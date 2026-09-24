@@ -154,7 +154,11 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      esquerdo de `A cinta`. O contrato que esta linha guarda não mudou uma
      vírgula — o retrato dentro de um botão NÃO abre a carta de tarô, porque
      botão dentro de botão passa no teste e falha no dedo. */
-  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-label="Abrir a ficha"[\s\S]{0,460}<Retrato semente=\{sementeDe\(personagem\)\} ente=\{personagem\} semCarta/.test(APP));
+  /* R21: o nome da porta passou a ser `nomeDaPorta` (muda com a marca), e
+     o retrato ganhou um invólucro para a marca se agarrar ao canto — daí o
+     alcance de 460 para 700. O contrato é o mesmo: dentro do botão, o
+     retrato é `semCarta`. */
+  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-label=\{nomeDaPorta\}[\s\S]{0,700}<Retrato semente=\{sementeDe\(personagem\)\} ente=\{personagem\} semCarta/.test(APP));
 }
 
 console.log(`\ntarô v9.126: ${bons} passaram, ${maus} falharam`);

@@ -83,7 +83,10 @@ sec("4. A VINHETA NÃO COME CLIQUE");
      e os avisos são z-40, as janelas são z-50. Uma vinheta por cima disso
      escureceria justamente a ficha e o mural, que é onde se lê número. */
   t("fica embaixo dos painéis", /\.tv-vinheta[\s\S]{0,260}?z-index: 1;/.test(CSS));
-  t("o painel lateral continua acima dela", /<aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40/.test(APP));
+  /* R21: a moldura do painel é agora o `Alforje` (`painel-alforje.jsx`), e
+     o `aside` virou um `role="dialog"`. O que a linha guarda é a CAMADA:
+     z-40, acima da vinheta (z 1) — e ela continua lá. */
+  t("o painel lateral continua acima dela", /role="dialog"[\s\S]{0,300}?fixed inset-x-0 bottom-0 z-40/.test(readFileSync(RAIZ + "src/painel-alforje.jsx", "utf8")));
 }
 
 sec("5. AS DUAS PILHAS DIVIDEM A MESMA TÁBUA");

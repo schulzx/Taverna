@@ -932,6 +932,54 @@ export const TELA_DE_BATALHA = {
 };
 
 /* ============================================================
+   R21 · A HUD RECOLHIDA NO TELEFONE (24/09/2026) — `mente/formas.md`,
+   "### R21 · a fabricação" §§2, 3, 4, 8.
+
+   QUATRO TABELAS PEQUENAS PARA UMA IDEIA SÓ: no telefone a fita de abas
+   sai da tela, e a ficha da cinta vira a porta de um ALFORJE — uma folha
+   que sobe por cima da cena com as abas no PÉ, não no cabeçalho (a razão
+   é a reaprendizagem: as abas ficam exactamente onde sempre estiveram, o
+   jogador só passa a precisar de um toque antes). Nenhum número aqui é
+   inventado: `ALFORJE.raio`/`pega` vêm do *drag handle* do Material 3
+   (md-comp-sheet-bottom, material-web v0_192); os dois tempos de `VEU`
+   são os que `formas.md` já escrevia em "abrir e fechar um painel" e
+   nunca tinham chegado ao código; `MARCA_DA_PORTA` e `MUDOU_AGORA` são a
+   primeira peça nova desta etapa — o disco que avisa "há algo aqui que
+   você ainda não abriu".
+
+   O TOPO DO ALFORJE E O ARRASTO PARA FECHAR NÃO MORAM AQUI, DE PROPÓSITO:
+   são RELAÇÃO, não número — `CINTA.altura` (ou `alturaViva`) + `ALVOS.piso`
+   para o primeiro, `2 × ALVOS.piso` para o segundo. Um número que já tem
+   casa não ganha uma segunda (a mesma lei de `CAMPO_DO_TURNO.tecto`).
+   ============================================================ */
+export const ALFORJE = {
+  raio: 16,                                    /* só os dois cantos de cima */
+  pega: { largura: 32, altura: 4, topo: 6 },    /* Material 3, drag handle */
+  enchimentoDaFita: 4,                          /* fita = ALVOS.chamado + 2 × isto = 64 */
+  espacoEntreAbas: 2,
+  larguraParaSeisRotulos: 339,                  /* 315 medidos (6 rótulos, JetBrains Mono Bold 12) + 2 × 12 de margem — abaixo disto, seis abas viram só glifo */
+  tira: { margemV: 4, margemH: 8, raio: 8 },    /* `A faixa do fundo` · Espreita: a tira da página, 359 × 40 a 375px (R21 §8) */
+};
+
+/* O VÉU — três pesos e dois tempos que já eram lei em "abrir e fechar um
+   painel" (`formas.md`) e nunca tinham chegado ao código: o alforje é o
+   primeiro leitor. `leve` é o do alforje (a cena continua a ler-se por
+   trás, 3,06:1 — de propósito); `pesado` e `semRetorno` esperam o dia em
+   que outra sobreposição precisar de um véu mais escuro. */
+export const VEU = { entra: 180, sai: 120, leve: 0.6, pesado: 0.85, semRetorno: 0.94 };
+
+/* A MARCA DA PORTA — disco de 16, recorte de 2 (o corpo visível é
+   `lado − 2 × recorte` = 12). O recorte é medida, não enfeite: sem um
+   fundo sólido por baixo, o disco `Novo` (`amber` cheio) sobre o anel
+   `amber` do próprio retrato mede 1,00:1 — desaparece. */
+export const MARCA_DA_PORTA = { lado: 16, recorte: 2 };
+
+/* A GRAMÁTICA DO "SELO DE ESTADO" QUE `A MARCA DA PORTA` TOMA EMPRESTADA
+   ao virar `Novo`: três pulsos de 1,2s e PÁRA — nunca `infinite`, porque
+   uma luz que nunca descansa é papel de parede, não aviso. */
+export const MUDOU_AGORA = { pulso: 1200, vezes: 3 };
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
@@ -1140,6 +1188,54 @@ export const MOVIMENTO_CSS = `
 }
 .tv-guardado-varre { animation: tvGuardadoVarre 600ms ease-out both; transform-origin: left center; }
 
+/* ---------------- O ALFORJE, O VÉU E A MARCA (R21) ----------------
+   (Sem crase neste comentário, como os vizinhos: ele mora DENTRO da
+   template literal, e uma crase aqui fecha a string e derruba o build.)
+
+   DOIS PARES DE ENTRA/SAI E UM PULSO. Os tempos vêm de VEU (180/120 —
+   os mesmos de "abrir e fechar um painel", nunca duplicados aqui). A
+   DIREÇÃO é a que formas.md escreve: o alforje SOBE a desacelerar
+   (ease-out) e DESCE a acelerar (ease-in) — a chegada é a resposta ao
+   toque, a saída é rápida porque já disse o que tinha a dizer. O véu é
+   sempre um fade nas duas direções: não há geometria para desacelerar
+   num plano só de opacidade.
+
+   NENHUMA COR NOVA: o pulso de .tv-mudou-agora usa T.amber SÓLIDO — o
+   halo nasce do desfoque do próprio box-shadow (blur+spread), não de um
+   alfa sobre a cor. Um alfa aqui esperaria o mesmo helper que o
+   parágrafo da caixa "O MOVIMENTO" (logo acima, na abertura do arquivo)
+   já recusa inventar duas vezes.
+
+   ---------------- A CORREÇÃO DO oficial (24/09) ----------------
+   .tv-alforje-sobe/-desce só valem NA ESTREITA: SOBE/DESCE é o gesto do
+   ALFORJE, que só existe abaixo de 767px. Na larga o painel continua o
+   que já era — o aside de hoje entra a deslizar da direita (o mesmo
+   .tv-slide que a casa inteira usa, tvSlide aqui embaixo) e sai sem
+   animação nenhuma (if (!aba) return null nunca animou a saída). É a
+   MESMA classe aplicada nos dois lados em painel-alforje.jsx — o que
+   muda é só o que ela FAZ, por media query, nunca por JavaScript. */
+@keyframes tvAlforjeSobe { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes tvAlforjeDesce { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@media (max-width: 767px) {
+  .tv-alforje-sobe { animation: tvAlforjeSobe ${VEU.entra}ms ease-out both; }
+  .tv-alforje-desce { animation: tvAlforjeDesce ${VEU.sai}ms ease-in both; }
+}
+@media (min-width: 768px) {
+  .tv-alforje-sobe { animation: tvSlide .25s ease both; }
+  .tv-alforje-desce { animation: none; }
+}
+
+@keyframes tvVeuEntra { from { opacity: 0; } to { opacity: 1; } }
+.tv-veu-entra { animation: tvVeuEntra ${VEU.entra}ms ease both; }
+@keyframes tvVeuSai { from { opacity: 1; } to { opacity: 0; } }
+.tv-veu-sai { animation: tvVeuSai ${VEU.sai}ms ease both; }
+
+@keyframes tvMudouAgora {
+  0%, 100% { box-shadow: 0 0 0 0 ${T.amber}; }
+  50%      { box-shadow: 0 0 10px 2px ${T.amber}; }
+}
+.tv-mudou-agora { animation: tvMudouAgora ${MUDOU_AGORA.pulso}ms ease-in-out ${MUDOU_AGORA.vezes}; }
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -1180,6 +1276,17 @@ export const MOVIMENTO_CSS = `
      CHEIO (scaleX(1), opacity 1) e quem o apaga passa a ser o prop
      visivel de SinalDeGuardado, que o pai segura 1,2 s. */
   .tv-guardado-varre { animation: none; transform: scaleX(1); opacity: 1; }
+  /* O ALFORJE, O VÉU E A MARCA (R21) — corte seco nos dois planos: quem
+     ENTRA pousa aberto (transform: none), quem SAI pousa invisível
+     (opacity: 0) — a mesma convenção de .tv-janela-sai /
+     .tv-trilho-sai, ali em cima. .tv-mudou-agora já comunica "novo"
+     pelo disco cheio e sem seta (a peça, não a folha); sem pulso, o
+     disco continua a dizer a mesma coisa parado. */
+  .tv-alforje-sobe { animation: none; transform: none; }
+  .tv-alforje-desce { animation: none; opacity: 0; }
+  .tv-veu-entra { animation: none; opacity: 1; }
+  .tv-veu-sai { animation: none; opacity: 0; }
+  .tv-mudou-agora { animation: none; }
 }
 `;
 
@@ -1271,12 +1378,66 @@ export const SUPERFICIES_CSS = `
 
    E A ORDEM É A REGRA: a media query vem DEPOIS das duas classes. Ela
    nao soma especificidade — so a posicao decide qual valor vale no
-   monitor. */
-.tv-espaco-abas { padding-bottom: 4.75rem; }
+   monitor.
+
+   ---------------- R21 · OS 4,75rem DEIXAM DE SER DEVIDOS ----------------
+   TrilhoAbas deixa de flutuar fixo sobre o telefone (vira a fita DO
+   ALFORJE, hidden md:flex — trabalho do oficial, com o bastão): a
+   reserva de 76px que pagava a barra fixa deixa de ter o que pagar. O
+   que sobra é só a área segura do aparelho — um iPhone sem a barra do
+   Safari tem um indicador de início que hoje nenhum ponto do projeto
+   evita (formas.md, R21 §0.3), e env() com fallback nunca quebra num
+   navegador que não o entende: cai em 0px, o mesmo de sempre. */
+.tv-espaco-abas { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .tv-margem-abas { margin-right: 0; }
 @media (min-width: 768px) {
   .tv-espaco-abas { padding-bottom: 0; }
   .tv-margem-abas { margin-right: 0; }
+}
+
+/* ---------------- O ALFORJE: A MOLDURA MUDA DE FORMA POR CSS (R21) ----------------
+   Um único invólucro, duas composições — a régua é CAMPO_DO_TURNO.colunaEstreita
+   nos outros lugares desta casa, e aqui é a MESMA ideia sem precisar
+   nomeá-la de novo: zero matchMedia, e rodar o telefone a meio do
+   turno não parte nada.
+
+   POR QUE UMA VARIÁVEL CSS E NÃO SÓ CLASSE DO TAILWIND: top e o raio de
+   cima nascem de uma CONTA que só o React sabe fazer (topo é prop —
+   CINTA.altura/alturaViva + ALVOS.piso —, e o raio vem de ALFORJE.raio).
+   Um valor computado em JS entra por style, e style sempre ganha de
+   qualquer classe, em qualquer tela — inclusive de uma classe do
+   Tailwind escrita md:. Por isso a TROCA por tamanho de tela não pode
+   morar no style: mora aqui, numa classe cuja media query os dois lados
+   leem, e o React só carimba a variável. */
+.tv-alforje-topo { top: var(--tv-alforje-topo, 0px); }
+@media (min-width: 768px) {
+  .tv-alforje-topo { top: 0; }
+}
+.tv-alforje-raio {
+  border-top-left-radius: var(--tv-alforje-raio, 0px);
+  border-top-right-radius: var(--tv-alforje-raio, 0px);
+}
+@media (min-width: 768px) {
+  .tv-alforje-raio { border-top-left-radius: 0; border-top-right-radius: 0; }
+}
+
+/* ---------------- SEIS ABAS, SÓ GLIFO ABAIXO DE 339px (R21 §3) ----------------
+   A correção do oficial (24/09): a degradação (rótulo escondido, nome no
+   aria-label) É POR CSS, não por uma conta em JavaScript que decidia
+   "seis abas = sem rótulo em qualquer largura" — cinco abas NUNCA
+   escondem, e seis só escondem abaixo de ALFORJE.larguraParaSeisRotulos
+   (339px, medido em formas.md §3).
+
+   O SELETOR NÃO É UM NOME DE CLASSE NOVO EM ui.jsx — é a combinação
+   .uppercase.tracking-wide, que já é exatamente como AbaComGlifo marca o
+   SEU rótulo (e só ele: o selo do contador usa outras classes).
+   painel-alforje.jsx só acrescenta .tv-fita-seis ao invólucro da fita
+   quando há seis abas; soGlifo continua false sempre (o nome acessível
+   vem de um aria-label passado por fora, não da peça escondendo o
+   próprio texto) — então o nome nunca desaparece, só o traço visível. */
+.tv-fita-seis [role="tab"] .uppercase.tracking-wide { display: none; }
+@media (min-width: ${ALFORJE.larguraParaSeisRotulos}px) {
+  .tv-fita-seis [role="tab"] .uppercase.tracking-wide { display: inline; }
 }
 
 /* ---------------- A CORTIÇA E O PAPEL (v9.127) ----------------

@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA } from "./estilo.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -1662,5 +1662,131 @@ export function SinalDeGuardado({ visivel }) {
       {/* 3 · a camada que nunca cai */}
       <span className="sr-only" aria-live="polite">{visivel ? "guardado" : ""}</span>
     </>
+  );
+}
+
+/* ============================================================
+   A MARCA DA PORTA (R21) — `mente/formas.md`, "### R21 · a fabricação"
+   §4. O disco que avisa "há algo aqui que você ainda não abriu", no
+   canto do retrato da cinta (16×16, absoluto, a transbordar 4 px — zero
+   px de leiaute, e é a única forma de caber numa cinta com 12 px de
+   folga).
+
+   O RECORTE NÃO É ENFEITE, É MEDIDA: o disco `Novo` é `amber` cheio, e
+   sem um fundo sólido por baixo dele `amber` sobre o anel `amber` do
+   próprio retrato mede 1,00:1 — desaparece. O recorte pinta um disco
+   inteiro na cor da cinta (`T.panel`) por baixo de tudo; o disco de fora
+   fica sempre `MARCA_DA_PORTA.lado − 2 × MARCA_DA_PORTA.recorte` = 12.
+
+   O CANAL QUE NÃO É COR: `novo` é cheio e sem seta; `porta`/`aberta` são
+   vazados e com seta (que desce ou sobe, conforme o estado da porta). Em
+   cinzentos a leitura sobrevive — o disco claro contra o escuro.
+
+   `aria-hidden`: o nome acessível mora na PORTA (o retrato que a
+   carrega), nunca aqui — é `nomeDaPorta` (`marca-da-porta.js`) quem monta
+   a frase inteira ("A ficha" / "A ficha — há novo no diário"). */
+export function MarcaDaPorta({ estado = "porta" }) {
+  const lado = MARCA_DA_PORTA.lado;
+  const c = lado / 2;
+  const r = c - MARCA_DA_PORTA.recorte;
+  const novo = estado === "novo";
+  const aberta = estado === "aberta";
+  return (
+    <svg aria-hidden="true" width={lado} height={lado} viewBox={`0 0 ${lado} ${lado}`}
+      className={novo ? "tv-mudou-agora" : ""}>
+      {/* o recorte: um disco cheio na cor da cinta, por baixo de tudo — o
+          que garante contraste seja qual for o anel do retrato por trás */}
+      <circle cx={c} cy={c} r={c} fill={T.panel} />
+      {novo ? (
+        <circle cx={c} cy={c} r={r} fill={T.amber} />
+      ) : (
+        <>
+          <circle cx={c} cy={c} r={r} fill={T.panelSoft} stroke={T.lineStrong} strokeWidth="1" />
+          {/* a seta: desce quando a porta está fechada (há o que abrir),
+              sobe quando já está aberta (há o que fechar) */}
+          <polyline
+            points={aberta ? "5.5,9.5 8,7 10.5,9.5" : "5.5,6.5 8,9 10.5,6.5"}
+            fill="none" stroke={T.inkDim} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/* ============================================================
+   A ESCOLHA, *Forma=Aba com glifo* (R21) — `mente/formas.md`,
+   "### R21 · a fabricação" §3 (Figma `20:77`, variantes `212:5412` ·
+   `212:5419` · `212:5427`).
+
+   NÃO É UMA ABA NOVA: é `A escolha` (`formas.md`, "navegar entre abas"),
+   que já tinha forma e nunca ganhou código — o trilho de hoje
+   (`TrilhoAbas`, em `App.jsx`) é escrito à mão. Isto dá à peça que já
+   existe a composição com glifo que a fita do alforje e o trilho da mesa
+   desenham; a aba no alforje e a aba no trilho são a MESMA peça em duas
+   composições — não duas verdades sobre "o que é uma aba".
+
+   56 de alto (`ALVOS.chamado`), glifo 24 em cima, rótulo mono Bold 12 —
+   o PISO da casa (`TIPOS.piso`), não os 9px que `TrilhoAbas` escreve
+   hoje (dívida da mesa; a coluna larga converte-se numa etapa própria).
+
+   SEM O `✓` NA ESCOLHIDA — só nesta composição, nas outras Formas da
+   peça o `✓` fica. Medido: seis rótulos com o `✓` pedem 366px contra 351
+   úteis a 375; sem ele, 315. O canal que não é cor passa a ser o aro +
+   o filete de baixo (forma presente contra ausente — WCAG 1.4.1).
+
+   LARGURA PELO CONTEÚDO, NÃO IGUAIS: `flex: 1 1 0; min-width:
+   max-content` — cada aba pede só o que o rótulo precisa; a maior
+   (`ASCENSÃO`, 61px medidos) não estica as outras.
+
+   `soGlifo` esconde o rótulo — a degradação abaixo de
+   `ALFORJE.larguraParaSeisRotulos` com seis abas na tela — e o nome não
+   some: vai para o `aria-label`. QUEM DECIDE O LIMIAR é quem monta a
+   fita (pode ser CSS, uma media query, sem medir); esta peça só sabe
+   desenhar as duas formas. */
+export function AbaComGlifo({ id, rotulo, Glifo, escolhida, novo, contador, soGlifo, onClick, ...aria }) {
+  const cor = escolhida ? T.amberSoft : T.inkDim;
+  return (
+    <button
+      id={id}
+      type="button"
+      onClick={onClick}
+      role="tab"
+      aria-selected={!!escolhida}
+      aria-label={soGlifo ? rotulo : undefined}
+      className="relative flex flex-col items-center justify-center gap-1"
+      style={{
+        flex: "1 1 0", minWidth: "max-content", height: ALVOS.chamado,
+        padding: "0 4px",
+        background: escolhida ? T.panelSoft : "transparent",
+        borderBottom: `3px solid ${escolhida ? T.amber : "transparent"}`,
+        color: cor,
+      }}
+      {...aria}>
+      <span style={{ position: "relative", display: "inline-flex" }}>
+        {Glifo ? <Glifo tamanho={24} cor={cor} /> : null}
+        {novo && (
+          <span style={{ position: "absolute", top: -6, right: -8 }}>
+            <MarcaDaPorta estado="novo" />
+          </span>
+        )}
+      </span>
+      {!soGlifo && (
+        <span className="tv-mono uppercase tracking-wide"
+          style={{ fontSize: TIPOS.piso, fontWeight: 700, lineHeight: 1, whiteSpace: "nowrap" }}>
+          {rotulo}
+        </span>
+      )}
+      {/* o contador `nGrupo` da aba Gestão — `Selo`, *Tom=Neutro*: é uma
+          CONTAGEM, não uma novidade, e por isso nunca sobe à marca */}
+      {contador > 0 && (
+        <span className="tv-mono rounded-full px-1"
+          style={{
+            position: "absolute", top: 2, right: 2, fontSize: TIPOS.piso, lineHeight: 1.4,
+            background: T.violet, color: T.onSecond,
+          }}>
+          {contador}
+        </span>
+      )}
+    </button>
   );
 }

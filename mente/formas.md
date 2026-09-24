@@ -8758,3 +8758,730 @@ e havia três.** A premissa foi escrita como facto e nunca conferida — e o que
 conferiu não foi um argumento, foi alguém ter ido ao código procurar a porta.*
 
 ---
+
+## R21 · a HUD recolhida no telefone
+
+*A ideia é da pessoa, e a direcção está aprovada: no telefone ficam **a cinta
+(PV, bolsa, hora, prazo), a página e a linha do turno**; o resto — gestão,
+diário, bolsa, mapa, códex — vem **a um toque**, por cima da cena. É a ordem de
+cedência de R17 aplicada à letra: **acervo à vista vai a um toque, nunca sai.**
+O `jogo` compõe o momento (`### R21 · o jogo`); o `desenho` fabrica as peças
+(`### R21 · a fabricação`). Figma: página `R21 · a HUD recolhida` (`212:67`).*
+
+### R21 · a fabricação (`desenho`, 24/09)
+
+#### 0 · Três factos que mudam a conta antes de ela começar
+
+1. **A folga da cinta a 375 px é 12, não 67.** O 67 é o orçado de R13 e ainda
+   está escrito no comentário de `App.jsx` (~l.1349, `folga : 351 − 186 − 98 =
+   67`); a tabela `CINTA` diz **`folgaMinima: 12`, MEDIDO**, e o pior caso (a
+   última noite) fecha a **7 px**. **Qualquer sinal de porta na cinta custa
+   zero px horizontais ou não entra.** *O comentário velho é dívida leve: um
+   número que envelheceu dentro do código que o executor vai abrir.*
+2. **A fita decidiu 1 turno em 20.** Censo de R6 (`mente/r6-jogo.md` §2):
+   campo 15 · soleira 3 · **painel 1** (Mapa › `▸ ir`) · botão 1. E as portas
+   `▸ Pessoas / Mural / Mercado / Códex / Correio` **já abrem sub-abas a partir
+   da prosa** (`abrirPortaDoSistema`), sem passar pela fita. A fita é acervo, e
+   custa **76 px permanentes** (`.tv-espaco-abas`, 4,75 rem).
+3. **Os 76 voltam inteiros.** O invólucro do campo já tem o seu próprio fundo
+   de 20 px (`paddingBottom: 20`, literal, ~l.23140) *dentro* da reserva — tirar
+   a reserva não encosta o campo ao vidro. **Página +76 px**, sem mexer em mais
+   nada. *(E um defeito que aparece ao medir: o `index.html` pede
+   `viewport-fit=cover` e **nenhum** sítio do projeto lê
+   `env(safe-area-inset-bottom)` — num iPhone sem barra do Safari a fita de hoje
+   fica debaixo do indicador de início. O que nasce aqui lê-o.)*
+
+#### 1 · A porta — **o alvo da ficha na cinta, inteiro**
+
+A pergunta do `regente` foi *o retrato ou um botão no canto de baixo*. Medi as
+duas:
+
+| | **A · a ficha da cinta** | **B · um botão no canto de baixo** |
+|---|---|---|
+| px verticais | **0** | 0 (ao lado do campo em repouso) |
+| px horizontais | **0** — a marca vai em absoluto sobre o retrato | **56 de 343** do campo (16,3 %); a chamada (229 px medidos, Spectral 15) ainda cabe em 244 |
+| área do alvo | **194 × 48 = 9 312 px²** (a ficha inteira, não os 32 do retrato) | 48 × 48 = 2 304 px² |
+| alcance do polegar | **zona dura** — o topo, fora do arco de ~520–560 px de baixo (E1) | zona fácil |
+| *uma acção, uma forma* | **é a porta que já existe** (`aoAbrirFicha` abre `gestao` hoje) | **uma segunda porta para a mesma sala** — R13: *quando a sala já tem porta, a segunda porta não é acesso, é mobília* |
+| comportamento | fica sempre no mesmo sítio | **tem de sumir quando o campo abre** (lei do `jogo`: nenhuma peça ocupa a tela no momento em que não serve) — uma porta que some é uma porta que não se aprende |
+
+**Decisão: A.** O custo é o alcance, e está pago de três lados: (1) **a
+frequência** — 1 em 20 turnos decidiu pelo painel (R6); o polegar estica-se
+para o topo raramente, e o que se toca todo turno (campo, soleira, verbo)
+continua todo em baixo; (2) **tudo o que se faz DEPOIS de abrir está em
+baixo** — as abas e a saída (§2); (3) **as portas `▸` na prosa continuam a ser
+o atalho do momento**, que é quando se precisa de um painel com pressa.
+
+**Estudo, citado:** Steven Hoober, *How Do Users Really Hold Mobile Devices?*
+(UXmatters, fev. 2013, 1 333 observações): **49 % seguram o telefone com uma
+mão**, 36 % no berço, 15 % com duas. É por isso que o custo do topo é real e
+está escrito, e não negado: para metade dos jogadores abrir o alforje é um
+reajuste de pega. **Não há estudo que eu possa citar a dizer que o avatar no
+topo lê-se como porta**; há **convenção observada** (as aplicações do Google e a
+App Store abrem a conta pelo avatar do canto), e escrevo-a como observação, não
+como estudo. *A descoberta não se apoia nela: apoia-se na marca (§3) e no
+momento que o `jogo` desenhar para a primeira vez.*
+
+**Para onde abre** é do `jogo` (momento). A minha proposta, para ele assinar ou
+emendar: **abre na última aba visitada na sessão; na primeira vez, na Ficha**
+(que é o que a porta faz hoje, logo nada se reaprende); **com a marca acesa,
+abre na aba que tem o novo** — a marca prometeu uma coisa, e o toque entrega-a.
+**→ Emendado pelo `jogo` com censo (§8): sem marca abre na Ficha, não na
+última aba.**
+
+#### 2 · A folha — **`O alforje`** (`214:67`)
+
+*Chama-se alforje e não "a folha" porque `FOLHA` já é o nome da folha de estilo
+em `estilo.js`, "gaveta" é a das habilidades `✦` e "painel" é o
+`PainelLateral`. Três peças com o mesmo nome é como as duas verdades nascem.
+Na tela não se lê nome nenhum.*
+
+**A emenda ao pedido, e é a decisão maior desta fabricação:** o `regente` pôs
+**as abas no cabeçalho** da folha. **Ponho-as no pé**, e a razão é a
+reaprendizagem, que é a única coisa que continua a ser da pessoa:
+
+- **As abas ficam exactamente onde sempre estiveram** — a mesma faixa de 64 px
+  no fundo do ecrã, a mesma ordem, os mesmos glifos. O jogador que tocava
+  `DIÁRIO` no fundo continua a tocar `DIÁRIO` no fundo; só passa a haver um
+  toque antes. **Nada muda de lugar.**
+- **Estão no arco do polegar**; no cabeçalho estariam a ~100–150 px do topo,
+  fora dele (E1).
+- **Trocar de aba passa de 2 toques a 1.** Hoje o `PainelLateral` é
+  `fixed inset-y-0 w-full z-40` e pinta **por cima** da fita (mesmo `z-40`,
+  depois no DOM): trocar de Bolsa para Mapa é `✕` (topo-direita, zona dura) +
+  aba. No alforje a fita é **do alforje** e está sempre lá.
+
+**A geometria** (375 × 812, cinta calma):
+
+| peça | medida | de onde sai |
+|---|---|---|
+| topo do alforje | **96** = cinta 48 + faixa 48 (cinta viva: 72 + 48 = **120**) | `CINTA.altura` / `alturaViva` + `ALVOS.piso` — **relação, não número** |
+| a faixa do fundo | **48** de cena velada entre a cinta e o alforje | `ALVOS.piso`: o fundo que fecha é um alvo, e um alvo é 48 |
+| raio | **16**, só os dois cantos de cima | `ALFORJE.raio` (novo) |
+| a pega | **32 × 4**, raio 2, a 6 px do topo | Material 3, *drag handle* 32 × 4 (tokens `md-comp-sheet-bottom`, material-web v0_192) |
+| cabeçalho | **48**: título (Cormorant, `TIPOS.titulo` 20) + `Fechar` | `ALVOS.piso` |
+| o conteúdo | **604** (716 − 48 − 64), rola dentro de si | o resto |
+| a fita | **64** = abas a 56 + 4 + 4, **+ `env(safe-area-inset-bottom)`** | `ALVOS.chamado` + `2 × ALFORJE.enchimentoDaFita` |
+| borda de cima | **1 px `lineStrong`** — obrigatória | ver contraste |
+
+**O custo, declarado:** o conteúdo de um painel passa de **~728 px** (o
+`PainelLateral` de hoje ocupa o ecrã inteiro) para **604 — −124 px, −17 %**.
+Paga-se com três coisas que hoje não existem: **a cena continua visível** (a
+faixa velada diz *não saíste daqui*), **a cinta continua acesa** (comprar no
+Mercado e ver a bolsa descer *na cinta*, no mesmo instante — o veredito antes
+e depois do clique, sem abrir outra coisa), e **1 toque para trocar de aba em
+vez de 2**. *Se o `jogo` medir um painel que precise dos 124 px (o Mercado com
+30 preços é o candidato), o remédio é a segunda altura — alforje a tela cheia
+por arrasto da pega — e não tirar a faixa.*
+
+**A cinta por cima do véu.** O véu é `Veu` · *Peso=Leve* (`T.bg` a 60 %, a
+peça que já existe) e cobre de `y = altura da cinta` para baixo. A cinta fica
+**acima** dele, viva: PV, bolsa e prazo lêem-se enquanto se gere, e **a porta
+que abriu é a porta que fecha** (`aria-expanded`, e a marca vira `Aberta`). O
+alvo do tempo, tocado com o alforje aberto, **fecha o alforje e abre o tempo**
+— uma sobreposição de cada vez. *(Composição: é do `jogo` assinar.)*
+
+**As seis saídas** — a lei do Véu (`formas.md`, *abrir e fechar um painel*:
+Esc, o fundo e o `✕`) e três que o alforje acrescenta:
+1. **o fundo** — a faixa de 48;
+2. **`Fechar`** — no canto de sempre, alvo 48;
+3. **`Esc`** — hoje não há um único `Escape` no projeto; este é o primeiro;
+4. **a aba escolhida tocada outra vez** — é o que a fita faz hoje
+   (`aoClicar(ativa ? null : id)`), **e é a única saída no arco do polegar**;
+5. **o gesto de descer** — na cabeça do alforje, ou no conteúdo quando o
+   rolamento está no topo (o comportamento das folhas do iOS). Segue o dedo
+   1:1, **sem animação** durante o arrasto; solta abaixo de
+   **`2 × ALVOS.piso` = 96 px** e volta, acima fecha;
+6. **a porta da cinta**, que fica acesa.
+
+**Voltar do sistema (Android) NÃO entra em R21.** Pede um `history.pushState`
+ao abrir e um `popstate` a fechar — e **não há um único `pushState` no
+projeto**. O primeiro não se escreve de passagem dentro de uma etapa de
+leiaute: um erro ali faz o *voltar* sair do jogo para o menu. Fica como
+**R21b**, com prova própria.
+
+**O movimento:** sobe de `translateY(100%)` em **180 ms** a desacelerar, desce
+em **120 ms** a acelerar — **os números do Véu**, já escritos em *abrir e fechar
+um painel* (`o véu entra com fade de 180ms… e sai em 120ms`); o véu faz o seu
+fade nos mesmos tempos. **Nenhum número de movimento novo.** Sob
+`prefers-reduced-motion`: **corte seco**, sem deslocamento e sem fade. **Nunca
+bloqueia:** o alforje aceita toques desde o primeiro fotograma, e o turno do
+Mestre continua a correr por trás.
+
+**Acessibilidade:** `role="dialog"`, `aria-modal="true"`, `aria-labelledby` no
+título. As abas seguem o padrão *Tabs* do WAI-ARIA APG (`tablist` / `tab` /
+`aria-selected` / `aria-controls`, setas para andar entre abas). Ao abrir, o
+foco vai para a aba escolhida; ao fechar, **volta à porta**. A porta leva
+`aria-haspopup="dialog"` e `aria-expanded`.
+
+**Só na coluna estreita.** A troca é CSS pela régua `CAMPO_DO_TURNO.colunaEstreita`
+(`max-width: 767px`), como a soleira e a linha do turno: zero `matchMedia` para
+leiaute, e rodar o telefone a meio não parte nada. **Na coluna larga (≥ 768) o
+trilho em coluna e o `PainelLateral` à direita ficam exactamente como estão.**
+
+#### 3 · As abas — **`A escolha`, *Forma=Aba com glifo*** (`20:77`, variantes `212:5412` · `212:5419` · `212:5427`)
+
+A aba **já tinha forma** — `formas.md`, *navegar entre abas*: **`A escolha`,
+*Forma=Aba*** — e o código nunca a usou (`TrilhoAbas` é escrito à mão). **Não
+fabrico uma aba nova: dou à que existe a composição com glifo**, que é a que a
+fita e o trilho da mesa desenham. *A aba no alforje e a aba no trilho da mesa
+são a MESMA peça em duas composições* — o pedido do `regente`, e a lei.
+
+- **56 de alto** (`ALVOS.chamado`), glifo 24 por cima, rótulo mono Bold 12.
+- **O rótulo sobe de 9 para 12 px.** O trilho de hoje escreve `text-[9px]` —
+  **3 px abaixo do piso da casa** (`TIPOS.piso` 12), na barra que se toca de
+  todas as telas. *(É dívida da mesa também; a coluna larga converte-se à peça
+  noutra etapa, uma por versão.)*
+- **Escolhida:** corpo `panelSoft`, aro `amber`, **filete de 3 px em baixo**,
+  glifo `amberSoft`. **Sem o `✓`**, e é medida: seis rótulos com o `✓` pedem
+  **366 px contra 351** úteis a 375; sem ele, **315**. O canal que não é cor
+  passa a ser **o aro e o filete** (forma presente contra ausente), que é o que
+  a WCAG 1.4.1 pede. *Nas outras Formas da peça o `✓` fica.*
+- **Larguras pelo conteúdo, não iguais:** `flex: 1 1 0; min-width:
+  max-content`. Medido (Figma, JetBrains Mono Bold 12): `GESTÃO` 45 · `DIÁRIO`
+  45 · `BOLSA` 38 · `MAPA` 30 · `CÓDEX` 38 · **`ASCENSÃO` 61**. Com 4 px de
+  enchimento de cada lado e 2 entre abas, seis abas pedem **315 px** — cabem a
+  partir de **339 px de ecrã**; abaixo disso (o telefone de 320) **seis abas
+  ficam só glifo**, com o nome no `aria-label`. Cinco cabem sempre (244 px). É
+  `ALFORJE.larguraParaSeisRotulos`, e diz como se degrada — *a peça acabada
+  é a que diz a partir de que largura muda.*
+- **O contador `nGrupo` fica na aba `GESTÃO`**, como `Selo`, *Tom=Neutro* — é a
+  regra já escrita (*o contador, quando existe, é um Selo*) — e **não sobe à
+  porta**: é uma contagem, não uma novidade. Sobe de 9 para 12 px (6,52:1,
+  `onSecond` sobre `violet`). *Se entrar ou sair gente do grupo, isso É
+  novidade e acende a marca — mas o que conta como novidade é do `jogo`.*
+
+#### 4 · A marca — **`A marca da porta`** (`212:76`, três variantes)
+
+**Procurei primeiro, e nenhuma servia sem ganhar um segundo sentido:**
+- `Selo de estado`, *Mudou=Agora* — é para **um valor que mudou**, no número,
+  e **morre no turno seguinte**. A novidade atrás de uma porta vive **até a
+  porta se abrir**, e não tem número.
+- `PontoAtivo` (`ui.jsx`) — quer dizer **vivo/agora** (`Continuar aventura`, a
+  vez no combate). Pô-lo a dizer *novo* dava à mesma forma dois sentidos — a
+  outra cara da mesma doença.
+- o selo `nGrupo` — é um **contador**.
+
+Então nasce uma, e nasce para todos: **qualquer porta do jogo que esconda algo
+que o jogador ainda não viu usa esta.**
+
+| Estado | forma | contraste |
+|---|---|---|
+| **Porta** | disco 12 `panelSoft`, aro 1 px `lineStrong`, seta que desce `inkDim` (traço 1,5) | aro/`panel` **3,84:1** · seta/`panelSoft` **5,82:1** |
+| **Aberta** | a mesma, seta que sobe | idem |
+| **Novo** | disco 12 **cheio** `amber`, sem seta | `amber`/`panel` **8,02:1** |
+
+- **16 × 16, em absoluto** no canto de baixo-direito do retrato de 32, a
+  transbordar 4 px — **zero px de leiaute**, e é a única forma de caber numa
+  cinta com 12 px de folga.
+- **O recorte de 2 px é medida, não enfeite:** o corpo de 16 é `T.panel` (a cor
+  da cinta). Sem ele, o disco `amber` sobre o anel `amber` do retrato mede
+  **1,00:1 — desaparece**; e sobre o anel `danger` do herói em agonia,
+  **1,26:1**. Com o recorte, `panel`/`amber` = **8,02:1** nos dois casos.
+- **O canal que não é cor:** *Novo* é **cheio e sem seta**; *Porta* é **vazado
+  e com seta**. Em cinzentos, *Novo* é o disco claro e *Porta* o disco escuro.
+- **O movimento:** ao virar *Novo*, o halo de *Mudou=Agora* — **três pulsos de
+  1,2 s e pára**, a gramática que o `Selo de estado` já tem. Sob
+  `prefers-reduced-motion`, nenhum pulso: o disco cheio diz o mesmo parado.
+- **O nome acessível muda com ela:** *"A ficha"* → *"A ficha — há novo no
+  diário"*. **Sem `aria-live`**: o acontecimento já foi dito pela linha de
+  sistema na prosa; anunciar duas vezes é ruído.
+- **A vida dela** (proposta, o `jogo` assina): acende **na porta** quando entra
+  no acervo algo que o jogador não abriu; **ao abrir o alforje passa para a
+  aba** (a mesma peça, *Novo*, no canto de cima-direito do glifo — propriedade
+  `Novo` de `A escolha`); **apaga quando a aba abre.** Um rasto de migalhas, e
+  nunca dois pontos a dizer a mesma coisa ao mesmo tempo.
+
+**O que a acende é do `jogo`.** Da fabricação só sai a regra de forma: *a marca
+é para o que entrou no acervo sem o jogador ter ido lá* — um contrato que ele
+aceitou na soleira **acende** (foi a soleira, não o diário, que o registou);
+uma entrada que ele próprio escreveu no diário **não acende**.
+
+#### 5 · A tabela, e onde ela mora — `src/estilo.js` (território do desenho; **não editado agora**, a construção é do executor)
+
+```
+ALFORJE = {
+  raio: 16,
+  pega: { largura: 32, altura: 4, topo: 6 },   // Material 3, drag handle
+  enchimentoDaFita: 4,                          // fita = ALVOS.chamado + 2 × isto = 64
+  espacoEntreAbas: 2,
+  larguraParaSeisRotulos: 339,                  // 315 medidos + 2 × 12 de margem
+  // o topo NAO mora aqui: é CINTA.altura (ou alturaViva) + ALVOS.piso
+  // o arrasto para fechar NAO mora aqui: é 2 × ALVOS.piso
+}
+VEU = { entra: 180, sai: 120, leve: 0.6, pesado: 0.85, semRetorno: 0.94 }
+  // os números de formas.md (abrir e fechar um painel) e da peça Veu, que
+  // nunca chegaram ao código; o alforje é o primeiro leitor
+MARCA_DA_PORTA = { lado: 16, recorte: 2 }       // o disco é lado − 2 × recorte
+MUDOU_AGORA = { pulso: 1200, vezes: 3 }         // a gramática do Selo de estado
+```
+
+E na folha (`MOVIMENTO_CSS` / `SUPERFICIES_CSS`), **sem crase em comentário
+nenhum** (a armadilha de R17): `.tv-alforje-sobe` / `.tv-alforje-desce`,
+`.tv-veu-entra` / `.tv-veu-sai`, `.tv-mudou-agora`, cada uma com a sua saída
+no bloco `prefers-reduced-motion` a pousar no **estado final** (a que sai
+pousa em `opacity: 0`, a que entra em `transform: none`). E
+`.tv-espaco-abas` passa a `padding-bottom: env(safe-area-inset-bottom, 0px)` na
+coluna estreita. **O `rgba(0,0,0,.45)` do fundo do `PainelLateral` morre com
+ele** — é uma das tintas soltas que a peça `Veu` existe para matar.
+
+#### 6 · O que o executor constrói, por ordem, e o que provar
+
+1. `A escolha` com glifo em `ui.jsx` (a aba), e `A marca da porta`.
+2. `O alforje` como **painel próprio** (`painel-alforje.jsx`), fora do
+   `App.jsx` — *o melhor uso do bastão é gastá-lo para não precisar mais dele*:
+   o `App.jsx` só passa `aba`, `setAba` e o conteúdo que o `PainelLateral` já
+   desenha. **Não se duplica o conteúdo dos painéis**: o alforje é a moldura, o
+   miolo continua a ser o do `PainelLateral`.
+3. No `App.jsx` (oficial, com o bastão): a porta na `ACinta` (a marca sobre o
+   retrato, `aria-*`), `TrilhoAbas` com `hidden md:flex`, `.tv-espaco-abas` a
+   zero na estreita, `PainelLateral` só na larga.
+
+**Provar, no navegador e não no diff** (375 × 812, aba nova depois de mexer em
+nomes — o HMR mente):
+- `.tv-espaco-abas` computado = 0 (+ safe-area) e **a página +76 px** no turno
+  normal — o número é do `jogo`, eu confiro;
+- as seis saídas, uma a uma, e `Esc`;
+- com `prefers-reduced-motion`: nenhum `transform` em transição;
+- cor: `grep` sem hex novo — todas as cores de `T`, e o véu é `T.bg` com alfa;
+- a 320 px com seis abas: só glifos, nenhuma aba abaixo de 48 de largura;
+- **salvar e restaurar os espaços de save antes de qualquer conferência viva.**
+
+#### 7 · O que fica por decidir, ou em aberto com o `jogo`
+
+- ~~**Para onde a porta abre** e **o que acende a marca** — momento, do `jogo`.~~
+  **Fechado pelo `jogo` em §8**, com censo.
+- **A primeira vez:** um jogador que volta com um save antigo procura a fita e
+  não a encontra. *O sistema não fala de si mesmo* — nada de texto a explicar.
+  Proponho que a descoberta seja **movimento**: na primeira sessão, a fita
+  **recolhe-se para dentro do retrato** uma vez (é a proposta ambiciosa, na
+  pauta). Se o `jogo` preferir outra coisa, o lado dele entra aqui.
+- **A segunda altura do alforje** (tela cheia pela pega) — só se o `jogo` medir
+  um painel que precise dos 124 px.
+- **R21b · voltar do sistema** — fora desta etapa, com prova própria.
+
+*Assina a fabricação: `desenho`, 24/09.*
+
+#### 8 · A assinatura do `jogo`, as quatro emendas, e a peça que ele pediu
+
+O `jogo` **assinou o pé do alforje** e trouxe um censo de **21 turnos a
+375 × 812**: **7 aberturas de painel por vontade dele** — Diário 3 · Bolsa 2 ·
+Mapa 1 · Gestão › Mercado 1 · Ficha 0 · Códex 0. **Todas pela fita; 0 pela
+cinta; 0 pelas cinco portas `▸` da prosa.** E a página, medida viva: tela
+cheia (gravura + 1 oferta + pílula) **399,7 → 475,7 px (+76, +19,0 %; 14,5 →
+17,2 linhas)**; rolagem pendente **302,5 → 378,5** (abaixo do piso de 359 hoje,
+acima depois); soleira vazia **492,8 → 568,8**. *O meu +76 de Figma e o +76
+dele no DOM: a mesma conta por dois caminhos.*
+
+**O censo corrige uma premissa minha, e digo-o:** escrevi que *"as portas `▸`
+na prosa continuam a ser o atalho do momento"* como parte do que paga o
+alcance do topo. **Em 21 turnos foram tocadas zero vezes.** O que paga o
+alcance é o resto — a frequência (7 aberturas em 21 turnos, uma a cada três) e
+tudo o que se faz depois de abrir estar em baixo. **A mitigação das `▸` sai
+da conta.** E o mesmo censo põe um número no custo que declarei: **7
+aberturas × 1 toque a mais no topo** por 21 turnos. É esse o preço de 76 px de
+prosa em todos os 21, e fica escrito para quem quiser voltar atrás.
+
+**As quatro emendas de momento — aceites, todas:**
+
+1. **Para onde abre: sem marca, a Ficha; com marca, a aba da novidade.** A
+   minha "última aba" **acertou 0 de 3** aberturas sem marca no censo dele; a
+   Ficha, 1 de 3, e é o que a porta faz desde R13. *Uma proposta minha que a
+   medida desmentiu sai sem discussão.*
+2. **O que acende**, pela regra dele por cima da minha: **não acende o que a
+   tela principal já mostra ou já anunciou com porta.** Acendem: **Diário**
+   (missão entra, conclui, falha — 4 em 21), **Bolsa** (item que entra sem ter
+   sido comprado dentro do alforje — 1 em 21), **Gestão** (carta nova, alguém
+   entra ou sai do grupo), **Mapa** (destino novo). Não acendem: moedas, PV,
+   hora, prazo (a cinta), lugar (a gravura — mudou 6 vezes em 21, seria
+   ruído), sub-aba nova e Códex (a porta `▸` já é a porta), conquistas (a
+   prosa celebra), etapas. **Apaga ao abrir a aba, e não conta número** — que
+   é o que a peça já é (§4: um disco sem algarismo).
+3. **A resposta que chega com o alforje aberto** — e é a peça que ele pediu
+   (abaixo). O alforje **não fecha** sozinho; a faixa de 48 **espreita**.
+4. **O relógio ganha do acervo:** a janela de reacção (tem relógio, K1b), o
+   início de batalha e o véu da morte **fecham o alforje sozinhos**, em
+   `VEU.sai` (120 ms) / corte seco. *O defeito que ele achou é real hoje:* a
+   janela de reacção fora da batalha mora a `zIndex: 40` na coluna, e o
+   `PainelLateral` (`w-full z-40`, depois no DOM) **pinta por cima dela — um
+   relógio a correr atrás de uma porta**. A lei de forma que sai daqui: **nada
+   com relógio fica debaixo do alforje, e a prova é a ordem de camadas**, não
+   o `z-index` igual e a sorte do DOM. A rolagem pendente (sem relógio) não
+   fecha.
+
+**A peça pedida — `A faixa do fundo`** (`218:357`; *Velada* `218:352` ·
+*Espreita* `218:353`; o quarto telefone do par, `218:358`):
+
+| Estado | forma | contraste |
+|---|---|---|
+| **Velada** | `Veu` · *Leve* sobre a cena (`T.bg` a 60 %) | a prosa por baixo a **3,06:1** — está lá, não se lê, de propósito |
+| **Espreita** | uma **tira da página** (`pagina`, raio 8, margem 4 em cima e em baixo, 8 dos lados → 359 × 40), **o filete da voz** à esquerda (3 × 24, `amber`), e **a primeira linha** da prosa nova — Spectral `TIPOS.prosa` 17, entrelinha 24, **uma linha, reticências no fim** | texto `ink`/`pagina` **11,08:1** · filete `amber`/`pagina` **6,05:1** |
+
+- **O que carrega a mudança não é o fundo:** `pagina` contra o velado mede
+  **1,27:1**. Carregam **o texto** (de 3,06 para 11,08 — o salto é esse) e **o
+  filete**, que é a marca da `Voz` (*no filete, nunca no texto*). *Uma
+  mudança que só o fundo dissesse não se veria.*
+- **A tira pára 4 px acima do alforje, e é medida:** a borda `lineStrong` do
+  alforje encostada à `pagina` daria **2,89:1**, abaixo dos 3; contra o velado
+  dá **3,67**. O contorno `paginaFio` da tira mede **2,92** sobre o velado e
+  **não é canal** — é identidade: é a página a espreitar.
+- **O alvo é a faixa inteira** (375 × 48), não a tira. Tocar **fecha o alforje
+  e deixa a página no início da resposta**. Nome acessível: a própria linha.
+  Não é controlo novo — a faixa já era o fundo que fecha.
+- **Movimento:** a tira entra em `VEU.entra` (180 ms, fade); com
+  `prefers-reduced-motion`, corte seco. Some quando o alforje fecha.
+- **O piso de truncagem de §21 não se aplica**, e o `jogo` disse porquê: é uma
+  linha inteira de prosa, e a reticência aqui diz *há mais*, que é o convite.
+  O piso de §21 existe contra `assi…`, um campo que perdeu o sentido — esta
+  linha nunca tem menos de ~35 caracteres a 343 px.
+- **Nada de número novo:** 48 é `ALVOS.piso`, 17 é `TIPOS.prosa`, 180 é
+  `VEU.entra`; a margem da tira (4/8) e o raio (8) entram em `ALFORJE` como
+  `tira: { margemV: 4, margemH: 8, raio: 8 }`.
+
+**O que o `jogo` assinou além disto:** tocar no tempo com o alforje aberto
+fecha-o e abre o tempo; tocar na porta aberta fecha. **Em aberto:** R22 (a fita
+recolhe-se para o retrato uma vez) — o `jogo` responde em `### R21 · o jogo`.
+
+*Assina a emenda: `desenho`, 24/09.*
+
+### R21 · o jogo (`jogo`, 24/09)
+
+*Assino a porta, o alforje e as abas no pé. Emendei três coisas do momento —
+para onde a porta abre, o que acende a marca, e o que acontece quando o Mestre
+responde com o alforje aberto — e acrescentei uma lei que o pedido não tinha:
+**o relógio ganha do acervo.** O `desenho` aceitou as quatro (#### 8 acima) e
+fabricou a peça que pedi. Composição no Figma: `R21 · o momento 1–4`
+(`218:497`, `218:514`, `218:532`, `218:550`), por baixo do par dele.*
+
+#### 1 · O censo que R20 me devia, jogado hoje
+
+**Método.** Campanha nova no `npm run dev` a **375 × 812**, 21 turnos (o da
+chegada + 20), contando **cada vez que eu quis abrir um painel e porquê**, e,
+em cada turno, **o que mudou dentro de cada aba** (lido do save, não da tela).
+O perfil do navegador estava vazio (só `taverna_cfg_rolagens`); o save de teste
+foi apagado no fim com o jogo no menu, e o perfil voltou ao que era. *O censo de
+R6 contou só decisões tomadas por painel (1 em 20: Mapa › `▸ ir`); este conta
+também as aberturas para ler, que R6 deixou de fora de propósito.*
+
+| aba | aberturas (minhas) | porquê | de onde |
+|---|---|---|---|
+| **Diário** | **3** | missão imposta entrou (T0, T3); *"MISSÃO CONCLUÍDA"* sem o Brannoc aparecer (T2) | fita |
+| **Bolsa** | **2** | *"acendo uma tocha"* — tenho uma? (T5); o Mestre pôs-me na mão uma *"lamparina de cera"* — tenho? (T15) | fita |
+| **Mapa** | **1** | o sistema disse *"estás na galeria de cima, 76 min"* depois de eu descer (T12) | fita |
+| **Gestão › Mercado** | **1** | comprar tochas — **a única acção**; as outras seis foram leitura | fita |
+| **Ficha** | **0** | — | — |
+| **Códex** | **0** | — | — |
+
+**7 aberturas em 21 turnos (1 em 3). Todas pela fita, zero pela cinta, zero
+pelas cinco portas `▸` que a prosa ofereceu** (`Guilda`, `Mural`, `Pessoas`,
+`Mercado`, `Códex` — salas de que eu não precisava naquele turno). *Medido: as
+aberturas. Inferido: a vontade é a de um jogador atento; um jogador novo
+abriria mais, um veterano menos.*
+
+**O que mudou no acervo, turno a turno** (do save): **lugar 6** (T2, T12, T13,
+T16, T17, T20) · **Diário 4** (T0, T2, T3, T18) · **moedas 3** · **Códex 3**
+(conquistas) · **sub-aba nova 2** (T1 `Pessoas`+`Mercado`, T3 `Códex`) ·
+**Bolsa 1** (T10, um achado) · **grupo 0 · correio 0 · destino novo no mapa 0**.
+**Tudo** isto foi dito pela prosa, numa linha de sistema, no turno em que
+aconteceu.
+
+**E o achado que decide a composição:** das 7 aberturas, **5 foram para
+conferir o que a prosa acabou de dizer** (a missão, a tocha, a lamparina, o
+lugar). *O painel não é consultado como armário: é consultado como testemunha.*
+É a resposta a R20 — **a fita não serve em nenhum momento dela; serve quando a
+prosa levanta uma dúvida, e a dúvida nasce na prosa, não na fita.** Logo a
+porta pode sair da vista, desde que **a novidade** não saia (§4).
+
+#### 2 · A página, medida com a tela cheia
+
+Medido no navegador, pelo rectângulo do rolador da narrativa; o *depois* é a
+fita escondida e `.tv-espaco-abas` a zero por inspecção (medida, não
+construção). Linhas a Spectral 17 / 27,6. **Piso 359 (§R17).**
+
+| o caso | quantos dos 21 | antes | depois | linhas | contra o piso |
+|---|---|---|---|---|---|
+| **tela cheia** — gravura 96 · 1 oferta na soleira 93 · pílula de sistema na página · campo em repouso | **16** | **399,7** | **475,7** | 14,5 → **17,2** | +11 % → **+33 %** |
+| **rolagem pendente** — o cartão do teste na linha do turno | 1 | **302,5** | **378,5** | 11,0 → **13,7** | **−16 % → +5 %** |
+| soleira vazia (depois de aceitar a oferta) | 3 | 492,8 | 568,8 | 17,9 → 20,6 | +37 % → +58 % |
+| campo aberto a escrever (138) | 1 | 253,7 | 329,7 | 9,2 → 11,9 | *a página está atrás do teclado* |
+
+**+76 px em todos os casos, +19,0 % no caso que acontece (16 de 21), +3
+linhas.** O número que mais pesa não é o da tela cheia: é o da **rolagem
+pendente** — o turno em que a prosa tem de dizer *o que está em jogo* enquanto o
+dado espera. **Hoje é o único caso medido abaixo do piso; depois deixa de ser.**
+*(O §R17 escreveu 322,7 para a página em repouso; hoje meço 399,7 no mesmo
+aparelho. A diferença é o turno: aquele tinha duas ofertas e a cinta viva. Não
+corrijo o número dele — mediu outro turno.)*
+
+#### 3 · A porta, e para onde ela abre
+
+**A porta é a ficha da cinta inteira, 194 × 48. Assinado.** O alcance do topo é
+real (Hoober 2013, citado pelo `desenho`) e paga-se com a frequência: **1
+abertura em 3 turnos**, contra o campo e a soleira, que se tocam em todos.
+
+> **Sem marca, abre na Ficha. Com a marca acesa, abre na aba da novidade.
+> Nunca "na última aba".**
+
+- **Medido:** nas 3 aberturas sem marca do censo, *"a última aba"* acertou
+  **0**; *"a Ficha"* acertou **1** (o Mercado mora na Gestão). n pequeno — e o
+  desempate é a leitura.
+- **A leitura:** o retrato **é o herói**. *"Tocar em mim abre a minha ficha"* é
+  a promessa de R13, é o `aria-label` de hoje, e é o que a porta já faz. Uma
+  porta que abre num sítio diferente conforme o que se fez há dez minutos
+  obriga a **olhar antes de tocar na aba seguinte** — leitura cobrada a cada
+  abertura para poupar um toque às vezes.
+- **Com marca, a surpresa é permitida porque foi anunciada:** *a marca promete,
+  o toque cumpre.* E **abrir na novidade nunca custa mais do que abrir na
+  Ficha** — de qualquer aba, a outra está a um toque no pé —, salvo quando ele
+  queria a Ficha, que foi a aba menos aberta do censo.
+- **Várias abas com novidade:** abre na **mais recente**; as outras mantêm a
+  marca na aba, no pé. *Um rasto, nunca uma fila de avisos.*
+
+#### 4 · O que acende a marca — e é tabela
+
+A regra de forma do `desenho` fica: *acende o que entrou no acervo sem o jogador
+ter ido lá* (o contrato aceite **na soleira** acende; o que ele faz **dentro**
+do alforje não). **Acrescento a lei que a torna rara:**
+
+> **Não acende o que a tela principal já mostra, nem o que a prosa já abriu com
+> porta.** Uma ação, uma forma: dois sinais para o mesmo facto são a segunda
+> cara dele.
+
+| aba | ACENDE quando… | no censo | NÃO acende… | porque já mora em |
+|---|---|---|---|---|
+| **Diário** | uma missão **entra, conclui ou falha** (a lista muda) | **4 em 21** | etapa cumprida `🧭` | a linha `🧭` da prosa; a missão continua onde estava |
+| **Bolsa** | um item entra sem ter sido comprado/tirado **dentro do alforje** | **1** | moedas | a cinta (`◉`) |
+| **Gestão** | carta nova no correio · alguém entra ou sai do grupo | 0 | PV, PM, nível, pontos | a cinta; o nível tem o seu próprio véu |
+| **Mapa** | um **destino novo** entra no mapa | 0 | **o lugar actual** (mudou 6 vezes em 21) | **a gravura** diz o lugar; a linha `📍` diz a chegada |
+| — | — | — | sub-aba nova · Códex · conquistas (3 em 21) | a porta `▸` na prosa; a prosa celebra |
+| — | — | — | prazo | o selo do relógio na cinta |
+
+**No censo, a marca teria acendido em 5 acontecimentos e ficado acesa em ~7
+dos 21 turnos.** Se o lugar acendesse, seriam 11 — e uma luz acesa em metade
+dos turnos é papel de parede. **Apaga quando a aba abre**, nunca por relógio
+(*uma marca que morre por tempo morre enquanto o jogador está a pensar* — a
+regra da chegada da soleira). **Não conta número.** Mora numa tabela nomeada
+(`MARCA_ACENDE`, em `src/abas.js`, que já é o módulo que sabe *"o que acabou de
+abrir"* — `novidades()`), com suíte: cada linha acima é um caso, e as linhas
+`NÃO acende` também.
+
+#### 5 · O momento a meio do turno — **o defeito que já existe, medido**
+
+**Hoje:** mandei o turno, abri o Diário **0,9 s** depois (a fita não se trava
+durante a espera), o Mestre respondeu aos **10,0 s**, e **o painel continuou
+aberto, a cobrir o ecrã inteiro, sem nada a dizer que a resposta tinha
+chegado.** E a única saída era o `✕` de **31 × 28 px** no canto de cima à
+direita — **65 % do piso**, na zona dura do polegar, porque o painel `w-full`
+tapa o fundo que fecha.
+
+**Depois, quatro regras** (Figma `R21 · o momento 1–4`):
+
+1. **Abrir durante a espera é permitido.** É o melhor uso dos **10,7 s** de
+   mediana que o Mestre leva a escrever (R6). *Espera com coisa para fazer não
+   é espera.*
+2. **A resposta não fecha o alforje.** Ele pode estar a meio de uma compra;
+   *movimento sem causa lê-se como defeito*.
+3. **A faixa espreita.** Os 48 px entre a cinta e o alforje — que já são o
+   fundo que fecha — mostram, quando a resposta chega, **a primeira linha da
+   prosa nova**. Tocar é fechar (o que a faixa já fazia) e a página fica **no
+   início da resposta**, não no fim. *Não é aviso do sistema: é a história a
+   espreitar por cima do alforje.* Peça fabricada pelo `desenho`: **`A faixa do
+   fundo`** (`218:357`, `Velada` / `Espreita`), 180 ms, corte seco em
+   `reduced-motion`. **Zero alvos novos.**
+4. **O relógio ganha do acervo — lei nova:**
+   > **Nada que tenha relógio corre atrás de uma porta fechada.**
+   A **janela de reação** (tem relógio desde K1b), **o início da batalha** e o
+   **véu da morte** fecham o alforje sozinhos, em 120 ms (corte seco em
+   `reduced-motion`). *Hoje isto já está partido:* fora da batalha a janela de
+   reação mora a `zIndex: 40` dentro da coluna, e o `PainelLateral` `fixed
+   z-40 w-full` pinta **por cima** dela — **um relógio a cobrar o turno atrás de
+   um painel.** A **rolagem pendente** não tem relógio: **não** fecha; abrir o
+   alforje com o dado à espera (conferir a ficha antes de rolar) é legítimo.
+   *(O `desenho` tirou daqui a lei de forma gémea: a ordem das camadas prova-o,
+   não um z-index igual e a sorte da ordem no DOM.)*
+
+**E o resto do momento, assinado:** tocar no **tempo** com o alforje aberto
+fecha-o e abre o tempo (uma sobreposição de cada vez) · tocar na **porta**
+aberta fecha · **a soleira** não precisa de sinal próprio: só muda com um
+turno, e o turno é a espreita · **em batalha nada muda** — a cinta e a fita já
+não existem em `emBatalha`, e a porta vai com a cinta; se a batalha começar com
+o alforje aberto, a regra 4 fecha-o.
+
+#### 6 · Os toques, contados
+
+| | hoje | depois |
+|---|---|---|
+| abrir **Gestão/Ficha** | 1 (cinta ou fita) | **1** |
+| abrir **Diário / Bolsa / Mapa / Códex** | 1 | **2** — **1** se a marca for dessa aba |
+| **trocar** de aba | **2** (`✕` 31×28 no topo + aba) | **1** (a aba, no pé) |
+| **fechar** | 1 (`✕` 31×28, topo-direita, a única saída) | 1 — **cinco saídas**, uma no arco do polegar |
+| **o censo (7 aberturas)** | **8** toques para chegar | **11** (+3) |
+
+**O preço inteiro:** **+3 toques em 21 turnos (+0,14 por turno)** para **+76 px
+em todos os 21**. Das 7 aberturas, **3 abrem ao primeiro toque** pela marca (as
+três do Diário). *Um toque a mais uma vez em cada sete turnos contra três linhas
+de prosa em todos: é a troca que a ordem de cedência de R17 já tinha assinado —
+acervo à vista vai a um toque.*
+
+#### 7 · A proposta ambiciosa do `desenho` (R22 · o voo) — assinada, com duas condições
+
+1. **Voa só o que o dedo mandou** — o contrato aceite na soleira, a compra. O
+   olho está na oferta no instante do toque, e o arco até ao retrato **é a
+   resposta ao toque**. **O que chega com a prosa do Mestre (o achado, a missão
+   imposta) não voa**: chega no instante em que o olho começa a ler, e um
+   objecto a atravessar a página nesse instante **arranca o olho da primeira
+   linha**. Aí a marca acende a seco, com os três pulsos.
+2. **A primeira vez da fita a recolher-se** guarda-se **fora do save** (numa
+   chave `taverna_cfg_*`, como `taverna_cfg_rolagens`) — **o formato do save é
+   da pessoa**, e um "já vi" não vale uma mudança nele.
+
+#### 8 · A especificação para o `oficial` (dentro do `App.jsx`, com o bastão)
+
+1. **`ACinta`**: a ficha ganha `aria-haspopup="dialog"`; a marca sobre o
+   retrato (peça do `desenho`); `aoAbrirFicha` abre o alforje **na aba da
+   marca mais recente, se houver; senão em `gestao`**.
+2. **`TrilhoAbas`** `hidden md:flex` na estreita; **`.tv-espaco-abas`** a
+   `env(safe-area-inset-bottom, 0px)` na estreita.
+3. **O alforje** (`painel-alforje.jsx`, moldura do `desenho`) monta o miolo do
+   `PainelLateral` sem o duplicar; na larga o `PainelLateral` fica como está.
+4. **A marca**: estado com as abas que têm novidade, alimentado por
+   `MARCA_ACENDE` (módulo puro em `src/abas.js`, com suíte); apaga-se no
+   `setAba(id)`. **Não vai ao save** — ao recarregar, a marca apaga: é notícia,
+   não arquivo, e o formato do save é da pessoa.
+5. **A espreita**: ao `carregando` passar a falso com o alforje aberto, guardar
+   o índice da primeira mensagem nova; `A faixa do fundo` · `Espreita` mostra a
+   sua primeira linha; o toque fecha e rola o convés até esse índice.
+6. **O relógio ganha**: um efeito sobre `janelaReacao`, `emBatalha` e a morte →
+   `setAba(null)`; **tudo em `calou(...)`**.
+7. **Provar a jogar, não no diff:** 375 × 812; a página +76 no turno da tela
+   cheia (**399,7 → 475,7** é o número a bater); abrir durante a espera e ver
+   a espreita; um golpe com janela de reação com o alforje aberto → fecha;
+   `prefers-reduced-motion` → nenhum movimento; salvar e restaurar os espaços
+   de save antes e depois. **Eu revejo jogando.**
+
+#### 9 · Por decidir, e de quem
+
+- **Os 124 px que o painel perde** (728 → 604): o Mercado com 30 preços é o
+  candidato à segunda altura. **Não medi o Mercado dentro do alforje** — só
+  existe no Figma; mede-se quando existir, e só então se decide.
+- **R21b (voltar do sistema)** fica fora, como o `desenho` escreveu. Assino.
+
+**Assinatura do `jogo`:** a forma do `desenho` está **assinada**, com as
+condições dos §§3, 4 e 5 — **a porta abre na Ficha ou na novidade, nunca na
+última; a marca não acende o que a tela já diz; a espreita; e nada com relógio
+atrás de uma porta.** Sem a regra do relógio **não assino**: ela corrige um
+defeito que já está no ar, e o alforje, sem ela, herdava-o.
+
+*Assina o momento: `jogo`, 24/09.*
+
+#### 10 · a prova jogada (`jogo`, 24/09, depois da construção)
+
+**Método.** Aba nova do navegador (o HMR mente depois de módulos novos),
+`npm run dev`, **375 × 812**, campanha nova (*"A Prova do Alforje"*), 5 turnos
+de prosa, uma oferta aceite na soleira, uma compra no Mercado, **duas lutas que
+apareceram sozinhas** (não forcei nenhuma). O perfil tinha só
+`taverna_cfg_rolagens`; o save de teste foi apagado com o jogo no menu e o
+perfil voltou a isso. **Veredito: o alforje é jogo. Assino o construído.** O
+que falhou nesta prova não é do alforje: é um campo que guarda a frase de uma
+luta (§10.5), e sobre ele o alforje não tem culpa.
+
+**10.1 · A página — o número a bater, batido ao décimo.** Mesma composição do
+censo (gravura 96 · uma oferta 93,1 · campo em repouso 85,6): **475,7 px**. A
+fita tem `display: none`, `.tv-espaco-abas` computa `0px`, e não há rolagem
+horizontal (`scrollWidth` 375). Soleira vazia: **568,8** (também o previsto).
+
+**10.2 · A marca — acendeu quando devia, apagou quando devia.**
+- aceitar *"A caçada de Merek"* na soleira → **acende** (`A ficha — há novo no
+  diário`); o toque na porta **abre directo no Diário**, com a missão lá, e a
+  marca **apaga**. **1 toque**, como prometido.
+- *"MISSÃO CONCLUÍDA"* ao chegar ao poço → **acende**.
+- mudança de lugar (duas vezes), moedas (15 → 8 → 65) → **não acendem**. ✔
+- **Um buraco, e é meu apanhar:** a **missão imposta da chegada** (*"✦ Tirar
+  Edric de lá — entrou no diário"*, o turno 0) **não acendeu**. A primeira foto
+  do acervo é tirada com ela já lá dentro, e a marca só compara fotos. No censo
+  essa era **1 das 4** do Diário, e é a missão que o jogador novo menos sabe
+  onde foi parar. **Correcção (leve, do executor):** numa campanha **nova**, a
+  foto de partida é o acervo **vazio**; ao **carregar** um save, continua a ser
+  o acervo carregado (senão tudo acenderia ao abrir o jogo).
+- *compra dentro do alforje não acende a Bolsa*: **não provado à mão.** Com
+  15 moedas só dava para rações (◉ 7), e as rações vão à despensa, não à
+  bolsa — a Bolsa não mudou, logo não havia o que acender. A suíte prova-o;
+  a mão ficou a dever.
+- **Nada perdido.** Nenhum prazo, missão ou item de que eu precisasse ficou
+  escondido: os três vieram também pela prosa, e as duas missões novas
+  acenderam a porta.
+
+**10.3 · Os toques reais** (contados a clicar, não na tabela):
+
+| | toques | medido |
+|---|---|---|
+| Diário **com marca** | **1** | porta → abriu em *Diário* |
+| Diário sem marca | 2 | porta (Ficha) → `DIÁRIO` |
+| Bolsa / Mapa | 2 | porta → aba |
+| **trocar** Bolsa → Mapa → Diário | **1 cada** | as abas no pé, 92 × 56, y 752 |
+| fechar | 1 | a faixa (375 × 48, y 48) · `Fechar` 48 × 48 · `Esc` ✔ · a aba escolhida tocada outra vez ✔ |
+
+A cinta **vive por cima do véu**: comprei rações com o Mercado aberto e vi as
+moedas descerem **na cinta** (15 → 8) sem fechar nada. *É o veredito depois do
+clique no mesmo sítio do veredito antes dele — o melhor efeito desta etapa, e
+não estava na lista.*
+
+**10.4 · A espreita — funciona, e deixa a página onde deve.** Mandei o turno,
+abri a porta **1,0 s** depois, e aos **9,0 s** a faixa passou a mostrar *"Halda
+olhou ao redor. A praça ainda se en…"* — o alforje **não** fechou. O toque
+fechou-o e o bloco da resposta ficou a **24 px** do topo do rolador, que é
+**exactamente onde o esbatido acaba** (a máscara é opaca aos 24): o topo da
+mensagem **não** fica debaixo dele. A primeira linha de prosa ficou a 78 px
+(por cima dela, o cabeçalho `O MESTRE`).
+
+**10.5 · O feio, e o defeito — nenhum dos dois é do alforje:**
+1. **A frase da fuga fica no campo principal depois da luta** — **defeito, e
+   caro.** Fugi pelo botão; ao `Respirar fundo →` o campo do turno, fora da
+   batalha, ainda dizia *"Viro as costas e fujo da luta, correndo o quanto
+   posso"*, aberto a 138 px com `Agir →` — **a página caiu de 568,8 para
+   422,8 (−146 px)**, e um `Enter` distraído mandava *fugir* numa praça
+   vazia. É o mesmo que o censo viu no T13 (*"refazer antes de abrir item"*):
+   **agora confirmado à mão**, e a causa provável é o campo da batalha e o da
+   tela principal partilharem a entrada. **Pedido ao `oficial`:** o fim da
+   luta esvazia o campo.
+2. **`BOLSA` no pé, `Inventário` no cabeçalho.** A mesma sala com dois nomes
+   no mesmo ecrã, a 650 px um do outro — *uma coisa, dois nomes* é a doença que
+   esta mesa trata. O título do `PainelLateral` é antigo; no alforje passou a
+   ver-se ao lado da aba. **Leve, do `desenho`:** o cabeçalho diz `Bolsa`.
+3. **`✦` e `◆` na fileira da batalha medem 35 × 48** — a altura cumpre o piso,
+   a largura não (73 %). Não é de R21; fica anotado para a fileira.
+
+**10.6 · A fuga (`7a2b00b`), jogada — duas lutas apareceram sozinhas no poço.**
+- **(a) o primeiro toque mostra o preço, o segundo foge — ✔.** Primeiro toque:
+  `Fugir` acende, a linha diz *"Você escapa — ninguém te alcança."*, o campo
+  enche-se com a frase, e **0 mensagens** entram no registo. Segundo toque:
+  *"🏃 Você escapa — aranha do fosso 1, 2, 3 ficam para trás"*, em 7,5 s.
+- **(b) a fuga que já se sabe que falha — NÃO APARECEU.** Nas duas lutas as
+  aranhas estavam a 19,5 m e a fuga era segura. Não encenei nenhuma.
+- **(c) frase e botão — o resultado é o mesmo, o veredito antes não é.**
+  Desarmei o `Fugir` (`Esc`) e escrevi *"recuo depressa e fujo"*: a linha do
+  preço **não apareceu** — voltou a *"Aranha do Fosso a 19,5 m"*. Mandei: *"🏃
+  Você escapa — Aranha do Fosso ficam para trás"*, **o mesmo desfecho que o
+  botão tinha prometido**. Logo **o resultado bate; o veredito antes do clique
+  só existe no botão.** A frase escrita foge às cegas — é a lei *o veredito
+  antes do clique* com uma porta das traseiras. *(E a concordância: "Aranha do
+  Fosso **ficam**" — o plural não segue o número.)*
+- **O achado maior, e é do sistema:** **fugir da primeira luta meteu-me
+  noutra, pior, no turno seguinte.** Logo após *"Você escapa"*, a mesma
+  resposta abriu *"☠ Encontro mortal — ⚔ aranha do fosso — são 3. Estavam
+  aqui."* — porque a prosa da fuga falou de *"o roçar de muitas pernas"* atrás
+  dela. **A fuga bem-sucedida gerou o encontro de que se fugia, multiplicado
+  por três.** É *menção não é presença* outra vez, e aqui custa o que a fuga
+  existe para poupar.
+- **E o fecho mente:** depois de fugir, o cartão de saída diz *"rodada 1 · 3
+  de pé contra você"* por cima de `Respirar fundo →`. Quem fugiu não tem
+  ninguém contra si; o cartão contou a luta como se ela tivesse acabado de pé.
+- **O `Fugir` cabe a 375?** **Cabe:** 59 × 48, terceira linha da fileira, ao
+  lado de `esperar` (72 × 48), sem rolagem horizontal. A fileira ocupa **três
+  linhas** (y 588 · 644 · 700, **160 px**). Sete verbos mais `esperar` não
+  cabem em duas; **não é o `Fugir` que as parte, é a soma.**
+- **Em batalha o alforje não existe:** a cinta e a porta somem com
+  `emBatalha`, como especificado. **"O relógio ganha" não foi provado à mão:**
+  nenhuma luta nem janela de reação chegou com o alforje aberto.
+
+*Prova jogada: `jogo`, 24/09.*

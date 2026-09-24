@@ -25,6 +25,30 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **fugir de uma luta abriu outra, pior** · de: R21 (prova jogada do `jogo`, a fuga de `7a2b00b`) · 24/09
+  A fuga bem-sucedida (*Você escapa — ninguém te alcança*) abriu, **na mesma resposta**, *☠ Encontro mortal — aranha do fosso, são 3. Estavam aqui.* A prosa da fuga falou de pernas atrás dela, e o portão tomou a menção por presença. **Menção não é presença** (a memória da casa: *o portão morde só o necessário*).
+  **Para quê:** a fuga promete *ninguém te alcança* e o turno seguinte desmente-a — o veredito antes do clique vira mentira. Junto: *Aranha do Fosso ficam* (concordância) e o cartão de saída a dizer *3 de pé contra você* depois de uma fuga.
+
+- [ ] **a fuga escrita não mostra o preço antes** · de: R21 (prova jogada do `jogo`) · 24/09
+  O botão `Fugir` mostra o preço ao primeiro toque e foge ao segundo (confirmado). A frase *recuo depressa e fujo* dá o mesmo desfecho, mas **foge às cegas**: o veredito antes do clique só existe no botão. **Para quê:** R15 já casa frases com verbos (`acoes-do-jogador`); a frase que casa com `fugir` devia mostrar na linha do turno o mesmo preço que o botão mostra. Pede a porta pura; a forma é da mesa.
+
+- [ ] **um módulo puro que casa os objectos nomeados numa frase com a bolsa** · de: R21 (`jogo`, a proposta R23) · 24/09
+  **Medido a jogar:** no censo de R21 (21 turnos a 375×812), 2 das 7 aberturas de painel foram à Bolsa perguntar se um objecto que a frase ia usar existia (*acendo uma tocha*; a *lamparina de cera* que o Mestre pôs na mão) — e nas duas o turno partiu antes da resposta.
+  **Para quê:** a linha do turno passaria a mostrar, antes de mandar, `🕯 tochas ×5` ou `🕯 tochas · nenhuma` — o veredito antes do clique levado à frase escrita. **Não é regra nova:** não consome, não decide, não proíbe; lê o inventário e casa nomes do catálogo. A maquinaria irmã é a de R15 (`acoes-do-jogador`).
+  **O que se pede:** `objectosNomeados(frase, inventario, catalogo)` → `[{ nome, quantos }]`, determinístico, com suíte, que **cala na dúvida** (um falso positivo é pior do que nada — a lição do cartaz de R17). Forma e prova em `mente/pauta-desenho.md` §`Semeado em R21 (jogo)`.
+
+- [ ] **uma missão de "tirar de lá" concluiu-se ao chegar** · de: R21 (censo do `jogo`) · 24/09
+  T2 do censo: *Tirar Brannoc Mata-Lobos de lá* tinha uma etapa só (`ir_a` a galeria) e concluiu ao pôr o pé lá (+57 moedas, +89 XP) com o Brannoc ainda desaparecido na prosa dos oito turnos seguintes.
+  **Para quê:** com a HUD recolhida, o Diário acende a marca da porta quando uma missão conclui — e aqui a marca levaria o jogador a um *feito* que a história desmente. Foi a razão de uma das três aberturas do Diário no censo. A confirmar pelo sistema.
+
+- [ ] **uma viagem-fantasma de 81 minutos dentro do mesmo sítio** · de: R21 (censo do `jogo`) · 24/09
+  T12: ao descer pela rachadura dentro da galeria, a linha de sistema disse *Você está na galeria de cima — 76 min de caminhada desde Pedra do Vigia* e o relógio andou de 10:36 para 11:57 sem o herói ter saído dali.
+  **Para quê:** foi a única abertura do Mapa do censo — o jogador foi conferir uma chegada que não aconteceu. A confirmar.
+
+- [ ] **o campo não esvazia ao fim da luta** · de: R21 (censo e prova jogada do `jogo`) · 24/09 · **CONFIRMADO na prova jogada**
+  Na prova jogada de R21 (depois de `7a2b00b`): ao fugir de uma luta, a frase *Viro as costas e fujo da luta…* ficou no campo PRINCIPAL, aberto a 138 px com `Agir →`. **A página caiu 568,8 → 422,8 px (−146)**, e um Enter mandaria fugir numa praça vazia. É a fiação da fuga (`App.jsx`, a frase e o verbo `Fugir`), por isso é pedido e não conserto da mesa. **O fim da luta tem de esvaziar o campo.** O relato antigo, abaixo, era o mesmo defeito visto uma vez:
+  T13: a frase enviada ficou no campo depois da resposta, com o campo aberto a 138 px, e a página caiu para 253,7 px. Pode ser do medidor do `jogo`, que escreve no campo por inspecção — **refazer à mão antes de abrir item.**
+
 - [ ] **o XP que a oferta promete não é o XP que o recibo paga** · de: R6/R13 · 23/09
   **Medido a jogar, duas vezes em duas:** a soleira ofereceu `◉205 · +166 XP` e
   pagou **191**; ofereceu `◉115 · +111 XP` e pagou **130**. *O ouro bate sempre;

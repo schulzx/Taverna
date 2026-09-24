@@ -2092,7 +2092,7 @@ de uma tabela e se desfaz num commit.*
 
 ### A proposta ambiciosa de R17 (`jogo`) — e ela NÃO vai à pessoa, pela régua dela própria
 
-- [ ] **R20 · a coluna estreita perde a fita das abas** · de: jogo · 24/09 ·
+- [x] **R20 · a coluna estreita perde a fita das abas** · **FEITO em R21 (24/09), pela ideia da pessoa: a HUD recolhida — ver `formas.md` §R21 e `mente/diario-desenho.md`** · de: jogo · 24/09 ·
   **a proposta ambiciosa de R17** · médio, **e só acontece se o censo a
   sustentar**
 
@@ -2217,3 +2217,188 @@ de uma tabela e se desfaz num commit.*
   reticências valem >10 % do que se mostra abaixo de ~10 caracteres). **Quando
   não se desenha, o facto muda de casa** — no cartaz, para o estado aberto da
   dobra. Varrível, e é o dente mais fácil da etapa.
+
+
+## Semeado em R21 (desenho, 24/09)
+
+### A proposta ambiciosa de R21 — **o que entra no acervo voa para a porta**
+
+- [ ] **R22 · o que entra no acervo voa para a porta** · **ASSINADO pelo
+  `jogo` com duas condições, aceites** (`formas.md` §R21 · o jogo): **(1) voa
+  só o que o dedo mandou** (aceitar na soleira, comprar); o que chega com a
+  prosa do Mestre **não voa** — arrancaria o olho da primeira linha — e aí a
+  marca acende a seco com os três pulsos; **(2) o "já vi a fita recolher-se"
+  mora numa chave `taverna_cfg_*`** (o padrão de `taverna_cfg_rolagens`), **fora
+  do save** — o formato do save é da pessoa. · de: desenho · 24/09 ·
+  **a proposta ambiciosa de R21** · médio · forma em `formas.md` §R21 §4 e §7
+
+  **O problema que R21 cria e não resolve inteiro.** Recolher a HUD devolve
+  76 px à prosa e esconde cinco salas. *O que se esconde esquece-se* — e a
+  `A marca da porta` diz **que** há novo, mas não diz **o quê**, nem ensina
+  **onde** fica a porta a quem acabou de perder a fita. Um ponto âmbar num
+  retrato de 32 px é uma notificação; o que falta é um **acontecimento**.
+
+  **O que se propõe.** Quando algo entra no acervo sem o jogador lá ir — o
+  contrato aceite na soleira, a carta que chega, o item que cai, a entrada
+  nova do diário, a pessoa que o mundo regista —, **a coisa sai da cena e voa
+  para a porta**: a oferta da soleira dobra-se num papel de ~24 px e faz um
+  arco até ao retrato (≤ 400 ms, desacelera à chegada), e **a marca acende no
+  instante em que ela chega** — a marca deixa de ser uma luz que aparece e
+  passa a ser a consequência visível de uma coisa que se viu ir. **A primeira
+  vez que um save antigo abre no telefone**, a fita inteira faz o mesmo
+  caminho: recolhe-se para dentro do retrato, uma vez, e nunca mais. *Nenhuma
+  palavra a explicar a mudança: o jogador viu para onde ela foi.*
+
+  **Porquê é o jogo a ser lembrado, e não um enfeite:** é o gesto de todo bom
+  jogo de telefone — a moeda que voa para o contador, a carta que voa para o
+  baralho — e **é a primeira vez que o Taverna teria um objecto a atravessar a
+  tela**. A prosa diz *"aceitaste o contrato"*; a tela **mostra-o a ir para o
+  teu alforje**. É a gramática do veredito levada até ao fim: o preço antes do
+  clique, **o destino depois dele**.
+
+  **A prova, e ela é de estudo, citado:** Bay-Wei Chang & David Ungar,
+  *Animation: From Cartoons to the User Interface* (UIST '93) — a continuidade
+  de um objecto que se move de um sítio para outro é o que deixa o utilizador
+  **seguir para onde a coisa foi** em vez de a reencontrar por busca; e Heer &
+  Robertson, *Animated Transitions in Statistical Data Graphics* (IEEE InfoVis
+  2007) mediram que transições animadas **melhoram o seguimento de objectos**
+  contra o corte seco. *A catraca do `jogo` para isto:* **quantas vezes, em 20
+  turnos, o jogador abre o alforje na aba certa ao primeiro toque** depois de
+  uma coisa entrar — com o voo contra sem o voo.
+
+  **As leis que o prendem, já escritas:** nunca custa o turno (o voo é
+  decoração de um facto já registado — se estourar, a marca acende na mesma);
+  **no máximo um voo por turno** (dois objectos a voar ao mesmo tempo é zero
+  objectos — a regra do `Mudou=Agora`); `prefers-reduced-motion` = **sem
+  voo**, a marca acende a seco; e **o voo é causado pelo toque do jogador**
+  (aceitar) ou por um acontecimento que a prosa acabou de narrar — *movimento
+  sem causa lê-se como defeito*.
+
+  *Não vai a "Para a pessoa decidir": um commit revertido tira-o inteiro, e
+  não muda nada do que o jogador faz — só lhe mostra para onde foi o que ele
+  fez. Pela régua de 23/09, é da mesa.*
+
+### As dívidas que R21 encontrou ao medir
+
+- [ ] **R21b · voltar do sistema fecha o alforje** · de: desenho · médio
+  Pede `history.pushState` ao abrir e `popstate` a fechar — e **não há um único
+  `pushState` no projeto**. O primeiro não entra de passagem numa etapa de
+  leiaute: um erro faz o *voltar* do Android sair do jogo. Etapa própria, com
+  prova no telefone.
+- [ ] **R21c · `viewport-fit=cover` sem nenhuma `safe-area`** · de: desenho ·
+  leve · **defeito**
+  `index.html` pede `viewport-fit=cover` e nenhum sítio do projeto lê
+  `env(safe-area-inset-*)`. Num iPhone com o indicador de início, a fita fixa
+  de hoje (e o que estiver `fixed bottom-0`) fica **por baixo** dele. R21 lê-o
+  no alforje e no convés; o resto da casa (os véus, o tabuleiro) fica por
+  varrer — um varredor: `fixed` + `bottom-0` sem `safe-area` no mesmo bloco.
+- [ ] **R21d · o comentário da folga de 67** · de: desenho · leve
+  `App.jsx` ~l.1340–1352 ainda escreve a conta orçada de R13 (`folga … = 67`);
+  a tabela `CINTA` diz **12, medido**. O `regente` herdou o 67 ao escrever o
+  pedido de R21 — *um número velho num comentário é uma medida falsa que se
+  lê como verdadeira*. Apontar para `CINTA.folgaMinima` em vez de o repetir.
+- [ ] **R21e · a mesa converte-se à aba** · de: desenho · médio
+  Na coluna larga o trilho continua escrito à mão (`TrilhoAbas`, 72 × 72,
+  rótulo **9 px**, 3 abaixo do piso). A peça é `A escolha` · *Aba com glifo*
+  (`20:77`); converter a coluna é a segunda composição da mesma peça. Uma
+  etapa, depois de R21 no ar.
+- [ ] **R21f · `VEU` chega ao código** · de: desenho · médio
+  A peça `Veu` (`14:53`, três pesos, `T.bg` a 60/85/94 %) e os tempos 180/120
+  estão escritos desde R1 e nunca foram tabela. O alforje é o primeiro leitor
+  de `VEU`; **os outros 14 véus** (nove tintas de fundo, `rgba` soltos) são a
+  conversão — uma tela por etapa.
+
+## Semeado em R21 (jogo, 24/09)
+
+### A proposta ambiciosa de R21 (`jogo`) — a frase confere a bolsa antes de partir
+
+- [ ] **R23 · o que a frase nomeia, a linha do turno confere** · de: jogo ·
+  24/09 · **a proposta ambiciosa de R21** · médio · **pede um módulo puro ao
+  sistema** (entra por `mente/pedidos-ao-sistema.md`, é do tema)
+
+  **O que o censo de R21 achou, e ninguém procurava.** Das 7 vezes que abri um
+  painel em 21 turnos, **5 foram para conferir o que a prosa tinha acabado de
+  dizer** — e **duas foram à Bolsa perguntar se uma coisa que eu ia usar
+  existia** (T5 *"acendo uma tocha"*: tinha? T15 o Mestre pôs-me na mão uma
+  *"lamparina de cera da Boa Morte"*: tinha?). **Nas duas o turno partiu antes
+  da resposta**, porque a pergunta só nasce ao escrever, e a Bolsa está a dois
+  toques e uma leitura de distância. *O painel não é consultado como armário: é
+  consultado como testemunha* — e a testemunha chega depois do crime.
+
+  **O que se propõe.** Quando a frase que ele está a escrever **nomeia um
+  objecto que se usa** (tocha, corda, poção, a faca herdada), **a linha do
+  turno diz, antes de ele mandar, o que a bolsa tem**: um selo por objecto
+  nomeado — `🕯 tochas ×5` ou `🕯 tochas · nenhuma` —, ao lado do verbo. **É o
+  veredito antes do clique, levado à única acção do jogo que ainda não o tinha:
+  a frase escrita.** Com o selo `nenhuma` à vista, *"acendo uma tocha"* vira
+  uma escolha informada (compro primeiro? improviso?) em vez de uma aposta que
+  o Mestre resolve em silêncio.
+
+  **Porquê é o jogo a ser lembrado.** É a coisa que um mestre de mesa faz sem
+  pensar — *"tu tens tocha? vê na ficha"* — e que um jogo de texto nunca faz: o
+  jogador escreve na ficção e **a mesa responde na ficha, antes do dado**. É
+  também o que fecha a costura que R21 abriu: recolhida a HUD, **a Bolsa vem
+  ter com a frase** no único instante em que ele precisa dela, e **o alforje
+  perde a sua abertura mais cara** (2 das 7).
+
+  **Não inventa regra.** Não consome o item, não decide se a tocha acende, não
+  proíbe nada: **lê** o inventário e **casa nomes**. A maquinaria de casar
+  frase com verbo já existe (R15, `acoes-do-jogador`); falta a mesma coisa para
+  nomes de objecto — **um módulo puro, com suíte, pedido ao sistema.** A catraca:
+  *o selo nunca afirma ter o que não há* (um falso positivo aqui é pior do que
+  nada — a lição do cartaz de R17), logo casa só nomes que existem no catálogo
+  e **cala na dúvida**.
+
+  **A prova, e o que a derrubaria:** refaço os 20 turnos e conto **as aberturas
+  da Bolsa para conferir uma frase** — hoje 2 em 21. Se não descerem a 0, a
+  proposta falhou e sai. *Uma proposta ambiciosa que se recusa a ser medida é só
+  uma proposta arrojada.*
+
+  *Não vai a "Para a pessoa decidir": um commit revertido tira-a inteira, e não
+  muda o que o jogador faz — só lhe diz, antes, o que ele já podia ir ver. Pela
+  régua de 23/09, é da mesa.*
+
+### O que o censo de R21 apanhou, e não é da mesa (vai ao sistema, por pedido)
+
+- [ ] **Uma missão de "tirar de lá" concluiu-se ao chegar** · de: jogo · a
+  confirmar pelo sistema
+  T2: *"Tirar Brannoc Mata-Lobos de lá"* tinha uma etapa só, `ir_a` a galeria,
+  e **concluiu ao pôr o pé lá** (+57 moedas, +89 XP) com o Brannoc ainda
+  desaparecido na prosa dos oito turnos seguintes. Foi a razão de uma das três
+  aberturas do Diário: a tela disse "feito" e a história disse "não".
+- [ ] **Uma viagem-fantasma de 81 minutos** · de: jogo · a confirmar
+  T12: ao descer pela rachadura dentro da galeria, o sistema escreveu *"Você
+  está na galeria de cima — 76 min de caminhada desde Pedra do Vigia"* e o
+  relógio andou de 10:36 para 11:57 — sem eu ter saído do sítio. Foi a única
+  abertura do Mapa do censo.
+- [ ] **O campo não esvaziou ao entrar na masmorra** · de: jogo ·
+  **CONFIRMADO na prova jogada de R21** (`formas.md` §R21 · o jogo, 10.5): a
+  frase da fuga ficou no campo principal depois da luta, aberto a 138 px, e a
+  página caiu 146 px. Pedido ao `oficial`: o fim da luta esvazia o campo.
+  T13: a frase enviada ficou no campo depois de o Mestre responder, com o
+  campo aberto a 138 px, e a página caiu para 253,7. Refazer à mão antes de
+  abrir item.
+- [ ] **Fugir de uma luta abriu outra, pior** · de: jogo · sistema · a prova
+  jogada de R21 (`formas.md` 10.6): logo após *"Você escapa"*, a mesma
+  resposta abriu *"☠ Encontro mortal — aranha do fosso, são 3"* porque a
+  prosa da fuga falou de pernas atrás dela. *Menção não é presença.*
+- [ ] **A fuga escrita não mostra o preço antes** · de: jogo · o botão mostra
+  *"Você escapa — ninguém te alcança"*; *"recuo depressa e fujo"* escrito
+  não mostra nada e foge às cegas (o desfecho é o mesmo). E *"Aranha do Fosso
+  ficam"* — o plural não segue o número; e o cartão de saída diz *"3 de pé
+  contra você"* depois de uma fuga.
+
+### Encaminhado pelo `regente` em R21
+
+- **Os quatro achados do sistema acima foram passados a `mente/pedidos-ao-sistema.md`** (24/09), que é onde a outra mente os lê. Ficam aqui como rasto; a verdade viva é lá.
+
+## Semeado em R21 (regente, 24/09)
+
+- [ ] **R21g · `✦` e `◆` da fileira da batalha medem 35 × 48** · de: jogo (prova jogada) · leve
+  Largura abaixo de `ALVOS.piso` (48) na fileira que decide a luta. Os dois sobem ao piso; a fileira já ocupa três linhas a 375 (160 px), e é a soma dos verbos que a parte — o que pede, a seguir, a pergunta de R17 (*cada fixo custa 56 de 343*) aplicada à batalha.
+- [ ] **R21h · as marcas no trilho da coluna larga** · de: oficial · leve
+  A marca da porta só aparece na cinta; na larga o trilho continua sem ela. É a mesma peça (`AbaComGlifo` · `novo`) e entra com R21e (a coluna larga converte-se à aba com glifo).
+- [ ] **R21i · "o relógio ganha" ainda não foi visto a acontecer** · de: jogo · prova
+  A janela de reacção, o início de batalha e a morte fecham o alforje — construído e lido no código, **não visto**: nenhum chegou com o alforje aberto na prova. A próxima sessão que jogue uma luta abre o alforje de propósito a meio da espera do turno que a traz.
+- [ ] **R21j · o convidado da sala não tem `carregando`** · de: oficial · leve
+  Um turno do anfitrião que chegue com o alforje aberto conta como mudança feita lá dentro e não acende a marca. Precisa de um sinal de "chegou um turno" do lado do convidado.

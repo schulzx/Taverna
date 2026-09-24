@@ -203,7 +203,11 @@ t("nenhuma altura de controlo voltou a ser literal na tela principal", semTabela
 sec("5. A página, a coluna e as peças de R2 estão montadas");
 t("a narração usa a superfície quente", /background: T\.pagina, border: `1px solid \$\{T\.paginaFio\}`/.test(APP),
   "a narração voltou à mesa fria: o painel e o balão voltam a medir 1,039:1 um contra o outro");
-t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna">\s*\n\s*<Voz quem="mestre"/.test(APP));
+/* R21: a fala do Mestre ganhou `data-msg` (o endereço para onde a espreita
+   do alforje salta) e `scrollMarginTop: ESBATIMENTO.altura` (para o salto não a
+   deixar debaixo do esbatido de cima). O que a régua prende é a COLUNA —
+   `tv-coluna` na fala do Mestre —, e ela tolera atributos depois da classe. */
+t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*<Voz quem="mestre"/.test(APP));
 /* mede o CÓDIGO e não a prosa: o comentário que explica por que as
    percentagens saíram cita-as, e um regex cego sobre o arquivo inteiro
    acusaria o próprio motivo de ser o defeito */

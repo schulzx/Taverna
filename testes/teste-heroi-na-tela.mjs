@@ -62,7 +62,13 @@ sec("2. O BLOCO SENTE — as três caras dele");
      comentário do bloco da barra de estado, e essa barra deixou de existir —
      uma régua ancorada num comentário que morreu procuraria no arquivo
      inteiro e daria tudo por verdadeiro. */
-  const bloco = APP.slice(APP.indexOf("function ACinta("), APP.indexOf("function ACinta(") + 4200);
+  /* R21: a janela de 4200 caracteres deixou de chegar à barra de vida — a
+     porta ganhou o nome que muda com a marca e o retrato ganhou a marca por
+     cima, com os comentários que as explicam. Em vez de alargar um número
+     a olho, a janela passa a ser a função inteira: vai até à função
+     seguinte do módulo, e cresce com ela. */
+  const iCinta = APP.indexOf("function ACinta(");
+  const bloco = APP.slice(iCinta, APP.indexOf("\nfunction ", iCinta + 1));
   t("o retrato reage pelo estado", /estado=\{estadoDe\(personagem\.vida, vidaMax\)\}/.test(bloco));
   t("o anel avermelha na agonia", /anel=\{grave \? T\.danger : T\.amber\}/.test(bloco));
   /* v9.170 (mesa-jogo-v2): a barra de vida passou a ser montada por tabela
@@ -104,8 +110,20 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
      ter UMA cara: o bloco do herói e a aba `GESTÃO` eram duas, na tela onde
      se passam 90 % do jogo, e a aba é outra gramática (uma porta para um
      painel) enquanto a cinta é o atalho. */
-  t("o alvo da cinta abre a ficha", /aoAbrirFicha=\{\(\) => setAba\(aba === "gestao" \? null : "gestao"\)\}/.test(APP));
-  t("e diz ao leitor de ecrã o que faz", /aria-label="Abrir a ficha" aria-expanded=\{!!fichaAberta\}/.test(APP));
+  /* R21: O ALVO CONTINUA A ALTERNAR E CONTINUA A ABRIR NA FICHA — e abre
+     agora O ALFORJE, a folha que no telefone substituiu a fita de abas. A
+     asserção mudou de forma por duas razões escritas em `formas.md` §R21 ·
+     o jogo, 3: com a marca acesa a porta abre na aba da novidade (a marca
+     promete, o toque cumpre); sem ela, `abaDaPorta` devolve `gestao`, que é
+     a Ficha de sempre. E o nome deixou de ser fixo: diz o que a porta abre
+     ("A ficha — há novo no diário") e que abre um diálogo. */
+  t("o alvo da cinta abre a ficha — ou a novidade — e alterna",
+    /aoAbrirFicha=\{abrirAPorta\}/.test(APP) && /if \(aba\) \{ setAba\(null\); return; \}\s*if \(janelaReacao\) return;\s*setAba\(abaDaPorta\(marcasDaPorta\)\)/.test(APP));
+  /* R21 (regente): entre o "fecha" e o "abre" entrou a guarda do relógio —
+     com a janela de reação aberta a porta não abre (nada com relógio fica
+     atrás de uma porta, nos dois sentidos). A régua passa a exigir a guarda
+     no sítio dela, em vez de a tolerar. */
+  t("e diz ao leitor de ecrã o que faz", /aria-label=\{nomeDaPorta\} aria-haspopup="dialog" aria-expanded=\{!!alforjeAberto\}/.test(APP));
   /* dentro de botão, o retrato não pode abrir carta — mesmo contrato do
      antigo atalho */
   /* v9.170: o retrato cresceu de 34 para 44 no redesenho. O que a lei

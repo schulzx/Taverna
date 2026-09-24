@@ -52,7 +52,9 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, VEU, ESBATIMENTO } from "./estilo.js";
+import { Alforje } from "./painel-alforje.jsx";
+import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
 import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, efeitoNoGolpe, escopoDoEfeito, naturezaDaHabilidade, tipoDeDanoDaHabilidade, combosPossiveis, resumoCombosPrompt, COMBOS_PROMPT } from "./combos.js";
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
@@ -178,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, RostoDaCena } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, RostoDaCena } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1343,15 +1345,23 @@ const GLIFO_DA_ABA = {
    ============================================================ */
 
 /* A GEOMETRIA DA CINTA sai de `CINTA` (`src/estilo.js`), que o `desenho`
-   publicou com a conta escrita por baixo:
+   publicou com a conta escrita por baixo — e é LÁ que ela se lê.
 
-     375 úteis − 24 de enchimento                        = 351
-     a ficha : rosto 32 + 10 + vitais 93 + 10 + bolsa 41 = 186
-     o tempo : hora 40 + 7 + selo 53 + 12                =  98
-     folga   : 351 − 186 − 98                            =  67  ← `✓ guardado`
+   Aqui morava a conta ORÇADA de R13 (ficha 186, tempo 98, folga 67), e
+   ela envelheceu dentro do código que se abre para mexer na cinta: a
+   tabela diz hoje `CINTA.ficha` e `CINTA.tempo` MEDIDOS, e a folga a
+   375 px é `CINTA.folgaMinima` — doze, e sete na última noite, quando o
+   selo enche. Um número que envelhece num comentário é lido como verdade
+   por quem vem a seguir; por isso este aponta para onde o número vive, e
+   não o repete. (R21, `formas.md` §R21 · a fabricação, 0.1.)
 
-   O enchimento é 12 e não 16 por causa da última linha: com 16 a folga cai
-   para 43 e o sinal de guardado deixa de caber.
+   A LIÇÃO QUE FICA: qualquer peça nova na cinta custa ZERO px horizontais
+   ou não entra. É por isso que a marca da porta (R21) vai em absoluto
+   sobre o retrato, e `✓ guardado` se esconde abaixo de
+   `CINTA.larguraParaORotulo`.
+
+   O enchimento é `CINTA.enchimento`, 12 e não 16: com 16 a folga medida
+   cairia a 4 px.
 
    OS TRÊS NÚMEROS QUE FALTAM À TABELA são de desenho fino e estão aqui
    declarados em vez de escondidos num `style`: o retrato, o trilho da barra
@@ -1363,6 +1373,11 @@ const CINTA_DESENHA = {
   rosto: 32,   /* o retrato dentro do alvo da ficha */
   trilho: 56,  /* a barra de recurso: o comprimento é o canal PRIMÁRIO */
   fio: 6,      /* a altura dela */
+  /* R21 · o quanto A MARCA DA PORTA transborda do retrato, para baixo e
+     para a direita (`formas.md` §R21 · a fabricação, 4): 16 × 16 no canto
+     do retrato de 32, a sair 4 px — zero px de leiaute, que é a única
+     forma de caber numa cinta com `CINTA.folgaMinima` de folga. */
+  transbordoDaMarca: 4,
 };
 
 /* ---------------- OS CHIPS DO ESTADO VIVO ----------------
@@ -1468,7 +1483,7 @@ function BarraDeRecurso({ atual, max, cor, className = "" }) {
   );
 }
 
-function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRecente, reduzido, tempoAberto, fichaAberta, aoAbrirFicha, aoAbrirTempo }) {
+function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRecente, reduzido, tempoAberto, alforjeAberto, marcaDaPorta = "porta", nomeDaPorta = "A ficha", aoAbrirFicha, aoAbrirTempo }) {
   const chips = chipsDoEstado(personagem);
   const vivo = chips.length > 0;
   const vidaMax = personagem.vidaMax || 0;
@@ -1504,11 +1519,27 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
             o golpe é AGORA e a agonia continua lá depois. A borda só existe
             quando há o que dizer: numa cinta de 48 px, uma moldura permanente
             à volta do alvo seria a moldura a voltar por outra porta. */}
-        <button onClick={aoAbrirFicha} title="Abrir a ficha" aria-label="Abrir a ficha" aria-expanded={!!fichaAberta}
+        {/* R21 · A FICHA É A PORTA DO ALFORJE. No telefone a fita de abas
+            saiu, e é este alvo — o que já abria a ficha desde R13 — que
+            abre a folha com as abas no pé. Por isso diz que abre um
+            diálogo e se está aberto; e o nome muda com a marca ("A ficha"
+            → "A ficha — há novo no diário"), sem `aria-live`: o
+            acontecimento já foi dito pela prosa, e dizê-lo duas vezes é
+            ruído (`formas.md` §R21 · a fabricação, 4). */}
+        <button onClick={aoAbrirFicha} title={nomeDaPorta} aria-label={nomeDaPorta} aria-haspopup="dialog" aria-expanded={!!alforjeAberto}
           className={"tv-anel-foco rounded-lg flex items-center gap-2.5 min-w-0 " + (feridaRecente ? "tv-dano" : grave ? "tv-agonia" : "")}
           style={{ height: CINTA.altura, background: "transparent", border: "1px solid " + (feridaRecente || grave ? T.danger : "transparent"), paddingRight: 4, paddingLeft: 2 }}>
-          <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={CINTA_DESENHA.rosto}
-            anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, vidaMax)} />
+          {/* O retrato leva A MARCA DA PORTA no canto de baixo-direito, em
+              absoluto e a transbordar `CINTA_DESENHA.transbordoDaMarca`:
+              ocupa ZERO px de leiaute. O invólucro só existe para dar ao
+              absoluto um canto a que se agarrar. */}
+          <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+            <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={CINTA_DESENHA.rosto}
+              anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, vidaMax)} />
+            <span aria-hidden="true" style={{ position: "absolute", right: -CINTA_DESENHA.transbordoDaMarca, bottom: -CINTA_DESENHA.transbordoDaMarca, lineHeight: 0, pointerEvents: "none" }}>
+              <MarcaDaPorta estado={marcaDaPorta} />
+            </span>
+          </span>
           {/* O GRUPO DO PV É O ÚNICO QUE CEDE: a bolsa e o retrato são
               `shrink-0` por decisão (a bolsa entra pela primeira vez nesta
               etapa e a ordem de sacrifício declara-a intocável), e o trilho é
@@ -1524,7 +1555,7 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
             <span className="flex items-center gap-1.5 shrink-0" title={"PM " + personagem.mana + "/" + personagem.manaMax}>
               <IconeMana tamanho={TIPOS.piso} cor={T.violetSoft} />
               {/* a barra do PM só na mesa: no telefone a conta da folga não a
-                  comporta (seriam +93 px contra 67 de folga), e o número
+                  comporta (seriam +93 px contra os 12 de CINTA.folgaMinima), e o número
                   sozinho continua a dizer tudo o que um caster precisa de ler
                   de relance. A barra inteira vive na ficha. */}
               <BarraDeRecurso className="hidden md:inline-block" atual={personagem.mana} max={personagem.manaMax} cor={T.violetSoft} />
@@ -1580,7 +1611,7 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
           `localStorage` do jogador é A ÚNICA COISA NA TELA que lhe diz que a
           vida dele está segura. Passa a transitório e a custar ZERO px
           permanentes: a peça acende a marca da chapa (o fio do pé) e escreve
-          `✓ guardado` na folga de 67, em absoluto — não empurra nem tapa
+          `✓ guardado` na folga da cinta, em absoluto — não empurra nem tapa
           nada. É filho DIRECTO da cinta porque é contra a cinta inteira que
           ele se posiciona, e o pé dela desce para 72 quando há um estado vivo.
 
@@ -1745,20 +1776,46 @@ function OTopoDoPapel({ semente, bioma, lugar, hora, chegada }) {
   );
 }
 
+/* ---------------- R21 · AS ABAS QUE EXISTEM HOJE ----------------
+   Uma lista só para as duas composições da mesma peça: o trilho da coluna
+   larga e a fita do alforje no telefone. Duas cópias do filtro seriam o
+   dia em que a Ascensão aparece numa e não na outra. */
+function abasDoTrilho(desperto, codexAberto = true) {
+  return ABAS.filter((a) => (!a.soDesperto || desperto) && (a.id !== "codex" || codexAberto));
+}
+
+/* A PRIMEIRA LINHA DA PROSA, em texto puro — o que a faixa do fundo do
+   alforje mostra quando a resposta do Mestre chega com ele aberto
+   (`A faixa do fundo` · Espreita). Uma linha inteira: a reticência de
+   quem a desenha é que diz "há mais". */
+function primeiraLinhaDaProsa(texto) {
+  try {
+    const linha = String(texto || "").split("\n").map((x) => x.trim()).find(Boolean) || "";
+    return linha.replace(/[*_#>]+/g, "").replace(/\s+/g, " ").trim();
+  } catch (e) { calou("a primeira linha da prosa", e); return ""; }
+}
+
+/* R21 · O TRILHO FICA SÓ NA COLUNA LARGA. No telefone ele era a fita fixa
+   de 76 px no fundo (4,75 rem de reserva no convés), e o censo de R6 e o
+   do `jogo` em R21 contaram o que ela decidia: 1 turno em 20, e 7
+   aberturas em 21 turnos. A fita passou a ser a DO ALFORJE (`Alforje`,
+   `painel-alforje.jsx`), que só existe aberta; a página ganhou os 76 px.
+   Na larga isto é exactamente o que era — a coluna em fluxo de v9.170, e
+   o que no telefone era barra inferior deixou de existir, em vez de ficar
+   escrito para uma tela onde não aparece. */
 function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }) {
   return (
-    <nav className="flex gap-1.5 shrink-0 fixed inset-x-0 bottom-0 z-40 flex-row justify-around px-2 py-1.5 md:static md:z-auto md:flex-col md:justify-start md:px-0 md:py-0 md:gap-3"
+    <nav className="hidden md:flex shrink-0 flex-col justify-start gap-3"
       aria-label="Painéis" style={{ background: T.bg }}>
-      {ABAS.filter((a) => (!a.soDesperto || desperto) && (a.id !== "codex" || codexAberto)).map((aba) => {
+      {abasDoTrilho(desperto, codexAberto).map((aba) => {
         const ativa = abaAtiva === aba.id;
         const Glifo = GLIFO_DA_ABA[aba.id];
         return (
           <button key={aba.id} onClick={() => aoClicar(ativa ? null : aba.id)}
-            className="relative flex flex-1 md:flex-none flex-col items-center justify-center gap-1.5 rounded-lg transition-all h-[52px] md:w-[72px] md:h-[72px]"
+            className="relative flex flex-none flex-col items-center justify-center gap-1.5 rounded-lg transition-all w-[72px] h-[72px]"
             style={{
-              minWidth: 52, maxWidth: 96,
               background: ativa ? T.panelSoft : T.panel,
-              border: `1px solid ${ativa ? T.amber : T.line}`,
+              border: "1px solid " + (ativa ? T.amber : T.line),
               color: ativa ? T.amberSoft : T.inkDim,
             }}>
             {Glifo
@@ -2432,7 +2489,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2456,21 +2513,40 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   const subGestao = abertasAqui.some((s) => s.id === subEscolhida) ? subEscolhida : "ficha";
   const [valorCofre, setValorCofre] = React.useState("");       // quanto depositar/sacar da guilda
   const [verHabsFicha, setVerHabsFicha] = React.useState(false); // habilidades da ficha sob demanda
+  /* R21 · A SAÍDA TEM DURAÇÃO. O alforje desce em `VEU.sai`, e para a
+     descida ter o que mostrar o miolo continua montado esse tempo com a
+     última aba vista; depois solta-se, e o painel fechado volta a não
+     custar nada ao render (o miolo é grande, e cada mudança de estado do
+     App o redesenha). Sob menos movimento, corte seco: zero. */
+  const [abaVista, setAbaVista] = React.useState(abaPedida || null);
+  React.useEffect(() => {
+    try {
+      if (abaPedida) { setAbaVista(abaPedida); return undefined; }
+      const tid = setTimeout(() => setAbaVista(null), alforje && alforje.reduzido ? 0 : VEU.sai);
+      return () => clearTimeout(tid);
+    } catch (e) { calou("a saída do alforje", e); return undefined; }
+  }, [abaPedida]); // eslint-disable-line
+  const aba = abaPedida || abaVista;
+  const al = alforje || {};
   mundo = mundo || { genero: "Fantasia medieval" };
   if (!aba) return null;
   const equipados = personagem.equipados || {};
   const equipDisponivel = (personagem.equipamento || []).filter((e) => !Object.values(equipados).some((x) => x?.nome === e.nome));
   return (
     <>
-      <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar} />
-      <aside className="tv-slide tv-scroll fixed right-0 inset-y-0 z-40 w-full md:w-80 md:max-w-[88vw] overflow-y-auto p-4 md:p-5 flex flex-col gap-5" style={{ background: T.panel, borderLeft: `1px solid ${T.line}` }}>
-        <div className="flex items-center justify-between">
-          <h2 className="tv-display text-2xl" style={{ color: T.ink }}>{aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : aba === "ascensao" ? "Ascensão" : "Inventário"}</h2>
-          <button onClick={fechar} className="tv-mono text-lg px-2" style={{ color: T.inkDim }}>✕</button>
-        </div>
+      {/* R21 · A MOLDURA É O ALFORJE (`painel-alforje.jsx`). No telefone é
+          a folha que sobe por baixo da cinta, com a faixa do fundo, a pega
+          e as abas no pé; na coluna larga é o painel à direita de sempre.
+          O miolo é este, sem uma linha duplicada — o alforje é só a
+          moldura. O fundo `rgba(0,0,0,.45)` morreu com a moldura velha: o
+          véu é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isso. */}
+      <Alforje aberto={!!abaPedida} abas={al.abas || []} abaAtiva={aba}
+        aoEscolher={al.aoEscolher} aoFechar={fechar} topo={al.topo}
+        espreita={al.espreita || null} aoTocarEspreita={al.aoTocarEspreita} reduzido={!!al.reduzido}
+        titulo={aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : aba === "ascensao" ? "Ascensão" : "Bolsa"}>
 
         {aba === "gestao" && (
-          <div className="flex flex-wrap gap-1.5 -mt-2">
+          <div className="flex flex-wrap gap-1.5">
             {subsAbertas(abasAbertas, estadoDasAbas).map((s) => (
               <button key={s.id} onClick={() => setSubGestao(s.id)}
                 className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
@@ -3591,7 +3667,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
             )}
           </>
         )}
-      </aside>
+      </Alforje>
     </>
   );
 }
@@ -5228,6 +5304,28 @@ export default function Taverna() {
      inteira sai dele e de `entrada` — nenhuma media query em JS. */
   const [campoFocado, setCampoFocado] = useState(false);
   const [aba, setAba] = useState(null);
+  /* R21 · A MARCA DA PORTA — as abas com novidade que o jogador ainda não
+     abriu, a mais recente no fim (`abaDaPorta` abre nela). É notícia e não
+     arquivo: NÃO entra no save nem no load — o formato do save é da
+     pessoa, e ao recarregar a marca apaga-se. `fotoDaPortaRef` é o retrato
+     do acervo contra o qual o seguinte se compara; `null` quer dizer
+     "sessão nova", e a primeira foto de uma sessão só grava (senão um
+     `continuar` acenderia tudo o que o save já tinha). */
+  const [marcasDaPorta, setMarcasDaPorta] = useState([]);
+  const fotoDaPortaRef = useRef(null);
+  /* A PARTIDA DE UMA CAMPANHA NOVA. Carregar um save começa do que o save
+     já tinha, e nada acende; mas numa campanha nova (`iniciar`) a missão
+     que o Mestre impõe no turno 0 ENTROU no acervo sem o jogador lá ir — e
+     é exactamente o que a marca existe para dizer (o `jogo` jogou-o, R21).
+     Por isso `iniciar` guarda aqui as missões que já existiam antes da
+     chegada (as de um capítulo anterior, que não são novidade), e a
+     primeira foto compara-se com elas em vez de só gravar. O resto do
+     acervo (a bolsa inicial, o mapa, o grupo) parte do que a primeira foto
+     vê: nascer com eles não é novidade nenhuma. */
+  const partidaDaPortaRef = useRef(null);
+  const recomecarAPorta = () => {
+    try { fotoDaPortaRef.current = null; partidaDaPortaRef.current = null; setMarcasDaPorta([]); } catch (e) { calou("recomeçar a marca da porta", e); }
+  };
   /* R3 · A SETA QUE ABRE. A sub-aba escolhida é estado DE DENTRO do
      `PainelLateral` (e está certo que seja: é ele quem sabe que abas têm
      porta hoje). Para uma linha do sistema poder pedir "abre-me o Mural",
@@ -11819,6 +11917,8 @@ export default function Taverna() {
   };
 
   const iniciar = (pers) => {
+    recomecarAPorta();
+    try { partidaDaPortaRef.current = fotoDoAcervo({ missoes: missoesRef.current }).missoes; } catch (e) { calou("a partida da marca da porta", e); }
     /* ---------------- A SEGUNDA CADEIRA ENTRA NO GRUPO (v9.120) ----------------
        O personagem do outro jogador não é um NPC nem um convidado da cena:
        ele é membro do grupo desde o primeiro turno, com ficha, poder e vez
@@ -11989,6 +12089,9 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
   const continuar = (comResumo, { silencioso = false } = {}) => {
     const sv = saveRef.current || temSave;
     if (!sv) { pushMsgs([{ autor: "sistema", texto: "Nenhuma aventura salva encontrada." }]); return; }
+    /* R21: carregar um save e sessao nova para a marca da porta - menos o
+       recado do anfitriao da sala, que chega por aqui a cada turno. */
+    if (!silencioso) recomecarAPorta();
     try {
       const pers = migrarPersonagem(sv.personagem);
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
@@ -17576,6 +17679,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const seguirComHerdeiro = (nome) => {
+    recomecarAPorta();   /* R21: ficha nova, primeira foto so grava */
     const p = personagemRef.current || personagem;
     const h = heranca(p, { mapa: mapaRef.current, guilda: guildaRef.current, faccaoJogador: faccaoJogadorRef.current });
     const nomeNovo = String(nome || "").trim().slice(0, 30) || "O Herdeiro";
@@ -22450,6 +22554,173 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     return () => clearTimeout(tid);
   }, [fase, emBatalha]);
 
+  /* ================================================================
+     R21 · O ALFORJE — a fiação de dentro do App
+
+     A moldura mora em `painel-alforje.jsx` e a conta da marca em
+     `marca-da-porta.js`; aqui fica só o que precisa do estado do jogo.
+     `mente/formas.md` §R21 · o jogo, 8 é a especificação. Tudo em
+     `calou(...)`: um alforje que estoura nunca pode custar o turno.
+     ================================================================ */
+  const turnosResolvidosRef = useRef(0);
+  const turnoDaFotoRef = useRef(0);
+  const carregandoAntesRef = useRef(false);
+  const inicioDoTurnoRef = useRef(null);
+  const espreitaPendenteRef = useRef(null);
+  const [espreita, setEspreita] = useState(null);
+
+  /* 1 · O TURNO QUE SE RESOLVE. `carregando` de verdadeiro a falso é o
+     Mestre a ter respondido: conta-se (é o que separa uma compra no
+     Mercado de um achado do turno), e, se o alforje estava aberto nesse
+     instante, guarda-se de onde a resposta começa — é a espreita. */
+  useEffect(() => {
+    try {
+      const antes = carregandoAntesRef.current;
+      carregandoAntesRef.current = !!carregando;
+      if (carregando && !antes) { inicioDoTurnoRef.current = (mensagens || []).length; return; }
+      if (!carregando && antes) {
+        turnosResolvidosRef.current += 1;
+        espreitaPendenteRef.current = aba && inicioDoTurnoRef.current != null ? inicioDoTurnoRef.current : null;
+        inicioDoTurnoRef.current = null;
+      }
+    } catch (e) { calou("o turno que se resolve, para o alforje", e); }
+  }, [carregando]); // eslint-disable-line
+
+  /* 2 · A ESPREITA (`formas.md` §R21 · o jogo, 5, regra 3). A resposta
+     NÃO fecha o alforje — ele pode estar a meio de uma compra —, mas a
+     faixa do fundo mostra a primeira linha da primeira fala nova do
+     Mestre. Procura-se a partir do início do turno, e não na última
+     mensagem: as linhas do sistema chegam depois da prosa. */
+  useEffect(() => {
+    try {
+      const desde = espreitaPendenteRef.current;
+      if (desde == null) return;
+      if (!aba) { espreitaPendenteRef.current = null; return; }
+      const lista = mensagens || [];
+      for (let i = desde; i < lista.length; i++) {
+        const m = lista[i];
+        if (m && m.autor === "mestre") {
+          espreitaPendenteRef.current = null;
+          const texto = primeiraLinhaDaProsa(m.texto);
+          if (texto) setEspreita({ texto, indice: i });
+          return;
+        }
+      }
+    } catch (e) { calou("a espreita do alforje", e); }
+  }, [carregando, mensagens, aba]); // eslint-disable-line
+
+  /* 3 · ABRIR UMA ABA, venha de onde vier (a porta, a fita, a seta de uma
+     linha do sistema), apaga a marca DESSA aba, e fecha o painel do tempo
+     — uma sobreposição de cada vez. Fechar o alforje apaga a espreita. */
+  useEffect(() => {
+    try {
+      if (!aba) { setEspreita(null); return; }
+      setMarcasDaPorta((ms) => (ms.includes(aba) ? ms.filter((x) => x !== aba) : ms));
+      setTempoAberto(false);
+    } catch (e) { calou("abrir uma aba do alforje", e); }
+  }, [aba]);
+
+  /* 4 · A FOTO DO ACERVO, e o que ela acende. A origem é `alforje`
+     quando o alforje está aberto E nenhum turno do Mestre se resolveu
+     desde a última foto (comprar no Mercado não acende a Bolsa); senão é
+     `turno`. Nunca acende a aba que está aberta agora: ela já se vê. */
+  useEffect(() => {
+    try {
+      if (fase !== "jogo" || !personagem) { fotoDaPortaRef.current = null; return; }
+      /* A Bolsa mostra DUAS listas — o inventario e os equipamentos na
+         mochila —, e um espolio de arma que chega num turno entra pela
+         segunda. As duas vao juntas: e o que a aba mostra que a marca
+         promete. (Equipar nao tira da lista, logo nao acende nada.) */
+      const foto = fotoDoAcervo({
+        missoes, itens: [...(personagem.inventario || []), ...(personagem.equipamento || [])],
+        correio, grupo: personagem.grupo, destinos: (mapa || {}).cidades,
+      });
+      let antes = fotoDaPortaRef.current;
+      fotoDaPortaRef.current = foto;
+      if (!antes && partidaDaPortaRef.current) {
+        antes = { ...foto, missoes: partidaDaPortaRef.current };
+        partidaDaPortaRef.current = null;
+      }
+      const turnoAgora = turnosResolvidosRef.current;
+      const houveTurno = !!carregando || turnoAgora !== turnoDaFotoRef.current;
+      turnoDaFotoRef.current = turnoAgora;
+      if (!antes) return;
+      const acesas = marcasQueAcendem(antes, foto, { origem: aba && !houveTurno ? "alforje" : "turno" })
+        .filter((x) => x !== aba);
+      if (!acesas.length) return;
+      setMarcasDaPorta((ms) => [...ms.filter((x) => !acesas.includes(x)), ...acesas]);
+    } catch (e) { calou("a marca da porta", e); }
+  }, [fase, personagem, missoes, correio, mapa, carregando]); // eslint-disable-line
+
+  /* 5 · O RELÓGIO GANHA DO ACERVO (`formas.md` §R21 · o jogo, 5, regra
+     4): nada que tenha relógio corre atrás de uma porta fechada. A janela
+     de reação, o início da batalha e o véu da morte fecham o alforje —
+     no instante em que CHEGAM, e só aí. A rolagem pendente não tem
+     relógio e não fecha: conferir a ficha antes de rolar é legítimo. */
+  const relogioAntesRef = useRef({ janela: false, batalha: false, morte: false });
+  useEffect(() => {
+    try {
+      const agora = { janela: !!janelaReacao, batalha: !!emBatalha, morte: !!desfechoMorte || !!(personagem && personagem.morto) };
+      const antes = relogioAntesRef.current;
+      relogioAntesRef.current = agora;
+      const chegou = (agora.janela && !antes.janela) || (agora.batalha && !antes.batalha) || (agora.morte && !antes.morte);
+      if (chegou) setAba(null);
+    } catch (e) { calou("o relógio ganha do acervo", e); }
+  }, [janelaReacao, emBatalha, desfechoMorte, personagem && personagem.morto]); // eslint-disable-line
+
+  /* A PORTA. Aberta, fecha; fechada, abre na aba da novidade mais
+     recente, ou na Ficha (`formas.md` §R21 · o jogo, 3 — a "última aba"
+     acertou 0 de 3 no censo). E com a janela de reação aberta NÃO abre:
+     nada com relógio fica atrás de uma porta, nos dois sentidos — o
+     efeito 5 fecha o alforje quando o relógio chega, e isto não o deixa
+     abrir enquanto o relógio corre. A forma da porta não muda; o toque só
+     não abre (decisão do `regente`, R21). */
+  const abrirAPorta = () => {
+    try {
+      if (aba) { setAba(null); return; }
+      if (janelaReacao) return;
+      setAba(abaDaPorta(marcasDaPorta));
+    } catch (e) { calou("abrir a porta do alforje", e); }
+  };
+  /* O TEMPO ABERTO FECHA O ALFORJE — a outra metade de "uma
+     sobreposição de cada vez" (a primeira é o efeito 3, acima). O toque
+     no relógio continua o de sempre; quem troca uma folha pela outra é
+     isto, venha o tempo de onde vier. */
+  useEffect(() => {
+    try { if (tempoAberto) setAba(null); } catch (e) { calou("o tempo fecha o alforje", e); }
+  }, [tempoAberto]);
+  /* Tocar a espreita fecha o alforje (quem fecha é a própria faixa) e
+     deixa a página no INÍCIO da resposta, não no fim. */
+  const irAoInicioDaEspreita = () => {
+    try {
+      if (!espreita || !areaRef.current) return;
+      const el = areaRef.current.querySelector('[data-msg="' + espreita.indice + '"]');
+      if (el) el.scrollIntoView({ behavior: reduzidoRef.current ? "auto" : "smooth", block: "start" });
+    } catch (e) { calou("ir ao início da resposta", e); }
+  };
+  const despertoAgora = !!(divindade && divindade.despertar) || ((personagem && personagem.nivel) || 1) >= NIVEL_DESPERTAR;
+  const alforjeDoPainel = (() => {
+    try {
+      if (fase !== "jogo" || !personagem) return null;
+      let vivo = false;
+      try { const cs = chipsDoEstado(personagem); vivo = Array.isArray(cs) && cs.length > 0; } catch (e2) { calou("a altura da cinta, para o alforje", e2); }
+      const nGrupo = (personagem.grupo || []).length;
+      return {
+        abas: abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas())).map((a) => ({
+          id: a.id, rotulo: a.rotulo, Glifo: GLIFO_DA_ABA[a.id],
+          novo: marcasDaPorta.includes(a.id), contador: a.id === "gestao" ? nGrupo : 0,
+        })),
+        aoEscolher: setAba,
+        topo: emBatalha ? 0 : (vivo ? CINTA.alturaViva : CINTA.altura),
+        espreita, aoTocarEspreita: irAoInicioDaEspreita,
+        reduzido: !!reduzidoRef.current,
+      };
+    } catch (e) { calou("o alforje do painel", e); return null; }
+  })();
+  const estadoDaPorta = aba ? "aberta" : marcasDaPorta.length ? "novo" : "porta";
+  let nomeDaPortaAgora = "A ficha";
+  try { nomeDaPortaAgora = nomeDaPorta(marcasDaPorta, ROTULOS_DA_PORTA); } catch (e) { calou("o nome da porta", e); }
+
   /* O passo que o campo acende é o que SOBROU da rodada, já corrigido
      pelo que estiver selecionado (Voo alcança mais). */
   const passoDaBatalha = (() => {
@@ -22631,8 +22902,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               guardado={guardadoAgora} falhaAoGuardar={statusSave === "erro"}
               feridaRecente={feridaRecente}
               reduzido={!!reduzidoRef.current}
-              tempoAberto={tempoAberto} fichaAberta={aba === "gestao"}
-              aoAbrirFicha={() => setAba(aba === "gestao" ? null : "gestao")}
+              tempoAberto={tempoAberto} alforjeAberto={!!aba}
+              marcaDaPorta={estadoDaPorta} nomeDaPorta={nomeDaPortaAgora}
+              aoAbrirFicha={abrirAPorta}
               aoAbrirTempo={() => setTempoAberto((v) => !v)} />
           </LimiteErro>
           <LimiteErro>
@@ -22815,7 +23087,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                    no telefone (piso 45). Uma medida em `ch` conserta os dois,
                    e por isso SUBSTITUI as percentagens em vez de as acompanhar. */
                 return (
-                  <div key={i} className="tv-fade tv-coluna">
+                  <div key={i} data-msg={i} className="tv-fade tv-coluna" style={{ scrollMarginTop: ESBATIMENTO.altura }}>
                     <Voz quem="mestre"
                       voz={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"}
                       aoOuvir={() => ouvirMestre(i, m.texto)}
@@ -23628,7 +23900,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           )}
 
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
-          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} /></LimiteErro>
+          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />
