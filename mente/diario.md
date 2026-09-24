@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 24/09 16:50 · v9.289 · o sistema de fugir (item da pessoa, pedido #33) · commit `HASH-A-SEGUIR`
+## 24/09 16:50 · v9.289 · o sistema de fugir (item da pessoa, pedido #33) · commit `7a2b00b`
 
 - **por que este ciclo andou com a fila parada:** a pessoa escreveu hoje
   *"Pode arrumar o sistema de fugir."* É a exceção que a ordem de 23/09 prevê
