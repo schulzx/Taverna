@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 24/09 · v9.290 · **R21 — a HUD recolhida: no telefone fica a história, e o resto vem a um toque** · commit HASH_R21
+## 24/09 · v9.290 · **R21 — a HUD recolhida: no telefone fica a história, e o resto vem a um toque** · commit `a28e8eb`
 
 *A forma fica em `mente/formas.md` §`R21 · a HUD recolhida no telefone` — `### R21 · a
 fabricação` (o `desenho`, ####0–8) e `### R21 · o jogo` (####1–10, com a prova
