@@ -17,7 +17,7 @@ import {
   REGIOES_DA_BATALHA, FORA_DA_TELA_DA_LUTA, faixaDaVez, rotuloDaVez,
   fileiraDeVerbos, VERBO_DE_ESPERA, vereditoDaTela, PEDIDO_DO_VERBO,
   SAIDA_DO_ARMADO, NARRACAO, ultimasLinhasDoMestre,
-  RECUSAS_DO_VERBO, TETO_DA_RECUSA, impedimentosDaFileira,
+  RECUSAS_DO_VERBO, TETO_DA_RECUSA, impedimentosDaFileira, LINHA_DO_FIM_DA_FUGA,
 } from "../src/tela-de-batalha.js";
 import { TELA_DE_BATALHA, ALVOS } from "../src/estilo.js";
 import { VERBOS_DE_COMBATE } from "../src/golpe.js";
@@ -339,6 +339,45 @@ sec("E4. o verbo cujo conjunto é vazio não arma, e a linha diz porquê");
     longas.length === 0, longas.map(([k, f]) => `${k} (${f.length})`).join(" · "));
   t("e nenhuma delas fala do mecanismo — só do que aconteceu",
     Object.values(RECUSAS_DO_VERBO).every((f) => !/verbo|armar|conjunto|bot/i.test(f)));
+}
+
+/* ============================================================
+   R21 — O FIM DIZ O QUE ACONTECEU, E A FRASE MOSTRA O PREÇO ANTES
+
+   JOGADO NO R21: depois de fugir, o cartão de saída dizia "3 de pé
+   contra você" — a mesma frase de toda rodada, sobre uma luta que já
+   tinha acabado. E o botão `Fugir` mostrava o preço ao primeiro toque
+   enquanto a frase digitada ("recuo depressa e fujo") corria às cegas
+   para o mesmo desfecho. As duas provas ficam aqui porque as duas são
+   `vereditoDaTela`: o que ele diz quando a luta JÁ ACABOU por fuga, e o
+   que ele diz enquanto o jogador ainda está a escrever uma.
+   ============================================================ */
+sec("R21. o fim fala de fuga, e a frase de fuga mostra o preço antes");
+{
+  t("fugiu sozinho não é a contagem de quem ficou de pé",
+    vereditoDaTela({ fugiu: true, rodada: 4, dePe: 3 }) === LINHA_DO_FIM_DA_FUGA
+    && !vereditoDaTela({ fugiu: true, rodada: 4, dePe: 3 }).includes("de pé"));
+  t("e cabe no teto de 54 da mesma linha",
+    LINHA_DO_FIM_DA_FUGA.length <= TETO_DA_RECUSA);
+  t("mas uma recusa de verbo ainda ganha do fim por fuga",
+    vereditoDaTela({ fugiu: true, recusaDoVerbo: RECUSAS_DO_VERBO.semPasso }) === RECUSAS_DO_VERBO.semPasso);
+  t("e um verbo armado também",
+    vereditoDaTela({ fugiu: true, armado: "mover" }).startsWith(PEDIDO_DO_VERBO.mover));
+
+  /* O PREÇO DA FRASE DE FUGA — mesma régua da linha do golpe, mas para
+     quem está prestes a escapar em vez de bater. */
+  t("o preço da frase de fuga ganha da linha do golpe",
+    vereditoDaTela({ precoDaFuga: "Você escapa — o Bandido fica para trás.", linha: "Bandido a 1,5 m — ao alcance." })
+      === "Você escapa — o Bandido fica para trás.");
+  t("e ganha da recusa do golpe também",
+    vereditoDaTela({ precoDaFuga: "3 inimigos te alcançam — não dá para fugir.", recusa: "Bandido a 12 m — faltam 10,5 m." })
+      === "3 inimigos te alcançam — não dá para fugir.");
+  t("mas perde para um verbo armado — a pergunta em curso vem primeiro",
+    vereditoDaTela({ precoDaFuga: "Você escapa.", armado: "mover" }).startsWith(PEDIDO_DO_VERBO.mover));
+  t("e perde para a recusa do verbo",
+    vereditoDaTela({ precoDaFuga: "Você escapa.", recusaDoVerbo: RECUSAS_DO_VERBO.semPasso }) === RECUSAS_DO_VERBO.semPasso);
+  t("sem frase de fuga, nada muda — a cadeia de antes continua inteira",
+    vereditoDaTela({ linha: "Bandido a 1,5 m — ao alcance." }) === "Bandido a 1,5 m — ao alcance.");
 }
 
 console.log(`\ntela da batalha E3: ${bons} passaram, ${maus} falharam`);

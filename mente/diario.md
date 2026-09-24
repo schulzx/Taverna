@@ -15,6 +15,60 @@ Formato:
 ```
 
 ---
+## 24/09 19:08 · v9.291 · a fuga, segunda volta: o que a prova jogada de R21 achou · commit `HASH-A-SEGUIR`
+
+- **por que andou:** ainda é o item da pessoa (*"Pode arrumar o sistema de
+  fugir"*). O desenho jogou a fuga de `7a2b00b` no R21 (`a28e8eb`) e escreveu
+  quatro achados em `mente/pedidos-ao-sistema.md`. Os arqueiros ficaram de fora
+  de propósito: é proposta do desenho à pessoa ("o arqueiro não segura,
+  cobra"), sem resposta — não lhe toquei.
+- **estado inicial:** árvore limpa, sem pausa, sem trava, bastão livre. Tomei
+  o bastão às 19:17 e devolvi-o às 20:15.
+- **1. a fuga abriu uma luta pior — e o diagnóstico era outro.** O pedido dizia
+  "menção tomada por presença"; medido, a linha *"Estavam aqui."* é da caçada
+  da missão (`talvezCacar`), que corre **dentro do mesmo `enviar`** da fuga e
+  encontrou o combate já zerado. **backend:** o fôlego da fuga em `fuga.js`
+  (`folegoDaFuga`, `folegoSegura`, `folegoDepoisDoTurno`): na resposta da fuga
+  nenhuma luta abre (caçada, virada ou emboscada do perigo); enquanto o herói
+  fica no lugar, a caçada e a emboscada de quem ficou para trás seguram; outra
+  criatura passa; saindo do lugar, o fôlego acaba. **frontend:** os três
+  portões consultam-no, e ele avança no fim de cada resposta, depois deles.
+- **2. o campo não esvaziava:** a tela de batalha passa a desarmar o verbo e
+  limpar o campo quando a luta acaba — fuga, vitória ou fim declarado, pelo
+  mesmo sinal `fim`.
+- **3. o texto:** `linhaDoEscape` concorda (*"Aranha do Fosso fica"*, *"A, B e
+  C ficam"*); `notaDaFuga` lista com "e" e deixou de dizer "Não os mate" a uma
+  criatura só; o fim da tela diz que se fugiu, em vez de *"3 de pé contra
+  você"*.
+- **4. a lei — a frase escrita mostra o preço antes:** `precoDaFrase` (a mesma
+  conta que `fugirDaLuta` faz ao enviar) vai para a linha do veredito enquanto
+  o texto casa `ehFuga`, a cada tecla. Precedência em `vereditoDaTela`: recusa
+  do verbo > armado > preço da fuga > linha do golpe > fugiu > a contagem.
+- **decisões médias, com o motivo:**
+  - **o fôlego não vai ao save** — é memória de uma cena. Reabrir o jogo no
+    covil devolve a caçada; é aceitável e está dito no cabeçalho do módulo.
+    Mudar o save seria da pessoa.
+  - **a emboscada segurada cai em nada**, sem nota extra ao Narrador: a nota
+    do escape já lhe disse que ninguém alcança o herói nesta cena.
+  - **o lugar que conta é o mais interno onde se fugiu**: fugir na praça não
+    protege o mercado da mesma cidade.
+- **prova, antes e depois:** `teste-fuga.mjs` contra o `fuga.js` de HEAD dá 6
+  falhas (três funções que não existiam e três textos errados); agora 126/126.
+  `teste-tela-de-batalha.mjs` ganhou 9 provas, que falhavam antes. `npm test`
+  211/211 suítes, 15/15 varredores; build limpo. Suíte de endereços re-medida
+  (141 endereços), com o motivo ao lado.
+- **jogado:** o `frontend` criou uma campanha nova e lutou contra um Morcego
+  Chato (IA de produção, pelo proxy de sempre). Viu, a cada tecla de "recuo
+  depressa e fujo", *"Morcego Chato te alcança — não dá para fugir."* antes do
+  Enter, e o campo vazio no fim da luta. O save de teste foi apagado com o jogo
+  desmontado e o `localStorage` conferido de volta ao estado inicial.
+- **o que ficou:** **o fôlego não foi visto a jogar** (o morcego voa, e
+  alcançou sempre: uma fuga bem-sucedida não aconteceu), nem a linha "você
+  escapou" do fim. Os dois estão provados em suíte; o próximo `jogo` que fugir
+  de uma luta fecha a prova. O T13 fora de combate (a frase que fica no campo
+  principal) não foi reproduzido. Os arqueiros esperam a pessoa.
+
+---
 ## 24/09 16:50 · v9.289 · o sistema de fugir (item da pessoa, pedido #33) · commit `7a2b00b`
 
 - **por que este ciclo andou com a fila parada:** a pessoa escreveu hoje

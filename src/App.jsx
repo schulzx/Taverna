@@ -5,7 +5,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
-import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair } from "./fuga.js";
+import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase } from "./fuga.js";
 import { VERBO_DE_FUGA } from "./tela-de-batalha.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
@@ -5428,6 +5428,15 @@ export default function Taverna() {
   const saveRef = useRef(null);
   const combateRef = useRef(null);
   combateRef.current = combate;
+  /* O FOLEGO DA FUGA (fuga.js): a promessa "ninguem te alcanca" tem de
+     sobreviver ao PROPRIO turno da fuga — sem isto a cacada da missao e a
+     emboscada do Narrador abriam outra luta na MESMA resposta (R21,
+     jogado: "Voce escapa" seguido, na mesma fala, de "Encontro mortal —
+     aranha do fosso, sao 3. Estavam aqui."). NAO E ESTADO DE JOGO: vive so
+     na sessao, nunca no save — reabrir o jogo no covil devolve a cacada, e
+     esta bem assim (a fuga salva o heroi desta cena, nao o covil para
+     sempre). */
+  const folegoRef = useRef(null);
   const mensagensRef = useRef([]);
   const habUsadaRef = useRef(false);
   const rolagemConsumidaRef = useRef(null);
@@ -10001,7 +10010,12 @@ export default function Taverna() {
     try {
       if (resp.perigo && !combateRef.current) {
         const emb = montarEmboscada(resp.perigo, { pers });
-        if (emb && emb.tipo === "emboscada") {
+        const embSeguro = emb && emb.tipo === "emboscada"
+          && folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "emboscada", criatura: emb.criatura });
+        if (embSeguro) {
+          /* nada: o folego da fuga protege — quem a IA descreveu e quem
+             acabou de ficar para tras */
+        } else if (emb && emb.tipo === "emboscada") {
           const ab = abrirCombate(emb.inimigos, { pers });
           pers = ab.pers;
           msgs.push(falaDaEmboscada(emb), ...ab.msgs);
@@ -10084,6 +10098,7 @@ export default function Taverna() {
       });
     } catch { /* ler a mesa nunca pode custar o turno */ }
     texturaRef.current = {};
+    try { folegoRef.current = folegoDepoisDoTurno(folegoRef.current, ondeEstou()); } catch (e) { calou("o folego da fuga", e); }
     return pers;
   }, [pushMsgs]);
 
@@ -14674,6 +14689,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          (forma, invocacoes, o combate em si), SEM registrar morte, SEM
          gerar espolio, SEM XP e SEM etapa de missao nenhuma — ninguem
          morreu aqui. */
+      /* O FOLEGO NASCE AQUI, ANTES do `enviar` la embaixo: e dentro dele
+         que a cacada da missao e a emboscada do Narrador vao perguntar se
+         podem abrir luta, e a resposta tem de ja estar pronta. */
+      folegoRef.current = folegoDaFuga(v, ondeEstou());
+      fugaAoSairRef.current = true;
       combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0;
       let base0 = pers;
       personagemRef.current = base0;
@@ -14695,7 +14715,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       bumpCont("fugas");
       setPersonagem(base0);
       salvar({ personagem: base0 });
-      pushMsgs([{ autor: "sistema", texto: `🏃 Você escapa — ${(v.deixados || []).join(", ") || "os inimigos"} ficam para trás.` }]);
+      pushMsgs([{ autor: "sistema", texto: `🏃 ${linhaDoEscape(v)}` }]);
       enviar(`${acao}${notaGolpes} ${notaDaFuga(v)}${extraTempo}`, base0);
       return true;
     } catch (e) { calou("fugir da luta", e); return false; }
@@ -15969,6 +15989,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const chave = `${m.id}|${i}`;
       if (cacadasFeitasRef.current.includes(chave)) continue;
       if (!ondeEstou().some((x) => mesmoLugar(x, e.onde))) continue;
+      /* O FOLEGO DA FUGA: a mesma resposta em que o heroi fugiu — ou o
+         mesmo lugar logo depois — nao pode reabrir a cacada que ele
+         acabou de deixar para tras. */
+      if (folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "cacada" })) continue;
       const quantos = Math.max(1, Number(e.quantos) || 1);
       const inimigos = Array.from({ length: quantos }, (_, k) => ({
         nome: quantos > 1 ? `${e.alvo} ${k + 1}` : e.alvo,
@@ -16010,6 +16034,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
       if (devida.tipo === "emboscada") {
         if (combateRef.current || acampadoRef.current) continue;
+        if (folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "virada" })) continue;
         const quantos = Math.max(1, devida.quantos || 3);
         const inimigos = Array.from({ length: quantos }, (_, i) => ({
           nome: nomeDoVilao ? `Homem de ${nomeDoVilao} ${i + 1}` : `Emboscador ${i + 1}`,
@@ -22532,11 +22557,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      a tela debaixo de quem ainda está a ler o último golpe.
      ================================================================ */
   const ultimoCombateRef = useRef(null);
+  const fugaAoSairRef = useRef(false);
   const [fimDaLuta, setFimDaLuta] = useState(null);
+  const [fugiuNoFim, setFugiuNoFim] = useState(false);
   useEffect(() => {
     try {
-      if (combate) { ultimoCombateRef.current = combate; if (fimDaLuta) setFimDaLuta(null); return; }
-      if (ultimoCombateRef.current) { setFimDaLuta(ultimoCombateRef.current); ultimoCombateRef.current = null; }
+      if (combate) { ultimoCombateRef.current = combate; if (fimDaLuta) setFimDaLuta(null); if (fugiuNoFim) setFugiuNoFim(false); return; }
+      if (ultimoCombateRef.current) {
+        setFimDaLuta(ultimoCombateRef.current);
+        setFugiuNoFim(!!fugaAoSairRef.current);
+        ultimoCombateRef.current = null;
+        fugaAoSairRef.current = false;
+      }
     } catch (e) { calou("o fim da luta", e); }
   }, [combate]);
 
@@ -22758,6 +22790,26 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("o veredito da fuga", e); return null; }
   })();
 
+  /* O PREÇO DA FRASE DE FUGA (R21, "a fuga escrita não mostra o preço
+     antes"): o botão já mostra o preço ao primeiro toque; quem digita
+     "recuo depressa e fujo" em vez de tocar o botão tem direito ao MESMO
+     aviso, ANTES do Enter. A mesma conta que `fugirDaLuta` fará ao
+     enviar — heroi com o nome (a nota ao Narrador precisa dele), o mesmo
+     passo de `vFugaDaBatalha`. */
+  const precoDaFugaNoCampo = (() => {
+    try {
+      if (!emBatalha || !combate) return "";
+      if (!ehFuga(entrada)) return "";
+      return precoDaFrase({
+        frase: entrada,
+        heroi: combate.heroi ? { ...combate.heroi, nome: personagem.nome } : null,
+        inimigos: combate.inimigos,
+        passoHeroiM: passoDaBatalha.passoTotal,
+        rodada: combate.rodada,
+      });
+    } catch (e) { calou("o preco da frase de fuga", e); return ""; }
+  })();
+
   /* As três peças que a tela recebe montadas: a gaveta das habilidades, a
      janela da reação (que nasce na linha do veredito, K3) e o d20. Vêm
      como nós e não como props soltas porque a FIAÇÃO é do App e a FORMA é
@@ -22827,6 +22879,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       recusaDoGolpe={vdDaBatalha ? recusaDoGolpe(vdDaBatalha) : ""}
       podeFugir={!!(vFugaDaBatalha && vFugaDaBatalha.escapa)}
       linhaDaFuga={vFugaDaBatalha ? linhaDaFuga(vFugaDaBatalha) : ""}
+      precoDaFuga={precoDaFugaNoCampo}
+      fugiu={!!fugiuNoFim}
       previsao={previsaoDeArea}
       mira={mira} aoMirar={definirMira} alcanceMira={alcanceDaHabilidade}
       acaoBonus={temAcaoBonus(personagem)}

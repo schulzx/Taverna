@@ -584,6 +584,24 @@ export function TelaDeBatalha(props) {
      não é. */
   React.useEffect(() => { setRecusado(""); }, [combate.rodada]);
 
+  /* O FIM ESVAZIA O CAMPO — JOGADO NO R21: fugir, todos caírem ou o
+     Mestre encerrar a luta são a mesma transição por fora, e um verbo
+     pode ter deixado a FRASE ARMADA no campo (`Fugir` preenche "Viro as
+     costas e fujo da luta, correndo o quanto posso" assim que se toca
+     nele uma vez). Essa frase não é mais o PRÓXIMO turno — é o turno que
+     ACABOU DE ACONTECER. Medido: ela sobrevivia no campo, aberto a
+     138 px com `Agir →`, e a página caía 146 px no telefone; um Enter
+     ali mandaria fugir de uma luta que já não existe. Os três fins
+     (fuga, `fecharSeTodosCairam`, o Mestre a declarar) chegam todos pelo
+     MESMO sinal — `p.fim` vira `true` — e por isso ficam resolvidos no
+     mesmo ponto, uma vez só. */
+  React.useEffect(() => {
+    if (!p.fim) return;
+    setArmado(""); setRecusado("");
+    if (p.aoEscrever) p.aoEscrever("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.fim]);
+
   React.useEffect(() => {
     if (!armado) return undefined;
     const ouve = (e) => { if (e.key === "Escape") setArmado(""); };
@@ -715,10 +733,19 @@ export function TelaDeBatalha(props) {
     : vereditoDaTela({
     armado,
     recusaDoVerbo: recusado,
+    /* O PREÇO DA FRASE DE FUGA (R21) já vem pronto do App — `p.precoDaFuga`
+       só existe enquanto o campo casa `ehFuga` e a luta está aberta. Ganha
+       da linha e da recusa do golpe porque, se o Enter vai fugir, mostrar
+       o preço de atacar prometeria um turno que não vai acontecer. */
+    precoDaFuga: p.precoDaFuga || "",
     linha: !armado && vd && vd.algumAoAlcance ? p.linhaDoGolpe : "",
     recusa: !armado && vd && !vd.algumAoAlcance ? p.recusaDoGolpe : "",
     rodada: combate.rodada || 1,
     dePe,
+    /* O FIM PELA FUGA (R21): `p.fugiu` só chega `true` no instante em que
+       a tela mostra o cartão de saída — a mesma luta que `fimDaLuta`
+       segura no App para o jogador ler o último golpe. */
+    fugiu: !!p.fugiu,
   });
 
   const fala = ultimasLinhasDoMestre(p.mensagens, {

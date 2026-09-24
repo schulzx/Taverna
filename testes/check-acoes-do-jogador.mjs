@@ -309,10 +309,16 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 8028) {
-    falha(`pushMsgs saiu de src/App.jsx:8028 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 8037) {
+    falha(`pushMsgs saiu de src/App.jsx:8037 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8028, como o mapa de X3b diz");   /* R21 (oficial, 2.º passe): a partida da marca da porta (a missão da chegada acende o Diário) entrou antes destas linhas. Endereço re-medido pelo diff, conteúdo idêntico; asserção intacta. 8018 -> 8028.
+  } else ok("pushMsgs segue em src/App.jsx:8037, como o mapa de X3b diz");   /* A FUGA (frontend, segunda volta — R21): 8028 -> 8037. As nove linhas
+     são o fôlego da fuga (fuga.js): o comentário e o `folegoRef` novos,
+     logados ao lado de `combateRef`, para a caçada e a emboscada da
+     missão não reabrirem luta NA MESMA resposta em que o herói fugiu —
+     e tudo abaixo andou junto. O funil não se moveu por vontade própria
+     nem mudou de forma: endereço re-medido pelo diff, asserção intacta.
+     R21 (oficial, 2.º passe): a partida da marca da porta (a missão da chegada acende o Diário) entrou antes destas linhas. Endereço re-medido pelo diff, conteúdo idêntico; asserção intacta. 8018 -> 8028.
      R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 7930 -> 8018.
      A FUGA (frontend): 7928 -> 7930. As duas linhas são o import novo
      no topo do arquivo (`fuga.js` e o rótulo do verbo Fugir, de

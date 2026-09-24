@@ -26,7 +26,17 @@
       que a deixaria continuar como no R15. As frases vetadas existem
       porque already morderam ("Grito para Elma: fuja!" não é o herói
       fugindo, e "não fujo" não pode ler como "fujo").
-   8. Determinismo, imutabilidade e lixo — a mesma lei de sempre. */
+   8. Determinismo, imutabilidade e lixo — a mesma lei de sempre.
+   9. O FÔLEGO DA FUGA — a cena do R21 rejogada: a heroína fugiu da Aranha
+      do Fosso no Fosso das Aranhas, e na MESMA resposta a caçada da missão
+      abriu "aranha do fosso, são 3. Estavam aqui." A fuga promete
+      "ninguém te alcança"; este bloco é a promessa escrita em asserção:
+      na resposta nada abre, no mesmo lugar o covil e quem ficou para trás
+      não voltam, fora dali o mundo volta a valer.
+   10. A LINHA DO ESCAPE — "Aranha do Fosso ficam para trás" (R21): um
+      corpo "fica", dois ou mais "ficam", e a lista fecha com "e".
+   11. O PREÇO DA FRASE — a frase escrita mostra o MESMO preço que o botão
+      mostra, porque é a mesma conta (R21: a frase fugia às cegas). */
 
 const RAIZ = "../src/";
 const FUGA_MOD = await import(RAIZ + "fuga.js");
@@ -37,6 +47,8 @@ const CONTROLE = await import(RAIZ + "controle.js");
 const {
   FUGA, PERSEGUICAO_POR_CONDICAO, quemGolpeiaAoSair, vereditoDaFuga,
   ehFuga, LINHAS_DA_FUGA, linhaDaFuga, notaDaFuga,
+  LINHAS_DO_ESCAPE, linhaDoEscape, precoDaFrase,
+  folegoDaFuga, folegoSegura, folegoDepoisDoTurno,
 } = FUGA_MOD;
 const { pedeDesengajar, ehRetirada } = COMBATE;
 const { distanciaM, alcanceNatural } = GRID;
@@ -392,6 +404,179 @@ sec("8. DETERMINISMO, IMUTABILIDADE E LIXO");
   t("e linhaDaFuga({}) não estoura — é string, e cabe no teto",
     typeof linhaDaFuga({}) === "string" && linhaDaFuga({}).length <= tetoAqui);
   t("notaDaFuga(null) não estoura e devolve string vazia", notaDaFuga(null) === "" && notaDaFuga(undefined) === "" && notaDaFuga({}) === "");
+}
+
+sec("9. O FÔLEGO DA FUGA — a cena do R21: fugiu da Aranha do Fosso no Fosso das Aranhas");
+{
+  /* As funções têm de EXISTIR antes de serem provadas: contra o fuga.js de
+     antes do R21 este bloco fica vermelho aqui, e não num TypeError que
+     esconderia o resto da suíte. */
+  const existem = [folegoDaFuga, folegoSegura, folegoDepoisDoTurno].every((f) => typeof f === "function");
+  t("folegoDaFuga, folegoSegura e folegoDepoisDoTurno existem", existem);
+  if (existem) {
+    /* a aranha longe o bastante para a fuga abrir de verdade — o veredito
+       sai de vereditoDaFuga, não de um objeto montado à mão */
+    const h = heroi(0, 0);
+    const aranha = { nome: "Aranha do Fosso", ameaca: "comum", vida: 12, x: 30, y: 0 };
+    const v = vereditoDaFuga({ heroi: h, inimigos: [aranha], passoHeroiM: 9, rodada: 1 });
+    t("a montagem escapa de verdade (pré-condição da cena)", v.escapa === true, v.motivo);
+
+    const ONDE = ["Fosso das Aranhas"];
+    const f = folegoDaFuga(v, ONDE);
+    t("o fôlego nasce com o lugar, quem ficou e naResposta",
+      !!f && f.naResposta === true && f.lugares.join() === "Fosso das Aranhas" && f.deixados.join() === "Aranha do Fosso", f);
+
+    /* 1. na resposta da própria fuga: NADA abre, venha de onde vier — é
+       exatamente a luta que o R21 viu abrir */
+    for (const origem of ["cacada", "virada", "emboscada"]) {
+      t(`na resposta da fuga, segura a ${origem}`,
+        folegoSegura(f, { lugares: ONDE, origem, criatura: "aranha do fosso" }) === true);
+    }
+    t("na resposta segura até a emboscada de OUTRA criatura — nenhuma luta aberta pelo sistema",
+      folegoSegura(f, { lugares: ONDE, origem: "emboscada", criatura: "Bandido" }) === true);
+
+    /* 2. o turno seguinte, ainda no fosso (com artigo e sem acento, como o
+       Narrador escreve: a comparação é a tolerante do mesmoLugar do App) */
+    const f2 = folegoDepoisDoTurno(f, ["o Fosso das Aranhas"]);
+    t("depois do turno, no mesmo lugar, o fôlego continua — sem naResposta",
+      !!f2 && f2.naResposta === false && f2.deixados.join() === "Aranha do Fosso", f2);
+    t("e é estrutura nova — o registro de antes não foi mutado",
+      f2 !== f && f.naResposta === true);
+    t("no mesmo lugar, a caçada continua segura (o covil não se reabre sozinho)",
+      folegoSegura(f2, { lugares: ONDE, origem: "cacada" }) === true);
+    t("e a emboscada de ARANHA continua segura (quem ficou para trás não aparece à frente)",
+      folegoSegura(f2, { lugares: ONDE, origem: "emboscada", criatura: "aranha do fosso" }) === true);
+    t("inclusive quando o bando vem numerado ('Aranha do Fosso 2')",
+      folegoSegura(f2, { lugares: ONDE, origem: "emboscada", criatura: "Aranha do Fosso 2" }) === true);
+    t("mas a emboscada de um BANDIDO passa — o mundo não parou",
+      folegoSegura(f2, { lugares: ONDE, origem: "emboscada", criatura: "Bandido" }) === false);
+    t("e a emboscada sem criatura dita também passa — não se segura o que não se sabe quem é",
+      folegoSegura(f2, { lugares: ONDE, origem: "emboscada" }) === false);
+    t("a virada passa depois da resposta — não é o covil nem quem ficou",
+      folegoSegura(f2, { lugares: ONDE, origem: "virada" }) === false);
+
+    /* 3. saiu do lugar: o fôlego acaba e nada fica seguro */
+    t("em outro lugar, mesmo com o fôlego vivo, nada fica seguro",
+      folegoSegura(f2, { lugares: ["Estrada"], origem: "cacada" }) === false
+      && folegoSegura(f2, { lugares: ["Estrada"], origem: "emboscada", criatura: "aranha do fosso" }) === false);
+    t("e o turno na Estrada acaba o fôlego (null)",
+      folegoDepoisDoTurno(f2, ["Estrada"]) === null);
+    t("com o fôlego acabado, nada segura",
+      folegoSegura(null, { lugares: ONDE, origem: "cacada" }) === false);
+
+    /* o LUGAR é o mais interno: fugir na praça não protege o mercado da
+       mesma cidade, mas vale em qualquer canto do ponto de onde se fugiu */
+    const naPraca = folegoDepoisDoTurno(folegoDaFuga(v, ["Praça de Escambo", "Baixo do Eco"]), ["Praça de Escambo", "Baixo do Eco"]);
+    t("fugiu na Praça de Escambo: ainda na praça, a caçada fica segura",
+      folegoSegura(naPraca, { lugares: ["Praça de Escambo", "Baixo do Eco"], origem: "cacada" }) === true);
+    t("no Mercado da mesma cidade, não — a cidade não é o covil",
+      folegoSegura(naPraca, { lugares: ["Mercado", "Baixo do Eco"], origem: "cacada" }) === false
+      && folegoDepoisDoTurno(naPraca, ["Mercado", "Baixo do Eco"]) === null);
+
+    /* quem não escapou não tem fôlego */
+    const colado = vereditoDaFuga({ heroi: heroi(0, 0), inimigos: [bandido(1, 0)], passoHeroiM: 9, rodada: 1 });
+    t("fuga que não abriu não dá fôlego (null)", colado.escapa === false && folegoDaFuga(colado, ONDE) === null);
+
+    /* determinismo e lixo: a lei de sempre, e `= {}` não cobre null */
+    t("mesma entrada, mesmo fôlego",
+      JSON.stringify(folegoDaFuga(v, ONDE)) === JSON.stringify(folegoDaFuga(v, ONDE)));
+    let estourou = "";
+    const lixos = [undefined, null, {}, 0, "", [], 7, "x", { escapa: true }, { escapa: true, deixados: null },
+      { lugares: null, deixados: null, naResposta: false }, { lugares: "Fosso", naResposta: false }];
+    for (const l of lixos) {
+      try {
+        folegoDaFuga(l, l); folegoDaFuga(l, null);
+        if (typeof folegoSegura(l, l) !== "boolean") estourou += "folegoSegura torta em " + JSON.stringify(l) + " ";
+        folegoSegura(l, null); folegoSegura(f2, l);
+        folegoDepoisDoTurno(l, l); folegoDepoisDoTurno(f2, l);
+      } catch (e) { estourou += JSON.stringify(l) + ":" + e.message + " "; }
+    }
+    t("nenhum lixo derruba o fôlego" + (estourou ? " — " + estourou : ""), estourou === "");
+    t("fôlego com escapa mas sem lugar nenhum: segura na resposta, e acaba no turno seguinte",
+      folegoSegura(folegoDaFuga({ escapa: true }, null), { origem: "cacada" }) === true
+      && folegoDepoisDoTurno(folegoDaFuga({ escapa: true }, null), ONDE) === null);
+  }
+}
+
+sec("10. A LINHA DO ESCAPE — um fica, dois ficam, e a lista fecha com 'e'");
+{
+  const existe = typeof linhaDoEscape === "function" && !!LINHAS_DO_ESCAPE;
+  t("linhaDoEscape e LINHAS_DO_ESCAPE existem", existe);
+  if (existe) {
+    const esc = (deixados) => linhaDoEscape({ escapa: true, deixados });
+    /* o R21: um nome só, e o verbo no plural */
+    t("1 deixado: 'fica' — o erro jogado no R21 era 'Aranha do Fosso ficam'",
+      esc(["Aranha do Fosso"]) === LINHAS_DO_ESCAPE.um("Aranha do Fosso")
+      && /Aranha do Fosso fica para trás/.test(esc(["Aranha do Fosso"])), esc(["Aranha do Fosso"]));
+    t("2 deixados: 'A e B ficam'",
+      esc(["Javali", "Bandido"]) === LINHAS_DO_ESCAPE.varios("Javali e Bandido"), esc(["Javali", "Bandido"]));
+    t("3 deixados: 'A, B e C ficam'",
+      esc(["Javali", "Bandido", "Zumbi"]) === LINHAS_DO_ESCAPE.varios("Javali, Bandido e Zumbi"), esc(["Javali", "Bandido", "Zumbi"]));
+    t("0 deixados: frase inteira, sem sujeito vazio nem vírgula órfã",
+      esc([]) === LINHAS_DO_ESCAPE.sozinho() && !/—\s+fica|\s,|—\s*$/.test(esc([])), esc([]));
+    /* o bando numerado da caçada vira um nome com a contagem — e a
+       concordância conta CORPOS: três aranhas "ficam" */
+    t("o bando numerado junta-se: 'Aranha do Fosso ×3 ficam'",
+      esc(["Aranha do Fosso 1", "Aranha do Fosso 2", "Aranha do Fosso 3"]) === LINHAS_DO_ESCAPE.varios("Aranha do Fosso ×3"),
+      esc(["Aranha do Fosso 1", "Aranha do Fosso 2", "Aranha do Fosso 3"]));
+    t("a linha real, saída de um veredito, bate com a tabela",
+      linhaDoEscape(vereditoDaFuga({ heroi: heroi(0, 0), inimigos: [javali(1, 13, 0), javali(2, 13, 1)], passoHeroiM: 9, rodada: 1 }))
+        === LINHAS_DO_ESCAPE.varios("Javali-de-pedra ×2"));
+    const MECANISMO = /desengaj|disparada|sistema|\bmodo\b/i;
+    t("nenhuma linha do escape nomeia o mecanismo",
+      [esc([]), esc(["A"]), esc(["A", "B"])].every((l) => !MECANISMO.test(l)));
+    let estourou = "";
+    for (const l of [undefined, null, {}, 0, "", [], 7, { deixados: null }, { deixados: [null, "", 3] }]) {
+      try { if (typeof linhaDoEscape(l) !== "string" || !linhaDoEscape(l)) estourou += "vazia em " + JSON.stringify(l) + " "; }
+      catch (e) { estourou += JSON.stringify(l) + ":" + e.message + " "; }
+    }
+    t("linhaDoEscape nunca estoura nem devolve vazio" + (estourou ? " — " + estourou : ""), estourou === "");
+  }
+
+  /* a nota ao Narrador com a mesma gramática: dois golpes são "os golpes
+     de A e B", e a lista de quem ficou fecha com "e" */
+  const nota = notaDaFuga({ escapa: true, quem: "Heroína", modo: "correndo", golpes: ["Javali", "Bandido"], deixados: ["Javali", "Bandido", "Zumbi"] });
+  t("a nota com dois golpes diz 'os golpes de Javali e Bandido'", /os golpes de Javali e Bandido/.test(nota), nota);
+  t("a nota lista quem ficou com 'e' no último", /Javali, Bandido e Zumbi/.test(nota), nota);
+  const nota1 = notaDaFuga({ escapa: true, quem: "Heroína", modo: "correndo", golpes: ["Javali"], deixados: ["Aranha do Fosso"] });
+  t("com um golpe só, 'o golpe de Javali'", /o golpe de Javali\b/.test(nota1), nota1);
+  /* "Não os mate" errava para uma aranha só: a frase não pode depender de
+     número nem de gênero de quem ficou */
+  t("e a nota não flexiona 'os' para uma criatura só", !/\bos mate\b|\bos faça\b/.test(nota1), nota1);
+}
+
+sec("11. O PREÇO DA FRASE — a frase escrita vê o mesmo preço que o botão");
+{
+  const existe = typeof precoDaFrase === "function";
+  t("precoDaFrase existe", existe);
+  if (existe) {
+    const { VERBO_DE_FUGA } = await import(RAIZ + "tela-de-batalha.js");
+    const h = heroi(0, 0);
+    /* colado a um caído: correndo escapa com um golpe, recuando não — o
+       modo muda o preço, e por isso a frase tem de ler o mesmo modo */
+    const mesa = { heroi: h, inimigos: [bandido(1, 0, { condicoes: [{ id: "caido" }] })], passoHeroiM: 9, rodada: 1 };
+    const doBotao = linhaDaFuga(vereditoDaFuga({ ...mesa, frase: VERBO_DE_FUGA.frase }));
+    const daTela = linhaDaFuga(vereditoDaFuga(mesa));
+    t("o botão e a tela já liam o mesmo preço (a frase do botão não força modo)", doBotao === daTela, { doBotao, daTela });
+    t("'recuo depressa e fujo' mostra o MESMO preço que o botão",
+      precoDaFrase({ ...mesa, frase: "recuo depressa e fujo" }) === doBotao, precoDaFrase({ ...mesa, frase: "recuo depressa e fujo" }));
+    /* e o preço mostrado é o que acontece ao enviar: fugirDaLuta chama
+       vereditoDaFuga com a própria frase — a mesma conta */
+    const guarda = "recuo de guarda erguida e fujo";
+    t("a frase 'de guarda erguida' lê o recuo — e mostra o preço desse modo",
+      precoDaFrase({ ...mesa, frase: guarda }) === linhaDaFuga(vereditoDaFuga({ ...mesa, frase: guarda }))
+      && vereditoDaFuga({ ...mesa, frase: guarda }).modo === "desengajando");
+    t("que aqui é outro preço: recuando, o caído ainda alcança",
+      precoDaFrase({ ...mesa, frase: guarda }) !== doBotao);
+    t("frase que não é fuga devolve vazio",
+      precoDaFrase({ ...mesa, frase: "ataco o bandido" }) === "" && precoDaFrase({ ...mesa, frase: "não fujo" }) === "");
+    let estourou = "";
+    for (const l of [undefined, null, {}, 0, "", [], 7, { frase: "fujo" }, { frase: "fujo", heroi: null, inimigos: null }, { ...mesa, frase: null }]) {
+      try { if (typeof precoDaFrase(l) !== "string") estourou += "torta em " + JSON.stringify(l) + " "; }
+      catch (e) { estourou += JSON.stringify(l) + ":" + e.message + " "; }
+    }
+    t("precoDaFrase nunca estoura (é lida a cada tecla)" + (estourou ? " — " + estourou : ""), estourou === "");
+  }
 }
 
 console.log(`\nfuga: ${bons} passaram, ${maus} falharam${pendentes ? `, ${pendentes} pendentes` : ""}`);

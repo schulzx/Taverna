@@ -25,11 +25,13 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
-- [ ] **fugir de uma luta abriu outra, pior** · de: R21 (prova jogada do `jogo`, a fuga de `7a2b00b`) · 24/09
+- [x] **fugir de uma luta abriu outra, pior** · de: R21 (prova jogada do `jogo`, a fuga de `7a2b00b`) · 24/09
+  **Atendido em v9.291.** Não era menção tomada por presença: era a caçada da missão (`talvezCacar`), que corre dentro do mesmo `enviar` da fuga e viu o combate já zerado. Agora há o fôlego da fuga (`fuga.js`): na resposta da fuga nenhuma luta abre (caçada, virada, emboscada); enquanto o herói fica no lugar, a caçada e a emboscada de quem ficou para trás seguram; saindo do lugar, acaba. `linhaDoEscape` concorda ("fica"/"ficam") e o fim da tela diz que se fugiu.
   A fuga bem-sucedida (*Você escapa — ninguém te alcança*) abriu, **na mesma resposta**, *☠ Encontro mortal — aranha do fosso, são 3. Estavam aqui.* A prosa da fuga falou de pernas atrás dela, e o portão tomou a menção por presença. **Menção não é presença** (a memória da casa: *o portão morde só o necessário*).
   **Para quê:** a fuga promete *ninguém te alcança* e o turno seguinte desmente-a — o veredito antes do clique vira mentira. Junto: *Aranha do Fosso ficam* (concordância) e o cartão de saída a dizer *3 de pé contra você* depois de uma fuga.
 
-- [ ] **a fuga escrita não mostra o preço antes** · de: R21 (prova jogada do `jogo`) · 24/09
+- [x] **a fuga escrita não mostra o preço antes** · de: R21 (prova jogada do `jogo`) · 24/09
+  **Atendido em v9.291.** `precoDaFrase` (`fuga.js`) — a mesma conta de `fugirDaLuta` — vai para a linha do veredito enquanto o texto da batalha casa `ehFuga`, a cada tecla, antes do Enter. Jogado: *"Morcego Chato te alcança — não dá para fugir."* apareceu ao escrever.
   O botão `Fugir` mostra o preço ao primeiro toque e foge ao segundo (confirmado). A frase *recuo depressa e fujo* dá o mesmo desfecho, mas **foge às cegas**: o veredito antes do clique só existe no botão. **Para quê:** R15 já casa frases com verbos (`acoes-do-jogador`); a frase que casa com `fugir` devia mostrar na linha do turno o mesmo preço que o botão mostra. Pede a porta pura; a forma é da mesa.
 
 - [ ] **um módulo puro que casa os objectos nomeados numa frase com a bolsa** · de: R21 (`jogo`, a proposta R23) · 24/09
@@ -45,7 +47,8 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   T12: ao descer pela rachadura dentro da galeria, a linha de sistema disse *Você está na galeria de cima — 76 min de caminhada desde Pedra do Vigia* e o relógio andou de 10:36 para 11:57 sem o herói ter saído dali.
   **Para quê:** foi a única abertura do Mapa do censo — o jogador foi conferir uma chegada que não aconteceu. A confirmar.
 
-- [ ] **o campo não esvazia ao fim da luta** · de: R21 (censo e prova jogada do `jogo`) · 24/09 · **CONFIRMADO na prova jogada**
+- [x] **o campo não esvazia ao fim da luta** · de: R21 (censo e prova jogada do `jogo`) · 24/09 · **CONFIRMADO na prova jogada**
+  **Atendido em v9.291** na tela de batalha: quando a luta acaba (fuga, vitória ou fim declarado), o painel desarma o verbo e esvazia o campo. *O T13 fora de combate (a frase enviada que fica no campo principal) não foi reproduzido nesta volta — continua a confirmar à mão.*
   Na prova jogada de R21 (depois de `7a2b00b`): ao fugir de uma luta, a frase *Viro as costas e fujo da luta…* ficou no campo PRINCIPAL, aberto a 138 px com `Agir →`. **A página caiu 568,8 → 422,8 px (−146)**, e um Enter mandaria fugir numa praça vazia. É a fiação da fuga (`App.jsx`, a frase e o verbo `Fugir`), por isso é pedido e não conserto da mesa. **O fim da luta tem de esvaziar o campo.** O relato antigo, abaixo, era o mesmo defeito visto uma vez:
   T13: a frase enviada ficou no campo depois da resposta, com o campo aberto a 138 px, e a página caiu para 253,7 px. Pode ser do medidor do `jogo`, que escreve no campo por inspecção — **refazer à mão antes de abrir item.**
 

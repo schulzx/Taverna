@@ -304,6 +304,19 @@ export const LINHAS_DA_FUGA = {
   variosAlcancam: (k) => `${k} inimigos te alcançam — não dá para fugir.`,
 };
 
+/* A LISTA COMO SE FALA: "A", "A e B", "A, B e C". A vírgula solta até o
+   último nome ("Aranha, Javali, Bandido ficam") é leitura de planilha. */
+const nomesDe = (x) => (Array.isArray(x) ? x.map((n) => String(n == null ? "" : n).trim()).filter(Boolean) : []);
+function emLista(nomes) {
+  const l = nomesDe(nomes);
+  if (l.length <= 1) return l[0] || "";
+  return `${l.slice(0, -1).join(", ")} e ${l[l.length - 1]}`;
+}
+
+/* O número de série que o combate põe num bando ("Aranha do Fosso 2")
+   não é coisa que o herói veja, nem distingue uma criatura de outra. */
+const baseDoNome = (n) => String(n).replace(/\s+\d+$/, "").trim() || String(n);
+
 const aparado = (nome, sobra) => {
   const s = String(nome || "");
   return s.length <= sobra ? s : s.slice(0, Math.max(1, sobra - 1)).trimEnd() + "…";
@@ -336,10 +349,147 @@ export function notaDaFuga(v) {
   if (!v || typeof v !== "object" || !v.escapa) return "";
   const quem = v.quem || "O herói";
   const como = v.modo === "desengajando" ? "recuando de guarda erguida, sem dar as costas" : "em disparada";
-  const golpes = Array.isArray(v.golpes) && v.golpes.length ? `, levando o golpe de ${v.golpes.join(", ")} ao dar as costas` : "";
-  const deixados = Array.isArray(v.deixados) ? v.deixados : [];
+  const g = nomesDe(v.golpes);
+  const golpes = g.length
+    ? `, levando ${g.length > 1 ? "os golpes" : "o golpe"} de ${emLista(g)} ao dar as costas`
+    : "";
+  const deixados = nomesDe(v.deixados);
+  /* "Não os mate" errava com uma aranha só (e feminina): a frase fala de
+     QUEM FICOU, que não tem número nem gênero para errar. */
   const atras = deixados.length
-    ? ` Ficaram para trás, VIVOS e ainda no mundo: ${deixados.join(", ")}. Não os mate nem os faça alcançá-lo nesta cena.`
+    ? ` Ficaram para trás, VIVOS e ainda no mundo: ${emLista(deixados)}. Nesta cena, quem ficou para trás não morre nem o alcança.`
     : "";
   return `[FUGA — RESOLVIDA PELO SISTEMA] ${quem} saiu da luta ${como}${golpes}; a luta ACABOU.${atras} Narre a fuga e o fôlego depois dela.`;
+}
+
+/* ============================================================
+   A LINHA DO ESCAPE — o que o jogador lê quando a fuga ACONTECE.
+
+   Nasceu de um erro de concordância jogado no R21: "Aranha do Fosso
+   ficam para trás". Um corpo é "fica", dois ou mais é "ficam", e a lista
+   fecha com "e".
+
+   Os nomes que o combate numera ("Aranha do Fosso 1", "... 2", "... 3" —
+   é assim que a caçada batiza um bando) juntam-se num só, com a
+   contagem: "Aranha do Fosso ×3". Três vezes o mesmo nome numa linha é
+   ruído. A concordância conta CORPOS, não nomes: "Aranha do Fosso ×3
+   ficam".
+
+   Sem ninguém deixado (todos caídos ou fora da luta), a frase não inventa
+   um sujeito vazio: diz só que ninguém segue o herói.
+
+   O emoji é de quem monta a mensagem, como em linhaDaFuga.
+   ============================================================ */
+export const LINHAS_DO_ESCAPE = {
+  sozinho: () => "Você escapa — ninguém vem no seu encalço.",
+  um:      (quem) => `Você escapa — ${quem} fica para trás.`,
+  varios:  (quem) => `Você escapa — ${quem} ficam para trás.`,
+};
+
+export function linhaDoEscape(v) {
+  const deixados = v && typeof v === "object" ? nomesDe(v.deixados) : [];
+  if (!deixados.length) return LINHAS_DO_ESCAPE.sozinho();
+  const contagem = new Map();
+  for (const n of deixados) {
+    const b = baseDoNome(n);
+    contagem.set(b, (contagem.get(b) || 0) + 1);
+  }
+  const grupos = [...contagem].map(([nome, k]) => (k > 1 ? `${nome} ×${k}` : nome));
+  const quem = emLista(grupos);
+  return deixados.length > 1 ? LINHAS_DO_ESCAPE.varios(quem) : LINHAS_DO_ESCAPE.um(quem);
+}
+
+/* ============================================================
+   O PREÇO DA FRASE — o veredito antes do clique, levado à frase escrita.
+
+   R21 jogou: o botão Fugir mostra o preço no primeiro toque; a frase
+   "recuo depressa e fujo" chegava ao mesmo desfecho às cegas. Esta é a
+   conta ÚNICA que a linha do turno lê enquanto o jogador escreve, e é a
+   mesma que o App faz ao enviar (fugirDaLuta): o mesmo vereditoDaFuga,
+   com a mesma frase, logo o mesmo modo — "de guarda erguida" recua sem
+   dar as costas; "fujo" sozinho escolhe o melhor, como o botão.
+
+   Frase que não é fuga devolve "". Nunca estoura: é lida a cada tecla.
+   ============================================================ */
+export function precoDaFrase(args) {
+  const a = args && typeof args === "object" ? args : {};
+  if (!ehFuga(a.frase)) return "";
+  return linhaDaFuga(vereditoDaFuga(a));
+}
+
+/* ============================================================
+   O FÔLEGO DA FUGA — a promessa "ninguém te alcança" vale até o herói
+   sair dali.
+
+   O DEFEITO, jogado no R21: a heroína fugiu da Aranha do Fosso no Fosso
+   das Aranhas, e NA MESMA RESPOSTA o jogo abriu "Encontro mortal —
+   aranha do fosso, são 3. Estavam aqui." Não foi o Narrador a mentir: a
+   fuga zera o combate e manda o turno, e dentro desse turno a caçada da
+   missão (etapa "derrotar" com lugar) viu o herói no lugar certo e sem
+   luta — e abriu outra, pior. O outro portão que abre luta a partir da
+   resposta é o perigo do Narrador (a emboscada), e a prosa de uma fuga
+   fala de pernas atrás de você: menção não é presença.
+
+   A REGRA, em três tempos:
+     1. na resposta da própria fuga, o sistema não abre luta nenhuma —
+        nem caçada, nem virada, nem emboscada. É o fôlego;
+     2. depois, enquanto o herói continua no lugar de onde fugiu, o covil
+        não se reabre sozinho (a caçada fica segura) e quem ficou para trás
+        não aparece à frente (a emboscada da MESMA criatura fica segura).
+        Uma emboscada de outra coisa passa, e a virada também: o mundo não
+        parou;
+     3. saiu do lugar, o fôlego acaba e nada fica seguro — voltar ao covil
+        é escolha, e a caçada volta a valer.
+
+   O LUGAR é o mais interno onde a fuga aconteceu (o primeiro nome de
+   "lugares", na ordem do ondeEstou do App: o ponto antes da cidade).
+   Fugir na Praça de Escambo não protege o Mercado da mesma cidade. A
+   comparação é a tolerante do mesmoLugar do App: sem acento, sem artigo
+   inicial, igualdade ou um nome contendo o outro.
+
+   NÃO É SAVE. Vive na memória da sessão: reabrir o jogo no covil devolve
+   a caçada. É aceitável — a fuga salva o herói desta cena, não o covil
+   para sempre —, e é por isso que isto não toca o formato do save.
+   ============================================================ */
+
+/* o normalizador de lugar e de criatura: o do mesmoLugar do App */
+const NL = (x) => N(x).replace(/^(a|o|as|os)\s+/, "").trim();
+const casaTolerante = (a, b) => {
+  const x = NL(a), y = NL(b);
+  return !!x && !!y && (x === y || x.includes(y) || y.includes(x));
+};
+const listaDeNomes = (x) => (Array.isArray(x) ? nomesDe(x) : nomesDe([x]));
+
+/* a criatura da emboscada casa quem ficou para trás: o mesmo casamento
+   tolerante, depois de tirar o número de série do bando */
+const mesmaCriatura = (a, b) => casaTolerante(baseDoNome(a), baseDoNome(b));
+
+export function folegoDaFuga(v, lugares) {
+  if (!v || typeof v !== "object" || !v.escapa) return null;
+  return { lugares: listaDeNomes(lugares), deixados: nomesDe(v.deixados), naResposta: true };
+}
+
+const aindaLa = (folego, lugares) => {
+  const onde = Array.isArray(folego.lugares) ? nomesDe(folego.lugares) : [];
+  if (!onde.length) return false;
+  return listaDeNomes(lugares).some((l) => casaTolerante(l, onde[0]));
+};
+
+export function folegoSegura(folego, args) {
+  if (!folego || typeof folego !== "object") return false;
+  if (folego.naResposta === true) return true;
+  const a = args && typeof args === "object" ? args : {};
+  if (!aindaLa(folego, a.lugares)) return false;
+  if (a.origem === "cacada") return true;
+  if (a.origem === "emboscada") {
+    const c = String(a.criatura == null ? "" : a.criatura).trim();
+    return !!c && nomesDe(folego.deixados).some((d) => mesmaCriatura(c, d));
+  }
+  return false;
+}
+
+export function folegoDepoisDoTurno(folego, lugares) {
+  if (!folego || typeof folego !== "object") return null;
+  if (!aindaLa(folego, lugares)) return null;
+  return { lugares: nomesDe(folego.lugares), deixados: nomesDe(folego.deixados), naResposta: false };
 }

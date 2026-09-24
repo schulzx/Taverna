@@ -343,6 +343,16 @@ export function impedimentosDaFileira(estado) {
   };
 }
 
+/* A LINHA DO FIM QUANDO O HERÓI FUGIU. Jogado no R21: depois de escapar,
+   o cartão de saída dizia "3 de pé contra você" — a mesma frase que abre
+   toda rodada, lida sobre uma luta que já não existe. A fuga tem
+   desfecho PRÓPRIO (fuga.js já escreveu "você escapa" no log, uma
+   mensagem antes), e o cartão de saída não pode desmenti-lo contando os
+   inimigos que ficaram para trás como se fossem uma ameaça presente.
+   Curta de propósito: entra na mesma linha e no mesmo teto de 54
+   (TETO_DA_RECUSA) que todo o resto desta região. */
+export const LINHA_DO_FIM_DA_FUGA = "Você escapou — a luta ficou para trás.";
+
 export function vereditoDaTela(estado) {
   const e = estado == null ? {} : estado;
   const armado = e.armado ? String(e.armado) : "";
@@ -356,8 +366,22 @@ export function vereditoDaTela(estado) {
     const pedido = PEDIDO_DO_VERBO[armado] || "";
     return pedido ? `${pedido} · ${SAIDA_DO_ARMADO}` : SAIDA_DO_ARMADO;
   }
+  /* O PREÇO DA FRASE DE FUGA (R21, "a fuga escrita não mostra o preço
+     antes"): o botão `Fugir` já mostra o que vai acontecer ao primeiro
+     toque — quem digita "recuo depressa e fujo" em vez de tocar o botão
+     tem direito ao MESMO aviso. Vem ANTES da linha do golpe porque, se a
+     frase no campo é de fuga, é fuga que o Enter vai executar — mostrar
+     o preço do ataque seria prometer um turno que não é o que vai
+     acontecer. `precoDaFuga` chega já pronta (fuga.js precoDaFrase,
+     montada pelo App): esta tela não importa fuga.js, só lê o texto. */
+  if (e.precoDaFuga) return String(e.precoDaFuga);
   if (e.linha) return String(e.linha);
   if (e.recusa) return String(e.recusa);
+  /* O FIM PELA FUGA GANHA DO REPOUSO — mas só depois de tudo o que já
+     tinha frase própria: uma recusa, um verbo armado ou o preço de uma
+     fuga em curso continuam a valer mais do que contar um fim que já
+     passou. */
+  if (e.fugiu) return LINHA_DO_FIM_DA_FUGA;
   const rodada = Math.max(1, Math.round(Number(e.rodada) || 1));
   const dePe = Math.max(0, Math.round(Number(e.dePe) || 0));
   return `rodada ${rodada} · ${dePe} de pé contra você`;
