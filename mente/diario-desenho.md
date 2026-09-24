@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 23/09 · v9.287 · **R15 — a soleira aprende a ouvir, e as dívidas de R13 pagam-se** · commits `d5ec4fe` (as dividas) · `f8709ba` (o save) · `HASHV` (os verbos)
+## 23/09 · v9.287 · **R15 — a soleira aprende a ouvir, e as dívidas de R13 pagam-se** · commits `d5ec4fe` (as dividas) · `f8709ba` (o save) · `89a9cec` (os verbos)
 
 *O escrito das mãos fica em `mente/r15-mesa.md`; a forma, na secção `R15` de
 `mente/formas.md`.*
