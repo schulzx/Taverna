@@ -6930,3 +6930,1831 @@ pré-R2) — e reapareceu **uma etapa depois**, o que prova que corrigir à mão
   de `ALVOS.piso`. Só se viu ao **medir o quadro construído** — como em R13,
   quando a cinta orçada em 186/98 deu 194/145. *Duas etapas seguidas em que o
   número orçado mentiu e o medido salvou.*
+
+---
+
+## R17 · o papel que só pode falhar, e o telefone que deixa de ser a mesa encolhida (`jogo`, 24/09)
+
+*A pessoa jogou no telefone e voltou com duas queixas. As duas são de composição,
+e as duas foram medidas a jogar — `npm run dev`, 375x812, o save dela
+(`A Prova do Depois`, Halda, dia 14), o mesmo turno para todos os números.*
+
+**O par visual está no Figma** — `e5wJUzInAssoebx5npssKc`, páginas
+*R17 · as duas colunas (jogo)* (o orçamento 1:1 das quatro telas, a régua e os
+quatro vereditos) e *R17 · o cartaz que nao pode ser aceite* (a fabricação, do
+`desenho`). **Nenhuma faixa ali é estimativa:** todas saíram do DOM ao vivo.
+
+---
+
+### ITEM 1 · o botão que só pode falhar
+
+**A queixa dela:** *"existe o botão de aceitar quest sendo que a quest já foi
+aceita, então ele diz que ela já está no diário e o botão continua lá ocupando um
+baita espaço."*
+
+#### o que eu medi, e é pior do que a queixa
+
+Ensaiei `aceitarProposta` em Node contra os cinco cartazes do mural dela, com a
+proposta exacta que `aceitarContrato` constrói:
+
+| cartaz | dador | veredito |
+|---|---|---|
+| `O que há em O Salão do Cálice` | Orso da Silva | **pode** |
+| `Tirar Lia da Silva de lá` | Barro de Pedra | não — *já está no diário* |
+| `Praga em a ermida de pedra` | Pia da Silva | não — *já está no diário* |
+| `Tirar Alba de lá` | Olga da Meia-Lua | não — *já está no diário* |
+| `Praga em o posto da estrada` | Sara de Sal | não — *já está no diário* |
+
+**Quatro dos cinco botões não podem dar certo. Oitenta por cento.** E só dois
+deles são o que a pessoa descreveu.
+
+**Os outros dois são falso positivo, e a conta está aqui para não se perder:**
+`Tirar Lia da Silva de lá` (de Barro de Pedra, a vítima é a Lia) colide com
+`Tirar Alba de lá` (de Olga da Meia-Lua, a vítima é a Alba) a **cobertura 0,667
+contra um limiar de 0,62** — quarenta e sete milésimos acima da linha. Duas
+pessoas diferentes, duas vítimas diferentes, dois lugares diferentes. O mesmo
+acontece com as duas pragas (esporo-rugidor na ermida × javali no posto).
+**A peneira semântica está a ler o molde da prosa, não o serviço.**
+
+> *O comentário de `missoes.js:503` conta o incidente que criou a peneira — o
+> mesmo serviço com dois nomes. Hoje ela paga esse acerto com o erro contrário:
+> dois serviços diferentes com o mesmo molde.* **O limiar é número, logo é
+> tabela, logo é do motor** — vai a `pedidos-ao-sistema.md`. **Mas a tela não
+> pode esperar por ele para parar de mentir**, e é isso que decide a forma.
+
+#### os três defeitos que ninguém tinha medido
+
+**1 · O botão está abaixo do piso da casa.** `✍ aceitar contrato` mede
+**27 x 134 px**. O piso é **48** e é lei desta casa (§D4, com as três fontes que
+concordam: WCAG 2.5.5, Apple HIG, Material). *Um alvo que não pode acertar e
+que ainda por cima não se acerta.*
+
+**2 · A resposta chega por baixo do mural — o jogador não a vê acontecer.**
+Medido: a linha `⛔ esse mesmo trabalho já está no diário.` renderiza em
+**y = 391**, e `document.elementFromPoint` nessa coordenada devolve
+**`.tv-cartaz`**. O cartaz tapa a própria resposta. O jogador toca, a tela não
+se mexe um pixel, e o veredito fica escrito num ecrã que ele não está a olhar.
+**Ele tem de fechar o mural para descobrir que não aconteceu nada.**
+
+**3 · E o preço não é o espaço do botão — é a página que ele destrói.**
+Cada toque morto escreve **48 px permanentes** na prosa. **Três toques = 144 px
+de uma página que mede 306** — quarenta e sete por cento da página consumidos
+por três linhas que não dizem nada. Tirei a fotografia: a tela ficou com duas
+linhas de prosa e três caixas de recusa empilhadas.
+
+> *A pessoa disse "ocupando um baita espaço" e tinha razão pelo motivo errado.
+> O botão ocupa 27 px. O que ele gasta, quando é premido, é a página onde a
+> história mora.*
+
+#### a régua: a soleira esconde, o mural carimba
+
+**A soleira esconde, e isto não é escolha — é a régua dela.** §R13 fixou que o
+papel é *oferta por que ainda se espera resposta*, e §R15 apertou-a: a soleira
+leva o que **FECHA** e a saída do que **COBRA**. Um serviço que não pode ser
+aceite não fecha nada, não cobra nada, e ninguém está à espera. **Sai.**
+(Hoje ela já filtra o título exacto — e é por isso que a queixa da pessoa é do
+mural e não da soleira. O que lhe falta são os outros três motivos.)
+
+**O mural carimba, e a razão é que ele não é uma lista — é um objecto.** É a
+única tela do jogo que representa uma coisa do mundo (`App.jsx:2127`, a
+cortiça), e um papel que desaparece da cortiça é **o mundo a esquecer-se de um
+pedido que ele próprio fez**. Foi por isso que os `oferecidos` atravessam a
+renovação do mural de propósito. *A soleira é uma janela de oportunidade; a
+tábua é um móvel. O que se fecha numa, na outra fica pregado e riscado.*
+
+> **A régua, dita de uma vez, para valer fora deste caso:**
+> **onde a casa OFERECE, o que não pode ser aceite não aparece.**
+> **Onde a casa mostra o MUNDO, o que não pode ser aceite aparece riscado.**
+> *A diferença entre esconder e carimbar não é de gravidade — é de quem está a
+> falar. Uma oferta é a casa a falar com o jogador; um papel pregado é o mundo
+> a falar sozinho, e o mundo não apaga o que já disse.*
+
+**E o carimbo tem um dever que o botão não tinha: nunca afirmar um facto sobre
+o mundo.** Com 2 dos 4 vereditos errados hoje, um selo que dissesse *"isto já
+está no seu diário"* sobre o cartaz da Lia seria **uma mentira em repouso** — o
+jogador lê, vai ao Diário, e a Lia não está lá. **Um carimbo errado é pior que
+um botão que falha: o botão só falha quando premido; o carimbo mente a cada
+olhada, de graça.**
+
+**A saída custa zero e é a melhor coisa desta etapa: o carimbo NOMEIA o que
+colidiu.** `pareceMesmaMissao` já sabe com qual missão bateu — só nunca lhe
+perguntaram. Então o ensaio seco não devolve `{pode, motivo}`: devolve
+**`{pode, motivo, contra}`**, e o selo escreve o nome. Sobre o cartaz da Lia o
+jogador lê *«Tirar Alba de lá»* e sabe, sem saber nada de código, que o jogo se
+enganou.
+
+> **Um veredito errado que mostra o seu trabalho é um relatório de defeito.**
+> **Um que o esconde é mentira.** *O veredito antes do clique não é só dizer
+> não — é dizer contra o quê.*
+
+#### os quatro vereditos — o que o jogador lê
+
+Os quatro motivos do motor são de bastidor, e três deles falam do sistema em voz
+alta, o que esta casa proíbe. A tradução é composição e é minha; **a forma do
+selo é do `desenho`**.
+
+| o motor diz (bastidor) | o jogador lê | saída? |
+|---|---|---|
+| `já há missões demais em jogo` | **A sua palavra já está dada oito vezes.**<br>`› largue um contrato no Diário` | **TEM** — e é a única que se desfaz com a mão do jogador, num gesto que ele já conhece |
+| `esse mesmo trabalho já está no diário` | **Já pegou este serviço:**<br>**«{o nome do outro}»** | **TEM**, largando o outro — e **o nome não é opcional**: é o que torna o falso positivo visível |
+| `essa pessoa já lhe deu esse mesmo trabalho` | **{Dador} já lhe pediu isto.** | **NÃO** — é literalmente o mesmo pedido da mesma pessoa; o papel é uma cópia |
+| `nenhuma etapa que o sistema saiba conferir` | **Isto já está feito — ninguém retirou o papel.** | **NÃO**, e não precisa: não há nada a ganhar |
+
+**Porque o quarto ficou assim, e é o que mais me custou:** *"nenhuma etapa que o
+sistema saiba conferir"* é o sistema a falar de si mesmo na pior forma possível.
+No mural este motivo só dispara de uma maneira — **quando o mundo já satisfaz
+todas as etapas do cartaz**. Ou seja: o serviço está feito. Logo a frase
+verdadeira é de ficção e não de mecanismo, e a segunda metade (*ninguém retirou
+o papel*) faz o trabalho a mais de **explicar porque é que um serviço cumprido
+continua pregado** — transforma uma verruga do mundo numa frase sobre o mundo.
+
+**E o primeiro é o único com uma porta, por isso é o único que tem uma seta.**
+*Um "não pode" que não diz o que fazer é metade de um veredito* — mas inventar
+uma saída onde não há é a outra metade da mesma doença. Três destes quatro não
+têm saída, e o selo diz isso calando-se, não fingindo.
+
+#### o espaço — e a resposta honesta é que o botão não era o problema
+
+**Trocar o botão pela razão devolve quase nada:** o botão mede 27 px mais 8 de
+margem, e duas linhas de razão medem uns 32. **A troca é neutra.** Dizer à
+pessoa que isto lhe devolve espaço seria mentir-lhe com um número.
+
+**O que devolve espaço é o cartaz recusado encolher, e a razão é de jogo:**
+depois de a decisão estar fechada, **a descrição, os três selos de recompensa, o
+prazo em vermelho e a linha do dador deixam de ser decisão.** Não são
+informação a menos — são informação que já não serve a nenhuma escolha.
+
+**Medido no DOM** (escondendo exactamente essas partes e devolvendo duas linhas
+de carimbo): **233 → 79 px.** **O `desenho` fabricou a peça a sério e mediu
+224 → 111,3 px (−50,3 %)** — a dele é a verdadeira, porque tem a forma dentro.
+*Os dois números concordam na direcção e o dele manda.*
+
+| | hoje | com o cartaz recusado encolhido |
+|---|---|---|
+| a tábua (5 cartazes) | **1 130 px** | **~570 px** |
+| o scroll do mural | **1 615 px · 2,0 ecrãs** | **~1 050 px · 1,3 ecrãs** |
+| cartazes por ecrã | 3,5 | **6,1** (medido pelo `desenho`) |
+| o útil × o morto | **1 : 1** — os cinco têm o mesmo tamanho | **2 : 1** — o aceitável fica o dobro |
+
+> **E este último é o número que interessa, não os pixels.** Hoje **um papel em
+> cinco é útil e parece exactamente igual aos outros quatro.** O olho tem de ler
+> cinco cartazes para achar o único que serve. Depois, acha-o sem ler — *a
+> hierarquia passa a ser a informação*, que é o trabalho que uma tábua devia
+> fazer desde o primeiro dia.
+
+---
+
+### ITEM 2 · o telefone deixa de ser a mesa encolhida
+
+**A proposta dela:** *"e se tivermos uma versão mobile e uma desktop? A desktop
+vem completa, e a mobile otimizada pra celular de forma que seja possível jogar
+e ter uma ótima experiência nos dois."*
+
+#### a resposta: um sistema, duas composições — e agora com um número a defendê-la
+
+Duas versões partem a lei-mãe desta mesa (*uma ação, uma forma*) e são o defeito
+que a pessoa nomeou ao pedir a mesa. **Mas a resposta "é tudo a mesma tela"
+também estava errada, e a prova é que o código já tem duas composições e nunca
+as escreveu:** a 1280 a soleira mostra duas ofertas e a porta `+N` não
+renderiza; a 375 mostra uma e nasce a porta. **A diferença existe há duas
+etapas. O que não existia era a tabela que a governa** — e por isso ela produziu
+um defeito em vez de uma composição.
+
+#### a régua das duas colunas
+
+> **A mesa mostra ao mesmo tempo o que o jogador compara.**
+> **O telefone mostra ao mesmo tempo só o que ele compara COM A CENA.**
+>
+> O que se compara com a cena é **estado** — quanto lhe resta, quanto falta, o
+> que o corpo pede, o que o mundo oferece agora. O que se compara consigo mesmo
+> é **acervo** — uma lista contra outra lista, uma oferta contra outra oferta.
+> Acervo vai a um toque **nos dois aparelhos**; na mesa pode *também* estar à
+> vista, porque lá a largura é grátis. **Nunca é o contrário: nada que a mesa
+> esconda o telefone mostra.**
+>
+> **A catraca:** toda faixa permanente do telefone tem de ter **um leitor na
+> prosa**. Se não se sabe dizer contra que frase da história o jogador a lê, é
+> acervo, e vai atrás de um toque.
+
+**Porque esta régua e não a de R13.** A régua de R13 (*fica visível o que ele
+usa para decidir enquanto decide*) é sobre **importância**, e a importância não
+muda de aparelho — é a mesma pessoa e a mesma decisão. O que muda é **quantas
+coisas cabem num olhar**. Uma régua de duas colunas tem de ser sobre
+**simultaneidade**, ou as duas colunas são uma só.
+
+**E a prova de que a régua presta é que ela re-deriva o que já estava certo.**
+O tecto de 1 no telefone, que R15 decidiu por taxa de acerto, cai dela sozinho:
+duas ofertas comparam-se **uma com a outra**, logo a segunda é acervo. *Uma
+régua que só confirmasse não provaria nada; uma que mudasse tudo estaria a
+descrever outro jogo.* Esta muda **uma** coisa.
+
+#### a tabela, faixa a faixa
+
+| faixa | compara-se com a cena? | mesa 1280x800 | telefone 375x812 |
+|---|---|---|---|
+| **a cinta** — PV, bolsa, relógio, prazo, estados vivos | sim — *"há três javalis"* × *"12 PV"* | à vista | **à vista** |
+| **o rosto da cena** | é a cena | à vista | **à vista** |
+| **a página** (a prosa) | é a cena | à vista | **à vista** |
+| **a soleira · fila A** — o que FECHA | sim, a oferta é *desta* cena | **2 à vista** | **1 à vista** |
+| **a soleira · fila B** — o que COBRA | é estado, e o estado já mora no relógio | 1 à vista (2.º lugar, grátis) | **no relógio** |
+| **a porta `+N`** para outra fila A | comparar oferta com oferta é acervo | não renderiza (cabem as duas) | **só quando o escondido também FECHA** |
+| **o campo + `Agir`** | é a resposta à cena | 930 px, uma linha | **largura inteira ao escrever** |
+| **as abas** — diário, bolsa, mapa, códex, gestão | **não** — é acervo puro | coluna lateral | a um toque |
+
+#### a única linha que muda, e a discordância que abro contra R15, que é meu
+
+**A porta `+N` mede 48 px mais 8 de intervalo — 56 — e só existe no telefone.**
+Medi as duas larguras no mesmo turno: a 1280 as duas ofertas estão à vista e a
+porta rende a zero.
+
+**E o que ela escondia, no turno que joguei, era `Seguir para Vila de Espinho`
+— a coisa que eu estava mesmo a fazer.** A fila A ganhou o lugar por lei, e a
+lei está certa em abstracto (*o que fecha antes do que cobra*). Mas produziu,
+no telefone, uma tela onde **a oferta no topo é sobre outro sítio e a oferta
+escondida é sobre onde eu estou.**
+
+> **A minha posição, e reverte metade de uma decisão minha:** a fila B já tem
+> casa permanente desde R13 — `Esperar` e `Montar acampamento` mudaram-se para o
+> toque no relógio, com a razão *o tempo mora onde o tempo se lê*. A soleira
+> nunca foi dona da fila B; ela só a faz **aflorar**. Logo, quando a fila A
+> ocupa o único lugar do telefone, **a porta `+N` é uma segunda porta para uma
+> sala que já tem porta** — e duas portas para uma sala é o mesmo defeito que
+> duas formas para uma ação.
+>
+> **A porta morre no telefone quando o escondido é fila B, e sobrevive quando o
+> escondido também FECHA.** §R15 diz que as duas filas competirem é raro por
+> construção (nos 20 turnos de R6, nunca). Devolve **56 px** e mata uma porta.
+
+*Se o `desenho` achar que a porta é forma e a decisão é dele, o lado dele entra
+por baixo deste parágrafo — nunca em dois códigos.*
+
+#### e a cinta não sabia que eu estava a viajar
+
+Joguei a caminho de Vila de Espinho. A cinta dizia `07:42 ⧗ 3 noites +1` —
+relógio e prazo. **A viagem, que naquele momento gastava uma ração, uma água,
+uma noite de cada prazo e uma rolagem de encontro por dia, não estava na faixa
+de estado.** O único sítio da tela que sabia dela era a legenda do rosto e a
+prosa.
+
+A metade direita da cinta é `T.mundo` e é **a região do tempo** (R13, e é o que
+paga R11). **Uma viagem aberta é a forma mais pura de "o tempo a correr com
+preço"**, e é ali que ela mora. Custa **zero pixels** — é a mesma faixa de 48 a
+dizer uma coisa mais verdadeira — e faz o alvo do relógio passar a ser o alvo da
+viagem, o que tira **um toque** ao gesto de a retomar.
+
+#### O ACHADO, e não é a soleira nem a página
+
+**O campo do turno mede 930 px na mesa e 129 px no telefone. A mesma altura de
+65 px nos dois.**
+
+Escrevi uma frase normal de **93 caracteres** — *"Sigo pela estrada rumo a Vila
+de Espinho, atento ao posto da estrada e aos rastros de javali."* — e medi
+`scrollHeight`: **211 px dentro de uma caixa de 65**.
+
+> **O jogador vê 29 dos 93 caracteres que escreveu. Trinta e um por cento.**
+> **Na mesa vê cem.**
+
+| | mesa | telefone | o telefone tem |
+|---|---|---|---|
+| a página | 413 px | 306 px | **74 %** |
+| o campo (largura) | 930 px | 129 px | **14 %** |
+
+> **O telefone não é a mesa encolhida — é a mesa com o CAMPO amputado.**
+> E o campo é o gesto protagonista deste jogo: R6 contou **15 dos 20 turnos**
+> escritos à mão, e foi essa contagem que defendeu a fase inteira. *Nove etapas
+> de redesenho passaram por cima da única peça que o jogo pediu ao jogador para
+> usar em três turnos de cada quatro.*
+
+#### a primeira tela a obedecer à tabela — e ela tem DUAS composições, não uma
+
+O telefone não consegue segurar ao mesmo tempo uma página cheia e um campo
+inteiro. **A mesa consegue, e é por isso que a mesa não muda.** A saída não é
+cortar nenhum dos dois:
+
+> **No telefone, o campo é o que o jogador está a fazer e a página é o que ele
+> acabou de ler. Quando ele escreve, a página pode ceder — ele não está a ler.
+> Quando ele lê, o campo pode ceder — ele não está a escrever.**
+
+**Em repouso** o campo é uma linha (o piso de 48) e os satélites ao lado.
+**Ao ganhar foco** toma a largura inteira, cresce a três linhas, e `✦` e
+`Agir →` descem para a linha de baixo.
+
+**A regra do movimento, e é minha, e não se negocia:** **a borda de BAIXO do
+campo não se mexe** — é onde o dedo está. O que cede é a página, por cima. O
+crescimento acontece **ao focar, antes da primeira tecla**, nunca a meio de uma
+frase; e respeita `prefers-reduced-motion` com corte seco. *Leiaute que se move
+debaixo do polegar é defeito, por mais suave que seja.*
+
+**Os números, medidos o antes e projectados o depois** (375x812, o mesmo save,
+o mesmo turno; as quatro colunas estão 1:1 no Figma e **cada uma soma 812**):
+
+| | mesa (não muda) | telefone HOJE | telefone, a ler | telefone, a escrever |
+|---|---|---|---|---|
+| a cinta | 48 | 48 | 48 | 48 |
+| o rosto da cena | 96 | 96 | 96 | 96 |
+| **A PÁGINA** | **413 · 51,6 %** | **306 · 37,7 %** | **399 · 49,1 %** | 311 · 38,3 % |
+| a soleira | 123 (2 ofertas) | 114 (1 oferta) | 114 | 114 |
+| a porta `+N` | — | **56** | **0** | 0 |
+| o campo + `Agir` | 102 (campo 930) | 102 (campo **129**) | 66 (uma linha) | **154 (campo 343)** |
+| as abas | coluna lateral | 76 | 76 | 76 |
+
+| o que a pessoa ganha | antes | depois |
+|---|---|---|
+| página no telefone, a ler | 306 px · 37,7 % · 11,1 linhas | **399 px · 49,1 % · 14,5 linhas** — **+30 %** |
+| do que ele escreveu, quanto vê | **31 %** | **100 %** |
+| peças permanentes na tela | 6, mais uma porta condicional | **6** |
+| toques para retomar a viagem | 2 (a porta, depois o verbo) | **1** (o relógio já é a viagem) |
+| toques para escrever e agir | 2 | 2 — *igual, e digo-o* |
+
+**As duas colunas melhoram e nenhuma paga a outra, porque nunca acontecem ao
+mesmo tempo.** É isto que uma composição própria dá e que "a mesa com menos
+pixels" não pode dar: **a mesma peça com dois estados vale mais do que duas
+peças**, e continua a ser *uma ação, uma forma*.
+
+#### o que não medi, e digo-o antes que alguém copie
+
+- **Quantos turnos em 20 têm a porta `+N`.** Medi num turno real; o censo é de
+  outra etapa. Se forem poucos, o ganho de 56 px é raro — **o que continua a
+  valer é a porta a mais, que é defeito em qualquer frequência.**
+- **Os 343 px do campo cheio** são geometria da linha, não medição de uma peça
+  construída. **R13 e R15 têm duas etapas seguidas em que o número orçado mentiu
+  e o medido salvou** (a cinta 186→194, a fila do verbo 48→44). *Medir o quadro
+  construído antes de dar o número por bom.*
+- **O teclado do telefone real** come metade do ecrã e eu não o simulei. Se o
+  fizer, a página *já* está quase toda fora e o argumento fica mais forte, não
+  mais fraco — mas não escrevo um número que não medi.
+
+---
+
+### R17 · o que ficou pendente entre o `jogo` e o `desenho`
+
+**Convergimos em separado na decisão que mais importava:** eu escrevi que o
+carimbo tem de nomear o contrato que colidiu; ele fabricou-o já a nomeá-lo
+(`já está no seu diário: «O poço de Vado»`). *Duas cabeças a chegar ao mesmo
+sítio sem se verem é a melhor prova que esta mesa tem, e é a segunda vez.*
+
+**E ele venceu-me no nome do eixo, por lei.** Eu propus `Recuperável` ×
+`Definitivo`; ele fabricou **`Saída: Tem / Não`**. *O sistema não fala de si
+mesmo* — "recuperável" é uma palavra de mecanismo, "saída" é uma palavra de
+jogo. **Aceite sem reserva, e a tabela dos quatro vereditos acima já usa a
+dele.**
+
+---
+
+
+---
+
+## R17 · a fabricação — a recusa ganha eixo, e a casa ganha duas colunas (`desenho`, 24/09)
+
+O `jogo` mediu jogando (`mente/r17-jogo.md`, 375×812, save real, dia 14) e
+compôs; aqui fica **de que cada peça é feita**. Tudo sai de `src/estilo.js` —
+nenhum literal de cor nasce nesta etapa.
+
+**O Figma** (`e5wJUzInAssoebx5npssKc`): duas colecções de variáveis novas
+(*A mao* e *A coluna*), `Consequencia` a 32 variantes, e a página
+**`R17 · o cartaz que nao pode ser aceite`** (`200:67`) com os três pares —
+o cartaz (`201:91`), as duas colunas (`201:67`) e o campo do turno (`201:80`).
+
+---
+
+# PARTE I — o cartaz que não pode ser aceite
+
+## 1 · A peça já existia, e o que lhe faltava era um eixo
+
+O `jogo` pediu **`O carimbo de recusa`** e escreveu que, se fosse antes um
+`Tom` novo de peça existente, a decisão era minha. **É nenhuma das duas.**
+
+- **Não é peça nova.** `A Consequência` (`Consequencia`, `11:35`) já é, por
+  escrito desde D4, *"o que o jogo diz que vai acontecer"*, e o `Tom=Impedimento`
+  já é *"você age — não pode"*. Uma segunda peça para dizer "não pode" seria a
+  mesma acção com duas caras, que é o defeito que esta mesa existe para impedir.
+- **Não é `Tom` novo.** `Tom` é **a quem o facto pertence** (o impedimento, a
+  espera, o preço, o estado). Um quinto `Tom` para "não pode NUNCA" poria dois
+  factos diferentes no mesmo eixo — e, pior, faria a distinção ser **cor**, que
+  é exactamente o que a etapa proíbe.
+
+**O que a etapa fabrica é o eixo que faltava:**
+
+> ### `A Consequência` ganha **`Saída`** — *Tem* · *Não tem*
+>
+> **`Saída=Tem`** — o jogador desfaz isto com a mão. O tecto de 8: larga-se um
+> contrato. É o **Recuperável** do `jogo`.
+> **`Saída=Não tem`** — não há o que fazer. O serviço já está no diário. É o
+> **Definitivo** dele.
+
+**16 → 32 variantes** (`Tom` 4 × `Forma` 2 × `Largura` 2 × `Saída` 2), no Figma,
+neste ciclo. *E o eixo dele e o meu são o mesmo eixo: ele nomeou-o pelo jogador,
+eu pela forma. Fica `Saída`, e fica escrito que "Recuperável/Definitivo" é a
+mesma coisa dita do outro lado da mesa.*
+
+## 2 · Como os dois se distinguem — **por forma, e a cor não é canal**
+
+A lei de `O selo de prazo` (§R13) aplicada inteira: *geometria primeiro, palavra
+segundo, forma terceiro, cor por último.* Aqui a cor **nem sequer entra**.
+
+| ordem | canal | `Saída=Tem` | `Saída=Não tem` |
+|---|---|---|---|
+| 1 | **o alvo** | existe, a `alvo/piso` | **não existe** — sai da árvore |
+| 2 | **o glifo** | `▸` no fim da linha | nenhum |
+| 3 | **a gramática** | **imperativo** — "largue um contrato" | **indicativo** — "já está no seu diário" |
+| 4 | **o tamanho da peça recusada** | não muda | **encolhe** (medido: −57,2 %) |
+| 5 | ~~a cor~~ | `T.inkDim` | `T.inkDim` — **a mesma** |
+
+**O canal 1 é o mais forte e é o único que se testa com o dedo em vez do olho:**
+um jogador que toque no sítio onde havia um botão ou encontra uma porta ou não
+encontra nada, e as duas respostas são instantâneas. Nenhum dos cinco canais
+depende de ver cor; os quatro primeiros sobrevivem ao cinzento e aos três
+daltonismos.
+
+**A cor é a mesma de propósito**, e é lei de R1 a cobrá-lo: *cor viva só em
+coisa com que se interage.* O `Saída=Tem` já tem o seu âmbar — está no `▸`, que
+é a parte interagível. Pintar a razão de vermelho seria dar acento a texto
+inerte e gastar o canal que o `▸` usa.
+
+**Contrastes, medidos (a razão em `T.inkDim` sobre o papel do cartaz, que é um
+gradiente de três paradas):** topo **6,02:1** · meio **6,49:1** · pé **6,69:1** —
+AA com 34 % a 49 % de folga no pior ponto. Sobre `T.panelSoft` (o resto da casa)
+**5,82:1**. A borda `T.lineStrong` do cartaz mede **3,87:1** (1.4.11 pede 3).
+*E a razão nunca apaga — a lei de D4 vale aqui sem excepção: nada de opacidade.*
+
+## 3 · A lei do que sobra — e é ela que responde à queixa dela
+
+> **Uma recusa `Saída=Não tem` SUBSTITUI o controlo que recusa** — o alvo sai da
+> árvore, não fica apagado. E quando o controlo vivia dentro de uma peça maior,
+> **a peça encolhe ao que ainda é verdade**: sai tudo o que só servia para
+> decidir o que já não se decide.
+> **`Saída=Tem` faz o contrário: nada sai**, porque o jogador vai voltar a
+> decidir, e precisa da descrição e do preço para saber se vale largar um
+> contrato por este.
+
+**E o que se guarda é uma RAZÃO, não um px:** a peça aceitável tem de ficar
+**≥ 2× a recusada**, para o olho achar o útil sem ler. Hoje 1 de 5 cartazes é
+útil e os cinco medem o mesmo.
+
+> **EMENDADO NO MESMO DIA, E A EMENDA É DO `jogo` CONTRA UM PEDIDO DELE
+> PRÓPRIO.** Ao assinar o cartaz dobrado (§18) ele reparou que *"a razão de
+> 2:1 era um remendo para um mundo em que tudo está aberto"* — com a lista
+> dobrada todos os papéis medem o mesmo, e o tamanho deixa de poder ser canal.
+> **Tem razão, e a lei não morre: ganha escopo.**
+>
+> - **numa lista ABERTA** (a coluna larga, e a estreita enquanto R18 não
+>   entrar) o canal é o **tamanho**: aceitável ≥ 2× recusada. Medido: 2,34×.
+> - **numa lista DOBRADA** o canal é **a marca na dobra** (§17), porque todas
+>   as dobras medem 79,8 px por construção.
+>
+> *Uma lei que não diz em que mundo vale é uma lei que o mundo seguinte
+> contradiz em silêncio.*
+
+### As medidas, a 375 px, no navegador, com a folha e as fontes carregadas
+
+| estado | altura | cartazes num ecrã de 812 |
+|---|---|---|
+| **hoje** — a letra de hoje, o botão que mente | **224,0** | 3,38 |
+| hoje, com a letra da coluna estreita (Parte II) | **253,9** | 3,01 |
+| **`Saída=Tem`** — a porta de 48 | **277,9** | 2,76 |
+| **`Saída=Não tem`** — encolhido | **118,8** | **6,02** |
+
+- **o botão que mente custa 32,6 px** (14,6 % do cartaz) e mede **27,4 × 133,8** —
+  **57 % do piso do alvo no dedo**. *Um alvo que não pode acertar e que ainda por
+  cima está abaixo do piso.*
+- **a porta custa +24,0 px sobre ele** — e paga-se, porque é o primeiro alvo
+  daquele cartaz que pode dar certo, e é o primeiro que cumpre `alvo/piso`;
+- **o encolhimento devolve 159,1 px por cartaz recusado (−57,2 %)**, e a razão
+  aceitável:recusado dá **2,34×** — a lei acima cumpre-se com 17 % de folga;
+- **a tábua passa de 3,0 para 6,0 cartazes por ecrã** quando o que lá está é o
+  que não se pode aceitar.
+
+*O `jogo` mediu o mesmo no save real e deu 233 → 79, devolvendo **154 px**, e
+**616 px** nos quatro recusados daquele dia. A diferença para os meus 159,1 é só
+o comprimento do título — e duas réguas independentes a caírem no mesmo sítio é
+a prova mais barata que este ciclo tem.*
+
+## 4 · O que o falso positivo obriga, e é a parte mais importante desta etapa
+
+O `jogo` achou que **2 dos 4 cartazes recusados são falsos positivos** da peneira
+semântica: *Tirar Lia da Silva de lá* colide com *Tirar Alba de lá* a cobertura
+**0,667 contra um limiar de 0,62** — duas pessoas, dois lugares, o mesmo molde de
+prosa. E escreveu a frase que decide isto: *"um veredito errado que mostra o seu
+trabalho é um relatório de defeito; um que o esconde é mentira."*
+
+**Sai daí uma lei de forma, e ela conserta o defeito por desenho em vez de por
+afinação de limiar:**
+
+> ### `Saída=Não tem` só se usa quando a recusa é um **FACTO**. Um **JUÍZO** recusa com `Saída=Tem`.
+>
+> "já está no seu diário: «O poço de Vado»" é facto — o título existe, é
+> conferível, e não há o que fazer.
+> "parece o mesmo serviço que «Tirar Alba de lá»" é juízo — e **o que há a fazer
+> é o jogador olhar e decidir**, que é uma saída como qualquer outra.
+> **A peneira semântica (`pareceMesmaMissao`) nunca produz `Não tem`.**
+
+Três coisas que isto paga de enfiada, e nenhuma custa um pixel:
+
+1. **O falso positivo deixa de ser invisível.** Com `Saída=Tem` a linha nomeia o
+   que colidiu e a porta abre o diário no sítio: o jogador vê as duas missões
+   lado a lado e percebe em dois segundos que o sistema se enganou.
+2. **A peneira deixa de precisar de estar certa para não mentir.** Um limiar mal
+   posto passa a custar um toque, não um serviço perdido — e afinar o 0,62 deixa
+   de ser urgente.
+3. **Cumpre-se *o veredito antes do clique*** sem que o veredito tenha de ser
+   infalível. *A casa nunca exigiu que o Mestre acertasse sempre; exigiu que
+   dissesse o preço antes.*
+
+**A segunda linha é fenda da peça, não texto à mão.** `A Consequência` ganha a
+propriedade de texto **`o que colidiu`** ao lado de `a frase`: fica vazia por
+omissão e, quando existe, escreve o nome entre `«»` em `T.inkMeio`. *Um nome
+escrito à mão em cada sítio seria a segunda cara da mesma acção no dia seguinte.*
+
+## 5 · O cartaz encolhido é uma **`A dobra` fechada** — e a peça é de R15
+
+A pergunta que fica de pé depois do §4: se o veredito pode estar errado, esconder
+a descrição esconde a prova. **Não esconde, porque o que encolhe abre.**
+
+`A dobra` (R15) nasceu declarada *"para todos — abas, inventário e bolsa passam a
+ter esta forma disponível, e a próxima vez que alguém precisar de mostrar mais na
+própria lista já não compõe: instancia."* **Esta é a próxima vez.** O cartaz
+`Saída=Não tem` é a dobra no estado *Dobrada*; o mesmo alvo desdobra-o de volta
+aos 253,9 px. Nada se perde, 159,1 px voltam, e **não nasce peça nenhuma.**
+
+Uma só diferença, e tem razão: na soleira `A dobra` esconde **outros itens**;
+aqui esconde **o resto do mesmo item**. O tracejado de `T.lineStrong` continua a
+dizer a mesma coisa — *é uma porta da lista, não uma porta do mundo* — e é por
+isso que continua a não gastar acento nenhum.
+
+## 6 · O alcance: **todo lugar que recusa**, e o cartaz é só o primeiro construtor
+
+`Saída` nasce em `A Consequência`, que é transversal por definição, e paga **G2**
+(*"não pode agora" recusa e DIZ POR QUÊ*, aberta desde 14/09): os **15 controlos**
+sob `bloqueado` recusam hoje no mesmo cinzento, e a partir daqui separam-se
+sozinhos —
+
+| onde | hoje | passa a ser |
+|---|---|---|
+| `Agir →` com o Mestre a escrever | cinzento mudo | `Tom=Espera`, `Saída=Não tem` |
+| `Agir →` com um dado por rolar | o mesmo cinzento | `Tom=Impedimento`, **`Saída=Tem`** — a porta rola o dado |
+| `Agir →` com o campo vazio | o mesmo cinzento | `Tom=Impedimento`, **`Saída=Tem`** — a porta põe o foco no campo |
+| o cartaz duplicado | um botão que falha | `Tom=Impedimento`, `Saída=Não tem`, e encolhe |
+| o grupo cheio | `title` | `Saída=Tem` — a porta abre o grupo |
+| `A escolha` *Impedida*, sem moedas | pílula apagada | `Saída=Tem` — a porta abre a bolsa |
+
+***O `Agir →` carregava três razões na mesma cara* (D3). Com `Saída`, duas delas
+passam a ter porta e uma não — e isso lê-se sem uma palavra.**
+
+**A catraca:** `check-formas` ganha um dente — **nenhum controlo desactivado sem
+uma `Consequencia` irmã**, e **nenhuma `Consequencia` `Saída=Tem` sem alvo a
+`alvo/piso`**. *Uma porta que não é alvo é um rótulo a fingir.*
+
+## 7 · O que fica com o `jogo`, e o que eu recuso
+
+- **Se o mundo continua a pregar um cartaz que não se pode aceitar** é dele — é
+  composição e momento. **A minha posição:** fica e encolhe. Tirá-lo faria a
+  tábua mudar debaixo do olho sem dizer porquê, e o estado encolhido **é** a
+  resposta a "onde é que aquele foi parar".
+- **Recuso a palavra *carimbo*, e digo porquê:** um carimbo é um selo gráfico —
+  cor e forma decorativa — e nesta tábua ele competiria com `O selo de prazo`,
+  que é a única peça da casa autorizada a ser um selo, e que **já mora no
+  cartaz**. Dois selos no mesmo papel e o jogador deixa de saber qual conta o
+  tempo. *O que a intenção dele pede — substituir o verbo e nomear o que colidiu
+  — está inteiro nos §§1–4, e sem gastar um selo.*
+
+---
+
+# PARTE II — o telefone deixa de ser a mesa encolhida
+
+## 8 · A tese, e ela corrige a pergunta antes de responder
+
+A pessoa propôs *"uma versão mobile e uma desktop"*. Duas versões partem a
+lei-mãe desta mesa. **Um sistema, duas composições** — e ao medir apareceu que
+nem sequer são *duas colunas*: **são duas perguntas diferentes, e juntá-las numa
+só é o que faz a régua errar num dos aparelhos.**
+
+> ### As duas perguntas, e são independentes
+>
+> **A MÃO** — *há hover para reler? há um ponteiro com precisão de sub-pixel?*
+> Decide-se por `(pointer: coarse)`, **nunca por largura**: um tablet de 1024 px
+> é um dedo, e uma janela de 375 px num monitor é um rato.
+> *(W3C Media Queries Level 4, `pointer`/`hover` — as únicas consultas que
+> perguntam pelo aparelho de entrada em vez de o adivinhar pelo ecrã.)*
+>
+> **A COLUNA** — *quantos caracteres cabem numa linha?* Decide-se pela largura
+> disponível, porque o que governa a leitura é a **medida**, não o aparelho.
+
+**Confundi-las é o defeito de hoje**, e ele está escrito no próprio
+`src/estilo.js`: há **quatro** chaves com sufixo `NoTelefone`
+(`SOLEIRA.tetoNoTelefone`, `TELA_DE_BATALHA.vezNoTelefone`,
+`fileirasNoTelefone`, `narracaoNoTelefone`), **três** chaves só-de-telefone sem
+sufixo nenhum (`arcoDoPolegar`, `colunas`, `linhas`) e **uma tabela inteira que
+é só do telefone** (`CINTA`). *A segunda coluna já existe — só não é tabela, e
+por isso nenhum varredor pode provar que alguém a honrou.*
+
+## 9 · A tabela, e onde ela mora
+
+Mora em **`src/estilo.js`**, ao lado de `T` e `MATERIAIS`, e chama-se
+**`MEDIDAS`**. Cada linha diz **por que pergunta** troca de coluna — e essa
+palavra (`por`) é o que faz a tabela ser legível por máquina em vez de ser um
+comentário:
+
+```js
+export const MEDIDAS = {
+  reguas: {
+    mao:    { dedo: "(pointer: coarse)", ponteiro: "(pointer: fine)" },
+    coluna: { estreita: "(max-width: 767px)", larga: "(min-width: 768px)" },
+  },
+  alvos: {
+    minimo:  { por: "mao", dedo: 44, ponteiro: 24 },
+    piso:    { por: "mao", dedo: 48, ponteiro: 32 },
+    chamado: { por: "mao", dedo: 56, ponteiro: 48 },
+    espaco:  { por: "mao", dedo:  8, ponteiro:  4 },
+  },
+  tipos: {
+    piso:    { por: "mao",    dedo: 13, ponteiro: 12 },
+    maquina: { por: "mao",    dedo: 13, ponteiro: 12 },
+    rotulo:  { por: "mao",    dedo: 14, ponteiro: 13 },
+    corpo:   { por: "mao",    dedo: 16, ponteiro: 15 },
+    prosa:   { por: "coluna", estreita: 16, larga: 17 },
+    titulo:  { por: "coluna", estreita: 20, larga: 20 },
+    display: { por: "coluna", estreita: 28, larga: 28 },
+  },
+  medida: { minima: 45, maxima: 75 },   /* caracteres por linha */
+};
+```
+
+### O TRUQUE QUE FAZ 117 LEITORES MIGRAREM SEM SEREM TOCADOS
+
+`TIPOS.*` tem **56 leitores** e `ALVOS.*` tem **61**, em 8 arquivos, o `App.jsx`
+incluído. Trocar-lhes a forma seria uma etapa inteira de mudança mecânica com o
+bastão na mão — e não é preciso:
+
+> **`MEDIDAS` gera CSS; `TIPOS` e `ALVOS` passam a ser os NOMES desse CSS.**
+>
+> ```js
+> export const TIPOS = { prosa: "var(--tv-prosa)", maquina: "var(--tv-maquina)", ... };
+> export const ALVOS = { piso: "var(--tv-alvo-piso)", chamado: "var(--tv-alvo-chamado)" };
+> ```
+>
+> e a folha ganha um bloco **gerado a partir de `MEDIDAS`**, como
+> `RAMPA_DO_ESBATIMENTO` já é gerado a partir de `ESBATIMENTO.rampa`:
+>
+> ```css
+> :root { --tv-prosa: 17px; --tv-alvo-piso: 32px; ... }
+> @media (pointer: coarse) { :root { --tv-alvo-piso: 48px; --tv-maquina: 13px; ... } }
+> @media (max-width: 767px) { :root { --tv-prosa: 16px; } }
+> ```
+
+**Quem põe na tela não muda uma linha:** `fontSize: TIPOS.maquina` e
+`minHeight: ALVOS.piso` continuam a ser exactamente o que já são, e é **o
+navegador** que escolhe a coluna — zero JS, zero `matchMedia`, zero re-render,
+e funciona mesmo quando o jogador roda o telefone a meio do turno. *"Nunca pode
+custar o turno" cumprido por construção, não por cuidado* — é a mesma frase com
+que `O esbatimento` se resolveu.
+
+**Quem faz CONTA muda, e são 14 sítios, todos nomeados** — 6 divisões por
+`ALVOS.piso` em `grade-de-batalha.jsx` e 8 asserções em 4 suítes. **E essa
+migração achou um defeito latente:** aquelas 6 divisões usam `ALVOS.piso` para
+dizer *"a casa do tabuleiro"*, que E2 mediu a **48 px no telefone** — é a coluna
+do **dedo**, sempre, e não a coluna viva. Escritas como `MEDIDAS.alvos.piso.dedo`
+ficam certas nos dois aparelhos; como estão, ficam certas num por acidente.
+*Uma conta que não diz de que aparelho fala é uma conta errada num deles.*
+
+**A catraca**, e é ela que prova que ninguém contornou a tabela: `check-formas`
+ganha um dente que conta **`text-[Npx]` literal e `fontSize:` com número**, e só
+o deixa **descer**. Hoje a catraca congela 653 abaixo do piso (R7); a partir
+daqui um tamanho literal é dívida mesmo quando é grande, porque **um número
+literal não sabe em que coluna está**.
+
+## 10 · Os alvos — a coluna da MÃO, com as fontes citadas
+
+| | `dedo` | `ponteiro` | de onde sai |
+|---|---|---|---|
+| `minimo` | **44** | **24** | WCAG 2.2 SC 2.5.8 *Target Size (Minimum)*, AA = **24×24 px CSS**, para qualquer ponteiro · WCAG 2.1 SC 2.5.5, AAA = **44×44** · Apple HIG (*Layout*): área tocável mínima **44×44 pt** |
+| `piso` | **48** | **32** | Material Design 3: alvo de toque **48×48 dp** · no ponteiro, a **mediana medida desta casa (30 px, K2)** arredondada ao degrau de 8 |
+| `chamado` | **56** | **48** | K3, e o degrau abaixo na mesa |
+| `espaco` | **8** | **4** | Material 3: **≥ 8 dp** entre alvos · a *excepção de espaçamento* do SC 2.5.8 existe pela mancha do dedo |
+
+**Por que 44/48 e não um número redondo qualquer, e a derivação é melhor do que a
+citação:** Bi, Li & Zhai, *"FFitts Law: Modeling Finger Touch with Fitts' Law"*
+(CHI 2013) mediram que o toque de dedo tem uma **imprecisão absoluta irredutível
+de ≈2,4 mm de desvio-padrão**, que nenhum treino remove — a ~96 dpi são ≈9 px
+CSS, e um alvo que acerte em ~95 % dos toques precisa de ≈±2σ ≈ **36 px**, mais a
+oclusão do próprio dedo. **É por isso que as três diretrizes caem todas entre 44
+e 48 sem se terem copiado**, e é por isso que o ponteiro não tem um σ equivalente
+e pode viver em 24–32. *A casa deixa de citar um número e passa a saber de onde
+ele vem.*
+
+**Nada regride com o piso de 32, e é verdade por definição:** um piso é um
+**mínimo, nunca um alvo**. Todos os 48 que existem hoje na mesa continuam ≥ 32.
+O que o 32 faz é dar à densidade uma licença **escrita** em vez de uma licença
+por descuido — porque hoje **87 % dos controlos (169 de 194) estão abaixo de 44**
+sem que nada o diga.
+
+**E há um quinto valor nesta coluna que não é px, e é o que paga os 105 `title`:**
+
+> **No `dedo`, `A Consequência` é sempre `Forma=Linha`.**
+> `Forma=Balão` é um canal de rato: abre no *hover*, e **num dedo o hover não
+> existe**. Os 105 `title` do jogo não são 105 textos pequenos — são 105 factos
+> que **não existem** para quem joga no telefone.
+
+## 11 · A letra — e o resultado mediu ao contrário do esperado
+
+**O piso SOBE no dedo (12 → 13); a PROSA DESCE na coluna estreita (17 → 16).**
+Os dois movem-se em sentidos opostos porque **respondem a perguntas diferentes**,
+e é isso que prova que a tabela não é gosto.
+
+### O piso sobe, e responde à MÃO
+
+Apple HIG (*Typography*, iOS): *evitar texto menor que 11 pt*. Material 3:
+`labelSmall` = **11 sp**. R2 já tinha posto o piso **um degrau acima** das duas
+réguas, em 12, com a razão escrita: *"11 pt/sp é o que essas plataformas ainda
+toleram mostrar — não o que sobra depois que o jogador JÁ aumentou a letra do
+sistema."* No dedo há **um degrau a mais a pagar**, e ele não é do olho:
+**não há hover para reler, não há ponteiro para apontar a linha, e o aparelho
+mexe-se na mão.** Daí 13.
+
+*E a prova de que as duas colunas se encaixam em vez de brigarem:* `✓ guardado`
+mede **73,8 px** a 12 e **79,9 px** a 13, logo `CINTA.larguraParaORotulo` passaria
+de 436 para 442. **Não passa** — porque aos 436 px já se está na coluna do
+ponteiro, onde a letra é 12. *A cinta, que foi orçada antes desta tabela existir,
+cai do lado certo dela sozinha.*
+
+### A prosa desce, e responde à COLUNA
+
+**Medido no navegador, a 375 px, com Spectral carregada:**
+
+| `TIPOS.prosa` | caracteres por linha (coluna de 343) | linhas na página de 586 |
+|---|---|---|
+| 17 (hoje) | **40,4** | 21,2 |
+| **16** | **42,9** | **22,5** |
+| 15 | 45,7 | 24,0 |
+
+A banda satisfatória de uma linha de texto é **45–75 caracteres** (Bringhurst,
+*The Elements of Typographic Style*, §2.1.2; a WCAG 1.4.8 põe o tecto em 80), e
+Dyson & Haselgrove (*"The influence of reading speed and line length on the
+effectiveness of reading from screen"*, Int. J. Human-Computer Studies 54(4),
+2001) mediram leitura **mais rápida** em linha média (~55 cpl) do que em linha
+curta.
+
+> **A prosa do telefone não está pequena: está LARGA DEMAIS para a coluna que
+> tem.** A 17 px ela lê-se a 40,4 caracteres — **abaixo** da banda. Subi-la
+> pioraria: a 18 px dá 38,1. **A 16 px dá 42,9 e mais 1,3 linhas de página por
+> ecrã (+6,2 %) — e 16 é exactamente o `bodyLarge` do Material 3, a medida de
+> leitura de uma plataforma inteira.**
+
+**E a mesa não muda nada**, porque a coluna dela já estava certa: a 65ch de R3
+está no meio da banda. *A tabela existe para o telefone; o ponteiro herda o que
+já tinha.*
+
+**`titulo` e `display` não mudam — e não mudar também precisa de razão:** são
+palavras curtas, e a medida de uma palavra curta não depende da coluna. Escrevo-o
+porque a linha vazia de uma tabela é onde a próxima mão inventa um número.
+
+**O que isto custa, declarado:** subir o cartaz do mural ao piso da coluna
+estreita leva-o de 224,0 a **253,9 px — +29,9 px, +13,3 %**. A dívida de R7 tem
+preço, e neste cartaz o encolhimento do §3 paga-a **cinco vezes**.
+
+## 12 · O campo do turno — o achado do `jogo`, e é ele o verdadeiro do dia
+
+Ele mediu: o campo mede **930 px na mesa e 129 px no telefone**, 65 px de altura
+nos dois, e o jogador vê **29 dos 93 caracteres que escreveu — 31 %**. E o campo
+é o gesto protagonista: **15 de 20 turnos** (R6).
+
+> *"O telefone não é a mesa encolhida — é a mesa com o campo amputado."*
+
+**A forma, e ela sai da tabela sem um número novo:** o campo é **a única peça
+desta casa que é mais generosa no dedo do que no ponteiro**, e a razão é
+geométrica — na mesa o eixo abundante é a largura (930 px, uma linha chega); no
+telefone a largura acabou, e **o único eixo que resta é a altura**.
+
+```
+piso   =  3 linhas a MEDIDAS.tipos.corpo.dedo (16) x 1,5  +  16 de enchimento + 2 de fio  =  90 px
+tecto  =  5 linhas                                                                         = 138 px
+```
+
+**3 linhas não é um arredondamento:** a 16 px cabem **42,9 caracteres por linha**
+em 343 px (a mesma régua do §11), logo os **93 caracteres** que ele mediu ocupam
+**2,2 linhas** — e uma frase média tem de caber **inteira**, não quase.
+
+**Custa 25 px de página**, e há de onde: a discordância do §13 devolve 56.
+*Líquido: +31 px, e o jogador passa a ver 100 % do que escreveu em vez de 31 %.*
+
+**Como se degrada:** abaixo do piso nunca desce; acima do tecto rola dentro de
+si com o esbatimento de R15, que já é lei; com `prefers-reduced-motion` o
+crescimento é instantâneo em vez de animado — **e nunca atrasa o `Agir →`.**
+
+## 13 · A discordância do `+N`, resolvida — e o resultado é dele, o mecanismo é meu
+
+**O lado do `jogo`:** no telefone a soleira leva 1 e, havendo 2, nasce
+`mais 1 oferta` — **48 + 8 = 56 px que só existem no telefone**. Hoje ela
+escondeu *Seguir para Vila de Espinho*, a coisa que ele estava mesmo a fazer. A
+fila B já tem casa permanente no relógio desde R13; **duas portas para uma sala
+que já tem porta é o mesmo defeito que duas formas para uma acção.**
+
+**O meu lado:** a conclusão está certa e o mecanismo está errado, e a prova é a
+lei que ele próprio escreveu em R15 —
+
+> *"O tecto protege a página do SISTEMA, não do jogador. A dobra passa-o por
+> decisão de quem joga — um tecto que o jogador não pode levantar não é um
+> tecto: é uma porta trancada."*
+
+Matar a porta no telefone **volta a trancá-la**. E há uma assimetria que só se vê
+do lado da forma: **um teto de 1 com porta e um teto de 1 sem porta são o mesmo
+desenho até ao momento em que há 2 ofertas** — logo o defeito não está na porta,
+está em **o que a peneira mandou para a soleira**.
+
+> ### A resolução: **a porta não morre; a lista é que fica mais curta.**
+> Se a fila B não perece, **não é uma oferta** — a soleira é *"o que o jogador
+> perde se não agir agora"*, que é peneira dele. Tirada a fila B da peneira, a
+> porta **não renderiza**, porque `A dobra` com zero itens escondidos não existe
+> por construção. **Os 56 px voltam na mesma** — a página do telefone vai de 306
+> (37,7 %) a **362 px (44,6 %)** —, e a casa continua com **uma** forma para
+> "mostrar mais na própria lista".
+>
+> **Divergência fechada a favor do `jogo` no resultado e do `desenho` no
+> mecanismo** — a mesma figura de R15 §4, invertida.
+
+## 14 · `A cinta` em viagem — quarto `Estado`, e não peça nova
+
+O `jogo` mediu-se a caminho de Vila de Espinho e a cinta dizia `07:42 ⧗3 noites +1`
+enquanto a viagem gastava ração, água e uma noite de cada prazo por dia.
+
+**É estado da peça de R13, e cai na regra que ela já tem:** *o que não cabe numa
+linha calma é exactamente o que tem de interromper.* Logo:
+
+- **`Estado=Em viagem` usa `alturaViva` (72)**, a mesma segunda fila dos estados
+  vivos — não há linha nova, não há geometria nova, não há orçamento novo;
+- a primeira fila não muda: a ficha à esquerda, o tempo à direita em `T.mundo`;
+- **a segunda fila leva o destino e o que o dia cobra**, na gramática dos chips
+  dos estados vivos — *com o efeito escrito por palavras, nunca só a cor*
+  (`Vila de Espinho · −1 ração · −1 água`);
+- **o selo de prazo continua a contar**, e é isso que faz a viagem doer: o `+N`
+  do lado direito é o número de prazos que a viagem está a queimar.
+
+**A única coisa que tenho de escrever e que não existia:** o destino é prosa e
+**prosa trunca** — pelo fim, com reticências —, porque ao lado dele estão dois
+números que não encolhem sem mentir. *É a mesma lei de quem cede que R15 fixou
+para `A oferta`.*
+
+**Quando entra e quando recolhe é do `jogo`.**
+
+---
+
+## 15 · O Figma, e o que se achou ao construir
+
+Arquivo `e5wJUzInAssoebx5npssKc`.
+
+- **Duas colecções novas, e a forma delas É a tese do §8:** as duas perguntas
+  viram **dois espaços de modos**, não dois valores num comentário.
+  - **`A mao (ALVOS + a letra de servico)`** — modos *Dedo* · *Ponteiro*, 8
+    variáveis (`alvo/minimo`, `alvo/piso`, `alvo/chamado`, `alvo/espaco`,
+    `letra/piso`, `letra/maquina`, `letra/rotulo`, `letra/corpo`).
+  - **`A coluna (a medida da prosa)`** — modos *Estreita* · *Larga*, 5 variáveis
+    (`letra/prosa`, `letra/titulo`, `letra/display`, `coluna/medidaMinima`,
+    `coluna/medidaMaxima`).
+  - Todas com `scopes` explícitos, `codeSyntax` WEB igual ao caminho JS
+    (`MEDIDAS.alvo.piso`) e **a fonte citada na `description` de cada uma** —
+    *a citação deixa de viver num parágrafo e passa a viajar com o número.*
+- **`Consequencia` (`11:35`) passa de 16 para 32 variantes** com o eixo `Saida`,
+  e as `Saida=Tem` têm `minHeight` **ligado a `alvo/piso`** — logo a porta mede
+  48 no modo *Dedo* e 32 no *Ponteiro* **sem uma segunda variante**. *É a primeira
+  peça desta biblioteca cuja altura de alvo muda com o aparelho sozinha.*
+- **E o Figma apanhou outra deriva da biblioteca, a terceira em três etapas:**
+  `a frase` de `Consequencia` estava a **10 px** — **abaixo do piso que a própria
+  casa escreveu em R2**, e desde D4. As 32 ficaram ligadas a `letra/maquina`,
+  logo 12/13 por modo. *Não é uma cor errada desta vez: é a biblioteca a mostrar
+  texto que o varredor do código proibiria. R13 achou a paleta pré-R2, R15 achou
+  a luz pré-correcção, R17 acha a letra pré-piso — **corrigir à mão não é
+  conserto, é adiamento**, e a proposta de sincronização continua na pauta.*
+- **Página `R17 · o cartaz que nao pode ser aceite` (`200:67`)**, três pares:
+  - `R17 · o par, antes e depois — 375×812` (`201:91`) — duas telas de telefone,
+    a mesma tábua, o mesmo save;
+  - `R17 · as duas colunas` (`201:67`) — a mesma prosa a 17 e a 16 numa coluna
+    de 311, e a mesa a 65ch ao lado;
+  - `R17 · o campo do turno` (`201:80`) — 65 px contra 90.
+
+## 16 · A dívida que R17 declara e não paga
+
+1. **A tabela está desenhada e não está construída.** `MEDIDAS`, o bloco gerado
+   na folha e os 14 sítios de conta são etapa do `aprendiz`; o §9 diz tudo o que
+   ela precisa de saber, e **nada nesta secção pede uma decisão nova**.
+2. **As 32 variantes de `Consequencia` não têm ainda a fenda `o que colidiu`**
+   — está especificada no §4 e não está desenhada.
+3. **O piso de 13 no dedo põe `text-[12px]` do lado errado da catraca**, e a
+   catraca de hoje congela só 8–11. O dente novo do §9 (contar literal, não
+   contar valor) substitui-a, e essa troca é do `testes`.
+4. **A porta de `Saída=Tem` no tabuleiro não foi medida.** No campo de batalha a
+   `Consequência` é sempre *Linha* por decisão de R13 (quatro segundos de balão
+   tapam casas) — mas uma *Linha* de 48 px sobre o tabuleiro também tapa, e isso
+   é medida que esta etapa não fez.
+
+---
+
+### R17 · a emenda do `jogo` à sua própria tabela, depois de ler o `desenho` (24/09)
+
+**Ele achou uma coisa que eu não vi, e ela corrige a linha 2 da minha tabela dos
+quatro vereditos.** Eu escrevi que o carimbo tem de nomear o contrato que
+colidiu, para o falso positivo ficar visível. Ele foi mais longe e resolveu o
+problema em vez de o expor:
+
+> **`Saída=Não tem` só se usa quando a recusa é um FACTO. Um JUÍZO recusa com
+> `Saída=Tem`.** *"já está no seu diário: «O poço de Vado»"* é facto — o título
+> existe e é conferível. *"parece o mesmo serviço que «Tirar Alba de lá»"* é
+> juízo — **e o que há a fazer é o jogador olhar e decidir**, que é uma saída
+> como qualquer outra.
+
+**Aceite, e a minha tabela emenda-se.** O motivo `esse mesmo trabalho já está no
+diário` do motor **é dois vereditos, não um**, e o motor já sabe distingui-los
+sem cálculo novo: `pareceMesmaMissao` decide por **título exacto** numa linha e
+por **vocabulário** noutra. Logo o ensaio seco devolve
+**`{pode, motivo, contra, certeza}`** — e `certeza` é `facto` ou `juízo`.
+
+| o motor diz | qual caso | o jogador lê | saída? |
+|---|---|---|---|
+| `esse mesmo trabalho já está no diário` | **título exacto** | **Já pegou este serviço: «{nome}».** | **NÃO** — é o mesmo papel |
+| `esse mesmo trabalho já está no diário` | **vocabulário** (0,667 × 0,62) | **Parece o mesmo serviço que «{nome}».**<br>`› ver no Diário` | **TEM** — o jogador olha e decide |
+
+**E o que isto paga é maior do que a linha da tabela, e é por isso que fica
+escrito com o nome dele:** a peneira **deixa de precisar de estar certa para não
+mentir**. Um limiar mal posto passa a custar um toque, não um serviço perdido —
+e afinar o 0,62 deixa de ser urgente. *A casa nunca exigiu que o Mestre
+acertasse sempre; exigiu que dissesse o preço antes.* **Eu propus tornar o erro
+visível; ele propôs tornar o erro barato, e barato é melhor.**
+
+*O pedido ao motor muda em consequência: `pedidos-ao-sistema.md` deixa de pedir
+uma afinação de limiar com urgência e passa a pedir o campo `certeza` no ensaio
+seco, que é menor, é determinístico, e não mexe em nenhuma regra de jogo.*
+
+---
+
+### R17 · a segunda emenda do `jogo` — a régua estava certa, a chave estava errada (24/09)
+
+Eu escrevi *"a mesa × o telefone"*, e ele mostrou que isso são **duas perguntas
+independentes coladas numa** — `A MÃO` (`pointer: coarse`) e `A COLUNA` (a
+largura). **Ele tem razão e o erro é meu**, e vê-se com dois contra-exemplos que
+a minha tabela julgaria mal: **um tablet de 1024 px é um dedo numa coluna
+larga**, e **uma janela de 375 px num monitor é um rato numa coluna estreita**.
+A minha tabela chamava "mesa" ao primeiro e "telefone" ao segundo, e errava nos
+dois.
+
+**Sobrevive inteira a régua** — *o que se compara com a cena fica; o que se
+compara consigo mesmo vai a um toque* — e a catraca do leitor na prosa.
+**Muda a chave:**
+
+> **A composição da tela principal troca de coluna por `coluna`, não por `mao`.**
+> Quantas ofertas cabem à vista, se as abas são fita ou coluna lateral, se um
+> acervo está aberto ou dobrado: tudo isso é **largura**, porque é sobre
+> *quantas coisas cabem num olhar*. O dedo não muda **o que** cabe — muda o
+> **tamanho** do que cabe, e disso trata a `MEDIDAS` dele.
+
+**As duas tabelas não se sobrepõem, e é esse o sinal de que a fronteira está no
+sítio:** a `MEDIDAS` dele diz **de que tamanho** é cada coisa; a minha diz **que
+coisas estão lá**. Onde as minhas colunas dizem "mesa" e "telefone", leia-se
+**`coluna larga`** e **`coluna estreita`**.
+
+**E aceito a recusa da palavra *carimbo*.** Ele mostrou que competiria com
+`O selo de prazo`, que já mora no mesmo papel e é a única peça da casa
+autorizada a ser um selo — *dois selos no mesmo cartaz e o jogador deixa de
+saber qual conta o tempo*. A intenção está paga sem gastar selo; a palavra não
+era a intenção.
+
+### R17 · a discordância do `+N`, fechada — e ele ganhou no mecanismo com uma lei minha
+
+Eu propus **matar a porta** na coluna estreita quando o que ela esconde é fila B.
+Ele devolveu os mesmos 56 px **sem a matar**, e citou contra mim o que eu próprio
+escrevi em R15: *um tecto que o jogador não pode levantar não é um tecto — é uma
+porta trancada.*
+
+> **O mecanismo dele é melhor e a diferença não é de gosto:** eu atacava a
+> porta, ele ataca a razão da porta. **Se a fila B não perece, não é uma
+> oferta** — sai da peneira da soleira, e `A dobra` com zero itens escondidos
+> **não existe por construção**. Mesmo resultado, uma forma só, e nenhuma regra
+> nova sobre quando uma porta pode ou não pode aparecer.
+
+*Eu tinha escrito uma excepção; ele apagou o caso. Uma excepção é uma lei que
+vai ser esquecida.* **Os 56 px voltam à página do mesmo jeito: 306 → 362 px,
+37,7 % → 44,6 %.**
+
+### R17 · o momento da cinta em viagem — o que é meu responder
+
+Ele fabricou `A cinta` *Estado=Em viagem* a `alturaViva` (72). **Quando entra e
+quando recolhe é meu, e é isto:**
+
+1. **Entra quando a jornada abre, e não no primeiro avanço.** O turno em que o
+   jogador decide viajar é o turno em que ele começa a pagar — *o relógio não
+   espera pelo segundo passo para começar a contar*, e a tela não deve esperar
+   também.
+2. **Não muda por turno: muda quando muda o que falta.** É a mesma regra do
+   rosto da cena (§R13) e pela mesma razão — *uma faixa que se mexe a cada turno
+   vira um pisca-pisca e deixa de informar*. O que ela mostra é `faltamMin` /
+   `turnosRestantes`, que só se mexem quando o herói anda.
+3. **Recolhe ao chegar, e a chegada é a única vez que a faixa pode fazer
+   barulho** — é o momento em que o preço para de correr, e é a notícia. Depois
+   volta aos 48 da linha calma.
+4. **Nunca interrompe.** A cinta é estado; estado não pede turno. Se a viagem
+   precisar de uma decisão, quem a pede é a soleira — *a cinta conta, a soleira
+   deixa fazer, e entre as duas ganha a segunda.*
+
+**E a razão de ela poder crescer para 72 é a regra dele aplicada à minha:** *o
+que não cabe numa linha calma é o que tem de interromper*. Uma viagem aberta não
+cabe — são um destino, um tempo que falta e um preço por dia — e **é o único
+estado desta tela que cobra enquanto o jogador não faz nada**. Um estado que
+cobra em silêncio é exactamente o que R15 pôs na fila B, e a fila B agora mora
+aqui.
+
+### R17 · a assinatura do `jogo` no cartaz dobrado (a proposta ambiciosa do `desenho`)
+
+Ele perguntou-me o que só eu podia responder: **a tábua ainda parece uma tábua
+com os papéis fechados?**
+
+**Assino, e com um argumento mais forte do que o dele.** Uma cortiça verdadeira
+**é** uma parede de títulos: ninguém lê seis avisos ao mesmo tempo — lê-se a
+parede e aproxima-se de um. **A tábua de papéis todos abertos é que nunca foi
+uma tábua: eram seis folhetos empilhados.** Com 8,48 cartazes por ecrã, o jogador
+**vê a tábua pela primeira vez** na coluna estreita, onde até hoje via um papel e
+meio. *A metáfora não enfraquece com a dobra — é a dobra que a torna possível no
+aparelho onde ela nunca coube.*
+
+**Duas condições, e a primeira não é um detalhe — é o que decide se a proposta
+ganha ou perde:**
+
+> **1 · A dobra tem de carregar a marca de `Saída`.** Se um papel morto for
+> indistinguível de um papel vivo enquanto dobrado, o jogador abre quatro para
+> achar um — e **os 8,48 cartazes por ecrã transformam-se em quatro toques
+> desperdiçados**, que é pior do que hoje, porque hoje o papel morto pelo menos
+> se denuncia depois de um toque. *Uma tábua de papéis fechados só é melhor que
+> uma tábua de papéis abertos se a parede se puder LER sem se abrir nada.*
+> **2 · Um aberto de cada vez na coluna estreita; livre na larga.** Segurar um
+> papel é o gesto do mundo, e é a régua das duas colunas outra vez: comparar
+> oferta com oferta é acervo, e acervo não se faz num ecrã de 375.
+
+**E a dobra aposenta a minha razão de 2:1, o que é uma melhoria contra mim.** Eu
+tinha pedido que o cartaz aceitável ficasse ao dobro do recusado, para o olho
+achar o útil sem ler. **Isso era um remendo para um mundo em que tudo está
+aberto.** Com tudo dobrado ao mesmo tamanho, o canal honesto deixa de ser o
+tamanho e passa a ser **a marca na dobra** — que é mais barato, mais legível e
+não gasta altura. *A razão de 2:1 fica escrita como o que era: a melhor resposta
+possível à pergunta errada.*
+
+---
+
+### R17 · a conta refeita, contra mim, depois de o campo ganhar piso (24/09)
+
+**Eu orçamentei a coluna estreita com o campo em repouso a UMA LINHA (48 px), e
+o `desenho` mediu e pôs-lhe piso 90** — porque 3 linhas a `corpo` 16 são
+**42,9 caracteres por linha a 343 px**, e uma frase média tem de caber inteira.
+**A medida dele manda, e a minha conta muda.** Refeita, e cada coluna continua a
+fechar em 812:
+
+| faixa | hoje | a ler | a escrever |
+|---|---|---|---|
+| a cinta | 48 | 48 | 48 |
+| folga | 13 | 13 | 13 |
+| o rosto da cena | 96 | 96 | 96 |
+| **A PÁGINA** | **306 · 37,7 %** | **359 · 44,2 %** | **311 · 38,3 %** |
+| a soleira | 114 | 114 | 114 |
+| a porta `+N` | **56** | **0** — a fila B sai da peneira | 0 |
+| o campo + `Agir` | 102 (campo 129 de largura) | **106** (piso 90) | **154** (tecto 138, campo 343) |
+| as abas | 76 | 76 | 76 |
+| **soma** | **811** | **812** | **812** |
+
+**O que muda em relação ao que escrevi acima, e escrevo com o erro à frente:**
+
+- **a página a ler é 359, não 399** — eu tinha-lhe dado um campo de 66 px que a
+  medida dele desmentiu. **+53 px sobre hoje (+17 %)**, não +30 %.
+- **a proposta ambiciosa das abas passa de 475 para 435 px (53,6 %)**, e de
+  1,55× para **1,42×** a página de hoje. *Continua acima da linha de R5a, e
+  continua a ser a maior faixa permanente da tela sem leitor na prosa — o
+  argumento não dependia do número, mas o número tinha de estar certo.*
+- **o líquido da etapa é +31 px**, como ele escreveu: a porta devolve 56, o piso
+  do campo custa 25.
+
+> **E fica escrito porque é a terceira vez seguida que isto acontece nesta
+> fase:** R13 orçou a cinta em 186/98 e o quadro construído deu 194/145; R15
+> orçou a fila do verbo em 48 e ela saiu a 44; R17 orçou o campo em repouso a 66
+> e ele tem 90. **Três etapas, três números orçados que mentiram e três medidas
+> que salvaram.** *O orçamento é a peça desta mesa que mais gente copia sem
+> reconferir — e a regra que sai daqui é uma: nenhum número de faixa entra numa
+> conta antes de a peça estar construída e medida.*
+
+---
+
+
+---
+
+## 17 · `A marca na dobra` — e é ela que decide se R18 ganha ou perde
+
+**A condição (1) do `jogo` está certa e é a mais dura desta etapa:** se o papel
+morto for indistinguível do vivo enquanto dobrado, o jogador abre quatro para
+achar um, e **os 8,48 cartazes por ecrã viram quatro toques desperdiçados —
+pior do que hoje**, porque hoje o papel morto ao menos se denuncia depois de um
+toque. *Uma tábua de papéis fechados só é melhor que uma de papéis abertos se a
+parede se puder LER sem se abrir nada.*
+
+### A marca é o PERCEVEJO, e a gramática é física antes de ser gráfica
+
+A casa já tem o vocabulário e nunca o usou para isto: `MATERIAIS` guarda **duas
+cabeças de percevejo** — a de latão (o cartaz é da cidade) e a roxa (foi-lhe
+oferecido). **O percevejo é o que segura o papel à tábua.** Um serviço que já
+está no diário é, literalmente, **um papel que já não está pregado para si.**
+
+| estado | o percevejo | o papel |
+|---|---|---|
+| **pode aceitar** | cabeça cheia, a prumo | pregado, com o giro do `hash` |
+| **`Saída=Tem`** | **a cabeça meio saída**, torta | o canto solto — *está a cair* |
+| **`Saída=Não tem`** | **não há**: fica **o furo** | pousado, não pregado |
+
+**Zero px de custo, nos três:** o furo ocupa exactamente o lugar que a cabeça
+ocupava, e a queda é `transform`, que não toca no leiaute. *E não nasce peça
+nenhuma* — é um terceiro e um quarto valor de `tv-percevejo`, que já existe.
+
+**E cumpre a lei mais funda desta casa:** um percevejo que falta não é um
+distintivo de estado — **é uma tábua.** *O sistema não fala de si mesmo.*
+
+### Os três canais, por ordem de força — e a cor continua a não ser um deles
+
+1. **O percevejo** (acima). Geometria e material; sobrevive ao cinzento e aos
+   três daltonismos.
+2. **A palavra, e ela mora numa fenda que já existe.** A cabeça dobrada tem
+   título e preço (`◉ 40`). Em **`Saída=Não tem`** o preço **sai e a razão
+   entra no lugar dele**: `◉ 40` → `no diário`. Mesma ranhura, mesmo orçamento
+   de largura, **zero px** — e é o canal mais forte que existe, porque é
+   palavras. Em `Saída=Tem` **o preço fica**, e tem de ficar: é com ele que o
+   jogador decide se vale largar um contrato por este.
+3. **A tinta do título.** `Saída=Não tem` escreve-o em `T.inkMeio` em vez de
+   `T.ink` — **8,82:1 contra 14,83:1 sobre o papel, e os dois são AAA**. É
+   **luminância, não cor**, e é a única coisa desta etapa que se parece com
+   apagar.
+   *E não fere a lei de D4 (`a razão nunca apaga`), que eu próprio invoquei no
+   §2:* o que baixa é o **título**, que deixou de ser accionável; **a razão
+   está no canal 2, a tinta cheia.** Uma lei que protege a razão não protege o
+   que já não é pergunta.
+
+### Por que `Saída=Tem` pode viver com UM canal, e não é preguiça
+
+É a mesma estrutura de `O selo de prazo` (§R13): *"`5 noites` e `2 noites` não
+são estados que se distinguem de relance — são um número que se lê. O único que
+tem de saltar aos olhos é a última noite."* Aqui:
+
+> **O único que tem de saltar aos olhos é o que NÃO VALE ABRIR.**
+>
+> Abrir um `Saída=Tem` **não é um toque desperdiçado** — é o toque que mostra o
+> preço da troca (largar qual contrato, por este). O desperdício que a condição
+> (1) do `jogo` nomeia é só o dos `Não tem`, e esses levam **três** canais.
+
+**Logo a condição (1) cumpre-se com folga**, e cumpre-se onde ela importa.
+
+### A condição (2) aceite, e ela obriga `A dobra` a ganhar uma lei de LISTA
+
+*Um aberto de cada vez na coluna estreita; livre na larga.* Aceite sem reserva —
+e reparo no que ela implica para a minha peça: `A dobra` de R15 tem `Estado`
+(*Dobrada* · *Aberta*) **por instância**, sem exclusão mútua. A exclusão não é
+propriedade da peça, é propriedade da lista:
+
+> **Numa coluna estreita, uma lista de dobras abre UMA de cada vez.** Abrir a
+> segunda fecha a primeira, no mesmo gesto e sem animação de fecho. Na coluna
+> larga, livre.
+> *Não é um eixo novo da peça: é uma lei de quem monta a lista, e entra no
+> varredor com ela.* **Segurar um papel é o gesto do mundo** (a razão é do
+> `jogo`); comparar oferta com oferta é acervo, **e acervo não se faz num ecrã
+> de 375**.
+
+---
+
+## 18 · R18 assinado, e o que muda na proposta por ter sido assinado
+
+O `jogo` assinou o cartaz dobrado e trouxe o argumento que faltava à proposta,
+melhor do que o meu: *"uma cortiça verdadeira **é** uma parede de títulos —
+ninguém lê seis avisos ao mesmo tempo. **A tábua de papéis todos abertos é que
+nunca foi uma tábua: eram seis folhetos empilhados.**"*
+
+**Isso troca a justificação da proposta, e a troca é para melhor.** Eu tinha
+escrito R18 como um ganho de densidade (8,48 contra 3,38 cartazes por ecrã).
+Com o argumento dele passa a ser **uma reparação de metáfora que dá densidade
+de lucro**: a dobra não enfraquece a tábua — *é ela que a torna possível no
+aparelho onde nunca coube.*
+
+**R18 entra com as duas condições escritas na etapa**, e o §17 é o que as paga.
+Sem o §17, R18 **não entra** — e isso fica dito assim na pauta, porque uma
+proposta ambiciosa com uma condição por cumprir é uma proposta por cumprir.
+
+### As duas propostas dele que tocam a minha, e não a duplicam
+
+- **`R17i` — a cortiça perde o caixilho na coluna estreita.** Ele mediu 294 px
+  de cartaz dentro de 375, **~76 px (20 % do eixo mais estreito) de moldura**.
+  **Concordo, e acrescento a razão de forma:** a moldura de madeira é a peça que
+  diz *isto é uma tábua* a quem **vê a tábua** — e na coluna estreita ninguém a
+  vê inteira, logo ela está a pagar por uma leitura que não acontece. *R18
+  resolve a altura; R17i resolve a largura; e depois de R18 a moldura volta a
+  ter trabalho, porque a parede passa a caber no olho.* **Ordem: R17i primeiro,
+  R18 depois** — o contrário faz a parede nascer estreita.
+- **`R20` — a coluna estreita perde a fita das abas.** É dele e é composição.
+  A minha nota de forma, e é a favor: **cinco portas sempre abertas para salas
+  que já têm porta na cinta é a mesma conta com que ele fechou o `+N`** — e a
+  condição que ele próprio pôs (um censo de 20 turnos antes) é a única coisa
+  que impede isto de ser arrojo. *Uma proposta ambiciosa que se recusa a ser
+  medida é só uma proposta arrojada* — a frase é dele e fica com o nome dele.
+
+### E a emenda dele à chave das colunas, aceite e anotada
+
+Ele reetiquetou a tabela de composição de *mesa × telefone* para **`coluna`**,
+e escreveu porquê: a composição é sobre **quantas** coisas cabem num olhar, e
+**o dedo só muda o tamanho do que cabe**. É exactamente a decomposição do §8, e
+vale a pena dizer o que ela prova:
+
+> **As duas tabelas não se sobrepõem em nenhuma linha, e é esse o sinal de que
+> a fronteira está no sítio:** `MEDIDAS` (minha) diz **de que tamanho** é cada
+> coisa e troca por `mao` ou por `coluna` conforme a linha; a tabela dele diz
+> **que coisas estão lá** e troca **sempre** por `coluna`.
+> *Duas tabelas que se tocassem seriam uma tabela mal cortada.*
+
+### A dívida do tabuleiro volta com uma leitura, e a leitura é boa
+
+A minha dívida do §16.4 (*uma `Consequência` `Saída=Tem` de 48 px sobre o
+tabuleiro também tapa casas*) volta dele com a régua certa: **ali a pergunta não
+é "quanto tapa", é "tapa o que eu preciso de ver para decidir AGORA"** — e uma
+linha de 48 px junto da casa tapa uma fileira inteira de 1,5 m. **A saída que
+ele antecipa — nascer colada ao topo do campo em vez de junto da casa — é forma,
+e por isso respondo:** aceito-a como a hipótese a medir, **e não como decisão**,
+porque colar ao topo troca "tapa casas" por "obriga o olho a sair do sítio onde
+a mão está", e nenhuma das duas se escolhe sem a medida. **Continua dívida
+declarada, agora com duas hipóteses em vez de zero.**
+
+
+### 17b · O QUE OLHAR PARA A PAREDE CONSTRUÍDA MUDOU — e muda a ordem que eu tinha escrito
+
+Desenhei os três percevejos no Figma, montei a parede a 302 px e **olhei**. Duas
+coisas, e a primeira é contra mim.
+
+**1 · A ordem dos canais estava errada, e a palavra é o canal primário.**
+Escrevi o percevejo em primeiro por reflexo — *geometria antes de palavra* é a
+lei de `O selo de prazo`. Na parede construída, `◉ 40` → `no diário` **lê-se
+antes de tudo o resto**, e o percevejo lê-se depois de se ir procurá-lo.
+
+> **E a lei de `O selo de prazo` não estava errada: estava mal citada por mim.**
+> Ela não diz *"geometria primeiro"*; diz **"o canal que carrega a informação
+> mais directamente primeiro"** — e ali a informação era uma **fracção** (quanto
+> falta), que uma ampulheta mostra melhor do que qualquer palavra.
+> **Aqui a informação é um FACTO BINÁRIO** (pode / não pode), e um facto binário
+> não tem melhor canal do que duas palavras.
+>
+> **A regra geral, e agora está escrita em vez de subentendida:**
+> *quantidade pede geometria; facto pede palavra; e o material vem depois dos
+> dois, porque o material diz o mundo, não diz o estado.*
+
+**A ordem corrigida:** 1) **a palavra na ranhura do preço**; 2) **a tinta do
+título** (14,83:1 → 8,82:1, os dois AAA); 3) **o percevejo**. Os três continuam
+a sobreviver ao cinzento e aos três daltonismos, e nenhum é cor — **o que muda é
+qual deles é o que salva, e isso decide o que NUNCA se pode tirar.** Se um dia a
+ranhura do preço tiver de encolher, é o percevejo que se reforça, não o
+contrário.
+
+**2 · O primeiro furo estava errado e só se viu ao olhar.** Desenhei-o como um
+ponto pálido — e um ponto pálido no sítio de uma cabeça de latão **lê como uma
+cabeça apagada**, que é precisamente o que esta casa proíbe (opacidade a dizer
+estado). Refeito: **buraco quase-preto com o rebordo do papel a apanhar luz em
+baixo.** Agora lê-se como o que é — *um furo de onde o percevejo saiu* — e a
+parede distingue o papel morto do vivo sem se abrir nada, que era a condição (1)
+do `jogo`.
+
+**E o que o olhar confirmou em vez de contradizer:** o `Saída=Tem` continua
+**subtil** ao lado do `Pode aceitar`, e está certo assim — *o único que tem de
+saltar aos olhos é o que não vale abrir* (§17). A medida não desmente a lei;
+mostra-a a funcionar.
+
+**No Figma:** `O percevejo` (`206:93`, **6 variantes** — `Saída` 3 × `Pilha` 2,
+esta última a que já existia em `MATERIAIS`) e `R17 · a tábua dobrada`
+(`206:94`), com os três canais ao mesmo tempo e a conta escrita no pé.
+
+*Terceira etapa seguida em que o número orçado — ou, aqui, a ordem raciocinada —
+mentiu, e o que estava construído salvou. **Começa a não ser coincidência: é a
+razão de a mesa ter de construir antes de assinar.***
+
+## R17 · a emenda das capturas — três decisões, e a primeira desmente a nossa própria medição (`jogo`, 24/09)
+
+*As capturas do telefone chegaram depois de a etapa estar escrita, e mostram uma
+tela **sem uma linha de prosa**. Conferi no código antes de decidir. As três
+decisões que o `regente` pediu, e nada mais — não é etapa nova.*
+
+### o achado: há DUAS imagens do mesmo facto, e colidem no único turno em que qualquer uma importa
+
+| peça | o que é | onde vive |
+|---|---|---|
+| `OTopoDoPapel` / `RostoDaCena` | a xilogravura de **96 px**, determinística por semente, que R13-B fabricou | **fora** da área que rola (`App.jsx:22364`) |
+| `VinhetaDaCena` | uma **fotografia `.webp` de 160 px** do bioma (`App.jsx:1225`) | **dentro** da área que rola, e é o **primeiro** elemento dela (`22368`) |
+
+**R13-B nasceu para dar rosto à cena e ninguém aposentou o que já lá estava.**
+Há arte para **30 biomas** em `public/cenas/`, portanto não é caso de canto.
+
+**E a colisão é pior do que a soma sugere.** A vinheta rola, logo não custa
+sempre 160 px — **custa 160 px exactamente quando o jogador chega a um lugar
+novo**, que é o turno para que o rosto da cena foi criado (§R13: *o rosto
+devolve a frase de abertura exactamente nos turnos em que o jogador está mais
+perdido*). **As duas imagens chocam no único turno em que qualquer uma delas
+importa.** E ainda há um terceiro bloco antes da prosa — `Voz` e
+`CabecalhoDaCena` (`rounded-2xl px-4 py-3 mb-4`).
+
+**A conta do turno da chegada, na coluna estreita:** o contentor da página mede
+306 px e dentro dele a vinheta leva 160, a voz e o cabeçalho o resto —
+**sobram ~100 px para a prosa: 3,6 linhas, umas 25 palavras**, contra um
+parágrafo deste jogo que tem 60 a 90. **A captura mostra o caso-limite: zero.**
+
+> **E fica escrito porque nos desmente:** `VinhetaDaCena` tem `onError → null`.
+> **A nossa medição estava certa e a tela está errada — medimos o caso que não
+> acontece.** R12, R13 e eu próprio em R17 medimos saves e turnos em que a arte
+> do bioma faltava ou já tinha rolado para fora do ecrã, e nenhum de nós
+> perguntou porque é que a faixa às vezes lá estava. *Uma peça que
+> silenciosamente desaparece quando falha é uma peça que ensina o medidor a não
+> a ver.*
+
+### DECISÃO 1 · fica a gravura, e a vinheta muda de emprego (não morre)
+
+**A régua do `regente` — vinheta é oferta, gravura é estado — não serve, e
+derrubo-a**: a minha peneira é sobre **ações**, e uma imagem não é uma ação. A
+régua certa é a lei-mãe desta mesa: **duas caras para o mesmo facto é defeito**.
+Qual das duas cede decide-se por **qual das duas diz mais**, e a resposta tem
+três fundamentos e todos são lei da casa:
+
+1. **Só a gravura sabe ONDE o jogador está.** Ela nasce de `lugarDaCena()` mais a
+   semente e distingue *a ermida de pedra* de *o posto da estrada*. A vinheta sabe
+   só o **bioma** — dois lugares diferentes do mesmo bioma dão a **mesma**
+   fotografia. *Uma imagem que não distingue o lugar não diz onde se está; diz em
+   que tipo de sítio se está, e isso a prosa faz melhor numa linha.*
+2. **Determinismo por semente é lei desta casa.** A gravura é a mesma em qualquer
+   máquina; a fotografia é um ficheiro que pode faltar. **Uma peça que às vezes
+   existe não pode ser aquela onde o jogador procura o lugar.**
+3. **A gravura está fora da área que rola e a vinheta está dentro** — a vinheta
+   rouba à prosa, a gravura não. E rouba no turno da chegada.
+
+> **A vinheta sai da faixa nas DUAS colunas, e já.** Não é orçamento: a largura
+> da mesa não compra o direito de repetir um facto. *Se coexistissem na mesa
+> teríamos escrito que a duplicação é aceitável quando há espaço, e é assim que
+> uma lei morre.*
+
+**E ela não é deitada fora — muda de emprego, e o emprego já está escrito na
+pauta.** A vinheta já tem um gradiente que a funde no fundo: **ela quer ser
+chão, não faixa.** É exactamente **R16** (*a página deixa de ser um rectângulo
+castanho e passa a ser papel com a cena impressa nele*). **Aposentar a faixa e
+entregar os 30 ficheiros a R16 aposenta a forma sem perder a arte** — e R16
+deixa de ser só uma marca de água gerada: passa a ter fotografia real por baixo
+da prosa, com a catraca de contraste que já escreveu para si mesma.
+
+*Se o `desenho` achar que a fotografia sob a prosa não passa a catraca de AAA
+que R16 fixou, o lado dele entra por baixo deste parágrafo — mas a faixa sai na
+mesma, porque a razão de sair não é onde ela vai parar.*
+
+### DECISÃO 2 · a ordem de cedência, e o piso da prosa
+
+A tabela das duas colunas dizia **o que está lá**; faltava-lhe dizer **quem sai
+primeiro quando não cabe**. Para a **coluna estreita**, por esta ordem:
+
+| ordem | quem cede | como cede |
+|---|---|---|
+| **1.º** | **repetição** — a segunda cara do mesmo facto | **sai inteira**, e não volta |
+| **2.º** | **acervo à vista** — a fita das abas, um `+N`, a segunda oferta | **vai a um toque**, nunca sai |
+| **3.º** | **o rosto da cena** | **encolhe, não sai** — sair faria a tela perder a única coisa que diz o lugar |
+| **4.º** | **a soleira** | cede o **número** (2 → 1), nunca a existência |
+| **5.º** | **a cinta** | **não cede** — é o que ele compara com a cena |
+| **nunca** | **a prosa** | **tem piso, e nada o atravessa** |
+
+> ### O PISO DA PROSA NA COLUNA ESTREITA É **359 px**
+> São **13 linhas** a Spectral 17 / entrelinha 27,6, e 13 linhas a ~7 palavras é
+> **um parágrafo inteiro deste jogo** (60 a 90 palavras). **O piso não é uma
+> altura: é uma unidade de escrita.** §R13 mediu e escreveu a acusação — *o
+> telefone não consegue mostrar um parágrafo inteiro; não é apertado, é
+> incapaz* — e nunca lhe deu número. Este é o número.
+
+**E o piso não foi escolhido para caber: a conta refeita já lá tinha chegado por
+outro caminho.** O orçamento de R17 dá **359 px** à página na coluna estreita
+depois de a fila B sair da peneira e o campo ganhar piso 90. *Duas contas
+independentes no mesmo número é a melhor prova que esta mesa tem, e é a terceira
+vez nesta fase.*
+
+**Hoje a tela está abaixo do piso, e é por isso que a fase existe:** 306 px em
+turno normal (**−15 %**) e **~100 px no turno da chegada** (**−72 %**), que é o
+turno em que a prosa mais importa. *Um piso que o produto de hoje não cumpre não
+é uma ambição — é o diagnóstico escrito como número.*
+
+### DECISÃO 3 · a lei da recusa
+
+> ## Uma recusa nunca é conteúdo.
+> **A recusa mora na peça que a causou, dura o tempo da decisão, e não deixa
+> rasto.**
+
+Três propriedades, e cada uma conserta um defeito medido hoje:
+
+1. **Mora na peça** — na mesma peça que o dedo tocou. Medido: a recusa do aceite
+   renderiza em `y=391` e `elementFromPoint` devolve `.tv-cartaz` — **o cartaz
+   tapa a própria resposta**. *Uma resposta que aparece longe do dedo é uma
+   resposta que não chegou.*
+2. **Não persiste** — não entra em `mensagens`, não entra no save, não se lê
+   amanhã. *A coluna da narração é a história do jogador. O diário dele é o que
+   ele fez, não o que o sistema lhe impediu.*
+3. **É idempotente** — dois toques não fazem duas recusas. Medido: três toques
+   deixam **três cartões e 144 px permanentes** numa página de 306.
+
+**O alcance, e é grande: `App.jsx` tem 61 ocorrências de `⛔`, e 49 delas na
+forma `autor: "sistema", texto: ⛔…`** — quarenta e nove recusas escritas como
+conteúdo permanente, ao lado da narração. GD insuficiente, PM que faltam, o
+cofre que não chega, o posto que não alcança: **tudo isto é o sistema a falar de
+si mesmo, para sempre, na coluna onde mora a história.** A lei vale para as 49.
+
+**E o corolário é o que a torna barata:** com o veredito a montante, **a maior
+parte destas recusas deixa de precisar de texto** — o alvo não existe, e
+***a melhor recusa é a que não é preciso escrever***. O texto sobra só para o
+que não se podia saber antes do toque: um estado que mudou entre o desenho da
+tela e o dedo. **Isso é uma minoria, e uma minoria cabe numa peça.**
+
+### a ordem de trabalho muda, e a correcção é contra mim
+
+O `regente` escreveu contra si mesmo que me disse que o problema era o botão.
+**Escrevo contra mim a mesma coisa: eu medi 4 de 5 cartazes irrecusáveis e dois
+falsos positivos, e mesmo assim compus a etapa à volta do botão.** As capturas
+mostram que **o botão é o mais barato dos três defeitos**:
+
+1. **as pílulas de recusa** — entulham a coluna da história para sempre;
+2. **o campo de texto** — 31 % do que o jogador escreve;
+3. **a composição com a prosa garantida** — duas imagens do mesmo facto a
+   empurrar a prosa para fora do ecrã no turno da chegada.
+
+*O botão é o sintoma que se vê primeiro porque é o que o jogador toca. Os outros
+três são os que ele sofre sem saber nomear — e é por isso que só apareceram na
+captura e não na queixa.*
+
+---
+
+
+---
+
+## 19 · A linha do turno na coluna estreita — a forma, e ela sai da tabela
+
+O `regente` trouxe as capturas do telefone e pediu **composição, não
+diagnóstico**. O campo divide a linha com `IconeBalao`, a gaveta `✦` e o verbo
+(`App.jsx:23110-23140`), os três `shrink-0` com `minWidth: ALVOS.piso`.
+
+### A conta que mostra que a linha de hoje não existe
+
+Cada alvo fixo custa `alvos.piso.dedo + alvos.espaco.dedo` = **56 px**, e a
+linha tem **343**:
+
+```
+3 alvos fixos x 56 = 168 px  =  49 % da linha
+o que sobra para o que CRESCE = 175 px  — e medido no ar dá 129
+```
+
+> **LEI: numa coluna estreita, uma linha leva no máximo UM alvo fixo além do que
+> cresce.** Dois já é 33 % da linha; três é metade. **Quatro peças numa linha de
+> 343 px não é uma composição apertada — é uma linha que não existe**, e é
+> varrível: conta-se `shrink-0` com `minWidth` por linha.
+
+### A decisão: a linha parte-se em duas, e a de cima é só o campo
+
+- **Linha 1 — o campo, a largura inteira (343).** Piso **90** (3 linhas a
+  `tipos.corpo.dedo` 16 × 1,5 + 16 de enchimento + 2 de fio), tecto **138**.
+- **Linha 2 — os verbos, alinhados à direita:** a gaveta `✦` (`alvos.piso`) e o
+  verbo (`alvos.chamado`). *O polegar já vive nos 144 px de baixo* (`E1`), e é
+  onde eles estavam a ir parar de qualquer maneira.
+- **`IconeBalao` SAI.** Um campo de texto não precisa de um ícone a dizer que é
+  um campo — e ele custava **56 px (16,3 %) da peça mais apertada da tela**.
+  *Isto é uma aposentadoria, e por isso obedece ao §20.*
+
+### O que muda, em número
+
+| | hoje | depois |
+|---|---|---|
+| largura útil do campo | **129 px** | **343** (+166 %) |
+| caracteres por linha | 14,0 | **39,9** |
+| linhas visíveis | 2,09 | **3** |
+| **caracteres visíveis** | **~29** | **~119** (+310 %) |
+| de uma frase de 93 caracteres | **31 %** | **100 %** |
+
+**As duas réguas chegaram ao mesmo sítio por caminhos diferentes**, e é a prova
+que esta etapa tinha por fazer: o `regente` contou 29 de 93 no DOM; a aritmética
+da tabela (105 px úteis ÷ 7,5 px de avanço a `corpo` 15 × 2,09 linhas) dá **28**.
+*Um carácter de diferença entre o medido e o calculado.*
+
+**O custo, declarado — E O SINAL ESTAVA TROCADO. Corrigido pelo `jogo` em 24/09,
+contra si mesmo, depois de o `oficial` MEDIR no save real:** +56 px (a segunda
+linha) +25 (o campo de 65 a 90) = **81 px que a linha do turno TIRA à página**,
+porque a caixa cresce de 82,3 para 163,6 e essa altura sai do scroller. O `+N`
+devolveria 56 (§13), logo o líquido é **−25 px**, não +25:
+**306,0 − 81,3 + 56,0 = 280,7**.
+
+**E 280,7 foi o que o `oficial` mediu** — a 0,3 px da previsão com o sinal
+corrigido. *Os números estavam todos certos; o sinal de um deles não, e um sinal
+trocado transformou uma regressão numa melhoria em três linhas de aritmética.*
+**O estado construído hoje, sem o §13, mede 224,7 px — 37,4 % abaixo do piso de
+359 que esta mesma etapa fixou, e abaixo dos 306 de onde partimos.**
+
+> **A frase que fica, porque é a lição e não o erro:** *um orçamento que só se
+> confere somando as parcelas não apanha um sinal trocado — só a soma do ECRÃ o
+> apanha.* §R13 escreveu exactamente isto (*uma tabela de orçamento que não
+> fecha na altura do ecrã não é um orçamento; é uma lista de desejos*) e esta
+> etapa voltou a cair no mesmo sítio, uma parcela de cada vez.
+
+**A correcção de composição que sai daqui está em §R17 · *o campo não paga em
+todos os turnos o que serve num só***, e ela devolve mais do que os 81.
+
+**Degradação:** acima do tecto rola dentro de si com `O esbatimento` (R15); o
+crescimento é instantâneo com `prefers-reduced-motion`; **nunca atrasa o verbo.**
+
+---
+
+## 20 · A LEI DA APOSENTADORIA — duas peças, um facto
+
+Pedida pelo `regente` depois de achar, na tela principal do telefone, **256 px
+de duas imagens do mesmo lugar antes de uma palavra**: a xilogravura de 96 px de
+R13-B (`OTopoDoPapel`) e a fotografia `.webp` de 160 px (`VinhetaDaCena`), com
+arte para 30 biomas em `public/cenas/`. **R13-B fabricou o rosto da cena e não
+aposentou o que já lá estava** — a lei-mãe desta mesa partida por nós, e achada
+pela etapa seguinte.
+
+> ### Quando duas peças afirmam o MESMO FACTO, uma é mobília. Qual sai prova-se, por esta ordem:
+>
+> 1. **Sobrevive a DETERMINISTA.** Mesma semente, mesmo resultado, em qualquer
+>    máquina — é a primeira lei da casa. **Um arquivo escolhido por nome não a
+>    cumpre**; uma gravura gerada de `hashSemente` cumpre.
+> 2. **Empate: sobrevive a que carrega MAIS DE UM facto.** A gravura leva o
+>    bioma **e** a hora **e** o lugar escrito (R13); a fotografia leva o bioma.
+> 3. **Empate: sobrevive a que custa menos página**, em px, **medidos no
+>    aparelho mais apertado** — nunca na mesa, onde tudo cabe.
+> 4. **Empate: sobrevive a que a biblioteca pode VARIAR.** Uma peça com eixos
+>    serve o caso seguinte; um arquivo serve um caso.
+>
+> **E a que sai, sai inteira.** Não se esconde por condição, não se reduz de
+> tamanho, não fica *para o caso de*. *Uma peça aposentada que continua no
+> código é a segunda cara da mesma acção à espera de voltar.*
+
+**O dever que sai daqui, e é para todas as etapas desta mesa:**
+
+> **Quem fabrica uma peça nova nomeia, na mesma etapa, o que ela aposenta — e
+> se não aposenta nada, escreve isso.** Uma etapa que só acrescenta está a
+> apostar que ninguém tinha resolvido aquilo antes, e esta casa já provou três
+> vezes que tinha.
+
+**Qual das duas fica é do `jogo`** — é composição. **A lei é minha, e ela já
+responde:** pelos degraus 1, 2 e 4 a gravura ganha sem chegar ao desempate; pelo
+3, o telefone devolve **160 px de uma página de 586 — 27 %**. *Se ele decidir ao
+contrário, tem de dizer qual degrau falha, e isso é uma frase, não uma opinião.*
+
+**A dívida:** o varredor disto não existe. A forma que ele terá: **contar, por
+região da tela principal, quantos elementos declaram a mesma origem
+(`bioma`/`lugar`)** e falhar acima de um. Declarado, não construído.
+
+---
+
+## 21 · O piso da truncagem — `assi…` é um defeito da biblioteca, não do cartaz
+
+`assina Yorick, taberneiro · Vado` sai **`assi…`**; o local sai **`a…`**. É
+`truncate` a fazer exactamente o seu trabalho **num sítio onde não devia ter
+sido pedido**.
+
+> ### Um campo trunca, ou NÃO SE DESENHA. Não há terceiro estado.
+>
+> **`MEDIDAS.texto.minimoParaTruncar`**, e o número não é escolhido — **é
+> recalculado a partir de outro que a tabela já tem**:
+>
+> ```js
+> texto: { minimoParaTruncar: Math.ceil(MEDIDAS.medida.minima / 4) },  /* 45 / 4 -> 12 */
+> ```
+>
+> **A derivação:** 45 caracteres é a medida mínima de uma linha de texto corrido
+> (§11, Bringhurst §2.1.2). Um rótulo não é texto corrido e não precisa dos 45 —
+> **mas um rótulo truncado abaixo de um quarto dela deixou de ser um rótulo e
+> passou a ser um coto.** O quarto é decisão minha e está escrito como decisão;
+> **o 45 é que não é**, e é dele que o 12 se refaz no dia em que a banda mudar.
+> *Uma tabela que se recalcula não se afina à mão.*
+>
+> **A segunda régua concorda, e por isso o número fica:** as reticências são
+> **um carácter que só diz "há mais"**. Abaixo de ~10 caracteres úteis ele vale
+> mais de 10 % do que se mostra — **o campo passa a gastar a própria largura a
+> anunciar-se em vez de informar.** Duas contas independentes entre 10 e 12.
+
+**E quando não se desenha, o facto não se perde: muda de casa.** No cartaz, o
+dador vive no estado **aberto** da dobra, onde há 343 px e ele cabe inteiro.
+*Um campo que não cabe não é um campo pequeno: é um campo noutro sítio.*
+
+**Escopo:** toda a biblioteca. **Varrível**, e é o dente mais fácil desta etapa:
+`truncate` / `text-ellipsis` num contentor cuja largura mínima declarada é menor
+que `minimoParaTruncar × o avanço da fonte`.
+
+**E é a terceira vez que uma reticência mente nesta casa** — depois de
+`CINTA.rotuloDoGuardado` (74 px que não cabiam em 12 de folga) e da truncagem do
+lugar em `O rosto da cena`. As duas primeiras resolveram-se por conta; esta
+fecha a família com a conta escrita na tabela.
+
+### R17 · o `jogo` fecha com o `desenho`: a ordem, o escopo, e a porta das traseiras (24/09)
+
+**1 · `R17i` antes de `R18`, e não é preferência — é a lei DELE aplicada.** Ele
+declarou o canal que nunca pode encolher: **a palavra na ranhura do preço**
+(`◉ 40` → `no diário`), e escreveu que *se a ranhura tiver de encolher, é o
+percevejo que se reforça, não o contrário*. **A ranhura vive na largura**, e a
+parede dele está construída a 302 px porque é o que há hoje. **`R17i` não alarga
+só o papel: alarga o único canal que ele próprio declarou intocável**, de 302
+para 343 (+13,6 %). *A altura sem a largura faz a parede nascer estreita, e a
+primeira coisa a apertar seria a primeira coisa a não poder apertar.*
+
+**2 · A regra dos canais dele é melhor que a minha citação, e passa o teste que
+eu exijo às minhas.** *Quantidade pede geometria; facto pede palavra; o material
+vem depois dos dois, porque o material diz o mundo e não diz o estado.* **Ela
+re-deriva `O selo de prazo` de §R13 em vez de o contradizer** — o prazo é uma
+*fracção*, logo quantidade, logo ampulheta, e o selo fica exactamente como
+estava. *Uma régua nova que obrigasse a refazer a peça anterior estaria a
+descrever outro jogo; esta explica por que é que a anterior estava certa.*
+
+**3 · A minha condição (1) era larga demais, e concedo.** Eu escrevi que a dobra
+tem de distinguir o morto do vivo *para o jogador não gastar toques*. Ele
+respondeu que **abrir um `Saída=Tem` não é toque desperdiçado — é o toque que
+mostra o preço da troca**, e tem razão. **Logo a dobra só precisa de tornar
+legível o `Saída=Não tem`**: *o único que tem de saltar aos olhos é o que não
+vale abrir.* A condição encolhe de três estados para um, e a peça fica mais
+barata por eu ter pedido de mais.
+
+**4 · E o furo em vez de uma cabeça pálida é a correcção mais fina da etapa.**
+Um ponto pálido no lugar de uma cabeça de latão **lê como uma cabeça apagada** —
+*opacidade a dizer estado*, que é o que esta casa proíbe desde D4. Ele apanhou-o
+ao olhar a parede construída, não ao escrevê-la. **É a quarta vez nesta fase em
+que o número orçado passou e o quadro construído reprovou.**
+
+### a porta das traseiras da lei da aposentadoria — e é a mim que ela obriga
+
+A §20 dele diz: **"a que sai, sai inteira — não se esconde por condição, não se
+reduz de tamanho, não fica *para o caso de*"**. Eu decidi que a vinheta sai da
+faixa **e os 30 `.webp` vão para R16 como chão da página**. Alguém vai ler as
+duas coisas e achar que se contradizem. **Não se contradizem, e a distinção tem
+de ficar escrita ou a lei dele morre no primeiro caso difícil:**
+
+> **A PEÇA sai inteira; o FICHEIRO não é a peça.** `VinhetaDaCena` — o
+> componente, a faixa de 160 px dentro do scroller — é aposentado e apagado, sem
+> condição e sem *para o caso de*. Os 30 `.webp` são **acervo, não forma**:
+> continuam no repositório como matéria-prima para **outra afirmação**.
+>
+> **Duas peças que afirmam o mesmo facto são mobília. Uma peça e um chão não
+> afirmam o mesmo facto.** A gravura afirma *onde estás*; o chão de R16 afirma
+> *esta página é a folha onde esta cena foi impressa*. Textura, não
+> identificação.
+
+**E a condição que me obriga, porque é o que impede a vinheta de voltar pela
+porta das traseiras:**
+
+> **Se o chão de R16 puder ser lido como "onde estou", volta a ser a segunda
+> cara e a lei da aposentadoria mata-o — e bem.** O chão tem de ser **ilegível
+> como identificação**.
+>
+> **A catraca já existe e não é minha: é a própria de R16** — a marca fica em
+> **1,50:1** contra a página, que é o piso de textura de `LUZ_DA_CENA`, sem
+> margem. **Uma coisa a 1,50:1 não identifica um lugar; ambienta uma folha.**
+> *A catraca que R16 escreveu para proteger a leitura é a mesma que a protege de
+> se tornar a vinheta outra vez, e nenhum de nós a escreveu para isso.*
+
+**Logo o dever de R16, e fica declarado aqui para não se perder entre etapas:**
+quem construir R16 com fotografia tem de **medir a visibilidade contra a página
+e falhar acima de 1,50:1** — não só abaixo de AAA. *A lei da aposentadoria
+ganha, nesse dia, a sua primeira catraca numerada, e ela estava escrita há uma
+etapa por outro motivo.*
+
+**E a lei dele obriga-me já, na etapa em curso:** `R17i` aposenta a moldura de
+madeira na coluna estreita, e eu tinha escrito o que ela ganha sem escrever o
+que ela perde. **Perde-se a leitura "isto é uma tábua" ao primeiro olhar — e
+paga-se porque na coluna estreita ninguém vê a tábua inteira**, logo é uma
+leitura cobrada e não entregue. *Escrito por dever da §20, e não por simetria.*
+
+---
+
+## R17 · o campo não paga em todos os turnos o que serve num só (`jogo`, 24/09)
+
+*Três respostas ao `regente`, e a primeira é contra mim.*
+
+### eu já tinha escrito a resposta certa, e abandonei-a quando me deram um número
+
+O meu §R17 diz, com todas as letras: *"No telefone, o campo é o que o jogador
+está a fazer e a página é o que ele acabou de ler... **em repouso o campo é uma
+linha; ao ganhar foco toma a largura inteira e cresce**"*. Duas mensagens
+depois aceitei **piso 90** como permanente porque veio com uma medida.
+
+> **A medida estava certa e respondia a outra pergunta.** Os 90 px respondem a
+> *"que altura precisa para caber o que ele escreve?"*. Eu usei-os para
+> responder a *"que altura deve ter sempre?"*. **Uma medida responde à pergunta
+> que lhe fizeram; aceitá-la como resposta a outra é o erro mais barato de
+> cometer numa mesa que respeita medidas** — e foi o meu.
+
+### 1 · Os 56 px são CONDICIONAIS. E a régua é a minha própria, aplicada a mim
+
+> **O campo e a prosa nunca disputam a mesma atenção.** Quando ele escreve, não
+> lê. Quando lê, o campo está vazio. **Orçámos os dois como se estivessem em
+> cena ao mesmo tempo, e não estão.**
+
+**O custo do movimento, que é a parte que me toca:** é **zero, e por construção**
+— a linha nasce **no toque que o próprio jogador acabou de dar**. *Movimento
+causado pelo dedo de quem joga lê-se como resposta; movimento sem causa lê-se
+como defeito.* É a única espécie de movimento que esta casa nunca teve de
+justificar.
+
+**E `Agir →` não se mexe.** O bloco está ancorado em baixo e cresce **para
+cima**, para dentro da página. O que sai do lugar é a página, que naquele
+instante ninguém está a ler. **A minha lei de §R17 — *a borda de baixo não se
+mexe, é onde o dedo está* — cumpre-se sem excepção.**
+
+**As duas regras do regresso, e a segunda é um presente que não estava no plano:**
+
+1. **Só encolhe vazio E sem foco.** Encolher com texto lá dentro esconderia ao
+   jogador o que ele escreveu — seria o defeito dos 31 % outra vez, de propósito.
+2. **Devolve os 56 px no instante em que o turno parte** — e é o instante exacto
+   em que a resposta do Mestre vem a caminho. **A página abre-se para receber a
+   resposta.** *O momento em que o campo deixa de servir é o momento em que a
+   página mais serve, e isso não foi desenhado: caiu da régua.*
+
+**E a razão de fundo, que torna os 81 px permanentes indefensáveis:** num
+telefone a sério, **focar o campo levanta o teclado**, e o teclado tapa a metade
+de baixo do ecrã — é por isso que todo sistema operativo rola o campo focado
+para a vista. **Durante a escrita a página não é pequena: é invisível.** Cobrar
+81 px em todos os turnos para servir o único momento em que a página já não está
+lá é a definição de mobília. *(Não meço aqui quantos px o teclado come — não o
+simulei, e não escrevo número que não medi.)*
+
+### 2 · O 90 não é piso. O piso é 48, e o crescimento é um SALTO, não uma rampa
+
+**Piso: `ALVOS.piso` (48), que é o piso de tudo nesta casa.** Um campo vazio não
+precisa de três linhas, e R3 nunca pediu três — R3 acusou **35 px, abaixo de
+48**, e uma linha **ao piso** é a correcção de R3, não a sua reversão.
+
+**Ao focar, vai DIRECTO ao tecto (138). Não passa por 90.**
+
+> **Um crescimento por passos é um leiaute a tremer; um crescimento por salto é
+> uma resposta.** Se a caixa crescer à medida que ele escreve, a página move-se
+> **a meio de uma frase** — que é precisamente o que a minha própria regra
+> proíbe (*o crescimento acontece ao focar, antes da primeira tecla, nunca a
+> meio de uma frase*). Um salto, uma vez, causado pelo toque dele.
+
+**E o que cai ao pé disto, e é a minha lei desta etapa aplicada a mim:**
+
+> ### `Agir →` não existe enquanto não há o que agir.
+> Hoje ele é `desativado={bloqueado || !entrada.trim()}` — **um alvo de ~90 px
+> que, com o campo vazio, não pode dar certo.** É exactamente o defeito que esta
+> etapa inteira persegue no cartaz do mural, uma faixa mais abaixo e na tela
+> onde se passam os 90 %. *A melhor recusa é a que não é preciso escrever, e o
+> melhor botão desactivado é o que não está lá.* Ele nasce na primeira letra.
+
+**E é isso que paga o repouso:** sem `Agir →` e sem a segunda linha, **o campo
+toma a largura inteira já em repouso** — a chamada *"O que você faz? Fale, aja,
+explore…"* deixa de ser truncada num campo de 129 px, que era a outra metade
+silenciosa do defeito. **A invitação melhora no turno em que ele lê, e é o turno
+em que ela tem de convidar.**
+
+### 3 · A coluna que faltava à tabela de composição
+
+> ## A tabela tem TRÊS colunas: `o quê` · `em que coluna` · **`em que momento`**.
+>
+> **Nenhuma peça ocupa a tela nos momentos em que não serve.** Uma peça que
+> serve um momento e ocupa todos é mobília — e mobília na tela principal
+> **paga-se em prosa**.
+
+**A catraca, irmã da do leitor na prosa e do mesmo formato:**
+
+> **Para cada faixa permanente, nomeie o momento em que ela NÃO serve.** Se
+> existe um e ela continua lá com o mesmo tamanho, esse tamanho é **dívida**, e
+> escreve-se como dívida.
+
+Passada pelas faixas de hoje: **a cinta serve sempre** (ele compara-a com a cena
+em todo o turno) · **a prosa serve sempre** · **o rosto serve sempre** · **a
+soleira serve sempre que há oferta, e ocupa 0 quando não há — já obedecia** ·
+**o campo serve dois momentos, o de convidar e o de escrever, e são de tamanhos
+diferentes** · **`Agir →` serve um momento só** · **a fita das abas: nomeie-se o
+momento em que ela serve, e é essa a pergunta de R20.**
+
+*A tabela perguntava **o que está na tela** e faltava-lhe perguntar **quando**.
+O mérito de ter achado a coluna é do `regente`; o dever de a ter escrito era
+meu, e a prova de que era meu é que a resposta já estava no meu próprio texto.*
+
+### a conta, com as três respostas
+
+| | a página | contra o piso de 359 |
+|---|---|---|
+| antes deste ciclo | 306,0 | −14,8 % |
+| **o construído de hoje** (81 px permanentes) | **224,7** | **−37,4 %** |
+| com o §13, que não está disponível | 280,7 | −21,8 % |
+| **o campo condicional, em repouso** | **~344** | **−4,2 %**, e **sem precisar do §13** |
+| o campo condicional, a escrever | ~194 | *e aqui a página está atrás do teclado* |
+
+**A correcção devolve mais do que os 81 px que se perderam, e devolve-os sem
+depender de uma etapa que não pode ser construída.** *O número a conferir é o de
+repouso, porque é ele que existe em 19 dos 20 turnos.*
+
+### e o §13 estava errado, e a prova é uma porta que não existe
+
+Eu escrevi que **a fila B já tem casa permanente no relógio desde R13**. É
+verdade para `Esperar` e `Montar acampamento`, e **falso para `Seguir viagem`**,
+que R15 criou e a que nunca deu morada. O `oficial` verificou os três caminhos e
+a porta não existe em nenhum. **R17h responderia à queixa da pessoa apagando a
+única porta de toque da coisa que ela estava a fazer** — e foi exactamente essa
+a coisa que eu apanhei escondida atrás do `+N`, e que me fez escrever a etapa.
+*Propus apagar o que tinha acabado de defender.*
+
+> **R17h não morre: fica a dever a R20.** A morada de `Seguir viagem` é a mesma
+> dos outros dois, e pela mesma razão — **viajar é passar o tempo com destino**.
+> R20 (*a cinta sabe que o herói está a viajar*) é o item que lha dá. **Ordem:
+> R20 antes de R17h**, e R17h só entra depois de a porta existir e ter sido
+> tocada.
+
+*E a lição é a mesma do sinal trocado: **eu generalizei a partir de dois casos
+e havia três.** A premissa foi escrita como facto e nunca conferida — e o que a
+conferiu não foi um argumento, foi alguém ter ido ao código procurar a porta.*
+
+---

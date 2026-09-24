@@ -491,6 +491,61 @@ export const ALVOS = {
 };
 
 /* ============================================================
+   O CAMPO DO TURNO (R17, §19 de `formas.md`) — a altura da peça mais
+   usada do jogo, e só na COLUNA ESTREITA.
+
+   A DOENÇA, medida pelo `desenho` e confirmada no DOM ao vivo: o campo
+   dividia a linha com três alvos fixos (`IconeBalao`, a gaveta ✦ e o
+   verbo), cada um a custar `piso + espaço` = 56 px. Três × 56 = 168 numa
+   linha de 343 — **metade da linha** —, e ao campo sobravam **129,1 px**
+   de largura por 64,8 de altura: o jogador via ~29 dos 93 caracteres que
+   escrevia. **31 %.** Na mesa via 100 %.
+
+   A LEI QUE SAI DAQUI (§19): *numa coluna estreita, uma linha leva no
+   máximo UM alvo fixo além do que cresce.* Por isso a linha parte-se em
+   duas e o campo fica sozinho na de cima.
+
+   O CUSTO NÃO É PERMANENTE, E ESTA É A EMENDA QUE APAGOU UM PISO DE 90.
+   A primeira versão desta tabela deu ao campo um piso de 90 px em TODOS os
+   turnos. O `jogo` emendou-se a si próprio: *o campo e a prosa nunca
+   disputam a mesma atenção — quando ele escreve, não lê; quando lê, o campo
+   está vazio.* Os 90 px respondiam a "que altura precisa para caber o que
+   ele escreve?" e estavam a responder a "que altura deve ter sempre?".
+   Medido: 81 px permanentes levavam a página de 306 para 224,7 — 37 % abaixo
+   do piso da prosa. Com a altura condicional a página fica acima de onde
+   estava, e sem depender de mais nenhuma etapa.
+
+   POR ISSO ESTA TABELA DIZ RELAÇÕES E NÃO DOIS NÚMEROS:
+     · o REPOUSO não é número novo — é `ALVOS.piso`, o piso de tudo nesta
+       casa. Um campo vazio não precisa de três linhas, e R3 nunca pediu
+       três: R3 acusou 35 px, ABAIXO de 48. Uma linha ao piso é a correcção
+       de R3, não a sua reversão.
+     · o TECTO é a altura do momento em que ele escreve, e sai da entrelinha
+       medida no DOM (24,38 px): 138 − 16 de enchimento − 2 de fio = 120,
+       que são CINCO linhas. Acima disso o campo rola dentro de si em vez de
+       empurrar a página.
+
+   E O CRESCIMENTO É UM SALTO, NUNCA UMA RAMPA: ao ganhar foco vai direito
+   ao tecto e não passa pelo meio. *Um crescimento por passos é um leiaute a
+   tremer; um crescimento por salto é uma resposta.* Crescer à medida que ele
+   escreve moveria a página a meio de uma frase, que é o que a regra do
+   `jogo` proíbe. O movimento nasce do toque que o próprio jogador acabou de
+   dar — é a única espécie de movimento que esta casa nunca teve de
+   justificar —, e com `prefers-reduced-motion` é instantâneo.
+
+   E A TROCA DE COLUNA É CSS, NÃO JAVASCRIPT: zero `matchMedia`, zero
+   re-render, e funciona quando o jogador roda o telefone a meio do turno.
+   É a mesma escolha de `A soleira` (`ui.jsx`), e pela mesma razão.
+   ============================================================ */
+export const CAMPO_DO_TURNO = {
+  /* o REPOUSO não mora aqui de propósito: é `ALVOS.piso`, e um número que
+     já tem casa não ganha uma segunda. */
+  tecto: 138,          /* cinco linhas: o momento em que ele escreve */
+  entrada: 120,        /* ms — a duração que a folha já usa em toda a casa */
+  colunaEstreita: "(max-width: 767px)",  /* a régua `coluna` de §9 */
+};
+
+/* ============================================================
    A CINTA (R13, etapa A) — o topo do telefone, em px.
 
    Ela substitui TRÊS faixas (o cabeçalho, a barra de estado e a fita de
@@ -1479,6 +1534,33 @@ export const SUPERFICIES_CSS = `
    CINTA.larguraParaORotulo, que a suite le de volta. */
 @media (max-width: 436px) {
   .tv-guardado-rotulo { display: none; }
+}
+
+/* ---------------- O CAMPO DO TURNO (R17 §19) ----------------
+   Gerado a partir de ALVOS e CAMPO_DO_TURNO — os números não estão
+   escritos aqui, estão interpolados. Na coluna larga o campo é o de
+   sempre (o piso do alvo); na estreita ganha altura para três linhas e
+   um tecto a partir do qual rola dentro de si.
+   (Sem crase neste bloco: ele vive dentro de um template-literal.) */
+.tv-campo-do-turno { min-height: ${ALVOS.piso}px; }
+@media ${CAMPO_DO_TURNO.colunaEstreita} {
+  /* REPOUSO: uma linha ao piso do alvo, e a largura inteira — a chamada
+     deixa de ser truncada, que era a outra metade silenciosa do defeito. */
+  .tv-campo-do-turno {
+    height: ${ALVOS.piso}px;
+    overflow-y: auto;
+    transition: height ${CAMPO_DO_TURNO.entrada}ms ease;
+  }
+  /* ABERTO: salta direito ao tecto. Nao ha degrau no meio. */
+  .tv-campo-do-turno.tv-campo-aberto { height: ${CAMPO_DO_TURNO.tecto}px; }
+  /* e a segunda linha dos verbos so existe com o campo aberto */
+  .tv-turno-repouso .tv-turno-verbos { display: none; }
+}
+/* A ORDEM É A REGRA, outra vez: este bloco tem de vir DEPOIS da transição
+   acima, porque uma media query nao soma especificidade — so envolve. Se
+   subisse, dava um acessivel que nao funciona, calado. */
+@media (prefers-reduced-motion: reduce) {
+  .tv-campo-do-turno { transition: none; }
 }
 `;
 

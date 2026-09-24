@@ -18,6 +18,7 @@ import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ga
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
+import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
@@ -175,7 +176,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, RostoDaCena } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, RostoDaCena } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1207,36 +1208,40 @@ const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amu
    O TOM é o que faz isto ser cenário e não etiqueta: uma faixa fina da
    cor do bioma, com a força da luz daquela hora. A mesma cripta é uma
    coisa ao meio-dia e outra às três da manhã, e o sistema já sabia. */
-/* ---------------- A VINHETA DA CENA (v9.175) ----------------
-   De `mesa-jogo-v2`: uma faixa de 160 no topo do painel da narrativa,
-   com a arte do bioma em que a cena acontece. Trinta imagens, uma por
-   bioma dos quatro moldes, servidas de `public/cenas` — ou seja, fora
-   do pacote: cada uma só é buscada quando aquele bioma entra em cena, e
-   fica em cache depois. Nenhuma pesa no primeiro carregamento.
+/* ---------------- A VINHETA DA CENA — APOSENTADA EM R17 ----------------
+   Era uma faixa de 160 px com a fotografia do bioma, DENTRO da área que
+   rola, e por isso a primeira coisa que a página mostrava. Saiu pela LEI
+   DA APOSENTADORIA (`formas.md` §20): *quando duas peças afirmam o mesmo
+   facto, uma é mobília.*
 
-   O DEGRADÊ NÃO É ENFEITE. Ele apaga a metade de baixo da imagem contra
-   o fundo do painel, e é isso que impede a arte de brigar com a primeira
-   linha do Mestre — a vinheta ambienta e sai da frente.
+   A outra peça é `OTopoDoPapel`/`RostoDaCena` (R13-B), a xilogravura de
+   96 px logo acima. R13-B deu rosto à cena e não aposentou o que já lá
+   estava — a lei-mãe desta mesa partida por nós, e achada pela etapa
+   seguinte. A gravura ganha nos degraus 1, 2 e 4 sem chegar ao desempate:
+     1 · é DETERMINÍSTICA POR SEMENTE, que é lei desta casa; a vinheta era
+         um ficheiro que podia faltar (e tinha `onError` a sumir em
+         silêncio — *uma peça que desaparece quando falha ensina o medidor
+         a não a ver*, e foi assim que R12, R13 e R17 mediram a tela sem
+         nunca perguntar porque é que a faixa às vezes lá estava);
+     2 · carrega MAIS DE UM facto — o bioma, a hora e o LUGAR escrito
+         (`lugarDaCena()` distingue a ermida de pedra do posto da estrada;
+         a vinheta sabia só o bioma, e dois lugares do mesmo bioma davam a
+         mesma fotografia);
+     4 · tem EIXOS, e a biblioteca pode variá-la.
 
-   E SE A ARTE NÃO EXISTIR, NÃO APARECE NADA. Um bioma novo entra no
-   jogo antes de alguém desenhar a cena dele, e uma moldura vazia com um
-   ícone de imagem quebrada é pior do que faixa nenhuma: parece defeito,
-   e não é. `onError` some com o bloco inteiro. */
-function VinhetaDaCena({ bioma }) {
-  const [falhou, setFalhou] = React.useState(false);
-  /* trocar de bioma tem de dar uma segunda chance: a arte da floresta
-     faltar não quer dizer que a do deserto falte */
-  React.useEffect(() => { setFalhou(false); }, [bioma]);
-  if (!bioma || falhou) return null;
-  return (
-    <div className="w-full rounded-lg overflow-hidden relative shrink-0" style={{ height: 160 }}>
-      <img src={`/cenas/${bioma}.webp`} alt="" loading="lazy" onError={() => setFalhou(true)}
-        className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, rgba(23,19,34,0) 50%, rgba(23,19,34,0.8) 100%)" }} />
-    </div>
-  );
-}
+   MEDIDO AO VIVO A 375×812, no save da pessoa, no turno da chegada: a
+   página mede 306 px e consumiam-se 494 px antes da primeira palavra do
+   Mestre — ZERO prosa na primeira tela da cena. A vinheta era 160 desses
+   494, e rolava, logo não custava sempre: custava exactamente no turno em
+   que o jogador chega a um lugar novo, que é o turno para que a gravura
+   foi criada. *As duas imagens chocavam no único turno em que qualquer
+   uma importava.*
+
+   SAIU INTEIRA — não por condição, não reduzida, não para o caso de: uma
+   peça aposentada que continua no código é a segunda cara da mesma acção
+   à espera de voltar. OS TRINTA `public/cenas/*.webp` FICAM: são acervo e
+   não forma, e o `jogo` entregou-os a R16 (a página impressa), onde vão
+   ser chão por baixo da prosa em vez de faixa à frente dela. */
 
 function CabecalhoDaCena({ cena }) {
   if (!cena) return null;
@@ -2011,7 +2016,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, gru
    Só aparece depois do despertar (nível NIVEL_DESPERTAR). Rastreável: o
    jogador VÊ a própria força e a de cada deus — e quando tem vantagem. */
 /* PainelAscensao extraído para ./painel-ascensao.jsx (v8.8) */
-function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garantirMural, acampado, decretos, pregarDecreto, cancelarDecreto, moedas, cofre, nivel, cidadeAtual = "" }) {
+function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garantirMural, acampado, decretos, pregarDecreto, cancelarDecreto, moedas, cofre, nivel, cidadeAtual = "", vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null }) {
   const ativos = (quests || []).filter((q) => q.contrato && q.status === "ativa");
   /* Duas pilhas no mesmo mural: o que a cidade quer feito, e o que alguém
      pregou depois de falar com o herói. */
@@ -2051,8 +2056,42 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
      que muda de ângulo a cada vez que a tela redesenha não é um papel
      pregado, é um papel tremendo. */
   const giro = (id) => (((hashSemente(String(id || "")) % 340) / 100) - 1.7).toFixed(2);
+  /* R17 · A SAÍDA DO VEREDITO É UM ENDEREÇO, NÃO UMA FUNÇÃO. O ensaio seco
+     devolve `{ rotulo, vai }` — ele sabe QUE há para onde ir e como se
+     chama a porta; quem sabe lá chegar é a tela. Um módulo puro que
+     guardasse callbacks deixava de ser provável em Node. */
+  const irDaSaida = (saida) => {
+    try { if (saida && saida.vai === "diario" && aoVerNoDiario) aoVerNoDiario(); }
+    catch (e) { calou("a saída do veredito do cartaz", e); }
+  };
   const cartaz = (c) => {
     const icone = c.icone || ICONE_OFERTA[c.molde] || "📜";
+    /* ---------------- R17 · O MURAL CARIMBA ----------------
+       Este botão desenhava-se INCONDICIONALMENTE, sem perguntar a
+       ninguém se o aceite o ia aceitar. No save da pessoa, quatro dos
+       cinco cartazes da tábua tinham um botão que não podia dar certo —
+       ela tocava, o jogo respondia por baixo do mural que o serviço já
+       estava no diário, e o botão continuava lá.
+
+       Agora pergunta, e a conta é a MESMA da soleira e a mesma que o
+       aceite vai aplicar (`vereditoDoCartaz`, o ensaio seco de
+       `aceitarProposta`). Uma conta, três leitores.
+
+       A RÉGUA QUE SEPARA ESTA TELA DA SOLEIRA é do `jogo` (§R17) e não é
+       de gravidade — é de quem está a falar: *onde a casa OFERECE, o que
+       não pode ser aceite não aparece; onde a casa mostra o MUNDO,
+       aparece riscado.* A tábua é a única tela do jogo que representa um
+       OBJETO do mundo, e um papel que desaparece da cortiça é o mundo a
+       esquecer-se de um pedido que ele próprio fez.
+
+       A FALHA É SEGURA: sem veredito, `pode` é verdadeiro e o cartaz é o
+       de ontem, botão incluído. */
+    const v = vereditoDeCartaz ? vereditoDeCartaz(c) : null;
+    const pode = v ? !!v.pode : true;
+    /* a recusa que o aceite produziu NESTE cartaz — só existe quando as
+       duas contas divergiram, porque com `pode` a montante o botão que a
+       causaria já não se desenha */
+    const divergiu = recusaDeCartaz && recusaDeCartaz.id === c.id ? recusaDeCartaz.texto : "";
     return (
       <div key={c.id} className="tv-pregado" style={{ transform: `rotate(${giro(c.id)}deg)` }}>
       <div className="tv-cartaz relative rounded-xl p-3 pt-6">
@@ -2065,6 +2104,17 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
             {c.paga ? `◉ ${c.paga}` : "sem moedas"}
           </span>
         </div>
+        {/* R17 · A LEI DO QUE SOBRA (`formas.md` §R17, do `desenho`): uma
+            recusa sem saída SUBSTITUI o controlo que recusa — o alvo sai da
+            árvore, não fica apagado —, e a peça encolhe ao que ainda é
+            verdade. Depois de a decisão estar fechada, a descrição, os três
+            selos de recompensa, o prazo e a linha do dador deixam de ser
+            decisão: não são informação a menos, são informação que já não
+            serve a nenhuma escolha. Medido pelo `desenho` a 375 px:
+            224,0 → 118,8 px (−57,2 %), e a tábua passa de 3,0 para 6,0
+            cartazes por ecrã. O título e a paga ficam — é por eles que o
+            jogador reconhece o papel amanhã. */}
+        {pode ? (<>
         <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{c.descricao}</div>
         {/* ---------------- A RECOMPENSA INTEIRA (v9.192) ----------------
             Redesenhado em `painel-mural-v2`. O cartaz mostrava só as moedas, e
@@ -2098,11 +2148,44 @@ function PainelMural({ mural, quests, aceitarContrato, abandonarContrato, garant
             ⏳ prazo: {c.prazo} noites — passou disso, o serviço se perde
           </div>
         )}
+        {/* R17 · O ÚNICO BOTÃO QUE PODE DAR CERTO ESTAVA ABAIXO DO PISO.
+            Medido ao vivo depois da primeira metade desta etapa: 27,3 ×
+            133,8 px — 57 % de `ALVOS.piso`. A etapa tinha corrigido os
+            botões que NÃO podiam dar certo e deixado abaixo do piso o
+            único que podia. Com a porta a 48 a razão aceitável:recusado
+            passa de 1,62× para 2,19× e a lei do 2:1 (§3) fecha-se sozinha. */}
         <button onClick={() => aceitarContrato(c)}
-          className="tv-mono text-[10px] mt-2 px-2 py-1 rounded"
-          style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>
+          className="tv-anel-foco tv-mono mt-2 px-3 rounded inline-flex items-center justify-center"
+          style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, minHeight: ALVOS.piso, fontSize: TIPOS.maquina }}>
           ✍ aceitar contrato
         </button>
+        {/* A RECUSA MORA NA PEÇA QUE A CAUSOU, e não na coluna da
+            história. Este ramo só existe quando o ensaio seco disse que
+            dava e o aceite recusou — defeito nosso, e por isso à vista,
+            debaixo do dedo que o encontrou. */}
+        {divergiu ? (
+          <div className="mt-2"><Consequencia tom="impedimento" largura="ocupa" frase={divergiu} saida="nao" /></div>
+        ) : null}
+        </>) : (
+        <div className="mt-2">
+          {/* O EIXO `Saída` É O CANAL 1 E O MAIS FORTE (§R17): `tem` vira
+              alvo de verdade a `alvo/piso`, `nao` sai da árvore e não há
+              onde tocar. A cor é a mesma nos dois — a distinção é por
+              forma, e isso é lei de §R13.
+
+              E `colidiu` É FENDA DA PEÇA, não texto à mão: o módulo devolve
+              a frase que PÁRA onde o nome entra, e `A Consequência` põe o
+              espaço, as aspas e o `T.inkMeio`. É o canal 3 do §2 — o nome
+              que colidiu tem de se ler como uma coisa e não como prosa,
+              porque é ele que torna um falso positivo visível ao jogador. */}
+          <Consequencia tom="impedimento" largura="ocupa"
+            frase={(v && v.texto) || ""}
+            colidiu={(v && v.contra) || ""}
+            saida={(v && v.saida) ? "tem" : "nao"}
+            rotulo={(v && v.saida && v.saida.rotulo) || ""}
+            aoAbrir={() => irDaSaida(v && v.saida)} />
+        </div>
+        )}
       </div>
       </div>
     );
@@ -2347,7 +2430,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2674,7 +2757,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} npcs={npcs} grupo={personagem.grupo || []} heroi={personagem.nome} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} onExportarSave={onExportarSave} />}
-        {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} />}
+        {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} vereditoDeCartaz={vereditoDeCartaz} recusaDeCartaz={recusaDeCartaz} aoVerNoDiario={aoVerNoDiario} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia potencias={potencias} dip={dip} veredito={veredito} onDiplomacia={onDiplomacia} onPresente={onPresente} onCumprir={onCumprirExigencia} cofre={guilda && guilda.cofre} temCasa={!!minhaCasa} />}
@@ -5138,6 +5221,10 @@ export default function Taverna() {
   /* v9.5: marca as respostas que NÃO fecham a rodada (meu turno continua) —
      nelas o relógio dos buffs e das condições fica parado. */
   const [entrada, setEntrada] = useState("");
+  /* R17 · O CAMPO SERVE DOIS MOMENTOS E SÃO DE TAMANHOS DIFERENTES:
+     convidar e escrever. Este estado é o que os separa. A composição
+     inteira sai dele e de `entrada` — nenhuma media query em JS. */
+  const [campoFocado, setCampoFocado] = useState(false);
   const [aba, setAba] = useState(null);
   /* R3 · A SETA QUE ABRE. A sub-aba escolhida é estado DE DENTRO do
      `PainelLateral` (e está certo que seja: é ele quem sabe que abas têm
@@ -7298,6 +7385,12 @@ export default function Taverna() {
   const trabalhoPendenteRef = useRef([]);
   const muralRef = useRef([]);
   const [mural, setMural] = useState([]);
+  /* R17 · A RECUSA MORA NA PEÇA QUE A CAUSOU, e não na coluna da história.
+     Um slot só, preso ao id do cartaz que o dedo tocou: dois toques não
+     fazem duas recusas (medido na captura dela: três toques deixavam três
+     pílulas idênticas e 144 px permanentes numa página de 306). Não entra
+     em `mensagens`, não entra no save, não se lê amanhã. */
+  const [recusaDoCartaz, setRecusaDoCartaz] = useState(null);
   const decretosRef = useRef([]);
   const [decretos, setDecretos] = useState([]);
   const diaRef = useRef(1);
@@ -13192,6 +13285,24 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     return true;
   };
 
+  /* R17 · O TURNO PARTE E A PÁGINA ABRE-SE PARA RECEBER A RESPOSTA.
+     É o instante exacto em que o campo deixa de servir e a página mais
+     serve — e por isso os 56 px da segunda linha voltam aqui, e não num
+     relógio. O `blur` é o que impede o campo de ficar aberto e vazio
+     quando a resposta chegar: sem ele, o foco que sobrou do toque no
+     verbo reabria-o no pior momento possível.
+
+     EM `try/catch` E COM O `agir` DE FORA: devolver o campo ao repouso é
+     cosmética, mandar o turno não é. Nunca pode custar o turno. */
+  const partirOTurno = (texto) => {
+    try {
+      setCampoFocado(false);
+      const foco = typeof document !== "undefined" ? document.activeElement : null;
+      if (foco && typeof foco.blur === "function") foco.blur();
+    } catch (e) { calou("devolver o campo ao repouso quando o turno parte", e); }
+    agir(texto);
+  };
+
   const agir = (texto) => {
     /* v9.42: morto não age. A tela de tombamento cobre tudo, mas cobrir não é
        impedir — e um caminho que ainda funciona por baixo do pano é o mesmo
@@ -18961,6 +19072,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   const aceitarContrato = (c) => {
     if (!c) return;
+    /* R17 · idempotência: a recusa do toque anterior sai antes deste */
+    setRecusaDoCartaz(null);
     /* v9.37: o cartaz JÁ é estrutura — dador, etapas tipadas, alvos que
        existem e preço decidido antes de qualquer palavra. Some a expressão
        regular que lia a frase que o próprio sistema tinha escrito.
@@ -18978,7 +19091,37 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       mundo: mundoDasMissoes(personagemRef.current || personagem),
       dadorPresente: false,
     });
-    if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
+    /* ---------------- R17 · UMA RECUSA NUNCA É CONTEÚDO ----------------
+       A lei, do `jogo` em `formas.md` §R17: *uma recusa nunca é conteúdo;
+       a recusa mora na peça que a causou, dura o tempo da decisão, e não
+       deixa rasto.*
+
+       O que estava aqui escrevia o motivo do MOTOR em `mensagens` —
+       permanente, no save, e na MESMA coluna onde mora a narração. Na
+       captura do telefone da pessoa havia três pílulas idênticas de
+       recusa empilhadas, a ocupar perto de um terço do ecrã. E o texto
+       era o sistema a falar de si mesmo ("já há missões demais em jogo"),
+       que é o que esta casa proíbe na tela.
+
+       E ESTE RAMO MUDOU DE SIGNIFICADO, por isso não vira silêncio: com
+       `vereditoDoCartaz` a montante o botão só existe quando o ensaio seco
+       diz que dá, logo chegar aqui passa a querer dizer QUE AS DUAS CONTAS
+       DIVERGIRAM. Isso é defeito nosso e queremos vê-lo — fica o rasto no
+       `calou`, e a recusa aparece presa ao cartaz que o dedo tocou.
+
+       O TEXTO QUE O JOGADOR LÊ É O DO VEREDITO, nunca `r.motivo`. */
+    if (!r.ok) {
+      let vv = null;
+      try {
+        vv = vereditoDoCartaz(c, missoesRef.current, {
+          nivel: (personagem && personagem.nivel) || 1, dia: diaRef.current,
+          mundo: mundoDasMissoes(personagemRef.current || personagem),
+        });
+      } catch (e) { calou("o veredito do cartaz que o aceite recusou", e); }
+      if (!vv || vv.pode) calou("as duas contas do cartaz divergiram — o aceite recusou o que o veredito deixava passar", new Error(String(r.motivo || "")));
+      setRecusaDoCartaz({ id: c.id, texto: (vv && !vv.pode && vv.texto) || "Não deu para pegar este papel." });
+      return;
+    }
     /* v9.132: uma missao de resgate AFIRMA que alguem esta preso. Sem
        escrever isso no mundo, a etapa nasceria cumprida — todo mundo e
        `livre` por omissao, inclusive quem nunca foi levado. */
@@ -21472,6 +21615,21 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      a guarda dentro de `agir`, que deixa o `/comando` passar. */
   const bloqueado = carregando || !!rolagem;
 
+  /* R17 · O CAMPO ABERTO — a terceira coluna da tabela de composição, a do
+     MOMENTO. *Nenhuma peça ocupa a tela nos momentos em que não serve, e
+     mobília na tela principal paga-se em prosa.*
+
+     SÓ ENCOLHE VAZIO **E** SEM FOCO: encolher com texto lá dentro esconderia
+     ao jogador o que ele escreveu — seria o defeito dos 31 % outra vez, e de
+     propósito. E `bloqueado` força o repouso porque é o instante em que o
+     turno parte — o instante exacto em que a resposta do Mestre vem a
+     caminho. A página abre-se para receber a resposta.
+
+     E É UM BOOLEANO E NÃO UMA MEDIA QUERY: quem sabe de que coluna se fala é
+     a folha. Aqui só se decide o MOMENTO; o tamanho de cada momento, e em
+     que coluna ele vale, é de `CAMPO_DO_TURNO`. */
+  const campoAberto = !bloqueado && (campoFocado || !!entrada.trim());
+
   /* ============================================================
      A SOLEIRA (R3) — o que o mundo oferece passa a ser tocável no
      sítio onde o mundo o ofereceu.
@@ -21556,6 +21714,60 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      a tábua fora não há pilha que precise de teto próprio aqui, e o teto que
      resta é uma promessa sobre a PROSA, não sobre as ofertas — o que não
      cabe vai para a porta do `+N`, que diz quantas ficaram. */
+
+  /* ============================================================
+     R17 · UMA CONTA SÓ PARA O CARTAZ QUE NÃO PODE SER ACEITE
+     ============================================================
+     Havia DUAS contas para o mesmo facto, e a mais fraca governava a
+     tela: a soleira filtrava por TÍTULO EXACTO (`semNome`), e o aceite
+     (`aceitarProposta`) recusa por CINCO motivos — o tecto de activas, o
+     duplicado SEMÂNTICO (que compara vocabulário, não título), o mesmo
+     dador com o mesmo alvo, e nenhuma etapa conferível. Títulos
+     diferentes para o mesmo serviço passavam o filtro e morriam no
+     aceite: o botão não podia dar certo, NUNCA. E o `PainelMural` era
+     pior — desenhava o botão sem consultar ninguém.
+
+     Medido no save da pessoa (`formas.md` §R17): QUATRO dos CINCO botões
+     do mural dela não podiam dar certo. Oitenta por cento.
+
+     O comentário da soleira, logo abaixo, já tinha nomeado o anti-padrão
+     sem reparar que o praticava: *duas contas para o mesmo número seriam
+     duas verdades.*
+
+     `vereditoDoCartaz` é o ENSAIO SECO da mesma `aceitarProposta`, com a
+     proposta exacta que `aceitarContrato` monta. Passa a ser a única
+     conta, e os três leitores leem-na: a soleira (que ESCONDE o que não
+     pode ser aceite), a tábua (que o mostra RISCADO) e o próprio aceite
+     (que só se alcança se ela disse que sim).
+
+     MEMOIZADO porque é por cartaz e por render, e a soleira corre em todo
+     turno: *nunca pode custar o turno*. As dependências incluem o mundo
+     que a quinta razão lê (`lugar`, `baseMundo`, `npcs`), senão um serviço
+     que o herói acabou de cumprir continuaria a parecer aceitável.
+
+     A FALHA É SEGURA E É A DE ONTEM: cartaz sem veredito lê-se como
+     ACEITÁVEL. Um órgão que estoura devolve o comportamento anterior a
+     esta etapa — nunca uma tábua inteira carimbada por engano —, e o
+     `calou` deixa o rasto no console de desenvolvimento. */
+  const vereditosDoMural = useMemo(() => {
+    const m = new Map();
+    try {
+      const qs = garantirMissoes(missoes);
+      const ctx = {
+        nivel: (personagem && personagem.nivel) || 1, dia: diaRef.current,
+        mundo: mundoDasMissoes(personagemRef.current || personagem),
+      };
+      for (const c of (mural || [])) {
+        if (!c || c.id == null) continue;
+        try { m.set(c.id, vereditoDoCartaz(c, qs, ctx)); }
+        catch (e) { calou("o veredito de um cartaz do mural", e); }
+      }
+    } catch (e) { calou("os vereditos do mural", e); }
+    return m;
+  }, [mural, missoes, dia, personagem, lugar, baseMundo, npcs]); // eslint-disable-line
+  const vereditoDoMural = (c) => (c && c.id != null && vereditosDoMural.get(c.id)) || null;
+  /* o que a soleira pergunta — e a tábua pergunta exactamente o mesmo */
+  const podeAceitarCartaz = (c) => { const v = vereditoDoMural(c); return v ? !!v.pode : true; };
 
   const ofertasDaSoleira = () => {
     try {
@@ -21899,13 +22111,21 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          papel é oferta *por que ainda se espera resposta*, e DEIXA DE O SER
          QUANDO NINGUÉM ESTÁ À ESPERA. Aceite o contrato, ninguém espera.
 
-         O TESTE É O MESMO QUE `pregarNoMural` JÁ USA, e de propósito: duas
-         leituras de "isto já está no diário" seriam duas verdades, e já
-         custaram caro nesta casa. */
-      const jaNoDiario = new Set(garantirMissoes(missoes)
-        .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
-        .map((q) => semNome(q.titulo)));
-      for (const c of (mural || []).filter((c) => c && c.oferecido && !jaNoDiario.has(semNome(c.titulo)))) {
+         E EM R17 ESTA SOLEIRA DEIXOU DE TER CONTA PRÓPRIA. O filtro daqui
+         era de TÍTULO EXACTO e o aceite recusa por cinco motivos — logo
+         havia um estado em que a soleira oferecia e o aceite recusava, que
+         é o defeito que o parágrafo acima diz que não pode existir. Agora
+         quem responde é `podeAceitarCartaz`, e é o mesmo ensaio seco que a
+         tábua e o aceite leem. Uma conta, três leitores.
+
+         E O QUE ELA FAZ COM A RESPOSTA É ESCONDER, não riscar, porque a
+         régua do `jogo` (§R17) separa os dois por quem está a falar: *onde
+         a casa OFERECE, o que não pode ser aceite não aparece; onde a casa
+         mostra o MUNDO, aparece riscado.* Uma oferta é a casa a falar com
+         o jogador — e a casa não oferece o que vai recusar. O papel pregado
+         na tábua é o mundo a falar sozinho, e o mundo não apaga o que já
+         disse: esse fica, e encolhe. */
+      for (const c of (mural || []).filter((c) => c && c.oferecido && podeAceitarCartaz(c))) {
         const rec = recompensaDe({ tipo: c.tipo || "contrato", nivel: c.nivel || (personagem && personagem.nivel) || 1, etapas: (c.etapas || []).length || 3, moedasPrometidas: c.paga });
         const paga = [c.paga ? `◉ ${c.paga}` : "", rec.xp ? `+${rec.xp} XP` : "", rec.fama ? `+${rec.fama} fama` : ""].filter(Boolean).join(" · ");
         lista.push({
@@ -22365,7 +22585,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               hora={Math.floor((minuto || 0) / 60)}
               chegada={lugarDaCena() !== lugarAntesRef.current ? "agora" : "assentada"} />
             <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 md:px-8 py-6 space-y-4" >
-              <VinhetaDaCena bioma={biomaDaqui()} />
               {/* A VOZ (R2), primeiro dos DOIS sítios onde o cabeçalho do
                   Mestre estava escrito à mão neste arquivo. Aqui ela é o
                   timbre da página, e leva a espera: `a preparar…` durante os
@@ -23089,7 +23308,76 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </LimiteErro>
                   </div>
                 )}
-              {/* ---------------- A LINHA (R3) ----------------
+              {/* ---------------- A LINHA (R3 → R17 §19) ----------------
+                  R17 PARTIU-A EM DUAS NA COLUNA ESTREITA, e a conta que a
+                  condena sai da tabela: cada alvo fixo custa piso+espaço =
+                  56 px, e a linha tem 343. TRÊS alvos fixos = 168 px, 49 %
+                  da linha. Ao campo sobravam 129,1 px de largura (medido no
+                  DOM ao vivo) e o jogador via ~29 dos 93 caracteres que
+                  escrevia — 31 %. Na mesa via 100 %.
+
+                  A LEI (§19): *numa coluna estreita, uma linha leva no
+                  máximo UM alvo fixo além do que cresce.* Quatro peças numa
+                  linha de 343 px não é uma composição apertada — é uma linha
+                  que não existe.
+
+                  `IconeBalao` SAIU, e é uma aposentadoria pelo §20: *um
+                  campo de texto não precisa de um ícone a dizer que é um
+                  campo* — ele afirmava o mesmo facto que o `placeholder`
+                  afirma melhor, e custava 56 px (16,3 %) da peça mais
+                  apertada da tela.
+
+                  A TROCA DE COLUNA É CSS E NÃO UM `if`: `md:flex-row` +
+                  `md:contents` no invólucro dos verbos. Na coluna larga o
+                  invólucro desaparece e os dois voltam a ser irmãos do campo,
+                  exactamente como estavam; na estreita descem para a sua
+                  própria linha, à direita, onde o polegar já vive. Zero
+                  `matchMedia`, zero re-render, e sobrevive a rodar o telefone
+                  a meio do turno — a mesma escolha de `A soleira`.
+
+                  E O CUSTO NÃO É PERMANENTE — foi a emenda que o `jogo`
+                  escreveu contra si próprio depois de a primeira versão desta
+                  linha ter sido medida: com um piso de 90 px em TODOS os
+                  turnos a página caía de 306 para 224,7, 37 % abaixo do piso
+                  da prosa. A régua que desfaz o nó é dele: *o campo e a prosa
+                  nunca disputam a mesma atenção — quando ele escreve, não lê;
+                  quando lê, o campo está vazio.*
+
+                  ENTÃO A COMPOSIÇÃO TEM DOIS MOMENTOS, e `campoAberto` é o
+                  que os separa:
+                    · REPOUSO (vazio E sem foco) — uma linha a `ALVOS.piso`,
+                      a largura inteira, sem a segunda linha e sem `Agir →`.
+                      A chamada deixa de ser truncada num campo de 129 px,
+                      que era a outra metade silenciosa do defeito, e melhora
+                      no turno em que ele lê, que é o turno em que ela tem de
+                      convidar.
+                    · ABERTO — salta direito ao tecto (138), e a segunda linha
+                      aparece. Não há degrau no meio: crescer por passos moveria
+                      a página a meio de uma frase.
+
+                  SÓ ENCOLHE VAZIO **E** SEM FOCO — encolher com texto lá
+                  dentro esconderia ao jogador o que ele escreveu, que é o
+                  defeito dos 31 % outra vez e de propósito. E `bloqueado`
+                  força o repouso, porque é o instante em que o turno parte:
+                  a página abre-se para receber a resposta.
+
+                  `Agir →` NÃO EXISTE ENQUANTO NÃO HÁ O QUE AGIR, e é a lei
+                  desta etapa aplicada à tela onde se passam 90 % do jogo: um
+                  alvo de ~90 px que com o campo vazio não pode dar certo é o
+                  mesmo defeito do cartaz do mural, uma faixa mais abaixo.
+                  *O melhor botão desactivado é o que não está lá.* Ele nasce
+                  na primeira letra. `bloqueado` é outra coisa e continua a
+                  valer: com texto no campo e o Mestre a escrever o botão FICA,
+                  cinzento — ali a recusa é uma ESPERA, e uma espera mostra-se;
+                  o vazio é uma AUSÊNCIA, e uma ausência não se desenha.
+
+                  A ALTURA SAI DE `CAMPO_DO_TURNO` (`estilo.js`), pela classe
+                  `tv-campo-do-turno`: repouso a `ALVOS.piso`, tecto 138, e
+                  acima disso rola dentro de si. O `minHeight` inline saiu
+                  daqui porque estilo em linha ganha sempre à folha — e a
+                  folha é quem sabe de que coluna se fala.
+
+                  ---------------- o diagnóstico de R3, que continua de pé ----
                   O campo media 208 × 35 px contra `ALVOS.piso` 48 (−27 %), e
                   `Agir →` media 69 × 28 — 1 946 px² contra os 5 184 px² da aba
                   `Bolsa`. O botão que faz o turno acontecer era 2,7× menor que
@@ -23106,13 +23394,31 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
                   `items-stretch` no invólucro do botão: o `Botao` cresce até
                   ao piso sozinho, sem que o número apareça dentro do JSX. */}
-              <div className="flex items-stretch gap-3 rounded-lg p-2 min-w-0" style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
-                <span className="shrink-0 pl-2 pt-2"><IconeBalao tamanho={16} /></span>
+              <div className={`flex flex-col md:flex-row md:items-stretch gap-2 md:gap-3 rounded-lg p-2 min-w-0${campoAberto ? "" : " tv-turno-repouso"}`} style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
                 <textarea value={entrada} onChange={(e) => setEntrada(e.target.value)} rows={2}
-                  onKeyDown={(e) => { if (gestoDoCampo(e) === "mandar") { e.preventDefault(); agir(entrada); } }}
+                  onKeyDown={(e) => { if (gestoDoCampo(e) === "mandar") { e.preventDefault(); partirOTurno(entrada); } }}
+                  onFocus={() => { try { setCampoFocado(true); } catch (e) { calou("abrir o campo do turno", e); } }}
+                  onBlur={() => { try { setCampoFocado(false); } catch (e) { calou("fechar o campo do turno", e); } }}
                   placeholder={rolagem ? "Role o dado abaixo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
-                  disabled={bloqueado} className="tv-anel-foco-no-campo flex-1 bg-transparent outline-none tv-body resize-none leading-relaxed px-3 py-2 min-w-0"
-                  style={{ color: T.ink, fontSize: TIPOS.corpo, minHeight: ALVOS.piso }} />
+                  disabled={bloqueado} className={`tv-campo-do-turno${campoAberto ? " tv-campo-aberto" : ""} tv-anel-foco-no-campo w-full md:flex-1 bg-transparent outline-none tv-body resize-none leading-relaxed px-3 py-2 min-w-0`}
+                  style={{ color: T.ink, fontSize: TIPOS.corpo }} />
+                {/* OS DOIS VERBOS, e o invólucro que só existe na coluna
+                    estreita: `md:contents` apaga-o na larga e eles voltam a
+                    ser irmãos diretos do campo — uma composição, duas colunas,
+                    e nenhuma segunda árvore para manter.
+
+                    E NA ESTREITA ELE SÓ APARECE COM O CAMPO ABERTO — quem o
+                    esconde é a FOLHA (`.tv-turno-repouso .tv-turno-verbos`) e
+                    não um ramo de JSX, porque esconder em JS apagaria os dois
+                    verbos também na coluna larga, onde eles servem sempre.
+
+                    `onPointerDown` COM `preventDefault` É O QUE MANTÉM A
+                    GAVETA TOCÁVEL: sem ele, o toque tira o foco ao campo, o
+                    invólucro desaparece por baixo do dedo e o clique não chega
+                    a acontecer. O `preventDefault` do `pointerdown` impede a
+                    mudança de foco e não impede o clique. */}
+                <div className="tv-turno-verbos flex shrink-0 items-stretch justify-end gap-2 md:contents"
+                  onPointerDown={(e) => { try { e.preventDefault(); } catch (err) { calou("segurar o foco do campo ao tocar num verbo", err); } }}>
                 {/* A GAVETA DAS HABILIDADES (R4b) — a forma é a de W1 no
                     tabuleiro, e é de propósito que não se inventa uma
                     segunda: `aria-pressed`, violeta, glifo só, alvo pelo
@@ -23132,8 +23438,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       opacity: bloqueado ? 0.4 : 1,
                     }}>✦{habsSel.length > 0 ? ` ${habsSel.length}` : ""}</button>
                 </div>
-                <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
-                  <Botao primario corpo desativado={bloqueado || !entrada.trim()} onClick={() => agir(entrada)}>Agir →</Botao>
+                {entrada.trim() ? (
+                  <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
+                    <Botao primario corpo desativado={bloqueado} onClick={() => partirOTurno(entrada)}>Agir →</Botao>
+                  </div>
+                ) : null}
                 </div>
               </div>
               </div>
@@ -23156,7 +23465,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           )}
 
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
-          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} /></LimiteErro>
+          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

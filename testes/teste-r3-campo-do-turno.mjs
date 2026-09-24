@@ -29,7 +29,7 @@
    ============================================================ */
 import { readFileSync } from "node:fs";
 import { SUBS_GESTAO, falaDaNovidade } from "../src/abas.js";
-import { ALVOS, TIPOS } from "../src/estilo.js";
+import { ALVOS, TIPOS, CAMPO_DO_TURNO } from "../src/estilo.js";
 
 const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 
@@ -89,8 +89,21 @@ t("o campo é `<textarea>`", /<textarea value=\{entrada\}/.test(APP),
 t("e o `onKeyDown` chama `gestoDoCampo`",
   /onKeyDown=\{\(e\) => \{ if \(gestoDoCampo\(e\) === "mandar"\)/.test(APP),
   "o campo voltou a decidir o gesto dentro do JSX — e o que está dentro do JSX não se prova");
+/* MOVIDA (24/09, R17 · a emenda do campo). Media que o gesto chamava
+   `agir(entrada)` directamente. Passou a chamar `partirOTurno(entrada)`, que
+   faz UMA coisa antes e depois chama o mesmo `agir`: devolve o campo ao
+   repouso. O motivo é de composição e está escrito no `App.jsx` — o instante
+   em que o turno parte é o instante em que a resposta do Mestre vem a
+   caminho, e é quando a página mais serve. Sem esse passo, o foco que sobra
+   do toque no verbo reabria o campo no pior momento possível.
+   O QUE ESTA ASSERÇÃO PROTEGE NÃO MUDOU: que o `Enter` de mandar não escreve
+   uma linha em branco antes de partir. Só mudou o nome de quem parte. */
 t("mandar impede o `Enter` nativo de escrever a linha em branco",
-  /gestoDoCampo\(e\) === "mandar"\) \{ e\.preventDefault\(\); agir\(entrada\); \}/.test(APP));
+  /gestoDoCampo\(e\) === "mandar"\) \{ e\.preventDefault\(\); partirOTurno\(entrada\); \}/.test(APP));
+t("e quem parte devolve o campo ao repouso ANTES de mandar — e o `agir` fica de fora do try",
+  /const partirOTurno = \(texto\) => \{[\s\S]{0,600}?calou\([^)]*\); \}\n    agir\(texto\);/.test(APP)
+  || (/const partirOTurno/.test(APP) && /\} catch \(e\) \{ calou\("devolver o campo ao repouso quando o turno parte", e\); \}\s*\n\s*agir\(texto\);/.test(APP)),
+  "devolver o campo ao repouso é cosmética; mandar o turno não é — nunca pode custar o turno");
 t("e `Agir →` continua a existir como botão", /Agir →<\/Botao>/.test(APP));
 
 sec("3. O SINAL DE SETA FICA RESERVADO AO QUE SE TOCA");
@@ -129,7 +142,55 @@ if (fonteDaPorta && fonteDaSeta && fonteDasPortas) {
 }
 
 sec("4. O piso do alvo entra na tela principal, e sai de tabela");
-t("o campo do turno lê `ALVOS.piso`", /minHeight: ALVOS\.piso \}\} \/>/.test(APP));
+/* MOVIDA (24/09, R17 §19) — a lei da casa manda escrever o motivo ao
+   mover uma asserção. Esta media `minHeight: ALVOS.piso }} />` em linha,
+   no `<textarea>` do campo do turno. Esse `minHeight` SAIU do JSX: estilo
+   em linha ganha sempre da folha, e por isso é a FOLHA — não mais o
+   componente — quem decide a altura do campo por coluna
+   (`estilo.js`, `.tv-campo-do-turno`); o `<textarea>` hoje só carrega a
+   classe. O que esta asserção protegia (o campo não inventa altura, ela
+   sai de tabela) continua protegido — só mudou de casa, e a prova muda
+   junto: lê `estilo.js` como texto, do mesmo jeito que esta suíte já lê
+   `APP`.
+   NÃO afirmo 90/138 nus: o piso da coluna estreita está em discussão com
+   o `jogo` agora mesmo (a página caiu 81px em TODO turno para servir só
+   o turno em que se escreve — pode virar tecto sem ser piso). A prova
+   fica na ESTRUTURA — a folha lê as tabelas certas, dentro e fora da
+   media query certa, e o tecto é maior que o piso —, para sobreviver a
+   essa decisão seja ela qual for. */
+{
+  const ESTILO = readFileSync(new URL("../src/estilo.js", import.meta.url), "utf8");
+  const iRegra = ESTILO.indexOf(".tv-campo-do-turno {");
+  const iMedia = ESTILO.indexOf("@media ${CAMPO_DO_TURNO.colunaEstreita}");
+  const foraDaMediaQuery = iRegra >= 0 && iMedia > iRegra ? ESTILO.slice(iRegra, iMedia) : "";
+  const dentroDaMediaQuery = iMedia >= 0 ? ESTILO.slice(iMedia, iMedia + 900) : "";
+  t("fora da media query, `.tv-campo-do-turno` lê `ALVOS.piso` — o piso de sempre, na mesa",
+    /min-height: \$\{ALVOS\.piso\}px/.test(foraDaMediaQuery));
+  /* MOVIDAS (24/09, R17 · a emenda do campo), e a nota de cima já as tinha
+     previsto: *"o piso da coluna estreita está em discussão com o `jogo`
+     agora mesmo — pode virar tecto sem ser piso"*. Virou.
+
+     O QUE MUDOU: a coluna estreita deixou de ter um PISO de 90 px em todos
+     os turnos e passou a ter DOIS MOMENTOS. Em repouso o campo é uma linha
+     a `ALVOS.piso` — nenhum número novo —, e ao ganhar foco salta direito ao
+     tecto. A régua é do `jogo`, contra ele próprio: *o campo e a prosa nunca
+     disputam a mesma atenção; quando ele escreve, não lê; quando lê, o campo
+     está vazio.* Medido: os 90 px permanentes levavam a página de 306 para
+     224,7; com a altura condicional ela fica em 322,7.
+
+     A PROVA CONTINUA NA ESTRUTURA e não nos números, pela mesma razão de
+     antes: que a folha lê as tabelas certas do lado certo da media query, e
+     que a altura não voltou a viver em linha no JSX. */
+  t("na coluna estreita o REPOUSO lê `ALVOS.piso` — o momento de convidar não inventa altura nova",
+    /height: \$\{ALVOS\.piso\}px/.test(dentroDaMediaQuery));
+  t("e o ABERTO lê `CAMPO_DO_TURNO.tecto` — o momento de escrever é o único que custa página",
+    /\.tv-campo-aberto \{ height: \$\{CAMPO_DO_TURNO\.tecto\}px; \}/.test(dentroDaMediaQuery));
+  t("a segunda linha dos verbos é escondida pela FOLHA, nunca por um ramo de JSX",
+    /\.tv-turno-repouso \.tv-turno-verbos \{ display: none; \}/.test(dentroDaMediaQuery),
+    "esconder em JS apagaria os dois verbos também na coluna larga, onde eles servem sempre");
+  t("e o campo do turno, na tela, carrega essa classe — nenhuma altura voltou a viver em linha",
+    /tv-campo-do-turno/.test(APP) && !/minHeight: ALVOS\.piso \}\} \/>/.test(APP));
+}
 t("a linha do sistema que abre uma porta lê `ALVOS.piso`",
   /minHeight: ALVOS\.piso, background: T\.paginaAlta, color: T\.amberSoft/.test(APP));
 /* a conta é a mesma que `estilo.js` guarda, e é por isso que ela é tabela:
@@ -209,10 +270,27 @@ t("e não há teto de contratos do mundo, porque não há contratos do mundo aqu
 t("o mercado não é oferta — é um lugar, e lugares abrem pela aba",
   !/id: "mercado\|aqui"/.test(APP) && !/verbo: "Negociar aqui"/.test(APP),
   "que há comércio numa cidade o jogador adivinha, e o mercado não se perde por não se agir agora");
-t("o que já foi aceite sai da soleira, pelo MESMO teste que `pregarNoMural` usa",
-  /const jaNoDiario = new Set\(garantirMissoes\(missoes\)/.test(rSoleira)
-  && /\["ativa", "oferecida", "concluida"\]\.includes\(q\.status\)/.test(rSoleira),
-  "cliquei no cartaz já aceite e o jogo respondeu `já está no diário`: um botão morto na fila ensina a não olhar para a soleira");
+/* ASSERÇÃO MOVIDA EM 24/09 (R17), E O MOTIVO É QUE ELA FICOU FRACA DEMAIS.
+
+   Ela exigia `jaNoDiario`/`semNome` dentro da soleira — um teste de TÍTULO
+   EXACTO. A pessoa jogou no telefone e achou o buraco: *"existe o botão de
+   aceitar quest sendo que a quest já foi aceita, então ele diz que ela já
+   está no diário e o botão continua lá"*. E a causa era esta linha a
+   proteger a conta errada — `aceitarProposta` recusa por CINCO motivos
+   (o tecto de `MAX_ATIVAS`, o duplicado semântico de `pareceMesmaMissao`,
+   o mesmo dador com o mesmo alvo, a etapa inconferível), e o título exacto
+   só apanha um deles. Títulos diferentes para o mesmo serviço passavam o
+   filtro e eram recusados no aceite: **o botão não podia dar certo, nunca.**
+
+   A intenção SOBREVIVE e ficou mais larga: continua a ser *o que já foi
+   aceite sai da soleira*, agora pelo ensaio seco que a tábua e o aceite
+   leem — uma conta só, e é literalmente a mesma função. Por isso a
+   asserção passa a EXIGIR `podeAceitarCartaz` e a PROIBIR o regresso do
+   teste de título, que é o que a tornava uma catraca a proteger o defeito. */
+t("o que já foi aceite sai da soleira, pelo MESMO ensaio seco que o aceite aplica",
+  /podeAceitarCartaz\(c\)/.test(rSoleira)
+  && !/jaNoDiario/.test(rSoleira) && !/semNome\(q\.titulo\)/.test(rSoleira),
+  "cliquei no cartaz já aceite e o jogo respondeu `já está no diário`: um botão morto na fila ensina a não olhar para a soleira — e o teste de título exacto deixava passar o caso em que os nomes divergem");
 /* AS QUE SOBRAM, na ordem da perecibilidade — a ordem é a prioridade, e
    medi-la pela posição no texto é medir a ordem da lista.
 
@@ -325,6 +403,55 @@ t("o que já foi aceite sai da soleira, pelo MESMO teste que `pregarNoMural` usa
       "sair sem descansar também é uma saída, e também tem preço — 20 minutos");
   }
 }
+
+sec("R17 · CAMPO_DO_TURNO — o campo deixou de ser um alvo mínimo");
+/* `CAMPO_DO_TURNO` (`estilo.js`) tinha um leitor só: a própria folha
+   (`RAMPA_...` gerado a partir dela). A lei é ≥2, e a catraca é
+   `teste-ligacao` — este bloco é o segundo leitor, e prova algo, não só
+   conta. Não afirmo 90 e 138 nus: o próprio `estilo.js` já diz, no
+   comentário acima da tabela, que os dois NÃO SE REPRODUZEM pela fórmula
+   do §19 enquanto `MEDIDAS` não nascer (`TIPOS.corpo` hoje é 15, a conta
+   pede 16) — uma asserção que congelasse o valor prenderia essa dívida
+   em vez de deixá-la se pagar sozinha no dia em que `MEDIDAS` existir.
+   O que vale a pena afirmar são as DUAS RELAÇÕES que a etapa comprou: */
+/* MOVIDAS (24/09, R17 · a emenda do campo). Estas duas afirmavam
+   `CAMPO_DO_TURNO.piso`, que DEIXOU DE EXISTIR — e deixou de existir pela
+   melhor das razões: o repouso não é número novo, é `ALVOS.piso`, e um
+   número que já tem casa não ganha uma segunda. A relação que a etapa
+   comprou mudou de forma com ele:
+     ANTES  o campo é sempre maior que um alvo mínimo (piso 90 > 48)
+     AGORA  o campo tem dois momentos, e só o de escrever é maior
+   A segunda é mais forte que a primeira, porque é ela que impede o regresso
+   do custo permanente: se algum dia o repouso subir acima de `ALVOS.piso`, a
+   página volta a pagar em todos os turnos o que serve num só. */
+t("o momento de escrever é maior que o de convidar — e só ele custa página",
+  CAMPO_DO_TURNO.tecto > ALVOS.piso,
+  `tecto=${CAMPO_DO_TURNO.tecto} · ALVOS.piso=${ALVOS.piso}`);
+t("e o repouso NÃO tem número próprio — quem lhe dá altura é `ALVOS.piso`",
+  CAMPO_DO_TURNO.piso === undefined,
+  "um piso próprio aqui seria o custo permanente a voltar: 81 px em todo turno para servir o único turno em que a página já não está a ser lida");
+/* e o movimento tem saída, que é lei desta casa para tudo o que se mexe */
+t("o salto até ao tecto respeita `prefers-reduced-motion`",
+  /@media \(prefers-reduced-motion: reduce\) \{\s*\n\s*\.tv-campo-do-turno \{ transition: none; \}/
+    .test(readFileSync(new URL("../src/estilo.js", import.meta.url), "utf8")),
+  "e o bloco tem de vir DEPOIS da transição: uma media query não soma especificidade, só envolve");
+
+/* ---------------- `Agir →` não existe enquanto não há o que agir ---------------- */
+/* A lei desta etapa, aplicada à tela onde se passam 90 % do jogo: um alvo de
+   ~90 px que, com o campo vazio, NÃO PODE DAR CERTO é o mesmo defeito que o
+   botão do cartaz do mural, uma faixa mais abaixo. *O melhor botão
+   desactivado é o que não está lá.*
+   E `bloqueado` é outra coisa e continua a valer: com texto no campo e o
+   Mestre a escrever o botão FICA, cinzento — ali a recusa é uma ESPERA, e
+   uma espera mostra-se; o vazio é uma AUSÊNCIA, e uma ausência não se
+   desenha. */
+t("`Agir →` nasce na primeira letra — com o campo vazio ele não está lá",
+  /\{entrada\.trim\(\) \? \(/.test(APP) && !/desativado=\{bloqueado \|\| !entrada\.trim\(\)\}/.test(APP));
+t("e `bloqueado` continua a apagá-lo, porque esperar não é o mesmo que não ter o que mandar",
+  /<Botao primario corpo desativado=\{bloqueado\} onClick=\{\(\) => partirOTurno\(entrada\)\}>Agir →<\/Botao>/.test(APP));
+t("e o campo só encolhe VAZIO E SEM FOCO, e `bloqueado` força o repouso",
+  /const campoAberto = !bloqueado && \(campoFocado \|\| !!entrada\.trim\(\)\);/.test(APP),
+  "encolher com texto lá dentro esconderia ao jogador o que ele escreveu — o defeito dos 31 % outra vez, de propósito");
 
 console.log(`\ncampo do turno R3: ${bons} passaram, ${maus} falharam`);
 if (maus) process.exit(1);

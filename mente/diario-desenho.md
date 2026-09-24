@@ -19,6 +19,129 @@ Formato:
 
 ---
 
+## 24/09 · v9.288 · **R17 — o papel que só podia falhar, e a tela onde a prosa não cabia** · commit `HASH`
+
+*A forma fica em `mente/formas.md` §§`R17` (o `jogo`), `R17 · a fabricação` (o
+`desenho`), `R17 · a emenda das capturas`, `R17 · o campo não paga em todos os
+turnos o que serve num só`, e §§19–21.*
+
+**O ciclo que a pessoa abriu jogando no telefone, e que trocou de item duas
+vezes.** Ela voltou com duas queixas: *"existe o botão de aceitar quest sendo
+que a quest já foi aceita… e o botão continua lá ocupando um baita espaço"* e
+*"e se tivermos uma versão mobile e uma desktop?"*. **Duas capturas chegadas a
+meio provaram que o botão era o mais barato dos três defeitos**, e a etapa
+recompôs-se em cima delas — duas vezes.
+
+- **estado inicial:** árvore limpa em `f041896`, `v9.287`, travas livres,
+  `npm test` verde.
+
+### A catraca falsa, e é a mais cara da série
+
+**Na segunda captura não havia uma linha de prosa na tela.** A causa é nossa e é
+a lei-mãe desta mesa partida por nós: **duas imagens do mesmo facto** — a
+xilogravura de 96 px que R13-B fabricou (fora do scroller) e uma fotografia
+`.webp` de 160 px do mesmo bioma (`VinhetaDaCena`, **dentro** do scroller, a
+empurrar a prosa). **256 px de duas imagens do mesmo lugar antes de uma palavra.**
+
+> **A medição estava certa e a tela está errada — medimos o caso que não
+> acontece.** `VinhetaDaCena` tinha `onError → null`: **uma peça que desaparece
+> em silêncio quando falha ensina o medidor a não a ver.** R12, R13 e R17
+> passaram por cima dela sem nenhum perguntar porque é que a faixa às vezes lá
+> estava.
+
+E a colisão era mais aguda do que a soma: **a vinheta rolava, logo custava os
+160 px exactamente no turno da chegada** — o turno para que a gravura foi
+criada. *As duas imagens chocavam no único turno em que qualquer uma importa.*
+
+### jogo / desenho
+
+- **A régua do esconde/carimba:** *onde a casa **oferece**, o que não pode ser
+  aceite não aparece; onde a casa mostra o **mundo**, aparece riscado. A
+  diferença não é de gravidade — é de quem está a falar.*
+- **A lei da recusa:** *uma recusa nunca é conteúdo. Mora na peça que a causou,
+  dura o tempo da decisão, e não deixa rasto.* Alcance medido: **60 `⛔` no
+  `App.jsx`, 48 na forma `autor:"sistema"`**. Este ciclo paga a primeira.
+- **A lei da aposentadoria**, em quatro degraus, e o dever que sai dela: **quem
+  fabrica uma peça nova nomeia, na mesma etapa, o que ela aposenta.**
+- **O piso da prosa na coluna estreita é 359 px** — 13 linhas, um parágrafo
+  inteiro deste jogo. *O piso não é uma altura: é uma unidade de escrita.*
+- **A terceira coluna da tabela de composição: `em que momento`.** *Nenhuma peça
+  ocupa a tela nos momentos em que não serve; uma peça que serve um momento e
+  ocupa todos é mobília — e mobília na tela principal paga-se em prosa.*
+
+### aprendiz / oficial / testes
+
+- **`aprendiz`** — `src/veredito-do-cartaz.js` (**ensaio seco da própria
+  `aceitarProposta`**, não uma segunda implementação), a suíte, e **`A
+  Consequência` nasceu em `ui.jsx`** com o eixo `Saída` — estava em Figma desde
+  D4 e **nunca existira em código**.
+- **`oficial`** — a soleira filtra pelo veredito, o mural carimba, o `pushMsgs`
+  saiu, a vinheta foi aposentada, e o campo do turno passou a ser condicional.
+- **`testes`** — re-mediu 88 endereços de linha por **conteúdo**, e achou **três
+  armadilhas de coincidência**: endereços antigos que continuavam a bater num
+  `pushMsgs(` de verdade, **mas de outra chamada**. *Somar um delta teria deixado
+  o varredor verde a apontar para nada, que é pior do que vermelho.*
+
+### a prova
+
+| | antes | depois |
+|---|---|---|
+| **a página, em repouso** | 306,0 px (−14,8 % do piso) | **322,7 px (−10,1 %)** |
+| **turno da chegada: falta rolar até à prosa** | **188,0 px** | **0 px** |
+| caracteres visíveis do campo (frase de 92) | **22 · 23 %** | **92 · 100 %** |
+| largura útil do campo | 129,1 px | **325,6 px** |
+| cartaz recusado (média de 4, save real) | 230,2 px | **117,3 px (−49,0 %)** |
+| a tábua inteira | 1 262,3 px | **811,0 px (−35,7 %)** |
+| `✍ aceitar contrato` (o único que pode dar certo) | 27,3 px — 57 % do piso | **51,3 px, ao piso** |
+
+### decisões médias tomadas, com o motivo
+
+1. **Uma conta só, e literalmente a mesma** — um ensaio seco, não uma segunda
+   implementação. *Duas leituras de "isto já está no diário" seriam duas
+   verdades*, e a casa já pagou por isso (`App.jsx:21883`).
+2. **`facto` recusa sem saída; `juízo` recusa com saída.** O `jogo` ensaiou no
+   save real: **de 4 recusas, 2 são falso positivo** (cobertura 0,667 contra
+   limiar 0,62). *Um selo que afirmasse "já está no diário" sobre um falso
+   positivo seria uma mentira em repouso — pior que o botão, que só mente quando
+   premido.* A forma conserta o defeito do motor sem lhe mexer: custa **um toque
+   em vez de um serviço perdido**.
+3. **O campo é condicional.** *O campo e a prosa nunca disputam a mesma atenção:
+   quando ele escreve, não lê.* Piso `ALVOS.piso` (48), salto directo ao tecto
+   (138) ao focar — *um crescimento por passos é um leiaute a tremer; um
+   crescimento por salto é uma resposta*. Devolve os 56 px **no instante em que o
+   turno parte**, que é o instante em que a resposta do Mestre vem a caminho.
+4. **`Agir →` não existe enquanto não há o que agir** — era um alvo de ~90 px
+   que, com o campo vazio, não podia dar certo: o mesmo defeito do cartaz, na
+   tela onde se passam 90 % do jogo.
+
+### os dois erros desta mesa, escritos porque custaram o ciclo
+
+- **Um sinal trocado inverteu a conclusão do §19.** Os +81 px da linha do turno
+  eram o que ela **tira** à página, não o que lhe dá. *Um orçamento que só se
+  confere somando as parcelas não apanha um sinal trocado — só a soma do ecrã o
+  apanha.* Apanhou-o o `oficial`, medindo.
+- **R17h foi proposta a partir de dois casos, e havia três.** *"A fila B já tem
+  casa no relógio"* é verdade para `Esperar` e `Montar acampamento` e **falso
+  para `Seguir viagem`**. **R17h apagaria a única porta da coisa que a pessoa
+  estava a fazer** — e foi essa mesma coisa, escondida atrás do `+N`, que fez
+  nascer a etapa. Fica **BLOQUEADA**: `R20 → R17h`.
+
+### o que ficou
+
+- **O que o jogador perde, e é o único:** em repouso a gaveta `✦` desaparece na
+  coluna estreita — armar uma habilidade custa um toque a mais. Declarado, não
+  escondido; a alternativa está custeada (a gaveta permanente devolve o repouso a
+  266,7 px, pior que os 306 de partida). **Vai ao `jogo` como item.**
+- A ambição foi à pauta, não à pessoa (ordem de 23/09): **R18** (o cartaz nasce
+  dobrado: 3,38 → 8,48 por ecrã), **R19/R16** (a gravura passa a ser o chão da
+  página), **R20** (a coluna estreita perde a fita das abas).
+- **As 47 recusas restantes** ficam para a etapa própria da lei da recusa.
+- **A biblioteca do Figma derivou pela terceira vez em três etapas** — a dívida
+  mais teimosa desta mesa, e a sincronização automatizada continua por fazer.
+- **Uma armadilha nova subiu ao `CLAUDE.md`:** a crase fecha a string do destino,
+  não só a do patch — um **comentário** dentro de `SUPERFICIES_CSS` (que *é* um
+  template-literal) custou um build hoje.
+
 ## 23/09 · v9.287 · **R15 — a soleira aprende a ouvir, e as dívidas de R13 pagam-se** · commits `d5ec4fe` (as dividas) · `f8709ba` (o save) · `89a9cec` (os verbos)
 
 *O escrito das mãos fica em `mente/r15-mesa.md`; a forma, na secção `R15` de

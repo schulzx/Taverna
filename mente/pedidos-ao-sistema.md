@@ -567,6 +567,62 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   oferta da estrada) mesmo sabendo-a hoje inalcançável — no dia em que o motor
   pausar, uma oferta que continuasse a andar seria um bug calado.
 
+- [x] **o ensaio seco do aceite: `{pode, motivo, contra, certeza}`** · de: R17 · 24/09
+  **SERVIDO PELA PRÓPRIA MESA no mesmo ciclo, e fica escrito porquê.** O pedido
+  nasceu a apontar ao motor e não precisava de lá chegar: `src/veredito-do-cartaz.js`
+  **não escreve regra nenhuma** — compõe exports que já existiam e faz um **ensaio
+  seco da própria `aceitarProposta`**, com exactamente a proposta que
+  `aceitarContrato` monta. *Uma conta só quer dizer chamar a mesma função, não
+  escrever uma segunda que concorde com ela.* Nenhum número novo, nenhum limiar
+  tocado — logo não era da fila do sistema, e teria ficado à espera por engano.
+  **A régua que isto deixa para a mesa:** um pedido ao motor que se possa cumprir
+  **compondo** o que o motor já exporta não é um pedido — é trabalho nosso.
+
+- [ ] **`pareceMesmaMissao` não diz CONTRA QUEM decidiu, e `norm` não é exportada** · de: R17 · 24/09
+  **O que sobra do pedido acima, e é real.** Para separar *facto* (bateu por
+  título exacto) de *juízo* (bateu por vocabulário) — a distinção de que a forma
+  de R17 depende — foi preciso **copiar `norm` (`missoes.js:57`) para dentro de
+  `veredito-do-cartaz.js`**, porque não é exportada. A cópia nunca decide o
+  `pode`; só escolhe entre duas legendas de uma recusa já dada, e está declarada
+  em comentário no sítio. **Mas é uma segunda cópia de uma normalização**, e esta
+  casa já sabe onde isso acaba.
+  **O que se pede, e é barato:** exportar `norm`, ou — melhor — `pareceMesmaMissao`
+  devolver **contra qual missão** decidiu e **por que ramo**. Ela já sabe as duas
+  coisas; só nunca lhe perguntaram.
+  **Para quê:** hoje `PainelMural` desenha `✍ aceitar contrato` sem consultar
+  ninguém, e a soleira consulta só o título exacto — **`aceitarProposta` recusa
+  por quatro motivos**. Medido no save real da pessoa: **4 dos 5 cartazes do
+  mural não podem ser aceites, e o jogador só descobre depois de tocar.** Pior:
+  a recusa chega por **baixo** do painel que a pediu (linha em `y=391`,
+  `elementFromPoint` devolve `.tv-cartaz`), e **cada toque morto escreve 48 px
+  permanentes na página** — três toques comem 47 % da página do telefone.
+  **O que se pede:** um ensaio seco de `aceitarProposta` com **exactamente** a
+  proposta que `aceitarContrato` constrói, devolvendo `{pode, motivo}` **mais
+  duas coisas que o motor já sabe e nunca disse**:
+  - **`contra`** — o **nome** da missão que colidiu (`pareceMesmaMissao` decide
+    contra uma missão concreta; só nunca lhe perguntaram qual). Sem o nome, o
+    selo afirma um facto que o jogador não pode conferir.
+  - **`certeza`** — `facto` (bateu por **título exacto**) ou `juizo` (bateu por
+    **vocabulário**). É a distinção que a lei de forma de R17 exige: *`Saída=Não
+    tem` só para facto; um juízo recusa com `Saída=Tem`, porque o que há a fazer
+    é o jogador olhar e decidir.*
+  **Uma conta só, e é a mesma que o aceite vai aplicar** — duas leituras de
+  "isto já está no diário" seriam duas verdades, e esta casa já pagou por isso
+  (`App.jsx:21883`).
+
+- [ ] **a peneira semântica erra em 2 de 4, medido** · de: R17 · 24/09
+  `Tirar Lia da Silva de lá` (de Barro de Pedra) colide com `Tirar Alba de lá`
+  (de Olga da Meia-Lua) a **cobertura 0,667 contra o limiar de 0,62** — **47
+  milésimos acima da linha**, com duas pessoas, duas vítimas e dois lugares
+  diferentes. O mesmo entre as duas pragas (esporo-rugidor na ermida × javali no
+  posto). **A peneira está a ler o molde da prosa, não o serviço** — é o erro
+  contrário ao incidente que a criou (`missoes.js:503`).
+  **Para quê, e porque NÃO é urgente:** a lei de forma de R17 faz um juízo errado
+  custar **um toque em vez de um serviço perdido**, logo o limiar deixou de ser
+  uma emergência. Fica medido e nomeado para o dia em que o motor lhe quiser
+  mexer — e com a régua de que *o alvo separa melhor que o vocabulário*, que é a
+  lição que `mesmoAlvo` já aprendeu do outro lado.
+
 
 ## Atendidos
 

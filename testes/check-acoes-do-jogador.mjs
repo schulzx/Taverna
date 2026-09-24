@@ -309,10 +309,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 7835) {
-    falha(`pushMsgs saiu de src/App.jsx:7835 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 7928) {
+    falha(`pushMsgs saiu de src/App.jsx:7928 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7835, como o mapa de X3b diz");   /* R13: 7258 -> 7724 (etapa A) -> 7835 (etapa B). É a sétima e a oitava cobrança desta catraca por um deslocamento que não é defeito nenhum: as peças que R13 acrescentou nascem ao NÍVEL DO MÓDULO, como a lei obriga (componente dentro do render mata o foco do input), e empurram para baixo tudo o que vem depois. O item da pauta que propõe trocar número por âncora de alcance ganha aqui mais duas. */
+  } else ok("pushMsgs segue em src/App.jsx:7928, como o mapa de X3b diz");   /* R13: 7258 -> 7724 (etapa A) -> 7835 (etapa B). É a sétima e a oitava cobrança desta catraca por um deslocamento que não é defeito nenhum: as peças que R13 acrescentou nascem ao NÍVEL DO MÓDULO, como a lei obriga (componente dentro do render mata o foco do input), e empurram para baixo tudo o que vem depois. O item da pauta que propõe trocar número por âncora de alcance ganha aqui mais duas.
+     R17: 7835 -> 7928. É a NONA cobrança: a lápide de `VinhetaDaCena`/
+     `IconeBalao` e a fiação nova do veredito do cartaz em `PainelMural`
+     nascem acima deste ponto, e tudo abaixo andou +93. Nenhuma forma
+     mudou — só o endereço, re-medido por conteúdo contra o HEAD anterior
+     à etapa, não por soma de delta. */
 
   let divergiu = 0;
   for (const f of FUNIL_DO_COMBATE) {

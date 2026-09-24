@@ -1252,6 +1252,30 @@ Medir antes de mexer, como a Fase A ensinou — aqui aplicado ao visual.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
+- [ ] **a gaveta `✦` desaparece em repouso, e é a única coisa que R17 tirou ao
+  jogador** · médio · de: regente · 24/09 · **para o `jogo` decidir**
+
+  **O que aconteceu, e está declarado e não escondido.** R17 tornou a segunda
+  linha do campo do turno condicional (nasce ao focar, some ao largar) e devolveu
+  **+16,7 px permanentes** à página, mais a prosa na primeira tela do turno da
+  chegada. **O preço, medido pelo `oficial`:** em repouso a gaveta `✦` também
+  desaparece na coluna estreita — **armar uma habilidade passa a custar um toque
+  a mais** (tocar o campo primeiro). É consequência directa da decisão do §3 e
+  cabia dentro dela, mas **não foi nomeada a ninguém antes de acontecer**, e é a
+  única coisa desta etapa que o jogador *perde*.
+
+  **A proposta, e é uma escolha entre dois números que já existem:** ou fica como
+  está (repouso **322,7 px**, +16,7 contra os 306 de partida, e um toque a mais
+  para armar), ou a gaveta sobe para a primeira linha ao lado do campo por **56
+  px** — e aí o repouso volta a **266,7 px**, que é **pior que os 306 de onde
+  partimos**. *O `jogo` decide, porque é momento: a pergunta é quantas vezes em
+  20 turnos se arma uma habilidade, e ele tem o censo.*
+
+  **E a régua nova dele responde a isto sozinha, se for aplicada:** *nomeie o
+  momento em que a peça NÃO serve.* A gaveta não serve no turno em que se lê —
+  logo a forma certa talvez não seja nenhuma das duas acima, mas a gaveta a ter
+  **o seu próprio momento**, separado do campo.
+
 - [ ] **`recusar` é o único gesto do cartão que muda o mundo, e é o único sem
   marca** · médio · de: jogo · 16/09 (K4) · **o achado que o número deu e a
   intuição não daria**
@@ -1860,3 +1884,336 @@ razões — está em `mente/arquivo/pauta-desenho-fechadas.md`, e o diário apon
   `COMPONENT_SET` com eixos a sério quando os verbos do `jogo` forem
   construídos — construir a peça antes de haver o que ela mostre seria mobília,
   que é o que a peneira desta etapa recusa.
+
+
+---
+
+## Semeado em R17 (`desenho`, 24/09)
+
+**A forma inteira está em `mente/formas.md` §*R17 · a fabricação***, e no Figma
+(`e5wJUzInAssoebx5npssKc`, página `R17 · o cartaz que nao pode ser aceite`,
+`200:67`). O que segue é só o que ficou **por fazer**, com peso.
+
+### A proposta ambiciosa — e ela também não vai à pessoa
+
+> Sai de tabela e desfaz-se num commit, logo é da mesa (regime de 23/09). Fica
+> escrita aqui com o mesmo rigor com que iria para lá.
+
+- [ ] **R18 · no telefone, toda lista de ofertas nasce DOBRADA** · de: desenho ·
+  24/09 · **a proposta ambiciosa de R17** · médio, com catraca
+
+  **O que fazer.** A tábua do mural é a única tela deste jogo que representa um
+  **objecto do mundo** — e no telefone ela é um scroll de rectângulos iguais. A
+  proposta é que, na coluna estreita, **um cartaz nasça fechado**: percevejo,
+  ícone, título e o preço. Toca-se e ele abre; toca-se noutro e o primeiro
+  fecha. *Um papel pregado numa tábua não se lê todo ao mesmo tempo — vira-se
+  um de cada vez, e é isso que faz uma tábua parecer uma tábua.*
+
+  **Os números, medidos a 375 px com a folha e as fontes carregadas:**
+
+  | estado | altura | cartazes num ecrã de 812 |
+  |---|---|---|
+  | hoje | 224,0 | **3,38** |
+  | com a letra da coluna estreita (R17 §11) | 253,9 | 3,01 |
+  | **fechado** (só a cabeça) | **79,8** | **8,48** |
+
+  **8,48 contra 3,38 — duas vírgula cinco vezes mais tábua por ecrã**, e o
+  jogador passa a ver a oferta inteira da cidade sem rolar uma vez. Hoje ele
+  vê três cartazes e **um deles é aceitável** (o `jogo` mediu: 4 de 5 recusam).
+
+  **Por que agora, e por que não custa peça nova.** `A dobra` nasceu em R15
+  declarada *"para todos"*, e R17 já a instancia uma vez (o cartaz recusado,
+  §5). Isto é a segunda instância, e a regra que sai dela é geral:
+  **na coluna estreita, o teto da soleira (1) e a dobra do cartaz são a mesma
+  lei — mostra-se uma coisa de cada vez, e a lista continua inteira.**
+
+  **A objecção honesta, e a resposta:** *um cartaz fechado esconde a
+  recompensa, e a recompensa é o que faz o jogador querer o serviço.* Por isso
+  o preço (`◉ 40`) **fica na cabeça** — é o campo que já lá está, e é o único
+  que decide se vale abrir. Os três chips de recompensa (+XP, +fama, item) são
+  o que se lê **depois** de querer.
+
+  **O que a mesa tem de assinar antes:** é do `jogo` dizer se a tábua ainda
+  parece uma tábua com os papéis fechados. **Sem essa assinatura isto não
+  entra** — é uma mudança do que o jogador vê primeiro.
+
+- [ ] **R19 · a gravura deixa de ser uma faixa e passa a ser o chão da página no
+  telefone** · de: desenho · 24/09 · **a segunda ambiciosa** · médio
+
+  Irmã de R16 e mais agressiva do que ela: R16 leva o talho para debaixo da
+  prosa; **R19 leva a SILHUETA.** No telefone, `O rosto da cena` ocupa 96 px de
+  812 — **11,8 %** — e a página que lhe fica por baixo tem 586 px de castanho
+  chapado. A proposta é a silhueta do bioma **sangrada pela página inteira**,
+  em densidade mínima, **nunca por baixo de uma linha de prosa**: a gravura
+  vive na margem e no sangramento, e o bloco de texto tem chão liso. *É como se
+  imprime um livro ilustrado, e é a diferença entre uma imagem colada e um
+  livro.*
+
+  **O que muda em número:** a imagem passa de 11,8 % do ecrã a ser o chão de
+  **72 %** dele, sem custar **um px de leiaute** — é o mesmo SVG determinista,
+  a mesma semente, a mesma `LUZ_DA_CENA`.
+
+  **O tecto, e é ele que faz a proposta ser aceitável:** a prosa mede hoje
+  **11,08:1**; a composição com a gravura por baixo **não pode descer de 7:1**
+  (AAA, o mesmo piso da legenda da faixa em R13). Isso é uma conta, não um
+  gosto, e a suíte pode refazê-la.
+
+### As três peças que o `jogo` pediu em R17 — decididas, por construir
+
+- [x] **R17a · `A Consequência` ganha `Saída` no código** · **FEITA no próprio
+  ciclo R17** · de: desenho · médio
+  32 variantes no Figma, `minHeight` ligado a `alvo/piso`. Em código a peça
+  **nunca existiu** (105 `title` fazem-lhe as vezes). Constrói-se junto com o
+  primeiro construtor, que é o cartaz. Forma fechada em `formas.md` §R17 §§1-4.
+  **Nasceu em `src/ui.jsx` com os cinco canais e a cor igual nos dois estados.**
+  `Forma=Balão` **não** foi construída e degrada para `linha`: `formas.md` fixa o
+  movimento do balão e não a **forma de repouso**, e o `aprendiz` recusou-se a
+  inventá-la — bem. *Fica como pergunta ao `desenho` para o dia em que houver o
+  primeiro consumidor; hoje não há nenhum.*
+- [x] **R17b · a fenda `o que colidiu`** · **FEITA no próprio ciclo R17** · de: desenho · leve
+  Segunda propriedade de texto de `Consequencia`, vazia por omissão. **É ela
+  que torna o falso positivo visível** (`formas.md` §R17 §4). Especificada,
+  não desenhada.
+- [ ] **R17c · `A cinta` ganha `Estado=Em viagem`** · de: jogo · médio
+  Quarto estado, a `alturaViva` (72). Forma em `formas.md` §R17 §14. **Quando
+  entra e quando recolhe é do `jogo`.**
+
+### A tabela das duas colunas — desenhada, por construir
+
+- [ ] **R17d · `MEDIDAS` nasce, e `TIPOS`/`ALVOS` viram `var(--tv-*)`** · de:
+  desenho · 24/09 · médio · **o item de maior alcance desta etapa**
+  A forma inteira em `formas.md` §R17 §§8-11, com o código da tabela escrito.
+  **117 leitores migram sem serem tocados**; **14 sítios de conta mudam**, todos
+  nomeados (6 divisões em `grade-de-batalha.jsx` + 8 asserções em 4 suítes) —
+  e essa migração **conserta um defeito latente**: aquelas 6 divisões querem
+  dizer *"a casa do tabuleiro"*, que é a coluna do **dedo**, sempre.
+  *Nada nesta etapa pede uma decisão nova ao `aprendiz`.*
+- [ ] **R17e · a catraca da tabela** · de: desenho · leve · para o `testes`
+  `check-formas` ganha um dente que conta **`text-[Npx]` literal e `fontSize:`
+  com número**, e só o deixa descer — substituindo a catraca de 653 que congela
+  só 8–11 px. **Um número literal não sabe em que coluna está**, e por isso é
+  dívida mesmo quando é grande.
+- [ ] **R17f · `A Consequência` é sempre `Forma=Linha` no dedo** · de: desenho ·
+  leve
+  `Forma=Balão` abre no *hover*, **e num dedo o hover não existe**. Os 105
+  `title` do jogo são 105 factos que não existem para quem joga no telefone.
+  É uma regra de composição e entra no varredor com a peça.
+
+### O campo do turno — e é o achado do dia
+
+- [ ] **R17g · o campo do telefone tem piso 90 e tecto 138** · de: jogo · médio
+  O `jogo` mediu: **930 px na mesa, 129 no telefone, 65 de altura nos dois — o
+  jogador vê 31 % do que escreveu.** A forma em `formas.md` §R17 §12: 3 linhas
+  a `corpo` 16 (42,9 ch/linha a 343 px, logo 93 caracteres cabem inteiros).
+  Custa 25 px de página; R17h devolve 56. **É a única peça da casa que é mais
+  generosa no dedo do que no ponteiro, e a razão é geométrica.**
+- [ ] **R17h · a fila B sai da peneira da soleira; a porta fica** · **BLOQUEADO:
+  depende de R20, e a premissa estava errada** · de: jogo ·
+  médio · **discordância fechada, os dois lados em `formas.md` §R17 §13**
+  Resultado do `jogo` (os 56 px voltam: a página do telefone vai de 306 a
+  **362 px, 37,7 % → 44,6 %**), mecanismo do `desenho` (`A dobra` não morre —
+  com zero itens escondidos ela não existe por construção). **Matar a porta
+  voltaria a trancá-la**, contra a lei que o próprio `jogo` escreveu em R15.
+
+  **E a premissa do `jogo` estava errada, achada pelo `oficial` ao ir ao código
+  procurar a porta.** O §13 diz *"a fila B já tem casa permanente no relógio
+  desde R13"* — **verdade para `Esperar` e `Montar acampamento`, FALSO para
+  `Seguir viagem`**, que R15 criou e a que nunca deu morada (`viajarPeloMapa`
+  retorna se há jornada; `painel-mapa.jsx` diz *"Você já está na estrada"*; o
+  relógio não tem `Seguir`). **Construir R17h hoje apagaria a única porta de
+  toque da coisa que a pessoa estava a fazer** — e foi essa mesma coisa,
+  escondida atrás do `+N`, que fez nascer a etapa. *O `jogo` generalizou a
+  partir de dois casos e havia três.*
+
+  **Não morre: fica a dever a R20.** Viajar é passar o tempo com destino, logo a
+  morada de `Seguir viagem` é a dos outros dois. **Ordem: R20 → R17h**, e R17h só
+  entra depois de a porta existir e ter sido tocada.
+
+### As dívidas que R17 declara e não paga
+
+- [ ] **a biblioteca do Figma derivou pela terceira vez em três etapas** · de:
+  desenho · 24/09 · médio
+  R13 achou a paleta pré-R2. R15 achou a luz pré-correcção. **R17 achou a letra
+  pré-piso: `a frase` de `Consequencia` estava a 10 px desde D4 — abaixo do
+  piso que a própria casa escreveu em R2**, e nenhum varredor olha para o
+  Figma. Corrigido à mão pela terceira vez. *Corrigir à mão não é conserto, é
+  adiamento* — a sincronização automatizada continua por fazer, e cada etapa
+  que passa torna-a mais barata do que a correcção seguinte.
+- [ ] **a porta de `Saída=Tem` sobre o tabuleiro não foi medida** · de: desenho ·
+  leve
+  No campo de batalha `A Consequência` é sempre *Linha* por decisão de R13
+  (quatro segundos de balão tapam casas). **Mas uma *Linha* de 48 px sobre o
+  tabuleiro também tapa**, e essa medida esta etapa não fez.
+- [ ] **o piso de 13 no dedo tem preço, e está medido** · de: desenho · nota
+  Subir o cartaz do mural ao piso da coluna estreita leva-o de 224,0 a
+  **253,9 px (+13,3 %)**. A dívida de R7 tem preço; neste cartaz o
+  encolhimento de R17 §3 paga-a cinco vezes. **Noutras telas pode não pagar** —
+  a conversão continua a ser um painel por etapa, medindo.
+
+## Semeado em R17 (`jogo`, 24/09)
+
+*O `desenho` semeou a fabricação (R17a–R17h, R18, R19). Aqui fica só o que é de
+composição e ele não tem como escrever: uma tela que ainda não obedece à régua
+das duas colunas, e a proposta ambiciosa — que **não vai à pessoa**, porque sai
+de uma tabela e se desfaz num commit.*
+
+- [ ] **R17i · o mural na coluna estreita: a cortiça deixa de ser moldura** · de:
+  jogo · 24/09 · médio · **VEM ANTES DE R18, e a ordem é lei e não preferência**
+
+  **Porquê antes.** O `desenho` declarou o canal que nunca pode encolher — **a
+  palavra na ranhura do preço** (`◉ 40` → `no diário`) — e escreveu que *se a
+  ranhura tiver de encolher, é o percevejo que se reforça, não o contrário*.
+  **A ranhura vive na largura**, e a parede dobrada de R18 está construída a
+  302 px porque é o que há hoje. **R17i não alarga só o papel: alarga o único
+  canal que ele próprio declarou intocável**, de 302 para 343 (+13,6 %).
+  *A altura sem a largura faz a parede nascer estreita, e a primeira coisa a
+  apertar seria a primeira coisa a não poder apertar.*
+
+  **E o que R17i aposenta, nomeado por dever da §20:** perde-se a leitura *"isto
+  é uma tábua"* ao primeiro olhar. **Paga-se porque na coluna estreita ninguém
+  vê a tábua inteira** — é uma leitura cobrada e não entregue.
+
+  **R18 do `desenho` resolve a ALTURA da tábua (a dobra). Isto é a LARGURA, e
+  não se resolve pela mesma peça.** Medido no telefone: o cartaz mede **294 px
+  dentro de 375** — a cortiça, a moldura e o respiro comem **~76 px, 20 % do
+  eixo mais estreito**, para dizer *"isto é uma tábua"* a quem **nunca vê a
+  tábua**. Na coluna larga vê-se o objecto inteiro com os papéis pregados nele, e
+  é aí que a metáfora se paga.
+
+  > **Um objecto que não cabe no ecrã deixa de ser um objecto e passa a ser uma
+  > moldura.** Na coluna estreita a cortiça sobrevive como **o chão por trás dos
+  > papéis**, não como o caixilho à volta deles: o cartaz passa de 294 para
+  > **343 px (+17 %)** de largura, no eixo em que a leitura dói.
+
+  Não é remover a tábua — é a mesma tábua vista de perto em vez de vista de
+  longe. *É a mesma decisão que o campo com duas alturas: a peça ganha dois
+  estados, não duas versões.* **Com R18 por cima, os dois ganhos multiplicam-se:
+  mais papéis no ecrã E cada papel mais largo.**
+
+### A proposta ambiciosa de R17 (`jogo`) — e ela NÃO vai à pessoa, pela régua dela própria
+
+- [ ] **R20 · a coluna estreita perde a fita das abas** · de: jogo · 24/09 ·
+  **a proposta ambiciosa de R17** · médio, **e só acontece se o censo a
+  sustentar**
+
+  **O que se propõe.** A fita de cinco abas — `GESTÃO · DIÁRIO · BOLSA · MAPA ·
+  CÓDEX` — ocupa **76 px permanentes, 9,4 % da altura do telefone**, e as cinco
+  são **acervo** pela régua de R17, que manda acervo para trás de um toque nos
+  dois aparelhos. A fita cumpre a letra (é um toque) e falha o espírito: são
+  **cinco portas sempre abertas para cinco salas que ninguém compara com a
+  cena**. É, hoje, a maior faixa permanente da tela sem um leitor na prosa.
+
+  **E há um argumento mais forte do que o uso: as salas já têm porta.** R13 fez
+  da cinta inteira **um alvo só** que abre a ficha — e PV, bolsa, relógio e prazo,
+  que estão na cinta, são exactamente o **estado** cujo **acervo** mora em
+  `GESTÃO`, `BOLSA` e `DIÁRIO`. *É a mesma conta com que o `desenho` fechou a
+  porta `+N` uma faixa acima: quando a sala já tem porta, a segunda porta não é
+  acesso — é mobília.*
+
+  **O que a pessoa ganharia, em número:** a página a ler passa de **359 para
+  435 px — 53,6 %**, acima da linha que a mesa assinou em R5a, e **1,42× a
+  página de hoje**. Peças permanentes na tela: **6 → 5**.
+  *(Conta refeita em `formas.md` §R17 depois de o campo ganhar piso 90: a minha
+  primeira versão dizia 475 e 1,55×, e assentava num campo de 66 px que a medida
+  do `desenho` desmentiu.)*
+
+  **A catraca, e ela é o corpo da proposta e não um apêndice:** esta é a coisa
+  mais *reaprender* que a mesa propôs desde que a ordem de 23/09 lhe deu a
+  decisão, e por isso **não se faz por argumento — faz-se por censo.** Vinte
+  turnos, contando **quantas vezes cada aba é aberta e a partir de onde**. R13
+  aposentou quatro botões de cabeçalho exactamente assim (`🎲` 0 usos, `📜` 0
+  usos), e **a fita é a última peça da tela principal que nunca passou por um
+  censo**. Aba aberta com frequência a partir da tela principal fica, e a
+  proposta encolhe para as outras. *Uma proposta ambiciosa que se recusa a ser
+  medida é só uma proposta arrojada.*
+
+  *Não vai a "Para a pessoa decidir" porque um commit revertido conserta isto
+  inteiro — é uma faixa de leiaute. Pela régua de 23/09, é da mesa, e fica
+  escrita com o mesmo cuidado com que iria para lá: o que muda é quem decide,
+  não o rigor.*
+
+### O que o `jogo` assinou em R17, e a condição que pôs
+
+- **R18 do `desenho` (o cartaz nasce dobrado) está ASSINADO**, com duas
+  condições escritas em `formas.md` §R17: **(1) a dobra tem de carregar a marca
+  de `Saída`** — sem isso os 8,48 cartazes por ecrã viram quatro toques
+  desperdiçados a procurar o único vivo, que é **pior do que hoje**; **(2) um
+  aberto de cada vez na coluna estreita, livre na larga.**
+- **E a dobra aposenta a razão de 2:1 que o `jogo` tinha pedido** (o cartaz
+  aceitável ao dobro do recusado): era um remendo para um mundo em que tudo está
+  aberto. *Com tudo dobrado, o canal honesto é a marca, não o tamanho.*
+
+
+
+### R17 · o que a assinatura do `jogo` acrescentou (24/09, mesmo dia)
+
+- [x] **R18 está ASSINADO pelo `jogo`, com duas condições** — e o argumento dele
+  é melhor que o meu: *uma cortiça verdadeira **é** uma parede de títulos; a
+  tábua de papéis todos abertos é que nunca foi uma tábua.* **R18 deixa de ser
+  um ganho de densidade e passa a ser uma reparação de metáfora que dá densidade
+  de lucro.**
+- [ ] **R17j · `A marca na dobra`** · de: desenho · 24/09 · médio · **R18 NÃO
+  ENTRA SEM ISTO**
+  A condição (1) do `jogo`, e é a que decide se R18 ganha ou perde: *se o papel
+  morto for indistinguível do vivo enquanto dobrado, o jogador abre quatro para
+  achar um, e os 8,48 por ecrã viram quatro toques desperdiçados — pior do que
+  hoje.* **Fabricado e no Figma: `O percevejo` (`206:93`, 6 variantes) e a
+  parede de prova `R17 · a tábua dobrada` (`206:94`).** Forma fechada em
+  `formas.md` §17 e §17b. Falta o código.
+  **Três canais, e a cor não é nenhum:** a palavra na ranhura do preço
+  (`◉ 40` → `no diário`, zero px), a tinta do título (14,83:1 → 8,82:1, os dois
+  AAA) e o percevejo (cheio · meio saído · **furo**).
+- [ ] **R17k · `A dobra` ganha a lei de LISTA** · de: desenho · leve
+  Condição (2) do `jogo`, aceite: **na coluna estreita, uma lista de dobras abre
+  UMA de cada vez**; na larga, livre. *Não é eixo novo da peça — é lei de quem
+  monta a lista*, e entra no varredor com ela.
+- [ ] **ordem: R17i ANTES de R18** · de: desenho · nota
+  A moldura de madeira diz *isto é uma tábua* a quem **vê a tábua** — na coluna
+  estreita ninguém a vê inteira, logo paga por uma leitura que não acontece.
+  **R17i resolve a largura, R18 resolve a altura**, e o contrário faz a parede
+  nascer estreita.
+- [ ] **a lei do 2× ganhou escopo em vez de morrer** · nota
+  O `jogo` reparou que a razão aceitável ≥ 2× recusada *"era um remendo para um
+  mundo em que tudo está aberto"*. **Lista ABERTA: o canal é o tamanho (2,34×
+  medido). Lista DOBRADA: o canal é a marca.** Emendado em `formas.md` §3.
+- [ ] **a regra dos canais estava mal citada por mim, e o Figma apanhou-a** ·
+  nota · `formas.md` §17b
+  `O selo de prazo` não diz *"geometria primeiro"*: diz **"o canal que carrega a
+  informação mais directamente primeiro"**. **Quantidade pede geometria; facto
+  pede palavra; o material vem depois dos dois.** Eu tinha posto o percevejo em
+  primeiro por reflexo; na parede construída é `no diário` que se lê antes de
+  tudo. *Terceira etapa seguida em que o raciocinado mentiu e o construído
+  salvou.*
+
+
+### R17 · as três do `regente`, depois das capturas do telefone (24/09)
+
+- [ ] **R17L · a linha do turno parte-se em duas na coluna estreita** · de:
+  regente · médio · **a peça mais usada do jogo, e vai ser construída neste
+  ciclo** · forma em `formas.md` §19
+  Linha 1: o campo, 343 px, piso 90 / tecto 138. Linha 2: a gaveta e o verbo à
+  direita. **`IconeBalao` sai.** **129 → 343 px de largura útil (+166 %);
+  ~29 → ~119 caracteres visíveis; 31 % → 100 % de uma frase de 93.** Custa
+  +81 px, o `+N` devolve 56, líquido **+25** — a página fica em 337 px (41,5 %)
+  contra 306 (37,7 %).
+  **LEI nova e varrível:** *numa coluna estreita, uma linha leva no máximo UM
+  alvo fixo além do que cresce* — cada fixo custa 56 px de 343 (16,3 %).
+- [ ] **R17m · A LEI DA APOSENTADORIA** · de: desenho · 24/09 · médio ·
+  `formas.md` §20
+  **256 px de duas imagens do mesmo lugar antes de uma palavra** no telefone:
+  R13-B fabricou `O rosto da cena` e **não aposentou `VinhetaDaCena`**. Quatro
+  degraus de desempate (determinismo · mais de um facto · menos página no
+  aparelho mais apertado · a biblioteca pode variar), e **a que sai, sai
+  inteira**. **O dever:** quem fabrica nomeia o que aposenta, ou escreve que não
+  aposenta nada. *Qual das duas fica é do `jogo`; a lei já responde — a gravura
+  ganha nos degraus 1, 2 e 4, e o 3 devolve 160 px de 586 (27 %).*
+  **Dívida:** o varredor não existe — contar, por região, elementos que declarem
+  a mesma origem (`bioma`/`lugar`) e falhar acima de um.
+- [ ] **R17n · `MEDIDAS.texto.minimoParaTruncar`** · de: regente · leve ·
+  `formas.md` §21
+  `assi…` e `a…` são `truncate` num sítio onde não devia ter sido pedido.
+  **Um campo trunca ou não se desenha.** O número é **12** e **refaz-se**:
+  `Math.ceil(MEDIDAS.medida.minima / 4)` = 45/4. Segunda régua concorda (as
+  reticências valem >10 % do que se mostra abaixo de ~10 caracteres). **Quando
+  não se desenha, o facto muda de casa** — no cartaz, para o estado aberto da
+  dobra. Varrível, e é o dente mais fácil da etapa.

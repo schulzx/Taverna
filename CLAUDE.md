@@ -85,6 +85,14 @@ para patch simples, e sempre com aspas simples.
   `Set-Content` mata os acentos do arquivo.
 - **Bash come crase e escape.** `node -e` via shell mutila regex e comentário,
   e não avisa. Prefira arquivo `.cjs` via Write.
+- **A crase fecha a string do destino, não só a do patch.** A lei acima fala de
+  crase dentro de um `.cjs`; em 24/09 (R17) a mesma crase custou um build pelo
+  outro lado: um **comentário** escrito dentro de `SUPERFICIES_CSS` — que *é* um
+  template-literal, e é o maior do projeto — fechou a string, e `estilo.js`
+  deixou de compilar com `SyntaxError: Unexpected identifier 'ALVOS'`. **Vale
+  para qualquer texto que vá parar dentro de um template-literal do projeto**, e
+  a folha de estilo é onde isso mais acontece: o comentário parece prosa e é
+  código. Escape, ou escreva sem crase.
 - **Screenshot congela com painel oculto.** Cliques são vivos, a foto é velha —
   confie na árvore de acessibilidade (`read_page`), não na imagem.
 - **HMR mente depois de rename.** Build limpo + suítes verdes, mas a aba cai no

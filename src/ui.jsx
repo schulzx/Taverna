@@ -328,13 +328,16 @@ export function IconeLosango({ tamanho = 12, cor = T.violetSoft }) {
   );
 }
 
-export function IconeBalao({ tamanho = 16, cor = T.inkDim }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" fill="none">
-      <path d="M14.2766 12.2762C14.5267 12.0261 14.6672 11.687 14.6672 11.3334V3.33334C14.6672 2.97972 14.5267 2.64058 14.2766 2.39053C14.0266 2.14048 13.6874 2 13.3338 2H2.66624C2.31259 2 1.97342 2.14048 1.72336 2.39053C1.47329 2.64058 1.3328 2.97972 1.3328 3.33334V14.1907C1.33281 14.2843 1.36058 14.3758 1.4126 14.4537C1.46461 14.5315 1.53854 14.5922 1.62503 14.628C1.71152 14.6638 1.80669 14.6732 1.8985 14.6549C1.99032 14.6367 2.07466 14.5916 2.14086 14.5254L3.60898 13.0574C3.85899 12.8073 4.1981 12.6668 4.55172 12.6667H13.3338C13.6874 12.6667 14.0266 12.5262 14.2766 12.2762Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
+/* `IconeBalao` MORREU AQUI (R17, depois de o `oficial` tirá-lo da linha do
+   turno: "um campo de texto não precisa de um ícone a dizer que é um
+   campo", e custava 56 px na peça mais apertada da tela — ver
+   `App.jsx:23287` e `estilo.js:498`, os dois narrando a aposentadoria).
+   Confirmado zero chamadores em `src/` inteiro (nenhum `<IconeBalao` em
+   parte nenhuma) antes de apagar — a mesma vara que já aposentou
+   `VinhetaDaCena` neste ciclo: uma peça de biblioteca sem chamador não
+   fica à espera de voltar, some. Se um dia o balão de `A Consequência`
+   (`ui.jsx`, mais acima) precisar de um ícone de fala, é uma decisão do
+   `desenho` desenhar um de novo — não ressuscitar este por economia. */
 
 /* O ponto do "MESTRE ATIVO": mesma ideia do ponto do menu, cor da casa. */
 export function PontoMestre({ tamanho = 16, cor = T.amber }) {
@@ -1169,6 +1172,149 @@ export function Dobra({ quantos = 0, singular = "oferta", plural = "ofertas", es
       {aberta ? "dobrar de volta" : `mais ${quantos} ${quantos === 1 ? singular : plural}`}
     </button>
   );
+}
+
+/* ---------------- A CONSEQUÊNCIA (D4 → R17) ----------------
+   "O QUE O JOGO DIZ QUE VAI ACONTECER" — declarada em `formas.md` desde
+   D4, e nunca tinha código: `Consequencia` NÃO EXISTIA — zero declarações
+   em `src/` inteiro — e o próprio comentário da `Oferta` (acima, R2) e
+   das 105 chamadas de `title` no `App.jsx` viviam à espera dela. É a
+   peça que cumpre *"o veredito antes do clique"* fora do `Botao`
+   (a razão de uma recusa é dela, nunca do botão — ver `formas.md`,
+   "As 4 gramáticas do veredito antes do clique").
+
+   OS QUATRO EIXOS QUE JÁ EXISTIAM NO FIGMA (D4), sem código até agora:
+   · `tom` — a quem o facto pertence: "impedimento" (você age, não pode,
+     `T.danger`) · "espera" (alguém mais está a decidir — `T.mundo`, que
+     já é a cor "do que espera" na casa) · "preco" (o que isto custa,
+     `T.amber`) · "estado" (uma confirmação neutra — "copiado" — `T.inkMeio`).
+   · `forma` — "linha" (vive sempre na árvore, e é a única construída —
+     ver a nota grande antes do `return linha` no fim da função: `formas.md`
+     fixa o MOVIMENTO de "balao" mas não a forma de repouso dele, e
+     inventar essa aparência aqui seria a lei do `aprendiz` sendo
+     quebrada). NO TABULEIRO a Consequência é SEMPRE "linha" mesmo depois
+     de "balao" nascer: quatro segundos de balão tapam as casas para
+     onde o jogador ia andar — decisão de quem chama, não desta peça.
+   · `largura` — "cabe" (o de sempre: a peça mede o que o texto pede) ·
+     "ocupa" (`width:100%`, a razão QUEBRA em vez de crescer — o eixo
+     que existe para a razão nunca ser cortada).
+   · `frase` / `colidiu` — a prosa, e "o que colidiu": vazio por
+     omissão, e quando existe escreve o nome entre «» em `T.inkMeio` —
+     uma fenda da peça, não texto à mão montado em cada chamada.
+
+   O EIXO NOVO DE R17 — `saida`: "tem" · "nao" · `undefined` (o eixo não
+   se aplica; é o comportamento de sempre, colorido por `tom`). Nasceu
+   do cartaz que só pode falhar (`mente/formas.md`, R17, PARTE I): o
+   mural filtrava por título exato e o aceite recusava por cinco motivos
+   que o desenho nunca perguntava — quatro em cinco botões do mural real
+   da pessoa não podiam dar certo. `Saída` é a resposta: "Tem" = o
+   jogador desfaz isto com a mão (larga um contrato, vai ver o Diário);
+   "Não tem" = não há o que fazer, o serviço já está feito.
+
+   OS CINCO CANAIS QUE DISTINGUEM "Tem" DE "Não tem" — E A COR NÃO É UM
+   DELES (formas.md, R17 §2: geometria primeiro, palavra segundo, forma
+   terceiro, cor por último — e aqui a cor nem entra):
+     1. o ALVO — "tem" desenha uma porta real (`<button>`, minHeight
+        `ALVOS.piso`); "nao" não desenha nenhum alvo — é o canal mais
+        forte porque se testa com o dedo, não com o olho.
+     2. o GLIFO `▸` — só em "tem", no fim da linha.
+     3. a GRAMÁTICA — "tem" traz um `rotulo` imperativo (quem chama
+        escreve "largue um contrato…", "ver no Diário…"); "nao" não tem
+        rotulo nenhum, porque não tem porta.
+     4. o TAMANHO — "tem" cresce até ao piso do alvo (é maior, por ter
+        um alvo de verdade); "nao" fica do tamanho da própria frase — o
+        encolhimento da PEÇA-MÃE (o cartão que a contém) é de quem
+        chama, não desta peça.
+     5. a COR — a MESMA nos dois: `T.inkDim`, nunca a cor viva do `tom`.
+        É lei de R1 ("cor viva só em coisa com que se interage") a
+        cobrar-se sozinha: o âmbar da porta já é o acento; pintar a
+        razão de vermelho/o-que-for gastaria esse canal em texto inerte.
+        Por isso, com `saida` definido, `tom` deixa de tingir a prosa —
+        só continua a existir para quem ainda usa a peça sem este eixo.
+
+   O QUE ESTA PEÇA NÃO FAZ, DE PROPÓSITO: não encolhe o CARTÃO que a
+   contém quando `saida==="nao"` — isso é o `formas.md` §5 chamar de
+   "uma `A dobra` fechada", e é decisão de composição de quem monta a
+   tela (o `oficial`/`App.jsx`), não desta peça de biblioteca. O que
+   `Consequencia` garante é só a SUA PRÓPRIA forma: com alvo ou sem
+   alvo, com porta ou sem porta.
+
+   CONTRASTE, MEDIDO (fórmula WCAG, luminância relativa sRGB, as MESMAS
+   cores de `T`): `T.inkDim` sobre `T.panel` = 6,44:1 (5,82:1 sobre
+   `T.panelSoft`) — a prosa neutra do eixo `saida`. `T.amber` sobre
+   `T.panel` = 8,02:1 (7,25 sobre `panelSoft`) — a porta. Sem `saida`:
+   `T.danger` 6,37:1 (5,76) · `T.mundo` 10,09:1 (9,12) · `T.inkMeio`
+   8,75:1 (7,91). As seis folgam acima do piso AA de texto pequeno
+   (4,5:1) — a pior é `T.danger`/`panelSoft`, com 28% de folga.
+
+   `prefers-reduced-motion`: esta peça (Forma=Linha) não anima nada — não
+   entra nem sai, só troca de conteúdo quando quem chama troca as props.
+   Nada para cortar é a forma mais barata de cumprir a lei. */
+export function Consequencia({
+  tom = "impedimento", forma = "linha", largura = "cabe",
+  frase = "", colidiu = "", saida, rotulo, aoAbrir, className = "",
+}) {
+  const CORES_DO_TOM = { impedimento: T.danger, espera: T.mundo, preco: T.amber, estado: T.inkMeio };
+  const corDoTom = CORES_DO_TOM[tom] || T.inkMeio;
+  const temEixo = saida === "tem" || saida === "nao";
+  const ehPorta = saida === "tem";
+  /* Canal 5: com o eixo `Saída` ativo a prosa é sempre `T.inkDim` — ver
+     o comentário grande acima. Sem o eixo, o comportamento de sempre:
+     a cor viva do `tom` tinge a frase (como `Oferta.preco` já faz). */
+  const corDaFrase = temEixo ? T.inkDim : corDoTom;
+
+  const conteudo = (
+    <>
+      <span>{frase}</span>
+      {/* R17, emenda depois de o `oficial` ligar a peça: `vereditoDoCartaz`
+          (e qualquer chamador futuro) devolve `frase` a parar exatamente
+          onde `colidiu` entraria — sem «» e sem espaço. É esta peça, não
+          quem chama, que cerca o nome com «» e o tinge de `T.inkMeio`
+          (a "fenda" de `formas.md`); o espaço antes do glifo é literal
+          (`{" "}`) porque JSX colapsa espaço em texto solto. */}
+      {colidiu && <> {" "}«<span style={{ color: T.inkMeio }}>{colidiu}</span>»</>}
+      {ehPorta && (
+        <span aria-hidden="true" style={{ color: T.amber, marginLeft: 8, whiteSpace: "nowrap" }}>
+          {rotulo} ▸
+        </span>
+      )}
+    </>
+  );
+  const nomeAcessivel = ehPorta ? [frase, colidiu, rotulo].filter(Boolean).join(" ") : undefined;
+
+  const estiloComum = {
+    fontSize: TIPOS.piso, lineHeight: 1.5, color: corDaFrase,
+    width: largura === "ocupa" ? "100%" : undefined,
+  };
+
+  /* Canal 1, a mais forte das cinco: só "tem" vira alvo de verdade. */
+  const linha = ehPorta ? (
+    <button type="button" onClick={aoAbrir} aria-label={nomeAcessivel}
+      className={`tv-anel-foco tv-mono text-left rounded-lg ${className}`}
+      style={{ ...estiloComum, minHeight: ALVOS.piso, padding: "4px 8px", background: "transparent", border: "none", cursor: "pointer" }}>
+      {conteudo}
+    </button>
+  ) : (
+    <div className={`tv-mono ${className}`} style={estiloComum}>
+      {conteudo}
+    </div>
+  );
+
+  /* FORMA=BALÃO, E POR QUE ELA NÃO ESTÁ CONSTRUÍDA: `formas.md` (D4)
+     fixa o MOVIMENTO do balão (abre em 120ms, não fecha sozinho antes de
+     4s, abre no dedo e no rato) mas não a FORMA DE REPOUSO — o que fica
+     visível ANTES do hover/toque, para o jogador saber que há algo ali.
+     Inventar essa aparência aqui seria exatamente o que a lei do
+     `aprendiz` proíbe ("se não existir como precisa, diga em vez de
+     duplicar"): um balão não é só timing, é também um gatilho, e nenhum
+     gatilho de "consequência escondida" está desenhado em `formas.md`
+     nem no Figma. Por isso `forma="balao"` hoje DEGRADA para `linha`
+     (sempre na árvore) em vez de fingir uma forma que ninguém fechou —
+     é o mesmo raciocínio que fez a `Oferta` sair em texto plano até
+     esta peça nascer. Quando o primeiro consumidor precisar do balão de
+     verdade (nenhum pede hoje), é ao `desenho` que se pergunta a forma
+     de repouso — não a este comentário. */
+  return linha;
 }
 
 /* ---------------- A SOLEIRA (R2) ----------------
