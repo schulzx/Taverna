@@ -85,7 +85,29 @@ console.log("\n== R5c: no telefone o verbo cabe — composição, não corte de 
 t("o cartão quebra por flex-wrap puro (CSS), e volta a uma linha só a partir de md — nenhum matchMedia", /flex-wrap/.test(rOferta) && /md:flex-nowrap/.test(rOferta) && !/matchMedia/.test(rOferta));
 t("o verbo continua por inteiro no DOM (o corte é só tinta) — a prop nunca é fatiada em código", /\{verbo\}/.test(rOferta) && !/verbo\.slice|verbo\.substring/.test(rOferta));
 t("nenhuma letra desce de TIPOS.piso para caber: a peça não escreve um px de fonte à mão", !/fontSize:\s*\d/.test(rOferta));
-t("preço e retorno continuam sempre na tela (não viram condicional só-mesa): a mesma condição de sempre, sem md:hidden neles", !/md:hidden/.test(rOferta) && /\(preco \|\| retorno\)/.test(rOferta));
+/* A CONDIÇÃO CRESCEU EM 23/09 (R15) E O MOTIVO FICA ESCRITO: era
+   `(preco || retorno)` e passou a `(preco || retorno || temJanela)`,
+   porque a janela é o QUARTO campo e viaja nesta mesma linha. O QUE O
+   DENTE GUARDA NÃO MUDOU UM MILÍMETRO — que nenhum dos campos vira
+   condicional só-de-mesa: continua a ser a MESMA condição para todas as
+   larguras, e continua sem um `md:hidden` a esconder informação no
+   telefone. *Esconder o preço no aparelho onde ele mais importa é o
+   defeito que esta peça nasceu para matar.* */
+t("preço, retorno e janela continuam sempre na tela (nenhum vira condicional só-mesa): a mesma condição em toda a largura, sem md:hidden", !/md:hidden/.test(rOferta) && /\(preco \|\| retorno \|\| temJanela\)/.test(rOferta));
+/* R15 — A JANELA É GRÁTIS E NÃO DEIXA BURACO: `Janela=Nenhuma` não
+   reserva lugar para nada. É a diferença entre um campo opcional e uma
+   mobília a mentir, e é medida no texto: o selo só se monta quando há
+   contagem. */
+t("`Janela=Nenhuma` não deixa buraco — o selo só nasce quando há contagem", /\{temJanela && \(/.test(rOferta));
+/* E A JANELA NÃO É UM SEGUNDO SELO: é `O selo de prazo` que já existe,
+   com o eixo `Conta`. *Uma ação, uma forma* — desenhar aqui uma
+   contagem própria seria a mesma coisa com duas caras. */
+t("a janela instancia `O selo de prazo`, não uma contagem própria",
+  /<SeloDePrazo\b/.test(rOferta) && /conta=\{j\.conta \|\| "noites"\}/.test(rOferta));
+/* `= {}` NO DESTRUCTURING NÃO COBRE `null` — lei escrita no CLAUDE.md, e
+   esta peça recebe a prop de um `App.jsx` que monta a janela a partir de
+   dois motores diferentes. */
+t("e uma janela `null` não derruba a peça (o `= {}` não cobre null)", /janela \|\| \{\}/.test(rOferta));
 
 console.log("\n== R5d: a linha só quebra quando o verbo precisa — sem w-full, sem min-width, sem estado ==");
 t("o botão do verbo NÃO força w-full: nenhuma classe de largura própria nele — o flex-wrap do cartão decide sozinho", !/className="w-full md:w-auto"/.test(rOferta) && !/<Botao\b[^>]*w-full/.test(rOferta));
@@ -103,12 +125,45 @@ t("lista vazia devolve null (zero altura, zero margem, zero borda)", /if \(lista
 t("a régua da mesa e do telefone são duas listas por CSS (hidden md:flex / flex md:hidden), nenhum JS de media query", /hidden md:flex/.test(rSoleira) && /flex md:hidden/.test(rSoleira) && !/matchMedia/.test(rSoleira));
 t("o excedente da mesa e do telefone contam por fora, e não viram gaveta escondida", /foraDaMesa/.test(rSoleira) && /foraDoTelefone/.test(rSoleira) && !/details|<dialog/.test(rSoleira));
 
-console.log("\n== R5a: o \"+N\" é PORTA — um <button> de verdade, não um <div> de texto ==");
-t("existe um <button> dentro de Soleira (não só o texto '+N')", /<button\b/.test(rSoleira));
-t("a porta tem onClick que alterna o estado (abre/fecha), não é estática", /onClick=\{?\(?\)? *=> *setAberto/.test(rSoleira));
-t("a porta declara aria-expanded — o estado aberto/fechado não é só visual", /aria-expanded=\{aberto\}/.test(rSoleira));
-t("a porta lê ALVOS.piso para o alvo (48px), não um px à mão", /minHeight: ALVOS\.piso/.test(rSoleira));
-t("fechada, a porta ainda diz QUANTAS ofertas ficam atrás dela", /\+\$\{n\}.*oferta/.test(rSoleira));
+/* ------------------------------------------------------------
+   ESTAS CINCO ASSERÇÕES MUDARAM DE CASA EM 23/09 (R15), E O MOTIVO FICA
+   ESCRITO, que é a lei da casa — *ao mover uma asserção, escreva o
+   porquê: a intenção tem de sobreviver à mudança.*
+
+   Elas mediam a porta do `+N` DENTRO do recorte de `Soleira`, porque era
+   lá que ela vivia: R5a montou-a à mão com peças já fechadas noutro
+   lugar, e escreveu por que o fazia — `formas.md` ainda não nomeava esta
+   forma, e o `aprendiz` recusou-se a inventá-la. A dívida ficou escrita:
+   *"vai reaparecer — abas, inventário, bolsa —, e na segunda vez já não
+   é composição, é forma por nomear."*
+
+   R15 nomeou-a: **`A dobra`**. A porta saiu de dentro de `Soleira` e é
+   agora uma peça própria, e por isso o recorte mudou — não a intenção.
+   **Nenhuma das cinco afrouxou:** cada uma pergunta exactamente o mesmo,
+   no sítio onde a resposta passou a viver. O que ficou em `Soleira` é o
+   que é DELA e não da peça: quem decide o teto, e que aberta mostra a
+   lista inteira.
+   ------------------------------------------------------------ */
+console.log("\n== R5a → R15: o \"+N\" é PORTA, e a porta agora tem nome — `A dobra` ==");
+const rDobra = recorte("Dobra");
+t("existe um <button> dentro de Dobra (não só o texto '+N')", /<button\b/.test(rDobra));
+t("Soleira instancia `A dobra` em vez de voltar a compor uma porta à mão",
+  /<Dobra\b/.test(rSoleira) && !/<button\b/.test(rSoleira));
+t("a porta alterna o estado (abre/fecha), não é estática",
+  /onClick=\{aoAlternar\}/.test(rDobra) && /setAberto\(\(a\) => !a\)/.test(rSoleira));
+t("a porta declara aria-expanded — o estado aberto/fechado não é só visual", /aria-expanded=\{aberta\}/.test(rDobra));
+t("a porta lê ALVOS.piso para o alvo (48px), não um px à mão", /minHeight: ALVOS\.piso/.test(rDobra));
+t("fechada, a porta diz QUANTAS ofertas ficam atrás dela — e o SUBSTANTIVO, nunca só `+3`",
+  /mais \$\{quantos\}/.test(rDobra) && /singular : plural/.test(rDobra));
+/* R15 — os dois dentes que a peça nova traz e que a composição não
+   tinha: a borda TRACEJADA (é a única porta da soleira que não abre
+   para o mundo mas para a lista, e o tracejado di-lo sem uma palavra) e
+   zero acento (dar-lhe cor viva seria pô-la a competir com as ofertas
+   que ela esconde). */
+t("a borda é tracejada — a porta da LISTA não se veste de porta do MUNDO",
+  /border: `1px dashed \$\{T\.lineStrong\}`/.test(rDobra));
+t("e não gasta acento nenhum: nem amber, nem violet, nem mundo, nem danger",
+  !/T\.(amber|violet|mundo|danger|ok)\b/.test(rDobra));
 t("aberta, a lista mostra o TOTAL (lista inteira), não só o teto — 'nada fica inalcançável'", /aberto \? lista : lista\.slice/.test(rSoleira));
 t("nem <details> nem <dialog>: a porta é o mesmo <button> que o resto da casa usa, não uma segunda maneira de abrir algo", !/<details|<dialog/.test(rSoleira));
 t("o estado 'aberto' nasce useState (React), fora de qualquer componente aninhado — Soleira já é o componente de topo", /React\.useState\(false\)/.test(rSoleira));

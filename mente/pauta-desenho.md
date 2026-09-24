@@ -1761,3 +1761,102 @@ razões — está em `mente/arquivo/pauta-desenho-fechadas.md`, e o diário apon
 
 - **Fase W — o turno por toque (a ação deixa a caixa de texto)** — 2/3 etapas · texto inteiro em `mente/arquivo/pauta-desenho-fechadas.md`
 - **Fase K — as três batidas da rodada (a reação ganha controle)** — 5/5 etapas · texto inteiro em `mente/arquivo/pauta-desenho-fechadas.md`
+
+---
+
+## Semeado em R15 (`desenho`, 23/09)
+
+### A proposta ambiciosa — e ela NÃO vai à pessoa, pela lei dela própria
+
+> **A ordem de 23/09 pede uma proposta ambiciosa por etapa. O regime de 23/09
+> diz que só chega à pessoa o que um commit revertido não conserta.** Esta sai
+> de uma tabela e desfaz-se num commit, logo é da mesa. Fica escrita aqui com o
+> mesmo cuidado com que iria para lá — o que muda é quem decide, não o rigor.
+
+- [ ] **R16 · a página deixa de ser um rectângulo castanho e passa a ser PAPEL
+  com a cena impressa nele** · de: desenho · 23/09 · **a proposta ambiciosa de
+  R15** · médio, com catraca
+
+  **O que fazer.** R13 deu à cena um rosto de 96 px. R15 deu-lhe um buril que
+  funciona. Mas o buril vive numa faixa e a página continua **um rectângulo
+  chapado de `T.pagina`** — *uma xilogravura colada por cima de uma coluna de
+  texto*. A proposta é levar o mesmo talho, em densidade mínima, para **debaixo
+  da prosa**: a página passa a ser a folha onde a cena foi impressa, e não uma
+  caixa ao lado dela. A silhueta do bioma, uma vez, muito ténue, e a hachura do
+  chão a morrer nos primeiros centímetros — *o que um prelo deixa quando a
+  chapa encosta ao papel.*
+
+  **Por quê agora.** Porque a peça que faltava nasceu nesta etapa: `talho`,
+  `talhoDoCeu`, `alfaDoTalho` e o motor determinista já existem. **Isto deixou
+  de ser gosto e passou a ser uma interpolação e um commit.**
+
+  **E o risco óbvio resolve-se ao contrário do esperado — está medido.** A
+  objecção é *"vai estragar a leitura"*, e a prosa é a protagonista. Mas o
+  campo da página é **escuro** (`T.pagina`, L 0,0305) e a prosa é **clara**
+  (`T.ink`, 11,08:1). Pela lei que R15 escreveu — *a marca é o contrário do
+  campo* — a marca da página é **`tinta`**, e uma marca escura **afasta-se** da
+  prosa em vez de se aproximar:
+
+  | marca | a prosa × a página |
+  |---|---|
+  | nenhuma (hoje) | 11,08:1 |
+  | `tinta` a 0,05 | **11,38:1** |
+  | `tinta` a 0,10 | **11,68:1** |
+  | `tinta` a 0,20 | **12,30:1** |
+  | (uma marca CLARA a 0,20) | 6,96:1 — **reprova AAA** |
+
+  **A marca de água torna a prosa MAIS legível, não menos** — e a versão clara,
+  que é a que a intuição sugeriria, é a única que reprova. *A catraca escreve-se
+  antes de começar: a prosa nunca desce de AAA (7:1), e a régua é o próprio
+  número acima.* A visibilidade da marca fica em **1,50:1** contra a página —
+  exactamente o piso de textura de `LUZ_DA_CENA`, sem margem, e é esse o teto
+  natural da peça.
+
+  **O que o jogador ganha:** ler uma cripta e ler uma praça deixam de acontecer
+  no mesmo papel. Hoje a única coisa na tela que sabe onde o jogador está são
+  96 px no topo; passariam a ser os 586 px onde ele realmente olha.
+
+### As dívidas que R15 declara e não paga
+
+- [ ] **R15 · o talho tem de PARAR na borda do astro** · de: desenho · 23/09 ·
+  médio
+  O astro ganhou piso (3:1) e passa-o contra o céu nu: **4,04 · 4,88 · 3,41 ·
+  9,43**. Contra um céu **já talhado** o entardecer cai a **2,56**, porque o
+  talho claro lhe atravessa o disco. **O segundo canal do astro não é cor: é
+  ser o único SÓLIDO num campo talhado** — e um disco atravessado por talhos
+  não é um sólido, é mais campo. Vê-se nas doze faixas do Figma
+  (*R15 · o ceu talhado a branco*). **É forma (`gravura-da-cena.js`), não
+  valor**, e a etapa mandou-me parar e dizer em vez de inventar.
+
+- [ ] **A biblioteca do Figma derivou DUAS VEZES em dois dias, e corrigir à mão
+  não é conserto** · de: desenho · 23/09 · médio, e é o item que mais paga
+  R13 achou a biblioteca a mostrar a paleta **pré-R2** — dez valores errados,
+  nove tokens em falta — e corrigiu-a à mão. **R15 achou-a a mostrar a receita
+  pré-correcção-do-buril: nove dos doze valores de céu e chão errados, e `talho`
+  inexistente.** Uma etapa depois. *A fonte da verdade visual esteve errada em
+  duas das duas vezes em que alguém foi lá ver.*
+
+  **A proposta:** um varredor — `check-figma.mjs` — que lê `T`, `MATERIAIS` e
+  `LUZ_DA_CENA` de `src/estilo.js`, lê as variáveis do arquivo, e **falha se
+  algum valor divergir**. Não sincroniza (escrever no Figma a partir de uma
+  suíte é dar-lhe a caneta); **acusa**, com o nome do modo e os dois hexes,
+  como `check-formas` já faz com a folha. *Uma fonte da verdade que ninguém
+  confere é uma fonte da verdade que mente na primeira semana — e esta mentiu
+  duas.*
+
+- [ ] **A página do telefone cai a 47,0 % com a oferta de quatro campos** · de:
+  desenho · 23/09 · **é do `jogo`, não meu** · médio
+  `A oferta` de R15 mede **108 px** medidos no Figma (contra 83–93 hoje), e com
+  ela a página em A+B-com-oferta passa de **407 px (50,1 %)** para **382 px
+  (47,0 %)** — **abaixo da linha que a mesa assinou em R5a**. A janela em si é
+  **grátis** (partilha a linha do preço; `Janela=Nenhuma` mede os mesmos 108);
+  o custo é o verbo ser um alvo de 48 a sério e o retorno ter a sua linha.
+  **O orçamento é do `jogo` e gastá-lo sozinho seria eu a decidir o que não é
+  meu.** Nos 9 de 20 turnos sem oferta nada muda.
+
+- [ ] **`A oferta`, `A dobra` e `O selo` *Conta=Turnos* estão desenhados e não
+  são componentes** · de: desenho · 23/09 · leve
+  Vivem como quadros na página *R15 · a soleira aprende verbos*. Viram
+  `COMPONENT_SET` com eixos a sério quando os verbos do `jogo` forem
+  construídos — construir a peça antes de haver o que ela mostre seria mobília,
+  que é o que a peneira desta etapa recusa.

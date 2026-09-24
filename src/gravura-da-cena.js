@@ -82,13 +82,38 @@ export function apertoDoPrazo(noites, urgente = false) {
   return APERTOS.find((a) => n >= a.minimo) || APERTOS[2];
 }
 
+/* ------------------------------------------------------------
+   O EIXO `Conta` (R15) — a mesma ampulheta conta duas grandezas.
+
+   `formas.md` (R15 §4): a janela de uma oferta **não é texto, é `O selo
+   de prazo`** — *uma ação, uma forma.* Mas a petição do correio conta
+   NOITES de calendário e uma oferta de encontro conta TURNOS, e a peça
+   não ganha um gémeo por causa disso: ganha um EIXO. **A areia da
+   ampulheta é a mesma geometria nos dois**, e é ela o canal primário.
+
+   É TABELA E NÃO UM `if` pela razão de sempre nesta casa, e aqui ela
+   morde duas vezes: são PALAVRAS de tela, e a regra que as rege — *conta
+   ao contrário, nunca `1/4`, e a última unidade tem nome e não número* —
+   tem de valer igual nas duas contas ou o jogador aprende duas
+   gramáticas para um selo só.
+   ------------------------------------------------------------ */
+export const CONTAS = {
+  noites: { um: "1 noite", muitos: "noites", ultima: "esta noite" },
+  turnos: { um: "1 turno", muitos: "turnos", ultima: "este turno" },
+};
+
 /* A palavra e o número. `esta noite` na última — NUNCA `1/4`: o nome do
    contrato e a fracção eram o que ocupava a linha na fita antiga, e são
-   a parte que o jogador já sabe. */
-export function palavraDoPrazo(noites, urgente = false) {
+   a parte que o jogador já sabe.
+
+   `conta` cai em `noites` quando vier lixo, e a degradação é de
+   propósito: uma contagem que não se sabe de quê ainda é melhor dita em
+   noites — a unidade que este jogo tem em todo lado — do que apagada. */
+export function palavraDoPrazo(noites, urgente = false, conta = "noites") {
   const n = Number.isFinite(noites) ? Math.max(0, Math.floor(noites)) : 0;
-  if (urgente || n === 0) return "esta noite";
-  return n === 1 ? "1 noite" : `${n} noites`;
+  const c = CONTAS[conta] || CONTAS.noites;
+  if (urgente || n === 0) return c.ultima;
+  return n === 1 ? c.um : `${n} ${c.muitos}`;
 }
 
 /* ------------------------------------------------------------

@@ -924,12 +924,51 @@ export function CampoDeBrasas({ className = "" }) {
      recusados por escrito em `formas.md`: `O realce` é o degrau 2 da
      cerimônia (usá-lo tornaria cada contrato um acontecimento), e
      `Selo` marca ESTADO de uma coisa — uma oferta não é um estado, é
-     uma porta. */
-export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", aoClicar }) {
+     uma porta.
+   · `janela` — R15, E É O QUARTO CAMPO. Ver o bloco logo abaixo. */
+/* ---------------- R15: O QUARTO CAMPO, E ELE ENTRA PELA PENEIRA ----------------
+   `A oferta` tem TRÊS campos porque três era o que CABIA: a soleira era
+   55 % do ecrã quando ela foi desenhada. Depois de R13 é 14 %, e o
+   orçamento que a apertava deixou de existir. **O que isso não autoriza
+   é enchê-la** — e o quarto campo não entra por caber, entra pela
+   peneira do `jogo`: *a soleira é o que o jogador PERDE se não agir
+   agora.* **Uma peça cuja razão de existir é a perda tem de dizer
+   quanto tempo falta**, e a de hoje não diz. Medido em R6: a oferta do
+   Yorick esteve viva QUATRO TURNOS e a tela nunca disse que eram
+   quatro.
+
+   E O QUINTO CAMPO É DEFEITO, e é lei varrível e não gosto:
+   `SOLEIRA.camposDaOferta = 4` (verbo · preço · retorno · janela). O
+   quinto faz a oferta deixar de se ler de relance e passar a ser um
+   formulário — e uma soleira de formulários é o *point-and-click* que a
+   medida dos 990 ms existe para apanhar.
+
+   A JANELA NÃO É TEXTO: é `O selo de prazo`, que já existe, com o eixo
+   `Conta` que R15 lhe deu (Noites · Turnos). *Uma ação, uma forma* —
+   desenhar aqui um segundo selo seria a mesma contagem com duas caras.
+
+   ELA É GRÁTIS, E É A MEDIDA QUE O DIZ (Figma, `desenho`): a oferta com
+   janela mede 108 px e **sem janela mede os mesmos 108**, porque viaja
+   numa linha que já existia — partilha a do preço, alinhada à direita.
+   `Janela=Nenhuma` não deixa buraco: não se reserva lugar para nada.
+
+   A FORMA DA PROP, e ela é tolerante de propósito porque quem a monta é
+   o `App.jsx` a partir de dois motores diferentes: `{ quanto, conta,
+   urgente }`, ou um número solto, que se lê como noites. Sem prop
+   nenhuma, a peça é byte a byte a de ontem.
+
+   QUEM CEDE QUANDO NÃO COUBER É O RETORNO, e ele é o único que pode: o
+   preço é um número que não encolhe sem mentir, a janela é uma contagem
+   que não encolhe sem mentir. **O retorno é prosa, e prosa trunca.** */
+export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", janela, aoClicar }) {
   const impedida = estado === "impedida";
   const tomada = estado === "tomada";
   const corDoTom = tom === "semVolta" ? T.danger : tom === "preco" ? T.amber : T.mundo;
   const quemOnde = [quem, onde].filter(Boolean).join(" · ");
+  /* `= {}` no destructuring NÃO cobre `null` — a lei da casa, escrita no
+     `CLAUDE.md` e paga em sangue noutro sítio. Daí o `|| {}`. */
+  const j = typeof janela === "number" ? { quanto: janela } : (janela || {});
+  const temJanela = Number.isFinite(j.quanto) || j.urgente === true;
   /* R4a — A CORREÇÃO DE ALTURA, com o número escrito: a peça media ~97px
      contra o orçamento de 48–56 (`mente/r1-desenho.md` §5: "Teto de três
      na mesa… 3 × 48 + 2 × 8 = 160 px"). O culpado não era um campo a
@@ -1036,13 +1075,99 @@ export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", est
           `Consequencia` — é o texto plano que a espera até ela nascer.
           Mono/`TIPOS.rotulo` porque preço e retorno são fala DA
           MÁQUINA, não da prosa; nunca abaixo de `TIPOS.piso`. */}
-      {(preco || retorno) && (
-        <div className="tv-mono flex items-baseline gap-2 shrink-0 md:ml-auto" style={{ fontSize: TIPOS.rotulo }}>
+      {(preco || retorno || temJanela) && (
+        <div className="tv-mono flex items-center gap-2 shrink-0 md:ml-auto" style={{ fontSize: TIPOS.rotulo }}>
           {preco && <span style={{ color: corDoTom, fontWeight: 600 }}>{preco}</span>}
+          {/* O RETORNO AINDA NÃO TRUNCA, e digo-o em vez de o fingir:
+              `formas.md` decide que quem cede é ele, *pelo fim, com
+              reticências* — mas `truncate` dentro de um `shrink-0` é uma
+              classe que promete "…" e nunca a desenha, que é
+              exactamente o defeito que o comentário de R5d acima existe
+              para não repetir. Fazê-lo a sério pede a fila do preço
+              poder encolher, e isso muda o `flex-wrap` que R5d mediu e
+              fixou. **Fica dito ao `desenho`, não remendado aqui.** */}
           {retorno && <span style={{ color: T.inkDim }}>{retorno}</span>}
+          {/* A JANELA É A ÚLTIMA DA LINHA, e por isso a mais à direita —
+              é o que `formas.md` pede. `quantos` fica em 1: o `+N` do
+              selo conta OUTROS prazos da cinta, e uma oferta tem uma
+              janela só. */}
+          {temJanela && (
+            <SeloDePrazo noites={j.quanto} urgente={j.urgente === true} conta={j.conta || "noites"} />
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+/* ---------------- A DOBRA (R15) ----------------
+   REVELAR MAIS ITENS NA PRÓPRIA LISTA. O nome é o da folha de papel:
+   dobra-se, e o que lá está continua lá.
+
+   POR QUE ELA NASCE AGORA, E É UMA DÍVIDA A SER PAGA. R10 precisou
+   desta forma para o `+N` da soleira, viu que a forma fechada de
+   `formas.md` (*Véu + Fechar*) é para SOBREPOSIÇÕES — e esta não cobre
+   a tela, não tem véu, não precisa de `Esc` — e então **compôs com
+   peças que já eram lei em vez de inventar**, deixando a dívida
+   escrita: *"vai reaparecer — abas, inventário, bolsa —, e na segunda
+   vez já não é composição, é forma por nomear."* Reapareceu: com quatro
+   verbos e teto 1 no telefone, o `+N` deixa de ser raro e passa a ser o
+   caminho NORMAL. Então nomeia-se.
+
+   A LEI DA DOBRA, e ela resolve o conflito com o teto da soleira:
+
+       O TETO PROTEGE A PÁGINA DO SISTEMA, NÃO DO JOGADOR.
+
+   A soleira nunca passa do teto (`SOLEIRA`) **por decisão do jogo**; a
+   dobra passa-o **por decisão de quem joga**, e por isso pode. *Um teto
+   que o jogador não pode levantar não é um teto: é uma porta trancada.*
+
+   A BORDA É TRACEJADA, E É DE PROPÓSITO: **é a única peça da soleira
+   que não é uma porta do MUNDO — é uma porta da LISTA.** O tracejado
+   diz isso sem uma palavra e não gasta cor nenhuma. Dar-lhe um acento
+   seria pô-la a competir com as ofertas que ela esconde, e a lei de R1
+   é que cor viva só vai em coisa com que se interage — ela é
+   interagível, mas não é uma oferta.
+
+   DIZ O NÚMERO **E** O SUBSTANTIVO — `mais 3 ofertas`, nunca só `+3`:
+   o número é o que deixa o jogador decidir se vale abrir, e o
+   substantivo é o que o impede de ser o `▸ Mural` a renascer (uma marca
+   que promete que há mais e não se sabe de quê). Aberta, diz `dobrar de
+   volta` — e fecha-se **no mesmo alvo**, que continua o último da
+   lista: *o polegar não volta a procurar.*
+
+   NASCE PARA TODOS, como a lei da mesa manda: abas, inventário e bolsa
+   passam a ter esta forma disponível, e por isso o substantivo entra por
+   prop. A próxima vez que alguém precisar de "mostrar mais na própria
+   lista" já não compõe — instancia.
+
+   `prefers-reduced-motion`: aparece e desaparece **sem transição** —
+   cumprido por construção, porque esta peça não tem movimento nenhum
+   para cortar. Nunca bloqueia e nunca atrasa o `Agir →`. */
+export function Dobra({ quantos = 0, singular = "oferta", plural = "ofertas", estado = "dobrada", aoAlternar }) {
+  const aberta = estado === "aberta";
+  return (
+    <button type="button" onClick={aoAlternar} aria-expanded={aberta}
+      className="tv-anel-foco tv-mono rounded-lg self-start inline-flex items-center gap-2"
+      style={{
+        minHeight: ALVOS.piso, padding: "0 14px", fontSize: TIPOS.rotulo,
+        color: T.ink, background: T.panel,
+        /* `rounded-lg` JÁ É o raio 8 que `formas.md` pede — escrevê-lo
+           outra vez em `style` seria o mesmo número em dois sítios. */
+        border: `1px dashed ${T.lineStrong}`,
+        cursor: "pointer",
+      }}>
+      {/* O GLIFO É `T.inkDim` — a segunda voz, nunca a primeira: quem
+          carrega o sentido é a frase, e o chevron só diz para que lado.
+          É a seta que a casa já tem, virada: uma peça que abre PARA
+          BAIXO aponta para baixo, e dobrada de volta aponta para cima —
+          sem um ícone novo e sem uma segunda gramática de direcção. */}
+      <span aria-hidden="true" className="inline-flex"
+        style={{ transform: `rotate(${aberta ? -90 : 90}deg)` }}>
+        <IconeSeta tamanho={14} cor={T.inkDim} />
+      </span>
+      {aberta ? "dobrar de volta" : `mais ${quantos} ${quantos === 1 ? singular : plural}`}
+    </button>
   );
 }
 
@@ -1128,20 +1253,18 @@ export function Soleira({ ofertas = [] }) {
   const foraDoTelefone = Math.max(0, lista.length - SOLEIRA.tetoNoTelefone);
   const noTelefone = aberto ? lista : lista.slice(0, SOLEIRA.tetoNoTelefone);
 
-  /* a porta: fechada, diz quantas ficam atrás dela (o número é o que
-     deixa o jogador decidir se vale abrir); aberta, dobra-se sobre si
-     mesma — nunca desaparece com a lista aberta, ou não haveria como
-     fechar. Nada mais no teto some: quem estava na mesa continua. */
+  /* R15 — A PORTA DEIXA DE SER COMPOSTA AQUI E PASSA A SER `A dobra`.
+     O comentário de R5a acima dizia, com todas as letras, que esta peça
+     não tinha nome em `formas.md` e que por isso ela era montada com
+     peças já fechadas noutro lugar, *até o `desenho` decidir um nome
+     para ela*. Decidiu, e chama-se `A dobra` — e o que muda não é só o
+     nome: ganha a borda TRACEJADA (que diz, sem uma palavra, que esta é
+     a única porta da soleira que não abre para o MUNDO mas para a
+     LISTA), o glifo de direcção, e o substantivo em vez do `+N` seco.
+     *Uma lei que se escreve e não se instancia é uma intenção.* */
   const porta = (n) => (
-    <button type="button" onClick={() => setAberto((a) => !a)} aria-expanded={aberto}
-      className="tv-anel-foco tv-mono rounded-lg self-start"
-      style={{
-        minHeight: ALVOS.piso, padding: "0 14px", fontSize: TIPOS.rotulo,
-        color: T.inkDim, background: "transparent", border: `1px solid ${T.lineStrong}`,
-        cursor: "pointer",
-      }}>
-      {aberto ? "mostrar menos" : `+${n} ${n === 1 ? "oferta" : "ofertas"}`}
-    </button>
+    <Dobra quantos={n} estado={aberto ? "aberta" : "dobrada"}
+      aoAlternar={() => setAberto((a) => !a)} />
   );
 
   return (
@@ -1288,10 +1411,22 @@ export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeO
 
    NAO E UM ALVO: o alvo de 48 e o do TEMPO inteiro, que o embrulha
    (`mente/r13-mesa.md`, §2.6). Dois alvos encaixados seriam duas
-   portas para a mesma sala — a mesma accao com duas caras. */
-export function SeloDePrazo({ noites, quantos = 1, urgente = false }) {
+   portas para a mesma sala — a mesma accao com duas caras.
+
+   ---------------- R15: O EIXO `Conta` (Noites · Turnos) ----------------
+   `A oferta` ganhou uma JANELA (§4 de `formas.md`), e a janela nao e
+   texto: e esta peca. Mas a peticao do correio conta NOITES de
+   calendario e uma oferta de encontro conta TURNOS — e a resposta do
+   `desenho` a isso foi um EIXO e NAO um gemeo, que e a lei de sempre:
+   *uma accao, uma forma.* A areia e a mesma geometria nos dois, e e ela
+   o canal primario; o que muda e a palavra, e a palavra sai de
+   `CONTAS`, em `gravura-da-cena.js`.
+
+   `conta` e OPCIONAL e cai em `noites`: sem ela a peca e byte a byte a
+   de ontem, e as chamadas vivas da cinta nao mudam uma letra. */
+export function SeloDePrazo({ noites, quantos = 1, urgente = false, conta = "noites" }) {
   const aperto = apertoDoPrazo(noites, urgente);
-  const palavra = palavraDoPrazo(noites, urgente);
+  const palavra = palavraDoPrazo(noites, urgente, conta);
   const cheio = aperto.cheio;
   /* A COR SAI DA TABELA POR NOME, nunca por valor: `APERTOS` diz
      `token`, e quem o traduz em tinta e esta linha, uma vez. */

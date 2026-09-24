@@ -47,6 +47,19 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   **não a implementou, e fez bem**: precisa que `pesarConvite` (`src/indole.js`)
   saiba marcar uma exigência como **não pagável agora**. Isso é regra, não
   pintura, e regra não é da mesa de desenho.
+  **[CORREÇÃO DO `jogo`, R15 · 23/09 — e ela muda o pedido.]** Este pedido
+  parte de que a oferta *não podia mudar nada*. **Não é verdade, e a prova é
+  uma função que já existe:** `bancarOConvite(nome)` (`App.jsx:20295`) **paga
+  a exigência** e confere `v.exigencia.moedas` contra a bolsa — vive em
+  Gestão › Pessoas, duas gavetas abaixo. *`Convidar Vero · tem preço` não era
+  uma oferta morta: era a oferta certa com o verbo errado.* R15 põe
+  **`Pagar o que {nome} pede`** na soleira quando há saldo, e **nada** quando
+  não há — o que fecha o defeito **sem pedir nada ao motor**.
+  **O que continua a ser pedido, e é menos do que estava escrito:** que
+  `pesarConvite` diga se a exigência é de **moedas** (pagável agora) ou de
+  **tempo/laço** (não pagável por nenhum gesto) — hoje `exigencia.o` é texto,
+  e a tela tem de adivinhar lendo-o.
+
   **O que se pede:** `pesarConvite` (ou irmão) devolver, junto do veredito, se a
   exigência é **impossível neste momento** — para a soleira a esconder em vez de
   a oferecer. *Um controlo cujo único resultado possível é perder o turno não
@@ -452,6 +465,79 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   defeito de sítio.** Ou volta a navegar, ou sai.
   *Vai aqui e não na pauta do desenho porque a fiação é do outro lado: a forma
   do botão está certa, o que falta é o que ele faz.*
+
+- [ ] **`Fugir` não tem porta, e custou 15 PV numa rodada** · de: R15 · 23/09
+  **Jogado hoje, no jogo em produção.** Emboscada na estrada: três
+  javalis-de-pedra a 19,5 m, a heroína com 18 PV. Escrevi a frase mais óbvia
+  que um jogador pode escrever numa luta que não quer — *"Recuo depressa pela
+  estrada e fujo dos javalis"* — e **o sistema não fugiu**. Deixou-a no sítio,
+  deu-lhes a rodada, e os três acertaram: `20 vs 12`, `14 vs 12`, `17 vs 12`,
+  5 de dano cada. **18 → 3 PV.**
+  O tabuleiro oferece `Atacar · Mover · Esquivar · Empurrar · Derrubar ·
+  Saltar` — **seis verbos, e nenhum é `Fugir`.** Mecanicamente a fuga é
+  possível (mover 9 m por rodada enquanto eles movem 9), mas **nada na tela o
+  diz e nenhuma frase o alcança**: o jogador tem de a descobrir por aritmética
+  de grelha, a 3 PV, com o dado já rolado.
+  **Para quê:** é a doença de R1 — *verbos de sistema contra portas de texto* —
+  no sítio onde ela mata. E é a que mais afasta um jogador de mesa: numa mesa
+  de verdade, *"eu corro"* é sempre uma frase válida.
+  **O que se pede:** uma ação de combate `fugir` (ou `retirada`), com o preço
+  escrito antes do toque — o ataque de oportunidade que ela concede, e a
+  condição em que falha. *A forma, quando a regra existir, é da mesa.*
+
+- [ ] **o pedido narrado nunca vira pedido do sistema — 4 dos 20 turnos** · de: R15 · 23/09
+  **É a maior causa isolada de "a soleira não tinha nada", e o censo ao
+  contrário de `mente/r15-mesa.md` mediu-a:** em T1 Elma pergunta *"Você
+  topa?"*; em T8 Sara pede que eu leve um recado ao Orso; em T15 Olga pergunta
+  *"pode olhar o que tem dentro do baú?"*; em T18 Sara oferece o cantil e
+  espera reacção. **Quatro vezes em vinte alguém pediu uma coisa na cara do
+  herói e o motor nunca soube que um pedido tinha sido feito.**
+  A régua da soleira (`formas.md` §R1b) é exactamente *"alguém espera resposta
+  sua"* — e o motor só a sabe ler no mural (`oferecido`) e nas missões
+  (`status: "oferecida"`). **A prosa faz pedidos o tempo todo e nenhum chega a
+  ser estado.**
+  **Para quê:** com isto, a soleira acerta em **10 de 20** turnos em vez de 6.
+  É a diferença entre uma peça que ajuda e uma peça em que se confia.
+  **O que se pede:** que um pedido narrado possa nascer como estado — um
+  registo leve `{de, o que, expira quando}` que o Narrador declare e o sistema
+  guarde, com o mesmo tratamento que `oferecido` já tem no mural. *Sem número
+  novo: é um estado, não uma mecânica.* **Peso: é dos dois — a mesa desenha a
+  oferta, o sistema tem de saber que ela existe.**
+
+- [ ] **o `▸` só sabe apontar para abas; precisa de apontar para lugares** · de: R15 · 23/09
+  `abrirPortaDoSistema(porta)` lê `porta.aba` e mais nada (`App.jsx`). Logo
+  `▸ Mural`, `▸ Mercado`, `▸ Pessoas` funcionam e **`▸ ir às salinas` é
+  impossível** — apesar de `irAoLugarPeloMapa(alvo)` existir inteiro do outro
+  lado, com o tempo já calculado por `aPeEmTexto` (`coordenadas.js:172`).
+  **Para quê, e é uma reversão do `jogo` contra si mesmo:** `r6-jogo.md` §5
+  pedia que `ir` entrasse na soleira. **R15 retirou esse pedido** — *todo lugar
+  que o mapa conhece* é mobília, é a tábua da cidade de sapatos novos, e
+  encheria a soleira em todo turno de toda cidade. **A casa certa do `ir` é o
+  `▸`, na linha em que o mundo nomeou o lugar**, que R3 já transformou de
+  enfeite em botão de 48 px. *A soleira é onde o mundo oferece; o `▸` é onde o
+  mundo abre.*
+  **O que se pede:** que uma linha `▸` possa carregar um destino (`porta.lugar`
+  ou `porta.cidade`) além de `porta.aba`, e que o sistema a emita quando a
+  prosa nomear um lugar que o mapa conhece. **O tecto é da mesa: no máximo duas
+  portas por mensagem**, senão a prosa vira menu.
+
+- [ ] **a missão fecha antes da história, e paga antes do resgate** · de: R6/R15 · 23/09
+  Medido a jogar: *"Tirar Sara de lá"* completou-se com `Chegar a as salinas ✓
+  (1/1)` — **`+57 moedas · +89 XP`** — no instante em que o herói pisou lá, com
+  a Sara ainda por encontrar, dentro de casa, na frase seguinte. **A recompensa
+  chegou antes do resgate.**
+  E o irmão do mesmo defeito: **`conferir()` conclui a missão sozinha**
+  (`missoes.js:397`); **não existe estado "pronta para entregar" nem gesto de
+  entregar**. Foi por isso que R15 **não** pôs "entregar" na soleira: *não há
+  verbo para onde apontar.*
+  **Para quê:** uma missão que se fecha sozinha tira ao jogador o único momento
+  em que o contrato vira história — o de voltar e dizer *está feito*. É o
+  oposto exacto do que a pessoa pediu em 23/09: *"que ele realmente está fazendo
+  coisas"*.
+  **O que se pede:** etapas cujo cumprimento não baste para concluir — um
+  estado `pronta` e um gesto `entregar`, com quem recebe e onde. **Aí a soleira
+  ganha o seu quinto verbo, e é o mais satisfatório de todos.**
+
 
 ## Atendidos
 

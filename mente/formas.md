@@ -6287,3 +6287,646 @@ trocou* — quem abrisse a biblioteca desenhava no passado.
 - **`R13 · o par, antes e depois`:** as duas telas **375×812**, a mesma cena e
   o mesmo save. *A dívida que os dois declararam em R1 fica paga pelos dois no
   mesmo dia* — o `jogo` com o orçamento em faixas, o `desenho` com as caras.
+
+---
+
+## R15 · a soleira aprende a ouvir (`jogo`, 23/09)
+
+*A composição longa, com o censo turno a turno e o método, está em
+`mente/r15-mesa.md`. Aqui fica só o que é **lei de forma**.*
+
+**O número que abriu a etapa, e é o censo ao contrário dos 20 turnos de R6:**
+em **5 de 20** havia uma oferta legítima por nascer com o motor de hoje (um
+deles já pago por R13); em **mais 4** havia oferta legítima que **o motor não
+sabe ver**; e em **9** não havia nenhuma, e está certo que não houvesse.
+**A soleira acerta hoje em 2 de 20. Com esta etapa, 6. Com o motor, 10.**
+
+### a lei nova: a peneira tem DUAS portas, e uma delas basta
+
+`formas.md` §R1b fixou: *"a soleira é o que você perde se não agir agora — e
+mobília não se perde"*. **A régua é boa e continua. Tinha um buraco, e foi R13
+que o tapou sem lhe dar nome:** `Montar acampamento` **não perece** — o
+acampamento está lá amanhã — e entrou na soleira, e está certo que tenha
+entrado.
+
+> **A soleira leva o que FECHA, e leva a saída do que COBRA.**
+>
+> 1. **Fecha** — a porta some se ele não agir: quem está *nesta* cena, a
+>    petição que expira, o que o chão guarda e fica para trás no próximo passo.
+> 2. **Cobra** — o estado não some, mas corre um preço enquanto durar: a
+>    estrada (uma ração, uma água, uma noite de cada prazo e uma rolagem de
+>    encontro por dia), o corpo que pede (desvantagem em todo o dado).
+>
+> **E continua a valer o segundo teste, o de R1:** se a frase é invenção do
+> jogador — atacar, persuadir, procurar, perguntar —, a casa dela é o campo,
+> mesmo que passe nas duas portas acima.
+
+**`Esperar` falha as três:** nada fecha, nada cobra, e a ideia é dele. *Saiu em
+R13 e não volta.*
+
+**A porta 2 abre-se para exactamente dois estados, os dois nomeados aqui, os
+dois com handler no motor, um deles já construído.** Não é uma licença: é uma
+lista fechada, e crescer nela é matéria de outra etapa, com outro censo.
+
+### a lei nova: o preço da soleira paga-se em ATENÇÃO, não em pixels
+
+**Medido, jogando o depois de R13:** a página do telefone foi de **151 para
+586 px**, e uma oferta custa **83**. A mesma oferta que em R6 tomava **50 %**
+de (página + soleira) toma hoje **14 %**.
+
+**O argumento que matou `Esperar` — *custa página demais* — morreu com R13.**
+Se a régua fosse feita de pixels, teria de se abrir, e o `jogo` teria de o
+dizer.
+
+> **Não se abre. O que defende a soleira nunca foram os pixels: é a taxa de
+> acerto.** R6 mediu-a: a soleira ofereceu alguma coisa em **11 dos 20** turnos
+> e foi a coisa que o jogador ia mesmo fazer em **2**. **18 %.** A 18 % o
+> jogador aprende a não olhar — e uma região em que não se olha não devolve
+> 10× coisa nenhuma, por mais barata que seja.
+>
+> **Pixels devolvem-se encolhendo a peça. Atenção só se devolve acertando.**
+
+**E é isto que mantém o teto de 1 no telefone, com uma razão melhor do que a
+de R13:** subir para 2 significa, *por construção*, que o segundo lugar é
+ocupado pelo item que o jogador queria **menos**. Não acrescenta um acerto —
+**baixa a média e ensina a desconfiar.** *O teto de 1 não é um orçamento de
+espaço; é uma promessa de que o que está ali é o melhor que o jogo tinha.*
+
+### a ordem: duas filas, e o desempate decidido antes do cansaço
+
+**Fila A — o que FECHA**, ordenada pelo que fecha mais cedo:
+`petição do correio (prazo − dia)` › `quem está em cena e espera` ›
+`o papel acabado de pregar` › `o que o chão guarda aqui`.
+
+**Fila B — o que COBRA**, no máximo **uma**:
+`Seguir viagem` (jornada aberta) · `Montar acampamento` (o corpo pede).
+
+> **Ganha a fila A. A fila B só ocupa lugar quando a A está vazia.**
+> A razão é jogada: *o que cobra está lá no turno seguinte também — a estrada
+> não foge, o cansaço não passa sozinho. O que fecha, não.* Perder uma petição
+> por ter visto a estrada é perder; ver a estrada um turno depois custa um
+> turno.
+>
+> **Na mesa (2 lugares) a fila B tem o segundo garantido**, porque lá não tira
+> nada a ninguém. **Teto: 1 no telefone, 2 na mesa** — não muda.
+
+**Testado contra os casos:** o choque entre as duas filas é **raro por
+construção** — na estrada não há mural, nem mercado, nem quem pregue cartazes,
+e o correio chega em cidade. **Nos 20 turnos de R6 as duas filas nunca teriam
+competido.** A régua existe para o dia em que competirem.
+
+### os quatro verbos que entram, e os três primeiros são surfacing puro
+
+Nenhum pede número novo, tabela nova ou porta nova ao motor.
+
+**1 · `Seguir para {destino}`** — fila B.
+Condição: `jornadaRef.current` viva.
+Preço: `emTempo(minutosPorAvanco(j))`. Retorno: `progressoDaViagem(j)` —
+`faltamMin` / `turnosRestantes`, na gramática de `linhaDaViagem(j)`.
+`tom: preco` · `precisaDoNarrador: true` · `aoClicar: viajar(j.para)`.
+**A razão, e é uma frase do próprio jogo:** a tela imprime, no primeiro avanço,
+`· escreva que segue viagem para avançar` (`App.jsx:20942`). *Um verbo com custo
+calculado, determinístico, e com **zero** portas de toque — o jogo a pedir a
+senha.* Medido em R6: duas viagens escritas no campo que não moveram o herói
+um metro, uma delas a custar seis dias contra um prazo de quatro noites.
+
+**2 · `Pagar o que {nome} pede`** — fila A.
+**Corrige uma decisão de R13 que estava errada, e a prova é uma função que já
+existe.** R13 escreveu *"oferta cuja pré-condição o sistema já sabe que falha
+vira estado, o toque sai"*. `Convidar Vero · tem preço` **não era** uma oferta
+que não podia mudar nada: **era a oferta certa com o verbo errado.**
+`bancarOConvite(nome)` (`App.jsx:20295`) paga a exigência, confere
+`v.exigencia.moedas` contra a bolsa, e vive duas gavetas abaixo.
+
+| `vereditoDoConvite` diz | a soleira oferece |
+|---|---|
+| `aceita` | `Convidar {nome}` — como hoje |
+| `exige` **e há saldo** | **`Pagar o que {nome} pede`**, com o preço e o saldo na cara |
+| `exige` **e não há saldo** | **nada** |
+| `recusa` | nada — como hoje |
+
+**Defeito vivo, e é a lei de R13 que nunca chegou ao código:** a soleira filtra
+`recusa` e **deixa entrar `exige`** (`App.jsx:21612`) — o botão morto de R6
+continua lá. *Uma lei sem catraca é uma intenção.*
+**E é a cinta de R13 que torna esta oferta legível:** sem a bolsa na tela, o
+preço seria outro `tem preço`.
+
+**3 · `Aceitar o que {quem} pede`** — fila A, e a mais perecível do jogo.
+`correio.peticoes` nasce com `prazo: dia+3` e **expira sozinha** em
+`processarDiaCorreio` (`correio.js:269`). O veredito já está escrito:
+`leituraDaPeticao(p)` (`correio.js:196`) devolve `{aceitar, recusar, perigoso}`
+**em palavras**, da mesma tabela que `resolverPeticao` aplica. *Há uma função
+nesta casa cujo único propósito é cumprir a lei do veredito, e ela fala para
+uma aba que só abre se já houver cartas.*
+
+> **Decisão do `jogo`, declarada para o `desenho` poder recusar:** a petição tem
+> duas respostas e `A oferta` tem um verbo. **A soleira leva só o `aceitar`.**
+> Recusar não é uma oferta — *a soleira é onde o mundo oferece, não um
+> formulário com duas caixas* — e **deixar expirar já é recusar**. A recusa
+> explícita fica onde sempre esteve, atrás do `▸ Correio`.
+> *Se a peça devia ter duas faces, é do `desenho` dizê-lo, e o lado dele entra
+> por baixo deste parágrafo.*
+
+**4 · `Convidar` — não é verbo novo, é ALCANCE.**
+Em T9 de R6 o convite estava na gramática e **não apareceu**. Vira catraca:
+**um NPC que a prosa pôs em cena neste turno e que o sistema conhece tem de
+chegar à soleira**; não chegando, é defeito, não desenho.
+
+### o que NÃO entra, e é metade da lei
+
+| não entra | por quê |
+|---|---|
+| `Esperar` / passar o tempo | nada fecha, nada cobra, e o jogador pensa nisso sozinho. Mora no relógio (R13) |
+| **`Ir a <lugar do mapa>`** | **é a tábua da cidade com outra roupa** — em todo turno de toda cidade, e cresce com o mapa. Ver a reversão abaixo |
+| comprar / o mercado | R5b: está aberto amanhã |
+| a tábua / os cartazes do acervo | R1b: mobília. Só `OFERECIDOS A VOCÊ` sobe |
+| trabalhos da casa (guilda) | existem todos os dias enquanto houver casa |
+| beber poção fora do combate | não cobra (nada bate fora da luta, e é ação bónus). **E duplicaria `Montar acampamento` para o mesmo estado** — dois botões para "o corpo pede" é a doença |
+| forragear | sempre disponível e custa meio dia. Mobília cara |
+| subir de nível / gastar pontos | `ModalNivel` já é modal bloqueante — uma segunda porta seria **duas formas para uma ação** |
+| cumprir exigência diplomática | a potência não está na cena e o estado não corre relógio |
+| **prazo na última noite** | **não há verbo para onde apontar.** A informação já está na cinta e o selo vira `danger`. *Entre a forma que conta e a forma que deixa fazer ganha a segunda — mas aqui não há segunda, e inventá-la seria inventar mecânica* |
+| entregar missão · escolher dádiva · portal · caçada · masmorra | **não existem como gesto no motor.** Vão a `pedidos-ao-sistema.md` |
+
+### a reversão: `ir` não entra, e o `jogo` reverte-se a si mesmo
+
+`mente/r6-jogo.md` §5 dizia, como recomendação do próprio `jogo`:
+*"a soleira aprende o terceiro verbo, e é `ir`"*. **Retirado, e a peneira é dele
+e vota contra ele:** *todo lugar que o mapa conhece* é a definição de mobília —
+está lá em todo turno, não perde valor, e a lista cresce a cada cidade
+descoberta. **É a tábua da cidade de sapatos novos.**
+
+**E o que faltava em T4 não era um verbo: era uma porta onde o mundo falou.** A
+prosa disse *"as salinas ficam ao norte, uns cinquenta minutos a pé"* e a frase
+não se tocava. **A forma disso já existe nesta casa e chama-se `▸`**, que R3
+transformou de `SPAN` em botão de 48 px.
+
+> **Uma ação, uma forma:** um lugar que a prosa nomeia e o mapa conhece é **uma
+> porta na linha em que foi dito**, não um cartão na soleira. *A soleira é onde
+> o mundo oferece; o `▸` é onde o mundo abre.*
+
+Falta ao motor que uma linha `▸` possa apontar para um **lugar** e não só para
+uma **aba** (`abrirPortaDoSistema` só lê `porta.aba`). Está em
+`pedidos-ao-sistema.md`.
+
+### a peça que o `jogo` pede ao `desenho`, e é a dívida mais velha desta fase
+
+**`A oferta` nunca entrou na biblioteca do Figma.** R1 declarou-a como dívida
+com motivo; R13 fabricou `A cinta`, `O selo de prazo` e `O rosto da cena`; e a
+peça que carrega todo o sistema de decisões continua a existir só em
+`ui.jsx:928`. **O `jogo` compôs com ela e não a desenhou, que não é dele.**
+
+Pedido, com os eixos que R1 já fixou (`Tom` × `Estado` × `Chegada`) e **uma
+pergunta que é do `desenho` responder:**
+
+> As duas ofertas da **fila B** — `Seguir viagem` e `Montar acampamento` — não
+> são um *Convite* nem um *Preço* nem um *Sem volta*. São **a saída de um
+> estado que cobra**. O `jogo` não sabe se isso é um **quarto valor de `Tom`**
+> ou um **eixo novo**, e não decide: *a peça é dele.*
+>
+> O que o `jogo` sabe dizer é o momento: **a fila B não é um acontecimento.**
+> Ela está lá enquanto o estado durar, e portanto **não pode usar `Chegada =
+> Agora`** — uma marca de "isto é novo" que dura cinco turnos deixa de
+> significar novo e passa a significar ruído. *A fila A chega; a fila B está.*
+
+### a divergência que o `jogo` abre contra si próprio, para não a descobrir depois
+
+**Quatro verbos novos movem ~4 turnos do campo para a soleira, e o campo cai de
+15/20 (75 %) para ~11/20 (55 %).** R13 escreveu que **15 é o número que não pode
+cair**. Ele cai, e é o `jogo` quem tem de o dizer.
+
+> **O piso novo é 10 de 20 — metade. E a razão de poder descer de 15 para 10 é
+> que os turnos que se movem não eram prosa a ser respondida:** T10 e T19 foram
+> frases que o jogo **ignorou** (duas viagens que não moveram o herói um metro)
+> e T16 foi um turno **gasto num botão morto**.
+> **Mover um turno que falhou não é perder prosa — é parar de mentir.**
+>
+> Abaixo de 10 o jogo virou *point-and-click*, e a culpa é do `jogo`.
+
+### o campo do turno tem duas formas, e ninguém tinha medido
+
+Medido no DOM hoje: na tela principal o campo é `<textarea>`; **dentro do
+combate é `<input>`**. **Uma ação, duas formas** — e não é cosmético: num deles
+`Shift+Enter` quebra linha e no outro não há linha para quebrar.
+**É do `desenho` fechar a forma e do `oficial` construir.**
+
+### o que R15 mede e não conserta
+
+- **`Praga em o posto da estrada`** — o defeito #10 de R6, visto outra vez hoje.
+  A preposição continua por contrair, e continua a aparecer na peça mais nova
+  da fase.
+- **`Fugir` não existe no tabuleiro.** Jogado hoje: escrever *"recuo depressa
+  pela estrada e fujo dos javalis"* deixou a heroína no sítio e deu a rodada aos
+  três, que acertaram todos — **18 → 3 PV**. Seis verbos no tabuleiro
+  (`Atacar · Mover · Esquivar · Empurrar · Derrubar · Saltar`) e nenhum é
+  `Fugir`. → `pedidos-ao-sistema.md`, e é o mais caro dos pedidos.
+
+---
+
+## R15 · a fabricação — o buril, o piso do astro, o esbatimento e as duas peças novas (`desenho`, 23/09)
+
+O `jogo` decidiu **que verbos entram** (`mente/r15-mesa.md`); aqui fica **de que
+cada coisa é feita**. Tudo sai de `src/estilo.js` — nenhum literal de cor nasce
+nesta etapa, e é isso que faz a mudança desfazer-se num commit.
+
+**O par visual está no Figma** (`e5wJUzInAssoebx5npssKc`): as páginas
+*R15 · o ceu talhado a branco* (o antes/depois das quatro luzes, três alfas) e
+*R15 · a soleira aprende verbos* (a oferta, a dobra, o esbatimento).
+
+---
+
+### 1 · O céu ganha o seu buril — e a lei do buril estava errada, não o valor
+
+A entrega de R13 declarou a dívida com o número: **o talho do céu mede 1,09 na
+noite contra um piso de 1,5.** O `aprendiz` provou que não se conserta por
+opacidade (a 1,0, tinta chapada, a noite chega a 1,18) nem mudando onde a
+hachura começa (*a travessia é y=8/14/29/40 conforme a luz, e fazer a geometria
+depender da luz partia a lei da peça*). **As duas eliminações estavam certas, e
+é por isso que a saída não estava lá: o defeito era a lei.**
+
+**A lei de R13 dizia:**
+
+> Acima do horizonte o buril escurece; abaixo dele, clareia.
+> *O céu é a fonte de luz: marca-se tirando-lhe luz.*
+
+**E "o céu é a fonte de luz" é verdade DO HORIZONTE, não do céu.** O céu desta
+peça é um gradiente, e o alto dele é escuro nas quatro luzes:
+
+```
+ceuAlto L:  noite 0,0070 · madrugada 0,0153 · entardecer 0,0413 · dia 0,0610
+tinta   L:  0,0036
+```
+
+Ao alto da noite, o buril e o campo estão a **1,03:1** um do outro **antes de se
+pôr uma gota de alfa**. *Nenhum alfa salva uma diferença que não existe* — que é
+exactamente o que a medida do `aprendiz` dizia, lida ao contrário.
+
+**E erguer o céu também não salva, e isto elimina-se com conta:** para `tinta` a
+0,45 chegar a 1,5 sobre o topo do céu seria preciso `L(ceuAlto) >= 0,1606`, um
+cinzento médio. **A noite deixaria de ser noite para que a textura dela se
+visse.**
+
+#### A lei geral, e é mais curta do que a que substitui
+
+> **A MARCA É O CONTRÁRIO DO CAMPO QUE A RECEBE.**
+> Campo claro, o buril põe tinta. Campo escuro, o buril tira-a.
+
+O chão é escuro nas quatro luzes: `talho`, sempre. O céu é escuro em cima nas
+quatro: **`talhoDoCeu`, sempre.** A silhueta não é marca — é **massa** — e
+continua `tinta`, uma, nas quatro luzes. **`tinta` recua para o que esta folha
+sempre disse que ela era.**
+
+**E isto não é menos Bewick, é mais.** Na gravura de linha branca o céu é
+cortado a branco; **o talho escuro no céu era a parte não-Bewick da nossa própria
+receita.**
+
+#### A prova de que é melhor pintura, e não só melhor piso
+
+A hachura adensa para o horizonte (passo 11 px em cima, 3 em baixo) e o gradiente
+**clareia** para o horizonte. Com marca escura, as duas puxavam em sentidos
+contrários. Medida a profundidade do céu — a razão de luz entre o alto e o
+horizonte, já com a cobertura da hachura:
+
+| luz | céu nu | hoje (tinta) | com `talhoDoCeu` | ganho |
+|---|---|---|---|---|
+| madrugada | 2,64 | 2,16 (**-18 %**) | **3,20** (+21 %) | **+48 %** |
+| dia | 2,21 | 1,81 (**-18 %**) | **2,47** (+12 %) | **+36 %** |
+| entardecer | 2,23 | 1,82 (**-19 %**) | **2,56** (+15 %) | **+41 %** |
+| noite | 2,50 | 2,10 (**-16 %**) | **3,23** (+29 %) | **+54 %** |
+
+**A textura estava a apagar entre 16 % e 19 % da profundidade que o gradiente
+declarava.** *Era por isto que o céu se lia chato mesmo onde o piso passava: a
+peça lutava contra si mesma, e nenhuma medida de contraste sozinha o diria.*
+
+#### Os valores, e nenhum deles é escolhido
+
+`talhoDoCeu` é o próprio `ceuBaixo` — a cor do horizonte, o ponto mais claro do
+campo — **erguido 65 % em direcção ao branco, com um k só para as quatro**. Vive
+em `LUZ_DA_CENA.erguerOTalhoDoCeu` para a suíte **refazer a conta** em vez de
+comparar hexes: uma tabela que se recalcula não se afina à mão.
+
+| luz | `talhoDoCeu` | a textura ao topo | hoje |
+|---|---|---|---|
+| madrugada | `#D2CDD2` | **3,04** | 1,20 |
+| dia | `#DFD5C7` | **2,43** | 1,59 |
+| entardecer | `#E9C9B4` | **2,59** | 1,43 |
+| noite | `#C4C9CF` | **3,11** | **1,09** |
+
+**E o alfa sobe de 0,45 para 0,85 — o mesmo dos dois buris**, por razão e não
+por afinação: **um corte de buril não é translúcido, é o papel.** Os 0,45 eram
+herança do tempo da tinta escura, onde o alfa não fazia diferença nenhuma. Com
+marca clara o alfa trabalha. *Um número, dois buris* — e ele sai de
+`rosto-da-cena.jsx`, onde estava solto, para `LUZ_DA_CENA.alfaDoTalho`.
+
+**O 0,85 foi escolhido contra o 0,65 no Figma, com os dois desenhados**: a 0,65
+o pior ponto é 1,82 e o dia continua lavado; a 0,85 é 2,14 e **a densidade
+lê-se como profundidade**, que é o trabalho que a hachura tem.
+
+#### O piso continua 1,5, e o que não regride
+
+**Um piso é uma razão, não um recorde.** A razão não mudou — a textura não
+carrega informação. O que mudou é que **passa**: o pior ponto das quatro luzes
+vai de **1,09 (27 % abaixo)** para **2,14 (43 % acima)**.
+
+| | antes | depois |
+|---|---|---|
+| a silhueta x o céu ao horizonte | 3,32 · 4,14 · 4,78 · 5,79 | **4,87 · 5,70 · 6,19 · 7,35** |
+| a marca da chapa x o céu ao topo | 8,13 · 4,78 · 5,82 · 9,32 | 6,27 · **3,73** · 4,51 · 7,48 |
+
+**A silhueta melhora nas quatro** — o campo atrás dela ficou mais claro. A marca
+da chapa desce e **nenhuma reprova**: o par mais apertado é o dia, a **3,73
+contra um piso de 3 (+24 %)**. O talho do chão e a legenda não se tocam.
+
+---
+
+### 2 · O astro ganha piso — e escrevê-lo é recusar escrever um número
+
+O `aprendiz` mediu-o e **recusou-se a pôr asserção**, com a razão certa:
+*inventar aqui um número que o `desenho` não escreveu seria a suíte a legislar
+sobre a forma.* Os números eram **entardecer 1,42 · dia 2,00 · madrugada 2,17 ·
+noite 3,77**.
+
+> **O piso é 3:1, e é o piso que já existe.** Esta tabela tem exactamente UM
+> piso para "uma forma que se tem de distinguir" — o 3 de `silhuetaNoCeu`, de
+> `talhoNoChao` e de `chapaNoCeu`, que sai da WCAG 1.4.11. **O astro é uma
+> forma.** Dar-lhe piso próprio seria a segunda tabela.
+
+**E não é o piso da textura (1,5):** uma textura *pode* dissolver-se em tom — é
+para isso que serve. **Um disco que se dissolve não lê como tom, lê como
+borrão.**
+
+**O entardecer obrigou a decisão, e é o caso que prova que não era afinação:**
+com `T.danger` **nenhum alfa chega a 2,0** — a 1,0, opaco, dá **1,77**. *O sol
+do entardecer era mais escuro do que o céu que ele acende.* Varridos os 24
+tokens de `T`, **`T.ink` é o único que passa 3:1 nas quatro luzes**, e é o que
+devia ser desde o princípio: **o astro é o sítio onde o bloco é cortado até ao
+papel**, e `ink` é o papel desta casa.
+
+| luz | hoje | `T.ink` a 0,85 |
+|---|---|---|
+| madrugada | 2,17 (`amberSoft` 0,55) | **4,04** |
+| dia | 2,00 (`amberSoft` 0,40) | **4,88** |
+| entardecer | **1,42** (`danger` 0,60) | **3,41** |
+| noite | 3,77 (`mundoSoft` 0,50) | **9,43** |
+
+**Três coisas que isto paga de enfiada:**
+
+1. **`astro` e `astroAlfa` sobem ao topo da tabela**, ao lado de `tinta`. Quatro
+   cópias do mesmo valor por modo é "a mesma cor escrita quatro vezes" — a
+   doença que a própria nota de `LUZ_DA_CENA` nomeia. **A tabela perde 8
+   entradas e ganha 2.**
+2. **Fecha a excepção que R13 declarou:** *"o astro é o único ponto da faixa
+   onde um acento da casa entra na paisagem."* Já não entra — **a paisagem fica
+   sem acento nenhum**, e a lei de R1 (*cor viva só em coisa com que se
+   interage*) deixa de ter um buraco.
+3. **A hora continua a colorir o sol — através do céu, não do token.** A 0,85 o
+   campo atravessa 15 % do disco: sobre um céu lilás o astro lê frio; sobre o
+   laranja do entardecer, quente. *A hora muda a luz, não o desenho* — aplicada
+   um andar mais fundo.
+
+**`astroAlto` fica por luz**, porque esse distingue de verdade. *Posição é luz;
+opacidade era afinação.*
+
+#### A dívida deste piso, declarada com o número
+
+Os 3,41 do entardecer são contra o céu **nu** — a mesma régua com que a silhueta
+é medida, e **duas réguas para duas formas seria pior do que uma régua
+imperfeita**. Contra um céu **já talhado** o entardecer dá **2,56**, porque o
+talho claro levanta o campo à volta do disco. Vê-se nos quadros do Figma.
+
+> **O segundo canal do astro não é cor: é ser o único SÓLIDO num campo talhado.**
+> Textura sobrevive ao cinzento e aos três daltonismos — a mesma razão pela qual
+> a areia da ampulheta é geometria.
+>
+> **A condição desse canal é que o talho PARE na borda do astro**, e hoje
+> corta-lhe por cima. **Isso é forma (`gravura-da-cena.js`), não valor, e não o
+> inventei aqui** — vai para quem constrói, como a etapa mandou.
+
+---
+
+### 3 · `O esbatimento` — e a primeira coisa a dizer é o que ele é
+
+O `oficial` declarou a dívida e **não inventou o remédio, porque é forma**: a
+primeira linha da prosa corta-se ao rolar sob a gravura. Não é sobreposição
+(medido: `sobrepoe: false`) — *só que agora a cabeça é uma imagem, e uma linha
+meio engolida por um desenho lê-se pior do que meio engolida por uma borda lisa.*
+
+> **Um esbatimento não é decoração: é uma região declarada ILEGÍVEL.**
+> Uma máscara de alfa sobre texto não o adoça — apaga-o por graus. Logo a altura
+> dele é o seu custo, e a lei que o rege não é estética:
+> **nunca pode esconder uma linha inteira.**
+
+**O número sai de duas medidas e de nenhum gosto:**
+
+1. **0,54** — o alfa em que a prosa deixa de ser AA. `T.ink` sobre `T.pagina`
+   mede **11,08:1**; composto a alfa `a`, cai abaixo de 4,5:1 **exactamente em
+   `a = 0,54`** (a 0,54 dá 4,41; a 0,56 dá 4,62). Logo a banda ilegível de um
+   esbatimento de altura `h` é `0,54 x h`.
+2. **27,6 px** — a entrelinha da prosa (`TIPOS.prosa` 17 x 1,625, o
+   `leading-relaxed` que a tela já usa), a régua de R13.
+
+**O teto, e a suíte refá-lo:**
+
+```
+alfaAA x altura  <  entrelinhaDaProsa / 2
+0,54   x   24    =  12,96  <  13,8          OK
+```
+
+**24 é o maior inteiro par abaixo do teto de 25,6** — o teto menos o
+arredondamento, não um gosto. E há um piso por baixo: **abaixo de ~12 px um
+gradiente deixa de se ler como esbatimento e volta a ser uma borda, só que
+desfocada — que é o defeito original com mais um passo.**
+
+#### E o número encontrou-se com outro que já lá estava
+
+A região da prosa tem **`py-6` = 24 px** de enchimento no topo, hoje, sem esta
+tabela. Com o esbatimento à mesma altura, em `scrollTop = 0` **ele cobre apenas
+enchimento**: a primeira linha do primeiro turno nasce à luz inteira, e a peça
+custa **zero px de página e zero deslocamento**. *Duas contas independentes que
+caem no mesmo número.*
+
+**A construção:** `mask-image` na **própria região que rola**, nunca numa camada
+por cima — uma máscara não é um elemento e **não intercepta um único clique**.
+*"Nunca pode custar o turno" cumprido por construção, não por cuidado.* Três
+batentes escalonados (0 -> 0,35 -> 0,80 -> 1) e não uma rampa linear, pela mesma
+razão que a barra de PV é comprimento: a percepção de luminância não é linear, e
+uma rampa linear lê-se como um degrau no fim.
+
+**Como se degrada:** `prefers-reduced-motion` — nada muda, **porque nada se
+move**: um esbatimento não é animação, é uma borda com espessura.
+`forced-colors: active` — **sai inteiro**, porque uma máscara de alfa apaga texto
+por graus e ali o sistema não tem como o repor; e nesse modo a cabeça já não é
+uma imagem, é um contorno, contra o qual um corte recto lê bem. Sem
+`mask-image` — a prosa fica como está hoje, degradação nula.
+
+---
+
+### 4 · `A oferta` ganha o quarto campo — e o teto de campos é lei nova
+
+A `Oferta` de R1 tem três campos porque **três era o que cabia**: a soleira era
+55 % do ecrã. Depois de R13 é 14 %, e o orçamento que a apertava deixou de
+existir.
+
+**O que isso não autoriza é enchê-la**, e o `jogo` chegou ao mesmo sítio por
+outro caminho (`r15-mesa.md` §6.3): *"o preço da soleira não se paga em pixels,
+paga-se em atenção — e a atenção tem um tecto mais baixo."* **Espaço que sobra
+não é convite; é margem.**
+
+> **O quarto campo entra pela peneira, não por caber.** A peneira é do `jogo`:
+> *a soleira é o que o jogador perde se não agir agora.* **Uma peça cuja razão
+> de existir é a perda tem de dizer quanto tempo falta**, e a de hoje não diz.
+
+Medido em R6: **a oferta do Yorick esteve viva quatro turnos e a tela nunca
+disse que eram quatro.** E o `jogo` trouxe, em §3.3, o verbo cuja propriedade
+que o define é o prazo — `Responder a quem escreveu`, que expira em
+`processarDiaCorreio`. *Ele escreveu a janela na linha do preço sem me perguntar,
+e é onde ela vai.*
+
+**`Tom` x `Estado` x `Chegada` continuam. Entra `Janela`:**
+
+| `Janela` | o que mostra |
+|---|---|
+| **Nenhuma** | a oferta não expira — **o selo não aparece e não deixa buraco** |
+| **Folgado** | `4 turnos` / `5 noites`, areia cheia, `T.mundo` |
+| **A apertar** | `2 turnos`, areia a terço, `T.amber` |
+| **Agora ou nunca** | **chip cheio** `T.danger`, areia a um fio |
+
+**E a janela não é texto: é `O selo de prazo`, que já existe.** *Uma ação, uma
+forma.* A peça ganha um eixo — **`Conta` (Noites · Turnos)** — e **não um
+gémeo**: a petição do `jogo` conta noites de calendário, uma oferta de encontro
+conta turnos, e **a areia da ampulheta é a mesma geometria nos dois**. O canal
+primário continua a ser a areia, que sobrevive ao cinzento e aos três
+daltonismos; a cor é a última leitura.
+
+#### O teto de campos é QUATRO, e é lei
+
+`SOLEIRA.camposDaOferta = 4` — verbo · preço · retorno · janela. **O quinto
+campo faz a oferta deixar de se ler de relance e passar a ser um formulário**, e
+uma soleira de formulários é o *point-and-click* que a medida dos 990 ms existe
+para apanhar. É varrível, e por isso é lei e não gosto.
+
+#### O custo, medido no Figma e não orçado
+
+| | px |
+|---|---|
+| a oferta de hoje | **83-93** |
+| a oferta de R15 (três filas) | **108** |
+| com o chip cheio de `Agora ou nunca` | **116** |
+| **`Janela=Nenhuma`** | **108 — o mesmo** |
+
+> **A janela é GRÁTIS, e é isso que a medida diz:** tirá-la deixa a oferta nos
+> mesmos 108 px, porque ela viaja numa linha que já existia — partilha a do
+> preço, alinhada à direita. **O que custa os ~20 px é o verbo ser um alvo de
+> 48 a sério e o retorno ter a sua linha**, e isso custa **0,72 linhas de prosa
+> (~5 palavras)** no telefone.
+>
+> **Quem cede é o RETORNO**, e ele é o único que pode: o preço é um número que
+> não encolhe sem mentir, a janela é uma contagem que não encolhe sem mentir.
+> **O retorno é prosa, e prosa trunca** — pelo fim, com reticências.
+
+**E há um número que NÃO é meu e vai ao `jogo`:** com a oferta a 108, a página
+do telefone em A+B-com-oferta passa de **407 px (50,1 %)** para **382 px
+(47,0 %)** — **abaixo da linha de 50 % que a mesa assinou em R5a.** O orçamento
+é dele (`r13-mesa.md` §1: *"o orçamento é lei"*), e **gastá-lo sozinho seria eu
+a decidir o que não é meu**. Nos 9 de 20 turnos sem oferta nada muda: a soleira
+é 0 px e a página fica nos 586.
+
+#### A pergunta que o `jogo` me fez, respondida — `A oferta` NÃO ganha duas faces
+
+Ele escreveu (§3.3): *"se o `desenho` achar que a peça devia ter duas faces, que
+escreva por baixo deste parágrafo e a decisão é dele, que a peça é dele."*
+
+**Não ganha, e a razão de forma é mais forte do que a dele.** Ele disse que a
+soleira é onde o mundo oferece, não um formulário com duas caixas. A metade que
+falta:
+
+> **Uma oferta com dois verbos deixa de ser uma PORTA e passa a ser uma
+> PERGUNTA — e esta casa já tem a peça da pergunta com duas respostas.**
+> É `O chamado` (K1/K3), que tem relógio, leque, e **a recusa no primeiro
+> degrau**. Se a recusa da petição alguma vez tiver de estar na tela, ela não é
+> uma segunda face de `A oferta`: **é `O chamado`, que já existe e já a tem.**
+
+E há a aritmética: duas faces são **dois alvos de 48** (a oferta vai a 156 px,
++48) ou um alvo partido, e um alvo partido **torna ambígua qual é a ação
+primária** — numa peça cuja gramática inteira é *um verbo, um preço*.
+**Divergência fechada a favor do `jogo`, com a razão do `desenho`.**
+
+---
+
+### 5 · `A dobra` — a forma que R10 deixou por nomear, e é agora que se nomeia
+
+O `aprendiz` precisou dela para o `+N` da soleira, viu que a forma fechada
+(*Véu + Fechar*) é para sobreposições, **compôs com peças que já são lei em vez
+de inventar**, e escreveu a dívida: *"vai reaparecer — abas, inventário, bolsa
+—, e na segunda vez já não é composição, é forma por nomear."*
+
+**Reapareceu.** Com quatro verbos e teto 1 no telefone, o `+N` deixa de ser raro
+e passa a ser **o caminho normal**. Então nomeia-se.
+
+**`A dobra` — revelar mais itens na própria lista.** O nome é o da folha de
+papel: dobra-se, e o que lá está continua lá.
+
+| eixo | valores |
+|---|---|
+| `Estado` | **Dobrada** · **Aberta** |
+
+- **48 px** (`ALVOS.piso`), largura da lista, raio 8, `T.panel`.
+- **Borda `T.lineStrong` TRACEJADA**, e é de propósito: **é a única peça da
+  soleira que não é uma porta do MUNDO — é uma porta da LISTA.** O tracejado
+  diz isso sem uma palavra, e não gasta cor nenhuma (a lei de R1: *cor viva só
+  em coisa com que se interage* — ela é interagível, mas não é uma oferta, e
+  dar-lhe um acento seria pô-la a competir com as ofertas que ela esconde).
+- **Diz o número E o substantivo:** `mais 3 ofertas`, **nunca só `+3`**. Aberta,
+  diz `dobrar de volta`.
+- **`T.ink` no rótulo, `T.inkDim` no glifo.**
+
+#### A lei da dobra, e ela resolve o conflito com o teto
+
+> **O teto protege a página do SISTEMA, não do jogador.**
+>
+> A soleira nunca passa do teto (1 no telefone, 2 na mesa) **por decisão do
+> jogo**. A dobra passa-o **por decisão de quem joga** — e por isso pode.
+> *Um teto que o jogador não pode levantar não é um teto: é uma porta trancada.*
+
+- **Fica no pé da soleira, colada ao campo, e abre para baixo — contra o campo.**
+  **A prosa não se move um pixel**, que é a lei que R13 §2.7e já fixou para a
+  oferta que nasce.
+- **Fecha-se no mesmo alvo**, que continua a ser o último da lista: *o polegar
+  não volta a procurar.*
+- **Não é um véu.** Um véu de tela inteira para mostrar duas ofertas a mais é
+  desproporcionado — era exactamente o que o `aprendiz` recusou, e a recusa dele
+  fica escrita como a razão desta peça existir.
+- **`prefers-reduced-motion`:** aparece e desaparece sem transição. Nunca
+  bloqueia, nunca atrasa o `Agir ->`.
+
+**Nasce para todos**, como a lei manda: abas, inventário e bolsa passam a ter
+esta forma disponível, e **a próxima vez que alguém precisar de "mostrar mais na
+própria lista" já não compõe — instancia.**
+
+---
+
+### 6 · O Figma, e um achado que devia envergonhar-nos
+
+**A biblioteca tinha voltado a derivar, no mesmo dia.** A colecção *Luz da cena*
+nasceu em R13 com os valores de antes da correcção do buril: a madrugada estava
+**castanha (`#2A2219`)** quando o código já a tinha em **lilás (`#241F2B`)**, o
+`ceuBaixo` da noite era `#2E2620` contra `#576675`, **e `talho` não existia de
+todo.** **Nove dos doze valores de céu e chão estavam errados**, e ninguém o
+reportou — a correcção de 23/09 entrou no código e não no Figma.
+
+*É a mesma doença que esta mesa apanhou em R13 (a biblioteca mostrava a paleta
+pré-R2) — e reapareceu **uma etapa depois**, o que prova que corrigir à mão não
+é conserto, é adiamento.* **A proposta que sai daqui está na pauta.**
+
+- **`Luz da cena` reparada e ampliada:** 21 valores corrigidos ou criados, mais
+  **`talho`** e **`talhoDoCeu`** — 7 variáveis x 4 modos.
+- **`R15 · o ceu talhado a branco`:** o par, com a **hachura real** —
+  `hashSemente` + `rng` + `talhos` + `hachuraDoCeu` portados byte a byte de
+  `src/`, mesma semente dos dois lados, **12 faixas** (hoje · 0,65 · 0,85) nas
+  quatro luzes. *O que muda é a tinta, não o desenho, e o par prova-o.*
+- **`R15 · a soleira aprende verbos`:** `A oferta` nos três apertos e sem
+  janela, `A dobra` nos dois estados, `O esbatimento` antes/depois.
+- **E o Figma apanhou um defeito meu:** a fila do verbo saiu a **44 px**, abaixo
+  de `ALVOS.piso`. Só se viu ao **medir o quadro construído** — como em R13,
+  quando a cinta orçada em 186/98 deu 194/145. *Duas etapas seguidas em que o
+  número orçado mentiu e o medido salvou.*

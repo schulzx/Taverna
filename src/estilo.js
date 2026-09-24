@@ -259,6 +259,158 @@ export const MATERIAIS = {
    POR ISSO `talho` É NOVO E É POR LUZ, e `tinta` continua UMA e no
    topo: a massa da silhueta é sempre o bloco por cortar.
 
+   ------------------------------------------------------------
+   R15 — A LEI ACIMA ESTAVA CERTA NO HORIZONTE E ERRADA NO RESTO DO
+   CÉU, E O NÚMERO QUE A APANHOU JÁ ESTAVA ESCRITO NESTE PROJECTO.
+
+   A entrega anterior declarou a sua própria dívida: o talho do céu mede
+   **1,09 na noite contra um piso de 1,5** — tinta escura sobre céu
+   escuro, *a mesma doença da entrega anterior, mudada de andar*. E
+   declarou também que não se conserta por opacidade (a 1,0, tinta
+   chapada, a noite chega a 1,18) nem mexendo em onde a hachura começa
+   (a travessia é y=8/14/29/40 conforme a luz, e fazer a GEOMETRIA
+   depender da luz partia a lei da peça).
+
+   A CAUSA É UMA PREMISSA FALSA, NÃO UM VALOR MAL ESCOLHIDO. A lei acima
+   diz «o céu é a fonte de luz», e isso é verdade DO HORIZONTE — não do
+   céu. O céu desta peça é um GRADIENTE, e o alto dele é escuro nas
+   quatro luzes:
+
+       ceuAlto L:  noite 0,0070 · madrugada 0,0153 · entardecer 0,0413
+       tinta   L:  0,0036
+
+   Ao alto da noite o buril e o campo estão a **1,03:1** um do outro
+   ANTES de se pôr uma gota de alfa. Nenhum alfa salva uma diferença que
+   não existe.
+
+   E ERGUER O CÉU TAMBÉM NÃO SALVA — eliminado com conta e não com
+   gosto: para `tinta` a 0,45 chegar a 1,5 sobre o topo do céu seria
+   preciso `L(ceuAlto) >= 0,1606`, um cinzento médio. **A noite deixaria
+   de ser noite para que a textura dela se visse.**
+
+   A LEI GERAL, ENTÃO — e é mais curta do que a que substitui:
+
+       A MARCA É O CONTRÁRIO DO CAMPO QUE A RECEBE.
+       Campo claro, o buril põe tinta. Campo escuro, o buril tira-a.
+
+   O chão é escuro nas quatro luzes: `talho`, sempre. O céu é escuro em
+   cima nas quatro: **`talhoDoCeu`, sempre** — um céu que é bloco na
+   maior parte da sua altura é um bloco por cortar, não uma folha por
+   marcar. A silhueta não é marca: é MASSA, e continua `tinta`.
+
+   E ISTO NÃO É MENOS BEWICK, É MAIS: na gravura de linha branca o céu é
+   cortado a branco. O talho ESCURO no céu era a parte não-Bewick da
+   nossa própria receita.
+
+   A PROVA DE QUE É MELHOR PICTURA E NÃO SÓ MELHOR PISO. A hachura
+   adensa para o horizonte (passo 11 px em cima, 3 px em baixo) e o
+   gradiente CLAREIA para o horizonte. Com marca escura as duas puxavam
+   em sentidos contrários — medida a profundidade do céu (razão de luz
+   entre o alto e o horizonte, já com a cobertura da hachura):
+
+       luz          céu nu   hoje (tinta)      com `talhoDoCeu`
+       madrugada     2,64     2,16  (-18 %)     3,20  (+21 %)
+       dia           2,21     1,81  (-18 %)     2,47  (+12 %)
+       entardecer    2,23     1,82  (-19 %)     2,56  (+15 %)
+       noite         2,50     2,10  (-16 %)     3,23  (+29 %)
+
+   **A textura estava a apagar entre 16 % e 19 % da profundidade que o
+   gradiente declarava.** Passa a acrescentar 12 % a 29 % — um ganho de
+   **30 % a 54 %** sobre o que está no ar. *Era por isto que o céu se
+   lia chato mesmo onde o piso passava: a peça lutava contra si mesma, e
+   nenhuma medida de contraste sozinha o diria.*
+
+   O TALHO DO CÉU NÃO É UM VALOR ESCOLHIDO, É UMA CONTA: é o próprio
+   `ceuBaixo` — a cor do horizonte, o ponto mais claro do campo —
+   erguido 65 % em direcção ao branco, com **um k só para as quatro**.
+   A suíte refá-lo em vez de comparar hexes.
+
+   E O ALFA SOBE DE 0,45 PARA 0,85 — o mesmo dos dois buris, por razão e
+   não por afinação: **um corte de buril não é translúcido, é o papel.**
+   Os 0,45 eram herança do tempo da tinta escura, onde o alfa não fazia
+   diferença nenhuma. Com marca clara o alfa trabalha, e o valor que o
+   chão já usava serve ao céu: um número, dois buris.
+
+   O QUE NADA DISTO PIORA, medido antes de se escrever:
+
+       a silhueta x o céu ao horizonte   3,32->4,87 · 4,14->5,70 · 4,78->6,19 · 5,79->7,35
+       a marca da chapa x o céu ao topo  8,13->6,27 · 4,78->3,73 · 5,82->4,51 · 9,32->7,48
+       o talho do chão, a legenda        intocados
+
+   **A silhueta melhora nas quatro** (o campo atrás dela ficou mais
+   claro) e a marca da chapa desce sem que nenhuma reprove — o par mais
+   apertado é o dia, a **3,73 contra um piso de 3** (+24 %).
+
+   O PISO DO CÉU CONTINUA 1,5 e não sobe para o que se alcançou: um piso
+   é uma RAZÃO, não um recorde, e a razão não mudou — a textura não
+   carrega informação. O que mudou é que passa: **o pior ponto das
+   quatro luzes é 2,14 (o dia, ao horizonte), 43 % acima do piso**, onde
+   antes era 1,09, **27 % abaixo**.
+   ------------------------------------------------------------
+
+   ------------------------------------------------------------
+   R15 — O ASTRO GANHA PISO, E O PISO NÃO É NÚMERO NOVO.
+
+   A entrega anterior mediu-o e **recusou-se a pôr asserção**, com a
+   razão certa: *inventar aqui um número que o `desenho` não escreveu
+   seria a suíte a legislar sobre a forma.* Os números eram **entardecer
+   1,42 · dia 2,00 · madrugada 2,17 · noite 3,77**.
+
+   O PISO É 3:1, E ESCREVÊ-LO É RECUSAR ESCREVER UM NÚMERO. Esta tabela
+   tem exactamente UM piso para «uma forma que se tem de distinguir» — o
+   3 de `silhuetaNoCeu`, de `talhoNoChao` e de `chapaNoCeu`, que sai da
+   WCAG 1.4.11. **O astro é uma forma.** Dar-lhe piso próprio seria a
+   segunda tabela; dar-lhe o que já existe é uma linha.
+
+   E NÃO É O PISO DA TEXTURA (1,5): uma textura PODE dissolver-se em tom
+   — é para isso que serve. **Um disco que se dissolve não lê como tom,
+   lê como borrão.**
+
+   O QUE MUDA PARA O CUMPRIR, e a mudança TIRA valores em vez de os pôr:
+
+       hoje:  amberSoft@0,55 · amberSoft@0,40 · danger@0,60 · mundoSoft@0,50
+       novo:  `T.ink` @ 0,85, nas quatro
+       medido: 4,04 · 4,88 · 3,41 · 9,43   (o pior tem 14 % de folga)
+
+   O ENTARDECER OBRIGOU A DECISÃO, e é o caso que prova que não era
+   afinação: com `T.danger` **nenhum alfa chega a 2,0** — a 1,0, opaco,
+   dá 1,77. *O sol do entardecer era mais escuro do que o céu que ele
+   acende.* Nenhum outro token de `T` passa 3:1 nas quatro; `T.ink` é o
+   único, e é o que devia ser desde o princípio: **o astro é o sítio
+   onde o bloco é cortado até ao papel**, e `ink` é o papel desta casa.
+
+   TRÊS COISAS QUE ISTO PAGA DE ENFIADA:
+
+   1. `astro` e `astroAlfa` SOBEM AO TOPO, ao lado de `tinta`. Quatro
+      cópias do mesmo valor por modo é «a mesma cor escrita quatro
+      vezes», que é a doença que a nota grande desta tabela nomeia.
+      **A tabela perde 8 entradas e ganha 2.**
+   2. FECHA A EXCEPÇÃO QUE R13 DECLAROU: *«o astro é o único ponto da
+      faixa onde um acento da casa entra na paisagem.»* Já não entra — a
+      paisagem fica sem acento nenhum, e a lei de R1 (*cor viva só em
+      coisa com que se interage*) deixa de ter um buraco.
+   3. A HORA CONTINUA A COLORIR O SOL — através do céu, não do token. A
+      0,85 o campo atravessa 15 % do disco: sobre um céu lilás o astro lê
+      frio; sobre o laranja do entardecer, quente. *A hora muda a luz,
+      não o desenho* — aplicada um andar mais fundo.
+
+   `astroAlto` FICA POR LUZ, porque esse distingue de verdade: de
+   madrugada e ao entardecer o astro roça o horizonte; de dia e de noite
+   é alto. **Posição é luz; opacidade era afinação.**
+
+   A DÍVIDA DESTE PISO, DECLARADA COM O NÚMERO. Os 3,41 do entardecer
+   são contra o céu NU — a mesma régua com que a silhueta é medida, e
+   duas réguas para duas formas seria pior do que uma régua imperfeita.
+   Contra um céu JÁ TALHADO o entardecer dá **2,56**, porque o talho
+   claro levanta o campo à volta do disco. **O segundo canal do astro
+   não é cor: é ser o único SÓLIDO num campo talhado** — e textura
+   sobrevive ao cinzento e aos três daltonismos, como a areia da
+   ampulheta. A condição desse canal é que **o talho PARE na borda do
+   astro**, e hoje corta-lhe por cima. Isso é FORMA
+   (`gravura-da-cena.js`), não valor, e está escrito em `mente/formas.md`
+   para quem constrói.
+   ------------------------------------------------------------
+
    OS CINCO PISOS, todos medidos, e o mais apertado tem 11% de folga:
 
    | o que é | piso | porquê |
@@ -287,14 +439,29 @@ export const MATERIAIS = {
       O sol que nasce volta pelo `astro`, que é um ponto e não um campo.
    ============================================================ */
 export const LUZ_DA_CENA = {
-  tinta: "#0F0B08",   /* o BLOCO: a massa da silhueta e o talho do céu — UMA, nas quatro luzes */
+  tinta: "#0F0B08",   /* o BLOCO: a MASSA da silhueta — e só ela, desde R15 */
+  /* O DISCO: o sítio onde o bloco é cortado até ao papel. UM token e UM
+     alfa nas quatro luzes — a hora colore-o através dos 15 % de céu que
+     lhe atravessam o disco, não através de um valor por modo. */
+  astro: T.ink,
+  astroAlfa: 0.85,
+  /* O ALFA DOS DOIS BURIS, e é um só: um corte não é translúcido, é o
+     papel. Vivia solto em `rosto-da-cena.jsx` (0,85 no chão, 0,45 no
+     céu) e é um número de que os pisos dependem — logo é tabela. */
+  alfaDoTalho: 0.85,
   /* os pisos moram aqui para a suíte os ler de volta: uma catraca que
      guarda um número que ela própria não vê não é uma catraca */
-  pisos: { silhuetaNoCeu: 3, talhoNoChao: 3, legendaInk: 7, legendaMundo: 4.5, chapaNoCeu: 3, texturaDoCeu: 1.5 },
-  madrugada:  { ceuAlto: "#241F2B", ceuBaixo: "#7D6F7D", chao: "#221C22", talho: "#988E95", astro: T.amberSoft, astroAlfa: 0.55, astroAlto: false },
-  dia:        { ceuAlto: "#54432F", ceuBaixo: "#A4875F", chao: "#332A1D", talho: "#AA9C83", astro: T.amberSoft, astroAlfa: 0.40, astroAlto: true  },
-  entardecer: { ceuAlto: "#4A3524", ceuBaixo: "#C16429", chao: "#2E2418", talho: "#B9906A", astro: T.danger,    astroAlfa: 0.60, astroAlto: false },
-  noite:      { ceuAlto: "#14131C", ceuBaixo: "#576675", chao: "#161318", talho: "#7F8C95", astro: T.mundoSoft, astroAlfa: 0.50, astroAlto: true  },
+  pisos: { silhuetaNoCeu: 3, talhoNoChao: 3, legendaInk: 7, legendaMundo: 4.5, chapaNoCeu: 3, texturaDoCeu: 1.5, astroNoCeu: 3 },
+  /* O K DO TALHO DO CÉU: `talhoDoCeu` é `ceuBaixo` erguido esta fracção
+     em direcção ao branco. Mora aqui para a suíte REFAZER a conta em vez
+     de comparar hexes — uma tabela que se recalcula não se afina à mão. */
+  erguerOTalhoDoCeu: 0.65,
+  /* `talho` é o buril ABAIXO do horizonte; `talhoDoCeu` é o buril ACIMA
+     dele. Os dois clareiam, porque os dois campos são escuros. */
+  madrugada:  { ceuAlto: "#241F2B", ceuBaixo: "#7D6F7D", chao: "#221C22", talho: "#988E95", talhoDoCeu: "#D2CDD2", astroAlto: false },
+  dia:        { ceuAlto: "#54432F", ceuBaixo: "#A4875F", chao: "#332A1D", talho: "#AA9C83", talhoDoCeu: "#DFD5C7", astroAlto: true  },
+  entardecer: { ceuAlto: "#4A3524", ceuBaixo: "#C16429", chao: "#2E2418", talho: "#B9906A", talhoDoCeu: "#E9C9B4", astroAlto: false },
+  noite:      { ceuAlto: "#14131C", ceuBaixo: "#576675", chao: "#161318", talho: "#7F8C95", talhoDoCeu: "#C4C9CF", astroAlto: true  },
 };
 
 /* ============================================================
@@ -485,10 +652,125 @@ export const TIPOS = {
    altura de cada `Oferta` decidir a régua — os px acima são o ORÇAMENTO
    que a conta prova cabe, não um número que o componente escreve na
    tela. */
+/* ------------------------------------------------------------
+   R15 — O TETO DE CAMPOS DA OFERTA, e é lei nova pela razão oposta
+   àquela que se esperaria.
+
+   A `Oferta` de R1 tem TRÊS campos na tela (o verbo, o preço, o
+   retorno) e foi desenhada quando a soleira era **55 % do ecrã**.
+   Depois de R13 ela é **14 %**, e a página passou de 151 px para 586.
+   *O orçamento que a apertava deixou de existir.*
+
+   O QUE ISSO NÃO AUTORIZA É ENCHÊ-LA. R6 mediu que tomar uma oferta
+   custa 990 ms contra 10,7 s por frase escrita — um ganho de 10x — e o
+   caminho mais curto para o deitar fora é transformar a soleira num
+   painel de botões, que é o point-and-click que a medida existe para
+   apanhar. **Espaço que sobra não é convite; é margem.**
+
+   O QUARTO CAMPO ENTRA POR UMA PENEIRA, NÃO POR CABER. A peneira é do
+   `jogo`: *a soleira é o que o jogador perde se não agir agora.* Uma
+   peça cuja razão de existir é a perda **tem de dizer quanto tempo
+   falta**, e a de hoje não diz — medido em R6: a oferta do Yorick
+   esteve viva **quatro turnos** e a tela nunca disse que eram quatro.
+
+   Por isso `camposDaOferta` é **4** e é um TETO: verbo · preço ·
+   retorno · janela. O quinto campo faz a oferta deixar de se ler de
+   relance e passar a ser um formulário. É varrível, e por isso é lei.
+   ------------------------------------------------------------ */
 export const SOLEIRA = {
   tetoNaMesa: 2,
   tetoNoTelefone: 1,
+  camposDaOferta: 4,
 };
+
+/* ============================================================
+   O ESBATIMENTO (R15) — a região que rola por baixo de uma cabeça fixa.
+
+   A DÍVIDA QUE ISTO PAGA, declarada pelo `oficial` com a medida feita:
+   a primeira linha da prosa **corta-se ao rolar sob a gravura**. Não é
+   sobreposição (medido: `sobrepoe: false`) — é uma região que rola sob
+   uma cabeça fixa, e era igual antes contra a borda do papel. *Só que
+   agora a cabeça é uma imagem, e uma linha meio engolida por um desenho
+   lê-se pior do que meio engolida por uma borda lisa.*
+
+   E A PRIMEIRA COISA A DIZER É O QUE UM ESBATIMENTO É, porque isso
+   decide tudo o resto: **não é decoração, é uma região declarada
+   ILEGÍVEL.** Uma máscara de alfa sobre texto não o adoça — apaga-o por
+   graus. Logo a altura dele é o seu custo, e a lei que o rege não é
+   estética:
+
+       NUNCA PODE ESCONDER UMA LINHA INTEIRA.
+
+   O NÚMERO SAI DE DUAS MEDIDAS E DE NENHUM GOSTO:
+
+   1. **0,54** — o alfa em que a prosa deixa de ser AA. `T.ink` sobre
+      `T.pagina` mede **11,08:1**; composto a alfa `a` sobre a mesma
+      página, cai abaixo de 4,5:1 exactamente em `a = 0,54`. Logo a
+      banda ilegível de um esbatimento de altura `h` é `0,54 x h`.
+   2. **27,6 px** — a entrelinha da prosa (`TIPOS.prosa` 17 x 1,625, o
+      `leading-relaxed` que a tela já usa), e é a régua de R13.
+
+   O TETO, ENTÃO, É UMA CONTA QUE A SUÍTE REFAZ:
+
+       alfaAA x altura  <  entrelinhaDaProsa / 2
+       0,54   x   24    =  12,96  <  13,8                ✓
+
+   **24 é o maior inteiro par abaixo do teto de 25,6.** Não é gosto: é o
+   teto menos o arredondamento. Acima dele uma linha pode ficar mais de
+   metade dentro da banda ilegível; muito abaixo dele (< 12) um
+   gradiente deixa de se ler como esbatimento e volta a ser uma borda,
+   só que desfocada — **que é o defeito original com mais um passo.**
+
+   E O NÚMERO ENCONTROU-SE COM OUTRO QUE JÁ LÁ ESTAVA. A região da prosa
+   tem `py-6` — **24 px** de enchimento no topo, hoje, sem esta tabela.
+   Com o esbatimento à mesma altura, em `scrollTop = 0` ele cobre
+   **apenas enchimento**: a primeira linha do primeiro turno nasce à
+   luz inteira, e a peça custa **zero px** de página e zero deslocamento.
+   *Duas contas independentes que caem no mesmo número é a melhor prova
+   que este ciclo tem — e foi a segunda vez neste projecto.*
+
+   COMO SE DEGRADA, e nenhum destes casos dá buraco:
+   - `prefers-reduced-motion` — nada muda, porque nada se move. Um
+     esbatimento não é animação: é uma borda com espessura.
+   - `forced-colors: active` — **sai inteiro**. Uma máscara em alto
+     contraste apaga texto sem o repor, e ali a cabeça já não é uma
+     imagem: é um contorno do sistema, contra o qual um corte recto lê
+     bem. *A peça que existe para suavizar uma imagem não tem trabalho
+     onde a imagem não existe.*
+   - sem `mask-image` — a prosa fica como está hoje. Degradação nula.
+   ============================================================ */
+export const ESBATIMENTO = {
+  altura: 24,
+  alfaAA: 0.54,            /* medido: T.ink sobre T.pagina cai de 11,08:1 para 4,5:1 */
+  entrelinhaDaProsa: 27.6, /* TIPOS.prosa (17) x 1,625 — o leading-relaxed da tela */
+  /* A RAMPA, em pares [fracção da altura, alfa da máscara]. Ela é TABELA e
+     não texto de CSS por duas razões, e a segunda foi a catraca a
+     ensinar-ma: a primeira é que estes números decidem onde a prosa deixa
+     de ser AA, e um número que decide legibilidade não mora dentro de uma
+     string; a segunda é que escritos em `rgba(...)` eram OITO literais de
+     cor novos, e `check-formas` apanhou-os no mesmo minuto — com razão,
+     mesmo sendo uma máscara e não uma cor.
+
+     E É ESCALONADA, não linear: a percepção de luminância não é linear, e
+     uma rampa linear de alfa lê-se como um degrau no fim. Três batentes
+     aproximam a curva com ~2 px de erro e custam zero — uma máscara de
+     gradiente é composta pela GPU, nunca pelo fio principal. */
+  rampa: [[0, 0], [0.45, 0.35], [0.75, 0.80], [1, 1]],
+};
+
+/* A rampa montada, para a folha. Mora AQUI e não junto de `sombra()`
+   porque lê `ESBATIMENTO`, e uma `const` não se lê antes de nascer.
+
+   O PRETO AQUI NÃO É COR: é o canal ALFA de uma máscara — o que a folha
+   pinta é "quanto desta região se vê", não "de que cor ela é". Reaproveita
+   `sombra()` na mesma, e de propósito: a alternativa era escrever oito
+   `rgba(...)` à mão, e `check-formas` contou-os como oito literais de cor
+   novos no minuto em que nasceram. *A catraca não sabe distinguir uma
+   máscara de uma cor — e é melhor assim: quem tiver uma boa razão que a
+   escreva, como esta.* */
+const RAMPA_DO_ESBATIMENTO = ESBATIMENTO.rampa
+  .map(([f, a]) => `${sombra(a)} ${Math.round(f * ESBATIMENTO.altura)}px`)
+  .join(", ");
 
 /* ============================================================
    A GEOMETRIA DA TELA DA BATALHA (E3) — os números de E1, numa tabela.
@@ -1125,6 +1407,40 @@ export const SUPERFICIES_CSS = `
 @media (forced-colors: active) {
   .tv-gravura-fundo { display: none; }
   .tv-gravura-tinta { fill: CanvasText; stroke: CanvasText; }
+}
+
+/* ---------------- O ESBATIMENTO DO TOPO (R15) ----------------------
+   A regiao que rola por baixo de uma cabeca fixa deixa de se cortar a
+   navalha. Poe-se na PROPRIA regiao que rola (nao numa camada por
+   cima), e por isso nao intercepta um unico clique: uma mascara nao e
+   um elemento. A lei "nunca pode custar o turno" fica cumprida por
+   construcao, e nao por cuidado.
+
+   A ALTURA E ESBATIMENTO.altura (24) e a conta esta na tabela. A regiao
+   ja tem py-6 = 24 px de enchimento no topo, logo em scrollTop 0 a
+   banda cobre so enchimento e a primeira linha nasce a luz inteira.
+
+   OS TRES BATENTES SAO ESCALONADOS e nao lineares, e a razao e a mesma
+   pela qual a barra de PV e comprimento e nao cor: uma rampa linear de
+   alfa le-se como um degrau no fim, porque a percepcao de luminancia
+   nao e linear. Os tres pontos aproximam uma curva com 2 px de erro e
+   custam zero em desempenho — e uma mascara de gradiente e composta
+   pela GPU, nunca pelo fio principal.
+
+   -webkit-mask-image fica por causa do Safari, que ainda pede o
+   prefixo para mask-image em contexto de composicao.
+
+   E SAI INTEIRO EM ALTO CONTRASTE, logo abaixo: uma mascara de alfa
+   apaga texto por graus e em forced-colors o sistema nao tem como o
+   repor. Ali a cabeca ja nao e uma imagem — e um contorno do sistema,
+   contra o qual um corte recto le bem. A peca que existe para suavizar
+   uma imagem nao tem trabalho onde a imagem nao existe. */
+.tv-esbate-topo {
+  -webkit-mask-image: linear-gradient(to bottom, ${RAMPA_DO_ESBATIMENTO});
+  mask-image: linear-gradient(to bottom, ${RAMPA_DO_ESBATIMENTO});
+}
+@media (forced-colors: active) {
+  .tv-esbate-topo { -webkit-mask-image: none; mask-image: none; }
 }
 
 /* O ROTULO do sinal de guardado vive na folga que o enchimento de 12 da
