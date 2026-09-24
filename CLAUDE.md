@@ -371,11 +371,20 @@ cumprindo a letra e falhando o pedido.
 
 ## Commits
 
-Português, narrativo, o *porquê* antes do *o quê*. Terminar com:
+Português, narrativo, o *porquê* antes do *o quê*. Terminar com a linha de
+assinatura **do modelo que de facto está a correr** — o harness entrega-a no
+lembrete de atribuição de cada sessão, e é essa que vale. Hoje é:
 
 ```
-Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 ```
+
+**Esta linha já apodreceu uma vez.** Até 24/09 dizia *Opus 5*; os agentes com
+`model: opus` passaram sozinhos ao 5.5 (o apelido acompanha o Opus mais novo, e
+foi por isso que não se fixou versão), e durante esse tempo os commits
+assinaram um modelo que já não corria. É a lei do `v9.221` outra vez: **onde a
+casa precisa de um valor atual, aponta para onde ele vive** — e a assinatura
+vive no harness, não aqui.
 
 **`git commit -- <caminhos>`, sempre. Nunca `git add` seguido de `git commit`
 solto, e nunca `git add -A`.** Duas mentes trabalham na mesma árvore e
