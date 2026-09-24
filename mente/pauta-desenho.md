@@ -714,7 +714,13 @@ local e no `origin`. *Ousadia é barata aqui; a timidez é que é o defeito.*
   23/09
 - [x] **R5 · a régua corrigida** — a soleira leva só o que perece; o `+N` vira
   porta · feito 23/09
-- [ ] **R6 · a prova jogada do *depois*** · de: jogo · 23/09
+- [x] **R6 · a prova jogada do *depois*** · de: jogo · 23/09 · **PAGA** — o
+  escrito em `mente/r6-jogo.md`. **15 dos 20 turnos usaram o campo de texto**:
+  a premissa aguentou, os 20 verbos genéricos nao fizeram falta uma unica vez,
+  e o jogo **nao** virou point-and-click. Mas a soleira so aprendeu dois verbos
+  e **so em 2 dos 20 ofereceu a coisa que o jogador ia mesmo fazer** — *o ganho
+  esta provado e quase todo por gastar*. E a medicao do telefone achou o reu
+  que ninguem tinha na conta e que virou R13.
   **A catraca que o `jogo` escreveu contra si mesmo** e que esta fase ainda não
   pagou: 20 turnos, **contando quantos usaram o campo de texto**. Perto de zero
   é **regressão** — o jogo teria virado *point-and-click* e a prosa deixado de

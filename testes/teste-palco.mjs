@@ -173,6 +173,50 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      convés, que é quem encosta na barra. A trava do eixo lateral fica. */
   t("o painel da narrativa tranca o eixo lateral", /tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
 
+  /* ============================================================
+     R13-B · O ROSTO DA CENA — a fiação, e só ela
+
+     A PEÇA e o MOTOR têm suíte própria (`teste-r13-pecas.mjs`, e
+     `gravura-da-cena.js` prova-se em Node). O que se guarda aqui é o que
+     só esta tela pode errar: onde a faixa mora, de onde vem a conta, e
+     quem lhe diz a largura.
+     ============================================================ */
+  {
+    const iPapel = APP.indexOf("O PAPEL PASSA A TER DUAS FAIXAS (R13-B)");
+    const iRosto = APP.indexOf("<OTopoDoPapel semente={sementeMundo()}");
+    const iRola = APP.indexOf("tv-scroll flex-1 overflow-y-auto");
+    /* 96 px NO TOPO DO PAPEL e FORA do que rola: a gravura é o topo da
+       folha, não um cartaz pousado em cima dela nem uma imagem que sobe
+       com a prosa. A ordem no texto é a ordem no DOM. */
+    t("o papel virou moldura de duas faixas", iPapel > 0 && iPapel < iRosto);
+    t("e o rosto vem ANTES da área que rola — ele não rola com a prosa", iRosto > 0 && iRosto < iRola);
+    /* A CONTA NÃO MORA NA TELA. `mesma semente, mesma cripta, em qualquer
+       máquina` só se prova porque a conta vive num módulo puro; uma cópia
+       dela aqui seria a segunda verdade, e a primeira lei da casa caía
+       com ela. */
+    t("a gravura vem da biblioteca, e o motor dela não foi copiado para cá",
+      /RostoDaCena } from "\.\/ui\.jsx"|, RostoDaCena } from "\.\/ui\.jsx"/.test(APP)
+      && !/gravuraDaCena\(/.test(APP) && !/BIOMAS_DA_GRAVURA|hachuraDoChao|silhuetaLisa/.test(APP),
+      "se a conta for copiada para o App.jsx, a mesma semente passa a dar duas criptas");
+    /* A LARGURA É MEDIDA, e não adivinhada: a hachura vive em px e não se
+       estica. Sem medição, uma mesa de 1 280 desenha a trama de um
+       telefone de 375 esticada dez vezes. */
+    t("quem monta mede a largura e entrega-a à peça",
+      /function OTopoDoPapel\(/.test(APP) && /new ResizeObserver\(medir\)/.test(APP) && /largura=\{largura\}/.test(APP));
+    t("e a medição nunca custa o turno", /calou\("a largura do topo do papel"/.test(APP));
+    /* UM LUGAR, NÃO DOIS: o mesmo `lugarDaCena()` entra na SEMENTE e na
+       LEGENDA. Se a legenda dissesse um lugar e a semente outro, a gravura
+       mudava sem o nome mudar — e o jogador via a cripta trocar sozinha. */
+    t("o mesmo lugar alimenta a semente e a legenda",
+      /const lugarDaCena = \(\) => \{/.test(APP)
+      && /bioma=\{biomaDaqui\(\)\} lugar=\{lugarDaCena\(\)\}/.test(APP));
+    /* E O `📍 lugar` SAIU DO PAINEL DO TEMPO: esteve lá emprestado uma
+       etapa porque recolher é mudar de morada e nunca apagar, e a morada
+       dele é esta legenda. Duas moradas seriam duas verdades. */
+    t("e o empréstimo do lugar ao painel do tempo terminou",
+      !/📍 \{lugar\.nome\}/.test(APP) && /pagou o empréstimo/.test(APP));
+  }
+
   /* ---------------- A FILEIRA DE MODO NÃO EXISTE MAIS (R4b) ----------------
      MOTIVO DA ASSERÇÃO INVERTIDA, e ele é de medida. A v9.197 tinha razão
      no problema que resolvia (a fileira estourava 375 px e fazia a prosa

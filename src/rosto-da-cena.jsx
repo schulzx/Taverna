@@ -87,6 +87,24 @@ export function RostoDaCena({ semente = "", bioma = "", lugar = "", hora = 12, l
   );
   const luz = LUZ_DA_CENA[g.luz] || LUZ_DA_CENA.dia;
   const tinta = LUZ_DA_CENA.tinta;
+  /* A GRAVURA DE LINHA BRANCA — e é por isto que são DUAS tintas e não
+     uma. A primeira versão desta peça pintava as quatro coisas com
+     `tinta`, e medida deu 1,08:1 entre o talho e o chão da noite: o
+     buril não existia. O `desenho` foi ver se havia um chão que
+     servisse aos dois e provou que NÃO HÁ — a legenda em AAA pede um
+     chão com L ≤ 0,0775 e uma hachura escura a 3:1 pede L ≥ 0,1108, e
+     nenhum número está nos dois lados. O defeito nunca foram os
+     valores: era haver UMA tinta.
+
+     A saída é a de Thomas Bewick e tem duzentos anos: no bloco escuro o
+     buril TIRA matéria, e a linha sai BRANCA. Acima do horizonte ele
+     escurece (o céu é claro, a silhueta e o talho do céu são `tinta`);
+     abaixo dele clareia (o chão é escuro, o talho é `luz.talho`).
+
+     O `|| tinta` é a degradação, e é de propósito: uma luz futura que
+     nasça sem `talho` desenha um chão pobre em vez de um chão sem
+     chão — `undefined` num `stroke` apaga a hachura inteira, calada. */
+  const talho = luz.talho || tinta;
   const id = React.useId();
   const alto = BANDAS.altura;
   const [ceuDe, ceuAte] = BANDAS.ceu;
@@ -122,8 +140,14 @@ export function RostoDaCena({ semente = "", bioma = "", lugar = "", hora = 12, l
           <path className="tv-gravura-tinta" d={g.d.silhueta} fill={tinta} fillRule="evenodd" />
         </g>
 
-        <Talhos linhas={g.d.chao} largura={0.75} opacidade={0.5} tinta={tinta} />
-        <path className="tv-gravura-tinta" d={g.linhaDoChao} stroke={tinta} strokeWidth="1.1"
+        {/* O CHÃO É LINHA BRANCA, e a opacidade é MEDIDA, não escolhida:
+            o talho composto sobre o chão dá 2,27:1 a 0,50 (reprova o
+            piso de 3), 3,55 a 0,75 e 4,19 a 0,85. Uma hachura a meia
+            opacidade é uma hachura que só se vê em duas das quatro
+            luzes — e as duas em que não se via eram a noite e a
+            madrugada, que é metade do jogo. */}
+        <Talhos linhas={g.d.chao} largura={0.75} opacidade={0.85} tinta={talho} />
+        <path className="tv-gravura-tinta" d={g.linhaDoChao} stroke={talho} strokeWidth="1.1"
           fill="none" vectorEffect="non-scaling-stroke" />
 
         {/* A MARCA DA CHAPA — 1 px de `T.inkMeio` em cima e em baixo, e o

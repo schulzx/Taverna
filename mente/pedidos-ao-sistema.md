@@ -25,6 +25,57 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **o XP que a oferta promete não é o XP que o recibo paga** · de: R6/R13 · 23/09
+  **Medido a jogar, duas vezes em duas:** a soleira ofereceu `◉205 · +166 XP` e
+  pagou **191**; ofereceu `◉115 · +111 XP` e pagou **130**. *O ouro bate sempre;
+  o XP vem sempre ~15 % acima.* Há um bónus aplicado no pagamento que a oferta
+  não sabe prever.
+  **Para quê:** a Fase R tirou o preço de dentro de um `title` e escreveu-o na
+  cara da oferta, justamente porque **o veredito vem antes do clique** — e uma
+  promessa escrita que o recibo desmente é pior do que a promessa escondida que
+  havia antes. *Esta etapa tornou o defeito visível; não o criou.*
+  **O que se pede:** ou a função que prevê o XP da oferta passa a incluir o
+  bónus, ou o bónus deixa de existir. **Um dos dois números tem de sair da
+  mesma tabela.**
+
+- [ ] **`Convidar Vero` é um controlo que só pode gastar o turno** · de: R6/R13 · 23/09
+  A oferta diz, na própria cara, que a pessoa vai **recusar** (a exigência é
+  *"mais 5 dias de estrada juntos"*), continua clicável, **gasta uma chamada ao
+  Narrador**, e permanece na soleira depois de falhar.
+  **Para quê:** o §2.7(b) de `mente/r13-mesa.md` manda que *oferta cuja
+  pré-condição o sistema já sabe que falha não entra na soleira* — e o `oficial`
+  **não a implementou, e fez bem**: precisa que `pesarConvite` (`src/indole.js`)
+  saiba marcar uma exigência como **não pagável agora**. Isso é regra, não
+  pintura, e regra não é da mesa de desenho.
+  **O que se pede:** `pesarConvite` (ou irmão) devolver, junto do veredito, se a
+  exigência é **impossível neste momento** — para a soleira a esconder em vez de
+  a oferecer. *Um controlo cujo único resultado possível é perder o turno não
+  devia estar na tela.*
+
+- [ ] **sair para o menu e reentrar pode reescrever `nomeCampanha` para "Aventura"** · de: R13 · 23/09 · **custa dado de jogador**
+  `largarASala()` limpa o nome **antes** de `continuar()` o repor, e o autossave
+  apanha a janela entre os dois. **Visto acontecer num save real** durante este
+  ciclo: *"A Prova do Depois"* virou *"Aventura"*. O `oficial` restaurou o save
+  byte a byte.
+  **Para quê:** é a única coisa desta lista que **um commit revertido não
+  desfaz** — o save já foi reescrito na máquina de quem joga. Pela régua de
+  23/09 isso põe-no acima de tudo o resto que está aqui aberto.
+  **O que se pede:** que `largarASala()` não deixe o estado passar por um
+  momento sem nome, ou que o autossave não grave enquanto ele estiver vazio.
+
+- [ ] **`teste-sala.mjs` falha de forma intermitente, e um dia vai recusar um push sem motivo** · de: R13 · 23/09
+  **Confirmado por duas mãos em separado neste ciclo:** deu `124/125` numa
+  passagem e `125/125` em seis seguidas sobre o mesmo conjunto exacto, e é verde
+  em HEAD puro. *Não é de nenhuma das duas mentes.*
+  **Para quê:** a lei desta casa é que **vermelho não sobe**. Uma suíte que
+  falha ao acaso numa corrida de 206 transforma essa lei num sorteio — e o custo
+  não é o teste, é o ciclo que para para investigar um vermelho que não existe.
+  *Fica escrito agora, e não na noite em que acontecer.*
+  **A pista:** `teste-sala.mjs:20` abre com `readFileSync("../src/App.jsx")` —
+  **relativo ao `cwd`**, que só é `testes/` porque o `rodar-tudo.mjs` o põe lá.
+  **Há ~20 arquivos com o mesmo padrão.** Não é seguramente a causa, mas é o
+  sítio por onde eu começaria.
+
 - [ ] **`src/soleira.js` — a régua da soleira é módulo puro e está presa no `App.jsx`** · de: R3/R4 · 23/09
   A Fase R construiu a **soleira**: a região fixa entre a página e o campo do
   turno onde vive **o que o mundo ofereceu e o jogador ainda não atravessou**.

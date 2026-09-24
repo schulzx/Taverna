@@ -21,7 +21,7 @@ import {
   APERTOS, apertoDoPrazo, palavraDoPrazo,
   GRAMATICAS, HACHURAS, BIOMAS_DA_GRAVURA, GRAMATICA_LISA, gramaticaDo,
   BANDAS, LUZES, HORARIO_DA_LUZ, luzDaHora,
-  hachuraDoCeu, hachuraDoChao, gravuraDaCena, LARGURA_DE_REFERENCIA,
+  hachuraDoCeu, hachuraDoChao, gravuraDaCena, LARGURA_DE_REFERENCIA, TREMOR_MINIMO,
 } from "../src/gravura-da-cena.js";
 import { LUZ_DA_CENA, CINTA, T, TIPOS, ALVOS } from "../src/estilo.js";
 import { idsDeBioma, MOLDES } from "../src/moldes.js";
@@ -93,6 +93,48 @@ sec("2. a dívida da hachura — um buril não anda de compasso");
   const incl = new Set(ceu.map((l) => l.match(/l (-?[\d.]+) (-?[\d.]+)$/)).filter(Boolean)
     .map((m) => Math.round((Number(m[2]) / Number(m[1])) * 100)));
   t(`e o ângulo também sai do mesmo rng (${incl.size} inclinações distintas)`, incl.size > 5);
+
+  /* O DESVIO DO ÂNGULO, e é ESTE o dente que paga a dívida — os dois de
+     cima não bastavam, e é por isso que ele nasce depois de eles terem
+     ficado verdes com o defeito na tela.
+
+     Medido na primeira construção: o céu variava **1,95° de desvio
+     padrão** e o chão seco **2,73°** — oito e dez ângulos inteiros
+     distintos em trezentos talhos. Os dentes do espaçamento diziam
+     "irregular" e tinham razão, mas um traço que se desvia dois graus
+     não treme: vai a direito com ruído de arredondamento, e a mancha
+     lê-se como TRAMA. *Uma catraca que só pergunta «varia?» fica verde
+     em cima do defeito que existe para apanhar; a que pergunta «varia
+     QUANTO?» não fica.*
+
+     O ângulo colhe-se do talho recto (`l dx dy`) e, onde não há talho
+     recto nenhum, da CORDA da onda (`q … dx dy`) — sem a segunda metade
+     a `molhada` media zero e passava por ser invisível ao regex. */
+  const angulosDe = (linhas) => linhas.map((l) => {
+    const recto = l.match(/l (-?[\d.]+) (-?[\d.]+)$/);
+    if (recto) return Math.atan2(Number(recto[2]), Number(recto[1])) * 180 / Math.PI;
+    const onda = l.match(/q [-\d.]+ [-\d.]+ (-?[\d.]+) (-?[\d.]+)$/);
+    if (onda) return Math.atan2(Number(onda[2]), Number(onda[1])) * 180 / Math.PI;
+    return null;
+  }).filter((x) => x !== null);
+  const desvio = (a) => { if (a.length < 2) return 0; const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((s2, y) => s2 + (y - m) ** 2, 0) / a.length); };
+
+  const medido = { ceu: desvio(angulosDe(hachuraDoCeu(rng(hashSemente("buril")), 375))) };
+  for (const h of HACHURAS) if (h !== "nenhuma") medido[h] = desvio(angulosDe(hachuraDoChao(rng(hashSemente("buril")), h, 375)));
+  const fracos = Object.entries(TREMOR_MINIMO).filter(([k, piso]) => !(medido[k] >= piso));
+  t(`o buril treme o que tem de tremer (${Object.entries(medido).map(([k, v]) => `${k} ${v.toFixed(1)}°`).join(" · ")})`,
+    fracos.length === 0,
+    fracos.map(([k, piso]) => `${k} desvia ${(medido[k] || 0).toFixed(2)}°, o piso é ${piso}° — voltou a ser trama.`).join("\n      "));
+
+  /* E O PISO TEM DE ESTAR NA TABELA, não aqui: uma catraca que guarda um
+     número que ela própria não vê não é uma catraca (a linha é do
+     `desenho`, escrita para os pisos de contraste, e vale igual aqui).
+     A tabela cobre exactamente as quatro hachuras que desenham mais o
+     céu — uma hachura nova sem piso nasceria sem catraca, calada. */
+  const devidos = [...HACHURAS.filter((h) => h !== "nenhuma"), "ceu"].sort();
+  t("e cada hachura que desenha tem o seu piso na tabela",
+    JSON.stringify(Object.keys(TREMOR_MINIMO).sort()) === JSON.stringify(devidos),
+    "a tabela tem " + Object.keys(TREMOR_MINIMO).sort().join(", ") + " e devia ter " + devidos.join(", "));
 
   /* as cinco hachuras de chão existem e são CINCO TALHOS diferentes, não
      cinco densidades — é isso que as faz distinguirem-se em cinzento */
@@ -236,6 +278,117 @@ sec("6. a hora acende a luz, e as quatro luzes existem");
 }
 
 /* ============================================================ */
+sec("6b. a gravura de linha branca — os seis pisos, medidos nas quatro luzes");
+{
+  /* POR QUE ESTA SECÇÃO EXISTE, e é a lição mais cara das duas entregas:
+     a primeira versão desta peça pintava as quatro coisas com uma tinta
+     só, e o talho media **1,08:1** contra o chão da noite — o buril não
+     existia, e NENHUMA catraca o disse. Foi preciso um par de olhos no
+     navegador. *Um contraste que ninguém mede é um contraste que ninguém
+     tem.* O `desenho` pôs os pisos em `LUZ_DA_CENA.pisos` para a suíte
+     os ler de volta; é esta secção que os lê.
+
+     A CONTA É A COMPOSIÇÃO, não a cor nua: um talho a 0,85 de opacidade
+     sobre o chão NÃO é o talho — é a mistura dos dois. Medir a cor crua
+     dava um número mais bonito e falso. */
+  const rgb = (h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16));
+  const lum = (c) => { const v = c.map((x) => x / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  const razao = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const sobre = (frente, alfa, atras) => rgb(frente).map((c, i) => alfa * c + (1 - alfa) * rgb(atras)[i]);
+  const misturar = (a, b, k) => rgb(a).map((c, i) => c + (rgb(b)[i] - c) * k);
+  const hex = (c) => "#" + c.map((x) => Math.round(x).toString(16).padStart(2, "0")).join("");
+  /* A TABELA PRIMEIRO, E COM MENSAGEM. Sem esta linha a secção morria com
+     um `TypeError` em cima de `P.silhuetaNoCeu` — e um varredor que
+     rebenta diz "está partido", não diz "a tabela que eu guardo
+     desapareceu", que é outra coisa e tem outro conserto. Mesmo
+     argumento de `pisoDeZona` em `check-formas`: catraca que mede o
+     vazio é pior que catraca nenhuma, e ela tem de o SABER dizer. */
+  const P = LUZ_DA_CENA.pisos || {};
+  const SEIS = ["silhuetaNoCeu", "talhoNoChao", "legendaInk", "legendaMundo", "chapaNoCeu", "texturaDoCeu"];
+  const semPiso = SEIS.filter((k) => !(P[k] > 0));
+  t("os seis pisos moram na tabela, não na suíte", semPiso.length === 0,
+    semPiso.length === SEIS.length
+      ? "A TABELA `LUZ_DA_CENA.pisos` DESAPARECEU — sem ela esta secção mede o vazio e fica verde por não medir nada."
+      : "sem piso: " + semPiso.join(", "));
+
+  const mal = [];
+  const linha = [];
+  for (const nome of LUZES) {
+    const z = LUZ_DA_CENA[nome];
+    /* a silhueta pousa no horizonte, logo mede-se contra o céu DE BAIXO */
+    const m = {
+      silhuetaNoCeu: razao(rgb(LUZ_DA_CENA.tinta), rgb(z.ceuBaixo)),
+      talhoNoChao: razao(sobre(z.talho || LUZ_DA_CENA.tinta, 0.85, z.chao), rgb(z.chao)),
+      legendaInk: razao(rgb(T.ink), rgb(z.chao)),
+      legendaMundo: razao(rgb(T.mundo), rgb(z.chao)),
+      chapaNoCeu: Math.min(razao(rgb(T.inkMeio), rgb(z.ceuAlto)), razao(rgb(T.inkMeio), rgb(z.chao))),
+    };
+    for (const [k, v] of Object.entries(m)) if (v < P[k]) mal.push(`${nome}.${k} = ${v.toFixed(2)}, o piso é ${P[k]}`);
+    linha.push(`${nome} ${m.silhuetaNoCeu.toFixed(1)}/${m.talhoNoChao.toFixed(1)}`);
+  }
+  t(`os cinco pisos fechados passam nas quatro luzes (silhueta/talho: ${linha.join(" · ")})`,
+    mal.length === 0, mal.join("\n      "));
+
+  /* ------------------------------------------------------------
+     A TEXTURA DO CÉU — A DÍVIDA QUE ESTA ENTREGA NÃO PAGA, ESCRITA
+     COM O NÚMERO, que é o que esta casa faz em vez de arredondar.
+
+     O talho do céu é `tinta` (escuro) sobre um céu que é um GRADIENTE:
+     claro no horizonte, escuro em cima. Em baixo ele passa folgado; em
+     cima volta a ser tinta escura sobre fundo escuro — *a mesma doença
+     da entrega anterior, mudada de andar.* Medido a 0,45 de opacidade:
+
+         y          8    16    24    32    40    48    56    60
+         madrugada 1,20  1,30  1,42  1,55  1,68  1,82  1,95  2,01
+         dia       1,59  1,71  1,82  1,93  2,04  2,14  2,24  2,29
+         entardecer 1,43 1,54  1,65  1,76  1,87  1,98  2,09  2,14
+         noite     1,09  1,17  1,27  1,38  1,51  1,64  1,77  1,83
+
+     E NÃO SE CONSERTA COM OPACIDADE: a 1,0 — tinta chapada — a noite
+     chega a **1,18** no topo. O limite não é a transparência, é a
+     distância entre `tinta` e `ceuAlto`, e essa é receita do `desenho`.
+     Também não se conserta subindo onde a hachura começa: o y de
+     travessia é 8/14/29/40 conforme a luz, e fazer a GEOMETRIA depender
+     da luz partia a lei da peça — *a hora muda a luz, não o desenho*
+     (a secção 1 prova-o, e continuaria a prová-lo mentindo).
+
+     O QUE A CATRACA GUARDA, ENTÃO: que a metade de baixo — a metade
+     densa, onde a textura faz o trabalho de dar profundidade — passa o
+     piso nas quatro luzes; e que o topo NÃO PIORA em relação ao que hoje
+     se mede. Regra anti-cemitério: no dia em que o `desenho` der ao céu
+     um segundo talho, estes números sobem e esta caixa SAI.
+     ------------------------------------------------------------ */
+  const texturaEm = (z, y) => {
+    const ceu = misturar(z.ceuAlto, z.ceuBaixo, y / BANDAS.ceu[1]);
+    return razao(sobre(LUZ_DA_CENA.tinta, 0.45, hex(ceu)), ceu);
+  };
+  const TOPO_DECLARADO = { madrugada: 1.20, dia: 1.59, entardecer: 1.43, noite: 1.09 };
+  const baixo = [], piorou = [];
+  for (const nome of LUZES) {
+    const z = LUZ_DA_CENA[nome];
+    const naMetadeDeBaixo = Math.min(...[40, 48, 56, 60].map((y) => texturaEm(z, y)));
+    if (naMetadeDeBaixo < P.texturaDoCeu) baixo.push(`${nome} = ${naMetadeDeBaixo.toFixed(2)}`);
+    const noTopo = texturaEm(z, 8);
+    if (noTopo < TOPO_DECLARADO[nome] - 0.01) piorou.push(`${nome} caiu de ${TOPO_DECLARADO[nome]} para ${noTopo.toFixed(2)}`);
+  }
+  t(`a textura do céu passa o piso onde ela é densa (${LUZES.map((n) => n.slice(0, 3) + " " + texturaEm(LUZ_DA_CENA[n], 56).toFixed(2)).join(" · ")})`,
+    baixo.length === 0, baixo.join(" · "));
+  t(`e no topo do céu não piora do que hoje se mede (${LUZES.map((n) => n.slice(0, 3) + " " + texturaEm(LUZ_DA_CENA[n], 8).toFixed(2)).join(" · ")})`,
+    piorou.length === 0, piorou.join("\n      "));
+
+  /* O ASTRO NÃO TEM PISO NA TABELA, e por isso NÃO tem asserção: inventar
+     aqui um número que o `desenho` não escreveu seria a suíte a legislar
+     sobre a forma. Fica MEDIDO e impresso, que é o que se pediu. */
+  const astroDe = (z) => {
+    const y = z.astroAlto ? 16 : BANDAS.horizonte - 10;
+    const ceu = misturar(z.ceuAlto, z.ceuBaixo, y / BANDAS.ceu[1]);
+    return razao(sobre(z.astro, z.astroAlfa, hex(ceu)), ceu);
+  };
+  console.log("  ··  o astro contra o céu local (sem piso na tabela): "
+    + LUZES.map((n) => `${n} ${astroDe(LUZ_DA_CENA[n]).toFixed(2)}`).join(" · "));
+}
+
+/* ============================================================ */
 sec("7. as três bandas e a cinta somam o que prometem");
 {
   t("as três bandas cobrem os 96 px sem sobra",
@@ -249,9 +402,35 @@ sec("7. as três bandas e a cinta somam o que prometem");
      deste orçamento saíram erradas — a do `jogo` e a do `desenho`, com o
      mesmo erro e em separado. */
   const folga = LARGURA_DE_REFERENCIA - 2 * CINTA.enchimento - CINTA.ficha - CINTA.tempo;
-  t(`a conta da cinta fecha: 375 − 24 − 186 − 98 = ${CINTA.folgaMinima}`, folga === CINTA.folgaMinima, `deu ${folga}`);
-  t("e o enchimento é 12 e não 16 — é dessa folga que o sinal de guardado vive",
-    CINTA.enchimento === 12 && CINTA.folgaMinima >= 67);
+  t(`a conta da cinta fecha: 375 − 24 − ${CINTA.ficha} − ${CINTA.tempo} = ${CINTA.folgaMinima}`,
+    folga === CINTA.folgaMinima, `deu ${folga}`);
+
+  /* ESTA ASSERÇÃO MUDOU EM 23/09, E O MOTIVO FICA ESCRITO porque a lei da
+     casa o manda. Ela dizia `CINTA.folgaMinima >= 67` — e 67 era um número
+     ORÇADO pelo `desenho` (ficha 186 + tempo 98), não medido. Com a cinta
+     no ar a régua deu **ficha 194 e tempo 145**: o tempo estava 47 px
+     optimista, porque o selo mede 76 e não 53 e o `+N` custa outros 20. A
+     folga real a 375 px é **12**. Uma catraca que guarda uma estimativa
+     como se fosse piso não guarda nada: bastava a medida chegar para ela
+     ficar vermelha por ter razão.
+
+     A INTENÇÃO SOBREVIVE INTEIRA — o enchimento tem de ser 12 e não 16 —
+     mas a razão é agora MAIOR e mede-se no pior caso em vez do típico:
+     com 16 a linha **não cabe** na última noite de um prazo, que é a noite
+     em que ela mais importa. `tempoMaximo` é o selo cheio (`esta noite` em
+     negrito, 105) e `fichaMinima` é a ficha com os trilhos no mínimo —
+     porque quem cede é sempre a ficha: *o comprimento de um trilho é uma
+     razão, não uma medida, e um trilho de 40 px diz o que um de 56 diz;
+     `esta noite` não encolhe sem mentir.* */
+  const comDoze = 2 * CINTA.enchimento + CINTA.fichaMinima + CINTA.tempoMaximo;
+  const comDezasseis = 2 * 16 + CINTA.fichaMinima + CINTA.tempoMaximo;
+  t(`o pior caso cabe: 24 + ${CINTA.fichaMinima} + ${CINTA.tempoMaximo} = ${comDoze} ≤ 375`,
+    comDoze <= LARGURA_DE_REFERENCIA, `deu ${comDoze}`);
+  t("e o enchimento é 12 e não 16 — com 16 a última noite transbordaria",
+    CINTA.enchimento === 12 && comDezasseis > LARGURA_DE_REFERENCIA,
+    `com 16 daria ${comDezasseis}`);
+  t("quem cede é a ficha, nunca o prazo: o trilho tem mínimo",
+    CINTA.trilhoMinimo < CINTA.trilho && CINTA.fichaMinima < CINTA.ficha);
   t("os dois alvos da cinta medem o piso da casa", CINTA.altura === ALVOS.piso);
   t("e o estado vivo cresce, não encolhe", CINTA.alturaViva > CINTA.altura);
 }

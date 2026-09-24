@@ -243,11 +243,41 @@ t("o que já foi aceite sai da soleira, pelo MESMO teste que `pregarNoMural` usa
   t("e o acampamento só sobe quando há o que curar",
     /if \(curadas\.length \|\| vidaBaixa \|\| exausto\)/.test(rSoleira),
     "uma oferta que aparece em todo turno é mobília — foi o que condenou a tábua da cidade em R5b");
-  t("e escreve o que cobra, pelas funções que o vão cobrar",
+  /* R13-B: A CONTA MUDOU DE SÍTIO, E A LEI FICOU MAIS FORTE. A asserção
+     pedia a conta inteira — rações, água, a noite de cada prazo — dentro da
+     OFERTA. Medido ao vivo no telefone: `A oferta` põe preço e retorno na
+     MESMA linha de ~300 px, a conta inteira pedia 429, e o veredito era
+     cortado ao meio. Um veredito cortado é pior do que um resumido.
+
+     Onde ela vive agora é onde o clique é de facto IRREVERSÍVEL: o
+     `🌙 Descanso longo`, empilhado e com folga. Montar acampamento não é
+     irreversível — a terceira porta da v9.99 deixa sair sem dormir —, e o
+     que a oferta promete é o TEMPO, que é o que o relógio ao lado dela
+     garante. O prazo tem ainda uma segunda voz a 48 px: o selo da cinta.
+
+     A régua passa a medir as DUAS pontas, que é mais do que media antes:
+     a manchete na oferta, a conta inteira no botão que a cobra — e as duas
+     saindo das mesmas funções que a vão aplicar, porque duas contas para o
+     mesmo preço seriam duas verdades. */
+  t("a oferta escreve a manchete, pela função que a vai cobrar",
     /limparPorDescanso\(personagem\.condicoes \|\| \[\], "longo"\)/.test(rSoleira)
-    && /consumoDiario\(bocas\)/.test(rSoleira)
-    && /\+1 noite em /.test(rSoleira),
-    "o veredito antes do clique, com os dois lados — e duas contas para o mesmo preço seriam duas verdades");
+    && /preco: "uma noite"/.test(rSoleira)
+    && /retorno: oQueCura \?/.test(rSoleira),
+    "o veredito antes do clique, com os dois lados — e o que ela promete é o TEMPO, que é o que o relógio ao lado garante");
+  {
+    const iSaidas = APP.indexOf("R13 · §4.2 — O ACAMPAMENTO ESCREVE O QUE COBRA");
+    const rSaidas = iSaidas < 0 ? "" : APP.slice(iSaidas, iSaidas + 4200);
+    t("e a conta INTEIRA está no toque que a cobra — o descanso longo",
+      rSaidas.length > 500
+      && /consumoDiario\(bocas\)/.test(rSaidas)
+      && /\+1 noite em /.test(rSaidas)
+      && /limparPorDescanso\(personagem\.condicoes \|\| \[\], "longo"\)/.test(rSaidas)
+      && /podeDescansoLongo\(personagem, dia\)/.test(rSaidas),
+      "medido em R6: `Descanso longo` dizia 'tudo, uma vez por dia' e cobrou a noite de um prazo, a comida e a água — três preços irreversíveis, nenhum na cara do botão");
+    t("e as três saídas dizem, cada uma, o que custam e o que devolvem",
+      (rSaidas.match(/saida\("/g) || []).length === 3 && /custa \{custa\}/.test(rSaidas) && /devolve \{devolve\}/.test(rSaidas),
+      "sair sem descansar também é uma saída, e também tem preço — 20 minutos");
+  }
 }
 
 console.log(`\ncampo do turno R3: ${bons} passaram, ${maus} falharam`);

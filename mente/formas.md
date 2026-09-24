@@ -5850,16 +5850,48 @@ movimento tem saída e respeita `prefers-reduced-motion`.
 ### `A cinta` — o topo do telefone, 48 px, e substitui três faixas
 
 **Medidas.** Altura **48** (`Estado=Calma` e `Estado=Prazo a apertar`) e **72**
-(`Estado=Um estado vivo`). Largura 100 %. Enchimento lateral **12** — não 16,
-e a razão é aritmética: a 375 px sobram **67 px de folga** entre os dois alvos
-com 12, e **43** com 16; é dessa folga que `O sinal de guardado` vive.
+(`Estado=Um estado vivo`). Largura 100 %. Enchimento lateral **12**.
+
+> **CORRIGIDO EM 23/09, COM A CINTA NO AR — e a correcção é contra mim.**
+> Esta secção dizia ficha **186**, tempo **98** e folga **67**. Eram números
+> **orçados**; a régua, lida no DOM com a peça construída, deu **194 e 145**.
+> **O tempo estava 47 px optimista:** o selo mede 76 e não 53 (ampulheta 12 +
+> 4 + `3 noites` 60) e o `+N` mais o respiro custam outros 20 que ninguém
+> somara. *É o mesmo erro do orçamento VERTICAL, cometido no eixo que sobrou —
+> e desta vez sem ninguém do outro lado da mesa para o apanhar.*
 
 ```
 375 úteis − 24 de enchimento = 351
-a ficha   : rosto 32 + 10 + vitais 93 + 10 + bolsa 41 = 186
-o tempo   : hora 40 + 7 + selo 53 + 12 de enchimento  =  98
-folga     : 351 − 186 − 98                            =  67
+a ficha   : medida no DOM                          = 194
+o tempo   : medido, com "3 noites +1"              = 145
+folga     : 351 − 194 − 145                        =  12
 ```
+
+**E o pior caso não cabia.** Na última noite o selo ENCHE e passa de 76 a
+**105** (`esta noite` em negrito, 72, mais 16 de enchimento do chip): o tempo
+vai a **174**, e 194 + 174 + 24 = **392 num ecrã de 375**. *A cinta
+transbordava exactamente na noite em que ela mais importa.*
+
+**Quem cede é a ficha, e a razão é de significado e não de espaço:**
+
+> **O comprimento de um trilho é uma RAZÃO, não uma medida.** Um trilho de
+> 40 px diz exactamente o que um de 56 diz, porque o que informa é a fracção
+> cheia. Já `esta noite` não encolhe sem mentir.
+
+Daí `CINTA.trilho` (56) e `CINTA.trilhoMinimo` (40), e a catraca do pior caso:
+
+```
+2 × enchimento + fichaMinima + tempoMaximo  ≤  375
+24             + 170         + 174          =  368     ✓ 7 px
+com enchimento 16:                             376     ✗ transborda
+```
+
+**O enchimento é 12 e não 16 por esta conta**, e já não pela folga — com 16
+a linha não cabe. *A catraca em `testes/teste-r13-pecas.mjs` passou a guardar
+o pior caso em vez do típico; a asserção antiga guardava `folgaMinima >= 67`,
+que era a minha estimativa promovida a piso. Uma catraca que guarda uma
+estimativa não guarda nada: basta a medida chegar para ela ficar vermelha por
+ter razão.*
 
 **Superfície e fio.** Fundo `T.panel`. **Fio só em baixo, 1 px, `T.lineStrong`.**
 Medido, e é por isto e não por gosto:
@@ -6013,12 +6045,33 @@ segura**. Duas camadas, para não depender de uma só:
    `T.lineStrong` a `T.ok` e **varre uma vez**, da esquerda para a direita,
    **600 ms**. Zero px, zero deslocamento — *é a própria borda do que guarda o
    seu estado a dizer que o guardou.*
-2. **`✓ guardado`**, mono `TIPOS.maquina` em `T.ok`, **na folga de 67 px**,
-   posicionado em absoluto. Não empurra nada e não tapa tinta nenhuma.
+2. **`✓ guardado`**, mono `TIPOS.maquina` em `T.ok`, **na folga**, posicionado
+   em absoluto. Não empurra nada e não tapa tinta nenhuma.
 
-**A degradação, escrita e não acidental:** abaixo de 67 px de folga (telefone
-estreito, letra de sistema aumentada) **o rótulo não aparece e fica a varredura
-sozinha**. `prefers-reduced-motion`: sem varredura — o fio fica `T.ok` 1,2 s e
+**A ESCOLHA, feita com a régua e não com as três hipóteses.** Mediu-se o rótulo
+no navegador com a fonte carregada: **`✓ guardado` pede 74 px** e **`guardado`
+sozinho pede 58**. A folga a 375 px é **12**. As três saídas propostas eram
+*encolher o rótulo*, *o tempo ceder 7 px* ou *o telefone assumir a varredura* —
+e **as duas primeiras não eram saídas: o buraco não é de 7 px, é de 62.** Com o
+tempo a ceder 7 sobram 19, e nem `guardado` sozinho cabe.
+
+**Fica a terceira, e fica por CONTA e não por limiar afinado:**
+
+```
+o rótulo entra quando   folga ≥ rotuloDoGuardado
+largura mínima       =  24 + 194 + 145 + 74 − 1  =  436 px
+```
+
+`CINTA.larguraParaORotulo`, e a suíte lê a **conta** de volta, não o número —
+o dia em que a cinta mudar de repartição é o dia em que a linha fica vermelha,
+que é o que se quer. **O respiro não é termo desta conta**, e isso é decisão:
+o rótulo **centra-se** na folga, logo os pixels que sobram distribuem-se
+sozinhos à medida que o ecrã cresce; pedir respiro ao limiar seria contar duas
+vezes o mesmo espaço.
+
+**No telefone é sempre a varredura** — e isso deixa de ser uma degradação
+envergonhada para passar a ser o que a peça é lá: *a borda do que guarda o teu
+estado a dizer que o guardou.* O rótulo é um ganho de ecrã largo. `prefers-reduced-motion`: sem varredura — o fio fica `T.ok` 1,2 s e
 desvanece. E `aria-live="polite"` diz *guardado* a quem não vê nenhuma das duas.
 
 ---
@@ -6055,16 +6108,95 @@ molhada · pedra · lajeado · nenhuma (o vazio).
 elas entram em `src/estilo.js` como `LUZ_DA_CENA` — *cor é número, logo é
 tabela*:
 
-| luz | céu (alto) | céu (horizonte) | chão | o astro |
-|---|---|---|---|---|
-| madrugada | `#2A2219` | `#4A3524` | `#241D16` | `T.amberSoft` a 0,55, baixo |
-| dia | `#54432F` | `#6B563C` | `#3E3222` | `T.amberSoft` a 0,40, alto |
-| entardecer | `#4A3524` | `#7A4A28` | `#2E2418` | `T.danger` a 0,60, baixo |
-| noite | `#221B14` | `#2E2620` | `#1A1510` | `T.mundoSoft` a 0,50, alto |
+> ### A CORRECÇÃO DE 23/09 — o buril desaparecia à noite
+>
+> O `aprendiz` mediu a tinta contra o chão de cada luz e trouxe o número sem
+> que lho pedissem: **dia 1,57 · entardecer 1,29 · madrugada 1,18 · noite
+> 1,08.** A 1,08 a hachura não existe; a 1,32 contra o céu **a própria
+> silhueta mal se lê — e a silhueta É a peça.** `Mar Aberto`, `Órbita Alta` e
+> `Cinturão` à noite eram rectângulos escuros com uma legenda por baixo.
+>
+> **E não eram os valores: era a tinta única.** A prova é aritmética:
+>
+> - a legenda em AAA (`ink` ≥ 7:1) exige um chão com **L ≤ 0,0775**;
+> - uma hachura **escura** (≥ 3:1) exige um chão com **L ≥ 0,1108**.
+>
+> **Não há chão que sirva aos dois.** Com uma tinta escura só, ou a legenda
+> perde AAA ou o buril não se vê — e a legenda diz *onde o jogador está*, que
+> é a razão de a faixa existir.
 
-A tinta da gravura é **uma só**, `#0F0B08` — três tons de linha e uma
-xilogravura vira desenho digital, que é a lição que `rosto.jsx` já tinha
-escrito.
+### A lei que sai daí, e ela é física antes de ser estética
+
+> **Acima do horizonte o buril escurece; abaixo dele, clareia.**
+> O céu é a fonte de luz: marca-se **tirando-lhe** luz (`tinta`).
+> O chão é sombra: marca-se **dando-lha** (`talho`).
+
+**Não é invenção nossa.** Na **gravura de linha branca** (Thomas Bewick, *wood
+engraving*) o bloco é escuro e o buril **tira** matéria: a marca é a luz que
+entra, não a tinta que se põe. É por isso que `tinta` continua **uma** e no
+topo da tabela — a massa da silhueta é sempre o bloco por cortar — e `talho`
+é **novo e por luz**.
+
+| luz | céu (alto) | céu (horizonte) | chão | **talho** | o astro |
+|---|---|---|---|---|---|
+| madrugada | `#241F2B` | `#7D6F7D` | `#221C22` | `#988E95` | `T.amberSoft` a 0,55, baixo |
+| dia | `#54432F` | `#A4875F` | `#332A1D` | `#AA9C83` | `T.amberSoft` a 0,40, alto |
+| entardecer | `#4A3524` | `#C16429` | `#2E2418` | `#B9906A` | `T.danger` a 0,60, baixo |
+| noite | `#14131C` | `#576675` | `#161318` | `#7F8C95` | `T.mundoSoft` a 0,50, alto |
+
+**A madrugada passou de castanho a lilás-cinza**, e por medida: em tom quente
+ela era indistinguível do entardecer (**1,17:1 de luz e 6° de matiz**). A luz
+de antes do sol é fria de verdade; o sol que nasce volta pelo `astro`, que é
+um **ponto** e não um campo.
+
+**Os cinco pisos, medidos, e o mais apertado tem 11 % de folga:**
+
+| o que é | piso | madrugada | dia | entardecer | noite |
+|---|---|---|---|---|---|
+| a silhueta × o céu ao horizonte | 3:1 | 4,10 | 5,79 | 4,78 | **3,32** |
+| o talho do chão × o chão | 3:1 | 4,20 | 4,22 | 4,22 | 4,19 |
+| a legenda `ink` × o chão | 7:1 | 14,14 | **11,98** | 12,92 | 15,65 |
+| a legenda `mundo` × o chão | 4,5:1 | 9,70 | **8,22** | 8,86 | 10,74 |
+| a marca da chapa × o `ceuAlto` | 3:1 | 7,92 | **4,78** | 5,82 | 9,32 |
+
+O talho do **céu** fica em 1,86–2,31:1 e **está isento por escrito**: ele não
+carrega informação nenhuma — é textura, e a 1.4.11 cobre *gráficos que
+transmitem informação*. O piso dele é só ser perceptível (≥ 1,5), e é.
+
+**Duas coisas que a tabela promete além dos pisos, e a suíte pode ler:**
+
+1. **O chão é sempre mais escuro que a página** (L 0,0070–0,0245 contra
+   0,0305). É onde moram as palavras da legenda, e *a prosa continua a ser a
+   superfície protagonista*. O **céu** pode ser mais claro — é um céu.
+2. **As quatro distinguem-se umas das outras**, por luz ≥ 1,2:1 **ou** matiz
+   ≥ 25°. Zero pares iguais.
+
+Os pisos vivem em `LUZ_DA_CENA.pisos` para a suíte os ler de volta: *uma
+catraca que guarda um número que ela própria não vê não é uma catraca.*
+
+### O que falta para a lei valer na tela — e é do `oficial`, não meu
+
+`src/rosto-da-cena.jsx` lê `LUZ_DA_CENA.tinta` e pinta com ela **as quatro
+coisas**: a silhueta, o talho do céu, o talho do chão e a linha do chão. As
+duas últimas têm de passar a `talho`. **São três linhas, e não mudam forma
+nenhuma — mudam de que número a mesma forma é feita:**
+
+```
+const tinta = LUZ_DA_CENA.tinta;          /* o BLOCO: silhueta e talho do céu */
+const talho = luz.talho || tinta;         /* o BURIL abaixo do horizonte */
+
+<Talhos linhas={g.d.chao} largura={0.75} opacidade={0.85} tinta={talho} />
+<path ... d={g.linhaDoChao} stroke={talho} ... />
+```
+
+**A opacidade tem de subir de 0,5 para 0,85, e o número é medido:** o talho
+composto sobre o chão dá **2,27:1 a 0,50** (reprova), **3,55 a 0,75** e
+**4,19 a 0,85**. O mínimo viável é 0,75; 0,85 é o valor para que a tabela foi
+resolvida.
+
+*Enquanto estas três linhas não entrarem, metade da correcção está na tela e
+metade não: a silhueta já se lê contra o céu (medido no ar: madrugada passou
+de 1,70 para 4,10), e o chão continua uma barra lisa.*
 
 **A legenda** mora na banda do chão: o lugar em Spectral Medium `TIPOS.corpo`
 (15) em `T.ink`, e **a hora por palavra** em mono `TIPOS.maquina` em `T.mundo`.

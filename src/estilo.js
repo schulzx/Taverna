@@ -225,12 +225,76 @@ export const MATERIAIS = {
    `T`, nunca de um hex novo — é o único ponto da faixa onde um acento da
    casa entra na paisagem.
    ============================================================ */
+/* ============================================================
+   A CORRECÇÃO DE 23/09 — O BURIL DESAPARECIA À NOITE, E A CULPA ERA DE
+   HAVER UMA TINTA SÓ.
+
+   O `aprendiz` mediu a tinta contra o chão de cada luz e trouxe o número
+   sem que lho pedissem: **dia 1,57 · entardecer 1,29 · madrugada 1,18 ·
+   noite 1,08.** A 1,08 a hachura não existe, e a 1,32 contra o céu a
+   própria silhueta mal se lê — e a silhueta É a peça. `Mar Aberto`,
+   `Órbita Alta` e `Cinturão` à noite eram rectângulos escuros com uma
+   legenda por baixo.
+
+   E NÃO ERAM OS VALORES: ERA A TINTA ÚNICA. A prova é aritmética e não
+   opinião, e é ela que decide tudo o que vem a seguir:
+
+     · a legenda em AAA (`ink` ≥ 7:1) exige um chão com **L ≤ 0,0775**;
+     · uma hachura ESCURA (≥ 3:1) exige um chão com **L ≥ 0,1108**.
+
+   **Não há chão que sirva aos dois.** Com uma tinta escura só, ou a
+   legenda perde AAA ou o buril não se vê — e a legenda diz *onde o
+   jogador está*, que é a razão de a faixa existir.
+
+   A SAÍDA NÃO É INVENÇÃO NOSSA, É COMO SE GRAVA HÁ DUZENTOS ANOS: na
+   GRAVURA DE LINHA BRANCA (Thomas Bewick, wood engraving) o bloco é
+   escuro e o buril TIRA matéria — a marca é a luz que entra, não a
+   tinta que se põe. Daí a lei desta tabela, que é física antes de ser
+   estética:
+
+       ACIMA DO HORIZONTE O BURIL ESCURECE; ABAIXO DELE, CLAREIA.
+       O céu é a fonte de luz: marca-se tirando-lhe luz (`tinta`).
+       O chão é sombra: marca-se dando-lha (`talho`).
+
+   POR ISSO `talho` É NOVO E É POR LUZ, e `tinta` continua UMA e no
+   topo: a massa da silhueta é sempre o bloco por cortar.
+
+   OS CINCO PISOS, todos medidos, e o mais apertado tem 11% de folga:
+
+   | o que é | piso | porquê |
+   |---|---|---|
+   | a silhueta × o céu ao horizonte | **3:1** | WCAG 1.4.11 — carrega informação (o bioma) |
+   | o talho do chão × o chão | **3:1** | idem — é o relevo do terreno |
+   | a legenda `ink` × o chão | **7:1** | AAA: é ela que diz onde o jogador está |
+   | a legenda `mundo` × o chão | **4,5:1** | AA |
+   | a marca da chapa × o `ceuAlto` | **3:1** | 1.4.11 — é a fronteira da faixa |
+
+   O talho do CÉU fica em 1,86–2,31:1 e **está isento por escrito**: ele
+   não carrega informação nenhuma — é textura, e a 1.4.11 cobre
+   "gráficos que transmitem informação". O piso dele é só ser
+   perceptível (≥ 1,5), e é.
+
+   E DUAS COISAS QUE ESTA TABELA PROMETE ALÉM DOS PISOS:
+
+   1. **O CHÃO É SEMPRE MAIS ESCURO QUE A PÁGINA** (L 0,0070–0,0245
+      contra 0,0305). É onde moram as palavras da legenda, e a prosa tem
+      de continuar a ser a superfície protagonista. O CÉU pode ser mais
+      claro — é um céu.
+   2. **AS QUATRO DISTINGUEM-SE UMAS DAS OUTRAS**, por luz ≥ 1,2:1 OU
+      matiz ≥ 25°. A madrugada passou de castanho a LILÁS-CINZA por
+      causa disto: em tom quente ela era indistinguível do entardecer
+      (1,17:1 e 6° de matiz), e a luz de antes do sol é fria de verdade.
+      O sol que nasce volta pelo `astro`, que é um ponto e não um campo.
+   ============================================================ */
 export const LUZ_DA_CENA = {
-  tinta: "#0F0B08",   /* a tinta da gravura — UMA, nas quatro luzes */
-  madrugada:  { ceuAlto: "#2A2219", ceuBaixo: "#4A3524", chao: "#241D16", astro: T.amberSoft, astroAlfa: 0.55, astroAlto: false },
-  dia:        { ceuAlto: "#54432F", ceuBaixo: "#6B563C", chao: "#3E3222", astro: T.amberSoft, astroAlfa: 0.40, astroAlto: true  },
-  entardecer: { ceuAlto: "#4A3524", ceuBaixo: "#7A4A28", chao: "#2E2418", astro: T.danger,    astroAlfa: 0.60, astroAlto: false },
-  noite:      { ceuAlto: "#221B14", ceuBaixo: "#2E2620", chao: "#1A1510", astro: T.mundoSoft, astroAlfa: 0.50, astroAlto: true  },
+  tinta: "#0F0B08",   /* o BLOCO: a massa da silhueta e o talho do céu — UMA, nas quatro luzes */
+  /* os pisos moram aqui para a suíte os ler de volta: uma catraca que
+     guarda um número que ela própria não vê não é uma catraca */
+  pisos: { silhuetaNoCeu: 3, talhoNoChao: 3, legendaInk: 7, legendaMundo: 4.5, chapaNoCeu: 3, texturaDoCeu: 1.5 },
+  madrugada:  { ceuAlto: "#241F2B", ceuBaixo: "#7D6F7D", chao: "#221C22", talho: "#988E95", astro: T.amberSoft, astroAlfa: 0.55, astroAlto: false },
+  dia:        { ceuAlto: "#54432F", ceuBaixo: "#A4875F", chao: "#332A1D", talho: "#AA9C83", astro: T.amberSoft, astroAlfa: 0.40, astroAlto: true  },
+  entardecer: { ceuAlto: "#4A3524", ceuBaixo: "#C16429", chao: "#2E2418", talho: "#B9906A", astro: T.danger,    astroAlfa: 0.60, astroAlto: false },
+  noite:      { ceuAlto: "#14131C", ceuBaixo: "#576675", chao: "#161318", talho: "#7F8C95", astro: T.mundoSoft, astroAlfa: 0.50, astroAlto: true  },
 };
 
 /* ============================================================
@@ -268,16 +332,49 @@ export const ALVOS = {
    suíte os pode somar de volta:
 
        375 úteis − 24 de enchimento = 351
-       a ficha : rosto 32 + 10 + vitais 93 + 10 + bolsa 41 = 186
-       o tempo : hora 40 + 7 + selo 53 + 12 de enchimento  =  98
-       folga   : 351 − 186 − 98                            =  67
+       a ficha : medida no DOM, com a cinta no ar            = 194
+       o tempo : medido, com "3 noites +1"                   = 145
+       folga   : 351 − 194 − 145                             =  12
 
-   O ENCHIMENTO É 12 E NÃO 16, E A RAZÃO É ARITMÉTICA: a 375 px sobram
-   67 px de folga entre os dois alvos com 12, e 43 com 16. **É dessa
-   folga que `O sinal de guardado` vive** — e é por isso que ela é uma
-   entrada desta tabela e não uma sobra de leiaute. Um `SinalDeGuardado`
-   que se centrasse no PAI cairia sobre o saldo da bolsa; centrado na
-   FOLGA, não tapa tinta nenhuma, que é a promessa escrita da peça.
+   ESTES NÚMEROS SÃO MEDIDOS E OS ANTERIORES ERAM ORÇADOS, E A DIFERENÇA
+   FOI GRANDE: o `desenho` escreveu ficha 186 e tempo 98, e a régua deu
+   **194 e 145**. O tempo estava **47 px optimista** — o selo mede 76 e
+   não 53 (a ampulheta 12 + 4 + "3 noites" 60), e o `+N` mais o respiro
+   custam outros 20 que ninguém tinha somado. *É o mesmo erro do
+   orçamento VERTICAL, cometido no eixo que sobrou: uma conta que
+   ninguém soma não está provada, está escrita.*
+
+   O ENCHIMENTO CONTINUA 12 E NÃO 16 — agora por uma razão maior do que
+   a folga: com 16 a linha não CABE no pior caso (ver a catraca).
+
+   A CATRACA DA SOMA, e ela guarda o pior caso e não o típico:
+
+       2 × enchimento + fichaMinima + tempoMaximo  ≤  375
+       24             + 170         + 174          =  368     ✓ 7 px
+
+   `tempoMaximo` é a última noite: o selo ENCHE e passa de 76 a 105
+   (`esta noite` em negrito, 72, mais 16 de enchimento do chip), e o
+   tempo vai a 174. Com a ficha nos 194 medidos isso dá **392 num ecrã de
+   375** — a cinta transbordava na única noite em que ela mais importa, e
+   ninguém o tinha visto porque ninguém somou o pior caso.
+
+   QUEM CEDE É A FICHA, E A RAZÃO É DE SIGNIFICADO, NÃO DE ESPAÇO:
+   **o comprimento de um trilho é uma RAZÃO, não uma medida** — um
+   trilho de 40 px diz exactamente o que um de 56 diz, porque o que
+   informa é a fracção cheia. Já `esta noite` não encolhe sem mentir.
+   Por isso `trilho` tem um mínimo e `fichaMinima` existe.
+
+   E O RÓTULO DO GUARDADO NÃO CABE NO TELEFONE — EM ESTADO NENHUM.
+   Medido com a fonte carregada: `✓ guardado` pede **74 px**, `guardado`
+   pede **58**, e a folga a 375 px é **12**. Nenhuma das três saídas
+   propostas (encolher o rótulo, o tempo ceder 7 px, o telefone assumir a
+   varredura) resolve as duas primeiras — porque o buraco não é de 7 px,
+   é de 62. **Fica a terceira, e fica por conta e não por limiar:** o
+   rótulo entra quando `folga ≥ rotuloDoGuardado + 2 × respiroDoRotulo`,
+   o que dá `larguraParaORotulo` = 445 px. Abaixo disso é a varredura da
+   marca da chapa sozinha, que é a camada que já estava escrita como
+   degradação da peça. *Uma peça que diz como se degrada é uma peça
+   acabada — e esta agora diz a partir de que largura.*
 
    `alturaViva` É DE PROPÓSITO, e a regra é do `jogo`: *o que não cabe
    numa linha calma é exactamente o que tem de interromper.* Um estado
@@ -289,9 +386,19 @@ export const CINTA = {
   altura: 48,        /* Estado=Calma e Estado=Prazo a apertar */
   alturaViva: 72,    /* Estado=Um estado vivo — a segunda fila dos chips */
   enchimento: 12,    /* lateral, e não 16 — ver a conta acima */
-  ficha: 186,        /* o alvo da esquerda: rosto · PV · PM · bolsa */
-  tempo: 98,         /* o alvo da direita: a hora · O selo de prazo */
-  folgaMinima: 67,   /* 375 − 24 − 186 − 98 — a casa do sinal de guardado */
+  ficha: 194,        /* o alvo da esquerda, MEDIDO: rosto · PV · PM · bolsa */
+  fichaMinima: 170,  /* com os trilhos no mínimo — quem cede é sempre ela */
+  tempo: 145,        /* o alvo da direita, MEDIDO: a hora · O selo · o +N */
+  tempoMaximo: 174,  /* a última noite: o selo enche e passa de 76 a 105 */
+  trilho: 56,        /* PV e PM em repouso */
+  trilhoMinimo: 40,  /* o comprimento é uma razão, não uma medida */
+  folgaMinima: 12,   /* 375 − 24 − 194 − 145, MEDIDO e não orçado */
+  larguraParaORotulo: 436,  /* 24 + 194 + 145 + 74 − 1 — abaixo disto, só a varredura.
+     O RESPIRO NÃO É TERMO DESTA CONTA, e isso é decisão e não esquecimento:
+     o rótulo CENTRA-SE na folga, logo os pixels que sobram distribuem-se
+     sozinhos à medida que o ecrã cresce. No limiar exacto ele tem 0 de cada
+     lado; um pixel acima, 1 de cada lado. Pedir respiro ao limiar seria
+     contar duas vezes o mesmo espaço. */
   /* O ROTULO DO GUARDADO, MEDIDO NO NAVEGADOR E NÃO ESTIMADO: 74 px.
      `✓ guardado` em JetBrains Mono a `TIPOS.maquina`, com a fonte
      carregada (`document.fonts.check` verdadeiro) e lido por
@@ -1044,8 +1151,17 @@ export const SUPERFICIES_CSS = `
    O QUE ISTO PEDE A MESA, e vai escrito no relato em vez de resolvido a
    sorrelfa: ou o rotulo encolhe (guardado sozinho cabe), ou o tempo cede
    sete px, ou o telefone assume a varredura. Escolher por conta propria
-   qual das tres era inventar forma, e a forma tem dono. */
-@media (max-width: 381px) {
+   qual das tres era inventar forma, e a forma tem dono.
+
+   O DESENHO ESCOLHEU A TERCEIRA, E AS OUTRAS DUAS NAO ERAM SAIDAS: o
+   buraco nao e de sete px, e de sessenta e dois. Medido com a cinta no
+   ar, a 375: a ficha come 194, o tempo 145, e a folga e 12 — enquanto
+   «✓ guardado» pede 74 e «guardado» sozinho pede 58. NENHUM DOS DOIS
+   CABE, e o tempo ceder sete px deixa 19, que continua a nao chegar.
+   Fica a varredura da marca da chapa, que ja era a degradacao escrita da
+   peca — e o limiar deixa de ser um numero afinado a olho e passa a ser
+   CINTA.larguraParaORotulo, que a suite le de volta. */
+@media (max-width: 436px) {
   .tv-guardado-rotulo { display: none; }
 }
 `;

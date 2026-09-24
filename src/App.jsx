@@ -175,7 +175,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeBalao, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, RostoDaCena } from "./ui.jsx";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1603,7 +1603,7 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
    E ele abre em ABSOLUTO, por baixo da cinta: a página não se move um
    pixel para o painel nascer. A mesma lei que o tabuleiro já tinha.
    ============================================================ */
-function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, lugar, relogios, acampado, emLuta, bloqueado, aoAcampar, aoPassarTempo, precoDoAcampamento }) {
+function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampado, emLuta, bloqueado, aoAcampar, aoPassarTempo, precoDoAcampamento }) {
   if (!aberto) return null;
   let est = null;
   try { est = estacaoDe(dia); } catch (e) { calou("a estação no painel do tempo", e); }
@@ -1651,15 +1651,15 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, lugar, relogios,
                — a prosa disse "chuva" e "sol" melhor do que o ícone dizia.
                Não some: muda de morada, e a morada do tempo é aqui.
 
-               (O `📍 lugar` está aqui EMPRESTADO. A morada dele é `O rosto
-               da cena`, a faixa de 96 px da etapa B, e ele muda-se no dia
-               em que ela existir. Está aqui e não em lado nenhum porque
-               recolher é mudar de casa, nunca apagar — e entre A e B ele
-               teria ficado sem nenhuma.) */}
+               (O `📍 lugar` esteve aqui EMPRESTADO uma etapa, e a etapa B
+               pagou o empréstimo: a morada dele é a LEGENDA de `O rosto da
+               cena`, que diz o lugar e a hora por palavras, na banda do chão
+               da gravura. Recolher é mudar de casa, nunca apagar — e entre A
+               e B ele teria ficado sem nenhuma, que é a razão de ter passado
+               por aqui.) */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>
           <span title={est ? est.nome + " — " + est.nota : ""}>📅 {dataTxt(dia)} · {horaTxt(minuto)}{ehNoite(minuto) ? " 🌙" : ""}{est ? " " + est.icone + " " + est.nome : ""}</span>
           {clima && <span title={clima.nota}>{clima.icone} {clima.rotulo}</span>}
-          {lugar && <span style={{ color: T.amberSoft }} title={"fora de " + (lugar.cidade || "a cidade")}>📍 {lugar.nome}</span>}
         </div>
 
         {/* 4 · TODOS OS PRAZOS, com nome, por ordem de aperto. O que na fita
@@ -1672,6 +1672,68 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, lugar, relogios,
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   R13 · O TOPO DO PAPEL — quem mede a largura para `O rosto da cena`
+
+   A PEÇA NÃO SE MEDE A SI PRÓPRIA, E É DE PROPÓSITO: a gravura é
+   determinística, e `largura` entra na conta (a hachura vive em px e não
+   se estica; a silhueta vive em 0..100 e estica). Uma peça que lesse
+   sozinha o seu tamanho teria de se re-desenhar a meio da primeira
+   pintura — e a semente deixaria de dar a mesma cripta conforme o
+   momento em que o navegador resolvesse o leiaute. Quem sabe a largura é
+   quem monta; a peça recebe-a e desenha.
+
+   O INVÓLUCRO EXISTE SÓ PARA ISSO, e por isso é ele quem carrega o
+   `ResizeObserver` — em `try/catch`, porque nunca pode custar o turno: se
+   a medição estourar, `largura` fica no valor que a peça usa por omissão
+   e a gravura continua de pé, apenas desenhada para o telefone de
+   referência.
+
+   ENQUANTO NÃO HÁ MEDIDA, `largura` é `null` e a peça usa o próprio
+   padrão (`LARGURA_DE_REFERENCIA`). Não se escreve 375 aqui: o número
+   existe uma vez, no módulo que o decide.
+
+   E É COMPONENTE DE MÓDULO, como tudo o que esta casa pinta: uma
+   componente definida dentro do render remonta a cada tecla do campo do
+   turno — e aqui isso custaria a gravura inteira, ~200 talhos, por letra
+   escrita. (A peça memoiza pelos cinco eixos; a memória só vale enquanto
+   a componente for a mesma.)
+   ============================================================ */
+function OTopoDoPapel({ semente, bioma, lugar, hora, chegada }) {
+  const caixa = React.useRef(null);
+  const [largura, setLargura] = React.useState(null);
+  React.useEffect(() => {
+    let parar = () => {};
+    try {
+      const el = caixa.current;
+      if (!el) return undefined;
+      const medir = () => {
+        try {
+          const w = Math.round(el.getBoundingClientRect().width);
+          if (w > 0) setLargura((antes) => (antes === w ? antes : w));
+        } catch (e2) { calou("medir o topo do papel", e2); }
+      };
+      medir();
+      if (typeof ResizeObserver === "function") {
+        const ro = new ResizeObserver(medir);
+        ro.observe(el);
+        parar = () => { try { ro.disconnect(); } catch (e3) { calou("largar o topo do papel", e3); } };
+      } else {
+        window.addEventListener("resize", medir);
+        parar = () => window.removeEventListener("resize", medir);
+      }
+    } catch (e) { calou("a largura do topo do papel", e); }
+    return () => parar();
+  }, []);
+  return (
+    <div ref={caixa} className="shrink-0">
+      <LimiteErro>
+        <RostoDaCena semente={semente} bioma={bioma} lugar={lugar} hora={hora} largura={largura} chegada={chegada} />
+      </LimiteErro>
     </div>
   );
 }
@@ -7338,6 +7400,55 @@ export default function Taverna() {
     const j = jornadaRef.current;
     return acha(cidadeAtualRef.current) || (j ? acha(j.de) || acha(j.para) : "") || "planicie";
   };
+
+  /* ---------------- O LUGAR DA CENA, EM DUAS PALAVRAS (R13-B) ----------------
+     `O rosto da cena` escreve o nome do lugar na banda do chão, e o que ele
+     pede é um NOME — não a frase que o Mestre lê. `localAtualTxt()`, logo
+     abaixo, é prosa de prompt ("EM VIAGEM: … — não estou em cidade nenhuma")
+     e não cabe numa legenda de 15 px que trunca com reticências.
+
+     A ORDEM É DO MAIS FECHADO PARA O MAIS ABERTO, e é a mesma que o resto da
+     casa usa para decidir onde o herói está: a masmorra manda sobre o lugar
+     nomeado, o lugar nomeado manda sobre a estrada, e a estrada manda sobre a
+     cidade. Quem não tem nome devolve vazio e a peça escreve o travessão —
+     um lugar sem nome é uma gravura legítima, não um erro.
+
+     E É ELE QUEM ENTRA NA SEMENTE, ao lado do bioma: mesma semente, mesma
+     cripta, em qualquer máquina. Mudar a ordem destes quatro ramos muda a
+     gravura de todas as campanhas — quem mexer, mexe de propósito. */
+  const lugarDaCena = () => {
+    try {
+      const mm = masmorraRef.current;
+      if (mm && mm.nome) return String(mm.nome);
+      const lg = lugarRef.current;
+      if (lg && lg.nome) return String(lg.nome);
+      const jn = jornadaRef.current;
+      if (jn) return jn.para ? `a caminho de ${jn.para}` : "a estrada";
+      return String(cidadeAtualRef.current || "");
+    } catch (e) { calou("o lugar da cena", e); return ""; }
+  };
+
+  /* A CHEGADA DECAI NO TURNO SEGUINTE, NUNCA POR RELÓGIO — é a mesma lei e o
+     mesmo mecanismo da soleira (`soleiraAntesRef`), e é de propósito que seja
+     o mesmo: *uma marca que morre por tempo morre enquanto o jogador está a
+     pensar*. O turno começa quando `carregando` passa a verdadeiro; nesse
+     instante o lugar em que se estava fica registado, e tudo o que for
+     diferente disso é CHEGADA até o turno seguinte começar.
+
+     DECLARADO, E É DÍVIDA À VISTA: `RostoDaCena` ainda NÃO tem o eixo
+     `Chegada` — a peça recebe `semente`, `bioma`, `lugar`, `hora` e
+     `largura`, e mais nada. A prop vai na chamada com o valor certo porque é
+     o que a especificação manda (`r13-mesa.md` §3.4: *o nome do lugar chega
+     com o eixo `Chegada` que `A oferta` já tem*), e porque no dia em que o
+     `desenho` a fabricar ela acende sem ninguém ter de reconstruir a conta.
+     Hoje é INERTE, e está dito aqui para não ser descoberto por acidente. */
+  const lugarAntesRef = useRef(null);
+  useEffect(() => {
+    try {
+      if (lugarAntesRef.current !== null && !carregando) return;
+      lugarAntesRef.current = lugarDaCena();
+    } catch (e) { calou("marcar o lugar que a cena ja tinha", e); }
+  }, [carregando]); // eslint-disable-line
 
   const localAtualTxt = () => jornadaRef.current
     ? `${(linhaDaViagem(jornadaRef.current) || `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"}`).replace(/^🧭 /, "EM VIAGEM: ")} — não estou em cidade nenhuma`
@@ -21431,22 +21542,23 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         const vidaBaixa = (personagem.vidaMax || 0) > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
         const exausto = (personagem.exaustao || 0) > 0;
         if (curadas.length || vidaBaixa || exausto) {
-          const bocas = 1 + ((personagem.grupo || []).length);
-          const cd = consumoDiario(bocas);
-          const nPrazos = prazosDaCinta(relogios).length;
+          /* `A oferta` põe o PREÇO e o RETORNO lado a lado, e no telefone
+             essa linha tem ~300 px — cerca de 37 caracteres para os dois
+             juntos. Medido: a conta inteira pedia 429 e era cortada ao meio,
+             e um veredito cortado é pior do que um veredito resumido.
+
+             O QUE FICA É A MANCHETE. A conta completa — as rações, a água e a
+             noite de cada prazo — vive no `🌙 Descanso longo`, que é o toque
+             de facto IRREVERSÍVEL (montar acampamento não é: a terceira porta
+             da v9.99 deixa sair sem dormir) e onde ela cabe empilhada. E o
+             prazo tem uma segunda voz a 48 px daqui: o selo da cinta, que diz
+             `3 noites` sem ninguém lhe tocar. */
+          const oQueCura = curadas.length ? curadas[0] : (exausto ? "cansaço" : "");
           lista.push({
             id: "tempo|acampar",
             verbo: "Montar acampamento",
-            preco: [
-              "uma noite",
-              cd.racoes + (cd.racoes === 1 ? " ração" : " rações") + " · " + cd.agua + (cd.agua === 1 ? " água" : " águas"),
-              nPrazos ? "+1 noite em " + nPrazos + (nPrazos === 1 ? " prazo" : " prazos") : "",
-            ].filter(Boolean).join(" · "),
-            retorno: [
-              vidaBaixa ? "PV e PM cheios" : "PV e PM",
-              curadas.length ? "cura " + curadas.join(", ") : "",
-              exausto ? "um grau de exaustão a menos" : "",
-            ].filter(Boolean).join(" · "),
+            preco: "uma noite",
+            retorno: oQueCura ? "PV, PM e o " + oQueCura : "PV e PM cheios",
             tom: "preco",
             precisaDoNarrador: true,
             aoClicar: () => acampar(),
@@ -21875,7 +21987,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           <LimiteErro>
             <OPainelDoTempo
               aberto={tempoAberto} aoFechar={() => setTempoAberto(false)}
-              dia={dia} minuto={minuto} clima={clima} lugar={lugar} relogios={relogios}
+              dia={dia} minuto={minuto} clima={clima} relogios={relogios}
               acampado={acampado} emLuta={!!combate} bloqueado={bloqueado}
               aoAcampar={() => { setTempoAberto(false); acampar(); }}
               aoPassarTempo={(h) => { setTempoAberto(false); passarTempo(h); }}
@@ -21948,8 +22060,43 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 o contorno `paginaFio` a 3,29:1. O contorno não é enfeite —
                 é o canal que sobrevive a quem não vê cor, e é o único dos
                 três que a 1.4.11 de facto cobra. */}
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden min-h-0 mx-4 md:mx-8 mt-3 md:mt-4 px-5 md:px-8 py-6 space-y-4 rounded-2xl"
-              style={{ background: T.pagina, border: `1px solid ${T.paginaFio}` }} >
+            {/* ---------------- O PAPEL PASSA A TER DUAS FAIXAS (R13-B) ----------------
+                A moldura, o fundo quente e o contorno saíram da área que rola
+                e subiram para AQUI, porque o papel deixou de ser uma coisa
+                só: em cima a gravura, que NÃO rola, e por baixo a prosa, que
+                rola. Com o fundo na área de rolamento, a gravura ficaria
+                fora do papel — uma imagem pousada em cima de uma folha, e
+                não o topo dela.
+
+                `overflow-hidden` aqui é o que corta os cantos da gravura no
+                raio da folha: sem ele a faixa é um rectângulo a espreitar
+                por baixo de um canto arredondado. */}
+            <div className="flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
+              style={{ background: T.pagina, border: `1px solid ${T.paginaFio}` }}>
+            {/* ---------------- O ROSTO DA CENA (R13-B) ----------------
+                96 px no topo do papel, e a razão é de jogo e não de enfeite:
+                das 21 mensagens de prosa de R6, DEZ abriam com descrição de
+                lugar, hora ou clima — 14,3 palavras de média, 37 % das 38
+                palavras que o telefone mostrava. E as dez eram quase todas
+                CHEGADAS A UM LUGAR NOVO. A faixa devolve a frase de abertura
+                exactamente nos turnos em que o jogador está mais perdido.
+
+                E É O QUE IMPEDE A ETAPA A DE ACERTAR NO NÚMERO E ERRAR NO
+                PEDIDO: com a página em 72 % do telefone, a tela passava a ser
+                um muro de texto com uma cinta em cima. A pessoa não pediu um
+                leitor. Os 96 px custam agora 16 % da página em vez dos 64 %
+                que custariam antes da etapa A — e é por isso que B vem
+                depois, que é aritmética e não gosto.
+
+                NÃO ANIMA entre cenas, por decisão escrita dos dois: uma
+                imagem que transiciona a cada turno é um piscar por turno, e
+                nunca pode custar o turno. A luz desliza com a hora (quatro
+                receitas em `LUZ_DA_CENA`); a gravura só muda quando o LUGAR
+                muda. */}
+            <OTopoDoPapel semente={sementeMundo()} bioma={biomaDaqui()} lugar={lugarDaCena()}
+              hora={Math.floor((minuto || 0) / 60)}
+              chegada={lugarDaCena() !== lugarAntesRef.current ? "agora" : "assentada"} />
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 md:px-8 py-6 space-y-4" >
               <VinhetaDaCena bioma={biomaDaqui()} />
               {/* A VOZ (R2), primeiro dos DOIS sítios onde o cabeçalho do
                   Mestre estava escrito à mão neste arquivo. Aqui ela é o
@@ -22441,6 +22588,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             )}
 
               <div ref={fimRef} style={{ height: 8 }} />
+            </div>
             </div>
             {longeDoFim && (
               <button onClick={irParaOFim} className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center"

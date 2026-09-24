@@ -201,13 +201,51 @@ export function luzDaHora(hora) {
 }
 
 /* ------------------------------------------------------------
-   O BURIL — a hachura irregular, que é a dívida que esta etapa paga.
+   O BURIL — a hachura irregular, e a dívida SÓ AGORA ESTÁ PAGA.
 
-   Cada linha tira o SEU passo e o SEU ângulo do mesmo `rng`. Um buril
-   não anda de compasso: se o passo fosse constante, a mancha lia-se como
-   trama de máquina.
+   Cada linha tira o SEU passo, o SEU comprimento e o SEU ângulo do mesmo
+   `rng`. Um buril não anda de compasso.
+
+   A PRIMEIRA VERSÃO DISTO DIZIA QUE A DÍVIDA ESTAVA PAGA E NÃO ESTAVA,
+   e foi preciso MEDIR para ver: o espaçamento era mesmo irregular (137
+   saltos distintos em 302), mas o ÂNGULO variava **1,95° de desvio
+   padrão no céu e 2,73° no chão seco** — oito e dez ângulos inteiros
+   distintos em trezentos talhos. *Um traço que se desvia dois graus não
+   é um traço trémulo: é um traço a direito com ruído de arredondamento.*
+   A mancha continuava a ler-se como TRAMA, que é exactamente o que
+   `formas.md` escreveu que não podia acontecer.
+
+   A CURA NÃO É UM NÚMERO NOVO DE FORMA, É O MESMO `rng` COM AMPLITUDE
+   A SÉRIO: `tremor` passou a abrir a dezena de graus em vez da unidade.
+   Nada aqui decide COMO a gravura é — decide só quanto a mão treme, que
+   é a diferença entre um buril e um pantógrafo.
+
+   E A SUÍTE PASSA A GUARDAR O DESVIO, não a existência da variação: uma
+   catraca que só perguntasse "varia?" ficava verde com 1,95°, que é o
+   estado que ela existia para apanhar.
    ------------------------------------------------------------ */
 const r2 = (n) => Math.round(n * 100) / 100;
+
+/* O PISO DO TREMOR, em graus de desvio padrão do ângulo de cada talho.
+
+   ELE MORA AQUI E NÃO NA SUÍTE pela razão que o `desenho` escreveu para
+   os pisos de contraste: *uma catraca que guarda um número que ela
+   própria não vê não é uma catraca.* Quem afina um `tremor` lá em baixo
+   vê nesta tabela o que a afinação tem de continuar a cumprir.
+
+   E OS CINCO NÚMEROS NÃO SÃO O MESMO NÚMERO, de propósito — cada hachura
+   é um gesto diferente e tremer todas por igual seria a trama outra vez,
+   com outro passo:
+
+   · `ceu` e `seca` são o talho longo e solto da mão que corre — abrem.
+   · `pedra` é o talho curto CRUZADO a dois ângulos: o desvio dela é
+     sobretudo a distância entre as duas direcções, e por isso é grande.
+   · `molhada` mede-se pela CORDA da onda (não há talho recto nenhum):
+     o que se guarda é que as ondas não reencontram todas o mesmo nível.
+   · `lajeado` é o único que pode ser quase direito — um chão assentado
+     É regular —, mas quase direito não é direito, e 1,5° é a diferença
+     entre pedra posta à mão e uma grelha desenhada. */
+export const TREMOR_MINIMO = { ceu: 4, seca: 4, pedra: 20, molhada: 3, lajeado: 1.5 };
 
 /* A LARGURA DE REFERENCIA e o telefone de 375 px em que o orcamento de
    R13 foi medido (`mente/r13-mesa.md`, TELEFONE 375x812). Nao e um teto:
@@ -242,7 +280,7 @@ export function hachuraDoCeu(rand, largura = LARGURA_DE_REFERENCIA) {
     const passo = 11 - prox * 8;                             /* 11 px em cima, 3 px em baixo */
     linhas.push(...talhos(rand, {
       de: -4, ate: largura + 4, passo: 16 - prox * 8, solta: 0.55,
-      y, comprimento: 7 + prox * 6, inclinacao: -0.05, tremor: 0.12,
+      y, comprimento: 7 + prox * 6, inclinacao: -0.05, tremor: 0.42,
     }));
     y += passo * (0.75 + rand() * 0.5);
   }
@@ -260,10 +298,15 @@ export function hachuraDoChao(rand, tipo, largura = LARGURA_DE_REFERENCIA) {
     let y = topo + 5;
     let guarda = 0;
     while (y < fundo - 2 && guarda++ < 40) {
-      linhas.push(`M -4 ${r2(y)} L ${largura + 4} ${r2(y + (rand() - 0.5) * 0.8)}`);
+      /* A FIADA É A ÚNICA COISA DESTE ARQUIVO QUE PODE SER QUASE
+         DIREITA — um lajeado assentado É regular, e tremê-lo como uma
+         duna seria mentir sobre o que ele é. Mas quase direita não é
+         direita: o desnível de ponta a ponta sai do `rng`, como tudo o
+         resto, e é o que separa pedra assentada à mão de uma grelha. */
+      linhas.push(`M -4 ${r2(y)} L ${largura + 4} ${r2(y + (rand() - 0.5) * 2.6)}`);
       let x = -4 + rand() * 14;
       while (x < largura + 4) {
-        linhas.push(`M ${r2(x)} ${r2(y)} l ${r2((rand() - 0.5) * 0.6)} ${r2(7 * (0.6 + rand() * 0.5))}`);
+        linhas.push(`M ${r2(x)} ${r2(y)} l ${r2((rand() - 0.5) * 1.8)} ${r2(7 * (0.6 + rand() * 0.5))}`);
         x += 12 + rand() * 12;
       }
       y += 8 + rand() * 3;
@@ -276,9 +319,23 @@ export function hachuraDoChao(rand, tipo, largura = LARGURA_DE_REFERENCIA) {
     let guarda = 0;
     while (y < fundo - 1 && guarda++ < 40) {
       let x = -6 + rand() * 10;
+      let yy = y;
       while (x < largura + 4) {
         const c = 9 + rand() * 12;
-        linhas.push(`M ${r2(x)} ${r2(y)} q ${r2(c / 2)} ${r2(-1.2 - rand())} ${r2(c)} 0`);
+        /* TRÊS COISAS SAEM DO rng E NÃO UMA: o comprimento da onda, a
+           altura da crista, e ONDE ELA ACABA. A primeira versão fechava
+           sempre em `c 0` — cada onda voltava exactamente à altura de
+           onde partiu, e uma fiada de ondas que reencontram o mesmo nível
+           é uma ondulação de papel de parede. */
+        const cai = (rand() - 0.5) * 3.8;
+        const crista = -1.2 - rand() * 2.2;
+        linhas.push(`M ${r2(x)} ${r2(yy)} q ${r2(c * (0.3 + rand() * 0.4))} ${r2(crista)} ${r2(c)} ${r2(cai)}`);
+        /* O PASSEIO ALEATÓRIO É PUXADO DE VOLTA À FIADA, e sem este 0,6
+           a fiada deixava de ser fiada: dez ondas a somar ±1,9 cada uma
+           derivam seis pixéis, e num chão de trinta e quatro a fiada de
+           cima acabava dentro da de baixo. O que se quer é que cada onda
+           acabe a um nível diferente — não que a linha fuja. */
+        yy = y + (yy + cai - y) * 0.6;
         x += c + 3 + rand() * 7;
       }
       y += 4 + rand() * 3.5;
@@ -293,7 +350,7 @@ export function hachuraDoChao(rand, tipo, largura = LARGURA_DE_REFERENCIA) {
       while (y < fundo && guarda++ < 40) {
         linhas.push(...talhos(rand, {
           de: -6, ate: largura + 6, passo: 9, solta: 0.6,
-          y, comprimento: 3.5, inclinacao: inc, tremor: 0.3,
+          y, comprimento: 3.5, inclinacao: inc, tremor: 0.45,
         }));
         y += 5 + rand() * 4;
       }
@@ -306,7 +363,7 @@ export function hachuraDoChao(rand, tipo, largura = LARGURA_DE_REFERENCIA) {
   while (y < fundo + 10 && guarda++ < 40) {
     linhas.push(...talhos(rand, {
       de: -12, ate: largura + 8, passo: 13, solta: 0.5,
-      y, comprimento: 10, inclinacao: 0.55, tremor: 0.22,
+      y, comprimento: 10, inclinacao: 0.55, tremor: 0.5,
     }));
     y += 4.5 + rand() * 3.5;
   }

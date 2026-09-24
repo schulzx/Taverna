@@ -19,6 +19,272 @@ Formato:
 
 ---
 
+## 23/09 · v9.283 · **R13 — a moldura devolve a página, e a página ganha um rosto** · commits `fc3efb1` (A) · HASH_B (B)
+
+*O escrito das mãos fica em `mente/r6-jogo.md` (a prova jogada) e
+`mente/r13-mesa.md` (a composição); a forma, na secção `R13` de
+`mente/formas.md`.*
+
+**O ciclo que começou por pagar uma conta em vez de abrir um andar novo.** A
+Fase R subiu em `1e406fe` com duas das três provas e **sem a terceira** — R6, a
+catraca que o `jogo` escrevera contra a sua própria proposta. A ordem deste
+ciclo foi abrir por ela, e a razão está escrita: *não se constrói mais um andar
+sobre um alicerce por medir.*
+
+- **estado inicial:** árvore limpa em `d3759b2`, VERSAO `v9.282`, trava e bastão
+  livres, `.claude/fila-pausada` ausente. **205/205 suítes e 15/15 varredores
+  verdes** — nenhum vermelho herdado, logo nenhum álibi.
+
+- **R6, a prova jogada (o `jogo`), e ela não desmentiu a fase — reapontou-a.**
+  20 turnos no modo história, save real. **15 dos 20 usaram o campo de texto.**
+  A premissa da Fase R aguentou: os 20 verbos genéricos morreram e **não fizeram
+  falta uma única vez**; o jogo não virou *point-and-click*. Mas a outra metade
+  da promessa não foi paga: **a soleira só aprendeu dois verbos** e em apenas
+  **2 dos 20 turnos ofereceu a coisa que o jogador ia mesmo fazer**. Tomar uma
+  oferta custa **~990 ms** contra **10,7 s** por frase escrita — *o ganho está
+  provado e quase todo por gastar.*
+
+- **e o número que mudou o item do ciclo.** Medindo o telefone com save real, o
+  `jogo` achou o réu que ninguém tinha na conta:
+
+  > **151 px de prosa — 18,6 % da altura — contra 180 de barra de estado, 81 de
+  > fita de prazos e 73 de cabeçalho.** A moldura era **maior que a página**. E
+  > **crescia a cada contrato aceite** (~40 px permanentes por chip): *o jogo
+  > punia com menos jogo quem jogava mais.*
+
+  **R12 estava mal mirada** — acusava a soleira (149 px) e falhava os 334. E
+  **R1 era impossível como estava escrita**: pede 96 px contando com 418, e
+  havia 151; construída antes, deixaria **55 px de prosa** e a xilogravura seria
+  legenda, não livro ilustrado. *R12 não era o preço de R1; era a condição dela.*
+  **Aceitei a aritmética do `jogo` contra o meu próprio direcionamento**, que era
+  fazer R1 primeiro.
+
+- **jogo / desenho, em par:** compuseram e fabricaram `R13` num desenho só, com
+  duas etapas — **A** (a moldura devolve a página) e **B** (o rosto da cena).
+  Decidido em `mente/formas.md` §R13 e no Figma `e5wJUzInAssoebx5npssKc`
+  (páginas *R13 · a cinta*, *R13 · o rosto da cena*, e o par 375×812 com o
+  orçamento). **219 pinturas, 219 ligadas a variável, zero cor literal.**
+
+- **o erro que os dois cometeram, e a lei que ele deixou.** As duas primeiras
+  versões do orçamento **não somavam a altura do ecrã**: a soleira descia de 149
+  para 83 e **nenhum dos dois devolvia os 66 px à página**. O `desenho` apanhou
+  a coluna do telefone; ao conferir, o `jogo` descobriu que **a coluna da mesa,
+  que ele próprio publicara, tinha o mesmo erro cometido em separado**. Dois
+  agentes, duas medições independentes, a mesma falha. Ficou lei:
+
+  > *Uma tabela de orçamento que não fecha na altura do ecrã não é um orçamento,
+  > é uma lista de desejos.*
+
+  A catraca do §5 passou a exigir a soma (812 / 800), e o script que gera as
+  telas no Figma **rebenta** se uma coluna não fechar. **Já não é possível
+  publicar outra tabela errada** — que vale mais do que a correção.
+
+- **aprendiz (fora do `App.jsx`) e oficial (dentro dele), no mesmo turno.** Ditei
+  o contrato de assinatura das sete peças antes de os lançar, para poderem
+  correr em paralelo sem se apagarem — e **nenhuma assinatura mudou de nome nem
+  de prop**. O `aprendiz` fez os quatro glifos, o selo, o sinal de guardado e
+  `O rosto da cena`; o `oficial` fez a cinta, o painel do tempo, o pé da ficha e
+  o acampamento, **+910/−436 no `App.jsx`**.
+
+- **a prova (etapa A), medida de volta no DOM e não copiada da spec:**
+
+  | | antes | depois |
+  |---|---|---|
+  | a moldura do topo (telefone) | **334 px** | **48** |
+  | a página, sem oferta | **151 px · 18,6 %** | **586 px · 72,2 %** |
+  | linhas de prosa | **5,5** | **21,2** |
+  | palavras visíveis | **~38** | **~128** |
+  | o 4.º contrato aceite custa | ~40 px para sempre | **0** |
+
+  **As colunas somam 812 e 800 em todas as medições.** O número que interessa
+  não é o múltiplo: **um parágrafo deste jogo tem 60–90 palavras, e o telefone
+  era incapaz de mostrar um inteiro.** Agora mostra-o com folga.
+
+- **a prova (etapa B), medida de volta, e a peça passa no canal que importa.**
+  Os 96 px do rosto entram e a página fica em **490 px sem oferta no telefone**
+  — ainda **3,2x** os 151 de antes da etapa A. **As colunas fecham: 48 + 96 +
+  490 + 0 + 102 + 76 = 812**, e na mesa 48 + 96 + 554 + 102 = 800.
+  **32 pares medidos nas quatro luzes, zero reprovam.** O pior é a silhueta na
+  noite — **3,32:1 contra um piso de 3**, 11 % de folga —, e é o canal
+  primário. A legenda nunca desce de 8,22:1, e a largura da gravura sai de um
+  `ResizeObserver` (1142 px na mesa, 286 a 320) porque **a hachura vive em px e
+  não se estica**: sem isso o desktop desenharia sempre a trama de um telefone.
+
+- **e a etapa B deixou de ser prémio a meio do desenho, contra a ordem de
+  sacrifício que o `jogo` tinha escrito.** A correção da aritmética levou a
+  página a **72 % do telefone** só com a etapa A, e a tela passava a ser *um
+  muro de texto com uma cinta em cima*. A pessoa não pediu um leitor: pediu que
+  *"o design e visual sejam estimulantes e chamativos como um bom jogo"*.
+  **Acertar no número e errar no pedido é uma forma de falhar que esta casa já
+  conhece** — e a correção tornou B barata: **16 % da página em vez de 64 %**.
+
+- **a dívida do buril paga, e o `aprendiz` desmentiu-se a si próprio com
+  número.** Ele declarara a hachura como *regular*; foi medir em vez de
+  acreditar na sua própria entrega e achou que o espaçamento variava mas **o
+  ângulo desviava 1,95° no céu — oito ângulos inteiros em trezentos talhos**.
+  *Um traço que se desvia dois graus não treme: vai a direito com ruído de
+  arredondamento.* Depois: céu 6,78° · pedra 41,8°. **E o dente mudou de
+  pergunta**, que é a lição que sobra: o antigo perguntava *"varia?"* e ficava
+  verde em cima do defeito; o novo pergunta ***"varia quanto?"***, com
+  `TREMOR_MINIMO` na tabela para a suíte o ler de volta.
+
+- **decisões médias tomadas, cada uma com o motivo:**
+  - **`IconeBolsa` passou a ser a moeda de 12 px e a mochila virou `IconeMochila`**
+    — colisão de nome achada pelo `aprendiz` e deixada por ele ao dono do
+    arquivo. Corrigi as duas linhas do `App.jsx` eu mesmo: sem isso **a aba do
+    inventário mostrava o saldo**, e um glifo que muda em silêncio é o defeito
+    que passa no build.
+  - **O acampamento fica com dois pontos de entrada** (o relógio sempre, a
+    soleira quando há estado a curar), contra a leitura literal do §5.4. *Uma
+    ação, uma forma* proíbe a mesma ação ter **duas caras** — não proíbe a mesma
+    **peça** aparecer em duas moradas: ali é a mesma `Oferta`, e *no relógio é
+    verbo à mão, na soleira é o mundo a dizer que está na hora*. §5.4 foi escrito
+    contra **dois controlos diferentes** a fazer o mesmo, que é o caso do "abrir
+    a ficha" — esse tinha mesmo duas caras e passou a ter uma.
+  - **O espaço libertado não vai para mais botões.** Com 586 px, uma oferta custa
+    14 % em vez de 55 % e seria tentador subir o teto da soleira no telefone de 1
+    para 2. **Não sobe:** o que defende esta fase é o *15 de 20* de R6, e encher a
+    soleira porque agora cabe é o caminho mais curto para o *point-and-click* que
+    essa medida existe para apanhar.
+  - **`R14` saiu de "Para a pessoa decidir" para "Aprovado".** Sob a ordem de
+    23/09 aquela secção guarda **só o que um commit revertido não conserta**;
+    R14 é revertível, logo é da mesa. *Deixá-lo à espera era pedir licença para
+    aquilo de que fomos dispensados hoje.*
+
+- **o que fechou de passagem, e nenhum estava no alvo:** o `Início` era **botão
+  morto** (testado) e agora navega; **"abrir a ficha" tinha duas caras**; e
+  **R11** — `T.mundo` nasceu em R2 para tirar cinco significados ao âmbar e
+  tinha **zero leitores**; ganhou enfim uma *região* (a metade direita da cinta)
+  em vez de uma lista de usos.
+
+- **R9 não foi herdado, e foi a medida que o impediu.** O primeiro esboço do selo
+  de prazo distinguia-se por três cores: **`mundo`×`amber` = 1,26:1 em visão
+  normal**, *pior que o próprio defeito de R9 que evitava* (1,37). Passou a
+  distinguir-se por **areia → palavra → enchimento → cor**, e a areia — desenhada
+  na geometria do glifo de 12 px — sobrevive aos três daltonismos, ao cinzento e
+  ao tamanho.
+
+- **o Figma, e o achado que é maior que a etapa:** ao pagar a dívida declarada em
+  R1, o `desenho` descobriu que **a biblioteca mostrava a paleta pré-R2** —
+  `bg` a `#0e0c15` quando o código diz `#131120`, **dez valores errados e nove
+  tokens inexistentes**. *A fonte da verdade visual mostrava as cores que o
+  código abandonara no mesmo dia em que R2 as trocou.* **Quem abrisse o Figma
+  desenhava no passado**, e a regra *nenhuma decisão sai sem passar pelo Figma*
+  esteve semanas a apontar para o sítio errado. Corrigido: 24 variáveis com
+  `scopes` e `codeSyntax`.
+
+- **o que ficou escrito em vez de arredondado** (a casa prefere-o a descoberto):
+  - **a página com oferta viva deu 493 e não os 503 da spec** — §4.1 obriga o
+    acampamento a escrever três linhas (verbo · o que cobra · o que devolve) onde
+    o modelo assumia duas. **Não se encolheu o texto para fechar a conta:** o
+    preço escrito é o item que a etapa existe para pagar.
+  - **o orçamento lateral do `desenho` estava 47 px otimista** — o alvo do tempo
+    mede 145 e não 98, e o rótulo `✓ guardado` pede 74 px de folga onde há 67.
+  - **dois defeitos que só o uso pegou** e que o build e as 206 suítes deixaram
+    passar: um **TDZ** no efeito do guardado (tela em branco) e o
+    `⛺ Montar acampamento` a pedir 391 px numa caixa de 326, cortando
+    **exatamente o preço** — o único controlo cujo trabalho é dizê-lo.
+
+- **um vermelho que não é nosso, e fica avisado em vez de consertado:**
+  `testes/teste-sala.mjs` abre com `readFileSync("../src/App.jsx")` — **relativo
+  ao `cwd`**. Falhou uma vez no meio deste ciclo e passou nas duas corridas
+  seguintes sem nada mudar. É território do sistema e **não lhe toquei**; está
+  escrito em `mente/pedidos-ao-sistema.md`.
+
+- **um achado que custa dados e é do sistema:** sair para o menu e reentrar pode
+  **reescrever `nomeCampanha` para "Aventura"** — `largarASala()` limpa o nome
+  antes de `continuar()` o repor, e o autossave apanha a janela. O `oficial` viu
+  o save real mudar de nome e **restaurou-o byte a byte**.
+
+- **o buril desaparecia à noite, e a causa não eram os valores: era haver uma
+  tinta só.** O `aprendiz` mediu a tinta da gravura contra o chão de cada luz e
+  trouxe o número **sem que lho pedissem** — *dia 1,57 · entardecer 1,29 ·
+  madrugada 1,18 · **noite 1,08***. A 1,08 a hachura não existe, e a 1,32
+  contra o céu **a própria silhueta mal se lê** — e a silhueta é a peça. Ele
+  recusou-se a inventar um quinto valor porque a receita da luz é do `desenho`,
+  e fez bem. O `desenho` foi ver e achou que o defeito era estrutural:
+
+  > **Uma tinta escura só não pode marcar ao mesmo tempo um céu claro e um chão
+  > escuro. Não há chão que sirva aos dois.**
+
+  A prova de que **não havia números que servissem** é aritmética e nao de
+  gosto: a legenda em AAA (`ink` >= 7:1) exige um chao com **L <= 0,0775**; uma
+  hachura **escura** (>= 3:1) exige um chao com **L >= 0,1108**. *Nenhum chao
+  serve aos dois.* A saida veio de **estudo citado** — a **gravura de linha
+  branca** de Thomas Bewick (*wood engraving*), em que o bloco e escuro e o
+  buril **tira** materia: **acima do horizonte o buril escurece; abaixo dele,
+  clareia.**
+
+  Daí `talho` — uma tinta **clara e por luz**, para o chão —, ficando `tinta`
+  única para a massa da silhueta contra o céu. *Física antes de gosto.* E os
+  **seis pisos** passaram a morar na própria tabela (`LUZ_DA_CENA.pisos`), para
+  a suíte os ler de volta e **nenhuma luz futura nascer abaixo deles** — o mais
+  apertado tem 11 % de folga.
+
+- **e ao medir a cinta no ar em vez de escolher entre hipóteses, o `desenho`
+  achou um defeito que ninguém tinha visto porque ninguém somara o pior caso:**
+  na **última noite** o selo enche e o alvo do tempo vai a 174 px —
+  `24 + 194 + 174 = 392 num ecrã de 375`. **A cinta transbordava exatamente na
+  noite em que mais importa.** Quem cede é a ficha, e por significado: *o
+  comprimento de um trilho é uma razão, não uma medida — 40 px dizem o que 56
+  dizem; `esta noite` não encolhe sem mentir.* Ficou `trilho 56 / trilhoMinimo
+  40 / fichaMinima 170`, com a catraca `24 + 170 + 174 = 368 <= 375`. **Com 16
+  de enchimento daria 376 e não caberia** — que é, enfim, a razão medida do 12.
+
+- **uma catraca que guardava uma estimativa foi corrigida, e a lição é geral:**
+  `teste-r13-pecas.mjs` travava `folgaMinima >= 67` — *a estimativa do
+  `desenho` promovida a piso*. Passou a guardar o pior caso medido. **Uma
+  catraca que guarda uma estimativa não guarda nada: basta a medida chegar para
+  ela ficar vermelha por ter razão.**
+
+- **a auditoria da lei-mãe, feita por mim e não pelas mãos** (*uma ação, uma
+  forma*): as sete peças novas não duplicam nenhuma forma fechada. Dois casos
+  passaram raspando e ficam escritos, porque o próximo pode não passar:
+  **`IconeMana` é o segundo losango de 12 px** ao lado de `IconeLosango` (a aba
+  `ascensão`) — o `aprendiz` separou-os por núcleo e escreveu o motivo no
+  código (*o contorno lê-se como "escolha"; o núcleo lê-se como "mana"*), e
+  aceito. **Se nascer um terceiro losango, um dos três tem de morrer.** E
+  `SeloDePrazo` não colide com `selo-de-estado.js`, que é dos selos da mecânica
+  de combate — mesma palavra, ações diferentes.
+
+- **a dívida de leitura fica por pagar, e digo porquê:** `arquivar.mjs --medir`
+  mostra **711 KB → 604 KB (15 % menos por ciclo)**, mas move os quatro
+  arquivos de uma vez, e dois são do sistema (`pauta.md`, `diario.md`). Não é
+  meu território e não era o item deste ciclo. *Fica nomeado para quem tiver as
+  duas filas na mão.*
+
+- **o que fica por pagar da etapa B, declarado e não escondido:**
+  - **a textura do céu reprova e não é consertável pela mão que a pinta.** O
+    talho do céu é `tinta` sobre um **gradiente**: em baixo passa (1,86–2,31),
+    em cima é tinta escura sobre céu escuro outra vez (**1,09 na noite**,
+    contra um piso de 1,5) — *a doença anterior, mudada de andar*. E **não se
+    conserta com opacidade**: a 1,0, tinta chapada, a noite chega a 1,18. O
+    limite é a distância entre `tinta` e `ceuAlto`, e **a saída é o céu ganhar
+    um segundo talho**, como o chão ganhou. A catraca guarda o que há hoje.
+  - **o `astro` não tem piso medido** contra os céus novos: entardecer **1,42**,
+    e a olho quase não existe. O `aprendiz` mediu-o e **não pôs asserção** —
+    *inventar um piso que o `desenho` não escreveu era a suíte a legislar sobre
+    forma*, e tem razão.
+  - **a prosa rola por baixo da gravura e a primeira linha fica cortada a
+    meio.** Não é sobreposição (medido) — é uma região que rola sob uma cabeça
+    fixa, e era igual antes contra a borda do papel. *Só que agora a cabeça é
+    uma imagem, e uma linha meio engolida por um desenho lê-se pior do que meio
+    engolida por uma borda lisa.* O remédio é um esbatimento no topo da prosa, e
+    é forma — **ninguém a inventou à pressa**.
+  - **o eixo `Chegada` está passado e inerte.** `RostoDaCena` ainda não o tem; o
+    `oficial` passa-o na chamada com o valor certo e escreveu-o em maiúsculas ao
+    lado, *para não ser descoberto por acidente*. Acende no dia em que o
+    `desenho` o fabricar, sem ninguém refazer a conta.
+
+- **a ambição deste ciclo não foi para a pauta: foi construída.** Sob a ordem de
+  23/09, propor o ambicioso e esperar seria a timidez que ela nomeou. **R13 é a
+  proposta ambiciosa e está no ar:** 334 px trocados por 48 na tela onde se
+  passam 90 % do jogo, e um motor de gravura determinística que o jogo nunca
+  teve. *Mesma semente, mesma cripta, em qualquer máquina* — a primeira lei da
+  casa aplicada, pela primeira vez, a uma imagem.
+
+---
+
 ## 23/09 · v9.282 · **Fase R — a tela principal, e o sistema de decisões** · commit `1e406fe`
 
 *O escrito das mãos fica em `mente/r1-jogo.md` e `mente/r1-desenho.md`; a forma,
