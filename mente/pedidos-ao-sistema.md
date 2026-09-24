@@ -466,7 +466,13 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   *Vai aqui e não na pauta do desenho porque a fiação é do outro lado: a forma
   do botão está certa, o que falta é o que ele faz.*
 
-- [ ] **`Fugir` não tem porta, e custou 15 PV numa rodada** · de: R15 · 23/09
+- [x] **`Fugir` não tem porta, e custou 15 PV numa rodada** · de: R15 · 23/09
+  **Atendido em v9.289 (24/09, pedido pela pessoa: *"Pode arrumar o sistema
+  de fugir"*).** `src/fuga.js` (veredito sem dado: quem golpeia ao sair, quem
+  alcança), a frase e o verbo `Fugir` (Papel=Recuo, ao lado de `esperar`)
+  pela mesma porta `fugirDaLuta`, e o fantasma consertado: os três golpes do
+  R15 eram "de oportunidade" de javalis a 19,5 m — hoje só quem está colado
+  golpeia. Ver `mente/diario.md`, ciclo de 24/09.
   **Jogado hoje, no jogo em produção.** Emboscada na estrada: três
   javalis-de-pedra a 19,5 m, a heroína com 18 PV. Escrevi a frase mais óbvia
   que um jogador pode escrever numa luta que não quer — *"Recuo depressa pela

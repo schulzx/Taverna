@@ -248,8 +248,14 @@ sec("5. as seis regiões estão na tela, e na ordem do turno");
 sec("6. o veredito antes do clique: linha permanente, nunca balão");
 {
   t("a linha é permanente e a altura sai da tabela", /minHeight: G\.veredito/.test(TEL));
-  t("e o texto sai do módulo, que garante que ela nunca cala",
-    /const linha = vereditoDaTela\(\{/.test(TEL));
+  /* RXX: a linha ganhou um SEGUNDO módulo que garante que ela nunca cala.
+     `fugir` não faz pergunta nenhuma quando arma (não há "toque a casa" ou
+     "diga em quem" para ele) — mostra o PREÇO de sair, medido pelo App
+     com `fuga.js` — e por isso não passa por `vereditoDaTela`, que é a
+     máquina das perguntas. `linhaFugaArmada` é a mesma garantia de nunca
+     vazio, para o caminho que `vereditoDaTela` não cobre. */
+  t("e o texto sai do módulo, que garante que ela nunca cala — `vereditoDaTela` no geral, `linhaFugaArmada` na exceção de `fugir`",
+    /vereditoDaTela\(\{/.test(TEL) && /linhaFugaArmada\(p\.linhaDaFuga\)/.test(TEL));
   t("é anunciada a quem ouve a tela", /aria-live="polite"/.test(TEL));
   /* K3: a pergunta SOBREPÕE, nunca EMPURRA. Empurrar move as casas que o
      jogador estava a ler no exato segundo em que ele tem de decidir. */
@@ -275,8 +281,14 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
   /* AS TRÊS SAÍDAS, vivas ao mesmo tempo. Um véu sem saída que não diz que
      tem saída é a armadilha que a peça `Véu sem retorno` existe para
      impedir — e aqui ela estaria montada por acidente. */
-  t("saída 1 — tocar o verbo outra vez desarma",
-    /if \(armado === v\.id\) \{ setArmado\(""\);/.test(TEL));
+  /* RXX: a saída 1 ganhou uma exceção, e é consciente. `fugir` NÃO desarma
+     no segundo toque no mesmo verbo — EXECUTA. É a confirmação de "o
+     veredito antes do clique" para uma ação irreversível: o preço já
+     apareceu no primeiro toque, e desarmar no segundo faria o botão
+     prometer uma coisa e fazer outra. O desarme geral continua ali para
+     todo gesto — a exceção está escrita ao lado dele, nunca escondida. */
+  t("saída 1 — tocar o verbo outra vez desarma, exceto `fugir` — que confirma e executa",
+    /if \(armado === v\.id\) \{\s*if \(v\.id === "fugir"\) \{ setArmado\(""\); if \(p\.aoFugir\) p\.aoFugir\(\); return; \}\s*setArmado\(""\); if \(p\.aoEscrever\) p\.aoEscrever\(""\);/.test(TEL));
   t("saída 2 — `Esc` desarma", /e\.key === "Escape"/.test(TEL) && /removeEventListener\("keydown"/.test(TEL));
   /* a terceira saída é a ÚNICA que existe no telefone, onde não há `Esc` —
      e mora na janela do campo, nunca na casa: a casa fora do alcance não

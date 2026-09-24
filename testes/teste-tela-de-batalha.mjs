@@ -161,8 +161,12 @@ sec("4. a faixa da vez: quem caiu sai, o herói fica na ponta, e o rótulo é a 
 sec("5. a fileira lê a tabela do `jogo`, e não fabrica a segunda");
 {
   const v = fileiraDeVerbos();
-  t("são os seis de `VERBOS_DE_COMBATE` mais o recuo",
-    v.length === VERBOS_DE_COMBATE.length + 1 && v.length === 7);
+  /* RXX: a fuga chegou como o SEGUNDO Papel=Recuo — mais um verbo, não uma
+     troca. A conta que era "seis mais um" passa a "seis mais dois", e o
+     total sobe de 7 para 8; o motivo de mudar a asserção em vez de
+     apagá-la é este comentário. */
+  t("são os seis de `VERBOS_DE_COMBATE` mais os dois recuos (`esperar`, `fugir`)",
+    v.length === VERBOS_DE_COMBATE.length + 2 && v.length === 8);
   t("e os rótulos são os da tabela, na ordem da tabela",
     v.slice(0, 6).map((x) => x.id).join(",") === VERBOS_DE_COMBATE.map((x) => x.id).join(","));
   /* NA TELA DA BATALHA NÃO HÁ `Papel=Chamada` NENHUM — decisão do
@@ -172,18 +176,27 @@ sec("5. a fileira lê a tabela do `jogo`, e não fabrica a segunda");
   t("nenhum verbo é Papel=Chamada", !v.some((x) => x.papel === "chamada"));
   t("e `Atacar` é o primeiro entre iguais, sozinho",
     v.filter((x) => x.primeiro).map((x) => x.id).join(",") === "atacar");
-  /* `esperar` do outro lado da goteira, que é a posição do Recuo em toda a casa */
-  t("`esperar` é o único Papel=Recuo, e é o último",
-    v.filter((x) => x.papel === "recuo").length === 1 && v[v.length - 1].id === "esperar");
+  /* `esperar` e `fugir` do outro lado da goteira, que é a posição do Recuo
+     em toda a casa — dois, agora, e nesta ordem: `fugir` é o mais novo e
+     fica por último, do mesmo jeito que `esperar` ficou quando chegou. */
+  t("`esperar` e `fugir` são os dois Papel=Recuo, nesta ordem, e `fugir` é o último",
+    v.filter((x) => x.papel === "recuo").map((x) => x.id).join(",") === "esperar,fugir"
+    && v[v.length - 1].id === "fugir");
 
   /* A LEI DE W1 EM DADO: o segundo toque nunca é uma confirmação — é
      sempre a resposta a uma pergunta que o jogo não pode responder
      sozinho, e são duas: EM QUEM e PARA ONDE. */
   t("`Atacar` e `esperar` resolvem num toque; os outros armam porque têm pergunta",
     v.filter((x) => x.toques === 1).map((x) => x.id).sort().join(",") === "atacar,esperar");
-  t("e todo verbo que arma tem a sua pergunta escrita",
-    v.filter((x) => x.toques === 2).every((x) => PEDIDO_DO_VERBO[x.id]),
-    v.filter((x) => x.toques === 2 && !PEDIDO_DO_VERBO[x.id]).map((x) => x.id).join(","));
+  /* `fugir` ARMA (toques: 2) como os gestos, mas o segundo toque não é uma
+     pergunta que a tela devolve ao jogador — é a confirmação de sair da
+     luta, a exceção consciente a W1 que `painel-batalha.jsx` documenta
+     onde o toque é tratado. Por isso ele fica de fora desta conta: cobrar
+     dele uma entrada em `PEDIDO_DO_VERBO` obrigaria a tela a inventar uma
+     pergunta que não existe. */
+  t("e todo verbo que arma tem a sua pergunta escrita, exceto `fugir` — o preço já está na linha, como em `Atacar`",
+    v.filter((x) => x.toques === 2 && x.id !== "fugir").every((x) => PEDIDO_DO_VERBO[x.id]),
+    v.filter((x) => x.toques === 2 && x.id !== "fugir" && !PEDIDO_DO_VERBO[x.id]).map((x) => x.id).join(","));
 
   /* A DÍVIDA FICA ESCRITA, porque dívida calada é mentira: não há porta de
      passar a vez no motor, e o botão não inventa mecânica nenhuma. */

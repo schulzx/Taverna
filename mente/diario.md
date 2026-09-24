@@ -15,6 +15,88 @@ Formato:
 ```
 
 ---
+## 24/09 16:50 · v9.289 · o sistema de fugir (item da pessoa, pedido #33) · commit `HASH-A-SEGUIR`
+
+- **por que este ciclo andou com a fila parada:** a pessoa escreveu hoje
+  *"Pode arrumar o sistema de fugir."* É a exceção que a ordem de 23/09 prevê
+  (é do tema — o jogador sente, e sente a 3 PV — e foi pedida). Nenhum outro
+  item de `mente/pauta.md` foi tocado. Mecânica que muda o que o jogador vive
+  (seria `pesado`), autorizada pela frase.
+- **estado inicial:** árvore limpa, 209/209 suítes, 15/15 varredores. Sem
+  pausa, sem trava do sistema. A trava do desenho (R21, o `regente`) estava
+  viva — renovada às 16:55 — e o bastão do `App.jsx`, livre: tomei-o às 17:09
+  e **devolvi-o às 18:01**, com a fiação fechada.
+- **o que o R15 escondia, medido e não suposto:** os três golpes que levaram a
+  heroína de 18 a 3 PV (`20/14/17 vs 12`, 5 cada) **não foram a rodada dos
+  javalis — foram golpes "de oportunidade" fantasmas.** `App.jsx:14260` cobrava
+  `oportunidadesContraOJogador` com a lista INTEIRA de inimigos de pé, a
+  qualquer distância. Javalis-de-pedra são corpo a corpo (1,5 m) e andam 9 m
+  (`deslocamentoDeCriatura`): a 19,5 m, na vez deles, só chegavam a 10,5 m e
+  não podiam bater. O outro sítio que faz a mesma conta (o Mover, `:15472`) já
+  passava só os `colados`. **Antes: 3 golpes de quem nem a alcançava. Agora: 0
+  — só quem está colado golpeia ao sair.**
+- **backend:** `src/fuga.js` — `vereditoDaFuga` (sem dado: é uma corrida de uma
+  rodada; quem está colado golpeia ao sair; o herói cobre 2× o passo correndo
+  ou 1× de guarda erguida, sem golpe; cada inimigo persegue a 2× o passo dele,
+  cortado pela condição — `PERSEGUICAO_POR_CONDICAO`: caído e lento à metade,
+  agarrado/paralisado/atordoado/amedrontado parados; alcança se a distância
+  final ≤ o alcance dele), `quemGolpeiaAoSair`, `ehFuga`, `linhaDaFuga` (≤ 54),
+  `notaDaFuga`. `combate.js` exporta `pedeDesengajar`, e `ehRetirada` passa a
+  usá-la (a lista das frases de cuidado continua uma só).
+- **testes:** `testes/teste-fuga.mjs`, 82 provas, com o R15 rejogado em número
+  como primeiro bloco.
+- **frontend:** uma porta só, `fugirDaLuta`, para a frase e para o botão (lei de
+  X2). O verbo `Fugir` na fileira da batalha, `Papel=Recuo` ao lado de
+  `esperar` (a mesma peça `Verbo` — uma ação, uma forma). O fantasma
+  consertado na retirada. `bumpCont("fugas")`: o contador que o antagonista lê
+  desde sempre (*"que eu corro quando aperta"*) e **ninguém escrevia** — um
+  sinal dormente que acordou. Suítes de endereço (`acoes-do-jogador`) e da tela
+  re-medidas, cada asserção movida com o porquê ao lado.
+- **decisões médias, com o motivo:**
+  - **O veredito não rola dado.** Porque só assim ele pode ser mostrado inteiro
+    antes do clique — uma fuga com d20 escondido só poderia prometer "talvez".
+    Determinismo por semente cumprido pela raiz: não há sorte na decisão.
+    Os golpes de oportunidade rolam como todo ataque do combate já rola.
+  - **Fuga que o sistema já sabe que falha não gasta o turno.** A frase
+    digitada recebe a linha do veredito ("Bandido te alcança — não dá para
+    fugir.") e a rodada segue intacta; o botão fica impedido com a mesma razão.
+    Tentar o que é certo falhar seria um turno roubado — o defeito exato do R15.
+  - **Fugir arma e o segundo toque executa** — exceção consciente à regra de W1
+    ("o segundo toque nunca é confirmação"), porque fugir é irreversível e a
+    lei da casa "o veredito antes do clique" manda. O primeiro toque mostra o
+    preço; a linha não diz "para desistir" no botão que vai fazer o oposto.
+  - **Escapar acaba a luta sem espólio, sem XP, sem morte registrada**: os
+    inimigos seguem vivos no mundo, e o Narrador é proibido de os fazer
+    alcançar o herói nessa cena.
+  - **"fuja" saiu das frases de fuga** (tirei eu, uma linha): "grito para Elma:
+    fuja!" encerraria a luta do herói por uma fala dele. Ordem dada a outro
+    ("mando/grito/digo ... fugir") é veto. O portão morde só o necessário.
+  - **Formato de save: intocado.** `contadores` já era um objeto aberto.
+- **a regra, jogada em número (a mesa que ela desenha):** colado a um bicho tão
+  rápido quanto você, nem correndo (1,5 + 18 − 18 = 1,5 ≤ 1,5). Derrubá-lo antes
+  (caído persegue à metade) abre a fuga, pagando o golpe dele. Colado a um
+  zumbi (6 m): foge correndo, com um golpe. **Empurrar e Derrubar ganharam uma
+  razão de ser que não é dano.**
+- **prova:** `bash mente/so-o-meu.sh` (HEAD + os meus 13 arquivos) → 210/210
+  suítes, 15/15 varredores; `npm run build` limpo na árvore inteira. Na árvore
+  cheia o desenho (R21) tem trabalho em voo — `estilo.js`, `ui.jsx`,
+  `painel-alforje.jsx`, `marca-da-porta.js`, `formas.md`, `pauta-desenho.md` —
+  e o `frontend` viu vermelho **dele** a meio (uma crase em `SUPERFICIES_CSS`,
+  `marca-da-porta.js` sem leitor); não toquei, não esperei.
+- **o que ficou, escrito para não virar surpresa:**
+  - **não joguei a fuga no navegador.** O `frontend` abriu o app (sem erro no
+    console) mas não montou um combate posicionado até à frase. A prova é a
+    suíte e o R15 rejogado em Node. Um `jogo` que jogue a próxima emboscada
+    fecha isto.
+  - **atiradores perseguem como corpo a corpo:** a 20 m de um arqueiro o herói
+    "escapa limpo" — no mundo, levaria flechas nas costas. Consertar pede
+    decidir se fugir de arqueiros deve ser quase impossível; ficou para a mesa.
+  - **a corrida é em uma dimensão:** ignora paredes e inimigos dos dois lados;
+    o herói encurralado numa masmorra lê o mesmo veredito do campo aberto.
+  - **o passo já gasto na rodada é ignorado:** a fuga usa o passo inteiro.
+  - **a fila do sistema continua parada**; nenhum item novo aberto.
+
+---
 ## 23/09 · v9.281 · decisão de sequenciamento, sem ciclo, sem commit
 
 - **não é um ciclo — é uma pausa da automação, com o motivo escrito**, porque

@@ -5,6 +5,8 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair } from "./fuga.js";
+import { VERBO_DE_FUGA } from "./tela-de-batalha.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
@@ -14249,6 +14251,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        chamadores resolvem. `false` quer dizer "não era golpe": o turno segue
        para as portas de baixo, como sempre seguiu. */
     if (aplicarGolpeDoJogador(acao, fichaViva() || personagem)) return;
+    /* A FUGA — a pergunta vem ANTES da retirada, porque toda frase de
+       fuga TAMBEM casa `ehRetirada`: quem diz "fujo dos javalis" nao
+       quer so recuar dois passos, quer sair da luta de vez.
+       `fugirDaLuta` devolve `true` sempre que DECIDIU (escapou, ou nao
+       escapou e por isso nao gastou o turno); `false` so quando algo
+       dela mesma estourou, e ai o fluxo de sempre continua como se a
+       fuga nao tivesse sido dita — nunca trava a cena por causa dela. */
+    if (combateRef.current && ehFuga(acao) && fugirDaLuta(acao, extraTempo)) return;
     pushMsgs([{ autor: "jogador", texto: acao }]);
     /* ---- SAIR DE PERTO CUSTA (v9.14) ----
        Recuar era de graça, então recuar não era decisão. Agora cada inimigo
@@ -14257,7 +14267,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        costas") evita, que é exatamente a ação de Desengajar do 5e. */
     let persG = personagem, notaOp = "";
     if (combateRef.current && ehRetirada(acao)) {
-      const ops = oportunidadesContraOJogador(combateRef.current.inimigos, persG, grauDe(divindadeRef.current));
+      /* O FANTASMA DO R15: golpe de oportunidade cobrado de TODO inimigo
+         de pe, sem olhar distancia — tres javalis corpo a corpo a 19,5 m
+         bateram "de oportunidade" sem nunca chegar perto. Quem golpeia ao
+         sair e quem esta COLADO, medido pela posicao do heroi na grade do
+         combate (a mesma conta que `adjacentes` ja faz para o Mover). */
+      const golpeiamRetirada = quemGolpeiaAoSair(combateRef.current.heroi, combateRef.current.inimigos, { rodada: combateRef.current.rodada });
+      const ops = oportunidadesContraOJogador(golpeiamRetirada, persG, grauDe(divindadeRef.current));
       let dano = 0;
       const linhas = [];
       for (const o of ops) {
@@ -14459,6 +14475,139 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         : " Nada de aproveitável ficou no chão — não invente achados."}`;
     }
     return personagemRef.current;
+  };
+
+  /* ---------------- OS GOLPES DE QUEM FICA PARA TRAS ----------------
+     O mesmo tratamento de "sair de perto custa" (a retirada por frase,
+     logo acima) serve a fuga que encerra a luta pela porta nova: rola a
+     oportunidade de cada inimigo que golpeia, loga o dado, passa pelo
+     abrigo e aplica o dano — uma funcao so, para as duas portas nunca
+     divergirem no que sair de perto custa. */
+  const golpesAoSair = (inimigosQueGolpeiam, pers) => {
+    const ops = oportunidadesContraOJogador(inimigosQueGolpeiam, pers, grauDe(divindadeRef.current));
+    let dano = 0;
+    const linhas = [];
+    for (const o of ops) {
+      logDadoCombate(resumoDoAtaque(o.r));
+      if (o.r.dano > 0) dano += o.r.dano;
+      linhas.push({ autor: "sistema", texto: o.r.dano > 0
+        ? `⚡ Oportunidade — ${o.inimigo} te acerta ao você sair: ${o.r.dano} de dano`
+        : `⚡ Oportunidade — ${o.inimigo} tenta te alcançar e erra` });
+    }
+    let novoPers = pers;
+    if (dano > 0) {
+      const abr = passarPeloAbrigo(novoPers, dano);
+      if (abr.linha) { novoPers = abr.pers; dano = abr.dano; linhas.push({ autor: "sistema", texto: abr.linha }); }
+      novoPers = { ...novoPers, vida: Math.max(0, (novoPers.vida || 0) - dano) };
+    }
+    return { pers: novoPers, dano, linhas, ops };
+  };
+
+  /* ---------------- FUGIR DA LUTA ----------------
+     O jogador ganha a porta que o inimigo ferido ja tinha (`querFugir`,
+     acima): sair da luta de verdade, nao so recuar um passo. O veredito
+     e de `fuga.js` — aritmetica de distancia e passo, sem dado nenhum —
+     e por isso pode ser mostrado ANTES do clique (a linha da tela da
+     batalha) e decidido aqui sem surpresa: o que `vereditoDaFuga` disse
+     que ia acontecer e exatamente o que acontece.
+
+     Chamada pelos DOIS caminhos — a frase digitada (`agirInterno`) e o
+     verbo `Fugir` do painel (`acionarFuga`, abaixo) — como todo par
+     digitado/botao desta casa desde X2: os dois entram aqui, byte por
+     byte, e nunca divergem.
+
+     Devolve `true` quando DECIDIU (escapou, ou nao escapou e por isso
+     nao gastou o turno); `false` so se algo dela estourou. */
+  const fugirDaLuta = (acao, extraTempo = "") => {
+    try {
+      const comb = combateRef.current;
+      if (!comb) return false;
+      let pers = fichaViva() || personagem;
+      const passo = passoComSelecao(pers, habsSel, {
+        dobrar: dobraMovimento(pers),
+        ignoraDificil: ignoraTerrenoDificil(pers) || ignoraDificilPorTraco(pers),
+      });
+      const v = vereditoDaFuga({
+        heroi: comb.heroi ? { ...comb.heroi, nome: pers.nome } : null, inimigos: comb.inimigos, /* com o nome: a nota ao Narrador diz quem fugiu */
+        passoHeroiM: passo.metros, frase: acao, rodada: comb.rodada,
+      });
+      pushMsgs([{ autor: "jogador", texto: acao }]);
+      /* NAO ESCAPA: o veredito e deterministico, e tentar uma fuga que o
+         sistema ja sabe que falha e um turno roubado. O jogador descobre
+         o preco ANTES de pagar — nada vai ao Narrador, e a rodada segue
+         exatamente como estava. */
+      if (!v.escapa) {
+        pushMsgs([{ autor: "sistema", texto: `🏃 ${linhaDaFuga(v)}` }]);
+        return true;
+      }
+      const persAntesDosGolpes = pers;
+      const golpeiam = (comb.inimigos || []).filter((e) => e && (v.golpes || []).includes(e.nome));
+      const resultado = golpeiam.length ? golpesAoSair(golpeiam, pers) : null;
+      if (resultado) {
+        pers = resultado.pers;
+        if (resultado.linhas.length) {
+          pushMsgs(resultado.linhas);
+          if (resultado.dano > 0) { danoJaAplicadoRef.current = true; setPersonagem(pers); }
+          /* o abrigo pode ter comido a batida inteira: a ficha ja mudou
+             (o efeito se gastou) e precisa ser publicada mesmo sem PV
+             nenhum a tirar */
+          else if (pers !== persAntesDosGolpes) setPersonagem(pers);
+        }
+      }
+      const notaGolpes = resultado && resultado.linhas.length
+        ? ` [ATAQUES DE OPORTUNIDADE — ROLADOS PELO SISTEMA] Ao fugir, dei as costas: ${resultado.ops.map((o) => `${o.inimigo} ${o.r.dano > 0 ? `acertou (${o.r.dano})` : "errou"}`).join("; ")}. Levei ${resultado.dano} de dano no total e já está aplicado — NÃO recalcule.`
+        : "";
+      /* OS GOLPES PODEM DERRUBAR O HEROI: a fuga nao acontece — segue o
+         fluxo normal de hoje, com o revide da rodada e tudo. Um golpe que
+         zera o PV nao e o preco de sair da luta, e a luta continuando. */
+      if ((pers.vida || 0) <= 0) {
+        fecharMeuTurno(pers, (rvG) => {
+          enviar(`${acao}${notaGolpes}${rvG.texto}${extraTempo}`, rvG.pers);
+        });
+        return true;
+      }
+      /* ESCAPOU: a luta ACABA sem espolio — os inimigos deixados para tras
+         seguem VIVOS no mundo. A limpeza e a mesma de `fecharSeTodosCairam`
+         (forma, invocacoes, o combate em si), SEM registrar morte, SEM
+         gerar espolio, SEM XP e SEM etapa de missao nenhuma — ninguem
+         morreu aqui. */
+      combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0;
+      let base0 = pers;
+      personagemRef.current = base0;
+      if (estaEmForma(base0)) {
+        const volta = desfazerForma(base0, "luta");
+        base0 = volta.pers;
+        personagemRef.current = base0;
+        pushMsgs([{ autor: "sistema", texto: volta.linha }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${volta.nota}`;
+      }
+      {
+        const disp = dispensarTodas(base0);
+        if (disp.sumiram.length) {
+          base0 = disp.pers;
+          personagemRef.current = base0;
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`;
+        }
+      }
+      bumpCont("fugas");
+      setPersonagem(base0);
+      salvar({ personagem: base0 });
+      pushMsgs([{ autor: "sistema", texto: `🏃 Você escapa — ${(v.deixados || []).join(", ") || "os inimigos"} ficam para trás.` }]);
+      enviar(`${acao}${notaGolpes} ${notaDaFuga(v)}${extraTempo}`, base0);
+      return true;
+    } catch (e) { calou("fugir da luta", e); return false; }
+  };
+
+  /* A PORTA DO BOTAO: mesma trava de `declararGolpe` (nao roda por cima
+     de um turno que o motor ja resolveu e espera narracao), mesma frase
+     canonica de `VERBO_DE_FUGA` (tela-de-batalha.js) — a fileira dos
+     verbos e `ehFuga` (fuga.js) leem a MESMA tabela, entao o botao nunca
+     pode virar um segundo caminho que a frase digitada nao reconhece. */
+  const acionarFuga = () => {
+    try {
+      if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
+      fugirDaLuta(VERBO_DE_FUGA.frase);
+    } catch (e) { calou("fugir na batalha", e); }
   };
 
   /* ---------------- O REVIDE (v9.13) ----------------
@@ -22327,6 +22476,17 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     try { return emBatalha && combate ? vereditoDoGolpeAgora() : null; } catch (e) { calou("o veredito da batalha", e); return null; }
   })();
 
+  /* O MESMO PADRAO, PARA A FUGA: medido uma vez por render, sem frase
+     nenhuma forcando o modo — o botao deixa o motor escolher o melhor
+     jeito de sair, exatamente como o veredito que `fugirDaLuta` vai
+     recalcular no clique (mesma entrada, mesma saida — nunca surpresa). */
+  const vFugaDaBatalha = (() => {
+    try {
+      if (!emBatalha || !combate) return null;
+      return vereditoDaFuga({ heroi: combate.heroi, inimigos: combate.inimigos, passoHeroiM: passoDaBatalha.passoTotal, rodada: combate.rodada });
+    } catch (e) { calou("o veredito da fuga", e); return null; }
+  })();
+
   /* As três peças que a tela recebe montadas: a gaveta das habilidades, a
      janela da reação (que nasce na linha do veredito, K3) e o d20. Vêm
      como nós e não como props soltas porque a FIAÇÃO é do App e a FORMA é
@@ -22385,6 +22545,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       aoAgir={(txt) => { try { agir(txt); } catch (e) { calou("agir na batalha", e); } }}
       aoAtacar={() => { try { declararGolpe(null); } catch (e) { calou("atacar na batalha", e); } }}
       aoMover={moverPara}
+      aoFugir={() => { try { acionarFuga(); } catch (e) { calou("fugir na batalha", e); } }}
       nGolpes={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
       alvosGolpe={alvosGolpe}
       aoDeclararAlvo={(i, nome) => { const a = [...alvosGolpeRef.current]; a[i] = nome; alvosGolpeRef.current = a; setAlvosGolpe([...a]); }}
@@ -22393,6 +22554,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       veredito={vdDaBatalha}
       linhaDoGolpe={vdDaBatalha ? linhaDoGolpe(vdDaBatalha) : ""}
       recusaDoGolpe={vdDaBatalha ? recusaDoGolpe(vdDaBatalha) : ""}
+      podeFugir={!!(vFugaDaBatalha && vFugaDaBatalha.escapa)}
+      linhaDaFuga={vFugaDaBatalha ? linhaDaFuga(vFugaDaBatalha) : ""}
       previsao={previsaoDeArea}
       mira={mira} aoMirar={definirMira} alcanceMira={alcanceDaHabilidade}
       acaoBonus={temAcaoBonus(personagem)}

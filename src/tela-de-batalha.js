@@ -187,6 +187,30 @@ export const VERBO_DE_ESPERA = {
   porqueSemMotor: "não há porta de passar a vez em turno.js — pedido 5.1 de W1, aberto em mente/pedidos-ao-sistema.md",
 };
 
+/* VERBO_DE_FUGA — o jogador ganha a porta que o inimigo ferido já tinha
+   (`querFugir`, combate.js): sair da luta de verdade, não só recuar um
+   passo. Vive do mesmo lado da goteira que `esperar` — os dois são "sair
+   do turno sem golpe" — mas diverge nele numa coisa: ARMA (`toques: 2`),
+   porque o preço de fugir (quem te alcança, quem te golpeia ao sair) só
+   se sabe olhando a mesa AGORA, e é isso que o primeiro toque mostra.
+
+   O SEGUNDO TOQUE NÃO É UM "DESISTO" — é a confirmação de sair da luta,
+   a exceção consciente à lei de W1 ("o segundo toque nunca é uma
+   confirmação"): aqui não há pergunta nenhuma para responder, só um
+   preço para aceitar, e "o veredito antes do clique" manda que ele
+   apareça antes do clique que o paga. `painel-batalha.jsx` é quem trata
+   esse segundo toque como confirma-e-executa, não esta tabela. */
+export const VERBO_DE_FUGA = {
+  id: "fugir",
+  rotulo: "Fugir",
+  papel: "recuo",
+  primeiro: false,
+  toques: 2,
+  frase: "Viro as costas e fujo da luta, correndo o quanto posso",
+  motor: "fuga.js vereditoDaFuga → App fugirDaLuta",
+  porqueSemMotor: "",
+};
+
 /* NA TELA DA BATALHA NÃO HÁ `Papel=Chamada` NENHUM — e a razão é a peça,
    não o gosto. `Chamada` já é âmbar cheio EM REPOUSO: no par comparável do
    Figma, o `ATACAR` em repouso e o armado eram a mesma caixa amarela,
@@ -210,7 +234,7 @@ export function fileiraDeVerbos() {
     motor: v.motor || null,
     porqueSemMotor: v.porqueSemMotor || "",
   }));
-  return [...gestos, VERBO_DE_ESPERA];
+  return [...gestos, VERBO_DE_ESPERA, VERBO_DE_FUGA];
 }
 
 /* ============================================================
@@ -235,8 +259,23 @@ export const PEDIDO_DO_VERBO = {
   derrubar: "diga em quem",
   saltar:   "diga sobre o quê",
   esperar:  "",   /* resolve num toque: quem espera não tem alvo */
+  fugir:    "",   /* o preço já está na linha — mas a linha É outra, ver `linhaFugaArmada` */
 };
 export const SAIDA_DO_ARMADO = "toque o verbo outra vez para desistir";
+
+/* A SAÍDA DE `Fugir`, e por que ela não é `SAIDA_DO_ARMADO`: tocar o
+   verbo outra vez não desiste, EXECUTA — e dizer "para desistir" bem no
+   botão que vai fazer o oposto seria o sistema mentir sobre o próprio
+   botão. `linhaFugaArmada` cola esta saída na linha do veredito quando
+   cabe no teto de 54 (TETO_DA_RECUSA); quando não cabe, a linha nua
+   basta — o botão amarelo já diz que é dele. */
+export const SAIDA_DA_FUGA = "toque de novo para fugir";
+export function linhaFugaArmada(linha) {
+  const base = String(linha || "").trim();
+  if (!base) return SAIDA_DA_FUGA;
+  const comSaida = `${base} · ${SAIDA_DA_FUGA}`;
+  return comSaida.length <= TETO_DA_RECUSA ? comSaida : base;
+}
 
 /* ============================================================
    O VERBO QUE NÃO PODE ARMAR (E4) — e a linha que E3 elogiou era a
@@ -300,6 +339,7 @@ export function impedimentosDaFileira(estado) {
       : e.bloqueado ? RECUSAS_DO_VERBO.fimDaLuta
       : e.algumAoAlcance === false ? RECUSAS_DO_VERBO.semAlcance : "",
     mover: razaoDoPasso,
+    fugir: fim ? RECUSAS_DO_VERBO.fimDaLuta : (e.razaoDaFuga ? String(e.razaoDaFuga) : ""),
   };
 }
 

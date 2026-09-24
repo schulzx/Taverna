@@ -865,12 +865,18 @@ sec("14. o abrigo está ligado ao jogo — a porta única e os sete sítios (P3)
   t("a porta única cala em vez de custar o turno, e devolve o que entrou",
     /catch \(e\) \{ calou\("abrigo", e\); return \{ pers: quem, dano, linha: "" \}; \}/.test(APP));
 
-  /* A CONTAGEM. Sete sítios, e o número é a lei: herói na rodada,
-     companheiro na rodada, `sofrerNaPele`, as duas oportunidades, o fogo
-     amigo e a armadilha. Se um sumir, fica vermelho; se nascer um oitavo
-     sem passar por aqui, também — e é esse o ponto, porque um sítio novo
-     que chame `absorverDano` direto perde o try/catch e o nome do dono. */
-  const SITIOS_DO_ABRIGO = 7;
+  /* A CONTAGEM. Oito sítios, e o número é a lei: herói na rodada,
+     companheiro na rodada, `sofrerNaPele`, as TRÊS oportunidades (a
+     retirada por frase, o Mover que sai de perto, e agora `golpesAoSair`
+     — o helper que a fuga usa para o mesmo preço), o fogo amigo e a
+     armadilha. Se um sumir, fica vermelho; se nascer um nono sem passar
+     por aqui, também — e é esse o ponto, porque um sítio novo que chame
+     `absorverDano` direto perde o try/catch e o nome do dono.
+
+     A FUGA (frontend) somou o oitavo: `golpesAoSair` (App.jsx) é o
+     tratamento de "sair de perto custa" reaproveitado para quem escapa
+     da luta pela porta nova — mesma conta, mesma porta única. */
+  const SITIOS_DO_ABRIGO = 8;
   const quantos = (APP.match(/passarPeloAbrigo\(/g) || []).length;
   t(`a porta única é usada em exatamente ${SITIOS_DO_ABRIGO} sítios`, quantos === SITIOS_DO_ABRIGO, `achou ${quantos}`);
   t("e nenhum sítio do App chama o módulo por fora da porta",

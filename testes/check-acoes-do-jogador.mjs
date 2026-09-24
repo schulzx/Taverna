@@ -309,10 +309,16 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 7928) {
-    falha(`pushMsgs saiu de src/App.jsx:7928 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 7930) {
+    falha(`pushMsgs saiu de src/App.jsx:7930 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:7928, como o mapa de X3b diz");   /* R13: 7258 -> 7724 (etapa A) -> 7835 (etapa B). É a sétima e a oitava cobrança desta catraca por um deslocamento que não é defeito nenhum: as peças que R13 acrescentou nascem ao NÍVEL DO MÓDULO, como a lei obriga (componente dentro do render mata o foco do input), e empurram para baixo tudo o que vem depois. O item da pauta que propõe trocar número por âncora de alcance ganha aqui mais duas.
+  } else ok("pushMsgs segue em src/App.jsx:7930, como o mapa de X3b diz");   /* A FUGA (frontend): 7928 -> 7930. As duas linhas são o import novo
+     no topo do arquivo (`fuga.js` e o rótulo do verbo Fugir, de
+     `tela-de-batalha.js`) — e tudo abaixo andou junto. O funil não se
+     moveu por vontade própria nem mudou de forma: endereço re-medido,
+     asserção intacta. É a DÉCIMA cobrança desta catraca por um
+     deslocamento que não é defeito nenhum.
+     R13: 7258 -> 7724 (etapa A) -> 7835 (etapa B). É a sétima e a oitava cobrança desta catraca por um deslocamento que não é defeito nenhum: as peças que R13 acrescentou nascem ao NÍVEL DO MÓDULO, como a lei obriga (componente dentro do render mata o foco do input), e empurram para baixo tudo o que vem depois. O item da pauta que propõe trocar número por âncora de alcance ganha aqui mais duas.
      R17: 7835 -> 7928. É a NONA cobrança: a lápide de `VinhetaDaCena`/
      `IconeBalao` e a fiação nova do veredito do cartaz em `PainelMural`
      nascem acima deste ponto, e tudo abaixo andou +93. Nenhuma forma

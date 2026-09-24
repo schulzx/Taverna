@@ -53,6 +53,7 @@ import { tituloDe } from "./divindades.js";
 import {
   faixaDaVez, rotuloDaVez, fileiraDeVerbos, vereditoDaTela,
   ultimasLinhasDoMestre, NARRACAO, PEDIDO_DO_VERBO, impedimentosDaFileira,
+  linhaFugaArmada,
 } from "./tela-de-batalha.js";
 
 /* ---------------- ONDE A MÃO TAPA O TABULEIRO ----------------
@@ -249,7 +250,11 @@ function Verbo({ v, armado, impedido, aoTocar }) {
 
 function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, gavetaAberta, aoAbrirGaveta, bolsaAberta, aoAbrirBolsa, nBolsa }) {
   const gestos = verbos.filter((v) => v.papel !== "recuo");
-  const recuo = verbos.find((v) => v.papel === "recuo");
+  /* MAIS DE UM RECUO PODE VIVER AQUI: `esperar` e `fugir` são os dois
+     "sair do turno sem golpe" — era `.find` quando só `esperar` existia,
+     e um `.find` teria engolido um dos dois em silêncio no dia em que o
+     segundo chegasse. */
+  const recuos = verbos.filter((v) => v.papel === "recuo");
   return (
     <div className="shrink-0 flex items-stretch gap-2 flex-wrap" style={{ minHeight: G.verbos }}>
       {gestos.map((v) => (
@@ -270,10 +275,12 @@ function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, gavetaAberta, aoA
           color: bolsaAberta ? T.onSecond : T.violetSoft,
           border: `1px solid ${T.violet}`,
         }}>◆{nBolsa > 0 ? ` ${nBolsa}` : ""}</button>
-      {/* a goteira, e depois o recuo — que é a posição do Recuo em toda a casa */}
-      {recuo && (
-        <span className="flex items-stretch" style={{ paddingLeft: G.goteira }}>
-          <Verbo v={recuo} armado={false} impedido={!!impedidos[recuo.id]} aoTocar={() => aoTocar(recuo)} />
+      {/* a goteira, e depois os recuos — a posição do Recuo em toda a casa */}
+      {recuos.length > 0 && (
+        <span className="flex items-stretch gap-2" style={{ paddingLeft: G.goteira }}>
+          {recuos.map((v) => (
+            <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} />
+          ))}
         </span>
       )}
     </div>
@@ -693,9 +700,19 @@ export function TelaDeBatalha(props) {
     podeAndar: podeDarUmPasso(p.passoM, p.passoTotal),
     casasDoPasso,
     fim: !!p.fim,
+    razaoDaFuga: p.podeFugir ? "" : (p.linhaDaFuga || ""),
   });
 
-  const linha = vereditoDaTela({
+  /* FUGIR NÃO PASSA PELA LINHA GENÉRICA DO ARMADO. Os outros verbos que
+     armam fazem uma PERGUNTA ("toque a casa", "diga em quem"), e a saída
+     universal é "toque outra vez para desistir". Fugir não pergunta nada
+     — mostra o PREÇO de sair (`linhaDaFuga`, já medido pelo App com
+     `fuga.js`), e tocar de novo não desiste, EXECUTA. Misturar as duas
+     seria ou esconder o preço atrás de uma pergunta que não existe, ou
+     dizer "para desistir" no botão que vai fazer o oposto. */
+  const linha = armado === "fugir"
+    ? linhaFugaArmada(p.linhaDaFuga)
+    : vereditoDaTela({
     armado,
     recusaDoVerbo: recusado,
     linha: !armado && vd && vd.algumAoAlcance ? p.linhaDoGolpe : "",
@@ -719,7 +736,11 @@ export function TelaDeBatalha(props) {
     if (razao) { setArmado(""); setRecusado(razao); return; }
     setRecusado("");
     if (v.id === "atacar") { setArmado(""); if (p.aoAtacar) p.aoAtacar(); return; }
-    if (armado === v.id) { setArmado(""); if (p.aoEscrever) p.aoEscrever(""); return; }
+    if (armado === v.id) {
+      if (v.id === "fugir") { setArmado(""); if (p.aoFugir) p.aoFugir(); return; }
+      setArmado(""); if (p.aoEscrever) p.aoEscrever("");
+      return;
+    }
     setArmado(v.id);
     /* o verbo que arma põe a sua frase na linha do texto livre: o jogador
        acrescenta o COMO e manda pela mesma porta de sempre. A frase sai da

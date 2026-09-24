@@ -920,7 +920,16 @@ const RETIRADA = /\b(recuo|recuar|me afasto|afasto-me|me distancio|fujo|fugir|ba
 const DESENGAJA = /\b(desengaj|com cuidado|sem dar as costas|passo a passo|de guarda erguida|protegendo a retirada)\b/;
 export function ehRetirada(texto) {
   const t = String(texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  return RETIRADA.test(t) && !DESENGAJA.test(t);
+  return RETIRADA.test(t) && !pedeDesengajar(t);
+}
+
+/* A outra metade da mesma pergunta, exposta porque a FUGA (fuga.js) precisa
+   dela sozinha: quem sai da luta "de guarda erguida" troca o golpe livre por
+   meio caminho. Uma lista só de frases de cuidado, lida pelos dois — duas
+   listas seriam duas respostas para "ele desengajou?". A normalização é
+   idempotente, então `ehRetirada` pode passar o texto já normalizado. */
+export function pedeDesengajar(texto) {
+  return DESENGAJA.test(String(texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
 }
 
 /* Cada inimigo de pé leva UM golpe livre em quem está saindo. É reação:
