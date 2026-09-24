@@ -128,10 +128,22 @@ sec("5. AS TELAS DE JOGO CARREGAM A CLASSE");
      que deixou de flutuar sobre o trilho sai da conta sem afrouxar nada. */
   t(`e a margem em ${margens}`, margens >= 3);
   t("quem reserva é o convés", /className="tv-espaco-abas shrink-0 flex flex-col"/.test(APP));
-  t("a área que rola NÃO reserva mais", /className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
+  /* R15 — A ÂNCORA DEIXA DE SER A LISTA INTEIRA DE CLASSES, e o motivo fica
+     escrito: esta asserção nunca quis dizer "as classes são exatamente
+     estas". Ela quer dizer que a área que rola é `flex-1 overflow-y-auto` e
+     não reserva altura para o trilho de abas — o convés é que reserva. Ao
+     ganhar `tv-esbate-topo` a região continuou a cumprir isso e a asserção
+     ficou vermelha por uma classe a mais, que é a asserção a medir a coisa
+     errada. Agora ela tolera classes entre `tv-scroll` e `flex-1`, e o que
+     ela prende é o que ela sempre quis prender. */
+  t("a área que rola NÃO reserva mais", /className="tv-scroll[^"]*flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
   t("e a linha de escrita também não", /className="px-4 md:px-8 shrink-0" style=\{\{ paddingBottom:/.test(APP));
   /* O CONVÉS FICA: é o que separa "o jogo na mão" de "o jogo que foge" */
-  t("o convés é irmão do painel, e não filho", APP.indexOf('className="tv-espaco-abas shrink-0 flex flex-col"') > APP.indexOf('className="tv-scroll flex-1 overflow-y-auto'));
+  /* mesma correção de âncora (R15): o que importa aqui é a ORDEM dos dois
+     blocos, não de que classes a região que rola é feita. `flex-1
+     overflow-y-auto overflow-x-hidden` é único no `App.jsx` e não se move
+     quando a região ganha uma classe nova. */
+  t("o convés é irmão do painel, e não filho", APP.indexOf('className="tv-espaco-abas shrink-0 flex flex-col"') > APP.indexOf('flex-1 overflow-y-auto overflow-x-hidden'));
 }
 
 console.log(`\ncelular v9.156: ${bons} passaram, ${maus} falharam`);

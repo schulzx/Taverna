@@ -481,7 +481,12 @@ sec("4. a definição operacional de 'número que muda'");
      a cada rodada e confirma-o; a asserção não mudou de sentido nem de força
      — continua a guardar que o porquê da exclusão vem com ENDEREÇO, para que
      a próxima medição o possa conferir. */
-  t("e aponta a linha que avança o relógio", !!relogio && /13784/.test(relogio.porque));
+  /* R15: 13784 -> 13820, +36, pelo comentário que o conserto do nome da
+     campanha pôs dentro de `salvar`. Conferido por CONTEÚDO — é o mesmo
+     `extraTempo = avancarMinutos(MINUTOS_POR_TURNO)`. A asserção continua a
+     guardar que o porquê da exclusão venha com ENDEREÇO; o que mudou foi
+     onde a linha mora no arquivo, não o que ela faz. */
+  t("e aponta a linha que avança o relógio", !!relogio && /13820/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -665,7 +670,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        mora depois de a janela da reacao entrar no arquivo. */
       /* E3: 12122 -> 11707. A voz da linha (`telegrama`) é o que esta
          asserção guarda, e ela não mudou. */
-      .linhas.find((l) => l.onde === "src/App.jsx:12407").voz === "telegrama");
+      /* R15: 12407 -> 12443, +36, pelo comentário que o conserto do nome da
+         campanha pôs dentro de `salvar`. Conferido por CONTEÚDO e não por
+         aritmética — é o mesmo `pushMsgs(linhas)` de `aplicarGolpeDoJogador`.
+         A voz continua a ser o que esta asserção guarda, e ela não mudou. */
+      .linhas.find((l) => l.onde === "src/App.jsx:12443").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -750,7 +759,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        da recusa (`alcance`) e o que se guarda aqui, e ela e a mesma. */
     /* E3: 12072 -> 11657, pelo mesmo deslocamento. A família da recusa
        (`alcance`) é o que se guarda aqui, e ela é a mesma. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12357" && x.familia === "alcance"));
+    /* R15: 12357 -> 12393, +36. Conferido por CONTEÚDO — é o mesmo
+       `pushMsgs([... 📏 ${ataque.motivo}])`. A família da recusa
+       (`alcance`) é o que se guarda aqui, e ela é a mesma. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12393" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -767,7 +779,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O que esta asserção guarda nunca foi o número — é que o porquê do
      silêncio venha com ENDEREÇO, para que a próxima medição o possa
      conferir. O número mudou; a intenção, não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12423/.test(S.ondeSai));   /* E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 · R13-A: 11846 -> 12312 · R13-B: 12312 -> 12423 (as peças de `A cinta`, de `O painel do tempo` e de `O topo do papel` nasceram ao nível do módulo — é a lei da casa, porque componente dentro do render mata o foco do input — e empurraram a região inteira; o `enviar` não mudou de sítio dentro da função) — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12459/.test(S.ondeSai));   /* R15: 12423 -> 12459, +36, pelo comentário do conserto do nome da campanha em `salvar` — conferido por CONTEÚDO, é o mesmo `enviar([COMBATE — RESOLVIDO PELO SISTEMA]...)`; o `enviar` não mudou de sítio dentro da função · E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 · R13-A: 11846 -> 12312 · R13-B: 12312 -> 12423 (as peças de `A cinta`, de `O painel do tempo` e de `O topo do papel` nasceram ao nível do módulo — é a lei da casa, porque componente dentro do render mata o foco do input — e empurraram a região inteira; o `enviar` não mudou de sítio dentro da função) — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo */
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

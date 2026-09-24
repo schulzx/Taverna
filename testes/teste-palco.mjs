@@ -131,7 +131,14 @@ sec("5. A COSTURA — no topo, e sem inventar");
   t("e o clima", /clima: climaRef\.current/.test(APP));
   /* ACIMA da narrativa, porque responde antes dela: a primeira palavra do
      Narrador já supõe o lugar */
-  const iArea = APP.indexOf("tv-scroll flex-1 overflow-y-auto");
+  /* R15 — A ÂNCORA DA ÁREA QUE ROLA DEIXA DE INCLUIR A LISTA DE CLASSES, e o
+     motivo tem de ficar escrito porque o modo como isto falhou é instrutivo:
+     a região ganhou `tv-esbate-topo` entre `tv-scroll` e `flex-1`, e este
+     `indexOf` passou a devolver **-1**. Com -1, `iCab > iArea` ficou VERDE
+     por acidente — uma asserção a passar por não achar nada é pior do que
+     uma asserção vermelha. `flex-1 overflow-y-auto overflow-x-hidden` é
+     único no `App.jsx` e não se move quando a região ganha classes. */
+  const iArea = APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden");
   const iCab = APP.indexOf("<CabecalhoDaCena cena={cenaDoPalco()} />");
   t("fica dentro da área que rola", iCab > iArea);
   /* v9.170 (mesa-jogo-v2): o selo "MESTRE ATIVO" passou a abrir o painel da
@@ -171,7 +178,9 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      inteiro derivar. */
   /* v9.197: a reserva da barra saiu daqui — ela agora vale uma vez, no
      convés, que é quem encosta na barra. A trava do eixo lateral fica. */
-  t("o painel da narrativa tranca o eixo lateral", /tv-scroll flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
+  /* R15: tolera classes entre `tv-scroll` e `flex-1` — o que esta asserção
+     prende é o `overflow-x-hidden`, não a lista de classes. */
+  t("o painel da narrativa tranca o eixo lateral", /tv-scroll[^"]*flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
 
   /* ============================================================
      R13-B · O ROSTO DA CENA — a fiação, e só ela
@@ -184,7 +193,8 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
   {
     const iPapel = APP.indexOf("O PAPEL PASSA A TER DUAS FAIXAS (R13-B)");
     const iRosto = APP.indexOf("<OTopoDoPapel semente={sementeMundo()}");
-    const iRola = APP.indexOf("tv-scroll flex-1 overflow-y-auto");
+    /* R15: mesma correção de âncora — ver o comentário em `iArea` acima. */
+    const iRola = APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden");
     /* 96 px NO TOPO DO PAPEL e FORA do que rola: a gravura é o topo da
        folha, não um cartaz pousado em cima dela nem uma imagem que sobe
        com a prosa. A ordem no texto é a ordem no DOM. */

@@ -37,6 +37,54 @@ export const FORMATO = 1;
 const so = (x) => (typeof x === "string" ? x : "");
 const semAcento = (s) => so(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+/* ---------------- O NOME DA CAMPANHA, E POR QUE ELE É UMA FUNÇÃO ----------
+   ACHADO CONSERTANDO, e é o único defeito desta casa que APAGA TRABALHO DE
+   JOGADOR: "A Prova do Depois" abriu um dia chamada "Aventura". Ela não foi
+   renomeada por engano — foi **gravada sem nome e batizada na leitura**.
+
+   O LADO DA ESCRITA (consertado em `App.jsx`): de todos os campos que o save
+   grava do ESTADO e não do ref, `nomeCampanha` é o único que nenhum chamador
+   nunca passa fresco. Contados: `salvar({ personagem: ... })` aparece 50
+   vezes, `mundo` e `historico` uma cada, e `nomeCampanha` **zero**. Os outros
+   têm o mesmo guarda (`if (x) ref.current = x`) E uma rede que os mantém
+   quentes; este tem o guarda e nenhuma rede. *Não é uma corrida rara: é o
+   estado normal deste campo.*
+
+   O LADO DA LEITURA, que é este: quatro sítios independentes escreviam
+   `sv.nomeCampanha || "Aventura"` — este, e três no `App.jsx`. Um literal
+   repetido em quatro sítios é a mesma doença que a primeira lei desta casa
+   persegue nos números, e a consequência aqui foi pior do que a de um número
+   errado: **um save mudo abria com o nome de outra coisa, e o jogador não via
+   um erro — via outra campanha.**
+
+   A REGRA, E ELA NÃO INVENTA: o nome gravado manda sempre. Faltando ele, o
+   nome sai do que o PRÓPRIO SAVE carrega — o herói —, porque um save mudo
+   ainda sabe de quem é. Só quando nem isso existe é que resta a palavra
+   genérica, e aí ela é honesta: não há nada ali para reconhecer.
+
+   ISTO CURA O QUE JÁ ESTÁ NO DISCO. Impedir a próxima corrupção não desfaz a
+   de ninguém — quem já tem o save mudo continuaria a abri-lo como "Aventura"
+   para sempre. Com esta função ele volta a ser distinguível pelo herói, que é
+   o que o jogador reconhece. */
+export const NOME_GENERICO = "Aventura";
+
+export function nomeDaCampanha(sv) {
+  const s = sv && typeof sv === "object" ? sv : {};
+  const gravado = so(s.nomeCampanha).trim();
+  if (gravado) return gravado;
+  const p = (s.personagem && typeof s.personagem === "object") ? s.personagem : {};
+  const heroi = so(p.nome).trim();
+  return heroi ? `A saga de ${heroi}` : NOME_GENERICO;
+}
+
+/* Um save que perdeu o nome na gravação — o `App.jsx` pergunta isto para
+   poder DIZER, em vez de calar. Um conserto silencioso é a mesma falha com
+   melhores modos. */
+export function salvoSemNome(sv) {
+  const s = sv && typeof sv === "object" ? sv : {};
+  return !so(s.nomeCampanha).trim();
+}
+
 /* ---------------- O RESUMO ----------------
    Uma linha que descreve a campanha sem abrir o save. Vai no envelope, no
    nome do arquivo e na tela de confirmação — os três lugares onde alguém
@@ -45,7 +93,7 @@ export function resumoDoSave(sv) {
   const s = sv && typeof sv === "object" ? sv : {};
   const p = (s.personagem && typeof s.personagem === "object") ? s.personagem : {};
   return {
-    campanha: so(s.nomeCampanha) || "Aventura",
+    campanha: nomeDaCampanha(s),
     heroi: so(p.nome) || "sem nome",
     nivel: Number(p.nivel) || 1,
     classe: so(p.classe),

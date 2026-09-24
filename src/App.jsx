@@ -163,7 +163,7 @@ import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorI
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
-import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo } from "./arquivo.js";
+import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS, SUBS_GESTAO } from "./abas.js";
 import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
 import { janelaAncorada } from "./janela.js";
@@ -7867,8 +7867,36 @@ export default function Taverna() {
        passa. Só que tem de ser no começo dele, não no fim. */
     try { conferirAbas(); } catch (e) { calou("conferirAbas", e); }
     setStatusSave("salvando");
+    /* O NOME NAO CAI MAIS NO BURACO, e o buraco tinha uma forma exata.
+
+       Dos campos que esta linha grava do ESTADO e nao do ref, tres tem uma
+       rede que os mantem quentes: os chamadores passam-nos em `extra` no
+       instante em que mudam. Contados neste arquivo: `salvar({ personagem`
+       cinquenta vezes, `mundo` uma, `historico` uma — e `nomeCampanha`
+       ZERO. Ele tem o mesmo guarda que os outros (`:5443` so o copia para o
+       ref `if (nomeCampanha)`) e nenhuma rede, e por isso e o unico que
+       depende inteiramente de o estado estar quente quando o autossave
+       dispara. *Nao e uma corrida rara: e o estado normal deste campo.*
+
+       O QUE ISSO CUSTOU: "A Prova do Depois" foi gravada sem nome, e o load
+       batizou-a "Aventura" na leitura. O jogador nao viu um erro — viu
+       outra campanha. E um save reescrito nao se desfaz com um revert.
+
+       E A CORRECAO OBVIA ERA UMA CORRUPCAO NOVA: trocar isto por
+       `nomeCampanhaRef.current || nomeCampanha` parece o conserto e nao e.
+       `largarASala()` NAO limpa o ref (so `esquecerOMundo()` limpa), logo
+       em `irNovo` o ref ainda carrega o nome da campanha ANTERIOR ate a
+       nova o substituir — e o save nasceria com o nome ERRADO, que e pior
+       do que sem nome. **Guarda, nao substituicao.**
+
+       O QUE SE GUARDA E O QUE JA ESTA NO DISCO, neste mesmo espaco de save
+       (`chaveDoSave()` e por modo). Se o estado esta mudo, o nome que la
+       esta e por construcao o desta campanha: um save so nasce depois de
+       `TelaMundo` ter fixado o nome E o ref, logo nunca ha um save com nome
+       de outra campanha neste espaco enquanto o estado esta vazio. */
+    const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     const dados = {
-      nomeCampanha, mundo, personagem, mensagens: mensagensRef.current, historico,
+      nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
       combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
@@ -11869,7 +11897,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     try {
       const pers = migrarPersonagem(sv.personagem);
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
-      setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(sv.nomeCampanha || "Aventura"); setPersonagem(pers);
+      setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(nomeDaCampanha(sv)); setPersonagem(pers);
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
@@ -12142,7 +12170,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(sv.nomeCampanha || "Aventura", sv.mundo || { genero: "Fantasia medieval" }, pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+      systemRef.current = montarSystemPrompt(nomeDaCampanha(sv), sv.mundo || { genero: "Fantasia medieval" }, pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
@@ -12173,11 +12201,19 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          Agora o recap sai do REGISTRO, por código, de graça, e aparece
          sozinho sempre que houve intervalo. Ele não pode errar o que
          aconteceu porque ele É o que aconteceu. */
+      /* R15: o save mudo DIZ que estava mudo. O nome ja foi recuperado do
+         heroi (`nomeDaCampanha`), e o jogador tem direito de saber que o que
+         esta na tela nao e o que estava gravado — senao o conserto e so uma
+         invencao mais educada. Em `calou` porque nunca pode custar a
+         abertura de uma campanha. */
+      try {
+        if (salvoSemNome(sv)) pushMsgs([{ autor: "sistema", texto: "💾 Esta campanha foi gravada sem nome e voltou como “" + nomeDaCampanha(sv) + "” — se ela tinha outro, dê-lhe o certo ao exportar." }]);
+      } catch (e) { calou("avisar o save sem nome", e); }
       const volta = houveIntervalo(sv.salvoEm);
       const recap = (volta.sim || comResumo) ? recapitular({
         registro: registroRef.current, dia: diaRef.current, lugar: cidadeAtualRef.current || (lugarRef.current || {}).nome || "",
         grupo: (pers && pers.grupo) || [], missoes: missoesRef.current, relogios: relogiosRef.current,
-        nomeCampanha: sv.nomeCampanha, desdeODia: (sv.sessao && sv.sessao.ateODia) || 0, quando: volta.quando,
+        nomeCampanha: nomeDaCampanha(sv), desdeODia: (sv.sessao && sv.sessao.ateODia) || 0, quando: volta.quando,
       }) : null;
       if (recap && recap.vale && !silencioso) {
         pushMsgs([{ autor: "sistema", texto: textoDoRecap(recap) }]);
@@ -12191,7 +12227,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       if (comResumo && !sv.rolagem) {
         enviar(recap && recap.vale
           ? envelopeDaRetomada(recap, volta.quando)
-          : `[RETOMADA] Voltei a "${sv.nomeCampanha}". Reabra a cena onde eu parei em duas ou três frases e devolva a palavra para mim. Não recapitule, não faça o tempo passar e não inicie cena nova.`,
+          : `[RETOMADA] Voltei a "${nomeDaCampanha(sv)}". Reabra a cena onde eu parei em duas ou três frases e devolva a palavra para mim. Não recapitule, não faça o tempo passar e não inicie cena nova.`,
           pers, sv.historico || []);
       }
     } catch (e) {
@@ -22096,7 +22132,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             <OTopoDoPapel semente={sementeMundo()} bioma={biomaDaqui()} lugar={lugarDaCena()}
               hora={Math.floor((minuto || 0) / 60)}
               chegada={lugarDaCena() !== lugarAntesRef.current ? "agora" : "assentada"} />
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 md:px-8 py-6 space-y-4" >
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 md:px-8 py-6 space-y-4" >
               <VinhetaDaCena bioma={biomaDaqui()} />
               {/* A VOZ (R2), primeiro dos DOIS sítios onde o cabeçalho do
                   Mestre estava escrito à mão neste arquivo. Aqui ela é o
