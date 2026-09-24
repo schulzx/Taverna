@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 24/09 · v9.288 · **R17 — o papel que só podia falhar, e a tela onde a prosa não cabia** · commit `HASH`
+## 24/09 · v9.288 · **R17 — o papel que só podia falhar, e a tela onde a prosa não cabia** · commit `f3f6dd6`
 
 *A forma fica em `mente/formas.md` §§`R17` (o `jogo`), `R17 · a fabricação` (o
 `desenho`), `R17 · a emenda das capturas`, `R17 · o campo não paga em todos os
