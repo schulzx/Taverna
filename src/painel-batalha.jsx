@@ -719,6 +719,12 @@ export function TelaDeBatalha(props) {
     casasDoPasso,
     fim: !!p.fim,
     razaoDaFuga: p.podeFugir ? "" : (p.linhaDaFuga || ""),
+    /* ACHADO EM 24/09: um save a 0 PV e "morrendo" deixava `Atacar` de pé,
+       escolhendo alvo e acertando golpe — o sistema diz ao Narrador que o
+       herói "não vê, não ouve e não age" (App.jsx, `resolverQueda`) e a
+       fileira dizia o contrário. `esperar` continua fora desta conta —
+       é ele que faz a rodada do mundo (e o teste de morte) rodar de novo. */
+    inconsciente: (personagem.vida || 0) <= 0 || !!personagem.morrendo,
   });
 
   /* FUGIR NÃO PASSA PELA LINHA GENÉRICA DO ARMADO. Os outros verbos que

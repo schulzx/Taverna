@@ -308,6 +308,16 @@ export const RECUSAS_DO_VERBO = {
   semSaida:   "não há casa livre à sua volta",
   semAlcance: "ninguém ao seu alcance",
   fimDaLuta:  "a luta acabou",
+  /* ACHADO NUM SAVE INJETADO (24/09), a mesma pergunta que abriu a fase: um
+     personagem a 0 PV, "morrendo" — o próprio sistema escreve ao Narrador
+     "eu não vejo, não ouço e não ajo" (App.jsx, `resolverQueda`) —, e a
+     fileira não sabia disso: `Atacar` respondia normal, escolhia alvo e
+     acertava golpe. Jogado: Halda a 0/18 PV declarou dois golpes e tirou
+     4 PV de um javali. Não é travamento — `esperar` nunca entra nesta
+     tabela e continua de pé, e é por ele que a rodada do mundo roda e o
+     teste de morte é rolado de novo — mas um inconsciente golpeando é o
+     sistema se contradizendo na mesma rodada. */
+  inconsciente: "você está desacordado — não pode agir",
 };
 
 /* O TECTO DOS 54 CARACTERES vale para estas também: elas entram na linha
@@ -326,7 +336,15 @@ export function impedimentosDaFileira(estado) {
   const e = estado == null ? {} : estado;
   const casas = e.casasDoPasso == null ? null : Math.max(0, Math.round(Number(e.casasDoPasso) || 0));
   const fim = !!e.fim;
+  /* INCONSCIENTE VEM ANTES DE TUDO O MAIS, na mesma posição que `fim`: um
+     personagem a 0 PV não decide nada, e nenhuma outra razão (sem passo,
+     sem alcance) é a razão de verdade quando esta já vale. `esperar` FICA
+     de fora — não tem chave nesta tabela — porque é ele quem faz a rodada
+     do mundo rodar e o teste de morte ser rolado de novo; tirá-lo também
+     travaria a luta, que é o próprio susto que este achado veio descartar. */
+  const inconsciente = !!e.inconsciente;
   const razaoDoPasso = fim ? RECUSAS_DO_VERBO.fimDaLuta
+    : inconsciente ? RECUSAS_DO_VERBO.inconsciente
     /* as duas metades do vazio, e elas NÃO são a mesma frase: sem passo
        é o tempo que acabou, sem saída é o espaço que fechou. Dizer
        "acabou o passo" a quem está cercado com 9 m na mão seria mandá-lo
@@ -336,10 +354,11 @@ export function impedimentosDaFileira(estado) {
     : "";
   return {
     atacar: fim ? RECUSAS_DO_VERBO.fimDaLuta
+      : inconsciente ? RECUSAS_DO_VERBO.inconsciente
       : e.bloqueado ? RECUSAS_DO_VERBO.fimDaLuta
       : e.algumAoAlcance === false ? RECUSAS_DO_VERBO.semAlcance : "",
     mover: razaoDoPasso,
-    fugir: fim ? RECUSAS_DO_VERBO.fimDaLuta : (e.razaoDaFuga ? String(e.razaoDaFuga) : ""),
+    fugir: fim ? RECUSAS_DO_VERBO.fimDaLuta : inconsciente ? RECUSAS_DO_VERBO.inconsciente : (e.razaoDaFuga ? String(e.razaoDaFuga) : ""),
   };
 }
 
@@ -458,4 +477,31 @@ export function ultimasLinhasDoMestre(mensagens, opcoes) {
   /* uma frase única maior que o teto continua a ter de caber: corta-se
      pela frente, com reticências, e o fim — que é o que importa — fica */
   return saida || `…${limpo.slice(limpo.length - (teto - 1))}`;
+}
+
+/* ============================================================
+   O TURNO DE QUEM CAIU (24/09) — o mesmo achado, na outra porta
+
+   `impedimentosDaFileira` fechou o BOTÃO: `Atacar` recusa quando o herói
+   está a 0 PV. Mas o campo de texto é uma porta diferente para o mesmo
+   golpe — "Ataco o javali" digitado resolvia um ataque de verdade,
+   escolhia alvo e tirava PV do inimigo, com o herói "morrendo". A lei de
+   X2 já tinha fechado essa mesma fenda para `Atacar`: o digitado e o
+   botão têm de passar pela MESMA porta, porque uma regra que vale para
+   um caminho e não para o outro é a regra tendo duas caras.
+
+   A SAÍDA NÃO É RECUSAR — é CONVERTER. Um guarda que recusasse todo
+   texto com o herói caído devolveria exatamente o trancamento que esta
+   investigação inteira existiu para descartar (o `esperar` do painel
+   também chega por aqui, pela mesma frase digitada). `convertePraTurnoDoCaido`
+   não decide SE o turno acontece — ele sempre acontece, com dado, sem
+   guarda que prenda nada — só decide se a INTENÇÃO do jogador entra na
+   conta: inconsciente, ela não entra, e o texto vira o mesmo turno vazio
+   que o botão `esperar` já manda (o que faz a rodada do mundo, e o teste
+   de morte, rodarem de novo). */
+export function convertePraTurnoDoCaido(estado) {
+  /* `= {}` não cobre `null`, e é lei desta casa (a mesma de
+     `impedimentosDaFileira`, logo acima). */
+  const e = estado == null ? {} : estado;
+  return !!e.emCombate && !e.morto && (Number(e.vida) || 0) <= 0;
 }

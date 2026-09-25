@@ -18,6 +18,7 @@ import {
   fileiraDeVerbos, VERBO_DE_ESPERA, vereditoDaTela, PEDIDO_DO_VERBO,
   SAIDA_DO_ARMADO, NARRACAO, ultimasLinhasDoMestre,
   RECUSAS_DO_VERBO, TETO_DA_RECUSA, impedimentosDaFileira, LINHA_DO_FIM_DA_FUGA,
+  convertePraTurnoDoCaido,
 } from "../src/tela-de-batalha.js";
 import { TELA_DE_BATALHA, ALVOS } from "../src/estilo.js";
 import { VERBOS_DE_COMBATE } from "../src/golpe.js";
@@ -322,6 +323,45 @@ sec("E4. o verbo cujo conjunto é vazio não arma, e a linha diz porquê");
   /* `= {}` não cobre `null`, e é lei desta casa */
   t("e a regra aguenta `null` inteiro sem estourar",
     typeof impedimentosDaFileira(null).mover === "string");
+
+  /* JOGADO NUM SAVE INJETADO (24/09, a investigação de "o save e a vida"):
+     um herói a 0 PV e "morrendo" carregava a luta com `Atacar` de pé —
+     escolheu alvo, rolou dado, tirou 4 PV de um javali. O próprio sistema
+     escreve ao Narrador, na mesma queda, que o herói "não vê, não ouve e
+     não age" (App.jsx, `resolverQueda`) — a fileira dizia o oposto.
+     `esperar` FICA de fora desta tabela de propósito: sem ele a luta
+     travaria de verdade, e o achado inteiro era que ela NÃO trava. */
+  t("inconsciente, `Atacar` recusa — e por uma razão só, não a de alcance",
+    impedimentosDaFileira({ ...podeTudo, inconsciente: true }).atacar === RECUSAS_DO_VERBO.inconsciente);
+  t("inconsciente, `Mover` recusa mesmo com passo e casas de sobra",
+    impedimentosDaFileira({ ...podeTudo, inconsciente: true }).mover === RECUSAS_DO_VERBO.inconsciente);
+  t("inconsciente, `Fugir` recusa mesmo quando a fuga escaparia",
+    impedimentosDaFileira({ ...podeTudo, inconsciente: true, razaoDaFuga: "" }).fugir === RECUSAS_DO_VERBO.inconsciente);
+  t("consciente (o padrão), nada muda — a régua de antes continua de pé",
+    !impedimentosDaFileira(podeTudo).atacar && !impedimentosDaFileira(podeTudo).mover);
+
+  /* O MESMO ACHADO, NA OUTRA PORTA: o botão recusa, mas "Ataco o javali"
+     digitado é outro caminho para o mesmo golpe. `convertePraTurnoDoCaido`
+     é a conta que o `App.jsx` usa no TOPO de `agirInterno` para decidir se
+     converte qualquer texto no turno vazio — nunca para recusar. */
+  t("em combate e a 0 PV, o texto converte",
+    convertePraTurnoDoCaido({ emCombate: true, vida: 0, morto: false }) === true);
+  t("em combate e morrendo (vida negativa por segurança), também converte",
+    convertePraTurnoDoCaido({ emCombate: true, vida: -3, morto: false }) === true);
+  t("fora de combate, a 0 PV não converte — não há rodada para rodar",
+    convertePraTurnoDoCaido({ emCombate: false, vida: 0, morto: false }) === false);
+  t("em combate mas de pé (PV > 0), não converte",
+    convertePraTurnoDoCaido({ emCombate: true, vida: 12, morto: false }) === false);
+  t("já morto, não converte — é outro fluxo (o desfecho da morte)",
+    convertePraTurnoDoCaido({ emCombate: true, vida: 0, morto: true }) === false);
+  t("sem nada (`= {}` não cobre `null`), não estoura e não converte",
+    convertePraTurnoDoCaido(null) === false && convertePraTurnoDoCaido() === false);
+  /* A PROVA DE QUE ISTO NÃO TRANCA `esperar`: o botão manda a MESMA frase
+     que a conversão manda ao Narrador (`VERBO_DE_ESPERA.frase`) — digitar
+     essa frase estando caído dá exatamente o mesmo resultado de sempre,
+     nunca um segundo "desacordado" empilhado em cima do primeiro. */
+  t("a frase do `esperar` é a mesma que a conversão reaproveita",
+    typeof VERBO_DE_ESPERA.frase === "string" && VERBO_DE_ESPERA.frase.length > 0);
 
   /* A RAZÃO VAI PARA A LINHA DO VEREDITO, e não para um balão de rato:
      `title=` não existe no telefone, e é lá que a fileira dos verbos

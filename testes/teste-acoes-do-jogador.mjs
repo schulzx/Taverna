@@ -497,7 +497,13 @@ sec("4. a definição operacional de 'número que muda'");
   /* A FUGA (frontend, segunda volta — R21): 14036 -> 14051, +15 (o fôlego
      da fuga entrou acima, em `combateRef`/`aplicarResposta`). Conferido
      por conteúdo — é o mesmo `avancarMinutos(MINUTOS_POR_TURNO)`. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14051/.test(relogio.porque));
+  /* O TURNO DE QUEM CAIU (frontend, 24/09): 14051 -> 14078, +27 (o guarda
+     que converte texto em turno de quem está inconsciente,
+     `convertePraTurnoDoCaido`, entrou no topo de `agirInterno`, acima
+     deste ponto). Conferido por conteúdo — é o mesmo
+     `avancarMinutos(MINUTOS_POR_TURNO)`, e `check-acoes-do-jogador.mjs`
+     (dente 8) confirma sozinho a cada corrida. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14078/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");

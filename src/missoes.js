@@ -487,7 +487,7 @@ export function pareceMesmaMissao(a, b) {
    Ele traz o nobre desesperado à taverna; o sistema decide o que
    aquilo vira. Propostas sem etapa verificável são recusadas — é a
    trava que impede "ganhe a confiança do barão" de virar missão. */
-export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null, moedasNaCena = null, dadorPresente = true } = {}) {
+export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null, moedasNaCena = null, dadorPresente = true, etapasPrometidas = null } = {}) {
   const atual = garantirMissoes(lista);
   if (!prop || !String(prop.titulo || "").trim()) return { ok: false, motivo: "sem título" };
   if (atual.filter((q) => q.status === "ativa" || q.status === "oferecida").length >= MAX_ATIVAS) {
@@ -578,8 +578,24 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
      do nível, logo acima: o mural mostra a recompensa antes da decisão, e
      as etapas mudam de número no ato de aceitar — esta função peneira as
      que já nascem cumpridas e acrescenta a de procurar quem assinou. Sem
-     isto o cartaz prometia +80 XP e o diário pagava 94. */
-  const etapasDoCartaz = Array.isArray(prop.etapas) && prop.etapas.length ? prop.etapas.length : null;
+     isto o cartaz prometia +80 XP e o diário pagava 94.
+
+     O v9.195 ORIGINAL contava `prop.etapas.length` — e essa conta já vem
+     COM a etapa de "procurar quem assinou" somada por quem chama esta
+     função (`App.jsx` e `veredito-do-cartaz.js` prependem `falar_com`
+     antes de passar `etapas` para cá). A peneira de "já nasce cumprida"
+     baixa a conta às vezes; o `falar_com` a sobe SEMPRE — e ninguém
+     descontava essa soma. Resultado: 80 continuava virando 94, byte a
+     byte o bug que o comentário diz ter fechado (medido de novo em
+     24/09 — a prova em `testes/teste-missoes2.mjs`).
+
+     Agora quem sabe quantas etapas o CARTAZ mostrou é quem chama —
+     ninguém além do lugar que desenhou a soleira sabe se prependeu algo
+     depois. `etapasPrometidas` chega explícito quando o chamador tem essa
+     conta; sem ele, cai no `prop.etapas.length` de sempre (proposta que
+     nasce de conversa, sem cartaz e sem prepend). */
+  const etapasDoCartaz = Number(etapasPrometidas) > 0 ? Math.round(Number(etapasPrometidas))
+    : (Array.isArray(prop.etapas) && prop.etapas.length ? prop.etapas.length : null);
   const m = criarMissao({
     titulo, tipo: TIPOS[prop.tipo] ? prop.tipo : "favor",
     descricao: proposta.descricao, dador: proposta.dador,

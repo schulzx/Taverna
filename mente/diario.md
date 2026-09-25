@@ -15,6 +15,56 @@ Formato:
 ```
 
 ---
+## 24/09 21:43 · v9.292 · o save e a vida: não há trancamento, mas havia dois defeitos · commit `HASH-A-SEGUIR`
+
+- **por que andou:** item da pessoa, o primeiro de dois (*"vamos arrumar também
+  a questão do save e da vida"*). O save com `vida 0/18`, `combate: true` e
+  `nível 1` ao dia 14 é *A Prova do Depois · Halda*, **a campanha de teste do
+  `jogo` (R6)**, e não de jogador. Por isso a pergunta não era reparar a ficha,
+  mas saber se os sintomas acontecem a jogadores reais.
+- **estado inicial:** árvore limpa, 211/211 suítes. Bastão tomado às 21:47 e
+  devolvido às 22:37. O desenho abriu V3 às 22:16 e escreveu três pedidos novos
+  em `mente/pedidos-ao-sistema.md` **enquanto eu trabalhava**. Por isso esse
+  arquivo não vai neste commit: marcar o pedido do XP como atendido levaria o
+  trabalho dele junto. Fica para quando o arquivo estiver limpo.
+- **1. `vida 0` com combate salvo — NÃO há trancamento, provado jogando.** O
+  `frontend` injetou, com o jogo desmontado, uma ficha a 0/18 com `morrendo` e um
+  combate salvo, recarregou numa aba nova e jogou. A tela abriu, `esperar` fez a
+  rodada andar e o teste de morte rolou (`resolverQueda`, a única porta da
+  queda). Todo save caído tem saída.
+- **mas o heroi desacordado AGIA.** A 0 PV, `Atacar` resolvia um golpe de
+  verdade (4 de dano num javali), contra o próprio envelope que diz ao Narrador
+  "eu não vejo, não ouço e não ajo". **Consertado nos dois caminhos:** no botão,
+  `impedimentosDaFileira` recusa `atacar`/`mover`/`fugir` a quem está
+  desacordado. No texto, `convertePraTurnoDoCaido` **converte, não recusa**:
+  qualquer frase digitada a 0 PV vira o turno de quem caiu (o mesmo caminho de
+  `esperar`) e o Narrador recebe a frase de `esperar`, nunca a intenção. Recusar
+  seria o trancamento que a investigação queria descartar, porque o `esperar` do
+  painel também passa por `agirInterno`. Jogado: "ataco o javali" a 0 PV → *"você
+  está desacordado — o mundo segue sem você"*, a rodada andou, o teste de morte
+  rolou e o javali ficou nos 10/24.
+- **2. `nível 1` ao dia 14 — NÃO é defeito.** A campanha recebeu **~89 XP** pagos
+  ("Tirar Sara de lá"), contra 300 para o nível 2. As outras duas missões só
+  foram aceitas, e a única luta acabou com a heroína caída: 0 XP. Doze dos
+  catorze dias vieram de duas frases de viagem.
+- **mas o pedido do XP (oferta ≠ recibo) era defeito real, e foi fechado.** A
+  soleira prometia +80 e o diário pagava 94. A "correção" de v9.195 contava
+  `prop.etapas.length` **já com a etapa de procurar quem assinou**, que os dois
+  chamadores somam antes. `aceitarProposta` ganhou `etapasPrometidas` explícito,
+  passado por `App.jsx` e `veredito-do-cartaz.js`. **Decisão média:** isto baixa
+  o XP pago em ~15% nos contratos de mural, porque o número pago passa a ser o
+  prometido. Motivo: a promessa escrita é o veredito antes do clique, e um
+  recibo que a desmente é pior do que a promessa escondida de antes. A suíte
+  endossava o número errado (`etapas: 2`); a asserção mudou, com o porquê ao lado.
+- **3. o save de teste:** não existe no navegador de preview (o `localStorage` só
+  tinha a configuração das rolagens). Onde o `jogo` o guardou não é alcançável
+  daqui; não há nada a reparar deste lado.
+- **prova:** `so-o-meu.sh` (HEAD + os meus 10) → 211/211, 15/15; build limpo.
+  Provas novas em `teste-tela-de-batalha.mjs` (o desacordado, nos dois
+  caminhos) e `teste-missoes2.mjs` (80 promete, 80 paga; e sem o parâmetro, o
+  comportamento de antes). A suíte de endereços foi re-medida por conteúdo.
+
+---
 ## 24/09 19:08 · v9.291 · a fuga, segunda volta: o que a prova jogada de R21 achou · commit `9d82ed8`
 
 - **por que andou:** ainda é o item da pessoa (*"Pode arrumar o sistema de

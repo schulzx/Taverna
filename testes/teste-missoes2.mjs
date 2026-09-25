@@ -184,7 +184,7 @@ console.log("\n[o nome não é uma chave]");
   t("e ela recusa gente diferente", mesmaPessoa("Marl de Osso", "Corvo Manco") === false);
 }
 
-/* ---------------- A PROMESSA DO CARTAZ VALE (v9.195) ----------------
+/* ---------------- A PROMESSA DO CARTAZ VALE (v9.195, e de novo em 24/09) ----------------
    Achado na campanha de teste: o cartaz prometia +80 XP e a missão aceita
    pagava 94. A causa é que a etiqueta conta as etapas que a OFERTA traz, e
    `aceitarProposta` peneira as que já nascem cumpridas e acrescenta a de
@@ -192,7 +192,18 @@ console.log("\n[o nome não é uma chave]");
 
    É a mesma lei que a v9.115 escreveu para o NÍVEL: o cartaz mostrou um
    patamar antes da decisão, e se a missão o recalculasse ao nascer, o
-   jogador teria lido uma promessa que o diário não cumpre. */
+   jogador teria lido uma promessa que o diário não cumpre.
+
+   A ASSERÇÃO DE BAIXO MENTIA (achado de novo em 24/09, pedido
+   `mente/pedidos-ao-sistema.md`, "o XP que a oferta promete não é o XP que
+   o recibo paga"): ela comparava `r.missao.recompensa.xp` contra
+   `etapas: 2` — ou seja, ENDOSSAVA a etapa extra de "procurar quem
+   assinou" como parte da promessa. O v9.195 só filtrava etapas que nascem
+   cumpridas (o cartaz recalculando por REMOÇÃO); nunca descontou a etapa
+   que ESTE MÓDULO acrescenta sozinho antes de contar. 80 continuava
+   virando 94, sempre, e o teste aplaudia. Agora `etapasPrometidas` é
+   explícito e é o número que a soleira mostrou (1, aqui) — não o array já
+   com o prepend — e a asserção compara contra ELE. */
 console.log("\n[a promessa do cartaz vale]");
 {
   const cartaz = {
@@ -204,15 +215,25 @@ console.log("\n[a promessa do cartaz vale]");
   const prometido = recompensaDe({ tipo: cartaz.tipo, nivel: cartaz.nivel, etapas: cartaz.etapas.length, moedasPrometidas: cartaz.paga });
 
   /* aceitar acrescenta a etapa de procurar quem assinou — o dador não está
-     presente num mural */
+     presente num mural — e por isso quem chama diz explicitamente quantas
+     etapas o CARTAZ mostrou, para a busca não inflar o XP */
   const r = aceitarProposta([], { ...cartaz, etapas: [{ tipo: "falar_com", alvo: "Marl de Osso" }, ...cartaz.etapas] },
-    { nivel: 1, dia: 5, dadorPresente: false });
+    { nivel: 1, dia: 5, dadorPresente: false, etapasPrometidas: cartaz.etapas.length });
   t("o cartaz vira missão", r.ok === true);
   t("e ela tem MAIS etapas que a oferta trazia", r.missao.etapas.length > 1);
-  /* a promessa é o que vale */
-  t("o XP pago é o que o cartaz prometeu", r.missao.recompensa.xp === recompensaDe({ tipo: "contrato", nivel: 3, etapas: 2, moedasPrometidas: 50 }).xp);
+  /* a promessa é o que vale — e agora É o que a soleira mostrou, não o
+     array com a busca pelo dador somada */
+  t("o XP pago é o que o cartaz prometeu", r.missao.recompensa.xp === prometido.xp);
   t("as moedas combinadas continuam mandando", r.missao.recompensa.moedas === 50 && r.missao.recompensa.combinada === true);
   t("e o nível do trabalho continua viajando junto", r.missao.nivel === 3);
+
+  /* SEM o parâmetro novo (chamador antigo, ou proposta sem cartaz por
+     trás), o comportamento de sempre continua: conta o array que chegou,
+     porque é a única informação que existe. Isto prova que o parâmetro é
+     aditivo — quem não sabe da promessa não perde o que já tinha. */
+  const semParametro = aceitarProposta([], { ...cartaz, etapas: [{ tipo: "falar_com", alvo: "Marl de Osso" }, ...cartaz.etapas] },
+    { nivel: 1, dia: 5, dadorPresente: false });
+  t("sem etapasPrometidas, cai no array recebido (compat)", semParametro.missao.recompensa.xp === recompensaDe({ tipo: "contrato", nivel: 3, etapas: 2, moedasPrometidas: 50 }).xp);
 
   /* SEM PROMESSA, a conta sai das etapas de verdade — proposta de conversa e
      missão do sistema seguem como sempre */

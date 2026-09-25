@@ -6,7 +6,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resum
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase } from "./fuga.js";
-import { VERBO_DE_FUGA } from "./tela-de-batalha.js";
+import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
@@ -13947,6 +13947,33 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        escreveu - e os chamadores internos, que mandam envelope montado, nao
        tem o que devolver a caixa nenhuma. */
     if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
+    /* ---------------- O TURNO DE QUEM CAIU (24/09) ----------------
+       O botão de `Atacar` já recusa a 0 PV (`impedimentosDaFileira`), mas
+       o campo de texto é OUTRA porta para o mesmo golpe: "Ataco o javali"
+       digitado resolvia um ataque de verdade, com o herói "morrendo". A
+       lei de X2 já tinha fechado essa mesma fenda entre o botão e o texto
+       de Atacar — regra que vale para um caminho e não para o outro é a
+       regra tendo duas caras.
+
+       A SAÍDA NÃO É RECUSAR. Um guarda que recusasse todo texto com o
+       herói caído devolveria o próprio trancamento que esta investigação
+       existiu para descartar — o `esperar` do painel TAMBÉM chega por
+       `agirInterno`, pela mesma frase digitada. Em vez disso, CONVERTE:
+       nenhuma das portas abaixo (o golpe, a habilidade citada, a fuga, a
+       retirada, o resto da cascata) chega a rodar, e o turno cai direto
+       no caminho genérico que `fecharMeuTurno` já usa para `esperar` — a
+       vez do mundo roda, o teste de morte rola de novo, sem decisão
+       nenhuma do jogador entrando na conta. Ao Narrador vai a MESMA frase
+       que o `esperar` mandaria, nunca a intenção escrita. */
+    try {
+      const persAgora = fichaViva() || personagem;
+      if (convertePraTurnoDoCaido({ emCombate: !!combateRef.current, vida: persAgora && persAgora.vida, morto: persAgora && persAgora.morto })) {
+        setEntrada("");
+        pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "você está desacordado — o mundo segue sem você" }]);
+        fecharMeuTurno(persAgora, (rv) => { enviar(`${VERBO_DE_ESPERA.frase}${rv.texto}`, rv.pers); });
+        return;
+      }
+    } catch (e) { calou("turno-de-quem-caiu", e); }
     /* ---------------- O DESPACHANTE (v9.61) ----------------
        A ordem do turno deixou de ser o layout deste arquivo e virou uma
        tabela em `turno.js`. Isto aqui não decide mais nada: pergunta qual
@@ -19361,6 +19388,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        por isso que `dadorPresente: false`. Se o herói já conhece a pessoa,
        a etapa cai sozinha na conferência de quem já nasce cumprido. */
     const prop = propostaDaOferta(c);
+    /* O RECIBO TEM DE PAGAR O QUE A SOLEIRA PROMETEU. A soleira (embaixo,
+       ~22407) mostra o XP contando SÓ as etapas do cartaz — c.etapas.length,
+       sem a busca por quem assinou. Esta chamada sempre prependeu essa etapa
+       ANTES de mandar para `aceitarProposta`, e a conta de lá contava o
+       array já com o prepend: um cartaz de 1 etapa e +80 XP na tela virava
+       +94 no diário, sempre, byte a byte o bug que um comentário antigo dizia
+       ter fechado. `etapasPrometidas` diz explicitamente quantas etapas o
+       jogador VIU, para a busca pelo dador não inflar a paga. */
     const r = ofertaDoMestre(missoesRef.current, {
       ...prop,
       etapas: [{ tipo: "falar_com", alvo: c.dador }, ...prop.etapas],
@@ -19368,6 +19403,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       nivel: (personagem && personagem.nivel) || 1, dia: diaRef.current,
       mundo: mundoDasMissoes(personagemRef.current || personagem),
       dadorPresente: false,
+      etapasPrometidas: (c.etapas || []).length,
     });
     /* ---------------- R17 · UMA RECUSA NUNCA É CONTEÚDO ----------------
        A lei, do `jogo` em `formas.md` §R17: *uma recusa nunca é conteúdo;

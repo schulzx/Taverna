@@ -143,10 +143,15 @@ export function vereditoDoCartaz(cartaz, missoes, { nivel = 1, dia = 0, mundo = 
      proposta cara a cara, quem oferece NÃO está presente
      (`dadorPresente: false`). */
   const prop = propostaDaOferta(cartaz);
+  /* a mesma conta do aceite de verdade (`App.jsx` `aceitarContrato`):
+     `etapasPrometidas` trava a recompensa nas etapas que o CARTAZ mostrou,
+     sem a busca por quem assinou inflando o XP — ver o comentário lá. Aqui
+     o resultado nunca é lido (`vereditoDoCartaz` só quer `ok`/`motivo`),
+     mas as duas chamadas continuam byte a byte a mesma conta. */
   const r = aceitarProposta(missoes, {
     ...prop,
     etapas: [{ tipo: "falar_com", alvo: cartaz.dador }, ...(Array.isArray(prop.etapas) ? prop.etapas : [])],
-  }, { nivel, dia, mundo, dadorPresente: false });
+  }, { nivel, dia, mundo, dadorPresente: false, etapasPrometidas: (Array.isArray(prop.etapas) ? prop.etapas.length : 0) });
 
   if (r.ok) return { pode: true, chave: "", texto: "", contra: "", saida: null };
 
