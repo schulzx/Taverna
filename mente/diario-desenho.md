@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 25/09 20:50 · v9.299 · **V4 — a cinta com os anéis: o grupo aparece na tela principal** · commit (no bloco seguinte)
+## 25/09 20:50 · v9.299 · **V4 — a cinta com os anéis: o grupo aparece na tela principal** · commit `89d1150`
 
 - **estado inicial:** trava tomada às 19:00; HEAD `fd6bdb1`; nenhum ciclo do
   sistema, bastão livre. **O estudo do `jogo` já estava no disco** (o ciclo de
@@ -37,7 +37,8 @@ Formato:
   (`243:73`, `O anel` com 12 variantes) e, no arquivo da pessoa, o `142:2` com o
   `126:6` clonado ao lado da cinta do código. Pagou de passagem uma dívida sua
   de V5a (`teste-v5a-cabecalho` falhava numa árvore em CRLF).
-- **oficial** (bastão tomado às 20:17): scripts 1→6 sem âncora falhada;
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 20:17 para o `oficial`, **devolvido às 20:46**, logo depois de `89d1150` subir.
+- **oficial**: scripts 1→6 sem âncora falhada;
   **24 257 linhas** antes e depois; 18 linhas de pt-PT trocadas para pt-BR nos
   comentários novos. **Um vermelho de passagem:** a 1.ª corrida deu 214/215 com
   `teste-sala.mjs`, que sozinho passa 125/125, e a 2.ª corrida inteira deu
