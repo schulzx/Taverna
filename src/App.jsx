@@ -52,7 +52,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, VEU, ESBATIMENTO, LADRILHO, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -180,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1370,9 +1370,9 @@ const GLIFO_DA_ABA = {
    instante em que esta etapa se construiu, e dois executores no mesmo
    arquivo apagam-se. **É uma dívida de uma linha, e está dita.** */
 const CINTA_DESENHA = {
-  rosto: 32,   /* o retrato dentro do alvo da ficha */
-  trilho: 56,  /* a barra de recurso: o comprimento é o canal PRIMÁRIO */
-  fio: 6,      /* a altura dela */
+  /* V4: o RETRATO (32), o TRILHO da barra (56) e a ALTURA dela (6) saíram —
+     o herói é um anel (`ANEL.heroi`, 40, com o rosto de 32 lá dentro) e a
+     barra de recurso morreu: o PV é o arco, o PM é número. */
   /* R21 · o quanto A MARCA DA PORTA transborda do retrato, para baixo e
      para a direita (`formas.md` §R21 · a fabricação, 4): 16 × 16 no canto
      do retrato de 32, a sair 4 px — zero px de leiaute, que é a única
@@ -1457,39 +1457,70 @@ function emTempo(minutos) {
   return (h < 10 ? h.toFixed(1) : String(Math.round(h))).replace(".0", "").replace(".", ",") + " h";
 }
 
-/* O comprimento é o canal primário e a cor é o segundo, e isto é lei e não
-   observação: `amber` × `danger` mede 1,26:1 em visão normal e 1,21:1 em
-   deuteranopia. Um PV que só mudasse de cor no grave não mudaria de nada
-   para quem não vê vermelho. */
-function BarraDeRecurso({ atual, max, cor, className = "" }) {
-  const frac = Math.max(0, Math.min(1, (Number(atual) || 0) / (Number(max) || 1)));
-  return (
-    <span aria-hidden="true" className={className}
-      style={{
-        display: "inline-block", width: CINTA_DESENHA.trilho, height: CINTA_DESENHA.fio,
-        /* É ELA QUEM CEDE quando o ecrã aperta, e é decisão: num telefone de
-           320 px a cinta pede mais do que tem, e o que sairia pela direita
-           seria a BOLSA. O comprimento continua a ser o canal primário
-           encolhido, e onde nem isso couber ele CEDE ATÉ SUMIR e o número
-           fica — medido a 320 px, que é o telefone mais apertado que ainda
-           se vende. Uma bolsa cortada não diz nada, e a bolsa é a peça que a
-           ordem de sacrifício desta etapa declara intocável: todas as ofertas
-           desta tela são em ◉. */
-        flexShrink: 1, minWidth: 0,
-        borderRadius: CINTA_DESENHA.fio / 2, background: T.panelSoft,
-      }}>
-      <span style={{ display: "block", height: "100%", width: (frac * 100) + "%", borderRadius: CINTA_DESENHA.fio / 2, background: cor, transition: "width .5s" }} />
-    </span>
-  );
+/* ---------------- V4 · A BARRA DE RECURSO MORREU ----------------
+   E com ela o defeito que a matou. O PV é o arco do anel (o comprimento
+   continua sendo o canal primário: à volta do rosto em vez de ao lado dele);
+   o PM é número, porque o que se compara com um custo é um número.
+
+   O DEFEITO (`mente/v4-jogo.md` §0): o `style` inline da barra passava por
+   cima do `hidden` da do PM, que por isso aparecia no telefone; com um prazo
+   quem cedia era a barra de PV — 3 px com um, 0 com dois —, e a do PM ficava
+   nos 56. Um arco não cede. A lição: *numa peça que cede, um `style` inline
+   vence a classe que a devia esconder*.
+
+   V4 · O CARTÃO DO COMPANHEIRO, na sala Grupo: é aqui que o toque num anel
+   chega. Rola até ele e dá-lhe o foco — sem animar a rolagem (quem pediu
+   menos movimento não a tem, e quem não pediu não precisa dela). */
+function focarNoCartao(el) {
+  if (!el) return;
+  try { el.scrollIntoView({ block: "start" }); el.focus({ preventScroll: true }); } catch (e) { calou("abrir o grupo no cartão", e); }
 }
 
-function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRecente, reduzido, tempoAberto, alforjeAberto, marcaDaPorta = "porta", nomeDaPorta = "A ficha", aoAbrirFicha, aoAbrirTempo }) {
+/* ---------------- V4 · A CINTA COM OS ANÉIS ----------------
+   A composição é a da pessoa (`126:6`, `top-hud-bar`): QUEM VOCÊS SÃO à
+   esquerda, O MUNDO ao meio, O QUE SE GASTA à direita — a ordem de
+   importância é a ordem de leitura (`mente/v4-jogo.md` §1: quanto PV eu
+   tenho, alguém do grupo está mal, há prazo, que horas são, quanto dinheiro,
+   quanto PM).
+
+   OS DESVIOS DO NÓ, cada um com o seu número (`formas.md` §V4):
+   - 48 de altura, e não 66: com o anel do herói em 40 dentro de 48 a prosa
+     não perde um pixel (o topo do campo fica onde estava, ±2);
+   - o anel ÂMBAR, e não ciano: contra o perigo separa 1,52:1 em cinzento, e
+     o ciano só 1,25 (em deuteranopia, 1,00 de luz);
+   - PV e não HP; a coroa no SEU herói, no canto de cima (a de baixo é da
+     marca da porta), sem a cinta crescer nem a cortar;
+   - o PM violeta (a magia tem uma cor só) e só número;
+   - a pílula sem o lugar (o lugar mora no cabeçalho da página, V5a) e com o
+     céu da hora; e nua no telefone, onde a moldura não cabe.
+
+   O QUE ELA RESOLVE, contado no antes: com quatro companheiros e uma a
+   morrer, a tela principal mostrava a heroína com o PV cheio e mais
+   ninguém — ler o PV do pior custava 2 toques e ~600 px de rolagem. Agora
+   são zero toques (o anel responde), e abrir o cartão dele é um.
+
+   QUEM CEDE quando a linha aperta é conta (`repartirACinta`, glifos.js,
+   provada em Node) e a medida é da peça (`useRepartoDaCinta`, ui.jsx): aqui
+   só se diz o que ocupa lugar (`chave`). A ordem é do `jogo`: na mesa os
+   rótulos, do último para o primeiro, depois o glifo da luz, depois os anéis
+   para o disco; no telefone o glifo e depois os anéis. Nunca cedem o herói,
+   a pílula, os contadores. */
+function ACinta({ personagem, minuto, dia, prazos, guardado, falhaAoGuardar, reduzido, tempoAberto, alforjeAberto, marcaDaPorta = "porta", nomeDaPorta = "A ficha", aoAbrirFicha, aoAbrirTempo, aoAbrirCompanheiro }) {
   const chips = chipsDoEstado(personagem);
   const vivo = chips.length > 0;
   const vidaMax = personagem.vidaMax || 0;
-  const grave = vidaMax > 0 && personagem.vida / vidaMax <= 1 / 3;
   const comPM = oPMConta(personagem);
   const prazo = prazos && prazos.length ? prazos[0] : null;
+  /* o +N dos prazos herda o pior do que esconde — a mesma lei do disco */
+  const escondidoGrave = !!(prazos && prazos.slice(1).some((p) => p.noites <= 1));
+  /* as invocadas não entram: só existem em luta, e a luta tem tela própria */
+  const grupo = (personagem.grupo || []).filter((g) => g && !g.invocada);
+  const mesa = useMesa();
+  /* mede-se quando muda o que ocupa lugar — e não a cada tecla do campo */
+  const chave = [grupo.map((c) => c.nome + ":" + c.vida + ":" + c.vidaMax).join(","), horaTxt(minuto), dia,
+    prazo ? prazo.noites + "/" + prazos.length : "", personagem.moedas, comPM ? personagem.mana : "",
+    personagem.vida, personagem.nome].join("|");
+  const { reparto, refs } = useRepartoDaCinta(grupo, mesa, chave);
   return (
     <div style={{
       height: vivo ? CINTA.alturaViva : CINTA.altura,
@@ -1506,90 +1537,65 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
       transition: reduzido ? "none" : "height .22s ease, border-color .6s ease",
       overflow: "hidden",
     }}>
-      <div className="flex items-center justify-between relative"
-        style={{ height: CINTA.altura, paddingLeft: CINTA.enchimento, paddingRight: CINTA.enchimento }}>
-        {/* ---------------- A FICHA, E É UM ALVO SÓ ----------------
-            "Abrir a ficha" tinha DUAS caras na tela onde se passam 90 % do
-            jogo: este bloco e a aba `GESTÃO`. A lei-mãe desta mesa — *uma
-            ação, uma forma* — quebrada no pior sítio possível. A cinta é a
-            cara que fica; a aba mantém-se como aba, que é outra gramática
-            (uma porta para um painel, não um atalho para a ficha). */}
-        {/* AS TRÊS CARAS DO BLOCO SOBREVIVEM À MUDANÇA DE CASA (v9.160): normal,
-            clarão de dano, pulso de agonia — e o clarão ganha do pulso, porque
-            o golpe é AGORA e a agonia continua lá depois. A borda só existe
-            quando há o que dizer: numa cinta de 48 px, uma moldura permanente
-            à volta do alvo seria a moldura a voltar por outra porta. */}
-        {/* R21 · A FICHA É A PORTA DO ALFORJE. No telefone a fita de abas
-            saiu, e é este alvo — o que já abria a ficha desde R13 — que
-            abre a folha com as abas no pé. Por isso diz que abre um
-            diálogo e se está aberto; e o nome muda com a marca ("A ficha"
-            → "A ficha — há novo no diário"), sem `aria-live`: o
-            acontecimento já foi dito pela prosa, e dizê-lo duas vezes é
-            ruído (`formas.md` §R21 · a fabricação, 4). */}
-        <button onClick={aoAbrirFicha} title={nomeDaPorta} aria-label={nomeDaPorta} aria-haspopup="dialog" aria-expanded={!!alforjeAberto}
-          className={"tv-anel-foco rounded-lg flex items-center gap-2.5 min-w-0 " + (feridaRecente ? "tv-dano" : grave ? "tv-agonia" : "")}
-          style={{ height: CINTA.altura, background: "transparent", border: "1px solid " + (feridaRecente || grave ? T.danger : "transparent"), paddingRight: 4, paddingLeft: 2 }}>
-          {/* O retrato leva A MARCA DA PORTA no canto de baixo-direito, em
-              absoluto e a transbordar `CINTA_DESENHA.transbordoDaMarca`:
-              ocupa ZERO px de leiaute. O invólucro só existe para dar ao
-              absoluto um canto a que se agarrar. */}
-          <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
-            <Retrato semente={sementeDe(personagem)} ente={personagem} semCarta tamanho={CINTA_DESENHA.rosto}
-              anel={grave ? T.danger : T.amber} estado={estadoDe(personagem.vida, vidaMax)} />
-            <span aria-hidden="true" style={{ position: "absolute", right: -CINTA_DESENHA.transbordoDaMarca, bottom: -CINTA_DESENHA.transbordoDaMarca, lineHeight: 0, pointerEvents: "none" }}>
-              <MarcaDaPorta estado={marcaDaPorta} />
+      <div ref={refs.linha} className="flex items-center justify-between relative"
+        style={{ height: CINTA.altura, paddingLeft: CINTA.enchimento, paddingRight: CINTA.enchimento, gap: CINTA.espaco }}>
+        <div className="flex items-center min-w-0">
+          {/* ---------------- O HERÓI, E É A PORTA DO ALFORJE ----------------
+              O mesmo alvo e o mesmo nome de R13/R21: custo de reaprender zero.
+              O ANEL É A MOLDURA — o bloco perdeu a borda vermelha e o pulso sem
+              fim (uma forma para o PV grave, não duas). A COROA marca o SEU
+              herói no canto de cima; o de baixo é da marca da porta. Nenhuma
+              das duas ocupa um pixel de leiaute, nem sai da cinta de 48. */}
+          <button ref={refs.heroi} onClick={aoAbrirFicha} title={nomeDaPorta} aria-label={nomeDaPorta} aria-haspopup="dialog" aria-expanded={!!alforjeAberto}
+            className="tv-anel-foco rounded-lg flex items-center shrink-0"
+            style={{ height: CINTA.altura, background: "transparent", border: "none", paddingRight: 4, paddingLeft: 2, gap: mesa ? 0 : CINTA.perto }}>
+            <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
+              <Anel ente={personagem} semente={sementeDe(personagem)} vida={personagem.vida} vidaMax={vidaMax} morrendo={!!personagem.morrendo} tamanho={ANEL.heroi} />
+              <span aria-hidden="true" className="inline-flex items-center justify-center rounded-full"
+                style={{ position: "absolute", left: -CINTA_DESENHA.transbordoDaMarca, top: -CINTA_DESENHA.transbordoDaMarca, width: CINTA.coroa, height: CINTA.coroa, background: T.amber, pointerEvents: "none" }}>
+                <Glifo nome="coroa" tamanho={CINTA.glifoDaCoroa} cor={T.onAccent} />
+              </span>
+              <span aria-hidden="true" style={{ position: "absolute", right: -CINTA_DESENHA.transbordoDaMarca, bottom: -CINTA_DESENHA.transbordoDaMarca, lineHeight: 0, pointerEvents: "none" }}>
+                <MarcaDaPorta estado={marcaDaPorta} />
+              </span>
             </span>
-          </span>
-          {/* O GRUPO DO PV É O ÚNICO QUE CEDE: a bolsa e o retrato são
-              `shrink-0` por decisão (a bolsa entra pela primeira vez nesta
-              etapa e a ordem de sacrifício declara-a intocável), e o trilho é
-              o item com mais gordura. Medido a 320 px — o telefone mais
-              apertado que ainda se vende — a cinta pede 15 px a mais do que
-              tem; quem os dá é o trilho. */}
-          <span className="flex items-center gap-1.5 min-w-0" title={"PV " + personagem.vida + "/" + vidaMax}>
-            <IconeVida tamanho={TIPOS.piso} cor={grave ? T.danger : T.amber} />
-            <BarraDeRecurso atual={personagem.vida} max={vidaMax} cor={grave ? T.danger : T.amber} />
-            <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.ink, fontWeight: 700 }}>{personagem.vida}</span>
-          </span>
-          {comPM && (
-            <span className="flex items-center gap-1.5 shrink-0" title={"PM " + personagem.mana + "/" + personagem.manaMax}>
-              <IconeMana tamanho={TIPOS.piso} cor={T.violetSoft} />
-              {/* a barra do PM só na mesa: no telefone a conta da folga não a
-                  comporta (seriam +93 px contra os 12 de CINTA.folgaMinima), e o número
-                  sozinho continua a dizer tudo o que um caster precisa de ler
-                  de relance. A barra inteira vive na ficha. */}
-              <BarraDeRecurso className="hidden md:inline-block" atual={personagem.mana} max={personagem.manaMax} cor={T.violetSoft} />
-              <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.ink, fontWeight: 700 }}>{personagem.mana}</span>
-            </span>
-          )}
-          {/* A BOLSA ENTRA PELA PRIMEIRA VEZ, e é obrigatória: todas as
-              ofertas desta tela são em `◉`. */}
-          <span className="flex items-center gap-1.5 shrink-0" title="A bolsa">
-            <IconeBolsa tamanho={TIPOS.piso} cor={T.amberSoft} />
-            <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.ink, fontWeight: 700 }}>{personagem.moedas || 0}</span>
-          </span>
-        </button>
+            {/* no telefone o herói é o único com número (`14`); na mesa, o nome
+                e `14/14 PV` em duas linhas de 12, como cada companheiro */}
+            {mesa
+              ? <RotuloDoRetrato ente={personagem} estado={estadoDoAnel(personagem)} refRotulo={refs.rotuloDoHeroi} />
+              : <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.ink, fontWeight: 700 }}>{personagem.vida}</span>}
+          </button>
+          {/* O GRUPO (ui.jsx): na ordem de entrada, o cacho de um alvo no
+              telefone e um alvo por retrato na mesa; o toque abre a sala Grupo
+              no cartão de quem mais precisa. Sozinho, ocupa zero px. */}
+          <GrupoNaCinta grupo={grupo} reparto={reparto} mesa={mesa} aoAbrir={aoAbrirCompanheiro} />
+        </div>
 
         {/* ---------------- O TEMPO, E TUDO O QUE É TEMPO MORA LÁ ----------------
-            `formas.md` §R1b tinha julgado que *"`Esperar` nunca devia ter
-            entrado na soleira"* e deixado a trava aberta: *"ou o `+N` vira
-            porta antes, ou o controlo de passar o tempo guarda o lugar que
-            tinha"*. A saída não é escondê-lo — é dar-lhe casa. Ele não
-            perdeu morada: ganhou-a, e levou o acampamento com ele, porque
-            acampar É passar o tempo. */}
+            O toque abre O TEMPO, como sempre. A pílula é a da v3: o céu da hora
+            (a conta d'O TEMPO e do cabeçalho da página), a hora, o dia na mesa,
+            e o selo do prazo, cujo +N herda o pior do que esconde. */}
         <button onClick={aoAbrirTempo} title="O tempo — esperar, acampar, os prazos"
           aria-label="O tempo" aria-expanded={!!tempoAberto}
           className="tv-anel-foco rounded-lg flex items-center shrink-0"
-          style={{ height: CINTA.altura, gap: 7, background: "transparent", border: "none", paddingLeft: 6 }}>
-          <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo, fontWeight: 700 }}>{horaTxt(minuto)}</span>
-          {prazo && <SeloDePrazo noites={prazo.noites} quantos={prazos.length} urgente={prazo.noites <= 1} />}
+          style={{ height: CINTA.altura, background: "transparent", border: "none", padding: 0 }}>
+          <PilulaDoTempo luz={luzDaHora(horaTxt(minuto))} hora={horaTxt(minuto)} data={dataTxt(dia || 1)} prazo={prazo}
+            quantos={prazos ? prazos.length : 0} escondidoGrave={escondidoGrave} comGlifo={reparto.glifo} mesa={mesa}
+            refPilula={refs.pilula} refGlifo={refs.glifo} />
         </button>
 
+        {/* ---------------- O QUE SE GASTA ----------------
+            A bolsa sempre (uma oferta com preço e sem saldo é meio veredito);
+            o PM só quando conta. No telefone empilham-se — é isso que faz o
+            pior caso caber a 375. Não é alvo: é um número que se lê, e o
+            glifo diz-se por palavra (moedas, PM) a quem não o vê. */}
+        <Contadores moedas={personagem.moedas || 0} pm={comPM ? personagem.mana : null} mesa={mesa} refContadores={refs.contadores} />
       </div>
 
       {/* A SEGUNDA FILA, e ela é de propósito: *o que não cabe numa linha
           calma é exactamente o que tem de interromper.* Custo medido: em 20
-          turnos houve UM estado vivo, durante UM turno. */}
+          turnos houve UM estado vivo, durante UM turno. As condições dos
+          COMPANHEIROS não vêm aqui: se sangram, o anel encurta, e isso chega. */}
       {vivo && (
         <div className="flex items-center gap-1.5"
           style={{ height: CINTA.alturaViva - CINTA.altura, paddingLeft: CINTA.enchimento, paddingRight: CINTA.enchimento, overflowX: "auto", overflowY: "hidden" }}>
@@ -1607,17 +1613,11 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
       )}
 
       {/* ---------------- O SINAL DE GUARDADO ----------------
-          Vivia no cabeçalho que morre, e num jogo cujo save mora só no
-          `localStorage` do jogador é A ÚNICA COISA NA TELA que lhe diz que a
-          vida dele está segura. Passa a transitório e a custar ZERO px
-          permanentes: a peça acende a marca da chapa (o fio do pé) e escreve
-          `✓ guardado` na folga da cinta, em absoluto — não empurra nem tapa
-          nada. É filho DIRECTO da cinta porque é contra a cinta inteira que
-          ele se posiciona, e o pé dela desce para 72 quando há um estado vivo.
-
-          A FALHA NÃO É TRANSITÓRIA e não passa pela peça: um save que não
-          gravou fica dito até deixar de ser verdade, e é a única coisa desta
-          faixa que tem direito a permanecer. */}
+          Num jogo cujo save mora só no `localStorage` é A ÚNICA COISA NA TELA
+          que diz ao jogador que a vida dele está segura: transitório, ZERO px
+          permanentes, filho DIRETO da cinta (é contra ela inteira que se
+          posiciona). A FALHA NÃO É TRANSITÓRIA: um save que não gravou fica
+          dito até deixar de ser verdade. */}
       <SinalDeGuardado visivel={!!guardado} />
       {falhaAoGuardar && (
         <span className="tv-mono" role="alert"
@@ -3309,7 +3309,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
             {(personagem.grupo || []).length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
             ) : (personagem.grupo || []).map((m, i) => (
-              <div key={i}>
+              <div key={i} data-membro={m.nome} tabIndex={-1} ref={subPedida && subPedida.alvo === m.nome && Date.now() - (subPedida.selo || 0) < CINTA.pedidoFresco ? focarNoCartao : undefined}>
                 {/* v9.184: o PM do companheiro entrou. Ele SEMPRE existiu —
                     `companheiros.js` dá manaMax a todo mundo, o Mestre recebe
                     "12/16 PM" na linha do prompt, e as habilidades dele cobram
@@ -22024,24 +22024,24 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      herda a trava de uma mesa que nao e a dele. */
   const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("menu"); };
 
-  /* ---------------- O CORPO SENTE (v9.160) ----------------
-     O clarão de dano do bloco do herói. Compara a vida de agora com a
-     última vista: caiu, o bloco acende vermelho por um instante. É efeito
-     e não evento porque a vida muda por dez caminhos (golpe, veneno,
-     marcha forçada, maldição) — escutar a MUDANÇA pega todos de uma vez,
-     e um caminho novo de dano nasce já fazendo o bloco acender. */
-  const vidaVistaRef = useRef(null);
-  const [feridaRecente, setFeridaRecente] = useState(false);
-  useEffect(() => {
-    const v = personagem ? personagem.vida : null;
-    const antes = vidaVistaRef.current;
-    vidaVistaRef.current = v;
-    if (antes != null && v != null && v < antes) {
-      setFeridaRecente(true);
-      const tid = setTimeout(() => setFeridaRecente(false), 750);
-      return () => clearTimeout(tid);
-    }
-  }, [personagem && personagem.vida]);
+  /* ---------------- O CORPO SENTE (v9.160 → V4) ----------------
+     Aqui morava o clarão do bloco do herói: um efeito que comparava a vida
+     de agora com a última vista e acendia o bloco por 750 ms. A lei que ele
+     guardava FICA, e mudou de casa: escutar a MUDANÇA da vida, e não um
+     evento, porque a vida cai por dez caminhos. Quem a escuta agora é o
+     próprio anel (`Anel`, ui.jsx), para o herói e para cada companheiro —
+     e por isso ele também sabe QUANTO se perdeu, que o bloco não sabia. */
+  /* V4 · O TOQUE NUM COMPANHEIRO abre a sala Grupo NO CARTÃO DELE (o `jogo`,
+     §2): a mesma porta de `abrirPortaDoSistema`, com o nome de quem abrir.
+     O cartão rola até ele e ganha o foco (`focarNoCartao`). Com a janela de
+     reação aberta não abre — nada com relógio fica atrás de uma porta. */
+  const abrirCompanheiro = (nome) => {
+    try {
+      if (janelaReacao) return;
+      setSubPedida({ sub: "grupo", selo: Date.now(), alvo: nome });
+      setAba("gestao");
+    } catch (e) { calou("abrir o grupo no companheiro", e); }
+  };
 
   /* v9.42: `morto` NÃO entra aqui de propósito. A tela de tombamento é um
      overlay que cobre a página inteira — para o jogador, tudo abaixo dela já
@@ -23133,7 +23133,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             <ACinta
               personagem={personagem} minuto={minuto} prazos={prazosDaCinta(relogios)}
               guardado={guardadoAgora} falhaAoGuardar={statusSave === "erro"}
-              feridaRecente={feridaRecente}
+              dia={dia} aoAbrirCompanheiro={abrirCompanheiro}
               reduzido={!!reduzidoRef.current}
               tempoAberto={tempoAberto} alforjeAberto={!!aba}
               marcaDaPorta={estadoDaPorta} nomeDaPorta={nomeDaPortaAgora}

@@ -25,6 +25,10 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **dar um consumível a um companheiro fora da luta, e a cura por semente** · de: V4b (`jogo`, "o anel é onde se cuida") · 25/09 · médio
+  `usarConsumivel` serve a qualquer ficha, mas o herói não tem forma de dar uma poção a um companheiro fora da luta; e `valorDaCura` sorteia com `Math.random()`, contra a lei do determinismo por semente.
+  **Para quê:** V4 pôs o grupo na cinta com o anel de PV; o passo seguinte é tocar no anel ferido e ver a melhor cura com o preço e o resultado antes do clique (*o veredito antes do clique*). **O que se pede:** `darConsumivel(heroi, companheiro, item, semente)` e `intervaloDaCura(item, ficha) → { min, max }` puros, com suíte; `valorDaCura` pela semente.
+
 - [ ] **`acampamento.js:327` ainda diz "monte acampamento (⛺)"** · de: V3c (`jogo`, prova jogada) · 25/09 · leve
   A recusa aponta para um desenho que já não existe em tela nenhuma: desde V3c o botão leva o glifo da tenda, não o emoji. **Para quê:** a recusa tem de apontar para o que o jogador vê. Pede-se tirar " (⛺)" da frase.
 

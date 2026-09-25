@@ -12,16 +12,16 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
-import { GLIFOS, tracoNaGrelha, partesDaMoeda } from "./glifos.js";
+import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta } from "./glifos.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
    os dois desenhos divergiriam no primeiro ajuste. */
 import { Rosto } from "./rosto.jsx";
-import { tracos } from "./semente.js";
+import { tracos, estadoDe, sementeDe } from "./semente.js";
 import { CartaDeTaro } from "./carta-taro.jsx";
 /* A brasa e conta (`brasas.js`) e o campo e desenho — mesma divisao do rosto. */
 import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
@@ -913,7 +913,7 @@ export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, e
         role={abre ? "button" : undefined} tabIndex={abre ? 0 : undefined}
         onClick={abre || undefined}
         onKeyDown={abre ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setAberta(true); } } : undefined}
-        style={{ borderRadius: "50%", border: `2px solid ${anel}`, background: corSubstituta || t.fundo, display: "block", cursor: abre ? "pointer" : "default" }}>
+        style={{ borderRadius: "50%", border: anel ? `2px solid ${anel}` : "none", background: corSubstituta || t.fundo, display: "block", cursor: abre ? "pointer" : "default" }}>
         {abre ? <title>Ver a carta de {ente.nome || "quem é este"}</title> : null}
         <Rosto semente={semente} estado={estado} ente={ente} />
       </svg>
@@ -1780,31 +1780,358 @@ export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeO
 
    `conta` e OPCIONAL e cai em `noites`: sem ela a peca e byte a byte a
    de ontem, e as chamadas vivas da cinta nao mudam uma letra. */
-export function SeloDePrazo({ noites, quantos = 1, urgente = false, conta = "noites" }) {
+export function SeloDePrazo({ noites, quantos = 1, urgente = false, conta = "noites", escondidoGrave = false }) {
   const aperto = apertoDoPrazo(noites, urgente);
   const palavra = palavraDoPrazo(noites, urgente, conta);
+  /* V4 · a mesma palavra, curta — `esta noite` diz-se `hoje` só abaixo de
+     `CINTA.palavraCurtaAbaixoDe` (a folha escolhe; as duas estão no DOM e só
+     uma se vê, e o leitor de tela lê a que se vê). */
+  const curta = palavraDoPrazo(noites, urgente, conta, true);
   const cheio = aperto.cheio;
+  /* V4 · ENTRAR NA ÚLTIMA NOITE pulsa três vezes (`MUDOU_AGORA`), no turno em
+     que acontece, e depois fica cheio e parado: o cheio já é a forma, o pulso
+     só diz *agora*. Ao montar não pulsa — quem abre o jogo na última noite
+     não acabou de entrar nela. */
+  const cheioAntesRef = React.useRef(null);
+  const [pulso, setPulso] = React.useState(0);
+  React.useEffect(() => {
+    const antes = cheioAntesRef.current;
+    cheioAntesRef.current = cheio;
+    if (antes === false && cheio) setPulso(Date.now());
+  }, [cheio]);
   /* A COR SAI DA TABELA POR NOME, nunca por valor: `APERTOS` diz
      `token`, e quem o traduz em tinta e esta linha, uma vez. */
   const tinta = T[aperto.token] || T.mundo;
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="inline-flex items-center gap-1" style={cheio ? {
+      <span key={pulso || "parado"} className={"inline-flex items-center gap-1" + (pulso ? " tv-mudou-agora" : "")} style={cheio ? {
         background: T.danger, color: T.onAccent, borderRadius: 4, padding: "4px 8px",
       } : { color: tinta }}>
         <IconeAmpulheta tamanho={12} cor={cheio ? T.onAccent : tinta} fracao={aperto.areia} />
-        <span className="tv-mono" style={{ fontSize: TIPOS.maquina, letterSpacing: "0.02em" }}>{palavra}</span>
+        <span className="tv-mono" style={{ fontSize: TIPOS.maquina, letterSpacing: "0.02em" }}>
+          {curta === palavra ? palavra : <><span className="tv-prazo-longo">{palavra}</span><span className="tv-prazo-curto">{curta}</span></>}
+        </span>
       </span>
       {/* `Quantos = Um e mais N`: o toque abre-os todos, e quem abre e o
           alvo do tempo. O `+N` e um NUMERO, nao um botao — dar-lhe alvo
-          proprio dentro de outro alvo era a segunda porta de novo. */}
+          proprio dentro de outro alvo era a segunda porta de novo.
+          V4 · E O +N HERDA O PIOR DO QUE ESCONDE: se um dos prazos escondidos
+          tambem esta na ultima noite, o numero passa de inkDim a danger — dois
+          contratos caindo hoje nao se leem como um urgente e outro qualquer.
+          A mesma lei do disco do grupo, na mesma cinta. */}
       {quantos > 1 && (
-        <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}
-          aria-label={`mais ${quantos - 1} prazo${quantos - 1 > 1 ? "s" : ""}`}>
+        <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: escondidoGrave ? T.danger : T.inkDim, fontWeight: escondidoGrave ? 700 : 400 }}
+          aria-label={`mais ${quantos - 1} prazo${quantos - 1 > 1 ? "s" : ""}${escondidoGrave ? ", um deles esta noite" : ""}`}>
           +{quantos - 1}
         </span>
       )}
     </span>
+  );
+}
+
+/* ============================================================
+   V4 · O ANEL — o PV de uma pessoa do grupo, à volta do rosto dela
+
+   A forma é a da v3 (`126:9`) e os números são de `ANEL` (estilo.js), com a
+   nota que diz porquê cada um. Aqui só se desenha, e o anel VÊ-SE A SI MESMO:
+   guarda a última vida que desenhou, e é daí que sabe que foi ferido agora
+   (o pedaço perdido), que curou (o arco cresce) ou que entrou em grave ou
+   tombou (três pulsos, e repouso). Por isso vale para o herói e para cada
+   companheiro sem o `App.jsx` ter de seguir a vida de ninguém — e ao voltar
+   da luta não repete nada: a cinta monta de novo, e um anel que acabou de
+   montar não viu ninguém cair.
+
+   NADA AQUI ESPERA: é tudo CSS sobre um desenho que já tem o estado final.
+   Uma ferida a meio de outra recomeça do comprimento de agora, sem fila.
+   É `aria-hidden`: quem diz o PV por palavras é o alvo que o contém.
+   ============================================================ */
+export function Anel({ ente = null, semente, vida = 0, vidaMax = 0, morrendo = false, tamanho = ANEL.heroi }) {
+  const estado = estadoDoAnel({ vida, vidaMax, morrendo });
+  const frac = estado === "tombado" ? 0 : Math.max(0, Math.min(1, vidaMax > 0 ? vida / vidaMax : 1));
+  const antesRef = React.useRef(null);
+  const relogioRef = React.useRef(null);
+  const [perdido, setPerdido] = React.useState(null);
+  const [pulso, setPulso] = React.useState(0);
+  /* só CRESCER anima; ferir salta — e é lido antes de o efeito atualizar o ref */
+  const cresce = !!antesRef.current && frac > antesRef.current.frac;
+  React.useEffect(() => {
+    const antes = antesRef.current;
+    antesRef.current = { frac, estado };
+    if (!antes) return;
+    try {
+      if (frac < antes.frac) {
+        clearTimeout(relogioRef.current);
+        setPerdido({ de: frac, ate: antes.frac, chave: Date.now() });
+        relogioRef.current = setTimeout(() => setPerdido(null), ANEL.perdido);
+      }
+      const ficouGrave = estado === "grave" && (antes.estado !== "grave" || frac < antes.frac);
+      const tombou = estado === "tombado" && antes.estado !== "tombado";
+      if (ficouGrave || tombou) setPulso(Date.now());
+    } catch (e) { /* sem pulso, o anel continua dizendo o estado parado — nunca custa o turno */ }
+  }, [frac, estado]);
+  React.useEffect(() => () => clearTimeout(relogioRef.current), []);
+  const s = tamanho, meio = s / 2, r = (s - ANEL.aro) / 2, C = 2 * Math.PI * r;
+  const dentro = ANEL.aro + ANEL.folga;
+  const tombado = estado === "tombado";
+  return (
+    <span aria-hidden="true" className="relative inline-block shrink-0 rounded-full" style={{ width: s, height: s }}>
+      <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} className="absolute inset-0" style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={meio} cy={meio} r={r} fill="none" stroke={T.panelSoft} strokeWidth={ANEL.aro} />
+        {!tombado && (
+          <circle className={cresce ? "tv-anel-cresce" : undefined} cx={meio} cy={meio} r={r} fill="none"
+            stroke={estado === "grave" ? T.danger : T.amber} strokeWidth={ANEL.aro}
+            strokeDasharray={C} strokeDashoffset={C * (1 - frac)} />
+        )}
+        {perdido && (
+          <circle key={perdido.chave} className="tv-anel-perdido" cx={meio} cy={meio} r={r} fill="none" stroke={T.danger} strokeWidth={ANEL.aro}
+            strokeDasharray={`${C * (perdido.ate - perdido.de)} ${C}`} strokeDashoffset={-C * perdido.de} />
+        )}
+      </svg>
+      <span className="absolute" style={{ left: dentro, top: dentro, lineHeight: 0, opacity: tombado ? ANEL.apagado : 1, filter: tombado ? "grayscale(1)" : "none" }}>
+        <Retrato semente={semente} ente={ente} semCarta tamanho={s - 2 * dentro} anel={null} estado={estadoDe(vida, vidaMax)} />
+      </span>
+      {tombado && (
+        <svg width={s} height={s} className="absolute inset-0">
+          <line x1={s * (1 - ANEL.barra)} y1={s * ANEL.barra} x2={s * ANEL.barra} y2={s * (1 - ANEL.barra)}
+            stroke={T.ink} strokeWidth={ANEL.traco} strokeLinecap="round" />
+        </svg>
+      )}
+      {perdido && <span key={"clarao" + perdido.chave} className="tv-anel-clarao absolute inset-0 rounded-full pointer-events-none" />}
+      {pulso > 0 && <span key={"pulso" + pulso} className="tv-agonia absolute inset-0 rounded-full pointer-events-none" />}
+    </span>
+  );
+}
+
+/* V4 · O DISCO DO GRUPO — os companheiros que não couberam, num `+N` do
+   tamanho de um anel. HERDA O PIOR DO QUE ESCONDE (`piorEstado`, glifos.js):
+   aro `danger` se um deles está grave; o mesmo aro e o traço de tombado se
+   um deles caiu. Um perigo escondido por falta de espaço é o defeito que a
+   cinta com os anéis existe para matar. `aria-hidden`: diz-se no alvo. */
+export function DiscoDoGrupo({ quantos = 0, estado = "calma", tamanho = ANEL.telefone }) {
+  const s = tamanho, meio = s / 2, r = (s - ANEL.aro) / 2;
+  return (
+    <span aria-hidden="true" className="relative inline-flex items-center justify-center shrink-0 rounded-full tv-mono"
+      style={{ width: s, height: s, background: T.panelSoft, fontSize: TIPOS.maquina, fontWeight: 700, color: T.ink }}>
+      {estado !== "calma" && (
+        <svg width={s} height={s} className="absolute inset-0">
+          <circle cx={meio} cy={meio} r={r} fill="none" stroke={T.danger} strokeWidth={ANEL.aro} />
+          {estado === "tombado" && (
+            <line x1={s * (1 - ANEL.barra)} y1={s * ANEL.barra} x2={s * ANEL.barra} y2={s * (1 - ANEL.barra)}
+              stroke={T.inkDim} strokeWidth={ANEL.traco} strokeLinecap="round" />
+          )}
+        </svg>
+      )}
+      <span className="relative">+{quantos}</span>
+    </span>
+  );
+}
+
+/* V4 · O RÓTULO DO RETRATO — na mesa, o nome e `14/14 PV` em duas linhas de
+   12 (a `meta` da v3, com PV e não HP). O texto do PV vem de `textoDoPV`
+   (glifos.js): quem tombou diz `caiu`. O grave escreve-o a `danger` (o
+   arco já o disse primeiro). `oculto`: é o rótulo que cedeu — zero de
+   largura, e quem o tira é a conta de `repartirACinta`. */
+export function RotuloDoRetrato({ ente = null, estado = "calma", oculto = false, refRotulo }) {
+  const nome = (ente && ente.nome) || "";
+  return (
+    <span ref={refRotulo} className="flex flex-col min-w-0 overflow-hidden"
+      style={{ maxWidth: oculto ? 0 : undefined, paddingLeft: oculto ? 0 : CINTA.entreAnelERotulo, lineHeight: CINTA.linhaDoRotulo + "px" }}>
+      <span className="tv-body whitespace-nowrap" style={{ fontSize: TIPOS.maquina, fontWeight: 700, color: T.ink }}>{nome}</span>
+      <span className="tv-mono whitespace-nowrap" style={{ fontSize: TIPOS.maquina, color: estado === "calma" ? T.inkDim : T.danger }}>
+        {textoDoPV(ente)}
+      </span>
+    </span>
+  );
+}
+
+/* V4 · OS CONTADORES — o que se gasta, à direita da cinta: `1.240 ◉` e, só
+   quando o PM conta, `85 ◆`. SÓ NÚMERO, SEM BARRA: o PM decide *"chego para
+   a Bola de Fogo (5)?"*, e o que se compara com um custo é um número.
+   Número primeiro e glifo depois, na cor do que conta — como o nó (`126:43`),
+   com o violeta da magia no lugar do ciano (`formas.md` §V1.6).
+   ARRANJO: na mesa lado a lado; no telefone EMPILHADOS (o PM por cima), numa
+   coluna de ~54 px — é isso que faz o pior caso caber a 375. */
+export function Contadores({ moedas = 0, pm = null, mesa = true, refContadores }) {
+  const letra = mesa ? TIPOS.rotulo : TIPOS.maquina;
+  const um = (valor, glifo, cor, rotulo) => (
+    <span className="inline-flex items-center tv-mono whitespace-nowrap"
+      style={{ gap: CINTA.entreNumeroEGlifo, fontSize: letra, fontWeight: 700, color: cor, lineHeight: 1.25 }}>
+      {valor}<Glifo nome={glifo} tamanho={TIPOS.piso} cor={cor} rotulo={rotulo} />
+    </span>
+  );
+  return (
+    <span ref={refContadores} className={"flex shrink-0 " + (mesa ? "flex-row items-center" : "flex-col-reverse items-end")}
+      style={{ gap: mesa ? CINTA.entreContadores : 0 }}>
+      {um((Number(moedas) || 0).toLocaleString("pt-BR"), "moeda", T.amber, "moedas")}
+      {pm != null && um(pm, "mana", T.violetSoft, "PM")}
+    </span>
+  );
+}
+
+/* V4 · A PÍLULA DO TEMPO — `[luz] 22:00 · 14 de Brumal [selo]` na mesa, e
+   `[luz] 22:00 [selo]` no telefone. O glifo é o da luz da hora (`luzDaHora`,
+   o mesmo d'O TEMPO e do cabeçalho da página: a hora nunca discorda de si).
+   Na mesa leva a moldura do nó (`126:37`): fundo `panelSoft`, fio e letra
+   `mundo` (7,09:1); no telefone é NUA, porque a moldura custaria 34 px que o
+   pior caso a 375 não tem. O glifo é o PRIMEIRO a ceder (`comGlifo`). Quem a
+   toca é o botão d'O TEMPO, à volta dela. */
+export function PilulaDoTempo({ luz = "dia", hora = "", data = "", prazo = null, quantos = 0, escondidoGrave = false, comGlifo = true, mesa = true, refPilula, refGlifo }) {
+  const P = CINTA.pilula;
+  return (
+    <span ref={refPilula} className="inline-flex items-center whitespace-nowrap"
+      style={mesa
+        ? { gap: P.entre, padding: `${P.cima}px ${P.lado}px`, borderRadius: P.raio, background: T.panelSoft, border: "1px solid " + T.mundo }
+        : { gap: P.entreTelefone }}>
+      {comGlifo && <span ref={refGlifo} className="inline-flex"><Glifo nome={luz} tamanho={TIPOS.piso} cor={T.mundo} rotulo={luz} /></span>}
+      <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo, fontWeight: 700 }}>{hora}</span>
+      {mesa && data ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>{data}</span> : null}
+      {prazo ? <SeloDePrazo noites={prazo.noites} quantos={quantos} urgente={prazo.noites <= 1} escondidoGrave={escondidoGrave} /> : null}
+    </span>
+  );
+}
+
+/* ============================================================
+   V4 · A CINTA MEDE-SE A SI MESMA — e decide pela conta, não pelo olho
+
+   `useMesa`: a cinta tem duas composições (a mesa, a partir de
+   `CINTA.mesa`; o telefone, abaixo) e troca quando a janela atravessa o corte.
+
+   `useRepartoDaCinta`: QUEM CEDE quando a linha aperta é `repartirACinta`
+   (glifos.js, provada em Node). Aqui só se medem as peças que existem — o
+   alvo do herói, a pílula (sem o glifo), o glifo, os contadores — e a
+   largura do rótulo de cada companheiro, pela fonte que o rótulo do herói
+   tem de fato (numa régua de `canvas`: é o que deixa medir o rótulo de
+   quem está no disco e, por isso, não está desenhado). Mede em
+   `useLayoutEffect` (antes de pintar: nunca se vê a cinta errada e depois
+   certa), quando muda o que ocupa lugar (`chave`) — não a cada tecla do
+   campo —, quando a linha muda de largura, e quando as fontes acabam de
+   chegar. Se a medida falhar, a cinta fica como está: nunca custa o turno.
+   ============================================================ */
+let reguaDoTexto = null;
+function larguraDoTexto(texto, modelo) {
+  try {
+    if (!modelo) return 0;
+    if (!reguaDoTexto) reguaDoTexto = document.createElement("canvas").getContext("2d");
+    reguaDoTexto.font = window.getComputedStyle(modelo).font;
+    return Math.ceil(reguaDoTexto.measureText(String(texto || "")).width);
+  } catch (e) { return 0; }
+}
+
+export function useMesa() {
+  const [mesa, setMesa] = React.useState(() => { try { return window.matchMedia(CINTA.mesa).matches; } catch (e) { return true; } });
+  React.useEffect(() => {
+    try {
+      const mm = window.matchMedia(CINTA.mesa);
+      const aoMudar = () => setMesa(mm.matches);
+      mm.addEventListener("change", aoMudar);
+      return () => mm.removeEventListener("change", aoMudar);
+    } catch (e) { return undefined; }
+  }, []);
+  return mesa;
+}
+
+export function useRepartoDaCinta(grupo, mesa, chave) {
+  const n = grupo.length;
+  const [reparto, setReparto] = React.useState(() => ({ aneis: n, rotulos: n, glifo: true, disco: 0 }));
+  const refs = {
+    linha: React.useRef(null), heroi: React.useRef(null), rotuloDoHeroi: React.useRef(null),
+    pilula: React.useRef(null), glifo: React.useRef(null), contadores: React.useRef(null),
+  };
+  const glifoMedido = React.useRef(0), medir = React.useRef(null);
+  medir.current = () => {
+    try {
+      const linha = refs.linha.current;
+      if (!linha) return;
+      const g = refs.glifo.current;
+      if (g) glifoMedido.current = g.offsetWidth + (mesa ? CINTA.pilula.entre : CINTA.pilula.entreTelefone);
+      const modelo = refs.rotuloDoHeroi.current ? refs.rotuloDoHeroi.current.children : [];
+      const larg = (el) => (el ? el.offsetWidth : 0);
+      const novo = repartirACinta({
+        largura: linha.clientWidth - 2 * CINTA.enchimento, mesa, n,
+        heroi: larg(refs.heroi.current), pilula: larg(refs.pilula.current) - (g ? glifoMedido.current : 0),
+        glifo: glifoMedido.current, contadores: larg(refs.contadores.current),
+        espaco: CINTA.espaco, perto: CINTA.perto, folga: CINTA.respiro, anel: mesa ? ANEL.mesa : ANEL.telefone,
+        passo: ANEL.telefone - ANEL.sobreposicao, separacao: 2 * CINTA.entreRetratos + CINTA.fioDoSeparador,
+        entreAnelERotulo: CINTA.entreAnelERotulo,
+        rotulos: grupo.map((c) => Math.max(larguraDoTexto(c.nome, modelo[0]), larguraDoTexto(textoDoPV(c), modelo[1]))),
+      });
+      setReparto((a) => (a.aneis === novo.aneis && a.rotulos === novo.rotulos && a.glifo === novo.glifo && a.disco === novo.disco ? a : novo));
+    } catch (e) { /* sem medida, a cinta fica como está */ }
+  };
+  React.useLayoutEffect(() => { medir.current(); }, [chave, mesa, n, reparto.glifo, reparto.aneis, reparto.rotulos]); // eslint-disable-line
+  React.useEffect(() => {
+    let parar = () => {};
+    try {
+      const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => medir.current()) : null;
+      if (ro && refs.linha.current) ro.observe(refs.linha.current);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => medir.current());
+      parar = () => { if (ro) ro.disconnect(); };
+    } catch (e) { /* sem observador, mede-se só quando o conteúdo muda */ }
+    return () => parar();
+  }, []); // eslint-disable-line
+  return { reparto, refs };
+}
+
+/* V4 · O GRUPO NA CINTA — os companheiros, na ordem de ENTRADA, nunca "pior
+   primeiro": posição é identidade, e a 28 px os rostos não se distinguem de
+   relance. NO TELEFONE o cacho inteiro é UM alvo de 48 (os anéis de 28 ficam
+   abaixo de `ALVOS.piso`), sobrepostos `ANEL.sobreposicao`, e abre o
+   primeiro no pior estado. NA MESA cada retrato com rótulo é o seu alvo, com
+   o fio de 24 do nó entre eles. O que não cabe entra no disco `+N`, que
+   herda o pior do que esconde. Sozinho, o grupo ocupa ZERO px: nada de
+   "convide alguém" — um lugar vazio dizendo que está vazio é mobília mentindo. */
+export function GrupoNaCinta({ grupo = [], reparto, mesa = true, aoAbrir }) {
+  if (!grupo.length || !reparto) return null;
+  const visiveis = grupo.slice(0, reparto.aneis), escondidos = grupo.slice(reparto.aneis);
+  const pior = piorEstado(escondidos.map(estadoDoAnel));
+  const abrirQuem = (lista) => { const nome = quemAbrir(lista); if (nome && aoAbrir) aoAbrir(nome); };
+  const alvo = { height: CINTA.altura, minWidth: ALVOS.piso, background: "transparent", border: "none", padding: 0 };
+  const recorte = { boxShadow: "0 0 0 " + ANEL.recorte + "px " + T.panel };
+  const fio = (k) => <span key={k} aria-hidden="true" className="shrink-0" style={{ width: CINTA.fioDoSeparador, height: CINTA.separador, background: T.line, margin: "0 " + CINTA.entreRetratos + "px" }} />;
+  if (!mesa) {
+    /* O ALVO DE 48 SEM OCUPAR 48: com dois anéis ou mais o cacho já mede 48;
+       com UM (um anel, ou só o disco) mede 28, e o que falta é uma área
+       invisível que come os espaços dos lados (`CINTA.alvoAlem`) — como o
+       `jogo` escreveu. Ocupar 48 de leiaute partia o pior caso a 375 em 12 px. */
+    const itens = visiveis.length + (escondidos.length > 0 ? 1 : 0);
+    return (
+      <button onClick={() => abrirQuem(grupo)} aria-label={nomeDoCacho(grupo)} title={nomeDoCacho(grupo)}
+        className="tv-anel-foco rounded-lg flex items-center justify-center shrink-0 relative"
+        style={{ height: CINTA.altura, background: "transparent", border: "none", padding: 0, marginLeft: CINTA.perto }}>
+        {itens === 1 && <span aria-hidden="true" className="absolute" style={{ top: 0, bottom: 0, left: -CINTA.alvoAlem.esquerda, right: -CINTA.alvoAlem.direita }} />}
+        {visiveis.map((c, i) => (
+          <span key={(c.nome || "") + i} className="inline-flex rounded-full" style={{ ...recorte, marginLeft: i ? -ANEL.sobreposicao : 0 }}>
+            <Anel ente={c} semente={sementeDe(c)} vida={c.vida} vidaMax={c.vidaMax || 0} morrendo={!!c.morrendo} tamanho={ANEL.telefone} />
+          </span>
+        ))}
+        {escondidos.length > 0 && (
+          <span className="inline-flex rounded-full" style={{ ...recorte, marginLeft: visiveis.length ? -ANEL.sobreposicao : 0 }}>
+            <DiscoDoGrupo quantos={escondidos.length} estado={pior} tamanho={ANEL.telefone} />
+          </span>
+        )}
+      </button>
+    );
+  }
+  return (
+    <>
+      {visiveis.map((c, i) => (
+        <React.Fragment key={(c.nome || "") + i}>
+          {fio("fio" + i)}
+          <button onClick={() => abrirQuem([c])} aria-label={nomeDoCompanheiro(c)} title={nomeDoCompanheiro(c)}
+            className="tv-anel-foco rounded-lg flex items-center shrink-0 min-w-0" style={alvo}>
+            <Anel ente={c} semente={sementeDe(c)} vida={c.vida} vidaMax={c.vidaMax || 0} morrendo={!!c.morrendo} tamanho={ANEL.mesa} />
+            <RotuloDoRetrato ente={c} estado={estadoDoAnel(c)} oculto={i >= reparto.rotulos} />
+          </button>
+        </React.Fragment>
+      ))}
+      {escondidos.length > 0 && fio("fioDoDisco")}
+      {escondidos.length > 0 && (
+        <button onClick={() => abrirQuem(escondidos)} aria-label={nomeDoCacho(escondidos).replace(/^O grupo/, "Mais " + escondidos.length)}
+          className="tv-anel-foco rounded-lg flex items-center justify-center shrink-0" style={alvo}>
+          <DiscoDoGrupo quantos={escondidos.length} estado={pior} tamanho={ANEL.mesa} />
+        </button>
+      )}
+    </>
   );
 }
 

@@ -29,8 +29,9 @@ const t = (nome, cond, extra = "") => {
 };
 const sec = (s) => console.log("\n" + s);
 const semComentario = (x) => x.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
-const UI = readFileSync("../src/ui.jsx", "utf8");
-const APP = readFileSync("../src/App.jsx", "utf8");
+/* V4: lidas sem o CR — a régua não pode depender do fim de linha (v9.176). */
+const UI = readFileSync("../src/ui.jsx", "utf8").split(String.fromCharCode(13)).join("");
+const APP = readFileSync("../src/App.jsx", "utf8").split(String.fromCharCode(13)).join("");
 const corpoDe = (txt, ini, fim) => txt.slice(txt.indexOf(ini), txt.indexOf(fim, txt.indexOf(ini) + ini.length));
 
 /* ============================================================ */

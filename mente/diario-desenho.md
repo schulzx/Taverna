@@ -19,6 +19,62 @@ Formato:
 
 ---
 
+## 25/09 20:50 · v9.299 · **V4 — a cinta com os anéis: o grupo aparece na tela principal** · commit (no bloco seguinte)
+
+- **estado inicial:** trava tomada às 19:00; HEAD `fd6bdb1`; nenhum ciclo do
+  sistema, bastão livre. **O estudo do `jogo` já estava no disco** (o ciclo de
+  V4 caiu às 03:32 com ele feito) — não o refiz: o `desenho` fabricou a partir
+  dele, e a prova foi feita por outra instância do `jogo`, que o leu inteiro.
+  Os três achados do estudo foram tratados como o coração da etapa, por ordem
+  do coordenador.
+- **desenho** (`formas.md` §V4, `mente/v4-desenho.md`, scripts provados em duas
+  cópias de `fd6bdb1`, **LF e CRLF** — o `_arquivo.cjs` aguenta os dois, e o
+  `oficial` não precisou de normalizar nada desta vez): `O anel` com quatro
+  estados (calma, grave, ferida agora, **tombado** — a peça que o `Retrato` não
+  tinha), o disco `+N` que herda o pior, `Os contadores`, `A pílula do tempo`;
+  o clarão do anel em classe própria (`tv-anel-clarao`) para ter saída com
+  `reduce` sem tocar no `tv-dano` do combate. Figma: página `V4` da biblioteca
+  (`243:73`, `O anel` com 12 variantes) e, no arquivo da pessoa, o `142:2` com o
+  `126:6` clonado ao lado da cinta do código. Pagou de passagem uma dívida sua
+  de V5a (`teste-v5a-cabecalho` falhava numa árvore em CRLF).
+- **oficial** (bastão tomado às 20:17): scripts 1→6 sem âncora falhada;
+  **24 257 linhas** antes e depois; 18 linhas de pt-PT trocadas para pt-BR nos
+  comentários novos. **Um vermelho de passagem:** a 1.ª corrida deu 214/215 com
+  `teste-sala.mjs`, que sozinho passa 125/125, e a 2.ª corrida inteira deu
+  215/215 sem nada mudar — intermitente, fora do território; fica dito.
+- **a prova jogada** (antes: o estudo em `4ce9d4c`; depois: a árvore; 1280, 375,
+  320 e `reduce`; `/api` cortado, **custo 0**): **sobe.**
+  - **companheiros na tela: 0 → todos** (até 4); a 320 com dois prazos, o disco
+    `+2`/`+4` com o aro do pior e o traço de quem caiu;
+  - **ler o PV de quem está pior: 2 toques e ~600 px de rolagem → 0 toques** na
+    mesa; no telefone o estado vê-se, e 1 toque abre o cartão dele;
+  - **a barra de PV que encolhia a 3 px (e a 0) no telefone com prazo deixou de
+    existir**: o anel do herói tem 40 px nas 24 telas;
+  - **o pulso de agonia era infinito e ignorava `reduce`**: agora 3 pulsos só
+    quando algo acontece (entrar em grave, ferida nova, tombar), e 0 com
+    `reduce` — provado num harness com as peças reais, que é o mesmo código de
+    um turno;
+  - a prosa **0 px** mais baixa (topo do campo 735/706/623, igual); cinco
+    segundos à primeira nas três larguras, e *"quem do grupo está mal?"* —
+    antes sem resposta — responde-se.
+  - **Limite da prova, dito:** o `jogo` não viu vivos `esta noite`/`hoje` e o
+    `+1` vermelho (os prazos injetados não geraram prazo novo); o `oficial`
+    viu-os, e o pulso da última noite está provado no harness.
+- **decisões médias:** a cinta fica em 48 px e não nos 66 da v3 (−18 px de
+  prosa em todos os turnos); o anel é âmbar e não ciano (em cinzento
+  âmbar×perigo 1,52, ciano×perigo 1,25); a coroa marca o SEU herói; o alvo do
+  grupo no telefone chega a 48 por área invisível (ocupar 48 partia o pior caso
+  em 12 px); a pílula não é centrada (centrada bateria no grupo de quatro).
+- **o que ficou — V4d:** a 1280, tocar num companheiro faz o título da gaveta
+  sair de vista (lê pior, não bloqueia; o conserto é o cabeçalho `sticky`); o
+  traço de tombado risca o número do disco `+4` a 320; o nome em Spectral e não
+  na Inter da v3 (é V2).
+- **as ambiciosas:** **V4b — o anel é onde se cuida** (`jogo`; o pedido
+  `darConsumivel`/cura por semente foi ao sistema) e **V4c — o segundo arco, o
+  PM** (`desenho`). Nenhuma vai à pessoa.
+
+---
+
 ## 25/09 19:00 · v9.298 · **V5a — o cabeçalho da pessoa: a xilogravura sai, o `129:4` entra** · commit `6fecd12`
 
 - **estado inicial:** a trava de V4 (03:31) morta, retomada às 17:35; HEAD

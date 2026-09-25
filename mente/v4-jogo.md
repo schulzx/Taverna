@@ -330,3 +330,160 @@ estados, o disco, o `Contador` em coluna) estão a ser fabricadas agora pelo
 existirem componho três quadros na página `02 · Entrada`, ao lado de `132:2`:
 a cinta de quatro a 1280, a de 375 no pior caso e a folha do cuidado.*
 *Assina o momento: `jogo`, 25/09.*
+
+---
+
+## 7 · A prova jogada de V4 — o resultado (`jogo`, 25/09, tarde)
+
+**Montagem.**
+- ***Depois*** = a árvore do `oficial` na 5173 (não commitada), aberta num perfil
+  novo de Chrome headless, com `/api` cortado (0 pedidos saíram) e o save injetado
+  com o jogo desmontado.
+- **O mesmo save e os mesmos grupos do §0**, mais uma cena `pior` (os quatro, com
+  a Ninha tombada, e dois prazos), em **1280 · 375 · 320**, e `reduce`.
+- **Os ficheiros**, no scratchpad `v4-jogo/`: `prova-depois.mjs` → `depois.json`,
+  56 fotos em `fotos-depois/` (tela, recorte da cinta e o toque), e `gaveta.mjs`
+  → `gaveta.json`.
+- **O momento prova-se com as peças reais, sem gastar um cêntimo.** Um harness
+  (uma cópia de `src/` da árvore servida à parte na 5178; a página, o script e o
+  resultado ficaram em `v4-jogo/harness/`, com a cache do vite isolada para não mexer na da 5173) monta `Anel` e
+  `SeloDePrazo` de `ui.jsx` e muda-lhes as props. Como o `Anel` vê-se a si mesmo
+  (guarda a última vida que desenhou), a ferida de um turno real e a do harness
+  **são o mesmo código**. O script é `momento.mjs` e o resultado `momento.json`.
+- **Não joguei nenhum turno real: 0 chamadas ao `/api`, custo 0.**
+- **Um limite honesto:** os `relogios` injetados não geraram prazo novo, e a
+  pílula mostrou o contrato do próprio save (`6 noites`, e `+1` com dois). Por
+  isso **`esta noite` / `hoje` e o `+1` a vermelho não foram vistos vivos por
+  mim**; o `oficial` viu-os. O pulso da última noite está provado no harness.
+
+### 7.1 · Os três achados do estudo
+
+| achado (antes, §0) | depois | |
+|---|---|---|
+| **1 · companheiros na tela: 0 de N** em todas as cenas | **N de N.** A 1280 cada um tem anel, nome e `PV` (`Tomé 3/10 PV` a `danger`, `Ninha caiu` com o traço). A 375 os quatro anéis cabem **em todas as cenas, até na `pior`**. A 320 os anéis cabem com 0–4 companheiros e sem 2 prazos; com o aperto, fica o disco `+2` / `+4`, que **herda o pior**: aro `danger` com Tomé grave, e aro mais traço com Ninha caída | **passou** |
+| **2 · a barra de PV encolhia a 3 px com um prazo e a 0 com dois (375), e a 0 a 320** | **Não há barra.** O anel do herói tem **40 px em todas as 24 telas** e o número está sempre lá (`14`, `4`). **0 barras de PV ou de PM na cinta**: o único fio encontrado é o sinal de guardado (375 × 1, `ok`). O PM é só número (`22 ◆`) | **passou** |
+| **3 · `tvAgonia` corria sem fim, com `reduce` ou sem ele** | **0 animações a correr** nas 24 telas ao abrir, **incluindo a heroína grave a 1280 depois de 4 s sem `reduce`** (montar não é entrar em grave). Com `reduce`, na cena de quatro e na de sangue: 0 | **passou** |
+
+### 7.2 · O momento, no harness (a prova que o `oficial` não podia dar)
+
+| gatilho | sem `reduce` | com `reduce` |
+|---|---|---|
+| **ferida que entra em grave** (10 → 3) | `tvAnelPerdido` ×1 750 ms + `tvDano` ×1 750 ms + **`tvAgonia` ×3 de 1200 ms**; o pedaço perdido é desenhado (1 nó) e some antes dos 900 ms; **aos 4 s: 0 animações** | 0 animações; o pedaço perdido **aparece parado** e some por corte (a informação fica e o movimento sai, como o §2 pedia) |
+| **ferida nova já em grave** (3 → 2) | **pulsa outra vez ×3**, e aos 4 s: 0 | 0 |
+| **parado em grave durante 8 s** | **0** (acabou o pulso infinito) | 0 |
+| **cura** (2 → 8) | uma transição de 400 ms no arco, sem clarão | 0 |
+| **tombar** (8 → 0, `morrendo`) | perdido + dano + **`tvAgonia` ×3**; o traço aparece; aos 4 s: 0 | 0, com o traço |
+| **entrar na última noite** (selo 2 → 1) | **`tvMudouAgora` ×3 de 1200 ms**; aos 4 s: 0. De 3 para 2: nada | 0 |
+| **escrever durante a ferida** | **20 letras em 974 ms, 20 chegaram** ao campo | 20 de 20 |
+
+**O pulso de três vezes só nasce ao entrar em grave, com uma ferida nova ou ao
+tombar, e acaba.** Está provado nas peças que a cinta usa.
+
+### 7.3 · Os oito critérios de "leu pior" (§5)
+
+| # | critério | resultado |
+|---|---|---|
+| 1 | **os seis segundos** | **passou** (7.4) |
+| 2 | **um perigo escondido** | **passou**: em nenhuma das 24 telas um grave ou um tombado deixa de ter anel ou disco com o aro dele (`pior-320`: `+4` com aro e traço) |
+| 3 | **a prosa perdeu altura** | **passou, 0 px**: o topo do campo fica em **735 / 706 / 623** em todas as cenas, igual ao antes |
+| 4 | **a cinta transborda** | **passou**: `scrollWidth` = largura nas 24 telas e na linha da cinta, a 320 incluída |
+| 5 | **os estados em cinzento e em deuteranopia** | **passou**. Calma × grave é **comprimento primeiro**; a cor (âmbar × `danger`) dá ΔE 55,5, **34,8 em deuteranopia** e 1,52:1 em cinzento (o ciano da v3 dava 1,25, e o 142:2 escreve o mesmo número). Tombado × grave é **forma**: sem arco, com traço e com o rosto apagado. O disco grave × calmo também é **forma**: aro presente ou ausente, e o aro `danger` sobre `panelSoft` dá 5,66:1 |
+| 6 | **movimento** | **passou** (7.2): 0 com `reduce`, 0 infinitas, 0 teclas perdidas |
+| 7 | **toques e alvos** | **passou**: a ficha e O TEMPO a 1 toque; o cartão do companheiro a **1 toque** (era 2 mais rolagem). **Os alvos têm todos 48 de alto**: herói 57–112, tempo 55–293, companheiros 74–98 na mesa, cacho 48–88 no telefone. Com um só item o cacho mede 28, mais 12 + 8 invisíveis, o que dá 48 |
+| 8 | **duas formas** | **passou**: o PV do herói é só anel (e número), o PM é só número; a moldura vermelha do bloco saiu |
+
+### 7.4 · Os seis segundos — em especial *quem do grupo está mal?*
+
+Diante de `quatro` e `pior` (1280, 375, 320), sem procurar:
+
+- **onde estou** → `TORRE DA FONTE` (o cabeçalho de V5a);
+- **que horas** → `22:00`;
+- **quanto PV** → `14` / `4` a vermelho, e o anel;
+- **quanto dinheiro** → `15 ◉`;
+- **há prazo** → `6 noites +1`;
+- **quem do grupo está mal?**
+  - **1280:** **o nome inteiro, sem toque**: `Tomé 3/10 PV` a vermelho e `Ninha caiu` com o traço. **Antes era impossível**: 2 toques e ~600 px de rolagem.
+  - **375:** **à primeira**, vê-se *que* há um grave (o arco curto e vermelho no segundo anel) e uma caída (o traço no quarto). O *nome* não se lê a 28 px, mas a posição é a de entrada, sempre a mesma, e o toque no cacho **abre já no cartão da Ninha** (a caída passa à frente do grave), com o foco no cartão. O nome acessível diz `O grupo — Ninha caiu, Tomé em perigo`.
+  - **320 com aperto:** `+4` com aro e traço diz **"alguém caiu"**, e um toque abre a Ninha.
+
+**Seis respostas à primeira nas três larguras.** A do grupo é completa na mesa, e no telefone está a um toque do nome. **É esta a pergunta para que V4 existia, e agora responde-se.**
+
+### 7.5 · Lado a lado com o `126:6` (e o `142:2` do `desenho`, conferido)
+
+Comparei o `126:6` (1280 × 66) com o meu recorte `pior-1280-cinta.png` e com a
+captura do `desenho` no `142:2`. **A composição é a dela**:
+- à esquerda, *quem vocês são*: anéis com nome e PV em duas linhas, e fios entre retratos;
+- ao meio, *o mundo*: a pílula de fio ciano;
+- à direita, *o que se gasta*: número primeiro, glifo depois.
+
+**Os quatro desvios do `142:2`, conferidos:**
+
+| desvio | medido | confere |
+|---|---|---|
+| **66 → 48 de altura** | cinta 48 (72 com estado vivo), campo em 706 igual ao antes | sim |
+| **o anel âmbar, não ciano** | cinzento 1,52 contra 1,25 (calculei-o de novo a partir de `T`) | sim |
+| **HP → PV** | `14/14 PV`, `3/10 PV`, `caiu` | sim |
+| **a coroa no SEU herói** | a coroa âmbar no canto de cima da Ilsa, sem sair dos 48, e a marca da porta no de baixo | sim |
+
+**Três desvios que o `142:2` não escreve** (nenhum bloqueia):
+
+1. **O nome em Spectral 12, não em Inter Bold 12.** O `get_design_context` do
+   `142:15` diz `Inter:Bold 12 #EAE4D6`, e a casa não tem Inter. Em serifa, a 12
+   sobre `panel`, lê-se um pouco mais mole que no Figma. O `PV` fica em **12** e
+   não nos **9** do Figma: aqui o desvio **lê melhor** (9 px está abaixo do piso da casa).
+2. **A pílula não fica ao centro fixo:** anda com o tamanho do grupo (x = 562
+   sozinha, 629 com um, 812 com quatro). **Não pode ser de outra forma**: com
+   quatro rótulos o grupo acaba em x = 624, e a pílula de 293 centrada em 640
+   bateria nele. Fica ao centro do espaço que sobra. Mexe só quando o grupo muda,
+   o que é raro, e aceito-o.
+3. **O traço de tombado no disco `+4` a 320 risca o número.** Lê-se, mas um
+   número riscado pode ler-se como "nenhum". Peço ao `desenho` que o traço passe
+   por trás do texto, ou fique só no aro. É forma dele, e fica para V4b.
+
+### 7.6 · O senão da gaveta a 1280 — **lê pior, sim**
+
+Medido (`gaveta.json`), com o toque em `Tomé` e quatro companheiros:
+
+| | 1280 | 375 |
+|---|---|---|
+| a gaveta rola até | `scrollTop 699`, o cartão **encostado ao topo** (0 px) | o cartão no meio (y 461 de 812) |
+| o título `Gestão` e o `✕` | **saem de vista**: estão dentro do que rola (`Gestão` em y 28 do conteúdo, `✕` em 20) | **ficam**: moram fora do que rola |
+| as sub-abas | saem de vista | saem de vista |
+
+**Porque lê pior:** a 1280 o jogador chega a um cartão sem saber em que sala
+está, e **o botão de fechar desapareceu**. A 375 o título e o `✕` ficam. É a
+mesma gaveta com duas composições, e a da mesa é a que perde.
+
+**O conserto, e `scroll-margin-top` sozinho não chega:** o cabeçalho está
+**dentro** do que rola. Uma margem de rolagem deixaria à vista o fim do cartão
+anterior, não o título. O conserto são duas linhas de forma, dentro da gaveta:
+1. **o cabeçalho da gaveta na mesa (título, `✕` e sub-abas) em
+   `position: sticky; top: 0`**, com fundo, como já é a composição do telefone.
+   Uma gaveta, uma composição;
+2. **`scroll-margin-top` no cartão = a altura desse cabeçalho** (medido:
+   sub-abas em y 68 → ~100 px) **+ 16 de ar**, para o foco não nascer colado nem
+   debaixo dele.
+
+Não mexe no fluxo nem no toque: é **leve**, e pode ir com V4 ou logo a seguir.
+
+### 7.7 · O que mudou para quem joga, em número
+
+- **companheiros na tela principal: 0 → todos** (1280 e 375; a 320 com aperto, um disco que herda o pior);
+- **ler o PV do companheiro pior: 2 toques + ~600 px de rolagem → 0 toques** na mesa (o rótulo diz `3/10 PV` / `caiu`); no telefone, **o estado a 0 toques** e o cartão a **1**;
+- **abrir o cartão de quem está mal: 2 toques + rolagem → 1 toque**, já no cartão dele, com o foco;
+- **a vida do herói deixou de poder desaparecer**: de 3 px / 0 px com prazo para um anel de 40 px em todas as telas;
+- **o pulso de agonia: infinito, e surdo ao `reduce` → 3 pulsos ao entrar em grave, com uma ferida nova ou ao tombar, e 0 com `reduce`**;
+- **a prosa: 0 px perdidos** (campo em 735 / 706 / 623, igual ao antes);
+- **o PM: de barra de 56 px para um número**.
+
+### 7.8 · Veredito
+
+**Sobe com um conserto: o cabeçalho da gaveta em `sticky` na mesa, mais
+`scroll-margin-top` no cartão (§7.6).** O conserto é leve e não bloqueia a subida de V4. Se couber
+no mesmo commit, melhor; senão, é o primeiro item de V4b, junto do traço sobre o
+`+4` (§7.5-3).
+
+Joguei as cenas de quatro lado a lado. No antes olho para a heroína de PV cheio e
+leio a história **sem saber que a Ninha está a morrer**. No depois, o primeiro
+olhar vai ao traço sobre o anel dela e à palavra `caiu`, e só depois à prosa. **O
+antes é uma folha com uma personagem. O depois é uma mesa com um grupo.**

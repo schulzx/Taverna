@@ -44,6 +44,10 @@
 
 /* O traço, em píxeis de tela, por tamanho de glifo. Entre dois degraus,
    interpola; fora da tabela, fica no degrau da ponta. */
+/* V4 · a régua do grave mora em `ANEL` (estilo.js), ao lado do desenho do anel;
+   daqui só se lê. */
+import { ANEL } from "./estilo.js";
+
 export const TRACO_DO_GLIFO = { 12: 1.25, 16: 1.5, 20: 1.75, 24: 2 };
 
 /* Os tamanhos da família são 12 · 16 · 20 · 24 (`formas.md` §V3). O alvo
@@ -118,6 +122,8 @@ export const GLIFOS = {
   heroi: { de: "lucide:user", d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M8 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" },
   /* venceu: conquista, título · aposenta 🏆 (V3b) */
   trofeu: { de: "lucide:trophy", d: "M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3M4 22h16M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zM6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" },
+  /* V4 · a coroa: marca o SEU herói na cinta (o `crown-badge` da v3, `126:13`) */
+  coroa: { de: "lucide:crown", d: "M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294zM5 21h14" },
   /* o que te ajuda: condição boa, vantagem, dádiva · aposenta 🌠 ⬆ 🍲, e o ✦ da condição boa (V3b) */
   favor: { de: "lucide:chevrons-up", d: "M17 11l-5-5-5 5M17 18l-5-5-5 5" },
   /* o que te pesa: condição ruim, exaustão · aposenta 🥱 😩 🌑, e o ☠ da condição ruim (V3b) */
@@ -339,4 +345,119 @@ export function etiquetasDaPagina(dados) {
   const clima = d.clima && typeof d.clima === "object" ? d.clima : null;
   const falaOClima = clima && !CLIMA_QUE_SE_CALA.includes(clima.id);
   return { lugar, direita: limpo([d.luz, falaOClima ? clima.rotulo : ""]), cede: "fim" };
+}
+
+/* ============================================================
+   V4 · A CINTA COM OS ANÉIS — as contas que a peça lê (`mente/v4-jogo.md`).
+
+   Conta se prova, tela se olha: o que decide o ESTADO de um anel, o NOME de
+   cada alvo e QUEM CEDE quando a linha aperta mora aqui, em Node; a cinta
+   (`App.jsx`) só mede as larguras e desenha o que isto devolve.
+   ============================================================ */
+
+/* Os três estados que se veem num anel parado (o quarto, *ferida agora*, é
+   um instante, e é o próprio anel que o vê chegar). Por ordem de gravidade:
+   quem manda num disco `+N` é o último desta lista que ele esconder. */
+export const ESTADOS_DO_ANEL = ["calma", "grave", "tombado"];
+
+/* `tombado` é o que a ressurreição do domínio lê (vida 0, ou morrendo);
+   `grave` é a régua de `ANEL.grave` (um terço do PV). Nulo e lixo: calma. */
+export function estadoDoAnel(ente) {
+  const e = ente && typeof ente === "object" ? ente : {};
+  const vida = Number(e.vida) || 0, max = Number(e.vidaMax) || 0;
+  if (e.morrendo || (max > 0 && vida <= 0)) return "tombado";
+  if (max > 0 && vida / max <= ANEL.grave) return "grave";
+  return "calma";
+}
+
+/* O pior de uma lista de estados — a lei única da cinta: o `+N` herda o
+   pior do que esconde (o disco do grupo e o `+N` dos prazos). */
+export function piorEstado(estados) {
+  let pior = 0;
+  for (const s of estados || []) pior = Math.max(pior, ESTADOS_DO_ANEL.indexOf(s));
+  return ESTADOS_DO_ANEL[Math.max(0, pior)];
+}
+
+/* O nome acessível de UM companheiro: o número que o telefone não escreve
+   entra aqui (`Tomé · 3 de 10 PV`). Quem tombou diz-se por palavra. */
+export function nomeDoCompanheiro(c) {
+  const e = c && typeof c === "object" ? c : {};
+  const nome = String(e.nome || "companheiro");
+  if (estadoDoAnel(e) === "tombado") return nome + " caiu";
+  return nome + " · " + (Number(e.vida) || 0) + " de " + (Number(e.vidaMax) || 0) + " PV";
+}
+
+/* O PV escrito debaixo do nome, na mesa (a `meta` da v3, com PV e não HP):
+   `14/14 PV`; quem tombou, `caiu`. Uma função só, para o rótulo e para a
+   régua que mede quanto ele ocupa não escreverem duas coisas diferentes. */
+export function textoDoPV(ente) {
+  const e = ente && typeof ente === "object" ? ente : {};
+  if (estadoDoAnel(e) === "tombado") return "caiu";
+  return (Number(e.vida) || 0) + "/" + (Number(e.vidaMax) || 0) + " PV";
+}
+
+/* O nome do CACHO (o alvo único do grupo no telefone): `O grupo`, e depois
+   quem está mal, do pior para o menos mal — o mesmo padrão de `nomeDaPorta`,
+   sem `aria-live` (o acontecimento já foi dito pela prosa). */
+export function nomeDoCacho(grupo) {
+  const g = Array.isArray(grupo) ? grupo : [];
+  const caidos = g.filter((c) => estadoDoAnel(c) === "tombado").map((c) => c.nome + " caiu");
+  const graves = g.filter((c) => estadoDoAnel(c) === "grave").map((c) => c.nome + " em perigo");
+  const mal = [...caidos, ...graves];
+  return mal.length ? "O grupo — " + mal.join(", ") : "O grupo";
+}
+
+/* Quem o toque abre na sala Grupo: o PRIMEIRO no pior estado (a ordem é a
+   de entrada — posição é identidade), porque é quem o aro ou o disco
+   estavam a assinalar. Sem ninguém mal, o primeiro. */
+export function quemAbrir(grupo) {
+  const g = Array.isArray(grupo) ? grupo.filter(Boolean) : [];
+  if (!g.length) return null;
+  const pior = piorEstado(g.map(estadoDoAnel));
+  const c = g.find((x) => estadoDoAnel(x) === pior) || g[0];
+  return c.nome || null;
+}
+
+/* QUEM CEDE QUANDO A LINHA APERTA — a ordem do `jogo` (§4), e é conta, não
+   medição: a cinta mede as peças que tem (o herói, a pílula, o glifo da luz,
+   os contadores, e o rótulo de cada companheiro na mesa) e isto decide.
+
+   `m`: `{ largura, mesa, n, heroi, pilula, glifo, contadores, espaco, perto,
+   anel, passo, separacao, entreAnelERotulo, rotulos: [px…] }`.
+   Devolve `{ aneis, rotulos, glifo, disco }`:
+   - NA MESA: primeiro cedem os RÓTULOS, do último para o primeiro; depois o
+     glifo da luz; depois os anéis entram no disco `+N`, do último para o
+     primeiro.
+   - NO TELEFONE: primeiro o glifo; depois os anéis, até restar só o disco.
+   - Nunca cedem: o herói, a pílula (a hora e o selo), os contadores. Se nem
+     o disco sozinho couber, fica o disco sozinho — um perigo escondido por
+     falta de espaço é o defeito que esta etapa existe para matar. */
+export function repartirACinta(m) {
+  const d = m && typeof m === "object" ? m : {};
+  const n = Math.max(0, Math.floor(Number(d.n) || 0));
+  const num = (x) => Number(x) || 0;
+  const rot = Array.isArray(d.rotulos) ? d.rotulos : [];
+  const fixo = num(d.heroi) + num(d.pilula) + num(d.contadores) + 2 * num(d.espaco);
+  const doGrupo = (k, r) => {
+    if (!n) return 0;
+    const itens = k + (n - k > 0 ? 1 : 0);
+    if (!d.mesa) return num(d.perto) + num(d.anel) + num(d.passo) * (itens - 1);
+    let w = 0;
+    for (let i = 0; i < k; i++) w += num(d.separacao) + num(d.anel) + (i < r ? num(d.entreAnelERotulo) + num(rot[i]) : 0);
+    if (n - k > 0) w += num(d.separacao) + num(d.anel);
+    return w;
+  };
+  /* `folga`: o respiro mínimo que a linha guarda (o `jogo` pede ≥ 7 a 375 —
+     sem ele cabe ao pixel e lê-se colado) */
+  const cabe = (k, r, g) => fixo + doGrupo(k, r) + (g ? num(d.glifo) : 0) + num(d.folga) <= num(d.largura);
+  const tentativas = [];
+  if (d.mesa) {
+    for (let r = n; r >= 0; r--) tentativas.push([n, r, true]);
+    tentativas.push([n, 0, false]);
+  } else {
+    tentativas.push([n, 0, true], [n, 0, false]);
+  }
+  for (let k = n - 1; k >= 0; k--) tentativas.push([k, 0, false]);
+  for (const [k, r, g] of tentativas) if (cabe(k, r, g)) return { aneis: k, rotulos: r, glifo: g, disco: n - k };
+  return { aneis: 0, rotulos: 0, glifo: false, disco: n };
 }

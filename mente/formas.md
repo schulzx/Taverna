@@ -10146,3 +10146,88 @@ a receita — **0 px, 0 `App.jsx` a mais do que um atributo**, degradação nula
 `:has()`. É a gravura a voltar, sem imagem: o jogador sente a madrugada no papel
 sem a ler. Médio (cria o que não existe, não muda o fluxo). Peço-a para depois de
 V5b, com o `jogo` a jogar as quatro luzes.
+
+### V4 · a cinta com os anéis (`desenho`, 25/09)
+
+*O momento é do `jogo` (`mente/v4-jogo.md`, e sigo-o em tudo o que não digo aqui);
+a composição é a da pessoa (`126:6`, `top-hud-bar`). Construção: `mente/v4-desenho.md`
+(seis scripts por âncora, provados em duas cópias de `fd6bdb1` — LF e CRLF —: build
+limpo, **215/215 · 15/15** nas duas; `App.jsx` com as mesmas **24 257** linhas,
+região a região, e **0** endereços de `check-acoes-do-jogador` mexidos). Figma:
+biblioteca `e5wJUzInAssoebx5npssKc`, página **`V4 · a cinta com os anéis`**
+(`243:73`) — `O anel` (`243:149`, *Estado* Calma · Grave · Ferida agora · Tombado ×
+*Tamanho* Herói 40 · Mesa 32 · Telefone 28), `O disco do grupo` (`243:162`),
+`Os contadores` (`243:177`, *Arranjo* Linha · Coluna), `A pílula do tempo`
+(`243:190`, *Largura* Mesa · Telefone), e o par antes/depois do jogo vivo a 1280,
+375 e 320; no arquivo da pessoa, **`142:2`**: o `126:6` clonado ao lado da cinta
+do código a 1280.*
+
+**1 · As peças (ui.jsx), e cada número sai de `ANEL` ou `CINTA`.**
+- **`O anel`** — trilho `panelSoft` e arco de **3 px** que começa no alto; rosto a
+  4 da borda (o herói continua com o rosto de 32). Calma `amber`, grave `danger`
+  (≤ `ANEL.grave`, 1/3): **1,52:1 em cinzento** (o ciano do nó dava 1,25). Tombado
+  não é cor: sem arco, rosto a 0,35 e em cinzento, traço diagonal `ink`
+  (**12,40:1** contra o trilho). **O anel vê-se a si mesmo**: guarda a última vida
+  que desenhou, e daí sabe que foi ferido (o arco SALTA e o pedaço perdido fica a
+  `danger` 250 ms, a apagar até 750), que curou (o arco cresce 400 ms) e que entrou
+  em grave ou tombou (**3 pulsos** `MUDOU_AGORA`, e repouso). Vale para o herói e
+  para cada companheiro sem o `App.jsx` seguir a vida de ninguém; e ao voltar da
+  luta não repete nada, porque a cinta monta de novo.
+- **`O disco do grupo`** — `+N` do tamanho de um anel; **herda o pior do que
+  esconde** (aro `danger`; aro e traço se alguém caiu). A mesma lei no `+N` dos
+  prazos: `inkDim` → `danger` quando outro prazo escondido também cai esta noite.
+- **`O rótulo do retrato`** (mesa) — nome e `14/14 PV` em duas linhas de 12;
+  `caiu` para quem tombou (`textoDoPV`, uma função para o rótulo e para a régua).
+- **`Os contadores`** — número primeiro e glifo depois, na cor do que conta
+  (`amber` 9,65 · `violetSoft` 7,84 sobre a cinta). **Só número** (o PM perdeu a
+  barra). *Arranjo*: linha na mesa, **coluna de 54 px no telefone** (medida).
+- **`A pílula do tempo`** — o céu da hora, a hora, o dia (mesa) e o selo; na mesa a
+  moldura do nó (`mundo` sobre o erguido **7,09:1**); **no telefone nua**.
+- **`GrupoNaCinta` + `useRepartoDaCinta` + `useMesa`** — o grupo na ordem de
+  entrada; quem cede é `repartirACinta` (glifos.js, em Node) e a medida é da peça
+  (`useLayoutEffect`, antes de pintar; quando muda o que ocupa lugar, nunca a cada
+  tecla; `ResizeObserver`; fontes prontas).
+
+**2 · O que decidi além do `jogo`, com o número.**
+1. **O alvo de 48 do cacho não ocupa 48.** Com um anel só (ou só o disco) o cacho
+   mede 28; ocupar 48 de leiaute **partia o pior caso a 375 em 12 px** (medido:
+   herói 64 + 4 + 48 + 8 + pílula 170 + 8 + 54 = 356 > 351). A área invisível come
+   os espaços (`CINTA.alvoAlem`, 12 + 8), como o `jogo` escreveu: 28 + 20 = 48, e o
+   herói continua com 56 de alvo. Com dois anéis o cacho já mede 48.
+2. **A pílula é nua no telefone.** A moldura do nó custa 34 px que o pior caso a 375
+   não tem; o `jogo` contava a pílula nua (145). Na mesa ela tem a moldura inteira.
+3. **O clarão da ferida tem classe própria** (`tv-anel-clarao`, os passos de
+   `tvDano`) — para ter saída no `reduced-motion` sem mexer no clarão que a tela de
+   combate usa (`tv-dano`, intocado).
+4. **Um respiro mínimo de 7 px** entre as peças (`CINTA.respiro`), a folga que o
+   `jogo` pedia — sem ele a conta cabia ao píxel e lia-se colado.
+5. **A pílula não fica ao centro.** A v3 também não a centra (é `space-between`);
+   centrar obrigaria a metade esquerda a caber em (1232 − pílula)/2, e com quatro
+   rótulos não cabe.
+
+**3 · Os três defeitos do antes, pagos** (medidos pelo `jogo`, confirmados aqui):
+1. *Nenhum companheiro na tela* → **os quatro à vista** a 1280, 375 e 320 (com um
+   prazo a 320, um anel e o disco `+3` com o aro do pior; no pior caso, só o disco
+   `+4` — nunca um perigo escondido); ler o PV do pior: **2 toques + ~600 px → 0**;
+   abrir o cartão dele: **1 toque** (medido: a sala abre com o foco no cartão da
+   Ninha, à vista).
+2. *A barra de PV a ceder até 0 px* (o `style` inline furava o `hidden` da do PM):
+   **a barra morreu** — o arco não cede.
+3. *A agonia infinita e surda ao `reduce`* (`tvAgonia:running`): **3 pulsos e
+   repouso; com `reduce`, 0 animações** na cinta (medido no jogo e no harness).
+   `.tv-agonia` saiu do livro de perdões de D5c, e os seus dois `rgba` de R2 viraram
+   `alfa(T.danger, …)` (D5a de `estilo.js`: 13 → 11).
+
+**4 · A prosa não perdeu altura.** A cinta fica em 48 (72 com estado vivo) e o topo
+do campo **não se mexeu um píxel** nas 21 telas medidas (735 · 706 · 623). Zero
+transbordo. Folga real no pior caso: **15 px a 375**, **4 px a 320** (com `hoje`).
+
+**A proposta ambiciosa — o anel diz também o que ainda se pode gastar.** O `jogo`
+propôs o anel como porta do cuidado (V4b, precisa do sistema). A minha é de forma
+e não precisa de ninguém: **o anel ganha um segundo arco, fino e por dentro, do PM
+de quem tem PM** — violeta, 1,5 px, a meia distância entre o arco do PV e o rosto.
+Um curandeiro sem mana lê-se de relance (hoje só na sala Grupo), e no herói o
+número do PM deixa de ser a única forma — sem uma barra, sem um píxel de leiaute.
+Conta: o rosto do herói desce de 32 para 30 (é o preço), os companheiros ficam
+iguais. Prova: o `jogo` corre os seis segundos com uma pergunta a mais (*quem ainda
+pode curar?*). Médio (cria o que não existe, não muda o fluxo).

@@ -25,6 +25,10 @@ const APP = readFileSync(S + "App.jsx", "utf8");
    `estilo.js`. As assercoes abaixo nao mudaram de exigencia — mudou so
    ONDE elas vao procurar. */
 const CSS = readFileSync(S + "estilo.js", "utf8");
+/* V4: o bloco do herói passou a ser um ANEL (`Anel`, ui.jsx) — as asserções
+   sobre o retrato, o clarão e a agonia passam a procurá-lo lá. */
+const UI = readFileSync(S + "ui.jsx", "utf8");
+const ANEL_TXT = UI.slice(UI.indexOf("export function Anel("), UI.indexOf("export function DiscoDoGrupo("));
 
 let bons = 0, maus = 0;
 const t = (n, c) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n); } };
@@ -32,11 +36,19 @@ const sec = (s) => console.log("\n" + s);
 
 sec("1. O CLARÃO ESCUTA A MUDANÇA DA VIDA");
 {
-  t("a última vida vista fica num ref", /const vidaVistaRef = useRef\(null\);/.test(APP));
-  t("e o efeito compara com a de agora", /if \(antes != null && v != null && v < antes\)/.test(APP));
-  t("o clarão morre sozinho", /setTimeout\(\(\) => setFeridaRecente\(false\), 750\)/.test(APP));
-  t("e o timeout morre com o efeito", /return \(\) => clearTimeout\(tid\);/.test(APP));
-  t("escutando a vida, não um evento", /\}, \[personagem && personagem\.vida\]\);/.test(APP));
+  /* V4 · A LEI FICA E MUDOU DE CASA. O clarão do bloco (um efeito no App que
+     comparava a vida com a última vista) morreu com o bloco; quem escuta a
+     MUDANÇA da vida agora é o próprio anel, para o herói e para cada
+     companheiro — e por isso sabe também QUANTO se perdeu. As cinco asserções
+     guardam o mesmo, no sítio novo: a última vista num ref, a comparação, a
+     morte sozinha do clarão, o relógio que morre com a peça, e o efeito a
+     escutar o comprimento e o estado, nunca um evento. */
+  t("a última vida vista fica num ref", /const antesRef = React\.useRef\(null\);/.test(ANEL_TXT));
+  t("e o efeito compara com a de agora", /if \(frac < antes\.frac\)/.test(ANEL_TXT));
+  t("o clarão morre sozinho", /setTimeout\(\(\) => setPerdido\(null\), ANEL\.perdido\)/.test(ANEL_TXT));
+  t("e o relógio morre com a peça", /React\.useEffect\(\(\) => \(\) => clearTimeout\(relogioRef\.current\), \[\]\);/.test(ANEL_TXT));
+  t("escutando a vida, não um evento", /\}, \[frac, estado\]\);/.test(ANEL_TXT));
+  t("e o App não segue a vida por fora (a mesma coisa com duas casas)", !/vidaVistaRef|setFeridaRecente/.test(APP));
 }
 
 sec("2. O BLOCO SENTE — as três caras dele");
@@ -51,12 +63,23 @@ sec("2. O BLOCO SENTE — as três caras dele");
      porque uma borda de `line` à volta do alvo seria a moldura a voltar por
      outra porta. A asserção continua a guardar a MESMA coisa: o clarão ganha
      do pulso, e a borda acompanha os dois. */
-  t("o clarão ganha da agonia", /feridaRecente \? "tv-dano" : grave \? "tv-agonia" : ""/.test(APP));
-  t("a borda acompanha", /border: "1px solid " \+ \(feridaRecente \|\| grave \? T\.danger : "transparent"\)/.test(APP));
+  /* V4 · o clarão e o pulso passaram do bloco inteiro para o ANEL SÓ, e a borda
+     vermelha do bloco saiu: o anel é a moldura (uma forma para o PV grave, não
+     duas). O que as duas asserções guardavam — o golpe é agora e a agonia vem
+     depois, cada um com a sua cara — continua: o clarão acende na ferida, o
+     pulso só ao entrar em grave (ou ao tombar). */
+  t("o clarão acende na ferida, no anel", /key=\{"clarao" \+ perdido\.chave\} className="tv-anel-clarao/.test(ANEL_TXT));
+  t("e a agonia pulsa ao entrar em grave, no anel", /key=\{"pulso" \+ pulso\} className="tv-agonia/.test(ANEL_TXT) && /const ficouGrave = estado === "grave"/.test(ANEL_TXT));
   t("agonia é um terço da vida", /personagem\.vida \/ personagem\.vidaMax <= 1 \/ 3/.test(APP));
   /* as animações moram no CSS da casa, e o clarão não repete */
   t("o clarão existe e não se repete", /\.tv-dano \{ animation: tvDano \.7s ease both; \}/.test(CSS));
-  t("a agonia pulsa sem parar", /\.tv-agonia \{ animation: tvAgonia 1\.6s ease infinite; \}/.test(CSS));
+  /* V4 · A ASSERÇÃO INVERTEU-SE, e o motivo é o defeito que o `jogo` mediu:
+     o pulso corria sem fim e ignorava o `prefers-reduced-motion`
+     (`tvAgonia:running` com `reduce`). Pulsar enquanto se está grave pode
+     durar dez turnos, e o que se repete até cansar é defeito. Agora são três
+     pulsos (`MUDOU_AGORA`) e repouso, e com `reduce` nenhum. */
+  t("a agonia pulsa TRÊS vezes e para", /\.tv-agonia \{ animation: tvAgonia \$\{MUDOU_AGORA\.pulso\}ms ease-in-out \$\{MUDOU_AGORA\.vezes\}; \}/.test(CSS) && !/tvAgonia[^;]*infinite/.test(CSS));
+  t("e com movimento reduzido não pulsa", /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.tv-agonia, \.tv-anel-clarao \{ animation: none; \}/.test(CSS));
   /* o retrato muda de cara junto: o estado entra pelo mesmo estadoDe */
   /* R13: a âncora passa a ser `function ACinta`. `O BLOCO DO HERÓI` era o
      comentário do bloco da barra de estado, e essa barra deixou de existir —
@@ -69,8 +92,11 @@ sec("2. O BLOCO SENTE — as três caras dele");
      seguinte do módulo, e cresce com ela. */
   const iCinta = APP.indexOf("function ACinta(");
   const bloco = APP.slice(iCinta, APP.indexOf("\nfunction ", iCinta + 1));
-  t("o retrato reage pelo estado", /estado=\{estadoDe\(personagem\.vida, vidaMax\)\}/.test(bloco));
-  t("o anel avermelha na agonia", /anel=\{grave \? T\.danger : T\.amber\}/.test(bloco));
+  /* V4: o herói é um `Anel` — o retrato e o arco moram na peça (ui.jsx), e o
+     que se guarda é a mesma lei nos dois lados: a cinta passa ao anel a vida
+     do herói, e o anel dá ao rosto o estado e ao arco a cor. */
+  t("o retrato reage pelo estado", /<Anel ente=\{personagem\} semente=\{sementeDe\(personagem\)\} vida=\{personagem\.vida\} vidaMax=\{vidaMax\}/.test(bloco) && /estado=\{estadoDe\(vida, vidaMax\)\}/.test(ANEL_TXT));
+  t("o anel avermelha na agonia", /stroke=\{estado === "grave" \? T\.danger : T\.amber\}/.test(ANEL_TXT));
   /* v9.170 (mesa-jogo-v2): a barra de vida passou a ser montada por tabela
      — as duas barras nascem do mesmo `map`, e a cor da agonia entra pelo
      campo `cor` de uma delas em vez de estar escrita no JSX. */
@@ -82,8 +108,12 @@ sec("2. O BLOCO SENTE — as três caras dele");
      primário e a cor é o segundo** — `amber` × `danger` mede 1,26:1 em visão
      normal e 1,21:1 em deuteranopia, e um PV que só mudasse de cor no grave
      não mudaria de nada para quem não vê vermelho. */
-  t("a barra de vida também avermelha", /cor=\{grave \? T\.danger : T\.amber\}/.test(bloco));
-  t("e o comprimento dela é o canal primário", /<BarraDeRecurso atual=\{personagem\.vida\} max=\{vidaMax\}/.test(bloco));
+  /* V4: a barra saiu — o arco É a barra, à volta do rosto. A lei é a mesma:
+     o comprimento é o canal primário (o arco encurta com o PV) e a cor é o
+     segundo. E não sobrou barra ao lado do anel: duas formas para o PV seriam
+     o defeito que `formas.md` caça (o `jogo`, §5.8). */
+  t("o comprimento do arco é o canal primário", /strokeDashoffset=\{C \* \(1 - frac\)\}/.test(ANEL_TXT));
+  t("e não sobrou barra de PV ao lado do anel", !/BarraDeRecurso/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")));
   /* R13 APOSENTA ESTA ASSERÇÃO, E COM O NÚMERO À FRENTE. Ela guardava "o
      nível é visível sem abrir nada" — primeiro como losango, depois como
      etiqueta `NIV n` no canto do retrato. O censo de 20 turnos de
@@ -133,7 +163,9 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
      tabela (`CINTA_DESENHA.rosto`), não de um literal. O que a lei protege
      continua a ser o `semCarta`: dentro de um botão, abrir a carta de tarô
      seria um clique dentro de outro. */
-  t("sem carta dentro do botão", /ente=\{personagem\} semCarta tamanho=\{CINTA_DESENHA\.rosto\}/.test(APP));
+  /* V4: o retrato do botão mora dentro de `Anel`, e continua `semCarta` —
+     dentro de um botão, abrir a carta seria um clique dentro de outro. */
+  t("sem carta dentro do botão", /<Retrato semente=\{semente\} ente=\{ente\} semCarta/.test(ANEL_TXT));
   /* as barrinhas anônimas de PV/PM DO HERÓI saíram — o bloco é a única
      casa delas. As BarraMini que ficaram são de outras pessoas: o
      companheiro no cartão dele e o inimigo no combate. */

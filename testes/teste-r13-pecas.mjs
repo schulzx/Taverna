@@ -285,7 +285,10 @@ sec("8. o contrato de assinatura das peças (o App chama por estes nomes)");
        valor por omissão. Um campo novo sem padrão partiria o chamador
        silenciosamente, que é exactamente o que este contrato existe
        para apanhar. */
-    ["SeloDePrazo", /export function SeloDePrazo\(\{ noites, quantos = 1, urgente = false, conta = "noites" \}\)/],
+    /* V4: o selo ganhou o QUINTO campo, `escondidoGrave = false` — a lei do +N
+       que herda o pior do que esconde. Os quatro primeiros ficam na mesma ordem
+       e com os mesmos padrões: as chamadas vivas não mudam uma letra. */
+    ["SeloDePrazo", /export function SeloDePrazo\(\{ noites, quantos = 1, urgente = false, conta = "noites", escondidoGrave = false \}\)/],
     ["SinalDeGuardado", /export function SinalDeGuardado\(\{ visivel \}\)/],
     /* R15 — AS DUAS PEÇAS NOVAS ENTRAM NO MESMO CONTRATO, e entram ANTES
        de o `App.jsx` as chamar, porque foi contra estas assinaturas que

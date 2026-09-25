@@ -204,8 +204,10 @@ const TETO_DE_LITERAIS = {
      zonas de tabela. Esperam o helper `alfa(cor, a)`; trocá-las à mão
      agora é escrever a fórmula treze vezes antes de ela existir, que é
      exatamente o que `src/estilo.js:110-113` avisa.
-     · paga: o helper `alfa(cor, a)` */
-  "src/estilo.js": 13,
+     · paga: o helper `alfa(cor, a)`
+     · 25/09 · V4: os dois `rgba(216,106,91,…)` do pulso de agonia (o danger
+       de R2, escrito à mão) passaram a `alfa(T.danger, …)`. 13 → 11. */
+  "src/estilo.js": 11,
 
   /* O DESENHO VETORIAL (68) — SVG em código, onde `fill=`/`stroke=`
      nunca passaram por decisão de tema. CORREÇÃO MEDIDA À PAUTA: estes
@@ -347,7 +349,9 @@ const SEM_SAIDA_DE_MOVIMENTO = {
   ".tv-dice":     "o dado a rolar · tvShake .35s + tvGlow 1s, INFINITE · SAÍDA NÃO É `none`",
   ".tv-pulse":    "o halo de atenção · tvGlow 1.6s INFINITE",
   ".tv-dano":     "o clarão do golpe · .7s",
-  ".tv-agonia":   "o pulso de agonia · 1.6s INFINITE enquanto a vida < 1/3",
+  /* 25/09 · V4 — `.tv-agonia` PAGOU: deixou de ser infinita (três pulsos,
+     `MUDOU_AGORA`) e ganhou a saída `none` no prefers-reduced-motion. O
+     `jogo` mediu `tvAgonia:running` com `reduce` e o pulso a correr sem fim. */
   /* Estas duas terminam em `opacity: 0` e só não ficam grudadas na tela
      porque um `setTimeout` as remove (3200 ms e 1400 ms). A saída tem de
      pousar no estado FINAL da animação, nunca no inicial — e onde é a

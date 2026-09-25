@@ -489,6 +489,77 @@ export const CINTA = {
      que sai o limiar em que o rótulo se esconde (`.tv-guardado-rotulo`,
      na folha), e um limiar afinado a olho mentiria no dia seguinte. */
   rotuloDoGuardado: 74,
+  /* V4 · A COMPOSIÇÃO DA v3 (`126:6`, a cinta da pessoa), com os desvios que o
+     `jogo` mediu (`mente/v4-jogo.md`): a altura fica em `altura` (48, não os
+     66 do nó) e a composição entra por inteiro — quem vocês são à esquerda, o
+     mundo ao centro, o que se gasta à direita. */
+  espaco: 8,             /* entre os três blocos da linha */
+  respiro: 7,            /* o mínimo que a linha guarda livre (o `jogo`, §4): sem ele cabe ao pixel e lê-se colado */
+  perto: 4,              /* entre o herói e o cacho do grupo, no telefone */
+  entreRetratos: 18,     /* na mesa, de cada lado do fio que separa dois retratos (o `gap` do nó) */
+  separador: 24,         /* a altura desse fio (a `Line` de 24 do nó) */
+  fioDoSeparador: 1,     /* e a espessura dele */
+  entreAnelERotulo: 8,   /* o `gap` do nó entre o anel e o nome */
+  linhaDoRotulo: 16,     /* duas linhas de 12 (nome · PV) em 32 dos 48 */
+  entreContadores: 16,   /* a bolsa e o PM lado a lado, na mesa (o `gap` do nó) */
+  entreNumeroEGlifo: 6,  /* `1.240 ◉` — o número primeiro, como no nó */
+  coroa: 16,             /* o disco da coroa, no canto de cima-esquerda do herói */
+  glifoDaCoroa: 10,      /* a coroa dentro dele (o `crown` de 10 do nó) */
+  /* o alvo do cacho, quando ele é UM anel de 28: a área invisível que o leva a
+     48 (`ALVOS.piso`) come o espaço dos lados — 12 à esquerda (os 4 de `perto`
+     e 8 da margem direita do alvo do herói, que continua com 56) e 8 à direita
+     (os 8 de `espaco`). 28 + 12 + 8 = 48, sem um pixel de leiaute. */
+  alvoAlem: { esquerda: 12, direita: 8 },
+  /* o pedido de abrir o Grupo NO CARTÃO de um companheiro vale este tempo (ms):
+     depois dele, reabrir a sala por outro caminho não salta para o cartão velho */
+  pedidoFresco: 1500,
+  /* a pílula do tempo, na mesa: o `location-section` do nó (raio 20, 16 dos
+     lados, 6 em cima e em baixo, 12 entre as partes). No telefone ela é NUA —
+     a moldura custaria 34 px que o pior caso a 375 não tem (`formas.md` §V4). */
+  pilula: { raio: 20, lado: 16, cima: 6, entre: 12, entreTelefone: 7 },
+  mesa: "(min-width: 768px)",  /* o corte da casa (o `md:` do Tailwind), dito por extenso */
+  palavraCurtaAbaixoDe: 360,   /* abaixo disto, `esta noite` diz-se `hoje` (só a 320 o pior caso não cabe) */
+};
+
+/* ============================================================
+   V4 · O ANEL — o PV de uma pessoa do grupo, à volta do rosto dela.
+
+   A FORMA É A DA v3 (`126:9`–`126:12`): um trilho de `panelSoft` e um arco de
+   ~3 px por fora, que começa no alto e anda no sentido do relógio; o rosto
+   dentro, a 4 px da borda. O arco é o canal PRIMÁRIO (comprimento); a cor é o
+   segundo: `amber` em calma, `danger` em grave — **1,52:1 em cinzento**, o
+   par que o `jogo` escolheu contra o ciano do nó (1,25), que em
+   deuteranopia dava 1,00 de luz (`formas.md` §V1.7).
+
+   QUATRO ESTADOS, e nenhum se diz só pela cor: *calma* (arco âmbar),
+   *grave* (≤ `grave` do PV: arco curto e vermelho, rosto grave), *ferida
+   agora* (o arco SALTA para o comprimento novo e o pedaço perdido fica
+   desenhado a `danger` — aceso `aceso` ms, se apagando até `perdido`) e
+   *tombado* (vida 0 ou morrendo: sem arco, rosto apagado a `apagado` e um
+   traço diagonal de `traco` px — lê-se em cinzento).
+
+   O TEMPO: curar faz o arco crescer em `cura` ms; ferir não anima o arco (o
+   pedaço perdido é que conta). Entrar em grave, e cada ferida nova enquanto
+   grave, dá TRÊS pulsos (`MUDOU_AGORA`) e depois repouso — o pulso infinito
+   de v9.160 morreu aqui. Com `prefers-reduced-motion`: o arco salta, o
+   pedaço perdido aparece parado a `alfaParado`, e não há pulso nenhum.
+   ============================================================ */
+export const ANEL = {
+  heroi: 40,        /* o herói, nas duas telas — a primeira leitura */
+  mesa: 32,         /* um companheiro, na mesa */
+  telefone: 28,     /* um companheiro, no telefone */
+  aro: 3,           /* a largura do arco (3,15 no nó de 42) */
+  folga: 1,         /* entre o arco e o rosto */
+  sobreposicao: 8,  /* os anéis do grupo no telefone pousam uns sobre os outros */
+  recorte: 2,       /* e um contorno da cor da cinta separa cada um do de baixo */
+  grave: 1 / 3,     /* a régua do grave — a mesma de v9.160, agora num sítio só */
+  cura: 400,        /* ms: o arco cresce */
+  aceso: 250,       /* ms: o pedaço perdido aceso */
+  perdido: 750,     /* ms: e apagado de todo (o mesmo tempo de v9.160) */
+  alfaParado: 0.5,  /* o pedaço perdido parado, com movimento reduzido */
+  traco: 2,         /* o traço do tombado */
+  barra: 0.18,      /* de onde a onde ele vai: de 18 % a 82 % do anel, na diagonal */
+  apagado: 0.35,    /* o rosto de quem tombou */
 };
 
 /* ============================================================
@@ -984,8 +1055,28 @@ export const MOVIMENTO_CSS = `
    pulsa ate alguem fazer alguma coisa a respeito. */
 @keyframes tvDano { 0% { box-shadow: 0 0 0 rgba(216,106,91,0); } 20% { box-shadow: 0 0 22px rgba(216,106,91,.85); } 100% { box-shadow: 0 0 0 rgba(216,106,91,0); } }
 .tv-dano { animation: tvDano .7s ease both; }
-@keyframes tvAgonia { 0%, 100% { box-shadow: 0 0 6px rgba(216,106,91,.25); } 50% { box-shadow: 0 0 16px rgba(216,106,91,.6); } }
-.tv-agonia { animation: tvAgonia 1.6s ease infinite; }
+/* V4: a agonia deixou de pulsar sem fim. Pulsa TRES vezes ao entrar em grave
+   (e a cada ferida nova enquanto grave) e para: o que fica e o arco curto, o
+   vermelho e o rosto grave. Um pulso que dura dez turnos cansa, e o que
+   cansa e defeito. A cor vem de T.danger pela tabela — era um vermelho
+   antigo escrito a mao. */
+@keyframes tvAgonia { 0%, 100% { box-shadow: 0 0 0 0 ${alfa(T.danger, 0)}; } 50% { box-shadow: 0 0 10px 2px ${alfa(T.danger, 0.6)}; } }
+.tv-agonia { animation: tvAgonia ${MUDOU_AGORA.pulso}ms ease-in-out ${MUDOU_AGORA.vezes}; }
+/* V4 · o anel: o arco CRESCE na cura (ferir nao o anima — o pedaco perdido
+   e que conta), e o pedaco perdido acende e apaga-se sozinho. */
+.tv-anel-cresce { transition: stroke-dashoffset ${ANEL.cura}ms ease-out; }
+/* o clarao da ferida, so no anel: o mesmo passo do golpe (tvDano), numa
+   classe propria para ter saida no reduced-motion sem mexer no clarao que
+   a tela de combate usa. */
+.tv-anel-clarao { animation: tvDano ${ANEL.perdido}ms ease both; }
+@keyframes tvAnelPerdido { 0%, ${Math.round(100 * ANEL.aceso / ANEL.perdido)}% { opacity: 1; } 100% { opacity: 0; } }
+.tv-anel-perdido { animation: tvAnelPerdido ${ANEL.perdido}ms linear both; }
+/* V4 · a palavra do prazo encurta no telefone mais estreito, e so ali. */
+.tv-prazo-curto { display: none; }
+@media (max-width: ${CINTA.palavraCurtaAbaixoDe - 1}px) {
+  .tv-prazo-longo { display: none; }
+  .tv-prazo-curto { display: inline; }
+}
 
 /* ---------------- O PALCO DO COMBATE (v9.161) ----------------
    O numero de dano sobe do quadrado de quem apanhou e some (as unidades
@@ -1219,6 +1310,13 @@ export const MOVIMENTO_CSS = `
   .tv-veu-entra { animation: none; opacity: 1; }
   .tv-veu-sai { animation: none; opacity: 0; }
   .tv-mudou-agora { animation: none; }
+  /* V4 · O ANEL — corte seco: o arco salta, o pulso nao acontece, e o pedaco
+     perdido fica PARADO a meia tinta ate o anel o tirar (750 ms). A saida
+     nao e none sozinho: com o both da declaracao, none deixava-o aceso por
+     inteiro; a informacao (quanto se perdeu) fica, o movimento sai. */
+  .tv-agonia, .tv-anel-clarao { animation: none; }
+  .tv-anel-cresce { transition: none; }
+  .tv-anel-perdido { animation: none; opacity: ${ANEL.alfaParado}; }
 }
 `;
 

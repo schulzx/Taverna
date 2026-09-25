@@ -126,7 +126,12 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      prova dizer que eles deixaram de entregar a pessoa, quando o que
      mudou foi o endereço. */
   const BATALHA = semComentarios(CRU("painel-batalha.jsx"));
-  const entes = ((APP + BATALHA).match(/<Retrato [^>]*\sente=\{/g) || []).length;
+  /* V4: o retrato do herói na cinta passou a ser desenhado DENTRO de `Anel`
+     (ui.jsx), que recebe o `ente` e o entrega ao retrato. A conta passa a
+     ler `<Anel … ente=` como retrato que entrega a pessoa — é o mesmo, com
+     outro invólucro, e a conta não mudou de verdade. (Os anéis do grupo são
+     retratos NOVOS a entregar a pessoa, e moram em `GrupoNaCinta`.) */
+  const entes = ((APP + BATALHA).match(/<(?:Retrato [^>]*\sente=|Anel ente=)\{/g) || []).length;
   /* v9.177: passaram a SETE. A sala redesenhada (`sala-multiplayer-v2`)
      mostra o retrato de quem já sentou, e ele veste o traje da classe como
      todos os outros — com `semCarta`, porque a cadeira inteira já é área de
@@ -158,7 +163,9 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      o retrato ganhou um invólucro para a marca se agarrar ao canto — daí o
      alcance de 460 para 700. O contrato é o mesmo: dentro do botão, o
      retrato é `semCarta`. */
-  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-label=\{nomeDaPorta\}[\s\S]{0,700}<Retrato semente=\{sementeDe\(personagem\)\} ente=\{personagem\} semCarta/.test(APP));
+  /* V4: dentro do botão, o retrato é o do `Anel` — e o anel desenha-o
+     sempre `semCarta` (`teste-heroi-na-tela` guarda essa metade). */
+  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-label=\{nomeDaPorta\}[\s\S]{0,700}<Anel ente=\{personagem\} semente=\{sementeDe\(personagem\)\}/.test(APP));
 }
 
 console.log(`\ntarô v9.126: ${bons} passaram, ${maus} falharam`);

@@ -843,7 +843,26 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
     (`v3-jogo.md` §7) — o mesmo glifo na promessa (a `Oferta`), no pagamento (a
     pílula) e no contador da cinta, e o recurso voa da pílula ao contador em
     400 ms; nada espera a animação. Depois de V4 (os anéis são o destino).
-- [ ] **V4 · a cinta com os anéis** — os retratos do grupo com anel de PV (âmbar
+- [x] **V4 · a cinta com os anéis** · **FEITO 25/09, no ar** — o estudo em
+  `mente/v4-jogo.md` (e a prova jogada no fim dele), a forma em `formas.md` §V4
+  e `mente/v4-desenho.md`. Os companheiros entram na tela principal (**0 → até
+  4**), o anel tem quatro estados (calma, grave, ferida agora, **tombado** —
+  traço diagonal, lê-se em cinzento), o disco `+N` herda o pior do que esconde,
+  a pílula do tempo no centro, o toque num companheiro abre o Grupo no cartão
+  dele; **a barra de PV que encolhia a 0–3 px no telefone com prazo deixou de
+  existir** (é o arco), e **o pulso de agonia passa a três pulsos e repouso, e
+  a zero com `reduce`**.
+- [ ] **V4b · o anel é onde se cuida** · `jogo` · médio · a ambiciosa do
+  estudo de V4 — tocar num companheiro ferido abre, por baixo da cinta, a
+  melhor cura que o herói tem para ele, com o preço e o resultado à vista (*Poção
+  pequena · 1 de 2 · → 5 a 9 PV*); um toque é o turno. **Precisa do sistema:**
+  `darConsumivel`/`intervaloDaCura`, e `valorDaCura` ainda sorteia com
+  `Math.random()` — a pedir em `pedidos-ao-sistema.md`.
+- [ ] **V4d · a gaveta não esconde o próprio título** · `desenho` + `oficial` · leve — a 1280, tocar num companheiro abre a Gestão com o cartão dele encostado ao topo, e o título `Gestão`, o `✕` e as sub-abas saem de vista (a 375 não). A prova de V4 mediu-o e não bloqueou. O conserto: o cabeçalho da gaveta na mesa em `position: sticky; top: 0` (como o telefone já faz) e `scroll-margin-top` no cartão com a altura dele + 16. **Leva junto:** a 320 o traço de tombado no disco `+4` risca o número e pode ler-se "nenhum"; o nome dos companheiros vai em Spectral 12 e não na Inter Bold da v3 (a casa não tem Inter — é V2, a letra).
+- [ ] **V4c · o segundo arco, o PM** · `desenho` · médio · a ambiciosa de V4 —
+  um arco fino por dentro do anel com o PM de quem o tem: *"quem ainda pode
+  curar?"* de relance, sem barra e sem leiaute; custa 2 px ao rosto do herói.
+- [x] ~~**V4 · a cinta com os anéis** (o texto original)~~ — os retratos do grupo com anel de PV (âmbar
   bem, perigo grave: em cinzento âmbar×perigo separa 1,52, ciano×perigo só
   1,25 — por isso o anel ciano da v3 não entra), a pílula do tempo (hora do
   mundo + selo de prazo; o `2h 15m` de sessão sai; o toque abre O TEMPO), bolsa

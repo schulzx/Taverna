@@ -20,6 +20,8 @@ const S = "../src/";
 const { readFileSync } = await import("node:fs");
 const P = await import(S + "palco.js");
 const APP = readFileSync("../src/App.jsx", "utf8");
+/* V4: o tamanho do anel do herói mora em `ANEL` (estilo.js) */
+const ANEL_HEROI_NA_TABELA = /heroi: 40,/.test(readFileSync("../src/estilo.js", "utf8"));
 
 let bons = 0, maus = 0;
 const t = (n, c) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n); } };
@@ -210,8 +212,10 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
        (glifos.js, provada em Node). Uma cópia dela aqui seria a segunda
        verdade — e a regra de quem cede primeiro divergiria no primeiro ajuste. */
     t("a peça vem da biblioteca e a conta das etiquetas não foi copiada para cá",
-      /, CabecalhoDaPagina, FimDaPagina } from "\.\/ui\.jsx"/.test(APP)
-      && /import \{ assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina \} from "\.\/glifos\.js"/.test(APP)
+      /* V4: as duas importações ganharam as peças da cinta (o anel e os seus);
+         a âncora passa a aceitar o que vem depois, e guarda o mesmo. */
+      /, CabecalhoDaPagina, FimDaPagina[^}]*\} from "\.\/ui\.jsx"/.test(APP)
+      && /import \{ assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina[^}]*\} from "\.\/glifos\.js"/.test(APP)
       && !/function etiquetasDaPagina|const etiquetasDaPagina/.test(APP) && !/\/tocha\/\.test/.test(APP) &&!/RostoDaCena|OTopoDoPapel\(|gravuraDaCena\(/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")),
       "se a regra das etiquetas for copiada para o App.jsx, o telefone e a mesa passam a dizer coisas diferentes");
     /* UM LUGAR, NÃO DOIS: o mesmo `lugarDaCena()` que a gravura escrevia é o
@@ -285,10 +289,18 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      **a barra tem comprimento de barra e o comprimento é o canal primário.**
      56 px saem da tabela (`CINTA_DESENHA.trilho`), e um número escrito à mão
      no meio de um `style` volta a ser o defeito que esta linha caça. */
-  t("a barra do herói tem comprimento de barra, e ele sai da tabela",
-    /width: CINTA_DESENHA\.trilho, height: CINTA_DESENHA\.fio/.test(APP));
-  t("e o PM só aparece quando conta", /\{comPM && \(/.test(APP) && /function oPMConta\(pers\)/.test(APP));
-  t("a barra do PM não rouba a folga do telefone", /<BarraDeRecurso className="hidden md:inline-block"/.test(APP));
+  /* V4 · AS TRÊS ASSERÇÕES MUDAM DE OBJETO, e a lei de cada uma fica:
+     1. «a barra tem comprimento de barra, e ele sai da tabela» — a barra
+        virou o ARCO do anel, e o tamanho dele sai de `ANEL` (40 no herói),
+        nunca de um número no `style`.
+     2. «o PM só aparece quando conta» — igual; mudou só a forma da condição.
+     3. «a barra do PM não rouba a folga do telefone» — ela ROUBAVA: o `style`
+        inline passava por cima do `hidden` e, com um prazo, a barra de PV
+        encolhia a 3 px e a de PM ficava nos 56 (`mente/v4-jogo.md` §0). A
+        barra do PM morreu: o PM é número, e no telefone empilha-se com a bolsa. */
+  t("a vida do herói tem comprimento de arco, e ele sai da tabela", /tamanho=\{ANEL\.heroi\}/.test(APP) && ANEL_HEROI_NA_TABELA);
+  t("e o PM só aparece quando conta", /pm=\{comPM \? personagem\.mana : null\}/.test(APP) && /function oPMConta\(pers\)/.test(APP));
+  t("o PM não tem barra em lado nenhum da cinta", !/BarraDeRecurso/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")));
   t("não sobrou barra de largura fixa sem escape", !/flex flex-col gap-1 w-\[110px\] md:w-\[140px\]/.test(APP));
 }
 console.log(`\npalco v9.157: ${bons} passaram, ${maus} falharam`);

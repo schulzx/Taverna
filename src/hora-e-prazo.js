@@ -98,7 +98,10 @@ export function apertoDoPrazo(noites, urgente = false) {
    gramáticas para um selo só.
    ------------------------------------------------------------ */
 export const CONTAS = {
-  noites: { um: "1 noite", muitos: "noites", ultima: "esta noite" },
+  /* V4 · `ultimaCurta`: o mesmo fato numa palavra que cabe a 320 px, onde o pior
+     caso da cinta (quatro companheiros, dois prazos, a última noite) pede 40 px
+     que não existem (`mente/v4-jogo.md` §4). A 375 não se toca na palavra. */
+  noites: { um: "1 noite", muitos: "noites", ultima: "esta noite", ultimaCurta: "hoje" },
   turnos: { um: "1 turno", muitos: "turnos", ultima: "este turno" },
 };
 
@@ -109,10 +112,11 @@ export const CONTAS = {
    `conta` cai em `noites` quando vier lixo, e a degradação é de
    propósito: uma contagem que não se sabe de quê ainda é melhor dita em
    noites — a unidade que este jogo tem em todo lado — do que apagada. */
-export function palavraDoPrazo(noites, urgente = false, conta = "noites") {
+export function palavraDoPrazo(noites, urgente = false, conta = "noites", curta = false) {
   const n = Number.isFinite(noites) ? Math.max(0, Math.floor(noites)) : 0;
   const c = CONTAS[conta] || CONTAS.noites;
-  if (urgente || n === 0) return c.ultima;
+  /* a palavra curta só existe onde a conta a tem; sem ela, a de sempre */
+  if (urgente || n === 0) return curta && c.ultimaCurta ? c.ultimaCurta : c.ultima;
   return n === 1 ? c.um : `${n} ${c.muitos}`;
 }
 
