@@ -103,6 +103,8 @@ import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
    de ser 15 000 ms, o dente muda de alvo sozinho — e é isso que separa
    uma catraca de uma cópia. */
 import { RITMO_DA_REACAO, TETO_DA_ESPERA } from "../src/ritmo-da-reacao.js";
+/* D5h lê a tabela dos glifos de volta: cada entrada tem de ter leitor. */
+import { GLIFOS } from "../src/glifos.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -1061,6 +1063,123 @@ t(`D5g · a letra abaixo do piso não sobe do retrato de hoje (${TETO_DE_LETRA_A
   letraAbaixoDoPiso > TETO_DE_LETRA_ABAIXO_DO_PISO
     ? `SUBIU: ${letraAbaixoDoPiso} contra o teto de ${TETO_DE_LETRA_ABAIXO_DO_PISO}. Nasceu letra nova abaixo de TIPOS.piso — use TIPOS.rotulo (13) ou maior.`
     : `desceu para ${letraAbaixoDoPiso} — pode baixar o teto para ${letraAbaixoDoPiso}, com a data de hoje no comentário.`);
+
+/* ============================================================
+   8. D5h — O EMOJI DO SISTEMA SÓ DESCE (V3, 24/09)
+
+   O QUE É UM "EMOJI DO SISTEMA": toda sequência que começa num carácter
+   `\p{Extended_Pictographic}` (sem ©, ®, ™). A forma dele não é nossa — cada
+   fabricante desenha o seu — e a cor também não: medido em Windows 11 /
+   Chromium 152 (V3, `v3-desenho.md` §2), 97 dos 128 emoji distintos da
+   interface saem na cor do fabricante e ignoram `T` por inteiro, e três
+   (👣 👥 🐾) não têm UM píxel a 3:1 contra `T.panel`. É `T` a ser
+   contornado por um carácter.
+
+   OS TRÊS GLIFOS DE FONTE (◉ ◆ ✦, e o ✧): não são emoji, mas NENHUMA das
+   três famílias da casa os tem — os subconjuntos que o Google Fonts serve
+   (`FONT_CSS`) cobrem U+0000–00FF, U+0100–02BA e U+2000–206F, e nada de
+   U+25A0–27BF. Logo também saem da fonte do sistema, e mudam com ele.
+   Contam num dente à parte, porque a forma desenhada deles já existe
+   (`IconeBolsa`, `IconeMana`, e o `faisca` de `GLIFOS`).
+
+   O QUE O DENTE FAZ é o de D5g: a dívida NÃO precisa de encolher de uma
+   vez (o `App.jsx` é V3b, com o bastão), só não pode crescer. Descer passa
+   sempre e pede para baixar o teto; subir falha. Arquivo sem entrada tem
+   teto ZERO — um painel novo nasce sem emoji do sistema.
+
+   O ESCOPO são os `.jsx` de `src/`: a interface. Os módulos `src/*.js` guardam
+   conteúdo do mundo (os ícones dos títulos, dos cómodos, das condições) e
+   são território do sistema; a soma deles é impressa e NÃO é dente — V3
+   não os toca, e a pintura deles no ecrã passa pela tabela de tradução de
+   V3b (`v3-jogo.md` §4).
+   ============================================================ */
+sec("8. D5h — o emoji do sistema só desce");
+
+const RX_EMOJI_DO_SISTEMA = /(?![\u00A9\u00AE\u2122])\p{Extended_Pictographic}[\uFE0E\uFE0F]?(?:[\u{1F3FB}-\u{1F3FF}])?(?:\u200D\p{Extended_Pictographic}[\uFE0E\uFE0F]?)*/gu;
+const RX_GLIFO_DE_FONTE = /[\u25C9\u25C6\u2726\u2727]/g;
+
+/* O RETRATO DE V3a (24/09/2026). `App.jsx` é medido na ÁRVORE do dia em que
+   V3a entra — o `orquestrador` estava a escrever nele —, e quem o medir
+   escreve o número aqui com a data. Os treze arquivos que V3a limpou
+   não têm entrada: zero. */
+const TETO_DE_EMOJI_DO_SISTEMA = {
+  "src/App.jsx": 595, /* 25/09 · HEAD 245dd3c (v9.294) — reconte no dia em que V3a entrar */
+};
+const TETO_DE_GLIFO_DE_FONTE = {
+  "src/App.jsx": 162,
+  "src/painel-diplomacia.jsx": 2,  /* ◉ dentro de frase: V3b, com o preço */
+  "src/painel-guilda.jsx": 3,      /* idem */
+  "src/painel-talentos.jsx": 6,    /* idem */
+};
+
+const emojiPorArquivo = {}, fontePorArquivo = {};
+let emojiNosModulos = 0;
+for (const arq of arquivos) {
+  if (!arq.startsWith("src/")) continue;
+  const ext = "." + arq.split(".").pop();
+  const texto = mascararComentarios(readFileSync(join(RAIZ, arq), "utf8"), ext);
+  const e = (texto.match(RX_EMOJI_DO_SISTEMA) || []).length;
+  if (ext === ".jsx") {
+    const f = (texto.match(RX_GLIFO_DE_FONTE) || []).length;
+    if (e) emojiPorArquivo[arq] = e;
+    if (f) fontePorArquivo[arq] = f;
+  } else emojiNosModulos += e;
+}
+const somaEmoji = Object.values(emojiPorArquivo).reduce((a, b) => a + b, 0);
+const somaFonte = Object.values(fontePorArquivo).reduce((a, b) => a + b, 0);
+console.log(`  ··  ${somaEmoji} emoji do sistema na interface: ${Object.entries(emojiPorArquivo).map(([a, n]) => `${a} ${n}`).join(" · ") || "nenhum"}`);
+console.log(`  ··  ${somaFonte} glifos de fonte (◉ ◆ ✦ ✧): ${Object.entries(fontePorArquivo).map(([a, n]) => `${a} ${n}`).join(" · ") || "nenhum"}`);
+console.log(`  ··  ${emojiNosModulos} emoji nos módulos src/*.js (conteúdo; impresso, não é dente)`);
+
+const soDesce = (medido, teto, oque) => {
+  const falhas = [], desceu = [];
+  for (const arq of new Set([...Object.keys(medido), ...Object.keys(teto)])) {
+    const m = medido[arq] || 0, tt = teto[arq] || 0;
+    if (m > tt) falhas.push(`${arq}: ${m} ${oque} contra o teto de ${tt}${tt === 0 ? " (arquivo sem entrada = teto zero)" : ""}`);
+    else if (m < tt) desceu.push(`${arq}: ${tt} → ${m}`);
+  }
+  if (desceu.length) console.log(`  ··  desceu — baixe o teto, com a data: ${desceu.join(" · ")}`);
+  return falhas;
+};
+const falhasH1 = soDesce(emojiPorArquivo, TETO_DE_EMOJI_DO_SISTEMA, "emoji do sistema");
+t("D5h.1 · nenhum arquivo de interface ganhou emoji do sistema (use <Glifo> de ui.jsx, ou tire-o: um rótulo não precisa de um glifo a dizer o que diz)",
+  falhasH1.length === 0, falhasH1.join("\n      "));
+const falhasH2 = soDesce(fontePorArquivo, TETO_DE_GLIFO_DE_FONTE, "glifos de fonte");
+t("D5h.2 · nenhum arquivo ganhou ◉ ◆ ✦ ✧ de fonte (use <Glifo nome=\"moeda\"|\"mana\"|\"faisca\">)",
+  falhasH2.length === 0, falhasH2.join("\n      "));
+
+/* D5h.3 · CADA GLIFO DA TABELA TEM LEITOR NO DIA EM QUE NASCE. A catraca de
+   `teste-ligacao` conta exports, e `GLIFOS` é UM export: uma entrada sem
+   ninguém a pedi-la passaria calada. Leitor = o nome entre aspas num
+   `.jsx` que desenha com `Glifo` (inclui os `Icone*` de `ui.jsx` que lhe
+   delegam). */
+const jsxQueDesenham = arquivos.filter((a) => a.endsWith(".jsx"))
+  .map((a) => mascararComentarios(readFileSync(join(RAIZ, a), "utf8"), ".jsx"))
+  .filter((txt) => /<Glifo\b|chip\(/.test(txt)).join("\n");
+const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`));
+t(`D5h.3 · as ${Object.keys(GLIFOS).length} entradas de GLIFOS têm, cada uma, um leitor na interface`,
+  Object.keys(GLIFOS).length > 0 && semLeitor.length === 0,
+  Object.keys(GLIFOS).length === 0 ? "A TABELA DESAPARECEU — renomearam GLIFOS, e o dente mede o vazio." : `sem leitor: ${semLeitor.join(", ")} — o glifo nasce com a etapa que o lê.`);
+
+/* D5h.4 · A COR DE UM GLIFO É UMA TINTA DE `T`, NUNCA UMA SUPERFÍCIE OU UM
+   FIO. As tintas medem ≥ 4,99:1 contra as quatro superfícies (V3, §4) — a
+   1.4.11 (3:1) passa por construção. `line` mede 1,51 e não passa. */
+const TINTAS_DE_GLIFO = new Set(["ink", "inkMeio", "inkDim", "amber", "amberSoft", "violet", "violetSoft", "mundo", "mundoSoft", "rosa", "danger", "ok", "onAccent", "onSecond", "onMundo"]);
+const coresDeGlifo = [...jsxQueDesenham.matchAll(/<(?:Glifo|DegrausDaAmeaca)\b[^>]*?\bcor=\{T\.(\w+)\}/g)].map((m) => m[1]);
+const coresMas = coresDeGlifo.filter((c) => !TINTAS_DE_GLIFO.has(c));
+t(`D5h.4 · os ${coresDeGlifo.length} glifos com cor explícita pintam com uma tinta de T (nunca line/panel/bg/pagina)`,
+  coresMas.length === 0, `cores que não são tinta: ${coresMas.join(", ")}`);
+
+/* D5h.5 · UM BOTÃO SÓ-GLIFO TEM NOME. `title` não é nome acessível fiável
+   (não chega ao toque nem a todos os leitores de ecrã); `aria-label` é a
+   lei da casa (`formas.md`, "O nome acessível da casa"). */
+const RX_BOTAO_SO_GLIFO = /<button\b((?:(?!<\/?button\b)[\s\S])*?)>\s*<Glifo\b[^>]*\/>\s*(?:\{[^{}]*\}\s*)?<\/button>/g;
+const botoesSemNome = [];
+for (const a of arquivos.filter((x) => x.endsWith(".jsx"))) {
+  const txt = mascararComentarios(readFileSync(join(RAIZ, a), "utf8"), ".jsx");
+  for (const m of txt.matchAll(RX_BOTAO_SO_GLIFO)) if (!/aria-label/.test(m[1])) botoesSemNome.push(`${a}:${txt.slice(0, m.index).split("\n").length}`);
+}
+t("D5h.5 · todo botão cujo conteúdo é só um Glifo tem aria-label", botoesSemNome.length === 0, botoesSemNome.join(" · "));
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

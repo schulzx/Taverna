@@ -44,7 +44,7 @@
 import React from "react";
 import { T, ALVOS, TELA_DE_BATALHA as G } from "./estilo.js";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
-import { Retrato, BarraMini, PontoAtivo } from "./ui.jsx";
+import { Retrato, BarraMini, PontoAtivo, Glifo } from "./ui.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { metrosTxt, podeDarUmPasso } from "./grid.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -261,20 +261,20 @@ function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, gavetaAberta, aoA
         <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} />
       ))}
       {/* AS DUAS GAVETAS — abrem lista, logo não são verbos */}
-      <button onClick={aoAbrirGaveta} aria-pressed={gavetaAberta} title="Habilidades"
-        className="tv-anel-foco tv-mono text-[11px] rounded-lg px-3" style={{
-          minHeight: G.verbos, height: G.verbos,
+      <button onClick={aoAbrirGaveta} aria-pressed={gavetaAberta} title="Habilidades" aria-label="Habilidades"
+        className="tv-anel-foco tv-mono text-[11px] rounded-lg px-3 inline-flex items-center justify-center" style={{
+          minHeight: G.verbos, height: G.verbos, minWidth: ALVOS.piso,
           background: gavetaAberta ? T.violet : T.panel,
           color: gavetaAberta ? T.onSecond : T.violetSoft,
           border: `1px solid ${T.violet}`,
-        }}>✦</button>
-      <button onClick={aoAbrirBolsa} aria-pressed={bolsaAberta} title="Bolsa"
-        className="tv-anel-foco tv-mono text-[11px] rounded-lg px-3" style={{
-          minHeight: G.verbos, height: G.verbos,
+        }}><Glifo nome="faisca" tamanho={20} /></button>
+      <button onClick={aoAbrirBolsa} aria-pressed={bolsaAberta} title="Bolsa" aria-label={nBolsa > 0 ? `Bolsa, ${nBolsa}` : "Bolsa"}
+        className="tv-anel-foco tv-mono text-[11px] rounded-lg px-3 inline-flex items-center justify-center gap-1" style={{
+          minHeight: G.verbos, height: G.verbos, minWidth: ALVOS.piso,
           background: bolsaAberta ? T.violet : T.panel,
           color: bolsaAberta ? T.onSecond : T.violetSoft,
           border: `1px solid ${T.violet}`,
-        }}>◆{nBolsa > 0 ? ` ${nBolsa}` : ""}</button>
+        }}><Glifo nome="bolsa" tamanho={20} />{nBolsa > 0 ? nBolsa : null}</button>
       {/* a goteira, e depois os recuos — a posição do Recuo em toda a casa */}
       {recuos.length > 0 && (
         <span className="flex items-stretch gap-2" style={{ paddingLeft: G.goteira }}>
@@ -358,9 +358,9 @@ function TiraDoHeroi({ personagem, economia, acaoBonus, selos = [], adversario =
      ação existir só para quem leu o código; e quem não tem ação bônus não
      vê a pílula dela — mostrar um recurso permanentemente riscado ensina a
      regra errada. */
-  const chip = (ativo, rotulo) => (
-    <span key={rotulo} className="tv-mono text-[9px] px-1.5 py-0.5 rounded"
-      style={{ border: `1px solid ${ativo ? T.amber : T.line}`, color: ativo ? T.amberSoft : T.inkDim, opacity: ativo ? 1 : 0.45, textDecoration: ativo ? "none" : "line-through" }}>{rotulo}</span>
+  const chip = (ativo, glifo, rotulo) => (
+    <span key={glifo + rotulo} className="tv-mono text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-1"
+      style={{ border: `1px solid ${ativo ? T.amber : T.line}`, color: ativo ? T.amberSoft : T.inkDim, opacity: ativo ? 1 : 0.45, textDecoration: ativo ? "none" : "line-through" }}><Glifo nome={glifo} tamanho={12} />{rotulo}</span>
   );
   /* A LINHA DO TELEFONE. O nome NÃO entra: ele está na ficha do campo,
      rotulada "você", no mesmo instante. E ela ROLA na horizontal em vez
@@ -378,8 +378,8 @@ function TiraDoHeroi({ personagem, economia, acaoBonus, selos = [], adversario =
             PM {Math.max(0, personagem.mana || 0)}/{personagem.manaMax}
           </span>
         )}
-        {chip(eco.acao > 0, eco.acao > 1 ? `⚔ ×${eco.acao}` : "⚔")}
-        {eco.extra != null && (eco.extra > 0 || acaoBonus) && chip(eco.extra > 0, "✦")}
+        {chip(eco.acao > 0, "espadas", eco.acao > 1 ? `×${eco.acao}` : "")}
+        {eco.extra != null && (eco.extra > 0 || acaoBonus) && chip(eco.extra > 0, "faisca", "")}
         {selos.map((x) => <SeloDoModificador key={x.id} selo={x} />)}
         {adversario && (
           /* a vida dele em NÚMERO: à volta da ficha, a 48 px, ela é um
@@ -399,8 +399,8 @@ function TiraDoHeroi({ personagem, economia, acaoBonus, selos = [], adversario =
       <div className="flex flex-col gap-1 flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="tv-display text-base truncate flex-1 min-w-0" style={{ color: T.ink }}>{personagem.nome}</span>
-          {chip(eco.acao > 0, eco.acao > 1 ? `⚔ ação ×${eco.acao}` : "⚔ ação")}
-          {eco.extra != null && (eco.extra > 0 || acaoBonus) && chip(eco.extra > 0, "✦ extra")}
+          {chip(eco.acao > 0, "espadas", eco.acao > 1 ? `ação ×${eco.acao}` : "ação")}
+          {eco.extra != null && (eco.extra > 0 || acaoBonus) && chip(eco.extra > 0, "faisca", "extra")}
         </div>
         <BarraMini rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={grave ? T.danger : T.amber} corBaixa={T.danger} />
         {personagem.manaMax > 0 && <BarraMini rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violetSoft} />}
@@ -426,7 +426,7 @@ function ORastroDosDados({ linhas }) {
   return (
     <div className="rounded-xl p-2 shrink-0" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
       {linhas.map((l, i) => (
-        <div key={i} className="tv-mono text-[10px]" style={{ color: T.inkDim, opacity: 0.5 + (0.5 * (i + 1)) / linhas.length }}>🎲 {l}</div>
+        <div key={i} className="tv-mono text-[10px]" style={{ color: T.inkDim, opacity: 0.5 + (0.5 * (i + 1)) / linhas.length }}><Glifo nome="dado" tamanho={14} /> {l}</div>
       ))}
     </div>
   );

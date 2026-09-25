@@ -774,6 +774,18 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
 - [ ] **V3 · os ícones desenhados** (~20: os do trilho, o dado, as quatro luzes,
   `◉`, `◆`, `✦`, a coroa) — **paga R8 na tela principal**; varredor: zero emoji
   do SO na mesa. O dado é um d20 de verdade (o Lucide não tem).
+  - [x] **V3a · fora do `App.jsx`** · **FEITO 25/09, no ar** — a decisão em
+    `formas.md` §V3, o spec em `mente/v3-desenho.md`, o censo jogado em
+    `mente/v3-jogo.md`. `src/glifos.js` (16 glifos, um assunto cada, geometria
+    Lucide ISC), a peça `Glifo` em `ui.jsx`, 12 `Icone*` antigos a delegar, o d20
+    icosaedro provado como geometria, `DegrausDaAmeaca` no Bestiário. **101 → 0
+    emoji do SO** nos 14 arquivos fora do `App.jsx`: todas as telas a um toque
+    da mesa ficam sem emoji do sistema. A catraca D5h congela o `App.jsx` em 595
+    e só o deixa descer.
+  - [ ] **V3b · o `App.jsx`** · `oficial`, com o bastão — a ordem por custo a
+    quem joga em `v3-desenho.md` §7: as falas do sistema traduzidas por tabela
+    (não 296 sítios) com `O ladrilho do assunto`, a voz, `chipsDoEstado`, o teste
+    pendente, a gaveta, o trilho sem espada nem caveira, O TEMPO; e V1b junto.
 - [ ] **V4 · a cinta com os anéis** — os retratos do grupo com anel de PV (âmbar
   bem, perigo grave: em cinzento âmbar×perigo separa 1,52, ciano×perigo só
   1,25 — por isso o anel ciano da v3 não entra), a pílula do tempo (hora do

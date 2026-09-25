@@ -13,6 +13,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
+import { Glifo } from "./ui.jsx";
 import { CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, ranksDoPersonagem, pontosDisponiveis, pontosTotais, pontosNoNivel, custoRespec, subclasseEscolhida, podeEscolherSubclasse, RANK_PARA_SUBCLASSE, habilidadesDaSubclasse, arvoreDaEspecializacao, especializacaoEscolhida, podeEscolherEspecializacao, especializacoesDaSubclasse, habilidadesDaEspecializacao, RANK_PARA_ESPECIALIZACAO, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { tabelaDeAtributos, pontosAtributoDisponiveis, pontosAtributoNoNivel, pontosAtributoTotais, tetoAtributo, conselhoDeBuild, custoDoDegrau } from "./atributos.js";
 
@@ -216,7 +217,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
                   <div key={h.nome} className="rounded-xl px-3 py-2.5" style={{ background: h.dominada ? T.panel : T.panelSoft, border: `1px solid ${cor}`, opacity: h.dominada || h.pode ? 1 : 0.55 }}>
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="tv-display text-base" style={{ color: h.dominada ? T.ok : T.ink }}>
-                        {h.dominada ? "✓ " : h.pode ? "" : "🔒 "}{h.nome}
+                        {h.dominada ? "✓ " : h.pode ? "" : <><Glifo nome="cadeado" tamanho={12} rotulo="fechada" /> </>}{h.nome}
                       </span>
                       {/* o degrau saiu daqui: ele agora é o cabeçalho da fileira */}
                       <span className="tv-mono text-[9px] shrink-0" style={{ color: T.violetSoft }}>{h.custo} PM</span>
@@ -337,7 +338,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
 
       {!abertas.includes(abaClasse) && (
         <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px dashed ${T.violet}` }}>
-          <div className="tv-body text-sm" style={{ color: T.ink }}>⚔ Abrir <b>{abaClasse}</b> como segunda classe</div>
+          <div className="tv-body text-sm" style={{ color: T.ink }}>Abrir <b>{abaClasse}</b> como segunda classe</div>
           <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>
             {(classePorNome(abaClasse) || {}).desc} Basta gastar um ponto numa habilidade de nível 1 abaixo — daí em diante você é {personagem.classe} e {abaClasse}.
           </div>

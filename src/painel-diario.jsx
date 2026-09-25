@@ -4,6 +4,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
+import { Glifo } from "./ui.jsx";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
 import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, textoDaPaga, temPrazo, textoDoPrazo } from "./missoes.js";
 import { dificuldadeDaMissao } from "./dificuldade.js";
@@ -92,7 +93,7 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null }) {
       {temPrazo(m) && !fim && (
         <div className="tv-mono text-[10px] mt-1" style={{ color: T.danger }}
           title="o relógio anda uma casa por noite dormida; quando enche, a missão falha">
-          ⏳ {oferta ? `prazo: ${textoDoPrazo(m)}` : `contra o tempo: ${textoDoPrazo(m)}`}
+          <Glifo nome="ampulheta" tamanho={12} /> {oferta ? `prazo: ${textoDoPrazo(m)}` : `contra o tempo: ${textoDoPrazo(m)}`}
         </div>
       )}
 
@@ -170,20 +171,20 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
       {/* FIOS DO MUNDO (v7.2): evento global em curso + fios locais com prazo */}
       {eventos && eventos.global && (
         <>
-          <div className="tv-mono text-[10px] uppercase tracking-widest mt-5 mb-1.5" style={{ color: T.danger }}>🌍 Evento global em curso</div>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mt-5 mb-1.5" style={{ color: T.danger }}>Evento global em curso</div>
           <div className="rounded-lg px-3 py-2.5 mb-2" style={{ background: T.panelSoft, border: `1px solid ${T.danger}` }}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="tv-body text-sm font-bold" style={{ color: T.ink }}>{eventos.global.nome}</span>
               <span className="tv-mono text-[9px] shrink-0" style={{ color: T.danger }}>etapa {eventos.global.etapa + 1}/{eventos.global.etapas.length}</span>
             </div>
             <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{eventos.global.semente}</div>
-            <div className="tv-body text-xs mt-1" style={{ color: T.amberSoft }}>▶ Agora: {eventos.global.etapas[eventos.global.etapa]}</div>
+            <div className="tv-body text-xs mt-1" style={{ color: T.amberSoft }}>› Agora: {eventos.global.etapas[eventos.global.etapa]}</div>
           </div>
         </>
       )}
       {eventos && (eventos.locais || []).length > 0 && (
         <>
-          <div className="tv-mono text-[10px] uppercase tracking-widest mt-4 mb-1.5" style={{ color: T.inkDim }}>🌱 Fios do mundo (se resolvem sem você)</div>
+          <div className="tv-mono text-[10px] uppercase tracking-widest mt-4 mb-1.5" style={{ color: T.inkDim }}>Fios do mundo (se resolvem sem você)</div>
           <div className="space-y-2">
             {eventos.locais.map((l) => (
               <div key={l.id} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>

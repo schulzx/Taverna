@@ -36,7 +36,7 @@ import { TELA_DE_BATALHA } from "./estilo.js";
 import { Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { fasesDoChefe, viradaPorId } from "./masmorras.js";
-import { IconeEscudoAlerta } from "./ui.jsx";
+import { IconeEscudoAlerta, Glifo } from "./ui.jsx";
 /* E2 — A GRAMÁTICA DO ENDEREÇO NÃO É NOVA, E ISSO É LEI. `LETRAS_DA_GRADE`
    (`coordenadas.js:151`) é a única tabela de letras do jogo: o pergaminho
    escreve `H13` com ela desde a v9.118, e o tabuleiro escreve `K14` com a
@@ -1031,12 +1031,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       </span>
       {colados.length > 0 && (
         <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
-          ⚡ sair custa {colados.length === 1 ? "um golpe livre" : `${colados.length} golpes livres`}
+          <Glifo nome="espadas" tamanho={12} /> sair custa {colados.length === 1 ? "um golpe livre" : `${colados.length} golpes livres`}
         </span>
       )}
       <span className="tv-mono text-[9px]" style={{ color: passoM > 0 ? T.inkDim : T.danger }}
         title="O que sobra do seu passo nesta rodada. Andar não gasta a ação: dá para dar dois passos, contornar e ainda golpear.">
-        👣 {metrosTxt(passoM)} de {metrosTxt(passoTotal)} m nesta rodada
+        <Glifo nome="passo" tamanho={12} /> {metrosTxt(passoM)} de {metrosTxt(passoTotal)} m nesta rodada
       </span>
       {rotaPrevista && (
         <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>
@@ -1055,12 +1055,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           title={mirando ? "Voltar a andar pelo tabuleiro" : `Escolher onde ${alcanceMira.nome} vai cair`}
           className="tv-mono text-[9px] px-2 py-0.5 rounded-full"
           style={{ background: mirando ? T.violet : "transparent", color: mirando ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}` }}>
-          {mirando ? `◎ mirando ${alcanceMira.nome} — toque onde cai` : `👣 andando — toque para mirar ${alcanceMira.nome}`}
+          {mirando ? `◎ mirando ${alcanceMira.nome} — toque onde cai` : <><Glifo nome="passo" tamanho={12} /> andando — toque para mirar {alcanceMira.nome}</>}
         </button>
       )}
       {previsao && (
         <span className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: previsao.aliados.length ? T.danger : T.amberSoft, border: `1px solid ${previsao.aliados.length ? T.danger : T.amber}` }}>
-          {previsao.aliados.length ? "💢" : "◎"} {previsao.nome} ({previsao.forma}{previsao.raio ? ` de ${previsao.raio} m` : ""}): {previsao.inimigos.length} inimigo{previsao.inimigos.length === 1 ? "" : "s"}
+          {previsao.aliados.length ? <Glifo nome="espadas" tamanho={12} rotulo="atinge aliados" /> : "◎"} {previsao.nome} ({previsao.forma}{previsao.raio ? ` de ${previsao.raio} m` : ""}): {previsao.inimigos.length} inimigo{previsao.inimigos.length === 1 ? "" : "s"}
           {previsao.aliados.length ? ` · PEGA ${previsao.aliados.join(", ")}` : " · nenhum aliado na área"}
         </span>
       )}

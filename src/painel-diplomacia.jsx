@@ -24,10 +24,10 @@ export function PainelDiplomacia({ potencias = [], dip = null, veredito, onDiplo
     return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhuma potência conhecida ainda. As casas do mundo e as facções que aparecerem na história entram aqui — e você poderá propor comércio, aliança, vassalagem… ou declarar guerra.</div>;
   }
   const ACOES = [
-    { id: "comercio", rotulo: "◉ comércio", dica: "+5% de renda por parceiro" },
-    { id: "alianca", rotulo: "🤝 aliança", dica: "+5% e apoio mútuo" },
-    { id: "vassalagem", rotulo: "♜ vassalagem", dica: "tributo de 10/dia — e ninguém se curva a quem é menor" },
-    { id: "guerra", rotulo: "⚔ guerra", dica: "não se propõe: se declara. E custa ânimo nos seus domínios, todo dia.", perigo: true },
+    { id: "comercio", rotulo: "comércio", dica: "+5% de renda por parceiro" },
+    { id: "alianca", rotulo: "aliança", dica: "+5% e apoio mútuo" },
+    { id: "vassalagem", rotulo: "vassalagem", dica: "tributo de 10/dia — e ninguém se curva a quem é menor" },
+    { id: "guerra", rotulo: "guerra", dica: "não se propõe: se declara. E custa ânimo nos seus domínios, todo dia.", perigo: true },
   ];
   return (
     <div className="space-y-2.5">
@@ -112,7 +112,7 @@ export function PainelDiplomacia({ potencias = [], dip = null, veredito, onDiplo
                       title={semCasa ? "Presentear exige uma casa (o cofre e os mensageiros são dela)" : `${ap.o}`}
                       className="tv-mono text-[10px] px-1.5 py-1.5 rounded col-span-2 text-left"
                       style={{ border: `1px solid ${T.amber}`, color: T.amberSoft, opacity: (semCasa || semCofre) ? 0.4 : 1 }}>
-                      <div>🎁 presentear · ◉ {custo} do cofre</div>
+                      <div>presentear · ◉ {custo} do cofre</div>
                       <div className="tv-mono text-[9px]" style={{ color: semCasa ? T.inkDim : semCofre ? T.danger : pega.cor }}>
                         {semCasa ? "exige uma casa" : semCofre ? `o cofre tem ◉ ${cofre || 0}` : pega.diz}
                       </div>

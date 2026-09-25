@@ -99,7 +99,7 @@ export function PainelHeroismo({ pontos, contexto, aoGastar, aoFechar }) {
           {erro && <div className="tv-body text-[11px] mb-2" style={{ color: T.danger }}>{erro}</div>}
           <div className="flex gap-2">
             <button onClick={confirmarDeclaracao} className="rounded-lg px-3 py-1.5 tv-mono text-xs"
-              style={{ background: T.violet, color: T.onSecond, fontWeight: 600 }}>📜 Declarar · 2 pontos</button>
+              style={{ background: T.violet, color: T.onSecond, fontWeight: 600 }}>Declarar · 2 pontos</button>
             <button onClick={() => { setDeclarando(false); setErro(""); }} className="rounded-lg px-3 py-1.5 tv-mono text-xs"
               style={{ color: T.inkDim, border: `1px solid ${T.line}` }}>voltar</button>
           </div>

@@ -25,6 +25,17 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **as noites que faltam de um prazo, expostas por `missoes.js`** · de: V3 (`desenho`) · 25/09 · leve
+  O Diário só consegue desenhar a ampulheta do prazo; a peça inteira `SeloDePrazo` (areia → palavra → enchimento → cor, a lei de R9) precisa do número de noites que faltam, e hoje só a cinta o calcula.
+  **Para quê:** o prazo tem **quatro caras** na tela (o censo de V3, `mente/v3-jogo.md`) — a cinta, a soleira, o Diário e o Correio; uma ação, uma forma. **O que se pede:** `noitesQueFaltam(missao, relogio)` pura, com suíte.
+
+- [ ] **a exaustão não fica** · de: V3 (`jogo`, achado ao jogar) · 25/09 · a confirmar
+  Numa campanha nova jogada por 38 h de mundo, o registo diz *"Você está Exausto"* às 36 h e outra vez às 38 h, e a ficha exportada tem `condicoes: []`. Ou a condição não é gravada, ou é gravada e limpa no mesmo turno.
+  **Para quê:** o jogador é avisado de um estado que a ficha não tem — o sistema a falar de uma coisa que não é. Saves e passos em `scratchpad/v3-jogo/` da sessão do `regente` de 24–25/09.
+
+- [ ] **sol às 22:00** · de: V3 (`jogo`, achado ao jogar) · 25/09 · a confirmar
+  O TEMPO mostra `22:00 🌙` e `☀ ensolarado` na mesma caixa: o clima escolhe o seu glifo sem olhar a hora. **Para quê:** V3b troca esta linha por um glifo só, o céu, tirado de `LUZ_DA_CENA` pela hora — mas a palavra do clima continua a vir do motor, e *"ensolarado"* à noite continua errado. Pede-se que o clima diurno tenha a sua palavra noturna (limpo, estrelado…).
+
 - [ ] **o dado do véu rola `Math.random`, dentro do componente de tela** · de: V (`jogo`, o plano da v3) · 24/09 · leve
   `OverlayDado` (`App.jsx` ~l.536–552) sorteia o valor do d20 — e o par da vantagem — com `Math.random()`, e é esse valor que `aoConcluir` entrega à regra. **O resultado de um teste é o único número do jogo que não sai da semente**, e é decidido dentro de um componente React: duas leis da casa de uma vez (*determinismo por semente*; *conta se prova, tela se olha*).
   **Para quê:** a v3 põe o dado no centro da mão do jogador (o botão de enviar é um dado). O número que ele mais olha tem de ser o que a semente garante. **O que se pede:** `rolarTeste(semente, turno, modo)` puro (`vantagem`/`desvantagem` inclusos), com suíte; o véu passa a animar até ao número dado. Forma e momento em `mente/v1-jogo.md` §7.

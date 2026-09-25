@@ -20,7 +20,7 @@
 import React from "react";
 import { T, ATRIBUTOS, XP_POR_NIVEL } from "./constantes.js";
 import { poderDe, poderDoGrupo, formatarPoder, contaDoPoder } from "./poder.js";
-import { Retrato, CartaoDeDado } from "./ui.jsx";
+import { Retrato, CartaoDeDado, Glifo } from "./ui.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
@@ -233,7 +233,7 @@ export function FichaVisual({
           </div>
           {tituloInfo && (
             <div className="tv-mono text-[10px] truncate" style={{ color: tituloInfo.divino ? T.violetSoft : T.inkDim }}>
-              {tituloInfo.divino ? `🌟 ${tituloInfo.titulo} · GD ${tituloInfo.gd}` : tituloInfo.titulo}
+              {tituloInfo.divino ? <><Glifo nome="ascensao" tamanho={14} /> {tituloInfo.titulo} · GD {tituloInfo.gd}</> : tituloInfo.titulo}
               {patamarNome ? <span style={{ color: T.inkDim }}> · {patamarNome}</span> : null}
             </div>
           )}
@@ -370,7 +370,7 @@ export function FichaVisual({
               })}
               {ef.vantagemMental && (
                 <span className={chip} title="Mente firme: vantagem para resistir a medo, encanto e domínio"
-                  style={{ color: T.violetSoft, border: `1px solid ${T.line}` }}>🧠 mente firme</span>
+                  style={{ color: T.violetSoft, border: `1px solid ${T.line}` }}>mente firme</span>
               )}
             </div>
           );
@@ -413,7 +413,7 @@ export function FichaVisual({
             const livres = dv.total - dv.gastos;
             return (
               <div className="flex items-center gap-2 flex-wrap" title="Dados de vida: o PV do descanso curto sai daqui. Só voltam pela metade numa noite inteira.">
-                <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>🩹 Fôlego</span>
+                <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}><Glifo nome="vida" tamanho={12} /> Fôlego</span>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: Math.min(dv.total, 20) }).map((_, i) => (
                     <span key={i} style={{
@@ -466,7 +466,7 @@ export function FichaVisual({
                 <span key={slot} title={`${it.nome}${fi && fi.base && fi.base !== it.nome ? ` (o sistema vê: ${fi.base})` : ""}${forma ? ` — ${forma}` : ""}${it.poder ? ` — ${it.poder}` : ""}`}
                   className="tv-mono text-[10px] px-2 py-1 rounded-lg" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink, maxWidth: "100%" }}>
                   <span className="truncate block">
-                  <span style={{ color: T.inkDim }}>{slot === "arma" ? "⚔" : slot === "escudo" ? "🛡" : slot === "armadura" ? "🧥" : "◆"}</span> {it.nome}
+                  {it.nome}
                   {it.atributos && Object.entries(it.atributos).map(([k, v]) => (
                     <span key={k} style={{ color: T.ok }}> {sinal(v)}{k === "dano" ? "dan" : k === "defesa" ? "def" : k.slice(0, 3)}</span>
                   ))}
@@ -485,7 +485,7 @@ export function FichaVisual({
           {penalidades.length > 0 && (
             <div className="mt-1.5 space-y-1">
               {penalidades.map((pe, i) => (
-                <div key={i} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ background: T.panel, border: `1px solid ${T.danger}`, color: T.inkDim }}>⚠ {pe.texto}</div>
+                <div key={i} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ background: T.panel, border: `1px solid ${T.danger}`, color: T.inkDim }}><Glifo nome="aviso" tamanho={12} cor={T.danger} /> {pe.texto}</div>
               ))}
             </div>
           )}
@@ -505,7 +505,7 @@ export function FichaVisual({
               {efeitos.map((e, i) => (
                 <span key={`e${i}`} className="tv-mono text-[10px] px-2 py-1 rounded-full"
                   style={{ background: T.panel, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
-                  ✦ {e.nome}{e.turnos ? ` ${e.turnos}t` : ""}
+                  <Glifo nome="faisca" tamanho={12} /> {e.nome}{e.turnos ? ` ${e.turnos}t` : ""}
                 </span>
               ))}
             </div>
@@ -519,7 +519,7 @@ export function FichaVisual({
         <div className="flex items-center gap-3 flex-wrap pt-1" style={{ borderTop: `1px solid ${T.line}` }}>
           {famaInfo && (
             <div className="flex items-center gap-1.5" title={famaInfo.pf.nota}>
-              <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.amberSoft }}>📣 {famaInfo.pf.rotulo}</span>
+              <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.amberSoft }}>{famaInfo.pf.rotulo}</span>
               <div className="w-14 h-1 rounded-full overflow-hidden" style={{ background: T.panel }}>
                 <div className="h-full rounded-full" style={{ width: `${famaInfo.f}%`, background: T.amber }} />
               </div>
@@ -527,10 +527,10 @@ export function FichaVisual({
           )}
           {/* o XP saiu daqui (v9.159): ele mora na régua do cabeçalho — o
               mesmo número em dois cantos é como as duas verdades nascem */}
-          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>◉ {p.moedas || 0}</span>
+          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}><Glifo nome="moeda" tamanho={12} /> {p.moedas || 0}</span>
           {(p.cicatrizes || []).length > 0 && (
             <span className="tv-mono text-[9px]" style={{ color: T.danger }} title={p.cicatrizes.map((c) => `${c.nome} — ${c.descricao}`).join("\n")}>
-              🩸 {p.cicatrizes.length} cicatriz{p.cicatrizes.length > 1 ? "es" : ""}
+              <Glifo nome="vida" tamanho={12} /> {p.cicatrizes.length} cicatriz{p.cicatrizes.length > 1 ? "es" : ""}
             </span>
           )}
           {p.conceito ? <span className="tv-body text-xs italic truncate flex-1" style={{ color: T.inkDim }}>{p.conceito}</span> : null}

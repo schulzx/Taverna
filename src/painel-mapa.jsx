@@ -4,6 +4,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
+import { Glifo } from "./ui.jsx";
 import { RELACOES, blobPath, centrosDeRegiao, gerarEstradas } from "./mapa.js";
 import { PORTES } from "./geografia.js";
 import { ESTADOS_FE, estadoFe, feDaCidade, temploDaCidade, temploDe, fieisDaCidade, heresiaDaCidade, patronoDaCidade, resumoNumerico } from "./devocao.js";
@@ -65,7 +66,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
 
   const rodapeNevoa = ocultas > 0 ? (
     <div className="tv-mono text-[10px] mt-2 px-2 py-1.5 rounded-lg" style={{ background: T.panelSoft, border: `1px dashed ${T.line}`, color: T.inkDim }}>
-      🌫 Há {ocultas} {ocultas === 1 ? "lugar" : "lugares"} neste mundo que você ainda não conhece. Viaje até eles, ou compre o mapa da região num armazém ou casa de relíquias.
+      Há {ocultas} {ocultas === 1 ? "lugar" : "lugares"} neste mundo que você ainda não conhece. Viaje até eles, ou compre o mapa da região num armazém ou casa de relíquias.
     </div>
   ) : null;
 
@@ -145,7 +146,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
   const elenco = ondeEstaOElenco(npcs, { cidadeAtual, jornada, masmorra, mapa, lugar, semente, grupo, heroi });
   const seletorEscala = podeCidade ? (
     <div className="flex gap-1.5 mb-3">
-      {[{ id: "mundo", rotulo: "🌍 Mundo" }, { id: "cidade", rotulo: `🏘 ${cidadeAqui.nome}` }].map((k) => (
+      {[{ id: "mundo", rotulo: "Mundo" }, { id: "cidade", rotulo: cidadeAqui.nome }].map((k) => (
         <button key={k.id} onClick={() => { setEscala(k.id); setSelecionada(null); }}
           className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
           style={{ background: escala === k.id ? T.amber : T.panelSoft, color: escala === k.id ? T.onAccent : T.inkDim, border: `1px solid ${escala === k.id ? T.amber : T.line}`, fontWeight: 600 }}>
@@ -173,7 +174,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
           narração nunca discordem sobre onde o herói está. */}
       <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${onde.tipo === "estrada" ? T.violet : onde.tipo === "masmorra" ? T.danger : T.line}` }}>
         <div className="flex items-baseline gap-2">
-          <span style={{ fontSize: 13 }}>{onde.tipo === "estrada" ? "🧭" : onde.tipo === "masmorra" ? "🕳" : "📍"}</span>
+          <Glifo nome={onde.tipo === "estrada" ? "mapa" : onde.tipo === "masmorra" ? "masmorra" : "alfinete"} tamanho={14} />
           <span className="tv-body text-sm" style={{ color: T.ink }}>{onde.rotulo}</span>
           {onde.detalhe && <span className="tv-body text-[11px]" style={{ color: T.inkDim }}>· {onde.detalhe}</span>}
           {rast && <span className="tv-mono text-[10px] ml-auto shrink-0" style={{ color: T.amberSoft }}>⌖ {rast.endereco}</span>}
@@ -201,7 +202,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
       {/* alternador de camadas: quem manda × quem reza */}
       {desperto && (
         <div className="flex gap-1.5 mb-2">
-          {[{ id: "politica", rotulo: "🏳 Política" }, { id: "fe", rotulo: "🙏 Fé" }].map((k) => (
+          {[{ id: "politica", rotulo: "Política" }, { id: "fe", rotulo: "Fé" }].map((k) => (
             <button key={k.id} onClick={() => setCamada(k.id)}
               className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
               style={{ background: camada === k.id ? T.amber : T.panelSoft, color: camada === k.id ? T.onAccent : T.inkDim, border: `1px solid ${camada === k.id ? T.amber : T.line}`, fontWeight: 600 }}>
@@ -417,7 +418,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
           return (
             <div key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${aberta ? T.amber : atual ? T.amberSoft : T.line}`, cursor: "pointer" }} onClick={() => setSelecionada(aberta ? null : c.nome)}>
               <div className="flex items-center justify-between gap-2">
-                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{atual ? "📍 " : ""}{templo ? `${templo.icone} ` : ""}{c.nome}</span>
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{c.sede ? "★ " : ""}{atual ? <><Glifo nome="alfinete" tamanho={14} rotulo="você está aqui" /> </> : null}{templo ? `${templo.icone} ` : ""}{c.nome}</span>
                 <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ color: etiqueta.cor, border: `1px solid ${etiqueta.cor}` }}>{etiqueta.rotulo}</span>
               </div>
               <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{c.tipo}{c.regiao ? ` · ${c.regiao}` : ""}{c.faccao ? ` · ${c.faccao}` : ""}</div>
@@ -447,7 +448,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
                     <button onClick={(e) => { e.stopPropagation(); aoViajar(c.nome); }}
                       className="tv-mono text-[10px] mt-2 px-2.5 py-1.5 rounded-full"
                       style={{ background: T.violet, color: T.onAccent, border: `1px solid ${T.violet}`, fontWeight: 600 }}>
-                      🧭 Viajar para {c.nome}
+                      <Glifo nome="mapa" tamanho={14} /> Viajar para {c.nome}
                     </button>
                   )}
                   {aoViajar && !atual && (jornada || masmorra) && (
@@ -473,7 +474,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
             {elenco.slice(0, 14).map((e, i) => (
               <div key={"el-" + i} className="rounded-lg px-3 py-1.5 flex items-baseline justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
                 <span className="tv-body text-xs truncate" style={{ color: T.ink }}>
-                  {e.comigo ? "🚶 " : e.suposto ? "· " : "📍 "}{e.nome}
+                  {e.comigo ? <><Glifo nome="grupo" tamanho={12} rotulo="anda contigo" /> </> : e.suposto ? "· " : <><Glifo nome="alfinete" tamanho={12} rotulo="paradeiro registrado" /> </>}{e.nome}
                   {e.papel ? <span style={{ color: T.inkDim }}> · {e.papel}</span> : null}
                 </span>
                 <span className="tv-mono text-[9px] shrink-0" style={{ color: e.comigo ? T.amberSoft : T.inkDim }}>
@@ -483,7 +484,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
             ))}
           </div>
           <div className="tv-mono text-[9px] mt-1" style={{ color: T.inkDim }}>
-            📍 paradeiro registrado · «·» sem lugar nomeado — suposto aqui
+            <Glifo nome="alfinete" tamanho={12} /> paradeiro registrado · «·» sem lugar nomeado — suposto aqui
           </div>
         </div>
       )}

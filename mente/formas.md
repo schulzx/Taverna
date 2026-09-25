@@ -9715,3 +9715,155 @@ luz, e a de V1b ler **quatro**.
 - **`MATERIAIS`** e **`LUZ_DA_CENA`**: intocados, e continuam a passar os seus
   pisos (a legenda do mundo sobre o chão do dia desce de 8,22 para **6,36**,
   contra um piso de 4,5).
+
+### V3 · os ícones desenhados (`desenho`, 24–25/09)
+
+*Construção: `mente/v3-desenho.md`. O censo jogado — o que cada emoji diz, e se
+é gameplay, enfeite ou conteúdo — é do `jogo`: `mente/v3-jogo.md`; esta secção
+segue-o e diz onde divergi. Figma, biblioteca `e5wJUzInAssoebx5npssKc`: página
+`V3 · os ícones` (`226:67`) — a família, `DegrausDaAmeaca`, o par ANTES/DEPOIS
+(`228:67`) e a gramática. Aplicado numa cópia do HEAD `245dd3c`: build limpo,
+213/213, 15/15.*
+
+#### 1 · A tese — o emoji do sistema é `T` contornado por um carácter
+
+A primeira lei da casa (*se é número, é tabela*) vale para a cor desde D1. Um
+emoji do sistema passa por fora dela **duas vezes**: a forma é do fabricante, e
+a cor também.
+
+**Medido** (Windows 11, Chromium 152, as 128 formas distintas da interface
+desenhadas numa tela a duas cores de tinta):
+- **97 de 128 saem na cor do fabricante** e ignoram a tinta pedida — ignoram `T`;
+- os outros 31 são de apresentação-texto (`Emoji_Presentation=No`, sem `U+FE0F`)
+  e aqui seguem a tinta; **a norma deixa a escolha ao sistema** (Unicode UTS #51,
+  *Unicode Emoji*, §4 — apresentação por omissão), e as plataformas da Apple
+  desenham muitos deles a cores. O mesmo carácter é monocromático num ecrã e
+  colorido noutro — não medido aqui (não há iOS nesta máquina), declarado;
+- **três não têm um píxel a 3:1 contra `T.panel`**: `👣` (o movimento na
+  grelha da batalha), `👥` (o grupo), `🐾` — reprovam a 1.4.11 por construção,
+  e ninguém o podia ter corrigido, porque a cor não era nossa. Mais sete ficam
+  com menos de metade da tinta a 3:1 (`🐴 🔮 👹 🌌 🐀 🌠 💾`);
+- **`◉ ◆ ✦` também não são nossos**, apesar de não serem emoji: os
+  subconjuntos que o Google Fonts serve às três famílias da casa cobrem
+  U+0000–00FF, U+0100–02BA e U+2000–206F — nada de U+25A0–27BF. Cada `◉` do
+  jogo sai da fonte de símbolos do sistema.
+
+**Estudo citado:** Miller, Thebault-Spieker, Chang, Johnson, Terveen, Hecht,
+*"Blissfully happy" or "ready to fight": Varying Interpretations of Emoji*
+(ICWSM 2016): o mesmo emoji, desenhado por fabricantes diferentes, é lido com
+sentido e sentimento diferentes — e também dentro da mesma plataforma. Um jogo
+que avisa com `⚠` e marca o perigo com `☠` está a entregar ao fabricante do
+telefone o que o aviso diz.
+
+**E a medida do próprio jogo** (o `jogo`, §1): a mesma coisa com até **14
+caras** (o trabalho no mural), e a mesma cara com até **7 coisas** (`🎲`). O
+glifo desenhado não resolve isso sozinho; resolve-o a regra de que **cada glifo
+nomeia um assunto** — e a tabela torna a regra varrível.
+
+#### 2 · A gramática (o que vale para toda peça da família)
+
+| | a regra | o porquê |
+|---|---|---|
+| grelha | 24, área viva 2–22; um `d` por glifo em `GLIFOS` (`src/glifos.js`) | é a do Lucide, a língua da v3; um `d` só é o que a suíte consegue ler de volta |
+| traço | redondo, sem enchimento; **em píxeis de tela**: 2 a 24 · 1,75 a 20 · 1,5 a 16 · 1,25 a 12 (`TRACO_DO_GLIFO`) | o Lucide a 12 px dá 1 px de traço, que o anti-alias come; o Material Symbols engrossa o traço, relativo ao desenho, quando o ícone encolhe (eixo de tamanho óptico, `fonts.google.com/icons`) |
+| tamanhos | 12 · 16 · 20 · 24; **o dado nunca abaixo de 14** | a 12 o d20 tem 65 % de tinta |
+| cor | sempre de `T`, pela prop `cor`; **omitida = `currentColor`** | o glifo ao lado de uma palavra veste a cor dela, que já muda com o estado; duas fontes de cor numa etiqueta divergem no primeiro estado novo |
+| que cores | só tintas (`ink*`, os acentos, `ok`, `danger`, os `on*` sobre o seu acento) | medem **≥ 4,99:1** contra as quatro superfícies — a 1.4.11 (3:1) passa por construção, com 66 % de folga no pior par (`violet` × `panelSoft`); `line` mede 1,51 e fica proibido (D5h.4) |
+| nome | sem `rotulo`: `aria-hidden`; com `rotulo`: `role="img"` + `aria-label` — só quando o glifo é a única coisa a dizer o sentido | a lei da casa do nome acessível; `title` não chega ao toque |
+| alvo | um botão só-glifo tem `aria-label` e **48 × 48** (`ALVOS.piso`); o glifo nunca é o alvo | WCAG 2.5.5 (44) e o piso da casa (48, Material); medido: a gaveta `✦` da luta tinha **34,6 × 48**, passa a 48 × 48 |
+| sentido | **o glifo nomeia o assunto, nunca o veredito**; um glifo, uma coisa; **um rótulo não precisa de um glifo a dizer o que diz** | a lei do chat já escrita nesta casa, e a de R17 (o `IconeBalao`) |
+| origem | Lucide 1.48.0 (ISC — a licença vai inteira no cabeçalho de `glifos.js`) ou desenho da casa, dito em `de` | |
+
+**Os quatro da cinta não se redesenham.** `moeda` (◉), `mana` (◆), `vida` e
+`ampulheta` têm forma desde R13, em quadro 12 e com miolo cheio; o `Glifo`
+pede-os pelo nome. *O dinheiro fica o `◉` desenhado e não o `coins` da v3* — o
+`jogo` deixou-me a escolha (§2, n.º 7) e ela sai do número: o `◉` está escrito
+**90 vezes** no `App.jsx` e a forma desenhada dele já existe e já é idêntica ao
+carácter (aro e miolo). O `coins` seria uma terceira cara para a mesma coisa.
+
+#### 3 · As peças
+
+**V3a — dezasseis na tabela, com leitor no dia em que nascem** (D5h.3 não deixa
+nascer nenhuma sem leitor): `dado` · `mapa` (a bússola da v3) · `bolsa` (a
+carteira da v3) · `diario` · `grupo` · `ascensao` · `alfinete` · `aviso` ·
+`cadeado` · `desconhecido` · `faisca` (`sparkles`) · `espadas` · `espada` ·
+`passo` · `masmorra` · `relogio`. E uma peça que não é glifo:
+**`DegrausDaAmeaca`** — a ordem do Bestiário (fraco 1 … lendário 5), no lugar
+dos cinco animais: um rato e um lobo a 18 px não dizem *ordem*; cinco barras que
+sobem dizem-na sem se aprender, e **a vazia é oca, não mais escura** (`inkDim`
+contra `lineStrong` separa só 1,54:1 de luz — cheia × oca é forma, lê-se em
+cinzento).
+
+**O d20 é um icosaedro de verdade.** Projectado pelo eixo de uma face: a
+silhueta é um hexágono regular (raio 10), a face da frente um triângulo
+equilátero concêntrico, e **a razão entre os dois é 1/φ** — a do sólido, não uma
+proporção a olho (a suíte prova-a). Desenhadas as 18 arestas visíveis, o glifo
+tem **74 % de tinta a 16 px** (a família anda nos 40–50 %) e vira mancha; o
+glifo desenha **12** — a silhueta, a face e as três que a prendem —, **todas
+arestas verdadeiras** (58 %). A versão com as 18 fica no Figma para ≥ 40 px.
+
+**Aposentam-se, sem apagar nada:** doze `Icone*` deixam de ter geometria própria
+e pedem-na ao `Glifo` (`IconeD20`, `IconeDado`, `IconeLivro`, `IconeMochila`,
+`IconeMapa`, `IconeBussola`, `IconeLosango`, `IconeAviso`, `IconeAlfinete`,
+`IconeDois`, `IconeEspada`, `IconeFaiscas`). Com isso, **sem tocar no `App.jsx`**:
+o d6 morre (o menu *Uma Noite* e o sorteio do nome passam ao d20), a aba Mapa
+passa à bússola e a Bolsa à carteira da v3, e **a aba Ascensão deixa o losango
+que era a cara do PM** — duas coisas com uma cara, na mesma fita.
+
+**V3b — desenhadas no Figma, entram na tabela com o seu leitor:** `heroi`,
+`codice`, `ajustes`, `coroa`, `ouvir`, `pausa`, `escudo`, `descanso`,
+`procurar`, `trabalho`, `a favor` / `contra` (setas opostas: forma primeiro),
+`essencia` (21.º, pedido do `jogo`), `tocha` (22.º), `perigo`, `trofeu`; e as
+quatro luzes (`madrugada` · `dia` · `entardecer` · `noite`) são de **V4** — a
+pílula do tempo é a morada delas, onde o glifo vem antes da palavra. Não as pus
+na legenda do rosto da cena: lá a palavra da luz já está escrita, e seria o
+glifo a dizer o que o texto diz.
+
+#### 4 · Onde divergi do `jogo`, e o que ficou
+
+| | o `jogo` | eu | ficou |
+|---|---|---|---|
+| a magia | `sparkles` | tinha desenhado `sparkle` (a estrela de quatro pontas, que é o `✦`) | **`sparkles`** — a forma já existia (`IconeFaiscas`) e *se a ação já tem forma, use-a* |
+| a recarga | `clock` | tinha-lhe dado a ampulheta | **`clock`** — a ampulheta é o prazo, e só o prazo |
+| a guerra política | não é `swords` | — | **`aviso`** (é um *reaja*: o trabalho mudou); a proposta de guerra na diplomacia fica só com a palavra e o `danger` |
+| os encaixes da ficha | enfeite | tinha desenhado `espada`/`escudo`/`armadura` | **saem**; o nome do item diz o que é. `armadura`, `grimorio`, `alianca` e `baixar` foram desenhados e retirados da família no mesmo ciclo |
+| o d20 | "um d20 de verdade" | 12 das 18 arestas | **12**, com a razão da tinta escrita; as 18 a ≥ 40 px |
+
+#### 5 · A catraca — `check-formas` D5h
+
+**D5h.1** o emoji do sistema por `.jsx` só desce (teto do `App.jsx`: 595 no HEAD
+`245dd3c`; os outros, zero) · **D5h.2** `◉ ◆ ✦ ✧` de fonte, idem (162 no
+`App.jsx`, 11 em três painéis) · **D5h.3** cada entrada de `GLIFOS` tem leitor ·
+**D5h.4** um glifo só pinta com tinta · **D5h.5** botão só-glifo tem nome. Os 841
+emoji dos módulos `src/*.js` imprimem-se e não mordem: são conteúdo e território
+do sistema, e V3b traduz-os no ecrã sem os tocar. Os quatro dentes foram
+provados a morder.
+
+#### 6 · A proposta ambiciosa — **o dado que rola é o sólido**
+
+Hoje, quando o jogo rola, gira um desenho (`tv-dice` roda um SVG) e um número
+aparece. **Proponho que o que rola seja o icosaedro** — o mesmo sólido que o
+glifo já é: vinte faces numeradas como num d20 de mesa (as faces opostas somam
+21), projectadas a cada quadro a partir de uma rotação; o dado tomba três ou
+quatro vezes e **pousa com a face do resultado virada para o jogador**, o número
+dentro do triângulo da frente. Ninguém lê "rolou 17": vê-se o 17 a pousar.
+
+- **Determinismo por semente:** a trajectória sai da mesma semente que decide o
+  resultado — mesmo turno, mesmo tombo, em qualquer máquina. O `OverlayDado` ainda
+  sorteia com `Math.random()` (já pedido ao sistema em V1, `pedidos-ao-sistema.md`);
+  este é o segundo motivo para o pedido.
+- **Conta em Node:** um módulo puro (`icosaedro.js`) — os 12 vértices, as 20
+  faces, a numeração de mesa, a face que fica de frente para cada rotação, e a
+  rotação final que põe o número *n* de frente. Prova-se sem React: as opostas
+  somam 21; para cada *n*, a face de frente é *n*.
+- **Nunca custa o turno:** 700 ms, sem bloquear o campo; `prefers-reduced-motion`
+  mostra só a pose final; um segundo teste no mesmo turno não espera o primeiro.
+- **Peso:** médio no tema (cria o que não existe, nenhum fluxo muda). Mora em
+  **V6** (o dado), depois do pedido da semente.
+
+*Porquê é o que faz o jogo ser lembrado:* o dado é a promessa de todo o RPG de
+mesa, e é o único objecto físico que um jogo no ecrã pode imitar por inteiro.
+Um d20 que cai como um d20 — com a geometria certa, e sempre o mesmo tombo para
+a mesma semente — é a mesa na tela. **É convenção observada, não estudo** (os
+simuladores de dados de mesa virtual fazem-no); a prova é do `jogo`, jogada:
+*sabes quanto rolaste antes de ler o número?*

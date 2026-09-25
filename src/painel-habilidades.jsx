@@ -18,6 +18,7 @@
 
 import React from "react";
 import { T } from "./estilo.js";
+import { Glifo, IconeCheck } from "./ui.jsx";
 import { ehPreparavel, ehRitual, estaPreparada, garantirPreparadas, limitePreparadas, motivoDoCaderno, preparaveisDe } from "./magias.js";
 import { recargaPadrao } from "./regras-jogo.js";
 export function PainelHabilidades({ personagem, selecionar, fechar, escolhidas = [], limite = 1 }) {
@@ -85,10 +86,9 @@ export function PainelHabilidades({ personagem, selecionar, fechar, escolhidas =
                       único sítio onde ela era visível. Zero diferença na tela. */
                     style={{ color: marcada ? T.onSecond : T.ink }}>{marcada ? "✓ " : ""}{h.nome}</span>
                   <span className="flex items-center gap-1.5 shrink-0">
-                    {rec > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>⏳ {rec}t</span>}
-                    {guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={ehRitual(h) ? "Não preparada hoje — fora de combate você ainda pode conduzi-la como ritual" : "Não preparada hoje. Prepare-a no próximo descanso longo."}>📕 guardada</span>}
-                    {doCaderno && !guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }} title="Preparada hoje">📖</span>}
-                    <span className="tv-mono text-[10px]" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span>
+                    {rec > 0 && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}><Glifo nome="relogio" tamanho={12} /> {rec}t</span>}
+                    {guardada && <span className="tv-mono text-[9px] px-1 py-0.5 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={ehRitual(h) ? "Não preparada hoje — fora de combate você ainda pode conduzi-la como ritual" : "Não preparada hoje. Prepare-a no próximo descanso longo."}>guardada</span>}
+                                        <span className="tv-mono text-[10px]" style={{ color: semMana ? T.danger : T.violetSoft }}>{custo} PM</span>
                   </span>
                 </div>
                 <div className="tv-body text-xs mt-1" style={{ color: T.inkDim }}>{h.descricao}</div>
@@ -103,7 +103,7 @@ export function PainelHabilidades({ personagem, selecionar, fechar, escolhidas =
           <button onClick={() => setVerGuardadas((v) => !v)}
             title="Magias que você sabe mas não preparou hoje. Elas não saem na luta."
             className="tv-mono text-[10px] flex items-center gap-2" style={{ color: T.inkDim }}>
-            📕 {guardadas.length} guardada{guardadas.length === 1 ? "" : "s"} — não saem na luta
+            {guardadas.length} guardada{guardadas.length === 1 ? "" : "s"} — não saem na luta
             <span style={{ opacity: 0.7 }}>{verGuardadas ? "▴ esconder" : "▾ ver quais"}</span>
           </button>
           {verGuardadas && (
@@ -112,11 +112,11 @@ export function PainelHabilidades({ personagem, selecionar, fechar, escolhidas =
                 <span key={h.nome} className="tv-mono text-[10px] px-2 py-1 rounded-full"
                   title={ehRitual(h) ? "Fora de combate você ainda pode conduzi-la como ritual, pagando tempo." : "Prepare-a na ficha ou no acampamento."}
                   style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
-                  📕 {h.nome}{ehRitual(h) ? " ⏳" : ""}
+                  {h.nome}{ehRitual(h) ? <> <Glifo nome="relogio" tamanho={12} rotulo="ritual" /></> : null}
                 </span>
               ))}
               <span className="tv-body text-[10px] w-full mt-1" style={{ color: T.inkDim }}>
-                Para trocar o que você leva, abra a ficha (Gestão › Ficha) ou acampe — o painel “📖 Magias na cabeça” está nos dois.
+                Para trocar o que você leva, abra a ficha (Gestão › Ficha) ou acampe — o painel “Magias na cabeça” está nos dois.
               </span>
             </div>
           )}
@@ -145,7 +145,7 @@ export function PainelCaderno({ personagem, onPreparar, compacto = false, travad
   return (
     <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${lista.length ? T.violet : T.line}` }}>
       <div className="flex items-baseline justify-between gap-2 mb-1.5">
-        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>📖 Magias na cabeça</div>
+        <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}><Glifo nome="faisca" tamanho={12} /> Magias na cabeça</div>
         {lista.length > 0 && <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violetSoft : T.inkDim }}>{prep.length}/{teto}</div>}
       </div>
       {motivo ? (
@@ -160,7 +160,7 @@ export function PainelCaderno({ personagem, onPreparar, compacto = false, travad
                   title={`${h.descricao || ""}${ehRitual(h) ? "\n\nRitual: fora de combate dá para conduzi-la mesmo sem preparar, pagando tempo." : ""}${travado ? `\n\n${travado}` : ""}`}
                   className="tv-mono text-[10px] px-2 py-1 rounded-full"
                   style={{ background: on ? T.violet : "transparent", color: on ? T.onSecond : T.inkDim, border: `1px solid ${on ? T.violet : T.line}`, opacity: travado ? 0.5 : 1, cursor: travado ? "not-allowed" : "pointer" }}>
-                  {on ? "📖" : "📕"} {h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? " ⏳" : ""}
+                  {on ? <><IconeCheck tamanho={10} cor={T.onSecond} /> </> : null}{h.nome} <span style={{ opacity: 0.7 }}>{Math.max(0, Number(h.custo) || 0)}PM</span>{ehRitual(h) ? <> <Glifo nome="relogio" tamanho={12} rotulo="ritual" /></> : null}
                 </button>
               );
             })}
@@ -172,11 +172,11 @@ export function PainelCaderno({ personagem, onPreparar, compacto = false, travad
               jogador procurou no lugar errado. */}
           {travado ? (
             <div className="tv-body text-[10px] mt-1.5" style={{ color: T.amberSoft }}>
-              🔒 {travado}.
+              <Glifo nome="cadeado" tamanho={12} /> {travado}.
             </div>
           ) : !compacto && (
             <div className="tv-body text-[10px] mt-1.5" style={{ color: T.inkDim }}>
-              Toque para preparar ou guardar. Só as preparadas aparecem no botão ✦ Habilidades — as guardadas voltam a caber no próximo descanso longo, e as marcadas com ⏳ ainda podem ser conduzidas como ritual fora da luta.
+              Toque para preparar ou guardar. Só as preparadas aparecem no botão <Glifo nome="faisca" tamanho={12} /> Habilidades — as guardadas voltam a caber no próximo descanso longo, e as marcadas com <Glifo nome="relogio" tamanho={12} /> ainda podem ser conduzidas como ritual fora da luta.
             </div>
           )}
         </>

@@ -13,6 +13,9 @@ import { T, ALVOS } from "./constantes.js";
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
 import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA } from "./estilo.js";
+/* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
+   como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
+import { GLIFOS, tracoNaGrelha } from "./glifos.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -83,12 +86,7 @@ export function Botao({ children, onClick, primario, desativado, pequeno, corpo 
 }
 
 export function IconeD20({ tamanho = 22, cor = T.amber }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
-      <path d="M12 2 L21 7.5 L21 16.5 L12 22 L3 16.5 L3 7.5 Z" stroke={cor} strokeWidth="1.4" strokeLinejoin="round" />
-      <path d="M12 2 L12 8.5 M12 8.5 L3 7.5 M12 8.5 L21 7.5 M12 8.5 L6.5 15.5 M12 8.5 L17.5 15.5 M6.5 15.5 L3 7.5 M17.5 15.5 L21 7.5 M6.5 15.5 L12 22 M17.5 15.5 L12 22 M6.5 15.5 L17.5 15.5" stroke={cor} strokeWidth="0.9" strokeLinejoin="round" opacity="0.7" />
-    </svg>
-  );
+  return <Glifo nome="dado" tamanho={tamanho} cor={cor} />;
 }
 
 export function IconeCaneca({ tamanho = 20, cor = T.inkDim }) {
@@ -102,6 +100,82 @@ export function IconeCaneca({ tamanho = 20, cor = T.inkDim }) {
   );
 }
 
+/* ============================================================
+   O GLIFO (V3, 24/09) — UMA peça para todos os ícones de traço
+
+   A forma vem de `GLIFOS` (`glifos.js`, grelha 24, um `d` por glifo);
+   a cor vem de `T` pela prop `cor`; o traço vem de `TRACO_DO_GLIFO`,
+   em píxeis de tela. Três leis, e a peça não decide nenhuma delas:
+
+   · `cor` OMITIDA = `currentColor`: o glifo veste a cor da letra ao lado,
+     que já sai de `T` e já muda com o estado (escolhido, desabilitado,
+     sobre violeta). Duas fontes de cor numa etiqueta divergem no primeiro
+     estado novo; uma só não pode.
+   · SEM `rotulo` o glifo é `aria-hidden` — é o caso de quase todos: há
+     texto ao lado, ou o botão tem `aria-label`. COM `rotulo` ele é
+     `role="img"` e diz o rótulo: só quando o glifo é a ÚNICA coisa que
+     carrega o sentido (o ❔ do bestiário, que ocupa o lugar de um retrato).
+   · O alvo de toque NUNCA é o glifo. Um glifo-botão mora num `<button>`
+     de `ALVOS.piso` (48) nos dois eixos.
+
+   Os quatro da cinta (`moeda`, `mana`, `vida`, `ampulheta`) têm forma
+   desde R13, em quadro 12 e com miolo cheio: o Glifo pede-os pelo nome
+   aos componentes de lá, e não os redesenha. `fracao` só serve à
+   ampulheta. */
+const DO_QUADRO_12 = { moeda: IconeBolsa, mana: IconeMana, vida: IconeVida, ampulheta: IconeAmpulheta };
+const EM_LINHA = { display: "inline-block", verticalAlign: "-0.15em", flexShrink: 0 };
+export function Glifo({ nome, tamanho = 16, cor = "currentColor", rotulo, fracao }) {
+  const a11y = rotulo ? { role: "img", "aria-label": rotulo } : { "aria-hidden": "true" };
+  const Doze = DO_QUADRO_12[nome];
+  if (Doze) {
+    return (
+      <span style={{ ...EM_LINHA, lineHeight: 0 }} {...a11y}>
+        <Doze tamanho={tamanho} cor={cor} fracao={fracao} />
+      </span>
+    );
+  }
+  const g = GLIFOS[nome];
+  if (!g) return null;
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none" stroke={cor}
+      strokeWidth={tracoNaGrelha(tamanho)} strokeLinecap="round" strokeLinejoin="round"
+      focusable="false" style={EM_LINHA} {...a11y}>
+      <path d={g.d} />
+    </svg>
+  );
+}
+
+/* OS DEGRAUS DA AMEAÇA (V3) — a ordem que o bicho não dizia.
+
+   O Bestiário marcava a ameaça com um animal (rato, lobo, javali,
+   dinossauro, dragão). A 18 px um rato e um lobo não dizem ORDEM — dizem
+   "um bicho" —, e eram cinco emoji do sistema, cada um com a cor do
+   fabricante. Cinco barras que sobem dizem ordem sem se aprender (é a
+   gramática do sinal de rede), e a barra cheia contra a vazia é FORMA,
+   não cor: lê-se em cinzento e nos três daltonismos. A palavra ao lado
+   (`fraco … lendário`) continua a ser o primeiro canal.
+
+   A VAZIA É OCA, NÃO MAIS ESCURA. Medido: `inkDim` (a cor do "fraco")
+   contra `lineStrong` separa só 1,54:1 de luz — cheia e vazia a
+   distinguir-se pela cor seria a lei de R9 quebrada. Oca × cheia é forma,
+   e sobrevive ao cinzento. O contorno oco é `T.lineStrong` (3,48:1 contra
+   `panelSoft`, o chão das linhas do Bestiário: passa a 1.4.11). */
+export function DegrausDaAmeaca({ nivel = 0, de = 5, tamanho = 16, cor = "currentColor", rotulo }) {
+  const n = Math.max(0, Math.min(de, Math.round(Number(nivel) || 0)));
+  const a11y = rotulo ? { role: "img", "aria-label": rotulo } : { "aria-hidden": "true" };
+  const passo = 16 / de;
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" focusable="false" style={EM_LINHA} {...a11y}>
+      {Array.from({ length: de }, (_, i) => {
+        const alto = 4 + (i * 11) / Math.max(1, de - 1);
+        const cheia = i < n;
+        return <rect key={i} x={i * passo + passo * 0.2 + (cheia ? 0 : 0.5)} y={15 - alto + (cheia ? 0 : 0.5)}
+          width={passo * 0.6 - (cheia ? 0 : 1)} height={alto - (cheia ? 0 : 1)} rx={0.8}
+          fill={cheia ? cor : "none"} stroke={cheia ? "none" : T.lineStrong} strokeWidth={cheia ? 0 : 1} />;
+      })}
+    </svg>
+  );
+}
 
 /* ---------------- OS ÍCONES DO MENU (v9.169) ----------------
    Vieram do redesenho `taverna-menu-v2-game` e são traçados de 2px. Entram
@@ -120,27 +194,15 @@ export function IconeSeta({ tamanho = 16, cor = T.ink }) {
 }
 
 export function IconeLivro({ tamanho = 20, cor = T.violetSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
-      <path d="M10 5.83333V17.5M10 5.83333C10 4.94928 9.64878 4.10143 9.02361 3.47631C8.39844 2.85119 7.55053 2.5 6.6664 2.5H2.4994C2.27837 2.5 2.06639 2.5878 1.9101 2.74408C1.7538 2.90036 1.666 3.11232 1.666 3.33333V14.1667C1.666 14.3877 1.7538 14.5996 1.9101 14.7559C2.06639 14.9122 2.27837 15 2.4994 15H7.4998C8.16289 15 8.79883 15.2634 9.26771 15.7322C9.73659 16.2011 10 16.837 10 17.5M10 5.83333C10 4.94928 10.3512 4.10143 10.9764 3.47631C11.6016 2.85119 12.4495 2.5 13.3336 2.5H17.5006C17.7216 2.5 17.9336 2.5878 18.0899 2.74408C18.2462 2.90036 18.334 3.11232 18.334 3.33333V14.1667C18.334 14.3877 18.2462 14.5996 18.0899 14.7559C17.9336 14.9122 17.7216 15 17.5006 15H12.5002C11.8371 15 11.2012 15.2634 10.7323 15.7322C10.2634 16.2011 10 16.837 10 17.5" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="diario" tamanho={tamanho} cor={cor} />;
 }
 
 export function IconeFaiscas({ tamanho = 20, cor = T.amber }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
-      <path d="M16.6672 1.66763V5.00083M18.334 3.33423H15.0004M9.18077 2.3463C9.21648 2.15515 9.31792 1.9825 9.46754 1.85825C9.61715 1.73401 9.80551 1.666 10 1.666C10.1945 1.666 10.3828 1.73401 10.5325 1.85825C10.6821 1.9825 10.7835 2.15515 10.8192 2.3463L11.6951 6.97779C11.7573 7.30706 11.9174 7.60994 12.1544 7.84689C12.3913 8.08385 12.6943 8.24387 13.0236 8.30607L17.6556 9.18187C17.8468 9.21757 18.0195 9.31901 18.1437 9.4686C18.268 9.6182 18.336 9.80654 18.336 10.001C18.336 10.1955 18.268 10.3838 18.1437 10.5334C18.0195 10.683 17.8468 10.7844 17.6556 10.8201L13.0236 11.6959C12.6943 11.7581 12.3913 11.9182 12.1544 12.1551C11.9174 12.3921 11.7573 12.6949 11.6951 13.0242L10.8192 17.6557C10.7835 17.8469 10.6821 18.0195 10.5325 18.1437C10.3828 18.268 10.1945 18.336 10 18.336C9.80551 18.336 9.61715 18.268 9.46754 18.1437C9.31792 18.0195 9.21648 17.8469 9.18077 17.6557L8.30486 13.0242C8.24265 12.6949 8.08262 12.3921 7.84564 12.1551C7.60865 11.9182 7.30574 11.7581 6.97642 11.6959L2.34438 10.8201C2.1532 10.7844 1.98053 10.683 1.85628 10.5334C1.73202 10.3838 1.664 10.1955 1.664 10.001C1.664 9.80654 1.73202 9.6182 1.85628 9.4686C1.98053 9.31901 2.1532 9.21757 2.34438 9.18187L6.97642 8.30607C7.30574 8.24387 7.60865 8.08385 7.84564 7.84689C8.08262 7.60994 8.24265 7.30706 8.30486 6.97779L9.18077 2.3463ZM4.99964 16.667C4.99964 17.5875 4.25338 18.3336 3.33284 18.3336C2.41229 18.3336 1.66603 17.5875 1.66603 16.667C1.66603 15.7466 2.41229 15.0004 3.33284 15.0004C4.25338 15.0004 4.99964 15.7466 4.99964 16.667Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="faisca" tamanho={tamanho} cor={cor} />;
 }
 
 export function IconeDois({ tamanho = 20, cor = T.violetSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
-      <path d="M15.0005 17.5C15.0005 15.7319 14.2981 14.0362 13.0477 12.786C11.7974 11.5357 10.1015 10.8333 8.33326 10.8333M8.33326 10.8333C6.565 10.8333 4.86915 11.5357 3.6188 12.786C2.36844 14.0362 1.666 15.7319 1.666 17.5M8.33326 10.8333C10.6347 10.8333 12.5003 8.96785 12.5003 6.66667C12.5003 4.36548 10.6347 2.5 8.33326 2.5C6.03187 2.5 4.16622 4.36548 4.16622 6.66667C4.16622 8.96785 6.03187 10.8333 8.33326 10.8333ZM18.334 16.6668C18.334 13.8585 16.6672 11.2502 15.0004 10.0002C15.5483 9.58914 15.9864 9.0494 16.276 8.42872C16.5655 7.80804 16.6976 7.12555 16.6605 6.44166C16.6234 5.75777 16.4183 5.09357 16.0634 4.50783C15.7084 3.92209 15.2145 3.43288 14.6253 3.0835" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="grupo" tamanho={tamanho} cor={cor} />;
 }
 
 export function IconeArquivo({ tamanho = 20, cor = T.amberSoft }) {
@@ -152,11 +214,7 @@ export function IconeArquivo({ tamanho = 20, cor = T.amberSoft }) {
 }
 
 export function IconeAviso({ tamanho = 16, cor = T.amber }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" fill="none">
-      <path d="M8 10.6669V8M8 5.33312H8.00667M14.6672 8C14.6672 11.6822 11.6822 14.6672 8 14.6672C4.31781 14.6672 1.3328 11.6822 1.3328 8C1.3328 4.31781 4.31781 1.3328 8 1.3328C11.6822 1.3328 14.6672 4.31781 14.6672 8Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="aviso" tamanho={tamanho} cor={cor} />;
 }
 
 /* O ponto que respira ao lado de "Continuar aventura". O desfoque é do
@@ -201,11 +259,7 @@ export function IconeCaveira({ tamanho = 24, cor = T.violetSoft }) {
 }
 
 export function IconeEspada({ tamanho = 24, cor = T.violetSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
-      <path d="M11 19L5 13M5 21L3 19M8 16L4 20M9.5 17.5L21 6V3H18L6.5 14.5" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="espada" tamanho={tamanho} cor={cor} />;
 }
 
 /* A MOCHILA — o glifo de 24x24 que era `IconeBolsa` ate R13.
@@ -222,19 +276,11 @@ export function IconeEspada({ tamanho = 24, cor = T.violetSoft }) {
    mostrar a MOEDA ate alguem trocar o nome do lado do `App.jsx`. O
    conserto e uma palavra, e nao e meu — o arquivo tem dono. */
 export function IconeMochila({ tamanho = 24, cor = T.violetSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
-      <path d="M21 16V20C21 20.2652 20.8946 20.5196 20.7071 20.7071C20.5196 20.8946 20.2652 21 20 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H18C18.2652 3 18.5196 3.10536 18.7071 3.29289C18.8946 3.48043 19 3.73478 19 4V7M3 5C3 5.53043 3.21071 6.03914 3.58579 6.41421C3.96086 6.78929 4.46957 7 5 7H20C20.2652 7 20.5196 7.10536 20.7071 7.29289C20.8946 7.48043 21 7.73478 21 8V12M21 12H18C17.4696 12 16.9609 12.2107 16.5858 12.5858C16.2107 12.9609 16 13.4696 16 14C16 14.5304 16.2107 15.0391 16.5858 15.4142C16.9609 15.7893 17.4696 16 18 16H21M21 12C21.2652 12 21.5196 12.1054 21.7071 12.2929C21.8946 12.4804 22 12.7348 22 13V15C22 15.2652 21.8946 15.5196 21.7071 15.7071C21.5196 15.8946 21.2652 16 21 16" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="bolsa" tamanho={tamanho} cor={cor} />;
 }
 
 export function IconeMapa({ tamanho = 24, cor = T.violetSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none">
-      <path d="M9 3.2352C8.68967 3.2352 8.3836 3.30741 8.106 3.44613L3.553 5.72313C3.38692 5.80612 3.24722 5.93371 3.14956 6.09161C3.05189 6.2495 3.0001 6.43147 3 6.61713V19.3801C2.99958 19.5508 3.04284 19.7187 3.12565 19.8679C3.20846 20.0171 3.32808 20.1426 3.47312 20.2325C3.61816 20.3224 3.78379 20.3737 3.95426 20.3816C4.12473 20.3894 4.29436 20.3534 4.447 20.2771L8.106 18.4471C8.3836 18.3084 8.68967 18.2362 9 18.2362C9.31033 18.2362 9.6164 18.3084 9.894 18.4471L14.106 20.5531C14.3836 20.6918 14.6897 20.7641 15 20.7641C15.3103 20.7641 15.6164 20.6918 15.894 20.5531L20.447 18.2761C20.6131 18.1931 20.7528 18.0656 20.8505 17.9077C20.9481 17.7498 20.9999 17.5678 21 17.3821V4.61813C21.0003 4.44757 20.9569 4.27978 20.874 4.13071C20.7911 3.98165 20.6715 3.85626 20.5265 3.76646C20.3814 3.67667 20.2159 3.62546 20.0455 3.6177C19.8751 3.60994 19.7056 3.64589 19.553 3.72213L15.894 5.55213C15.6164 5.69085 15.3103 5.76306 15 5.76306C14.6897 5.76306 14.3836 5.69085 14.106 5.55213L9.894 3.44613C9.6164 3.30741 9.31033 3.2352 9 3.2352ZM15 5.76306L15 20.7625M9 3.2352L9 18.2352" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="mapa" tamanho={tamanho} cor={cor} />;
 }
 
 export function IconeGota({ tamanho = 12, cor = T.danger }) {
@@ -321,11 +367,7 @@ export function IconeCirculoX({ tamanho = 12, cor = T.ok }) {
 }
 
 export function IconeLosango({ tamanho = 12, cor = T.violetSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 12 12" fill="none">
-      <path d="M1.08903 5.54102C1.14966 5.39476 1.23852 5.26188 1.35054 5.14998L5.14518 1.35534C5.25708 1.24332 5.38996 1.15446 5.53622 1.09383C5.68249 1.03321 5.83927 1.002 5.9976 1.002C6.15593 1.002 6.31271 1.03321 6.45897 1.09383C6.60524 1.15446 6.73812 1.24332 6.85002 1.35534L10.6447 5.14998C10.7567 5.26188 10.8455 5.39476 10.9062 5.54102C10.9668 5.68729 10.998 5.84407 10.998 6.0024C10.998 6.16073 10.9668 6.31751 10.9062 6.46377C10.8455 6.61004 10.7567 6.74292 10.6447 6.85482L6.85002 10.6495C6.73812 10.7615 6.60524 10.8503 6.45897 10.911C6.31271 10.9716 6.15593 11.0028 5.9976 11.0028C5.83927 11.0028 5.68249 10.9716 5.53622 10.911C5.38996 10.8503 5.25708 10.7615 5.14518 10.6495L1.35054 6.85482C1.23852 6.74292 1.14966 6.61004 1.08903 6.46377C1.02841 6.31751 0.9972 6.16073 0.9972 6.0024C0.9972 5.84407 1.02841 5.68729 1.08903 5.54102Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="ascensao" tamanho={tamanho} cor={cor} />;
 }
 
 /* `IconeBalao` MORREU AQUI (R17, depois de o `oficial` tirá-lo da linha do
@@ -431,11 +473,7 @@ export function IconeFoguete({ tamanho = 20, cor = T.amberSoft }) {
 }
 
 export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 20 20" fill="none">
-      <path d="M10 18.334C14.6027 18.334 18.334 14.6027 18.334 10C18.334 5.39726 14.6027 1.666 10 1.666C5.39726 1.666 1.666 5.39726 1.666 10C1.666 14.6027 5.39726 18.334 10 18.334Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="mapa" tamanho={tamanho} cor={cor} />;
 }
 
 /* ---------------- A DIVISÓRIA RÚNICA (v9.173) ----------------
@@ -453,11 +491,7 @@ export function DivisoriaRunica() {
 }
 
 export function IconeDado({ tamanho = 28, cor = T.amberSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 28 28" fill="none">
-      <path d="M18.6667 9.33333H18.6783M18.6667 14H18.6783M18.6667 18.6667H18.6783M9.33333 9.33333H9.345M9.33333 14H9.345M9.33333 18.6667H9.345M5.83333 3.5H22.1667C23.4553 3.5 24.5 4.54467 24.5 5.83333V22.1667C24.5 23.4553 23.4553 24.5 22.1667 24.5H5.83333C4.54467 24.5 3.5 23.4553 3.5 22.1667V5.83333C3.5 4.54467 4.54467 3.5 5.83333 3.5Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="dado" tamanho={tamanho} cor={cor} />;
 }
 /* ============================================================
    AS PRIMITIVAS DAS TELAS DE CRIAÇÃO (v9.176)
@@ -670,11 +704,7 @@ export function IconePlay({ tamanho = 16, cor = T.bg }) {
 /* o alfinete de `momento-lugar-novo-v2` — o único glifo do desenho que a
    casa ainda não tinha */
 export function IconeAlfinete({ tamanho = 13, cor = T.amberSoft }) {
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 13 13" fill="none">
-      <path d="M6.82551 11.8083C7.83291 10.9384 10.8329 8.12143 10.8329 5.41663C10.8329 4.26726 10.3764 3.16495 9.56382 2.35222C8.75125 1.53949 7.64916 1.0829 6.5 1.0829C5.35084 1.0829 4.24875 1.53949 3.43618 2.35222C2.6236 3.16495 2.1671 4.26726 2.1671 5.41663C2.1671 8.12143 5.16709 10.9384 6.17449 11.8083C6.26834 11.8789 6.38258 11.9171 6.5 11.9171C6.61742 11.9171 6.73166 11.8789 6.82551 11.8083Z" stroke={cor} strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Glifo nome="alfinete" tamanho={tamanho} cor={cor} />;
 }
 
 /* ============================================================

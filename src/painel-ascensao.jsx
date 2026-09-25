@@ -4,6 +4,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
+import { Glifo } from "./ui.jsx";
 import { GRAUS, MILAGRES, NIVEL_DESPERTAR, grauDe, tituloDe, proximoPatamar, pfMaximo, pfPorDia, garantirDivindade, bonusDivino, imunePorEscopo } from "./divindades.js";
 import { estadoFe, feDaCidade, fieisDaCidade, temploDaCidade, temploDe, resumoNumerico } from "./devocao.js";
 import { provaAtual, provasDoCaminho } from "./ascensao.js";
@@ -31,8 +32,8 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
           </div>
           {podeDespertar && (
             <div className="mt-3 space-y-2">
-              <button onClick={onDespertar} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.amber, color: "#1A1206" }}>🌟 Despertar agora</button>
-              <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>{recalibrando ? "⚖ Lendo sua lenda…" : "⚖ Recalibrar com a IA"}</button>
+              <button onClick={onDespertar} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.amber, color: "#1A1206" }}><Glifo nome="ascensao" tamanho={16} /> Despertar agora</button>
+              <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>{recalibrando ? "Lendo sua lenda…" : "Recalibrar com a IA"}</button>
               <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>Já é divindade na história? A recalibração lê o livro da aventura e o cânone e ajusta GD, fiéis, domínio e panteão pelo que de fato aconteceu — nada é inventado.</div>
             </div>
           )}
@@ -48,7 +49,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
   const blocoRito = rito && prova ? (
     <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.danger}` }}>
       <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.danger }}>
-        ⚱ Rito em curso — {rito.caminho === "reliquia" ? "Fonte Milenar" : "Deicídio"}
+        Rito em curso — {rito.caminho === "reliquia" ? "Fonte Milenar" : "Deicídio"}
       </div>
       <div className="tv-display text-2xl" style={{ color: T.ink }}>{rito.alvo.nome}</div>
       <div className="tv-body text-sm mt-1" style={{ color: T.inkDim }}>
@@ -61,7 +62,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
           return (
             <div key={p.id} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft, border: `1px solid ${feita ? T.ok : agora ? T.danger : T.line}`, opacity: feita || agora ? 1 : 0.55 }}>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="tv-body text-sm" style={{ color: T.ink }}>{feita ? "✓ " : agora ? "▸ " : "🔒 "}{p.nome}</span>
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{feita ? "✓ " : agora ? "▸ " : <><Glifo nome="cadeado" tamanho={14} rotulo="fechada" /> </>}{p.nome}</span>
                 <span className="tv-mono text-[9px] shrink-0" style={{ color: T.amberSoft }}>dif. {p.dificuldade}</span>
               </div>
               <div className="tv-body text-xs" style={{ color: T.inkDim }}>{p.nota}</div>
@@ -70,7 +71,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
         })}
       </div>
       <button onClick={onEncararProva} className="tv-btn w-full rounded-xl py-2.5 mt-3 tv-mono text-xs uppercase tracking-widest" style={{ background: T.danger, color: "#1A0F0D" }}>
-        🎲 Encarar: {prova.nome}
+        <Glifo nome="dado" tamanho={16} /> Encarar: {prova.nome}
       </button>
       <button onClick={onDesistirRito} className="tv-btn w-full rounded-xl py-2 mt-1.5 tv-mono text-[10px]" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
         abandonar o rito
@@ -141,8 +142,8 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
         ) : <div className="tv-mono text-[10px] mt-3 uppercase tracking-widest" style={{ color: T.amber }}>Topo da escala — não há mais degraus acima de você.</div>}
         {(dv.dominio || dv.patrono) && (
           <div className="tv-body text-sm mt-3" style={{ color: T.ink }}>
-            {dv.dominio && <div>🌌 Domínio: <b>{dv.dominio}</b></div>}
-            {dv.patrono && <div>🙏 Patrono: <b>{dv.patrono}</b></div>}
+            {dv.dominio && <div>Domínio: <b>{dv.dominio}</b></div>}
+            {dv.patrono && <div>Patrono: <b>{dv.patrono}</b></div>}
           </div>
         )}
       </div>
@@ -217,7 +218,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
                   </div>
                   <div className="tv-mono text-[10px] mt-1" style={{ color: T.inkDim }}>GD {d.gd} · {tituloDe(d.gd)} · {(d.fieis || 0).toLocaleString("pt-BR")} fiéis · culto: {d.culto}</div>
                   {d.nota && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim }}>{d.nota}</div>}
-                  {imune && <div className="tv-body text-[11px] mt-1" style={{ color: T.danger }}>⚠ Imune ao seu dano comum — cresça antes de desafiá-lo (ou enfraqueça a fé dele).</div>}
+                  {imune && <div className="tv-body text-[11px] mt-1" style={{ color: T.danger }}><Glifo nome="aviso" tamanho={12} /> Imune ao seu dano comum — cresça antes de desafiá-lo (ou enfraqueça a fé dele).</div>}
                 </div>
               );
             })}
@@ -226,7 +227,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
       </div>
 
       <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-[10px] uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>
-        {recalibrando ? "⚖ Lendo sua lenda…" : "⚖ Recalibrar ascensão com a IA"}
+        {recalibrando ? "Lendo sua lenda…" : "Recalibrar ascensão com a IA"}
       </button>
     </div>
   );

@@ -30,6 +30,7 @@
 
 import React from "react";
 import { T } from "./constantes.js";
+import { Glifo } from "./ui.jsx";
 import { rngDe, formaDaCidade } from "./geografia.js";
 import { locaisDaCidade } from "./mundo-base.js";
 import { arredoresDaCidade, tempoDeIda } from "./arredores.js";
@@ -150,7 +151,7 @@ export function PlantaCidade({ semente, cidade, genero, molde, lex = null, lugar
           entrou na adega clicando não deveria precisar do teclado para subir. */}
       {lugar && lugar.nome && (
         <div className="rounded-xl px-3 py-2 mb-3 flex items-center gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.amberSoft}` }}>
-          <span style={{ fontSize: 13 }}>📍</span>
+          <Glifo nome="alfinete" tamanho={14} cor={T.amberSoft} />
           <span className="tv-body text-sm" style={{ color: T.ink }}>{lugar.nome}{lugar.dentroDe ? <span className="tv-body text-xs" style={{ color: T.inkDim }}> · dentro de {lugar.dentroDe}</span> : null}</span>
           {aoIr && (
             <button onClick={() => aoIr({ nome: cidade.nome, onde: "cidade" })}
@@ -264,7 +265,7 @@ export function PlantaCidade({ semente, cidade, genero, molde, lex = null, lugar
               style={{ background: T.panelSoft, border: `1px solid ${aberto ? T.amber : estouAqui || (noComodo && noComodo.id === l.id) ? T.amberSoft : T.line}`, cursor: "pointer" }}>
               <div className="flex items-center gap-2">
                 <span style={{ fontSize: 14 }}>{l.icone}</span>
-                <span className="tv-body text-sm" style={{ color: T.ink }}>{estouAqui ? "📍 " : ""}{l.nome}</span>
+                <span className="tv-body text-sm" style={{ color: T.ink }}>{estouAqui ? <><Glifo nome="alfinete" tamanho={14} rotulo="você está aqui" /> </> : null}{l.nome}</span>
                 <span className="tv-mono text-[9px] ml-auto shrink-0" style={{ color: T.inkDim }}>{l.tipo}</span>
                 {botaoIr({ ...l, onde: "dentro" }, "▸ ir")}
               </div>
@@ -279,7 +280,7 @@ export function PlantaCidade({ semente, cidade, genero, molde, lex = null, lugar
                     return (
                       <div key={q.id} className="flex items-center gap-2">
                         <span style={{ fontSize: 11 }}>{q.icone}</span>
-                        <span className="tv-body text-xs" style={{ color: noQuarto ? T.amber : T.ink }}>{noQuarto ? "📍 " : ""}{q.nome}</span>
+                        <span className="tv-body text-xs" style={{ color: noQuarto ? T.amber : T.ink }}>{noQuarto ? <><Glifo nome="alfinete" tamanho={12} rotulo="você está aqui" /> </> : null}{q.nome}</span>
                         {q.restrito && <span className="tv-mono text-[8px] px-1 rounded shrink-0" style={{ color: T.danger, border: `1px solid ${T.danger}` }}>restrito</span>}
                         <span className="tv-body text-[10px] ml-auto shrink-0" style={{ color: T.inkDim }}>{q.nota}</span>
                         {botaoIr({ ...q, onde: "comodo", dentroDe: l.nome }, "▸ entrar")}
@@ -302,7 +303,7 @@ export function PlantaCidade({ semente, cidade, genero, molde, lex = null, lugar
                 style={{ background: T.panelSoft, border: `1px solid ${selecionado === a.id ? T.amber : noArredor && noArredor.id === a.id ? T.amberSoft : T.line}`, cursor: "pointer" }}>
                 <div className="flex items-center gap-2">
                   <span style={{ fontSize: 14 }}>{a.icone}</span>
-                  <span className="tv-body text-sm" style={{ color: T.ink }}>{noArredor && noArredor.id === a.id ? "📍 " : ""}{a.nome}</span>
+                  <span className="tv-body text-sm" style={{ color: T.ink }}>{noArredor && noArredor.id === a.id ? <><Glifo nome="alfinete" tamanho={14} rotulo="você está aqui" /> </> : null}{a.nome}</span>
                   <span className="tv-mono text-[9px] ml-auto shrink-0" style={{ color: T.violetSoft }}>{tempoDeIda(a)}</span>
                   {botaoIr({ ...a, onde: "arredores" }, "▸ ir")}
                 </div>

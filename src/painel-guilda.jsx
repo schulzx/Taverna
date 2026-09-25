@@ -18,7 +18,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { Botao } from "./ui.jsx";
+import { Botao, Glifo } from "./ui.jsx";
 import {
   oficioPorId, leisDa, nomeDoPosto, degrauDaCasa, DEGRAUS, resumoDaGuilda,
   podeMandar, podeDelegar, faixaDeAtrito, NIVEL_PARA_FUNDAR, CUSTO_DE_FUNDAR,
@@ -57,11 +57,11 @@ function CartaoDaCasa({ g, aoEntrar, motivo }) {
           </span>
         ))}
       </div>
-      {g.guerraCom && <div className="tv-mono text-[9px] mt-1.5" style={{ color: T.danger }}>⚔ em guerra</div>}
+      {g.guerraCom && <div className="tv-mono text-[9px] mt-1.5" style={{ color: T.danger }}><Glifo nome="aviso" tamanho={12} /> em guerra</div>}
       <div className="flex items-center gap-2 mt-2 flex-wrap">
         <button onClick={() => aoEntrar(g)} className="tv-mono text-[10px] px-2 py-1 rounded"
           style={{ border: `1px solid ${motivo ? T.line : T.amber}`, color: motivo ? T.inkDim : T.amberSoft }}>
-          ✋ bater à porta
+          bater à porta
         </button>
         {motivo && <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>{motivo}</span>}
       </div>
@@ -159,7 +159,7 @@ export function PainelGuilda({
           </div>
           <div className="text-right shrink-0">
             <div className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>Cofre</div>
-            <div className="tv-display text-xl leading-none" style={{ color: T.amber }}>◉ {r.cofre}</div>
+            <div className="tv-display text-xl leading-none" style={{ color: T.amber }}><Glifo nome="moeda" tamanho={16} /> {r.cofre}</div>
           </div>
         </div>
 
@@ -186,20 +186,20 @@ export function PainelGuilda({
         )}
         {r.faltas > 0 && (
           <div className="tv-mono text-[9px] mt-2" style={{ color: r.ateExpulsar <= 3 ? T.danger : T.amberSoft }}>
-            ⚠ {r.faltas} falta{r.faltas > 1 ? "s" : ""} anotada{r.faltas > 1 ? "s" : ""} — {r.ateExpulsar} até a porta da rua
+            <Glifo nome="aviso" tamanho={12} /> {r.faltas} falta{r.faltas > 1 ? "s" : ""} anotada{r.faltas > 1 ? "s" : ""} — {r.ateExpulsar} até a porta da rua
           </div>
         )}
         {r.guerra && (
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            <span className="tv-mono text-[10px]" style={{ color: T.danger }}>⚔ A casa está em guerra. O trabalho mudou.</span>
+            <span className="tv-mono text-[10px]" style={{ color: T.danger }}><Glifo nome="aviso" tamanho={12} /> A casa está em guerra. O trabalho mudou.</span>
             {podeMandar(minha) && (
-              <button onClick={aoPedirPazes} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px solid ${T.ok}`, color: T.ok }}>🕊 pedir as pazes</button>
+              <button onClick={aoPedirPazes} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px solid ${T.ok}`, color: T.ok }}>pedir as pazes</button>
             )}
           </div>
         )}
 
         <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>saque até ◉ {r.degrau.saque}</span>
+          <span className="tv-mono text-[9px]" style={{ color: T.inkDim }}>saque até <Glifo nome="moeda" tamanho={12} /> {r.degrau.saque}</span>
           <input value={valor} onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))} placeholder="0"
             className="tv-mono text-xs rounded px-2 py-1" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink, width: 72 }} />
           <button onClick={() => { aoSacar(Number(valor) || 0); setValor(""); }} className="tv-mono text-[10px] px-2 py-1 rounded"
@@ -236,7 +236,7 @@ export function PainelGuilda({
               <div key={t.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${t.guerra ? T.danger : T.line}` }}>
                 <div className="flex items-start justify-between gap-2">
                   <span className="tv-display text-base leading-tight" style={{ color: T.ink }}>{t.icone} {t.titulo}</span>
-                  <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>◉ {t.paga}</span>
+                  <span className="tv-mono text-[9px] px-1.5 py-0.5 rounded shrink-0" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}><Glifo nome="moeda" tamanho={12} /> {t.paga}</span>
                 </div>
                 {/* v9.188: O PRAZO ENTROU. Ele era calculado só na hora de
                     delegar, e o jogador escolhia o trabalho sem saber se
@@ -245,7 +245,7 @@ export function PainelGuilda({
                   nível {t.nivel} · {diasDoTrabalho(t)} dia{diasDoTrabalho(t) > 1 ? "s" : ""} · rende {t.contribui} de contribuição
                 </div>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <button onClick={() => aoPegarTrabalho(t)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>✍ eu faço</button>
+                  <button onClick={() => aoPegarTrabalho(t)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>eu faço</button>
                   {vagas > 0 && (
                     <button onClick={() => setDelegando(delegando === t.id ? null : t.id)} className="tv-mono text-[10px] px-2 py-1 rounded"
                       style={{ border: `1px solid ${T.violet}`, color: T.violetSoft }}>

@@ -250,7 +250,10 @@ sec("O PRESENTE DIZ SE PEGA (v9.190)");
      PRESENTE era a única ação sem veredito na tela: ele mostrava o preço, e
      escondia num `title` a única coisa que importa — se ele pega. Num
      telefone o title não existe, e lá o botão era um sorteio de ◉ 200. */
-  t("o botão do presente diz o preço", /🎁 presentear · ◉ \{custo\} do cofre/.test(PAINEL));
+  /* V3 (24/09) · a asserção deixou de exigir o 🎁: o emoji do sistema saiu
+     do painel (o rótulo já diz "presentear"; `check-formas` D5h). O que ela
+     guarda é o que importava — o botão DIZ O PREÇO, e continua a dizê-lo. */
+  t("o botão do presente diz o preço", /presentear · ◉ \{custo\} do cofre/.test(PAINEL));
   t("e diz, em linha visível, se o presente pega", /\{semCasa \? "exige uma casa" : semCofre \? `o cofre tem ◉ \$\{cofre \|\| 0\}` : pega\.diz\}/.test(PAINEL));
   t("a leitura sai do multiplicador da potência", /ap\.presente >= 1\.1 \? \{ diz: "isto impressiona"/.test(PAINEL));
   t("com as três faixas", /isto serve/.test(PAINEL) && /pode soar pouco — ela não se compra com ouro/.test(PAINEL));

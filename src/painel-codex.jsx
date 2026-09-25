@@ -6,9 +6,15 @@ import React from "react";
 import { T } from "./constantes.js";
 import { CONQUISTAS, conquistaPorId } from "./conquistas.js";
 import { criaturasDoGenero } from "./bestiario.js";
-import { Retrato, Botao } from "./ui.jsx";
+import { Retrato, Botao, Glifo, DegrausDaAmeaca } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
 import { gerarCronica } from "./cronica.js";
+
+/* V3 · o degrau de cada ameaça do Bestiário (fraco 1 … lendário 5). É
+   tabela porque é número; e a cor mora ao lado, para os degraus e a
+   palavra nunca discordarem. */
+const DEGRAU_DA_AMEACA = { fraco: 1, comum: 2, competente: 3, elite: 4, lendario: 5 };
+const corDaAmeaca = (a) => (a === "lendario" ? T.amber : a === "elite" ? T.violetSoft : T.inkDim);
 
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
 const CATEGORIAS_CONQUISTA = [
@@ -30,12 +36,12 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
   const descExtra = (descobertas || []).filter((d) => !criaturas.some((c) => d.toLowerCase().includes(c.nome.toLowerCase())));
   const cont = contadores || {};
   const REGISTROS = [
-    ["☠ Abates", cont.inimigosDerrotados || 0], ["🐗 Elites", cont.elitesDerrotados || 0], ["🐉 Lendárias", cont.lendariosDerrotados || 0],
-    ["🛡 Vitórias", cont.combatesVencidos || 0], ["🎯 Críticos", cont.criticos || 0], ["💥 Desastres", cont.desastres || 0],
-    ["💀 Fio da morte", cont.quaseMorte || 0], ["🧭 Viagens", cont.viagens || 0], ["🌲 Perigos na estrada", cont.perigosEstrada || 0],
-    ["⛺ Descansos", cont.descansos || 0], ["🎁 Presentes", cont.presentes || 0], ["⚑ Recrutados", cont.recrutados || 0],
+    ["Abates", cont.inimigosDerrotados || 0], ["Elites", cont.elitesDerrotados || 0], ["Lendárias", cont.lendariosDerrotados || 0],
+    ["Vitórias", cont.combatesVencidos || 0], ["Críticos", cont.criticos || 0], ["Desastres", cont.desastres || 0],
+    ["Fio da morte", cont.quaseMorte || 0], ["Viagens", cont.viagens || 0], ["Perigos na estrada", cont.perigosEstrada || 0],
+    ["Descansos", cont.descansos || 0], ["Presentes", cont.presentes || 0], ["Recrutados", cont.recrutados || 0],
   ];
-  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }, { id: "cronica", rotulo: "📜 Crônica" }];
+  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }, { id: "cronica", rotulo: "Crônica" }];
   return (
     <>
       <div className="flex flex-wrap gap-1.5 -mt-2">
@@ -70,7 +76,7 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
                     <button key={c.id} disabled={!aberta} onClick={() => escolherTitulo(c.id)}
                       className="w-full text-left rounded-lg px-3 py-2 flex items-center gap-2.5"
                       style={{ background: equipado ? T.panelSoft : "transparent", border: `1px solid ${equipado ? T.amber : aberta ? T.line : T.panelSoft}`, opacity: aberta ? 1 : 0.55 }}>
-                      <span style={{ fontSize: 18, filter: aberta ? "none" : "grayscale(1)" }}>{aberta || !c.segredo ? c.icone : "❔"}</span>
+                      <span style={{ fontSize: 18, filter: aberta ? "none" : "grayscale(1)" }}>{aberta || !c.segredo ? c.icone : <Glifo nome="desconhecido" tamanho={18} cor={T.inkDim} rotulo="título secreto" />}</span>
                       <span className="flex-1 min-w-0">
                         <span className="tv-body text-sm block truncate" style={{ color: aberta ? T.ink : T.inkDim }}>
                           {aberta || !c.segredo ? c.nome : "???"}
@@ -100,18 +106,20 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
               const vista = descNomes.some((d) => d.includes(c.nome.toLowerCase()));
               return (
                 <div key={c.nome} className="rounded-lg px-3 py-2 flex items-center gap-2.5" style={{ background: vista ? T.panelSoft : "transparent", border: `1px solid ${vista ? T.line : T.panelSoft}`, opacity: vista ? 1 : 0.5 }}>
-                  <span style={{ fontSize: 18 }}>{vista ? ({ fraco: "🐀", comum: "🐺", competente: "🐗", elite: "🦖", lendario: "🐉" })[c.ameaca] || "👹" : "❔"}</span>
+                  <span className="shrink-0 inline-flex items-center justify-center" style={{ width: 18, height: 18 }}>{vista
+                    ? (DEGRAU_DA_AMEACA[c.ameaca] ? <DegrausDaAmeaca nivel={DEGRAU_DA_AMEACA[c.ameaca]} tamanho={18} cor={corDaAmeaca(c.ameaca)} /> : null)
+                    : <Glifo nome="desconhecido" tamanho={18} cor={T.inkDim} rotulo="criatura ainda não vista" />}</span>
                   <span className="flex-1 min-w-0">
                     <span className="tv-body text-sm block" style={{ color: vista ? T.ink : T.inkDim }}>{vista ? c.nome : "???"}</span>
                     {vista && <span className="tv-body text-[11px] italic block truncate" style={{ color: T.inkDim }}>{c.desc}</span>}
                   </span>
-                  {vista && <span className="tv-mono text-[9px] uppercase" style={{ color: c.ameaca === "lendario" ? T.amber : c.ameaca === "elite" ? T.violetSoft : T.inkDim }}>{ROTULO_AMEACA[c.ameaca] || c.ameaca}</span>}
+                  {vista && <span className="tv-mono text-[9px] uppercase" style={{ color: corDaAmeaca(c.ameaca) }}>{ROTULO_AMEACA[c.ameaca] || c.ameaca}</span>}
                 </div>
               );
             })}
             {descExtra.map((d) => (
               <div key={d} className="rounded-lg px-3 py-2 flex items-center gap-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                <span style={{ fontSize: 18 }}>👹</span>
+                <span className="shrink-0" style={{ width: 18, height: 18 }} aria-hidden="true" />
                 <span className="flex-1 min-w-0">
                   <span className="tv-body text-sm block" style={{ color: T.ink }}>{d}</span>
                   <span className="tv-body text-[11px] italic block" style={{ color: T.inkDim }}>criatura única desta história</span>
@@ -137,10 +145,10 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
             <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Mundo</div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                ["👥 Pessoas conhecidas", Object.keys(npcs || {}).length],
-                ["🚩 Potências", ((mapa || {}).faccoes || []).length],
-                ["🏰 Cidades no mapa", ((mapa || {}).cidades || []).length],
-                ["⚑ Companheiros", ((personagem || {}).grupo || []).length],
+                ["Pessoas conhecidas", Object.keys(npcs || {}).length],
+                ["Potências", ((mapa || {}).faccoes || []).length],
+                ["Cidades no mapa", ((mapa || {}).cidades || []).length],
+                ["Companheiros", ((personagem || {}).grupo || []).length],
               ].map(([rotulo, valor]) => (
                 <div key={rotulo} className="rounded-xl px-3 py-2.5 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
                   <span className="tv-body text-xs" style={{ color: T.inkDim }}>{rotulo}</span>
@@ -166,7 +174,7 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
             <button onClick={() => onExportarCronica && onExportarCronica(md)}
               className="w-full tv-mono text-xs px-3 py-2.5 rounded-lg font-semibold"
               style={{ background: T.amber, color: T.onAccent, border: `1px solid ${T.amber}` }}>
-              📜 baixar crônica (.md)
+              baixar crônica (.md)
             </button>
             {/* A CRÔNICA É PARA LER; O SAVE É PARA VOLTAR (v9.147).
                 Quem baixa a crônica achando que fez backup descobre tarde
@@ -177,7 +185,7 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
                 <div className="tv-body text-xs mb-2" style={{ color: T.inkDim }}>A crônica acima é para <em>ler</em>. Para <em>voltar</em> — em outro navegador, em outra máquina, ou depois de o cache ser limpo — o que serve é o save.</div>
                 <button onClick={onExportarSave}
                   className="w-full tv-mono text-xs px-3 py-2.5 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.ink }}>
-                  💾 guardar a campanha em arquivo (.json)
+                  guardar a campanha em arquivo (.json)
                 </button>
               </div>
             )}
