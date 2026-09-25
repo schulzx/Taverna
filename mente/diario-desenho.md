@@ -19,6 +19,87 @@ Formato:
 
 ---
 
+## 25/09 19:00 · v9.298 · **V5a — o cabeçalho da pessoa: a xilogravura sai, o `129:4` entra** · commit (no bloco seguinte)
+
+- **estado inicial:** a trava de V4 (03:31) morta, retomada às 17:35; HEAD
+  `4ce9d4c`; nenhum ciclo do sistema, bastão livre. **Ordem direta da pessoa,
+  à frente de V4:** *"ainda existe uma imagem procedural, vamos tirar ela e
+  deixar exatamente igual à imagem do Figma."*
+- **jogo** (`mente/v5a-jogo.md`): o conteúdo de mundo — à esquerda o lugar
+  (`lugarDaCena()`, ` — ` vira ` · `, caixa alta por CSS para o leitor de tela
+  não soletrar), à direita a palavra da luz (`luzDaHora`, a mesma da pílula da
+  cinta) e o clima; na masmorra `CAMADA n · n TOCHAS`, e a tocha nunca cai
+  primeiro. **O bom tempo não se anuncia** (`CLIMA_QUE_SE_CALA`): o
+  "ensolarado" às 22:00 não pode ser herdado. O lugar fica **âmbar, como no
+  Figma**, contra a decisão de V1 (o lugar em `mundo`) — a pessoa pediu
+  "exatamente igual", e o custo ficou escrito.
+- **desenho** (`formas.md` §V5a, `mente/v5a-desenho.md`, scripts provados em
+  cópia): o que morre — `rosto-da-cena.jsx` inteiro, o motor da gravura,
+  `LUZ_DA_CENA` (a sua única leitora era a gravura: O TEMPO lê `luzDaHora`, que
+  são só os nomes), `.tv-gravura-*`, `CabecalhoDaCena`, `OTopoDoPapel`,
+  `lugarAntesRef`; `gravura-da-cena.js` passa a `hora-e-prazo.js` com o que
+  tem leitor. A exceção do piso (10 px contra 12) mora em `CABECALHO_DA_PAGINA`
+  com o motivo: são maiúsculas, 7,3 px de altura contra os 6,6 px de x da letra
+  de 12. Contraste: o lugar **10,61:1**, a direita **6,60:1**. A divisória de
+  runas passa a ser **uma forma só** (a runa da v3). Os floreados do rodapé
+  entram na linha da runa do fim, **0 px**. A divisória "entre blocos" do
+  corpo fica de fora: no jogo não há blocos, e uma runa por turno seria um
+  metrónomo. Figma: página `V5a` na biblioteca (`241:67`) e, no arquivo da
+  pessoa, o quadro `141:2` com o `129:4` clonado, o código e o mapa da
+  diferença.
+- **oficial** (bastão tomado às 18:27): scripts 1→6; o `3-ui.cjs` falhou numa
+  âncora por **CRLF no disco contra LF na cópia** — não forçou, normalizou o
+  `ui.jsx` para LF (byte a byte igual ao HEAD) e seguiu; e trocou 47 linhas de
+  português de Portugal para pt-BR nos comentários novos. **24 257 linhas antes
+  e depois**, nenhum dos 138 endereços do `check-acoes-do-jogador` mexeu.
+- **a prova jogada** (antes `4ce9d4c`, depois a árvore, 375/1280/320): **sobe.**
+  - **ao lado do `129:4`:** os três pontos idênticos ao píxel (76/92/108, y 45,
+    8×8), o fio curto e a etiqueta direita idênticos, a esquerda a 1 px por
+    serrilhado; 95 % dos píxeis a ΔE<3 e **todos os 24 deslocamentos de ±1–2 px
+    pioram**. Troquei o critério de "98 % a ΔE<3" para o de forma (caixa
+    idêntica + mínimo sem deslocamento): o serrilhado da letra e o traço de 1 px
+    que o Figma espalha por duas filas não são defeito de construção.
+  - **69 px nas 18 telas**; o topo do papel **97 → 69 px** em todos os turnos;
+    rolado ao topo, a primeira palavra do Mestre sobe **107 px** e vêem-se **+3
+    a +4 linhas** em todas as cenas (a noite a 375: **5 → 9**).
+  - **Falhou um critério do próprio `jogo`, dito:** "uma linha inteira a mais
+    com a tela como abre" só aconteceu em 2 de 6 — os 29 px caem num intervalo
+    de parágrafo com a vista presa ao fundo; nenhuma tela perdeu linha. Era um
+    proxy mal escolhido, e ficou escrito em vez de trocado.
+  - as tochas passam a estar sempre à vista na masmorra; a hora aparece duas
+    vezes e de acordo (antes três, uma com "ensolarado" às 22:00).
+- **decisões médias:** o critério do píxel (acima); `hora-e-prazo.js` é um
+  `src/*.js` novo por rename de um módulo que a própria mesa criou em R13-B —
+  sem regra de jogo dentro; o lugar em âmbar pela letra da pessoa.
+- **o que ficou:** o painel da sala da masmorra repete o lugar logo abaixo do
+  cabeçalho com outro separador — vai com **V5b**. A "caixa mista" que o
+  `oficial` julgou ver a 375 não se reproduziu (o DOM diz maiúsculas; suspeita
+  de aba velha).
+- **as ambiciosas:** **V5b — a cartela de chegada** (`jogo`: o nome do lugar
+  grande no turno em que se chega, 0 px nos outros) e **V5c — a luz da hora no
+  fundo do cartão** (`desenho`: com a gravura fora, a atmosfera da hora ficou
+  só em palavra). Nenhuma vai à pessoa.
+
+---
+
+## 25/09 03:32 · — · **V4 caiu no estudo** · sem commit
+
+- A trava de V4 foi tomada às 03:31 e **a sessão caiu às ~03:32**, com o `jogo`
+  já de volta e o `desenho` por chamar. Ficaram no disco, **guardados e não
+  descartados**: `mente/v4-jogo.md` (o momento da cinta, a base do antes medida
+  em `4ce9d4c`, o protocolo) e duas edições em `mente/pauta-desenho.md` (V1b e V3
+  marcados `[x]`, a nova ordem V4→V7 escrita). **Nenhum código.** A trava foi
+  retomada às 17:35 pelo ciclo seguinte (tinha mais de 90 min).
+- O que o estudo de V4 achou, e não se perde: **o grupo vai até quatro
+  companheiros e nenhum aparece na tela principal** (ler o PV de um companheiro
+  custa 2 toques; os cinco segundos falham em "quem do grupo está mal?"); a
+  barra de PV encolhe a 0–3 px a 375 com um prazo, porque o estilo inline de
+  `BarraDeRecurso` fura o `hidden` (`App.jsx` ~:1568); o pulso de agonia repete
+  sem fim e ignora `prefers-reduced-motion`. A ambiciosa: **o anel é onde se
+  cuida** (V4b). V4 retoma deste estudo depois de V5a.
+
+---
+
 ## 25/09 03:40 · v9.297 · **V3c — a soleira diz o que decide, e O TEMPO cabe numa linha** · commit `29debdf`
 
 - **estado inicial:** fila não pausada; trava do desenho tomada às 02:00; HEAD

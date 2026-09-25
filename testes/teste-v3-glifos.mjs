@@ -250,7 +250,7 @@ sec("10. V3c · a soleira, O TEMPO, a magia guardada, o arco, a masmorra e o aca
 {
   const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
   const { partesDaMoeda, assuntoDaLinha } = await import("../src/glifos.js");
-  const { LUZES, luzDaHora } = await import("../src/gravura-da-cena.js");
+  const { LUZES, luzDaHora } = await import("../src/hora-e-prazo.js");
   const j = (x) => JSON.stringify(x);
 
   /* 1 · a soleira: o dinheiro com a forma da cinta, o prazo com a do selo */
@@ -290,11 +290,11 @@ sec("10. V3c · a soleira, O TEMPO, a magia guardada, o arco, a masmorra e o aca
     && /janela: c\.prazo > 0 \? \{ quanto: c\.prazo, conta: "noites" \} : null,/.test(APP)
     && !/`prazo \$\{[mc]\.prazo\} noites`/.test(APP));
 
-  /* 2 · O TEMPO: um glifo só, e a luz é a da gravura */
+  /* 2 · O TEMPO: um glifo só, e a luz é a do cabeçalho da página (V5a; era a da gravura) */
   t("as quatro luzes estão em GLIFOS, uma por nome que luzDaHora devolve",
     LUZES.every((l) => GLIFOS[l]) && Array.from({ length: 24 }, (_, h) => luzDaHora(h)).every((l) => GLIFOS[l])
     && GLIFOS.madrugada.de === "lucide:sunrise" && GLIFOS.dia.de === "lucide:sun" && GLIFOS.entardecer.de === "lucide:sunset" && GLIFOS.noite.de === "lucide:moon");
-  t("O TEMPO desenha a luz pela mesma conta da gravura, com nome; a hora vem antes da data; a linha de cinco emoji saiu",
+  t("O TEMPO desenha a luz pela mesma conta do cabeçalho da página, com nome; a hora vem antes da data; a linha de cinco emoji saiu",
     /<Glifo nome=\{luzDaHora\(horaTxt\(minuto\)\)\} tamanho=\{16\} rotulo=\{luzDaHora\(horaTxt\(minuto\)\)\} \/>\{horaTxt\(minuto\)\} · \{dataTxt\(dia\)\}/.test(APP)
     && !/📅 \{dataTxt/.test(APP) && !/ehNoite\(minuto\) \? " 🌙"/.test(APP) && !/\{clima\.icone\} \{clima\.rotulo\}/.test(APP));
   t("o céu limpo não se escreve (era \"ensolarado\" ao lado da lua às 22:00)", /\{clima && clima\.id !== "ensolarado" && <span title=\{clima\.nota\}>\{clima\.rotulo\}<\/span>\}/.test(APP));

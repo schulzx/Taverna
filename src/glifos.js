@@ -131,13 +131,13 @@ export const GLIFOS = {
   /* a marca da forma Impedido, NÃO um assunto: dentro do ladrilho oco, sem ela o
      quadrado vazio lia-se caixa por marcar (v3-jogo.md §9.1). Nenhuma fala a pede
      pela tabela; quem a desenha é LadrilhoDoAssunto e o selo "sem ação" da cinta. */
-  /* a luz da cena: madrugada (4h–8h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  /* a luz da cena: madrugada (4h–8h) · V3c: a luz do TEMPO e do cabecalho da pagina (luzDaHora) */
   madrugada: { de: "lucide:sunrise", d: "M12 2v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M8 6l4-4 4 4M16 18a4 4 0 0 0-8 0" },
-  /* a luz da cena: dia (8h–18h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  /* a luz da cena: dia (8h–18h) · V3c: a luz do TEMPO e do cabecalho da pagina (luzDaHora) */
   dia: { de: "lucide:sun", d: "M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" },
-  /* a luz da cena: entardecer (18h–21h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  /* a luz da cena: entardecer (18h–21h) · V3c: a luz do TEMPO e do cabecalho da pagina (luzDaHora) */
   entardecer: { de: "lucide:sunset", d: "M12 10V2M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 6l-4 4-4-4M16 18a4 4 0 0 0-8 0" },
-  /* a luz da cena: noite (21h–4h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  /* a luz da cena: noite (21h–4h) · V3c: a luz do TEMPO e do cabecalho da pagina (luzDaHora) */
   noite: { de: "lucide:moon", d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" },
   ban: { de: "lucide:ban", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M4.929 4.929l14.142 14.142" },
 };
@@ -291,4 +291,52 @@ export function retornoDaSoleira(paga) {
   const item = p.item ? `item ${p.item}` : "";
   const primeiro = moedas ? `◉ ${moedas}` : xp ? `+${xp} XP` : "";
   return [primeiro, item].filter(Boolean).join(" · ");
+}
+
+/* V5a · AS ETIQUETAS DA PÁGINA — o que o cabeçalho da página diz.
+
+   O CONTEÚDO É DO `jogo` (`mente/v5a-jogo.md`); a peça é
+   `CabecalhoDaPagina` (`ui.jsx`), que só desenha. Mora aqui, e não no
+   `App.jsx`, pela lei de sempre: *conta se prova, tela se olha* — e a
+   regra de qual termo cede primeiro é conta.
+
+   - À ESQUERDA, O LUGAR: `lugarDaCena()` (a masmorra, o lugar nomeado, a
+     estrada ou a cidade — a ordem do `App.jsx`), com o travessão dos
+     nomes de masmorra trocado pelo ponto do Figma: *Andar 1 — do
+     Silêncio* passa a *Andar 1 · do Silêncio*. As maiúsculas são da peça.
+   - À DIREITA, a luz e o ar, NA ORDEM EM QUE SE LÊEM, e com o lado que
+     cede no telefone (`cede`):
+     · à superfície, `NOITE · CHUVA` — a LUZ da hora e o CLIMA; cede o
+       clima (o FIM). O clima só entra quando muda o jogo:
+       `CLIMA_QUE_SE_CALA` (`ensolarado` às 22:00 era o defeito medido do
+       cartão de v9.157 — o bom tempo não se anuncia);
+     · na masmorra, `CAMADA 1 · 3 TOCHAS` — do maior para o menor, como um
+       endereço; cede a CAMADA (o INÍCIO), porque a tocha é recurso e é ela
+       que fica quando só cabe um termo. Com zero, `sem tochas`: `0 tochas`
+       lê-se como contagem, `sem` lê-se como perigo. Lá em baixo não há
+       luz da hora (`palco.js`: *subterrâneo não tem hora*).
+
+   A masmorra lê-se de `cabecalhoDaCena()` (`palco.js`), que já decide
+   camada e tochas: uma segunda conta aqui seria a segunda verdade. O
+   `onde` dela junta os termos com ` · ` — é esse o separador que se
+   parte, e `teste-v5a-cabecalho.mjs` prova-o contra o `palco.js` real.
+
+   Nada sabido, nada mostrado: sem lugar a esquerda fica vazia; sem
+   termos, a direita também. Nunca lança — `null` e lixo dão vazio. */
+export const CLIMA_QUE_SE_CALA = ["ensolarado"];
+
+export function etiquetasDaPagina(dados) {
+  const d = dados && typeof dados === "object" ? dados : {};
+  const lugar = String(d.lugar == null ? "" : d.lugar).replace(/\s*—\s*/g, " · ").trim();
+  const cena = d.cena && typeof d.cena === "object" ? d.cena : null;
+  const limpo = (lista) => lista.map((x) => String(x == null ? "" : x).trim()).filter(Boolean);
+  if (cena && cena.subterraneo) {
+    const partes = String(cena.onde || "").split(" · ").map((x) => x.trim()).filter(Boolean);
+    const tochas = partes.find((x) => /tocha/.test(x));
+    const camada = partes.find((x) => /^camada\b/.test(x));
+    return { lugar, direita: limpo([camada, tochas && /^0 tochas?$/.test(tochas) ? "sem tochas" : tochas]), cede: "inicio" };
+  }
+  const clima = d.clima && typeof d.clima === "object" ? d.clima : null;
+  const falaOClima = clima && !CLIMA_QUE_SE_CALA.includes(clima.id);
+  return { lugar, direita: limpo([d.luz, falaOClima ? clima.rotulo : ""]), cede: "fim" };
 }

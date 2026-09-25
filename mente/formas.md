@@ -10028,3 +10028,121 @@ de uma taverna. Conta: duas fitas = 2 × 54 + 8 = **116 px**; dois cartazes de
 jogador faz (o mesmo toque, a mesma ordem, o mesmo teto de 2) → médio. Prova: o
 `jogo` corre os cinco segundos (*qual paga mais? · há alguma a apertar?*) antes e
 depois; no telefone nada muda (o teto é 1).
+
+### V5a · o cabeçalho da pessoa (`desenho`, 25/09)
+
+*A ordem foi directa: "ainda existe uma imagem procedural, vamos tirar ela e
+deixar exatamente igual à imagem do Figma" — o nó `129:4` `parchment-header`
+de `ffWFqD7TueSb88Mkeg9bhW`. Construção: `mente/v5a-desenho.md` (seis scripts
+por âncora, provados numa cópia de `4ce9d4c`: build limpo, **214/214 · 15/15**,
+`App.jsx` com as mesmas **24 257** linhas, região a região). O conteúdo das
+etiquetas é do `jogo` (`mente/v5a-jogo.md` §1–2); esta secção é a forma. Figma:
+biblioteca `e5wJUzInAssoebx5npssKc`, página **`V5a · o cabeçalho da pessoa`**
+(`241:67`) — `O cabeçalho da página` (`241:97`, `Largura=Mesa · Telefone`),
+`A runa` (`241:68`), `O fim da página` (`241:98`), o par antes/depois (o JOGO
+VIVO, capturado, a 375 e a 1280) e os quatro casos da degradação; no arquivo da
+pessoa, ao lado do nó, **a prova** (`141:2`): o `129:4` clonado, o código no
+Chrome com as mesmas etiquetas, e o mapa da diferença.*
+
+**1 · O que sai.** A xilogravura por semente (R13-B, 96 px fixos) e o cartão de
+v9.157 que rolava logo abaixo dela (64 px + 16). Sem a gravura o cartão seria a
+segunda peça a dizer o lugar (§20), e dizia `🌙 noite · ☀ ensolarado` às 22:00 e
+`manhã` quando a legenda dizia `DIA`. Com eles morrem `rosto-da-cena.jsx`, o
+motor da gravura (o arquivo passa a `hora-e-prazo.js` e guarda só o prazo e a luz
+da hora) e **`LUZ_DA_CENA`** — que não tinha outro leitor: `O TEMPO` lê os NOMES
+das luzes (`luzDaHora`), nunca as cores. A colecção do Figma e `O rosto da cena`
+ficam marcados **APOSENTADOS**, sem apagar.
+
+**2 · A peça — o `129:4` ao píxel, em tabela.** `CABECALHO_DA_PAGINA` (20 · 16 ·
+24 · 12 · letra 10 · linha 13 · rastreio 1,8), `RUNA` (40 · pontos 8 a cada 16 ·
+12 · traço `amber` a 0,2 · `["amber","mundo","rosa"]` por nome), `FLOREADO`.
+**69 px = 20 + 13 + 12 + 8 + 16** e a suíte refaz a soma. Medido no DOM a 1280:
+etiqueta a **24 · 20** da borda, runa a **45**, pontos com centro em **80 · 96 ·
+112**, traço longo a partir de **128** — os números do nó. Contra a imagem do
+nó, píxel a píxel (as mesmas etiquetas, 1142 × 69): **o alinhamento é exacto** —
+deslocar o código ±1/±2 px piora a diferença em todas as direcções (média 2,94/255
+em (0,0); 4,26 em (1,0); 4,75 em (0,1)). **93,9 % dos píxeis a ΔE76 < 3; 95,5 %
+sem a moldura** (o nó não tem o fio do cartão; o código tem-no por cima). O
+resto é rasterização, e fica dito com o número: a letra (92,9 % na banda das
+etiquetas — Figma e Chrome desenham o antialias de JetBrains Mono de maneiras
+diferentes) e o traço de 1 px, que no nó está a y 48,5 e o Figma reparte por
+**duas** filas a meia tinta, enquanto o Chrome o pousa **numa**, nítido (80,9 % na
+banda da runa). *Não imitei o borrão:* um fio de 1 px meio desfocado é artefacto
+do renderizador, não desenho. O critério do `jogo` (≥ 98 % a ΔE < 3) **não passa
+como escrito** por estas duas razões; proponho trocá-lo pelo que mede a forma —
+mínimo da diferença em (0,0) e caixa idêntica ao píxel — e ele passa.
+
+**3 · O fio do cartão passa a ser por dentro** (`outline` com `outlineOffset:
+-1`, como o `strokeAlign: INSIDE` do nó). Com `border`, tudo nascia 1 px mais para
+dentro, e o cabeçalho ficava a 25 da borda. Mesma cor, espessura e raio.
+
+**4 · A excepção ao piso, escrita.** A letra é **10**, abaixo de `TIPOS.piso`
+(12), porque o nó é 10 e a pessoa pediu *exatamente igual*. Não subi o tamanho, e
+digo porque não joga pior: são **maiúsculas** de JetBrains Mono, e a altura de
+maiúscula a 10 (0,73 em = **7,3 px**; 8 px de caixa medida no Chrome) é maior do
+que a altura-x da letra da máquina a 12 (0,55 em = **6,6 px**; 7 no Chrome) — a
+medida que o olho lê numa palavra curta. Contraste: o lugar (âmbar) **10,61:1**,
+AAA; a luz (`inkDim`) **6,60:1**, AA. Não é controlo nem prosa, nada ali se toca.
+`check-formas` D5g não a conta (vem da tabela, não de `text-[10px]`): a excepção
+mora em `CABECALHO_DA_PAGINA.letra` com o motivo ao lado, e a suíte prende que o
+piso continua 12.
+
+**5 · A degradação, sem medir nada.** O `jogo` pediu a ordem (§2 dele): cede a
+direita termo a termo, depois o lugar encurta; nunca quebra linha; 69 px sempre.
+Ele sugeria reaproveitar a `ResizeObserver` de `OTopoDoPapel`; **fi-lo em CSS**, e
+a razão é o custo: a direita é uma fila `flex-wrap` dentro de uma caixa de uma
+linha com `overflow: hidden`, com um espaçador de 0 px à frente (é ele que deixa o
+primeiro termo cair inteiro em vez de ficar cortado); a esquerda cresce até ao que
+diz, a direita só tem o que sobra. Zero estado, zero medição, zero re-pintura
+extra. Quando cede o INÍCIO (a masmorra: cai a camada, fica a tocha), a fila corre
+em `row-reverse` com os termos ao contrário — lê-se `CAMADA 1 · 3 TOCHAS` e quebra
+pela esquerda; o ponto anda com o termo que cai. O leitor de ecrã ouve a linha
+inteira por um `sr-only`. **Medido:** a 375, `ANDAR 1 · DO SILÊNCIO` +
+`CAMADA 1 · 3 TOCHAS` cabem; a 320 cai a camada e fica `3 TOCHAS`; o lugar de 44
+caracteres apaga a direita e trunca com `…` (283 px a 375, 228 a 320); 69 px e 0
+transbordo em todas as 12 telas (4 cenas × 3 larguras).
+
+**6 · A runa é uma forma só.** `DivisoriaRunica` deixa o losango de v9.173 e passa
+a ser a runa da v3 — a mesma peça nas quatro moradas que a pessoa lhe deu
+(cabeçalho, corpo, rodapé, e as telas de criação `135:330`). As sete da criação do
+mundo mantêm a altura (24, com `RUNA.respiro` 8) e o ritmo.
+
+**7 · O rodapé (`129:32`) mora onde a página acaba, e custa 0 px.** Pregado ao
+fundo do cartão custaria 76 px de prosa em todos os turnos. `FimDaPagina` é o
+último filho do registo, no lugar do marcador de 8 px que o `fimRef` já era, com a
+mesma altura; o ar à volta (16 acima, 24 abaixo) já existia. **O floreado entra**
+— na mesma linha da runa, nos cantos; as barras de 20 transbordam 6 px para cima
+e para baixo desse ar, sem mexer na altura. Cumpre a condição do `regente` (*só se
+couber sem roubar altura*): **0 px**, medido (8 px de caixa, 24 até ao fim do
+registo, antes e depois).
+
+**8 · O que ficou de fora, e porquê.** **A divisória de runas ENTRE BLOCOS do
+corpo (`129:20`).** No jogo não há "bloco" definido: pôr a runa entre turnos
+seria um metrónomo (24 px de registo por turno, a mesma marca vinte vezes). A
+única fronteira que carrega sentido é a mudança de cena — e essa é a **cartela de
+chegada** do `jogo` (§5 dele, V5b), que já usa esta runa. A peça está pronta;
+o momento é dele. **O enchimento do corpo (28) e a letra da v3** são V2.
+
+**9 · Os números para quem joga.** O que não rola no topo do papel: **97 → 69 px**.
+A prosa ganha **29 px em todos os turnos** — uma linha inteira (27,6) — a 320, 375
+e 1280. No topo de cada cena, **107 px**: a 1.ª linha do Mestre sobe de **366 → 259**
+(375) e **348 → 241** (1280); linhas à vista rolado ao topo: 375 **7 → 11** (dia),
+**5 → 9** (noite); 1280 **8 → 11**, **5 → 8**; 320 **2 → 5**. Na masmorra as
+**tochas passam a estar sempre à vista** (estavam num cartão que rolava para fora).
+
+**Divergências com o `jogo`, escritas:** (1) a `ResizeObserver` — troquei-a por CSS
+(§5), o resultado é a ordem dele; (2) o critério de 98 % ΔE < 3 — proponho o
+critério de forma (§2); (3) *nada*: o texto, a cor âmbar do lugar (contra V1 §1,
+por ordem da pessoa), `sem tochas`, `CLIMA_QUE_SE_CALA`, a luz de `luzDaHora` e não
+os `MOMENTOS` — tudo é dele e está como ele pediu.
+
+**A proposta ambiciosa — o cartão da história ganha a sua própria luz de hora.**
+Com a gravura fora, a hora ficou só em palavra (`NOITE`) e em glifo (O TEMPO); a
+*atmosfera* da hora perdeu-se (o `jogo` §1.4). V1 §9 já propunha que `AMBIENTE`
+seja a luz da hora — quatro receitas (madrugada, dia, entardecer, noite), todas
+acima dos pisos (prosa ≥ 12,49:1), distinguíveis entre si (ΔE ≥ 2,6). Agora ela
+tem uma morada sem gravura: o cabeçalho põe `data-luz` na página e a folha escolhe
+a receita — **0 px, 0 `App.jsx` a mais do que um atributo**, degradação nula sem
+`:has()`. É a gravura a voltar, sem imagem: o jogador sente a madrugada no papel
+sem a ler. Médio (cria o que não existe, não muda o fluxo). Peço-a para depois de
+V5b, com o `jogo` a jogar as quatro luzes.

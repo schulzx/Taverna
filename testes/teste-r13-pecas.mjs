@@ -1,5 +1,13 @@
 /* teste-r13-pecas.mjs — as peças da cinta e o rosto da cena (R13)
 
+   V5a (25/09/2026): O ROSTO DA CENA SAIU DA TELA, e com ele as seções que
+   provavam a gravura (1, 2, 3 e 6b, e as linhas das bandas, da tinta e da
+   degradação dela). Cada uma deixou no sítio o motivo de ter saído — a lei
+   da casa. O que esta suíte continua guardando é o que tinha outro leitor:
+   a ampulheta e o selo de prazo, a luz da hora (agora em `hora-e-prazo.js`),
+   o esbatimento, a conta da cinta e o contrato das peças. O cabeçalho que
+   ficou no lugar da gravura prova-se em `teste-v5a-cabecalho.mjs`.
+
    O QUE ESTA SUÍTE GUARDA, e não é a tela: é a CONTA por baixo dela. A
    lei da casa parte a peça em duas — `gravura-da-cena.js` decide (e
    prova-se aqui, em Node) e os `.jsx` pintam (e provam-se no olho). O
@@ -19,13 +27,15 @@ import { readFileSync } from "node:fs";
 import {
   AMPULHETA, areiaDaAmpulheta,
   APERTOS, apertoDoPrazo, palavraDoPrazo, CONTAS,
-  GRAMATICAS, HACHURAS, BIOMAS_DA_GRAVURA, GRAMATICA_LISA, gramaticaDo,
-  BANDAS, LUZES, HORARIO_DA_LUZ, luzDaHora,
-  hachuraDoCeu, hachuraDoChao, gravuraDaCena, LARGURA_DE_REFERENCIA, TREMOR_MINIMO,
-} from "../src/gravura-da-cena.js";
-import { LUZ_DA_CENA, CINTA, T, TIPOS, ALVOS, ESBATIMENTO, FOLHA, SOLEIRA } from "../src/estilo.js";
-import { idsDeBioma, MOLDES } from "../src/moldes.js";
-import { rng, hashSemente } from "../src/semente.js";
+  LUZES, HORARIO_DA_LUZ, luzDaHora,
+} from "../src/hora-e-prazo.js";
+import { CINTA, T, TIPOS, ALVOS, ESBATIMENTO, FOLHA, SOLEIRA } from "../src/estilo.js";
+/* V5a: `LARGURA_DE_REFERENCIA` era um export de `gravura-da-cena.js` e morreu com
+   a gravura (o único leitor de código era `rosto-da-cena.jsx`). A conta da cinta
+   (seção 7) continua precisando do telefone de referência — o 375 × 812 em que
+   o orçamento de R13 foi medido (`mente/r13-mesa.md`) —, e é só esta suíte que o
+   lê agora. Fica aqui, com o nome de sempre, para as asserções não mudarem. */
+const LARGURA_DE_REFERENCIA = 375;
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => {
@@ -35,164 +45,18 @@ const t = (nome, cond, extra = "") => {
 const sec = (s) => console.log("\n" + s);
 
 const UI = readFileSync("../src/ui.jsx", "utf8");
-const ROSTO = readFileSync("../src/rosto-da-cena.jsx", "utf8");
 
 /* ============================================================ */
-sec("1. determinismo por semente — a primeira lei da casa");
-{
-  const cena = () => gravuraDaCena({ semente: "s-12345", bioma: "montanha", lugar: "Vale Torto", hora: 19, largura: 375 });
-  const a = JSON.stringify(cena()), b = JSON.stringify(cena());
-  t("a mesma semente dá a mesma cripta, chamada a chamada", a === b);
-
-  const outra = JSON.stringify(gravuraDaCena({ semente: "s-12346", bioma: "montanha", lugar: "Vale Torto", hora: 19, largura: 375 }));
-  t("uma semente diferente dá outra cripta", a !== outra);
-
-  /* O LUGAR ENTRA NA SEMENTE, e é isto que faz duas montanhas do mesmo
-     mundo não serem a mesma montanha. */
-  const outroLugar = JSON.stringify(gravuraDaCena({ semente: "s-12345", bioma: "montanha", lugar: "Pedra Alta", hora: 19, largura: 375 }));
-  t("o lugar entra na semente: duas montanhas do mesmo mundo diferem", a !== outroLugar);
-
-  /* E A HORA NÃO ENTRA NO DESENHO — muda a LUZ e nada mais. É a lei da
-     peça: «a hora não muda o desenho: muda a luz». Se um dia a hora
-     entrar no sorteio, a gravura passa a piscar de hora a hora e o
-     motivo de ela não animar cai por terra. */
-  const manha = gravuraDaCena({ semente: "s-12345", bioma: "montanha", lugar: "Vale Torto", hora: 5, largura: 375 });
-  const noite = gravuraDaCena({ semente: "s-12345", bioma: "montanha", lugar: "Vale Torto", hora: 23, largura: 375 });
-  t("a hora muda a luz e NÃO o desenho", manha.luz !== noite.luz && JSON.stringify(manha.d) === JSON.stringify(noite.d));
-
-  /* A semente é `hashSemente(mundo + "|" + bioma + "|" + lugar)`, byte a
-     byte como `formas.md` a escreve — e não um segundo motor. */
-  const esperado = rng(hashSemente("s-12345|montanha|Vale Torto"));
-  t("o motor é o da casa: hashSemente + rng de semente.js", typeof esperado === "function" && esperado() >= 0);
-}
-
-/* ============================================================ */
-sec("2. a dívida da hachura — um buril não anda de compasso");
-{
-  const rand = rng(hashSemente("buril"));
-  const ceu = hachuraDoCeu(rand, 375);
-  const xs = ceu.map((l) => Number(l.match(/^M (-?[\d.]+)/)[1]));
-  /* os saltos entre talhos consecutivos da MESMA fiada */
-  const saltos = [];
-  for (let i = 1; i < xs.length; i++) if (xs[i] > xs[i - 1]) saltos.push(Math.round((xs[i] - xs[i - 1]) * 10));
-  const distintos = new Set(saltos).size;
-  /* A RÉGUA NÃO É A PERCENTAGEM, e a primeira versão deste dente errou
-     nisso: pedia "mais de metade dos saltos distintos" e mediu 137 em
-     302 — 45 %. O número estava certo e a régua é que estava errada,
-     porque com os saltos arredondados a 0,1 px as colisões são
-     inevitáveis num acervo de 300. O que prova que o buril não anda de
-     compasso é que NENHUM salto domina: um passo constante daria UM
-     salto repetido as 302 vezes. */
-  const maisRepetido = Math.max(...[...new Set(saltos)].map((v) => saltos.filter((x) => x === v).length));
-  t(`o espaçamento do céu é irregular (${distintos} saltos distintos em ${saltos.length})`,
-    distintos > 20, "passo constante = trama de máquina, não talho");
-  t(`e nenhum salto domina (o mais repetido sai ${maisRepetido}× em ${saltos.length})`,
-    maisRepetido < saltos.length * 0.1, "um passo constante daria UM salto repetido em todas");
-
-  /* e o ÂNGULO também: `formas.md` pede os dois do mesmo `rng` */
-  const incl = new Set(ceu.map((l) => l.match(/l (-?[\d.]+) (-?[\d.]+)$/)).filter(Boolean)
-    .map((m) => Math.round((Number(m[2]) / Number(m[1])) * 100)));
-  t(`e o ângulo também sai do mesmo rng (${incl.size} inclinações distintas)`, incl.size > 5);
-
-  /* O DESVIO DO ÂNGULO, e é ESTE o dente que paga a dívida — os dois de
-     cima não bastavam, e é por isso que ele nasce depois de eles terem
-     ficado verdes com o defeito na tela.
-
-     Medido na primeira construção: o céu variava **1,95° de desvio
-     padrão** e o chão seco **2,73°** — oito e dez ângulos inteiros
-     distintos em trezentos talhos. Os dentes do espaçamento diziam
-     "irregular" e tinham razão, mas um traço que se desvia dois graus
-     não treme: vai a direito com ruído de arredondamento, e a mancha
-     lê-se como TRAMA. *Uma catraca que só pergunta «varia?» fica verde
-     em cima do defeito que existe para apanhar; a que pergunta «varia
-     QUANTO?» não fica.*
-
-     O ângulo colhe-se do talho recto (`l dx dy`) e, onde não há talho
-     recto nenhum, da CORDA da onda (`q … dx dy`) — sem a segunda metade
-     a `molhada` media zero e passava por ser invisível ao regex. */
-  const angulosDe = (linhas) => linhas.map((l) => {
-    const recto = l.match(/l (-?[\d.]+) (-?[\d.]+)$/);
-    if (recto) return Math.atan2(Number(recto[2]), Number(recto[1])) * 180 / Math.PI;
-    const onda = l.match(/q [-\d.]+ [-\d.]+ (-?[\d.]+) (-?[\d.]+)$/);
-    if (onda) return Math.atan2(Number(onda[2]), Number(onda[1])) * 180 / Math.PI;
-    return null;
-  }).filter((x) => x !== null);
-  const desvio = (a) => { if (a.length < 2) return 0; const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((s2, y) => s2 + (y - m) ** 2, 0) / a.length); };
-
-  const medido = { ceu: desvio(angulosDe(hachuraDoCeu(rng(hashSemente("buril")), 375))) };
-  for (const h of HACHURAS) if (h !== "nenhuma") medido[h] = desvio(angulosDe(hachuraDoChao(rng(hashSemente("buril")), h, 375)));
-  const fracos = Object.entries(TREMOR_MINIMO).filter(([k, piso]) => !(medido[k] >= piso));
-  t(`o buril treme o que tem de tremer (${Object.entries(medido).map(([k, v]) => `${k} ${v.toFixed(1)}°`).join(" · ")})`,
-    fracos.length === 0,
-    fracos.map(([k, piso]) => `${k} desvia ${(medido[k] || 0).toFixed(2)}°, o piso é ${piso}° — voltou a ser trama.`).join("\n      "));
-
-  /* E O PISO TEM DE ESTAR NA TABELA, não aqui: uma catraca que guarda um
-     número que ela própria não vê não é uma catraca (a linha é do
-     `desenho`, escrita para os pisos de contraste, e vale igual aqui).
-     A tabela cobre exactamente as quatro hachuras que desenham mais o
-     céu — uma hachura nova sem piso nasceria sem catraca, calada. */
-  const devidos = [...HACHURAS.filter((h) => h !== "nenhuma"), "ceu"].sort();
-  t("e cada hachura que desenha tem o seu piso na tabela",
-    JSON.stringify(Object.keys(TREMOR_MINIMO).sort()) === JSON.stringify(devidos),
-    "a tabela tem " + Object.keys(TREMOR_MINIMO).sort().join(", ") + " e devia ter " + devidos.join(", "));
-
-  /* as cinco hachuras de chão existem e são CINCO TALHOS diferentes, não
-     cinco densidades — é isso que as faz distinguirem-se em cinzento */
-  const assinaturas = new Set();
-  for (const h of HACHURAS) {
-    const linhas = hachuraDoChao(rng(hashSemente("chao")), h, 375);
-    /* A IMPRESSÃO DIGITAL DE CADA HACHURA. A primeira versão comparava
-       os três primeiros talhos com os números apagados, e `seca` e
-       `pedra` saíam IGUAIS — as duas são talhos rectos, e o que as
-       separa é o ÂNGULO (uma direcção contra duas, cruzadas), que um
-       `M # # l # #` não mostra. A régua passa a colher o que de facto as
-       separa: que comandos de caminho usa, e em quantos sentidos talha. */
-    const comandos = [...new Set(linhas.join(" ").match(/[A-Za-z]/g) || [])].sort().join("");
-    const sentidos = new Set(linhas.map((l) => l.match(/l (-?[\d.]+) (-?[\d.]+)$/))
-      .filter(Boolean).map((m) => Math.sign(Number(m[2]) / Number(m[1]))));
-    assinaturas.add(h === "nenhuma" ? "vazia" : comandos + "|" + [...sentidos].sort().join(","));
-    if (h === "nenhuma") t("a hachura `nenhuma` (o vazio) não desenha nada", linhas.length === 0);
-    else t(`a hachura \`${h}\` desenha (${linhas.length} talhos)`, linhas.length > 10);
-  }
-  t("e as cinco são cinco TALHOS diferentes, não cinco densidades", assinaturas.size === HACHURAS.length,
-    [...assinaturas].join("  ·  "));
-}
-
-/* ============================================================ */
-sec("3. os 30 biomas, e o desconhecido que não dá buraco");
-{
-  const todos = new Set();
-  for (const m of MOLDES) for (const id of idsDeBioma(m)) todos.add(id);
-  t(`moldes.js tem ${todos.size} biomas (a peça foi desenhada para 30)`, todos.size === 30, `achou ${todos.size}`);
-
-  const semLinha = [...todos].filter((id) => !BIOMAS_DA_GRAVURA[id]);
-  t("todo bioma de moldes.js tem uma linha na tabela da gravura",
-    semLinha.length === 0, "sem linha: " + semLinha.join(", "));
-
-  const sobra = Object.keys(BIOMAS_DA_GRAVURA).filter((id) => !todos.has(id));
-  t("e nenhuma linha da tabela fala de um bioma que já não existe",
-    sobra.length === 0, "a mais: " + sobra.join(", "));
-
-  const fora = Object.entries(BIOMAS_DA_GRAVURA)
-    .filter(([, g]) => !GRAMATICAS.includes(g.silhueta) || !HACHURAS.includes(g.hachura))
-    .map(([id]) => id);
-  t("toda linha usa uma das sete gramáticas e uma das cinco hachuras",
-    fora.length === 0, "fora do acervo: " + fora.join(", "));
-
-  /* A DEGRADAÇÃO ESCRITA: bioma desconhecido dá horizonte liso com
-     hachura, que é uma gravura legítima — nunca um buraco na tela. */
-  t("o bioma desconhecido cai no liso", gramaticaDo("bioma_que_nao_existe") === GRAMATICA_LISA);
-  t("e o bioma vazio/nulo também", gramaticaDo(null) === GRAMATICA_LISA && gramaticaDo(undefined) === GRAMATICA_LISA);
-  const orfa = gravuraDaCena({ semente: "x", bioma: "nada_disto", lugar: "Lugar Nenhum", hora: 3 });
-  t("e desenha mesmo assim: silhueta, chão e astro", !!orfa.d.silhueta && orfa.d.chao.length > 0 && orfa.astro.raio > 0);
-
-  /* e nenhum dos 30 estoura nem devolve desenho vazio */
-  const vazios = [...todos].filter((id) => {
-    const g = gravuraDaCena({ semente: "s", bioma: id, lugar: "L", hora: 12 });
-    return !g.d.silhueta || g.d.ceu.length === 0;
-  });
-  t("os 30 biomas desenham, e nenhum devolve faixa vazia", vazios.length === 0, vazios.join(", "));
-}
+/* 1 · 2 · 3 — SAÍRAM EM V5a, e o motivo fica escrito no lugar delas.
+   Provavam a CONTA da xilogravura: o determinismo por semente da paisagem
+   (mesma semente, mesma cripta), a hachura irregular do buril (o tremor
+   mínimo de cada gesto) e os 30 biomas com gramática e hachura. A pessoa
+   tirou a gravura da tela em 25/09 (*"deixar exatamente igual à imagem do
+   Figma"*), `rosto-da-cena.jsx` e o motor em `gravura-da-cena.js` saíram
+   inteiros, e uma asserção sobre uma conta que já não existe seria verde
+   por vazio — pior do que nenhuma. O determinismo por semente continua a
+   ser lei e continua provado onde a semente ainda desenha (`teste-rosto`,
+   `teste-semente` e as suítes do motor). */
 
 /* ============================================================ */
 sec("4. a areia é uma função, não um desenho");
@@ -278,33 +142,14 @@ sec("5. o selo de prazo conta ao contrário, e nunca 1/4");
 /* ============================================================ */
 sec("6. a hora acende a luz, e as quatro luzes existem");
 {
-  t("as quatro luzes de formas.md estão na tabela",
-    LUZES.every((l) => LUZ_DA_CENA[l]) && LUZES.length === 4);
-  /* R15 — A RECEITA POR LUZ PERDEU O ASTRO E GANHOU O SEGUNDO BURIL.
-     `astro`/`astroAlfa` subiram ao topo da tabela (quatro cópias do
-     mesmo valor por modo é "a mesma cor escrita quatro vezes"), e o
-     céu ganhou `talhoDoCeu`. O que continua por luz é `astroAlto`:
-     *posição é luz, opacidade era afinação.* */
-  const faltando = [];
-  for (const l of LUZES) for (const k of ["ceuAlto", "ceuBaixo", "chao", "talho", "talhoDoCeu", "astroAlto"]) {
-    if (LUZ_DA_CENA[l][k] === undefined) faltando.push(`${l}.${k}`);
-  }
-  t("e cada uma traz a receita inteira", faltando.length === 0, faltando.join(", "));
-  t("a tinta da gravura é UMA, e é chave de topo", typeof LUZ_DA_CENA.tinta === "string");
-  /* UMA verificação em vez de quatro, porque agora é um valor em vez de
-     quatro. E o alfa do astro e o dos buris são números de topo pela
-     mesma razão: quem os lê é a suíte, não só a tela. */
-  t("o astro sai de T, nunca de um hex novo, e é UM no topo da tabela",
-    Object.values(T).includes(LUZ_DA_CENA.astro) && LUZ_DA_CENA.astro === T.ink);
-  t("o alfa do astro e o dos dois buris moram na tabela",
-    LUZ_DA_CENA.astroAlfa > 0 && LUZ_DA_CENA.astroAlfa <= 1
-    && LUZ_DA_CENA.alfaDoTalho > 0 && LUZ_DA_CENA.alfaDoTalho <= 1);
-  t("nenhuma luz guarda uma cópia local do astro",
-    LUZES.every((l) => LUZ_DA_CENA[l].astro === undefined && LUZ_DA_CENA[l].astroAlfa === undefined));
-  /* madrugada e entardecer têm o astro BAIXO; dia e noite, ALTO */
-  t("madrugada e entardecer trazem o astro baixo",
-    LUZ_DA_CENA.madrugada.astroAlto === false && LUZ_DA_CENA.entardecer.astroAlto === false);
-
+  /* V5a: AS RECEITAS DE COR DAS QUATRO LUZES SAÍRAM (`LUZ_DA_CENA`, em
+     `estilo.js`, só a gravura as lia). As asserções sobre elas — a receita
+     inteira por luz, a tinta de topo, o astro de `T.ink` a 0,85, o astro
+     baixo na madrugada — saíram com a tabela. O que fica é o que ainda tem
+     leitor: os NOMES das luzes, que `O TEMPO` desenha e o cabeçalho da
+     página escreve, e a fronteira de cada uma. */
+  t("as quatro luzes existem, e são quatro nomes distintos",
+    LUZES.length === 4 && new Set(LUZES).size === 4);
   t("cada hora do dia acende exactamente uma luz",
     Array.from({ length: 24 }, (_, h) => luzDaHora(h)).every((l) => LUZES.includes(l)));
   t("a noite atravessa a meia-noite", luzDaHora(23) === "noite" && luzDaHora(0) === "noite" && luzDaHora(3) === "noite");
@@ -317,157 +162,13 @@ sec("6. a hora acende a luz, e as quatro luzes existem");
 }
 
 /* ============================================================ */
-sec("6b. a gravura de linha branca — os sete pisos, medidos nas quatro luzes");
-{
-  /* POR QUE ESTA SECÇÃO EXISTE, e é a lição mais cara das duas entregas:
-     a primeira versão desta peça pintava as quatro coisas com uma tinta
-     só, e o talho media **1,08:1** contra o chão da noite — o buril não
-     existia, e NENHUMA catraca o disse. Foi preciso um par de olhos no
-     navegador. *Um contraste que ninguém mede é um contraste que ninguém
-     tem.* O `desenho` pôs os pisos em `LUZ_DA_CENA.pisos` para a suíte
-     os ler de volta; é esta secção que os lê.
-
-     A CONTA É A COMPOSIÇÃO, não a cor nua: um talho a 0,85 de opacidade
-     sobre o chão NÃO é o talho — é a mistura dos dois. Medir a cor crua
-     dava um número mais bonito e falso. */
-  const rgb = (h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16));
-  const lum = (c) => { const v = c.map((x) => x / 255).map((x) => (x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4))); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
-  const razao = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-  const sobre = (frente, alfa, atras) => rgb(frente).map((c, i) => alfa * c + (1 - alfa) * rgb(atras)[i]);
-  const misturar = (a, b, k) => rgb(a).map((c, i) => c + (rgb(b)[i] - c) * k);
-  const hex = (c) => "#" + c.map((x) => Math.round(x).toString(16).padStart(2, "0")).join("");
-  /* A TABELA PRIMEIRO, E COM MENSAGEM. Sem esta linha a secção morria com
-     um `TypeError` em cima de `P.silhuetaNoCeu` — e um varredor que
-     rebenta diz "está partido", não diz "a tabela que eu guardo
-     desapareceu", que é outra coisa e tem outro conserto. Mesmo
-     argumento de `pisoDeZona` em `check-formas`: catraca que mede o
-     vazio é pior que catraca nenhuma, e ela tem de o SABER dizer. */
-  const P = LUZ_DA_CENA.pisos || {};
-  const SETE = ["silhuetaNoCeu", "talhoNoChao", "legendaInk", "legendaMundo", "chapaNoCeu", "texturaDoCeu", "astroNoCeu"];
-  const semPiso = SETE.filter((k) => !(P[k] > 0));
-  t("os sete pisos moram na tabela, não na suíte", semPiso.length === 0,
-    semPiso.length === SETE.length
-      ? "A TABELA `LUZ_DA_CENA.pisos` DESAPARECEU — sem ela esta secção mede o vazio e fica verde por não medir nada."
-      : "sem piso: " + semPiso.join(", "));
-
-  /* O CÉU É UM GRADIENTE, e por isso quem mede nele tem de dizer em que
-     altura mediu. `ceuEm` é a mesma conta que o `<linearGradient>` do
-     `.jsx` faz: interpola `ceuAlto`→`ceuBaixo` pela banda inteira. */
-  const ceuEm = (z, y) => hex(misturar(z.ceuAlto, z.ceuBaixo, y / BANDAS.ceu[1]));
-  const ALTURAS = [8, 16, 24, 32, 40, 48, 56, 60];
-
-  const mal = [];
-  const linha = [];
-  for (const nome of LUZES) {
-    const z = LUZ_DA_CENA[nome];
-    /* a silhueta pousa no horizonte, logo mede-se contra o céu DE BAIXO */
-    const m = {
-      silhuetaNoCeu: razao(rgb(LUZ_DA_CENA.tinta), rgb(z.ceuBaixo)),
-      talhoNoChao: razao(sobre(z.talho || LUZ_DA_CENA.tinta, LUZ_DA_CENA.alfaDoTalho, z.chao), rgb(z.chao)),
-      legendaInk: razao(rgb(T.ink), rgb(z.chao)),
-      legendaMundo: razao(rgb(T.mundo), rgb(z.chao)),
-      chapaNoCeu: Math.min(razao(rgb(T.inkMeio), rgb(z.ceuAlto)), razao(rgb(T.inkMeio), rgb(z.chao))),
-      /* R15 — A TEXTURA DO CÉU DEIXA DE SER DÍVIDA E ENTRA NO LAÇO, e é
-         medida em TODO o gradiente e não só na metade de baixo: com o
-         buril claro o pior ponto deixou de ser o topo (é o horizonte,
-         onde o campo já é claro) e passou a 2,14 contra um piso de 1,5.
-         A caixa de dívida que aqui estava — com `TOPO_DECLARADO` e o
-         dente "no topo não piora do que hoje se mede" — SAIU pela regra
-         anti-cemitério que ela própria escrevia: *no dia em que o
-         `desenho` der ao céu um segundo talho, estes números sobem e
-         esta caixa sai.* Deu. */
-      texturaDoCeu: Math.min(...ALTURAS.map((y) => {
-        const c = ceuEm(z, y);
-        return razao(sobre(z.talhoDoCeu || LUZ_DA_CENA.tinta, LUZ_DA_CENA.alfaDoTalho, c), rgb(c));
-      })),
-      /* R15 — O PISO QUE A SUÍTE SE RECUSOU A INVENTAR, e agora pode,
-         porque o `desenho` escreveu o número: é 3:1, o mesmo de
-         `silhuetaNoCeu`/`talhoNoChao`/`chapaNoCeu`, porque **o astro é
-         uma forma** — e não o 1,5 da textura, que uma textura pode
-         dissolver-se em tom e um disco que se dissolve lê como borrão. */
-      astroNoCeu: (() => {
-        const y = z.astroAlto ? 16 : BANDAS.horizonte - 10;
-        const c = ceuEm(z, y);
-        return razao(sobre(LUZ_DA_CENA.astro, LUZ_DA_CENA.astroAlfa, c), rgb(c));
-      })(),
-    };
-    for (const [k, v] of Object.entries(m)) if (v < P[k]) mal.push(`${nome}.${k} = ${v.toFixed(2)}, o piso é ${P[k]}`);
-    linha.push(`${nome} ${m.silhuetaNoCeu.toFixed(1)}/${m.talhoNoChao.toFixed(1)}/${m.texturaDoCeu.toFixed(2)}/${m.astroNoCeu.toFixed(2)}`);
-  }
-  t(`os sete pisos fechados passam nas quatro luzes (silhueta/talho/textura/astro: ${linha.join(" · ")})`,
-    mal.length === 0, mal.join("\n      "));
-
-  /* ------------------------------------------------------------
-     A TABELA RECALCULA-SE, E É POR ISSO QUE ELA É TABELA.
-
-     `talhoDoCeu` não é um hex escolhido: é `ceuBaixo` — a cor do
-     horizonte, o ponto mais claro do campo — erguido
-     `erguerOTalhoDoCeu` em direcção ao branco, com um k só para as
-     quatro. A suíte REFAZ a conta em vez de comparar hexes de cor:
-     *uma tabela que se recalcula não pode ser afinada à mão sem que a
-     catraca diga.* A caixa do hex ignora-se — `#D2CDD2` e `#d2cdd2`
-     são a mesma cor com outro texto, e isso já custou uma linha nesta
-     casa (`sombra(".55")`, em `estilo.js`).
-     ------------------------------------------------------------ */
-  const erguer = (h, k) => hex(rgb(h).map((c) => Math.round(c + (255 - c) * k)));
-  const desafinadas = LUZES.filter((n) => {
-    const z = LUZ_DA_CENA[n];
-    return String(z.talhoDoCeu).toLowerCase() !== erguer(z.ceuBaixo, LUZ_DA_CENA.erguerOTalhoDoCeu);
-  });
-  t(`o talho do céu é o horizonte erguido ${Math.round(LUZ_DA_CENA.erguerOTalhoDoCeu * 100)} % ao branco, nas quatro`,
-    desafinadas.length === 0 && LUZ_DA_CENA.erguerOTalhoDoCeu > 0,
-    desafinadas.map((n) => `${n}: ${LUZ_DA_CENA[n].talhoDoCeu} ≠ ${erguer(LUZ_DA_CENA[n].ceuBaixo, LUZ_DA_CENA.erguerOTalhoDoCeu)}`).join(" · "));
-
-  /* A SILHUETA É MASSA, NÃO MARCA — e é o dente que impede a lei nova de
-     ser aplicada onde ela não vale: `tinta` continua uma, e a silhueta
-     continua a ser pintada com ela nas quatro luzes. */
-  t("a silhueta continua `tinta` — massa não é marca",
-    /d=\{g\.d\.silhueta\}\s+fill=\{tinta\}/.test(ROSTO));
-  t("e o céu deixou de ser talhado a `tinta`",
-    /linhas=\{g\.d\.ceu\}[^/]*tinta=\{talhoCeu\}/.test(ROSTO)
-    && !/linhas=\{g\.d\.ceu\}[^/]*tinta=\{tinta\}/.test(ROSTO));
-  /* O ALFA DEIXOU DE ESTAR SOLTO NO `.jsx`: nenhum dos dois buris
-     escreve o seu número à mão. */
-  t("nenhum dos dois buris traz o alfa escrito à mão no .jsx",
-    !/opacidade=\{0\.\d+\}/.test(ROSTO) && (ROSTO.match(/opacidade=\{alfa\}/g) || []).length === 2);
-  /* R15 §5 — O TALHO PARA NA BORDA DO ASTRO. O segundo canal do astro é
-     ser o único SÓLIDO num campo talhado; um recorte é o que o garante,
-     e sem cor nenhuma (uma máscara pediria branco e preto literais, e
-     `rosto-da-cena.jsx` não tem tecto de literais). */
-  t("o talho do céu é recortado à volta do astro (o disco é sólido)",
-    /clipPath[\s\S]{0,400}clipRule="evenodd"/.test(ROSTO) && /recorte=\{`url\(#\$\{id\}-semOAstro\)`\}/.test(ROSTO));
-
-  /* ------------------------------------------------------------
-     O QUE AQUI ESTAVA, E POR QUE SAIU (R15) — e a caixa saiu pela regra
-     que ela própria escreveu no fim de si mesma.
-
-     Ela media a textura do céu a `tinta` sobre o gradiente e declarava
-     a dívida com a tabela inteira dos números, porque o piso de 1,5
-     reprovava no topo das quatro luzes (noite 1,09). Guardava duas
-     coisas: que a metade de BAIXO passava, e que o topo NÃO PIORAVA em
-     relação ao medido — este segundo dente existia só porque o primeiro
-     não podia ser cobrado em todo o lado.
-
-     A saída não veio de afinar: veio de o `desenho` descobrir que a LEI
-     estava errada (*"o céu é a fonte de luz" é verdade do horizonte,
-     não do céu*) e dar ao céu o seu próprio buril, claro. Com ele o
-     pior ponto das quatro passa de **1,09** para **2,14**, e a textura
-     entra no laço dos pisos fechados lá em cima, medida em TODO o
-     gradiente. `TOPO_DECLARADO` e o dente do topo foram com ela: *um
-     dente que existe só porque o piso não passa é uma dívida com forma
-     de catraca, e quando a dívida se paga ele não fica de lembrança.*
-
-     O QUE FICA DESTA CAIXA, porque é o que não envelhece: o número que
-     provou que a opacidade não era a saída — a 1,0, tinta chapada, a
-     noite chegava a **1,18** no topo. O limite nunca foi a
-     transparência; era a distância entre `tinta` e `ceuAlto`.
-
-     E O ASTRO — que aqui era só um `console.log` de cortesia, porque a
-     suíte se recusou (com razão) a inventar um piso que o `desenho` não
-     tinha escrito — deixou de precisar dele: tem piso na tabela e
-     asserção no laço, a três colunas acima.
-     ------------------------------------------------------------ */
-}
+/* 6b — SAIU EM V5a. Media os sete pisos de contraste da gravura de linha
+   branca nas quatro luzes (a silhueta contra o céu, o talho contra o chão,
+   a legenda, a marca da chapa, a textura do céu, o astro). Eram pisos de
+   `LUZ_DA_CENA`, e a tabela saiu com a gravura. A lição dela fica, e é
+   de toda a casa: *um contraste que ninguém mede é um contraste que ninguém
+   tem* — os pares do cabeçalho que ocupou o lugar dela medem-se em
+   `teste-v5a-cabecalho.mjs`. */
 
 /* ============================================================ */
 sec("6c. o esbatimento do topo (R15) — uma região declarada ilegível");
@@ -518,12 +219,11 @@ sec("6c. o esbatimento do topo (R15) — uma região declarada ilegível");
 }
 
 /* ============================================================ */
-sec("7. as três bandas e a cinta somam o que prometem");
+sec("7. a cinta soma o que promete");
 {
-  t("as três bandas cobrem os 96 px sem sobra",
-    BANDAS.ceu[0] === 0 && BANDAS.ceu[1] === BANDAS.chao[0] && BANDAS.chao[1] === BANDAS.altura);
-  t("o horizonte é a linha onde a silhueta pousa", BANDAS.horizonte === BANDAS.chao[0]);
-  t("a legenda mora na banda do chão", BANDAS.legenda > BANDAS.chao[0] && BANDAS.legenda < BANDAS.altura);
+  /* V5a: as três asserções das BANDAS da gravura (céu, horizonte, chão, e a
+     legenda na banda do chão) saíram com `BANDAS`. A conta da cinta, abaixo,
+     não dependia delas — só do telefone de referência, que ficou no topo. */
 
   /* A CATRACA DO ORÇAMENTO (`mente/r13-mesa.md`, §1): uma tabela de
      orçamento que não fecha na largura do ecrã não é um orçamento; é uma
@@ -608,9 +308,12 @@ sec("8. o contrato de assinatura das peças (o App chama por estes nomes)");
     SOLEIRA.camposDaOferta === 4 && campos.every((c) => corpoDaOferta.includes(c)),
     "faltam: " + campos.filter((c) => !corpoDaOferta.includes(c)).join(", "));
   for (const [nome, rx] of contrato) t(`ui.jsx exporta \`${nome}\` com a assinatura combinada`, rx.test(UI));
-  t("e `RostoDaCena` chega ao App por ui.jsx, com UM import só",
-    /export \{ RostoDaCena \} from "\.\/rosto-da-cena\.jsx"/.test(UI)
-    && /export function RostoDaCena\(\{ semente = "", bioma = "", lugar = "", hora = 12, largura = LARGURA_DE_REFERENCIA \}\)/.test(ROSTO));
+  /* V5a: a asserção dizia que `RostoDaCena` chegava ao App por ui.jsx, com a
+     assinatura combinada. A peça saiu da tela e do código; o que se guarda
+     agora é que não volta por esta porta — o topo do papel é
+     `CabecalhoDaPagina`, e o contrato dele está em `teste-v5a-cabecalho.mjs`. */
+  t("e `RostoDaCena` já não chega ao App por ui.jsx (V5a)",
+    !/export \{ RostoDaCena \}/.test(UI) && !/rosto-da-cena/.test(UI.replace(/\/\*[\s\S]*?\*\//g, "")));
 
   /* A MOCHILA SOBREVIVEU AO RENOMEAR. `formas.md` dá o nome
      `IconeBolsa` à MOEDA de 12×12; o glifo de 24×24 que tinha esse nome
@@ -626,29 +329,24 @@ sec("9. as leis da casa, medidas no texto das peças novas");
   const semComentario = (x) => x.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
   const RX_COR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})(?![0-9a-fA-F])|\b(?:rgb|rgba|hsl|hsla)\(/g;
 
-  /* COR É NÚMERO, LOGO É TABELA — e o rosto da cena é o sítio onde isto
-     mais se arriscava: uma xilogravura são dezenas de traços, e cada um
-     é um sítio onde um hex cabe. */
-  for (const [nome, txt] of [["rosto-da-cena.jsx", ROSTO], ["gravura-da-cena.js", readFileSync("../src/gravura-da-cena.js", "utf8")]]) {
+  /* COR É NÚMERO, LOGO É TABELA. V5a: o rosto da cena (a xilogravura, onde
+     isto mais se arriscava) saiu; a conta que sobrou chama-se `hora-e-prazo.js`
+     e continua sem um único hex. */
+  for (const [nome, txt] of [["hora-e-prazo.js", readFileSync("../src/hora-e-prazo.js", "utf8")]]) {
     const achados = semComentario(txt).match(RX_COR) || [];
     t(`\`${nome}\` não tem um único literal de cor`, achados.length === 0, achados.join(" "));
   }
 
-  t("a tinta da gravura sai de LUZ_DA_CENA, nunca de uma constante local",
-    /LUZ_DA_CENA\.tinta/.test(ROSTO));
+  /* V5a: «a tinta da gravura sai de LUZ_DA_CENA» saiu com as duas. */
 
   /* NADA DESCE DE 12: as peças escrevem a letra por `TIPOS`, nunca por
      um número solto. */
-  const letras = (semComentario(UI + ROSTO).match(/fontSize:\s*(\d+)/g) || []);
+  const letras = (semComentario(UI).match(/fontSize:\s*(\d+)/g) || []);
   t("nenhuma peça nova escreve um tamanho de letra à mão", letras.length === 0, letras.join(" "));
-  t("e as duas que escrevem letra pedem-na a TIPOS",
-    TIPOS.maquina >= TIPOS.piso && /TIPOS\.maquina/.test(UI) && /TIPOS\.corpo/.test(ROSTO));
-
-  /* COMPONENTE DEFINIDO DENTRO DO RENDER MATA O FOCO — a armadilha da
-     casa. `Talhos` e `Legenda` têm de viver FORA de `RostoDaCena`. */
-  const iRosto = ROSTO.indexOf("export function RostoDaCena");
-  t("Talhos e Legenda são definidos FORA do render",
-    ROSTO.indexOf("function Talhos") < iRosto && ROSTO.indexOf("function Legenda") < iRosto);
+  /* V5a: «as duas que escrevem letra» eram ui.jsx e o rosto da cena; fica uma.
+     E «Talhos e Legenda FORA do render» saiu com as duas componentes (a lei
+     que a asserção guardava continua de pé em `check-escopo`). */
+  t("e a que escreve letra pede-a a TIPOS", TIPOS.maquina >= TIPOS.piso && /TIPOS\.maquina/.test(UI));
 
   /* A DEGRADAÇÃO NÃO É OPCIONAL, e está escrita em formas.md. */
   /* A FOLHA LÊ-SE SEM COMENTÁRIOS, e a razão é a mesma que
@@ -661,8 +359,9 @@ sec("9. as leis da casa, medidas no texto das peças novas");
     /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.tv-guardado-varre/.test(FOLHA));
   t("e a saída NÃO é `none` sozinho — pousa no fio cheio",
     /\.tv-guardado-varre \{ animation: none; transform: scaleX\(1\); opacity: 1; \}/.test(FOLHA));
-  t("o rosto da cena degrada em forced-colors, sem forced-color-adjust: none",
-    /@media \(forced-colors: active\)[\s\S]*?\.tv-gravura-tinta/.test(FOLHA) && !/forced-color-adjust:\s*none/.test(FOLHA));
+  /* V5a: a degradação da gravura em forced-colors saiu com ela; a metade que
+     é lei de toda a folha — nunca `forced-color-adjust: none` — fica. */
+  t("a folha nunca declara forced-color-adjust: none", !/forced-color-adjust:\s*none/.test(FOLHA));
   /* O LIMIAR É A CONTA DA FOLGA, e a suíte guarda a CONTA e não o
      número. `CINTA.rotuloDoGuardado` é uma MEDIDA — 74 px, lida no
      navegador com a fonte carregada e por `scrollWidth`; a conta à mão
@@ -684,8 +383,8 @@ sec("9. as leis da casa, medidas no texto das peças novas");
     CINTA.rotuloDoGuardado > CINTA.folgaMinima);
   t("mas a camada que fala nunca cai: aria-live fora do rótulo",
     /className="sr-only" aria-live="polite"/.test(UI));
-  t("e a faixa não anima: zero movimento novo no rosto da cena",
-    !/animation|transition|tv-fade|tv-slide/.test(semComentario(ROSTO)));
+  /* V5a: «a faixa não anima» saiu com a faixa; o cabeçalho que a substitui
+     também não anima, e é `teste-v5a-cabecalho.mjs` que o guarda. */
 }
 
 console.log(`\nR13 · as peças: ${ok} passaram, ${mal} falharam`);

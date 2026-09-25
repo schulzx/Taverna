@@ -109,13 +109,14 @@ sec("4. NADA SABIDO É NADA MOSTRADO");
   t("sem região nem bioma, a linha some", so.onde === "");
   t("mas o título fica", so.titulo === "Vila");
   t("sem clima, só o momento", !/·/.test(so.quando) && /manhã/.test(so.quando));
-  /* o componente respeita isso */
-  /* v9.176: a régua não pode depender do FIM DE LINHA. Ela casava `\n`
-     literal, e este repositório roda com `autocrlf` — num clone novo o
-     arquivo chega em CRLF e a prova falharia sem ninguém ter tocado em
-     nada. `\s*` cobre os dois, e a lei continua a mesma. */
-  t("o componente não desenha o nulo", /function CabecalhoDaCena\(\{ cena \}\) \{\s*if \(!cena\) return null;/.test(APP));
-  t("e some com a linha vazia", /\{cena\.onde && \(/.test(APP));
+  /* V5a (25/09): as duas asserções sobre O COMPONENTE (`CabecalhoDaCena` não
+     desenha o nulo; some com a linha vazia) saíram com ele. O cartão de
+     v9.157 deixou a tela — sem a gravura, seria a segunda peça a dizer o
+     lugar (a lei da aposentadoria, `formas.md` §20), e às 22:00 dizia
+     `noite · ensolarado`. A regra que elas guardavam — NADA SABIDO É NADA
+     MOSTRADO — continua de pé duas vezes: na conta, logo acima, e nas
+     etiquetas do cabeçalho da página (`teste-v5a-cabecalho.mjs`). */
+  t("o cartão de v9.157 não voltou à tela", !/function CabecalhoDaCena\(/.test(APP) && !/<CabecalhoDaCena /.test(APP));
 }
 
 sec("5. A COSTURA — no topo, e sem inventar");
@@ -139,8 +140,13 @@ sec("5. A COSTURA — no topo, e sem inventar");
      uma asserção vermelha. `flex-1 overflow-y-auto overflow-x-hidden` é
      único no `App.jsx` e não se move quando a região ganha classes. */
   const iArea = APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden");
-  const iCab = APP.indexOf("<CabecalhoDaCena cena={cenaDoPalco()} />");
-  t("fica dentro da área que rola", iCab > iArea);
+  /* V5a: o lugar deixou de estar DENTRO da área que rola (o cartão de v9.157)
+     e passou a estar ACIMA dela, no cabeçalho da página, que não rola. A lei
+     que as duas asserções seguintes guardavam — o lugar vem antes da primeira
+     palavra do Narrador — fica mais forte, não mais fraca: agora vem antes
+     por construção, em todos os turnos, e não só no topo da conversa. */
+  const iCab = APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(");
+  t("fica ACIMA da área que rola, e não rola com ela", iCab > 0 && iCab < iArea);
   /* v9.170 (mesa-jogo-v2): o selo "MESTRE ATIVO" passou a abrir o painel da
      narrativa, então o cabeçalho da cena virou a SEGUNDA coisa. A folga
      sobe de 400 para 900 caracteres para caber o selo — o que a lei
@@ -158,11 +164,11 @@ sec("5. A COSTURA — no topo, e sem inventar");
      isso mede-se contra `agruparMensagens(mensagens)`, não contra uma
      folga de texto. Deixo a observação para o `testes` em vez de mudar a
      asserção de outra mesa por minha conta. */
-  t("e vem antes da primeira palavra do Narrador", iCab - iArea < 1100);
-  /* o tom entra como VÉU sobre o painel da casa, e não como fundo próprio */
-  t("a cor é um véu, não um fundo", /linear-gradient\(100deg, \$\{tom\.cor\}\$\{veu/.test(APP));
-  t("com a barra do bioma na borda", /borderLeft: `3px solid \$\{tom\.cor\}`/.test(APP));
-  t("e a força do véu vem da luz", /const veu = Math\.round\(10 \+ tom\.luz \* 26\)/.test(APP));
+  t("e vem antes da primeira palavra do Narrador", iCab < APP.indexOf("agruparMensagens(mensagens).map("));
+  /* V5a: as três asserções do VÉU (a cor do bioma como véu, a barra na
+     borda, a força da luz) saíram com o cartão que o pintava. O tom do bioma
+     (`TONS`) continua pintando o cartão da chegada, e é `teste-momentos` que
+     o guarda. */
 }
 
 
@@ -183,46 +189,38 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
   t("o painel da narrativa tranca o eixo lateral", /tv-scroll[^"]*flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
 
   /* ============================================================
-     R13-B · O ROSTO DA CENA — a fiação, e só ela
+     V5a · O CABEÇALHO DA PÁGINA — a fiação, e só ela
 
-     A PEÇA e o MOTOR têm suíte própria (`teste-r13-pecas.mjs`, e
-     `gravura-da-cena.js` prova-se em Node). O que se guarda aqui é o que
-     só esta tela pode errar: onde a faixa mora, de onde vem a conta, e
-     quem lhe diz a largura.
+     Era a fiação do rosto da cena (R13-B): a faixa no topo do papel e fora
+     do que rola, a conta vinda da biblioteca, a largura medida por quem
+     monta, e o mesmo lugar na semente e na legenda. A gravura saiu em V5a e
+     as asserções mudaram de objeto, uma a uma, guardando a mesma coisa onde
+     a coisa ainda existe. A PEÇA e a CONTA provam-se em
+     `teste-v5a-cabecalho.mjs`; aqui fica só o que esta tela pode errar.
      ============================================================ */
   {
-    const iPapel = APP.indexOf("O PAPEL PASSA A TER DUAS FAIXAS (R13-B)");
-    const iRosto = APP.indexOf("<OTopoDoPapel semente={sementeMundo()}");
-    /* R15: mesma correção de âncora — ver o comentário em `iArea` acima. */
+    const iPapel = APP.indexOf("O PAPEL TEM DUAS FAIXAS (R13-B → V5a)");
+    const iCabecalho = APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(");
     const iRola = APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden");
-    /* 96 px NO TOPO DO PAPEL e FORA do que rola: a gravura é o topo da
-       folha, não um cartaz pousado em cima dela nem uma imagem que sobe
-       com a prosa. A ordem no texto é a ordem no DOM. */
-    t("o papel virou moldura de duas faixas", iPapel > 0 && iPapel < iRosto);
-    t("e o rosto vem ANTES da área que rola — ele não rola com a prosa", iRosto > 0 && iRosto < iRola);
-    /* A CONTA NÃO MORA NA TELA. `mesma semente, mesma cripta, em qualquer
-       máquina` só se prova porque a conta vive num módulo puro; uma cópia
-       dela aqui seria a segunda verdade, e a primeira lei da casa caía
-       com ela. */
-    t("a gravura vem da biblioteca, e o motor dela não foi copiado para cá",
-      /RostoDaCena } from "\.\/ui\.jsx"|, RostoDaCena } from "\.\/ui\.jsx"/.test(APP)
-      && !/gravuraDaCena\(/.test(APP) && !/BIOMAS_DA_GRAVURA|hachuraDoChao|silhuetaLisa/.test(APP),
-      "se a conta for copiada para o App.jsx, a mesma semente passa a dar duas criptas");
-    /* A LARGURA É MEDIDA, e não adivinhada: a hachura vive em px e não se
-       estica. Sem medição, uma mesa de 1 280 desenha a trama de um
-       telefone de 375 esticada dez vezes. */
-    t("quem monta mede a largura e entrega-a à peça",
-      /function OTopoDoPapel\(/.test(APP) && /new ResizeObserver\(medir\)/.test(APP) && /largura=\{largura\}/.test(APP));
-    t("e a medição nunca custa o turno", /calou\("a largura do topo do papel"/.test(APP));
-    /* UM LUGAR, NÃO DOIS: o mesmo `lugarDaCena()` entra na SEMENTE e na
-       LEGENDA. Se a legenda dissesse um lugar e a semente outro, a gravura
-       mudava sem o nome mudar — e o jogador via a cripta trocar sozinha. */
-    t("o mesmo lugar alimenta a semente e a legenda",
+    /* NO TOPO DO PAPEL e FORA do que rola — como a gravura estava: o
+       cabeçalho é o topo da folha, não um cartaz que sobe com a prosa. */
+    t("o papel continua a ser moldura de duas faixas", iPapel > 0 && iPapel < iCabecalho);
+    t("e o cabeçalho vem ANTES da área que rola — ele não rola com a prosa", iCabecalho > 0 && iCabecalho < iRola);
+    /* A CONTA NÃO MORA NA TELA: o que as etiquetas dizem é `etiquetasDaPagina`
+       (glifos.js, provada em Node). Uma cópia dela aqui seria a segunda
+       verdade — e a regra de quem cede primeiro divergiria no primeiro ajuste. */
+    t("a peça vem da biblioteca e a conta das etiquetas não foi copiada para cá",
+      /, CabecalhoDaPagina, FimDaPagina } from "\.\/ui\.jsx"/.test(APP)
+      && /import \{ assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina \} from "\.\/glifos\.js"/.test(APP)
+      && !/function etiquetasDaPagina|const etiquetasDaPagina/.test(APP) && !/\/tocha\/\.test/.test(APP) &&!/RostoDaCena|OTopoDoPapel\(|gravuraDaCena\(/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")),
+      "se a regra das etiquetas for copiada para o App.jsx, o telefone e a mesa passam a dizer coisas diferentes");
+    /* UM LUGAR, NÃO DOIS: o mesmo `lugarDaCena()` que a gravura escrevia é o
+       que a etiqueta escreve; a mesma `luzDaHora` d'O TEMPO; o mesmo `clima`. */
+    t("o mesmo lugar, a mesma luz e o mesmo clima alimentam a etiqueta",
       /const lugarDaCena = \(\) => \{/.test(APP)
-      && /bioma=\{biomaDaqui\(\)\} lugar=\{lugarDaCena\(\)\}/.test(APP));
-    /* E O `📍 lugar` SAIU DO PAINEL DO TEMPO: esteve lá emprestado uma
-       etapa porque recolher é mudar de morada e nunca apagar, e a morada
-       dele é esta legenda. Duas moradas seriam duas verdades. */
+      && /etiquetasDaPagina\(\{ lugar: lugarDaCena\(\), cena: cenaDoPalco\(\),\s*luz: luzDaHora\(Math\.floor\(\(minuto \|\| 0\) \/ 60\)\), clima \}\)/.test(APP));
+    /* E O `📍 lugar` NÃO VOLTOU AO PAINEL DO TEMPO: a morada dele mudou de
+       casa (da legenda da gravura para a etiqueta), nunca para duas. */
     t("e o empréstimo do lugar ao painel do tempo terminou",
       !/📍 \{lugar\.nome\}/.test(APP) && /pagou o empréstimo/.test(APP));
   }

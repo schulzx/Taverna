@@ -105,7 +105,7 @@ import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
 import { RITMO_DA_REACAO, TETO_DA_ESPERA } from "../src/ritmo-da-reacao.js";
 /* D5h lê a tabela dos glifos de volta: cada entrada tem de ter leitor. */
 import { GLIFOS, ASSUNTO_DO_EMOJI } from "../src/glifos.js";
-import { LUZES } from "../src/gravura-da-cena.js";
+import { LUZES } from "../src/hora-e-prazo.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -298,22 +298,10 @@ const TETO_DE_COR_DE_T = {
 const ZONAS_DE_TABELA = [
   { arquivo: "src/estilo.js", tabela: "T", d5a: "isenta", d5b: "isenta" },
   { arquivo: "src/estilo.js", tabela: "MATERIAIS", d5a: "isenta", d5b: "VARRE" },
-  /* 23/09 · R13 — `LUZ_DA_CENA`, as quatro luzes de `O rosto da cena`.
-     É uma ZONA e não um teto, e a distinção é a que já está escrita
-     acima: zona é onde a cor tem DIREITO de nascer, teto é dívida
-     registada. Uma tabela de luz que não pudesse ganhar a quinta luz —
-     ou a quinta variável de cada luz — seria sagrada, que é o oposto da
-     lei da casa; e treze hexes de madrugada, dia, entardecer e noite
-     dentro de `TETO_DE_LITERAIS` dariam a mensagem errada a quem lesse o
-     vermelho ("use T"), porque a luz de uma cena NÃO é um significado de
-     `T`: `T` diz o que a cor significa, isto diz que luz há na cena.
-
-     D5b VARRE, pelo MESMO argumento de `MATERIAIS` e não por simetria:
-     a luz PODE copiar `T`, e o dia em que `ceuBaixo` for `#E8A33D` é o
-     dia em que a paisagem virou um alias do âmbar com outro nome. Sem
-     esta metade a zona seria uma LAVANDARIA. (Mede 0 hoje: a cor do
-     astro entra por referência a `T`, nunca por hex.) */
-  { arquivo: "src/estilo.js", tabela: "LUZ_DA_CENA", d5a: "isenta", d5b: "VARRE" },
+  /* 25/09 · V5a — a zona `LUZ_DA_CENA` (as quatro luzes de `O rosto da cena`,
+     R13) SAIU com a tabela: a gravura deixou a tela e a tabela ficou sem
+     leitor. Sem esta linha a zona continuaria a pedir "pelo menos 10 cores"
+     a uma tabela que já não existe — e o alcance mentiria. */
 ];
 
 /* D5c · AS ANIMAÇÕES SEM SAÍDA no `prefers-reduced-motion`. Hoje 13
@@ -1162,7 +1150,7 @@ const jsxQueDesenham = arquivos.filter((a) => a.endsWith(".jsx"))
 const lidosPeloAssunto = /assuntoDaLinha\(/.test(jsxQueDesenham)
   ? new Set(Object.values(ASSUNTO_DO_EMOJI).map((a) => (typeof a === "string" ? a : a && a.glifo)).filter(Boolean)) : new Set();
 /* V3c · as quatro luzes são lidas pelo NOME QUE A CONTA DEVOLVE (`<Glifo nome={luzDaHora(…)}`), nunca
-   escrito entre aspas — é de propósito: o glifo do TEMPO e a gravura escolhem a luz pela mesma conta. */
+   escrito entre aspas — é de propósito: o glifo do TEMPO e o cabeçalho da página escolhem a luz pela mesma conta. */
 const lidosPelaLuz = /<Glifo nome=\{luzDaHora\(/.test(jsxQueDesenham) ? new Set(LUZES) : new Set();
 const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome) && !lidosPelaLuz.has(nome));
 t(`D5h.3 · as ${Object.keys(GLIFOS).length} entradas de GLIFOS têm, cada uma, um leitor na interface`,

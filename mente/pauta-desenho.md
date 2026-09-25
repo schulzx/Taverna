@@ -755,7 +755,7 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
   pior ponto do gradiente; borda dos avisos da página **2,30 → 3,41** (antes
   reprovava a 1.4.11 e ninguém tinha medido); PV grave contra normal **+37 %** de
   separação (+27 % em deuteranopia); **0 px** de leiaute mexido.
-- [ ] **V1b · as pontas de V1 que moram no `App.jsx`** · `oficial`, com o
+- [x] **V1b · as pontas de V1 que moram no `App.jsx`** · **FEITO 25/09 com V3b, `e9b3531`** · `oficial`, com o
   bastão · leve — o contorno do cartão separa-se do controlo (`T.line` no
   cartão, `T.lineStrong` nos chips e no botão flutuante; `paginaFio`
   aposenta-se e a asserção 6 de `teste-v1-folha` muda com motivo); o comentário
@@ -779,7 +779,7 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
   vista ≥ hoje −5 % no telefone; 65ch na mesa; o `jogo` lê uma cena de noite e
   uma de dia em cada candidata. A abertura grande (28) é **cerimónia** — turno
   da chegada e primeira resposta da sessão, não todos os turnos (~61 px).
-- [ ] **V3 · os ícones desenhados** (~20: os do trilho, o dado, as quatro luzes,
+- [x] **V3 · os ícones desenhados** · **FEITO 25/09: V3a `afaffd8`, V3b `e9b3531`, V3c `29debdf`; o resíduo é V3f, depois de V7** (~20: os do trilho, o dado, as quatro luzes,
   `◉`, `◆`, `✦`, a coroa) — **paga R8 na tela principal**; varredor: zero emoji
   do SO na mesa. O dado é um d20 de verdade (o Lucide não tem).
   - [x] **V3a · fora do `App.jsx`** · **FEITO 25/09, no ar** — a decisão em
@@ -849,7 +849,30 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
   mundo + selo de prazo; o `2h 15m` de sessão sai; o toque abre O TEMPO), bolsa
   e PM (violeta, a cor da gaveta). *A coroa marca o SEU herói, não liderança —
   o jogo não tem essa regra.*
-- [ ] **V5 · a página** — o cabeçalho da v3 **funde-se com o rosto da cena**
+- [x] **V5a · o cabeçalho da pessoa** · **FEITO 25/09, no ar** · ordem direta
+  da pessoa: *"ainda existe uma imagem procedural, vamos tirar ela e deixar
+  exatamente igual à imagem do Figma"* (`129:4`). **A xilogravura por semente
+  (R13-B) sai**, e com ela o motor da gravura; o cabeçalho é o `parchment-header`
+  ao píxel, com conteúdo de mundo (o lugar à esquerda em âmbar, a luz e o clima à
+  direita; na masmorra, a camada e as tochas); a runa e os floreados do rodapé no
+  fim do registo, a 0 px. Decisão em `formas.md` §V5a, spec `mente/v5a-desenho.md`,
+  momento e prova `mente/v5a-jogo.md`. **Isto desfaz a "fusão" que V5 planeava:
+  não há fusão, há remoção.**
+- [ ] **V5b · a cartela de chegada** · `jogo` · médio · a ambiciosa de V5a — no
+  turno em que o lugar muda, a prosa abre com o nome do lugar grande e a runa por
+  baixo (os títulos de área de Dark Souls e Hollow Knight); nos outros turnos, 0
+  px. Usa o eixo `chegada`, que já vai na chamada e não faz nada desde R13-B.
+  **Leva junto:** na masmorra o painel da sala repete o lugar logo abaixo do
+  cabeçalho (`ANDAR 1 — DO SILÊNCIO` contra `ANDAR 1 · DO SILÊNCIO`) — o mesmo
+  facto duas vezes, com dois separadores (a prova de V5a).
+- [ ] **V5c · a luz da hora no fundo do cartão** · `desenho` · médio · a
+  ambiciosa de V5a (é V1c reposta) — com a gravura fora, a atmosfera da hora
+  ficou só em palavra; o gradiente do cartão passa a segui-la, 0 px e um
+  atributo no `App.jsx`.
+- [ ] **V5 · a página (o resto)** — coluna de 65ch, a soleira no pé do cartão (0
+  px sem oferta), a abertura grande como cerimónia. *(O texto original abaixo
+  falava de fundir o cabeçalho com o rosto da cena; V5a substituiu essa parte.)*
+  ~~o cabeçalho da v3 **funde-se com o rosto da cena**~~
   (168 → 96 px): as etiquetas viram a legenda da gravura, o lugar à esquerda
   (`lugarDaCena()`), a luz e o clima à direita (na masmorra, a camada e as
   tochas); a runa na borda de baixo; coluna de 65ch; a soleira no pé do cartão
@@ -862,6 +885,8 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
 - [ ] **V7 · o trilho e as salas** — Herói, Grupo, Diário+Mural, Bolsa+Mercado,
   Mapa, Códice, Ajustes; na mesa o painel abre ao lado da história em vez de a
   tapar; no telefone o trilho vira o alforje que sobe do retrato.
+
+**A ordem, dita pelo coordenador em 25/09 (03:30), e o motivo é o pedido da pessoa:** depois de V1–V3c o que ela veria é *a tela antiga com as cores e os ícones da v3* — a composição dela ainda não começou. Então **V4 → V5 → V6 → V7, um por ciclo**; **V2 (a letra) onde a mesa julgar melhor**, isolada para a prova; **V3f depois de V7**. A `47:2` (combate) não se toca até a pessoa responder sobre o tabuleiro.
 
 **A ambiciosa do `jogo`, à espera do motor:** *a frase é o lançamento* —
 enquanto se escreve, a linha lê a frase e mostra o teste e a chance; o toque no

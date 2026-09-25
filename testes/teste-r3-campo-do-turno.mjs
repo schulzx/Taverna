@@ -208,7 +208,11 @@ sec("5. A página, a coluna e as peças de R2 estão montadas");
    quando o contorno decorativo (`line`) se separou do de controlo
    (`lineStrong`). O que ela guarda é o que importava — a narração mora na
    SUA superfície, `T.pagina`, e não na mesa. */
-t("a narração usa a superfície dela", /background: T\.pagina, border: `1px solid \$\{T\.line\}`/.test(APP),
+/* V5a (25/09) · o fio do cartão passou de `border` a `outline` por dentro
+   (`outlineOffset: -1`), como o `strokeAlign: INSIDE` do Figma — é o que põe
+   o cabeçalho da página a 24 px da borda e não a 25. A asserção aceita os
+   dois nomes do fio e guarda o mesmo: a narração mora na SUA superfície. */
+t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outline): `1px solid \$\{T\.line\}`/.test(APP),
   "a narração voltou à mesa fria: o painel e o balão voltam a medir 1,039:1 um contra o outro");
 /* R21: a fala do Mestre ganhou `data-msg` (o endereço para onde a espreita
    do alforje salta) e `scrollMarginTop: ESBATIMENTO.altura` (para o salto não a

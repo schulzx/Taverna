@@ -180,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, RostoDaCena } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira } from "./glifos.js"; import { luzDaHora } from "./gravura-da-cena.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1202,24 +1202,49 @@ const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", ep
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
 const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"];
 
-/* ---------------- O CABEÇALHO DE CENA (v9.157) ----------------
-   O jogo sabia onde o herói está com uma precisão que nenhum
-   concorrente tem — cidade, local, bioma, hora, clima, andar da
-   masmorra — e a tela não dizia nada. O lugar vivia só dentro da prosa,
-   e quem entrasse no meio de uma sessão precisava ler três parágrafos
-   para trás para saber onde estava.
+/* ---------------- O CABEÇALHO DE CENA (v9.157) — APOSENTADO EM V5a ----------------
+   Nasceu porque o jogo sabia onde o herói está com uma precisão que nenhum
+   concorrente tem — cidade, local, bioma, hora, clima, andar da masmorra —
+   e a tela não dizia nada: o lugar vivia só dentro da prosa. Era um cartão
+   DENTRO da área que rola, com o emoji do sítio, o título, o entorno e a
+   hora, debaixo de um véu da cor do bioma.
 
-   O TOM é o que faz isto ser cenário e não etiqueta: uma faixa fina da
-   cor do bioma, com a força da luz daquela hora. A mesma cripta é uma
-   coisa ao meio-dia e outra às três da manhã, e o sistema já sabia. */
+   SAIU EM V5a (25/09), por duas razões medidas e nenhuma de gosto:
+   1 · SEM A GRAVURA, ELE SERIA A SEGUNDA PEÇA A DIZER O LUGAR — e a lei da
+       aposentadoria é de `formas.md` §20: *quando duas peças afirmam o
+       mesmo facto, uma é mobília*. Fica `CabecalhoDaPagina`, o `129:4` da
+       pessoa: não rola, não tem emoji, mede 69 px em qualquer largura.
+   2 · ELE DIZIA O QUE NÃO ERA. Medido ao vivo às 22:00: `🌙 noite · ☀
+       ensolarado`, a lua e o sol na mesma linha (`v5a-jogo.md` §1.3). A
+       etiqueta nova não herda isso: o céu limpo não se escreve. E às 08:00
+       ele dizia `manhã` enquanto a legenda da gravura, dois palmos acima,
+       dizia `DIA`: duas contas da hora na mesma tela (`MOMENTOS`, de
+       `palco.js`, e `luzDaHora`). O cabeçalho da página fala só a segunda,
+       que é também a do céu d'`O TEMPO` — uma hora, uma palavra.
+   3 · E CUSTAVA 80 PX NO TOPO DE CADA CENA: 64 de cartão e 16 de margem,
+       iguais a 375 e a 1280 (medido ao vivo, `mente/v5a-desenho.md`). Com a
+       gravura por cima, a primeira linha do Mestre nascia a 366 px do topo
+       do cartão no telefone; sem os dois, nasce a 259.
+
+   O TOM DO BIOMA (o véu) era o que o fazia cenário e não etiqueta. A v3
+   não tem cor por lugar — tem uma escada só de superfície, e o mundo é o
+   ciano (`formas.md` §V1.6); a etiqueta do lugar é âmbar porque a pessoa
+   a desenhou assim, e foi essa a ordem.
+
+   O QUE FICA DELE é a conta, que nunca morou aqui: `cabecalhoDaCena`
+   (`palco.js`) continua decidindo a masmorra — a camada e as tochas que a
+   etiqueta da direita escreve lá em baixo —, continua dizendo ONDE ELE
+   CAIU ao véu da morte (`local={cenaDoPalco()}`), e `TONS` continua a
+   pintar o cartão da chegada. Saiu a pintura; a verdade ficou onde estava. */
 /* ---------------- A VINHETA DA CENA — APOSENTADA EM R17 ----------------
    Era uma faixa de 160 px com a fotografia do bioma, DENTRO da área que
    rola, e por isso a primeira coisa que a página mostrava. Saiu pela LEI
    DA APOSENTADORIA (`formas.md` §20): *quando duas peças afirmam o mesmo
    facto, uma é mobília.*
 
-   A outra peça é `OTopoDoPapel`/`RostoDaCena` (R13-B), a xilogravura de
-   96 px logo acima. R13-B deu rosto à cena e não aposentou o que já lá
+   A outra peça era `OTopoDoPapel`/`RostoDaCena` (R13-B), a xilogravura de
+   96 px que ficava logo acima — e que saiu por sua vez em V5a (ver `O TOPO
+   DO PAPEL`, mais abaixo). R13-B deu rosto à cena e não aposentou o que já lá
    estava — a lei-mãe desta mesa partida por nós, e achada pela etapa
    seguinte. A gravura ganha nos degraus 1, 2 e 4 sem chegar ao desempate:
      1 · é DETERMINÍSTICA POR SEMENTE, que é lei desta casa; a vinheta era
@@ -1246,31 +1271,6 @@ const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amu
    à espera de voltar. OS TRINTA `public/cenas/*.webp` FICAM: são acervo e
    não forma, e o `jogo` entregou-os a R16 (a página impressa), onde vão
    ser chão por baixo da prosa em vez de faixa à frente dela. */
-
-function CabecalhoDaCena({ cena }) {
-  if (!cena) return null;
-  const { tom } = cena;
-  /* a cor entra como VÉU sobre o painel da casa, e não como fundo
-     próprio: um cabeçalho com paleta inteira por bioma faria o jogo
-     parecer sete jogos diferentes. */
-  const veu = Math.round(10 + tom.luz * 26);
-  return (
-    <div className="tv-fade rounded-2xl px-4 py-3 mb-4 flex items-center gap-3"
-      style={{
-        background: `linear-gradient(100deg, ${tom.cor}${veu.toString(16).padStart(2, "0")} 0%, ${T.panel} 62%)`,
-        border: `1px solid ${T.line}`, borderLeft: `3px solid ${tom.cor}`,
-      }}>
-      <span className="text-xl leading-none shrink-0" aria-hidden="true">{cena.icone}</span>
-      <div className="min-w-0 flex-1">
-        <div className="tv-display text-lg leading-tight truncate" style={{ color: T.ink }}>{cena.titulo}</div>
-        {cena.onde && (
-          <div className="tv-mono text-[10px] uppercase tracking-wider truncate" style={{ color: T.inkDim }}>{cena.onde}</div>
-        )}
-      </div>
-      <div className="tv-mono text-[10px] shrink-0 text-right" style={{ color: T.amberSoft }}>{cena.quando}</div>
-    </div>
-  );
-}
 
 /* ---------------- O TRILHO (v9.170) ----------------
    Redesenhado em `mesa-jogo-v2`: botões quadrados de 72, ícone de traço
@@ -1690,11 +1690,11 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampa
                Não some: muda de morada, e a morada do tempo é aqui.
 
                (O `📍 lugar` esteve aqui EMPRESTADO uma etapa, e a etapa B
-               pagou o empréstimo: a morada dele é a LEGENDA de `O rosto da
-               cena`, que diz o lugar e a hora por palavras, na banda do chão
-               da gravura. Recolher é mudar de casa, nunca apagar — e entre A
-               e B ele teria ficado sem nenhuma, que é a razão de ter passado
-               por aqui.) */}
+               pagou o empréstimo: a morada dele foi a legenda da gravura e,
+               desde V5a, é a ETIQUETA DA ESQUERDA do cabeçalho da página, que
+               o diz por palavras em todos os turnos. Recolher é mudar de
+               casa, nunca apagar — e entre A e B ele teria ficado sem
+               nenhuma, que é a razão de ter passado por aqui.) */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>
           <span className="inline-flex items-center gap-1.5" title={est ? est.nome + " — " + est.nota : ""}><Glifo nome={luzDaHora(horaTxt(minuto))} tamanho={16} rotulo={luzDaHora(horaTxt(minuto))} />{horaTxt(minuto)} · {dataTxt(dia)}{est ? " · " + est.nome.toLowerCase() : ""}</span>
           {clima && clima.id !== "ensolarado" && <span title={clima.nota}>{clima.rotulo}</span>}
@@ -1715,66 +1715,66 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampa
 }
 
 /* ============================================================
-   R13 · O TOPO DO PAPEL — quem mede a largura para `O rosto da cena`
+   R13-B · O TOPO DO PAPEL — APOSENTADO EM V5a (25/09/2026)
 
-   A PEÇA NÃO SE MEDE A SI PRÓPRIA, E É DE PROPÓSITO: a gravura é
-   determinística, e `largura` entra na conta (a hachura vive em px e não
-   se estica; a silhueta vive em 0..100 e estica). Uma peça que lesse
-   sozinha o seu tamanho teria de se re-desenhar a meio da primeira
-   pintura — e a semente deixaria de dar a mesma cripta conforme o
-   momento em que o navegador resolvesse o leiaute. Quem sabe a largura é
-   quem monta; a peça recebe-a e desenha.
+   Aqui morava o invólucro que media a largura para `O rosto da cena`, a
+   xilogravura de 96 px por semente que abria o cartão da história: o céu,
+   o horizonte do bioma e o chão talhados a buril, e o lugar e a luz da
+   hora escritos na banda do chão. A peça não se media a si própria porque
+   a largura entrava na conta (a hachura vivia em px e não se esticava);
+   por isso quem a montava tinha um `ResizeObserver`, e o tinha aqui.
 
-   O INVÓLUCRO EXISTE SÓ PARA ISSO, e por isso é ele quem carrega o
-   `ResizeObserver` — em `try/catch`, porque nunca pode custar o turno: se
-   a medição estourar, `largura` fica no valor que a peça usa por omissão
-   e a gravura continua de pé, apenas desenhada para o telefone de
-   referência.
+   POR QUE EXISTIU, e o número continua certo: das 21 mensagens de prosa
+   de R6, DEZ abriam com descrição de lugar, hora ou clima — quase todas
+   chegadas a um lugar novo. A faixa devolvia essa frase de abertura nos
+   turnos em que o jogador está mais perdido.
 
-   ENQUANTO NÃO HÁ MEDIDA, `largura` é `null` e a peça usa o próprio
-   padrão (`LARGURA_DE_REFERENCIA`). Não se escreve 375 aqui: o número
-   existe uma vez, no módulo que o decide.
+   POR QUE SAIU: a pessoa, em 25/09 — *"ainda existe uma imagem
+   procedural, vamos tirar ela e deixar exatamente igual à imagem do
+   Figma"*. O topo do papel passou a ser `CabecalhoDaPagina` (`ui.jsx`), o
+   nó `129:4` da v3, e o lugar se mudou da banda do chão para a etiqueta
+   da esquerda dele: não perdeu a morada, mudou de casa. E a frase de
+   abertura que a faixa devolvia continua a ter quem a devolva — a
+   etiqueta diz ONDE em cada turno, e a proposta do `jogo` para a
+   chegada (a cartela, `v5a-jogo.md` §5) diz QUANDO se chegou.
 
-   E É COMPONENTE DE MÓDULO, como tudo o que esta casa pinta: uma
-   componente definida dentro do render remonta a cada tecla do campo do
-   turno — e aqui isso custaria a gravura inteira, ~200 talhos, por letra
-   escrita. (A peça memoiza pelos cinco eixos; a memória só vale enquanto
-   a componente for a mesma.)
+   O QUE MORREU COM ELA: `rosto-da-cena.jsx` inteiro; o motor da gravura
+   (gramáticas, hachuras, bandas, tremor, a largura de referência), e com
+   ele o nome de `gravura-da-cena.js`, que passou a `hora-e-prazo.js` e
+   guarda só o que tinha outro leitor; `LUZ_DA_CENA` em `estilo.js`; e a
+   medição que vivia aqui. O QUE FICOU: `luzDaHora` — o céu d'`O TEMPO` e a
+   palavra da luz no cabeçalho saem da mesma conta, e por isso não
+   discordam. Nada disto toca o save: a gravura nunca foi guardada, era
+   refeita da semente a cada pintura.
+
+   AS CONTAS, medidas ao vivo (Chrome, os saves de prova de V1 — dia,
+   noite, masmorra e um lugar de nome longo —, a 375×812 e a 1280×800):
+
+                                     antes (gravura)   depois (V5a)
+     o que não rola no topo            97 px             69 px
+     a área da prosa, 375 · dia       475 px            504 px
+     a área da prosa, 1280 · dia      473 px            502 px
+     1.ª linha do Mestre, 375 · 1280  366 · 348 px      259 · 241 px
+     linhas à vista no topo, 375      7 · 5             11 · 9
+     linhas à vista no topo, 1280     8 · 5             11 · 8
+
+   Em TODOS os turnos a prosa ganha 29 px (os 28 da diferença e o 1 do fio
+   de baixo da gravura) — uma linha inteira da entrelinha de 27,6. No topo
+   de cada cena ganha 107 px, porque o cartão de v9.157 saiu com ela:
+   quatro linhas no telefone, três na mesa. E a linha de todos os turnos é
+   regra e não média: a altura do cabeçalho não depende do lugar, do clima
+   nem do comprimento do nome — mede 69 em qualquer largura e em qualquer cena.
+
+   E A PEÇA NOVA É O NÓ AO PIXEL, medida no mesmo passe, contra o
+   `get_design_context` do `129:4`: a etiqueta a 24 · 20 da borda do
+   cartão, 10 px em JetBrains Mono com rastreio de 1,8 e linha de 13; a
+   runa a 45 px do topo, o traço curto a 24–64, os três pontos com centro
+   em 80 · 96 · 112 e 8 px de diâmetro, o traço longo a partir de 128;
+   69 px de altura. Nenhum destes números está escrito na peça — saem de
+   `CABECALHO_DA_PAGINA` e de `RUNA`, e `teste-v5a-cabecalho.mjs` refaz a
+   soma. (O nó mede o cartão a 1142 e a mesa a 1144: o traço longo absorve
+   os 2 px, e nada mais se mexe.)
    ============================================================ */
-function OTopoDoPapel({ semente, bioma, lugar, hora, chegada }) {
-  const caixa = React.useRef(null);
-  const [largura, setLargura] = React.useState(null);
-  React.useEffect(() => {
-    let parar = () => {};
-    try {
-      const el = caixa.current;
-      if (!el) return undefined;
-      const medir = () => {
-        try {
-          const w = Math.round(el.getBoundingClientRect().width);
-          if (w > 0) setLargura((antes) => (antes === w ? antes : w));
-        } catch (e2) { calou("medir o topo do papel", e2); }
-      };
-      medir();
-      if (typeof ResizeObserver === "function") {
-        const ro = new ResizeObserver(medir);
-        ro.observe(el);
-        parar = () => { try { ro.disconnect(); } catch (e3) { calou("largar o topo do papel", e3); } };
-      } else {
-        window.addEventListener("resize", medir);
-        parar = () => window.removeEventListener("resize", medir);
-      }
-    } catch (e) { calou("a largura do topo do papel", e); }
-    return () => parar();
-  }, []);
-  return (
-    <div ref={caixa} className="shrink-0">
-      <LimiteErro>
-        <RostoDaCena semente={semente} bioma={bioma} lugar={lugar} hora={hora} largura={largura} chegada={chegada} />
-      </LimiteErro>
-    </div>
-  );
-}
 
 /* ---------------- R21 · AS ABAS QUE EXISTEM HOJE ----------------
    Uma lista só para as duas composições da mesma peça: o trilho da coluna
@@ -7614,21 +7614,21 @@ export default function Taverna() {
     return acha(cidadeAtualRef.current) || (j ? acha(j.de) || acha(j.para) : "") || "planicie";
   };
 
-  /* ---------------- O LUGAR DA CENA, EM DUAS PALAVRAS (R13-B) ----------------
-     `O rosto da cena` escreve o nome do lugar na banda do chão, e o que ele
-     pede é um NOME — não a frase que o Mestre lê. `localAtualTxt()`, logo
-     abaixo, é prosa de prompt ("EM VIAGEM: … — não estou em cidade nenhuma")
-     e não cabe numa legenda de 15 px que trunca com reticências.
+  /* ---------------- O LUGAR DA CENA, EM DUAS PALAVRAS (R13-B → V5a) ----------------
+     A etiqueta da esquerda do cabeçalho da página escreve o nome do lugar
+     (era a legenda da gravura até V5a), e o que ela pede é um NOME — não a
+     frase que o Mestre lê. `localAtualTxt()`, logo abaixo, é prosa de prompt
+     ("EM VIAGEM: … — não estou em cidade nenhuma"), e não cabe numa etiqueta.
 
      A ORDEM É DO MAIS FECHADO PARA O MAIS ABERTO, e é a mesma que o resto da
      casa usa para decidir onde o herói está: a masmorra manda sobre o lugar
      nomeado, o lugar nomeado manda sobre a estrada, e a estrada manda sobre a
-     cidade. Quem não tem nome devolve vazio e a peça escreve o travessão —
-     um lugar sem nome é uma gravura legítima, não um erro.
+     cidade. Quem não tem nome devolve vazio, e a etiqueta fica vazia — nada
+     sabido, nada mostrado (a lei de `palco.js`).
 
-     E É ELE QUEM ENTRA NA SEMENTE, ao lado do bioma: mesma semente, mesma
-     cripta, em qualquer máquina. Mudar a ordem destes quatro ramos muda a
-     gravura de todas as campanhas — quem mexer, mexe de propósito. */
+     Até V5a este nome entrava também na SEMENTE da gravura, e mudar a ordem
+     destes ramos mudava a paisagem de todas as campanhas. A gravura saiu;
+     o que a ordem decide agora é só o que a etiqueta diz. */
   const lugarDaCena = () => {
     try {
       const mm = masmorraRef.current;
@@ -7641,27 +7641,27 @@ export default function Taverna() {
     } catch (e) { calou("o lugar da cena", e); return ""; }
   };
 
-  /* A CHEGADA DECAI NO TURNO SEGUINTE, NUNCA POR RELÓGIO — é a mesma lei e o
-     mesmo mecanismo da soleira (`soleiraAntesRef`), e é de propósito que seja
-     o mesmo: *uma marca que morre por tempo morre enquanto o jogador está a
-     pensar*. O turno começa quando `carregando` passa a verdadeiro; nesse
-     instante o lugar em que se estava fica registado, e tudo o que for
-     diferente disso é CHEGADA até o turno seguinte começar.
+  /* A CHEGADA DO LUGAR — `lugarAntesRef` SAIU EM V5a. Guardava o lugar em que
+     o turno começara, para o eixo `Chegada` do rosto da cena — e esse eixo
+     nunca chegou a existir na peça: foi uma prop INERTE durante doze dias,
+     escrita para acender no dia em que o `desenho` a fabricasse. A gravura
+     saiu primeiro. A chegada a um lugar novo passa a marcar-se na PROSA e não
+     no cabeçalho (a cartela, proposta do `jogo` em `v5a-jogo.md` §5),
+     justamente para o cabeçalho nunca mudar de altura nem piscar. Se voltar,
+     a conta é a de sempre — o turno começa quando `carregando` sobe — e o
+     mecanismo irmão continua vivo e provado na soleira (`soleiraAntesRef`).
 
-     DECLARADO, E É DÍVIDA À VISTA: `RostoDaCena` ainda NÃO tem o eixo
-     `Chegada` — a peça recebe `semente`, `bioma`, `lugar`, `hora` e
-     `largura`, e mais nada. A prop vai na chamada com o valor certo porque é
-     o que a especificação manda (`r13-mesa.md` §3.4: *o nome do lugar chega
-     com o eixo `Chegada` que `A oferta` já tem*), e porque no dia em que o
-     `desenho` a fabricar ela acende sem ninguém ter de reconstruir a conta.
-     Hoje é INERTE, e está dito aqui para não ser descoberto por acidente. */
-  const lugarAntesRef = useRef(null);
-  useEffect(() => {
-    try {
-      if (lugarAntesRef.current !== null && !carregando) return;
-      lugarAntesRef.current = lugarDaCena();
-    } catch (e) { calou("marcar o lugar que a cena ja tinha", e); }
-  }, [carregando]); // eslint-disable-line
+     A LEI QUE ELE GUARDAVA FICA ESCRITA, para quem o trouxer de volta: a
+     marca de chegada DECAI NO TURNO SEGUINTE, NUNCA POR RELÓGIO. *Uma marca
+     que morre por tempo morre enquanto o jogador está pensando.* O turno
+     começa quando `carregando` passa a verdadeiro; nesse instante o lugar em
+     que se estava fica registado, e tudo o que for diferente disso é
+     CHEGADA até o turno seguinte começar.
+
+     E A LIÇÃO DO QUE NÃO SE FEZ: uma prop que vai na chamada «para o dia em
+     que a peça a tiver» é código que corre todos os turnos sem efeito
+     nenhum. Doze dias depois, a peça morreu sem a ter — e a prop, a
+     referência e o efeito tinham de morrer com ela. */
 
   const localAtualTxt = () => jornadaRef.current
     ? `${(linhaDaViagem(jornadaRef.current) || `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"}`).replace(/^🧭 /, "EM VIAGEM: ")} — não estou em cidade nenhuma`
@@ -23216,42 +23216,42 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 controlo: o cartão leva o fio decorativo `T.line` (um contentor
                 de prosa não é componente; a 1.4.11 não o cobre), o que se toca
                 leva `T.lineStrong`, e `paginaFio` aposentou-se. `formas.md` §V1. */}
-            {/* ---------------- O PAPEL PASSA A TER DUAS FAIXAS (R13-B) ----------------
-                A moldura, o fundo quente e o contorno saíram da área que rola
-                e subiram para AQUI, porque o papel deixou de ser uma coisa
-                só: em cima a gravura, que NÃO rola, e por baixo a prosa, que
-                rola. Com o fundo na área de rolamento, a gravura ficaria
-                fora do papel — uma imagem pousada em cima de uma folha, e
-                não o topo dela.
+            {/* ---------------- O PAPEL TEM DUAS FAIXAS (R13-B → V5a) ----------------
+                A moldura, o fundo e o fio moram AQUI, e não na área que rola,
+                porque o papel é duas coisas: em cima o cabeçalho da página,
+                que NÃO rola, e por baixo a prosa, que rola. `overflow-hidden`
+                corta os cantos do cabeçalho no raio da folha.
 
-                `overflow-hidden` aqui é o que corta os cantos da gravura no
-                raio da folha: sem ele a faixa é um rectângulo a espreitar
-                por baixo de um canto arredondado. */}
+                V5a: O FIO É POR DENTRO (`outline` com `outlineOffset` −1), como
+                o do Figma (`strokeAlign: INSIDE`). Com `border`, tudo o que o
+                cartão tem dentro nascia 1 px mais para dentro do que no nó —
+                e o cabeçalho, que a pessoa pediu ao pixel, ficava a 25 px da
+                borda em vez de 24. Mesma cor, mesma espessura, mesmo raio. */}
             <div className="flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
-              style={{ background: T.pagina, border: `1px solid ${T.line}` }}>
-            {/* ---------------- O ROSTO DA CENA (R13-B) ----------------
-                96 px no topo do papel, e a razão é de jogo e não de enfeite:
-                das 21 mensagens de prosa de R6, DEZ abriam com descrição de
-                lugar, hora ou clima — 14,3 palavras de média, 37 % das 38
-                palavras que o telefone mostrava. E as dez eram quase todas
-                CHEGADAS A UM LUGAR NOVO. A faixa devolve a frase de abertura
-                exactamente nos turnos em que o jogador está mais perdido.
+              style={{ background: T.pagina, outline: `1px solid ${T.line}`, outlineOffset: -1 }}>
+            {/* ---------------- V5a · O CABEÇALHO DA PÁGINA ----------------
+                O topo do papel é o nó `129:4` da pessoa, ao pixel: 69 px que
+                NÃO rolam, o lugar em âmbar à esquerda, a luz e o ar à direita,
+                a runa por baixo. Substitui a xilogravura de R13-B (96 px) e o
+                cartão de v9.157 que rolava logo abaixo dela.
 
-                E É O QUE IMPEDE A ETAPA A DE ACERTAR NO NÚMERO E ERRAR NO
-                PEDIDO: com a página em 72 % do telefone, a tela passava a ser
-                um muro de texto com uma cinta em cima. A pessoa não pediu um
-                leitor. Os 96 px custam agora 16 % da página em vez dos 64 %
-                que custariam antes da etapa A — e é por isso que B vem
-                depois, que é aritmética e não gosto.
+                O QUE DIZ é do `jogo`, e é conta (`etiquetasDaPagina`, em
+                `glifos.js`, provada em Node): o mesmo `lugarDaCena()` que a
+                gravura escrevia, a mesma `luzDaHora` d'O TEMPO, o mesmo
+                `clima` do painel do tempo, e na masmorra o que `palco.js` já
+                decide (a camada e as tochas). No telefone quem cede é a
+                direita, termo a termo, e só depois o lugar encurta — a peça
+                faz isso sem medir nada, e nunca muda de altura. Medido a 375:
+                a linha tem 293 px; `ANDAR 1 · DO SILÊNCIO` e `CAMADA 1 ·
+                3 TOCHAS` cabem inteiros, e `ERMIDA DE PEDRA DO VELHO GUARDIÃO
+                DAS BRUMAS` apaga a direita e encurta com reticência (283 px).
+                Na mesa, a 1280, a linha tem 1096 px e nada cede.
 
-                NÃO ANIMA entre cenas, por decisão escrita dos dois: uma
-                imagem que transiciona a cada turno é um piscar por turno, e
-                nunca pode custar o turno. A luz desliza com a hora (quatro
-                receitas em `LUZ_DA_CENA`); a gravura só muda quando o LUGAR
-                muda. */}
-            <OTopoDoPapel semente={sementeMundo()} bioma={biomaDaqui()} lugar={lugarDaCena()}
-              hora={Math.floor((minuto || 0) / 60)}
-              chegada={lugarDaCena() !== lugarAntesRef.current ? "agora" : "assentada"} />
+                NÃO ANIMA, e continua a ser decisão dos dois: uma peça que
+                transiciona a cada turno é um piscar por turno, e o que muda
+                entre cenas é o texto, nunca a altura. */}
+            <CabecalhoDaPagina {...etiquetasDaPagina({ lugar: lugarDaCena(), cena: cenaDoPalco(),
+              luz: luzDaHora(Math.floor((minuto || 0) / 60)), clima })} />
             <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 md:px-8 py-6 space-y-4" >
               {/* A VOZ (R2), primeiro dos DOIS sítios onde o cabeçalho do
                   Mestre estava escrito à mão neste arquivo. Aqui ela é o
@@ -23263,7 +23263,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 <PontoMestre tamanho={16} />
                 <div className="flex-1 min-w-0"><Voz quem="mestre" voz={carregando ? "preparando" : "muda"} /></div>
               </div>
-              <CabecalhoDaCena cena={cenaDoPalco()} />
+              {/* V5a: o cartão de v9.157 saiu daqui — o lugar mora no cabeçalho da página, acima. */}
               {agruparMensagens(mensagens).map((item, k) => {
                 /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
                    combate empurrava vinte balões iguais entre a ação do
@@ -23742,7 +23742,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
-              <div ref={fimRef} style={{ height: 8 }} />
+              <div ref={fimRef}><FimDaPagina /></div>
             </div>
             </div>
             {longeDoFim && (

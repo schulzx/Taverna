@@ -77,7 +77,7 @@ t(`os ${PARES.length} pares da catraca passam`, mal1.length === 0, mal1.join(" |
 
 /* ============================================================
    2. A PROSA no pior ponto do ambiente ≥ AMBIENTE.pisos.prosa (7, o
-      piso AAA da legenda em `LUZ_DA_CENA`). A prosa é a protagonista
+      piso AAA que a legenda da gravura tinha — aposentada em V5a). A prosa é a protagonista
       da tela — uma luz decorativa por cima dela não pode empurrá-la
       para perto do piso AA (4,5); ela tem de sobrar até AAA mesmo no
       ponto mais fraco do gradiente.

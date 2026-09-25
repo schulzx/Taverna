@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
 import { GLIFOS, tracoNaGrelha, partesDaMoeda } from "./glifos.js";
@@ -25,12 +25,11 @@ import { tracos } from "./semente.js";
 import { CartaDeTaro } from "./carta-taro.jsx";
 /* A brasa e conta (`brasas.js`) e o campo e desenho — mesma divisao do rosto. */
 import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
-/* R13 · a gravura e o selo sao CONTA e moram em `gravura-da-cena.js`; o
-   rosto da cena e DESENHO e mora em `rosto-da-cena.jsx`. A mesma divisao
-   do rosto e da brasa, tres linhas acima. O re-export existe para o
-   `App.jsx` ter UM import de interface, e nao dois. */
-import { areiaDaAmpulheta, apertoDoPrazo, palavraDoPrazo } from "./gravura-da-cena.js";
-export { RostoDaCena } from "./rosto-da-cena.jsx";
+/* O selo de prazo e CONTA (`hora-e-prazo.js`) e DESENHO (aqui) — a mesma
+   divisao do rosto e da brasa, tres linhas acima. (V5a: o arquivo se chamava
+   `gravura-da-cena.js` e reexportava daqui `RostoDaCena`, a xilogravura do
+   topo do papel; a gravura saiu da tela e o topo e `CabecalhoDaPagina`.) */
+import { areiaDaAmpulheta, apertoDoPrazo, palavraDoPrazo } from "./hora-e-prazo.js";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
    máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
@@ -503,16 +502,126 @@ export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
   return <Glifo nome="mapa" tamanho={tamanho} cor={cor} />;
 }
 
-/* ---------------- A DIVISÓRIA RÚNICA (v9.173) ----------------
-   Linha, gema, linha. Aparece oito vezes na criação do mundo e é o que
-   transforma uma rolagem longuíssima em capítulos — sem ela, a tela é um
-   formulário de três mil pixels sem respiro nenhum. */
-export function DivisoriaRunica() {
+/* ---------------- A RUNA (v9.173 → V5a) ----------------
+   Traço curto, três pontos, traço longo — a runa da v3, e a MESMA nas
+   quatro moradas que a pessoa lhe deu no Figma: o cabeçalho da página
+   (`129:8`), a divisória do corpo (`129:20`), o rodapé (`129:33`) e as
+   telas de criação (`135:330`). Até V5a esta peça era outra (linha, gema
+   em losango, linha): a mesma ação com duas caras, e a do Figma é a da
+   pessoa. *Uma ação, uma forma.*
+
+   Continua a ser o que transforma a rolagem longa da criação do mundo em
+   capítulos — lá leva `RUNA.respiro` acima e abaixo, o `py-2` de sempre,
+   e as telas não mudam de ritmo (a altura da peça solta é a mesma: 24).
+   Dentro do cabeçalho e no fim da página vai com `respiro={0}`.
+
+   Os pontos são UM `svg` (o `imgFrame` 40×8 do nó, círculos a 4 · 20 ·
+   36) com a cor de `T` por nome; os traços são `amber` a `alfaDoFio`.
+   Decorativa por inteiro: `aria-hidden`, e em `forced-colors` os traços
+   somem com o fundo — não carregam sentido nenhum. */
+export function DivisoriaRunica({ respiro = RUNA.respiro }) {
+  const fio = alfa(T.amber, RUNA.alfaDoFio);
+  const largura = RUNA.passo * (RUNA.pontos.length - 1) + RUNA.ponto;
   return (
-    <div className="flex items-center gap-5 w-full py-2" aria-hidden="true">
-      <div className="flex-1 h-px" style={{ background: T.line }} />
-      <div className="shrink-0" style={{ width: 8, height: 8, transform: "rotate(45deg)", border: `1px solid ${T.amber}` }} />
-      <div className="flex-1 h-px" style={{ background: T.line }} />
+    <div className="flex items-center w-full" aria-hidden="true"
+      style={{ gap: RUNA.espaco, paddingTop: respiro, paddingBottom: respiro }}>
+      <div className="shrink-0" style={{ width: RUNA.fio, height: RUNA.espessura, background: fio }} />
+      <svg className="shrink-0 block" width={largura} height={RUNA.ponto} viewBox={`0 0 ${largura} ${RUNA.ponto}`}>
+        {RUNA.pontos.map((nome, i) => (
+          <circle key={nome} cx={RUNA.ponto / 2 + i * RUNA.passo} cy={RUNA.ponto / 2} r={RUNA.ponto / 2} fill={T[nome]} />
+        ))}
+      </svg>
+      <div className="flex-1" style={{ height: RUNA.espessura, minWidth: RUNA.espessura, background: fio }} />
+    </div>
+  );
+}
+
+/* ---------------- V5a · O CABEÇALHO DA PÁGINA — o `129:4` da pessoa ----------------
+   O topo do cartão da história, onde vivia a xilogravura de 96 px (R13-B).
+   A ordem da pessoa foi *"exatamente igual à imagem do Figma"*, e cada
+   medida sai de `CABECALHO_DA_PAGINA` e de `RUNA` com o número do nó: 69 px
+   de alto, etiqueta do lugar em âmbar e rastreada à esquerda, a luz e o ar
+   discretos à direita, a runa por baixo.
+
+   O QUE DIZ é do `jogo` (`mente/v5a-jogo.md`): à esquerda o LUGAR (a
+   morada dele na tela); à direita uma lista curta de termos — a luz da
+   hora e o clima, ou, na masmorra, a camada e as tochas. A peça não sabe
+   de onde vêm: recebe `lugar`, `direita` (na ordem em que se lê) e `cede`
+   (qual ponta da direita cai primeiro: `"fim"` à superfície, onde cai o
+   clima; `"inicio"` na masmorra, onde cai a camada e fica a tocha) e
+   desenha. As maiúsculas são `text-transform`: o texto do DOM fica como
+   se escreve, e um leitor de tela não soletra a etiqueta.
+
+   A DEGRADAÇÃO, e é o que a torna segura no telefone — sem medir nada,
+   sem `ResizeObserver`, sem estado:
+   1. A LINHA NUNCA QUEBRA. A altura é `linha` (13) e o cabeçalho mede 69
+      em qualquer largura: se mudasse com o nome do lugar, a prosa saltava
+      no turno da chegada, que é o turno em que se lê com mais atenção.
+   2. A DIREITA CEDE PRIMEIRO, TERMO A TERMO. Os termos são itens de uma
+      fila que QUEBRA (`flex-wrap`) dentro de uma caixa da altura de uma
+      linha e com `overflow: hidden`: o termo que não cabe desce para a
+      segunda fila, que não se vê. O primeiro item é um espaçador de 0 px —
+      é ele que deixa o PRIMEIRO termo descer também, em vez de ficar
+      cortado a meio da palavra. Quando cede o INÍCIO, a fila corre da
+      direita para a esquerda (`flex-row-reverse`) com os termos ao
+      contrário: lê-se na mesma ordem e quebra pela outra ponta. O ponto
+      que separa dois termos anda com o termo que cai — nunca fica sozinho.
+      O leitor de tela ouve a linha inteira, na ordem certa (`sr-only`).
+   3. SÓ DEPOIS O LUGAR ENCURTA, com reticência. A esquerda cresce até o
+      tamanho do que diz (`flex: 0 1 auto`); a direita só tem o que sobra
+      (`flex: 1 1 0`). Enquanto o lugar couber, ele não perde uma letra. */
+export function CabecalhoDaPagina({ lugar = "", direita = [], cede = "fim" }) {
+  const C = CABECALHO_DA_PAGINA;
+  const termos = (Array.isArray(direita) ? direita : []).filter(Boolean);
+  const doFim = cede !== "inicio";
+  const pecas = termos.map((termo, i) => (
+    <span key={i}>{doFim ? (i ? `\u00A0·\u00A0${termo}` : termo) : (i < termos.length - 1 ? `${termo}\u00A0·\u00A0` : termo)}</span>
+  ));
+  return (
+    <div className="shrink-0 flex flex-col"
+      style={{ background: T.pagina, padding: `${C.cima}px ${C.lado}px ${C.baixo}px`, gap: C.entre }}>
+      <div className="tv-mono flex items-start uppercase whitespace-nowrap"
+        style={{ height: C.linha, lineHeight: `${C.linha}px`, fontSize: C.letra, columnGap: C.entre }}>
+        <span className="truncate" style={{ flex: "0 1 auto", minWidth: 0, color: T.amber, letterSpacing: C.espacamento }}>{lugar}</span>
+        <span className={`flex flex-wrap overflow-hidden ${doFim ? "justify-end" : "flex-row-reverse justify-start"}`} aria-hidden="true"
+          style={{ flex: "1 1 0%", minWidth: 0, height: C.linha, color: T.inkDim }}>
+          <span style={{ width: 0 }} />
+          {doFim ? pecas : pecas.slice().reverse()}
+        </span>
+        {termos.length > 0 && <span className="sr-only">{termos.join(" · ")}</span>}
+      </div>
+      <DivisoriaRunica respiro={0} />
+    </div>
+  );
+}
+
+/* ---------------- V5a · O FIM DA PÁGINA — a runa do `129:32`, e o floreado ----------------
+   O rodapé do Figma mede 76 px: a runa, e por baixo dela as quatro barras
+   âmbar num canto e as quatro `mundo` no outro. Pregado ao fundo do
+   cartão, custaria 76 px de prosa em TODOS os turnos — e o `jogo` mediu
+   o floreado como enfeite que não diz nada (`v1-jogo.md` §5).
+
+   Então o rodapé mora onde a página ACABA: é o último filho do registro, no
+   lugar do marcador de 8 px que o `fimRef` já era, com a mesma altura
+   (`RUNA.ponto`, 8). O ar à volta é o que o fim do registro já tinha (os 16
+   do `space-y-4` acima, os 24 do `py-6` abaixo) — **0 px de prosa**. E o
+   floreado vem na MESMA linha da runa, nos cantos: as barras (20 de alto)
+   transbordam 6 px para cima e 6 para baixo desse mesmo ar, sem mexer na
+   altura da linha. Quem está no fim da conversa vê o cartão fechado como
+   no Figma; quem rola para trás não paga nada por ele. */
+function barrasDoFloreado(alturas, cor) {
+  return (
+    <div className="shrink-0 flex items-end" style={{ gap: FLOREADO.espaco }}>
+      {alturas.map((h, i) => <div key={i} style={{ width: FLOREADO.barra, height: h, background: cor }} />)}
+    </div>
+  );
+}
+export function FimDaPagina() {
+  return (
+    <div className="flex items-center w-full" aria-hidden="true" style={{ height: RUNA.ponto, gap: RUNA.espaco }}>
+      {barrasDoFloreado(FLOREADO.esquerda, T.amber)}
+      <div className="flex-1 min-w-0"><DivisoriaRunica respiro={0} /></div>
+      {barrasDoFloreado(FLOREADO.direita, T.mundo)}
     </div>
   );
 }
@@ -1667,7 +1776,7 @@ export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeO
    `desenho` a isso foi um EIXO e NAO um gemeo, que e a lei de sempre:
    *uma accao, uma forma.* A areia e a mesma geometria nos dois, e e ela
    o canal primario; o que muda e a palavra, e a palavra sai de
-   `CONTAS`, em `gravura-da-cena.js`.
+   `CONTAS`, em `hora-e-prazo.js`.
 
    `conta` e OPCIONAL e cai em `noites`: sem ela a peca e byte a byte a
    de ontem, e as chamadas vivas da cinta nao mudam uma letra. */

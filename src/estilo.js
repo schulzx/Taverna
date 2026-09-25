@@ -236,275 +236,86 @@ export const MATERIAIS = {
 };
 
 /* ============================================================
-   A LUZ DA CENA (R13, etapa B) — `O rosto da cena`, as quatro receitas.
+   `LUZ_DA_CENA` APOSENTOU-SE EM V5a (25/09/2026) — e com ela a gravura.
 
-   POR QUE AQUI E NÃO DENTRO DE `T`, e a distinção é a razão de a tabela
-   existir: `T` diz o que a cor SIGNIFICA (o perigo, a página, o mundo);
-   isto não diz o que a cor significa, diz QUE LUZ HÁ NA CENA. É irmã de
-   `MATERIAIS` — a paleta FÍSICA —, e mora ao lado dela pelo mesmo
-   motivo: uma madrugada não é "o fundo do painel", é uma hora do dia.
-
-   E É O QUE FAZ QUATRO DESENHOS SEREM UM DESENHO COM QUATRO LUZES.
-   `formas.md` (R13, `O rosto da cena`): *a hora não muda o desenho: muda
-   a luz.* A gravura sai da semente e não se mexe; o que desliza com o
-   relógio é esta tabela. No Figma é a colecção *Luz da cena*, cinco
-   variáveis × quatro modos, e cada variante do rosto fixa o seu modo.
-
-   A TINTA É UMA SÓ, e por isso é chave de topo e não de cada luz: três
-   tons de linha e uma xilogravura vira desenho digital — a lição que
-   `rosto.jsx` já tinha escrito, aplicada à paisagem. (O Figma guarda-a
-   nos quatro modos com o mesmo valor; aqui uma cópia por modo seria a
-   mesma cor escrita quatro vezes, que é a doença que esta casa varre.)
-
-   OS CONTRASTES, medidos pelo `desenho` nas quatro luzes: o pior par da
-   legenda é `ink` × chão de dia, **11,12:1** (V1; era 10,60 — o `ink`
-   desceu) — AAA com folga larga. E `T.mundo`, que escreve a hora, nunca
-   desce de **6,36:1** (V1; era 7,27 — o ciano da v3 é mais escuro que
-   o teal de R2).
-
-   `astroAlfa` e `astroAlto` vão na receita e não no desenho porque são o
-   que distingue uma luz da outra: de madrugada e ao entardecer o astro é
-   BAIXO (roça o horizonte); de dia e de noite é ALTO. A cor dele sai de
-   `T`, nunca de um hex novo — é o único ponto da faixa onde um acento da
-   casa entra na paisagem.
+   Eram as quatro receitas de cor da xilogravura do topo do papel
+   (`O rosto da cena`, R13-B): céu, chão, talho, astro, por luz. A pessoa
+   tirou a gravura da tela (*"deixar exatamente igual à imagem do
+   Figma"*) e a tabela ficou sem nenhum leitor — o único era
+   `rosto-da-cena.jsx`, que saiu inteiro. `O TEMPO` (V3c) NÃO a lia: lê os
+   NOMES das luzes (`luzDaHora`, agora em `hora-e-prazo.js`), nunca as
+   cores. Os pisos, as medições e a história estão em `mente/formas.md`
+   (R13, R15) e no `git`; a coleção do Figma ficou marcada como
+   aposentada, sem apagar, para os pares antigos continuarem legíveis.
    ============================================================ */
+
 /* ============================================================
-   A CORRECÇÃO DE 23/09 — O BURIL DESAPARECIA À NOITE, E A CULPA ERA DE
-   HAVER UMA TINTA SÓ.
+   V5a · A RUNA, O CABEÇALHO DA PÁGINA E O FLOREADO — o `129:4` e o
+   `129:32` da pessoa (Figma `ffWFqD7TueSb88Mkeg9bhW`), em tabela.
 
-   O `aprendiz` mediu a tinta contra o chão de cada luz e trouxe o número
-   sem que lho pedissem: **dia 1,57 · entardecer 1,29 · madrugada 1,18 ·
-   noite 1,08.** A 1,08 a hachura não existe, e a 1,32 contra o céu a
-   própria silhueta mal se lê — e a silhueta É a peça. `Mar Aberto`,
-   `Órbita Alta` e `Cinturão` à noite eram rectângulos escuros com uma
-   legenda por baixo.
+   A ORDEM FOI DIRETA: *"deixar exatamente igual à imagem do Figma"*.
+   Então cada número abaixo é o do nó, lido no `get_design_context` e na
+   API do Figma — nenhum foi afinado a olho — e a suíte
+   (`teste-v5a-cabecalho.mjs`) refaz a soma que o nó mede: 20 + 13 + 12 +
+   8 + 16 = **69 px**, a altura do `parchment-header`.
 
-   E NÃO ERAM OS VALORES: ERA A TINTA ÚNICA. A prova é aritmética e não
-   opinião, e é ela que decide tudo o que vem a seguir:
+   A RUNA É UMA FORMA SÓ: traço curto, três pontos, traço longo. É a do
+   cabeçalho, a do corpo (`ornamental-divider`, `129:20`), a do rodapé
+   (`129:33`) e a das telas de criação (`135:330`) — a mesma peça no
+   Figma quatro vezes, e `DivisoriaRunica` (`ui.jsx`) uma vez no código.
+   Os pontos saem de `T` POR NOME (a luz, o mundo, a tua mão — o mapa de
+   V1 §6), e o traço é `amber` a 0,2: **1,48:1** contra o poço, e é
+   decorativo de propósito (não carrega informação, e a 1.4.11 não o cobre).
 
-     · a legenda em AAA (`ink` ≥ 7:1) exige um chão com **L ≤ 0,0775**;
-     · uma hachura ESCURA (≥ 3:1) exige um chão com **L ≥ 0,1108**.
-
-   **Não há chão que sirva aos dois.** Com uma tinta escura só, ou a
-   legenda perde AAA ou o buril não se vê — e a legenda diz *onde o
-   jogador está*, que é a razão de a faixa existir.
-
-   A SAÍDA NÃO É INVENÇÃO NOSSA, É COMO SE GRAVA HÁ DUZENTOS ANOS: na
-   GRAVURA DE LINHA BRANCA (Thomas Bewick, wood engraving) o bloco é
-   escuro e o buril TIRA matéria — a marca é a luz que entra, não a
-   tinta que se põe. Daí a lei desta tabela, que é física antes de ser
-   estética:
-
-       ACIMA DO HORIZONTE O BURIL ESCURECE; ABAIXO DELE, CLAREIA.
-       O céu é a fonte de luz: marca-se tirando-lhe luz (`tinta`).
-       O chão é sombra: marca-se dando-lha (`talho`).
-
-   POR ISSO `talho` É NOVO E É POR LUZ, e `tinta` continua UMA e no
-   topo: a massa da silhueta é sempre o bloco por cortar.
-
-   ------------------------------------------------------------
-   R15 — A LEI ACIMA ESTAVA CERTA NO HORIZONTE E ERRADA NO RESTO DO
-   CÉU, E O NÚMERO QUE A APANHOU JÁ ESTAVA ESCRITO NESTE PROJECTO.
-
-   A entrega anterior declarou a sua própria dívida: o talho do céu mede
-   **1,09 na noite contra um piso de 1,5** — tinta escura sobre céu
-   escuro, *a mesma doença da entrega anterior, mudada de andar*. E
-   declarou também que não se conserta por opacidade (a 1,0, tinta
-   chapada, a noite chega a 1,18) nem mexendo em onde a hachura começa
-   (a travessia é y=8/14/29/40 conforme a luz, e fazer a GEOMETRIA
-   depender da luz partia a lei da peça).
-
-   A CAUSA É UMA PREMISSA FALSA, NÃO UM VALOR MAL ESCOLHIDO. A lei acima
-   diz «o céu é a fonte de luz», e isso é verdade DO HORIZONTE — não do
-   céu. O céu desta peça é um GRADIENTE, e o alto dele é escuro nas
-   quatro luzes:
-
-       ceuAlto L:  noite 0,0070 · madrugada 0,0153 · entardecer 0,0413
-       tinta   L:  0,0036
-
-   Ao alto da noite o buril e o campo estão a **1,03:1** um do outro
-   ANTES de se pôr uma gota de alfa. Nenhum alfa salva uma diferença que
-   não existe.
-
-   E ERGUER O CÉU TAMBÉM NÃO SALVA — eliminado com conta e não com
-   gosto: para `tinta` a 0,45 chegar a 1,5 sobre o topo do céu seria
-   preciso `L(ceuAlto) >= 0,1606`, um cinzento médio. **A noite deixaria
-   de ser noite para que a textura dela se visse.**
-
-   A LEI GERAL, ENTÃO — e é mais curta do que a que substitui:
-
-       A MARCA É O CONTRÁRIO DO CAMPO QUE A RECEBE.
-       Campo claro, o buril põe tinta. Campo escuro, o buril tira-a.
-
-   O chão é escuro nas quatro luzes: `talho`, sempre. O céu é escuro em
-   cima nas quatro: **`talhoDoCeu`, sempre** — um céu que é bloco na
-   maior parte da sua altura é um bloco por cortar, não uma folha por
-   marcar. A silhueta não é marca: é MASSA, e continua `tinta`.
-
-   E ISTO NÃO É MENOS BEWICK, É MAIS: na gravura de linha branca o céu é
-   cortado a branco. O talho ESCURO no céu era a parte não-Bewick da
-   nossa própria receita.
-
-   A PROVA DE QUE É MELHOR PICTURA E NÃO SÓ MELHOR PISO. A hachura
-   adensa para o horizonte (passo 11 px em cima, 3 px em baixo) e o
-   gradiente CLAREIA para o horizonte. Com marca escura as duas puxavam
-   em sentidos contrários — medida a profundidade do céu (razão de luz
-   entre o alto e o horizonte, já com a cobertura da hachura):
-
-       luz          céu nu   hoje (tinta)      com `talhoDoCeu`
-       madrugada     2,64     2,16  (-18 %)     3,20  (+21 %)
-       dia           2,21     1,81  (-18 %)     2,47  (+12 %)
-       entardecer    2,23     1,82  (-19 %)     2,56  (+15 %)
-       noite         2,50     2,10  (-16 %)     3,23  (+29 %)
-
-   **A textura estava a apagar entre 16 % e 19 % da profundidade que o
-   gradiente declarava.** Passa a acrescentar 12 % a 29 % — um ganho de
-   **30 % a 54 %** sobre o que está no ar. *Era por isto que o céu se
-   lia chato mesmo onde o piso passava: a peça lutava contra si mesma, e
-   nenhuma medida de contraste sozinha o diria.*
-
-   O TALHO DO CÉU NÃO É UM VALOR ESCOLHIDO, É UMA CONTA: é o próprio
-   `ceuBaixo` — a cor do horizonte, o ponto mais claro do campo —
-   erguido 65 % em direcção ao branco, com **um k só para as quatro**.
-   A suíte refá-lo em vez de comparar hexes.
-
-   E O ALFA SOBE DE 0,45 PARA 0,85 — o mesmo dos dois buris, por razão e
-   não por afinação: **um corte de buril não é translúcido, é o papel.**
-   Os 0,45 eram herança do tempo da tinta escura, onde o alfa não fazia
-   diferença nenhuma. Com marca clara o alfa trabalha, e o valor que o
-   chão já usava serve ao céu: um número, dois buris.
-
-   O QUE NADA DISTO PIORA, medido antes de se escrever:
-
-       a silhueta x o céu ao horizonte   3,32->4,87 · 4,14->5,70 · 4,78->6,19 · 5,79->7,35
-       a marca da chapa x o céu ao topo  8,13->6,27 · 4,78->3,73 · 5,82->4,51 · 9,32->7,48
-       o talho do chão, a legenda        intocados
-
-   **A silhueta melhora nas quatro** (o campo atrás dela ficou mais
-   claro) e a marca da chapa desce sem que nenhuma reprove — o par mais
-   apertado é o dia, a **3,73 contra um piso de 3** (+24 %).
-
-   O PISO DO CÉU CONTINUA 1,5 e não sobe para o que se alcançou: um piso
-   é uma RAZÃO, não um recorde, e a razão não mudou — a textura não
-   carrega informação. O que mudou é que passa: **o pior ponto das
-   quatro luzes é 2,14 (o dia, ao horizonte), 43 % acima do piso**, onde
-   antes era 1,09, **27 % abaixo**.
-   ------------------------------------------------------------
-
-   ------------------------------------------------------------
-   R15 — O ASTRO GANHA PISO, E O PISO NÃO É NÚMERO NOVO.
-
-   A entrega anterior mediu-o e **recusou-se a pôr asserção**, com a
-   razão certa: *inventar aqui um número que o `desenho` não escreveu
-   seria a suíte a legislar sobre a forma.* Os números eram **entardecer
-   1,42 · dia 2,00 · madrugada 2,17 · noite 3,77**.
-
-   O PISO É 3:1, E ESCREVÊ-LO É RECUSAR ESCREVER UM NÚMERO. Esta tabela
-   tem exactamente UM piso para «uma forma que se tem de distinguir» — o
-   3 de `silhuetaNoCeu`, de `talhoNoChao` e de `chapaNoCeu`, que sai da
-   WCAG 1.4.11. **O astro é uma forma.** Dar-lhe piso próprio seria a
-   segunda tabela; dar-lhe o que já existe é uma linha.
-
-   E NÃO É O PISO DA TEXTURA (1,5): uma textura PODE dissolver-se em tom
-   — é para isso que serve. **Um disco que se dissolve não lê como tom,
-   lê como borrão.**
-
-   O QUE MUDA PARA O CUMPRIR, e a mudança TIRA valores em vez de os pôr:
-
-       hoje:  amberSoft@0,55 · amberSoft@0,40 · danger@0,60 · mundoSoft@0,50
-       novo:  `T.ink` @ 0,85, nas quatro
-       medido: 4,04 · 4,88 · 3,41 · 9,43   (o pior tem 14 % de folga)
-
-   O ENTARDECER OBRIGOU A DECISÃO, e é o caso que prova que não era
-   afinação: com `T.danger` **nenhum alfa chega a 2,0** — a 1,0, opaco,
-   dá 1,77. *O sol do entardecer era mais escuro do que o céu que ele
-   acende.* Nenhum outro token de `T` passa 3:1 nas quatro; `T.ink` é o
-   único, e é o que devia ser desde o princípio: **o astro é o sítio
-   onde o bloco é cortado até ao papel**, e `ink` é o papel desta casa.
-
-   TRÊS COISAS QUE ISTO PAGA DE ENFIADA:
-
-   1. `astro` e `astroAlfa` SOBEM AO TOPO, ao lado de `tinta`. Quatro
-      cópias do mesmo valor por modo é «a mesma cor escrita quatro
-      vezes», que é a doença que a nota grande desta tabela nomeia.
-      **A tabela perde 8 entradas e ganha 2.**
-   2. FECHA A EXCEPÇÃO QUE R13 DECLAROU: *«o astro é o único ponto da
-      faixa onde um acento da casa entra na paisagem.»* Já não entra — a
-      paisagem fica sem acento nenhum, e a lei de R1 (*cor viva só em
-      coisa com que se interage*) deixa de ter um buraco.
-   3. A HORA CONTINUA A COLORIR O SOL — através do céu, não do token. A
-      0,85 o campo atravessa 15 % do disco: sobre um céu lilás o astro lê
-      frio; sobre o laranja do entardecer, quente. *A hora muda a luz,
-      não o desenho* — aplicada um andar mais fundo.
-
-   `astroAlto` FICA POR LUZ, porque esse distingue de verdade: de
-   madrugada e ao entardecer o astro roça o horizonte; de dia e de noite
-   é alto. **Posição é luz; opacidade era afinação.**
-
-   A DÍVIDA DESTE PISO, DECLARADA COM O NÚMERO. Os 3,41 do entardecer
-   são contra o céu NU — a mesma régua com que a silhueta é medida, e
-   duas réguas para duas formas seria pior do que uma régua imperfeita.
-   Contra um céu JÁ TALHADO o entardecer dá **2,56**, porque o talho
-   claro levanta o campo à volta do disco. **O segundo canal do astro
-   não é cor: é ser o único SÓLIDO num campo talhado** — e textura
-   sobrevive ao cinzento e aos três daltonismos, como a areia da
-   ampulheta. A condição desse canal é que **o talho PARE na borda do
-   astro**, e hoje corta-lhe por cima. Isso é FORMA
-   (`gravura-da-cena.js`), não valor, e está escrito em `mente/formas.md`
-   para quem constrói.
-   ------------------------------------------------------------
-
-   OS CINCO PISOS, todos medidos, e o mais apertado tem 11% de folga:
-
-   | o que é | piso | porquê |
-   |---|---|---|
-   | a silhueta × o céu ao horizonte | **3:1** | WCAG 1.4.11 — carrega informação (o bioma) |
-   | o talho do chão × o chão | **3:1** | idem — é o relevo do terreno |
-   | a legenda `ink` × o chão | **7:1** | AAA: é ela que diz onde o jogador está |
-   | a legenda `mundo` × o chão | **4,5:1** | AA |
-   | a marca da chapa × o `ceuAlto` | **3:1** | 1.4.11 — é a fronteira da faixa |
-
-   O talho do CÉU fica em 1,86–2,31:1 e **está isento por escrito**: ele
-   não carrega informação nenhuma — é textura, e a 1.4.11 cobre
-   "gráficos que transmitem informação". O piso dele é só ser
-   perceptível (≥ 1,5), e é.
-
-   E DUAS COISAS QUE ESTA TABELA PROMETE ALÉM DOS PISOS:
-
-   1. **O CHÃO É SEMPRE MAIS ESCURO QUE A PÁGINA** (L 0,0070–0,0245
-      contra 0,0305). É onde moram as palavras da legenda, e a prosa tem
-      de continuar a ser a superfície protagonista. O CÉU pode ser mais
-      claro — é um céu.
-   2. **AS QUATRO DISTINGUEM-SE UMAS DAS OUTRAS**, por luz ≥ 1,2:1 OU
-      matiz ≥ 25°. A madrugada passou de castanho a LILÁS-CINZA por
-      causa disto: em tom quente ela era indistinguível do entardecer
-      (1,17:1 e 6° de matiz), e a luz de antes do sol é fria de verdade.
-      O sol que nasce volta pelo `astro`, que é um ponto e não um campo.
+   A LETRA DO CABEÇALHO É 10, ABAIXO DE `TIPOS.piso` (12) — e é EXCEÇÃO
+   ESCRITA, não esquecimento. A pessoa pediu o nó ao pixel, e o nó tem 10.
+   O que a torna legível, medido: são MAIÚSCULAS de JetBrains Mono, e a
+   altura de maiúscula a 10 px é maior do que a altura-x da letra da máquina
+   a 12 (`TIPOS.maquina`) — a medida que o olho lê numa palavra curta; e o
+   contraste é **10,61:1** (âmbar, o lugar) e **6,60:1** (`inkDim`, a luz),
+   os dois acima de AA. São duas etiquetas, nunca prosa nem controlo — nada
+   ali se toca. E a da esquerda é a MORADA do lugar (era a legenda da
+   gravura desde R13-B; antes disso, o painel do tempo): por isso o lugar
+   leva o âmbar, a 10,61:1, e a da direita, que repete o que `O TEMPO`
+   já diz, leva a tinta discreta.
+   `check-formas` (D5g) conta
+   `text-[Npx]` e esta letra não passa por lá: vem desta tabela, com o
+   motivo ao lado — a catraca não subiu, e a exceção não se esconde.
    ============================================================ */
-export const LUZ_DA_CENA = {
-  tinta: "#0F0B08",   /* o BLOCO: a MASSA da silhueta — e só ela, desde R15 */
-  /* O DISCO: o sítio onde o bloco é cortado até ao papel. UM token e UM
-     alfa nas quatro luzes — a hora colore-o através dos 15 % de céu que
-     lhe atravessam o disco, não através de um valor por modo. */
-  astro: T.ink,
-  astroAlfa: 0.85,
-  /* O ALFA DOS DOIS BURIS, e é um só: um corte não é translúcido, é o
-     papel. Vivia solto em `rosto-da-cena.jsx` (0,85 no chão, 0,45 no
-     céu) e é um número de que os pisos dependem — logo é tabela. */
-  alfaDoTalho: 0.85,
-  /* os pisos moram aqui para a suíte os ler de volta: uma catraca que
-     guarda um número que ela própria não vê não é uma catraca */
-  pisos: { silhuetaNoCeu: 3, talhoNoChao: 3, legendaInk: 7, legendaMundo: 4.5, chapaNoCeu: 3, texturaDoCeu: 1.5, astroNoCeu: 3 },
-  /* O K DO TALHO DO CÉU: `talhoDoCeu` é `ceuBaixo` erguido esta fracção
-     em direcção ao branco. Mora aqui para a suíte REFAZER a conta em vez
-     de comparar hexes — uma tabela que se recalcula não se afina à mão. */
-  erguerOTalhoDoCeu: 0.65,
-  /* `talho` é o buril ABAIXO do horizonte; `talhoDoCeu` é o buril ACIMA
-     dele. Os dois clareiam, porque os dois campos são escuros. */
-  madrugada:  { ceuAlto: "#241F2B", ceuBaixo: "#7D6F7D", chao: "#221C22", talho: "#988E95", talhoDoCeu: "#D2CDD2", astroAlto: false },
-  dia:        { ceuAlto: "#54432F", ceuBaixo: "#A4875F", chao: "#332A1D", talho: "#AA9C83", talhoDoCeu: "#DFD5C7", astroAlto: true  },
-  entardecer: { ceuAlto: "#4A3524", ceuBaixo: "#C16429", chao: "#2E2418", talho: "#B9906A", talhoDoCeu: "#E9C9B4", astroAlto: false },
-  noite:      { ceuAlto: "#14131C", ceuBaixo: "#576675", chao: "#161318", talho: "#7F8C95", talhoDoCeu: "#C4C9CF", astroAlto: true  },
+export const RUNA = {
+  fio: 40,          /* o traço curto, antes dos pontos */
+  ponto: 8,         /* o diâmetro de cada ponto — e a altura da runa */
+  passo: 16,        /* de centro a centro: três pontos cabem em 40 (4 · 20 · 36) */
+  espaco: 12,       /* entre o traço curto, os pontos e o traço longo */
+  alfaDoFio: 0.2,   /* os dois traços: `amber` a 0,2 */
+  espessura: 1,     /* os dois traços: 1 px (o `h-px` do nó) */
+  pontos: ["amber", "mundo", "rosa"],  /* por NOME de T — a luz, o mundo, a tua mão */
+  /* O AR DA RUNA SOLTA: quando ela separa seções (as oito da criação do
+     mundo), leva 8 px acima e abaixo — o mesmo `py-2` da divisória de
+     v9.173, para aquelas telas não mudarem de ritmo. Dentro do cabeçalho
+     e no fim da página vai a 0: ali quem dá o ar é o vizinho. */
+  respiro: 8,
+};
+
+export const CABECALHO_DA_PAGINA = {
+  cima: 20,         /* `pt` do 129:4 */
+  baixo: 16,        /* `pb` */
+  lado: 24,         /* `px` — medido da BORDA do cartão, porque o fio dele é por dentro */
+  entre: 12,        /* entre a linha das etiquetas e a runa; e o mínimo entre as duas etiquetas */
+  letra: 10,        /* JetBrains Mono 10 — abaixo de TIPOS.piso, EXCEÇÃO escrita acima */
+  linha: 13,        /* a altura da linha das etiquetas (o `leading normal` do nó mede 13) */
+  espacamento: 1.8, /* o rastreio da etiqueta do lugar, em px (0,18 em); a da direita não tem */
+};
+
+/* O FLOREADO (`129:40`): quatro barras de 4 px, 4 px entre elas, pousadas
+   pela base — âmbar no canto esquerdo, `mundo` no direito. Mora no FIM DA
+   PÁGINA, na mesma linha da runa, dentro do ar que o fim do registro já
+   tinha: custa **0 px** de prosa (a decisão está em `formas.md` §V5a). */
+export const FLOREADO = {
+  barra: 4,
+  espaco: 4,
+  esquerda: [12, 20, 16, 14],   /* `amber` */
+  direita: [14, 18, 12, 16],    /* `mundo` */
 };
 
 /* ============================================================
@@ -861,6 +672,12 @@ export const SOLEIRA = {
      bem. *A peça que existe para suavizar uma imagem não tem trabalho
      onde a imagem não existe.*
    - sem `mask-image` — a prosa fica como está hoje. Degradação nula.
+
+   V5a (25/09): A CABEÇA DEIXOU DE SER IMAGEM — a gravura saiu e o topo
+   do papel é o cabeçalho da pessoa, liso, com a runa por baixo. O
+   esbatimento FICA pela razão original (uma linha meio engolida por uma
+   borda dura lê-se pior do que uma que se apaga) e pelo custo, que
+   continua zero: cobre só os 24 px de enchimento em `scrollTop = 0`.
    ============================================================ */
 export const ESBATIMENTO = {
   altura: 24,
@@ -885,15 +702,15 @@ export const ESBATIMENTO = {
    AMBIENTE (V1, 24/09/2026) — a luz que a v3 põe sobre o corpo da
    história: um gradiente horizontal fraco, âmbar → mundo → rosa, por
    cima do poço (`T.pagina`). As paradas apontam para `T` POR NOME
-   (como `APERTOS` em `gravura-da-cena.js`): a luz segue a paleta
+   (como `APERTOS` em `hora-e-prazo.js`): a luz segue a paleta
    sozinha, e não há hex novo aqui.
 
    OS ALFAS SÃO OS DO FIGMA: as paradas do nó `ambient-gradient-overlay`
    medem 0,07/0,10/0,08, e o próprio nó tem opacidade 0,90 — logo
    0,063/0,090/0,072.
 
-   OS DOIS PISOS: `prosa` = 7 é o mesmo piso AAA da legenda em
-   `LUZ_DA_CENA` — a prosa é a protagonista da tela, e uma luz
+   OS DOIS PISOS: `prosa` = 7 é o piso AAA que a legenda da gravura
+   tinha (aposentada em V5a, com a gravura) — a prosa é a protagonista da tela, e uma luz
    decorativa por cima dela não pode piorar a leitura. `corpoContraMesa`
    = 2,3 é ΔE76 (Sharma, *Digital Color Imaging Handbook*: o limiar de
    diferença perceptível) — substitui o par de R2 "página × mesa ≥ 1,5",
@@ -1727,21 +1544,6 @@ export const SUPERFICIES_CSS = `
   box-shadow: 0 0 0 2px ${T.bg}, var(--tv-filete, inset 0 0 0 0 transparent);
 }
 
-/* ---------------- O ROSTO DA CENA, EM ALTO CONTRASTE (R13) ----------
-   forced-colors apaga a paleta por ESPECIFICACAO, e a degradacao desta
-   peca esta escrita em formas.md: a faixa perde as cores e fica a
-   silhueta a traco sobre o fundo do sistema, com a legenda a continuar
-   a dizer o lugar e a hora POR PALAVRAS — que e o que ali importa.
-
-   Nao se declara forced-color-adjust: none em lado nenhum: isso seria
-   dizer ao sistema operativo que a nossa paleta sabe melhor do que o
-   jogador que a desligou. Tira-se o que e so cor (o ceu, o chao, o
-   astro) e deixa-se o que e DESENHO. */
-@media (forced-colors: active) {
-  .tv-gravura-fundo { display: none; }
-  .tv-gravura-tinta { fill: CanvasText; stroke: CanvasText; }
-}
-
 /* ---------------- O ESBATIMENTO DO TOPO (R15) ----------------------
    A regiao que rola por baixo de uma cabeca fixa deixa de se cortar a
    navalha. Poe-se na PROPRIA regiao que rola (nao numa camada por
@@ -1769,8 +1571,8 @@ export const SUPERFICIES_CSS = `
    contra o qual um corte recto le bem. A peca que existe para suavizar
    uma imagem nao tem trabalho onde a imagem nao existe. */
 /* V1: a LUZ_AMBIENTE mora aqui e nao numa classe nova porque .tv-esbate-topo
-   e o unico leitor do corpo da historia (App.jsx:23112) e ja e a regiao que
-   rola por baixo da gravura — exatamente onde a v3 poe o gradiente. Sem
+   e o unico leitor do corpo da historia e ja e a regiao que rola por baixo
+   do cabecalho da pagina (V5a; antes, da gravura) — exatamente onde a v3 poe o gradiente. Sem
    background-attachment (o padrao e scroll) o gradiente fica preso a CAIXA,
    nao ao texto, e a mascara do esbatimento tambem o esbate nos 24px de cima. */
 .tv-esbate-topo {
