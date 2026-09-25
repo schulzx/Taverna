@@ -7,7 +7,7 @@
 
    Lê `T`, `AMBIENTE`, `ESBATIMENTO`, `FOLHA` de `../src/estilo.js` —
    nada de React, tudo em Node, como toda suíte desta casa. */
-import { T, AMBIENTE, ESBATIMENTO, FOLHA } from "../src/estilo.js";
+import { T, AMBIENTE, ESBATIMENTO, FOLHA, alfa } from "../src/estilo.js";
 
 let ok = 0, mal = 0;
 const t = (n, c, d = "") => { if (c) { ok++; console.log("  ok  " + n); } else { mal++; console.log("  XX  " + n + (d ? "\n      " + d : "")); } };
@@ -52,7 +52,8 @@ const pior = (fg) => { let m = 99; for (let i = 0; i <= 100; i++) m = Math.min(m
       MENOS o duplicado: `inkDim`×`panel` aparecia duas vezes em R2
       ("rótulo do HUD" e "placeholder"), o mesmo par com dois nomes.
       MAIS sete, os que a v3 obriga: `paginaFio`×`pagina` (o contorno
-      do cartão), `rosa`×`bg`/`rosa`×`panelSoft` (a marca nasce nesta
+      do cartão — em V1b trocado por `lineStrong`×`pagina`, a borda do que
+      se toca na página, quando `paginaFio` se aposentou), `rosa`×`bg`/`rosa`×`panelSoft` (a marca nasce nesta
       etapa), `violet`×`panelSoft` (é a razão de o violeta ter subido
       de `#9B5DE5` para `#AC79E9`), e os três chips da página —
       `danger`/`amberSoft`/`inkMeio` × `paginaAlta`.
@@ -67,7 +68,7 @@ const PARES = [
   ["onMundo", "mundo", 4.5], ["amberSoft", "panel", 4.5], ["violetSoft", "panel", 4.5], ["ink", "panel", 4.5],
   ["ok", "okFundo", 4.5], ["danger", "perigoFundo", 4.5], ["danger", "panel", 4.5], ["danger", "pagina", 4.5],
   ["ok", "panel", 4.5], ["mundo", "pagina", 4.5], ["lineStrong", "bg", 3], ["lineStrong", "panel", 3],
-  ["lineStrong", "panelSoft", 3], ["paginaFio", "bg", 3], ["paginaFio", "pagina", 3], ["amber", "bg", 3], ["violet", "bg", 3],
+  ["lineStrong", "panelSoft", 3], ["lineStrong", "pagina", 3], ["amber", "bg", 3], ["violet", "bg", 3],
   ["mundo", "bg", 3], ["danger", "bg", 3], ["rosa", "bg", 3], ["rosa", "panelSoft", 3],
   ["violet", "panelSoft", 4.5], ["danger", "paginaAlta", 4.5], ["amberSoft", "paginaAlta", 4.5], ["inkMeio", "paginaAlta", 4.5],
 ];
@@ -110,13 +111,19 @@ t("o ambiente só usa tokens de T", AMBIENTE.paradas.every((p) => typeof T[p.tok
 
 /* 6. T.paginaAlta === T.panelSoft (de propósito: a v3 tem uma escada
       só, fria, de quatro degraus — poço, mesa, cinta, erguido — e a
-      página deixa de ser uma segunda família de superfície) e
-      T.paginaFio !== T.line (a segunda ainda separa o contorno
-      decorativo do controlo; essa separação é V2, quando o `App.jsx`
-      puder trocar `paginaFio` por `line`/`lineStrong` nos dois
-      trabalhos que hoje ele acumula — até lá esta desigualdade tem de
-      se manter, ou o contorno perde o fio que carrega 1.4.11). */
-t("paginaAlta = panelSoft e paginaFio ≠ line (até V2)", T.paginaAlta === T.panelSoft && T.paginaFio !== T.line);
+      página deixa de ser uma segunda família de superfície).
+      A ASSERÇÃO MUDOU EM V1b (25/09), E O MOTIVO FICA: ela pedia
+      `paginaFio !== line` porque o fio fazia dois trabalhos — contorno
+      decorativo e borda de controlo — e não podia descer a `line` sem
+      tirar os 3:1 aos chips. V1b separou-os no `App.jsx` (o cartão a
+      `line`, o que se toca a `lineStrong`), e `paginaFio` aposentou-se.
+      O que ela guarda agora é que ele NÃO volta: um terceiro fio seria
+      outra vez uma cor com dois trabalhos. O par `lineStrong`×`pagina`
+      entrou na catraca de cima no lugar dos dois de `paginaFio`. */
+t("paginaAlta = panelSoft, e paginaFio aposentado (V1b)", T.paginaAlta === T.panelSoft && T.paginaFio === undefined);
+/* 6b. `alfa` é pública desde V1b e é a conta que se espera: a rosa a 0,15 do
+       "Continuar aventura" sai daqui, e não de um rgba() escrito à mão. */
+t("alfa(T.rosa, 0.15) é a rosa a 0,15", alfa(T.rosa, 0.15) === "rgba(241,91,181,0.15)", alfa(T.rosa, 0.15));
 
 /* ============================================================
    7. ESBATIMENTO.alfaAA É A CONTA DE HOJE (±0,01) — o alfa em que

@@ -19,6 +19,74 @@ Formato:
 
 ---
 
+## 25/09 02:00 · v9.295–v9.296 · **V3 — os ícones desenhados: o emoji do sistema sai da mesa** · commits `afaffd8` (V3a) e (V3b, no bloco seguinte)
+
+- **estado inicial:** fila não pausada; trava do desenho livre, tomada às 23:30.
+  HEAD `6329ca1`; o `orquestrador` no ciclo 2 com o bastão (desde 23:03), que
+  fechou em `561ff65` (v9.294) e devolveu o bastão às ~23:49. Suíte verde.
+- **o Figma da pessoa, relido no começo:** as páginas 02–06 estão a ser refeitas
+  na linguagem v3, **nenhuma com nome de versão** — nada construído além da
+  mesa; a pergunta vai ao coordenador (a `47:2`, combate aberto, parece
+  acabada; a `46:3` ainda tem emoji, está a meio).
+- **jogo / desenho (em par, em primeiro plano):**
+  - `jogo` → `mente/v3-jogo.md`: o censo jogado. Numa campanha nova o jogador vê
+    **57 emoji distintos** na mesa ou a um toque, **43 de 75 abaixo de 12 px**.
+    O achado: *uma ação, várias caras* — o prazo com 4, o dinheiro com 4, a
+    magia com 6, o dado com 5 (um d6), "não pode" com 5, e *"há trabalho no
+    mural"* com até 14; e o avesso — `🎲` diz 7 coisas, `⚔` e `🛡` dizem 6. A
+    decisão de construção que fez V3b caber: **o ecrã traduz**, por tabela, em
+    vez de se tocarem as 296 falas do motor.
+  - `desenho` → `formas.md` §V3 e §V3b, spec `mente/v3-desenho.md`: a família
+    `GLIFOS` (Lucide ISC), a peça `Glifo`, o d20 como icosaedro provado,
+    `DegrausDaAmeaca`, `O ladrilho do assunto` (Figma `229:125`, cinco
+    variantes), e a catraca D5h. Entregou scripts por âncora provados em cópia
+    — pela segunda vez foi o que mais poupou tempo.
+- **aprendiz (V3a):** `glifos.js`, `ui.jsx`, 13 painéis e `grade-de-batalha`,
+  `check-formas` D5h, `teste-diplomacia` (o `🎁` deixa de ser exigido; o preço
+  visível fica), `teste-v3-glifos`. **101 → 0 emoji do SO** fora do `App.jsx`.
+- **oficial (V3b + V1b, com o bastão, tomado às 00:35):** o `BlocoSistema` em
+  ladrilhos, a voz, os chips, o teste pendente, a gaveta, o trilho; o contorno
+  do cartão, `paginaFio` aposentado, o `Continuar aventura` rosa. **App.jsx 595
+  → 589 emoji, 24 257 linhas antes e depois** (os scripts são neutros em linhas
+  de propósito: a primeira versão partia 89 endereços do
+  `check-acoes-do-jogador`). O `oficial` achou o círculo da seta ainda em
+  perigo — **`T.ink` sobre `T.danger` era 2,19:1, reprovava a 1.4.11 desde
+  antes de V1** — e passou a rosa com a seta em `onAccent` (**6,02:1**). Tocou
+  uma linha de `painel-alforje.jsx` (território do `aprendiz`, sem outra mão
+  nele) por ordem do spec.
+- **a prova jogada** (`v3-jogo.md` §9, antes `245dd3c` na 5174, depois a árvore,
+  375 e 1280, `/api` cortado): emoji na mesa **10 → 1 a 1280, 8 → 0 a 375**;
+  cinco segundos **3/5 → 4/5**; cinzento e deuteranopia passam (setas e peso).
+  **Falharam dois critérios dele**: as espadas diziam o dano *e* "tem um
+  trabalho"; a notícia do mural tinha três caras no mesmo registo; e **a Porta
+  lia pior** (perdeu contorno e fundo). Veredito: *sobe com conserto*. Os cinco
+  consertos + a marca `ban` no Impedido (o quadrado vazio lia-se como caixa de
+  marcar) foram feitos antes de subir.
+  - **A falha deste ciclo, dita:** **V3a subiu (`afaffd8`) antes da prova
+    jogada** — só com build, suíte e o harness do `desenho`. A lei que eu próprio
+    escrevi na Fase V pede o `jogo` antes de subir. A prova veio depois e não
+    apanhou nada de V3a que lesse pior, mas apanhou que **a soleira ainda
+    escreve `prazo 4 noites` e `◉ 140` em texto nu** — o item de V3a que o
+    `jogo` tinha como o maior ganho por linha não entrou. Vai para V3c, à cabeça.
+- **decisões médias:** `ASSUNTO_DO_EMOJI` mora em `glifos.js`, não num
+  `src/assunto-da-linha.js` novo (`src/*.js` é do sistema; uma tabela de
+  apresentação é nossa); `⛔` não vira glifo, vira a forma *Impedido* (oca,
+  com `ban`); a Porta ganha contorno `lineStrong` (4,29:1) e a seta no
+  ladrilho; `🕯` fica só com as tochas (os caídos passam a vida, a fé à
+  ascensão); `📖` é magia.
+- **o que ficou:** V3c (a soleira, O TEMPO, masmorra, acampamento, raid, as
+  falas do jogador, e o *"Novo arco iniciado"* no registo — o sistema a falar
+  de si); os chips cortados a 375 (já eram, V4), a ficha armada sobre a borda
+  do cartão (já era), a gaveta a 375 só com o campo aberto (já era, V6).
+  Pedidos ao sistema: as noites que faltam de um prazo; *a exaustão não fica*
+  e *sol às 22:00*, achados ao jogar.
+- **as propostas ambiciosas:** **V3d — o dado que rola é o sólido** (o
+  icosaedro cai com a cambalhota da semente) e **V3e — o glifo viaja** (da
+  promessa ao pagamento ao contador). Nenhuma vai à pessoa: um commit revertido
+  desfaz as duas.
+
+---
+
 ## 24/09 23:30 · v9.293 · **V1 — a folha da v3: a tela da pessoa começa pela cor** · **a Fase V abre** · commit `1484a3c`
 
 - **estado inicial:** fila não pausada; trava do desenho livre, tomada às 22:16.

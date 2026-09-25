@@ -100,4 +100,135 @@ export const GLIFOS = {
   masmorra: { de: "casa", d: "M4 21V11a8 8 0 0 1 16 0v10M2 21h20M7.5 21v-2.5H11V16h3.5v-2.5H17" },
   /* a hora, o tempo que passa: recarga, ritual · aposenta ⏳ quando não é prazo */
   relogio: { de: "lucide:clock", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M12 6v6l4 2" },
+  /* a defesa: proteger, o escudo, a pele que endurece · aposenta 🛡 🪨 ⛰ (V3b) */
+  escudo: { de: "lucide:shield", d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" },
+  /* a essência, a moeda do ofício · aposenta ⚗ ⚒ (V3b) */
+  essencia: { de: "lucide:flask-round", d: "M10 2v6.292a7 7 0 1 0 4 0V2M5 15h14M8.5 2h7" },
+  /* descansar, acampar, o sono · aposenta ⛺ 🌙 (V3b) */
+  descanso: { de: "lucide:tent", d: "M3.5 21 14 3M20.5 21 10 3M15.5 21 12 15l-3.5 6M2 21h20" },
+  /* o perigo mortal · aposenta ☠ 💀 ⚰ 🪤 🪂 (V3b) */
+  perigo: { de: "lucide:skull", d: "M12.5 17l-.5-1-.5 1h1zM15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1zM14 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0M8 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" },
+  /* procurar, perceber, deduzir · aposenta 🔎 🔍 👁 (V3b) */
+  procurar: { de: "lucide:search", d: "M21 21l-4.34-4.34M3 11a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" },
+  /* trabalho, contrato, decreto · aposenta 📋 📌 📜 ✅ ✖ 📣 🗡 (V3b) */
+  trabalho: { de: "lucide:scroll-text", d: "M15 12h-5M15 8h-5M19 17V5a2 2 0 0 0-2-2H4M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" },
+  /* as tochas, recurso contado · aposenta 🕯 (V3b) */
+  tocha: { de: "lucide:flame", d: "M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" },
+  /* o seu herói, e o legado · aposenta ⚜ (V3b) */
+  heroi: { de: "lucide:user", d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M8 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" },
+  /* venceu: conquista, título · aposenta 🏆 (V3b) */
+  trofeu: { de: "lucide:trophy", d: "M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3M4 22h16M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zM6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" },
+  /* o que te ajuda: condição boa, vantagem, dádiva · aposenta 🌠 ⬆ 🍲, e o ✦ da condição boa (V3b) */
+  favor: { de: "lucide:chevrons-up", d: "M17 11l-5-5-5 5M17 18l-5-5-5 5" },
+  /* o que te pesa: condição ruim, exaustão · aposenta 🥱 😩 🌑, e o ☠ da condição ruim (V3b) */
+  contra: { de: "lucide:chevrons-down", d: "M7 6l5 5 5-5M7 13l5 5 5-5" },
+  /* ouvir a voz do Mestre · aposenta 🔊 (V3b) */
+  ouvir: { de: "lucide:volume-2", d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6M19.364 18.364a9 9 0 0 0 0-12.728" },
+  /* parar a voz · aposenta ⏸ (V3b) */
+  pausa: { de: "lucide:pause", d: "M15 3h3a1 1 0 0 1 1 1v16a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-16a1 1 0 0 1 1 -1zM6 3h3a1 1 0 0 1 1 1v16a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-16a1 1 0 0 1 1 -1z" },
+  /* a sala do Códice · aposenta a caveira na aba (V3c) (V3b) */
+  codice: { de: "lucide:amphora", d: "M10 2v5.632c0 .424-.272.795-.653.982A6 6 0 0 0 6 14c.006 4 3 7 5 8M10 5H8a2 2 0 0 0 0 4h.68M14 2v5.632c0 .424.272.795.652.982A6 6 0 0 1 18 14c0 4-3 7-5 8M14 5h2a2 2 0 0 1 0 4h-.68M18 22H6M9 2h6" },
+  /* a marca da forma Impedido, NÃO um assunto: dentro do ladrilho oco, sem ela o
+     quadrado vazio lia-se caixa por marcar (v3-jogo.md §9.1). Nenhuma fala a pede
+     pela tabela; quem a desenha é LadrilhoDoAssunto e o selo "sem ação" da cinta. */
+  ban: { de: "lucide:ban", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M4.929 4.929l14.142 14.142" },
 };
+
+/* ============================================================
+   O ASSUNTO DA LINHA (V3b, 25/09) — o motor escreve, o ecrã traduz
+
+   As falas do sistema (296 no `App.jsx`, e as dos módulos) abrem com um
+   emoji: `⛔ Bola de Fogo custa 3 PM`, `🧭 Chegada: …`, `⚗ +3 de
+   essência`. São ~110 prefixos diferentes, e a mesma coisa chegava a ter
+   14 caras (`v3-jogo.md` §1). O motor NÃO se toca — é território do
+   sistema, e a fila dele está parada. Quem traduz é esta tabela: o
+   prefixo sai da frase e vira UM dos glifos da família, ou nenhum.
+
+   AS TRÊS RESPOSTAS DA TABELA:
+   · um nome de glifo  → o ladrilho do assunto, tom Neutro;
+   · `IMPEDIDO` (ou `impedidoCom(glifo)`) → o tom Impedido: o ladrilho
+     oco, a razão a cinza. O `⛔` NÃO VIRA GLIFO — vira a forma (`formas.md`,
+     "não pode agora"): um glifo de proibido por cima da frase era o
+     veredito a gritar por cima do assunto;
+   · `null` → o emoji sai e a palavra fica (enfeite, ou a voz do sistema a
+     falar de si mesmo).
+
+   UM PREFIXO QUE NÃO ESTÁ AQUI SAI NA MESMA — a linha nunca mostra o emoji
+   do sistema —, mas a suíte (`teste-v3-glifos` §6) varre `src/` e recusa
+   prefixo novo sem entrada: glifo novo sem assunto não nasce, e assunto
+   novo sem decisão também não.
+
+   Os nomes são de `GLIFOS` ou dos quatro da cinta (`moeda`, `mana`,
+   `vida`, `ampulheta`, que o `Glifo` pede a `ui.jsx`).
+   ============================================================ */
+const IMPEDIDO = { glifo: null, tom: "impedido" };
+const impedidoCom = (glifo) => ({ glifo, tom: "impedido" });
+
+export const ASSUNTO_DO_EMOJI = {
+  /* não pode — a forma, não o glifo */
+  "⛔": IMPEDIDO, "🚫": IMPEDIDO,
+  "📕": impedidoCom("faisca"), "🐾": impedidoCom("faisca"), "⛓": impedidoCom("cadeado"),
+  /* o golpe, o dano */
+  "⚔": "espadas", "⚡": "espadas", "💢": "espadas", "💥": "espadas", "🏹": "espadas", "🎯": "espadas",
+  /* o movimento */
+  "🏃": "passo", "👣": "passo", "📏": "passo",
+  /* a defesa */
+  "🛡": "escudo", "🪨": "escudo", "⛰": "escudo",
+  /* o dado */
+  "🎲": "dado", "🍀": "dado",
+  /* a magia */
+  "✨": "faisca", "🌀": "faisca", "🔮": "faisca", "🌿": "faisca", "📯": "faisca", "⏪": "faisca", "⏩": "faisca",
+  "✦": "faisca", "✧": "faisca",
+  /* a vida */
+  "🩸": "vida", "🩶": "vida", "🩹": "vida", "⚕": "vida", "🧪": "vida", "⛲": "vida",
+  /* o dinheiro e a essência */
+  "💰": "moeda", "🛒": "moeda", "⚗": "essencia", "⚒": "essencia",
+  /* o tempo */
+  "⏳": "relogio", "🕐": "relogio",
+  /* onde estou, para onde vou */
+  "📍": "alfinete", "🧭": "mapa", "🗺": "mapa", "🏞": "mapa", "🐴": "mapa",
+  /* descansar */
+  "⛺": "descanso", "🌙": "descanso",
+  /* a favor, contra */
+  "🌠": "favor", "⬆": "favor", "🍲": "favor", "🥱": "contra", "😩": "contra", "🌑": "contra",
+  /* o perigo mortal */
+  "☠": "perigo", "💀": "perigo", "⚰": "perigo", "🪤": "perigo", "🪂": "perigo",
+  /* aviso — reaja */
+  "⚠": "aviso", "💾": "aviso", "🔇": "aviso", "🥖": "aviso", "💧": "aviso",
+  /* trancado */
+  "🔒": "cadeado",
+  /* procurar, perceber */
+  "🔎": "procurar", "🔍": "procurar", "👁": "procurar",
+  "📖": "faisca", /* o livro das falas é o grimório: magia, não lupa (v3-jogo.md §9.1, a quarta errada) */
+  /* trabalho, contrato */
+  "📋": "trabalho", "📌": "trabalho", "📜": "trabalho", "✅": "trabalho", "✖": "trabalho", "📣": "trabalho", "🗡": "trabalho",
+  /* a masmorra */
+  "🕯": "tocha", "🕳": "masmorra", "🗝": "masmorra",
+  /* gente, a bolsa */
+  "👥": "grupo", "🧺": "bolsa", "🤲": "bolsa", "🎒": "bolsa",
+  /* a ascensão, o herói, o que se venceu */
+  "🌟": "ascensao", "🌌": "ascensao", "⚱": "ascensao", "⚜": "heroi", "🏆": "trofeu",
+  /* ouvir */
+  "🔊": "ouvir",
+  /* SAEM, e a palavra fica: enfeite, a voz do sistema a falar de si
+     (`⚖` recalibrar, `⚙` o turno), a sala multijogador (`🚪`), e os
+     que dizem coisas demais para um glifo só (`🔥` é fogueira e revolta) */
+  "🏛": null, "🌍": null, "💪": null, "✋": null, "🎭": null, "🎏": null, "🤝": null, "✉": null,
+  "🗞": null, "💭": null, "⚙": null, "🕊": null, "🚪": null, "👑": null, "🗣": null, "🌫": null,
+  "🔥": null, "⚖": null, "🎁": null, "🚶": null, "🌈": null, "🏰": null, "♂": null, "♀": null,
+};
+
+/* O prefixo: um pictográfico (com a variação e as junções), ou `✦`/`✧`,
+   e o espaço que o separa da frase. */
+const RX_PREFIXO_DA_LINHA = /^\s*((?:\p{Extended_Pictographic}|[✦✧])️?(?:‍\p{Extended_Pictographic}️?)*)[  ]*/u;
+
+export function assuntoDaLinha(texto) {
+  const linha = String(texto == null ? "" : texto);
+  const m = linha.match(RX_PREFIXO_DA_LINHA);
+  if (!m) return { glifo: null, tom: "neutro", resto: linha };
+  const resto = linha.slice(m[0].length);
+  const a = ASSUNTO_DO_EMOJI[m[1].replace(/️/g, "")];
+  if (a == null) return { glifo: null, tom: "neutro", resto };
+  if (typeof a === "string") return { glifo: a, tom: "neutro", resto };
+  return { glifo: a.glifo || null, tom: a.tom || "neutro", resto };
+}

@@ -191,8 +191,11 @@ sec("4. O piso do alvo entra na tela principal, e sai de tabela");
   t("e o campo do turno, na tela, carrega essa classe — nenhuma altura voltou a viver em linha",
     /tv-campo-do-turno/.test(APP) && !/minHeight: ALVOS\.piso \}\} \/>/.test(APP));
 }
+/* V3b (25/09) · a porta deixou de ser uma pílula (fundo `paginaAlta`) e passou a
+   ser a linha do ladrilho feita botão; a asserção guarda o mesmo — o alvo é a
+   linha inteira, a `ALVOS.piso`. */
 t("a linha do sistema que abre uma porta lê `ALVOS.piso`",
-  /minHeight: ALVOS\.piso, background: T\.paginaAlta, color: T\.amberSoft/.test(APP));
+  /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(APP));
 /* a conta é a mesma que `estilo.js` guarda, e é por isso que ela é tabela:
    um 48 escrito à mão aqui não teria como ser conferido de volta */
 t("e o piso continua a ser 48 e ≥ 44 (WCAG 2.5.5)", ALVOS.piso === 48 && ALVOS.piso >= 44);
@@ -201,7 +204,11 @@ t("nenhuma altura de controlo voltou a ser literal na tela principal", semTabela
   `achei ${semTabela.length}: ${semTabela.join(" ")} — use ALVOS.piso`);
 
 sec("5. A página, a coluna e as peças de R2 estão montadas");
-t("a narração usa a superfície quente", /background: T\.pagina, border: `1px solid \$\{T\.paginaFio\}`/.test(APP),
+/* V1b (25/09) · a asserção deixou de pedir `paginaFio`: o token aposentou-se
+   quando o contorno decorativo (`line`) se separou do de controlo
+   (`lineStrong`). O que ela guarda é o que importava — a narração mora na
+   SUA superfície, `T.pagina`, e não na mesa. */
+t("a narração usa a superfície dela", /background: T\.pagina, border: `1px solid \$\{T\.line\}`/.test(APP),
   "a narração voltou à mesa fria: o painel e o balão voltam a medir 1,039:1 um contra o outro");
 /* R21: a fala do Mestre ganhou `data-msg` (o endereço para onde a espreita
    do alforje salta) e `scrollMarginTop: ESBATIMENTO.altura` (para o salto não a

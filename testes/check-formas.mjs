@@ -104,7 +104,7 @@ import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
    uma catraca de uma cópia. */
 import { RITMO_DA_REACAO, TETO_DA_ESPERA } from "../src/ritmo-da-reacao.js";
 /* D5h lê a tabela dos glifos de volta: cada entrada tem de ter leitor. */
-import { GLIFOS } from "../src/glifos.js";
+import { GLIFOS, ASSUNTO_DO_EMOJI } from "../src/glifos.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -175,7 +175,7 @@ const TETO_DE_LITERAIS = {
      o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
      outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
      e é assim que ela fica: arquivo novo nasce com teto zero. */
-  "src/App.jsx": 76, /* 24/09 · R21: o fundo `rgba(0,0,0,.45)` do `PainelLateral` morreu com a moldura velha — o véu do alforje é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isto. 77 → 76. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero.) · 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R17: `VinhetaDaCena` foi aposentada pela lei do §20 (duas peças para o mesmo facto: ela e a gravura de R13-B), e com ela saíram os dois `rgba(23,19,34,…)` do degradê. 79 → 77. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
+  "src/App.jsx": 75, /* 25/09 · V1b: o brilho `rgba(216,106,91,0.15)` do "Continuar aventura" (o danger de R2) morreu — sai de `alfa(T.rosa, 0.15)`. 76 → 75. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 24/09 · R21: o fundo `rgba(0,0,0,.45)` do `PainelLateral` morreu com a moldura velha — o véu do alforje é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isto. 77 → 76. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero.) · 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R17: `VinhetaDaCena` foi aposentada pela lei do §20 (duas peças para o mesmo facto: ela e a gravura de R13-B), e com ela saíram os dois `rgba(23,19,34,…)` do degradê. 79 → 77. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
   /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
@@ -1103,10 +1103,10 @@ const RX_GLIFO_DE_FONTE = /[\u25C9\u25C6\u2726\u2727]/g;
    escreve o número aqui com a data. Os treze arquivos que V3a limpou
    não têm entrada: zero. */
 const TETO_DE_EMOJI_DO_SISTEMA = {
-  "src/App.jsx": 595, /* 25/09 · HEAD 245dd3c (v9.294) — reconte no dia em que V3a entrar */
+  "src/App.jsx": 589, /* 25/09 · V3b: as falas do sistema, a voz, os chips, o teste e a gaveta traduzem o emoji (era 595 em 245dd3c) */
 };
 const TETO_DE_GLIFO_DE_FONTE = {
-  "src/App.jsx": 162,
+  "src/App.jsx": 156, /* 25/09 · V3b: o ✦ da gaveta, da habilidade armada, da espera e da vantagem (era 162) */
   "src/painel-diplomacia.jsx": 2,  /* ◉ dentro de frase: V3b, com o preço */
   "src/painel-guilda.jsx": 3,      /* idem */
   "src/painel-talentos.jsx": 6,    /* idem */
@@ -1156,7 +1156,11 @@ t("D5h.2 · nenhum arquivo ganhou ◉ ◆ ✦ ✧ de fonte (use <Glifo nome=\"mo
 const jsxQueDesenham = arquivos.filter((a) => a.endsWith(".jsx"))
   .map((a) => mascararComentarios(readFileSync(join(RAIZ, a), "utf8"), ".jsx"))
   .filter((txt) => /<Glifo\b|chip\(/.test(txt)).join("\n");
-const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`));
+/* V3b · um glifo que só a tabela do assunto nomeia também é lido — desde que algum `.jsx`
+   desenhe as falas por `assuntoDaLinha`. Sem esse leitor, a tabela não lê ninguém. */
+const lidosPeloAssunto = /assuntoDaLinha\(/.test(jsxQueDesenham)
+  ? new Set(Object.values(ASSUNTO_DO_EMOJI).map((a) => (typeof a === "string" ? a : a && a.glifo)).filter(Boolean)) : new Set();
+const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome));
 t(`D5h.3 · as ${Object.keys(GLIFOS).length} entradas de GLIFOS têm, cada uma, um leitor na interface`,
   Object.keys(GLIFOS).length > 0 && semLeitor.length === 0,
   Object.keys(GLIFOS).length === 0 ? "A TABELA DESAPARECEU — renomearam GLIFOS, e o dente mede o vazio." : `sem leitor: ${semLeitor.join(", ")} — o glifo nasce com a etapa que o lê.`);

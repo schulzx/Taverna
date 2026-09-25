@@ -733,6 +733,14 @@ outra:
 Cada tela que estiver pronta vira aqui uma linha `- [ ] **V·<tela>**` quando o
 ciclo que a ler a encontrar acabada; as da mesa já estão escritas.
 
+**Leitura do arquivo em 25/09, 00:00 (ciclo de V3):** as páginas 02–06 têm os
+quadros a ser refeitos na linguagem da v3 (filhos novos `135:*` com nomes como
+`top-hud-bar`, `hud-header`, `ceremony-*`), mas **nenhum tem nome de versão** —
+só `126:5 · taverna-gameplay-v3`. `47:2 · A mesa - combate aberto` já está na
+linguagem v3 inteira; `46:3 · A mesa - jogo em curso` ainda tem emoji do SO no
+trilho, logo está a meio. **Nenhuma construída; a pergunta (quais estão
+prontas) foi entregue ao coordenador para levar à pessoa.**
+
 **As etapas da mesa** (a sequência é a do `jogo`, reordenada com razão escrita
 em `mente/v1-jogo.md` §4: a letra antes de compor, porque é ela que decide o
 orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
@@ -782,10 +790,38 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
     emoji do SO** nos 14 arquivos fora do `App.jsx`: todas as telas a um toque
     da mesa ficam sem emoji do sistema. A catraca D5h congela o `App.jsx` em 595
     e só o deixa descer.
-  - [ ] **V3b · o `App.jsx`** · `oficial`, com o bastão — a ordem por custo a
-    quem joga em `v3-desenho.md` §7: as falas do sistema traduzidas por tabela
-    (não 296 sítios) com `O ladrilho do assunto`, a voz, `chipsDoEstado`, o teste
-    pendente, a gaveta, o trilho sem espada nem caveira, O TEMPO; e V1b junto.
+  - [x] **V3b · o `App.jsx`** · `oficial`, com o bastão · **FEITO 25/09, no
+    ar** — as falas do sistema traduzidas por tabela (`ASSUNTO_DO_EMOJI` e
+    `assuntoDaLinha` em `glifos.js`, não 296 sítios) com `O ladrilho do assunto`
+    (Neutro cheio, Impedido oco com a marca `ban`, Porta com contorno
+    `lineStrong`), a voz, `chipsDoEstado` com setas a favor/contra, o teste
+    pendente, a gaveta `✦`, o trilho (Gestão → herói, Códex → ânfora); e **V1b**
+    junto (o cartão a `T.line`, `paginaFio` aposentado, o `Continuar aventura`
+    de perigo para rosa com a seta a 6,02:1 — era 2,19). A prova jogada
+    (`v3-jogo.md` §9) pediu cinco consertos antes de subir, e subiram com ela.
+  - [ ] **V3c · o que V3 deixou** · `oficial` + `aprendiz` — **a soleira ainda
+    escreve `prazo 4 noites` e `◉ 140` como texto nu: o `SeloDePrazo` e o glifo
+    do dinheiro na `Oferta` são o maior ganho que falta** (o prazo tem quatro
+    caras — `v3-jogo.md` §1); O TEMPO (cinco emoji numa linha → um glifo, o céu
+    de `LUZ_DA_CENA`; começo de V4); masmorra, acampamento, raid; as falas do
+    jogador sem carimbo; **`App.jsx` ~:20679 escreve *"Novo arco iniciado"* no
+    registo — o sistema a falar de si mesmo**, sai (hoje leva um prefixo
+    `null`, ladrilho vazio). **O `📕 X: guardada` (~:18654) cai no tom
+    *Impedido***, e guardar uma magia não é recusa — a entrada `📕` da tabela
+    tem de separar *guardada* de *proibida*. A 375 o botão flutuante `↓` tapa o
+    contorno da segunda Porta (já tapava a linha antiga). O `oficial` pôs `🔮`
+    (faísca) no interrogatório dos mortos (~:13774/:13778) — confira o `jogo`.
+    Âncoras em `v3-desenho.md` §7.6. O pedido das noites que faltam já está em `pedidos-ao-sistema.md`.
+  - [ ] **V3d · o dado que rola é o sólido** · `desenho` · médio · a ambiciosa
+    de V3 (`formas.md` §V3.6) — o que rola no véu é o icosaedro, 20 faces
+    numeradas como um d20 de mesa (opostas somam 21), a cambalhota tirada da
+    mesma semente do resultado (a mesma jogada, a mesma queda, em qualquer
+    máquina), 700 ms, nunca bloqueia; `reduced-motion` mostra só a pose final.
+    Vai com V6 e depende do pedido `rolarTeste` por semente.
+  - [ ] **V3e · o glifo viaja** · `jogo` · médio · a ambiciosa de V3
+    (`v3-jogo.md` §7) — o mesmo glifo na promessa (a `Oferta`), no pagamento (a
+    pílula) e no contador da cinta, e o recurso voa da pílula ao contador em
+    400 ms; nada espera a animação. Depois de V4 (os anéis são o destino).
 - [ ] **V4 · a cinta com os anéis** — os retratos do grupo com anel de PV (âmbar
   bem, perigo grave: em cinzento âmbar×perigo separa 1,52, ciano×perigo só
   1,25 — por isso o anel ciano da v3 não entra), a pílula do tempo (hora do

@@ -245,8 +245,12 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      não volte a ter uma fileira de modos a estourar a largura —, só que
      agora pelo lado de fora: se a grade renascer, esta linha morde. */
   t("a fileira de quatro modos não voltou ao convés", !/className="grid grid-cols-4 gap-1\.5 mb-2 md:flex md:items-center md:flex-wrap"/.test(APP));
+  /* V3b (25/09) · a asserção pedia o nome literal "Habilidades"; o nome passou a
+     dizer também quantas estão armadas ("Habilidades, 2 armadas"), porque o número
+     que se vê ao lado do glifo não chegava a quem não vê. O que ela guarda fica:
+     a gaveta vive na linha do turno, com estado e nome. */
   t("e a gaveta das habilidades vive na linha do turno, com a forma de W1",
-    /aria-pressed=\{habAbertas\} aria-label="Habilidades"/.test(APP));
+    /aria-pressed=\{habAbertas\} aria-label=\{habsSel\.length > 0 \? `Habilidades, /.test(APP));
   t("e a fileira do combate continua quebrando a linha", /className="flex items-center gap-1.5 mb-2 flex-wrap"/.test(APP));
   /* O SELO DO HEROÍSMO SAIU da fileira de modos: ele é recurso do HERÓI, e
      pendurado ali ficava órfão numa linha própria no telefone.

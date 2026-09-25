@@ -9867,3 +9867,54 @@ Um d20 que cai como um d20 — com a geometria certa, e sempre o mesmo tombo par
 a mesma semente — é a mesa na tela. **É convenção observada, não estudo** (os
 simuladores de dados de mesa virtual fazem-no); a prova é do `jogo`, jogada:
 *sabes quanto rolaste antes de ler o número?*
+
+### V3b · o ladrilho do assunto, e V1b (`desenho`, 25/09)
+
+*Construção: `mente/v3-desenho.md` §7 (scripts, provados contra `afaffd8`:
+213/213, 15/15, e zero linhas a mais no `App.jsx`). Figma: `O ladrilho do
+assunto` (`229:125`) e o par antes/depois das falas do sistema (`230:125`), na
+página `V3 · os ícones`.*
+
+**1 · A peça — `O ladrilho do assunto`.** Cada fala do sistema deixa de ser uma
+pílula centrada com o emoji do motor e passa a ser **uma linha**: um ladrilho de
+**36** (raio 12) com o glifo de **16**, e a frase a **12** dele, alinhada à
+coluna. É a linha do registo que a pessoa desenhou em `47:2`, na medida dela
+(`LADRILHO` em `estilo.js`). **Porquê a linha e não a pílula:** a pílula
+centrada punha cada fala num sítio diferente consoante o comprimento; com o
+ladrilho, o assunto está sempre na mesma coluna e a frase sempre na seguinte —
+lê-se de cima a baixo pela coluna dos glifos, que é a leitura rápida que o
+`jogo` cobra (§6.3 de `v3-jogo.md`: doze falas, o assunto de cada uma).
+
+| tom | ladrilho | glifo | frase | o número |
+|---|---|---|---|---|
+| **Neutro** | cheio `panelSoft`, fio `line` (decorativo) | `amber` | `inkMeio` | glifo 8,62:1 · frase 9,78:1 |
+| **Impedido** (o `⛔`) | **oco**, fio `lineStrong` | `inkDim` (quando há assunto) | `inkDim` | fio 4,29:1 — é ele que carrega o estado · glifo e frase 6,60:1 |
+| **Porta** | como Neutro | — | `amberSoft`, e a seta desenhada no fim | 13,48:1 · a linha inteira é o botão, a `ALVOS.piso` |
+| **Sem assunto** | um vazio de 36 | — | `inkMeio` | a frase fica na coluna |
+
+**Neutro × Impedido separam-se pela forma antes da cor:** cheio com fio quase
+invisível (1,55) contra oco com fio a 4,29. Entre as frases, a cor sozinha dá só
+1,48:1 — por isso não é ela que diz. O `⛔` **não vira glifo** (o `jogo`, §2): um
+sinal de proibido por cima da frase era o veredito a gritar por cima do assunto;
+o ladrilho oco é a gramática de *"não pode agora"* que a casa já tinha (D4:
+*sai o preenchimento, fica a borda*).
+
+O glifo em âmbar é a voz do Mestre (§V1.6), e é o da v3. O ladrilho é
+`aria-hidden` — a frase diz tudo o que ele diz — e **nunca é o alvo**.
+
+**2 · A tabela do assunto mora em `glifos.js`.** `ASSUNTO_DO_EMOJI` +
+`assuntoDaLinha(texto) → { glifo, tom, resto }`: o motor continua a escrever as
+frases que escreve e o ecrã traduz. Não é um módulo novo em `src/*.js` porque
+aquilo é território do sistema e isto é apresentação — a tabela da nossa peça,
+irmã de `estilo.js` (decisão do `regente`, 25/09). A catraca: **todo emoji que
+abre uma frase em `src/` tem uma decisão na tabela** (`teste-v3-glifos` §6), e
+um glifo que só a tabela nomeia conta como lido (D5h.3).
+
+**3 · V1b.** O contorno separou-se do controlo: o cartão da história e a tira
+do alforje levam o fio decorativo `line` (um contentor de prosa não é
+componente, e a 1.4.11 não o cobre); o botão flutuante leva `lineStrong`.
+`paginaFio`, que fazia os dois trabalhos, **aposentou-se** (a variável do Figma
+diz-o). E **o "Continuar aventura" deixou a cor do perigo**: o primeiro botão de
+cada sessão era `danger` — passa a `rosa`, *a tua mão* (5,78:1 contra `panel`), e
+o brilho sai de `alfa(T.rosa, 0.15)`, que passou a pública para isso. *Não
+entrou:* a aba activa do trilho em rosa — é V7.

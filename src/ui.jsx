@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
 import { GLIFOS, tracoNaGrelha } from "./glifos.js";
@@ -174,6 +174,33 @@ export function DegrausDaAmeaca({ nivel = 0, de = 5, tamanho = 16, cor = "curren
           fill={cheia ? cor : "none"} stroke={cheia ? "none" : T.lineStrong} strokeWidth={cheia ? 0 : 1} />;
       })}
     </svg>
+  );
+}
+
+/* O LADRILHO DO ASSUNTO (V3b) — `formas.md` §V3b.
+
+   Dois tons, e é a forma que os separa, não só a cor:
+   · NEUTRO — o ladrilho cheio (`panelSoft`), fio decorativo `line`, o
+     glifo em âmbar (a voz do Mestre, `formas.md` §V1.6): 8,62:1;
+   · IMPEDIDO — o ladrilho OCO: sai o enchimento, o fio sobe a `lineStrong`
+     (4,29:1 contra o poço — é ele que carrega o estado, e passa a 1.4.11),
+     o glifo a `inkDim` (6,60:1). É a gramática de "não pode agora": sem
+     glifo próprio, o ladrilho oco leva a marca `ban` (sem ela, o quadrado vazio
+     lia-se caixa por marcar: `v3-jogo.md` §9.1);
+   · PORTA — como Neutro, e o glifo é a seta: o assunto de uma porta é ir.
+   É `aria-hidden`: a frase ao lado diz tudo o que ele diz. */
+export function LadrilhoDoAssunto({ glifo, tom = "neutro" }) {
+  const impedido = tom === "impedido";
+  return (
+    <span aria-hidden="true" className="inline-flex items-center justify-center shrink-0"
+      style={{
+        width: LADRILHO.lado, height: LADRILHO.lado, borderRadius: LADRILHO.raio,
+        background: impedido ? "transparent" : T.panelSoft,
+        border: `1px solid ${impedido ? T.lineStrong : T.line}`,
+      }}>
+      {tom === "porta" ? <IconeSeta tamanho={LADRILHO.glifo} cor={T.amber} />
+        : glifo || impedido ? <Glifo nome={glifo || "ban"} tamanho={LADRILHO.glifo} cor={impedido ? T.inkDim : T.amber} /> : null}
+    </span>
   );
 }
 

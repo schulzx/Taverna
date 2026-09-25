@@ -297,3 +297,120 @@ em V7.
 
 *Todo número deste documento sai de um script no scratchpad
 (`scratchpad/v3-jogo/`) ou da tela a correr. Nenhum sai de memória.*
+
+---
+
+## 9 · A prova jogada de V3 — o resultado (`jogo`, 25/09)
+
+**Montagem.** *Antes* = `245dd3c` num worktree (5174); *depois* = a árvore com
+V3b e V1b por commitar (5173). Chrome headless, perfil temporário, **todo pedido
+a `/api` cortado** (cortados: 0 — nenhum saiu). Duas cenas por injecção com o
+jogo desmontado: **(a)** o save *noite* de V1 + doze falas reais do sistema + uma
+porta (`▸ Mural — …`) + *Sangrando*, *Abençoado* e o efeito *Bênção +1*;
+**(b)** o save *dia* com um teste pendente (*Perceber, dif. 13*). As duas a
+**1280×800 e 375×812**, e depois a gaveta aberta e uma habilidade armada.
+Scripts `scratchpad/v3-jogo/prova.mjs` e `prova2.mjs`; 32 fotos em
+`scratchpad/v3-jogo/prova/`.
+
+**O que não medi e digo:** a leitura das pílulas **não foi cronometrada**. Um
+cronómetro na minha mão não é comparável ao de um jogador, e escrevê-lo seria
+inventar precisão. Contei o que se conta: **quantas das doze pílulas levam o
+glifo do assunto certo**.
+
+### 9.1 · Por critério
+
+| critério | antes | depois | |
+|---|---|---|---|
+| emoji visíveis na mesa, cena (a) | 10 (1280) · 8 (375) | **1 · 0** — sobra o `🎲` do chip `vantagem` | **falhou por um** |
+| emoji visíveis, cena (b) (teste pendente) | 1 · 1 | **0 · 0** — o d20 lê-se d20 | passou |
+| pílulas com o glifo do assunto certo (12) | 11 (emoji um a um) | **7** · 1 é a forma *Impedido* · **4 erradas** | **falhou** |
+| o mesmo glifo, dois sentidos, no mesmo ecrã | — | **`swords` = o dano no lobo e *"Nyla tem um trabalho"*** | **falhou** |
+| a mesma notícia, várias caras | — | *"… tem um trabalho no mural"* ×3: **nada** (`🆘`), **espadas** (`🏹`), **pergaminho** (`📋`) | **falhou** — é o defeito que V3 veio pagar |
+| glifo abaixo de 12 px | emoji a 9–12 | ladrilho 36 com glifo 16; chips com setas a 12 | passou |
+| pílula que passou a quebrar linha a 375 | — | nenhuma (as mesmas duas quebram antes e depois) | passou |
+| cinzento e deuteranopia (chips) | gota × faíscas | **setas para baixo × para cima + peso** — distinguem-se nas duas | passou |
+| controlo só-glifo sem nome | — | nenhum novo | passou |
+| cinco segundos (5 perguntas, cena a, 1280) | 3/5 | **4/5** — o botão ao lado do campo passou a dizer *magia* (as faíscas são as do chip *Bênção*); o `✦` a 12 px lia-se enfeite. Nos dois falha *"as três últimas falas são sobre o quê?"* (2 de 3: antes o `🕯`, depois a chama) | passou |
+
+**As quatro erradas, uma a uma** (todas se consertam fora da regra):
+1. `🆘 Olga … tem um trabalho no mural` → **sem glifo** (`🆘` não está na tabela).
+2. `🏹 Nyla … tem um trabalho no mural` → **`swords`**. A origem é `App.jsx:16338`,
+   que põe o ícone do molde na notícia.
+3. `🕯 Ninguém do seu grupo está caído` → **`tocha`**. O `🕯` diz **três** coisas
+   no `App.jsx`: a tocha (6 falas), **trazer de volta um caído** (`:10627`,
+   `:13774–13799`, 5 falas) e **a fé** (`:9564`, `:20209`).
+4. `📖 Você ainda não sabe essa magia de cor` → **lupa**. Das quatro falas `📖`
+   do registo, duas são magia (`:14157`, `:18654`); a tabela manda-as todas para
+   *procurar*.
+
+**E um que não é erro mas lê pior.** O *Impedido* é um **quadrado vazio com
+contorno** (`Projétil Arcano custa 2 PM — você tem 1`), e lê-se como caixa de
+marcar por preencher. Antes, o `⛔` dizia *não* antes da frase. **Corrijo-me:**
+na §2 escrevi que o `⛔` saía sem substituto. Construído, o vazio é pior do que
+uma marca. **A forma precisa de uma marca**: `ban` (o círculo cortado), em
+`inkDim`, dentro do ladrilho. É a marca da forma, não um assunto.
+
+**Custo de altura, 1280:** cada fala do sistema passou de **38 para 44 px**
+(+6, +16 %). Num turno de três falas são 18 px. A 375 o custo é **zero**: as
+pílulas antigas já quebravam em duas linhas e o ladrilho cabe na mesma altura.
+Aceito o custo, porque é o preço da coluna de assuntos que a v3 desenhou (`47:2`).
+
+### 9.2 · As quatro perguntas do `oficial`
+
+1. **A Porta — lê pior, e é de V3b.** Antes era uma **pílula com contorno de
+   1 px, fundo `paginaAlta`, `rounded-full`, centrada**: um botão, sem dúvida.
+   Depois: **sem contorno, sem fundo, largura inteira**, e a seta fica a
+   **83 px do fim da frase a 1280** (13 px a 375). A 375 ainda se lê como
+   ligação; a 1280, a linha âmbar a negrito sem glifo no ladrilho parece uma
+   frase realçada, e a seta solta parece de outra coisa. **Conserto no estilo
+   da v3:** a seta **entra no ladrilho**, à esquerda (o assunto de uma porta é
+   *ir*, e a coluna de glifos fica inteira). A linha ganha **contorno
+   `T.lineStrong`, raio `LADRILHO.raio`, e largura à medida do texto** (`w-fit`,
+   não `w-full`). Zero px de altura a mais.
+2. **Os chips a 375 — já era assim.** Antes cortava `Bênção +1 3t` (a
+   402 px de 375) e escondia `🎲 vantagem` e `−3 PV/turno`. Depois corta à mesma
+   (385 px) e esconde os mesmos dois. Os chips ficaram 2–8 px mais estreitos sem
+   o emoji, e não chega. **Não é de V3**; é de V4 (a cinta com anéis), e deixo
+   lá uma nota: *o chip mecânico (`−3 PV/turno`) é o que muda a decisão, e é o
+   que fica escondido — a ordem da fila está ao contrário*.
+3. **A ficha da habilidade armada sobre a borda do cartão, 1280 — já era
+   assim**, ao pixel: o cartão acaba em 517 e a ficha ocupa 484–524, antes e
+   depois. Não é de V3. *(A mim lê-se como uma lingueta presa ao cartão, e não
+   me incomoda; fica para V5, que refaz o pé da página.)*
+4. **A gaveta a 375 só com o campo aberto — já era assim**, antes e depois:
+   escondida sem foco, visível com o campo aberto. Não é de V3. É a composição
+   de V6.
+
+### 9.3 · O que mudou para quem joga, em número
+
+- Emoji do sistema operativo na mesa: **10 → 1** a 1280, **8 → 0** a 375, na
+  cena mais carregada que montei. O teste pendente: **1 → 0**.
+- A identidade deixa de mudar com o aparelho em **todas as falas do sistema**:
+  296 sítios passam por um ladrilho só.
+- Os estados da cinta ficam legíveis **em deuteranopia pela forma** (setas),
+  não pela cor.
+- **O que piorou, em número:** 4 das 12 falas com o assunto errado; +6 px por
+  fala a 1280; a porta perdeu o contorno.
+
+### 9.4 · Veredito — **sobe com conserto**
+
+Os consertos são cinco, todos pequenos, nenhum toca regra:
+1. `App.jsx:16338` — a notícia do mural passa a `📋` sempre, sem o ícone do
+   molde. *Uma linha; paga "uma notícia, três caras".*
+2. `glifos.js` — `📖` → `faisca`. As duas falas de `📖` que não são magia
+   (`:9690`, `:20679`) mudam de prefixo. *Paga a lupa.*
+3. `App.jsx` — o `🕯` de trazer de volta os caídos (`:10627`, `:13774–13799`)
+   passa a `🩹`, e o da fé (`:9564`, `:20209`) a `🌟`. *Paga a tocha errada; a
+   tocha fica só com as tochas.*
+4. `chipsDoEstado` — os selos de `selosDaMecanica` passam por `assuntoDaLinha`,
+   como as pílulas. *Paga o último emoji da mesa.*
+5. **A porta** — seta no ladrilho, contorno `lineStrong`, `w-fit` (§9.2-1).
+
+**Recomendado, mas não bloqueia:** a marca `ban` no ladrilho *Impedido*
+(§9.1). **Fica para a etapa seguinte, e é o maior ganho que falta:** a soleira
+ainda escreve *"prazo 4 noites"* e `◉ 140` como texto nu (o item 3 de V3a na §4
+não entrou). É todo turno com oferta, e é a peça de quatro canais que já existe
+(`SeloDePrazo`) a faltar onde o jogador decide.
+
+*De passagem, e não é desta mesa:* `App.jsx:20679` escreve *"Novo arco
+iniciado"* no registo. É o sistema a falar de si mesmo.

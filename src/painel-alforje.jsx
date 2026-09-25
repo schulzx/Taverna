@@ -72,7 +72,7 @@ function FaixaDoFundo({ espreita, aoTocar, reduzido }) {
             margin: `${ALFORJE.tira.margemV}px ${ALFORJE.tira.margemH}px`,
             height: ALVOS.piso - 2 * ALFORJE.tira.margemV,
             width: `calc(100% - ${2 * ALFORJE.tira.margemH}px)`,
-            background: T.pagina, border: `1px solid ${T.paginaFio}`, borderRadius: ALFORJE.tira.raio,
+            background: T.pagina, border: `1px solid ${T.line}`, borderRadius: ALFORJE.tira.raio,
             padding: "0 10px", overflow: "hidden",
           }}>
           <span aria-hidden="true" style={{ width: 3, height: 24, background: T.amber, flexShrink: 0, borderRadius: 2 }} />

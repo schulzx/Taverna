@@ -52,7 +52,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, VEU, ESBATIMENTO } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, VEU, ESBATIMENTO, LADRILHO, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -180,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, RostoDaCena } from "./ui.jsx";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeVida, IconeMana, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, RostoDaCena } from "./ui.jsx"; import { assuntoDaLinha } from "./glifos.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -1291,11 +1291,11 @@ function CabecalhoDaCena({ cena }) {
    que o jogo tem, e cada um ganhou um glifo distinto (o desenho repetia o
    livro em dois botões diferentes). */
 const GLIFO_DA_ABA = {
-  gestao: IconeEspada,
+  gestao: (p) => <Glifo nome="heroi" {...p} />, /* V3c: a Gestão abre na ficha — é o herói, não a luta */
   diario: IconeLivro,
   inv: IconeMochila,
   mapa: IconeMapa,
-  codex: IconeCaveira,
+  codex: (p) => <Glifo nome="codice" {...p} />, /* V3c: a ânfora da v3; a caveira fica para o perigo */
   ascensao: IconeLosango,
 };
 
@@ -1391,20 +1391,20 @@ function chipsDoEstado(pers) {
   try {
     const cs = (pers.condicoes || []).map((c, i) => ({
       id: "c" + i,
-      texto: (c.icone || (c.tipo === "bom" ? "✦" : "☠")) + " " + c.nome + (c.turnos ? " " + c.turnos + "t" : ""),
+      glifo: c.tipo === "bom" ? "favor" : "contra", texto: c.nome + (c.turnos ? " " + c.turnos + "t" : ""),
       titulo: c.efeito || c.nota || "",
       bom: c.tipo === "bom",
     }));
     const es = (pers.efeitos || []).map((e, i) => ({
       id: "e" + i,
-      texto: "✧ " + e.nome + (e.bonus ? " +" + e.bonus : "") + (e.turnos ? " " + e.turnos + "t" : ""),
+      glifo: "faisca", texto: e.nome + (e.bonus ? " +" + e.bonus : "") + (e.turnos ? " " + e.turnos + "t" : ""),
       titulo: e.descricao || "",
       arcano: true,
     }));
     const mec = mecanicaDe(pers.condicoes || []);
     const ms = selosDaMecanica(mec).map((x) => ({
       id: "m" + x.id,
-      texto: x.texto,
+      ...(() => { const s = assuntoDaLinha(x.texto); return { glifo: s.glifo || (s.tom === "impedido" ? "ban" : null), texto: s.resto }; })(),
       titulo: (mec.motivos || []).join(" · "),
       bom: x.tom === "bom",
     }));
@@ -1600,8 +1600,8 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
                 background: c.arcano ? T.panelSoft : c.bom ? T.okFundo : T.perigoFundo,
                 border: "1px solid " + (c.arcano ? T.violet : c.bom ? T.ok : T.danger),
                 color: c.arcano ? T.violetSoft : c.bom ? T.ok : T.danger,
-                fontWeight: 600,
-              }}>{c.texto}</span>
+                fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4,
+              }}>{c.glifo ? <Glifo nome={c.glifo} tamanho={12} /> : null}{c.texto}</span>
           ))}
         </div>
       )}
@@ -1626,7 +1626,7 @@ function ACinta({ personagem, minuto, prazos, guardado, falhaAoGuardar, feridaRe
             transform: "translateY(-50%)", fontSize: TIPOS.maquina, color: T.danger,
             background: T.perigoFundo, border: "1px solid " + T.danger, padding: "2px 6px", borderRadius: 4,
             whiteSpace: "nowrap", pointerEvents: "none", zIndex: 2,
-          }}>⚠ não guardou</span>
+          }}><Glifo nome="aviso" tamanho={12} /> não guardou</span>
       )}
     </div>
   );
@@ -3822,57 +3822,57 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
      o que vier depois: texto com quebra de linha é bloco, texto sem
      quebra é pílula. Quem escreve a mensagem decide a forma sem precisar
      saber que esta função existe. */
-  /* R3: as três cores saíram da MESA e vieram para a PÁGINA
-     (`paginaAlta`/`inkMeio`/`paginaFio`). A linha do sistema mora dentro
-     da narração, e uma pílula em tom frio dentro do papel quente era a
-     costura a aparecer. O corpo passa a `TIPOS.maquina` (12) — o mesmo
-     número que `text-xs` já dava, agora lido da tabela.
-
-     E o alvo: quem abre uma porta cumpre `ALVOS.piso`. O enchimento cresce,
-     a tinta não — 48 px de alvo com a mesma letra de sempre. */
-  const pilula = (txt, i) => {
+  /* V3b (25/09) · A PÍLULA CENTRADA SAIU; cada fala é uma LINHA com o
+     `LadrilhoDoAssunto` (36, glifo 16 — a linha do registo da v3, `47:2`) e a
+     frase alinhada à coluna. O emoji do motor vira o assunto por
+     `assuntoDaLinha` (`glifos.js`); o motor não se toca. `⛔` vira o tom
+     Impedido (ladrilho oco, frase a cinza), não um glifo. Sem assunto, um
+     vazio de 36: as frases ficam na mesma coluna. A porta é a linha feita
+     botão: a seta no ladrilho (o assunto dela é IR), fio `lineStrong` e a
+     largura do texto (`v3-jogo.md` §9.2-1: sem fio, lia-se frase realçada).
+     O alvo continua o de R3: quem abre uma porta cumpre `ALVOS.piso`, e o
+     ladrilho nunca é o alvo — é a linha inteira. */
+  const linha = (txt, i) => {
     const bruto = String(txt);
     const porta = aoAbrir ? portaDaLinhaDeSistema(bruto) : null;
-    if (porta) return (
-      <div key={i} className="tv-fade flex justify-center">
-        <button type="button" onClick={() => aoAbrir(porta)}
-          className="tv-anel-foco tv-mono px-4 py-1.5 rounded-full text-center flex items-center justify-center max-w-xl"
-          style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, background: T.paginaAlta, color: T.amberSoft, border: `1px solid ${T.paginaFio}`, cursor: "pointer" }}>
-          {bruto}
-        </button>
-      </div>
+    const { glifo, tom, resto } = assuntoDaLinha(semSetaQueMente(bruto));
+    const impedido = tom === "impedido", bloco = resto.includes("\n");
+    const miolo = (
+      <>
+        {porta ? <LadrilhoDoAssunto tom="porta" /> : glifo || impedido ? <LadrilhoDoAssunto glifo={glifo} tom={tom} /> : <span aria-hidden="true" className="shrink-0" style={{ width: LADRILHO.lado }} />}
+        <span className={(bloco ? "whitespace-pre-line " : "") + (porta ? "min-w-0" : "flex-1 min-w-0")} style={{ color: porta ? T.amberSoft : impedido ? T.inkDim : T.inkMeio }}>{resto}</span>
+        {/* a seta da porta mora no ladrilho, à esquerda: a coluna dos assuntos fica inteira */}
+      </>
     );
-    const limpo = semSetaQueMente(bruto);
-    return limpo.includes("\n") ? (
-      <div key={i} className="tv-fade flex justify-center">
-        <div className="tv-mono px-4 py-3 rounded-xl whitespace-pre-line max-w-xl w-full"
-          style={{ fontSize: TIPOS.maquina, background: T.paginaAlta, color: T.inkMeio, border: `1px solid ${T.paginaFio}` }}>{limpo}</div>
-      </div>
+    return porta ? (
+      <button key={i} type="button" onClick={() => aoAbrir(porta)} className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"
+        style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, cursor: "pointer", border: "1px solid " + T.lineStrong, borderRadius: LADRILHO.raio, padding: "0 12px 0 5px", marginLeft: -6 }}>{miolo}</button>
     ) : (
-      <div key={i} className="tv-fade flex justify-center">
-        <span className="tv-mono px-3 py-1.5 rounded-full text-center" style={{ fontSize: TIPOS.maquina, background: T.paginaAlta, color: T.inkMeio }}>{limpo}</span>
-      </div>
+      <div key={i} className={"tv-fade tv-mono flex " + (bloco ? "items-start" : "items-center")}
+        style={{ fontSize: TIPOS.maquina, gap: LADRILHO.espaco, minHeight: LADRILHO.lado }}>{miolo}</div>
     );
   };
+  const doSaldo = assuntoDaLinha(saldo);
   return (
     <div className="tv-coluna space-y-2">
-      {visiveis.map(pilula)}
+      {visiveis.map(linha)}
       {dobradas.length > 0 && (
-        <div className="tv-fade flex flex-col items-center gap-1.5">
+        <div className="tv-fade flex flex-col gap-1.5">
           <button onClick={() => setAberto((v) => !v)}
             title={aberto ? "Esconder as rolagens e os golpes" : "Ver rolagem por rolagem, golpe por golpe"}
-            className="tv-mono text-xs px-3 py-1.5 rounded-full flex items-center gap-2"
-            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, background: T.paginaAlta, color: T.inkMeio, border: `1px solid ${T.paginaFio}` }}>
-            <span style={{ color: T.amberSoft }}>{saldo}</span>
+            className="tv-anel-foco tv-mono w-full text-left flex items-center rounded-xl"
+            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, color: T.inkMeio }}>
+            <LadrilhoDoAssunto glifo={doSaldo.glifo || "dado"} />
+            <span style={{ color: T.amberSoft }}>{doSaldo.resto}</span>
             <span style={{ opacity: 0.7 }}>{aberto ? "▴ esconder" : `▾ ${dobradas.length} linhas`}</span>
           </button>
           {aberto && (
-            <div className="w-full space-y-1">
-              {dobradas.map((t, i) => (
-                <div key={i} className="flex justify-center">
-                  <span className="tv-mono text-[11px] px-3 py-1 rounded-full text-center" style={{ background: "transparent", color: T.inkDim, border: `1px solid ${T.line}` }}>{t}</span>
+            <div className="w-full space-y-1" style={{ paddingLeft: LADRILHO.lado + LADRILHO.espaco }}>
+              {dobradas.map((t, i) => { const d = assuntoDaLinha(t); return (
+                <div key={i} className="tv-mono flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>
+                  {d.glifo ? <Glifo nome={d.glifo} tamanho={14} /> : null}<span>{d.resto}</span>
                 </div>
-              ))}
+              ); })}
             </div>
           )}
         </div>
@@ -5054,12 +5054,12 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
         {temSave && (
           <button onClick={() => continuar(false)}
             className="relative w-full text-left flex items-center gap-4 p-5 rounded-2xl transition-all"
-            style={{ background: T.panel, border: `2.5px solid ${T.danger}`, boxShadow: "0 8px 10px rgba(216,106,91,0.15), inset 0 1px 0 0 rgba(255,255,255,0.06)" }}>
+            style={{ background: T.panel, border: `2.5px solid ${T.rosa}`, boxShadow: `0 8px 10px ${alfa(T.rosa, 0.15)}, inset 0 1px 0 0 rgba(255,255,255,0.06)` }}>
             <div className="flex-1 min-w-0 flex flex-col gap-1.5">
               <div className="flex items-center gap-2">
                 {/* o ponto aceso: 8 de caixa, 12 de brilho transbordando */}
                 <span className="relative block shrink-0" style={{ width: 8, height: 8 }}>
-                  <span className="absolute" style={{ inset: "-25%" }}><PontoAtivo tamanho={12} /></span>
+                  <span className="absolute" style={{ inset: "-25%" }}><PontoAtivo tamanho={12} cor={T.rosa} /></span>
                 </span>
                 <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Continuar aventura</span>
               </div>
@@ -5067,8 +5067,8 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
                 {temSave.nomeCampanha} · {temSave.personagem?.nome} · Nível {temSave.personagem?.nivel}
               </span>
             </div>
-            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ background: T.danger }}>
-              <IconeSeta tamanho={16} cor={T.ink} />
+            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ background: T.rosa }}>
+              <IconeSeta tamanho={16} cor={T.onAccent} />
             </span>
           </button>
         )}
@@ -9561,7 +9561,7 @@ export default function Taverna() {
         } else if (chave === "patrono" && dvAtual && dvAtual.despertar && arg && !dvAtual.patrono) {
           const dv2 = { ...divindadeRef.current, patrono: arg.slice(0, 60) };
           divindadeRef.current = dv2; setDivindade(dv2);
-          msgs.push(`🕯 Patrono declarado: ${dv2.patrono}`);
+          msgs.push(`🌟 Patrono declarado: ${dv2.patrono}`);
         }
       }
     }
@@ -9687,7 +9687,7 @@ export default function Taverna() {
             || guardiaoPorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome, (mundoAtual() || {}).lexico, moldeMundo())
             || criaturaPorNome(sementeMundo(), mapaRef.current, generoMundo(), e.nome, (mundoAtual() || {}).lexico);
           if (!ficha) return e;
-          msgs.push(`📖 ${e.nome} está na base do mundo: nível ${ficha.nivel}${ficha.gd ? ` · GD ${ficha.gd}` : ""}${ficha.personalidade ? ` · ${ficha.personalidade}` : ""}.`);
+          msgs.push(`🔎 ${e.nome} está na base do mundo: nível ${ficha.nivel}${ficha.gd ? ` · GD ${ficha.gd}` : ""}${ficha.personalidade ? ` · ${ficha.personalidade}` : ""}.`);
           return { ...e, nivel: ficha.nivel, gd: ficha.gd || e.gd || 0, ameaca: ficha.ameaca || e.ameaca };
         });
         const panteaoMundo = (divindadeRef.current && divindadeRef.current.panteao) || [];
@@ -10624,7 +10624,7 @@ export default function Taverna() {
         if (p.vida <= 0 || p.morrendo) voltaram.push(p.nome);
         return { ...p, grupo, vida: p.vida <= 0 ? Math.max(1, Math.round(p.vidaMax / 2)) : p.vida, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
       });
-      msgs.push({ autor: "sistema", texto: voltaram.length ? `🕯 Voltam: ${voltaram.join(", ")} — a morte devolve o que é seu.` : "🕯 Ninguém havia tombado — o domínio guarda o gesto." });
+      msgs.push({ autor: "sistema", texto: voltaram.length ? `🩹 Voltam: ${voltaram.join(", ")} — a morte devolve o que é seu.` : "🩹 Ninguém havia tombado — o domínio guarda o gesto." });
       if (voltaram.length) notaMestre += ` Quem voltou: ${voltaram.join(", ")} — já de pé na ficha.`;
     } else if (ef.tipo === "vinculo") {
       notaMestre += " O NPC presente mais relevante jura lealdade de forma irreversível — trate como fato firmado.";
@@ -13771,11 +13771,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         ses = abrirInterrogatorio(morto, diaRef.current);
       }
       const r = perguntarAoMorto(ses, pergunta);
-      if (!r.ok) { pushMsgs([linhaJogador, { autor: "sistema", texto: `🕯 ${r.motivo}.` }]); return true; }
+      if (!r.ok) { pushMsgs([linhaJogador, { autor: "sistema", texto: `🔮 ${r.motivo}.` }]); return true; }
       /* só a PRIMEIRA pergunta custa PM: a magia foi conjurada uma vez */
       const pers = ses.restam === PERGUNTAS_AOS_MORTOS ? cobrar(p0) : p0;
       mortosSessaoRef.current = r.sessao;
-      pushMsgs([linhaJogador, { autor: "sistema", texto: `🕯 ${m.nome}${r.sessao.quem ? ` · ${r.sessao.quem}` : ""}: restam ${r.restam} pergunta${r.restam === 1 ? "" : "s"}${ses.restam === PERGUNTAS_AOS_MORTOS ? ` · −${m.custo} PM` : ""}` }]);
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `🔮 ${m.nome}${r.sessao.quem ? ` · ${r.sessao.quem}` : ""}: restam ${r.restam} pergunta${r.restam === 1 ? "" : "s"}${ses.restam === PERGUNTAS_AOS_MORTOS ? ` · −${m.custo} PM` : ""}` }]);
       enviar(envelopeDoMorto(r.sessao, r.pergunta), pers);
       return true;
     }
@@ -13793,10 +13793,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
     if (m.funcao === "reviver") {
       const caidos = (p0.grupo || []).filter((g) => (g.vida || 0) <= 0 || g.morrendo);
-      if (!caidos.length) { pushMsgs([linhaJogador, { autor: "sistema", texto: "🕯 Ninguém do seu grupo está caído." }]); return true; }
+      if (!caidos.length) { pushMsgs([linhaJogador, { autor: "sistema", texto: "🩹 Ninguém do seu grupo está caído." }]); return true; }
       const alvo = caidos[0];
       const pers = cobrar({ ...p0, grupo: (p0.grupo || []).map((g) => (g.nome === alvo.nome ? { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false } : g)) });
-      pushMsgs([linhaJogador, { autor: "sistema", texto: `🕯 ${alvo.nome} volta — ${Math.max(1, Math.round((alvo.vidaMax || 10) / 2))} PV · −${m.custo} PM` }]);
+      pushMsgs([linhaJogador, { autor: "sistema", texto: `🩹 ${alvo.nome} volta — ${Math.max(1, Math.round((alvo.vidaMax || 10) / 2))} PV · −${m.custo} PM` }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — APLICADO PELO SISTEMA] ${alvo.nome} voltou dos mortos pela minha magia e já está de pé com metade dos PV. Isso é fato: não desfaça, não cobre outro preço e não deixe ambíguo. Narre a volta e o que ela custa a quem voltou.`;
       enviar(`[${m.nome}] ${acao}`, pers);
       return true;
@@ -16335,7 +16335,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* o aviso espera a cena: quem o solta é `aplicarResposta`, depois da
        narração em que o Mestre encena a menção. Uma linha, e só: o log é a
        cena, e o cartaz já diz o resto quando o jogador abrir o mural. */
-    trabalhoPendenteRef.current = [`${of.icone || "📋"} ${of.dador} tem um trabalho no mural.`];
+    trabalhoPendenteRef.current = [`📋 ${of.dador} tem um trabalho no mural.`];
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(of)}`;
   };
 
@@ -20206,7 +20206,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         const novo = { ...dv, fieis: fieisDepois, pf: Math.min(teto, (dv.pf || 0) + ganho) };
         divindadeRef.current = novo; setDivindade(novo);
         if (novo.pf > (dv.pf || 0)) pushMsgs([{ autor: "sistema", texto: `✨ As preces rendem ${novo.pf - (dv.pf || 0)} PF${pfTemplos ? ` (${pfTemplos} vindos dos templos)` : ""} (${novo.pf}/${teto}).` }]);
-        if (fieisDepois < fieisAntes) pushMsgs([{ autor: "sistema", texto: `🕯 A fé míngua onde não há templo nem sinal seu: ${fieisAntes - fieisDepois} deixam de rezar.` }]);
+        if (fieisDepois < fieisAntes) pushMsgs([{ autor: "sistema", texto: `🌟 A fé míngua onde não há templo nem sinal seu: ${fieisAntes - fieisDepois} deixam de rezar.` }]);
         /* marcos de fé viram notícia para o jogador E envelope para o Mestre */
         marcos.slice(0, 3).forEach((m) => {
           pushMsgs([{ autor: "sistema", texto: m.texto }]);
@@ -20676,7 +20676,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     historiaRef.current = garantirHistoria({ estrutura: id, etapa: 0 });
     /* o nome do arco pode aparecer: foi o jogador que o escolheu. O nome do
        MOMENTO dentro dele, não — esse continua sendo bastidor. */
-    pushMsgs([{ autor: "sistema", texto: `📖 Novo arco iniciado: ${est.nome} — ${est.desc}` }]);
+    pushMsgs([{ autor: "sistema", texto: `⚙ Novo arco iniciado: ${est.nome} — ${est.desc}` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${est.nome}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Direção do momento em que ele recomeça: ${est.etapas[0].instrucao} Trabalhe com as missões, ameaças e relógios que JÁ existem, adaptando o que não fizer mais sentido; e não me diga em que momento do arco eu estou.`;
   };
 
@@ -23026,7 +23026,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const dadoDaBatalha = emBatalha && rolagem && !carregando ? (
     <div className="flex justify-center shrink-0">
       <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-        <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
+        <span className="tv-mono text-xs text-center" style={{ color: T.ink }}><Glifo nome="dado" tamanho={16} /> Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em></span>
         <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
       </div>
     </div>
@@ -23210,12 +23210,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 1.4.11 pede 3:1 para não-texto. O balão era uma borda
                 arredondada à volta de nada.
 
-                Agora a narração é a única coisa QUENTE da tela (h≈30) e tudo
-                o resto recua para a mesa fria (h≈250). A separação tem três
-                canais e os três estão aqui: 1,43:1 de luz, 143° de matiz, e
-                o contorno `paginaFio` a 3,29:1. O contorno não é enfeite —
-                é o canal que sobrevive a quem não vê cor, e é o único dos
-                três que a 1.4.11 de facto cobra. */}
+                V1 (24/09) inverteu isto: o cartão passou a POÇO (`T.pagina`,
+                mais escuro que a mesa) e a figura passou a ser a PROSA, a única
+                luz forte lá dentro (13,59:1). V1b (25/09) separou o contorno do
+                controlo: o cartão leva o fio decorativo `T.line` (um contentor
+                de prosa não é componente; a 1.4.11 não o cobre), o que se toca
+                leva `T.lineStrong`, e `paginaFio` aposentou-se. `formas.md` §V1. */}
             {/* ---------------- O PAPEL PASSA A TER DUAS FAIXAS (R13-B) ----------------
                 A moldura, o fundo quente e o contorno saíram da área que rola
                 e subiram para AQUI, porque o papel deixou de ser uma coisa
@@ -23228,7 +23228,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 raio da folha: sem ele a faixa é um rectângulo a espreitar
                 por baixo de um canto arredondado. */}
             <div className="flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
-              style={{ background: T.pagina, border: `1px solid ${T.paginaFio}` }}>
+              style={{ background: T.pagina, border: `1px solid ${T.line}` }}>
             {/* ---------------- O ROSTO DA CENA (R13-B) ----------------
                 96 px no topo do papel, e a razão é de jogo e não de enfeite:
                 das 21 mensagens de prosa de R6, DEZ abriam com descrição de
@@ -23298,7 +23298,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     <div key={i} className="tv-fade tv-coluna">
                       <Voz quem="voce" voz="muda" />
                       <div className="tv-body whitespace-pre-wrap mt-1 pl-4 pr-3 py-2 rounded-r-lg"
-                        style={{ fontSize: TIPOS.corpo, fontStyle: "italic", color: T.inkMeio, background: T.paginaAlta, borderLeft: `2px solid ${esperaResposta ? T.amber : T.paginaFio}` }}>{m.texto}</div>
+                        style={{ fontSize: TIPOS.corpo, fontStyle: "italic", color: T.inkMeio, background: T.paginaAlta, borderLeft: `2px solid ${esperaResposta ? T.amber : T.line}` }}>{m.texto}</div>
                     </div>
                   );
                 }
@@ -23324,7 +23324,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     <Voz quem="mestre"
                       voz={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"}
                       aoOuvir={() => ouvirMestre(i, m.texto)}
-                      glifoDeOuvir={<span style={{ fontSize: TIPOS.maquina, lineHeight: 1, color: voz && voz.i === i ? T.amber : T.inkMeio }}>{voz && voz.i === i ? (voz.status === "gerando" ? "…" : "⏸") : "🔊"}</span>} />
+                      glifoDeOuvir={<span style={{ fontSize: TIPOS.maquina, lineHeight: 1, color: voz && voz.i === i ? T.amber : T.inkMeio }}>{voz && voz.i === i ? (voz.status === "gerando" ? "…" : <Glifo nome="pausa" tamanho={14} />) : <Glifo nome="ouvir" tamanho={14} />}</span>} />
                     <div className="tv-body leading-relaxed whitespace-pre-wrap" style={{ fontSize: TIPOS.prosa, color: T.ink }}>{m.texto}</div>
                   </div>
                 );
@@ -23381,7 +23381,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               <div className="tv-fade px-4 md:px-8 pb-1.5 flex flex-wrap gap-1.5" >
                 {habsSel.map((h, i) => (
                   <div key={i} className="inline-flex items-center gap-2 rounded-full pl-3.5 pr-1.5 py-1.5" style={{ background: T.panelSoft, border: `1px solid ${T.violet}` }}>
-                    <span className="tv-mono text-xs" style={{ color: T.violetSoft }}>✦ {h.nome} · {h.custo} PM</span>
+                    <span className="tv-mono text-xs inline-flex items-center gap-1.5" style={{ color: T.violetSoft }}><Glifo nome="faisca" tamanho={12} />{h.nome} · {h.custo} PM</span>
                     <button onClick={() => setHabsSel(habsSel.filter((x) => x.nome !== h.nome))} className="tv-mono text-xs rounded-full w-5 h-5 flex items-center justify-center" style={{ background: T.line, color: T.inkDim }}>✕</button>
                   </div>
                 ))}
@@ -23747,7 +23747,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             </div>
             {longeDoFim && (
               <button onClick={irParaOFim} className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center"
-                style={{ right: "84px", bottom: "18px", width: ALVOS.piso, height: ALVOS.piso, background: T.paginaAlta, border: `1px solid ${T.paginaFio}`, color: T.amberSoft, fontSize: 21, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
+                style={{ right: "84px", bottom: "18px", width: ALVOS.piso, height: ALVOS.piso, background: T.paginaAlta, border: `1px solid ${T.lineStrong}`, color: T.amberSoft, fontSize: 21, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
                 title="Ir para a última mensagem">↓</button>
             )}
             </div>
@@ -23902,7 +23902,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   vira fato. */}
               {oMestreTecendo && !vezDaSala && (
                 <div className="rounded-2xl px-3 py-2 mb-2 tv-mono text-[11px]" style={{ background: T.panelSoft, border: `1px solid ${T.violet}`, color: T.violetSoft }}>
-                  ✦ As duas ações saíram — o Mestre está tecendo o turno.
+                  As duas ações saíram — o Mestre está tecendo o turno.
                 </div>
               )}
               {vezDaSala && (
@@ -24096,7 +24096,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     a gaveta para saber que há algo armado. */}
                 <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
                   <button onClick={() => setHabAbertas((v) => !v)} disabled={bloqueado}
-                    aria-pressed={habAbertas} aria-label="Habilidades" title="Habilidades"
+                    aria-pressed={habAbertas} aria-label={habsSel.length > 0 ? `Habilidades, ${habsSel.length} armada${habsSel.length === 1 ? "" : "s"}` : "Habilidades"} title="Habilidades"
                     className="tv-anel-foco tv-mono rounded-lg px-3 flex items-center justify-center"
                     style={{
                       minWidth: ALVOS.piso, fontSize: TIPOS.maquina,
@@ -24104,7 +24104,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       color: habAbertas ? T.onSecond : T.violetSoft,
                       border: `1px solid ${T.violet}`,
                       opacity: bloqueado ? 0.4 : 1,
-                    }}>✦{habsSel.length > 0 ? ` ${habsSel.length}` : ""}</button>
+                    }}><Glifo nome="faisca" tamanho={20} />{habsSel.length > 0 ? <span className="ml-1">{habsSel.length}</span> : null}</button>
                 </div>
                 {entrada.trim() ? (
                   <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
@@ -24120,7 +24120,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {rolagem && !carregando && (
               <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" >
                 <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em>{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · ✦ {rolagem.porVantagem}</span> : null}</span>
+                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}><Glifo nome="dado" tamanho={16} /> Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em>{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</span>
                   <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
                 </div>
               </div>

@@ -147,5 +147,101 @@ const BAT = readFileSync("../src/painel-batalha.jsx", "utf8");
 t("as duas gavetas da luta têm nome e 48 px de largura mínima", /aria-label="Habilidades"/.test(BAT) && (BAT.match(/minWidth: ALVOS\.piso/g) || []).length >= 2);
 t("a bolsa da luta deixou o ◆ (que é o PM)", !/>◆\{nBolsa/.test(BAT) && /<Glifo nome="bolsa"/.test(BAT));
 
+/* ============================================================
+   6. V3b · o assunto da linha — o motor escreve, o ecrã traduz
+   ============================================================ */
+sec("6. V3b · o assunto da linha");
+{
+  const { ASSUNTO_DO_EMOJI, assuntoDaLinha } = await import("../src/glifos.js");
+  const QUADRO_12 = ["moeda", "mana", "vida", "ampulheta"];
+  const nomeDe = (a) => (typeof a === "string" ? a : a && a.glifo);
+  const orfaos = Object.entries(ASSUNTO_DO_EMOJI).map(([k, a]) => [k, nomeDe(a)]).filter(([, g]) => g && !GLIFOS[g] && !QUADRO_12.includes(g));
+  t("todo assunto da tabela é um glifo que existe (GLIFOS ou os quatro da cinta)", orfaos.length === 0, orfaos.map(([k, g]) => `${k}→${g}`).join(" "));
+  /* A CATRACA DO PREFIXO: todo emoji que abre uma frase escrita em `src/`
+     tem entrada — glifo, `IMPEDIDO` ou `null`. Um prefixo novo sem decisão
+     sai na mesma (a linha nunca mostra o emoji), mas não entra calado. */
+  const { readdirSync } = await import("node:fs");
+  const RX_ABRE = /["`]((?:\p{Extended_Pictographic})️?)(?=[  ])/gu;
+  const semDecisao = new Set();
+  for (const f of readdirSync("../src").filter((n) => /\.(js|jsx)$/.test(n) && n !== "glifos.js")) {
+    const txt = semComentarios(readFileSync(`../src/${f}`, "utf8"));
+    for (const m of txt.matchAll(RX_ABRE)) { const k = m[1].replace(/️/g, ""); if (!(k in ASSUNTO_DO_EMOJI)) semDecisao.add(`${k} (${f})`); }
+  }
+  t("todo emoji que abre uma frase em src/ tem uma decisão na tabela", semDecisao.size === 0, [...semDecisao].join(" · "));
+  const c = (txt) => JSON.stringify(assuntoDaLinha(txt));
+  t("⛔ vira o tom Impedido, sem glifo, e sai da frase", c("⛔ Bola de Fogo custa 3 PM — você tem 1.") === JSON.stringify({ glifo: null, tom: "impedido", resto: "Bola de Fogo custa 3 PM — você tem 1." }));
+  t("🧭 vira o mapa, tom Neutro", c("🧭 Chegada: agora você está em Pedravale.") === JSON.stringify({ glifo: "mapa", tom: "neutro", resto: "Chegada: agora você está em Pedravale." }));
+  t("o seletor de variação (⚠️) não muda o assunto", assuntoDaLinha("⚠️ cuidado").glifo === "aviso" && assuntoDaLinha("⚠️ cuidado").resto === "cuidado");
+  t("📕 é uma recusa COM assunto: a magia, no tom Impedido", c("📕 x") === JSON.stringify({ glifo: "faisca", tom: "impedido", resto: "x" }));
+  t("um prefixo que a tabela manda sair some, e a palavra fica", c("⚖ Lenda recalibrada") === JSON.stringify({ glifo: null, tom: "neutro", resto: "Lenda recalibrada" }));
+  t("um prefixo desconhecido também sai (a linha nunca mostra emoji do sistema)", assuntoDaLinha("🦄 x").resto === "x" && assuntoDaLinha("🦄 x").glifo === null);
+  t("uma linha sem emoji fica como está", c("Nada a declarar") === JSON.stringify({ glifo: null, tom: "neutro", resto: "Nada a declarar" }));
+  t("o ✦ de fonte também é prefixo (é a magia)", assuntoDaLinha("✦ Bênção 3t").glifo === "faisca");
+  t("null e undefined não partem a conta", assuntoDaLinha(null).resto === "" && assuntoDaLinha(undefined).tom === "neutro");
+  t("o emoji a meio da frase NÃO é prefixo e não se toca", assuntoDaLinha("Paga ⚗ 3").resto === "Paga ⚗ 3");
+}
+
+/* ============================================================
+   7. V3b · a tela principal: as falas, a voz, os chips, o teste, a gaveta
+   ============================================================ */
+sec("7. V3b · a tela principal");
+{
+  const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
+  const UI2 = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
+  const { LADRILHO } = await import("../src/estilo.js");
+  t("o ladrilho mede o que a v3 desenhou: 36, glifo 16, raio 12, 12 até à frase", LADRILHO.lado === 36 && LADRILHO.glifo === 16 && LADRILHO.raio === 12 && LADRILHO.espaco === 12);
+  const LAD = corpo("LadrilhoDoAssunto");
+  t("LadrilhoDoAssunto: Neutro cheio com fio line e glifo âmbar; Impedido oco com fio lineStrong e glifo inkDim",
+    /background: impedido \? "transparent" : T\.panelSoft/.test(LAD) && /impedido \? T\.lineStrong : T\.line/.test(LAD) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD) && /aria-hidden="true"/.test(LAD));
+  t("o BlocoSistema traduz cada fala por assuntoDaLinha e desenha o ladrilho", /const \{ glifo, tom, resto \} = assuntoDaLinha\(semSetaQueMente\(bruto\)\);/.test(APP) && /<LadrilhoDoAssunto glifo=\{glifo\} tom=\{tom\} \/>/.test(APP));
+  /* A asserção mudou depois da prova jogada (v3-jogo.md §9.2-1): a seta saiu do fim da
+     linha e foi para o ladrilho (tom "porta"). O que ela guarda fica: alvo a ALVOS.piso,
+     e a seta desenhada, não o carácter do motor. */
+  t("a porta continua um botão a ALVOS.piso, e a seta é desenhada", /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(APP) && /\{porta \? <LadrilhoDoAssunto tom="porta" \/>/.test(APP) && /tom === "porta" \? <IconeSeta /.test(LAD));
+  { const i = APP.indexOf("function BlocoSistema"); const BLOCO = APP.slice(i, APP.indexOf("\n}\n", i));
+    t("a pílula centrada morreu: nenhum rounded-full no BlocoSistema", i > 0 && !/rounded-full/.test(BLOCO)); }
+  t("a voz desenha ouvir e pausa — o 🔊 e o ⏸ saíram do glifoDeOuvir", /<Glifo nome="pausa" tamanho=\{14\} \/>/.test(APP) && /<Glifo nome="ouvir" tamanho=\{14\} \/>/.test(APP) && !/"⏸"\) : "🔊"/.test(APP));
+  t("os chips do estado deixaram o emoji de condicoes.js: a favor / contra pela forma", /glifo: c\.tipo === "bom" \? "favor" : "contra", texto: c\.nome/.test(APP) && !/c\.icone \|\| \(c\.tipo === "bom"/.test(APP) && /glifo: "faisca", texto: e\.nome/.test(APP));
+  t("o teste pendente mostra o d20 da casa, nas duas telas", (APP.match(/<Glifo nome="dado" tamanho=\{16\} \/> Teste de \{rolagem\.rotulo/g) || []).length === 2 && !/🎲 Teste de/.test(APP));
+  t("a gaveta da mesa é o glifo da magia, com o número de armadas no nome", /\}\}><Glifo nome="faisca" tamanho=\{20\} \/>\{habsSel\.length > 0/.test(APP) && /aria-label=\{habsSel\.length > 0 \? `Habilidades, \$\{habsSel\.length\} armada/.test(APP));
+  t("o \"não guardou\" leva o aviso desenhado", /<Glifo nome="aviso" tamanho=\{12\} \/> não guardou/.test(APP));
+  t("LadrilhoDoAssunto mora em ui.jsx, não no App (a peça é do desenho)", /export function LadrilhoDoAssunto\(/.test(UI2) && !/function LadrilhoDoAssunto\(/.test(APP));
+}
+
+sec("8. V3c · o trilho não mente");
+{ const APP = readFileSync("../src/App.jsx", "utf8");
+  t("a aba Gestão é o herói e a aba Códex é a ânfora (a espada e a caveira saíram do trilho)",
+    /gestao: \(p\) => <Glifo nome="heroi"/.test(APP) && /codex: \(p\) => <Glifo nome="codice"/.test(APP) && !/gestao: IconeEspada/.test(APP) && !/codex: IconeCaveira/.test(APP)); }
+
+/* ============================================================
+   9. V3b · os consertos da prova jogada (v3-jogo.md §9.4)
+   ============================================================ */
+sec("9. V3b · os consertos da prova jogada");
+{
+  const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
+  const UI3 = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
+  const { ASSUNTO_DO_EMOJI, assuntoDaLinha } = await import("../src/glifos.js");
+  /* 1 — uma notícia, uma cara: era 🆘/🏹/📋 conforme o molde, e 🏹 lia-se dano */
+  t("a notícia do mural leva sempre o pergaminho, nunca o ícone do molde",
+    /\[`📋 \$\{of\.dador\} tem um trabalho no mural\.`\]/.test(APP) && !/of\.icone \|\| "📋"/.test(APP));
+  /* 2 — o 📖 é o grimório; as duas falas de 📖 que não eram magia mudaram de prefixo */
+  t("📖 é magia (faísca), não lupa", ASSUNTO_DO_EMOJI["📖"] === "faisca" && assuntoDaLinha("📖 Você ainda não sabe essa magia de cor").glifo === "faisca");
+  t("a ficha da base do mundo e o arco novo já não abrem com 📖", !/`📖 \$\{e\.nome\} está na base do mundo/.test(APP) && !/`📖 Novo arco iniciado/.test(APP));
+  /* 3 — o 🕯 dizia três coisas; fica só a tocha */
+  t("trazer de volta é vida (🩹) e a fé é ascensão (🌟), na tabela", ASSUNTO_DO_EMOJI["🩹"] === "vida" && ASSUNTO_DO_EMOJI["🌟"] === "ascensao" && ASSUNTO_DO_EMOJI["🕯"] === "tocha");
+  { const semTocha = APP.split("\n").filter((l) => /🕯/.test(l) && !/toch/i.test(l));
+    t("todo 🕯 que resta no App.jsx é das tochas", semTocha.length === 0, semTocha.map((l) => l.trim().slice(0, 60)).join(" · ")); }
+  /* 4 — os selos da mecânica passam pela tabela: sai o último emoji da mesa (🎲 vantagem) */
+  { const i = APP.indexOf("function chipsDoEstado("); const CHIPS = APP.slice(i, APP.indexOf("\n}\n", i));
+    t("chipsDoEstado traduz os selos por assuntoDaLinha e não escreve emoji", i > 0 && /assuntoDaLinha\(x\.texto\)/.test(CHIPS) && !/\p{Extended_Pictographic}/u.test(CHIPS));
+    t("o selo 🎲 vantagem vira o dado e a palavra", JSON.stringify(assuntoDaLinha("🎲 vantagem")) === JSON.stringify({ glifo: "dado", tom: "neutro", resto: "vantagem" })); }
+  /* 5 — a porta: a seta no ladrilho, o fio de controlo, a largura do texto */
+  t("a porta leva fio lineStrong, raio do ladrilho e a largura do texto",
+    /className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"/.test(APP) && /border: "1px solid " \+ T\.lineStrong, borderRadius: LADRILHO\.raio/.test(APP));
+  /* 6 — o Impedido ganha marca: o ladrilho oco sem assunto desenha o círculo cortado */
+  { const i = UI3.indexOf("export function LadrilhoDoAssunto("); const LAD2 = UI3.slice(i, UI3.indexOf("\n}\n", i));
+    t("o Impedido sem assunto desenha ban, em inkDim", !!GLIFOS.ban && /<Glifo nome=\{glifo \|\| "ban"\}/.test(LAD2) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD2)); }
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

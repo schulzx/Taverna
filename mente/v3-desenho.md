@@ -17,7 +17,7 @@ Bestiário, o trilho) e a gramática (`228:6383`). Na página antiga `Glifos`
 *"V3: aposentado"* — não se apagou nada. **O código é o espelho: se um `d`
 abaixo divergir do Figma, o Figma ganha.**
 
-**Tudo isto foi aplicado numa cópia do HEAD `245dd3c` (v9.294) e medido:**
+**V3a está no ar (`afaffd8`, v9.295).** Antes de subir, foi aplicado numa cópia do HEAD `245dd3c` (v9.294) e medido:
 `npm run build` limpo; **213/213 suítes verdes** (212 de hoje + `teste-v3-glifos`);
 **15/15 varredores**. Os quatro dentes novos foram provados a morder (um emoji
 posto de volta, um `aria-label` tirado, uma entrada sem leitor, um glifo pintado
@@ -201,55 +201,159 @@ Depois de construído confiro na árvore viva: a gaveta (preparada/guardada/ritu
 trancado), o Bestiário, o mapa e a planta, a ficha, a luta (as duas gavetas e a
 tira), e o trilho — a 1280 e a 375, a árvore de acessibilidade e não a foto.
 
-## 7 · V3b — o `App.jsx`, com o bastão (`oficial`)
+## 7 · V3b — a ordem de construção do `oficial` (com o bastão)
 
-*Às 23:49 de 24/09 o `.claude/app-jsx` já não existia: o bastão está livre.* A
-ordem é a do `jogo` (`v3-jogo.md` §4, *por custo a quem joga*). Linhas de HEAD
-`245dd3c`; âncora = o texto citado.
+*Reescrita a 25/09 para o `oficial` executar. **Provado contra o HEAD real
+`afaffd8`** (V3a no ar, v9.295): os passos 1→4 aplicados por script,
+`npm run build` limpo, **213/213 suítes, 15/15 varredores**; e o mesmo com o
+passo 5 (V3c) por cima. **Nenhum script muda o número de linhas do `App.jsx`**
+(24 257 antes e depois): `check-acoes-do-jogador` endereça ~90 recusas por
+número de linha, e a primeira versão, com +22 linhas, partia 89 endereços.*
 
-1. **As falas do sistema — a tabela que traduz, não 296 sítios.** Módulo puro
-   novo `src/assunto-da-linha.js`: `ASSUNTO_DO_EMOJI` (emoji → nome de glifo, ou
-   `null` para "sai") e `assuntoDaLinha(texto) → { glifo, resto }` — prova-se em
-   Node. `BlocoSistema` (`:3812`, dentro de `pilula`, âncora `const limpo =
-   semSetaQueMente(bruto);`) passa a desenhar o ladrilho de 36 da v3 com o
-   `Glifo` de 16 à esquerda e o `resto` como texto. **`⛔` não vira glifo**: a
-   pílula passa ao tom *Impedido*. As frases do motor não se tocam. O rastro
-   dobrado (`{dobradas.map((t, i) =>`) leva o mesmo tratamento. *Peça nova para
-   mim fabricar com ele: `O ladrilho do assunto` (36, glifo 16, tom Neutro /
-   Impedido) — no Figma antes do código.*
-2. **A voz** (`:23327`, `glifoDeOuvir={<span … "⏸") : "🔊"}</span>}`) →
-   `<Glifo nome="ouvir"|"pausa" tamanho={14} />` (as duas entram na tabela com ele;
-   `…` fica, é texto).
-3. **`chipsDoEstado`** (`:1394` `texto: (c.icone || (c.tipo === "bom" ? "✦" : "☠")) + " "`
-   e `:1400` `texto: "✧ " + e.nome`) → o chip leva `glifo: "a-favor" | "contra" | "faisca"`
-   e o nome; os 22 emoji de `condicoes.js` deixam de ser pintados (o nome está
-   escrito). *A favor / contra é forma (setas opostas), depois enchimento, depois cor.*
-4. **O teste pendente** (`:23029` e `:24123`, `🎲 Teste de {rolagem.rotulo`) →
-   `<Glifo nome="dado" tamanho={16} />`.
-5. **A gaveta da mesa** (`:24107`, `}}>✦{habsSel.length > 0 ?`) → `<Glifo nome="faisca" tamanho={20} />`;
-   o chip da habilidade armada (`:23384`, `✦ {h.nome} · {h.custo} PM`) e a espera
-   (`:23905`, `✦ As duas ações saíram`) → `faisca`; **`⚠ não guardou`** (`:1629`) → `aviso`.
-6. **O trilho sem mentir até V7** (`:1293`, `GLIFO_DA_ABA`): `gestao: IconeEspada`
-   → o glifo `heroi`; `codex: IconeCaveira` → `codice`. O campo `icone` de
-   `ABAS` (`:1188`) é o reserva de quem não tem glifo e deixa de ser lido.
-7. **O TEMPO** (`:1670` `⛺ Montar acampamento` → `descanso`; `:1699` a linha
-   `📅 … 🌙 … est.icone` → **um glifo só, o céu** (`madrugada|dia|entardecer|noite`,
-   de `LUZ_DA_CENA` pela hora) + as palavras. É também o começo de V4 (a pílula
-   do tempo).
-8. Masmorra (`:23450–23519`: `🕳` → `masmorra`, `🕯` → `tocha`, `🗝`, `👁`/`🔎` → `procurar`,
-   `🔮`, `🔒` → `cadeado`, `❔` → `desconhecido`, `↩`), acampamento, raid; a Gestão
-   em `PainelLateral`; **as falas do jogador sem carimbo** (`:16563`, `:17707`, `:19584`).
+**Os scripts:**
+`C:\Users\clara\AppData\Local\Temp\claude\C--Users-clara-Desktop-Taverna\abe8407d-8980-431b-acd7-f819615f4634\scratchpad\v3b-entrega\`.
+Todos usam `comum.cjs`: respeitam o CRLF, trocam por **âncora de texto exacto**
+e **falham** se a âncora não bate ou aparece um número de vezes diferente do
+esperado. De dentro da pasta, com `R` = a raiz do projecto e **o bastão na mão**:
 
-Os glifos de V3b já estão desenhados no Figma com a fase na descrição: `heroi`,
-`codice`, `ajustes`, `coroa`, `ouvir`, `pausa`, `escudo`, `descanso`, `procurar`,
-`trabalho`, `a favor`, `contra`, `essencia` (21.º, pedido do `jogo`), `tocha`
-(22.º), `perigo`, `trofeu`, e as quatro luzes (V4). **Cada um entra em `GLIFOS`
-no commit que lhe dá leitor** (D5h.3 não deixa entrar antes).
+```
+node 1-pecas.cjs R        # glifos.js + estilo.js + ui.jsx (as peças)
+node 2-app.cjs R          # App.jsx, itens 1–5
+node 3-v1b.cjs R          # V1b: App.jsx, painel-alforje.jsx, estilo.js e duas suítes
+node 4-testes.cjs R 589 156 75   # as provas; os três números: ver 7.4
+npm run build && npm test
+node 5-v3c-trilho.cjs R   # OPCIONAL (V3c, item 6) — só se houver tempo; build + test outra vez
+```
 
-**Um pedido ao sistema, leve, para V3b:** `missoes.js` expor as noites que faltam
-de um prazo, para o Diário desenhar a peça inteira `SeloDePrazo` (areia → palavra
-→ enchimento → cor) em vez de só a ampulheta. Vai a `mente/pedidos-ao-sistema.md`
-pelo `regente`.
+### 7.0 · A prioridade
+
+| | item | obrigatório neste ciclo? |
+|---|---|---|
+| 1 | as falas do sistema (`BlocoSistema`) → o ladrilho do assunto | **sim** — *todo turno; 296 falas por um sítio só* |
+| 2 | a voz (`🔊`/`⏸`) | **sim** — *uma vez por mensagem, o glifo mais repetido do ecrã* |
+| 3 | os chips do estado vivo | **sim** — *distingue o que te ajuda do que te pesa* |
+| 4 | o teste pendente (as duas telas) | **sim** — *o veredito antes do clique* |
+| 5 | a gaveta da mesa, a habilidade armada, a espera, o "não guardou" | **sim** |
+| V1b | o contorno separa-se do controlo, `paginaFio` aposenta-se, o comentário, o "Continuar aventura" | **sim** |
+| 6 | o trilho: Gestão → `heroi`, Códex → `codice` | V3c — **script pronto e provado** (`5-v3c-trilho.cjs`); cabe se sobrar meia hora |
+| 7 | O TEMPO (`⛺`, e a linha `📅 … 🌙 …` → um glifo só, o céu) | V3c — âncoras em 7.6, sem script |
+| 8 | masmorra, acampamento, raid; as falas do jogador sem carimbo | V3c — âncoras em 7.6, sem script |
+
+### 7.1 · As peças (`1-pecas.cjs`) — fora do `App.jsx`
+
+**`src/glifos.js`** — é a tabela da nossa peça, irmã de `estilo.js`; o assunto
+mora aqui e não num módulo novo de `src/*.js` (território do sistema: decisão do
+`regente`, 25/09). Ganha:
+- **13 glifos** depois de `relogio` (texto em `entradas.txt`, Lucide 1.48.0):
+  `escudo` · `essencia` · `descanso` · `perigo` · `procurar` · `trabalho` ·
+  `tocha` · `heroi` · `trofeu` · `favor` · `contra` · `ouvir` · `pausa`.
+  **Cada um tem leitor no mesmo commit** (D5h.3): `ouvir`/`pausa`/`favor`/`contra`
+  directamente no `App.jsx`; os outros pela tabela do assunto, que o
+  `BlocoSistema` desenha. `codice` só entra com o item 6.
+- **`ASSUNTO_DO_EMOJI`** (~110 prefixos → glifo, `IMPEDIDO`, `impedidoCom(glifo)`
+  ou `null`) e **`assuntoDaLinha(texto) → { glifo, tom, resto }`**, puro, provado
+  em Node (texto inteiro em `assunto.txt`). `⛔`/`🚫` → tom Impedido sem glifo;
+  `📕`/`🐾` → Impedido com `faisca`; `⛓` → Impedido com `cadeado`. Um prefixo
+  desconhecido sai na mesma (a linha nunca mostra emoji), mas a suíte recusa-o
+  até ter decisão.
+
+**`src/estilo.js`** — `export const LADRILHO = { lado: 36, glifo: 16, raio: 12, espaco: 12 }`, logo depois de `ALVOS`.
+
+**`src/ui.jsx`** — `export function LadrilhoDoAssunto({ glifo, tom = "neutro" })`
+antes dos ícones do menu; importa `LADRILHO`. A forma está em `formas.md` §V3b.
+
+### 7.2 · O `App.jsx` (`2-app.cjs`) — as âncoras, conferidas em `afaffd8`
+
+| # | âncora (texto exacto, ≈linha) | fica |
+|---|---|---|
+| 0 | `SinalDeGuardado, MarcaDaPorta, RostoDaCena } from "./ui.jsx";` (183) | `…, MarcaDaPorta, Glifo, LadrilhoDoAssunto, RostoDaCena } from "./ui.jsx"; import { assuntoDaLinha } from "./glifos.js";` — **na mesma linha**, e `RostoDaCena` fica o último (`teste-palco` lê-o assim) |
+| 0 | `import { FOLHA, TIPOS, ALVOS, CINTA, VEU, ESBATIMENTO } from "./estilo.js";` (55) | `+ LADRILHO` (e `alfa` no passo 3) |
+| 1 | o comentário `/* R3: as três cores saíram da MESA…` **até** o fim do `return` do `BlocoSistema` (3825–3880, 56 linhas; em `bloco-velho.txt`) | `bloco-novo.txt`, **56 linhas**: `const linha = …` com `assuntoDaLinha(semSetaQueMente(bruto))`, `LadrilhoDoAssunto`, a porta como botão a `ALVOS.piso` com `IconeSeta` no fim, o saldo e as linhas dobradas também traduzidos |
+| 2 | `{voz && voz.i === i ? (voz.status === "gerando" ? "…" : "⏸") : "🔊"}</span>}` (23327) | `<Glifo nome="pausa" tamanho={14} />` / `<Glifo nome="ouvir" tamanho={14} />` |
+| 3 | `      texto: (c.icone \|\| (c.tipo === "bom" ? "✦" : "☠")) + " " + c.nome + …,` (1394) | `glifo: c.tipo === "bom" ? "favor" : "contra", texto: c.nome + …,` (uma linha) |
+| 3 | `      texto: "✧ " + e.nome + …,` (1400) | `glifo: "faisca", texto: e.nome + …,` |
+| 3 | `fontWeight: 600,⏎              }}>{c.texto}</span>` (1603) | `+ display: "inline-flex", alignItems: "center", gap: 4` e `{c.glifo ? <Glifo nome={c.glifo} tamanho={12} /> : null}{c.texto}` |
+| 4 | `…style={{ color: T.ink }}>🎲 Teste de {rolagem.rotulo` (**2×**: 23029, 24123) | `<Glifo nome="dado" tamanho={16} /> Teste de …` |
+| 4 | `<span style={{ color: T.violetSoft }}> · ✦ {rolagem.porVantagem}</span>` | `· <Glifo nome="faisca" tamanho={12} /> …` |
+| 5 | `aria-pressed={habAbertas} aria-label="Habilidades" title="Habilidades"` | o nome diz as armadas: `` `Habilidades, ${n} armada(s)` `` |
+| 5 | `}}>✦{habsSel.length > 0 ? ` ${habsSel.length}` : ""}</button>` (24107) | `<Glifo nome="faisca" tamanho={20} />` + o número num `<span className="ml-1">` |
+| 5 | `…>✦ {h.nome} · {h.custo} PM</span>` (23384) | `<Glifo nome="faisca" tamanho={12} />{h.nome} · {h.custo} PM` |
+| 5 | `✦ As duas ações saíram — o Mestre está tecendo o turno.` (23905) | sem o `✦` (não é magia; a frase diz) |
+| 5 | `}}>⚠ não guardou</span>` (1629) | `<Glifo nome="aviso" tamanho={12} /> não guardou` |
+
+### 7.3 · V1b (`3-v1b.cjs`)
+
+| onde | antes | depois |
+|---|---|---|
+| `App.jsx` — o cartão da história (≈23231) | `border: 1px solid ${T.paginaFio}` | `T.line` (decorativo: um contentor de prosa não é componente) |
+| `App.jsx` — a régua da fala do jogador (≈23301) | `esperaResposta ? T.amber : T.paginaFio` | `… : T.line` |
+| `App.jsx` — o botão flutuante "ir para a última" (≈23750) | `T.paginaFio` | **`T.lineStrong`** (é controlo; 4,29:1 sobre o poço) |
+| `App.jsx` — o comentário "a narração é a única coisa QUENTE" (23213–23218) | falso desde V1 | reescrito, **6 linhas → 6 linhas** |
+| `App.jsx` — **"Continuar aventura"** (≈5057) | borda `T.danger`, brilho `rgba(216,106,91,0.15)` (o danger de R2) | borda **`T.rosa`** (5,78:1 sobre `panel`), brilho `` `${alfa(T.rosa, 0.15)}` ``, e o ponto aceso `<PontoAtivo … cor={T.rosa} />` |
+| `painel-alforje.jsx:75` | `T.paginaFio` | `T.line` |
+| `estilo.js` | `paginaFio: "#695DA4"` | **aposentado** (a linha sai, fica o comentário); **`alfa` passa a `export`** (era privada; o brilho da rosa precisava dela) |
+| `teste-v1-folha` asserção 6 | `paginaFio !== line` | `T.paginaFio === undefined` + **`alfa(T.rosa, 0.15) === "rgba(241,91,181,0.15)"`** (o 2.º leitor de `alfa`); nos pares, `paginaFio×bg/pagina` → `lineStrong×pagina` — **com o motivo escrito** |
+| `teste-r3-campo-do-turno` | "a narração usa a superfície quente" pedia `paginaFio` | pede `T.line`, **com o motivo** |
+
+*Não entra em V1b:* a aba activa do trilho em `T.rosa` (`v1-desenho.md` §10.2) — é
+V7 (o trilho novo); pô-la agora seria desenhar a fita duas vezes.
+
+### 7.4 · As provas (`4-testes.cjs`) — e os números que descem
+
+| dente | antes (`afaffd8`) | depois de V3b | porquê |
+|---|---|---|---|
+| D5h.1 — emoji do sistema no `App.jsx` | 595 | **589** | voz 2, teste 2, chips 1 (`☠`), não guardou 1 |
+| D5h.2 — `◉ ◆ ✦ ✧` no `App.jsx` | 162 | **156** | a gaveta, a armada, a espera, a vantagem, e o `✦`/`✧` dos chips |
+| D5a — literais de cor no `App.jsx` | 76 | **75** | o brilho `rgba(216,106,91,0.15)` do "Continuar aventura" |
+| D5h.3 | — | **aprende a ler a tabela**: um glifo que só `ASSUNTO_DO_EMOJI` nomeia conta como lido quando algum `.jsx` chama `assuntoDaLinha` | sem isto, `essencia`, `procurar`, `trabalho` e `trofeu` reprovavam |
+
+**Os números reconferem-se no dia**: se o `App.jsx` mudou entre `afaffd8` e a
+aplicação, `check-formas` imprime *"desceu — baixe o teto"* com o valor certo, e
+é esse que se passa ao `4-testes.cjs`.
+
+**Duas asserções mudam com o motivo escrito:** `teste-palco` (o nome da gaveta
+passou a dizer quantas estão armadas) e `teste-r3-campo-do-turno` (a porta deixou
+de ser pílula e passou a linha-botão; o alvo continua `ALVOS.piso`).
+
+**`teste-v3-glifos` ganha §6 e §7 (23 asserções; 63 no total):** todo assunto da
+tabela é um glifo que existe; **todo emoji que abre uma frase em `src/` tem uma
+decisão na tabela** (a catraca do prefixo); os casos de `assuntoDaLinha` (`⛔`,
+`🧭`, `⚠️` com variação, `📕` Impedido com assunto, `⚖` que sai, o desconhecido,
+a linha sem emoji, o `✦` de fonte, `null`, o emoji a meio que não se toca); e na
+tela: `LADRILHO` 36/16/12/12, as duas formas do ladrilho, o `BlocoSistema` a
+traduzir, a porta a `ALVOS.piso` com a seta, **nenhum `rounded-full` no
+`BlocoSistema`**, a voz, os chips, o teste nas duas telas, a gaveta com o número
+no nome, o "não guardou", e a peça a morar em `ui.jsx`. O passo 5 acrescenta §8.
+
+### 7.5 · O Figma
+
+`O ladrilho do assunto` (`229:125`, cinco variantes: *Neutro* · *Impedido* ·
+*Impedido com assunto* · *Porta* · *Sem assunto*) e **o par antes/depois de
+falas reais do `BlocoSistema`** (`230:125`: `🧭 Chegada…`, `⛔ Bola de Fogo…`,
+`⚗ +3 de essência…`, `▸ Mercado…`, e a dobra `⚔ 3 golpes · 🎲 2 rolagens`), na
+página `V3 · os ícones`. A variável `paginaFio` leva na descrição *"aposentado em
+V1b"* (fica para os ANTES).
+
+### 7.6 · V3c — as âncoras (sem script)
+
+- **O TEMPO** (`App.jsx` ≈1670): `⛺ Montar acampamento` → `<Glifo nome="descanso" tamanho={16} />`.
+  ≈1699–1700: `📅 {dataTxt(dia)} · {horaTxt(minuto)}{ehNoite(minuto) ? " 🌙" : ""}{est ? " " + est.icone + " " + est.nome : ""}`
+  e `{clima.icone} {clima.rotulo}` → **um glifo só, o céu**: `luzDaHora(hora)`
+  (já exportada por `gravura-da-cena.js`) escolhe `madrugada|dia|entardecer|noite`
+  (os quatro entram em `GLIFOS` com este leitor), e o `📅`, o `🌙`, o `est.icone`
+  e o `clima.icone` saem — ficam as palavras. É o começo de V4 (a pílula do tempo).
+- **Masmorra** (≈23450–23519): `🕳 {masmorra.nome}` → `masmorra`; `🕯 {masmorra.tochas}` → `tocha`;
+  `🗝` → `masmorra` com rótulo *chave*; `👁 passiva` e `🔎 Procurar nesta sala` → `procurar`;
+  `🔮 Tentar` → `faisca`; `"🔒" : "❔"` → `cadeado` / `desconhecido`; `↩ voltar` → `IconeSetaEsq`.
+- **Acampamento** (≈23531–23693: `⛺`, `🩹`, `✦ Objetos de poder`, as três saídas `🌙🔥🎒`) e **raid** (≈23407–23434: `⚡`, `☠`).
+- **As falas do jogador sem carimbo** (`📜 Declaro` ≈16563, `🎲 Peço um teste` ≈17707,
+  `📋 Pego o cartaz` ≈19584, `🏃 Fugo de` ≈19431): o emoji sai da frase **dele**.
+  *Atenção:* aí sim mexe-se no texto que o Narrador recebe — é uma linha de
+  `pushMsgs` com `autor: "jogador"`, e `check-acoes-do-jogador` endereça algumas.
+
+**Um pedido ao sistema, leve, para V3c:** `missoes.js` expor as noites que
+faltam de um prazo, para o Diário desenhar a peça inteira `SeloDePrazo` em vez
+de só a ampulheta.
 
 ## 8 · O que NÃO muda e ninguém deve "consertar"
 

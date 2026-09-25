@@ -52,9 +52,8 @@
    4. O violeta `#9B5DE5` da v3 reprova como letra (3,81 sobre o
       erguido); erguido no mesmo matiz até `#AC79E9`, que dá 4,99 em
       letra e 5,93 sob `onSecond` — 10% de folga.
-   5. `paginaFio` fica no fio `#695DA4` até V2 separar o contorno
-      decorativo do controlo: é a borda dos chips da página, que são
-      botões, e precisa dos 3:1 do 1.4.11 até essa separação existir.
+   5. `paginaFio` viveu no fio `#695DA4` até V1b separar o contorno
+      decorativo (`line`) do controlo (`lineStrong`); aposentou-se aí.
    6. Três pares colam nos daltonismos, e a defesa é regra e não
       paleta: mundo×violet em deuteranopia (ΔE 8) — glifo e morada
       fixos; rosa×danger em tritanopia (ΔE 10) — rosa nunca ao lado de
@@ -153,7 +152,9 @@ export const T = {
   /* A PÁGINA — quente (h≈30). É o que está aceso: só onde a prosa mora. */
   pagina:     "#0F0C18",   /* V1: o POÇO da história — a página castanha morreu */
   paginaAlta: "#241F3C",   /* V1: = panelSoft, de propósito (a suíte prende) */
-  paginaFio:  "#695DA4",   /* V1: o fio que carrega 1.4.11 dos chips (3,31/3,41) */
+  /* `paginaFio` APOSENTOU-SE em V1b (25/09): fazia dois trabalhos — o fio
+     decorativo do cartão e a borda dos chips que são botões. Separados,
+     o primeiro é `line` e o segundo `lineStrong`, e ele ficou sem nenhum. */
 
   /* A TINTA */
   ink:        "#EAE4D6",   /* V1: a prosa — o da v3 (13,59–14,15 no corpo) */
@@ -532,6 +533,12 @@ export const ALVOS = {
   chamado: 56,  /* `O chamado`: mais alto por decisão de K1, fixado em K3 */
 };
 
+/* V3b · O LADRILHO DO ASSUNTO — a casa de cada fala do sistema: a linha do
+   registo da v3 (`47:2`, a pessoa desenhou-a a 36 com glifo de 16 e raio
+   12). Entre o ladrilho e a frase, 12. O ladrilho NUNCA é o alvo: quando a
+   linha abre uma sala, é a linha inteira que é botão, a `ALVOS.piso`. */
+export const LADRILHO = { lado: 36, glifo: 16, raio: 12, espaco: 12 };
+
 /* ============================================================
    O CAMPO DO TURNO (R17, §19 de `formas.md`) — a altura da peça mais
    usada do jogo, e só na COLUNA ESTREITA.
@@ -887,11 +894,12 @@ export const AMBIENTE = {
 };
 
 /* O HELPER QUE `MATERIAIS` PROMETIA DESDE D5: uma cor do tema a alfa,
-   pronta para um gradiente. Privado — quem precisa de transparência
-   sobre uma cor do tema espera por ele, não escreve `rgba(...)` à mão.
+   pronta para um gradiente ou uma sombra. PÚBLICO desde V1b (25/09): o
+   brilho do "Continuar aventura" é a rosa a 0,15, e a alternativa era
+   escrever `rgba(...)` à mão — que é o defeito que ele existe para matar.
    Escrito com INTERPOLAÇÃO, não `rgba(...)` literal, para não contar
    como cor nova no `check-formas` (medido: o teto de D5a não se mexe). */
-const alfa = (cor, a) => {
+export const alfa = (cor, a) => {
   const n = parseInt(cor.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };
