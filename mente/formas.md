@@ -9485,3 +9485,233 @@ mensagem **não** fica debaixo dele. A primeira linha de prosa ficou a 78 px
   nenhuma luta nem janela de reação chegou com o alforje aberto.
 
 *Prova jogada: `jogo`, 24/09.*
+
+---
+
+## V · a tela da pessoa
+
+*A partir de 24/09 a direção da tela de jogo é a que a pessoa desenhou: Figma
+`ffWFqD7TueSb88Mkeg9bhW`, quadro `126:5 · taverna-gameplay-v3` (1280×912). Nas
+palavras dela, "muito mais cara de game e muito mais bonito". O `jogo` lê-a
+contra os momentos (`mente/v1-jogo.md`); o `desenho` fabrica as peças. A ordem é
+a do `jogo` (§8 dele): **V1 a folha · V2 a letra · V3 os ícones** — uma coisa por
+versão, para a prova saber a quem culpar.*
+
+### V1 · a folha da v3 (`desenho`, 24/09)
+
+*Construção: `mente/v1-desenho.md`. Figma, biblioteca `e5wJUzInAssoebx5npssKc`:
+página `V1 · a folha da v3` (`221:67`) — o par ANTES/DEPOIS da mesma tela, a
+tabela e a faixa dos daltonismos; a colecção `Paleta semantica (T)` já tem os
+valores novos e a variável `rosa`. Tudo abaixo foi medido com a régua de R2
+(`contraste WCAG 2.1`, simulação de Machado 2009 a severidade 1, ΔE76) e aplicado
+numa cópia da árvore: build limpo, 212/212 suítes.*
+
+#### 1 · A tese — a v3 inverte R2, e inverte-o para o lado da Failbetter
+
+R2 resolveu a falta de figura e fundo **acendendo a página**: uma superfície
+castanha, mais clara que a mesa (1,43:1 de luz, 143° de matiz). A v3 faz o
+contrário: **o cartão da história é um poço, mais escuro que a mesa**
+(`#0F0C18` contra `#12101F`), e a única luz forte lá dentro é a prosa. A figura
+deixa de ser a superfície e passa a ser **o texto**.
+
+Isto não é gosto da pessoa contra aritmética nossa — é a regra que o próprio R2
+citou e não levou até ao fim: *"o Unterzee é escuro por defeito… a luz que há,
+trazes tu"* (Failbetter, `gamedeveloper.com/design/reading-by-gaslight-…`). R2
+pôs a luz na superfície; a v3 põe-na na palavra e numa luz ambiente fraca por
+cima dela.
+
+#### 2 · A tabela, antes → depois
+
+| token | R2 | **V1** | o trabalho |
+|---|---|---|---|
+| `bg` | `#131120` | **`#12101F`** | a mesa — recua |
+| `panel` | `#1B182C` | **`#1A162B`** | a cinta, o trilho, o compositor |
+| `panelSoft` | `#252038` | **`#241F3C`** | o erguido |
+| `line` | `#3D3559` | **`#352F54`** | divisória, decorativa |
+| `lineStrong` | `#7A719A` | fica | a borda de controlo |
+| `pagina` | `#3A2F23` | **`#0F0C18`** | **o poço** |
+| `paginaAlta` | `#48392B` | **`#241F3C`** | = `panelSoft` |
+| `paginaFio` | `#7A6349` | **`#695DA4`** | o fio que carrega 1.4.11 (até V2) |
+| `ink` | `#F2ECE0` | **`#EAE4D6`** | a prosa |
+| `inkMeio` | `#C3B7A3` | fica | a segunda voz |
+| `inkDim` | `#A29AB4` | **`#9B93AC`** | o rótulo da máquina |
+| `amber` / `amberSoft` | `#E8A33D` / `#F5C878` | **`#FFB03A` / `#FFD08A`** | a luz e o herói |
+| `violet` / `violetSoft` | `#9B8DE4` / `#B0A5EC` | **`#AC79E9` / `#C29DEF`** | a magia |
+| `mundo` / `mundoSoft` / `onMundo` | `#79D6C6` / `#A8E7DC` / `#04140F` | **`#00BBF9` / `#71DCFF` / `#03131C`** | o mundo |
+| `rosa` | — | **`#F15BB5`** (novo) | a tua mão |
+| `danger` | `#EE7C6A` | **`#FF6B6B`** | o fim de uma contagem |
+| `ok`, `onAccent`, `onSecond`, `okFundo`, `perigoFundo` | — | ficam | |
+
+E uma tabela nova, **`AMBIENTE`** (`estilo.js`): o gradiente horizontal da v3 por
+cima do corpo da história — `amber` a 0,063 → `mundo` a 0,090 em 55 % → `rosa` a
+0,072 (as paradas `.07/.10/.08` do Figma × a opacidade `.90` do nó). As paradas
+apontam para `T` **por nome**: a luz segue a paleta e não há hex novo. Com ela
+nasce o helper `alfa(cor, a)` que `MATERIAIS` prometia desde D5.
+
+#### 3 · O que morre: a página castanha
+
+Morre, e o número que a mata não é o da prosa — é o dos **acentos**. Sobre a
+página castanha **todo acento perde 33 % do contraste** que tem sobre o poço
+(âmbar 10,61 → 7,15; ciano 8,72 → 5,88), e **dois dos quatro acentos da v3
+reprovam AA como letra** sobre ela: rosa **4,29**, violeta **4,14**. E o âmbar —
+a cor do Mestre e da ação — fica a **5° de matiz** da página: luz quente sobre
+papel quente. A paleta da pessoa não cabe numa página castanha; cabe num poço.
+
+(O argumento contrário também foi medido e **caiu**: "o gradiente só se vê sobre
+preto" é falso — sobre a castanha ele mede ΔE 6,3–10,9, tão visível quanto sobre
+o poço, 7,1–9,3. Não é por isso.)
+
+`paginaAlta` passa a ser o mesmo erguido da mesa (`#241F3C`): **a página deixa
+de ser uma segunda família de superfície.** A v3 tem uma escada só, fria, de
+quatro degraus — poço, mesa, cinta, erguido — e um fio. A suíte prende a
+igualdade, para ela não se desfazer por acaso.
+
+#### 4 · A prosa — a pergunta de R2 sobre a irradiação, respondida
+
+R2 desceu a prosa de 14,37 para **11,08:1** contra a irradiação de claro sobre
+escuro. A v3 volta à tinta `#EAE4D6` sobre quase preto. Medido, **no corpo, com o
+ambiente por cima** (varrido de 5 % a 95 % da largura, a cada 1 %):
+
+| | pior | média | melhor |
+|---|---|---|---|
+| **V1** (`#EAE4D6`, a v3) | **13,59** (ciano a 55 %) | **13,85** | 14,15 |
+| manter a tinta de R2 (`#F2ECE0`) | 14,65 | — | 15,28 |
+| régua: Material 2, texto de alta ênfase (branco a 87 % sobre `#121212`) | | **14,22** | |
+
+**A v3 joga melhor do que manter a tinta de R2**, e cai exactamente na régua
+publicada (`m2.material.io/design/color/dark-theme.html`) — o ambiente faz o
+trabalho dos 87 %. O 11,08 de R2 nunca foi alvo: era a consequência de a página
+ter subido. A defesa contra a irradiação que R2 escreveu **continua de pé e não é
+de cor**: o peso 300 da `.tv-coluna`. Descer mais a tinta (`#E4DDCE`, 12,75–13,30)
+foi medido e recusado: fica abaixo da régua sem razão.
+
+A letra da v3 (Cormorant 20/1,6 na prosa) **não entra em V1** — é V2, pedido do
+`jogo` com razão: se a paleta e a letra mudarem juntas, a prova não sabe a qual
+culpar.
+
+#### 5 · O que se descartou da v3, e só com número
+
+1. **O violeta `#9B5DE5`.** Como letra sobre o erguido dá **3,81** (reprova AA) e
+   debaixo de `onSecond` **4,53** (0,7 % de folga). `T.violet` acaba como letra
+   em `cor` calculadas (`painel-diario`, `painel-talentos`, `App.jsx:2024`) —
+   tem de passar. **Erguido no mesmo matiz (h267, s72)** até 10 % de folga:
+   **`#AC79E9`** (4,99 em letra, 5,93 sob `onSecond`). ΔE 16 do da v3 — nota-se
+   lado a lado, não se nota na tela.
+2. **O contorno `#352F54` como única borda de um controlo.** Contra a mesa mede
+   **1,51**. Para o cartão está certo — é decorativo (1.4.11 cobre componentes e
+   gráficos que carregam informação; um contentor de prosa não é nenhum dos
+   dois). Mas `paginaFio` também é a borda dos **chips da página**, que são
+   botões. Até V2 separar os dois trabalhos no `App.jsx`, `paginaFio` fica no
+   menor fio do mesmo matiz que dá 3,3 contra mesa e poço: **`#695DA4`**
+   (3,31/3,41). O cartão sai mais nítido do que na v3 **durante uma versão**; é o
+   preço de não abrir um buraco de acessibilidade para ter o desenho uma versão
+   mais cedo.
+3. **O lugar em âmbar.** A v3 pinta a pílula do lugar de `#FFD08A`. O `jogo`
+   recusou-o (R11: o âmbar carregava 24 sentidos e o lugar foi um dos cinco
+   tirados). Concordo, e o número é dele. O lugar é `mundo`.
+4. **O anel de PV em ciano.** Ver §7.
+
+#### 6 · O mapa — um trabalho por acento (a lei Failbetter de R2, varrível)
+
+| acento | o trabalho | onde, na tela da v3 |
+|---|---|---|
+| `amber` | **a luz e o herói**: a voz do Mestre, o dado de enviar, o ouro `◉`, a coroa, o anel de PV, o preço | o cabeçalho da cena, o dado, `1.240`, a coroa |
+| `mundo` | **o mundo**: lugar, a pílula do tempo, a luz/clima, a espera, o prazo folgado, o convite; a metade direita da cinta | a pílula do lugar (fica **ciano**, não âmbar), a hora |
+| `violet` | **a magia**: PM `◆`, a gaveta `✦`, a borda do campo com habilidade armada | a borda do campo |
+| `rosa` | **a tua mão: o que está escolhido agora** — a aba ativa (moldura **e** ícone), o 3.º ponto da runa. É **marca**: nunca chão de letra, nunca sentido sozinho | o ícone ativo do trilho |
+| `danger` | o fim de uma contagem, o que se perde | o anel grave |
+| `ok` | o que se ganha | — |
+
+Duas correcções à v3 que saem do mapa e não do gosto: **a moldura da aba ativa
+passa de violeta a rosa** (violeta é a magia e só a magia — o `jogo` pediu "a
+magia tem uma cor só"); e **a caneta rosa do campo desaparece** porque o `jogo`
+pôs a gaveta `✦` no lugar dela — o rosa perde esse emprego sem perder o
+trabalho.
+
+#### 7 · As cores das peças que o `jogo` compõe (dadas agora, no mesmo mapa)
+
+| peça | repouso | aviso | o número |
+|---|---|---|---|
+| **`O anel`** (PV) | arco `amber` | arco `danger` (≤ 1/3) | em **cinzento** âmbar×danger separa **1,52:1**; ciano×danger só **1,25** — o teste do cinzento do `jogo` (§9, item 3) escolhe o âmbar. Em deuteranopia o ciano dava 1,00 de luz. O trilho do arco: `panelSoft` |
+| **`O selo de prazo`** | `mundo` (folgado) → `amber` (a apertar) | cheio: fundo `danger`, letra `onAccent` (6,59) | o cheio contra a cinta mede **6,34** (era 6,37 em R2). **6,37 nunca foi piso** — era a medida de R2; o piso de uma forma é 3:1 (1.4.11) e o selo passa com 111 % de folga |
+| **`A linha do veredito`** | `inkDim` | armado: `amberSoft` | 6,00 / 12,27 sobre a cinta |
+| **`A pílula do tempo`** | fundo `panelSoft`, contorno e letra `mundo` | com prazo: o selo dentro | 7,09 sobre o erguido |
+| **`O contador`** | `◉` ouro em `amber` · `◆` PM em `violet` | — | 9,65 / 5,58 sobre a cinta |
+| **`O dado`** | fundo `amber`, glifo `onAccent` | — | 10,04 |
+| **a runa** | fio `amber` a 0,2 + pontos `amber`·`mundo`·`rosa` | — | decorativa — os pontos são 6 px e não carregam sentido |
+| **o ambiente** | `AMBIENTE` | — | ver §4 e a proposta |
+
+#### 8 · Os daltonismos — os quatro acentos, e o que se declara
+
+Razão de luz · ΔE76, sob Machado 2009:
+
+| par | normal | protan. | deutan. | tritan. |
+|---|---|---|---|---|
+| amber × mundo | 1,22 · 116 | 1,06 · 106 | 1,42 · 114 | **1,01** · 82 |
+| amber × violet | 1,73 · 121 | 1,54 · 123 | 1,83 · 118 | 1,52 · 39 |
+| amber × rosa | 1,67 · 99 | 1,81 · 101 | 1,59 · 81 | 1,50 · 32 |
+| mundo × violet | 1,42 · 61 | 1,62 · 22 | 1,29 · **8** | 1,53 · 53 |
+| mundo × rosa | 1,37 · 88 | 1,91 · 21 | 1,12 · 35 | 1,52 · 110 |
+| violet × rosa | 1,04 · 40 | 1,18 · 23 | 1,15 · 38 | 1,01 · 59 |
+| rosa × danger | 1,10 · 48 | 1,05 · 48 | 1,12 · 47 | 1,05 · **10** |
+| ok × danger | 1,76 · 96 | 2,38 · 30 | 1,48 · 20 | 1,99 · 103 |
+
+**O que melhora contra R2:** âmbar×mundo em deuteranopia, o par que R2 declarou
+como dívida (1,12:1, ΔE 64), passa a **1,42 · ΔE 114**. ok×danger fica igual
+(1,48/1,50).
+
+**Os três que colam, declarados em vez de escondidos:**
+- **mundo × violet em deuteranopia, ΔE 8.** A pílula do tempo e o PM. Defesa:
+  glifo e morada fixos (`◆` à direita da cinta, a hora na pílula), e nunca o
+  mesmo formato — um é número, o outro é pílula.
+- **rosa × danger em tritanopia, ΔE 10.** Defesa: **rosa nunca ao lado de
+  danger**, e danger nunca sem glifo (`⚠`, o arco, o selo cheio). A rosa só vive
+  no trilho e na runa.
+- **amber × mundo em tritanopia, 1,01 de luz** — mas ΔE 82: separa pelo matiz
+  que sobra. Moram em metades opostas da cinta.
+
+A lei de R2 continua a ser a defesa e não a paleta: **nenhum acento carrega
+sentido sozinho.**
+
+#### 9 · A proposta ambiciosa — o ambiente passa a ser **a luz da hora**
+
+O gradiente da v3 é fixo. **Proponho que seja a hora.** `LUZ_DA_CENA` já decide a
+luz de cada cena (madrugada, dia, entardecer, noite) e já a pinta na gravura do
+topo; o ambiente é a mesma luz a cair sobre a página. *A hora não muda o
+desenho: muda a luz* — a lei de R13, um andar mais fundo. Três paradas sempre
+(âmbar → ciano → rosa); a hora muda **o peso e o lugar** delas:
+
+| luz | âmbar | ciano (onde) | rosa | prosa, pior | corpo × mesa, ΔE mín |
+|---|---|---|---|---|---|
+| madrugada | 0,03 | 0,06 (40 %) | 0,10 | 13,69 | 2,73 |
+| dia | 0,10 | 0,10 (50 %) | 0,05 | 13,02 | 2,55 |
+| entardecer | 0,12 | 0,07 (65 %) | 0,10 | **12,49** | 3,59 |
+| noite | 0,02 | 0,11 (50 %) | 0,05 | 13,15 | 2,69 |
+
+Todas passam os dois pisos de `AMBIENTE` (prosa ≥ 7, ΔE ≥ 2,3) e o do `jogo`
+(prosa ≥ 10 em cada luz). E **distinguem-se umas das outras**: o par mais
+próximo (dia × entardecer) está a ΔE 2,6 no tom médio — acima do limiar de
+diferença. O jogador **sente a hora na página sem a ler**, o que é exactamente o
+que a casa pede ao sistema ("sente pelo efeito, nunca lê o nome").
+
+**Custa zero `App.jsx`:** `rosto-da-cena.jsx` (território do desenho) põe
+`data-luz={g.luz}` na raiz que já tem; `AMBIENTE` ganha as quatro receitas; a
+folha escolhe a receita com `:has([data-luz="noite"]) .tv-esbate-topo` (ou `~`,
+se a gravura e o corpo forem irmãos — confere-se no DOM). Sem `:has()` o
+navegador fica com a receita fixa de hoje: **degradação nula**. A mudança de hora
+é um corte (a hora muda entre turnos, não durante a leitura); se o `jogo` quiser
+transição, 600 ms de `background` com saída em `reduced-motion`.
+
+Peso: médio (cria o que não existe, não muda fluxo). Proponho-a como **V1b**,
+logo depois de V1 no ar e da prova do `jogo` — para a prova de V1 ler **uma**
+luz, e a de V1b ler **quatro**.
+
+#### 10 · O que V1 não toca, e porquê
+
+- **A letra** (V2), **os ícones** (V3), **o `App.jsx`** (o contorno separado do
+  controlo, a aba ativa rosa, o comentário de 23066 que fica falso — lista em
+  `v1-desenho.md` §10).
+- **O save**: nada. É uma tabela de cor; um commit revertido desfaz tudo.
+- **`MATERIAIS`** e **`LUZ_DA_CENA`**: intocados, e continuam a passar os seus
+  pisos (a legenda do mundo sobre o chão do dia desce de 8,22 para **6,36**,
+  contra um piso de 4,5).

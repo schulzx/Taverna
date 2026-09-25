@@ -32,6 +32,7 @@
    ============================================================ */
 import React from "react";
 import { tracos, feicoes, acentoDe } from "./semente.js";
+import { T } from "./estilo.js";
 
 /* A tinta é UMA: o mesmo quase-preto violeta da casa em todo traço.
    Xilogravura com três tons de linha vira desenho digital na hora. */
@@ -209,8 +210,8 @@ const TRAJES = {
     <circle cx={32 - 4.6} cy={22.6} r="2.9" fill={PANO} stroke={ac} strokeWidth="1.3" />
     <circle cx={32 + 4.6} cy={22.6} r="2.9" fill={PANO} stroke={ac} strokeWidth="1.3" />
     <path d={`M ${32 - 1.7} 22.6 L ${32 + 1.7} 22.6`} stroke={ac} strokeWidth="1" />
-    <circle cx={32 - 5.4} cy={21.8} r="0.7" fill="#EAE4D6" opacity="0.55" />
-    <circle cx={32 + 3.8} cy={21.8} r="0.7" fill="#EAE4D6" opacity="0.55" />
+    <circle cx={32 - 5.4} cy={21.8} r="0.7" fill={T.ink} opacity="0.55" />
+    <circle cx={32 + 3.8} cy={21.8} r="0.7" fill={T.ink} opacity="0.55" />
   </g>),
   Invocador: (g, ac) => (<g>
     {/* a gema desce para o meio da testa, onde há pele para contrastar; o

@@ -33,6 +33,36 @@
    `panel` é feito hoje.
 
    ============================================================
+   V1 · A FOLHA DA v3 (24/09/2026) — a decisão inteira, com a conta,
+   mora em `mente/formas.md` §V1 e em `mente/v1-desenho.md`. Aqui só o
+   resumo que explica por que os valores abaixo mudaram outra vez.
+
+   1. A direção da tela de jogo passa a ser a que a pessoa desenhou:
+      Figma `ffWFqD7TueSb88Mkeg9bhW`, quadro `126:5 · taverna-gameplay-v3`
+      (1280×912). Nas palavras dela: "muito mais cara de game e muito
+      mais bonito".
+   2. A página castanha morre: sobre ela todo acento perdia 33% do
+      contraste que tem sobre o poço (âmbar 10,61 → 7,15; ciano 8,72 →
+      5,88), e dois dos quatro acentos da v3 reprovavam AA como letra —
+      rosa 4,29, violeta 4,14. A paleta da pessoa não cabe numa página
+      castanha; cabe num poço.
+   3. A prosa, no corpo com o ambiente por cima: pior 13,59, média
+      13,85, melhor 14,15 — cai exactamente na régua do Material 2 para
+      texto de alta ênfase, 14,22.
+   4. O violeta `#9B5DE5` da v3 reprova como letra (3,81 sobre o
+      erguido); erguido no mesmo matiz até `#AC79E9`, que dá 4,99 em
+      letra e 5,93 sob `onSecond` — 10% de folga.
+   5. `paginaFio` fica no fio `#695DA4` até V2 separar o contorno
+      decorativo do controlo: é a borda dos chips da página, que são
+      botões, e precisa dos 3:1 do 1.4.11 até essa separação existir.
+   6. Três pares colam nos daltonismos, e a defesa é regra e não
+      paleta: mundo×violet em deuteranopia (ΔE 8) — glifo e morada
+      fixos; rosa×danger em tritanopia (ΔE 10) — rosa nunca ao lado de
+      danger, e danger nunca sem glifo; amber×mundo em tritanopia
+      (1,01 de luz) — moram em metades opostas da cinta.
+   ============================================================
+
+   ============================================================
    R2 · "A PÁGINA ILUMINADA" (23/09/2026) — o `jogo` e o `desenho`
    mediram a tela principal e acharam a mesma doença por dois caminhos.
 
@@ -108,32 +138,42 @@
    luminância. A defesa não é a paleta: é a lei escrita acima — nenhum
    acento carrega sentido sozinho, cada um tem glifo e posição fixos, e
    isso não é medida, é regra.
+
+   (Os valores desta nota são os de R2; os de hoje estão na nota V1
+   acima.)
    ============================================================ */
 export const T = {
   /* A MESA — fria (h≈250). Recua: cabeçalho, trilho, HUD, bastidor. */
-  bg:         "#131120",   /* era #0E0C15 — SOBE (ver a nota grande acima) */
-  panel:      "#1B182C",   /* era #171322 */
-  panelSoft:  "#252038",   /* era #1E1930 */
-  line:       "#3D3559",   /* era #2E2745 */
-  lineStrong: "#7A719A",   /* era #70688C — a borda de CONTROLE */
+  bg:         "#12101F",   /* V1: a mesa da v3 (L 0,60 = a régua do Material) */
+  panel:      "#1A162B",   /* V1: a cinta, o trilho, o compositor */
+  panelSoft:  "#241F3C",   /* V1: o erguido — pílula, aba ativa */
+  line:       "#352F54",   /* V1: divisória — decorativa (1,51 contra a mesa) */
+  lineStrong: "#7A719A",   /* fica — a borda de CONTROLO */
 
   /* A PÁGINA — quente (h≈30). É o que está aceso: só onde a prosa mora. */
-  pagina:     "#3A2F23",   /* NOVO */
-  paginaAlta: "#48392B",   /* NOVO */
-  paginaFio:  "#7A6349",   /* NOVO — o contorno, e é ele que carrega os 3:1 (3,29:1) */
+  pagina:     "#0F0C18",   /* V1: o POÇO da história — a página castanha morreu */
+  paginaAlta: "#241F3C",   /* V1: = panelSoft, de propósito (a suíte prende) */
+  paginaFio:  "#695DA4",   /* V1: o fio que carrega 1.4.11 dos chips (3,31/3,41) */
 
   /* A TINTA */
-  ink:        "#F2ECE0",   /* era #EAE4D6 — a prosa */
-  inkMeio:    "#C3B7A3",   /* NOVO — a segunda voz DA PÁGINA, quente */
-  inkDim:     "#A29AB4",   /* era #9B93AC — o rótulo DA MÁQUINA, frio */
+  ink:        "#EAE4D6",   /* V1: a prosa — o da v3 (13,59–14,15 no corpo) */
+  inkMeio:    "#C3B7A3",   /* fica — a segunda voz */
+  inkDim:     "#9B93AC",   /* V1: o rótulo da máquina — o da v3 */
 
   /* OS TRÊS ACENTOS, cada um com UM trabalho */
-  amber:      "#E8A33D", amberSoft: "#F5C878", onAccent: "#1A1408",   /* a luz */
-  violet:     "#9B8DE4", violetSoft: "#B0A5EC", onSecond: "#14101F",  /* era violet #8B7BD8 — o arcano */
-  mundo:      "#79D6C6", mundoSoft: "#A8E7DC", onMundo:   "#04140F",  /* NOVO — o mundo (relógio, data, estação, lugar, a espera) */
+  amber:      "#FFB03A",   /* V1: a luz e o herói */
+  amberSoft:  "#FFD08A",   /* V1: o âmbar que se lê em letra */
+  onAccent:   "#1A1408",   /* fica — 10,04 sobre o âmbar novo */
+  violet:     "#AC79E9",   /* V1: a magia — o #9B5DE5 da v3 ERGUIDO no mesmo matiz */
+  violetSoft: "#C29DEF",   /* V1: a magia em letra (7,00 sobre o erguido) */
+  onSecond:   "#14101F",   /* fica — 5,93 sobre o violeta novo */
+  mundo:      "#00BBF9",   /* V1: o mundo — o ciano da v3 */
+  mundoSoft:  "#71DCFF",   /* V1: a voz do mundo */
+  onMundo:    "#03131C",   /* V1: tinta sobre o ciano (8,51) */
+  rosa:       "#F15BB5",   /* NOVO (V1) — a tua mão: o escolhido, marca, nunca chão de letra */
 
-  danger:     "#EE7C6A",   /* era #D86A5B */
-  ok:         "#8FE0A2",   /* era #7BC98F */
+  danger:     "#FF6B6B",   /* V1: o da v3 */
+  ok:         "#8FE0A2",   /* fica */
   /* O CHÃO DE UM SELO DE ESTADO — o verde e o vermelho muito escuros
      por baixo de `ok` e de `danger`. Estavam escritos à mão CINCO vezes no
      mesmo bloco do HUD (as condições, os efeitos, a rolagem, a ação
@@ -216,8 +256,10 @@ export const MATERIAIS = {
    mesma cor escrita quatro vezes, que é a doença que esta casa varre.)
 
    OS CONTRASTES, medidos pelo `desenho` nas quatro luzes: o pior par da
-   legenda é `ink` × chão de dia, **10,60:1** — AAA com 51 % de folga. E
-   `T.mundo`, que escreve a hora, nunca desce de **7,27:1**.
+   legenda é `ink` × chão de dia, **11,12:1** (V1; era 10,60 — o `ink`
+   desceu) — AAA com folga larga. E `T.mundo`, que escreve a hora, nunca
+   desce de **6,36:1** (V1; era 7,27 — o ciano da v3 é mais escuro que
+   o teal de R2).
 
    `astroAlfa` e `astroAlto` vão na receita e não no desenho porque são o
    que distingue uma luz da outra: de madrugada e ao entardecer o astro é
@@ -758,17 +800,18 @@ export const SOLEIRA = {
 
    O NÚMERO SAI DE DUAS MEDIDAS E DE NENHUM GOSTO:
 
-   1. **0,54** — o alfa em que a prosa deixa de ser AA. `T.ink` sobre
-      `T.pagina` mede **11,08:1**; composto a alfa `a` sobre a mesma
-      página, cai abaixo de 4,5:1 exactamente em `a = 0,54`. Logo a
-      banda ilegível de um esbatimento de altura `h` é `0,54 x h`.
+   1. **0,52** (V1; era 0,54 sobre a página de R2) — `T.ink` composto a
+      alfa `a` sobre o pior ponto do corpo (poço + ambiente a 55%, hoje
+      13,59:1) cai a 4,5:1 exactamente em `a = 0,520` (sobre o poço nu,
+      sem ambiente, seria 0,505). Logo a banda ilegível de um
+      esbatimento de altura `h` é `0,52 x h`.
    2. **27,6 px** — a entrelinha da prosa (`TIPOS.prosa` 17 x 1,625, o
       `leading-relaxed` que a tela já usa), e é a régua de R13.
 
    O TETO, ENTÃO, É UMA CONTA QUE A SUÍTE REFAZ:
 
        alfaAA x altura  <  entrelinhaDaProsa / 2
-       0,54   x   24    =  12,96  <  13,8                ✓
+       0,52   x   24    =  12,48  <  13,8                ✓ (V1; era 12,96)
 
    **24 é o maior inteiro par abaixo do teto de 25,6.** Não é gosto: é o
    teto menos o arredondamento. Acima dele uma linha pode ficar mais de
@@ -796,7 +839,7 @@ export const SOLEIRA = {
    ============================================================ */
 export const ESBATIMENTO = {
   altura: 24,
-  alfaAA: 0.54,            /* medido: T.ink sobre T.pagina cai de 11,08:1 para 4,5:1 */
+  alfaAA: 0.52,            /* V1: T.ink sobre o pior ponto do corpo (13,59:1) cai a 4,5:1 em a = 0,52 — a tabela que se recalcula não se afina à mão */
   entrelinhaDaProsa: 27.6, /* TIPOS.prosa (17) x 1,625 — o leading-relaxed da tela */
   /* A RAMPA, em pares [fracção da altura, alfa da máscara]. Ela é TABELA e
      não texto de CSS por duas razões, e a segunda foi a catraca a
@@ -812,6 +855,52 @@ export const ESBATIMENTO = {
      gradiente é composta pela GPU, nunca pelo fio principal. */
   rampa: [[0, 0], [0.45, 0.35], [0.75, 0.80], [1, 1]],
 };
+
+/* ============================================================
+   AMBIENTE (V1, 24/09/2026) — a luz que a v3 põe sobre o corpo da
+   história: um gradiente horizontal fraco, âmbar → mundo → rosa, por
+   cima do poço (`T.pagina`). As paradas apontam para `T` POR NOME
+   (como `APERTOS` em `gravura-da-cena.js`): a luz segue a paleta
+   sozinha, e não há hex novo aqui.
+
+   OS ALFAS SÃO OS DO FIGMA: as paradas do nó `ambient-gradient-overlay`
+   medem 0,07/0,10/0,08, e o próprio nó tem opacidade 0,90 — logo
+   0,063/0,090/0,072.
+
+   OS DOIS PISOS: `prosa` = 7 é o mesmo piso AAA da legenda em
+   `LUZ_DA_CENA` — a prosa é a protagonista da tela, e uma luz
+   decorativa por cima dela não pode piorar a leitura. `corpoContraMesa`
+   = 2,3 é ΔE76 (Sharma, *Digital Color Imaging Handbook*: o limiar de
+   diferença perceptível) — substitui o par de R2 "página × mesa ≥ 1,5",
+   que era razão de LUZ. Na v3 o poço é mais escuro que a mesa, e o que
+   as separa é matiz + contorno, não luminância: o piso passa de razão
+   de luz a diferença perceptível.
+   ============================================================ */
+export const AMBIENTE = {
+  direcao: "to right",
+  paradas: [
+    { token: "amber", alfa: 0.063, em: 0 },
+    { token: "mundo", alfa: 0.09,  em: 0.55 },
+    { token: "rosa",  alfa: 0.072, em: 1 },
+  ],
+  pisos: { prosa: 7, corpoContraMesa: 2.3 },
+};
+
+/* O HELPER QUE `MATERIAIS` PROMETIA DESDE D5: uma cor do tema a alfa,
+   pronta para um gradiente. Privado — quem precisa de transparência
+   sobre uma cor do tema espera por ele, não escreve `rgba(...)` à mão.
+   Escrito com INTERPOLAÇÃO, não `rgba(...)` literal, para não contar
+   como cor nova no `check-formas` (medido: o teto de D5a não se mexe). */
+const alfa = (cor, a) => {
+  const n = parseInt(cor.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+};
+
+/* A LUZ AMBIENTE MONTADA, para a folha. Mora AQUI e não junto de
+   `sombra()`/`brilho()` porque lê `AMBIENTE` e `T`, e uma `const` não
+   se lê antes de nascer. */
+const LUZ_AMBIENTE = `linear-gradient(${AMBIENTE.direcao}, ${AMBIENTE.paradas
+  .map((p) => `${alfa(T[p.token], p.alfa)} ${Math.round(p.em * 100)}%`).join(", ")})`;
 
 /* A rampa montada, para a folha. Mora AQUI e não junto de `sombra()`
    porque lê `ESBATIMENTO`, e uma `const` não se lê antes de nascer.
@@ -964,7 +1053,7 @@ export const ALFORJE = {
 /* O VÉU — três pesos e dois tempos que já eram lei em "abrir e fechar um
    painel" (`formas.md`) e nunca tinham chegado ao código: o alforje é o
    primeiro leitor. `leve` é o do alforje (a cena continua a ler-se por
-   trás, 3,06:1 — de propósito); `pesado` e `semRetorno` esperam o dia em
+   trás, 3,30:1 — V1, de propósito); `pesado` e `semRetorno` esperam o dia em
    que outra sobreposição precisar de um véu mais escuro. */
 export const VEU = { entra: 180, sai: 120, leve: 0.6, pesado: 0.85, semRetorno: 0.94 };
 
@@ -1330,8 +1419,10 @@ export const SUPERFICIES_CSS = `
    letra do jogo. Texto claro sobre fundo escuro IRRADIA — um peso 400
    lê como 500 (css-tricks.com/dark-mode-and-variable-fonts) — e é por
    isso que a prosa também desce de contraste (14,37:1 para 11,08:1
-   sobre T.pagina, ver a nota grande sobre T acima): as duas decisões
-   nascem da mesma causa óptica, e por isso vivem na mesma caixa. O
+   sobre T.pagina, ver a nota grande sobre T acima). (V1: no poço,
+   13,59–14,15:1 — o peso 300 continua a ser a defesa contra a
+   irradiação.) As duas decisões nascem da mesma causa óptica, e por
+   isso vivem na mesma caixa. O
    @import de FONT_CSS já carrega o peso 300 do Spectral — a classe
    só usa o que já chega.
 
@@ -1651,7 +1742,13 @@ export const SUPERFICIES_CSS = `
    repor. Ali a cabeca ja nao e uma imagem — e um contorno do sistema,
    contra o qual um corte recto le bem. A peca que existe para suavizar
    uma imagem nao tem trabalho onde a imagem nao existe. */
+/* V1: a LUZ_AMBIENTE mora aqui e nao numa classe nova porque .tv-esbate-topo
+   e o unico leitor do corpo da historia (App.jsx:23112) e ja e a regiao que
+   rola por baixo da gravura — exatamente onde a v3 poe o gradiente. Sem
+   background-attachment (o padrao e scroll) o gradiente fica preso a CAIXA,
+   nao ao texto, e a mascara do esbatimento tambem o esbate nos 24px de cima. */
 .tv-esbate-topo {
+  background-image: ${LUZ_AMBIENTE};
   -webkit-mask-image: linear-gradient(to bottom, ${RAMPA_DO_ESBATIMENTO});
   mask-image: linear-gradient(to bottom, ${RAMPA_DO_ESBATIMENTO});
 }

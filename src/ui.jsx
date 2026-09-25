@@ -1240,12 +1240,11 @@ export function Dobra({ quantos = 0, singular = "oferta", plural = "ofertas", es
    alvo, com porta ou sem porta.
 
    CONTRASTE, MEDIDO (fórmula WCAG, luminância relativa sRGB, as MESMAS
-   cores de `T`): `T.inkDim` sobre `T.panel` = 6,44:1 (5,82:1 sobre
-   `T.panelSoft`) — a prosa neutra do eixo `saida`. `T.amber` sobre
-   `T.panel` = 8,02:1 (7,25 sobre `panelSoft`) — a porta. Sem `saida`:
-   `T.danger` 6,37:1 (5,76) · `T.mundo` 10,09:1 (9,12) · `T.inkMeio`
-   8,75:1 (7,91). As seis folgam acima do piso AA de texto pequeno
-   (4,5:1) — a pior é `T.danger`/`panelSoft`, com 28% de folga.
+   cores de `T`; V1, 24/09): `T.inkDim` sobre `T.panel` = 6,00:1 (5,36
+   sobre `T.panelSoft`) — a prosa neutra do eixo `saida`. `T.amber` =
+   9,65 (8,62) · `T.danger` 6,34 (5,66) · `T.mundo` 7,94 (7,09) ·
+   `T.inkMeio` 8,90 (7,95). A pior é `T.inkDim`/`panelSoft`, com 19% de
+   folga — deixou de ser o `T.danger`.
 
    `prefers-reduced-motion`: esta peça (Forma=Linha) não anima nada — não
    entra nem sai, só troca de conteúdo quando quem chama troca as props.
@@ -1547,7 +1546,7 @@ export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeO
         aos tres daltonismos, ao cinzento e ao tamanho. E o PRIMARIO.
      2. A PALAVRA e o numero.
      3. A FORMA: a ultima noite ENCHE. A area muda de luminancia em
-        6,37:1, e luminancia nao e cor.
+        6,34:1 (V1; era 6,37), e luminancia nao e cor.
      4. A COR — e e a ULTIMA leitura, nunca a primeira.
 
    POR QUE AS OUTRAS DUAS NAO PRECISAM DE UM CANAL FORTE: `5 noites` e

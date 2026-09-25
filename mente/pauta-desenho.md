@@ -680,6 +680,127 @@ vive — não pelo que é mais barato de fazer.
 - [x] **A ação principal tem a mesma cara nos três modos** · feita · texto em `mente/arquivo/pauta-desenho-feitas.md`
 
 
+### Fase V — a tela da pessoa: a v3 passa a ser a linguagem do jogo inteiro
+
+**Aberta em 24/09/2026 pelo `regente`, por ordem da pessoa, e é a primeira da
+fila.** Ela desenhou a tela principal que quer: Figma `ffWFqD7TueSb88Mkeg9bhW`
+(*Taverna — design e UX*), quadro **`126:5` · `taverna-gameplay-v3`**, 1280×912.
+*"Trabalhei em uma versão de tela e gostei muito do resultado, creio que tem
+muito mais cara de game e é muito mais bonito do que a versão que temos hoje."*
+E logo depois: *"o Figma também está repassando o design que criamos para as
+outras telas, por gentileza, após finalizar essa, code as próximas."* **A v3 não
+é uma tela: é a linguagem nova do jogo inteiro**, e a pessoa está a desenhar as
+outras telas nela, no mesmo arquivo, enquanto a fila anda.
+
+**As leis desta fase — valem para cada tela, não só para a mesa:**
+1. **Só se constrói tela que a pessoa terminou.** No começo de cada ciclo,
+   **releia o arquivo** (`get_metadata` nas páginas, índice em `56:3`) e trate
+   como pronta a tela que estiver na linguagem v3 **e com nome de versão**
+   (como `taverna-gameplay-v3`). Na dúvida, **pule-a nesse ciclo e diga-o no
+   relato** — quem rege pergunta-lhe. Construir um quadro a meio é construir
+   duas vezes.
+2. **O que nomeia o mecanismo passa a ser de mundo.** A forma de uma etiqueta
+   fica; o conteúdo que diz *revelação*, *ato*, *cena* ou tempo de sessão sai,
+   e entra o lugar, a luz, a hora do mundo (a lei *o sistema não fala de si
+   mesmo*; o Diário nunca nomeia o momento).
+3. **Nada se corta — traduz-se.** O que o jogo precisa e a tela desenhada não
+   mostra (a soleira, a gaveta `✦`, o veredito, os prazos, o PM, as condições,
+   o rosto da cena…) ganha morada no estilo dela. Onde ela não desenhou, a mesa
+   desenha na linguagem dela.
+4. **Cada tela nasce com as duas composições** (1280 e 375×812) e prova-se nas
+   duas na mesma versão — o telefone não é etapa do fim (`jogo`, `v1-jogo.md`
+   §4).
+5. **A prova antes de subir:** o par antes/depois no Figma, os números da régua
+   da casa, e o `jogo` a jogar o antes e o depois. *A pessoa gostou — é a
+   direção, e não dispensa a prova de que joga bem.* Onde um pedaço da v3 joga
+   pior, diz-se com o número e constrói-se a versão que joga melhor **no mesmo
+   estilo** (o `jogo` já achou dez: `v1-jogo.md` §5 — a prosa a 137 car./linha
+   volta aos 65ch, o "d20" desenhado é um d6, *Herói* aceso sem painel, `HP` a
+   9 px, o lugar em âmbar que desfazia R11…).
+
+**A ordem das telas — pelo tempo que o jogador passa nelas** (o índice dá a
+régua: *"A mesa… 95 % do tempo de jogo é passado nela"*), se a pessoa não der
+outra:
+1. **A mesa — jogo em curso** (`126:5`, pronta) — etapas V1–V7 abaixo;
+2. **A mesa — combate aberto** (`grade-de-batalha.jsx`);
+3. **as abas de topo** — Diário, Bolsa, Mapa, Códex, Ascensão;
+4. **as dez sub-abas da Gestão** — Ficha, Grupo, Pessoas, Talentos, Mercado,
+   Guilda, Domínios, Diplomacia, Correio, Mural;
+5. **os momentos** — subida de nível, espólio, chegada, a morte e o legado,
+   recalibrar save;
+6. **a entrada** — Menu, Criação do mundo, Criação do personagem, Sala.
+
+Cada tela que estiver pronta vira aqui uma linha `- [ ] **V·<tela>**` quando o
+ciclo que a ler a encontrar acabada; as da mesa já estão escritas.
+
+**As etapas da mesa** (a sequência é a do `jogo`, reordenada com razão escrita
+em `mente/v1-jogo.md` §4: a letra antes de compor, porque é ela que decide o
+orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
+
+- [x] **V1 · a folha da v3** (paleta e tokens) · `desenho` + `jogo` → `aprendiz`
+  · **FEITO 24/09, no ar** — a decisão em `mente/formas.md` §V1, o spec em
+  `mente/v1-desenho.md`, a prova jogada em `mente/v1-jogo.md` §10. `T` veste os
+  valores da v3; a página castanha de R2 morre (sobre ela todos os acentos
+  perdiam 33 % de contraste); `T.mundo` passa a ciano; nasce `T.rosa` (o que
+  está escolhido agora) e a tabela `AMBIENTE` (o gradiente âmbar·ciano·rosa da
+  v3, pintado no corpo da história). Prosa sobre o corpo **11,08 → 13,59:1** no
+  pior ponto do gradiente; borda dos avisos da página **2,30 → 3,41** (antes
+  reprovava a 1.4.11 e ninguém tinha medido); PV grave contra normal **+37 %** de
+  separação (+27 % em deuteranopia); **0 px** de leiaute mexido.
+- [ ] **V1b · as pontas de V1 que moram no `App.jsx`** · `oficial`, com o
+  bastão · leve — o contorno do cartão separa-se do controlo (`T.line` no
+  cartão, `T.lineStrong` nos chips e no botão flutuante; `paginaFio`
+  aposenta-se e a asserção 6 de `teste-v1-folha` muda com motivo); o comentário
+  de `App.jsx` ≈l.23066 que ainda diz que a narração é "a única coisa QUENTE";
+  **o `Continuar aventura` em `T.danger`** (`App.jsx:5057`, e a sombra com o
+  literal `rgba(216,106,91,…)` de R2): o primeiro botão de cada sessão tem a
+  cor do perigo — passa a `T.rosa`. Detalhe em `v1-desenho.md` §10 e
+  `v1-jogo.md` §10.4. *Vai junto da primeira etapa que tomar o bastão.*
+- [ ] **V1c · o ambiente é a luz da hora** · `desenho` · médio · **a proposta
+  ambiciosa de V1** — o gradiente deixa de ser fixo e segue `LUZ_DA_CENA`
+  (madrugada, dia, entardecer, noite): as mesmas três cores, peso e posição
+  pela hora. Medido nas quatro: prosa ≥ 12,49 (piso 10), corpo contra mesa ΔE ≥
+  2,55, as quatro luzes distinguem-se entre si (par mais próximo ΔE 2,6). **É
+  R14 feito na linguagem da v3**, sem `App.jsx`: `data-luz` em
+  `rosto-da-cena.jsx` e uma regra `:has()` na folha; sem `:has()`, fica o
+  gradiente fixo. *O jogador sente a hora na página sem a ler.*
+- [ ] **V2 · a letra medida** · `desenho` + `jogo` — Cormorant Garamond (20/1,6
+  · 20/1,5 · 18/1,6) contra Spectral 17, no telefone e na mesa. Cormorant tem
+  olho de x pequeno e é face de título; se perder no telefone, a saída legítima
+  é Cormorant nos títulos e na abertura, Spectral no corpo. Prova: caracteres à
+  vista ≥ hoje −5 % no telefone; 65ch na mesa; o `jogo` lê uma cena de noite e
+  uma de dia em cada candidata. A abertura grande (28) é **cerimónia** — turno
+  da chegada e primeira resposta da sessão, não todos os turnos (~61 px).
+- [ ] **V3 · os ícones desenhados** (~20: os do trilho, o dado, as quatro luzes,
+  `◉`, `◆`, `✦`, a coroa) — **paga R8 na tela principal**; varredor: zero emoji
+  do SO na mesa. O dado é um d20 de verdade (o Lucide não tem).
+- [ ] **V4 · a cinta com os anéis** — os retratos do grupo com anel de PV (âmbar
+  bem, perigo grave: em cinzento âmbar×perigo separa 1,52, ciano×perigo só
+  1,25 — por isso o anel ciano da v3 não entra), a pílula do tempo (hora do
+  mundo + selo de prazo; o `2h 15m` de sessão sai; o toque abre O TEMPO), bolsa
+  e PM (violeta, a cor da gaveta). *A coroa marca o SEU herói, não liderança —
+  o jogo não tem essa regra.*
+- [ ] **V5 · a página** — o cabeçalho da v3 **funde-se com o rosto da cena**
+  (168 → 96 px): as etiquetas viram a legenda da gravura, o lugar à esquerda
+  (`lugarDaCena()`), a luz e o clima à direita (na masmorra, a camada e as
+  tochas); a runa na borda de baixo; coluna de 65ch; a soleira no pé do cartão
+  (0 px sem oferta); o `CabecalhoDaCena` antigo aposenta-se.
+- [ ] **V6 · o compositor e o dado** — um dado só, cinco estados (Repouso ·
+  Pronto · Lançado · À espera · Rolar), `✦` no lugar da caneta, a linha do
+  veredito por cima do campo só quando há veredito; `Enter`/`Shift+Enter`
+  intactos; o `Rolar d20` aposenta-se; a catraca de R6 (15 de 20 turnos ainda
+  pelo campo).
+- [ ] **V7 · o trilho e as salas** — Herói, Grupo, Diário+Mural, Bolsa+Mercado,
+  Mapa, Códice, Ajustes; na mesa o painel abre ao lado da história em vez de a
+  tapar; no telefone o trilho vira o alforje que sobe do retrato.
+
+**A ambiciosa do `jogo`, à espera do motor:** *a frase é o lançamento* —
+enquanto se escreve, a linha lê a frase e mostra o teste e a chance; o toque no
+dado lança e envia no mesmo gesto, o resultado sai da semente e o Mestre narra
+a partir dele. É regra nova: está em `mente/pedidos-ao-sistema.md`, com dois
+pedidos leves ao lado (o `OverlayDado` sorteia com `Math.random()`, contra a
+lei do determinismo; e `chanceDoTeste` exposta).
+
 ### Fase R — a tela principal, e o sistema de decisões
 
 **A ordem da pessoa, em 23/09/2026, na íntegra:**

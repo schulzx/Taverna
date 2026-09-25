@@ -129,8 +129,9 @@ const enderecoDaCasa = (x, y) => `${LETRAS_DA_GRADE[x] || "?"}${y + 1}`;
    não tem 22 px para dar duas vezes.
 
    POR QUE FORA DO SVG. Dentro dele a letra disputaria com as fichas e
-   com os nomes de região já escritos no chão, e cairia de 6,62:1 para
-   6,37:1. Na calha, sobre `bg`, fica em 6,62:1 e não tapa nada.
+   com os nomes de região já escritos no chão, e cairia de 6,40:1 para
+   6,00:1 (V1; eram 6,62/6,37 — o par é `T.inkDim` sobre `bg`/`panel`).
+   Na calha, sobre `bg`, fica em 6,40:1 e não tapa nada.
 
    O CANTO (22×22) É `bg` E NÃO LEVA RÓTULO: `A1` não se escreve duas
    vezes.

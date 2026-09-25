@@ -19,6 +19,93 @@ Formato:
 
 ---
 
+## 24/09 23:30 · v9.293 · **V1 — a folha da v3: a tela da pessoa começa pela cor** · **a Fase V abre** · commit (no bloco seguinte)
+
+- **estado inicial:** fila não pausada; trava do desenho livre, tomada às 22:16.
+  `npm test` 211/211 e 15/15 no começo. O bastão do `App.jsx` era do
+  `orquestrador` (ciclo 1, desde 21:47) — **este ciclo não o pediu nem o tocou**;
+  ele devolveu-o, commitou v9.292 e tomou-o de novo às 23:03 (ciclo 2). V1 foi
+  escolhida por morar inteira fora dele.
+- **o item:** a pessoa desenhou a tela principal que quer (Figma
+  `ffWFqD7TueSb88Mkeg9bhW`, `126:5 · taverna-gameplay-v3`) e mandou-a como
+  direção; a meio do ciclo, alargou-a: *"o Figma também está repassando o
+  design que criamos para as outras telas… após finalizar essa, code as
+  próximas."* A **Fase V** abriu na pauta com as leis dela (só se constrói tela
+  acabada, relida a cada ciclo; mecanismo vira mundo; nada se corta; duas
+  composições por tela; prova antes de subir), a ordem das 26 telas pelo tempo
+  que o jogador passa nelas, e as etapas da mesa V1–V7 + V1b + V1c.
+- **jogo / desenho (em par, os dois em primeiro plano):**
+  - `desenho` → `mente/formas.md` §*V · a tela da pessoa → V1* e o spec
+    `mente/v1-desenho.md`. A tabela de `T` com os valores da v3; **a página
+    castanha de R2 morre** (sobre ela todos os acentos perdiam 33 % de
+    contraste; o rosa cairia a 4,29 e o violeta a 4,14, abaixo de AA); `T.mundo`
+    passa a ciano `#00BBF9`; nasce `T.rosa` (o escolhido agora; marca, nunca
+    fundo de texto) e `AMBIENTE` (o gradiente da v3 como tabela, com o helper
+    `alfa()` prometido desde D5). O violeta da v3 (`#9B5DE5`, 3,81 como texto)
+    sobe no mesmo matiz para `#AC79E9` (4,99).
+  - `jogo` → `mente/v1-jogo.md`: as quatro coisas que a mesa resolve sem
+    perguntar, decididas (§1–3), a sequência reordenada (§4), **dez pedaços da
+    v3 que jogam pior, com número e a versão no mesmo estilo** (§5), as peças
+    pedidas ao `desenho` (§6), três pedidos ao sistema (§7) e o protocolo da
+    prova (§9).
+- **aprendiz:** `src/estilo.js` (T, `AMBIENTE`, `alfa`, `LUZ_AMBIENTE`, o
+  gradiente em `.tv-esbate-topo`, `ESBATIMENTO.alfaAA` 0,54→0,52 recalculado),
+  `index.html` (o primeiro pixel, duas paletas atrás, passa a `T.bg`),
+  `painel-habilidades.jsx` (violeta-texto → `violetSoft`), `rosto.jsx` (dois
+  `#EAE4D6` → `T.ink`), os números velhos dos comentários de `ui.jsx` e
+  `grade-de-batalha.jsx`, `check-formas` (as catracas D5a/D5b com data e
+  motivo), e a suíte nova `teste-v1-folha.mjs` (8 asserções: os 37 pares, a
+  prosa no pior ponto do gradiente, o corpo contra a mesa por ΔE, `alfaAA`
+  recalculado e não afinado à mão).
+- **o Figma:** biblioteca `e5wJUzInAssoebx5npssKc`, página `V1 · a folha da v3`
+  (`221:67`): antes `221:68` (R2 congelado) / depois `221:122` (ligado às
+  variáveis), tabela `222:67`, faixa dos daltonismos `222:249`; a coleção
+  `Paleta semantica (T)` com os valores novos e a variável `rosa`. O orçamento
+  do `jogo` (1280 e 375) no arquivo da pessoa, secção `132:2`.
+- **a prova:** a prosa sobre o corpo **11,08 → 13,59:1** no pior ponto do
+  gradiente (Material 2 pede 14,22 para alta ênfase; a defesa contra a
+  irradiação continua a ser o peso 300 da letra, não a cor); a borda dos avisos
+  da página **2,30 → 3,41** (o antes reprovava a 1.4.11 e ninguém tinha
+  medido); PV grave × normal ΔE **40,6 → 55,5**, em deuteranopia **27,5 →
+  34,8**; âmbar × mundo em deuteranopia **1,12 → 1,42** (a dívida de R2);
+  **0,0 px** de leiaute mexido nas 12 capturas; zero animação, zero hex novo.
+  O `jogo` jogou o antes (HEAD em worktree, 5174) e o depois com o mesmo save,
+  de dia e de noite, a 1280×800, 1280×912 e 375×812: **nenhum dos sete
+  critérios de "leu pior" falhou**, os cinco segundos responderam-se à
+  primeira, e *de noite o âmbar passou a ser a única cor quente de área grande
+  — o que se pode fazer é o que brilha* (no antes a página castanha e as
+  ofertas âmbar estavam a 5° de matiz e disputavam a vista).
+  - **A suíte na árvore:** 212/212, **14/15** — o `check-acoes-do-jogador` está
+    vermelho pelo `App.jsx` do `orquestrador` em voo (endereço de linha a
+    mudar). **HEAD + só os meus 8 arquivos (`so-o-meu.sh`): 212/212 e 15/15.**
+    O vermelho é dele; não se consertou e não se esperou.
+- **decisões médias (pesadas antes de 23/09, da mesa agora — um commit
+  revertido desfaz todas):**
+  - *a página castanha aposenta-se* — a v3 inverte a tese de R2: a figura
+    passa a ser a prosa, não a superfície; a asserção "página × mesa ≥ 1,5"
+    passa a ΔE ≥ 2,3 (o limiar do perceptível), com o motivo escrito junto;
+  - *`T.mundo` vira ciano* — a v3 usa-o para a essência; aqui fica a cor do
+    mundo (lugar, hora, prazo), e o lugar sai do âmbar em que a v3 o pôs,
+    porque o âmbar voltaria aos 24 sentidos que R11 lhe tirou;
+  - *o contorno do cartão da v3 (1,51:1) é decorativo* e fica isento da
+    1.4.11; os controlos dentro da página continuam a 3,31–3,41;
+  - *a letra não muda em V1* (o `jogo`): se paleta e letra mudassem juntas, a
+    prova não saberia a qual culpar.
+- **o que ficou:** V1b (as pontas no `App.jsx`, com o `oficial` e o bastão —
+  incluindo o **`Continuar aventura` pintado de perigo**, o primeiro botão de
+  cada sessão); o `forced-colors` **por provar** (o headless reconhece o modo
+  mas não pinta); de dia a gravura continua sépia sobre fundo frio (V5); o 🆘
+  do chip de oferta e os outros emoji (V3). **A tela ainda não é a v3 — é a
+  tela de hoje com a cor da v3.** A composição (a cinta com anéis, a página
+  fundida ao rosto, o dado, o trilho) são as etapas V4–V7.
+- **as propostas ambiciosas:** do `desenho`, **V1c — o ambiente é a luz da
+  hora** (R14 na linguagem da v3, sem `App.jsx`, medido nas quatro luzes); do
+  `jogo`, **a frase é o lançamento** (o dado antes do Mestre, o resultado da
+  semente), que é regra e foi ao sistema por `pedidos-ao-sistema.md`. Nenhuma
+  vai à pessoa: um commit revertido desfaz as duas.
+
+---
+
 ## 24/09 · v9.290 · **R21 — a HUD recolhida: no telefone fica a história, e o resto vem a um toque** · commit `a28e8eb`
 
 *A forma fica em `mente/formas.md` §`R21 · a HUD recolhida no telefone` — `### R21 · a

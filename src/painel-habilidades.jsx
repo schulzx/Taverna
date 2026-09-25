@@ -146,7 +146,7 @@ export function PainelCaderno({ personagem, onPreparar, compacto = false, travad
     <div className="rounded-xl px-3 py-2 mb-3" style={{ background: T.panelSoft, border: `1px solid ${lista.length ? T.violet : T.line}` }}>
       <div className="flex items-baseline justify-between gap-2 mb-1.5">
         <div className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.violetSoft }}>📖 Magias na cabeça</div>
-        {lista.length > 0 && <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violet : T.inkDim }}>{prep.length}/{teto}</div>}
+        {lista.length > 0 && <div className="tv-mono text-[10px]" style={{ color: prep.length >= teto ? T.violetSoft : T.inkDim }}>{prep.length}/{teto}</div>}
       </div>
       {motivo ? (
         <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>{motivo}</div>

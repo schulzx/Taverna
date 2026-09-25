@@ -217,7 +217,7 @@ const TETO_DE_LITERAIS = {
      o vão de 2 px do anel de foco, que sobre `#141020` dava 1,04:1 e não
      se separava do fundo, volta a funcionar como foi desenhado. */
   "src/grade-de-batalha.jsx": 19, /* 15/09 → 15/09 · E2, o endereço do tabuleiro */
-  "src/rosto.jsx": 12,
+  "src/rosto.jsx": 10, /* 24/09 · V1: os dois brilhos das lentes eram T.ink escrito à mão */
 
   /* O RESTO (10) — migalhas, e o mais barato do projeto. */
   "src/painel-talentos.jsx": 4,
@@ -232,8 +232,10 @@ const TETO_DE_LITERAIS = {
      linha no build, ou aceitar por escrito. */
   "index.html": 1,
 };
-/* total 332 · `api/*.js` mede 0 hoje e NÃO recebe entrada: é o caso que
-   prova que ausência da tabela é zero, e não licença. */
+/* total 330 (24/09 · V1: era 332 — os dois brilhos de rosto.jsx viraram
+   T.ink e saíram do dente) · `api/*.js` mede 0 hoje e NÃO recebe
+   entrada: é o caso que prova que ausência da tabela é zero, e não
+   licença. */
 
 /* D5b · O TETO DO FÁCIL. Literal que JÁ É uma cor de `T`: hex idêntico
    (caixa ignorada), ou `rgb()`/`rgba()` cujo RGB é exatamente o de uma
@@ -251,17 +253,23 @@ const TETO_DE_COR_DE_T = {
      SEMPRE (esses hexes nunca vieram de `T`, sempre foram cópias soltas)
      ficando temporariamente invisível a este dente até alguém a
      converter para `T` de verdade — o que ela sempre devia ter sido. */
-  "src/App.jsx": 17, /* 15/09 → 23/09 · R2 · R13: 19 → 17 — as duas cópias de T que saíram eram os leitos das barras de PV e PM do bloco do herói (`rgba(232,163,61,0.13)` e `rgba(176,165,236,0.13)`), escritos à mão dentro do `map` das duas barras. `A cinta` desenha o trilho com `T.panelSoft`. */
-  "src/estilo.js": 5, /* 15/09 → 23/09 · R2 (a zona de `T` é isenta; o que sobra são as `rgba` que esperam o helper `alfa()`) */
-  "src/carta-taro.jsx": 5, /* 15/09 → 23/09 · R2 */
+  "src/App.jsx": 3, /* 15/09 → 23/09 · R2 · R13: 19 → 17 · 24/09 · V1: a paleta trocou de valores; 14 cópias de R2 deixaram de ser byte a byte T — a dívida não sumiu, ficou invisível a este dente (a mesma frase da entrada de R2) */
+  "src/estilo.js": 1, /* 15/09 → 23/09 · R2 · 24/09 · V1: idem */
+  "src/carta-taro.jsx": 1, /* 15/09 → 23/09 · R2 · 24/09 · V1: idem (o #EAE4D6 dos FORROS volta a ser T.ink) */
   "src/painel-talentos.jsx": 2,
-  "src/ui.jsx": 1,
+  /* 24/09 · V1 — `index.html` ENTRA (nasceu, não voltou): o primeiro
+     pixel passou a ser T.bg de verdade (§4); o `index.html` é servido
+     antes do bundle e não pode importar T — o perdão eterno de D5a,
+     agora com a cor certa. */
+  "index.html": 1,
   /* SAÍRAM (ENTRADA MORTA seria pior que ausência): `src/grade-de-batalha.jsx`
-     (era 5), `src/painel-ascensao.jsx` (era 1, `#7BC98F` = ok antigo),
-     `src/rosto.jsx` (era 2, `#EAE4D6`×2 = ink antigo) e `index.html`
-     (era 1, `#0E0C15` = bg antigo) mediram ZERO depois de R2 — os literais
-     continuam lá, byte a byte iguais a ONTEM, mas ontem não é mais uma cor
-     de `T`. A regra anti-cemitério tira a linha em vez de deixá-la dizer
+     (era 5), `src/painel-ascensao.jsx` (era 1, `#7BC98F` = ok antigo) e
+     `src/rosto.jsx` (era 2, `#EAE4D6`×2 = ink antigo) mediram ZERO depois
+     de R2 — os literais continuam lá, byte a byte iguais a ONTEM, mas
+     ontem não é mais uma cor de `T`. 24/09 · V1: `src/ui.jsx` (era 1,
+     teto 0 = ENTRADA MORTA) mede ZERO pelo mesmo motivo — a paleta
+     mudou de valores e o literal parou de bater com a nova `T`. A regra
+     anti-cemitério tira a linha em vez de deixá-la dizer
      "0". */
 };
 

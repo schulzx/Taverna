@@ -25,6 +25,18 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **o dado do véu rola `Math.random`, dentro do componente de tela** · de: V (`jogo`, o plano da v3) · 24/09 · leve
+  `OverlayDado` (`App.jsx` ~l.536–552) sorteia o valor do d20 — e o par da vantagem — com `Math.random()`, e é esse valor que `aoConcluir` entrega à regra. **O resultado de um teste é o único número do jogo que não sai da semente**, e é decidido dentro de um componente React: duas leis da casa de uma vez (*determinismo por semente*; *conta se prova, tela se olha*).
+  **Para quê:** a v3 põe o dado no centro da mão do jogador (o botão de enviar é um dado). O número que ele mais olha tem de ser o que a semente garante. **O que se pede:** `rolarTeste(semente, turno, modo)` puro (`vantagem`/`desvantagem` inclusos), com suíte; o véu passa a animar até ao número dado. Forma e momento em `mente/v1-jogo.md` §7.
+
+- [ ] **`chanceDoTeste(dificuldade, modificador, modo)` — a aritmética que já existe, exposta** · de: V (`jogo`) · 24/09 · leve
+  **Para quê:** o dado da v3, no estado *Rolar*, mostra na face a dificuldade e, na linha do veredito, a chance (`12+ · 45 %`) — o veredito antes do clique levado ao teste. Não é regra nova: é a conta do d20 contra a dificuldade, com vantagem/desvantagem, num sítio só e com suíte (a mesma função serve a proposta abaixo).
+
+- [ ] **a frase é o lançamento — o teste que a frase anuncia sai ANTES do Mestre** · de: V (`jogo`, a proposta ambiciosa da fase) · 24/09 · **regra nova — do `backend`**
+  **Hoje o dado chega depois da história:** o Mestre narra, o Cronista acha a concessão grande demais, e só então `teste_sugerido` (`App.jsx` ~l.10380) abre um teste, pedindo ao Mestre que *desnarre* o que disse. O jogador rola para confirmar uma cena que já leu.
+  **Para quê:** numa mesa o dado vem antes (*"queres escalar? rola Destreza"*). Pede-se: (1) um classificador puro que, a cada tecla, reconhece na frase um risco que as tabelas conhecem (a maquinaria irmã é a de R15 e a de `precoDaFrase`, v9.291) e devolve `{ atributo, dificuldade }` — **cala na dúvida** (falso positivo pior que nada, a lição do cartaz de R17); (2) o resultado rolado por semente no envio; (3) o resultado a entrar no turno pela `pauta` dinâmica (SECAO curta com prio), **nunca como bloco estático** — o teto de prompt é sagrado.
+  **A catraca que a mesa cobra:** 15 de 20 turnos pelo campo (R6) não pode cair; sem teste reconhecido o dado envia sem número, como hoje. Tudo o resto — a proposta, o risco, a prova — em `mente/v1-jogo.md` §8.
+
 - [x] **fugir de uma luta abriu outra, pior** · de: R21 (prova jogada do `jogo`, a fuga de `7a2b00b`) · 24/09
   **Atendido em v9.291.** Não era menção tomada por presença: era a caçada da missão (`talvezCacar`), que corre dentro do mesmo `enviar` da fuga e viu o combate já zerado. Agora há o fôlego da fuga (`fuga.js`): na resposta da fuga nenhuma luta abre (caçada, virada, emboscada); enquanto o herói fica no lugar, a caçada e a emboscada de quem ficou para trás seguram; saindo do lugar, acaba. `linhaDoEscape` concorda ("fica"/"ficam") e o fim da tela diz que se fugiu.
   A fuga bem-sucedida (*Você escapa — ninguém te alcança*) abriu, **na mesma resposta**, *☠ Encontro mortal — aranha do fosso, são 3. Estavam aqui.* A prosa da fuga falou de pernas atrás dela, e o portão tomou a menção por presença. **Menção não é presença** (a memória da casa: *o portão morde só o necessário*).
