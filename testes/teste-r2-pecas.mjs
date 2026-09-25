@@ -111,7 +111,16 @@ t("e uma janela `null` não derruba a peça (o `= {}` não cobre null)", /janela
 
 console.log("\n== R5d: a linha só quebra quando o verbo precisa — sem w-full, sem min-width, sem estado ==");
 t("o botão do verbo NÃO força w-full: nenhuma classe de largura própria nele — o flex-wrap do cartão decide sozinho", !/className="w-full md:w-auto"/.test(rOferta) && !/<Botao\b[^>]*w-full/.test(rOferta));
-t("nenhum min-width nem estado novo foi inventado para decidir a quebra — é o tamanho natural do conteúdo (regra de sempre do flex-wrap)", !/minWidth/.test(rOferta) && !/useState/.test(rOferta));
+/* V3c (25/09) — ESTA ASSERÇÃO MUDOU, E O MOTIVO FICA ESCRITO. R5d proibia
+   qualquer min-width na Oferta porque o defeito era o VERBO: um `w-full`
+   que cobrava a linha inteira até de `Esperar`. Isso continua proibido (o
+   dente de cima guarda o botão). O que V3c acrescenta é UM piso, e noutro
+   item: `quem · onde` — que o `jogo` mediu a 375 com 1 px de largura,
+   escrevendo *"a…"*. O piso sai da tabela (`SOLEIRA.quemMinimo`) e só decide
+   para onde `quem` desce; medido: nenhuma oferta ganhou fila nem altura. O
+   `md:min-w-[var(--janela-na-mesa)]` da janela não conta: vale só na mesa,
+   onde a linha não quebra (`md:flex-nowrap`), e serve a coluna do dinheiro. */
+t("nenhum min-width no verbo nem estado novo decide a quebra — o único piso é o de quem · onde, e sai da tabela (V3c)", (rOferta.match(/minWidth/g) || []).length === 1 && /minWidth: SOLEIRA\.quemMinimo/.test(rOferta) && !/useState/.test(rOferta));
 t("o teto de duas linhas com reticências vem de STYLE inline (garantido), não da classe line-clamp-2 da CDN (que mediu display:flow-root ao vivo)", /WebkitLineClamp:\s*2/.test(rOferta) && /WebkitBoxOrient:\s*"vertical"/.test(rOferta) && /display:\s*"-webkit-box"/.test(rOferta) && !/line-clamp-2/.test(rOferta));
 t("o corte é mesmo hermético: overflow hidden junto do -webkit-box (sem os três juntos não há reticência nenhuma)", /overflow:\s*"hidden"/.test(rOferta));
 

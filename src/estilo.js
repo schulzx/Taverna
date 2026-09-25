@@ -785,6 +785,24 @@ export const SOLEIRA = {
   tetoNaMesa: 2,
   tetoNoTelefone: 1,
   camposDaOferta: 4,
+  /* V3c · A COLUNA DO DINHEIRO NA MESA. Com duas ofertas lado a lado (o teto
+     da mesa), o número que se compara é o dinheiro, e ele tem de cair na
+     mesma coluna (v3c-jogo.md §1: eram 8 px de desvio). A janela passa a
+     ter lugar fixo NA MESA — a largura do selo mais largo, *Esta noite* /
+     *Este turno* cheio, medido 106,4 px; 108 é o degrau de 4 acima — e o
+     dinheiro alinha à direita contra ele. Custa 0 px de altura (a mesa tem
+     uma fila só). No telefone não se reserva nada: lá o teto é 1 e não há
+     o que comparar, e a lei de R15 (*Janela=Nenhuma não deixa buraco*)
+     continua de pé. */
+  janelaNaMesa: 108,
+  /* V3c · O PISO DE `quem · onde`: abaixo de um nome, a tinta não diz nada
+     (medido pelo `jogo` a 375: *"a…"*, 1 px de largura). 14ch é o prefixo
+     (`assina `, 7) e mais sete letras de um nome. Com o piso, quem não cabe
+     ao lado do verbo desce para a fila do dinheiro, que tem lugar desde que
+     XP e fama saíram da soleira — medido a 375: nenhuma oferta ganhou fila
+     nem altura (86 · 86 · 86 · 107 · 86 · 86), e `quem` mede ≥ 171 px em
+     todas (antes, até 1 px). */
+  quemMinimo: "14ch",
 };
 
 /* ============================================================

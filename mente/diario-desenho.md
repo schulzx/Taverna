@@ -19,6 +19,58 @@ Formato:
 
 ---
 
+## 25/09 03:40 · v9.297 · **V3c — a soleira diz o que decide, e O TEMPO cabe numa linha** · commit (no bloco seguinte)
+
+- **estado inicial:** fila não pausada; trava do desenho tomada às 02:00; HEAD
+  `7efd121`, 213/213 · 15/15; nenhum ciclo do sistema no ar, bastão livre.
+  **Ordem do coordenador:** nenhuma etapa da Fase V sobe sem o `jogo` ter
+  jogado o depois (a falha de V3a); **a tela de combate não se toca** — a
+  `47:2` da pessoa não tem tabuleiro e isso foi-lhe perguntado.
+- **jogo** (`mente/v3c-jogo.md`): jogou o antes primeiro. A leitura da soleira
+  é *verbo → dinheiro → prazo*: aceitar não gasta turno nem moeda, a pergunta é
+  "vale a pena?" e depois "cabe no meu tempo?". Nas duas ofertas do save o
+  prazo e a fama eram iguais e estavam a âmbar negrito, e o que decidia
+  (dinheiro, XP) estava apagado. **XP e fama saem da soleira** (a fama nunca
+  desempata; o XP sobe com o dinheiro), ficam a um toque no Mural.
+- **desenho** (`formas.md` §V3c, `mente/v3c-desenho.md`, scripts provados em
+  cópia): a `janela` que a `Oferta` já sabia desenhar passa a receber o prazo
+  (o `SeloDePrazo`); `TextoComMoeda` para o dinheiro (a moeda da cinta, uma
+  forma só); tom Convite nos contratos; `quem` com piso de 14ch; O TEMPO com
+  `luzDaHora`; o `↓` na margem. Figma: `A oferta` entra na biblioteca (a
+  dívida "nunca entrou") e os pares antes/depois da soleira e do TEMPO.
+- **oficial** (com o bastão, tomado às 02:54): os scripts 1→2→3→5→6→7 sem
+  âncora falhada; **24 257 linhas antes e depois**; emoji do `App.jsx` **589 →
+  555** (M1 não mexe no número: tira ícones que o código monta a partir de tabela, não emoji escrito no arquivo). Nada na tela de combate; o raid ficou de fora.
+- **a prova jogada** (antes `7efd121` na 5174, depois a árvore, 375 e 1280,
+  nove cenas, `/api` cortado): **sobe.** O contrato a 375 de **113 px e 3
+  filas para 86 e 2**; a soleira fechada **169 → 142 px** (uma linha de prosa
+  volta à página); quem pede o trabalho de **"a…" (18 px) para o nome inteiro
+  (182)**; o dinheiro das duas ofertas a 1280 de 8 px de desvio para **0**;
+  O TEMPO de 5 emoji em 2 filas para **uma fila de 18 px**; os botões de esperar
+  que dizem o céu em que se acorda **0 → 7**; "ensolarado" ao lado da lua às
+  22:00 **nunca mais**; os cinco segundos da soleira **2/5 → 4/5**. A masmorra
+  ficou em 13 → 4 emoji, e o conserto **M1** (o `🔮` ao lado do rótulo que já o
+  diz e os `🐢🚶🏃` dos ritmos) entrou no mesmo commit. O `↓` a 375 tapa 21 px do
+  fio da Porta e 0 px de texto (antes 48) — **lê melhor, fica**; o `max-width`
+  custaria uma linha a mais em toda Porta, todo turno.
+- **decisões médias:** *guardada* consertou-se na fonte (a fala abre com `📖`),
+  não na tabela — o `jogo` tinha razão contra a âncora de V3b; duas asserções
+  de lei emendadas com o motivo escrito (o piso de `quem` é o único
+  `min-width`; na mesa a janela reserva 108 px de largura, 0 de altura, para o
+  dinheiro ficar em coluna); "Novo arco iniciado" virou comentário no mesmo
+  número de linhas (a lógica do arco intacta; o cartão do Diário já muda no
+  toque).
+- **o que ficou:** V3f na pauta (a passagem visitada, o acampamento a sangrar
+  atrás da dobra, "mais 1 trabalho", os `◉` dos painéis, o raid com o
+  combate). Pedido ao sistema: `acampamento.js:327` ainda diz "(⛺)". **Não
+  verificado de ponta a ponta:** as falas do jogador perderam o carimbo só na
+  exibição — o `oficial` confirmou que o `enviar(...)` não muda, mas ninguém
+  seguiu o histórico até ao prompt.
+- **as ambiciosas:** **V3g — a escolha é uma mesa de cartas** (`desenho`) e
+  **V3h — esperar até à luz** (`jogo`). Nenhuma vai à pessoa.
+
+---
+
 ## 25/09 02:00 · v9.295–v9.296 · **V3 — os ícones desenhados: o emoji do sistema sai da mesa** · commits `afaffd8` (V3a) e `e9b3531` (V3b)
 
 - **estado inicial:** fila não pausada; trava do desenho livre, tomada às 23:30.

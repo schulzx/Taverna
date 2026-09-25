@@ -105,6 +105,7 @@ import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
 import { RITMO_DA_REACAO, TETO_DA_ESPERA } from "../src/ritmo-da-reacao.js";
 /* D5h lê a tabela dos glifos de volta: cada entrada tem de ter leitor. */
 import { GLIFOS, ASSUNTO_DO_EMOJI } from "../src/glifos.js";
+import { LUZES } from "../src/gravura-da-cena.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -1103,10 +1104,10 @@ const RX_GLIFO_DE_FONTE = /[\u25C9\u25C6\u2726\u2727]/g;
    escreve o número aqui com a data. Os treze arquivos que V3a limpou
    não têm entrada: zero. */
 const TETO_DE_EMOJI_DO_SISTEMA = {
-  "src/App.jsx": 589, /* 25/09 · V3b: as falas do sistema, a voz, os chips, o teste e a gaveta traduzem o emoji (era 595 em 245dd3c) */
+  "src/App.jsx": 555, /* 25/09 · V3c: a soleira, O TEMPO, a masmorra, o acampamento, o arco que falava de si e as falas do jogador sem carimbo (era 589) · 25/09 · V3b: as falas do sistema, a voz, os chips, o teste e a gaveta traduzem o emoji (era 595 em 245dd3c) */
 };
 const TETO_DE_GLIFO_DE_FONTE = {
-  "src/App.jsx": 156, /* 25/09 · V3b: o ✦ da gaveta, da habilidade armada, da espera e da vantagem (era 162) */
+  "src/App.jsx": 150, /* 25/09 · V3c: o ✦ dos objetos de poder, da sintonia e das duas falas de magia do jogador, e o ◉ do decreto e do retorno do cartaz (era 156) · 25/09 · V3b: o ✦ da gaveta, da habilidade armada, da espera e da vantagem (era 162) */
   "src/painel-diplomacia.jsx": 2,  /* ◉ dentro de frase: V3b, com o preço */
   "src/painel-guilda.jsx": 3,      /* idem */
   "src/painel-talentos.jsx": 6,    /* idem */
@@ -1160,7 +1161,10 @@ const jsxQueDesenham = arquivos.filter((a) => a.endsWith(".jsx"))
    desenhe as falas por `assuntoDaLinha`. Sem esse leitor, a tabela não lê ninguém. */
 const lidosPeloAssunto = /assuntoDaLinha\(/.test(jsxQueDesenham)
   ? new Set(Object.values(ASSUNTO_DO_EMOJI).map((a) => (typeof a === "string" ? a : a && a.glifo)).filter(Boolean)) : new Set();
-const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome));
+/* V3c · as quatro luzes são lidas pelo NOME QUE A CONTA DEVOLVE (`<Glifo nome={luzDaHora(…)}`), nunca
+   escrito entre aspas — é de propósito: o glifo do TEMPO e a gravura escolhem a luz pela mesma conta. */
+const lidosPelaLuz = /<Glifo nome=\{luzDaHora\(/.test(jsxQueDesenham) ? new Set(LUZES) : new Set();
+const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome) && !lidosPelaLuz.has(nome));
 t(`D5h.3 · as ${Object.keys(GLIFOS).length} entradas de GLIFOS têm, cada uma, um leitor na interface`,
   Object.keys(GLIFOS).length > 0 && semLeitor.length === 0,
   Object.keys(GLIFOS).length === 0 ? "A TABELA DESAPARECEU — renomearam GLIFOS, e o dente mede o vazio." : `sem leitor: ${semLeitor.join(", ")} — o glifo nasce com a etapa que o lê.`);

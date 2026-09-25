@@ -9918,3 +9918,113 @@ diz-o). E **o "Continuar aventura" deixou a cor do perigo**: o primeiro botão d
 cada sessão era `danger` — passa a `rosa`, *a tua mão* (5,78:1 contra `panel`), e
 o brilho sai de `alfa(T.rosa, 0.15)`, que passou a pública para isso. *Não
 entrou:* a aba activa do trilho em rosa — é V7.
+
+### V3c · o que V3 deixou — a soleira, O TEMPO, e o sistema que ainda falava (`desenho`, 25/09)
+
+*Construção: `mente/v3c-desenho.md` (scripts por âncora, provados numa cópia da
+árvore em `7efd121`: `npm run build` limpo, **213/213 · 15/15**, `App.jsx` com as
+mesmas **24 257** linhas). O momento — o que se lê e quando — é do `jogo`:
+`mente/v3c-jogo.md`; esta secção segue-o e diz onde divergi. Figma, página
+`V3 · os ícones`: **`A oferta`** (`235:233`, variantes `Largura=Telefone` ·
+`Largura=Mesa`) — a dívida mais velha da fase, *"nunca entrou na biblioteca"*,
+paga; **`Glifo/moeda`** (`232:148`); o par da soleira (`236:142`) e o de O TEMPO
+(`233:6484`).*
+
+**1 · A soleira — o prazo é a janela, o dinheiro é a moeda da cinta, e o
+retorno é só o que decide.** A peça `A oferta` já sabia desenhar `O selo de
+prazo` pela `janela` (R15) e o `App.jsx` nunca lho passou: o prazo ia no preço
+como texto (*"prazo 4 noites"*, âmbar negrito, e *"prazo 1 noites"*). Agora:
+
+| | antes | depois | porquê |
+|---|---|---|---|
+| prazo | texto no preço, sempre âmbar | **`janela`** → `SeloDePrazo` (areia · palavra · enchimento · cor) | *uma ação, uma forma*; o prazo só grita quando aperta (`APERTOS`) |
+| dinheiro | `◉` da fonte do sistema | **`Glifo/moeda`** (= `IconeBolsa`, a da cinta), por `TextoComMoeda` | uma cara para o dinheiro (eram quatro); cor = a da palavra |
+| retorno | `◉ 140 · +112 XP · +3 fama` | **`◉ 140`**; sem dinheiro, `+94 XP`; o item sempre (`retornoDaSoleira`) | o `jogo` contou: a fama nunca desempata, o XP anda com o dinheiro |
+| tom | Preço (âmbar) quando havia prazo | **Convite** | aceitar não sai da mão; o âmbar volta a querer dizer *custa* |
+| `onde` | sempre | só quando não é aqui | *"· Torre da Fonte"* era o sítio onde o herói está |
+| `quem` | espremido até **1 px** (*"a…"*) | piso **14ch** (`SOLEIRA.quemMinimo`): desce para a fila do dinheiro | abaixo de um nome a tinta não diz nada |
+| retorno longo | passava **99–197 px** da borda, cortado sem reticência | **trunca** com `…` (só no telefone a fila encolhe) | a decisão de R15 (*quem cede é o retorno*), agora feita a sério |
+| mesa, 2 ofertas | o dinheiro desviava **8 px** | **0 px**: a janela tem lugar fixo de **108** (`SOLEIRA.janelaNaMesa`; o selo mais largo mede 106,4) e o dinheiro alinha à direita contra ele | é o número que se compara |
+
+**Medido** (harness com as peças reais e o jogo vivo na cópia de prova, save
+*noite* de V1, `/api` cortado): a 375, **nenhuma oferta ganhou fila nem altura**
+(86 · 86 · 107 · 86 · 86 px); a soleira fechada **169 → 142 px** (o alvo do `jogo`
+era ≤ 142 — volta uma linha de prosa); `quem` ≥ 171 px em todos os casos. A 1280,
+54 px e o dinheiro das duas ofertas com a borda direita no **mesmo píxel**. Zero
+emoji na soleira. Contraste sobre `panel`: selo folgado `mundo` 7,94:1 · a apertar
+`amber` 9,65:1 · esta noite `onAccent`/`danger` 6,59:1 · moeda e retorno `inkDim`
+6,00:1. **Duas leis emendadas, com o motivo escrito no código e no teste:** R5d
+(*nenhum min-width*) ganha uma exceção — o piso de `quem`, que não toca o verbo e
+foi medido sem custo de fila; R15 (*Janela=Nenhuma não deixa buraco*) continua de
+pé **no telefone**; na mesa a janela reserva lugar horizontal (0 px de altura)
+porque é isso que põe o dinheiro em coluna.
+
+**2 · O TEMPO — um glifo só, o céu da hora.** A linha `📅 data · hora 🌙 🌱
+estação` + `☀ ensolarado` (quatro emoji, duas filas a 375, *lua e sol na mesma
+caixa às 22:00*) passa a **`[céu] 22:00 · 2 de Brumal · primavera`**: o glifo
+sai de `luzDaHora`, **a mesma conta que acende a gravura do rosto da cena** —
+entre as 4h e as 6h o `🌙` (`ehNoite`) dizia noite e a gravura madrugada; agora
+não podem discordar. Nascem os quatro glifos da luz (`madrugada` · `dia` ·
+`entardecer` · `noite`, Lucide sunrise · sun · sunset · moon), lidos pela conta
+(D5h.3 aprende a ler `<Glifo nome={luzDaHora(…)}>`). **Uma fila (18 px) a 375,
+era duas (40).** O céu limpo não se escreve. **E cada botão de esperar diz o céu
+onde se acorda** (glifo 12 por cima do número, dentro do mesmo alvo de 48, e no
+nome acessível: *"Esperar 6h, até madrugada"*) — o veredito antes do clique do
+esperar, pedido do `jogo`. `⛺ Montar acampamento` → `descanso`.
+
+*Divergi do `jogo` num ponto, e digo:* ele pede que **o clima substitua o céu
+quando o muda** (chuva, neve, névoa). Isso são quatro a seis glifos novos (a
+família não tem nuvem) e a morada deles é **V4, a pílula do tempo**, onde o glifo
+vem antes da palavra; desenhá-los aqui para uma linha que V4 refaz era fabricar
+duas vezes. Fica: a palavra do clima, só quando não é céu limpo.
+
+**3 · Guardar uma magia não é recusa.** `📕 X: guardada` caía no *Impedido*
+(ladrilho oco, razão a cinza) — lia-se *proibida*. O conserto é **na fonte**
+(`📖`, Neutro, como *preparada*), não na tabela: a tabela traduz o prefixo, não
+lê o fim da frase (o `jogo` tinha razão contra a minha âncora de V3b, que dizia
+*"separe na tabela"*). O `📕` fica só com as recusas — e ganha uma que faltava: o
+interrogatório dos mortos que recusa (*"pergunte alguma coisa"*) saía Neutro com
+`🔮`. Os ícones do molde gravados nos saves antigos (`🆘 🧹 📦 💌 🔦`) ganham o
+ladrilho do trabalho.
+
+**4 · "Novo arco iniciado" sai do registo.** Era a máquina a relatar uma troca de
+configuração; a resposta já está onde o jogador tocou (o cartão *Arco da
+campanha* muda no mesmo instante) e o Narrador recebe a nota para costurar.
+
+**5 · Masmorra, acampamento, a voz do jogador.** Um rótulo não leva glifo que
+diga o que ele diz (`Procurar nesta sala`, `Tentar o enigma`, `sair`, `voltar`,
+`Acampamento`, as três saídas do descanso, `Gastar 1`); o que não tem palavra leva
+glifo com nome (as **tochas**, `rotulo="tochas"`); a passagem trancada/desconhecida
+desenha `cadeado`/`desconhecido`; a chave do chefe é a **palavra** — um uso só no
+jogo não paga um glifo novo; a sintonia usa a gramática da gaveta das magias
+(sintonizado leva a marca, dormente nada). **As falas do jogador perdem o
+carimbo** (`📜 Declaro`, `🎲 Peço um teste`, `📋 Pego o cartaz`, e mais onze): é a
+voz dele; o Narrador recebe o envelope à parte, que não muda. *"Fugo"* → *"fujo"*.
+**O raid fica de fora:** é o placar de uma luta, e a tela de combate está parada
+à espera da pessoa (`47:2`).
+
+**6 · A seta do fim (opcional).** Ela só aparece a mais de **240 px** do fim
+(`aoRolar`), logo **uma margem no fim do registo nunca a encontraria** e subi-la
+só muda qual linha tapa. O que se decide é ONDE tapa: sai de `right: 84px` (a 375,
+x 243–291, o **meio** das linhas — 48 px dentro da coluna) para a margem direita
+do cartão (`right-6 md:right-10`; x 303–351, **27 px** sobre o fim das linhas, que
+são irregulares à direita); na mesa a coluna de 65ch não chega lá (**0 px**, antes
+e depois). Ganha `aria-label` (o `title` não chega ao toque) e a `IconeSeta`
+desenhada no lugar do `↓` da fonte do sistema. A saída inteira — zero
+sobreposição por construção — é a seta morar no convés, e é **V6**.
+
+**Os números da catraca:** D5h.1 (emoji do sistema no `App.jsx`) **589 → 555**;
+D5h.2 (`◉ ◆ ✦ ✧`) **156 → 150**; `teste-v3-glifos` **73 → 99** asserções.
+
+**A proposta ambiciosa — *a escolha é uma mesa de cartas*.** Na mesa, as duas
+ofertas empilhadas em fitas de 54 px lêem-se como uma lista. Proponho que, **quando
+há duas**, se ponham **lado a lado, como dois cartazes na mão**: o verbo em cima
+(duas linhas no máximo, a lei de R5d), por baixo **o dinheiro grande**
+(`TIPOS.titulo`, 20 — o número que se compara) e o selo do prazo; `quem` em
+rodapé. A comparação deixa de ser *ler duas linhas* e passa a ser *olhar dois
+números à mesma altura* — a gramática de todo jogo de cartas e do próprio mural
+de uma taverna. Conta: duas fitas = 2 × 54 + 8 = **116 px**; dois cartazes de
+~96 px lado a lado = **96 px** — a soleira desce 20 px na mesa. Nada muda no que o
+jogador faz (o mesmo toque, a mesma ordem, o mesmo teto de 2) → médio. Prova: o
+`jogo` corre os cinco segundos (*qual paga mais? · há alguma a apertar?*) antes e
+depois; no telefone nada muda (o teto é 1).

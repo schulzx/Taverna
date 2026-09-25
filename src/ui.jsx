@@ -15,7 +15,7 @@ import { T, ALVOS } from "./constantes.js";
 import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
-import { GLIFOS, tracoNaGrelha } from "./glifos.js";
+import { GLIFOS, tracoNaGrelha, partesDaMoeda } from "./glifos.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -1127,7 +1127,7 @@ export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", est
         </span>
       </Botao>
       {quemOnde && (
-        <div className="tv-mono truncate flex-1 min-w-0" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>
+        <div className="tv-mono truncate flex-1" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio, minWidth: SOLEIRA.quemMinimo }}>
           {quemOnde}
         </div>
       )}
@@ -1136,27 +1136,72 @@ export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", est
           Mono/`TIPOS.rotulo` porque preço e retorno são fala DA
           MÁQUINA, não da prosa; nunca abaixo de `TIPOS.piso`. */}
       {(preco || retorno || temJanela) && (
-        <div className="tv-mono flex items-center gap-2 shrink-0 md:ml-auto" style={{ fontSize: TIPOS.rotulo }}>
-          {preco && <span style={{ color: corDoTom, fontWeight: 600 }}>{preco}</span>}
-          {/* O RETORNO AINDA NÃO TRUNCA, e digo-o em vez de o fingir:
-              `formas.md` decide que quem cede é ele, *pelo fim, com
-              reticências* — mas `truncate` dentro de um `shrink-0` é uma
-              classe que promete "…" e nunca a desenha, que é
-              exactamente o defeito que o comentário de R5d acima existe
-              para não repetir. Fazê-lo a sério pede a fila do preço
-              poder encolher, e isso muda o `flex-wrap` que R5d mediu e
-              fixou. **Fica dito ao `desenho`, não remendado aqui.** */}
-          {retorno && <span style={{ color: T.inkDim }}>{retorno}</span>}
+        <div className="tv-mono flex items-center gap-2 min-w-0 max-w-full md:shrink-0 md:ml-auto" style={{ fontSize: TIPOS.rotulo, "--janela-na-mesa": SOLEIRA.janelaNaMesa + "px" }}>
+          {preco && <span className="shrink-0" style={{ color: corDoTom, fontWeight: 600 }}><TextoComMoeda texto={preco} /></span>}
+          {/* V3c · O RETORNO TRUNCA, e agora a sério: é quem cede
+              (`formas.md` §R15 — *pelo fim, com reticências*). O que
+              faltava era a fila poder encolher, e ela passa a poder SÓ no
+              telefone (`min-w-0 max-w-full`; na mesa segue `shrink-0`).
+              O `flex-wrap` de R5d não muda: a fila entra na linha pelo
+              tamanho natural e, se não couber, desce — só depois encolhe.
+              Medido a 375 (harness, `mente/v3c-desenho.md` §1): o retorno
+              `◉ 140 (o combinado) · 112 XP · +3 fama` com prazo passava
+              99 px da borda do cartão e era cortado sem reticência nenhuma;
+              agora acaba em `…` dentro dele. O preço e a janela NÃO
+              encolhem (`shrink-0`): são números que não encolhem sem
+              mentir. O texto inteiro continua no DOM para o leitor de tela.
+              A janela vai numa caixa `flex`: solto na linha, o selo somava
+              1 px à altura da oferta no telefone (medido: 86 → 87 → 86). */}
+          {retorno && <span className="truncate min-w-0" style={{ color: T.inkDim }}><TextoComMoeda texto={retorno} /></span>}
           {/* A JANELA É A ÚLTIMA DA LINHA, e por isso a mais à direita —
               é o que `formas.md` pede. `quantos` fica em 1: o `+N` do
               selo conta OUTROS prazos da cinta, e uma oferta tem uma
               janela só. */}
           {temJanela && (
-            <SeloDePrazo noites={j.quanto} urgente={j.urgente === true} conta={j.conta || "noites"} />
+            <span className="shrink-0 whitespace-nowrap flex items-center md:min-w-[var(--janela-na-mesa)]"><SeloDePrazo noites={j.quanto} urgente={j.urgente === true} conta={j.conta || "noites"} /></span>
           )}
+          {/* V3c · sem janela mas com retorno, a mesa guarda o lugar dela na mesma: é
+              o que põe o dinheiro de todas as ofertas na mesma coluna (SOLEIRA.janelaNaMesa). */}
+          {!temJanela && retorno && <span aria-hidden="true" className="hidden md:block shrink-0 md:min-w-[var(--janela-na-mesa)]" />}
         </div>
       )}
     </div>
+  );
+}
+
+/* ---------------- O TEXTO COM MOEDA (V3c, 25/09) ----------------
+   A frase da máquina com o dinheiro dentro: `◉ 140 · +112 XP · +3 fama`.
+   O ◉ era o caractere da fonte de símbolos do sistema — as três famílias
+   da casa não o têm (`formas.md` §V3.1), logo mudava de desenho com o
+   aparelho e não era de `T`. Aqui vira A MESMA FORMA da cinta (`Glifo`
+   `moeda` = `IconeBolsa`, aro e miolo): o que a oferta promete e o que a
+   cinta conta têm uma cara só, que é a condição de V3e (o glifo viaja).
+
+   A COR É A DA PALAVRA (`currentColor`): no preço veste o tom da oferta,
+   no retorno o `inkDim` do retorno — a gramática da família (§V3.2). O
+   tamanho é `TIPOS.piso` (12), o da cinta; um espaço inseparável — o
+   mesmo que separava o ◉ da quantia — e `whitespace-nowrap` colam-no
+   ao número. Sem `inline-flex` de propósito: medido, ele somava 1 px
+   à linha (a caixa flexível alinha pela base do svg); o `Glifo` em
+   linha já desce 0,15em e cabe na entrelinha da mono.
+   O rótulo `moedas` é o nome acessível: o leitor de tela diz *moedas
+   140*, onde antes lia o nome do caractere ou nada.
+
+   É PARA TODOS, não só para a soleira: qualquer frase da máquina com ◉
+   (diplomacia, guilda, talentos — o resto que D5h.2 ainda conta) passa
+   por aqui no dia em que for tocada. A conta que parte a frase é pura e
+   mora em `glifos.js` (`partesDaMoeda`). */
+export function TextoComMoeda({ texto }) {
+  const partes = partesDaMoeda(texto);
+  if (!partes.some((p) => p.moeda)) return <>{texto}</>;
+  return (
+    <>
+      {partes.map((p, i) => p.moeda ? (
+        <span key={i} className="whitespace-nowrap">
+          <Glifo nome="moeda" tamanho={TIPOS.piso} rotulo="moedas" />{"\u00A0" + p.texto}
+        </span>
+      ) : <React.Fragment key={i}>{p.texto}</React.Fragment>)}
+    </>
   );
 }
 

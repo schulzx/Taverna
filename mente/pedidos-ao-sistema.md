@@ -25,6 +25,9 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **`acampamento.js:327` ainda diz "monte acampamento (⛺)"** · de: V3c (`jogo`, prova jogada) · 25/09 · leve
+  A recusa aponta para um desenho que já não existe em tela nenhuma: desde V3c o botão leva o glifo da tenda, não o emoji. **Para quê:** a recusa tem de apontar para o que o jogador vê. Pede-se tirar " (⛺)" da frase.
+
 - [ ] **as noites que faltam de um prazo, expostas por `missoes.js`** · de: V3 (`desenho`) · 25/09 · leve
   O Diário só consegue desenhar a ampulheta do prazo; a peça inteira `SeloDePrazo` (areia → palavra → enchimento → cor, a lei de R9) precisa do número de noites que faltam, e hoje só a cinta o calcula.
   **Para quê:** o prazo tem **quatro caras** na tela (o censo de V3, `mente/v3-jogo.md`) — a cinta, a soleira, o Diário e o Correio; uma ação, uma forma. **O que se pede:** `noitesQueFaltam(missao, relogio)` pura, com suíte.

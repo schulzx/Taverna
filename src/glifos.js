@@ -131,6 +131,14 @@ export const GLIFOS = {
   /* a marca da forma Impedido, NÃO um assunto: dentro do ladrilho oco, sem ela o
      quadrado vazio lia-se caixa por marcar (v3-jogo.md §9.1). Nenhuma fala a pede
      pela tabela; quem a desenha é LadrilhoDoAssunto e o selo "sem ação" da cinta. */
+  /* a luz da cena: madrugada (4h–8h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  madrugada: { de: "lucide:sunrise", d: "M12 2v8M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M8 6l4-4 4 4M16 18a4 4 0 0 0-8 0" },
+  /* a luz da cena: dia (8h–18h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  dia: { de: "lucide:sun", d: "M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" },
+  /* a luz da cena: entardecer (18h–21h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  entardecer: { de: "lucide:sunset", d: "M12 10V2M4.93 10.93l1.41 1.41M2 18h2M20 18h2M19.07 10.93l-1.41 1.41M22 22H2M16 6l-4 4-4-4M16 18a4 4 0 0 0-8 0" },
+  /* a luz da cena: noite (21h–4h) · V3c: a luz do TEMPO, a mesma conta da gravura (luzDaHora) */
+  noite: { de: "lucide:moon", d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" },
   ban: { de: "lucide:ban", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M4.929 4.929l14.142 14.142" },
 };
 
@@ -167,6 +175,8 @@ const impedidoCom = (glifo) => ({ glifo, tom: "impedido" });
 export const ASSUNTO_DO_EMOJI = {
   /* não pode — a forma, não o glifo */
   "⛔": IMPEDIDO, "🚫": IMPEDIDO,
+  /* 📕 é SÓ a recusa (a magia que não sai). Preparar e guardar falam com 📖, que é Neutro:
+     guardar uma magia é escolha do jogador, não um "não pode" (V3c). */
   "📕": impedidoCom("faisca"), "🐾": impedidoCom("faisca"), "⛓": impedidoCom("cadeado"),
   /* o golpe, o dano */
   "⚔": "espadas", "⚡": "espadas", "💢": "espadas", "💥": "espadas", "🏹": "espadas", "🎯": "espadas",
@@ -201,7 +211,8 @@ export const ASSUNTO_DO_EMOJI = {
   "🔎": "procurar", "🔍": "procurar", "👁": "procurar",
   "📖": "faisca", /* o livro das falas é o grimório: magia, não lupa (v3-jogo.md §9.1, a quarta errada) */
   /* trabalho, contrato */
-  "📋": "trabalho", "📌": "trabalho", "📜": "trabalho", "✅": "trabalho", "✖": "trabalho", "📣": "trabalho", "🗡": "trabalho",
+  "📋": "trabalho", "🆘": "trabalho", "🧹": "trabalho", "📦": "trabalho", "💌": "trabalho", "🔦": "trabalho",
+  "📌": "trabalho", "📜": "trabalho", "✅": "trabalho", "✖": "trabalho", "📣": "trabalho", "🗡": "trabalho",
   /* a masmorra */
   "🕯": "tocha", "🕳": "masmorra", "🗝": "masmorra",
   /* gente, a bolsa */
@@ -231,4 +242,53 @@ export function assuntoDaLinha(texto) {
   if (a == null) return { glifo: null, tom: "neutro", resto };
   if (typeof a === "string") return { glifo: a, tom: "neutro", resto };
   return { glifo: a.glifo || null, tom: a.tom || "neutro", resto };
+}
+
+/* ============================================================
+   A MOEDA NA FRASE (V3c, 25/09) — o ◉ de fonte vira o glifo da cinta
+
+   O dinheiro tinha quatro caras (`v3-jogo.md` §1): o ◉ da fonte do
+   sistema na soleira e no retorno, o `IconeBolsa` desenhado na cinta, o
+   💰 das falas e a palavra solta. A cinta já tem a forma — aro e miolo,
+   quadro 12 (R13) —, e o `Glifo` pede-a pelo nome `moeda`. O que faltava
+   era quem lesse a frase que o motor escreve (`textoDaPaga`, em
+   `missoes.js`, é território do sistema e a mesma frase vai ao Diário e ao
+   envelope) e a devolvesse em partes: texto, moeda, texto.
+
+   A QUANTIA É O TOKEN QUE SEGUE O ◉ (até o espaço seguinte), e anda
+   colada ao glifo: `◉ 140 (o combinado)` dá a moeda `140` e o texto
+   ` (o combinado)`. Um ◉ solto no fim dá uma moeda sem número — o glifo
+   ainda diz dinheiro. Uma frase sem ◉ volta inteira, numa parte só.
+   ============================================================ */
+const RX_MOEDA_NA_FRASE = /◉[ \u00A0]?(\S*)/g;
+
+export function partesDaMoeda(texto) {
+  const s = String(texto == null ? "" : texto);
+  const partes = [];
+  let i = 0;
+  for (const m of s.matchAll(RX_MOEDA_NA_FRASE)) {
+    if (m.index > i) partes.push({ moeda: false, texto: s.slice(i, m.index) });
+    partes.push({ moeda: true, texto: m[1] });
+    i = m.index + m[0].length;
+  }
+  if (i < s.length || !partes.length) partes.push({ moeda: false, texto: s.slice(i) });
+  return partes;
+}
+
+/* O RETORNO NA SOLEIRA (V3c) — o que a oferta promete, e só o que decide.
+   O `jogo` contou (`v3c-jogo.md` §1): das quatro coisas escritas à direita
+   de um contrato, só o dinheiro e o XP mudam de uma oferta para a outra, e
+   o XP sobe no mesmo sentido do dinheiro; a fama (`round(peso × 3)`) nunca
+   desempata dois contratos do mesmo tamanho. Então a soleira diz o
+   dinheiro; sem dinheiro, o XP — um favor sem moedas não pode ler-se
+   "não paga nada" (a lei de v9.193); e o item, quando há, sempre. XP e
+   fama continuam no Mural e no Diário (`textoDaPaga`, em `missoes.js`).
+   Recebe `{ moedas, xp, item }` — a forma de `recompensaDe` —, e `null`. */
+export function retornoDaSoleira(paga) {
+  const p = paga || {};
+  const moedas = Number(p.moedas) > 0 ? Math.round(Number(p.moedas)) : 0;
+  const xp = Number(p.xp) > 0 ? Math.round(Number(p.xp)) : 0;
+  const item = p.item ? `item ${p.item}` : "";
+  const primeiro = moedas ? `◉ ${moedas}` : xp ? `+${xp} XP` : "";
+  return [primeiro, item].filter(Boolean).join(" · ");
 }

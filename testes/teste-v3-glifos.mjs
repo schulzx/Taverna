@@ -243,5 +243,107 @@ sec("9. V3b · os consertos da prova jogada");
     t("o Impedido sem assunto desenha ban, em inkDim", !!GLIFOS.ban && /<Glifo nome=\{glifo \|\| "ban"\}/.test(LAD2) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD2)); }
 }
 
+/* ============================================================
+   10. V3c · o que V3 deixou (mente/v3c-desenho.md)
+   ============================================================ */
+sec("10. V3c · a soleira, O TEMPO, a magia guardada, o arco, a masmorra e o acampamento");
+{
+  const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
+  const { partesDaMoeda, assuntoDaLinha } = await import("../src/glifos.js");
+  const { LUZES, luzDaHora } = await import("../src/gravura-da-cena.js");
+  const j = (x) => JSON.stringify(x);
+
+  /* 1 · a soleira: o dinheiro com a forma da cinta, o prazo com a do selo */
+  t("partesDaMoeda: a quantia anda colada ao glifo, o resto é texto",
+    j(partesDaMoeda("◉ 140 · +112 XP · +3 fama")) === j([{ moeda: true, texto: "140" }, { moeda: false, texto: " · +112 XP · +3 fama" }]));
+  t("partesDaMoeda: o combinado fica no texto, não na quantia",
+    j(partesDaMoeda("◉ 140 (o combinado) · 112 XP")) === j([{ moeda: true, texto: "140" }, { moeda: false, texto: " (o combinado) · 112 XP" }]));
+  t("partesDaMoeda: duas moedas na frase dão duas partes de moeda",
+    partesDaMoeda("de ◉ 30 a ◉ 50").filter((p) => p.moeda).map((p) => p.texto).join("|") === "30|50");
+  t("partesDaMoeda: frase sem ◉ volta inteira numa parte, e null não parte a conta",
+    j(partesDaMoeda("sem moedas — o pagamento é outro")) === j([{ moeda: false, texto: "sem moedas — o pagamento é outro" }])
+    && j(partesDaMoeda(null)) === j([{ moeda: false, texto: "" }]));
+  { const TCM = corpo("TextoComMoeda"), OF = corpo("Oferta");
+    t("TextoComMoeda mora em ui.jsx, parte a frase por partesDaMoeda e desenha a moeda da cinta com nome",
+      /partesDaMoeda\(texto\)/.test(TCM) && /<Glifo nome="moeda" tamanho=\{TIPOS\.piso\} rotulo="moedas" \/>/.test(TCM) && /whitespace-nowrap/.test(TCM));
+    t("a Oferta passa o preço e o retorno por TextoComMoeda",
+      /<TextoComMoeda texto=\{preco\} \/>/.test(OF) && /<TextoComMoeda texto=\{retorno\} \/>/.test(OF)); }
+  { const { retornoDaSoleira } = await import("../src/glifos.js");
+    t("retornoDaSoleira: o dinheiro e nada mais — XP e fama ficam no Mural e no Diário",
+      retornoDaSoleira({ moedas: 140, xp: 112, fama: 3 }) === "◉ 140");
+    t("retornoDaSoleira: sem dinheiro, o XP (um favor não lê \"não paga nada\"); o item fica sempre; null é vazio",
+      retornoDaSoleira({ moedas: 0, xp: 94, fama: 3 }) === "+94 XP" && retornoDaSoleira({ moedas: 140, xp: 1, item: "raro" }) === "◉ 140 · item raro"
+      && retornoDaSoleira(null) === "" && retornoDaSoleira({ moedas: null, xp: 0 }) === ""); }
+  t("a missão e o cartaz dizem o retorno pela mesma conta, e o onde só quando não é aqui",
+    /retorno: retornoDaSoleira\(m\.recompensa\),/.test(APP)
+    && /const paga = retornoDaSoleira\(\{ moedas: c\.paga, xp: rec\.xp, item: rec\.item \}\);/.test(APP)
+    && /onde: c\.cidade && c\.cidade !== cidadeAtualRef\.current \? c\.cidade : "",/.test(APP));
+  { const { SOLEIRA } = await import("../src/estilo.js"); const OF2 = corpo("Oferta");
+    /* 106,4 px é o selo mais largo medido (Esta noite / Este turno, cheio); a reserva não pode ser menor */
+    t("a mesa reserva o lugar da janela (SOLEIRA.janelaNaMesa ≥ 106,4) e o dinheiro alinha contra ele, com e sem janela",
+      SOLEIRA.janelaNaMesa >= 106.4 && /"--janela-na-mesa": SOLEIRA\.janelaNaMesa \+ "px"/.test(OF2)
+      && (OF2.match(/md:min-w-\[var\(--janela-na-mesa\)\]/g) || []).length === 2 && /\{!temJanela && retorno && <span aria-hidden="true" className="hidden md:block/.test(OF2));
+    t("quem · onde tem piso (SOLEIRA.quemMinimo): abaixo de um nome desce de fila, não vira \"a…\"",
+      /^\d+ch$/.test(SOLEIRA.quemMinimo) && /minWidth: SOLEIRA\.quemMinimo/.test(OF2)); }
+  t("a missão pedida e o cartaz levam o prazo na janela (o SeloDePrazo), não no preço",
+    /janela: m\.prazo > 0 \? \{ quanto: m\.prazo, conta: "noites" \} : null,/.test(APP)
+    && /janela: c\.prazo > 0 \? \{ quanto: c\.prazo, conta: "noites" \} : null,/.test(APP)
+    && !/`prazo \$\{[mc]\.prazo\} noites`/.test(APP));
+
+  /* 2 · O TEMPO: um glifo só, e a luz é a da gravura */
+  t("as quatro luzes estão em GLIFOS, uma por nome que luzDaHora devolve",
+    LUZES.every((l) => GLIFOS[l]) && Array.from({ length: 24 }, (_, h) => luzDaHora(h)).every((l) => GLIFOS[l])
+    && GLIFOS.madrugada.de === "lucide:sunrise" && GLIFOS.dia.de === "lucide:sun" && GLIFOS.entardecer.de === "lucide:sunset" && GLIFOS.noite.de === "lucide:moon");
+  t("O TEMPO desenha a luz pela mesma conta da gravura, com nome; a hora vem antes da data; a linha de cinco emoji saiu",
+    /<Glifo nome=\{luzDaHora\(horaTxt\(minuto\)\)\} tamanho=\{16\} rotulo=\{luzDaHora\(horaTxt\(minuto\)\)\} \/>\{horaTxt\(minuto\)\} · \{dataTxt\(dia\)\}/.test(APP)
+    && !/📅 \{dataTxt/.test(APP) && !/ehNoite\(minuto\) \? " 🌙"/.test(APP) && !/\{clima\.icone\} \{clima\.rotulo\}/.test(APP));
+  t("o céu limpo não se escreve (era \"ensolarado\" ao lado da lua às 22:00)", /\{clima && clima\.id !== "ensolarado" && <span title=\{clima\.nota\}>\{clima\.rotulo\}<\/span>\}/.test(APP));
+  t("cada botão de esperar diz o céu onde se acorda (o veredito antes do clique), dentro do alvo de 48 e com nome",
+    /<Glifo nome=\{luzDaHora\(Math\.floor\(minuto \/ 60\) \+ h\)\} tamanho=\{12\} \/>\{h\}h<\/button>/.test(APP)
+    && /aria-label=\{`Esperar \$\{h\}h, até \$\{luzDaHora\(Math\.floor\(minuto \/ 60\) \+ h\)\}`\}/.test(APP));
+  t("Montar acampamento leva o glifo do descanso", /<Glifo nome="descanso" tamanho=\{16\} \/>Montar acampamento/.test(APP) && !/⛺ Montar acampamento/.test(APP));
+
+  /* 3 · guardar uma magia é escolha, não recusa: 📖 Neutro; o 📕 fica só nas recusas */
+  t("preparar e guardar falam com 📖 (Neutro); o 📕 Impedido é só a magia que não sai",
+    /texto: `📖 \$\{nome\}: \$\{r\.acao === "preparou" \? "preparada" : "guardada"\}/.test(APP)
+    && !/"📖" : "📕"/.test(APP)
+    && assuntoDaLinha("📖 Bola de Fogo: guardada (2/3).").tom === "neutro"
+    && assuntoDaLinha("📕 Bola de Fogo não está preparada.").tom === "impedido");
+  t("o interrogatório dos mortos que recusa é Impedido (📕), não Neutro (🔮)",
+    /texto: `📕 \$\{r\.motivo\}\.` \}\]\); return true; \}/.test(APP) && !/texto: `🔮 \$\{r\.motivo\}\.`/.test(APP));
+  t("a notícia do mural gravada nos saves antigos (🆘 🧹 📦 💌 🔦) ganha o ladrilho do trabalho",
+    ["🆘", "🧹", "📦", "💌", "🔦"].every((e) => assuntoDaLinha(e + " Olga da Maré tem um trabalho no mural.").glifo === "trabalho"));
+
+  /* 4 · o sistema não fala de si: a troca de arco não escreve no registro (o Diário já mostra o arco novo) */
+  t("\"Novo arco iniciado\" saiu do registro", !/Novo arco iniciado/.test(semComentarios(APP)) && /const trocarArco = \(id\) => \{/.test(APP));
+
+  /* 5 · a masmorra e o acampamento sem emoji do sistema (o conteúdo das tabelas — ICONE_SALA, r.icone,
+     sitio.icone — fica: é a identidade de uma coisa do mundo, formas.md §V3 "o que não muda") */
+  { const i = APP.indexOf("{masmorra && !acampado && (() => {"), f = APP.indexOf("A PORTA DOS CAPITULOS", i);
+    const BLOCO = i < 0 || f < 0 ? "" : semComentarios(APP.slice(i, f));
+    const sobra = BLOCO.match(/\p{Extended_Pictographic}|[◉◆✦✧]/gu) || [];
+    t("a masmorra e o acampamento não escrevem emoji do sistema nem ◉◆✦✧ de fonte", BLOCO.length > 2000 && sobra.length === 0, sobra.join(" "));
+    t("as tochas são um número com nome, e a passagem trancada/desconhecida é desenhada",
+      /<Glifo nome="tocha" tamanho=\{12\} rotulo="tochas" \/>\{masmorra\.tochas\}/.test(BLOCO)
+      && /<Glifo nome="cadeado" tamanho=\{16\} \/> : <Glifo nome="desconhecido" tamanho=\{16\} \/>/.test(BLOCO));
+    t("a sintonia usa a gramática da gaveta das magias: sintonizado leva a marca, dormente nada",
+      /\{on \? <><IconeCheck tamanho=\{10\} cor=\{T\.onAccent\} \/> <\/> : null\}\{it\.nome\}/.test(BLOCO)); }
+
+  /* 5b · a fala do jogador é a voz dele: nenhuma leva o carimbo do sistema */
+  { const carimbadas = APP.split("\n").filter((l) => /autor: "jogador", texto: `(?:\p{Extended_Pictographic}|[◉◆✦✧])/u.test(l));
+    t("nenhuma fala do jogador abre com emoji do sistema", carimbadas.length === 0, carimbadas.map((l) => l.trim().slice(0, 70)).join(" · "));
+    t("e a primeira pessoa de fugir é \"fujo\"", /`Fujo de \$\{mm\.nome\}/.test(APP) && !/Fugo de/.test(APP)); }
+}
+
+/* 11 · V3c (opcional, item 6) · a seta do fim: na margem do cartão, com nome, desenhada.
+   Ela só aparece a mais de 240 px do fim (aoRolar), logo uma margem no fim do registro
+   nunca a encontraria; o que se mede é onde ela tapa: a 375 saiu de x 243–291 (o meio
+   das linhas) para x 303–351 (o fim delas); na mesa a coluna de 65ch não chega lá. */
+sec("11. V3c · a seta do fim");
+{ const APP = readFileSync("../src/App.jsx", "utf8");
+  t("a seta do fim mora na margem direita (right-6 md:right-10), tem aria-label e é a IconeSeta, não o caractere da fonte",
+    /aria-label="Ir para a última mensagem" className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center right-6 md:right-10"/.test(APP)
+    && !/right: "84px"/.test(APP) && /rotate\(90deg\)" \}\}><IconeSeta tamanho=\{20\} cor=\{T\.amberSoft\} \/>/.test(APP) && !/>↓<\/button>/.test(APP)); }
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

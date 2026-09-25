@@ -799,7 +799,28 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
     junto (o cartão a `T.line`, `paginaFio` aposentado, o `Continuar aventura`
     de perigo para rosa com a seta a 6,02:1 — era 2,19). A prova jogada
     (`v3-jogo.md` §9) pediu cinco consertos antes de subir, e subiram com ela.
-  - [ ] **V3c · o que V3 deixou** · `oficial` + `aprendiz` — **a soleira ainda
+  - [x] **V3c · FEITO 25/09, no ar** (o spec em `mente/v3c-desenho.md`, o
+    momento e a prova jogada em `mente/v3c-jogo.md`) — a soleira com o selo de
+    prazo e a moeda desenhada, XP e fama fora dela (nunca desempatam dois
+    contratos), o dinheiro em coluna; O TEMPO numa linha com o céu da hora e os
+    botões de esperar com o céu de chegada; *guardada* deixa de parecer recusa;
+    "Novo arco iniciado" sai; masmorra, acampamento e falas do jogador sem
+    emoji; o `↓` na margem do cartão. **O que sobra, e é V3f:** a passagem
+    visitada da masmorra ainda imprime `ICONE_SALA` (`App.jsx` ~:23504); o
+    acampamento atrás de "mais 2 ofertas" com o herói a sangrar (o que estanca
+    uma perda por turno passa à frente do que não tem prazo — `v3c-jogo.md`
+    §1); a dobra a dizer "mais 1 trabalho"; os 11 `◉` de frase nos painéis
+    (`TextoComMoeda` já serve — `aprendiz`); o raid, com a tela de combate.
+  - [ ] **V3g · a escolha é uma mesa de cartas** · `desenho` · médio · a
+    ambiciosa de V3c (`formas.md` §V3c) — na mesa, duas ofertas lado a lado
+    como dois cartazes com o dinheiro grande; a soleira desce de 116 para ~96
+    px e comparar vira olhar dois números à mesma altura.
+  - [ ] **V3h · esperar até à luz** · `jogo` · médio · a ambiciosa de V3c
+    (`v3c-jogo.md` §8) — os botões de esperar passam a `1h`, `2h` e as três
+    luzes seguintes com as horas de cada uma (*"até a madrugada · 6h"*); a
+    página amanhece enquanto o Mestre escreve, sem prolongar a espera. Depende
+    de V1c.
+  - [x] ~~**V3c · o que V3 deixou**~~ (o texto original, para o registo) · `oficial` + `aprendiz` — **a soleira ainda
     escreve `prazo 4 noites` e `◉ 140` como texto nu: o `SeloDePrazo` e o glifo
     do dinheiro na `Oferta` são o maior ganho que falta** (o prazo tem quatro
     caras — `v3-jogo.md` §1); O TEMPO (cinco emoji numa linha → um glifo, o céu
