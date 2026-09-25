@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 25/09 19:00 · v9.298 · **V5a — o cabeçalho da pessoa: a xilogravura sai, o `129:4` entra** · commit (no bloco seguinte)
+## 25/09 19:00 · v9.298 · **V5a — o cabeçalho da pessoa: a xilogravura sai, o `129:4` entra** · commit `6fecd12`
 
 - **estado inicial:** a trava de V4 (03:31) morta, retomada às 17:35; HEAD
   `4ce9d4c`; nenhum ciclo do sistema, bastão livre. **Ordem direta da pessoa,
@@ -47,7 +47,8 @@ Formato:
   metrónomo. Figma: página `V5a` na biblioteca (`241:67`) e, no arquivo da
   pessoa, o quadro `141:2` com o `129:4` clonado, o código e o mapa da
   diferença.
-- **oficial** (bastão tomado às 18:27): scripts 1→6; o `3-ui.cjs` falhou numa
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 18:27 para o `oficial`, **devolvido às 18:59**, logo depois de `6fecd12` subir.
+- **oficial**: scripts 1→6; o `3-ui.cjs` falhou numa
   âncora por **CRLF no disco contra LF na cópia** — não forçou, normalizou o
   `ui.jsx` para LF (byte a byte igual ao HEAD) e seguiu; e trocou 47 linhas de
   português de Portugal para pt-BR nos comentários novos. **24 257 linhas antes
