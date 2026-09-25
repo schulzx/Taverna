@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 24/09 22:40 · v9.294 · nenhuma fuga sai de graça · commit `HASH-A-SEGUIR`
+## 24/09 22:40 · v9.294 · nenhuma fuga sai de graça · commit `561ff65`
 
 - **por que andou:** item da pessoa, o segundo dos dois de hoje. *"Faça tanto a
   dos arqueiros quanto de qualquer outra fuga, nada sai de graça, tudo tem
