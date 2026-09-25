@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 24/09 23:30 · v9.293 · **V1 — a folha da v3: a tela da pessoa começa pela cor** · **a Fase V abre** · commit (no bloco seguinte)
+## 24/09 23:30 · v9.293 · **V1 — a folha da v3: a tela da pessoa começa pela cor** · **a Fase V abre** · commit `1484a3c`
 
 - **estado inicial:** fila não pausada; trava do desenho livre, tomada às 22:16.
   `npm test` 211/211 e 15/15 no começo. O bastão do `App.jsx` era do
