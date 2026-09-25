@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 24/09 21:43 · v9.292 · o save e a vida: não há trancamento, mas havia dois defeitos · commit `HASH-A-SEGUIR`
+## 24/09 21:43 · v9.292 · o save e a vida: não há trancamento, mas havia dois defeitos · commit `a441fe9`
 
 - **por que andou:** item da pessoa, o primeiro de dois (*"vamos arrumar também
   a questão do save e da vida"*). O save com `vida 0/18`, `combate: true` e
