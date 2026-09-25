@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 25/09 03:40 · v9.297 · **V3c — a soleira diz o que decide, e O TEMPO cabe numa linha** · commit (no bloco seguinte)
+## 25/09 03:40 · v9.297 · **V3c — a soleira diz o que decide, e O TEMPO cabe numa linha** · commit `29debdf`
 
 - **estado inicial:** fila não pausada; trava do desenho tomada às 02:00; HEAD
   `7efd121`, 213/213 · 15/15; nenhum ciclo do sistema no ar, bastão livre.
@@ -38,7 +38,8 @@ Formato:
   forma só); tom Convite nos contratos; `quem` com piso de 14ch; O TEMPO com
   `luzDaHora`; o `↓` na margem. Figma: `A oferta` entra na biblioteca (a
   dívida "nunca entrou") e os pares antes/depois da soleira e do TEMPO.
-- **oficial** (com o bastão, tomado às 02:54): os scripts 1→2→3→5→6→7 sem
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 02:54 para o `oficial`, **devolvido às 03:30**, logo depois de `29debdf` subir.
+- **oficial** (com o bastão): os scripts 1→2→3→5→6→7 sem
   âncora falhada; **24 257 linhas antes e depois**; emoji do `App.jsx` **589 →
   555** (M1 não mexe no número: tira ícones que o código monta a partir de tabela, não emoji escrito no arquivo). Nada na tela de combate; o raid ficou de fora.
 - **a prova jogada** (antes `7efd121` na 5174, depois a árvore, 375 e 1280,
