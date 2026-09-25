@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 25/09 02:00 · v9.295–v9.296 · **V3 — os ícones desenhados: o emoji do sistema sai da mesa** · commits `afaffd8` (V3a) e (V3b, no bloco seguinte)
+## 25/09 02:00 · v9.295–v9.296 · **V3 — os ícones desenhados: o emoji do sistema sai da mesa** · commits `afaffd8` (V3a) e `e9b3531` (V3b)
 
 - **estado inicial:** fila não pausada; trava do desenho livre, tomada às 23:30.
   HEAD `6329ca1`; o `orquestrador` no ciclo 2 com o bastão (desde 23:03), que
@@ -44,7 +44,8 @@ Formato:
 - **aprendiz (V3a):** `glifos.js`, `ui.jsx`, 13 painéis e `grade-de-batalha`,
   `check-formas` D5h, `teste-diplomacia` (o `🎁` deixa de ser exigido; o preço
   visível fica), `teste-v3-glifos`. **101 → 0 emoji do SO** fora do `App.jsx`.
-- **oficial (V3b + V1b, com o bastão, tomado às 00:35):** o `BlocoSistema` em
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 00:35 (livre desde ~23:49), para o `oficial`; **devolvido às 01:57**, logo depois de `e9b3531` subir.
+- **oficial (V3b + V1b, com o bastão):** o `BlocoSistema` em
   ladrilhos, a voz, os chips, o teste pendente, a gaveta, o trilho; o contorno
   do cartão, `paginaFio` aposentado, o `Continuar aventura` rosa. **App.jsx 595
   → 589 emoji, 24 257 linhas antes e depois** (os scripts são neutros em linhas
