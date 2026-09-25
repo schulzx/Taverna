@@ -15,6 +15,95 @@ Formato:
 ```
 
 ---
+## 24/09 22:40 · v9.294 · nenhuma fuga sai de graça · commit `HASH-A-SEGUIR`
+
+- **por que andou:** item da pessoa, o segundo dos dois de hoje. *"Faça tanto a
+  dos arqueiros quanto de qualquer outra fuga, nada sai de graça, tudo tem
+  consequência, mas lembre-se de que existem as rolagens de dado… o arqueiro
+  pode errar o tiro, mas ele pode se fortalecer e ir atrás do personagem… a
+  consequência pode não ser dano."*
+- **estado inicial:** verde; o desenho em V3, na mesma árvore, sem tocar no que
+  é meu, e commitou V1 (v9.293) no meio deste ciclo. Tomei o bastão às 23:04 e
+  devolvi-o às 23:50.
+- **a tensão, e como ficou:** a fuga nasceu sem dado, para o preço caber
+  inteiro antes do clique; a pessoa pediu dados. **A corrida continua
+  determinística (quem alcança, alcança); o que ela custa passou a ser rolado,
+  por semente; e o que se mostra antes do clique é a chance, não o desfecho.**
+  Numa mesa, é o que se diz antes de alguém correr: "ele tem boa mira".
+- **backend:**
+  - **Quem ataca de longe não segura: cobra.** `atacaDeLonge` (tabela
+    `QUEM_ATACA_DE_LONGE`: atirador, arqueiro, besteiro, fundibulário; mago,
+    feiticeiro, bruxo, xamã, necromante, lich…) sai de quem alcança e faz **um
+    disparo** enquanto se corre, até 36 m (`ALCANCES.armaDeLonge`), com
+    desvantagem acima de 18 m. Colado, é golpe e não disparo, nunca os dois.
+  - **A chance, exata:** `chanceDeAcerto` foi conferida face a face contra o
+    próprio `resolverAtaque` em 112 combinações, e `ladosDoDado` saiu de dentro
+    dele, para a chance mostrada e o dado rolado passarem pela mesma regra.
+    Na tela vira voz de mundo (`FAIXAS_DA_CHANCE`: "quase não erra", "deve te
+    acertar", "pode te acertar", "dificilmente acerta").
+  - **Por semente:** `d`, `d20` e `resolverAtaque` aceitam uma fonte de sorte
+    opcional. Sem ela, é o `Math.random` de sempre: regressão zero, provada com
+    o `Math.random` substituído. `rolarOCustoDaFuga` rola golpes e disparos
+    com a semente do mundo + dia + rodada.
+  - **A consequência que não é dano (`consequenciaDaFuga`).** Toda fuga que
+    escapa tem uma, sorteada pela semente e pesada pelo degrau do mais esperto
+    de quem ficou: **perseguição** (reagrupam e voltam reforçados: vida cheia,
+    +1 do mesmo tipo a partir de bruto, a ameaça sobe um degrau a partir de
+    treinado; 8/6/4 noites), **território** (o lugar fica deles: voltar lá
+    reabre a luta; em 4 noites sossegam, sem luta) e **rasto** (seguem-no pela
+    estrada; em 6 viagens alcançam-no). Recusada: "largar moedas ou item",
+    que seria dano com outro nome. Por cima, e sempre: a fama que já existia
+    (`bumpCont("fugas")` → o antagonista, "que eu corro quando aperta"; o
+    `cobrador` com testemunhas, `a_fuga_correu`). Relógios cheios (6) → a
+    consequência cai na fama, com linha própria. Nunca uma fuga sem consequência.
+- **frontend:** `fugirDaLuta` rola o custo por `rolarOCustoDaFuga` (a semente
+  sai de `sementeDaFuga`, a mesma função que a prévia usa, para o aviso e o clique
+  nunca divergirem), com uma linha própria para o disparo (`🏹`). Depois do
+  escape, a consequência vira relógio. `tiquear` trata `fuga:`: ao encher, abre
+  a luta com o bando. `talvezVoltarAoTerritorio` reabre a luta de quem guarda o
+  lugar, e vencê-la tira o relógio. O botão e a frase mostram, antes do clique,
+  a chance e o aviso juntos na linha do veredito que já existe, sem peça nova.
+- **as três cenas, em número:**
+  - **(a) os javalis do R15** (animal, comum, 19,5 m): perseguição nunca sai
+    (0 em 600 sementes); **território 83%**, rasto 17%. Com a semente da prova:
+    território — antes do clique *"Não vão esquecer este lugar."*, depois
+    *"Javali-de-pedra ×3 não esquecem este lugar."*; voltar lá nas 4 noites
+    seguintes reabre a luta.
+  - **(b) um Atirador a 19,5 m** (a casa mais próxima de 20): não segura, e
+    dispara com desvantagem. **Chance 0,36**, "pode te acertar"; medido em 4000
+    sementes: 0,354. Numa semente, 3 e 18 → fica o 3 → **erra**; noutra, 12 e 19 →
+    15 contra 12 → **acerta, 5**. Consequência: perseguição, 8 noites.
+  - **(c) um Comandante (elite, treinado) com dois Soldados:** perseguição sai
+    56% das vezes. **Em 4 noites voltam quatro**: o Comandante (elite, o teto) e
+    três Soldados, agora competentes. A suíte leva o relógio ao JSON e de volta
+    e ele enche na 4ª noite com esses mesmos quatro.
+- **jogado:** campanha de teste, Atirador a 7,5 m. Antes do clique: *"Escapa,
+  mas Atirador deve te acertar. Vai seguir o seu rasto."* No clique: *"🏹 Disparo
+  — Atirador erra o tiro"*, *"Você escapa — Atirador fica para trás."*, *"Atirador
+  segue o seu rasto."* Uma viagem depois: *"🐺 Atirador segue o seu rasto ●○○○○○
+  (1/6)"*. O save de teste foi apagado com o jogo desmontado.
+- **decisões médias, com o motivo:**
+  - **o save:** o relógio ganhou um campo **opcional e aditivo** (`fuga: { efeito,
+    bando, lugar, degrau }`), aparado por `LIMITES_DA_FUGA`, que nunca nasce onde
+    não existe. Nenhum campo existente mudou. Código antigo que abra o save
+    descarta-o e o relógio segue narrado; perde só a luta ao encher. **Um commit
+    revertido conserta isto.**
+  - **relógio de fuga que enche durante outra luta (ou sono, masmorra, raide)
+    adia-se sem fila:** a marca avisou, e emendar duas lutas é pior do que uma
+    consequência que evapora num turno raro.
+  - **um Comandante sozinho volta com um segundo Comandante** ("+1 do mesmo
+    tipo", à letra). O `jogo` pode querer outro reforço; fica escrito.
+- **o que ficou:**
+  - **não se viu a luta voltar a jogar**, porque o atalho `/relogio ++` do modo
+    criativo enche por outro caminho. A volta está provada em suíte (o relógio
+    enche na 4ª noite com o bando reforçado); falta um `jogo` que viaje e durma.
+  - **o Atirador do bestiário continua a lutar corpo a corpo dentro da luta:**
+    `distancia` só nasce em invocações. A fuga já o trata como atirador; o
+    combate não. É outro item, que muda o que o jogador vive em toda luta.
+  - a fiação do App não ganhou asserção de fonte nova; a prova está no motor
+    (`teste-fuga`, 126 → 228) e no jogo jogado.
+
+---
 ## 24/09 21:43 · v9.292 · o save e a vida: não há trancamento, mas havia dois defeitos · commit `a441fe9`
 
 - **por que andou:** item da pessoa, o primeiro de dois (*"vamos arrumar também

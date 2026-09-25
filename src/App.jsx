@@ -5,7 +5,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
-import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase } from "./fuga.js";
+import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
@@ -5723,6 +5723,11 @@ export default function Taverna() {
   };
 
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
+  /* A SEMENTE DA FUGA — UMA FUNÇÃO SÓ para a prévia (antes do clique) e o
+     clique (`fugirDaLuta`) nunca divergirem: mesmo mundo, mesmo dia, mesma
+     rodada, mesmo dado. `comb` é o combate (ref ou estado — os dois têm
+     `.rodada`); sem rodada, 1 (nunca undefined dentro do hash). */
+  const sementeDaFuga = (comb) => `${sementeMundo()}|${diaRef.current}|${(comb && comb.rodada) || 1}`;
   const generoMundo = () => (mundoAtual() && mundoAtual().genero) || "Fantasia medieval";
   /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar
      recebe isto ao lado do gênero — um decide o sabor, o outro a forma. */
@@ -5808,6 +5813,12 @@ export default function Taverna() {
      são da ficha e não do combate.
      ============================================================ */
   const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false } = {}) => {
+    /* TODA luta nova zera a marca do território (abaixo): só volta a valer
+       quando ESTA luta é mesmo a que reabriu por causa do território de
+       uma fuga — `talvezVoltarAoTerritorio` a repõe logo depois de chamar
+       esta função. Sem isto, vencer qualquer OUTRA luta no mesmo lugar
+       apagaria um relógio de território que nunca chegou a se resolver. */
+    territorioEmLutaRef.current = null;
     let pers = persEntra || fichaViva() || personagem;
     const msgs = [];
     const crus = jaNoRef
@@ -14482,6 +14493,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
     if (!todosCairam) return false;
     combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0;
+    /* A LUTA DO TERRITÓRIO FECHA O RELÓGIO QUE A ABRIU (fuga.js): vencida,
+       o bando que guardava o lugar já não guarda mais nada. */
+    if (territorioEmLutaRef.current) {
+      const idTerr = territorioEmLutaRef.current;
+      territorioEmLutaRef.current = null;
+      const semEle = removerRelogio(relogiosRef.current, idTerr);
+      if (semEle.length !== relogiosRef.current.length) { relogiosRef.current = semEle; setRelogios(semEle); }
+    }
     /* v9.46: acabou a luta, acabou a conjuração. Sem isto a fera invocada
        viraria companheiro permanente pela porta dos fundos — e o teto do
        grupo, o vínculo e o XP não sabem lidar com uma criatura que não é
@@ -14622,22 +14641,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     return personagemRef.current;
   };
 
-  /* ---------------- OS GOLPES DE QUEM FICA PARA TRAS ----------------
-     O mesmo tratamento de "sair de perto custa" (a retirada por frase,
-     logo acima) serve a fuga que encerra a luta pela porta nova: rola a
-     oportunidade de cada inimigo que golpeia, loga o dado, passa pelo
-     abrigo e aplica o dano — uma funcao so, para as duas portas nunca
-     divergirem no que sair de perto custa. */
-  const golpesAoSair = (inimigosQueGolpeiam, pers) => {
-    const ops = oportunidadesContraOJogador(inimigosQueGolpeiam, pers, grauDe(divindadeRef.current));
+  /* ---------------- O CUSTO DE QUEM SAI — AGORA COM DADO E COM DISPARO ----------------
+     Era `golpesAoSair`: só golpe de quem estava colado, sem semente. A
+     pessoa pediu que nada saísse de graça MAS que o dado continuasse
+     dado — "o arqueiro pode errar o tiro". `rolarOCustoDaFuga` (fuga.js)
+     já decide QUEM cobra (golpe de quem colou, disparo de quem ataca de
+     longe) e ROLA cada um com a semente do clique; aqui só se aplica o
+     resultado — loga o dado, passa pelo abrigo, tira PV. Golpe e disparo
+     têm a MESMA consequência (dano ou nada) e cada um a SUA linha, porque
+     levar uma flecha nas costas não é o mesmo que um golpe de quem estava
+     colado, e o jogador tem de ler a diferença. */
+  const aplicarCustoDaFuga = (custos, pers) => {
     let dano = 0;
     const linhas = [];
-    for (const o of ops) {
-      logDadoCombate(resumoDoAtaque(o.r));
-      if (o.r.dano > 0) dano += o.r.dano;
-      linhas.push({ autor: "sistema", texto: o.r.dano > 0
-        ? `⚡ Oportunidade — ${o.inimigo} te acerta ao você sair: ${o.r.dano} de dano`
-        : `⚡ Oportunidade — ${o.inimigo} tenta te alcançar e erra` });
+    for (const c of custos) {
+      logDadoCombate(resumoDoAtaque(c.r));
+      if (c.r.dano > 0) dano += c.r.dano;
+      linhas.push({ autor: "sistema", texto: c.tipo === "disparo"
+        ? (c.r.dano > 0 ? `🏹 Disparo — ${c.nome} te acerta nas costas: ${c.r.dano} de dano` : `🏹 Disparo — ${c.nome} erra o tiro`)
+        : (c.r.dano > 0 ? `⚡ Oportunidade — ${c.nome} te acerta ao você sair: ${c.r.dano} de dano` : `⚡ Oportunidade — ${c.nome} tenta te alcançar e erra`) });
     }
     let novoPers = pers;
     if (dano > 0) {
@@ -14645,7 +14667,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (abr.linha) { novoPers = abr.pers; dano = abr.dano; linhas.push({ autor: "sistema", texto: abr.linha }); }
       novoPers = { ...novoPers, vida: Math.max(0, (novoPers.vida || 0) - dano) };
     }
-    return { pers: novoPers, dano, linhas, ops };
+    return { pers: novoPers, dano, linhas, custos };
   };
 
   /* ---------------- FUGIR DA LUTA ----------------
@@ -14672,9 +14694,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         dobrar: dobraMovimento(pers),
         ignoraDificil: ignoraTerrenoDificil(pers) || ignoraDificilPorTraco(pers),
       });
+      const gdJogador = grauDe(divindadeRef.current);
       const v = vereditoDaFuga({
         heroi: comb.heroi ? { ...comb.heroi, nome: pers.nome } : null, inimigos: comb.inimigos, /* com o nome: a nota ao Narrador diz quem fugiu */
         passoHeroiM: passo.metros, frase: acao, rodada: comb.rodada,
+        ficha: pers, gdJogador, /* a chance mostrada e a rolada lêem a MESMA defesa */
       });
       pushMsgs([{ autor: "jogador", texto: acao }]);
       /* NAO ESCAPA: o veredito e deterministico, e tentar uma fuga que o
@@ -14685,9 +14709,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         pushMsgs([{ autor: "sistema", texto: `🏃 ${linhaDaFuga(v)}` }]);
         return true;
       }
-      const persAntesDosGolpes = pers;
-      const golpeiam = (comb.inimigos || []).filter((e) => e && (v.golpes || []).includes(e.nome));
-      const resultado = golpeiam.length ? golpesAoSair(golpeiam, pers) : null;
+      /* O CUSTO ROLA COM SEMENTE (a pessoa: "existem as rolagens de dado") —
+         a MESMA que a prévia da tela já mostrou como chance, composta por
+         `sementeDaFuga`, para o clique nunca surpreender além do que a
+         chance prometeu. */
+      const persAntesDoCusto = pers;
+      const semente = sementeDaFuga(comb);
+      const custosRolados = rolarOCustoDaFuga(v, { heroi: pers, inimigos: comb.inimigos, semente, gdJogador });
+      const resultado = custosRolados.length ? aplicarCustoDaFuga(custosRolados, pers) : null;
       if (resultado) {
         pers = resultado.pers;
         if (resultado.linhas.length) {
@@ -14696,11 +14725,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           /* o abrigo pode ter comido a batida inteira: a ficha ja mudou
              (o efeito se gastou) e precisa ser publicada mesmo sem PV
              nenhum a tirar */
-          else if (pers !== persAntesDosGolpes) setPersonagem(pers);
+          else if (pers !== persAntesDoCusto) setPersonagem(pers);
         }
       }
       const notaGolpes = resultado && resultado.linhas.length
-        ? ` [ATAQUES DE OPORTUNIDADE — ROLADOS PELO SISTEMA] Ao fugir, dei as costas: ${resultado.ops.map((o) => `${o.inimigo} ${o.r.dano > 0 ? `acertou (${o.r.dano})` : "errou"}`).join("; ")}. Levei ${resultado.dano} de dano no total e já está aplicado — NÃO recalcule.`
+        ? ` [FUGA — CUSTO ROLADO PELO SISTEMA] Ao dar as costas: ${custosRolados.map((c) => `${c.nome} (${c.tipo === "disparo" ? "disparo" : "golpe"}) ${c.r.dano > 0 ? `acertou (${c.r.dano})` : "errou"}`).join("; ")}. Levei ${resultado.dano} de dano no total e já está aplicado — NÃO recalcule.`
         : "";
       /* OS GOLPES PODEM DERRUBAR O HEROI: a fuga nao acontece — segue o
          fluxo normal de hoje, com o revide da rodada e tudo. Um golpe que
@@ -14740,10 +14769,34 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         }
       }
       bumpCont("fugas");
+      /* A CONSEQUÊNCIA QUE NÃO É DANO ("pode se fortalecer e ir atrás do
+         personagem etc."): toda fuga que escapa deixa UMA marca no mundo,
+         sorteada com a MESMA semente do custo (sal próprio, fuga.js) e
+         pesada pela cabeça de quem ficou. Vira relógio (aditivo, viaja no
+         save) ou, num repeat, reforça o que já existia. Nunca pode custar
+         o turno — a fuga já aconteceu, e travar aqui não desfaz. */
+      let linhaDaConsequencia = "", notaDaConsequencia = "";
+      try {
+        const c = consequenciaDaFuga(v, {
+          inimigos: comb.inimigos, semente, lugares: ondeEstou(), dia: diaRef.current, relogios: relogiosRef.current,
+        });
+        if (c) {
+          if (c.relogio) {
+            const novosRel = [...relogiosRef.current, c.relogio];
+            relogiosRef.current = novosRel; setRelogios(novosRel);
+          }
+          if (c.reforca) tiquear(null, { apenasIds: [c.reforca], porque: "você fugiu de novo" });
+          linhaDaConsequencia = c.linha || "";
+          notaDaConsequencia = c.nota || "";
+        }
+      } catch (e) { calou("a consequencia da fuga", e); }
       setPersonagem(base0);
       salvar({ personagem: base0 });
-      pushMsgs([{ autor: "sistema", texto: `🏃 ${linhaDoEscape(v)}` }]);
-      enviar(`${acao}${notaGolpes} ${notaDaFuga(v)}${extraTempo}`, base0);
+      pushMsgs([
+        { autor: "sistema", texto: `🏃 ${linhaDoEscape(v)}` },
+        ...(linhaDaConsequencia ? [{ autor: "sistema", texto: linhaDaConsequencia }] : []),
+      ]);
+      enviar(`${acao}${notaGolpes} ${notaDaFuga(v)}${notaDaConsequencia ? ` ${notaDaConsequencia}` : ""}${extraTempo}`, base0);
       return true;
     } catch (e) { calou("fugir da luta", e); return false; }
   };
@@ -16002,6 +16055,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      jogador sair do lugar e voltar. Viaja no save. */
   const cacadasFeitasRef = useRef([]);
 
+  /* QUAL relógio de território esta luta fecha ao ser vencida — ver o
+     comentário em `abrirCombate` e em `fecharSeTodosCairam`. */
+  const territorioEmLutaRef = useRef(null);
+
+  /* O BANDO DE UMA FUGA VIRA LISTA DE INIMIGOS — numerado como a caçada já
+     numeia o dela (`Nome 1`, `Nome 2`) quando o mesmo nome se repete: quem
+     lembra QUEM ficou (fuga.js) guarda só um nome e uma ameaça por corpo,
+     não a numeração — essa é sempre de quem monta a luta. */
+  const inimigosDoBandoDaFuga = (bando) => {
+    const porNome = new Map();
+    for (const b of bando) porNome.set(b.nome, (porNome.get(b.nome) || 0) + 1);
+    const vistos = new Map();
+    return bando.map((b) => {
+      if ((porNome.get(b.nome) || 1) <= 1) return { nome: b.nome, ameaca: b.ameaca };
+      const k = (vistos.get(b.nome) || 0) + 1; vistos.set(b.nome, k);
+      return { nome: `${b.nome} ${k}`, ameaca: b.ameaca };
+    });
+  };
+
   /* A PRESA APARECE, e isto vale para TODA missão ativa — inclusive as do
      mural. A queixa que originou tudo isto era de um trabalho de mural, e
      consertar só as tramas deixaria o defeito de pé exatamente onde ele
@@ -16039,8 +16111,31 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     return "";
   };
 
+  /* A VOLTA AO TERRITÓRIO (fuga.js): o bando que ficou de guarda no lugar
+     de onde o herói fugiu não esquece — voltar lá, enquanto o relógio
+     existe, reabre a luta com eles alertas. O mesmo fôlego que protege a
+     caçada logo acima protege esta porta: a resposta em que a fuga
+     aconteceu, e o turno em que o herói ainda não saiu do lugar, não
+     reabrem luta nenhuma. */
+  const talvezVoltarAoTerritorio = () => {
+    if (combateRef.current || acampadoRef.current || masmorraRef.current || raidRef.current) return "";
+    if (folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "cacada" })) return "";
+    const r = relogioDoTerritorio(relogiosRef.current, ondeEstou());
+    if (!r) return "";
+    const bando = bandoAoVoltar(r);
+    if (!bando.length) return "";
+    const ab = abrirCombate(inimigosDoBandoDaFuga(bando), { pers: personagemRef.current });
+    if (ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
+    if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
+    territorioEmLutaRef.current = r.id;
+    pushMsgs([{ autor: "sistema", texto: `⚔ ${r.nome} — você voltou, e eles estavam à espera.` }]);
+    return `[FUGA — TERRITÓRIO DO SISTEMA] A luta ACONTECE agora: ${r.nome.toLowerCase()}, porque o herói voltou ao lugar de onde fugiu. Narre a emboscada.${ab.nota ? `\n${ab.nota}` : ""}`;
+  };
+
   const talvezVirar = () => {
     let env = talvezCacar();
+    if (env) return env;
+    env = talvezVoltarAoTerritorio();
     if (env) return env;
     const ms = missoesRef.current || [];
     for (const m of ms) {
@@ -16315,6 +16410,32 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         /* a missão já não estava ativa (concluída, recusada ou apagada): o
            relógio era um fantasma, e some sem dizer nada ao jogador */
         continue;
+      }
+      /* v9.293 (fuga.js): perseguição e rasto trazem o bando de volta pronto
+         para a luta (`lutaAoEncher`) — território não: ele só sossega, e
+         cai no aviso genérico logo abaixo, que já lê a `consequencia` certa
+         ("...volta a ser passagem"). */
+      if (String(cheio.fonte || "").startsWith("fuga:")) {
+        const bandoDeVolta = lutaAoEncher(cheio);
+        if (bandoDeVolta.length) {
+          if (combateRef.current || acampadoRef.current || masmorraRef.current || raidRef.current) {
+            /* ADIADO: outra coisa já toma a cena agora (luta, sono, masmorra
+               ou raid) — abrir uma segunda luta em cima dela emendaria dois
+               combates num turno só. A marca já fez o que tinha de fazer; o
+               bando que voltaria fica de fora desta vez. */
+            pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.nome} — o tempo acabou.` }]);
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(cheio)}`;
+            marcarNoArco("relogio", `o tempo de "${cheio.nome}" se esgotou`);
+            continue;
+          }
+          const ab = abrirCombate(inimigosDoBandoDaFuga(bandoDeVolta), { pers: personagemRef.current });
+          if (ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
+          if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
+          pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.consequencia || `${cheio.nome} — chegaram.`}` }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(cheio)}${ab.nota ? `\n${ab.nota}` : ""}`;
+          marcarNoArco("relogio", `o tempo de "${cheio.nome}" se esgotou`);
+          continue;
+        }
       }
       pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.nome} — o tempo acabou. ${cheio.consequencia || ""}`.trim() }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeCheio(cheio)}`;
@@ -22822,8 +22943,29 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const vFugaDaBatalha = (() => {
     try {
       if (!emBatalha || !combate) return null;
-      return vereditoDaFuga({ heroi: combate.heroi, inimigos: combate.inimigos, passoHeroiM: passoDaBatalha.passoTotal, rodada: combate.rodada });
+      return vereditoDaFuga({
+        heroi: combate.heroi, inimigos: combate.inimigos, passoHeroiM: passoDaBatalha.passoTotal, rodada: combate.rodada,
+        ficha: personagem, gdJogador: grauDe(divindadeRef.current), /* a mesma chance que o clique vai rolar */
+      });
     } catch (e) { calou("o veredito da fuga", e); return null; }
+  })();
+
+  /* A LINHA QUE O JOGADOR LÊ ANTES DO CLIQUE, com o aviso da consequência
+     junto ("Vai voltar mais forte.", "Não vai esquecer este lugar.") —
+     nunca "relógio", "perseguição" ou "degrau". A MESMA semente do clique
+     (`sementeDaFuga`), para a prévia nunca prometer um aviso que o clique
+     não cumpre. Sem peça nova: `LinhaDoVeredito` (painel-batalha.jsx) já
+     mostra o texto que `linhaDaFuga` traz aqui — só o texto cresceu. */
+  const linhaDaFugaComAviso = (() => {
+    try {
+      if (!vFugaDaBatalha) return "";
+      const base = linhaDaFuga(vFugaDaBatalha);
+      if (!vFugaDaBatalha.escapa) return base;
+      const c = consequenciaDaFuga(vFugaDaBatalha, {
+        inimigos: combate.inimigos, semente: sementeDaFuga(combate), lugares: ondeEstou(), dia: diaRef.current, relogios: relogiosRef.current,
+      });
+      return c && c.aviso ? `${base} ${c.aviso}` : base;
+    } catch (e) { calou("a linha da fuga com aviso", e); return vFugaDaBatalha ? linhaDaFuga(vFugaDaBatalha) : ""; }
   })();
 
   /* O PREÇO DA FRASE DE FUGA (R21, "a fuga escrita não mostra o preço
@@ -22831,7 +22973,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      "recuo depressa e fujo" em vez de tocar o botão tem direito ao MESMO
      aviso, ANTES do Enter. A mesma conta que `fugirDaLuta` fará ao
      enviar — heroi com o nome (a nota ao Narrador precisa dele), o mesmo
-     passo de `vFugaDaBatalha`. */
+     passo de `vFugaDaBatalha`, e agora a mesma ficha/gdJogador (a chance). */
   const precoDaFugaNoCampo = (() => {
     try {
       if (!emBatalha || !combate) return "";
@@ -22842,6 +22984,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         inimigos: combate.inimigos,
         passoHeroiM: passoDaBatalha.passoTotal,
         rodada: combate.rodada,
+        ficha: personagem, gdJogador: grauDe(divindadeRef.current),
       });
     } catch (e) { calou("o preco da frase de fuga", e); return ""; }
   })();
@@ -22914,7 +23057,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       linhaDoGolpe={vdDaBatalha ? linhaDoGolpe(vdDaBatalha) : ""}
       recusaDoGolpe={vdDaBatalha ? recusaDoGolpe(vdDaBatalha) : ""}
       podeFugir={!!(vFugaDaBatalha && vFugaDaBatalha.escapa)}
-      linhaDaFuga={vFugaDaBatalha ? linhaDaFuga(vFugaDaBatalha) : ""}
+      linhaDaFuga={vFugaDaBatalha ? linhaDaFugaComAviso : ""}
       precoDaFuga={precoDaFugaNoCampo}
       fugiu={!!fugiuNoFim}
       previsao={previsaoDeArea}

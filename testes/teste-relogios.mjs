@@ -97,5 +97,39 @@ console.log("\n[8. REMOVER]");
 ok(removerRelogio([quase], "q").length === 0, "remove pelo id");
 ok(removerRelogio([quase], "nao_existe").length === 1, "id inexistente não apaga nada");
 
+console.log("\n[9. O CAMPO DA FUGA — aditivo, e nunca nasce onde não estava]");
+{
+  /* O relógio que nasce de uma fuga leva o bando e o lugar (fuga.js), e o
+     save é este mesmo array. A promessa é dupla: o campo sobrevive ao
+     garantirRelogios (senão a luta some no primeiro load), e nenhum relógio
+     antigo ganha campo nenhum (senão o save de todo mundo muda de forma). */
+  const { LIMITES_DA_FUGA } = await import("../src/relogios.js");
+  const antigo = { id: "v", nome: "A nêmesis fecha o cerco", tipo: "cacada", segmentos: 6, cheios: 2, gatilho: "noite", consequencia: "x", fonte: "nemesis", criadoEm: 3 };
+  const g0 = garantirRelogios([antigo])[0];
+  ok(!("fuga" in g0), "relógio sem o campo continua sem ele — não nasce");
+  ok(JSON.stringify(g0) === JSON.stringify(antigo), "e sai byte por byte igual ao que entrou");
+  ok(!("fuga" in criarRelogio({ nome: "comum", segmentos: 4 })), "criarRelogio sem fuga também não o cria");
+
+  const fuga = { efeito: "perseguicao", bando: [{ nome: "Comandante", ameaca: "elite" }, { nome: "Soldado", ameaca: "comum" }], lugar: "Quartel do Passo", degrau: "treinado" };
+  const comF = criarRelogio({ id: "f1", nome: "Comandante e Soldado vêm atrás de você", tipo: "cacada", segmentos: 4, fonte: "fuga:comandante", fuga });
+  ok(JSON.stringify(comF.fuga) === JSON.stringify(fuga), "criarRelogio leva o campo inteiro");
+  const volta = garantirRelogios(JSON.parse(JSON.stringify([comF])))[0];
+  ok(JSON.stringify(volta.fuga) === JSON.stringify(fuga), "e ele atravessa o save (JSON ida e volta + garantirRelogios)");
+  const av = avancarUm([comF], "f1", { quanto: 4 });
+  ok(av.cheios.length === 1 && JSON.stringify(av.cheios[0].fuga) === JSON.stringify(fuga), "o relógio que ENCHE sai com o bando dentro — é dele que a luta abre");
+
+  const L = LIMITES_DA_FUGA;
+  const torto = garantirRelogios([{ ...antigo, fuga: {
+    efeito: "e".repeat(90), lugar: "l".repeat(300), degrau: "d".repeat(50),
+    bando: Array.from({ length: 30 }, (_, i) => ({ nome: "n".repeat(99) + i, ameaca: "a".repeat(40) })),
+  } }])[0].fuga;
+  ok(torto.bando.length === L.bando && torto.bando.every((b) => b.nome.length === L.nome && b.ameaca.length === L.ameaca),
+    `o bando é aparado pela tabela (${L.bando} corpos, nome ${L.nome}, ameaça ${L.ameaca})`);
+  ok(torto.efeito.length === L.efeito && torto.lugar.length === L.lugar && torto.degrau.length === L.degrau, "e o resto também");
+  for (const lixo of [null, 7, "x", [], {}, { efeito: "perseguicao" }, { efeito: "", bando: [{ nome: "A" }] }, { efeito: "rasto", bando: [null, 3, { nome: "  " }] }]) {
+    ok(!("fuga" in garantirRelogios([{ ...antigo, fuga: lixo }])[0]), `fuga torta (${JSON.stringify(lixo)}) é largada, e o relógio fica comum`);
+  }
+}
+
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);

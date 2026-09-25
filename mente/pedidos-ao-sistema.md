@@ -64,7 +64,10 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   Na prova jogada de R21 (depois de `7a2b00b`): ao fugir de uma luta, a frase *Viro as costas e fujo da luta…* ficou no campo PRINCIPAL, aberto a 138 px com `Agir →`. **A página caiu 568,8 → 422,8 px (−146)**, e um Enter mandaria fugir numa praça vazia. É a fiação da fuga (`App.jsx`, a frase e o verbo `Fugir`), por isso é pedido e não conserto da mesa. **O fim da luta tem de esvaziar o campo.** O relato antigo, abaixo, era o mesmo defeito visto uma vez:
   T13: a frase enviada ficou no campo depois da resposta, com o campo aberto a 138 px, e a página caiu para 253,7 px. Pode ser do medidor do `jogo`, que escreve no campo por inspecção — **refazer à mão antes de abrir item.**
 
-- [ ] **o XP que a oferta promete não é o XP que o recibo paga** · de: R6/R13 · 23/09
+- [x] **o XP que a oferta promete não é o XP que o recibo paga** · de: R6/R13 · 23/09
+  **Atendido em v9.292 (`a441fe9`).** A conta de v9.195 somava a etapa de
+  procurar quem assinou, que os chamadores prependem. `aceitarProposta`
+  recebe agora `etapasPrometidas`, e o que o cartaz promete é o que paga (+80 → 80).
   **Medido a jogar, duas vezes em duas:** a soleira ofereceu `◉205 · +166 XP` e
   pagou **191**; ofereceu `◉115 · +111 XP` e pagou **130**. *O ouro bate sempre;
   o XP vem sempre ~15 % acima.* Há um bónus aplicado no pagamento que a oferta

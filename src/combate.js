@@ -21,13 +21,21 @@ import { estaInvisivel } from "./gatilhos.js";
 import { estaVirado } from "./controle.js";
 import { escolherAlvo } from "./adversario.js";
 
-export function d(n) { return 1 + Math.floor(Math.random() * n); }
+/* A SORTE PODE ENTRAR DE FORA. `rolar` é uma fonte opcional de números em
+   [0, 1) — um `rng(hashSemente(...))` de semente.js, por exemplo. Sem ela,
+   é o `Math.random` de sempre, e toda chamada antiga rola exatamente como
+   rolava. Nasceu para a fuga: o que ela CUSTA é rolado com semente, porque
+   a mesma semente tem de dar o mesmo desfecho em qualquer máquina (lei da
+   casa), e porque só assim a suíte consegue provar um golpe que acerta e
+   outro que erra. Aceita-se só função: `[..].map(d)` passaria o índice. */
+const sorteDe = (rolar) => (typeof rolar === "function" ? rolar : Math.random);
+export function d(n, rolar) { return 1 + Math.floor(sorteDe(rolar)() * n); }
 
 /* rola d20 com vantagem/desvantagem; devolve {valor, dados} */
-export function d20(vantagem = false, desvantagem = false) {
-  if (vantagem && !desvantagem) { const a = d(20), b = d(20); return { valor: Math.max(a, b), dados: [a, b], modo: "vantagem" }; }
-  if (desvantagem && !vantagem) { const a = d(20), b = d(20); return { valor: Math.min(a, b), dados: [a, b], modo: "desvantagem" }; }
-  const a = d(20); return { valor: a, dados: [a], modo: null };
+export function d20(vantagem = false, desvantagem = false, rolar) {
+  if (vantagem && !desvantagem) { const a = d(20, rolar), b = d(20, rolar); return { valor: Math.max(a, b), dados: [a, b], modo: "vantagem" }; }
+  if (desvantagem && !vantagem) { const a = d(20, rolar), b = d(20, rolar); return { valor: Math.min(a, b), dados: [a, b], modo: "desvantagem" }; }
+  const a = d(20, rolar); return { valor: a, dados: [a], modo: null };
 }
 
 /* competência -> bônus de ataque (usado por NPCs, do "fraco" ao "lendário") */
@@ -93,14 +101,38 @@ export function modificadoresDeCondicao(condicoes = []) {
   return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, danoRecebidoExtra: m.danoRecebidoExtra, perdeAcao: m.perdeAcao };
 }
 
+/* ---------------- OS LADOS DO DADO ----------------
+   O que decide, ANTES do d20, como ele rola: se o atacante nem age, se o
+   golpe nem encontra corpo, e se o dado entorta para um lado ou outro.
+   Saiu de dentro de `resolverAtaque`, palavra por palavra, para que a
+   CHANCE mostrada antes do clique (fuga.js) leia a mesma porta que o
+   ataque rolado lê — duas cópias desta conta seriam duas respostas para
+   "ele tem desvantagem?", e a primeira a divergir mentiria na tela.
+   Listas nulas contam como vazias (`= []` não cobre `null`). */
+export function ladosDoDado({ alvo, vantagem, desvantagem, condAtacante, condAlvo, tipoDano = "fisico" } = {}) {
+  const modAtk = modificadoresDeCondicao(Array.isArray(condAtacante) ? condAtacante : []);
+  if (modAtk.perdeAcao) return { impedido: true, intocavel: false, vantagem: false, desvantagem: false };
+  if (estaIntocavel(alvo)) return { impedido: false, intocavel: true, vantagem: false, desvantagem: false };
+  let vant = !!(vantagem || modAtk.vantagem);
+  let desv = !!(desvantagem || modAtk.desvantagem);
+  /* as de prazo longo não zeram o golpe: entortam o dado contra quem ataca */
+  if (esquivaDeGuarda(alvo, { magico: tipoDano && tipoDano !== "fisico" })) desv = true;
+  /* cego no alvo dá vantagem a quem ataca */
+  if ((Array.isArray(condAlvo) ? condAlvo : []).some((c) => ((c && c.nome) || "").toLowerCase().includes("cego"))) vant = true;
+  /* se vantagem e desvantagem coexistem, cancelam (regra 5e) */
+  if (vant && desv) { vant = false; desv = false; }
+  return { impedido: false, intocavel: false, vantagem: vant, desvantagem: desv };
+}
+
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
 /* `criticoEm` é a régua do crítico: 20 no d20 comum, 19 para quem tem a
    Dádiva da Sorte Impossível. Vem com padrão 20 para que toda chamada antiga
    — e são muitas — continue rolando exatamente como rolava. */
-export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0, criticoEm = 20, ignoraArmadura = false }) {
+export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque, danoBase, vantagem, desvantagem, condAtacante = [], condAlvo = [], tipoDano = "fisico", perfilAlvo = null, resistAlvo = [], bonusDefesaAlvo = 0, criticoEm = 20, ignoraArmadura = false, rolar }) {
   const modAtk = modificadoresDeCondicao(condAtacante);
   const modAlvo = modificadoresDeCondicao(condAlvo);
-  if (modAtk.perdeAcao) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
+  const lados = ladosDoDado({ alvo, vantagem, desvantagem, condAtacante, condAlvo, tipoDano });
+  if (lados.impedido) return { tipo: "impedido", texto: `${atacante} está impossibilitado de agir` };
 
   /* ---------------- A GUARDA QUE NÃO DEIXA ACERTAR (v9.53) ----------------
      Quatro habilidades prometiam "por N turnos nada te atinge" e nenhuma
@@ -109,19 +141,12 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
 
      A intocável erra ANTES do dado: não é uma rolagem difícil, é o golpe que
      não encontra corpo. Dura um turno, e é por isso que pode ser absoluta. */
-  if (estaIntocavel(alvo)) {
+  if (lados.intocavel) {
     return { tipo: "erra", resultado: "errou", d20: 0, bonus: 0, total: 0, ca: 0, dano: 0, critico: false, desastre: false, intocavel: true };
   }
-  // cego no alvo dá vantagem a quem ataca; vantagem/desvantagem do atacante somam
-  let vant = vantagem || modAtk.vantagem;
-  let desv = desvantagem || modAtk.desvantagem;
-  /* as de prazo longo não zeram o golpe: entortam o dado contra quem ataca */
-  if (esquivaDeGuarda(alvo, { magico: tipoDano && tipoDano !== "fisico" })) desv = true;
-  if (condAlvo.some((c) => (c.nome || "").toLowerCase().includes("cego"))) vant = true;
-  // se vantagem e desvantagem coexistem, cancelam (regra 5e)
-  if (vant && desv) { vant = false; desv = false; }
-
-  const rolagem = d20(vant, desv);
+  /* vantagem/desvantagem do atacante, a esquiva de guarda e o alvo cego:
+     tudo em `ladosDoDado`, logo acima */
+  const rolagem = d20(lados.vantagem, lados.desvantagem, rolar);
   const bonus = bonusAtaque || 0;
   const total = rolagem.valor + bonus;
   /* v9.20: a cobertura do terreno soma na defesa do alvo. Fica AQUI e não
@@ -215,17 +240,17 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
    O `2` que sobrou do antigo `4` é o piso que mantém o dano total na mesma
    faixa de antes — sem ele, trocar a fórmula seria também nerfar todo
    mundo, e uma coisa de cada vez. */
-export function danoDe(ent, ehInimigo = false) {
+export function danoDe(ent, ehInimigo = false, rolar) {
   if (ehInimigo) {
     const base = { fraco: 3, comum: 5, competente: 7, elite: 10, lendario: 14 }[ent.ameaca] || 5;
-    return base + d(4) - 1;
+    return base + d(4, rolar) - 1;
   }
   const arma = ent.equipados?.arma || null;
   const dado = danoDaArma(arma);
   const atr = modDoGolpe(ent, arma);
   const bonusArma = arma?.atributos?.dano || 0;
   let total = 2 + atr + bonusArma;
-  for (let i = 0; i < dado.n; i++) total += d(dado.faces);
+  for (let i = 0; i < dado.n; i++) total += d(dado.faces, rolar);
   return total;
 }
 
@@ -902,7 +927,9 @@ export function acoesBonusDe(classe, nivel) {
    Agora vale nos dois sentidos, que é o que torna a regra interessante:
    recuar CUSTA, e por isso vira decisão; e o inimigo ferido que corre
    também expõe as costas. */
-export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase, { ehAtacanteInimigo = false, tipoDano } = {}) {
+/* `desvantagem` nas opções soma-se à da invisibilidade: é por onde o
+   disparo nas costas de quem foge (fuga.js) entra com a distância longa. */
+export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase, { ehAtacanteInimigo = false, tipoDano, desvantagem = false, rolar } = {}) {
   return resolverAtaque({
     atacante: atacante.nome || atacante, alvo, ehAtacanteInimigo,
     bonusAtaque, danoBase, condAtacante: atacante.condicoes || [], condAlvo: alvo.condicoes || [],
@@ -910,7 +937,8 @@ export function ataqueDeOportunidade(atacante, alvo, bonusAtaque, danoBase, { eh
     /* v9.45: acertar quem não se vê é difícil. Vale para o ataque de
        oportunidade porque é exatamente aqui que a invisibilidade deveria
        salvar o herói que decide sair de perto. */
-    desvantagem: estaInvisivel(alvo),
+    desvantagem: estaInvisivel(alvo) || desvantagem === true,
+    rolar,
   });
 }
 
@@ -932,14 +960,26 @@ export function pedeDesengajar(texto) {
   return DESENGAJA.test(String(texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
 }
 
+/* O bônus de um inimigo contra o jogador: a ameaça, mais o degrau divino
+   de um contra o do outro. Uma conta só, lida por quem ROLA o golpe
+   (`oportunidadesContraOJogador`) e por quem mostra a CHANCE dele antes
+   do clique (fuga.js) — se fossem duas, a chance mentiria no dia em que
+   uma mudasse. */
+export function bonusContraOJogador(inim, gdJogador = 0) {
+  const e = inim && typeof inim === "object" ? inim : {};
+  return bonusDeAmeaca(e.ameaca) + 2 * ((Number(e.gd) || 0) - (Number(gdJogador) || 0));
+}
+
 /* Cada inimigo de pé leva UM golpe livre em quem está saindo. É reação:
-   um por inimigo, independente de quantos ataques ele tenha na rodada. */
-export function oportunidadesContraOJogador(inimigos, jogador, gdJogador = 0) {
+   um por inimigo, independente de quantos ataques ele tenha na rodada.
+   `opcoes.rolar`: a sorte semeada (ver `d`). Sem ela, Math.random. */
+export function oportunidadesContraOJogador(inimigos, jogador, gdJogador = 0, opcoes) {
+  const rolar = opcoes && typeof opcoes.rolar === "function" ? opcoes.rolar : undefined;
   return (inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0).map((inim) => {
     const perfil = perfilDe(inim);
     const r = ataqueDeOportunidade(inim, jogador,
-      bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)),
-      danoDe(inim, true), { ehAtacanteInimigo: true, tipoDano: perfil.ataque });
+      bonusContraOJogador(inim, gdJogador),
+      danoDe(inim, true, rolar), { ehAtacanteInimigo: true, tipoDano: perfil.ataque, rolar });
     return { inimigo: inim.nome, r };
   });
 }

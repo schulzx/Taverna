@@ -309,10 +309,14 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 8037) {
-    falha(`pushMsgs saiu de src/App.jsx:8037 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 8048) {
+    falha(`pushMsgs saiu de src/App.jsx:8048 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8037, como o mapa de X3b diz");   /* A FUGA (frontend, segunda volta — R21): 8028 -> 8037. As nove linhas
+  } else ok("pushMsgs segue em src/App.jsx:8048, como o mapa de X3b diz");   /* A FUGA COBRA (frontend, R22): 8037 -> 8048. `sementeMundo`
+     (+5) e `abrirCombate` (+6) — a semente única da fuga e a marca do
+     território que se zera a cada luta nova — nascem acima deste ponto, e
+     tudo abaixo andou +11 junto. Re-medido por conteúdo, asserção intacta.
+     A FUGA (frontend, segunda volta — R21): 8028 -> 8037. As nove linhas
      são o fôlego da fuga (fuga.js): o comentário e o `folegoRef` novos,
      logados ao lado de `combateRef`, para a caçada e a emboscada da
      missão não reabrirem luta NA MESMA resposta em que o herói fugiu —

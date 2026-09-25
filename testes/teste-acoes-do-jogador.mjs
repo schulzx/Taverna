@@ -502,8 +502,11 @@ sec("4. a definição operacional de 'número que muda'");
      `convertePraTurnoDoCaido`, entrou no topo de `agirInterno`, acima
      deste ponto). Conferido por conteúdo — é o mesmo
      `avancarMinutos(MINUTOS_POR_TURNO)`, e `check-acoes-do-jogador.mjs`
-     (dente 8) confirma sozinho a cada corrida. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14078/.test(relogio.porque));
+     (dente 8) confirma sozinho a cada corrida.
+     A FUGA COBRA (frontend, R22): 14078 -> 14089, +11 (`sementeMundo` +
+     `abrirCombate`, acima deste ponto). Conferido por conteúdo — é o
+     mesmo `avancarMinutos(MINUTOS_POR_TURNO)`; o dente 8 confirma. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14089/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -704,8 +707,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
          `talvezCacar`/`talvezVirar`, e a emboscada do `resp.perigo` — e
          tudo abaixo andou junto. Endereço re-medido pelo diff (as
          mesmas nove linhas do bloco 9, mais seis do `resp.perigo`); o
-         `pushMsgs` desta linha não mudou de conteúdo nem de voz. */
-      .linhas.find((l) => l.onde === "src/App.jsx:12656").voz === "telegrama");
+         `pushMsgs` desta linha não mudou de conteúdo nem de voz.
+         A FUGA COBRA (frontend, R22): 12656 -> 12667, +11 — o mesmo
+         delta do bloco 9 (`sementeMundo` + `abrirCombate`, acima dos
+         dois). Conferido por conteúdo; a voz não mudou. */
+      .linhas.find((l) => l.onde === "src/App.jsx:12667").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -800,8 +806,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
     /* R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 12488 -> 12580. */
     /* A FUGA (frontend, segunda volta — R21): 12591 -> 12606, +15 — o
        mesmo delta do bloco 9 (o fôlego da fuga entrou acima). Conferido
-       por conteúdo; a família não mudou. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12606" && x.familia === "alcance"));
+       por conteúdo; a família não mudou.
+       A FUGA COBRA (frontend, R22): 12606 -> 12617, +11 — o mesmo delta
+       do bloco 9. Conferido por conteúdo; a família não mudou. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12617" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -818,7 +826,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O que esta asserção guarda nunca foi o número — é que o porquê do
      silêncio venha com ENDEREÇO, para que a próxima medição o possa
      conferir. O número mudou; a intenção, não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12672/.test(S.ondeSai));   /* A FUGA (frontend, segunda volta — R21): 12657 -> 12672, +15 (o mesmo delta de `aplicarGolpeDoJogador` — o fôlego da fuga entrou acima, em `combateRef`/`aplicarResposta`). Conferido por conteúdo; o `enviar` não mudou de sítio dentro da função. · R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 12554 -> 12646. · R15: 12423 -> 12459, +36, pelo comentário do conserto do nome da campanha em `salvar` — conferido por CONTEÚDO, é o mesmo `enviar([COMBATE — RESOLVIDO PELO SISTEMA]...)`; o `enviar` não mudou de sítio dentro da função · E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 · R13-A: 11846 -> 12312 · R13-B: 12312 -> 12423 (as peças de `A cinta`, de `O painel do tempo` e de `O topo do papel` nasceram ao nível do módulo — é a lei da casa, porque componente dentro do render mata o foco do input — e empurraram a região inteira; o `enviar` não mudou de sítio dentro da função) — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo · R17: 12459 -> 12552, +93 (mesmo delta de `aplicarGolpeDoJogador`; conferido por conteúdo, não por soma) · A FUGA (frontend): 12552 -> 12554, +2 (mesmo delta de `aplicarGolpeDoJogador`) */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12683/.test(S.ondeSai));   /* A FUGA COBRA (frontend, R22): 12672 -> 12683, +11 (o mesmo delta de `aplicarGolpeDoJogador` — `sementeMundo` + `abrirCombate`, acima dos dois). Conferido por conteúdo; o `enviar` não mudou de sítio. · A FUGA (frontend, segunda volta — R21): 12657 -> 12672, +15 (o mesmo delta de `aplicarGolpeDoJogador` — o fôlego da fuga entrou acima, em `combateRef`/`aplicarResposta`). Conferido por conteúdo; o `enviar` não mudou de sítio dentro da função. · R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 12554 -> 12646. · R15: 12423 -> 12459, +36, pelo comentário do conserto do nome da campanha em `salvar` — conferido por CONTEÚDO, é o mesmo `enviar([COMBATE — RESOLVIDO PELO SISTEMA]...)`; o `enviar` não mudou de sítio dentro da função · E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 · R13-A: 11846 -> 12312 · R13-B: 12312 -> 12423 (as peças de `A cinta`, de `O painel do tempo` e de `O topo do papel` nasceram ao nível do módulo — é a lei da casa, porque componente dentro do render mata o foco do input — e empurraram a região inteira; o `enviar` não mudou de sítio dentro da função) — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo · R17: 12459 -> 12552, +93 (mesmo delta de `aplicarGolpeDoJogador`; conferido por conteúdo, não por soma) · A FUGA (frontend): 12552 -> 12554, +2 (mesmo delta de `aplicarGolpeDoJogador`) */
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

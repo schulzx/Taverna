@@ -79,6 +79,37 @@ export const GATILHOS = {
 
 const norm = (s) => String(s || "").trim();
 
+/* ---------------- O RELÓGIO QUE NASCE DE UMA FUGA ----------------
+   Fugir tem consequência, e a que atravessa dias vive aqui: no array de
+   relógios que o save já guarda, e não num campo novo de save. O relógio
+   comum não sabe QUEM vem nem DE ONDE, e é disso que a fuga precisa para
+   abrir a luta quando ele encher — por isso o campo `fuga`:
+
+     { efeito, bando: [{ nome, ameaca }], lugar, degrau }
+
+   É ADITIVO, nos dois sentidos. Só passa adiante quando existe, e nunca
+   nasce num relógio que não o trazia — a ficha de todo relógio antigo sai
+   daqui byte por byte igual. E um código que não o conheça (um save
+   aberto numa versão anterior) simplesmente o larga: o relógio continua a
+   encher e a ser narrado, só perde a luta ao encher. Nada se quebra.
+
+   Quem decide o que `efeito` quer dizer é fuga.js; aqui só se apara o
+   tamanho, para que um save torto não traga um bando de mil nomes. Os
+   limites são tabela, como tudo que é número nesta casa. */
+export const LIMITES_DA_FUGA = { efeito: 20, bando: 8, nome: 40, ameaca: 12, lugar: 60, degrau: 12 };
+
+function comFuga(f) {
+  if (!f || typeof f !== "object") return {};
+  const L = LIMITES_DA_FUGA;
+  const efeito = norm(f.efeito).slice(0, L.efeito);
+  const bando = (Array.isArray(f.bando) ? f.bando : [])
+    .filter((b) => b && typeof b === "object" && norm(b.nome))
+    .slice(0, L.bando)
+    .map((b) => ({ nome: norm(b.nome).slice(0, L.nome), ameaca: norm(b.ameaca).slice(0, L.ameaca) }));
+  if (!efeito || !bando.length) return {};
+  return { fuga: { efeito, bando, lugar: norm(f.lugar).slice(0, L.lugar), degrau: norm(f.degrau).slice(0, L.degrau) } };
+}
+
 export function garantirRelogios(lista) {
   if (!Array.isArray(lista)) return [];
   return lista
@@ -93,12 +124,13 @@ export function garantirRelogios(lista) {
       consequencia: norm(r.consequencia).slice(0, 220),
       fonte: norm(r.fonte).slice(0, 40),
       criadoEm: Number.isFinite(r.criadoEm) ? r.criadoEm : 0,
+      ...comFuga(r.fuga),
     }))
     .slice(0, MAX_RELOGIOS);
 }
 
-export function criarRelogio({ nome, tipo = "ameaca", segmentos = 6, gatilho = "noite", consequencia = "", fonte = "sistema", dia = 0, id }) {
-  return garantirRelogios([{ id, nome, tipo, segmentos, cheios: 0, gatilho, consequencia, fonte, criadoEm: dia }])[0] || null;
+export function criarRelogio({ nome, tipo = "ameaca", segmentos = 6, gatilho = "noite", consequencia = "", fonte = "sistema", dia = 0, id, fuga }) {
+  return garantirRelogios([{ id, nome, tipo, segmentos, cheios: 0, gatilho, consequencia, fonte, criadoEm: dia, fuga }])[0] || null;
 }
 
 export function relogioPorId(lista, id) { return garantirRelogios(lista).find((r) => r.id === id) || null; }
