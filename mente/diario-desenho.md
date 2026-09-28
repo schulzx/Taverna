@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 28/09 20:30 · v9.300 · **V5 — a página: lê-se como um livro, não como uma conversa com etiquetas** · commit (no bloco seguinte)
+## 28/09 20:30 · v9.300 · **V5 — a página: lê-se como um livro, não como uma conversa com etiquetas** · commit `2100eaa`
 
 - **estado inicial:** trava tomada às 20:47; HEAD `1bb8f4d`; nenhum ciclo do
   sistema. **Pedido do coordenador, por causa da pessoa:** ela lê a v3 como
@@ -42,7 +42,8 @@ Formato:
   `126:5` clonado ao lado da página a 1280×912. Biblioteca: página `V5`
   (`244:320`), seis peças.
 - **o ciclo caiu no limite de uso da API** (25/09, ~22:05), com a prova do `jogo` já escrita (§8) e o `oficial` a começar os dois consertos. **Nada se perdeu:** o trabalho ficou todo na árvore, e ninguém lhe tocou em três dias (HEAD continuou `1bb8f4d`). **Retomado a 28/09 às 20:05**: a trava (20:47) e o bastão (21:51), com mais de 90 minutos, foram renovados em nome do mesmo ciclo; build e suíte conferidos verdes com o que estava no disco (216/216 · 15/15) antes de continuar; o mesmo `oficial` retomado para os consertos.
-- **oficial** (bastão tomado às 21:51 de 25/09, renovado às 20:05 de 28/09): scripts 1-2-3-5-6; **`App.jsx` 24 257 →
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 21:51 de 25/09 para o `oficial`, renovado às 20:05 de 28/09, **devolvido às 20:18 de 28/09**, logo depois de `2100eaa` subir.
+- **oficial**: scripts 1-2-3-5-6; **`App.jsx` 24 257 →
   24 315 linhas**, todas as mudanças de contagem depois da 22 489 — nenhum
   endereço do `check-acoes-do-jogador` se moveu.
 - **a prova jogada** (antes `1bb8f4d`, depois a árvore, 375 e 1280, `/api`
