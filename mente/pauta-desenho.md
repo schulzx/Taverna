@@ -877,7 +877,7 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
   fim do registo, a 0 px. Decisão em `formas.md` §V5a, spec `mente/v5a-desenho.md`,
   momento e prova `mente/v5a-jogo.md`. **Isto desfaz a "fusão" que V5 planeava:
   não há fusão, há remoção.**
-- [ ] **V5b · a cartela de chegada** · `jogo` · médio · a ambiciosa de V5a — no
+- [x] ~~**V5b · a cartela de chegada**~~ · **FECHADA dentro de V5 pelo `jogo`:** o nome do lugar em grande repetiria o cabeçalho de V5a a 80 px — o mesmo defeito do painel da sala. O que ficou dela é a abertura (a primeira frase grande), em V5. · `jogo` · médio · a ambiciosa de V5a — no
   turno em que o lugar muda, a prosa abre com o nome do lugar grande e a runa por
   baixo (os títulos de área de Dark Souls e Hollow Knight); nos outros turnos, 0
   px. Usa o eixo `chegada`, que já vai na chamada e não faz nada desde R13-B.
@@ -888,7 +888,10 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
   ambiciosa de V5a (é V1c reposta) — com a gravura fora, a atmosfera da hora
   ficou só em palavra; o gradiente do cartão passa a segui-la, 0 px e um
   atributo no `App.jsx`.
-- [ ] **V5 · a página (o resto)** — coluna de 65ch, a soleira no pé do cartão (0
+- [x] **V5 · a página** · **FEITO 25/09, no ar** — `mente/v5-jogo.md` (o momento, D1–D9, a prova §8), `mente/v5-desenho.md` e `formas.md` §V5 (D10–D17). **Cada desvio do Figma tem a razão escrita no quadro `144:2` do arquivo da pessoa**, numerado, para ela poder recusar um sem desfazer os outros. Os cinco `O MESTRE` saem (uma runa por resposta, com o ouvir na ponta); a soleira mora no pé do cartão pelos mesmos píxeis (94/150/62); a espera nasce no fim, à vista (antes a 1 454 px); o painel da masmorra diz a sala (`TESOURO · POR RESOLVER`, `ÀS ESCURAS`) e já não repete o lugar nem as tochas; V4d paga (o título da gaveta preso). **A abertura grande foi construída e fica APAGADA**: nasce fora de vista em 5/5 respostas reais — religa-se em V5e.
+- [ ] **V5e · a resposta chega pelo começo** · `jogo` + `desenho` · médio · **a seguinte, antes de V6** — quando a resposta nova não cabe na área, a vista para no começo dela, com a seta de voltar ao fim à vista (medido no harness: a primeira frase a 48 px do topo, 12 linhas desde a primeira; hoje no telefone o jogador cai no fim e lê primeiro as últimas 12 linhas). **Religa a cerimónia.** A prova tem de cobrir: a resposta curta continua a ancorar no fim; a rolagem pendente segura a vista; as linhas do sistema que chegam depois não arrastam a vista; a seta de ir ao fim funciona; nada salta enquanto se lê.
+- [ ] **V5d · a página vira à chegada** · `jogo` · médio · a ambiciosa de V5 — ao chegar a um lugar novo, o capítulo anterior recolhe numa linha (`▸ Torre da Fonte · 14 respostas`) e a página começa de novo; o registo ganha capítulos com o nome dos lugares. Sem motor.
+- [x] ~~**V5 · a página (o resto)**~~ (o texto original) — coluna de 65ch, a soleira no pé do cartão (0
   px sem oferta), a abertura grande como cerimónia. *(O texto original abaixo
   falava de fundir o cabeçalho com o rosto da cena; V5a substituiu essa parte.)*
   ~~o cabeçalho da v3 **funde-se com o rosto da cena**~~

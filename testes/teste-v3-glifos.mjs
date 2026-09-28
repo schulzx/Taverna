@@ -200,7 +200,9 @@ sec("7. V3b · a tela principal");
   t("a porta continua um botão a ALVOS.piso, e a seta é desenhada", /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(APP) && /\{porta \? <LadrilhoDoAssunto tom="porta" \/>/.test(APP) && /tom === "porta" \? <IconeSeta /.test(LAD));
   { const i = APP.indexOf("function BlocoSistema"); const BLOCO = APP.slice(i, APP.indexOf("\n}\n", i));
     t("a pílula centrada morreu: nenhum rounded-full no BlocoSistema", i > 0 && !/rounded-full/.test(BLOCO)); }
-  t("a voz desenha ouvir e pausa — o 🔊 e o ⏸ saíram do glifoDeOuvir", /<Glifo nome="pausa" tamanho=\{14\} \/>/.test(APP) && /<Glifo nome="ouvir" tamanho=\{14\} \/>/.test(APP) && !/"⏸"\) : "🔊"/.test(APP));
+  /* V5: o botão de ouvir saiu de `A voz` para a ponta da runa, e é uma peça
+     (`BotaoDeOuvir`, ui.jsx); o glifo mede `RUNA.glifoDeOuvir` (14, o de sempre). */
+  t("a voz desenha ouvir e pausa — o 🔊 e o ⏸ saíram do glifoDeOuvir", /<Glifo nome=\{estado === "lendo" \? "pausa" : "ouvir"\} tamanho=\{RUNA\.glifoDeOuvir\} \/>/.test(UI2) && /<BotaoDeOuvir /.test(APP) && !/"⏸"\) : "🔊"/.test(APP));
   t("os chips do estado deixaram o emoji de condicoes.js: a favor / contra pela forma", /glifo: c\.tipo === "bom" \? "favor" : "contra", texto: c\.nome/.test(APP) && !/c\.icone \|\| \(c\.tipo === "bom"/.test(APP) && /glifo: "faisca", texto: e\.nome/.test(APP));
   t("o teste pendente mostra o d20 da casa, nas duas telas", (APP.match(/<Glifo nome="dado" tamanho=\{16\} \/> Teste de \{rolagem\.rotulo/g) || []).length === 2 && !/🎲 Teste de/.test(APP));
   t("a gaveta da mesa é o glifo da magia, com o número de armadas no nome", /\}\}><Glifo nome="faisca" tamanho=\{20\} \/>\{habsSel\.length > 0/.test(APP) && /aria-label=\{habsSel\.length > 0 \? `Habilidades, \$\{habsSel\.length\} armada/.test(APP));
@@ -323,8 +325,11 @@ sec("10. V3c · a soleira, O TEMPO, a magia guardada, o arco, a masmorra e o aca
     const BLOCO = i < 0 || f < 0 ? "" : semComentarios(APP.slice(i, f));
     const sobra = BLOCO.match(/\p{Extended_Pictographic}|[◉◆✦✧]/gu) || [];
     t("a masmorra e o acampamento não escrevem emoji do sistema nem ◉◆✦✧ de fonte", BLOCO.length > 2000 && sobra.length === 0, sobra.join(" "));
+    /* V5: as tochas SAÍRAM do painel da masmorra — moram no cabeçalho da página
+       desde V5a (`etiquetasDaPagina`), e ali eram o mesmo número duas vezes. O
+       painel diz a SALA; às escuras o título o diz com o glifo da tocha. */
     t("as tochas são um número com nome, e a passagem trancada/desconhecida é desenhada",
-      /<Glifo nome="tocha" tamanho=\{12\} rotulo="tochas" \/>\{masmorra\.tochas\}/.test(BLOCO)
+      /<Glifo nome=\{escuro \? "tocha" : GLIFO_DA_SALA\[/.test(BLOCO) && !/\{masmorra\.tochas\}/.test(BLOCO)
       && /<Glifo nome="cadeado" tamanho=\{16\} \/> : <Glifo nome="desconhecido" tamanho=\{16\} \/>/.test(BLOCO));
     t("a sintonia usa a gramática da gaveta das magias: sintonizado leva a marca, dormente nada",
       /\{on \? <><IconeCheck tamanho=\{10\} cor=\{T\.onAccent\} \/> <\/> : null\}\{it\.nome\}/.test(BLOCO)); }

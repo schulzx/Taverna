@@ -52,7 +52,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -180,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, PontoMestre, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, Prosa, BotaoDeOuvir, PeDaPagina } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -3309,7 +3309,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
             {(personagem.grupo || []).length === 0 ? (
               <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
             ) : (personagem.grupo || []).map((m, i) => (
-              <div key={i} data-membro={m.nome} tabIndex={-1} ref={subPedida && subPedida.alvo === m.nome && Date.now() - (subPedida.selo || 0) < CINTA.pedidoFresco ? focarNoCartao : undefined}>
+              <div key={i} data-membro={m.nome} tabIndex={-1} style={{ scrollMarginTop: FOCO_NA_GAVETA }} ref={subPedida && subPedida.alvo === m.nome && Date.now() - (subPedida.selo || 0) < CINTA.pedidoFresco ? focarNoCartao : undefined}>
                 {/* v9.184: o PM do companheiro entrou. Ele SEMPRE existiu —
                     `companheiros.js` dá manaMax a todo mundo, o Mestre recebe
                     "12/16 PM" na linha do prompt, e as habilidades dele cobram
@@ -22674,6 +22674,37 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("marcar o que a soleira ja tinha", e); }
   }, [carregando]); // eslint-disable-line
 
+  /* ---------------- V5 · A ABERTURA DE CERIMÔNIA — quem decide o turno ----------------
+     A primeira FRASE de uma resposta vai na letra de cerimônia (`ABERTURA`) só
+     em DOIS turnos (o `jogo`, V5 §3): a CHEGADA a um lugar novo — o lugar em
+     que o turno acabou não é o lugar em que começou — e a PRIMEIRA RESPOSTA DA
+     SESSÃO. E é EFÊMERA: ao começar o turno seguinte a frase volta a prosa
+     (decai por turno, nunca por relógio), e quem rola para trás lê o livro
+     normal. A vista está presa ao fim: encolher lá em cima não empurra nada.
+
+     O mecanismo é o da soleira, logo acima: o turno começa quando `carregando`
+     sobe, e nesse instante ficam registrados o lugar e o tamanho do registro;
+     quando acaba, a última resposta do Mestre DESTE turno ganha a cerimônia se
+     o lugar mudou (ou se é a primeira da sessão). Nada disto vai ao save: é um
+     momento, não um fato. APAGADA ATÉ V5e: só marca com `ABERTURA.acesa`. */
+  const [abertura, setAbertura] = useState(null);
+  const aberturaRef = useRef({ primeira: true, pendente: false, lugar: null, desde: 0 });
+  useEffect(() => {
+    try {
+      const a = aberturaRef.current;
+      if (carregando) {
+        if (!a.pendente) { a.pendente = true; a.lugar = lugarDaCena(); a.desde = mensagens.length; setAbertura(null); }
+        return;
+      }
+      if (!a.pendente) return;
+      const i = mensagens.map((m) => m && m.autor).lastIndexOf("mestre");
+      if (i < a.desde) return;
+      a.pendente = false;
+      if (ABERTURA.acesa && (a.primeira || lugarDaCena() !== a.lugar)) setAbertura(i);
+      a.primeira = false;
+    } catch (e) { calou("marcar a abertura de cerimonia", e); }
+  }, [carregando, mensagens.length]); // eslint-disable-line
+
   /* ---------------- A SETA ABRE O QUE ANUNCIA (R3) ----------------
      Em `try/catch` porque nunca pode custar o turno: uma linha do sistema
      com um rótulo que já não existe devolve `null` bem antes daqui, e o
@@ -23252,17 +23283,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 entre cenas é o texto, nunca a altura. */}
             <CabecalhoDaPagina {...etiquetasDaPagina({ lugar: lugarDaCena(), cena: cenaDoPalco(),
               luz: luzDaHora(Math.floor((minuto || 0) / 60)), clima })} />
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-5 md:px-8 py-6 space-y-4" >
-              {/* A VOZ (R2), primeiro dos DOIS sítios onde o cabeçalho do
-                  Mestre estava escrito à mão neste arquivo. Aqui ela é o
-                  timbre da página, e leva a espera: `a preparar…` durante os
-                  14,3 s de mediana que o Mestre leva a responder. O ponto vivo
-                  fica — ele é o sinal de que a casa está acordada, e a peça
-                  não o tem. */}
-              <div className="tv-coluna flex items-center gap-2">
-                <PontoMestre tamanho={16} />
-                <div className="flex-1 min-w-0"><Voz quem="mestre" voz={carregando ? "preparando" : "muda"} /></div>
-              </div>
+            {/* V5 · a região que rola ganha um invólucro: é contra ele que a seta
+                do fim se posiciona, e por isso ela fica sempre ACIMA do pé do
+                cartão (a soleira), nunca por cima de uma oferta. */}
+            <div className="relative flex-1 min-h-0 flex flex-col">
+            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 tv-pagina" >
+              {/* A VOZ (R2 → V5) — o `O MESTRE` do topo da página SAIU (o `jogo`,
+                  V5 §9): estava lá sempre, `muda` fora da espera, custando ~48 px
+                  no topo de toda cena, e durante a espera ficava fora de vista a
+                  quem está no fim. A espera se diz UMA vez, onde a resposta vai
+                  nascer — no fim do registro, na forma da `Voz`. */}
               {/* V5a: o cartão de v9.157 saiu daqui — o lugar mora no cabeçalho da página, acima. */}
               {agruparMensagens(mensagens).map((item, k) => {
                 /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
@@ -23302,34 +23332,41 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </div>
                   );
                 }
-                /* A VOZ (R2), SEGUNDO sítio — e é aqui que o botão de ouvir
-                   ganha os seus 48 px em vez dos 22 de hoje (`ALVOS.piso`,
-                   fechado em K3 e nunca lido por esta tela). O alvo cresce, a
-                   tinta não: o glifo continua do tamanho que sempre foi, e um
-                   botão sem fundo nem borda não paga um pixel de leiaute por
-                   ser maior que o próprio desenho.
+                /* A RESPOSTA DO MESTRE (R2 → V5).
 
-                   A PROSA PERDE O BALÃO. Ela é a página — fundo nenhum, canto
-                   nenhum, filete nenhum. O que separa uma voz da seguinte é `A
-                   voz`, que é o trabalho dela.
+                   COMEÇA POR UMA RUNA, e não por `O MESTRE`: a runa ornamental
+                   do meio da prosa da pessoa (`129:20`) passa a ter um sentido
+                   só — *começa uma resposta* —, uma por resposta e nunca dentro
+                   dela (o `jogo`, V5 §4). O BOTÃO DE OUVIR NÃO SAI: fica na ponta
+                   direita da runa, com o alvo de 48 de R2, e o estado dele
+                   (preparando, lendo) passa a ser o glifo e o nome do botão.
 
-                   E GANHA MEDIDA: `.tv-coluna` (65ch, centrada, peso 300).
-                   Os `max-w-[95%] md:max-w-[82%]` de antes eram exatamente o
-                   que partia os dois aparelhos em direções opostas — 89–100
-                   caracteres por linha na mesa (teto WCAG 1.4.8 = 80) e 28–37
-                   no telefone (piso 45). Uma medida em `ch` conserta os dois,
-                   e por isso SUBSTITUI as percentagens em vez de as acompanhar. */
+                   A PROSA É PARÁGRAFOS a 16 (`Prosa`, ui.jsx), como o nó, e não
+                   um bloco com linhas vazias de 27,6. A medida continua a de R2:
+                   `.tv-coluna` (65ch, centrada, peso 300) — é o único desvio
+                   grande da composição da pessoa, que corre a prosa a 1 086 px
+                   (~137 caracteres por linha; a WCAG 1.4.8 pede ≤ 80).
+
+                   A ABERTURA DE CERIMÔNIA (a primeira frase na letra de
+                   `ABERTURA`) só no turno que `abertura` marcou: a chegada a
+                   um lugar novo e a primeira resposta da sessão. */
                 return (
                   <div key={i} data-msg={i} className="tv-fade tv-coluna" style={{ scrollMarginTop: ESBATIMENTO.altura }}>
-                    <Voz quem="mestre"
-                      voz={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"}
-                      aoOuvir={() => ouvirMestre(i, m.texto)}
-                      glifoDeOuvir={<span style={{ fontSize: TIPOS.maquina, lineHeight: 1, color: voz && voz.i === i ? T.amber : T.inkMeio }}>{voz && voz.i === i ? (voz.status === "gerando" ? "…" : <Glifo nome="pausa" tamanho={14} />) : <Glifo nome="ouvir" tamanho={14} />}</span>} />
-                    <div className="tv-body leading-relaxed whitespace-pre-wrap" style={{ fontSize: TIPOS.prosa, color: T.ink }}>{m.texto}</div>
+                    <DivisoriaRunica respiro={0} ponta={<BotaoDeOuvir estado={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"} aoOuvir={() => ouvirMestre(i, m.texto)} />} />
+                    <Prosa texto={m.texto} abertura={abertura === i ? "cerimonia" : "nenhuma"} />
                   </div>
                 );
               })}
-              {carregando && <div className="tv-fade tv-mono tv-coluna flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: T.inkMeio }}><span className="tv-dice inline-flex"><IconeD20 tamanho={16} cor={T.inkMeio} /></span> O Mestre tece o destino…</div>}
+              {/* A ESPERA, dita uma vez e onde a resposta vai nascer (V5 §9): o dado
+                  que rola (o de sempre, `tv-dice`, com a saída dele no reduced
+                  motion) e a voz preparando — a forma da `Voz`, que era a do topo.
+                  Nenhum movimento novo: o dado já rolava nesta linha. */}
+              {carregando && (
+                <div className="tv-fade tv-coluna flex items-center gap-2">
+                  <span className="tv-dice inline-flex"><IconeD20 tamanho={16} cor={T.inkMeio} /></span>
+                  <div className="flex-1 min-w-0"><Voz quem="mestre" voz="preparando" /></div>
+                </div>
+              )}
               {falha && !carregando && (
                 <div className="tv-fade flex flex-col items-center gap-1.5">
                   <div className="flex items-center gap-3 rounded-full pl-4 pr-2 py-2" style={{ background: T.paginaAlta, border: `1px solid ${T.danger}` }}>
@@ -23446,17 +23483,28 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const escuro = noEscuro(masmorra);
               return (
               <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-3.5" style={{ background: T.panel, border: `1px solid ${escuro ? T.danger : T.violet}` }}>
+                {/* V5 · O PAINEL DIZ A SALA, NÃO O LUGAR (o `jogo`, V5 §5): o nome
+                    da masmorra e as tochas moram no cabeçalho da página desde V5a,
+                    a 69 px daqui — aqui eram o mesmo fato duas vezes, com dois
+                    separadores. O título passa a ser a sala, e a linha `Você está
+                    em: …` morre (é o que o título diz agora). Às escuras o título
+                    o diz, em `danger`, e a linha do preço FICA: é o veredito antes
+                    do clique. */}
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.violetSoft }}><Glifo nome="masmorra" tamanho={12} /> {masmorra.nome}</div>
-                  <div className="tv-mono text-[10px] shrink-0 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1" style={{ color: escuro ? T.danger : T.amberSoft }}><Glifo nome="tocha" tamanho={12} rotulo="tochas" />{masmorra.tochas}</span>
+                  <div className="tv-mono uppercase tracking-widest truncate inline-flex items-center gap-1.5" style={{ fontSize: TIPOS.maquina, color: escuro ? T.danger : T.violetSoft }}>
+                    <Glifo nome={escuro ? "tocha" : GLIFO_DA_SALA[salaAtual?.tipo] || "masmorra"} tamanho={12} />
+                    {escuro ? "às escuras" : `${ROTULO_SALA[salaAtual?.tipo] || "—"}${salaAtual && !salaAtual.resolvida && salaAtual.tipo !== "entrada" ? " · por resolver" : ""}`}
+                  </div>
+                  <div className="tv-mono shrink-0 flex items-center gap-2" style={{ fontSize: TIPOS.maquina }}>
                     {masmorra.chave && <span style={{ color: T.amber }}>chave</span>}
-                    <span style={{ color: T.inkDim }}>{prog.visitadas}/{prog.total}</span>
+                    <span style={{ color: T.inkDim }} title="salas visitadas">{prog.visitadas}/{prog.total}</span>
                   </div>
                 </div>
-                <div className="tv-body text-[11px] mb-2" style={{ color: escuro ? T.danger : T.inkDim }}>
-                  {escuro ? "Sem tochas — vocês avançam às cegas, em desvantagem." : `Você está em: ${ROTULO_SALA[salaAtual?.tipo] || "—"}${salaAtual && !salaAtual.resolvida && salaAtual.tipo !== "entrada" ? " (ainda não resolvida)" : ""}`}
-                </div>
+                {escuro && (
+                  <div className="tv-body mb-2" style={{ fontSize: TIPOS.maquina, color: T.danger }}>
+                    Sem tochas — vocês avançam às cegas, em desvantagem.
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                   {RITMOS.map((r) => (
                     <button key={r.id} onClick={() => mudarRitmo(r.id)} disabled={bloqueado || !!combate}
@@ -23744,12 +23792,49 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
               <div ref={fimRef}><FimDaPagina /></div>
             </div>
-            </div>
             {longeDoFim && (
               <button onClick={irParaOFim} aria-label="Ir para a última mensagem" className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center right-6 md:right-10"
                 style={{ bottom: "18px", width: ALVOS.piso, height: ALVOS.piso, background: T.paginaAlta, border: `1px solid ${T.lineStrong}`, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
                 title="Ir para a última mensagem"><span aria-hidden="true" style={{ display: "inline-flex", transform: "rotate(90deg)" }}><IconeSeta tamanho={20} cor={T.amberSoft} /></span></button>
             )}
+            </div>
+            {/* ---------------- V5 · A SOLEIRA NO PÉ DO CARTÃO ----------------
+                O terceiro andar do cartão da pessoa (`126:54`): cabeçalho fixo,
+                corpo que rola, e o pé — só com oferta, 0 px sem ela. A soleira
+                entra DENTRO da borda do cartão, por baixo de uma runa, e FORA do
+                que rola, pela razão de R15 que continua de pé: a oferta do
+                Yorick viveu QUATRO turnos, e ao quarto a mensagem que a criou
+                estava três telas acima. *A oferta persiste; a mensagem passa.* O
+                que saiu foi a caixa própria entre o cartão e o compositor, e a
+                borda ciano de cada oferta (`moldura="aberta"`: a moldura é a do cartão). Todas
+                as peças de V3c ficam como estavam (`Oferta`, `Soleira`, o `+N`, a
+                janela, a chegada, a impedida, o alvo de 48).
+
+                O momento se recupera pela `chegada`, que é propriedade da peça: o
+                que nasce neste turno chega marcado e assenta depois. */}
+            {(() => {
+              const vivas = ofertasDaSoleira();
+              if (!vivas.length) return null;
+              const jaTinha = soleiraAntesRef.current;
+              return (
+                <PeDaPagina>
+                  <Soleira ofertas={vivas.map((o) => (
+                    <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
+                      quem={o.quem} onde={o.onde} tom={o.tom} janela={o.janela}
+                      estado={o.precisaDoNarrador && bloqueado ? "impedida" : "repouso"}
+                      /* A FILA B NUNCA CHEGA — ela ESTA. A marca de "novo
+                         neste turno" dura enquanto o estado durar, e uma
+                         marca de novidade que dura cinco turnos deixa de
+                         significar novo e passa a significar ruido. *A fila
+                         A chega; a fila B esta.* (decisao do `jogo`,
+                         `formas.md` §R15) */
+                      chegada={o.fila === "B" || (jaTinha && jaTinha.has(o.id)) ? "assentada" : "agora"}
+                      aoClicar={o.aoClicar} moldura="aberta" />
+                  ))} />
+                </PeDaPagina>
+              );
+            })()}
+            </div>
             </div>
 
             {/* ---------------- O CONVÉS (v9.197) ----------------
@@ -23764,37 +23849,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 convés fica. É a mesma ideia da barra de abas embaixo, que já
                 estava certa: o que se toca todo turno não se procura. */}
             <div className="tv-espaco-abas shrink-0 flex flex-col">
-            {/* A SOLEIRA, e é aqui e não dentro da conversa. Considerou-se
-                colá-la à mensagem que a criou — é o que o MOMENTO pede —, e
-                recusou-se por uma razão jogada: a oferta do Yorick continuou
-                válida QUATRO turnos, e ao quarto a mensagem que a criou estava
-                três ecrãs acima. A oferta persiste; a mensagem passa. E
-                persistência pede lugar fixo, fora do rolamento.
-
-                O momento recupera-se pela `chegada`, que é propriedade da
-                peça: o que nasce neste turno chega marcado e assenta depois. */}
-            {(() => {
-              const vivas = ofertasDaSoleira();
-              if (!vivas.length) return null;
-              const jaTinha = soleiraAntesRef.current;
-              return (
-                <div className="px-4 md:px-8 pb-2">
-                  <Soleira ofertas={vivas.map((o) => (
-                    <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
-                      quem={o.quem} onde={o.onde} tom={o.tom} janela={o.janela}
-                      estado={o.precisaDoNarrador && bloqueado ? "impedida" : "repouso"}
-                      /* A FILA B NUNCA CHEGA — ela ESTA. A marca de "novo
-                         neste turno" dura enquanto o estado durar, e uma
-                         marca de novidade que dura cinco turnos deixa de
-                         significar novo e passa a significar ruido. *A fila
-                         A chega; a fila B esta.* (decisao do `jogo`,
-                         `formas.md` §R15) */
-                      chegada={o.fila === "B" || (jaTinha && jaTinha.has(o.id)) ? "assentada" : "agora"}
-                      aoClicar={o.aoClicar} />
-                  ))} />
-                </div>
-              );
-            })()}
+            {/* V5 · A SOLEIRA SAIU DAQUI para o pé do cartão (`PeDaPagina`), por
+                baixo de uma runa, dentro da borda da página — o convés fica com
+                o que se toca todo turno para ESCREVER; o que a cena OFERECE é da
+                página. Continua fora do que rola (a razão de R15). */}
             {/* ============================================================
                 R13 · OS 334 px DE MOLDURA SAÍRAM DAQUI, E NADA SE PERDEU
 

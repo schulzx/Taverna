@@ -108,11 +108,16 @@ t("e o aviso nunca pode custar a abertura da campanha",
 sec("O ESBATIMENTO (R15) — e o que o protege é o enchimento que já lá estava");
 t("[ANTES:X] a região da prosa esbate o topo",
   /className="tv-scroll tv-esbate-topo flex-1[^"]*"/.test(APP));
-/* `py-6` são os 24px que fazem o esbatimento cobrir SÓ enchimento em
+/* `py-6` eram os 24px que fazem o esbatimento cobrir SÓ enchimento em
    scrollTop 0 — é o que o torna grátis. Tirá-lo é o defeito, não uma
-   limpeza, e por isso ele é lei e não estilo. */
-t("e o py-6 fica, que é o que faz a peça custar zero px",
-  /className="tv-scroll tv-esbate-topo[^"]*py-6[^"]*"/.test(APP));
+   limpeza, e por isso ele é lei e não estilo.
+   V5 MOVEU A ASSERÇÃO, NÃO A LEI: o enchimento da página passou a ser o do
+   `parchment-body` da pessoa (`129:15`), em tabela — a classe `tv-pagina`
+   lê `PAGINA.cima` (28). O que a régua prende agora é a mesma conta dita
+   por nome: o enchimento de cima nunca desce da altura do esbatimento. */
+{ const E = await import(S + "estilo.js");
+  t("e a página tem o enchimento que faz a peça custar zero px (PAGINA.cima ≥ ESBATIMENTO.altura)",
+    /className="tv-scroll tv-esbate-topo[^"]*tv-pagina[^"]*"/.test(APP) && E.PAGINA.cima >= E.ESBATIMENTO.altura); }
 t("não se criou camada nenhuma por cima da prosa (uma máscara não intercepta clique)",
   !/tv-esbate-topo[^\n]*position: *["']?fixed/.test(APP));
 

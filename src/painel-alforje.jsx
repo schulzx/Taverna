@@ -156,6 +156,34 @@ export function Alforje({
   const inicioYRef = React.useRef(0);
   const conteudoRef = React.useRef(null);
 
+  /* V5 · A ALTURA DO CABEÇALHO, MEDIDA (conserto da prova do `jogo`,
+     `v5-jogo.md` §8.4). O cartão que o toque num companheiro pede para abaixo
+     do cabeçalho preso (`FOCO_NA_GAVETA`, estilo.js) lê esta medida em vez de
+     uma soma escrita à mão, que deixava uma tira de ~8 px do cartão de cima
+     debaixo do título. A medida vai para `--tv-cabecalho-da-gaveta` no
+     contentor, que é antepassado do cartão; um `ResizeObserver` a refaz
+     quando a letra ou a largura mudam. Nunca derruba a gaveta: sem medida,
+     vale a reserva da tabela. */
+  const observadorDoCabecalhoRef = React.useRef(null);
+  const medirCabecalho = React.useCallback((el) => {
+    try {
+      if (observadorDoCabecalhoRef.current) { observadorDoCabecalhoRef.current.disconnect(); observadorDoCabecalhoRef.current = null; }
+      if (!el) return;
+      const pai = el.parentElement;
+      const medir = () => {
+        try { if (pai) pai.style.setProperty("--tv-cabecalho-da-gaveta", Math.round(el.getBoundingClientRect().height) + "px"); }
+        catch (e) { console.warn("[Alforje] medir o cabeçalho", e); }
+      };
+      medir();
+      if (typeof ResizeObserver === "function") {
+        const ro = new ResizeObserver(medir);
+        ro.observe(el);
+        observadorDoCabecalhoRef.current = ro;
+      }
+    } catch (e) { console.warn("[Alforje] medir o cabeçalho", e); }
+  }, []);
+  React.useEffect(() => () => { try { if (observadorDoCabecalhoRef.current) observadorDoCabecalhoRef.current.disconnect(); } catch (e) { console.warn("[Alforje] medir o cabeçalho (desmontar)", e); } }, []);
+
   React.useEffect(() => {
     if (!arrastando) return;
     const mover = (e) => {
@@ -300,9 +328,16 @@ export function Alforje({
         {/* o cabeçalho — título + Fechar, nos dois tamanhos de tela. A
             pega (acima) já cobre o gesto de descer nesta região; o
             cabeçalho em si não duplica o listener para não competir com
-            o toque no título ou no botão de fechar. */}
-        <div className="flex items-center justify-between shrink-0 px-4 md:px-5 md:pt-5"
-          style={{ minHeight: ALVOS.chamado }}>
+            o toque no título ou no botão de fechar.
+
+            V4d · NA MESA ELE FICA COLADO AO TOPO ao rolar (`md:sticky`): na
+            larga a gaveta rola inteira, e o toque num companheiro (V4) rolava
+            o cartão dele até o topo — o título e o ✕ saíam de vista. No
+            telefone nada muda (lá só o conteúdo rola, entre o cabeçalho e a
+            fita). O cartão pedido para abaixo dele por `scroll-margin-top`
+            (`FOCO_NA_GAVETA`, no `App.jsx`), com a altura medida aqui. */}
+        <div className="flex items-center justify-between shrink-0 px-4 md:px-5 md:pt-5 md:sticky md:top-0 md:z-10"
+          style={{ minHeight: ALVOS.chamado, background: T.panel }} ref={medirCabecalho}>
           <h2 id={tituloId} className="tv-display text-xl md:text-2xl" style={{ color: T.ink }}>{titulo}</h2>
           <button type="button" onClick={aoFechar} aria-label="Fechar" className="tv-mono flex items-center justify-center"
             style={{ minWidth: ALVOS.piso, minHeight: ALVOS.piso, color: T.inkDim, fontSize: 18, background: "transparent", border: "none" }}>

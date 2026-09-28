@@ -218,7 +218,10 @@ t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outli
    do alforje salta) e `scrollMarginTop: ESBATIMENTO.altura` (para o salto não a
    deixar debaixo do esbatido de cima). O que a régua prende é a COLUNA —
    `tv-coluna` na fala do Mestre —, e ela tolera atributos depois da classe. */
-t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*<Voz quem="mestre"/.test(APP));
+/* V5: a resposta do Mestre começa pela RUNA com o botão de ouvir na ponta
+   (o `jogo`, V5 §4), e não por `O MESTRE`. A coluna é a mesma; o que muda é
+   o primeiro filho dela. */
+t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir /.test(APP));
 /* mede o CÓDIGO e não a prosa: o comentário que explica por que as
    percentagens saíram cita-as, e um regex cego sobre o arquivo inteiro
    acusaria o próprio motivo de ser o defeito */
@@ -226,10 +229,18 @@ const classes = (APP.match(/className="[^"]*"/g) || []).join(" ");
 t("e não voltaram as percentagens que partiam os dois aparelhos",
   !/max-w-\[95%\]/.test(classes) && !/max-w-\[85%\]/.test(classes)
   && !/md:max-w-\[82%\]/.test(classes) && !/md:max-w-\[70%\]/.test(classes));
-t("a prosa nasce em `TIPOS.prosa`", /fontSize: TIPOS\.prosa, color: T\.ink/.test(APP) && TIPOS.prosa === 17);
-t("`A voz` entrou nos DOIS sítios onde o cabeçalho estava à mão",
-  (APP.match(/<Voz quem=/g) || []).length >= 3,
-  "são três usos: o timbre da página, a prosa do Mestre e a fala do jogador");
+/* V5: a prosa passou para a peça `Prosa` (ui.jsx) — parágrafos a 16, como o
+   nó da pessoa. O tamanho continua `TIPOS.prosa`; a régua o lê onde ele mora. */
+{ const UI = readFileSync(new URL("../src/ui.jsx", import.meta.url), "utf8");
+  t("a prosa nasce em `TIPOS.prosa`", /const normal = \{ fontSize: TIPOS\.prosa, lineHeight: PAGINA\.entrelinha/.test(UI)
+    && /<Prosa texto=\{m\.texto\}/.test(APP) && TIPOS.prosa === 17); }
+/* V5: eram três usos de `A voz` — o timbre no topo da página, a prosa do Mestre
+   e a fala do jogador. O do topo DESCEU para onde a resposta vai nascer (é o
+   mesmo, esperando), e o da prosa virou a runa. Ficam dois, e os dois
+   continuam a ser a peça, nunca um cabeçalho à mão. */
+t("`A voz` continua sendo a peça nos dois lugares onde ela ainda fala",
+  (APP.match(/<Voz quem=/g) || []).length >= 2 && /<Voz quem="mestre" voz="preparando" \/>/.test(APP) && /<Voz quem="voce"/.test(APP),
+  "são dois usos: a espera do Mestre (onde a resposta nasce) e a fala do jogador");
 t("e o botão de ouvir deixou de medir 22", !/width: 22, height: 22, fontSize: 12/.test(APP));
 t("`A soleira` está montada com `A oferta` dentro", /<Soleira ofertas=\{vivas\.map\(\(o\) => \(/.test(APP) && /<Oferta key=\{o\.id\}/.test(APP));
 t("a montagem da lista tem nome e está em `try/catch`",

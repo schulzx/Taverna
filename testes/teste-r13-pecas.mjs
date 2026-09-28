@@ -295,7 +295,10 @@ sec("8. o contrato de assinatura das peças (o App chama por estes nomes)");
        o `oficial` escreveu as chamadas dele no mesmo turno. `janela` é o
        QUARTO campo de `A oferta` e é OPCIONAL: sem ela a peça é a de
        ontem, byte a byte. */
-    ["Oferta", /export function Oferta\(\{ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", janela, aoClicar \}\)/],
+    /* V5: a oferta ganhou `moldura = "caixa"` no FIM — `aberta` é a oferta dentro do
+       pé da página, sem a caixa ciano. Os campos de antes ficam na mesma ordem e
+       com os mesmos padrões: as chamadas vivas não mudam uma letra. */
+    ["Oferta", /export function Oferta\(\{ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", janela, aoClicar, moldura = "caixa" \}\)/],
     ["Dobra", /export function Dobra\(\{ quantos = 0, singular = "oferta", plural = "ofertas", estado = "dobrada", aoAlternar \}\)/],
   ];
   /* R15 — O TETO DE CAMPOS É LEI, E É VARRÍVEL. `SOLEIRA.camposDaOferta`

@@ -12,10 +12,10 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
-import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta } from "./glifos.js";
+import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase } from "./glifos.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -407,20 +407,10 @@ export function IconeLosango({ tamanho = 12, cor = T.violetSoft }) {
    (`ui.jsx`, mais acima) precisar de um ícone de fala, é uma decisão do
    `desenho` desenhar um de novo — não ressuscitar este por economia. */
 
-/* O ponto do "MESTRE ATIVO": mesma ideia do ponto do menu, cor da casa. */
-export function PontoMestre({ tamanho = 16, cor = T.amber }) {
-  const id = React.useId();
-  return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 16 16" fill="none">
-      <defs>
-        <filter id={id} x="0" y="0" width="16" height="16" filterUnits="userSpaceOnUse">
-          <feGaussianBlur stdDeviation="1.5" />
-        </filter>
-      </defs>
-      <circle cx="8" cy="8" r="4" fill={cor} filter={`url(#${id})`} />
-    </svg>
-  );
-}
+/* V5 · O PONTO DO "MESTRE ATIVO" SE APOSENTOU. Era a marca de `O MESTRE` no
+   topo da página e na linha da espera; V5 tirou-lhe os dois lugares — a runa
+   (com o botão de ouvir na ponta) marca onde uma resposta começa, e o dado que
+   rola marca a espera. Confirmado zero chamadores em `src/` antes de apagar. */
 
 /* ---------------- OS ÍCONES DO COMBATE (v9.172) ----------------
    De `mesa-combate-v2`. Todos em caixa de 14, que é o tamanho que o
@@ -519,9 +509,96 @@ export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
    36) com a cor de `T` por nome; os traços são `amber` a `alfaDoFio`.
    Decorativa por inteiro: `aria-hidden`, e em `forced-colors` os traços
    somem com o fundo — não carregam sentido nenhum. */
-export function DivisoriaRunica({ respiro = RUNA.respiro }) {
+/* ---------------- V5 · O BOTÃO DE OUVIR ----------------
+   Vivia dentro de `A voz`, ao lado de `O MESTRE`; com a palavra fora da
+   página (o `jogo`, V5 §4: *a página é dele*), passa para a ponta da runa
+   que abre cada resposta. O alvo é o de R2 (`ALVOS.piso`), sem fundo nem
+   borda — não paga um pixel por ser maior que o desenho. O estado se diz no
+   glifo (ouvir · `…` preparando · pausa lendo) e no NOME: o `a ler…` que a
+   voz escrevia ao lado passa a ser o nome acessível do botão. */
+export function BotaoDeOuvir({ estado = "muda", aoOuvir }) {
+  const nome = estado === "lendo" ? "Parar a leitura" : estado === "preparando" ? "Preparando a leitura" : "Ouvir o Mestre";
+  const ativo = estado !== "muda";
+  return (
+    <button type="button" onClick={aoOuvir} aria-label={nome} title={nome}
+      className="tv-anel-foco shrink-0 rounded-full flex items-center justify-center"
+      style={{ width: ALVOS.piso, height: ALVOS.piso, background: "transparent", border: "none", cursor: "pointer", color: ativo ? T.amber : T.inkMeio }}>
+      {estado === "preparando"
+        ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, lineHeight: 1 }}>…</span>
+        : <Glifo nome={estado === "lendo" ? "pausa" : "ouvir"} tamanho={RUNA.glifoDeOuvir} />}
+    </button>
+  );
+}
+
+/* ---------------- V5 · A PROSA — os parágrafos do nó, e a cerimônia ----------------
+   A resposta do Mestre deixa de ser UM bloco `pre-wrap` com linhas vazias a
+   separar parágrafos (27,6 px cada) e passa a ser parágrafos a 16, como o
+   `parchment-body` da pessoa (`129:15`). Uma quebra simples continua quebra
+   (`pre-wrap` dentro do parágrafo) — o Mestre às vezes põe falas assim.
+
+   O EIXO `abertura` (`nenhuma` · `cerimonia`): na cerimônia a PRIMEIRA
+   FRASE (`primeiraFrase`, glifos.js) vai na letra de `ABERTURA` — a de
+   `display`, ou a de `titulo` se passar do teto de caracteres — num
+   parágrafo seu, e o resto do primeiro parágrafo segue na prosa de sempre.
+   Só nos dois turnos que o `jogo` escolheu (a chegada a um lugar novo, a
+   primeira resposta da sessão), e só enquanto esse turno é o último: nos
+   outros custaria dezenas de px por turno. Não anima — a cerimônia é o
+   tamanho, não o movimento. Quem decide o turno é o `App.jsx`; a peça só
+   desenha. */
+export function Prosa({ texto = "", abertura = "nenhuma" }) {
+  const partes = partesDaProsa(texto);
+  const normal = { fontSize: TIPOS.prosa, lineHeight: PAGINA.entrelinha, margin: 0 };
+  if (abertura === "cerimonia" && partes.length) {
+    const { frase, resto } = primeiraFrase(partes[0]);
+    const longa = frase.length > ABERTURA.tetoDeCaracteres;
+    partes.splice(0, 1, ...(resto ? [resto] : []));
+    return (
+      <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.ink }}>
+        <p className="whitespace-pre-wrap" data-abertura="cerimonia"
+          style={{ fontSize: longa ? ABERTURA.letraLonga : ABERTURA.letra, lineHeight: ABERTURA.entrelinha, fontWeight: ABERTURA.peso, margin: 0 }}>{frase}</p>
+        {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
+      </div>
+    );
+  }
+  return (
+    <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.ink }}>
+      {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
+    </div>
+  );
+}
+
+/* ---------------- V5 · O PÉ DA PÁGINA — onde a cena oferece ----------------
+   O terceiro andar do cartão da pessoa (`126:54`): cabeçalho fixo, corpo que
+   rola, e o pé — que na v3 era decorativo (`129:32`, e esse já mora no fim do
+   registro desde V5a) e aqui é o lugar da SOLEIRA, DENTRO da borda do cartão e
+   FORA do que rola (a razão de R15 continua: a oferta vive turnos, a mensagem
+   que a criou sobe). A runa por cima é a do fim do registro; o pé leva só um fio
+   de 1 px por dentro (uma sombra, sem leiaute) para a prosa que rola não
+   entrar por baixo da oferta sem borda. SEM OFERTA NÃO HÁ PÉ — 0 px. */
+export function PeDaPagina({ children }) {
+  if (!children) return null;
+  return (
+    <div className="tv-pe-da-pagina shrink-0 flex flex-col" style={{ background: T.pagina, boxShadow: "inset 0 1px 0 " + T.line }}>
+      {children}
+    </div>
+  );
+}
+
+/* V5 · A PONTA: a runa que ABRE uma resposta do Mestre leva, na ponta direita,
+   o botão de ouvir (o alvo de 48 de R2). A runa continua decorativa — é a
+   ponta que é controle, e por isso o `aria-hidden` passa da linha inteira
+   para os traços e os pontos. Sem ponta, a peça é byte a byte a de V5a. */
+export function DivisoriaRunica({ respiro = RUNA.respiro, ponta = null }) {
   const fio = alfa(T.amber, RUNA.alfaDoFio);
   const largura = RUNA.passo * (RUNA.pontos.length - 1) + RUNA.ponto;
+  if (ponta) {
+    return (
+      <div className="flex items-center w-full" style={{ gap: RUNA.espaco, paddingTop: respiro, paddingBottom: respiro }}>
+        <DivisoriaRunica respiro={0} />
+        <span className="shrink-0 inline-flex">{ponta}</span>
+      </div>
+    );
+  }
   return (
     <div className="flex items-center w-full" aria-hidden="true"
       style={{ gap: RUNA.espaco, paddingTop: respiro, paddingBottom: respiro }}>
@@ -1129,7 +1206,7 @@ export function CampoDeBrasas({ className = "" }) {
    QUEM CEDE QUANDO NÃO COUBER É O RETORNO, e ele é o único que pode: o
    preço é um número que não encolhe sem mentir, a janela é uma contagem
    que não encolhe sem mentir. **O retorno é prosa, e prosa trunca.** */
-export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", janela, aoClicar }) {
+export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", janela, aoClicar, moldura = "caixa" }) {
   const impedida = estado === "impedida";
   const tomada = estado === "tomada";
   const corDoTom = tom === "semVolta" ? T.danger : tom === "preco" ? T.amber : T.mundo;
@@ -1213,12 +1290,21 @@ export function Oferta({ verbo, preco, retorno, quem, onde, tom = "convite", est
      verbo CONTINUA por inteiro no DOM (leitor de tela lê tudo, e agora
      também o nome acessível do botão — ver `ariaLabel` em `Botao`,
      acima), só a TINTA é que para em duas linhas com "…" no fim. */
+  /* V5 · A MOLDURA. `caixa` é a de sempre: a borda na cor do tom, o fundo do
+     painel, 12 de cada lado. `aberta` é a oferta DENTRO do pé da página
+     (`PeDaPagina`): sem borda, sem fundo, sem enchimento lateral — a moldura
+     é a do cartão, e a oferta lê-se como o que a cena põe na mesa, não como
+     um cartaz pregado por baixo. O TOM NÃO SE PERDE: é a cor do preço, que a
+     peça já escrevia; o que sai é a segunda vez que ele era dito. E a largura
+     que a caixa comia volta ao verbo — a 375 o botão passa de 314 a 319 px, e
+     um verbo que cabia continua cabendo numa linha. */
+  const aberta = moldura === "aberta";
   return (
-    <div className={`rounded-xl flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 px-3 py-1 md:py-0.5 ${chegada === "agora" ? "tv-slide" : ""}`}
+    <div className={`rounded-xl flex flex-wrap md:flex-nowrap items-center gap-2 md:gap-3 ${aberta ? "" : "px-3 "}py-1 md:py-0.5 ${chegada === "agora" ? "tv-slide" : ""}`}
       style={{
         minHeight: ALVOS.piso,
-        background: T.panel,
-        border: `1px solid ${tomada ? T.lineStrong : corDoTom}`,
+        background: aberta ? "transparent" : T.panel,
+        border: aberta ? "none" : `1px solid ${tomada ? T.lineStrong : corDoTom}`,
         opacity: impedida ? 0.55 : 1,
       }}>
       <Botao onClick={impedida || tomada ? undefined : aoClicar} desativado={impedida || tomada} corpo primario ariaLabel={verbo}>
@@ -1696,7 +1782,7 @@ export function Soleira({ ofertas = [] }) {
    própria suíte ao rodar esta correção. */
 export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeOuvir }) {
   const ROTULO_DE_QUEM = { mestre: "O Mestre", voce: "Você", mundo: "O mundo" };
-  const ROTULO_DA_VOZ = { lendo: "a ler…", preparando: "a preparar…" };
+  const ROTULO_DA_VOZ = { lendo: "lendo…", preparando: "preparando…" };
   const corDoNome = quem === "mestre" ? T.amberSoft : quem === "mundo" ? T.mundoSoft : T.ink;
   /* `resposta` só é lido em Quem=Você — nas outras vozes o eixo não existe. */
   const espera = quem === "voce" && resposta === "espera-se";
@@ -1716,7 +1802,7 @@ export function Voz({ quem = "mestre", voz = "muda", resposta, aoOuvir, glifoDeO
             <span className="tv-mono truncate" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>{ROTULO_DA_VOZ[voz]}</span>
           )}
           {parado && (
-            <span className="tv-mono truncate" style={{ fontSize: TIPOS.rotulo, color: T.amberSoft }}>o Mestre está a tecer</span>
+            <span className="tv-mono truncate" style={{ fontSize: TIPOS.rotulo, color: T.amberSoft }}>o Mestre está tecendo</span>
           )}
         </div>
         {aoOuvir && (

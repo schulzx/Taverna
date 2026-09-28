@@ -160,7 +160,9 @@ sec("4. a peça e a fiação");
   t("a runa do cabeçalho e a do fim da página são a mesma peça", /<DivisoriaRunica respiro=\{0\} \/>/.test(cab) && /<DivisoriaRunica respiro=\{0\} \/>/.test(fim));
   t("e a runa desenha-se de RUNA, com os pontos de T por nome", /RUNA\.pontos\.map/.test(runa) && /fill=\{T\[nome\]\}/.test(runa) && /alfa\(T\.amber, RUNA\.alfaDoFio\)/.test(runa));
   t("a runa solta guarda o ar de sempre (as oito da criação do mundo não mudam de ritmo)",
-    /export function DivisoriaRunica\(\{ respiro = RUNA\.respiro \}\)/.test(UI) && RUNA.respiro === 8);
+    /* V5: a assinatura ganhou `ponta = null` (o botão de ouvir na runa que abre
+       uma resposta). Sem ponta, a peça é a de V5a — o respiro de sempre. */
+    /export function DivisoriaRunica\(\{ respiro = RUNA\.respiro, ponta = null \}\)/.test(UI) && RUNA.respiro === 8);
   t("nenhuma runa à mão sobrou no App (a gema em losango de v9.173)", !/rotate\(45deg\)", border: `1px solid \$\{T\.amber\}`/.test(APP + UI));
   /* O FIM DA PÁGINA CUSTA 0 px: tem a altura do marcador que o fimRef já era (8). */
   t("o fim da página tem a altura do marcador que substituiu (8 px = RUNA.ponto)", /style=\{\{ height: RUNA\.ponto, gap: RUNA\.espaco \}\}/.test(fim) && RUNA.ponto === 8);

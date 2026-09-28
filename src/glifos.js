@@ -461,3 +461,42 @@ export function repartirACinta(m) {
   for (const [k, r, g] of tentativas) if (cabe(k, r, g)) return { aneis: k, rotulos: r, glifo: g, disco: n - k };
   return { aneis: 0, rotulos: 0, glifo: false, disco: n };
 }
+
+/* V5 · O GLIFO DE CADA SALA — o painel da masmorra deixa de dizer o LUGAR (o
+   cabeçalho da página já o diz, a 69 px dali, e as tochas com ele) e passa a
+   dizer a SALA: `[glifo] TESOURO · POR RESOLVER` (o `jogo`, V5 §5). Os tipos
+   são os de `masmorras.js` (`ROTULO_SALA`); os glifos são todos da família
+   que já existe — nenhum nasce para isto. Um tipo novo sem linha cai no
+   glifo da masmorra, que é uma sala legítima e não um buraco. */
+export const GLIFO_DA_SALA = {
+  entrada: "masmorra",
+  combate: "espadas",
+  armadilha: "aviso",
+  tesouro: "bolsa",
+  enigma: "desconhecido",
+  santuario: "descanso",   /* onde se recupera o fôlego; a tocha fica para a luz */
+  chave: "escudo",         /* a sala do guardião da chave (o rótulo é Guardião) */
+  chefe: "coroa",
+};
+
+/* V5 · OS PARÁGRAFOS DA PROSA — a resposta do Mestre partida onde há uma linha
+   em branco (uma quebra simples continua dentro do parágrafo: o Mestre às
+   vezes põe falas assim). É o que deixa a página separar parágrafos a 16, como
+   o nó, em vez de uma linha vazia de 27,6. Vazio e lixo: nenhum parágrafo. */
+export function partesDaProsa(texto) {
+  return String(texto == null ? "" : texto)
+    .split(/\n[ \t]*\n+/)
+    .map((p) => p.replace(/^\n+|\s+$/g, ""))
+    .filter((p) => p.trim());
+}
+
+/* V5 · A PRIMEIRA FRASE — o que a abertura de cerimônia põe em letra grande.
+   Acaba no primeiro `.`, `!`, `?` ou `…` seguido de espaço ou do fim (as aspas
+   e parênteses que fecham vão com ela). Sem pontuação, a frase é o parágrafo
+   inteiro — e a peça cai para a letra longa se passar do teto. */
+export function primeiraFrase(paragrafo) {
+  const s = String(paragrafo == null ? "" : paragrafo);
+  const m = s.match(/^[\s\S]*?[.!?…]+["”»')\]]*(?=\s|$)/);
+  if (!m) return { frase: s.trim(), resto: "" };
+  return { frase: m[0].trim(), resto: s.slice(m[0].length).trim() };
+}

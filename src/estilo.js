@@ -290,6 +290,7 @@ export const RUNA = {
   alfaDoFio: 0.2,   /* os dois traços: `amber` a 0,2 */
   espessura: 1,     /* os dois traços: 1 px (o `h-px` do nó) */
   pontos: ["amber", "mundo", "rosa"],  /* por NOME de T — a luz, o mundo, a tua mão */
+  glifoDeOuvir: 14,     /* V5 · o glifo do botão de ouvir, na ponta da runa que abre uma resposta (o de R2) */
   /* O AR DA RUNA SOLTA: quando ela separa seções (as oito da criação do
      mundo), leva 8 px acima e abaixo — o mesmo `py-2` da divisória de
      v9.173, para aquelas telas não mudarem de ritmo. Dentro do cabeçalho
@@ -789,6 +790,76 @@ export const ESBATIMENTO = {
    as separa é matiz + contorno, não luminância: o piso passa de razão
    de luz a diferença perceptível.
    ============================================================ */
+/* ============================================================
+   V5 · A PÁGINA — o `parchment-body` da pessoa (`129:15`), em tabela.
+
+   O NÓ: enchimento 28 dos quatro lados, 16 entre parágrafos, 24 entre
+   blocos (o bloco de prosa, a runa, o bloco seguinte). A casa os leva
+   como estão NA MESA. No TELEFONE os lados ficam em 20 — o Figma não
+   desenhou telefone, e 28 comeria 16 px à coluna de 375 (−2 caracteres
+   por linha numa medida que já está abaixo do piso de 45); em cima e em
+   baixo, 28 nos dois.
+
+   O ENCHIMENTO DE CIMA NÃO PODE DESCER DE `ESBATIMENTO.altura` (24): é
+   por ser ≥ que a máscara do topo cobre só enchimento em `scrollTop = 0` e
+   a primeira linha nasce à luz inteira (a conta de R15). 28 ≥ 24 — e a
+   suíte o prende.
+
+   ENTRE PARÁGRAFOS, 16 E NÃO UMA LINHA EM BRANCO: até aqui a prosa era um
+   bloco `pre-wrap` e o parágrafo se separava com uma linha vazia de 27,6
+   (a entrelinha). O nó os separa com 16 — cada parágrafo devolve 11,6 px
+   à página, e a resposta típica do Mestre tem três ou quatro.
+   ============================================================ */
+export const PAGINA = {
+  cima: 28, baixo: 28,
+  lado: 28,             /* na mesa (o nó) */
+  ladoTelefone: 20,     /* no telefone — ver acima */
+  entreParagrafos: 16,
+  entreBlocos: 24,
+  entrelinha: 1.625,    /* a da prosa de hoje (o `leading-relaxed`), agora dita */
+};
+
+/* V5 · A ABERTURA DE CERIMÔNIA — a primeira FRASE de uma resposta, só nos dois
+   turnos que o `jogo` escolheu (`mente/v5-jogo.md` §3): a chegada a um lugar
+   novo e a primeira resposta da sessão. No nó é o primeiro parágrafo inteiro
+   em Cormorant SemiBold 28/1,35; o parágrafo do Mestre tem 2–3× o da v3, e em
+   28 custaria meia página no telefone — por isso é a FRASE, e acima de
+   `tetoDeCaracteres` a cerimônia cai para `letraLonga` (o `jogo` mediu: uma
+   frase de 110 car. a 375 chega a ~5 linhas, ~190 px). O peso é 500, o mais
+   pesado que a folha carrega da Spectral (um 600 seria negrito falso,
+   desenhado pelo navegador); a família é V2. */
+export const ABERTURA = {
+  letra: 28,              /* TIPOS.display — a cerimônia, e só ela */
+  letraLonga: 20,         /* TIPOS.titulo — a frase comprida */
+  tetoDeCaracteres: 110,
+  entrelinha: 1.35,       /* a do nó */
+  peso: 500,
+  /* APAGADA ATÉ V5e — "a resposta chega pelo começo". A prova jogada
+     (`mente/v5-jogo.md` §8.1) mediu que, com a vista presa ao fim, a cerimônia
+     nasce fora de vista em 5 de 5 respostas reais e ainda empurra o fim da
+     resposta 53–64 px para baixo. A peça e as medidas ficam; o `App.jsx` só a
+     marca quando isto for verdadeiro, e religá-la é trocar este valor. */
+  acesa: false,
+};
+
+/* V5 · O PÉ DO CARTÃO — onde a soleira passa a morar: DENTRO da borda do
+   cartão, fora do que rola. 0 px sem oferta. A RUNA POR CIMA dela é a do fim
+   do registro (`FimDaPagina`, V5a), que já é o último filho do que rola — a
+   ordem de leitura do `jogo` (§2): a última frase, a runa, a oferta. Uma
+   segunda runa no pé ficaria a um palmo da primeira.
+
+   E O PÉ SE PAGA COM O QUE A CAIXA DE HOJE CUSTAVA (o critério do `jogo`: o
+   topo do campo não se mexe, a área que rola não encolhe). A caixa de hoje
+   custa 8 px por baixo da oferta e os 2 da borda ciano dela; dentro do pé a
+   oferta é `moldura="aberta"` (sem borda), e os 10 px repartem-se em 6 em
+   cima (o botão fica a 10 do fio, com o `py-1` da peça) e 4 embaixo (a
+   linha de quem/onde fica a 8 da borda do cartão). Medido: 94 = 94 px a 375
+   com uma oferta, 62 = 62 a 1280. O fio que separa o pé do que rola é uma
+   sombra de 1 px por dentro, sem leiaute. Os lados: 24 na mesa (o do
+   `parchment-footer`), 12 no telefone (o enchimento da cinta) — e sem a
+   caixa o verbo GANHA largura: 319 px a 375, contra 314 hoje. */
+export const PE_DA_PAGINA = { cima: 6, baixo: 4, lado: 24, ladoTelefone: 12 };
+
 export const AMBIENTE = {
   direcao: "to right",
   paradas: [
@@ -962,7 +1033,21 @@ export const ALFORJE = {
   espacoEntreAbas: 2,
   larguraParaSeisRotulos: 339,                  /* 315 medidos (6 rótulos, JetBrains Mono Bold 12) + 2 × 12 de margem — abaixo disto, seis abas viram só glifo */
   tira: { margemV: 4, margemH: 8, raio: 8 },    /* `A faixa do fundo` · Espreita: a tira da página, 359 × 40 a 375px (R21 §8) */
+  /* V4d · na mesa o cabeçalho da gaveta (título e ✕) fica colado ao topo ao
+     rolar, e o cartão que o toque num companheiro pede para abaixo dele: 20 do
+     `md:pt-5` + 56 de `ALVOS.chamado` + 16 de respiro. */
+  focoAbaixoDoCabecalho: 92,
+  /* V5 (conserto da prova do `jogo`, `v5-jogo.md` §8.4) · a soma de cima
+     supunha um cabeçalho de 76, e o medido é maior: sobrava uma tira de ~8 px
+     do cartão de cima debaixo do título preso. O foco passa a sair da altura
+     MEDIDA do cabeçalho (a `Alforje` a escreve em `--tv-cabecalho-da-gaveta`)
+     mais este respiro; os 92 ficam só como reserva, antes da primeira medida. */
+  respiroDoFoco: 16,
 };
+
+/* O `scroll-margin-top` do cartão pedido na gaveta: a altura medida do
+   cabeçalho preso + `respiroDoFoco`; sem medida, a soma de V4d. */
+export const FOCO_NA_GAVETA = `calc(var(--tv-cabecalho-da-gaveta, ${ALFORJE.focoAbaixoDoCabecalho - ALFORJE.respiroDoFoco}px) + ${ALFORJE.respiroDoFoco}px)`;
 
 /* O VÉU — três pesos e dois tempos que já eram lei em "abrir e fechar um
    painel" (`formas.md`) e nunca tinham chegado ao código: o alforje é o
@@ -1680,6 +1765,21 @@ export const SUPERFICIES_CSS = `
 }
 @media (forced-colors: active) {
   .tv-esbate-topo { -webkit-mask-image: none; mask-image: none; }
+}
+/* V5 · A PAGINA (o parchment-body do no 129:15): o enchimento e o ritmo
+   entre blocos saem de PAGINA. No telefone os lados sao mais estreitos que
+   o no, de proposito (ver a tabela). */
+.tv-pagina {
+  padding: ${PAGINA.cima}px ${PAGINA.ladoTelefone}px ${PAGINA.baixo}px;
+}
+.tv-pagina > * + * { margin-top: ${PAGINA.entreBlocos}px; }
+@media (min-width: 768px) {
+  .tv-pagina { padding-inline: ${PAGINA.lado}px; }
+}
+/* V5 · o pe do cartao: os lados da mesa sao os do no, os do telefone os da cinta */
+.tv-pe-da-pagina { padding: ${PE_DA_PAGINA.cima}px ${PE_DA_PAGINA.ladoTelefone}px ${PE_DA_PAGINA.baixo}px; }
+@media (min-width: 768px) {
+  .tv-pe-da-pagina { padding-inline: ${PE_DA_PAGINA.lado}px; }
 }
 
 /* O ROTULO do sinal de guardado vive na folga que o enchimento de 12 da

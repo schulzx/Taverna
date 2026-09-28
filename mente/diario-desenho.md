@@ -19,6 +19,74 @@ Formato:
 
 ---
 
+## 28/09 20:30 · v9.300 · **V5 — a página: lê-se como um livro, não como uma conversa com etiquetas** · commit (no bloco seguinte)
+
+- **estado inicial:** trava tomada às 20:47; HEAD `1bb8f4d`; nenhum ciclo do
+  sistema. **Pedido do coordenador, por causa da pessoa:** ela lê a v3 como
+  *"exatamente igual"* — **cada desvio do Figma leva a razão no próprio quadro**,
+  um por um, para poder recusar um sem desfazer os outros; e a dívida de V5a (o
+  lugar repetido na masmorra) paga-se aqui.
+- **jogo** (`mente/v5-jogo.md`, retomado — o mesmo agente de V5a e da prova de
+  V4): nove desvios D1–D9, cada um com o que custa recusá-lo; a soleira no pé,
+  dentro da borda e fora do que rola (a oferta dura vários turnos); **a abertura
+  grande só na primeira frase** (o parágrafo do Mestre tem 336–481 caracteres
+  contra os 170 da v3: a 28 px custaria meia página); **V5b fechou dentro de
+  V5** (o nome do lugar grande repetiria o cabeçalho a 80 px); o painel da sala
+  diz a sala, não o lugar.
+- **desenho** (`formas.md` §V5, `mente/v5-desenho.md`, scripts LF/CRLF provados
+  em `1bb8f4d`): D10–D17 medidos (a oferta perde a caixa ciano dentro do pé —
+  com ela o verbo quebrava a 375 e a prosa perdia 21 px; ofertas empilhadas —
+  lado a lado cada coluna teria 544 px contra ~600; a espera mantém o dado que
+  rola e o `PontoMestre` aposenta-se; a voz em pt-BR; V4d junto). **Os D1–D17
+  estão escritos e numerados no quadro `144:2` do arquivo da pessoa**, com o
+  `126:5` clonado ao lado da página a 1280×912. Biblioteca: página `V5`
+  (`244:320`), seis peças.
+- **o ciclo caiu no limite de uso da API** (25/09, ~22:05), com a prova do `jogo` já escrita (§8) e o `oficial` a começar os dois consertos. **Nada se perdeu:** o trabalho ficou todo na árvore, e ninguém lhe tocou em três dias (HEAD continuou `1bb8f4d`). **Retomado a 28/09 às 20:05**: a trava (20:47) e o bastão (21:51), com mais de 90 minutos, foram renovados em nome do mesmo ciclo; build e suíte conferidos verdes com o que estava no disco (216/216 · 15/15) antes de continuar; o mesmo `oficial` retomado para os consertos.
+- **oficial** (bastão tomado às 21:51 de 25/09, renovado às 20:05 de 28/09): scripts 1-2-3-5-6; **`App.jsx` 24 257 →
+  24 315 linhas**, todas as mudanças de contagem depois da 22 489 — nenhum
+  endereço do `check-acoes-do-jogador` se moveu.
+- **a prova jogada** (antes `1bb8f4d`, depois a árvore, 375 e 1280, `/api`
+  cortado, a cerimónia num harness com as peças reais, **custo 0**): **sobe com
+  conserto.**
+  - **o que passou:** topo do campo imóvel (735/706) em todas as telas; o pé
+    custa exatamente o que a caixa custava (94 · 150 · 62, e 124 → 122 com
+    duas); **zero `O MESTRE`** (eram 5 numa noite de 4 respostas); a espera à
+    vista, onde a resposta vai nascer (antes a **1 454 px** de quem está no
+    fim); o lugar e as tochas uma vez cada na masmorra (eram duas); linhas de
+    prosa rolado ao topo **+1 a +2** em todas as telas; ao lado do `126:5`, cada
+    diferença está entre D1 e D17.
+  - **o que falhou, e é o achado do ciclo:** **a cerimónia nasce fora de vista
+    em 5 de 5 respostas reais** (1 137–1 880 caracteres; fica 230–1 217 px acima
+    da vista) e ainda empurra o fim da resposta 53–64 px para baixo. O defeito
+    de fundo é **anterior a V5**: no telefone o jogador cai no fim de uma
+    resposta de ~980 px e **lê primeiro as últimas 12 linhas**. A cerimónia só o
+    tornou visível. **Conserto: a cerimónia fica construída e apagada** até V5e
+    ("a resposta chega pelo começo"), que a religa.
+  - **os consertos, feitos pelo `oficial` a 28/09 e verificados vivos:** a
+    cerimónia apaga-se por tabela (`ABERTURA.acesa: false` — religar em V5e é
+    trocar um valor, e a suíte prende a chave desligada); a tira de ~8 px da
+    gaveta a 1280 some porque o foco passa a sair da **altura medida** do
+    cabeçalho preso + 16 (`FOCO_NA_GAVETA`) — o cabeçalho mede **68 px** de
+    verdade, não os 76 da soma escrita nem os ~84 do palpite; o cartão do
+    companheiro para exatamente 16 px abaixo dele. **24 315 linhas**, 216/216 ·
+    15/15, `teste-v5-pagina` 58/58. *Os consertos são os que a prova do `jogo`
+    receitou; o depois que ele jogou é este, menos uma cerimónia que ninguém via
+    e mais uma tira que deixou de se ver.*
+  - **uma tela perdeu uma linha** com a vista como abre (noite a 375, 8 → 7) —
+    os espaçamentos da v3 no fim do registo; não bloqueia, fica escrito.
+- **decisões médias:** apagar a cerimónia em vez de a subir invisível (uma peça
+  que ninguém vê e que custa o fim da resposta não é superior); V5e antes de V6
+  (é ela que dá sentido à abertura, e o defeito de ler primeiro o fim é o mais
+  caro da página); as sub-abas da gaveta que rolam para fora ficam para V7.
+- **o que ficou:** V5e (a seguinte), V5d, V5c; a grelha do cartão a 1280 difere
+  da v3 (32–1 176 contra 24–1 166; topo em 64 contra 90) por causa da cinta de
+  48 e do trilho — nota para o `144:2`, e é de V4/V7.
+- **as ambiciosas:** **V5e — a resposta chega pelo começo** (`desenho`; o
+  `jogo` recomendou-a para antes de V6) e **V5d — a página vira à chegada**
+  (`jogo`: capítulos com o nome dos lugares). Nenhuma vai à pessoa.
+
+---
+
 ## 25/09 20:50 · v9.299 · **V4 — a cinta com os anéis: o grupo aparece na tela principal** · commit `89d1150`
 
 - **estado inicial:** trava tomada às 19:00; HEAD `fd6bdb1`; nenhum ciclo do

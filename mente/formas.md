@@ -10231,3 +10231,119 @@ número do PM deixa de ser a única forma — sem uma barra, sem um píxel de le
 Conta: o rosto do herói desce de 32 para 30 (é o preço), os companheiros ficam
 iguais. Prova: o `jogo` corre os seis segundos com uma pergunta a mais (*quem ainda
 pode curar?*). Médio (cria o que não existe, não muda o fluxo).
+
+### V5 · a página (`desenho`, 25/09)
+
+*O momento é do `jogo` (`mente/v5-jogo.md`, e sigo-o em tudo o que não digo aqui);
+a composição é a da pessoa (`126:5`, o `parchment-body` `129:15`). Construção:
+`mente/v5-desenho.md` (cinco scripts por âncora, provados em duas cópias de
+`1bb8f4d` — LF e CRLF —: build limpo, **216/216 · 15/15** nas duas; `App.jsx`
+24 257 → 24 315 linhas, **todas as diferenças de número de linhas depois da linha
+22 489**, e **0** endereços de `check-acoes-do-jogador` mexidos). Figma:
+biblioteca `e5wJUzInAssoebx5npssKc`, página **`V5 · a página`** (`244:320`) — `O
+botão de ouvir` (`245:75`, *Estado* Muda · Preparando · Lendo), `A runa com ponta`
+(`245:76`), `A prosa` (`245:94`, *Abertura* Nenhuma · Cerimônia), `A oferta ·
+moldura` (`245:105`, *Moldura* Caixa · Aberta), `O pé da página` (`245:106`), `O
+título da sala` (`245:127`, *Estado* Sala · Às escuras), a coleção de variáveis
+`A página` (PAGINA · ABERTURA · PE_DA_PAGINA), e o par antes/depois do jogo vivo; no
+arquivo da pessoa, **`144:2`**: o `126:5` clonado ao lado do código a 1280 × 912,
+com **os 17 desvios numerados e a razão de cada um escrita no quadro**.*
+
+**1 · As peças (ui.jsx), e cada número sai de `PAGINA`, `ABERTURA`, `PE_DA_PAGINA`
+ou `RUNA`.**
+- **`A prosa`** — a resposta do Mestre em **parágrafos a 16** (`partesDaProsa`,
+  glifos.js: parte-se na linha em branco; a quebra simples fica), e não um bloco
+  `pre-wrap` com linhas vazias de 27,6. Spectral 17/1,625 na coluna de 65ch. O
+  eixo **Abertura** (`nenhuma` · `cerimonia`): a **primeira frase**
+  (`primeiraFrase`) num parágrafo seu, em `ABERTURA.letra` (28) peso 500 — ou
+  `letraLonga` (20) acima de 110 caracteres —, e o resto do parágrafo segue na
+  prosa. Quem escolhe o turno é o `App.jsx` (a chegada, a primeira da sessão); a
+  peça só desenha. Não anima: a cerimônia é o tamanho.
+- **`O botão de ouvir`** — sai de `A voz` para a ponta da runa. Alvo `ALVOS.piso`
+  (48) sem fundo nem borda; glifo `RUNA.glifoDeOuvir` (14) `ouvir` · `…` · `pausa`;
+  o estado diz-se no **nome acessível** (*Ouvir o Mestre · Preparando a leitura ·
+  Parar a leitura*) — o `a ler…` que se escrevia ao lado virou nome.
+- **`A runa` ganha `ponta`** — `DivisoriaRunica({ respiro, ponta = null })`. Com
+  ponta, a linha deixa de ser `aria-hidden` (os traços continuam) e leva o controle
+  à direita. Sem ponta é a de V5a, byte a byte (as oito da criação do mundo não
+  mudam de ritmo).
+- **`O pé da página`** — `PeDaPagina`: `null` sem filhos (**0 px sem oferta**);
+  fundo `pagina`, o fio de cima é **uma sombra de 1 px `line` por dentro**, sem
+  leiaute; enchimento `PE_DA_PAGINA` 6 / 24 / 4 (telefone 6 / 12 / 4).
+- **`A oferta` ganha `moldura`** (`caixa` · `aberta`), o QUINTO campo, opcional e no
+  fim da assinatura. `aberta`: sem borda, sem fundo, sem `px-3` — a moldura é a do
+  cartão (o `jogo`, §2: *a borda ciano sai*). O tom continua dito na cor do preço.
+- **A voz fala o português do jogo**: `preparando…` · `lendo…` · *o Mestre está
+  tecendo* (era `a preparar…` · `a ler…` · `a tecer`).
+- **`PontoMestre` se aposentou**: era a marca de `O MESTRE` no topo e na espera, e
+  perdeu os dois lugares. Zero chamadores antes de apagar.
+
+**2 · A fiação (App.jsx).** A região que rola é `.tv-pagina` (o `px-5 md:px-8 py-6
+space-y-4` sai): enchimento `PAGINA` 28 (lados 20 no telefone) e **24 entre
+blocos**; `PAGINA.cima ≥ ESBATIMENTO.altura` continua (a suíte prende). O `O MESTRE`
+do topo **saiu**; cada resposta começa pela runa com ponta; a espera é UMA linha no
+fim do registro — **o dado que rola** (`tv-dice`, o de sempre, com a saída dele) e
+`O MESTRE · preparando…`. A soleira mudou-se para o pé do cartão, fora do que rola
+(um invólucro `relative flex-1` à volta da região que rola, e a seta de voltar ao
+fim mora nele: nunca cobre uma oferta). O painel da masmorra diz a sala
+(`GLIFO_DA_SALA`); *Você está em* morreu; às escuras o título diz-o em `danger` e a
+linha do preço fica (de 11 para 12 px, o piso). A cerimônia: um efeito em
+`[carregando, mensagens.length]`, em `calou`, que marca a última resposta do turno
+se o lugar mudou ou se é a primeira da sessão — e **nada vai ao save**.
+**V4d**: na mesa o cabeçalho da gaveta fica `md:sticky` com fundo `panel`, e o
+cartão pedido para em `scrollMarginTop: ALFORJE.focoAbaixoDoCabecalho` (92).
+
+**3 · O que mudei do `jogo`, e porquê (os desvios D10–D17 no quadro `144:2`).**
+- **D10 · o pé sem runa própria** (o `jogo` pedia o fio e não a runa — é isso) e
+  **6 em cima / 4 embaixo**: o pé paga-se com o que a caixa de fora custava — os 8
+  de baixo e os 2 da borda da oferta. **Medido: 94 = 94 px a 375 (uma oferta), 150
+  = 150 (com a dobra), 62 = 62 a 1280, 124 → 122 com duas.**
+- **D11 · a oferta aberta**: com a caixa dentro do pé o verbo ficava com 293 px a
+  375 e quebrava (`Aceitar: Tirar Godfrey Sombravinda de lá` pede 314): a oferta ia
+  de 48 a 69 px e **a área que rola perdia 21 px** — reprovava o critério do `jogo`.
+  Sem a caixa, 319 px: **cabe, e cabe mais do que cabia**.
+- **D12 · empilhadas, não lado a lado**: a 1280 cada coluna teria 544 px e a oferta
+  pede ~600 numa linha. Medido com o lado a lado: o verbo quebrava e cada oferta
+  passava a 69 px. *Se couberem* — não cabem.
+- **D13 · Spectral 500** e não Cormorant SemiBold: 500 é o mais pesado que a folha
+  carrega (um 600 seria negrito falso); a família é V2.
+- **D14 · o dado fica na espera**: a linha de espera antiga rolava um d20
+  (`tv-dice`); trocá-lo pelo ponto estático tirava o único sinal de vida durante 10
+  segundos. Não é movimento novo — é o mesmo, no mesmo lugar.
+- **D15 · o português do jogo**, **D16 · o painel da sala**, **D17 · V4d** — acima.
+
+**4 · Os números (jogo vivo, Chrome, 13 casos, antes `1bb8f4d` × depois).**
+- **O topo do campo não se mexeu em nenhum**: 735 · 706 · 818.
+- **A área que rola**: 504 = 504 · 448 = 448 · 502 = 502 · 440 → 442 · 552 → 554.
+- **O rolo encurtou** 50 (dia) a 127 px (masmorra): sem `O MESTRE` × 5 e com os
+  parágrafos a 16.
+- **Linhas de prosa à vista no topo do rolo**: 11 → 12 (dia 375), 11 → 12 (1280),
+  9 → 10 (noite 375), 8 → 10 (noite 1280), 12 → 14 (masmorra 1280 × 912). Como abre
+  (a vista no fim): 8 → 9 · 8 = 8 · 7 = 7 — nunca menos.
+- **A espera**: antes, `a preparar…` estava **1 454 px acima da vista** de quem
+  está no fim (375) e 716 a 1280; agora nasce no fim, à vista (548 · 586).
+- **A cerimônia**: 28 px peso 500, **3 linhas / 113 px a 375, 2 linhas / 76 px a
+  1280**; decai no turno seguinte (medido: 0 cerimônias na segunda resposta).
+- **Contraste**: `ink`/`pagina` 15,25:1 (a cerimônia) · `inkMeio`/`pagina` 9,78:1 (o
+  quem/onde da oferta, que perdeu o fundo `panel`: era 8,90) · `danger`/`pagina`
+  6,97:1 (às escuras) · `inkDim`/`pagina` 6,60:1 (`preparando…`).
+- **Movimento**: nada novo; `reduce` sem nada a correr na página.
+
+**5 · O que o número mostrou e a forma não resolve.** A cerimônia nasce **fora de
+vista** sempre que a resposta é maior que a área (a 375, quase sempre; a 1280, com a
+resposta do dia — ~700 px contra 502): a vista está presa ao FIM, e a primeira frase
+fica lá em cima. É a proposta abaixo.
+
+**A proposta ambiciosa — a resposta chega pelo começo.** Hoje, quando o Mestre
+responde, a vista corre para o **fim** da resposta: numa resposta maior que a tela
+(a 375, quase todas), o jogador lê primeiro o último parágrafo e tem de subir para
+começar — e a cerimônia, que é o momento, nasce onde ninguém está olhando. Proposta:
+**quando a resposta nova não cabe na área, a vista aterra no começo dela** — a runa
+logo abaixo do esbatimento (o `scrollMarginTop` que R21 já lhe deu), a seta de
+voltar ao fim à vista. Medido no jogo vivo (`fotos-depois/dia-375-aterrar.png`): a
+cerimônia a 72 px do topo da área e **11 linhas da resposta nova à vista a partir da
+primeira**, contra a vista de hoje, que mostra as últimas. É o gesto do livro:
+vira-se a página e lê-se de cima. **Peso: é do `jogo`** (muda o que a vista faz a
+cada turno — é o momento, e é fluxo de leitura); não precisa do sistema; um commit
+revertido desfá-lo. O que arrisca: quem gosta de ver o fim (a oferta nova) desce
+com a seta — por isso só quando não cabe.
