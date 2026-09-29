@@ -115,7 +115,9 @@ sec("4. a fiação");
   const pe = APP.indexOf("<PeDaPagina>"), fim = APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>");
   t("a soleira mora no pé do cartão, e há UMA soleira só", pe > fim && (APP.match(/<Soleira /g) || []).length === 1 && /<PeDaPagina>\s*<Soleira ofertas=\{vivas\.map/.test(APP));
   t("fora do que rola: entre o fim da página e o pé se fecha a região da rolagem", /<div ref=\{fimRef\}><FimDaPagina \/><\/div>\s*<\/div>/.test(APP.slice(fim - 10, pe)));
-  t("a seta de voltar ao fim mora dentro da região da rolagem (nunca cobre a oferta)", APP.indexOf("Ir para a última mensagem", fim) > fim && APP.indexOf("Ir para a última mensagem", fim) < pe);
+  /* V5e: a seta é a peça `SetaDaLeitura` — o que se prende é o mesmo lugar: entre o
+     fim da página e o pé, dentro do invólucro da rolagem. */
+  t("a seta de voltar ao fim mora dentro da região da rolagem (nunca cobre a oferta)", APP.indexOf("<SetaDaLeitura", fim) > fim && APP.indexOf("<SetaDaLeitura", fim) < pe);
   t("todas as peças de V3c continuam (a chegada, a impedida, a janela)", /chegada=\{o\.fila === "B" \|\| \(jaTinha && jaTinha\.has\(o\.id\)\) \? "assentada" : "agora"\}/.test(APP) && /estado=\{o\.precisaDoNarrador && bloqueado \? "impedida" : "repouso"\}/.test(APP) && /janela=\{o\.janela\}/.test(APP));
   /* lado a lado NÃO: a 1280 cada coluna teria 544 px e a oferta pede ~600 numa
      linha (verbo 314 + quem + preço + janela 108) — o verbo quebrava em duas

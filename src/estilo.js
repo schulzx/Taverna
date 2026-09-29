@@ -842,6 +842,30 @@ export const ABERTURA = {
   acesa: false,
 };
 
+/* ============================================================
+   V5e · A CHEGADA — onde a vista pousa quando o Mestre responde.
+
+   ESTAR NO FIM é estar a no máximo UM QUARTO da área do fundo, medido no
+   instante em que a resposta CHEGA (o `jogo`, `mente/v5e-jogo.md` §1–2): a
+   375 são ~112 px (umas quatro linhas), a 1280 ~110. Até aqui eram 240 px
+   fixos — nove linhas no telefone: quem subia nove linhas para reler a frase
+   que escreveu já estava lendo, e era arrancado de lá. Quem está no fim
+   recebe a resposta pelo começo (a conta é `pousoDaVista`, glifos.js); quem
+   está relendo não se move, e a seta lhe diz que há resposta nova. A mesma
+   tolerância decide quando a seta aparece. */
+export const CHEGADA = {
+  toleranciaDoFim: 0.25,
+};
+
+/* V5e · A SETA DA LEITURA — a peça que vivia à mão no `App.jsx` (V3c), agora
+   com dois estados (`fim` · `novo`). A 18 px do fundo da área, na margem
+   direita; a sombra que a destaca da prosa sai daqui e não de um `rgba` à
+   mão (o preto a 0,45 de antes é o `onSecond` da casa, #14101F, a 0,45). */
+export const SETA_DA_LEITURA = {
+  baixo: 18,
+  sombra: { y: 4, raio: 14, alfa: 0.45 },
+};
+
 /* V5 · O PÉ DO CARTÃO — onde a soleira passa a morar: DENTRO da borda do
    cartão, fora do que rola. 0 px sem oferta. A RUNA POR CIMA dela é a do fim
    do registro (`FimDaPagina`, V5a), que já é o último filho do que rola — a
@@ -1032,7 +1056,7 @@ export const ALFORJE = {
   enchimentoDaFita: 4,                          /* fita = ALVOS.chamado + 2 × isto = 64 */
   espacoEntreAbas: 2,
   larguraParaSeisRotulos: 339,                  /* 315 medidos (6 rótulos, JetBrains Mono Bold 12) + 2 × 12 de margem — abaixo disto, seis abas viram só glifo */
-  tira: { margemV: 4, margemH: 8, raio: 8 },    /* `A faixa do fundo` · Espreita: a tira da página, 359 × 40 a 375px (R21 §8) */
+  tira: { margemV: 4, margemH: 8, raio: 8, recuo: 10, marca: { largura: 3, altura: 24, raio: 2 } },    /* `A faixa do fundo` · Espreita: a tira da página, 359 × 40 a 375px (R21 §8) · V5e: e a seta `Novo` da página — a mesma tira (`TiraDaResposta`) */
   /* V4d · na mesa o cabeçalho da gaveta (título e ✕) fica colado ao topo ao
      rolar, e o cartão que o toque num companheiro pede para abaixo dele: 20 do
      `md:pt-5` + 56 de `ALVOS.chamado` + 16 de respiro. */

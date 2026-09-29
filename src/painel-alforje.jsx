@@ -32,7 +32,7 @@
    ============================================================ */
 import React from "react";
 import { T, ALVOS, CINTA, TIPOS, ALFORJE, VEU } from "./estilo.js";
-import { AbaComGlifo } from "./ui.jsx";
+import { AbaComGlifo, TiraDaResposta } from "./ui.jsx";
 
 /* Um pequeno auxiliar PRIVADO, só para este arquivo: alfa sobre um token
    de `T`, sem escrever um dígito de cor novo no texto-fonte que a
@@ -65,25 +65,9 @@ function FaixaDoFundo({ espreita, aoTocar, reduzido }) {
       aria-label={espreita && espreita.texto ? espreita.texto : "Fechar"}
       className={`w-full flex items-center text-left ${reduzido ? "" : "tv-veu-entra"}`}
       style={{ height: ALVOS.piso, background: "transparent", border: "none", padding: 0 }}>
-      {espreita && espreita.texto ? (
-        <span
-          className="flex items-center gap-2 tv-body"
-          style={{
-            margin: `${ALFORJE.tira.margemV}px ${ALFORJE.tira.margemH}px`,
-            height: ALVOS.piso - 2 * ALFORJE.tira.margemV,
-            width: `calc(100% - ${2 * ALFORJE.tira.margemH}px)`,
-            background: T.pagina, border: `1px solid ${T.line}`, borderRadius: ALFORJE.tira.raio,
-            padding: "0 10px", overflow: "hidden",
-          }}>
-          <span aria-hidden="true" style={{ width: 3, height: 24, background: T.amber, flexShrink: 0, borderRadius: 2 }} />
-          <span
-            style={{
-              fontSize: TIPOS.prosa, color: T.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-            }}>
-            {espreita.texto}
-          </span>
-        </span>
-      ) : null}
+      {/* V5e: a tira é a peça da biblioteca (`TiraDaResposta`) — a mesma que a
+          seta `Novo` da página desenha: uma ação, uma forma. */}
+      {espreita && espreita.texto ? <TiraDaResposta texto={espreita.texto} /> : null}
     </button>
   );
 }

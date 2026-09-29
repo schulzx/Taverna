@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
@@ -52,7 +52,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -180,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, Prosa, BotaoDeOuvir, PeDaPagina } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, Prosa, BotaoDeOuvir, PeDaPagina, SetaDaLeitura } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -7924,15 +7924,15 @@ export default function Taverna() {
   };
   const mostrarRolagensRef = useRef(true);
 
-  /* rola para o fim SÓ quando chega mensagem nova E o jogador já estava no fim.
+  /* V5e: onde a vista pousa quando chega mensagem nova é `chegouMensagem` (mais abaixo).
      Nunca reage a longeDoFim mudar (isso causava o "imã" ao subir lendo). */
   const nMsgRef = useRef(0);
   useEffect(() => {
-    const cresceu = mensagens.length > nMsgRef.current;
+    const antes = nMsgRef.current, cresceu = mensagens.length > antes;
     nMsgRef.current = mensagens.length;
     /* não rola sozinho se há uma rolagem pendente — o jogador quer ler a
        narrativa do Mestre antes de rolar, sem a tela pular para o rodapé */
-    if (cresceu && !longeDoFim && !rolagem) fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    chegouMensagem({ antes, cresceu }); /* V5e: a regra do `jogo` — a vista vai ao fim, nunca além do começo da resposta */
   }, [mensagens]); // eslint-disable-line
 
   /* ---------------- TRAZER DE UM ARQUIVO (v9.147) ----------------
@@ -8017,20 +8017,20 @@ export default function Taverna() {
   /* ao entrar no jogo, posiciona direto na última mensagem (sem animação) */
   useEffect(() => {
     if (fase !== "jogo") return;
-    const t = setTimeout(() => fimRef.current?.scrollIntoView({ behavior: "auto", block: "end" }), 80);
+    const t = setTimeout(() => pousarAoAbrir(), 80); /* V5e: a mesma regra da chegada, seca */
     return () => clearTimeout(t);
   }, [fase]);
 
   const aoRolar = useCallback((e) => {
     const el = e.currentTarget;
     const distancia = el.scrollHeight - el.scrollTop - el.clientHeight;
-    setLongeDoFim(distancia > 240);
+    distanciaAoFimRef.current = distancia; setLongeDoFim(!estaNoFim(distancia, el.clientHeight)); /* V5e: ¼ da área, não 240 px */
   }, []);
 
   const irParaOFim = useCallback(() => {
     const el = areaRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    else fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: rolarComo() });
+    else fimRef.current?.scrollIntoView({ behavior: rolarComo(), block: "end" });
     setLongeDoFim(false);
   }, []);
 
@@ -22705,6 +22705,126 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("marcar a abertura de cerimonia", e); }
   }, [carregando, mensagens.length]); // eslint-disable-line
 
+  /* ---------------- V5e · A RESPOSTA CHEGA PELO COMEÇO ----------------
+     Até aqui, quando o Mestre respondia, a vista corria sempre ao FIM: numa
+     resposta maior que a área (no telefone, quase todas — 980 a 1 533 px contra
+     448 a 504) o jogador lia primeiro as últimas linhas e subia para começar, e
+     a cerimônia de V5 nascia onde ninguém estava olhando (`mente/v5-jogo.md`
+     §8.1: fora de vista em 5 de 5 respostas reais).
+
+     A REGRA-MÃE (o `jogo`, `mente/v5e-jogo.md`): *a vista vai para o fim — mas
+     nunca para além do começo da resposta.* A conta é `pousoDaVista`
+     (glifos.js); aqui só se mede e se chama. O que ela decide, por ordem:
+     - QUEM ESTAVA NO FIM no instante da CHEGADA (a distância ao fundo ≤ um
+       quarto da área, `CHEGADA`) pousa pelo começo da resposta, ou fica no fim
+       se ela cabe — a mesma conta para os dois casos;
+     - QUEM ESTAVA RELENDO não se move, nunca: a seta passa a `novo` e diz a
+       primeira linha da resposta nova; o toque leva ao começo dela;
+     - O QUE CHEGA DEPOIS no mesmo turno (as linhas do sistema, a cerimônia a
+       acender) recalcula o mesmo alvo e nunca arrasta além do começo; se o
+       jogador tocou na rolagem desde a chegada, nada o move até o turno seguinte;
+     - COM A ROLAGEM PENDENTE a resposta também pousa pelo começo (antes ela
+       nascia inteira abaixo da vista: 0 linhas, e nenhuma seta) — o teste
+       lê-se depois da narração que o pediu — e nada mais a move até rolar;
+     - com `prefers-reduced-motion` o salto é seco;
+     - nada rouba o foco: a rolagem não toca no campo.
+     Nada disto vai ao save: é onde a vista está, não um fato do mundo. */
+  const distanciaAoFimRef = useRef(0);
+  const chegadaRef = useRef({ i: null, tocou: false, alvo: null });
+  const [porLer, setPorLer] = useState(null); /* { i, texto }: a resposta nova que quem relê ainda não viu */
+  const rolarComo = () => comportamentoDaRolagem(reduzidoRef.current);
+  /* pousa a vista na resposta `i`: o fim, mas nunca além do começo dela. Devolve
+     se achou a resposta na página. O mesmo alvo duas vezes não mexe em nada. */
+  const pousarNaResposta = (i, comportamento) => {
+    const area = areaRef.current;
+    const el = area && area.querySelector('[data-msg="' + i + '"]');
+    if (!area || !el) return false;
+    /* o topo NO ROLO pela cadeia de offsetTop, e não pelo retângulo: a resposta
+       nova entra com o `tv-fade`, que a desenha 8 px abaixo enquanto assenta, e
+       o retângulo pousaria a vista 8 px baixa demais (medido: a runa a 16 do topo
+       em vez de 24) */
+    let topo = 0, n = el;
+    while (n && n !== area && n !== area.offsetParent) { topo += n.offsetTop; n = n.offsetParent; }
+    if (n !== area) topo -= area.offsetTop;
+    const alvo = pousoDaVista({ topoDaResposta: topo, margem: ESBATIMENTO.altura, alturaDoRolo: area.scrollHeight, alturaDaArea: area.clientHeight });
+    if (alvo == null) return false;
+    const c = chegadaRef.current;
+    if (c.alvo != null && Math.abs(c.alvo - alvo) <= 1) return true;
+    c.alvo = alvo;
+    area.scrollTo({ top: alvo, behavior: comportamento });
+    return true;
+  };
+  /* chamada pelo efeito das mensagens (lá em cima), a cada mensagem nova */
+  const chegouMensagem = ({ antes, cresceu }) => {
+    try {
+      /* a primeira leva (o save a carregar, a campanha a abrir) é de pousarAoAbrir */
+      if (!cresceu || antes === 0) return;
+      const novas = mensagens.slice(antes);
+      const c = chegadaRef.current;
+      const area = areaRef.current;
+      const noFim = estaNoFim(distanciaAoFimRef.current, area ? area.clientHeight : 0);
+      /* o turno seguinte começa como sempre: ao enviar, a vista vai ao fim — a
+         frase do jogador e a espera à vista */
+      if (novas.some((m) => m && m.autor === "jogador")) {
+        c.i = null; c.tocou = false; c.alvo = null; setPorLer(null);
+        if (!rolagem) fimRef.current?.scrollIntoView({ behavior: rolarComo(), block: "end" });
+        return;
+      }
+      const k = novas.findIndex((m) => m && m.autor === "mestre");
+      if (k >= 0) {
+        const i = antes + k;
+        if (!noFim) { setPorLer({ i, texto: primeiraLinhaDaProsa(mensagens[i].texto) }); return; }
+        c.i = i; c.tocou = false; c.alvo = null;
+        pousarNaResposta(i, rolarComo());
+        return;
+      }
+      if (c.i != null) { if (!c.tocou && !rolagem) pousarNaResposta(c.i, rolarComo()); return; }
+      if (noFim && !rolagem) fimRef.current?.scrollIntoView({ behavior: rolarComo(), block: "end" });
+    } catch (e) { calou("pousar a vista na chegada", e); }
+  };
+  /* a cerimônia acendendo (ou apagando) muda a altura da resposta: o alvo se
+     recalcula antes de a tela se pintar, pela mesma conta */
+  useLayoutEffect(() => {
+    try {
+      const c = chegadaRef.current;
+      if (c.i == null || c.tocou || rolagem) return;
+      pousarNaResposta(c.i, rolarComo());
+    } catch (e) { calou("pousar a vista depois da cerimonia", e); }
+  }, [abertura]); // eslint-disable-line
+  /* o jogador tocou na rolagem (roda, dedo, tecla, a barra): nada o move até o
+     turno seguinte */
+  const tocouNaRolagem = () => { chegadaRef.current.tocou = true; };
+  /* a seta `novo` some quando o começo da resposta entra na vista */
+  const verSeChegouANova = () => {
+    try {
+      if (!porLer || !areaRef.current) return;
+      const area = areaRef.current;
+      const el = area.querySelector('[data-msg="' + porLer.i + '"]');
+      if (!el) { setPorLer(null); return; }
+      const a = area.getBoundingClientRect(), r = el.getBoundingClientRect();
+      if (r.top >= a.top - 1 && r.top <= a.bottom - ESBATIMENTO.altura) setPorLer(null);
+    } catch (e) { calou("a seta da resposta nova", e); }
+  };
+  /* o toque na seta `novo`: ao COMEÇO da resposta nova (a ação da espreita) */
+  const irANova = () => {
+    try {
+      const p = porLer;
+      setPorLer(null);
+      if (p) pousarNaResposta(p.i, rolarComo());
+    } catch (e) { calou("ir a resposta nova", e); }
+  };
+  /* abrir o jogo (continuar a campanha): a mesma regra — pousa no começo da
+     última resposta do Mestre se ela não couber, e o que veio depois fica por
+     baixo. Seco: é a primeira vista, não um movimento. */
+  const pousarAoAbrir = () => {
+    try {
+      const i = (mensagens || []).map((m) => m && m.autor).lastIndexOf("mestre");
+      chegadaRef.current.alvo = null;
+      if (i >= 0 && pousarNaResposta(i, "auto")) return;
+      fimRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+    } catch (e) { calou("pousar a vista ao abrir", e); }
+  };
+
   /* ---------------- A SETA ABRE O QUE ANUNCIA (R3) ----------------
      Em `try/catch` porque nunca pode custar o turno: uma linha do sistema
      com um rótulo que já não existe devolve `null` bem antes daqui, e o
@@ -22766,10 +22886,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* Ao sair da tela da batalha o `main` remonta com `scrollTop = 0`, e
      cair no topo de uma cena de vinte mensagens é perder exactamente o
      que acabou de acontecer. */
+  const vinhaDaBatalhaRef = useRef(false);
   useEffect(() => {
-    if (fase !== "jogo" || emBatalha) return undefined;
+    if (fase !== "jogo" || emBatalha) { vinhaDaBatalhaRef.current = !!emBatalha; return undefined; }
+    const daBatalha = vinhaDaBatalhaRef.current;
+    vinhaDaBatalhaRef.current = false;
     const tid = setTimeout(() => {
-      try { if (fimRef.current) fimRef.current.scrollIntoView({ behavior: "auto", block: "end" }); } catch (e) { calou("voltar ao fim da prosa", e); }
+      try {
+        if (!daBatalha) { pousarAoAbrir(); return; } /* V5e: entrar no jogo é abrir, pela regra da chegada */
+        if (fimRef.current) fimRef.current.scrollIntoView({ behavior: "auto", block: "end" });
+      } catch (e) { calou("voltar ao fim da prosa", e); }
     }, 80);
     return () => clearTimeout(tid);
   }, [fase, emBatalha]);
@@ -23287,7 +23413,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 do fim se posiciona, e por isso ela fica sempre ACIMA do pé do
                 cartão (a soleira), nunca por cima de uma oferta. */}
             <div className="relative flex-1 min-h-0 flex flex-col">
-            <div ref={areaRef} onScroll={aoRolar} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 tv-pagina" >
+            <div ref={areaRef} onScroll={(e) => { aoRolar(e); verSeChegouANova(); }} onWheel={tocouNaRolagem} onTouchMove={tocouNaRolagem} onKeyDown={tocouNaRolagem} onPointerDown={tocouNaRolagem} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 tv-pagina" >
               {/* A VOZ (R2 → V5) — o `O MESTRE` do topo da página SAIU (o `jogo`,
                   V5 §9): estava lá sempre, `muda` fora da espera, custando ~48 px
                   no topo de toda cena, e durante a espera ficava fora de vista a
@@ -23792,10 +23918,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
               <div ref={fimRef}><FimDaPagina /></div>
             </div>
-            {longeDoFim && (
-              <button onClick={irParaOFim} aria-label="Ir para a última mensagem" className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center right-6 md:right-10"
-                style={{ bottom: "18px", width: ALVOS.piso, height: ALVOS.piso, background: T.paginaAlta, border: `1px solid ${T.lineStrong}`, zIndex: 25, boxShadow: "0 4px 14px rgba(0,0,0,.45)" }}
-                title="Ir para a última mensagem"><span aria-hidden="true" style={{ display: "inline-flex", transform: "rotate(90deg)" }}><IconeSeta tamanho={20} cor={T.amberSoft} /></span></button>
+            {/* V5e · A SETA DA LEITURA — uma peça, dois estados: `fim` (o círculo de
+                sempre, leva ao fim) e `novo` (chegou resposta enquanto se relia: a
+                tira com a primeira linha, e o toque leva ao COMEÇO dela). */}
+            {(longeDoFim || porLer) && (
+              <SetaDaLeitura estado={porLer ? "novo" : "fim"} texto={porLer ? porLer.texto : ""} aoIr={porLer ? irANova : irParaOFim} />
             )}
             </div>
             {/* ---------------- V5 · A SOLEIRA NO PÉ DO CARTÃO ----------------

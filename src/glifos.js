@@ -46,7 +46,7 @@
    interpola; fora da tabela, fica no degrau da ponta. */
 /* V4 · a régua do grave mora em `ANEL` (estilo.js), ao lado do desenho do anel;
    daqui só se lê. */
-import { ANEL } from "./estilo.js";
+import { ANEL, CHEGADA } from "./estilo.js";
 
 export const TRACO_DO_GLIFO = { 12: 1.25, 16: 1.5, 20: 1.75, 24: 2 };
 
@@ -500,3 +500,42 @@ export function primeiraFrase(paragrafo) {
   if (!m) return { frase: s.trim(), resto: "" };
   return { frase: m[0].trim(), resto: s.slice(m[0].length).trim() };
 }
+
+/* ============================================================
+   V5e · A RESPOSTA CHEGA PELO COMEÇO — a conta de onde a vista pousa.
+
+   A REGRA-MÃE, numa linha (o `jogo`, `mente/v5e-jogo.md`): *quando chega a
+   resposta, a vista vai para o fim — mas nunca para além do começo da
+   resposta.* Uma conta só para os dois casos: a resposta que cabe fica toda
+   à vista, ancorada no fim, como sempre; a que não cabe pousa pelo começo —
+   a runa logo abaixo do esbatimento, e a primeira frase à vista. Até aqui a
+   vista corria sempre ao fim, e no telefone o jogador lia primeiro as
+   últimas doze linhas de uma resposta de 980 px.
+
+   Estas funções só fazem contas: o `App.jsx` mede (onde está a runa, quanto
+   rola a área) e chama. Não leem o DOM, não conhecem o React, e respondem
+   igual em qualquer máquina. */
+
+/* quem está no fim: a distância ao fundo ≤ um quarto da área (CHEGADA) */
+export function estaNoFim(distanciaAoFim, alturaDaArea, tolerancia = CHEGADA.toleranciaDoFim) {
+  const d = Number(distanciaAoFim), a = Number(alturaDaArea);
+  if (!Number.isFinite(d) || !Number.isFinite(a) || a <= 0) return true;
+  return d <= a * tolerancia;
+}
+
+/* o `scrollTop` onde a vista pousa: o fim, mas nunca além do começo da
+   resposta (o topo da runa menos a margem do esbatimento). Lixo: null — e
+   quem chama não mexe na vista. */
+export function pousoDaVista({ topoDaResposta, margem = 0, alturaDoRolo, alturaDaArea } = {}) {
+  const t = Number(topoDaResposta), m = Number(margem) || 0, rolo = Number(alturaDoRolo), area = Number(alturaDaArea);
+  if (![t, rolo, area].every(Number.isFinite)) return null;
+  const fim = Math.max(0, rolo - area);
+  return Math.round(Math.max(0, Math.min(fim, t - m)));
+}
+
+/* o movimento da rolagem: seco com `prefers-reduced-motion` (a lei do
+   coordenador), suave sem ele. Nunca há animação além da própria rolagem. */
+export function comportamentoDaRolagem(reduzido) {
+  return reduzido ? "auto" : "smooth";
+}
+

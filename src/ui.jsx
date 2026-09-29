@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
 import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase } from "./glifos.js";
@@ -509,6 +509,67 @@ export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
    36) com a cor de `T` por nome; os traços são `amber` a `alfaDoFio`.
    Decorativa por inteiro: `aria-hidden`, e em `forced-colors` os traços
    somem com o fundo — não carregam sentido nenhum. */
+/* ---------------- V5e · A TIRA DA RESPOSTA — uma ação, uma forma ----------------
+   A primeira linha de uma resposta do Mestre que o jogador ainda não leu, e o
+   toque leva ao COMEÇO dela. Nasceu em R21 como a espreita do alforje (a faixa
+   do fundo, no telefone); em V5e é também a seta `Novo` da página, quando a
+   resposta chega a quem está relendo lá em cima. É a MESMA ação — ir ler o que
+   acabou de chegar, pelo começo —, e por isso é a mesma peça: a marca âmbar, a
+   linha em prosa com reticência, e na ponta (se houver) o que diz para onde. */
+export function TiraDaResposta({ texto = "", ponta = null, sombra = null }) {
+  const t = ALFORJE.tira;
+  return (
+    <span className="flex items-center gap-2 tv-body"
+      style={{
+        margin: `${t.margemV}px ${t.margemH}px`,
+        height: ALVOS.piso - 2 * t.margemV,
+        width: `calc(100% - ${2 * t.margemH}px)`,
+        background: T.pagina, border: `1px solid ${T.line}`, borderRadius: t.raio,
+        padding: `0 ${t.recuo}px`, overflow: "hidden", boxShadow: sombra || undefined,
+      }}>
+      <span aria-hidden="true" style={{ width: t.marca.largura, height: t.marca.altura, background: T.amber, flexShrink: 0, borderRadius: t.marca.raio }} />
+      <span className="flex-1 min-w-0" style={{ fontSize: TIPOS.prosa, color: T.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {texto}
+      </span>
+      {ponta}
+    </span>
+  );
+}
+
+/* ---------------- V5e · A SETA DA LEITURA — uma peça, dois estados ----------------
+   `fim`: a de V3c, que vivia à mão no `App.jsx` — o círculo de 48 na margem
+   direita da página, e o toque leva ao fim. `novo`: chegou uma resposta
+   enquanto o jogador relia lá em cima (o `jogo`, `mente/v5e-jogo.md` §4) — a
+   vista NÃO se move; a seta cresce para a tira da resposta, na medida da
+   coluna, com a primeira linha dela, e o toque leva ao COMEÇO (não ao fim).
+   Some quando o começo entra na vista ou ao toque — quem decide é o App. Não
+   anima além do `tv-fade` de entrada, que ela sempre teve. */
+export function SetaDaLeitura({ estado = "fim", texto = "", aoIr }) {
+  const s = SETA_DA_LEITURA.sombra;
+  const sombra = `0 ${s.y}px ${s.raio}px ${alfa(T.onSecond, s.alfa)}`;
+  const seta = (
+    <span aria-hidden="true" className="shrink-0" style={{ display: "inline-flex", transform: "rotate(90deg)" }}>
+      <IconeSeta tamanho={20} cor={T.amberSoft} />
+    </span>
+  );
+  if (estado === "novo" && texto) {
+    return (
+      <button type="button" onClick={aoIr} aria-label={"Resposta nova do Mestre: " + texto} title="Ir ao começo da resposta nova"
+        className="tv-anel-foco tv-fade tv-coluna tv-body absolute inset-x-0 flex items-center"
+        style={{ bottom: SETA_DA_LEITURA.baixo, height: ALVOS.piso, fontSize: TIPOS.prosa, background: "transparent", border: "none", padding: 0, zIndex: 25, cursor: "pointer" }}>
+        <TiraDaResposta texto={texto} ponta={seta} sombra={sombra} />
+      </button>
+    );
+  }
+  return (
+    <button type="button" onClick={aoIr} aria-label="Ir para a última mensagem" title="Ir para a última mensagem"
+      className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center right-6 md:right-10"
+      style={{ bottom: SETA_DA_LEITURA.baixo, width: ALVOS.piso, height: ALVOS.piso, background: T.paginaAlta, border: `1px solid ${T.lineStrong}`, zIndex: 25, boxShadow: sombra }}>
+      {seta}
+    </button>
+  );
+}
+
 /* ---------------- V5 · O BOTÃO DE OUVIR ----------------
    Vivia dentro de `A voz`, ao lado de `O MESTRE`; com a palavra fora da
    página (o `jogo`, V5 §4: *a página é dele*), passa para a ponta da runa

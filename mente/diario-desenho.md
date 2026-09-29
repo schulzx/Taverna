@@ -19,6 +19,67 @@ Formato:
 
 ---
 
+## 28/09 22:00 · v9.301–v9.302 · **V5e — a resposta chega pelo começo, e a cerimónia acende** · commits (no bloco seguinte)
+
+- **estado inicial:** trava tomada às 20:19; HEAD `c5acc8c`; nenhum ciclo do
+  sistema. **O achado de V5, dito pelo coordenador o mais importante desde
+  R12:** no telefone o jogador cai no fim de TODAS as respostas e lê primeiro as
+  últimas 12 linhas. **Duas leis dele:** quem já está a ler não é arrancado; com
+  "reduzir movimento" o salto é seco.
+- **jogo** (`mente/v5e-jogo.md`, o mesmo agente de V5a–V5): onze regras. A
+  regra-mãe numa conta: *a vista vai ao fim, mas nunca para além do começo da
+  resposta* — a curta ancora no fim como hoje, a longa pousa pelo começo.
+  "Estar no fim" passa de 240 px a **¼ da área** (~112 px): medido, quem subia
+  180 px para reler era arrancado. O instante que conta é a chegada, não o
+  envio (é nos ~14 s de espera que se sobe para reler). A rolagem pendente
+  passa a segurar contra o começo — hoje, com um teste pendente, **a resposta
+  nascia toda abaixo da vista, sem uma linha e sem seta**.
+- **desenho** (`formas.md` §V5e, `mente/v5e-desenho.md`, scripts LF/CRLF
+  provados em `c5acc8c`): `pousoDaVista`/`estaNoFim`/`comportamentoDaRolagem`
+  puras em `glifos.js`; a espreita do alforje virou peça (`TiraDaResposta`) e a
+  seta ganhou dois estados (`SetaDaLeitura`: Fim · Novo) — **uma ação, uma
+  forma**; dois defeitos pegos na própria prova e consertados (o envio não
+  reiniciava o turno — o autor das falas é `"jogador"`, não `"voce"`; o
+  `tv-fade` desenhava a resposta 8 px abaixo e o pouso ficava 8 px baixo).
+  Afastou-se do `jogo` em dois pontos, e o `jogo` concordou com os dois: enviar
+  leva ao fim **sempre**; o "Novo" é a tira da espreita e não uma pílula nova.
+  Sem desvios do Figma: a pessoa não desenhou o pouso.
+- **oficial** (bastão tomado às 21:27): scripts 1-2-3-5-6, **sem o 7**;
+  **24 315 → 24 442 linhas**, antes da 22 489 só trocas na mesma linha, 0
+  endereços mexidos; D5a do `App.jsx` 75 → 74.
+- **a prova jogada** (antes `c5acc8c`; o depois na 5173 e uma cópia com a
+  cerimónia acesa na 5181; o Mestre simulado com as cinco respostas reais,
+  **0 chamadas**): **V5e sobe.**
+  - **a primeira linha da resposta à vista, com o jogador no fim: 0 de 10 →
+    10 de 10** (as cinco respostas, 375 e 1280), a runa a 24 px, 14–15 linhas
+    desde a primeira;
+  - a reler 180 e 600 px: **0 px** de deslocação (antes, 180 px era arrancado),
+    e a tira "Novo" com a primeira frase; o toque pousa a runa a 24 px;
+  - `reduce`: salto seco (a 150 ms já no lugar; antes ainda rolava); nada
+    salta em 30 amostras; abrir o jogo pousa no começo da última resposta.
+  - **não provocados ao vivo, e ditos:** a rolagem pendente (o teste vem do
+    Cronista, e a prova corta esse pedido) e as linhas do sistema que chegam
+    depois — cobertos pela suíte `teste-v5e-chegada`.
+  - **uma nota de método do `jogo`, dita por ele:** na primeira corrida
+    esqueceu o envelope `{ texto }` da resposta e mediu uma resposta de duas
+    linhas; refez tudo.
+- **a cerimónia — veredito separado: acende.** Os três critérios do `jogo`
+  passaram: inteira à vista a 72 px em **10 de 10**; a resposta curta com a
+  cerimónia e o fim a 0 px (2/2); a reler, acende e a vista não se mexe (4/4).
+  As duas falhas de V5 desapareceram (fora de vista 5/5 → 0/10; o fim empurrado
+  −53/−64 → 0 px). Custa uma a duas linhas à vista, só nos dois turnos dela.
+  **Subiu em commit próprio.**
+- **o que ficou:** V5g (a tira "Novo" tapa ~1,7 linhas na mesa: vai para a
+  margem direita); **V6a — a espera deixa escrever**: o campo fica `disabled`
+  enquanto o Mestre pensa e as letras escritas **perdem-se sem aviso (0 de
+  20)** — era uma decisão de `v1-jogo.md` §2, e o `jogo` corrigiu-se a si
+  próprio.
+- **as ambiciosas:** **V5h — a tira "Novo" conta o que chegou** (`desenho`) e
+  **V5i — o marcador de onde paraste** (`jogo`, numa chave de preferência, nunca
+  no save). Nenhuma vai à pessoa.
+
+---
+
 ## 28/09 20:30 · v9.300 · **V5 — a página: lê-se como um livro, não como uma conversa com etiquetas** · commit `2100eaa`
 
 - **estado inicial:** trava tomada às 20:47; HEAD `1bb8f4d`; nenhum ciclo do

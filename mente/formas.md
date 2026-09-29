@@ -10347,3 +10347,111 @@ vira-se a página e lê-se de cima. **Peso: é do `jogo`** (muda o que a vista f
 cada turno — é o momento, e é fluxo de leitura); não precisa do sistema; um commit
 revertido desfá-lo. O que arrisca: quem gosta de ver o fim (a oferta nova) desce
 com a seta — por isso só quando não cabe.
+
+### V5e · a resposta chega pelo começo (`desenho`, 28/09)
+
+*O momento é do `jogo` (`mente/v5e-jogo.md`), e sigo-o em tudo o que não digo aqui;
+as duas leis do coordenador valem acima dele: quem já está lendo não é arrancado,
+e com `prefers-reduced-motion` o salto é seco. Construção: `mente/v5e-desenho.md`
+(cinco scripts por âncora e um sexto opcional, provados em duas cópias de `c5acc8c`
+— LF e CRLF —: build limpo, **217/217 · 15/15** nas duas, e também com o passo 7;
+`App.jsx` 24 315 → 24 442 linhas, **10 trocas na mesma linha antes da 22 489 e
+tudo o que cresce depois dela: 0 endereços de `check-acoes-do-jogador` mexidos**).
+Figma: biblioteca `e5wJUzInAssoebx5npssKc`, página **`V5e · a resposta chega pelo
+começo`** (`246:80`) — `A tira da resposta` (`246:81`, propriedade *Ponta*), `A seta
+da leitura` (`246:95`, *Estado* Fim · Novo), e a sequência antes/depois do jogo vivo
+a 375 e a 1280.*
+
+**1 · A conta (glifos.js), provada em Node.** A regra-mãe do `jogo` numa linha:
+*a vista vai para o fim — mas nunca para além do começo da resposta.*
+- `pousoDaVista({ topoDaResposta, margem, alturaDoRolo, alturaDaArea })` → o
+  `scrollTop`: `max(0, min(fim, topo − margem))`, com a margem de
+  `ESBATIMENTO.altura` (24, o `scrollMarginTop` que a mensagem já tinha). **Uma
+  conta só para os dois casos**: a resposta que cabe fica no fim, como sempre; a
+  que não cabe pousa pela runa. Lixo → `null`, e ninguém mexe na vista.
+- `estaNoFim(distancia, area)` → ≤ `CHEGADA.toleranciaDoFim` (¼) da área, e não os
+  240 px de antes (nove linhas no telefone: quem subia nove linhas para reler já
+  estava lendo, e era arrancado).
+- `comportamentoDaRolagem(reduzido)` → `auto` com `reduce`, `smooth` sem ele. O
+  `App.jsx` já sabia o `reduce` (`reduzidoRef`, R21); faltava lê-lo aqui.
+
+**2 · As peças (ui.jsx).**
+- **`A tira da resposta`** (`TiraDaResposta`) — a espreita do alforje (R21) tirada
+  de dentro de `painel-alforje.jsx` para a biblioteca: a marca âmbar 3 × 24, a
+  primeira linha em prosa com reticência, e uma **ponta** opcional. Os números que
+  a faixa escrevia à mão (3, 24, 2, 10) foram para `ALFORJE.tira`. **Uma ação, uma
+  forma** (o `jogo`, §4): *ir ler, pelo começo, a resposta que acabou de chegar* é
+  a mesma ação na faixa do alforje e na página, e agora é a mesma peça.
+- **`A seta da leitura`** (`SetaDaLeitura`, `estado` `fim` · `novo`) — sai do
+  `App.jsx`, onde vivia à mão desde V3c. `fim` é a de sempre (o círculo de 48, a 18
+  do fundo, na margem direita; leva ao fim). `novo` é a seta a crescer para a tira,
+  na medida da coluna (65ch: 343 px a 375, 553 a 1280), com a primeira linha da
+  resposta nova e o ↓ na ponta; leva **ao começo**. Nome acessível: *Resposta nova
+  do Mestre: …*. A sombra sai de `SETA_DA_LEITURA` (`onSecond` a 0,45), e o
+  `rgba(0,0,0,.45)` à mão morreu com a seta (D5a do `App.jsx`: 75 → 74). Não anima
+  além do `tv-fade` que já tinha.
+
+**3 · A fiação (App.jsx) — `chegouMensagem`, chamada pelo efeito das mensagens na
+mesma linha de antes.**
+- **No fim, no instante da chegada** (a distância que o último evento de rolagem
+  deixou, ≤ ¼): pousa pela conta. **Relendo**: não se move; a seta passa a `novo`,
+  e some quando o começo da resposta entra na vista ou ao toque.
+- **O que chega depois no mesmo turno** (as linhas do sistema, a cerimônia a
+  acender, num `useLayoutEffect` em `[abertura]`, antes da pintura) recalcula o
+  mesmo alvo; o mesmo alvo duas vezes não mexe em nada. **Se o jogador tocou na
+  rolagem** (roda, dedo, tecla, a barra) desde a chegada, nada o move até o turno
+  seguinte.
+- **A rolagem pendente**: a resposta também pousa pelo começo (antes nascia
+  inteira abaixo da vista: 0 linhas, e nenhuma seta — §3 do `jogo`), e depois nada
+  a move até rolar.
+- **Abrir o jogo** usa a mesma regra, seca. Havia **dois** efeitos que levavam a
+  vista ao fim ao entrar (o de `fase` e o da volta da batalha, que também corria na
+  entrada); os dois chamam `pousarAoAbrir`, e a volta da batalha continua no fim
+  (é lá que está o desfecho da luta). A primeira leva de mensagens (o save a
+  carregar) não conta como chegada.
+- **Enviar**: a vista vai ao fim, a frase do jogador e a espera à vista.
+- **A medida do topo é pela cadeia de `offsetTop`, não pelo retângulo**: a resposta
+  entra com o `tv-fade`, que a desenha 8 px abaixo enquanto assenta, e o retângulo
+  pousava a vista 8 px baixa (medido: a runa a 16 do topo em vez de 24).
+- Nada vai ao save; nada toca no foco; tudo em `calou`.
+
+**4 · Onde discordei do `jogo`, e por quê.**
+- **Regra 10 — "ao enviar, a vista vai ao fim, como hoje".** *Hoje* só ia se o
+  jogador estivesse a menos de 240 px do fim. Fiz ir **sempre**: enviar é um gesto,
+  e o que o jogador quer ver é a frase dele e a espera. Com a tolerância nova (¼),
+  "como hoje" deixaria de fora quem enviou estando 150 px acima.
+- **A seta `novo`**: o `jogo` sugeriu *a pílula que cresce da seta* e deixou a forma
+  comigo. É a tira da espreita, e não uma pílula nova: é a mesma ação.
+
+**5 · Os números (jogo vivo, Chrome, save do dia, Narrador simulado — 0 chamadas;
+antes `c5acc8c` × depois × depois com a cerimônia).**
+
+| critério do `jogo` | antes | depois |
+|---|---|---|
+| 1 · no fim, resposta longa: a 1.ª linha à vista | não (375 e 1280) | **sim**: a runa a **24 px** do topo, **15 linhas** desde a 1.ª (14 com a cerimônia) |
+| 2 · no fim, resposta curta | tudo à vista, fim a 27–29 px | tudo à vista, **fim a 0 px** |
+| 3 · relendo 180 px | **arrancado para o fim** | **Δ scrollTop 0**, seta `novo` |
+| 3 · relendo 600 px | parado, seta leva ao fim | **Δ 0**, seta `novo`; o toque pousa a runa a **24 px** |
+| 4 · o que chega depois / nada salta | — | **scrollTop constante** em 30 amostras × 100 ms, nas duas larguras |
+| 6 · `reduce` | a 150 ms ainda rolando (runa a 244) | **a 150 ms já no lugar** (o scrollTop final) |
+| 7 · letras durante a chegada | o campo fica `disabled` enquanto o Mestre pensa: as letras da espera não entram (7 de 20 no meu ritmo) | **igual** — não é desta etapa (ver 6) |
+| 9 · abrir o jogo | no fim, a runa 1 284 px acima | **a runa a 24 px**, 15 linhas |
+| 11 · a cerimônia (os três do §4) | apagada | (1) inteira à vista, topo a **72 px**; (2) curta: à vista **e** o fim a **0 px**; (3) relendo: acende e **Δ 0** |
+
+**6 · O que o número mostrou e esta etapa não resolve.** O critério 7 do `jogo`
+("as 20 letras chegam todas") esbarra num comportamento anterior: o campo é
+`disabled={bloqueado}` durante a espera, e o que se digita nesse tempo não entra.
+Antes e depois iguais. Se o `jogo` quer que se escreva enquanto o Mestre pensa, é
+uma decisão dele (o campo aberto e o envio travado), e é outra etapa.
+
+**A proposta ambiciosa — a página conta o que chegou enquanto não se olhava.** A
+seta `novo` diz *uma* resposta. Mas quem relê três respostas atrás, ou volta ao
+jogo depois de uma pausa, tem **várias coisas** novas abaixo dele: a resposta, as
+linhas do sistema que ela trouxe (o mural, o diário, a bolsa), uma oferta nova no
+pé. Proposta: **a tira `novo` ganha, à direita da primeira linha, as marcas do que
+veio com ela** — os mesmos ladrilhos de V3b (o glifo do assunto, sem palavra),
+até três, na ordem em que chegaram — e o toque continua a levar ao começo. É o
+índice do capítulo que se perdeu, em 48 px. Não precisa do sistema (as linhas já
+dizem o assunto a `assuntoDaLinha`); peso médio de design; um commit revertido
+desfá-lo. A prova é do `jogo`: o jogador que volta à página diz *o que mudou* antes
+de rolar?

@@ -266,7 +266,11 @@ sec("6. O atalho de rolamento não pode voltar a tapar a chamada do turno");
 t("ele vive dentro do invólucro da página, e não do `main`",
   /<div className="relative flex-1 min-h-0 flex flex-col">/.test(APP),
   "sem o invólucro ele volta a ancorar no fundo do `main`, que é onde o convés está");
-t("e mede o piso do alvo, e não 46", /width: ALVOS\.piso, height: ALVOS\.piso, background: T\.paginaAlta/.test(APP));
+/* V5e: a seta saiu do App para a biblioteca (`SetaDaLeitura`, ui.jsx), com dois
+   estados; o que a régua prende é o mesmo — o círculo mede o piso do alvo — lido
+   onde ele mora agora, e o App montando a peça dentro do invólucro. */
+{ const UI = readFileSync(new URL("../src/ui.jsx", import.meta.url), "utf8");
+  t("e mede o piso do alvo, e não 46", /width: ALVOS\.piso, height: ALVOS\.piso, background: T\.paginaAlta/.test(UI) && /<SetaDaLeitura estado=/.test(APP)); }
 
 /* ============================================================
    7. A RÉGUA DA SOLEIRA SEPARA ESTADOS, E NÃO OBJETOS (R5b)

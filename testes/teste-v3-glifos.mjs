@@ -345,10 +345,15 @@ sec("10. V3c · a soleira, O TEMPO, a magia guardada, o arco, a masmorra e o aca
    nunca a encontraria; o que se mede é onde ela tapa: a 375 saiu de x 243–291 (o meio
    das linhas) para x 303–351 (o fim delas); na mesa a coluna de 65ch não chega lá. */
 sec("11. V3c · a seta do fim");
+/* V5e: a seta saiu do App para a biblioteca (`SetaDaLeitura`, ui.jsx) e ganhou o
+   estado `novo`. O estado `fim` é a de V3c, e a régua a prende onde ela mora
+   agora: na margem direita, com nome, desenhada — e o App sem cópia à mão. */
 { const APP = readFileSync("../src/App.jsx", "utf8");
+  const UI4 = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
   t("a seta do fim mora na margem direita (right-6 md:right-10), tem aria-label e é a IconeSeta, não o caractere da fonte",
-    /aria-label="Ir para a última mensagem" className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center right-6 md:right-10"/.test(APP)
-    && !/right: "84px"/.test(APP) && /rotate\(90deg\)" \}\}><IconeSeta tamanho=\{20\} cor=\{T\.amberSoft\} \/>/.test(APP) && !/>↓<\/button>/.test(APP)); }
+    /aria-label="Ir para a última mensagem" title="Ir para a última mensagem"\s*className="tv-anel-foco tv-fade absolute rounded-full flex items-center justify-center right-6 md:right-10"/.test(UI4)
+    && !/right: "84px"/.test(APP) && /rotate\(90deg\)" \}\}>\s*<IconeSeta tamanho=\{20\} cor=\{T\.amberSoft\} \/>/.test(UI4) && !/>↓<\/button>/.test(APP + UI4)
+    && !/aria-label="Ir para a última mensagem"/.test(APP)); }
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);
