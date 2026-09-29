@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 18:40 · v9.310 · MM6 · escondido é um estado · commit (o hash vai no próximo bloco)
+## 29/09 18:40 · v9.310 · MM6 · escondido é um estado · commit `b4ca492`
 
 - **por que andou:** o teste de furtividade existia e o estado não — no turno seguinte
   nada lembrava que o herói estava escondido, e o Narrador não sabia quem o via. É a
