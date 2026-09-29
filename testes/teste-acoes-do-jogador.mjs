@@ -706,7 +706,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
   t("o funil tem 15 funções", f.funcoes === 15, String(f.funcoes));
   t("e 12 delas são provadamente mudas fora da luta", f.porAnel.nucleo === 12, String(f.porAnel.nucleo));
   t("as outras 3 são de borda — falam dentro e fora", f.porAnel.borda === 3, String(f.porAnel.borda));
-  t("são 58 chamadas de pushMsgs no funil", f.linhas === 58, String(f.linhas));
+  /* MM7 (frontend, 29/09): +1 — o golpe de oportunidade de quem recua para
+     disparar (`m.provoca`, grid.js) ganhou a própria linha de chat dentro
+     de `resolverRevide`, ao lado da de quem foge. Re-medido pelo próprio
+     `check-acoes-do-jogador.mjs`, que re-deriva a contagem do código. */
+  t("são 59 chamadas de pushMsgs no funil", f.linhas === 59, String(f.linhas));
   /* a soma tem de fechar: uma linha sem voz declarada some da conta em
      silêncio, e é exatamente assim que uma régua passa a mentir */
   t("e toda chamada tem uma voz declarada",
@@ -743,8 +747,9 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        cabeçalho de FUNIL_DO_COMBATE. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
       .linhas.find((l) => l.onde === "src/App.jsx:12876").voz === "telegrama");
-  t("a maior boca do funil é `resolverRevide`, com 30 chamadas",
-    FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 30);
+  /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
+  t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
+    FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
     FUNIL_DO_COMBATE.every((x) => /^src\/App\.jsx:\d+$/.test(x.onde)
       && (x.anel === "nucleo" || x.anel === "borda") && x.linhas.length > 0));
@@ -755,7 +760,9 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
   /* a coluna `nasce` é a que diz quanto da voz já é testável em Node */
   const n = vozQueNasceNoModulo();
   t("parte da voz do combate já nasce fora do React", n.doModulo === 23, String(n.doModulo));
-  t("e a maior parte ainda só existe no App.jsx", n.doApp === 35 && n.doApp > n.doModulo, String(n.doApp));
+  /* MM7: +1 — a linha nova nasce em src/App.jsx (o mesmo golpe de
+     oportunidade de `querFugir`, sem módulo próprio). */
+  t("e a maior parte ainda só existe no App.jsx", n.doApp === 36 && n.doApp > n.doModulo, String(n.doApp));
 }
 
 sec("10. as recusas, contadas à parte — a correção de escopo de X3b");

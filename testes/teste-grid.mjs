@@ -227,7 +227,18 @@ sec("11. a IA de posição anda na direção certa");
   const antes = distanciaM(inim[0], heroi), depois = distanciaM(ogroDepois, heroi);
   t("o ogro não cobriu mais chão do que um turno permite", antes - depois <= DESLOCAMENTO_PADRAO + 0.01);
   const arq = r.inimigos.find((e) => e.nome === "Arqueiro");
-  t("o atirador que já alcança não fecha distância", arq.x === 2 && arq.y === 2);
+  /* MM7 MUDOU ESTA ASSERÇÃO, e o motivo: ela dizia que o atirador a 12 m
+     "já alcança" e não se mexe (a regra antiga: parado até 18 m, com ou sem
+     linha de visão). Na luta o tiro paga a mesma penalidade por faixa de
+     9 m que o do herói, e desde MM7 o posto do atirador é a faixa que NÃO
+     paga (`POSTURA_DO_ATIRADOR.faixasSemCusto`): a 12 m ele dá uns passos
+     até ficar abaixo dos 9 m — e continua sem colar. A intenção que
+     sobrevive é a mesma: o atirador não vem para o corpo a corpo, e quem já
+     está no posto não se mexe (o segundo arqueiro, logo abaixo). */
+  const dArq = distanciaM(arq, heroi);
+  t("o atirador não vem colar: fica abaixo dos 9 m e longe do corpo a corpo", dArq < 9 && dArq > 1.5, dArq);
+  const noPosto = moverInimigos(campo, [{ nome: "Arqueiro", x: 5, y: 10, vida: 8, distancia: true }], heroi, [heroi]);
+  t("o atirador que já está no posto não fecha distância", noPosto.movimentos.length === 0 && noPosto.inimigos[0].x === 5);
   const colado = moverInimigos(campo, [{ nome: "Goblin", x: 9, y: 9, vida: 8 }], heroi, [heroi]);
   t("quem já alcança fica parado", colado.movimentos.length === 0);
 }

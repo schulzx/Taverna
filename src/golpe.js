@@ -52,6 +52,10 @@ import {
   TAMANHOS,
 } from "./grid.js";
 import { podeDisputar, destinoDoEmpurrao } from "./disputa.js";
+/* MM7: o teto da arma de longe mora em atirador.js (uma folha, sem import),
+   porque o passo do atirador em grid.js precisa dele e grid.js não pode ler
+   esta casa. O número é o mesmo; a morada é uma só. */
+import { POSTURA_DO_ATIRADOR } from "./atirador.js";
 
 /* ============================================================
    A TABELA DOS ALCANCES
@@ -72,7 +76,7 @@ export const ALCANCES = {
      tornar o tiro ruim demais para valer a pena. São quatro faixas de
      9 m, ou seja, 8 de penalidade no limite — e é esse custo crescente,
      não uma parede invisível, que faz o atirador se mover. */
-  armaDeLonge: 36,
+  armaDeLonge: POSTURA_DO_ATIRADOR.alcanceM,
 
   /* +1,5 m, um quadrado. A propriedade "alcance" do catálogo de itens
      (lança, tridente, alabarda, pique, chicote) existe desde a v9.11 e

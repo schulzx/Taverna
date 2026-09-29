@@ -292,6 +292,47 @@ export function golpeDaVez(nome, elemento, ameaca, indice = 0) {
   return g[indice % g.length] || g[0];
 }
 
+/* ---------------- OS GOLPES DE QUEM ATIRA (MM7) ----------------
+   O Atirador do bestiário atirava "Rasteira" e "Marretada" — o nome do
+   golpe sai do hash do nome contra o catálogo por elemento, e o físico só
+   tinha golpe de encostar. Com o atirador a disparar de doze metros, o
+   Narrador ouviria que ele passou uma rasteira em alguém do outro lado da
+   sala, e a rasteira ainda levava a aflição dela (`caido`) de brinde.
+
+   Um catálogo à parte, com a mesma forma, e só com o que chega longe. Os
+   elementos repetem de propósito nomes do catálogo de cima que JÁ são de
+   distância ("Dardo arcano", "Jato de brasas", "Estilhaço de gelo"): são
+   os mesmos portadores, e a aflição que carregam continua a mesma. Os do
+   físico não carregam aflição nenhuma — um tiro é dano, e é por isso que
+   esta linha não tem "nas pernas" nem "atordoante". E "Sussurro
+   assombrado" ficou de fora do sombrio de propósito: "assombrado" contém
+   "brado", e o portador `inspiracao` casa com ele — o golpe inspiraria o
+   bando de quem o lança (é defeito do catálogo de cima, escrito no diário
+   de MM7; aqui simplesmente não se repete). Pela mesma razão não há
+   "sombra" em nome nenhum daqui: o portador `sombra` dá `furtivo` a quem
+   lança. A suíte de MM7 cobra que nenhum disparo case um portador que não
+   seja do alvo.
+   O repertório tem o tamanho do de `golpesDeCriatura` (1 a 3 pela ameaça)
+   e sai do mesmo hash: o mesmo atirador usa sempre os mesmos disparos. */
+export const GOLPES_DE_LONGE = {
+  fisico:  ["Disparo certeiro", "Tiro na junta da armadura", "Disparo rasante", "Tiro de cobertura"],
+  arcano:  ["Dardo arcano", "Pulso encantado", "Amarras místicas", "Raio arcano"],
+  fogo:    ["Jato de brasas", "Sopro incandescente", "Seta de fogo", "Bola de chamas"],
+  gelo:    ["Estilhaço de gelo", "Lufada glacial", "Raio gélido", "Seta de geada"],
+  raio:    ["Descarga estrondosa", "Estrondo de trovão", "Fagulha atordoante", "Relâmpago"],
+  sombrio: ["Raio sombrio", "Uivo aterrador", "Seta necrótica", "Dardo de trevas"],
+  sagrado: ["Clarão ofuscante", "Julgamento em luz", "Lança de luz", "Raio radiante"],
+  veneno:  ["Cuspe ácido", "Dardo peçonhento", "Nuvem tóxica", "Seta envenenada"],
+};
+
+export function golpeDeLonge(nome, elemento, ameaca, indice = 0) {
+  const pool = GOLPES_DE_LONGE[elemento] || GOLPES_DE_LONGE.fisico;
+  const quantos = golpesDeCriatura(nome, elemento, ameaca).length;
+  const h = hashNome(nome);
+  const i = Math.max(0, Number(indice) || 0) % quantos;
+  return pool[(h + i * 7) % pool.length];
+}
+
 export const AFLICOES_PROMPT = `GOLPES E AFLIÇÕES (v9.1 — o sistema decide, você narra):
 - Armas, habilidades, magias e golpes de criatura são lidos por um catálogo do sistema. Uma adaga envenenada envenena, uma maça atordoa, um sopro ígneo queima — o SISTEMA reconhece a fonte, rola o teste do alvo e aplica (ou não) a condição, para o herói, para os companheiros e para os inimigos igualmente.
 - Quando isso acontecer você recebe o resultado pronto ("[AFLIÇÃO APLICADA — sistema rolou]" ou "RESISTIDA"). Narre exatamente o que o sistema decidiu: não envenene ninguém por conta própria, não anule o que passou, não invente outro efeito.

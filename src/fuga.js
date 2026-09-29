@@ -89,6 +89,7 @@ import { TETO_DA_LINHA, ALCANCES } from "./golpe.js";
 import { perfilDe } from "./danos.js";
 import { estaInvisivel } from "./gatilhos.js";
 import { hashSemente, rng } from "./semente.js";
+import { atacaDeLonge } from "./atirador.js";
 import { degrauDaCriatura, ordemDoDegrau, DEGRAU_DO_CHAO } from "./degraus.js";
 import { criarRelogio, garantirRelogios, MAX_RELOGIOS } from "./relogios.js";
 
@@ -146,35 +147,13 @@ export const PERSEGUICAO_POR_CONDICAO = {
 /* ============================================================
    QUEM ATACA DE LONGE — não segura quem foge: cobra.
 
-   HOJE NENHUM INIMIGO DO BESTIÁRIO LUTA DE LONGE. O campo `distancia`
-   só nasce em invocações (invocacoes.js), e o Atirador do bestiário
-   ("perigoso à distância") luta corpo a corpo. Mudar isso no combate é
-   outro item; na FUGA, o nome basta para saber quem tem arco ou feitiço
-   — e é aqui que ter arco muda a conta: quem foge de um arqueiro não é
-   alcançado por ele, é alvejado.
-
-   A tabela é de NOMES (o `desc` do bestiário não chega à mesa: é dívida
-   conhecida de `completarInimigo`, escrita em degraus.js), e o `desc` é
-   lido também, para o dia em que chegar. Duas famílias:
-     arma   quem dispara coisa — arco, besta, funda, dardo.
-     magia  quem conjura de longe. O Lich entra: é o conjurador por
-            excelência, e fugir de um é fugir de um feitiço nas costas.
-   FICOU DE FORA o Cultista: no 5e ele luta de cimitarra, e um sacerdote
-   sombrio que só o nome faz conjurador entra pelo "sombrio", não pelo
-   "cultista". E o Caçador: caçador de faca é tão comum quanto de arco.
+   Quem foge de um arqueiro não é alcançado por ele, é alvejado. A
+   TABELA DE NOMES nasceu aqui (v9.294) e mudou-se para `atirador.js` em
+   MM7, quando a luta passou a lê-la também: o passo (`grid.js`) e o golpe
+   (`combate.js`) precisam da mesma resposta, e esta casa lê os dois —
+   ficar aqui fechava um círculo de imports. A regra é a mesma, palavra
+   por palavra; só a morada mudou.
    ============================================================ */
-export const QUEM_ATACA_DE_LONGE = [
-  { id: "arma", rx: /\b(atirador|atiradora|franco-?atirador|arqueir[oa]s?|besteir[oa]s?|fundibulari[oa]s?|lanca-?dardos)\b/ },
-  { id: "magia", rx: /\b(mago|maga|feiticeir[oa]|brux[oa]|xama|conjurador|conjuradora|necromante|piromante|lich|sacerdote sombrio|sacerdotisa sombria)\b/ },
-  { id: "descrito", rx: /\b(a distancia|de longe)\b/ },
-];
-
-export function atacaDeLonge(inimigo) {
-  if (!inimigo || typeof inimigo !== "object") return false;
-  if (inimigo.distancia) return true;
-  const t = N(`${inimigo.nome || ""} ${inimigo.desc || ""}`);
-  return QUEM_ATACA_DE_LONGE.some((q) => q.rx.test(t));
-}
 
 /* ============================================================
    O DISPARO NAS COSTAS — a tabela.

@@ -39,6 +39,9 @@
    ============================================================ */
 
 import { deslocamentoDeCriatura } from "./movimento.js";
+/* MM7: quem luta de longe, e a tabela do posto dele. atirador.js é folha
+   (não importa nada), então esta seta também aponta para um lado só. */
+import { mantemDistancia, POSTURA_DO_ATIRADOR } from "./atirador.js";
 
 export const METROS_POR_QUADRADO = 1.5;
 export const m2q = (metros) => Math.max(0, Math.round((Number(metros) || 0) / METROS_POR_QUADRADO));
@@ -878,8 +881,17 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
   const novos = (inimigos || []).map((e) => {
     if (!vivos.includes(e) || e.x == null) return e;
     const dist = distanciaM(e, alvo);
+    /* MM7: QUEM LUTA DE LONGE NÃO VEM. Até aqui só a invocação com
+       `distancia` ficava parada (e só dentro dos 18 m, com ou sem linha de
+       visão); o Atirador do bestiário vinha colar no herói como um ogro. O
+       posto é decidido em `postoDoAtirador`, logo abaixo. */
+    if (mantemDistancia(e)) {
+      const posto = postoDoAtirador(grade, e, alvo, todos, vivos);
+      if (!posto) return e;
+      movimentos.push(posto.movimento);
+      return { ...e, x: posto.x, y: posto.y };
+    }
     if (dist <= alcanceNatural(e)) return e;
-    if (e.distancia && dist <= 18) return e;   // atirador mantém distância
     const ocupados = ocupacaoDe([...(todos || []), ...vivos], e);
     /* ---- CADA BICHO NO SEU PASSO (v9.44) ----
        `deslocamentoDeCriatura` existia em movimento.js desde a v9.34 com o
@@ -909,6 +921,94 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
     return { ...e, x: melhor.x, y: melhor.y };
   });
   return { inimigos: novos, movimentos };
+}
+
+/* ============================================================
+   O POSTO DO ATIRADOR (Fase MM · MM7) — onde fica quem dispara
+
+   A regra de mesa, do 5e e de quem já viu um arqueiro bem jogado:
+     · JÁ ESTÁ BEM — vê o herói, está dentro da faixa em que o tiro não
+       paga penalidade (`faixasSemCusto` faixas de `METROS_POR_FAIXA`: a
+       mesma conta de `alcanca`, logo o mesmo preço que o arco do herói
+       paga) e ninguém do outro lado está colado nele: NÃO SE MEXE. Fica e
+       dispara.
+     · NÃO ESTÁ — procura, no passo dele (o mesmo `custosDe` da tela, o
+       mesmo `deslocamentoDeCriatura` do resto), a casa de onde dispara
+       melhor. Três degraus, e o de cima manda em tudo: vê e está na faixa
+       sem custo; vê e está ao alcance (36 m); não vê — aí aproxima-se, para
+       ver na rodada seguinte. Dentro do degrau, soma-se a COBERTURA (a
+       mesma `temCobertura` que dá +2 de defesa), tira-se o desvio da
+       distância ideal (a última casa da faixa sem custo: o mais longe que
+       se pode estar sem pagar) e tira-se o que andou: entre dois postos
+       iguais, fica o mais perto de onde já estava.
+     · NUNCA ACABA COLADO. Casa a um quadrado de alguém do outro lado não é
+       posto: disparar dali é com desvantagem (5e), e é isso que o faz sair.
+     · COLADO E SEM SAÍDA — nenhuma casa livre que o descole —, fica: é o
+       encurralado, e `turnoDosInimigos` dispara com desvantagem.
+
+   QUEM ESTÁ DO OUTRO LADO é o alvo e `todos` (o App passa o herói e o
+   grupo), menos os da própria lista e quem já caiu.
+
+   O RECUO PROVOCA. Quem começa dentro do alcance do herói e acaba fora
+   dele saiu de perto de quem tinha a guarda erguida — é o golpe de
+   oportunidade que o App já rola em quem foge. O movimento traz
+   `provoca: true` para a fiação saber em quem; e `recua: true` quando
+   acabou mais longe do que estava, para a linha de passo não dizer
+   "avança" de quem deu as costas.
+
+   DETERMINÍSTICO: nenhum dado. A mesma planta e as mesmas casas dão o
+   mesmo posto, e o empate fica com a casa que a busca achou primeiro.
+   ============================================================ */
+function postoDoAtirador(grade, e, alvo, todos, vivos) {
+  const P = POSTURA_DO_ATIRADOR;
+  const W = P.pesos;
+  const meus = vivos || [];
+  const vistos = new Set();
+  const hostis = [alvo, ...(todos || [])].filter((h) => {
+    if (!h || h === e || h.x == null || vistos.has(h)) return false;
+    vistos.add(h);
+    if (meus.includes(h) || h.derrotado || (h.vida != null && h.vida <= 0)) return false;
+    return true;
+  });
+  const colado = (pos) => hostis.some((h) => distanciaM(pos, h) <= METROS_POR_QUADRADO);
+  const semCusto = (d) => Math.floor(d / METROS_POR_FAIXA) < P.faixasSemCusto;
+  const idealM = P.faixasSemCusto * METROS_POR_FAIXA - METROS_POR_QUADRADO;
+  const dist = distanciaM(e, alvo);
+  if (!colado(e) && semCusto(dist) && linhaDeVisao(grade, e, alvo)) return null;
+  if (colado(e) && !P.coladoRecua) return null;
+  const passoDele = deslocamentoDeCriatura(e);
+  const metrosDele = passoDele.metros || DESLOCAMENTO_PADRAO;
+  const ocupados = ocupacaoDe([...(todos || []), ...meus], e);
+  const custos = custosDe(grade, e, { ocupados, deslocamentoM: metrosDele, ignoraDificil: !!passoDele.voando });
+  const nota = (x, y, custoM) => {
+    const aqui = { ...e, x, y };
+    if (colado(aqui)) return null;
+    const d = distanciaM(aqui, alvo);
+    const ve = d <= P.alcanceM && linhaDeVisao(grade, aqui, alvo);
+    if (!ve) return -d - custoM * W.passo;
+    const degrau = semCusto(d) ? 2 : 1;
+    return degrau * W.faixa + (temCobertura(grade, x, y) ? W.cobertura : 0)
+      - Math.abs(d - idealM) * W.ideal - custoM * W.passo;
+  };
+  let melhor = null;
+  const ficar = nota(e.x, e.y, 0);
+  if (ficar != null) melhor = { x: e.x, y: e.y, n: ficar, custoM: 0 };
+  for (const [k, custoM] of custos) {
+    const [x, y] = k.split(",").map(Number);
+    const n = nota(x, y, custoM);
+    if (n == null) continue;
+    if (!melhor || n > melhor.n) melhor = { x, y, n, custoM };
+  }
+  if (!melhor || (melhor.x === e.x && melhor.y === e.y)) return null;
+  const nd = distanciaM({ ...e, x: melhor.x, y: melhor.y }, alvo);
+  const alcanceDoAlvo = alcanceNatural(alvo);
+  const movimento = {
+    nome: e.nome, de: nomeDoLugar(grade, e.x, e.y), para: nomeDoLugar(grade, melhor.x, melhor.y),
+    metros: Math.round(melhor.custoM),
+  };
+  if (nd > dist) movimento.recua = true;
+  if (dist <= alcanceDoAlvo && nd > alcanceDoAlvo) movimento.provoca = true;
+  return { x: melhor.x, y: melhor.y, movimento };
 }
 
 /* ---------------- ÁREA COM FORMA DE VERDADE ----------------

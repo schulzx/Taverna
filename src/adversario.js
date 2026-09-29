@@ -43,6 +43,9 @@
    ============================================================ */
 
 import { menteDoBicho } from "./lexico.js";
+/* MM7: quem fala pela oposição pode ser um arqueiro, e a voz dele não pode
+   dizer que ele avança. Folha: atirador.js não importa nada. */
+import { atacaDeLonge } from "./atirador.js";
 
 const limpar = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 
@@ -269,6 +272,11 @@ export function garantirLuta(s) {
        aproveitam. So tempera a margem — as intencoes especificas (calar a
        magia, o refem) ganham sempre. Default 0: sem postura, nada muda. */
     posturaMoral: num(o.posturaMoral, 0),
+    /* MM7: QUEM FALA PELA OPOSIÇÃO LUTA DE LONGE? Derivado do nome (e do
+       `desc`, quando vier) pela mesma tabela que decide o passo e o golpe,
+       para a voz e a mecânica não discordarem; o campo explícito manda. Só
+       muda a VOZ da intenção (`VOZ_DE_QUEM_ATIRA`), nunca a eleição. */
+    deLonge: o.deLonge === undefined ? atacaDeLonge({ nome: o.nome, desc: o.desc }) : b(o.deLonge),
   };
 }
 
@@ -663,6 +671,48 @@ export const INTENCOES = [
 
 export function intencaoPorId(id) { return INTENCOES.find((i) => i.id === id) || null; }
 
+/* ============================================================
+   A VOZ DE QUEM ATIRA (Fase MM · MM7)
+
+   Desde MM7 o arqueiro fica no posto e dispara (`grid.js`,
+   `postoDoAtirador`). Só que a intenção é eleita pelo que o bando QUER,
+   e a frase dela foi escrita para quem luta de perto: "usar o número e
+   cercar", "aguentar e bater em quem estiver mais perto", "avançar sem
+   recuar nunca". Com um Atirador a falar pela oposição, o Narrador ouvia
+   que ele avança — e o sistema deixava-o parado a doze metros. É a mesma
+   mentira que a Fase MM existe para fechar, só que ao contrário: o sistema
+   sabe, e conta outra coisa.
+
+   A eleição NÃO muda: o `alvo` da intenção é o mesmo e é o que o
+   `turnoDosInimigos` executa. Muda só a frase, e só a das intenções
+   cujo verbo é de encostar. As outras ("sair inteiro daqui", "derrubar
+   sem matar") servem a quem dispara tal como estão. A suíte cobra a
+   catraca nos dois sentidos: toda intenção cujo `quer` fala de avançar,
+   cercar, bater, empurrar, prender ou arrancar tem a sua linha aqui — e
+   nenhuma linha daqui fala nenhuma dessas palavras.
+   ============================================================ */
+export const VOZ_DE_QUEM_ATIRA = {
+  territorio: "expulsar do território, e para de disparar em quem recua",
+  nao_para: "não sair do posto nunca, e disparar até desmontar",
+  empurrar: "disparar em quem estiver na beira e deixar a queda fazer o resto",
+  afogar: "disparar em quem estiver na água, onde ninguém se esquiva",
+  tirar_a_coisa: "derrubar quem carrega a coisa e sumir com ela",
+  proteger: "não sair de perto da coisa, e disparar em quem chegar nela",
+  aproveitador: "mirar no que já está ferido, sem dar trégua",
+  separar: "cortar o grupo em dois, e disparar na metade menor",
+  cercar_o_sozinho: "cobrir de longe quem está sem ninguém, enquanto os outros o rodeiam",
+  receoso: "só disparar com vantagem clara, e recuar ao menor sinal",
+  sobrepujar: "usar o número, e mirar de longe enquanto os outros apertam",
+  aguentar: "aguentar de longe e disparar em quem estiver mais perto",
+  brigar: "manter a distância e disparar até um dos dois lados parar",
+};
+
+/* A frase da intenção para ESTA voz. */
+function querDaVoz(intencao, deLonge) {
+  if (!intencao) return "";
+  return (deLonge && VOZ_DE_QUEM_ATIRA[intencao.id]) || intencao.quer;
+}
+
 /* ---------------- A CONSULTA ----------------
    Falha FECHADA: sem situação, sem intenção. Um adversário com intenção
    inventada é pior que um sem nenhuma, porque a Pauta afirma ao Narrador
@@ -762,7 +812,7 @@ export function linhaDaLuta(situacao, alvos = [], { antes = "" } = {}) {
   const alvo = escolherAlvo(v.intencao.alvo, alvos);
   const quem = alvo && alvo.nome ? ` — em ${alvo.nome}` : "";
   const virou = v.quebrou ? " (mudou agora)" : "";
-  return `${s.nome}: ${v.intencao.quer}${quem}${virou}`;
+  return `${s.nome}: ${querDaVoz(v.intencao, s.deLonge)}${quem}${virou}`;
 }
 
 /* O envelope de CANON, para o Narrador não desfazer o que a mecânica já
@@ -774,7 +824,7 @@ export function envelopeDaVirada(situacao, { antes = "" } = {}) {
   const v = intencaoDaVez(s, { antes });
   if (!v || !v.quebrou || !v.intencao) return "";
   const oQueEra = intencaoPorId(v.de);
-  return `[A LUTA VIROU] ${s.nome} não quer mais ${oQueEra ? oQueEra.quer.split(",")[0] : "o que queria"} — agora quer ${v.intencao.quer.split(",")[0]}. Mostre a virada acontecendo: alguma coisa nesta rodada fez a oposição mudar de ideia, e o jogador tem de poder ver o quê.`;
+  return `[A LUTA VIROU] ${s.nome} não quer mais ${oQueEra ? querDaVoz(oQueEra, s.deLonge).split(",")[0] : "o que queria"} — agora quer ${querDaVoz(v.intencao, s.deLonge).split(",")[0]}. Mostre a virada acontecendo: alguma coisa nesta rodada fez a oposição mudar de ideia, e o jogador tem de poder ver o quê.`;
 }
 
 export const ADVERSARIO_PROMPT = `A OPOSIÇÃO TEM VONTADE (v9.110):

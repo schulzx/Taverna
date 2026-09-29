@@ -6,13 +6,13 @@
    Estilo D&D 5e / Baldur's Gate 3: todos rolam d20, com
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
-import { alcanca, bonusDefesaEm, distanciaM } from "./grid.js";
+import { alcanca, bonusDefesaEm, distanciaM, METROS_POR_QUADRADO } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
 import { xpDeCombate } from "./juiz.js";
 import { perfilDeCriatura, perfilDe, multiplicadorDano, iconeDano, resistenciasEquipadas, elementoDaArma } from "./danos.js";
 import { mecanicaDe } from "./condicoes.js";
-import { golpeDaVez } from "./aflicoes.js";
+import { golpeDaVez, golpeDeLonge } from "./aflicoes.js";
 import { decidirAcaoCompanheiro, valorDaCura, danoDaHabilidadeComp } from "./companheiros.js";
 import { tipoDeDanoDaHabilidade, bonusDeDano, bonusDeArma } from "./combos.js";
 import { proficienciaDe, fichaDoItem, danoDaArma, modDoGolpe } from "./itens.js";
@@ -23,6 +23,28 @@ import { escolherAlvo } from "./adversario.js";
 /* MM6: quem está escondido de quem. Seta de um lado só — escondido.js lê
    grid.js, condicoes.js e peneira.js, e nenhum deles conhece este arquivo. */
 import { oculto } from "./escondido.js";
+/* MM7: quem luta de longe (a mesma tabela da fuga e do passo), e o teto da
+   arma dele. Folha: atirador.js não importa nada. */
+import { mantemDistancia, POSTURA_DO_ATIRADOR } from "./atirador.js";
+
+/* O ALCANCE DE QUEM GOLPEIA. Quem luta de longe alcança o teto da arma de
+   longe (36 m) e paga, como o herói paga, a penalidade por faixa de 9 m
+   que `alcanca` já cobra; quem luta de perto alcança o que o corpo dele
+   alcança. Era a conta que já se fazia para a invocação com `distancia` —
+   só passou a valer para quem o nome chama de atirador. */
+const alcanceDoGolpe = (inim) => (mantemDistancia(inim)
+  ? { distancia: true, alcanceM: POSTURA_DO_ATIRADOR.alcanceM }
+  : { distancia: false, alcanceM: null });
+
+/* COLADO, NA REGRA DO 5e: alguém do outro lado a um quadrado, de pé e sem
+   ter perdido a ação. Disparar assim é com desvantagem — é o que faz o
+   arqueiro recuar (grid.js), e o que ele paga quando não tem para onde. */
+function coladoEmQuem(inim, hostis, grade) {
+  if (!grade || !inim || inim.x == null) return false;
+  return hostis.some((h) => h && h.onde && h.onde.x != null
+    && (h.ent.vida || 0) > 0 && !mecanicaDe(h.ent.condicoes || []).perdeAcao
+    && distanciaM(inim, h.onde) <= METROS_POR_QUADRADO);
+}
 
 /* A SORTE PODE ENTRAR DE FORA. `rolar` é uma fonte opcional de números em
    [0, 1) — um `rng(hashSemente(...))` de semente.js, por exemplo. Sem ela,
@@ -303,7 +325,7 @@ function bandeirasDosAlvos(alvos, inim, grade, pos) {
   const comAlcance = alvos.map((a) => {
     let perto = true;
     try {
-      const alc = alcanca(grade, { ...inim }, a.onde || pos, { distancia: !!inim.distancia, alcanceM: inim.distancia ? 36 : null });
+      const alc = alcanca(grade, { ...inim }, a.onde || pos, alcanceDoGolpe(inim));
       perto = !!alc.ok && !(alc.penalidade > 0);
     } catch { perto = true; }
     const cls = (a.ent && a.ent.classe) || "";
@@ -413,6 +435,10 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
     /* MULTIATAQUE (5e): elites agem 2 vezes, lendários até 3 — como o
        Multiattack dos monstros. Cada golpe escolhe alvo de novo. */
     const nGolpes = ataquesDoInimigo(inim.ameaca, inim.nivel);
+    /* MM7: quem dispara, e se dispara colado. A lista de quem está do outro
+       lado é a mesma dos alvos — para a marionete, os próprios. */
+    const atira = mantemDistancia(inim);
+    const colado = atira && coladoEmQuem(inim, alvosDele, grade);
     for (let g = 0; g < nGolpes; g++) {
       const vivosAlvo = alvosDele.filter((a) => (a.ent.vida || 0) > 0);
       if (!vivosAlvo.length) break;
@@ -441,11 +467,21 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
       } else {
         alvo = vivosAlvo[0];
       }
+      /* MM7: QUEM NÃO O VÊ ESCOLHE OUTRO. O atirador que perdeu o herói de
+         vista (escondido dele, MM6) e tem outro alvo que vê e alcança dispara
+         nesse — é a escolha de mesa, e é o que faz esconder-se de um arqueiro
+         valer a pena. Sem outro, dispara no quadrado, com a desvantagem que o
+         golpe às cegas já tem logo abaixo. Uma provocação não se desfaz aqui:
+         quem provoca PEDE para ser alvo. */
+      if (atira && !virado && !provocado && alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos })) {
+        const outro = vivosAlvo.find((x) => x.ref !== "jogador" && !!alcanca(grade, { ...inim }, x.onde || pos, alcanceDoGolpe(inim)).ok);
+        if (outro) alvo = outro;
+      }
       /* quem não alcança, não bate — e agora "alcançar" é uma distância em
          metros contra o alcance natural do bicho (o ogro pega de 3 m), com
          parede cortando o tiro. Sem grade, devolve "alcança, sem penalidade"
          e o comportamento antigo fica intacto. */
-      const alc = alcanca(grade, { ...inim }, alvo.onde || pos, { distancia: !!inim.distancia, alcanceM: inim.distancia ? 36 : null });
+      const alc = alcanca(grade, { ...inim }, alvo.onde || pos, alcanceDoGolpe(inim));
       if (!alc.ok) continue;
       const penalidadeZona = alc.penalidade || 0;
       const perfilInim = perfilDe(inim);
@@ -473,16 +509,23 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
              quem acabou de ganhar linha de visão já o ver) é golpe às cegas:
              desvantagem, a mesma metade da invisibilidade. Só o herói se
              esconde nesta etapa; o grupo e a marionete ficam como estavam. */
-          || (alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos })),
+          || (alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos }))
+          /* MM7: e o disparo colado, a regra do 5e */
+          || colado,
       });
       /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
          narra e é dele que o sistema tira a aflição que o golpe carrega. */
-      const golpeNome = golpeDaVez(inim.nome, perfilInim.ataque, inim.ameaca, g);
+      /* MM7: quem atira usa o repertório de quem atira — o Atirador
+         disparava "Rasteira" do outro lado da sala. */
+      const golpeNome = (atira ? golpeDeLonge : golpeDaVez)(inim.nome, perfilInim.ataque, inim.ameaca, g);
       /* os três campos de lugar entram POR ÚLTIMO e por spread: quem já
          lia os oito de cima continua a lê-los na mesma ordem, e numa
          luta sem grade o spread não acrescenta chave nenhuma. */
-      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado, ...lugarDaAcao(inim, alvo.onde || pos, alc) });
+      /* `deLonge` só nasce em quem dispara (a chave que só existe quando é
+         verdade, a regra de `LUGAR_NA_ACAO`): quem já lia a ação não vê
+         campo novo em golpe de perto. */
+      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado, ...lugarDaAcao(inim, alvo.onde || pos, alc), ...(atira ? { deLonge: true } : {}) });
     }
   }
   return acoes;

@@ -5938,7 +5938,7 @@ export default function Taverna() {
      Com metros, a maior parte dos passos acontece dentro de um lugar só, e a
      linha precisa dizer o que de fato mudou: a distância. */
   const linhaDePasso = (m) => (m.de === m.para
-    ? `👣 ${m.nome} avança ${Math.max(1, Math.round(m.metros || 0))} m — ainda ${m.para}`
+    ? `👣 ${m.nome} ${m.recua ? "recua" : "avança"} ${Math.max(1, Math.round(m.metros || 0))} m — ainda ${m.para}`
     : `👣 ${m.nome}: ${m.de} → ${m.para}`);
 
   /* A presença nos DOIS sentidos, na abertura da luta. O deus que entrou
@@ -15060,6 +15060,34 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      herói acontece antes de o dano virar PV, concentração é testada, os
      companheiros agem, o teste de morte roda, e a rodada seguinte abre com os
      movimentos renovados. Devolve o resumo pronto para colar no envelope. */
+  /* ---------------- O GOLPE DE OPORTUNIDADE DO HERÓI (MM7) ----------------
+     Um auxiliar só para os dois momentos em que alguém dá as costas ao
+     herói sob a guarda dele: quem foge (`querFugir`, logo abaixo) e quem
+     recua para abrir distância e disparar (`postoDoAtirador`, `m.provoca`,
+     mais abaixo). A conta — bônus, o veredito do furtivo, o dano pela
+     metade da classe — vivia só na fuga; copiá-la para o recuo duplicaria
+     a mesma fórmula em dois lugares que precisam mudar juntos. Não mexe
+     em `combPos`: só calcula o golpe e devolve o resultado — quem chama
+     decide o que fazer com o corpo (`derrotado`, `fugiu`, ou nenhum dos
+     dois). */
+  const golpeDeOportunidadeDoHeroi = (persBase, alvo, aliadosOp, grade, heroi) => {
+    const bonusOp = Math.max((persBase.atributos?.forca || 0), (persBase.atributos?.destreza || 0)) + 2 + Math.floor(((persBase.nivel || 1) - 1) / 4);
+    let vfOp = null;
+    try {
+      vfOp = vereditoDoFurtivo({
+        classe: persBase.classe, nivel: persBase.nivel || 1, alvo, aliados: aliadosOp,
+        vantagem: estaInvisivel(persBase) || oculto(persBase, alvo, { grade, heroi }),
+        desvantagem: ataqueEstorvado(persBase),
+        condAtacante: persBase.condicoes || [], condAlvo: alvo.condicoes || [],
+        tipoDano: elementoDaArma(persBase),
+      });
+    } catch (err) { calou("vereditoDoFurtivo-oportunidade", err); }
+    const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false) / 2), vfOp ? { furtivo: vfOp.soma } : null) + bonusDeArma(persBase).bonus;
+    const r = ataqueDeOportunidade(persBase, alvo, bonusOp, dOp, { tipoDano: elementoDaArma(persBase) });
+    const pv = Math.max(0, (alvo.vida || 0) - (r.dano || 0));
+    return { r, pv, morreu: pv <= 0 };
+  };
+
   const resolverRevide = (persBase, aoTerminar) => {
     /* K3: a rodada passou a ter uma CONTINUACAO, e a razao e uma so — a janela
        da reacao suspende o meio dela, e uma funcao sincrona nao sabe suspender.
@@ -15090,21 +15118,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        do golpe comum — aqui ha posicao (grade/heroi de combPos). */
     const aliadosOp = (combPos.aliados || []).map((al, i) => ({ ...al, vida: ((persBase.grupo || [])[i] || {}).vida, condicoes: ((persBase.grupo || [])[i] || {}).condicoes, i }));
     for (const e of vivos.filter((x) => querFugir(x))) {
-      const bonusOp = Math.max((persBase.atributos?.forca || 0), (persBase.atributos?.destreza || 0)) + 2 + Math.floor(((persBase.nivel || 1) - 1) / 4);
-      let vfOp = null;
-      try {
-        vfOp = vereditoDoFurtivo({
-          classe: persBase.classe, nivel: persBase.nivel || 1, alvo: e, aliados: aliadosOp,
-          vantagem: estaInvisivel(persBase) || oculto(persBase, e, { grade: combPos.grade, heroi: combPos.heroi }),
-          desvantagem: ataqueEstorvado(persBase),
-          condAtacante: persBase.condicoes || [], condAlvo: e.condicoes || [],
-          tipoDano: elementoDaArma(persBase),
-        });
-      } catch (err) { calou("vereditoDoFurtivo-oportunidade", err); }
-      const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false) / 2), vfOp ? { furtivo: vfOp.soma } : null) + bonusDeArma(persBase).bonus;
-      const r = ataqueDeOportunidade(persBase, e, bonusOp, dOp, { tipoDano: elementoDaArma(persBase) });
-      const pv = Math.max(0, (e.vida || 0) - (r.dano || 0));
-      const morreu = pv <= 0;
+      const { r, pv, morreu } = golpeDeOportunidadeDoHeroi(persBase, e, aliadosOp, combPos.grade, combPos.heroi);
       /* sai do combate nos dois casos; `fugiu` distingue quem escapou VIVO —
          é o que impede o sistema de dar XP por ele e, pior, de riscar o nome
          dele no registro do mundo como se tivesse morrido. */
@@ -15125,6 +15139,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const aindaVivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
     if (!aindaVivos.length) return aoTerminar({ pers: persBase, resumo: fugas.length ? ` ${fugas.join("; ")}.` : "" });
     const notaFuga = fugas.length ? ` ${fugas.join("; ")} (rolado pelo sistema — narre a fuga, não a impeça).` : "";
+    /* MM7: a nota de quem caiu ao recuar para disparar — populada logo
+       abaixo, junto do passo dos inimigos, e usada ao lado de `notaFuga`
+       no resumo final da rodada. */
+    let notaRecuo = "";
 
     /* ZONAS (v9.20): antes de bater, quem não alcança ANDA — e, tendo
        chegado, bate no mesmo turno. Mover e atacar juntos é a regra de mesa,
@@ -15142,6 +15160,44 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         combPos.inimigos = mv.inimigos;
         combateRef.current = { ...combateRef.current, inimigos: mv.inimigos };
         pushMsgs(mv.movimentos.map((m) => ({ autor: "sistema", texto: linhaDePasso(m) })));
+        /* MM7: O RECUO PROVOCA — quem sai do alcance do herói para abrir
+           distância e disparar dá as costas à mesma guarda erguida que a
+           fuga já cobrava (`querFugir`, acima); `m.provoca` é quem
+           `postoDoAtirador` marcou (grid.js). Só reage o herói que PODE
+           reagir: vivo e sem ter perdido a ação (atordoado, paralisado) —
+           a mesma condição que tira o incapacitado de `quemGolpeiaAoSair`
+           (fuga.js), do lado de cá da mesa. */
+        if ((persBase.vida || 0) > 0 && !mecanicaDe(persBase.condicoes || []).perdeAcao) {
+          const recuos = [];
+          for (const m of mv.movimentos.filter((x) => x.provoca)) {
+            const alvo = (combPos.inimigos || []).find((x) => x.nome === m.nome && !x.derrotado && (x.vida || 0) > 0);
+            if (!alvo) continue;
+            const { r, pv, morreu } = golpeDeOportunidadeDoHeroi(persBase, alvo, aliadosOp, gradeAtual, lugarHeroi);
+            /* sem `fugiu`: quem recua continua na luta — só sai dela de vez
+               se este golpe o derrubar, e aí é uma morte comum, não uma
+               fuga. */
+            combPos.inimigos = combPos.inimigos.map((x) => (x.nome !== alvo.nome ? x : (morreu ? { ...x, vida: pv, derrotado: true } : { ...x, vida: pv })));
+            logDadoCombate(resumoDoAtaque(r));
+            /* SEM EMOJI NOVO (D5h.1): o teto de emoji do sistema em App.jsx só
+               desce — reaproveitar 🏃/☠ aqui ainda seria uma ocorrência a
+               mais no arquivo. A linha de fuga (acima) já os usa; esta é
+               prosa simples, do mesmo jeito que outras linhas de sistema
+               sem glifo já convivem na mesma tela. */
+            pushMsgs([{ autor: "sistema", texto: r.dano > 0
+              ? `${alvo.nome} recua para disparar e leva o seu golpe de oportunidade: ${r.dano} de dano${morreu ? " — cai antes de puxar o gatilho" : ""}`
+              : `${alvo.nome} recua para disparar; seu golpe de oportunidade passa raspando` }]);
+            if (morreu) recuos.push(`${alvo.nome} recuou para disparar e CAIU com o golpe de oportunidade (${r.dano})`);
+          }
+          if (recuos.length) {
+            combateRef.current = { ...combateRef.current, inimigos: combPos.inimigos };
+            setCombate({ ...combateRef.current });
+            const pRecuo = fecharSeTodosCairam(persBase);
+            if (pRecuo) {
+              return aoTerminar({ pers: (pRecuo !== true) ? pRecuo : persBase, resumo: ` ${[...fugas, ...recuos].join("; ")}. Com isso a luta ACABOU — narre o tiro final e o silêncio depois.` });
+            }
+          }
+          notaRecuo = recuos.length ? ` ${recuos.join("; ")} (rolado pelo sistema — narre o golpe, não o impeça).` : "";
+        }
       }
     }
     /* v9.34: E OS COMPANHEIROS ANDAM. Sem isto eles ficavam na linha de
@@ -15642,7 +15698,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
     const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
-    return { pers: persAtual, resumo: `${notaFuga} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
+    return { pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
     };
 
     /* ---------------- A JANELA ABRE, OU NAO (v9.259, K3) ----------------

@@ -598,8 +598,12 @@ sec("11. O PREÇO DA FRASE — a frase escrita vê o mesmo preço que o botão")
 
 
 /* ================== NADA SAI DE GRAÇA — a terceira volta ================== */
+/* MM7: a tabela de quem ataca de longe mudou-se para `atirador.js` (a luta
+   passou a lê-la, e em fuga.js fechava um círculo de imports). As asserções
+   são as mesmas, palavra por palavra; só a porta de onde vêm mudou. */
+const { QUEM_ATACA_DE_LONGE, atacaDeLonge } = await import(RAIZ + "atirador.js");
 const {
-  QUEM_ATACA_DE_LONGE, atacaDeLonge, DISPARO_NA_FUGA, chanceDeAcerto, FAIXAS_DA_CHANCE,
+  DISPARO_NA_FUGA, chanceDeAcerto, FAIXAS_DA_CHANCE,
   rolarOCustoDaFuga, CONSEQUENCIAS_DA_FUGA, FAMA_DA_FUGA, REFORCO_DA_PERSEGUICAO,
   consequenciaDaFuga, bandoAoVoltar, lutaAoEncher, relogioDoTerritorio,
 } = FUGA_MOD;

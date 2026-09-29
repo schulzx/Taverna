@@ -15,7 +15,52 @@ Formato:
 ```
 
 ---
-## 29/09 20:10 · v9.311 · "escondo-me" esconde: a ênclise no catálogo · commit (o hash vai no próximo bloco)
+## 29/09 16:45 · v9.312 · MM7 · os atiradores atiram · commit (o hash vai no próximo bloco)
+
+- **por que andou:** achado da fuga (v9.294) — o inimigo de distância era atirador na fuga
+  e lutador colado dentro da luta. Pior: o Atirador do bestiário andava até ficar colado e
+  "atirava" Rasteira e Marretada, porque o alcance de 36 m só valia para invocações.
+- **estado inicial:** verde (`c06d904` no ar).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com
+  este commit. Endereços de `acoes-do-jogador` re-medidos por conteúdo, com o motivo.
+- **backend:** `src/atirador.js` (a tabela `QUEM_ATACA_DE_LONGE` saiu de `fuga.js` para
+  não criar ciclo de imports); `postoDoAtirador` — vê o herói, a ≤ 9 m, preferindo
+  cobertura; nunca termina colado; colado, recua um passo. O disparo em `turnoDosInimigos`
+  paga a mesma penalidade por faixa que o arco do herói; colado a um hostil, desvantagem;
+  herói escondido, dispara noutro visível ou às cegas. Golpes de distância com nome de
+  distância (`golpeDeLonge`). A voz da intenção do atirador (`VOZ_DE_QUEM_ATIRA`): o
+  Narrador não ouve "vem para cima de você" de quem fica atrás.
+- **medido antes de mudar (140 lutas por cenário, antes sobre a árvore de HEAD):** dano ao
+  herói dupla 13,0 → 11,6 (−11%), conjurador 10,6 → 12,0 (+13%), bando 16,4 → 13,7 (−16%);
+  vitórias iguais. O posto a 12 m deixava o atirador mais fraco do que o lutador colado
+  que era (−22%, −30%); a faixa sem custo (7,5 m ideal) acertou-o. **Sem o golpe de
+  oportunidade no recuo, o conjurador ia a +29%** — por isso a fiação era obrigatória.
+- **frontend:** o golpe de oportunidade do herói em quem recua para disparar, num auxiliar
+  comum às fugas e aos recuos (`golpeDeOportunidadeDoHeroi`, a mesma conta, byte a byte,
+  no ramo das fugas); "recua" em vez de "avança" na linha do passo. O cartão do golpe
+  final **não** se levanta no golpe de oportunidade — nem hoje na fuga; é tema de MM3b.
+- **um acidente, e como se pagou:** a mão `frontend` sobrescreveu a suíte do backend, ainda
+  não commitada. O backend reescreveu-a com toda a cobertura, preservando a secção de
+  fiação da frontend. Duas mãos, um arquivo novo sem commit: é o bastão do `App.jsx` em
+  pequeno, e vale a mesma regra — quem escreve um arquivo que não fez, lê-o antes.
+- **a prova jogada:** um homem com arco numa clareira sumiu antes da luta; nenhuma luta
+  contra atirador apareceu no orçamento de chamadas. Provado pela suíte e pela simulação.
+  **O Poupar continua sem prova jogada** — MM3b, a seguir, aumenta a chance de o ver.
+- **achados para "Aberto":** "Sussurro assombrado" inspira o bando ("assombrado" contém
+  "brado"); `moverInimigos` trava atrás de paredes; o herói colado que atira não paga, e há
+  duas regras para o mesmo arco (fuga e luta).
+- **as horas deste diário, corrigidas:** os cabeçalhos de v9.304 a v9.311 levavam horas
+  que eu escrevi de cabeça e não batiam com o relógio (até cinco horas à frente). Passam
+  a ser a hora do commit de cada etapa (`git log`), e as horas de bastão que eu não
+  tinha medido saíram. Um diário que a pessoa audita não pode ter hora inventada.
+- **decisões médias tomadas:**
+  - **O atirador fica na faixa sem custo** (≤ 9 m), não no limite: medido, é o único posto
+    em que ele não fica mais fraco do que o lutador que era.
+  - **Sem glifo novo** para o disparo (🏹): o teto de emoji é do desenho; pedido a ele.
+- **para quem joga:** o arqueiro fica atrás, dispara, e recua se o herói se cola — e leva o
+  golpe ao recuar. Fechar distância ou procurar cobertura passa a ser a decisão da luta.
+
+## 29/09 15:27 · v9.311 · "escondo-me" esconde: a ênclise no catálogo · commit `c06d904`
 
 - **por que andou:** item de "Aberto" promovido pelo coordenador — o mesmo defeito da
   peneira da agressão, agora no catálogo de desafios, que foi todo escrito em próclise.
@@ -49,13 +94,13 @@ Formato:
   o que dizem; "posso esconder-me?" e "não me escondo" deixam de rolar. A sonda não se
   move (72/157).
 
-## 29/09 18:40 · v9.310 · MM6 · escondido é um estado · commit `b4ca492`
+## 29/09 15:01 · v9.310 · MM6 · escondido é um estado · commit `b4ca492`
 
 - **por que andou:** o teste de furtividade existia e o estado não — no turno seguinte
   nada lembrava que o herói estava escondido, e o Narrador não sabia quem o via. É a
   resposta a *"o anão está me vendo?"*.
 - **estado inicial:** verde (a peneira no ar, `28f788c`).
-- **bastão:** tomado às ~16:15 em nome deste ciclo para a mão `frontend`; devolvido com
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com
   este commit. O `App.jsx` cresceu 122 linhas; os endereços de `acoes-do-jogador` foram
   re-medidos pelo próprio varredor e conferidos à mão, com o motivo.
 - **backend:** `src/escondido.js` e a condição `escondido` em `condicoes.js` — viaja no
@@ -105,7 +150,7 @@ Formato:
   mundo não reage a quem não viu —, e o Ladino ganha um motivo para se esconder a cada
   turno em vez de somar o furtivo sem pensar.
 
-## 29/09 15:30 · v9.309 · a peneira da agressão: a ênclise abre a luta, a pergunta não · commit `28f788c`
+## 29/09 13:26 · v9.309 · a peneira da agressão: a ênclise abre a luta, a pergunta não · commit `28f788c`
 
 - **por que andou, antes de MM6:** o coordenador da fase promoveu o item de "Aberto".
   "Socá-lo", "ataco-o", "golpeio-a" são a forma normal de um brasileiro escrever que
@@ -113,7 +158,7 @@ Formato:
   primeiro minuto da primeira briga. E o avesso — "posso atacar o guarda?" abrir uma
   luta — pune quem pergunta, que é o que a própria `agressao.js` diz que não pode.
 - **estado inicial:** verde (MM5 no ar, `d2688b4`, `7ef0124`).
-- **bastão:** tomado às ~14:10 em nome deste ciclo para a mão `frontend`; devolvido
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido
   com este commit.
 - **as duas causas:** `RX_AGRESSAO` só conhecia a primeira pessoa do presente; e
   `NAO_E_AGRESSAO` não tinha trava de pergunta, lendo o texto inteiro de uma vez. Medido,
@@ -154,7 +199,7 @@ Formato:
   (69/157). *(Correção: no relato ao coordenador de MM4/MM5 escrevi "70"; o número
   certo sempre foi 69 — 68 depois de MM2, 69 depois de MM4, e o diário já o dizia.)*
 
-## 29/09 13:10 · v9.308 · MM5 · o sucesso com preço · commit `d2688b4`
+## 29/09 12:10 · v9.308 · MM5 · o sucesso com preço · commit `d2688b4`
 
 - **por que andou:** a etapa que lê o dado que MM4 deu a toda ação. *A Aposta*
   preparava duas versões; o Matt usa três — na runa de C1E1, um 15 é "recuas a
@@ -203,13 +248,13 @@ Formato:
   cinco rolagens fora da luta passa a ter esse meio.
 - **a sonda:** não se move (69/157) — nenhuma das 157 perguntas era sobre o raspão.
 
-## 29/09 12:00 · v9.307 · MM4 · toda ação ganha um dado · commit `263b4b6`
+## 29/09 11:29 · v9.307 · MM4 · toda ação ganha um dado · commit `263b4b6`
 
 - **por que andou:** Fase MM, a etapa seguinte. O Matt nunca diz "isso não dá" nem
   decide de cabeça: escolhe o atributo, diz a CD e manda rolar. Aqui, a frase que
   o catálogo não conhecia virava ficção sem dado e o Narrador decidia sozinho.
 - **estado inicial:** verde (MM3 no ar, `9cf6e16`; o mapa das perguntas, `d8e6fd7`).
-- **bastão:** tomado por mim às ~11:55 para uma linha em `concluirRolagem`
+- **bastão:** tomado por mim para uma linha em `concluirRolagem`
   (deslocamento zero); devolvido com este commit.
 - **backend:** `FAMILIAS_DO_IMPROVISO` — seis famílias de verbo, uma por atributo
   da casa, com perícia quando a há; `CD_DO_IMPROVISO` — o degrau comum (13), e uma
@@ -249,7 +294,7 @@ Formato:
   prova jogada do Poupar (MM3) continua aberta: fica para a sessão jogada no fim de
   MM5, se houver luta.
 
-## 29/09 10:55 · v9.306 · MM3 · o golpe final é seu (Q3 + Q5) · commit `9cf6e16`
+## 29/09 10:52 · v9.306 · MM3 · o golpe final é seu (Q3 + Q5) · commit `9cf6e16`
 
 - **por que andou:** a etapa que a pessoa aprovou há duas semanas (Q3 em 14/09,
   Q5 em 15/09) e o momento mais famoso do Critical Role — o *"how do you want to
@@ -308,7 +353,7 @@ Formato:
   acordar e voltar) — hoje o corpo poupado existe no combate e na pauta do turno,
   mas nada no mundo se lembra dele depois da luta.
 
-## 29/09 09:40 · v9.305 · MM2 · o Narrador vê o tabuleiro · commit `98d6f63`
+## 29/09 09:25 · v9.305 · MM2 · o Narrador vê o tabuleiro · commit `98d6f63`
 
 - **por que andou:** a etapa seguinte da Fase MM, com o escopo que a sonda
   corrigiu: a distância já chegava, a cobertura e a linha de visão não.
@@ -347,7 +392,7 @@ Formato:
 - **o que ficou:** MM3 (o golpe final é seu), cujo módulo já está a ser escrito
   em paralelo, em arquivos separados.
 
-## 29/09 00:30 · v9.304 · MM0 · Uma Vida é o único modo do beta · commit `c65c755`
+## 29/09 00:16 · v9.304 · MM0 · Uma Vida é o único modo do beta · commit `c65c755`
 
 - **por que andou:** ordem da pessoa de 28/09, item 1: *Uma Noite* e *Duelo*
   saem do menu. Ficou para depois de MM1 porque o bastão do `App.jsx` estava com

@@ -174,7 +174,10 @@ O limite é o que um commit revertido não desfaz.
   Condição que dura até agir ou ser achado; dá vantagem e o ataque furtivo
   (hoje o do Ladino é sempre, por classe); e vai à pauta — **quem te vê**. É a
   resposta a *"o anão está me vendo?"*.
-- [ ] **MM7 · os atiradores atiram**
+- [x] **MM7 · os atiradores atiram** · feito 29/09, v9.312 · sonda não se move (72/157)
+  `atirador.js` (a tabela saiu de `fuga.js`), `postoDoAtirador` em `grid.js`, o disparo em
+  `turnoDosInimigos`, a voz da intenção do atirador; o golpe de oportunidade do herói no recuo.
+  Dano ao herói −11% / +13% / −16% nos três cenários (catraca ±20%).
   Achado da fuga (v9.294): o inimigo de distância é atirador na fuga e lutador
   colado dentro da luta. Passa a manter a distância e a disparar.
 - [ ] **MM12 · a cidade por dentro (e o mapa das perguntas que ninguém decide)** · de: orquestrador, 29/09, pedido do
@@ -1016,6 +1019,18 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   "escondo-me" — o mesmo defeito que a peneira da agressão teve, agora no catálogo. Varrer
   os `rx` do catálogo pela ênclise dos verbos que têm pronome (esconder-se, esgueirar-se,
   agachar-se, atirar-se…), com corpus.
+- [ ] **"Sussurro assombrado" inspira o bando** · leve · de: sistema/MM7 · 29/09
+  O golpe do Necromante casa o portador `inspiracao` porque "assombrado" contém "brado";
+  "sombra" dá `furtivo` a quem lança. O casamento de portadores por substring precisa de
+  fronteira de palavra. Bug com teste que prova.
+- [ ] **os inimigos travam atrás de paredes** · médio · de: sistema/MM7 · 29/09
+  `moverInimigos` é gulosa em linha reta: na planta da taverna, o conjurador de antes
+  empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
+  (o herói da sonda já o tem), medido pela régua.
+- [ ] **o herói colado que atira não paga** · leve · de: sistema/MM7 · 29/09
+  O inimigo colado dispara com desvantagem (5e); o herói colado que atira, não — e a fuga
+  usa desvantagem acima de 18 m enquanto a luta usa penalidade por faixa de 9 m. Duas
+  regras para o mesmo arco; unificar pela mesma tabela.
 - [ ] **o dado improvisado dentro da luta** · médio · de: sistema/MM4 · 29/09
   *Mais um (29/09, v9.311):* fora da luta, "empurro o guarda contra a parede" rola Atletismo
   (`forcar` casa "empurro o/a") em vez de ir à disputa; a trava da disputa só existe no
