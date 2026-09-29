@@ -5,7 +5,7 @@ import {
   terrenoDificil, temCobertura, bonusDefesaEm, BONUS_COBERTURA,
   quadradosDe, distanciaQuadrados, distanciaM, centroDe, linhaDeVisao,
   alcanca, caminhar, ocupacaoDe, posicionar, adjacentes, moverInimigos,
-  quadradosDaArea, pegosPelaArea, mapaEmTexto, resumoGridPrompt,
+  quadradosDaArea, pegosPelaArea, mapaEmTexto, resumoGridPrompt, ROTULOS_DO_TABULEIRO,
   detectarAlcanceImpossivel, notaAlcanceImpossivel, METROS_PARA_MORDER, DESLOCAMENTO_PADRAO,
   ESPECIES, QUALIFICADORES, ESCADA, degrauDeTamanho,
   PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar,
@@ -562,6 +562,139 @@ sec("E4. custosDe — o mesmo conjunto de sempre, agora com o preço");
      isso que o número tem de estar escrito, e não deduzido. */
   t("o passo dentro da lama alcança MENOS casas que em chão liso, com o mesmo passo",
     cLama.size < cLiso.size, `${cLama.size} contra ${cLiso.size}`);
+}
+
+sec("MM2. o Narrador vê o tabuleiro — cobertura e linha de visão na linha da luta");
+{
+  /* Grades mínimas: a planta da estrada (a faixa "na estrada", y 3..8, não
+     protege por natureza) com paredes e estorvos postos à mão. Assim cada
+     prova isola UMA causa — e o campo aberto prova a regressão zero. */
+  const grade = (paredes = [], estorvos = []) => ({ cenario: "estrada", largura: 18, altura: 12, paredes, estorvos });
+  const linha = (s) => s.split("\n")[0];
+  const R = ROTULOS_DO_TABULEIRO;
+  const heroi = { nome: "Vera", x: 2, y: 5 };
+  const orc = { nome: "Orc", x: 8, y: 5, vida: 20 };
+  const goblin = { nome: "Goblin", x: 4, y: 4, vida: 7 };
+
+  t("os rótulos são tabela, com as quatro vozes",
+    typeof R.coberturaDele === "string" && typeof R.semVisao === "string"
+    && typeof R.juntaRotulos === "string" && typeof R.coberturaMinha === "string");
+
+  /* CAMPO ABERTO: a linha é LETRA POR LETRA a de antes da MM2 — o normal
+     não custa caractere. */
+  const aberto = linha(resumoGridPrompt(grade(), { heroi, grupo: [], inimigos: [orc, goblin] }));
+  t("campo aberto: a linha é idêntica à de antes (regressão zero)",
+    aberto === "TERRENO DA LUTA (do sistema — obedeça): na estrada: você, Orc, Goblin | na vala: — | na encosta: —. Distâncias até mim: Orc a 9 m, Goblin a 3 m.");
+  t("campo aberto: nenhum rótulo novo", !aberto.includes(R.coberturaDele) && !aberto.includes(R.semVisao) && !aberto.includes(R.coberturaMinha));
+
+  /* INIMIGO COLADO NUM ESTORVO → cobertura dele, e só dele */
+  const comEstorvo = linha(resumoGridPrompt(grade([], ["9,5"]), { heroi, inimigos: [orc, goblin] }));
+  t("inimigo ao lado de um estorvo: ganha o rótulo de cobertura",
+    comEstorvo.includes(`Orc a 9 m (${R.coberturaDele})`));
+  t("…e o vizinho em campo aberto segue sem rótulo", comEstorvo.includes("Goblin a 3 m.") || comEstorvo.includes("Goblin a 3 m,"));
+  t("…e o herói, longe do estorvo, não se diz coberto", !comEstorvo.includes(R.coberturaMinha));
+  t("o rótulo bate com a regra que o dado aplica (bonusDefesaEm)",
+    bonusDefesaEm(grade([], ["9,5"]), orc) === BONUS_COBERTURA && bonusDefesaEm(grade([], ["9,5"]), goblin) === 0);
+
+  /* HERÓI COLADO NUMA PAREDE (atrás dele, fora da reta) → a frase dele,
+     UMA vez, não uma por inimigo */
+  const heroiCoberto = linha(resumoGridPrompt(grade(["1,5"]), { heroi, inimigos: [orc, goblin] }));
+  t("herói ao lado de parede: a frase do herói aparece", heroiCoberto.includes(R.coberturaMinha));
+  t("…e aparece uma vez só, com dois inimigos", heroiCoberto.split(R.coberturaMinha).length - 1 === 1);
+  t("…e fecha a linha das distâncias", heroiCoberto.endsWith(`Goblin a 3 m. ${R.coberturaMinha}`));
+  /* procura o rótulo ENTRE PARÊNTESES: a frase do herói contém as mesmas
+     palavras, e é o parêntese que marca o rótulo de um inimigo */
+  t("…e os inimigos não herdam a cobertura dele", !heroiCoberto.includes(`(${R.coberturaDele}`));
+
+  /* PAREDE ENTRE OS DOIS, longe de ambos → sem linha de visão, sem cobertura */
+  const muro = []; for (let y = 3; y <= 8; y++) muro.push(`5,${y}`);
+  const semVer = linha(resumoGridPrompt(grade(muro), { heroi, inimigos: [orc] }));
+  t("parede no meio: 'sem linha de visão' aparece", semVer.includes(`Orc a 9 m (${R.semVisao})`));
+  t("…e o motor concorda (linhaDeVisao)", linhaDeVisao(grade(muro), heroi, orc) === false);
+  t("…sem inventar cobertura para quem não encosta na parede", !semVer.includes(R.coberturaDele));
+
+  /* AS DUAS EXCEÇÕES JUNTAS: o inimigo encostado no muro que o esconde */
+  const muro2 = []; for (let y = 3; y <= 8; y++) muro2.push(`7,${y}`);
+  const ambos = linha(resumoGridPrompt(grade(muro2), { heroi, inimigos: [orc] }));
+  t("atrás do muro e colado nele: os dois rótulos, na ordem, com a junção da tabela",
+    ambos.includes(`Orc a 9 m (${R.coberturaDele}${R.juntaRotulos}${R.semVisao})`));
+
+  /* QUEM CAIU NÃO SE DESCREVE */
+  const morto = linha(resumoGridPrompt(grade([], ["9,5"]), { heroi, inimigos: [{ ...orc, vida: 0 }, goblin] }));
+  t("inimigo derrubado não entra, nem com cobertura", !morto.includes("Orc a") && !morto.includes(R.coberturaDele));
+
+  /* SEM INIMIGO VIVO: a frase do herói não fica pendurada sem linha */
+  const sozinho = linha(resumoGridPrompt(grade(["1,5"]), { heroi, inimigos: [] }));
+  t("sem inimigo vivo, nem distâncias nem a frase do herói", !sozinho.includes("Distâncias") && !sozinho.includes(R.coberturaMinha));
+
+  /* LIXO: herói sem posição não inventa rótulo (centroDe o poria no canto) */
+  const semPos = linha(resumoGridPrompt(grade(muro2, ["9,5"]), { heroi: { nome: "Vera" }, inimigos: [orc] }));
+  t("herói sem posição: nenhum rótulo inventado", !semPos.includes(R.coberturaDele) && !semPos.includes(R.semVisao));
+  t("grade nula devolve vazio", resumoGridPrompt(null, { heroi, inimigos: [orc] }) === "");
+  let naoQuebra = true; try { resumoGridPrompt(grade(), null); } catch { naoQuebra = false; }
+  t("ocupantes null não derruba a linha", naoQuebra);
+
+  /* DETERMINISMO E IMUTABILIDADE */
+  const oc = { heroi, inimigos: [orc, goblin] };
+  const antes = JSON.stringify(oc);
+  const g2 = grade(muro2, ["3,4"]);
+  t("mesma entrada, mesma string", resumoGridPrompt(g2, oc) === resumoGridPrompt(g2, oc));
+  t("a entrada sai intacta", JSON.stringify(oc) === antes);
+
+  /* O CUSTO, MEDIDO: seis inimigos, todos com as duas exceções, e o herói
+     coberto. A linha vai no rodapé do turno (não no system prompt nem no
+     histórico); o teto aqui é a régua de que ela não cresce às escondidas. */
+  const faixa = []; for (let x = 0; x < 18; x++) faixa.push(`${x},6`);
+  const seis = ["Orc", "Goblin", "Bandido", "Lobo", "Troll", "Cultista"].map((nome, i) => ({ nome, x: i * 2, y: 7, vida: 10 }));
+  const hP = { nome: "Vera", x: 0, y: 4 };
+  const pior = resumoGridPrompt(grade(faixa, ["1,3"]), { heroi: hP, inimigos: seis });
+  const piorAberto = resumoGridPrompt(grade(), { heroi: hP, inimigos: seis });
+  const ganho = pior.length - piorAberto.length;
+  console.log(`      pior caso realista (6 inimigos, tudo exceção): +${ganho} caracteres`);
+  t("pior caso: todos os seis marcados e o herói uma vez",
+    pior.split(R.semVisao).length - 1 === 6 && pior.split(R.coberturaMinha).length - 1 === 1);
+  t("pior caso: o ganho fica abaixo de 400 caracteres", ganho < 400);
+
+  /* A ORDEM DA RODADA (#142). O formato é o de `combate.ordem`: o que
+     `rolarIniciativa` devolve, já ordenado, com `lado`. */
+  const ordem = [
+    { nome: "Orc", lado: "inimigo", iniciativa: 17, rolo: 15, mod: 2 },
+    { nome: "Vera", lado: "heroi", iniciativa: 14, rolo: 12, mod: 2 },
+    { nome: "Brisa", lado: "aliado", iniciativa: 9, rolo: 8, mod: 1 },
+    { nome: "Goblin", lado: "inimigo", iniciativa: 6, rolo: 4, mod: 2 },
+  ];
+  const brisa = { nome: "Brisa", x: 2, y: 4, vida: 30 };
+  const comOrdem = linha(resumoGridPrompt(grade(), { heroi, grupo: [brisa], inimigos: [orc, goblin], ordem }));
+  t("com ordem: a frase vem depois das distâncias, na ordem rolada",
+    comOrdem.endsWith(`Goblin a 3 m. ${R.ordemDaRodada} Orc, Vera, Brisa, Goblin.`));
+  t("sem ordem: a linha é a de antes, letra por letra",
+    linha(resumoGridPrompt(grade(), { heroi, grupo: [], inimigos: [orc, goblin] })) === aberto);
+  const caiu = linha(resumoGridPrompt(grade(), { heroi, grupo: [{ ...brisa, vida: 0 }], inimigos: [orc, { ...goblin, vida: 0 }], ordem }));
+  t("quem caiu sai da fila, o herói fica", caiu.endsWith(`${R.ordemDaRodada} Orc, Vera.`));
+  const doisGoblins = [{ nome: "Goblin", lado: "inimigo" }, { nome: "Vera", lado: "heroi" }, { nome: "Goblin", lado: "inimigo" }];
+  const umDeDois = linha(resumoGridPrompt(grade(), { heroi, inimigos: [goblin, { ...goblin, x: 6, derrotado: true }], ordem: doisGoblins }));
+  t("dois com o mesmo nome e um caído: fica um só na fila", umDeDois.endsWith(`${R.ordemDaRodada} Goblin, Vera.`));
+  const fim = linha(resumoGridPrompt(grade(), { heroi, inimigos: [{ ...orc, vida: 0 }], ordem }));
+  t("sem inimigo de pé, não há ordem a dizer", !fim.includes(R.ordemDaRodada));
+  let lixoOk = true;
+  for (const lixo of [null, undefined, "Orc", 42, {}, [null, 7, {}, { nome: 3 }]]) {
+    try {
+      const l = linha(resumoGridPrompt(grade(), { heroi, inimigos: [orc, goblin], ordem: lixo }));
+      if (l !== aberto) lixoOk = false;
+    } catch { lixoOk = false; }
+  }
+  t("ordem lixo (null, texto, número, objeto, entradas sem nome) não quebra e não muda a linha", lixoOk);
+  const ocO = { heroi, grupo: [brisa], inimigos: [orc, goblin], ordem };
+  const antesO = JSON.stringify(ocO);
+  t("com ordem: mesma entrada, mesma string, e a entrada sai intacta",
+    resumoGridPrompt(grade(), ocO) === resumoGridPrompt(grade(), ocO) && JSON.stringify(ocO) === antesO);
+
+  /* O CUSTO TOTAL DA MM2: o pior caso de cima, agora com os sete na fila */
+  const ordemPior = [{ nome: "Vera", lado: "heroi" }, ...seis.map((e) => ({ nome: e.nome, lado: "inimigo" }))];
+  const piorTotal = resumoGridPrompt(grade(faixa, ["1,3"]), { heroi: hP, inimigos: seis, ordem: ordemPior });
+  const ganhoTotal = piorTotal.length - piorAberto.length;
+  console.log(`      custo total da MM2 no pior caso (rótulos + ordem de 7): +${ganhoTotal} caracteres`);
+  t("custo total da MM2 no pior caso abaixo de 480 caracteres", ganhoTotal < 480);
 }
 console.log(`\n${ok} ok, ${mau} falhas`);
 process.exit(mau ? 1 : 0);

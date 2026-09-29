@@ -126,7 +126,9 @@ O limite é o que um commit revertido não desfaz.
   decide* (sabor — aceitável). O número de hoje é o ponto de partida, e cada
   etapa seguinte tem de o mover. Juntar as perguntas do *Honey Heist 3*
   (`cr1-115.14`) só se acrescentarem um tipo novo.
-- [ ] **MM2 · o Narrador vê o tabuleiro** · *escopo corrigido pela sonda (MM1):
+- [x] **MM2 · o Narrador vê o tabuleiro** · feito 29/09, v9.305 · sonda 66 → 68/157,
+  sabe-e-não-conta 1 → 0 (cobertura #138 e a ordem da rodada #142 passaram a chegar
+  pela linha da luta, `resumoGridPrompt`; +439 chars no pior caso, só no rodapé) · *escopo corrigido pela sonda (MM1):
   distância e região já chegam por `resumoGridPrompt`; faltam cobertura e linha
   de visão, e é nelas que a etapa mexe — dentro da mesma linha, sem bloco novo*
   Em combate, uma linha na pauta com cada inimigo: **distância** (a que o motor

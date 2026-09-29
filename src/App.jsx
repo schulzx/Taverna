@@ -11478,7 +11478,7 @@ export default function Taverna() {
          livre e é ele quem descreve. */
       const zon = combateRef.current ? resumoGridPrompt(combateRef.current.grade, {
         heroi: combateRef.current.heroi,
-        inimigos: combateRef.current.inimigos || [], grupo: combateRef.current.aliados || [],
+        inimigos: combateRef.current.inimigos || [], grupo: combateRef.current.aliados || [], ordem: combateRef.current.ordem,
       }) : "";
       /* v9.34: quanto chão eu cubro num turno. Sem isto o Mestre inventa a
          velocidade do herói cena a cena, e sempre a favor da cena. */

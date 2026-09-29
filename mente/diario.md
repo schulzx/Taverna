@@ -15,7 +15,46 @@ Formato:
 ```
 
 ---
-## 29/09 00:30 · v9.304 · MM0 · Uma Vida é o único modo do beta · commit (o hash vai no bloco de MM2)
+## 29/09 09:40 · v9.305 · MM2 · o Narrador vê o tabuleiro · commit (o hash vai no bloco de MM3)
+
+- **por que andou:** a etapa seguinte da Fase MM, com o escopo que a sonda
+  corrigiu: a distância já chegava, a cobertura e a linha de visão não.
+- **estado inicial:** verde (MM0 no ar, `c65c755`). A fila do desenho parada à
+  espera da palavra da pessoa; a árvore só com o que é meu.
+- **bastão:** tomado às 09:09 para uma linha em `enviar` (a ordem da rodada);
+  a mão `backend` escreveu-a com o bastão em nome deste ciclo, por âncora e com
+  deslocamento zero (24527 linhas antes e depois). Devolvido com este commit.
+- **backend:** `resumoGridPrompt` diz, na mesma linha das distâncias, quem está
+  **atrás de cobertura** (a mesma pergunta que `bonusDefesaEm` faz, logo o que o
+  Narrador lê é o bônus que o dado aplicou), quem está **sem linha de visão**,
+  se **eu** estou coberto, e a **ordem da rodada** só com quem está de pé. Só a
+  exceção ocupa caractere: em campo aberto e sem `ordem`, a linha é idêntica à
+  de antes, letra por letra (a suíte prova com a string literal). Rótulos em
+  `ROTULOS_DO_TABULEIRO`.
+- **o #142, e por que entrou aqui:** a sonda tinha-o posto em *ninguém decide*
+  por não conseguir provar o caminho. Conferido: a iniciativa é rolada uma vez e
+  guardada em `combate.ordem`, e o Narrador só a ouvia na abertura — era um *sabe
+  e não conta* disfarçado. Reclassificar e deixar o teto subir seria honesto;
+  fechá-lo na mesma linha era melhor e custava uma linha. Fechei.
+- **o custo:** +439 caracteres no pior caso (6 inimigos, todos com as duas
+  exceções, sete nomes na fila), travado abaixo de 480. Vive no rodapé do turno
+  de luta, não no system prompt: `teste-prompt` segue em 81 934 < 82 mil.
+- **a sonda:** **66 → 68/157 chega · 1 → 0 sabe e não conta** · 81 ninguém
+  decide · 8 código resolve. `PISO_CHEGA = 68`, `TETO_SABE_E_NAO_CONTA = 0`.
+  A linha de visão não moveu nenhum caso: a única pergunta de "quem vê quem"
+  (#70) é fora de luta, onde não há grade — não forcei.
+- **decisões médias tomadas:**
+  - **O herói entra sempre na fila da rodada**, mesmo caído, porque caído ele
+    ainda faz o teste contra a morte na vez dele.
+  - **A asserção "há ao menos um *sabe e não conta*" mudou** para "todo caso
+    desse tipo tem `ondeVive`": a antiga quebrava por mérito no dia em que o
+    último fosse fechado. O motivo está escrito no teste.
+- **para quem joga:** em luta, o Mestre passa a saber quem está protegido, quem
+  está fora da vista e de quem é a vez — e deixa de ter de adivinhar as três.
+- **o que ficou:** MM3 (o golpe final é seu), cujo módulo já está a ser escrito
+  em paralelo, em arquivos separados.
+
+## 29/09 00:30 · v9.304 · MM0 · Uma Vida é o único modo do beta · commit `c65c755`
 
 - **por que andou:** ordem da pessoa de 28/09, item 1: *Uma Noite* e *Duelo*
   saem do menu. Ficou para depois de MM1 porque o bastão do `App.jsx` estava com

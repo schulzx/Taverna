@@ -54,8 +54,10 @@
    3. O NÚMERO — imprime a linha `sonda da mesa: X/157 chega · ...` e a
       tabela tipo×veredito, e trava duas catracas:
 
-        PISO_CHEGA = 66              (o "chega" de hoje; não pode DESCER)
-        TETO_SABE_E_NAO_CONTA = 1    (o "sabe-e-nao-conta" de hoje; não pode SUBIR)
+        PISO_CHEGA = 68              (o "chega" de hoje; não pode DESCER)
+        TETO_SABE_E_NAO_CONTA = 0    (o "sabe-e-nao-conta" de hoje; não pode SUBIR)
+
+      (MM1 partiu de 66 e 1; a MM2 moveu os dois — o motivo está na seção 6.)
 
       Cada etapa da Fase MM SOBE o piso (liga um fato que hoje "não conta")
       e DESCE o teto (o inverso: acha um "sabe-e-nao-conta" novo que ainda
@@ -243,7 +245,13 @@ sec("3. chega — a função de via é CHAMADA no caminho até o Narrador");
 sec("4. sabe-e-nao-conta — a função de ondeVive NÃO aparece no caminho principal");
 {
   const escondidos = CASOS.filter((c) => c.veredito === "sabe-e-nao-conta");
-  t(`há ao menos um caso sabe-e-nao-conta (${escondidos.length})`, escondidos.length > 0);
+  /* MM2: ESTA ASSERÇÃO DIZIA "há ao menos um" (> 0), e caiu por mérito: o
+     único sabe-e-nao-conta da MM1 era o #138, a cobertura, e a MM2 o fez
+     chegar pela linha da luta. Zero é o alvo da fase, não um defeito da
+     régua. O que fica é a forma — todos os que existirem têm ondeVive — e
+     a catraca de baixo, que continua valendo para o primeiro caso novo que
+     uma etapa futura revelar. */
+  t(`todo sabe-e-nao-conta tem onde viver (${escondidos.length} hoje)`, escondidos.every((c) => c.ondeVive));
   const jaChegou = [];
   for (const c of escondidos) {
     const nome = c.ondeVive.split("#")[1];
@@ -275,15 +283,37 @@ sec("5. prova comportamental — o fato aparece de verdade no texto que a funç�
   const gridTxt = resumoGridPrompt(campo, { heroi, grupo: [], inimigos: [ogro] });
   t("posicao · grid.js#resumoGridPrompt entrega a distância até o inimigo", /Ogro a \d+ m/.test(gridTxt));
 
-  /* A PROVA DE QUE O SISTEMA SABE (mesmo quando não conta): cobertura e
-     linha de visão são calculadas de verdade — é por isso que #138
-     ("aquilo do meu lado conta como cobertura?") é "sabe-e-nao-conta" e não
-     "ninguem-decide": alguém no código SABE a resposta, só não a manda. */
+  /* A PROVA DE QUE O SISTEMA SABE: cobertura e linha de visão são
+     calculadas de verdade. Na MM1 era por isso que #138 ("aquilo do meu
+     lado conta como cobertura?") ficava "sabe-e-nao-conta" e não
+     "ninguem-decide" — alguém no código sabia a resposta, só não a mandava.
+     Na MM2 passou a mandar; a prova de que CHEGA vem logo abaixo. */
   t("posicao · grid.js#temCobertura calcula cobertura onde ela existe (a vala do campo aberto)", temCobertura(campo, 5, 0) === true);
   t("posicao · grid.js#temCobertura calcula a ausência dela na estrada aberta", temCobertura(campo, 9, 5) === false);
   const masm = montarGrade({ emMasmorra: true });
   t("posicao · grid.js#linhaDeVisao calcula quando a parede bloqueia", linhaDeVisao(masm, { nome: "a", x: 0, y: 4 }, { nome: "b", x: 0, y: 13 }) === false);
   t("posicao · grid.js#linhaDeVisao calcula quando o corredor está livre", linhaDeVisao(masm, { nome: "a", x: 3, y: 4 }, { nome: "b", x: 3, y: 13 }) === true);
+
+  /* #138 CHEGA (MM2): o mesmo campo, o ogro agora NA VALA (a região que
+     protege por natureza) — a linha que vai ao Narrador tem de dizer que ele
+     está atrás de cobertura, com o rótulo da tabela, e o goblin na estrada
+     aberta não. É a prova comportamental do veredito novo. */
+  const { ROTULOS_DO_TABULEIRO } = await import("../src/grid.js");
+  const ogroNaVala = { nome: "Ogro", x: 5, y: 0, vida: 50 };
+  const goblin = { nome: "Goblin", x: 12, y: 5, vida: 7 };
+  const comCob = resumoGridPrompt(campo, { heroi, grupo: [], inimigos: [ogroNaVala, goblin] });
+  t("posicao · #138 · resumoGridPrompt diz que o inimigo na vala está atrás de cobertura",
+    /Ogro a \d+ m \(/.test(comCob) && comCob.includes(`(${ROTULOS_DO_TABULEIRO.coberturaDele}`));
+  t("posicao · #138 · e não diz o mesmo de quem está na estrada aberta",
+    /Goblin a \d+ m[.,]/.test(comCob));
+
+  /* #142 CHEGA (MM2): com a ordem da iniciativa (o formato de combate.ordem),
+     a linha da luta diz quem age e em que ordem — a cada turno, não só na
+     abertura. */
+  const ordem = [{ nome: "Goblin", lado: "inimigo", iniciativa: 18 }, { nome: "Vera", lado: "heroi", iniciativa: 12 }, { nome: "Ogro", lado: "inimigo", iniciativa: 5 }];
+  const comOrdem = resumoGridPrompt(campo, { heroi, grupo: [], inimigos: [ogroNaVala, goblin], ordem });
+  t("regra · #142 · resumoGridPrompt diz a ordem da rodada",
+    comOrdem.includes(`${ROTULOS_DO_TABULEIRO.ordemDaRodada} Goblin, Vera, Ogro.`));
 
   const { resumoDaqui } = await import("../src/mundo-base.js");
   t("mundo-base.js#resumoDaqui existe e devolve string (fixture completo é caro demais para esta suíte; a chamada real já é provada na seção 3)", typeof resumoDaqui === "function");
@@ -324,8 +354,21 @@ sec("6. o número e a catraca");
      (porque a etapa que o revelou ainda não existia) e cobri-lo aqui.
      Mover qualquer um dos dois números exige o motivo escrito nesta seção —
      é a lei "ao mover uma asserção de teste, escreva o motivo". */
-  const PISO_CHEGA = 66;
-  const TETO_SABE_E_NAO_CONTA = 1;
+  /* MM2 (v9.304+): PISO 66 → 67 e TETO 1 → 0. Motivo: a cobertura passou a
+     chegar pela linha da luta — `resumoGridPrompt` marca, na mesma linha das
+     distâncias, o inimigo atrás de cobertura e o herói quando é ele, e ainda
+     o inimigo sem linha de visão. O #138 saiu de "sabe-e-nao-conta" para
+     "chega" (provado na seção 5). A linha de visão não moveu caso nenhum:
+     nenhuma das 157 perguntas a pede dentro de uma luta (a única de "quem
+     vê quem", #70, é fora de combate, onde não há grade).
+     E 67 → 68, NA MESMA ETAPA: o #142 (a ordem da iniciativa entre
+     rodadas). Conferido, ele era sabe-e-não-conta disfarçado de
+     ninguém-decide — a ordem rolada uma vez vive em combate.ordem e só ia
+     ao Narrador na abertura. `enviar` passou a entregar combate.ordem a
+     resumoGridPrompt, que fecha a linha da luta com a ordem dos vivos. Em
+     vez de reclassificá-lo e deixar o teto subir, fechou-se: o teto fica 0. */
+  const PISO_CHEGA = 68;
+  const TETO_SABE_E_NAO_CONTA = 0;
   t(`o piso do chega não desceu (hoje: ${X}, piso: ${PISO_CHEGA})`, X >= PISO_CHEGA);
   t(`o teto do sabe-e-nao-conta não subiu (hoje: ${Y}, teto: ${TETO_SABE_E_NAO_CONTA})`, Y <= TETO_SABE_E_NAO_CONTA);
 }

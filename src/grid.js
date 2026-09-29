@@ -1024,14 +1024,97 @@ export function mapaEmTexto(grade, { heroi, grupo = [], inimigos = [] } = {}) {
   return [...porRegiao.entries()].map(([nome, quem]) => `${nome}: ${quem.join(", ") || "—"}`).join(" | ");
 }
 
+/* O TABULEIRO QUE O NARRADOR VÊ (Fase MM, MM2). A sonda da mesa (MM1)
+   mediu que a distância e o lugar já chegavam, e que o motor calculava
+   mais duas coisas e as calava: a COBERTURA (`temCobertura`, que só virava
+   bônus de defesa) e a LINHA DE VISÃO (`linhaDeVisao`, que só virava aviso
+   de tela no ataque). À mesa, "aquilo do meu lado conta como cobertura?" é
+   pergunta de todo combate, e o Narrador respondia de imaginação o que o
+   sistema já tinha decidido.
+
+   Entram NA MESMA LINHA das distâncias, sem bloco novo nem frase de
+   instrução — o teto de prompt é sagrado. E só entra a EXCEÇÃO: campo
+   aberto com visão livre é o normal e não custa um caractere, de modo que
+   a luta sem parede nem estorvo manda exatamente a linha de antes.
+   Os rótulos são tabela porque são a voz do sistema ao Narrador — quem
+   quiser trocar a palavra troca aqui, e a suíte lê de volta. */
+export const ROTULOS_DO_TABULEIRO = {
+  coberturaDele: "atrás de cobertura",
+  semVisao: "sem linha de visão, parede no meio",
+  juntaRotulos: "; ",
+  coberturaMinha: "Eu estou atrás de cobertura.",
+  ordemDaRodada: "Ordem da rodada:",
+};
+
+/* A ORDEM DA RODADA (MM2, caso #142 da sonda). A iniciativa é rolada UMA
+   vez, ao abrir a luta, e fica em `combate.ordem` — lista de
+   `{ nome, lado: "heroi"|"aliado"|"inimigo", iniciativa, ... }` já ordenada
+   por `rolarIniciativa`. O Narrador só a lia na nota da abertura; a partir
+   da terceira rodada ela já tinha rolado para longe, e "a ordem é a mesma?"
+   virava palpite. Aqui ela volta a cada turno, só com quem ainda age: o
+   herói sempre (caído ainda rola contra a morte na vez dele); aliado e
+   inimigo enquanto houver um vivo com aquele nome no tabuleiro — contado,
+   para dois "Goblin" com um já caído deixarem um só na fila. Lixo em
+   `ordem` (não-lista, entrada sem nome) some sem derrubar a linha. */
+function ordemDosVivos(ordem, oc) {
+  if (!Array.isArray(ordem) || !ordem.length) return [];
+  /* inimigo sem vida contada não está vivo — a mesma régua das distâncias;
+     aliado sem o campo conta como de pé (a ficha do grupo nem sempre o traz) */
+  const vivos = (lista, estrito) => {
+    const m = new Map();
+    for (const e of Array.isArray(lista) ? lista : []) {
+      if (!e || !e.nome || e.derrotado) continue;
+      if (estrito ? !((e.vida || 0) > 0) : (e.vida != null && (e.vida || 0) <= 0)) continue;
+      m.set(e.nome, (m.get(e.nome) || 0) + 1);
+    }
+    return m;
+  };
+  const inimigos = vivos(oc.inimigos, true);
+  const aliados = vivos(oc.grupo, false);
+  const heroiNome = oc.heroi && oc.heroi.nome;
+  const out = [];
+  let algumInimigo = false;
+  for (const c of ordem) {
+    if (!c || typeof c.nome !== "string" || !c.nome) continue;
+    if (c.lado === "heroi" || (!c.lado && c.nome === heroiNome)) { out.push(c.nome); continue; }
+    const lado = c.lado === "aliado" ? [aliados] : c.lado === "inimigo" ? [inimigos] : [inimigos, aliados];
+    const onde = lado.find((m) => (m.get(c.nome) || 0) > 0);
+    if (!onde) continue;
+    onde.set(c.nome, onde.get(c.nome) - 1);
+    if (onde === inimigos) algumInimigo = true;
+    out.push(c.nome);
+  }
+  /* sem inimigo de pé a luta acabou: não há rodada a ordenar */
+  return algumInimigo ? out : [];
+}
+
 export function resumoGridPrompt(grade, ocupantes = {}) {
   const g = garantirGrade(grade);
   if (!g) return "";
-  const distancias = (ocupantes.inimigos || [])
-    .filter((e) => e && !e.derrotado && (e.vida || 0) > 0 && e.x != null && ocupantes.heroi)
-    .map((e) => `${e.nome} a ${Math.round(distanciaM(e, ocupantes.heroi))} m`)
+  const oc = ocupantes || {};
+  const heroi = oc.heroi;
+  /* cobertura e visão só se medem com o herói posto no tabuleiro; sem x,
+     centroDe o poria no canto (0,0) e a linha mentiria */
+  const heroiPosto = !!(heroi && heroi.x != null && heroi.y != null);
+  const R = ROTULOS_DO_TABULEIRO;
+  const distancias = (oc.inimigos || [])
+    .filter((e) => e && !e.derrotado && (e.vida || 0) > 0 && e.x != null && heroi)
+    .map((e) => {
+      const base = `${e.nome} a ${Math.round(distanciaM(e, heroi))} m`;
+      if (!heroiPosto) return base;
+      const rot = [];
+      /* a mesma pergunta que bonusDefesaEm faz — o que o Narrador lê é o
+         que o dado já aplicou */
+      if (temCobertura(grade, e.x, e.y)) rot.push(R.coberturaDele);
+      /* do herói ao inimigo: é a direção do golpe dele (alcanca) */
+      if (!linhaDeVisao(grade, heroi, e)) rot.push(R.semVisao);
+      return rot.length ? `${base} (${rot.join(R.juntaRotulos)})` : base;
+    })
     .join(", ");
-  return `TERRENO DA LUTA (do sistema — obedeça): ${mapaEmTexto(grade, ocupantes)}.${distancias ? ` Distâncias até mim: ${distancias}.` : ""}
+  const minha = distancias && heroiPosto && temCobertura(grade, heroi.x, heroi.y) ? ` ${R.coberturaMinha}` : "";
+  const fila = ordemDosVivos(oc.ordem, oc);
+  const ordemTxt = fila.length ? ` ${R.ordemDaRodada} ${fila.join(", ")}.` : "";
+  return `TERRENO DA LUTA (do sistema — obedeça): ${mapaEmTexto(grade, oc)}.${distancias ? ` Distâncias até mim: ${distancias}.${minha}` : ""}${ordemTxt}
 Estas posições são FATO. Você não move ninguém, não faz um inimigo "cruzar o salão" para alcançar quem está longe e não põe alguém a golpe de espada de quem está a dez metros. Quem se move, se move pelo sistema, e você recebe o movimento pronto para narrar. Use os NOMES dos lugares na prosa — "ele recua para o pé da escada" —, nunca coordenada, nunca a palavra quadrado e nunca a palavra grid.`;
 }
 
