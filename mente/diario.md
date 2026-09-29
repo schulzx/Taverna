@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 18:16 · v9.313 · MM3b · o golpe final é do grupo · commit (o hash vai no próximo bloco)
+## 29/09 18:16 · v9.313 · MM3b · o golpe final é do grupo · commit `92158be`
 
 - **por que andou:** decisão do coordenador da fase, pela liberdade da ordem de 28/09,
   sobre a questão que este diário deixou na etapa da peneira: nas provas jogadas, o
