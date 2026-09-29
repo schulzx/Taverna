@@ -834,12 +834,14 @@ export const ABERTURA = {
   tetoDeCaracteres: 110,
   entrelinha: 1.35,       /* a do nó */
   peso: 500,
-  /* APAGADA ATÉ V5e — "a resposta chega pelo começo". A prova jogada
-     (`mente/v5-jogo.md` §8.1) mediu que, com a vista presa ao fim, a cerimônia
-     nasce fora de vista em 5 de 5 respostas reais e ainda empurra o fim da
-     resposta 53–64 px para baixo. A peça e as medidas ficam; o `App.jsx` só a
-     marca quando isto for verdadeiro, e religá-la é trocar este valor. */
-  acesa: false,
+  /* ACESA EM V5e. Em V5 ela ficou apagada porque, com a vista presa ao fim,
+     nascia fora de vista em 5 de 5 respostas reais e empurrava o fim da
+     resposta 53–64 px para baixo (`mente/v5-jogo.md` §8.1). Com a resposta a
+     chegar pelo começo (`pousoDaVista`, glifos.js) a vista pousa na runa, e a
+     primeira frase fica logo abaixo dela; e a cerimônia, ao acender, recalcula o
+     pouso antes de a tela se pintar (prova do `jogo`, `mente/v5e-jogo.md` §7.2:
+     inteira à vista a 72 px em 10 de 10). Apagá-la de novo é trocar este valor. */
+  acesa: true,
 };
 
 /* ============================================================

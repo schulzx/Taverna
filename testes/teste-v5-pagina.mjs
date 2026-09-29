@@ -108,7 +108,12 @@ sec("4. a fiação");
      agora é que ela só acende por `ABERTURA.acesa`, e que isso hoje é falso. */
   t("a cerimônia: a chegada a um lugar novo ou a primeira resposta da sessão — e só com ABERTURA.acesa",
     /if \(ABERTURA\.acesa && \(a\.primeira \|\| lugarDaCena\(\) !== a\.lugar\)\) setAbertura\(i\);/.test(ABRE));
-  t("e está apagada até V5e (nasce fora de vista em 5/5 respostas reais)", ABERTURA.acesa === false);
+  /* V5e: RELIGADA. Apagou-se em V5 porque nascia fora de vista com a vista presa
+     ao fim; com a resposta a chegar pelo começo (teste-v5e-chegada.mjs) ela pousa à
+     vista — a prova jogada do `jogo` em `mente/v5e-jogo.md` §7.2: inteira à vista
+     a 72 px em 10 de 10 chegadas, a resposta curta com o fim a 0 px, e a reler ela
+     acende sem mexer a vista. */
+  t("e está acesa desde V5e (a resposta chega pelo começo, e ela nasce à vista)", ABERTURA.acesa === true);
   t("e ela é efêmera: o turno seguinte a devolve à prosa", /a\.pendente = true;[^\n]*setAbertura\(null\);/.test(ABRE));
   t("e nunca custa o turno", /calou\("marcar a abertura de cerimonia", e\)/.test(ABRE));
   t("e não vai ao save (é um momento, não um fato)", !/aberturaRef\.current[^\n]*(?:localStorage|salvar)/.test(APP) && !/\babertura: abertura\b/.test(APP));
