@@ -571,6 +571,129 @@ export function alcancaveisDe(grade, ent, opcoes = {}) {
 }
 
 /* ============================================================
+   O CAMINHO ATÉ O ALCANCE (Fase MM · as paredes) — andar por onde se passa
+
+   O ACHADO, e é de MM7: `moverInimigos` escolhia, entre as casas do passo,
+   a mais perto do alvo EM LINHA RETA, e só andava se alguma fosse mais
+   perto do que onde já estava. É uma subida de encosta, e ela para no
+   primeiro topo falso: com o balcão da taverna entre os dois, o bandido
+   colado ao balcão a 3 m do herói não tem casa nenhuma mais perto do que
+   3 m do lado dele — a volta começa por se AFASTAR —, e fica ali a rodada
+   inteira, e a seguinte, até o teto. Medido (`sonda-das-paredes.mjs`):
+   quem anda por esta função — os inimigos, e o grupo do jogador, que o App
+   move por ela — empatava 30 de 30 lutas contra dois soldados na taverna,
+   e 13 de 30 contra soldado e mago; o ogro ficava a um muro caído do herói
+   no gelo, 30 de 30.
+
+   A CONTA DE AGORA mede a distância que se ANDA, não a que se vê: um mapa
+   de passos de cada casa até as casas de onde o alvo se alcança (o anel
+   do alcance natural de quem anda), contornando só PAREDE — é a planta, e
+   não quem por acaso está no caminho, que decide se há volta. O passo
+   continua a ser o de sempre: as casas que o deslocamento cobre nesta
+   rodada (`custosDe`, com a ocupação, o terreno difícil e o tamanho), e
+   delas fica a de menos passos até o anel; no empate, a mais perto em
+   linha reta; no empate disso, a primeira da varredura (x, depois y) —
+   que é a ordem em que a busca antiga as via.
+
+   A REGRESSÃO QUE ISTO NÃO FAZ. Sem parede, os passos até o anel são a
+   distância de mesa menos o alcance (Chebyshev, a diagonal vale a reta),
+   e ordenar por (passos, reta) é ordenar pela reta — o passo em campo
+   aberto é casa a casa o mesmo de antes (a suíte `teste-paredes` guarda
+   uma cópia da busca antiga e compara as duas em milhares de mesas sem
+   parede).
+
+   ALCANÇAR É O QUE `alcanca` DIZ: a distância E a linha de visão. O ogro
+   de 3 m colado a um muro, com o herói do outro lado a 3 m,
+   "já alcançava" pela conta antiga e ficava parado — e `turnoDosInimigos`,
+   que pergunta a `alcanca`, não o deixava bater através da parede. Parado
+   para sempre, a um muro de distância. Sem parede, a linha de visão é
+   sempre verdadeira, e o campo aberto não muda.
+
+   SEM CAMINHO NENHUM — o bicho grande que não cabe no vão, o anel todo
+   atrás de parede — o mapa não chega a ele e a escolha cai na reta, como
+   antes: não há volta a dar, e ficar parado não seria melhor.
+
+   Devolve `{ x, y, custoM, passos }` da casa escolhida, ou `null` quando
+   ficar é o melhor (já alcança, ou nenhuma casa melhora). Não move
+   ninguém: quem chama decide o que fazer com a casa.
+   ============================================================ */
+/* O mapa: de cada casa onde `ent` cabe (só parede conta), quantos passos
+   até a mais perto das casas-meta. `ehMeta(x, y)` diz quais são: o anel do
+   alcance para quem luta de perto, as casas que veem o alvo para quem
+   dispara (`postoDoAtirador`). */
+function mapaDePassos(grade, ent, ehMeta) {
+  const g = garantirGrade(grade);
+  const lado = ladoDe(ent);
+  const passos = new Map();
+  let fila = [];
+  for (let x = 0; x < g.largura; x++) for (let y = 0; y < g.altura; y++) {
+    if (!livrePara(grade, x, y, lado, null)) continue;
+    if (ehMeta(x, y)) { passos.set(chave(x, y), 0); fila.push({ x, y }); }
+  }
+  while (fila.length) {
+    const prox = [];
+    for (const a of fila) {
+      const pa = passos.get(chave(a.x, a.y));
+      for (let ax = -1; ax <= 1; ax++) for (let ay = -1; ay <= 1; ay++) {
+        if (!ax && !ay) continue;
+        const nx = a.x + ax, ny = a.y + ay, k = chave(nx, ny);
+        if (passos.has(k) || !livrePara(grade, nx, ny, lado, null)) continue;
+        passos.set(k, pa + 1);
+        prox.push({ x: nx, y: ny });
+      }
+    }
+    fila = prox;
+  }
+  return passos;
+}
+
+/* O DESEMPATE, e são dois porque são dois jeitos de escolher casa:
+     · "reta"  (o de quem o MOTOR move — inimigos, grupo) — entre as casas
+               de menos passos, a mais perto em linha reta, e depois a
+               primeira da varredura. É a ordem da busca antiga, e é ela
+               que deixa o campo aberto casa a casa igual.
+     · "passo" (o do JOGADOR, que escolhe com o preço escrito na casa) —
+               entre as casas de menos passos, a que custa menos a chegar,
+               na ordem em que a busca do custo as acha; e só sai do lugar
+               se ficar mais perto EM PASSOS. É o passo que a sonda de MM7
+               dava ao herói, e as réguas medidas com ele continuam a
+               medir o mesmo jogador. */
+export function passoAteAlcancar(grade, ent, alvo, { ocupados = new Set(), deslocamentoM = DESLOCAMENTO_PADRAO, ignoraDificil = false, alcanceM = null, desempate = "reta" } = {}) {
+  const g = garantirGrade(grade);
+  if (!g || !ent || ent.x == null || !alvo || alvo.x == null) return null;
+  const alc = alcanceM != null && Number.isFinite(Number(alcanceM)) ? Number(alcanceM) : alcanceNatural(ent);
+  const dist = distanciaM(ent, alvo);
+  const alcancaDali = (aqui) => distanciaM(aqui, alvo) <= alc && linhaDeVisao(grade, aqui, alvo);
+  if (alcancaDali(ent)) return null;
+  const passos = mapaDePassos(grade, ent, (x, y) => alcancaDali({ ...ent, x, y }));
+  const pDe = (x, y) => { const p = passos.get(chave(x, y)); return p == null ? Infinity : p; };
+  const custos = custosDe(grade, ent, { ocupados, deslocamentoM, ignoraDificil });
+  let melhor = { x: ent.x, y: ent.y, p: pDe(ent.x, ent.y), d: dist, custoM: 0 };
+  let mudou = false;
+  if (desempate === "passo") {
+    let achado = null;
+    for (const [k, custoM] of custos) {
+      const [x, y] = k.split(",").map(Number);
+      const p = pDe(x, y);
+      if (!Number.isFinite(p)) continue;
+      if (!achado || p < achado.p || (p === achado.p && custoM < achado.custoM)) achado = { x, y, p, custoM };
+    }
+    if (!achado || achado.p >= melhor.p) return null;
+    return { x: achado.x, y: achado.y, custoM: achado.custoM, passos: achado.p };
+  }
+  for (let x = 0; x < g.largura; x++) for (let y = 0; y < g.altura; y++) {
+    const custoM = custos.get(chave(x, y));
+    if (custoM == null) continue;
+    const p = pDe(x, y), d = distanciaM({ ...ent, x, y }, alvo);
+    if (p > melhor.p || (p === melhor.p && d >= melhor.d)) continue;
+    melhor = { x, y, p, d, custoM };
+    mudou = true;
+  }
+  if (!mudou) return null;
+  return { x: melhor.x, y: melhor.y, custoM: melhor.custoM, passos: melhor.p };
+}
+
+/* ============================================================
    O ORÇAMENTO DO PASSO NA RODADA (v9.279) — o passo tem preço
 
    MEDIDO A JOGAR, e reproduzido em duas lutas e nos dois tamanhos:
@@ -891,7 +1014,9 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
       movimentos.push(posto.movimento);
       return { ...e, x: posto.x, y: posto.y };
     }
-    if (dist <= alcanceNatural(e)) return e;
+    /* quem alcança fica e bate — e alcançar pede linha de visão, que é o
+       que `alcanca` cobra na hora do golpe (as paredes, MM) */
+    if (dist <= alcanceNatural(e) && linhaDeVisao(grade, e, alvo)) return e;
     const ocupados = ocupacaoDe([...(todos || []), ...vivos], e);
     /* ---- CADA BICHO NO SEU PASSO (v9.44) ----
        `deslocamentoDeCriatura` existia em movimento.js desde a v9.34 com o
@@ -902,22 +1027,18 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
        atravessa o terreno difícil sem pagar o dobro. */
     const passoDele = deslocamentoDeCriatura(e);
     const metrosDele = passoDele.metros || DESLOCAMENTO_PADRAO;
-    /* anda o quanto der na direção do alvo: procura o quadrado alcançável
-       que mais aproxima. É guloso e basta — o campo é pequeno. */
-    let melhor = null, melhorD = dist;
-    const teto = m2q(metrosDele);
-    for (let x = Math.max(0, e.x - teto); x <= Math.min(g.largura - 1, e.x + teto); x++) {
-      for (let y = Math.max(0, e.y - teto); y <= Math.min(g.altura - 1, e.y + teto); y++) {
-        if (x === e.x && y === e.y) continue;
-        const d = distanciaM({ ...e, x, y }, alvo);
-        if (d >= melhorD) continue;
-        const r = caminhar(grade, e, { x, y }, { ocupados, deslocamentoM: metrosDele, ignoraDificil: !!passoDele.voando });
-        if (!r.ok) continue;
-        melhor = { x, y }; melhorD = d;
-      }
-    }
+    /* anda o quanto der na direção do alvo, PELO CAMINHO (as paredes, MM):
+       a casa do passo que deixa menos chão a andar até o alcance. Até aqui
+       era a mais perto em linha reta, e o balcão da taverna prendia quem
+       estava do lado errado dele — `passoAteAlcancar` conta o porquê. */
+    const melhor = passoAteAlcancar(grade, e, alvo, { ocupados, deslocamentoM: metrosDele, ignoraDificil: !!passoDele.voando });
     if (!melhor) return e;
-    movimentos.push({ nome: e.nome, de: nomeDoLugar(grade, e.x, e.y), para: nomeDoLugar(grade, melhor.x, melhor.y), metros: Math.round(dist - melhorD) });
+    /* os metros da linha de passo: o quanto encurtou, como sempre; na volta
+       à parede, que encurta pouco ou nada em linha reta, o chão que gastou
+       (`custoM`, o mesmo número que a tela escreve na casa) — "avança 0 m"
+       de quem deu a volta ao balcão seria mentira. */
+    const encurtou = Math.round(dist - distanciaM({ ...e, x: melhor.x, y: melhor.y }, alvo));
+    movimentos.push({ nome: e.nome, de: nomeDoLugar(grade, e.x, e.y), para: nomeDoLugar(grade, melhor.x, melhor.y), metros: encurtou > 0 ? encurtou : Math.round(melhor.custoM) });
     return { ...e, x: melhor.x, y: melhor.y };
   });
   return { inimigos: novos, movimentos };
@@ -980,12 +1101,25 @@ function postoDoAtirador(grade, e, alvo, todos, vivos) {
   const metrosDele = passoDele.metros || DESLOCAMENTO_PADRAO;
   const ocupados = ocupacaoDe([...(todos || []), ...meus], e);
   const custos = custosDe(grade, e, { ocupados, deslocamentoM: metrosDele, ignoraDificil: !!passoDele.voando });
+  /* QUEM NÃO VÊ, VAI VER PELO CAMINHO (as paredes, MM). O degrau de baixo
+     aproximava-se em linha reta, a mesma subida de encosta de
+     `moverInimigos`: atrás do balcão, a casa mais perto do herói é a colada
+     ao balcão, e dali não se vê nada. Agora conta os passos até a casa mais
+     perto de onde se VÊ o herói dentro do alcance; sem casa dessas ao alcance
+     de pernas nenhumas, cai na reta de antes. Sem parede, toda casa a menos
+     de 36 m vê — e nenhuma planta tem 36 m —, então este degrau só existe
+     onde há parede, e o campo aberto não muda. */
+  const veDali = mapaDePassos(grade, e, (x, y) => {
+    const aqui = { ...e, x, y };
+    return distanciaM(aqui, alvo) <= P.alcanceM && linhaDeVisao(grade, aqui, alvo);
+  });
+  const faltaVer = (x, y, d) => { const p = veDali.get(chave(x, y)); return p == null ? d : p * METROS_POR_QUADRADO; };
   const nota = (x, y, custoM) => {
     const aqui = { ...e, x, y };
     if (colado(aqui)) return null;
     const d = distanciaM(aqui, alvo);
     const ve = d <= P.alcanceM && linhaDeVisao(grade, aqui, alvo);
-    if (!ve) return -d - custoM * W.passo;
+    if (!ve) return -faltaVer(x, y, d) - custoM * W.passo;
     const degrau = semCusto(d) ? 2 : 1;
     return degrau * W.faixa + (temCobertura(grade, x, y) ? W.cobertura : 0)
       - Math.abs(d - idealM) * W.ideal - custoM * W.passo;

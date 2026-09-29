@@ -22,12 +22,35 @@ import { CONDICOES, criarCondicao } from "./condicoes.js";
    em quem usou, ou nos aliados de quem usou.
 
    `chance` é a probabilidade de o golpe SEQUER tentar afligir (um
-   crítico sempre tenta); `dif` soma na dificuldade do teste do alvo. */
+   crítico sempre tenta); `dif` soma na dificuldade do teste do alvo.
+
+   A FRONTEIRA DE PALAVRA (Fase MM, as paredes · 29/09). Até aqui cada
+   linha casava por PEDAÇO: "Sussurro assombrado", o golpe do Necromante,
+   inspirava o bando de quem o lançava, porque "assombrado" contém
+   "brado"; a "Clava de Ossos" queimava ("c-LAVA"); o "Coração" da
+   Tormenta abençoava ("c-ORAÇÃO"); "Emaranhar" envenenava ("em-ARANHA-r");
+   a "Bomba de Fumaça" atordoava ("fu-MAÇA") em vez de cegar; o "Atalho"
+   sangrava, o "Bosque Acorda" prendia, "Disparo Calibrado" inspirava.
+   Agora toda linha começa por `(?<!\p{L})` — o pedaço só casa no começo
+   de uma palavra (com a flag `u`, que é o que faz "é" e "ç" serem letra
+   para a fronteira; o `\b` do JavaScript não os vê).
+   ONDE A PALAVRA CERTA TEM O PEDAÇO NO MEIO, ela entra por extenso e com
+   o nome: "envenen", "intoxic", "apavor", "aterroriz", "apress",
+   "abrasad", "sanguessuga". E onde o pedaço é uma palavra inteira que,
+   esticada, vira outra — "cobra"/"cobrança", "chama"/"chamado",
+   "garra"/"garrafa", "rede"/"redenção", "carga"/"cargo" —, ela fecha
+   também no fim (`(?!\p{L})`), com o plural. "enfraquec" passou a ler o
+   verbo ("o alvo enfraquece") e não o estado ("executa alvo
+   enfraquecido" é a condição da execução, não o efeito do golpe).
+   Varrido o acervo inteiro (716 textos: habilidades de classe,
+   subclasse, especialização e grimório, os dois catálogos de golpe, o
+   bestiário e as armas), 36 mudam de portador, e as 36 estão nomeadas em
+   `teste-afl.mjs`; nenhuma linha casa mais um pedaço no meio de palavra. */
 export const PORTADORES = [
   /* ---- debuffs no alvo ---- */
-  { id: "veneno",     re: /venen|peçonh|pecconh|tóxic|toxic|víbora|vibora|serpente|escorpi|aranha|naja|cobra|ácido|acido/i, cond: "envenenado", alvo: "alvo", chance: 0.55, dif: 0 },
-  { id: "fogo",       re: /flamej|ígne|igne|fogo|chama|incandes|brasa|infern|piro|lava|magma|solar/i,                       cond: "queimando",  alvo: "alvo", chance: 0.5,  dif: 0 },
-  { id: "sangria",    re: /serrilh|dilacer|estripa|rasga|garra|talho|sangr|acutilan|farpad/i,                               cond: "sangrando",  alvo: "alvo", chance: 0.45, dif: 0 },
+  { id: "veneno",     re: /(?<!\p{L})(?:venen|envenen|peçonh|pecconh|tóxic|toxic|intoxic|víbora|vibora|serpente|escorpi|aranha|naja|cobras?(?!\p{L})|ácido|acido)/iu, cond: "envenenado", alvo: "alvo", chance: 0.55, dif: 0 },
+  { id: "fogo",       re: /(?<!\p{L})(?:flamej|ígne|igne|fogo|chamas?(?!\p{L})|incandes|brasa|abrasad|infern|piro|lava(?!\p{L})|magma|solar)/iu,                       cond: "queimando",  alvo: "alvo", chance: 0.5,  dif: 0 },
+  { id: "sangria",    re: /(?<!\p{L})(?:serrilh|dilacer|estripa|rasga|garras?(?!\p{L})|talho|sangr|acutilan|farpad)/iu,                               cond: "sangrando",  alvo: "alvo", chance: 0.45, dif: 0 },
   /* Estes dois vêm ANTES dos debuffs de propósito: "Grito de Guerra" e
      "Postura Defensiva" são buffs, mas casariam com "grito" (terror) e
      "guarda" se a ordem fosse outra. A primeira linha que casa vence. */
@@ -39,7 +62,7 @@ export const PORTADORES = [
      "eco" e "empresta" sozinhos casariam com meia dúzia de golpes e com a
      descrição de criatura, e um falso positivo aqui inspira o grupo inteiro
      porque um zumbi arrombou uma porta. */
-  { id: "inspiracao", re: /grito de guerra|inspir|canção|cancao|hino|balada|arenga|estandarte|brado|cria abertura|eco do seu poder|empresta poder/i,          cond: "inspirado",  alvo: "aliados", chance: 1, dif: 0 },
+  { id: "inspiracao", re: /(?<!\p{L})(?:grito de guerra|inspir|canção|cancao|hino|balada|arenga|estandarte|brados?(?!\p{L})|cria abertura|eco do seu poder|empresta poder)/iu,          cond: "inspirado",  alvo: "aliados", chance: 1, dif: 0 },
   /* v9.265 (H1): "Armadura Sombria — trevas protetoras envolvem o corpo" tem
      a palavra "protetoras", que NÃO casa com `prote[çc]` (é "protet", não
      "protec"). Um nível 1 de Bruxo prometia abrigo e entregava a linha. */
@@ -90,7 +113,7 @@ export const PORTADORES = [
      uma palavra solta. Medido: nenhuma das nove casa qualquer portador que
      venha antes desta linha, então a posição é a mínima que funciona. */
   { id: "amparo",     re: /(?=[\s\S]*proteg)(?=[\s\S]*(aliad|o grupo|quem estiver perto))/i,                                   cond: "protegido", alvo: "aliados", chance: 1, dif: 0 },
-  { id: "guarda",     re: /postura defensiv|defensiv|escudo|barreira|prote[çc]|trevas protetoras|muralha|couraça|couraca|égide|egide|aparar|bloquei|reduz o dano/i, cond: "protegido", alvo: "proprio", chance: 1, dif: 0 },
+  { id: "guarda",     re: /(?<!\p{L})(?:postura defensiv|defensiv|escudo|barreira|prote[çc]|trevas protetoras|muralha|couraça|couraca|égide|egide|aparar|bloquei|reduz o dano)/iu, cond: "protegido", alvo: "proprio", chance: 1, dif: 0 },
 
   /* v9.276 (H4) · A MARCA, E ELA ENTRA POR FRASE INTEIRA — nunca pela
      palavra "marca". É a lição de H1 cobrada na família mais perigosa
@@ -123,32 +146,32 @@ export const PORTADORES = [
      específico que esta tabela tem. */
   { id: "marca",      re: /sofre dano extra de todos|todo dano contra ele aumenta/i,                                          cond: "marcado",    alvo: "alvo", chance: 1,    dif: 0 },
 
-  { id: "concussao",  re: /atordo|concuss|maça|maca de|martelo|marreta|clava|pancada|trov[aã]o|estrondo|cabeçada/i,          cond: "atordoado",  alvo: "alvo", chance: 0.35, dif: 1 },
-  { id: "paralisia",  re: /paralis|petrific|basilisco|medusa|estase|entorpec/i,                                             cond: "paralisado", alvo: "alvo", chance: 0.35, dif: 1 },
-  { id: "gelo",       re: /gélid|gelid|gelo|congel|glacial|nevasca|frio mordaz/i,                                           cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },
-  { id: "cegueira",   re: /cega|cegue|ofusc|clarão|clarao|areia nos olhos|fumaça|fumaca|flash/i,                            cond: "cego",       alvo: "alvo", chance: 0.45, dif: 0 },
-  { id: "terror",     re: /terror|pavor|medo|amedront|uivo|berro|aterrad|macabr|espectr|assombr|arrepi/i,                   cond: "amedrontado", alvo: "alvo", chance: 0.45, dif: 0 },
+  { id: "concussao",  re: /(?<!\p{L})(?:atordo|concuss|maças?(?!\p{L})|maca de|martelo|marreta|clava|pancada|trov[aã]o|estrondo|cabeçada)/iu,          cond: "atordoado",  alvo: "alvo", chance: 0.35, dif: 1 },
+  { id: "paralisia",  re: /(?<!\p{L})(?:paralis|petrific|basilisco|medusa|estase|entorpec)/iu,                                             cond: "paralisado", alvo: "alvo", chance: 0.35, dif: 1 },
+  { id: "gelo",       re: /(?<!\p{L})(?:gélid|gelid|gelo|congel|glacial|nevasca|frio mordaz)/iu,                                           cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },
+  { id: "cegueira",   re: /(?<!\p{L})(?:cega|cegue|ofusc|clarão|clarao|areia nos olhos|fumaça|fumaca|flash)/iu,                            cond: "cego",       alvo: "alvo", chance: 0.45, dif: 0 },
+  { id: "terror",     re: /(?<!\p{L})(?:terror|aterroriz|pavor|apavor|medo|amedront|uivo|berro|aterrad|macabr|espectr|assombr|arrepi)/iu,                   cond: "amedrontado", alvo: "alvo", chance: 0.45, dif: 0 },
   /* v9.45: "prende", "imobiliza", "impede de sair do lugar" são a mesma coisa
      que rede e teia, e faltavam. A varredura de habilidades encontrou Prisão
      Arcana ("Prende um inimigo por 2 turnos") e Armadilha ("Prende o primeiro
      inimigo que passar") sem nenhum portador — duas habilidades cujo efeito
      inteiro é a palavra que ninguém estava lendo. */
-  { id: "prisao",     re: /rede|teia|laço|laco|corda|grilh[aã]o|agarr|enred|lama|piche|raiz|vinha|prend[ea]|prision|aprision|imobiliz|algem|cativ/i, cond: "agarrado",   alvo: "alvo", chance: 0.5,  dif: 0 },
+  { id: "prisao",     re: /(?<!\p{L})(?:redes?(?!\p{L})|teias?(?!\p{L})|laço|laco|cordas?(?!\p{L})|grilh[aã]o|agarr|enred|lama|piche|raiz|vinhas?(?!\p{L})|prend[ea]|prision|aprision|imobiliz|algem|cativ)/iu, cond: "agarrado",   alvo: "alvo", chance: 0.5,  dif: 0 },
   /* "para de lutar", "sai da luta", "não ataca mais" — o Fascínio do Bardo
      dizia isso por extenso e o sistema não tinha onde encaixar. */
-  { id: "fascinio",   re: /fascin|para de lutar|deixa de lutar|baixa a arma|perde a vontade de lutar|encara sem reagir/i,     cond: "enfeiticado", alvo: "alvo", chance: 0.5, dif: 1 },
+  { id: "fascinio",   re: /(?<!\p{L})(?:fascin|para de lutar|deixa de lutar|baixa a arma|perde a vontade de lutar|encara sem reagir)/iu,     cond: "enfeiticado", alvo: "alvo", chance: 0.5, dif: 1 },
   /* "impede de usar habilidades" (Toque da Quietude) e "silêncio": quem não
      conjura perde a ação mágica, e Atordoado é o mais próximo do catálogo. */
-  { id: "quietude",   re: /impede.{0,20}(habilidade|magia|conjur)|silenc|emudec|sela a voz|sem conseguir conjurar/i,          cond: "atordoado",  alvo: "alvo", chance: 0.5, dif: 1 },
-  { id: "encanto",    re: /encant|enfeitiç|enfeitic|domin|hipnot|sedu|canto de sereia|sussurr|persuas[aã]o arcana/i,        cond: "enfeiticado", alvo: "alvo", chance: 0.4,  dif: 1 },
-  { id: "derrubada",  re: /derrub|investida|rasteira|empurr|tromba|arremete|carga|placagem/i,                               cond: "caido",      alvo: "alvo", chance: 0.45, dif: 0 },
-  { id: "drenagem",   re: /drena|suga|debilit|enfraquec|maldi[çc]|praga|definha|murcha/i,                                   cond: "enfraquecido", alvo: "alvo", chance: 0.45, dif: 0 },
-  { id: "lentidao",   re: /lentid|retard|melaço|melaco|atras|peso do tempo/i,                                              cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },
+  { id: "quietude",   re: /(?<!\p{L})(?:impede.{0,20}(habilidade|magia|conjur)|silenc|emudec|sela a voz|sem conseguir conjurar)/iu,          cond: "atordoado",  alvo: "alvo", chance: 0.5, dif: 1 },
+  { id: "encanto",    re: /(?<!\p{L})(?:encant|enfeitiç|enfeitic|domin(?!go)|hipnot|sedu|canto de sereia|sussurr|persuas[aã]o arcana)/iu,        cond: "enfeiticado", alvo: "alvo", chance: 0.4,  dif: 1 },
+  { id: "derrubada",  re: /(?<!\p{L})(?:derrub|investida|rasteira|empurr|tromba|arremete|cargas?(?!\p{L})|placagem)/iu,                               cond: "caido",      alvo: "alvo", chance: 0.45, dif: 0 },
+  { id: "drenagem",   re: /(?<!\p{L})(?:drena|suga|sanguessuga|debilit|enfraquece(?:r|m)?(?!\p{L})|fica enfraquecid|maldi[çc]|praga|definha|murcha)/iu,                                   cond: "enfraquecido", alvo: "alvo", chance: 0.45, dif: 0 },
+  { id: "lentidao",   re: /(?<!\p{L})(?:lentid|retard|melaço|melaco|atras|peso do tempo)/iu,                                              cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },
 
   /* ---- buffs em quem usa ou nos aliados ---- */
-  { id: "bencao",     re: /bênção|bencao|abençoa|abencoa|consagra|graça divina|milagre menor|oração|oracao/i, cond: "abencoado",  alvo: "aliados", chance: 1, dif: 0 },
-  { id: "furia",      re: /fúria|furia|frenesi|enfurec|berserk|sanha/i,                                       cond: "enfurecido", alvo: "proprio", chance: 1, dif: 0 },
-  { id: "pressa",     re: /pressa|acelera|velocidade|ligeireza|ímpeto|impeto|passo rápido|passo rapido/i,      cond: "apressado",  alvo: "proprio", chance: 1, dif: 0 },
+  { id: "bencao",     re: /(?<!\p{L})(?:bênção|bencao|abençoa|abencoa|consagra|graça divina|milagre menor|oração|oracao)/iu, cond: "abencoado",  alvo: "aliados", chance: 1, dif: 0 },
+  { id: "furia",      re: /(?<!\p{L})(?:fúria|furia|frenesi|enfurec|berserk|sanha)/iu,                                       cond: "enfurecido", alvo: "proprio", chance: 1, dif: 0 },
+  { id: "pressa",     re: /(?<!\p{L})(?:pressa|apress|acelera|velocidade|ligeireza|ímpeto|impeto|passo rápido|passo rapido)/iu,      cond: "apressado",  alvo: "proprio", chance: 1, dif: 0 },
   /* v9.265 (H1): `invisib` não casa com "invisível" — é "invisív". "Desaparecer
      — sai de combate e fica invisível por 1 turno" passava batido pelos dois
      lados da alternância, e o Ladino de nível 6 sumia só na frase.
@@ -159,8 +182,8 @@ export const PORTADORES = [
      "Cortes INVISÍVEIS atingem todos em linha" (um ataque), "Ver o Invisível",
      "Detectar Magia", "Porta Dimensional", "Olho Arcano" e "Não Pisco" (que
      ENXERGA invisíveis). Quem fica invisível diz que FICA. */
-  { id: "sombra",     re: /furtiv|sombra|invisib|fica invis[ií]vel|silencios|camufla|espreita/i,              cond: "furtivo",    alvo: "proprio", chance: 1, dif: 0 },
-  { id: "vigor",      re: /fortalec|força bruta|forca bruta|potenciali/i,                                     cond: "fortalecido", alvo: "proprio", chance: 1, dif: 0 },
+  { id: "sombra",     re: /(?<!\p{L})(?:furtiv|sombra|invisib|fica invis[ií]vel|silencios|camufla|espreita)/iu,              cond: "furtivo",    alvo: "proprio", chance: 1, dif: 0 },
+  { id: "vigor",      re: /(?<!\p{L})(?:fortalec|força bruta|forca bruta|potenciali)/iu,                                     cond: "fortalecido", alvo: "proprio", chance: 1, dif: 0 },
 ];
 
 /* Lê qualquer fonte (nome da arma + elemento, nome+descrição da habilidade,
@@ -305,13 +328,13 @@ export function golpeDaVez(nome, elemento, ameaca, indice = 0) {
    os mesmos portadores, e a aflição que carregam continua a mesma. Os do
    físico não carregam aflição nenhuma — um tiro é dano, e é por isso que
    esta linha não tem "nas pernas" nem "atordoante". E "Sussurro
-   assombrado" ficou de fora do sombrio de propósito: "assombrado" contém
-   "brado", e o portador `inspiracao` casa com ele — o golpe inspiraria o
-   bando de quem o lança (é defeito do catálogo de cima, escrito no diário
-   de MM7; aqui simplesmente não se repete). Pela mesma razão não há
-   "sombra" em nome nenhum daqui: o portador `sombra` dá `furtivo` a quem
-   lança. A suíte de MM7 cobra que nenhum disparo case um portador que não
-   seja do alvo.
+   assombrado" ficou de fora do sombrio: em MM7 "assombrado" casava o
+   "brado" do portador `inspiracao`, e o golpe inspirava o bando de quem o
+   lançava. A fronteira de palavra (lá em cima, em `PORTADORES`) consertou
+   o catálogo de cima — hoje ele é `terror`, no alvo —, e aqui a lista
+   ficou como estava. Não há "sombra" em nome nenhum daqui: o portador
+   `sombra` dá `furtivo` a quem lança. A suíte de MM7 cobra que nenhum
+   disparo case um portador que não seja do alvo.
    O repertório tem o tamanho do de `golpesDeCriatura` (1 a 3 pela ameaça)
    e sai do mesmo hash: o mesmo atirador usa sempre os mesmos disparos. */
 export const GOLPES_DE_LONGE = {

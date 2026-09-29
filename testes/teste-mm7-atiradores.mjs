@@ -371,13 +371,25 @@ sec("12. a medida — 140 lutas, e o golpe de oportunidade que fecha a conta");
   const b = JSON.stringify(lutaDosAtiradores(M, "dupla", "mm7prova|3"));
   t("determinismo: a mesma semente dá a mesma luta", a === b);
 
-  /* uma amostra ao vivo, menor que o retrato (40 contra 140) para caber no
+  /* uma amostra ao vivo, menor que o retrato (70 contra 140) para caber no
      `npm test` — com folga extra no limite, porque amostra pequena tem
-     mais ruído do que 140 lutas. */
-  console.log(`      (medindo ${Object.keys(LUTAS_DOS_ATIRADORES).length * 40 * 2} lutas ao vivo — pode levar alguns segundos)`);
+     mais ruído do que 140 lutas.
+
+     A AMOSTRA PASSOU DE 40 PARA 70 NA ETAPA DAS PAREDES (29/09), e o
+     limite e a folga ficaram onde estavam. O motivo: as plantas vêm em
+     rodízio de sete pela semente, e 40 não é uma volta inteira — cinco
+     plantas levavam uma luta a mais do que as outras duas. Com o caminho
+     de verdade, o conjurador ficou a +19% do antes nas 140 lutas do
+     retrato (dentro dos 20%), e as 40 primeiras sementes desta família
+     davam +35,3%, um terço de ponto além da folga, só por serem as 40
+     que eram (42 dava 38%, 70 dá 27%, 140 dá 20%). Dez voltas inteiras
+     do rodízio medem o mesmo jogo com metade do ruído; o preço são uns
+     três segundos. */
+  const N_AO_VIVO = 70;
+  console.log(`      (medindo ${Object.keys(LUTAS_DOS_ATIRADORES).length * N_AO_VIVO * 2} lutas ao vivo — pode levar alguns segundos)`);
   const folga = LIMITE_DOS_ATIRADORES.variacao + 0.15;
-  const vivoComOp = sondarAtiradores(M, { n: 40, prefixo: "mm7ao-vivo-com" });
-  const vivoSemOp = sondarAtiradores(M, { n: 40, prefixo: "mm7ao-vivo-sem", comOportunidade: false });
+  const vivoComOp = sondarAtiradores(M, { n: N_AO_VIVO, prefixo: "mm7ao-vivo-com" });
+  const vivoSemOp = sondarAtiradores(M, { n: N_AO_VIVO, prefixo: "mm7ao-vivo-sem", comOportunidade: false });
   for (const c of Object.keys(LUTAS_DOS_ATIRADORES)) {
     const variacaoViva = Math.abs(vivoComOp[c].dano - RETRATO_DOS_ATIRADORES.antes[c].dano) / RETRATO_DOS_ATIRADORES.antes[c].dano;
     t(`${c} ao vivo, com o golpe de oportunidade: ainda perto do retrato (${(variacaoViva * 100).toFixed(1)}%, folga ${(folga * 100).toFixed(0)}%)`,

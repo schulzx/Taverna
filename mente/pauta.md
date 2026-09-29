@@ -1034,11 +1034,19 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   escrito (a mão só o procurou em `src/*.js`; o App escreve-o em ~9713, ~9722, ~9990):
   investigar o que conta como "estrada" (dias de viagem? `convivio`?) e se o painel do
   tempo o move. Se o convite nunca abre, nenhum companheiro novo entra no grupo.
-- [ ] **"Sussurro assombrado" inspira o bando** · leve · de: sistema/MM7 · 29/09
+- [x] **"Sussurro assombrado" inspira o bando** · feito 29/09, v9.314 · de: sistema/MM7 · 29/09
   O golpe do Necromante casa o portador `inspiracao` porque "assombrado" contém "brado";
   "sombra" dá `furtivo` a quem lança. O casamento de portadores por substring precisa de
   fronteira de palavra. Bug com teste que prova.
-- [ ] **os inimigos travam atrás de paredes** · médio · de: sistema/MM7 · 29/09
+- [x] **os inimigos travam atrás de paredes** · feito 29/09, v9.314 (promovido: parte a sessão) · de: sistema/MM7 · 29/09
+- [ ] **os inimigos empilham na mesma casa** · médio · de: sistema/v9.314 · 29/09
+  `moverInimigos` calcula a ocupação com as posições de antes do turno: quem anda depois
+  não vê quem já andou. Na estrada, três soldados vão todos para (4,6). Antigo e no ar.
+  Consertar muda o passo em campo aberto — medir pela sonda das paredes.
+- [ ] **"Golpe consagrado" abençoa o bando do monstro** · leve · de: sistema/v9.314 · 29/09
+  Não é pedaço de palavra: o nome do golpe promete bênção e o portador `bencao` dá-a aos
+  aliados de quem o lança. Nomeado em `teste-afl`. (E "silencioso" cai em `quietude` antes
+  de `sombra`, pela ordem da tabela.)
   `moverInimigos` é gulosa em linha reta: na planta da taverna, o conjurador de antes
   empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
   (o herói da sonda já o tem), medido pela régua.

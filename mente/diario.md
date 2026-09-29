@@ -15,6 +15,47 @@ Formato:
 ```
 
 ---
+## 29/09 19:12 · v9.314 · nenhuma luta trava atrás de uma parede (e o "assombrado") · commit (o hash vai no próximo bloco)
+
+- **por que andou:** promovido pelo coordenador da fase, com o critério *numa sessão à
+  Matt, o que parte a sessão vem antes do que a enriquece*: uma luta que não pode acabar é
+  o jogo parado.
+- **estado inicial:** verde (MM3b no ar, `92158be`, `d32bc54`). Duas mãos `backend` em
+  paralelo, em arquivos separados (esta e a do convite), cada uma provada com o seu
+  `so-o-meu.sh`.
+- **o diagnóstico:** `moverInimigos` era busca gulosa em linha reta — topo falso: na
+  taverna, de um lado e do outro do balcão, a volta tem 7 casas e o passo 6, e nenhuma casa
+  ao alcance fica mais perto em linha reta, logo ninguém se mexe (seis pares de posições
+  presos na taverna, quatro no beco). **E move também o grupo do jogador**, pela mesma
+  função. Segunda causa: "já alcança" não pedia linha de visão — o ogro de 3 m colado a um
+  muro, com o herói do outro lado, ficava parado para sempre, e `alcanca` não o deixava
+  bater. O mesmo no atirador que procura ver.
+- **backend:** `passoAteAlcancar` — um mapa de passos (BFS) a partir das casas de onde se
+  alcança o alvo (distância **e** linha de visão), contornando paredes e respeitando o
+  tamanho; do que o passo cobre nesta rodada, a casa com menos passos. Em campo aberto,
+  idêntica à antiga em mais de 3000 passos. A sonda de MM7 passou a ler esta função em vez
+  de ter a sua.
+- **a prova (10 plantas × 5 lutas × 4 jogadores × 30):** taverna, lutador, com o
+  companheiro a andar: **30/30 lutas travadas → 0**. **Travas depois: 0 em todas as
+  plantas.** Os empates que sobram são de desenho (o herói que fica parado contra quem o
+  alcança de mais longe) e estão numa tabela com o motivo. Balanço dentro de ±10% em todas
+  as plantas; duas lutas isoladas passam, e nenhuma é trava (a ruína com conjurador, −25%:
+  antes o soldado ficava preso do lado errado do muro e o herói dava a volta debaixo de
+  fogo).
+- **catracas movidas, com o motivo:** o retrato do MM7 (o "depois" +2 a 3%; o conjurador
+  fica a +19,3% do antes, com o limite em 20% — **margem curta, anotada**); a amostra viva
+  do MM7 de 40 para 70 lutas (as plantas rodam de sete em sete, e 40 não fecha a volta).
+- **o "assombrado":** os portadores de `aflicoes.js` passam a casar só no começo de palavra
+  (`(?<!\p{L})`, porque o `\b` do JavaScript não conhece "é" nem "ç"). Num acervo de 716
+  golpes e habilidades, **36 mudaram de portador**, revistos um a um: Sussurro assombrado,
+  de inspirar o bando a aterrorizar; Emaranhar, de veneno a prender; os seis "Chamado", os
+  três "Coração", as três "Cobrança", "Disparo Calibrado", "Adivinhação", "O Bosque Acorda"
+  deixam de ganhar fogo, oração, cobra, brado, vinha, corda.
+- **achados para "Aberto":** os inimigos empilham na mesma casa (a ocupação é a de antes
+  do turno); "Golpe consagrado" abençoa o bando do monstro (é o nome, não um pedaço).
+- **para quem joga:** nenhuma luta fica presa atrás de um balcão, e os golpes deixam de
+  fazer coisas que o nome não diz.
+
 ## 29/09 18:16 · v9.313 · MM3b · o golpe final é do grupo · commit `92158be`
 
 - **por que andou:** decisão do coordenador da fase, pela liberdade da ordem de 28/09,

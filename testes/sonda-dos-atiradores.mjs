@@ -12,8 +12,9 @@
    Então a sonda monta a planta com as PEÇAS DE PRODUÇÃO e nenhuma regra
    nasce aqui:
      · a planta e o posicionamento: `montarGrade`, `posicionar`;
-     · o passo de todo mundo: `moverInimigos` — a mesma que o App usa para
-       os inimigos, para o grupo, e que aqui move também o herói;
+     · o passo: `moverInimigos` — a mesma que o App usa para os inimigos e
+       para o grupo —, e o do herói por `passoAteAlcancar`, o caminho que
+       ela própria usa por dentro (desde a etapa das paredes);
      · o golpe: `resolverAtaque`, `danoDaClasse`, `turnoDosInimigos`,
        `turnoDosCompanheiros`;
      · o golpe de oportunidade no recuo: a conta que o App já faz em quem
@@ -62,7 +63,22 @@ export const AMOSTRA_DOS_ATIRADORES = { n: 140, prefixo: "mm7", tetoDeRodadas: 2
    dia em que a regra entrou (29/09/2026). `antes` com a árvore de HEAD
    (c06d904, v9.311), `depois` com MM7. `dano` é o dano que o HERÓI leva
    por luta; `danoGrupo` o que o grupo leva (só no `bando`); `vitoria` a
-   fração das lutas ganhas; `rodadas` a média de rodadas. */
+   fração das lutas ganhas; `rodadas` a média de rodadas.
+
+   O DEPOIS FOI REFEITO NA ETAPA DAS PAREDES (29/09, depois de v9.313), e
+   o motivo fica escrito porque a asserção se moveu: `moverInimigos` deixou
+   de ser gulosa em linha reta (o soldado da ruína ficava colado ao muro
+   caído do lado errado, e o herói tinha de dar a volta até ele debaixo dos
+   disparos do mago), e o herói desta sonda passou a andar pelo caminho de
+   produção (`passoAteAlcancar`), que só dá o alcance por encerrado com
+   linha de visão — antes ele parava em diagonal do outro lado da quina de
+   uma parede, de onde `alcanca` não o deixa bater. Os dois juntos:
+   dupla 11,57 → 12,06, conjurador 12,01 → 12,69, bando 13,71 → 13,39; e
+   sem o golpe de oportunidade 13,11/13,76/16,02 → 14,04/13,83/15,69. O
+   ANTES NÃO MUDA: remedido na árvore de c06d904 com o mesmo conserto, dá
+   13,03 · 10,64 · 16,36 — a luta de antes de MM7 não tinha a trava dentro
+   desta sonda, e o limite continua a medir a regra dos atiradores, não o
+   caminho. */
 export const RETRATO_DOS_ATIRADORES = {
   n: 140,
   antes: {
@@ -71,17 +87,17 @@ export const RETRATO_DOS_ATIRADORES = {
     bando:      { dano: 16.35, danoGrupo: 8.00, vitoria: 1,     rodadas: 4.37 },
   },
   depois: {
-    dupla:      { dano: 11.57, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.66 },
-    conjurador: { dano: 12.01, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.74 },
-    bando:      { dano: 13.71, danoGrupo: 7.36, vitoria: 1,     rodadas: 4.00 },
+    dupla:      { dano: 12.06, danoGrupo: 0,    vitoria: 0.986, rodadas: 4.67 },
+    conjurador: { dano: 12.69, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.72 },
+    bando:      { dano: 13.39, danoGrupo: 7.49, vitoria: 1,     rodadas: 3.99 },
   },
   /* o mesmo depois SEM o golpe de oportunidade no recuo — o jogo enquanto a
-     fiação do App não chega. O conjurador passa do limite (+29%): é por
+     fiação do App não chega. O conjurador passa do limite (+30%): é por
      isso que a fiação não é enfeite. */
   semOportunidade: {
-    dupla:      { dano: 13.11 },
-    conjurador: { dano: 13.76 },
-    bando:      { dano: 16.02 },
+    dupla:      { dano: 14.04 },
+    conjurador: { dano: 13.83 },
+    bando:      { dano: 15.69 },
   },
 };
 /* O LIMITE — a luta tem de ficar DIFERENTE, não mais dura nem mais mole:
@@ -138,55 +154,61 @@ function fichasDosInimigos(M, nomes) {
 
 /* ---------------- O PASSO DO HERÓI ----------------
    O jogador escolhe a casa, e a tela mostra-lhe por onde se chega: ele
-   contorna o balcão. `moverInimigos` é gulosa em linha reta (o comentário
-   dela o diz: "é guloso e basta") e prendia o herói atrás de uma parede
-   com o arqueiro do outro lado — a sonda media um jogador que não existe.
-   Aqui: o mapa de passos até o alvo (paredes só), e das casas que o passo
-   de 9 m cobre (`custosDe`, a mesma busca da tela) fica a mais perto dele
-   pelo caminho; no empate, a que custou menos. Sem regra nova: é só a
-   escolha de casa que um jogador faz com o tabuleiro à frente. */
-function passoDoHeroi(G, grade, lugar, alvo, outros) {
-  if (!alvo || G.distanciaM(lugar, alvo) <= G.alcanceNatural(lugar)) return lugar;
+   contorna o balcão. Até MM7 a sonda tinha o seu próprio caminho, porque
+   `moverInimigos` era gulosa em linha reta e prendia o herói atrás de uma
+   parede com o arqueiro do outro lado. Desde a etapa das paredes o caminho
+   é de produção (`passoAteAlcancar`, grid.js) — o mesmo que os inimigos e o
+   grupo andam —, e a sonda o lê de lá: uma conta só, e não duas que podem
+   divergir.
+
+   O JOGADOR DAS PAREDES (`passo`, para `sonda-das-paredes.mjs`): além do
+   jogador que anda pelo caminho, dois que a sonda das paredes precisa —
+     · "companheiro": anda pela `moverInimigos`, como o App move o grupo;
+       é o herói que a sonda de MM7 tinha antes de ter caminho próprio;
+     · "espera": não sai do lugar, e bate em quem chega. São os inimigos
+       que têm de vir, e é aí que se vê se chegam;
+     · "abrigo": o "escondo-me atrás do balcão" — começa a luta colado a
+       uma parede que o esconde do inimigo mais perto (`abrigoDoHeroi`) e
+       espera ali. É o herói que põe a parede ENTRE ele e quem vem, e é
+       onde a busca em linha reta prendia os inimigos. Planta sem parede
+       não tem abrigo: ele espera onde está. */
+function abrigoDoHeroi(G, grade, lugar, outros, inimigos) {
   const g = G.garantirGrade(grade);
-  if (!g) return lugar;
-  const k = (x, y) => x + "," + y;
-  const passos = new Map();
-  let fila = [];
-  for (let x = 0; x < g.largura; x++) for (let y = 0; y < g.altura; y++) {
-    if (G.ehParede(grade, x, y)) continue;
-    if (G.distanciaM({ ...lugar, x, y }, alvo) <= G.alcanceNatural(lugar)) { passos.set(k(x, y), 0); fila.push({ x, y }); }
-  }
-  while (fila.length) {
-    const prox = [];
-    for (const a of fila) for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
-      const nx = a.x + dx, ny = a.y + dy;
-      if ((!dx && !dy) || !G.dentro(grade, nx, ny) || G.ehParede(grade, nx, ny) || passos.has(k(nx, ny))) continue;
-      passos.set(k(nx, ny), passos.get(k(a.x, a.y)) + 1);
-      prox.push({ x: nx, y: ny });
-    }
-    fila = prox;
-  }
-  const custos = G.custosDe(grade, lugar, { ocupados: G.ocupacaoDe(outros, lugar) });
+  const ocupados = G.ocupacaoDe(outros, lugar);
+  const perto = [...inimigos].sort((a, b) => G.distanciaM(a, lugar) - G.distanciaM(b, lugar))[0];
   let melhor = null;
-  for (const [chave, custoM] of custos) {
-    const p = passos.get(chave);
-    if (p == null) continue;
-    if (!melhor || p < melhor.p || (p === melhor.p && custoM < melhor.c)) melhor = { chave, p, c: custoM };
+  for (let x = 0; x < g.largura; x++) for (let y = 0; y < g.altura; y++) {
+    if (G.ehParede(grade, x, y) || ocupados.has(x + "," + y)) continue;
+    let colado = false;
+    for (let dx = -1; dx <= 1 && !colado; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && G.ehParede(grade, x + dx, y + dy)) { colado = true; break; }
+    if (!colado || (perto && G.linhaDeVisao(grade, { ...lugar, x, y }, perto))) continue;
+    const d = G.distanciaM({ ...lugar, x, y }, lugar), lado = Math.abs(x - lugar.x);
+    if (!melhor || d < melhor.d || (d === melhor.d && lado < melhor.lado)) melhor = { x, y, d, lado };
   }
-  const aqui = passos.get(k(lugar.x, lugar.y));
-  if (!melhor || (aqui != null && aqui <= melhor.p)) return lugar;
-  const [x, y] = melhor.chave.split(",").map(Number);
-  return { ...lugar, x, y };
+  return melhor ? { ...lugar, x: melhor.x, y: melhor.y } : lugar;
+}
+
+function passoDoHeroi(G, grade, lugar, alvo, outros, passo) {
+  if (!alvo || passo === "espera" || passo === "abrigo") return lugar;
+  if (passo === "companheiro") {
+    const mv = G.moverInimigos(grade, [{ ...lugar, vida: 1 }], alvo, outros);
+    return { ...lugar, x: mv.inimigos[0].x, y: mv.inimigos[0].y };
+  }
+  const p = G.passoAteAlcancar(grade, lugar, alvo, { ocupados: G.ocupacaoDe(outros, lugar), desempate: "passo" });
+  return p ? { ...lugar, x: p.x, y: p.y } : lugar;
 }
 
 /* ---------------- UMA LUTA ---------------- */
 
 /* `comOportunidade`: o recuo cobra o golpe do herói (a fiação que MM7 pede
-   ao App). Desligado, mede o jogo como fica ENQUANTO a fiação não chega. */
-export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = true } = {}) {
-  const cen = LUTAS_DOS_ATIRADORES[cenarioId];
+   ao App). Desligado, mede o jogo como fica ENQUANTO a fiação não chega.
+   `planta`, `luta` e `passo` são da sonda das paredes: uma planta fixa em
+   vez do rodízio, uma luta que não está na tabela desta sonda, e o jogador
+   (ver `passoDoHeroi`). Omitidos, a luta é byte a byte a de MM7. */
+export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = true, planta: plantaFixa = null, luta = null, passo = "caminho" } = {}) {
+  const cen = luta || LUTAS_DOS_ATIRADORES[cenarioId];
   const { combate: C, grid: G } = M;
-  const planta = PLANTAS_DOS_ATIRADORES[Math.abs(Number(String(semente).split("|").pop()) || 0) % PLANTAS_DOS_ATIRADORES.length];
+  const planta = plantaFixa || PLANTAS_DOS_ATIRADORES[Math.abs(Number(String(semente).split("|").pop()) || 0) % PLANTAS_DOS_ATIRADORES.length];
   return comSorteTravada(`${semente}|${cenarioId}`, () => {
     const grade = G.montarGrade(planta);
     let heroi = fichaDoHeroi(M);
@@ -196,7 +218,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
       grupo: grupo.map((c) => ({ nome: c.nome, vida: c.vida, tamanho: "medio" })),
       inimigos: fichasDosInimigos(M, cen.inimigos),
     });
-    let lugar = pos.heroi;
+    let lugar = passo === "abrigo" ? abrigoDoHeroi(G, grade, pos.heroi, [...pos.grupo, ...pos.inimigos], pos.inimigos) : pos.heroi;
     let aliados = pos.grupo;
     let inimigos = pos.inimigos;
     const vivos = () => inimigos.filter((e) => !e.derrotado && (e.vida || 0) > 0);
@@ -204,6 +226,11 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
       inimigos = inimigos.map((e) => (e.nome !== nome ? e : { ...e, vida: Math.max(0, e.vida - dano), derrotado: e.vida - dano <= 0 }));
     };
     let danoNoHeroi = 0, danoNoGrupo = 0, recuos = 0, oportunidades = 0, disparos = 0, disparosColados = 0, rodada = 1;
+    /* a última rodada em que alguém ATACOU alguém (acertando ou não) — a
+       sonda das paredes separa por ela a luta LENTA (dados até o teto) da
+       TRAVADA (ninguém alcança ninguém, e o teto chega sozinho). Contar só
+       os acertos confundia cinco erros seguidos com uma trava. */
+    let ultimoAtaque = 0;
     const nv = heroi.nivel;
     const arma = heroi.equipados.arma;
     const bonusAtk = M.itens.modDoGolpe(heroi, arma) + 2 + Math.floor((nv - 1) / 4);
@@ -212,13 +239,14 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
       /* ---- 1. O HERÓI: vai ao mais perto e bate ---- */
       if ((heroi.vida || 0) > 0) {
         const alvo0 = [...vivos()].sort((a, b) => G.distanciaM(a, lugar) - G.distanciaM(b, lugar))[0];
-        lugar = passoDoHeroi(G, grade, lugar, alvo0, [...aliados, ...vivos()]);
+        lugar = passoDoHeroi(G, grade, lugar, alvo0, [...aliados, ...vivos()], passo);
         const nAt = C.ataquesPorTurno(heroi.classe, nv);
         for (let i = 0; i < nAt; i++) {
-          const perto = vivos().filter((e) => G.distanciaM(lugar, e) <= G.alcanceNatural(lugar))
+          const perto = vivos().filter((e) => G.distanciaM(lugar, e) <= G.alcanceNatural(lugar) && G.linhaDeVisao(grade, lugar, e))
             .sort((a, b) => (a.vida || 0) - (b.vida || 0));
           if (!perto.length) break;
           const alvo = perto[0];
+          ultimoAtaque = rodada;
           const r = C.resolverAtaque({
             atacante: heroi.nome, alvo, ehAtacanteInimigo: false, bonusAtaque: bonusAtk,
             danoBase: C.danoDaClasse(heroi.classe, nv, Math.round(C.danoDe(heroi, false) / 2)),
@@ -241,6 +269,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
         const bonusOp = Math.max(heroi.atributos.forca || 0, heroi.atributos.destreza || 0) + 2 + Math.floor((nv - 1) / 4);
         const dOp = C.danoDaClasse(heroi.classe, nv, Math.round(C.danoDe(heroi, false) / 2)) + M.combos.bonusDeArma(heroi).bonus;
         const r = C.ataqueDeOportunidade(heroi, e, bonusOp, dOp, { tipoDano: M.danos.elementoDaArma(heroi) });
+        ultimoAtaque = rodada;
         oportunidades++;
         if (r.dano > 0) ferir(e.nome, r.dano);
       }
@@ -251,6 +280,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
         gdJogador: 0, grade, heroi: lugar, aliados, rodada, provocado: false, prioridade: "",
       });
       for (const a of acoes) {
+        if (a.r) ultimoAtaque = rodada;
         if (a.deLonge) { disparos++; if (a.r && a.r.modo === "desvantagem") disparosColados++; }
         if (!(a.r && a.r.dano > 0)) continue;
         if (a.alvoRef === "jogador") { heroi = { ...heroi, vida: Math.max(0, (heroi.vida || 0) - a.r.dano) }; danoNoHeroi += a.r.dano; }
@@ -269,6 +299,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
           jogadorCaido: (heroi.vida || 0) <= 0, jogadorNome: heroi.nome, jogador: heroi, rodada, provocado: false, comFuria: [],
         });
         for (const ac of acoesComp) {
+          if ((ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r) ultimoAtaque = rodada;
           if ((ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r && ac.r.dano > 0) ferir(ac.alvoNome, ac.r.dano);
           else if (ac.tipo === "cura") {
             const valor = ac.valor || 0;
@@ -286,7 +317,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
     return {
       danoNoHeroi, danoNoGrupo, vitoria: vivos().length ? 0 : 1,
       rodadas: Math.min(rodada, AMOSTRA_DOS_ATIRADORES.tetoDeRodadas),
-      recuos, oportunidades, disparos, disparosColados,
+      recuos, oportunidades, disparos, disparosColados, ultimoAtaque,
     };
   });
 }

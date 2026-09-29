@@ -1,7 +1,12 @@
-import { aflicaoDe, rolarAflicao, golpesDeCriatura, golpeDaVez, PORTADORES } from "../src/aflicoes.js";
+import { aflicaoDe, rolarAflicao, golpesDeCriatura, golpeDaVez, PORTADORES, GOLPES_POR_ELEMENTO, GOLPES_DE_LONGE } from "../src/aflicoes.js";
 import { CONDICOES } from "../src/condicoes.js";
 import { perfilDeCriatura } from "../src/danos.js";
-import { CRIATURAS_FANTASIA } from "../src/bestiario.js";
+import { CRIATURAS_FANTASIA, ARQUETIPOS } from "../src/bestiario.js";
+import { CLASSES } from "../src/classes.js";
+import { SUBCLASSES } from "../src/subclasses.js";
+import { ESPECIALIZACOES } from "../src/especializacoes.js";
+import { MAGIAS } from "../src/grimorio.js";
+import { ARMAS } from "../src/itens.js";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -131,6 +136,93 @@ for (const c of doem) {
   const port = PORTADORES.filter((p) => p.cond === c.id);
   ok(port.length === 1 && port[0].alvo === "alvo",
     `${c.rotulo}: portador único (${port.map((p) => p.id).join(", ") || "nenhum"}) e sempre em "alvo"`);
+}
+
+/* ============================================================
+   A FRONTEIRA DE PALAVRA (Fase MM, as paredes · 29/09)
+
+   "Sussurro assombrado", o golpe do Necromante, inspirava o bando de quem
+   o lançava: "assombrado" contém "brado". A família inteira foi varrida
+   contra o acervo (716 textos) e 36 mudaram de portador — estão aqui, uma
+   a uma, com o portador que ficou. Se uma delas voltar a mudar, a linha
+   acende: é a tabela a andar, e isso decide-se com o motivo à vista.
+   ============================================================ */
+console.log("\n[a fronteira de palavra] nenhum portador casa pedaço de palavra:");
+{
+  const acervo = [];
+  const junta = (h) => `${(h && h.nome) || ""} ${(h && h.descricao) || ""}`;
+  for (const c of CLASSES) for (const h of c.habilidades) acervo.push({ nome: h.nome, txt: junta(h) });
+  for (const hs of Object.values(SUBCLASSES)) for (const h of hs) acervo.push({ nome: h.nome, txt: junta(h) });
+  for (const hs of Object.values(ESPECIALIZACOES)) for (const h of hs) acervo.push({ nome: h.nome, txt: junta(h) });
+  for (const m of MAGIAS) acervo.push({ nome: m.nome, txt: junta(m) });
+  for (const g of [...Object.values(GOLPES_POR_ELEMENTO).flat(), ...Object.values(GOLPES_DE_LONGE).flat()]) acervo.push({ nome: g, txt: g });
+  for (const b of [...CRIATURAS_FANTASIA, ...ARQUETIPOS]) acervo.push({ nome: b.nome, txt: `${b.nome || ""} ${b.desc || ""}` });
+  for (const a of ARMAS) acervo.push({ nome: a.nome, txt: a.nome });
+  ok(acervo.length >= 700, `o acervo varrido tem ${acervo.length} textos (habilidades, grimório, golpes, bestiário, armas)`);
+
+  /* 1. a regra, sobre o acervo inteiro: onde um portador casa, o que vem
+     antes do casamento não é letra */
+  const LETRA = /\p{L}/u;
+  const noMeio = [];
+  for (const { nome, txt } of acervo) for (const p of PORTADORES) {
+    const m = txt.match(p.re);
+    if (m && m.index > 0 && LETRA.test(txt[m.index - 1])) noMeio.push(`${nome} (${p.id}: "${m[0]}")`);
+  }
+  ok(noMeio.length === 0, `nenhum portador casa no meio de uma palavra do acervo${noMeio.length ? " — " + noMeio.join(", ") : ""}`);
+
+  /* 2. as 36 que mudaram, cada uma com o portador certo (null = nenhum) */
+  const MUDARAM = [
+    ["Sussurro assombrado", "terror"],        // era inspiracao ("assombr-ADO" ⊃ "brado")
+    ["Clava de Ossos", "concussao"],          // era fogo ("c-LAVA")
+    ["Emaranhar", "prisao"],                  // era veneno ("em-ARANHA-r")
+    ["Bomba de Fumaça", "cegueira"],          // era concussao ("fu-MAÇA")
+    ["Fumaça Cegante", "cegueira"],           // idem
+    ["Investida da Alcateia", "derrubada"],   // era prisao ("alca-TEIA")
+    ["Chamado do Trovão", "concussao"],       // era fogo ("CHAMA-do")
+    ["Raízes Agarradoras", "prisao"],         // era sangria ("a-GARRA-doras")
+    ["Tentáculo Insone", "prisao"],           // idem ("a-GARRA")
+    ["Raízes que Prendem", "prisao"],         // idem
+    ["Cobrança de Alma", "vigor"],            // era veneno ("COBRA-nça"); "fortalece você"
+    ["Chamado da Chuva", null], ["Chamar de Volta", null], ["Chamado Selvagem", null],
+    ["Chamado da Alcateia", null], ["Chamado do Bando", null], ["Chamar o Grande", null],
+    ["Coração Tempestuoso", null], ["Coração da Tormenta", null], ["Coração do Mundo", null], // "c-ORAÇÃO"
+    ["Cobrança", null], ["Cobrança Final", null], ["Cobrança em Dobro", null],
+    ["Disparo Calibrado", null], ["Tiro Calibrado", null], ["Forma Conjunta", null], ["Sangue de Dragão", null], // "-BRADO-"
+    ["Ovação", null], ["Cerco de Presas", null], // "pla-TEIA", "alca-TEIA"
+    ["O Bosque Acorda", null], ["Clone", null],  // "a-CORDA"
+    ["Descarga Celeste", null], ["Sobrecarga", null], // "des-CARGA"
+    ["Atalho de Orvalho", null],              // "a-TALHO"
+    ["Passo Aracnídeo", null],                // "pa-REDE-s"
+    ["Adivinhação", null],                    // "adi-VINHA-ção"
+  ];
+  ok(MUDARAM.length === 36, `as ${MUDARAM.length} mudanças da varredura estão nomeadas`);
+  for (const [nome, esperado] of MUDARAM) {
+    const item = acervo.find((a) => a.nome === nome);
+    const p = item ? aflicaoDe(item.txt) : undefined;
+    ok(item && (p ? p.id : null) === esperado, `"${nome}" → ${p ? p.id : "nada"} (esperado ${esperado || "nada"})`);
+  }
+
+  /* 3. a palavra certa com o pedaço no meio continua a casar, pelo nome */
+  for (const [txt, esperado] of [
+    ["Adaga envenenada", "veneno"], ["os inimigos ficam apavorados", "terror"], ["o grupo fica apressado", "pressa"],
+    ["uma névoa que intoxica", "veneno"], ["um grito que aterroriza", "terror"], ["calor abrasador", "fogo"],
+    ["mordida de sanguessuga", "drenagem"], ["Garras afiadas", "sangria"], ["Chuva de chamas", "fogo"],
+    ["Maça-estrela", "concussao"], ["O alvo enfraquece", "drenagem"],
+  ]) {
+    const p = aflicaoDe(txt);
+    ok((p ? p.id : null) === esperado, `"${txt}" → ${p ? p.id : "nada"} (esperado ${esperado})`);
+  }
+  /* 4. e a palavra que só CONTÉM o pedaço não casa */
+  for (const txt of ["Palavra de Poder", "Vampiro", "Plácido", "Parede de Pedra", "Comedor de Almas", "Adrenalina",
+    "Afogar", "Garrafada", "Expressão", "Consolar", "Redenção", "Maçaneta", "Domingo", "Executa alvo enfraquecido"]) {
+    const p = aflicaoDe(txt);
+    ok(!p, `"${txt}" não carrega nada (${p ? p.id : "nada"})`);
+  }
+  /* 5. nenhum golpe de criatura dá efeito ao bando de quem o lança — a não
+     ser "Golpe consagrado" (bênção), que casa a palavra inteira e é outra
+     conversa: a de um nome de golpe que promete bênção. Fica nomeado. */
+  const doBando = Object.values(GOLPES_POR_ELEMENTO).flat().filter((g) => { const p = aflicaoDe(g); return p && p.alvo !== "alvo"; });
+  ok(doBando.length === 1 && doBando[0] === "Golpe consagrado", `só um golpe de criatura escreve fora do alvo: ${doBando.join(", ") || "nenhum"}`);
 }
 
 console.log("\n[texto que o Mestre recebe]:");
