@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 10:55 · v9.306 · MM3 · o golpe final é seu (Q3 + Q5) · commit (o hash vai no commit seguinte)
+## 29/09 10:55 · v9.306 · MM3 · o golpe final é seu (Q3 + Q5) · commit `9cf6e16`
 
 - **por que andou:** a etapa que a pessoa aprovou há duas semanas (Q3 em 14/09,
   Q5 em 15/09) e o momento mais famoso do Critical Role — o *"how do you want to

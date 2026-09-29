@@ -164,7 +164,43 @@ O limite é o que um commit revertido não desfaz.
 - [ ] **MM7 · os atiradores atiram**
   Achado da fuga (v9.294): o inimigo de distância é atirador na fuga e lutador
   colado dentro da luta. Passa a manter a distância e a disparar.
-- [ ] **MM8 · o elenco** · proposta da pessoa, 28/09
+- [ ] **MM12 · a cidade por dentro (e o mapa das perguntas que ninguém decide)** · de: orquestrador, 29/09, pedido do
+  coordenador da fase · *posição: depois de MM7, antes de MM8*
+  **O achado:** a sonda (MM1) contou **82 *ninguém decide***; 36 são cenário (sabor,
+  aceitável) e **46 são defeito** — 29 de mundo, 13 de regra, 3 de licença, 1 de posição.
+  MM2 fechou uma (#142), ficam **45**. É mais do que o resto da Fase MM junto. Lidas
+  uma a uma, não são 45 buracos: são
+  **cinco blocos**, e três já têm órgão na fila.
+  | bloco | casos | quem paga |
+  |---|---|---|
+  | **a gente por dentro** — passado, motivo, aparência, reputação, paradeiro | 12 | **MM8** (o elenco; escrito lá) |
+  | **a cidade por dentro** — língua, preço do pouso, quem estuda magia, gíria, salvo-conduto, o sino que toca, o preço do que se dá | 9 (#6, #14, #15, #31, #37, #38, #80, #107, #110) | **esta etapa** |
+  | **que teste é este?** e a licença criativa | 6 (#33, #93, #102, #76, #78, #152) | **MM4** (toda ação ganha um dado) |
+  | **escondido e flanco** | 4 (#70, #74, #124, #153) | **MM6** (escondido é um estado) |
+  | regras de classe e de criatura não tabeladas, objetos da cena, a biografia do herói | 9 (#48, #99, #121, #136, #137, #141, #91, #92, #114) | um a um, pelo peso — não é um órgão |
+  **E 5 não são defeito:** #57, #65, #82, #97, #116 têm fato "nenhum" (convite, gesto,
+  logística na ficção) — é ficção livre, como o cenário. Ao tocar a sonda, passam a
+  *ninguém decide* aceitável, com o motivo escrito; o defeito real é **40** (12 + 9 + 6 + 4 + 9).
+  **O que esta etapa faz:** a cidade ganha **ficha** — por semente, na criação do mundo,
+  como o comércio já tem (`envelopeDoComercio`): a língua que se fala e quem não a fala,
+  o preço de uma noite de pouso (por tabela, pelo porte e pela riqueza da cidade), as
+  instituições (quem estuda magia, quem cura, quem guarda a lei), duas ou três gírias e
+  apelidos do léxico local (`lexico.js` já existe), o costume de reconhecimento
+  (salvo-conduto, senha, marca) e **o que está a acontecer hoje** (o sino, a feira, o
+  luto) a partir do relógio do mundo. Vai à pauta pela secção `onde`, curta e por
+  prioridade — nunca bloco estático. **Critério:** as 9 da cidade passam a *chega* e a
+  sonda sobe na mesma medida. Um órgão paga 9; é o segundo maior bloco e o único sem dono.
+  **Porque não antes:** MM4 fecha 6 e toca toda cena; MM6 fecha 4 e é da luta; esta
+  toca toda cidade e é barata, mas assenta melhor com o elenco logo a seguir — a
+  reputação de uma família (#60–#62) é da gente e não da cidade, e as duas etapas
+  devem partilhar a semente.
+- [ ] **MM8 · o elenco** · proposta da pessoa, 28/09 · **paga o maior bloco das que ninguém decide (ver MM12)**
+  **O que a sonda pede do elenco (29/09):** além de quem são, o que querem, o segredo e
+  os laços, cada pessoa do elenco precisa de **passado com data** (#18, #29, #42),
+  **motivo do posto** (#26), **aparência e jeito** (#103, #105, #106), **reputação na
+  cidade** (#60, #61, #62) e **rotina/paradeiro** (#90), e cada casa tem **quem
+  trabalha lá** (#54). São **12 perguntas** de *ninguém decide* que só o elenco fecha —
+  o critério de pronto desta etapa é movê-las na sonda.
   **O defeito que o prova:** o Narrador recebe as **22 pessoas vistas mais
   recentemente** (`resumoNPCsParaPrompt`, `npcs.js:355`), por recência e não
   por importância, e o registo não tem teto — o vilão ausente há duas semanas
