@@ -56,6 +56,7 @@ import { periciaPorId } from "./pericias.js";
 import { detectarPedidoDeTeste, semOPedidoDeTeste, nomeDoAtributo } from "./testes.js";
 import { dificuldadeSocial, foraDaConversa, envelopeForaDaConversa } from "./social.js";
 import { NAO_E_AGRESSAO, RX_AGRESSAO } from "./agressao.js";
+import { soODeclarado } from "./peneira.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -768,34 +769,17 @@ export const NAO_E_IMPROVISO = [
     rx: new RegExp("\\b(empurr|derrub|agarr|imobiliz|rasteir|trombo|placo)\\w*\\b[^.!?]{0,30}?\\b" + ARTIGO + UM_SER),
     porque: "empurrar ou derrubar alguém é disputa de dois corpos, e quem a resolve é a tabela da disputa, não um número fixo",
   },
+  /* A PERGUNTA, O PENSAR ALTO, A NEGAÇÃO, O JÁ FEITO E A FRASE FEITA
+     moravam aqui até a peneira da agressão (Fase MM). Subiram para
+     `peneira.js` e chegam por NAO_E_AGRESSAO, no topo desta lista: eram
+     duas peneiras para a mesma pergunta, e a de lá deixava passar
+     "posso atacar o guarda?". Agora são lidas ORAÇÃO A ORAÇÃO
+     (`soODeclarado`), e por isso "Posso? Salto o balcão." ganha o dado
+     que a pergunta de antes lhe calava. */
   {
-    id: "pergunta", rx: /\?/,
-    porque: "pergunta não é ação: quem pergunta ainda não fez — e a pergunta ao mundo tem porta própria, o oráculo",
-  },
-  {
-    id: "pensarAlto",
-    rx: /\b(se eu|caso eu|e se|sera que|quero saber se|me pergunto se|imagino se|penso em|pensei em|estou pensando em|seria possivel|daria (para|pra)|da (para|pra) eu|como seria|posso|consigo|poderia)\b/,
-    porque: "pensar alto no que faria não é fazer — rolar aqui puniria o jogador por planejar",
-  },
-  {
-    id: "negacao",
-    rx: /(^|[.!;]\s*)(eu )?(nao|nunca|jamais)\b|\b(nao|nunca|jamais) (vou|tento|quero|consigo|posso|devo|pretendo|ouso)\b/,
-    porque: "o que o herói decide NÃO fazer não tem o que rolar",
-  },
-  {
-    id: "jaFeito",
-    rx: /\b(ontem|anteontem|naquele dia|quando eu era|na semana passada|anos atras|dias atras|certa vez|uma vez eu)\b/,
-    porque: "contar o que já fez não é fazer de novo",
-  },
-  {
-    /* FIGURA DE LINGUAGEM, a outra metade do "o portão morde só o
-       necessário": o verbo está lá, a ação não. A lista é de frases feitas,
-       e cresce quando o jogo achar mais uma. */
-    id: "fraseFeita",
-    rx: /\b(morro de (rir|vergonha|medo|fome|sono|tedio|saudade|raiva)|me mata de rir|quebr(o|ar) a cabeca|perco a cabeca|(pulo|salto) de (alegria|felicidade|susto|contente)|pulo fora|pulo (a|essa|esta) parte|engulo (o orgulho|o sapo|seco|a raiva|em seco)|seguro as pontas|seguro o riso|dou a volta por cima|empurro com a barriga|lanc(o|ar) (um|uma|o|a) (olhar|sorriso|piscadela|pergunta|ideia|desafio|olhada|indireta|boato)|jogo (conversa fora|verde|uma indireta)|quebr(o|ar) o (gelo|silencio|clima|jejum|galho|protocolo|encanto)|carrego o mundo|arranco (um sorriso|risadas?|aplausos|suspiros|uma risada)|derrubo (a tese|o argumento|a mentira)|desvio (do|o) (assunto|olhar|rumo)|(o|um|do|no|meu|seu|dar um|de um) (salto|pulo)\b)/,
-    porque: "figura de linguagem tem o verbo e não tem a ação — 'isso me mata de rir' não pede Vigor",
-  },
-  {
+    /* fica aqui, e não na peneira: "Mestre, ataco o guarda" é um ataque
+       dito ao Mestre, e "ataco o mestre de armas" também. Para o dado de
+       atributo, falar COM o Mestre continua sendo conversa. */
     id: "aoMestre", rx: /\b(mestre|narrador)\b/,
     porque: "falar COM o Mestre é conversa fora da cena, não gesto dentro dela",
   },
@@ -813,16 +797,12 @@ export const NAO_E_IMPROVISO = [
   },
 ];
 
-/* O que o sistema vê da frase é a AÇÃO, não a fala. "Digo: vou quebrar a
+/* O que o sistema vê da frase é a AÇÃO, não a fala: "Digo: vou quebrar a
    sua cara" tem "quebrar" dentro da boca do herói, e é ameaça — não um
-   teste de Força. Mascara com espaços (e não corta) para que as posições
-   continuem batendo com o texto original na hora de escrever o rótulo. */
+   teste de Força. Quem tira a fala é a peneira (`soODeclarado`), que
+   mascara com espaços em vez de cortar; aqui fica só a máscara, que o
+   improviso usa para procurar a ousadia fora do verbo. */
 const mascarar = (m) => " ".repeat(m.length);
-function semAFala(t) {
-  return String(t || "")
-    .replace(/["“”«»][^"“”«»]*["“”«»]/g, mascarar)
-    .replace(/\b(digo|falo|grito|respondo|pergunto|sussurro|murmuro|comento|berro|anuncio|declaro|aviso)\b\s*(:|—|-|que\b)[\s\S]*$/, (m, v) => v + mascarar(m.slice(v.length)));
-}
 
 /* ---------------- A DIFICULDADE ----------------
    O padrão é o obstáculo comum da régua (13) — um desafio que o jogador
@@ -997,8 +977,11 @@ function improvisoDe(cru, ctx) {
   if (ctx && ctx.emCombate) return null;
   const t = norm(cru);
   /* a peneira lê a AÇÃO, não a fala: 'digo "e se ele fugir?" e salto o
-     balcão' não é pergunta nem hipótese do jogador */
-  const s = semAFala(t);
+     balcão' não é pergunta nem hipótese do jogador. E lê oração a
+     oração: o que foi pergunta, hipótese ou negação vira espaço, e o
+     resto — o que o herói declarou — é o que passa adiante */
+  const s = soODeclarado(t, NAO_E_AGRESSAO);
+  if (!s.trim()) return null;
   if (peneiraDoImproviso(s)) return null;
   const mesmoTamanho = t.length === String(cru).length;
   for (const fam of FAMILIAS_DO_IMPROVISO) {

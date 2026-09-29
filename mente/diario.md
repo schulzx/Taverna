@@ -15,6 +15,55 @@ Formato:
 ```
 
 ---
+## 29/09 15:30 · v9.309 · a peneira da agressão: a ênclise abre a luta, a pergunta não · commit (o hash vai no bloco de MM6)
+
+- **por que andou, antes de MM6:** o coordenador da fase promoveu o item de "Aberto".
+  "Socá-lo", "ataco-o", "golpeio-a" são a forma normal de um brasileiro escrever que
+  bate em alguém: uma mesa à Matt em que o ataque declarado não abre a luta falha no
+  primeiro minuto da primeira briga. E o avesso — "posso atacar o guarda?" abrir uma
+  luta — pune quem pergunta, que é o que a própria `agressao.js` diz que não pode.
+- **estado inicial:** verde (MM5 no ar, `d2688b4`, `7ef0124`).
+- **bastão:** tomado às ~14:10 em nome deste ciclo para a mão `frontend`; devolvido
+  com este commit.
+- **as duas causas:** `RX_AGRESSAO` só conhecia a primeira pessoa do presente; e
+  `NAO_E_AGRESSAO` não tinha trava de pergunta, lendo o texto inteiro de uma vez. Medido,
+  a mordida era pior do que a pauta sabia: "desço a escada até o salão", "corto o pão",
+  "chuto a porta", "acerto a conta com o taverneiro", "levo um soco no queixo", "não
+  ataco o guarda" — todas davam ataque.
+- **backend:** `src/peneira.js` (novo) — **uma peneira só** para a agressão e o
+  improviso de MM4 (o `desafios.js` perdeu as cinco travas que duplicava): lê oração a
+  oração (`soODeclarado`), apaga pergunta, licença, hipótese, condição, negação, passado,
+  figura e fala; "Posso? Ataco o guarda." é ataque, "Ataco o guarda. Posso?" não.
+  `VERBOS_DE_GOLPE` (os que batem sozinhos e os que só batem com alguém do outro lado,
+  `QUEM_APANHA`), com ênclise, mesóclise, próclise e "lhe". O alvo do pronome: o último
+  citado entre os presentes; senão o único hostil; senão não abre — nunca por eliminação.
+- **frontend:** o golpe em combate (`resolverAtaqueJogador`) tinha o mesmo defeito na sua
+  própria regex; passou a pedir o veredito à peneira, sem perder nenhum verbo que já
+  atacava. Uma pergunta em combate volta a ir ao Narrador sem gastar a ação. `lerAgressao`
+  recebe as quatro últimas falas da mesa (`mensagensRef`, nenhum estado novo). Endereços
+  de `acoes-do-jogador` re-medidos um a um, com o motivo.
+- **o corpus:** 135 frases, 100% (64 abrem, 71 não). Fora dele, numa varredura de 94, fica
+  um erro que não se consertou: "sento-lhe o braço" (gíria; pôr "braço" na lista morderia
+  "dou-lhe a mão"). Nenhuma asserção antiga mudou de veredito.
+- **a prova jogada:** "Posso atacar Corwin?" → o Mestre respondeu "Não", e nenhuma luta
+  abriu. "Saco minha espada e avanço para atacá-la" → "você parte para cima de Cora — o
+  combate está aberto": a ênclise e o alvo pelo pronome (a última citada), vivos. "Saco a
+  espada e ataco-o" resolveu para o companheiro Bram, e o sistema recusou por ser do grupo.
+- **o Poupar de MM3, ainda aberto — e porquê desta vez:** houve lutas, mas nunca foi o
+  golpe do herói a derrubar: o alvo fugia antes, ou o companheiro, com iniciativa mais
+  alta, acabava o inimigo primeiro. Não se forçou com injeção. Fica para MM11, e fica um
+  achado de desenho de jogo: **o golpe final só é do jogador quando é o golpe dele** — um
+  companheiro que finaliza por conta própria rouba o momento. Vale pensar em Q2/MM11.
+- **decisões médias tomadas:**
+  - **"golpeá-lo-ia" não morde:** o condicional é hipótese, e hipótese é da peneira.
+  - **'Digo: "vou te socar"' é fala, não ato** — a ameaça tem casa na intimidação.
+  - **Duas listas de "alguém"** (`UM_SER` em desafios.js e `QUEM_APANHA`) ficam por agora,
+    para não mexer no improviso; unificar é trabalho leve para depois.
+- **para quem joga:** "acerto-lhe um soco", "ataco-o", "avanço para socá-lo" abrem a luta;
+  "posso atacar?" é respondido como pergunta, fora e dentro da luta. A sonda não se move
+  (69/157). *(Correção: no relato ao coordenador de MM4/MM5 escrevi "70"; o número
+  certo sempre foi 69 — 68 depois de MM2, 69 depois de MM4, e o diário já o dizia.)*
+
 ## 29/09 13:10 · v9.308 · MM5 · o sucesso com preço · commit `d2688b4`
 
 - **por que andou:** a etapa que lê o dado que MM4 deu a toda ação. *A Aposta*

@@ -309,10 +309,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 8100) {
-    falha(`pushMsgs saiu de src/App.jsx:8100 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 8101) {
+    falha(`pushMsgs saiu de src/App.jsx:8101 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8100, como o mapa de X3b diz");   /* O GOLPE FINAL (frontend, 29/09, MM3): 8048 -> 8100. Os hooks
+  } else ok("pushMsgs segue em src/App.jsx:8101, como o mapa de X3b diz");   /* A PENEIRA DA AGRESSÃO (frontend, MM, 29/09): 8100 -> 8101. O novo
+     import de `soODeclarado` (peneira.js) no topo do arquivo empurra tudo
+     abaixo dele +1 — o mesmo degrau que FUNIL_DO_COMBATE e
+     RECUSAS_DO_COMBATE registram no cabeçalho deles. Re-medido por esta
+     própria catraca; nada foi somado de cabeça. */
+  /* O GOLPE FINAL (frontend, 29/09, MM3): 8048 -> 8100. Os hooks
      novos do estado do cartão do golpe final (perto de 5396-8251) nascem
      ACIMA deste ponto, e tudo abaixo andou +52 junto — o mesmo degrau que
      FUNIL_DO_COMBATE e RECUSAS_DO_COMBATE registram no cabeçalho deles.

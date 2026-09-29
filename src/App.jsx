@@ -87,7 +87,8 @@ import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobran
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
-import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo } from "./agressao.js";
+import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO } from "./agressao.js";
+import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
 /* O LIVRO DE PROMESSAS (v9.199) — o razao do que foi insinuado. Conta em
@@ -12529,7 +12530,20 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     if (!comb || !(comb.inimigos || []).some((e) => !e.derrotado)) return null;
     const acaoN = acao.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     const verboAtaque = /\b(ataco|atacar|golpeio|golpear|acerto|acertar|bato|bater|corto|cortar|perfuro|estoco|disparo|atiro|atirar|flecho|soco|chuto|esfaqueio|abato|invisto|avanco|arremesso)\b/.test(acaoN);
-    if (!verboAtaque) return null;
+    /* MM (a peneira da agressao): o verbo cru só abre o golpe se a frase
+       sobreviver à peneira — senão "posso atacar o guarda?" bate no mesmo
+       "atacar" que "ataco o guarda" bate. Mesma tabela de verbos, lida
+       sobre o texto SEM pergunta/hipótese/negação/passado/figura; a
+       ênclise ("socá-lo", "ataco-o") que essa lista nunca leu vem de
+       `ehDeclaracaoDeAtaque`. Estourou, cai no verbo cru — nunca custa o
+       turno. */
+    let ataqueDeclarado = verboAtaque;
+    try {
+      const semTravas = soODeclarado(acao, NAO_E_AGRESSAO);
+      const verboDeclarado = /\b(ataco|atacar|golpeio|golpear|acerto|acertar|bato|bater|corto|cortar|perfuro|estoco|disparo|atiro|atirar|flecho|soco|chuto|esfaqueio|abato|invisto|avanco|arremesso)\b/.test(semTravas);
+      ataqueDeclarado = verboDeclarado || ehDeclaracaoDeAtaque(acao);
+    } catch (e) { calou("peneirar o golpe em combate", e); }
+    if (!ataqueDeclarado) return null;
     const vivos = comb.inimigos.filter((e) => !e.derrotado);
     const gdJ = grauDe(divindadeRef.current);
     /* v9.45: o bônus de ataque sai da MESMA regra do dano — corpo a corpo é
@@ -14075,7 +14089,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* v9.63: o MESMO leitor que o adjudicador usa. Enquanto eram dois, o
          sinal negava desafio para "peço um teste de Percepção" e o
          adjudicador o atendia — a decisão e o ato discordavam. */
-      ehAgressao: ler(() => ehDeclaracaoDeAtaque(acao)),
+      ehAgressao: ler(() => {
+        let nomes = [];
+        try { nomes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (fichaViva() || personagem).grupo || [] }).aqui.map((n) => n.nome).filter(Boolean); } catch (e) { calou("nomes do elenco para ehAgressao", e); }
+        return ehDeclaracaoDeAtaque(acao, { nomes });
+      }),
       ehDesafio: ler(() => !!veredictoDaAcao(acao)),
       ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao)),
       temMilagreArmado: !!milagreSel,
@@ -17618,7 +17636,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const declararAgressao = (acao) => {
     const p = fichaViva() || personagem;
     const elenco = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [] });
-    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current });
+    /* MM: as últimas falas da própria conversa — jogador e Mestre — para o
+       pronome sem nome ("avanço para socá-lo") achar de quem se fala.
+       `mensagensRef` já existe e já guarda isto; não é estado novo. */
+    let recentes = [];
+    try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes para o pronome da agressao", e); }
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes });
     if (!a) return false;
     if (a.tipo === "companheiro") {
       pushMsgs([

@@ -524,8 +524,11 @@ sec("4. a definição operacional de 'número que muda'");
      Jogador`/`responderGolpeFinal`) — o relógio volta ao endereço de antes
      de qualquer debug. Re-medido pelo dente 8; o comportamento guardado
      (o turno fora de combate avança MINUTOS_POR_TURNO faça o jogador o
-     que fizer) não mudou em nenhuma das três medições de hoje. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14239/.test(relogio.porque));
+     que fizer) não mudou em nenhuma das três medições de hoje.
+     A peneira da agressão (frontend, MM, 29/09): 14239 -> 14257, +18 —
+     ver o motivo completo junto do campo `porque`, em
+     testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14257/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -609,7 +612,9 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:16398 → veredictoDaAcao) */
+     adjudicador usa (src/App.jsx:17417 → veredictoDaAcao — MM, 29/09: a
+     referência já estava desatualizada antes desta etapa; corrigida por
+     busca direta no arquivo, não por soma de delta) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -725,9 +730,13 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        ver a nota do relógio de 45 min, bloco 4).
        Mesmo dia, terceira medição: 12806 -> 12804, -2 (as 4 linhas de
        debug que chegaram a existir foram removidas ao fim do diagnóstico
-       — mesma nota do bloco 4). */
+       — mesma nota do bloco 4).
+       A peneira da agressão (frontend, MM, 29/09): 12804 -> 12818, +14 —
+       o mesmo degrau que `aplicarGolpeDoJogador` leva no cabeçalho de
+       FUNIL_DO_COMBATE (a peneira em `resolverAtaqueJogador`, acima desta
+       função no arquivo). */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:12804").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:12818").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -815,8 +824,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        aqui, e ela é a mesma — a recusa por alcance não mudou de função,
        só de linha. O histórico anterior (K4, E3, R15, R17, R21, R22) fica
        resumido: cada um re-mediu por conteúdo o mesmo `pushMsgs([...
-       📏 ${ataque.motivo}])`, nunca por soma de delta. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12679" && x.familia === "alcance"));
+       📏 ${ataque.motivo}])`, nunca por soma de delta.
+       A peneira da agressão (frontend, MM, 29/09): 12679 -> 12693, +14 —
+       o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
+       FUNIL_DO_COMBATE. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12693" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -837,8 +849,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      diagnóstico). O histórico anterior (H1, K4, E4, R3/R4b/R13/R15/R17/
      R21/R22 — dezenove cobranças desta mesma catraca por deslocamento
      simples) traçava a linha dentro de `aplicarGolpeDoJogador`; sai daqui
-     porque essa linha já não mora lá. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12820/.test(S.ondeSai));
+     porque essa linha já não mora lá.
+     A peneira da agressão (frontend, MM, 29/09): 12820 -> 12834, +14 — o
+     mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
+     FUNIL_DO_COMBATE. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12834/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

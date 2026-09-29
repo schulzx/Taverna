@@ -1000,7 +1000,8 @@ se apaga nada: o beta é um corte de foco, não um descarte.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
-- [ ] **"posso atacar o guarda?" abre uma luta** · leve · de: sistema/MM4 · 29/09
+- [x] **"posso atacar o guarda?" abre uma luta** · feito 29/09, v9.309 (promovido pelo
+  coordenador da fase: a ênclise é a forma normal de bater em português) · de: sistema/MM4 · 29/09
   *E o avesso, visto a jogar em MM5:* "avanço para socá-lo" **não** abriu luta — o soco
   virou acidente de cena (barris, queda, salvaguarda). A `RX_AGRESSAO` tem `soco` e não
   a ênclise (`socá-lo`, `esmurrá-lo`, `chutá-lo`). Os dois lados da mesma peneira.
