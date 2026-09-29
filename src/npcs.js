@@ -214,8 +214,34 @@ export function comLaco(npcs, { tipo = null, rompido = null } = {}) {
    a API "completa", e a catraca vai aparando o que ninguém pediu. É
    exatamente o trabalho dela. */
 
-export function criarNPC(nome, dados = {}) {
+/* ---------------- O DIA DO ENCONTRO (v9.314) ----------------
+   `conhecidoEm` é o dia em que o herói cruzou com esta pessoa, e é a régua
+   de três coisas: o convite para o grupo (quantos dias de estrada juntos),
+   o propósito secreto que amadurece com o convívio, e a etapa de missão
+   "encontrar Fulano". O App mandava o dia a cada `criarNPC(..., {
+   conhecidoEm: diaRef.current })` — oito lugares — e esta função o
+   JOGAVA FORA, porque monta a ficha campo a campo e ele não era campo.
+
+   O efeito, medido numa prova jogada: "mais 5 dias de estrada" para aceitar
+   alguém no grupo, e depois de 8 dias pelo painel do tempo, ainda "mais 5".
+   Sem data, o convívio era sempre ZERO dias; só depois de recarregar o save
+   a blindagem do load dava "dia 0" a todo mundo — e aí o convívio saltava
+   para a campanha inteira. Os dois lados eram mentira.
+
+   Só entra número de verdade (inteiro, não negativo). Lixo fica de fora e
+   a ficha continua sem a chave — é o `== null` que o load e a missão já
+   sabem ler como "sem data", e inventar um dia seria pior que não ter. */
+function diaDoEncontro(v) {
+  if (v === null || v === undefined || v === "" || typeof v === "boolean") return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
+}
+
+export function criarNPC(nome, dados0 = {}) {
+  const dados = dados0 && typeof dados0 === "object" ? dados0 : {};
+  const encontro = diaDoEncontro(dados.conhecidoEm);
   return {
+    ...(encontro != null ? { conhecidoEm: encontro } : {}),
     nome,
     papel: dados.papel || "",            // mago, ferreiro, capitão da guarda…
     relacao: (dados.relacao || "desconhecido").toLowerCase(),
@@ -324,8 +350,17 @@ export function mesmoPapel(a, b) {
    Quem chama recebe o conflito em `_papelConflito` e decide o que fazer;
    ignorar isso preserva o comportamento seguro, que é manter o que já
    estava lá. */
-export function mesclarNPC(ficha, dados = {}) {
+export function mesclarNPC(ficha, dados0 = {}) {
+  const dados = dados0 && typeof dados0 === "object" ? dados0 : {};
   const out = { ...ficha };
+  /* O DIA DO ENCONTRO NÃO SE REESCREVE (v9.314): quem já tem data fica com
+     a dela — reencontrar alguém não é conhecê-lo de novo, e repor o dia a
+     cada cena zeraria o convívio para sempre. Quem não tem (ficha de antes
+     desta versão, ou vinda por outro caminho) ganha a que veio agora. */
+  if (diaDoEncontro(out.conhecidoEm) == null) {
+    const encontro = diaDoEncontro(dados.conhecidoEm);
+    if (encontro != null) out.conhecidoEm = encontro;
+  }
   let conflito = null;
   for (const k of ["papel", "relacao", "genero", "local", "status", "segredo", "notas"]) {
     if (dados[k] === undefined || dados[k] === null || String(dados[k]).trim() === "") continue;

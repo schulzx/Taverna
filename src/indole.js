@@ -621,12 +621,29 @@ export const VONTADE_DE_IR = {
 export const CONVITE_ACEITA = 55;
 export const CONVITE_TALVEZ = 35;
 
-export function pesarConvite(indole, { convivio = {}, fama = 0, grupoCheio = false } = {}) {
+/* O TEMPO NO CONVITE: cada dia de estrada pesa `porDia`, e só os primeiros
+   `teto` dias contam — depois disso ela já sabe quem você é, e mais tempo
+   não muda o que sabe. Não é export (a mesma escolha de
+   DIAS_ATE_QUALQUER_PLANO): quem lê é esta balança, e a prova a lê na fonte. */
+const TEMPO_NO_CONVITE = { teto: 20, porDia: 1.5 };
+
+export function pesarConvite(indole, opcoes) {
+  const { convivio = {}, fama = 0, grupoCheio = false } = opcoes || {};
   const i = garantirIndole(indole);
   const c = garantirConvivio(convivio);
-  const porques = [];
   if (grupoCheio) return { resposta: "recusa", porques: ["não há lugar no seu grupo"], exigencia: null };
+  const { peso, porques } = pesoDoConvite(i, c, fama);
+  if (peso >= CONVITE_ACEITA) return { resposta: "aceita", porques, exigencia: null };
+  if (peso >= CONVITE_TALVEZ) return { resposta: "exige", porques, exigencia: exigenciaDoConvite(i, c, fama) };
+  return { resposta: "recusa", porques, exigencia: null };
+}
 
+/* A balança em si, separada do veredito porque a EXIGÊNCIA precisa pesar
+   de novo — "quantos dias faltam" é a mesma conta com outro número de dias,
+   e duas cópias da conta seriam a segunda ficando para trás. */
+function pesoDoConvite(i, c, fama0) {
+  const fama = Number(fama0) || 0;
+  const porques = [];
   let peso = 30;
   for (const t of i.tracos || []) {
     const v = VONTADE_DE_IR[t];
@@ -638,8 +655,8 @@ export function pesarConvite(indole, { convivio = {}, fama = 0, grupoCheio = fal
 
   /* O TEMPO PESA MAIS QUE QUALQUER TRAÇO. Ninguém larga a vida para andar
      com quem conheceu ontem, por mais simpático que seja. */
-  const dias = Math.min(20, c.dias);
-  peso += dias * 1.5;
+  const dias = Math.min(TEMPO_NO_CONVITE.teto, c.dias);
+  peso += dias * TEMPO_NO_CONVITE.porDia;
   if (c.dias <= 1) porques.push("vocês se conheceram ontem");
   else if (c.dias >= 10) porques.push(`vocês se conhecem há ${c.dias} dias`);
 
@@ -656,20 +673,41 @@ export function pesarConvite(indole, { convivio = {}, fama = 0, grupoCheio = fal
      ACEITANDO — e não seria justo o sistema ignorar isso. */
   if (i.proposito === "seguir") { peso += 25; porques.push("ela já queria ir"); }
 
-  if (peso >= CONVITE_ACEITA) return { resposta: "aceita", porques, exigencia: null };
-  if (peso >= CONVITE_TALVEZ) return { resposta: "exige", porques, exigencia: exigenciaDoConvite(i, c) };
-  return { resposta: "recusa", porques, exigencia: null };
+  return { peso, porques };
 }
 
-/* A condição tem de ser CONFERÍVEL, como toda condição desta casa. São
-   duas, e o sistema sabe olhar as duas. */
-export function exigenciaDoConvite(indole, convivio) {
+/* A condição tem de ser CONFERÍVEL, como toda condição desta casa.
+
+   v9.314 — A PROMESSA DE DIAS MENTIA. Era `max(1, 5 − dias)`: um número
+   que não olhava a balança. Quem estava a 14 dias do "sim" pedia 5; no
+   quinto dia pedia "mais 1"; no sexto, "mais 1" outra vez — e assim até o
+   décimo quarto, ou para sempre, se nem o teto de dias a levasse lá.
+   Varridas 1500 pessoas (50 mundos × 30) com 0 a 30 dias de convívio e
+   fama 0 ou 30: de 37.831 promessas de dias, só 1.975 (5,2%) aceitavam no
+   dia prometido, e 18.022 vinham de quem NUNCA aceitaria só com tempo.
+
+   Agora os dias saem da própria balança: é o menor número de dias a mais
+   em que ela diria sim, com o que já se tem hoje (laço, dívidas, fama). E
+   quem nem o teto de dias leva lá não promete estrada: diz o que falta de
+   verdade, que é um laço — e, para quem ainda não tem laço nenhum, um de
+   força 3 fecha qualquer "talvez", porque vale 21 e a distância do talvez
+   ao sim é 20. Quem já tem o laço inteiro e ainda hesita não pode ouvir
+   "um laço" (já o tem): ouve que falta um favor — é a dívida dela e a
+   ajuda que você deu, as duas alavancas que sobram na balança. */
+export function exigenciaDoConvite(indole, convivio, fama = 0) {
   const i = garantirIndole(indole);
   if ((i.tracos || []).includes("ganancioso")) {
     return { tipo: "paga", moedas: 120, o: "◉ 120 adiantados — ela não anda de graça" };
   }
-  const faltam = Math.max(1, 5 - (garantirConvivio(convivio).dias || 0));
-  return { tipo: "convivio", dias: faltam, o: `mais ${faltam} dia${faltam === 1 ? "" : "s"} de estrada juntos antes de decidir` };
+  const c = garantirConvivio(convivio);
+  for (let mais = 1; c.dias + mais <= TEMPO_NO_CONVITE.teto; mais++) {
+    if (pesoDoConvite(i, { ...c, dias: c.dias + mais }, fama).peso >= CONVITE_ACEITA) {
+      return { tipo: "convivio", dias: mais, o: `mais ${mais} dia${mais === 1 ? "" : "s"} de estrada juntos antes de decidir` };
+    }
+  }
+  return c.forcaDoLaco >= 3
+    ? { tipo: "laco", dias: null, o: "que você faça por ela o que ninguém fez antes de decidir — só estrada não basta" }
+    : { tipo: "laco", dias: null, o: "um laço de verdade com você antes de decidir — só estrada não basta" };
 }
 
 export function envelopeDoConvite(nome, veredito) {

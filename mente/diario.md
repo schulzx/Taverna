@@ -15,7 +15,44 @@ Formato:
 ```
 
 ---
-## 29/09 19:12 · v9.314 · nenhuma luta trava atrás de uma parede (e o "assombrado") · commit (o hash vai no próximo bloco)
+## 29/09 19:43 · v9.315 · o convite para o grupo anda: era o caso geral · commit (o hash vai no próximo bloco)
+
+- **por que andou:** promovido pelo coordenador da fase — *se nunca abrir, nenhum
+  companheiro novo entra no grupo*. A primeira pergunta era se é o caso geral ou de canto.
+- **a resposta: geral.** O convite **nunca andava para ninguém conhecido na sessão, em
+  nenhuma campanha**. O App manda o dia do encontro em oito sítios, mas `criarNPC`
+  (`npcs.js`) montava a ficha campo a campo e **descartava o `conhecidoEm`**, e
+  `mesclarNPC` também não o copiava: `dias = hoje − hoje = 0` para sempre. O "mais 5 dias"
+  da prova jogada era `max(1, 5 − 0)`. Ao recarregar, a blindagem do load dava 0 a todos e o
+  convívio saltava para a campanha inteira. No mesmo defeito: a etapa de missão
+  "falar com" não fechava na sessão, e os propósitos secretos nunca amadureciam.
+  (A mão anterior tinha dito que o `conhecidoEm` "nunca era escrito"; era escrito e deitado
+  fora. Certo o sintoma, errado o sítio.)
+- **o segundo defeito, também geral — a promessa mentia:** "mais 5", depois "mais 1", "mais
+  1"… Numa varredura de 1500 pessoas, **só 5,2% das promessas de dias viravam "sim" no dia
+  prometido**, e metade vinha de quem nunca aceitaria só com tempo. Agora a promessa é o
+  número exato de dias que leva ao "sim" (100% cumprem-se), e quem nem com o teto de dias
+  aceitaria recebe a condição nova **"um laço de verdade com você — só estrada não basta"**.
+  Comparado com HEAD em 1 116 000 casos: nenhuma resposta nem "porquê" diferente; só o texto.
+- **o terceiro, no App — o laço nunca contava:** `convivioCom` lia `n.forcaDoLaco`, um campo
+  que a ficha nunca tem; o laço valia 0 no convite para sempre. Passou a `garantirLaco`, como
+  o resto do App. `primeiraVez` tratava o dia 0 como "nunca vi" (quem veio de save antigo
+  era estranho para sempre). E a recusa de pagar distingue tempo de laço.
+- **os números (1500 pessoas, sem laço, fama 0):** aceitam 1,7% no dia 0, 3,3% ao 5.º, 10,7%
+  ao 10.º, 54,3% ao 20.º; com laço 2 e fama 30, 48,5% ao 5.º. 5% nunca aceitam só com tempo
+  (72 de 75 são medrosos) — é desenho, não se mexeu.
+- **a prova jogada:** Gareth, conhecido no dia 1: no dia 6 pedia "mais 9 dias", no dia 7
+  "mais 8" — **desce um por dia**, o contrário do defeito. O convite mostrou "quer mais 8 dias
+  de estrada" e o Narrador disse "me dá mais oito dias de estrada juntos". O "sim" não foi
+  jogado (mais oito dias de chamadas pagas); a suíte prova que toda promessa se cumpre.
+- **decisões médias tomadas:**
+  - **A condição `laco` nova** em vez de deixar a promessa mentir — a soleira já a mostra
+    (lê o texto da exigência); o botão de pagar continua só para o que se paga.
+  - **O "desenho" ficou:** os medrosos que só com tempo não vêm, e o teto de 20 dias.
+- **para quem joga:** o grupo passa a poder crescer. Quem convida alguém ouve quantos dias
+  faltam, e o número desce a cada dia até ao sim — ou ouve que é preciso um laço.
+
+## 29/09 19:12 · v9.314 · nenhuma luta trava atrás de uma parede (e o "assombrado") · commit `cc126b9`
 
 - **por que andou:** promovido pelo coordenador da fase, com o critério *numa sessão à
   Matt, o que parte a sessão vem antes do que a enriquece*: uma luta que não pode acabar é

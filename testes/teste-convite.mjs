@@ -120,9 +120,21 @@ sec("6. A CONDIÇÃO É CONFERÍVEL");
     const ind = I.indoleDe("x", { nome: `R${i}`, relevancia: "arco" });
     const v = I.pesarConvite(ind, { convivio: { dias: 3 }, fama: 20 });
     if (v.resposta === "exige") tipos.add(v.exigencia.tipo);
+    /* v9.314: o `laco` só aparece depois do sétimo dia — antes disso todo
+       "talvez" ainda chega ao "sim" pelo tempo (1,5 por dia até o teto de
+       20 cobre os 20 pontos entre o talvez e o sim) */
+    const v2 = I.pesarConvite(ind, { convivio: { dias: 12 }, fama: 20 });
+    if (v2.resposta === "exige") tipos.add(v2.exigencia.tipo);
   }
-  t("as condições são duas e conhecidas", [...tipos].every((x) => ["paga", "convivio"].includes(x)));
-  t("e as duas aparecem", tipos.size === 2);
+  /* MOVIDA na v9.314: eram duas condições, `paga` e `convivio`. A de
+     convívio prometia `max(1, 5 − dias)` sem olhar a balança, e só 5,2%
+     das promessas se cumpriam no dia prometido (seção 9). Quem nem o teto
+     de dias leva ao "sim" passou a dizer o que falta de verdade — um laço —,
+     e essa é a terceira. A intenção da asserção sobrevive: toda condição é
+     de um tipo conhecido, e o App sabe o que fazer com cada um (a soleira
+     só oferece `paga`; `bancarOConvite` recusa o resto em voz alta). */
+  t("as condições são três e conhecidas", [...tipos].every((x) => ["paga", "convivio", "laco"].includes(x)));
+  t("e as três aparecem", tipos.size === 3);
   /* o App confere as duas — e diz que tempo não se compra */
   t("o App cobra a moeda", /ex\.tipo === "paga"/.test(APP));
   /* a moeda sai da MESMA ficha que segue para o turno: descontar por um
@@ -174,6 +186,157 @@ sec("8. O ENVELOPE É FATO, E O PAINEL AVISA ANTES");
   t("o painel mostra o veredito", /vereditoConvite \? vereditoConvite\(n\.nome\) : null/.test(APP));
   t("com o porquê no título", /v\.porques\.join\("; "\)/.test(APP));
   t("e a condição na tela", /v\.exigencia\.o/.test(APP));
+}
+
+/* ============================================================
+   v9.314 — "O CONVITE NÃO ANDOU EM 8 DIAS"
+
+   Na prova jogada de MM3b: "mais 5 dias de estrada" para aceitar alguém
+   no grupo, e depois de 8 dias pelo painel do tempo, ainda "mais 5". Eram
+   dois defeitos em fila, os dois gerais — nenhum de canto:
+
+   1. `criarNPC` montava a ficha campo a campo e JOGAVA FORA o
+      `conhecidoEm` que o App lhe mandava em oito lugares. Sem data, o
+      convívio de toda pessoa conhecida na sessão era ZERO dias para
+      sempre (e "mais 5" é exatamente `max(1, 5 − 0)`). Só um recarregar
+      do save dava "dia 0" a todo mundo, e aí o convívio saltava para a
+      campanha inteira.
+   2. Mesmo com a data, a promessa de dias não olhava a balança: 5,2% se
+      cumpriam no dia prometido.
+   ============================================================ */
+const N = await import(S + "npcs.js");
+const M = await import(S + "missoes.js");
+const FONTE_I = readFileSync("../src/indole.js", "utf8");
+
+/* 50 mundos × 30 pessoas, com a semente no formato do App
+   (`nome da campanha|gênero`) — a mesma gente em toda corrida */
+const GENTE = [];
+for (let m = 0; m < 50; m++) for (let p = 0; p < 30; p++) {
+  const semente = `Campanha ${m}|Fantasia medieval`;
+  GENTE.push(I.indoleDe(semente, { nome: `Pessoa ${m}-${p}` }));
+}
+
+sec("9. A PROMESSA DE DIAS SE CUMPRE, NO DIA PROMETIDO");
+{
+  let promessas = 0, cumpridas = 0, exatas = 0, lacos = 0, lacoSemLacoFalha = 0;
+  for (const ind of GENTE) for (const fama of [0, 30, 70]) for (const forcaDoLaco of [0, 2, 3]) for (let dias = 0; dias <= 25; dias++) {
+    const conv = { dias, forcaDoLaco };
+    const v = I.pesarConvite(ind, { convivio: conv, fama });
+    if (v.resposta !== "exige") continue;
+    if (v.exigencia.tipo === "convivio") {
+      promessas++;
+      const n = v.exigencia.dias;
+      if (I.pesarConvite(ind, { convivio: { ...conv, dias: dias + n }, fama }).resposta === "aceita") cumpridas++;
+      /* e não é folgada: um dia antes ainda não era sim */
+      if (n === 1 || I.pesarConvite(ind, { convivio: { ...conv, dias: dias + n - 1 }, fama }).resposta !== "aceita") exatas++;
+    } else if (v.exigencia.tipo === "laco") {
+      lacos++;
+      if (forcaDoLaco === 0 && I.pesarConvite(ind, { convivio: { ...conv, dias: 20, forcaDoLaco: 3 }, fama }).resposta !== "aceita") lacoSemLacoFalha++;
+    }
+  }
+  /* ANTES: 1.975 de 37.831 (5,2%), porque era `max(1, 5 − dias)` */
+  t(`toda promessa de dias vira sim no dia prometido (${cumpridas}/${promessas})`, promessas > 1000 && cumpridas === promessas);
+  t(`e nenhuma é folgada (${exatas}/${promessas})`, exatas === promessas);
+  t("quem o tempo não leva lá não promete estrada", lacos > 0);
+  t(`e, sem laço, um laço inteiro leva (${lacoSemLacoFalha} falhas)`, lacoSemLacoFalha === 0);
+  /* o caso da prova jogada: "mais 5" com 0 dias e "mais 5" com 8 dias não
+     pode mais ser a mesma frase para a mesma pessoa */
+  let mesmaFrase = 0;
+  for (const ind of GENTE) {
+    const a = I.pesarConvite(ind, { convivio: { dias: 0 }, fama: 0 });
+    const b = I.pesarConvite(ind, { convivio: { dias: 8 }, fama: 0 });
+    if (a.resposta === "exige" && b.resposta === "exige" && a.exigencia.tipo === "convivio" && b.exigencia.tipo === "convivio" && a.exigencia.o === b.exigencia.o) mesmaFrase++;
+  }
+  t("8 dias de estrada mudam o que ela pede", mesmaFrase === 0);
+  /* o teto e o passo moram numa tabela, e a promessa lê a mesma tabela */
+  t("o tempo do convite é tabela", /const TEMPO_NO_CONVITE = \{ teto: 20, porDia: 1\.5 \}/.test(FONTE_I));
+  t("e não há mais o 5 solto", !/5 - \(garantirConvivio/.test(FONTE_I));
+  t("lixo não quebra a balança", [null, undefined, {}, 0].every((x) => I.pesarConvite(x, x).resposta === "recusa"));
+}
+
+sec("10. A VARREDURA — quantos aceitam, com quantos dias (1500 pessoas)");
+{
+  /* CATRACA DE NÚMERO. Estes são os números da balança na v9.314, sem
+     mudança nenhuma de resposta em relação à v9.313 (1.116.000 casos
+     comparados, 0 diferenças). Se alguém rebalancear VONTADE_DE_IR, o
+     tempo ou a fama, esta seção quebra — e deve: é para o motivo ir
+     escrito no commit, não passar calado. */
+  const conta = (dias, extra, fama) => GENTE.filter((ind) => I.pesarConvite(ind, { convivio: { dias, ...extra }, fama }).resposta === "aceita").length;
+  const sem = (d) => conta(d, {}, 0);
+  t(`sem laço e sem nome, 0 dias: ${sem(0)} aceitam (1,7%)`, sem(0) === 26);
+  t(`5 dias: ${sem(5)} (3,3%)`, sem(5) === 50);
+  t(`10 dias: ${sem(10)} (10,7%)`, sem(10) === 161);
+  t(`20 dias: ${sem(20)} (54,3%) — o teto`, sem(20) === 815);
+  t("e depois do teto o tempo não pesa mais", sem(30) === 815 && sem(90) === 815);
+  t(`fama 30, 20 dias: ${conta(20, {}, 30)} (69,4%)`, conta(20, {}, 30) === 1041);
+  t(`laço 2 e fama 30, 10 dias: ${conta(10, { forcaDoLaco: 2 }, 30)} (69,4%)`, conta(10, { forcaDoLaco: 2 }, 30) === 1041);
+  const nunca = GENTE.filter((ind) => I.pesarConvite(ind, { convivio: { dias: 999 }, fama: 0 }).resposta === "recusa");
+  t(`só com tempo, ${nunca.length} nunca aceitam (5%) — e são os medrosos`, nunca.length === 75 && nunca.filter((i) => i.tracos.includes("medroso")).length === 72);
+  /* e a porta nunca é fechada para sempre: com laço e fama, todos */
+  t("com laço inteiro, dívida e lenda, todos", conta(20, { forcaDoLaco: 3, meDeve: true }, 60) === 1500);
+}
+
+sec("11. O DIA DO ENCONTRO FICA NA FICHA");
+{
+  /* o defeito de raiz: o App mandava o dia e a ficha o perdia */
+  t("criarNPC guarda o dia", N.criarNPC("Vero", { conhecidoEm: 3 }).conhecidoEm === 3);
+  t("e o dia 0 também (antes do registro)", N.criarNPC("Vero", { conhecidoEm: 0 }).conhecidoEm === 0);
+  t("sem dia, a ficha fica sem a chave", !("conhecidoEm" in N.criarNPC("Vero", {})));
+  t("lixo não vira dia", [null, "", "x", -3, NaN, true].every((v) => !("conhecidoEm" in N.criarNPC("Vero", { conhecidoEm: v }))));
+  t("dados null não quebra", N.criarNPC("Vero", null).nome === "Vero");
+  /* reencontrar não é conhecer de novo */
+  const f = N.criarNPC("Vero", { conhecidoEm: 2 });
+  t("a mescla não reescreve o dia", N.mesclarNPC(f, { conhecidoEm: 9, local: "o porto" }).conhecidoEm === 2);
+  t("e dá o dia a quem não tinha", N.mesclarNPC(N.criarNPC("Ume"), { conhecidoEm: 5 }).conhecidoEm === 5);
+  t("a mescla não muta a ficha", f.conhecidoEm === 2 && !("local" in f && f.local === "o porto"));
+  t("mescla com null não quebra", N.mesclarNPC(f, null).conhecidoEm === 2);
+
+  /* O CAMINHO DO APP, em Node: registrar no dia 2 (como a linha que lê
+     `resp.mudancas.npcs`), reencontrar no dia 6, e pesar no dia 10 com a
+     conta de `convivioCom` — `diaRef − conhecidoEm`. */
+  let reg = {};
+  reg.Vero = N.criarNPC("Vero", { papel: "batedora", ultimaVez: 1, conhecidoEm: 2 });
+  reg = { ...reg, Vero: N.mesclarNPC(reg.Vero, { nome: "Vero", local: "a ponte", ultimaVez: 4, conhecidoEm: reg.Vero.conhecidoEm != null ? reg.Vero.conhecidoEm : 6 }) };
+  const diaHoje = 10;
+  const dias = Math.max(0, diaHoje - (reg.Vero.conhecidoEm != null ? reg.Vero.conhecidoEm : diaHoje));
+  t(`no dia 10, quem foi conhecida no dia 2 tem 8 dias de convívio (${dias})`, dias === 8);
+  /* e a missão "encontrar Fulano" fecha na mesma sessão, sem recarregar */
+  t("e a etapa 'encontrar' fecha sem recarregar", M.etapaDef("falar_com").ver({ alvo: "Vero" }, { npcs: reg }));
+}
+
+/* ============================================================
+   v9.315 — "O CONVITE NUNCA ANDAVA PARA NINGUÉM CONHECIDO"
+
+   `npcs.js` e `indole.js` já provam o motor (seções 9-11 acima); esta
+   seção prova a FIAÇÃO — que o App de fato lê o que o motor agora entrega,
+   e não voltou a reinventar o número por cima. Corpo por âncora, como o
+   resto do arquivo; \r\n normalizado porque o corpo é fatiado por
+   `indexOf`/`slice`, e um CRLF solto no meio de um recorte não muda o que
+   ele CONTÉM, mas os testes daqui comparam o texto inteiro — mais seguro
+   não depender de qual fim de linha o checkout desta máquina usou. */
+const APPn = APP.replace(/\r\n/g, "\n");
+
+sec("12. A FIAÇÃO LÊ O QUE O MOTOR ENTREGA");
+{
+  /* convivioCom: o laço de verdade, não um campo que a ficha nunca teve */
+  const CV = APPn.slice(APPn.indexOf("const convivioCom = (nome)"), APPn.indexOf("const vereditoDoConvite"));
+  t("convivioCom existe", CV.length > 100);
+  t("lê o laço por garantirLaco, como pessoasDaCena", /const l = garantirLaco\(n\.laco\)/.test(CV));
+  t("a força vem do laço vivo, não de um campo solto", /forcaDoLaco: \(l && !l\.rompido && l\.forca\) \|\| 0/.test(CV));
+  t("e não sobrou o campo que a ficha nunca teve", !/Number\(n\.forcaDoLaco\)/.test(CV));
+  t("a linha morta que não lia nada saiu", !/\(elencoMemRef\.current \|\| \[\]\)\.find \? null : null/.test(CV));
+  t("euDevo se deriva das notas ou de uma dívida de verdade", /euDevo: \/d\[íi\]vida\|devo\|prometi\/i\.test\(String\(n\.notas \|\| ""\)\) \|\| \(l && l\.tipo === "divida"\)/.test(CV));
+
+  /* primeiraVez: dia 0 é um dia conhecido, não "nunca vi essa pessoa" */
+  t("primeiraVez usa == null, não a falsidade de 0", /primeiraVez: n\.conhecidoEm == null && !noGrupo/.test(APPn));
+  t("e não sobrou a leitura que tratava o dia 0 como estranho", !/primeiraVez: !n\.conhecidoEm && !noGrupo/.test(APPn));
+
+  /* bancarOConvite: o laço não é tempo, e a fala não pode confundir os dois */
+  const BC = APPn.slice(APPn.indexOf("const bancarOConvite = (nome)"), APPn.indexOf("const usarConsumivelUI"));
+  t("bancarOConvite existe", BC.length > 100);
+  t("distingue convívio (tempo) do resto", /ex\.tipo === "convivio"/.test(BC));
+  t("tempo continua recusado como tempo", /isso é tempo, e tempo não se compra/.test(BC));
+  t("e o laço tem fala própria, não a de tempo", /isso não se compra, se conquista/.test(BC));
 }
 
 console.log(`\nconvite v9.143: ${bons} passaram, ${maus} falharam`);

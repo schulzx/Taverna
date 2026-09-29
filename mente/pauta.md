@@ -1028,7 +1028,7 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   "escondo-me" — o mesmo defeito que a peneira da agressão teve, agora no catálogo. Varrer
   os `rx` do catálogo pela ênclise dos verbos que têm pronome (esconder-se, esgueirar-se,
   agachar-se, atirar-se…), com corpus.
-- [ ] **o convite para o grupo não andou em 8 dias** · médio · de: sistema/MM3b · 29/09
+- [x] **o convite para o grupo não andou em 8 dias** · feito 29/09, v9.315 — **era o caso geral** · de: sistema/MM3b · 29/09
   Na prova jogada, o pedido "mais 5 dias de estrada" para aceitar alguém no grupo não se
   moveu depois de 8 dias avançados pelo painel do tempo. **Não é** o `conhecidoEm` nunca
   escrito (a mão só o procurou em `src/*.js`; o App escreve-o em ~9713, ~9722, ~9990):

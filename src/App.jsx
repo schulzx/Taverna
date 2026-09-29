@@ -7295,7 +7295,7 @@ export default function Taverna() {
           euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || "")) || (l && l.tipo === "divida"),
           sabeDeMim: confid.some((c) => (c.ouvintes || []).includes(nome)),
           euSeiDela: !!n.segredo,
-          primeiraVez: !n.conhecidoEm && !noGrupo,
+          primeiraVez: n.conhecidoEm == null && !noGrupo, /* v9.315: dia 0 é conhecido, não "nunca vi" (!n.conhecidoEm tratava os dois igual) */
           ato: atoDoTurnoRef.current,
           quantosEscutam: Math.max(0, quantos - 1),
           aSos: quantos <= 1,
@@ -21316,16 +21316,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      A ficha já era do sistema desde a v9.116 — só o SIM ficou com a IA, e
      ficou justamente onde havia mais material para decidir por código:
      desde a v9.136 esta pessoa tem traços, medo e, às vezes, um plano. */
-  const convivioCom = (nome) => {
+  const convivioCom = (nome) => { try {
     const n = (npcsRef.current || {})[nome] || Object.values(npcsRef.current || {}).find((x) => x && (x.nome || "").toLowerCase() === String(nome).toLowerCase()) || {};
-    const l = (elencoMemRef.current || []).find ? null : null;
+    const l = garantirLaco(n.laco); /* v9.315: o laço de verdade, como pessoasDaCena (~7293) — a ficha nunca teve forcaDoLaco/euDevo soltos */
     return {
       dias: Math.max(0, diaRef.current - (n.conhecidoEm != null ? n.conhecidoEm : diaRef.current)),
-      forcaDoLaco: Number(n.forcaDoLaco) || 0,
-      meDeve: !!n.meDeve, euDevo: !!n.euDevo,
+      forcaDoLaco: (l && !l.rompido && l.forca) || 0,
+      meDeve: !!n.meDeve, euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || "")) || (l && l.tipo === "divida"),
       sabeDeMim: !!n.sabeDeMim, euSeiDela: !!n.euSeiDela, euGanhei: !!n.euGanhei,
     };
-  };
+  } catch (e) { return calou("convivioCom", e); } };
 
   const vereditoDoConvite = (nome) => pesarConvite(indoleDe(sementeMundo(), { nome }), {
     convivio: convivioCom(nome), fama: famaAtual(),
@@ -21391,8 +21391,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     enviar(envelopeDoConvite(nome, v), personagem);
   };
 
-  /* PAGAR O QUE ELA PEDIU. Duas condições, e o sistema confere as duas:
-     moeda adiantada, ou mais dias de estrada. */
+  /* PAGAR O QUE ELA PEDIU. Três condições, e só uma se banca no clique: moeda
+     adiantada — as outras duas (tempo, ou um laço) o sistema recusa em voz alta. */
   const bancarOConvite = (nome) => {
     const v = vereditoDoConvite(nome);
     if (v.resposta !== "exige") { convidarNpc(nome); return; }
@@ -21400,7 +21400,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (ex.tipo === "paga") {
       if ((personagem.moedas || 0) < ex.moedas) { pushMsgs([{ autor: "sistema", texto: `⛔ ela quer ◉ ${ex.moedas} e você tem ◉ ${personagem.moedas || 0}.` }]); return; }
     } else {
-      pushMsgs([{ autor: "sistema", texto: `⛔ ${nome} quer ${ex.o} — isso é tempo, e tempo não se compra.` }]); return;
+      pushMsgs([{ autor: "sistema", texto: `⛔ ${nome} quer ${ex.o} — ${ex.tipo === "convivio" ? "isso é tempo, e tempo não se compra" : "isso não se compra, se conquista"}.` }]); return;
     }
     const r = porNoGrupo(nome);
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
