@@ -153,7 +153,13 @@ export function detectarPedidoDeTeste(texto) {
 /* ---------------- OS ENVELOPES ----------------
    O ponto inteiro do pedido: no fracasso o Mestre não pode ser generoso.
    "Se eu não passar no teste o mestre não inventa nada" — é regra, não estilo. */
-export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino }) {
+/* MM4: `gesto` — o teste de uma AÇÃO improvisada (Força, Destreza, Vigor,
+   Presença; `desafios.js` marca no veredito). Ali passar não é saber uma
+   coisa: é o gesto acontecendo. Sem a marca, o envelope mandava "revele
+   UMA coisa concreta e útil sobre saltar do balcão", que é uma ordem para
+   o Narrador inventar um achado em cima de um salto. Sem `gesto`, o texto
+   é o de sempre, letra por letra. */
+export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino, gesto = false }) {
   const t = tipoTestePorId(tipo);
   const per = pericia ? periciaPorId(pericia) : null;
   const attr = nomeDoAtributo(t.atributo);
@@ -169,6 +175,14 @@ export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, 
     ? `[TESTE PEDIDO POR MIM — RESOLVIDO PELO SISTEMA SEM DADO] Pedi um teste de ${rotulo}${motivo ? ` para ${motivo}` : ""}. O sistema fixou a dificuldade em ${dc} e NÃO rolou: meu bônus é ${mod}, alto demais para que o acaso importe.${selo} Resultado: ${resultado.toUpperCase()} AUTOMÁTICO — isto está ${resultado === "sucesso" ? "abaixo do meu patamar" : "muito acima do meu patamar"}.`
     : `[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA] Pedi um teste de ${rotulo}${motivo ? ` para ${motivo}` : ""}.${selo} O sistema fixou a dificuldade em ${dc} e rolou: d20 ${valor}${mod ? ` ${mod >= 0 ? "+" : "−"} ${Math.abs(mod)}` : ""} = ${total}. Resultado: ${resultado.toUpperCase()}.`;
   const passou = resultado === "sucesso" || critico;
+  if (gesto && !passou) {
+    return `${cabeca}
+REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. O que eu declarei NÃO acontece como declarei — narre em duas ou três frases a tentativa falhando no corpo e no lugar, sem me dar metade do efeito nem uma saída de consolo${desastre ? ", e, como foi falha crítica, com um pequeno custo a mais: perdi tempo, chamei atenção ou fiquei em pior posição" : ""}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;
+  }
+  if (gesto) {
+    return `${cabeca}
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. O que eu declarei ACONTECE, do jeito que declarei${motivo ? ` (${motivo})` : ""} — narre o gesto dando certo, com o corpo e o lugar, em até três frases. ${critico ? "Foi crítico: o gesto sai mais bonito ou mais limpo do que eu esperava — mas o efeito é o que eu declarei, não maior." : "O efeito é o que eu declarei, nem mais nem menos."} NÃO acrescente achado, item, aliado ou informação que eu não busquei. Devolva a palavra para mim, sem iniciar cena nova e sem fazer o tempo passar.`;
+  }
   if (!passou) {
     return `${cabeca}
 REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. Você NÃO revela nada, NÃO entrega meia-informação, NÃO oferece uma pista "de consolo" e NÃO deixa a resposta escapar numa descrição. Narre em duas ou três frases apenas o meu esforço e o silêncio dele — ${desastre ? "e, como foi falha crítica, acrescente um pequeno custo: perdi tempo, chamei atenção ou tirei a conclusão errada" : "sem custo extra, só a ausência de resultado"}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;

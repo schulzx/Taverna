@@ -15,6 +15,52 @@ Formato:
 ```
 
 ---
+## 29/09 12:00 · v9.307 · MM4 · toda ação ganha um dado · commit (o hash vai no bloco de MM5)
+
+- **por que andou:** Fase MM, a etapa seguinte. O Matt nunca diz "isso não dá" nem
+  decide de cabeça: escolhe o atributo, diz a CD e manda rolar. Aqui, a frase que
+  o catálogo não conhecia virava ficção sem dado e o Narrador decidia sozinho.
+- **estado inicial:** verde (MM3 no ar, `9cf6e16`; o mapa das perguntas, `d8e6fd7`).
+- **bastão:** tomado por mim às ~11:55 para uma linha em `concluirRolagem`
+  (deslocamento zero); devolvido com este commit.
+- **backend:** `FAMILIAS_DO_IMPROVISO` — seis famílias de verbo, uma por atributo
+  da casa, com perícia quando a há; `CD_DO_IMPROVISO` — o degrau comum (13), e uma
+  palavra de ousadia ("de costas", "no escuro", "com uma mão só") sobe a 15, sem
+  acumular. `lerAcao` devolve o improviso com a mesma forma de um desafio do
+  catálogo, por isso o App rola, mostra ("🎯 saltar do balcão para o lustre —
+  dificuldade 13") e manda à pauta sem saber que ele existe. A peneira reusa as
+  travas de `NAO_E_AGRESSAO` e estende-as: pergunta, hipótese, negação, passado,
+  figura de linguagem, fala, rotina. Seis custos de falha `improviso_*`.
+- **orquestrador:** a marca `gesto` passa de `concluirRolagem` a `envelopeDoTeste`:
+  sem ela, o sucesso de um salto recebia "revele UMA coisa concreta" e o Narrador
+  inventava um achado em cima do gesto. Com ela: "o que declarei ACONTECE, nem mais
+  nem menos". Uma asserção por âncora prova a fiação.
+- **o corpus:** 92 frases reais, 100%: 32 ganham dado, 49 não, 11 são do catálogo. A
+  varredura de rotina achou 14 falsos positivos da primeira versão (o brinde, "ergo a
+  espada em saudação", "salto da cama") e **três do catálogo antigo** — "levanto a
+  caneca e brindo" rolava Atletismo contra 15, "vasculho a memória" virava revistar o
+  lugar, "subo a escada até o quarto" virava escalar. Os 17 consertados e no corpus.
+- **decisões médias tomadas:**
+  - **Desligado em combate.** Um desafio rolado dentro da luta hoje não gasta a ação
+    — o catálogo já tem esse furo com escalar e saltar; ligar o improviso lá alargava-o
+    a quase toda frase. "Atiro a cadeira no bandido" já é ataque (com a arma
+    equipada); "derrubo a mesa em cima dele" continua sem dado. Os três consertos que
+    faltam para o ligar foram para "Aberto".
+  - **A intimidação é da Força nesta casa**, e ficou no catálogo, não numa família de
+    Presença: uma mesma ação não ganha duas regras.
+  - **#33 conta, #102 não:** o "que teste é este?" responde-se declarando (v9.64,
+    teste não se pede); o #102 pergunta antes de declarar e fica.
+- **achado fora do escopo:** "posso atacar o guarda?" é lido como declaração de
+  ataque e abre luta se o guarda estiver presente. Para "Aberto", leve.
+- **a sonda:** **68 → 69/157 chega** · 0 sabe e não conta · 80 ninguém decide. Só o
+  #33 mudou; #76, #78, #93, #102, #152 ficaram, cada um com o porquê na nota.
+- **para quem joga:** fora da luta, toda ação que ele inventa — saltar para o lustre,
+  lembrar o brasão, acalmar o cavalo — ganha um dado, um atributo e uma dificuldade
+  ditos antes, e o resultado é o que o Mestre narra.
+- **o que ficou:** MM5 (o sucesso com preço) lê a margem que este dado já produz. A
+  prova jogada do Poupar (MM3) continua aberta: fica para a sessão jogada no fim de
+  MM5, se houver luta.
+
 ## 29/09 10:55 · v9.306 · MM3 · o golpe final é seu (Q3 + Q5) · commit `9cf6e16`
 
 - **por que andou:** a etapa que a pessoa aprovou há duas semanas (Q3 em 14/09,

@@ -16882,7 +16882,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         ? envelopeDeBuscaVazia(des.rotulo)
         : envelopeDoTeste({
           tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
-          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre,
+          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre, gesto: !!(des && des.gesto),
         });
       /* ---------------- O BARULHO PARA DE SER DELEGADO (v9.62) ----------------
          O envelope antigo dizia "se houver alguém por perto, ELE OUVIU —

@@ -145,7 +145,12 @@ O limite é o que um commit revertido não desfaz.
   você faz isso?"** (Q5) — o que o jogador escrever é o que o Narrador narra,
   ampliado e nunca desmentido. É o momento mais famoso do Critical Role. O
   texto inteiro das duas está na Fase Q, abaixo.
-- [ ] **MM4 · toda ação ganha um dado**
+- [x] **MM4 · toda ação ganha um dado** · feito 29/09, v9.307 · sonda 68 → 69/157
+  `FAMILIAS_DO_IMPROVISO` (seis famílias → atributo) e `CD_DO_IMPROVISO` (13; uma
+  palavra de ousadia sobe a 15) em `desafios.js`; `lerAcao` devolve o improviso no
+  ramo em que nenhum desafio casa, e o App rola-o pelo caminho de sempre. Fica
+  **desligado em combate** (ver o diário): lá o dado improvisado pede três coisas
+  que ainda não existem — cobrar a ação, 1d4 da arma improvisada, `disputa.js`.
   Hoje a frase que não casa com o catálogo de desafios **vira ficção sem dado**
   e o Narrador decide sozinho. O Matt nunca diz *"isso não dá"*: escolhe o
   atributo e manda rolar. Aqui: o atributo mais próximo por tabela, uma CD de
@@ -989,6 +994,16 @@ Duelo — **não é a vez**, e fica onde está na pauta com esta nota por cima. 
 se apaga nada: o beta é um corte de foco, não um descarte.
 
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
+
+- [ ] **"posso atacar o guarda?" abre uma luta** · leve · de: sistema/MM4 · 29/09
+  `ehDeclaracaoDeAtaque("posso atacar o guarda?")` dá `true` (`agressao.js`): uma
+  pergunta ao Mestre, com o guarda presente, vira agressão. A peneira do improviso
+  (`NAO_E_IMPROVISO`) já barra perguntas; a da agressão não. Bug com teste que prova.
+- [ ] **o dado improvisado dentro da luta** · médio · de: sistema/MM4 · 29/09
+  Em combate, um desafio rolado (catálogo ou improviso) não gasta a ação; a arma
+  improvisada ataca com a arma equipada em vez de 1d4; empurrar/derrubar não chama
+  `disputa.js`. Por isso o improviso de MM4 fica desligado em luta. Fechar as três e
+  ligá-lo.
 
 - [ ] **quatro regras que apanham a habilidade errada — e uma delas inverte o
   que promete** · leve · de: sistema/H2 · 16/09

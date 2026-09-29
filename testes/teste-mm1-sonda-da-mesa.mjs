@@ -29,10 +29,15 @@
                     (por `aoTerminar`/`depoisDoRevide`)
         ADJUDICA  — `adjudicarAcao`, onde `desafios.js#lerAcao` vira
                     `envelopeDeVeredicto` e entra direto num `enviar(...)`
+        ROLAGEM   — `concluirRolagem` (MM4), onde o veredito do tipo
+                    `teste` volta do dado: `testes.js#envelopeDoTeste`
+                    monta o resultado (atributo, perícia, CD, total) e ele
+                    entra num `enviar(...)`. É a outra metade de ADJUDICA —
+                    lá o teste é decidido, aqui ele chega ao Narrador.
 
       PAUTA + ENVIAR + HELPERS formam o "caminho principal" (o que a tarefa
-      chama de "pautaDoTurno... ou o montador do prompt"). GOLPE, REVIDE e
-      ADJUDICA são três canais A MAIS, genuínos, mas que também contêm MUITA
+      chama de "pautaDoTurno... ou o montador do prompt"). GOLPE, REVIDE,
+      ADJUDICA e ROLAGEM são quatro canais A MAIS, genuínos, mas que também contêm MUITA
       conta que NUNCA chega ao Narrador (ex.: o `motivo` de "sem alcance" que
       vira mensagem de SISTEMA na tela, não turno de IA) — por isso o teste
       de "sabe-e-nao-conta" (prova 1b) olha só para PAUTA+ENVIAR+HELPERS:
@@ -54,10 +59,11 @@
    3. O NÚMERO — imprime a linha `sonda da mesa: X/157 chega · ...` e a
       tabela tipo×veredito, e trava duas catracas:
 
-        PISO_CHEGA = 68              (o "chega" de hoje; não pode DESCER)
+        PISO_CHEGA = 69              (o "chega" de hoje; não pode DESCER)
         TETO_SABE_E_NAO_CONTA = 0    (o "sabe-e-nao-conta" de hoje; não pode SUBIR)
 
-      (MM1 partiu de 66 e 1; a MM2 moveu os dois — o motivo está na seção 6.)
+      (MM1 partiu de 66 e 1; a MM2 moveu os dois e a MM4 subiu o piso — os
+      motivos estão na seção 6.)
 
       Cada etapa da Fase MM SOBE o piso (liga um fato que hoje "não conta")
       e DESCE o teto (o inverso: acha um "sabe-e-nao-conta" novo que ainda
@@ -120,6 +126,11 @@ const ANCORAS_REVIDE = [
   "const fecharMeuTurno = (pers, aoTerminar) => {",
 ];
 const ANCORAS_ADJUDICA = ["const adjudicarAcao = (acao) => {"];
+/* MM4: a região que faltava para um teste declarado ser provado até o fim.
+   ADJUDICA decide e manda rolar (`rolarDesafio`); o resultado só vira texto
+   do Narrador quando o dado volta, aqui. Sem esta âncora, nenhum caso cujo
+   fato viaja no RESULTADO de um teste podia provar que chega. */
+const ANCORAS_ROLAGEM = ["const concluirRolagem = (valor, dadoAnterior = null) => {"];
 
 function extrairTodas(anchors) {
   const achadas = [];
@@ -144,19 +155,22 @@ const rHelpers = extrairTodas(ANCORAS_HELPERS);
 const rGolpe = extrairTodas(ANCORAS_GOLPE);
 const rRevide = extrairTodas(ANCORAS_REVIDE);
 const rAdjudica = extrairTodas(ANCORAS_ADJUDICA);
+const rRolagem = extrairTodas(ANCORAS_ROLAGEM);
 
 sec("0. as âncoras do App.jsx ainda batem (se isto quebrar, o resto da suíte não prova nada)");
 {
-  const todas = [rPauta, rEnviar, rHelpers, rGolpe, rRevide, rAdjudica];
+  const todas = [rPauta, rEnviar, rHelpers, rGolpe, rRevide, rAdjudica, rRolagem];
   const faltando = todas.flatMap((r) => r.faltando);
-  t(`as 12 âncoras de pautaDoTurno/enviar/helpers/golpe/revide/adjudica existem no App.jsx de hoje`,
+  /* MM4: 12 → 13 âncoras — entrou a de `concluirRolagem` (ROLAGEM) */
+  t(`as 13 âncoras de pautaDoTurno/enviar/helpers/golpe/revide/adjudica/rolagem existem no App.jsx de hoje`,
     faltando.length === 0, faltando.join(", "));
   t("o corpo de pautaDoTurno não está vazio (extração por chave, não por linha)", rPauta.texto.length > 2000);
   t("o corpo de enviar não está vazio", rEnviar.texto.length > 5000);
+  t("o corpo de concluirRolagem não está vazio, e é ele que chama enviar", rRolagem.texto.length > 2000 && /\benviar\(/.test(rRolagem.texto));
 }
 
 const CAMINHO_PRINCIPAL = rPauta.texto + rEnviar.texto + rHelpers.texto;
-const CAMINHO_CHEGA = CAMINHO_PRINCIPAL + rGolpe.texto + rRevide.texto + rAdjudica.texto;
+const CAMINHO_CHEGA = CAMINHO_PRINCIPAL + rGolpe.texto + rRevide.texto + rAdjudica.texto + rRolagem.texto;
 
 /* Uma constante do sistema (tudo-maiúsculas, ex. ECONOMIA_ACAO_PROMPT) entra
    no texto por interpolação de template (`${NOME}`), não por chamada — por
@@ -235,7 +249,7 @@ sec("3. chega — a função de via é CHAMADA no caminho até o Narrador");
     const nome = c.via.split("#")[1];
     if (!apareceNoCaminho(nome, CAMINHO_CHEGA)) semChamada.push(`#${c.n} (${c.via})`);
   }
-  t(`todo caso "chega" tem sua função de via chamada em PAUTA+ENVIAR+HELPERS+GOLPE+REVIDE+ADJUDICA`,
+  t(`todo caso "chega" tem sua função de via chamada em PAUTA+ENVIAR+HELPERS+GOLPE+REVIDE+ADJUDICA+ROLAGEM`,
     semChamada.length === 0, semChamada.join(", "));
 }
 
@@ -320,6 +334,17 @@ sec("5. prova comportamental — o fato aparece de verdade no texto que a funç�
 
   const { envelopeDeVeredicto, lerAcao } = await import("../src/desafios.js");
   t("regra · desafios.js#lerAcao e #envelopeDeVeredicto existem e são funções", typeof lerAcao === "function" && typeof envelopeDeVeredicto === "function");
+
+  /* #33 CHEGA (MM4): a frase que o catálogo não conhece ganha o atributo e a
+     CD por tabela, e o envelope do resultado — o que `concluirRolagem` manda
+     a `enviar` — diz os dois ao Narrador. */
+  const { envelopeDoTeste } = await import("../src/testes.js");
+  const imp = lerAcao("Salto do balcão para o lustre", { personagem: { nivel: 3 }, semente: "sonda", lugar: "a taverna", tentativas: {}, dia: 1 });
+  t("regra · #33 · a ação sem desafio catalogado vira teste, com atributo e CD decididos pelo sistema",
+    imp && imp.tipo === "teste" && imp.atributo === "destreza" && imp.dc === 13);
+  const envImp = envelopeDoTeste({ tipo: imp.atributo, pericia: imp.pericia, motivo: imp.rotulo, valor: 12, mod: 2, total: 14, dc: imp.dc, resultado: "sucesso", nivelTreino: "nenhum" });
+  t("regra · #33 · e o envelope que vai ao Narrador leva a perícia, o atributo e a dificuldade",
+    /Acrobacia \(Destreza\)/.test(envImp) && /dificuldade em 13/.test(envImp));
 }
 
 /* ============================================================
@@ -367,7 +392,19 @@ sec("6. o número e a catraca");
      ao Narrador na abertura. `enviar` passou a entregar combate.ordem a
      resumoGridPrompt, que fecha a linha da luta com a ordem dos vivos. Em
      vez de reclassificá-lo e deixar o teto subir, fechou-se: o teto fica 0. */
-  const PISO_CHEGA = 68;
+  /* MM4 (toda ação ganha um dado): PISO 68 → 69. Motivo: o #33 ("isso seria
+     um teste de investigação ou de intuição?") tinha como FATO "qual
+     atributo testar quando a ação não casa com nenhum desafio catalogado" —
+     e é exatamente o que o improviso passou a decidir, por tabela
+     (FAMILIAS_DO_IMPROVISO + CD_DO_IMPROVISO), e a levar ao Narrador pelo
+     envelope do resultado. Para provar essa chegada, a suíte ganhou a
+     região ROLAGEM (`concluirRolagem`), provada na seção 0 e na 5.
+     Os outros cinco do bloco "que teste é este?" (#76, #78, #93, #102,
+     #152) NÃO moveram, cada um com o porquê escrito na nota do caso: o
+     #102 pergunta ANTES de declarar (e a pergunta é peneirada de
+     propósito), o #152 é poder e não atributo, o #93 é pool de dados, e
+     #76/#78 são licença sem risco. */
+  const PISO_CHEGA = 69;
   const TETO_SABE_E_NAO_CONTA = 0;
   t(`o piso do chega não desceu (hoje: ${X}, piso: ${PISO_CHEGA})`, X >= PISO_CHEGA);
   t(`o teto do sabe-e-nao-conta não subiu (hoje: ${Y}, teto: ${TETO_SABE_E_NAO_CONTA})`, Y <= TETO_SABE_E_NAO_CONTA);
