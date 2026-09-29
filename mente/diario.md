@@ -15,7 +15,66 @@ Formato:
 ```
 
 ---
-## 29/09 09:40 · v9.305 · MM2 · o Narrador vê o tabuleiro · commit (o hash vai no bloco de MM3)
+## 29/09 10:55 · v9.306 · MM3 · o golpe final é seu (Q3 + Q5) · commit (o hash vai no commit seguinte)
+
+- **por que andou:** a etapa que a pessoa aprovou há duas semanas (Q3 em 14/09,
+  Q5 em 15/09) e o momento mais famoso do Critical Role — o *"how do you want to
+  do this?"*. É o único instante em que o jogador **dirige** em vez de agir, e cai
+  onde a emoção já está no pico; o sistema já decidiu tudo (o golpe acerta, o
+  dano mata), por isso a prosa pode ser livre.
+- **estado inicial:** verde, MM2 no ar (`98d6f63`).
+- **bastão:** tomado às 09:26 pela mão `frontend` em nome deste ciclo; devolvido
+  por ela ao fim da fiação; retomado às 10:29 para o conserto; devolvido às ~10:45.
+- **backend:** `src/golpe-final.js` — `haEscolhaNoGolpe` (só há escolha quando o
+  golpe leva um alvo vivo a 0, não em área, não em morte instantânea, não quando
+  não fere), `decidirGolpeFinal` (perguntar · sempre matar · sempre poupar),
+  `aplicarEscolha` (poupado = desacordado, vivo, fora da luta, acorda em 1d4 horas
+  por semente; campos novos e aditivos no inimigo, nenhum campo de save mudou) e
+  `envelopeDoGolpeFinal` (o fato em `acabou`, a cena do jogador em segunda linha,
+  o "não pode morrer" do poupado em `naoPode`). Suíte com 100 asserções.
+- **frontend:** `src/painel-golpe-final.jsx`, no mesmo sítio e com as mesmas peças
+  do cartão da reação (K3) — uma decisão que suspende a luta não ganha segunda
+  cara. "Como você faz isso?" com 240 caracteres; **Poupar — cai desacordado,
+  vivo** / **Matar — não se levanta mais**, cada um aplicando de imediato (pular
+  é um clique); "lembrar a minha escolha", e a troca das três na ficha, ao lado
+  de "Quando um golpe chega". A preferência vive fora do save
+  (`taverna_cfg_golpe_final`). `aplicarGolpeDoJogador` dividiu-se em três:
+  pergunta, retoma (`continuarGolpeDoJogador`) e responde. O chat e a linha para
+  o Mestre nunca dizem ☠ de quem foi poupado.
+- **a devolução, e porquê:** a mão contou, na prova jogada, um "Poupar sem efeito"
+  e uma morte sem cartão que atribuiu à regra. Li o código: em
+  `resolverAtaqueJogador` o `alvo` é o mesmo objeto que a cópia local que o dano
+  decrementa, e o `push` copiava o corpo **depois** do golpe — o golpe que matava
+  chegava já "caído" e a escolha nunca era oferecida (só aparecia por acaso). O
+  conserto captura o corpo antes do decremento, em duas linhas reescritas no
+  lugar; a suíte crava a ordem no texto-fonte. **Uma devolução, verde.**
+- **o que não está provado:** depois do conserto, **o clique em Poupar não foi
+  jogado ao vivo** — a campanha de teste ficou sem luta à mão e parei antes de
+  gastar mais chamadas pagas. O cartão foi visto ao vivo antes do conserto, com
+  os rótulos certos; a lógica depois do conserto está provada por leitura e
+  suíte. Fica para a sessão de prova (MM11) ou para o próximo ciclo que tiver
+  luta à mão.
+- **decisões médias tomadas:**
+  - **Uma escolha por sequência de ataques**, não um cartão por alvo: dois
+    cartões seguidos no pico da cena seriam formulário, não momento.
+  - **Escolha ou preferência torta → letal / perguntar**: o comportamento de
+    hoje e a pergunta a mais são os erros baratos; um desacordado que ninguém
+    escolheu seria uma semente de Q4 que o jogador não plantou.
+  - **240 caracteres para a cena**: o exemplo da pessoa tem 187; com 280 a linha
+    empurrava para fora QUEM e CONTRA numa luta que pode continuar.
+  - **O poupado sem emoji novo** (" (poupado)" em texto): o varredor D5h trava a
+    contagem de emoji do sistema, e a mesa de design está parada.
+  - **Endereços re-medidos** em `acoes-do-jogador.mjs` (+52 e +150 linhas), com o
+    motivo em cada um; nenhuma asserção afrouxada.
+- **para quem joga:** quando o golpe vai derrubar alguém, o jogo pára e pergunta
+  se mata ou poupa, e *como* — e o que ele escrever é o que o Mestre narra. Poupar
+  deixa um corpo vivo e desacordado por 1 a 4 horas. **A sonda não se move
+  (68/157)**: nenhuma das 157 perguntas era desta, porque a pergunta é do Matt.
+- **o que ficou:** Q4 (o desacordado como fato do mundo: prender, interrogar,
+  acordar e voltar) — hoje o corpo poupado existe no combate e na pauta do turno,
+  mas nada no mundo se lembra dele depois da luta.
+
+## 29/09 09:40 · v9.305 · MM2 · o Narrador vê o tabuleiro · commit `98d6f63`
 
 - **por que andou:** a etapa seguinte da Fase MM, com o escopo que a sonda
   corrigiu: a distância já chegava, a cobertura e a linha de visão não.

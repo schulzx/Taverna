@@ -136,7 +136,11 @@ O limite é o que um commit revertido não desfaz.
   (`temCobertura`). Dentro do `TETO_DA_PAUTA`; se não couber tudo, corta-se
   pela prioridade, nunca se soma bloco estático. É a resposta a *"a quantos
   metros estou da criatura?"*.
-- [ ] **MM3 · o golpe final é seu** · Q3 + Q5, aprovadas pela pessoa em 14–15/09
+- [x] **MM3 · o golpe final é seu** · Q3 + Q5, aprovadas pela pessoa em 14–15/09 · feito 29/09, v9.306
+  `golpe-final.js` + `painel-golpe-final.jsx`; a escolha antes de aplicar, a cena do
+  jogador na pauta (`acabou`, 240 chars) e o veto do poupado em `naoPode`. A sonda não
+  se move (68/157): nenhuma das 157 era do golpe final — a frase é do Matt, não dos
+  jogadores. **Falta a prova jogada do Poupar depois do conserto** (ver o diário).
   Quando o golpe **levaria** o alvo a 0: letal ou não letal (Q3), e **"como
   você faz isso?"** (Q5) — o que o jogador escrever é o que o Narrador narra,
   ampliado e nunca desmentido. É o momento mais famoso do Critical Role. O
@@ -641,7 +645,7 @@ que esta fase torna uma regra em vez de um acidente.
   desmentida; o conserto é dos **três lados**. As tabelas de Q1 já existem
   e esperam leitor: `quedaAoChegarAZero` é a porta única, e se aparecer um
   segundo `vida <= 0 ? …` no App a doença voltou.
-- [ ] **Q3 · letal ou não letal** · de: pessoa · 14/09
+- [x] **Q3 · letal ou não letal** · de: pessoa · 14/09 · feito em MM3 (v9.306)
   Quando o golpe **levaria** o alvo a 0, o jogador escolhe antes de aplicar
   — é a lei *o veredito antes do clique* na sua forma mais pura. Não letal
   derruba desacordado, e ele acorda em **1d4 horas**. A pergunta só aparece
@@ -656,7 +660,7 @@ que esta fase torna uma regra em vez de um acidente.
   postura), os propósitos de `indole.js`. **Poupar tem de ter consequência**,
   senão é só um botão a mais. O que exigir órgão novo sobe para a pessoa.
 
-- [ ] **Q5 · o golpe final é seu** · de: pessoa · 15/09
+- [x] **Q5 · o golpe final é seu** · de: pessoa · 15/09 · feito em MM3 (v9.306)
   **Ideia da pessoa (15/09), e ela é barata porque Q3 já fez o caro:** quando
   o inimigo chega a 0 e o jogador escolhe a letalidade, o sistema pergunta
   ***"como você faz isso?"*** — e o que ele escrever é o que o Narrador narra.

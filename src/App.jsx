@@ -40,6 +40,12 @@ import { escolherReacao, resolverReacao, resumoReacoesPrompt, reacoesDe } from "
 import { ritmoDaRodada, reacaoDoSilencio, fecharAJanela, TEMPOS_DO_CARTAO } from "./ritmo-da-reacao.js";
 import { falaDaResolucao, numeroDaResolucao, AVISO_DO_SILENCIO, LINHAS_DO_CARTAO, PALAVRAS_DO_NADA } from "./palavras-da-reacao.js";
 import { PainelReacao } from "./painel-reacao.jsx";
+/* ---------------- O GOLPE FINAL E SEU (Fase MM, MM3 = Q3 + Q5) ----------------
+   Letal ou poupar, e "como voce faz isso?" -- a conta inteira mora em
+   `golpe-final.js`; o App so liga a fiacao e pinta o cartao (peca propria,
+   `painel-golpe-final.jsx`, pelo mesmo molde do cartao da reacao). */
+import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal } from "./golpe-final.js";
+import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
@@ -2489,7 +2495,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2634,6 +2640,30 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                           rotulo={p.rotulo}
                           escolhida={(preferenciaReacao || "normal") === p.id}
                           aoClicar={() => aoEscolherPreferenciaReacao && aoEscolherPreferenciaReacao(p.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* ---------------- MM3: O GOLPE QUE DECIDE ----------------
+                  O espelho do bloco acima, mas para o instante oposto: não
+                  quando um golpe CHEGA, e sim quando o SEU golpe derruba
+                  alguém. Mesma peça (`PilulaDeEscolha`), mesma fila — os
+                  rótulos já são gameplay (o módulo os escreveu para o
+                  jogador, não para o código): "Perguntar a cada golpe
+                  final", "Sempre matar", "Sempre poupar". */}
+              {(() => {
+                const fila = Object.values(PREFERENCIAS_DO_GOLPE_FINAL);
+                return (
+                  <div className="rounded-lg px-2.5 py-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+                    <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Ao derrubar um inimigo</div>
+                    <div className="flex gap-2 flex-wrap" role="group" aria-label="Ao derrubar um inimigo">
+                      {fila.map((p) => (
+                        <PilulaDeEscolha key={p.id}
+                          rotulo={p.rotulo}
+                          escolhida={(preferenciaGolpeFinal || PREFERENCIA_PADRAO) === p.id}
+                          aoClicar={() => aoEscolherPreferenciaGolpeFinal && aoEscolherPreferenciaGolpeFinal(p.id)}
                         />
                       ))}
                     </div>
@@ -5397,6 +5427,17 @@ export default function Taverna() {
     try { const v = localStorage.getItem("taverna_cfg_rolagens"); return v === null ? true : v === "1"; } catch { return true; }
   });
   useEffect(() => { mostrarRolagensRef.current = mostrarRolagens; try { localStorage.setItem("taverna_cfg_rolagens", mostrarRolagens ? "1" : "0"); } catch {} }, [mostrarRolagens]);
+  /* MM3: a preferencia do golpe final. FORA do save de proposito -- e
+     conveniencia de aparelho, nao ficha de personagem, e uma pessoa que
+     jogue dos dois lados de uma sala nao devia herdar a escolha da outra
+     pelo save. Lixo cai no padrao (perguntar) -- o erro barato e uma
+     pergunta a mais, nunca uma morte que ninguem escolheu. */
+  const [preferenciaGolpeFinal, setPreferenciaGolpeFinal] = useState(() => {
+    try { const v = localStorage.getItem("taverna_cfg_golpe_final"); return v && PREFERENCIAS_DO_GOLPE_FINAL[v] ? v : PREFERENCIA_PADRAO; } catch { return PREFERENCIA_PADRAO; }
+  });
+  const preferenciaGolpeFinalRef = useRef(PREFERENCIA_PADRAO);
+  useEffect(() => { preferenciaGolpeFinalRef.current = preferenciaGolpeFinal; try { localStorage.setItem("taverna_cfg_golpe_final", preferenciaGolpeFinal); } catch {} }, [preferenciaGolpeFinal]);
+  const escolherPreferenciaDoGolpeFinal = (id) => { setPreferenciaGolpeFinal(PREFERENCIAS_DO_GOLPE_FINAL[id] ? id : PREFERENCIA_PADRAO); };
   const [temSave, setTemSave] = useState(null);
   /* quando foi a última cópia em arquivo — carregado do save, carimbado
      por exportarSave, e persistido por salvar() como qualquer campo */
@@ -6931,6 +6972,17 @@ export default function Taverna() {
         if (sit) { const ap = apostas(sit); if (ap) p = porNaPauta(p, "mesa", "Se " + ap.sePassa, "Se " + ap.seFalha); }
       }
     } catch (e) { /* a aposta nunca pode custar o turno */ }
+    /* ---------------- MM3: O GOLPE FINAL, NA PAUTA ----------------
+       O envelope nasce em `continuarGolpeDoJogador` (aplicarEscolha ja
+       resolvido) e mora num ref ate a PROXIMA montagem da pauta -- que e
+       sempre a narracao do proprio golpe (`enviar` monta a pauta uma vez
+       por turno). Consome e limpa: um golpe final e um fato de UM turno,
+       nunca do proximo. */
+    try {
+      const gf = golpeFinalEnvelopeRef.current;
+      if (gf) { p = porNaPauta(p, "acabou", ...gf.acabou); p = porNaPauta(p, "naoPode", ...gf.naoPode); }
+    } catch (e) { /* o golpe final nunca pode custar o turno */ }
+    golpeFinalEnvelopeRef.current = null;
     return p;
   };
 
@@ -8249,6 +8301,16 @@ export default function Taverna() {
   /* O CARTAO, num estado so — e e isso que garante a lei "nunca dois cartoes
      na tela, nunca": nao ha lista onde um segundo caiba. */
   const [janelaReacao, setJanelaReacao] = useState(null);
+  /* MM3: o cartao do golpe final. `golpeFinalPendente` e so o que a tela
+     pinta (nunca dois cartoes ao mesmo tempo -- golpe final resolve ANTES
+     de qualquer revide, que e onde a janela da reacao nasce); o contexto
+     inteiro do ataque fica no ref, porque e ele que `continuarGolpeDoJogador`
+     precisa para retomar. */
+  const [golpeFinalPendente, setGolpeFinalPendente] = useState(null);
+  const golpeFinalCtxRef = useRef(null);
+  /* o envelope de UM turno -- nasce quando a escolha se aplica, e
+     `pautaDoTurno` o consome e limpa; nunca sobrevive a um segundo turno */
+  const golpeFinalEnvelopeRef = useRef(null);
   /* O que a reacao DE FACTO fez, para o cartao poder dizer o numero sem o
      inventar. E leitura: `resolverReacao` continua a ser a unica fonte, e
      nada muda de caminho por causa desta anotacao. */
@@ -12572,8 +12634,8 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       });
       /* três degraus abaixo, o golpe comum atravessa sem ferir */
       if (imunePorEscopo(gdJ, gdAlvo)) { r.escopoImune = true; r.dano = 0; }
-      if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
-      resultados.push({ r, alvo: { ...alvo } });
+      const antes = { ...alvo }; /* MM3: alvo É l (mesmo objeto) — captura o corpo ANTES do decremento */ if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
+      resultados.push({ r, alvo: antes });
     }
     /* ---- ATACOU, APARECEU (v9.45) ----
        "Fica invisível ATÉ ATACAR ou conjurar" era a descrição da habilidade
@@ -12626,18 +12688,88 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       return true;
     }
     if (eco) { eco.acao -= 1; combateRef.current = { ...combateRef.current, economia: { ...eco } }; setCombate(combateRef.current); }
+    /* ---------------- MM3: O GOLPE FINAL É SEU (Q3 + Q5) ----------------
+       A AÇÃO JÁ SAIU (linha acima) — igual à janela da reação (K3): pular
+       ou responder, o turno já pagou o preço. Cada `alvo` de
+       `ataque.resultados` é a vida CORRENTE no instante daquele golpe
+       dentro desta sequência — `resolverAtaqueJogador` já a capturou golpe
+       a golpe, antes de decrementar para o próximo —, que é exatamente o
+       "corpo ANTES deste golpe" que `haEscolhaNoGolpe` pede. Só pergunta
+       quando a preferência de quem joga diz "perguntar"; sempre_letal e
+       sempre_poupar aplicam direto, sem cartão e sem cena escrita — quem
+       decide isso é `continuarGolpeDoJogador`. */
+    try {
+      if (decidirGolpeFinal(preferenciaGolpeFinalRef.current) === "perguntar") {
+        const quedas = ataque.resultados.filter(({ r, alvo }) => {
+          try { return haEscolhaNoGolpe({ alvo, r }).ha; } catch (e) { return false; }
+        });
+        if (quedas.length) {
+          golpeFinalCtxRef.current = { acao, pers, ataque };
+          setGolpeFinalPendente({ quedas: quedas.map(({ r, alvo }) => ({ nome: alvo.nome, dano: r.dano, critico: !!r.critico })) });
+          return true;
+        }
+      }
+    } catch (e) { calou("perguntar o golpe final", e); }
+    return continuarGolpeDoJogador(acao, pers, ataque, null);
+  };
+
+  /* ---------------- MM3: A APLICAÇÃO, RETOMADA (OU DIRETA) ----------------
+     Continua `aplicarGolpeDoJogador` depois do cartão, ou direto quando não
+     havia nada a perguntar. `escolhaEComoFez` é `{ escolha, comoFez }` vindo
+     do cartão, ou `null` — e mesmo `null` a preferência ainda pode decidir
+     sozinha (sempre_letal/sempre_poupar) golpe a golpe, aqui embaixo, sem
+     ter perguntado nada. Nunca reconstrói o ataque: ele já foi resolvido
+     por código, e não rola de novo só porque o jogador demorou a responder. */
+  const continuarGolpeDoJogador = (acao, pers, ataque, escolhaEComoFez) => {
     const { resultados } = ataque;
     ataqueResolvidoRef.current = true;
     /* aplica cada golpe por código (fonte da verdade) e monta as linhas de dano */
     const gdJ = grauDe(divindadeRef.current);
     const linhas = [{ autor: "jogador", texto: acao }];
     const partesMeu = [];
+    /* A ESCOLHA VALE PARA A SEQUÊNCIA INTEIRA: um clique no cartão decide
+       por todos os golpes desta declaração que caírem a zero — nunca um
+       cartão por alvo. Sem cartão (`escolhaEComoFez` nulo), a preferência
+       ainda decide sozinha quando ela é sempre_letal/sempre_poupar; quando
+       ela é "perguntar" mas esta chamada não veio de pergunta nenhuma (isto
+       é: `haEscolhaNoGolpe` disse que não havia escolha), fica `null` e o
+       golpe que cair aqui cai como sempre caiu — regressão zero. */
+    const escolhaAplicada = escolhaEComoFez ? escolhaEComoFez.escolha
+      : (() => { try { const d = decidirGolpeFinal(preferenciaGolpeFinalRef.current); return d === "perguntar" ? null : d; } catch (e) { return null; } })();
+    const comoFezDoJogador = escolhaEComoFez ? escolhaEComoFez.comoFez : "";
+    let acabouGolpeFinal = [];
+    let naoPodeGolpeFinal = [];
+    let cenaJaNarrada = false;
     for (const { r, alvo } of resultados) {
       let pvDepois = alvo.vida;
+      let poupadoAgora = false;
       if (r.dano > 0) {
         const atualAlvo = (combateRef.current?.inimigos || []).find((e) => e.nome === alvo.nome);
         pvDepois = Math.max(0, (atualAlvo ? atualAlvo.vida : alvo.vida) - r.dano);
-        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => e.nome === alvo.nome ? { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano } : e) };
+        const novo = { ...combateRef.current, inimigos: combateRef.current.inimigos.map((e) => {
+          if (e.nome !== alvo.nome) return e;
+          let corpo = { ...e, vida: pvDepois, derrotado: pvDepois <= 0, ultimoDano: r.dano };
+          /* MM3: o golpe que leva a 0 e tem escolha aplicada vira o corpo
+             desacordado (ou continua letal, byte a byte o de hoje) —
+             `aplicarEscolha` é a porta única, e o envelope viaja para a
+             pauta do turno, nunca para um bloco estático do prompt. A
+             semente segue o padrão do combate (dia + rodada), salgada pelo
+             nome dentro do próprio módulo — dois poupados no mesmo turno
+             não acordam em bloco. */
+          if (pvDepois <= 0 && escolhaAplicada) {
+            try {
+              if (haEscolhaNoGolpe({ alvo, r }).ha) {
+                corpo = aplicarEscolha(corpo, escolhaAplicada, { semente: sementeDaFuga(combateRef.current) });
+                poupadoAgora = escolhaAplicada === "nao_letal";
+                const env = envelopeDoGolpeFinal({ alvo: corpo, escolha: escolhaAplicada, comoFez: cenaJaNarrada ? "" : comoFezDoJogador, heroi: pers.nome });
+                cenaJaNarrada = true;
+                acabouGolpeFinal = acabouGolpeFinal.concat(env.acabou);
+                naoPodeGolpeFinal = naoPodeGolpeFinal.concat(env.naoPode);
+              }
+            } catch (e) { calou("aplicar a escolha do golpe final", e); }
+          }
+          return corpo;
+        }) };
         combateRef.current = novo; setCombate(novo);
         /* AFLIÇÃO DA ARMA (v9.1): a adaga envenenada envenena — o sistema lê
            a arma equipada, rola o teste do inimigo e aplica. Sem pedir nada
@@ -12658,12 +12790,17 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       linhas.push({ autor: "sistema", texto: r.escopoImune
         ? `⚔ ${personagem.nome} → ${alvo.nome}: o golpe atravessa sem encontrar carne — ${alvo.nome} é GD ${alvo.gd} (${tituloDe(alvo.gd)}), IMUNE ao seu dano comum`
         : r.dano > 0
-        ? `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? " ☠" : ""}`
+        ? `⚔ ${personagem.nome} → ${alvo.nome}: ${r.critico ? "CRÍTICO! " : ""}${r.dano} de dano · ${alvo.nome} ${pvDepois}/${alvo.vidaMax || alvo.vida}${pvDepois <= 0 ? (poupadoAgora ? " (poupado)" : " ☠") : ""}`
         : `⚔ ${personagem.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
       partesMeu.push(r.escopoImune
         ? `${alvo.nome} — IMUNE (GD ${alvo.gd} vs meu GD ${gdJ}; dano comum não fere divindades — preciso de artefato lendário, bênção ou enfraquecê-lo)`
+        : poupadoAgora
+        ? `${linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined)} — mas foi poupado: cai desacordado, vivo, sem golpe fatal`
         : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
     }
+    /* MM3: o envelope de UM turno — `pautaDoTurno` o lê na próxima montagem
+       (a narração deste mesmo golpe, logo abaixo) e o limpa depois. */
+    golpeFinalEnvelopeRef.current = (acabouGolpeFinal.length || naoPodeGolpeFinal.length) ? { acabou: acabouGolpeFinal, naoPode: naoPodeGolpeFinal } : null;
     pushMsgs(linhas);
     alvosGolpeRef.current = []; setAlvosGolpe([]);
     const desfecho = `${resultados.length} ${resultados.length > 1 ? "ataques" : "ataque"}: ${partesMeu.join("; ")}`;
@@ -12685,6 +12822,19 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     if (fechouNoMeuGolpe) depoisDoRevide({ pers: fichaViva() || personagem, texto: "" });
     else fecharMeuTurno(fichaViva() || personagem, depoisDoRevide);
     return true;
+  };
+
+  /* MM3: a resposta do cartão — fecha o cartão, grava a preferência se foi
+     pedido para lembrar, e RETOMA a aplicação de onde ela parou. */
+  const responderGolpeFinal = (escolhaId, comoFez, lembrar) => {
+    try {
+      const ctx = golpeFinalCtxRef.current;
+      golpeFinalCtxRef.current = null;
+      setGolpeFinalPendente(null);
+      if (lembrar) escolherPreferenciaDoGolpeFinal(escolhaId === "letal" ? "sempre_letal" : "sempre_poupar");
+      if (!ctx) return;
+      continuarGolpeDoJogador(ctx.acao, ctx.pers, ctx.ataque, { escolha: escolhaId, comoFez });
+    } catch (e) { calou("responder o golpe final", e); }
   };
 
   /* ---------------- O ALCANCE ANTES DO CLIQUE (v9.255, Fase X, X2) ----------------
@@ -23251,7 +23401,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     );
   })() : null;
 
-  const reacaoDaBatalha = emBatalha && janelaReacao ? (
+  /* MM3: o cartao do golpe final entra no MESMO slot do cartao da reacao
+     (K3) -- a mesma ancora, a mesma LinhaDoVeredito, sem tocar em
+     painel-batalha.jsx. Os dois nunca coexistem: o golpe final resolve-se
+     (aplicarGolpeDoJogador -> continuarGolpeDoJogador) ANTES de qualquer
+     revide, que e onde a janela da reacao nasce. */
+  const golpeFinalDaBatalha = emBatalha && golpeFinalPendente ? (
+    <LimiteErro>
+      <PainelGolpeFinal quedas={golpeFinalPendente.quedas} aoEscolher={responderGolpeFinal} />
+    </LimiteErro>
+  ) : null;
+
+  const reacaoDaBatalha = golpeFinalDaBatalha || (emBatalha && janelaReacao ? (
     <LimiteErro>
       <PainelReacao
         oferta={janelaReacao.abre} t0={janelaReacao.t0}
@@ -23264,7 +23425,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         aoSair={janelaReacao.aoSair}
       />
     </LimiteErro>
-  ) : null;
+  ) : null);
 
   const dadoDaBatalha = emBatalha && rolagem && !carregando ? (
     <div className="flex justify-center shrink-0">
@@ -24403,7 +24564,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           )}
 
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
-          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} /></LimiteErro>
+          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

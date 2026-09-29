@@ -505,8 +505,27 @@ sec("4. a definição operacional de 'número que muda'");
      (dente 8) confirma sozinho a cada corrida.
      A FUGA COBRA (frontend, R22): 14078 -> 14089, +11 (`sementeMundo` +
      `abrirCombate`, acima deste ponto). Conferido por conteúdo — é o
-     mesmo `avancarMinutos(MINUTOS_POR_TURNO)`; o dente 8 confirma. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14089/.test(relogio.porque));
+     mesmo `avancarMinutos(MINUTOS_POR_TURNO)`; o dente 8 confirma.
+     O GOLPE FINAL (frontend, 29/09, MM3): 14089 -> 14239, +150 — o mesmo
+     delta que `FUNIL_DO_COMBATE` registra a partir de `declararGolpe` no
+     cabeçalho dele (a divisão de `aplicarGolpeDoJogador` em três, bem
+     acima deste ponto). Conferido pelo próprio dente 8, que re-deriva a
+     linha do código; o relógio não mudou de comportamento, só de linha.
+     Mesmo dia, segunda medição: 14239 -> 14241, +2. Duas linhas de
+     `console.warn("[MM3-DEBUG] ...")` entraram dentro de `aplicarGolpe-
+     DoJogador` — depuração do próprio MM3, acima deste ponto — entre a
+     minha primeira e a minha segunda corrida do varredor nesta etapa; é
+     a prova de que o `App.jsx` seguiu em edição por outra mão enquanto
+     eu reconciliava a tabela (duas mentes, mesma árvore). Re-medido pelo
+     dente 8.
+     Mesmo dia, terceira medição: 14241 -> 14239, -2. O `frontend` fechou o
+     diagnóstico e removeu as 4 linhas de debug que chegaram a existir (as
+     2 de cima, mais 2 que tinham nascido depois em `continuarGolpeDo-
+     Jogador`/`responderGolpeFinal`) — o relógio volta ao endereço de antes
+     de qualquer debug. Re-medido pelo dente 8; o comportamento guardado
+     (o turno fora de combate avança MINUTOS_POR_TURNO faça o jogador o
+     que fizer) não mudou em nenhuma das três medições de hoje. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14239/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -654,7 +673,7 @@ sec("8. o motor que nenhum clique chama");
 
    O QUE ESTE BLOCO GUARDA. X3b escreveu em prosa "treze funções chamam
    `pushMsgs` dentro do combate" e "15 formas de recusa". Nenhum dos dois
-   se reproduz: são 14 funções (11 provadamente mudas fora da luta) e 18
+   se reproduz: eram 14 funções (11 provadamente mudas fora da luta) e 18
    chamadas de recusa em 25 formas. A tabela guarda os números medidos,
    este bloco os afirma, e `check-acoes-do-jogador.mjs` re-deriva do
    `App.jsx` os endereços — é o mesmo tripé de X1.
@@ -662,12 +681,22 @@ sec("8. o motor que nenhum clique chama");
    NENHUMA ASSERÇÃO ANTERIOR FOI MOVIDA AQUI. O eixo do número (blocos 3
    e 4) fica onde estava e continua dando 7/7: X4 é medição, e a política
    da sessão A não foi tocada.
-   ============================================================ */
+
+   O GOLPE FINAL SOMA UMA FUNÇÃO AO FUNIL (frontend, 29/09, MM3). Ligar o
+   golpe final (Q3+Q5) partiu `aplicarGolpeDoJogador` em três — ela mesma
+   (que só perdeu 1 das suas 3 `linhas`, a que aplicava o dano), a nova
+   `continuarGolpeDoJogador` (que herdou exatamente essa linha, com a
+   mesma voz e o mesmo `nasce`) e `responderGolpeFinal` (sem `pushMsgs`,
+   por isso fora do funil). São 14 funções antes, 15 depois; o núcleo
+   (nucleo) sobe de 11 para 12 porque a nova função é núcleo por CADEIA DE
+   CHAMADA, como o comentário dela em FUNIL_DO_COMBATE explica — a borda
+   (3) e o total de 57 `pushMsgs` não mudam, porque a linha só trocou de
+   função, não nasceu nem sumiu. */
 sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
 {
   const f = contarFunil();
-  t("o funil tem 14 funções", f.funcoes === 14, String(f.funcoes));
-  t("e 11 delas são provadamente mudas fora da luta", f.porAnel.nucleo === 11, String(f.porAnel.nucleo));
+  t("o funil tem 15 funções", f.funcoes === 15, String(f.funcoes));
+  t("e 12 delas são provadamente mudas fora da luta", f.porAnel.nucleo === 12, String(f.porAnel.nucleo));
   t("as outras 3 são de borda — falam dentro e fora", f.porAnel.borda === 3, String(f.porAnel.borda));
   t("são 57 chamadas de pushMsgs no funil", f.linhas === 57, String(f.linhas));
   /* a soma tem de fechar: uma linha sem voz declarada some da conta em
@@ -681,37 +710,24 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
   t("frase de mesa e telegrama estão separados e ambos existem",
     f.voz.frase > 0 && f.voz.telegrama > 0, JSON.stringify(f.voz));
   t("o telegrama do golpe do jogador está declarado como telegrama",
-    FUNIL_DO_COMBATE.find((x) => x.fn === "aplicarGolpeDoJogador")
-      /* v9.273 (K4): 12125 -> 12122. v9.273 (K4): -3 linhas. A fila de pilulas da ficha (1993-2003) passou a consumir a peca `PilulaDeEscolha` e encolheu 3 linhas; o codigo abaixo dela andou junto e nada mais mudou.
-         A voz da linha (`telegrama`) e o que esta assercao guarda, e ela nao mudou.
-
-         v9.270 (K3): 11960 -> 12125, pelo mesmo deslocamento que re-mediu a
-       tabela inteira. A assercao e a mesma; o que mudou foi onde a linha
-       mora depois de a janela da reacao entrar no arquivo. */
-      /* E3: 12122 -> 11707. A voz da linha (`telegrama`) é o que esta
-         asserção guarda, e ela não mudou. */
-      /* R15: 12407 -> 12443, +36, pelo comentário que o conserto do nome da
-         campanha pôs dentro de `salvar`. Conferido por CONTEÚDO e não por
-         aritmética — é o mesmo `pushMsgs(linhas)` de `aplicarGolpeDoJogador`.
-         A voz continua a ser o que esta asserção guarda, e ela não mudou.
-         R17: 12443 -> 12536, +93 (a lápide de `VinhetaDaCena`/`IconeBalao`
-         e a fiação nova do veredito do cartaz nascem acima). Mesmo
-         `pushMsgs(linhas)`, conferido por conteúdo; a voz não mudou.
-         A FUGA (frontend): 12536 -> 12538, +2 (o import de `fuga.js` e
-         do rótulo do verbo Fugir, no topo do arquivo). Mesmo
-         `pushMsgs(linhas)`; a voz não mudou. */
-      /* R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 12538 -> 12630. */
-      /* A FUGA (frontend, segunda volta — R21): 12641 -> 12656, +15. O
-         fôlego da fuga (fuga.js) entrou acima — o `folegoRef` ao lado de
-         `combateRef`, o guardar/consultar dentro de `fugirDaLuta`/
-         `talvezCacar`/`talvezVirar`, e a emboscada do `resp.perigo` — e
-         tudo abaixo andou junto. Endereço re-medido pelo diff (as
-         mesmas nove linhas do bloco 9, mais seis do `resp.perigo`); o
-         `pushMsgs` desta linha não mudou de conteúdo nem de voz.
-         A FUGA COBRA (frontend, R22): 12656 -> 12667, +11 — o mesmo
-         delta do bloco 9 (`sementeMundo` + `abrirCombate`, acima dos
-         dois). Conferido por conteúdo; a voz não mudou. */
-      .linhas.find((l) => l.onde === "src/App.jsx:12667").voz === "telegrama");
+    /* MM3 (frontend, 29/09): esta asserção apontava para `aplicarGolpe-
+       DoJogador`, e passa a apontar para `continuarGolpeDoJogador` — não
+       porque a régua afrouxou, mas porque a LINHA mudou de função: é a
+       mesma divisão em três descrita no cabeçalho do bloco. A voz
+       (`telegrama`) e o conteúdo da linha (dano, PV, aflição da arma) são
+       exatamente os de sempre; só o corpo que a chama tem nome novo. O
+       histórico de deslocamentos anterior (K3, K4, E3, R15, R17, R21, R22)
+       rastreava esta MESMA linha dentro de `aplicarGolpeDoJogador`, onde
+       ela não mora mais — por isso sai daqui: continuar a acumulá-lo sob
+       um `fn` que já não é o dela confundiria o próximo re-medidor.
+       Mesmo dia, segunda medição: 12804 -> 12806, +2 (as duas linhas de
+       depuração do próprio MM3 dentro de `aplicarGolpeDoJogador`, acima —
+       ver a nota do relógio de 45 min, bloco 4).
+       Mesmo dia, terceira medição: 12806 -> 12804, -2 (as 4 linhas de
+       debug que chegaram a existir foram removidas ao fim do diagnóstico
+       — mesma nota do bloco 4). */
+    FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
+      .linhas.find((l) => l.onde === "src/App.jsx:12804").voz === "telegrama");
   t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
@@ -792,41 +808,37 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
     S.semNumero / S.turnos === 1 && S.semLinha / S.turnos === 0);
   t("e a recusa da sessão A é da família `alcance`", S.familiaDaRecusa === "alcance");
   t("a família `alcance` tem literal declarado em aplicarGolpeDoJogador",
-    /* v9.273 (K4): 12075 -> 12072, pelo mesmo -3 da fila da ficha. A familia
-       da recusa (`alcance`) e o que se guarda aqui, e ela e a mesma. */
-    /* E3: 12072 -> 11657, pelo mesmo deslocamento. A família da recusa
-       (`alcance`) é o que se guarda aqui, e ela é a mesma. */
-    /* R15: 12357 -> 12393, +36. Conferido por CONTEÚDO — é o mesmo
-       `pushMsgs([... 📏 ${ataque.motivo}])`. A família da recusa
-       (`alcance`) é o que se guarda aqui, e ela é a mesma.
-       R17: 12393 -> 12486, +93 (mesmo delta do bloco acima). Conferido
-       por conteúdo; a família não mudou.
-       A FUGA (frontend): 12486 -> 12488, +2 (mesmo delta do bloco acima).
-       Conferido por conteúdo; a família não mudou. */
-    /* R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 12488 -> 12580. */
-    /* A FUGA (frontend, segunda volta — R21): 12591 -> 12606, +15 — o
-       mesmo delta do bloco 9 (o fôlego da fuga entrou acima). Conferido
-       por conteúdo; a família não mudou.
-       A FUGA COBRA (frontend, R22): 12606 -> 12617, +11 — o mesmo delta
-       do bloco 9. Conferido por conteúdo; a família não mudou. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12617" && x.familia === "alcance"));
+    /* MM3 (frontend, 29/09): 12617 -> 12679, +62 — o mesmo delta que
+       `FUNIL_DO_COMBATE` registra no cabeçalho dele até `aplicarGolpe-
+       DoJogador` (hooks novos do estado do cartão do golpe final, acima
+       desta função). A família da recusa (`alcance`) é o que se guarda
+       aqui, e ela é a mesma — a recusa por alcance não mudou de função,
+       só de linha. O histórico anterior (K4, E3, R15, R17, R21, R22) fica
+       resumido: cada um re-mediu por conteúdo o mesmo `pushMsgs([...
+       📏 ${ataque.motivo}])`, nunca por soma de delta. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12679" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
      que a IA teve chance de narrar e não narrou. */
   t("o Narrador não é chamado nos sete turnos", S.chamadasAoNarrador === 0);
-  /* o endereço do `enviar` era `11932` até a v9.262 e hoje é `12138`: H1
-     abriu a porta das habilidades de classe e somou linhas acima dele, e
-     v9.273 (K4) tirou 3 ao trocar a fila de pílulas da ficha pela primitiva
-     `PilulaDeEscolha` — `12141 -> 12138`, conferido na linha do `enviar(` de
-     `aplicarGolpeDoJogador`. O que esta asserção guarda nunca foi o número —
-     é que o porquê do silêncio venha com ENDEREÇO, para que a próxima medição
-     possa conferi-lo; o número mudou, a intenção não. */
-  /* E4: 11723 -> 11737, pelas treze linhas da chave `economia` em :4929.
-     O que esta asserção guarda nunca foi o número — é que o porquê do
-     silêncio venha com ENDEREÇO, para que a próxima medição o possa
-     conferir. O número mudou; a intenção, não. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12683/.test(S.ondeSai));   /* A FUGA COBRA (frontend, R22): 12672 -> 12683, +11 (o mesmo delta de `aplicarGolpeDoJogador` — `sementeMundo` + `abrirCombate`, acima dos dois). Conferido por conteúdo; o `enviar` não mudou de sítio. · A FUGA (frontend, segunda volta — R21): 12657 -> 12672, +15 (o mesmo delta de `aplicarGolpeDoJogador` — o fôlego da fuga entrou acima, em `combateRef`/`aplicarResposta`). Conferido por conteúdo; o `enviar` não mudou de sítio dentro da função. · R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 12554 -> 12646. · R15: 12423 -> 12459, +36, pelo comentário do conserto do nome da campanha em `salvar` — conferido por CONTEÚDO, é o mesmo `enviar([COMBATE — RESOLVIDO PELO SISTEMA]...)`; o `enviar` não mudou de sítio dentro da função · E3: 12138 -> 11723 · R3: 11737 -> 11839 · R4b: 11839 -> 11846 · R13-A: 11846 -> 12312 · R13-B: 12312 -> 12423 (as peças de `A cinta`, de `O painel do tempo` e de `O topo do papel` nasceram ao nível do módulo — é a lei da casa, porque componente dentro do render mata o foco do input — e empurraram a região inteira; o `enviar` não mudou de sítio dentro da função) — as sete linhas são a lápide dos doze verbos (oito linhas onde havia a tabela) menos a do estado da gaveta de `Ações`. O `enviar` não mudou de sítio dentro da função, só de linha no arquivo · R17: 12459 -> 12552, +93 (mesmo delta de `aplicarGolpeDoJogador`; conferido por conteúdo, não por soma) · A FUGA (frontend): 12552 -> 12554, +2 (mesmo delta de `aplicarGolpeDoJogador`) */
+  /* MM3 (frontend, 29/09): o `enviar` MUDOU DE FORMA, não só de linha — pela
+     primeira vez desde que este dente existe. Ele não fica mais dentro de
+     `aplicarGolpeDoJogador`: a divisão em três (cabeçalho do bloco 9) moveu
+     a chamada para dentro de `depoisDoRevide`, uma função interna nova de
+     `continuarGolpeDoJogador`. `aplicarGolpeDoJogador` continua a mesma
+     função que a sessão A percorre (o `return true` da recusa por alcance
+     não mudou de corpo nenhum), mas o `enviar` que ele NÃO chama passou a
+     morar um nível de indireção adiante. Novo endereço: 12820, e mesmo dia,
+     segunda medição: 12820 -> 12822, +2 (as duas linhas de depuração do
+     próprio MM3 em `aplicarGolpeDoJogador` — ver a nota do relógio de 45
+     min, bloco 4), e terceira medição no MESMO dia: 12822 -> 12820, -2 (as
+     4 linhas de debug que chegaram a existir foram removidas ao fim do
+     diagnóstico). O histórico anterior (H1, K4, E4, R3/R4b/R13/R15/R17/
+     R21/R22 — dezenove cobranças desta mesma catraca por deslocamento
+     simples) traçava a linha dentro de `aplicarGolpeDoJogador`; sai daqui
+     porque essa linha já não mora lá. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12820/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));
