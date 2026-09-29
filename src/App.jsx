@@ -52,7 +52,7 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -180,7 +180,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, Prosa, BotaoDeOuvir, PeDaPagina, SetaDaLeitura } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, Prosa, BotaoDeOuvir, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -13451,7 +13451,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     if (salaRef.current) {
       const nova = porAcao(salaRef.current, euRef.current, texto);
       setSala(nova);
-      setEntrada("");
+      setEntrada(""); apagarORascunho(); /* V6a: a parte partiu para a faixa */
       /* v9.124: sem linha no log. Quem diz que você escreveu, e o que o
          outro escreveu, é a FAIXA logo acima da caixa — e ela diz melhor,
          porque mostra o texto inteiro e some quando o turno vira fato. Duas
@@ -13979,7 +13979,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     try {
       const persAgora = fichaViva() || personagem;
       if (convertePraTurnoDoCaido({ emCombate: !!combateRef.current, vida: persAgora && persAgora.vida, morto: persAgora && persAgora.morto })) {
-        setEntrada("");
+        setEntrada(""); apagarORascunho(); /* V6a: o turno partiu */
         pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "você está desacordado — o mundo segue sem você" }]);
         fecharMeuTurno(persAgora, (rv) => { enviar(`${VERBO_DE_ESPERA.frase}${rv.texto}`, rv.pers); });
         return;
@@ -14057,7 +14057,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (faz === "oraculo") { consultarOMundo(acao); return true; }
       return false;
     };
-    setEntrada("");
+    setEntrada(""); apagarORascunho(); /* V6a: o turno partiu */
     for (let i = 0; i < cascata.atalhos.length;) {
       let feito = false;
       try { feito = !!executar(cascata.atalhos[i].faz); } catch { feito = false; }
@@ -14089,7 +14089,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
       marcarTurnoDoMundo();
     }
-    setEntrada(""); setHabAbertas(false);
+    setEntrada(""); apagarORascunho(); setHabAbertas(false); /* V6a: o turno partiu */
     /* ---------------- A SEGUNDA FASE (v9.63) ----------------
        Daqui para baixo o turno já pagou os 45 minutos, e é essa a linha que
        separa as duas fases da tabela: as portas de "atalho" cobram o próprio
@@ -22022,7 +22022,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* v9.256 (Fase X - X3): sair para o menu solta o turno preso. Quem carrega
      um save o recebe de volta na restauracao; quem comeca outra campanha nao
      herda a trava de uma mesa que nao e a dele. */
-  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); setEntrada(""); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("menu"); };
+  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); guardarORascunho(); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("menu"); };
 
   /* ---------------- O CORPO SENTE (v9.160 → V4) ----------------
      Aqui morava o clarão do bloco do herói: um efeito que comparava a vida
@@ -22063,7 +22063,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      E É UM BOOLEANO E NÃO UMA MEDIA QUERY: quem sabe de que coluna se fala é
      a folha. Aqui só se decide o MOMENTO; o tamanho de cada momento, e em
      que coluna ele vale, é de `CAMPO_DO_TURNO`. */
-  const campoAberto = !bloqueado && (campoFocado || !!entrada.trim());
+  const campoAberto = campoFocado || !!entrada.trim(); /* V6a: o campo escreve na espera, e abre-se para isso */
 
   /* ============================================================
      A SOLEIRA (R3) — o que o mundo oferece passa a ser tocável no
@@ -22824,6 +22824,92 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       fimRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
     } catch (e) { calou("pousar a vista ao abrir", e); }
   };
+
+  /* ---------------- V6a · O QUE SE ESCREVE NUNCA SE PERDE ----------------
+     Até aqui o campo fechava (`disabled`) enquanto o Mestre pensava e com um
+     teste pendente, e as letras escritas nesse tempo sumiam sem aviso — 0 de
+     20, medido em V5e e pelo `jogo` em V6. A LEI (o coordenador; o `jogo`,
+     `mente/v6-jogo.md` §A): *o que se escreve nunca se perde; o que espera é o
+     envio.* O campo escreve sempre; quem espera é o DADO (`estadoDoDado`,
+     glifos.js), e nunca há fila automática — uma frase escrita antes de ler a
+     resposta não parte sozinha depois dela: o envio é sempre do jogador.
+
+     O RASCUNHO: o texto do campo guarda-se a cada pausa de escrita e ao
+     esconder a página, numa chave de preferência por modo — FORA do save —,
+     com a campanha que o escreveu; volta ao entrar no jogo, e só à mesma
+     campanha. Apaga-se quando o turno parte (e quando o jogador apaga o
+     campo). Nunca se grava com o jogo desmontado (a injeção de save). */
+  const campoRef = useRef(null);
+  const entradaRef = useRef("");
+  entradaRef.current = entrada;
+  const rascunhoDeQuemRef = useRef(null); /* a campanha em jogo; null fora do jogo */
+  const [pulsoDoDado, setPulsoDoDado] = useState(0);
+  const [lancado, setLancado] = useState(false);
+  /* A SALA A DOIS continua como a faixa promete (e a suíte da sala prende): com a sua
+     parte já escrita, mandar de novo REESCREVE-A até o outro escrever — o dado fica
+     Pronto com texto. À espera fica só quando o Mestre tece o turno dos dois. */
+  const estadoDado = estadoDoDado({ texto: entrada, carregando: carregando || oMestreTecendo, rolagem: !!rolagem, lancado });
+  const nomeDado = nomeDoDado(estadoDado, {
+    teste: rolagem ? linhaDoTeste({ ...rolagem, dificuldade: null, motivo: "" }) : "",
+    dificuldade: rolagem && rolagem.dificuldade != null ? rolagem.dificuldade : null,
+  });
+  const guardarORascunho = () => {
+    try {
+      if (!rascunhoDeQuemRef.current) return;
+      const v = rascunhoPara(entradaRef.current, rascunhoDeQuemRef.current);
+      if (v) localStorage.setItem(chaveDoRascunho(modoRef.current), v);
+    } catch (e) { calou("guardar o rascunho", e); }
+  };
+  const apagarORascunho = () => {
+    try { localStorage.removeItem(chaveDoRascunho(modoRef.current)); } catch (e) { calou("apagar o rascunho", e); }
+  };
+  /* ao entrar no jogo (e a cada campanha), o rascunho DESTA campanha volta */
+  useEffect(() => {
+    try {
+      if (fase !== "jogo") { rascunhoDeQuemRef.current = null; return; }
+      const quem = sementeMundo();
+      if (rascunhoDeQuemRef.current === quem) return;
+      rascunhoDeQuemRef.current = quem;
+      setEntrada(rascunhoDe(localStorage.getItem(chaveDoRascunho(modoRef.current)), quem));
+    } catch (e) { calou("devolver o rascunho", e); }
+  }, [fase, nomeCampanha, mundo]); // eslint-disable-line
+  /* a cada pausa de escrita */
+  useEffect(() => {
+    if (!entrada.trim()) return undefined;
+    const t = setTimeout(guardarORascunho, DADO.pausaDoRascunho);
+    return () => clearTimeout(t);
+  }, [entrada]); // eslint-disable-line
+  /* ao esconder ou fechar a página, na hora */
+  useEffect(() => {
+    const aoEsconder = () => { try { if (document.visibilityState === "hidden") guardarORascunho(); } catch (e) { calou("guardar o rascunho ao esconder", e); } };
+    try { document.addEventListener("visibilitychange", aoEsconder); window.addEventListener("pagehide", guardarORascunho); } catch (e) { calou("ouvir a página se esconder", e); }
+    return () => { try { document.removeEventListener("visibilitychange", aoEsconder); window.removeEventListener("pagehide", guardarORascunho); } catch { /* nada a desligar */ } };
+  }, []); // eslint-disable-line
+  /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
+     texto fica intacto e o dado dá um pulso (nenhum com reduce). */
+  const lancarODado = () => {
+    if (!entrada.trim()) return;
+    if (envioEspera(estadoDado)) { try { setPulsoDoDado((n) => n + 1); } catch (e) { calou("o pulso do dado", e); } return; }
+    try {
+      setLancado(true);
+      setTimeout(() => { try { setLancado(false); } catch (e) { calou("o dado assenta", e); } }, DADO.lancado);
+    } catch (e) { calou("o quarto de volta do dado", e); }
+    partirOTurno(entrada);
+  };
+  /* O TOQUE NO DADO — Repouso foca o campo (pegar no dado é começar a jogada);
+     Pronto envia; Rolar abre o véu do dado; À espera não faz nada (o nome diz). */
+  const tocarNoDado = () => {
+    try {
+      if (estadoDado === "repouso") { if (campoRef.current) campoRef.current.focus(); return; }
+      if (estadoDado === "rolar") { if (!dadoRolando) setDadoRolando(true); return; }
+      if (estadoDado === "pronto") lancarODado();
+    } catch (e) { calou("o toque no dado", e); }
+  };
+  /* a linha por cima do campo: o teste pendente; e, na espera, que o que se
+     escreveu fica */
+  const linhaDoCampo = rolagem && !carregando ? (
+    <>{linhaDoTeste(rolagem)}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
+  ) : estadoDado === "espera" && entrada.trim() ? "Fica guardado — você manda depois de ler." : null;
 
   /* ---------------- A SETA ABRE O QUE ANUNCIA (R3) ----------------
      Em `try/catch` porque nunca pode custar o turno: uma linha do sistema
@@ -24029,7 +24115,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 um turno só, ela vira ruído — e o botão que pedia ao jogador
                 para mandar o mundo viver some junto, porque o mundo já vive. */}
             {(
-            <div className="px-4 md:px-8 shrink-0" style={{ paddingBottom: rolagem ? "6px" : "20px" }}>
+            <div className="px-4 md:px-8 shrink-0" style={{ paddingBottom: COMPOSITOR.fundo }}>
               {/* LINHA 1 — ferramentas: rótulos sempre visíveis, sem roubar espaço da escrita */}
               {/* ---------------- A FILEIRA QUEBRA A LINHA (v9.196) ----------------
                   No telefone esta fileira pedia 370px e recebia 298: os quatro
@@ -24247,69 +24333,68 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
                   `items-stretch` no invólucro do botão: o `Botao` cresce até
                   ao piso sozinho, sem que o número apareça dentro do JSX. */}
-              <div className={`flex flex-col md:flex-row md:items-stretch gap-2 md:gap-3 rounded-lg p-2 min-w-0${campoAberto ? "" : " tv-turno-repouso"}`} style={{ background: T.bg, border: `1.5px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
-                <textarea value={entrada} onChange={(e) => setEntrada(e.target.value)} rows={2}
-                  onKeyDown={(e) => { if (gestoDoCampo(e) === "mandar") { e.preventDefault(); partirOTurno(entrada); } }}
-                  onFocus={() => { try { setCampoFocado(true); } catch (e) { calou("abrir o campo do turno", e); } }}
-                  onBlur={() => { try { setCampoFocado(false); } catch (e) { calou("fechar o campo do turno", e); } }}
-                  placeholder={rolagem ? "Role o dado abaixo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
-                  disabled={bloqueado} className={`tv-campo-do-turno${campoAberto ? " tv-campo-aberto" : ""} tv-anel-foco-no-campo w-full md:flex-1 bg-transparent outline-none tv-body resize-none leading-relaxed px-3 py-2 min-w-0`}
-                  style={{ color: T.ink, fontSize: TIPOS.corpo }} />
-                {/* OS DOIS VERBOS, e o invólucro que só existe na coluna
-                    estreita: `md:contents` apaga-o na larga e eles voltam a
-                    ser irmãos diretos do campo — uma composição, duas colunas,
-                    e nenhuma segunda árvore para manter.
+              {/* ---------------- V6 · O COMPOSITOR — a pílula e o dado ----------------
+                  O `bottom-composer-section` da pessoa (`126:112`): a pílula do
+                  campo (`126:113`, raio 24, o fundo do chão) com a gaveta `✦`
+                  onde a v3 tinha a caneta, e o DADO à direita — o único dado da
+                  tela, no lugar do `Agir →` e do `Rolar d20` (`mente/formas.md`
+                  §V6). Por cima, a linha do veredito, só quando há o que dizer
+                  (o teste pendente; na espera, que o texto fica).
 
-                    E NA ESTREITA ELE SÓ APARECE COM O CAMPO ABERTO — quem o
-                    esconde é a FOLHA (`.tv-turno-repouso .tv-turno-verbos`) e
-                    não um ramo de JSX, porque esconder em JS apagaria os dois
-                    verbos também na coluna larga, onde eles servem sempre.
+                  O CAMPO NUNCA FECHA (V6a): sem `disabled`. O Enter manda pelo
+                  dado (`lancarODado`), e é o dado que espera — na espera e no
+                  teste, o texto fica intacto e o dado dá um pulso. `Shift+Enter`
+                  quebra a linha, como sempre (`gestoDoCampo`).
 
-                    `onPointerDown` COM `preventDefault` É O QUE MANTÉM A
-                    GAVETA TOCÁVEL: sem ele, o toque tira o foco ao campo, o
-                    invólucro desaparece por baixo do dedo e o clique não chega
-                    a acontecer. O `preventDefault` do `pointerdown` impede a
-                    mudança de foco e não impede o clique. */}
-                <div className="tv-turno-verbos flex shrink-0 items-stretch justify-end gap-2 md:contents"
-                  onPointerDown={(e) => { try { e.preventDefault(); } catch (err) { calou("segurar o foco do campo ao tocar num verbo", err); } }}>
-                {/* A GAVETA DAS HABILIDADES (R4b) — a forma é a de W1 no
-                    tabuleiro, e é de propósito que não se inventa uma
-                    segunda: `aria-pressed`, violeta, glifo só, alvo pelo
-                    piso da tabela. O que está ARMADO já se lê nas fichas
-                    logo abaixo do campo e na borda dele, que muda de cor;
-                    o número aqui é só quantas, para não ser preciso abrir
-                    a gaveta para saber que há algo armado. */}
-                <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
-                  <button onClick={() => setHabAbertas((v) => !v)} disabled={bloqueado}
-                    aria-pressed={habAbertas} aria-label={habsSel.length > 0 ? `Habilidades, ${habsSel.length} armada${habsSel.length === 1 ? "" : "s"}` : "Habilidades"} title="Habilidades"
-                    className="tv-anel-foco tv-mono rounded-lg px-3 flex items-center justify-center"
-                    style={{
-                      minWidth: ALVOS.piso, fontSize: TIPOS.maquina,
-                      background: habAbertas ? T.violet : T.panel,
-                      color: habAbertas ? T.onSecond : T.violetSoft,
-                      border: `1px solid ${T.violet}`,
-                      opacity: bloqueado ? 0.4 : 1,
-                    }}><Glifo nome="faisca" tamanho={20} />{habsSel.length > 0 ? <span className="ml-1">{habsSel.length}</span> : null}</button>
-                </div>
-                {entrada.trim() ? (
-                  <div className="flex shrink-0 items-stretch" style={{ minHeight: ALVOS.piso }}>
-                    <Botao primario corpo desativado={bloqueado} onClick={() => partirOTurno(entrada)}>Agir →</Botao>
+                  A LINHA CONTINUA A TER UM ALVO FIXO NA COLUNA ESTREITA (R17
+                  §19): o dado. A gaveta `✦` mora DENTRO da pílula, e no
+                  telefone só com o campo aberto — quem a esconde continua sendo
+                  a folha (`.tv-turno-repouso .tv-turno-verbos`), e o
+                  `onPointerDown` com `preventDefault` continua segurando o foco
+                  do campo ao tocar nela (e no dado). A borda da pílula continua
+                  semântica: violeta com habilidade armada, âmbar com milagre. */}
+              <div className="pt-2">
+              <LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} />
+              <div className="flex items-end md:items-center min-w-0 gap-3 md:gap-4">
+                <div className={`tv-pilula-do-campo relative flex-1 min-w-0 flex items-end${campoAberto ? "" : " tv-turno-repouso"}`}
+                  style={{ background: T.bg, borderRadius: COMPOSITOR.raio, border: `${COMPOSITOR.borda}px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
+                  {/* A GAVETA DAS HABILIDADES (R4b → V6): a forma de W1 — `aria-pressed`,
+                      violeta, glifo só —, agora dentro da pílula. Durante a espera
+                      continua travada: não guarda texto, e abrir uma lista de
+                      habilidades para um turno que ainda não pode partir é ruído. */}
+                  <div className="tv-turno-verbos tv-gaveta-no-canto flex shrink-0 items-end md:self-center"
+                    onPointerDown={(e) => { try { e.preventDefault(); } catch (err) { calou("segurar o foco do campo ao tocar na gaveta", err); } }}>
+                    <button onClick={() => setHabAbertas((v) => !v)} disabled={bloqueado}
+                      aria-pressed={habAbertas} aria-label={habsSel.length > 0 ? `Habilidades, ${habsSel.length} armada${habsSel.length === 1 ? "" : "s"}` : "Habilidades"} title="Habilidades"
+                      className="tv-anel-foco tv-mono flex items-center justify-center"
+                      style={{
+                        minWidth: ALVOS.piso, height: ALVOS.piso, fontSize: TIPOS.maquina, borderRadius: COMPOSITOR.raio,
+                        background: habAbertas ? T.violet : "transparent",
+                        color: habAbertas ? T.onSecond : T.violetSoft,
+                        border: "none",
+                        opacity: bloqueado ? 0.4 : 1,
+                      }}><Glifo nome="faisca" tamanho={20} />{habsSel.length > 0 ? <span className="ml-1">{habsSel.length}</span> : null}</button>
                   </div>
-                ) : null}
+                  <textarea ref={campoRef} value={entrada} rows={2}
+                    onChange={(e) => { setEntrada(e.target.value); if (!e.target.value.trim()) apagarORascunho(); }}
+                    onKeyDown={(e) => { if (gestoDoCampo(e) !== "mandar") return; e.preventDefault(); lancarODado(); }}
+                    onFocus={() => { try { setCampoFocado(true); } catch (e) { calou("abrir o campo do turno", e); } }}
+                    onBlur={() => { try { setCampoFocado(false); } catch (e) { calou("fechar o campo do turno", e); } }}
+                    placeholder={rolagem && !carregando ? "Role o dado ao lado…" : carregando || oMestreTecendo ? "Pode ir escrevendo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
+                    className={`tv-campo-do-turno${campoAberto ? " tv-campo-aberto" : ""} w-full flex-1 bg-transparent outline-none tv-body resize-none leading-relaxed px-4 py-2 min-w-0`}
+                    style={{ color: T.ink, fontSize: TIPOS.corpo }} />
                 </div>
+                <Dado estado={estadoDado} dificuldade={rolagem && rolagem.dificuldade != null ? rolagem.dificuldade : null}
+                  nome={nomeDado} pulso={pulsoDoDado} aoTocar={tocarNoDado} />
+              </div>
               </div>
               </div>
             </div>
             )}
 
-            {rolagem && !carregando && (
-              <div className="tv-fade px-4 md:px-8 pb-5 flex justify-center" >
-                <div className="tv-pulse flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-2xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                  <span className="tv-mono text-xs text-center" style={{ color: T.ink }}><Glifo nome="dado" tamanho={16} /> Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : ""} — <em className="tv-body" style={{ color: T.inkDim }}>{rolagem.motivo}</em>{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</span>
-                  <Botao primario pequeno desativado={dadoRolando} onClick={() => { if (!dadoRolando) setDadoRolando(true); }}>Rolar d20{modPend !== 0 ? ` (+${modPend})` : ""}</Botao>
-                </div>
-              </div>
-            )}
+            {/* V6 · O CARTÃO DO TESTE SAIU DAQUI: o teste é a linha do veredito por cima
+                do campo, e o `Rolar d20` (132 × 28, o alvo mais pequeno da tela) aposentou-se —
+                quem rola é o dado, no estado Rolar. Um dado só na tela. */}
 
             </div>
 

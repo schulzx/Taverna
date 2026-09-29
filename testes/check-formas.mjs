@@ -346,7 +346,11 @@ const SEM_SAIDA_DE_MOVIMENTO = {
      imóvel com 19 (que passaria) que um segundo depois era 6 e
      "Falha". Sob movimento reduzido o dado não pisca: mostra um
      estado "rolando" parado e revela o valor de uma vez. */
-  ".tv-dice":     "o dado a rolar · tvShake .35s + tvGlow 1s, INFINITE · SAÍDA NÃO É `none`",
+  /* 28/09 · V6 — `.tv-dice` PAGOU: ganhou saída no prefers-reduced-motion, e ela
+     não é só `none` (o aviso de cima): o d20 fica parado e escurecido a
+     `DADO.rolandoParado`, que é o que separa o "rolando" do resultado no véu. A
+     entrada sai daqui pela regra anti-cemitério; a colisão de 1 000 ms (abaixo)
+     fica, porque sem `reduce` ele continua animando. */
   ".tv-pulse":    "o halo de atenção · tvGlow 1.6s INFINITE",
   ".tv-dano":     "o clarão do golpe · .7s",
   /* 25/09 · V4 — `.tv-agonia` PAGOU: deixou de ser infinita (três pulsos,

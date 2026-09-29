@@ -539,3 +539,66 @@ export function comportamentoDaRolagem(reduzido) {
   return reduzido ? "auto" : "smooth";
 }
 
+/* ============================================================
+   V6 · O DADO E O RASCUNHO — as contas do compositor.
+
+   A LEI DE V6a (o coordenador; o `jogo`, `mente/v6-jogo.md` §A): *o que se
+   escreve nunca se perde; o que espera é o envio.* O campo nunca fecha; quem
+   espera é o dado. Estas funções só fazem contas — o `App.jsx` lê o estado
+   do turno e chama.
+   ============================================================ */
+
+export const ESTADOS_DO_DADO = ["repouso", "pronto", "lancado", "espera", "rolar"];
+
+/* o estado do dado, por ordem de força: o quarto de volta do envio; a espera
+   (o Mestre respondendo, ou a sala à espera do outro); o teste pendente; e
+   então o campo — com texto é Pronto, vazio é Repouso */
+export function estadoDoDado({ texto = "", carregando = false, rolagem = false, aEsperaDoOutro = false, lancado = false } = {}) {
+  if (lancado) return "lancado";
+  if (carregando || aEsperaDoOutro) return "espera";
+  if (rolagem) return "rolar";
+  return String(texto == null ? "" : texto).trim() ? "pronto" : "repouso";
+}
+
+/* o envio espera? (o Enter e o toque não mandam nada nestes estados) */
+export function envioEspera(estado) {
+  return estado === "espera" || estado === "rolar" || estado === "lancado";
+}
+
+/* o nome acessível do dado, que é também o `title`: diz o que o toque faz */
+export function nomeDoDado(estado, { teste = "", dificuldade = null, outro = "" } = {}) {
+  if (estado === "pronto" || estado === "lancado") return "Agir";
+  if (estado === "espera") return outro ? `À espera de ${outro}` : "À espera do Mestre";
+  if (estado === "rolar") return ["Rolar o dado", teste, dificuldade != null ? `dificuldade ${dificuldade}` : ""].filter(Boolean).join(" — ");
+  return "Escrever a jogada";
+}
+
+/* a linha do veredito do teste pendente — a que era o cartão com o botão
+   `Rolar d20`: `Teste de Força · dif. 12 — motivo` */
+export function linhaDoTeste(rolagem) {
+  if (!rolagem || typeof rolagem !== "object") return "";
+  const nome = rolagem.rotulo || rolagem.atributo || "sorte";
+  const dif = rolagem.dificuldade != null ? ` · dif. ${rolagem.dificuldade}` : "";
+  const motivo = rolagem.motivo ? ` — ${rolagem.motivo}` : "";
+  return `Teste de ${nome}${dif}${motivo}`;
+}
+
+/* O RASCUNHO — o texto do campo, fora do save (uma chave de preferência por
+   modo, como `taverna_cfg_rolagens`). Guarda-se com QUEM o escreveu (a
+   campanha), e só volta à mesma: injetar ou começar outro save não o
+   ressuscita noutra campanha. Vazio: nada a guardar. */
+export function chaveDoRascunho(modo) {
+  return "taverna_rascunho_" + (modo ? String(modo) : "historia");
+}
+export function rascunhoPara(texto, campanha) {
+  const t = String(texto == null ? "" : texto);
+  if (!t.trim()) return null;
+  return JSON.stringify({ de: String(campanha || ""), texto: t });
+}
+export function rascunhoDe(bruto, campanha) {
+  try {
+    const r = JSON.parse(bruto);
+    if (!r || typeof r.texto !== "string" || String(r.de) !== String(campanha || "")) return "";
+    return r.texto;
+  } catch { return ""; }
+}

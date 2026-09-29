@@ -25,6 +25,9 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **`vereditoDaFrase(frase, estado)` — o que a frase vai fazer, antes de partir** · de: V6b (`jogo`) · 28/09 · médio
+  O que decide o turno já é código puro (`decidirTurno` e vizinhas em `turno.js`), mas só corre depois do envio. **Para quê:** enquanto o jogador escreve, a linha do veredito por cima do campo diz o que a frase vai fazer (*"Atacar o javali · Força contra 12"*) — a lei *o veredito antes do clique* a chegar ao texto livre. **O que se pede:** a mesma decisão, exposta pura e sem efeitos, com suíte; ligada ao pedido irmão *a frase é o lançamento* e a `chanceDoTeste`.
+
 - [ ] **dar um consumível a um companheiro fora da luta, e a cura por semente** · de: V4b (`jogo`, "o anel é onde se cuida") · 25/09 · médio
   `usarConsumivel` serve a qualquer ficha, mas o herói não tem forma de dar uma poção a um companheiro fora da luta; e `valorDaCura` sorteia com `Math.random()`, contra a lei do determinismo por semente.
   **Para quê:** V4 pôs o grupo na cinta com o anel de PV; o passo seguinte é tocar no anel ferido e ver a melhor cura com o preço e o resultado antes do clique (*o veredito antes do clique*). **O que se pede:** `darConsumivel(heroi, companheiro, item, semente)` e `intervaloDaCura(item, ficha) → { min, max }` puros, com suíte; `valorDaCura` pela semente.

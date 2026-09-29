@@ -204,7 +204,10 @@ sec("7. V3b · a tela principal");
      (`BotaoDeOuvir`, ui.jsx); o glifo mede `RUNA.glifoDeOuvir` (14, o de sempre). */
   t("a voz desenha ouvir e pausa — o 🔊 e o ⏸ saíram do glifoDeOuvir", /<Glifo nome=\{estado === "lendo" \? "pausa" : "ouvir"\} tamanho=\{RUNA\.glifoDeOuvir\} \/>/.test(UI2) && /<BotaoDeOuvir /.test(APP) && !/"⏸"\) : "🔊"/.test(APP));
   t("os chips do estado deixaram o emoji de condicoes.js: a favor / contra pela forma", /glifo: c\.tipo === "bom" \? "favor" : "contra", texto: c\.nome/.test(APP) && !/c\.icone \|\| \(c\.tipo === "bom"/.test(APP) && /glifo: "faisca", texto: e\.nome/.test(APP));
-  t("o teste pendente mostra o d20 da casa, nas duas telas", (APP.match(/<Glifo nome="dado" tamanho=\{16\} \/> Teste de \{rolagem\.rotulo/g) || []).length === 2 && !/🎲 Teste de/.test(APP));
+  /* V6: na tela principal o cartão do teste saiu — o teste é a linha do veredito
+     (`linhaDoTeste`) e o d20 da casa está no DADO, ao lado; a batalha mantém o seu
+     cartão (a tela de combate não se toca). Nenhum 🎲 voltou. */
+  t("o teste pendente mostra o d20 da casa, nas duas telas", (APP.match(/<Glifo nome="dado" tamanho=\{16\} \/> Teste de \{rolagem\.rotulo/g) || []).length === 1 && /<>\{linhaDoTeste\(rolagem\)\}/.test(APP) && /<Glifo nome="dado" tamanho=\{DADO\.glifo\}/.test(UI2) && !/🎲 Teste de/.test(APP));
   t("a gaveta da mesa é o glifo da magia, com o número de armadas no nome", /\}\}><Glifo nome="faisca" tamanho=\{20\} \/>\{habsSel\.length > 0/.test(APP) && /aria-label=\{habsSel\.length > 0 \? `Habilidades, \$\{habsSel\.length\} armada/.test(APP));
   t("o \"não guardou\" leva o aviso desenhado", /<Glifo nome="aviso" tamanho=\{12\} \/> não guardou/.test(APP));
   t("LadrilhoDoAssunto mora em ui.jsx, não no App (a peça é do desenho)", /export function LadrilhoDoAssunto\(/.test(UI2) && !/function LadrilhoDoAssunto\(/.test(APP));

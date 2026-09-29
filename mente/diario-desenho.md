@@ -19,6 +19,70 @@ Formato:
 
 ---
 
+## 28/09 23:40 · v9.303 · **V6 — o compositor e o dado: nenhuma letra se perde, e há um dado só** · commit (no bloco seguinte)
+
+- **estado inicial:** trava tomada às 22:03; HEAD `6805086`; nenhum ciclo do
+  sistema. **Lei do coordenador para a V6a:** *letras escritas enquanto o Mestre
+  pensa perdem-se sem aviso, 0 de 20 — o jogador a perder a própria frase sem
+  perceber*; nada do que se escreve se perde, nunca; o envio é que espera.
+- **jogo** (`mente/v6-jogo.md`): o campo nunca fica desativado, o `bloqueado`
+  só trava o envio; o `Enter` na espera não envia, não apaga e não fica em fila
+  — o dado dá um pulso e diz porquê; **nunca há envio automático** (uma frase
+  escrita antes de ler a resposta não parte sozinha). Mapeou mais dois caminhos
+  por onde as letras se perdiam: **ir ao menu apagava o texto** (`irMenu` fazia
+  `setEntrada("")`) e **recarregar a página também** — daí o rascunho. A base: 0
+  de 20 letras na espera e com teste pendente; o `Rolar d20` era o alvo mais
+  pequeno da tela principal (132×28).
+- **desenho** (`formas.md` §V6, `mente/v6-desenho.md`, scripts LF/CRLF provados
+  em `6805086`): o dado da pessoa (`126:117`) com o d20 de V3 e cinco estados
+  (Repouso · Pronto · Lançado · À espera · Rolar; `estadoDoDado` puro em
+  `glifos.js`); a linha do veredito fora da batalha; a pílula com o `✦` dentro;
+  o rascunho numa chave por modo (`taverna_rascunho_<modo>`), **fora do save**,
+  marcado com a campanha. Os 15 desvios numerados no quadro `146:2` do arquivo
+  da pessoa. **Três decisões do `regente`:** a sala a dois fica como está (o
+  protocolo é da pessoa, e a suíte dela intacta); a largura do campo no
+  telefone decide-a o `jogo`; **a linha do veredito da batalha não se troca** —
+  o combate está parado por ordem da pessoa.
+- **oficial** (bastão tomado às 22:49): scripts 1-2-3-5-6; **24 442 → 24 527
+  linhas**, 0 endereços mexidos; confirmou que a suíte da sala não foi tocada,
+  que nada no combate mudou, e que **o rascunho só escreve na sua chave** — nenhum
+  toque nas chaves do save nem no formato dele, e nenhum código percorre as
+  chaves do `localStorage`.
+- **a prova jogada** (depois na 5173, Mestre simulado, 375 e 1280, **custo 0**):
+  **sobe com três consertos.**
+  - **letras na espera: 0 → 20 de 20**, e ficam depois de a resposta chegar;
+    **com teste pendente: 0 → 20 de 20**; `Enter` na espera: 0 envios; 0 envios
+    automáticos em 5 s; **um dado só** em todos os estados; o rascunho sobrevive
+    a recarregar; ao lado do `126:112`, nada fora de D1–D15.
+  - **os consertos:** (1) no telefone o texto do campo aberto começava a 65 px da
+    borda, com 201 px de largura — lia-se como uma citação; o `✦` passa ao canto
+    de baixo, sem coluna, e o texto a 16 px com ~250 px (+25 %); (2) o anel de
+    foco de 3 px de `ink` era a linha mais clara da tela → 2 px de `lineStrong`
+    (4,16:1); (3) **um defeito anterior a V6**: o d20 da espera rodava sem fim
+    com "reduzir movimento".
+  - **os consertos, feitos no mesmo commit** (script do `desenho` provado numa
+    cópia da árvore com V6 aplicada; o `oficial` aplicou e viu vivo): a 375 o
+    texto do campo aberto começa a **17 px** da borda (era 65) com **249 px** úteis
+    (era 201, +24 %), o `✦` no canto de baixo; o anel é 2 px `lineStrong`; o d20
+    da espera **parado e escurecido** com `reduce` (a regra de folha vale no véu e
+    na lenda — nenhum arquivo do combate a usa). `teste-v6-compositor` 52/52.
+  - **a sala a dois:** não perde letras, por leitura do código; o lado do
+    cliente que não é anfitrião **não foi verificado ao vivo**.
+  - **não medidos, e não bloqueiam:** a catraca de R6 e *Enter contra toque* —
+    com o Mestre simulado quem escolhe é o próprio `jogo`, que conhece o dado, e
+    os números não valeriam nada. Pedem uma sessão real de 20 turnos (~20
+    chamadas); **não a gastei sem a pessoa** — idealmente é ela a jogar os
+    primeiros 5 sem lhe explicarem o dado.
+- **decisões médias:** o rascunho fora do save (uma chave de preferência; um
+  commit revertido deixa só uma chave inerte); nunca envio automático; o dado
+  "Pronto" também na sala a dois enquanto se pode reescrever (o `jogo` corrigiu
+  a sua regra 5).
+- **as ambiciosas:** **V6b — a frase mostra o preço antes de partir** (`jogo`,
+  pedido `vereditoDaFrase` ao sistema) e **V6c — o dado lembra a sorte da mesa**
+  (`desenho`). Nenhuma vai à pessoa.
+
+---
+
 ## 28/09 22:00 · v9.301–v9.302 · **V5e — a resposta chega pelo começo, e a cerimónia acende** · commits `1d414df` (V5e, v9.301) e `0b06385` (a cerimónia, v9.302)
 
 - **estado inicial:** trava tomada às 20:19; HEAD `c5acc8c`; nenhum ciclo do

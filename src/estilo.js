@@ -407,6 +407,61 @@ export const CAMPO_DO_TURNO = {
 };
 
 /* ============================================================
+   V6 · O DADO — o gesto que compromete o turno, e o único dado da tela.
+
+   A FORMA é o `btn-send-d20` da pessoa (`126:117`): redondo de 48, âmbar
+   cheio, a sombra âmbar por fora (0 0 8, a 0,25) e o reflexo por dentro
+   (inset 0 1 1, a 0,25 — o branco do nó é o `ink` da casa). O GLIFO é o d20
+   de V3 (o icosaedro), e não o d6 que a v3 desenhou: um jogo de d20 com um
+   d6 no botão de agir diz o dado errado (o `jogo`, V6 D1).
+
+   OS CINCO ESTADOS (o `jogo`, `mente/v6-jogo.md` §B; a conta é
+   `estadoDoDado`, glifos.js):
+   - REPOUSO: contorno âmbar, o glifo a 0,55 (3,82:1 sobre o fundo — acima
+     dos 3:1 de um gráfico, WCAG 1.4.11). O toque foca o campo.
+   - PRONTO: cheio e aceso. O toque envia (= Enter).
+   - LANÇADO: o quarto de volta do glifo, em `lancado` ms, e nada com reduce.
+   - À ESPERA: contorno `lineStrong` (3,90:1), glifo `inkDim`. Não envia; o
+     Enter dá UM pulso de `pulso` ms (nenhum com reduce).
+   - ROLAR: cheio, com a dificuldade na face; os pulsos de `MUDOU_AGORA` ao
+     aparecer, e pára. O toque abre o véu do dado.
+   ============================================================ */
+export const DADO = {
+  glifo: 24,              /* o `d20-die` do nó (24) */
+  borda: 1.5,             /* o contorno do repouso e da espera */
+  brilho: 8,              /* a sombra âmbar da v3, por fora */
+  alfaDoBrilho: 0.25,
+  alfaDoBrilhoAceso: 0.6, /* o topo dos pulsos do Rolar */
+  alfaDoReflexo: 0.25,    /* o brilho por dentro (inset 0 1 1) */
+  alfaApagado: 0.55,      /* o glifo do repouso */
+  alfaDaFace: 0.35,       /* o d20 por trás do número, no Rolar (decoração: o número é que diz) */
+  lancado: 300,           /* ms — o quarto de volta (≤ 300, o `jogo`) */
+  pulso: 400,             /* ms — o pulso único do Enter na espera */
+  pausaDoRascunho: 400,   /* ms — o rascunho guarda-se a cada pausa de escrita (o `jogo`, §1) */
+  /* o d20 da casa rolando (`.tv-dice`: a espera, o véu, a lenda), PARADO com
+     reduced-motion: escurecido, e não apagado — é o que separa o "a rolar" do
+     resultado no véu, onde o número continua trocando por JavaScript (o aviso de
+     D5c: a saída do dado a rolar não pode ser só `none`) */
+  rolandoParado: 0.7,
+};
+
+/* V6 · A PÍLULA DO COMPOSITOR — o `custom-input-field` da pessoa (`126:113`):
+   raio 24, o fundo do chão (`bg`) e a borda SEMÂNTICA (violeta com
+   habilidade armada, âmbar com milagre, o fio `line` sem nada — a v3
+   pinta-a violeta sempre, e isso apagaria o sinal de armada: V6 D5). O
+   compositor fica a `fundo` px do pé da tela, com ou sem teste pendente (o
+   cartão do teste saiu: o teste é a linha do veredito, por cima do campo). */
+export const COMPOSITOR = {
+  raio: 24,
+  borda: 1.5,
+  fundo: 20,
+  /* V6 · a prova jogada (`v6-jogo.md` §7): o anel de 3 px de `ink` (14,8:1) era a
+     linha mais clara da tela e pesava mais que o botão da soleira. 2 px de
+     `lineStrong` (4,16:1 sobre o fundo) continua cumprindo a WCAG 2.4.11. */
+  anelDoFoco: 2,
+};
+
+/* ============================================================
    A CINTA (R13, etapa A) — o topo do telefone, em px.
 
    Ela substitui TRÊS faixas (o cabeçalho, a barra de estado e a fita de
@@ -1378,6 +1433,11 @@ export const MOVIMENTO_CSS = `
    funciona, calado. */
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
+  /* O D20 ROLANDO, PARADO (V6, um defeito anterior apanhado na prova jogada): a
+     linha da espera, o veu do dado e a lenda rodavam sem fim com reduced-motion.
+     A saida nao e so none: parado, o d20 fica escurecido, e e isso que separa o
+     rolando do resultado no veu (o numero continua trocando por JavaScript). */
+  .tv-dice { animation: none; filter: brightness(${DADO.rolandoParado}); }
   .tv-chamado-entra, .tv-leque-abre, .tv-trilho-entra, .tv-resolve { animation: none; }
   /* O FILETE QUE RESPIRA (R4a) — sem crase, mesma razão de cima: sem
      pulso, amber fixo — Voz já troca a legenda por texto ("o Mestre
@@ -1865,12 +1925,46 @@ export const SUPERFICIES_CSS = `
   .tv-campo-do-turno.tv-campo-aberto { height: ${CAMPO_DO_TURNO.tecto}px; }
   /* e a segunda linha dos verbos so existe com o campo aberto */
   .tv-turno-repouso .tv-turno-verbos { display: none; }
+  /* V6 · A GAVETA NO CANTO (a prova jogada): aberta no telefone, a gaveta mora
+     no canto de baixo a esquerda da pilula, sem coluna — a coluna ocupava a
+     altura toda e empurrava o texto 65 px para dentro (lia-se como uma citacao).
+     O campo reserva por baixo a altura de um alvo, e o texto comeca a 16 px e
+     tem a largura inteira; ate tres linhas cabem sem altura a mais. O fundo da
+     gaveta e o da pilula: o texto que rola passa por baixo dela, nunca por cima. */
+  .tv-gaveta-no-canto {
+    position: absolute; left: 0; bottom: 0; z-index: 1;
+    background: ${T.bg}; border-radius: ${COMPOSITOR.raio}px;
+  }
+  .tv-campo-do-turno.tv-campo-aberto { padding-bottom: ${ALVOS.piso}px; }
 }
 /* A ORDEM É A REGRA, outra vez: este bloco tem de vir DEPOIS da transição
    acima, porque uma media query nao soma especificidade — so envolve. Se
    subisse, dava um acessivel que nao funciona, calado. */
 @media (prefers-reduced-motion: reduce) {
   .tv-campo-do-turno { transition: none; }
+}
+/* ---------------- V6 · O DADO (os tres movimentos) ----------------
+   LANCADO: o quarto de volta do glifo, uma vez. PULSO: o Enter na espera,
+   uma vez. ROLAR: os pulsos de MUDOU_AGORA ao aparecer, e para. Nenhum
+   deles bloqueia nada, e os tres tem saida no reduced-motion, logo abaixo. */
+.tv-dado-lancado { animation: tvDadoLancado ${DADO.lancado}ms ease-out 1 both; }
+@keyframes tvDadoLancado { from { transform: rotate(0deg); } to { transform: rotate(90deg); } }
+.tv-dado-pulso { animation: tvDadoPulso ${DADO.pulso}ms ease-out 1; }
+@keyframes tvDadoPulso { 0% { transform: scale(1); } 40% { transform: scale(0.86); } 100% { transform: scale(1); } }
+.tv-dado-rolar { animation: tvDadoRolar ${MUDOU_AGORA.pulso}ms ease-in-out ${MUDOU_AGORA.vezes}; }
+@keyframes tvDadoRolar {
+  0%, 100% { box-shadow: 0 0 ${DADO.brilho}px ${alfa(T.amber, DADO.alfaDoBrilho)}; }
+  50% { box-shadow: 0 0 ${DADO.brilho * 3}px ${alfa(T.amber, DADO.alfaDoBrilhoAceso)}; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-dado-lancado, .tv-dado-pulso, .tv-dado-rolar { animation: none; }
+}
+/* V6 · O ANEL DO FOCO NA PILULA: com o raio de 24, o anel do campo (o
+   retangulo de tv-anel-foco-no-campo) cortava a pilula por dentro. O anel
+   passa a ser da pilula inteira, com o raio dela, a 2 px por fora do fio. */
+.tv-pilula-do-campo:focus-within {
+  outline: ${COMPOSITOR.anelDoFoco}px solid ${T.lineStrong};
+  outline-offset: 2px;
 }
 `;
 

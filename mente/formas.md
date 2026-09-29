@@ -10455,3 +10455,135 @@ até três, na ordem em que chegaram — e o toque continua a levar ao começo. 
 dizem o assunto a `assuntoDaLinha`); peso médio de design; um commit revertido
 desfá-lo. A prova é do `jogo`: o jogador que volta à página diz *o que mudou* antes
 de rolar?
+
+### V6 · o compositor e o dado, com V6a dentro (`desenho`, 28/09)
+
+*O momento é do `jogo` (`mente/v6-jogo.md`), e sigo-o em tudo o que não digo aqui;
+a lei de V6a é do coordenador: **o que se escreve nunca se perde; o que espera é o
+envio.** A composição é a da pessoa (`126:112` · `bottom-composer-section`).
+Construção: `mente/v6-desenho.md` (cinco scripts por âncora, provados em duas cópias
+de `6805086` — LF e CRLF —: build limpo, **218/218 · 15/15** nas duas; `App.jsx`
+24 442 → 24 527 linhas, **8 trocas na mesma linha antes da 22 489 e tudo o que
+cresce depois dela: 0 endereços de `check-acoes-do-jogador` mexidos**; a suíte da
+sala e a tela de combate intocadas). Figma: biblioteca `e5wJUzInAssoebx5npssKc`,
+página **`V6 · o compositor e o dado`** (`247:67`) — `O dado` (`247:85`, *Estado*
+Repouso · Pronto · Lançado · À espera · Rolar), `A pílula do campo` (`247:106`),
+`A linha do veredito` (`247:107`) e o par antes/depois do jogo vivo; no arquivo da
+pessoa, **`146:2`**: o `126:112` clonado por cima de três faixas do código, com
+**os 15 desvios numerados e escritos um por um**.*
+
+**1 · V6a — cada caminho por onde uma letra se perdia.**
+- **O campo nunca fecha.** O `disabled={bloqueado}` saiu do `<textarea>`; o que
+  `bloqueado` trava passa a ser só o envio (o Enter e o toque no dado) e a gaveta
+  `✦`, que não guarda texto. O Enter na espera e no teste não manda, não apaga,
+  não enfileira: o dado dá um pulso e o nome diz porquê.
+- **Nunca há fila.** O envio só nasce de dois gestos do jogador (o Enter e o toque
+  no dado); nenhum efeito o chama. Quando a resposta chega, o texto fica, e o dado
+  passa a Pronto.
+- **O rascunho**: o texto guarda-se a cada pausa de 400 ms, ao esconder e ao
+  fechar a página, numa chave por modo (`taverna_rascunho_<modo>`, **fora do
+  save**), com a campanha que o escreveu; volta ao entrar no jogo, e só à mesma
+  campanha (injetar ou começar outro save não o ressuscita). Ir ao menu **guarda**
+  (antes apagava). Apaga-se quando o turno parte — nos quatro `setEntrada("")` de
+  quem manda — e quando o jogador esvazia o campo. Nunca grava com o jogo
+  desmontado.
+- O que continua como estava: o véu do dado, o morto e o alforje cobrem o campo e
+  não o apagam; a batalha por cima guarda o estado.
+
+**2 · As peças (ui.jsx), e cada número sai de `DADO` ou `COMPOSITOR`.**
+- **`O dado`** (`Dado`, com `estadoDoDado` em glifos.js) — o `btn-send-d20` da
+  pessoa com o d20 de V3. Repouso: contorno âmbar 1,5, glifo a 0,55 (**3,82:1**,
+  acima dos 3:1 de um gráfico); o toque foca o campo. Pronto: âmbar cheio, a
+  sombra âmbar (0 0 8, 0,25) e o reflexo por dentro (inset 0 1 1, ink 0,25); na
+  mesa a palavra **AGIR** à esquerda. Lançado: o quarto de volta do glifo em 300
+  ms. À espera: contorno `lineStrong` (**3,90:1**), glifo `inkDim`,
+  `aria-disabled` (nunca `disabled`: tem nome e foco). Rolar: cheio, a
+  dificuldade na face (mono 12 negrito `onAccent`, **10,04:1**) por cima do d20 a
+  0,35, e os 3 pulsos de `MUDOU_AGORA`. `onPointerDown` segura o foco do campo.
+  Os três movimentos têm saída no reduced-motion.
+- **`A linha do veredito`** (`LinhaDoVeredito`, fora da batalha) — por cima da
+  pílula, **0 px sem veredito**: o teste pendente (`linhaDoTeste`, com o
+  modificador e a vantagem, em `amberSoft`) e, na espera com texto, *"Fica guardado
+  — você manda depois de ler."* `aria-live`. Letra do piso (12), e não os 11 da de
+  batalha, que é a mesma ideia e deve passar a ser esta peça **quando o `regente`
+  abrir aquele ramo** — até lá são duas, e fica escrito.
+- **A pílula** — raio 24, fundo `bg`, borda semântica, o `✦` dentro à esquerda
+  (no telefone só com o campo aberto, pela folha de R17), e o **anel do foco na
+  pílula inteira** (`focus-within`, 2 px por fora) em vez do retângulo do campo,
+  que a cortava por dentro.
+
+**3 · A fiação (App.jsx).** O `Agir →` e o `Rolar d20` da tela principal
+aposentam-se: **um dado na tela** em todos os estados (o da batalha fica, e a tela
+de combate não se toca). O cartão do teste saiu (o `Rolar d20` media 132 × **28**,
+o alvo mais pequeno da tela). O compositor fica 8 px abaixo do cartão da página e
+a `COMPOSITOR.fundo` (20) do pé, com ou sem teste.
+
+**4 · Onde me afastei do `jogo`.** **A sala a dois** — ele pediu o dado À espera
+também à espera do outro (§A.5), e o critério 12 dele pede a suíte da sala sem
+asserção movida. A faixa promete *"Dá para reescrever a sua até lá"*, e a suíte
+prende essa frase. As duas coisas não cabem juntas; ficou a promessa (mandar de novo
+reescreve a sua parte, e o dado fica Pronto com texto). A conta do estado já sabe da
+espera do outro (`aEsperaDoOutro`), se ele decidir o contrário.
+
+**5 · Os números (jogo vivo, Chrome, save do dia, Narrador simulado — 0 chamadas;
+antes `6805086` × depois).**
+
+| critério do `jogo` (§5) | antes | depois |
+|---|---|---|
+| 1 · letras na espera (20) | **0**, e 0 depois da resposta | **20 / 20**, e 20 depois (375 e 1280) |
+| 2 · letras com teste pendente | **0** (`disabled`) | **20 / 20** |
+| 3 · Enter na espera | — | **0 envios**, 20 letras intactas, um pulso |
+| 4 · nenhuma fila | — | **0 envios em 5 s**; o dado passa a Pronto |
+| 5 · Enter com teste | — | **não rola, não manda**; o toque no dado abre o véu |
+| 6 · um dado | o `Rolar d20` longe do campo | **1** em todos os estados; **0** `Rolar d20`, **0** `Agir →` |
+| 7 · os cinco estados | — | lidos pelo nome e por `data-dado`; Lançado a correr aos 60 ms; **0** animações com reduce |
+| 8 · o Repouso foca | — | foco no campo, **0** envios |
+| 9 · alvos | ✦ 48 × 65 na mesa, Rolar 132 × **28** | dado **48 × 48** (90 × 48 com AGIR), ✦ **48 × 48** |
+| 10 · Enter / Shift+Enter | quebra, 0 envios | **igual** |
+| 11 · o rascunho | recarregar: **0** | recarregar: **20 / 20**; outra campanha: **0**; de volta: volta; enviar: **apaga** (campo e chave) |
+
+**6 · O que o número mostrou e fica para o `jogo`.** **A largura do campo no
+telefone, a escrever**: 325 → **233 px** (o dado ao lado e o ✦ dentro da pílula —
+~31 caracteres por linha em vez de ~44). É a composição que o `jogo` desenhou (D7),
+e a lei de R17 §19 (*uma linha estreita leva um alvo fixo além do que cresce*) fica
+no limite: com o campo aberto a linha leva **dois** (o ✦ e o dado). A alternativa
+que meço se ele quiser: com o campo aberto no telefone, o ✦ e o dado descem para uma
+fila por baixo da pílula, como era o `Agir →` — o campo volta a 325, e a altura
+aberta sobe 56 (a mesma que já custava).
+
+**A proposta ambiciosa — o dado lembra a sorte da mesa.** Um dado só na tela é
+também **um sítio só para a memória da sorte**. Proposta: depois de um teste, o dado
+em Repouso mostra na face, até ao envio seguinte, **o número que saiu** — em
+contorno, a cor do tom (âmbar se passou, `danger` se falhou, o crítico com o anel
+cheio). O jogador que volta os olhos ao campo vê, sem ler o registro, *"tirei 17"*.
+É o dado de verdade que fica em cima da mesa depois de rolar. Não precisa do
+sistema (a última rolagem já se sabe); médio de design; um commit revertido desfá-lo.
+A prova é do `jogo`: quem volta ao campo sabe, sem subir, como correu o teste?
+
+#### V6 · os consertos da prova (`desenho`, 28/09)
+
+*A prova jogada do `jogo` (`mente/v6-jogo.md` §7) aprovou V6 com três consertos leves,
+no mesmo commit. Script: `1-consertos.cjs`, provado numa cópia da árvore com V6
+aplicado (LF e CRLF): build limpo, **218/218 · 15/15**; `App.jsx` com as mesmas
+**24 527** linhas (duas trocas na mesma linha, depois da 22 489). Par antes/depois a
+375 na biblioteca, página `247:67`.*
+
+1. **A gaveta no canto.** Aberta no telefone, a `✦` deixa de ser uma coluna com a
+   altura toda (o texto começava a 65 px da borda e lia-se como uma citação) e passa
+   ao **canto de baixo à esquerda da pílula** (`.tv-gaveta-no-canto`, só na coluna
+   estreita), com o fundo da pílula por trás. O campo aberto reserva por baixo a
+   altura de um alvo (`ALVOS.piso`), para o texto nunca passar debaixo dela. Medido a
+   375: o texto começa a **16 px** (era 65) e tem **249 px** (era 201, **+24 %**); a
+   pílula continua com **140** de altura, e três linhas cabem sem rolar (82 px de
+   texto contra 73 de três linhas). Na mesa nada muda.
+2. **O anel do foco** da pílula: **2 px de `lineStrong`** (`COMPOSITOR.anelDoFoco`),
+   em vez de 3 de `ink`. Era a linha mais clara da tela (14,8:1) e pesava mais que o
+   botão da soleira; 4,16:1 continua a cumprir a WCAG 2.4.11.
+3. **O d20 a rolar com reduced-motion** — um defeito anterior a V6. O `.tv-dice` (a
+   linha da espera, o véu do dado, a lenda) rodava sem fim (`tvShake` + `tvGlow`
+   medidos a correr). Ganhou saída no bloco `reduce` de `MOVIMENTO_CSS`: **parado e
+   escurecido** (`brightness(DADO.rolandoParado)`, 0,7), e não só `none`. É o aviso
+   que o próprio `check-formas` escrevia: no véu, o "a rolar" parado tem de se
+   distinguir do resultado (o número continua a trocar por JavaScript). A entrada
+   sai do livro de perdões (`SEM_SAIDA_DE_MOVIMENTO`) pela regra anti-cemitério.
+   Nenhum outro toque no ramo de combate.

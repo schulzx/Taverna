@@ -84,10 +84,14 @@ if (fonteDoGesto) {
 }
 
 sec("2. E o campo do turno usa ESTA função, e não uma cópia");
-t("o campo é `<textarea>`", /<textarea value=\{entrada\}/.test(APP),
+/* V6: o campo ganhou `ref={campoRef}` (o dado em Repouso foca-o). Continua a ser o
+   `<textarea>` de D4 — é isso que a régua prende. */
+t("o campo é `<textarea>`", /<textarea ref=\{campoRef\} value=\{entrada\}/.test(APP),
   "voltou a ser `<input>`: a prosa perdeu a multi-linha que D4 desenhou");
 t("e o `onKeyDown` chama `gestoDoCampo`",
-  /onKeyDown=\{\(e\) => \{ if \(gestoDoCampo\(e\) === "mandar"\)/.test(APP),
+  /* V6: o gesto continua sendo decidido por `gestoDoCampo`; o que mudou é quem manda
+     (`lancarODado`, que espera quando o Mestre ainda responde) */
+  /onKeyDown=\{\(e\) => \{ if \(gestoDoCampo\(e\) !== "mandar"\) return;/.test(APP),
   "o campo voltou a decidir o gesto dentro do JSX — e o que está dentro do JSX não se prova");
 /* MOVIDA (24/09, R17 · a emenda do campo). Media que o gesto chamava
    `agir(entrada)` directamente. Passou a chamar `partirOTurno(entrada)`, que
@@ -98,13 +102,19 @@ t("e o `onKeyDown` chama `gestoDoCampo`",
    do toque no verbo reabria o campo no pior momento possível.
    O QUE ESTA ASSERÇÃO PROTEGE NÃO MUDOU: que o `Enter` de mandar não escreve
    uma linha em branco antes de partir. Só mudou o nome de quem parte. */
+/* V6: o Enter de mandar passa pelo dado (`lancarODado`), que é quem parte pelo
+   `partirOTurno` — ou espera, na resposta do Mestre e no teste. O que a régua
+   protege não mudou: mandar não escreve uma linha em branco antes de partir. */
 t("mandar impede o `Enter` nativo de escrever a linha em branco",
-  /gestoDoCampo\(e\) === "mandar"\) \{ e\.preventDefault\(\); partirOTurno\(entrada\); \}/.test(APP));
+  /gestoDoCampo\(e\) !== "mandar"\) return; e\.preventDefault\(\); lancarODado\(\); \}/.test(APP)
+  && /const lancarODado = \(\) => \{[\s\S]{0,700}?partirOTurno\(entrada\);/.test(APP));
 t("e quem parte devolve o campo ao repouso ANTES de mandar — e o `agir` fica de fora do try",
   /const partirOTurno = \(texto\) => \{[\s\S]{0,600}?calou\([^)]*\); \}\n    agir\(texto\);/.test(APP)
   || (/const partirOTurno/.test(APP) && /\} catch \(e\) \{ calou\("devolver o campo ao repouso quando o turno parte", e\); \}\s*\n\s*agir\(texto\);/.test(APP)),
   "devolver o campo ao repouso é cosmética; mandar o turno não é — nunca pode custar o turno");
-t("e `Agir →` continua a existir como botão", /Agir →<\/Botao>/.test(APP));
+/* V6: `Agir →` aposentou-se — o gesto de agir é O DADO (`126:117`), e o nome
+   dele no Pronto é `Agir`. Continua a haver um botão que parte o turno. */
+t("e `Agir →` continua existindo como botão", /<Dado estado=\{estadoDado\}/.test(APP) && /if \(estado === "pronto" \|\| estado === "lancado"\) return "Agir";/.test(readFileSync(new URL("../src/glifos.js", import.meta.url), "utf8")));
 
 sec("3. O SINAL DE SETA FICA RESERVADO AO QUE SE TOCA");
 const fonteDaPorta = extrair("portaDaLinhaDeSistema");
@@ -475,12 +485,20 @@ t("o salto até ao tecto respeita `prefers-reduced-motion`",
    Mestre a escrever o botão FICA, cinzento — ali a recusa é uma ESPERA, e
    uma espera mostra-se; o vazio é uma AUSÊNCIA, e uma ausência não se
    desenha. */
-t("`Agir →` nasce na primeira letra — com o campo vazio ele não está lá",
-  /\{entrada\.trim\(\) \? \(/.test(APP) && !/desativado=\{bloqueado \|\| !entrada\.trim\(\)\}/.test(APP));
-t("e `bloqueado` continua a apagá-lo, porque esperar não é o mesmo que não ter o que mandar",
-  /<Botao primario corpo desativado=\{bloqueado\} onClick=\{\(\) => partirOTurno\(entrada\)\}>Agir →<\/Botao>/.test(APP));
-t("e o campo só encolhe VAZIO E SEM FOCO, e `bloqueado` força o repouso",
-  /const campoAberto = !bloqueado && \(campoFocado \|\| !!entrada\.trim\(\)\);/.test(APP),
+/* V6: a lei continua (*o melhor botão desactivado é o que não está lá*), e o dado
+   cumpre-a de outra maneira: com o campo vazio ele é o Repouso, que FOCA o campo em
+   vez de mandar nada — nunca um botão morto. E a espera continua se mostrando: o dado
+   em À espera, com o texto lá. O que V6a mudou é o campo: ele já não fecha na espera,
+   e abre-se com foco ou texto também enquanto o Mestre responde. */
+{ const G = await import("../src/glifos.js");
+  t("`Agir →` nasce na primeira letra — com o campo vazio ele não está lá",
+    G.estadoDoDado({ texto: "" }) === "repouso" && G.estadoDoDado({ texto: "vou" }) === "pronto"
+    && /if \(estadoDado === "repouso"\) \{ if \(campoRef\.current\) campoRef\.current\.focus\(\); return; \}/.test(APP));
+  t("e `bloqueado` continua a apagá-lo, porque esperar não é o mesmo que não ter o que mandar",
+    G.estadoDoDado({ texto: "vou", carregando: true }) === "espera" && G.envioEspera("espera") && G.envioEspera("rolar"));
+}
+t("e o campo só encolhe VAZIO E SEM FOCO — e já não fecha na espera (V6a)",
+  /const campoAberto = campoFocado \|\| !!entrada\.trim\(\);/.test(APP) && !/disabled=\{bloqueado\} className=\{`tv-campo-do-turno/.test(APP),
   "encolher com texto lá dentro esconderia ao jogador o que ele escreveu — o defeito dos 31 % outra vez, de propósito");
 
 console.log(`\ncampo do turno R3: ${bons} passaram, ${maus} falharam`);

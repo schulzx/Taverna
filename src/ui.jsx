@@ -12,10 +12,10 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
-import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase } from "./glifos.js";
+import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase, ESTADOS_DO_DADO } from "./glifos.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -509,6 +509,72 @@ export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
    36) com a cor de `T` por nome; os traços são `amber` a `alfaDoFio`.
    Decorativa por inteiro: `aria-hidden`, e em `forced-colors` os traços
    somem com o fundo — não carregam sentido nenhum. */
+/* ---------------- V6 · O DADO — um só na tela, cinco estados ----------------
+   O `btn-send-d20` da pessoa (`126:117`) com o d20 de V3, no lugar do `Agir →`
+   e do `Rolar d20` (que se aposentam: um dado na tela em qualquer instante —
+   `v1-jogo.md` §2, `v6-jogo.md` §B). O estado vem de fora (`estadoDoDado`,
+   glifos.js); a peça só desenha e diz o nome. As medidas saem de `DADO`.
+
+   NA ESPERA ele não é `disabled`: é `aria-disabled`, e continua tendo nome e
+   foco — uma espera mostra-se (R17), e quem usa leitor de tela ouve porquê.
+   O `pulso` é um contador: cada Enter na espera remonta o glifo e o pulso
+   corre uma vez (nenhuma com reduce, pela folha).
+
+   NA MESA, no Pronto, a palavra `Agir` à esquerda do círculo (o `jogo`, §2):
+   o primeiro toque de quem não conhece o dado. No telefone não cabe, e o
+   Enter continua enviando. O alvo é o botão inteiro, com a palavra. */
+export function Dado({ estado = "repouso", dificuldade = null, nome = "", pulso = 0, aoTocar }) {
+  const e = ESTADOS_DO_DADO.includes(estado) ? estado : "repouso";
+  const cheio = e === "pronto" || e === "lancado" || e === "rolar";
+  const espera = e === "espera";
+  const cor = cheio ? T.onAccent : espera ? T.inkDim : alfa(T.amber, DADO.alfaApagado);
+  const face = e === "rolar" && dificuldade != null ? (
+    <span className="relative inline-flex items-center justify-center" style={{ width: DADO.glifo, height: DADO.glifo }}>
+      <Glifo nome="dado" tamanho={DADO.glifo} cor={alfa(T.onAccent, DADO.alfaDaFace)} />
+      <span className="tv-mono absolute inset-0 flex items-center justify-center" style={{ fontSize: TIPOS.maquina, fontWeight: 700, color: T.onAccent }}>{dificuldade}</span>
+    </span>
+  ) : <Glifo nome="dado" tamanho={DADO.glifo} cor={cor} />;
+  return (
+    <button type="button" data-dado={e} onClick={aoTocar} aria-label={nome} title={nome} aria-disabled={espera || undefined}
+      onPointerDown={(ev) => { try { ev.preventDefault(); } catch { /* o foco fica no campo */ } }}
+      className="tv-anel-foco shrink-0 inline-flex items-center gap-2 rounded-full"
+      style={{ minHeight: ALVOS.piso, background: "transparent", border: "none", padding: 0, cursor: espera ? "default" : "pointer" }}>
+      {(e === "pronto" || e === "lancado") && (
+        <span aria-hidden="true" className="hidden md:inline tv-mono uppercase tracking-widest" style={{ fontSize: TIPOS.maquina, color: T.amberSoft }}>Agir</span>
+      )}
+      <span className={"rounded-full inline-flex items-center justify-center" + (e === "rolar" ? " tv-dado-rolar" : "")}
+        style={{
+          width: ALVOS.piso, height: ALVOS.piso,
+          background: cheio ? T.amber : "transparent",
+          border: cheio ? "none" : `${DADO.borda}px solid ${espera ? T.lineStrong : T.amber}`,
+          boxShadow: cheio ? `0 0 ${DADO.brilho}px ${alfa(T.amber, DADO.alfaDoBrilho)}, inset 0 1px 1px ${alfa(T.ink, DADO.alfaDoReflexo)}` : "none",
+        }}>
+        <span key={pulso} aria-hidden="true" className={"inline-flex" + (e === "lancado" ? " tv-dado-lancado" : pulso && (espera || e === "rolar") ? " tv-dado-pulso" : "")}>
+          {face}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/* ---------------- V6 · A LINHA DO VEREDITO — fora da batalha ----------------
+   A mesma ideia da linha do tabuleiro (`painel-batalha.jsx`): uma linha, por
+   cima do campo, que diz o que está pendente antes do gesto — aqui, o teste
+   (`Teste de Força · dif. 12 — motivo`) e, na espera, que o que se escreveu
+   fica. Só existe quando há o que dizer: 0 px sem veredito. `aria-live`:
+   quem usa leitor de tela ouve o teste chegar. A letra é a do piso (12), e
+   não os 11 da de batalha — que passa a ser esta peça quando o `regente`
+   abrir aquele ramo (a tela de combate não se toca nesta etapa). */
+export function LinhaDoVeredito({ texto, armado = false }) {
+  if (!texto) return null;
+  return (
+    <div className="tv-mono flex items-center gap-1.5 min-w-0" aria-live="polite"
+      style={{ minHeight: TELA_DE_BATALHA.veredito, fontSize: TIPOS.maquina, color: armado ? T.amberSoft : T.inkDim }}>
+      {texto}
+    </div>
+  );
+}
+
 /* ---------------- V5e · A TIRA DA RESPOSTA — uma ação, uma forma ----------------
    A primeira linha de uma resposta do Mestre que o jogador ainda não leu, e o
    toque leva ao COMEÇO dela. Nasceu em R21 como a espreita do alforje (a faixa

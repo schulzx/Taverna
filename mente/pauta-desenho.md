@@ -14,6 +14,19 @@ A forma de cada coisa mora em `mente/formas.md`; o feito, em
 
 ---
 
+## A fila do desenho está parada (ordem de 28/09)
+
+**A pessoa, em 28/09:** *"depois digo o que faremos na parte de design."* O ciclo de
+V6, que estava no ar, fechou e subiu; **nenhum outro começa até ela falar** — nem
+V7, nem nada da Fase V (a lei inteira em `CLAUDE.md`, *"A ordem de 28/09"*). A
+tarefa agendada roda o ciclo do sistema. Quando ela falar, a fila retoma de
+**V7** (a herança está escrita lá).
+
+**Um modo só até ao beta:** *Uma Noite* e o *Duelo* saem do jogo. **Sai a porta,
+não o código**, e nada se apaga desta pauta: o que é só desses dois modos fica
+marcado **depois do beta** (a Fase S e os itens do Duelo). **A sala de dois fica**
+— é Uma Vida a dois.
+
 ## Para a pessoa decidir (pesado)
 
 **Esta seção esvaziou-se em 23/09, e não por terem sido respondidos um a um.**
@@ -893,7 +906,7 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
 - [ ] **V5g · a tira "Novo" sai de cima da prosa na mesa** · `desenho` · leve — a 1280 a tira (553×48) fica sobre a coluna e tapa ~1,7 linhas do que o jogador relê; a mesa tem ~296 px de margem livre de cada lado: a tira passa para a margem direita (~260 px), ancorada ao fundo como a seta. No telefone fica.
 - [ ] **V5h · a tira "Novo" conta o que chegou** · `desenho` · médio · a ambiciosa de V5e — até três ladrilhos de V3b à direita da primeira linha (o assunto das linhas do sistema que vieram com a resposta: mural, diário, bolsa), e o toque continua a ir ao começo. `assuntoDaLinha` já existe.
 - [ ] **V5i · o marcador de onde paraste** · `jogo` · médio · a ambiciosa de V5e — quando a página perde a vista, guarda-se a linha que estava no topo, e ao voltar a vista pousa lá, com a espreita a dizer "continuas aqui". Numa chave de preferência (`taverna_cfg_*`), **nunca no save**.
-- [ ] **V6a · a espera deixa escrever** · `jogo` · médio · dentro de V6 — hoje o campo fica `disabled` enquanto o Mestre pensa, e as letras escritas na espera **perdem-se sem aviso (0 de 20)**; o campo fica editável e só o envio fica travado. (Era uma decisão de `v1-jogo.md` §2, e o `jogo` corrigiu-a.)
+- [x] **V6a · a espera deixa escrever** · **FEITO 28/09 com V6** — o campo nunca fica desativado; letras escritas na espera **0 → 20 de 20**, e com teste pendente também; o `Enter` na espera não envia nem apaga; nunca há envio automático; o rascunho numa chave de preferência por modo, **fora do save**, sobrevive a recarregar e a ir ao menu. — · `jogo` · médio · dentro de V6 — hoje o campo fica `disabled` enquanto o Mestre pensa, e as letras escritas na espera **perdem-se sem aviso (0 de 20)**; o campo fica editável e só o envio fica travado. (Era uma decisão de `v1-jogo.md` §2, e o `jogo` corrigiu-a.)
 - [ ] **V5d · a página vira à chegada** · `jogo` · médio · a ambiciosa de V5 — ao chegar a um lugar novo, o capítulo anterior recolhe numa linha (`▸ Torre da Fonte · 14 respostas`) e a página começa de novo; o registo ganha capítulos com o nome dos lugares. Sem motor.
 - [x] ~~**V5 · a página (o resto)**~~ (o texto original) — coluna de 65ch, a soleira no pé do cartão (0
   px sem oferta), a abertura grande como cerimónia. *(O texto original abaixo
@@ -903,12 +916,14 @@ orçamento de altura; os anéis sobem porque são o que mais diz *jogo*):
   (`lugarDaCena()`), a luz e o clima à direita (na masmorra, a camada e as
   tochas); a runa na borda de baixo; coluna de 65ch; a soleira no pé do cartão
   (0 px sem oferta); o `CabecalhoDaCena` antigo aposenta-se.
-- [ ] **V6 · o compositor e o dado** — um dado só, cinco estados (Repouso ·
+- [x] **V6 · o compositor e o dado** · **FEITO 28/09, no ar** (`mente/v6-jogo.md` §7, `mente/v6-desenho.md`, `formas.md` §V6; os 15 desvios no quadro `146:2`) — o dado da v3 com o d20 de verdade e cinco estados; **um dado só na tela** (o `Rolar d20` de 132×28 e o `Agir →` aposentam-se); o teste pendente é uma linha por cima do campo com a dificuldade na face do dado; o `✦` no canto da pílula. **Por medir, e não bloqueia:** a catraca de R6 (≥15 de 20 turnos pelo campo) e "Enter contra toque" pedem uma sessão real de 20 turnos a 375 (~20 chamadas) — de preferência com a pessoa a jogar os 5 primeiros sem lhe explicarem o dado. **Anotado para quando o combate abrir:** a linha do veredito da batalha é a mesma peça (2 linhas no ramo de combate). — *(texto original:)* um dado só, cinco estados (Repouso ·
   Pronto · Lançado · À espera · Rolar), `✦` no lugar da caneta, a linha do
   veredito por cima do campo só quando há veredito; `Enter`/`Shift+Enter`
   intactos; o `Rolar d20` aposenta-se; a catraca de R6 (15 de 20 turnos ainda
   pelo campo).
-- [ ] **V7 · o trilho e as salas** — Herói, Grupo, Diário+Mural, Bolsa+Mercado,
+- [ ] **V6b · a frase mostra o preço antes de partir** · `jogo` · médio · a ambiciosa de V6 — enquanto se escreve, a linha do veredito diz o que a frase vai fazer (*"Atacar o javali · Força contra 12"*). Pedido `vereditoDaFrase` em `pedidos-ao-sistema.md`.
+- [ ] **V6c · o dado lembra a sorte da mesa** · `desenho` · médio · a ambiciosa de V6 — depois de um teste, o dado em Repouso mostra na face o número que saiu até ao envio seguinte, âmbar se passou, perigo se falhou; é o dado que fica em cima da mesa depois de rolar.
+- [ ] **V7 · o trilho e as salas** · **a próxima quando a pessoa falar** — **a herança que V4–V6 deixaram para V7:** as sub-abas da gaveta que ainda rolam para fora de vista (V5); a grelha do cartão a 1280 difere da v3 (32–1 176 contra 24–1 166, topo 64 contra 90) por causa da cinta de 48 e do trilho (V5, nota para o `144:2`); a aba ativa do trilho em rosa (V1b adiou-a para V7); *Herói* só aceso com o painel aberto (`v1-jogo.md` §5); o trilho no telefone vira o alforje que sobe do retrato. — Herói, Grupo, Diário+Mural, Bolsa+Mercado,
   Mapa, Códice, Ajustes; na mesa o painel abre ao lado da história em vez de a
   tapar; no telefone o trilho vira o alforje que sobe do retrato.
 
@@ -1393,7 +1408,9 @@ scroller de 301px, e o painel `Ações` abre abaixo da dobra.
   ela responde *"como se chama isto que vejo"*, e a pergunta que um campo de
   33% faz o tempo inteiro é **"o que existe que eu não vejo"**.
 
-### Fase S — o Duelo e a sala ganham momento
+### Fase S — o Duelo e a sala ganham momento · **DEPOIS DO BETA (ordem de 28/09)**
+*O Duelo sai do jogo até ao beta; S1 e S2 são só dele (S2 é a sala do Duelo, não a
+sala de Uma Vida a dois). Nada se apaga; volta quando o modo voltar.*
 Decisão da pessoa (14/09) sobre as duas: *"vamos corrigir."*
 
 - [ ] **S1 · o Duelo é jogado, não lido** · de: pessoa · 14/09
@@ -1912,7 +1929,7 @@ elemento cuja largura não carrega informação**; e `A marca de borda` foi
   `App.jsx:163`**. Passam no `teste-ligacao` porque a lei conta "referência",
   e import é referência. **A catraca de export morto tem um furo do tamanho
   de uma linha de import** — fechá-lo é meio-item à parte, e é da outra fila.
-- [ ] **`REVANCHE` faz revanche** · leve · de: jogo · 14/09
+- [ ] **`REVANCHE` faz revanche** · **depois do beta (só do Duelo)** · leve · de: jogo · 14/09
   O botão grande e dourado do resultado do Duelo devolve o jogador ao **ecrã
   de montagem**. O rótulo promete uma coisa e o clique faz outra.
 - [ ] **o aviso cola-se ao botão que destrói** · leve · de: jogo · 14/09
@@ -1956,7 +1973,7 @@ elemento cuja largura não carrega informação**; e `A marca de borda` foi
   de "estado com fundo" que o jogo tem. Estão fora da tabela por descuido,
   não por decisão.
 - [ ] **vitória e derrota são dois ecrãs, e o meu campeão é marcado como
-  meu** · médio · de: jogo · 14/09
+  meu** · **depois do beta (só do Duelo)** · médio · de: jogo · 14/09
   Medido lado a lado nas duas abas do PvP: quem perdeu e quem ganhou veem
   **o mesmo ecrã**, mesma cor, mesmo tamanho — `A Sombra vence · 2×1`. Nada
   diz qual dos dois campeões era do jogador. Para além da palavra do nome,
