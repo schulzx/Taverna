@@ -4,7 +4,7 @@ import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdapt
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
@@ -52,6 +52,7 @@ import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePaga
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
+import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, pautaDoEscondido } from "./escondido.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -6801,7 +6802,7 @@ export default function Taverna() {
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
        dali em vez de refazer a conta, porque duas versões da mesma
        verdade é como nasce o balanceamento fantasma desta casa */
-    const { longe } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [] });
+    const { longe, aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [] });
     const g = paraPauta({
       ...contextoDoEspaco(),
       espaco: espacoDaMesa(),
@@ -6984,6 +6985,15 @@ export default function Taverna() {
       if (gf) { p = porNaPauta(p, "acabou", ...gf.acabou); p = porNaPauta(p, "naoPode", ...gf.naoPode); }
     } catch (e) { /* o golpe final nunca pode custar o turno */ }
     golpeFinalEnvelopeRef.current = null;
+    /* ---------------- MM6: O ESCONDIDO FORA DA LUTA ----------------
+       Dentro da luta a linha e a do tabuleiro (resumoGridPrompt, em `enviar`);
+       aqui e o veto — quem nao me viu nao pode reagir a mim por conta propria. */
+    try {
+      if (!combateRef.current) {
+        const peEsc = pautaDoEscondido(personagemRef.current || personagem, { presentes: aqui });
+        if (peEsc) p = porNaPauta(p, "naoPode", peEsc.naoPode);
+      }
+    } catch (e) { /* o veto do escondido nunca pode custar o turno */ }
     return p;
   };
 
@@ -8423,10 +8433,26 @@ export default function Taverna() {
       const alvo = (comb.inimigos || []).find((e) => e.nome === a.inimigo && !e.derrotado && e.vida > 0);
       if (alvo) {
         const nv = pers.nivel || 1;
+        /* MM6 (coerencia): o revide ainda somava o furtivo sempre — aqui HA
+           posicao (o mesmo `comb` da reacao), entao o veredito pode ver
+           vantagem (escondido/invisivel) e aliado colado, nao so a classe.
+           So o DANO passa pelo veredito; o acerto deste contra-golpe ja nao
+           lia vantagem/desvantagem antes de MM6, e continua sem ler. */
+        let vfRev = null;
+        try {
+          vfRev = vereditoDoFurtivo({
+            classe: pers.classe, nivel: nv, alvo,
+            aliados: (comb.aliados || []).map((al, i) => ({ ...al, vida: ((pers.grupo || [])[i] || {}).vida, condicoes: ((pers.grupo || [])[i] || {}).condicoes, i })),
+            vantagem: estaInvisivel(pers) || oculto(pers, alvo, { grade: comb.grade, heroi: comb.heroi }),
+            desvantagem: ataqueEstorvado(pers),
+            condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+            tipoDano: elementoDaArma(pers),
+          });
+        } catch (e) { calou("vereditoDoFurtivo-revide", e); }
         const rr = resolverAtaque({
           atacante: pers.nome, alvo, ehAtacanteInimigo: false,
           bonusAtaque: Math.max(pers.atributos?.forca || 0, pers.atributos?.destreza || 0) + 2 + Math.floor((nv - 1) / 4),
-          danoBase: Math.round(danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) * 0.6),
+          danoBase: Math.round(danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2), vfRev ? { furtivo: vfRev.soma } : null) * 0.6),
           condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
           tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         });
@@ -11539,9 +11565,16 @@ export default function Taverna() {
       /* v9.20: o terreno é fato, e o Mestre precisa dele para não teleportar
          ninguém pelo salão. Só existe durante a luta — fora dela, espaço é
          livre e é ele quem descreve. */
+      /* MM6: "o anao esta me vendo?" — null quando nao estou escondido, e
+         so entao a linha do tabuleiro sai identica a de antes. */
+      let qmvLuta = null;
+      try {
+        qmvLuta = combateRef.current ? quemMeVe(p, { grade: combateRef.current.grade, heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }) : null;
+      } catch (e) { calou("quemMeVe-na-luta", e); }
       const zon = combateRef.current ? resumoGridPrompt(combateRef.current.grade, {
         heroi: combateRef.current.heroi,
         inimigos: combateRef.current.inimigos || [], grupo: combateRef.current.aliados || [], ordem: combateRef.current.ordem,
+        quemMeVe: qmvLuta,
       }) : "";
       /* v9.34: quanto chão eu cubro num turno. Sem isto o Mestre inventa a
          velocidade do herói cena a cena, e sempre a favor da cena. */
@@ -12566,6 +12599,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     const alvoCitado = vivos.find((e) => acaoN.includes(normalizar(e.nome)));
     const gradeDaLuta = comb.grade || null;
     const meuLugar = comb.heroi || { nome: pers.nome, x: null, y: null };
+    /* MM6: os aliados COM POSICAO, vida e condicoes lidas de pers.grupo pelo
+       mesmo indice — e o que vereditoDoFurtivo pede para achar quem esta
+       colado no alvo. */
+    const aliadosFurtivo = (comb.aliados || []).map((a, i) => ({ ...a, vida: ((pers.grupo || [])[i] || {}).vida, condicoes: ((pers.grupo || [])[i] || {}).condicoes, i }));
     /* clone local para mirar corretamente entre golpes */
     const locais = comb.inimigos.map((e) => ({ ...e }));
     const resultados = [];
@@ -12629,12 +12666,27 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          regra estava pronta e a metade que conta faltava. */
       const gdAlvo = Math.max(0, Number(alvo.gd) || 0);
       const degrau = bonusDivino(gdJ, gdAlvo);
+      /* MM6: o ATAQUE FURTIVO passa a valer a regra do 5e — vantagem, ou um
+         aliado colado no alvo — e nunca com desvantagem. So o PRIMEIRO golpe
+         da sequencia pode contar com o esconderijo: atacar me revela, e os
+         golpes seguintes ja saem com o mundo me vendo. */
+      let vantEsc = false, vf = null;
+      try {
+        vantEsc = i === 0 && oculto(pers, alvo, { grade: gradeDaLuta, heroi: meuLugar });
+        vf = vereditoDoFurtivo({
+          classe: pers.classe, nivel: nv, alvo, aliados: aliadosFurtivo,
+          vantagem: estaInvisivel(pers) || vantEsc,
+          desvantagem: ataqueEstorvado(pers),
+          condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
+          tipoDano: elementoDaArma(pers),
+        });
+      } catch (e) { calou("vereditoDoFurtivo", e); }
       const r = resolverAtaque({
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: bonusAtkBase - penal + degrau,
         /* v9.47: o golpe da FORMA soma aqui — garra de bicho e punho de
            avatar são o corpo batendo, não um buff mágico. */
-        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2)) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
+        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2), vf ? { furtivo: vf.soma } : null) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         bonusDefesaAlvo: bonusDefesaEm(gradeDaLuta, alvo),
@@ -12643,9 +12695,11 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
            que o painel de equipamento promete desde a v9.11. */
         desvantagem: ataqueEstorvado(pers),
         /* v9.45: e quem golpeia sem ser visto acerta melhor. A vantagem vale
-           para ESTE golpe: a invisibilidade só cai depois que ele sai. */
-        vantagem: estaInvisivel(pers),
+           para ESTE golpe: a invisibilidade só cai depois que ele sai — e o
+           esconderijo (MM6) entra pela mesma porta. */
+        vantagem: estaInvisivel(pers) || vantEsc,
       });
+      if (vf && vf.aplica) r.furtivo = vf;
       /* três degraus abaixo, o golpe comum atravessa sem ferir */
       if (imunePorEscopo(gdJ, gdAlvo)) { r.escopoImune = true; r.dano = 0; }
       const antes = { ...alvo }; /* MM3: alvo É l (mesmo objeto) — captura o corpo ANTES do decremento */ if (r.dano > 0) { const l = locais.find((e) => e.nome === alvo.nome); l.vida = Math.max(0, l.vida - r.dano); if (l.vida <= 0) l.derrotado = true; }
@@ -12811,6 +12865,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
         : poupadoAgora
         ? `${linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined)} — mas foi poupado: cai desacordado, vivo, sem golpe fatal`
         : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
+      /* MM6: a frase do Ataque Furtivo cola na mesma linha do golpe — nunca
+         quando o corpo era imune (o furtivo nao atravessa o que o golpe
+         comum nao atravessa). */
+      if (r.furtivo?.linha && !r.escopoImune) partesMeu[partesMeu.length - 1] += " — " + r.furtivo.linha;
     }
     /* MM3: o envelope de UM turno — `pautaDoTurno` o lê na próxima montagem
        (a narração deste mesmo golpe, logo abaixo) e o limpa depois. */
@@ -14164,6 +14222,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        de dois caminhos, invisível para qualquer teste de módulo porque o
        defeito não estava em módulo nenhum, estava na ORDEM. Agora a ordem
        tem teste, e a decisão diz por que passou por cada porta. */
+    /* MM6: o ato que a frase declara pode ter acabado de me revelar — gritar,
+       sair do esconderijo, acender uma luz. Antes do despachante, porque o
+       que ele decide depois ja deve ver a ficha sem o estado. */
+    try {
+      const rvA = revelarPorAto(fichaViva() || personagem, acao);
+      if (rvA.revelado) {
+        mudarFicha(() => rvA.pers);
+        pushMsgs(rvA.linhas.map((t2) => ({ autor: "sistema", texto: t2 })));
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + rvA.nota;
+      }
+    } catch (e) { calou("revelarPorAto", e); }
     ultimoDesfechoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do
        desafio que rolou. A leitura antiga servia ao turno com dado e
@@ -14589,7 +14658,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        de pé leva UM golpe livre em quem dá as costas — reação, uma por
        inimigo. Anunciar que a retirada é ordenada ("desengajo", "sem dar as
        costas") evita, que é exatamente a ação de Desengajar do 5e. */
-    let persG = personagem, notaOp = "";
+    let persG = fichaViva() || personagem, notaOp = "";
     if (combateRef.current && ehRetirada(acao)) {
       /* O FANTASMA DO R15: golpe de oportunidade cobrado de TODO inimigo
          de pe, sem olhar distancia — tres javalis corpo a corpo a 19,5 m
@@ -15017,9 +15086,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        regra sempre prometeu e que nunca teve código. Quem sobrevive à
        oportunidade sai da luta de verdade; quem não sobrevive cai ali. */
     const fugas = [];
+    /* MM6 (coerencia): os aliados do golpe de oportunidade, pela mesma leitura
+       do golpe comum — aqui ha posicao (grade/heroi de combPos). */
+    const aliadosOp = (combPos.aliados || []).map((al, i) => ({ ...al, vida: ((persBase.grupo || [])[i] || {}).vida, condicoes: ((persBase.grupo || [])[i] || {}).condicoes, i }));
     for (const e of vivos.filter((x) => querFugir(x))) {
       const bonusOp = Math.max((persBase.atributos?.forca || 0), (persBase.atributos?.destreza || 0)) + 2 + Math.floor(((persBase.nivel || 1) - 1) / 4);
-      const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false) / 2)) + bonusDeArma(persBase).bonus;
+      let vfOp = null;
+      try {
+        vfOp = vereditoDoFurtivo({
+          classe: persBase.classe, nivel: persBase.nivel || 1, alvo: e, aliados: aliadosOp,
+          vantagem: estaInvisivel(persBase) || oculto(persBase, e, { grade: combPos.grade, heroi: combPos.heroi }),
+          desvantagem: ataqueEstorvado(persBase),
+          condAtacante: persBase.condicoes || [], condAlvo: e.condicoes || [],
+          tipoDano: elementoDaArma(persBase),
+        });
+      } catch (err) { calou("vereditoDoFurtivo-oportunidade", err); }
+      const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false) / 2), vfOp ? { furtivo: vfOp.soma } : null) + bonusDeArma(persBase).bonus;
       const r = ataqueDeOportunidade(persBase, e, bonusOp, dOp, { tipoDano: elementoDaArma(persBase) });
       const pv = Math.max(0, (e.vida || 0) - (r.dano || 0));
       const morreu = pv <= 0;
@@ -15085,6 +15167,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* v9.54: a rodada entra no motor porque é ela que diz quem ainda está
        virado, e a provocação porque é ela que decide para onde todo mundo
        olha. Sem os dois, a família de controle seria uma linha de tela. */
+    /* MM6: antes de o mundo agir, quem estava de olho pode ter me achado —
+       a passiva de alguem, ou quem me tinha a descoberto o tempo todo. */
+    try {
+      const rvE = revisarEscondido(persBase, { grade: gradeAtual, heroi: lugarHeroi, inimigos: combPos.inimigos });
+      if (rvE.achadoAgora.length) {
+        persBase = rvE.pers;
+        mudarFicha(() => rvE.pers);
+        pushMsgs(rvE.linhas.map((t2) => ({ autor: "sistema", texto: t2 })));
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + rvE.nota;
+      }
+    } catch (e) { calou("revisarEscondido", e); }
     const rodadaAgora = (combateRef.current && combateRef.current.rodada) || 1;
     const provocandoAgora = estaProvocando(combateRef.current, rodadaAgora);
     const acoes = turnoDosInimigos({
@@ -16860,6 +16953,35 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      /* ---------------- MM6: ESCONDIDO NASCE DE UM TESTE PASSADO ----------------
+         O teste de furtividade que passou vira ESTADO — sem isto, o "ate" que
+         gatilhos.js ja sabe derrubar nunca teria o que derrubar. Dentro da
+         luta cobra o recurso da ACAO (ou a bonus, com Acao Ardilosa); o custo
+         so sai da bolsa quando o esconderijo de fato nasce — tentar e nao
+         achar onde sumir nao e o mesmo gasto que sumir de verdade. */
+      try {
+        if (des && passou && ESCONDIDO.alvosQueEscondem.includes(des.alvoDoCusto)) {
+          const combEsc = combateRef.current;
+          const baseEsc = personagemRef.current || personagem;
+          const custoEsc = custoDeEsconder(baseEsc);
+          const ecoEsc = combEsc && combEsc.economia;
+          const temRecurso = !combEsc || (custoEsc === "bonus" ? !!(ecoEsc && ecoEsc.extra > 0) : !!(ecoEsc && ecoEsc.acao > 0));
+          if (temRecurso) {
+            const ns = nascerEscondido(baseEsc, {
+              total, grade: combEsc?.grade, heroi: combEsc?.heroi, inimigos: combEsc?.inimigos,
+              presentes: combEsc ? null : elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: baseEsc.grupo || [] }).aqui,
+            });
+            if (ns.ok) {
+              personagemRef.current = ns.pers; setPersonagem(ns.pers);
+              if (combEsc) {
+                const ecoNovo = custoEsc === "bonus" ? { ...ecoEsc, extra: ecoEsc.extra - 1 } : { ...ecoEsc, acao: ecoEsc.acao - 1 };
+                combateRef.current = { ...combEsc, economia: ecoNovo }; setCombate(combateRef.current);
+              }
+            }
+            if (ns.linhas.length) pushMsgs(ns.linhas.map((t2) => ({ autor: "sistema", texto: t2 })));
+          }
+        }
+      } catch (e) { calou("nascerEscondido", e); }
       /* v9.70: o desfecho fica registrado para a cobranca poder recusar o que
          a narracao prometer depois de uma falha. O dado manda mais que ela. */
       ultimoDesfechoRef.current = passou ? "sucesso" : "falha";

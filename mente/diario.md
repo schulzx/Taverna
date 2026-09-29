@@ -15,7 +15,63 @@ Formato:
 ```
 
 ---
-## 29/09 15:30 · v9.309 · a peneira da agressão: a ênclise abre a luta, a pergunta não · commit (o hash vai no bloco de MM6)
+## 29/09 18:40 · v9.310 · MM6 · escondido é um estado · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o teste de furtividade existia e o estado não — no turno seguinte
+  nada lembrava que o herói estava escondido, e o Narrador não sabia quem o via. É a
+  resposta a *"o anão está me vendo?"*.
+- **estado inicial:** verde (a peneira no ar, `28f788c`).
+- **bastão:** tomado às ~16:15 em nome deste ciclo para a mão `frontend`; devolvido com
+  este commit. O `App.jsx` cresceu 122 linhas; os endereços de `acoes-do-jogador` foram
+  re-medidos pelo próprio varredor e conferidos à mão, com o motivo.
+- **backend:** `src/escondido.js` e a condição `escondido` em `condicoes.js` — viaja no
+  save por `pers.condicoes` (três campos novos e aditivos), cai ao atacar ou conjurar pelo
+  `romperPorGatilho` que já existia (o molde da invisibilidade de v9.45) e no descanso.
+  Nasce de uma furtividade passada — na luta, só com cobertura ou sem linha de visão.
+  Acaba ao revelar-se (voz, luz, correr para o aberto — a frase passa pela peneira: "posso
+  gritar?" não revela) ou ao ser achado (Percepção passiva acima do total, linha de visão
+  sem cobertura, procura que bate o total). Dá vantagem contra quem não viu, e quem não
+  achou ataca com desvantagem.
+- **o furtivo, medido antes de mudar:** hoje o Ladino somava-o em 100% dos golpes, por
+  classe. Pela regra do 5e (vantagem, ou aliado a 1,5 m do alvo, nunca com desvantagem):
+  com grupo quase nada muda (−1,8% no justo); **sozinho, −21% de dano e a vitória de 91% a
+  61%**. Passou do limite, e a compensação é do próprio 5e: **Ação Ardilosa** (esconder-se
+  com a ação bônus, nível 2+) — sozinho fica −5% e 84% de vitória; com grupo, +4,6%. A
+  suíte trava cada modo entre −12% e +20% do antes. O Ladino passa a jogar diferente
+  (esconde-se, flanqueia), não pior.
+- **frontend:** onze pontos de fiação (nasce depois do teste, cobra a ação bônus na luta,
+  vantagem e furtivo no golpe, a linha do furtivo ao Narrador, cai por ato, é achado no
+  revide, "quem me vê" na linha da luta, `naoPode` fora dela); o golpe de oportunidade e o
+  contra-ataque da reação passam pelo mesmo veredito do furtivo.
+- **dois defeitos achados a jogar, e consertados:** (1) o veredito do desafio não tem
+  `alvo`, tem `alvoDoCusto` — o estado nunca nascia; (2) **um defeito antigo**: o ramo da
+  declaração livre em `agirInterno` usava `let persG = personagem`, a ficha do render,
+  capturada antes de qualquer `mudarFicha` do mesmo turno — o jogo dizia "escondido cai" e
+  o save guardava-o vivo. Passou a `fichaViva() || personagem`, como no resto do arquivo,
+  com asserção que o trava. Vale para toda mudança de ficha feita no começo desse ramo.
+- **a prova jogada (Ladina de teste, save apagado no fim):** "Eu me escondo atrás de uma
+  árvore" → 15 contra 15 → "🌠 Você está escondido (furtividade 15)", a condição no save; a
+  mulher da porta ouviu o barulho (o oráculo) e nunca se dirigiu a ela; "Berro por
+  socorro!" → "✧ Escondido cai — você levantou a voz", confirmado no save. A luta não
+  apareceu (o hostil não era gente registrada), por isso vantagem e furtivo em combate
+  ficam provados pela suíte e pela simulação de 140 lutas, não jogados. **O Poupar de MM3
+  continua sem prova jogada.**
+- **achado:** "escondo-me" não casa o catálogo (só "me escondo") — a ênclise outra vez,
+  agora no catálogo de desafios. Para "Aberto", leve.
+- **pedido ao desenho, para quando a fila dele voltar:** a linha de nascimento usa 🌠
+  (o glifo "a favor"); um glifo próprio para "escondido" é decisão de `glifos.js`.
+- **decisões médias tomadas:**
+  - **O estado é uma condição**, não um campo novo: save, pauta e queda vêm de graça.
+  - **Empate na passiva fica com o herói**; na procura ativa, com quem procura.
+  - **O contra-ataque da reação** só teve o dano passado pelo veredito; o acerto dele não
+    lia vantagem antes e continua a não ler.
+- **a sonda:** **69 → 72/157 chega** (#74 quem me vê, #124 o flanco, #153 caído e escondido)
+  · 0 sabe e não conta · 77 ninguém decide. O #70 ("a rua é vigiada?") é da MM12.
+- **para quem joga:** esconder-se passa a durar e a valer — vantagem no primeiro golpe, o
+  mundo não reage a quem não viu —, e o Ladino ganha um motivo para se esconder a cada
+  turno em vez de somar o furtivo sem pensar.
+
+## 29/09 15:30 · v9.309 · a peneira da agressão: a ênclise abre a luta, a pergunta não · commit `28f788c`
 
 - **por que andou, antes de MM6:** o coordenador da fase promoveu o item de "Aberto".
   "Socá-lo", "ataco-o", "golpeio-a" são a forma normal de um brasileiro escrever que

@@ -6,7 +6,7 @@
    Estilo D&D 5e / Baldur's Gate 3: todos rolam d20, com
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
-import { alcanca, bonusDefesaEm } from "./grid.js";
+import { alcanca, bonusDefesaEm, distanciaM } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
 import { xpDeCombate } from "./juiz.js";
@@ -20,6 +20,9 @@ import { estaSintonizado } from "./sintonia.js";
 import { estaInvisivel } from "./gatilhos.js";
 import { estaVirado } from "./controle.js";
 import { escolherAlvo } from "./adversario.js";
+/* MM6: quem está escondido de quem. Seta de um lado só — escondido.js lê
+   grid.js, condicoes.js e peneira.js, e nenhum deles conhece este arquivo. */
+import { oculto } from "./escondido.js";
 
 /* A SORTE PODE ENTRAR DE FORA. `rolar` é uma fonte opcional de números em
    [0, 1) — um `rng(hashSemente(...))` de semente.js, por exemplo. Sem ela,
@@ -109,7 +112,12 @@ export function modificadoresDeCondicao(condicoes = []) {
    ataque rolado lê — duas cópias desta conta seriam duas respostas para
    "ele tem desvantagem?", e a primeira a divergir mentiria na tela.
    Listas nulas contam como vazias (`= []` não cobre `null`). */
-export function ladosDoDado({ alvo, vantagem, desvantagem, condAtacante, condAlvo, tipoDano = "fisico" } = {}) {
+/* MM6: AS FONTES, ANTES DE SE ANULAREM. O dado só precisa do líquido
+   (vantagem e desvantagem juntas rolam um d20 só), mas o Ataque Furtivo
+   precisa de saber se HAVIA desvantagem — no 5e, quem tem as duas não tem
+   vantagem nem pode usar o aliado ao lado. Mesma conta, palavra por
+   palavra; `ladosDoDado` anula por cima e devolve o que sempre devolveu. */
+function fontesDoDado({ alvo, vantagem, desvantagem, condAtacante, condAlvo, tipoDano = "fisico" } = {}) {
   const modAtk = modificadoresDeCondicao(Array.isArray(condAtacante) ? condAtacante : []);
   if (modAtk.perdeAcao) return { impedido: true, intocavel: false, vantagem: false, desvantagem: false };
   if (estaIntocavel(alvo)) return { impedido: false, intocavel: true, vantagem: false, desvantagem: false };
@@ -119,9 +127,14 @@ export function ladosDoDado({ alvo, vantagem, desvantagem, condAtacante, condAlv
   if (esquivaDeGuarda(alvo, { magico: tipoDano && tipoDano !== "fisico" })) desv = true;
   /* cego no alvo dá vantagem a quem ataca */
   if ((Array.isArray(condAlvo) ? condAlvo : []).some((c) => ((c && c.nome) || "").toLowerCase().includes("cego"))) vant = true;
-  /* se vantagem e desvantagem coexistem, cancelam (regra 5e) */
-  if (vant && desv) { vant = false; desv = false; }
   return { impedido: false, intocavel: false, vantagem: vant, desvantagem: desv };
+}
+export function ladosDoDado(args = {}) {
+  const f = fontesDoDado(args || {});
+  if (f.impedido || f.intocavel) return f;
+  /* se vantagem e desvantagem coexistem, cancelam (regra 5e) */
+  if (f.vantagem && f.desvantagem) return { impedido: false, intocavel: false, vantagem: false, desvantagem: false };
+  return f;
 }
 
 /* Resolve UM ataque. Devolve um objeto de resultado detalhado (sem narrar). */
@@ -454,7 +467,13 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
            invisibilidade dura — e ela dura até o herói atacar ou conjurar —
            todo golpe contra ele sai com desvantagem. É a metade da magia que
            faltava; sem ela, sumir não protegia de nada. */
-        desvantagem: estaInvisivel(alvo.ent),
+        desvantagem: estaInvisivel(alvo.ent)
+          /* MM6: e quem não o ACHOU também. O herói escondido de ESTE
+             inimigo (`oculto`, escondido.js — com a posição de agora, para
+             quem acabou de ganhar linha de visão já o ver) é golpe às cegas:
+             desvantagem, a mesma metade da invisibilidade. Só o herói se
+             esconde nesta etapa; o grupo e a marionete ficam como estavam. */
+          || (alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos })),
       });
       /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
@@ -842,10 +861,90 @@ export function resumoAcaoDeTurno(classe, nivel) {
   return { n, dados: dd, face: p.dadoBase, texto: `${n} ataque${n > 1 ? "s" : ""} por turno de ${dd}d${p.dadoBase}`, tipo: p.tipo };
 }
 
-/* Dano por golpe já considerando os dados da classe. */
-export function danoDaClasse(classe, nivel, bonusAtributo = 0) {
+/* ═══════════ MM6 — O ATAQUE FURTIVO É A REGRA DO 5e ═══════════
+   Até aqui o Ladino somava o furtivo em TODO golpe, por classe. No 5e ele
+   exige uma de duas coisas, e nenhuma desvantagem:
+     · VANTAGEM no ataque (escondido, invisível, alvo cego, uma bênção);
+     · ou um ALIADO de pé colado no alvo — "outro inimigo dele a 1,5 m".
+   Com vantagem e desvantagem ao mesmo tempo (caído e escondido, por
+   exemplo), as duas se anulam no dado E o furtivo não soma: não há
+   vantagem, e há desvantagem para barrar o aliado.
+
+   OS DADOS DO FURTIVO são os que o Ladino tem A MAIS que a base da classe:
+   `dadosDeDano` dá 1 + ⌊nível/2⌋, e o 1 é o golpe de qualquer um. No
+   nível 1 o furtivo desta casa vale zero dados — a regra não muda nada
+   ali, e é honesto dizê-lo: o Ladino desta casa nasce com 1d6 e cresce
+   pelo furtivo, como a tabela de v9.54 já escrevia.
+
+   A MEDIDA, antes de mudar, foi feita num tabuleiro montado com as peças
+   de produção (a planta, o passo, o golpe, o turno dos dois lados), com o
+   Ladino de nível 5 e a sorte por semente — o instrumento mora com as
+   suítes desta etapa e não é nomeado aqui, como manda a lei de que medida
+   não entra no motor. O que ele achou, em uma frase por luta:
+     · COM GRUPO a regra quase não morde: o grupo anda para o inimigo mais
+       perto do herói (é a regra do App), e o aliado colado no alvo é o
+       normal — o furtivo continua a somar em ~95–100% dos golpes, e o dano
+       por luta cai 2% ou menos;
+     · SOZINHO ela morde inteira: sem aliado e sem vantagem, 0% — o dano
+       por luta cai ~21% e a vitória contra dois comuns cai de ~91% para
+       ~61%. Uma Vida começa sem grupo, e é aí que o Ladino nasce.
+   Por isso a regra não entrou sozinha: entrou com a AÇÃO ARDILOSA
+   (`ESCONDIDO.comoBonus`, escondido.js) — esconder-se como ação bônus, que
+   é do 5e e é o que dá ao estado escondido razão de existir. Com ela o
+   Ladino sozinho esconde-se ~2,5 vezes por luta, soma o furtivo em ~40%
+   dos golpes, e a queda fica em ~5% (vitória ~84%). O Ladino joga
+   diferente — procura a cobertura, flanqueia — e não pior. */
+export const ATAQUE_FURTIVO = {
+  alcanceDoAliadoM: 1.5,
+  frases: {
+    vantagem: "o Ataque Furtivo soma — o golpe sai com vantagem",
+    aliado: "o Ataque Furtivo soma — {quem} está colado no alvo",
+    desvantagem: "o Ataque Furtivo NÃO soma — o golpe sai com desvantagem",
+    anulada: "o Ataque Furtivo NÃO soma — vantagem e desvantagem se anulam",
+    sozinho: "o Ataque Furtivo NÃO soma — sem vantagem e sem aliado colado no alvo",
+  },
+};
+
+/* Os dados que o furtivo acrescenta a UM golpe do Ladino; zero para as
+   outras classes. É a diferença que a regra liga e desliga. */
+export function dadosDoFurtivo(classe, nivel) {
+  if (perfilCombate(classe).tipo !== "furtivo") return 0;
+  return Math.max(0, dadosDeDano(classe, nivel) - 1);
+}
+
+/* O VEREDITO, antes do dado. Recebe o mesmo que `resolverAtaque` recebe
+   para o lado do dado (`vantagem`, `desvantagem`, as duas listas de
+   condição, o alvo) e, para o aliado, a lista de aliados COM POSIÇÃO.
+   Sem tabuleiro, só a vantagem conta — o aliado não se mede sem lugar.
+   Listas nulas contam como vazias. */
+export function vereditoDoFurtivo({ classe, nivel = 1, alvo = null, aliados = [], vantagem = false, desvantagem = false, condAtacante = [], condAlvo = [], tipoDano = "fisico" } = {}) {
+  const dados = dadosDoFurtivo(classe, nivel);
+  const F = ATAQUE_FURTIVO.frases;
+  const sai = (soma, porque, quem = "") => ({ aplica: true, soma, porque, quem, dados, linha: (F[porque] || "").replace("{quem}", quem) });
+  if (perfilCombate(classe).tipo !== "furtivo") return { aplica: false, soma: false, porque: "classe", quem: "", dados: 0, linha: "" };
+  const f = fontesDoDado({ alvo, vantagem, desvantagem, condAtacante, condAlvo, tipoDano });
+  if (f.impedido || f.intocavel) return { aplica: true, soma: false, porque: "sem_golpe", quem: "", dados, linha: "" };
+  if (f.desvantagem) return sai(false, f.vantagem ? "anulada" : "desvantagem");
+  if (f.vantagem) return sai(true, "vantagem");
+  const posto = (e) => !!(e && e.x != null && e.y != null);
+  if (posto(alvo)) {
+    const colado = (Array.isArray(aliados) ? aliados : []).find((a) => a && posto(a) && !a.derrotado && !a.morrendo
+      && !(a.vida != null && (Number(a.vida) || 0) <= 0)
+      && !modificadoresDeCondicao(Array.isArray(a.condicoes) ? a.condicoes : []).perdeAcao
+      && distanciaM(a, alvo) <= ATAQUE_FURTIVO.alcanceDoAliadoM);
+    if (colado) return sai(true, "aliado", colado.nome || "um aliado");
+  }
+  return sai(false, "sozinho");
+}
+
+/* Dano por golpe já considerando os dados da classe.
+   MM6: `opcoes.furtivo === false` tira os dados do furtivo (o veredito
+   acima disse que não soma). Sem opções, soma como sempre somou — toda
+   chamada antiga continua a rolar exatamente o que rolava. */
+export function danoDaClasse(classe, nivel, bonusAtributo = 0, opcoes = null) {
   const p = perfilCombate(classe);
-  const nd = dadosDeDano(classe, nivel);
+  const semFurtivo = !!(opcoes && opcoes.furtivo === false);
+  const nd = dadosDeDano(classe, nivel) - (semFurtivo ? dadosDoFurtivo(classe, nivel) : 0);
   let total = 0;
   for (let i = 0; i < nd; i++) total += d(p.dadoBase);
   return Math.max(1, total + bonusAtributo);

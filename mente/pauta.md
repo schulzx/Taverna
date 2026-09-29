@@ -165,7 +165,10 @@ O limite é o que um commit revertido não desfaz.
   *A Aposta* prepara duas versões (sim/não). O Matt usa três: na runa de C1E1,
   um 15 é *"recuas a tempo, mas levas 8"*. Passar por pouco ou falhar por
   pouco ganha a versão do meio — por tabela, com a margem que a define.
-- [ ] **MM6 · escondido é um estado**
+- [x] **MM6 · escondido é um estado** · feito 29/09, v9.310 · sonda 69 → 72/157
+  `escondido.js` + a condição `escondido`; o furtivo pela regra do 5e com Ação Ardilosa
+  (Ladino sozinho: −21% de dano sem ela, −5% com ela); "quem me vê" na linha da luta
+  e em `naoPode` fora dela. Jogado fora da luta: nasce, cala o mundo, cai ao gritar.
   O teste de furtividade existe (`desafios.js`), o estado não: no turno
   seguinte nada lembra que o herói está escondido, e isso não dá vantagem.
   Condição que dura até agir ou ser achado; dá vantagem e o ataque furtivo
@@ -1008,6 +1011,11 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   `ehDeclaracaoDeAtaque("posso atacar o guarda?")` dá `true` (`agressao.js`): uma
   pergunta ao Mestre, com o guarda presente, vira agressão. A peneira do improviso
   (`NAO_E_IMPROVISO`) já barra perguntas; a da agressão não. Bug com teste que prova.
+- [ ] **"escondo-me" não esconde** · leve · de: sistema/MM6 · 29/09
+  O catálogo de desafios (`desafios.js`, a furtividade) casa "me escondo" e não a ênclise
+  "escondo-me" — o mesmo defeito que a peneira da agressão teve, agora no catálogo. Varrer
+  os `rx` do catálogo pela ênclise dos verbos que têm pronome (esconder-se, esgueirar-se,
+  agachar-se, atirar-se…), com corpus.
 - [ ] **o dado improvisado dentro da luta** · médio · de: sistema/MM4 · 29/09
   Em combate, um desafio rolado (catálogo ou improviso) não gasta a ação; a arma
   improvisada ataca com a arma equipada em vez de 1d4; empurrar/derrubar não chama

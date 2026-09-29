@@ -1044,7 +1044,31 @@ export const ROTULOS_DO_TABULEIRO = {
   juntaRotulos: "; ",
   coberturaMinha: "Eu estou atrás de cobertura.",
   ordemDaRodada: "Ordem da rodada:",
+  /* MM6: QUEM ME VÊ, quando estou escondido — "Estou escondido: Orc e
+     Goblin não me veem; Ogro me vê." A conta é de `escondido.js`
+     (`quemMeVe`); aqui só a voz. */
+  escondido: "Estou escondido:",
+  naoMeVe: ["não me vê", "não me veem"],
+  meVe: ["me vê", "me veem"],
+  ninguemPerto: "ninguém à volta me vê",
 };
+
+/* "A", "A e B", "A, B e C". Não é importada de escondido.js de propósito:
+   escondido.js lê este arquivo, e ler de volta fecharia um ciclo. */
+const juntarNaLinha = (nomes) => (nomes.length <= 1 ? nomes.join("") : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`);
+
+/* A frase do escondido na linha da luta, ou "" — `q` é o que
+   `quemMeVe` devolve (null quando não estou escondido). */
+function linhaDoEscondido(q) {
+  if (!q || typeof q !== "object") return "";
+  const R = ROTULOS_DO_TABULEIRO;
+  const naoVeem = (Array.isArray(q.naoVeem) ? q.naoVeem : []).map(String).filter(Boolean);
+  const veem = (Array.isArray(q.veem) ? q.veem : []).map((v) => String((v && v.nome) || v || "")).filter(Boolean);
+  const partes = [];
+  if (naoVeem.length) partes.push(`${juntarNaLinha(naoVeem)} ${R.naoMeVe[naoVeem.length > 1 ? 1 : 0]}`);
+  if (veem.length) partes.push(`${juntarNaLinha(veem)} ${R.meVe[veem.length > 1 ? 1 : 0]}`);
+  return ` ${R.escondido} ${partes.length ? partes.join("; ") : R.ninguemPerto}.`;
+}
 
 /* A ORDEM DA RODADA (MM2, caso #142 da sonda). A iniciativa é rolada UMA
    vez, ao abrir a luta, e fica em `combate.ordem` — lista de
@@ -1114,7 +1138,10 @@ export function resumoGridPrompt(grade, ocupantes = {}) {
   const minha = distancias && heroiPosto && temCobertura(grade, heroi.x, heroi.y) ? ` ${R.coberturaMinha}` : "";
   const fila = ordemDosVivos(oc.ordem, oc);
   const ordemTxt = fila.length ? ` ${R.ordemDaRodada} ${fila.join(", ")}.` : "";
-  return `TERRENO DA LUTA (do sistema — obedeça): ${mapaEmTexto(grade, oc)}.${distancias ? ` Distâncias até mim: ${distancias}.${minha}` : ""}${ordemTxt}
+  /* MM6: só quando estou escondido — sem `quemMeVe`, é a string vazia e a
+     linha sai letra por letra a de antes */
+  const escTxt = linhaDoEscondido(oc.quemMeVe);
+  return `TERRENO DA LUTA (do sistema — obedeça): ${mapaEmTexto(grade, oc)}.${distancias ? ` Distâncias até mim: ${distancias}.${minha}` : ""}${escTxt}${ordemTxt}
 Estas posições são FATO. Você não move ninguém, não faz um inimigo "cruzar o salão" para alcançar quem está longe e não põe alguém a golpe de espada de quem está a dez metros. Quem se move, se move pelo sistema, e você recebe o movimento pronto para narrar. Use os NOMES dos lugares na prosa — "ele recua para o pé da escada" —, nunca coordenada, nunca a palavra quadrado e nunca a palavra grid.`;
 }
 

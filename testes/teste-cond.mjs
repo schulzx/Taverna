@@ -1245,10 +1245,14 @@ console.log("\n[T4 · REGRESSÃO ZERO] o que o descanso limpa é IDÊNTICO ao de
      `marcado` (H4) sai pelos dois canais pela mesma razão que o prazo a
      vence: a marca é um acordo sobre o corpo, e quem para para respirar
      desfá-lo — a régua é a de `concentrado`, e uma hora de parada já é mais
-     que a duração inteira dela. */
+     que a duração inteira dela.
+     `escondido` (MM6, 29/09/2026) entra pelos dois canais porque é um estado
+     que dura até agir ou ser achado, sem relógio (`turnos: null`) — quem
+     para uma hora ou dorme a noite parou de se esconder, e sem o descanso
+     o estado atravessaria dias. */
   const ANTES_CURTO = ["cego", "queimando", "sangrando"];
   const ANTES_LONGO = ["agarrado", "amedrontado", "atordoado", "caido", "cego", "enfraquecido", "envenenado", "exausto", "lento", "paralisado", "queimando", "sangrando"];
-  const ENTRARAM = ["concentrado" /* T4 */, "marcado" /* H4 */];
+  const ENTRARAM = ["concentrado" /* T4 */, "marcado" /* H4 */, "escondido" /* MM6 */];
   const limpaNo = (canal) => listaCondicoes().filter((c) => limparPorDescanso([criarCondicao(c.id)], canal).removidas.length > 0).map((c) => c.id).sort();
   const curto = limpaNo("curto"), longo = limpaNo("longo");
   ok(curto.join(",") === [...ANTES_CURTO, ...ENTRARAM].sort().join(","), `a parada de uma hora limpa as MESMAS de antes, mais ${ENTRARAM.join(" e ")}: ${curto.join(", ")}`);

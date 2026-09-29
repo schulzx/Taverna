@@ -404,7 +404,19 @@ sec("6. o número e a catraca");
      #102 pergunta ANTES de declarar (e a pergunta é peneirada de
      propósito), o #152 é poder e não atributo, o #93 é pool de dados, e
      #76/#78 são licença sem risco. */
-  const PISO_CHEGA = 69;
+  /* MM6 (escondido é um estado, frontend, 29/09): PISO 69 → 72. Os três
+     casos do Ataque Furtivo e do estado escondido viram "chega":
+       #74  — "tenho vantagem porque ele não me viu chegar?" `quemMeVe`
+              (escondido.js) roda dentro de `enviar` (região ENVIAR) e soma
+              à linha da luta.
+       #124 — "o furtivo soma porque tenho um aliado do lado dele?"
+       #153 — "ainda escondido, dá pra atacar por trás mesmo caído?"
+       Os dois últimos são `vereditoDoFurtivo` (combate.js), chamado dentro
+       de `resolverAtaqueJogador` (região GOLPE) e do golpe de oportunidade
+       de `resolverRevide` (região REVIDE) — não precisou de região nova:
+       a chamada já aparece em DUAS das que a suíte já conhecia, byte a
+       byte a mesma prova que o resto do funil usa. */
+  const PISO_CHEGA = 72;
   const TETO_SABE_E_NAO_CONTA = 0;
   t(`o piso do chega não desceu (hoje: ${X}, piso: ${PISO_CHEGA})`, X >= PISO_CHEGA);
   t(`o teto do sabe-e-nao-conta não subiu (hoje: ${Y}, teto: ${TETO_SABE_E_NAO_CONTA})`, Y <= TETO_SABE_E_NAO_CONTA);

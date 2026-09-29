@@ -527,8 +527,11 @@ sec("4. a definição operacional de 'número que muda'");
      que fizer) não mudou em nenhuma das três medições de hoje.
      A peneira da agressão (frontend, MM, 29/09): 14239 -> 14257, +18 —
      ver o motivo completo junto do campo `porque`, em
+     testes/acoes-do-jogador.mjs.
+     O escondido entra na fiação (frontend, MM6, 29/09): 14257 -> 14326,
+     +69 — mesmo motivo, mesmo lugar: o campo `porque` em
      testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14257/.test(relogio.porque));
+  t("e aponta a linha que avança o relógio", !!relogio && /14326/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -703,7 +706,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
   t("o funil tem 15 funções", f.funcoes === 15, String(f.funcoes));
   t("e 12 delas são provadamente mudas fora da luta", f.porAnel.nucleo === 12, String(f.porAnel.nucleo));
   t("as outras 3 são de borda — falam dentro e fora", f.porAnel.borda === 3, String(f.porAnel.borda));
-  t("são 57 chamadas de pushMsgs no funil", f.linhas === 57, String(f.linhas));
+  t("são 58 chamadas de pushMsgs no funil", f.linhas === 58, String(f.linhas));
   /* a soma tem de fechar: uma linha sem voz declarada some da conta em
      silêncio, e é exatamente assim que uma régua passa a mentir */
   t("e toda chamada tem uma voz declarada",
@@ -734,11 +737,14 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        A peneira da agressão (frontend, MM, 29/09): 12804 -> 12818, +14 —
        o mesmo degrau que `aplicarGolpeDoJogador` leva no cabeçalho de
        FUNIL_DO_COMBATE (a peneira em `resolverAtaqueJogador`, acima desta
-       função no arquivo). */
+       função no arquivo).
+       O escondido entra na fiação (frontend, MM6, 29/09): 12818 -> 12876,
+       +58 — o mesmo degrau que `continuarGolpeDoJogador` leva no
+       cabeçalho de FUNIL_DO_COMBATE. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:12818").voz === "telegrama");
-  t("a maior boca do funil é `resolverRevide`, com 29 chamadas",
-    FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 29);
+      .linhas.find((l) => l.onde === "src/App.jsx:12876").voz === "telegrama");
+  t("a maior boca do funil é `resolverRevide`, com 30 chamadas",
+    FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 30);
   t("toda função do funil declara anel, endereço e ao menos uma linha",
     FUNIL_DO_COMBATE.every((x) => /^src\/App\.jsx:\d+$/.test(x.onde)
       && (x.anel === "nucleo" || x.anel === "borda") && x.linhas.length > 0));
@@ -748,7 +754,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
 
   /* a coluna `nasce` é a que diz quanto da voz já é testável em Node */
   const n = vozQueNasceNoModulo();
-  t("parte da voz do combate já nasce fora do React", n.doModulo === 22, String(n.doModulo));
+  t("parte da voz do combate já nasce fora do React", n.doModulo === 23, String(n.doModulo));
   t("e a maior parte ainda só existe no App.jsx", n.doApp === 35 && n.doApp > n.doModulo, String(n.doApp));
 }
 
@@ -828,7 +834,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        A peneira da agressão (frontend, MM, 29/09): 12679 -> 12693, +14 —
        o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
        FUNIL_DO_COMBATE. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12693" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12747" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -853,7 +859,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      A peneira da agressão (frontend, MM, 29/09): 12820 -> 12834, +14 — o
      mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
      FUNIL_DO_COMBATE. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12834/.test(S.ondeSai));
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12892/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

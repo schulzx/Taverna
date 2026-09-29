@@ -271,6 +271,32 @@ export const CONDICOES = {
     desc: "Escondido: vantagem enquanto não for notado.",
     aliases: [/furtiv/, /nas sombras, sem ser vist/, /escondid[oa] de todos/],
   },
+  /* MM6 · ESCONDIDO É UM ESTADO, e não é o `furtivo` de cima. O `furtivo`
+     é um BUFF de magia (a aflição `sombra`): três turnos de vantagem em
+     tudo, venha de onde vier. O `escondido` nasce de um teste de
+     furtividade passado e é o contrário de um buff de relógio: não vence
+     no tempo (`turnos: null`), cai por ATO (atacar, conjurar, gritar,
+     sair para o aberto) ou por ser ACHADO, e a vantagem dele NÃO é deste
+     catálogo — vale só contra quem não o viu, e quem sabe isso é
+     `escondido.js` (`oculto`). Por isso não há `vantagem: true` aqui: pô-la
+     daria vantagem até contra quem o está a ver.
+
+     `aliases` vazio de propósito: a normalização acha o id pela raiz do
+     rótulo ("escondid-"). E isso tem um preço pequeno, escrito para não
+     ser surpresa: a raiz vem ANTES dos apelidos em `normalizarCondicao`,
+     logo o apelido `/escondid[oa] de todos/` do `furtivo` deixa de casar —
+     um NOME LIVRE "escondido de todos" passa a ser este estado. Medido:
+     nenhuma porta do `src/` cria condição por essa frase (a aflição
+     `sombra` aplica `furtivo` pelo id), e toda instância nova já nasce com
+     `id`, que `mecanicaDe` lê antes do nome. O apelido fica no `furtivo`
+     como estava — tirá-lo mudaria uma linha que não é desta etapa.
+     O descanso limpa — quem parou para dormir parou de se esconder. */
+  escondido: {
+    id: "escondido", rotulo: "Escondido", icone: "👤", tipo: "bom",
+    turnos: null, saiCom: ["curto", "longo"],
+    desc: "Fora da vista: vantagem no golpe contra quem não o viu; atacar, conjurar ou se mostrar o revela.",
+    aliases: [],
+  },
   protegido: {
     id: "protegido", rotulo: "Protegido", icone: "🛡", tipo: "bom",
     turnos: 4, defesa: 2,
