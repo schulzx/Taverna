@@ -1011,12 +1011,15 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   `ehDeclaracaoDeAtaque("posso atacar o guarda?")` dá `true` (`agressao.js`): uma
   pergunta ao Mestre, com o guarda presente, vira agressão. A peneira do improviso
   (`NAO_E_IMPROVISO`) já barra perguntas; a da agressão não. Bug com teste que prova.
-- [ ] **"escondo-me" não esconde** · leve · de: sistema/MM6 · 29/09
+- [x] **"escondo-me" não esconde** · feito 29/09, v9.311 · de: sistema/MM6 · 29/09
   O catálogo de desafios (`desafios.js`, a furtividade) casa "me escondo" e não a ênclise
   "escondo-me" — o mesmo defeito que a peneira da agressão teve, agora no catálogo. Varrer
   os `rx` do catálogo pela ênclise dos verbos que têm pronome (esconder-se, esgueirar-se,
   agachar-se, atirar-se…), com corpus.
 - [ ] **o dado improvisado dentro da luta** · médio · de: sistema/MM4 · 29/09
+  *Mais um (29/09, v9.311):* fora da luta, "empurro o guarda contra a parede" rola Atletismo
+  (`forcar` casa "empurro o/a") em vez de ir à disputa; a trava da disputa só existe no
+  improviso. Entra no mesmo conserto que liga `disputa.js`.
   Em combate, um desafio rolado (catálogo ou improviso) não gasta a ação; a arma
   improvisada ataca com a arma equipada em vez de 1d4; empurrar/derrubar não chama
   `disputa.js`. Por isso o improviso de MM4 fica desligado em luta. Fechar as três e

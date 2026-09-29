@@ -15,6 +15,40 @@ Formato:
 ```
 
 ---
+## 29/09 20:10 · v9.311 · "escondo-me" esconde: a ênclise no catálogo · commit (o hash vai no próximo bloco)
+
+- **por que andou:** item de "Aberto" promovido pelo coordenador — o mesmo defeito da
+  peneira da agressão, agora no catálogo de desafios, que foi todo escrito em próclise.
+- **estado inicial:** verde (MM6 no ar, `b4ca492`, `98d4e80`).
+- **backend:** duas causas. (1) o catálogo só conhecia "me escondo"; nem "tento me
+  esconder" casava. (2) **o catálogo era a única porta que age pelo jogador sem passar
+  pela peneira** — no ar, "posso me esgueirar até a porta?" e "não me escondo" rolavam
+  Furtividade. `emProclise` e a tabela `ENCLISE` em `peneira.js` desfazem a ênclise sem
+  mudar o tamanho da frase — o reflexivo e o "lhe" para antes do verbo, o objeto para
+  depois, que é como o catálogo escreve quem sofre a ação —, e `lerAcao` passa a ler só
+  o que o herói declarou. Seis desafios cuja pergunta é o próprio gesto (investigar,
+  heráldica, arcano…) continuam a ler tudo: "de quem é esse brasão?" rola. A agressão não
+  passa pela troca (já lê a ênclise): veredito idêntico em 11 709 frases.
+- **corpus:** 63 frases, 100% (44 pares ênclise/próclise, 19 que não podem rolar), mais 21
+  hífens que não são ênclise (guarda-roupa, pé-de-cabra, corpo-a-corpo) intactos.
+- **decisões médias tomadas:**
+  - **Três jeitos novos de se esconder** (misturar-se na multidão, aproximar-se sem ruído,
+    agachar-se atrás de algo): o item citava-os e nem a próclise deles casava.
+  - **Cinco alternativas que nunca casaram** ("convenço", "calço a placa", "trenó",
+    "encalço"): a frase chega sem acento e a regra tinha a letra acentuada solta. "Convenço
+    ele" nunca tinha sido Persuasão.
+  - **O "se" depois de preposição deixou de ser condição** na peneira ("convencer o guarda
+    a se matar por mim").
+- **orquestrador:** a suíte de MM6 falhava no HEAD puro (o `so-o-meu.sh` tira a árvore
+  por `git archive`, que com `core.autocrlf` traz o App.jsx em CRLF, e as âncoras de
+  várias linhas só casavam em LF). Normalizado o fim de linha na leitura, com o motivo.
+  Era defeito meu, da etapa anterior.
+- **achado:** "empurro o guarda contra a parede" rola Atletismo em vez de disputa — juntou-se
+  ao item do dado improvisado dentro da luta, que é quem liga `disputa.js`.
+- **para quem joga:** "escondo-me", "esgueiro-me", "equilibro-me", "tento esconder-me" fazem
+  o que dizem; "posso esconder-me?" e "não me escondo" deixam de rolar. A sonda não se
+  move (72/157).
+
 ## 29/09 18:40 · v9.310 · MM6 · escondido é um estado · commit `b4ca492`
 
 - **por que andou:** o teste de furtividade existia e o estado não — no turno seguinte

@@ -59,13 +59,18 @@ export const NAO_E_DECLARACAO = [
        3) a condição: "se ele sacar a espada", "quando o guarda virar
           as costas" — o futuro do subjuntivo é um plano, não um golpe.
        "Salto o mais alto que posso" NÃO cai: "posso" sem infinitivo
-       depois é medida do salto, e o salto aconteceu. */
+       depois é medida do salto, e o salto aconteceu.
+       E o "se" depois de preposição não é condição, é o pronome do
+       infinitivo: "convenço o guarda A SE afastar", "PARA SE esconder".
+       Achado quando o catálogo passou a ler esta peneira (a ênclise, Fase
+       MM): "tento convencer o guarda a se matar por mim" deixava de ser a
+       conversa que nenhuma lábia compra e virava nada. */
     id: "hipotese",
     rx: new RegExp([
       "^\\s*((mestre|narrador)\\s*,?\\s*)?((e|mas|entao)\\s+)?(eu\\s+)?(posso|podia|poderia|pude|devo|devia|deveria|consigo|conseguiria|da (para|pra)|daria (para|pra)|seria possivel|sera que|e se|se|caso|quem sabe|talvez|tem como|e possivel|vale a pena|a menos que|a nao ser que)\\b",
       "\\b(se eu|caso eu|e se|sera que|quero saber se|me pergunto se|imagino se|imagino que|me imagino|sonho que|sonhei que|sonho com|penso em|pensei em|pensando em|seria possivel|daria (para|pra)|da (para|pra) eu|como seria|a menos que|a nao ser que)\\b",
       "\\b(eu|se|acho que|creio que|sei que|penso que|imagino que|talvez)\\s+(eu\\s+)?(posso|podia|poderia|pude|consigo|conseguiria|devo|devia|deveria)\\s+((mesmo|ainda|so|tambem|nao|simplesmente)\\s+)?\\w+(ar|er|ir|or|[aei]-l[oa]s?)\\b",
-      "\\b(se|caso|quando|assim que|logo que)\\s+((ele|ela|eles|elas|alguem|voce|(o|a|os|as)\\s+\\w+)\\s+)?((se|me|nos|lhe)\\s+)?(\\w+(ar|er|ir|or)|for|forem|tiver|tiverem|puder|quiser|fizer|vier|der|estiver|houver|souber)\\b",
+      "(\\b(caso|quando|assim que|logo que)|(?<!\\b(a|de|para|pra|sem|por|ao)\\s+)\\bse)\\s+((ele|ela|eles|elas|alguem|voce|(o|a|os|as)\\s+\\w+)\\s+)?((se|me|nos|lhe)\\s+)?(\\w+(ar|er|ir|or)|for|forem|tiver|tiverem|puder|quiser|fizer|vier|der|estiver|houver|souber)\\b",
     ].join("|")),
     porque: "perguntar se pode, supor o que aconteceria ou planejar para quando algo acontecer não é fazer — agir aqui puniria o jogador por pensar alto",
   },
@@ -149,4 +154,123 @@ export function soODeclarado(texto, travas = NAO_E_DECLARACAO) {
     if (cai) s = s.slice(0, p.ini) + mascarar(p.txt) + s.slice(p.ini + p.txt.length);
   }
   return s;
+}
+
+/* ============================================================
+   A ÊNCLISE (Fase MM) — "escondo-me" é "me escondo"
+
+   Em português, o pronome depois do verbo é o jeito NORMAL de escrever,
+   não o raro: escondo-me, esgueiro-me, equilibro-me, tento convencê-lo,
+   vou esgueirar-me. O catálogo de desafios foi escrito em próclise ("me
+   escondo", "me equilibro") e com o objeto depois do verbo ("sigo ele
+   de longe", "tento convencer o guarda"), e por isso "escondo-me atrás
+   do barril" não rolava nada — o mesmo defeito que a agressão teve com
+   "socá-lo", agora no catálogo. Remendar quarenta `rx` seria quarenta
+   lugares para esquecer o próximo verbo; aqui a FRASE é reescrita uma
+   vez, antes do catálogo, na forma em que ele já lê.
+
+   A DIREÇÃO NÃO É UMA SÓ, e foi medida no próprio catálogo:
+     - o reflexivo e o dativo vão para ANTES do verbo, porque é assim que
+       o catálogo os escreve: "escondo-me" → "me escondo", "dou-lhe um
+       sermão" → "lhe dou um sermão";
+     - o objeto (o, a, -lo, -la) fica DEPOIS, sem o hífen, porque é assim
+       que o catálogo escreve quem sofre a ação: "sigo-o de longe" → "sigo
+       o de longe" (como "sigo ele de longe"), "tento convencê-lo" → "tento
+       convencer o". Em próclise, "tento o convencer" partiria o "tento
+       convencer" que a tabela conhece.
+   O -lo que comeu a letra do verbo devolve a letra: "convencê-lo" é
+   convencer + o; "vemo-lo", vemos + o.
+
+   O MESMO TAMANHO, SEMPRE. "escondo-me" e "me escondo" têm dez letras;
+   "convencê-lo" e "convencer o", onze. A troca só mexe DENTRO do trecho
+   trocado — o resto da frase fica na mesma posição, e o rótulo do
+   improviso continua a copiar os acentos do jogador. Onde a língua não
+   deixa (a mesóclise encurta, "escondemo-nos" alongaria), o trecho é
+   completado com espaço ou fica sem o "s" do plural — o radical, que é
+   o que o catálogo lê, não muda.
+
+   O HÍFEN QUE NÃO É ÊNCLISE não se mexe: só se troca quando o que vem
+   depois do hífen é um pronome e nada mais se lhe cola ("corpo-a-corpo",
+   "bem-te-vi", "bem-me-quer" ficam), e quando o verbo não é, ele próprio,
+   o fim de outra palavra com hífen. "Guarda-roupa", "meio-dia",
+   "pé-de-cabra" nunca têm pronome depois do hífen.
+
+   O CONDICIONAL FICA DE FORA de propósito: "esconder-me-ia" é "eu me
+   esconderia", hipótese — e hipótese é da peneira, não do catálogo.
+
+   Não peneira nada, e não substitui a peneira: a pergunta continua
+   pergunta ("posso esconder-me?" vira "posso me esconder?", e a trava a
+   apaga igual). Só muda a ordem das palavras.
+   ============================================================ */
+export const ENCLISE = {
+  /* o pronome que o catálogo escreve antes do verbo */
+  antes: ["me", "te", "se", "nos", "vos", "lhe", "lhes", "lho", "lha", "lhos", "lhas"],
+  /* o objeto, que o catálogo escreve depois */
+  depois: ["o", "a", "os", "as"],
+  /* o -lo da ênclise que comeu a última letra: a letra que volta, pela
+     terminação do que sobrou ("socá" → "socar", "vemo" → "vemos") */
+  letraComida: [
+    { fim: "mo", volta: "s" },
+    { fim: "a", volta: "r" },
+    { fim: "e", volta: "r" },
+    { fim: "i", volta: "r" },
+    { fim: "o", volta: "r" },
+  ],
+  /* só o futuro; o condicional (-ia) é hipótese e fica como está */
+  mesoclise: ["ei", "as", "ás", "a", "á", "emos", "eis", "ao", "ão"],
+  porque: "a ênclise é o jeito normal de escrever em português; o catálogo lê próclise e objeto depois do verbo, e a frase é reescrita uma vez, no mesmo tamanho, em vez de cada regra aprender as duas",
+};
+
+const SEM_ACENTO = { á: "a", â: "a", à: "a", ã: "a", é: "e", ê: "e", í: "i", ó: "o", ô: "o", õ: "o", ú: "u", Á: "A", Â: "A", É: "E", Ê: "E", Í: "I", Ó: "O", Ô: "O", Ú: "U" };
+const tiraAcentoFinal = (p) => p.slice(0, -1) + (SEM_ACENTO[p.slice(-1)] || p.slice(-1));
+const alt = (l) => l.slice().sort((a, b) => b.length - a.length).join("|");
+/* o verbo que devolve a letra comida, ou nada se não tem cara de verbo */
+function devolveALetra(host) {
+  const base = tiraAcentoFinal(host);
+  const b = base.toLowerCase();
+  const r = ENCLISE.letraComida.find((l) => b.endsWith(l.fim));
+  return r ? base + r.volta : "";
+}
+const completa = (novo, velho) => (novo.length < velho.length ? novo + " ".repeat(velho.length - novo.length) : novo.slice(0, velho.length));
+const ehAntes = (p) => ENCLISE.antes.includes(p.toLowerCase());
+/* a maiúscula do começo da frase passa ao pronome: "Escondo-me" → "Me escondo" */
+function antesDoVerbo(p, v) {
+  const cap = v.charAt(0) !== v.charAt(0).toLowerCase();
+  return cap ? p.charAt(0).toUpperCase() + p.slice(1) + " " + v.charAt(0).toLowerCase() + v.slice(1) : p + " " + v;
+}
+const PRONOMES = alt([...ENCLISE.antes, ...ENCLISE.depois]);
+const FUTURO = alt(ENCLISE.mesoclise);
+/* o verbo: letras, sem hífen colado antes (senão é o fim de "bem-te-vi") */
+const VERBO = "(?<![\\p{L}\\-])(\\p{L}{2,})";
+const SOLTO = "(?![\\p{L}\\-])";
+const RX_MESOCLISE = new RegExp(VERBO + "-(" + PRONOMES + "|l[oa]s?)-(" + FUTURO + ")" + SOLTO, "giu");
+const RX_LO = new RegExp(VERBO + "-(l[oa]s?)" + SOLTO, "giu");
+const RX_ENCLISE = new RegExp(VERBO + "-(" + PRONOMES + ")" + SOLTO, "giu");
+
+/* A frase com a ênclise desfeita, no mesmo tamanho. Nunca lança: o que
+   não entende devolve como veio. */
+export function emProclise(texto) {
+  const t = String(texto == null ? "" : texto);
+  if (!t.includes("-")) return t;
+  try {
+    return t
+      /* esconder-me-ei → me esconderei · atacá-lo-ei → atacarei o */
+      .replace(RX_MESOCLISE, (m, v, p, f) => {
+        const lo = /^l[oa]s?$/i.test(p);
+        const verbo = (lo ? devolveALetra(v) : v) + f;
+        if (lo && verbo === f) return m;
+        const pron = lo ? p.slice(1) : p;
+        return completa(ehAntes(pron) ? antesDoVerbo(pron, verbo) : verbo + " " + pron, m);
+      })
+      /* convencê-lo → convencer o · vemo-lo → vemos o */
+      .replace(RX_LO, (m, v, p) => {
+        const verbo = devolveALetra(v);
+        return verbo ? completa(verbo + " " + p.slice(1), m) : m;
+      })
+      /* escondo-me → me escondo · sigo-o → sigo o · dou-lhe → lhe dou */
+      .replace(RX_ENCLISE, (m, v, p) => {
+        /* "escondemo-nos": o "s" do plural foi comido e não cabe de volta */
+        return ehAntes(p) ? antesDoVerbo(p, v) : v + " " + p;
+      });
+  } catch { return t; }
 }

@@ -56,7 +56,7 @@ import { periciaPorId } from "./pericias.js";
 import { detectarPedidoDeTeste, semOPedidoDeTeste, nomeDoAtributo } from "./testes.js";
 import { dificuldadeSocial, foraDaConversa, envelopeForaDaConversa } from "./social.js";
 import { NAO_E_AGRESSAO, RX_AGRESSAO } from "./agressao.js";
-import { soODeclarado } from "./peneira.js";
+import { soODeclarado, emProclise, NAO_E_DECLARACAO } from "./peneira.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -263,7 +263,7 @@ export const DESAFIOS = [
     id: "investigar",
     rx: /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo)/,
     pericia: "investigacao", alvo: "investigacao", minutos: 15, barulho: false,
-    rotulo: "ler os vestígios", dcPadrao: DC("incomum"),
+    rotulo: "ler os vestígios", dcPadrao: DC("incomum"), lePergunta: true,
   },
   {
     id: "escutar",
@@ -288,7 +288,7 @@ export const DESAFIOS = [
        número e visível na ficção. */
     naoSe: /\b(bras[aã]o|estandarte|emblema|bandeira|sotaque|dialeto|casa (é|e|de)|reino|ordem|selo da casa)\b/,
     pericia: "saberes", alvo: "fraqueza", minutos: 0, barulho: false,
-    rotulo: "lembrar o que se sabe da criatura", dcBase: DC("incomum"), dispensavel: true,
+    rotulo: "lembrar o que se sabe da criatura", dcBase: DC("incomum"), dispensavel: true, lePergunta: true,
     /* este é o único que vale DENTRO da luta sem penalidade de tempo: é
        exatamente para isto que a perícia de saberes existe */
     valeEmCombate: true,
@@ -297,7 +297,7 @@ export const DESAFIOS = [
     id: "mentira",
     rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]|tento saber se|desconfio|sinto se|percebo se mente)\b/,
     pericia: "intuicao", alvo: "intuicao", minutos: 0, barulho: false,
-    rotulo: "ler a intenção", dcPadrao: DC("incomum"),
+    rotulo: "ler a intenção", dcPadrao: DC("incomum"), lePergunta: true,
     /* v9.65: rolar Intuição sem o mundo ter decidido se HÁ mentira é
        rolar para saber se existe a coisa que a pergunta já supôs. Mas
        este é o único que exige um alvo NOMEADO: sem nome, o fato ficaria
@@ -325,7 +325,7 @@ export const DESAFIOS = [
   },
   {
     id: "escalar",
-    rx: /\b(escal|trepo|subo (o\b|a\b|pel)|me i[cç]o|galgo|escalar)/,
+    rx: /\b(escal|trepo|subo (o\b|a\b|pel)|me i[cç](o|ar)|galgo|escalar)/,
     /* MM4: "subo a escada até o quarto" rolava Atletismo — o corpus do
        improviso achou. `SEM_DADO` já dizia que subir a escada é andar; o
        catálogo é que a roubava antes. "Subo PELA escadaria" (a ruína, a
@@ -336,7 +336,14 @@ export const DESAFIOS = [
   },
   {
     id: "furtar_se",
-    rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escondo|fico na sombra|sigo sem que)/,
+    rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escond(o|er|erei)\b|fico na sombra|sigo sem que|me mistur(o|ar) (a|na|no|com a|entre a|entre o) (multid[aã]o|turba|gente|povo|plateia|prociss[aã]o|feira|romaria|fila)|me aproxim(o|ar) (sem (fazer )?(ru[ií]do|barulho)|em sil[eê]ncio|p[eé] ante p[eé]|na ponta dos p[eé]s|de mansinho)|me (agach|abaix)(o|ar) (atr[aá]s|detr[aá]s|nas? sombras?|entre|sob|debaixo|embaixo))/,
+    /* Fase MM (a ênclise): "escondo-me" não rolava nada, e "tento me
+       esconder" também não — a regra só conhecia "me escondo". A ênclise
+       chega aqui já desfeita (emProclise, em lerAcao); o infinitivo é que
+       faltava. E três jeitos de se esconder que a mesa usa e o catálogo não
+       tinha: misturar-se na multidão, chegar sem ruído, agachar-se atrás de
+       algo. Nenhum deles rola se for pergunta — o catálogo passou a ler a
+       peneira. */
     pericia: "furtividade", alvo: "furtividade", minutos: 5, barulho: false, testemunha: true,
     rotulo: "passar sem ser visto", dcPadrao: DC("incomum"),
   },
@@ -351,7 +358,7 @@ export const DESAFIOS = [
     /* Conversa não se rola — só o que a conversa TENTA arrancar contra
        resistência. "Peço uma cerveja" não é Persuasão; "tento convencer o
        guarda a me deixar passar" é. A régua é o verbo de esforço. */
-    rx: /\b(tento convencer|convenço|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch)/,
+    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch)/,
     pericia: "persuasao", alvo: "persuasao", minutos: 10, barulho: false,
     rotulo: "convencer", dcPadrao: DC("incomum"), social: true,
   },
@@ -384,7 +391,7 @@ export const DESAFIOS = [
        `me aproximo d\b` não casa "dela", porque o que vem depois do
        radical é letra, não fronteira. O `\b` da esquerda basta — é ele que
        impede o radical de casar no meio de outra palavra. */
-    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresento (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproximo d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento|pergunto)|dizendo|falando)\b/,
+    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresent(o|ar) (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproxim(o|ar) d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento|pergunto)|dizendo|falando)\b/,
     /* pedir informação a alguém não é se apresentar a alguém: quem chega
        com uma pergunta de balcão está na porta da cortesia, não na da
        simpatia, e o degrau resolve isso sozinho — mas a BRIGA não. */
@@ -403,7 +410,7 @@ export const DESAFIOS = [
   },
   {
     id: "mentir",
-    rx: /\b(minto|mentir|blefo|blefar|engano|finjo ser|me passo por|disfar[cç])/,
+    rx: /\b(minto|mentir|blefo|blefar|engano|finjo ser|me pass(o|ar) por|disfar[cç])/,
     pericia: "enganacao", alvo: "enganacao", minutos: 5, barulho: false,
     rotulo: "enganar", dcPadrao: DC("incomum"), social: true,
   },
@@ -426,7 +433,7 @@ export const DESAFIOS = [
     id: "arcano",
     rx: /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examino o selo|o que (é|e) esse feiti)\b/,
     pericia: "arcanismo", alvo: "arcano", minutos: 10, barulho: false,
-    rotulo: "ler o arcano", dcPadrao: DC("incomum"),
+    rotulo: "ler o arcano", dcPadrao: DC("incomum"), lePergunta: true,
   },
 
   /* ============================================================
@@ -456,19 +463,19 @@ export const DESAFIOS = [
     /* A armadilha existia na masmorra e não havia como declarar que se
        tenta desarmá-la: o jogador passava por cima e torcia. */
     id: "desarmar",
-    rx: /\b(desarm|desativ|neutraliz\w* (a|o) (armadilha|mecanismo|gatilho)|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|calço a placa)/,
+    rx: /\b(desarm|desativ|neutraliz\w* (a|o) (armadilha|mecanismo|gatilho)|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|cal[cç]o a placa)/,
     pericia: "prestidigitacao", alvo: "armadilha", minutos: 5, barulho: false,
     rotulo: "desarmar a armadilha", dcPadrao: DC("dificil"),
   },
   {
     id: "nadar",
-    rx: /\b(nado|nadar|atravesso a nado|me jogo n[oa] (agua|[aá]gua|rio|mar)|mergulho (n|at[eé]|para))/,
+    rx: /\b(nado|nadar|atravesso a nado|me jog(o|ar) n[oa] (agua|[aá]gua|rio|mar)|mergulho (n|at[eé]|para))/,
     pericia: "atletismo", alvo: "nado", minutos: 10, barulho: false,
     rotulo: "atravessar a nado", dcPadrao: DC("comum"), corpo: true,
   },
   {
     id: "saltar",
-    rx: /\b(salto (o\b|a\b|para|por cima|sobre)|pulo (o\b|a\b|para|por cima|sobre|do\b)|dou um salto|me atiro (para|sobre|por))/,
+    rx: /\b(salto (o\b|a\b|para|por cima|sobre)|pulo (o\b|a\b|para|por cima|sobre|do\b)|dou um salto|me atir(o|ar) (para|sobre|por))/,
     pericia: "atletismo", alvo: "salto", minutos: 0, barulho: false,
     rotulo: "saltar o vão", dcPadrao: DC("incomum"), corpo: true, queda: true,
   },
@@ -488,13 +495,13 @@ export const DESAFIOS = [
   },
   {
     id: "equilibrio",
-    rx: /\b(me equilibro|atravesso (a|o) (viga|corda|tronco|parapeito|beiral|telhado)|ando pel[ao] (viga|corda|beiral|parapeito)|passo pel[ao] (peitoril|beiral|parapeito))/,
+    rx: /\b(me equilibr(o|ar)|atravesso (a|o) (viga|corda|tronco|parapeito|beiral|telhado)|ando pel[ao] (viga|corda|beiral|parapeito)|passo pel[ao] (peitoril|beiral|parapeito))/,
     pericia: "acrobacia", alvo: "equilibrio", minutos: 2, barulho: false,
     rotulo: "atravessar sem cair", dcPadrao: DC("incomum"), corpo: true, queda: true,
   },
   {
     id: "escapar",
-    rx: /\b(me solto|me desvencilho|escapo (da|das|do|dos) (corda|amarra|algema|n[oó]|la[cç]o|rede|teia|agarr)|solto os pulsos|me contorço|escorrego pel[ao] (grade|abertura|fresta))/,
+    rx: /\b(me solt(o|ar)\b|me desvencilh(o|ar)|escapo (da|das|do|dos) (corda|amarra|algema|n[oó]|la[cç]o|rede|teia|agarr)|solto os pulsos|me contor[cç](o|er)|escorrego pel[ao] (grade|abertura|fresta))/,
     pericia: "acrobacia", alvo: "escapar", minutos: 5, barulho: false,
     rotulo: "escapar do que prende", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -510,13 +517,13 @@ export const DESAFIOS = [
   },
   {
     id: "cavalgar",
-    rx: /\b(esporeio|cavalgo|galopo|monto (no|na|o cavalo|a [eé]gua)|conduzo (a|o) (carro[cç]a|carreta|charrete|trenó|barca)|guio (a|o) (carro[cç]a|carreta)|salto com o cavalo)/,
+    rx: /\b(esporeio|cavalgo|galopo|monto (no|na|o cavalo|a [eé]gua)|conduzo (a|o) (carro[cç]a|carreta|charrete|tren[oó]|barca)|guio (a|o) (carro[cç]a|carreta)|salto com o cavalo)/,
     pericia: "montaria", alvo: "montaria", minutos: 5, barulho: false,
     rotulo: "dominar a montaria", dcPadrao: DC("comum"), corpo: true, queda: true,
   },
   {
     id: "acalmar_bicho",
-    rx: /\b(acalmo (o|a) (cavalo|[eé]gua|c[aã]o|cachorro|mula|boi|bicho|animal|fera|besta)|me aproximo devagar d|estendo a m[aã]o para (o|a) (bicho|animal|cavalo|c[aã]o)|falo baixo com (o|a) (bicho|animal|cavalo))/,
+    rx: /\b(acalmo (o|a) (cavalo|[eé]gua|c[aã]o|cachorro|mula|boi|bicho|animal|fera|besta)|me aproxim(o|ar) devagar d|estendo a m[aã]o para (o|a) (bicho|animal|cavalo|c[aã]o)|falo baixo com (o|a) (bicho|animal|cavalo))/,
     pericia: "montaria", alvo: "bicho", minutos: 5, barulho: false,
     rotulo: "acalmar o bicho", dcPadrao: DC("incomum"),
   },
@@ -534,7 +541,7 @@ export const DESAFIOS = [
   },
   {
     id: "orientar",
-    rx: /\b(me oriento|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/,
+    rx: /\b(me orient(o|ar)|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/,
     pericia: "sobrevivencia", alvo: "orientar", minutos: 40, barulho: false,
     rotulo: "não se perder", dcPadrao: DC("comum"), dispensavel: true,
   },
@@ -542,13 +549,13 @@ export const DESAFIOS = [
     id: "diagnosticar",
     rx: /\b(examino o (corpo|cad[aá]ver|ferimento|ferido|morto|doente)|de que (ele|ela|isso) morreu|do que (ele|ela) (est[aá] doente|padece)|vejo o que (ele|ela) tem|abro o corpo|checo o pulso)/,
     pericia: "medicina", alvo: "diagnostico", minutos: 15, barulho: false,
-    rotulo: "ler o corpo", dcPadrao: DC("incomum"), dispensavel: true,
+    rotulo: "ler o corpo", dcPadrao: DC("incomum"), dispensavel: true, lePergunta: true,
   },
   {
     id: "heraldica",
     rx: /\b(de quem (é|e) (esse|este|aquele) (bras[aã]o|estandarte|s[ií]mbolo|emblema)|reconhe[cç]o (o|esse|este) (bras[aã]o|estandarte|emblema|sotaque|dialeto)|que casa (é|e)|de que reino|que ordem (é|e) essa)/,
     pericia: "saberes", alvo: "heraldica", minutos: 2, barulho: false,
-    rotulo: "reconhecer de onde vem", dcPadrao: DC("incomum"), dispensavel: true,
+    rotulo: "reconhecer de onde vem", dcPadrao: DC("incomum"), dispensavel: true, lePergunta: true,
   },
   {
     id: "falsificar",
@@ -561,7 +568,7 @@ export const DESAFIOS = [
        antes no catálogo e cuida das pegadas; isto é a sombra atrás de
        alguém que ainda está andando, e falhar aqui é ser notado. */
     id: "seguir_alguem",
-    rx: /\b(sigo (ele|ela|o|a|os|as)\s*\w*\s*(sem ser|de longe|a dist[aâ]ncia|discretamente)|vou atr[aá]s del|encalço|sigo os passos del|fico na cola)/,
+    rx: /\b(sigo (ele|ela|o|a|os|as)\s*\w*\s*(sem ser|de longe|a dist[aâ]ncia|discretamente)|vou atr[aá]s del|encal[cç]o|sigo os passos del|fico na cola)/,
     pericia: "furtividade", alvo: "perseguir", minutos: 20, barulho: false, testemunha: true,
     rotulo: "seguir sem ser notado", dcPadrao: DC("incomum"),
   },
@@ -672,7 +679,7 @@ export function fraseDaAcaoRapida(id, motivo = "") {
 export const SEM_DADO = [
   { rx: /\b(pergunto|pe[cç]o (informa|not[ií]cia)|falo com|converso|cumprimento|saúdo|saudo|digo|respondo|comento|agrade[cç]o|me apresento|dou bom dia|me despe[cç]o|escuto o que ele diz)\b/, porque: "conversa não se rola — só o que a conversa TENTA arrancar" },
   { rx: /\b(ando|caminho|sigo (at[eé]|para)|entro|saio|sento|levanto|olho para|observo o|espero|aguardo|descanso|encosto na parede|me afasto|dou meia volta|volto por onde vim|subo a escada|des[cç]o a escada)\b/, porque: "deslocar-se e olhar não são obstáculos" },
-  { rx: /\b(saco|puxo|desembainho|equipo|guardo|bebo|como|visto|acendo|apago a|embainho|abro a bolsa|pego (a|o|meu|minha)|solto a corda|amarro|calço)\b/, porque: "usar o que se tem na mão não pede dado" },
+  { rx: /\b(saco|puxo|desembainho|equipo|guardo|bebo|como|visto|acendo|apago a|embainho|abro a bolsa|pego (a|o|meu|minha)|solto a corda|amarro|cal[cç]o)\b/, porque: "usar o que se tem na mão não pede dado" },
   /* ---------------- A SEGUNDA LEVA (v9.67) ----------------
      Meia dúzia de coisas que a leva nova de desafios encostou perigosamente
      perto, e que continuam não sendo teste nenhum. Esta lista cresce JUNTO
@@ -916,7 +923,7 @@ export const FAMILIAS_DO_IMPROVISO = [
     corpo: true, dispensavel: false, gesto: true, custo: "improviso_destreza",
     verbos: [
       { rx: /\b(salto|pulo|saltar|pular)\b[^.!?]{0,40}\b((para|pra) (o|a|os|as|um|uma|outro|outra|dentro|fora|cima|baixo|tras|frente|o lado)|ate (o|a|os|as)|sobre|por cima|em (movimento|disparada|pleno)|no (lustre|rio|poco|lago|mar|abismo|vao|telhado|lombo|dorso)|na (carroca|corda|agua|viga|janela|sacada|borda)|entre (os|as))\b/, nucleo: /\b(salto|pulo|saltar|pular)\b/, faz: { salto: "saltar", pulo: "pular", saltar: "saltar", pular: "pular" } },
-      { rx: /\bme (balanco|penduro|dependuro|esquivo|jogo (para o lado|no chao|atras|para tras|por baixo|por cima|para fora|de lado))\b/, nucleo: /\bme (balanco|penduro|dependuro|esquivo|jogo)\b/, faz: { "me balanco": "balançar-me", "me penduro": "pendurar-me", "me dependuro": "pendurar-me", "me esquivo": "esquivar-me", "me jogo": "jogar-me" } },
+      { rx: /\bme (balanc(o|ar)|pendur(o|ar)|dependur(o|ar)|esquiv(o|ar)|jog(o|ar) (para o lado|no chao|atras|para tras|por baixo|por cima|para fora|de lado))\b/, nucleo: /\bme (balanc(o|ar)|pendur(o|ar)|dependur(o|ar)|esquiv(o|ar)|jog(o|ar))\b/, faz: { "me balanco": "balançar-me", "me penduro": "pendurar-me", "me dependuro": "pendurar-me", "me esquivo": "esquivar-me", "me jogo": "jogar-me", "me balancar": "balançar-me", "me pendurar": "pendurar-me", "me dependurar": "pendurar-me", "me esquivar": "esquivar-me", "me jogar": "jogar-me" } },
       { rx: /\bdesvio (d[aoe]s?|para o lado d[aoe]s?) [^.!?]{0,20}\b(flecha|dardo|lamina|faca|pedra|carroca|cavalo|galho|viga|armadilha|machado|garra|jato|chama|fogo|raio|tiro|pedregulho|destrocos|escombros|tronco|barril)/, nucleo: /\bdesvio\b/, faz: "desviar" },
       { rx: /\b(agarro|pego|apanho|seguro)\b[^.!?]{0,30}\b(no ar|antes que (caia|toque|bata|chegue|quebre|se espatife)|em pleno voo)/, nucleo: /\b(agarro|pego|apanho|seguro)\b/, faz: "apanhar" },
       { rx: /\b(rolo|deslizo) (por baixo|por cima|pelo|pela|ate|para|entre)\b/, nucleo: /\b(rolo|deslizo)\b/, faz: { rolo: "rolar", deslizo: "deslizar" } },
@@ -980,10 +987,19 @@ function improvisoDe(cru, ctx) {
      balcão' não é pergunta nem hipótese do jogador. E lê oração a
      oração: o que foi pergunta, hipótese ou negação vira espaço, e o
      resto — o que o herói declarou — é o que passa adiante */
-  const s = soODeclarado(t, NAO_E_AGRESSAO);
-  if (!s.trim()) return null;
+  const s0 = soODeclarado(t, NAO_E_AGRESSAO);
+  if (!s0.trim()) return null;
+  if (peneiraDoImproviso(s0)) return null;
+  /* a ênclise desfeita (Fase MM): "penduro-me no lustre" é "me penduro no
+     lustre", e é nesta forma que as famílias leem. A peneira olha as DUAS —
+     "atiro-a no bandido" só mostra o bandido do outro lado da cadeira
+     depois de o hífen sair ("atiro a no bandido"). O rótulo copia a frase
+     do jogador trocada do mesmo jeito, no mesmo tamanho, e os acentos dele
+     continuam onde estavam. */
+  const s = emProclise(s0);
   if (peneiraDoImproviso(s)) return null;
-  const mesmoTamanho = t.length === String(cru).length;
+  const cruP = emProclise(String(cru));
+  const mesmoTamanho = t.length === cruP.length;
   for (const fam of FAMILIAS_DO_IMPROVISO) {
     for (const v of fam.verbos) {
       const m = s.match(v.rx);
@@ -994,7 +1010,7 @@ function improvisoDe(cru, ctx) {
       if (fam.leve && fam.leve.test(s.slice(fim).trim().split(/\s+/).slice(0, 4).join(" "))) continue;
       const chaveFaz = nuc ? nuc[0].trim().replace(/\s+/g, " ") : "";
       const faz = typeof v.faz === "string" ? v.faz : ((v.faz || {})[chaveFaz] || (v.faz || {})[chaveFaz.split(" ")[0]] || chaveFaz);
-      const rotulo = rotuloDoImproviso(cru, s, fim, faz);
+      const rotulo = rotuloDoImproviso(cruP, s, fim, faz);
       /* a ousadia é procurada FORA do núcleo do verbo — e, onde a palavra é
          o próprio gesto ("bebo de uma vez", `consome`), fora do trecho
          inteiro que o casou: ali ela é o gesto, e não a bravata */
@@ -1013,7 +1029,7 @@ function improvisoDe(cru, ctx) {
         dispensavel: !!fam.dispensavel && !v.social,
         gesto: !!fam.gesto,
         dcPadrao: degrau.dc,
-        deOnde: `${nomeDoAtributo(fam.atributo)}, obstáculo ${degrau.nome}${ous ? ` — ${(mesmoTamanho ? String(cru).slice(ous.index, ous.index + ous[0].length) : ous[0]).trim()}` : ""}`,
+        deOnde: `${nomeDoAtributo(fam.atributo)}, obstáculo ${degrau.nome}${ous ? ` — ${(mesmoTamanho ? cruP.slice(ous.index, ous.index + ous[0].length) : ous[0]).trim()}` : ""}`,
       };
     }
   }
@@ -1159,6 +1175,10 @@ export function bonusDoQueMudou(mudou) {
    A função que este arquivo existe para ter. Entra a frase e o que o
    sistema sabe da cena; sai o que fazer. Nunca "talvez".
    ============================================================ */
+/* As travas da peneira que o catálogo lê (Fase MM): todas menos a frase
+   feita — o porquê está em lerAcao, junto de onde elas entram. */
+const TRAVAS_DO_CATALOGO = NAO_E_DECLARACAO.filter((n) => n && n.id !== "fraseFeita");
+
 export function lerAcao(texto, ctx = {}) {
   const cru = String(texto || "");
   if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
@@ -1192,7 +1212,38 @@ export function lerAcao(texto, ctx = {}) {
      por isso `buscar` ganhou a frase e pagou um tesouro. `naoSeCom` pergunta
      ao CONTEXTO em vez de adivinhar pelo texto — que e o que esta casa faz
      em todo o resto. */
-  let d = DESAFIOS.find((x) => x.rx.test(daAcao) && !(x.naoSe && x.naoSe.test(daAcao)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)));
+  /* ---------------- A ÊNCLISE E A PENEIRA (Fase MM) ----------------
+     Duas coisas que o catálogo não fazia, e as duas vistas a jogar MM6.
+
+     1. "Escondo-me atrás do barril" não rolava nada: o catálogo foi escrito
+        em próclise ("me escondo"). A frase chega com a ênclise desfeita
+        (emProclise, da peneira), no mesmo tamanho — uma troca, em vez de
+        cada rx aprender as duas formas.
+     2. O catálogo era a única porta que age pelo jogador SEM a peneira:
+        "posso me esgueirar até a porta?" rolava Furtividade, e "não me
+        escondo" também. A agressão e o improviso já liam só o que o herói
+        DECLAROU (soODeclarado); agora o catálogo lê igual. Sem isto, o
+        infinitivo que o item pediu ("tento me esconder") faria "posso me
+        esconder?" rolar.
+
+     lePergunta: os seis desafios de SABER, em que a pergunta é o próprio
+     gesto — "de quem é esse brasão?", "o que sei sobre essa criatura?",
+     "ele está mentindo?" — continuam a ler a frase inteira. Perguntar-se o
+     que se sabe é tentar lembrar, e é assim que eles sempre rolaram.
+
+     O naoSe lê a frase INTEIRA, de propósito: é um veto, e um veto que some
+     porque a oração dele foi apagada deixaria passar o que ele barrava. O
+     pedido de teste ("peço Furtividade para...") não passa pela peneira: a
+     porta dele é outra, e o que sobra dele é lido como sempre foi.
+
+     A frase feita (a trava "fraseFeita") fica de fora, e a suíte do
+     improviso é que o disse: "quebro o gelo com uma piada" é figura para o
+     teste de Força e é o GATILHO de "impressionar" aqui. O catálogo guarda
+     as figuras dele nos próprios naoSe. */
+  const inteira = emProclise(daAcao);
+  let declarada = inteira;
+  if (!pedido) { try { declarada = emProclise(soODeclarado(daAcao, TRAVAS_DO_CATALOGO)); } catch { declarada = inteira; } }
+  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)));
   /* MM4: o que o catálogo não conhece, a família do verbo conhece. Vem
      DEPOIS do pedido de teste (pedir continua não sendo declarar) e ANTES do
      "sem dado" — "pego a cadeira e arremesso" tem um verbo de usar o que se
@@ -1226,7 +1277,7 @@ export function lerAcao(texto, ctx = {}) {
         motivo: pedido.motivo || "",
       };
     }
-    const livre = naoPedeDado(cru);
+    const livre = naoPedeDado(emProclise(cru));
     return livre ? { tipo: "livre", porque: livre.porque } : null;
   }
 

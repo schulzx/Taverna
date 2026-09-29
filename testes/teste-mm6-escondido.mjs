@@ -340,7 +340,11 @@ sec("11. o Ladino antes e depois — a catraca da medida");
    endereço a cada corrida). */
 sec("12. a fiação no App.jsx");
 {
-  const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  /* O fim de linha é normalizado: com core.autocrlf, uma cópia fresca do
+     repositório (git archive, o so-o-meu.sh, outra máquina) traz o App.jsx
+     em CRLF, e as âncoras de várias linhas desta seção só casavam em LF —
+     a suíte ficava vermelha no HEAD puro sem nada estar errado. */
+  const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
   t("importa as portas de escondido.js", /from "\.\/escondido\.js"/.test(APP)
     && /\bESCONDIDO\b.*\bnascerEscondido\b.*\bquemMeVe\b.*\boculto\b.*\brevisarEscondido\b.*\brevelarPorAto\b.*\bcustoDeEsconder\b.*\bpautaDoEscondido\b/.test(APP));
