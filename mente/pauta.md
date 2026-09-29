@@ -105,7 +105,16 @@ O limite é o que um commit revertido não desfaz.
   porta, não o código** — módulos, suítes e saves ficam; voltar é mudar a
   tabela. Confirmar que um save de *Uma Noite* ou *Duelo* já existente não
   quebra o menu nem se perde. A *sala de dois* (Uma Vida a dois) fica.
-- [ ] **MM1 · a sonda da mesa: as 157 perguntas viram régua**
+- [x] **MM1 · a sonda da mesa: as 157 perguntas viram régua** · feito 28/09
+  **O número de partida: 66/157 chega · 1 sabe e não conta · 82 ninguém decide ·
+  8 código resolve** (`testes/teste-mm1-sonda-da-mesa.mjs`, casos em
+  `testes/sonda-da-mesa-casos.mjs`; `PISO_CHEGA = 66`, `TETO_SABE_E_NAO_CONTA = 1`).
+  Dos 82 *ninguém decide*, 36 são cenário (sabor, aceitável) e **46 são defeito**:
+  29 de mundo, 13 de regra, 3 de licença, 1 de posição. O achado que corrige a
+  leitura à mão: **a distância já chega** (`grid.js#resumoGridPrompt`, no rodapé
+  de cada turno de luta); o que o sistema calcula e esconde é a **cobertura**
+  (`temCobertura`, caso #138) e a **linha de visão** (`linhaDeVisao`, só vira
+  aviso de tela).
   As perguntas dos jogadores de C1E1 (`https://www.kryogenix.org/crsearch/html/cr1-1.html`),
   **traduzidas e parafraseadas** em casos de teste (nunca o texto original),
   cada uma com o FATO que a responde e o sítio do sistema onde ele vive.
@@ -114,7 +123,9 @@ O limite é o que um commit revertido não desfaz.
   decide* (sabor — aceitável). O número de hoje é o ponto de partida, e cada
   etapa seguinte tem de o mover. Juntar as perguntas do *Honey Heist 3*
   (`cr1-115.14`) só se acrescentarem um tipo novo.
-- [ ] **MM2 · o Narrador vê o tabuleiro**
+- [ ] **MM2 · o Narrador vê o tabuleiro** · *escopo corrigido pela sonda (MM1):
+  distância e região já chegam por `resumoGridPrompt`; faltam cobertura e linha
+  de visão, e é nelas que a etapa mexe — dentro da mesma linha, sem bloco novo*
   Em combate, uma linha na pauta com cada inimigo: **distância** (a que o motor
   já mede), **linha de visão** (`linhaDeVisao`, `grid.js`) e **cobertura**
   (`temCobertura`). Dentro do `TETO_DA_PAUTA`; se não couber tudo, corta-se

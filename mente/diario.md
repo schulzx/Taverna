@@ -15,6 +15,48 @@ Formato:
 ```
 
 ---
+## 28/09 23:55 · v9.303 (sem bump) · MM1 · a sonda da mesa · commit (o hash vai no bloco de MM0)
+
+- **por que andou:** Fase MM, aprovada pela pessoa na ordem de 28/09 — a primeira
+  etapa, porque é a régua de todas as outras. O bastão do `App.jsx` estava com o
+  desenho (V6) e esta etapa não precisa dele.
+- **estado inicial:** HEAD verde (217/217 suítes, 15/15 varredores, provado por
+  `so-o-meu.sh` com o desenho em voo na árvore). A fila do sistema estava parada
+  desde 24/09; este é o primeiro bloco desde então.
+- **conselheiro:** não chamado — a fase está escrita e aprovada.
+- **testes:** as 157 perguntas que os jogadores fizeram ao Matt em C1E1,
+  **traduzidas, parafraseadas e transpostas** para o Taverna (nenhum texto
+  original no repositório), cada uma com o fato que a responde, onde ele vive e
+  por onde chega ao Narrador. A suíte prova sem IA: para *chega*, que a função
+  que carrega o fato é chamada no corpo de `pautaDoTurno`/`enviar` (extraído por
+  âncora, não por linha); para *sabe e não conta*, que não é — e avisa no dia em
+  que passar a ser. Amostra comportamental por tipo.
+- **o número de hoje:** **66/157 chega · 1 sabe e não conta · 82 ninguém decide ·
+  8 código resolve.** Por tipo: mundo 39 chega / 29 ninguém; regra 21 / 13 / 8
+  código; posição 6 / 1 sabe-e-não-conta / 1 ninguém; cenário 36 ninguém; licença 3
+  ninguém. Dos 82 *ninguém decide*, **46 são defeito** (os 36 de cenário são sabor).
+- **o achado que muda MM2:** a leitura à mão supunha que quase toda pergunta de
+  posição seria *o sistema sabe e não conta*. Não é: `resumoGridPrompt` (grid.js)
+  já manda ao Narrador a região e a distância de cada inimigo a cada turno de
+  luta. O que o sistema calcula e esconde é a **cobertura** (`temCobertura`, só
+  vira bônus de defesa) e a **linha de visão** (`linhaDeVisao`, só vira aviso de
+  tela). MM2 fica mais estreita e mais certeira; escrevi isso na pauta.
+- **decisões médias tomadas:**
+  - **Sem bump de `VERSAO`.** A etapa não muda nada que o jogador tenha na mão
+    (dois arquivos em `testes/`, nenhum `src/`); subir o número seria um deploy
+    que diz que algo mudou quando nada mudou, e a colisão com o bump do desenho
+    é o único risco que ele traria.
+  - **Os casos em arquivo próprio sem prefixo `teste-`**, para o `rodar-tudo`
+    não os correr como suíte e para as etapas seguintes mudarem um veredito sem
+    tocar na prova.
+  - **Na dúvida, *ninguém decide*, nunca *chega*:** a iniciativa entre rodadas
+    (#142) e "que perícia testo?" antes de agir (#33, #102) ficaram de fora do
+    *chega* porque a suíte não conseguia provar o caminho. Inflar a régua no dia
+    em que nasce é perder a régua.
+- **o que ficou:** para cada etapa seguinte, subir `PISO_CHEGA` e descer o teto
+  com o motivo escrito. MM0 a seguir: o bastão do `App.jsx` libertou-se às
+  ~23:50, quando o desenho fechou V6.
+
 ## 24/09 22:40 · v9.294 · nenhuma fuga sai de graça · commit `561ff65`
 
 - **por que andou:** item da pessoa, o segundo dos dois de hoje. *"Faça tanto a
