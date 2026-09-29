@@ -15,7 +15,43 @@ Formato:
 ```
 
 ---
-## 28/09 23:55 · v9.303 (sem bump) · MM1 · a sonda da mesa · commit (o hash vai no bloco de MM0)
+## 29/09 00:30 · v9.304 · MM0 · Uma Vida é o único modo do beta · commit (o hash vai no bloco de MM2)
+
+- **por que andou:** ordem da pessoa de 28/09, item 1: *Uma Noite* e *Duelo*
+  saem do menu. Ficou para depois de MM1 porque o bastão do `App.jsx` estava com
+  o desenho (V6); ele fechou V6 (`445ef0b`) e devolveu-o às ~23:50.
+- **bastão:** tomado às 23:58 de 28/09 em nome deste ciclo, para a fiação do
+  menu; devolvido às ~00:30 de 29/09, com o commit.
+- **estado inicial:** verde (MM1 acabava de subir, `be7e2d9`).
+- **backend:** `MODOS_DO_BETA = ["historia"]` e `modoNaPorta(id)` em
+  `src/modos.js`. `MODOS`, `garantirModo`, `modoDoSave` e os espaços de save
+  intocados; a suíte `teste-modos` fixa os quatro nomes de chave de
+  `rapida`/`duelo` por extenso, para que nenhum save mude de sítio sem a suíte
+  gritar.
+- **frontend:** os dois cartões do `TelaMenu` guardados por `modoNaPorta`, na
+  mesma linha que já abria e fechava cada botão — deslocamento zero, porque
+  `acoes-do-jogador.mjs` guarda ~130 endereços literais de linha abaixo do menu
+  e uma primeira versão com linhas novas derrubou 84 deles. `TelaNoite`,
+  `TelaDuelo` e todo o código dos dois modos ficaram; a sala de dois ficou.
+  Menu vivo (aba nova, árvore de acessibilidade): *Começar a jogar*, *Jogar em
+  dois*, *A campanha em arquivo*; sem *Uma Noite*, sem *Duelo*.
+- **os saves antigos:** o boot lê só `espacoDoSave(modoRef.current)` com
+  `modoRef` sempre em `historia` nesse instante; nenhum caminho abre sozinho numa
+  noite ou num duelo (não há rota por hash, e os dois únicos `setFase` para lá
+  são os cartões escondidos). Um save de *Uma Noite* ou *Duelo* não é lido,
+  escrito nem apagado — fica onde está, à espera da tabela.
+- **decisões médias tomadas:**
+  - **A porta é uma função, não um `if` com nome de modo**, para a volta ser uma
+    linha na tabela e para qualquer outra porta futura perguntar ao mesmo sítio.
+  - **`modoNaPorta` diz `false` ao lixo**, ao contrário de `garantirModo`, que o
+    faz `historia`: uma pergunta "este modo tem porta?" não pode responder por
+    outro modo.
+- **para quem joga:** o menu passa de 5 entradas a 3 (mais *Continuar* quando há
+  campanha). **A sonda não se move nesta etapa: 66/157** — é porta, não Mestre.
+- **o que ficou:** MM2 (cobertura e linha de visão na linha da luta), sem bastão
+  para o motor.
+
+## 28/09 23:55 · v9.303 (sem bump) · MM1 · a sonda da mesa · commit `be7e2d9`
 
 - **por que andou:** Fase MM, aprovada pela pessoa na ordem de 28/09 — a primeira
   etapa, porque é a régua de todas as outras. O bastão do `App.jsx` estava com o

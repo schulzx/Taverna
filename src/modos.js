@@ -88,6 +88,22 @@ export const MODOS = [
   },
 ];
 
+/* ---------------- A PORTA DO BETA (MM0) ----------------
+   Ordem da pessoa de 28/09: o beta tem um modo só. Uma Noite e o Duelo
+   saem do MENU — sai a porta, não o código. Esta lista diz só o que o
+   menu oferece; voltar um modo é pôr o id de volta aqui.
+   Ela NÃO toca em MODOS, em garantirModo, em modoDoSave nem nos espaços
+   de save: um save de rapida ou duelo continua válido, continua no seu
+   espaço de localStorage, e nada o apaga. */
+export const MODOS_DO_BETA = ["historia"];
+
+/* o modo é oferecido no menu? Tem de existir em MODOS e estar na porta
+   do beta; lixo é false (nunca saneia para o padrão — aqui não se
+   carrega nada, só se pergunta se a porta está aberta). */
+export function modoNaPorta(id) {
+  return typeof id === "string" && MODOS.some((m) => m.id === id) && MODOS_DO_BETA.includes(id);
+}
+
 export function modoPorId(id) {
   return MODOS.find((m) => m.id === id) || MODOS[0];
 }

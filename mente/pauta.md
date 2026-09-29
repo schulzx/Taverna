@@ -99,7 +99,10 @@ precisa dele.
 **Liberdade:** pesado do motor não espera a pessoa nesta fase (ordem de 28/09).
 O limite é o que um commit revertido não desfaz.
 
-- [ ] **MM0 · Uma Vida é o único modo do beta** · ordem da pessoa, 28/09
+- [x] **MM0 · Uma Vida é o único modo do beta** · ordem da pessoa, 28/09 · feito 29/09, v9.304
+  `MODOS_DO_BETA = ["historia"]` + `modoNaPorta(id)` em `modos.js`; o menu lê a
+  função. Nenhuma linha de `rapida`/`duelo` apagada; os saves ficam nos seus espaços,
+  intocados (o boot só lê `taverna_save_v1`). Voltar = pôr o id na tabela.
   *Uma Noite* e *Duelo* saem do menu (`TelaMenu`, `App.jsx:~5100`). Por tabela,
   não por `if`: `MODOS_DO_BETA` em `src/modos.js`, lida pelo menu. **Sai a
   porta, não o código** — módulos, suítes e saves ficam; voltar é mudar a

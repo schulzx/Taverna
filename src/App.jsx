@@ -119,7 +119,7 @@ import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } fro
 /* OS MODOS (v9.213) — a moldura das mesas: preset de flags e territorio de
    save por modo. A lei-mae do documento As Duas Mesas: modo e lente sobre
    o motor, nunca segundo jogo. Conta em modos.js. */
-import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior } from "./modos.js";
+import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior, modoNaPorta } from "./modos.js";
 /* A NOITE JOGAVEL (v9.218 — M6): o roster, o Capitulo e o Torneio entram
    na mesa. Conta em prontos.js, uma-noite.js e torneio.js. */
 import { PRONTOS, montarPronto, prontoPorId } from "./prontos.js";
@@ -5092,8 +5092,8 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
           </span>
         </button>
 
-        {/* O DUELO (v9.219) e UMA NOITE (v9.218) — as mesas novas, em voz de mundo */}
-        <button onClick={irNoite} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
+        {/* UMA NOITE e O DUELO só aparecem quando a porta do beta (MM0) os oferece — MODOS_DO_BETA em modos.js decide, nunca um nome de modo solto aqui */}
+        {modoNaPorta("rapida") && <button onClick={irNoite} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
           <span className="shrink-0 rounded-lg p-2.5" style={{ background: "rgba(46,39,69,0.67)" }}>
             <IconeDado tamanho={20} />
           </span>
@@ -5101,8 +5101,8 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
             <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Uma Noite</span>
             <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>20 a 30 minutos: um capítulo inteiro, ou o torneio até sobrar um.</span>
           </span>
-        </button>
-        <button onClick={irDuelo} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
+        </button>}
+        {modoNaPorta("duelo") && <button onClick={irDuelo} className="w-full text-left flex items-start gap-4 p-[18px] rounded-xl" style={cartao}>
           <span className="shrink-0 rounded-lg p-2.5" style={{ background: "rgba(46,39,69,0.67)" }}>
             <IconeEspada tamanho={20} />
           </span>
@@ -5110,7 +5110,7 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
             <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Duelo</span>
             <span className="tv-body text-sm leading-[1.65]" style={{ color: T.inkDim }}>Seu campeão contra o de outro jogador. Melhor de três. Sem cicatriz.</span>
           </span>
-        </button>
+        </button>}
 
         {/* ---------------- A SEGUNDA CADEIRA (v9.120) ---------------- */}
         <div className="w-full flex flex-col gap-4 p-5 rounded-2xl" style={{ background: T.panel, border: `1px solid ${T.violetSoft}` }}>
