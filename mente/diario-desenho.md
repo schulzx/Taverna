@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 28/09 23:40 · v9.303 · **V6 — o compositor e o dado: nenhuma letra se perde, e há um dado só** · commit (no bloco seguinte)
+## 28/09 23:40 · v9.303 · **V6 — o compositor e o dado: nenhuma letra se perde, e há um dado só** · commit `445ef0b`
 
 - **estado inicial:** trava tomada às 22:03; HEAD `6805086`; nenhum ciclo do
   sistema. **Lei do coordenador para a V6a:** *letras escritas enquanto o Mestre
@@ -43,7 +43,9 @@ Formato:
   protocolo é da pessoa, e a suíte dela intacta); a largura do campo no
   telefone decide-a o `jogo`; **a linha do veredito da batalha não se troca** —
   o combate está parado por ordem da pessoa.
-- **oficial** (bastão tomado às 22:49): scripts 1-2-3-5-6; **24 442 → 24 527
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 22:48 para o `oficial`, **devolvido às 23:36**, logo depois de `445ef0b` subir — e depressa de propósito: a outra mente precisa dele para tirar Uma Noite e o Duelo do menu (MM0).
+- **a ordem de 28/09 chegou a meio do ciclo:** V6 fechou e subiu (o push levou junto o `fe4a829` do coordenador); **a fila do desenho para aqui** até a pessoa falar. A pauta ficou arrumada: V6 fechada, V7 com a herança escrita, a Fase S e os itens só do Duelo marcados *depois do beta* (nada apagado; a sala de dois fica). **Um arquivo estranho na raiz** (`Userscl…scratchpadpautaDoTurno.txt`, um caminho do scratchpad que perdeu as barras) **não é deste ciclo**: não foi commitado nem apagado.
+- **oficial**: scripts 1-2-3-5-6; **24 442 → 24 527
   linhas**, 0 endereços mexidos; confirmou que a suíte da sala não foi tocada,
   que nada no combate mudou, e que **o rascunho só escreve na sua chave** — nenhum
   toque nas chaves do save nem no formato dele, e nenhum código percorre as
