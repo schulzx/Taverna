@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 20:08 · v9.316 · ninguém termina na casa de outro (e o "Golpe consagrado") · commit (o hash vai no próximo bloco)
+## 29/09 20:08 · v9.316 · ninguém termina na casa de outro (e o "Golpe consagrado") · commit `f17e60f`
 
 - **por que andou:** promovido pelo coordenador da fase, com o motivo que este diário deu:
   **desde o MM2 as posições são verdade contada ao Narrador**, e três soldados na mesma
