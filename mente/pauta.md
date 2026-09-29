@@ -145,6 +145,15 @@ O limite é o que um commit revertido não desfaz.
   você faz isso?"** (Q5) — o que o jogador escrever é o que o Narrador narra,
   ampliado e nunca desmentido. É o momento mais famoso do Critical Role. O
   texto inteiro das duas está na Fase Q, abaixo.
+- [x] **MM3b · o golpe final é do grupo** · decisão do coordenador da fase, 29/09 · feito 29/09, v9.313
+  Quando é um companheiro a derrubar, o cartão aparece na mesma e o jogador narra como o
+  companheiro o faz; uma escolha por rodada; o ☠ só sai depois da escolha. Os companheiros
+  não evitam o último golpe. Falta: o golpe de oportunidade do herói (fuga, recuo) — MM3c.
+  **O Poupar foi jogado** (o golpe do herói): "(poupado)", fim de luta, o Narrador não matou.
+- [ ] **MM3c · o golpe de oportunidade também é golpe final** · de: sistema/MM3b · 29/09
+  O golpe de oportunidade do herói (fuga e recuo do atirador) derruba sem cartão: acontece
+  antes da janela da reação, com saídas próprias. Pede uma segunda suspensão coordenada com
+  a do turno dos companheiros, para nunca perguntar duas vezes na mesma rodada.
 - [x] **MM4 · toda ação ganha um dado** · feito 29/09, v9.307 · sonda 68 → 69/157
   `FAMILIAS_DO_IMPROVISO` (seis famílias → atributo) e `CD_DO_IMPROVISO` (13; uma
   palavra de ousadia sobe a 15) em `desafios.js`; `lerAcao` devolve o improviso no
@@ -1019,6 +1028,12 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   "escondo-me" — o mesmo defeito que a peneira da agressão teve, agora no catálogo. Varrer
   os `rx` do catálogo pela ênclise dos verbos que têm pronome (esconder-se, esgueirar-se,
   agachar-se, atirar-se…), com corpus.
+- [ ] **o convite para o grupo não andou em 8 dias** · médio · de: sistema/MM3b · 29/09
+  Na prova jogada, o pedido "mais 5 dias de estrada" para aceitar alguém no grupo não se
+  moveu depois de 8 dias avançados pelo painel do tempo. **Não é** o `conhecidoEm` nunca
+  escrito (a mão só o procurou em `src/*.js`; o App escreve-o em ~9713, ~9722, ~9990):
+  investigar o que conta como "estrada" (dias de viagem? `convivio`?) e se o painel do
+  tempo o move. Se o convite nunca abre, nenhum companheiro novo entra no grupo.
 - [ ] **"Sussurro assombrado" inspira o bando** · leve · de: sistema/MM7 · 29/09
   O golpe do Necromante casa o portador `inspiracao` porque "assombrado" contém "brado";
   "sombra" dá `furtivo` a quem lança. O casamento de portadores por substring precisa de

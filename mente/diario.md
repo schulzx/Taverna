@@ -15,7 +15,46 @@ Formato:
 ```
 
 ---
-## 29/09 16:45 · v9.312 · MM7 · os atiradores atiram · commit (o hash vai no próximo bloco)
+## 29/09 18:16 · v9.313 · MM3b · o golpe final é do grupo · commit (o hash vai no próximo bloco)
+
+- **por que andou:** decisão do coordenador da fase, pela liberdade da ordem de 28/09,
+  sobre a questão que este diário deixou na etapa da peneira: nas provas jogadas, o
+  companheiro com mais iniciativa acabava os inimigos e o momento do MM3 nunca chegava ao
+  jogador. **O golpe final é do grupo**: quando é um companheiro a derrubar, o cartão
+  aparece e o jogador narra como o companheiro o faz — como o Matt dá o momento a quem fez
+  o golpe. Os companheiros **não** passam a evitar o último golpe: pioraria as lutas para
+  enfeitar um momento.
+- **estado inicial:** verde (MM7 no ar, `32dbb8b`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **frontend:** `quedasComEscolhaNaRodada` (pura, em `golpe-final.js`, provada em Node)
+  simula a rodada dos companheiros golpe a golpe sem aplicar nada e marca a primeira queda
+  de cada alvo com escolha de verdade — o corpo antes do golpe, o defeito do MM3 não volta.
+  Com "perguntar", **a rodada suspende como a janela da reação (K3)** e o mesmo cartão
+  lista as quedas ("Bram derruba o Bandido.") com "Como Bram faz isso?"; a resposta aplica
+  a escolha e só então o envelope da rodada sai, com o nome do companheiro no envelope. Uma
+  escolha por rodada. **O ☠ só sai depois da escolha.** Se a rodada estourar depois de
+  escolher, a cena é entregue na mesma. Com "sempre matar/poupar", byte a byte o de antes.
+- **o golpe de oportunidade do herói ficou de fora** (MM3c, na pauta): acontece antes da
+  janela da reação, com saídas próprias; juntá-lo pedia uma segunda suspensão coordenada
+  com esta, em código delicado. Preferi o seguro e a dívida escrita.
+- **A PROVA DO POUPAR, PAGA:** herói de teste, luta aberta pela frase, e no golpe que levou
+  Nádia do Ouro a 0 **o cartão apareceu**; cena escrita, **Poupar** → "Kael → Nádia do Ouro:
+  7 de dano · 0/4 (poupado)", "Todos os inimigos caíram", sem ☠, e o Narrador narrou a cena
+  sem a matar ("o corpo dela tomba de lado, imóvel"). O despertar não foi visto (Q4 não
+  está feita). **O golpe do companheiro não foi jogado**: não houve companheiro no grupo.
+- **um achado corrigido antes de entrar na pauta:** a mão atribuiu a falta de companheiro a
+  um `conhecidoEm` "nunca escrito" e abriu uma tarefa com isso. É falso — o App escreve-o
+  em vários sítios; ela só procurou nos módulos. Retirei a tarefa. O sintoma é real (o
+  convite não andou em 8 dias de jogo) e foi para "Aberto" com a descrição certa.
+- **decisões médias tomadas:**
+  - **Uma escolha e um cartão por rodada**, como no MM3 uma por sequência.
+  - **"Como isso acontece?"** quando caem por mãos diferentes na mesma rodada.
+  - **Edit com âncora em vez de `.cjs`** para código cheio de `${}` e crases: a mesma
+    garantia de falhar se não bate, sem a armadilha do template-literal.
+- **para quem joga:** o momento do golpe final deixa de depender de quem tem mais
+  iniciativa. A sonda não se move (72/157).
+
+## 29/09 16:45 · v9.312 · MM7 · os atiradores atiram · commit `32dbb8b`
 
 - **por que andou:** achado da fuga (v9.294) — o inimigo de distância era atirador na fuga
   e lutador colado dentro da luta. Pior: o Atirador do bestiário andava até ficar colado e

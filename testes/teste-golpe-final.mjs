@@ -45,6 +45,7 @@ const {
   ESCOLHAS_DO_GOLPE_FINAL, PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO,
   DADO_DO_DESPERTAR, TETO_DA_CENA_DO_JOGADOR,
   haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal,
+  quedasComEscolhaNaRodada,
 } = G;
 
 /* a cena que a pessoa deu como exemplo (15/09) — é a que define o órgão,
@@ -334,6 +335,128 @@ sec("6. A FIAÇÃO EM src/App.jsx E NO PAINEL (texto, corpo por âncora)");
     /ESCOLHAS_DO_GOLPE_FINAL\.nao_letal\.rotulo/.test(PAINEL) && /ESCOLHAS_DO_GOLPE_FINAL\.letal\.rotulo/.test(PAINEL));
   t("o painel importa o teto da cena do próprio módulo, não um número solto",
     /TETO_DA_CENA_DO_JOGADOR/.test(PAINEL) && /from "\.\/golpe-final\.js"/.test(PAINEL));
+}
+
+sec("7. O GOLPE FINAL É DO GRUPO (MM3b) — quedasComEscolhaNaRodada, o passeio seco");
+{
+  const e1 = { nome: "Bandido", vida: 5 };
+  const e2 = { nome: "Bandido 2", vida: 5 };
+  const dano = (n, extra) => ({ dano: n, critico: false, resultado: "acerta", ...(extra || {}) });
+
+  t("golpe que leva a zero: pendente", quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(5), autor: "Bram" }], [e1]).length === 1);
+  t("golpe que só fere: não pendente", quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(3), autor: "Bram" }], [e1]).length === 0);
+  t("o autor viaja intacto", quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(5), autor: "Bram" }], [e1])[0].autor === "Bram");
+  t("dano e crítico viajam", (() => {
+    const p = quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(9, { critico: true }), autor: "Bram" }], [e1])[0];
+    return p.dano === 9 && p.critico === true;
+  })());
+
+  /* DUAS QUEDAS NA MESMA RODADA, alvos diferentes: as duas pendentes,
+     cada uma com o seu autor — "o golpe final é do grupo" vale para o
+     grupo inteiro na mesma rodada, não só para quem bateu primeiro */
+  const duasQuedas = quedasComEscolhaNaRodada(
+    [{ nome: "Bandido", r: dano(5), autor: "Bram" }, { nome: "Bandido 2", r: dano(5), autor: "Ilse" }],
+    [e1, e2]
+  );
+  t("duas quedas, dois alvos: as duas pendentes", duasQuedas.length === 2);
+  t("cada queda leva o autor certo", duasQuedas.find((q) => q.nome === "Bandido").autor === "Bram" && duasQuedas.find((q) => q.nome === "Bandido 2").autor === "Ilse");
+
+  /* DOIS GOLPES NO MESMO ALVO NA MESMA RODADA: o primeiro que o leva a
+     zero é o pendente; o segundo (já caído) não pergunta de novo — "uma
+     escolha por rodada", nunca um cartão por golpe */
+  const feridoPrimeiro = { nome: "Bandido", vida: 8 };
+  const doisNoMesmo = quedasComEscolhaNaRodada(
+    [{ nome: "Bandido", r: dano(3), autor: "Bram" }, { nome: "Bandido", r: dano(5), autor: "Ilse" }],
+    [feridoPrimeiro]
+  );
+  t("dois golpes no mesmo alvo: só UMA queda pendente", doisNoMesmo.length === 1);
+  t("e é a do golpe que de fato o levou a zero (o segundo, Ilse)", doisNoMesmo[0].autor === "Ilse");
+
+  /* ALVO JÁ CAÍDO ANTES DA RODADA (por outro caminho, ex.: o próprio
+     jogador já o derrubou): golpe de companheiro sobre um cadáver não
+     pergunta nada — não há escolha nenhuma a fazer */
+  t("alvo já derrotado antes da rodada: não pendente", quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(5), autor: "Bram" }], [{ nome: "Bandido", vida: 0, derrotado: true }]).length === 0);
+  t("alvo que a lista de inimigos não conhece: não pendente (nunca inventa corpo)", quedasComEscolhaNaRodada([{ nome: "Fantasma", r: dano(5), autor: "Bram" }], [e1]).length === 0);
+
+  /* ÁREA E INSTANTÂNEA continuam sem pergunta, mesmo vindas do grupo —
+     `haEscolhaNoGolpe` é a mesma porta única, só chamada de outro lugar */
+  t("dano de área do companheiro: não pendente", quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(5), area: true, autor: "Bram" }], [e1]).length === 0);
+  t("golpe imune do companheiro: não pendente", quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(0, { escopoImune: true }), autor: "Bram" }], [e1]).length === 0);
+
+  /* LIXO NÃO QUEBRA */
+  t("lixo não quebra e não pergunta por ninguém",
+    quedasComEscolhaNaRodada(null, null).length === 0
+    && quedasComEscolhaNaRodada([null, undefined, {}, { nome: "Bandido" }, { nome: "Bandido", r: null }], [e1]).length === 0
+    && quedasComEscolhaNaRodada([{ nome: "Bandido", r: dano(5) }], null).length === 0);
+  t("a ordem devolvida é a ordem em que os golpes caem",
+    quedasComEscolhaNaRodada(
+      [{ nome: "Bandido 2", r: dano(5), autor: "Ilse" }, { nome: "Bandido", r: dano(5), autor: "Bram" }],
+      [e1, e2]
+    ).map((q) => q.nome).join(",") === "Bandido 2,Bandido");
+}
+
+sec("8. A FIAÇÃO EM src/App.jsx — O GOLPE FINAL DO GRUPO (MM3b, texto, corpo por âncora)");
+{
+  const APP = readFileSync(join(AQUI, "..", "src", "App.jsx"), "utf8").replace(/\r\n/g, "\n");
+  const PAINEL = readFileSync(join(AQUI, "..", "src", "painel-golpe-final.jsx"), "utf8").replace(/\r\n/g, "\n");
+
+  const corpoEntre = (deTxt, ateTxt) => {
+    const i = APP.indexOf(deTxt);
+    if (i < 0) return "";
+    const j = ateTxt ? APP.indexOf(ateTxt, i + deTxt.length) : APP.length;
+    return j < 0 ? APP.slice(i) : APP.slice(i, j);
+  };
+
+  t("o App importa quedasComEscolhaNaRodada de ./golpe-final.js", /quedasComEscolhaNaRodada/.test(APP) && /from "\.\/golpe-final\.js"/.test(APP));
+
+  const DECL_CORRER = "const correrORestoDaRodada = (acoes, escolha, entregar) => {";
+  const DECL_RESPONDER_COMP = "const responderGolpeFinalComp = (escolhaId, comoFez, lembrar) => {";
+  t("correrORestoDaRodada agora recebe `entregar` — o retorno virou callback (pode suspender de novo)", APP.includes(DECL_CORRER));
+  t("responderGolpeFinalComp existe", APP.includes(DECL_RESPONDER_COMP));
+
+  const corpoCorrer = corpoEntre(DECL_CORRER, DECL_RESPONDER_COMP);
+  t("dentro dele, pergunta decidirGolpeFinal outra vez — agora para o grupo", (corpoCorrer.match(/decidirGolpeFinal\(/g) || []).length >= 1);
+  t("e chama quedasComEscolhaNaRodada para achar as quedas do companheiro", /quedasComEscolhaNaRodada\(/.test(corpoCorrer));
+  t("as quedas viajam para o cartão do grupo (setGolpeFinalCompPendente)", /setGolpeFinalCompPendente\(/.test(corpoCorrer));
+  /* A SUSPENSÃO: quando há pendente, a rodada devolve sem chamar `entregar`
+     — é o que corta o turno no meio, como o K3 já faz para a reação. Um
+     `return;` logo depois de guardar o contexto é a prova textual de que
+     nada mais roda até o cartão responder. */
+  t("guarda o contexto para retomar (finalizar + entregar) antes de suspender",
+    /golpeFinalCompCtxRef\.current = \{ finalizar: finalizarRodada, entregar, persAtual \};/.test(corpoCorrer));
+  t("e SUSPENDE a rodada (return, sem chamar entregar) quando há quedas pendentes",
+    /if \(quedasPendentesComp\.length\) \{[\s\S]*?return;\s*\}/.test(corpoCorrer));
+  /* SEM PENDENTE, corre direto — regressão zero para quem nunca vê o
+     cartão (preferência sempre_letal/sempre_poupar, ou nenhuma queda). */
+  t("sem pendente, chama finalizarRodada direto (não fica esperando ninguém)", /finalizarRodada\(prefGF === "perguntar" \? null : prefGF, ""\);/.test(corpoCorrer));
+  /* O ENVELOPE LEVA O NOME DE QUEM DEU O GOLPE — o companheiro, não o
+     jogador; é o coração de "o golpe final é do grupo": o Matt dá o
+     momento a quem acertou o golpe. */
+  t("o envelope do grupo usa o nome do companheiro (heroi: ac.companheiro)", /envelopeDoGolpeFinal\(\{ alvo: corpo, escolha: escolhaDaRodada, comoFez: cenaJaNarradaComp \? "" : comoFezDaRodada, heroi: ac\.companheiro \}\)/.test(corpoCorrer));
+  /* UMA ESCOLHA POR RODADA: a MESMA `comoFezDaRodada` e a MESMA
+     `escolhaDaRodada` valem para toda queda pendente da rodada — nunca um
+     cartão por queda. `cenaJaNarradaComp` garante que a cena escrita só
+     narra uma vez, mesmo com duas quedas. */
+  t("a escolha e a cena chegam prontas do cartão único da rodada (nunca recalculadas por queda)",
+    (corpoCorrer.match(/aplicarEscolha\(corpo, escolhaDaRodada, \{ semente: sementeDaFuga\(combPos\) \}\)/g) || []).length === 2);
+  /* O ☠ NÃO PODE APARECER ANTES DA ESCOLHA: quem cai pendente só ganha
+     marcador (☠ ou "(poupado)") depois de `aplicarEscolha` já ter rodado
+     — nunca marcado às cegas enquanto a rodada ainda espera o cartão. */
+  t("a linha do companheiro não crava ☠ em quem foi poupado", /poupadoAgoraComp \? " \(poupado\)" : " ☠"/.test(corpoCorrer));
+  t("a linha para o Mestre marca o poupado do companheiro sem inventar morte", /mas foi poupado: cai desacordado, vivo, sem golpe fatal/.test(corpoCorrer));
+
+  const corpoResponderComp = corpoEntre(DECL_RESPONDER_COMP, null);
+  t("responderGolpeFinalComp fecha o cartão do grupo", /setGolpeFinalCompPendente\(null\)/.test(corpoResponderComp));
+  t("e retoma pela continuação guardada (ctx.finalizar), nunca reconstruindo a rodada", /ctx\.finalizar\(/.test(corpoResponderComp));
+  t("se a continuação estourar, ainda entrega o turno (nunca pode custar o turno)", /ctx\.entregar\(/.test(corpoResponderComp));
+
+  t("o render nunca deixa os dois cartões de golpe final coexistirem (um || o outro)",
+    /const golpeFinalDaBatalha = golpeFinalDoJogadorNaBatalha \|\| golpeFinalDoGrupoNaBatalha;/.test(APP));
+  t("o cartão do grupo usa o MESMO painel do jogador (uma ação, uma forma)",
+    /aoEscolher=\{responderGolpeFinalComp\}/.test(APP));
+
+  t("o painel aceita as linhas de queda já prontas do grupo (linhasQuedas)", /linhasQuedas/.test(PAINEL));
+  t("o painel aceita a pergunta customizada do grupo (pergunta)", /placeholder=\{pergunta \|\|/.test(PAINEL));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

@@ -294,3 +294,56 @@ export function envelopeDoGolpeFinal(entrada) {
   if (cena) acabou.push(TEXTOS.cena(h, cena) + (poupou ? TEXTOS.mandaPoupar(nome) : TEXTOS.mandaLetal(nome)));
   return { acabou, naoPode: poupou ? [TEXTOS.vetoPoupar(nome)] : [] };
 }
+
+/* ---------------- 5. AS QUEDAS DE UMA RODADA (MM3b · o golpe final é do grupo) ----------------
+
+   A pessoa: os companheiros têm iniciativa mais alta e chegam primeiro ao
+   último golpe — o momento do jogador nunca vinha. A resposta: o golpe
+   final é do GRUPO. Quando quem derruba é um companheiro (ou o próprio
+   herói, por um golpe de oportunidade), o cartão sobe igual — só que UMA
+   vez por RODADA, nunca uma vez por queda.
+
+   Esta é a PORTA SECA que decide quem entra nesse cartão único: um passeio
+   pelos golpes de uma rodada, NA ORDEM em que caem, sem aplicar nada e sem
+   mexer em nada — só simula a vida de cada alvo para achar a PRIMEIRA
+   queda de cada um. Um alvo que já caiu nesta rodada (por um golpe
+   anterior da MESMA lista) não pergunta de novo por ele: a escolha, uma
+   vez tomada, vale para a rodada inteira.
+
+   `golpes` é `[{ nome, r, autor, area, instantanea }]`, na ordem em que os
+   golpes caem — `r` é o resultado já resolvido (o mesmo formato que
+   `haEscolhaNoGolpe` lê, `{ dano, critico, escopoImune, resultado, ... }`),
+   `area`/`instantanea` são as MESMAS duas portas de veto de
+   `haEscolhaNoGolpe` (opcionais — hoje nenhum golpe de companheiro as usa,
+   mas a porta não inventa uma regra nova para não as aceitar), e `autor` é
+   livre (quem chama decide o que carregar ali, esta porta só devolve de
+   volta).
+   `inimigos` é o corpo de cada um ANTES desta rodada — a mesma lista que
+   `haEscolhaNoGolpe` já entende. Devolve só os que TÊM escolha de
+   verdade: `[{ nome, autor, dano, critico }]`, na mesma ordem. */
+export function quedasComEscolhaNaRodada(golpes, inimigos) {
+  const lista = Array.isArray(golpes) ? golpes : [];
+  const listaInimigos = Array.isArray(inimigos) ? inimigos : [];
+  const vidaPor = new Map(listaInimigos.map((e) => [ehObj(e) ? e.nome : undefined, ehObj(e) ? e.vida : null]));
+  const caidoPor = new Set(listaInimigos.filter((e) => ehObj(e) && (e.derrotado === true || (e.vida || 0) <= 0)).map((e) => e.nome));
+  const pendentes = [];
+  for (const g of lista) {
+    const e = ehObj(g) ? g : {};
+    const nome = e.nome;
+    const r = ehObj(e.r) ? e.r : null;
+    if (nome == null || !r) continue;
+    const dano = Number(r.dano);
+    if (!Number.isFinite(dano) || dano <= 0) continue;
+    if (caidoPor.has(nome)) continue;
+    const vidaAntes = vidaPor.has(nome) ? vidaPor.get(nome) : null;
+    if (vidaAntes == null) continue;
+    const vidaDepois = Math.max(0, vidaAntes - dano);
+    vidaPor.set(nome, vidaDepois);
+    if (vidaDepois > 0) continue;
+    caidoPor.add(nome);
+    let ha = false;
+    try { ha = haEscolhaNoGolpe({ alvo: { nome, vida: vidaAntes, derrotado: false }, r, area: e.area, instantanea: e.instantanea }).ha; } catch (err) { ha = false; }
+    if (ha) pendentes.push({ nome, autor: e.autor, dano, critico: !!r.critico });
+  }
+  return pendentes;
+}

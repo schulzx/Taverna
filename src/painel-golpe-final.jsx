@@ -38,6 +38,11 @@ function LinhaDaQueda({ quedas }) {
 export function PainelGolpeFinal({
   quedas,      // [{ nome, dano, critico }] — quem cai e o golpe que derruba, já resolvido
   aoEscolher,  // (escolhaId, comoFez, lembrar) => void
+  linhasQuedas, // opcional (MM3b): strings já prontas ("Bram derruba o Bandido."),
+                // para quando quem derruba é o GRUPO — substitui `LinhaDaQueda`
+                // sem mudar nada do golpe do próprio jogador.
+  pergunta,     // opcional (MM3b): substitui "Como você faz isso?" — o golpe do
+                // grupo pergunta pelo nome de quem deu o golpe.
 }) {
   const [comoFez, setComoFez] = React.useState("");
   const [lembrar, setLembrar] = React.useState(false);
@@ -65,7 +70,13 @@ export function PainelGolpeFinal({
         background: T.panel, border: `1px solid ${T.amber}`, borderRadius: 10, padding: 12,
       }}
     >
-      <LinhaDaQueda quedas={quedas} />
+      {linhasQuedas && linhasQuedas.length ? (
+        <div className="tv-body text-sm" role="status" style={{ color: T.ink }}>
+          {linhasQuedas.join(" ")}
+        </div>
+      ) : (
+        <LinhaDaQueda quedas={quedas} />
+      )}
 
       {/* "Como você faz isso?" (Q5) — sempre opcional; um campo vazio não
           atrasa nem penaliza quem só quer clicar. Enter não envia nada: é
@@ -76,7 +87,7 @@ export function PainelGolpeFinal({
         onChange={(e) => setComoFez(e.target.value.slice(0, TETO_DA_CENA_DO_JOGADOR))}
         maxLength={TETO_DA_CENA_DO_JOGADOR}
         rows={2}
-        placeholder="Como você faz isso? (opcional)"
+        placeholder={pergunta || "Como você faz isso? (opcional)"}
         className="w-full rounded-lg p-3 tv-body text-sm outline-none resize-none leading-[1.5]"
         style={{ marginTop: 8, background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink }}
       />

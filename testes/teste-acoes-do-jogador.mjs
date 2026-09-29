@@ -530,8 +530,13 @@ sec("4. a definição operacional de 'número que muda'");
      testes/acoes-do-jogador.mjs.
      O escondido entra na fiação (frontend, MM6, 29/09): 14257 -> 14326,
      +69 — mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14326/.test(relogio.porque));
+     testes/acoes-do-jogador.mjs.
+     O golpe final é do grupo (frontend, 29/09, MM3b): 14326 -> 14357,
+     +31 — o estado novo do cartão do grupo mais a função
+     `responderGolpeFinalComp` (perto do estado e logo depois de
+     `responderGolpeFinal`), ambos ANTES deste ponto no arquivo — mesmo
+     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14357/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -615,9 +620,10 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:17417 → veredictoDaAcao — MM, 29/09: a
-     referência já estava desatualizada antes desta etapa; corrigida por
-     busca direta no arquivo, não por soma de delta) */
+     adjudicador usa (src/App.jsx:17731 → veredictoDaAcao — MM3b,
+     frontend, 29/09: re-medido por busca direta no arquivo, não por soma
+     de delta, porque a referência já vinha desatualizada de antes desta
+     etapa) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -744,9 +750,15 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        função no arquivo).
        O escondido entra na fiação (frontend, MM6, 29/09): 12818 -> 12876,
        +58 — o mesmo degrau que `continuarGolpeDoJogador` leva no
-       cabeçalho de FUNIL_DO_COMBATE. */
+       cabeçalho de FUNIL_DO_COMBATE.
+       O golpe final é do grupo (frontend, 29/09, MM3b): 12876 -> 12883,
+       +7 — o estado novo do cartão do grupo (`golpeFinalCompPendente`/
+       `golpeFinalCompCtxRef`) nasce perto do estado do cartão do jogador,
+       ANTES de `aplicarGolpeDoJogador` no arquivo, e empurra tudo abaixo
+       — o mesmo degrau que `aplicarGolpeDoJogador`/`continuarGolpeDoJogador`
+       levam no cabeçalho de FUNIL_DO_COMBATE nesta etapa. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:12876").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:12883").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -840,8 +852,14 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        📏 ${ataque.motivo}])`, nunca por soma de delta.
        A peneira da agressão (frontend, MM, 29/09): 12679 -> 12693, +14 —
        o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
-       FUNIL_DO_COMBATE. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12747" && x.familia === "alcance"));
+       FUNIL_DO_COMBATE.
+       (os deltas de MM6/MM7 entre 12693 e 12747 já vinham re-medidos na
+       tabela antes desta etapa.)
+       O golpe final é do grupo (frontend, 29/09, MM3b): 12747 -> 12754,
+       +7 — o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
+       FUNIL_DO_COMBATE nesta etapa (o estado novo do cartão do grupo,
+       antes dela no arquivo). */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12754" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -865,8 +883,14 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      porque essa linha já não mora lá.
      A peneira da agressão (frontend, MM, 29/09): 12820 -> 12834, +14 — o
      mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
-     FUNIL_DO_COMBATE. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12892/.test(S.ondeSai));
+     FUNIL_DO_COMBATE.
+     (os deltas de MM6/MM7 entre 12834 e 12892 já vinham re-medidos na
+     tabela antes desta etapa.)
+     O golpe final é do grupo (frontend, 29/09, MM3b): 12892 -> 12899,
+     +7 — o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
+     FUNIL_DO_COMBATE nesta etapa (o estado novo do cartão do grupo,
+     antes dela no arquivo). */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12899/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

@@ -44,7 +44,7 @@ import { PainelReacao } from "./painel-reacao.jsx";
    Letal ou poupar, e "como voce faz isso?" -- a conta inteira mora em
    `golpe-final.js`; o App so liga a fiacao e pinta o cartao (peca propria,
    `painel-golpe-final.jsx`, pelo mesmo molde do cartao da reacao). */
-import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal } from "./golpe-final.js";
+import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
@@ -8319,6 +8319,13 @@ export default function Taverna() {
      precisa para retomar. */
   const [golpeFinalPendente, setGolpeFinalPendente] = useState(null);
   const golpeFinalCtxRef = useRef(null);
+  /* MM3b: o golpe final quando quem derruba e o GRUPO -- um companheiro. A
+     mecanica cai como sempre caiu (o inimigo marca derrotado, sai da luta);
+     so a LETALIDADE fica por decidir, e por uma so vez por rodada -- nunca
+     um cartao por queda. O contexto para retomar a rodada (o que falta
+     aplicar depois da escolha) mora no ref, como no golpe do jogador. */
+  const [golpeFinalCompPendente, setGolpeFinalCompPendente] = useState(null);
+  const golpeFinalCompCtxRef = useRef(null);
   /* o envelope de UM turno -- nasce quando a escolha se aplica, e
      `pautaDoTurno` o consome e limpa; nunca sobrevive a um segundo turno */
   const golpeFinalEnvelopeRef = useRef(null);
@@ -12909,6 +12916,30 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     } catch (e) { calou("responder o golpe final", e); }
   };
 
+  /* MM3b: a resposta do cartão QUANDO QUEM DERRUBOU É O GRUPO — fecha o
+     cartão, grava a preferência se foi pedido para lembrar, e entrega a
+     ÚNICA escolha da rodada a `finalizar`, que é o resto de
+     `correrORestoDaRodada` retomado de onde parou. Nunca reconstrói a
+     rodada: os golpes já foram rolados, só a letalidade esperava. */
+  const responderGolpeFinalComp = (escolhaId, comoFez, lembrar) => {
+    try {
+      const ctx = golpeFinalCompCtxRef.current;
+      golpeFinalCompCtxRef.current = null;
+      setGolpeFinalCompPendente(null);
+      if (lembrar) escolherPreferenciaDoGolpeFinal(escolhaId === "letal" ? "sempre_letal" : "sempre_poupar");
+      if (!ctx) return;
+      try {
+        ctx.finalizar(escolhaId === "letal" ? "letal" : "nao_letal", comoFez);
+      } catch (e) {
+        /* NUNCA PODE CUSTAR O TURNO: se o resto da rodada estourar depois da
+           escolha, a rodada não fica presa para sempre — entrega o que já
+           havia antes do turno dos companheiros, sem os golpes deles. */
+        calou("finalizar o golpe final do grupo", e);
+        try { ctx.entregar({ pers: ctx.persAtual, resumo: "" }); } catch (e2) { calou("entregar depois de falhar o golpe final do grupo", e2); }
+      }
+    } catch (e) { calou("responder o golpe final do grupo", e); }
+  };
+
   /* ---------------- O ALCANCE ANTES DO CLIQUE (v9.255, Fase X, X2) ----------------
      O MESMO veredito que resolve o golpe, medido com o que está na mesa
      agora — para a tela poder dizer se alcança sem que o turno seja gasto.
@@ -15254,7 +15285,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        e o laco corre como sempre correu; um objecto quer dizer que a reacao ja
        foi escolhida (ou recusada), e entao so o golpe em que ela caiu a
        resolve. */
-    const correrORestoDaRodada = (acoes, escolha) => {
+    const correrORestoDaRodada = (acoes, escolha, entregar) => {
     const linhasSis = [];
     let danoNoJogador = 0;
     let grupoAtual = [...(persBase.grupo || [])];
@@ -15519,31 +15550,104 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         pushMsgs([{ autor: "sistema", texto: `📯 Voz de Comando — ${soInvocadas.map((g) => g.nome).join(", ")} ${soInvocadas.length > 1 ? "agem" : "age"} de novo.` }]);
       }
     }
-    const partesComp = [];
-    for (const ac of acoesComp) {
+    /* ---------------- MM3b: O GOLPE FINAL É DO GRUPO ----------------
+       A pessoa: os companheiros têm iniciativa mais alta e chegavam
+       primeiro ao último golpe — o momento do jogador nunca vinha. A
+       resposta: o golpe final é do GRUPO. Quando quem derruba é um
+       companheiro, o cartão sobe igual, e o jogador narra COMO O
+       COMPANHEIRO faz — o Matt dando o momento a quem acertou o golpe, e
+       aqui quem está à mesa é sempre o jogador.
+
+       UM PASSEIO SECO (`quedasComEscolhaNaRodada`, golpe-final.js) decide se
+       há pergunta, ANTES de aplicar um golpe sequer: simula a vida de cada
+       alvo golpe a golpe (a mesma ordem do laço de baixo), sem side effect
+       nenhum, e só marca pendente a PRIMEIRA queda de cada alvo com
+       escolha de verdade — um alvo que já caiu nesta rodada (por outro
+       companheiro, ou por um golpe anterior) não pergunta de novo por
+       ele. */
+    let prefGF = "letal";
+    try { prefGF = decidirGolpeFinal(preferenciaGolpeFinalRef.current); } catch (e) { calou("decidir o golpe final do grupo", e); prefGF = "letal"; }
+    let quedasPendentesComp = [];
+    if (prefGF === "perguntar") {
+      try {
+        const golpesDosCompanheiros = acoesComp
+          .filter((ac) => (ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r)
+          .map((ac) => ({ nome: ac.alvoNome, r: ac.r, autor: ac.companheiro }));
+        quedasPendentesComp = quedasComEscolhaNaRodada(golpesDosCompanheiros, combPos.inimigos || [])
+          .map((q) => ({ nome: q.nome, companheiro: q.autor, dano: q.dano, critico: q.critico }));
+      } catch (e) { calou("prever as quedas do golpe final do grupo", e); quedasPendentesComp = []; }
+    }
+
+    /* A APLICAÇÃO, retomável: o mesmo laço de sempre, com uma só mudança —
+       quem cai com escolha de verdade só vira corpo (letal ou poupado) e
+       ganha envelope quando `escolhaDaRodada` já é conhecida. Sem cartão
+       (a preferência decidiu sozinha), `escolhaDaRodada` chega pronta e o
+       laço corre síncrono, byte a byte o de hoje. Com cartão, o laço só
+       roda DEPOIS da resposta — nunca um golpe aplicado às cegas. */
+    const aplicarTurnoDosCompanheiros = (escolhaDaRodada, comoFezDaRodada) => {
+      const partesComp = [];
+      const pendentesPorNome = new Map(quedasPendentesComp.map((q) => [q.nome, q]));
+      let cenaJaNarradaComp = false;
+      let acabouGF = [];
+      let naoPodeGF = [];
+      for (const ac of acoesComp) {
       if (ac.tipo === "ataque" && ac.r) {
         logDadoCombate(resumoDoAtaque(ac.r));
         if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
         let pvAlvo = null;
+        let poupadoAgoraComp = false;
         if (ac.r.dano > 0) {
-          combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
+          combPos.inimigos = combPos.inimigos.map((e) => {
+            if (e.nome !== ac.alvoNome) return e;
+            pvAlvo = Math.max(0, e.vida - ac.r.dano);
+            let corpo = { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano };
+            const pend = pvAlvo <= 0 ? pendentesPorNome.get(e.nome) : null;
+            if (pend && escolhaDaRodada) {
+              try {
+                corpo = aplicarEscolha(corpo, escolhaDaRodada, { semente: sementeDaFuga(combPos) });
+                poupadoAgoraComp = escolhaDaRodada === "nao_letal";
+                const env = envelopeDoGolpeFinal({ alvo: corpo, escolha: escolhaDaRodada, comoFez: cenaJaNarradaComp ? "" : comoFezDaRodada, heroi: ac.companheiro });
+                cenaJaNarradaComp = true;
+                acabouGF = acabouGF.concat(env.acabou);
+                naoPodeGF = naoPodeGF.concat(env.naoPode);
+              } catch (e) { calou("aplicar o golpe final do companheiro", e); }
+            }
+            return corpo;
+          });
           combPos.inimigos = aflicaoDeCompanheiro(combPos.inimigos, ac, persAtual);
         }
-        pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
-        partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined));
+        pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? (poupadoAgoraComp ? " (poupado)" : " ☠") : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
+        partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined) + (poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""));
       } else if (ac.tipo === "habilidade" && ac.r) {
         logDadoCombate(resumoDoAtaque(ac.r));
         if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
         let pvAlvo = null;
+        let poupadoAgoraComp = false;
         if (ac.r.dano > 0) {
-          combPos.inimigos = combPos.inimigos.map((e) => { if (e.nome !== ac.alvoNome) return e; pvAlvo = Math.max(0, e.vida - ac.r.dano); return { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano }; });
+          combPos.inimigos = combPos.inimigos.map((e) => {
+            if (e.nome !== ac.alvoNome) return e;
+            pvAlvo = Math.max(0, e.vida - ac.r.dano);
+            let corpo = { ...e, vida: pvAlvo, derrotado: pvAlvo <= 0, ultimoDano: ac.r.dano };
+            const pend = pvAlvo <= 0 ? pendentesPorNome.get(e.nome) : null;
+            if (pend && escolhaDaRodada) {
+              try {
+                corpo = aplicarEscolha(corpo, escolhaDaRodada, { semente: sementeDaFuga(combPos) });
+                poupadoAgoraComp = escolhaDaRodada === "nao_letal";
+                const env = envelopeDoGolpeFinal({ alvo: corpo, escolha: escolhaDaRodada, comoFez: cenaJaNarradaComp ? "" : comoFezDaRodada, heroi: ac.companheiro });
+                cenaJaNarradaComp = true;
+                acabouGF = acabouGF.concat(env.acabou);
+                naoPodeGF = naoPodeGF.concat(env.naoPode);
+              } catch (e) { calou("aplicar o golpe final da habilidade do companheiro", e); }
+            }
+            return corpo;
+          });
           const apH = aplicarAflicaoEmInimigo(combPos.inimigos, ac.alvoNome, { fonte: `${ac.habilidade.nome} ${ac.habilidade.descricao || ""}`, nomeFonte: `${ac.habilidade.nome} (${ac.companheiro})`, atacante: ac.companheiro, critico: ac.r.critico });
           combPos.inimigos = apH.lista;
           if (apH.res) { pushMsgs([{ autor: "sistema", texto: apH.res.texto }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${apH.res.nota}`; }
         }
         persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
-        pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " ☠" : ""}` : "errou"}` }]);
-        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined)}`);
+        pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? (poupadoAgoraComp ? " (poupado)" : " ☠") : ""}` : "errou"}` }]);
+        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined)}${poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""}`);
       } else if (ac.tipo === "cura") {
         const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
         persAtual = gastarManaComp(r2.pers, ac.companheiro, ac.custo);
@@ -15603,102 +15707,125 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         }
       }
     }
-    combateRef.current = combPos; setCombate({ ...combPos });
-    /* o companheiro pode ter dado o golpe final — e se deu, os espólios entram
-       AQUI, na ficha que segue viagem daqui para baixo. Antes o fechamento
-       creditava numa cópia que o `setPersonagem` de baixo cobria de volta. */
-    {
-      const pFim = fecharSeTodosCairam(persAtual);
-      if (pFim && pFim !== true) persAtual = pFim;
-    }
+      return { partesComp, acabouGF, naoPodeGF };
+    };
 
-    /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte.
-       v9.41: a regra saiu daqui e virou `resolverQueda`, porque cair a zero
-       acontece em muito mais lugares do que o turno dos inimigos — e o que
-       estava escrito aqui era, na prática, a única queda que o jogo
-       reconhecia. `morteRolada` avisa a resposta do Mestre de que este zero
-       já foi testado, para o mesmo golpe não render dois testes. */
-    if ((persAtual.vida || 0) <= 0 && !persAtual.morto) {
-      const linhasQueda = [];
-      persAtual = resolverQueda(persAtual, linhasQueda);
-      if (linhasQueda.length) pushMsgs(linhasQueda.map((t) => ({ autor: "sistema", texto: t })));
-      morteRoladaRef.current = true;
-    }
+    const finalizarRodada = (escolhaDaRodada, comoFezDaRodada) => {
+      const { partesComp, acabouGF, naoPodeGF } = aplicarTurnoDosCompanheiros(escolhaDaRodada, comoFezDaRodada);
+      if (acabouGF.length || naoPodeGF.length) {
+        golpeFinalEnvelopeRef.current = golpeFinalEnvelopeRef.current
+          ? { acabou: golpeFinalEnvelopeRef.current.acabou.concat(acabouGF), naoPode: golpeFinalEnvelopeRef.current.naoPode.concat(naoPodeGF) }
+          : { acabou: acabouGF, naoPode: naoPodeGF };
+      }
+      combateRef.current = combPos; setCombate({ ...combPos });
+      /* o companheiro pode ter dado o golpe final — e se deu, os espólios entram
+         AQUI, na ficha que segue viagem daqui para baixo. Antes o fechamento
+         creditava numa cópia que o `setPersonagem` de baixo cobria de volta. */
+      {
+        const pFim = fecharSeTodosCairam(persAtual);
+        if (pFim && pFim !== true) persAtual = pFim;
+      }
 
-    /* v9.46: O PRAZO DA CONJURAÇÃO. Vence na virada da rodada, que é o
-       único relógio que a luta tem. Sai do grupo E do tabuleiro na mesma
-       operação — deixar a figura no grid depois de a criatura sumir seria
-       pior do que não ter prazo nenhum. */
-    if (combateRef.current) {
-      const proxima = (combateRef.current.rodada || 1) + 1;
-      /* v9.47: a FORMA vence pelo mesmo relógio. Vem primeiro porque é o
-         corpo do herói: saber quem ele é precede saber quem está com ele. */
-      const fim = expirarForma(persAtual, proxima);
-      if (fim.linha) {
-        persAtual = fim.pers;
-        pushMsgs([{ autor: "sistema", texto: fim.linha }]);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${fim.nota}`;
+      /* SISTEMA DE MORTE: se o jogador está a 0 PV, faz um teste de morte.
+         v9.41: a regra saiu daqui e virou `resolverQueda`, porque cair a zero
+         acontece em muito mais lugares do que o turno dos inimigos — e o que
+         estava escrito aqui era, na prática, a única queda que o jogo
+         reconhecia. `morteRolada` avisa a resposta do Mestre de que este zero
+         já foi testado, para o mesmo golpe não render dois testes. */
+      if ((persAtual.vida || 0) <= 0 && !persAtual.morto) {
+        const linhasQueda = [];
+        persAtual = resolverQueda(persAtual, linhasQueda);
+        if (linhasQueda.length) pushMsgs(linhasQueda.map((t) => ({ autor: "sistema", texto: t })));
+        morteRoladaRef.current = true;
       }
-      /* v9.53: a GUARDA vence pelo mesmo relógio da forma e da invocação —
-         quem tem prazo em rodadas é contado num lugar só. */
-      const gua = expirarGuardas(persAtual, proxima);
-      if (gua.linhas.length) {
-        persAtual = gua.pers;
-        pushMsgs(gua.linhas.map((texto) => ({ autor: "sistema", texto })));
-      }
-      /* v9.232: e a GUARDA DO GRUPO no mesmo relógio, pela mesma razão de os
-         quatro prazos morarem juntos. Desde que o companheiro ergue guarda de
-         verdade (o ramo novo do turno deles), `defesaDe` já soma
-         `defesaDeGuarda` na ficha dele — sem este irmão aqui, Casca de
-         Carvalho viraria +4 de defesa PERMANENTE, que é um bug bem pior que
-         o silêncio que a etapa veio fechar. */
-      try {
-        const linhasDoGrupo = [];
-        const grupoComPrazo = (persAtual.grupo || []).map((g) => {
-          if (!g || !((g.guardas || []).length)) return g;
-          const eg = expirarGuardas(g, proxima);
-          if (!eg.linhas.length) return g;
-          for (const l of eg.linhas) linhasDoGrupo.push(`🛡 ${g.nome} · ${l.replace(/^🛡\s*/, "")}`);
-          return eg.pers;
-        });
-        if (linhasDoGrupo.length) {
-          persAtual = { ...persAtual, grupo: grupoComPrazo };
-          pushMsgs(linhasDoGrupo.map((texto) => ({ autor: "sistema", texto })));
+
+      /* v9.46: O PRAZO DA CONJURAÇÃO. Vence na virada da rodada, que é o
+         único relógio que a luta tem. Sai do grupo E do tabuleiro na mesma
+         operação — deixar a figura no grid depois de a criatura sumir seria
+         pior do que não ter prazo nenhum. */
+      if (combateRef.current) {
+        const proxima = (combateRef.current.rodada || 1) + 1;
+        /* v9.47: a FORMA vence pelo mesmo relógio. Vem primeiro porque é o
+           corpo do herói: saber quem ele é precede saber quem está com ele. */
+        const fim = expirarForma(persAtual, proxima);
+        if (fim.linha) {
+          persAtual = fim.pers;
+          pushMsgs([{ autor: "sistema", texto: fim.linha }]);
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${fim.nota}`;
         }
-      } catch (e) { calou("prazo-da-guarda-do-grupo", e); }
-      /* v9.54: e a PRESSA no mesmo relógio — quarto prazo em rodadas, quarta
-         linha aqui. É por isso que os quatro moram juntos: quem escrever o
-         quinto vai ver os outros antes de esquecer o dele. */
-      const prs = expirarPressa(persAtual, proxima);
-      if (prs.linha) { persAtual = prs.pers; pushMsgs([{ autor: "sistema", texto: prs.linha }]); }
-      /* v9.54: e os fios arrebentam. A leitura de quem está virado já é
-         preguiçosa (compara com a rodada), então isto existe para o jogador
-         saber e para o inimigo não carregar campo morto pelo resto da luta. */
-      const ctr = expirarControles(combateRef.current.inimigos, proxima);
-      if (ctr.linhas.length) {
-        combateRef.current = { ...combateRef.current, inimigos: ctr.inimigos };
-        pushMsgs(ctr.linhas.map((texto) => ({ autor: "sistema", texto })));
+        /* v9.53: a GUARDA vence pelo mesmo relógio da forma e da invocação —
+           quem tem prazo em rodadas é contado num lugar só. */
+        const gua = expirarGuardas(persAtual, proxima);
+        if (gua.linhas.length) {
+          persAtual = gua.pers;
+          pushMsgs(gua.linhas.map((texto) => ({ autor: "sistema", texto })));
+        }
+        /* v9.232: e a GUARDA DO GRUPO no mesmo relógio, pela mesma razão de os
+           quatro prazos morarem juntos. Desde que o companheiro ergue guarda de
+           verdade (o ramo novo do turno deles), `defesaDe` já soma
+           `defesaDeGuarda` na ficha dele — sem este irmão aqui, Casca de
+           Carvalho viraria +4 de defesa PERMANENTE, que é um bug bem pior que
+           o silêncio que a etapa veio fechar. */
+        try {
+          const linhasDoGrupo = [];
+          const grupoComPrazo = (persAtual.grupo || []).map((g) => {
+            if (!g || !((g.guardas || []).length)) return g;
+            const eg = expirarGuardas(g, proxima);
+            if (!eg.linhas.length) return g;
+            for (const l of eg.linhas) linhasDoGrupo.push(`🛡 ${g.nome} · ${l.replace(/^🛡\s*/, "")}`);
+            return eg.pers;
+          });
+          if (linhasDoGrupo.length) {
+            persAtual = { ...persAtual, grupo: grupoComPrazo };
+            pushMsgs(linhasDoGrupo.map((texto) => ({ autor: "sistema", texto })));
+          }
+        } catch (e) { calou("prazo-da-guarda-do-grupo", e); }
+        /* v9.54: e a PRESSA no mesmo relógio — quarto prazo em rodadas, quarta
+           linha aqui. É por isso que os quatro moram juntos: quem escrever o
+           quinto vai ver os outros antes de esquecer o dele. */
+        const prs = expirarPressa(persAtual, proxima);
+        if (prs.linha) { persAtual = prs.pers; pushMsgs([{ autor: "sistema", texto: prs.linha }]); }
+        /* v9.54: e os fios arrebentam. A leitura de quem está virado já é
+           preguiçosa (compara com a rodada), então isto existe para o jogador
+           saber e para o inimigo não carregar campo morto pelo resto da luta. */
+        const ctr = expirarControles(combateRef.current.inimigos, proxima);
+        if (ctr.linhas.length) {
+          combateRef.current = { ...combateRef.current, inimigos: ctr.inimigos };
+          pushMsgs(ctr.linhas.map((texto) => ({ autor: "sistema", texto })));
+        }
+        const exp = expirarInvocacoes(persAtual, proxima);
+        if (exp.sumiram.length) {
+          const idx = new Set();
+          (persAtual.grupo || []).forEach((g, i) => { if (exp.sumiram.includes(g.nome)) idx.add(i); });
+          persAtual = exp.pers;
+          combateRef.current = { ...combateRef.current, aliados: (combateRef.current.aliados || []).filter((_, i) => !idx.has(i)) };
+          pushMsgs(exp.linhas.map((t) => ({ autor: "sistema", texto: t })));
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${exp.sumiram.join(", ")} ${exp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo venceu. Narre o desmanche em uma frase e siga — ${exp.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} no campo, e não ${exp.sumiram.length > 1 ? "voltam" : "volta"}.`;
+        }
       }
-      const exp = expirarInvocacoes(persAtual, proxima);
-      if (exp.sumiram.length) {
-        const idx = new Set();
-        (persAtual.grupo || []).forEach((g, i) => { if (exp.sumiram.includes(g.nome)) idx.add(i); });
-        persAtual = exp.pers;
-        combateRef.current = { ...combateRef.current, aliados: (combateRef.current.aliados || []).filter((_, i) => !idx.has(i)) };
-        pushMsgs(exp.linhas.map((t) => ({ autor: "sistema", texto: t })));
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${exp.sumiram.join(", ")} ${exp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo venceu. Narre o desmanche em uma frase e siga — ${exp.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} no campo, e não ${exp.sumiram.length > 1 ? "voltam" : "volta"}.`;
+      persAtual = mudarFicha(() => persAtual);
+      /* NOVA RODADA: revide concluído, meus movimentos renovam */
+      if (combateRef.current) {
+        combateRef.current = { ...combateRef.current, economia: economiaNova(persAtual), rodada: (combateRef.current.rodada || 1) + 1 };
+        setCombate(combateRef.current);
+        reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
       }
+      const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
+      const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
+      entregar({ pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` });
+    };
+
+    /* A RODADA SUSPENDE AQUI quando há queda com escolha de verdade e a
+       preferência é perguntar — o MESMO desenho do K3: nada mais acontece
+       até o cartão responder. Sem pendente nenhum, ou com a preferência já
+       decidida, corre tudo síncrono, byte a byte o jogo de hoje. */
+    if (quedasPendentesComp.length) {
+      combateRef.current = combPos; setCombate({ ...combPos });
+      golpeFinalCompCtxRef.current = { finalizar: finalizarRodada, entregar, persAtual };
+      setGolpeFinalCompPendente({ quedas: quedasPendentesComp.map(({ nome, companheiro, dano, critico }) => ({ nome, companheiro, dano, critico })) });
+      return;
     }
-    persAtual = mudarFicha(() => persAtual);
-    /* NOVA RODADA: revide concluído, meus movimentos renovam */
-    if (combateRef.current) {
-      combateRef.current = { ...combateRef.current, economia: economiaNova(persAtual), rodada: (combateRef.current.rodada || 1) + 1 };
-      setCombate(combateRef.current);
-      reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
-    }
-    const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
-    const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
-    return { pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` };
+    finalizarRodada(prefGF === "perguntar" ? null : prefGF, "");
     };
 
     /* ---------------- A JANELA ABRE, OU NAO (v9.259, K3) ----------------
@@ -15725,7 +15852,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         escondida: typeof document !== "undefined" && !!document.hidden,
       });
     } catch (e) { calou("ritmoDaRodada", e); ritmo = null; }
-    if (!ritmo || !ritmo.abre) return aoTerminar(correrORestoDaRodada(acoes, null));
+    if (!ritmo || !ritmo.abre) { correrORestoDaRodada(acoes, null, aoTerminar); return undefined; }
 
     /* A JANELA ABRE — E A RODADA SUSPENDE AQUI. Nada mais acontece ate o portao
        de uma via deixar alguem entrar: nem uma linha no chat, nem um ponto de
@@ -15797,21 +15924,30 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       } catch (e) { calou("desfecho-da-janela", e); escolha = { reacao: null, ordem: null }; }
 
       ultimaReacaoRef.current = null;
-      let rv = null;
-      try { rv = correrORestoDaRodada(acoes, escolha); }
+      /* O ENVELOPE NAO ESPERA O CARTAO. A resolucao fica 1 200 ms na tela; a
+         espera pelo Mestre e ~13,4 s. Mandar agora poe um dentro do outro e
+         poupa 1,2 s por rodada — e nao custa nada, porque `a.r` ja esta cortado
+         quando `correrORestoDaRodada` devolve, que era a unica razao pela qual
+         o envelope nao podia sair antes.
+         MM3b: `correrORestoDaRodada` agora pode SUSPENDER de novo, se o golpe
+         de um companheiro precisar da mesma pergunta — por isso `aoTerminar`
+         vira um retorno por CALLBACK, nunca mais um valor devolvido. Nos dois
+         casos (correu direto, ou voltou depois do cartao do grupo) e este
+         `entregarRevide` quem chama `aoTerminar`, uma vez so. */
+      let jaEntregouRevide = false;
+      const entregarRevide = (rv) => {
+        if (jaEntregouRevide) return;
+        jaEntregouRevide = true;
+        try { aoTerminar(rv); } catch (e) { calou("aoTerminar-da-janela", e); }
+      };
+      try { correrORestoDaRodada(acoes, escolha, entregarRevide); }
       catch (e) {
         /* NUNCA PODE CUSTAR O TURNO — e aqui ele custaria a rodada A MEIO, com o
            dano por aplicar. Se o resto da rodada estourar, o envelope sai com o
            que havia e a luta segue. */
         calou("correrORestoDaRodada", e);
-        rv = { pers: persBase, resumo: "" };
+        entregarRevide({ pers: persBase, resumo: "" });
       }
-      /* O ENVELOPE NAO ESPERA O CARTAO. A resolucao fica 1 200 ms na tela; a
-         espera pelo Mestre e ~13,4 s. Mandar agora poe um dentro do outro e
-         poupa 1,2 s por rodada — e nao custa nada, porque `a.r` ja esta cortado
-         quando `correrORestoDaRodada` devolve, que era a unica razao pela qual
-         o envelope nao podia sair antes. */
-      try { aoTerminar(rv); } catch (e) { calou("aoTerminar-da-janela", e); }
 
       try {
         const u = ultimaReacaoRef.current || {};
@@ -23607,11 +23743,34 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      painel-batalha.jsx. Os dois nunca coexistem: o golpe final resolve-se
      (aplicarGolpeDoJogador -> continuarGolpeDoJogador) ANTES de qualquer
      revide, que e onde a janela da reacao nasce. */
-  const golpeFinalDaBatalha = emBatalha && golpeFinalPendente ? (
+  const golpeFinalDoJogadorNaBatalha = emBatalha && golpeFinalPendente ? (
     <LimiteErro>
       <PainelGolpeFinal quedas={golpeFinalPendente.quedas} aoEscolher={responderGolpeFinal} />
     </LimiteErro>
   ) : null;
+
+  /* MM3b: o golpe final do GRUPO entra no MESMO slot -- os dois cartoes de
+     golpe final nunca coexistem entre si (o do jogador resolve-se antes do
+     revide; o do grupo nasce dentro dele, no turno dos companheiros) nem
+     com o da reacao (K3), que so nasce depois de o turno dos companheiros
+     ja ter corrido. */
+  const golpeFinalDoGrupoNaBatalha = emBatalha && golpeFinalCompPendente ? (() => {
+    const quedas = golpeFinalCompPendente.quedas || [];
+    const nomesDosHerois = Array.from(new Set(quedas.map((q) => q.companheiro).filter(Boolean)));
+    const pergunta = nomesDosHerois.length === 1 ? `Como ${nomesDosHerois[0]} faz isso? (opcional)` : "Como isso acontece? (opcional)";
+    return (
+      <LimiteErro>
+        <PainelGolpeFinal
+          quedas={quedas}
+          linhasQuedas={quedas.map((q) => `${q.companheiro || "Seu companheiro"} derruba ${q.nome}.`)}
+          pergunta={pergunta}
+          aoEscolher={responderGolpeFinalComp}
+        />
+      </LimiteErro>
+    );
+  })() : null;
+
+  const golpeFinalDaBatalha = golpeFinalDoJogadorNaBatalha || golpeFinalDoGrupoNaBatalha;
 
   const reacaoDaBatalha = golpeFinalDaBatalha || (emBatalha && janelaReacao ? (
     <LimiteErro>
