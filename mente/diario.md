@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 19:43 · v9.315 · o convite para o grupo anda: era o caso geral · commit (o hash vai no próximo bloco)
+## 29/09 19:43 · v9.315 · o convite para o grupo anda: era o caso geral · commit `af1b489`
 
 - **por que andou:** promovido pelo coordenador da fase — *se nunca abrir, nenhum
   companheiro novo entra no grupo*. A primeira pergunta era se é o caso geral ou de canto.
