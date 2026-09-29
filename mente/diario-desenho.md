@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 28/09 22:00 · v9.301–v9.302 · **V5e — a resposta chega pelo começo, e a cerimónia acende** · commits (no bloco seguinte)
+## 28/09 22:00 · v9.301–v9.302 · **V5e — a resposta chega pelo começo, e a cerimónia acende** · commits `1d414df` (V5e, v9.301) e `0b06385` (a cerimónia, v9.302)
 
 - **estado inicial:** trava tomada às 20:19; HEAD `c5acc8c`; nenhum ciclo do
   sistema. **O achado de V5, dito pelo coordenador o mais importante desde
@@ -44,7 +44,8 @@ Formato:
   Afastou-se do `jogo` em dois pontos, e o `jogo` concordou com os dois: enviar
   leva ao fim **sempre**; o "Novo" é a tira da espreita e não uma pílula nova.
   Sem desvios do Figma: a pessoa não desenhou o pouso.
-- **oficial** (bastão tomado às 21:27): scripts 1-2-3-5-6, **sem o 7**;
+- **o bastão do `App.jsx`:** tomado pelo `regente` às 21:27 para o `oficial`, **devolvido às 22:02**, logo depois de `0b06385` subir (o commit da cerimónia não tocou no `App.jsx`: só `estilo.js` e a suíte).
+- **oficial**: scripts 1-2-3-5-6, **sem o 7**;
   **24 315 → 24 442 linhas**, antes da 22 489 só trocas na mesma linha, 0
   endereços mexidos; D5a do `App.jsx` 75 → 74.
 - **a prova jogada** (antes `c5acc8c`; o depois na 5173 e uma cópia com a
