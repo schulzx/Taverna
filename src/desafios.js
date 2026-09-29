@@ -1542,6 +1542,11 @@ REGRA DESTE ENVELOPE (obrigatória): NÃO role, NÃO peça rolagem, NÃO invente
    volta em minutos, em ruído e em pele. Por isso ele NÃO vale para
    o social (onde "consegui, mas caro" já é um degrau da escada do
    pedido) nem dentro da luta (onde o turno já é o preço).
+
+   MM5: a regra 2 ganhou o lado de cima. `porPouco` passou a querer dizer
+   "esta linha aceita o MEIO" — o sim pago —, e o meio vale tanto para quem
+   falhou por um fio como para quem passou por um. A tabela das faixas e
+   a conta que as justifica moram em FAIXAS_DA_MARGEM, mais abaixo.
    ============================================================ */
 export const CUSTO_DE_FALHAR = [
   {
@@ -1549,9 +1554,12 @@ export const CUSTO_DE_FALHAR = [
     seca: "a fechadura emperra com a tentativa malfeita",
     preco: "ela cede, mas cede errado: com estrondo, e a porta fica marcada de quem passou",
     minutosExtra: 5, barulhoExtra: true,
-    /* v9.66: o ombro que arromba paga. Número fixo e pequeno de propósito —
-       é o preço de uma vitória que o dado não deu, não um golpe de inimigo. */
-    pelePorPouco: { dano: 2, diz: "o ombro bate na madeira que só cede depois" },
+    /* v9.66: o ombro que arromba paga. Era um 2 fixo — "o preço de uma
+       vitória que o dado não deu, não um golpe de inimigo". MM5: continua
+       pequeno, mas passa a sair de MORDIDA_POR_DEGRAU (um dado pelo degrau
+       do obstáculo; 1d4 no comum, média 2,5 — ao lado do 2 antigo): a porta
+       de uma cripta morde mais que a de um celeiro. */
+    pelePorPouco: { mordida: 1, diz: "o ombro bate na madeira que só cede depois" },
   },
   {
     alvo: "escalada", porPouco: true,
@@ -1591,14 +1599,19 @@ export const CUSTO_DE_FALHAR = [
     minutosExtra: 2,
   },
   {
-    alvo: "furtividade", porPouco: false,
+    /* MM5: o meio da furtividade é o som. Passar por um fio é passar e
+       deixar um ruído para trás — e o ruído é um preço que o código cobra:
+       vira a pergunta ao oráculo ("alguém ouviu?"), cuja resposta é fato. */
+    alvo: "furtividade", porPouco: true,
     seca: "o passo sai errado e o corpo aparece onde não devia",
-    minutosExtra: 0,
+    preco: "você passa, mas não em silêncio — um som fica para trás, e alguém pode tê-lo ouvido",
+    minutosExtra: 0, barulhoExtra: true,
   },
   {
-    alvo: "furto", porPouco: false,
+    alvo: "furto", porPouco: true,
     seca: "a mão erra o tempo e toca onde não devia tocar",
-    minutosExtra: 0,
+    preco: "a coisa vem para a sua mão, mas vem tilintando — e o tilintar tem ouvidos à volta",
+    minutosExtra: 0, barulhoExtra: true,
   },
   {
     alvo: "medicina", porPouco: false,
@@ -1628,12 +1641,19 @@ export const CUSTO_DE_FALHAR = [
      — e uma regra que vale para parte do catálogo é a pior espécie de
      regra, porque parece que vale para tudo. */
   {
-    alvo: "armadilha", porPouco: false,
+    /* MM5: é o exemplo do Matt — a runa de C1E1, onde um 15 foi "recuas a
+       tempo, mas levas 8". Desarmar por um fio é desarmar E ser mordido;
+       falhar é a armadilha inteira. Por isso a seca morde com DOIS dados do
+       degrau e o meio com UM: quem passou raspando nunca paga mais do que
+       quem falhou (era 2 fixo na seca, e nenhum meio). */
+    alvo: "armadilha", porPouco: true,
     seca: "o mecanismo salta sob os seus dedos",
+    preco: "o mecanismo trava, mas não antes de morder — você recua a tempo, e não inteiro",
     minutosExtra: 5,
     /* desarmar mal é a única falha desta leva que fere sem cair: a
        armadilha dispara no dedo de quem a estava desarmando */
-    peleSeca: { dano: 2, diz: "a lâmina do gatilho acha a mão antes do fio" },
+    peleSeca: { mordida: 2, diz: "a lâmina do gatilho acha a mão antes do fio" },
+    pelePorPouco: { mordida: 1, diz: "o gatilho morde a ponta dos dedos antes de travar" },
   },
   {
     alvo: "nado", porPouco: true,
@@ -1648,14 +1668,14 @@ export const CUSTO_DE_FALHAR = [
     preco: "a mão alcança a beira e o resto do corpo bate contra ela",
     minutosExtra: 0,
     peleSeca: { queda: true, diz: "não havia como parar no meio do salto" },
-    pelePorPouco: { dano: 2, diz: "as costelas encontram a quina da borda" },
+    pelePorPouco: { mordida: 1, diz: "as costelas encontram a quina da borda" },
   },
   {
     alvo: "peso", porPouco: true,
     seca: "não cede — e você sente onde vai doer amanhã",
     preco: "cede, e as suas costas pagam a diferença",
     minutosExtra: 5,
-    pelePorPouco: { dano: 2, diz: "alguma coisa estala nas costas" },
+    pelePorPouco: { mordida: 1, diz: "alguma coisa estala nas costas" },
   },
   {
     alvo: "equilibrio", porPouco: true,
@@ -1669,7 +1689,7 @@ export const CUSTO_DE_FALHAR = [
     seca: "o nó aperta mais a cada tentativa",
     preco: "você sai, deixando pele no caminho",
     minutosExtra: 10,
-    pelePorPouco: { dano: 2, diz: "os pulsos saem em carne viva" },
+    pelePorPouco: { mordida: 1, diz: "os pulsos saem em carne viva" },
   },
   {
     alvo: "aguentar", porPouco: false,
@@ -1685,9 +1705,13 @@ export const CUSTO_DE_FALHAR = [
     peleSeca: { queda: true, diz: "cair de um cavalo em movimento é cair duas vezes" },
   },
   {
-    alvo: "bicho", porPouco: false,
+    /* MM5: o bicho aceita a mão, e marca-a antes — o meio é uma mordida de
+       verdade, do tamanho do degrau (um lobo acuado é "difícil", 1d6) */
+    alvo: "bicho", porPouco: true,
     seca: "o bicho recua, mostra os dentes e não deixa mais ninguém chegar perto",
+    preco: "o bicho aceita a sua mão, mas não antes de marcá-la",
     minutosExtra: 10,
+    pelePorPouco: { mordida: 1, diz: "os dentes chegam antes da calma" },
   },
   {
     alvo: "atuacao", porPouco: true,
@@ -1729,32 +1753,51 @@ export const CUSTO_DE_FALHAR = [
     minutosExtra: 10,
     pelePorPouco: { condicao: "enfraquecido", diz: "o selo devolve o olhar, e a cabeça paga" },
   },
-  /* ---------------- OS CUSTOS DO IMPROVISO (MM4) ----------------
+  /* ---------------- OS CUSTOS DO IMPROVISO (MM4 · MM5) ----------------
      Um por família, porque o improviso não sabe mais do que isso: sabe que
-     foi Força, não que foi a cadeira. A falha é SECA em todos, e é de
-     propósito — o "por pouco" (conseguir pagando) é a etapa seguinte da
-     fase (MM5), e ela precisa da margem que já viaja no veredito, não de
-     um preço inventado agora. Nenhum preço em pele: quem cobra pele é o
-     pipeline de dano, e o improviso não sabe de que altura se cai. */
+     foi Força, não que foi a cadeira. No MM4 a falha era SECA em todos, à
+     espera da margem; no MM5 cinco das seis ganham o MEIO, cada uma com um
+     preço que o código cobra — nunca só narrado:
+
+       Força      → barulho  (o esforço cede, e cede alto: pergunta ao oráculo)
+       Destreza   → mordida  (chega, mas torto: o corpo bate onde não devia)
+       Vigor      → condição (aguenta até o fim, e sai enfraquecido)
+       Intelecto  → tempo    (a resposta vem, mas vem tarde: minutos no relógio)
+       Presença   → barulho  (o gesto pega, e pega alto: alguém reparou)
+       Percepção  → SEM MEIO. Perceber é instantâneo — ou se vê, ou não se
+                    vê —, como a escuta e a intuição da mesma tabela. Um
+                    "notou, mas…" seria meia-informação, que é exatamente o
+                    que o envelope da falha proíbe ao Narrador.
+
+     A queda continua fora: o improviso não sabe de que altura se cai. */
   {
-    alvo: "improviso_forca", porPouco: false,
+    alvo: "improviso_forca", porPouco: true,
     seca: "não cede — o peso ganha, e o esforço fica nos braços",
-    minutosExtra: 0,
+    preco: "cede, mas cede alto: o estalo e o baque chegam longe",
+    minutosExtra: 0, barulhoExtra: true,
   },
   {
-    alvo: "improviso_destreza", porPouco: false,
+    alvo: "improviso_destreza", porPouco: true,
     seca: "o corpo chega um instante atrasado, e o gesto sai torto",
+    preco: "você chega, mas chega torto — o corpo bate onde não devia",
     minutosExtra: 0,
+    pelePorPouco: { mordida: 1, diz: "o corpo bate onde não devia" },
   },
   {
-    alvo: "improviso_vigor", porPouco: false,
+    alvo: "improviso_vigor", porPouco: true,
     seca: "o corpo avisa antes do fim, e você para antes de chegar lá",
+    preco: "você aguenta até o fim, e o fim cobra: o corpo sai vazio",
     minutosExtra: 5,
+    pelePorPouco: { condicao: "enfraquecido", diz: "o corpo aguentou e agora cobra" },
   },
   {
-    alvo: "improviso_intelecto", porPouco: false,
+    /* o tempo do meio é só dele: a falha seca daqui não custa minuto
+       nenhum (a resposta não vem, e pronto), e por isso o meio precisa de
+       um número próprio — senão "veio, mas tarde" custaria o mesmo zero */
+    alvo: "improviso_intelecto", porPouco: true,
     seca: "a resposta não vem, por mais que você a procure",
-    minutosExtra: 0,
+    preco: "a resposta vem, mas vem tarde — depois de um bom tempo de cabeça baixa",
+    minutosExtra: 0, minutosPorPouco: 15,
   },
   {
     alvo: "improviso_percepcao", porPouco: false,
@@ -1762,9 +1805,10 @@ export const CUSTO_DE_FALHAR = [
     minutosExtra: 0,
   },
   {
-    alvo: "improviso_presenca", porPouco: false,
+    alvo: "improviso_presenca", porPouco: true,
     seca: "o gesto não pega, e quem viu vai lembrar dele do jeito errado",
-    minutosExtra: 0,
+    preco: "o gesto pega, mas pega alto demais — quem estava por perto reparou",
+    minutosExtra: 0, barulhoExtra: true,
   },
 ];
 
@@ -1831,30 +1875,195 @@ export function rolarQueda(q, { sorte = Math.random } = {}) {
   return { total, dados: n, metros: (q && q.metros) || 3, nome: (q && q.nome) || "a queda" };
 }
 
-/* O desfecho de uma rolagem que não bateu a dificuldade. `total` e `dc` são
-   os números que já saíram — esta função não rola nada e não decide nada
-   por sorteio: só lê a distância entre os dois. */
-export function desfechoDaFalha(v, total, dc, { emCombate = false } = {}) {
+/* ============================================================
+   A MARGEM (MM5) — o sucesso com preço
+
+   Até aqui o dado tinha duas saídas e meia: passou (limpo), falhou (seco)
+   e, só do lado de baixo, "falhou por um ou dois, e consegue pagando"
+   (v9.65). O Matt usa três, e usa-as dos DOIS lados da linha: na runa de
+   C1E1, um 15 é "recuas a tempo, mas levas 8" — nem o sim limpo nem o não.
+
+   A margem é `total − dc`. A tabela a corta em quatro faixas, e as duas
+   do meio são UMA faixa só, simétrica em torno da linha da dificuldade:
+   dois pontos abaixo dela (−2, −1) e dois acima (0, +1). O que as separa
+   é a VOZ, não o preço — o preço é um só, o da linha de CUSTO_DE_FALHAR:
+
+     margem  ≥ +2   limpo   o sim, sem custo escondido
+     0 · +1         mas     "consegue, mas…"          (passou por um fio)
+     −1 · −2        quase   "por um fio, e paga"      (falhou por um fio)
+     ≤ −3           falha   o não, com o custo seco da linha
+
+   PORQUE ASSIM, EM NÚMERO. Num d20, cada ponto de margem é UMA face — a
+   conta não depende do modificador nem da CD, só de onde a linha cai no
+   dado. Então o meio é sempre 4 faces em 20: 20% das rolagens (10% de cada
+   lado), e o resto se reparte pela distância. O caso típico da casa — CD
+   13, o obstáculo comum, contra +3 — dá, face a face (o 1 e o 20 incluídos):
+
+     limpo 45% · mas 10% · quase 10% · falha 35%
+
+   É a faixa do "sucesso a um custo" do Dungeon Master's Guide de D&D 5e
+   (2014, cap. 8, p. 242, "Success at a Cost": falhar por 1 ou 2 pode
+   virar sucesso com complicação), que a casa já seguia desde a
+   v9.65, espelhada para cima da linha — que é o que a mesa do Matt faz. A
+   simetria mata um degrau absurdo que existia: falhar por 1 custava e
+   passar por 0 era de graça, e um ponto no dado separava "pagou" de "não
+   pagou" exatamente onde a sorte menos devia pesar. Agora o degrau mora na
+   borda da faixa, entre o raspão e a folga.
+
+   Os dois lados da conta, sem maquiagem: onde a linha aceita o meio, a
+   chance de conseguir sobe 10 pontos (o "quase" vira sim) e 10 pontos de
+   sucessos que eram limpos passam a pagar (o "mas"). A maioria dos
+   sucessos continua limpa — 45 contra 20 no caso típico.
+
+   QUEM NUNCA É O MEIO:
+   - o 20 natural é limpo e o 1 natural é falha, caia a margem onde cair
+     (com um +10 contra CD 13, o 1 natural daria margem −2: continua falha);
+   - a luta: dentro dela o turno já é o preço (a mesma regra de v9.65);
+   - a linha sem `porPouco` (o que só revela informação: escuta, intuição,
+     heráldica, perceber) — ali o raspão de cima é limpo e o de baixo é seco;
+   - a busca que não tem nada para achar (`fechaDepois`): o preço do meio
+     da busca diz "você acha", e ali não há o que achar. Passar por um fio
+     num quarto vazio é a certeza limpa; falhar por um fio é não ter certeza.
+   ============================================================ */
+export const FAIXAS_DA_MARGEM = [
+  { id: "limpo", de: 2, ate: Infinity, passou: true, meio: false, semMeio: "limpo", voz: "consegue" },
+  { id: "mas", de: 0, ate: 1, passou: true, meio: true, semMeio: "limpo", voz: "consegue, mas…" },
+  { id: "quase", de: -2, ate: -1, passou: true, meio: true, semMeio: "falha", voz: "por um fio — e paga" },
+  { id: "falha", de: -Infinity, ate: -3, passou: false, meio: false, semMeio: "falha", voz: "não consegue" },
+];
+function faixaDaMargemPorId(id) { return FAIXAS_DA_MARGEM.find((f) => f.id === id) || null; }
+
+/* A faixa em que uma margem cai. O crítico e o desastre mandam antes da
+   conta — é o dado natural, não a soma, que decide esses dois. Margem que
+   não é número não cai em faixa nenhuma: quem chamou não tinha teste. */
+export function faixaDaMargem(margem, { critico = false, desastre = false } = {}) {
+  if (critico) return faixaDaMargemPorId("limpo");
+  if (desastre) return faixaDaMargemPorId("falha");
+  const m = margem == null || margem === "" ? NaN : Number(margem);
+  if (!Number.isFinite(m)) return null;
+  return FAIXAS_DA_MARGEM.find((f) => m >= f.de && m <= f.ate) || null;
+}
+
+/* ---------------- A MORDIDA ----------------
+   Quando o preço é pele, o número sai daqui: UM dado, e as faces dele são
+   o degrau do obstáculo. A porta da cripta morde mais que a do celeiro, e
+   quem escolhe o obstáculo escolhe a mordida.
+
+   Pequeno de propósito. Um herói de nível 1 tem por volta de 16 de vida;
+   1d4 no obstáculo comum (média 2,5) é um sexto dela — sente-se, não
+   derruba. É o preço de um SIM, não um golpe de inimigo; a queda, que é o
+   golpe do chão, continua sendo 1d6 por três metros. O antigo 2 fixo (v9.66)
+   fica ao lado da média do comum, e é por isso que ele pôde sair.
+
+   O topo é contido de propósito: a primeira versão dava 1d8 ao difícil, e
+   a sonda achou o arrombamento de ombro a 19 (difícil) mordendo 8 num
+   herói de nível 1 — metade da vida por um SIM. O difícil e o incomum
+   ficam em 1d6 (média 3,5, um quinto da vida de nível 1); só o que a régua
+   chama de árduo e heroico passa disso, e ali quem tenta já é outro herói. */
+export const MORDIDA_POR_DEGRAU = [
+  { degrau: "trivial", faces: 4 },
+  { degrau: "facil", faces: 4 },
+  { degrau: "comum", faces: 4 },
+  { degrau: "incomum", faces: 6 },
+  { degrau: "dificil", faces: 6 },
+  { degrau: "arduo", faces: 8 },
+  { degrau: "heroico", faces: 10 },
+];
+
+export function mordidaDoDegrau(dc) {
+  const d = degrauDaDC(dc);
+  return MORDIDA_POR_DEGRAU.find((m) => m.degrau === d.id) || MORDIDA_POR_DEGRAU[2];
+}
+
+/* Rola `n` dados da mordida. A sorte entra por parâmetro; sem ela, sai de
+   uma SEMENTE — a tentativa (a chave), o total e a dificuldade —, e então
+   o mesmo raspão na mesma porta morde sempre o mesmo tanto, em qualquer
+   máquina. Nada de Math.random aqui dentro. */
+function rolarMordida(n, dc, { sorte = null, semente = "" } = {}) {
+  const { faces } = mordidaDoDegrau(dc);
+  const r = typeof sorte === "function" ? sorte : rngDe(`mordida|${semente}`);
+  const k = Math.max(1, Math.min(4, Math.round(Number(n) || 1)));
+  let total = 0;
+  for (let i = 0; i < k; i++) total += 1 + Math.floor(r() * faces);
+  return { dano: total, dado: `${k}d${faces}` };
+}
+
+/* O preço em pele de um lado, já com o número. `mordida` vira dano rolado;
+   o resto (a queda, a condição) passa como estava — quem as resolve é o
+   App, pelas portas que já existem. */
+function peleResolvida(p, dc, opcoes) {
+  if (!p) return null;
+  if (!p.mordida) return p;
+  const { mordida, ...resto } = p;
+  const m = rolarMordida(mordida, dc, opcoes);
+  return { ...resto, dano: m.dano, dado: m.dado };
+}
+
+/* O DESFECHO DA MARGEM — o que uma rolagem de desafio custa, dos dois
+   lados da linha. Devolve:
+   - null  quando não há o que cobrar: o sim limpo, o teste sem custo de
+           tabela (o social), ou o lixo (sem dificuldade, sem total) — e
+           então quem chama faz exatamente o que fazia antes do MM5;
+   - o desfecho, na MESMA forma do de v9.65 (`porPouco`, `diz`, `faltou`,
+     `minutosExtra`, `barulhoExtra`, `pele`) mais `faixa` e `margem`. É a
+     forma de antes de propósito: tudo o que o App já faz com um "por
+     pouco" (a fala, o relógio, o barulho, a pele) serve ao "mas" sem uma
+     linha nova de fiação. `porPouco` quer dizer "é o meio": o sim, pago. */
+export function desfechoDaMargem(v, { total = null, dc = null, critico = false, desastre = false, emCombate = false, sorte = null } = {}) {
   if (!v || !v.alvoDoCusto) return null;
   const c = custoPorAlvo(v.alvoDoCusto);
   if (!c) return null;
-  const faltou = Number(dc) - Number(total);
-  if (!(faltou > 0)) return null;
-  const porPouco = !!c.porPouco && !emCombate && faltou <= 2;
+  if (total == null || dc == null || total === "" || dc === "") return null;
+  const t = Number(total), d = Number(dc);
+  if (!Number.isFinite(t) || !Number.isFinite(d)) return null;
+  const margem = t - d;
+  let f = faixaDaMargem(margem, { critico: !!critico, desastre: !!desastre });
+  if (!f) return null;
+  const aceitaMeio = !!c.porPouco && !emCombate && !v.fechaDepois;
+  if (f.meio && !aceitaMeio) f = faixaDaMargemPorId(f.semMeio);
+  if (f.passou && !f.meio) return null;
+  const meio = f.meio;
+  const opcoes = { sorte, semente: `${v.chave || v.id || c.alvo}|${t}|${d}` };
+  const minutos = meio && c.minutosPorPouco != null ? c.minutosPorPouco : c.minutosExtra;
   return {
-    porPouco, faltou, alvo: c.alvo,
-    diz: porPouco ? c.preco : c.seca,
-    minutosExtra: Math.max(0, Number(c.minutosExtra) || 0),
-    barulhoExtra: !!c.barulhoExtra && porPouco,
+    porPouco: meio, faixa: f.id, margem, faltou: d - t, alvo: c.alvo,
+    diz: meio ? c.preco : c.seca,
+    minutosExtra: Math.max(0, Number(minutos) || 0),
+    barulhoExtra: !!c.barulhoExtra && meio,
     /* v9.66: o preço em PELE, e ele é diferente nos dois lados. Quem falha
        por pouco e sobe machucado não é quem falha e despenca — juntar os
        dois num campo só faria a vitória paga e o tombo custarem igual. */
-    pele: (porPouco ? c.pelePorPouco : c.peleSeca) || null,
+    pele: peleResolvida(meio ? c.pelePorPouco : c.peleSeca, d, opcoes),
   };
+}
+
+/* O desfecho de uma rolagem que NÃO bateu a dificuldade — a metade de
+   baixo de `desfechoDaMargem`, com a assinatura de sempre (v9.65). Passar
+   continua não tendo "desfecho de falha", nem quando o passar é pago. */
+export function desfechoDaFalha(v, total, dc, { emCombate = false, desastre = false, sorte = null } = {}) {
+  if (!(Number(dc) - Number(total) > 0)) return null;
+  return desfechoDaMargem(v, { total, dc, emCombate, desastre, sorte });
+}
+
+/* O que o sistema já cobrou, em palavras de mesa — para o Narrador não
+   ter de adivinhar se "o preço" foi um minuto ou um osso. */
+function oQueFoiCobrado(des) {
+  const partes = [];
+  if (des.minutosExtra) partes.push(`${des.minutosExtra} minutos no relógio`);
+  if (des.barulhoExtra) partes.push("o barulho, que o mundo já está a julgar");
+  const p = des.pele;
+  if (p && p.dano) partes.push(`${p.dano} de vida`);
+  if (p && p.condicao) partes.push(`a condição ${p.condicao}`);
+  if (p && p.queda) partes.push("a queda");
+  return partes.length ? partes.join(", ") : "o que está escrito acima";
 }
 
 export function falaDoCusto(des) {
   if (!des) return "";
+  if (des.porPouco && des.faixa === "mas") {
+    const quanto = des.margem > 0 ? `Passou por ${des.margem}` : "Na conta exata";
+    return `⚖ ${quanto} — e por um fio o mundo cobra: ${des.diz}.`;
+  }
   return des.porPouco
     ? `⚖ Faltaram ${des.faltou} — e por tão pouco o mundo negocia: ${des.diz}.`
     : `↯ ${des.diz.charAt(0).toUpperCase()}${des.diz.slice(1)}.`;
@@ -1863,7 +2072,10 @@ export function falaDoCusto(des) {
 export function envelopeDoCusto(des, rotulo) {
   if (!des) return "";
   if (des.porPouco) {
-    return `[CUSTO — DECIDIDO PELO SISTEMA] Eu falhei por ${des.faltou} no teste de ${rotulo || "perícia"}, e por tão pouco o sistema decidiu que EU CONSIGO — pagando. O que aconteceu: ${des.diz}. O sistema já cobrou o preço (tempo, e o que mais estiver no envelope ao lado).
+    const como = des.faixa === "mas"
+      ? `Eu passei no teste de ${rotulo || "perícia"} por um fio (${des.margem > 0 ? `sobrou ${des.margem}` : "bati a dificuldade exata"}), e por tão pouco o sistema decidiu que EU CONSIGO — mas pago.`
+      : `Eu falhei por ${des.faltou} no teste de ${rotulo || "perícia"}, e por tão pouco o sistema decidiu que EU CONSIGO — pagando.`;
+    return `[CUSTO — DECIDIDO PELO SISTEMA] ${como} O que aconteceu: ${des.diz}. O sistema já cobrou o preço (${oQueFoiCobrado(des)}).
 REGRA DESTE ENVELOPE (obrigatória): narre o sucesso E o preço, os dois, na mesma cena — o preço não é enfeite, é o que eu paguei para ter isto. NÃO transforme em sucesso limpo e NÃO transforme em fracasso. E não invente um custo maior que este: o que custou está escrito aqui.`;
   }
   return `[CUSTO — DECIDIDO PELO SISTEMA] Eu falhei no teste de ${rotulo || "perícia"}, e falhar aqui não é só não conseguir: ${des.diz}. O sistema já cobrou o tempo.

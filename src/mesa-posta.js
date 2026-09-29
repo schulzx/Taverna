@@ -78,23 +78,23 @@ export const recusaPorId = (id) => RECUSAS.find((r) => r.id === id) || null;
    é "nada acontece". A régua-base vem do patamar (dificuldade.js); os
    modificadores a empurram um degrau.
    ============================================================ */
-const S = (id, grupo, nome, atributo, pericia, sobe, moeda, falha, chaves) =>
-  ({ id, grupo, nome, atributo, pericia, sobe, moeda, falha, chaves });
+const S = (id, grupo, nome, atributo, pericia, sobe, moeda, falha, chaves, meio = "") =>
+  ({ id, grupo, nome, atributo, pericia, sobe, moeda, falha, chaves, meio });
 
 export const SITUACOES = [
   /* ---- CORPO ---- */
-  S("escalar_muralha", "corpo", "Escalar a muralha na chuva", "forca", "atletismo", "altura; chuva −; corda e gancho +; armadura pesada −", "posicao", "desce ao meio, com barulho — a ronda se aproxima", ["escalar", "muralha", "muro", "subir", "parede"]),
-  S("saltar_fenda", "corpo", "Saltar a fenda com corrida", "forca", "atletismo", "vão vs. deslocamento; carga −; impulso +", "posicao", "pendurado na borda: segunda decisão, agora pior", ["saltar", "pular", "fenda", "abismo", "vão"]),
-  S("nadar_armadura", "corpo", "Nadar vestindo armadura", "forca", "atletismo", "correnteza −; metal −; margem perto +", "recurso", "larga o escudo ou afunda um degrau da régua", ["nadar", "atravessar o rio", "correnteza", "afogar"]),
-  S("arrombar_porta", "corpo", "Arrombar a porta reforçada", "forca", "", "material; pé-de-cabra +; pressa −", "ruido", "o estrondo: quem estava perto agora sabe", ["arrombar", "derrubar a porta", "forçar a porta", "quebrar a porta"]),
-  S("marcha_forcada", "corpo", "Aguentar a marcha forçada", "vigor", "", "dias seguidos −; clima −; montaria +", "condicao", "exaustão sobe um degrau ao chegar", ["marcha", "forçar o passo", "viajar sem parar", "caminhar a noite"]),
+  S("escalar_muralha", "corpo", "Escalar a muralha na chuva", "forca", "atletismo", "altura; chuva −; corda e gancho +; armadura pesada −", "posicao", "desce ao meio, com barulho — a ronda se aproxima", ["escalar", "muralha", "muro", "subir", "parede"], "chega ao topo, mas sem fôlego e com a ronda a olhar para cima"),
+  S("saltar_fenda", "corpo", "Saltar a fenda com corrida", "forca", "atletismo", "vão vs. deslocamento; carga −; impulso +", "posicao", "pendurado na borda: segunda decisão, agora pior", ["saltar", "pular", "fenda", "abismo", "vão"], "alcança o outro lado, e o corpo bate na borda"),
+  S("nadar_armadura", "corpo", "Nadar vestindo armadura", "forca", "atletismo", "correnteza −; metal −; margem perto +", "recurso", "larga o escudo ou afunda um degrau da régua", ["nadar", "atravessar o rio", "correnteza", "afogar"], "chega à margem sem ar, e a correnteza leva alguma coisa"),
+  S("arrombar_porta", "corpo", "Arrombar a porta reforçada", "forca", "", "material; pé-de-cabra +; pressa −", "ruido", "o estrondo: quem estava perto agora sabe", ["arrombar", "derrubar a porta", "forçar a porta", "quebrar a porta"], "a porta cede, e cede com estrondo"),
+  S("marcha_forcada", "corpo", "Aguentar a marcha forçada", "vigor", "", "dias seguidos −; clima −; montaria +", "condicao", "exaustão sobe um degrau ao chegar", ["marcha", "forçar o passo", "viajar sem parar", "caminhar a noite"], "chega a tempo, e chega gasto"),
 
   /* ---- FURTIVIDADE ---- */
-  S("passar_posto", "furtividade", "Passar pelo posto de guarda", "destreza", "furtividade", "luz −; neblina +; armadura ruidosa −; guarda distraído +", "posicao", "visto, ainda não alcançado — a perseguição é a próxima cena", ["esgueirar", "passar despercebido", "furtivo", "sorrateiro", "escapulir", "passar pela guarda"]),
-  S("palmear_chave", "furtividade", "Palmear a chave do carcereiro", "destreza", "prestidigitacao", "multidão +; alvo sóbrio −; distração armada +", "ruido", "a mão agarrada no pulso — e agora?", ["roubar", "furtar", "palmear", "surrupiar", "batedor de carteira", "bolso"]),
-  S("seguir_feira", "furtividade", "Seguir alguém pela feira", "destreza", "furtividade", "multidão +; alvo desconfiado −; segundo seguidor +", "info", "despistado — e o alvo muda a rotina de amanhã", ["seguir", "perseguir discreto", "ir atrás sem", "rastrear na cidade"]),
-  S("esconder_adaga", "furtividade", "Esconder a adaga na revista", "destreza", "prestidigitacao", "rigor do posto −; bainha dissimulada +", "recurso", "confiscada, nome anotado no registro da guarda", ["esconder a arma", "revista", "passar pela revista", "ocultar a lâmina"]),
-  S("fechadura_pressao", "furtividade", "Abrir a fechadura sob pressão", "destreza", "ferramentas", "qualidade da gazua +; escuro −; turnos contados −", "recurso", "a gazua parte DENTRO — a fechadura trava para todos", ["arrombar a fechadura", "abrir o cadeado", "gazua", "picklock", "destrancar"]),
+  S("passar_posto", "furtividade", "Passar pelo posto de guarda", "destreza", "furtividade", "luz −; neblina +; armadura ruidosa −; guarda distraído +", "posicao", "visto, ainda não alcançado — a perseguição é a próxima cena", ["esgueirar", "passar despercebido", "furtivo", "sorrateiro", "escapulir", "passar pela guarda"], "passa, mas deixa um som para trás"),
+  S("palmear_chave", "furtividade", "Palmear a chave do carcereiro", "destreza", "prestidigitacao", "multidão +; alvo sóbrio −; distração armada +", "ruido", "a mão agarrada no pulso — e agora?", ["roubar", "furtar", "palmear", "surrupiar", "batedor de carteira", "bolso"], "a chave vem, e vem tilintando"),
+  S("seguir_feira", "furtividade", "Seguir alguém pela feira", "destreza", "furtividade", "multidão +; alvo desconfiado −; segundo seguidor +", "info", "despistado — e o alvo muda a rotina de amanhã", ["seguir", "perseguir discreto", "ir atrás sem", "rastrear na cidade"], "não o perde, mas ele olha para trás uma vez"),
+  S("esconder_adaga", "furtividade", "Esconder a adaga na revista", "destreza", "prestidigitacao", "rigor do posto −; bainha dissimulada +", "recurso", "confiscada, nome anotado no registro da guarda", ["esconder a arma", "revista", "passar pela revista", "ocultar a lâmina"], "a adaga passa, e o guarda demora os olhos em você"),
+  S("fechadura_pressao", "furtividade", "Abrir a fechadura sob pressão", "destreza", "ferramentas", "qualidade da gazua +; escuro −; turnos contados −", "recurso", "a gazua parte DENTRO — a fechadura trava para todos", ["arrombar a fechadura", "abrir o cadeado", "gazua", "picklock", "destrancar"], "abre, e a gazua sai torta — não serve outra vez"),
 
   /* ---- SOCIAL ---- */
   S("mentir_desconfia", "social", "Mentir a quem já desconfia", "presenca", "enganacao", "história ensaiada +; fato que contradiz −; índole do alvo", "info", "a mentira é ANOTADA, não confrontada — semente do outro lado", ["mentir", "enganar", "blefar", "história falsa", "disfarçar a verdade"]),
@@ -111,32 +111,32 @@ export const SITUACOES = [
   S("lembrar_fraqueza", "conhecimento", "Lembrar a fraqueza da criatura", "intelecto", "", "estante consultada antes +; criatura rara −", "info", "lembra o MITO, não o fato — e o mito morde", ["fraqueza da criatura", "ponto fraco", "como matar", "vulnerabilidade", "o que a fere"]),
 
   /* ---- PERCEPÇÃO ---- */
-  S("notar_emboscada", "percepcao", "Notar a emboscada a tempo", "percepcao", "percepcao", "neblina −; pássaros calados como pista +; pressa −", "posicao", "a surpresa é deles: o primeiro golpe sem resposta", ["notar a emboscada", "algo errado", "perceber perigo", "sentir cilada"]),
-  S("achar_porta", "percepcao", "Achar a porta que o mapa nega", "percepcao", "investigacao", "mapa antigo +; tempo +", "tempo", "acha o mecanismo, não o gatilho — abrir à força tem preço", ["passagem secreta", "porta escondida", "procurar saída", "revistar a parede", "compartimento"]),
+  S("notar_emboscada", "percepcao", "Notar a emboscada a tempo", "percepcao", "percepcao", "neblina −; pássaros calados como pista +; pressa −", "posicao", "a surpresa é deles: o primeiro golpe sem resposta", ["notar a emboscada", "algo errado", "perceber perigo", "sentir cilada"], "nota a tempo de gritar, não de se pôr a salvo"),
+  S("achar_porta", "percepcao", "Achar a porta que o mapa nega", "percepcao", "investigacao", "mapa antigo +; tempo +", "tempo", "acha o mecanismo, não o gatilho — abrir à força tem preço", ["passagem secreta", "porta escondida", "procurar saída", "revistar a parede", "compartimento"], "acha, depois de muito tempo de parede"),
   S("ler_intencao", "percepcao", "Ler a intenção na mesa de jogo", "percepcao", "intuicao", "índole do alvo; bebida −", "info", "confia na pessoa errada — a régua não avisa duas vezes", ["ler a intenção", "ele está mentindo", "confiar", "sincero", "farol"]),
-  S("vigiar_noite", "percepcao", "Vigiar a noite inteira", "percepcao", "", "exaustão −; lua clara +", "condicao", "o sono vence no fim do turno — e o mundo escolhe o que passa", ["vigiar", "montar guarda", "ficar de sentinela", "vigília"]),
-  S("sentir_veneno", "percepcao", "Sentir o veneno antes do gole", "percepcao", "", "prato temperado −; veneno conhecido +", "condicao", "um gole antes da certeza — a dose decide o resto", ["cheirar a comida", "veneno na taça", "está envenenado", "provar antes"]),
+  S("vigiar_noite", "percepcao", "Vigiar a noite inteira", "percepcao", "", "exaustão −; lua clara +", "condicao", "o sono vence no fim do turno — e o mundo escolhe o que passa", ["vigiar", "montar guarda", "ficar de sentinela", "vigília"], "fica de pé até o fim, e o dia seguinte paga"),
+  S("sentir_veneno", "percepcao", "Sentir o veneno antes do gole", "percepcao", "", "prato temperado −; veneno conhecido +", "condicao", "um gole antes da certeza — a dose decide o resto", ["cheirar a comida", "veneno na taça", "está envenenado", "provar antes"], "sente no primeiro gole — pouco, mas algum entrou"),
 
   /* ---- SOBREVIVÊNCIA ---- */
-  S("rastrear_chuva", "sobrevivencia", "Rastrear sob a chuva de ontem", "percepcao", "sobrevivencia", "horas passadas −; terreno mole +", "tempo", "rastro certo, bifurcação errada — meio dia atrás do nada", ["rastrear", "seguir as pegadas", "a trilha", "farejar o caminho"]),
-  S("orientar_sem_estrelas", "sobrevivencia", "Orientar-se sem estrelas", "intelecto", "sobrevivencia", "mapa +; mata fechada −", "tempo", "o círculo: a mesma clareira, horas depois", ["me orientar", "achar o norte", "não me perder", "que direção"]),
-  S("prever_tempestade", "sobrevivencia", "Prever a tempestade a tempo", "percepcao", "sobrevivencia", "estação; costa; bicho inquieto +", "condicao", "o acampamento montado no lugar que alaga", ["prever o tempo", "vai chover", "ler o céu", "tempestade chegando"]),
-  S("forragear_inverno", "sobrevivencia", "Forragear no inverno", "percepcao", "sobrevivencia", "região; neve −; conhecimento local +", "recurso", "ração pela metade: a fome cobra amanhã", ["forragear", "caçar comida", "achar água", "buscar mantimento", "colher"]),
-  S("fogo_ventania", "sobrevivencia", "Acender fogo na ventania", "destreza", "sobrevivencia", "pederneira +; lenha molhada −", "condicao", "noite fria: o descanso rende menos", ["acender fogo", "fazer fogueira", "atear", "acampar no frio"]),
+  S("rastrear_chuva", "sobrevivencia", "Rastrear sob a chuva de ontem", "percepcao", "sobrevivencia", "horas passadas −; terreno mole +", "tempo", "rastro certo, bifurcação errada — meio dia atrás do nada", ["rastrear", "seguir as pegadas", "a trilha", "farejar o caminho"], "reencontra a trilha, e perdeu terreno"),
+  S("orientar_sem_estrelas", "sobrevivencia", "Orientar-se sem estrelas", "intelecto", "sobrevivencia", "mapa +; mata fechada −", "tempo", "o círculo: a mesma clareira, horas depois", ["me orientar", "achar o norte", "não me perder", "que direção"], "acha o rumo, depois de andar em falso"),
+  S("prever_tempestade", "sobrevivencia", "Prever a tempestade a tempo", "percepcao", "sobrevivencia", "estação; costa; bicho inquieto +", "condicao", "o acampamento montado no lugar que alaga", ["prever o tempo", "vai chover", "ler o céu", "tempestade chegando"], "prevê, mas tarde: o acampamento vai molhado"),
+  S("forragear_inverno", "sobrevivencia", "Forragear no inverno", "percepcao", "sobrevivencia", "região; neve −; conhecimento local +", "recurso", "ração pela metade: a fome cobra amanhã", ["forragear", "caçar comida", "achar água", "buscar mantimento", "colher"], "junta o bastante, e a tarde inteira foi nisso"),
+  S("fogo_ventania", "sobrevivencia", "Acender fogo na ventania", "destreza", "sobrevivencia", "pederneira +; lenha molhada −", "condicao", "noite fria: o descanso rende menos", ["acender fogo", "fazer fogueira", "atear", "acampar no frio"], "o fogo pega, e leva metade da lenha"),
 
   /* ---- OFÍCIO ---- */
-  S("consertar_armadura", "oficio", "Consertar a armadura em campo", "intelecto", "ferramentas", "ferramentas certas +; sem forja −", "recurso", "remendo: quebra de novo no primeiro crítico sofrido", ["consertar a armadura", "remendar", "reparar o equipamento"]),
+  S("consertar_armadura", "oficio", "Consertar a armadura em campo", "intelecto", "ferramentas", "ferramentas certas +; sem forja −", "recurso", "remendo: quebra de novo no primeiro crítico sofrido", ["consertar a armadura", "remendar", "reparar o equipamento"], "conserta, e gasta o material que havia"),
   S("falsificar_selo", "oficio", "Falsificar o selo do decreto", "destreza", "ferramentas", "original à vista +; cera errada −", "info", "a falha é INVISÍVEL agora: descoberta na entrega — e vira semente", ["falsificar", "forjar o selo", "imitar o documento", "copiar o lacre"]),
-  S("preparar_antidoto", "oficio", "Preparar o antídoto certo", "intelecto", "medicina", "amostra do veneno +; pressa −", "tempo", "antídoto fraco: adia o veneno, não o cura", ["antídoto", "preparar o remédio", "curar o veneno", "poção de cura caseira"]),
-  S("ferrar_cavalo", "oficio", "Ferrar o cavalo arisco", "destreza", "ferramentas", "animal acalmado antes +", "condicao", "o coice: dano leve e uma manhã perdida", ["ferrar o cavalo", "cuidar da montaria", "ferradura"]),
+  S("preparar_antidoto", "oficio", "Preparar o antídoto certo", "intelecto", "medicina", "amostra do veneno +; pressa −", "tempo", "antídoto fraco: adia o veneno, não o cura", ["antídoto", "preparar o remédio", "curar o veneno", "poção de cura caseira"], "sai certo, e gasta a amostra inteira"),
+  S("ferrar_cavalo", "oficio", "Ferrar o cavalo arisco", "destreza", "ferramentas", "animal acalmado antes +", "condicao", "o coice: dano leve e uma manhã perdida", ["ferrar o cavalo", "cuidar da montaria", "ferradura"], "ferra, e leva um coice de raspão"),
   S("cozinhar_banquete", "oficio", "Cozinhar o banquete que importa", "intelecto", "oficio", "ingredientes da terra +; cozinha alheia −", "info", "o anfitrião nota — a mesa social desce um degrau", ["cozinhar", "preparar o banquete", "fazer a refeição", "o jantar"]),
 
   /* ---- VONTADE ---- */
   S("concentracao_ferido", "vontade", "Manter a concentração ferido", "vigor", "", "dano sofrido −; âncora de ritual +", "recurso", "a magia escapa — no turno em que mais fazia falta", ["manter a concentração", "segurar o feitiço", "não perder a magia"]),
-  S("medo_lendario", "vontade", "Resistir ao medo do lendário", "presenca", "", "aliados de pé +; primeira vez −", "posicao", "hesita: age por último na rodada", ["resistir ao medo", "encarar o dragão", "não fugir", "coragem diante"]),
+  S("medo_lendario", "vontade", "Resistir ao medo do lendário", "presenca", "", "aliados de pé +; primeira vez −", "posicao", "hesita: age por último na rodada", ["resistir ao medo", "encarar o dragão", "não fugir", "coragem diante"], "fica de pé, e as mãos tremem na primeira troca"),
   S("recusar_oferta", "vontade", "Recusar a oferta do inimigo", "presenca", "", "a oferta toca teu propósito −; testemunhas +", "info", "aceita 'só ouvir' — e o grupo viu aceitar", ["recusar a oferta", "resistir à tentação", "dizer não ao"]),
-  S("velar_acordado", "vontade", "Velar acordado no velório", "vigor", "", "exaustão −; dever +", "condicao", "o cochilo — e a cidade repara quem dormiu", ["velar", "ficar acordado", "vigília do morto", "não dormir no velório"]),
-  S("ponte_balanca", "vontade", "Atravessar a ponte que balança", "presenca", "", "vento −; corda-guia +; vertigem conhecida −", "posicao", "paralisa no meio: alguém precisa voltar", ["ponte", "travessia perigosa", "abismo embaixo", "corda bamba"]),
+  S("velar_acordado", "vontade", "Velar acordado no velório", "vigor", "", "exaustão −; dever +", "condicao", "o cochilo — e a cidade repara quem dormiu", ["velar", "ficar acordado", "vigília do morto", "não dormir no velório"], "vela até o fim, e o corpo cobra no dia seguinte"),
+  S("ponte_balanca", "vontade", "Atravessar a ponte que balança", "presenca", "", "vento −; corda-guia +; vertigem conhecida −", "posicao", "paralisa no meio: alguém precisa voltar", ["ponte", "travessia perigosa", "abismo embaixo", "corda bamba"], "atravessa, de joelhos e agarrado à corda"),
 ];
 
 export const GRUPOS = ["corpo", "furtividade", "social", "conhecimento", "percepcao", "sobrevivencia", "oficio", "vontade"];
@@ -158,19 +158,34 @@ export function situacaoQueCasa(texto) {
 }
 
 /* ---------------- AS APOSTAS ANTES DA ROLAGEM ----------------
-   As duas versões da cena, para o Narrador ter as duas na mão antes do
-   dado. A de falha SEMPRE nomeia a moeda — é a lei que impede o "nada
-   acontece". Quando a ação casa com uma situação, usa o custo dela;
-   senão, cai numa moeda genérica honesta (tempo). */
+   As versões da cena, para o Narrador ter todas na mão antes do dado. A
+   de falha SEMPRE nomeia a moeda — é a lei que impede o "nada acontece".
+   Quando a ação casa com uma situação, usa o custo dela; senão, cai numa
+   moeda genérica honesta (tempo).
+
+   MM5: A TERCEIRA VERSÃO. O Matt prepara três, não duas: o sim, o não, e
+   o raspão — "recuas a tempo, mas levas 8". Quando a situação tem `meio`,
+   a aposta ganha `noMeio`, e o App a põe como a TERCEIRA linha da secção:
+   dentro de uma secção, a linha de índice i corta com prioridade
+   `prio + 0,1·i` (pauta.js), e a terceira é a primeira a cair num turno
+   apertado — antes da falha, que é a lei, e antes do sim. A situação sem
+   `meio` (a conversa, o saber, a escolha) devolve as duas de sempre, e
+   `noMeio` nem aparece: o raspão ali é limpo de um lado e seco do outro.
+
+   A aposta é CONSELHO antes do dado. Quem decide se o raspão aconteceu é a
+   margem (`desafios.js#FAIXAS_DA_MARGEM`), e o envelope do teste chega
+   depois com o preço já cobrado. */
 export function apostas(situacao) {
   const s = typeof situacao === "string" ? situacaoPorId(situacao) : situacao;
   if (!s) return null;
   const m = moedaPorId(s.moeda) || moedaPorId("tempo");
-  return {
+  const out = {
     sePassa: `passa: ${s.nome.toLowerCase()} — dê o resultado limpo, sem custo escondido.`,
     seFalha: `falha: ${s.falha}. A moeda é ${m.nome} — a cena anda para frente, nunca 'nada acontece'.`,
     moeda: m.id,
   };
+  if (s.meio) out.noMeio = `passa por um fio: ${s.meio} — o sim e o preço, nunca um sem o outro.`;
+  return out;
 }
 
 export function custoDeFalha(situacao) {

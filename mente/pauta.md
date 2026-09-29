@@ -156,7 +156,12 @@ O limite é o que um commit revertido não desfaz.
   atributo e manda rolar. Aqui: o atributo mais próximo por tabela, uma CD de
   tabela, e o resultado vai à pauta. As hipóteses e as figuras de linguagem
   continuam fora (a peneira de `agressao.js` já sabe distingui-las).
-- [ ] **MM5 · o sucesso com preço**
+- [x] **MM5 · o sucesso com preço** · feito 29/09, v9.308 · sonda não se move (69/157)
+  `FAIXAS_DA_MARGEM` (margem = total − CD: +2 limpo · 0/+1 "consegue, mas" · −1/−2 "por um
+  fio, e paga" · −3 falha; 20 e 1 naturais nunca são o meio) e `desfechoDaMargem`;
+  preço do meio por tabela e cobrado pelo sistema (barulho, mordida por degrau, condição,
+  tempo); *A Aposta* com a terceira versão em 25 das 40 situações. Jogado: um salto
+  falhado por 1 virou "a mão alcança a beira" e custou 1 de vida, narrado nas duas metades.
   *A Aposta* prepara duas versões (sim/não). O Matt usa três: na runa de C1E1,
   um 15 é *"recuas a tempo, mas levas 8"*. Passar por pouco ou falhar por
   pouco ganha a versão do meio — por tabela, com a margem que a define.
@@ -996,6 +1001,9 @@ se apaga nada: o beta é um corte de foco, não um descarte.
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
 - [ ] **"posso atacar o guarda?" abre uma luta** · leve · de: sistema/MM4 · 29/09
+  *E o avesso, visto a jogar em MM5:* "avanço para socá-lo" **não** abriu luta — o soco
+  virou acidente de cena (barris, queda, salvaguarda). A `RX_AGRESSAO` tem `soco` e não
+  a ênclise (`socá-lo`, `esmurrá-lo`, `chutá-lo`). Os dois lados da mesma peneira.
   `ehDeclaracaoDeAtaque("posso atacar o guarda?")` dá `true` (`agressao.js`): uma
   pergunta ao Mestre, com o guarda presente, vira agressão. A peneira do improviso
   (`NAO_E_IMPROVISO`) já barra perguntas; a da agressão não. Bug com teste que prova.

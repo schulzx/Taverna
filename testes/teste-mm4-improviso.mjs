@@ -53,8 +53,14 @@ sec("1. as tabelas — nomeadas, e cada número sai da régua da casa");
   t("toda perícia de um verbo mora no atributo da família dele", perdidas.length === 0, perdidas.join(", "));
   t("toda família tem o custo da falha escrito na tabela da casa",
     FAMILIAS_DO_IMPROVISO.every((f) => !!custoPorAlvo(f.custo)));
-  t("e o custo é SECO — o 'por pouco' é da etapa seguinte (MM5), não daqui",
-    FAMILIAS_DO_IMPROVISO.every((f) => custoPorAlvo(f.custo).porPouco === false));
+  /* MM5: era "o custo é SECO em todas as seis" — a promessa de que o meio
+     seria a etapa seguinte. Chegou: cinco famílias aceitam o meio, e a
+     Percepção fica de fora (perceber é instantâneo, como a escuta). A
+     intenção de antes continua provada: quem tem meio tem o preço escrito. */
+  t("o meio chegou (MM5): cinco famílias o aceitam, a Percepção não",
+    FAMILIAS_DO_IMPROVISO.filter((f) => custoPorAlvo(f.custo).porPouco).length === 5
+      && custoPorAlvo("improviso_percepcao").porPouco === false
+      && FAMILIAS_DO_IMPROVISO.every((f) => !custoPorAlvo(f.custo).porPouco || (custoPorAlvo(f.custo).preco || "").length > 20));
   t("todo custo novo diz a falha numa frase de verdade",
     CUSTO_DE_FALHAR.filter((c) => /^improviso_/.test(c.alvo)).every((c) => c.seca.length > 20));
   t("todo verbo tem regra, núcleo e infinitivo",
@@ -292,10 +298,15 @@ sec("8. determinismo, lixo e imutabilidade");
 sec("9. a falha: o custo da família, e a MARGEM que a etapa seguinte vai ler");
 {
   const v = ler("Salto do balcão para o lustre");
+  /* MM5: aqui dizia "falhar por 1 é falhar — seco (MM5 decide o meio)", e
+     o MM5 decidiu: falhar por 1 é o meio, o sim pago, com o preço da
+     família. A falha seca continua provada, agora onde ela mora — por 3. */
   const d = desfechoDaFalha(v, v.dc - 1, v.dc);
-  t("falhar por 1 é falhar — seco, sem 'por pouco' (MM5 decide o meio)", d && d.porPouco === false);
-  t("com a frase da família", d.diz === custoPorAlvo("improviso_destreza").seca);
+  t("falhar por 1 é o meio (MM5): o sim, pago", d && d.porPouco === true && d.faixa === "quase");
+  t("com o preço da família", d.diz === custoPorAlvo("improviso_destreza").preco);
   t("e a margem viaja no desfecho", d.faltou === 1);
+  const seco = desfechoDaFalha(v, v.dc - 3, v.dc);
+  t("falhar por 3 é seco, com a frase da família", seco && seco.porPouco === false && seco.diz === custoPorAlvo("improviso_destreza").seca);
   t("passar não tem desfecho de falha", desfechoDaFalha(v, v.dc + 3, v.dc) === null);
   const soc = ler("Seduzo a taverneira");
   t("o social não tem custo de tabela — quem diz o preço é o envelope social",

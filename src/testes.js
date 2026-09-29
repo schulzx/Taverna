@@ -159,7 +159,23 @@ export function detectarPedidoDeTeste(texto) {
    UMA coisa concreta e útil sobre saltar do balcão", que é uma ordem para
    o Narrador inventar um achado em cima de um salto. Sem `gesto`, o texto
    é o de sempre, letra por letra. */
-export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino, gesto = false }) {
+/* MM5: `meio` — o desfecho da margem (`desafios.js#desfechoDaMargem`)
+   quando o dado caiu na faixa do meio: passou por um fio, ou falhou por um
+   fio numa linha que aceita o sim pago. Com ele, o envelope diz as DUAS
+   metades — o que aconteceu e o preço — e manda narrar exatamente essa
+   versão, sem a promover a sucesso limpo nem a rebaixar a falha. Sem ele
+   (ou com um desfecho que não é o meio), o texto é o de sempre, letra por
+   letra. O meio só existe do lado do sim: um `meio` com resultado de falha
+   é ignorado, porque o crítico e o desastre nunca são o meio. */
+function linhaDoMeio(meio) {
+  if (!meio || !meio.porPouco || !meio.diz) return null;
+  const onde = meio.faixa === "mas"
+    ? (meio.margem > 0 ? `passei por ${meio.margem}` : "bati a dificuldade exata")
+    : `faltaram ${meio.faltou}`;
+  return { onde, preco: String(meio.diz) };
+}
+
+export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino, gesto = false, meio = null }) {
   const t = tipoTestePorId(tipo);
   const per = pericia ? periciaPorId(pericia) : null;
   const attr = nomeDoAtributo(t.atributo);
@@ -175,6 +191,14 @@ export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, 
     ? `[TESTE PEDIDO POR MIM — RESOLVIDO PELO SISTEMA SEM DADO] Pedi um teste de ${rotulo}${motivo ? ` para ${motivo}` : ""}. O sistema fixou a dificuldade em ${dc} e NÃO rolou: meu bônus é ${mod}, alto demais para que o acaso importe.${selo} Resultado: ${resultado.toUpperCase()} AUTOMÁTICO — isto está ${resultado === "sucesso" ? "abaixo do meu patamar" : "muito acima do meu patamar"}.`
     : `[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA] Pedi um teste de ${rotulo}${motivo ? ` para ${motivo}` : ""}.${selo} O sistema fixou a dificuldade em ${dc} e rolou: d20 ${valor}${mod ? ` ${mod >= 0 ? "+" : "−"} ${Math.abs(mod)}` : ""} = ${total}. Resultado: ${resultado.toUpperCase()}.`;
   const passou = resultado === "sucesso" || critico;
+  const doMeio = passou && !critico && !desastre && !automatico ? linhaDoMeio(meio) : null;
+  if (doMeio) {
+    const oQue = gesto
+      ? `O que eu declarei ACONTECE${motivo ? ` (${motivo})` : ""}, do jeito que declarei — e o efeito é esse, não maior.`
+      : `Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade inventada agora.`;
+    return `${cabeca} POR UM FIO (${doMeio.onde}) — COM PREÇO.
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense. Devolva a palavra para mim, sem iniciar cena nova e sem fazer o tempo passar.`;
+  }
   if (gesto && !passou) {
     return `${cabeca}
 REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. O que eu declarei NÃO acontece como declarei — narre em duas ou três frases a tentativa falhando no corpo e no lugar, sem me dar metade do efeito nem uma saída de consolo${desastre ? ", e, como foi falha crítica, com um pequeno custo a mais: perdi tempo, chamei atenção ou fiquei em pior posição" : ""}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;

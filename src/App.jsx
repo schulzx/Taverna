@@ -148,7 +148,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaP
 import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaFalha, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
@@ -6969,7 +6969,7 @@ export default function Taverna() {
     try {
       if (!combateRef.current) {
         const sit = situacaoQueCasa(acaoDoTurno);
-        if (sit) { const ap = apostas(sit); if (ap) p = porNaPauta(p, "mesa", "Se " + ap.sePassa, "Se " + ap.seFalha); }
+        if (sit) { const ap = apostas(sit); if (ap) p = porNaPauta(p, "mesa", "Se " + ap.sePassa, "Se " + ap.seFalha, ap.noMeio ? "Se " + ap.noMeio : ""); }
       }
     } catch (e) { /* a aposta nunca pode custar o turno */ }
     /* ---------------- MM3: O GOLPE FINAL, NA PAUTA ----------------
@@ -16835,7 +16835,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          pagando. Falhar por muito continua sendo falhar, e mesmo aí cobra
          alguma coisa, para que "nada acontece" pare de ser um desfecho. */
       const bateu = critico || (!desastre && total >= dc);
-      const custo = des && !bateu ? desfechoDaFalha(des, total, dc, { emCombate: !!combateRef.current }) : null;
+      const custo = des ? desfechoDaMargem(des, { total, dc, critico, desastre, emCombate: !!combateRef.current }) : null;
       const passou = bateu || !!(custo && custo.porPouco);
       /* ---------------- O QUE A TENTATIVA CUSTA (v9.59) ----------------
          Tempo sempre, barulho onde faz sentido, e o registro no livro — os
@@ -16882,7 +16882,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         ? envelopeDeBuscaVazia(des.rotulo)
         : envelopeDoTeste({
           tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
-          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre, gesto: !!(des && des.gesto),
+          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre, gesto: !!(des && des.gesto), meio: custo && custo.porPouco ? custo : null,
         });
       /* ---------------- O BARULHO PARA DE SER DELEGADO (v9.62) ----------------
          O envelope antigo dizia "se houver alguém por perto, ELE OUVIU —
@@ -16954,7 +16954,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           }
         } catch (e) { calou("consultaDeInformante", e); }
       }
-      if (custo) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`;
+      if (custo && !custo.porPouco) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`; else if (envQueda) env = `${envQueda}${env}`;
       if (des && des.testemunha && !passou) {
         const q = perguntarTestemunha(des);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu falhei ao ${des.rotulo}` })}\n${env}`;

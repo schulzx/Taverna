@@ -15,7 +15,56 @@ Formato:
 ```
 
 ---
-## 29/09 12:00 · v9.307 · MM4 · toda ação ganha um dado · commit (o hash vai no bloco de MM5)
+## 29/09 13:10 · v9.308 · MM5 · o sucesso com preço · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a etapa que lê o dado que MM4 deu a toda ação. *A Aposta*
+  preparava duas versões; o Matt usa três — na runa de C1E1, um 15 é "recuas a
+  tempo, mas levas 8".
+- **estado inicial:** verde (MM4 no ar, `263b4b6`).
+- **bastão:** tomado às 11:48 em nome deste ciclo para a mão `frontend`; quatro
+  linhas reescritas no lugar (24 689 linhas antes e depois); devolvido com este commit.
+- **o "por pouco" de antes:** existia só de um lado — falhar por 1–2 em 17 linhas de
+  `CUSTO_DE_FALHAR` virava "consigo, pagando"; passar por 0 saía de graça. O degrau era
+  torto (falhar por 1 custava, passar por 0 não) e havia dois defeitos: um 1 natural
+  a 1–2 da CD virava sucesso pago, e uma busca vazia falhada por pouco ouvia "você
+  acha, mas…" colado a "aqui não há nada".
+- **backend:** `FAIXAS_DA_MARGEM` — +2 ou mais limpo; 0/+1 "consegue, mas…"; −1/−2 "por
+  um fio — e paga"; −3 ou menos falha. O meio são sempre 4 faces em 20 (20%, 10% de cada
+  lado) para qualquer CD − bônus entre 4 e 18; no caso típico (CD 13 contra +3), limpo
+  45% · mas 10% · quase 10% · falha 35%. É o *Success at a Cost* do DMG 5e (2014, cap. 8,
+  p. 242), que a casa já seguia do lado de baixo, espelhado. O preço do meio sai de
+  tabela e **o sistema cobra-o**: barulho (vira a pergunta ao oráculo), mordida por
+  degrau da CD (`MORDIDA_POR_DEGRAU`: 1d4 até comum … 1d10 heroico, por semente),
+  condição, tempo. Sem meio: a luta, o que só revela informação, a busca vazia, a
+  conversa. *A Aposta*: 25 das 40 situações ganham a terceira linha; é a primeira a
+  cair numa pauta cheia (1365 → 1365 chars).
+- **frontend:** `concluirRolagem` chama `desfechoDaMargem` com `critico` e `desastre`;
+  o envelope do teste leva o `meio` e o custo não vai duas vezes ao Narrador (a queda
+  `envQueda` preservada no sim pago); a `mesa` leva `noMeio`. **Achado e consertado:**
+  o código antigo nunca passava `desastre` ao custo, e um 1 natural podia sair "sim pago".
+- **a prova jogada (campanha de teste criada pela tela, apagada no fim):** "salto o
+  chafariz entupido" → 🎯 Atletismo, dif. 15 → 14 contra 15, margem −1 → "Faltaram 1 — a
+  mão alcança a beira e o resto do corpo bate contra ela", 1 de dano cobrado, e o
+  Narrador narrou as duas metades sem promover nem rebaixar. MM4 e MM5 vistos no mesmo
+  lance.
+- **o Poupar de MM3, ainda aberto:** a mão seguiu um encapuzado até um beco e avançou
+  para o socar; **a luta não abriu** — o soco virou acidente de cena. Parou aí, sem forçar.
+  O achado vale mais do que a prova: "socá-lo" não é lido como agressão (a ênclise), e
+  foi para "Aberto" junto do seu avesso ("posso atacar o guarda?" abre luta). A prova do
+  Poupar fica para MM11.
+- **decisões médias tomadas:**
+  - **Uma faixa só, simétrica, 2 pontos de cada lado**: é a que dá 20% certo em toda CD
+    e acaba com o degrau torto; um meio maior tirava peso ao dado.
+  - **A mordida do difícil passou de 1d8 a 1d6** depois de a prova mostrar 8 de dano num
+    herói de nível 1 por um *sim*.
+  - **Asserções movidas com o motivo:** `teste-social` ("dano === 2" → um dado do
+    degrau) e `teste-mm4-improviso` (as cinco famílias com meio; a Percepção sem).
+- **para quem joga:** um resultado a um ou dois pontos da dificuldade deixa de ser tudo
+  ou nada — consegue e paga, ou quase e paga, e o preço é real e visível. Uma em cada
+  cinco rolagens fora da luta passa a ter esse meio.
+- **a sonda:** não se move (69/157) — nenhuma das 157 perguntas era sobre o raspão.
+
+## 29/09 12:00 · v9.307 · MM4 · toda ação ganha um dado · commit `263b4b6`
 
 - **por que andou:** Fase MM, a etapa seguinte. O Matt nunca diz "isso não dá" nem
   decide de cabeça: escolhe o atributo, diz a CD e manda rolar. Aqui, a frase que

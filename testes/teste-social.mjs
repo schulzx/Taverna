@@ -230,7 +230,13 @@ sec("10. O PREÇO EM PELE (v9.66)");
   t("a tranca cobra o ombro na vitória paga", desfechoDaFalha(ler("arrombo a porta", guarda), 10, 15).pele === null);
   {
     const tr = ler("arrombo a porta no braço", guarda);
-    t("e cobra quando falha por pouco", desfechoDaFalha(tr, tr.dc - 1, tr.dc).pele.dano === 2);
+    /* MM5: era `pele.dano === 2` — o 2 fixo da v9.66. O preço em pele do
+       meio passou a sair de MORDIDA_POR_DEGRAU (um dado pelo degrau do
+       obstáculo), e a asserção passou a provar isso: há um dado, e o dano
+       cabe nele. A intenção de antes fica — falhar por pouco COBRA o ombro. */
+    const pe = desfechoDaFalha(tr, tr.dc - 1, tr.dc).pele;
+    const faces = pe && /^1d(\d+)$/.test(pe.dado || "") ? Number(pe.dado.slice(2)) : 0;
+    t("e cobra quando falha por pouco — um dado do degrau", faces > 0 && pe.dano >= 1 && pe.dano <= faces);
   }
   /* onde não há preço em pele, o campo é nulo — e não um objeto vazio que
      alguém, um dia, leria como "tem alguma coisa aqui" */
