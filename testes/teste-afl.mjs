@@ -218,11 +218,38 @@ console.log("\n[a fronteira de palavra] nenhum portador casa pedaço de palavra:
     const p = aflicaoDe(txt);
     ok(!p, `"${txt}" não carrega nada (${p ? p.id : "nada"})`);
   }
-  /* 5. nenhum golpe de criatura dá efeito ao bando de quem o lança — a não
-     ser "Golpe consagrado" (bênção), que casa a palavra inteira e é outra
-     conversa: a de um nome de golpe que promete bênção. Fica nomeado. */
+  /* 5. nenhum golpe de criatura dá efeito ao bando de quem o lança.
+     A ASSERÇÃO MUDOU NA ETAPA DO EMPILHAMENTO (29/09): até ali ela aceitava
+     UM, o "Golpe consagrado", que casava `bencao` pela palavra inteira e
+     ficava nomeado como "outra conversa". A conversa fez-se: é a lâmina que
+     é consagrada, o golpe fere com luz, e a bênção ia para o bando do
+     monstro. `bencao` passou a ler o verbo, e a regra volta a ser a de
+     sempre — nenhum. */
   const doBando = Object.values(GOLPES_POR_ELEMENTO).flat().filter((g) => { const p = aflicaoDe(g); return p && p.alvo !== "alvo"; });
-  ok(doBando.length === 1 && doBando[0] === "Golpe consagrado", `só um golpe de criatura escreve fora do alvo: ${doBando.join(", ") || "nenhum"}`);
+  ok(doBando.length === 0, `nenhum golpe de criatura escreve fora do alvo: ${doBando.join(", ") || "nenhum"}`);
+
+  /* 6. CONSAGRAR É O VERBO, E SILENCIAR NÃO É SER SILENCIOSO (etapa do
+     empilhamento, 29/09) — sete mudanças no acervo, cada uma com o dono
+     certo. "Toque do Fim" promete morte adiada, e nenhum portador a tem:
+     `sombra` (furtivo, de quem dá o golpe silencioso) é o menos errado dos
+     dois que a frase casa, e a dívida fica escrita aqui. */
+  for (const [nome, esperado] of [
+    ["Golpe consagrado", null],        // era bencao: o bando do monstro abençoado pelo golpe do monstro
+    ["Golpe Consagrado", null],        // idem, o do Paladino: "dano sagrado extra no impacto"
+    ["Passos Silenciosos", "sombra"],  // era quietude: atordoava; "move-se sem ser detectado"
+    ["Bote Silencioso", "sombra"],     // era quietude
+    ["Toque do Fim", "sombra"],        // era quietude
+    ["Silêncio Que Grita", "quietude"], // era nada: "ninguém consegue conjurar" — o `silenc` nunca casou "silêncio"
+    ["Silêncio", "quietude"],          // era nada: "nenhuma magia falada sai"
+  ]) {
+    const item = acervo.find((a) => a.nome === nome);
+    const p = item ? aflicaoDe(item.txt) : undefined;
+    ok(item && (p ? p.id : null) === esperado, `"${nome}" → ${p ? p.id : "nada"} (esperado ${esperado || "nada"})`);
+  }
+  for (const [txt, esperado] of [["O clérigo consagra o chão", "bencao"], ["consagrar a arma do grupo", "bencao"], ["silencia o conjurador", "quietude"], ["fica silenciado", "quietude"]]) {
+    const p = aflicaoDe(txt);
+    ok((p ? p.id : null) === esperado, `"${txt}" → ${p ? p.id : "nada"} (esperado ${esperado})`);
+  }
 }
 
 console.log("\n[texto que o Mestre recebe]:");

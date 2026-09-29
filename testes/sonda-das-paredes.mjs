@@ -87,7 +87,19 @@ export const EMPATES_DE_DESENHO = {
    `balanco` é o jogador de caminho, 140 lutas por luta (sementes
    `balanco|0..139`), a média das cinco lutas de cada planta: o dano no
    herói e a fração de vitórias. As plantas sem parede dão o MESMO número
-   antes e depois — é a regressão zero em campo aberto, medida. */
+   antes e depois — é a regressão zero em campo aberto, medida.
+
+   `semPilha` É A ETAPA SEGUINTE (29/09, depois de v9.315): `moverInimigos`
+   passou a atualizar a ocupação a cada um que anda, e dois corpos deixaram
+   de acabar na mesma casa. Medido com a mesma bateria, sobre a árvore de
+   cc126b9 (v9.314) e com o conserto: `sobreposicoes` conta as rodadas
+   que terminavam com duas criaturas numa casa só — 7390 de 42937 antes
+   (17%), zero depois. Os empates que mexeram são todos de desenho (o ogro
+   contra quem espera: 3 → 5 em quatro células); o balanço por planta
+   mexeu no máximo 1,2% sobre v9.314, e as plantas sem parede deixam de
+   dar o mesmo número porque a ocupação vale também em campo aberto —
+   três soldados na estrada iam para a mesma casa (4,6). `antes` e
+   `depois` ficam como estavam: são o registro da etapa das paredes. */
 export const RETRATO_DAS_PAREDES = {
   n: 30,
   antes: {
@@ -114,6 +126,19 @@ export const RETRATO_DAS_PAREDES = {
     gelo: { atirador: { espera: [7, 0], abrigo: [13, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] }, grande: { abrigo: [13, 0] } },
     deserto: { atirador: { espera: [7, 0], abrigo: [7, 0] }, conjurador: { espera: [5, 0], abrigo: [5, 0] }, grande: { espera: [3, 0], abrigo: [3, 0] } },
   },
+  semPilha: {
+    taverna: { atirador: { espera: [5, 0], abrigo: [10, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] } },
+    masmorra: { atirador: { espera: [7, 0], abrigo: [13, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] } },
+    floresta: { atirador: { espera: [7, 0], abrigo: [7, 0] }, conjurador: { espera: [5, 0], abrigo: [5, 0] } },
+    estrada: { atirador: { espera: [5, 0], abrigo: [5, 0] }, conjurador: { espera: [5, 0], abrigo: [5, 0] } },
+    cidade: { atirador: { espera: [5, 0], abrigo: [13, 0] }, conjurador: { espera: [5, 0], abrigo: [10, 0] } },
+    caverna: { atirador: { espera: [7, 0], abrigo: [10, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] }, grande: { espera: [5, 0] } },
+    ruina: { atirador: { espera: [7, 0], abrigo: [13, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] }, grande: { espera: [5, 0] } },
+    navio: { atirador: { espera: [7, 0], abrigo: [13, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] }, grande: { espera: [5, 0] } },
+    gelo: { atirador: { espera: [7, 0], abrigo: [13, 0] }, conjurador: { espera: [5, 0], abrigo: [9, 0] }, grande: { abrigo: [13, 0] } },
+    deserto: { atirador: { espera: [7, 0], abrigo: [7, 0] }, conjurador: { espera: [5, 0], abrigo: [5, 0] }, grande: { espera: [5, 0], abrigo: [5, 0] } },
+  },
+  sobreposicoes: { antes: 7390, depois: 0, rodadasAntes: 42937, rodadasDepois: 43039 },
   balanco: {
     n: 140,
     antes: {
@@ -140,6 +165,18 @@ export const RETRATO_DAS_PAREDES = {
       gelo: { dano: 11.37, vitoria: 0.996 },
       deserto: { dano: 11.37, vitoria: 0.996 },
     },
+    semPilha: {
+      taverna: { dano: 11.19, vitoria: 0.996 },
+      masmorra: { dano: 10.95, vitoria: 0.996 },
+      floresta: { dano: 11.05, vitoria: 0.996 },
+      estrada: { dano: 16.80, vitoria: 0.980 },
+      cidade: { dano: 12.14, vitoria: 0.997 },
+      caverna: { dano: 11.35, vitoria: 0.996 },
+      ruina: { dano: 10.38, vitoria: 0.997 },
+      navio: { dano: 11.20, vitoria: 0.997 },
+      gelo: { dano: 11.34, vitoria: 0.996 },
+      deserto: { dano: 11.34, vitoria: 0.996 },
+    },
   },
 };
 
@@ -151,7 +188,8 @@ export const RETRATO_DAS_PAREDES = {
    soldado ficava colado ao muro caído do lado errado e o herói dava a
    volta até ele debaixo dos disparos do mago (conjurador 13,24 → 9,94);
    ali o número novo é o certo. */
-export const LIMITE_DAS_PAREDES = { travas: 0, balanco: 0.1 };
+/* `sobreposicoes`: rodada nenhuma termina com dois corpos na mesma casa. */
+export const LIMITE_DAS_PAREDES = { travas: 0, balanco: 0.1, sobreposicoes: 0 };
 
 /* ---------------- A MEDIDA ---------------- */
 
@@ -164,11 +202,12 @@ export function sondarParedes(M, { n = AMOSTRA_DAS_PAREDES.n, prefixo = AMOSTRA_
     for (const l of lutas) {
       out[p][l] = {};
       for (const j of jogadores) {
-        const c = { empates: 0, travas: 0, dano: 0, vitoria: 0, rodadas: 0 };
+        const c = { empates: 0, travas: 0, dano: 0, vitoria: 0, rodadas: 0, sobreposicoes: 0 };
         for (let i = 0; i < n; i++) {
           const r = lutaDosAtiradores(M, l, `${prefixo}|${i}`, { planta: CONTEXTO_DA_PLANTA(p), luta: LUTAS_DAS_PAREDES[l], passo: j });
           const empate = !r.vitoria && r.rodadas >= teto;
           if (empate) c.empates++;
+          c.sobreposicoes += r.sobreposicoes || 0;
           if (empate && teto - r.ultimoAtaque >= AMOSTRA_DAS_PAREDES.rodadasParadas) c.travas++;
           c.dano += r.danoNoHeroi / n; c.vitoria += r.vitoria / n; c.rodadas += r.rodadas / n;
         }
@@ -189,7 +228,7 @@ if (process.argv[1] && process.argv[1].endsWith("sonda-das-paredes.mjs")) {
   for (const [p, porLuta] of Object.entries(m)) {
     for (const [l, porJog] of Object.entries(porLuta)) {
       console.log(`${p.padEnd(9)} ${l.padEnd(11)} ` + Object.entries(porJog)
-        .map(([j, c]) => `${j}: ${c.empates}e/${c.travas}t dano ${f(c.dano)} vit ${(c.vitoria * 100).toFixed(0)}% rod ${f(c.rodadas)}`).join(" · "));
+        .map(([j, c]) => `${j}: ${c.empates}e/${c.travas}t/${c.sobreposicoes}s dano ${f(c.dano)} vit ${(c.vitoria * 100).toFixed(0)}% rod ${f(c.rodadas)}`).join(" · "));
     }
   }
   console.log("JSON " + JSON.stringify(m));

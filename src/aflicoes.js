@@ -161,15 +161,36 @@ export const PORTADORES = [
      dizia isso por extenso e o sistema não tinha onde encaixar. */
   { id: "fascinio",   re: /(?<!\p{L})(?:fascin|para de lutar|deixa de lutar|baixa a arma|perde a vontade de lutar|encara sem reagir)/iu,     cond: "enfeiticado", alvo: "alvo", chance: 0.5, dif: 1 },
   /* "impede de usar habilidades" (Toque da Quietude) e "silêncio": quem não
-     conjura perde a ação mágica, e Atordoado é o mais próximo do catálogo. */
-  { id: "quietude",   re: /(?<!\p{L})(?:impede.{0,20}(habilidade|magia|conjur)|silenc|emudec|sela a voz|sem conseguir conjurar)/iu,          cond: "atordoado",  alvo: "alvo", chance: 0.5, dif: 1 },
+     conjura perde a ação mágica, e Atordoado é o mais próximo do catálogo.
+     SILENCIAR NÃO É SER SILENCIOSO (29/09, etapa do empilhamento). O
+     `silenc` desta linha é o verbo de calar alguém — silencia, silenciar,
+     silenciado —, e apanhava também o adjetivo de quem anda sem ruído:
+     "Passos Silenciosos — move-se sem ser detectado" atordoava; "Bote
+     Silencioso" e o "golpe silencioso" do Toque do Fim, idem. O adjetivo
+     tem dono escrito, a linha `sombra` lá em baixo (`silencios`), que
+     nunca era alcançada porque esta vinha antes. Por isso `silenc` recusa
+     o "-ios-" do adjetivo, e "silêncio" (com o acento, que o `silenc`
+     nunca casou) entra por extenso. */
+  { id: "quietude",   re: /(?<!\p{L})(?:impede.{0,20}(habilidade|magia|conjur)|silenc(?!ios)|silênci|emudec|sela a voz|sem conseguir conjurar)/iu,          cond: "atordoado",  alvo: "alvo", chance: 0.5, dif: 1 },
   { id: "encanto",    re: /(?<!\p{L})(?:encant|enfeitiç|enfeitic|domin(?!go)|hipnot|sedu|canto de sereia|sussurr|persuas[aã]o arcana)/iu,        cond: "enfeiticado", alvo: "alvo", chance: 0.4,  dif: 1 },
   { id: "derrubada",  re: /(?<!\p{L})(?:derrub|investida|rasteira|empurr|tromba|arremete|cargas?(?!\p{L})|placagem)/iu,                               cond: "caido",      alvo: "alvo", chance: 0.45, dif: 0 },
   { id: "drenagem",   re: /(?<!\p{L})(?:drena|suga|sanguessuga|debilit|enfraquece(?:r|m)?(?!\p{L})|fica enfraquecid|maldi[çc]|praga|definha|murcha)/iu,                                   cond: "enfraquecido", alvo: "alvo", chance: 0.45, dif: 0 },
   { id: "lentidao",   re: /(?<!\p{L})(?:lentid|retard|melaço|melaco|atras|peso do tempo)/iu,                                              cond: "lento",      alvo: "alvo", chance: 0.5,  dif: 0 },
 
   /* ---- buffs em quem usa ou nos aliados ---- */
-  { id: "bencao",     re: /(?<!\p{L})(?:bênção|bencao|abençoa|abencoa|consagra|graça divina|milagre menor|oração|oracao)/iu, cond: "abencoado",  alvo: "aliados", chance: 1, dif: 0 },
+  /* CONSAGRAR É O VERBO, NÃO O ADJETIVO (29/09, etapa do empilhamento).
+     "Golpe consagrado" é o golpe das criaturas sagradas, e "Golpe
+     Consagrado" o do Paladino ("a arma brilha: dano sagrado extra no
+     impacto"): nos dois é a LÂMINA que é consagrada, e o golpe fere com
+     luz. O `consagra` casava o adjetivo e dava a bênção aos aliados de
+     quem golpeava — o bando do monstro abençoado pelo golpe que o monstro
+     dá, e o grupo do Paladino abençoado a cada ataque que a ficha não
+     promete. Agora é só o verbo — "consagra o chão", "consagrar",
+     "consagram" —, a mesma regra que `drenagem` usa para "enfraquece". No
+     acervo inteiro, os dois golpes eram os únicos que a palavra apanhava;
+     o dano sagrado deles é do elemento (`sagrado`, perfil de dano), não
+     de uma condição. */
+  { id: "bencao",     re: /(?<!\p{L})(?:bênção|bencao|abençoa|abencoa|consagra(?:r|m)?(?!\p{L})|graça divina|milagre menor|oração|oracao)/iu, cond: "abencoado",  alvo: "aliados", chance: 1, dif: 0 },
   { id: "furia",      re: /(?<!\p{L})(?:fúria|furia|frenesi|enfurec|berserk|sanha)/iu,                                       cond: "enfurecido", alvo: "proprio", chance: 1, dif: 0 },
   { id: "pressa",     re: /(?<!\p{L})(?:pressa|apress|acelera|velocidade|ligeireza|ímpeto|impeto|passo rápido|passo rapido)/iu,      cond: "apressado",  alvo: "proprio", chance: 1, dif: 0 },
   /* v9.265 (H1): `invisib` não casa com "invisível" — é "invisív". "Desaparecer

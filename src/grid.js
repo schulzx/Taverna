@@ -1001,15 +1001,36 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
   if (!g || !alvo || alvo.x == null) return { inimigos: inimigos || [], movimentos: [] };
   const movimentos = [];
   const vivos = (inimigos || []).filter((e) => e && !e.derrotado && (e.vida || 0) > 0);
-  const novos = (inimigos || []).map((e) => {
-    if (!vivos.includes(e) || e.x == null) return e;
+  /* ---- A OCUPAÇÃO ANDA COM QUEM ANDA (a etapa do empilhamento) ----
+     Até aqui cada um via os companheiros de bando NAS CASAS DE ANTES do
+     turno: o primeiro andava para a melhor casa, o segundo via-a vazia e ia
+     para a mesma, e o terceiro também. Medido na bateria das paredes (10
+     plantas × 5 lutas × 4 jogadores × 30): 7390 rodadas terminavam com dois
+     corpos numa casa só — e desde MM2 a posição é verdade contada ao
+     Narrador (`resumoGridPrompt`), que narrava três soldados onde cabe um.
+     Agora `atuais` guarda onde cada um ESTÁ: quem já andou ocupa a casa
+     nova (todas as `ladoDe`² dela), e quem vem a seguir já não a vê livre.
+     A ORDEM é a da lista que chega — a do combate, fixa —, então a mesma
+     mesa dá sempre o mesmo passo. Vale para o grupo do jogador, que o App
+     move por esta mesma função. */
+  const atuais = vivos.slice();
+  const novos = (inimigos || []).map((e0) => {
+    const i = vivos.indexOf(e0);
+    if (i < 0 || e0.x == null) return e0;
+    const movido = moverUm(e0);
+    atuais[i] = movido;
+    return movido;
+  });
+  return { inimigos: novos, movimentos };
+
+  function moverUm(e) {
     const dist = distanciaM(e, alvo);
     /* MM7: QUEM LUTA DE LONGE NÃO VEM. Até aqui só a invocação com
        `distancia` ficava parada (e só dentro dos 18 m, com ou sem linha de
        visão); o Atirador do bestiário vinha colar no herói como um ogro. O
        posto é decidido em `postoDoAtirador`, logo abaixo. */
     if (mantemDistancia(e)) {
-      const posto = postoDoAtirador(grade, e, alvo, todos, vivos);
+      const posto = postoDoAtirador(grade, e, alvo, todos, atuais);
       if (!posto) return e;
       movimentos.push(posto.movimento);
       return { ...e, x: posto.x, y: posto.y };
@@ -1017,7 +1038,7 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
     /* quem alcança fica e bate — e alcançar pede linha de visão, que é o
        que `alcanca` cobra na hora do golpe (as paredes, MM) */
     if (dist <= alcanceNatural(e) && linhaDeVisao(grade, e, alvo)) return e;
-    const ocupados = ocupacaoDe([...(todos || []), ...vivos], e);
+    const ocupados = ocupacaoDe([...(todos || []), ...atuais], e);
     /* ---- CADA BICHO NO SEU PASSO (v9.44) ----
        `deslocamentoDeCriatura` existia em movimento.js desde a v9.34 com o
        comentário "um dragão voa; um zumbi arrasta", estava importada no App e
@@ -1040,8 +1061,7 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
     const encurtou = Math.round(dist - distanciaM({ ...e, x: melhor.x, y: melhor.y }, alvo));
     movimentos.push({ nome: e.nome, de: nomeDoLugar(grade, e.x, e.y), para: nomeDoLugar(grade, melhor.x, melhor.y), metros: encurtou > 0 ? encurtou : Math.round(melhor.custoM) });
     return { ...e, x: melhor.x, y: melhor.y };
-  });
-  return { inimigos: novos, movimentos };
+  }
 }
 
 /* ============================================================

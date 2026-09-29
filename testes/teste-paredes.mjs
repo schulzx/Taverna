@@ -19,7 +19,7 @@
 import { readFileSync } from "node:fs";
 import {
   montarGrade, garantirGrade, moverInimigos, passoAteAlcancar, distanciaM, linhaDeVisao, caminhar,
-  ocupacaoDe, alcanceNatural, ladoDe, ehParede, PLANTAS, DESLOCAMENTO_PADRAO, METROS_POR_QUADRADO, m2q,
+  ocupacaoDe, quadradosDe, alcanceNatural, ladoDe, ehParede, PLANTAS, DESLOCAMENTO_PADRAO, METROS_POR_QUADRADO, m2q,
 } from "../src/grid.js";
 import { deslocamentoDeCriatura } from "../src/movimento.js";
 import { mantemDistancia, POSTURA_DO_ATIRADOR } from "../src/atirador.js";
@@ -165,11 +165,20 @@ sec("3. campo aberto: casa a casa o mesmo passo de antes");
       const aliados = Array.from({ length: ri(3) }, (_, i) => ({ nome: `Aliado ${i}`, vida: 5, x: ri(g.largura), y: ri(g.altura) }));
       const todos = [h, ...aliados];
       const r = moverInimigos(g, inim, h, todos);
+      /* A OCUPAÇÃO QUE ANDA (etapa do empilhamento, depois de v9.315): a
+         busca antiga recebia os companheiros de bando nas casas de ANTES do
+         turno, e três soldados iam para a mesma casa. Isso foi consertado de
+         propósito, e não é o que esta secção mede — ela mede a ESCOLHA da
+         casa. Por isso a régua antiga recebe agora a mesma ocupação que o
+         motor vê: quem já andou, na casa nova (`atuais`). A escolha
+         continua a ser casa a casa a da busca antiga. */
+      const atuais = inim.slice();
       for (let i = 0; i < inim.length; i++) {
-        if (mantemDistancia(inim[i])) continue;
+        if (mantemDistancia(inim[i])) { atuais[i] = r.inimigos[i]; continue; }
         mesas++;
-        const a = passoGulosoAntigo(g, inim[i], h, todos, inim);
+        const a = passoGulosoAntigo(g, inim[i], h, todos, atuais);
         const n = r.inimigos[i];
+        atuais[i] = n;
         const mv = r.movimentos.find((m) => m.nome === inim[i].nome);
         const igual = a.x === n.x && a.y === n.y && (a.metros == null ? !mv : (mv && mv.metros === a.metros));
         if (igual) iguais++;
@@ -267,6 +276,50 @@ sec("7. a sonda anda pelo caminho de produção");
 }
 
 /* ============================================================ */
+sec("7b. ninguém acaba na casa de outro (a etapa do empilhamento)");
+{
+  /* o caso que a etapa das paredes achou: três soldados na estrada, lado a
+     lado, iam os três para (4,6) */
+  const g = montarGrade({ local: "estrada" });
+  const h = heroi(9, 11);
+  const tres = [soldado(8, 0, { nome: "A" }), soldado(9, 0, { nome: "B" }), soldado(10, 0, { nome: "C" })];
+  const r = moverInimigos(g, tres, h, [h]).inimigos;
+  const casas = r.map((e) => e.x + "," + e.y);
+  t(`três soldados, três casas (${casas.join(" · ")})`, new Set(casas).size === 3);
+  t("o primeiro da lista escolhe primeiro: a casa dele é a de sempre", r[0].x === 4 && r[0].y === 6);
+  t("a ordem é a da lista, e a mesma lista dá o mesmo passo", JSON.stringify(moverInimigos(g, tres, h, [h])) === JSON.stringify(moverInimigos(g, tres, h, [h])));
+  /* o grande ocupa `ladoDe`² casas: ninguém entra em nenhuma delas */
+  const og = { ...ogro(8, 0), nome: "Ogro" };
+  const bando = [og, soldado(9, 2, { nome: "D" }), soldado(7, 2, { nome: "E" }), soldado(10, 1, { nome: "F" })];
+  const rb = moverInimigos(g, bando, h, [h]).inimigos;
+  const donas = new Map();
+  let choque = "";
+  for (const e of [h, ...rb]) for (const q of quadradosDe(e)) {
+    const k = q.x + "," + q.y;
+    if (donas.has(k) && !choque) choque = `${donas.get(k)} e ${e.nome} em ${k}`;
+    donas.set(k, e.nome);
+  }
+  t("com o ogro no bando (lado 2), nenhuma casa tem dois corpos", !choque, choque);
+  t("o ogro ocupa quatro casas", quadradosDe(rb[0]).length === 4);
+  /* o herói: ninguém termina em cima dele, nem o grupo que anda pela mesma
+     função para o inimigo */
+  const perto = heroi(5, 5);
+  const cerco = Array.from({ length: 8 }, (_, i) => soldado(1 + i, 0, { nome: `S${i}` }));
+  const rc = moverInimigos(g, cerco, perto, [perto]).inimigos;
+  t("oito soldados à volta do herói: nenhum na casa dele", rc.every((e) => e.x !== perto.x || e.y !== perto.y));
+  t("...e nenhum na casa de outro", new Set(rc.map((e) => e.x + "," + e.y)).size === rc.length);
+  const alvoDoGrupo = soldado(9, 0, { nome: "Alvo" });
+  const grupo = [{ nome: "Bram", vida: 30, x: 8, y: 11 }, { nome: "Iria", vida: 30, x: 10, y: 11 }, { nome: "Tomás", vida: 30, x: 9, y: 10 }];
+  const rg = moverInimigos(g, grupo, alvoDoGrupo, [h, alvoDoGrupo]).inimigos;
+  t("o grupo também não se empilha", new Set(rg.map((e) => e.x + "," + e.y)).size === 3);
+  t("e ninguém do grupo pisa o herói nem o alvo", rg.every((e) => !(e.x === h.x && e.y === h.y) && !(e.x === alvoDoGrupo.x && e.y === alvoDoGrupo.y)));
+  /* quem já caiu não ocupa: o derrotado não é obstáculo */
+  const caido = { ...soldado(4, 6, { nome: "Caído" }), vida: 0, derrotado: true };
+  const rcai = moverInimigos(g, [caido, soldado(8, 0, { nome: "G" })], h, [h]).inimigos;
+  t("quem caiu fica onde está e não tira a casa a ninguém", rcai[0] === caido && rcai[1].x === 4 && rcai[1].y === 6);
+}
+
+/* ============================================================ */
 sec("8. a catraca: o retrato de antes e de depois");
 {
   const R = RETRATO_DAS_PAREDES;
@@ -287,7 +340,31 @@ sec("8. a catraca: o retrato de antes e de depois");
       Math.abs(varia) <= LIMITE_DAS_PAREDES.balanco && d.vitoria >= a.vitoria - 0.01);
   }
   const abertas = Object.keys(PLANTAS).filter((id) => !(PLANTAS[id].muros || []).length);
-  t("nas plantas sem parede o balanço é o MESMO número (regressão zero, medida)", abertas.every((p) => B.antes[p].dano === B.depois[p].dano && B.antes[p].vitoria === B.depois[p].vitoria));
+  t("nas plantas sem parede o caminho não mudou o balanço (regressão zero, medida)", abertas.every((p) => B.antes[p].dano === B.depois[p].dano && B.antes[p].vitoria === B.depois[p].vitoria));
+
+  /* A ETAPA DO EMPILHAMENTO, sobre o mesmo retrato. A asserção de cima
+     continua a falar do caminho (antes → depois). O empilhamento mexe
+     também em campo aberto, de propósito — é lá que os três soldados da
+     estrada iam para a mesma casa —, e por isso `semPilha` responde só ao
+     limite de sempre: 10% por planta, contra o antes de tudo. */
+  const SO = R.sobreposicoes;
+  t(`antes do conserto, ${SO.antes} de ${SO.rodadasAntes} rodadas acabavam com dois corpos numa casa`, SO.antes > 1000);
+  t("depois, nenhuma", SO.depois === LIMITE_DAS_PAREDES.sobreposicoes && LIMITE_DAS_PAREDES.sobreposicoes === 0);
+  const semPilha = celulas(R.semPilha);
+  t("sem a pilha: nenhuma trava", semPilha.every((c) => c.travas === 0));
+  const foraSP = semPilha.filter((c) => !(EMPATES_DE_DESENHO.jogadores.includes(c.j) && EMPATES_DE_DESENHO.lutas.includes(c.l)));
+  t("sem a pilha: nenhum empate fora do de desenho", foraSP.length === 0, foraSP.map((c) => `${c.p}.${c.l}.${c.j}`).join(", "));
+  /* os empates de desenho podem subir: o ogro contra quem espera empatava 3
+     e empata 5 em quatro células, porque o soldado que vinha colado a ele na
+     MESMA casa agora ocupa outra e chega depois. Célula nova com empate é
+     que não pode nascer. */
+  t("sem a pilha: nenhuma célula nova com empate", semPilha.every((c) => depois.some((d) => d.p === c.p && d.l === c.l && d.j === c.j)));
+  for (const p of Object.keys(PLANTAS)) {
+    const a = B.antes[p], d = B.semPilha[p];
+    const varia = d.dano / a.dano - 1;
+    t(`${p} sem a pilha: dano ${(varia * 100).toFixed(1)}% do antes (limite ${LIMITE_DAS_PAREDES.balanco * 100}%)`,
+      Math.abs(varia) <= LIMITE_DAS_PAREDES.balanco && d.vitoria >= a.vitoria - 0.01);
+  }
 }
 
 /* ============================================================ */
@@ -300,12 +377,14 @@ sec("9. ao vivo: todas as plantas, todas as lutas, os quatro jogadores");
   const n = 8;
   console.log(`      (medindo ${Object.keys(PLANTAS).length * Object.keys(LUTAS_DAS_PAREDES).length * JOGADORES_DAS_PAREDES.length * n} lutas — pode levar alguns segundos)`);
   const m = sondarParedes(M, { n });
-  let travas = 0; const fora = [];
+  let travas = 0, sobreposicoes = 0; const fora = [];
   for (const [p, ls] of Object.entries(m)) for (const [l, js] of Object.entries(ls)) for (const [j, c] of Object.entries(js)) {
     travas += c.travas;
+    sobreposicoes += c.sobreposicoes;
     if (c.empates && !(EMPATES_DE_DESENHO.jogadores.includes(j) && EMPATES_DE_DESENHO.lutas.includes(l))) fora.push(`${p}.${l}.${j}:${c.empates}`);
   }
   t("nenhuma trava", travas === 0, travas);
+  t("nenhuma rodada termina com dois corpos na mesma casa", sobreposicoes === LIMITE_DAS_PAREDES.sobreposicoes, sobreposicoes);
   t("nenhum empate fora do de desenho", fora.length === 0, fora.join(", "));
   t("o jogador que anda ganha em toda planta", Object.values(m).every((ls) => Object.values(ls).every((js) => js.caminho.vitoria >= 0.5)));
   t("a amostra do retrato é a da sonda", RETRATO_DAS_PAREDES.n === AMOSTRA_DAS_PAREDES.n);

@@ -1039,11 +1039,11 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   "sombra" dá `furtivo` a quem lança. O casamento de portadores por substring precisa de
   fronteira de palavra. Bug com teste que prova.
 - [x] **os inimigos travam atrás de paredes** · feito 29/09, v9.314 (promovido: parte a sessão) · de: sistema/MM7 · 29/09
-- [ ] **os inimigos empilham na mesma casa** · médio · de: sistema/v9.314 · 29/09
+- [x] **os inimigos empilham na mesma casa** · feito 29/09, v9.316 (promovido: é verdade contada ao Narrador) · de: sistema/v9.314 · 29/09
   `moverInimigos` calcula a ocupação com as posições de antes do turno: quem anda depois
   não vê quem já andou. Na estrada, três soldados vão todos para (4,6). Antigo e no ar.
   Consertar muda o passo em campo aberto — medir pela sonda das paredes.
-- [ ] **"Golpe consagrado" abençoa o bando do monstro** · leve · de: sistema/v9.314 · 29/09
+- [x] **"Golpe consagrado" abençoa o bando do monstro** · feito 29/09, v9.316 · de: sistema/v9.314 · 29/09
   Não é pedaço de palavra: o nome do golpe promete bênção e o portador `bencao` dá-a aos
   aliados de quem o lança. Nomeado em `teste-afl`. (E "silencioso" cai em `quietude` antes
   de `sombra`, pela ordem da tabela.)
@@ -1051,6 +1051,11 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
   (o herói da sonda já o tem), medido pela régua.
 - [ ] **o herói colado que atira não paga** · leve · de: sistema/MM7 · 29/09
+  *E o que o MM7 fez ao grupo (medido em v9.316):* no bando, contra um "antes" remedido sem
+  a pilha, o herói leva −8,9% e **o grupo +39%** — os atiradores espalham os tiros pelo grupo.
+  O total mexe +3,6%. O retrato do MM7 mede contra o "antes" gravado (com pilha), onde o grupo
+  fica a +6,8%. Decidir se o grupo a +39% é o que se quer (o arqueiro que mira no mais frágil)
+  ou se se afina a escolha de alvo do atirador.
   O inimigo colado dispara com desvantagem (5e); o herói colado que atira, não — e a fuga
   usa desvantagem acima de 18 m enquanto a luta usa penalidade por faixa de 9 m. Duas
   regras para o mesmo arco; unificar pela mesma tabela.

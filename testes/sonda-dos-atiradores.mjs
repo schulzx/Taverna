@@ -78,7 +78,24 @@ export const AMOSTRA_DOS_ATIRADORES = { n: 140, prefixo: "mm7", tetoDeRodadas: 2
    ANTES NÃO MUDA: remedido na árvore de c06d904 com o mesmo conserto, dá
    13,03 · 10,64 · 16,36 — a luta de antes de MM7 não tinha a trava dentro
    desta sonda, e o limite continua a medir a regra dos atiradores, não o
-   caminho. */
+   caminho.
+
+   E O BANDO FOI REFEITO NA ETAPA DO EMPILHAMENTO (29/09, depois de
+   v9.315): `moverInimigos` passou a ver a casa nova de quem já andou, e no
+   `bando` 473 das 559 rodadas do retrato acabavam com dois corpos numa
+   casa só — os dois soldados colavam-se ao herói na MESMA casa. Sem a
+   pilha, o bando fica 13,39 → 13,94 no herói (grupo 7,49 → 7,46), e sem o
+   golpe de oportunidade 15,69 → 15,89. A dupla e o conjurador não mexem
+   (um só corpo de perto, nunca empilhavam): o conjurador continua a
+   +19,3% do antes, a mesma margem de v9.314.
+   O ANTES DO BANDO TAMBÉM EMPILHAVA, e fica como foi medido, com a
+   medida sem pilha escrita aqui para quem decidir: na árvore de c06d904
+   com o caminho e a ocupação que anda, o bando dá 15,30 no herói e 5,35
+   no grupo (era 16,36 · 7,89). Contra esse antes, o herói fica a −8,9% e
+   o GRUPO a +39% — os dois atiradores de MM7 espalham os tiros pelo
+   grupo, que antes só apanhava de quem lhe chegava ao corpo. O total do
+   bando mexe +3,6% (20,65 → 21,40). O limite de MM7 é sobre o herói, e a
+   asserção do grupo continua a medir contra o antes gravado. */
 export const RETRATO_DOS_ATIRADORES = {
   n: 140,
   antes: {
@@ -89,7 +106,7 @@ export const RETRATO_DOS_ATIRADORES = {
   depois: {
     dupla:      { dano: 12.06, danoGrupo: 0,    vitoria: 0.986, rodadas: 4.67 },
     conjurador: { dano: 12.69, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.72 },
-    bando:      { dano: 13.39, danoGrupo: 7.49, vitoria: 1,     rodadas: 3.99 },
+    bando:      { dano: 13.94, danoGrupo: 7.46, vitoria: 1,     rodadas: 3.97 },
   },
   /* o mesmo depois SEM o golpe de oportunidade no recuo — o jogo enquanto a
      fiação do App não chega. O conjurador passa do limite (+30%): é por
@@ -97,7 +114,7 @@ export const RETRATO_DOS_ATIRADORES = {
   semOportunidade: {
     dupla:      { dano: 14.04 },
     conjurador: { dano: 13.83 },
-    bando:      { dano: 15.69 },
+    bando:      { dano: 15.89 },
   },
 };
 /* O LIMITE — a luta tem de ficar DIFERENTE, não mais dura nem mais mole:
@@ -231,6 +248,26 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
        TRAVADA (ninguém alcança ninguém, e o teto chega sozinho). Contar só
        os acertos confundia cinco erros seguidos com uma trava. */
     let ultimoAtaque = 0;
+    /* AS RODADAS COM DUAS CRIATURAS NA MESMA CASA (a etapa do empilhamento).
+       Desde MM2 a posição é verdade contada ao Narrador (`resumoGridPrompt`):
+       três soldados numa casa só é o sistema a dizer ao Mestre uma coisa
+       impossível. Conta-se no fim de cada rodada, só entre quem está de pé
+       (herói, grupo e inimigos vivos), casa a casa de cada corpo — o grande
+       ocupa `ladoDe`² casas. */
+    let sobreposicoes = 0;
+    const sobrepostos = () => {
+      const corpos = [];
+      if ((heroi.vida || 0) > 0) corpos.push(lugar);
+      aliados.forEach((a, i) => { if (((grupo[i] || {}).vida || 0) > 0) corpos.push(a); });
+      corpos.push(...vivos());
+      const vistas = new Set();
+      for (const c of corpos) for (const q of G.quadradosDe(c)) {
+        const k = q.x + "," + q.y;
+        if (vistas.has(k)) return true;
+        vistas.add(k);
+      }
+      return false;
+    };
     const nv = heroi.nivel;
     const arma = heroi.equipados.arma;
     const bonusAtk = M.itens.modDoGolpe(heroi, arma) + 2 + Math.floor((nv - 1) / 4);
@@ -309,6 +346,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
           if (ac.custo) grupo = grupo.map((g) => (g.nome === ac.companheiro ? { ...g, mana: Math.max(0, (g.mana || 0) - ac.custo) } : g));
         }
       }
+      if (sobrepostos()) sobreposicoes++;
       /* ---- 4. O RELÓGIO ---- */
       if ((heroi.condicoes || []).length) heroi = { ...heroi, condicoes: M.condicoes.tickCondicoes(heroi.condicoes).condicoes };
       if (!vivos().length) break;
@@ -317,7 +355,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
     return {
       danoNoHeroi, danoNoGrupo, vitoria: vivos().length ? 0 : 1,
       rodadas: Math.min(rodada, AMOSTRA_DOS_ATIRADORES.tetoDeRodadas),
-      recuos, oportunidades, disparos, disparosColados, ultimoAtaque,
+      recuos, oportunidades, disparos, disparosColados, ultimoAtaque, sobreposicoes,
     };
   });
 }

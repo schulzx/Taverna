@@ -15,6 +15,44 @@ Formato:
 ```
 
 ---
+## 29/09 20:08 · v9.316 · ninguém termina na casa de outro (e o "Golpe consagrado") · commit (o hash vai no próximo bloco)
+
+- **por que andou:** promovido pelo coordenador da fase, com o motivo que este diário deu:
+  **desde o MM2 as posições são verdade contada ao Narrador**, e três soldados na mesma
+  casa é o sistema a dizer ao Mestre uma coisa impossível.
+- **estado inicial:** verde (`af1b489`, `cb96d7d`). A mesma mão `backend` das paredes,
+  retomada — já tinha a bateria na cabeça.
+- **backend:** `moverInimigos` passa a ver a casa nova de quem já andou no mesmo turno (a
+  ordem é a da lista do combate, logo determinística); criatura grande ocupa as suas quatro
+  casas; quem caiu não ocupa. Vale para o atirador e para o grupo do jogador.
+- **o tamanho do defeito:** na bateria (10 plantas × 5 lutas × 4 jogadores × 30), **7390 de
+  42 937 rodadas — 17% — acabavam com dois corpos na mesma casa**, em todas as plantas.
+  Agora 0, e o 0 é catraca (também medido ao vivo, 1600 lutas).
+- **o equilíbrio:** o dano ao herói mexe no máximo 1,2% por planta (masmorra); vitórias
+  iguais; travas 0. A maior luta isolada: masmorra, bando, +5,9%.
+- **a margem do conjurador do MM7 aguentou sem mexer: +19,3%** (nessa luta há um só corpo
+  de perto; nunca empilhava).
+- **um achado de equilíbrio, não da pilha — para a pauta:** o "antes" do bando do MM7 também
+  empilhava. Remedido sem a pilha, **o herói fica a −8,9% e o grupo a +39%**: os atiradores
+  do MM7 espalham os tiros pelo grupo. O total do bando mexe +3,6%. Mantive o "antes" gravado
+  (a asserção do grupo mede contra ele, +6,8%) e escrevi as duas contas no retrato; a pergunta
+  — o arqueiro que mira no mais frágil é o que se quer? — foi para "Aberto".
+- **o "Golpe consagrado":** a lâmina é que é consagrada, e o golpe fere com luz; o portador de
+  bênção passa a ler só o verbo ("consagra o chão"). **O mesmo defeito estava no jogador**: o
+  "Golpe Consagrado" do Paladino abençoava o grupo a cada ataque, sem a ficha o prometer —
+  deixa de o fazer. E "silencioso" caía em atordoar antes de furtividade: Passos
+  Silenciosos, Bote Silencioso e Toque do Fim passam a dar furtividade a quem os usa; o
+  "Silêncio" (magia) e "Silêncio Que Grita", que nunca faziam nada por causa do acento, passam
+  a atordoar. 7 mudanças, nomeadas em `teste-afl`.
+- **decisões médias tomadas:**
+  - **O "antes" do bando fica o gravado**, com as duas contas escritas: trocá-lo mudava o que
+    a catraca mede no meio de uma etapa que não era sobre isso.
+  - **O Paladino perde a bênção que o nome prometia e a ficha não** — é a correção, não um
+    nerf; está no diário para quem sentir a diferença.
+- **para quem joga:** o Mestre deixa de receber (e de narrar) inimigos uns em cima dos
+  outros; o Paladino deixa de abençoar o grupo a cada golpe; os golpes silenciosos escondem
+  quem os dá. A sonda não se move (72/157).
+
 ## 29/09 19:43 · v9.315 · o convite para o grupo anda: era o caso geral · commit `af1b489`
 
 - **por que andou:** promovido pelo coordenador da fase — *se nunca abrir, nenhum
