@@ -79,6 +79,99 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase MM — o Mestre à Matt Mercer (a fase do beta · ordem de 28/09)
+
+**De onde vem.** A pessoa leu duas sessões do Critical Role contra o Taverna
+(C1E1 *Arrival at Kraghammer*, com o Matt; e o *Honey Heist 3*, com a Marisha).
+Das **157 perguntas** que os jogadores fizeram ao Matt no episódio 1, a regra
+que saiu é uma: **o nosso Mestre acerta tudo o que o sistema decide E lhe
+conta; falha no que o sistema decide e NÃO lhe conta, e no que ninguém
+decide.** Esta fase fecha a segunda categoria e acrescenta os momentos em que
+o Matt brilha e nós não temos.
+
+**A ordem é esta, e tem motivo:** a régua primeiro (MM1), para cada etapa
+seguinte mover um número; depois o que é barato e toca toda luta (MM2); depois
+o momento que ela já aprovou em 15/09 (MM3); e o elenco antes da luta sem
+espada e do crime, porque os dois assentam nele. O bastão do `App.jsx` manda
+na sequência do dia: se estiver com o desenho, faz-se a etapa seguinte que não
+precisa dele.
+
+**Liberdade:** pesado do motor não espera a pessoa nesta fase (ordem de 28/09).
+O limite é o que um commit revertido não desfaz.
+
+- [ ] **MM0 · Uma Vida é o único modo do beta** · ordem da pessoa, 28/09
+  *Uma Noite* e *Duelo* saem do menu (`TelaMenu`, `App.jsx:~5100`). Por tabela,
+  não por `if`: `MODOS_DO_BETA` em `src/modos.js`, lida pelo menu. **Sai a
+  porta, não o código** — módulos, suítes e saves ficam; voltar é mudar a
+  tabela. Confirmar que um save de *Uma Noite* ou *Duelo* já existente não
+  quebra o menu nem se perde. A *sala de dois* (Uma Vida a dois) fica.
+- [ ] **MM1 · a sonda da mesa: as 157 perguntas viram régua**
+  As perguntas dos jogadores de C1E1 (`https://www.kryogenix.org/crsearch/html/cr1-1.html`),
+  **traduzidas e parafraseadas** em casos de teste (nunca o texto original),
+  cada uma com o FATO que a responde e o sítio do sistema onde ele vive.
+  **Sem chamada de IA:** mede se o fato **chega à pauta** do Narrador. Três
+  resultados por pergunta: *chega* · *o sistema sabe e não conta* · *ninguém
+  decide* (sabor — aceitável). O número de hoje é o ponto de partida, e cada
+  etapa seguinte tem de o mover. Juntar as perguntas do *Honey Heist 3*
+  (`cr1-115.14`) só se acrescentarem um tipo novo.
+- [ ] **MM2 · o Narrador vê o tabuleiro**
+  Em combate, uma linha na pauta com cada inimigo: **distância** (a que o motor
+  já mede), **linha de visão** (`linhaDeVisao`, `grid.js`) e **cobertura**
+  (`temCobertura`). Dentro do `TETO_DA_PAUTA`; se não couber tudo, corta-se
+  pela prioridade, nunca se soma bloco estático. É a resposta a *"a quantos
+  metros estou da criatura?"*.
+- [ ] **MM3 · o golpe final é seu** · Q3 + Q5, aprovadas pela pessoa em 14–15/09
+  Quando o golpe **levaria** o alvo a 0: letal ou não letal (Q3), e **"como
+  você faz isso?"** (Q5) — o que o jogador escrever é o que o Narrador narra,
+  ampliado e nunca desmentido. É o momento mais famoso do Critical Role. O
+  texto inteiro das duas está na Fase Q, abaixo.
+- [ ] **MM4 · toda ação ganha um dado**
+  Hoje a frase que não casa com o catálogo de desafios **vira ficção sem dado**
+  e o Narrador decide sozinho. O Matt nunca diz *"isso não dá"*: escolhe o
+  atributo e manda rolar. Aqui: o atributo mais próximo por tabela, uma CD de
+  tabela, e o resultado vai à pauta. As hipóteses e as figuras de linguagem
+  continuam fora (a peneira de `agressao.js` já sabe distingui-las).
+- [ ] **MM5 · o sucesso com preço**
+  *A Aposta* prepara duas versões (sim/não). O Matt usa três: na runa de C1E1,
+  um 15 é *"recuas a tempo, mas levas 8"*. Passar por pouco ou falhar por
+  pouco ganha a versão do meio — por tabela, com a margem que a define.
+- [ ] **MM6 · escondido é um estado**
+  O teste de furtividade existe (`desafios.js`), o estado não: no turno
+  seguinte nada lembra que o herói está escondido, e isso não dá vantagem.
+  Condição que dura até agir ou ser achado; dá vantagem e o ataque furtivo
+  (hoje o do Ladino é sempre, por classe); e vai à pauta — **quem te vê**. É a
+  resposta a *"o anão está me vendo?"*.
+- [ ] **MM7 · os atiradores atiram**
+  Achado da fuga (v9.294): o inimigo de distância é atirador na fuga e lutador
+  colado dentro da luta. Passa a manter a distância e a disparar.
+- [ ] **MM8 · o elenco** · proposta da pessoa, 28/09
+  **O defeito que o prova:** o Narrador recebe as **22 pessoas vistas mais
+  recentemente** (`resumoNPCsParaPrompt`, `npcs.js:355`), por recência e não
+  por importância, e o registo não tem teto — o vilão ausente há duas semanas
+  sai da memória, o padeiro de ontem fica. **O desenho:** 20–30 personagens
+  nascem **por semente** na criação do mundo (quem são, o que querem, o
+  segredo, os laços entre eles), não aparecem todos no primeiro dia, e
+  **agem fora de cena** no relógio do mundo. Os figurantes nascem e somem sem
+  entrar no Códex como gente importante. **Promoção:** o figurante em quem o
+  jogador investe (volta a ele, laço, grupo) sobe ao elenco, e o elenco de
+  tamanho fixo perde alguém. A pauta leva quem está em cena e quem mexe os
+  pauzinhos neste turno — por isso o número não esbarra no teto de prompt.
+  Campo de save novo, aditivo, ignorado pela versão antiga.
+- [ ] **MM9 · a luta sem espada**
+  Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
+  Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).
+  No Honey Heist o clímax resolveu-se assim.
+- [ ] **MM10 · o crime**
+  Atacar o taverneiro abre uma luta (`agressao.js`) e não um crime: ninguém
+  chama a guarda, não há recompensa pela cabeça, a porta não fecha, as
+  testemunhas não contam. Assenta no elenco: contra alguém do elenco, a
+  consequência é de história; contra um figurante, é da cidade.
+- [ ] **MM11 · a sessão de prova**
+  O `jogo` joga uma sessão inteira à maneira de C1E1 — chegada, taverna,
+  persuasão, armadilha, luta — e a sonda de MM1 mede outra vez. É o critério
+  do beta.
+
+
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
 mas precisamos de uma solução para as 12 restantes."*
@@ -832,6 +925,13 @@ eleita de saves existentes, e campanha viva não perde o que sorteou.
 - [x] **R2 · toda forma eleita tem detector** · feita em v9.228 · texto em `mente/arquivo/pauta-feitas.md`
 - [x] **R3 · a maior enfim acontece** · feita em v9.229 · texto em `mente/arquivo/pauta-feitas.md`
 - [x] **R4 · a suíte da fase** · feita em v9.230 · texto em `mente/arquivo/pauta-feitas.md`
+## Depois do beta (parado pela ordem de 28/09)
+
+*Uma Noite* e o *Duelo* saíram do menu até ao beta. Todo item que só serve a
+esses dois modos — o Torneio, a arena, o selo e o roster do Duelo, a sala do
+Duelo — **não é a vez**, e fica onde está na pauta com esta nota por cima. Não
+se apaga nada: o beta é um corte de foco, não um descarte.
+
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
 - [ ] **quatro regras que apanham a habilidade errada — e uma delas inverte o

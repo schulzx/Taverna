@@ -218,6 +218,41 @@ jogo ser lembrado, **escolhe-se a segunda** e prova-se depois.
 **E ela pediu notícia:** *"quando puder, me atualize por aqui."* Todo ciclo
 fecha com o que mudou para quem joga, em número — não com o que foi tocado.
 
+## A ordem de 28/09 — o beta, e um Mestre à Matt Mercer
+
+A pessoa leu duas sessões do Critical Role contra o que temos e decidiu o rumo
+até ao beta: *"Tire as opções de PvP e modo frenético da lista e do jogo por
+enquanto, vamos arrumar agora somente o modo principal e o design e vamos
+lançar o beta... faça a lista do motor e comece as alterações, você tem total
+liberdade para tomar as decisões... agora vamos fazer com que nosso mestre
+consiga tocar uma sessão à la Matt Mercer."*
+
+**1. Um modo só.** O beta é **Uma Vida**. *Uma Noite* (o "modo frenético") e o
+*Duelo* saem do menu. **Sai a porta, não o código:** módulos, suítes e saves
+ficam onde estão, e voltar é mudar uma tabela. O que for só desses dois modos
+não é a vez de nada — nem na pauta, nem no desenho.
+
+**2. A fila do sistema volta a andar, e só com uma fase:** a **Fase MM** em
+`mente/pauta.md` — *o Mestre à Matt Mercer*. A régua é a pergunta dela: **um
+jogador pergunta ao Mestre o que perguntaria ao Matt, e a resposta é verdade?**
+O Narrador responde sempre; o que conta é se a resposta sai do sistema
+(verdade) ou da imaginação (plausível). O que o sistema sabe e não conta ao
+Narrador é defeito, não detalhe.
+
+**3. Liberdade no motor igual à do desenho.** *"Total liberdade para tomar as
+decisões"*: dentro da Fase MM, `pesado` do motor não espera a pessoa. **O limite
+é o mesmo da ordem de 23/09 — o que um commit revertido não desfaz** (mudar um
+campo de save que já existe, dinheiro/infra, apagar dado de jogador). Campo de
+save **novo e ignorado pela versão antiga** é reversível e está permitido.
+
+**4. O desenho espera a palavra dela.** *"Depois digo o que faremos na parte de
+design."* O ciclo de desenho que estava no ar fecha e sobe; **nenhum outro
+começa** até ela dizer. A tarefa agendada passa a rodar o ciclo do sistema.
+
+A ordem de 23/09 continua a valer para o que diz do desenho (a liberdade, o
+backup, a régua do melhor RPG de mesa do mundo). O que ela dizia da fila do
+sistema parada foi substituído por esta.
+
 ## A fila pode ser pausada
 
 A pessoa para as duas filas com uma frase, e parou em **16/09/2026** para
