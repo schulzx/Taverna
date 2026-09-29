@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 13:10 · v9.308 · MM5 · o sucesso com preço · commit (o hash vai no próximo bloco)
+## 29/09 13:10 · v9.308 · MM5 · o sucesso com preço · commit `d2688b4`
 
 - **por que andou:** a etapa que lê o dado que MM4 deu a toda ação. *A Aposta*
   preparava duas versões; o Matt usa três — na runa de C1E1, um 15 é "recuas a
