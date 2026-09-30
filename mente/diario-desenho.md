@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 29/09 · v9.320 · **R21k — um toque nunca é um arrasto: o alforje deixa de tremer e de engolir toques** · commit HASH_R21K
+## 29/09 · v9.320 · **R21k — um toque nunca é um arrasto: o alforje deixa de tremer e de engolir toques** · commit `0c68ecd`
 
 *A forma: `mente/formas.md` §`### R21k · o gesto de descer tinha de ser pedido, e
 não suposto`. Item único, pedido pela pessoa com a fila do desenho parada
