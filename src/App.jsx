@@ -11772,7 +11772,7 @@ export default function Taverna() {
         const citadosAgora = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ");
         emCenaAgora = Object.keys(npcsRef.current || {}).filter((nome) => citadosAgora.includes(nome));
       } catch { emCenaAgora = []; }
-      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco() });
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })() });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
       /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —
@@ -11823,7 +11823,7 @@ export default function Taverna() {
       nomeCampanhaRef.current || nomeCampanha, mundoAtual(), persAtual || personagemRef.current || personagem,
       canoneRef.current, { ...bancoNomesRef.current, elenco: (() => { try { return elencoParaPovoar(sementeMundo(), mapaRef.current, { ...contextoDoElenco(), dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); } catch (e) { calou("elencoParaPovoar", e); return []; } })() },
       (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
-      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco() }),
+      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco(), emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((n) => c.includes(n)); } catch (e) { calou("emCena das pessoas", e); return []; } })(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao das pessoas", e); return []; } })() }),
       tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
       /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */
       { npcs: npcsRef.current, elenco: nomesDoElenco() },

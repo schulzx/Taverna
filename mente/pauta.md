@@ -271,7 +271,7 @@ O limite é o que um commit revertido não desfaz.
     recência); o LONGE do rodapé com teto; o "ELENCO DIVERSO PRONTO" (hoje `Math.random`) passa
     a ser o elenco por encontrar; a recência que zera no load e o vilão preso no topo,
     consertados. Catraca nova no `teste-prompt` com o registo de 200 turnos.
-  - [ ] **MM8d · figurante é de passagem**
+  - [x] **MM8d · figurante é de passagem** · feito 30/09, v9.328 · "visto em 2+ dias" fica para a MM8e (precisa do campo dela)
     Sem investimento e fora do elenco, sai de PESSOAS CONHECIDAS e do LONGE (a não ser que
     esteja presente). **Nada se apaga do registo.** A lista dobrada em Gestão › Pessoas é tela
     e espera a palavra da pessoa (ordem 28/09 §4).

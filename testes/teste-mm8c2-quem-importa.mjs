@@ -54,10 +54,16 @@ sec("2. o rival de há 150 turnos e o padeiro de ontem");
   t("o rival visto no turno 5, ausente 150 turnos, continua nas 22", txt.includes("• Rival "));
   t("o vilão também", txt.includes("• Vilao "));
   t("e o padeiro de ontem, sem laço, está atrás dos dois", txt.indexOf("• Padeiro") > txt.indexOf("• Vilao ") && txt.indexOf("• Padeiro") > txt.indexOf("• Rival "));
-  /* a lista cheia: 22 lugares, dois deles do rival e do vilão; quem sai
-     é o mais antigo dos sem peso */
-  t("as 22 continuam 22 (muda quem, não quantos)", txt.split("\n").length === TETO_DAS_PESSOAS.pessoas && txt.length <= TETO_DAS_PESSOAS.chars);
-  t("quem sai para lhes dar lugar é o mais antigo dos sem peso", !txt.includes("• Gente 131 ") && txt.includes("• Gente 132 ") && txt.includes("• Padeiro"));
+  /* MOVIDAS NA MM8d (30/09), com o motivo: na MM8c-2 a "Gente" sem peso
+     enchia os lugares que sobravam ("as 22 continuam 22"; "quem sai é o
+     mais antigo dos sem peso"). Desde a MM8d o figurante sem investimento,
+     fora do elenco e fora da cena NÃO OCUPA LUGAR, mesmo com lugar vazio —
+     é a regra da etapa. O que a MM8c-2 provava (o teto não muda, e quem tem
+     peso entra à frente) continua provado; o que mudou é que a sobra fica
+     vazia em vez de cheia de figurantes. O padeiro fica porque o Mestre o
+     anotou agora (está na cena), não porque sobrou lugar. */
+  t("as 22 continuam no teto (nunca mais do que 22, nem dos caracteres)", txt.split("\n").length <= TETO_DAS_PESSOAS.pessoas && txt.length <= TETO_DAS_PESSOAS.chars);
+  t("a gente sem peso e fora da cena não ocupa lugar (MM8d); o padeiro de agora fica", !txt.includes("• Gente ") && txt.includes("• Padeiro") && txt.split("\n").length === 3);
   /* o padeiro contra o vilão, na lista cheia de gente importante */
   let cheio = { Vilao: pessoa("Vilao", 1, { relacao: "inimigo" }), Padeiro: pessoa("Padeiro", 999) };
   for (let i = 1; i <= 21; i++) cheio[`Amigo ${i}`] = pessoa(`Amigo ${i}`, 10 + i, { relacao: "amigo" });

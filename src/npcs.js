@@ -504,6 +504,65 @@ export function ordemDaImportancia(npcs, contexto) {
     .map((x) => x.n);
 }
 
+/* ============================================================
+   O FIGURANTE É DE PASSAGEM (Fase MM, MM8d)
+
+   A MM8c-2 pôs quem importa à frente; o figurante (peso 0) continuava a
+   ocupar os lugares que sobrassem. Agora ele deixa de os ocupar — mesmo
+   com lugar vazio — quando não tem INVESTIMENTO, não é do elenco e não
+   está na cena. NADA SE APAGA do registo: a ficha fica, o Códex conta-a,
+   e ela volta à lista no dia em que a cena a trouxer de volta.
+
+   INVESTIMENTO é o que a ficha já guarda, e só isso (a MM8e trará os
+   "dias vistos"; aqui não há campo novo):
+     · laço comigo (`laco`, rompido também);
+     · consultas (`consultas` > 0 — já se lhe arrancou informação);
+     · uma relação que não é neutra (`relacao` fora de SEM_PESO);
+     · um segredo registado (`segredo` — o prompt chama-lhe "a memória do
+       enredo", e é o Narrador que o anota quando importa);
+     · e, pelo contexto que o App dá: anda comigo (grupo), é pedido numa
+       missão (missao), é do elenco (elenco).
+   PRESENTE é quem a cena cita agora (`emCena`) ou quem o Mestre anotou
+   nos últimos `FIGURANTE.janela` turnos de registo — é o figurante da
+   cena de agora, que ainda pode ser o assunto do turno seguinte.
+
+   "Visto em dois dias ou mais" NÃO se deixa medir honestamente com o que
+   o registo tem: `conhecidoEm` é o primeiro dia, e `ultimaVez` é um
+   contador de turnos sem dia. Fica para a MM8e, com o seu campo.
+   ============================================================ */
+export const FIGURANTE = {
+  janela: 3,
+  relacoesSemPeso: ["", "neutro", "desconhecido"],
+};
+
+export function investimentoDe(n, contexto) {
+  const c = contexto && typeof contexto === "object" ? contexto : {};
+  if (!n || typeof n !== "object") return [];
+  const nome = semAcento(n.nome);
+  const em = (lista) => !!nome && Array.isArray(lista) && lista.some((x) => semAcento(x && typeof x === "object" ? x.nome : x) === nome);
+  const out = [];
+  if (garantirLaco(n.laco)) out.push("laço");
+  if (contagem(n.consultas) > 0) out.push("consultas");
+  if (!FIGURANTE.relacoesSemPeso.includes(semAcento(n.relacao))) out.push("relação");
+  if (String(n.segredo || "").trim()) out.push("segredo");
+  if (em(c.grupo)) out.push("grupo");
+  if (em(c.missao)) out.push("missão");
+  if (em(c.elenco)) out.push("elenco");
+  return out;
+}
+
+/* De passagem: sem investimento, fora do elenco e fora da cena. `agora` é
+   o contador de hoje (sem ele, o maior do registo). */
+export function ehDePassagem(n, contexto, agora = 0) {
+  if (!n || typeof n !== "object") return false;
+  if (investimentoDe(n, contexto).length) return false;
+  const c = contexto && typeof contexto === "object" ? contexto : {};
+  const nome = semAcento(n.nome);
+  if (nome && Array.isArray(c.emCena) && c.emCena.some((x) => semAcento(x && typeof x === "object" ? x.nome : x) === nome)) return false;
+  const v = marcaDe(n);
+  return !(v >= LIMITE_DO_CONTADOR || (Number(agora) || 0) - v < FIGURANTE.janela);
+}
+
 /* O TETO DAS PESSOAS CONHECIDAS, em pessoas E em caracteres. As 22 já
    eram lei; os caracteres não: uma ficha com notas longas do Narrador
    fazia a mesma lista de 22 custar o dobro. Quem não cabe sai pela
@@ -513,8 +572,11 @@ export const TETO_DAS_PESSOAS = { pessoas: 22, chars: 3200 };
 /* Resumo compacto do elenco para o prompt — UMA linha por pessoa, as mais
    recentes/relevantes primeiro. Teto rígido para nunca inflar o prompt. */
 export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, contexto = null) {
-  /* MM8c-2: por importância, a recência desempata */
-  const ord = ordemDaImportancia(npcs, contexto).slice(0, limite);
+  /* MM8c-2: por importância, a recência desempata. MM8d: e quem é de
+     passagem não ocupa lugar nenhum */
+  const reg = normalizarRecencia(npcs && typeof npcs === "object" ? npcs : {}) || {};
+  const agora = retomarContador(reg);
+  const ord = ordemDaImportancia(reg, contexto).filter((n) => !ehDePassagem(n, contexto, agora)).slice(0, limite);
   if (!ord.length) return "";
   const linhas = ord.map((n) => {
     const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);

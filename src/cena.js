@@ -23,7 +23,7 @@
 
 /* MM8c-1: a ordem é a do registo, e só ele a sabe. MM8c-2: por importância,
    com a recência a desempatar */
-import { ordemDaImportancia } from "./npcs.js";
+import { ordemDaImportancia, ehDePassagem, normalizarRecencia, retomarContador } from "./npcs.js";
 
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
 const norm = (s) => semAcento(s).toLowerCase().trim();
@@ -300,7 +300,7 @@ function comTeto(itens, teto, texto, protegido = () => false) {
 }
 
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [] } = {}) {
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [] } = {}) {
   const { aqui: aqui0, longe: longe0 } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
   if (!aqui0.length && !longe0.length) return "";
   /* a ordem do registo: quem importa primeiro, a recência desempata */
@@ -312,7 +312,12 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
   /* quem anda comigo primeiro, depois quem a cena põe aqui, depois o resto por importância */
   const peso = (n) => (noGrupo.has(norm(n.nome)) ? 0 : naCena.has(norm(n.nome)) ? 1 : 2);
   const aqui = [...aqui0].sort((a, b) => peso(a) - peso(b) || rank(a) - rank(b));
-  const longe = [...longe0].sort((a, b) => rank(a) - rank(b));
+  /* MM8d: quem está longe e é de passagem (sem laço, sem relação, sem
+     segredo, fora do elenco, do grupo e das missões) não entra no LONGE —
+     nem conta no +N, porque não é gente que a cena possa pedir */
+  const agora = retomarContador(normalizarRecencia(npcs && typeof npcs === "object" ? npcs : {}) || {});
+  const contexto = { grupo: comGrupo, elenco, emCena, missao };
+  const longe = longe0.filter((n) => !ehDePassagem(n, contexto, agora)).sort((a, b) => rank(a) - rank(b));
   const ta = comTeto(aqui, TETO_DO_QUEM.aqui, (n) => `${n.nome} (${n.motivo})`, protegido);
   const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`);
   const linhaAqui = ta.linhas.length ? `${ta.linhas.join(" · ")}${ta.fora ? ` · +${ta.fora}` : ""}` : "ninguém do registro";

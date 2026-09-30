@@ -23,7 +23,15 @@ const t = (nome, cond, extra = "") => {
 };
 const sec = (s) => console.log("\n" + s);
 const RELOGIO = 1759100000000;
-const pessoa = (nome, ultimaVez, extra = {}) => ({ ...criarNPC(nome, { papel: "ferreiro", ...extra }), ultimaVez });
+/* MUDADO NA MM8d (30/09), com o motivo: esta suíte prova TETOS e a régua
+   da RECÊNCIA, e enchia as listas com fichas sem investimento. Desde a MM8d
+   uma ficha sem laço, relação, segredo nem consultas, fora do elenco e da
+   cena, é "de passagem" e não ocupa lugar — as listas desta suíte ficariam
+   vazias e não provariam teto nenhum. A gente daqui passa a ser "amigo":
+   todas com o MESMO peso, logo a ordem entre elas continua a ser a da
+   recência, que é o que as asserções medem. Quem precisa de ser outra
+   coisa (o inimigo, o sem relação) continua a dizê-lo em `extra`. */
+const pessoa = (nome, ultimaVez, extra = {}) => ({ ...criarNPC(nome, { papel: "ferreiro", relacao: "amigo", ...extra }), ultimaVez });
 const nomesDe = (lista) => lista.map((n) => n.nome);
 
 /* ============================================================ */

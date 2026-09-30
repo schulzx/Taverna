@@ -127,16 +127,44 @@ export const TETO_DO_CANONE = { pessoas: 20, chars: 2400 };
 
 const ehPessoaDoCanone = (f) => /pessoa/i.test(String((f && f.tipo) || ""));
 
+/* ---------------- A PESSOA QUE JÁ FOI DITA (Fase MM, MM8d) ----------------
+   O cânone e o registo copiam gente um do outro (o App põe no registo toda
+   pessoa do cânone, com os mesmos campos), e a mesma pessoa subia duas
+   vezes: na lista das PESSOAS CONHECIDAS e no CÂNONE. Uma pessoa do cânone
+   deixa de se repetir quando a linha dela nas PESSOAS CONHECIDAS deste
+   turno JÁ DIZ tudo o que o cânone diz — papel, gênero, lugar, estado e
+   notas, cada um por inteiro. Se o cânone sabe uma palavra a mais, a
+   linha dele fica: nenhum fato sai do prompt por isto.
+   `jaDitos` é o texto das PESSOAS CONHECIDAS, como o prompt o monta. */
+const semAcentoCanone = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+export function linhasJaDitas(texto) {
+  const out = new Map();
+  for (const l of String(texto || "").split("\n")) {
+    const m = l.match(/^• ([^(—]+?)(?: \(| —|$)/);
+    if (m) out.set(semAcentoCanone(m[1]), semAcentoCanone(l));
+  }
+  return out;
+}
+function jaFoiDita(nome, f, jaDitos) {
+  if (!(jaDitos instanceof Map)) return false;
+  const linha = jaDitos.get(semAcentoCanone(nome));
+  if (!linha) return false;
+  /* "vivo" é o que a linha do registo cala por ser o normal: calado, está dito */
+  return ["papel", "genero", "local", "status", "notas"].every((k) => { const v = String((f && f[k]) || "").trim(); return !v || (k === "status" && semAcentoCanone(v) === "vivo") || linha.includes(semAcentoCanone(v)); });
+}
+
 export function formatarCanone(canone, opcoes = null) {
   if (!canone || typeof canone !== "object") return "";
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const teto = o.teto && typeof o.teto === "object" ? o.teto : null;
   let fora = new Set();
+  /* MM8d: quem as PESSOAS CONHECIDAS já disseram por inteiro não se repete — nem gasta o teto */
+  for (const [nome, f] of Object.entries(canone)) if (f && ehPessoaDoCanone(f) && jaFoiDita(nome, f, o.jaDitos)) fora.add(nome);
   if (teto) {
     const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
     const ordem = new Map(ordemDaImportancia(o.npcs, { grupo: o.grupo, elenco: o.elenco }).map((n, i) => [semAc(n.nome), i]));
     const comigo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => semAc(g && g.nome)));
-    const pessoas = Object.entries(canone).map(([nome, f], i) => ({ nome, f, i })).filter((x) => x.f && ehPessoaDoCanone(x.f));
+    const pessoas = Object.entries(canone).map(([nome, f], i) => ({ nome, f, i })).filter((x) => x.f && ehPessoaDoCanone(x.f) && !fora.has(x.nome));
     const rank = (x) => (comigo.has(semAc(x.nome)) ? -1 : ordem.has(semAc(x.nome)) ? ordem.get(semAc(x.nome)) : Infinity);
     pessoas.sort((a, b) => rank(a) - rank(b) || b.i - a.i);
     let n = 0, gasto = 0;
@@ -329,7 +357,7 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
   /* MM8c-1: o cânone do Narrador tem teto nas pessoas; `recencia.npcs` é o
      registo, que diz quem foi visto por último (sem ele, conta a ordem de
      entrada no cânone) */
-  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, elenco: recencia && recencia.elenco, grupo: personagem.grupo });
+  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, elenco: recencia && recencia.elenco, grupo: personagem.grupo, jaDitos: linhasJaDitas(npcsInfo) });
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
   const npcsTexto = npcsInfo || "";

@@ -15,7 +15,40 @@ Formato:
 ```
 
 ---
-## 30/09 04:56 · v9.327 · MM8c-2 · quem importa, e não quem foi visto por último · commit (o hash vai no próximo bloco)
+## 30/09 05:11 · v9.328 · MM8d · o figurante é de passagem · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a quarta subetapa do elenco. Com a MM8c-2 o figurante já pesava 0, mas ainda
+  ocupava os lugares vazios das PESSOAS CONHECIDAS e da lista de longe.
+- **estado inicial:** verde (MM8c-2 no ar, `c3b9a7a`).
+- **bastão:** tomado por mim para duas linhas em `enviar` (deslocamento zero); devolvido com este
+  commit.
+- **backend:** quem não tem investimento, não é do elenco e não está em cena **deixa de ocupar
+  lugar**, mesmo com lugar vazio. Investimento, só com o que a ficha já guarda: laço (rompido
+  também), consultas, relação que não seja neutra, um segredo registado; e do contexto, o grupo, a
+  missão ativa, o elenco. "Presente" é quem a cena cita agora ou o Mestre anotou nos últimos 3
+  turnos. **"Visto em dois dias ou mais" não se mede honestamente** (o registo só guarda o primeiro
+  dia e um contador sem data): fica para a MM8e, com o campo dela. **Nada se apaga**: o registo fica
+  byte a byte igual e o Códex conta o mesmo. E **o cânone deixa de repetir** a pessoa cuja linha nas
+  PESSOAS CONHECIDAS já diz tudo o que ele diz, campo a campo — nunca sai um fato.
+- **orquestrador:** a fiação que o backend deixou como opcional não era — sem ela, **quem a missão
+  ativa procura (o Orin da pista da MM13, o dador) sairia das pessoas conhecidas** por não ter laço.
+  O App passa agora a cena e a missão às duas listas.
+- **o ganho (200 turnos):** campanha contida — PESSOAS CONHECIDAS 22 → 6 pessoas, 2 947 → 890
+  caracteres; lista de longe 542 → 354. Média: 22 → 5, 3 009 → 694; 586 → 268. **Cerca de 2,1 a 2,6
+  mil caracteres a menos por turno nas campanhas comuns.** Na solta quase nada muda (muita gente
+  com segredo), e o pior caso do prompt fica igual (81 397 com o orçamento cheio). O cânone
+  duplicado: onde o App copia a pessoa do cânone para o registo com os mesmos campos, 735 → 0 /
+  1 771 → 0 / 2 388 → 2 354.
+- **decisões médias tomadas:**
+  - **O segredo registado conta como investimento** — é "a memória do enredo", e é o Narrador que
+    o anota quando importa.
+  - **A lista dobrada em Gestão › Pessoas não se tocou** — é tela, e a mesa de design espera a
+    palavra da pessoa.
+- **a sonda:** não se move (92/157).
+- **para quem joga:** o Mestre deixa de gastar a memória com quem passou uma vez, e guarda-a para
+  quem importa — e para quem a história manda procurar.
+
+## 30/09 04:56 · v9.327 · MM8c-2 · quem importa, e não quem foi visto por último · commit `c3b9a7a`
 
 - **por que andou:** a terceira subetapa do elenco. O Narrador recebia as 22 pessoas vistas
   mais recentemente; o vilão ausente há duas semanas saía da memória e o padeiro de ontem ficava.
