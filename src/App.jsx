@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
+import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
+import { elencoDoMundo, elencoParaPovoar } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
@@ -5268,7 +5269,7 @@ function gerarBancoNomes(mundo) {
   const lex = mundo && mundo.lexico;
   const cidades = cidadesDo(lex) || (() => { const a = []; for (let i = 0; i < 8; i++) a.push(nomeCidade(g)); return a; })();
   const tavernas = tavernasDo(lex) || (() => { const a = []; for (let i = 0; i < 4; i++) a.push(nomeTaverna(g)); return a; })();
-  const elenco = elencoDiverso(g, 6, lex);
+  const elenco = []; // MM8c-2: a gente por conhecer vem por turno, de elencoParaPovoar — não daqui
   return { cidades: [...new Set(cidades)], tavernas: [...new Set(tavernas)], elenco };
 }
 
@@ -5781,6 +5782,21 @@ export default function Taverna() {
   };
 
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
+  /* MM8c-2: o contexto e os nomes do elenco desta campanha — a gente que
+     PESA na narração (resumoCenaPrompt, resumoNPCsParaPrompt, o cânone),
+     não a lista para povoar (essa é `elencoParaPovoar`, mais abaixo). */
+  const contextoDoElenco = () => ({ genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, espinha: espinhaRef.current, guildas: guildasRef.current, base: baseMundoRef.current });
+  const elencoCacheRef = useRef(null);
+  const nomesDoElenco = () => {
+    try {
+      const semente = sementeMundo(), mapa = mapaRef.current, ctx = contextoDoElenco();
+      const c = elencoCacheRef.current;
+      if (c && c.semente === semente && c.mapa === mapa && c.espinha === ctx.espinha && c.guildas === ctx.guildas && c.base === ctx.base) return c.nomes;
+      const nomes = elencoDoMundo(semente, mapa, ctx).pessoas.map((p) => p.nome);
+      elencoCacheRef.current = { semente, mapa, espinha: ctx.espinha, guildas: ctx.guildas, base: ctx.base, nomes };
+      return nomes;
+    } catch (e) { calou("nomesDoElenco", e); return []; }
+  };
   /* A SEMENTE DA FUGA — UMA FUNÇÃO SÓ para a prévia (antes do clique) e o
      clique (`fugirDaLuta`) nunca divergirem: mesmo mundo, mesmo dia, mesma
      rodada, mesmo dado. `comb` é o combate (ref ou estado — os dois têm
@@ -11756,7 +11772,7 @@ export default function Taverna() {
         const citadosAgora = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ");
         emCenaAgora = Object.keys(npcsRef.current || {}).filter((nome) => citadosAgora.includes(nome));
       } catch { emCenaAgora = []; }
-      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora });
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco() });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
       /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —
@@ -11805,12 +11821,12 @@ export default function Taverna() {
        muda sem haver turno (recalibrar, carregar save). */
     systemRef.current = montarSystemPrompt(
       nomeCampanhaRef.current || nomeCampanha, mundoAtual(), persAtual || personagemRef.current || personagem,
-      canoneRef.current, bancoNomesRef.current,
+      canoneRef.current, { ...bancoNomesRef.current, elenco: (() => { try { return elencoParaPovoar(sementeMundo(), mapaRef.current, { ...contextoDoElenco(), dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); } catch (e) { calou("elencoParaPovoar", e); return []; } })() },
       (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
-      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current),
+      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco() }),
       tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
-      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto */
-      { npcs: npcsRef.current },
+      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */
+      { npcs: npcsRef.current, elenco: nomesDoElenco() },
     );
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);

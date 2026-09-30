@@ -306,7 +306,16 @@ sec("7. o pior caso COM GENTE (Fase MM, MM8c-1)");
   };
   const pers20 = { ...pers, nivel: 20, vidaMax: 200, manaMax: 120 };
   const mundo = { genero: "Fantasia medieval", lexico: LEX_CHEIO };
-  const banco = { elenco: [], cidades: [], tavernas: [] };
+  /* MM8c-2 (30/09): O BANCO DE NOMES NO TETO. Até aqui ele entrava VAZIO
+     nesta conta, e no jogo ele leva as cidades prontas, as tavernas e a
+     gente por conhecer (que desde a MM8c-2 é o elenco por perto, e mora no
+     ESTADO DESTE TURNO). Entra no pior caso com nomes compridos, porque é
+     prompt de todos os turnos. */
+  const banco = {
+    cidades: Array.from({ length: 8 }, (_, i) => `Cidade Longa do Norte ${i}`),
+    tavernas: Array.from({ length: 4 }, (_, i) => `A Taverna do Corvo Torto ${i}`),
+    elenco: Array.from({ length: 6 }, (_, i) => ({ nome: `Pessoa de Nome Composto ${i}`, genero_pessoa: "mulher", raca: "meio-elfa", ocupacao: "vendedor de ervas", traco: "desconfiada e calada" })),
+  };
   const vazio = montarSystemPrompt("C", mundo, pers20, {}, banco, "", "", "", "", "", "", "Mortal", piorReal).length;
   const CABECALHOS = 200;   // "═══ CÂNONE (VERDADES…) ═══" e a moldura
   const orcamento = TETO_DAS_PESSOAS.chars + TETO_DO_CANONE.chars + CABECALHOS;

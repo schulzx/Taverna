@@ -266,7 +266,7 @@ O limite é o que um commit revertido não desfaz.
     que a gente deixou de crescer com a campanha (187 pessoas custam o mesmo que 50).
     **E os lugares e itens do cânone também crescem sem teto** (e o Cronista recebe o cânone
     inteiro e todos os nomes) — não tapados nesta etapa.
-  - [ ] **MM8c-2 · a pauta leva quem importa** · sem campo de save (depois da MM8b)
+  - [x] **MM8c-2 · a pauta leva quem importa** · feito 30/09, v9.327 · sem campo de save
     `resumoNPCsParaPrompt` por importância (grupo, laço, inimigo/rival, elenco, só depois
     recência); o LONGE do rodapé com teto; o "ELENCO DIVERSO PRONTO" (hoje `Math.random`) passa
     a ser o elenco por encontrar; a recência que zera no load e o vilão preso no topo,

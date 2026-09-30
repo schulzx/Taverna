@@ -79,7 +79,13 @@ sec("3. a recência: o relógio que prendia o vilão no topo");
   for (let i = 1; i <= 150; i++) { cont++; r = { ...r, [`Q${i}`]: pessoa(`Q${i}`, cont) }; }
   const ordem = nomesDe(ordemDaRecencia(r));
   t("150 turnos depois, o vilão está abaixo de quem se viu agora", ordem.indexOf("Vilao") > ordem.indexOf("Q150") && ordem.indexOf("Vilao") === 151);
-  t("e sai das 22 do prompt", !resumoNPCsParaPrompt(r).includes("• Vilao"));
+  /* MOVIDA NA MM8c-2 (30/09), com o motivo: "e sai das 22 do prompt" era a
+     consequência da recência quando o prompt só lia a recência. Agora ele
+     lê a importância e o Vilao é inimigo: fica. A prova da régua mede a
+     recência onde ela vive (acima); e o prompt, sem a relação, ainda o tira. */
+  const semRelacao = Object.fromEntries(Object.entries(r).map(([k, n]) => [k, { ...n, relacao: "desconhecido" }]));
+  t("e, sem ser inimigo, sai das 22 do prompt (a recência desempata)", !resumoNPCsParaPrompt(semRelacao).includes("• Vilao"));
+  t("sendo inimigo, fica nas 22: a importância manda (MM8c-2)", resumoNPCsParaPrompt(r).includes("• Vilao"));
   t("a leitura também conserta: um relógio nunca fica abaixo de um contador", nomesDe(ordemDaRecencia(reg)).slice(0, 2).join() === "Amiga,Vilao");
   t("no empate, a ordem do registo (o sort estável de antes)", nomesDe(ordemDaRecencia({ a: pessoa("A", 5), b: pessoa("B", 5), c: pessoa("C", 5) })).join() === "A,B,C");
 }
@@ -181,7 +187,14 @@ sec("7. três campanhas de 200 turnos");
     t(`${c.id}: sem o conserto, os dois relógios estavam no topo ao fim de 200 turnos`, cru[0].nome === "Ilsa Marés" && cru[1].nome === "Morvath, o Sem-Rosto");
     let depois = carregado, cont = retomarContador(carregado);
     for (let i = 1; i <= TETO_DAS_PESSOAS.pessoas; i++) { cont++; depois = { ...depois, [`Nova ${i}`]: pessoa(`Nova ${i}`, cont) }; }
-    t(`${c.id}: depois do load, 22 pessoas anotadas tiram o vilão das 22`, !resumoNPCsParaPrompt(depois).includes("Morvath") && !resumoNPCsParaPrompt(depois).includes("Ilsa Marés"));
+    /* MOVIDA NA MM8c-2 (30/09), com o motivo: esta linha provava a RÉGUA DA
+       RECÊNCIA pelo prompt ("22 anotadas tiram o vilão das 22"). Desde a
+       MM8c-2 o prompt ordena por IMPORTÂNCIA, e um inimigo (o vilão) e uma
+       amiga (Ilsa) ficam nas 22 por serem quem são — é exatamente o que a
+       etapa pede ("o vilão antes do padeiro"). A régua da recência não
+       mudou, e a prova passa a lê-la onde ela vive: `ordemDaRecencia`. */
+    const rec = ordemDaRecencia(depois).map((n) => n.nome);
+    t(`${c.id}: depois do load, 22 pessoas anotadas passam à frente do vilão na recência`, rec.indexOf("Morvath, o Sem-Rosto") >= TETO_DAS_PESSOAS.pessoas && rec.indexOf("Ilsa Marés") >= TETO_DAS_PESSOAS.pessoas);
     t(`${c.id}: e o contador retomado é o do último turno anotado`, retomarContador(r.npcs) <= r.contador && retomarContador(carregado) >= retomarContador(r.npcs));
   }
 }
@@ -246,12 +259,20 @@ sec("9. a fiação no App.jsx (prova por texto)");
   /* ponto 8 — o QUEM do rodapé recebe emCena (citados nas 2 últimas falas) */
   tem("o rodapé calcula quem foi citado nas duas últimas falas do Mestre",
     "(mensagensRef.current || []).filter((m) => m && m.autor === \"mestre\").slice(-2).map((m) => m.texto).join(\" \");");
+  /* MOVIDA NA MM8c-2 (30/09), com o motivo: a MM8c-2 acrescentou `elenco:
+     nomesDoElenco()` ao final desta chamada, para o QUEM (perto e longe)
+     pesar também pelo elenco (MM8b). O texto exato mudou; o que o ponto 8
+     prova (emCena chegando a resumoCenaPrompt) continua verdadeiro. */
   tem("e manda isso como emCena para resumoCenaPrompt",
-    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora });");
+    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco() });");
 
-  /* ponto 9 — o cânone por recência: o 14º argumento na chamada por turno */
+  /* ponto 9 — o cânone por recência: o 14º argumento na chamada por turno.
+     MOVIDA NA MM8c-2 (30/09), com o motivo: o banco de nomes (5º
+     argumento) passou a levar `elenco: elencoParaPovoar(...)` e este
+     último objeto ganhou `elenco: nomesDoElenco()` ao lado de `npcs` — o
+     cânone agora pesa pelo elenco também, não só pela recência. */
   tem("a chamada por turno de montarSystemPrompt manda o registo para a recência do cânone",
-    "tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),\n      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto */\n      { npcs: npcsRef.current },\n    );");
+    "tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),\n      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */\n      { npcs: npcsRef.current, elenco: nomesDoElenco() },\n    );");
 }
 
 console.log(`\nMM8c-1 · os tetos das pessoas: ${ok} passaram, ${mal} falharam`);

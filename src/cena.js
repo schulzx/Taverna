@@ -21,8 +21,9 @@
    corrigir quando ele escorregar.
    ============================================================ */
 
-/* MM8c-1: a ordem da recência é a do registo, e só ele a sabe */
-import { ordemDaRecencia } from "./npcs.js";
+/* MM8c-1: a ordem é a do registo, e só ele a sabe. MM8c-2: por importância,
+   com a recência a desempatar */
+import { ordemDaImportancia } from "./npcs.js";
 
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
 const norm = (s) => semAcento(s).toLowerCase().trim();
@@ -267,8 +268,9 @@ export function notaVazamento(vazamentos) {
    As duas listas deste bloco eram o registo INTEIRO, em todo turno: numa
    campanha de 200 turnos com 107 pessoas, 6 mil caracteres só de nomes
    (medido no estudo da MM8). Agora cada uma tem teto de pessoas e de
-   caracteres, e quem não cabe sai pela RECÊNCIA — o critério que o
-   registo já usava para as PESSOAS CONHECIDAS (`ordemDaRecencia`).
+   caracteres, e quem não cabe sai pela ordem do registo — desde a MM8c-2
+   a IMPORTÂNCIA (`ordemDaImportancia`: grupo, laço, relação, elenco),
+   com a recência a desempatar, a mesma das PESSOAS CONHECIDAS.
 
    Quem VIAJA COMIGO e quem a cena diz que está AQUI (`emCena`) nunca saem
    do "aqui", nem que passem do teto: tirar do texto quem está sentado à
@@ -298,16 +300,16 @@ function comTeto(itens, teto, texto, protegido = () => false) {
 }
 
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [] } = {}) {
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [] } = {}) {
   const { aqui: aqui0, longe: longe0 } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
   if (!aqui0.length && !longe0.length) return "";
-  /* a recência do registo: o índice na ordem da mais recente */
-  const ordem = new Map(ordemDaRecencia(npcs).map((n, i) => [norm(n.nome), i]));
+  /* a ordem do registo: quem importa primeiro, a recência desempata */
+  const ordem = new Map(ordemDaImportancia(npcs, { grupo: comGrupo, elenco }).map((n, i) => [norm(n.nome), i]));
   const rank = (n) => (ordem.has(norm(n.nome)) ? ordem.get(norm(n.nome)) : Infinity);
   const noGrupo = new Set((comGrupo || []).map((g) => norm(g && g.nome)));
   const naCena = new Set((Array.isArray(emCena) ? emCena : []).map((x) => norm(x && typeof x === "object" ? x.nome : x)).filter(Boolean));
   const protegido = (n) => noGrupo.has(norm(n.nome)) || naCena.has(norm(n.nome));
-  /* quem anda comigo primeiro, depois quem a cena põe aqui, depois o resto pela recência */
+  /* quem anda comigo primeiro, depois quem a cena põe aqui, depois o resto por importância */
   const peso = (n) => (noGrupo.has(norm(n.nome)) ? 0 : naCena.has(norm(n.nome)) ? 1 : 2);
   const aqui = [...aqui0].sort((a, b) => peso(a) - peso(b) || rank(a) - rank(b));
   const longe = [...longe0].sort((a, b) => rank(a) - rank(b));

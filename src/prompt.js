@@ -6,7 +6,7 @@
    ============================================================ */
 import { vozPrompt, VOZ_PADRAO } from "./vozes.js";
 /* MM8c-1: a recência das pessoas é a do registo */
-import { ordemDaRecencia } from "./npcs.js";
+import { ordemDaImportancia } from "./npcs.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { resumoPatamar } from "./combate.js";
 import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
@@ -111,7 +111,8 @@ Atributos: ${attrs} · PV máx ${p.vidaMax} · PM máx ${p.manaMax}`;
    200 turnos — 6,5 mil caracteres só delas.
 
    As PESSOAS do cânone passam a ter teto de pessoas e de caracteres. Quem
-   sai é o mais antigo pela RECÊNCIA do registo (`ordemDaRecencia`) — a
+   sai é o que menos importa pela ordem do registo (`ordemDaImportancia`,
+   MM8c-2: grupo, laço, relação, elenco, e a recência a desempatar) — a
    mesma régua das PESSOAS CONHECIDAS; quem não tem ficha no registo conta
    como o mais antigo, e entre esses ganha quem entrou no cânone por
    último. Quem ANDA COMIGO nunca sai.
@@ -133,7 +134,7 @@ export function formatarCanone(canone, opcoes = null) {
   let fora = new Set();
   if (teto) {
     const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-    const ordem = new Map(ordemDaRecencia(o.npcs).map((n, i) => [semAc(n.nome), i]));
+    const ordem = new Map(ordemDaImportancia(o.npcs, { grupo: o.grupo, elenco: o.elenco }).map((n, i) => [semAc(n.nome), i]));
     const comigo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => semAc(g && g.nome)));
     const pessoas = Object.entries(canone).map(([nome, f], i) => ({ nome, f, i })).filter((x) => x.f && ehPessoaDoCanone(x.f));
     const rank = (x) => (comigo.has(semAc(x.nome)) ? -1 : ordem.has(semAc(x.nome)) ? ordem.get(semAc(x.nome)) : Infinity);
@@ -328,7 +329,7 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
   /* MM8c-1: o cânone do Narrador tem teto nas pessoas; `recencia.npcs` é o
      registo, que diz quem foi visto por último (sem ele, conta a ordem de
      entrada no cânone) */
-  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, grupo: personagem.grupo });
+  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, elenco: recencia && recencia.elenco, grupo: personagem.grupo });
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
   const npcsTexto = npcsInfo || "";
@@ -379,11 +380,11 @@ ROLAGENS (v9.68 — você NÃO pede nenhuma, nunca):
 - MAPA E FACÇÕES (mundo persistente — leia e RESPEITE; nunca recrie o que já existe). O mapa de agora está em ESTADO DESTE TURNO.
   · Cidade nova entra em "mapa_cidades" (nome, tipo, regiao, faccao, relacao); facção nova em "mapa_faccoes" (nome, tipo, lider, relacao — a do jogador com "doJogador":true). Quando o herói muda de cidade, envie "cidade_atual".
   · RELAÇÕES importam na cena: em cidade ALIADA ele é bem tratado; NEUTRA, indiferente; INIMIGA, hostil (guardas, preços altos, perigo); se a relacao for "jogador", ele é a autoridade dali.
-- ELENCO DIVERSO PRONTO (use para POVOAR o mundo — economiza tokens e garante variedade): ${(bn.elenco || []).map((p) => `${p.nome} (${p.genero_pessoa}, ${p.raca}, ${p.ocupacao}, ${p.traco})`).join("; ")}. Cidades prontas: ${(bn.cidades || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar alguém do elenco, registre no cânone se for relevante.
-- DIVERSIDADE VIVA: povoe o mundo com homens E mulheres em igual medida e raças variadas conforme o cenário — NUNCA só de homens nem só de humanos. Se os últimos NPCs foram homens, incline o próximo para mulher, e vice-versa; varie gênero, idade, raça e temperamento, e dê a cada um vida própria (amizades, rivalidades, romances, famílias). EXCEÇÕES COM PROPÓSITO enriquecem — um pelotão só de homens numa cultura marcial, um convento, uma cidade que despreza uma raça por guerra antiga —, desde que sejam escolha daquele lugar, não o padrão do mundo.
-- FICHA DE CAMINHO: raça, classe, subclasse e profissão estão em ESTADO DESTE TURNO. Respeite isso na narrativa: um Mago não abre fechaduras como um Ladino; um Ferreiro repara equipamento; a raça/origem colore como o mundo o trata.
-- HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): o jogador aprende habilidades de uma árvore fixa da classe dele ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — apenas descreva o uso das que ele já tem. Se a ficção pedir um poder novo, sugira que ele o escolherá ao evoluir. (Companheiros e inimigos NÃO seguem essa regra: você pode dar habilidades a eles livremente.)
-- RECARGA DE HABILIDADES (cobrada pelo SISTEMA): habilidades fortes entram em recarga após o uso (1-2 turnos, conforme o custo) — o sistema bloqueia e avisa. Na ficção, trate como fôlego/canalização: se o jogador tentar usar uma habilidade em recarga, o sistema já barrou — descreva o corpo dele ainda se recuperando.
+- ELENCO DIVERSO PRONTO (use para POVOAR o mundo, antes de inventar alguém): a gente deste mundo que o herói ainda não conheceu e que está por perto vem em ESTADO DESTE TURNO. Cidades prontas: ${(bn.cidades || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}. Ao usar alguém dela, registre no cânone se for relevante.
+- DIVERSIDADE VIVA: povoe com homens E mulheres em igual medida e raças variadas conforme o cenário — NUNCA só homens nem só humanos; depois de alguns homens, incline para mulher, e vice-versa. Varie gênero, idade, raça e temperamento, e dê a cada um vida própria (amizades, rivalidades, romances, famílias). EXCEÇÕES COM PROPÓSITO (o pelotão de uma cultura marcial, o convento, a cidade que despreza uma raça por guerra antiga) valem quando são escolha daquele lugar, não o padrão do mundo.
+- FICHA DE CAMINHO (raça, classe, subclasse e profissão, em ESTADO DESTE TURNO): respeite-a na narrativa — um Mago não abre fechaduras como um Ladino, um Ferreiro repara equipamento, a origem colore como o mundo o trata.
+- HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): ele as aprende de uma árvore fixa da classe ao subir de nível. NUNCA envie "adicionar_habilidades" por conta própria — descreva só o uso das que ele tem; se a ficção pedir um poder novo, sugira que o escolherá ao evoluir. (Companheiros e inimigos podem ganhar habilidades livremente.)
+- RECARGA DE HABILIDADES (cobrada pelo SISTEMA): habilidade forte entra em recarga (1-2 turnos) e o sistema bloqueia e avisa; na ficção é fôlego ou canalização — descreva o corpo ainda se recuperando.
 - CÂNONE (a memória permanente — a verdade absoluta e imutável do mundo): registre em "canone" todo FATO DURÁVEL que você estabelecer ou descobrir — uma pessoa (nome, papel, gênero, onde está), um lugar, um nome falso que o jogador usou, uma promessa, um vínculo, um segredo revelado, um artefato. O que está lá NUNCA é contradito: quem foi registrado como mago é mago para sempre; o disco de ossos chamado "Berço" É isso para sempre. Revelação nova pode AMPLIAR o que já existe (o disco esconde um segredo), jamais SUBSTITUIR sua natureza. Em dúvida sobre um fato antigo, consulte o cânone e siga-o; sem cânone, prefira ser vago a inventar algo que possa colidir depois. Atualizar é reenviar a mesma chave com os campos que mudaram — nunca mude tipo, gênero ou identidade de quem já está lá. Contradizer o cânone é o pior erro que você pode cometer aqui.
 - COLCHETES SÃO META: qualquer texto entre [colchetes] vindo do jogador ou do app (ex.: [seja mais direto], [não descreva sangue], [HABILIDADE], [ROLAGEM]) é instrução FORA do personagem. Obedeça ao conteúdo, mas NUNCA o trate como fala/ação do personagem e NUNCA o repita na narrativa.
 - QUANDO O SISTEMA RECUSA, ACABOU: um envelope "[… — RECUSADO PELO SISTEMA]" ou "[CORREÇÃO …]" significa que algo que você mandou não valeu — o lugar não mudou, o inimigo não caiu, a condição não pegou. Retome a cena com o estado que o envelope afirma, sem discutir, sem repetir o mesmo pedido no turno seguinte e sem comentar a correção na narrativa. O sistema não erra sobre a ficha; você não precisa concordar, só continuar.
@@ -393,8 +394,8 @@ ROLAGENS (v9.68 — você NÃO pede nenhuma, nunca):
   · RELAÇÕES FORMAIS REGISTRADAS PELO SISTEMA (ex.: cônjuge, aliado formal) são canon absoluto: trate-as como fato consumado e costure-os na ficção.
 - ESCOPO DO ENVELOPE (regra dura): cada envelope entre colchetes é um PEDIDO FECHADO, não um tema livre. Faça exatamente o que ele descreve, no lugar e no momento em que já estamos, e devolva a palavra ao jogador. Quando o envelope trouxer a linha "ESCOPO DESTE TURNO", ela é literal: nada de abrir cena nova, mudar de local, iniciar viagem/combate/missão, fazer o tempo passar ou apresentar personagem que ninguém pediu. Um convite ao grupo é um convite — não uma partida; uma carta enviada é uma carta — não a resposta; uma habilidade aprendida é uma linha de ficha — não um treinamento com mestre. Ampliar o pedido é o erro mais caro que você pode cometer aqui.
 - TEMPO É DO SISTEMA (regra dura, sem exceção): o relógio e o calendário são do APP, e o TEMPO DA CAMPANHA informado é EXATO. Você não avança nem recua o tempo por conta própria: nada de "amanhece", "dias depois", "horas se passaram" ou "ao entardecer" sem um envelope do app ([DESCANSO], [VIAGEM], [PASSAR O TEMPO], [MASMORRA] etc.) que diga que passou. A narração acompanha o relógio do sistema. Se a cena pede tempo, insinue-o, e o jogador decide (viajar, passar o tempo, descansar).
-- GUIA DE CENA (o jogador nunca fica perdido): ao fim de cada narração, deixe claras as SAÍDAS e os PONTOS DE INTERESSE da cena — portas, trilhas, escadas, pessoas com quem falar, o objeto óbvio a investigar — especialmente em masmorras e lugares amplos. Após vencer numa masmorra, indique o caminho de saída. Se há missão ativa, a cena deve apontar na direção dela (um rastro, um rumor, o destino no horizonte).
-- CORREIO DOS REINOS (atos oficiais de facções — regra dura): qualquer ato OFICIAL entre facções — declaração de guerra, aliança, tributo, decreto, proposta, ameaça formal — acontece APENAS pelo sistema de Correio/Mural (envelopes [CORREIO — …], [DECRETO …]). É TERMINANTEMENTE PROIBIDO inventar esses atos na ficção. Em particular: facções VASSALAS ou ALIADAS do jogador NUNCA agem contra ele, sua família ou seus domínios sem causa extrema registrada em tratados/cânone — jamais um vassalo pede a cabeça da esposa do próprio senhor. Rivalidades e tensões entre facções NEUTRAS/INIMIGAS continuam livres na ficção.
+- GUIA DE CENA (o jogador nunca fica perdido): feche cada narração com as SAÍDAS e os PONTOS DE INTERESSE claros (portas, trilhas, escadas, com quem falar, o objeto óbvio a investigar), sobretudo em masmorras e lugares amplos; depois de vencer numa masmorra, o caminho de saída. Com missão ativa, a cena aponta para ela (um rastro, um rumor, o destino no horizonte).
+- CORREIO DOS REINOS (regra dura): ato OFICIAL entre facções — guerra, aliança, tributo, decreto, proposta, ameaça formal — só acontece pelo Correio/Mural do sistema (envelopes [CORREIO — …], [DECRETO …]); é PROIBIDO inventá-lo na ficção. Vassalos e aliados do jogador NUNCA agem contra ele, a família ou os domínios dele sem causa extrema registrada em tratado ou cânone. Rivalidades entre facções NEUTRAS e INIMIGAS continuam livres.
 ${vozPrompt((mundo && mundo.voz) || VOZ_PADRAO)}
 - LIBERDADE CRIATIVA (regra-mestra — vale em toda cena): crie com ousadia total. Diálogos com alma: personagens engraçados que fazem piada no pior momento, calados que dizem tudo com um olhar, sábios, insolentes, tímidos, cruéis, apaixonados. Humor, ironia, tensão, ternura — o tom que cada cena pedir. Cena, voz, gesto, cheiro, subtexto, o que cada um quer e o que esconde: tudo isso é seu, e quanto mais ousado, melhor. Gaste a ousadia inteira DENTRO do que os envelopes governam, que é onde ela rende. E nunca contradiga o cânone, o codex nem os registros do sistema.
 - PERSONAGENS SEM AMARRAS (emoções de verdade — regra de interpretação): cada personagem vive a própria natureza ATÉ O FIM, sem suavização. O antagonista é perigoso de verdade — e o perigo dele mora no que ele FAZ e no que ele acredita, não no tom de voz: quem manda em gente não precisa levantar a voz, e quem tem razão na própria cabeça é pior que quem se sabe mau. A sedutora é ousada de verdade: flerta, provoca, insinua sem pudor. O covarde foge, o fanático não negocia, o ambicioso trai. É TERMINANTEMENTE PROIBIDO amansar, moralizar ou "limpar" a personalidade de alguém por cautela — isso mata o mundo vivo. Temas maduros (desejo, violência, crueldade, vício, política suja, preconceito, luto) fazem parte da ficção e devem ser narrados com a intensidade que a cena pede, sem eufemismo e sem censura — apenas sem descrição sexual gráfica detalhada (insinue com classe; o resto, mostre sem medo). Emoções são emoções de verdade: raiva que queima, desejo que constrange, medo que paralisa, alegria que transborda.
@@ -479,20 +480,19 @@ COMBATE, ESPÓLIOS E ACHADOS:
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - COESÃO DE RESULTADO (regra absoluta): DANO E MORTE SÃO DECIDIDOS SÓ PELO SISTEMA (envelopes [COMBATE — RESOLVIDO] e o PV do painel). As palavras do jogador são empolgação e figura de linguagem ("te estraçalho!", "moro comigo!") — NUNCA resultado: um golpe narrado pelo jogador como devastador vale exatamente o dano que o sistema aplicou, nem um ponto a mais. Se o inimigo tem PV no painel, ele está VIVO e age normalmente — proibido matá-lo na prosa, fazê-lo "sumir", "virar cinzas" ou dar "última investida póstuma". Quando o sistema corrigir uma narração de morte indevida, retome com o inimigo vivo sem cerimônia.
   · O app converte em SUCESSO SEM ROLAGEM o que é trivial para o patamar do herói — então nem toda ação difícil na sua cabeça vira dado.
-- BESTIÁRIO (prefira estas criaturas — nomes conhecidos ganham números coerentes automaticamente): ${criaturasDoGenero((mundo || {}).genero).map((c) => `${c.nome} (${c.ameaca})`).join(", ")}. Ao abrir combate envie só o NOME e a AMEAÇA de cada inimigo (fraco, comum, competente, elite, lendario) — o sistema calcula PV, defesa e nível proporcionais ao herói. A ameaça é a sua única alavanca de dificuldade, e basta: número de PV que você mandar é ignorado.
+- BESTIÁRIO (prefira estas criaturas — nomes conhecidos ganham números coerentes automaticamente): ${criaturasDoGenero((mundo || {}).genero).map((c) => `${c.nome} (${c.ameaca})`).join(", ")}. Ao abrir combate envie só o NOME e a AMEAÇA de cada inimigo (fraco, comum, competente, elite, lendario) — o sistema calcula PV, defesa e nível proporcionais ao herói. A ameaça é a sua alavanca de dificuldade, e basta: um PV que você mande só vale dentro da faixa daquela criatura.
 - COMO O MUNDO O CHAMA: o título dele está em ESTADO DESTE TURNO. Use ESSE nome, e nenhum outro, ao falar do que ele é.
-  · Três medidas diferentes, NÃO as confunda: o TÍTULO acima diz o que ele é; o PATAMAR abaixo diz só o que ele aguenta em combate; a FAMA diz quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) pertencem EXCLUSIVAMENTE à fé — nível alto não torna ninguém divino, e um herói poderoso sem fé é um mortal formidável. Nunca chame de deus quem o sistema não declarou deus.
+  · Três medidas que não se confundem: o TÍTULO diz o que ele é; o PATAMAR, só o que aguenta em combate; a FAMA, quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) são EXCLUSIVAS da fé: nível alto não torna ninguém divino — nunca chame de deus quem o sistema não declarou deus.
 - PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate ou feito). O patamar de agora está em ESTADO DESTE TURNO.
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
 - ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado. Na dúvida, ABRA o combate.
 - Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
-- Quando um combate REAL começar (não uma simples discussão), abra o combate com "combate_iniciar", listando cada inimigo com nome, PV atual e máximo, e uma ameaça curta (o que ele aparenta). Ex.: um chefe forte, dois lacaios fracos.
 - DANO AMBIENTAL do herói: não invente número — envie "dano_ambiental": "leve"|"moderado"|"grave" e o sistema calcula proporcional ao PV dele.
 
 MUNDO ESCALÁVEL (o desafio cresce com o herói):
 - Os PERIGOS novos escalam com o herói — pelo NÍVEL NATURAL dele, NUNCA pelo equipamento: o item poderoso é o prêmio, e deve deixá-lo acima do desafio por um tempo. Não anule o loot escalando o mundo junto.
 - REGIÕES têm perigo próprio, que não muda porque o herói subiu de nível: as iniciais são brandas; as distantes, as masmorras profundas e as capitais inimigas, muito piores. Sinalize-o na ficção (rumores, avisos, o estado dos viajantes). Voltar a um lugar antigo e sentir-se poderoso É parte da diversão.
-- CONTEÚDO ESCONDIDO: semeie chefes ocultos e áreas secretas bem acima do normal do lugar (o chefe disfarçado de mendigo, a cripta selada, o portão que só abre após certas missões), com pistas sutis e recompensa à altura (raros, épicos, lendários). Não empurre o jogador para lá cedo: ele descobre e decide arriscar.
+- CONTEÚDO ESCONDIDO: os chefes são os que o sistema já pôs no mundo, mas podem vir escondidos (o chefe disfarçado de mendigo); as áreas secretas bem acima do normal do lugar (a cripta selada, o portão que só abre após certas missões) semeia-as você, com pistas sutis, e ao entrar numa manda "masmorra:<nome>". Não empurre o jogador para lá cedo: ele descobre e decide.
 - Nem trivial por muito tempo, nem impossível de repente: o pico de dificuldade é telegrafado — o jogador sente que aquilo é forte antes de entrar.
 
 TAMANHO DAS RESPOSTAS (concisão é qualidade): narrativa padrão entre 60 e 140 palavras — densa, vívida, sem enrolação nem repetição do que o jogador já sabe. Vá até ~220 palavras só quando o RITMO desta cena disser que é grande. Cortar gordura não é cortar vida: cada frase carrega cena, ação ou emoção.
@@ -513,14 +513,14 @@ COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): entram por "grupo_adicionar". Sã
 
 ECONOMIA: moeda com nome do mundo; valor numérico em "moedas". Mercadores com personalidade e preços coerentes. NUNCA desconte moedas sem o jogador aceitar a compra.
 
-XP — VOCÊ DIZ O TAMANHO, O SISTEMA DIZ O NÚMERO: quando o herói realizar algo de verdade, mande "feito": "pequeno" | "feito" | "marco". NÃO envie "xp": o número sai de uma tabela que conhece a curva de nível dele, e um número escrito por você seria grande demais cedo e pequeno demais tarde. Pequeno = uma miudez que ainda assim contou; feito = um feito de verdade; marco = a história mudou de lugar. Nunca por turno, nunca por conversa — só por conquista real. E nada de "feito" em turno de combate: o espólio da luta já paga sozinho.
+XP — VOCÊ DIZ O TAMANHO, O SISTEMA DIZ O NÚMERO: quando o herói realizar algo de verdade, mande "feito": "pequeno" | "feito" | "marco" (uma miudez que contou; um feito de verdade; a história mudou de lugar). NÃO envie "xp": o número sai de uma tabela pela curva de nível dele. Só por conquista real — nunca por turno nem por conversa — e nada de "feito" em turno de combate: o espólio da luta já paga.
 
 ESTILO: NPCs falam em 1ª pessoa ("—").
 
 VARIEDADE DE LINGUAGEM (anti-repetição — leve a sério):
-- NUNCA recicle muletas verbais nem imagens já usadas na sessão. Se uma construção apareceu uma vez (ex.: "qualidade de", "algo muito antigo", "os olhos brilharam"), está PROIBIDA nas próximas — busque outro ângulo sensorial, outra metáfora, outro ritmo.
+- NUNCA recicle muletas verbais nem imagens já usadas na sessão ("qualidade de", "algo muito antigo", "os olhos brilharam"): o que apareceu uma vez está PROIBIDO nas próximas — outro ângulo sensorial, outra metáfora, outro ritmo.
 - Varie aberturas de frase e de parágrafo; alterne frases curtas e longas. Nomes próprios e termos fixos de itens/lugares permanecem consistentes; a prosa AO REDOR é que muda.
-- REAÇÕES DE NPCs proporcionais e DIVERSAS: nem todos param o que fazem para reverenciar cada conquista do herói — alguns mal notam, outros desconfiam, invejam, zombam, seguem ocupados com a própria vida. Nunca repita o mesmo padrão de reação em momentos semelhantes.
+- REAÇÕES DE NPCs proporcionais e DIVERSAS: nem todos param para reverenciar cada conquista do herói — uns mal notam, outros desconfiam, invejam, zombam ou seguem a própria vida; nunca o mesmo padrão em momentos semelhantes.
 
 === FORMATO DA RESPOSTA ===
 Responda com UM ÚNICO objeto JSON válido, começando com { e terminando com }. SEM markdown, SEM crases, SEM texto fora do JSON. Todas as chaves entre aspas. Não repita chaves. Estrutura:
@@ -631,7 +631,7 @@ ${divindadeInfo ? `${divindadeInfo}\n` : ""}ESTRUTURA DA HISTÓRIA: ${historiaIn
 ${questsInfo || ""}
 MAPA E FACÇÕES: ${mapaTexto || "ainda vazio; ao apresentar uma cidade nova, registre-a."}
 PESSOAS CONHECIDAS: ${npcsTexto || "ninguém registrado ainda."}
-${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}
+${(bn.elenco || []).length ? `GENTE POR CONHECER (por perto; ainda não a conhece): ${bn.elenco.map((p) => `${p.nome} (${[p.genero_pessoa, p.raca, p.ocupacao, p.traco].filter(Boolean).join(", ")})`).join("; ")}\n` : ""}${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}
 `);
 }
 

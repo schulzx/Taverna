@@ -15,6 +15,41 @@ Formato:
 ```
 
 ---
+## 30/09 04:56 · v9.327 · MM8c-2 · quem importa, e não quem foi visto por último · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a terceira subetapa do elenco. O Narrador recebia as 22 pessoas vistas
+  mais recentemente; o vilão ausente há duas semanas saía da memória e o padeiro de ontem ficava.
+- **estado inicial:** verde (MM8b no ar, `76a374a`, `c7698c2`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend:** uma tabela de peso — anda com o herói 100, laço com ele 60 (rompido também, é
+  história), inimigo 50, rival/romance/cônjuge 45, família 40, aliado/amigo 30, do elenco 25,
+  morto −40; o desempate é a recência consertada da MM8c-1. Serve às PESSOAS CONHECIDAS, ao LONGE
+  do rodapé e às pessoas do cânone. **Os tetos não mudam: muda quem entra, não quantos.** Numa
+  campanha de 200 turnos com 8 pessoas com história, pela recência entravam 2 das 8 nas 22; pela
+  importância entram as 8. O "ELENCO DIVERSO PRONTO", que saía de `Math.random` e era refeito a
+  cada load, passa a ser **o elenco ainda por conhecer, já estreado e vivo** — da cidade primeiro;
+  a lista vai no fim do prompt, com o estado do turno, para não partir a cache a cada viagem.
+- **as duas contradições antigas do prompt, resolvidas pelo que o código faz:** (1) **o PV que o
+  Narrador manda não é ignorado** — o código usa-o como sugestão, dentro da faixa da criatura, e
+  honra a vida já reduzida; o prompt passa a dizê-lo, e sai o "liste o PV de cada inimigo ao abrir
+  a luta"; (2) **nenhum código regista chefes que o Narrador invente**, mas as áreas secretas sim
+  (`masmorra:<nome>`) — o prompt diz que os chefes são os do sistema, que podem vir escondidos, e
+  que as áreas secretas se semeiam por esse sinal.
+- **UMA CORREÇÃO HONESTA SOBRE A MM8c-0:** a catraca dela media o pior caso com o **banco de nomes
+  vazio**, mas no jogo ele leva 8 cidades, 4 tavernas e 6 pessoas. **Com o banco cheio, a MM8c-0
+  deixava o orçamento cheio a 82 165 — ainda acima do teto**, e a folga de 819 que relatei era
+  falsa. Esta etapa pôs o banco cheio na catraca e encurtou prosa do fixo sem tirar regra: agora
+  a campanha solta mede **81 215** (folga 785) e o orçamento cheio **81 397** (folga 603). A lei do
+  teto passa a valer de facto a partir desta versão, não da anterior.
+- **frontend:** a fiação, e um cache por referência (o cálculo do elenco custa ~40 ms e corria três
+  vezes por turno; a imutabilidade da casa garante que a mesma referência é o mesmo conteúdo).
+- **a prova jogada (payload real):** a linha "GENTE POR CONHECER" leva "Línio da Capa; Ada Semente;
+  Vênia; Jasco da Lareira; Cina do Muro; Zaira do Bando" — **byte a byte** o `elencoParaPovoar`
+  calculado em Node com a semente do save; e a parte fixa não mudou de tamanho entre listas.
+- **a sonda:** não se move (92/157).
+- **para quem joga:** o Mestre deixa de esquecer o rival e o vilão por não os ver há dias, e a
+  gente nova que ele põe em cena passa a ser gente deste mundo, a mesma em todas as sessões.
+
 ## 30/09 03:45 · v9.326 · MM8b · o elenco de 24, com laços e casas · commit `76a374a`
 
 - **por que andou:** a segunda subetapa do elenco (a proposta da pessoa), depois de a MM8c-0 ter

@@ -553,8 +553,14 @@ sec("4. a definição operacional de 'número que muda'");
      A fiação do primeiro dia (frontend, MM13b, 30/09): 14482 -> 14493,
      +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
      entraram acima, dentro de `aplicarResposta` — mesmo motivo, mesmo
-     lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14493/.test(relogio.porque));
+     lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
+     A gente que pesa (frontend, MM8c-2, 30/09): 14493 -> 14499, +6 —
+     o import de elenco.js e o contexto/nomes do elenco, mesmo motivo,
+     mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
+     A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
+     14499 -> 14509, +10 — o cache por identidade (elencoCacheRef), mesmo
+     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14509/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -638,12 +644,14 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:17782 → veredictoDaAcao — MM3b,
+     adjudicador usa (src/App.jsx:17798 → veredictoDaAcao — MM3b,
      frontend, 29/09: re-medido por busca direta no arquivo, não por soma
      de delta, porque a referência já vinha desatualizada de antes desta
      etapa; MM8c-1, frontend, 29/09: 17762 -> 17782, +20 — o mesmo delta
      desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE, re-medido por
-     busca direta) */
+     busca direta; MM8c-2, frontend, 30/09: 17782 -> 17788, +6, depois
+     17788 -> 17798, +10 (o cache por identidade, elencoCacheRef) — o mesmo
+     delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -787,9 +795,15 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
        A fiação do primeiro dia (frontend, MM13b, 30/09): 13008 -> 13019,
        +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-       entraram acima, dentro de `aplicarResposta`. */
+       entraram acima, dentro de `aplicarResposta`.
+       A gente que pesa (frontend, MM8c-2, 30/09): 13019 -> 13025, +6 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
+       13025 -> 13035, +10 — o mesmo degrau desta etapa em
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
+       elencoCacheRef). */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13019").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13035").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -904,8 +918,14 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
        A fiação do primeiro dia (frontend, MM13b, 30/09): 12879 -> 12890,
        +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-       entraram acima, dentro de `aplicarResposta`. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12890" && x.familia === "alcance"));
+       entraram acima, dentro de `aplicarResposta`.
+       A gente que pesa (frontend, MM8c-2, 30/09): 12890 -> 12896, +6 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
+       12896 -> 12906, +10 — o mesmo degrau desta etapa em
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
+       elencoCacheRef). */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12906" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -950,8 +970,14 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
      A fiação do primeiro dia (frontend, MM13b, 30/09): 13024 -> 13035,
      +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-     entraram acima, dentro de `aplicarResposta`. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13035/.test(S.ondeSai));
+     entraram acima, dentro de `aplicarResposta`.
+     A gente que pesa (frontend, MM8c-2, 30/09): 13035 -> 13041, +6 —
+     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+     A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
+     13041 -> 13051, +10 — o mesmo degrau desta etapa em
+     FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
+     elencoCacheRef). */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13051/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

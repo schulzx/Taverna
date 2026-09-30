@@ -305,3 +305,39 @@ export function lacosDe(elenco, nome) {
   return out;
 }
 
+/* ============================================================
+   A GENTE PARA POVOAR (Fase MM, MM8c-2) — o fim do "ELENCO DIVERSO"
+
+   O prompt dava ao Narrador seis nomes para povoar o mundo, e eles saíam
+   de `Math.random` a cada load: a mesma campanha, recarregada, oferecia
+   seis estranhos novos, e o Narrador punha em cena gente que o mundo não
+   tinha. Agora a lista é o ELENCO que o herói ainda não conheceu, que já
+   estreou (`estreia` ≤ hoje) e que está por perto — da cidade onde ele
+   está primeiro, da região depois, do resto do mundo por fim. Os chefes
+   ficam de fora: têm lista própria (`resumoChefesPrompt`) e aparecem
+   quando a história pede, não para povoar uma taverna. Mortos, também.
+
+   Devolve a mesma forma que o banco antigo ({ nome, genero_pessoa, raca,
+   ocupacao, traco }), para o prompt a ler sem saber de onde veio.
+   ============================================================ */
+export const PARA_POVOAR = 6;
+
+export function elencoParaPovoar(semente, mapa, contexto, quantos = PARA_POVOAR) {
+  const o = obj(contexto);
+  let el;
+  try { el = elencoDoMundo(semente, mapa, o); } catch { return []; }
+  const conhecidos = new Set(Object.keys(obj(o.npcs)).map(norm));
+  const dia = Number.isFinite(Number(o.dia)) ? Number(o.dia) : 1;
+  const cidades = Array.isArray(obj(mapa).cidades) ? mapa.cidades.filter((c) => c && c.nome) : [];
+  const regiaoDe = (nome) => ((cidades.find((c) => norm(c.nome) === norm(nome)) || {}).regiao || "");
+  const aqui = norm(o.cidade), regiaoAqui = norm(regiaoDe(o.cidade));
+  const perto = (p) => (aqui && norm(p.cidade) === aqui ? 0 : regiaoAqui && norm(regiaoDe(p.cidade)) === regiaoAqui ? 1 : 2);
+  const n = Math.max(0, Math.floor(Number(quantos) || 0));
+  return el.pessoas
+    .filter((p) => p.fonte !== "chefe" && !p.morto && p.estreia <= dia && !conhecidos.has(norm(p.nome)))
+    .map((p, i) => ({ p, i, d: perto(p) }))
+    .sort((a, b) => a.d - b.d || a.i - b.i)
+    .slice(0, n)
+    .map(({ p }) => ({ nome: p.nome, genero_pessoa: p.genero_pessoa || "", raca: p.raca || "", ocupacao: p.papel || "", traco: p.traco || "" }));
+}
+

@@ -454,6 +454,56 @@ export function ordemDaRecencia(npcs) {
     .sort((a, b) => marcaDe(b) - marcaDe(a));
 }
 
+/* ============================================================
+   QUEM IMPORTA (Fase MM, MM8c-2) — o vilão antes do padeiro
+
+   A recência sozinha trocava o vilão ausente há duas semanas pelo padeiro
+   de ontem. Agora a ordem é por IMPORTÂNCIA — o que a pessoa é na
+   história de quem joga —, e a recência só desempata. Nenhum teto muda:
+   muda QUEM entra nas 22 (e no LONGE, e nas pessoas do cânone), não
+   quantas.
+
+   O peso soma: anda comigo, tem laço comigo (rompido também — é história),
+   o que ela é para mim pela relação, é do elenco (MM8b). Morto pesa menos:
+   a memória dele fica, mas cede o lugar a quem ainda pode entrar na cena.
+   ============================================================ */
+export const PESO_DA_IMPORTANCIA = {
+  grupo: 100,
+  laco: 60,
+  relacao: { inimigo: 50, rival: 45, romance: 45, conjuge: 45, familia: 40, aliado: 30, amigo: 30, companheiro: 30 },
+  elenco: 25,
+  morto: -40,
+};
+
+const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+export function importanciaDe(n, contexto) {
+  const c = contexto && typeof contexto === "object" ? contexto : {};
+  if (!n || typeof n !== "object") return 0;
+  const nome = semAcento(n.nome);
+  const em = (lista) => Array.isArray(lista) && lista.some((x) => semAcento(x && typeof x === "object" ? x.nome : x) === nome);
+  const P = PESO_DA_IMPORTANCIA;
+  let peso = 0;
+  if (nome && em(c.grupo)) peso += P.grupo;
+  if (garantirLaco(n.laco)) peso += P.laco;
+  peso += P.relacao[semAcento(n.relacao)] || 0;
+  if (nome && em(c.elenco)) peso += P.elenco;
+  if (/mort/.test(semAcento(n.status))) peso += P.morto;
+  return peso;
+}
+
+/* As fichas do registo da que mais importa para a que menos; no empate, a
+   mais recente (a régua consertada da MM8c-1). `contexto`: { grupo, elenco }
+   — nomes ou fichas. Sem contexto, pesam o laço, a relação e a morte, que
+   a ficha já tem. */
+export function ordemDaImportancia(npcs, contexto) {
+  const rec = ordemDaRecencia(npcs);
+  const pos = new Map(rec.map((n, i) => [n, i]));
+  return rec.map((n) => ({ n, p: importanciaDe(n, contexto) }))
+    .sort((a, b) => b.p - a.p || pos.get(a.n) - pos.get(b.n))
+    .map((x) => x.n);
+}
+
 /* O TETO DAS PESSOAS CONHECIDAS, em pessoas E em caracteres. As 22 já
    eram lei; os caracteres não: uma ficha com notas longas do Narrador
    fazia a mesma lista de 22 custar o dobro. Quem não cabe sai pela
@@ -462,8 +512,9 @@ export const TETO_DAS_PESSOAS = { pessoas: 22, chars: 3200 };
 
 /* Resumo compacto do elenco para o prompt — UMA linha por pessoa, as mais
    recentes/relevantes primeiro. Teto rígido para nunca inflar o prompt. */
-export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas) {
-  const ord = ordemDaRecencia(npcs).slice(0, limite);
+export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, contexto = null) {
+  /* MM8c-2: por importância, a recência desempata */
+  const ord = ordemDaImportancia(npcs, contexto).slice(0, limite);
   if (!ord.length) return "";
   const linhas = ord.map((n) => {
     const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
