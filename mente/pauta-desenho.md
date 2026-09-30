@@ -27,6 +27,18 @@ não o código**, e nada se apaga desta pauta: o que é só desses dois modos fi
 marcado **depois do beta** (a Fase S e os itens do Duelo). **A sala de dois fica**
 — é Uma Vida a dois.
 
+## Deixado pela fila do sistema, para quando esta fila reabrir
+
+- [ ] **Peças mortas a aposentar** · da MM14 (v9.337), 30/09 · o sistema não mexeu (a fila está parada)
+  O bloco **"contratos ativos"** do mural (`PainelMural`, `App.jsx` ~2104/2294) e o botão **"abandonar
+  contrato"** (`abandonarContrato`, ~20455) leem a lista antiga de tarefas, que desde a v9.337 já não tem
+  tarefas ativas (os contratos migram para missões ao carregar). Ficam inertes: não aparecem com nada, não
+  fazem nada. Aposentar a forma quando a fila reabrir.
+- [ ] **"O rumo" — o próximo passo à vista no ecrã principal** · da prova jogada de MM13, 30/09 · pedido do
+  coordenador da fase. Na abertura o passo encontra-se sem ajuda; depois do primeiro, some (a linha do ✓ já
+  traz "→ agora: …" desde a v9.323, mas vive no chat). Uma linha fixa da missão principal sob o nome do lugar,
+  que abre o cartão do diário e acende uma vez quando o sino toca. Prova: experiência jogada (`jogo`).
+
 ## Para a pessoa decidir (pesado)
 
 **Esta seção esvaziou-se em 23/09, e não por terem sido respondidos um a um.**
