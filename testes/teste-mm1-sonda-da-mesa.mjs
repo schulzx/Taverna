@@ -345,6 +345,18 @@ sec("5. prova comportamental — o fato aparece de verdade no texto que a funç�
   const envImp = envelopeDoTeste({ tipo: imp.atributo, pericia: imp.pericia, motivo: imp.rotulo, valor: 12, mod: 2, total: 14, dc: imp.dc, resultado: "sucesso", nivelTreino: "nenhum" });
   t("regra · #33 · e o envelope que vai ao Narrador leva a perícia, o atributo e a dificuldade",
     /Acrobacia \(Destreza\)/.test(envImp) && /dificuldade em 13/.test(envImp));
+
+  /* #14 CHEGA (MM12): a cidade por dentro. A frase do jogador ("quanto
+     custa a diária?") tem de devolver o preço desta cidade, calculado por
+     fichaDaCidade — a mesma prova que teste-mm12-cidade.mjs faz por dentro
+     do módulo, aqui repetida como prova comportamental da via de pauta. */
+  const { fichaDaCidade, fichaParaPauta } = await import("../src/cidade-por-dentro.js");
+  const cidTeste = { nome: "Vau do Sino", porte: "cidade", regiao: "Brejos" };
+  const ctxTeste = { semente: "sonda-mm1|Fantasia medieval", mapa: { cidades: [cidTeste] }, genero: "Fantasia medieval" };
+  const precoDaFicha = fichaDaCidade(cidTeste, ctxTeste).pouso.comum;
+  const respostaDaPauta = fichaParaPauta(cidTeste, { ...ctxTeste, frase: "Quanto custa a diária?" }).pergunta[0];
+  t(`mundo · #14 · cidade-por-dentro.js#fichaParaPauta devolve o preço da própria ficha (◉ ${precoDaFicha})`,
+    !!respostaDaPauta && respostaDaPauta.includes(`◉ ${precoDaFicha} a noite`), respostaDaPauta);
 }
 
 /* ============================================================
@@ -416,7 +428,15 @@ sec("6. o número e a catraca");
        de `resolverRevide` (região REVIDE) — não precisou de região nova:
        a chamada já aparece em DUAS das que a suíte já conhecia, byte a
        byte a mesma prova que o resto do funil usa. */
-  const PISO_CHEGA = 72;
+  /* MM12 (a cidade por dentro, frontend, 29/09): PISO 72 → 81. `fichaParaPauta`
+     (cidade-por-dentro.js) está ligada em `pautaDoTurno` (região PAUTA) e nove
+     casos que eram "ninguém decide" viram "chega": #6 a língua da rua, #14 e
+     #15 o preço do pouso, #31 quem estuda magia, #37 e #38 a gíria e o que
+     ela quer dizer, #70 a vigilância fora de combate, #107 como se reconhece
+     quem é bem-vindo, #110 o que o sino marca agora. O #80 ("ela me dá de
+     graça?") fica ninguém-decide: o costume da praça (DADIVAS) não é a
+     decisão desta pessoa sobre este item — a nota do caso explica. */
+  const PISO_CHEGA = 81;
   const TETO_SABE_E_NAO_CONTA = 0;
   t(`o piso do chega não desceu (hoje: ${X}, piso: ${PISO_CHEGA})`, X >= PISO_CHEGA);
   t(`o teto do sabe-e-nao-conta não subiu (hoje: ${Y}, teto: ${TETO_SABE_E_NAO_CONTA})`, Y <= TETO_SABE_E_NAO_CONTA);

@@ -96,6 +96,10 @@ sec("1. NENHUM MÓDULO MUDO");
      A lista volta a ficar VAZIA, como a regra acima pede. Ela nasceu em
      v9.214, esvaziou-se em v9.218, encheu-se de novo em v9.258 e esta
      vazia outra vez — tres levas, tres credores, zero perdao sobrando. */
+  /* 29/09 (Fase MM, MM12): `cidade-por-dentro.js` pagou o próprio crédito
+     no mesmo dia em que nasceu — `fichaParaPauta` está ligado dentro de
+     `pautaDoTurno` (App.jsx), e os dez casos da sonda que dependiam dela já
+     passam a `chega`. A lista volta a ficar VAZIA, como a regra pede. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

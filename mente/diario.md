@@ -15,7 +15,44 @@ Formato:
 ```
 
 ---
-## 29/09 21:03 · v9.317 · o arqueiro mira pela cabeça que tem · commit (o hash vai no próximo bloco)
+## 29/09 21:10 · v9.318 · MM12 · a cidade por dentro · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a sonda deixou nove perguntas sobre a cidade que ninguém decidia —
+  a língua, o preço do pouso, quem estuda magia, a gíria, o distintivo, o sino, a rua
+  vigiada — e o Narrador inventava cada vez uma coisa. O segundo maior bloco das que
+  ninguém decide, e o único sem dono.
+- **estado inicial:** verde (`cd309db` no ar).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+  O App cresceu 14 linhas; endereços de `acoes-do-jogador` re-medidos por conteúdo.
+- **backend:** `src/cidade-por-dentro.js` — a ficha de cada cidade **por semente, sem
+  campo de save**: a língua da rua e quem fala a comum (as cidades de fronteira entendem a
+  vizinha), o pouso (quarto comum, bom, estábulo, a semana que paga seis noites), as
+  instituições (magia, cura, lei), a vigilância de dia e de noite e a brecha, o
+  reconhecimento, o costume com o que se dá, a gíria (o apelido dos vizinhos pelo mapa, o
+  de um ofício, uma expressão) e **o hoje** (festa, luto, feira, o sino da hora). **O
+  preço do pouso não é uma segunda economia**: as faixas já viviam no `ECONOMIA_PROMPT`, e a
+  suíte relê-o para provar que a ficha não sai delas. Duas secções novas na pauta: "A
+  CIDADE" (prio 7: o hoje e a língua, sempre) e "PERGUNTOU" (prio 4: só a resposta ao que
+  a frase perguntou; na 3 tirava da pauta o próprio taverneiro a quem se perguntou).
+- **o teto:** numa taverna cheia de verdade, com a pergunta do preço, a pauta dá 1316/1400
+  e ficam QUEM, ONDE, a fala, o momento e o veto. Para caber, a linha do comércio perdeu
+  106 caracteres que o cabeçalho da pauta já dizia ("isto é FATO do mundo…") — médio, com
+  o motivo no código.
+- **frontend:** a chamada em `pautaDoTurno`, só na cidade (fora de jornada, masmorra e
+  luta), com os mesmos argumentos que `locaisDaCidade` usa — os prédios têm o mesmo nome.
+- **a prova jogada:** Sal Velho, capital. "Quanto custa a diária?" → o taverneiro: "quarto
+  comum, seis ferros; bom, quinze; uma semana, trinta e seis; no estábulo, dois por bicho".
+  `fichaDaCidade` em Node, com a semente do save: **6, 15, 2, 36 — número a número**. "Há
+  quem estude magia?" → "duas escolas de sopro, rivais… os livros ficam no Quarto dos
+  Nomes" — a ficha, palavra por palavra no que importa.
+- **a sonda:** **72 → 81/157 chega** (#6, #14, #15, #31, #37, #38, #70, #107, #110) · 0
+  sabe e não conta · 68 ninguém decide. O #80 ("ela me dá isso de graça?") **fica**: o
+  costume da cidade não é a decisão daquela pessoa sobre aquele item. O #110 teve o fato
+  reescrito para o que a pergunta pede ("o que o sino da cidade marca agora").
+- **para quem joga:** perguntar pela cidade passa a ter resposta — e a mesma amanhã. O
+  preço da noite não muda de uma pergunta para a outra, e cada cidade tem o seu sino.
+
+## 29/09 21:03 · v9.317 · o arqueiro mira pela cabeça que tem · commit `cd309db`
 
 - **por que andou:** a pergunta que este diário deixou em v9.316 (o grupo a +39% contra o
   "antes" sem pilha) foi decidida pelo coordenador da fase com uma lei da pessoa, de

@@ -535,8 +535,12 @@ sec("4. a definição operacional de 'número que muda'");
      +31 — o estado novo do cartão do grupo mais a função
      `responderGolpeFinalComp` (perto do estado e logo depois de
      `responderGolpeFinal`), ambos ANTES deste ponto no arquivo — mesmo
-     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14357/.test(relogio.porque));
+     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
+     A cidade por dentro (frontend, MM12, 29/09): 14357 -> 14371, +14 —
+     a fiação de `fichaParaPauta` em `pautaDoTurno`, acima no arquivo —
+     mesmo motivo, mesmo lugar: o campo `porque` em
+     testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14371/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -758,7 +762,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        — o mesmo degrau que `aplicarGolpeDoJogador`/`continuarGolpeDoJogador`
        levam no cabeçalho de FUNIL_DO_COMBATE nesta etapa. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:12883").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:12897").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -858,8 +862,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        O golpe final é do grupo (frontend, 29/09, MM3b): 12747 -> 12754,
        +7 — o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
        FUNIL_DO_COMBATE nesta etapa (o estado novo do cartão do grupo,
-       antes dela no arquivo). */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12754" && x.familia === "alcance"));
+       antes dela no arquivo).
+       A cidade por dentro (frontend, MM12, 29/09): 12754 -> 12768, +14 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE
+       (a fiação de `fichaParaPauta` em `pautaDoTurno`, acima no arquivo). */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12768" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -889,8 +896,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O golpe final é do grupo (frontend, 29/09, MM3b): 12892 -> 12899,
      +7 — o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
      FUNIL_DO_COMBATE nesta etapa (o estado novo do cartão do grupo,
-     antes dela no arquivo). */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12899/.test(S.ondeSai));
+     antes dela no arquivo).
+     A cidade por dentro (frontend, MM12, 29/09): 12899 -> 12913, +14 — o
+     mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
+     fiação de `fichaParaPauta` em `pautaDoTurno`, acima no arquivo). */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12913/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

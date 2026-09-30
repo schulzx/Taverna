@@ -49,6 +49,7 @@ import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
+import { fichaParaPauta } from "./cidade-por-dentro.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
@@ -6849,6 +6850,19 @@ export default function Taverna() {
     /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
        cheia a gente presente ganha dela, e é isso que se quer */
     p = porNaPauta(p, "daqui", g.daqui);
+    /* MM12: a cidade por dentro — o hoje e a língua sempre, a resposta ao
+       que o jogador perguntou só quando ele pergunta. Nunca em jornada, em
+       masmorra nem em combate: ali não há rua para se perguntar nada dela. */
+    try {
+      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {
+        const fc = fichaParaPauta(cidadeDoMapa(cidadeAtualRef.current), {
+          semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico,
+          genero: generoMundo(), molde: moldeMundo(), dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
+        });
+        p = porNaPauta(p, "cidade", fc.cidade);
+        p = porNaPauta(p, "pergunta", fc.pergunta);
+      }
+    } catch (e) { calou("fichaParaPauta", e); }
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
        maré do porto. Só parado em cidade: no meio da estrada a linha do

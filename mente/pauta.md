@@ -189,7 +189,7 @@ O limite é o que um commit revertido não desfaz.
   Dano ao herói −11% / +13% / −16% nos três cenários (catraca ±20%).
   Achado da fuga (v9.294): o inimigo de distância é atirador na fuga e lutador
   colado dentro da luta. Passa a manter a distância e a disparar.
-- [ ] **MM12 · a cidade por dentro (e o mapa das perguntas que ninguém decide)** · de: orquestrador, 29/09, pedido do
+- [x] **MM12 · a cidade por dentro (e o mapa das perguntas que ninguém decide)** · feito 29/09, v9.318 · sonda 72 → 81/157 · de: orquestrador, 29/09, pedido do
   coordenador da fase · *posição: depois de MM7, antes de MM8*
   **O achado:** a sonda (MM1) contou **82 *ninguém decide***; 36 são cenário (sabor,
   aceitável) e **46 são defeito** — 29 de mundo, 13 de regra, 3 de licença, 1 de posição.

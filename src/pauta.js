@@ -70,8 +70,23 @@ export const SECOES = [
   { id: "aliado", rotulo: "O ALIADO", prio: 7, o: "quem anda comigo" },
   { id: "vilao", rotulo: "O VILÃO", prio: 6, o: "o que a ameaça fez" },
   { id: "mundo", rotulo: "O MUNDO", prio: 7, o: "o que o mundo cobra ou paga por um ato antigo" },
+  /* MM12: A CIDADE POR DENTRO — o dia de hoje e a língua da rua, que a
+     cena mostra sem ninguém perguntar. Prioridade baixa e DEPOIS do vilão,
+     do aliado e do mundo na lista: no empate de prioridade, a ordem da
+     lista decide, e numa cena cheia a gente ganha do sino. É o precedente
+     do DAQUI (v9.118), medido de novo em teste-mm12-cidade. */
+  { id: "cidade", rotulo: "A CIDADE", prio: 7, o: "o dia de hoje e a língua da rua" },
   { id: "antes", rotulo: "ANTES", prio: 8, o: "o que já aconteceu aqui" },
   { id: "acabou", rotulo: "ACABOU DE", prio: 3, o: "o que o sistema resolveu agora" },
+  /* MM12: e o que o jogador PERGUNTOU. Uma pergunta direta é o centro do
+     turno — "quanto custa a diária?" cortada pelo teto seria o Narrador a
+     inventar exatamente o que se quis saber. Prioridade 4, a de QUEM, e
+     DEPOIS dela na lista: no empate, quem está presente entra primeiro.
+     Com 3 a medição (teste-mm12-cidade, a taverna cheia) mostrou a resposta
+     do preço a empurrar para fora o taverneiro a quem se perguntou — e
+     responder sem quem responde não é resposta. Só se enche quando a frase
+     pergunta; a cidade é a primeira a usá-la, e o elenco (MM8) a segunda. */
+  { id: "pergunta", rotulo: "PERGUNTOU", prio: 4, o: "o fato do mundo que responde ao que o jogador perguntou agora" },
   /* v9.201: as duas versoes da cena, antes do dado. So entra quando a acao
      casa com uma situacao conhecida da Mesa Posta — advisoria, e por isso
      de prioridade media: importa, mas cede a fala e ao veto se faltar teto.

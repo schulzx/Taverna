@@ -354,7 +354,15 @@ export function envelopeDoComercio(cidade, dia = 1) {
     produz ? `Aqui sobra ${produz}, e sai barato.` : "",
     falta ? `Falta ${falta}: o que há veio de longe, é caro, e nem sempre há.` : "Por aqui tudo passa — falta pouca coisa.",
     `Estação: ${nomeDaEstacao(dia)}.`,
-    "Isto é FATO do mundo: use na cena — no que se vê na praça, no que o mercador reclama — e não o contradiga. Não faça abundar o que falta nem faltar o que sobra.",
+    /* MM12: saiu daqui "Isto é FATO do mundo: use na cena — no que se vê
+       na praça, no que o mercador reclama — e não o contradiga." Cento e
+       seis caracteres, em TODO turno de cidade, para repetir o que o
+       cabeçalho da Pauta já diz a cada linha dela ("decidido pelo
+       SISTEMA... não se discute"). Medido na taverna cheia (teste-mm12-
+       cidade): era esse o espaço que faltava para a resposta à pergunta
+       do jogador caber sem tirar da cena quem está nela. Fica o veto, que
+       é a parte que nenhum cabeçalho diz. */
+    "Não faça abundar o que falta nem faltar o que sobra.",
   ].filter(Boolean).join(" ");
 }
 
