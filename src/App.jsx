@@ -50,6 +50,7 @@ import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortear
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { fichaParaPauta } from "./cidade-por-dentro.js";
+import { genteParaPauta } from "./gente-por-dentro.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
@@ -6863,6 +6864,22 @@ export default function Taverna() {
         p = porNaPauta(p, "pergunta", fc.pergunta);
       }
     } catch (e) { calou("fichaParaPauta", e); }
+    /* MM8a: a gente por dentro — só quando a frase pergunta por alguém */
+    try {
+      if (!combateRef.current) {
+        let recentes = [];
+        try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes da gente por dentro", e); }
+        const gp = genteParaPauta({
+          semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
+          genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
+          base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui,
+          grupo: (personagemRef.current || personagem || {}).grupo || [],
+          heroi: (personagemRef.current || personagem || {}).nome || "",
+          recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
+        });
+        p = porNaPauta(p, "pergunta", gp.pergunta);
+      }
+    } catch (e) { calou("genteParaPauta", e); }
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
        maré do porto. Só parado em cidade: no meio da estrada a linha do

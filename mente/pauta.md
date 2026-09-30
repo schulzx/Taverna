@@ -246,7 +246,7 @@ O limite é o que um commit revertido não desfaz.
   (`resumoCenaPrompt`) e o CÂNONE crescem sem limite, e **nenhum é contado no teto de 82k**
   (`teste-prompt` mede com cânone vazio). A 107 pessoas no registo, o QUEM do rodapé já pesa
   ~6,1k. E a recência volta a zero em cada load, e o vilão fica preso no topo por `Date.now()`.
-  - [ ] **MM8a · a ficha por dentro** · sem campo de save · App: uma chamada na pauta
+  - [x] **MM8a · a ficha por dentro** · feito 29/09, v9.319 · sonda 81 → 89 (o #29 fica: é a ferida de agora) · sem campo de save · App: uma chamada na pauta
     `gente-por-dentro.js`: idade e compleição lidas do **mesmo traço do retrato** (o cabelo
     branco nunca dá "jovem"), o jeito, 1–2 passados com "há N anos" que citam chefes,
     criaturas e cidades deste mundo, o motivo do posto, a rotina (onde está a esta hora),

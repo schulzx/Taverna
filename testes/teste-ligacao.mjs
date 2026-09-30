@@ -100,6 +100,9 @@ sec("1. NENHUM MÓDULO MUDO");
      no mesmo dia em que nasceu — `fichaParaPauta` está ligado dentro de
      `pautaDoTurno` (App.jsx), e os dez casos da sonda que dependiam dela já
      passam a `chega`. A lista volta a ficar VAZIA, como a regra pede. */
+  /* 29/09 (Fase MM, MM8a): `gente-por-dentro.js` pagou o próprio crédito no
+     mesmo dia em que nasceu — `genteParaPauta` está ligado dentro de
+     `pautaDoTurno` (App.jsx). A lista volta a ficar VAZIA. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

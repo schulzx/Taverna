@@ -15,6 +15,48 @@ Formato:
 ```
 
 ---
+## 29/09 22:33 · v9.319 · MM8a · a gente por dentro · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a primeira das seis subetapas do elenco (MM8), a proposta da pessoa.
+  Antes de construir, um estudo e o plano, escritos na pauta (`a6418f2`). O que o estudo
+  achou muda o tamanho do problema: o mundo já tem, por semente, ~122 pessoas com índole
+  — **o elenco é escolher e aprofundar essa gente**; e dos três canais de pessoas ao
+  Narrador só um tem teto, e nenhum é contado no teto de 82k.
+- **estado inicial:** verde (MM12 no ar, `f950165`, `eeac762`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+  O App cresceu 17 linhas; endereços de `acoes-do-jogador` re-medidos por conteúdo.
+- **backend:** `src/gente-por-dentro.js` — a ficha de uma pessoa: **idade e compleição
+  lidas do mesmo sorteio que desenha o retrato** (cabelo grisalho nunca abaixo de 45, branco
+  nunca abaixo de 62, maxilar largo é robusto, a cicatriz dita é a desenhada; conferido em
+  3000 caras), o jeito, 1–2 passados com "há N anos" que citam chefes, criaturas e cidades
+  **deste** mundo, o motivo do posto, a rotina (turno, folga, onde está a esta hora), quem
+  trabalha em cada casa. O registo manda na identidade. Vai à pauta só quando a frase
+  pergunta por alguém (secção PERGUNTOU, uma resposta por turno, 0 caracteres sem pergunta).
+  O `RELEVANTE` da índole, que passava na catraca só porque a palavra aparecia na prosa do
+  prompt, ganhou um leitor de verdade (o segundo passado é só de quem volta).
+- **o teto:** a primeira versão juntava passado, adversário e cicatriz numa linha de 304
+  caracteres e não cabia na taverna cheia; partiu-se em três perguntas. Taverna cheia com a
+  pergunta pela gente: 1370/1400. Preço e passado na mesma frase: o passado espera o turno
+  seguinte, sem empurrar nada de prio alta — medido, não suposto.
+- **a prova jogada (pelo payload real enviado ao Narrador):** Ceia do Cego, Tiber dos Três.
+  "Que idade você tem?" → a pauta levou "aparenta uns 39 anos, cabelo negro, compleição
+  esguia" — **byte a byte a ficha** calculada em Node com a semente do save, e o retrato
+  tem o cabelo negro e o queixo esguio. "Quem mais trabalha aqui?" → "Tiber (de folga hoje:
+  no templo), Doran (fora do turno: no templo), Greta (de folga)", e o Mestre usou-a quase
+  literal: "A Ceia tem três que trabalham: eu, o Doran e ela… Doran tá no templo". Na idade,
+  o fato estava lá duas vezes e o Narrador escolheu fugir à pergunta com drama — narração,
+  não fiação.
+- **o Códex:** a MM8a não põe ninguém no registo — a ficha é derivada e só se lê. Antes e
+  depois, o mesmo número. A medida de base (20 mundos, a taxa de nomes do Narrador suposta):
+  50 / 107 / 168 pessoas no registo a 200 turnos. É a MM8c/MM8d que o encolhem à vista do
+  Narrador; a lista do jogador é tela e espera a palavra da pessoa.
+- **a sonda:** **81 → 89/157 chega** (#18, #26, #42, #54, #90, #103, #105, #106) · 0 sabe e
+  não conta · 60 ninguém decide. O #29 ("como o teu amigo se feriu desse jeito?") fica: é a
+  ferida de agora, na cena, e o sistema só decide a cicatriz do retrato.
+- **para quem joga:** perguntar por alguém tem resposta — a idade que o retrato mostra, o
+  passado neste mundo, porque está naquele posto, onde anda a esta hora, quem trabalha na
+  casa — e a mesma amanhã.
+
 ## 29/09 21:10 · v9.318 · MM12 · a cidade por dentro · commit `f950165`
 
 - **por que andou:** a sonda deixou nove perguntas sobre a cidade que ninguém decidia —

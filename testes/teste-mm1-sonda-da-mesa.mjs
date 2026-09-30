@@ -357,6 +357,20 @@ sec("5. prova comportamental — o fato aparece de verdade no texto que a funç�
   const respostaDaPauta = fichaParaPauta(cidTeste, { ...ctxTeste, frase: "Quanto custa a diária?" }).pergunta[0];
   t(`mundo · #14 · cidade-por-dentro.js#fichaParaPauta devolve o preço da própria ficha (◉ ${precoDaFicha})`,
     !!respostaDaPauta && respostaDaPauta.includes(`◉ ${precoDaFicha} a noite`), respostaDaPauta);
+
+  /* #106 CHEGA (MM8a): a gente por dentro. O mesmo fixture mínimo da suíte
+     dedicada (teste-mm8a-ficha.mjs) — uma pessoa em cena e a pergunta de
+     C1E1 sobre a compleição dela — provando que a resposta de pauta cita a
+     compleição, tirada do mesmo maxilar que o retrato desenha. */
+  const { genteParaPauta } = await import("../src/gente-por-dentro.js");
+  const pergunta106 = CASOS.find((c) => c.n === 106).pergunta;
+  const respostaDaGente = genteParaPauta({
+    semente: "sonda-mm1|Fantasia medieval",
+    presentes: [{ nome: "Fina", genero_pessoa: "mulher", papel: "serviçal" }],
+    frase: pergunta106,
+  }).pergunta[0];
+  t("mundo · #106 · gente-por-dentro.js#genteParaPauta devolve a compleição da própria ficha",
+    !!respostaDaGente && /compleição/.test(respostaDaGente), respostaDaGente);
 }
 
 /* ============================================================
@@ -436,7 +450,17 @@ sec("6. o número e a catraca");
      quem é bem-vindo, #110 o que o sino marca agora. O #80 ("ela me dá de
      graça?") fica ninguém-decide: o costume da praça (DADIVAS) não é a
      decisão desta pessoa sobre este item — a nota do caso explica. */
-  const PISO_CHEGA = 81;
+  /* MM8a (a gente por dentro, frontend, 29/09): PISO 81 → 89. `genteParaPauta`
+     (gente-por-dentro.js) está ligada em `pautaDoTurno` (região PAUTA), depois
+     de `fichaParaPauta`, e oito casos que eram "ninguém decide" viram "chega":
+     #18 o passado com data, #26 o motivo do posto, #42 o adversário mais
+     famoso (um chefe, uma criatura ou uma pessoa do mundo, nunca inventado),
+     #54 quem trabalha em cada casa (`genteDoLocal` já sabia; a pauta não
+     dizia — era "sabe e não conta"), #90 a escala de plantão e folga, #103 a
+     comparação de idades, #105 o jeito e desde quando, #106 a compleição pelo
+     maxilar do retrato. O #29 fica ninguém-decide: pergunta por uma ferida DE
+     AGORA, mostrada na cena — o sistema só decide a cicatriz do retrato. */
+  const PISO_CHEGA = 89;
   const TETO_SABE_E_NAO_CONTA = 0;
   t(`o piso do chega não desceu (hoje: ${X}, piso: ${PISO_CHEGA})`, X >= PISO_CHEGA);
   t(`o teto do sabe-e-nao-conta não subiu (hoje: ${Y}, teto: ${TETO_SABE_E_NAO_CONTA})`, Y <= TETO_SABE_E_NAO_CONTA);
