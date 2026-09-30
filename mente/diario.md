@@ -15,6 +15,19 @@ Formato:
 ```
 
 ---
+## 30/09 15:08 · v9.337 · os restos da MM14 — interrompidos pelo limite de uso · sem código
+
+- **o que aconteceu:** as três mãos dos restos da MM14 (as pessoas que seguem a heroína, o "você mudou",
+  os nomes que colidem; as missões forçadas em série; a pergunta que vai ao oráculo) foram lançadas em
+  paralelo e **morreram as três ao mesmo tempo no limite de uso da sessão** ("session limit", HTTP 429),
+  antes de escreverem uma linha. **A árvore ficou limpa**: nada a desfazer, nada meio escrito.
+- **o que ficou feito neste ciclo:** a pauta do desenho recebeu as duas peças do sistema para quando a
+  fila reabrir (`81e52f6`).
+- **o que falta, pela ordem:** os três restos da MM14 (os pedidos estão escritos, iguais, na MM14 da
+  pauta) e depois a segunda sessão de prova (`mente/mm11-sessao-2.md`, 25–30 respostas).
+- **a lição, para o próximo ciclo:** três mãos pesadas em paralelo gastam o limite três vezes mais depressa;
+  quando o limite apertar, uma de cada vez.
+
 ## 30/09 14:48 · v9.337 · MM14 (5) · os fios e os contratos viram missões, e os dois canais antigos saem · commit `fc23d35`
 
 - **por que andou:** decisão do coordenador (a opção (a)). O Narrador (`quest_atualizar`) e o Cronista
