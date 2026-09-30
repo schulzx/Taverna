@@ -271,8 +271,13 @@ sec("9. a fiação no App.jsx (prova por texto)");
      nomesDoElenco()` ao final desta chamada, para o QUEM (perto e longe)
      pesar também pelo elenco (MM8b). O texto exato mudou; o que o ponto 8
      prova (emCena chegando a resumoCenaPrompt) continua verdadeiro. */
+  /* MOVIDA OUTRA VEZ NA MM8d (30/09), com o motivo: a MM8d acrescentou
+     `missao:` ao fim desta chamada (quem a missão ativa procura não sai do
+     LONGE). O que se prova continua o mesmo — emCena chega a
+     resumoCenaPrompt —, por isso a asserção passa a ler só o começo da
+     chamada até ao emCena, que é o que ela sempre quis dizer. */
   tem("e manda isso como emCena para resumoCenaPrompt",
-    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco() });");
+    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco()");
 
   /* ponto 9 — o cânone por recência: o 14º argumento na chamada por turno.
      MOVIDA NA MM8c-2 (30/09), com o motivo: o banco de nomes (5º

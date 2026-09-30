@@ -15,6 +15,22 @@ Formato:
 ```
 
 ---
+## 30/09 05:18 · v9.328 · **subi vermelho, e o conserto** · commit (este)
+
+- **o que aconteceu:** o commit da MM8d (`8f95b4d`) **subiu com duas suítes vermelhas**
+  (`teste-mm8c1-tetos`, `teste-mm8c2-quem-importa`: 235/237). A fiação que eu mesmo fiz em
+  `enviar` acrescentou `missao:` ao fim de duas chamadas cujo texto literal essas duas suítes
+  liam; e a minha cadeia de comandos era `npm test | tail -4 && git commit` — **o `&&` lia o
+  código de saída do `tail`, não o do teste**, e o commit e o push seguiram. Foi falha minha: li a
+  linha "235/237" já depois do push. **Violou a lei do push** (build limpo, `npm test`
+  inteiramente verde) durante uns minutos, com o jogo publicado a correr código são — o vermelho
+  era de suíte, não de jogo — mas a lei não distingue, e não devia.
+- **o conserto:** as duas asserções passam a ler o começo das chamadas (o que sempre quiseram
+  provar: o `emCena` e o grupo/elenco a chegar), com o motivo escrito; 237/237.
+- **o que muda na forma de trabalhar:** o teste corre para um ficheiro e o **código de saída do
+  próprio `npm test`** decide o commit; nunca mais por um `tail`. Revi os commits anteriores
+  desta fase: em todos a linha impressa era verde antes do push; este foi o único.
+
 ## 30/09 05:11 · v9.328 · MM8d · o figurante é de passagem · commit `8f95b4d`
 
 - **por que andou:** a quarta subetapa do elenco. Com a MM8c-2 o figurante já pesava 0, mas ainda

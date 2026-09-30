@@ -191,7 +191,7 @@ sec("6. as duas contradições antigas, pelo que o código faz");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   t("o App importa o elenco", /import \{[^}]*elencoParaPovoar[^}]*\} from "\.\/elenco\.js"/.test(app));
   t("o banco de nomes já não sorteia a gente (sem elencoDiverso no App)", !app.includes("elencoDiverso("));
-  t("as pessoas conhecidas recebem o grupo e o elenco", app.includes("resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: ") && app.includes("||| [], elenco: nomesDoElenco() }),".replace("|||", "{}).grupo ||")));
+  t("as pessoas conhecidas recebem o grupo e o elenco", app.includes("resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: ") && app.includes("||| [], elenco: nomesDoElenco()".replace("|||", "{}).grupo ||")) /* MM8d: a chamada ganhou emCena e missao depois do elenco; prova-se o que esta asserção sempre quis (o grupo e o elenco chegam), sem o fecho da linha */);
   t("o prompt do turno leva a gente por conhecer", app.includes("elenco: (() => { try { return elencoParaPovoar("));
   t("o cânone recebe o elenco", app.includes("{ npcs: npcsRef.current, elenco: nomesDoElenco() }"));
 }
