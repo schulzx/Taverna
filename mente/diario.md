@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 09:40 · v9.332 · MM10 · o crime · commit (o hash vai no próximo bloco)
+## 30/09 09:40 · v9.332 · MM10 · o crime · commit `f5dd2e6`
 
 - **por que andou:** atacar o taverneiro abria uma luta e não um crime — ninguém chamava a guarda,
   não havia recompensa, a porta não fechava, as testemunhas não contavam.
