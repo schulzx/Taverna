@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 22:33 · v9.319 · MM8a · a gente por dentro · commit (o hash vai no próximo bloco)
+## 29/09 22:33 · v9.319 · MM8a · a gente por dentro · commit `bb1474d`
 
 - **por que andou:** a primeira das seis subetapas do elenco (MM8), a proposta da pessoa.
   Antes de construir, um estudo e o plano, escritos na pauta (`a6418f2`). O que o estudo
