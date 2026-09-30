@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 21:10 · v9.318 · MM12 · a cidade por dentro · commit (o hash vai no próximo bloco)
+## 29/09 21:10 · v9.318 · MM12 · a cidade por dentro · commit `f950165`
 
 - **por que andou:** a sonda deixou nove perguntas sobre a cidade que ninguém decidia —
   a língua, o preço do pouso, quem estuda magia, a gíria, o distintivo, o sino, a rua
