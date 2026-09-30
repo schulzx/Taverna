@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 19:32 · v9.342 · MM15 (2) · a boca que se pagava e nunca falava · commit (o hash vai no próximo bloco)
+## 30/09 19:32 · v9.342 · MM15 (2) · a boca que se pagava e nunca falava · commit `0a0f71e`
 
 - **por que andou:** o segundo da MM15 — a segunda sessão gastou 3,6 chamadas pagas por resposta (a primeira ~2,0), quatro
   delas falas de personagem que não chegaram a lado nenhum. É dinheiro de cada jogador a cada turno, e o teto de 500 por
