@@ -571,8 +571,16 @@ sec("4. a definição operacional de 'número que muda'");
      mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
      As perguntas ao Mestre (frontend, MM14, 30/09): 14546 -> 14584, +38 —
      mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14584/.test(relogio.porque));
+     testes/acoes-do-jogador.mjs.
+     Os dois canais antigos (frontend, MM14, 30/09): 14584 -> 14559, -25.
+     A migração das tarefas antigas para missão do sistema (o load, o fio
+     do descanso, a paga no fecho) entrou ACIMA deste ponto, mas a remoção
+     dos dois canais que fechavam a lista antiga pelo título (o `forEach`
+     do Narrador e o `casar` do Cronista) tirou mais linhas do que a
+     migração somou — o líquido é -25. Re-medido pelo próprio dente 8 de
+     check-acoes-do-jogador.mjs, com o diff de App.jsx contra HEAD
+     conferindo cada endereço; nada somado de cabeça. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14559/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -830,9 +838,13 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        O crime (frontend, MM10, 30/09): 13054 -> 13072, +18 — o mesmo
        degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
        As perguntas ao Mestre (frontend, MM14, 30/09): 13072 -> 13093, +21 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       Os dois canais antigos (frontend, MM14, 30/09): 13093 -> 13068, -25
+       — o mesmo líquido desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE
+       (a migração das tarefas antigas soma menos do que a remoção dos
+       dois canais tira). Re-medido pelo diff de App.jsx contra HEAD. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13093").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13068").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -964,8 +976,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        por check-acoes-do-jogador.mjs.
        As perguntas ao Mestre (frontend, MM14, 30/09): 12939 -> 12960, +21 —
        o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido por check-acoes-do-jogador.mjs. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12960" && x.familia === "alcance"));
+       Re-medido por check-acoes-do-jogador.mjs.
+       Os dois canais antigos (frontend, MM14, 30/09): 12960 -> 12935, -25
+       — o mesmo líquido desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       Re-medido pelo diff de App.jsx contra HEAD. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12935" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1024,8 +1039,12 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O crime (frontend, MM10, 30/09): 13070 -> 13088, +18 — o mesmo
      degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
      As perguntas ao Mestre (frontend, MM14, 30/09): 13088 -> 13109, +21 —
-     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13109/.test(S.ondeSai));
+     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+     Os dois canais antigos (frontend, MM14, 30/09): 13109 -> 13084, -25 —
+     o mesmo líquido desta etapa (a migração das tarefas antigas soma
+     menos do que a remoção dos dois canais tira), re-medido pelo diff de
+     App.jsx contra HEAD. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13084/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

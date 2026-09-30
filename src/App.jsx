@@ -63,6 +63,7 @@ import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
+import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, alfa } from "./estilo.js";
@@ -9655,7 +9656,6 @@ export default function Taverna() {
     /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
     if (resp.mudancas) {
       const md2 = resp.mudancas;
-      let recompensaContrato = null; // contratos pagos por código ao concluir
       /* v9.27: "quest_nova" morreu. O Mestre criava missão do nada, sem
          etapa, sem recompensa e sem ninguém para encerrá-la — era a raiz de
          metade da bagunça do diário. Se ele ainda mandar o campo (modelo
@@ -9670,34 +9670,12 @@ export default function Taverna() {
         marcarNoArco("global", `${g.nome} chegou ao fim`);
         msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
       }
-      [].concat(md2.quest_atualizar || []).forEach((q) => {
-        if (!q || !q.titulo) return;
-        questsRef.current = questsRef.current.map((x) => {
-          if (x.titulo.toLowerCase() !== q.titulo.toLowerCase()) return x;
-          const nova = { ...x, status: q.status || x.status, nota: q.nota !== undefined ? q.nota : x.nota };
-          if (q.status === "concluida" && x.status !== "concluida") {
-            msgs.push(`✓ Missão concluída: ${x.titulo}`);
-            /* FÉ POR FEITOS (v7.4): missões concluídas espalham o nome do herói */
-            if (divindadeRef.current && divindadeRef.current.despertar) {
-              msgs.push(...ganharFe(x.tipo === "principal" ? 150 : 40, 2, "seu feito corre de boca em boca"));
-            }
-            /* CONTRATO: o pagamento sai por CÓDIGO no momento da conclusão */
-            if (x.contrato && !recompensaContrato) recompensaContrato = x.contrato;
-          }
-          else if (q.status === "falhada" && x.status !== "falhada") msgs.push(`✗ Missão falhou: ${x.titulo}`);
-          else if (q.nota) msgs.push(`📜 ${x.titulo}: ${q.nota}`);
-          return nova;
-        });
-      });
-      if (recompensaContrato) {
-        bumpCont("contratosConcluidos");
-        const r = recompensaContrato;
-        const p2 = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + r.moedas, xp: (pers.xp || 0) + r.xp });
-        msgs.push(`📋 Contrato pago pelo sistema: +${r.moedas} moedas · +${r.xp} XP`);
-        pers = p2; setPersonagem(p2);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${r.moedas} moedas e +${r.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado.]`;
-        recompensaContrato = null;
-      }
+      /* MM14 (30/09, os canais): "quest_atualizar" saiu com ele — fechava
+         a lista antiga só pelo TÍTULO que o Mestre repetisse, sem conferir
+         nada. Ela agora vira missão do sistema (no load e no descanso
+         longo, `tarefas-antigas.js`) e fecha pela mesma porta que toda
+         missão fecha: `conferirAsMissoes`, pelas etapas — o contrato que
+         carregava paga lá (`pagaDoFecho`). */
       /* v9.28: "historia_avancar" morreu junto com "quest_nova", e pela mesma
          razão. O Mestre virava o ato quando ACHAVA que o momento tinha se
          cumprido, e o motor não tinha voto: dava o abismo da campanha com a
@@ -10387,14 +10365,18 @@ export default function Taverna() {
     };
   };
 
+  /* MM14 (30/09, os canais): o mundo que a conversão da lista antiga
+     precisa — a mesma semente e a mesma geografia que `mundoDasMissoes`
+     usa, para o alvo sorteado ser sempre o mesmo lugar. */
+  const mundoDasTarefas = () => ({ semente: sementeMundo(), mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, nivel: ((personagemRef.current || personagem || {}).nivel) || 1, dia: diaRef.current });
+
   const cronistaDoTurno = async (pers, narrativa) => {
     if (!narrativa || narrativa.length < 60) return;
-    const ativas = questsRef.current.filter((q) => q.status === "ativa");
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"lugar\":null,\"missoes\":{\"concluidas\":[\"titulo exato\"],\"falhadas\":[\"titulo exato\"],\"progresso\":[{\"titulo\":\"...\",\"nota\":\"resumo curto\"}],\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]}}",
-        "SEÇÃO missoes: (1) \"concluida\" SÓ com objetivo CUMPRIDO de fato e sem dúvida neste turno; (2) \"falhada\" só se impossível ou explicitamente perdida; (3) avanço parcial real vira \"progresso\"; (4) copie os títulos EXATAMENTE; (5) \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
+        "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]}}",
+        "SEÇÃO missoes: \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
         "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real. Para gestos comuns, fieis 10 a 500, pf 1 a 10; na dúvida, 0. Para GRANDES acontecimentos de fé, NÃO chute números: preencha \"acontecimento\":{\"tipo\":\"alianca_reino|libertacao|milagre_publico|santuario|conversao_lider|vitoria_lendaria|pregacao\",\"local\":\"nome da cidade/reino\"} e deixe fieis/pf em 0 — o SISTEMA calcula pela população do local. Um povo/reino inteiro prometendo sua fé ao herói É \"alianca_reino\" (ou \"libertacao\", se o herói o libertou) — NUNCA deixe isso passar sem registrar.",
@@ -10408,9 +10390,8 @@ export default function Taverna() {
         "CAMPO \"prazo\": só quando a CENA impôs pressa em número de noites (\"até a próxima lua\", \"antes que ela morra\", \"tenho três dias\") — use 4, 6 ou 8, o mais próximo do que foi dito. Sem pressa dita, \"prazo\": 0. Não invente urgência: prazo em toda missão não pressiona em nenhuma.",
         "UM TRABALHO É UMA MISSÃO SÓ: se a proposta desta cena é o mesmo serviço de uma missão que já está na lista (o cartaz no mural e a pessoa que vem falar dele são a mesma coisa), missao_oferecida é null. E a etapa \"falar_com\" nunca aponta para quem está oferecendo — o herói já está diante dele.",
         "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
-        "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"concluidas\":[],\"falhadas\":[],\"progresso\":[],\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
+        "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
-      const lista = ativas.map((q) => `- "${q.titulo}" (${q.tipo}) — objetivo: ${q.objetivo || q.descricao || "—"}`).join("\n");
       const evG = eventosRef.current && eventosRef.current.global;
       const combatentes = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
       /* o que já está no diário do sistema — sem isso o Cronista reoferece o
@@ -10418,7 +10399,7 @@ export default function Taverna() {
       const jaNoDiario = garantirMissoes(missoesRef.current)
         .filter((q) => ["ativa", "oferecida"].includes(q.status))
         .map((q) => `- "${q.titulo}"${q.dador ? ` (de ${q.dador})` : ""} — ${q.descricao || "—"}`).join("\n");
-      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nMISSÕES ATIVAS:\n${lista || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
+      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
       const txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve");
       const r = parseObjetoTolerante(txt);
       if (!r || typeof r !== "object") return;
@@ -10481,33 +10462,12 @@ export default function Taverna() {
       /* ---- SEÇÃO missões (isolada) ---- */
       try {
         const rm = r.missoes && typeof r.missoes === "object" ? r.missoes : {};
-        const casar = (t) => {
-          const alvo = String(t || "").toLowerCase();
-          if (!alvo) return null;
-          return ativas.find((q) => q.titulo.toLowerCase() === alvo)
-            || (alvo.length > 8 ? ativas.find((q) => q.titulo.toLowerCase().includes(alvo) || alvo.includes(q.titulo.toLowerCase())) : null);
-        };
-        let recompensa = null;
-        [].concat(rm.concluidas || []).forEach((t) => {
-          const q = casar(t); if (!q) return;
-          questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "concluida" } : x);
-          msgs.push(`✓ Missão concluída: ${q.titulo} (reconhecida pelo sistema)`);
-          if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(q.tipo === "principal" ? 150 : 40, 2, "seu feito corre de boca em boca"));
-          /* v9.16: fechar uma missão rende um ponto de heroísmo */
-          { const rh = ganharHeroismo(p, "missao"); p = rh.pers; if (rh.msg) msgs.push(rh.msg); }
-          if (q.contrato && !recompensa) recompensa = q.contrato;
-        });
-        [].concat(rm.falhadas || []).forEach((t) => {
-          const q = casar(t); if (!q) return;
-          questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, status: "falhada" } : x);
-          msgs.push(`✗ Missão falhou: ${q.titulo} (reconhecida pelo sistema)`);
-        });
-        [].concat(rm.progresso || []).forEach((pr) => {
-          if (!pr || !pr.titulo || !pr.nota) return;
-          const q = casar(pr.titulo); if (!q) return;
-          questsRef.current = questsRef.current.map((x) => x.titulo === q.titulo ? { ...x, nota: String(pr.nota).slice(0, 120) } : x);
-          msgs.push(`📜 ${q.titulo}: ${pr.nota}`);
-        });
+        /* MM14 (30/09, os canais): "concluidas"/"falhadas"/"progresso"
+           saíram — fechavam a lista antiga só pelo TÍTULO que o Cronista
+           casasse, sem conferir nada. A lista antiga agora vira missão do
+           sistema (no load e no descanso longo, `tarefas-antigas.js`) e
+           fecha pela mesma porta que toda missão fecha: `conferirAsMissoes`,
+           pelas etapas — o contrato que carregava paga lá (`pagaDoFecho`). */
         if (rm.global_encerrado === true && eventosRef.current && eventosRef.current.global) {
           const g = eventosRef.current.global;
           eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
@@ -10516,12 +10476,6 @@ export default function Taverna() {
           msgs.push(`🌍 ${g.nome}: desfecho alcançado (reconhecido pelo sistema) — a região entra numa nova era.`);
           if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(500, 10, "uma era inteira reza seu nome"));
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EVENTO GLOBAL "${g.nome}" ENCERRADO pelo sistema — NÃO o continue nem o encerre de novo: a região vive a nova era. O gerador semeará um arco novo quando chegar a hora.]`;
-        }
-        if (recompensa) {
-          bumpCont("contratosConcluidos");
-          p = aplicarNivel({ ...p, moedas: (p.moedas || 0) + recompensa.moedas, xp: (p.xp || 0) + recompensa.xp });
-          msgs.push(`📋 Contrato pago pelo sistema: +${recompensa.moedas} moedas · +${recompensa.xp} XP`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONTRATO PAGO pelo sistema: +${recompensa.moedas} moedas e +${recompensa.xp} XP — NÃO envie moedas nem xp por esse serviço, seria dobrado. A missão já consta como concluída no diário, não a conclua de novo.]`;
         }
         if (msgs.length) { setQuests([...questsRef.current]); setPersonagem(p); }
       } catch { /* seção quebrada não derruba as outras */ }
@@ -12700,6 +12654,27 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
           }
         }
       }
+      /* MM14 (30/09, os canais): a lista antiga vira missão do sistema ao
+         carregar — os refs do mundo já estão do save que acabou de entrar
+         (mapa, cidade), mas o estado React ainda não virou; por isso lê-se
+         de `sv`, não de `mundoAtual()`. */
+      try {
+        const mw = sv.mundo || {};
+        const mg = migrarTarefasAntigas(questsRef.current, missoesRef.current, {
+          semente: `${nomeDaCampanha(sv) || "aventura"}|${mw.genero || ""}`,
+          mapa: mapaRef.current,
+          cidadeAtual: sv.cidadeAtual || "",
+          genero: mw.genero || "Fantasia medieval",
+          molde: moldePorId(mw.molde || MOLDE_PADRAO),
+          lex: mw.lexico || null,
+          nivel: (pers && pers.nivel) || 1,
+          dia: sv.dia || 0,
+        });
+        if (mg.migradas.length) {
+          questsRef.current = mg.quests;
+          missoesRef.current = mg.missoes;
+        }
+      } catch (e) { calou("a migração das tarefas antigas", e); }
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
@@ -16934,6 +16909,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const rec = m.recompensa || recompensaDe({ tipo: m.tipo, nivel: pers.nivel || 1, etapas: m.etapas.length });
       pers = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + rec.moedas, xp: (pers.xp || 0) + rec.xp });
       const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — ${rec.moedas ? `+${rec.moedas} moedas · ` : "o pagamento não era em moedas · "}+${rec.xp} XP`];
+      /* MM14 (30/09): a missão que veio da lista antiga (um fio do
+         descanso, ou um contrato de save de antes da v9.27) paga a MESMA
+         fé e o MESMO heroísmo que a lista antiga pagava — moedas e XP já
+         saíram das duas linhas acima, `pagaDoFecho` não repete. */
+      try {
+        const pf = pagaDoFecho(m, { despertar: !!(divindadeRef.current && divindadeRef.current.despertar) });
+        if (pf.fe) linhas.push(...ganharFe(pf.fe.fieis, pf.fe.pf, "seu feito corre de boca em boca"));
+        if (pf.heroismo) { const rh = ganharHeroismo(pers, pf.heroismo); pers = rh.pers; if (rh.msg) linhas.push(rh.msg); }
+      } catch (e) { calou("a paga da tarefa antiga", e); }
       if (rec.item) {
         const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico });
         pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
@@ -21393,7 +21377,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (tipo === "longo") {
       const ctx = ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current });
       ctx.fase = faseDoArco(historiaRef.current, ESTRUTURAS);
-      const secundarias = questsRef.current.filter((q) => q.status === "ativa" && q.tipo !== "principal").length;
+      /* MM14 (30/09): o fio do descanso passou a nascer direto em
+         `missoes` (ver mais abaixo) — a conta de secundárias ativas segue
+         para lá também, senão o teto nunca via o que acabara de sortear. */
+      const secundarias = (missoesRef.current || []).filter((m) => m && m.status === "ativa" && m.veiculo === VEICULO_DA_TAREFA_ANTIGA && m.intencao !== "principal").length;
       /* ERMOS (v8.5): um dia se passou — o grupo come, bebe e se cansa. */
       {
         const bocas = 1 + (personagem.grupo || []).length;
@@ -21425,8 +21412,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }
       r.expirados.forEach((l) => partes.push(`[EVENTO LOCAL — EXPIRADO] O fio "${l.texto}" se resolveu SEM a minha intervenção (o mundo seguiu sem mim). Mencione o desfecho como notícia de passagem, se couber.`));
       if (r.questNova) {
-        questsRef.current = [...questsRef.current, { titulo: r.questNova.titulo, descricao: r.questNova.descricao, objetivo: r.questNova.objetivo, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }];
-        setQuests([...questsRef.current]);
+        /* MM14 (30/09): o fio não entra mais na lista antiga — nasce direto
+           como missão do sistema, com etapas que se conferem. O envelope
+           para o Narrador e a linha do diário ficam os mesmos de sempre. */
+        try {
+          const mFio = tarefaParaMissao({ ...r.questNova, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }, mundoDasTarefas());
+          if (mFio && !(missoesRef.current || []).some((x) => x.id === mFio.id)) {
+            missoesRef.current = [...(missoesRef.current || []), mFio];
+            setMissoes(missoesRef.current);
+          }
+        } catch (e) { calou("o fio do descanso", e); }
         partes.push(`[QUEST GERADA PELO SISTEMA — fase "${ctx.fase}" do arco] Nova missão secundária JÁ REGISTRADA no diário (NÃO envie "quest_nova" duplicando-a): "${r.questNova.titulo}" — ${r.questNova.descricao} Objetivo: ${r.questNova.objetivo}. Apresente-a na ficção com liberdade total de execução (quem procura, como, com que voz); os FATOS acima são fixos.`);
         pushMsgs([{ autor: "sistema", texto: `📜 Fio de história: ${r.questNova.titulo}` }]);
       }

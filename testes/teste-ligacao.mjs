@@ -118,6 +118,13 @@ sec("1. NENHUM MÓDULO MUDO");
      importa `crime.js` (a agressão, a pauta, o save, o mercado e a
      guarda), e `teste-mm10-crime.mjs` prova a fiação por texto. A lista
      volta a ficar VAZIA, como a regra pede. */
+  /* 30/09 (Fase MM, MM14 · os canais): a dívida foi paga no mesmo dia — o
+     App.jsx importa `tarefas-antigas.js` (a migração no load, o fio do
+     descanso longo nascendo missão, e a fé e o heroísmo no fecho pela mão
+     de `pagaDoFecho`), junto da remoção dos dois canais que fechavam a
+     lista antiga só pelo título (`quest_atualizar` no Narrador,
+     `missoes.concluidas` no Cronista). `teste-mm14-canais.mjs` prova a
+     fiação por texto. A lista volta a ficar VAZIA, como a regra pede. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

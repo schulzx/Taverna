@@ -85,9 +85,20 @@ export function faseDoArco(historia, estruturas) {
   return "meio";
 }
 
+/* MM14 (30/09): O FIO SAI COM QUEM E ONDE. O fio vivia na lista antiga de
+   tarefas e só fechava pelo título, quando o Narrador ou o Cronista o
+   davam por feito. Passa a ser uma missão do sistema (`tarefas-antigas.js`),
+   e uma missão precisa de alvo: a pessoa que o gancho sorteou e as cidades
+   que ele nomeou, pela ordem em que o texto as diz. Os ganchos continuam
+   iguais; quem e onde leem-se do contexto que os montou. */
 export function gerarQuestDeArco(ctx, fase) {
   const pool = GANCHOS[fase] || GANCHOS.meio;
-  return pick(pool)(ctx);
+  const q = pick(pool)(ctx);
+  const texto = `${q.titulo} ${q.objetivo} ${q.descricao}`;
+  const quem = [ctx.a1, ctx.a2, ctx.a3, ctx.a4].map((a) => a && a.nome).find((n) => n && `${q.titulo} ${q.objetivo}`.includes(n)) || "";
+  const ondes = [ctx.lugar, ctx.lugar2].filter((l, i, s) => l && s.indexOf(l) === i && texto.includes(l))
+    .sort((a, b) => texto.indexOf(a) - texto.indexOf(b));
+  return { ...q, quem, ondes };
 }
 
 /* ---------------- 2) EVENTOS LOCAIS (fios vivos — frequentes, máx. 3, expiram) ---------------- */

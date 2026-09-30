@@ -406,7 +406,9 @@ O limite é o que um commit revertido não desfaz.
      ainda não registada; é no sinal `ehPerguntaAoMundo`* · **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
      vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
   7. ✓ *feito em v9.336 (perguntar é de graça — decisão do coordenador)* · **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
-  8. **Missões forçadas em série** *(e ainda: o Narrador e o Cronista fecham quests antigas por título, sem
+  8. **Missões forçadas em série** *(✓ os dois canais que fechavam por título saíram em v9.337, depois de os fios e os contratos
+     passarem a missões que se conferem e os saves antigos migrarem; ficam inertes o bloco "contratos ativos" do mural e
+     `abandonarContrato`, que só serviam a saves anteriores à v9.27. Ainda: o Narrador e o Cronista fechavam quests antigas por título, sem
      conferir — `App.jsx` ~9651 e ~10470; fechá-los é remover o que existe, decidir; e a secção `pessoas` do
      Cronista ainda regista nomes de passagem sem `aindaSoUmNome`; e "volto para a mesa" casa "A Mesa Honesta")* (quatro em 43 respostas; "alguém vem cobrar o que você disse" sem promessa).
   9. **As pessoas da cidade seguem a heroína** até à masmorra; "você mudou desde a última vez" no primeiro

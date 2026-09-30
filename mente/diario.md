@@ -15,6 +15,39 @@ Formato:
 ```
 
 ---
+## 30/09 14:48 · v9.337 · MM14 (5) · os fios e os contratos viram missões, e os dois canais antigos saem · commit (o hash vai no próximo bloco)
+
+- **por que andou:** decisão do coordenador (a opção (a)). O Narrador (`quest_atualizar`) e o Cronista
+  (`missoes.concluidas`) fechavam as tarefas da lista antiga **só pelo título, sem conferir nada** — a
+  mesma família de defeito que a MM14 pagou nas missões. Mas eram a única via de fechar dois tipos de
+  tarefa, por isso: primeiro converter, depois remover.
+- **estado inicial:** verde (`031bd26`, `e52c863`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend:** `src/tarefas-antigas.js` — **os fios do descanso longo** (o único tipo que ainda nasce)
+  passam a nascer missões com etapas que se conferem (encontrar a pessoa num lugar da cidade dela, por
+  semente — 380 fechavam só porque o Narrador dizia o nome); **os contratos** (só existem em saves
+  anteriores à v9.37) viram missões cujo fecho **paga exatamente o mesmo — 1152 contratos comparados, 0
+  diferenças** em moedas, XP, fé, heroísmo e contagem. **A migração ao carregar** leva as tarefas ativas
+  da lista antiga para as missões, idempotente (carregar duas vezes não duplica), e marca a antiga como
+  `migrada` — o mesmo campo, o mesmo tipo, só um valor novo, que todos os leitores já ignoram (filtram
+  "ativa"): num rollback continua invisível, e a missão fica. **E um gémeo que ninguém tinha visto**: os
+  saves sem missões, desde a v9.27, copiavam cada tarefa ativa para uma missão "de legado" que nunca
+  fechava, deixando a tarefa ativa também — é trocado pela missão convertida.
+- **decisão média tomada (orquestrador):** **o fio paga o que pagava** (só a fé e o heroísmo). O backend
+  propôs que passasse a pagar como um favor (◉62 · 96 XP no nível 3); mudar a economia não era desta
+  etapa. Fica uma diferença pequena e escrita: o fio fechado soma agora em "contratos concluídos", como
+  toda missão.
+- **frontend:** a migração no load (com a semente do save que se carrega), o fio do descanso nascido
+  missão, a fé e o heroísmo pagos no fecho, e **os dois canais fora** — e o prompt do Cronista encurtou
+  (só o "global encerrado" fica). Ficam inertes, sem mexer: o bloco "contratos ativos" do mural e o
+  "abandonar contrato", que só serviam a saves pré-v9.27.
+- **a prova:** um save antigo feito à mão, com um fio e um contrato ativos e sem missões, injetado com o
+  jogo desmontado — as duas viraram missões com etapas reais e a lista antiga marcou-as `migrada`;
+  recarregar não duplicou; o localStorage foi restaurado ao de antes.
+- **a sonda:** não se move (92/157).
+- **para quem joga:** nenhuma tarefa acaba porque o Mestre disse que acabou; um contrato paga quando se faz
+  o que ele pede, e paga o mesmo de sempre.
+
 ## 30/09 13:26 · v9.336 · MM14 (4) · perguntar é de graça, e a resposta que chega é a que responde · commit `031bd26`
 
 - **por que andou:** duas decisões do coordenador da fase — **perguntar ao Mestre é de graça** (numa mesa

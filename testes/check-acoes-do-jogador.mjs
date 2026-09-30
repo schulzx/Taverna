@@ -329,11 +329,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      mesa de PERGUNTOU (`nomesDaMesa`, fc/gp/mc, `juntarRespostas`) nasce
      ACIMA de `pushMsgs`, dentro de `pautaDoTurno` — mesmo delta desta
      etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido por esta
-     própria catraca; nada somado de cabeça. */
-  } else if (iPush + 1 !== 8237) {
-    falha(`pushMsgs saiu de src/App.jsx:8237 e agora está em :${iPush + 1}`,
+     própria catraca; nada somado de cabeça.
+     OS DOIS CANAIS ANTIGOS (frontend, MM14, 30/09): 8237 -> 8238, +1. O
+     import de `tarefas-antigas.js` no topo do arquivo empurra tudo abaixo
+     dele +1 — o mesmo degrau que qualquer import novo no topo sempre dá.
+     Re-medido por esta própria catraca; nada somado de cabeça. */
+  } else if (iPush + 1 !== 8238) {
+    falha(`pushMsgs saiu de src/App.jsx:8238 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8237, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8238, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;
