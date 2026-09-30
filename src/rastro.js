@@ -136,9 +136,12 @@ export function detectarPartida(acao, ctx = {}) {
   /* a oração que contém o verbo de partida é a que manda: "pergunto o
      caminho e sigo para Rio do Sul" parte de verdade, e o exame por período
      inteiro dizia que não. */
-  for (const o of oracoes(txt)) {
+  for (const o0 of oracoes(txt)) {
+    /* MM14: sem acento, pela mesma fronteira de ASCII que abria a masmorra
+       da lâmina (ver `detectarEntradaEmMasmorra`) */
+    const o = norm(o0);
     if (!PARTIDA.test(o) || SO_INTENCAO.test(o)) continue;
-    const destino = nomeDeCidade(norm(o)) || nomeDeCidade(norm(txt));
+    const destino = nomeDeCidade(o) || nomeDeCidade(norm(txt));
     if (destino) return { destino, motivo: "destino nomeado no mapa" };
     /* sem cidade nomeada, só a direção explícita serve. E ela ganha do lugar
        interno: "sigo para fora dos portões" é sair, mesmo com "portão" na
@@ -160,17 +163,70 @@ const ENTRADA = /\b(entro|entrar|adentro|adentrar|desco|descer|desço|invado|inv
    vira um lugar que masmorras.js sabe povoar com salas, chave e chefe. */
 const COVIL = /\b(masmorra|calabouco|calabouço|cripta|catacumba|catacumbas|tumba|tumulo|túmulo|mausoleu|mausoléu|covil|toca|caverna|gruta|caverna|mina|minas|ruina|ruína|ruinas|ruínas|labirinto|subterraneo|subterrâneo|esgoto|esgotos|cova|fosso|torre abandonada|torre em ruinas|fortaleza abandonada|forte abandonado|templo soterrado|templo abandonado|santuario perdido|santuário perdido|necropole|necrópole|ossario|ossário|antro|cavernas|galeria|poco antigo|poço antigo)\b/i;
 
+/* ---------------- A LÂMINA NÃO É UMA MINA (30/09, MM14 · o lugar) ----------------
+   As DUAS masmorras da sessão de prova nasceram da faca da heroína.
+   "Entro no galpão devagar, com a lâmina à frente" (T21) e "Desço ao
+   salão com a lâmina à cintura" (T47): as regex corriam sobre o texto
+   CRU, e em JavaScript o `\b` é de ASCII — o "â" não é letra para ele, e
+   por isso há uma fronteira de palavra dentro de "lâ|mina". "mina" é
+   covil. Verbo de entrada mais covil na mesma oração: masmorra aberta,
+   no galpão do cais e no salão da taverna.
+
+   A cura é a de toda a casa: ler o texto SEM ACENTO (as listas já têm as
+   duas grafias). E a regra de mesa que faltava vem logo abaixo, em
+   `portaDaMasmorra`: um cômodo de um prédio é o prédio, nunca uma
+   masmorra. */
 export function detectarEntradaEmMasmorra(acao, ctx = {}) {
   const gate = podeAbrirModulo(ctx);
   if (!gate.pode) return null;
   const txt = String(acao || "");
   if (!txt.trim()) return null;
   for (const o of oracoes(txt)) {
-    if (SO_INTENCAO.test(o)) continue;
-    if (!ENTRADA.test(o) || !COVIL.test(o)) continue;
-    return { nome: nomeDoCovil(o), motivo: "verbo de entrada e covil na mesma oração" };
+    const n = norm(o);
+    if (SO_INTENCAO.test(n) || !ENTRADA.test(n)) continue;
+    /* o covil é a palavra (a cripta, a mina) — OU a masmorra do mundo pelo
+       nome dela, ou por ser o lugar onde o herói está: "O que sobrou de
+       Sal" não tem palavra de covil nenhuma e é uma mina de nove salas */
+    const porta = portaDaMasmorra({ texto: o, nome: nomeDoCovil(o) }, ctx);
+    if (!COVIL.test(n) && !porta.doMundo) continue;
+    if (!porta.ok) return null;
+    return { nome: porta.nome, motivo: porta.doMundo ? "verbo de entrada e uma masmorra do mundo" : "verbo de entrada e covil na mesma oração" };
   }
   return null;
+}
+
+/* ---------------- A PORTA DA MASMORRA (30/09, MM14 · o lugar) ----------------
+   Por onde uma masmorra pode abrir — pela frase do jogador
+   (`detectarEntradaEmMasmorra`) ou pelo sinal do Narrador
+   (`masmorra:<nome>`, que até aqui abria sem pergunta nenhuma).
+
+     1) um lugar que É masmorra no mundo (`ctx.masmorras`, a lista de
+        `masmorrasDoMundo`) abre sempre — pelo nome dito, ou por ser o
+        lugar onde o herói está; e abre com o nome DELE;
+     2) dentro de um prédio (um local da cidade ou um cômodo, `distancia:
+        "dentro"`) não abre: o salão, o porão e o quarto de cima da
+        taverna são a taverna;
+     3) dentro dos muros, sem lugar (a rua), só abre o que é do mundo —
+        quando quem pergunta traz a lista do mundo;
+     4) fora dos muros, o covil que o gerador improvisa continua a abrir,
+        como sempre.
+   Sem `ctx.lugar` nem `ctx.masmorras`, a resposta é a de antes: sim. */
+export function portaDaMasmorra({ texto = "", nome = "" } = {}, ctx = {}) {
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  const semArt = (s) => norm(s).trim().replace(/^(o|a|os|as)\s+/, "").trim();
+  const t = ` ${norm(`${texto || ""} ${nome || ""}`).replace(/[^a-z0-9]+/g, " ")} `;
+  const doMundo = (Array.isArray(o.masmorras) ? o.masmorras : []).filter((m) => m && m.nome);
+  const lugar = o.lugar && typeof o.lugar === "object" ? o.lugar : null;
+  const achada = doMundo.find((m) => { const k = semArt(m.nome).replace(/[^a-z0-9]+/g, " ").trim(); return k.length > 3 && t.includes(` ${k} `); })
+    || (lugar && doMundo.find((m) => semArt(m.nome) === semArt(lugar.nome)));
+  if (achada) return { ok: true, nome: String(achada.nome).slice(0, 50), doMundo: true };
+  if (lugar && (lugar.distancia === "dentro" || lugar.dentroDe)) {
+    return { ok: false, motivo: `${lugar.nome} é um lugar ${lugar.dentroDe ? "do prédio" : "da cidade"}, não uma masmorra` };
+  }
+  if (!lugar && o.cidadeAtual && !o.emViagem && Array.isArray(o.masmorras)) {
+    return { ok: false, motivo: "dentro dos muros só abre a masmorra que o mundo tem" };
+  }
+  return { ok: true, nome: String(nome || "").slice(0, 50), doMundo: false };
 }
 
 /* Tenta pescar o nome próprio do lugar ("desço na Cripta de Malgar") para

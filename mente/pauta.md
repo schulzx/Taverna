@@ -394,7 +394,7 @@ O limite é o que um commit revertido não desfaz.
   1. ✓ *feito em v9.333* · **As missões fecham sem se jogarem** — a principal fechou no turno 5 sem ver a Delfina (a 146 km);
      "Tirar Branca de lá" fechou por uma frase no futuro; "O lance" por entrar na taverna; a história
      avançou de ato e o Mestre narrou "você trouxe a Branca".
-  2. **O lugar da heroína e o da narração separam-se** — "vou à torre" fez a viagem sozinho, "saio pelo
+  2. ✓ *feito em v9.335* (fica: ir a pé até à boca de uma masmorra do mundo, que pode estar a centenas de km, não tem caminho — mecânica nova) · **O lugar da heroína e o da narração separam-se** — "vou à torre" fez a viagem sozinho, "saio pelo
      portão" foi recusado, a taverna ficou fora da cidade e voltou; descer ao salão abriu uma masmorra.
   3. ✓ *feito em v9.334* · **Voltar a uma sala limpa ressuscita os inimigos** (T34) — e o sistema avisa depois que estão mortos.
   4. ✓ *feito em v9.334* · **O "como você faz isso?" do golpe final não chega ao Narrador** (3 em 3).

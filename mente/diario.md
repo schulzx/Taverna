@@ -15,6 +15,37 @@ Formato:
 ```
 
 ---
+## 30/09 12:04 · v9.335 · MM14 (3) · o lugar da heroína e o da narração voltam a ser um · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o defeito nº 2 da sessão de prova, o maior que restava — a continuidade partia-se
+  no turno 5.
+- **estado inicial:** verde (`b7aed23`). A mesma mão das missões, retomada.
+- **bastão:** tomado por mim para cinco pontos (deslocamento zero); devolvido com este commit.
+- **os casos da sessão, com a causa:**
+  - **"Eu vou à torre" viajou sozinho; ir à banca levou ao Cais do Sal** — a leitura do "para onde vou"
+    lia a fala entre aspas (já consertado na MM14 (1); provado outra vez).
+  - **"Saio pelo portão" foi recusado** — "saio" não era verbo de ir; casou só o "sal" do Cais do Sal,
+    onde ela já estava. Agora sai: ao arredor nomeado, senão "o lado de fora dos portões"; se a frase
+    pede estrada, decide a estrada. Nenhuma lei nova fecha o portão (seria mecânica nova).
+  - **O galpão e o salão da taverna abriram masmorras — e as duas nasceram da faca da heroína:** em
+    JavaScript o `\b` só conhece ASCII, e "lâmina" contém "mina", que é palavra de covil. "Desço ao
+    salão com a lâmina à cintura" abria uma masmorra. Agora o detector lê sem acento, **nunca abre
+    num prédio ou cômodo**, e abre sempre a masmorra do mundo pelo nome dela. **O sinal "masmorra:"
+    do Narrador abria sem pergunta nenhuma** — passa pela mesma porta, e a recusa diz-se ao Narrador.
+  - **"Continuo lá" e "agora estou aqui" no mesmo turno** — a recusa do turno anterior ficava na nota e
+    juntava-se ao movimento novo. Agora só sobe o último envelope de lugar.
+  - **A taverna ficou "fora da cidade"** — o Mestre escreveu "Sino Calado" sem artigo, a comparação era
+    letra a letra, e o lugar "novo" caiu em "arredores". Agora compara sem artigo, e **"arredores" só
+    fora dos muros**. (Isto pesa: o baú do ermo e o crime da MM10 dependem dele.)
+- **a varredura (24 mundos), antes → depois:** masmorras num cômodo pela frase 192/384 → 0, pelo sinal
+  do Narrador 96 → 0; saídas pelo portão perdidas 96/144 → 0; masmorras do mundo que não abriam com o
+  nome delas 13/16 → 0; "arredores" dentro dos muros 328/708 → 0; turnos com duas versões do lugar
+  96/168 → 0; passos na cidade que viraram viagem 0 → 0; perguntas "onde fica?" que movem 0 → 0.
+- **o que fica:** ir a pé até à boca de uma masmorra do mundo, que pode estar a centenas de km, não tem
+  caminho — é mecânica nova, na pauta.
+- **para quem joga:** onde ele está é onde a história está — descer ao salão é o salão, sair pelo portão
+  sai, e a taverna fica dentro dos muros.
+
 ## 30/09 11:26 · v9.334 · MM14 (2) · o "como" chega, o revide fere, a sala limpa fica limpa · commit `14f0bd6`
 
 - **por que andou:** os defeitos nº 3, 4 e 5 da sessão de prova.

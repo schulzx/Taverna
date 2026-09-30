@@ -151,7 +151,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaP
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
 import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
-import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
+import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar, distanciaNaCidade, umSoLugar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
@@ -197,7 +197,7 @@ import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
-import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra } from "./rastro.js";
+import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra } from "./rastro.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
@@ -7885,7 +7885,7 @@ export default function Taverna() {
       try {
         const locais = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
         const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-        return locais.some((l) => semA(l.nome) === semA(cru)) ? "dentro" : null;
+        const aqui = lugarRef.current; const anfitriao = aqui && locais.find((l) => semA(l.nome) === semA(aqui.dentroDe || aqui.nome)); return distanciaNaCidade(cru, { locais, comodos: anfitriao ? comodosDoLocal(sementeMundo(), anfitriao, generoMundo(), moldeMundo()) : [], arredores: arredoresDaCidade(sementeMundo(), cid), masmorras: masmorrasDoMundo(sementeMundo(), mapaRef.current).filter((m) => m.cidadeProxima === cid.nome), foraDosMuros: !!(aqui && aqui.distancia !== "dentro") }); /* MM14: arredores só fora dos muros */
       } catch { return null; }
     })();
     /* v9.118: se o nome é um arredor que o sistema gerou, o ponto é o DELE —
@@ -9711,7 +9711,7 @@ export default function Taverna() {
           }
         } else if (chave === "masmorra") {
           if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
-            sinalMasmorraRef.current = arg || "";
+            { const pm = portaDaMasmorra({ nome: arg }, { cidadeAtual: cidadeAtualRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: (() => { try { return masmorrasDoMundo(sementeMundo(), mapaRef.current); } catch (e) { return []; } })() }); if (pm.ok) sinalMasmorraRef.current = pm.nome || arg || ""; else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MASMORRA — RECUSADA PELO SISTEMA] Não há masmorra aqui: ${pm.motivo}. A cena continua onde estou.`; } /* MM14: o sinal abria sem pergunta nenhuma */
           }
         } else if (chave === "raid") {
           /* A TRAVA É AQUI, e não na cena. Se o Mestre anunciar um chamado
@@ -11680,7 +11680,7 @@ export default function Taverna() {
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
-    const nota = [pauta, oficina, notaRef.current, doCompasso, formaDaCena, daFrente, daVirada, daTrama].filter(Boolean).join("\n");
+    const nota = [pauta, oficina, umSoLugar(notaRef.current), doCompasso, formaDaCena, daFrente, daVirada, daTrama].filter(Boolean).join("\n"); /* MM14: a pauta nunca leva duas versões do lugar */
     notaRef.current = "";
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
@@ -14038,7 +14038,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
         cidadeAtual: cidadeAtualRef.current,
         cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
         emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
-        emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
+        emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: (() => { try { return masmorrasDoMundo(sementeMundo(), mapaRef.current); } catch (e) { return []; } })(),
       };
       if (sinalViagemRef.current === null && sinalMasmorraRef.current === null) {
         /* a masmorra vem primeiro: "desço na cripta fora da cidade" é entrar
@@ -14390,7 +14390,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     cidadeAtual: cidadeAtualRef.current,
     cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
     emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
-    emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current,
+    emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: (() => { try { return masmorrasDoMundo(sementeMundo(), mapaRef.current); } catch (e) { return []; } })(),
   });
 
   const agirInterno = (texto) => {

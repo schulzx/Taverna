@@ -284,10 +284,48 @@ export function tiposPedidos(texto) {
 /* Compatibilidade com quem só quer um: o primeiro da lista. */
 export function tipoPedido(texto) { return tiposPedidos(texto)[0] || null; }
 
+/* ============================================================
+   "SAIO PELO PORTÃO" SAI (30/09, MM14 · o lugar)
+
+   É o gesto mais comum de uma mesa, e nesta casa não levava a lado
+   nenhum. Na sessão de prova (T18) a heroína escreveu "Saio pelo portão
+   e vou a pé até ao Poço de Sal": esta função não conhecia "saio" (o
+   RX_VOU não o tem), o Poço de Sal não é um lugar a pé da lista, e o que
+   sobrou foi "sal" — meio nome do Cais do Sal, onde ela já estava. Nada
+   se registou; o Mestre tirou-a do cais, e o sistema recusou-lho ("sem
+   que eu tenha dito que saio"), porque `pediuParaVoltar` só conhecia
+   "saio d…". Ela ficou "LÁ", no cais, a ver a cidade tocar a rebate.
+
+   A regra: quem declara que sai dos muros sai. Se nomeou um lugar lá
+   fora (um arredor), vai a ele; se não, fica do lado de fora dos
+   portões — um lugar real, nos arredores, a poucos minutos. Os lugares
+   de DENTRO deixam de concorrer na frase de saída: quem sai pelo portão
+   não está a pedir o cais. E se a frase pede estrada ("rumo a", "parto
+   para"), quem decide é a estrada (`rastro.js`), não esta função. */
+export const SAIDA_DOS_MUROS = {
+  nome: "o lado de fora dos portões", tipo: "portao", minutos: 5,
+  rx: /\b(saio|saimos|sair|deixo|deixamos|atravesso|atravessamos|cruzo|cruzamos|passo|passamos)\b[^.!?;]{0,24}?\b(pel[oa]s? (portao|portoes|portas? da (cidade|vila)|muralhas?)|d[aoe]s? (cidade|vila|muros|muralhas|portoes)|(os|o) portoes?|(as|a) muralhas?|os muros)\b|\bpara fora d[oa]s? (muros|muralhas|portoes|portao|cidade|vila)\b|\bportoes afora\b/,
+  /* a estrada é de outra porta: com isto na frase, a saída não é um passo */
+  /* (e as direções que `detectarPartida`, em rastro.js, já trata como
+     estrada: "portões afora", "cruzo os portões", "para fora dos muros",
+     "ao norte" — se a estrada abre, este passo não se soma a ela) */
+  estrada: /\b(rumo a|rumo ao|sigo para|seguimos para|parto para|partimos para|viajo para|viajamos para|vou para|vamos para|sigo viagem|pego a estrada|tomo a estrada|estrada afora|pela estrada|para a estrada|portoes afora|cruzo (os |as |o |a )?(portoes|portao|muralhas?)|para fora d[aeo]s? (cidade|vila|muralhas?|portoes|portao|povoado|muros?|aldeia)|para o (norte|sul|leste|oeste)|ao (norte|sul|leste|oeste))\b/,
+};
+
 export function lugarPedido(texto, lugares = []) {
   /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
   const t = soODeclarado(texto, NAO_E_IDA);
-  if (!t.trim() || !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
+  if (!t.trim()) return null;
+  const sai = SAIDA_DOS_MUROS.rx.test(t);
+  if (!sai && !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
+  /* MM14: na frase de saída só concorre o que fica lá fora */
+  lugares = (Array.isArray(lugares) ? lugares : []).filter((l) => !sai || (l && l.onde === "arredores"));
+  if (sai) {
+    const fora = lugarPedido(t.replace(SAIDA_DOS_MUROS.rx, (m) => m.replace(/./g, " ")), lugares);
+    if (fora) return fora;
+    if (SAIDA_DOS_MUROS.estrada.test(t)) return null;
+    return { nome: SAIDA_DOS_MUROS.nome, tipo: SAIDA_DOS_MUROS.tipo, onde: "arredores", minutos: SAIDA_DOS_MUROS.minutos, saida: true };
+  }
   /* o mais específico ganha: entre "a Forja" e "a Forja Velha", casa a que
      tem mais pedaços reconhecidos no texto.
 
@@ -349,9 +387,80 @@ export function definirLugar(nome, { cidade = "", dia = 0, distancia = null, den
 
 /* O mesmo lugar de novo não é um lugar novo: evita reanunciar a cada
    turno em que o Mestre repete o nome. */
+/* MM14 (30/09): SEM O ARTIGO. Na sessão de prova (T42) o sistema pôs a
+   heroína "n'O Sino Calado" e o Mestre, no mesmo turno, mandou
+   `lugar_atual: "Sino Calado"` — o mesmo lugar, dito sem artigo. Aqui eram
+   dois lugares, e o segundo, sem casar com os locais da cidade, caiu na
+   régua do texto e virou "FORA DA CIDADE, nos arredores de Foz do Meio":
+   a taverna saiu dos muros por um turno e voltou no seguinte. */
+const semArtigoL = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "").trim();
 export function ehOMesmoLugar(a, b) {
   if (!a || !b) return !a && !b;
-  return norm(a.nome) === norm(b.nome);
+  return semArtigoL(a.nome) === semArtigoL(b.nome);
+}
+
+/* ============================================================
+   "ARREDORES" SÓ FORA DOS MUROS (30/09, MM14 · o lugar)
+
+   Quando o Mestre nomeia um lugar (`lugar_atual`), o App só sabia dizer
+   "dentro" se o nome fosse, letra a letra e com o artigo, um local da
+   cidade; tudo o resto caía em `distanciaPorTexto`, que na dúvida diz
+   arredores. Na sessão de prova "o galpão do cais" — dentro dos muros, a
+   dez minutos da taverna — virou "nos arredores (ir e voltar leva
+   HORAS)", e "Sino Calado" sem artigo virou "FORA DA CIDADE". E o
+   crime da MM10 e o baú do ermo leem essa distância.
+
+   A régua passa a ser do SÍTIO e não da palavra: o nome é comparado sem
+   artigo com os locais e os cômodos daqui (dentro), com os arredores e as
+   masmorras do mundo (arredores); depois a palavra que só pode ser
+   interior (`RX_DENTRO`) ou só pode ser campo (`RX_FORA_DOS_MUROS`); e na
+   dúvida, o lado dos muros em que o herói JÁ está. Um lugar sem nome
+   conhecido, nomeado por quem narra enquanto o herói anda pela cidade, é
+   da cidade. `ctx`: { locais, comodos, arredores, masmorras, foraDosMuros }
+   — listas de nomes ou de objetos com `nome`. */
+export const RX_FORA_DOS_MUROS = /\b(fazenda|sitio|quinta|granja|moinho|azenha|bosque|floresta|mata|matagal|estrada|trilha|gruta|caverna|colina|monte|serra|rio|riacho|lago|lagoa|pantano|charco|ponte|acampamento|ruina|ruinas|torre caida|mina|minas|pedreira|salinas|pomar|olival|vinha|vinhedo|charneca|vale|clareira|ermo|arredores|fora dos muros|lado de fora)\b/;
+export function distanciaNaCidade(nome, ctx = {}) {
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  const n = semArtigoL(nome);
+  if (!n) return o.foraDosMuros ? "arredores" : "dentro";
+  const palavrasL = (s) => ` ${norm(s).replace(/[^a-z0-9]+/g, " ").trim()} `;
+  const nomeDe = (x) => semArtigoL(x && typeof x === "object" ? x.nome : x);
+  const casa = (lista) => (Array.isArray(lista) ? lista : []).some((x) => {
+    const k = nomeDe(x);
+    return !!k && (k === n || (k.length > 3 && palavrasL(n).includes(palavrasL(k))));
+  });
+  if (casa(o.locais) || casa(o.comodos)) return "dentro";
+  if (casa(o.arredores) || casa(o.masmorras)) return "arredores";
+  if (RX_DENTRO.test(norm(nome))) return "dentro";
+  if (RX_FORA_DOS_MUROS.test(norm(nome))) return "arredores";
+  return o.foraDosMuros ? "arredores" : "dentro";
+}
+
+/* ============================================================
+   UMA VERSÃO DO LUGAR POR TURNO (30/09, MM14 · o lugar)
+
+   Na sessão de prova (T42) a mesma mensagem ao Narrador levou "[LUGAR —
+   RECUSADO] … continuo LÁ [no galpão]" e "[MOVIMENTO — REGISTRADO] …
+   AGORA estou no Sino Calado". A recusa nasceu no fim do turno anterior
+   (o Mestre tirou-a do galpão ao fugir da masmorra) e ficou na nota à
+   espera do turno seguinte; o movimento deste turno juntou-se-lhe. Duas
+   verdades sobre onde se está, e o Narrador escolhe a que lhe apetece.
+
+   Os envelopes de lugar dizem todos a mesma coisa — onde eu estou agora —
+   e por isso só o ÚLTIMO vale: o que o sistema decidiu depois é o que o
+   sistema decidiu. Os outros saem da nota antes de ela subir. */
+export const ENVELOPES_DE_LUGAR = [
+  "[LUGAR — RECUSADO PELO SISTEMA]",
+  "[MOVIMENTO — REGISTRADO PELO SISTEMA]",
+  "[CORREÇÃO DE LUGAR — REGISTRO DO SISTEMA]",
+];
+export function umSoLugar(nota) {
+  const s = String(nota == null ? "" : nota);
+  const linhas = s.split("\n");
+  const deLugar = linhas.map((l, i) => (ENVELOPES_DE_LUGAR.some((e) => l.trimStart().startsWith(e)) ? i : -1)).filter((i) => i >= 0);
+  if (deLugar.length <= 1) return s;
+  const fica = deLugar[deLugar.length - 1];
+  return linhas.filter((_, i) => i === fica || !deLugar.includes(i)).join("\n");
 }
 
 /* Um "lugar" que na verdade é a própria cidade não é sublocal nenhum —
@@ -484,12 +593,23 @@ export function falaDoJogador(texto) {
   return t.startsWith("[") ? "" : t.trim();
 }
 
+/* MM14 (30/09): DUAS FRASES DA SESSÃO DE PROVA, ao contrário uma da outra.
+   "Saio pelo portão" (T18) não contava como sair — a lista só tinha "saio
+   d…" —, e o Mestre foi recusado por tirar a heroína do cais. E "Para que
+   toca o sino assim, aqui em Foz do Meio?" (T43) contava como voltar à
+   cidade, porque o nome da cidade estava na frase. Agora lê-se só o que o
+   herói declarou (a pergunta não pede nada), "saio" é sair, e o nome da
+   cidade só é pedido de volta com um verbo de ir ao lado. */
+const RX_SAIO = /\b(saio|saimos|vou embora|vamos embora)\b/;
 export function pediuParaVoltar(textoDoJogador, cidade) {
-  const t = norm(falaDoJogador(textoDoJogador));
-  if (!t) return false;
+  const cru = falaDoJogador(textoDoJogador);
+  if (!cru) return false;
+  const t = soODeclarado(cru, NAO_E_IDA);
+  if (!t.trim()) return false;
   if (PEDIDOS_DE_VOLTA.some((p) => t.includes(norm(p)))) return true;
+  if (RX_SAIO.test(t)) return true;
   const c = norm(cidade);
-  return !!c && t.includes(c);
+  return !!c && t.includes(c) && (RX_VOU.test(t) || RX_ATE.test(t));
 }
 
 export function detectarVoltaForcada(narrativa, { lugar, cidade, pedidoDoJogador } = {}) {
