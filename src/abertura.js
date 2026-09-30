@@ -24,7 +24,7 @@
       ANTECEDENTE do herói, por tabela e semente. A pista é uma pessoa com
       nome e um lugar DESTA cidade, tirados da base do mundo — nada de gente
       inventada ao lado da que o mundo já tem. A principal nasce ACEITA, e o
-      primeiro passo é ir aonde a pista está.
+      primeiro passo é encontrar a pista, no lugar dela.
 
    2) A ORDEM DA NARRAÇÃO: o mundo → onde estou (a chegada) → a pequena
       história do lugar → porque estou aqui e o que sei. O próximo passo
@@ -47,13 +47,25 @@
    semente refaça — só o que ACONTECEU (quantos turnos, onde já esteve, se
    o sino tocou) vai para o save, num campo novo que a versão antiga
    ignora.
+
+   ---------------- A PISTA TEM MORADA (MM13b, 30/09) ----------------
+
+   A prova jogada de MM13 achou a pista e o sino a apontar para lugares
+   que a planta da cidade não mostrava. Eram três defeitos com a mesma
+   cara: o lugar do segundo passo era de OUTRA cidade e a linha não o
+   dizia (`cidadeDoMarco`, `ondeComMorada`); a pista tinha o nome de outro
+   marco da espinha, e conhecê-la fechava esse marco (o filtro de
+   homónimos); e o léxico que chega depois de o mundo nascer renomeava a
+   planta e não o que já estava gravado (`soOVocabulario`, em lexico.js,
+   que o App aplica nesse caso). O primeiro passo passou de chegar a
+   encontrar.
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
 import { marcoAtual } from "./saga.js";
 import { estruturaPorId } from "./historia.js";
-import { oQueExisteAqui, masmorrasDoMundo, chefesDoMundo, chaveDoLugar } from "./mundo-base.js";
-import { criarMissao, etapaAtual, textoDaEtapa, garantirMissoes } from "./missoes.js";
+import { oQueExisteAqui, masmorrasDoMundo, chefesDoMundo, chaveDoLugar, locaisDaCidade, genteDoLocal } from "./mundo-base.js";
+import { criarMissao, etapaAtual, garantirMissoes, mesmaPessoa, rumoDaEtapa } from "./missoes.js";
 import { criarRelogio, envelopeCheio, TAMANHOS } from "./relogios.js";
 import { vocacaoDe } from "./comercio.js";
 import { fichaDaCidade } from "./cidade-por-dentro.js";
@@ -337,6 +349,54 @@ function ehConversa(local) {
   return i < 0 ? LUGARES_DE_CONVERSA.length : i;
 }
 
+/* ---------------- A MORADA DO MARCO (30/09, MM13b) ----------------
+   O primeiro marco da espinha é DESTA região, mas quase nunca desta
+   cidade: a espinha sorteia o primeiro ato entre as cidades mais perto
+   da partida (`saga.js`, "a espinha caminha para fora"). A marca guarda
+   o lugar pelo NOME ("A Corda Velha") e esquece a cidade — e a linha do
+   passo dizia "procurar Petra na Corda Velha" a quem estava noutra
+   cidade, onde a planta não tem Corda Velha nenhuma. Medido na varredura
+   de 576 aberturas: 57% dos segundos passos apontavam para um lugar de
+   outra cidade sem o dizer.
+
+   Achar a cidade é refazer a pergunta que a espinha fez, pela semente:
+   o descobrir traz a chave (`Cidade|tipo`); o procurar é a cidade onde
+   AQUELA pessoa trabalha NAQUELE lugar; o enfrentar aponta para um covil
+   ou uma cidade do mapa, que já estão no mapa do mundo. A cidade de
+   partida é perguntada primeiro. Nada disto se grava: é recalculado. */
+function cidadeDoMarco(semente, mapa, marco, nomeCidade, genero, molde, lex) {
+  const cs = ((mapa && mapa.cidades) || []).filter((c) => c && c.nome);
+  const ordem = [...cs.filter((c) => c.nome === nomeCidade), ...cs.filter((c) => c.nome !== nomeCidade)];
+  const chave = String((marco.condicao && marco.condicao.chave) || marco.chave || "");
+  if (chave.includes("|")) {
+    const c = chave.split("|")[0];
+    if (cs.some((x) => x.nome === c)) return c;
+  }
+  if (!marco.onde) return "";
+  if (cs.some((x) => norm(x.nome) === norm(marco.onde))) return "";
+  for (const c of ordem) {
+    let locais = [];
+    try { locais = locaisDaCidade(semente, c, genero, molde, lex); } catch { locais = []; }
+    const l = locais.find((x) => norm(x.nome) === norm(marco.onde));
+    if (!l) continue;
+    if (marco.feitio !== "procurar" || !marco.quem) return c.nome;
+    let gente = [];
+    try { gente = genteDoLocal(semente, l, genero, molde, lex); } catch { gente = []; }
+    if (gente.some((p) => norm(p.nome) === norm(marco.quem))) return c.nome;
+  }
+  return "";
+}
+
+/* O onde de uma etapa que fica noutra cidade leva a cidade atrás — a
+   mesma forma que o jogador lê no mapa ("A Corda Velha, em Vila Clara").
+   Aqui, só o lugar: a planta desta cidade já o mostra. */
+const ONDE_TETO = 60;
+function ondeComMorada(local, cidade, aqui) {
+  if (!local || !cidade || norm(cidade) === norm(aqui)) return local || "";
+  const longo = `${local}, em ${cidade}`;
+  return longo.length <= ONDE_TETO ? longo : local;
+}
+
 function historiaDoLugar(semente, mapa, cidade, genero, lex) {
   const voc = vocacaoDe(cidade);
   const vive = voc ? voc.o : "";
@@ -378,24 +438,41 @@ export function abrirAbertura(ctx) {
   let marco = null;
   try { marco = marcoAtual(o.espinha, 0); } catch { marco = null; }
 
-  let alvo, condicao, pista = null, propria = false;
+  let alvo, condicao, pista = null, propria = false, cidadeAlvo = "";
+  /* MM13b: A PISTA NÃO TEM O NOME DE OUTRO MARCO. A etapa `falar_com` casa
+     pelo primeiro nome (`mesmaPessoa`), e a espinha confere TODOS os
+     marcos, de todos os atos, a cada turno: uma pista chamada Orin, numa
+     espinha que tem "Encontrar Orin" três marcos adiante (outro Orin,
+     noutro lugar), fechava esse marco no turno em que se conhecia a pista
+     — "🔎 Encontrar Orin — O Armazém Velho" no turno 2, a contradizer a
+     pista e o diário. Em 576 aberturas, 11% das pistas tinham um homónimo
+     na espinha. Quem não tem homónimo é preferido; se ninguém serve, a
+     regra cede (uma pista com homónimo é melhor que nenhuma). */
+  const quens = ((obj(o.espinha).atos || []).flatMap((x) => (x && x.marcos) || []).map((m) => m && m.quem)).filter(Boolean);
+  const semHomonimo = (x, alem = "") => ![alem, ...quens].filter(Boolean).some((k) => norm(k) === norm(x.nome) || mesmaPessoa(k, x.nome));
+  const preferir = (lista, alem = "") => { const l = lista.filter((x) => semHomonimo(x, alem)); return l.length ? l : lista; };
   if (marco && OBJETO_DO_FEITIO[marco.feitio] && (marco.quem || marco.onde || marco.alvo)) {
     alvo = { feitio: marco.feitio, quem: marco.quem || "", onde: marco.onde || "", alvo: marco.alvo || "" };
     const c = obj(marco.condicao);
-    condicao = c.tipo ? { tipo: c.tipo, alvo: c.alvo || "", quantos: c.quantos || 1, onde: marco.onde || "" } : null;
+    try { cidadeAlvo = cidadeDoMarco(semente, o.mapa, marco, q.cidade.nome, genero, o.molde || null, o.lex || null); } catch { cidadeAlvo = ""; }
+    /* MM13b: o onde do passo leva a cidade quando o lugar é de outra */
+    const ondeDoPasso = c.tipo === "falar_com" || c.tipo === "revelar" ? ondeComMorada(marco.onde || "", cidadeAlvo, q.cidade.nome) : (marco.onde || "");
+    condicao = c.tipo ? { tipo: c.tipo, alvo: c.alvo || "", quantos: c.quantos || 1, onde: ondeDoPasso } : null;
     /* descobrir cumpre-se pela CHAVE que a base grava (`Cidade|tipo`), não
        pelo nome: a espinha nova já a traz; a antiga, traduz-se aqui */
     if (condicao && condicao.tipo === "revelar") {
       let k = c.chave || "";
-      if (!k) { try { k = chaveDoLugar(semente, o.mapa, condicao.alvo, { genero, molde: o.molde || null, lex: o.lex || null, cidade: nomeCidade }); } catch { k = ""; } }
+      if (!k) { try { k = chaveDoLugar(semente, o.mapa, condicao.alvo, { genero, molde: o.molde || null, lex: o.lex || null, cidade: cidadeAlvo || nomeCidade }); } catch { k = ""; } }
       if (k) condicao.chave = k;
     }
-    const aqui = !!localPorNome(marco.onde);
+    /* "aqui" é a CIDADE do marco, e não um nome que casa: dois lugares de
+       cidades diferentes podem chamar-se o mesmo */
+    const aqui = !!localPorNome(marco.onde) && (!cidadeAlvo || norm(cidadeAlvo) === norm(q.cidade.nome));
     if (marco.feitio === "procurar" && aqui) {
       const p = gente.find((x) => norm(x.nome) === norm(marco.quem));
       if (p) { pista = p; propria = true; }
     } else if (marco.feitio === "descobrir" && aqui) {
-      const daCasa = gente.filter((x) => norm(x.local) === norm(marco.onde));
+      const daCasa = preferir(gente.filter((x) => norm(x.local) === norm(marco.onde)));
       if (daCasa.length) pista = pick(rnd, daCasa);
     }
   } else {
@@ -406,7 +483,8 @@ export function abrirAbertura(ctx) {
     condicao = { tipo: "falar_com", alvo: p.nome, quantos: 1, onde: p.local || "" };
   }
   if (!pista) {
-    const candidatos = gente.filter((x) => norm(x.nome) !== norm(alvo.quem) && x.local);
+    /* o informante: nem o alvo, nem homónimo de nenhum marco (acima) */
+    const candidatos = preferir(gente.filter((x) => norm(x.nome) !== norm(alvo.quem) && x.local), alvo.quem);
     const pool = candidatos.length ? candidatos : gente.filter((x) => x.local);
     if (!pool.length) return null;
     const melhor = Math.min(...pool.map((x) => ehConversa(localPorNome(x.local))));
@@ -423,17 +501,32 @@ export function abrirAbertura(ctx) {
   const molde = o.molde && o.molde.id ? o.molde.id : (typeof o.molde === "string" ? o.molde : "sobremundo");
   const chegada = encher(CHEGADAS[molde] || CHEGADAS.sobremundo, { cidade: q.cidade.nome });
   const hl = historiaDoLugar(semente, o.mapa, q.cidade, genero, o.lex || null);
-  alvo.origem = hl.origem || alvo.onde || "";
+  /* MM13b: sem masmorra perto, o que o sino traz vem do lugar do marco —
+     e, se ele é de outra cidade, da CIDADE, que está no mapa do mundo:
+     "alguma coisa sai de A Corda Velha e chega às portas de Monte do
+     Norte" apontava para uma taverna que a planta desta cidade não tem. */
+  const fora = !!cidadeAlvo && norm(cidadeAlvo) !== norm(q.cidade.nome);
+  alvo.origem = hl.origem || (fora && alvo.feitio !== "enfrentar" ? cidadeAlvo : alvo.onde) || "";
   let sinal = "";
   try { sinal = fichaDaCidade(q.cidade, { semente, mapa: o.mapa, genero, lex: o.lex || null, molde: o.molde || null }).hoje.sinal || ""; } catch { sinal = ""; }
   const titulo = encher(TITULO_DO_FEITIO[alvo.feitio] || TITULO_DO_FEITIO.procurar, alvo).slice(0, 70);
 
-  /* A PRINCIPAL NASCE ACEITA. Primeiro passo: ir aonde a pista está — por
-     PRESENÇA, e não por nome: a abertura diz o nome da pista, e a menção
-     não pode cumprir o passo (é a lei "menção não é presença"). Depois, o
-     que o primeiro marco pede, na língua que `missoes.js` já confere. */
-  const etapas = [{ tipo: "ir_a", alvo: pista.local, lugar: true }];
-  if (condicao && !(condicao.tipo === "ir_a" && norm(condicao.alvo) === norm(pista.local))) etapas.push(condicao);
+  /* A PRINCIPAL NASCE ACEITA. Primeiro passo: ENCONTRAR a pista, no lugar
+     dela. Era "ir aonde a pista está" (`ir_a`), e na prova jogada de MM13
+     (30/09) isso falhou duas vezes: o ✓ dizia "Chegar a…" a quem ia
+     procurar alguém, e o passo contava ao chegar, não ao encontrar. O Matt
+     não manda os heróis a Kraghammer, manda-os ao Nostoc.
+
+     `falar_com` fecha quando a pessoa entra no registo — e ela só entra
+     depois de o herói estar no lugar dela (`aindaSoUmNome`, a lei "menção
+     não é presença"): fecha quando se está com ele, nem antes, nem num
+     turno depois. Depois, o que o primeiro marco pede, na língua que
+     `missoes.js` já confere — e se o marco é a própria pista, é um passo
+     só. */
+  const etapas = [{ tipo: "falar_com", alvo: pista.nome, onde: pista.local }];
+  const repete = condicao && condicao.tipo === "falar_com" && norm(condicao.alvo) === norm(pista.nome);
+  const soChegar = condicao && condicao.tipo === "ir_a" && norm(condicao.alvo) === norm(pista.local);
+  if (condicao && !repete && !soChegar) etapas.push(condicao);
   const missao = criarMissao({
     id: "mis_principal", titulo, tipo: "principal", status: "ativa",
     descricao: razao.slice(0, 240), dador: "", etapas,
@@ -543,14 +636,14 @@ export function proximoPasso(estado) {
   if (et.tipo === "ir_a" && et.lugar && daAbertura && norm(et.alvo) === norm(a.pista.local)) {
     return `Procurar ${a.pista.nome} ${comEm(a.pista.local)}`;
   }
-  if (et.tipo === "falar_com") {
-    const onde = et.onde || (daAbertura && norm(et.alvo) === norm(a.alvo.quem) ? a.alvo.onde : "");
-    return `Procurar ${et.alvo}${onde ? ` ${comEm(onde)}` : ""}`;
+  /* a etapa de MM13 sem onde: o da abertura */
+  if (et.tipo === "falar_com" && !et.onde && daAbertura && norm(et.alvo) === norm(a.alvo.quem)) {
+    return rumoDaEtapa({ ...et, onde: a.alvo.onde });
   }
-  if (et.tipo === "ir_a") return `Ir ${et.lugar ? "até" : "a"} ${et.alvo}`;
-  if (et.tipo === "revelar") return `Descobrir o que ${meio(et.alvo)} esconde`;
-  if (et.tipo === "derrotar") return `Acabar com ${et.alvo}${et.onde ? ` — ${et.onde}` : ""}`;
-  return textoDaEtapa(et);
+  /* MM13b: a voz é uma só, a de `missoes.js` — a mesma que a linha do ✓
+     usa para dizer o que abriu. Duas vozes para o mesmo passo seriam dois
+     rumos. */
+  return rumoDaEtapa(et);
 }
 
 /* ============================================================
@@ -573,7 +666,13 @@ export function fioParaAPrincipal(ctx) {
   const nome = txt(p.nome, 60);
   const obj_ = a.alvo.objeto;
   if (nome && norm(nome) === norm(a.alvo.quem)) return `${nome} é quem o herói veio procurar`;
-  if (nome && norm(nome) === norm(a.pista.nome)) return contrair(`${nome} sabe de ${obj_}, e fala se lhe perguntarem`);
+  /* MM13b: e sabe ONDE. A pista dava o nome e calava a morada — "a Corda
+     Velha" do segundo passo não estava na fala de quem a deu. Agora o
+     Narrador recebe o lugar (e a cidade, se é outra) do passo seguinte. */
+  if (nome && norm(nome) === norm(a.pista.nome)) {
+    const seguinte = m.etapas.find((e, i) => i > 0 && e.onde && norm(e.onde) !== norm(a.pista.local));
+    return contrair(`${nome} sabe de ${obj_}${seguinte ? ` (${comEm(seguinte.onde)})` : ""}, e fala se lhe perguntarem`);
+  }
   const lugar = txt(obj(o.lugar).nome || (typeof o.lugar === "string" ? o.lugar : ""), 60);
   if (!nome && lugar) {
     if (norm(lugar) === norm(a.alvo.onde) && a.alvo.feitio === "descobrir") return contrair(`aqui há sinal de ${obj_}, para quem procurar`);

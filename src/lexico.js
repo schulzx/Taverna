@@ -879,6 +879,32 @@ export function lerLexico(obj) {
   }
 }
 
+/* ---------------- O LÉXICO QUE CHEGA DEPOIS DO MUNDO (30/09, MM13b) ----------------
+   A leitura do mundo corre enquanto o jogador monta a ficha, e o jogo não
+   espera por ela. Quando ela chega DEPOIS de o mundo nascer, o mapa, a
+   espinha, a abertura e as missões já foram escritos com os nomes
+   genéricos — e ficam gravados assim. A planta, a base, o "▸ ir" e o
+   "você está em" não se gravam: recalculam-se a cada turno com o léxico
+   de agora. O mesmo lugar passava a ter dois nomes: a pista mandava ao
+   "Círculo Rachado" e a planta mostrava o "Picadeiro Central" (a prova
+   jogada de MM13, 30/09).
+
+   A saída é o mundo nascer com o léxico que tinha. Este é o léxico que
+   se aplica quando ele chega tarde: fica o VOCABULÁRIO (como as coisas
+   se chamam, a lei, o passado, as falas, o equipamento) e sai tudo o que
+   NOMEIA o que já nasceu — cidades, lugares, gente, bichos, títulos. A
+   suíte (teste-mm13b-morada) prova o que isto promete: com ele, todo
+   gerador do mundo devolve os mesmos nomes que sem léxico nenhum. */
+export function soOVocabulario(l) {
+  const x = garantirLexico(l);
+  return {
+    ...x,
+    povos: [], oficios: [], criaturas: [], cidades: [], tavernas: [], titulos: [],
+    lugares: x.lugares.map((p) => ({ ...p, nomes: [] })).filter((p) => p.chamado),
+    nomes: { masc: [], fem: [], sobrenome: [], cidadeA: [], cidadeB: [], continente: "" },
+  };
+}
+
 /* ---------------- O QUE SOBE AO PROMPT ----------------
    Só o que NADA MAIS diz. Os nomes de cidade, as tavernas e o elenco já
    têm seção própria e passam a ser preenchidos pelo léxico — mudam de

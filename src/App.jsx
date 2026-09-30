@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, elencoDiverso } from "./nomes.js";
-import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
+import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
@@ -5730,7 +5730,7 @@ export default function Taverna() {
      mundo genérico em segredo não é, porque o jogador não tem como
      distinguir "o sistema ignorou o que eu escrevi" de "o sistema tentou
      e falhou", e a primeira leitura é a que ele vai fazer. */
-  const lerOMundo = async (m, { tentativa = 1 } = {}) => {
+  const lerOMundo = async (m, { tentativa = 1, mapaAntes = mapaRef.current } = {}) => {
     if (!m || lexicoLendoRef.current) return;
     lexicoLendoRef.current = true; setLendoMundo(true);
     let conseguiu = false;
@@ -5747,8 +5747,8 @@ export default function Taverna() {
       const lex = lerLexico(lexicoDoTexto(texto));
       if (lex.gerado) {
         conseguiu = true;
-        mundoRef.current = { ...(mundoRef.current || m), lexico: lex };
-        setMundo((v) => ({ ...(v || m), lexico: lex }));
+        /* MM13b: chegou depois de o mundo nascer? Então só o vocabulário — os nomes do que já nasceu (cidades, lugares, gente) ficam os da nascença, os que a espinha e a abertura gravaram. */ const lexAplicado = mapaRef.current !== mapaAntes ? soOVocabulario(lex) : lex; mundoRef.current = { ...(mundoRef.current || m), lexico: lexAplicado };
+        setMundo((v) => ({ ...(v || m), lexico: lexAplicado }));
         /* ---------------- E O CONVIDADO PRECISA SABER (v9.122) ----------------
            A leitura do mundo é ASSÍNCRONA e demora — é o que a tela de
            criação diz enquanto o jogador monta a ficha. O anfitrião publicava
@@ -5771,7 +5771,7 @@ export default function Taverna() {
     } finally { lexicoLendoRef.current = false; setLendoMundo(false); }
 
     if (conseguiu) return;
-    if (tentativa < 2) { await lerOMundo(m, { tentativa: tentativa + 1 }); return; }
+    if (tentativa < 2) { await lerOMundo(m, { tentativa: tentativa + 1, mapaAntes }); return; }
     /* desistiu: a sala precisa saber, senão o convidado espera para sempre
        uma leitura que não vem mais */
     if (salaRef.current && souAnfitriaoRef.current) {

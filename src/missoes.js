@@ -53,6 +53,9 @@ import { criarRelogio } from "./relogios.js";
    ciclo — e a alternativa seria copiar a normalizacao do nome para ca,
    que e como nascem duas verdades sobre a mesma pessoa. */
 import { situacaoDe, SITUACOES } from "./mundo-base.js";
+/* MM13b: a preposição colada ao artigo ("na Corda Velha"), a mesma régua
+   que a abertura e o "você está em" já usam. */
+import { comEm } from "./lugar.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -752,13 +755,45 @@ export function falharPorRelogio(lista, relogioFonte) {
 }
 
 /* ---------------- OS TEXTOS ---------------- */
+
+/* ---------------- O RUMO (30/09, MM13b) ----------------
+   O que fazer agora, dito como o mundo o diria ("Procurar Petra na Corda
+   Velha"), e não como o diário o arquiva ("Encontrar Petra"). É a mesma
+   etapa, em voz de quem aponta o caminho: o ONDE vai junto, porque uma
+   etapa sem morada não é um passo. `abertura.js` usa esta voz na linha do
+   próximo passo; a linha do ✓ usa-a para dizer o que abriu. */
+const meioDaFrase = (nome) => String(nome || "").replace(/^(O|A|Os|As) /, (m) => m.toLowerCase());
+export function rumoDaEtapa(e) {
+  if (!e || typeof e !== "object") return "";
+  const onde = String(e.onde || "").trim();
+  if (e.tipo === "falar_com") return `Procurar ${e.alvo}${onde ? ` ${comEm(onde)}` : ""}`;
+  if (e.tipo === "ir_a") return `Ir ${e.lugar ? "até" : "a"} ${e.alvo}`;
+  if (e.tipo === "revelar") {
+    /* o `onde` do revelar é o próprio lugar, às vezes com a cidade atrás
+       ("O Fosso, em Vila Clara"): só o que sobra do nome vai para a frase */
+    const resto = onde && norm(onde).startsWith(norm(e.alvo)) ? onde.slice(String(e.alvo).length) : (onde ? `, ${comEm(onde)}` : "");
+    return `Descobrir o que ${meioDaFrase(e.alvo)} esconde${resto}`;
+  }
+  if (e.tipo === "derrotar") return `Acabar com ${e.alvo}${onde ? ` — ${onde}` : ""}`;
+  return textoDaEtapa(e);
+}
+
+/* A linha do ✓ diz o que fechou E o que abriu. Dizia só o que fechou, e na
+   prova jogada de MM13 (30/09) o `jogo` ficou sem rumo no turno 3: a linha
+   do passo cumprido é o único sítio do ecrã onde o jogador olha no instante
+   em que o rumo muda. */
 export function linhaDoAvanco(a) {
-  return `${etapaDef(a.etapa.tipo).icone} ${a.missao.titulo}: ${textoDaEtapa(a.etapa)} ✓ (${a.indice + 1}/${a.total})`;
+  const prox = a.missao && a.missao.status === "ativa" ? etapaAtual(a.missao) : null;
+  const rumo = prox ? rumoDaEtapa(prox) : "";
+  return `${etapaDef(a.etapa.tipo).icone} ${a.missao.titulo}: ${textoDaEtapa(a.etapa)} ✓ (${a.indice + 1}/${a.total})${rumo ? ` → agora: ${rumo}` : ""}`;
 }
 
 export function envelopeDeAvanco(a) {
   const prox = etapaAtual(a.missao);
-  return `[MISSÃO — ETAPA CUMPRIDA, RECONHECIDA PELO SISTEMA] "${a.missao.titulo}": eu cumpri "${textoDaEtapa(a.etapa)}" (${a.indice + 1} de ${a.total}). ${prox ? `A próxima etapa é: ${textoDaEtapa(prox)}.` : "Era a última."} Reconheça isso na ficção — uma frase de fechamento, uma reação de quem está por perto — e ${prox ? "deixe claro, sem dizer como fazer, que ainda falta o próximo passo" : "prepare o desfecho"}. Não conclua a missão por conta própria e não invente etapa nova: quem marca é o sistema.`;
+  /* MM13b: a próxima etapa vai com a morada (o rumo), para quem fala na
+     cena poder dizer ONDE — "a Corda Velha" não estava na fala de quem a
+     deu, na prova jogada de MM13 */
+  return `[MISSÃO — ETAPA CUMPRIDA, RECONHECIDA PELO SISTEMA] "${a.missao.titulo}": eu cumpri "${textoDaEtapa(a.etapa)}" (${a.indice + 1} de ${a.total}). ${prox ? `A próxima etapa é: ${rumoDaEtapa(prox)}.` : "Era a última."} Reconheça isso na ficção — uma frase de fechamento, uma reação de quem está por perto — e ${prox ? "deixe claro, sem dizer como fazer, que ainda falta o próximo passo" : "prepare o desfecho"}. Não conclua a missão por conta própria e não invente etapa nova: quem marca é o sistema.`;
 }
 
 export function envelopeDeConclusao(m, rec) {

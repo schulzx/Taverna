@@ -127,7 +127,12 @@ sec("3. toda abertura tem razão e pista — 24 mundos × estruturas × antecede
       if (!norm(a.razao).includes(norm(LACOS_DO_ANTECEDENTE[ant.id].o).slice(0, 20))) falhas.push(`${onde}: sem o laço do antecedente`);
       if (/\b(de|por|em) (o|a) que\b/i.test(a.razao + " " + a.sabe)) falhas.push(`${onde}: costura "de o que"`);
       if (!(m.tipo === "principal" && m.status === "ativa")) falhas.push(`${onde}: principal não nasceu aceita`);
-      if (!(m.etapas[0].tipo === "ir_a" && m.etapas[0].lugar && m.etapas[0].alvo === a.pista.local)) falhas.push(`${onde}: o primeiro passo não é ir aonde a pista está`);
+      /* MM13b (30/09): o primeiro passo era "ir aonde a pista está" (ir_a) e
+         passou a ser ENCONTRAR a pista, no lugar dela (falar_com com onde).
+         Na prova jogada o ✓ dizia "Chegar a…" a quem ia procurar alguém, e
+         o passo contava ao chegar e não ao encontrar. A intenção desta
+         asserção fica: o primeiro passo leva à pista, e à morada dela. */
+      if (!(m.etapas[0].tipo === "falar_com" && m.etapas[0].alvo === a.pista.nome && m.etapas[0].onde === a.pista.local)) falhas.push(`${onde}: o primeiro passo não é encontrar a pista onde ela está`);
       if (m.etapas.some((e) => e.feito)) falhas.push(`${onde}: passo nascido cumprido`);
       const p = pedidoDaAbertura(a, { habilidades: ["Golpe"] });
       pedidos.push(p.length);
@@ -153,8 +158,13 @@ sec("4. o mural espera");
   const e1 = { abertura: R0.abertura, missoes: [R0.missao] };
   t("fechado no turno 1", muralLiberado(e1) === false);
   t("e o veto vai à pauta", vetosDaAbertura(e1).length === 1 && vetosDaAbertura(e1)[0] === MURAL.veto);
-  const c = conferir([R0.missao], { lugarAtual: { nome: R0.abertura.pista.local }, npcs: {} });
-  t("chegar ao lugar da pista cumpre o primeiro passo", c.missoes[0].etapas[0].feito === true);
+  /* MM13b: chegar já não cumpre — encontrar é que cumpre. A pista entra no
+     registo (e é isso que `falar_com` lê) só depois de o herói estar no
+     lugar dela: `aindaSoUmNome`, provado na secção 5. */
+  const soChegar = conferir([R0.missao], { lugarAtual: { nome: R0.abertura.pista.local }, npcs: {} });
+  t("chegar ao lugar da pista, sem a encontrar, ainda não é o passo", soChegar.missoes[0].etapas[0].feito === false);
+  const c = conferir([R0.missao], { lugarAtual: { nome: R0.abertura.pista.local }, npcs: { [R0.abertura.pista.nome]: { nome: R0.abertura.pista.nome, conhecidoEm: 1 } } });
+  t("encontrar a pista cumpre o primeiro passo", c.missoes[0].etapas[0].feito === true);
   t("e abre o mural", muralLiberado({ abertura: R0.abertura, missoes: c.missoes }) === true);
   t("e o veto sai", vetosDaAbertura({ abertura: R0.abertura, missoes: c.missoes }).length === 0);
   let ab = R0.abertura;
@@ -174,7 +184,8 @@ sec("5. a menção não é presença");
   t("o nome da pista, antes de lá estar, é só um nome", aindaSoUmNome(a, a.pista.nome, { missoes: [R0.missao], lugar: null }) === true);
   t("sem acento e em minúsculas, também", aindaSoUmNome(a, norm(a.pista.nome), { missoes: [R0.missao] }) === true);
   t("no lugar da pista, é presença", aindaSoUmNome(a, a.pista.nome, { missoes: [R0.missao], lugar: { nome: a.pista.local } }) === false);
-  const c = conferir([R0.missao], { lugarAtual: { nome: a.pista.local }, npcs: {} });
+  /* MM13b: o primeiro passo é encontrar a pista (era chegar ao lugar dela) */
+  const c = conferir([R0.missao], { lugarAtual: { nome: a.pista.local }, npcs: { [a.pista.nome]: { nome: a.pista.nome, conhecidoEm: 1 } } });
   t("depois do primeiro passo, é presença em qualquer lado", aindaSoUmNome(a, a.pista.nome, { missoes: c.missoes }) === false);
   t("outra pessoa nunca é travada", aindaSoUmNome(a, "Fulano de Tal", { missoes: [R0.missao] }) === false);
   t("save antigo: nunca trava", aindaSoUmNome(null, a.pista.nome, {}) === false);
@@ -255,9 +266,14 @@ sec("7. o próximo passo, em voz de mundo");
     const r = abrir(w, ESTRUTURAS[i % ESTRUTURAS.length].id, ANTECEDENTES[i % ANTECEDENTES.length].id);
     if (!r) return;
     const l0 = proximoPasso({ abertura: r.abertura, missoes: [r.missao] });
-    const c = conferir([r.missao], { lugarAtual: { nome: r.abertura.pista.local }, npcs: {} });
+    /* MM13b: o primeiro passo fecha ao encontrar a pista, não ao chegar */
+    const c = conferir([r.missao], { lugarAtual: { nome: r.abertura.pista.local }, npcs: { [r.abertura.pista.nome]: { nome: r.abertura.pista.nome, conhecidoEm: 1 } } });
     const l1 = proximoPasso({ abertura: r.abertura, missoes: c.missoes });
-    for (const l of [l0, l1]) {
+    /* MM13b: quando a pista É o marco (o Nostoc do Matt), a principal tem um
+       passo só — encontrá-la — e fecha nele; aí não há próximo passo, e a
+       linha vazia é a verdade. Nos outros casos continua a ser defeito. */
+    const fechou = c.missoes[0].status === "concluida";
+    for (const l of fechou ? [l0] : [l0, l1]) {
       if (!l) falhas.push(`${w.genero}/${w.molde.id}: linha vazia`);
       if (bastidor.test(norm(l))) falhas.push(`${w.genero}/${w.molde.id}: "${l}"`);
       if (/\{|undefined|\|/.test(l)) falhas.push(`${w.genero}/${w.molde.id}: buraco em "${l}"`);
@@ -377,7 +393,8 @@ sec("10. descobrir cumpre-se quando o lugar é revelado (o defeito A)");
     const mundo = {
       lugarAtual: { nome: a.pista.local },
       revelados: alvoLocal ? [alvoLocal] : [],
-      npcs: a.alvo.quem ? { [a.alvo.quem]: { nome: a.alvo.quem, conhecidoEm: 1 } } : {},
+      /* MM13b: e a pista, que o primeiro passo agora pede que se encontre */
+      npcs: { [a.pista.nome]: { nome: a.pista.nome, conhecidoEm: 1 }, ...(a.alvo.quem ? { [a.alvo.quem]: { nome: a.alvo.quem, conhecidoEm: 1 } } : {}) },
       derrotados: a.alvo.alvo ? [a.alvo.alvo] : [],
     };
     for (let i = 0; i < 4; i++) ms = conferir(ms, mundo).missoes;

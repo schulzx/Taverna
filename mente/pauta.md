@@ -313,14 +313,19 @@ O limite é o que um commit revertido não desfaz.
   *porque estou aqui?*, *o que sei?* e *qual é o meu próximo passo?* — as três com resposta **no
   primeiro turno**, sem nenhum cartão de Aceitar; e conta em que turno chega a escalada, e se
   chegou depois de ele já ter explorado.
-- [ ] **MM13b · a pista tem morada** · da prova jogada de MM13, 30/09 · **o defeito que a MM13 deixou**
+- [x] **MM13b · a pista tem morada** · feito 30/09, v9.323 · da prova jogada de MM13, 30/09
+  *Resta, da pessoa:* os saves já partidos (léxico que chegou tarde e renomeou a planta) não se
+  reparam — repará-los reescreveria o léxico gravado do jogador. *Proposta ao desenho:* o "Começar"
+  esperar pela leitura do mundo. *Item à parte:* em `saga.js`, qualquer homónimo encontrado em jogo
+  fecha um marco da espinha fora de ordem (`falar_com` casa pelo primeiro nome).
   A pista e o sino apontam para lugares que **não estão na planta da cidade**: "o Círculo Rachado"
   (da base do mundo) é, na planta de Monte do Norte, o "Picadeiro Central"; "a Corda Velha" do
   segundo passo não está na planta nem na fala de quem a deu. **Duas fontes de nomes para os
   mesmos lugares** (a base e a planta) — achar qual manda e fazê-las uma. Junto: "🔎 Encontrar
   Orin — O Armazém Velho" (T2) contradiz a pista e o diário (de onde vem?); e o passo "procurar
   alguém" conta um turno depois de chegar e diz "Chegar a" em vez de "Procurar".
-- [ ] **o próximo passo some do ecrã quando muda** · da prova jogada de MM13, 30/09
+- [ ] **o próximo passo some do ecrã quando muda** · da prova jogada de MM13, 30/09 · *o mínimo
+  feito em v9.323 (a linha do ✓ traz "→ agora: …"); falta a peça "o rumo", pedida ao desenho*
   Na abertura encontra-se sem ajuda (a narração di-lo e o mundo repete o nome). Depois do primeiro
   passo, não: a linha do ✓ diz o que fechou e cala o que abriu — o `jogo` ficou sem rumo no turno 3.
   **O mínimo, sem peça:** a linha do ✓ traz o passo seguinte ("→ agora: procurar Petra na Corda

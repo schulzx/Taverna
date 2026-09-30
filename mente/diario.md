@@ -15,6 +15,41 @@ Formato:
 ```
 
 ---
+## 30/09 02:21 · v9.323 · MM13b · a pista tem morada · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a prova jogada de MM13 viu a pista e o sino a apontar para lugares que não
+  estão na planta da cidade — "o Círculo Rachado" que a planta chamava "Picadeiro Central", e
+  "a Corda Velha" que não existia em lado nenhum da tela.
+- **estado inicial:** verde (`74a4b61`, `77351b6`). Em paralelo, noutra mão e noutros arquivos, os
+  defeitos do primeiro dia.
+- **bastão:** tomado por mim para quatro linhas em `lerOMundo` (deslocamento zero); devolvido
+  com este commit.
+- **a causa — não eram duas fontes, era uma com dois léxicos:** a mesma `locaisDaCidade` nomeia
+  os lugares pelo léxico do mundo. **A leitura do mundo corre enquanto o jogador monta a ficha,
+  e o jogo não espera por ela**: quando chega depois de o mundo nascer, a planta passa a usar os
+  nomes do léxico e o que já foi gravado (o mapa, a espinha, a abertura, as missões) fica com os
+  da nascença. O mesmo lugar, dois nomes.
+- **backend:** `soOVocabulario` (`lexico.js`) — do léxico que chega tarde, só o vocabulário
+  (como as coisas se chamam, a lei, o passado); os nomes do que já nasceu ficam. Nenhum campo de
+  save muda; 355 gerações provadas iguais aos nomes da nascença. E mais duas causas com a mesma
+  cara: **o passo noutra cidade sem a dizer** (57% das aberturas!) — agora "A Corda Velha, em Vila
+  Clara"; e **o homónimo**: "🔎 Encontrar Orin — O Armazém Velho" era o marco de *outro* Orin,
+  adiante na espinha, fechado por conhecer o Orin da pista — a pista passa a evitar os nomes da
+  espinha.
+- **o passo "procurar":** passa a ser **encontrar a pessoa** (fecha quando se está com ela, no
+  mesmo turno, e o ✓ diz "Encontrar Orin"), não "chegar ao lugar".
+- **o mínimo do próximo passo:** a linha do ✓ traz agora **"→ agora: Procurar Petra na Corda
+  Velha, em Vila Clara"**, para todas as missões; o diário e o ✓ dizem a mesma coisa. A peça "o
+  rumo" no ecrã principal continua pedida ao desenho.
+- **órfãos (576 aberturas):** passo noutra cidade sem a dizer 330 → 0; sino de outra cidade 172 → 0;
+  léxico tardio — pistas / passos / sinos 144 / 288 / 206 → 0; pista com homónimo 65 → 11 (cidades
+  onde toda a gente tem homónimo; aí uma pista com homónimo é melhor que nenhuma).
+- **o que fica da pessoa:** os saves já partidos (o da prova jogada) não se reparam — repará-los
+  reescreveria o léxico gravado do jogador. E uma proposta ao desenho: o "Começar" esperar pela
+  leitura do mundo.
+- **para quem joga:** a pista, o passo seguinte e o sino passam a ter morada no mapa que ele vê.
+  A sonda não se move (89/157).
+
 ## 30/09 01:53 · v9.322 · MM13 · a prova jogada do `jogo` · sem código (só a mente)
 
 - **quem jogou:** o `jogo`, a pedido do ciclo do sistema, sem desenhar nem editar (a mesa de
