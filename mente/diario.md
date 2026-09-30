@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 06:50 · v9.330 · MM8f · o elenco age fora de cena — o MM8 completo · commit (o hash vai no próximo bloco)
+## 30/09 06:50 · v9.330 · MM8f · o elenco age fora de cena — o MM8 completo · commit `5734383`
 
 - **por que andou:** a sexta e última subetapa do elenco, a proposta da pessoa: o elenco **age fora
   de cena** no relógio do mundo, e a pauta leva quem mexe os pauzinhos neste turno.
