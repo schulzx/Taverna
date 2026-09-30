@@ -72,7 +72,7 @@
 
 import { ATRIBUTO_MAX, ATRIBUTO_MAX_CRIACAO } from "./constantes.js";
 import { atributoDaClasse } from "./atributos.js";
-import { menteDaCriatura, INTENCOES } from "./adversario.js";
+import { menteDaCriatura, INTENCOES, escolherAlvo } from "./adversario.js";
 
 /* ---------------- OS CINCO DEGRAUS ----------------
    `enxerga` é o que chega aos olhos dele; `decide` é o que ele faz com
@@ -81,32 +81,52 @@ import { menteDaCriatura, INTENCOES } from "./adversario.js";
    do que enxerga é o Mestre jogando pelo monstro.
 
    Nomes são BASTIDOR — nenhum deles aparece na tela. O jogador sente a
-   diferença pelo que o inimigo faz, nunca lendo o nome do mecanismo. */
+   diferença pelo que o inimigo faz, nunca lendo o nome do mecanismo.
+
+   `mira` (Fase MM · a mira pela cabeça, depois de v9.316) é EM QUEM ele
+   dispara quando o bando não lhe deu um alvo com nome: uma lista de
+   prioridades de `PRIORIDADES` (adversario.js), tentadas por ordem, e a
+   primeira que acha alguém decide. É a coluna `decide` dita em alvo:
+     · animal, bruto — quem o feriu, e senão o mais perto. O corpo
+       responde a quem lhe doeu e ao que tem à frente.
+     · astuto, treinado — o mais frágil: o que cai com menos golpes. É o
+       que torna o arqueiro esperto perigoso, e o que dá sentido a pôr o
+       conjurador atrás de alguém.
+     · brilhante — a magia e o remendo antes de tudo (é o que o degrau
+       `decide` diz), e depois o mais frágil.
+   Hoje só quem DISPARA a usa (`turnoDosInimigos`, combate.js): quem luta
+   de perto escolhe entre quem o braço alcança, e ligar-lhe a mira é outra
+   medida, de outra etapa. */
 export const DEGRAUS = [
   {
     id: "animal", ordem: 0, nome: "animal",
     enxerga: "quem está na frente e quem já está caindo — nada além do alcance do corpo",
     decide: "pelo corpo: comer, expulsar do território, fugir ferido, ou bater em quem estiver mais perto",
+    mira: ["quem_me_feriu", "o_mais_perto"],
   },
   {
     id: "bruto", ordem: 1, nome: "bruto",
     enxerga: "o número dos dois lados, o próprio estado e a ordem que recebeu",
     decide: "pela força: cercar quando são mais, aguentar quando são menos, terminar quem já está caindo, ir no que parece mais forte",
+    mira: ["quem_me_feriu", "o_mais_perto"],
   },
   {
     id: "astuto", ordem: 2, nome: "astuto",
     enxerga: "o lugar e a oportunidade — a beira, a água, o escuro, a porta, o refém, o que o outro carrega",
     decide: "pela vantagem: usar o terreno e o que está em jogo para gastar menos golpe do que gastaria brigando",
+    mira: ["o_mais_fragil"],
   },
   {
     id: "treinado", ordem: 3, nome: "treinado",
     enxerga: "o outro lado como um grupo, e o próprio bando como uma tropa com baixas",
     decide: "pelo plano: separar, cercar quem ficou só, capturar, atrasar — e parar de gastar golpe em quem já não é ameaça",
+    mira: ["o_mais_fragil"],
   },
   {
     id: "brilhante", ordem: 4, nome: "brilhante",
     enxerga: "a função de cada um do outro lado ANTES de ela ser usada",
     decide: "pela mesa: derruba primeiro o que faz a mesa funcionar — a magia e o remendo",
+    mira: ["o_conjurador", "o_curandeiro", "o_mais_fragil"],
   },
 ];
 
@@ -118,6 +138,28 @@ export const DEGRAU_DO_CHAO = "animal";
 export function degrauPorId(id) { return DEGRAUS.find((d) => d.id === id) || null; }
 
 export function ordemDoDegrau(id) { const d = degrauPorId(id); return d ? d.ordem : -1; }
+
+/* ---------------- A MIRA (Fase MM, depois de v9.316) ----------------
+   O ALVO QUE O BANDO DÁ SEM NOME. A intenção do bando (adversario.js) diz
+   em quem ele bate; a rede — `brigar`, `sobrepujar` — diz "quem estiver",
+   que é a primeira da lista: o herói, sempre. Isso não é um alvo, é a
+   falta de um, e é aí que a cabeça de quem dispara decide. Uma intenção
+   com alvo de verdade ("o conjurador", "o ferido") manda em todos, como
+   sempre mandou: é a mesma frase que a Pauta conta ao Narrador. */
+export const MIRA_SEM_ALVO_DO_BANDO = ["", "quem_estiver"];
+
+/* Em quem ESTE degrau dispara, entre `alvos` (as bandeiras de
+   `bandeirasDosAlvos`, combate.js). A primeira prioridade da `mira` que
+   acha alguém decide; nenhuma acha, null — e quem chama cai na regra de
+   sempre. Degrau desconhecido é o chão. Determinística: sem dado. */
+export function alvoDaMira(degrau, alvos) {
+  const d = degrauPorId(degrau) || degrauPorId(DEGRAU_DO_CHAO);
+  for (const p of (d && d.mira) || []) {
+    const r = escolherAlvo(p, alvos);
+    if (r) return r;
+  }
+  return null;
+}
 
 /* A pergunta que o módulo inteiro existe para responder: alguém NESTE
    degrau chega a ter ESTE pensamento? */

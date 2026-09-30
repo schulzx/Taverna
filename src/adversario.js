@@ -110,6 +110,32 @@ export const PRIORIDADES = [
     id: "quem_estiver", o: "quem estiver na frente",
     escolher: (a) => primeiro(a),
   },
+  /* AS DUAS DA MIRA (Fase MM · a mira pela cabeça, depois de v9.316).
+     Nasceram para a coluna `mira` de `DEGRAUS` (degraus.js): quem dispara
+     e não recebeu do bando um alvo com nome escolhe pela cabeça que tem.
+     As duas olham primeiro para quem está À VISTA (`aVista`: ao alcance e
+     com linha de visão, e não escondido de quem mira — MM6: quem não vê
+     não mira); só sem ninguém à vista é que olham para o resto.
+     · o_mais_perto — o bicho e o bruto: o que está mais perto, em metros
+       (`metros`, a distância que `alcanca` mede). Empate: a ordem da lista.
+     · o_mais_fragil — o astuto para cima: O QUE CAI COM MENOS GOLPES
+       (`golpes`): a vida que ele TEM AGORA dividida pela chance de o tiro
+       o acertar, que é a defesa dele (armadura, escudo, destreza, guarda)
+       mais a cobertura do lugar, contra o bônus de quem dispara — a conta
+       é feita em `bandeirasDosAlvos` (combate.js), que é quem sabe as
+       duas coisas. Medido na sonda de MM7: pela vida sozinha, o arqueiro
+       esperto ia no Guerreiro que os soldados já tinham gastado, de armadura
+       e escudo; com a defesa, vai no Mago de túnica. Sem `golpes` (luta sem
+       motor), cai na vida. Empate: a ordem da lista. Não lê classe nem
+       nível: isso é `o_conjurador` e `o_mais_fraco`. */
+  {
+    id: "o_mais_perto", o: "o que estiver mais perto",
+    escolher: (a) => maisPor(aVistaSeHouver(a), (x) => -(Number(x.metros) || 0)),
+  },
+  {
+    id: "o_mais_fragil", o: "o que cai com menos golpes",
+    escolher: (a) => maisPor(aVistaSeHouver(a), (x) => -(Number(x.golpes) || Number(x.vida) || 0)),
+  },
 ];
 
 export function prioridadePorId(id) { return PRIORIDADES.find((p) => p.id === id) || null; }
@@ -120,6 +146,11 @@ const frac = (x) => {
   return Math.max(0, Math.min(1, (Number.isFinite(v) ? v : max) / max));
 };
 const primeiro = (a) => (a && a.length ? a[0] : null);
+/* quem está à vista, se houver alguém; senão, todos */
+const aVistaSeHouver = (a) => {
+  const vistos = (a || []).filter((x) => x.aVista);
+  return vistos.length ? vistos : a || [];
+};
 const maisPor = (a, f) => {
   if (!a || !a.length) return null;
   let melhor = a[0], nota = f(a[0]);
@@ -148,6 +179,12 @@ export function garantirAlvo(a) {
     bloqueia: !!o.bloqueia,
     meFeriu: !!o.meFeriu,
     perto: o.perto === undefined ? true : !!o.perto,
+    /* a mira (degraus.js): sem grade, todo mundo está à vista e a zero
+       metros, e as duas novas caem na ordem da lista — o comportamento de
+       sempre de uma luta sem tabuleiro */
+    aVista: o.aVista === undefined ? true : !!o.aVista,
+    metros: num(o.metros, 0),
+    golpes: num(o.golpes, 0),
     i: num(o.i, 0),
   };
 }

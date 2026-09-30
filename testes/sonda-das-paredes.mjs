@@ -177,6 +177,25 @@ export const RETRATO_DAS_PAREDES = {
       gelo: { dano: 11.34, vitoria: 0.996 },
       deserto: { dano: 11.34, vitoria: 0.996 },
     },
+    /* A ETAPA DA MIRA (depois de v9.316): quem dispara deixou de sortear
+       e mira pela cabeça (`mira`, degraus.js). O Atirador e o Mago do
+       bando desta sonda são `bruto`, e sem o `feridoPor` que o App ainda
+       não escreve miram no mais perto — que na maior parte das plantas é
+       o herói, que vai à frente. Medido no jogo como está ligado hoje:
+       nenhuma planta passa de 10% do antes de tudo; a pior é a floresta
+       (+9,3%). Travas 0, sobreposições 0, empates iguais aos de v9.316. */
+    mira: {
+      taverna: { dano: 11.37, vitoria: 0.996 },
+      masmorra: { dano: 11.46, vitoria: 0.996 },
+      floresta: { dano: 12.08, vitoria: 0.996 },
+      estrada: { dano: 17.33, vitoria: 0.980 },
+      cidade: { dano: 12.72, vitoria: 0.997 },
+      caverna: { dano: 12.12, vitoria: 0.996 },
+      ruina: { dano: 11.29, vitoria: 0.997 },
+      navio: { dano: 11.81, vitoria: 0.997 },
+      gelo: { dano: 11.27, vitoria: 0.996 },
+      deserto: { dano: 12.33, vitoria: 0.996 },
+    },
   },
 };
 

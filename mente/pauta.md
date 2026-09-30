@@ -1051,6 +1051,9 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
   (o herói da sonda já o tem), medido pela régua.
 - [ ] **o herói colado que atira não paga** · leve · de: sistema/MM7 · 29/09
+  *Resolvido em v9.317 (decisão do coordenador: a mira pela inteligência, lei da pessoa):*
+  **fica pendente uma decisão** — ligar `feridoPor` no App (quem feriu o arqueiro) põe o bruto
+  a disparar só no herói e o grupo do bando a −30,8% do antes; a catraca de ±20% acende.
   *E o que o MM7 fez ao grupo (medido em v9.316):* no bando, contra um "antes" remedido sem
   a pilha, o herói leva −8,9% e **o grupo +39%** — os atiradores espalham os tiros pelo grupo.
   O total mexe +3,6%. O retrato do MM7 mede contra o "antes" gravado (com pilha), onde o grupo

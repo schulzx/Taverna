@@ -59,7 +59,10 @@ export const LUTAS_DOS_ATIRADORES = {
 };
 export const AMOSTRA_DOS_ATIRADORES = { n: 140, prefixo: "mm7", tetoDeRodadas: 20, ameaca: "comum", nivel: 5 };
 
-/* O RETRATO — medido a 140 lutas por cenário (sementes `mm7|0..139`), no
+/* A DECISÃO PENDENTE, em duas linhas: ligar `feridoPor` no App (a mira do bruto em quem
+   o feriu) derruba o grupo do bando para −30,8% do antes e acende a catraca de ±20%.
+
+   O RETRATO — medido a 140 lutas por cenário (sementes `mm7|0..139`), no
    dia em que a regra entrou (29/09/2026). `antes` com a árvore de HEAD
    (c06d904, v9.311), `depois` com MM7. `dano` é o dano que o HERÓI leva
    por luta; `danoGrupo` o que o grupo leva (só no `bando`); `vitoria` a
@@ -88,25 +91,48 @@ export const AMOSTRA_DOS_ATIRADORES = { n: 140, prefixo: "mm7", tetoDeRodadas: 2
    golpe de oportunidade 15,69 → 15,89. A dupla e o conjurador não mexem
    (um só corpo de perto, nunca empilhavam): o conjurador continua a
    +19,3% do antes, a mesma margem de v9.314.
-   O ANTES DO BANDO TAMBÉM EMPILHAVA, e fica como foi medido, com a
+   O ANTES DO BANDO TAMBÉM EMPILHAVA, e nesta etapa ficou como foi medido
+   (a etapa da mira, abaixo, trocou-o pelo sem pilha), com a
    medida sem pilha escrita aqui para quem decidir: na árvore de c06d904
    com o caminho e a ocupação que anda, o bando dá 15,30 no herói e 5,35
    no grupo (era 16,36 · 7,89). Contra esse antes, o herói fica a −8,9% e
    o GRUPO a +39% — os dois atiradores de MM7 espalham os tiros pelo
    grupo, que antes só apanhava de quem lhe chegava ao corpo. O total do
    bando mexe +3,6% (20,65 → 21,40). O limite de MM7 é sobre o herói, e a
-   asserção do grupo continua a medir contra o antes gravado. */
+   asserção do grupo continua a medir contra o antes gravado.
+
+   E O BANDO FOI REFEITO NA ETAPA DA MIRA (depois de v9.316): quem dispara
+   deixou de sortear (35% num companheiro ao acaso) e passou a mirar pela
+   cabeça (`mira` em `DEGRAUS`, degraus.js). O Atirador do bestiário é
+   `bruto`: mira em quem o feriu, e senão no mais perto. O App ainda não
+   escreve `feridoPor`, então no jogo de hoje o bruto mira no mais perto —
+   e É ESSE O JOGO QUE O RETRATO MEDE (`comFerida: false`, o padrão da
+   sonda): o bando fica 13,94 → 15,21 no herói e 7,46 → 5,49 no grupo; sem
+   o golpe de oportunidade, 15,89 → 17,94.
+   E O ANTES PASSOU A SER O SEM PILHA, que é o honesto: o gravado (16,35 ·
+   8,00) tinha dois soldados na mesma casa em quase toda rodada. Medido na
+   árvore de c06d904 com o caminho e a ocupação que anda: 15,30 · 5,35 no
+   bando; a dupla e o conjurador dão o mesmo número de sempre (nunca
+   empilhavam). Contra ele, o bando fica a −0,6% no herói, +2,6% no grupo e
+   +0,3% no total, e o conjurador continua a +19,3%.
+   `registo` guarda, SEM ASSERÇÃO que o exija, o que a decisão tem à frente
+   (bando, herói · grupo · total):
+     com `feridoPor` (bruto)    16,26 ·  3,70 · 19,96  (grupo −30,8%)
+     astuto, treinado            5,90 · 19,78 · 25,68  (o Mago de túnica é o frágil)
+     brilhante                   4,71 · 16,19 · 20,91  (a magia e o remendo primeiro)
+   O herói é quem mais fere os arqueiros (o golpe de oportunidade no
+   recuo): com `feridoPor`, é nele que o bruto passa a disparar. */
 export const RETRATO_DOS_ATIRADORES = {
   n: 140,
   antes: {
     dupla:      { dano: 13.03, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.98 },
-    conjurador: { dano: 10.64, danoGrupo: 0,    vitoria: 1,     rodadas: 4.99 },
-    bando:      { dano: 16.35, danoGrupo: 8.00, vitoria: 1,     rodadas: 4.37 },
+    conjurador: { dano: 10.64, danoGrupo: 0,    vitoria: 1,     rodadas: 5.01 },
+    bando:      { dano: 15.30, danoGrupo: 5.35, vitoria: 1,     rodadas: 4.31 },
   },
   depois: {
     dupla:      { dano: 12.06, danoGrupo: 0,    vitoria: 0.986, rodadas: 4.67 },
     conjurador: { dano: 12.69, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.72 },
-    bando:      { dano: 13.94, danoGrupo: 7.46, vitoria: 1,     rodadas: 3.97 },
+    bando:      { dano: 15.21, danoGrupo: 5.49, vitoria: 1,     rodadas: 4.06 },
   },
   /* o mesmo depois SEM o golpe de oportunidade no recuo — o jogo enquanto a
      fiação do App não chega. O conjurador passa do limite (+30%): é por
@@ -114,7 +140,13 @@ export const RETRATO_DOS_ATIRADORES = {
   semOportunidade: {
     dupla:      { dano: 14.04 },
     conjurador: { dano: 13.83 },
-    bando:      { dano: 15.89 },
+    bando:      { dano: 17.94 },
+  },
+  /* o que a decisão pendente tem à frente — registo, sem asserção */
+  registo: {
+    comFerida: { bando: { dano: 16.26, danoGrupo: 3.70, vitoria: 1, rodadas: 4.04 } },
+    astuto:    { bando: { dano: 5.90,  danoGrupo: 19.78, vitoria: 1, rodadas: 4.06 } },
+    brilhante: { bando: { dano: 4.71,  danoGrupo: 16.19, vitoria: 1, rodadas: 3.99 } },
   },
 };
 /* O LIMITE — a luta tem de ficar DIFERENTE, não mais dura nem mais mole:
@@ -159,13 +191,19 @@ function fichasDoGrupo(M, comGrupo) {
   });
 }
 
-function fichasDosInimigos(M, nomes) {
+/* Quem dispara, entre os nomes das lutas desta sonda. Só serve para a
+   medida por degrau (`degrauDeQuemAtira`): quem decide se dispara é
+   `mantemDistancia` (atirador.js), e a sonda não a copia. */
+export const QUEM_ATIRA_NA_SONDA = ["Atirador", "Mago"];
+
+function fichasDosInimigos(M, nomes, degrauDeQuemAtira = null) {
   const { ameaca, nivel } = AMOSTRA_DOS_ATIRADORES;
   const conta = {};
   return nomes.map((base) => {
     conta[base] = (conta[base] || 0) + 1;
     const nome = nomes.filter((n) => n === base).length > 1 ? `${base} ${conta[base]}` : base;
-    return { ...M.bestiario.completarInimigo({ nome, ameaca, nivel }, nivel), derrotado: false, condicoes: [] };
+    const ficha = { ...M.bestiario.completarInimigo({ nome, ameaca, nivel }, nivel), derrotado: false, condicoes: [] };
+    return degrauDeQuemAtira && QUEM_ATIRA_NA_SONDA.includes(base) ? { ...ficha, degrau: degrauDeQuemAtira } : ficha;
   });
 }
 
@@ -221,8 +259,14 @@ function passoDoHeroi(G, grade, lugar, alvo, outros, passo) {
    ao App). Desligado, mede o jogo como fica ENQUANTO a fiação não chega.
    `planta`, `luta` e `passo` são da sonda das paredes: uma planta fixa em
    vez do rodízio, uma luta que não está na tabela desta sonda, e o jogador
-   (ver `passoDoHeroi`). Omitidos, a luta é byte a byte a de MM7. */
-export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = true, planta: plantaFixa = null, luta = null, passo = "caminho" } = {}) {
+   (ver `passoDoHeroi`). Omitidos, a luta é byte a byte a de MM7.
+   A MIRA (depois de v9.316): `comFerida` escreve em cada inimigo o nome de
+   quem o acertou por último (`feridoPor`), que é o que a mira do bicho e
+   do bruto lê — a fiação que a mira pede ao App, simulada como se já
+   estivesse ligada, como MM7 fez com o golpe de oportunidade. Desligada,
+   mede o jogo ENQUANTO ela não chega. `degrauDeQuemAtira` declara o
+   degrau de quem dispara, para medir a mira de cada degrau. */
+export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = true, planta: plantaFixa = null, luta = null, passo = "caminho", comFerida = false, degrauDeQuemAtira = null } = {}) {
   const cen = luta || LUTAS_DOS_ATIRADORES[cenarioId];
   const { combate: C, grid: G } = M;
   const planta = plantaFixa || PLANTAS_DOS_ATIRADORES[Math.abs(Number(String(semente).split("|").pop()) || 0) % PLANTAS_DOS_ATIRADORES.length];
@@ -233,14 +277,17 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
     const pos = G.posicionar(grade, {
       heroi: { nome: heroi.nome, tamanho: "medio" },
       grupo: grupo.map((c) => ({ nome: c.nome, vida: c.vida, tamanho: "medio" })),
-      inimigos: fichasDosInimigos(M, cen.inimigos),
+      inimigos: fichasDosInimigos(M, cen.inimigos, degrauDeQuemAtira),
     });
     let lugar = passo === "abrigo" ? abrigoDoHeroi(G, grade, pos.heroi, [...pos.grupo, ...pos.inimigos], pos.inimigos) : pos.heroi;
     let aliados = pos.grupo;
     let inimigos = pos.inimigos;
     const vivos = () => inimigos.filter((e) => !e.derrotado && (e.vida || 0) > 0);
-    const ferir = (nome, dano) => {
-      inimigos = inimigos.map((e) => (e.nome !== nome ? e : { ...e, vida: Math.max(0, e.vida - dano), derrotado: e.vida - dano <= 0 }));
+    const ferir = (nome, dano, quem = "") => {
+      inimigos = inimigos.map((e) => (e.nome !== nome ? e : {
+        ...e, vida: Math.max(0, e.vida - dano), derrotado: e.vida - dano <= 0,
+        ...(comFerida && quem ? { feridoPor: quem } : {}),
+      }));
     };
     let danoNoHeroi = 0, danoNoGrupo = 0, recuos = 0, oportunidades = 0, disparos = 0, disparosColados = 0, rodada = 1;
     /* a última rodada em que alguém ATACOU alguém (acertando ou não) — a
@@ -290,7 +337,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
             condAtacante: heroi.condicoes, condAlvo: alvo.condicoes || [],
             tipoDano: M.danos.elementoDaArma(heroi), perfilAlvo: M.danos.perfilDe(alvo),
           });
-          if (r.dano > 0) ferir(alvo.nome, r.dano);
+          if (r.dano > 0) ferir(alvo.nome, r.dano, heroi.nome);
         }
       }
       if (!vivos().length) break;
@@ -308,7 +355,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
         const r = C.ataqueDeOportunidade(heroi, e, bonusOp, dOp, { tipoDano: M.danos.elementoDaArma(heroi) });
         ultimoAtaque = rodada;
         oportunidades++;
-        if (r.dano > 0) ferir(e.nome, r.dano);
+        if (r.dano > 0) ferir(e.nome, r.dano, heroi.nome);
       }
       if (!vivos().length) break;
       const grupoDePe = grupo.filter((g) => (g.vida || 0) > 0);
@@ -337,7 +384,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
         });
         for (const ac of acoesComp) {
           if ((ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r) ultimoAtaque = rodada;
-          if ((ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r && ac.r.dano > 0) ferir(ac.alvoNome, ac.r.dano);
+          if ((ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r && ac.r.dano > 0) ferir(ac.alvoNome, ac.r.dano, ac.companheiro);
           else if (ac.tipo === "cura") {
             const valor = ac.valor || 0;
             if (ac.alvo === heroi.nome) heroi = { ...heroi, vida: Math.min(heroi.vidaMax, Math.max(0, heroi.vida) + valor) };
@@ -361,12 +408,12 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
 }
 
 /* ---------------- A MEDIDA ---------------- */
-export function sondarAtiradores(M, { n = AMOSTRA_DOS_ATIRADORES.n, prefixo = AMOSTRA_DOS_ATIRADORES.prefixo, cenarios = Object.keys(LUTAS_DOS_ATIRADORES), comOportunidade = true } = {}) {
+export function sondarAtiradores(M, { n = AMOSTRA_DOS_ATIRADORES.n, prefixo = AMOSTRA_DOS_ATIRADORES.prefixo, cenarios = Object.keys(LUTAS_DOS_ATIRADORES), comOportunidade = true, comFerida = false, degrauDeQuemAtira = null } = {}) {
   const out = {};
   for (const c of cenarios) {
     const soma = { dano: 0, danoGrupo: 0, vitoria: 0, rodadas: 0, recuos: 0, oportunidades: 0, disparos: 0, disparosColados: 0 };
     for (let i = 0; i < n; i++) {
-      const r = lutaDosAtiradores(M, c, `${prefixo}|${i}`, { comOportunidade });
+      const r = lutaDosAtiradores(M, c, `${prefixo}|${i}`, { comOportunidade, comFerida, degrauDeQuemAtira });
       soma.dano += r.danoNoHeroi; soma.danoGrupo += r.danoNoGrupo; soma.vitoria += r.vitoria; soma.rodadas += r.rodadas;
       soma.recuos += r.recuos; soma.oportunidades += r.oportunidades; soma.disparos += r.disparos; soma.disparosColados += r.disparosColados;
     }

@@ -33,7 +33,9 @@ import {
 import { turnoDosInimigos } from "../src/combate.js";
 import { completarInimigo } from "../src/bestiario.js";
 import { GOLPES_DE_LONGE, GOLPES_POR_ELEMENTO, golpeDeLonge, golpesDeCriatura, PORTADORES } from "../src/aflicoes.js";
-import { garantirLuta, intencaoDaVez, linhaDaLuta, envelopeDaVirada, INTENCOES, VOZ_DE_QUEM_ATIRA } from "../src/adversario.js";
+import { garantirLuta, intencaoDaVez, linhaDaLuta, envelopeDaVirada, INTENCOES, VOZ_DE_QUEM_ATIRA, PRIORIDADES, escolherAlvo } from "../src/adversario.js";
+import { DEGRAUS, alvoDaMira, MIRA_SEM_ALVO_DO_BANDO, degrauDaCriatura } from "../src/degraus.js";
+import { CHANCE_NAS_PONTAS } from "../src/combate.js";
 import { ALCANCES } from "../src/golpe.js";
 import { DISPARO_NA_FUGA } from "../src/fuga.js";
 import { nascerEscondido, oculto } from "../src/escondido.js";
@@ -483,6 +485,91 @@ sec("13. a fiação no App.jsx");
     t("nem a fuga nem o recuo perguntam `setGolpeFinalPendente`", posQuerFugir > -1 && !/setGolpeFinalPendente/.test(fugaAoRecuo));
     t("nem chamam `decidirGolpeFinal`", !/decidirGolpeFinal/.test(fugaAoRecuo));
   }
+}
+
+/* ============================================================
+   14. A MIRA PELA CABEÇA (depois de v9.316) — em quem o arqueiro dispara
+
+   Até aqui quem disparava sorteava: 35% num companheiro ao acaso, senão o
+   herói (combate.js, o `else if (... Math.random() < 0.35)`). Agora, sem
+   um alvo com nome dado pelo bando, dispara pela coluna `mira` do degrau
+   dele: o bicho e o bruto em quem o feriu e senão no mais perto; o astuto
+   e o treinado no mais frágil (o que cai com menos golpes); o brilhante na
+   magia e no remendo. A intenção com nome continua a mandar, e quem não
+   vê não mira (MM6).
+   ============================================================ */
+sec("14. a mira pela cabeça — o astuto no frágil, o bruto no perto ou em quem o feriu");
+{
+  const ids = new Set(PRIORIDADES.map((p) => p.id));
+  t("todo degrau tem mira, e toda mira é uma prioridade que existe",
+    DEGRAUS.every((d) => Array.isArray(d.mira) && d.mira.length && d.mira.every((p) => ids.has(p))));
+  t("o bicho e o bruto: quem me feriu, e senão o mais perto",
+    ["animal", "bruto"].every((d) => JSON.stringify(DEGRAUS.find((x) => x.id === d).mira) === JSON.stringify(["quem_me_feriu", "o_mais_perto"])));
+  t("o astuto e o treinado: o mais frágil", ["astuto", "treinado"].every((d) => DEGRAUS.find((x) => x.id === d).mira[0] === "o_mais_fragil"));
+  t("o brilhante: a magia e o remendo antes do frágil", JSON.stringify(DEGRAUS.find((x) => x.id === "brilhante").mira) === JSON.stringify(["o_conjurador", "o_curandeiro", "o_mais_fragil"]));
+  t("a rede do bando ('quem estiver') e a falta de intenção deixam a mira decidir", MIRA_SEM_ALVO_DO_BANDO.includes("") && MIRA_SEM_ALVO_DO_BANDO.includes("quem_estiver"));
+  t("a chance do d20 tem as pontas do 5e (5% e 95%)", CHANCE_NAS_PONTAS.min === 0.05 && CHANCE_NAS_PONTAS.max === 0.95);
+
+  /* as prioridades, secas */
+  const bandeiras = [
+    { ref: "jogador", nome: "Vera", vida: 40, vidaMax: 40, heroi: true, metros: 7.5, golpes: 66, aVista: true },
+    { ref: "grupo", nome: "Iria", vida: 30, vidaMax: 30, conjurador: true, metros: 13.5, golpes: 43, aVista: true },
+    { ref: "grupo", nome: "Bram", vida: 12, vidaMax: 40, metros: 4.5, golpes: 50, aVista: false },
+  ];
+  t("o_mais_perto: o mais perto À VISTA (Bram está mais perto, mas não se vê)", escolherAlvo("o_mais_perto", bandeiras).nome === "Vera");
+  t("o_mais_fragil: o que cai com menos golpes à vista, e não o de menos vida", escolherAlvo("o_mais_fragil", bandeiras).nome === "Iria");
+  t("sem ninguém à vista, olha para todos", escolherAlvo("o_mais_perto", bandeiras.map((b) => ({ ...b, aVista: false }))).nome === "Bram");
+  t("alvoDaMira: o bruto sem ferida vai no mais perto", alvoDaMira("bruto", bandeiras).nome === "Vera");
+  t("alvoDaMira: o bruto ferido pela Iria vai na Iria", alvoDaMira("bruto", bandeiras.map((b) => (b.nome === "Iria" ? { ...b, meFeriu: true } : b))).nome === "Iria");
+  t("alvoDaMira: o astuto vai no frágil", alvoDaMira("astuto", bandeiras).nome === "Iria");
+  t("alvoDaMira: degrau torto cai no chão, lista vazia devolve null", alvoDaMira("nao_existe", bandeiras).nome === "Vera" && alvoDaMira("astuto", []) === null);
+
+  /* no motor: o herói de ficha (12 de defesa, 40 de vida) à frente, a Iria
+     (Mago de túnica, 10 de defesa, 30 de vida) atrás; o arqueiro no fundo */
+  const h = { nome: "Vera", x: 9, y: 6 };
+  const onde = [{ nome: "Iria", x: 9, y: 10 }];
+  const iria = [{ nome: "Iria", classe: "Mago", nivel: 5, vida: 30, vidaMax: 30, atributos: { destreza: 0 }, condicoes: [] }];
+  const alvosDe = (arq, extra = {}, semente = "mira") => comSorteTravada(`mm7|${semente}`, () =>
+    turnoDosInimigos({ inimigos: [arq], jogador: ficha(), grupo: iria, grade: campoAberto, heroi: h, aliados: onde, rodada: 1, ...extra }))
+    .map((a) => a.alvoNome || a.alvoRef);
+  const bruto = umAtirador(9, 1);
+  t("o Atirador do bestiário é bruto", degrauDaCriatura(bruto) === "bruto");
+  const tb = alvosDe(bruto);
+  t(`o bruto dispara no mais perto — o herói (${tb.join(", ")})`, tb.length > 0 && tb.every((n) => n === "jogador" || n === "Vera"));
+  const tf = alvosDe({ ...bruto, feridoPor: "Iria" });
+  t(`o bruto ferido pela Iria dispara na Iria (${tf.join(", ")})`, tf.length > 0 && tf.every((n) => n === "Iria"));
+  const astuto = umAtirador(9, 1, { degrau: "astuto" });
+  const ta = alvosDe(astuto);
+  t(`o astuto dispara na frágil — a Iria, atrás do herói (${ta.join(", ")})`, ta.length > 0 && ta.every((n) => n === "Iria"));
+  const tl = alvosDe(umAtirador(9, 1, { degrau: "brilhante" }));
+  t(`o brilhante dispara em quem conjura (${tl.join(", ")})`, tl.length > 0 && tl.every((n) => n === "Iria"));
+  /* a intenção com nome manda; a rede não */
+  const tn = alvosDe(astuto, { prioridade: "o_heroi" });
+  t("a intenção com nome ('o herói') manda no astuto", tn.length > 0 && tn.every((n) => n === "jogador" || n === "Vera"));
+  const tr = alvosDe(astuto, { prioridade: "quem_estiver" });
+  t("a rede ('quem estiver') deixa a mira decidir", tr.length > 0 && tr.every((n) => n === "Iria"));
+  /* a provocação continua dura */
+  const tp = alvosDe(astuto, { provocado: true });
+  t("provocado, o astuto não troca o herói pela frágil", tp.length > 0 && tp.every((n) => n === "jogador" || n === "Vera"));
+  /* determinismo: sem sorteio de alvo — dez sementes, o mesmo alvo */
+  const dez = Array.from({ length: 10 }, (_, i) => alvosDe(astuto, {}, `mira|det|${i}`).join(","));
+  t("dez sementes, o mesmo alvo (o sorteio de 35% saiu)", new Set(dez).size === 1);
+  /* quem não vê não mira (MM6): o herói escondido do bruto, que o tinha
+     como o mais perto, não é escolhido — a Iria é */
+  const hEsc = { nome: "Vera", x: 9, y: 1 };
+  const arqE = umAtirador(9, 6);
+  const ns = nascerEscondido(ficha(), { total: 30, grade: campoAberto, heroi: hEsc, inimigos: [arqE] });
+  const aliE = [{ nome: "Iria", x: 12, y: 10 }];
+  const te = comSorteTravada("mm7|mira|oculto", () => turnoDosInimigos({ inimigos: [arqE], jogador: ns.pers, grupo: iria, grade: campoAberto, heroi: hEsc, aliados: aliE, rodada: 1 }))
+    .map((a) => a.alvoNome || a.alvoRef);
+  t(`o herói escondido, mais perto, não é a mira do bruto (${te.join(", ")})`, ns.ok && te.length > 0 && te.every((n) => n === "Iria"));
+  /* a medida por degrau, ao vivo e pequena: o astuto põe no grupo o que
+     o bruto põe no herói (o retrato de 140 está em RETRATO_DOS_ATIRADORES) */
+  const M = await carregar();
+  const vb = sondarAtiradores(M, { n: 21, prefixo: "mm7mira", cenarios: ["bando"] }).bando;
+  const va = sondarAtiradores(M, { n: 21, prefixo: "mm7mira", cenarios: ["bando"], degrauDeQuemAtira: "astuto" }).bando;
+  console.log(`      bando, 21 lutas: bruto herói ${vb.dano.toFixed(2)} · grupo ${vb.danoGrupo.toFixed(2)} | astuto herói ${va.dano.toFixed(2)} · grupo ${va.danoGrupo.toFixed(2)}`);
+  t("o arqueiro astuto fere mais o grupo e menos o herói do que o bruto", va.danoGrupo > vb.danoGrupo && va.dano < vb.dano);
 }
 
 console.log(`\nmm7 atiradores (motor + sonda + fiação): ${ok} passaram, ${mal} falharam`);

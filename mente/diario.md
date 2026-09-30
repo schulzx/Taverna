@@ -15,6 +15,41 @@ Formato:
 ```
 
 ---
+## 29/09 21:03 · v9.317 · o arqueiro mira pela cabeça que tem · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a pergunta que este diário deixou em v9.316 (o grupo a +39% contra o
+  "antes" sem pilha) foi decidida pelo coordenador da fase com uma lei da pessoa, de
+  setembro: **a tabela de intenções por nível de inteligência** — o arqueiro astuto ou
+  acima mira no mais frágil; o animal ou bruto, no mais perto ou em quem o feriu.
+- **estado inicial:** verde (`f17e60f`, `d3268a0`). Em paralelo, noutra mão e noutros
+  arquivos, a MM12.
+- **o que havia:** nenhuma escolha de alvo por degrau, nem para quem luta de perto. Sem
+  intenção do bando, **um sorteio de 35%** mandava o tiro a um companheiro ao acaso — era
+  isso o +39%. E "quem me feriu" só existia como leitura: nada o escrevia.
+- **backend:** a coluna `mira` em `DEGRAUS` — bruto e animal: quem me feriu, senão o mais
+  perto; astuto e treinado: o mais frágil; brilhante: quem conjura, quem cura, o mais
+  frágil. **"O mais frágil" é quem cai com menos golpes** (a vida a dividir pela chance de
+  ser acertado, com defesa e cobertura) — pela vida sozinha, o astuto ia no guerreiro já
+  gasto; assim vai no mago de túnica. As duas prioridades entram na tabela que já existia
+  (`PRIORIDADES`), só com quem está à vista (MM6). Só quem dispara usa a mira, e só quando o
+  bando não deu um alvo com nome; o sorteio sai e não há sorte nenhuma.
+- **medido (140 lutas, contra o "antes" sem pilha, que passou a ser o do retrato):** dupla
+  −7,4%; conjurador **+19,3%** (a margem de sempre); bando: herói −0,6%, grupo +2,6%, total
+  +0,3%. Paredes: 0 travas, 0 sobreposições, pior planta a floresta +9,3% (nova catraca).
+- **a decisão que fica pendente — levada ao coordenador, não tomada por mim:** o App ainda
+  não escreve `feridoPor`. Ligado, o bruto dispara só no herói (é quem mais o fere, no
+  golpe de oportunidade do recuo) e **o grupo do bando cai a −30,8%**: a catraca de ±20%
+  acende. Não se alargou limite nenhum: o retrato mede o jogo como está ligado, e as
+  linhas com `feridoPor`, do astuto (grupo 19,78, total +24%) e do brilhante ficam
+  escritas como registo. O §14 prova em unidade que "quem me feriu" funciona.
+- **decisões médias tomadas:**
+  - **Medir o jogo que existe** em vez de ligar `feridoPor` e pedir o limite alargado.
+  - **Os lutadores de perto ficam como estavam**: dar-lhes mira mexe na régua de Uma Vida
+    (sem grade, todos alcançam todos) e pede medida própria.
+- **para quem joga:** o arqueiro deixa de atirar ao acaso; um bruto atira no que tem à
+  frente, um esperto no mago. Hoje nenhum arqueiro do bestiário é astuto — mas os que o
+  Narrador inventa "competentes" são.
+
 ## 29/09 20:08 · v9.316 · ninguém termina na casa de outro (e o "Golpe consagrado") · commit `f17e60f`
 
 - **por que andou:** promovido pelo coordenador da fase, com o motivo que este diário deu:

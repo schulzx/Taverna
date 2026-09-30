@@ -365,6 +365,15 @@ sec("8. a catraca: o retrato de antes e de depois");
     t(`${p} sem a pilha: dano ${(varia * 100).toFixed(1)}% do antes (limite ${LIMITE_DAS_PAREDES.balanco * 100}%)`,
       Math.abs(varia) <= LIMITE_DAS_PAREDES.balanco && d.vitoria >= a.vitoria - 0.01);
   }
+  /* A ETAPA DA MIRA (depois de v9.316): o mesmo limite, contra o mesmo
+     antes de tudo, para o jogo com a mira pela cabeça como está ligado
+     hoje (sem `feridoPor` no App) */
+  for (const p of Object.keys(PLANTAS)) {
+    const a = B.antes[p], d = B.mira[p];
+    const varia = d.dano / a.dano - 1;
+    t(`${p} com a mira: dano ${(varia * 100).toFixed(1)}% do antes (limite ${LIMITE_DAS_PAREDES.balanco * 100}%)`,
+      Math.abs(varia) <= LIMITE_DAS_PAREDES.balanco && d.vitoria >= a.vitoria - 0.01);
+  }
 }
 
 /* ============================================================ */

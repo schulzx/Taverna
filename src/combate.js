@@ -20,6 +20,10 @@ import { estaSintonizado } from "./sintonia.js";
 import { estaInvisivel } from "./gatilhos.js";
 import { estaVirado } from "./controle.js";
 import { escolherAlvo } from "./adversario.js";
+/* A MIRA (depois de v9.316): em quem dispara quem não recebeu do bando um
+   alvo com nome. degraus.js não importa este arquivo — a seta é de mão
+   única. */
+import { alvoDaMira, MIRA_SEM_ALVO_DO_BANDO, degrauDaCriatura } from "./degraus.js";
 /* MM6: quem está escondido de quem. Seta de um lado só — escondido.js lê
    grid.js, condicoes.js e peneira.js, e nenhum deles conhece este arquivo. */
 import { oculto } from "./escondido.js";
@@ -318,16 +322,39 @@ export function resumoDoAtaque(r) {
    promessa vazia: é a classe que tem o quê, não a que soa clerical. */
 const CURAM = ["Clérigo", "Druida", "Bardo"];
 
+/* A chance de um d20 acertar tem piso e teto: o 1 erra sempre e o 20
+   acerta sempre (5e) — 5% e 95%. */
+export const CHANCE_NAS_PONTAS = { min: 0.05, max: 0.95 };
+
 /* v9.110: as bandeiras que o ADVERSÁRIO lê para escolher o alvo. Elas
    nascem aqui porque só o motor sabe: "perto" é alcance contra a grade,
    "bloqueia" é quem está fisicamente entre o bicho e o resto. */
 function bandeirasDosAlvos(alvos, inim, grade, pos) {
   const comAlcance = alvos.map((a) => {
-    let perto = true;
+    let perto = true, aVista = true, metros = 0, cobertura = 0;
     try {
       const alc = alcanca(grade, { ...inim }, a.onde || pos, alcanceDoGolpe(inim));
       perto = !!alc.ok && !(alc.penalidade > 0);
-    } catch { perto = true; }
+      /* A MIRA (depois de v9.316): à vista é o que `alcanca` deixa atingir
+         e o que não está escondido de quem mira (MM6: quem não vê não
+         mira); `metros` é a distância que ela mediu; `cobertura`, a
+         defesa que o lugar dele dá. Sem grade: à vista, a zero, descoberto. */
+      aVista = !!alc.ok && !(a.ref === "jogador" && oculto(a.ent, inim, { grade, heroi: pos }));
+      const m = Number(alc.metros);
+      metros = Number.isFinite(m) ? m : 0;
+      cobertura = grade ? Number(bonusDefesaEm(grade, a.onde || pos)) || 0 : 0;
+    } catch { perto = true; aVista = true; metros = 0; cobertura = 0; }
+    /* O QUE CAI COM MENOS GOLPES (`o_mais_fragil`, a mira do astuto para
+       cima): a vida de agora dividida pela chance de ESTE atacante o
+       acertar — a mesma conta do d20 de `resolverAtaque`: acerta com
+       `d20 + bônus >= defesa`, com o 1 e o 20 de sempre nas pontas
+       (`CHANCE_NAS_PONTAS`). */
+    let golpes = 0;
+    try {
+      const def = defesaDe(a.ent, a.ref === "inimigo") + cobertura;
+      const chance = Math.max(CHANCE_NAS_PONTAS.min, Math.min(CHANCE_NAS_PONTAS.max, (21 + bonusDeAmeaca(inim.ameaca) - def) / 20));
+      golpes = Math.max(0, Number(a.ent.vida) || 0) / chance;
+    } catch { golpes = 0; }
     const cls = (a.ent && a.ent.classe) || "";
     const perfil = cls ? perfilCombate(cls) : null;
     return {
@@ -337,8 +364,11 @@ function bandeirasDosAlvos(alvos, inim, grade, pos) {
       conjurador: !!perfil && (perfil.tipo === "conjurador" || perfil.tipo === "misto"),
       cura: CURAM.includes(cls),
       carrega: !!(a.ent && a.ent.carregaAChave),
-      meFeriu: !!(a.ent && a.ent.feriu === inim.nome),
-      perto,
+      /* QUEM ME FERIU: o inimigo guarda o nome de quem o acertou por último
+         (`feridoPor`, escrito por quem aplica o dano — o App); a leitura
+         antiga (`feriu` na ficha de quem bateu) continua a valer. */
+      meFeriu: !!(a.ent && a.ent.feriu === inim.nome) || (!!inim.feridoPor && inim.feridoPor === a.nome),
+      perto, aVista, metros, golpes,
     };
   });
   /* BLOQUEIA é quem está no caminho, e sem grade isso ainda é decidível:
@@ -457,7 +487,24 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
         const esc = escolherAlvo(prioridade, bandeiras);
         if (esc) daIntencao = vivosAlvo.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
       }
-      if (daIntencao) {
+      /* A MIRA PELA CABEÇA (depois de v9.316). Quem DISPARA e não recebeu do
+         bando um alvo com nome — sem intenção, ou com a da rede, "quem
+         estiver", que é sempre o herói — escolhe pelo degrau dele
+         (`mira`, degraus.js): o bicho e o bruto no que o feriu ou no mais
+         perto, o astuto para cima no mais frágil, o brilhante na magia e no
+         remendo. No lugar do sorteio de 35%: a mesma mesa, o mesmo tiro.
+         Uma intenção com nome que não acha ninguém também cai aqui, e não no
+         sorteio. A provocação e a marionete continuam a mandar, como sempre. */
+      let daMira = null;
+      const semNome = MIRA_SEM_ALVO_DO_BANDO.includes(prioridade || "") || !daIntencao;
+      if (atira && !virado && !provocado && semNome && vivosAlvo.length > 1) {
+        const bandeiras = bandeirasDosAlvos(vivosAlvo, inim, grade, pos);
+        const esc = alvoDaMira(degrauDaCriatura(inim), bandeiras);
+        if (esc) daMira = vivosAlvo.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
+      }
+      if (daMira) {
+        alvo = daMira;
+      } else if (daIntencao) {
         alvo = daIntencao;
       } else if (!virado && !provocado && vivosAlvo.length > 1 && Math.random() < 0.35) {
         const comps = vivosAlvo.filter((a) => a.ref === "grupo");
