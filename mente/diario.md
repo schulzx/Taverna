@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 29/09 23:55 · v9.321 · MM8c-1 · as listas de pessoas ganham teto, e a recência deixa de zerar · commit (o hash vai no próximo bloco)
+## 29/09 23:55 · v9.321 · MM8c-1 · as listas de pessoas ganham teto, e a recência deixa de zerar · commit `4e28aef`
 
 - **por que andou, à frente da MM8b:** reordenado pelo coordenador da fase a partir do que o
   estudo do MM8 achou — **o teto de prompt é lei da casa**, e duas listas de pessoas o violavam
