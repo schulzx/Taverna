@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 02:55 · v9.324 · os defeitos do primeiro dia: a taverna que dava um baú, as moedas que não saíam, o d20 à vista · commit (o hash vai no próximo bloco)
+## 30/09 02:55 · v9.324 · os defeitos do primeiro dia: a taverna que dava um baú, as moedas que não saíam, o d20 à vista · commit `496037a`
 
 - **por que andou:** três dos defeitos que o `jogo` viu de passagem na prova de MM13, promovidos
   pelo coordenador — **o jogador vê-os no primeiro dia, e um fura a economia**.
