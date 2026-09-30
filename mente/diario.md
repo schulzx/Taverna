@@ -15,7 +15,42 @@ Formato:
 ```
 
 ---
-## 30/09 01:29 · v9.322 · MM13 · o mundo puxa o herói · commit (o hash vai no próximo bloco)
+## 30/09 01:53 · v9.322 · MM13 · a prova jogada do `jogo` · sem código (só a mente)
+
+- **quem jogou:** o `jogo`, a pedido do ciclo do sistema, sem desenhar nem editar (a mesa de
+  design continua parada). Duas campanhas novas, ~19 respostas pagas.
+- **o veredito:** a etapa funciona para quem joga. **No turno 1, as três perguntas têm resposta
+  na tela, sem nenhum Aceitar** — "uma carta sem assinatura, de um antigo companheiro de armas";
+  "Orin sabe mais; o Círculo Rachado fica a leste da praça"; "procurar Orin". O mundo repetiu o
+  nome da pista três vezes em doze turnos, sem ninguém lho pedir.
+- **o mural:** o primeiro Aceitar chegou no turno 8 (o fecho de 6 turnos), e na campanha que
+  seguiu a pista abriu no turno 3, no mesmo turno do primeiro passo. Como desenhado.
+- **o sino:** prenúncio no turno 6 ("ao longe, o sino toca uma vez, fora de hora, e cala") — e
+  **o Narrador pegou-o sozinho**: no turno 10 um guarda "não volta desde o sino", no 11 o
+  sargento "se o sino tocar de novo…". O sino tocou depois da 12.ª jogada, com o herói fora dos
+  muros: feridos a gritar "A coisa saiu do Círculo! Corre!". **Chegou depois de explorar oito
+  lugares e cinco pessoas, e pareceu o mundo a empurrar, não o sistema a castigar.** (Uma noite de
+  sono pelo meio deve tê-lo enchido; um jogador faria o mesmo.)
+- **o que falha — e é da MM13:** **a pista e o sino apontam para lugares que não estão na planta**
+  (o Círculo Rachado da base do mundo é o Picadeiro Central na planta; a Corda Velha do segundo
+  passo não existe em lado nenhum da tela). Duas fontes de nomes para os mesmos lugares. Vira a
+  MM13b, à frente de tudo.
+- **o próximo passo:** na abertura, encontra-se sem ajuda. **Depois do primeiro passo, não**: a
+  linha do ✓ diz o que fechou e cala o que abriu, e o `jogo` ficou sem rumo no turno 3. É a
+  prova, por experiência jogada, de que falta **"o rumo"** no ecrã principal — peça do desenho,
+  para quando a pessoa reabrir a fila dele; o mínimo sem peça (a linha do ✓ com o passo
+  seguinte) é do sistema e vai com a MM13b.
+- **mais nove defeitos vistos de passagem**, para "Aberto": o sistema a falar de si no descanso
+  ("d20 = 16 vs 10 → acontece"); uma missão "do Mestre" antes do primeiro passo, com o próprio
+  herói como contratante e erros de texto; a 🗝 de um segredo com cara de principal; o relógio que
+  não segue a narração; "procuro uma taverna" a dar Percepção e 168 moedas; moedas narradas que
+  não descem; o herói "nos arredores" de dentro dos muros; "de volta a" sem ter saído; o Guerreiro
+  sem arma nem comida; e o "Continuar" do dado fora do ecrã a 310 px.
+- **para quem joga:** começar uma campanha passou a ser chegar a um sítio com uma razão e alguém
+  para procurar; o que ainda falta é que esse alguém esteja no mapa, e que o rumo não se perca
+  depois do primeiro passo.
+
+## 30/09 01:29 · v9.322 · MM13 · o mundo puxa o herói · commit `74a4b61`
 
 - **por que andou:** pedido da pessoa, com peso grande, e corrigido por ela antes de começar:
   *"ele diz o mundo, onde o personagem está, e uma pequena história do local… conforme o mestre

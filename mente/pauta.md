@@ -313,6 +313,35 @@ O limite é o que um commit revertido não desfaz.
   *porque estou aqui?*, *o que sei?* e *qual é o meu próximo passo?* — as três com resposta **no
   primeiro turno**, sem nenhum cartão de Aceitar; e conta em que turno chega a escalada, e se
   chegou depois de ele já ter explorado.
+- [ ] **MM13b · a pista tem morada** · da prova jogada de MM13, 30/09 · **o defeito que a MM13 deixou**
+  A pista e o sino apontam para lugares que **não estão na planta da cidade**: "o Círculo Rachado"
+  (da base do mundo) é, na planta de Monte do Norte, o "Picadeiro Central"; "a Corda Velha" do
+  segundo passo não está na planta nem na fala de quem a deu. **Duas fontes de nomes para os
+  mesmos lugares** (a base e a planta) — achar qual manda e fazê-las uma. Junto: "🔎 Encontrar
+  Orin — O Armazém Velho" (T2) contradiz a pista e o diário (de onde vem?); e o passo "procurar
+  alguém" conta um turno depois de chegar e diz "Chegar a" em vez de "Procurar".
+- [ ] **o próximo passo some do ecrã quando muda** · da prova jogada de MM13, 30/09
+  Na abertura encontra-se sem ajuda (a narração di-lo e o mundo repete o nome). Depois do primeiro
+  passo, não: a linha do ✓ diz o que fechou e cala o que abriu — o `jogo` ficou sem rumo no turno 3.
+  **O mínimo, sem peça:** a linha do ✓ traz o passo seguinte ("→ agora: procurar Petra na Corda
+  Velha"). **A peça (para o desenho, quando a pessoa reabrir a fila dele): "o rumo"** — uma linha
+  fixa da principal sob o nome do lugar, que abre o cartão do diário e acende uma vez quando o sino
+  toca. Prova: experiência jogada (o `jogo`, 30/09). E a 🗝 do turno 1 (o segredo de um lugar)
+  tem a cara da principal sem o ser.
+- [ ] **o sistema fala de si no descanso longo** · leve · da prova jogada de MM13, 30/09
+  "Fio local: d20 = 16 vs 10 → acontece · Nova missão: d20 = 3 vs 13 → nada · Arco regional…" na
+  tela — viola a lei "o sistema não fala de si".
+- [ ] **uma missão "do Mestre" antes do primeiro passo da principal** · da prova jogada de MM13
+  No T8, "Tirar Anya de lá… não se recusa", com o próprio herói como contratante ("Varek paga para
+  trazer de volta") e erros de texto ("de o casarão", "Chegar a o casarão", "vivo" para Anya). O
+  mural abriu no mesmo turno com o mesmo molde. Uma segunda história forçada antes de a primeira
+  andar é o cardápio outra vez.
+- [ ] **o que a prova jogada de MM13 viu de passagem** · 30/09 · pesar cada um
+  O relógio não segue a narração ("fim da tarde" e "durmo até de manhã" com O tempo a dizer 09:40);
+  "procuro uma taverna" virou Percepção e um baú de 168 moedas; o pão e o quarto narrados não
+  desceram as moedas; o herói "nos arredores de Casa escura" dentro de uma taverna de dentro dos
+  muros; "De volta a Monte do Norte — X fica para trás" sem ter saído; o Guerreiro começa sem arma
+  equipada nem comida; a 310 px o "Continuar →" do dado fica fora do ecrã.
 - [ ] **MM8c-0 · a parte fixa do prompt emagrece ~6k** · decisão do coordenador, 29/09 · **antes da MM8b**
   Encolher o fixo, nunca subir o teto (subir é custo em todos os turnos de todos os jogadores).
   Sem perder regra: o que se repete entre blocos, o que a pauta dinâmica já diz, o que entra sem
