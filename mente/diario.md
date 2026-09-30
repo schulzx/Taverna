@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 11:26 · v9.334 · MM14 (2) · o "como" chega, o revide fere, a sala limpa fica limpa · commit (o hash vai no próximo bloco)
+## 30/09 11:26 · v9.334 · MM14 (2) · o "como" chega, o revide fere, a sala limpa fica limpa · commit `14f0bd6`
 
 - **por que andou:** os defeitos nº 3, 4 e 5 da sessão de prova.
 - **estado inicial:** verde (MM14 (1) no ar, `dc0fd9d`).

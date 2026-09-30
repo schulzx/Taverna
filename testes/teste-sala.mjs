@@ -171,7 +171,14 @@ sec("6. o protocolo, e o transporte que não sabe de nada");
   const c = T.abrirCanal("PROVA1", { aoReceber: () => {} });
   t("sem navegador, o canal existe e é mudo", c.estado().tipo === "mudo" && c.enviar({}) === false);
   t("e fechar um canal mudo não quebra", (c.fechar(), true));
-  t("ids de participante não se repetem", new Set(Array.from({ length: 200 }, () => T.novoIdDeParticipante())).size === 200);
+  /* SEMEADA NA MM14 (30/09), com o motivo: esta prova sorteava 200 ids com
+     `Math.random` no mesmo milissegundo, e o id é o relógio mais um número
+     até um milhão — colisão de aniversário: ~2% por rodada, e medido 2 em 30
+     vermelhas, sem defeito atrás. É o mesmo caso que a v9.240 consertou para
+     os códigos, acima. `novoIdDeParticipante(rnd)` já aceita a sorte; com
+     semente, a prova é exata (e a mesma semente dá os mesmos ids). */
+  { const sorteDosIds = rng(hashSemente("taverna|sala|participante")); const ids = Array.from({ length: 200 }, () => T.novoIdDeParticipante(sorteDosIds));
+    t("ids de participante não se repetem", new Set(ids).size === 200, `${new Set(ids).size}/200`); }
   /* o save inteiro passa dos 80 KB; o teto existe para o mundo não sumir em
      silêncio quando não couber */
   t("o que cabe, cabe", T.cabeNoFio({ a: "x".repeat(1000) }));
