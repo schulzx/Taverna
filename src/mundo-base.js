@@ -540,12 +540,38 @@ export function foiSaqueado(base, id) { return garantirBase(base).saqueados.incl
    se existe algo procurável AQUI com aquele atributo, e é a dificuldade do
    PRÓPRIO segredo que vale — não a genérica do pedido. Quem decide se achou
    é o dado; o Mestre só narra o que já foi decidido. */
-export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null, lex = null) {
+/* ---------------- ONDE O HERÓI ESTÁ (30/09, da prova jogada de MM13) ----------------
+   "Procuro uma taverna" pagou 168 moedas — e o número diz de onde vieram:
+   só os baús do ERMO (`tesourosDoMundo`) têm conteúdo de moeda, e a conta
+   do achado dá 14 × 12. O herói estava dentro de uma taverna, dentro dos
+   muros, e achou um baú enterrado "sob uma pedra marcada" fora da cidade.
+   Esta função olhava a CIDADE inteira e a região à volta, e dava o mais
+   fácil de tudo: o segredo de outro prédio, o baú de outra estrada.
+
+   `onde` diz onde se está a procurar, e o que se acha passa a ser o que
+   está ALI:
+     · dentro dos muros, só o segredo cujo local é o lugar onde o herói
+       está (ou o prédio de que o cômodo faz parte — o quarto de cima é da
+       taverna); na rua, sem lugar, nada — a rua não é o assoalho de
+       ninguém;
+     · fora dos muros, só os baús do ermo, e nenhum segredo de prédio.
+   Sem `onde`, a resposta é a de sempre, letra por letra: quem ainda não
+   diz onde está não pode ficar sem resposta no meio de uma versão. */
+const semArtigoDoLocal = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+  .trim().replace(/^(o|a|os|as)\s+/, "").trim();
+
+export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null, lex = null, onde = null) {
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
   if (!q) return null;
+  const o = onde && typeof onde === "object" ? onde : null;
+  const aqui = o ? [o.lugar, o.dentroDe].map(semArtigoDoLocal).filter(Boolean) : [];
+  const segredos = !o ? (q.segredos || [])
+    : o.foraDosMuros ? []
+      : (q.segredos || []).filter((s) => aqui.includes(semArtigoDoLocal(s.local)));
+  const tesouros = !o || o.foraDosMuros ? (q.tesouros || []) : [];
   const cands = [
-    ...(q.segredos || []).map((s) => ({ ...s, especie: "segredo", onde: `em ${s.local}` })),
-    ...(q.tesouros || []).map((t) => ({ ...t, especie: "tesouro", o: t.conteudo })),
+    ...segredos.map((s) => ({ ...s, especie: "segredo", onde: `em ${s.local}` })),
+    ...tesouros.map((t) => ({ ...t, especie: "tesouro", o: t.conteudo })),
   ].filter((x) => (x.acha || "percepcao") === atributo);
   if (!cands.length) return null;
   /* o mais fácil primeiro: procurar acha o que está mais à mão */

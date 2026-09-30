@@ -14,11 +14,23 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
    como numa mesa de verdade: o dado aparece, o alvo aparece, e só
    acontece se passar. Um mundo que se explica é mais confiável do que
    um mundo que só acontece. */
-export const d20 = () => 1 + Math.floor(Math.random() * 20);
+/* 30/09 (da prova jogada de MM13): o dado continua a ser rolado, e fica
+   ATRÁS DO ECRÃ. "Fio local: d20 = 16 vs 10 → acontece · Nova missão:
+   d20 = 3 vs 13 → nada" aparecia na conversa a cada descanso longo, e é
+   o sistema a falar de si: o jogador não tem "fio local" nem "arco
+   regional" — tem um grito na rua, um boato, uma região que muda. A
+   preferência "mostrar rolagens" é para os dados DELE (o golpe, o teste),
+   onde ver o número é jogo; o dado do Mestre a decidir se o mundo mexe
+   é bastidor, e sente-se pelo efeito. O registro continua a existir, com
+   outro nome — `bastidor` —, para a suíte e para quem depurar.
 
-export function rolarGatilho(rotulo, alvo, { vantagem = false, garantido = false } = {}) {
+   A sorte entra por argumento (`sorte`), como em todo o motor desta casa:
+   sem ela nenhuma suíte consegue provar o que o descanso faz. */
+export const d20 = (sorte = Math.random) => 1 + Math.floor(sorte() * 20);
+
+export function rolarGatilho(rotulo, alvo, { vantagem = false, garantido = false, sorte = Math.random } = {}) {
   if (garantido) return { rotulo, alvo, d: 20, passou: true, garantido: true, texto: `${rotulo}: garantido pelo tempo decorrido` };
-  const a = d20(), b = vantagem ? d20() : null;
+  const a = d20(sorte), b = vantagem ? d20(sorte) : null;
   const d = b != null ? Math.max(a, b) : a;
   const passou = d >= alvo;
   return {
@@ -144,7 +156,20 @@ export function garantirEventos(ev) {
     : { locais: [], global: null, semGlobalDesde: 0, seq: 1 };
 }
 
-export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2 } = {}) {
+/* Os alvos do dado do Mestre no descanso longo, e os tetos que decidem
+   se ele rola. Se é número, é tabela: moravam soltos na função. */
+export const ALVOS_DO_DESCANSO = {
+  fioLocal: 10,          // ~55% — o dia a dia mexe quase sempre
+  novaMissao: 13,        // mais rara
+  arcoRegional: 17,      // rara
+  escalada: 12,          // o arco em curso só escala se o dado mandar
+  maxFiosLocais: 3,      // com três fios à vista, não nasce um quarto
+  secundariasMax: 2,     // com duas secundárias ativas, não nasce missão
+  diasAteGarantia: 10,   // dez dias sem arco regional e ele vem sem dado
+};
+
+export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2, sorte = Math.random } = {}) {
+  const A = ALVOS_DO_DESCANSO;
   const e = garantirEventos(ev);
   const out = { eventos: e, localNovo: null, questNova: null, globalNovo: null, globalAvancou: false, expirados: [] };
 
@@ -155,35 +180,35 @@ export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas 
     return false;
   });
 
-  /* ROLAGENS DO MESTRE: cada possibilidade tem seu alvo no d20 e o
-     resultado fica registrado (out.rolagens) para o jogador ver. */
-  out.rolagens = [];
+  /* ROLAGENS DO MESTRE: cada possibilidade tem seu alvo no d20, e o
+     resultado fica registrado em `bastidor` — nunca na tela (ver d20). */
+  out.bastidor = [];
 
-  /* novo fio local — alvo 10 (55% ≈ 10+ no d20) */
-  if (e.locais.length < 3) {
-    const r = rolarGatilho("Fio local", 10);
-    out.rolagens.push(r);
+  /* novo fio local */
+  if (e.locais.length < A.maxFiosLocais) {
+    const r = rolarGatilho("Fio local", A.fioLocal, { sorte });
+    out.bastidor.push(r);
     if (r.passou) { out.localNovo = gerarEventoLocal(ctx, dia); e.locais.push(out.localNovo); }
   }
 
-  /* quest da fase do arco — alvo 13 (mais rara) */
-  if (secundariasAtivas < 2) {
-    const r = rolarGatilho("Nova missão", 13);
-    out.rolagens.push(r);
+  /* quest da fase do arco */
+  if (secundariasAtivas < A.secundariasMax) {
+    const r = rolarGatilho("Nova missão", A.novaMissao, { sorte });
+    out.bastidor.push(r);
     if (r.passou) out.questNova = gerarQuestDeArco(ctx, ctx.fase || "meio");
   }
 
-  /* evento global — alvo 17 (raro); garantido se faz 10 dias sem nenhum */
+  /* evento global — raro; garantido depois de tantos dias sem nenhum */
   if (!e.global) {
     e.semGlobalDesde = e.semGlobalDesde || dia;
-    const garantia = dia - e.semGlobalDesde >= 10;
-    const r = rolarGatilho("Arco regional", 17, { garantido: garantia });
-    out.rolagens.push(r);
+    const garantia = dia - e.semGlobalDesde >= A.diasAteGarantia;
+    const r = rolarGatilho("Arco regional", A.arcoRegional, { garantido: garantia, sorte });
+    out.bastidor.push(r);
     if (r.passou) { out.globalNovo = gerarEventoGlobal(ctx, dia); e.global = out.globalNovo; }
   } else if (e.global.etapa < e.global.etapas.length - 1) {
-    /* o arco global só escala se o dado mandar — alvo 12 */
-    const r = rolarGatilho(`Escalada de "${e.global.nome}"`, 12);
-    out.rolagens.push(r);
+    /* o arco global só escala se o dado mandar */
+    const r = rolarGatilho(`Escalada de "${e.global.nome}"`, A.escalada, { sorte });
+    out.bastidor.push(r);
     if (r.passou) { e.global = { ...e.global, etapa: e.global.etapa + 1 }; out.globalAvancou = true; }
   }
 

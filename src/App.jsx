@@ -86,7 +86,7 @@ import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPr
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
 import { consultar, ehPerguntaAoMundo, tipoDaPergunta, envelopeDoOraculo, linhaDaConsulta, chaveDoFato, garantirFatos, registrarFato, perguntarPeloSistema, envelopeDaPerguntaDoSistema, linhaDaPerguntaDoSistema, iniciativaDoMundo, envelopeDaIniciativa, linhaDaIniciativa, ORACULO_PROMPT } from "./oraculo.js";
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao } from "./turno.js";
-import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada } from "./cobranca.js";
+import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada, oQueFaltaDebitar, falaDoDebito, envelopeDoDebito } from "./cobranca.js";
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
@@ -9185,7 +9185,8 @@ export default function Taverna() {
     return { pers, dano: perdeu, caiu, condicao: posta, linhas };
   };
 
-  const aplicarResposta = useCallback((resp, persAtual) => {
+  const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {
+    const op = opts && typeof opts === "object" ? opts : {};
     /* v9.32: FICHA NUNCA NULA. O erro "undefined is not an object (evaluating
        'e.efeitos')" que apareceu em jogo era isto: alguma chamada de enviar()
        passou `persAtual` vazio, `tickEfeitos(pers)` é a PRIMEIRA coisa que
@@ -9472,6 +9473,16 @@ export default function Taverna() {
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaCobranca(falta)}`;
       }
     } catch { /* conferir a narração nunca pode custar o turno */ }
+    /* O ESPELHO: o que a narração diz que o herói PAGOU, ver cobranca.js —
+       MM13b, da prova jogada de MM13. `envelopes` é o que foi ao Narrador
+       neste turno (a pauta, os avisos do sistema): se ele já disse "já
+       registrada pelo sistema", a compra já saiu da bolsa por outro
+       caminho, e debitar de novo cobraria duas vezes. */
+    try {
+      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "" });
+      if (deb.temAlgo && !deb.semFundos) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - deb.moedas) }; msgs.push(falaDoDebito(deb)); }
+      if (deb.temAlgo) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoDebito(deb)}`;
+    } catch (e) { calou("oQueFaltaDebitar", e); }
     if ((pers.dadivasPendentes || 0) > 0) pers = concederDadivas(pers, msgs);
     if (resp.mudancas) {
       const md = resp.mudancas;
@@ -11815,7 +11826,7 @@ export default function Taverna() {
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
          sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
-      let pers = aplicarResposta(resp, persAtual) || personagemRef.current || personagem;
+      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota }) || personagemRef.current || personagem;
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
          na bolsa). Custa zero: é comparação com o que já está na mão.
@@ -17519,6 +17530,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch { return null; }
   };
 
+  /* ---------------- O BAÚ SÓ ONDE SE PROCURA (30/09, MM13b) ----------------
+     `achavelAqui` precisa saber ONDE o herói está para não devolver o
+     segredo de outro prédio ou o baú de outra estrada — ver mundo-base.js. */
+  const ondeSeProcura = () => {
+    const l = lugarRef.current;
+    return { lugar: (l && l.nome) || "", dentroDe: (l && l.dentroDe) || "", foraDosMuros: !cidadeAtualRef.current || !!(l && l.distancia === "arredores") };
+  };
+
   const ctxDesafio = () => ({
     personagem: fichaViva() || personagem,
     semente: sementeMundo(),
@@ -17537,7 +17556,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     achadoDe: (attr) => {
       try {
         if (combateRef.current) return null;
-        return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico);
+        return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico, ondeSeProcura());
       } catch { return null; }
     },
   });
@@ -18292,9 +18311,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        mundo — não a genérica do pedido. É a diferença entre procurar num
        lugar que esconde algo e procurar no vazio: o sistema já sabe qual é
        o caso, e o Mestre nunca precisa decidir se "tinha alguma coisa ali". */
-    const achado = (!extra.dificuldade && !combateRef.current)
-      ? achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), t.atributo, moldeMundo(), (mundoAtual() || {}).lexico)
-      : null;
+    let achado = null;
+    try {
+      achado = (!extra.dificuldade && !combateRef.current)
+        ? achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), t.atributo, moldeMundo(), (mundoAtual() || {}).lexico, ondeSeProcura())
+        : null;
+    } catch (e) { calou("achavelAqui/pedirTeste", e); }
     /* provas de rito têm dificuldade fixa de catálogo — nada de escala */
     const dcFinal = extra.dificuldade != null ? extra.dificuldade : achado ? achado.dc : dc;
     const explic = extra.dificuldade != null ? "dificuldade fixa do rito"
@@ -21159,11 +21181,6 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }
       const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias });
       eventosRef.current = r.eventos; setEventos(r.eventos);
-      /* DADOS À VISTA (v8.2): o mundo não "acontece" por mágica — o Mestre
-         rola, e o jogador vê o dado e o alvo, como numa mesa de verdade. */
-      if (mostrarRolagensRef.current && (r.rolagens || []).length) {
-        pushMsgs((r.rolagens || []).map((x) => ({ autor: "sistema", texto: `🎲 ${x.texto}` })));
-      }
       const partes = [];
       if (r.globalNovo) {
         partes.push(`[EVENTO GLOBAL — NOVO ARCO MAIOR: ${r.globalNovo.nome.toUpperCase()}] O SISTEMA sorteou um acontecimento que abalará a região: ${r.globalNovo.semente} ETAPA 1/${r.globalNovo.etapas.length} agora: ${r.globalNovo.etapas[0]} Teça isso na ficção aos poucos — é um arco longo de fundo, coerente com o arco atual, NÃO uma quest para resolver hoje.`);

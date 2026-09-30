@@ -15,7 +15,41 @@ Formato:
 ```
 
 ---
-## 30/09 02:21 · v9.323 · MM13b · a pista tem morada · commit (o hash vai no próximo bloco)
+## 30/09 02:55 · v9.324 · os defeitos do primeiro dia: a taverna que dava um baú, as moedas que não saíam, o d20 à vista · commit (o hash vai no próximo bloco)
+
+- **por que andou:** três dos defeitos que o `jogo` viu de passagem na prova de MM13, promovidos
+  pelo coordenador — **o jogador vê-os no primeiro dia, e um fura a economia**.
+- **estado inicial:** verde (MM13b no ar, `aead5c1`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **"procuro uma taverna" → Percepção e 168 moedas.** Duas causas. (1) **O catálogo**: o desafio
+  `buscar` tinha "procur" na regra, e qualquer "procuro" virava "vasculhar o lugar" — o improviso
+  da MM4 nem chegava a entrar. Procurar um sítio, um serviço, alguém por ofício, ou "procuro
+  saber/comprar" é ir ou perguntar; vasculho, reviro, revisto, "procuro pistas/armadilhas" e
+  "procuro NA taverna" continuam a ser busca. Corpus de 56 frases, 100%. (2) **O baú não era dali**:
+  `achavelAqui` juntava os segredos de todos os prédios da cidade com os baús do ermo da região e
+  dava o mais fácil — o herói, dentro de uma taverna, achava um baú que está fora dos muros (em 11
+  de 22 cidades do mundo de teste). Agora só acha o que está onde procura.
+- **as moedas narradas que não saíam:** o canal existia (`mudancas.moedas` negativo) e o Narrador
+  não o usava — 15 iniciais + 168 do baú = 183, e nenhum dos três pagamentos narrados desceu. Pior:
+  o leitor de ganhos da narração creditava a frase da compra ("paga 3 moedas" dava **+3**).
+  `cobranca.js` passa a ler também o pagamento feito pelo herói e debita o que foi narrado menos
+  o que o Narrador já declarou; não debita o que o painel já cobrou neste turno; sem fundos, a compra
+  não acontece e o Narrador sabe. Corpus de 18 frases, 100%.
+- **"d20 = 16 vs 10 → acontece" no descanso:** a linha respeitava a preferência "mostrar rolagens",
+  mas essa preferência é dos dados **do jogador**, e "Fio local", "Nova missão", "Arco regional" são
+  nomes de mecanismo. O registo virou bastidor, e os alvos soltos do descanso viraram tabela.
+- **a prova jogada:** "procuro uma taverna" → foi direto à Coruja Sonolenta, sem teste nem baú;
+  "pago 5 moedas ao taverneiro por um quarto" → "Ingrid aceita as cinco moedas…" e **◉ −5** (15 →
+  10, no painel); "ela desliza três moedas" (a taverneira a pagar) **não** debitou, como deve; descanso
+  longo sem nenhum dado à vista.
+- **decisões médias tomadas:**
+  - **"procuro pela taverna do Corvo" conta como ir** (o lado seguro de não rolar).
+  - **O pouso que ninguém cobra fica proposto**, não feito: o acampamento na cidade descreve "um
+    quarto pago" e nunca o cobra; cobrar pede ao `jogo` a decisão de quem não tem dinheiro.
+- **para quem joga:** procurar onde ir deixa de dar tesouro; pagar o que se narra custa; e o
+  descanso deixa de mostrar as engrenagens. A sonda não se move (89/157).
+
+## 30/09 02:21 · v9.323 · MM13b · a pista tem morada · commit `aead5c1`
 
 - **por que andou:** a prova jogada de MM13 viu a pista e o sino a apontar para lugares que não
   estão na planta da cidade — "o Círculo Rachado" que a planta chamava "Picadeiro Central", e

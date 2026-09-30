@@ -220,6 +220,98 @@ export function degrauDaDC(dc) {
 }
 const DC = (id) => (dificuldadePorId(id) || { dc: 13 }).dc;
 
+/* ============================================================
+   PROCURAR PARA IR (30/09, da prova jogada de MM13)
+
+   "Procuro uma taverna" deu um teste de Percepção e um baú de 168
+   moedas. A frase casou `procur` na primeira entrada do catálogo, e
+   `buscar` fez o que sabe fazer: revirou o lugar onde o herói estava e
+   pagou o que a base do mundo tinha escondido por perto. O herói só
+   queria um sítio para dormir.
+
+   PROCURAR TEM DOIS SENTIDOS EM PORTUGUÊS, e o objeto é que os separa:
+     · procurar ALGO NUM SÍTIO — pistas, armadilhas, o fundo falso, a
+       chave caída — é revirar, e rola;
+     · procurar UM SÍTIO, ALGUÉM ou UM SERVIÇO — uma taverna, o
+       mercado, um guia, trabalho, onde dormir — é ir até lá ou
+       perguntar ao mundo, e não rola: ninguém falha em achar o mercado
+       de uma cidade, e o mundo diz onde fica.
+
+   A tabela é uma lista de DESTINOS, não de achados, e a razão é o lado
+   do erro: um destino que falte devolve a frase ao `buscar` (o que
+   sempre foi); um achado que faltasse aqui calaria uma busca a sério.
+   Três travas mantêm a busca de pé mesmo com um destino na frase:
+   o verbo de revirar ("vasculho a taverna" é busca), o sinal de coisa
+   escondida ("a saída secreta") e o complemento de lugar antes do
+   objeto ("procuro NA taverna o que for"), que o molde não aceita.
+   ============================================================ */
+export const PROCURAR_PARA_IR = {
+  /* o verbo, em todas as formas que a mesa escreve — "procuro",
+     "procurar por", "à procura de", "em busca de", "buscando" */
+  verbo: "(?:procur\\w*|busc\\w*|a procura|em busca)",
+  /* o que pode vir entre o verbo e o objeto: preposição do objeto
+     ("procuro por", "à procura de", "procuro pela taverna" — ir, e não
+     revirar, porque o lado seguro de uma frase ambígua é não rolar), o
+     artigo e um adjetivo curto ("uma boa estalagem", "a mais próxima").
+     Menos "pelo quarto", "pela sala", "pela casa": ali o "pelo" é o
+     percurso da busca — procuro PELO quarto inteiro —, e o cômodo onde
+     se está não é destino. "Pela casa DE Orin" continua a ser ir. */
+  ligacao: "(?:(?:por|pel[oa]s?(?!\\s+(?:quarto|cama|comodo|sala|chao|casa(?!\\s+d)|cela|cabana|barraca|tenda|carroca|barco|navio)\\b)|de|d[oa]s?|dum|duma)\\s+)?(?:(?:um|uma|uns|umas|o|a|os|as|algum|alguma|alguns|algumas|outr[oa]s?|ess[ea]|est[ea]|aquel[ea]|meu|minha|seu|sua)\\s+)?(?:(?:bo[am]|melhor|barat[oa]|decente|tal|nov[oa]|velh[oa]|grande|pequen[oa]|mais proxim[oa])\\s+)?",
+  /* os destinos: sítios da cidade e da estrada, serviços, gente por
+     ofício (a lista antiga de `buscar` já barra taverneiro, ferreiro,
+     guarda — estes são os que faltavam) e o que se procura sem ser
+     objeto: trabalho, notícia, conselho, um jeito de */
+  destinos: [
+    /* sítios */
+    "taverna", "estalage", "hospedar", "pousada", "albergue", "bodega", "botequim", "tasca", "cervejaria",
+    "mercado", "feira", "praca", "porto", "cais", "doca", "templo", "santuario", "igreja",
+    "ferraria", "forja", "loja", "armazem", "emporio", "bazar", "mercearia", "padaria", "acougue", "botica",
+    "estabulo", "cocheira", "estrebaria", "quartel", "guarnicao", "prefeitura", "paco", "castelo", "palacio",
+    "biblioteca", "academia", "guilda", "banco", "casa de", "casa d[oa]", "banhos", "bordel", "teatro", "arena",
+    "portao", "portoes", "saida", "estrada", "rua", "bairro", "distrito", "avenida", "ponte", "farol",
+    "moinho", "fazenda", "cidade", "vila", "aldeia", "vilarejo", "caravana", "barco", "navio", "embarcacao",
+    "carona", "transporte", "diligencia", "lugar", "sitio", "canto para", "canto onde",
+    /* o pouso e a mesa */
+    "quarto", "cama", "pouso", "pernoite", "estadia", "refeicao", "bebida", "comida",
+    /* gente por ofício ou laço */
+    "guia", "mercenari", "soldado", "sargento", "chefe", "lider", "prefeito", "alcaide", "burgomestre", "mestre",
+    "aprendiz", "bardo", "alfaiate", "sapateiro", "padeiro", "acougueiro", "pescador", "cacador", "lenhador",
+    "cavalarico", "boticario", "alquimista", "mago", "maga", "feiticeir", "bruxa", "sabio", "escriba", "erudito",
+    "nobre", "lorde", "dama", "crianca", "menino", "menina", "garot", "mendigo", "viajante", "estrangeir",
+    "peregrino", "monge", "freira", "clerigo", "druida", "patrulha", "parente", "irma", "pai", "mae", "filh",
+    "esposa", "marido", "noiv", "mentor", "patrao", "contratante", "recrutador", "capataz", "carcereiro", "juiz",
+    "escrivao", "cambista", "agiota", "joalheiro", "armeiro", "ourives", "carpinteiro", "cartografo",
+    "marinheiro", "ladrao", "assassino", "culpado", "testemunha", "quem",
+    /* o que se procura sem ser objeto */
+    "trabalho", "emprego", "servico", "bico", "ocupacao", "informac", "noticia", "boato", "rumor", "conselho",
+    "ajuda", "orientac", "direc", "indicac", "jeito de", "forma de", "maneira de", "modo de", "onde",
+  ],
+  /* o que diz que a frase É uma busca, mesmo com destino: o verbo de
+     revirar e o sinal de coisa escondida */
+  revirar: /\b(vasculh|revir|remex|fu[cç]|esquadrinh|inspecion|revist|dou (uma )?busca|pente fino)/,
+  escondido: /\b(secret|escondid|ocult|disfar[cç]ad|fals[oa]s?\b|armadilh|pistas?\b|rastros?\b|vestigi|pegadas?\b|esconderij|compartiment|alcap)/,
+};
+
+const RX_VERBO_DE_PROCURAR = new RegExp(`\\b${PROCURAR_PARA_IR.verbo}\\b`, "g");
+/* depois do verbo: o destino, ou um infinitivo ("procuro saber",
+   "procuro me lembrar" — procurar é tentar, e o que se tenta é outro
+   verbo, que o resto do catálogo e o improviso leem) */
+const RX_PROCURA_DE_IR = new RegExp(
+  `^${PROCURAR_PARA_IR.verbo}\\s+(?:${PROCURAR_PARA_IR.ligacao}(?:${PROCURAR_PARA_IR.destinos.join("|")})|(?:me\\s+|se\\s+|nao\\s+)?[a-z]+(?:ar|er|ir)\\b)`,
+);
+
+/* A frase procura para IR? Verdadeiro só quando TODA procura da frase é
+   por um destino — "procuro uma taverna e vasculho o quarto dela"
+   continua a ser busca. */
+export function ehProcuraDeIr(texto) {
+  const t = norm(texto);
+  if (!t) return false;
+  if (PROCURAR_PARA_IR.revirar.test(t) || PROCURAR_PARA_IR.escondido.test(t)) return false;
+  const verbos = [...t.matchAll(RX_VERBO_DE_PROCURAR)];
+  if (!verbos.length) return false;
+  return verbos.every((m) => RX_PROCURA_DE_IR.test(t.slice(m.index)));
+}
+
 export const DESAFIOS = [
   {
     id: "buscar",
@@ -228,7 +320,9 @@ export const DESAFIOS = [
        seria piorar o jogo em nome da regra. Entram os verbos de conferir
        ("verifico o quarto" era o exemplo do próprio jogador e NÃO casava
        nada), de esquadrinhar e de passar os olhos. */
-    rx: /\b(vasculh|revir|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos)/,
+    /* 30/09 (MM13): `revist` — "revisto a taverna de cima a baixo" é o verbo
+       mais seco que a língua tem para isto, e não casava nada. */
+    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos)/,
     /* PROCURAR UMA PESSOA NÃO É VASCULHAR UM LUGAR, e a diferença é cara: um
        falso positivo aqui marca o quarto como revirado por causa de "procuro
        o taverneiro". A lista é de gente porque é o caso real; o falso
@@ -251,7 +345,9 @@ export const DESAFIOS = [
        linha conhece gente — se a frase nomeia alguem que o jogo tem no
        elenco, na base ou na espinha, isto e uma PROCURA, e procurar alguem
        nunca foi revirar um comodo. */
-    naoSeCom: (txt, ctx) => !!(ctx && typeof ctx.ehPessoaConhecida === "function" && ctx.ehPessoaConhecida(txt)),
+    /* 30/09 (MM13): e o sítio, o serviço e o ofício, que também não são
+       revirar um cômodo — `PROCURAR_PARA_IR`, logo antes do catálogo. */
+    naoSeCom: (txt, ctx) => ehProcuraDeIr(txt) || !!(ctx && typeof ctx.ehPessoaConhecida === "function" && ctx.ehPessoaConhecida(txt)),
     pericia: "percepcao", alvo: "busca", minutos: 10, barulho: false,
     rotulo: "vasculhar o lugar",
     /* a dificuldade sai do que existe aqui; sem nada, o sistema ainda deixa

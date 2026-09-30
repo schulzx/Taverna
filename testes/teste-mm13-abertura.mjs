@@ -499,7 +499,10 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   const trama = corpoApos(app, "const talvezDarUmaTrama = ({ forcar = false } = {}) => {");
   t("a trama forçada espera o mural, salvo quando forçada (a própria abertura)",
     trama.includes('if (!forcar && !muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return "";'));
-  const aplicar = corpoApos(app, "const aplicarResposta = useCallback((resp, persAtual) => {");
+  /* 30/09 (MM13b): a assinatura ganhou um terceiro parâmetro (`opts`, os
+     envelopes do turno, para o débito de cobranca.js saber o que o sistema
+     já cobrou) — a âncora segue o texto, não o número da linha. */
+  const aplicar = corpoApos(app, "const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {");
   t("o corpo de aplicarResposta não está vazio", aplicar.length > 20000);
   const cronista = corpoApos(app, "const cronistaDoTurno = async (pers, narrativa) => {");
   t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural",

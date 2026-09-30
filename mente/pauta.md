@@ -333,7 +333,7 @@ O limite é o que um commit revertido não desfaz.
   fixa da principal sob o nome do lugar, que abre o cartão do diário e acende uma vez quando o sino
   toca. Prova: experiência jogada (o `jogo`, 30/09). E a 🗝 do turno 1 (o segredo de um lugar)
   tem a cara da principal sem o ser.
-- [ ] **o sistema fala de si no descanso longo** · leve · da prova jogada de MM13, 30/09
+- [x] **o sistema fala de si no descanso longo** · feito 30/09, v9.324 · da prova jogada de MM13, 30/09
   "Fio local: d20 = 16 vs 10 → acontece · Nova missão: d20 = 3 vs 13 → nada · Arco regional…" na
   tela — viola a lei "o sistema não fala de si".
 - [ ] **uma missão "do Mestre" antes do primeiro passo da principal** · da prova jogada de MM13
@@ -341,7 +341,14 @@ O limite é o que um commit revertido não desfaz.
   trazer de volta") e erros de texto ("de o casarão", "Chegar a o casarão", "vivo" para Anya). O
   mural abriu no mesmo turno com o mesmo molde. Uma segunda história forçada antes de a primeira
   andar é o cardápio outra vez.
-- [ ] **o que a prova jogada de MM13 viu de passagem** · 30/09 · pesar cada um
+- [ ] **o que a prova jogada de MM13 viu de passagem** · 30/09 · pesar cada um · *a taverna que dava
+  um baú e as moedas narradas: feitos em v9.324*
+  **E o pouso que ninguém cobra (proposta de v9.324):** o acampamento na cidade escolhe a estalagem
+  e descreve "um quarto pago", mas nunca o cobra; o preço já existe (`fichaDaCidade().pouso`, MM12).
+  Cobrar ao dormir, com o preço no botão antes do clique; falta ao `jogo` decidir o que acontece a
+  quem não tem dinheiro (estábulo, acampar dentro dos muros, recusa). E o baú do ermo passa a
+  depender do `distancia: "arredores"` do lugar — o defeito do herói "nos arredores" dentro de uma
+  taverna ganha peso.
   O relógio não segue a narração ("fim da tarde" e "durmo até de manhã" com O tempo a dizer 09:40);
   "procuro uma taverna" virou Percepção e um baú de 168 moedas; o pão e o quarto narrados não
   desceram as moedas; o herói "nos arredores de Casa escura" dentro de uma taverna de dentro dos
