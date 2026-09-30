@@ -57,7 +57,9 @@ const PERDOADAS = {
   /* v9.125: ehEstorvo saiu da lista — a grade em SVG desenha o estorvo
      como vulto no chao, e para isso precisa perguntar onde ele esta. */
   "grid.js": ["ondeEstaEmPalavras"],
-  "nomes.js": ["sortearVarios", "generosDisponiveis"],
+  /* 30/09 (MM13): `generosDisponiveis` saiu da lista — a suíte da abertura
+     o lê para varrer os seis géneros, e perdão que sobra é dívida. */
+  "nomes.js": ["sortearVarios"],
   "godmode.js": ["GODMODE_AVISO"],
   "itens.js": ["PROPS"],
   "movimento.js": ["DESLOCAMENTO_LIGEIRO"],
@@ -103,6 +105,15 @@ sec("1. NENHUM MÓDULO MUDO");
   /* 29/09 (Fase MM, MM8a): `gente-por-dentro.js` pagou o próprio crédito no
      mesmo dia em que nasceu — `genteParaPauta` está ligado dentro de
      `pautaDoTurno` (App.jsx). A lista volta a ficar VAZIA. */
+  /* 30/09 (Fase MM, MM13): `abertura.js` nasce no backend e espera a
+     fiação da MESMA leva — a abertura, o mural, o sino e o próximo passo
+     entram no App.jsx pela mão da tela. A entrada sai quando o App o
+     importar, e a lista volta a ficar VAZIA. */
+  /* 30/09 (Fase MM, MM13): a dívida foi paga no mesmo dia — o App.jsx
+     importa `abertura.js` (a abertura, o mural, a menção que não é
+     presença, o sino, o fio e o próximo passo), e `teste-mm13-abertura.mjs`
+     prova a fiação por texto. A lista volta a ficar VAZIA, como a regra
+     pede. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

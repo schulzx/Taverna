@@ -15,6 +15,59 @@ Formato:
 ```
 
 ---
+## 30/09 01:29 · v9.322 · MM13 · o mundo puxa o herói · commit (o hash vai no próximo bloco)
+
+- **por que andou:** pedido da pessoa, com peso grande, e corrigido por ela antes de começar:
+  *"ele diz o mundo, onde o personagem está, e uma pequena história do local… conforme o mestre
+  trabalha o mundo, vai induzindo o player para a quest."* O coordenador conferiu no C1E1: o
+  Matt abre com **o propósito antes da cena** (uma memória, não uma oferta), **a chegada, o lugar
+  e uma pista concreta**, e **o mundo aperta muito depois** — o sino.
+- **estado inicial:** verde (MM8c-1 no ar, `4e28aef`, `f41b32d`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **o que havia:** a casa forçava a principal no papel, mas com uma trama sorteada por
+  `Math.random` que não lia a espinha nem o antecedente; a abertura convidava o Narrador a
+  oferecer um trabalho; e **logo depois da resposta da abertura, `oferecerTrabalhoDaqui`
+  pregava um cartaz com Aceitar no dia 1** — o cardápio que a pessoa viu.
+- **backend:** `src/abertura.js` — a razão de estar ali sai da estrutura da história e do
+  antecedente (por tabela), e **a pista sai do primeiro marco da espinha**: se o marco é uma
+  pessoa nesta cidade, é ela; se é descobrir, alguém dessa casa; senão, um informante num lugar
+  de conversa — gente e lugares que o mundo já tem, nada inventado ao lado. A principal nasce
+  ativa com dois passos (ir ao lugar da pista; o que o marco pede). O pedido ao Narrador segue a
+  ordem mundo → chegada → a pequena história → porque estou aqui e o que sei, e diz que ninguém
+  oferece trabalho. O mural fica fechado 6 turnos ou até o primeiro passo. **O sino**: enche com
+  o tempo, com cada lugar e pessoa novos, e quando a principal pára 8 turnos; **nunca antes do
+  turno 12**; um prenúncio antes ("o sino toca fora de hora e cala"); toca uma vez, por tabela,
+  ligado ao marco e à masmorra perto; longe, vira notícia. Nunca bloqueia.
+- **três defeitos que já estavam no ar, consertados no caminho:**
+  - **A — os marcos "descobrir" nunca se cumpriam:** a etapa comparava o nome do local com ids
+    da forma "Cidade|tipo". **58% das principais ficavam presas** (192 da varredura; 75% em
+    ficção científica, horror e pós-apocalíptico) → **0%**. Prendia também as tarefas de guilda
+    de furto, escuta, relíquia, selo. O formato do save não mudou: a etapa aceita a chave e uma
+    ponte nome→id.
+  - **B — toda campanha nova ficava com a espinha da estrutura anterior** (a primeira, sempre
+    "jornada").
+  - **C — uma campanha nova na mesma sessão herdava as missões da anterior.**
+- **frontend:** a abertura nova (e o caminho antigo, se não houver pista); o save `abertura`
+  (campo novo, aditivo; save sem ele é legado — mural aberto, sino desligado); o mural fechado
+  em cinco sítios; "dizer o nome não é conhecer" (a pista só conta quando se chega a ela); o
+  sino a andar; um fio por turno de quem está em cena; e **o próximo passo no cartão da
+  principal do diário**, sem peça nova (2 cliques do ecrã principal). Um `ReferenceError` só
+  apareceu a jogar (a prop do diário vive noutro componente) e foi consertado.
+- **a prova curta (payload real ao Narrador):** turno 1 com a razão ("uma carta sem assinatura…
+  um nome parecido com o da família que perdeu"), a pista ("Generosa… encontra-se em Feira dos
+  Ossos"), a principal ativa, e "ninguém me oferece trabalho". **Nenhum Aceitar** na tela. O
+  diário: "Procurar Generosa em Feira dos Ossos".
+- **o custo:** o pedido de abertura custa 1 188–1 350 caracteres e substitui ~1 920 (o texto
+  antigo mais o envelope da trama). Nada vai para a parte fixa.
+- **decisões médias tomadas:**
+  - **O sino é escondido até tocar** (fora da lista de relógios), como o do Matt, que não foi
+    anunciado.
+  - **O próximo passo vai para o diário e não para uma peça nova**: 2 cliques. Se a prova
+    longa mostrar que o jogador não o encontra, pede-se a peça ao desenho.
+- **para quem joga:** a campanha começa com uma razão e alguém para procurar, sem cardápio; o
+  mural só abre quando ele já sabe o que está a fazer; e, se ele vaguear, a história vem ter
+  com ele — mais tarde, não no primeiro minuto.
+
 ## 29/09 23:55 · v9.321 · MM8c-1 · as listas de pessoas ganham teto, e a recência deixa de zerar · commit `4e28aef`
 
 - **por que andou, à frente da MM8b:** reordenado pelo coordenador da fase a partir do que o

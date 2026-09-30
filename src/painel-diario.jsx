@@ -8,6 +8,10 @@ import { Glifo } from "./ui.jsx";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
 import { ativas as missoesAtivas, ofertas as missoesOferecidas, garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, textoDaPaga, temPrazo, textoDoPrazo } from "./missoes.js";
 import { dificuldadeDaMissao } from "./dificuldade.js";
+/* MM13: o próximo passo em voz de mundo ("Procurar Nostoc no mercado"),
+   só para a missão que a abertura pôs na mesa — as outras continuam com
+   o texto cru da etapa, que já é delas. */
+import { proximoPasso } from "./abertura.js";
 
 /* ---------------- O CARTÃO DA MISSÃO (v9.27) ----------------
    A regra de desenho é uma só, e ela é de gameplay: mostrar o que
@@ -18,7 +22,7 @@ import { dificuldadeDaMissao } from "./dificuldade.js";
    Uma lista inteira aberta transformaria a aventura num checklist,
    e um cartão sem etapa nenhuma é o que existia antes: um bilhete
    que não dizia o que fazer. */
-function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null }) {
+function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null, pistaMundo = "" }) {
   const t = tipoMissao(m.tipo);
   const dif = dificuldadeDaMissao(m, pers);
   const p = progressoMissao(m);
@@ -70,7 +74,7 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null }) {
           </div>
           {atual ? (
             <div className="tv-body text-xs" style={{ color: T.amberSoft }}>
-              {etapaDef(atual.tipo).icone} {textoDaEtapa(atual)}
+              {etapaDef(atual.tipo).icone} {pistaMundo || textoDaEtapa(atual)}
             </div>
           ) : null}
           {p.total - p.feitas > 1 && (
@@ -122,7 +126,7 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null }) {
   );
 }
 
-export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null }) {
+export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null, abertura = null }) {
   const [trocando, setTrocando] = React.useState(false);
   const est = estruturaPorId((historia || {}).estrutura);
   const todas = garantirMissoes(missoes);
@@ -164,7 +168,14 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
       </div>
       {ofertasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.violetSoft }}>Ofereceram a você</div><div className="space-y-2 mb-4">{ofertasM.map((m) => <CartaoMissao key={m.id} pers={pers} m={m} aoResponder={aoResponderMissao} />)}</div></>)}
       {ativasM.length === 0 && ofertasM.length === 0 && <div className="tv-body text-sm italic mb-4" style={{ color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>}
-      {principaisM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>O que o mundo impôs</div><div className="space-y-2 mb-4">{principaisM.map((m) => <CartaoMissao key={m.id} pers={pers} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
+      {principaisM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.amberSoft }}>O que o mundo impôs</div><div className="space-y-2 mb-4">{principaisM.map((m) => {
+        /* MM13: só a missão principal fala em voz de mundo — as outras
+           (trama, caçada, evento global, divina) continuam com a etapa
+           crua, que já é a delas. */
+        let pistaMundo = "";
+        if (m.tipo === "principal") { try { pistaMundo = proximoPasso({ abertura, missoes: todas }); } catch { pistaMundo = ""; } }
+        return <CartaoMissao key={m.id} pers={pers} m={m} aoEncerrarLegado={aoEncerrarLegado} pistaMundo={pistaMundo} />;
+      })}</div></>)}
       {secundariasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>O que você aceitou</div><div className="space-y-2 mb-4">{secundariasM.map((m) => <CartaoMissao key={m.id} pers={pers} m={m} aoEncerrarLegado={aoEncerrarLegado} />)}</div></>)}
       {encerradasM.length > 0 && (<><div className="tv-mono text-[10px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Encerradas</div><div className="space-y-2">{encerradasM.slice(-8).reverse().map((m) => <CartaoMissao key={m.id} pers={pers} m={m} />)}</div></>)}
 

@@ -546,8 +546,11 @@ sec("4. a definição operacional de 'número que muda'");
      campo `porque` em testes/acoes-do-jogador.mjs.
      Os tetos das pessoas (frontend, MM8c-1, 29/09): 14388 -> 14408, +20 —
      a recência do registo de NPCs, acima no arquivo — mesmo motivo, mesmo
-     lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14408/.test(relogio.porque));
+     lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
+     O mundo puxa o herói (frontend, MM13, 30/09): 14408 -> 14482, +74 —
+     mesmo motivo, mesmo lugar: o campo `porque` em
+     testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14482/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -775,9 +778,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        fiação de `genteParaPauta` em `pautaDoTurno`, acima no arquivo).
        Os tetos das pessoas (frontend, MM8c-1, 29/09): 12914 -> 12934, +20 —
        o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       recência do registo de NPCs, acima no arquivo). */
+       recência do registo de NPCs, acima no arquivo).
+       O mundo puxa o herói (frontend, MM13, 30/09): 12934 -> 13008, +74 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:12934").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13008").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -887,8 +892,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        `fichaParaPauta`, acima no arquivo).
        Os tetos das pessoas (frontend, MM8c-1, 29/09): 12785 -> 12805, +20 —
        o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       recência do registo de NPCs, acima no arquivo). */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12805" && x.familia === "alcance"));
+       recência do registo de NPCs, acima no arquivo).
+       O mundo puxa o herói (frontend, MM13, 30/09): 12805 -> 12879, +74 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12879" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -928,8 +935,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      `fichaParaPauta`, acima no arquivo).
      Os tetos das pessoas (frontend, MM8c-1, 29/09): 12930 -> 12950, +20 —
      o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-     recência do registo de NPCs, acima no arquivo). */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12950/.test(S.ondeSai));
+     recência do registo de NPCs, acima no arquivo).
+     O mundo puxa o herói (frontend, MM13, 30/09): 12950 -> 13024, +74 —
+     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13024/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

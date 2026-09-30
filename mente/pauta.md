@@ -285,7 +285,7 @@ O limite é o que um commit revertido não desfaz.
   crescem pelo elenco. Medida de base (20 mundos, sem IA, taxa suposta de nomes do Narrador):
   a 200 turnos, 50 / 107 / 168 pessoas no registo (0,10 / 0,25 / 0,50 nomes por turno). A
   medida a sério é uma campanha jogada a contar `npcs` e `canone` por turno — pedir na MM11.
-- [ ] **MM13 · o mundo puxa o herói** · da pessoa, 29/09 · **antes da MM8b**
+- [x] **MM13 · o mundo puxa o herói** · da pessoa, 29/09 · feito 30/09, v9.322 · a prova longa do `jogo` no diário
   *"Quando o jogo inicia o mestre já joga uma quest logo de cara… nos RPGs do Matt, o player é
   induzido à quest da história principal… o mundo joga ele na quest. Um sistema de quests é
   necessário para o player não se perder… como um sandbox sem tutorial."* E depois: *"ele diz o
@@ -313,6 +313,13 @@ O limite é o que um commit revertido não desfaz.
   *porque estou aqui?*, *o que sei?* e *qual é o meu próximo passo?* — as três com resposta **no
   primeiro turno**, sem nenhum cartão de Aceitar; e conta em que turno chega a escalada, e se
   chegou depois de ele já ter explorado.
+- [ ] **MM8c-0 · a parte fixa do prompt emagrece ~6k** · decisão do coordenador, 29/09 · **antes da MM8b**
+  Encolher o fixo, nunca subir o teto (subir é custo em todos os turnos de todos os jogadores).
+  Sem perder regra: o que se repete entre blocos, o que a pauta dinâmica já diz, o que entra sem
+  a cena pedir. A suíte do pior caso passa a incluir as pessoas, com a meta de caber nos 82k com a
+  campanha solta (187 pessoas). Antes/depois bloco a bloco. Cortar uma regra que muda o que o
+  Narrador faz já não é emagrecer: pára e diz-se qual. Os lugares e itens do cânone e o que o
+  Cronista recebe entram se couberem.
 - [ ] **MM9 · a luta sem espada**
   Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
   Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).

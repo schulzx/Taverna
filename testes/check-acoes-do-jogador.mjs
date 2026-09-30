@@ -309,10 +309,14 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 8145) {
-    falha(`pushMsgs saiu de src/App.jsx:8145 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 8168) {
+    falha(`pushMsgs saiu de src/App.jsx:8168 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8145, como o mapa de X3b diz");   /* OS TETOS DAS PESSOAS (frontend, MM8c-1, 29/09): 8142 -> 8145, +3. A
+  } else ok("pushMsgs segue em src/App.jsx:8168, como o mapa de X3b diz");   /* O MUNDO PUXA O HERÓI (frontend, MM13, 30/09): 8145 -> 8168, +23. A
+     fiação da abertura entra em `pautaDoTurno` (o veto do mural e o fio da
+     principal) ACIMA de `pushMsgs` no arquivo, e tudo abaixo andou junto.
+     Re-medido por esta própria catraca; nada somado de cabeça.
+     OS TETOS DAS PESSOAS (frontend, MM8c-1, 29/09): 8142 -> 8145, +3. A
      ref nova da recência (`npcTurnoNoLoadRef`, ao lado de `npcTurnoRef`)
      nasce três linhas acima de `pushMsgs` no arquivo, e tudo abaixo andou
      junto. Re-medido por esta própria catraca; nada somado de cabeça.

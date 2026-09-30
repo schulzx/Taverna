@@ -44,7 +44,7 @@
    ============================================================ */
 import { rngDe } from "./geografia.js";
 import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
-import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo } from "./mundo-base.js";
+import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
 
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -76,7 +76,11 @@ export const FEITIOS = {
     /* `revelar`, e não `ir_a`: passar pela porta não é descobrir. A etapa
        nasceu nesta versão justamente porque a primeira sonda estendeu uma
        espinha inteira que se cumpria andando. */
-    condicao: (m) => ({ tipo: "revelar", alvo: m.onde }),
+    /* 30/09 (MM13): e a CHAVE, o id que a base grava quando o lugar entra
+       em cena (`Cidade|tipo`). O nome sozinho nunca casava com ele, e todo
+       marco "descobrir" ficava de pe para sempre (ver `revelar` em
+       missoes.js). So viaja quando existe: espinha antiga fica igual. */
+    condicao: (m) => ({ tipo: "revelar", alvo: m.onde, ...(m.chave ? { chave: m.chave } : {}) }),
     consequencia: "revela",
   },
   /* NÃO EXISTE AQUI UM FEITIO DE ENTREGA, e a ausência é decisão: `levar_a`
@@ -249,6 +253,7 @@ export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia 
         if (!locais.length) continue;
         const l = pick(rnd, locais);
         m.onde = l.nome; m.ehLugar = true;
+        m.chave = idDoLocal(cidade.nome, l);
         marcarUso(l.nome);
       } else if (m.feitio === "levar") {
         const destino = porDistancia.find((c) => livre(c.nome) && c.nome !== cidade.nome);

@@ -675,6 +675,25 @@ export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narra
 export const idDoLocal = (cidade, l) => (l && l.id) || `${cidade}|local|${(l && l.nome) || ""}`;
 export const idDaGente = (cidade, p) => `${cidade}|gente|${(p && p.nome) || ""}`;
 
+/* ---------------- DO NOME À CHAVE (30/09, MM13) ----------------
+   O inverso de `idDoLocal`: dado o NOME de um local, o id que o livro-razão
+   grava quando ele entra em cena. Existe porque a etapa `revelar` (e o
+   marco "descobrir" da espinha, e as tarefas de guilda) guardam o nome, e
+   a base guarda `Cidade|tipo` — sem esta ponte as duas pontas nunca se
+   encontravam. A cidade de `cidade` é procurada primeiro; depois o mapa
+   inteiro, pela ordem dele. Nome que não é local de lugar nenhum: "". */
+export function chaveDoLugar(semente, mapa, nome, { genero = "Fantasia medieval", molde = null, lex = null, cidade = "" } = {}) {
+  const alvo = semAcento(String(nome || "")).trim();
+  if (!alvo) return "";
+  const cs = ((mapa && mapa.cidades) || []).filter((c) => c && c.nome);
+  const ordem = [...cs.filter((c) => c.nome === cidade), ...cs.filter((c) => c.nome !== cidade)];
+  for (const c of ordem) {
+    const l = locaisDaCidade(semente, c, genero, molde, lex).find((x) => semAcento(x.nome).trim() === alvo);
+    if (l) return idDoLocal(c.nome, l);
+  }
+  return "";
+}
+
 /* O bloco que entra no prompt. Curto de propósito: é ficha, não literatura. */
 export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = null, lex = null) {
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);

@@ -148,10 +148,32 @@ export const ETAPAS = {
      mesma mentira do resgate que se cumpria ao chegar. O que existe de
      verdade é `base.revelados` — a lista do que já foi apresentado em cena —
      e agora as etapas sabem lê-la. */
+  /* ---------------- O NOME NÃO É O ID (30/09, MM13) ----------------
+     A etapa comparava o NOME do lugar ("O Rossio Oco") com o que a base
+     guarda quando um lugar entra em cena — e a base guarda o ID do local,
+     que é `Cidade|tipo` ("Baixo Valente|mercado", `locaisDaCidade`), sem o
+     nome dentro. Nunca casava: todo marco "descobrir" da espinha, toda
+     tarefa de guilda de furto/escuta/selo e o segundo passo da principal
+     da abertura ficavam presos para sempre. Gente casava por acaso, porque
+     o id da gente (`Cidade|gente|Nome`) leva o nome.
+
+     Três portas, e nenhuma muda o formato do save (o id que a base grava é
+     o mesmo de sempre):
+       1) o nome dentro do id, como antes — gente e ids antigos;
+       2) `e.chave`, o id que a base vai gravar, quando quem criou a etapa
+          o sabia (a espinha nova e a abertura o escrevem na criação);
+       3) `m.chaveDoLugar(nome)`, quando quem confere sabe traduzir o nome
+          (o App, com a semente, para as espinhas e tarefas já gravadas). */
   revelar: {
     id: "revelar", icone: "🗝",
     texto: (e) => `Descobrir o que ${e.alvo} esconde`,
-    ver: (e, m) => (m.revelados || []).some((id) => norm(id).includes(norm(e.alvo))),
+    ver: (e, m) => {
+      const ids = (m.revelados || []).map(norm);
+      if (ids.some((id) => id.includes(norm(e.alvo)))) return true;
+      const chaves = [e.chave];
+      if (typeof m.chaveDoLugar === "function") { try { chaves.push(m.chaveDoLugar(e.alvo)); } catch { /* traduzir nunca derruba o turno */ } }
+      return chaves.some((k) => !!norm(k) && ids.includes(norm(k)));
+    },
   },
   aguentar: {
     id: "aguentar", icone: "⏳",
@@ -287,6 +309,10 @@ export function garantirMissoes(lista) {
          conferida — e uma etapa que não pode ser cumprida é a missão dos
          três lobos de novo. */
       onde: String(e.onde || "").slice(0, 60), lugar: !!e.lugar,
+      /* 30/09 (MM13): o id que a base grava quando o lugar é revelado — só
+         existe quando quem criou a etapa o sabia, e só viaja quando existe,
+         para a missão antiga sair daqui byte a byte igual */
+      ...(e.chave ? { chave: String(e.chave).slice(0, 80) } : {}),
       feito: !!e.feito,
     })).slice(0, 5),
     /* v9.38: em NOITES, não em dias — o relógio de prazo tem gatilho "noite",
