@@ -543,8 +543,11 @@ sec("4. a definição operacional de 'número que muda'");
      A gente por dentro (frontend, MM8a, 29/09): 14371 -> 14388, +17 —
      a fiação de `genteParaPauta` em `pautaDoTurno`, logo depois de
      `fichaParaPauta`, acima no arquivo — mesmo motivo, mesmo lugar: o
-     campo `porque` em testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14388/.test(relogio.porque));
+     campo `porque` em testes/acoes-do-jogador.mjs.
+     Os tetos das pessoas (frontend, MM8c-1, 29/09): 14388 -> 14408, +20 —
+     a recência do registo de NPCs, acima no arquivo — mesmo motivo, mesmo
+     lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14408/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -628,10 +631,12 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:17731 → veredictoDaAcao — MM3b,
+     adjudicador usa (src/App.jsx:17782 → veredictoDaAcao — MM3b,
      frontend, 29/09: re-medido por busca direta no arquivo, não por soma
      de delta, porque a referência já vinha desatualizada de antes desta
-     etapa) */
+     etapa; MM8c-1, frontend, 29/09: 17762 -> 17782, +20 — o mesmo delta
+     desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE, re-medido por
+     busca direta) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -767,9 +772,12 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        levam no cabeçalho de FUNIL_DO_COMBATE nesta etapa.
        A gente por dentro (frontend, MM8a, 29/09): 12897 -> 12914, +17 — o
        mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       fiação de `genteParaPauta` em `pautaDoTurno`, acima no arquivo). */
+       fiação de `genteParaPauta` em `pautaDoTurno`, acima no arquivo).
+       Os tetos das pessoas (frontend, MM8c-1, 29/09): 12914 -> 12934, +20 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
+       recência do registo de NPCs, acima no arquivo). */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:12914").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:12934").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -876,8 +884,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        A gente por dentro (frontend, MM8a, 29/09): 12768 -> 12785, +17 — o
        mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
        fiação de `genteParaPauta` em `pautaDoTurno`, logo depois de
-       `fichaParaPauta`, acima no arquivo). */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12785" && x.familia === "alcance"));
+       `fichaParaPauta`, acima no arquivo).
+       Os tetos das pessoas (frontend, MM8c-1, 29/09): 12785 -> 12805, +20 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
+       recência do registo de NPCs, acima no arquivo). */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12805" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -914,8 +925,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      A gente por dentro (frontend, MM8a, 29/09): 12913 -> 12930, +17 — o
      mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
      fiação de `genteParaPauta` em `pautaDoTurno`, logo depois de
-     `fichaParaPauta`, acima no arquivo). */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12930/.test(S.ondeSai));
+     `fichaParaPauta`, acima no arquivo).
+     Os tetos das pessoas (frontend, MM8c-1, 29/09): 12930 -> 12950, +20 —
+     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
+     recência do registo de NPCs, acima no arquivo). */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /12950/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

@@ -6,7 +6,9 @@
    inteiro ensinando o Mestre a rolar o d20 dos inimigos — trabalho que o
    sistema faz sozinho desde que o combate virou codigo.                     */
 import fs from "node:fs";
-import { montarSystemPrompt } from "../src/prompt.js";
+import { montarSystemPrompt, formatarCanone, TETO_DO_CANONE } from "../src/prompt.js";
+import { resumoNPCsParaPrompt, TETO_DAS_PESSOAS } from "../src/npcs.js";
+import { registoSimulado, CENARIOS } from "./registo-simulado.mjs";
 import { TETO_DO_BLOCO, TETO_DA_CENA, lerLexico, COISAS, SISTEMAS } from "../src/lexico.js";
 
 /* um léxico no TETO de todos os campos: é o pior caso, e o pior caso é o
@@ -271,6 +273,53 @@ sec("6. o que NAO pode ter sido perdido na faxina");
     ["sinais", /SINAIS \(canal barato/],
   ];
   for (const [nome, rx] of essenciais) t(`"${nome}" continua lá`, rx.test(P));
+}
+
+sec("7. o pior caso COM GENTE (Fase MM, MM8c-1)");
+{
+  /* ---------------- O PIOR CASO ERA MEDIDO SEM NINGUÉM ----------------
+     A PIOR CENA REAL de cima monta o prompt com `canone = {}` e
+     `npcsInfo = ""`: o registo de pessoas e o cânone — as duas coisas que
+     mais crescem numa campanha — ficavam fora da conta. O estudo da MM8
+     achou-as sem teto e esta etapa pô-lo (TETO_DAS_PESSOAS em npcs.js,
+     TETO_DO_CANONE em prompt.js). Aqui entram na conta, com as três
+     campanhas de 200 turnos de `registo-simulado.mjs`.
+
+     O QUE ESTA SECÇÃO PROVA é que a gente deixou de crescer com a
+     campanha: o pior caso com gente é o pior caso sem gente MAIS o
+     orçamento das pessoas, e nunca mais do que isso — em 50 ou em 180
+     pessoas. O QUE ELA NÃO ESCONDE é o número: a PIOR CENA REAL sem gente
+     está a menos de cem caracteres dos 82 mil, e com qualquer gente passa.
+     O teto de 82 mil nunca contou com as pessoas; resolver isso (encolher o
+     fixo, ou escrever o orçamento das pessoas dentro do teto) é decisão de
+     quem rege o teto, e está no relato da MM8c-1 — o guarda de 82 mil de
+     cima não se moveu. */
+  const piorReal = {
+    emCombate: true, emMasmorra: true, temChao: true, temGente: true, conjura: true,
+    temGrupo: true, aflicao: true, temSintonia: true, temRegraPropria: true, temMissao: true,
+    temGatilho: true, temDadiva: true, temEspecializacao: true, despertou: true, invoca: true, temLegado: true,
+  };
+  const pers20 = { ...pers, nivel: 20, vidaMax: 200, manaMax: 120 };
+  const mundo = { genero: "Fantasia medieval", lexico: LEX_CHEIO };
+  const banco = { elenco: [], cidades: [], tavernas: [] };
+  const vazio = montarSystemPrompt("C", mundo, pers20, {}, banco, "", "", "", "", "", "", "Mortal", piorReal).length;
+  const CABECALHOS = 200;   // "═══ CÂNONE (VERDADES…) ═══" e a moldura
+  const orcamento = TETO_DAS_PESSOAS.chars + TETO_DO_CANONE.chars + CABECALHOS;
+  console.log(`      a PIOR CENA REAL sem gente: ${vazio} · o orçamento das pessoas: ${orcamento}`);
+  let maior = 0;
+  for (const c of CENARIOS) {
+    const r = registoSimulado(c);
+    const pes = resumoNPCsParaPrompt(r.npcs);
+    const depois = montarSystemPrompt("C", mundo, pers20, r.canone, banco, "", "", "", pes, "", "", "Mortal", piorReal, { npcs: r.npcs }).length;
+    /* o antes: o cânone inteiro e as 22 sem teto de caracteres, pela régua crua */
+    const cru = Object.values(r.npcs).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0)).slice(0, 22);
+    const pesAntes = cru.map((n) => resumoNPCsParaPrompt({ [n.nome]: n })).join("\n").length;
+    const antes = depois - formatarCanone(r.canone, { teto: TETO_DO_CANONE, npcs: r.npcs }).length + formatarCanone(r.canone).length - pes.length + pesAntes;
+    maior = Math.max(maior, depois);
+    console.log(`      ${c.id} (${Object.keys(r.npcs).length} pessoas, ${Object.keys(r.canone).length} no cânone): ${antes} → ${depois}`);
+    t(`${c.id}: o pior caso com gente nunca passa do sem gente + o orçamento das pessoas`, depois <= vazio + orcamento);
+  }
+  t("a gente deixou de crescer com a campanha: 180 pessoas custam o mesmo teto que 50", maior <= vazio + orcamento);
 }
 
 console.log(`\nprompt v9.50: ${ok} passaram, ${mal} falharam`);

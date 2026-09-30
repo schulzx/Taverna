@@ -21,6 +21,9 @@
    corrigir quando ele escorregar.
    ============================================================ */
 
+/* MM8c-1: a ordem da recência é a do registo, e só ele a sabe */
+import { ordemDaRecencia } from "./npcs.js";
+
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
 const norm = (s) => semAcento(s).toLowerCase().trim();
 
@@ -260,12 +263,58 @@ export function notaVazamento(vazamentos) {
   return `[CORREÇÃO DO SISTEMA — QUEM SABE O QUÊ] ${l}. Não há como essa pessoa saber disso: ninguém contou. Trate como se ela NÃO soubesse. Informação viaja por boca, carta ou espião — e quando viajar, tem que ser mostrado em cena, com quem contou e por quê. Nunca faça um personagem simplesmente saber o que o jogador disse a outro.`;
 }
 
+/* ---------------- O TETO DO QUEM (Fase MM, MM8c-1) ----------------
+   As duas listas deste bloco eram o registo INTEIRO, em todo turno: numa
+   campanha de 200 turnos com 107 pessoas, 6 mil caracteres só de nomes
+   (medido no estudo da MM8). Agora cada uma tem teto de pessoas e de
+   caracteres, e quem não cabe sai pela RECÊNCIA — o critério que o
+   registo já usava para as PESSOAS CONHECIDAS (`ordemDaRecencia`).
+
+   Quem VIAJA COMIGO e quem a cena diz que está AQUI (`emCena`) nunca saem
+   do "aqui", nem que passem do teto: tirar do texto quem está sentado à
+   mesa seria mandar o Narrador narrar uma mesa vazia.
+
+   Só o TEXTO tem teto. `elencoDaCena` continua a devolver toda a gente,
+   e o cão de guarda (`detectarForaDeLugar`) continua a morder quem está
+   longe e não foi listado — cortar a linha não solta ninguém.
+
+   `+N` no fim diz que a lista é parcial: sem ele, o Narrador leria "estes
+   são todos" e trataria quem ficou de fora como quem não existe. */
+export const TETO_DO_QUEM = {
+  aqui: { pessoas: 12, chars: 700 },
+  longe: { pessoas: 8, chars: 600 },
+};
+
+function comTeto(itens, teto, texto, protegido = () => false) {
+  const out = [];
+  let gasto = 0, fora = 0, livres = 0;
+  for (const n of itens) {
+    const l = texto(n);
+    if (protegido(n)) { out.push(l); gasto += l.length + 3; continue; }
+    if (livres >= teto.pessoas || gasto + l.length + 3 > teto.chars) { fora++; continue; }
+    out.push(l); gasto += l.length + 3; livres++;
+  }
+  return { linhas: out, fora };
+}
+
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [] } = {}) {
-  const { aqui, longe } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
-  if (!aqui.length && !longe.length) return "";
-  const linhaAqui = aqui.length ? aqui.map((n) => `${n.nome} (${n.motivo})`).join(" · ") : "ninguém do registro";
-  const linhaLonge = longe.length ? longe.map((n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`).join(" · ") : "";
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [] } = {}) {
+  const { aqui: aqui0, longe: longe0 } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
+  if (!aqui0.length && !longe0.length) return "";
+  /* a recência do registo: o índice na ordem da mais recente */
+  const ordem = new Map(ordemDaRecencia(npcs).map((n, i) => [norm(n.nome), i]));
+  const rank = (n) => (ordem.has(norm(n.nome)) ? ordem.get(norm(n.nome)) : Infinity);
+  const noGrupo = new Set((comGrupo || []).map((g) => norm(g && g.nome)));
+  const naCena = new Set((Array.isArray(emCena) ? emCena : []).map((x) => norm(x && typeof x === "object" ? x.nome : x)).filter(Boolean));
+  const protegido = (n) => noGrupo.has(norm(n.nome)) || naCena.has(norm(n.nome));
+  /* quem anda comigo primeiro, depois quem a cena põe aqui, depois o resto pela recência */
+  const peso = (n) => (noGrupo.has(norm(n.nome)) ? 0 : naCena.has(norm(n.nome)) ? 1 : 2);
+  const aqui = [...aqui0].sort((a, b) => peso(a) - peso(b) || rank(a) - rank(b));
+  const longe = [...longe0].sort((a, b) => rank(a) - rank(b));
+  const ta = comTeto(aqui, TETO_DO_QUEM.aqui, (n) => `${n.nome} (${n.motivo})`, protegido);
+  const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`);
+  const linhaAqui = ta.linhas.length ? `${ta.linhas.join(" · ")}${ta.fora ? ` · +${ta.fora}` : ""}` : "ninguém do registro";
+  const linhaLonge = tl.linhas.length ? `${tl.linhas.join(" · ")}${tl.fora ? ` · +${tl.fora}` : ""}` : "";
   const segredos = garantirConfidencias(confidencias).filter((c) => c.exclusivo && (c.ouvintes || []).length);
   const linhaSegredo = segredos.length
     ? segredos.map((c) => `"${c.assunto}" — sabem disso: ${c.ouvintes.join(", ")}`).join(" · ")

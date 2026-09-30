@@ -385,13 +385,87 @@ export function quemTemOPapel(npcs, papel, exceto = "") {
     n && n.nome && n.papel && semAc(n.nome) !== alvo && mesmoPapel(n.papel, papel)) || null;
 }
 
+/* ============================================================
+   A RECÊNCIA (Fase MM, MM8c-1) — o contador que voltava a zero e o
+   relógio que ganhava sempre
+
+   `ultimaVez` é o NÚMERO DO TURNO em que o Mestre anotou a pessoa pela
+   última vez (`npcTurnoRef` no App), e é por ele que o registo se ordena
+   para o prompt. Dois defeitos o partiam:
+
+   · o contador voltava a ZERO a cada load (e a cada capítulo novo, que
+     mantém o registo). Depois de recarregar, quem se via de novo recebia
+     1, 2, 3… — ABAIXO de toda a gente anotada antes do save. A lista dos
+     "mais recentes" passava a ser a dos mais recentes ANTES do load;
+   · três sítios do App escreviam `Date.now()` no mesmo campo (a revelação
+     do vilão, a relação definida à mão). Um relógio em milissegundos,
+     posto numa régua de turnos, ganha de todos para sempre: o vilão
+     revelado há 150 turnos ficava no topo, acima de quem se viu agora.
+
+   A régua que separa os dois é uma só: um contador de turnos nunca chega
+   a mil milhões (seriam dez mil turnos por dia durante 270 anos), e
+   `Date.now()` passou de mil milhões doze dias depois de 1970. Não há
+   valor que caiba nos dois lados.
+   ============================================================ */
+export const LIMITE_DO_CONTADOR = 1e9;
+
+const marcaDe = (n) => {
+  const v = Number(n && n.ultimaVez);
+  return Number.isFinite(v) && v > 0 ? v : 0;
+};
+const ehRelogio = (v) => v >= LIMITE_DO_CONTADOR;
+
+/* O contador a retomar no load: o maior `ultimaVez` do registo que seja
+   contador — nunca um relógio. Registo vazio ou lixo: zero. */
+export function retomarContador(npcs) {
+  let max = 0;
+  for (const n of Object.values(npcs && typeof npcs === "object" ? npcs : {})) {
+    const v = marcaDe(n);
+    if (!ehRelogio(v) && v > max) max = Math.floor(v);
+  }
+  return max;
+}
+
+/* O registo com a régua consertada: cada relógio vira contador, logo
+   ACIMA do maior contador que existe, pela ordem em que os relógios foram
+   escritos (o vilão revelado antes fica abaixo da relação definida
+   depois). "Visto agora" é a melhor leitura honesta de um relógio: foi
+   escrito num momento da campanha que a régua de turnos não sabe dizer, e
+   a partir daí desce como toda a gente — cada pessoa anotada depois passa
+   à frente. Sem relógio nenhum, devolve o MESMO objeto (nada a trocar). */
+export function normalizarRecencia(npcs) {
+  const reg = npcs && typeof npcs === "object" ? npcs : {};
+  const relogios = Object.entries(reg).filter(([, n]) => n && ehRelogio(marcaDe(n)))
+    .sort((a, b) => marcaDe(a[1]) - marcaDe(b[1]));
+  if (!relogios.length) return npcs;
+  const base = retomarContador(reg);
+  const out = { ...reg };
+  relogios.forEach(([k, n], i) => { out[k] = { ...n, ultimaVez: base + 1 + i }; });
+  return out;
+}
+
+/* As fichas do registo da mais recente para a mais antiga, com a régua
+   consertada NA LEITURA também — um relógio escrito no meio da sessão
+   não prende ninguém no topo até ao próximo load. No empate, a ordem do
+   registo (a mesma do `sort` estável de antes). */
+export function ordemDaRecencia(npcs) {
+  const reg = normalizarRecencia(npcs && typeof npcs === "object" ? npcs : {}) || {};
+  return Object.values(reg).filter((n) => n && typeof n === "object")
+    .sort((a, b) => marcaDe(b) - marcaDe(a));
+}
+
+/* O TETO DAS PESSOAS CONHECIDAS, em pessoas E em caracteres. As 22 já
+   eram lei; os caracteres não: uma ficha com notas longas do Narrador
+   fazia a mesma lista de 22 custar o dobro. Quem não cabe sai pela
+   recência — a mais antiga primeiro. */
+export const TETO_DAS_PESSOAS = { pessoas: 22, chars: 3200 };
+
 /* Resumo compacto do elenco para o prompt — UMA linha por pessoa, as mais
    recentes/relevantes primeiro. Teto rígido para nunca inflar o prompt. */
-export function resumoNPCsParaPrompt(npcs, limite = 22) {
-  const lista = Object.values(npcs || {});
-  if (!lista.length) return "";
-  const ord = [...lista].sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0)).slice(0, limite);
-  return ord.map((n) => {
+export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas) {
+  const ord = ordemDaRecencia(npcs).slice(0, limite);
+  if (!ord.length) return "";
+  const linhas = ord.map((n) => {
     const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
     /* ---------------- O LAÇO SOBE (v9.98) ----------------
        O Mestre sabia que Marta era um amor rompido e a IA não — ela só
@@ -415,5 +489,14 @@ export function resumoNPCsParaPrompt(npcs, limite = 22) {
     const laE = Object.entries(garantirEntre(n.entre)).map(([o, t]) => `${(tipoDeLacoPorId(t) || {}).rotulo} com ${o}`).join(", ");
     const extra = [laco, laE, n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas].filter(Boolean).join(" · ");
     return `• ${n.nome}${partes.length ? ` (${partes.join(", ")})` : ""}${extra ? ` — ${extra}` : ""}`;
-  }).join("\n");
+  });
+  /* o teto de caracteres: pela ordem da recência, entra quem cabe */
+  const dentro = [];
+  let gasto = 0;
+  for (const l of linhas) {
+    if (gasto + l.length + 1 > TETO_DAS_PESSOAS.chars) continue;
+    dentro.push(l);
+    gasto += l.length + 1;
+  }
+  return dentro.join("\n");
 }

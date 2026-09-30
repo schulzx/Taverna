@@ -256,7 +256,17 @@ O limite é o que um commit revertido não desfaz.
     `elencoDoMundo`: 24 por tabela (a espinha, os chefes humanoides, os mestres de guilda, os
     do arco e recorrentes da base), laços entre eles, casas notáveis por cidade (famílias),
     reputação da casa e de cada um, estreia por semente. Sonda: #60, #61, #62 → ~93.
-  - [ ] **MM8c · a pauta leva quem importa** · sem campo de save
+  - [x] **MM8c-1 · os tetos** · feito 29/09, v9.321 (reordenado pelo coordenador: o teto de
+    prompt é lei, e as listas sem teto violavam-na ao vivo) · as pessoas conhecidas, o QUEM do
+    rodapé e as pessoas do cânone com teto por tabela, cortadas por recência; a recência que
+    zerava no load e o vilão preso no topo por `Date.now()`, consertados.
+    **Decisão pendente (lei da casa):** a pior cena sem ninguém já mede 81 945 de ~82k; com
+    gente, a pessoa custa até +5,8k — o teto de 82k **nunca contou as pessoas**. Ou se encolhe o
+    prompt fixo ~5,8k, ou a lei passa a dizer 82k de fixo + 5,8k de gente. A catraca nova prova
+    que a gente deixou de crescer com a campanha (187 pessoas custam o mesmo que 50).
+    **E os lugares e itens do cânone também crescem sem teto** (e o Cronista recebe o cânone
+    inteiro e todos os nomes) — não tapados nesta etapa.
+  - [ ] **MM8c-2 · a pauta leva quem importa** · sem campo de save (depois da MM8b)
     `resumoNPCsParaPrompt` por importância (grupo, laço, inimigo/rival, elenco, só depois
     recência); o LONGE do rodapé com teto; o "ELENCO DIVERSO PRONTO" (hoje `Math.random`) passa
     a ser o elenco por encontrar; a recência que zera no load e o vilão preso no topo,
@@ -275,6 +285,34 @@ O limite é o que um commit revertido não desfaz.
   crescem pelo elenco. Medida de base (20 mundos, sem IA, taxa suposta de nomes do Narrador):
   a 200 turnos, 50 / 107 / 168 pessoas no registo (0,10 / 0,25 / 0,50 nomes por turno). A
   medida a sério é uma campanha jogada a contar `npcs` e `canone` por turno — pedir na MM11.
+- [ ] **MM13 · o mundo puxa o herói** · da pessoa, 29/09 · **antes da MM8b**
+  *"Quando o jogo inicia o mestre já joga uma quest logo de cara… nos RPGs do Matt, o player é
+  induzido à quest da história principal… o mundo joga ele na quest. Um sistema de quests é
+  necessário para o player não se perder… como um sandbox sem tutorial."* E depois: *"ele diz o
+  mundo, onde o personagem está, e uma pequena história do local… conforme o mestre trabalha o
+  mundo, vai induzindo o player para a quest. Não sei se deve ser logo na primeira cena."*
+  **O que falha:** a casa já força a principal (`missoes.js`, `forcada: true`; a abertura força
+  uma trama e pede um "primeiro fio"), mas **na tela o primeiro turno mostra ofertas do mural com
+  Aceitar** — o cardápio chega antes do mundo, e a trama não se vê.
+  **O desenho (os três movimentos do Matt em C1E1, conferidos no texto):**
+  1. **O propósito antes da cena** — o herói chega já com a razão de estar ali (da espinha e do
+     antecedente, por tabela e semente) como memória, nunca como oferta; a principal nasce aceita
+     dessa razão, com **uma pista concreta** que é o primeiro passo (quem procurar, onde).
+  2. **A ordem da narração:** o mundo → onde estou → a pequena história do lugar → porque estou
+     aqui e o que sei. O próximo passo sai da pista, e é o jogador que o diz.
+  3. **O mundo pinga fios** — a cidade (MM12) e as pessoas (MM8) vão deixando pistas ligadas à
+     principal.
+  4. **A escalada é o sino do Matt**: um acontecimento que obriga a enfrentar a história, quando o
+     jogador já conhece o lugar ou quando se afasta dela — um relógio (`relogios.js`); por bem ou
+     por mal, mas nunca no primeiro minuto. Nunca um bloqueio.
+  5. **Nenhuma oferta avulsa antes de estar orientado** (o mural só depois do primeiro passo da
+     principal, ou de N turnos, por tabela); as secundárias continuam opcionais.
+  6. **O próximo passo sempre à vista** — uma linha no sítio que já existe; peça nova, pede-se ao
+     desenho.
+  **A prova:** o `jogo` começa uma campanha nova e responde, a cada um dos primeiros turnos,
+  *porque estou aqui?*, *o que sei?* e *qual é o meu próximo passo?* — as três com resposta **no
+  primeiro turno**, sem nenhum cartão de Aceitar; e conta em que turno chega a escalada, e se
+  chegou depois de ele já ter explorado.
 - [ ] **MM9 · a luta sem espada**
   Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
   Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).

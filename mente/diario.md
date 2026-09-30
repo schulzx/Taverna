@@ -15,6 +15,48 @@ Formato:
 ```
 
 ---
+## 29/09 23:55 · v9.321 · MM8c-1 · as listas de pessoas ganham teto, e a recência deixa de zerar · commit (o hash vai no próximo bloco)
+
+- **por que andou, à frente da MM8b:** reordenado pelo coordenador da fase a partir do que o
+  estudo do MM8 achou — **o teto de prompt é lei da casa**, e duas listas de pessoas o violavam
+  ao vivo em campanhas longas. Não precisava do elenco para se consertar.
+- **estado inicial:** verde (MM8a no ar, `bb1474d`). A mente do desenho commitou R21k
+  (`0c68ecd`, v9.320) a meio deste ciclo; os territórios não se cruzaram, e este commit leva
+  v9.321.
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+  O App cresceu ~20 linhas; endereços de `acoes-do-jogador` re-medidos por faixa, conferidos
+  contra os que o varredor re-deriva.
+- **backend:** tetos por tabela, cortados pela recência (o critério de hoje; a importância é
+  da MM8c-2): as PESSOAS CONHECIDAS — as 22 de sempre, e agora também 3200 caracteres (notas
+  longas faziam as mesmas 22 custar o dobro); o QUEM do rodapé — 12 pessoas/700 aqui, 8/600
+  longe, e quem anda comigo ou está em cena nunca sai; as pessoas do CÂNONE — 20/2400, e sem
+  opções o cânone sai igual (o Cronista e o Arquivista continuam a recebê-lo inteiro). Numa
+  campanha solta de 200 turnos: QUEM do rodapé 10 428 → 1 239; cânone de pessoas 8 256 → 2 388.
+- **os dois defeitos da recência, consertados e provados:** (a) o contador voltava a zero em
+  cada load — agora retoma do maior valor abaixo de mil milhões (um contador de turnos nunca lá
+  chega; o relógio passou-o doze dias depois de 1970); (b) o vilão e quem mudava de relação no
+  painel levavam `Date.now()` num campo que é contador e ficavam no topo para sempre — no load
+  passam a contador, e **o App deixou de os escrever** (eram três, não dois: a frontend achou o
+  terceiro, o líder de bando que aceita um decreto). A gente nova do Cronista entrava com
+  contador 0 e, com o corte, sairia sempre primeiro — passa a entrar com o de agora.
+- **a prova jogada:** seis pessoas conhecidas, recarregar a página, um turno a citar Eldric —
+  **ele subiu ao topo** (`ultimaVez` de 1 para 3, acima do máximo de antes do load), no save e
+  no painel. Antes, teria caído para o fim.
+- **A DECISÃO QUE FICA — é da lei do teto de prompt, e não a tomei:** medida como a suíte a mede
+  hoje (sem ninguém no registo nem no cânone), a pior cena tem **81 945 de ~82 000**. Com gente,
+  as pessoas custam até ~5,8k — **o teto de 82k nunca contou as pessoas**, e qualquer campanha
+  com gente já passava dos 82k na pior cena antes desta etapa. Nenhum teto de pessoas cabe em
+  55 caracteres. O que esta etapa garante é que **a gente deixou de crescer com a campanha**
+  (187 pessoas custam o mesmo que 50: 93 557 → 87 563 na campanha solta). Fechar os 82k é
+  encolher o prompt fixo ~5,8k ou escrever na lei "82k de fixo + 5,8k de gente". Levado ao
+  coordenador; escrito na pauta.
+- **também crescem sem teto:** os lugares e itens do cânone, e a chamada do Cronista (o cânone
+  inteiro e todos os nomes do registo). Não tapados — ditos.
+- **a sonda:** não se move (89/157).
+- **para quem joga:** o Narrador deixa de esquecer quem se viu antes de recarregar, o vilão
+  deixa de ocupar o topo da memória para sempre, e uma campanha longa deixa de engordar o
+  prompt a cada pessoa nova.
+
 ## 29/09 22:33 · v9.319 · MM8a · a gente por dentro · commit `bb1474d`
 
 - **por que andou:** a primeira das seis subetapas do elenco (MM8), a proposta da pessoa.

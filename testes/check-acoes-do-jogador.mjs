@@ -309,10 +309,14 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 8142) {
-    falha(`pushMsgs saiu de src/App.jsx:8142 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 8145) {
+    falha(`pushMsgs saiu de src/App.jsx:8145 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8142, como o mapa de X3b diz");   /* A GENTE POR DENTRO (frontend, MM8a, 29/09): 8125 -> 8142, +17. A
+  } else ok("pushMsgs segue em src/App.jsx:8145, como o mapa de X3b diz");   /* OS TETOS DAS PESSOAS (frontend, MM8c-1, 29/09): 8142 -> 8145, +3. A
+     ref nova da recência (`npcTurnoNoLoadRef`, ao lado de `npcTurnoRef`)
+     nasce três linhas acima de `pushMsgs` no arquivo, e tudo abaixo andou
+     junto. Re-medido por esta própria catraca; nada somado de cabeça.
+     A GENTE POR DENTRO (frontend, MM8a, 29/09): 8125 -> 8142, +17. A
      fiação de `genteParaPauta` (gente-por-dentro.js) entrou em
      `pautaDoTurno`, logo depois de `fichaParaPauta` — um import no topo
      (+1) e o try/catch de dezesseis linhas (+16) —, e tudo abaixo de

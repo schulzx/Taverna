@@ -5,6 +5,8 @@
    Extraído do App.jsx na modularização.
    ============================================================ */
 import { vozPrompt, VOZ_PADRAO } from "./vozes.js";
+/* MM8c-1: a recência das pessoas é a do registo */
+import { ordemDaRecencia } from "./npcs.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { resumoPatamar } from "./combate.js";
 import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
@@ -101,22 +103,67 @@ Antecedente: ${p.antecedente}${p.antecedenteGancho ? ` — GANCHO (teça na fic�
 Atributos: ${attrs} · PV máx ${p.vidaMax} · PM máx ${p.manaMax}`;
 }
 
-export function formatarCanone(canone) {
+/* ---------------- O TETO DAS PESSOAS DO CÂNONE (Fase MM, MM8c-1) ----------------
+   O cânone subia INTEIRO em todo turno, e as pessoas eram a parte que mais
+   crescia: o Narrador e o Cronista registam gente como fato durável, e o
+   App copia cada uma também para o registo (onde ela já sobe nas PESSOAS
+   CONHECIDAS e no QUEM). No estudo da MM8, 68 pessoas no cânone ao fim de
+   200 turnos — 6,5 mil caracteres só delas.
+
+   As PESSOAS do cânone passam a ter teto de pessoas e de caracteres. Quem
+   sai é o mais antigo pela RECÊNCIA do registo (`ordemDaRecencia`) — a
+   mesma régua das PESSOAS CONHECIDAS; quem não tem ficha no registo conta
+   como o mais antigo, e entre esses ganha quem entrou no cânone por
+   último. Quem ANDA COMIGO nunca sai.
+
+   Lugares, artefatos, promessas e segredos NÃO têm teto nesta etapa (é a
+   pergunta seguinte, e fica escrita no relato da MM8c-1). E a ordem de
+   leitura não muda: o que fica sai na posição em que sempre saiu.
+
+   Sem `teto`, a função devolve o cânone inteiro como sempre — é o que o
+   Cronista e o Arquivista recebem, e mudar isso é outra decisão. */
+export const TETO_DO_CANONE = { pessoas: 20, chars: 2400 };
+
+const ehPessoaDoCanone = (f) => /pessoa/i.test(String((f && f.tipo) || ""));
+
+export function formatarCanone(canone, opcoes = null) {
   if (!canone || typeof canone !== "object") return "";
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const teto = o.teto && typeof o.teto === "object" ? o.teto : null;
+  let fora = new Set();
+  if (teto) {
+    const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+    const ordem = new Map(ordemDaRecencia(o.npcs).map((n, i) => [semAc(n.nome), i]));
+    const comigo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => semAc(g && g.nome)));
+    const pessoas = Object.entries(canone).map(([nome, f], i) => ({ nome, f, i })).filter((x) => x.f && ehPessoaDoCanone(x.f));
+    const rank = (x) => (comigo.has(semAc(x.nome)) ? -1 : ordem.has(semAc(x.nome)) ? ordem.get(semAc(x.nome)) : Infinity);
+    pessoas.sort((a, b) => rank(a) - rank(b) || b.i - a.i);
+    let n = 0, gasto = 0;
+    for (const x of pessoas) {
+      const custo = linhaDoCanone(x.nome, x.f).length + 1;
+      if (!comigo.has(semAc(x.nome)) && (n >= teto.pessoas || gasto + custo > teto.chars)) { fora.add(x.nome); continue; }
+      n++; gasto += custo;
+    }
+  }
   const linhas = [];
   for (const [nome, f] of Object.entries(canone)) {
-    if (!f) continue;
-    const partes = [];
-    if (f.tipo) partes.push(f.tipo);
-    if (f.papel) partes.push(f.papel);
-    if (f.genero) partes.push(f.genero);
-    if (f.local) partes.push(`em ${f.local}`);
-    if (f.status) partes.push(f.status);
-    const desc = partes.length ? ` — ${partes.join(", ")}` : "";
-    const notas = f.notas ? `. ${f.notas}` : "";
-    linhas.push(`• ${nome}${desc}${notas}`);
+    if (!f || fora.has(nome)) continue;
+    linhas.push(linhaDoCanone(nome, f));
   }
   return linhas.join("\n");
+}
+
+/* uma linha do cânone — a mesma de sempre, caractere por caractere */
+function linhaDoCanone(nome, f) {
+  const partes = [];
+  if (f.tipo) partes.push(f.tipo);
+  if (f.papel) partes.push(f.papel);
+  if (f.genero) partes.push(f.genero);
+  if (f.local) partes.push(`em ${f.local}`);
+  if (f.status) partes.push(f.status);
+  const desc = partes.length ? ` — ${partes.join(", ")}` : "";
+  const notas = f.notas ? `. ${f.notas}` : "";
+  return `• ${nome}${desc}${notas}`;
 }
 
 /* ============================================================
@@ -264,7 +311,7 @@ const _limparVazios = (t) => String(t).replace(/\n{3,}/g, "\n\n");
    vilão, marcas, confidências, tentativas, fama. Ele reescrevia em prosa
    o que o sistema já sabe em campo, e custava uma chamada de rede.
    Quem lembra agora é o REGISTRO, e ele não resume: recupera. */
-export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "", cena = null) {
+export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, bancoNomes, mapaInfo, historiaInfo, questsInfo, npcsInfo, tempoInfo, divindadeInfo = "", tituloInfo = "", cena = null, recencia = null) {
   const porta = portasAbertas(cena);
   /* `so` é a única forma deste arquivo esconder alguma coisa: o bloco entra
      inteiro ou não entra. Nada de meio bloco — regra pela metade é pior do
@@ -272,7 +319,10 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
   const so = (id, txt) => (porta[id] ? txt : "");
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
-  const canoneTexto = formatarCanone(canone);
+  /* MM8c-1: o cânone do Narrador tem teto nas pessoas; `recencia.npcs` é o
+     registo, que diz quem foi visto por último (sem ele, conta a ordem de
+     entrada no cânone) */
+  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, grupo: personagem.grupo });
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
   const npcsTexto = npcsInfo || "";

@@ -11,7 +11,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -1974,7 +1974,7 @@ function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, gru
   /* o registro é a união de quem o Mestre anotou e de quem o SISTEMA matou:
      alguém da base do mundo pode ter morrido sem nunca ter virado ficha */
   const mortosSet = new Set((mortosBase || []).map((m) => String(m).toLowerCase()));
-  const lista = Object.values(npcs || {}).sort((a, b) => (b.ultimaVez || 0) - (a.ultimaVez || 0));
+  const lista = ordemDaRecencia(npcs);
   const nomesGrupo = new Set((grupo || []).map((g) => (g.nome || "").toLowerCase()));
   /* membros do grupo também têm relação formal: puxa a ficha do registro se existir */
   const fichaDe = (nome) => Object.values(npcs || {}).find((n) => (n.nome || "").toLowerCase() === (nome || "").toLowerCase());
@@ -5548,6 +5548,9 @@ export default function Taverna() {
   const npcsRef = useRef({});                 // registro persistente de pessoas
   const [npcs, setNpcs] = useState({});
   const npcTurnoRef = useRef(0);              // marca "visto por último" de cada NPC
+  /* MM8c-1: a marca do contador no load — a soleira do convite (mais abaixo)
+     cala-se até o mundo voltar a falar, comparando com esta marca em vez de zero */
+  const npcTurnoNoLoadRef = useRef(0);
   const bancoNomesRef = useRef(null);
   const mapaRef = useRef({ cidades: [], faccoes: [] });
   const [mapa, setMapa] = useState({ cidades: [], faccoes: [] });
@@ -10424,7 +10427,7 @@ export default function Taverna() {
             const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
             if (!tocou) { reg = { ...reg }; tocou = true; }
             if (chave) reg[chave] = mesclarNPC(reg[chave], n);
-            else reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, conhecidoEm: diaRef.current });
+            else reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
           });
           if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); tocouElenco = true; }
         }
@@ -11699,7 +11702,15 @@ export default function Taverna() {
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
          de teletransportar e o estranho de saber o que não ouviu. */
-      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current });
+      /* MM8c-1: quem foi citado nas duas últimas falas do Mestre nunca sai
+         do "aqui", mesmo com a recência antiga — citar alguém na narração
+         é a cena dizendo que ela está presente agora */
+      let emCenaAgora = [];
+      try {
+        const citadosAgora = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ");
+        emCenaAgora = Object.keys(npcsRef.current || {}).filter((nome) => citadosAgora.includes(nome));
+      } catch { emCenaAgora = []; }
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
       /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —
@@ -11752,6 +11763,8 @@ export default function Taverna() {
       (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
       resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current),
       tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
+      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto */
+      { npcs: npcsRef.current },
     );
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);
@@ -12110,7 +12123,11 @@ export default function Taverna() {
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
-    npcTurnoRef.current = 0; definirAcampado(false);
+    /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
+       retomar dele, nunca voltar a zero (é a mesma régua do load) */
+    if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
+    npcTurnoRef.current = cap ? retomarContador(npcsRef.current) : 0; npcTurnoNoLoadRef.current = npcTurnoRef.current;
+    definirAcampado(false);
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
        regiões com bioma, cidades com porte e população, rotas com dias de
        viagem. O Mestre narra em cima de fatos fixos, não inventa caminhos. */
@@ -12268,7 +12285,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
-      npcsRef.current = sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}; setNpcs(npcsRef.current); npcTurnoRef.current = 0;
+      /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
+         do maior turno anotado — antes disto o contador voltava a zero e
+         quem se via logo depois do load caía para o fim da lista */
+      npcsRef.current = normalizarRecencia(sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}); setNpcs(npcsRef.current); npcTurnoRef.current = retomarContador(npcsRef.current); npcTurnoNoLoadRef.current = npcTurnoRef.current;
       definirAcampado(!!sv.acampado);
       /* v9.100: o sítio volta com o acampamento. Sem esta linha, recarregar
          a página dentro do acampamento apagaria onde se estava dormindo — e
@@ -20172,7 +20192,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO ACEITO — ${d.alvo}] A ${grupo.bando} (${grupo.membros.map((m) => m.nome).join(", ")}, força ${grupo.forca}) aceitou meu decreto: "${d.descricao}" Recompensa de ◉ ${d.recompensa} já está retida pelo sistema. Eles partiram; o resultado chegará pelo sistema em alguns dias — até lá, eles estão FORA DE CENA, em missão.`;
           /* o líder vira uma pessoa conhecida */
           if (!npcsRef.current[grupo.lider]) {
-            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: mundo && mundo.genero, notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: Date.now(), conhecidoEm: diaRef.current } };
+            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: mundo && mundo.genero, notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current } };
             setNpcs(npcsRef.current);
           }
         } else {
@@ -20469,7 +20489,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       npcsRef.current = { ...npcsRef.current, [r.vilao.nome]: criarNPC(r.vilao.nome, {
         papel: r.vilao.titulo, relacao: "inimigo",
         notas: `O VILÃO desta campanha. Acredita que ${r.vilao.crenca}. Quer ${r.vilao.quer}.`,
-        conhecidoEm: diaRef.current, ultimaVez: Date.now(),
+        conhecidoEm: diaRef.current, ultimaVez: npcTurnoRef.current,
       }) };
       setNpcs(npcsRef.current);
       marcarNoArco("nemesis", `soube quem é ${r.vilao.nome}`);
@@ -20901,7 +20921,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     if ((n.relacao || "") === relacao) return;
     const rotulo = relacaoNPC(relacao).rotulo;
-    npcsRef.current = { ...reg, [nome]: { ...n, nome, relacao, ultimaVez: Date.now() } };
+    npcsRef.current = { ...reg, [nome]: { ...n, nome, relacao, ultimaVez: n.ultimaVez || npcTurnoRef.current } };
     setNpcs(npcsRef.current);
     pushMsgs([{ autor: "sistema", texto: `🤝 Relação formal registrada: ${nome} agora é ${rotulo}.` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RELAÇÃO FORMAL — CANON ABSOLUTO] Eu declarei formalmente: minha relação com ${nome} é ${rotulo.toUpperCase()}${relacao === "conjuge" ? " — CÔNJUGE: somos casados, isso é fato consumado e permanente (trate como parte do nosso presente, sem inventar um passado longo que não esteja registrado)" : ""}. Registre no cânone e trate como verdade absoluta daqui em diante.`;
@@ -22945,10 +22965,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       /* 2 · A PESSOA EM CENA QUE TEM VERBO. "Em cena" é a marca que o
          próprio registo já guarda: `ultimaVez` é o número da última vez em
          que o Mestre anotou gente, e quem tem a marca DE AGORA está na
-         cena de agora. Depois de carregar um save o contador volta a zero e
-         ninguém entra — e esse é o lado seguro do erro: a soleira cala-se
-         até o mundo voltar a falar, em vez de oferecer o convite de alguém
-         que ficou três cidades atrás.
+         cena de agora. MM8c-1: o contador agora RETOMA no load em vez de
+         voltar a zero, então a soleira compara com a marca QUE O LOAD
+         DEIXOU (`npcTurnoNoLoadRef`) — é ela, e não mais o zero, que
+         mantém o convite calado até o mundo voltar a falar depois de
+         recarregar, em vez de oferecer o convite de alguém que ficou três
+         cidades atrás só porque o número dele já era alto antes do save.
 
          O VEREDITO ANTES DO CLIQUE vem de `pesarConvite`, que já existe e
          já é determinístico: quem aceitaria entra dizendo que aceitaria,
@@ -22960,7 +22982,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const marcaDeAgora = npcTurnoRef.current || 0;
       const noGrupo = new Set(((personagem && personagem.grupo) || []).map((g) => String(g.nome || "").toLowerCase()));
       const grupoCheio = ((personagem && personagem.grupo) || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS;
-      if (marcaDeAgora > 0 && !grupoCheio) {
+      if (marcaDeAgora > npcTurnoNoLoadRef.current && !grupoCheio) {
         for (const n of Object.values(npcs || {})) {
           if (!n || !n.nome) continue;
           if ((n.ultimaVez || 0) < marcaDeAgora) continue;
