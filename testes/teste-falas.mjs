@@ -101,7 +101,10 @@ sec("6. LIGADO AO JOGO, E SEM CUSTAR O TURNO");
   /* em paralelo entre si: a fala de uma não depende da outra */
   t("as bocas vão em paralelo", /await Promise\.all\(escolhidos\.map\(async \(m\)/.test(APP));
   t("no modelo barato", /promptDoAtor\(d\)[\s\S]{0,90}?"leve"/.test(APP));
-  t("no máximo MAX_BOCAS", /mov\.slice\(0, MAX_BOCAS\)/.test(APP));
+  /* MM15 (2): o número deixou de ser um `.slice` solto no App e virou tabela
+     (BOCAS_POR_TURNO, em falas.js) — a asserção agora prova a chamada a
+     bocasDoTurno e a saída antecipada quando ela devolve vazio. */
+  t("quantas bocas é tabela (bocasDoTurno)", /const escolhidos = bocasDoTurno\(mov, \{ conteudo \}\);\s*\n\s*if \(!escolhidos\.length\) return \[\];/.test(APP));
   /* envelope do sistema não é frase do jogador: ninguém responde a ele */
   t("não fala em turno de envelope", /trimStart\(\)\.startsWith\("\["\)\) return \[\];/.test(APP));
   t("nem quando não há gente na cena", /if \(!mov\.length\) return \[\];/.test(APP));

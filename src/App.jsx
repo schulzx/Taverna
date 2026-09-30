@@ -187,7 +187,7 @@ import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
-import { dossieDe, promptDoAtor, pedidoDoAtor, garantirFala, envelopeDasFalas, MAX_BOCAS } from "./falas.js";
+import { dossieDe, promptDoAtor, pedidoDoAtor, envelopeDasFalas, bocasDoTurno, falaDaResposta } from "./falas.js";
 import { indoleDe, linhaDaIndole, dispararProposito, pesarConvite, envelopeDoConvite } from "./indole.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
 import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
@@ -11633,7 +11633,9 @@ export default function Taverna() {
       if (!mov.length) return [];
       const nomes = mov.map((m) => m.nome);
       const lugar = (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "";
-      const escolhidos = mov.slice(0, MAX_BOCAS);
+      // quantas bocas se pagam e tabela (BOCAS_POR_TURNO); o Narrador ja da voz a gente da cena
+      const escolhidos = bocasDoTurno(mov, { conteudo });
+      if (!escolhidos.length) return [];
       const ditas = await Promise.all(escolhidos.map(async (m) => {
         const d = dossieDe(m.pessoa, {
           faz: m.faz, gesto: m.gesto, proibidos: m.proibidos,
@@ -11657,8 +11659,8 @@ export default function Taverna() {
         if (!d) return null;
         try {
           const bruto = await chamarModelo(promptDoAtor(d), [{ role: "user", content: pedidoDoAtor(d) }], 220, "json", "leve");
-          const j = extrairJSON(bruto);
-          const fala = garantirFala(j && j.fala);
+          // leitor proprio da boca: o extrairJSON do Narrador apagava o campo "fala" desde a v9.135
+          const fala = falaDaResposta(bruto);
           return fala ? { nome: d.nome, fala } : null;
         } catch { return null; }
       }));

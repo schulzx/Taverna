@@ -592,8 +592,12 @@ sec("4. a definição operacional de 'número que muda'");
      motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
      O lugar pelo Cronista (frontend, MM15 (1), 30/09): 14633 -> 14638, +5 —
      `registrarLugar` passou a decidir pelo `lerLugarDito` (lugar.js), cinco
-     linhas ACIMA do relógio no arquivo; mesmo motivo, mesmo lugar. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14638/.test(relogio.porque));
+     linhas ACIMA do relógio no arquivo; mesmo motivo, mesmo lugar.
+     As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 14638 ->
+     14640, +2 — `colherAsFalas` trocou o `.slice` por `bocasDoTurno` mais
+     uma saída antecipada, duas linhas ACIMA do relógio; mesmo motivo,
+     mesmo lugar. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14640/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -866,9 +870,14 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        check-acoes-do-jogador.mjs.
        O lugar pelo Cronista (frontend, MM15 (1), 30/09): 13142 -> 13147,
        +5 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido por check-acoes-do-jogador.mjs. */
+       Re-medido por check-acoes-do-jogador.mjs.
+       As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 13147 ->
+       13149, +2 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/
+       RECUSAS_DO_COMBATE (colherAsFalas trocou o `.slice` por
+       `bocasDoTurno` mais uma saída antecipada). Re-medido por
+       check-acoes-do-jogador.mjs. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13147").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13149").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1014,8 +1023,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        check-acoes-do-jogador.mjs.
        O lugar pelo Cronista (frontend, MM15 (1), 30/09): 13009 -> 13014,
        +5 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido por check-acoes-do-jogador.mjs. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13014" && x.familia === "alcance"));
+       Re-medido por check-acoes-do-jogador.mjs.
+       As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 13014 ->
+       13016, +2 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/
+       RECUSAS_DO_COMBATE. Re-medido por check-acoes-do-jogador.mjs. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13016" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1086,8 +1098,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      13140 -> 13158, +18 — o mesmo delta desta etapa, re-medido por
      check-acoes-do-jogador.mjs.
      O lugar pelo Cronista (frontend, MM15 (1), 30/09): 13158 -> 13163, +5 —
-     o mesmo delta desta etapa, re-medido por check-acoes-do-jogador.mjs. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13163/.test(S.ondeSai));
+     o mesmo delta desta etapa, re-medido por check-acoes-do-jogador.mjs.
+     As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 13163 ->
+     13165, +2 — o mesmo delta desta etapa, re-medido por
+     check-acoes-do-jogador.mjs. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13165/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

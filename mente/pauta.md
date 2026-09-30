@@ -431,7 +431,9 @@ O limite é o que um commit revertido não desfaz.
   1. ✓ *feito em v9.341* · **O lugar pelo Cronista** — dentro de um prédio ele devolve `"lugar": "cidade"` a cada turno; o sistema lê-o como o
      Narrador a tirar a heroína de lá: 4 "[LUGAR — RECUSADO]" falsos em 10 respostas, uma saída falsa que passou (T10), e
      "saio do Último Gomo e vou ao Fundo do Poço" registou o Último Gomo (T11). Era aqui que a sessão partia.
-  2. **O gasto e o disfarce** — 3,6 chamadas por resposta (a primeira, ~2,0): quatro falas de personagem pagas e deitadas
+  2. ✓ *o gasto feito em v9.342: as bocas pagas a zero (tabela), 3,6 → 3,2 por resposta; fica: 11 das 21 chamadas leves da
+     sessão 2 não são do Cronista (~1,1 por resposta) e sem o registo das chamadas não se atribuem — suspeitos o portão e as
+     2 do T11; o disfarce é o nº 3 da ordem do coordenador* · **O gasto e o disfarce** — 3,6 chamadas por resposta (a primeira, ~2,0): quatro falas de personagem pagas e deitadas
      fora (nenhuma entra em pauta nem na tela; duas de alguém fora de cena). E o 429 aparece como recusa do Mestre ("a porta
      não se abre para esta mão") e anda o relógio num turno que não aconteceu. O teto em si é infra — da pessoa.
   3. **Persuasão sem dado revela um segredo da espinha** (T10), contra a base (o Fundo do Poço é a casa de banhos), e o

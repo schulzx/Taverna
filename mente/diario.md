@@ -15,7 +15,37 @@ Formato:
 ```
 
 ---
-## 30/09 18:51 · v9.341 · MM15 (1) · o "cidade" do Cronista não tira a heroína da taverna, e "saio de X" vai a Y · commit (o hash vai no próximo bloco)
+## 30/09 19:32 · v9.342 · MM15 (2) · a boca que se pagava e nunca falava · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o segundo da MM15 — a segunda sessão gastou 3,6 chamadas pagas por resposta (a primeira ~2,0), quatro
+  delas falas de personagem que não chegaram a lado nenhum. É dinheiro de cada jogador a cada turno, e o teto de 500 por
+  endereço conta todas. **Sem chamadas pagas hoje:** provado em Node.
+- **estado inicial:** verde (`fab6d06`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend — a causa, que não era a suposta:** as falas não se perdiam numa corrida nem no corte da pauta; **nenhuma chegou
+  nunca ao Narrador desde que nasceram, na v9.135 (27/08).** `colherAsFalas` lia a resposta da boca com `extrairJSON`, que é
+  o parser do Narrador e só devolve os campos dele — o campo `fala` morria ali, o envelope A FALA saía vazio. Provado em
+  Node nas três formas (limpo, entre crases, truncado), e pelo commit que criou a fala.
+- **o orçamento de um turno:** a boca 0–2 (antes do Narrador, que esperava ~1,5 s por ela) · o Narrador 1 · a rede de
+  segurança 0–1 · o portão 0–1 · o Cronista 1. Antes 2–6 chamadas por turno; agora 2–4; um turno típico com gente, 4 → 2.
+- **decisão (média, com o motivo):** `BOCAS_POR_TURNO = 0` numa tabela, e a leitura consertada (`falaDaResposta`). Porquê
+  zero e não "consertar e manter as duas bocas": ligá-las seria dar ao jogador uma coisa que ele nunca teve, pagando duas
+  chamadas a mais por turno — mudar o que ele vive, e mais caro. Com zero, **o jogador não perde nada que tenha tido** (as
+  duas sessões de prova, "as melhores dez respostas" incluídas, foram jogadas sem nenhuma fala a chegar), e o Narrador
+  começa ~1,5 s mais cedo. "Só a quem está na cena" não resolvia: as bocas já saíam do "aqui" (o Túlio estava no "aqui"
+  por outro defeito, o nº 4/5). Na tabela, "desligar o que existe" é pesado; pesei-o pela régua da ordem de 23/09 — um commit
+  revertido conserta isto, e voltar é trocar um número, agora com a leitura a funcionar — e porque o coordenador pediu o
+  corte deste gasto. Fica dito aqui para a pessoa auditar.
+- **em número:** sessão 2, **3,6 → 3,2 chamadas por resposta** (3,0 se as duas leves do T11 que voltaram 429 eram bocas, como
+  o código indica; não provado, o registo das chamadas não ficou). Com o teto de 500: **138 → 156 respostas por dia** por
+  jogador. Sessão 1: ~2,0 antes e depois (não teve bocas). **Fica por explicar:** 11 das 21 chamadas leves da sessão 2 não são
+  do Cronista — ~1,1 por resposta; é o próximo corte, e precisa do registo das chamadas na terceira sessão.
+- **frontend:** o import, `bocasDoTurno(mov, { conteudo })` com saída imediata sem rede, `falaDaResposta(bruto)`; `garantirFala`
+  e `MAX_BOCAS` saem do App e ficam com leitores nas suítes; +2 linhas re-medidas.
+- **para quem joga:** o Mestre responde mais depressa em cada turno com gente, e cada jogador tem ~18 respostas a mais por
+  dia no mesmo teto.
+
+## 30/09 18:51 · v9.341 · MM15 (1) · o "cidade" do Cronista não tira a heroína da taverna, e "saio de X" vai a Y · commit `fab6d06`
 
 - **por que andou:** a ordem do coordenador — a MM15 pela sua ordem, e o lugar à frente, porque é o que parte a sessão.
   **Sem chamadas pagas hoje** (o teto do nosso endereço esgotou-se): provado pela suíte e pelo que o jogo faria.

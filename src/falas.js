@@ -140,6 +140,80 @@ export function garantirFala(bruta) {
   return f.length > TETO_DA_FALA ? `${f.slice(0, TETO_DA_FALA - 1).trimEnd()}…` : f;
 }
 
+/* ---------------- A RESPOSTA DO ATOR (MM15, 30/09) ----------------
+   Da v9.135 à v9.341 o App lia a resposta do ator com `extrairJSON`, que é
+   o parser do NARRADOR: ele passa tudo por `sanearResposta`, que devolve só
+   narrativa, perigo, rolagem, mudancas e sugestoes. O campo `fala` morria
+   ali, em TODA resposta — `{"fala":"Aqui não."}` virava
+   `{ narrativa: "…" }`, `garantirFala(undefined)` dava "", e o envelope
+   saía vazio. Duzentas versões de falas pagas, e nenhuma palavra chegou ao
+   Narrador. A segunda sessão de prova (MM11) viu o sintoma — quatro
+   "Responda como …" que não aparecem em pauta nenhuma — e esta é a causa.
+
+   A boca tem o seu próprio leitor, e ele só conhece o campo dela. Resposta
+   sem o campo é pessoa calada, como antes: nada de adivinhar fala em prosa
+   solta, que é justamente o parágrafo que o ator não devia escrever. */
+export function falaDaResposta(bruto) {
+  const limpo = String(bruto == null ? "" : bruto).replace(/```json/gi, "").replace(/```/g, "").trim();
+  const ini = limpo.indexOf("{"), fim = limpo.lastIndexOf("}");
+  if (ini !== -1 && fim > ini) {
+    try {
+      const j = JSON.parse(limpo.slice(ini, fim + 1));
+      if (j && typeof j === "object" && typeof j.fala === "string") return garantirFala(j.fala);
+    } catch { /* segue para o resgate */ }
+  }
+  /* resgate por campo: JSON truncado ou torto, a fala inteira ou não */
+  const m = limpo.match(/"fala"\s*:\s*"((?:[^"\\]|\\.)*)("?)/);
+  if (!m) return "";
+  let s = m[1];
+  try { s = JSON.parse(`"${s}"`); } catch { s = s.replace(/\\"/g, "\"").replace(/\\n/g, " "); }
+  /* sem a aspa de fecho, a fala foi cortada pelo teto de tokens: o corte
+     fica visível, como no parágrafo longo de `garantirFala` */
+  const f = garantirFala(s);
+  return f && !m[2] && !f.endsWith("…") ? `${f.slice(0, TETO_DA_FALA - 1).trimEnd()}…` : f;
+}
+
+/* ---------------- QUANTAS BOCAS SE PAGAM (MM15, 30/09) ----------------
+   A regra de bolso: uma chamada paga que não chega ao jogador não se faz.
+
+   Cada boca é uma chamada ao modelo, feita ANTES do Narrador e à espera
+   dela (~1,5 s na sessão). No único fluxo que as pede — o turno em que eu
+   escrevo, em `enviar` — o Narrador fala sempre logo a seguir, e é ele quem
+   dá voz à gente da cena: o INTERPRETE_PROMPT diz-lhe com todas as letras
+   que "o que ela diz é seu, inteiro", e a linha A GENTE já lhe entrega o
+   gesto que o sistema escolheu.
+
+   Por isso ZERO, e não "só a quem está de facto na cena". A segunda via foi
+   medida e não serve: as bocas já saem de `pessoasDaCena()`, que é o
+   "aqui" do `elencoDaCena` — filtrar por ele é filtrar a lista por ela
+   mesma. Túlio, em casa, recebeu duas falas pagas porque ESTAVA no "aqui"
+   (os nomes fundidos e a gente da cidade que segue a heroína, os defeitos 4
+   e 5 da sessão); o conserto dele é no elenco, não aqui.
+
+   O que se perde é nada que o jogador tenha tido: pela causa acima, fala
+   nenhuma chegou nunca à pauta, e as duas sessões de prova (a segunda deu
+   "as melhores dez respostas que joguei nesta mesa") foram jogadas assim.
+   O que se ganha: até duas chamadas e ~1,5 s em cada turno com gente.
+
+   A boca continua inteira e agora lê a própria resposta: voltar a pedi-la
+   é mudar este número (até `MAX_BOCAS`), e isso é decisão de quem jogar o
+   antes e o depois — nunca mais um gasto que ninguém viu. */
+export const BOCAS_POR_TURNO = 0;
+
+/* Quem recebe boca neste turno, pela ordem que o Intérprete deu (o laço
+   mais forte primeiro). Vazio em turno do sistema — o que começa por
+   colchete não é frase do jogador, e ninguém responde a um envelope. */
+export function bocasDoTurno(movimentos, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const conteudo = o.conteudo == null ? "" : String(o.conteudo);
+  const pedidas = o.bocas == null ? BOCAS_POR_TURNO : Number(o.bocas);
+  const n = Math.max(0, Math.min(MAX_BOCAS, Math.floor(Number.isFinite(pedidas) ? pedidas : 0)));
+  if (!n) return [];
+  if (conteudo.trimStart().startsWith("[")) return [];
+  const mov = (Array.isArray(movimentos) ? movimentos : []).filter((m) => m && m.nome && m.pessoa);
+  return mov.slice(0, n);
+}
+
 /* ---------------- O QUE VAI À PAUTA ----------------
    Fato consumado, como todo envelope desta casa. O Narrador costura; ele
    não reescreve e não dá fala a quem não falou. */
