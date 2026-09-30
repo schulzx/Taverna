@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 17:58 · v9.340 · MM11 (2) · a segunda sessão de prova — parcial, cortada pelo teto diário · commit (o hash vai no próximo bloco)
+## 30/09 17:58 · v9.340 · MM11 (2) · a segunda sessão de prova — parcial, cortada pelo teto diário · commit `c6646b6`
 
 - **por que andou:** a ordem do coordenador — fechados os três restos da MM14 (v9.338, v9.339, v9.340), jogar a
   segunda sessão, 25 a 30 respostas, pelo mesmo método, e responder de novo "o Mestre toca uma sessão à la Matt?".
