@@ -55,7 +55,7 @@ import { criarRelogio } from "./relogios.js";
 import { situacaoDe, SITUACOES } from "./mundo-base.js";
 /* MM13b: a preposição colada ao artigo ("na Corda Velha"), a mesma régua
    que a abertura e o "você está em" já usam. */
-import { comEm } from "./lugar.js";
+import { comEm, contrair } from "./lugar.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -237,7 +237,7 @@ export const ETAPAS = {
      omissao, inclusive quem nunca foi preso. */
   resgatar: {
     id: "resgatar", icone: "⛓",
-    texto: (e) => `Tirar ${e.alvo} de la`,
+    texto: (e) => `Tirar ${e.alvo} de lá`,
     ver: (e, m) => {
       const s = situacaoDe(m.base, e.alvo);
       if (s === SITUACOES.cativa || s === SITUACOES.ferida || s === SITUACOES.morta) return false;
@@ -348,7 +348,12 @@ export function tipoDaEtapa(e, { estrito = false } = {}) {
      virar missao. La, verbo que ninguem reconhece nao vira nada. */
   return estrito ? "" : "ir_a";
 }
-export function textoDaEtapa(e) { return etapaDef(e.tipo).texto(e); }
+/* MM14 (30/09): A CONTRAÇÃO, num lugar só. "Chegar a o casarão" e "Chegar a a
+   torre caída" foram à tela (prova jogada de MM13, sessão de prova MM11): o
+   alvo vem da base com o artigo colado, e o molde da etapa só sabe "a".
+   Toda linha de etapa passa por aqui, então a regra do português
+   (`contrair`, lugar.js) entra aqui e em nenhum molde. */
+export function textoDaEtapa(e) { return contrair(etapaDef(e.tipo).texto(e)); }
 
 /* ---------------- OS TIPOS DE MISSÃO ---------------- */
 export const TIPOS = {

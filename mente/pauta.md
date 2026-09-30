@@ -342,7 +342,7 @@ O limite é o que um commit revertido não desfaz.
 - [x] **o sistema fala de si no descanso longo** · feito 30/09, v9.324 · da prova jogada de MM13, 30/09
   "Fio local: d20 = 16 vs 10 → acontece · Nova missão: d20 = 3 vs 13 → nada · Arco regional…" na
   tela — viola a lei "o sistema não fala de si".
-- [ ] **uma missão "do Mestre" antes do primeiro passo da principal** · da prova jogada de MM13
+- [x] **uma missão "do Mestre" antes do primeiro passo da principal** · feito em v9.339 · da prova jogada de MM13
   No T8, "Tirar Anya de lá… não se recusa", com o próprio herói como contratante ("Varek paga para
   trazer de volta") e erros de texto ("de o casarão", "Chegar a o casarão", "vivo" para Anya). O
   mural abriu no mesmo turno com o mesmo molde. Uma segunda história forçada antes de a primeira
@@ -406,7 +406,7 @@ O limite é o que um commit revertido não desfaz.
      ainda não registada; é no sinal `ehPerguntaAoMundo`* · **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
      vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
   7. ✓ *feito em v9.336 (perguntar é de graça — decisão do coordenador)* · **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
-  8. **Missões forçadas em série** *(✓ os dois canais que fechavam por título saíram em v9.337, depois de os fios e os contratos
+  8. ✓ *feito em v9.339 (fica: o registo de pessoas não recusa o nome do próprio herói — ~9853, ~9866; a trama já está protegida)* · **Missões forçadas em série** *(✓ os dois canais que fechavam por título saíram em v9.337, depois de os fios e os contratos
      passarem a missões que se conferem e os saves antigos migrarem; ficam inertes o bloco "contratos ativos" do mural e
      `abandonarContrato`, que só serviam a saves anteriores à v9.27. Ainda: o Narrador e o Cronista fechavam quests antigas por título, sem
      conferir — `App.jsx` ~9651 e ~10470; fechá-los é remover o que existe, decidir; e a secção `pessoas` do

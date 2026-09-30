@@ -69,7 +69,7 @@ import { criarMissao, etapaAtual, garantirMissoes, mesmaPessoa, rumoDaEtapa } fr
 import { criarRelogio, envelopeCheio, TAMANHOS } from "./relogios.js";
 import { vocacaoDe } from "./comercio.js";
 import { fichaDaCidade } from "./cidade-por-dentro.js";
-import { comEm } from "./lugar.js";
+import { comEm, contrair } from "./lugar.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -350,18 +350,10 @@ const encher = (modelo, v) => String(modelo || "").replace(/\{(\w+)\}/g, (_, k) 
    Juramento") e o objeto começa por "o que". Encaixados numa frase, "de o
    que" e "por A Confraria" denunciam a costura. `contrair` junta a
    preposição ao artigo (do, pelo, na); `meio` baixa o artigo que ficou a
-   meio da frase. A mesma burrice deliberada de `comEm` (lugar.js). */
-export const CONTRACOES = {
-  de: { o: "do", a: "da", os: "dos", as: "das" },
-  por: { o: "pelo", a: "pela", os: "pelos", as: "pelas" },
-  em: { o: "no", a: "na", os: "nos", as: "nas" },
-};
-function contrair(frase) {
-  return String(frase || "").replace(/\b(de|por|em) (o|a|os|as) /gi, (m, p, art) => {
-    const c = (CONTRACOES[p.toLowerCase()] || {})[art.toLowerCase()];
-    return c ? `${c} ` : m;
-  });
-}
+   meio da frase. A mesma burrice deliberada de `comEm` (lugar.js).
+   MM14 (30/09): a tabela CONTRACOES e `contrair` mudaram-se para
+   `lugar.js` — as tramas e as etapas das missões precisavam da mesma
+   regra, e a segunda cópia seria a segunda régua. */
 const meio = (nome) => String(nome || "").replace(/^(O|A|Os|As) /, (m) => m.toLowerCase());
 
 function objetoDe(alvo) {
@@ -613,11 +605,80 @@ function principalDe(abertura, missoes) {
 export function muralLiberado(estado) {
   const e = obj(estado);
   const a = garantirAbertura(e.abertura);
-  if (a.legado) return true;
   if (a.turnos >= MURAL.turnos) return true;
-  const m = principalDe(a, e.missoes);
+  return deuOPrimeiroPasso(a, e.missoes);
+}
+
+/* O critério da MM13 sem o atalho do relógio: o primeiro passo da
+   principal feito, ou a principal já fora de jogo. Save antigo: sim. */
+function deuOPrimeiroPasso(a, missoes) {
+  if (a.legado) return true;
+  const m = principalDe(a, missoes);
   if (!m || m.id !== a.principalId || m.status !== "ativa") return true;
   return !!(m.etapas[0] && m.etapas[0].feito);
+}
+
+/* ============================================================
+   A TRAMA ESPERA A SUA VEZ (MM14, 30/09)
+
+   "Quatro missões do sistema em 43 respostas" (sessão de prova MM11), e
+   na prova jogada de MM13 uma missão "do Mestre" no turno 8, antes de o
+   herói dar o primeiro passo da principal. A trama forçada (`tramas.js`,
+   que o App tenta dar a cada turno) só tinha três portas: nenhuma outra
+   trama ativa, o mural liberado e o compasso fora do respiro. Por isso:
+
+   · NASCIA ANTES DO PRIMEIRO PASSO — o mural liberta-se também por
+     `MURAL.turnos` (6), e a trama usava a mesma porta. Para o mural é
+     certo: o cartaz é opcional e espera o jogador. A trama não se recusa,
+     e uma segunda história que se não recusa antes de a primeira andar é o
+     cardápio outra vez.
+   · NASCIA EM SÉRIE — "uma por vez" quer dizer que, no turno a seguir a
+     uma fechar, nasce a próxima: "Tirar Branca de lá" fechou no turno 10 e
+     "O lance" nasceu no 11; "O lance" fechou no 42 e "A noite em claro"
+     nasceu no 43. Nada media o espaço entre elas.
+
+   A regra de mesa: a principal é a história. Uma trama forçada só nasce
+   quando a anterior fechou, a principal deixou espaço, e o herói está
+   orientado pelo critério da MM13 (o primeiro passo feito — sem o atalho
+   dos seis turnos). "Espaço" é medido com o que o save já tem, sem campo
+   novo:
+   · `dias` — dias de jogo desde que nasceu a última história que não se
+     recusa (a principal da abertura ou uma trama: `criadaEm`). O relógio
+     de turnos da abertura pára quando o sino toca, e o save antigo não o
+     tem; o dia de jogo existe sempre e anda para todos.
+   · `semAvanco` — turnos seguidos sem a principal andar (o contador do
+     sino). Quem acabou de dar um passo na história está nela; interromper
+     aí é roubar-lhe a cena. Depois de o sino tocar o contador congela, e
+     esta porta deixa de ler.
+   `forcar` (a abertura sem pista) não passa por aqui: é a única história.
+   ============================================================ */
+export const ESPACO_DA_TRAMA = {
+  dias: 1,
+  semAvanco: 3,
+  /* as histórias que não se recusam e contam para o intervalo */
+  contam: ["principal", "trama"],
+};
+
+/* `estado`: { abertura, missoes, dia }. Devolve true quando uma trama
+   forçada pode nascer neste turno. */
+export function tramaTemEspaco(estado) {
+  const e = obj(estado);
+  const a = garantirAbertura(e.abertura);
+  const ms = garantirMissoes(e.missoes);
+  /* a anterior fechou */
+  if (ms.some((m) => m.status === "ativa" && m.tipo === "trama")) return false;
+  /* o herói está orientado */
+  if (!deuOPrimeiroPasso(a, ms)) return false;
+  /* o intervalo, em dias de jogo */
+  const dia = Number(e.dia);
+  const nascidas = ms.filter((m) => ESPACO_DA_TRAMA.contam.includes(m.tipo)).map((m) => Number(m.criadaEm) || 0);
+  if (Number.isFinite(dia) && nascidas.length && dia - Math.max(...nascidas) < ESPACO_DA_TRAMA.dias) return false;
+  /* a principal não acabou de andar */
+  if (!a.legado && !a.tocou) {
+    const m = principalDe(a, ms);
+    if (m && m.id === a.principalId && m.status === "ativa" && a.semAvanco < ESPACO_DA_TRAMA.semAvanco) return false;
+  }
+  return true;
 }
 
 /* O veto que vai à pauta (secção NÃO PODE) enquanto o mural espera. */

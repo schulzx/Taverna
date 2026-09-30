@@ -526,6 +526,38 @@ export function comA(nome) {
   return `a ${s}`;
 }
 
+/* ---------------- A CONTRAÇÃO NO MEIO DA FRASE (MM14, 30/09) ----------------
+   Os três irmãos de cima resolvem o artigo quando se sabe onde o nome
+   entra. `contrair` é o quarto, para a frase já montada: os nomes da base
+   nascem com artigo ("A Confraria do Juramento", "o casarão") e, encaixados
+   num molde, dão "de o casarão", "Chegar a a torre caída", "em A Porta
+   Aberta" — o que a prova jogada de MM13 viu numa missão do Mestre.
+
+   Nasceu em `abertura.js` (MM13) só com de, por e em; muda-se para aqui,
+   ao lado de comEm/comDe/comA, porque a regra é do português e não da
+   abertura: as tramas e as etapas das missões precisam dela, e uma segunda
+   cópia seria a segunda régua. Ganhou a linha do "a" (ao, à, aos, às).
+
+   A mesma burrice deliberada: só preposição solta seguida de artigo solto.
+   A preposição não pode vir colada a letra nem a hífen — "leva-a a casa" é
+   o pronome da ênclise, não a preposição. A maiúscula do começo da frase
+   passa à contração ("De o" → "Do"). */
+export const CONTRACOES = {
+  de: { o: "do", a: "da", os: "dos", as: "das" },
+  por: { o: "pelo", a: "pela", os: "pelos", as: "pelas" },
+  em: { o: "no", a: "na", os: "nos", as: "nas" },
+  a: { o: "ao", a: "à", os: "aos", as: "às" },
+};
+const RX_CONTRACAO = new RegExp(`(?<![\\p{L}\\-])(${Object.keys(CONTRACOES).join("|")}) (o|a|os|as) `, "giu");
+export function contrair(frase) {
+  return String(frase == null ? "" : frase).replace(RX_CONTRACAO, (m, p, art) => {
+    const c = (CONTRACOES[p.toLowerCase()] || {})[art.toLowerCase()];
+    if (!c) return m;
+    const cap = p.charAt(0) !== p.charAt(0).toLowerCase();
+    return `${cap ? c.charAt(0).toUpperCase() + c.slice(1) : c} `;
+  });
+}
+
 export function textoDoLugar(l) {
   if (!l) return "";
   const d = distanciaDe(l.distancia);

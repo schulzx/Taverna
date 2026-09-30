@@ -65,7 +65,8 @@
    ============================================================ */
 
 import { FASES, faseDe } from "./vilao.js";
-import { comDe, comEm } from "./lugar.js";
+import { comDe, comEm, contrair } from "./lugar.js";
+import { mesmaPessoa } from "./missoes.js";
 
 const limpar = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 const inteiro = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : d);
@@ -316,6 +317,38 @@ export const TIPOS_DE_VIRADA = [
 ];
 export function tipoDeViradaPorId(id) { return TIPOS_DE_VIRADA.find((t) => t.id === id) || null; }
 
+/* ---------------- QUEM SUMIU, E EM QUE GÉNERO (MM14, 30/09) ----------------
+   "Tirar Anya de lá … paga para trazer de volta — vivo, se der" (prova
+   jogada de MM13): quem sumiu nasce com um nome sorteado, e o molde
+   escrevia sempre o masculino. Quem monta o material pode dizer o sexo
+   (`sumidoSexo`, o mesmo "masc"/"fem" de `nomePessoa`); quando não diz, a
+   frase fica na forma que não pede concordância — a mesma saída que o
+   mural escolheu desde sempre (ofertas.js: "não voltou" serve a qualquer
+   pessoa). */
+export const DE_VOLTA_COM_VIDA = { masc: "vivo", fem: "viva", neutro: "com vida" };
+const comVida = (sexo) => DE_VOLTA_COM_VIDA[sexo] || DE_VOLTA_COM_VIDA.neutro;
+
+/* ---------------- QUEM PEDE (MM14, 30/09) ----------------
+   "Varek paga para trazer de volta" — e o Varek era o herói. Quem pede é
+   o primeiro conhecido do registo de pessoas, e o registo não recusa o
+   nome do próprio herói: o Narrador e o Cronista registam quem a narração
+   nomeia, e na primeira pessoa o herói é nomeado no primeiro turno — o
+   mais antigo do registo, logo o primeiro da fila. O herói nunca é quem
+   lhe pede nada. Nem um morto. `conhecidos`: as fichas do registo, pela
+   ordem dele; `gente`: a da base, desta cidade; `heroi`: o nome da ficha. */
+const ehOHeroi = (nome, heroi) => {
+  const a = String(nome || "").trim().toLowerCase(), b = String(heroi || "").trim().toLowerCase();
+  return !!a && !!b && (a === b || mesmaPessoa(nome, heroi));
+};
+export function quemPede(ctx) {
+  const { conhecidos = [], gente = [], heroi = "" } = ctx && typeof ctx === "object" ? ctx : {};
+  const serve = (p) => !!(p && p.nome) && !ehOHeroi(p.nome, heroi) && String(p.status || "").toLowerCase() !== "morto";
+  const c = (Array.isArray(conhecidos) ? conhecidos : []).find(serve);
+  if (c) return { nome: c.nome, papel: c.papel || "" };
+  const g = (Array.isArray(gente) ? gente : []).find(serve);
+  return g || null;
+}
+
 /* ---------------- OS VEÍCULOS ----------------
    Deliberadamente banais. O veículo não é o ponto — é o transporte da
    intenção, e uma quest que chama atenção para o próprio formato rouba a
@@ -386,9 +419,9 @@ export const VEICULOS = [
        `derrotar` com endereço (`talvezCacar`) e `talvezVirar` salta: era
        uma virada que nunca acontecia. Passa a emboscada, que o App já
        executa, à chegada; e o resgate é a segunda etapa, no lugar. */
-    montar: ({ pessoa, sumido, ermo }) => ({
+    montar: ({ pessoa, sumido, sumidoSexo, ermo }) => ({
       titulo: `Tirar ${sumido} de lá`,
-      descricao: `${sumido} não voltou de ${ermo.nome || "perto daqui"}. ${pessoa.nome} paga para trazer de volta — vivo, se der.`,
+      descricao: `${sumido} não voltou ${ermo.nome ? comDe(ermo.nome) : "de perto daqui"}. ${pessoa.nome} paga para trazer de volta — ${comVida(sumidoSexo)}, se der.`,
       etapas: [
         { tipo: "ir_a", alvo: ermo.nome || "", lugar: true },
         { tipo: "resgatar", alvo: sumido, onde: ermo.nome || "" },
@@ -492,7 +525,10 @@ export function veiculoPorId(id) { return VEICULOS.find((v) => v.id === id) || n
 export function montarTrama({ situacao, material, semente = "trama", rnd = null } = {}) {
   const s = garantirSituacao(situacao);
   const r = rnd || (() => Math.random());
-  const mat = material || {};
+  const mat0 = material && typeof material === "object" ? material : {};
+  /* MM14: o herói nunca é quem pede — mesmo que quem chama o mande. Sem
+     pessoa, os veículos que pedem alguém saem da urna, e fica o ermo. */
+  const mat = mat0.pessoa && ehOHeroi(mat0.pessoa.nome, mat0.heroi) ? { ...mat0, pessoa: null } : mat0;
   const intencao = escolherIntencao(s, { rnd: r });
   if (!intencao) return null;
 
@@ -521,8 +557,10 @@ export function montarTrama({ situacao, material, semente = "trama", rnd = null 
     id: `tr_${veiculo.id}_${intencao.id}`.slice(0, 40),
     veiculo: veiculo.id,
     intencao: intencao.id,
-    titulo: limpar(corpo.titulo, 70),
-    descricao: limpar(corpo.descricao, 240),
+    /* MM14: "de o casarão" — os nomes do mundo vêm com artigo, e a
+       regra do português é uma só (`contrair`, lugar.js) */
+    titulo: limpar(contrair(corpo.titulo), 70),
+    descricao: limpar(contrair(corpo.descricao), 240),
     dador: limpar((mat.pessoa && mat.pessoa.nome) || "", 40),
     etapas: corpo.etapas,
     nivel: s.nivel,

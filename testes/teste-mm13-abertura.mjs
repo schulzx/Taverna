@@ -37,10 +37,15 @@ import fs from "node:fs";
 import {
   RAZOES_DA_ESTRUTURA, LACOS_DO_ANTECEDENTE, OBJETO_DO_FEITIO, TITULO_DO_FEITIO, O_QUE_SE_SABE,
   LUGARES_DE_CONVERSA, CHEGADAS, HISTORIA_DO_LUGAR, SINO, PRENUNCIOS, ACONTECIMENTOS_DO_SINO,
-  SINO_DE_LONGE, MURAL, FIOS, PALAVRAS_DE_BASTIDOR, CONTRACOES,
+  SINO_DE_LONGE, MURAL, FIOS, PALAVRAS_DE_BASTIDOR,
   garantirAbertura, abrirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura,
   aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino,
 } from "../src/abertura.js";
+/* MM14 (30/09): CONTRACOES mudou-se de abertura.js para lugar.js, ao lado
+   de comEm/comDe/comA — as tramas e as etapas das missoes precisavam da
+   mesma regra, e uma segunda copia seria a segunda regua. A assercao das
+   contracoes, abaixo, continua a mesma: so muda de onde a tabela vem. */
+import { CONTRACOES } from "../src/lugar.js";
 import { gerarGeografia } from "../src/geografia.js";
 import { estenderEspinha, FEITIOS, conferirEspinha } from "../src/saga.js";
 import { ESTRUTURAS } from "../src/historia.js";
@@ -470,8 +475,11 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   /* MM14: nove → dez — entrou `sinosForaDeHora` (o sino fora de hora,
      perguntado depois). A asserção move-se com o motivo, sem afrouxar: ainda
      é o MESMO import, só que agora com o décimo nome. */
+  /* MM14 (nº 8): entrou `tramaTemEspaco` no fim do mesmo import. Prova-se o
+     que esta asserção sempre quis — as dez funções da abertura chegam ao App —
+     sem depender do fecho da lista. */
   t("App.jsx importa as dez funções de abertura.js",
-    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora } from "./abertura.js";'));
+    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora'));
   t("App.jsx importa chaveDoLugar de mundo-base.js",
     app.includes("masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from \"./mundo-base.js\";"));
 

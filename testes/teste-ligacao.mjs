@@ -125,6 +125,12 @@ sec("1. NENHUM MÓDULO MUDO");
      lista antiga só pelo título (`quest_atualizar` no Narrador,
      `missoes.concluidas` no Cronista). `teste-mm14-canais.mjs` prova a
      fiação por texto. A lista volta a ficar VAZIA, como a regra pede. */
+  /* 30/09 (Fase MM, MM14 · nº 8, as histórias em série): `palavra-dada.js`
+     nasce no backend e espera a fiação da MESMA leva — o App.jsx passa a
+     ler `promessaEmAberto` onde lia "a primeira missão ativa" (o fio da
+     memória, ~19440, e a situação da trama, ~16708). A entrada sai quando
+     o App o importar, e a lista volta a ficar VAZIA. */
+  /* e paga no mesmo dia: o App.jsx importa `promessaEmAberto`. A lista volta a ficar VAZIA. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

@@ -168,7 +168,7 @@ import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficie
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
-import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId } from "./tramas.js";
+import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
 import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
@@ -181,7 +181,7 @@ import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDa
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
-import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora } from "./abertura.js";
+import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
@@ -16672,8 +16672,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const conhecidos = Object.values(npcsRef.current || {}).filter((n) => n && n.nome && String(n.status || "").toLowerCase() !== "morto");
       /* quem PEDE é de preferência alguém que o herói já conhece: um pedido
          de estranho é um cartaz, e cartaz é o mural */
-      const pessoa = conhecidos.length ? { nome: conhecidos[0].nome, papel: conhecidos[0].papel || "" }
-        : (gente.length ? gente[0] : null);
+      const heroi = ((fichaViva() || personagem || {}).nome) || ""; const pessoa = quemPede({ conhecidos, gente, heroi }); /* MM14: quem pede nunca é o herói */
+        const sumidoSexo = Math.random() < 0.5 ? "masc" : "fem";
       return {
         cidade: vizinhas.length ? vizinhas[0] : null,
         pessoa,
@@ -16683,7 +16683,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
            Loja do Norte": o material entregava o LUGAR DE TRABALHO de quem
            pedia, e um ninho de bicho não se faz numa loja. */
         ermo: fora.length ? fora[Math.floor(Math.random() * fora.length)] : null,
-        sumido: nomePessoa(generoMundo(), undefined, Math.random, (mundoAtual() || {}).lexico),
+        sumido: nomePessoa(generoMundo(), sumidoSexo, Math.random, (mundoAtual() || {}).lexico), sumidoSexo, heroi,
         objeto: "pacote lacrado",
       };
     } catch { return {}; }
@@ -16705,7 +16705,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       temGrupo: (p0.grupo || []).length > 0,
       temCidadeVizinha: (((mapaRef.current || {}).cidades) || []).some((x) => x.descoberta && x.nome !== cidadeAtualRef.current),
       temGenteConhecida: Object.keys(npcsRef.current || {}).length > 0,
-      temPromessaAberta: (missoesAtivas(missoesRef.current) || []).length > 0,
+      temPromessaAberta: (() => { try { return !!promessaEmAberto(mensagensRef.current); } catch (e) { return false; } })(), /* MM14: só a palavra dada é promessa */
       nivel: p0.nivel || 1,
       intencoesFeitas: intencoesFeitasRef.current,
       tramasFeitas: tramasFeitasRef.current,
@@ -16720,7 +16720,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* MM13: enquanto o herói não está orientado, a trama também espera —
          é uma oferta do mundo como outra qualquer. `forcar` (a abertura,
          quando não há pista) continua furando esta espera. */
-      if (!forcar && !muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return "";
+      if (!forcar && !muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return ""; if (!forcar && !(() => { try { return tramaTemEspaco({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, dia: diaRef.current }); } catch (e) { calou("tramaTemEspaco", e); return true; } })()) return ""; /* MM14: uma trama forçada só quando a principal deixou espaço */
       /* e não no respiro: o respiro existe para NÃO haver nada em jogo.
          v9.120: MENOS NA ABERTURA. O compasso nasce em "respiro" — é o
          padrão de `garantirCompasso` —, e por isso a primeira cena da
@@ -16742,7 +16742,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       missoesRef.current = [...(missoesRef.current || []), m]; setMissoes(missoesRef.current);
       intencoesFeitasRef.current = [...intencoesFeitasRef.current, t.intencao].slice(-12);
       tramasFeitasRef.current = [...tramasFeitasRef.current, t.veiculo].slice(-8);
-      pushMsgs([{ autor: "sistema", texto: `✦ ${m.titulo} — entrou no diário. Esta é do Mestre: não se recusa.` }]);
+      pushMsgs([{ autor: "sistema", texto: `✦ ${m.titulo} — entrou no diário.` }]);
       return envelopeDaTrama(t);
     } catch (e) { calou("talvezDarUmaTrama", e); return ""; }
   };
@@ -19437,7 +19437,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
              e a diferença entre as duas grafias é a diferença entre um fio que
              existe e um que nunca dispara — foi assim que o "o prazo aperta"
              passou vidas inteiras de campanha calado (v9.71). */
-          promessaAberta: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean)[0] || "",
+          promessaAberta: (() => { try { return promessaEmAberto(mensagensRef.current); } catch (e) { return ""; } })(), /* MM14: só a palavra dada é promessa */
           nomeEsquecido: longe.length ? { nome: longe[0].nome, vontade: longe[0].vontade || "" } : null,
           tentativaFalha: (fracassoEsquecido(tentativasRef.current, { dia: diaRef.current }) || {}).frase || "",
           derrotado: derrotadosDaSessaoRef.current[derrotadosDaSessaoRef.current.length - 1] || "",

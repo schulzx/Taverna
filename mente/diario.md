@@ -15,7 +15,35 @@ Formato:
 ```
 
 ---
-## 30/09 16:03 · v9.338 · MM14 (6) · ninguém segue a heroína à masmorra, e ninguém "mudou" sem a ter visto · commit (o hash vai no próximo bloco)
+## 30/09 16:31 · v9.339 · MM14 (7) · uma história de cada vez, quem pede nunca é o herói, e só a palavra dada é promessa · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o segundo dos restos da MM14 — quatro histórias forçadas em 43 respostas, uma delas antes
+  do primeiro passo da principal, com o próprio herói a contratar, e "alguém vem cobrar o que você disse" sem
+  promessa nenhuma.
+- **estado inicial:** verde (MM14 (6) no ar, `92875d0`).
+- **bastão:** tomado por mim para a fiação (deslocamento zero); devolvido com este commit.
+- **as tramas em série:** a trama forçada passava pela mesma porta do mural, que se abre ao fim de 6 turnos —
+  certo para um cartaz opcional, errado para uma história que não se recusa; e "uma de cada vez" fazia nascer a
+  seguinte no turno logo a seguir a uma fechar. Agora (`tramaTemEspaco`) só nasce com a anterior fechada, **o
+  primeiro passo da principal feito**, pelo menos um dia desde a última história forçada, e a principal parada
+  há 3 turnos (depois do sino, não espera). Medido: a sessão MM11 tinha 3 tramas forçadas → 0; uma campanha
+  de 10 dias, 13 (até 2 num dia) → 9 (no máximo 1 por dia, nenhuma logo a seguir a um passo da principal).
+- **"Varek paga para trazer de volta":** quem pedia era o mais antigo do registo de pessoas — e o registo não
+  recusa o nome do próprio herói, que na primeira pessoa aparece logo no turno 1. Agora quem pede nunca é o
+  herói nem um morto. **As contrações** ("de o casarão", "Chegar a o") passam por uma função só, a que a
+  abertura já tinha, movida para o módulo comum (em 200 tramas, 161 costuras → 0). **"Vivo" para Anya:** o texto
+  concorda com o sexo de quem sumiu ("viva, se der").
+- **"alguém vem cobrar o que você disse":** não vinha do Livro de Promessas — "a promessa em aberto" era **o
+  título da primeira missão ativa**, e no turno da cobrança era uma trama forçada que ninguém prometera.
+  Agora (`src/palavra-dada.js`) **promessa é uma frase da heroína, dita a alguém, com compromisso** ("prometo",
+  "juro", "tens a minha palavra"), pela peneira; as 28 frases da sessão dão 0 promessas, 7 em 7 promessas de
+  verdade são lidas.
+- **orquestrador:** a linha "Esta é do Mestre: não se recusa" saiu — era o sistema a falar de si.
+- **o que fica:** o registo de pessoas não recusa o nome do próprio herói (a trama já está protegida) — na pauta.
+- **para quem joga:** uma história de cada vez, e só depois de a principal ter andado; ninguém lhe pede para
+  resgatar alguém em nome dela; e só cobra uma promessa quem ouviu uma.
+
+## 30/09 16:03 · v9.338 · MM14 (6) · ninguém segue a heroína à masmorra, e ninguém "mudou" sem a ter visto · commit `92875d0`
 
 - **por que andou:** o primeiro dos restos da MM14, retomado depois do limite de uso — agora uma mão de cada
   vez, em primeiro plano.
