@@ -2652,6 +2652,9 @@ de uma tabela e se desfaz num commit.*
 
 ## Semeado em R21 (regente, 24/09)
 
+- [ ] **R21l · o fecho pelo conteúdo, num telefone físico** · de: regente · 29/09 · prova
+  R21k consertou o toque que sacudia a folha (5 de 5 → 0 de 5, medido com `PointerEvent`s sintéticos). Falta o que só um dedo real prova: com o rolamento no topo, descer o conteúdo pode ser tomado pelo navegador (`pointercancel`) antes de o arrasto nascer — nunca fecha nem treme, mas pode não fechar. Se não fechar no aparelho, o passo seguinte é ouvir `touchmove` com `{ passive: false }` só enquanto há candidato. A pega fecha sempre.
+
 - [ ] **R21g · `✦` e `◆` da fileira da batalha medem 35 × 48** · de: jogo (prova jogada) · leve
   Largura abaixo de `ALVOS.piso` (48) na fileira que decide a luta. Os dois sobem ao piso; a fileira já ocupa três linhas a 375 (160 px), e é a soma dos verbos que a parte — o que pede, a seguir, a pergunta de R17 (*cada fixo custa 56 de 343*) aplicada à batalha.
 - [ ] **R21h · as marcas no trilho da coluna larga** · de: oficial · leve

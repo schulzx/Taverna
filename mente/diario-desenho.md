@@ -19,6 +19,105 @@ Formato:
 
 ---
 
+## 29/09 · v9.320 · **R21k — um toque nunca é um arrasto: o alforje deixa de tremer e de engolir toques** · commit HASH_R21K
+
+*A forma: `mente/formas.md` §`### R21k · o gesto de descer tinha de ser pedido, e
+não suposto`. Item único, pedido pela pessoa com a fila do desenho parada
+(ordem de 28/09).*
+
+**A queixa, no telefone:** *"ao abrir a ficha, a tela fica toda bugada, não
+consigo abrir o grupo nem as abas ao lado, quando tento clicar nas abas a tela
+desce e sobe sozinha... como se tivesse fechando e volta."* O defeito é meu: fui
+eu que rigi R21, e a construção leu mal uma forma que estava bem escrita.
+
+- **estado inicial:** HEAD `fd85336`, `v9.319`; sem `fila-pausada`; a trava do
+  desenho livre, tomada às 22:52; a outra mente viva (`orquestrador`, MM8c-1,
+  com `src/cena.js`, `npcs.js`, `prompt.js` e testes na árvore, e com o bastão do
+  `App.jsx` desde as 22:56 para a fiação dela). **Não precisei do bastão**: o
+  defeito mora todo em `src/painel-alforje.jsx`.
+
+### o diagnóstico, confirmado a medir antes de mexer
+
+`aoPressionarConteudo` começava o arrasto em **qualquer** `pointerdown` no
+conteúdo com o rolamento no topo — sem limiar, sem direcção, sem excluir o que
+se toca. **As sub-abas da Gestão (`Ficha`, `Grupo`, `Pessoas`, `Mercado`,
+`Mural`) moram no topo do conteúdo, onde o rolamento está sempre a zero:** cada
+toque nelas armava um arrasto. O arrasto desligava a animação de entrada
+(`animation: none`) e, ao soltar, ela recomeçava do zero — a folha descia a
+`translateY(100%)` e subia. O tremor do dedo virava `translateY`, o alvo saía de
+baixo do dedo, e o toque perdia-se. E `soltar` chamava `aoFechar` de dentro de um
+*updater* de estado (efeito colateral que o StrictMode corre duas vezes).
+
+### aprendiz
+
+Só `src/painel-alforje.jsx` e `src/estilo.js`: o `pointerdown` passa a **armar
+um candidato** num ref (sem re-render); o arrasto só **começa** num `pointermove`
+que ande `ALFORJE.limiarDoArrasto` **para baixo**, com o vertical a dominar;
+**nunca** a partir de botão, aba, ligação ou campo; a classe de entrada **sai do
+elemento quando a entrada acaba** (`onAnimationEnd`, com rede de 300 ms) e só
+volta ao reabrir; soltar abaixo de `2 × ALVOS.piso` devolve a folha com uma
+transição de `VEU.sai`, sem repor a entrada; `pointercancel` nunca fecha; a pega
+ganhou `touch-action: none` e o conteúdo `overscroll-behavior: contain`. Suíte
+nova `testes/teste-arrasto-do-alforje.mjs` (32 asserções de fonte).
+
+### a prova
+
+| a 375 × 812, alforje aberto na Gestão | antes | depois |
+|---|---|---|
+| toques nas 5 sub-abas que **mexeram a folha** (a entrada a recomeçar) | **5 de 5** | **0 de 5** |
+| toques que trocaram de sub-aba | 5 de 5, com a folha a piscar | 5 de 5, parada |
+| tremor de 3 px durante um toque no conteúdo | a folha desceu 3 px (`top` 96 → 99) | parada em 96 |
+| arrasto de 150 px pela pega | — | fecha |
+| arrasto de 60 px pela pega | — | volta ao sítio, sem reentrar |
+| arrasto de 150 px no conteúdo já rolado (`scrollTop` 300) | — | não arma nada; o conteúdo rola |
+
+**O que isto mede e o que não mede, dito:** os toques foram `PointerEvent`s
+sintéticos com `pointerType: "touch"` (os cliques da ferramenta chegam como rato
+e não tremem). Medem a regra — nenhum toque abaixo do limiar mexe a folha, e a
+entrada não se repõe. **Não medem um dedo real num telefone real**, e há um caso
+que só esse prova: no conteúdo, um dedo verdadeiro a descer com o rolamento no
+topo pode ser tomado pelo navegador (`pointercancel`) antes de o nosso arrasto
+nascer — o conserto garante que isso **nunca fecha nem treme**, mas o fecho pelo
+conteúdo pode não acontecer no aparelho. A pega fecha sempre (`touch-action:
+none`). Fica na pauta como R21l.
+
+- `npm run build` limpo. **Na árvore, `check-acoes-do-jogador` está vermelho
+  (94 endereços do `App.jsx` deslocados) — é da outra mente**, que tem o bastão
+  e está a editar o `App.jsx` agora; eu não o toquei. **HEAD + só os meus três
+  arquivos (`mente/so-o-meu.sh`): 230/230 suítes e 15/15 varredores.** Verde meu;
+  subo.
+
+### decisões médias tomadas, cada uma com o motivo
+
+- **O limiar é 8 px, citado:** o *touch slop* do Android (`config_viewConfigurationTouchSlop`
+  = 8 dp no AOSP), a distância abaixo da qual a plataforma ainda chama o gesto de
+  toque. Mora em `ALFORJE.limiarDoArrasto`.
+- **Não passou pelo par:** não é forma nova — é a saída 5 de §2 construída como
+  estava escrita (*"o comportamento das folhas do iOS"*). O `jogo` e o `desenho`
+  já a tinham assinado; falhou a tradução. Figma sem alteração.
+- **`touchmove` com `passive: false` ficou de fora:** só entraria se o
+  `overscroll-behavior` não bastasse, e nada medido o pediu; acrescentá-lo sem
+  prova seria inventar problema. Se R21l mostrar no aparelho que o fecho pelo
+  conteúdo não acontece, é ele o próximo passo.
+
+### o que ficou
+
+- **R21l** — provar num telefone físico o fecho pelo conteúdo (e o `touchmove`
+  se faltar).
+- **Sem proposta ambiciosa neste ciclo, e o motivo é a ordem:** a fila do desenho
+  está parada desde 28/09, e a pessoa pediu este conserto e só ele. Propor agora
+  seria abrir trabalho contra a pausa dela.
+
+### o que mudou para quem joga
+
+**No telefone, abrir a ficha deixa de ser uma luta:** tocar nas sub-abas da
+Gestão (`Grupo` incluído) ou em qualquer botão da ficha já não faz a folha descer
+e voltar — **de 5 toques em 5 que a sacudiam para 0**, e cada toque abre à
+primeira. Arrastar a pega para baixo continua a fechar; um arrasto curto devolve
+a folha ao sítio sem ela "reentrar".
+
+---
+
 ## 28/09 23:40 · v9.303 · **V6 — o compositor e o dado: nenhuma letra se perde, e há um dado só** · commit `445ef0b`
 
 - **estado inicial:** trava tomada às 22:03; HEAD `6805086`; nenhum ciclo do

@@ -9488,6 +9488,50 @@ mensagem **não** fica debaixo dele. A primeira linha de prosa ficou a 78 px
 
 ---
 
+### R21k · o gesto de descer tinha de ser pedido, e não suposto (`regente`, 29/09)
+
+**A queixa, da pessoa, no telefone:** *"ao abrir a ficha, a tela fica toda
+bugada, não consigo abrir o grupo nem as abas ao lado, quando tento clicar nas
+abas a tela desce e sobe sozinha... às vezes em algum toque em algum botão da
+ficha a tela começa a descer sozinha como se tivesse fechando e volta."*
+
+**A forma de §2 (saída 5) estava certa e a construção leu-a mal.** §2 dizia *"o
+gesto de descer — na cabeça do alforje, ou no conteúdo quando o rolamento está
+no topo (o comportamento das folhas do iOS)"*. Construiu-se *"qualquer toque no
+conteúdo com o rolamento no topo **é** um arrasto"* — sem limiar, sem direcção,
+e a partir de qualquer botão. As sub-abas da Gestão (`Ficha`, `Grupo`, …)
+moram **no topo do conteúdo**, exactamente onde o rolamento está sempre a zero:
+cada toque nelas começava um arrasto. Três defeitos em cadeia:
+
+1. **o tremor do dedo** (alguns px) virava `translateY` — *"a tela desce e sobe"*;
+2. **com a folha a mexer, o alvo saía de baixo do dedo** e o toque perdia-se —
+   *"não consigo abrir o grupo"*;
+3. **o arrasto desligava a animação de entrada** (`animation: none`) e, ao
+   soltar, **ela voltava a correr do zero** — a folha descia a `translateY(100%)`
+   e subia outra vez: *"começa a descer como se estivesse fechando e volta"*.
+
+**A lei que faltava escrever, e fica escrita:**
+
+> **Um toque nunca é um arrasto.** O gesto de descer só começa depois de o
+> dedo andar `ALFORJE.limiarDoArrasto` **para baixo**, com o movimento
+> vertical a dominar o horizontal; **nunca** a partir de um elemento que se
+> toca (botão, aba, ligação, campo); e **a animação de entrada corre uma vez,
+> ao abrir** — nenhum toque a repõe. O conteúdo que rola continua a rolar.
+
+- **O limiar é 8 px**, e é citado: é o *touch slop* do Android (`ViewConfiguration`,
+  `config_viewConfigurationTouchSlop` = 8 dp no AOSP) — a distância abaixo da
+  qual a própria plataforma diz que um dedo ainda está a *tocar* e não a
+  *arrastar*. Mora em `ALFORJE.limiarDoArrasto`.
+- **A pega não muda de gramática:** ela não é um botão, é o sítio de agarrar;
+  arrasta como antes, e agora também só se mexe depois do limiar (um toque na
+  pega não faz nada, que é o que um toque numa pega deve fazer).
+- **Ao soltar abaixo de `2 × ALVOS.piso`, a folha volta ao sítio** com a
+  transição de `VEU.sai` — e **não** repondo a entrada.
+
+*Não é forma nova: é a forma de §2 construída como estava escrita. Por isso não
+passou pelo par — o `jogo` e o `desenho` já a tinham assinado; o que falhou
+foi a tradução. Figma sem alteração (o gesto não tem desenho estático).*
+
 ## V · a tela da pessoa
 
 *A partir de 24/09 a direção da tela de jogo é a que a pessoa desenhou: Figma

@@ -89,7 +89,10 @@ export function Alforje({
   const [visivel, setVisivel] = React.useState(!!aberto);
   const [saindo, setSaindo] = React.useState(false);
   React.useEffect(() => {
-    if (aberto) { setVisivel(true); setSaindo(false); return; }
+    /* R21k: reabrir (fechado → aberto) tem de fazer a entrada correr de
+       novo — é por isso que `entrou` reseta aqui, no mesmo efeito que já
+       decide `visivel`/`saindo`, e não onde ela é lida (mais abaixo). */
+    if (aberto) { setVisivel(true); setSaindo(false); setEntrou(false); return; }
     if (!visivel) return;
     setSaindo(true);
     const ms = reduzido ? 0 : VEU.sai;
@@ -132,12 +135,28 @@ export function Alforje({
     return () => { try { window.removeEventListener("keydown", aoTeclar); } catch (e) { console.warn("[Alforje] Esc (desmontar)", e); } };
   }, [aberto, aoFechar]);
 
-  /* O GESTO DE DESCER — segue o dedo 1:1 sem transição, solta abaixo de
-     2×ALVOS.piso fecha, senão volta. Ouve na janela inteira enquanto
-     ativo, para não perder o gesto se o dedo sair da pega. */
+  /* O GESTO DE DESCER (R21k, 29/09) — "um toque nunca é um arrasto".
+     A CONSTRUÇÃO ANTERIOR começava o arrasto em QUALQUER pointerdown com o
+     rolamento no topo: sem limiar, sem direção, e a partir de QUALQUER alvo —
+     inclusive as sub-abas da Gestão (Ficha, Grupo…), que moram exatamente no
+     topo do conteúdo. Resultado, em cadeia: o tremor do dedo virava
+     translateY ("a tela desce e sobe sozinha"), o alvo saía de baixo do dedo
+     ("não consigo abrir o grupo"), e ao soltar a animação de entrada
+     recomeçava do zero ("começa a descer como se estivesse fechando").
+
+     A CORREÇÃO: o pointerdown só ARMA UM CANDIDATO (`candidatoRef`, sem
+     re-render nenhum). O arrasto de verdade só COMEÇA num pointermove que
+     cruze `ALFORJE.limiarDoArrasto` para BAIXO, com o vertical a dominar o
+     horizontal — e nunca a partir de um elemento tocável (botão, aba, link…,
+     ver `SELETOR_TOCAVEL` abaixo). Um toque que não cruza o limiar não vira
+     nada: o conteúdo continua a rolar como sempre (nenhum `preventDefault`
+     é chamado enquanto o arrasto não começou). */
   const [arrastando, setArrastando] = React.useState(false);
+  const [soltando, setSoltando] = React.useState(false); /* a transição de "volta ao sítio" */
   const [deslocamento, setDeslocamento] = React.useState(0);
-  const inicioYRef = React.useRef(0);
+  const candidatoRef = React.useRef(null); /* {x, y} do pointerdown, antes de o limiar decidir se é arrasto */
+  const arrastandoRef = React.useRef(false); /* espelha `arrastando`, lido sem closure velha dentro dos listeners */
+  const deslocamentoRef = React.useRef(0); /* idem, para o `soltar` decidir sem passar por um updater */
   const conteudoRef = React.useRef(null);
 
   /* V5 · A ALTURA DO CABEÇALHO, MEDIDA (conserto da prova do `jogo`,
@@ -168,34 +187,90 @@ export function Alforje({
   }, []);
   React.useEffect(() => () => { try { if (observadorDoCabecalhoRef.current) observadorDoCabecalhoRef.current.disconnect(); } catch (e) { console.warn("[Alforje] medir o cabeçalho (desmontar)", e); } }, []);
 
+  /* OS OUVINTES VIVEM ENQUANTO O ALFORJE EXISTE — não só enquanto já se
+     está a arrastar (essa era a falha: religar o listener DEPOIS do estado
+     mudar chega tarde demais para um toque rápido). Aqui eles ficam prontos
+     desde o primeiro fotograma para reconhecer um candidato e decidir, no
+     PRÓPRIO pointermove, se ele cruza o limiar — nunca no pointerdown. */
   React.useEffect(() => {
-    if (!arrastando) return;
+    if (!visivel) return;
     const mover = (e) => {
       try {
-        const y = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
-        setDeslocamento(Math.max(0, y - inicioYRef.current));
+        if (!candidatoRef.current) return;
+        const p = e.touches && e.touches[0] ? e.touches[0] : e;
+        const y = p.clientY, x = p.clientX;
+        if (typeof y !== "number") return;
+        const dy = y - candidatoRef.current.y;
+        const dx = x - candidatoRef.current.x;
+        if (!arrastandoRef.current) {
+          /* ainda é só um candidato: só vira arrasto para BAIXO, além do
+             limiar, com o vertical a dominar — senão é o dedo a rolar ou a
+             tremer, e o conteúdo já está a rolar sozinho (nada aqui chamou
+             preventDefault). */
+          if (dy < ALFORJE.limiarDoArrasto || dy <= 0 || Math.abs(dy) <= Math.abs(dx)) return;
+          arrastandoRef.current = true;
+          setArrastando(true);
+          setSoltando(false); /* corta uma "volta ao sítio" que ainda estivesse a meio */
+        }
+        const d = Math.max(0, dy);
+        deslocamentoRef.current = d;
+        setDeslocamento(d);
       } catch (err) { console.warn("[Alforje] gesto de descer (mover)", err); }
     };
-    const soltar = () => {
+    const voltarOuFechar = (podeFechar) => {
+      const comecara = arrastandoRef.current;
+      candidatoRef.current = null;
+      if (!comecara) return; /* só um toque: nada a desfazer, nada a fechar */
+      arrastandoRef.current = false;
       setArrastando(false);
-      setDeslocamento((d) => {
-        if (d > 2 * ALVOS.piso) { try { aoFechar && aoFechar(); } catch (e) { console.warn("[Alforje] gesto de descer (fechar)", e); } }
-        return 0;
-      });
+      const d = deslocamentoRef.current;
+      deslocamentoRef.current = 0;
+      setDeslocamento(0);
+      if (podeFechar && d > 2 * ALVOS.piso) {
+        try { aoFechar && aoFechar(); } catch (e) { console.warn("[Alforje] gesto de descer (fechar)", e); }
+      } else if (!reduzido) {
+        setSoltando(true); /* a transição de VEU.sai que devolve a folha ao sítio */
+      }
     };
+    /* soltar: acima de 2×ALVOS.piso fecha. pointercancel (o navegador a
+       tomar o toque por rolagem/PTR): NUNCA fecha, só devolve ao sítio — e,
+       se o arrasto nem tinha começado, só desarma o candidato. */
+    const soltar = () => voltarOuFechar(true);
+    const cancelar = () => voltarOuFechar(false);
     try {
       window.addEventListener("pointermove", mover);
       window.addEventListener("pointerup", soltar);
-      window.addEventListener("pointercancel", soltar);
+      window.addEventListener("pointercancel", cancelar);
     } catch (e) { console.warn("[Alforje] gesto de descer (ouvir)", e); }
     return () => {
       try {
         window.removeEventListener("pointermove", mover);
         window.removeEventListener("pointerup", soltar);
-        window.removeEventListener("pointercancel", soltar);
+        window.removeEventListener("pointercancel", cancelar);
       } catch (e) { console.warn("[Alforje] gesto de descer (parar de ouvir)", e); }
     };
-  }, [arrastando, aoFechar]);
+  }, [visivel, aoFechar, reduzido]);
+
+  /* A ENTRADA CORRE UMA VEZ. Depois de tvAlforjeSobe/tvSlide terminar, a
+     classe sai do elemento (não é reposta por nenhum re-render nem pelo fim
+     de um arrasto) — o `onAnimationEnd` é o sinal principal, o temporizador é
+     só a rede para o dia em que ele não disparar (ex.: o navegador engole o
+     evento). 300ms cobre com folga tanto VEU.entra (180, telefone) quanto o
+     .tv-slide de .25s do monitor — nunca corta a animação de verdade. Ao
+     reabrir (fechado → aberto) a entrada volta a valer: `entrou` reseta no
+     mesmo efeito que já cuida de `visivel`/`saindo`, lá em cima. */
+  const [entrou, setEntrou] = React.useState(false);
+  React.useEffect(() => {
+    if (!aberto || entrou) return;
+    const t = setTimeout(() => setEntrou(true), 300);
+    return () => clearTimeout(t);
+  }, [aberto, entrou]);
+  const aoEntradaTerminar = (e) => {
+    try { if (e.target === e.currentTarget) setEntrou(true); } catch (err) { console.warn("[Alforje] entrada terminou", err); }
+  };
+  const aoVoltarAoSitioTerminar = (e) => {
+    try { if (e.target === e.currentTarget && e.propertyName === "transform") setSoltando(false); } catch (err) { console.warn("[Alforje] volta ao sítio terminou", err); }
+  };
 
   /* O GESTO SÓ FAZ SENTIDO NA ESTREITA — na larga o alforje nem sobe nem
      desce, é o aside de sempre (ver a correção em estilo.js, junto de
@@ -209,12 +284,18 @@ export function Alforje({
   const emColunaEstreita = () => {
     try { return window.matchMedia("(max-width: 767px)").matches; } catch { return true; }
   };
-  const comecarArrasto = (clienteY) => { inicioYRef.current = clienteY; setArrastando(true); };
-  const aoPressionarPega = (e) => { try { comecarArrasto(e.clientY); } catch (err) { console.warn("[Alforje] pega", err); } };
+  /* NUNCA a partir de um elemento tocável — R21k: o pointerdown no conteúdo
+     não pode armar um candidato quando o dedo pousou num botão, aba, link,
+     campo… (senão o próprio toque nessas peças é que dispara o arrasto). A
+     pega não precisa desta exclusão: não tem nada tocável dentro dela. */
+  const SELETOR_TOCAVEL = 'button, a, input, select, textarea, label, summary, [role="tab"], [role="button"], [role="link"], [contenteditable="true"]';
+  const armarCandidato = (clienteX, clienteY) => { candidatoRef.current = { x: clienteX, y: clienteY }; };
+  const aoPressionarPega = (e) => { try { armarCandidato(e.clientX, e.clientY); } catch (err) { console.warn("[Alforje] pega", err); } };
   const aoPressionarConteudo = (e) => {
     try {
       if (!emColunaEstreita()) return;
-      if (conteudoRef.current && conteudoRef.current.scrollTop <= 0) comecarArrasto(e.clientY);
+      if (e.target && e.target.closest && e.target.closest(SELETOR_TOCAVEL)) return;
+      if (conteudoRef.current && conteudoRef.current.scrollTop <= 0) armarCandidato(e.clientX, e.clientY);
     } catch (err) { console.warn("[Alforje] conteúdo (início do arrasto)", err); }
   };
 
@@ -254,9 +335,20 @@ export function Alforje({
   if (!visivel) return null;
 
   const topoPx = Math.round(topo) + ALVOS.piso;
-  const classeEntradaSaida = reduzido ? "" : (saindo ? "tv-alforje-desce" : "tv-alforje-sobe");
+  /* R21k: a classe de entrada só existe até `entrou` virar true — depois
+     disso nenhum re-render (nem o fim de um arrasto) a repõe. A saída
+     continua igual, sempre que `saindo`. */
+  const classeEntradaSaida = reduzido ? "" : (saindo ? "tv-alforje-desce" : (entrou ? "" : "tv-alforje-sobe"));
   const classeVeu = reduzido ? "" : (saindo ? "tv-veu-sai" : "tv-veu-entra");
-  const estiloArrasto = arrastando ? { transform: `translateY(${deslocamento}px)`, transition: "none", animation: "none" } : null;
+  /* `animation: "none"` fica como rede: com `entrou` true a classe já não
+     declara animação nenhuma, mas um arrasto iniciado NO MEIO da entrada
+     (janela rara de ~180ms) ainda teria a keyframe a disputar o `transform`
+     com o dedo sem isto. */
+  const estiloArrasto = arrastando
+    ? { transform: `translateY(${deslocamento}px)`, transition: "none", animation: "none" }
+    : soltando
+      ? { transform: "translateY(0px)", transition: `transform ${VEU.sai}ms ease-out` } /* volta ao sítio, sem repor a entrada */
+      : null;
 
   return (
     <>
@@ -286,6 +378,8 @@ export function Alforje({
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}
+        onAnimationEnd={aoEntradaTerminar}
+        onTransitionEnd={aoVoltarAoSitioTerminar}
         className={
           "tv-alforje-topo tv-alforje-raio tv-scroll fixed inset-x-0 bottom-0 z-40 flex flex-col overflow-hidden " +
           "md:left-auto md:right-0 md:w-80 md:max-w-[88vw] md:overflow-y-auto " +
@@ -300,8 +394,10 @@ export function Alforje({
           borderLeftColor: T.line,
           ...(estiloArrasto || {}),
         }}>
-        {/* a pega — só no telefone; arrasta para fechar */}
-        <div className="md:hidden flex justify-center shrink-0" style={{ paddingTop: ALFORJE.pega.topo }}
+        {/* a pega — só no telefone; arrasta para fechar. `touchAction: none`
+           (R21k): a pega nunca rola, então o navegador nunca precisa de
+           decidir entre o nosso arrasto e um gesto nativo dele. */}
+        <div className="md:hidden flex justify-center shrink-0" style={{ paddingTop: ALFORJE.pega.topo, touchAction: "none" }}
           onPointerDown={aoPressionarPega}>
           <span aria-hidden="true" style={{
             width: ALFORJE.pega.largura, height: ALFORJE.pega.altura, borderRadius: ALFORJE.pega.altura / 2,
@@ -331,9 +427,20 @@ export function Alforje({
 
         {/* o conteúdo — na estreita rola sozinho entre o cabeçalho e a
             fita; na larga rola junto com tudo, como hoje (é por isso que
-            `overflow-y-auto`/`flex-1` somem em `md:`). */}
+            `overflow-y-auto`/`flex-1` somem em `md:`).
+
+            `overscrollBehavior: "contain"` (R21k, ponto 6): com o rolamento
+            no topo, um arrasto começado aqui pode ser tomado pelo navegador
+            como pull-to-refresh/overscroll (que manda `pointercancel`, e o
+            gesto some antes de decidir se era um toque ou um arrasto). Isto
+            contém o efeito de rebote NESTE contentor, sem impedir o scroll
+            normal — e é a defesa mais simples que a lei pede para tentar
+            primeiro. Não fui até o `touchmove` com `{ passive: false }`: ele
+            só entraria se esta linha não bastasse, e nada medido aqui pediu
+            isso — acrescentá-lo sem essa prova seria inventar problema. */}
         <div ref={conteudoRef} id={conteudoId} onPointerDown={aoPressionarConteudo}
-          className="flex-1 min-h-0 overflow-y-auto tv-scroll md:overflow-visible md:flex-none px-4 pb-4 md:px-5 md:pb-5 flex flex-col gap-5">
+          className="flex-1 min-h-0 overflow-y-auto tv-scroll md:overflow-visible md:flex-none px-4 pb-4 md:px-5 md:pb-5 flex flex-col gap-5"
+          style={{ overscrollBehavior: "contain" }}>
           {children}
         </div>
 

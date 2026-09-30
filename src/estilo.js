@@ -1124,6 +1124,17 @@ export const ALFORJE = {
      MEDIDA do cabeçalho (a `Alforje` a escreve em `--tv-cabecalho-da-gaveta`)
      mais este respiro; os 92 ficam só como reserva, antes da primeira medida. */
   respiroDoFoco: 16,
+  /* R21k (29/09) · "um toque nunca é um arrasto". A construção original de §2
+     começava o gesto de descer em QUALQUER pointerdown com o rolamento no
+     topo — sem limiar, sem direção — e as sub-abas da Gestão (Ficha, Grupo…)
+     moram exatamente aí: cada toque nelas armava um arrasto, o tremor do dedo
+     virava translateY, e ao soltar a animação de entrada recomeçava do zero.
+     8 px é o touch slop do Android: a distância abaixo da qual a própria
+     plataforma ainda chama o gesto de "toque" e não de "arrasto"
+     (ViewConfiguration.config_viewConfigurationTouchSlop = 8 dp, AOSP). Abaixo
+     disso, o pointerdown só arma um candidato; o arrasto em si só começa no
+     pointermove que cruzar esta distância para baixo. */
+  limiarDoArrasto: 8,
 };
 
 /* O `scroll-margin-top` do cartão pedido na gaveta: a altura medida do
