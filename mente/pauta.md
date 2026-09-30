@@ -411,9 +411,9 @@ O limite é o que um commit revertido não desfaz.
      `abandonarContrato`, que só serviam a saves anteriores à v9.27. Ainda: o Narrador e o Cronista fechavam quests antigas por título, sem
      conferir — `App.jsx` ~9651 e ~10470; fechá-los é remover o que existe, decidir; e a secção `pessoas` do
      Cronista ainda regista nomes de passagem sem `aindaSoUmNome`; e "volto para a mesa" casa "A Mesa Honesta")* (quatro em 43 respostas; "alguém vem cobrar o que você disse" sem promessa).
-  9. **As pessoas da cidade seguem a heroína** até à masmorra; "você mudou desde a última vez" no primeiro
+  9. ✓ *feito em v9.338 (fica: na jornada, a gente da cidade de origem continua "presente" — a mesma regra, fora do pedido)* · **As pessoas da cidade seguem a heroína** até à masmorra; "você mudou desde a última vez" no primeiro
      encontro (quatro vezes — uma linha de índole da pauta).
-  10. **Nomes que colidem** (duas Delfinas; "Floripes do Sino" nascida do nome da taverna).
+  10. ✓ *feito em v9.338* · **Nomes que colidem** (duas Delfinas; "Floripes do Sino" nascida do nome da taverna).
   11. Miúdos: a Ladina sem arma; o espólio não se apanha por palavras; o Mestre joga pela heroína; um
      parágrafo repetido; "fico escondida" não esconde; "poupar" oferecido a esqueleto e slime; a caixa do cartão
      fora do ecrã a 310 px; "1 de pé contra você" com os dois mortos; a narração na primeira pessoa.

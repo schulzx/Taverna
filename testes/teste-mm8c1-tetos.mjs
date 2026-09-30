@@ -261,8 +261,12 @@ sec("9. a fiação no App.jsx (prova por texto)");
     "if (marcaDeAgora > npcTurnoNoLoadRef.current && !grupoCheio) {");
 
   /* ponto 7 — o Cronista marca a gente nova com o turno atual */
+  /* MOVIDA NA MM14 · 10a (30/09), com o motivo: o nome que cria a ficha
+     passou a ser `nomeCerto` (o que `nomeComDono` decide), não mais o
+     `n.nome` cru — um homônimo de quem já importa mescla-se na ficha
+     dela em vez de abrir uma segunda pessoa com o apelido. */
   tem("o Cronista marca a gente nova com o turno atual, não com o padrão (zero)",
-    "criarNPC(String(n.nome).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });");
+    "criarNPC(String(nomeCerto).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });");
 
   /* ponto 8 — o QUEM do rodapé recebe emCena (citados nas 2 últimas falas) */
   tem("o rodapé calcula quem foi citado nas duas últimas falas do Mestre",
@@ -276,8 +280,13 @@ sec("9. a fiação no App.jsx (prova por texto)");
      LONGE). O que se prova continua o mesmo — emCena chega a
      resumoCenaPrompt —, por isso a asserção passa a ler só o começo da
      chamada até ao emCena, que é o que ela sempre quis dizer. */
+  /* MOVIDA OUTRA VEZ NA MM14 · 9a (30/09), com o motivo: a masmorra aberta
+     entrou entre `emCena` e `elenco` (para PRESENTES ser a masmorra e a
+     gente da cidade ir para o LONGE). A asserção volta a cortar antes do
+     que mudou — ela já provava só "emCena chega a resumoCenaPrompt", nunca
+     o texto inteiro da chamada. */
   tem("e manda isso como emCena para resumoCenaPrompt",
-    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco()");
+    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, masmorra: masmorraRef.current, elenco: nomesDoElenco()");
 
   /* ponto 9 — o cânone por recência: o 14º argumento na chamada por turno.
      MOVIDA NA MM8c-2 (30/09), com o motivo: o banco de nomes (5º

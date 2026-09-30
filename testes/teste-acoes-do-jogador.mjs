@@ -579,8 +579,14 @@ sec("4. a definição operacional de 'número que muda'");
      do Narrador e o `casar` do Cronista) tirou mais linhas do que a
      migração somou — o líquido é -25. Re-medido pelo próprio dente 8 de
      check-acoes-do-jogador.mjs, com o diff de App.jsx contra HEAD
-     conferindo cada endereço; nada somado de cabeça. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14559/.test(relogio.porque));
+     conferindo cada endereço; nada somado de cabeça.
+     A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
+     30/09): 14559 -> 14615, +56 — o `viuAntes` de `pessoasDaCena`, o
+     helper `contextoDoNome`, e as três portas do registo (mais o mural)
+     decidindo `nomeCerto` por `nomeComDono`, todas ACIMA deste ponto;
+     mesmo motivo, mesmo lugar: o campo `porque` em
+     testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14615/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -842,9 +848,13 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        Os dois canais antigos (frontend, MM14, 30/09): 13093 -> 13068, -25
        — o mesmo líquido desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE
        (a migração das tarefas antigas soma menos do que a remoção dos
-       dois canais tira). Re-medido pelo diff de App.jsx contra HEAD. */
+       dois canais tira). Re-medido pelo diff de App.jsx contra HEAD.
+       A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
+       30/09): 13068 -> 13124, +56 — o mesmo delta desta etapa em
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido pelo diff de App.jsx
+       contra HEAD. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13068").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13124").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -979,8 +989,12 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        Re-medido por check-acoes-do-jogador.mjs.
        Os dois canais antigos (frontend, MM14, 30/09): 12960 -> 12935, -25
        — o mesmo líquido desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido pelo diff de App.jsx contra HEAD. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12935" && x.familia === "alcance"));
+       Re-medido pelo diff de App.jsx contra HEAD.
+       A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
+       30/09): 12935 -> 12991, +56 — o mesmo delta desta etapa em
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido pelo diff de App.jsx
+       contra HEAD. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12991" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1043,8 +1057,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      Os dois canais antigos (frontend, MM14, 30/09): 13109 -> 13084, -25 —
      o mesmo líquido desta etapa (a migração das tarefas antigas soma
      menos do que a remoção dos dois canais tira), re-medido pelo diff de
-     App.jsx contra HEAD. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13084/.test(S.ondeSai));
+     App.jsx contra HEAD.
+     A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
+     30/09): 13084 -> 13140, +56 — o mesmo delta desta etapa, re-medido
+     pelo diff de App.jsx contra HEAD. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13140/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

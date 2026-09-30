@@ -545,10 +545,14 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     && pauta.indexOf('p = porNaPauta(p, "naoPode", g.naoPode);') < pauta.indexOf("vetosDaAbertura("));
 
   /* ---- 6. a menção não é presença (três sítios) ---- */
+  /* MOVIDAS NA MM14 · 10a (30/09), com o motivo: as duas portas passaram a
+     decidir `nomeCerto` (por `nomeComDono`, antes de checar a menção) e
+     conferem a menção com ele — nunca com o nome cru do Mestre/cânone,
+     que pode ser um apelido do mesmo homônimo que já vale como "a pista". */
   t("os NPCs que o Mestre envia não registam a pista/alvo antes da hora",
-    aplicar.includes("if (aindaSoUmNome(aberturaMundoRef.current, n.nome, { lugar: lugarRef.current, missoes: missoesRef.current })) return;"));
+    aplicar.includes("if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) return;"));
   t("nem as pessoas do cânone sem ficha",
-    aplicar.includes("if (aindaSoUmNome(aberturaMundoRef.current, nome, { lugar: lugarRef.current, missoes: missoesRef.current })) continue;"));
+    aplicar.includes("if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) continue;"));
   t("nem quem é só mencionado na narrativa — e sai também dos ids de revelação",
     aplicar.includes("const genteRevelavel = m.gente.filter((p) => !aindaSoUmNome(aberturaMundoRef.current, p.nome, { lugar: lugarRef.current, missoes: missoesRef.current }));")
     && aplicar.includes("...genteRevelavel.map((p) => idDaGente(cidadeAtualRef.current, p)),")

@@ -45,18 +45,40 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
    e continua sendo vasculhar o lugar — que é o certo.
 
    O nome mais longo ganha: num mundo com uma Ione e uma Ione Vantel, a
-   frase que diz o sobrenome está falando da segunda. */
-export function nomeProcurado(texto, nomes = []) {
-  const t = norm(texto);
+   frase que diz o sobrenome está falando da segunda.
+
+   O APELIDO DE LUGAR NÃO É NOME (Fase MM, MM14 · item 10). A sessão de
+   prova (mm11-sessao.md, T3 e T7) perguntou "onde fica o Sino Calado" e
+   recebeu "Floripes do Sino está em Campo das Cinco Torres"; mais tarde,
+   "Encontrar Lino do Sino". Floripes e Lino são gente que o jogo conhece
+   (o gerador de pessoas tira o sobrenome do léxico do mundo, e este mundo
+   tem alcunhas de lugar: "do Sino", "das Tábuas", "do Lamento"), e esta
+   função casava QUALQUER pedaço de 4 letras ou mais: "sino", de "Floripes
+   do Sino", com "o Sino Calado". O pedaço que vem depois de uma partícula
+   ("do", "da", "dos", "das", "de") é alcunha: diz de ONDE a pessoa é, e
+   não QUEM ela é, e sozinho não procura ninguém. O nome inteiro continua a
+   casar ("onde anda a Floripes do Sino?"), o primeiro nome também, e o
+   sobrenome sem partícula ("Duarte") também.
+   `lugares` (opcional): nomes de lugar que se tiram da frase antes de
+   procurar, porque o que o jogador diz de um lugar nunca é procura de gente. */
+export const ALCUNHA_DE_LUGAR = { particulas: ["de", "do", "da", "dos", "das", "del"], pedacoMinimo: 4, nomeMinimo: 3 };
+export function nomeProcurado(texto, nomes = [], opcoes = {}) {
+  let t = norm(texto);
   if (!t) return "";
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  for (const l of Array.isArray(o.lugares) ? o.lugares : []) {
+    const nl = norm(l).replace(/^(o|a|os|as)\s+/, "");
+    if (nl.length >= ALCUNHA_DE_LUGAR.nomeMinimo) t = t.split(nl).join(" ".repeat(nl.length));
+  }
   let achado = "";
-  for (const n of nomes) {
+  for (const n of Array.isArray(nomes) ? nomes : []) {
     const nn = norm(n);
-    if (nn.length < 3) continue;
-    /* o nome inteiro, ou o primeiro pedaço dele — a mesa chama Ione Vantel
-       de Ione, e uma procura que só casasse com o nome completo perderia
-       todas as frases reais */
-    const pedacos = [nn, ...nn.split(/\s+/).filter((x) => x.length >= 4)];
+    if (nn.length < ALCUNHA_DE_LUGAR.nomeMinimo) continue;
+    /* o nome inteiro, ou um pedaço dele — a mesa chama Ione Vantel de Ione,
+       e uma procura que só casasse com o nome completo perderia todas as
+       frases reais. Mas nunca o pedaço que vem depois de uma partícula. */
+    const pal = nn.split(/\s+/);
+    const pedacos = [nn, ...pal.filter((x, i) => x.length >= ALCUNHA_DE_LUGAR.pedacoMinimo && !(i > 0 && ALCUNHA_DE_LUGAR.particulas.includes(pal[i - 1])))];
     for (const p of pedacos) {
       if (new RegExp(`(^|[^a-z0-9])${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`).test(t) && n.length > achado.length) achado = n;
     }

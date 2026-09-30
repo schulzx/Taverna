@@ -127,6 +127,10 @@ export function garantirPessoa(p) {
     sabeDeMim: b(o.sabeDeMim),
     euSeiDela: b(o.euSeiDela),
     primeiraVez: b(o.primeiraVez),
+    /* MM14 · 9: já me viu num dia antes de hoje (`jaMeViuAntes`). Sem o
+       dado, NÃO: é o padrão seguro, porque o que ele liga é afirmar um
+       passado comum, e um passado inventado é o defeito que custou caro */
+    viuAntes: b(o.viuAntes),
     /* agora */
     ato: atoPorId(o.ato) ? String(o.ato) : "nada",
     quantosEscutam: num(o.quantosEscutam),
@@ -303,12 +307,45 @@ export const MOVIMENTOS = [
      Sem eles, uma pessoa em situação neutra não teria movimento nenhum e
      o Intérprete calaria justamente na cena mais comum do jogo. */
   { id: "toca_a_vida", gesto: "cala", peso: 1, quando: () => true, faz: "continua o que estava fazendo, e o que estava fazendo é do ofício dela" },
-  { id: "repara_em_mim", gesto: "testa", peso: 1, quando: () => true, faz: "repara em alguma coisa minha que mudou desde a última vez" },
+  /* MM14 · 9: era `quando: () => true` — e "mudou desde a última vez" saía
+     no PRIMEIRO encontro (quatro vezes na sessão de prova: T3, T12, T18,
+     T20 — "Eu não disse que te conhecia. Disse que você mudou."). Mudar
+     pressupõe ter visto antes: só vale para quem me viu num dia anterior
+     a hoje (`viuAntes`). Sai da rede do "vale sempre"; a rede continua
+     com `toca_a_vida` e `comenta_o_lugar`, que não afirmam passado. */
+  { id: "repara_em_mim", gesto: "testa", peso: 1, quando: (p) => p.viuAntes, faz: "repara em alguma coisa minha que mudou desde a última vez" },
   { id: "comenta_o_lugar", gesto: "aproxima", peso: 1, quando: () => true, faz: "comenta uma coisa do lugar que só quem vive aqui repararia" },
   { id: "quer_o_que_quer", gesto: "oferece", peso: 2, quando: (p) => !!p.quer, faz: "puxa a conversa para perto do que ela quer, sem dizer que é isso" },
   { id: "esconde_o_medo", gesto: "esquiva", peso: 2, quando: (p) => !!p.teme, faz: "desconversa quando o assunto chega perto do que ela teme" },
 ];
 export function movimentoPorId(id) { return MOVIMENTOS.find((m) => m.id === id) || null; }
+
+/* ---------------- JÁ ME VIU ANTES? (Fase MM, MM14 · item 9) ----------------
+   A premissa de "você mudou desde a última vez": houve uma última vez, e
+   não foi hoje. Duas provas, as duas precisas:
+     · `conhecidoEm` (o dia em que entrou na história) ANTES de hoje — a
+       abertura regista a pista como conhecida no dia em que a campanha
+       nasce, e isso só não basta: é um nome na ficha, não um encontro;
+     · e dias VISTOS (o campo `elenco.vistos` da MM8e — os dias em que a
+       narração a pôs diante de mim) antes de hoje, pelo menos
+       `JA_ME_VIU.diasAntes`.
+   `ficha`: a do registo ({ nome, conhecidoEm }); `ctx`: { hoje, vistos }.
+   Lixo, `null` e ficha sem dia devolvem false — nunca erro. */
+export const JA_ME_VIU = { diasAntes: 1 };
+const semAc = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+export function jaMeViuAntes(ficha, ctx = {}) {
+  const f = ficha && typeof ficha === "object" ? ficha : null;
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  if (!f || !semAc(f.nome)) return false;
+  const hoje = Number(c.hoje);
+  const desde = f.conhecidoEm == null || f.conhecidoEm === "" ? NaN : Number(f.conhecidoEm);
+  if (!Number.isFinite(hoje) || !Number.isFinite(desde) || !(desde < hoje)) return false;
+  const vistos = c.vistos && typeof c.vistos === "object" ? c.vistos : {};
+  const k = Object.keys(vistos).find((x) => semAc(x) === semAc(f.nome));
+  const dias = k && Array.isArray(vistos[k]) ? vistos[k] : [];
+  const antes = new Set(dias.map(Number).filter((d) => Number.isFinite(d) && d < hoje));
+  return antes.size >= JA_ME_VIU.diasAntes;
+}
 
 /* ---------------- A MEMÓRIA ----------------
    Por pessoa, e não por cena: o que Marta fez três turnos atrás não pode

@@ -622,3 +622,122 @@ export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, co
   }
   return dentro.join("\n");
 }
+
+/* ============================================================
+   O NOME QUE JÁ TEM DONO (Fase MM, MM14 · item 10)
+
+   Na sessão de prova (mm11-sessao.md, T18-T20) o Narrador pôs na boca de
+   Lino "Foi a Delfina. Delfina da Névoa", e na de Teodoro "É o recrutador.
+   Delfina da Névoa" — e o Cronista registou "Delfina da Névoa —
+   recrutador", um homem, ao lado da Delfina da missão principal, que
+   estava a 146 km, em Alto do Sal, e ainda não fora encontrada. No turno
+   seguinte o homónimo tinha um cartaz no mural. As três portas por onde o
+   registo aceita gente (\`mudancas.npcs\`, as PESSOAS do cânone e a secção
+   \`pessoas\` do Cronista) só comparavam o nome INTEIRO: "Delfina da Névoa"
+   não é "Delfina", logo entrava como gente nova.
+
+   A regra: um nome novo que partilha o PRIMEIRO nome com alguém que
+   importa — a pista e o alvo da principal, os marcos da espinha, o
+   elenco, o grupo, quem uma missão pede, e quem no registo tem
+   investimento (laço, consultas, relação, segredo) — é a mesma pessoa ou
+   é recusado. Decide o contexto, pela ordem:
+     1. o SEXO dito não bate com o de quem importa → é outra pessoa com o
+        mesmo nome, e recusa-se (o Narrador dá-lhe outro nome);
+     2. quem importa está NOUTRO lugar do que este (o \`local\` da ficha
+        nova, ou onde a heroína está) → recusa-se: ela não está aqui;
+     3. quem importa já está no registo → é ELA: a ficha nova mescla-se na
+        dela (\`chave\`), e o apelido não faz uma segunda pessoa;
+     4. quem importa ainda é só um nome (nunca foi encontrada) e o lugar
+        bate → é ela, e entra com o nome dela (\`nome\`), nunca com o
+        apelido; e o lugar sem prova → recusa-se, porque "ainda não a
+        vi" e "a vi com outro nome" não se distinguem sem ele.
+   Um primeiro nome igual ao de quem NÃO importa (um figurante do
+   registo) não é colisão: nomes repetem-se, e o mundo tem duas Martas.
+
+   Devolve { decisao: "nova" | "mesma" | "recusada", nome, chave, dono,
+   motivo }: \`nome\` é o nome com que a pessoa entra ou mescla, \`chave\` a
+   chave do registo a mesclar ("" quando é para criar), \`dono\` quem já
+   tinha o nome, e \`motivo\` um id de MOTIVO_DO_HOMONIMO. Lixo devolve
+   "nova" com o nome vazio — quem chama já o recusa por não ter nome.
+   ============================================================ */
+export const HOMONIMO = {
+  /* um primeiro nome mais curto que isto não identifica ninguém ("Al") */
+  primeiroMinimo: 3,
+  /* o que vem antes do nome e não é nome */
+  artigos: ["o", "a", "os", "as", "dona", "dom", "seu", "senhor", "senhora", "mestre", "mestra", "velho", "velha"],
+};
+export const MOTIVO_DO_HOMONIMO = {
+  sexo: "é outra pessoa com o mesmo nome",
+  lugar: "ela está noutro lugar",
+  soNome: "ela ainda não foi encontrada, e não é aqui que está",
+};
+
+const SEXO = [["f", /\b(mulher|feminin[oa]|fem|ela|menina|senhora|dona)\b/], ["m", /\b(homem|masculin[oa]|masc|ele|menino|senhor)\b/]];
+function sexoDe(g) {
+  const t = semAcento(g);
+  if (!t) return "";
+  for (const [s, rx] of SEXO) if (rx.test(t)) return s;
+  return "";
+}
+
+/* o primeiro nome, sem artigo nem tratamento, em minúsculas e sem acento */
+export function primeiroNome(nome) {
+  const partes = semAcento(nome).split(/[\s,]+/).filter(Boolean);
+  while (partes.length > 1 && HOMONIMO.artigos.includes(partes[0])) partes.shift();
+  return partes[0] || "";
+}
+
+const lugarCasa = (a, b) => {
+  const x = semAcento(a).replace(/^(o|a|os|as)\s+/, ""), y = semAcento(b).replace(/^(o|a|os|as)\s+/, "");
+  return !!x && !!y && (x.includes(y) || y.includes(x));
+};
+
+export function nomeComDono(nome, npcs, contexto = {}) {
+  const reg = npcs && typeof npcs === "object" ? npcs : {};
+  const c = contexto && typeof contexto === "object" ? contexto : {};
+  const alvo = semAcento(nome);
+  const nomeLimpo = String(nome == null ? "" : nome).trim();
+  const out = (decisao, extra = {}) => ({ decisao, nome: nomeLimpo, chave: "", dono: "", motivo: "", ...extra });
+  if (!alvo) return out("nova", { nome: "" });
+  /* 0 — o próprio nome já está no registo (caixa e acento não contam) */
+  const exata = Object.keys(reg).find((k) => semAcento(k) === alvo);
+  if (exata) return out("mesma", { nome: exata, chave: exata });
+  const pn = primeiroNome(nome);
+  if (pn.length < HOMONIMO.primeiroMinimo) return out("nova");
+  /* quem importa: o que o App passa, mais quem no registo tem investimento */
+  const lista = [];
+  for (const x of Array.isArray(c.importantes) ? c.importantes : []) {
+    const o = x && typeof x === "object" ? x : { nome: x };
+    if (typeof o.nome === "string" && o.nome.trim()) lista.push({ nome: o.nome.trim(), onde: String(o.onde || ""), genero: String(o.genero || "") });
+  }
+  for (const [k, n] of Object.entries(reg)) {
+    if (n && typeof n === "object" && investimentoDe({ ...n, nome: n.nome || k }, {}).length) lista.push({ nome: String(n.nome || k), onde: "", genero: "" });
+  }
+  const dono = lista.find((d) => primeiroNome(d.nome) === pn && semAcento(d.nome) !== alvo);
+  if (!dono) return out("nova");
+  const chaveDono = Object.keys(reg).find((k) => semAcento(k) === semAcento(dono.nome)) || "";
+  const fichaDono = chaveDono ? reg[chaveDono] || {} : {};
+  const base = { dono: chaveDono || dono.nome };
+  /* 1 — o sexo */
+  const s1 = sexoDe(c.genero), s2 = sexoDe(dono.genero || fichaDono.genero);
+  if (s1 && s2 && s1 !== s2) return out("recusada", { ...base, motivo: "sexo" });
+  /* 2 — o lugar: o da ficha nova, ou onde a heroína está */
+  const ondeDono = dono.onde || fichaDono.local || fichaDono.cidade || "";
+  const aqui = [c.local, ...(Array.isArray(c.aqui) ? c.aqui : [])].map((x) => String(x || "")).filter((x) => x.trim());
+  const bate = ondeDono && aqui.length ? aqui.some((a) => lugarCasa(a, ondeDono)) : null;
+  if (bate === false) return out("recusada", { ...base, motivo: "lugar" });
+  /* 3 — já no registo: é ela */
+  if (chaveDono) return out("mesma", { ...base, nome: chaveDono, chave: chaveDono });
+  /* 4 — ainda só um nome: é ela se o lugar bate; sem prova, recusa-se */
+  if (bate === true) return out("mesma", { ...base, nome: dono.nome });
+  return out("recusada", { ...base, motivo: "soNome" });
+}
+
+/* O que o Narrador recebe quando o registo recusou um nome: fato fechado,
+   uma linha por recusa, e a saída (outro nome, ou ela não está aqui). */
+export function notaDoHomonimo(recusas) {
+  const rs = (Array.isArray(recusas) ? recusas : []).filter((r) => r && r.decisao === "recusada" && r.nome && r.dono);
+  if (!rs.length) return "";
+  const l = rs.map((r) => `"${r.nome}" — ${r.dono} já é outra pessoa desta história (${MOTIVO_DO_HOMONIMO[r.motivo] || MOTIVO_DO_HOMONIMO.lugar})`).join("; ");
+  return `[CORREÇÃO DO SISTEMA — NOMES] ${l}. O registo não aceitou este nome. Se é alguém novo, dê-lhe um nome que não comece pelo de quem já importa; se era para ser ${rs.length > 1 ? "essas pessoas" : rs[0].dono}, ela não está nesta cena.`;
+}

@@ -170,15 +170,59 @@ export function cidadeDe(npc, mapa) {
   return achou ? achou.nome : "";
 }
 
+/* ---------------- QUEM DESCE (Fase MM, MM14 · item 9) ----------------
+   A sessão de prova (mm11-sessao.md, T20-T26) viu Teodoro, Isolina e
+   Branca dentro da masmorra do galpão, a reagir a cada golpe, sem estarem
+   no grupo. A causa era esta função: ela decidia quem está AQUI só pela
+   CIDADE — "vive em Foz do Meio" é presente em Foz do Meio —, e uma
+   masmorra aberta dentro da cidade não muda a cidade. Quem não tem
+   paradeiro ("paradeiro não registrado") era presente em qualquer lugar,
+   masmorra incluída. E tudo o que lê o `aqui` herdava o erro: as linhas A
+   GENTE do Intérprete (`pessoasDaCena`), o fio da principal (MM13) e o
+   PRESENTES do rodapé.
+
+   A regra de mesa: quem está aqui é quem está no lugar onde a heroína
+   está. Numa masmorra aberta, isso é o GRUPO e quem a ficha diz que está
+   NA masmorra (`local` com o nome dela) — e mais ninguém. A gente da
+   cidade, e quem não tem paradeiro, fica LÁ FORA: vai para o `longe`
+   com `dias: 0` e `laFora` (o nome da masmorra), que é o balde que o
+   Narrador já sabe ler como "não aparece nesta cena". Uma citação do
+   Mestre (`emCena`) protege do teto quem JÁ está aqui; nunca traz para
+   dentro quem está fora — o `emCena` não é lido neste ponto.
+
+   Sem `masmorra` (ou com ela encerrada) a função é a de sempre, byte a
+   byte: é o que deixa intocados os chamadores que não a passam.
+
+   `nomeMinimo`: um nome de masmorra mais curto que isto casaria com
+   pedaço de qualquer `local` ("Ur" dentro de "Rua do Ouro"), e ninguém
+   entraria por engano — fica lá fora quem não se sabe que está dentro. */
+export const QUEM_DESCE = { nomeMinimo: 3 };
+export function masmorraAberta(masmorra) {
+  if (!masmorra || typeof masmorra !== "object" || masmorra.encerrada) return "";
+  return String(masmorra.nome || "").trim();
+}
+
 /* Quem plausivelmente está na cena, e quem está longe (com a conta feita). */
-export function elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo = [] } = {}) {
+export function elencoDaCena(npcs, cidadeAtual, mapa, opcoes = {}) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const comGrupo = Array.isArray(o.comGrupo) ? o.comGrupo : [];
+  const mm = masmorraAberta(o.masmorra);
   const lista = Object.values(npcs || {}).filter((n) => n && n.nome);
-  const noGrupo = new Set((comGrupo || []).map((g) => norm(g.nome)));
+  const noGrupo = new Set(comGrupo.map((g) => norm(g && g.nome)));
   const aqui = [], longe = [];
   for (const n of lista) {
     if ((n.status || "").toLowerCase().includes("morto")) continue;
     /* quem viaja com você está sempre onde você está */
     if (noGrupo.has(norm(n.nome))) { aqui.push({ ...n, motivo: "viaja com você" }); continue; }
+    if (mm) {
+      /* MM14 · 9: numa masmorra, só o que ela tem */
+      const onde0 = cidadeDe(n, mapa);
+      const ficha = norm(n.local || n.cidade || "");
+      if (norm(mm).length >= QUEM_DESCE.nomeMinimo && ficha.includes(norm(mm))) { aqui.push({ ...n, motivo: `está em ${mm}` }); continue; }
+      if (onde0 && norm(onde0) !== norm(cidadeAtual)) { longe.push({ ...n, onde: onde0, dias: diasEntre(mapa, onde0, cidadeAtual) }); continue; }
+      longe.push({ ...n, onde: onde0 || "", dias: 0, laFora: mm });
+      continue;
+    }
     const onde = cidadeDe(n, mapa);
     if (!onde) { aqui.push({ ...n, motivo: "paradeiro não registrado" }); continue; }
     if (norm(onde) === norm(cidadeAtual)) { aqui.push({ ...n, motivo: `vive em ${onde}` }); continue; }
@@ -300,8 +344,11 @@ function comTeto(itens, teto, texto, protegido = () => false) {
 }
 
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null } = {}) {
-  const { aqui: aqui0, longe: longe0 } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null, masmorra = null } = {}) {
+  /* MM14 · 9: numa masmorra aberta, PRESENTES é a masmorra, e a gente da
+     cidade vai para o LONGE, com o mesmo teto dele (o pior caso não sobe) */
+  const mm = masmorraAberta(masmorra);
+  const { aqui: aqui0, longe: longe0 } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo, masmorra });
   if (!aqui0.length && !longe0.length) return "";
   /* a ordem do registo: quem importa primeiro, a recência desempata */
   const ordem = new Map(ordemDaImportancia(npcs, { grupo: comGrupo, elenco }).map((n, i) => [norm(n.nome), i]));
@@ -320,7 +367,7 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
   const contexto = { grupo: comGrupo, elenco, emCena, missao, vistos };
   const longe = longe0.filter((n) => !ehDePassagem(n, contexto, agora)).sort((a, b) => rank(a) - rank(b));
   const ta = comTeto(aqui, TETO_DO_QUEM.aqui, (n) => `${n.nome} (${n.motivo})`, protegido);
-  const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`);
+  const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => (n.laFora ? `${n.nome} ficou fora de ${n.laFora}` : `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`));
   const linhaAqui = ta.linhas.length ? `${ta.linhas.join(" · ")}${ta.fora ? ` · +${ta.fora}` : ""}` : "ninguém do registro";
   const linhaLonge = tl.linhas.length ? `${tl.linhas.join(" · ")}${tl.fora ? ` · +${tl.fora}` : ""}` : "";
   const segredos = garantirConfidencias(confidencias).filter((c) => c.exclusivo && (c.ouvintes || []).length);
@@ -328,7 +375,7 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
     ? segredos.map((c) => `"${c.assunto}" — sabem disso: ${c.ouvintes.join(", ")}`).join(" · ")
     : "";
   return `QUEM ESTÁ EM CENA (do sistema — obedeça):
-- PRESENTES em ${cidadeAtual || "onde estou"}: ${linhaAqui}.
+- PRESENTES em ${mm || cidadeAtual || "onde estou"}: ${linhaAqui}.
 ${linhaLonge ? `- LONGE (NÃO podem aparecer nesta cena; no máximo mandam carta ou recado, e mesmo assim só se fizer sentido): ${linhaLonge}.\n` : ""}${linhaSegredo ? `- O QUE FOI DITO EM PARTICULAR (só estas pessoas sabem — ninguém mais pode mencionar, nem de leve): ${linhaSegredo}.\n` : ""}`;
 }
 

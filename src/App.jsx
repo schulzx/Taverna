@@ -12,7 +12,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -186,7 +186,7 @@ import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeE
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
-import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta } from "./interprete.js";
+import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, garantirFala, envelopeDasFalas, MAX_BOCAS } from "./falas.js";
 import { indoleDe, linhaDaIndole, dispararProposito, pesarConvite, envelopeDoConvite } from "./indole.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
@@ -6850,7 +6850,7 @@ export default function Taverna() {
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
        dali em vez de refazer a conta, porque duas versões da mesma
        verdade é como nasce o balanceamento fantasma desta casa */
-    const { longe, aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [] });
+    const { longe, aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [], masmorra: masmorraRef.current });
     const g = paraPauta({
       ...contextoDoEspaco(),
       espaco: espacoDaMesa(),
@@ -7392,7 +7392,7 @@ export default function Taverna() {
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || personagem || {};
-      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });
+      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current });
       const quantos = aqui.length;
       const daBase = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
       const confid = confidenciasRef.current || [];
@@ -7416,6 +7416,7 @@ export default function Taverna() {
           sabeDeMim: confid.some((c) => (c.ouvintes || []).includes(nome)),
           euSeiDela: !!n.segredo,
           primeiraVez: n.conhecidoEm == null && !noGrupo, /* v9.315: dia 0 é conhecido, não "nunca vi" (!n.conhecidoEm tratava os dois igual) */
+          viuAntes: (() => { try { return jaMeViuAntes(n, { hoje: diaRef.current, vistos: (elencoSaveRef.current || {}).vistos }); } catch (e) { calou("viuAntes", e); return false; } })(),
           ato: atoDoTurnoRef.current,
           quantosEscutam: Math.max(0, quantos - 1),
           aSos: quantos <= 1,
@@ -9255,6 +9256,26 @@ export default function Taverna() {
     return { pers, dano: perdeu, caiu, condicao: posta, linhas };
   };
 
+  /* MM14 · 10: o contexto que `nomeComDono` usa para decidir se um nome
+     novo é homónimo de quem importa — a pista e o alvo da principal, os
+     marcos da espinha, o grupo, o elenco do mundo (com a cidade dele, para
+     que um homónimo de alguém ainda não encontrado não seja recusado sem
+     razão) e quem uma missão ativa pede. */
+  const contextoDoNome = (n) => {
+    const importantes = [];
+    try {
+      const a = aberturaMundoRef.current || {};
+      if (a.pista && a.pista.nome) importantes.push({ nome: a.pista.nome, onde: a.pista.local || "" });
+      if (a.alvo && a.alvo.quem) importantes.push({ nome: a.alvo.quem, onde: a.alvo.onde || "" });
+      for (const at of ((espinhaRef.current || {}).atos || [])) for (const m of (at.marcos || [])) if (m && m.quem) importantes.push({ nome: m.quem, onde: m.onde || "" });
+      for (const g of ((personagemRef.current || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });
+      for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "" });
+      for (const q of (missoesRef.current || [])) if (q && q.status === "ativa") for (const x of [q.dador, ...(q.etapas || []).map((e) => e && e.alvo)]) if (x) importantes.push({ nome: x });
+    } catch (e) { calou("contextoDoNome", e); }
+    const mm = masmorraRef.current;
+    return { importantes, local: (n && n.local) || "", genero: (n && n.genero) || "", aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };
+  };
+
   const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {
     const op = opts && typeof opts === "object" ? opts : {};
     /* v9.32: FICHA NUNCA NULA. O erro "undefined is not an object (evaluating
@@ -9821,26 +9842,47 @@ export default function Taverna() {
       npcTurnoRef.current += 1;
       let reg = npcsRef.current;
       let tocou = false;
+      /* MM14 · 10a: um nome novo que colide com quem já importa (mesmo
+         primeiro nome) é a mesma pessoa, ou é recusado — as três portas do
+         registo (aqui, o cânone logo abaixo, e o Cronista mais adiante)
+         passam por `nomeComDono` antes de criar ou mesclar ficha. */
+      const homonimos = [];
       [].concat(resp.mudancas.npcs || []).forEach((n) => {
         if (!n || !n.nome) return;
+        let id = null;
+        try { id = nomeComDono(n.nome, reg, contextoDoNome(n)); } catch (e) { calou("nomeComDono", e); }
+        if (id && id.decisao === "recusada") { homonimos.push(id); return; }
+        const nomeCerto = (id && id.nome) || n.nome;
         /* MM13: a menção não é presença — o nome da pista (ou do alvo) da
            abertura não entra no registo antes de o herói de fato chegar. */
-        if (aindaSoUmNome(aberturaMundoRef.current, n.nome, { lugar: lugarRef.current, missoes: missoesRef.current })) return;
-        const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
+        if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) return;
+        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
         const ficha = chave
           ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: reg[chave].conhecidoEm != null ? reg[chave].conhecidoEm : diaRef.current })
-          : criarNPC(n.nome, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });
+          : criarNPC(nomeCerto, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });
         if (!tocou) { reg = { ...reg }; tocou = true; }
-        reg[chave || n.nome] = ficha;
+        reg[chave || nomeCerto] = ficha;
       });
       for (const [nome, f] of Object.entries(canoneRef.current || {})) {
         if (!f || !String(f.tipo || "").toLowerCase().includes("pessoa")) continue;
         if (Object.keys(reg).some((k) => k.toLowerCase() === nome.toLowerCase())) continue;
+        let id = null;
+        try { id = nomeComDono(nome, reg, contextoDoNome(f)); } catch (e) { calou("nomeComDono", e); }
+        if (id && id.decisao === "recusada") { homonimos.push(id); continue; }
+        const nomeCerto = (id && id.nome) || nome;
         /* MM13: idem — a menção não é presença. */
-        if (aindaSoUmNome(aberturaMundoRef.current, nome, { lugar: lugarRef.current, missoes: missoesRef.current })) continue;
+        if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) continue;
+        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === nomeCerto.toLowerCase());
+        /* chave achada por homónimo (id.chave): já existe ficha dela — mescla,
+           nunca `criarNPC` por cima (apagaria laço e consultas já firmados;
+           sem isto, este mesmo cânone recriaria "Delfina" do zero a cada
+           turno, porque a chave literal "Delfina da Névoa" nunca entra no
+           registo e o `continue` de cima não a barra de novo). */
+        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current };
         if (!tocou) { reg = { ...reg }; tocou = true; }
-        reg[nome] = criarNPC(nome, { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
+        reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);
       }
+      if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoHomonimo(homonimos)}`;
       if (tocou) {
         npcsRef.current = reg; setNpcs(reg);
         systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
@@ -10437,9 +10479,16 @@ export default function Taverna() {
                cena ainda vale — o jogador leu aquele número */
             { ...prop, paga: Number.isFinite(Number(prop.paga)) ? prop.paga : precoNoTexto(narrativa) },
             { cidade: cidadeAtualRef.current, nivel: p.nivel || 1 });
-          if (cartaz && pregarNoMural(cartaz)) {
-            msgs.push(`📋 ${cartaz.dador || "Alguém"} tem um trabalho no mural.`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(cartaz)}`;
+          if (cartaz) {
+            /* MM14 · 10a: um dador homônimo de quem já importa não prega —
+               "Delfina da Névoa" recrutadora não vira cartaz ao lado da
+               Delfina que a principal já persegue a 146 km. */
+            let semHomonimo = true;
+            try { semHomonimo = nomeComDono(cartaz.dador, npcsRef.current, contextoDoNome({})).decisao !== "recusada"; } catch (e) { calou("nomeComDono do mural", e); }
+            if (semHomonimo && pregarNoMural(cartaz)) {
+              msgs.push(`📋 ${cartaz.dador || "Alguém"} tem um trabalho no mural.`);
+              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(cartaz)}`;
+            }
           }
         }
       } catch { /* proposta malformada nunca derruba o turno */ }
@@ -10491,14 +10540,21 @@ export default function Taverna() {
              única coisa que o JOGADOR decide — e virava boca pela qual o
              Vilão podia saber das coisas. */
           const euMesmo = String((personagemRef.current || personagem || {}).nome || "").toLowerCase().trim();
+          /* MM14 · 10a: a terceira porta — mesma régua do homónimo */
+          const homonimos = [];
           r.pessoas.slice(0, 4).forEach((n) => {
             if (!n || !n.nome) return;
             if (euMesmo && String(n.nome).toLowerCase().trim() === euMesmo) return;
-            const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(n.nome).toLowerCase());
+            let id = null;
+            try { id = nomeComDono(n.nome, reg, contextoDoNome(n)); } catch (e) { calou("nomeComDono", e); }
+            if (id && id.decisao === "recusada") { homonimos.push(id); return; }
+            const nomeCerto = (id && id.nome) || n.nome;
+            const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
             if (!tocou) { reg = { ...reg }; tocou = true; }
             if (chave) reg[chave] = mesclarNPC(reg[chave], n);
-            else reg[String(n.nome).slice(0, 40)] = criarNPC(String(n.nome).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
+            else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
           });
+          if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoHomonimo(homonimos)}`;
           if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); tocouElenco = true; }
         }
       } catch { /* seção quebrada não derruba as outras */ }
@@ -11780,7 +11836,7 @@ export default function Taverna() {
         const citadosAgora = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ");
         emCenaAgora = Object.keys(npcsRef.current || {}).filter((nome) => citadosAgora.includes(nome));
       } catch { emCenaAgora = []; }
-      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })() });
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, masmorra: masmorraRef.current, elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })() });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
       /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —

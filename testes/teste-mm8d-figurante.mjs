@@ -164,7 +164,11 @@ sec("6. lixo");
   const pessoas = i >= 0 ? app.slice(i, app.indexOf("\n", i)) : "";
   t("as pessoas conhecidas recebem quem a cena cita", pessoas.includes("emCena:"));
   t("as pessoas conhecidas recebem quem a missão ativa procura", pessoas.includes("missao:") && pessoas.includes("m.status === \"ativa\""));
-  const j = app.indexOf("emCena: emCenaAgora, elenco: nomesDoElenco()");
+  /* MOVIDA NA MM14 · 9a (30/09), com o motivo: a masmorra aberta entrou
+     entre `emCena` e `elenco` nesta mesma chamada (resumoCenaPrompt). A
+     âncora segue por `emCena: emCenaAgora,` sozinho — é o pedaço que esta
+     asserção sempre quis achar, e o que vem depois dele pode crescer de novo. */
+  const j = app.indexOf("emCena: emCenaAgora,");
   const rodape = j >= 0 ? app.slice(j, app.indexOf("\n", j)) : "";
   t("o rodapé recebe a missão ativa", rodape.includes("missao:"));
 }

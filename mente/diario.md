@@ -15,6 +15,38 @@ Formato:
 ```
 
 ---
+## 30/09 16:03 · v9.338 · MM14 (6) · ninguém segue a heroína à masmorra, e ninguém "mudou" sem a ter visto · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o primeiro dos restos da MM14, retomado depois do limite de uso — agora uma mão de cada
+  vez, em primeiro plano.
+- **estado inicial:** verde (`8c40c74`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **9a · a gente da cidade dentro da masmorra:** "quem está aqui" decidia-se só pela cidade — quem vive em Foz do
+  Meio estava "aqui" em qualquer sítio de Foz, **incluindo dentro de uma masmorra aberta na cidade**, e quem não
+  tinha paradeiro estava "aqui" em todo o lado. Agora, com masmorra aberta, o "aqui" é o grupo e quem está na
+  masmorra; o resto fica "lá fora". Na prova com os dados da sessão: Teodoro, Isolina e Branca, que desciam com
+  a heroína, → ninguém.
+- **9b · "você mudou desde a última vez" no primeiro encontro:** era um movimento do Intérprete que valia
+  **sempre** (`quando: () => true`) — 84 em 600 primeiros encontros. Agora exige que a pessoa a tenha visto antes
+  (conhecida antes de hoje e com dias vistos): 0 em 600.
+- **10a · nomes que colidem:** as três portas do registo só comparavam o nome inteiro. Agora um nome novo que
+  partilha o primeiro nome com alguém que importa (a pista, a espinha, o elenco com a cidade dele, o grupo, quem
+  a missão procura) é a mesma pessoa — e mescla na ficha dela, sem apagar o laço — ou é recusado pelo motivo
+  (outro sexo, outro lugar) e dito ao Narrador nesse turno. A "Delfina da Névoa" da sessão é recusada: a
+  Delfina está noutro lugar.
+- **10b · "Floripes do Sino":** não veio do Narrador — é gente do gerador, com o sobrenome de lugar que o léxico
+  dá; o que falhava era **a procura**, que casava qualquer pedaço de 4 letras, e "sino" apanhou "o Sino Calado"
+  (e numa das vezes ganhou à própria taverneira). Um pedaço depois de partícula ("do", "das") já não procura
+  ninguém.
+- **frontend:** as três ligações de 9a, o `viuAntes` de 9b (sem ele a frase calava-se para todos), as três portas e
+  o mural de 10a; **uma correção à especificação**: na porta do cânone, uma pessoa já registada mescla em vez de
+  ser recriada — recriá-la apagava o laço a cada turno.
+- **a prova jogada:** a pessoa foi registada; a ruína próxima dessa campanha não era uma masmorra estruturada, por
+  isso o "ninguém desce" está provado pela suíte com os dados da sessão, não jogado.
+- **o que fica:** na jornada, a gente da cidade de origem continua "presente" — a mesma regra, fora do pedido.
+- **para quem joga:** na masmorra estão os que desceram; quem nunca o viu não diz que ele mudou; e o mundo deixa de
+  inventar uma segunda Delfina ou uma pessoa com o nome da taverna.
+
 ## 30/09 15:08 · v9.337 · os restos da MM14 — interrompidos pelo limite de uso · sem código
 
 - **o que aconteceu:** as três mãos dos restos da MM14 (as pessoas que seguem a heroína, o "você mudou",
