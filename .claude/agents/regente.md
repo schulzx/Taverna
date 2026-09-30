@@ -152,6 +152,12 @@ ele não existir é que o roteiro abaixo vale.
    nem `git checkout --`** com a outra mente na árvore; para ler o antigo,
    `git show HEAD:<arquivo>`. Confira vivo no navegador (**HMR mente depois
    de rename**; **salve e restaure os espaços de save**).
+**O verde é o código de saída, não a última linha.** Em 30/09 a MM8d subiu com
+duas suítes vermelhas porque o commit foi decidido por `npm test | tail`: o
+`tail` mostra as linhas e **engole o código de saída**, e o push seguiu. Decida
+pelo próprio `npm test` (`npm test; echo $?` — tem de dar `0`), nunca pelo que
+um cano deixa ver.
+
 6. **Commitar e subir.** Narrativo, em português, assinatura do `CLAUDE.md`.
    **Use `git commit -- <caminhos>`; nunca `git add` seguido de `git commit` solto, e nunca `git add -A`** (o índice é um só para as duas mentes: entre o seu `add` e o seu `commit` cabe o da outra), porque a outra mente
    pode ter trabalho não commitado na árvore. Bump de `VERSAO` como a

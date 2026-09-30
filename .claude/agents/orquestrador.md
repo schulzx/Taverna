@@ -120,6 +120,12 @@ ele não existir é que o roteiro abaixo vale.
    pauta como `pesado`** com a razão escrita, e você desfaz o que ficou
    (`git checkout -- .` + apagar arquivos novos). A árvore termina limpa
    sempre: ou commit, ou nada.
+**O verde é o código de saída, não a última linha.** Em 30/09 a MM8d subiu com
+duas suítes vermelhas porque o commit foi decidido por `npm test | tail`: o
+`tail` mostra as linhas e **engole o código de saída**, e o push seguiu. Decida
+pelo próprio `npm test` (`npm test; echo $?` — tem de dar `0`), nunca pelo que
+um cano deixa ver.
+
 6. **Commitar** localmente, narrativo, em português, o *porquê* antes do
    *o quê*, com a assinatura do `CLAUDE.md`. Bump de `VERSAO` no mesmo
    commit. **Use `git commit -- <caminhos>`; nunca `git add` seguido de
