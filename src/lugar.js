@@ -165,6 +165,17 @@ export const NAO_E_IDA = [
     rx: /\b(digo|falo|conto|explico|aviso|prometo|juro|anuncio|respondo|sussurro|murmuro|grito|garanto)(-lhes?|-os|-as)?\b[^:—"“«]{0,40}?(:|—|\bque\b)/,
     porque: "contar a alguém que se vai não é ir",
   },
+  {
+    /* MM15 (30/09): "Pego na chave mas NÃO SAIO do balcão" (a segunda
+       sessão de prova, T10) contou como pedir para sair — a negação da
+       peneira só conhece o "não" no começo da oração ou antes de "vou",
+       "tento", "quero"; e "saio d…" estava lá, inteiro. Com o Cronista a
+       dizer "cidade", passou a saída falsa: "De volta a Runa do Poço — O
+       Último Gomo fica para trás", com a heroína ao balcão. */
+    id: "negaSaida",
+    rx: /\b(nao|nunca|jamais|nem)\s+(me\s+)?(saio|saimos|vou embora|vamos embora|volto|voltamos|retorno|regresso|deixo|deixamos|arredo|mexo|movo)\b/,
+    porque: "dizer que não sai é ficar",
+  },
 ];
 
 /* Palavras que não distinguem nada e por isso não podem casar sozinhas. */
@@ -312,12 +323,87 @@ export const SAIDA_DOS_MUROS = {
   estrada: /\b(rumo a|rumo ao|sigo para|seguimos para|parto para|partimos para|viajo para|viajamos para|vou para|vamos para|sigo viagem|pego a estrada|tomo a estrada|estrada afora|pela estrada|para a estrada|portoes afora|cruzo (os |as |o |a )?(portoes|portao|muralhas?)|para fora d[aeo]s? (cidade|vila|muralhas?|portoes|portao|povoado|muros?|aldeia)|para o (norte|sul|leste|oeste)|ao (norte|sul|leste|oeste))\b/,
 };
 
+/* ============================================================
+   DE ONDE SE SAI NÃO É PARA ONDE SE VAI (30/09, MM15 · o lugar)
+
+   Na segunda sessão de prova (T11) a heroína escreveu "saio do Último
+   Gomo e vou direita ao Fundo do Poço", e o sistema registou "AGORA estou
+   no Último Gomo": o destino foi o sítio de onde ela saía. A frase tinha
+   os DOIS nomes inteiros, cada um valia 100 + 2 pedaços, e no empate
+   ganhava o que vinha primeiro na lista da cidade. A régua nunca soube
+   que "saio de X" diz de onde, e não para onde.
+
+   A regra: o que vem logo depois de um verbo de saída ("saio de",
+   "deixo", "largo"), de uma proveniência ("desde", "vindo de") ou de um
+   "de/do/da" que abre a oração ("Do Último Gomo, vou…") é a ORIGEM, e
+   sai da disputa — nome e tipo. A origem acaba onde a frase muda de rumo:
+   no "e", na vírgula, no "para", no verbo de ir, ou ao fim de `palavras`.
+   E, havendo uma origem dita, "para o X"/"rumo a X" também é ir: "saio
+   da forja para a taverna" leva à taverna. */
+export const ORIGEM_DO_PASSO = {
+  marcas: [
+    /\b(saio|saimos|sair|saindo|deixo|deixamos|deixar|deixando|largo|largamos|abandono|abandonamos)\s+(de\s+|d[oa]s?\s+|[oa]s?\s+)?/g,
+    /\b(desde|vindo|vinda|vindos|vindas|venho|vimos)\s+(de\s+|d[oa]s?\s+|[oa]s?\s+)?/g,
+    /(^|[.!?;]\s*)(de|d[oa]s?)\s+/g,
+  ],
+  /* onde a origem acaba: a palavra que muda de rumo */
+  fim: new Set(["e", "ou", "para", "pra", "rumo", "ate", "ao", "aos", "pelo", "pela", "pelos", "pelas", "com", "em", "que", "quando", "enquanto", "onde", "volta", "direita", "direto", "direitinho"]),
+  palavras: 5,
+  /* com uma origem dita, o rumo sem verbo de ir também é ir — mas só
+     quando o que vem depois do "para" é um lugar: "saio da forja para o
+     Limiar de Ferro" vai; "saio do quarto para falar com o ferreiro" não
+     (a palavra depois do "para" não é lugar nenhum, e "ferreiro" três
+     palavras adiante também não é para onde ela vai) */
+  rumo: /\b(para|pra|rumo a|rumo ao|em direcao a|em direcao ao)\s+((o|a|os|as)\s+)?/g,
+};
+/* Há um "para <lugar>" no texto? `nomes` são os nomes dos candidatos; o
+   lugar pode vir pelo nome (sem artigo, a primeira palavra dele basta) ou
+   pela palavra do tipo ("para a forja"). */
+function rumoA(texto, nomes) {
+  const rx = new RegExp(ORIGEM_DO_PASSO.rumo.source, "g");
+  const cabecas = (Array.isArray(nomes) ? nomes : []).map((n) => semArtigoL(n)).filter(Boolean)
+    .map((n) => n.split(/[^a-z0-9]+/).filter(Boolean)[0]).filter((p) => p && p.length > 2);
+  const tipos = Object.values(PALAVRAS_DO_TIPO).flat();
+  let m;
+  while ((m = rx.exec(texto))) {
+    const resto = texto.slice(m.index + m[0].length);
+    const primeira = (resto.match(/^[a-z0-9]+/) || [""])[0];
+    if (primeira && (cabecas.includes(primeira) || cabecas.includes(singular(primeira)))) return true;
+    if (tipos.some((p) => new RegExp(`^${p}s?\\b`).test(resto))) return true;
+    if (rx.lastIndex <= m.index) rx.lastIndex = m.index + 1;
+  }
+  return false;
+}
+function semAOrigem(t) {
+  let s = String(t || "");
+  for (const marca of ORIGEM_DO_PASSO.marcas) {
+    const rx = new RegExp(marca.source, "g");
+    let m;
+    while ((m = rx.exec(s))) {
+      const ini = m.index + m[0].length;
+      const palavra = /\s*([a-z0-9]+)/y;
+      palavra.lastIndex = ini;
+      let fim = ini, n = 0, p;
+      while (n < ORIGEM_DO_PASSO.palavras && (p = palavra.exec(s))) {
+        if (ORIGEM_DO_PASSO.fim.has(p[1]) || RX_VOU.test(p[1])) break;
+        fim = palavra.lastIndex; n++;
+      }
+      if (fim > ini) s = s.slice(0, ini) + s.slice(ini, fim).replace(/[^\n]/g, " ") + s.slice(fim);
+      if (rx.lastIndex <= m.index) rx.lastIndex = m.index + 1;
+    }
+  }
+  return s;
+}
+
 export function lugarPedido(texto, lugares = []) {
   /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
   const t = soODeclarado(texto, NAO_E_IDA);
   if (!t.trim()) return null;
   const sai = SAIDA_DOS_MUROS.rx.test(t);
-  if (!sai && !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
+  /* MM15: a origem sai da disputa (ver `ORIGEM_DO_PASSO`, acima) */
+  const alvo = semAOrigem(t);
+  const vai = RX_VOU.test(alvo) || RX_ATE.test(alvo) || (alvo !== t && rumoA(alvo, (Array.isArray(lugares) ? lugares : []).map((l) => l && l.nome)));
+  if (!sai && !vai) return null;
   /* MM14: na frase de saída só concorre o que fica lá fora */
   lugares = (Array.isArray(lugares) ? lugares : []).filter((l) => !sai || (l && l.onde === "arredores"));
   if (sai) {
@@ -336,8 +422,8 @@ export function lugarPedido(texto, lugares = []) {
      o jogador sobre o que ele acabou de dizer. */
   let melhor = null, pontos = 0;
   for (const l of lugares) {
-    if (!l || !l.nome || !casaNome(t, l.nome)) continue;
-    const inteiro = t.includes(norm(l.nome)) ? 100 : 0;
+    if (!l || !l.nome || !casaNome(alvo, l.nome)) continue;
+    const inteiro = alvo.includes(norm(l.nome)) ? 100 : 0;
     const p = inteiro + pedacos(l.nome).length;
     if (p > pontos) { pontos = p; melhor = l; }
   }
@@ -345,7 +431,7 @@ export function lugarPedido(texto, lugares = []) {
   /* O NOME GANHA DO TIPO, sempre: quem escreveu "Santuário das Cinzas" já
      disse qual é, e discutir com ele seria o mesmo erro do "salão" contra a
      "sala dos fundos". O tipo só entra quando nome nenhum casou. */
-  const tipos = tiposPedidos(t);
+  const tipos = tiposPedidos(alvo);
   if (!tipos.length) return null;
   const doTipo = lugares.filter((l) => l && tipos.includes(l.tipo));
   if (!doTipo.length) return null;
@@ -642,6 +728,95 @@ export function pediuParaVoltar(textoDoJogador, cidade) {
   if (RX_SAIO.test(t)) return true;
   const c = norm(cidade);
   return !!c && t.includes(c) && (RX_VOU.test(t) || RX_ATE.test(t));
+}
+
+/* ============================================================
+   O "CIDADE" DO CRONISTA NÃO É UM PASSO (30/09, MM15 · o lugar)
+
+   O Cronista é pedido, a cada turno, a dizer onde a heroína ficou — e as
+   suas instruções (v9.39, de quando o único lugar nomeado era o de FORA
+   dos muros) mandam-no dizer "a palavra exata cidade" quando ela está
+   dentro dela. Numa taverna, ela está dentro da cidade: o Cronista
+   obedece e diz "cidade". O App lia essa palavra como "voltei à cidade",
+   e como a jogadora não tinha pedido para sair, respondia ao Narrador com
+   "[LUGAR — RECUSADO] Você me tirou de onde eu estava…". Na segunda
+   sessão de prova, **quatro recusas falsas em dez respostas** (T5, T6, T9,
+   T10) — uma acusação a quem nada fez, numa pauta que tem teto —, e à
+   quinta (T10) a negação "não saio do balcão" passou por pedido e a saída
+   falsa entrou: "De volta a Runa do Poço — O Último Gomo fica para trás".
+
+   A regra, por quem diz:
+   - o CRONISTA só lê; o "cidade" dele, com a heroína num lugar DENTRO dos
+     muros (um prédio, um cômodo), não diz nada de novo — ela já está na
+     cidade. Ignora-se, em silêncio. Fora dos muros (a fazenda, o lado de
+     fora dos portões), "cidade" continua a ser o que era: uma volta, que
+     só passa se ela a pediu (é o teleporte que a v9.39 existe para
+     impedir);
+   - o MESTRE, com o `lugar_atual`, age: a recusa dele fica como era
+     (v9.48), dentro e fora.
+   E, dos dois lados, pedir para sair só conta se o pedido não a trouxe
+   PARA AQUI no mesmo turno ("saio do Último Gomo e vou ao Fundo do Poço"
+   pede para sair do Último Gomo, não do Fundo do Poço onde ela chegou);
+   e o nome do sítio de onde ela acabou de sair não a leva de volta. */
+export const QUEM_DIZ_O_LUGAR = {
+  /* a palavra combinada para "voltei para dentro dela" (era do App, v9.48) */
+  voltou: /^(cidade|na cidade|a cidade|de volta|dentro da cidade)$/i,
+  cronista: { dentroDosMuros: "ignora", foraDosMuros: "recusa" },
+  mestre: { dentroDosMuros: "recusa", foraDosMuros: "recusa" },
+};
+
+/* O pedido de hoje trouxe-a PARA este lugar? (o nome dele, fora da origem,
+   com um verbo de ir) */
+function pedidoTrazA(pedido, nome) {
+  const cru = falaDoJogador(pedido);
+  if (!cru || !nome) return false;
+  const t = soODeclarado(cru, NAO_E_IDA);
+  const alvo = semAOrigem(t);
+  const vai = RX_VOU.test(alvo) || RX_ATE.test(alvo) || /\b(volto|voltamos|regresso|retorno)\b/.test(alvo) || (alvo !== t && rumoA(alvo, [nome]));
+  return vai && casaNome(alvo, nome);
+}
+/* O pedido de hoje disse que ela SAI deste lugar? (o nome dele só na origem) */
+function pedidoDeixa(pedido, nome) {
+  const cru = falaDoJogador(pedido);
+  if (!cru || !nome) return false;
+  const t = soODeclarado(cru, NAO_E_IDA);
+  const alvo = semAOrigem(t);
+  /* o nome inteiro primeiro: "o Largo Faminto" e "o Arquivo Faminto"
+     partilham meia palavra, e a meia palavra não diz de qual se sai */
+  const n = semArtigoL(nome);
+  if (n && t.includes(n)) return !alvo.includes(n);
+  return casaNome(t, nome) && !casaNome(alvo, nome);
+}
+
+/* O que fazer com um lugar DITO — pelo Cronista (`fonte: "cronista"`) ou
+   pelo Mestre (`"mestre"`) — com a heroína em `lugar`. Devolve `{ acao,
+   porque }`, e `acao` é uma de:
+     "novo"   — é o nome de um sítio: quem chama segue a régua de sempre;
+     "nada"   — "cidade" sem lugar registado: já está onde é dito;
+     "volta"  — a volta à cidade, pedida: apaga o lugar;
+     "recusa" — tirou-a de onde está sem pedido: o envelope de recusa;
+     "ignora" — não diz nada de novo: nem move nem acusa.
+   O combate fica com quem chama (é antes disto, e recusa tudo). */
+export function lerLugarDito(dito, ctx) {
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  const lugar = o.lugar && typeof o.lugar === "object" && o.lugar.nome ? o.lugar : null;
+  const cidade = String(o.cidade || "");
+  const regra = QUEM_DIZ_O_LUGAR[o.fonte] || QUEM_DIZ_O_LUGAR.mestre;
+  /* `null` é a volta do Mestre (o `lugar_atual: null` do LUGAR_PROMPT); o
+     que não é texto nem nada não é lugar nenhum */
+  if (dito != null && typeof dito !== "string") return { acao: "ignora", porque: "lixo" };
+  const cru = String(dito == null ? "" : dito).trim();
+  const eCidade = !cru || QUEM_DIZ_O_LUGAR.voltou.test(cru) || ehAPropriaCidade(cru, cidade);
+  if (!eCidade) {
+    /* o sítio de onde ela acabou de sair não a leva de volta */
+    if (lugar && !ehOMesmoLugar({ nome: cru }, lugar) && pedidoDeixa(o.pedido, cru)) return { acao: "ignora", porque: "origem" };
+    return { acao: "novo", porque: "nome" };
+  }
+  if (!lugar) return { acao: "nada", porque: "semLugar" };
+  if (pediuParaVoltar(o.pedido, cidade) && !pedidoTrazA(o.pedido, lugar.nome)) return { acao: "volta", porque: "pedido" };
+  const dentro = !!distanciaDe(lugar.distancia).dentro;
+  const acao = dentro ? regra.dentroDosMuros : regra.foraDosMuros;
+  return { acao, porque: dentro ? "dentroDosMuros" : "foraDosMuros" };
 }
 
 export function detectarVoltaForcada(narrativa, { lugar, cidade, pedidoDoJogador } = {}) {

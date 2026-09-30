@@ -15,6 +15,31 @@ Formato:
 ```
 
 ---
+## 30/09 18:51 · v9.341 · MM15 (1) · o "cidade" do Cronista não tira a heroína da taverna, e "saio de X" vai a Y · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a ordem do coordenador — a MM15 pela sua ordem, e o lugar à frente, porque é o que parte a sessão.
+  **Sem chamadas pagas hoje** (o teto do nosso endereço esgotou-se): provado pela suíte e pelo que o jogo faria.
+- **estado inicial:** verde (`865c9ff`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend — as causas:** (a) o prompt do Cronista manda-o dizer "a palavra exata cidade" quando a heroína está dentro da
+  cidade — regra de quando o único lugar com nome era fora dos muros; numa taverna ele cumpre, e `registrarLugar` lia-o como
+  "voltei" e, sem pedido, recusava ("[LUGAR — RECUSADO]"). (b) A saída falsa do T10: "pego na chave mas **não saio** do
+  balcão" contava como pedido de volta — a negação não apanhava "não saio". (c) O T11: em "saio do Último Gomo e vou ao
+  Fundo do Poço" os dois nomes pesavam o mesmo e o empate ia para o primeiro da lista — a régua não sabia que "saio de X"
+  diz de onde se sai.
+- **o conserto:** `lerLugarDito` (`src/lugar.js`) decide por quem diz: o "cidade" do Cronista com a heroína num prédio é
+  "nada de novo" (não move nem acusa); fora dos muros e vindo do Mestre continua recusa, como a v9.48 e a v9.335 queriam;
+  "não saio" trava a ida; o que vem depois de "saio de / deixo / vindo de" é a origem e sai da disputa. O prompt do
+  Cronista não mudou (o teto de prompt fica igual).
+- **em número (24 mundos, o módulo de HEAD contra o novo):** "cidade" do Cronista dentro de um prédio, recusas falsas
+  **3720 de 4092 → 0**, saídas falsas **372 → 0**; fora dos muros as recusas ficam **144 de 144**; "saio de X e vou a Y" e
+  irmãs que não levavam a Y **1440 de 2304 → 0**. A sessão J2–J11 reproduzida: 4 recusas + 1 saída falsa → 0 + 0, e acaba
+  no Fundo do Poço.
+- **frontend:** `registrarLugar(nome, fonte)` delega a `lerLugarDito` em try/`calou` (estourar é não mover), com os textos
+  de cada ramo iguais; o Cronista passa `"cronista"`. `pediuParaVoltar` saiu do import do App (continua com leitores no
+  módulo e nas suítes). +5 linhas; as medidas das ações do jogador re-medidas por conteúdo.
+- **para quem joga:** ao balcão, a heroína fica ao balcão — e quando diz "saio daqui e vou ali", vai ali.
+
 ## 30/09 17:58 · v9.340 · MM11 (2) · a segunda sessão de prova — parcial, cortada pelo teto diário · commit `c6646b6`
 
 - **por que andou:** a ordem do coordenador — fechados os três restos da MM14 (v9.338, v9.339, v9.340), jogar a

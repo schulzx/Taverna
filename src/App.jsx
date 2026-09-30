@@ -155,7 +155,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaP
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
 import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
-import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar, distanciaNaCidade, umSoLugar } from "./lugar.js";
+import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, distanciaNaCidade, umSoLugar, lerLugarDito } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
@@ -7882,13 +7882,9 @@ export default function Taverna() {
      "lugar_atual" (imediato) e o Cronista lendo a narração (no fim do turno)
      — e os dois passam por aqui, para o anúncio e a limpeza serem um só.
      `null` significa "voltei para dentro da cidade". */
-  const registrarLugar = (nome) => {
+  const registrarLugar = (nome, fonte = "mestre") => {
     const cidade = cidadeAtualRef.current || "";
     const cru = String(nome || "").trim();
-    /* "cidade" é a palavra combinada para "voltei para dentro dela": sem um
-       sinal explícito, um `null` de descuido apagaria o lugar todo turno e
-       devolveria exatamente o teleporte que este código existe para impedir */
-    const voltou = /^(cidade|na cidade|de volta|dentro da cidade)$/i.test(cru);
     /* v9.48: NINGUÉM SE MOVE NO MEIO DE UMA LUTA. Achado jogando: o herói
        subiu para o Andar 2, atacou um zumbi, e o turno seguinte o anunciou
        "de volta ao Andar 1". Dentro do combate quem diz onde cada um está é
@@ -7898,8 +7894,16 @@ export default function Taverna() {
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você mudou o meu lugar no meio de um combate. Não muda: enquanto a luta corre, quem diz onde cada um está é o tabuleiro do sistema. Continuo ${lugarRef.current ? comEm(lugarRef.current.nome) : `em ${cidade || "onde eu estava"}`}, e a cena é aqui.`;
       return null;
     }
-    if (!cru || voltou || ehAPropriaCidade(cru, cidade)) {
-      if (!lugarRef.current) return null;
+    /* MM15: quem diz o lugar (o Cronista ou o Mestre) decide o que o
+       "cidade" significa — a régua vive em `lerLugarDito` (lugar.js), por
+       QUEM_DIZ_O_LUGAR. Um órgão que estoura não pode custar o turno: se
+       o motor falhar, não mover é o erro barato. */
+    let lido;
+    try {
+      lido = lerLugarDito(nome, { lugar: lugarRef.current, cidade, pedido: ultimoPedidoRef.current, fonte });
+    } catch (e) { calou("registrarLugar/lerLugarDito", e); return null; }
+    if (lido.acao === "nada" || lido.acao === "ignora") return null;
+    if (lido.acao === "recusa") {
       /* v9.48: SAIR DAQUI TAMBÉM É UM MOVIMENTO, e movimento é do jogador.
          O cão de guarda de `lugar.js` já defendia a NARRATIVA que devolvia o
          herói à cidade sem ele pedir — mas o Mestre nem precisava narrar:
@@ -7907,15 +7911,16 @@ export default function Taverna() {
          obedecia, anunciando a volta com o próprio ícone. A porta dos
          fundos do mesmo bug. Agora o campo passa pela mesma régua: só volta
          quem escreveu que volta. */
-      if (!pediuParaVoltar(ultimoPedidoRef.current, cidade)) {
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você me tirou de onde eu estava — ${lugarRef.current.nome} — sem que eu tenha dito que saio. O SISTEMA registra que eu continuo LÁ. Retome a cena ${comEm(lugarRef.current.nome)} — eu não caminhei de volta e não cheguei a lugar nenhum. Só eu decido sair daqui, e só quando eu escrever isso.`;
-        return null;
-      }
+      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você me tirou de onde eu estava — ${lugarRef.current.nome} — sem que eu tenha dito que saio. O SISTEMA registra que eu continuo LÁ. Retome a cena ${comEm(lugarRef.current.nome)} — eu não caminhei de volta e não cheguei a lugar nenhum. Só eu decido sair daqui, e só quando eu escrever isso.`;
+      return null;
+    }
+    if (lido.acao === "volta") {
       const antigo = lugarRef.current;
       lugarRef.current = null; setLugar(null);
       return `📍 De volta ${cidade ? `a ${cidade}` : "à cidade"} — ${antigo.nome} fica para trás.`;
     }
-    /* v9.55: se o nome é um local DESTA cidade, a distância é `dentro` — e
+    /* "novo": segue a régua de sempre.
+       v9.55: se o nome é um local DESTA cidade, a distância é `dentro` — e
        não a de arredores que o classificador por texto daria a uma taverna.
        Sem isto, o Mestre mandando `lugar_atual: "O Javali Cambaleante"`
        rebaixava para "horas de caminhada" o que o sistema tinha acabado de
@@ -10475,7 +10480,7 @@ export default function Taverna() {
            "voltou para a cidade" faria o descuido do Cronista desfazer o
            lugar a cada turno — o bug de novo, por outra porta. */
         if (typeof r.lugar === "string" && r.lugar.trim()) {
-          const aviso = registrarLugar(r.lugar);
+          const aviso = registrarLugar(r.lugar, "cronista");
           if (aviso) msgs.push(aviso);
         }
       } catch { /* nunca derruba o turno */ }

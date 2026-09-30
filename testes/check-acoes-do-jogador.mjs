@@ -344,11 +344,17 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      mudou-se de `pautaDoTurno` para `fichasDaMesa`, uma função nova que
      nasce ACIMA de `pushMsgs` no arquivo — para que o sinal do oráculo
      também pudesse perguntar às fichas antes de rolar o d100. Re-medido
-     por esta própria catraca; nada somado de cabeça. */
-  } else if (iPush + 1 !== 8257) {
-    falha(`pushMsgs saiu de src/App.jsx:8257 e agora está em :${iPush + 1}`,
+     por esta própria catraca; nada somado de cabeça.
+     O LUGAR PELO CRONISTA (frontend, MM15 (1), 30/09): 8257 -> 8262, +5. A
+     decisão de `registrarLugar` (o "cidade" do Cronista) mudou-se para
+     `lerLugarDito` (lugar.js): a assinatura ganhou o parâmetro `fonte` e o
+     comentário da palavra combinada saiu, porque a regra agora mora lá. As
+     cinco linhas nascem ACIMA de `pushMsgs` no arquivo, e tudo abaixo andou
+     junto. Re-medido por esta própria catraca; nada somado de cabeça. */
+  } else if (iPush + 1 !== 8262) {
+    falha(`pushMsgs saiu de src/App.jsx:8262 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8257, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8262, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

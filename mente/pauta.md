@@ -428,7 +428,7 @@ O limite é o que um commit revertido não desfaz.
   slime), o escondido com vantagem numa luta, o atirador.
 - [ ] **MM15 · o que a segunda sessão de prova partiu** · da MM11 (2), 30/09, `mente/mm11-sessao-2.md` · **à frente de tudo**
   Parcial: 10 respostas, cortada no T11 pelo teto diário da API (500 por endereço). Pela ordem em que partem a sessão:
-  1. **O lugar pelo Cronista** — dentro de um prédio ele devolve `"lugar": "cidade"` a cada turno; o sistema lê-o como o
+  1. ✓ *feito em v9.341* · **O lugar pelo Cronista** — dentro de um prédio ele devolve `"lugar": "cidade"` a cada turno; o sistema lê-o como o
      Narrador a tirar a heroína de lá: 4 "[LUGAR — RECUSADO]" falsos em 10 respostas, uma saída falsa que passou (T10), e
      "saio do Último Gomo e vou ao Fundo do Poço" registou o Último Gomo (T11). Era aqui que a sessão partia.
   2. **O gasto e o disfarce** — 3,6 chamadas por resposta (a primeira, ~2,0): quatro falas de personagem pagas e deitadas
