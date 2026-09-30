@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 14:48 · v9.337 · MM14 (5) · os fios e os contratos viram missões, e os dois canais antigos saem · commit (o hash vai no próximo bloco)
+## 30/09 14:48 · v9.337 · MM14 (5) · os fios e os contratos viram missões, e os dois canais antigos saem · commit `fc23d35`
 
 - **por que andou:** decisão do coordenador (a opção (a)). O Narrador (`quest_atualizar`) e o Cronista
   (`missoes.concluidas`) fechavam as tarefas da lista antiga **só pelo título, sem conferir nada** — a
