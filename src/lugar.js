@@ -39,6 +39,8 @@
 
 import { coordDe, garantirCoord, deslocar, kmAPe } from "./coordenadas.js";
 import { rngDe } from "./geografia.js";
+/* MM14: a peneira da declaração — "dizer que vai" não é ir */
+import { soODeclarado, NAO_E_DECLARACAO } from "./peneira.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -134,6 +136,36 @@ export function pontoDoLugar(nome, ancora, distancia = "arredores") {
 const RX_VOU = /\b(vou|vamos|sigo|segui|caminho|ando|marcho|me dirijo|dirijo-?me|entro|entrar|adentro|rumo a|rumo ao|chego|chegar|visito|visitar|passo n[ao]|passar n[ao]|procuro|procurar|subo|desco|volto para|retorno a|me encaminho|encaminho-?me|parto para|atravesso ate|atravesso para)\b/;
 /* "até X" sozinho já é deslocamento em português falado ("até a forja!") */
 const RX_ATE = /\bat[eé]\s+[ao]?\s*\w/;
+
+/* ---------------- DIZER QUE VAI NÃO É IR (30/09, MM14) ----------------
+   Na sessão de prova a heroína disse ao Teodoro, entre aspas, "Eu vou à
+   torre caída buscar a Branca… Venha comigo" — um convite — e o sistema
+   registou a viagem: 08:35 → 09:59, "AGORA estou na torre caída", a missão
+   de chegar lá fechada, e o Mestre a narrar a taverna. A régua desta
+   função pedia o verbo e o nome, e a frase tinha os dois — dentro da boca.
+
+   A peneira da casa (`peneira.js`) já sabe a diferença entre declarar e
+   falar, perguntar, supor, negar ou contar: esta função passa a ler só o
+   que o herói DECLAROU. E acrescenta-lhe a trava que só a viagem precisa,
+   o FUTURO dito com todas as letras ("amanhã vou à forja", "irei à
+   torre"): é um plano, e um plano não se registra como chegada. O "vou"
+   sozinho continua a ser ida — é assim que o português anda. */
+export const NAO_E_IDA = [
+  ...NAO_E_DECLARACAO,
+  {
+    id: "futuro",
+    rx: /\b(amanha|depois de amanha|mais tarde|logo mais|outro dia|um dia destes|na proxima|semana que vem|daqui a (pouco|nada|uma hora|um dia|dois dias)|a noite (vou|irei)|irei|iremos|irao|hei de ir|havemos de ir|pretendo|planejo|tenciono)\b/,
+    porque: "o que o herói vai fazer depois é um plano, e um plano não o põe lá",
+  },
+  {
+    /* a fala com destinatário: a peneira da casa tira o que vem depois de
+       "digo:", mas não o de "digo ao Teodoro: vou até a torre" nem o de
+       "conto-lhe que vou à forja" — e nos dois o herói só disse que ia */
+    id: "falaDita",
+    rx: /\b(digo|falo|conto|explico|aviso|prometo|juro|anuncio|respondo|sussurro|murmuro|grito|garanto)(-lhes?|-os|-as)?\b[^:—"“«]{0,40}?(:|—|\bque\b)/,
+    porque: "contar a alguém que se vai não é ir",
+  },
+];
 
 /* Palavras que não distinguem nada e por isso não podem casar sozinhas. */
 const VAZIAS = new Set(["a", "o", "as", "os", "da", "do", "das", "dos", "de", "e", "em", "na", "no", "um", "uma", "the"]);
@@ -253,7 +285,8 @@ export function tiposPedidos(texto) {
 export function tipoPedido(texto) { return tiposPedidos(texto)[0] || null; }
 
 export function lugarPedido(texto, lugares = []) {
-  const t = norm(texto);
+  /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
+  const t = soODeclarado(texto, NAO_E_IDA);
   if (!t.trim() || !(RX_VOU.test(t) || RX_ATE.test(t))) return null;
   /* o mais específico ganha: entre "a Forja" e "a Forja Velha", casa a que
      tem mais pedaços reconhecidos no texto.

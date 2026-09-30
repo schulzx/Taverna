@@ -15,6 +15,40 @@ Formato:
 ```
 
 ---
+## 30/09 11:14 · v9.333 · MM14 (1) · as missões deixam de fechar sem se jogarem · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o defeito nº 1 da sessão de prova — o que a partiu no turno 5.
+- **estado inicial:** verde (`1323b58`, a transcrição). Em paralelo, noutra mão, os defeitos 3, 4 e 5.
+- **bastão:** tomado por mim para três linhas (deslocamento zero); devolvido com este commit.
+- **backend — os quatro fechos da sessão, cada um reproduzido em Node (falha antes, passa depois):**
+  - **"Encontrar Teodoro ✓" no portão, e a principal fechada com a Delfina a 146 km:** a etapa "falar
+    com" lia "está no registo", e quem é só nomeado entra no registo (a secção de pessoas do
+    Cronista não passava pela guarda da MM13b). Agora **encontrar exige estar com a pessoa** — no
+    lugar dela; um cômodo conta como o prédio; nome parecido ou cidade errada reprovam.
+  - **"Tirar Branca de lá" fechado por uma frase no futuro:** a leitura do "para onde vou" lia o texto
+    inteiro, incluindo a fala entre aspas; agora só o que a heroína declarou (a peneira), e o futuro
+    dito com todas as letras e a fala com destinatário não movem ninguém. E o veículo era um "ir a"
+    só: passa a chegar **e** resgatar, com a emboscada à chegada.
+  - **"O lance" fechado por entrar na taverna:** as tramas de uma etapa fechavam no mesmo instante, e a
+    virada prometida nunca acontecia (em 10 veículos, desde a v9.117). Agora a última etapa segura a
+    missão até a virada vir, e só então fecha.
+  - **"O Chamado" → "A Travessia" no turno 11:** as missões falsas empurraram o arco; o ato **não vira
+    com marcos da espinha por cumprir**.
+- **e um defeito do App, provado em Node e consertado na fiação:** cada marco da espinha cumprido
+  **gravava o objeto de retorno no lugar do arco**, e o arco voltava a "jornada", ato 0 — **toda a
+  história principal reiniciava a cada marco**. Uma asserção de `teste-espinha` guardava a linha do
+  defeito; foi movida, com o motivo.
+- **a varredura (24 mundos × 8 estruturas):** frases que não são ida e moviam a heroína 2016/2016 → 0;
+  principais com um passo fechado só por menção 192/192 → 0; marcos caídos por menção 2511/2511 → 0;
+  tramas fechadas antes da virada 10/10 → 0; idas declaradas perdidas 0 → 0; principais jogadas que
+  ficam presas 0 → 0.
+- **o que fica (na pauta, com o nº 8):** o Narrador e o Cronista ainda fecham as quests antigas por
+  título, sem conferir — não foram a causa, e fechá-los é remover o que existe; a secção de pessoas
+  do Cronista ainda regista nomes de passagem; "volto para a mesa" casa "A Mesa Honesta".
+- **para quem joga:** uma missão só acaba quando acontece — encontrar alguém é estar com ele, chegar é
+  estar lá, e a história não salta de ato por conversa. As tramas curtas ganham a virada que sempre
+  prometeram (a emboscada, o encontro, a revelação).
+
 ## 30/09 10:38 · v9.332 · MM11 · a sessão de prova — veredito: ainda não · sem código (só a mente e a transcrição)
 
 - **quem jogou:** o `jogo`, uma sessão inteira à maneira de C1E1 numa campanha nova de *Uma Vida*

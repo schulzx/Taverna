@@ -376,12 +376,25 @@ export const VEICULOS = [
   {
     id: "tirar_de_la", serve: ["dar_um_aliado", "tirar_algo", "cobrar_o_que_prometi"],
     precisa: ["pessoa", "ermo"],
+    /* MM14 (30/09): "Tirar Branca de lá" fechou na sessão de prova por
+       CHEGAR à torre caída — e a heroína nem lá estava (uma frase no
+       futuro, dentro de um convite, moveu-a; ver `lugarPedido`). Mas mesmo
+       chegando de verdade, a etapa única era `ir_a`: o resgate que se
+       cumpre ao pisar no lugar, a mesma mentira que a etapa `resgatar`
+       nasceu (v9.132) para desfazer, e que esta trama nunca adotou.
+       E a virada era uma caçada — que o App só executa para etapas
+       `derrotar` com endereço (`talvezCacar`) e `talvezVirar` salta: era
+       uma virada que nunca acontecia. Passa a emboscada, que o App já
+       executa, à chegada; e o resgate é a segunda etapa, no lugar. */
     montar: ({ pessoa, sumido, ermo }) => ({
       titulo: `Tirar ${sumido} de lá`,
       descricao: `${sumido} não voltou de ${ermo.nome || "perto daqui"}. ${pessoa.nome} paga para trazer de volta — vivo, se der.`,
-      etapas: [{ tipo: "ir_a", alvo: ermo.nome || "", lugar: true }],
+      etapas: [
+        { tipo: "ir_a", alvo: ermo.nome || "", lugar: true },
+        { tipo: "resgatar", alvo: sumido, onde: ermo.nome || "" },
+      ],
     }),
-    virada: { apos: 0, tipo: "cacada", quantos: 2, ameaca: "competente" },
+    virada: { apos: 0, tipo: "emboscada", onde: "À chegada", quantos: 2, ameaca: "competente" },
   },
   {
     id: "a_reuniao", serve: ["declarar_a_guerra", "apresentar_o_rosto", "fechar_o_fio"],

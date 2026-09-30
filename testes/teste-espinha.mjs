@@ -132,7 +132,13 @@ sec("7. O MARCO CAI PELO FATO, E SÓ UMA VEZ");
   const primeiro = marcoAtual(espinha, 0);
   t("há um marco atual no primeiro ato", !!primeiro);
   const mundo = { cidadeAtual: "", lugarAtual: null, npcs: {}, derrotados: [], inventario: [], equipamento: [], revelados: [], dia: 1, relogios: [] };
-  /* cumprir o primeiro marco de verdade, pelo estado do mundo */
+  /* cumprir o primeiro marco de verdade, pelo estado do mundo.
+     MM14 (30/09): e o herói LÁ — o marco que cai por conhecer alguém ou
+     ver um lugar nomeado exige agora estar no lugar do marco (o `onde`).
+     Antes o mundo desta prova tinha a pessoa no registo e o herói em lado
+     nenhum; foi exatamente assim que "Encontrar Delfina" caiu na sessão de
+     prova com ela a 146 km. */
+  mundo.lugarAtual = { nome: primeiro.onde };
   if (primeiro.condicao.tipo === "falar_com") mundo.npcs = { x: { nome: primeiro.condicao.alvo, conhecidoEm: 3 } };
   else if (primeiro.condicao.tipo === "revelar") mundo.revelados = [`cidade|local|${primeiro.condicao.alvo}`];
   else if (primeiro.condicao.tipo === "derrotar") mundo.derrotados = Array(primeiro.condicao.quantos || 1).fill(primeiro.condicao.alvo);
@@ -175,7 +181,12 @@ sec("9. LIGADA AO JOGO");
      era preenchida — a espinha é o leitor que faltava */
   t("e enche a seção `momento` da Pauta", /porNaPauta\(p, "momento", envelopeDaEspinha\(/.test(APP));
   t("o marco confere pela MESMA porta das missões", /conferirEspinha\(espinhaRef\.current, mundoAgora, \(cond, m\) => etapaDef\(cond\.tipo\)\.ver\(cond, m\)\)/.test(APP));
-  t("e empurra o arco pelo peso do próprio feitio", /registrarMarco\(historiaRef\.current, feitioDe\(m\.feitio\)\.peso, m\.titulo\)/.test(APP));
+  /* MOVIDA NA MM14 (30/09), com o motivo: a linha que esta asserção guardava
+     era o defeito — gravava o retorno de registrarMarco ({historia, ganhou})
+     no lugar do arco, e cada marco cumprido reiniciava o arco. O marco passa
+     pelo marcarNoArco, que desembrulha o retorno; o que se prova continua a
+     ser "empurra o arco pelo peso do próprio feitio". */
+  t("e empurra o arco pelo peso do próprio feitio", /marcarNoArco\(feitioDe\(m\.feitio\)\.peso, m\.titulo\)/.test(APP));
   t("`revelados` chega ao conferidor", /revelados: \(baseMundoRef\.current \|\| \{\}\)\.revelados \|\| \[\]/.test(APP));
 }
 

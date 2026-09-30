@@ -48,7 +48,7 @@ import { ANTECEDENTES } from "../src/antecedentes.js";
 import { MOLDES, moldePorId } from "../src/moldes.js";
 import { generosDisponiveis } from "../src/nomes.js";
 import { oQueExisteAqui, chaveDoLugar, locaisDaCidade, idDoLocal, idDaGente } from "../src/mundo-base.js";
-import { conferir, criarMissao, TIPOS, etapaDef } from "../src/missoes.js";
+import { conferir, criarMissao, TIPOS, etapaDef, moradaDe } from "../src/missoes.js";
 import { TAMANHOS, garantirRelogios } from "../src/relogios.js";
 
 let ok = 0, mal = 0;
@@ -353,14 +353,22 @@ sec("10. descobrir cumpre-se quando o lugar é revelado (o defeito A)");
   const ver = (cond, m) => etapaDef(cond.tipo).ver(cond, m);
   const nada = conferirEspinha(wD.esp, { revelados: [] }, ver);
   t("sem nada revelado, o marco continua de pé", !nada.cumpridos.some((m) => m.id === marcoD.id));
-  const sim = conferirEspinha(wD.esp, { revelados: [chave] }, ver);
+  /* MM14 (30/09): revelado E lá. A sessão de prova viu "O que O Campo das
+     Mães esconde" cair porque o lugar foi NOMEADO numa conversa noutro
+     sítio; descobrir exige o herói no lugar quando ele entra em cena. As
+     duas asserções abaixo põem o herói lá (a cidade vem da chave), e a do
+     meio prova que de longe não cai. */
+  const la = { nome: marcoD.onde, cidade: chave.split("|")[0] };
+  const deLonge = conferirEspinha(wD.esp, { revelados: [chave], lugarAtual: { nome: "Outro Sítio Qualquer", cidade: la.cidade } }, ver);
+  t("revelado de longe (só nomeado), o marco continua de pé", !deLonge.cumpridos.some((m) => m.id === marcoD.id));
+  const sim = conferirEspinha(wD.esp, { revelados: [chave], lugarAtual: la }, ver);
   t("o marco descobrir cumpre-se quando o lugar é revelado", sim.cumpridos.some((m) => m.id === marcoD.id));
   /* a espinha JÁ GRAVADA (sem chave) e as tarefas de guilda: a ponte é a do
      App, `chaveDoLugar` no mundo das missões */
   const antiga = { tipo: "revelar", alvo: marcoD.onde };
   t("etapa antiga sem ponte continua sem casar (o defeito, medido)", verRevelar(antiga, { revelados: [chave] }) === false);
   const ponte = (n) => chaveDoLugar(wD.semente, wD.mapa, n, { genero: wD.genero, molde: wD.molde });
-  t("etapa antiga com a ponte do App casa", verRevelar(antiga, { revelados: [chave], chaveDoLugar: ponte }) === true);
+  t("etapa antiga com a ponte do App casa", verRevelar(antiga, { revelados: [chave], chaveDoLugar: ponte, lugarAtual: la }) === true);
   t("a ponte que estoura não derruba o turno", verRevelar(antiga, { revelados: [chave], chaveDoLugar: () => { throw new Error("x"); } }) === false);
   t("o nome dentro do id continua a valer (a gente)", verRevelar({ tipo: "revelar", alvo: "Fina" }, { revelados: [idDaGente("Vila", { nome: "Fina" })] }) === true);
   t("revelado outro lugar não cumpre", verRevelar({ ...antiga, chave }, { revelados: [`${wD.cidade}|nada-disto`] }) === false);
@@ -397,7 +405,24 @@ sec("10. descobrir cumpre-se quando o lugar é revelado (o defeito A)");
       npcs: { [a.pista.nome]: { nome: a.pista.nome, conhecidoEm: 1 }, ...(a.alvo.quem ? { [a.alvo.quem]: { nome: a.alvo.quem, conhecidoEm: 1 } } : {}) },
       derrotados: a.alvo.alvo ? [a.alvo.alvo] : [],
     };
-    for (let i = 0; i < 4; i++) ms = conferir(ms, mundo).missoes;
+    /* MM14 (30/09): O HERÓI ANDA. Este mundo punha o herói no lugar da
+       pista e dava o resto por visto de lá — a pessoa do marco no registo,
+       o lugar do marco revelado —, e é exatamente o mundo em que a sessão
+       de prova fechou a principal no turno 5 com a Delfina a 146 km. Agora
+       cada passo se confere com o herói no lugar DESSE passo (e na cidade
+       dele, quando a morada a diz): o que se mede continua a ser se a
+       principal fecha quando o jogador faz o que ela pede. */
+    const ondeDo = (e) => {
+      if (!e) return { nome: a.pista.local, cidade: "" };
+      if (e.tipo === "ir_a" && !e.lugar) return { nome: "", cidade: e.alvo };
+      const md = moradaDe(e.onde || (e.tipo === "revelar" || e.tipo === "ir_a" ? e.alvo : "") || a.pista.local);
+      const k = e.tipo === "revelar" ? (e.chave || alvoLocal || "") : "";
+      return { nome: md.lugar, cidade: md.cidade || (k.includes("|") ? k.split("|")[0] : "") };
+    };
+    for (let i = 0; i < 4; i++) {
+      const l = ondeDo(ms[0].etapas.find((x) => !x.feito));
+      ms = conferir(ms, { ...mundo, lugarAtual: l, cidadeAtual: l.cidade }).missoes;
+    }
     return ms[0].status !== "concluida";
   };
   const porGenero = {};

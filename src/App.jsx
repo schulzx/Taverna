@@ -172,7 +172,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco } from "./saga.js";
+import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto } from "./saga.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
@@ -10352,7 +10352,7 @@ export default function Taverna() {
       lugarAtual: lugarRef.current || null,
       derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
       inventario: p.inventario || [], equipamento: p.equipamento || [],
-      npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current,
+      npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current, emLuta: !!combateRef.current,
       /* v9.129: o que já foi apresentado em cena. É o que a etapa `revelar`
          lê — descobrir é diferente de passar pela porta. */
       revelados: (baseMundoRef.current || {}).revelados || [],
@@ -16527,7 +16527,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const n = nemesisRef.current;
     const g = (eventosRef.current || {}).global;
     const ms = missoesAtivas(missoesRef.current);
-    return {
+    return { marcosPendentes: (() => { try { const pa = progressoDoAto(espinhaRef.current, (historiaRef.current || {}).etapa || 0); return Math.max(0, pa.total - pa.feitos); } catch (e) { return undefined; } })(),
       nemesis: n && n.status !== "derrotada" && n.nome ? n.nome : null,
       global: g && g.nome ? g.nome : null,
       impostas: ms.filter((m) => tipoMissao(m.tipo).forcada).map((m) => `"${m.titulo}"`).slice(0, 3),
@@ -16863,7 +16863,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           /* o marco empurra o ARCO pelo peso do proprio feitio: e assim que
              a espinha e a forma dramatica andam casadas em vez de cada uma
              contar a sua historia */
-          historiaRef.current = registrarMarco(historiaRef.current, feitioDe(m.feitio).peso, m.titulo);
+          marcarNoArco(feitioDe(m.feitio).peso, m.titulo); /* MM14: gravava {historia, ganhou} no lugar do arco, e cada marco cumprido reiniciava o arco */
           pushMsgs([{ autor: "sistema", texto: `✦ ${linhaDoMarco(m)}` }]);
         }
         setHistoria(historiaRef.current);

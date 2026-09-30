@@ -23,7 +23,12 @@ console.log("\n[1. SÓ EXISTE ETAPA QUE O CÓDIGO CONFERE]");
 ok(Object.keys(ETAPAS).length === 9, "nove tipos de etapa, todos verificáveis");
 ok(Object.values(ETAPAS).every((e) => typeof e.ver === "function" && typeof e.texto === "function"), "cada um sabe se olhar no espelho do estado e se descrever");
 const casos = [
-  [{ tipo: "revelar", alvo: "A Capela" }, { ...MUNDO_VAZIO, revelados: ["Aldoria|local|A Capela"] }, true, "descobrir o que o lugar esconde"],
+  /* MM14 (30/09): a asserção mudou, e o motivo é a sessão de prova — o
+     Campo das Mães "descoberto" porque alguém disse que morava lá. Revelado
+     é "apareceu na narração"; descobrir exige também ESTAR no lugar. O caso
+     de antes (revelado, herói em lado nenhum) virou o de baixo, reprovado. */
+  [{ tipo: "revelar", alvo: "A Capela" }, { ...MUNDO_VAZIO, cidadeAtual: "Aldoria", lugarAtual: "A Capela", revelados: ["Aldoria|local|A Capela"] }, true, "descobrir o que o lugar esconde"],
+  [{ tipo: "revelar", alvo: "A Capela" }, { ...MUNDO_VAZIO, cidadeAtual: "Aldoria", revelados: ["Aldoria|local|A Capela"] }, false, "e o lugar só NOMEADO não se descobre de longe"],
   /* resgatar: a pessoa deixou de estar presa, e nao morreu no caminho */
   [{ tipo: "resgatar", alvo: "Ione" }, { ...MUNDO_VAZIO, base: SIT(null, "Ione", "cativa") }, false, "quem ainda esta presa nao foi resgatada"],
   [{ tipo: "resgatar", alvo: "Ione" }, { ...MUNDO_VAZIO, base: SIT(null, "Ione", "livre") }, true, "e livre e resgatada"],

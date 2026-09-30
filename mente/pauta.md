@@ -391,7 +391,7 @@ O limite é o que um commit revertido não desfaz.
   **Das 12 perguntas que o mundo sabe responder: 5 certas, 2 pela metade, 4 inventadas, 1 contradita, 1 perdida.**
 - [ ] **MM14 · o que a sessão de prova partiu** · da MM11, 30/09 · **à frente de tudo — o beta depende disto**
   Pela ordem em que partem a sessão (turno e prova na transcrição):
-  1. **As missões fecham sem se jogarem** — a principal fechou no turno 5 sem ver a Delfina (a 146 km);
+  1. ✓ *feito em v9.333* · **As missões fecham sem se jogarem** — a principal fechou no turno 5 sem ver a Delfina (a 146 km);
      "Tirar Branca de lá" fechou por uma frase no futuro; "O lance" por entrar na taverna; a história
      avançou de ato e o Mestre narrou "você trouxe a Branca".
   2. **O lugar da heroína e o da narração separam-se** — "vou à torre" fez a viagem sozinho, "saio pelo
@@ -402,7 +402,9 @@ O limite é o que um commit revertido não desfaz.
   6. **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
      vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
   7. **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
-  8. **Missões forçadas em série** (quatro em 43 respostas; "alguém vem cobrar o que você disse" sem promessa).
+  8. **Missões forçadas em série** *(e ainda: o Narrador e o Cronista fecham quests antigas por título, sem
+     conferir — `App.jsx` ~9651 e ~10470; fechá-los é remover o que existe, decidir; e a secção `pessoas` do
+     Cronista ainda regista nomes de passagem sem `aindaSoUmNome`; e "volto para a mesa" casa "A Mesa Honesta")* (quatro em 43 respostas; "alguém vem cobrar o que você disse" sem promessa).
   9. **As pessoas da cidade seguem a heroína** até à masmorra; "você mudou desde a última vez" no primeiro
      encontro (quatro vezes — uma linha de índole da pauta).
   10. **Nomes que colidem** (duas Delfinas; "Floripes do Sino" nascida do nome da taverna).

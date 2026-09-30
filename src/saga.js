@@ -310,8 +310,16 @@ export function conferirEspinha(espinha, mundo, verEtapa) {
     ...a,
     marcos: a.marcos.map((m) => {
       if (m.feito || !m.condicao) return m;
+      /* MM14 (30/09): "Encontrar Delfina — A Porta Aberta" caiu no turno 4
+         da sessão de prova com a Delfina a 146 km. A condição do marco
+         "procurar" é só o nome (`FEITIOS.procurar.condicao`), e o marco
+         sabe ONDE a pessoa está — o `onde` que a linha do marco mostra.
+         Encontrar é estar lá (`estaCom`, missoes.js): o marco empresta a
+         morada à condição, aqui, sem mudar o que a espinha gravou. */
+      const cond = m.condicao.tipo === "falar_com" && !m.condicao.onde && m.onde
+        ? { ...m.condicao, onde: m.onde } : m.condicao;
       let ok = false;
-      try { ok = !!verEtapa(m.condicao, mundo); } catch { ok = false; }
+      try { ok = !!verEtapa(cond, mundo); } catch { ok = false; }
       if (!ok) return m;
       mudou = true;
       cumpridos.push(m);

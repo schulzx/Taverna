@@ -420,6 +420,17 @@ export function podeVirar(h, motor = {}) {
   const ultima = est.etapas.length - 1;
   if (i >= ultima) return { pode: false, motivo: "este já é o momento final do arco" };
   const custo = custoDaEtapa(est, i);
+  /* MM14 (30/09): O ATO NÃO VIRA COM MARCOS DE PÉ. A espinha (saga.js)
+     dimensiona cada ato pela conta deste arquivo, "para o arco virar
+     exatamente quando os marcos do ato acabam, em vez de virar por acúmulo
+     de coisas que aconteceram por acaso" — e o arco nunca lhe perguntou.
+     Na sessão de prova "O Chamado" virou "A Travessia" no turno 11 pelo
+     peso de duas missões que tinham fechado sem se jogar (3 + 3 contra um
+     custo de 4), com a Delfina por encontrar. `motor.marcosPendentes` é
+     quantos marcos DESTE ato a espinha ainda tem de pé; sem espinha (save
+     antigo, mundo sem mapa) ele não vem, e a conta é a de sempre. */
+  const pendentes = Number(motor && motor.marcosPendentes);
+  if (Number.isFinite(pendentes) && pendentes > 0) return { pode: false, motivo: `o ato ainda tem ${pendentes} marco(s) de pé`, pendentes };
   if (hh.marcos < custo) return { pode: false, motivo: `faltam ${custo - hh.marcos} marcos`, falta: custo - hh.marcos };
   /* v9.84: A REGRA 2 VALE PARA A SEGUNDA METADE INTEIRA. Ela já protegia o
      último momento — "O Retorno" sem ninguém do outro lado não é desfecho.

@@ -59,6 +59,99 @@ import { comEm } from "./lugar.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
+/* ============================================================
+   ESTAR LÁ (30/09, MM14) — a etapa fecha pelo que acontece
+
+   A sessão de prova (MM11, `mente/mm11-sessao.md`) viu as três missões da
+   manhã fecharem sem se jogarem, e a causa das três é uma só: a etapa
+   perguntava ao estado o que o estado sabe por MENÇÃO. `falar_com` lia
+   "está no registo", e a pessoa entra no registo quando é nomeada — a
+   principal fechou no turno 5 com a Delfina a 146 km, porque o Teodoro
+   disse onde ela vivia. `revelar` lia "já apareceu na narração", e o
+   Campo das Mães foi "descoberto" porque alguém disse que morava lá.
+
+   A régua da mesa é outra, e é a que esta secção escreve:
+     · ENCONTRAR ALGUÉM é estar com essa pessoa — no lugar dela. O nome
+       dito não conta; o registo é condição, não prova.
+     · CHEGAR A UM LUGAR é estar nesse lugar: o nome inteiro (sem o
+       artigo), não um parecido; e na cidade dele, quando se sabe qual é.
+     · DESCOBRIR o que um lugar esconde exige lá estar quando ele entra em
+       cena.
+
+   A MORADA vem de três fontes, pela ordem: o `onde` da etapa (a abertura
+   e o marco da espinha o escrevem, às vezes com a cidade: "A Porta
+   Aberta, em Alto do Sal"); senão, o `local` da ficha da pessoa, que é
+   texto livre e por isso se lê com folga; e sem morada nenhuma, nem
+   posição do herói, fica o que sempre foi — o registo basta. Esse último
+   degrau não é descuido: é o único que não inventa uma resposta.
+   ============================================================ */
+const semArtigo = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "").trim();
+const palavras = (s) => ` ${norm(s).replace(/[^a-z0-9]+/g, " ").trim()} `;
+
+/* "A Porta Aberta, em Alto do Sal" → o lugar e a cidade. É a forma que
+   `ondeComMorada` (abertura.js) escreve e que `rumoDaEtapa` já lê. */
+export function moradaDe(onde) {
+  const s = String(onde || "").trim();
+  if (!s) return { lugar: "", cidade: "" };
+  const m = s.match(/^(.*\S)\s*,\s*(?:em|no|na|nos|nas)\s+(.+)$/i);
+  return m ? { lugar: m[1].trim(), cidade: m[2].trim() } : { lugar: s, cidade: "" };
+}
+
+/* Onde o herói está, nos nomes que valem como "aqui": o lugar, o prédio de
+   que ele é cômodo (o quarto de cima é o Sino Calado), e a cidade — a do
+   lugar, quando o lugar a sabe, que é a mais fresca. */
+function aquiDe(mundo) {
+  const o = mundo && typeof mundo === "object" ? mundo : {};
+  const l = o.lugarAtual;
+  const ehObj = l && typeof l === "object";
+  return {
+    lugar: semArtigo(ehObj ? l.nome : l),
+    dentroDe: semArtigo(ehObj ? l.dentroDe : ""),
+    cidade: semArtigo((ehObj && l.cidade) || o.cidadeAtual),
+  };
+}
+
+/* Estar num lugar, pelo NOME INTEIRO. `cidade` é a do lugar quando quem
+   pergunta a sabe (a chave de um local, `Cidade|tipo`); a cidade errada só
+   reprova quando se sabe onde o herói está. Um `onde` que é a própria
+   cidade vale em qualquer canto dela. */
+export function estaEm(mundo, onde, { cidade = "" } = {}) {
+  const md = moradaDe(onde);
+  const lugar = semArtigo(md.lugar), cid = semArtigo(md.cidade || cidade);
+  if (!lugar) return false;
+  const a = aquiDe(mundo);
+  if (lugar === a.cidade && (!cid || cid === a.cidade)) return true;
+  if (lugar !== a.lugar && lugar !== a.dentroDe) return false;
+  return !cid || !a.cidade || cid === a.cidade;
+}
+
+/* A ficha diz onde a pessoa anda em texto livre ("nas docas de Alto do
+   Sal", "O Sino Calado", "Foz do Meio"): casa se o texto é o lugar, ou
+   se nomeia, palavra por palavra, o lugar ou a cidade em que o herói está. */
+function pertoDe(mundo, local) {
+  if (estaEm(mundo, local)) return true;
+  const a = aquiDe(mundo);
+  const t = palavras(local);
+  return [a.lugar, a.dentroDe, a.cidade].some((x) => x && x.length > 2 && t.includes(palavras(x)));
+}
+
+/* Quem o registo tem com este nome — e já foi encontrado (`conhecidoEm`). */
+function naFicha(alvo, mundo) {
+  return Object.values((mundo && mundo.npcs) || {}).find((n) => n && n.conhecidoEm != null
+    && (norm(n.nome) === norm(alvo) || mesmaPessoa(n.nome, alvo))) || null;
+}
+
+/* ESTAR COM ALGUÉM. A pessoa tem de estar no registo E o herói no lugar
+   dela. As três fontes de morada, pela ordem descrita acima. */
+export function estaCom(e, mundo, ficha = null) {
+  const n = ficha || naFicha(e && e.alvo, mundo);
+  if (!n) return false;
+  if (e && e.onde) return estaEm(mundo, e.onde);
+  const a = aquiDe(mundo);
+  if (!n.local || (!a.lugar && !a.cidade)) return true;
+  return pertoDe(mundo, n.local);
+}
+
 /* ---------------- OS TIPOS DE ETAPA ----------------
    Cada um sabe se olhar no espelho do estado do jogo. `ver` recebe o
    mundo inteiro e devolve true quando a etapa está cumprida. */
@@ -70,9 +163,17 @@ export const ETAPAS = {
        conferia `cidadeAtual`, então uma missão que mandava a uma cabana,
        a uma torre caída ou a uma boca de mina nunca cumpria a etapa —
        o herói chegava e o diário continuava dizendo "chegar a". */
-    ver: (e, m) => (e.lugar
-      ? norm((m.lugarAtual && m.lugarAtual.nome) || m.lugarAtual) === norm(e.alvo)
-      : norm(m.cidadeAtual) === norm(e.alvo)),
+    /* MM14: o lugar pelo nome INTEIRO e sem o artigo, e o cômodo conta
+       como o prédio (o quarto de cima é o Sino Calado); a cidade, quando a
+       etapa a diz ("…, em Alto do Sal"), tem de ser esta. Nunca o ramo da
+       cidade: um lugar e uma cidade com o mesmo nome não se confundem. */
+    ver: (e, m) => {
+      if (!e.lugar) return norm(m.cidadeAtual) === norm(e.alvo);
+      const alvo = semArtigo(e.alvo), a = aquiDe(m);
+      if (!alvo || (alvo !== a.lugar && alvo !== a.dentroDe)) return false;
+      const cid = semArtigo(moradaDe(e.onde).cidade);
+      return !cid || !a.cidade || cid === a.cidade;
+    },
   },
   derrotar: {
     id: "derrotar", icone: "⚔",
@@ -108,11 +209,15 @@ export const ETAPAS = {
      demais para significar alguém. Duas pessoas com o mesmo primeiro nome no
      mesmo elenco confundiriam a etapa, e esse é o preço: um contrato que
      fecha cedo demais é infinitamente melhor do que um que não fecha nunca. */
+  /* MM14 (30/09): "fecha cedo demais é melhor" deixou de ser verdade no dia
+     em que o registo passou a receber quem é só NOMEADO (o Cronista, o
+     cânone, a menção na cena): a principal da sessão de prova fechou no
+     turno 5 sem a heroína ver a Delfina. O registo continua a ser condição;
+     a presença é a prova (`estaCom`, acima). */
   falar_com: {
     id: "falar_com", icone: "💬",
     texto: (e) => `Encontrar ${e.alvo}`,
-    ver: (e, m) => Object.values(m.npcs || {}).some((n) => n && n.conhecidoEm != null
-      && (norm(n.nome) === norm(e.alvo) || mesmaPessoa(n.nome, e.alvo))),
+    ver: (e, m) => estaCom(e, m),
   },
   levar_a: {
     id: "levar_a", icone: "📦",
@@ -135,7 +240,15 @@ export const ETAPAS = {
     texto: (e) => `Tirar ${e.alvo} de la`,
     ver: (e, m) => {
       const s = situacaoDe(m.base, e.alvo);
-      return s !== SITUACOES.cativa && s !== SITUACOES.ferida && s !== SITUACOES.morta;
+      if (s === SITUACOES.cativa || s === SITUACOES.ferida || s === SITUACOES.morta) return false;
+      /* MM14: QUANDO A PREMISSA NÃO FOI ESCRITA, livre é só a omissão. A
+         porta do Mestre escreve o cativeiro (`cativeiros`, e o App o
+         aplica), e aí a mudança de situação é o acontecimento. A trama do
+         sistema ("Tirar Branca de lá") nunca o escreveu — e sem isto a
+         etapa nasceria cumprida. Nesse caso, tirar de lá é, no mínimo,
+         lá estar com a pessoa. */
+      const premissa = !!((m.base && m.base.situacoes) || {})[norm(e.alvo)];
+      return premissa || estaCom(e, m);
     },
     /* A FALHA DESCRITA: ate aqui so o PRAZO fazia uma missao fracassar, e
        era isso que tornava o resto do fracasso invisivel. Um resgate tem um
@@ -170,12 +283,24 @@ export const ETAPAS = {
   revelar: {
     id: "revelar", icone: "🗝",
     texto: (e) => `Descobrir o que ${e.alvo} esconde`,
+    /* MM14 (30/09): E ESTAR LÁ. "Revelado" quer dizer "apareceu na
+       narração", e a narração nomeia lugares de longe: na sessão de prova
+       "O que O Campo das Mães esconde" caiu no turno 4 porque o Teodoro
+       disse que a carpideira vivia lá. Descobrir exige o herói no lugar
+       quando o lugar entra em cena. A cidade vem da chave (`Cidade|tipo`),
+       que é a única ponta que a sabe. Gente (`Cidade|gente|Nome`) continua
+       como era: não é um sítio onde se esteja. */
     ver: (e, m) => {
       const ids = (m.revelados || []).map(norm);
-      if (ids.some((id) => id.includes(norm(e.alvo)))) return true;
-      const chaves = [e.chave];
-      if (typeof m.chaveDoLugar === "function") { try { chaves.push(m.chaveDoLugar(e.alvo)); } catch { /* traduzir nunca derruba o turno */ } }
-      return chaves.some((k) => !!norm(k) && ids.includes(norm(k)));
+      let achado = ids.find((id) => !!norm(e.alvo) && id.includes(norm(e.alvo))) || "";
+      if (!achado) {
+        const chaves = [e.chave];
+        if (typeof m.chaveDoLugar === "function") { try { chaves.push(m.chaveDoLugar(e.alvo)); } catch { /* traduzir nunca derruba o turno */ } }
+        achado = chaves.map(norm).find((k) => !!k && ids.includes(k)) || "";
+      }
+      if (!achado) return false;
+      if (achado.includes("|gente|")) return true;
+      return estaEm(m, e.onde || e.alvo, { cidade: achado.includes("|") ? achado.split("|")[0] : "" });
     },
   },
   aguentar: {
@@ -423,13 +548,43 @@ export function progresso(m) {
    na mão. Só avança a etapa ATUAL — missão é sequência, não lista de
    compras, e deixar a etapa 3 fechar antes da 1 quebraria a história
    que a sequência conta. */
+/* ---------------- A VIRADA É O MEIO (30/09, MM14) ----------------
+   Toda trama do sistema traz uma virada — o encontro, a emboscada, a
+   revelação que o CÓDIGO executa (`talvezVirar`, no App) — e ela só é
+   devida depois de uma etapa cumprida (`viradaDevida`, tramas.js). Mas a
+   quase todas as tramas basta UMA etapa: cumprida ela, a missão fechava no
+   mesmo conferir, e a virada, que só olha missões ativas, nunca acontecia.
+   Na sessão de prova "O lance em O Sino Calado" fechou por entrar na
+   taverna, com o lance por acontecer; o `a_reuniao`, o `o_que_ficou`, a
+   escolta — todas iam pelo mesmo caminho, desde a v9.117.
+
+   Agora a última etapa cumprida com a virada por vir SEGURA a missão: ela
+   fica ativa, a virada acontece no turno seguinte, e só depois fecha. E se
+   a virada abriu uma luta (`mundo.emLuta`), fecha quando a luta acaba.
+   A caçada não entra na lista: nela a etapa (`derrotar`) É a virada, e
+   esperar por ela seria esperar por si mesma. */
+export const VIRADAS_QUE_ESPERAM = ["emboscada", "encontro", "revelacao"];
+const viradaPorVir = (m) => !!(m && m.virada && !m.virada.feita && VIRADAS_QUE_ESPERAM.includes(m.virada.tipo));
+const segura = (m, mundo) => viradaPorVir(m) || !!(m && m.virada && mundo.emLuta);
+
 export function conferir(lista, mundo = {}) {
   const ms = garantirMissoes(lista);
+  mundo = mundo && typeof mundo === "object" ? mundo : {};
   const avancos = [], concluidas = [], falhadas = [];
   const out = ms.map((m) => {
     if (m.status !== "ativa") return m;
     const i = m.etapas.findIndex((e) => !e.feito);
-    if (i < 0) return m;
+    if (i < 0) {
+      /* todas cumpridas e ainda de pé: esperava a virada. Fecha quando ela
+         passou — com um avanço de FECHO, para quem lê a lista (o App) ter a
+         linha e pagar pelo mesmo caminho de sempre */
+      if (segura(m, mundo) || !m.etapas.length) return m;
+      const fim = { ...m, status: "concluida" };
+      const k = m.etapas.length - 1;
+      avancos.push({ missao: fim, etapa: m.etapas[k], indice: k, total: m.etapas.length, fecho: true });
+      concluidas.push(fim);
+      return fim;
+    }
     const e = m.etapas[i];
     /* ---------------- A FALHA DESCRITA (v9.132) — fase 3 ----------------
        Ate aqui, a UNICA coisa que fazia uma missao fracassar era o prazo. O
@@ -449,7 +604,7 @@ export function conferir(lista, mundo = {}) {
     }
     if (!etapaDef(e.tipo).ver(e, mundo)) return m;
     const etapas = m.etapas.map((x, k) => (k === i ? { ...x, feito: true } : x));
-    const fim = etapas.every((x) => x.feito);
+    const fim = etapas.every((x) => x.feito) && !segura(m, mundo);
     const novo = { ...m, etapas, status: fim ? "concluida" : "ativa" };
     avancos.push({ missao: novo, etapa: e, indice: i, total: etapas.length });
     if (fim) concluidas.push(novo);
@@ -783,6 +938,9 @@ export function rumoDaEtapa(e) {
    do passo cumprido é o único sítio do ecrã onde o jogador olha no instante
    em que o rumo muda. */
 export function linhaDoAvanco(a) {
+  /* MM14: o fecho da missão que esperava a virada — o passo já teve o seu
+     ✓ num turno antes; aqui só se diz que a coisa se cumpriu */
+  if (a && a.fecho) return `${etapaDef(a.etapa.tipo).icone} ${a.missao.titulo}: está feito.`;
   const prox = a.missao && a.missao.status === "ativa" ? etapaAtual(a.missao) : null;
   const rumo = prox ? rumoDaEtapa(prox) : "";
   return `${etapaDef(a.etapa.tipo).icone} ${a.missao.titulo}: ${textoDaEtapa(a.etapa)} ✓ (${a.indice + 1}/${a.total})${rumo ? ` → agora: ${rumo}` : ""}`;
@@ -793,7 +951,13 @@ export function envelopeDeAvanco(a) {
   /* MM13b: a próxima etapa vai com a morada (o rumo), para quem fala na
      cena poder dizer ONDE — "a Corda Velha" não estava na fala de quem a
      deu, na prova jogada de MM13 */
-  return `[MISSÃO — ETAPA CUMPRIDA, RECONHECIDA PELO SISTEMA] "${a.missao.titulo}": eu cumpri "${textoDaEtapa(a.etapa)}" (${a.indice + 1} de ${a.total}). ${prox ? `A próxima etapa é: ${rumoDaEtapa(prox)}.` : "Era a última."} Reconheça isso na ficção — uma frase de fechamento, uma reação de quem está por perto — e ${prox ? "deixe claro, sem dizer como fazer, que ainda falta o próximo passo" : "prepare o desfecho"}. Não conclua a missão por conta própria e não invente etapa nova: quem marca é o sistema.`;
+  /* MM14: a última etapa cumprida com a missão AINDA ATIVA é a que espera
+     a virada (`VIRADAS_QUE_ESPERAM`). "Prepare o desfecho" ali seria pedir
+     ao Narrador que contasse o lance antes de o lance acontecer. */
+  const espera = !prox && a.missao && a.missao.status === "ativa";
+  const depois = prox ? `A próxima etapa é: ${rumoDaEtapa(prox)}.`
+    : espera ? "Falta o que esta missão existe para fazer, e isso o sistema entrega por envelope: NÃO o antecipe e NÃO narre o desfecho." : "Era a última.";
+  return `[MISSÃO — ETAPA CUMPRIDA, RECONHECIDA PELO SISTEMA] "${a.missao.titulo}": eu cumpri "${textoDaEtapa(a.etapa)}" (${a.indice + 1} de ${a.total}). ${depois} Reconheça isso na ficção — uma frase de fechamento, uma reação de quem está por perto — e ${prox ? "deixe claro, sem dizer como fazer, que ainda falta o próximo passo" : espera ? "devolva a vez" : "prepare o desfecho"}. Não conclua a missão por conta própria e não invente etapa nova: quem marca é o sistema.`;
 }
 
 export function envelopeDeConclusao(m, rec) {

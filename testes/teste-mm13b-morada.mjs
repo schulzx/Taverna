@@ -287,7 +287,11 @@ sec("5. o primeiro passo é encontrar, e o ✓ diz o que abriu");
   const cm = conferir([mural], { cidadeAtual: "Vila Clara", npcs: {} });
   t("um contrato do mural também diz o que abriu", linhaDoAvanco(cm.avancos[0]).endsWith("→ agora: Procurar Jessa na Corda Velha"));
   t("e o Narrador recebe a mesma morada no aviso do passo cumprido", envelopeDeAvanco(cm.avancos[0]).includes("A próxima etapa é: Procurar Jessa na Corda Velha."));
-  const fim = conferir(cm.missoes, { cidadeAtual: "Vila Clara", npcs: { j: { nome: "Jessa", conhecidoEm: 1 } } });
+  /* MM14 (30/09): e o herói na Corda Velha. Encontrar a Jessa exige estar
+     onde a etapa diz que ela está; antes esta prova a dava por encontrada
+     em qualquer canto de Vila Clara — o mesmo furo que fechou a principal
+     da sessão de prova com a Delfina noutra cidade. */
+  const fim = conferir(cm.missoes, { cidadeAtual: "Vila Clara", lugarAtual: { nome: "A Corda Velha", cidade: "Vila Clara" }, npcs: { j: { nome: "Jessa", conhecidoEm: 1 } } });
   t("e o último passo não promete um seguinte", !linhaDoAvanco(fim.avancos[0]).includes("→"));
 }
 
