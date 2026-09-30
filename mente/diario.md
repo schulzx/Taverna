@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 03:45 · v9.326 · MM8b · o elenco de 24, com laços e casas · commit (o hash vai no próximo bloco)
+## 30/09 03:45 · v9.326 · MM8b · o elenco de 24, com laços e casas · commit `76a374a`
 
 - **por que andou:** a segunda subetapa do elenco (a proposta da pessoa), depois de a MM8c-0 ter
   devolvido espaço ao prompt.
