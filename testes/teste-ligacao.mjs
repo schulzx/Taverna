@@ -114,6 +114,10 @@ sec("1. NENHUM MÓDULO MUDO");
      presença, o sino, o fio e o próximo passo), e `teste-mm13-abertura.mjs`
      prova a fiação por texto. A lista volta a ficar VAZIA, como a regra
      pede. */
+  /* 30/09 (Fase MM, MM10): a dívida foi paga no mesmo dia — o App.jsx
+     importa `crime.js` (a agressão, a pauta, o save, o mercado e a
+     guarda), e `teste-mm10-crime.mjs` prova a fiação por texto. A lista
+     volta a ficar VAZIA, como a regra pede. */
   const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {

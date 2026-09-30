@@ -15,7 +15,46 @@ Formato:
 ```
 
 ---
-## 30/09 08:27 · v9.331 · MM9 · a luta sem espada · commit (o hash vai no próximo bloco)
+## 30/09 09:40 · v9.332 · MM10 · o crime · commit (o hash vai no próximo bloco)
+
+- **por que andou:** atacar o taverneiro abria uma luta e não um crime — ninguém chamava a guarda,
+  não havia recompensa, a porta não fechava, as testemunhas não contavam.
+- **estado inicial:** verde (MM9 no ar, `f6820cf`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend:** `src/crime.js` — é crime atacar quem não é inimigo, não atacou o herói agora e não
+  anda com ele; três gravidades (roubar, ferir, matar). A cidade só fica a saber com testemunhas
+  nomeadas ou com a rua vigiada (a `VIGILANCIA` da MM12): de noite, sem testemunhas, numa cidade sem
+  ronda, ninguém sabe. **Contra um figurante, a cidade reage**: a lei da ficha da cidade vem atrás,
+  há recompensa pela cabeça (maior nas cidades grandes), os preços sobem ×1,15 a ×1,6 e deixam de
+  lhe dar pouso (no matar, também o templo), e quem viu conta. **Contra alguém do elenco, é
+  história**: a casa dele não esquece, e quem gosta dele dá um passo fora de cena ("jurou que isso
+  não fica assim"), que chega pela linha ENTRETANTO da MM8f. **O procurado** vive num campo novo e
+  aditivo, `lei`, por cidade, e expira no prazo da tabela; se a vítima morre, o crime passa a
+  matar, sem cobrar duas vezes. **A guarda vem** no máximo uma vez por dia, com o combate que já
+  existe (numa cidade grande, 6 vezes em 12 dias; numa aldeia, nunca). Reusa o que existia — a
+  agressão, o cobrador que cobra a memória dias depois — sem o duplicar.
+- **O VEREDITO ANTES DO CLIQUE — decisão do orquestrador, pela lei da casa:** atacar quem não é
+  inimigo é irreversível, e o preço aparece antes: "Ivo não é inimigo: atacar é um crime em
+  Poço-Pequeno… 90 moedas… 12 dias… nem pouso", com **atacar mesmo assim / deixar**. Na forma do
+  cartão do golpe final (os mesmos botões, o mesmo painel), no sítio da soleira — sem peça nova.
+- **frontend:** o save (e **a sala publicada sem `lei`**, como sem `elenco`), o crime na pauta, o
+  procurado em "não pode" enquanto dura, a morte da vítima pelos dois caminhos (a narrada e o fecho da
+  luta), o preço no mercado, a estalagem que recusa o pouso, e a guarda depois de um descanso na
+  cidade.
+- **um defeito achado a jogar, e consertado:** o App marcava a vítima como "inimigo" **antes** de ler
+  o crime — e o crime recusa inimigos declarados, por isso **todo crime era engolido em silêncio**. A
+  ordem inverteu-se, e uma asserção guarda-a.
+- **a prova jogada:** na Brasa Viva, "ataco Ivo" mostrou o preço antes; "deixar" não abriu luta nem
+  gastou o turno; "atacar mesmo assim" abriu a luta — e foi essa jogada que expôs o defeito acima.
+  Depois do conserto, a cadeia (o procurado, o preço no mercado) está provada pela suíte, não jogada.
+- **o que fica escrito:** render-se à guarda e pagar a multa (pedem um cartão e uma regra de
+  pagamento); a legítima defesa completa ("quem me atacou nesta cena" pede um ref que o App não tem).
+- **a sonda:** não se move (92/157) — nenhuma das 157 era de crime.
+- **para quem joga:** bater em quem não é inimigo passa a ter preço, e o preço vê-se antes — a guarda,
+  a recompensa, as portas que fecham; e bater em alguém que importa ao mundo tem uma casa e amigos
+  que se lembram.
+
+## 30/09 08:27 · v9.331 · MM9 · a luta sem espada · commit `f6820cf`
 
 - **por que andou:** a vontade da oposição só virava pela vida. No Honey Heist o clímax
   resolveu-se pela conversa; aqui, intimidar, convencer, envergonhar não mudava nada.

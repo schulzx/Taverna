@@ -159,6 +159,7 @@ import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, en
    falar. Tudo por tabela em `sem-espada.js`; o App só lê o veredito, cobra
    a ação e aplica o que ele devolve. */
 import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
+import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
@@ -5563,6 +5564,12 @@ export default function Taverna() {
   const canoneRef = useRef({});
   const npcsRef = useRef({});                 // registro persistente de pessoas
   const elencoSaveRef = useRef(garantirElencoDoSave(null)); // MM8e: promovidos, saídos e dias vistos (campo `elenco` do save)
+  /* MM10: a lei que o herói carrega perante cada cidade — quem ele atacou
+     que não era inimigo, e o preço disso (campo novo do save, `lei`). */
+  const leiRef = useRef(garantirLei(null));
+  const crimeDoTurnoRef = useRef(null);       // as linhas do crime deste turno, para a pauta
+  const crimeConfirmadoRef = useRef(false);   // marca do "atacar mesmo assim" — não pergunta duas vezes
+  const [crimeVereditoPendente, setCrimeVereditoPendente] = useState(null); // { texto, aoConfirmar, aoDeixar }
   const [npcs, setNpcs] = useState({});
   const npcTurnoRef = useRef(0);              // marca "visto por último" de cada NPC
   /* MM8c-1: a marca do contador no load — a soleira do convite (mais abaixo)
@@ -6954,6 +6961,17 @@ export default function Taverna() {
          lugar do propósito que amadureceu: o Mestre já resolveu, e o
          Narrador só narra o momento em que aparece. */
       p = porNaPauta(p, "acabou", (propositosDoTurnoRef.current || []).map((x) => x.envelope).join("\n"));
+      /* MM10: o crime deste turno (testemunhas, a lei, o preço) — uma vez
+         só, e depois limpo; e o veto de quem é procurado aqui, todo turno
+         em que durar. */
+      try {
+        if (crimeDoTurnoRef.current) {
+          p = porNaPauta(p, "acabou", crimeDoTurnoRef.current.acabou || []);
+          p = porNaPauta(p, "naoPode", crimeDoTurnoRef.current.naoPode || []);
+          crimeDoTurnoRef.current = null;
+        }
+        p = porNaPauta(p, "naoPode", procuradoParaPauta(leiRef.current, { cidade: cidadeAtualRef.current, dia: diaRef.current }).naoPode);
+      } catch (e) { calou("crimeParaPauta", e); }
     }
     /* MM13: O MUNDO PINGA FIOS — no máximo uma linha por turno, da primeira
        pessoa em cena que tiver algo a dizer sobre a principal. */
@@ -8260,7 +8278,7 @@ export default function Taverna() {
     const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     const dados = {
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -8316,7 +8334,7 @@ export default function Taverna() {
          porque TODO caminho que muda o jogo passa por `salvar` — o turno, o
          combate, o mercado, o descanso. Pendurar a publicação num só deles
          deixaria o convidado com uma tela velha nos outros. */
-      try { const { elenco: _elencoLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
+      try { const { elenco: _elencoLocal, lei: _leiLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
       if (podou && !avisoPodaRef.current) {
         avisoPodaRef.current = true;
         pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
@@ -12199,7 +12217,7 @@ export default function Taverna() {
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
-    if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); }
+    if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
     /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
        retomar dele, nunca voltar a zero (é a mesma régua do load) */
     if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
@@ -12395,7 +12413,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -14981,6 +14999,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
        registro de pessoas e some do que o Mestre recebe no prompt. */
     derrotados.filter((e) => !e.rendido && !e.desacordado).forEach((e) => registrarMorte(e.nome));
+    /* MM10: o mesmo agravamento do golpe declarado ao Mestre (`registrarMorteDeAlvo`) — este caminho, o golpe mecânico que fecha a luta, não passa por lá. */
+    try { leiRef.current = derrotados.filter((e) => !e.rendido && !e.desacordado).reduce((l, e) => agravarParaMorte(l, e.nome, { semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo(), cidade: cidadeDoMapa(cidadeAtualRef.current), dia: diaRef.current }), leiRef.current); } catch (e) { calou("agravarParaMorte no fecho da luta", e); }
     /* v9.28: os nomes dos caídos alimentam as etapas "derrotar" das missões.
        Isto existia só no OUTRO caminho de vitória (a que vem declarada na
        resposta do Mestre) — e este aqui é o caminho comum, o golpe que derruba
@@ -18196,13 +18216,55 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       enviar(envelopeSemAlvo(a, acao), p);
       return true;
     }
+    /* ---------------- MM10: O VEREDITO ANTES DO CLIQUE ----------------
+       Atacar quem NÃO é inimigo é crime, e é irreversível: a lei da casa
+       manda mostrar o preço antes de abrir a luta. `crimeConfirmadoRef` é
+       a marca de "já mostrei, o jogador escolheu atacar mesmo assim" — sem
+       ela, o clique de confirmar cairia de novo no mesmo veredito. Só
+       corre fora de combate: dentro de uma luta já aberta, a agressão a
+       um terceiro não passa por aqui (ver `crime.js`, `hostis`). */
+    const jaConfirmado = crimeConfirmadoRef.current;
+    crimeConfirmadoRef.current = false;
+    if (!jaConfirmado && !combateRef.current) {
+      try {
+        const crimeCtx = { npcs: npcsRef.current, presentes: elenco.aqui || [], grupo: p.grupo || [], hostis: [], elenco: nomesDoElenco() };
+        const mundoCtx = { semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeDoMapa(cidadeAtualRef.current), genero: generoMundo(), lex: (mundoAtual() || {}).lexico, molde: moldeMundo(), noite: ehNoite(minutoRef.current), elencoCtx: contextoDoElenco() };
+        const veredito = veredictoDoCrime(a, crimeCtx, mundoCtx);
+        if (veredito) {
+          pushMsgs([{ autor: "jogador", texto: acao }]);
+          setCrimeVereditoPendente({
+            texto: veredito,
+            aoConfirmar: () => { setCrimeVereditoPendente(null); crimeConfirmadoRef.current = true; declararAgressao(acao); },
+            aoDeixar: () => { setCrimeVereditoPendente(null); pushMsgs([{ autor: "sistema", texto: "Você contém o golpe — a violência não acontece." }]); },
+          });
+          return true;
+        }
+      } catch (e) { calou("veredictoDoCrime", e); }
+    }
     const ab = abrirCombate([{ nome: a.nome, ameaca: a.ameaca }], { pers: p });
     if (ab.pers !== p) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
     pushMsgs([
-      { autor: "jogador", texto: acao },
+      ...(jaConfirmado ? [] : [{ autor: "jogador", texto: acao }]),
       { autor: "sistema", texto: falaDaAgressao(a) },
       ...ab.msgs.map((t) => ({ autor: "sistema", texto: t })),
     ]);
+    /* MM10: O CRIME EM SI — contra quem não é inimigo, a cidade reage (ou é
+       história, se a vítima é do elenco). `hostis: []`: quem ataca o herói
+       primeiro é legítima defesa, e essa luta não passa por aqui. TEM DE
+       CORRER ANTES da relação virar "inimigo" duas linhas abaixo — depois
+       dela, `lerCrime` leria a própria vítima como inimigo declarado e
+       nunca veria o crime que acabou de acontecer. */
+    try {
+      const crime = lerCrime(a, { npcs: npcsRef.current, presentes: elenco.aqui || [], grupo: p.grupo || [], hostis: [], elenco: nomesDoElenco() });
+      if (crime) {
+        const cons = consequenciaDoCrime(crime, { semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeDoMapa(cidadeAtualRef.current), genero: generoMundo(), lex: (mundoAtual() || {}).lexico, molde: moldeMundo(), noite: ehNoite(minutoRef.current), elencoCtx: contextoDoElenco() });
+        if (cons) {
+          leiRef.current = registrarCrime(leiRef.current, cons, crime, diaRef.current);
+          elencoSaveRef.current = reacaoDoElenco(elencoSaveRef.current, crime, cons, diaRef.current);
+          crimeDoTurnoRef.current = cons.linhas;
+        }
+      }
+    } catch (e) { calou("lerCrime", e); }
     /* quem você ataca deixa de gostar de você, e isso vale mesmo que a luta
        acabe em um turno: sem esta linha o mundo esqueceria o golpe */
     try {
@@ -20514,6 +20576,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const registrarMorteDeAlvo = (nome, causa, { aproximado = false } = {}) => {
     const alvo = String(nome || "").trim();
     if (!alvo) return false;
+    /* MM10: se a vítima de um crime conhecido cai aqui, o crime vira matar
+       — mais caro, mais longo, e a rua já sabia mesmo sem ver o corpo. */
+    try { leiRef.current = agravarParaMorte(leiRef.current, alvo, { semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo(), cidade: cidadeDoMapa(cidadeAtualRef.current), dia: diaRef.current }); } catch (e) { calou("agravarParaMorte", e); }
     /* Nome exato sempre; parecido SÓ quando o texto veio do jogador (o alvo de
        um decreto é digitado à mão: "a cabeça de Sarna, a Víbora"). Em combate
        exigimos exato — senão "Bandido do Corvo" mataria a NPC "Corvo". */
@@ -21170,7 +21235,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        afloramento de rocha era o Mestre, cena a cena, sem nada com que
        estar em desacordo. O sistema já sabia o bioma, a estrada, a
        masmorra e o lugar nomeado; faltava usar. */
-    const sitio = sitioDaVez(sitioRef.current, {
+    let sitio = sitioDaVez(sitioRef.current, {
       masmorra: masmorraRef.current,
       lugar: lugarRef.current,
       jornada: jornadaRef.current,
@@ -21179,6 +21244,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       faccao: faccaoJogadorRef.current,
       bioma: biomaDaqui(),
     });
+    /* MM10: procurado nesta cidade, nenhuma estalagem me recebe — o mesmo
+       abrigo improvisado de território hostil (`localDeDescanso`,
+       `mapa.js`), só que a razão é a minha cabeça ter preço, não a bandeira
+       da cidade. */
+    try {
+      if (sitio.tipo === "estalagem" && servicoRecusado(leiRef.current, cidadeAtualRef.current, diaRef.current, "pouso")) {
+        /* o ícone fica o que já era (D5h: nenhum emoji novo em App.jsx) —
+           só tipo, nome, texto e abrigo mudam. */
+        sitio = { ...sitio, tipo: "hostil", abrigo: 1,
+          nome: `escondido em ${cidadeAtualRef.current} — sou procurado, nenhuma porta se abre`,
+          texto: `um esconderijo em ${cidadeAtualRef.current} (sou procurado — nenhuma estalagem me recebe)`,
+          dentro: "sou procurado aqui: ninguém me hospeda, e o descanso é escondido e arriscado" };
+      }
+    } catch (e) { calou("pouso recusado ao procurado", e); }
     sitioRef.current = sitio; setSitio(sitio);
     pushMsgs([{ autor: "sistema", texto: `${falaDoSitio(sitio)} O tempo pausa — converse à vontade, arrume o que precisar levar, e escolha como sair.` }]);
     enviar(envelopeDoSitio(sitio), personagem);
@@ -21330,10 +21409,29 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (partes.length) eventosMsg = "\n" + partes.join("\n");
     }
     let reinoMsg = "";
+    let guardaMsg = "";
     if (tipo === "longo") { // um dia virou: o calendário anda e o reino vive
       const evs = avancarDiasReino(1);
       evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
       reinoMsg = envelopeEventosReino(evs);
+      /* MM10: a lei acorda com o dia — se sou procurado aqui e a cidade
+         ainda não veio atrás de mim hoje, ela pode vir agora. Só com o
+         herói de fato numa cidade (nunca em viagem, que aqui só cochila
+         no meio do caminho). */
+      try {
+        if (!jornadaRef.current && cidadeAtualRef.current) {
+          const vinda = guardaQueVem(leiRef.current, { semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeDoMapa(cidadeAtualRef.current), genero: generoMundo(), lex: (mundoAtual() || {}).lexico, molde: moldeMundo(), dia: diaRef.current });
+          if (vinda) {
+            leiRef.current = vinda.lei;
+            if (vinda.inimigos && vinda.inimigos.length) {
+              const ab = abrirCombate(vinda.inimigos, { pers });
+              if (ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
+              if (ab.pers) { pers = ab.pers; setPersonagem(pers); }
+              guardaMsg = `\n${envelopeDaGuarda(vinda, cidadeAtualRef.current)}${ab.nota ? `\n${ab.nota}` : ""}`;
+            }
+          }
+        }
+      } catch (e) { calou("guardaQueVem", e); }
       minutoRef.current = AMANHECER; setMinuto(minutoRef.current);
       acordouAbsRef.current = absMin(); // o relógio do sono recomeça no amanhecer
       /* v9.17: a noite fica marcada no dia em que o herói ACORDA, não naquele
@@ -21393,7 +21491,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const localMsg = jornadaRef.current
       ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
       : "";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${sonhoMsg}${eventosMsg}`, pers);
+    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);
   };
 
   /* Escolher/trocar caminho (classe). Regras:
@@ -21874,7 +21972,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         ...l,
         caixa: podePagar(l, cidadeMercado, diaRef.current, ((mercado && mercado.gastos && mercado.gastos[l.id] && mercado.gastos[l.id].dia === diaRef.current) ? mercado.gastos[l.id].moedas : 0)),
         barganha: (b && b.dia === diaRef.current) ? b : null,
-        estoque: (l.estoque || []).map((it) => ({ ...it, preco: Math.max(1, Math.round(precoDeCompraPara(personagem, it.preco) * aj)) })),
+        estoque: (l.estoque || []).map((it) => ({ ...it, preco: Math.max(1, Math.round(precoDeCompraPara(personagem, it.preco) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current))) })),
       };
     });
   })();
@@ -24843,6 +24941,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 O momento se recupera pela `chegada`, que é propriedade da peça: o
                 que nasce neste turno chega marcado e assenta depois. */}
             {(() => {
+              /* MM10: O VEREDITO ANTES DO CLIQUE — atacar quem não é
+                 inimigo é irreversível, e este cartão nasce ANTES do
+                 golpe, nunca depois. Mesma forma do cartão do golpe final
+                 (painel-golpe-final.jsx: painel âmbar, `Botao` corpo e
+                 primário) — sem peça nova. Nunca coexiste com a soleira:
+                 os dois disputam a mesma decisão do turno. */
+              if (crimeVereditoPendente) {
+                return (
+                  <PeDaPagina>
+                    <div className="tv-chamado-entra" style={{ width: "100%", textAlign: "left", background: T.panel, border: `1px solid ${T.amber}`, borderRadius: 10, padding: 12 }}>
+                      <div className="tv-body text-sm" role="status" style={{ color: T.ink }}>{crimeVereditoPendente.texto}</div>
+                      <div className="flex gap-2 flex-wrap" style={{ marginTop: 8 }}>
+                        <Botao corpo className="flex-1" onClick={crimeVereditoPendente.aoDeixar}>Deixar</Botao>
+                        <Botao corpo primario className="flex-1" onClick={crimeVereditoPendente.aoConfirmar}>Atacar mesmo assim</Botao>
+                      </div>
+                    </div>
+                  </PeDaPagina>
+                );
+              }
               const vivas = ofertasDaSoleira();
               if (!vivas.length) return null;
               const jaTinha = soleiraAntesRef.current;

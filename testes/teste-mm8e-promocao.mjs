@@ -211,8 +211,13 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   const cacheGravacao = linhaDe("elencoCacheRef.current = { semente, mapa,");
   t("e a gravação do cache guarda esse mesmo estado", cacheGravacao.includes("estado: ctx.estado"));
 
-  t("o save publica o campo novo `elenco`", app.includes("elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, aliados: aliadosRef.current,"));
-  const sala = linhaDe("try { const { elenco: _elencoLocal, ...paraSala } = dados;");
+  /* MM10: `lei` (a ficha criminal do herói) entrou entre `elenco` e
+     `aliados` no mesmo statement — a âncora cresce junto. */
+  t("o save publica o campo novo `elenco`", app.includes("elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current,"));
+  /* MM10: a mesma desestruturação passou a tirar também `lei` (a ficha
+     criminal do herói perante uma cidade) — a âncora cresce junto, e o que
+     esta prova sempre quis (a chave `elenco` não atravessa) continua de pé. */
+  const sala = linhaDe("try { const { elenco: _elencoLocal, lei: _leiLocal, ...paraSala } = dados;");
   t("a sala recebe o save SEM a chave `elenco` — o protocolo da sala não muda nesta fase", sala.includes("publicarEstado(paraSala)") && !sala.includes("publicarEstado(dados)"));
 
   const load = linhaDe("elencoMemRef.current = garantirElenco(sv.elencoMem);");

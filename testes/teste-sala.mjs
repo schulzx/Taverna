@@ -191,8 +191,12 @@ sec("7. a costura no App");
      `elenco` — o protocolo da sala não muda nesta fase, e o convidado não
      precisa das promoções do anfitrião), não mais `dados` puro. A prova
      original queria dizer que TODO save publica — isso continua verdade:
-     é a mesma chamada, um passo depois de `dados` ser desestruturado. */
-  t("o mundo atravessa a cada save", /const \{ elenco: _elencoLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
+     é a mesma chamada, um passo depois de `dados` ser desestruturado.
+     MM10: a mesma desestruturação também tira `lei` — o procurado é do
+     herói perante uma cidade, e o convidado não herda a ficha criminal do
+     anfitrião. O protocolo da sala continua o mesmo: só cresce o que NÃO
+     atravessa. */
+  t("o mundo atravessa a cada save", /const \{ elenco: _elencoLocal, lei: _leiLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
   t("o convidado veste o save pela porta que já existia", /continuar\(false, \{ silencioso: true \}\)/.test(APP));
   /* e os avisos que são da FICHA não caem na tela de quem não é dono dela */
   t("o despertar do outro não estoura na tela do convidado", /if \(!silencioso\) setTimeout\(\(\) => checarDespertar/.test(APP));

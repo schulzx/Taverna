@@ -566,8 +566,10 @@ sec("4. a definição operacional de 'número que muda'");
      `porque` em testes/acoes-do-jogador.mjs.
      A luta sem espada (frontend, MM9, 30/09): 14512 -> 14528, +16 —
      mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14528/.test(relogio.porque));
+     testes/acoes-do-jogador.mjs.
+     O crime (frontend, MM10, 30/09): 14528 -> 14546, +18 — mesmo motivo,
+     mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14546/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -651,7 +653,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:17856 → veredictoDaAcao — MM3b,
+     adjudicador usa (src/App.jsx:17994 → veredictoDaAcao — MM3b,
      frontend, 29/09: re-medido por busca direta no arquivo, não por soma
      de delta, porque a referência já vinha desatualizada de antes desta
      etapa; MM8c-1, frontend, 29/09: 17762 -> 17782, +20 — o mesmo delta
@@ -661,7 +663,11 @@ sec("7. os seis literais do painel que não casam leitor nenhum");
      delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE; MM9,
      frontend, 30/09: 17798 -> 17856, +58 — a palavra dobra o bando
      (dentro de `concluirRolagem`, ANTES deste ponto) somou 28 linhas ao
-     mesmo delta já acumulado de FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE) */
+     mesmo delta já acumulado de FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE;
+     MM10, frontend, 30/09: 17856 -> 17994, re-medido por busca direta —
+     a referência já não seguia o delta uniforme de FUNIL_DO_COMBATE/
+     RECUSAS_DO_COMBATE antes desta etapa (era uma prova solta, não uma
+     asserção), e o crime some +18 igual às outras duas tabelas) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -817,9 +823,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        A luta sem espada (frontend, MM9, 30/09): 13038 -> 13054, +16 — a
        rodada que impressiona (dentro desta própria função, ANTES desta
        linha) somou 4 linhas ao mesmo degrau já acumulado de
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       O crime (frontend, MM10, 30/09): 13054 -> 13072, +18 — o mesmo
+       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13054").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13072").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -945,8 +953,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
        A luta sem espada (frontend, MM9, 30/09): 12909 -> 12921, +12 — o
        import de sem-espada.js (+5) e o ref/helper da impressão (+7)
-       nascem acima deste ponto. Re-medido por check-acoes-do-jogador.mjs. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12921" && x.familia === "alcance"));
+       nascem acima deste ponto. Re-medido por check-acoes-do-jogador.mjs.
+       O crime (frontend, MM10, 30/09): 12921 -> 12939, +18 — o mesmo
+       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido
+       por check-acoes-do-jogador.mjs. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12939" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1001,8 +1012,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      A promoção (frontend, MM8e, 30/09): 13051 -> 13054, +3 — o mesmo
      degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
      A luta sem espada (frontend, MM9, 30/09): 13054 -> 13070, +16 — o
-     mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13070/.test(S.ondeSai));
+     mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+     O crime (frontend, MM10, 30/09): 13070 -> 13088, +18 — o mesmo
+     degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13088/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

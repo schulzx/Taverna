@@ -380,7 +380,7 @@ O limite é o que um commit revertido não desfaz.
   Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
   Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).
   No Honey Heist o clímax resolveu-se assim.
-- [ ] **MM10 · o crime**
+- [x] **MM10 · o crime** · feito 30/09, v9.332 · render-se à guarda e pagar a multa ficam escritos; a legítima defesa por "quem me atacou nesta cena" também
   Atacar o taverneiro abre uma luta (`agressao.js`) e não um crime: ninguém
   chama a guarda, não há recompensa pela cabeça, a porta não fecha, as
   testemunhas não contam. Assenta no elenco: contra alguém do elenco, a
