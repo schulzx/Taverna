@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
-import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta } from "./elenco.js";
+import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
@@ -7014,7 +7014,7 @@ export default function Taverna() {
        você. Vai em O MUNDO porque é o mundo em volta — e vai SEMPRE, não
        só quando o mundo cobra uma dívida antiga. */
     p = porNaPauta(p, "mundo", envelopeDasPotencias(potenciasAqui(), diplomaciaRef.current));
-    try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); }
+    try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }
     p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
       onde: linhaDoLugarDaMesa(),
       quem: (elencoDaOnda().aqui || []),
@@ -20906,7 +20906,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       checarFama();
       tentarSurgirNemesis();
       processarNemesisDiaria();
-      try { const r = promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], dia: diaRef.current - (n - 1 - i) }); elencoSaveRef.current = r.estado; } catch (e) { calou("promoverNoDia", e); }
+      try { const r = promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], dia: diaRef.current - (n - 1 - i) }); elencoSaveRef.current = r.estado; } catch (e) { calou("promoverNoDia", e); } /* MM8f: o elenco age fora de cena, e o que é de longe corre como boato */ try { const diaDaVolta = diaRef.current - (n - 1 - i); const r2 = agirForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [] }); elencoSaveRef.current = r2.estado; const boatoDoMundo = boatoDoForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); if (boatoDoMundo) { pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boatoDoMundo}…` }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RUMOR] Um boato chegou aos meus ouvidos: "${boatoDoMundo}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado).`; } } catch (e) { calou("agirForaDeCena", e); }
       if (Math.random() < 0.25) {
         const boato = rumorDoDia({ ...contRef.current, cicatrizes: (personagem.cicatrizes || []).length, quaseMorte: contRef.current.quaseMorte || 0 }, personagem.nome, patamarFama(famaAtual()), !!(nemesisRef.current && nemesisRef.current.status !== "derrotada"));
         pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boato}…` }]);

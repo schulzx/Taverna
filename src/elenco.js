@@ -310,7 +310,16 @@ export function elencoDoMundo(semente, mapa, ctx) {
   }
   final = final.slice(0, TAMANHO_DO_ELENCO);
   const ficou = new Set(final.map((p) => norm(p.nome)));
-  const lacosFinais = lacos.filter((l) => ficou.has(norm(l.a)) && ficou.has(norm(l.b)));
+  let lacosFinais = lacos.filter((l) => ficou.has(norm(l.a)) && ficou.has(norm(l.b)));
+  /* MM8f: o laço que um feito mudou vale por cima do sorteado (a família não muda) */
+  for (const [k, tipo] of Object.entries(est.lacos)) {
+    const [a, b] = k.split("|");
+    if (!ficou.has(norm(a)) || !ficou.has(norm(b))) continue;
+    const mesmo = (l) => (norm(l.a) === norm(a) && norm(l.b) === norm(b)) || (norm(l.a) === norm(b) && norm(l.b) === norm(a));
+    if (lacosFinais.some((l) => mesmo(l) && l.tipo === "familia")) continue;
+    const tab = LACOS_DO_ELENCO.find((l) => l.tipo === tipo);
+    lacosFinais = [...lacosFinais.filter((l) => !mesmo(l)), { a, b, tipo, simetrico: !!(tab && tab.simetrico) }];
+  }
 
   /* nada do que sai daqui carrega a data do encontro nem a marca do registo */
   for (const p of final) { delete p.conhecidoEm; delete p.ultimaVez; }
@@ -433,7 +442,22 @@ export function garantirElencoDoSave(x) {
     nomes.sort((a, b) => vistos[b][vistos[b].length - 1] - vistos[a][vistos[a].length - 1] || (a < b ? -1 : 1));
     for (const n of nomes.slice(VISTOS.pessoas)) delete vistos[n];
   }
-  return { versao: ELENCO_DO_SAVE_VERSAO, promovidos: mapaDeDias(o.promovidos), saidos: mapaDeDias(o.saidos), vistos };
+  /* MM8f: o que o elenco fez fora de cena (os mais recentes, até o teto) e
+     os laços que esses feitos mudaram (até o teto). Save da v9.329 não os
+     tem: vêm vazios, e o jogo é o mesmo. */
+  const feitos = (Array.isArray(o.feitos) ? o.feitos : [])
+    .map((f) => obj(f))
+    .map((f) => ({ dia: diaValido(f.dia), quem: nomeValido(f.quem), com: nomeValido(f.com), passo: String(f.passo || "").slice(0, 30), cidade: String(f.cidade || "").slice(0, 60), o: String(f.o || "").slice(0, 160) }))
+    .filter((f) => f.dia != null && f.quem && f.o)
+    .slice(-FORA_DE_CENA.feitosNoSave);
+  const lacos = {};
+  for (const [k, v] of Object.entries(obj(o.lacos))) {
+    const par = String(k).split("|").map(nomeValido);
+    if (par.length === 2 && par[0] && par[1] && LACOS_DO_ELENCO.some((l) => l.tipo === v)) lacos[`${par[0]}|${par[1]}`] = v;
+  }
+  const chaves = Object.keys(lacos);
+  for (const k of chaves.slice(0, Math.max(0, chaves.length - FORA_DE_CENA.lacosNoSave))) delete lacos[k];
+  return { versao: ELENCO_DO_SAVE_VERSAO, promovidos: mapaDeDias(o.promovidos), saidos: mapaDeDias(o.saidos), vistos, feitos, lacos };
 }
 
 const chaveDe = (m, nome) => Object.keys(m).find((k) => norm(k) === norm(nome));
@@ -544,3 +568,179 @@ export function saidaParaPauta(semente, mapa, contexto, estado, cena) {
   return out;
 }
 
+/* ============================================================
+   O ELENCO AGE FORA DE CENA (Fase MM, MM8f)
+
+   O mundo do Matt não para quando os jogadores olham para o outro lado:
+   o rival faz uma dívida, a velha fecha a porta, dois que se odiavam
+   fazem as pazes. Aqui, a cada dia, de 0 a 2 pessoas do elenco dão UM
+   PASSO pela agenda da índole delas — o propósito diz de que família é o
+   passo (quem quer trair junta gente; quem quer proteger ajuda os
+   vizinhos), e quem não tem propósito vive o dia do ofício.
+
+   Dois tipos de passo, e só dois nesta etapa:
+     · um LAÇO que muda com outra pessoa do elenco (fica em `elenco.lacos`
+       e o elenco passa a lê-lo por cima do sorteado — a família não muda);
+     · uma SITUAÇÃO — o que a pessoa fez, sem mexer em nada mais.
+   MUDAR DE CIDADE NÃO ENTRA: a cidade de quem o herói já conhece mora na
+   ficha do registo (`npcs[].local`), e a de quem ainda não conhece mora
+   na base derivada, que não tem onde guardar uma mudança. Mudá-la de
+   verdade exige escrever num campo que já existe — é a pergunta que esta
+   etapa devolve, em vez de a decidir.
+
+   Nunca age: quem morreu, quem anda no grupo, os chefes (têm o sistema
+   do vilão e da espinha), quem ainda não estreou.
+
+   O que chega ao Narrador: UMA linha da pauta, só quando o passo toca a
+   cena (a cidade é a do herói, alguém envolvido está na cena, ou tem
+   laço com ele). De longe, o passo de alguém da história pode chegar como
+   boato, pelo canal de rumor que o dia já tem.
+   ============================================================ */
+export const FORA_DE_CENA = {
+  /* quantos passos por dia, com peso: o mundo mexe, mas não todo dia */
+  passosPorDia: [{ n: 0, peso: 40 }, { n: 1, peso: 45 }, { n: 2, peso: 15 }],
+  feitosNoSave: 12,
+  lacosNoSave: 40,
+  /* a linha da pauta: até quantos dias depois, e quantas por turno */
+  naPauta: { dias: 2, linhas: 1 },
+  /* quem pode virar boato de longe: gente da história e quem manda numa
+     casa, não o padeiro; e um boato a cada tantos dias, no máximo — o canal
+     de rumor já tem os seus, e um mundo que fala todo dia vira ruído */
+  fontesDoBoato: ["espinha", "mestre"],
+  diasEntreBoatos: 3,
+};
+
+export const AGENDA = {
+  hostil: {
+    propositos: ["trair", "usar", "roubar", "delatar", "vender_o_que_sabe", "vinganca_silenciosa", "divida_de_sangue", "desafiar", "testar", "provar_ao_pai"],
+    passos: [
+      { id: "rixa", laco: "rivalidade", o: "{a} e {b} discutiram em público, e agora não se falam" },
+      { id: "divida", laco: "divida", o: "{a} ficou devendo a {b}, e {b} não esquece" },
+      { id: "conversas", o: "{a} foi visto falando baixo com gente de fora, em {cidade}" },
+      { id: "juntar", o: "{a} anda juntando gente e dinheiro, e não diz para quê" },
+    ],
+  },
+  afeto: {
+    propositos: ["apaixonar", "seguir", "proteger", "adotar", "redimir", "herdar_o_oficio"],
+    passos: [
+      { id: "pazes", laco: "amizade", o: "{a} e {b} fizeram as pazes e agora andam juntos" },
+      { id: "ensinar", laco: "aprendizado", o: "{a} começou a aprender o ofício com {b}" },
+      { id: "perguntar", o: "{a} perguntou por onde anda o forasteiro" },
+      { id: "ajudar", o: "{a} passou a noite ajudando os vizinhos em {cidade}" },
+    ],
+  },
+  guarda: {
+    propositos: ["guardar_tumulo", "esconder_filho", "recuperar_nome"],
+    passos: [
+      { id: "porta", o: "{a} fechou a porta a visitas e só abre de dia" },
+      { id: "vela", o: "{a} foi acender velas no templo de {cidade}" },
+      { id: "carta", o: "{a} mandou uma carta, e ninguém viu para quem" },
+    ],
+  },
+  comum: {
+    propositos: [],
+    passos: [
+      { id: "briga", laco: "rivalidade", o: "{a} e {b} se desentenderam por causa de dinheiro" },
+      { id: "amizade", laco: "amizade", o: "{a} e {b} beberam juntos até tarde, e saíram amigos" },
+      { id: "bom_dia", o: "{a} teve um dia bom no ofício e anda de bom humor" },
+      { id: "mau_dia", o: "{a} perdeu um freguês importante e anda de cara fechada" },
+    ],
+  },
+};
+
+function agendaDe(semente, nome) {
+  const prop = indoleDe(String(semente == null ? "" : semente), { nome }).proposito;
+  return Object.values(AGENDA).find((g) => g.propositos.includes(prop)) || AGENDA.comum;
+}
+const chaveDoLaco = (a, b) => [a, b].sort((x, y) => (norm(x) < norm(y) ? -1 : 1)).join("|");
+
+/* AO VIRAR O DIA. `mundo`: { dia, npcs, grupo }. Devolve o estado novo e
+   os feitos do dia. Tudo pela semente e pelo dia: o mesmo dia, o mesmo
+   mundo e o mesmo campo dão os mesmos passos em qualquer máquina. */
+export function agirForaDeCena(semente, mapa, contexto, estado, mundo) {
+  const w = obj(mundo);
+  let e = garantirElencoDoSave(estado);
+  const dia = diaValido(w.dia);
+  if (dia == null) return { estado: e, feitos: [] };
+  let el;
+  try { el = elencoDoMundo(semente, mapa, { ...obj(contexto), estado: e, npcs: w.npcs }); } catch { return { estado: e, feitos: [] }; }
+  const grupo = new Set((Array.isArray(w.grupo) ? w.grupo : []).map((g) => norm(g && typeof g === "object" ? g.nome : g)));
+  const registo = obj(w.npcs);
+  const mortoNoRegisto = (n) => { const k = Object.keys(registo).find((x) => norm(x) === norm(n)); return !!(k && /mort/.test(norm(registo[k] && registo[k].status))); };
+  const agem = el.pessoas.filter((p) => !p.morto && !mortoNoRegisto(p.nome) && !grupo.has(norm(p.nome)) && p.fonte !== "chefe" && p.estreia <= dia);
+  const r = rngDe(`${semente}|fora-de-cena|${dia}`);
+  const total = FORA_DE_CENA.passosPorDia.reduce((x, p) => x + p.peso, 0);
+  let d = r() * total, quantos = 0;
+  for (const p of FORA_DE_CENA.passosPorDia) { if (d < p.peso) { quantos = p.n; break; } d -= p.peso; }
+  const novos = [];
+  const usados = new Set();
+  for (let i = 0; i < quantos; i++) {
+    const livres = agem.filter((p) => !usados.has(norm(p.nome)));
+    if (!livres.length) break;
+    const a = livres[Math.floor(r() * livres.length)];
+    usados.add(norm(a.nome));
+    const g = agendaDe(semente, a.nome);
+    let passo = g.passos[Math.floor(r() * g.passos.length)];
+    let b = null;
+    if (passo.laco) {
+      const mesma = agem.filter((q) => q !== a && q.cidade && q.cidade === a.cidade);
+      const outros = agem.filter((q) => q !== a);
+      const lista = mesma.length ? mesma : outros;
+      if (lista.length) b = lista[Math.floor(r() * lista.length)];
+      else passo = g.passos.find((x) => !x.laco) || AGENDA.comum.passos.find((x) => !x.laco);
+    }
+    const cidade = a.cidade || "a cidade";
+    const o = passo.o.split("{a}").join(a.nome).split("{b}").join(b ? b.nome : "").split("{cidade}").join(cidade);
+    novos.push({ dia, quem: a.nome, com: b ? b.nome : "", passo: passo.id, cidade: a.cidade || "", o });
+    if (passo.laco && b) {
+      /* o laço dos dois guarda-se pela ordem do nome; o que tem sentido (a
+         dívida, o aprendizado) guarda-se na ordem do feito: {a} deve a {b} */
+      const tab = LACOS_DO_ELENCO.find((l) => l.tipo === passo.laco);
+      const lac = { ...e.lacos };
+      for (const x of Object.keys(lac)) { const [p, q] = x.split("|"); if (chaveDoLaco(p, q) === chaveDoLaco(a.nome, b.nome)) delete lac[x]; }
+      lac[tab && tab.simetrico ? chaveDoLaco(a.nome, b.nome) : `${a.nome}|${b.nome}`] = passo.laco;
+      e = { ...e, lacos: lac };
+    }
+  }
+  e = garantirElencoDoSave({ ...e, feitos: [...e.feitos, ...novos] });
+  return { estado: e, feitos: novos };
+}
+
+/* toca a cena: na cidade do herói, com alguém da cena, ou com quem tem laço com ele */
+function tocaACena(f, c) {
+  const naCena = new Set((Array.isArray(c.emCena) ? c.emCena : []).map((x) => norm(x && typeof x === "object" ? x.nome : x)));
+  const registo = obj(c.npcs);
+  const comLaco = (n) => { const k = n && Object.keys(registo).find((x) => norm(x) === norm(n)); return !!(k && garantirLaco(registo[k] && registo[k].laco)); };
+  return (!!c.cidade && norm(f.cidade) === norm(c.cidade)) || naCena.has(norm(f.quem)) || (f.com && naCena.has(norm(f.com))) || comLaco(f.quem) || comLaco(f.com);
+}
+const quando = (ha) => (ha === 0 ? "hoje" : ha === 1 ? "ontem" : `há ${ha} dias`);
+
+/* A LINHA DA PAUTA: o feito mais recente que toca a cena, dos últimos dias */
+export function foraDeCenaParaPauta(estado, cena) {
+  const c = obj(cena);
+  const e = garantirElencoDoSave(estado);
+  const hoje = diaValido(c.dia);
+  const out = { foraDeCena: [] };
+  if (hoje == null) return out;
+  const recentes = e.feitos.filter((f) => hoje - f.dia >= 0 && hoje - f.dia <= FORA_DE_CENA.naPauta.dias).reverse();
+  for (const f of recentes) {
+    if (!tocaACena(f, c)) continue;
+    out.foraDeCena.push(`${quando(hoje - f.dia)}: ${f.o}`);
+    if (out.foraDeCena.length >= FORA_DE_CENA.naPauta.linhas) break;
+  }
+  return out;
+}
+
+/* O BOATO DE LONGE: o feito de hoje de alguém da história, que NÃO toca a
+   cena — para o canal de rumor que o dia já tem. Um por dia, no máximo. */
+export function boatoDoForaDeCena(semente, mapa, contexto, estado, cena) {
+  const c = obj(cena);
+  const e = garantirElencoDoSave(estado);
+  const hoje = diaValido(c.dia);
+  if (hoje == null || hoje % FORA_DE_CENA.diasEntreBoatos !== 0) return "";
+  let el;
+  try { el = elencoDoMundo(semente, mapa, { ...obj(contexto), estado: e, npcs: c.npcs }); } catch { return ""; }
+  const fonteDe = (n) => (el.pessoas.find((p) => norm(p.nome) === norm(n)) || {}).fonte;
+  const f = e.feitos.find((x) => x.dia === hoje && !tocaACena(x, c) && FORA_DE_CENA.fontesDoBoato.includes(fonteDe(x.quem)));
+  return f ? `dizem que ${f.o}` : "";
+}

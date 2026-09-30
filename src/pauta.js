@@ -69,6 +69,10 @@ export const SECOES = [
   { id: "contra", rotulo: "CONTRA", prio: 5, o: "o que a oposição quer, e em quem bate" },
   { id: "aliado", rotulo: "O ALIADO", prio: 7, o: "quem anda comigo" },
   { id: "vilao", rotulo: "O VILÃO", prio: 6, o: "o que a ameaça fez" },
+  /* MM8f: o que alguém do mundo fez enquanto o herói não olhava, e que
+     toca esta cena. Prioridade 6, a da gente e do vilão, e DEPOIS deles na
+     lista: no empate, o que acontece à frente do herói entra primeiro. */
+  { id: "foraDeCena", rotulo: "ENTRETANTO", prio: 6, o: "o que alguém fez longe dos olhos do herói, e toca esta cena" },
   { id: "mundo", rotulo: "O MUNDO", prio: 7, o: "o que o mundo cobra ou paga por um ato antigo" },
   /* MM12: A CIDADE POR DENTRO — o dia de hoje e a língua da rua, que a
      cena mostra sem ninguém perguntar. Prioridade baixa e DEPOIS do vilão,

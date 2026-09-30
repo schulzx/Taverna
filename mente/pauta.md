@@ -278,7 +278,13 @@ O limite é o que um commit revertido não desfaz.
   - [x] **MM8e · a promoção** · feito 30/09, v9.329 · campo novo `elenco` no topo do save (aditivo; a sala é publicada sem ele)
     Por tabela, lendo **o mesmo `conhecidoEm` e o mesmo convívio do convite** (nunca os
     reescreve); com o tamanho fixo, sai quem pesa menos (nunca espinha, chefe, laço, grupo).
-  - [ ] **MM8f · o elenco age fora de cena**
+  - [x] **MM8f · o elenco age fora de cena** · feito 30/09, v9.330 · **o MM8 está completo: 11 das 12 perguntas
+    chegam** (a #29, a ferida de agora na cena, fica — ver o diário)
+    **Decisão pendente (para o coordenador / a pessoa):** mudar alguém de cidade não entrou. O jogo lê a
+    cidade de uma pessoa no registo (`npcs[x].local`, campo existente) e, para quem ainda não se conhece,
+    na base derivada (que o save não guarda: `garantirBase` apaga chaves novas). (a) mudar de verdade =
+    escrever `npcs[x].local` (o Narrador já o reescreve hoje) e um `elenco.paradeiros` novo que a base
+    passe a ler; (b) ninguém muda de cidade — é o de hoje. Ficou (b).
     0–2 passos por dia pelo propósito da índole; "quem mexe os pauzinhos" na pauta só quando
     toca a cidade ou os presentes (prio 6); de longe, por rumor ou correio.
   **O Códex:** da MM8a à MM8c ninguém entra no registo à nascença — o Códex e o cânone não

@@ -191,9 +191,17 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
 {
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   const linhaDe = (agulha) => { const i = app.indexOf(agulha); return i >= 0 ? app.slice(i, app.indexOf("\n", i)) : ""; };
+  /* MOVIDO NA MM8f (30/09), com o motivo: a MM8f pôs, NA MESMA LINHA e
+     depois destes dois statements (para não deslocar os endereços de
+     acoes-do-jogador), a ação fora de cena e a sua linha de ENTRETANTO — que
+     tem o seu próprio boato na tela, pelo canal de rumor. Estas asserções
+     provam a PROMOÇÃO e a SAÍDA; por isso passam a ler só o statement delas,
+     até ao seu calou, e não o resto da linha. */
+  const statementDe = (agulha, fim) => { const l = linhaDe(agulha); const k = l.indexOf(fim); return k >= 0 ? l.slice(0, k + fim.length) : l; };
   const blocoDe = (agulha, ateChars = 400) => { const i = app.indexOf(agulha); return i >= 0 ? app.slice(i, i + ateChars) : ""; };
 
-  t("o import traz as quatro funções do elenco", app.includes('import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta } from "./elenco.js";'));
+  /* MOVIDO NA MM8f: o import ganhou as funções da MM8f no fim; prova-se o que esta asserção sempre quis (as quatro da MM8e chegam), sem o fecho. */
+  t("o import traz as quatro funções do elenco", app.includes('import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta'));
   t("o ref do save nasce vazio, ao lado do registo de pessoas", /const elencoSaveRef = useRef\(garantirElencoDoSave\(null\)\);/.test(app));
 
   const ctx = linhaDe("const contextoDoElenco = () =>");
@@ -216,10 +224,10 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   const vistoDoTurno = linhaDe('try { elencoSaveRef.current = vistosDaNarrativa(');
   t("uma vez por turno, o que a narração citou vira dia visto — calado se estourar", vistoDoTurno.includes("vistosDaNarrativa(elencoSaveRef.current, npcsRef.current, resp.narrativa, diaRef.current)") && vistoDoTurno.includes('calou("vistosDaNarrativa", e)'));
 
-  const viradaDoDia = linhaDe("try { const r = promoverNoDia(");
+  const viradaDoDia = statementDe("try { const r = promoverNoDia(", 'calou("promoverNoDia", e); }');
   t("ao virar o dia, a promoção roda por dia passado — calada se estourar, nenhuma linha na tela", viradaDoDia.includes("promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current,") && viradaDoDia.includes("elencoSaveRef.current = r.estado;") && viradaDoDia.includes('calou("promoverNoDia", e)') && !/pushMsgs/.test(viradaDoDia));
 
-  const saidaNaPauta = linhaDe('try { p = porNaPauta(p, "antes", saidaParaPauta(');
+  const saidaNaPauta = statementDe('try { p = porNaPauta(p, "antes", saidaParaPauta(', 'calou("saidaParaPauta", e); }');
   t("a saída entra na pauta antes do arquivista — calada se estourar", saidaNaPauta.includes("saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current,") && saidaNaPauta.includes('calou("saidaParaPauta", e)'));
   const iSaida = app.indexOf('try { p = porNaPauta(p, "antes", saidaParaPauta(');
   const iArquivista = app.indexOf('p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {');

@@ -15,7 +15,46 @@ Formato:
 ```
 
 ---
-## 30/09 06:27 · v9.329 · MM8e · a promoção, pelos dias do convite · commit (o hash vai no próximo bloco)
+## 30/09 06:50 · v9.330 · MM8f · o elenco age fora de cena — o MM8 completo · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a sexta e última subetapa do elenco, a proposta da pessoa: o elenco **age fora
+  de cena** no relógio do mundo, e a pauta leva quem mexe os pauzinhos neste turno.
+- **estado inicial:** verde (MM8e no ar, `c69f814`).
+- **bastão:** tomado por mim para duas linhas (apêndices às linhas da promoção e da saída —
+  deslocamento zero); devolvido com este commit.
+- **backend:** a cada dia, **0 a 2 pessoas do elenco dão um passo pela agenda da índole** (em 200
+  dias: 83 sem passo, 85 com um, 32 com dois) — os hostis têm rixas, dívidas, conversas baixas com
+  gente de fora; os de afeto fazem as pazes, aprendem um ofício, ajudam os vizinhos; os que guardam
+  alguma coisa fecham a porta; os comuns zangam-se por dinheiro ou têm um dia bom. **Os passos com
+  outra pessoa mudam o laço entre as duas**, e o elenco passa a lê-lo; a família nunca muda. Nunca
+  age quem morreu, quem anda no grupo, os chefes, nem quem ainda não estreou. Guarda-se dentro do
+  campo `elenco` da MM8e (os 12 passos mais recentes, até 40 laços mudados); a validação não os
+  apaga; um save da v9.329 joga igual; um revert perde o que o mundo fez e não parte nada.
+- **o que o Narrador ouve:** uma linha "ENTRETANTO" (prioridade 6) **só quando toca a cena** — na
+  cidade do herói, alguém presente, ou alguém com laço com ele — até 2 dias depois ("ontem: Kaelith e
+  Dagon desentenderam-se por causa de dinheiro"). **De longe, pelo canal de rumor que já existia**
+  ("🗞 Corre a boca miúda"), só para gente da história e mestres de guilda, no máximo um a cada 3 dias
+  (8 boatos em 120 dias). Nada no fixo: a folga do prompt continua 603.
+- **o que não entrou, e é decisão:** mudar alguém de cidade. O jogo lê a cidade de uma pessoa no
+  registo e, para quem ainda não se conhece, na base derivada, que o save não guarda; mudar de
+  verdade pede escrever `npcs[x].local` (campo que já existe) e um campo novo de paradeiros que a base
+  leia. Ficou como está — ninguém se muda; na pauta, para o coordenador.
+- **orquestrador:** três asserções da MM8e liam a linha inteira da promoção e da saída, e a MM8f pôs
+  código na mesma linha (para não deslocar endereços); passam a ler só o statement delas, até ao seu
+  `calou`, com o motivo. **O vermelho foi visto antes do commit, pelo código de saída do `npm test`.**
+- **o critério de pronto do MM8 — as 12 perguntas de "pessoas por dentro": 11 chegam** (#18, #26,
+  #42, #54, #60, #61, #62, #90, #103, #105, #106). **Falta a #29** — "como o teu amigo se feriu desse
+  jeito?": é a ferida de agora, mostrada na cena; o sistema decide a cicatriz do retrato, e a ferida
+  que o Narrador narra continua de ninguém. Um passo "ferido numa briga" não a responderia — seria o
+  sistema a decidir uma ferida que a cena nunca mostrou. A sonda: **92/157**.
+- **o elenco, de ponta a ponta (MM8a–f):** a ficha por dentro, 24 com laços e casas, os tetos, quem
+  importa, o figurante de passagem, a promoção pelos dias do convite, e o mundo a mexer-se sozinho —
+  sem nada no registo nem no Códex à nascença, e com a lei do teto a valer.
+- **para quem joga:** as pessoas do mundo passam a ter vida entre as visitas — brigam, fazem as pazes,
+  ficam a dever —, e o que acontece perto dele ou a quem lhe importa chega-lhe; o resto, às vezes, como
+  boato na taverna.
+
+## 30/09 06:27 · v9.329 · MM8e · a promoção, pelos dias do convite · commit `c69f814`
 
 - **por que andou:** a quinta subetapa do elenco — o figurante em quem o jogador investe sobe ao
   elenco, e o elenco de tamanho fixo perde alguém. A proposta da pessoa, nas palavras dela.
