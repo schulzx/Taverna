@@ -500,7 +500,13 @@ export const DESAFIOS = [
     /* MM4: e o olhar que dobra alguém. "Encaro o guarda nos olhos até ele
        desviar" não casava nada; nesta casa Intimidação é da Força, e por isso
        o olhar mora aqui, e não numa família de Presença do improviso. */
-    rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para)|\bencaro (o|a|os|as|ele|ela|eles|elas|aquele|aquela|esse|essa)\b[^.!?]{0,30}\b(nos olhos|sem piscar|at[eé] (ele|ela|eles|elas) (desviar|baixar|recuar|desistir|ceder)|de cima a baixo)/,
+    /* MM9: e ENVERGONHAR. Humilhar alguém diante dos seus para ele ceder é
+       quebrar-lhe a coragem, não convencê-lo — a mesma perícia. */
+    /* E A ORDEM DE SE RENDER, que é a frase mais natural da luta sem espada
+       ("rendam-se!", "larguem as armas!") e não casava nada: ia ao Narrador
+       sem dado. Só a ordem aos OUTROS — "me rendo" é o herói a render-se, e
+       não entra. As duas formas, porque a ênclise chega desfeita. */
+    rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para|envergonh|humilh|rendam-se|renda-se|rende-te|te rende(?! (nada|mais|menos|muito|pouco|bem|dinheiro|lucro|moedas))|se rendam|te rendas|larguem as armas|larga a arma|largue a arma|baixem as armas|abaixem as armas)|\bencaro (o|a|os|as|ele|ela|eles|elas|aquele|aquela|esse|essa)\b[^.!?]{0,30}\b(nos olhos|sem piscar|at[eé] (ele|ela|eles|elas) (desviar|baixar|recuar|desistir|ceder)|de cima a baixo)/,
     pericia: "intimidacao", alvo: "intimidacao", minutos: 5, barulho: true,
     rotulo: "intimidar", dcPadrao: DC("incomum"), social: true,
   },

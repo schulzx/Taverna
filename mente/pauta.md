@@ -376,7 +376,7 @@ O limite é o que um commit revertido não desfaz.
   campanha solta (187 pessoas). Antes/depois bloco a bloco. Cortar uma regra que muda o que o
   Narrador faz já não é emagrecer: pára e diz-se qual. Os lugares e itens do cânone e o que o
   Cronista recebe entram se couberem.
-- [ ] **MM9 · a luta sem espada**
+- [x] **MM9 · a luta sem espada** · feito 30/09, v9.331 · prender, levar e o interrogatório com teste ficam para Q4
   Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
   Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).
   No Honey Heist o clímax resolveu-se assim.

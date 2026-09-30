@@ -154,6 +154,11 @@ import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPa
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, pediuParaVoltar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+/* ---------------- MM9: A LUTA SEM ESPADA ----------------
+   A palavra como AÇÃO dentro da luta — dobra o bando, ou não há com quem
+   falar. Tudo por tabela em `sem-espada.js`; o App só lê o veredito, cobra
+   a ação e aplica o que ele devolve. */
+import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
@@ -7627,6 +7632,13 @@ export default function Taverna() {
   const cobrouAgoraRef = useRef(false);
   const ultimaCobrancaRef = useRef(-99);
   const intencaoRef = useRef("");
+  /* MM9: a rodada em que o herói acabou de impressionar o bando — um golpe
+     que levou alguém a zero, ou um crítico. A palavra que vem logo depois
+     pesa mais (CD_DA_PALAVRA.impressionou); por COMBATE, como intencaoRef,
+     e por isso reposta a 0 nos mesmos pontos em que a luta fecha — sem
+     isso, o efeito de uma luta velha vazaria para a próxima. */
+  const impressionouRef = useRef(0);
+  const impressionouAgora = () => !!impressionouRef.current && ((combateRef.current?.rodada || 1) - impressionouRef.current) <= 1;
   const vilaoAgiuRef = useRef(-99);
   /* e o ATO do herói neste turno, lido do que ele escreveu. É o que a
      maioria dos movimentos do Intérprete consulta. */
@@ -9927,7 +9939,7 @@ export default function Taverna() {
         else combateOciosoRef.current += 1;
         if (combateOciosoRef.current >= 2) {
           combateOciosoRef.current = 0;
-          combateRef.current = null; intencaoRef.current = ""; setCombate(null); limparConjuracoesDaLuta(null);
+          combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); limparConjuracoesDaLuta(null);
           msgs.push("⚔ O confronto se dissolve — o painel de combate se fecha.");
         }
       } else combateOciosoRef.current = 0;
@@ -12136,7 +12148,7 @@ export default function Taverna() {
     masmorraRef.current = null; setMasmorra(null);
     raidRef.current = null; setRaid(null);
     jornadaRef.current = null; setJornada(null);
-    combateRef.current = null; intencaoRef.current = ""; setCombate(null);
+    combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null);
     mesaRef.current = garantirMesa(null);
     estanteRef.current = garantirEstante(null);
     /* O HERDEIRO. Ele entra em "espreita" e na fase do rumor, como qualquer
@@ -12293,7 +12305,7 @@ export default function Taverna() {
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
-    setCombate(null); combateRef.current = null; intencaoRef.current = "";   /* fim de campanha: nao ha ficha para limpar */
+    setCombate(null); combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
     /* v9.101: a mesa fica sabendo que o mundo dela foi lido. É a única
        linha do léxico que o jogador vê, e ela é sobre o MUNDO — não sobre
@@ -12986,6 +12998,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
              semente segue o padrão do combate (dia + rodada), salgada pelo
              nome dentro do próprio módulo — dois poupados no mesmo turno
              não acordam em bloco. */
+          /* MM9: a palavra que vem depois de um golpe assim pesa mais —
+             derrubou alguém, ou acertou em cheio. Vale para a sequência
+             inteira, então basta UM golpe da rodada bater para carimbar. */
+          try { if (r.critico || pvDepois <= 0) impressionouRef.current = combateRef.current?.rodada || 1; } catch (e) { calou("a rodada que impressiona", e); }
           if (pvDepois <= 0 && escolhaAplicada) {
             try {
               if (haEscolhaNoGolpe({ alvo, r }).ha) {
@@ -14915,7 +14931,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!c || !(c.inimigos || []).length) return false;
     const todosCairam = c.inimigos.every((e) => e.derrotado || (e.vida || 0) <= 0);
     if (!todosCairam) return false;
-    combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0;
+    /* MM9: OS PRISIONEIROS — o que ficou vivo nas mãos do herói (rendido ou
+       poupado) vai à pauta ANTES de `c` sumir — é a última vez que este
+       corpo de combate ainda existe para ser lido. */
+    try {
+      const envPresos = envelopeDosPrisioneiros(c.inimigos, {
+        heroi: (base0 || personagemRef.current || personagem).nome,
+        doVilao: !!c.doVilao, quemMandou: (c.doVilao && nemesisRef.current && nemesisRef.current.nome) || "",
+      });
+      if (envPresos.acabou.length || envPresos.naoPode.length) {
+        golpeFinalEnvelopeRef.current = golpeFinalEnvelopeRef.current
+          ? { acabou: golpeFinalEnvelopeRef.current.acabou.concat(envPresos.acabou), naoPode: golpeFinalEnvelopeRef.current.naoPode.concat(envPresos.naoPode) }
+          : { acabou: envPresos.acabou, naoPode: envPresos.naoPode };
+      }
+    } catch (e) { calou("os prisioneiros na pauta", e); }
+    combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
     /* A LUTA DO TERRITÓRIO FECHA O RELÓGIO QUE A ABRIU (fuga.js): vencida,
        o bando que guardava o lugar já não guarda mais nada. */
     if (territorioEmLutaRef.current) {
@@ -14950,7 +14980,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!derrotados.length) { pushMsgs([{ autor: "sistema", texto: "⚔ Não sobrou ninguém em pé para lutar — o combate termina sem espólios." }]); return base0 || true; }
     /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
        registro de pessoas e some do que o Mestre recebe no prompt. */
-    derrotados.forEach((e) => registrarMorte(e.nome));
+    derrotados.filter((e) => !e.rendido && !e.desacordado).forEach((e) => registrarMorte(e.nome));
     /* v9.28: os nomes dos caídos alimentam as etapas "derrotar" das missões.
        Isto existia só no OUTRO caminho de vitória (a que vem declarada na
        resposta do Mestre) — e este aqui é o caminho comum, o golpe que derruba
@@ -15173,7 +15203,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          podem abrir luta, e a resposta tem de ja estar pronta. */
       folegoRef.current = folegoDaFuga(v, ondeEstou());
       fugaAoSairRef.current = true;
-      combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0;
+      combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
       let base0 = pers;
       personagemRef.current = base0;
       if (estaEmForma(base0)) {
@@ -16197,7 +16227,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* PASSAR O TEMPO (deliberado): simula N horas; quanto mais horas, mais o mundo muda */
   const passarTempo = (horas) => {
     if (bloqueado || acampadoRef.current) return;
-    if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
+    if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     setTempoAberto(false);
     const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
@@ -17306,6 +17336,34 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      /* ---------------- MM9: A PALAVRA DOBRA O BANDO ----------------
+         O teste já rolou (dado de verdade, CD de `vereditoDaPalavra`); aqui
+         só se aplica o que ele decidiu — vergar, render, ou nada muda. */
+      try {
+        if (des && des.palavra && combateRef.current) {
+          const heroiPalavra = (personagemRef.current || personagem).nome;
+          const res = ouvirAPalavra({
+            inimigos: combateRef.current.inimigos, tipo: des.palavra.tipo, passou,
+            margem: total - dc, critico, intencao: intencaoRef.current || "",
+            situacao: lutaDaMesa(), lex: (mundoAtual() || {}).lexico,
+          });
+          if (res.efeito !== "nada") {
+            combateRef.current = { ...combateRef.current, inimigos: res.inimigos }; setCombate(combateRef.current);
+            if (res.intencao) intencaoRef.current = res.intencao;
+            const linhaBando = res.efeito === "rendicao"
+              ? `${res.rendidos.join(", ")} ${res.rendidos.length > 1 ? "baixam as armas e se rendem." : "baixa as armas e se rende."}`
+              : res.efeito === "fuga"
+              ? `${res.fogem.join(", ")} ${res.fogem.length > 1 ? "fogem." : "foge."}`
+              : `${res.voz} vacila.`;
+            pushMsgs([{ autor: "sistema", texto: linhaBando }]);
+            const envPalavra = envelopeDaPalavra(res, { heroi: heroiPalavra });
+            golpeFinalEnvelopeRef.current = golpeFinalEnvelopeRef.current
+              ? { acabou: golpeFinalEnvelopeRef.current.acabou.concat(envPalavra.acabou), naoPode: golpeFinalEnvelopeRef.current.naoPode.concat(envPalavra.naoPode) }
+              : { acabou: envPalavra.acabou, naoPode: envPalavra.naoPode };
+            if (!res.restam.length) fecharSeTodosCairam(fichaViva() || personagem);
+          }
+        }
+      } catch (e) { calou("a palavra dobra o bando", e); }
       /* ---------------- MM6: ESCONDIDO NASCE DE UM TESTE PASSADO ----------------
          O teste de furtividade que passou vira ESTADO — sem isto, o "ate" que
          gatilhos.js ja sabe derrubar nunca teria o que derrubar. Dentro da
@@ -18173,6 +18231,33 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      do obstáculo, não do herói —, e por isso esta função não calcula nada:
      ela cobra o tempo, anuncia e entrega o dado. */
   const rolarDesafio = (v, acao) => {
+    /* ---------------- MM9: A PALAVRA NA LUTA ----------------
+       Dentro do combate, um teste social (Persuasão/Intimidação/Enganação)
+       não é o desafio do catálogo — é a AÇÃO que dobra o bando, por
+       `sem-espada.js`. Decide-se ANTES de tudo o resto desta função: sem
+       com quem falar, ou sem ação, o turno nem chega a rolar dado. */
+    try {
+      const tipoP = combateRef.current ? tipoDaPalavra(v) : null;
+      if (tipoP) {
+        const vp = vereditoDaPalavra({
+          inimigos: combateRef.current.inimigos, tipo: tipoP,
+          mod: modDoTeste(fichaViva() || personagem, v.atributo, v.pericia).total,
+          intencao: intencaoRef.current || "", situacao: lutaDaMesa(),
+          impressionou: impressionouAgora(), lex: (mundoAtual() || {}).lexico,
+        });
+        if (!vp.pode) {
+          pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: vp.linha }]);
+          return;
+        }
+        const eco = combateRef.current && combateRef.current.economia;
+        if (eco && eco.acao <= 0) {
+          pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: "Você já usou sua ação nesta rodada — a palavra fica para a próxima." }]);
+          return;
+        }
+        if (eco) { eco.acao -= 1; combateRef.current = { ...combateRef.current, economia: { ...eco } }; setCombate(combateRef.current); }
+        v = { ...v, dc: vp.cd, deOnde: vp.linha, palavra: { tipo: tipoP } };
+      }
+    } catch (e) { calou("a palavra na luta", e); }
     /* v9.71: a mesa fica sabendo que houve dado neste turno, e de que lado
        do jogo ele foi. O pilar sai do próprio desafio — quem pede algo a
        alguém está jogando o pilar social; quem força a fechadura está
@@ -18218,7 +18303,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* SEM DADO quando o bônus decide sozinho. Mantida a exceção do achado:
        a entrega do tesouro mora em `concluirRolagem`, e duplicá-la aqui é
        como se cria a divergência que ninguém acha depois. */
-    const auto = resolucaoAutomatica(modT, v.dc, { permitir: !v.achado });
+    const auto = v.palavra ? null : resolucaoAutomatica(modT, v.dc, { permitir: !v.achado });
     if (auto) {
       pushMsgs([{ autor: "sistema", texto: auto === "sucesso"
         ? `✓ Isto está abaixo do seu patamar — sucesso sem rolar.`
@@ -21076,7 +21161,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
   const acampar = () => {
     if (acampadoRef.current || bloqueado) return;
-    if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
+    if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     definirAcampado(true);
     /* v9.99: ONDE se acampa passa a ser decisão do CÓDIGO. Antes o sistema
        só sabia responder dentro de uma cidade; fora dos muros dizia
@@ -23896,6 +23981,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      aviso, ANTES do Enter. A mesma conta que `fugirDaLuta` fará ao
      enviar — heroi com o nome (a nota ao Narrador precisa dele), o mesmo
      passo de `vFugaDaBatalha`, e agora a mesma ficha/gdJogador (a chance). */
+  /* MM9: o mesmo veredito da palavra, mas ANTES do Enter — o botão nunca
+     existiu para isto (a palavra se digita), então quem escreve "baixem
+     as armas" tem direito ao MESMO aviso que o golpe e a fuga já dão. */
+  const precoDaPalavraNoCampo = (() => {
+    try {
+      if (!emBatalha || !combate) return "";
+      const v = lerAcao(entrada, { ...ctxDesafio(), emCombate: true });
+      const tipoP = v ? tipoDaPalavra(v) : null;
+      if (!tipoP) return "";
+      const vp = vereditoDaPalavra({
+        inimigos: combate.inimigos, tipo: tipoP,
+        mod: modDoTeste(fichaViva() || personagem, v.atributo, v.pericia).total,
+        intencao: intencaoRef.current || "", situacao: lutaDaMesa(),
+        impressionou: impressionouAgora(), lex: (mundoAtual() || {}).lexico,
+      });
+      return vp.linha || "";
+    } catch (e) { calou("o preco da palavra no campo", e); return ""; }
+  })();
+
   const precoDaFugaNoCampo = (() => {
     try {
       if (!emBatalha || !combate) return "";
@@ -24014,7 +24118,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       recusaDoGolpe={vdDaBatalha ? recusaDoGolpe(vdDaBatalha) : ""}
       podeFugir={!!(vFugaDaBatalha && vFugaDaBatalha.escapa)}
       linhaDaFuga={vFugaDaBatalha ? linhaDaFugaComAviso : ""}
-      precoDaFuga={precoDaFugaNoCampo}
+      precoDaFuga={precoDaFugaNoCampo || precoDaPalavraNoCampo}
       fugiu={!!fugiuNoFim}
       previsao={previsaoDeArea}
       mira={mira} aoMirar={definirMira} alcanceMira={alcanceDaHabilidade}

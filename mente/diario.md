@@ -15,6 +15,40 @@ Formato:
 ```
 
 ---
+## 30/09 08:27 · v9.331 · MM9 · a luta sem espada · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a vontade da oposição só virava pela vida. No Honey Heist o clímax
+  resolveu-se pela conversa; aqui, intimidar, convencer, envergonhar não mudava nada.
+- **estado inicial:** verde (`5734383`, `8b56d7a`). Em paralelo, noutra mão e noutros arquivos,
+  a MM10 (o crime), por commitar.
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend:** `src/sem-espada.js` — **a tabela por inteligência** (`DEGRAUS`): o animal não se
+  convence com palavras (a ameaça fá-lo fugir, não render-se); o bruto ouve a ameaça; **o astuto é
+  o que a persuasão move mais barato**; o treinado aguenta a ameaça; o brilhante não se intimida; os
+  mortos-vivos nunca; **o fanático** — que não existia como traço — ganhou uma tabela de nomes e só
+  ouve a persuasão **depois de a causa cair** (o chefe tombado, a coisa que guardava quebrada): o
+  "talvez nunca". Uma escada de dois degraus (firme → vergado → rendido, ou o bicho foge); quem a
+  vida já vergou rende-se à primeira palavra certa — a espada e a palavra somam-se. A CD sai de
+  tabela (15, menos a vida que falta, os companheiros caídos, e se o herói acabou de impressionar).
+  A frase passa pela peneira ("posso intimidá-lo?" não rola). **A palavra gasta a ação**, como o
+  golpe (o furo que a MM4 deixou escrito): bater ou falar. O rendido fica vivo, fora da luta, e a
+  pauta diz ao Narrador que pode ser interrogado e **só o que ele sabe** (para que veio, e quem o
+  mandou quando há nome).
+- **medido (200 lutas):** o orador contra astutos acaba a luta **15% mais cedo com o mesmo dano**
+  (99% das lutas acabam com rendidos); contra bichos, nada muda (um lobo foge em 43%); contra
+  fanáticos, nem uma palavra. Tudo dentro de ±20%, fixado como catraca.
+- **frontend:** o veredito antes do clique (a chance, no mesmo sítio da fuga, enquanto se digita),
+  a ação gasta, o bando que verga depois do dado, os prisioneiros na pauta. **E um defeito antigo:
+  o poupado da MM3 era riscado como morto no registo do mundo** ao fechar a luta — o rendido e o
+  desacordado deixam de o ser. Sem emoji novo.
+- **orquestrador:** a prova de fiação por texto que faltava na suíte da MM9.
+- **a prova jogada:** contra Sérgio, "baixem as armas e rendam-se, ou morrem aqui!" → o veredito
+  apareceu antes ("podem ceder — a vontade deles verga"), rolou Intimidação contra 15, gastou a ação;
+  a falha (7) não mudou nada. A rendição inteira não foi jogada (custo); a suíte cobre-a.
+- **a sonda:** não se move (92/157) — nenhuma das 157 era de rendição.
+- **para quem joga:** numa luta, falar passa a ser uma jogada — com a chance à vista, a gastar a
+  vez — e um inimigo rendido é um prisioneiro, não um cadáver.
+
 ## 30/09 06:50 · v9.330 · MM8f · o elenco age fora de cena — o MM8 completo · commit `5734383`
 
 - **por que andou:** a sexta e última subetapa do elenco, a proposta da pessoa: o elenco **age fora
