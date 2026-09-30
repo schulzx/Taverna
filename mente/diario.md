@@ -15,7 +15,28 @@ Formato:
 ```
 
 ---
-## 30/09 17:36 · v9.340 · MM14 (8) · o que a ficha sabe não se rola · commit (o hash vai no próximo bloco)
+## 30/09 17:58 · v9.340 · MM11 (2) · a segunda sessão de prova — parcial, cortada pelo teto diário · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a ordem do coordenador — fechados os três restos da MM14 (v9.338, v9.339, v9.340), jogar a
+  segunda sessão, 25 a 30 respostas, pelo mesmo método, e responder de novo "o Mestre toca uma sessão à la Matt?".
+- **estado inicial:** verde (MM14 (8) no ar, `187b6f8`).
+- **jogo:** campanha nova (Brites Ferrolho, anã, Guerreira, Médica de Campo), 13 perguntas. **Só 10 respostas:** no T11 a
+  API respondeu 429 — o teto diário de 500 chamadas **por endereço** (`api/_portao.js`), que as sessões e provas de hoje
+  esgotaram. Não é o jogo, e mexer no teto é da pessoa (custa dinheiro); por isso a sessão fica **parcial** e está marcada
+  assim no arquivo. Os jogadores reais não foram barrados: o teto conta por endereço.
+- **em número, contra a primeira:** perguntas do sistema 5/12 → **7/12**; inventadas/perdidas 4/1 → **2/0**; a sessão partiu
+  no T5 → **T11** (o teto; e o lugar ia parti-la no mesmo turno); missões fechadas sem se jogarem, tramas forçadas e "você
+  mudou" → **0** em 10. Pior: **3,6 chamadas pagas por resposta** (eram ~2,0), com quatro falas de personagem deitadas fora.
+- **os consertos:** aguentaram v9.333 (missões), v9.336 (perguntar de graça, fora da luta), v9.339 (tramas), v9.340 (a
+  ficha antes do d100) e o "você mudou" de v9.338; **não aguentaram** o lugar (v9.335 — agora pela porta do Cronista, que
+  devolve "cidade" dentro de um prédio) e os nomes (v9.338 fundiu "Túlio da Runa" com o músico). A luta não se jogou.
+- **veredito do jogo:** *ainda não se sabe* — a primeira vez que não é "ainda não"; as melhores dez respostas desta mesa,
+  mas metade da prova (a luta) nunca se jogou.
+- **decisão (média):** não consertei nada neste ciclo — o coordenador pediu relato ao fim da sessão, e o que ela partiu
+  vai à pauta como **MM15**, pela ordem, com o lugar à frente. A proposta "A sala à vista" foi para "Para a pessoa decidir".
+- **para quem joga:** nada mudou nesta etapa; é a medida do que as três anteriores mudaram.
+
+## 30/09 17:36 · v9.340 · MM14 (8) · o que a ficha sabe não se rola · commit `187b6f8`
 
 - **por que andou:** o terceiro e último dos restos da MM14 — uma pergunta fechada que a ficha sabe responder
   ("há quanto tempo a senhora tem esta taverna?") ainda ia ao oráculo, e um d100 decidia o que o mundo já tinha

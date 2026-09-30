@@ -17,6 +17,12 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
+- [ ] **"A sala à vista" — quem está aqui, em rostos, debaixo do nome do lugar** · do `jogo`, 30/09, da segunda sessão de prova
+  Uma fila de retratos pequenos com quem o sistema dá como presente na cena, e só esses; tocar num rosto dirige a fala a
+  essa pessoa (e a pergunta continua de graça). Numa mesa do Matt os jogadores veem as miniaturas; aqui essa verdade vive
+  só na pauta. A prova: 3 das 10 pautas da sessão puseram gente ausente na cena, e a jogadora tê-lo-ia visto no T7.
+  Texto inteiro em `mente/mm11-sessao-2.md`, "A proposta ambiciosa". É da fila do desenho quando ela reabrir.
+
 - [ ] **A FILA PAROU AQUI — o que fica por pagar, com endereço** · 16/09 · **v9.280, commit `f706cf2`**
   A pessoa pediu pausa depois de F3 para avaliar. **Nada foi encadeado, a pauta
   não foi semeada, e nada ficou no disco por commitar.** O que espera:
@@ -420,6 +426,23 @@ O limite é o que um commit revertido não desfaz.
   **Não apareceram na sessão (continuam só provados pela suíte):** o golpe final do companheiro (não há
   companheiro possível numa sessão: pede 13 dias de convívio), a rendição completa (só houve esqueleto e
   slime), o escondido com vantagem numa luta, o atirador.
+- [ ] **MM15 · o que a segunda sessão de prova partiu** · da MM11 (2), 30/09, `mente/mm11-sessao-2.md` · **à frente de tudo**
+  Parcial: 10 respostas, cortada no T11 pelo teto diário da API (500 por endereço). Pela ordem em que partem a sessão:
+  1. **O lugar pelo Cronista** — dentro de um prédio ele devolve `"lugar": "cidade"` a cada turno; o sistema lê-o como o
+     Narrador a tirar a heroína de lá: 4 "[LUGAR — RECUSADO]" falsos em 10 respostas, uma saída falsa que passou (T10), e
+     "saio do Último Gomo e vou ao Fundo do Poço" registou o Último Gomo (T11). Era aqui que a sessão partia.
+  2. **O gasto e o disfarce** — 3,6 chamadas por resposta (a primeira, ~2,0): quatro falas de personagem pagas e deitadas
+     fora (nenhuma entra em pauta nem na tela; duas de alguém fora de cena). E o 429 aparece como recusa do Mestre ("a porta
+     não se abre para esta mão") e anda o relógio num turno que não aconteceu. O teto em si é infra — da pessoa.
+  3. **Persuasão sem dado revela um segredo da espinha** (T10), contra a base (o Fundo do Poço é a casa de banhos), e o
+     Cronista grava-o no cânone.
+  4. **A regra dos nomes funde mal** — "Túlio da Runa" (sumido na estrada) fundido com Túlio, o músico (T5).
+  5. **A gente da cidade segue a heroína pela cidade** (T7, T9, T10) — o resto já anotado do nº 9 da MM14.
+  6. **A procura que ninguém fez** — "despeço-me do Otávio" dá "Otávio está aqui" (T7); e "ELA" para Otávio.
+  7. Miúdos (na transcrição): todas as classes começam sem arma; pagar o quarto por palavras não tira moedas; "Boa noite"
+     às 08:35; a Médica de Campo sem Medicina.
+  **Por provar:** a luta inteira (o "como", o revide, a sala limpa, esconder, atirador, rendição) — a terceira sessão vai
+  direita à porta do Fundo do Poço, com o teto zerado.
 - [ ] **MM11 · para a pessoa decidir (pesado: muda o fluxo) — "perguntar" como jogada à parte** · do `jogo`, 30/09
   Um gesto "perguntar ao Mestre" ao lado da caixa, que nunca gasta tempo nem a vez; a pergunta junta todas as
   fichas que toca; a resposta numa linha curta, separada da narração. É onde a sessão perdeu 7 das 12 perguntas.
