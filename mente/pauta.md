@@ -238,6 +238,43 @@ O limite é o que um commit revertido não desfaz.
   tamanho fixo perde alguém. A pauta leva quem está em cena e quem mexe os
   pauzinhos neste turno — por isso o número não esbarra no teto de prompt.
   Campo de save novo, aditivo, ignorado pela versão antiga.
+  **O estudo (29/09) e as subetapas — um commit cada, na ordem:** o mundo já tem, por
+  semente, ~122 pessoas da base (+ chefes, mestres de guilda, a gente da espinha), e a
+  `indoleDe` já as separa em figurante 61,5% · recorrente 28,5% · do arco 10,1%. **O elenco
+  é escolher e aprofundar essa gente, não criar outra.** O defeito é maior do que o escrito:
+  dos três canais de pessoas ao Narrador, só um tem teto (os 22); o QUEM do rodapé
+  (`resumoCenaPrompt`) e o CÂNONE crescem sem limite, e **nenhum é contado no teto de 82k**
+  (`teste-prompt` mede com cânone vazio). A 107 pessoas no registo, o QUEM do rodapé já pesa
+  ~6,1k. E a recência volta a zero em cada load, e o vilão fica preso no topo por `Date.now()`.
+  - [ ] **MM8a · a ficha por dentro** · sem campo de save · App: uma chamada na pauta
+    `gente-por-dentro.js`: idade e compleição lidas do **mesmo traço do retrato** (o cabelo
+    branco nunca dá "jovem"), o jeito, 1–2 passados com "há N anos" que citam chefes,
+    criaturas e cidades deste mundo, o motivo do posto, a rotina (onde está a esta hora),
+    quem trabalha em cada casa. Só vai à pauta quando a frase pergunta (secção `pergunta`).
+    Sonda: #18, #26, #29, #42, #54, #90, #103, #105, #106 → **81 → 90**.
+  - [ ] **MM8b · o elenco nasce, com laços e casas** · sem campo de save
+    `elencoDoMundo`: 24 por tabela (a espinha, os chefes humanoides, os mestres de guilda, os
+    do arco e recorrentes da base), laços entre eles, casas notáveis por cidade (famílias),
+    reputação da casa e de cada um, estreia por semente. Sonda: #60, #61, #62 → ~93.
+  - [ ] **MM8c · a pauta leva quem importa** · sem campo de save
+    `resumoNPCsParaPrompt` por importância (grupo, laço, inimigo/rival, elenco, só depois
+    recência); o LONGE do rodapé com teto; o "ELENCO DIVERSO PRONTO" (hoje `Math.random`) passa
+    a ser o elenco por encontrar; a recência que zera no load e o vilão preso no topo,
+    consertados. Catraca nova no `teste-prompt` com o registo de 200 turnos.
+  - [ ] **MM8d · figurante é de passagem**
+    Sem investimento e fora do elenco, sai de PESSOAS CONHECIDAS e do LONGE (a não ser que
+    esteja presente). **Nada se apaga do registo.** A lista dobrada em Gestão › Pessoas é tela
+    e espera a palavra da pessoa (ordem 28/09 §4).
+  - [ ] **MM8e · a promoção** · campo novo `elenco` no topo do save (aditivo)
+    Por tabela, lendo **o mesmo `conhecidoEm` e o mesmo convívio do convite** (nunca os
+    reescreve); com o tamanho fixo, sai quem pesa menos (nunca espinha, chefe, laço, grupo).
+  - [ ] **MM8f · o elenco age fora de cena**
+    0–2 passos por dia pelo propósito da índole; "quem mexe os pauzinhos" na pauta só quando
+    toca a cidade ou os presentes (prio 6); de longe, por rumor ou correio.
+  **O Códex:** da MM8a à MM8c ninguém entra no registo à nascença — o Códex e o cânone não
+  crescem pelo elenco. Medida de base (20 mundos, sem IA, taxa suposta de nomes do Narrador):
+  a 200 turnos, 50 / 107 / 168 pessoas no registo (0,10 / 0,25 / 0,50 nomes por turno). A
+  medida a sério é uma campanha jogada a contar `npcs` e `canone` por turno — pedir na MM11.
 - [ ] **MM9 · a luta sem espada**
   Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
   Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).
@@ -1051,9 +1088,12 @@ se apaga nada: o beta é um corte de foco, não um descarte.
   empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
   (o herói da sonda já o tem), medido pela régua.
 - [ ] **o herói colado que atira não paga** · leve · de: sistema/MM7 · 29/09
-  *Resolvido em v9.317 (decisão do coordenador: a mira pela inteligência, lei da pessoa):*
-  **fica pendente uma decisão** — ligar `feridoPor` no App (quem feriu o arqueiro) põe o bruto
-  a disparar só no herói e o grupo do bando a −30,8% do antes; a catraca de ±20% acende.
+  *Resolvido em v9.317 (decisão do coordenador: a mira pela inteligência, lei da pessoa).*
+  **Simplificação conhecida, decidida pelo coordenador em 29/09: o registo de "quem me feriu"
+  (`feridoPor`) fica desligado.** O bruto atira no mais perto. Ligá-lo punha todos os brutos a
+  atirar no herói por causa do golpe de oportunidade — consequência da mecânica, não intenção
+  de bicho — e não paga os −30,8% do grupo. `quem_me_feriu` continua na tabela e provado em
+  unidade, à espera de um sinal que seja de facto "quem me feriu".
   *E o que o MM7 fez ao grupo (medido em v9.316):* no bando, contra um "antes" remedido sem
   a pilha, o herói leva −8,9% e **o grupo +39%** — os atiradores espalham os tiros pelo grupo.
   O total mexe +3,6%. O retrato do MM7 mede contra o "antes" gravado (com pilha), onde o grupo
