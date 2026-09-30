@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 13:26 · v9.336 · MM14 (4) · perguntar é de graça, e a resposta que chega é a que responde · commit (o hash vai no próximo bloco)
+## 30/09 13:26 · v9.336 · MM14 (4) · perguntar é de graça, e a resposta que chega é a que responde · commit `031bd26`
 
 - **por que andou:** duas decisões do coordenador da fase — **perguntar ao Mestre é de graça** (numa mesa
   do Matt, "ele está a ver-me?" nunca custa a vez; foi onde a sessão perdeu 7 de 12 perguntas) — e **a
