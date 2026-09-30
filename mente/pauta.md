@@ -385,7 +385,36 @@ O limite é o que um commit revertido não desfaz.
   chama a guarda, não há recompensa pela cabeça, a porta não fecha, as
   testemunhas não contam. Assenta no elenco: contra alguém do elenco, a
   consequência é de história; contra um figurante, é da cidade.
-- [ ] **MM11 · a sessão de prova**
+- [x] **MM11 · a sessão de prova** · jogada 30/09 sobre v9.332 · **veredito: ainda não** · transcrição em
+  `mente/mm11-sessao.md` · 49 respostas do Mestre. A voz já é de mesa, e quando o fato chega à pauta ele
+  acerta número a número; o que falta é a continuidade, e é o próprio sistema que a parte.
+  **Das 12 perguntas que o mundo sabe responder: 5 certas, 2 pela metade, 4 inventadas, 1 contradita, 1 perdida.**
+- [ ] **MM14 · o que a sessão de prova partiu** · da MM11, 30/09 · **à frente de tudo — o beta depende disto**
+  Pela ordem em que partem a sessão (turno e prova na transcrição):
+  1. **As missões fecham sem se jogarem** — a principal fechou no turno 5 sem ver a Delfina (a 146 km);
+     "Tirar Branca de lá" fechou por uma frase no futuro; "O lance" por entrar na taverna; a história
+     avançou de ato e o Mestre narrou "você trouxe a Branca".
+  2. **O lugar da heroína e o da narração separam-se** — "vou à torre" fez a viagem sozinho, "saio pelo
+     portão" foi recusado, a taverna ficou fora da cidade e voltou; descer ao salão abriu uma masmorra.
+  3. **Voltar a uma sala limpa ressuscita os inimigos** (T34) — e o sistema avisa depois que estão mortos.
+  4. **O "como você faz isso?" do golpe final não chega ao Narrador** (3 em 3).
+  5. **O dano do contra-ataque é contado ao Narrador e nunca aplicado** (2 em 2).
+  6. **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
+     vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
+  7. **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
+  8. **Missões forçadas em série** (quatro em 43 respostas; "alguém vem cobrar o que você disse" sem promessa).
+  9. **As pessoas da cidade seguem a heroína** até à masmorra; "você mudou desde a última vez" no primeiro
+     encontro (quatro vezes — uma linha de índole da pauta).
+  10. **Nomes que colidem** (duas Delfinas; "Floripes do Sino" nascida do nome da taverna).
+  11. Miúdos: a Ladina sem arma; o espólio não se apanha por palavras; o Mestre joga pela heroína; um
+     parágrafo repetido; "fico escondida" não esconde; "poupar" oferecido a esqueleto e slime; a caixa do cartão
+     fora do ecrã a 310 px; "1 de pé contra você" com os dois mortos; a narração na primeira pessoa.
+  **Não apareceram na sessão (continuam só provados pela suíte):** o golpe final do companheiro (não há
+  companheiro possível numa sessão: pede 13 dias de convívio), a rendição completa (só houve esqueleto e
+  slime), o escondido com vantagem numa luta, o atirador.
+- [ ] **MM11 · para a pessoa decidir (pesado: muda o fluxo) — "perguntar" como jogada à parte** · do `jogo`, 30/09
+  Um gesto "perguntar ao Mestre" ao lado da caixa, que nunca gasta tempo nem a vez; a pergunta junta todas as
+  fichas que toca; a resposta numa linha curta, separada da narração. É onde a sessão perdeu 7 das 12 perguntas.
   O `jogo` joga uma sessão inteira à maneira de C1E1 — chegada, taverna,
   persuasão, armadilha, luta — e a sonda de MM1 mede outra vez. É o critério
   do beta.

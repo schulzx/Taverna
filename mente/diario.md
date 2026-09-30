@@ -15,6 +15,38 @@ Formato:
 ```
 
 ---
+## 30/09 10:38 · v9.332 · MM11 · a sessão de prova — veredito: ainda não · sem código (só a mente e a transcrição)
+
+- **quem jogou:** o `jogo`, uma sessão inteira à maneira de C1E1 numa campanha nova de *Uma Vida*
+  (Iara do Vau, Meio-elfo Ladina; Foz do Meio), **49 respostas do Mestre**, um dia de jogo. A
+  transcrição, turno a turno, com as anotações, está em `mente/mm11-sessao.md` — é o documento para
+  a pessoa ler.
+- **O VEREDITO: o nosso Mestre ainda não toca uma sessão à la Matt Mercer.** A voz já é de mesa, e
+  quando o fato certo chega à pauta ele acerta sempre, número a número (o quarto: seis moedas, como a
+  ficha; a distância na luta: 20 m e 17 m; "não me veem, ele meio encoberto"). **O que falta é a
+  continuidade, e é o próprio sistema que a parte**: a sessão partiu no turno 5 e não se recompôs.
+- **as perguntas contra o sistema (12 que o mundo sabe responder):** 5 certas, 2 pela metade, 4
+  inventadas, 1 contradita, 1 perdida. O defeito não é o Narrador, é o caminho da pergunta até à
+  pauta — a palavra "sino" do nome da taverna sequestrou a resposta seis vezes; o teste social comeu a
+  frase de quem perguntava; um fato por turno, às vezes de outra cidade. **A sonda estática diz 92/157;
+  a sessão jogada mostra que chegar à pauta não basta — a pergunta tem de ser a que chega.**
+- **o que aconteceu do que a fase tinha de provar:** a abertura (turno 1, as três respostas, sem
+  Aceitar — mas o primeiro passo fechou logo no portão, e o mural abriu no turno 2); **o sino — o
+  melhor momento da sessão**: prenúncio no turno 9, rebate no 18, depois de explorar (mas aponta para
+  um lugar a 146 km); o cartão do golpe final veio 4 vezes e a escolha valeu — **mas o "como você faz
+  isso?" nunca chegou ao Narrador**; o aviso antes de falar a um esqueleto funcionou; o enigma das
+  alavancas foi o momento mais Matt. Não apareceram: o golpe do companheiro, a rendição, o escondido
+  na luta, o atirador.
+- **os defeitos que partem a sessão, por ordem** (na pauta como MM14, à frente de tudo): as missões
+  fecham sem se jogarem; o lugar da heroína e o da narração separam-se; voltar a uma sala limpa
+  ressuscita os inimigos; o "como" do golpe final não chega; o dano do contra-ataque é contado e nunca
+  aplicado. Mais seis de peso menor, e os miúdos.
+- **a proposta ambiciosa do `jogo`, para a pessoa decidir:** "perguntar ao Mestre" como jogada à parte,
+  que nunca gasta tempo nem a vez — é onde a sessão perdeu 7 das 12 perguntas.
+- **o que isto muda na fase:** a Fase MM mediu-se até aqui pela sonda (a pergunta chega à pauta?). A
+  sessão jogada mede outra coisa, e mais dura: **o mundo aguenta uma sessão inteira sem se contradizer?**
+  Hoje não. É por aí que o beta passa.
+
 ## 30/09 09:40 · v9.332 · MM10 · o crime · commit `f5dd2e6`
 
 - **por que andou:** atacar o taverneiro abria uma luta e não um crime — ninguém chamava a guarda,
