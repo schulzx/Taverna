@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 30/09 05:11 · v9.328 · MM8d · o figurante é de passagem · commit (o hash vai no próximo bloco)
+## 30/09 05:11 · v9.328 · MM8d · o figurante é de passagem · commit `8f95b4d`
 
 - **por que andou:** a quarta subetapa do elenco. Com a MM8c-2 o figurante já pesava 0, mas ainda
   ocupava os lugares vazios das PESSOAS CONHECIDAS e da lista de longe.
