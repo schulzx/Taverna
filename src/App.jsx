@@ -19,7 +19,7 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -32,7 +32,7 @@ import { gerarVilao, gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano,
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
-import { escolherReacao, resolverReacao, resumoReacoesPrompt, reacoesDe } from "./reacoes.js";
+import { escolherReacao, resolverReacao, resumoReacoesPrompt, reacoesDe, revideNoCampo } from "./reacoes.js";
 /* ---------------- A JANELA DA REACAO (v9.259, Fase K - K3) ----------------
    Tres modulos e um componente, e nenhum deles decide nada aqui dentro: o
    ritmo diz SE a janela abre e por quanto tempo, as palavras dizem o que o
@@ -45,7 +45,7 @@ import { PainelReacao } from "./painel-reacao.jsx";
    Letal ou poupar, e "como voce faz isso?" -- a conta inteira mora em
    `golpe-final.js`; o App so liga a fiacao e pinta o cartao (peca propria,
    `painel-golpe-final.jsx`, pelo mesmo molde do cartao da reacao). */
-import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada } from "./golpe-final.js";
+import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, golpeFinalNaPauta } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
@@ -7080,7 +7080,7 @@ export default function Taverna() {
        nunca do proximo. */
     try {
       const gf = golpeFinalEnvelopeRef.current;
-      if (gf) { p = porNaPauta(p, "acabou", ...gf.acabou); p = porNaPauta(p, "naoPode", ...gf.naoPode); }
+      if (gf) p = golpeFinalNaPauta(p, gf); /* MM14: o "como" era cortado pelo teto em ACABOU (prio 3,1) e nunca chegava; vai em DESFECHO */
     } catch (e) { /* o golpe final nunca pode custar o turno */ }
     golpeFinalEnvelopeRef.current = null;
     /* ---------------- MM6: O ESCONDIDO FORA DA LUTA ----------------
@@ -15534,7 +15534,7 @@ REGRA DESTE ENVELOPE (obrigat贸ria): trate o resto da minha frase normalmente 鈥
           : comJanela
           ? (noGolpeDaReacao ? tentarReacaoNoGolpe(a, persBase, escolha.reacao) : null)
           : tentarReacaoNoGolpe(a, persBase);
-        if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal;
+        if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal; try { const rv = rc && rc.contraAtaca ? (ultimaReacaoRef.current || {}).revide : null; if (rv) combPos.inimigos = revideNoCampo(combPos.inimigos, rv); } catch (e) { calou("o revide no campo", e); } /* MM14: o revide era contado ao Narrador e depois apagado pela c贸pia do turno */
       }
       if (a.r.dano > 0) {
         if (a.alvoRef === "jogador") {
@@ -19927,7 +19927,7 @@ REGRA DESTE ENVELOPE (obrigat贸ria): trate o resto da minha frase normalmente 鈥
     if (r.bloqueado) { pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t }))); return; }
     const mm2 = r.mm, sala = r.sala;
     masmorraRef.current = mm2; setMasmorra(mm2);
-    if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t })));
+    if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t }))); if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} 路 camada ${sala.camada} 路 ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala j谩 resolvida n茫o se refaz (a luta, o tesouro, o santu谩rio, a armadilha, o enigma) */
     /* PERCEP脟脙O PASSIVA (5e): o que estiver abaixo do seu limiar voc锚 nota
        sozinho, sem rolar. O apressado enxerga menos; o cauteloso, mais. */
     const modPerc = atributoEfetivo(personagem, "percepcao");

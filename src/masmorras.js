@@ -336,7 +336,56 @@ export function entrarNaSala(mm, id) {
   if (tochas === 0 && (mm.tochas || 0) > 0) msgs.push("🕯 Sua última tocha se apaga — daqui em diante é no escuro (desvantagem e mais perigo).");
   else if (gasto > 1 && tochas > 0) msgs.push(`🕯 Passo cauteloso: ${gasto} tochas queimadas — restam ${tochas}.`);
   const salas = mm.salas.map((s) => s.id === id ? { ...s, visitada: true } : s);
-  return { mm: { ...mm, salas, atual: id, tochas }, msgs, sala: salas.find((s) => s.id === id) };
+  /* MM14: `jaLimpa` é o estado da sala ANTES do passo — quem chama decide
+     por ele se o conteúdo dela acontece de novo (nunca). A entrada é
+     "resolvida" desde que nasce e não tem conteúdo: não conta. */
+  const jaLimpa = alvo.resolvida === true && alvo.tipo !== "entrada";
+  return { mm: { ...mm, salas, atual: id, tochas }, msgs, sala: salas.find((s) => s.id === id), jaLimpa };
+}
+
+/* ---------------- A SALA LIMPA FICA LIMPA (MM14) ----------------
+   Voltar a uma sala resolvida refazia tudo o que ela tinha: a luta abria
+   de novo com os mesmos corpos, de vida cheia (a sessão de prova, MM11,
+   T34: "Esqueleto 8/8 e Slime 4/4", os dois que ela tinha matado no T29),
+   e no turno seguinte o próprio sistema avisava o Narrador de que estavam
+   mortos. A porta do App (`irParaSala`) lia só o TIPO da sala e nunca se
+   ela já estava resolvida — e o mesmo buraco pagava o tesouro outra vez,
+   curava outra vez no santuário, disparava a armadilha outra vez e abria
+   o enigma de uma porta já aberta.
+
+   A regra: o que uma sala tinha acontece UMA vez. Voltar é andar — gasta
+   a tocha e o tempo do passo, como sempre — e a cena é a sala como ficou.
+   `oQueFicou` é o que o Narrador lê sobre ela (O QUE, nunca o COMO), e
+   `linha` é o que a tela diz: gameplay, sem nome de mecanismo. */
+export const SALA_LIMPA = {
+  combate: { oQueFicou: "a luta aqui já acabou", linha: "A sala está como você a deixou." },
+  chave: { oQueFicou: "o guardião já caiu e o que ele guardava já foi levado", linha: "A sala está como você a deixou." },
+  armadilha: { oQueFicou: "a armadilha já disparou e não se rearma", linha: "A armadilha daqui já disparou." },
+  tesouro: { oQueFicou: "o tesouro já foi levado — o que resta é o vazio onde ele estava", linha: "Aqui já não há nada para levar." },
+  santuario: { oQueFicou: "o refúgio já deu o que tinha a dar nesta descida", linha: "O refúgio já deu o que tinha." },
+  enigma: { oQueFicou: "a tranca já cedeu e a passagem continua aberta", linha: "A passagem continua aberta." },
+  chefe: { oQueFicou: "o chefe já caiu", linha: "A sala está como você a deixou." },
+};
+
+/* O que voltar a uma sala limpa entrega: `{ linha, envelope }`, ou `null`
+   quando a sala não está limpa (ou é lixo, ou é a entrada) — aí a porta
+   segue o caminho de sempre. `pos` é a posição que o App já monta para os
+   outros envelopes da masmorra. Os nomes de quem caiu vão ao Narrador pelo
+   nome, e o veto diz o que ele não pode fazer com eles: é a mesma verdade
+   que a "correção do sistema" dizia um turno tarde demais. As opções
+   podem vir `null` (o `= {}` do destructuring não o cobre). */
+export function voltarASalaLimpa(sala, opcoes) {
+  const pos = opcoes && typeof opcoes === "object" ? opcoes.pos : "";
+  if (!sala || typeof sala !== "object" || sala.resolvida !== true || sala.tipo === "entrada") return null;
+  const t = SALA_LIMPA[sala.tipo] || SALA_LIMPA.combate;
+  const caidos = [...new Set((Array.isArray(sala.inimigos) ? sala.inimigos : [])
+    .map((i) => String((i && i.nome) || "").trim()).filter(Boolean))];
+  const onde = String(pos || "").trim();
+  const quem = caidos.length
+    ? ` Quem lutou aqui continua caído: ${caidos.join(", ")} — não se levanta, não reaparece, não volta a atacar.`
+    : "";
+  const envelope = `[MASMORRA${onde ? ` — ${onde}` : ""} · SALA JÁ RESOLVIDA — NADA SE REPETE] Volto a uma sala por onde já passei: ${t.oQueFicou}.${quem} Nada salta das sombras e nada se paga outra vez. Descreva em 1-2 frases a sala como ficou e me passe a vez.`;
+  return { linha: t.linha, envelope };
 }
 
 export function marcarResolvida(mm, id, extras = {}) {

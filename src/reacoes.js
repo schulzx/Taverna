@@ -123,6 +123,34 @@ export function resolverReacao(reacao, { pers, dano = 0, atacante = "", alvoCont
   };
 }
 
+/* ---------------- O REVIDE CHEGA AO CORPO (MM14) ----------------
+   O contra-ataque da reação era rolado, contado ao Narrador ("acertou
+   Esqueleto: 5 de dano, ele está com 3 de 8") e APAGADO no mesmo instante:
+   `tentarReacaoNoGolpe` (App) escrevia o dano no ref do combate, e o turno
+   dos inimigos, que tem a sua própria cópia do campo (`combPos`) como
+   autoridade, publicava essa cópia no fim da rodada por cima do revide. Na
+   sessão de prova (MM11) foi 2 em 2: o Mestre narrou um peito fendido num
+   esqueleto que o tabuleiro dizia inteiro, 8 de 8.
+
+   Esta é a conta que o laço aplica à SUA cópia do campo, no mesmo formato
+   da linha do App que já a fazia (vida, `derrotado`, `ultimoDano`).
+   `revide` é `{ alvo, dano }` — o nome de quem abriu a guarda e o dano
+   que o revide rolou. Lista NOVA quando o revide morde; a recebida fica
+   intacta. Sem mordida — revide de lixo, dano zero ou torto, alvo que não
+   está de pé — devolve a MESMA lista: nada a aplicar não é estado novo.
+   Um corpo já caído não é ferido outra vez nem levantado. */
+export function revideNoCampo(inimigos, revide) {
+  if (!Array.isArray(inimigos)) return inimigos;
+  const rv = revide && typeof revide === "object" ? revide : null;
+  const dano = rv ? Number(rv.dano) : NaN;
+  if (!rv || rv.alvo == null || !Number.isFinite(dano) || dano <= 0) return inimigos;
+  const i = inimigos.findIndex((e) => e && typeof e === "object" && e.nome === rv.alvo && !e.derrotado && Number(e.vida) > 0);
+  if (i < 0) return inimigos;
+  const e = inimigos[i];
+  const pv = Math.max(0, Number(e.vida) - dano);
+  return inimigos.map((x, k) => (k !== i ? x : { ...x, vida: pv, derrotado: pv <= 0, ultimoDano: dano }));
+}
+
 export function resumoReacoesPrompt(pers) {
   const rs = reacoesDe(pers);
   if (!rs.length) return "";

@@ -324,8 +324,12 @@ sec("6. A FIAÇÃO EM src/App.jsx E NO PAINEL (texto, corpo por âncora)");
 
   const DECL_PAUTA = 'const pautaDoTurno = (acaoDoTurno = "") => {';
   const corpoPauta = corpoEntre(DECL_PAUTA, DECL_ALIADOS);
-  t("pautaDoTurno põe o envelope em ACABOU e em NÃO PODE",
-    /porNaPauta\(p, "acabou", \.\.\.gf\.acabou\)/.test(corpoPauta) && /porNaPauta\(p, "naoPode", \.\.\.gf\.naoPode\)/.test(corpoPauta));
+  /* MOVIDA NA MM14 (30/09), com o motivo: a sessão de prova mostrou que a cena
+     ("como você faz isso?") ia em ACABOU com prio 3,1 e era cortada pelo teto
+     da pauta — 3 em 3 vezes não chegou ao Narrador. O envelope passa a ir por
+     golpeFinalNaPauta, que o põe em DESFECHO (prio 2) e os vetos à frente do
+     NÃO PODE. O que se prova continua a ser: a pauta recebe o envelope. */
+  t("pautaDoTurno põe o envelope do golpe final na pauta (DESFECHO e NÃO PODE)", /if \(gf\) p = golpeFinalNaPauta\(p, gf\);/.test(corpoPauta));
   t("e limpa o ref depois — o envelope não sobrevive a um segundo turno", /golpeFinalEnvelopeRef\.current = null;/.test(corpoPauta));
 
   t("a preferência vive FORA do save (localStorage, não no objeto salvo)",

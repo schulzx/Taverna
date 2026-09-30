@@ -396,9 +396,11 @@ O limite é o que um commit revertido não desfaz.
      avançou de ato e o Mestre narrou "você trouxe a Branca".
   2. **O lugar da heroína e o da narração separam-se** — "vou à torre" fez a viagem sozinho, "saio pelo
      portão" foi recusado, a taverna ficou fora da cidade e voltou; descer ao salão abriu uma masmorra.
-  3. **Voltar a uma sala limpa ressuscita os inimigos** (T34) — e o sistema avisa depois que estão mortos.
-  4. **O "como você faz isso?" do golpe final não chega ao Narrador** (3 em 3).
-  5. **O dano do contra-ataque é contado ao Narrador e nunca aplicado** (2 em 2).
+  3. ✓ *feito em v9.334* · **Voltar a uma sala limpa ressuscita os inimigos** (T34) — e o sistema avisa depois que estão mortos.
+  4. ✓ *feito em v9.334* · **O "como você faz isso?" do golpe final não chega ao Narrador** (3 em 3).
+  5. ✓ *feito em v9.334* · **O dano do contra-ataque é contado ao Narrador e nunca aplicado** (2 em 2).
+     *Ficam dois miúdos antigos: o PV do envelope sai de `comb` e não de `combPos`; um inimigo morto pelo
+     revide ainda age nessa rodada. E a sala abandonada a meio de uma luta volta com todos, mesmo os mortos.*
   6. **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
      vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
   7. **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.

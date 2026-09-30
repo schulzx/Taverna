@@ -82,6 +82,16 @@ export const SECOES = [
   { id: "cidade", rotulo: "A CIDADE", prio: 7, o: "o dia de hoje e a língua da rua" },
   { id: "antes", rotulo: "ANTES", prio: 8, o: "o que já aconteceu aqui" },
   { id: "acabou", rotulo: "ACABOU DE", prio: 3, o: "o que o sistema resolveu agora" },
+  /* MM14: O DESFECHO — quem saiu da luta neste turno, e COMO o jogador
+     escreveu que saiu. Morava em ACABOU (prio 3), com a cena do jogador na
+     segunda linha (3,1), e a sessão de prova (MM11) mostrou o preço: 3 em 3
+     golpes finais sem a frase escrita chegar ao Narrador, e no terceiro nem
+     o fato. A linha da cena tinha até ~470 caracteres (hoje ~425) e o
+     corte é guloso — quando ela não cabia, o CONTRA (prio 5) e o DAQUI (7)
+     entravam no lugar dela, e o Mestre narrava outra morte. Prioridade 2 pela razão de A FALA:
+     é o que alguém escreveu palavra por palavra, e a única vez em que o
+     jogador DIRIGE a cena. Vem logo depois de ACABOU na leitura. */
+  { id: "desfecho", rotulo: "DESFECHO", prio: 2, o: "quem saiu da luta agora, e como o jogador escreveu que foi" },
   /* MM12: e o que o jogador PERGUNTOU. Uma pergunta direta é o centro do
      turno — "quanto custa a diária?" cortada pelo teto seria o Narrador a
      inventar exatamente o que se quis saber. Prioridade 4, a de QUEM, e

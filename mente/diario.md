@@ -15,7 +15,38 @@ Formato:
 ```
 
 ---
-## 30/09 11:14 · v9.333 · MM14 (1) · as missões deixam de fechar sem se jogarem · commit (o hash vai no próximo bloco)
+## 30/09 11:26 · v9.334 · MM14 (2) · o "como" chega, o revide fere, a sala limpa fica limpa · commit (o hash vai no próximo bloco)
+
+- **por que andou:** os defeitos nº 3, 4 e 5 da sessão de prova.
+- **estado inicial:** verde (MM14 (1) no ar, `dc0fd9d`).
+- **bastão:** tomado por mim para três apêndices em linhas existentes e três imports (deslocamento
+  zero); devolvido com este commit.
+- **nº 4 — o "como você faz isso?" nunca chegava ao Narrador (3 em 3):** a hipótese do `jogo`
+  confirmou-se — **o corte da pauta por prioridade**. A cena era a segunda linha de ACABOU DE (prio
+  3,1) com ~470 caracteres, e o ONDE e o NÃO PODE sozinhos já enchiam o teto; o CONTRA (prio 5)
+  entrava no lugar dela. Numa das vezes caiu também o fato, empurrado por outras linhas de ACABOU.
+  Conserto: uma secção nova, **DESFECHO (prio 2, como A FALA)**, para o golpe final, e os vetos dele à
+  frente do NÃO PODE. As três frases da sessão passam a chegar (1349, 1369, 1319 de 1400). No pior caso
+  de todos, quem cede é a cena; o fato e o veto nunca. O teto não subiu.
+- **nº 5 — o dano do contra-ataque contado e nunca aplicado (2 em 2):** o revide era aplicado num
+  objeto novo do combate, e o turno dos inimigos, que trabalha na sua própria cópia, publicava-a por
+  cima — o Narrador ouvia "3 de 8" e o tabuleiro voltava a 8 de 8. Agora o revide aplica-se na cópia
+  do turno.
+- **nº 3 — voltar a uma sala limpa ressuscitava os inimigos (T34):** a entrada numa sala decidia só pelo
+  tipo e nunca olhava se já fora resolvida. **O mesmo buraco pagava o tesouro outra vez (ouro
+  infinito), curava no santuário outra vez, disparava a armadilha e reabria o enigma.** Agora a sala
+  limpa fica limpa, e o Narrador ouve quem caiu ali e que não se levanta.
+- **orquestrador:** uma asserção do `teste-golpe-final` guardava o caminho que cortava a cena — movida,
+  com o motivo. **E achei a correr as suítes uma prova instável que já existia**: "ids de participante
+  não se repetem" (`teste-sala`) falha ~7% das vezes (2 em 30) — sorteio sem semente na própria prova,
+  o mesmo defeito que a v9.240 consertou para os códigos. Não é desta etapa; consertado a seguir, num
+  commit à parte.
+- **o que fica (na pauta):** o PV do envelope do revide sai do campo antigo; um inimigo morto pelo revide
+  ainda age nessa rodada; a sala abandonada a meio de uma luta volta com todos.
+- **para quem joga:** o que ele escreve no golpe final chega ao Mestre; o contra-ataque fere de verdade; e
+  uma sala que ele limpou fica limpa — sem mortos que se levantam nem tesouros que se repetem.
+
+## 30/09 11:14 · v9.333 · MM14 (1) · as missões deixam de fechar sem se jogarem · commit `dc0fd9d`
 
 - **por que andou:** o defeito nº 1 da sessão de prova — o que a partiu no turno 5.
 - **estado inicial:** verde (`1323b58`, a transcrição). Em paralelo, noutra mão, os defeitos 3, 4 e 5.
