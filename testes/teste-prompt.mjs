@@ -288,12 +288,17 @@ sec("7. o pior caso COM GENTE (Fase MM, MM8c-1)");
      O QUE ESTA SECÇÃO PROVA é que a gente deixou de crescer com a
      campanha: o pior caso com gente é o pior caso sem gente MAIS o
      orçamento das pessoas, e nunca mais do que isso — em 50 ou em 180
-     pessoas. O QUE ELA NÃO ESCONDE é o número: a PIOR CENA REAL sem gente
-     está a menos de cem caracteres dos 82 mil, e com qualquer gente passa.
-     O teto de 82 mil nunca contou com as pessoas; resolver isso (encolher o
-     fixo, ou escrever o orçamento das pessoas dentro do teto) é decisão de
-     quem rege o teto, e está no relato da MM8c-1 — o guarda de 82 mil de
-     cima não se moveu. */
+     pessoas.
+
+     MM8c-0 (30/09): E AGORA CABE NOS 82 MIL. Na MM8c-1 a PIOR CENA REAL
+     sem gente estava a 55 caracteres do teto, e com qualquer gente passava
+     (85 a 93 mil). A decisão da fase foi que o teto não sobe — encolhe-se o
+     fixo: repetições entre blocos, regra que só vale fora da luta descida
+     para a zona das portas, e prosa dita em menos palavras (o relato da
+     MM8c-0 lista cada corte). Por isso a catraca deixou de ser só "não
+     cresce" e passou a ser a lei inteira: com gente, nos três mundos, e com
+     o orçamento das pessoas CHEIO, a pior cena cabe em 82 mil. O guarda de
+     82 mil de cima (sem gente) não se moveu. */
   const piorReal = {
     emCombate: true, emMasmorra: true, temChao: true, temGente: true, conjura: true,
     temGrupo: true, aflicao: true, temSintonia: true, temRegraPropria: true, temMissao: true,
@@ -318,8 +323,24 @@ sec("7. o pior caso COM GENTE (Fase MM, MM8c-1)");
     maior = Math.max(maior, depois);
     console.log(`      ${c.id} (${Object.keys(r.npcs).length} pessoas, ${Object.keys(r.canone).length} no cânone): ${antes} → ${depois}`);
     t(`${c.id}: o pior caso com gente nunca passa do sem gente + o orçamento das pessoas`, depois <= vazio + orcamento);
+    t(`${c.id}: a PIOR CENA REAL com gente cabe abaixo de 82 mil (${depois})`, depois <= 82000);
   }
   t("a gente deixou de crescer com a campanha: 180 pessoas custam o mesmo teto que 50", maior <= vazio + orcamento);
+  /* a prova que não depende da simulação: o orçamento das pessoas CHEIO */
+  t(`e mesmo com o orçamento das pessoas cheio, a pior cena cabe em 82 mil (${vazio + orcamento})`, vazio + orcamento <= 82000);
+  /* MM8c-0: o que só vale fora da luta desceu para a porta `foraDaLuta` —
+     logo a cena de paz mais cheia que existe (cidade, mercado, bancada,
+     prédio, missão, trama, gente, grupo, vilão, cobrança, e a ficha
+     inteira) também tem de caber, com a campanha solta */
+  const pazCheia = {
+    emCidade: true, temMercado: true, temBancada: true, dentroDeUmLocal: true, temMissao: true, temTrama: true,
+    temGente: true, temGrupo: true, temVilao: true, temCobranca: true, temChao: true, conjura: true, temSintonia: true,
+    temRegraPropria: true, temGatilho: true, temDadiva: true, temEspecializacao: true, despertou: true, invoca: true, temLegado: true,
+  };
+  const solto = registoSimulado("solto");
+  const paz = montarSystemPrompt("C", mundo, pers20, solto.canone, banco, "", "", "", resumoNPCsParaPrompt(solto.npcs), "", "", "Mortal", pazCheia, { npcs: solto.npcs }).length;
+  console.log(`      a cena de paz mais cheia, com a campanha solta: ${paz}`);
+  t("a cena de paz mais cheia, com a campanha solta, também cabe em 82 mil", paz <= 82000);
 }
 
 console.log(`\nprompt v9.50: ${ok} passaram, ${mal} falharam`);

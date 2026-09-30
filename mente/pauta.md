@@ -354,7 +354,16 @@ O limite é o que um commit revertido não desfaz.
   desceram as moedas; o herói "nos arredores de Casa escura" dentro de uma taverna de dentro dos
   muros; "De volta a Monte do Norte — X fica para trás" sem ter saído; o Guerreiro começa sem arma
   equipada nem comida; a 310 px o "Continuar →" do dado fica fora do ecrã.
-- [ ] **MM8c-0 · a parte fixa do prompt emagrece ~6k** · decisão do coordenador, 29/09 · **antes da MM8b**
+- [x] **MM8c-0 · a parte fixa do prompt emagrece ~6k** · feito 30/09, v9.325 · a pior cena solta 87 563 → 81 181
+  **O que ficou:** (1) o cânone de **lugares e itens** continua sem teto — com 819 de folga, qualquer
+  teto faria o Narrador esquecer artefactos e lugares antigos ("verdade imutável"): é decisão, não
+  emagrecimento; (2) **as descrições que o Cronista regista nunca chegam ao Narrador** (`formatarCanone`
+  só imprime tipo, papel, local, status, notas) — um artefacto sobe como "Nome — artefato, em X": é
+  "sabe e não conta"; (3) **o Cronista recebe o cânone inteiro e todos os nomes** (App ~10302) — a
+  fiação com teto está proposta; (4) duas contradições antigas do prompt: "semeie chefes ocultos"
+  contra "não invente outros chefes", e "envie o PV de cada inimigo" contra "o PV que mandar é
+  ignorado". **Folgas curtas:** 819 caracteres nos 82k; o guarda do cache a 0,9093 (sobram ~480 de
+  regra fixa para descer a portas).
   Encolher o fixo, nunca subir o teto (subir é custo em todos os turnos de todos os jogadores).
   Sem perder regra: o que se repete entre blocos, o que a pauta dinâmica já diz, o que entra sem
   a cena pedir. A suíte do pior caso passa a incluir as pessoas, com a meta de caber nos 82k com a

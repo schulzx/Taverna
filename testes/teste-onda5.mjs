@@ -44,15 +44,26 @@ sec("1. o prompt encolhe conforme a cena");
   /* v9.116: o PORTE entra no par que se exclui. A porta dele é
      `temGente && !emCombate` — como as pessoas tratam o herói não decide
      nada dentro de uma luta, onde quem responde é o dado. */
-  const SE_EXCLUEM = ["descanso", "porte"];
+  /* MM8c-0 (30/09): e a porta FORA DA LUTA entra no par, pela mesma régua
+     do descanso — governar o reino, a diplomacia entre potências e o mundo
+     que age por conta própria desceram do bloco fixo para ela, porque
+     dentro de uma luta aberta não acontecem (e lá quem move o mundo é o
+     sistema). A asserção de baixo continua a medir os MESMOS 1500 de
+     antes: o bloco desta porta é descontado pelo seu próprio texto, e não
+     por um limite maior. */
+  const SE_EXCLUEM = ["descanso", "porte", "foraDaLuta"];
   const abertas = portasAbertas(Object.fromEntries(["emCombate", "emMasmorra", "temChao", "emCidade", "temMercado", "temBancada", "temMissao", "conjura", "temGrupo", "temLegado", "temSintonia", "temEspecializacao", "despertou", "invoca", "temGatilho", "temDadiva", "temRegraPropria", "emViagem", "dentroDeUmLocal", "acampado", "emMasmorra", "temGente", "temVilao", "temCobranca", "emRaid", "temTrama", "emSala"].map((k) => [k, true])));
   const fechadas = Object.entries(abertas).filter(([, v]) => !v).map(([k]) => k);
   t("o contexto do teste abre todas as portas que não se excluem (senão a lista acima envelheceu)",
     fechadas.every((id) => SE_EXCLUEM.includes(id)));
   t("e as que se excluem se excluem de fato", SE_EXCLUEM.every((id) => fechadas.includes(id)));
   t("fora da luta, a porta do descanso abre", portasAbertas({ emCidade: true }).descanso === true);
+  const iFora = cheio.indexOf("TURNO DO MUNDO (o mundo AGE");
+  const fimFora = cheio.indexOf("\n", cheio.indexOf("- DIPLOMACIA:", iFora));
+  const blocoForaDaLuta = iFora >= 0 && fimFora > iFora ? fimFora - iFora + 1 : 0;
+  t("o bloco da porta fora-da-luta existe no prompt cheio e some na luta", blocoForaDaLuta > 0 && !tudo.includes("TURNO DO MUNDO (o mundo AGE"));
   t("com tudo ligado, o prompt fica perto do cheio, menos o que se exclui",
-    cheio.length - tudo.length > 0 && cheio.length - tudo.length < 1500);
+    cheio.length - tudo.length > 0 && cheio.length - tudo.length - blocoForaDaLuta < 1500);
 }
 
 sec("2. o que sai e o que NUNCA sai");

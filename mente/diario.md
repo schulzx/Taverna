@@ -15,6 +15,42 @@ Formato:
 ```
 
 ---
+## 30/09 03:20 · v9.325 · MM8c-0 · a parte fixa do prompt emagrece, e a lei do teto volta a valer · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a MM8c-1 mediu que o teto de 82k **nunca contou as pessoas**, e que qualquer
+  campanha com gente já passava dele na pior cena (85–93 mil). O coordenador da fase decidiu:
+  **encolher o fixo, nunca subir o teto** — subir é mais caracteres em todos os turnos de todos
+  os jogadores, custo em dinheiro, e isso é da pessoa. Encolher cumpre a lei em vez de a mudar.
+- **estado inicial:** verde (`496037a`, `456e09c`). A mesma mão do estudo do MM8, retomada.
+- **o pior caso (a pior cena de luta), antes → depois:** sem gente 81 945 → 75 563; campanha
+  contida 85 754 → 79 372; média 86 852 → 80 470; **solta (187 pessoas) 87 563 → 81 181**; com o
+  orçamento de pessoas cheio 81 363; a paz mais cheia 84 346 → 80 532. **E a cena comum, a de
+  quase todos os turnos, desce de 59 154 para 55 361 — menos 3,8k em cada turno de cada jogador.**
+- **de onde saiu, tudo de `prompt.js`, sem tocar em nenhum bloco de módulo:** regras ditas duas
+  vezes (o "perigo" e o "não antecipe o desfecho", que as condições já dizem frase a frase;
+  "nunca conceda habilidades"; o mundo que pára no acampamento; o espólio; o loot); regra que só
+  vale numa cena desceu às portas que só entram quando a cena as pede (o "onde estou é fato" da
+  viagem; uma porta nova `foraDaLuta` para o turno do mundo, a agenda, a gestão e a diplomacia —
+  dentro de uma luta aberta nada disso acontece); o bloco fixo do descanso foi, compacto, para a
+  porta do descanso (e a frase "aplique os ganhos", que contradizia a regra do descanso, saiu);
+  uma regra morta (o `[RESUMO DE SESSÃO]`, que nenhum código envia desde que o resumo é do
+  sistema); e prosa mais curta para a mesma regra.
+- **o corte que merece olhos:** a "iniciativa própria" dos companheiros ("companheiro calado é
+  mobília: proibido") saiu, porque contradizia a regra do aliado desde a v9.108 ("um por turno, os
+  outros calados — deliberado"). O comportamento que pedia já era o que o sistema proíbe.
+- **a prova:** a catraca do prompt passa a ser a lei inteira — a pior cena **com gente** ≤ 82 000
+  nos três mundos, o orçamento cheio, e a paz mais cheia. Nenhuma asserção lia uma regra cortada.
+  **A sonda não desceu (89/157): nenhum fato saiu.**
+- **o que não se fez, com o motivo — na pauta:** o teto dos lugares e itens do cânone (com 819 de
+  folga, faria o Narrador esquecer o que é "verdade imutável": decisão, não emagrecimento); **as
+  descrições que o Cronista regista nunca chegam ao Narrador** — um artefacto sobe só como "Nome —
+  artefato, em X" (um "sabe e não conta" novo); o Cronista a receber o cânone inteiro; e duas
+  contradições antigas do prompt.
+- **folgas curtas, para a próxima mão:** 819 caracteres nos 82k; o guarda do cache a 0,9093 —
+  sobram ~480 de regra fixa que ainda se podem descer para portas.
+- **para quem joga:** nada que se veja — o Mestre recebe as mesmas regras em menos 6 mil
+  caracteres na pior cena e menos 3,8 mil em cada turno comum.
+
 ## 30/09 02:55 · v9.324 · os defeitos do primeiro dia: a taverna que dava um baú, as moedas que não saíam, o d20 à vista · commit `496037a`
 
 - **por que andou:** três dos defeitos que o `jogo` viu de passagem na prova de MM13, promovidos
