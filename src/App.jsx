@@ -6888,7 +6888,7 @@ export default function Taverna() {
         const gp = genteParaPauta({
           semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
           genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
-          base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui,
+          base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui, espinha: espinhaRef.current, guildas: guildasRef.current,
           grupo: (personagemRef.current || personagem || {}).grupo || [],
           heroi: (personagemRef.current || personagem || {}).nome || "",
           recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,

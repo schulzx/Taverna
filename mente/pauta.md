@@ -252,7 +252,7 @@ O limite é o que um commit revertido não desfaz.
     criaturas e cidades deste mundo, o motivo do posto, a rotina (onde está a esta hora),
     quem trabalha em cada casa. Só vai à pauta quando a frase pergunta (secção `pergunta`).
     Sonda: #18, #26, #29, #42, #54, #90, #103, #105, #106 → **81 → 90**.
-  - [ ] **MM8b · o elenco nasce, com laços e casas** · sem campo de save
+  - [x] **MM8b · o elenco nasce, com laços e casas** · feito 30/09, v9.326 · sonda 89 → 92 · sem campo de save
     `elencoDoMundo`: 24 por tabela (a espinha, os chefes humanoides, os mestres de guilda, os
     do arco e recorrentes da base), laços entre eles, casas notáveis por cidade (famílias),
     reputação da casa e de cada um, estreia por semente. Sonda: #60, #61, #62 → ~93.

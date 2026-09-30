@@ -15,7 +15,40 @@ Formato:
 ```
 
 ---
-## 30/09 03:20 · v9.325 · MM8c-0 · a parte fixa do prompt emagrece, e a lei do teto volta a valer · commit (o hash vai no próximo bloco)
+## 30/09 03:45 · v9.326 · MM8b · o elenco de 24, com laços e casas · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a segunda subetapa do elenco (a proposta da pessoa), depois de a MM8c-0 ter
+  devolvido espaço ao prompt.
+- **estado inicial:** verde (`3d0fc5b`). A mesma mão do estudo do MM8.
+- **bastão:** tomado por mim para uma linha em `pautaDoTurno` (deslocamento zero); devolvido com
+  este commit.
+- **backend:** `src/elenco.js` — **24 pessoas, sempre, pela semente**, escolhidas de quem o mundo
+  já tem, por esta ordem: a gente dos marcos da espinha (até 8), os chefes com cara de gente (até
+  3), os mestres de guilda (até 4), e da base os "do arco" e os que voltam, cidade a cidade, para o
+  elenco se espalhar. Só contam as 12 cidades geradas com o mundo — uma cidade que o Narrador
+  acrescente não troca ninguém. Quem morre fica no lugar, marcado. **Estreia por semente**: há
+  sempre gente no dia 1, nunca toda; os chefes a partir do dia 15. **Laços** com os tipos que o
+  registo já conhece, um ou dois por pessoa, a maioria na mesma cidade, dos dois lados quando é
+  de dois. **Casas notáveis** (uma por cidade, duas nas capitais, nenhuma nas aldeias), de 2 a 4
+  pessoas, com o sobrenome de quem as encabeça ("Casa Punho-de-Pedra"); o papel na família sai da
+  **idade que o retrato mostra** (a cabeça é quem aparenta mais anos; filho quem aparenta 16 a
+  menos). A reputação da casa (amada, respeitada, decadente, suspeita, nova) e a de cada um.
+- **o que o jogador ouve (pela PERGUNTOU, só quando pergunta):** "Casa Olho-de-Corvo (3 na
+  família): a cidade gosta dela: é a porta a que se bate quando falta pão; popular? muito" e
+  "bem-vistos: Quorin (cabeça), Petra (irmã); mal-vista: Sable (irmã)". A maior linha (138) cabe
+  na taverna cheia (1364/1400). Nada fixo.
+- **as duas conversas obrigatórias:** **o Códex fica igual** (58 → 58, 96 → 96, 187 → 187 nos três
+  mundos simulados; o elenco não escreve em lado nenhum); **o convite dá exatamente o mesmo** —
+  ninguém do elenco nasce com data de encontro (testado nos 480 do elenco dos 20 mundos).
+- **a sonda:** **89 → 92/157 chega** (#60 o que dizem da casa, #61 quem é bem e mal visto, #62 se a
+  família é popular). Ressalva escrita no caso: numa capital, fora das sedes e sem nome, "nesta
+  casa" não sobe nada — uma linha a menos, nunca uma errada.
+- **o que não foi jogado:** esta subetapa não teve prova no jogo; o canal é o da MM8a, provado
+  byte a byte pelo payload real. Fica para a sessão de prova (MM11).
+- **para quem joga:** as cidades passam a ter famílias com nome e fama, e perguntar por elas tem
+  resposta — a mesma amanhã.
+
+## 30/09 03:20 · v9.325 · MM8c-0 · a parte fixa do prompt emagrece, e a lei do teto volta a valer · commit `3d0fc5b`
 
 - **por que andou:** a MM8c-1 mediu que o teto de 82k **nunca contou as pessoas**, e que qualquer
   campanha com gente já passava dele na pior cena (85–93 mil). O coordenador da fase decidiu:

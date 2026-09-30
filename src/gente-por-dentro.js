@@ -68,6 +68,8 @@ import { oQueExisteAqui, locaisDaCidade, genteDoLocal, chefesDoMundo, criaturasD
 import { nomePessoa } from "./nomes.js";
 import { O_HOJE } from "./cidade-por-dentro.js";
 import { comEm } from "./lugar.js";
+/* MM8b: o elenco, as casas e o que a cidade diz de cada um */
+import { elencoDoMundo, reputacaoDe, REPUTACAO_DA_CASA } from "./elenco.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -254,11 +256,18 @@ export const PERGUNTAS_DA_GENTE = [
   { id: "adversario", rx: /\b(adversari|enfrentou|lutou contra|inimigo mais|rival mais|mais famos)/ },
   { id: "ferida", rx: /\b(se feriu|se machucou|ferid[oa]|machucad[oa]|cicatriz|como (ele|ela) perdeu)/ },
   { id: "passado", rx: /\b(quanto tempo|ha quanto|faz quanto|quando (isso|foi|aconteceu)|aconteceu com|historia d|passado|de onde (ele|ela|voce) (veio|e))/ },
+  /* MM8b: a CASA como família — o que a cidade diz dela e se é popular —,
+     e cada um dela: quem é bem-visto e quem não */
+  { id: "familia", rx: /\b(o que (dizem|falam)|nesta casa|desta casa|dessa casa|essa casa|esta casa|familia|parentes|popular|reputacao|fama da casa|casa nobre)/ },
+  { id: "cadaUm", rx: /\b(bem[- ]vist[oa]s?|mal[- ]vist[oa]s?|um deles|uma delas|os outros nem|mais querid[oa]|mais odiad[oa])/ },
 ];
 export const RESPOSTAS_DA_GENTE = 1;
 /* quantas pessoas cabem numa resposta que fala de várias (a casa, a
    comparação de idades) */
 export const PESSOAS_POR_RESPOSTA = 4;
+/* MM8b: na família, quem aparenta tantos anos a mais do que outro é pai
+   ou mãe dele; menos do que isso, irmão. A idade é a do retrato. */
+export const IDADE_DE_PAI = 16;
 
 /* "ele", "ela", "o seu amigo", "aquele" — alguém de quem já se falava */
 const PRONOME = /\b(ele|ela|dele|dela|nele|nela|seu amigo|sua amiga|o amigo|a amiga|aquele|aquela|esse homem|essa mulher)\b/;
@@ -637,6 +646,81 @@ function casaDaFrase(frase, locais, o) {
    presentes, grupo, heroi, recentes, lugar, dia, minuto, frase }.
    Devolve { pergunta: [] } — no máximo RESPOSTAS_DA_GENTE linhas, e
    nenhuma se a frase não pergunta por ninguém. */
+/* ============================================================
+   A FAMÍLIA (MM8b) — a casa notável e cada um dela
+   ============================================================ */
+
+/* a casa de que se fala: nomeada (o nome ou o sobrenome), a de alguém
+   nomeado, a de quem a frase aponta, a que tem sede onde estou, ou a
+   única da cidade */
+function familiaDaFrase(frase, el, gente, o, pessoa) {
+  /* as da cidade onde estou primeiro: o mundo repete nomes, e a Sable de
+     que se fala aqui é a daqui */
+  const todas = (el && el.casas) || [];
+  if (!todas.length) return null;
+  const casas = [...todas.filter((k) => norm(k.cidade) === norm(o.cidade)), ...todas.filter((k) => norm(k.cidade) !== norm(o.cidade))];
+  const nomeada = casas.find((k) => citaNome(frase, k.nome) >= 0 || citaNome(frase, k.nome.replace(/^Casa\s+(d[oa]s?\s+)?/i, "")) >= 0);
+  if (nomeada) return nomeada;
+  for (const k of casas) if (k.membros.some((m) => citaNome(frase, m) >= 0)) return k;
+  if (PRONOME.test(frase) || A_QUEM_FALO.test(frase) || /\b(deles|delas|dessa|desta|essa|esta)\b/.test(frase)) {
+    const p = pessoa();
+    const k = p && casas.find((x) => x.membros.some((m) => norm(m) === norm(p.nome)));
+    if (k) return k;
+  }
+  const daqui = casas.filter((k) => norm(k.cidade) === norm(o.cidade));
+  const lugar = obj(o.lugar);
+  const onde = norm(semArtigo(lugar.dentroDe || lugar.nome));
+  const naSede = onde && daqui.find((k) => norm(semArtigo(k.sede)) === onde);
+  if (naSede) return naSede;
+  return daqui.length === 1 ? daqui[0] : null;
+}
+
+const REPUTACAO_DA_CASA_POR_ID = Object.fromEntries(REPUTACAO_DA_CASA.map((r) => [r.id, r]));
+
+/* #60 e #62: o que dizem da casa, e se ela é popular no resto da cidade */
+function linhaDaFamilia(k, cidadeAtual = "") {
+  const r = REPUTACAO_DA_CASA_POR_ID[k.reputacao] || REPUTACAO_DA_CASA[0];
+  /* a cidade só se diz quando a casa não é daqui: o ONDE já a disse */
+  const onde = norm(k.cidade) === norm(cidadeAtual) ? "" : `${k.cidade}, `;
+  return `${k.nome} (${onde}${k.membros.length} na família): ${r.o}; popular? ${r.popular}`;
+}
+
+/* #61: cada um da casa — o papel na família (pela idade que o retrato
+   mostra: quem tem 16 anos a mais é pai ou mãe, os outros são irmãos) e o
+   que a cidade diz dele. Só o primeiro nome, quando não se repete na casa. */
+function linhaDeCadaUm(k, s, ctxF, gente) {
+  const dados = (nome) => gente.find((p) => norm(p.nome) === norm(nome)) || { nome };
+  const fs = k.membros.slice(0, PESSOAS_POR_RESPOSTA).map((m) => ({ p: dados(m), f: fichaDaPessoa(s, dados(m), ctxF) }));
+  if (!fs.length) return "";
+  const velho = [...fs].sort((a, b) => b.f.aparencia.idade.anos - a.f.aparencia.idade.anos)[0];
+  const primeiros = fs.map((x) => x.f.nome.split(/\s+/)[0]);
+  const curto = (x, i) => (primeiros.filter((n) => n === primeiros[i]).length > 1 ? x.f.nome : primeiros[i]);
+  const cada = fs.map((x, i) => {
+    const g = norm(x.p.genero || x.p.genero_pessoa);
+    const papel = x === velho ? "cabeça"
+      : velho.f.aparencia.idade.anos - x.f.aparencia.idade.anos >= IDADE_DE_PAI ? (g === "mulher" ? "filha" : g === "homem" ? "filho" : "filho(a)")
+        : (g === "mulher" ? "irmã" : g === "homem" ? "irmão" : "irmão(ã)");
+    return { x, g, rep: reputacaoDe(s, x.p).id, txt: `${curto(x, i)} (${papel}${x.f.morta ? ", já morto(a)" : ""})` };
+  });
+  /* a cabeça primeiro, e agrupados pelo que a cidade diz: três grupos
+     cabem numa taverna cheia, quatro sentenças não (teste-mm8b §7) */
+  cada.sort((a, b) => (a.x === velho ? -1 : 0) - (b.x === velho ? -1 : 0));
+  const grupo = (id) => cada.filter((c) => c.rep === id);
+  const adj = (lista, raiz) => (lista.length > 1 ? `${raiz}os` : lista[0].g === "mulher" ? `${raiz}a` : `${raiz}o`);
+  const partes = [];
+  const bem = grupo("bem"), mal = grupo("mal"), nada = grupo("nada");
+  if (bem.length) partes.push(`${adj(bem, "bem-vist")}: ${bem.map((c) => c.txt).join(", ")}`);
+  if (mal.length) partes.push(`${adj(mal, "mal-vist")}: ${mal.map((c) => c.txt).join(", ")}`);
+  if (nada.length) partes.push(`ninguém repara em ${nada.map((c) => c.txt).join(", ")}`);
+  return `${k.nome}: ${partes.join("; ")}`;
+}
+
+/* uma pessoa só, sem casa: o que a cidade diz dela, e porquê */
+function linhaDaReputacao(s, p) {
+  const r = reputacaoDe(s, p);
+  return `${p.nome}: ${r.o} na cidade${r.porque ? ` — ${r.porque}` : ""}`;
+}
+
 export function genteParaPauta(ctx) {
   const o = obj(ctx);
   const out = { pergunta: [] };
@@ -661,13 +745,39 @@ export function genteParaPauta(ctx) {
     try { locais = locaisDaCidade(s, q.cidade, o.genero || "Fantasia medieval", o.molde, o.lex); } catch { locais = []; }
   }
   const gente = juntarGente(o, q);
+  /* o elenco só se calcula quando a frase pergunta por alguém */
+  let el = null;
+  const elenco = () => {
+    if (el) return el;
+    try { el = elencoDoMundo(s, o.mapa, { genero: o.genero, molde: o.molde, lex: o.lex, espinha: o.espinha, guildas: o.guildas, base: o.base }); } catch { el = { pessoas: [], lacos: [], casas: [] }; }
+    return el;
+  };
+  /* MM8b: o elenco é o último a ser procurado, e SÓ PELO NOME — o mestre de
+     guilda e o chefe não estão na gente da cidade nem no registo, mas o
+     jogador que diz o nome deles pergunta por eles. Nunca por pronome nem
+     por eliminação: quem está longe não é "ele" de uma frase dita aqui. */
   let alvo = null, resolvido = false;
-  const pessoa = () => { if (!resolvido) { alvo = quemDaFrase(frase, gente, o); resolvido = true; } return alvo; };
+  const pessoa = () => {
+    if (resolvido) return alvo;
+    resolvido = true;
+    alvo = quemDaFrase(frase, gente, o);
+    if (!alvo) {
+      const vistos = new Set(gente.map((p) => norm(p.nome)));
+      const doElenco = elenco().pessoas.filter((p) => !vistos.has(norm(p.nome)) && citaNome(frase, p.nome) >= 0);
+      alvo = doElenco.sort((a, b) => String(b.nome).length - String(a.nome).length)[0] || null;
+    }
+    return alvo;
+  };
   const ficha = (p) => fichaDaPessoa(s, p, ctxF);
 
   for (const a of achados) {
     let linha = "";
-    if (a.id === "casa") {
+    if (a.id === "familia" || a.id === "cadaUm") {
+      const k = familiaDaFrase(frase, elenco(), gente, o, pessoa);
+      if (k && a.id === "familia") linha = linhaDaFamilia(k, o.cidade);
+      else if (k) linha = linhaDeCadaUm(k, s, ctxF, gente);
+      else if (a.id === "cadaUm") { const p = pessoa(); if (p) linha = linhaDaReputacao(s, p); }
+    } else if (a.id === "casa") {
       const l = casaDaFrase(frase, locais, o);
       if (l) linha = linhaDaCasa(s, l, ctxF);
     } else if (a.id === "rotina" && AUSENCIA.test(frase) && !gente.some((p) => citaNome(frase, p.nome) >= 0)) {

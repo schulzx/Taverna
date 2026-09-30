@@ -460,7 +460,12 @@ sec("6. o número e a catraca");
      comparação de idades, #105 o jeito e desde quando, #106 a compleição pelo
      maxilar do retrato. O #29 fica ninguém-decide: pergunta por uma ferida DE
      AGORA, mostrada na cena — o sistema só decide a cicatriz do retrato. */
-  const PISO_CHEGA = 89;
+  /* MM8b (o elenco, 30/09): PISO 89 → 92. O elenco de 24 (elenco.js) dá às
+     cidades as suas casas notáveis e a reputação da casa e de cada um;
+     `genteParaPauta` — já ligada em `pautaDoTurno` desde a MM8a — responde
+     pela secção PERGUNTOU: #60 o que dizem da casa, #61 quem é bem e mal
+     visto, #62 se a família é popular. */
+  const PISO_CHEGA = 92;
   const TETO_SABE_E_NAO_CONTA = 0;
   t(`o piso do chega não desceu (hoje: ${X}, piso: ${PISO_CHEGA})`, X >= PISO_CHEGA);
   t(`o teto do sabe-e-nao-conta não subiu (hoje: ${Y}, teto: ${TETO_SABE_E_NAO_CONTA})`, Y <= TETO_SABE_E_NAO_CONTA);
