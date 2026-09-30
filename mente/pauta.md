@@ -403,7 +403,7 @@ O limite é o que um commit revertido não desfaz.
      revide ainda age nessa rodada. E a sala abandonada a meio de uma luta volta com todos, mesmo os mortos.*
   6. ✓ *feito em v9.336 (as 12 da sessão: 5 → 13 de 13 pelo caminho novo); fica: uma pergunta fechada que a
      ficha sabe responder ainda pode ir ao oráculo (d100) antes da pauta — visto a jogar com uma taverneira
-     ainda não registada; é no sinal `ehPerguntaAoMundo`* · **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
+     ainda não registada; é no sinal `ehPerguntaAoMundo` — ✓ feito em v9.340: a ficha é perguntada antes do d100* · **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
      vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
   7. ✓ *feito em v9.336 (perguntar é de graça — decisão do coordenador)* · **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
   8. ✓ *feito em v9.339 (fica: o registo de pessoas não recusa o nome do próprio herói — ~9853, ~9866; a trama já está protegida)* · **Missões forçadas em série** *(✓ os dois canais que fechavam por título saíram em v9.337, depois de os fios e os contratos

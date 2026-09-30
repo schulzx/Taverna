@@ -350,30 +350,44 @@ sec("7. a fiação — pautaDoTurno chama fichaParaPauta de verdade");
      para extrair o corpo de `pautaDoTurno` — por chave balanceada, nunca por
      número de linha, porque o arquivo muda sob os pés desta suíte. `\r\n` é
      normalizado para `\n` antes de qualquer teste, porque o Windows grava o
-     arquivo com final de linha diferente do que os regex abaixo assumem. */
+     arquivo com final de linha diferente do que os regex abaixo assumem.
+
+     MM14 (o resto do nº 6): o cálculo das três fichas (cidade, gente,
+     mercado) mudou-se de `pautaDoTurno` para `fichasDaMesa`, chamada de
+     dentro de `pautaDoTurno` — extraído para que o sinal do oráculo também
+     pudesse perguntar às fichas antes de rolar o d100. `fichaParaPauta`, o
+     `try/calou` que a guarda e o `if` de jornada/masmorra/combate que a
+     circunda deixaram de estar no corpo de `pautaDoTurno`; passaram para o
+     de `fichasDaMesa`. As asserções movem-se com o motivo — sem afrouxar
+     nenhuma: o que provavam continua verdade, só que num corpo vizinho. O
+     que fica em `pautaDoTurno` é o `porNaPauta` de "cidade" (só quando a
+     ficha veio) e o de "pergunta" (sempre, com a mesa inteira). */
   const appPath = new URL("../src/App.jsx", import.meta.url);
   const app = fs.readFileSync(appPath, "utf8").replace(/\r\n/g, "\n");
-  const anchor = "const pautaDoTurno = (";
-  const i = app.indexOf(anchor);
-  t("a âncora de pautaDoTurno existe no App.jsx de hoje", i >= 0);
-  let corpo = "";
-  if (i >= 0) {
+  const corpoDe = (anchor) => {
+    const i = app.indexOf(anchor);
+    if (i < 0) return { i, corpo: "" };
     const j = app.indexOf("{", app.indexOf("=>", i));
     let depth = 0, k = j;
     for (; k < app.length; k++) {
       if (app[k] === "{") depth++;
       else if (app[k] === "}") { depth--; if (depth === 0) break; }
     }
-    corpo = app.slice(i, k + 1);
-  }
-  t("o corpo de pautaDoTurno não está vazio", corpo.length > 2000);
+    return { i, corpo: app.slice(i, k + 1) };
+  };
+  const { i, corpo } = corpoDe("const pautaDoTurno = (");
+  t("a âncora de pautaDoTurno existe no App.jsx de hoje", i >= 0);
+  const { i: iF, corpo: corpoFichas } = corpoDe("const fichasDaMesa = (");
+  t("a âncora de fichasDaMesa existe no App.jsx de hoje", iF >= 0);
+  t("o corpo de pautaDoTurno não está vazio", corpo.length > 500);
   t("pautaDoTurno importa fichaParaPauta de cidade-por-dentro.js", /import\s*\{[^}]*\bfichaParaPauta\b[^}]*\}\s*from\s*"\.\/cidade-por-dentro\.js"/.test(app));
-  t("pautaDoTurno CHAMA fichaParaPauta", /\bfichaParaPauta\s*\(/.test(corpo));
-  t("e põe o resultado na secção \"cidade\"", /porNaPauta\(p,\s*"cidade"/.test(corpo));
+  t("pautaDoTurno CHAMA fichasDaMesa", /\bfichasDaMesa\s*\(\s*acaoDoTurno,\s*aqui\s*\)/.test(corpo));
+  t("e fichasDaMesa CHAMA fichaParaPauta", /\bfichaParaPauta\s*\(/.test(corpoFichas));
+  t("e pautaDoTurno põe o resultado na secção \"cidade\"", /porNaPauta\(p,\s*"cidade"/.test(corpo));
   t("e na secção \"pergunta\"", /porNaPauta\(p,\s*"pergunta"/.test(corpo));
-  t("a chamada está guardada por calou (um órgão que estoura não derruba o turno)", /try\s*\{[^]*?fichaParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("fichaParaPauta"/.test(corpo));
+  t("a chamada está guardada por calou (um órgão que estoura não derruba o turno) — agora dentro de fichasDaMesa", /try\s*\{[^]*?fichaParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("fichaParaPauta"/.test(corpoFichas));
   t("e fora de jornada, masmorra e combate — ali não há rua para se perguntar nada dela",
-    /if\s*\(cidadeAtualRef\.current\s*&&\s*!jornadaRef\.current\s*&&\s*!masmorraRef\.current\s*&&\s*!combateRef\.current\)/.test(corpo));
+    /if\s*\(cidadeAtualRef\.current\s*&&\s*!jornadaRef\.current\s*&&\s*!masmorraRef\.current\s*&&\s*!combateRef\.current\)/.test(corpoFichas));
 }
 
 console.log(`\nMM12 · a cidade por dentro: ${ok} passaram, ${mal} falharam`);

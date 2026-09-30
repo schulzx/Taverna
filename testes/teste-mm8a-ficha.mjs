@@ -342,35 +342,48 @@ sec("10. a fiação — pautaDoTurno chama genteParaPauta de verdade");
      é de módulo puro. A mesma âncora e o mesmo corte por chave balanceada
      que teste-mm12-cidade.mjs usa para extrair o corpo de `pautaDoTurno` —
      nunca por número de linha, porque o arquivo muda sob os pés desta
-     suíte. `\r\n` é normalizado para `\n` antes de qualquer teste. */
+     suíte. `\r\n` é normalizado para `\n` antes de qualquer teste.
+
+     MM14 (o resto do nº 6): o cálculo das três fichas (cidade, gente,
+     mercado) mudou-se de `pautaDoTurno` para `fichasDaMesa` — extraído
+     para que o sinal do oráculo também pudesse perguntar antes de rolar o
+     d100. `genteParaPauta` deixou de ser chamada DENTRO do corpo de
+     `pautaDoTurno`; passou a ser chamada dentro de `fichasDaMesa`, que
+     `pautaDoTurno` invoca. As asserções movem-se com o motivo: onde antes
+     liam o corpo de `pautaDoTurno`, agora leem o de `fichasDaMesa` — sem
+     afrouxar nenhuma, e com uma nova provando a ligação entre as duas. */
   const appPath = new URL("../src/App.jsx", import.meta.url);
   const app = fs.readFileSync(appPath, "utf8").replace(/\r\n/g, "\n");
-  const anchor = "const pautaDoTurno = (";
-  const i = app.indexOf(anchor);
-  t("a âncora de pautaDoTurno existe no App.jsx de hoje", i >= 0);
-  let corpo = "";
-  if (i >= 0) {
+  const corpoDe = (anchor) => {
+    const i = app.indexOf(anchor);
+    if (i < 0) return { i, corpo: "" };
     const j = app.indexOf("{", app.indexOf("=>", i));
     let depth = 0, k = j;
     for (; k < app.length; k++) {
       if (app[k] === "{") depth++;
       else if (app[k] === "}") { depth--; if (depth === 0) break; }
     }
-    corpo = app.slice(i, k + 1);
-  }
+    return { i, corpo: app.slice(i, k + 1) };
+  };
+  const { i, corpo } = corpoDe("const pautaDoTurno = (");
+  t("a âncora de pautaDoTurno existe no App.jsx de hoje", i >= 0);
+  const { i: iF, corpo: corpoFichas } = corpoDe("const fichasDaMesa = (");
+  t("a âncora de fichasDaMesa existe no App.jsx de hoje", iF >= 0);
   t("o corpo de pautaDoTurno não está vazio", corpo.length > 2000);
   t("pautaDoTurno importa genteParaPauta de gente-por-dentro.js", /import\s*\{[^}]*\bgenteParaPauta\b[^}]*\}\s*from\s*"\.\/gente-por-dentro\.js"/.test(app));
-  t("pautaDoTurno CHAMA genteParaPauta", /\bgenteParaPauta\s*\(/.test(corpo));
+  t("pautaDoTurno CHAMA fichasDaMesa", /\bfichasDaMesa\s*\(\s*acaoDoTurno,\s*aqui\s*\)/.test(corpo));
+  t("e fichasDaMesa CHAMA genteParaPauta", /\bgenteParaPauta\s*\(/.test(corpoFichas));
   /* MM14: a gente deixou de subir sozinha — a cidade, a gente e o mercado
      juntam-se numa mesa só (`juntarRespostas`, perguntas.js), pela ordem em
      que a frase pediu cada coisa. A asserção move-se com o motivo: ainda
      prova que `gp` chega à secção "pergunta", só que pela mesa, não sozinho. */
   t("e o resultado sobe pela mesa (com o da cidade e o do mercado) na secção \"pergunta\"",
-    /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc\]\)\)/.test(corpo));
-  t("a chamada está guardada por calou (um órgão que estoura não derruba o turno)", /try\s*\{[^]*?genteParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("genteParaPauta"/.test(corpo));
-  const iCidade = corpo.indexOf("fichaParaPauta(");
-  const iGente = corpo.indexOf("genteParaPauta(");
-  t("a chamada vem depois da de fichaParaPauta (a cidade primeiro, a gente depois)", iCidade >= 0 && iGente > iCidade);
+    /const\s*\{\s*cidade:\s*fc,\s*gente:\s*gp,\s*mercado:\s*mc\s*\}\s*=\s*fichasDaMesa/.test(corpo)
+    && /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc\]\)\)/.test(corpo));
+  t("a chamada está guardada por calou (um órgão que estoura não derruba o turno) — agora dentro de fichasDaMesa", /try\s*\{[^]*?genteParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("genteParaPauta"/.test(corpoFichas));
+  const iCidade = corpoFichas.indexOf("fichaParaPauta(");
+  const iGente = corpoFichas.indexOf("genteParaPauta(");
+  t("a chamada vem depois da de fichaParaPauta (a cidade primeiro, a gente depois), dentro de fichasDaMesa", iCidade >= 0 && iGente > iCidade);
 }
 
 console.log(`\nMM8a · a gente por dentro: ${ok} passaram, ${mal} falharam`);

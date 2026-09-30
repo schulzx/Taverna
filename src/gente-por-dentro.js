@@ -623,14 +623,18 @@ function doGeneroDoPronome(frase, gente) {
   if (ela === ele) return gente;
   return gente.filter((p) => { const g = generoDe(p); return !g || g === (ela ? "mulher" : "homem"); });
 }
-function quemDaFrase(frase, gente, o) {
+/* pelo nome: quem a frase nomeia, o mais perto da cena primeiro */
+function peloNome(frase, gente) {
   let melhor = null;
   for (const p of gente) {
     const i = citaNome(frase, p.nome);
     if (i < 0) continue;
     if (!melhor || p._tier < melhor._tier || (p._tier === melhor._tier && String(p.nome).length > String(melhor.nome).length)) melhor = p;
   }
-  if (melhor) return melhor;
+  return melhor;
+}
+/* pelo contexto: o pronome e a conversa, ou a única pessoa da cena */
+function peloContexto(frase, gente, o) {
   const aqui = doGeneroDoPronome(frase, gente.filter((p) => p._tier <= 1));
   const presentes = doGeneroDoPronome(frase, gente.filter((p) => p._tier === 0));
   if (PRONOME.test(frase) || A_QUEM_FALO.test(frase)) {
@@ -641,6 +645,81 @@ function quemDaFrase(frase, gente, o) {
      aqui custa uma linha, não uma luta (a agressão não escolhe assim) */
   const fora = presentes.filter((p) => !(Array.isArray(o.grupo) ? o.grupo : []).some((g) => g && norm(g.nome) === norm(p.nome)));
   return fora.length === 1 ? fora[0] : null;
+}
+
+/* ---------------- A PESSOA DA CASA ONDE SE ESTÁ (MM14, o resto do nº 6) ----------------
+   "Há quanto tempo a senhora tem essa taverna?", dito ao balcão, é à
+   taverneira — e ela está na base do mundo mesmo que nenhum turno a tenha
+   posto no registo. Quem pergunta assim CHAMA alguém: pelo tratamento
+   ("a senhora", "o senhor", "você") ou pelo ofício ("taverneira",
+   "músico"). A resposta procura-se entre a gente da casa onde a heroína
+   está — a da base (`genteDoLocal`) e a do registo que trabalha ali —,
+   nunca na cidade inteira:
+     · o ofício dito escolhe; o tratamento diz o sexo de quem ouve;
+     · sobrando uma pessoa, é ela; sobrando várias, é quem responde pela
+       casa (o primeiro ofício do lugar, `papeis[0]`: o taverneiro, a
+       ferreira, o mestre do porto) — é a ele que se fala ao balcão;
+     · e ninguém, se quem responde pela casa não cabe no que se disse.
+   Chamar alguém que ninguém conhece ("Maren," sem Maren nenhuma no
+   mundo) NÃO se adivinha: dar-lhe a ficha de outra pessoa era pôr na boca
+   do Narrador um nome que o jogador não disse. */
+export const TRATAMENTOS = [
+  { id: "senhora", rx: /\b(a senhora|senhora|minha senhora|moca|menina)\b/, genero: "mulher" },
+  { id: "senhor", rx: /\b(o senhor|senhor|meu senhor|moco|rapaz)\b/, genero: "homem" },
+  { id: "voce", rx: /\b(voce|voces|tu|contigo)\b/, genero: "" },
+];
+/* palavras com maiúscula que não são nome de ninguém: o chamamento à mesa,
+   as interjeições, os tratamentos */
+const NAO_E_NOME = /^(bem|entao|olha|ok|certo|espera|calma|ei|ola|bom|sim|nao|ah|oh|pois|mestre|narrador|senhora|senhor|moca|moco|rapaz|menina|amigo|amiga|eu|ele|ela|voce|tu|mas|deus|deuses)$/;
+
+/* a raiz de um ofício: "taverneiro(a)" → "taverneir", "músico de canto" →
+   "music". Casa "taverneira" e "taverneiro" na frase. */
+function raizDoOficio(papel) {
+  const w = (norm(papel).replace(/\([^)]*\)/g, " ").match(/[a-z]+/) || [""])[0];
+  if (w.length < 4) return "";
+  return w.length >= 6 ? w.slice(0, -1) : w;
+}
+
+/* a frase chama por um nome que nenhum dos `conhecidos` tem? A maiúscula
+   que abre a oração só conta quando é chamamento (seguida de vírgula). */
+function nomeQueNinguemConhece(dita, conhecidos) {
+  const t = String(dita == null ? "" : dita);
+  const sabidos = new Set();
+  for (const n of Array.isArray(conhecidos) ? conhecidos : []) for (const w of norm(n).split(/[^a-z0-9'-]+/)) if (w.length >= 3) sabidos.add(w);
+  const rx = /[\p{L}][\p{L}'-]*/gu;
+  let m;
+  while ((m = rx.exec(t))) {
+    const w = m[0];
+    if (w.length < 3 || !/^\p{Lu}/u.test(w)) continue;
+    const antes = t.slice(0, m.index).replace(/[\s"“”«»'(\-—]+$/u, "");
+    const abre = !antes || /[.!?:;\n]$/.test(antes);
+    if (abre && !/^\s*,/.test(t.slice(m.index + w.length))) continue;
+    const n = norm(w);
+    if (NAO_E_NOME.test(n) || sabidos.has(n)) continue;
+    return true;
+  }
+  return false;
+}
+
+function quemDaCasa(frase, locais, gente, o) {
+  const lugar = obj(o.lugar);
+  const aqui = norm(semArtigo(lugar.dentroDe || lugar.nome));
+  if (!aqui) return null;
+  const local = (Array.isArray(locais) ? locais : []).find((l) => l && norm(semArtigo(l.nome)) === aqui);
+  if (!local) return null;
+  const doGrupo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => norm(g && g.nome)));
+  const daCasa = gente.filter((p) => [p.casa, p.local].some((x) => txt(x) && norm(semArtigo(x)) === aqui)
+    && !doGrupo.has(norm(p.nome)) && !estaMorto(o.base, p.nome) && !norm(p.status).includes("mort"));
+  if (!daCasa.length) return null;
+  const tratamento = TRATAMENTOS.find((x) => x.rx.test(frase));
+  const peloOficio = daCasa.filter((p) => { const r = raizDoOficio(p.papel); return r && new RegExp(`\\b${r}`).test(frase); });
+  /* ninguém foi chamado: a pergunta não é a quem está ao balcão */
+  if (!tratamento && !peloOficio.length) return null;
+  let cand = peloOficio.length ? peloOficio : daCasa;
+  if (tratamento && tratamento.genero) cand = cand.filter((p) => { const g = generoDe(p); return !g || g === tratamento.genero; });
+  if (cand.length === 1) return cand[0];
+  const cabeca = raizDoOficio((Array.isArray(local.papeis) ? local.papeis : [])[0]);
+  return (cabeca && cand.find((p) => raizDoOficio(p.papel) === cabeca)) || null;
 }
 
 /* a casa de que se fala: nomeada na frase, onde estou, ou a última citada */
@@ -832,16 +911,24 @@ export function genteParaPauta(ctx) {
      guilda e o chefe não estão na gente da cidade nem no registo, mas o
      jogador que diz o nome deles pergunta por eles. Nunca por pronome nem
      por eliminação: quem está longe não é "ele" de uma frase dita aqui. */
+  /* MM14 (o resto do nº 6): e quem a frase chama pelo nome e ninguém conhece
+     não é achado por pronome nem por eliminação — "Maren, a senhora…" não é
+     o último citado da conversa nem a única pessoa da cena. Chamado sem
+     nome, ao balcão, é a gente da casa onde se está (`quemDaCasa`). */
   let alvo = null, resolvido = false;
+  const doElencoPeloNome = () => {
+    const vistos = new Set(gente.map((p) => norm(p.nome)));
+    const doElenco = elenco().pessoas.filter((p) => !vistos.has(norm(p.nome)) && citaNome(frase, p.nome) >= 0);
+    return doElenco.sort((a, b) => String(b.nome).length - String(a.nome).length)[0] || null;
+  };
   const pessoa = () => {
     if (resolvido) return alvo;
     resolvido = true;
-    alvo = quemDaFrase(frase, gente, o);
-    if (!alvo) {
-      const vistos = new Set(gente.map((p) => norm(p.nome)));
-      const doElenco = elenco().pessoas.filter((p) => !vistos.has(norm(p.nome)) && citaNome(frase, p.nome) >= 0);
-      alvo = doElenco.sort((a, b) => String(b.nome).length - String(a.nome).length)[0] || null;
-    }
+    alvo = peloNome(frase, gente);
+    if (alvo) return alvo;
+    const desconhecido = nomeQueNinguemConhece(dita, [txt(o.cidade), ...nomesDoApp, ...gente.map((p) => p.nome), ...locais.map((l) => l.nome), ...cidades]);
+    if (desconhecido) { alvo = doElencoPeloNome(); return alvo; }
+    alvo = peloContexto(frase, gente, o) || doElencoPeloNome() || quemDaCasa(frase, locais, gente, o);
     return alvo;
   };
   const ficha = (p) => fichaDaPessoa(s, p, ctxF);

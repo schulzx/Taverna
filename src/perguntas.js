@@ -62,11 +62,17 @@ export const MARCAS_DE_PERGUNTA = /\?|\b(pergunt\w*|quero saber|queria saber|ind
 /* Um envelope do sistema ("[SOCIAL — RESOLVIDO …] Eu disse: "…"") não é a
    frase do jogador: o que o jogador disse é o que vem entre as aspas do
    "Eu disse". Sem isto, as palavras da REGRA DO ENVELOPE eram lidas como
-   se fossem a pergunta. */
+   se fossem a pergunta.
+   MM14 (o resto do nº 6): e o "Eu perguntei" do envelope do oráculo. Quando
+   o d100 decide o que ninguém decidiu ("o guarda aceita suborno?"), o que a
+   ficha JÁ sabe (quem guarda a lei aqui) continua a ir ao Narrador — sem
+   isto, o turno do oráculo chegava sem ficha nenhuma, e o "não" podia ser
+   narrado contra o mundo. Só com os dois-pontos colados: "Eu perguntei ao
+   cadáver de X:" (grimório) não é a frase do jogador sobre a cidade. */
 export function fraseDoJogador(texto) {
   const t = String(texto == null ? "" : texto);
   if (!t.trimStart().startsWith("[")) return t;
-  const m = t.match(/Eu disse: "([^"]*)"/);
+  const m = t.match(/Eu (?:disse|perguntei): "([^"]*)"/);
   return m ? m[1] : "";
 }
 

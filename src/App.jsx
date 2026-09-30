@@ -6844,6 +6844,60 @@ export default function Taverna() {
   const cidadeDoMapa = (nome) => ((mapaRef.current && mapaRef.current.cidades) || [])
     .find((c) => String(c.nome || "").toLowerCase() === String(nome || "").toLowerCase()) || null;
 
+  /* MM14: as tres fichas da mesa (cidade, gente, mercado) para uma frase —
+     extraido de `pautaDoTurno` para que o sinal do oraculo
+     (`ehPerguntaAoMundo`) tambem possa perguntar as fichas antes de rolar
+     o d100. Quando `presentes` nao vem pronto (o sinal so tem a frase),
+     calcula-se aqui pelo mesmo elenco da cena que `pautaDoTurno` usa. */
+  const fichasDaMesa = (frase = "", presentes = null) => {
+    if (!Array.isArray(presentes)) {
+      try {
+        presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [], masmorra: masmorraRef.current }).aqui;
+      } catch (e) { calou("elencoDaCena em fichasDaMesa", e); presentes = []; }
+    }
+    /* MM14: os nomes que a mesa ja conhece — a gente em cena e o lugar onde
+       se esta —, para as fichas apagarem o nome proprio antes de procurar o
+       assunto ("o Sino Calado" nao pergunta pelo sino). Uma vez so, e as
+       tres fichas (a cidade, a gente, o mercado) a usam. */
+    const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || ""].filter(Boolean);
+    let fc = null;
+    try {
+      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {
+        let foraDeHora = [];
+        try { foraDeHora = sinosForaDeHora(aberturaMundoRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }); } catch (e) { calou("sinosForaDeHora", e); }
+        fc = fichaParaPauta(cidadeDoMapa(cidadeAtualRef.current), {
+          semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico,
+          genero: generoMundo(), molde: moldeMundo(), dia: diaRef.current, minuto: minutoRef.current, frase,
+          nomes: nomesDaMesa, foraDeHora,
+        });
+      }
+    } catch (e) { calou("fichaParaPauta", e); }
+    /* MM8a: a gente por dentro — so quando a frase pergunta por alguem */
+    let gp = null;
+    try {
+      if (!combateRef.current) {
+        let recentes = [];
+        try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes da gente por dentro", e); }
+        gp = genteParaPauta({
+          semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
+          genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
+          base: baseMundoRef.current, npcs: npcsRef.current, presentes, espinha: espinhaRef.current, guildas: guildasRef.current, estado: elencoSaveRef.current,
+          grupo: (personagemRef.current || personagem || {}).grupo || [],
+          heroi: (personagemRef.current || personagem || {}).nome || "",
+          recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase,
+          nomes: nomesDaMesa,
+        });
+      }
+    } catch (e) { calou("genteParaPauta", e); }
+    /* MM14: o preco perguntado — a mesma frase, a banca de hoje. Nunca em
+       luta (ali nao ha banca) nem fora de cidade (nao ha onde comprar). */
+    let mc = null;
+    try {
+      mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;
+    } catch (e) { calou("mercadoParaPauta", e); }
+    return { cidade: fc, gente: gp, mercado: mc };
+  };
+
   const pautaDoTurno = (acaoDoTurno = "") => {
     let p = garantirPauta(null);
     cobrouAgoraRef.current = false;
@@ -6903,47 +6957,11 @@ export default function Taverna() {
     /* MM12: a cidade por dentro — o hoje e a língua sempre, a resposta ao
        que o jogador perguntou só quando ele pergunta. Nunca em jornada, em
        masmorra nem em combate: ali não há rua para se perguntar nada dela. */
-    /* MM14: os nomes que a mesa já conhece — a gente em cena e o lugar onde
-       se está —, para as fichas apagarem o nome próprio antes de procurar o
-       assunto ("o Sino Calado" não pergunta pelo sino). Uma vez só, e as
-       três fichas (a cidade, a gente, o mercado) a usam. */
-    const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || ""].filter(Boolean);
-    let fc = null;
-    try {
-      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {
-        let foraDeHora = [];
-        try { foraDeHora = sinosForaDeHora(aberturaMundoRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }); } catch (e) { calou("sinosForaDeHora", e); }
-        fc = fichaParaPauta(cidadeDoMapa(cidadeAtualRef.current), {
-          semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico,
-          genero: generoMundo(), molde: moldeMundo(), dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
-          nomes: nomesDaMesa, foraDeHora,
-        });
-        p = porNaPauta(p, "cidade", fc.cidade);
-      }
-    } catch (e) { calou("fichaParaPauta", e); }
-    /* MM8a: a gente por dentro — só quando a frase pergunta por alguém */
-    let gp = null;
-    try {
-      if (!combateRef.current) {
-        let recentes = [];
-        try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes da gente por dentro", e); }
-        gp = genteParaPauta({
-          semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
-          genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
-          base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui, espinha: espinhaRef.current, guildas: guildasRef.current, estado: elencoSaveRef.current,
-          grupo: (personagemRef.current || personagem || {}).grupo || [],
-          heroi: (personagemRef.current || personagem || {}).nome || "",
-          recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
-          nomes: nomesDaMesa,
-        });
-      }
-    } catch (e) { calou("genteParaPauta", e); }
-    /* MM14: o preço perguntado — a mesma frase, a banca de hoje. Nunca em
-       luta (ali não há banca) nem fora de cidade (não há onde comprar). */
-    let mc = null;
-    try {
-      mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, acaoDoTurno, { onde: cidadeAtualRef.current }) : null;
-    } catch (e) { calou("mercadoParaPauta", e); }
+    /* MM14: as tres fichas da mesa (cidade, gente, mercado), pela mesma
+       frase e o mesmo elenco desta cena — agora em fichasDaMesa, para que
+       o sinal do oraculo tambem consiga perguntar. */
+    const { cidade: fc, gente: gp, mercado: mc } = fichasDaMesa(acaoDoTurno, aqui);
+    if (fc) p = porNaPauta(p, "cidade", fc.cidade);
     /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a
        frase pediu cada coisa — não pela ordem em que os módulos correram. */
     p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc]));
@@ -14425,7 +14443,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return ehDeclaracaoDeAtaque(acao, { nomes });
       }),
       ehDesafio: ler(() => !!veredictoDaAcao(acao)),
-      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao)),
+      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao, { fichas: () => fichasDaMesa(acao) })),
       temMilagreArmado: !!milagreSel,
       /* v9.79: OU o texto nomeou uma habilidade que eu TENHO. É a metade
          positiva da conferência da ficha: a v9.78 passou a recusar quando

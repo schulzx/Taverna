@@ -585,8 +585,12 @@ sec("4. a definição operacional de 'número que muda'");
      helper `contextoDoNome`, e as três portas do registo (mais o mural)
      decidindo `nomeCerto` por `nomeComDono`, todas ACIMA deste ponto;
      mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14615/.test(relogio.porque));
+     testes/acoes-do-jogador.mjs.
+     A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6, 30/09):
+     14615 -> 14633, +18 — o cálculo das três fichas mudou-se de
+     `pautaDoTurno` para `fichasDaMesa`, ACIMA do relógio no arquivo; mesmo
+     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14633/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -852,9 +856,13 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
        30/09): 13068 -> 13124, +56 — o mesmo delta desta etapa em
        FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido pelo diff de App.jsx
-       contra HEAD. */
+       contra HEAD.
+       A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6,
+       30/09): 13124 -> 13142, +18 — o mesmo delta desta etapa em
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido por
+       check-acoes-do-jogador.mjs. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13124").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13142").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -993,8 +1001,12 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
        30/09): 12935 -> 12991, +56 — o mesmo delta desta etapa em
        FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido pelo diff de App.jsx
-       contra HEAD. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12991" && x.familia === "alcance"));
+       contra HEAD.
+       A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6,
+       30/09): 12991 -> 13009, +18 — o mesmo delta desta etapa em
+       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido por
+       check-acoes-do-jogador.mjs. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13009" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1060,8 +1072,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      App.jsx contra HEAD.
      A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
      30/09): 13084 -> 13140, +56 — o mesmo delta desta etapa, re-medido
-     pelo diff de App.jsx contra HEAD. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13140/.test(S.ondeSai));
+     pelo diff de App.jsx contra HEAD.
+     A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6, 30/09):
+     13140 -> 13158, +18 — o mesmo delta desta etapa, re-medido por
+     check-acoes-do-jogador.mjs. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13158/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

@@ -116,6 +116,14 @@ const ANCORAS_HELPERS = [
   "const infoRegras = () => {",
   "const infoTitulo = () => {",
   "const infoNemesis = () => {",
+  /* MM14 (o resto do nº 6): `pautaDoTurno` deixou de chamar `fichaParaPauta`
+     e `genteParaPauta` por nome — o cálculo das três fichas mudou-se para
+     `fichasDaMesa`, de onde o sinal do oráculo também as pede. Sem esta
+     âncora aqui, a prova estrutural (a "chega" de PAUTA+ENVIAR+HELPERS) não
+     achava mais as duas funções chamadas, e casos que dependem delas caíam
+     para "sabe-e-nao-conta" por um motivo falso: elas continuam a alimentar
+     a pauta, só que por dentro de uma função vizinha. */
+  "const fichasDaMesa = (",
 ];
 const ANCORAS_GOLPE = [
   "const resolverAtaqueJogador = (acao, pers) => {",
@@ -138,9 +146,10 @@ function extrairTodas(anchors) {
   let texto = "";
   for (const a of anchors) {
     /* Quando a própria âncora já termina em "{" (ex.: "... => {"), a chave
-       de abertura é ela mesma — não há "=>" a procurar depois. Só a âncora
-       de pautaDoTurno ("const pautaDoTurno = (") termina em "(": o "=>" e a
-       "{" vêm depois, porque o parâmetro tem um default (`= ""`). */
+       de abertura é ela mesma — não há "=>" a procurar depois. `pautaDoTurno`
+       ("const pautaDoTurno = (") e, desde MM14, `fichasDaMesa`
+       ("const fichasDaMesa = (") terminam em "(": o "=>" e a "{" vêm depois,
+       porque o parâmetro tem um default (`= ""`). */
     const viaArrow = !a.trim().endsWith("{");
     const r = extrairBloco(APP, a, { viaArrow });
     if (!r.achou) faltando.push(a);

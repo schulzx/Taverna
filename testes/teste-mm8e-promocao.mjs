@@ -238,7 +238,14 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   const iArquivista = app.indexOf('p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {');
   t("nessa ordem: a saída antes do arquivista", iSaida >= 0 && iArquivista > iSaida);
 
-  const chamadaGente = linhaDe("base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui,");
+  /* MM14 (o resto do nº 6): a chamada de genteParaPauta mudou-se de
+     `pautaDoTurno` para `fichasDaMesa` — extraído para que o sinal do
+     oráculo também pudesse perguntar às fichas. De caminho, o parâmetro
+     `presentes` (que recebia `aqui`, o de fora) virou o nome do próprio
+     parâmetro da função nova, e a chamada passou a usar o atalho do
+     objeto (`presentes,` em vez de `presentes: aqui,`) — a âncora
+     acompanha a mudança, sem afrouxar o que prova. */
+  const chamadaGente = linhaDe("base: baseMundoRef.current, npcs: npcsRef.current, presentes, espinha: espinhaRef.current,");
   t("genteParaPauta recebe o estado da promoção", chamadaGente.includes("estado: elencoSaveRef.current"));
 
   const rodape = linhaDe("const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current,");

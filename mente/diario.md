@@ -15,7 +15,29 @@ Formato:
 ```
 
 ---
-## 30/09 16:31 · v9.339 · MM14 (7) · uma história de cada vez, quem pede nunca é o herói, e só a palavra dada é promessa · commit (o hash vai no próximo bloco)
+## 30/09 17:36 · v9.340 · MM14 (8) · o que a ficha sabe não se rola · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o terceiro e último dos restos da MM14 — uma pergunta fechada que a ficha sabe responder
+  ("há quanto tempo a senhora tem esta taverna?") ainda ia ao oráculo, e um d100 decidia o que o mundo já tinha
+  escrito.
+- **estado inicial:** verde (MM14 (7) no ar, `5aa4ed4`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend:** o sinal `ehPerguntaAoMundo` passa a perguntar primeiro às fichas (`A_FICHA_DECIDE`): se a cidade, a
+  gente ou o mercado respondem, a pergunta não é ao mundo. E a pessoa da casa onde a heroína está é achada pelo
+  tratamento ("a senhora", "o senhor") ou pelo ofício ("taverneira"), entre a gente da base e do registo que
+  trabalha ali — nunca na cidade inteira; quem responde pela casa é o primeiro ofício do lugar. Chamar um nome que
+  ninguém conhece não se adivinha. Medido na sonda: das 157 perguntas, as que iam ao oráculo tendo resposta na
+  ficha **15 → 3**; a sonda fica em 92.
+- **frontend:** o cálculo das três fichas saiu de `pautaDoTurno` para `fichasDaMesa` (o mesmo código, com a frase e
+  os presentes por parâmetro), que a pauta e o sinal agora partilham; a pauta sai igual. As provas de fiação por
+  texto (MM8a §10, MM12 §7, MM14-perguntas §4/§7, a sonda MM1, MM8e) acompanharam, com o motivo; as linhas
+  deslocaram +18 e as medidas das ações do jogador foram re-medidas por conteúdo.
+- **a prova jogada:** numa taverna, "Helena, há quanto tempo a senhora tem esta taverna?" levou ao Narrador o posto
+  da taverneira ("está no posto há 1 ano: deve o lugar a alguém e ainda paga") e nenhum d100; "vai chover
+  amanhã?" continuou a ir ao oráculo (33, sim).
+- **para quem joga:** o que o mundo já sabe responde-se pelo mundo; o dado fica para o que ninguém decidiu.
+
+## 30/09 16:31 · v9.339 · MM14 (7) · uma história de cada vez, quem pede nunca é o herói, e só a palavra dada é promessa · commit `5aa4ed4`
 
 - **por que andou:** o segundo dos restos da MM14 — quatro histórias forçadas em 43 respostas, uma delas antes
   do primeiro passo da principal, com o próprio herói a contratar, e "alguém vem cobrar o que você disse" sem

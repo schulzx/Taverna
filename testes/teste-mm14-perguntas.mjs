@@ -438,30 +438,43 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
       iCaiu >= 0 && iSoP > iCaiu && iRevela > iSoP, `${iCaiu}/${iSoP}/${iRevela}`);
   }
 
-  /* ---- 4. a pauta: as três fichas juntas, pela ordem da frase ---- */
+  /* ---- 4. a pauta: as três fichas juntas, pela ordem da frase ----
+     MM14 (o resto do nº 6): o cálculo das três fichas mudou-se de
+     `pautaDoTurno` para `fichasDaMesa` — extraído para que o sinal do
+     oráculo (`ehPerguntaAoMundo`) também pudesse perguntar às fichas antes
+     de rolar o d100, sem duplicar o cálculo. `pautaDoTurno` passou a só
+     CHAMAR `fichasDaMesa` e destruturar { cidade: fc, gente: gp, mercado:
+     mc }; o que fazia esse cálculo (nomesDaMesa, as três chamadas, o
+     try/calou de cada uma, a ordem entre elas) mora agora em
+     `fichasDaMesa`. As asserções movem-se com o motivo, para o corpo onde
+     o fato hoje vive — nenhuma afrouxa, e uma nova prova a ligação. */
   const pauta = corpoApos(app, "const pautaDoTurno = (acaoDoTurno = \"\") => {");
-  t("o corpo de pautaDoTurno não está vazio", pauta.length > 2000);
-  t("nomesDaMesa existe, uma vez só, dos NPCs e do lugar",
-    pauta.includes("const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || \"\"].filter(Boolean);"));
+  t("o corpo de pautaDoTurno não está vazio", pauta.length > 300);
+  const fichas = corpoApos(app, "const fichasDaMesa = (frase = \"\", presentes = null) => {");
+  t("o corpo de fichasDaMesa não está vazio", fichas.length > 1500);
+  t("pautaDoTurno chama fichasDaMesa com a frase do turno e quem está aqui, e destrutura as três fichas",
+    pauta.includes("const { cidade: fc, gente: gp, mercado: mc } = fichasDaMesa(acaoDoTurno, aqui);"));
+  t("nomesDaMesa existe, uma vez só, dos NPCs e do lugar — dentro de fichasDaMesa",
+    fichas.includes("const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || \"\"].filter(Boolean);"));
   t("fichaParaPauta recebe os nomes da mesa e o sino fora de hora",
-    pauta.includes("nomes: nomesDaMesa, foraDeHora,") && /foraDeHora = sinosForaDeHora\(aberturaMundoRef\.current, \{ dia: diaRef\.current, cidade: cidadeAtualRef\.current \}\)/.test(pauta));
-  t("genteParaPauta recebe os mesmos nomes da mesa", pauta.includes("recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,\n          nomes: nomesDaMesa,"));
+    fichas.includes("nomes: nomesDaMesa, foraDeHora,") && /foraDeHora = sinosForaDeHora\(aberturaMundoRef\.current, \{ dia: diaRef\.current, cidade: cidadeAtualRef\.current \}\)/.test(fichas));
+  t("genteParaPauta recebe os mesmos nomes da mesa", fichas.includes("recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase,\n          nomes: nomesDaMesa,"));
   t("o mercado responde fora da luta, numa cidade, pela mesma frase do turno",
-    pauta.includes('mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, acaoDoTurno, { onde: cidadeAtualRef.current }) : null;'));
-  t("as três (fc, gp, mc) juntam-se numa mesa só, na secção \"pergunta\"",
+    fichas.includes('mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;'));
+  t("as três (fc, gp, mc) juntam-se numa mesa só, na secção \"pergunta\", de volta em pautaDoTurno",
     pauta.includes('p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc]));'));
   {
-    const iFc = pauta.indexOf("fc = fichaParaPauta(");
-    const iGp = pauta.indexOf("gp = genteParaPauta(");
-    const iMc = pauta.indexOf("mercadoParaPauta(mercadoAqui");
-    const iJunta = pauta.indexOf('juntarRespostas([fc, gp, mc])');
-    t("a ordem no código é cidade, gente, mercado, e só então a mesa junta",
-      iFc >= 0 && iGp > iFc && iMc > iGp && iJunta > iMc, `${iFc}/${iGp}/${iMc}/${iJunta}`);
+    const iFc = fichas.indexOf("fc = fichaParaPauta(");
+    const iGp = fichas.indexOf("gp = genteParaPauta(");
+    const iMc = fichas.indexOf("mercadoParaPauta(mercadoAqui");
+    const iRetorna = fichas.indexOf('return { cidade: fc, gente: gp, mercado: mc };');
+    t("a ordem no código é cidade, gente, mercado, e só então fichasDaMesa devolve a mesa",
+      iFc >= 0 && iGp > iFc && iMc > iGp && iRetorna > iMc, `${iFc}/${iGp}/${iMc}/${iRetorna}`);
   }
-  t("cada ficha guardada fora do try (fc e gp nascem null antes)",
-    pauta.includes("let fc = null;") && pauta.includes("let gp = null;") && pauta.includes("let mc = null;"));
-  t("as três chamadas estão guardadas por calou",
-    /calou\("fichaParaPauta", e\);/.test(pauta) && /calou\("genteParaPauta", e\);/.test(pauta) && /calou\("mercadoParaPauta", e\);/.test(pauta));
+  t("cada ficha guardada fora do try (fc e gp nascem null antes), dentro de fichasDaMesa",
+    fichas.includes("let fc = null;") && fichas.includes("let gp = null;") && fichas.includes("let mc = null;"));
+  t("as três chamadas estão guardadas por calou, dentro de fichasDaMesa",
+    /calou\("fichaParaPauta", e\);/.test(fichas) && /calou\("genteParaPauta", e\);/.test(fichas) && /calou\("mercadoParaPauta", e\);/.test(fichas));
 
   /* ---- 5. o sino leva o quando ---- */
   const marcarMundo = corpoApos(app, "const marcarTurnoDoMundo = () => {");

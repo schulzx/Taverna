@@ -205,13 +205,88 @@ export function linhaDaConsulta(r) {
    caminho daquilo já existe. */
 const ABRE = /^\s*(sera que|será que|por acaso|o guarda|ele|ela|isso|isto|aquilo|tem|h[áa]|existe|d[áa] para|da para|consigo|posso|vale|est[áa]|e |é )/i;
 const FECHADA = /\?\s*$/;
-const ABERTA = /^\s*(o que|quem|onde|quando|como|por que|porque|quanto|qual)\b/i;
 
-export function ehPerguntaAoMundo(texto) {
+/* ---------------- A PERGUNTA ABERTA (MM14, o resto do nº 6) ----------------
+   Um oráculo responde "sim" ou "não". "Há quanto tempo a senhora tem essa
+   taverna?" não tem sim nem não — e ia ao d100, por dois buracos que a
+   prova jogada abriu de uma vez: a leitura só olhava o COMEÇO da frase, e
+   o começo era o nome de quem se chamava ("Maren, há quanto…"); e "há
+   quanto", "desde quando", "que horas", "de onde" nunca foram abertas.
+   Agora lê-se a ÚLTIMA oração que pergunta (a que vem depois de "pergunto:",
+   do ponto, do travessão), sem o chamamento do começo ("Maren,", "Mestre,",
+   "senhora,"), e é essa que decide. Lido sem acento. */
+export const PERGUNTA_ABERTA = /^(o que|que|quem|onde|aonde|de onde|para onde|pra onde|quando|desde quando|ate quando|como|por que|porque|pra que|para que|a que|de que|em que|com que|quanto|quanta|quantos|quantas|qual|quais|ha quanto|faz quanto|a quantos|a quantas|de quem|com quem|para quem|pra quem)\b/;
+/* e a que só no FIM diz o que quer: "fica onde?", "isso foi por quê?" */
+export const ABERTA_NO_FIM = /\b(por que|porque|o que|onde|quem|quanto|qual|como)$/;
+/* o chamamento: até três palavras antes da primeira vírgula */
+const CHAMAMENTO = /^([a-z][a-z'-]*(?:\s+[a-z][a-z'-]*){0,2})\s*,\s*(.+)$/;
+const semAcentoP = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+/* a oração que pergunta, sem acento — inteira (é por ela que se lê o TIPO)
+   e sem o chamamento do começo (é por ela que se vê se é aberta) */
+function oQueSePergunta(texto) {
+  const n = semAcentoP(texto).trim().replace(/\?\s*$/, "");
+  const partes = n.split(/[.!?;:—–"“”«»]+/).map((x) => x.trim()).filter(Boolean);
+  const oracao = (partes[partes.length - 1] || "").replace(/^(e|mas|entao)\s+/, "").trim();
+  const ch = oracao.match(CHAMAMENTO);
+  const semChamamento = ch && !PERGUNTA_ABERTA.test(ch[1]) ? ch[2].replace(/^(e|mas|entao)\s+/, "").trim() : oracao;
+  return { oracao, semChamamento };
+}
+
+/* ---------------- O QUE O MUNDO JÁ DECIDIU NÃO SE ROLA ----------------
+   O oráculo é para o que NINGUÉM decidiu. Uma pergunta fechada que a ficha
+   da cidade, a da gente ou o mercado já respondem vai à pauta, e não ao
+   d100: "a senhora já era assim quando abriu a casa?" tem resposta no
+   retrato dela; "vendem adagas aqui?" tem resposta na banca. Rolar isso é
+   deixar o dado desmentir o mundo.
+
+   Mas a ficha é GROSSEIRA de propósito (um falso positivo lá custa uma
+   linha verdadeira): "o guarda aceita suborno?" acende a linha da lei pelo
+   "guarda", e a lei não diz se ESTE guarda se vende. Por isso o que conta é
+   o TIPO da pergunta (`TIPOS`, acima), que já separa o que muda do que
+   fica — a mesma régua de `DURACOES`: o que é "mundo" (a forma das coisas,
+   permanente) é o que as fichas guardam; a disposição de alguém hoje
+   ("social") e o instante ("perigo") nenhuma ficha guarda, e continuam do
+   oráculo. A exceção é o mercado: "vende" é palavra social, e o que a banca
+   tem à venda é decidido.
+
+   Quando o oráculo rola na mesma, as fichas ainda chegam ao Narrador: a
+   frase entra na pauta pelo "Eu perguntei" do envelope (`fraseDoJogador`,
+   perguntas.js) — a lei da cidade vai junto do "não" do guarda. */
+export const A_FICHA_DECIDE = {
+  mundo: ["cidade", "gente", "mercado"],
+  social: ["mercado"],
+  perigo: [],
+};
+
+/* `fichas`: { cidade, gente, mercado } — as saídas de `fichaParaPauta`,
+   `genteParaPauta` e `mercadoParaPauta` para ESTA frase —, ou uma função
+   que as devolve (só é chamada quando a frase é mesmo pergunta fechada:
+   as fichas custam, e quase nenhum turno pergunta). */
+function aFichaResponde(q, fichas) {
+  let f = fichas;
+  if (typeof f === "function") { try { f = f(); } catch { f = null; } }
+  if (!f || typeof f !== "object") return false;
+  const quais = A_FICHA_DECIDE[tipoDaPergunta(q)] || [];
+  return quais.some((k) => {
+    const o = f[k];
+    return !!(o && typeof o === "object" && Array.isArray(o.pergunta) && o.pergunta.some((l) => String(l == null ? "" : l).trim()));
+  });
+}
+
+export function ehPerguntaAoMundo(texto, opcoes) {
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
   const t = String(texto || "").trim();
   if (!t || t.length < 6 || t.length > 200) return false;
   if (!FECHADA.test(t)) return false;
-  if (ABERTA.test(t)) return false;    // pergunta aberta é cena, não oráculo
+  const { oracao, semChamamento } = oQueSePergunta(t);
+  /* pergunta aberta é cena, não oráculo — a última oração, ou o começo da
+     frase (a leitura de antes, que continua a valer: "O que você faz aqui —
+     é o dono?" pergunta as duas coisas, e a primeira não tem sim nem não) */
+  const comeco = semAcentoP(t).replace(/^[\s"“”«»'(\-—]+/, "");
+  if (!oracao || PERGUNTA_ABERTA.test(oracao) || PERGUNTA_ABERTA.test(semChamamento) || ABERTA_NO_FIM.test(oracao) || PERGUNTA_ABERTA.test(comeco)) return false;
+  /* o que a ficha já decidiu vai à pauta */
+  if (op.fichas && aFichaResponde(oracao, op.fichas)) return false;
   return ABRE.test(t) || /\?/.test(t);
 }
 
