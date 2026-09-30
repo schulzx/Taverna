@@ -187,7 +187,12 @@ sec("7. a costura no App");
   t("o convidado manda a ação pelo fio", /mandarRecado\(RECADOS\.acao/.test(APP));
   t("o anfitrião junta as duas e dispara", /dispararTurnoDaSala/.test(APP) && /textoDoTurno\(s\)/.test(APP));
   t("e o turno só sai completo", /if \(!turnoCompleto\(s\)\) return false;/.test(APP));
-  t("o mundo atravessa a cada save", /publicarEstado\(dados\)/.test(APP));
+  /* MM8e: `publicarEstado` passou a receber `paraSala` (dados sem a chave
+     `elenco` — o protocolo da sala não muda nesta fase, e o convidado não
+     precisa das promoções do anfitrião), não mais `dados` puro. A prova
+     original queria dizer que TODO save publica — isso continua verdade:
+     é a mesma chamada, um passo depois de `dados` ser desestruturado. */
+  t("o mundo atravessa a cada save", /const \{ elenco: _elencoLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
   t("o convidado veste o save pela porta que já existia", /continuar\(false, \{ silencioso: true \}\)/.test(APP));
   /* e os avisos que são da FICHA não caem na tela de quem não é dono dela */
   t("o despertar do outro não estoura na tela do convidado", /if \(!silencioso\) setTimeout\(\(\) => checarDespertar/.test(APP));

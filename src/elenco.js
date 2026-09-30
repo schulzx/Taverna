@@ -43,9 +43,9 @@
 
 import { rngDe } from "./geografia.js";
 import { locaisDaCidade, genteDoLocal, chefesDoMundo, estaMorto } from "./mundo-base.js";
-import { indoleDe, tracoPorId } from "./indole.js";
+import { indoleDe, tracoPorId, garantirConvivio } from "./indole.js";
 import { nomePessoa } from "./nomes.js";
-import { TIPOS_DE_LACO } from "./npcs.js";
+import { TIPOS_DE_LACO, garantirLaco, importanciaDe, FIGURANTE } from "./npcs.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -289,9 +289,32 @@ export function elencoDoMundo(semente, mapa, ctx) {
     }
   }
 
+  /* ---- MM8e: O QUE A CAMPANHA MUDOU (o campo `elenco` do save) ----
+     Aplicado DEPOIS dos laços e das casas, de propósito: uma promoção não
+     pode baralhar os laços de quem não tem nada com ela. Quem saiu sai
+     (dos laços também); quem subiu entra no fim, sem laço sorteado — o
+     laço dele é o que o jogo lhe der a partir de agora. */
+  const est = garantirElencoDoSave(o.estado);
+  const saiu = new Set(Object.keys(est.saidos).map(norm));
+  let final = pessoas.filter((p) => !saiu.has(norm(p.nome)));
+  const registo = obj(o.npcs);
+  const subiram = Object.entries(est.promovidos)
+    .filter(([n]) => !saiu.has(norm(n)) && !final.some((p) => norm(p.nome) === norm(n)))
+    .sort((a, b) => a[1] - b[1] || (norm(a[0]) < norm(b[0]) ? -1 : 1));
+  for (const [nome, dia] of subiram) {
+    const b = daBase.get(norm(nome));
+    const f = registo[Object.keys(registo).find((k) => norm(k) === norm(nome))] || {};
+    const cidade = b ? b.cidade : (todas.find((c) => norm(c.nome) === norm(f.local)) || {}).nome || "";
+    const k = casas.find((x) => norm(x.cidade) === norm(cidade) && x.membros.some((m) => norm(m) === norm(nome)));
+    final.push({ ...(b || {}), nome, papel: String(f.papel || (b && b.papel) || ""), cidade, fonte: "promovido", estreia: dia, morto: estaMorto(o.base, nome), ...(k ? { casa: k.nome } : {}) });
+  }
+  final = final.slice(0, TAMANHO_DO_ELENCO);
+  const ficou = new Set(final.map((p) => norm(p.nome)));
+  const lacosFinais = lacos.filter((l) => ficou.has(norm(l.a)) && ficou.has(norm(l.b)));
+
   /* nada do que sai daqui carrega a data do encontro nem a marca do registo */
-  for (const p of pessoas) { delete p.conhecidoEm; delete p.ultimaVez; }
-  return { pessoas, lacos, casas };
+  for (const p of final) { delete p.conhecidoEm; delete p.ultimaVez; }
+  return { pessoas: final, lacos: lacosFinais, casas };
 }
 
 /* Os laços de UMA pessoa, lidos dos dois lados quando o laço é dos dois:
@@ -339,5 +362,185 @@ export function elencoParaPovoar(semente, mapa, contexto, quantos = PARA_POVOAR)
     .sort((a, b) => a.d - b.d || a.i - b.i)
     .slice(0, n)
     .map(({ p }) => ({ nome: p.nome, genero_pessoa: p.genero_pessoa || "", raca: p.raca || "", ocupacao: p.papel || "", traco: p.traco || "" }));
+}
+
+/* ============================================================
+   A PROMOÇÃO (Fase MM, MM8e) — o figurante em quem se investe sobe
+
+   É a única subetapa da MM8 com campo de save, e ele é NOVO, no topo, e
+   ignorado pela versão antiga: `elenco` = { versao, promovidos, saidos,
+   vistos }. O load antigo lê o save chave a chave (`sv.npcs`, `sv.mapa`…)
+   e nunca olha para esta; o `salvar` antigo monta o objeto de novo a
+   partir dos refs, e por isso, se alguém voltar a uma versão antiga, a
+   chave some no primeiro autosave — perde-se a promoção, e o elenco volta
+   a ser o derivado. O jogo continua inteiro: é o que um revert pode
+   desfazer.
+
+   (O nome da função é `garantirElencoDoSave`, e não `garantirElenco`: esse
+   já existe em `interprete.js` — a memória do Intérprete — e o App importa
+   os dois.)
+
+   · VISTOS: os dias em que o herói viu cada pessoa — quando a narração a
+     cita. Com teto por pessoa (os dias mais recentes) e por total (quem
+     foi visto por último). Fecha o "visto em 2 dias ou mais" da MM8d.
+   · A PROMOÇÃO, ao virar o dia: quem está no registo, fora do elenco,
+     vivo, e em quem o jogador INVESTIU — voltou a ele (dias vistos), tem
+     laço, anda no grupo — sobe, desde que o CONVÍVIO do convite o permita
+     (o mesmo `garantirConvivio`, com o mesmo `conhecidoEm`, lidos e nunca
+     escritos). Um por dia.
+   · A SAÍDA: o elenco tem tamanho fixo, e quem sobe empurra quem pesa
+     menos. Nunca sai quem a espinha pede, nenhum chefe, ninguém com laço
+     comigo, ninguém do grupo. A saída é dita em voz de mundo ("Fulano
+     deixou a cidade"), na pauta, quando a cena é a cidade dele.
+   ============================================================ */
+export const ELENCO_DO_SAVE_VERSAO = 1;
+export const VISTOS = { porPessoa: 10, pessoas: 150 };
+export const PROMOCAO = {
+  /* o mesmo piso de dias que a índole pede antes de qualquer propósito
+     acontecer (`DIAS_ATE_QUALQUER_PLANO`, indole.js): ninguém vira gente
+     da história no dia em que o herói o conheceu */
+  convivioMinimo: 3,
+  porDia: 1,
+  peso: { grupo: 100, laco: 60, porDiaVisto: 10 },
+  /* o que pesa para SAIR, além da importância do registo */
+  pesoDeFicar: { mestre: 5, doArco: 3, recorrente: 0, promovido: 4 },
+  /* quantos dias a saída ainda se diz na cena, e quantas por turno */
+  saidaNaPauta: 3,
+  saidasPorTurno: 1,
+};
+export const FONTES_QUE_NUNCA_SAEM = ["espinha", "chefe"];
+
+const PROIBIDAS = new Set(["__proto__", "constructor", "prototype"]);
+const diaValido = (v) => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 0 ? n : null; };
+const nomeValido = (k) => { const n = String(k == null ? "" : k).trim().slice(0, 60); return n && !PROIBIDAS.has(n) ? n : ""; };
+
+export function garantirElencoDoSave(x) {
+  const o = obj(x);
+  const mapaDeDias = (m) => {
+    const out = {};
+    for (const [k, v] of Object.entries(obj(m))) { const nome = nomeValido(k), d = diaValido(v); if (nome && d != null) out[nome] = d; }
+    return out;
+  };
+  const vistos = {};
+  for (const [k, v] of Object.entries(obj(o.vistos))) {
+    const nome = nomeValido(k);
+    if (!nome || !Array.isArray(v)) continue;
+    const dias = [...new Set(v.map(diaValido).filter((d) => d != null))].sort((a, b) => a - b).slice(-VISTOS.porPessoa);
+    if (dias.length) vistos[nome] = dias;
+  }
+  const nomes = Object.keys(vistos);
+  if (nomes.length > VISTOS.pessoas) {
+    nomes.sort((a, b) => vistos[b][vistos[b].length - 1] - vistos[a][vistos[a].length - 1] || (a < b ? -1 : 1));
+    for (const n of nomes.slice(VISTOS.pessoas)) delete vistos[n];
+  }
+  return { versao: ELENCO_DO_SAVE_VERSAO, promovidos: mapaDeDias(o.promovidos), saidos: mapaDeDias(o.saidos), vistos };
+}
+
+const chaveDe = (m, nome) => Object.keys(m).find((k) => norm(k) === norm(nome));
+
+export function diasVistosDe(estado, nome) {
+  const e = garantirElencoDoSave(estado);
+  const k = chaveDe(e.vistos, nome);
+  return k ? e.vistos[k].length : 0;
+}
+
+/* o herói viu esta pessoa neste dia — estado novo, o recebido intacto */
+export function registrarVisto(estado, nome, dia) {
+  const e = garantirElencoDoSave(estado);
+  const n = nomeValido(nome), d = diaValido(dia);
+  if (!n || d == null) return e;
+  const k = chaveDe(e.vistos, n) || n;
+  return garantirElencoDoSave({ ...e, vistos: { ...e.vistos, [k]: [...(e.vistos[k] || []), d] } });
+}
+
+/* quem do registo a narração cita pelo nome inteiro, como palavra */
+export function vistosDaNarrativa(estado, npcs, narrativa, dia) {
+  const texto = ` ${norm(narrativa).replace(/[^a-z0-9]+/g, " ")} `;
+  let e = garantirElencoDoSave(estado);
+  if (!texto.trim()) return e;
+  for (const nome of Object.keys(obj(npcs))) {
+    const alvo = norm(nome).replace(/[^a-z0-9]+/g, " ").trim();
+    if (alvo.length >= 3 && texto.includes(` ${alvo} `)) e = registrarVisto(e, nome, dia);
+  }
+  return e;
+}
+
+/* AO VIRAR O DIA. `contexto` é o de `elencoDoMundo` (sem o estado, que
+   vai à parte); `mundo`: { npcs, grupo, dia }. Devolve o estado novo, quem
+   subiu e quem saiu (com a cidade dele) — ou tudo vazio. */
+export function promoverNoDia(semente, mapa, contexto, estado, mundo) {
+  const w = obj(mundo);
+  let e = garantirElencoDoSave(estado);
+  const vazio = { estado: e, promovidos: [], saidos: [] };
+  const npcs = obj(w.npcs);
+  const hoje = diaValido(w.dia);
+  if (hoje == null) return vazio;
+  const grupo = (Array.isArray(w.grupo) ? w.grupo : []).map((g) => norm(g && typeof g === "object" ? g.nome : g));
+  const noGrupo = (n) => grupo.includes(norm(n));
+  const out = { promovidos: [], saidos: [] };
+  for (let vez = 0; vez < PROMOCAO.porDia; vez++) {
+    let el;
+    try { el = elencoDoMundo(semente, mapa, { ...obj(contexto), estado: e, npcs }); } catch { break; }
+    if (!el.pessoas.length) break;
+    const noElenco = new Set(el.pessoas.map((p) => norm(p.nome)));
+    const candidatos = Object.entries(npcs)
+      .filter(([k, n]) => n && typeof n === "object" && nomeValido(k) && !noElenco.has(norm(k)))
+      .filter(([k, n]) => !/mort/.test(norm(n.status)) && !estaMorto(obj(contexto).base, k))
+      .map(([k, n]) => {
+        /* O CONVÍVIO DO CONVITE, lido e nunca escrito: os dias desde o encontro */
+        const conhecido = diaValido(n.conhecidoEm);
+        const convivio = garantirConvivio({ dias: conhecido == null ? 0 : hoje - conhecido });
+        const dias = diasVistosDe(e, k);
+        const laco = !!garantirLaco(n.laco);
+        const investiu = noGrupo(k) || laco || dias >= FIGURANTE.diasVistos;
+        const peso = (noGrupo(k) ? PROMOCAO.peso.grupo : 0) + (laco ? PROMOCAO.peso.laco : 0) + dias * PROMOCAO.peso.porDiaVisto;
+        return { nome: k, ficha: n, conhecido, convivio, investiu, peso };
+      })
+      .filter((c) => c.investiu && c.conhecido != null && c.convivio.dias >= PROMOCAO.convivioMinimo)
+      .sort((a, b) => b.peso - a.peso || a.conhecido - b.conhecido || (norm(a.nome) < norm(b.nome) ? -1 : 1));
+    if (!candidatos.length) break;
+    /* quem sai: o que pesa menos entre os que PODEM sair */
+    const podemSair = el.pessoas.filter((p) => {
+      if (FONTES_QUE_NUNCA_SAEM.includes(p.fonte) || noGrupo(p.nome)) return false;
+      const f = npcs[chaveDe(npcs, p.nome) || ""];
+      return !(f && garantirLaco(f.laco));
+    }).map((p, i) => {
+      const f = npcs[chaveDe(npcs, p.nome) || ""];
+      const peso = importanciaDe(f || { nome: p.nome, status: p.morto ? "morto" : "" }, { grupo: w.grupo }) + diasVistosDe(e, p.nome) * PROMOCAO.peso.porDiaVisto + (PROMOCAO.pesoDeFicar[p.fonte] || 0) + (p.morto ? -40 : 0);
+      return { p, i, peso };
+    }).sort((a, b) => a.peso - b.peso || b.p.estreia - a.p.estreia || b.i - a.i);
+    if (!podemSair.length) break;
+    const sobe = candidatos[0], sai = podemSair[0].p;
+    const saidos = { ...e.saidos, [sai.nome]: hoje };
+    const k = chaveDe(saidos, sobe.nome);
+    if (k) delete saidos[k];
+    e = garantirElencoDoSave({ ...e, promovidos: { ...e.promovidos, [sobe.nome]: hoje }, saidos });
+    out.promovidos.push(sobe.nome);
+    out.saidos.push({ nome: sai.nome, cidade: sai.cidade || "" });
+  }
+  return { estado: e, ...out };
+}
+
+/* A SAÍDA EM VOZ DE MUNDO: na cidade de quem saiu, nos dias logo a seguir.
+   A cidade é a da derivação (sem o estado): é onde a pessoa vivia. */
+export function saidaParaPauta(semente, mapa, contexto, estado, cena) {
+  const c = obj(cena);
+  const e = garantirElencoDoSave(estado);
+  const hoje = diaValido(c.dia);
+  const out = { antes: [] };
+  if (hoje == null || !c.cidade || !Object.keys(e.saidos).length) return out;
+  let el;
+  try { el = elencoDoMundo(semente, mapa, { ...obj(contexto), estado: null }); } catch { return out; }
+  const recentes = Object.entries(e.saidos)
+    .filter(([, d]) => hoje - d >= 0 && hoje - d <= PROMOCAO.saidaNaPauta)
+    .sort((a, b) => b[1] - a[1] || (norm(a[0]) < norm(b[0]) ? -1 : 1));
+  for (const [nome, d] of recentes) {
+    const p = el.pessoas.find((x) => norm(x.nome) === norm(nome));
+    if (!p || norm(p.cidade) !== norm(c.cidade)) continue;
+    const ha = hoje - d;
+    out.antes.push(`${nome} deixou ${p.cidade} ${ha === 0 ? "hoje" : ha === 1 ? "ontem" : `há ${ha} dias`}`);
+    if (out.antes.length >= PROMOCAO.saidasPorTurno) break;
+  }
+  return out;
 }
 

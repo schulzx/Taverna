@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
-import { elencoDoMundo, elencoParaPovoar } from "./elenco.js";
+import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
@@ -5557,6 +5557,7 @@ export default function Taverna() {
   const [tempoAberto, setTempoAberto] = useState(false);
   const canoneRef = useRef({});
   const npcsRef = useRef({});                 // registro persistente de pessoas
+  const elencoSaveRef = useRef(garantirElencoDoSave(null)); // MM8e: promovidos, saídos e dias vistos (campo `elenco` do save)
   const [npcs, setNpcs] = useState({});
   const npcTurnoRef = useRef(0);              // marca "visto por último" de cada NPC
   /* MM8c-1: a marca do contador no load — a soleira do convite (mais abaixo)
@@ -5785,15 +5786,15 @@ export default function Taverna() {
   /* MM8c-2: o contexto e os nomes do elenco desta campanha — a gente que
      PESA na narração (resumoCenaPrompt, resumoNPCsParaPrompt, o cânone),
      não a lista para povoar (essa é `elencoParaPovoar`, mais abaixo). */
-  const contextoDoElenco = () => ({ genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, espinha: espinhaRef.current, guildas: guildasRef.current, base: baseMundoRef.current });
+  const contextoDoElenco = () => ({ genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, espinha: espinhaRef.current, guildas: guildasRef.current, base: baseMundoRef.current, estado: elencoSaveRef.current, npcs: npcsRef.current });
   const elencoCacheRef = useRef(null);
   const nomesDoElenco = () => {
     try {
       const semente = sementeMundo(), mapa = mapaRef.current, ctx = contextoDoElenco();
       const c = elencoCacheRef.current;
-      if (c && c.semente === semente && c.mapa === mapa && c.espinha === ctx.espinha && c.guildas === ctx.guildas && c.base === ctx.base) return c.nomes;
+      if (c && c.semente === semente && c.mapa === mapa && c.espinha === ctx.espinha && c.guildas === ctx.guildas && c.base === ctx.base && c.estado === ctx.estado) return c.nomes;
       const nomes = elencoDoMundo(semente, mapa, ctx).pessoas.map((p) => p.nome);
-      elencoCacheRef.current = { semente, mapa, espinha: ctx.espinha, guildas: ctx.guildas, base: ctx.base, nomes };
+      elencoCacheRef.current = { semente, mapa, espinha: ctx.espinha, guildas: ctx.guildas, base: ctx.base, estado: ctx.estado, nomes };
       return nomes;
     } catch (e) { calou("nomesDoElenco", e); return []; }
   };
@@ -6904,7 +6905,7 @@ export default function Taverna() {
         const gp = genteParaPauta({
           semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
           genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
-          base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui, espinha: espinhaRef.current, guildas: guildasRef.current,
+          base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui, espinha: espinhaRef.current, guildas: guildasRef.current, estado: elencoSaveRef.current,
           grupo: (personagemRef.current || personagem || {}).grupo || [],
           heroi: (personagemRef.current || personagem || {}).nome || "",
           recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
@@ -7013,6 +7014,7 @@ export default function Taverna() {
        você. Vai em O MUNDO porque é o mundo em volta — e vai SEMPRE, não
        só quando o mundo cobra uma dívida antiga. */
     p = porNaPauta(p, "mundo", envelopeDasPotencias(potenciasAqui(), diplomaciaRef.current));
+    try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); }
     p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
       onde: linhaDoLugarDaMesa(),
       quem: (elencoDaOnda().aqui || []),
@@ -8246,7 +8248,7 @@ export default function Taverna() {
     const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     const dados = {
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -8302,7 +8304,7 @@ export default function Taverna() {
          porque TODO caminho que muda o jogo passa por `salvar` — o turno, o
          combate, o mercado, o descanso. Pendurar a publicação num só deles
          deixaria o convidado com uma tela velha nos outros. */
-      try { publicarEstado(dados); } catch (e) { calou("publicarEstado", e); }
+      try { const { elenco: _elencoLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
       if (podou && !avisoPodaRef.current) {
         avisoPodaRef.current = true;
         pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
@@ -10054,6 +10056,7 @@ export default function Taverna() {
        — ver a nota lá em cima, onde `condicoes_adicionar` saiu. Foi ele que
        transformou "o ar preso na garganta" em 🕸 Agarrado (2t). */
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
+    try { elencoSaveRef.current = vistosDaNarrativa(elencoSaveRef.current, npcsRef.current, resp.narrativa, diaRef.current); } catch (e) { calou("vistosDaNarrativa", e); }
     /* ---- DA BASE PARA O CÂNONE (v9.14) ----
        O outro lado do consumo. Quando um local ou uma pessoa da base entra na
        narrativa, ele deixa de ser estoque e vira história: o sistema marca
@@ -11772,7 +11775,7 @@ export default function Taverna() {
         const citadosAgora = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ");
         emCenaAgora = Object.keys(npcsRef.current || {}).filter((nome) => citadosAgora.includes(nome));
       } catch { emCenaAgora = []; }
-      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })() });
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })() });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
       /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —
@@ -11823,7 +11826,7 @@ export default function Taverna() {
       nomeCampanhaRef.current || nomeCampanha, mundoAtual(), persAtual || personagemRef.current || personagem,
       canoneRef.current, { ...bancoNomesRef.current, elenco: (() => { try { return elencoParaPovoar(sementeMundo(), mapaRef.current, { ...contextoDoElenco(), dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); } catch (e) { calou("elencoParaPovoar", e); return []; } })() },
       (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
-      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco(), emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((n) => c.includes(n)); } catch (e) { calou("emCena das pessoas", e); return []; } })(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao das pessoas", e); return []; } })() }),
+      resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((n) => c.includes(n)); } catch (e) { calou("emCena das pessoas", e); return []; } })(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao das pessoas", e); return []; } })() }),
       tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
       /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */
       { npcs: npcsRef.current, elenco: nomesDoElenco() },
@@ -12184,7 +12187,7 @@ export default function Taverna() {
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
-    if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); }
+    if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); }
     /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
        retomar dele, nunca voltar a zero (é a mesma régua do load) */
     if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
@@ -12380,7 +12383,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -20903,6 +20906,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       checarFama();
       tentarSurgirNemesis();
       processarNemesisDiaria();
+      try { const r = promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], dia: diaRef.current - (n - 1 - i) }); elencoSaveRef.current = r.estado; } catch (e) { calou("promoverNoDia", e); }
       if (Math.random() < 0.25) {
         const boato = rumorDoDia({ ...contRef.current, cicatrizes: (personagem.cicatrizes || []).length, quaseMorte: contRef.current.quaseMorte || 0 }, personagem.nome, patamarFama(famaAtual()), !!(nemesisRef.current && nemesisRef.current.status !== "derrotada"));
         pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boato}…` }]);

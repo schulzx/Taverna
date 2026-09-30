@@ -275,7 +275,7 @@ O limite é o que um commit revertido não desfaz.
     Sem investimento e fora do elenco, sai de PESSOAS CONHECIDAS e do LONGE (a não ser que
     esteja presente). **Nada se apaga do registo.** A lista dobrada em Gestão › Pessoas é tela
     e espera a palavra da pessoa (ordem 28/09 §4).
-  - [ ] **MM8e · a promoção** · campo novo `elenco` no topo do save (aditivo)
+  - [x] **MM8e · a promoção** · feito 30/09, v9.329 · campo novo `elenco` no topo do save (aditivo; a sala é publicada sem ele)
     Por tabela, lendo **o mesmo `conhecidoEm` e o mesmo convívio do convite** (nunca os
     reescreve); com o tamanho fixo, sai quem pesa menos (nunca espinha, chefe, laço, grupo).
   - [ ] **MM8f · o elenco age fora de cena**

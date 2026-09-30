@@ -309,10 +309,16 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      que deram o `Atacar` do painel por vivo durante um ciclo inteiro
      depois de E3 o ter tornado inalcançável. Trocar número por texto não
      basta; é preciso âncora que meça ALCANCE.) */
-  } else if (iPush + 1 !== 8184) {
-    falha(`pushMsgs saiu de src/App.jsx:8184 e agora está em :${iPush + 1}`,
+  /* A PROMOÇÃO (frontend, MM8e, 30/09): 8184 -> 8186, +2. Dois dos quatro
+     pontos novos desta etapa (o ref `elencoSaveRef`, logo abaixo de
+     `npcsRef`; a saída na pauta, dentro de `pautaDoTurno`) nascem ACIMA
+     deste ponto; os outros dois (os vistos por turno; a promoção ao virar
+     o dia) nascem abaixo dele e não contam aqui. Re-medido por esta
+     própria catraca; nada somado de cabeça. */
+  } else if (iPush + 1 !== 8186) {
+    falha(`pushMsgs saiu de src/App.jsx:8186 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8184, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8186, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

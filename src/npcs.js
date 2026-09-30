@@ -533,6 +533,10 @@ export function ordemDaImportancia(npcs, contexto) {
 export const FIGURANTE = {
   janela: 3,
   relacoesSemPeso: ["", "neutro", "desconhecido"],
+  /* MM8e: quem o herói viu em tantos dias diferentes VOLTOU a ele — é
+     investimento. Os dias vêm do campo `elenco.vistos` do save, pelo
+     contexto (`vistos`); sem ele, este critério simplesmente não conta. */
+  diasVistos: 2,
 };
 
 export function investimentoDe(n, contexto) {
@@ -548,6 +552,11 @@ export function investimentoDe(n, contexto) {
   if (em(c.grupo)) out.push("grupo");
   if (em(c.missao)) out.push("missão");
   if (em(c.elenco)) out.push("elenco");
+  /* MM8e: voltou a ele em dias diferentes */
+  if (nome && c.vistos && typeof c.vistos === "object") {
+    const k = Object.keys(c.vistos).find((x) => semAcento(x) === nome);
+    if (k && Array.isArray(c.vistos[k]) && new Set(c.vistos[k]).size >= FIGURANTE.diasVistos) out.push("voltou");
+  }
   return out;
 }
 

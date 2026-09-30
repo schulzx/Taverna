@@ -15,6 +15,40 @@ Formato:
 ```
 
 ---
+## 30/09 06:27 · v9.329 · MM8e · a promoção, pelos dias do convite · commit (o hash vai no próximo bloco)
+
+- **por que andou:** a quinta subetapa do elenco — o figurante em quem o jogador investe sobe ao
+  elenco, e o elenco de tamanho fixo perde alguém. A proposta da pessoa, nas palavras dela.
+- **estado inicial:** verde (`904c935`, e o `27efcb8` do coordenador no roteiro: o verde é o código
+  de saída do `npm test`). Todas as provas desta etapa foram lidas pelo código de saída.
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit. **A mão
+  encerrou o turno a meio**, a "esperar a notificação de um monitor" — foi retomada com a ordem de
+  correr tudo em primeiro plano, e fechou.
+- **backend — o único campo novo do MM8:** `elenco` no topo do save (promovidos, saídos, e os dias
+  em que o herói viu cada pessoa — até 10 por pessoa e 150 pessoas). **A versão antiga ignora-o**:
+  o load lê o save chave a chave e o salvar monta o objeto de novo a partir do estado, por isso
+  quem voltar a uma versão antiga perde as promoções no primeiro autosave e o jogo segue inteiro —
+  o "reversível" da lei. **Um save sem o campo joga igual.** Os dias vistos fecham o "visto em dois
+  dias" que a MM8d não podia medir.
+- **a promoção:** ao virar o dia, sobe quem está no registo, vivo, fora do elenco e com investimento
+  (dois dias vistos, um laço ou o grupo) — **e só com o convívio do convite** (os dias desde o
+  encontro, lidos do mesmo `conhecidoEm`, nunca reescrito; piso 3). Um por dia. Sai quem pesa menos;
+  **nunca** quem é da história, um chefe, quem tem laço ou está no grupo; se ninguém pode sair,
+  ninguém sobe. A saída diz-se pelo mundo ("Aelith deixou Forte do Rei ontem"), só na cidade dela e
+  por 3 dias. O registo, o convite e o Códex ficam iguais; nada no fixo do prompt.
+- **a sala — o limite que se respeitou:** o salvar publica o save na sala de dois (`api/sala`), e o
+  protocolo da sala é da pessoa. **A sala passa a ser publicada sem a chave nova** — tudo o resto
+  byte a byte igual; o convidado não precisa das promoções do anfitrião. Uma asserção do
+  `teste-sala` re-ancorada, com o motivo.
+- **o cache do elenco** (MM8c-2) passou a ter o estado na chave — sem isso, depois de uma promoção o
+  elenco ficava velho.
+- **a prova jogada:** "Gael da Colina" citado → `elenco.vistos` cresceu um dia por turno no save;
+  três "Esperar 24h" até ao dia 4 → **promovido no dia 4** (convívio de exatamente 3 dias, o piso),
+  com uma saída no mesmo dia; recarregar duas vezes — o campo sobreviveu byte a byte; nenhum nome de
+  mecanismo na tela.
+- **para quem joga:** a gente a quem ele volta passa a ficar — o Mestre lembra-a, conta com ela, e
+  alguém que ele nunca procurou abre-lhe lugar, deixando a cidade.
+
 ## 30/09 05:18 · v9.328 · **subi vermelho, e o conserto** · commit (este)
 
 - **o que aconteceu:** o commit da MM8d (`8f95b4d`) **subiu com duas suítes vermelhas**

@@ -749,7 +749,8 @@ export function genteParaPauta(ctx) {
   let el = null;
   const elenco = () => {
     if (el) return el;
-    try { el = elencoDoMundo(s, o.mapa, { genero: o.genero, molde: o.molde, lex: o.lex, espinha: o.espinha, guildas: o.guildas, base: o.base }); } catch { el = { pessoas: [], lacos: [], casas: [] }; }
+    /* MM8e: com o que a campanha mudou (promovidos e saídos) */
+    try { el = elencoDoMundo(s, o.mapa, { genero: o.genero, molde: o.molde, lex: o.lex, espinha: o.espinha, guildas: o.guildas, base: o.base, estado: o.estado, npcs: o.npcs }); } catch { el = { pessoas: [], lacos: [], casas: [] }; }
     return el;
   };
   /* MM8b: o elenco é o último a ser procurado, e SÓ PELO NOME — o mestre de

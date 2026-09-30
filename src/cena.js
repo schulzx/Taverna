@@ -300,7 +300,7 @@ function comTeto(itens, teto, texto, protegido = () => false) {
 }
 
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [] } = {}) {
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null } = {}) {
   const { aqui: aqui0, longe: longe0 } = elencoDaCena(npcs, cidadeAtual, mapa, { comGrupo });
   if (!aqui0.length && !longe0.length) return "";
   /* a ordem do registo: quem importa primeiro, a recência desempata */
@@ -316,7 +316,8 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
      segredo, fora do elenco, do grupo e das missões) não entra no LONGE —
      nem conta no +N, porque não é gente que a cena possa pedir */
   const agora = retomarContador(normalizarRecencia(npcs && typeof npcs === "object" ? npcs : {}) || {});
-  const contexto = { grupo: comGrupo, elenco, emCena, missao };
+  /* MM8e: e quem o herói viu em dias diferentes (`vistos`) voltou a ele */
+  const contexto = { grupo: comGrupo, elenco, emCena, missao, vistos };
   const longe = longe0.filter((n) => !ehDePassagem(n, contexto, agora)).sort((a, b) => rank(a) - rank(b));
   const ta = comTeto(aqui, TETO_DO_QUEM.aqui, (n) => `${n.nome} (${n.motivo})`, protegido);
   const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`);

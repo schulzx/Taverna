@@ -559,8 +559,12 @@ sec("4. a definição operacional de 'número que muda'");
      mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
      A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
      14499 -> 14509, +10 — o cache por identidade (elencoCacheRef), mesmo
-     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14509/.test(relogio.porque));
+     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
+     A promoção (frontend, MM8e, 30/09): 14509 -> 14512, +3 — quatro
+     pontos novos acima deste (o ref do save, os vistos, a promoção ao
+     virar o dia, a saída na pauta), mesmo motivo, mesmo lugar: o campo
+     `porque` em testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14512/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -801,9 +805,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
        13025 -> 13035, +10 — o mesmo degrau desta etapa em
        FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
-       elencoCacheRef). */
+       elencoCacheRef).
+       A promoção (frontend, MM8e, 30/09): 13035 -> 13038, +3 — o mesmo
+       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13035").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13038").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -924,8 +930,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
        12896 -> 12906, +10 — o mesmo degrau desta etapa em
        FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
-       elencoCacheRef). */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12906" && x.familia === "alcance"));
+       elencoCacheRef).
+       A promoção (frontend, MM8e, 30/09): 12906 -> 12909, +3 — o mesmo
+       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12909" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -976,8 +984,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
      13041 -> 13051, +10 — o mesmo degrau desta etapa em
      FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
-     elencoCacheRef). */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13051/.test(S.ondeSai));
+     elencoCacheRef).
+     A promoção (frontend, MM8e, 30/09): 13051 -> 13054, +3 — o mesmo
+     degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13054/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));
