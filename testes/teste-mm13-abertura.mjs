@@ -467,8 +467,11 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   };
 
   /* ---- 1. os imports ---- */
-  t("App.jsx importa as nove funções de abertura.js",
-    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino } from "./abertura.js";'));
+  /* MM14: nove → dez — entrou `sinosForaDeHora` (o sino fora de hora,
+     perguntado depois). A asserção move-se com o motivo, sem afrouxar: ainda
+     é o MESMO import, só que agora com o décimo nome. */
+  t("App.jsx importa as dez funções de abertura.js",
+    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora } from "./abertura.js";'));
   t("App.jsx importa chaveDoLugar de mundo-base.js",
     app.includes("masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from \"./mundo-base.js\";"));
 

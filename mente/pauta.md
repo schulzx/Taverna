@@ -401,9 +401,11 @@ O limite é o que um commit revertido não desfaz.
   5. ✓ *feito em v9.334* · **O dano do contra-ataque é contado ao Narrador e nunca aplicado** (2 em 2).
      *Ficam dois miúdos antigos: o PV do envelope sai de `comb` e não de `combPos`; um inimigo morto pelo
      revide ainda age nessa rodada. E a sala abandonada a meio de uma luta volta com todos, mesmo os mortos.*
-  6. **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
+  6. ✓ *feito em v9.336 (as 12 da sessão: 5 → 13 de 13 pelo caminho novo); fica: uma pergunta fechada que a
+     ficha sabe responder ainda pode ir ao oráculo (d100) antes da pauta — visto a jogar com uma taverneira
+     ainda não registada; é no sinal `ehPerguntaAoMundo`* · **A pergunta perde-se no caminho** — a palavra "sino" do nome da taverna sequestrou a resposta seis
      vezes; o teste social come a frase; um fato por turno, às vezes de outra cidade (a casa de outra cidade).
-  7. **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
+  7. ✓ *feito em v9.336 (perguntar é de graça — decisão do coordenador)* · **Perguntar numa luta gasta a vez**; o movimento escrito é engolido; "esperar" é um contra-ataque sem aviso.
   8. **Missões forçadas em série** *(e ainda: o Narrador e o Cronista fecham quests antigas por título, sem
      conferir — `App.jsx` ~9651 e ~10470; fechá-los é remover o que existe, decidir; e a secção `pessoas` do
      Cronista ainda regista nomes de passagem sem `aindaSoUmNome`; e "volto para a mesa" casa "A Mesa Honesta")* (quatro em 43 respostas; "alguém vem cobrar o que você disse" sem promessa).

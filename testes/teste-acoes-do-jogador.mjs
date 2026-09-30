@@ -568,8 +568,11 @@ sec("4. a definição operacional de 'número que muda'");
      mesmo motivo, mesmo lugar: o campo `porque` em
      testes/acoes-do-jogador.mjs.
      O crime (frontend, MM10, 30/09): 14528 -> 14546, +18 — mesmo motivo,
-     mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14546/.test(relogio.porque));
+     mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
+     As perguntas ao Mestre (frontend, MM14, 30/09): 14546 -> 14584, +38 —
+     mesmo motivo, mesmo lugar: o campo `porque` em
+     testes/acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14584/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -825,9 +828,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        linha) somou 4 linhas ao mesmo degrau já acumulado de
        FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
        O crime (frontend, MM10, 30/09): 13054 -> 13072, +18 — o mesmo
-       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       As perguntas ao Mestre (frontend, MM14, 30/09): 13072 -> 13093, +21 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13072").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13093").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -956,8 +961,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        nascem acima deste ponto. Re-medido por check-acoes-do-jogador.mjs.
        O crime (frontend, MM10, 30/09): 12921 -> 12939, +18 — o mesmo
        degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido
-       por check-acoes-do-jogador.mjs. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12939" && x.familia === "alcance"));
+       por check-acoes-do-jogador.mjs.
+       As perguntas ao Mestre (frontend, MM14, 30/09): 12939 -> 12960, +21 —
+       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+       Re-medido por check-acoes-do-jogador.mjs. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:12960" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1014,8 +1022,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      A luta sem espada (frontend, MM9, 30/09): 13054 -> 13070, +16 — o
      mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
      O crime (frontend, MM10, 30/09): 13070 -> 13088, +18 — o mesmo
-     degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13088/.test(S.ondeSai));
+     degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
+     As perguntas ao Mestre (frontend, MM14, 30/09): 13088 -> 13109, +21 —
+     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13109/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

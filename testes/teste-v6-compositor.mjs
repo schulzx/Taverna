@@ -103,7 +103,11 @@ sec("4. a fiação");
   t("o rascunho guarda-se na pausa e ao esconder, e só dentro do jogo", /setTimeout\(guardarORascunho, DADO\.pausaDoRascunho\)/.test(ORG) && /"visibilitychange"/.test(ORG) && /"pagehide"/.test(ORG) && /if \(!rascunhoDeQuemRef\.current\) return;/.test(ORG));
   t("volta ao entrar no jogo — e só o desta campanha", /setEntrada\(rascunhoDe\(localStorage\.getItem\(chaveDoRascunho\(modoRef\.current\)\), quem\)\);/.test(ORG));
   t("ir ao menu guarda, já não apaga", /setHabsSel\(\[\]\); guardarORascunho\(\); setDadoRolando\(false\);/.test(APP) && !/setHabsSel\(\[\]\); setEntrada\(""\)/.test(APP));
-  t("apaga-se quando o turno parte (os quatro que mandam) e quando se apaga o campo", (APP.match(/setEntrada\(""\); apagarORascunho\(\);/g) || []).length === 4 && /if \(!e\.target\.value\.trim\(\)\) apagarORascunho\(\);/.test(COMP));
+  /* MM14 (frontend, 30/09): quatro → cinco. A pergunta que não gasta a vez
+     dentro da luta ("a quantos metros estão?") também parte para o
+     Narrador — limpa a caixa e o rascunho como qualquer turno que parte,
+     só que sem mexer no tabuleiro. É o mesmo idioma, um quinto lugar. */
+  t("apaga-se quando o turno parte (os cinco que mandam) e quando se apaga o campo", (APP.match(/setEntrada\(""\); apagarORascunho\(\);/g) || []).length === 5 && /if \(!e\.target\.value\.trim\(\)\) apagarORascunho\(\);/.test(COMP));
   t("o campo abre-se com foco ou texto, também na espera", /const campoAberto = campoFocado \|\| !!entrada\.trim\(\);/.test(APP));
   t("a sala a dois: a faixa e a promessa de reescrever ficam", /O turno sai quando os dois escreverem\. Dá para reescrever a sua até lá\./.test(APP));
   t("e nada disto custa o turno", /calou\("guardar o rascunho", e\)/.test(ORG) && /calou\("o toque no dado", e\)/.test(ORG) && /calou\("devolver o rascunho", e\)/.test(ORG));

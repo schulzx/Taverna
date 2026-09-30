@@ -21,6 +21,8 @@ import { valorDeItem, PRECO_VENDA } from "./economia.js";
 import { PORTES } from "./geografia.js";
 import { nomesDeLugar } from "./lexico.js";
 import { fatorDoLugar, generoDoItem, vocacaoDe } from "./comercio.js";
+/* MM14: a frase do jogador (não o envelope), e só a parte que pergunta */
+import { assuntoDaFrase, fraseDoJogador } from "./perguntas.js";
 
 /* RNG determinístico — a mesma cidade na mesma semana dá a mesma banca */
 function rngDe(semente) {
@@ -289,6 +291,88 @@ export function resumoMercadoPrompt(mercadores) {
      amostra do que elas têm — a lista inteira mora no painel do jogador. */
   const linhas = ms.map((m) => `${m.icone} ${m.nome} (${m.rotulo}): ${m.estoque.slice(0, 3).map((it) => it.nome).join(", ")}${m.estoque.length > 3 ? ` e mais ${m.estoque.length - 3}` : ""}`);
   return `BANCAS ABERTAS AQUI (fato do sistema — são estas e só estas; estoque e preço estão no painel do jogador, não os invente): ${linhas.join(" · ")}.`;
+}
+
+/* ============================================================
+   O PREÇO PERGUNTADO (MM14)
+
+   "Quanto custa uma adaga boa, equilibrada para lançar?" (T14 da sessão de
+   prova). A ferraria não tinha adaga nenhuma — a única lâmina da cidade
+   era a Lâmina de Névoa, no Armazém, a ◉ 22 —, e o Mestre respondeu "doze
+   moedas; ferro de briga, seis": a pauta levava as bancas cortadas em "e
+   mais 4" e nenhum preço. O painel desmentiu-o no turno seguinte.
+
+   Quando a frase pergunta um preço e nomeia uma MERCADORIA, sobe à pauta
+   (secção PERGUNTOU) o que há dela à venda aqui, com o preço e a banca —
+   ou, não havendo, que não há, e o que há do mesmo gênero. "Não há adaga"
+   é a resposta certa, e só o sistema a pode dar.
+   ============================================================ */
+export const PERGUNTA_DE_PRECO = /\b(quanto (custa|custam|e|sao|sai|saem|fica|ficam|vale|valem|cobra|cobram|pede|pedem|quer)|qual (e )?o preco|que preco|preco d|a quanto|vende[ms]?|vendem|tem (alguma?|um|uma|uns|umas) \w+( \w+)? (a venda|para vender|pra vender)|a venda|comprar)\b/;
+/* A palavra do jogador e o TIPO de item do catálogo que ela nomeia. A
+   palavra procura-se no nome do item (a "Lâmina de Névoa" é lâmina); não
+   havendo, o tipo dá o que há de parecido. */
+export const MERCADORIAS = [
+  { tipo: "arma", rotulo: "armas", rx: /\b(adagas?|punha(l|is)|facas?|laminas?|espadas?|sabres?|machad\w*|lancas?|arcos?|bestas?|macas?|martelos?|foices?|chicotes?|cajados?|clavas?|armas?)\b/ },
+  { tipo: "escudo", rotulo: "escudos", rx: /\b(escudos?|broquel|paves)\b/ },
+  { tipo: "armadura", rotulo: "armaduras", rx: /\b(armaduras?|couracas?|cota de malha|gibao|peitora(l|is)|brigantina|couro batido)\b/ },
+  { tipo: "elmo", rotulo: "elmos", rx: /\b(elmos?|capacetes?)\b/ },
+  { tipo: "botas", rotulo: "calçados", rx: /\b(botas?|sandalias?|sapatos?|grevas?)\b/ },
+  { tipo: "consumivel", rotulo: "poções e frascos", rx: /\b(pocao|pocoes|elixir(es)?|frascos?|tonicos?|antidotos?|remedios?)\b/ },
+];
+export const ITENS_POR_RESPOSTA = 3;
+
+const semAcentoM = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* o singular de uma palavra de mercadoria, para a procurar no nome do item */
+const raiz = (p) => p.replace(/(oes|ais|eis)$/, (x) => ({ oes: "ao", ais: "al", eis: "el" })[x]).replace(/s$/, "");
+
+/* `mercadores`: as bancas desta cidade como o painel as mostra (sem o que já
+   se comprou); `frase`: o que o jogador disse (já sem envelope). Devolve
+   { pergunta: [linha], em: [pos] } — ou vazios, se a frase não pergunta um
+   preço de mercadoria. */
+export function mercadoParaPauta(mercadores, frase, { onde = "" } = {}) {
+  const out = { pergunta: [], em: [] };
+  /* a frase do jogador (não o envelope), e só a parte que PERGUNTA: "pago
+     a lâmina e pergunto a quantos passos fica o poço" não pede preço de
+     lâmina nenhuma. Os nomes ficam — "a Lâmina de Névoa" é a mercadoria. */
+  const t = assuntoDaFrase(fraseDoJogador(frase), [], { nomesProprios: false });
+  if (!t.trim()) return out;
+  /* a mercadoria de que se pergunta o preço é a da MESMA oração da
+     pergunta, e de preferência a que vem depois dela: "aponto para as
+     facas: «quanto custa uma adaga?»" pergunta pela adaga */
+  let achada = null;
+  const rx = /[^.!?;\n]+[.!?;\n]*/g;
+  let o;
+  while (!achada && (o = rx.exec(t))) {
+    const oracao = o[0];
+    const preco = oracao.match(PERGUNTA_DE_PRECO);
+    if (!preco) continue;
+    let melhor = null;
+    for (const m of MERCADORIAS) {
+      const re = new RegExp(m.rx.source, "g");
+      let x;
+      while ((x = re.exec(oracao))) {
+        const depois = x.index >= preco.index;
+        const c = { m, palavra: x[0], pos: o.index + x.index, depois, dist: Math.abs(x.index - preco.index) };
+        if (!melhor || (c.depois && !melhor.depois) || (c.depois === melhor.depois && c.dist < melhor.dist)) melhor = c;
+      }
+    }
+    if (melhor) achada = { ...melhor, preco: o.index + preco.index };
+  }
+  if (!achada) return out;
+  const bancas = (Array.isArray(mercadores) ? mercadores : []).filter((b) => b && Array.isArray(b.estoque));
+  const itens = bancas.flatMap((b) => b.estoque.filter((it) => it && it.nome).map((it) => ({ it, banca: b.nome || b.rotulo || "uma banca" })));
+  const alvo = raiz(achada.palavra);
+  const pelaPalavra = itens.filter(({ it }) => semAcentoM(`${it.nome} ${it.base || ""}`).split(/[^a-z]+/).some((w) => raiz(w) === alvo));
+  const doTipo = itens.filter(({ it }) => it.tipo === achada.m.tipo);
+  const lista = (xs) => xs.slice(0, ITENS_POR_RESPOSTA).map(({ it, banca }) => `${it.nome} ◉ ${it.preco} (${banca})`).join(", ");
+  const aqui = onde ? ` em ${onde}` : " aqui";
+  let linha;
+  if (pelaPalavra.length) linha = `à venda${aqui}: ${lista(pelaPalavra)}`;
+  else if (doTipo.length) linha = `não há ${achada.palavra} à venda${aqui}; ${achada.m.rotulo} à venda: ${lista(doTipo)}`;
+  else linha = `não há ${achada.palavra} à venda${aqui}, e nenhuma banca daqui vende ${achada.m.rotulo}`;
+  out.pergunta.push(linha);
+  out.em.push(Math.min(achada.preco, achada.pos));
+  return out;
 }
 
 export const MERCADO_PROMPT = `MERCADO E COMÉRCIO (v9.2 — o sistema tem o estoque, você tem a cena):

@@ -15,7 +15,42 @@ Formato:
 ```
 
 ---
-## 30/09 12:04 · v9.335 · MM14 (3) · o lugar da heroína e o da narração voltam a ser um · commit (o hash vai no próximo bloco)
+## 30/09 13:26 · v9.336 · MM14 (4) · perguntar é de graça, e a resposta que chega é a que responde · commit (o hash vai no próximo bloco)
+
+- **por que andou:** duas decisões do coordenador da fase — **perguntar ao Mestre é de graça** (numa mesa
+  do Matt, "ele está a ver-me?" nunca custa a vez; foi onde a sessão perdeu 7 de 12 perguntas) — e **a
+  medida muda**: não chega a informação estar na pauta; tem de lá estar **a que responde à pergunta**.
+- **estado inicial:** verde (MM14 (3) no ar, `4d721eb`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend:** `src/perguntas.js` — `soPergunta` separa a pergunta do que age, pela peneira (os gestos de
+  quem pergunta — virar-se, chamar, apontar — também são de graça). E o caminho:
+  - **o "sino" do Sino Calado sequestrava a resposta** — a ficha da cidade lia a frase inteira e casava o
+    nome da taverna; agora o assunto procura-se numa frase **sem nomes próprios** e sem a parte que age;
+  - **o teste social comia a frase** — "vou até X e pergunto" era Persuasão; uma fala que só pergunta é
+    balcão, não dado (a cantada continua a ser teste);
+  - **um fato só por turno, às vezes de outra cidade** — até três respostas, pela ordem da frase, dentro do
+    teto (duas cabem na taverna cheia; a terceira entra quando há lugar); "que família manda aqui?" só
+    aceita casas daqui (o erro da sessão era um homónimo);
+  - **as quatro inventadas** passam a sair do sistema: o posto com data, quem trabalha na casa (com a gente
+    do registo), **o preço de uma arma pelo mercado** ("não há adaga à venda; armas à venda: …"), a
+    distância a um lugar nomeado ("Poço de Sal, a sudeste, 90 km — mina, perigo 4, 9 salas");
+  - **o rebate que o Mestre desmentia** — o sino da MM13 guarda quando tocou (campos novos, aditivos), e a
+    resposta ao sino diz "às 10:49, tocou a rebate".
+- **A RÉGUA NOVA — as 12 perguntas da sessão, refeitas sem chamadas pelo que o jogo enviaria (o mundo
+  reconstruído pela semente): antes 5 de 13 levavam a resposta certa; agora 13 de 13**, e em cada uma a
+  errada (o sino das horas, a casa do homónimo) não está.
+- **frontend:** a pergunta não faz andar o relógio, os relógios nem o sino; **na luta, quem só pergunta é
+  respondido e a vez continua dele** (o `enviar` em luta não corre o turno dos inimigos — só o `fecharMeuTurno`
+  o faz); a pauta junta as respostas numa linha; o teste social leva a frase do jogador e não o rótulo.
+- **a prova jogada:** "quanto custa o quarto na taverna daqui?" → a pauta levou o preço da ficha, e **o
+  relógio ficou nas 08:00** em três perguntas seguidas. **E um resto:** "Maren, há quanto tempo tem essa
+  taverna?" foi ao oráculo (d100) em vez da ficha, porque a taverneira ainda não estava registada — a
+  pergunta fechada que a ficha sabe responder ainda pode ir ao oráculo; na pauta.
+- **a sonda:** 92/157, não se move (nenhum "ninguém decide" passa honestamente).
+- **para quem joga:** perguntar ao Mestre deixa de custar a vez e o tempo, e a resposta é a verdade do
+  mundo — o preço da ficha, a idade do retrato, a distância do mapa — e não o sino das horas.
+
+## 30/09 12:04 · v9.335 · MM14 (3) · o lugar da heroína e o da narração voltam a ser um · commit `4d721eb`
 
 - **por que andou:** o defeito nº 2 da sessão de prova, o maior que restava — a continuidade partia-se
   no turno 5.

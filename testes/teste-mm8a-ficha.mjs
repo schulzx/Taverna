@@ -71,7 +71,11 @@ sec("1. as tabelas");
   t("toda família tem ao menos um acontecimento possível", [...familias].every((f) => EVENTOS_DO_PASSADO.some((e) => e.familias.includes("*") || e.familias.includes(f))));
   t("fora do turno, desfechos e o dormir existem", FORA_DO_TURNO.length >= 3 && DESFECHOS_DO_ADVERSARIO.length >= 3 && !!DORMINDO);
   t("o jeito que mudou é uma fração", JEITO_QUE_MUDOU > 0 && JEITO_QUE_MUDOU < 1);
-  t("uma resposta por turno; no máximo quatro pessoas por resposta", RESPOSTAS_DA_GENTE === 1 && PESSOAS_POR_RESPOSTA === 4);
+  /* MM14: 1 → 2. A sessão de prova (T44) fez duas perguntas à mesma pessoa
+     numa frase ("há quanto tempo tocas aqui? e de onde vens?") e só uma
+     subia; a mesa corta o total em RESPOSTAS_DA_MESA (perguntas.js), e o
+     teto da pauta é medido em teste-mm14-perguntas. */
+  t("até duas respostas por turno; no máximo quatro pessoas por resposta", RESPOSTAS_DA_GENTE === 2 && PESSOAS_POR_RESPOSTA === 4);
   t("as perguntas têm id único", new Set(PERGUNTAS_DA_GENTE.map((p) => p.id)).size === PERGUNTAS_DA_GENTE.length);
   /* a rotina e a feira contam a MESMA semana */
   t("a folga cai na semana da feira (O_HOJE.semana)", AQUI.gente.every((p) => { const f = fichaDaPessoa(SEM, p, CTX); return f.rotina.folga >= 0 && f.rotina.folga < O_HOJE.semana; }));
@@ -318,7 +322,9 @@ sec("9. lixo, null e imutabilidade");
     try { const r = genteParaPauta(c); if (!Array.isArray(r.pergunta)) erroP = "sem pergunta[]"; } catch (e) { erroP = `${JSON.stringify(c).slice(0, 80)}: ${e.message}`; }
   }
   t("nenhum lixo derruba a pauta, e ela devolve sempre { pergunta: [] }", !erroP, erroP);
-  t("null não vai à pauta", JSON.stringify(genteParaPauta(null)) === JSON.stringify({ pergunta: [] }));
+  /* MM14: a saída ganhou `em` (a posição de cada resposta na frase, para a
+     mesa juntar as fichas pela ordem em que foram pedidas) — vazio no null */
+  t("null não vai à pauta", JSON.stringify(genteParaPauta(null)) === JSON.stringify({ pergunta: [], em: [] }));
   t("um nome que ninguém conhece, sem ninguém em cena, não sobe nada", genteParaPauta({ ...cena("Há quanto tempo o Zebulão Inexistente está aqui?"), presentes: [], recentes: [], lugar: null }).pergunta.length === 0);
 
   const congela = (o) => { Object.freeze(o); for (const v of Object.values(o)) if (v && typeof v === "object") congela(v); return o; };
@@ -355,7 +361,12 @@ sec("10. a fiação — pautaDoTurno chama genteParaPauta de verdade");
   t("o corpo de pautaDoTurno não está vazio", corpo.length > 2000);
   t("pautaDoTurno importa genteParaPauta de gente-por-dentro.js", /import\s*\{[^}]*\bgenteParaPauta\b[^}]*\}\s*from\s*"\.\/gente-por-dentro\.js"/.test(app));
   t("pautaDoTurno CHAMA genteParaPauta", /\bgenteParaPauta\s*\(/.test(corpo));
-  t("e põe o resultado na secção \"pergunta\"", /porNaPauta\(p,\s*"pergunta",\s*gp\.pergunta\)/.test(corpo));
+  /* MM14: a gente deixou de subir sozinha — a cidade, a gente e o mercado
+     juntam-se numa mesa só (`juntarRespostas`, perguntas.js), pela ordem em
+     que a frase pediu cada coisa. A asserção move-se com o motivo: ainda
+     prova que `gp` chega à secção "pergunta", só que pela mesa, não sozinho. */
+  t("e o resultado sobe pela mesa (com o da cidade e o do mercado) na secção \"pergunta\"",
+    /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc\]\)\)/.test(corpo));
   t("a chamada está guardada por calou (um órgão que estoura não derruba o turno)", /try\s*\{[^]*?genteParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("genteParaPauta"/.test(corpo));
   const iCidade = corpo.indexOf("fichaParaPauta(");
   const iGente = corpo.indexOf("genteParaPauta(");

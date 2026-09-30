@@ -59,9 +59,17 @@
 import { rngDe } from "./geografia.js";
 import { vocacaoDe } from "./comercio.js";
 import { festivalDe, ehNoite } from "./calendario.js";
-import { locaisDaCidade } from "./mundo-base.js";
+import { locaisDaCidade, masmorrasDoMundo } from "./mundo-base.js";
 import { comoChamam, chamadoDaRaca, GENEROS_FUTURISTAS } from "./lexico.js";
 import { comEm } from "./lugar.js";
+/* MM14: a frase do jogador sem os nomes próprios (o "Sino" do Sino Calado
+   sequestrou seis respostas), e a posição de cada assunto na frase para a
+   mesa juntar as respostas pela ordem em que foram pedidas */
+import { fraseDoJogador, assuntoDaFrase } from "./perguntas.js";
+/* MM14: a distância até um lugar nomeado — a mesma conta e a mesma escrita
+   do Geógrafo e dos arredores, nunca uma segunda */
+import { arredoresDaCidade, ondeFicaOArredor } from "./arredores.js";
+import { coordDe, kmEntre, rumoEntre, linhaDePonto } from "./coordenadas.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -389,6 +397,9 @@ export function fichaDaCidade(cidade, ctx = {}) {
 
   return {
     nome, porte, escala, militar, palavras,
+    /* MM14: os nomes das casas desta cidade — quem lê a frase do jogador
+       apaga-os antes de procurar o assunto ("o Sino Calado" não é o sino) */
+    lugares: locais.map((l) => l.nome).filter(Boolean),
     lingua,
     pouso: pousoDe(c, escala),
     instituicoes,
@@ -402,7 +413,15 @@ export function fichaDaCidade(cidade, ctx = {}) {
 
 /* O dia de hoje nesta cidade: a festa do calendário, o luto, a feira, o
    sino que toca agora. Determinístico pelo dia e pelo minuto. */
-function hojeDe(ficha, { semente = "", dia = 1, minuto = null } = {}) {
+/* `foraDeHora`: os sinos que tocaram fora de hora HOJE nesta cidade — quem
+   os sabe é a abertura (`sinosForaDeHora`, abertura.js), e o App passa-os;
+   aqui só se filtram os que servem: com hora e com o que foi. */
+const foraDeHoraValidos = (lista) => (Array.isArray(lista) ? lista : [])
+  .filter((x) => x && typeof x === "object" && typeof x.hora === "string" && x.hora && typeof x.o === "string" && x.o)
+  .slice(0, 2)
+  .map((x) => ({ hora: x.hora.slice(0, 5), o: x.o.slice(0, 200), curto: typeof x.curto === "string" ? x.curto.slice(0, 90) : "" }));
+
+function hojeDe(ficha, { semente = "", dia = 1, minuto = null, foraDeHora = null } = {}) {
   const d = Math.max(1, Math.floor(Number(dia) || 1));
   const festa = festivalDe(d);
   const rl = rngDe(`${semente}|luto|${ficha.nome}|${d}`);
@@ -417,7 +436,7 @@ function hojeDe(ficha, { semente = "", dia = 1, minuto = null } = {}) {
       if (s) sino = { nome: `${ficha.hoje.sinal} ${s.nome}`, o: s.o };
     }
   }
-  return { festa, luto, feira, sino, noite: m != null ? ehNoite(m) : false };
+  return { festa, luto, feira, sino, noite: m != null ? ehNoite(m) : false, foraDeHora: foraDeHoraValidos(foraDeHora) };
 }
 
 /* ---------------- AS PERGUNTAS ----------------
@@ -437,6 +456,10 @@ export const PERGUNTAS_DA_CIDADE = [
   { id: "reconhecer", rx: /\b(distintivo|salvo-conduto|salvo conduto|senha|insignia|reconhec|credencial|passe\b)/ },
   { id: "hoje", rx: /\b(sino|badal|corneta|sirene|festa|festival|feira|luto|enterro)/ },
   { id: "dadiva", rx: /\b(de graca|gratis|presente|sem cobrar|nao cobra|de oferta)/ },
+  /* MM14: "a que distância fica o Poço de Sal?" — a sessão de prova levou o
+     rumo e nunca a distância (T15). O LUGAR sai da frase inteira; aqui só
+     se reconhece que se pergunta pela distância. */
+  { id: "distancia", rx: /\b(a que distancia|que distancia|distancia (ate|de|daqui)|a quantos (passos|metros|km|quilometros|dias|horas|minutos|leguas)|quanto tempo (ate|leva|demora|se leva|de caminhada)|quanto falta|quao longe|(e|fica|esta) (longe|perto)|longe daqui|perto daqui|quantos dias (ate|de))/ },
 ];
 /* no máximo duas respostas por turno: quem pergunta três coisas de uma
    vez recebe as duas primeiras, e a terceira no turno seguinte */
@@ -457,6 +480,11 @@ const linhaDaLingua = (f) => {
    só precisa quando alguém pergunta. */
 function linhaDoHoje(f, h, { inteira = false } = {}) {
   const partes = [];
+  /* MM14: o sino que tocou FORA de hora hoje (o prenúncio e o rebate da
+     MM13) é o fato mais alto do dia — foi ele que a taverneira negou no
+     T43 ("não toca fora de hora há anos"), porque a pauta só levava o sino
+     das horas. No ambiente vai a forma curta; perguntado, a inteira. */
+  for (const x of h.foraDeHora || []) partes.push(`às ${x.hora}, ${inteira || !x.curto ? x.o : x.curto}`);
   if (h.festa) partes.push(inteira ? `dia de ${h.festa.nome} (${h.festa.descricao})` : `dia de ${h.festa.nome}`);
   if (h.luto) partes.push(`luto: enterram ${h.luto}`);
   if (h.feira && !h.festa) partes.push("dia de feira, a praça cheia");
@@ -471,9 +499,12 @@ const TODAS_AS_GIRIAS = [...APELIDOS_DE_FORA.map((x) => x.a), ...APELIDOS_DE_OFI
 function resposta(id, f, h, frase = "") {
   if (id === "pouso") {
     const p = f.pouso;
-    return `pouso: quarto comum ◉ ${p.comum} a noite`
-      + (p.bom != null ? `, quarto bom ◉ ${p.bom}` : ", não há quarto bom")
-      + `, estábulo ◉ ${p.estabulo} por animal; a semana (7 noites) ◉ ${p.semana} o quarto comum; ${p.camas} camas por quarto`;
+    /* MM14: mais curta (−40), os mesmos números. Na taverna cheia a segunda
+       resposta de uma frase que pergunta duas coisas não cabia atrás desta
+       (teste-mm14-perguntas §5) */
+    return `pouso: quarto comum ◉ ${p.comum} a noite (◉ ${p.semana} a semana)`
+      + (p.bom != null ? `, bom ◉ ${p.bom}` : ", não há quarto bom")
+      + `, estábulo ◉ ${p.estabulo} por animal; ${p.camas} camas por quarto`;
   }
   if (id === "lingua") return linhaDaLingua(f);
   if (id === "magia") return `quem estuda ${f.palavras.magia}: ${f.instituicoes.magia}`;
@@ -509,40 +540,119 @@ function resposta(id, f, h, frase = "") {
   return "";
 }
 
+/* ---------------- A DISTÂNCIA (MM14) ----------------
+   Até um lugar NOMEADO na frase: um arredor (a caminhada que o sistema lhe
+   deu), uma masmorra do mundo (com o que se sabe dela de fora: o tipo, o
+   perigo, as salas), outra cidade (com os dias de estrada, se há rota) ou
+   uma casa daqui (dentro dos muros). A conta e a escrita são as do
+   Geógrafo (`linhaDePonto`): rumo, distância e, até onde se vai a pé, o
+   tempo de pé. Nomeado primeiro na frase ganha; nenhum nomeado, nenhuma
+   linha — a distância de um lugar que o sistema não conhece é da cena. */
+function citaLugar(frase, nome) {
+  let melhor = -1;
+  for (const alvo of [norm(nome).trim(), norm(String(nome || "").replace(/^(o|a|os|as)\s+/i, "")).trim()]) {
+    if (alvo.length < 3) continue;
+    let i = frase.indexOf(alvo);
+    while (i >= 0) {
+      const a = i > 0 ? frase[i - 1] : " ", d = frase[i + alvo.length] || " ";
+      if (!/[a-z0-9]/.test(a) && !/[a-z0-9]/.test(d)) { if (melhor < 0 || i < melhor) melhor = i; break; }
+      i = frase.indexOf(alvo, i + 1);
+    }
+  }
+  return melhor;
+}
+
+function linhaDaDistancia(cidade, f, o, frase) {
+  const semente = String(o.semente == null ? "" : o.semente);
+  const mapa = o.mapa && typeof o.mapa === "object" ? o.mapa : {};
+  const c0 = coordDe(cidade);
+  const pontos = [];
+  for (const nome of f.lugares || []) pontos.push({ nome, dentro: true });
+  if (c0) {
+    try {
+      for (const a of arredoresDaCidade(semente, cidade)) {
+        const w = ondeFicaOArredor(cidade, a);
+        if (w) pontos.push({ nome: a.nome, coord: w.coord, km: w.km, rumo: w.rumo });
+      }
+    } catch { /* sem arredores, sem linha deles */ }
+    try {
+      for (const m of masmorrasDoMundo(semente, mapa)) {
+        const q = coordDe(m);
+        if (q) pontos.push({ nome: m.nome, coord: q, km: kmEntre(c0, q), rumo: rumoEntre(c0, q), mais: `${m.tipo}, perigo de nível ${m.nivel}, ${m.salas} salas` });
+      }
+    } catch { /* sem masmorras, sem linha delas */ }
+    const rotas = Array.isArray(mapa.rotas) ? mapa.rotas : [];
+    for (const c of (Array.isArray(mapa.cidades) ? mapa.cidades : [])) {
+      if (!c || !c.nome || semA(c.nome) === semA(cidade.nome)) continue;
+      const q = coordDe(c);
+      if (!q) continue;
+      const r = rotas.find((x) => x && ((semA(x.de) === semA(cidade.nome) && semA(x.para) === semA(c.nome)) || (semA(x.para) === semA(cidade.nome) && semA(x.de) === semA(c.nome))));
+      const dias = r && Number(r.dias) > 0 ? Number(r.dias) : 0;
+      pontos.push({ nome: c.nome, coord: q, km: kmEntre(c0, q), rumo: rumoEntre(c0, q), mais: dias ? `${dias} dia${dias > 1 ? "s" : ""} de estrada` : "" });
+    }
+  }
+  let alvo = null, onde = -1;
+  for (const p of pontos) {
+    const i = citaLugar(frase, p.nome);
+    if (i < 0) continue;
+    if (!alvo || i < onde || (i === onde && String(p.nome).length > String(alvo.nome).length)) { alvo = p; onde = i; }
+  }
+  if (!alvo) return "";
+  if (alvo.dentro) return `distância: ${alvo.nome} fica dentro dos muros — minutos a pé`;
+  if (!Number.isFinite(alvo.km)) return "";
+  return `distância: ${linhaDePonto(alvo)}${alvo.mais ? ` — ${alvo.mais}` : ""}`;
+}
+
 /* ---------------- O QUE SOBE À PAUTA ----------------
    `cidade`: o hoje e a língua, sempre que se está numa cidade — as duas
    coisas que a cena mostra sem ninguém perguntar. `pergunta`: a linha
    do que a frase do jogador pediu, e só isso. Quando a pergunta é pela
    língua, a língua sobe para a resposta e sai do ambiente — a mesma
-   verdade não entra duas vezes no mesmo turno. */
+   verdade não entra duas vezes no mesmo turno.
+
+   MM14: `em` diz, para cada linha de `pergunta`, onde o assunto dela está
+   na frase — é por aí que a mesa junta as respostas das várias fichas
+   (`juntarRespostas`, perguntas.js). O ASSUNTO procura-se na frase SEM os
+   nomes próprios: os lugares desta cidade, as outras cidades, os `nomes`
+   que o App conhece (a gente, o lugar onde se está) e toda palavra com
+   maiúscula no meio da oração. A frase que chega pode ser um envelope do
+   sistema: vale o que está no "Eu disse". */
 export function fichaParaPauta(cidade, ctx = {}) {
   const o = ctx && typeof ctx === "object" ? ctx : {};
-  const out = { cidade: [], pergunta: [] };
+  const out = { cidade: [], pergunta: [], em: [] };
   if (!cidade || typeof cidade !== "object" || !cidade.nome) return out;
   /* a ruína não tem rua, nem língua, nem sino */
   if (escalaDe(cidade) < 1) return out;
   const f = fichaDaCidade(cidade, o);
-  const h = hojeDe(f, { semente: o.semente, dia: o.dia, minuto: o.minuto });
-  const frase = norm(o.frase);
+  const h = hojeDe(f, { semente: o.semente, dia: o.dia, minuto: o.minuto, foraDeHora: o.foraDeHora });
+  const dita = fraseDoJogador(o.frase);
+  const frase = norm(dita);
+  const cidades = (o.mapa && Array.isArray(o.mapa.cidades) ? o.mapa.cidades : []).map((c) => c && c.nome).filter(Boolean);
+  const nomes = [cidade.nome, ...cidades, ...(f.lugares || []), ...(Array.isArray(o.nomes) ? o.nomes : [])].filter((x) => typeof x === "string");
+  const assunto = assuntoDaFrase(dita, nomes);
   const pedidos = [];
   if (frase.trim()) {
     /* pela ORDEM em que aparecem na frase: quem pergunta o preço e depois
        a guarda quer o preço primeiro */
     const achados = PERGUNTAS_DA_CIDADE
-      .map((p) => { const m = frase.match(p.rx); return m ? { id: p.id, pos: m.index } : null; })
+      .map((p) => { const m = assunto.match(p.rx); return m ? { id: p.id, pos: m.index } : null; })
       .filter(Boolean);
     /* a palavra de gíria dita pelo jogador — daqui ou de fora — também é
-       pergunta pela gíria */
+       pergunta pela gíria (na frase inteira: "Cabeças-de-vento" com
+       maiúscula continua a ser a palavra de que se pergunta) */
     if (!achados.some((a) => a.id === "giria")) {
       const i = TODAS_AS_GIRIAS.map((g) => frase.indexOf(norm(g))).filter((x) => x >= 0);
       if (i.length) achados.push({ id: "giria", pos: Math.min(...i) });
     }
     achados.sort((a, b) => a.pos - b.pos);
-    for (const a of achados) if (!pedidos.includes(a.id) && pedidos.length < RESPOSTAS_POR_TURNO) pedidos.push(a.id);
+    for (const a of achados) if (!pedidos.some((x) => x.id === a.id) && pedidos.length < RESPOSTAS_POR_TURNO) pedidos.push(a);
   }
-  for (const id of pedidos) { const l = resposta(id, f, h, frase); if (l) out.pergunta.push(l); }
+  for (const a of pedidos) {
+    const l = a.id === "distancia" ? linhaDaDistancia(cidade, f, o, frase) : resposta(a.id, f, h, frase);
+    if (l) { out.pergunta.push(l); out.em.push(a.pos); }
+  }
   const hj = linhaDoHoje(f, h);
-  if (hj && !pedidos.includes("hoje")) out.cidade.push(hj);
-  if (!pedidos.includes("lingua")) out.cidade.push(linhaDaLingua(f));
+  if (hj && !pedidos.some((x) => x.id === "hoje")) out.cidade.push(hj);
+  if (!pedidos.some((x) => x.id === "lingua")) out.cidade.push(linhaDaLingua(f));
   return out;
 }

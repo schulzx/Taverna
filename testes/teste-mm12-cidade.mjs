@@ -328,7 +328,9 @@ sec("6. lixo, null e imutabilidade");
   t("toda ficha tem todos os campos, mesmo a de lixo", fichas.every((f) => campos.every((k) => f[k] != null)));
   const minima = fichaDaCidade(null);
   t("a cidade sem dados recebe a ficha da vila (o meio honesto)", minima.escala === 2 && /comum/.test(minima.lingua.rua));
-  t("null não vai à pauta", JSON.stringify(fichaParaPauta(null)) === JSON.stringify({ cidade: [], pergunta: [] }));
+  /* MM14: a saída ganhou `em` (a posição de cada resposta na frase, para a
+     mesa as juntar pela ordem em que foram pedidas) — vazio também no null */
+  t("null não vai à pauta", JSON.stringify(fichaParaPauta(null)) === JSON.stringify({ cidade: [], pergunta: [], em: [] }));
   t("a ruína não tem rua, nem língua, nem sino", fichaParaPauta({ nome: "Ruínas", porte: "ruina" }, { frase: pergunta(14) }).cidade.length === 0);
 
   const congela = (o) => { Object.freeze(o); for (const v of Object.values(o)) if (v && typeof v === "object") congela(v); return o; };

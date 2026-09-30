@@ -217,6 +217,20 @@ export const SINO = {
 /* O PRENÚNCIO — o primeiro sino, ao longe, um segmento antes de encher.
    `{sinal}` é o da cidade (`cidade-por-dentro.js`: o sino, a corneta, a
    sirene); a aldeia sem sinal tem gente a correr. */
+/* MM14: O SINO FORA DE HORA, PERGUNTADO DEPOIS. "Para que toca o sino
+   assim?" (T43 da sessão de prova): o rebate tocou às 10:49 e a taverneira
+   respondeu às 13:30 que "não toca fora de hora há anos" — a ficha da
+   cidade só sabia o sino das HORAS. A abertura passa a guardar QUANDO o
+   sino tocou (dois campos novos no save, ignorados pela versão antiga), e
+   `sinosForaDeHora` devolve os de hoje à ficha. `o` é a resposta inteira;
+   `curto`, a que cabe no ambiente de todo turno. */
+export const SINOS_FORA_DE_HORA = {
+  prenuncio: { o: "{sinal} tocou uma vez fora de hora e calou; ninguém disse porquê", curto: "{sinal} tocou fora de hora e calou" },
+  rebate: { o: "{sinal} tocou a rebate: {o}", curto: "{sinal} tocou a rebate" },
+  /* a aldeia sem sino dá o alarme de outro jeito */
+  semSinal: "a gente",
+};
+
 export const PRENUNCIOS = {
   comSinal: "ao longe, {sinal} toca fora de hora e cala; ninguém diz porquê",
   semSinal: "gente passa a correr para os lados de {origem}, sem dizer porquê",
@@ -305,7 +319,18 @@ export function garantirAbertura(a) {
     cheios: Math.min(SINO.segmentos, inteiro(a.cheios)),
     prenunciado: !!a.prenunciado,
     tocou: !!a.tocou,
+    /* MM14: quando (dia e minuto do mundo) e, no rebate, o que trouxe */
+    prenunciadoEm: quandoFoi(a.prenunciadoEm),
+    tocouEm: quandoFoi(a.tocouEm),
+    oQueTocou: txt(a.oQueTocou, 200),
   };
+}
+
+function quandoFoi(q) {
+  if (!q || typeof q !== "object") return null;
+  const dia = Number(q.dia), minuto = Number(q.minuto);
+  if (!Number.isFinite(dia) || dia < 1 || !Number.isFinite(minuto) || minuto < 0) return null;
+  return { dia: Math.floor(dia), minuto: Math.floor(minuto) % 1440 };
 }
 
 /* ============================================================
@@ -754,14 +779,36 @@ export function andarOSino(abertura, ctx = {}) {
     });
     const relogio = base ? { ...base, cheios: base.segmentos } : null;
     return {
-      abertura: { ...novo, tocou: true, prenunciado: true },
+      abertura: { ...novo, tocou: true, prenunciado: true, tocouEm: quandoFoi({ dia: o.dia, minuto: o.minuto }), oQueTocou: txt(aconteceu, 200) },
       prenuncio: "",
       toque: relogio ? { relogio, envelope: envelopeCheio(relogio), linha: `⚠ ${consequencia.charAt(0).toUpperCase()}${consequencia.slice(1)}.` } : null,
     };
   }
   if (!novo.prenunciado && novo.cheios >= SINO.segmentos - 1 && !(o.cidade && norm(o.cidade) !== norm(a.cidade))) {
     const pr = contrair(encher(v.sinal ? PRENUNCIOS.comSinal : PRENUNCIOS.semSinal, v));
-    return { abertura: { ...novo, prenunciado: true }, prenuncio: pr, toque: null };
+    return { abertura: { ...novo, prenunciado: true, prenunciadoEm: quandoFoi({ dia: o.dia, minuto: o.minuto }) }, prenuncio: pr, toque: null };
   }
   return { abertura: novo, prenuncio: "", toque: null };
+}
+
+/* MM14: os sinos que tocaram FORA DE HORA hoje, na cidade da abertura —
+   para a ficha da cidade (`fichaParaPauta`, ctx `foraDeHora`) os dizer ao
+   ser perguntada. [{ hora: "10:49", o, curto }], pela ordem em que
+   tocaram; vazio noutra cidade, noutro dia, ou num save de antes. */
+export function sinosForaDeHora(abertura, { dia, cidade } = {}) {
+  const a = garantirAbertura(abertura);
+  if (a.legado) return [];
+  const d = Math.floor(Number(dia));
+  if (!Number.isFinite(d) || (cidade != null && norm(cidade) !== norm(a.cidade))) return [];
+  const sinal = a.sinal || SINOS_FORA_DE_HORA.semSinal;
+  const hora = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  const out = [];
+  const um = (q, molde, o = "") => {
+    if (!q || q.dia !== d) return;
+    const x = (s) => contrair(encher(s, { sinal, o }));
+    out.push({ hora: hora(q.minuto), o: x(molde.o), curto: x(molde.curto), minuto: q.minuto });
+  };
+  um(a.prenunciadoEm, SINOS_FORA_DE_HORA.prenuncio);
+  um(a.tocouEm, SINOS_FORA_DE_HORA.rebate, a.oQueTocou);
+  return out.sort((x, y) => x.minuto - y.minuto).map(({ hora: h, o, curto }) => ({ hora: h, o, curto }));
 }

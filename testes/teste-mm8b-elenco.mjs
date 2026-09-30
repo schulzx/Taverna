@@ -301,7 +301,10 @@ sec("9. lixo, null e imutabilidade");
 {
   const { readFileSync } = await import("node:fs");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  const i = app.indexOf("const gp = genteParaPauta({");
+  /* MM14: `gp` passou a nascer `let gp = null;` antes do try (a mesa
+     guarda-o fora dele para juntar com fc/mc) — a âncora perdeu o `const`,
+     sem perder o que prova. */
+  const i = app.indexOf("gp = genteParaPauta({");
   const chamada = i >= 0 ? app.slice(i, app.indexOf("});", i)) : "";
   t("pautaDoTurno passa a espinha e as guildas ao elenco", chamada.includes("espinha: espinhaRef.current") && chamada.includes("guildas: guildasRef.current"), chamada.slice(0, 200));
 }

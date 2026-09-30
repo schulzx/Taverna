@@ -48,10 +48,13 @@ import { PainelReacao } from "./painel-reacao.jsx";
 import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, golpeFinalNaPauta } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
-import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir } from "./mercado.js";
+import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta } from "./mercado.js";
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { fichaParaPauta } from "./cidade-por-dentro.js";
 import { genteParaPauta } from "./gente-por-dentro.js";
+/* MM14: as perguntas ao Mestre — perguntar é de graça, e as várias fichas
+   juntam a resposta pela ordem em que a frase as pediu */
+import { soPergunta, juntarRespostas } from "./perguntas.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
@@ -177,7 +180,7 @@ import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDa
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
-import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino } from "./abertura.js";
+import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora } from "./abertura.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
@@ -6899,32 +6902,50 @@ export default function Taverna() {
     /* MM12: a cidade por dentro — o hoje e a língua sempre, a resposta ao
        que o jogador perguntou só quando ele pergunta. Nunca em jornada, em
        masmorra nem em combate: ali não há rua para se perguntar nada dela. */
+    /* MM14: os nomes que a mesa já conhece — a gente em cena e o lugar onde
+       se está —, para as fichas apagarem o nome próprio antes de procurar o
+       assunto ("o Sino Calado" não pergunta pelo sino). Uma vez só, e as
+       três fichas (a cidade, a gente, o mercado) a usam. */
+    const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || ""].filter(Boolean);
+    let fc = null;
     try {
       if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {
-        const fc = fichaParaPauta(cidadeDoMapa(cidadeAtualRef.current), {
+        let foraDeHora = [];
+        try { foraDeHora = sinosForaDeHora(aberturaMundoRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }); } catch (e) { calou("sinosForaDeHora", e); }
+        fc = fichaParaPauta(cidadeDoMapa(cidadeAtualRef.current), {
           semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico,
           genero: generoMundo(), molde: moldeMundo(), dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
+          nomes: nomesDaMesa, foraDeHora,
         });
         p = porNaPauta(p, "cidade", fc.cidade);
-        p = porNaPauta(p, "pergunta", fc.pergunta);
       }
     } catch (e) { calou("fichaParaPauta", e); }
     /* MM8a: a gente por dentro — só quando a frase pergunta por alguém */
+    let gp = null;
     try {
       if (!combateRef.current) {
         let recentes = [];
         try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes da gente por dentro", e); }
-        const gp = genteParaPauta({
+        gp = genteParaPauta({
           semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
           genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
           base: baseMundoRef.current, npcs: npcsRef.current, presentes: aqui, espinha: espinhaRef.current, guildas: guildasRef.current, estado: elencoSaveRef.current,
           grupo: (personagemRef.current || personagem || {}).grupo || [],
           heroi: (personagemRef.current || personagem || {}).nome || "",
           recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase: acaoDoTurno,
+          nomes: nomesDaMesa,
         });
-        p = porNaPauta(p, "pergunta", gp.pergunta);
       }
     } catch (e) { calou("genteParaPauta", e); }
+    /* MM14: o preço perguntado — a mesma frase, a banca de hoje. Nunca em
+       luta (ali não há banca) nem fora de cidade (não há onde comprar). */
+    let mc = null;
+    try {
+      mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, acaoDoTurno, { onde: cidadeAtualRef.current }) : null;
+    } catch (e) { calou("mercadoParaPauta", e); }
+    /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a
+       frase pediu cada coisa — não pela ordem em que os módulos correram. */
+    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc]));
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
     p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));
@@ -14431,6 +14452,19 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return;
       }
     } catch (e) { calou("turno-de-quem-caiu", e); }
+    /* MM14: PERGUNTAR AO MESTRE É DE GRAÇA — também na luta. Uma frase que
+       SÓ pergunta ("a quantos metros estão?") não é o turno: a vez continua
+       minha, ninguém se move, e a resposta vem do que o tabuleiro já sabe.
+       Só aqui, dentro de combate — fora dela o relógio (acima) já cobre o
+       mesmo caso, e sem gastar tempo de mundo nenhum. */
+    try {
+      if (combateRef.current && soPergunta(acao).soPergunta) {
+        setEntrada(""); apagarORascunho();
+        pushMsgs([{ autor: "jogador", texto: acao }]);
+        enviar(`${acao} [PERGUNTA AO MESTRE — não é ação: a vez continua minha e ninguém se move; responda pelo que o tabuleiro diz]`, fichaViva() || personagem);
+        return;
+      }
+    } catch (e) { calou("soPergunta na luta", e); }
     /* ---------------- O DESPACHANTE (v9.61) ----------------
        A ordem do turno deixou de ser o layout deste arquivo e virou uma
        tabela em `turno.js`. Isto aqui não decide mais nada: pergunta qual
@@ -14542,7 +14576,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* RELÓGIO: turnos de exploração/cons conversam ~45 min de mundo.
        Combate, masmorra e acampamento têm tempo próprio (contado nesses fluxos). */
     let extraTempo = "";
-    if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
+    /* MM14: quem SÓ pergunta não faz o relógio andar — nem os minutos, nem
+       o sino. Perguntar ao Mestre é de graça (`perguntas.js`, soPergunta). */
+    if (!combateRef.current && !acampadoRef.current && !masmorraRef.current && !(() => {
+      try { return soPergunta(acao).soPergunta; } catch (e) { calou("soPergunta no tempo", e); return false; }
+    })()) {
       extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
       marcarTurnoDoMundo();
     }
@@ -17478,7 +17516,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          que ainda sobrava para a IA. */
       if (des && des.social) {
         const quem = des.quem || "essa pessoa";
-        env = envelopeSocial(des.social, { passou, quem, oQueEuDisse: r.motivo || "", rotulo: des.rotulo });
+        env = envelopeSocial(des.social, { passou, quem, oQueEuDisse: r.frase || r.motivo || "", rotulo: des.rotulo });
         /* o ouro sai da bolsa de verdade: uma alavanca que não cobra não é
            uma alavanca, é um desconto de graça na dificuldade */
         if (passou && des.social.custoEmMoedas > 0) {
@@ -18417,6 +18455,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       motivo: v.rotulo, origem: "pedido", tipo: v.atributo,
       dificuldade: v.dc, achado: v.achado, desafio: v,
       vantagem: vant, desvantagem: desv, porVantagem,
+      /* MM14: a frase do jogador viaja com o teste — o envelope social
+         a usa (`oQueEuDisse`) em vez do rótulo do painel */
+      frase: acao,
     });
   };
 
@@ -19011,6 +19052,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         conhecidos: Object.keys(npcsRef.current || {}).length,
         pausa: !!(acampadoRef.current || masmorraRef.current || raidRef.current),
         cidade: cidadeAtualRef.current,
+        /* MM14: o dia e o minuto em que o sino tocou — é o que
+           `sinosForaDeHora` usa para dizer QUANDO, se alguém perguntar */
+        dia: diaRef.current, minuto: minutoRef.current,
       });
       aberturaMundoRef.current = s.abertura;
       if (s.prenuncio) sinoDoTurnoRef.current = s.prenuncio;

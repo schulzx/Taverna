@@ -70,6 +70,8 @@ import { O_HOJE } from "./cidade-por-dentro.js";
 import { comEm } from "./lugar.js";
 /* MM8b: o elenco, as casas e o que a cidade diz de cada um */
 import { elencoDoMundo, reputacaoDe, REPUTACAO_DA_CASA } from "./elenco.js";
+/* MM14: o assunto lê-se sem os nomes próprios; a pessoa, na frase inteira */
+import { fraseDoJogador, assuntoDaFrase } from "./perguntas.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -251,17 +253,28 @@ export const PERGUNTAS_DA_GENTE = [
   { id: "rotina", rx: /\b(cade|onde (ele|ela|esta|anda|fica|mora|foi)|plantao|de folga|\bfolga|turno|de servico|costuma (estar|ficar|vir|aparecer)|nao (veio|apareceu|esta aqui)|a que horas)/ },
   { id: "idade", rx: /\b(mais nov[oa]|mais velh[oa]|que idade|quantos anos|idade (dele|dela|tem)|e jovem|e velh[oa])/ },
   { id: "aparencia", rx: /\b(forte|fraco|fraca|magr[oa]|gord[oa]|robust|franzin|musculos|de peso|aparencia|como (ele|ela) e\b|cara del|pintura|tatuag)/ },
-  { id: "jeito", rx: /\b(desajeitad|jeito|temperamento|personalidade|sempre foi assim|era assim|ja era|timid|nervos[oa]|mal-humorad|simpatic[oa])/ },
-  { id: "posto", rx: /\b(responsavel|encarregad|por que (ele|ela) (e|esta|cuida|manda|trabalha)|por algum motivo|como (ele|ela) (chegou|virou|ficou|ganhou)|cargo|posto|quem (o|a) pos)/ },
+  /* MM14: "como se feriu DESSE JEITO?" (#29) é a ferida, e não o jeito dela —
+     com duas respostas por turno, a locução passou a subir uma segunda linha */
+  { id: "jeito", rx: /\b(desajeitad|(?<!\b(desse|deste|daquele|nesse|neste|de|do|sem|qualquer) )jeito|temperamento|personalidade|sempre foi assim|era assim|ja era|timid|nervos[oa]|mal-humorad|simpatic[oa])/ },
+  /* MM14: "há quanto tempo a senhora tem o Sino Calado?", "há quanto tempo
+     tocas aqui?" (T7, T44) são o POSTO com data — `linhaDoPosto` já diz "está
+     no posto há N anos" — e iam ao `passado` pelo "há quanto", que responde
+     de onde a pessoa veio. A forma mais longa ganha na mesma posição. */
+  { id: "posto", rx: /\b(responsavel|encarregad|por que (ele|ela) (e|esta|cuida|manda|trabalha)|por algum motivo|como (ele|ela) (chegou|virou|ficou|ganhou)|cargo|posto|quem (o|a) pos|ha quanto tempo (\S+ ){0,3}?(tem|tens|toca|tocas|trabalha|trabalhas|serve|serves|cuida|cuidas|manda|mandas|e dono|e dona|es dono|es dona|esta no posto)\b( (o|a|os|as|esta|essa|este|esse|aquela|aquele) \w+)?)/ },
   { id: "adversario", rx: /\b(adversari|enfrentou|lutou contra|inimigo mais|rival mais|mais famos)/ },
   { id: "ferida", rx: /\b(se feriu|se machucou|ferid[oa]|machucad[oa]|cicatriz|como (ele|ela) perdeu)/ },
-  { id: "passado", rx: /\b(quanto tempo|ha quanto|faz quanto|quando (isso|foi|aconteceu)|aconteceu com|historia d|passado|de onde (ele|ela|voce) (veio|e))/ },
+  /* MM14: "e de onde vens?" (T44) — o tu e o presente também perguntam */
+  { id: "passado", rx: /\b(quanto tempo|ha quanto|faz quanto|quando (isso|foi|aconteceu)|aconteceu com|historia d|passado|de onde ((ele|ela|voce|tu) )?(veio|vem|vens|vieste|e|es)\b)/ },
   /* MM8b: a CASA como família — o que a cidade diz dela e se é popular —,
      e cada um dela: quem é bem-visto e quem não */
   { id: "familia", rx: /\b(o que (dizem|falam)|nesta casa|desta casa|dessa casa|essa casa|esta casa|familia|parentes|popular|reputacao|fama da casa|casa nobre)/ },
   { id: "cadaUm", rx: /\b(bem[- ]vist[oa]s?|mal[- ]vist[oa]s?|um deles|uma delas|os outros nem|mais querid[oa]|mais odiad[oa])/ },
 ];
-export const RESPOSTAS_DA_GENTE = 1;
+/* MM14: 1 → 2. "Há quanto tempo tocas aqui? E de onde vens?" (T44) são duas
+   perguntas à mesma pessoa, e a sessão só respondia uma. A mesa junta as
+   respostas de todas as fichas e corta em RESPOSTAS_DA_MESA (perguntas.js),
+   medido no teto da pauta em teste-mm14-perguntas. */
+export const RESPOSTAS_DA_GENTE = 2;
 /* quantas pessoas cabem numa resposta que fala de várias (a casa, a
    comparação de idades) */
 export const PESSOAS_POR_RESPOSTA = 4;
@@ -512,10 +525,21 @@ function linhaDaRotina(f) {
 
 /* QUEM TRABALHA NUMA CASA — a gente de `genteDoLocal`, com o sítio dito,
    o papel que o registo manda e quem está de folga agora */
-function linhaDaCasa(semente, local, o) {
+/* MM14: `conhecidos` — a gente do registo e da cena cuja casa é ESTA. A
+   taverneira que o jogador conhece pelo nome trabalha ali mesmo que a base
+   do mundo não a tenha posto lá (T8: "quem mais trabalha aqui, além de
+   você?" foi respondido com um cozinheiro surdo inventado). Vem primeiro,
+   porque é quem o jogador já viu. */
+function linhaDaCasa(semente, local, o, conhecidos = []) {
   let gente = [];
   try { gente = genteDoLocal(semente, local, o.genero || "Fantasia medieval", o.molde, o.lex); } catch { gente = []; }
-  gente = gente.filter((p) => p && p.nome && !estaMorto(o.base, p.nome)).slice(0, PESSOAS_POR_RESPOSTA);
+  const alvo = norm(semArtigo(local.nome));
+  const daqui = (Array.isArray(conhecidos) ? conhecidos : [])
+    .filter((p) => p && p.nome && [p.casa, p.local].some((x) => txt(x) && norm(semArtigo(x)) === alvo));
+  const vistos = new Set();
+  gente = [...daqui, ...gente]
+    .filter((p) => p && p.nome && !estaMorto(o.base, p.nome) && !norm(p.status).includes("mort") && !vistos.has(norm(p.nome)) && vistos.add(norm(p.nome)))
+    .slice(0, PESSOAS_POR_RESPOSTA);
   if (!gente.length) return "";
   const cada = gente.map((p) => {
     const f = fichaDaPessoa(semente, p, o);
@@ -642,10 +666,7 @@ function casaDaFrase(frase, locais, o) {
    O QUE SOBE À PAUTA
    ============================================================ */
 
-/* `ctx`: { semente, mapa, cidade, genero, molde, lex, base, npcs,
-   presentes, grupo, heroi, recentes, lugar, dia, minuto, frase }.
-   Devolve { pergunta: [] } — no máximo RESPOSTAS_DA_GENTE linhas, e
-   nenhuma se a frase não pergunta por ninguém. */
+/* (a descrição do `ctx` e da saída mora sobre `genteParaPauta`, lá em baixo) */
 /* ============================================================
    A FAMÍLIA (MM8b) — a casa notável e cada um dela
    ============================================================ */
@@ -653,25 +674,41 @@ function casaDaFrase(frase, locais, o) {
 /* a casa de que se fala: nomeada (o nome ou o sobrenome), a de alguém
    nomeado, a de quem a frase aponta, a que tem sede onde estou, ou a
    única da cidade */
-function familiaDaFrase(frase, el, gente, o, pessoa) {
+/* MM14: "que família manda AQUI?" pergunta pela desta cidade. A sessão
+   (T9) respondeu com a Casa da Água Alta, de Campo Grande: o "dela" do fim
+   da frase ("e o que se diz dela?") apontou para uma pessoa, e a casa dessa
+   pessoa era de outra cidade. Quem pergunta pelo poder daqui só ouve as
+   casas daqui — a nomeada continua a valer de onde for. */
+export const FAMILIA_DAQUI = /\b(aqui|daqui|nesta cidade|desta cidade|na cidade|da cidade|manda|mandam|importantes?|poderos[oa]s?|notave(l|is))\b/;
+
+function familiaDaFrase(frase, el, gente, o, pessoa, assunto = frase, { daFamilia = false } = {}) {
   /* as da cidade onde estou primeiro: o mundo repete nomes, e a Sable de
      que se fala aqui é a daqui */
   const todas = (el && el.casas) || [];
   if (!todas.length) return null;
-  const casas = [...todas.filter((k) => norm(k.cidade) === norm(o.cidade)), ...todas.filter((k) => norm(k.cidade) !== norm(o.cidade))];
+  const soDaqui = FAMILIA_DAQUI.test(assunto);
+  const daqui = todas.filter((k) => norm(k.cidade) === norm(o.cidade));
+  const casas = [...daqui, ...todas.filter((k) => norm(k.cidade) !== norm(o.cidade))];
   const nomeada = casas.find((k) => citaNome(frase, k.nome) >= 0 || citaNome(frase, k.nome.replace(/^Casa\s+(d[oa]s?\s+)?/i, "")) >= 0);
   if (nomeada) return nomeada;
-  for (const k of casas) if (k.membros.some((m) => citaNome(frase, m) >= 0)) return k;
+  const entre = soDaqui ? daqui : casas;
+  for (const k of entre) if (k.membros.some((m) => citaNome(frase, m) >= 0)) return k;
   if (PRONOME.test(frase) || A_QUEM_FALO.test(frase) || /\b(deles|delas|dessa|desta|essa|esta)\b/.test(frase)) {
     const p = pessoa();
-    const k = p && casas.find((x) => x.membros.some((m) => norm(m) === norm(p.nome)));
+    /* MM14: e a casa tem de ser da cidade DESSA pessoa. O mundo repete
+       nomes (na sessão reconstruída, a taverneira do Sino Calado e uma da
+       casa de Campo Grande chamam-se as duas Mabel): quem está aqui, em
+       cena ou na base daqui, é da casa daqui ou de nenhuma */
+    const k = p && entre.find((x) => x.membros.some((m) => norm(m) === norm(p.nome)) && (p._tier > 1 || norm(x.cidade) === norm(o.cidade)));
     if (k) return k;
   }
-  const daqui = casas.filter((k) => norm(k.cidade) === norm(o.cidade));
   const lugar = obj(o.lugar);
   const onde = norm(semArtigo(lugar.dentroDe || lugar.nome));
   const naSede = onde && daqui.find((k) => norm(semArtigo(k.sede)) === onde);
   if (naSede) return naSede;
+  /* perguntada a FAMÍLIA que manda daqui, a primeira casa daqui (a capital
+     tem duas). Só a família: "ele é bem-visto por aqui?" pergunta por ele */
+  if (soDaqui && daFamilia) return daqui[0] || null;
   return daqui.length === 1 ? daqui[0] : null;
 }
 
@@ -721,16 +758,48 @@ function linhaDaReputacao(s, p) {
   return `${p.nome}: ${r.o} na cidade${r.porque ? ` — ${r.porque}` : ""}`;
 }
 
+/* MM14: os assuntos da frase, com a posição e o fim de cada um. A MESMA
+   palavra não responde duas perguntas: "há quanto tempo tocas aqui?" é o
+   posto, e o "há quanto" dentro dele não é também o passado — na mesma
+   posição ganha a forma mais longa, e o que se sobrepõe a um assunto já
+   tomado cai. O mesmo assunto só se responde uma vez. */
+function assuntosDe(texto) {
+  const todos = [];
+  for (const p of PERGUNTAS_DA_GENTE) {
+    const re = new RegExp(p.rx.source, "g");
+    let m;
+    while ((m = re.exec(texto))) {
+      todos.push({ id: p.id, pos: m.index, fim: m.index + m[0].length });
+      if (!m[0].length) re.lastIndex++;
+    }
+  }
+  todos.sort((a, b) => a.pos - b.pos || (b.fim - b.pos) - (a.fim - a.pos));
+  const out = [];
+  for (const x of todos) {
+    if (out.some((y) => x.pos < y.fim && y.pos < x.fim) || out.some((y) => y.id === x.id)) continue;
+    out.push(x);
+  }
+  return out;
+}
+
+/* `ctx`: { semente, mapa, cidade, genero, molde, lex, base, npcs,
+   presentes, grupo, heroi, recentes, lugar, dia, minuto, frase, nomes }.
+   Devolve { pergunta: [], em: [] } — no máximo RESPOSTAS_DA_GENTE linhas,
+   nenhuma se a frase não pergunta por ninguém; `em` é a posição, na
+   frase, do assunto de cada linha (a mesa junta as fichas por ela).
+   MM14: a frase pode ser um envelope do sistema (vale o "Eu disse"), e o
+   ASSUNTO procura-se sem os nomes próprios — "o Sino Calado" não pergunta
+   pelo sino, "Teodoro das Tábuas" não pergunta por tábuas. */
 export function genteParaPauta(ctx) {
   const o = obj(ctx);
-  const out = { pergunta: [] };
-  const frase = norm(o.frase);
+  const out = { pergunta: [], em: [] };
+  const dita = fraseDoJogador(o.frase);
+  const frase = norm(dita);
   if (!frase.trim()) return out;
-  const achados = PERGUNTAS_DA_GENTE
-    .map((p) => { const m = frase.match(p.rx); return m ? { id: p.id, pos: m.index } : null; })
-    .filter(Boolean)
-    .sort((a, b) => a.pos - b.pos);
-  if (!achados.length) return out;
+  const nomesDoApp = (Array.isArray(o.nomes) ? o.nomes : []).filter((x) => typeof x === "string");
+  /* primeira leitura, barata: só com os nomes que já se sabem — sem assunto
+     nenhum, nem se calcula a cidade */
+  if (!assuntosDe(assuntoDaFrase(dita, [txt(o.cidade), ...nomesDoApp])).length) return out;
 
   const s = String(o.semente == null ? "" : o.semente);
   const ctxF = { ...o, frase: undefined };
@@ -745,6 +814,12 @@ export function genteParaPauta(ctx) {
     try { locais = locaisDaCidade(s, q.cidade, o.genero || "Fantasia medieval", o.molde, o.lex); } catch { locais = []; }
   }
   const gente = juntarGente(o, q);
+  /* a segunda leitura, com os nomes que a cidade tem: a gente, as casas e
+     as cidades do mapa */
+  const cidades = Array.isArray(obj(o.mapa).cidades) ? o.mapa.cidades.map((c) => c && c.nome).filter(Boolean) : [];
+  const assunto = assuntoDaFrase(dita, [txt(o.cidade), ...nomesDoApp, ...gente.map((p) => p.nome), ...locais.map((l) => l.nome), ...cidades]);
+  const achados = assuntosDe(assunto);
+  if (!achados.length) return out;
   /* o elenco só se calcula quando a frase pergunta por alguém */
   let el = null;
   const elenco = () => {
@@ -774,19 +849,22 @@ export function genteParaPauta(ctx) {
   for (const a of achados) {
     let linha = "";
     if (a.id === "familia" || a.id === "cadaUm") {
-      const k = familiaDaFrase(frase, elenco(), gente, o, pessoa);
+      const k = familiaDaFrase(frase, elenco(), gente, o, pessoa, assunto, { daFamilia: a.id === "familia" });
       if (k && a.id === "familia") linha = linhaDaFamilia(k, o.cidade);
       else if (k) linha = linhaDeCadaUm(k, s, ctxF, gente);
       else if (a.id === "cadaUm") { const p = pessoa(); if (p) linha = linhaDaReputacao(s, p); }
+      /* MM14: perguntado o poder DAQUI e não havendo casa daqui, a verdade é
+         essa — e não a casa de outra cidade (T9) */
+      else if (a.id === "familia" && txt(o.cidade) && FAMILIA_DAQUI.test(assunto)) linha = `${txt(o.cidade)}: nenhuma casa notável tem sede aqui`;
     } else if (a.id === "casa") {
       const l = casaDaFrase(frase, locais, o);
-      if (l) linha = linhaDaCasa(s, l, ctxF);
+      if (l) linha = linhaDaCasa(s, l, ctxF, gente);
     } else if (a.id === "rotina" && AUSENCIA.test(frase) && !gente.some((p) => citaNome(frase, p.nome) >= 0)) {
       /* quem pergunta por quem falta não pergunta por quem está à frente
          dele: a resposta é a casa — quem está de turno e quem folga */
       const l = casaDaFrase(frase, locais, o)
         || (/plantao|guarda|vigia/.test(frase) ? locais.find((x) => x.tipo === "quartel") : null);
-      if (l) linha = linhaDaCasa(s, l, ctxF);
+      if (l) linha = linhaDaCasa(s, l, ctxF, gente);
     } else if (a.id === "idade" && COMPARA.test(frase) && !gente.some((p) => citaNome(frase, p.nome) >= 0)) {
       linha = linhaDaComparacao(gente.filter((p) => p._tier === 0).map(ficha));
     } else {
@@ -805,10 +883,13 @@ export function genteParaPauta(ctx) {
            que se fala, com quem está e quem folga */
         const l = casaDaFrase(frase, locais, o)
           || (/plantao|guarda|vigia/.test(frase) ? locais.find((x) => x.tipo === "quartel") : null);
-        if (l) linha = linhaDaCasa(s, l, ctxF);
+        if (l) linha = linhaDaCasa(s, l, ctxF, gente);
       }
     }
-    if (linha) { out.pergunta.push(linha); if (out.pergunta.length >= RESPOSTAS_DA_GENTE) break; }
+    if (linha && !out.pergunta.includes(linha)) {
+      out.pergunta.push(linha); out.em.push(a.pos);
+      if (out.pergunta.length >= RESPOSTAS_DA_GENTE) break;
+    }
   }
   return out;
 }

@@ -57,6 +57,8 @@ import { detectarPedidoDeTeste, semOPedidoDeTeste, nomeDoAtributo } from "./test
 import { dificuldadeSocial, foraDaConversa, envelopeForaDaConversa } from "./social.js";
 import { NAO_E_AGRESSAO, RX_AGRESSAO } from "./agressao.js";
 import { soODeclarado, emProclise, NAO_E_DECLARACAO } from "./peneira.js";
+/* MM14: a pergunta de balcão não é performance — ver `impressionar` */
+import { falaSoPergunta } from "./perguntas.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -487,11 +489,18 @@ export const DESAFIOS = [
        `me aproximo d\b` não casa "dela", porque o que vem depois do
        radical é letra, não fronteira. O `\b` da esquerda basta — é ele que
        impede o radical de casar no meio de outra palavra. */
-    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresent(o|ar) (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproxim(o|ar) d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento|pergunto)|dizendo|falando)\b/,
-    /* pedir informação a alguém não é se apresentar a alguém: quem chega
-       com uma pergunta de balcão está na porta da cortesia, não na da
-       simpatia, e o degrau resolve isso sozinho — mas a BRIGA não. */
+    /* MM14: SEM "e pergunto" na estrutura. "Vou até o balcão e pergunto a
+       quem está a servir: «Quanto custa um quarto?»" (T5 da sessão de
+       prova) virava "causar boa impressão", e o envelope social ia ao
+       Narrador no lugar da frase — a pergunta nunca foi respondida. O
+       comentário antigo dizia que o degrau da cortesia resolvia isto
+       sozinho; resolvia o número, e perdia a pergunta. Uma pergunta não é
+       teste. */
+    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresent(o|ar) (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproxim(o|ar) d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento)|dizendo|falando)\b/,
     naoSe: /\b(ataco|golpeio|saco a|puxo a (espada|faca|adaga)|avan[cç]o (n|sobre)|parto para cima)\b/,
+    /* e a fala que é só pergunta de quem quer saber ("digo: «onde fica o
+       templo?»") também não: é balcão, não cantada */
+    naoSeCom: (t) => falaSoPergunta(t),
     pericia: "persuasao", alvo: "impressao", minutos: 5, barulho: false,
     rotulo: "causar boa impressão", dcPadrao: DC("comum"), social: true,
   },
