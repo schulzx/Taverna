@@ -15,7 +15,7 @@ Formato:
 ```
 
 ---
-## 01/10 00:49 · v9.347 · a campanha começa com alguém de antes ao lado · commit (o hash vai no próximo bloco)
+## 01/10 00:49 · v9.347 · a campanha começa com alguém de antes ao lado · commit `170b735`
 
 - **por que andou:** decisão da pessoa, 30/09: *"A campanha pode começar com um companheiro."* Sem ele, o golpe final do
   companheiro (MM3b) nunca se viu numa sessão: um companheiro pedia 13 dias de convívio. Sem chamadas pagas: provado em Node.
