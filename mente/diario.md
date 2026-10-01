@@ -15,7 +15,33 @@ Formato:
 ```
 
 ---
-## 30/09 22:25 · v9.344 · MM15 (4) · o que a história guarda só sai pelo sistema · commit (o hash vai no próximo bloco)
+## 30/09 23:17 · v9.345 · MM15 (5) · dois Túlios são duas pessoas, e "Lina," é a Lina do Sal · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o último da MM15 — no T5 da segunda sessão o "Túlio da Runa" do cartaz, sumido na estrada, fundiu-se com
+  Túlio, o músico da cidade que a ficha põe em casa; daí em diante "Túlio ✓ conhecido" sem a heroína o ter visto.
+  **Sem chamadas pagas hoje:** provado em Node.
+- **estado inicial:** verde (`062d7f0`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend — a causa:** a fusão dava-se em `nomeComDono`: o músico vinha no elenco, nunca registado, e caía em "só um nome e
+  o lugar bate → é ele". O lugar "batia" porque o `local` da ficha nova se juntava ao "aqui" da heroína; e a regra só
+  perguntava "pode ser ela?", nunca "o que os separa?" — não lia sobrenome, paradeiro nem ofício, e o App nem os passava.
+- **a regra afinada:** o primeiro nome igual só funde quando nada os distingue — sexo, sobrenome de família diferente,
+  paradeiro (sumido/na estrada contra em casa), ofício de famílias diferentes, o local de quem está longe; separados, a gente
+  do mundo deixa nascer o novo com o nome inteiro, e quem a história persegue continua a recusar. O nome inteiro que o mundo
+  já conhece é da própria pessoa. O "Túlio" solto, havendo dois, decide pela conversa, o lugar, o ofício e o paradeiro; em
+  empate, ninguém — e pede-se o nome inteiro. O que a v9.338 acertou fica (a Delfina da Névoa, a mescla de quem já está
+  registado, o "Floripes do Sino").
+- **em número (24 mundos, 75 cartazes de sumidos com o primeiro nome de alguém do elenco ou da espinha, 3 fichas cada):**
+  fundidos na pessoa errada **3/3/5 → 0**; fusões certas mantidas **474 → 482 de 482**. E um defeito escondido que a medida
+  achou: **72 dos 75** cartazes tinham o próprio nome recusado pelo registo, e o Narrador recebia a ordem de trocar o nome do
+  cartaz → **0**.
+- **frontend:** `contextoDoNome` passa o elenco com ofício, sexo e de onde vem, quem o mural procura, e a conversa recente.
+  **Decisão (leve, alargada com motivo):** incluí o vizinho do item 4 — `pessoaNaFrente` só reconhecia o nome inteiro, e no
+  T10 a persuasão foi contra "essa pessoa" em vez da Lina do Sal; agora usa `nomeProcurado` (o primeiro nome), com a guarda
+  de não adivinhar quando dois presentes o partilham. É o mesmo defeito de nomes, na mesma sessão, com teste.
+- **para quem joga:** o homem que sumiu na estrada não é o músico que está em casa; e "Lina, diz-me…" fala com a Lina.
+
+## 30/09 22:25 · v9.344 · MM15 (4) · o que a história guarda só sai pelo sistema · commit `062d7f0`
 
 - **por que andou:** o quarto da MM15 — no T10 da segunda sessão a jogadora pressionou a taverneira ("diz-me o que se
   passa no Fundo do Poço"), **não houve teste**, o Mestre fez da casa de banhos da base um poço maldito, e o Cronista

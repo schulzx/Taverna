@@ -440,7 +440,8 @@ O limite é o que um commit revertido não desfaz.
      gravado num save antigo não sai — apagar é dado de jogador; e a proposta de o "o que X esconde" ser o segredo da base
      que já mora no local, eleito na criação do mundo)* · **Persuasão sem dado revela um segredo da espinha** (T10), contra a base (o Fundo do Poço é a casa de banhos), e o
      Cronista grava-o no cânone.
-  4. **A regra dos nomes funde mal** — "Túlio da Runa" (sumido na estrada) fundido com Túlio, o músico (T5).
+  4. ✓ *feito em v9.345 (e o "Lina," do nº 3: o primeiro nome acha quem está à frente; fica: o molde "resgate" não põe o
+     nome do sumido nas etapas do cartaz, e o mural vai no save)* · **A regra dos nomes funde mal** — "Túlio da Runa" (sumido na estrada) fundido com Túlio, o músico (T5).
   5. **A gente da cidade segue a heroína pela cidade** (T7, T9, T10) — o resto já anotado do nº 9 da MM14.
   6. **A procura que ninguém fez** — "despeço-me do Otávio" dá "Otávio está aqui" (T7); e "ELA" para Otávio.
   7. Miúdos (na transcrição): todas as classes começam sem arma; pagar o quarto por palavras não tira moedas; "Boa noite"

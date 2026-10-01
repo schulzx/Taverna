@@ -12,7 +12,7 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
@@ -9384,17 +9384,21 @@ export default function Taverna() {
      razão) e quem uma missão ativa pede. */
   const contextoDoNome = (n) => {
     const importantes = [];
+    const conhecidos = [];
     try {
       const a = aberturaMundoRef.current || {};
       if (a.pista && a.pista.nome) importantes.push({ nome: a.pista.nome, onde: a.pista.local || "" });
       if (a.alvo && a.alvo.quem) importantes.push({ nome: a.alvo.quem, onde: a.alvo.onde || "" });
       for (const at of ((espinhaRef.current || {}).atos || [])) for (const m of (at.marcos || [])) if (m && m.quem) importantes.push({ nome: m.quem, onde: m.onde || "" });
       for (const g of ((personagemRef.current || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });
-      for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "" });
+      for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });
       for (const q of (missoesRef.current || [])) if (q && q.status === "ativa") for (const x of [q.dador, ...(q.etapas || []).map((e) => e && e.alvo)]) if (x) importantes.push({ nome: x });
+      for (const cz of (muralRef.current || [])) for (const e of ((cz && cz.etapas) || [])) if (e && e.tipo === "falar_com" && e.alvo) conhecidos.push({ nome: e.alvo, notas: cz.descricao || "" });
     } catch (e) { calou("contextoDoNome", e); }
+    let recentes = [];
+    try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }
     const mm = masmorraRef.current;
-    return { importantes, local: (n && n.local) || "", genero: (n && n.genero) || "", aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };
+    return { importantes, conhecidos, recentes, local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };
   };
 
   const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {
@@ -17910,11 +17914,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagem && personagem.grupo) || [] });
       const vivos = aqui.filter((n) => n && n.nome && n.nome.length >= 3);
       if (!vivos.length) return null;
-      const alvo = t.toLowerCase();
-      /* o nome mais longo ganha, mesma regra dos lugares e das habilidades:
-         "Bram" e "Bram, o Torto" na mesma cena não podem trocar de lugar */
-      const citados = vivos.filter((n) => alvo.includes(n.nome.toLowerCase())).sort((a, b) => b.nome.length - a.nome.length);
-      if (citados.length) return citados[0];
+      /* MM15 (5): nomeProcurado casa um primeiro nome solto ("Lina,") com
+         o nome inteiro de quem esta em cena; a guarda nao adivinha se dois
+         presentes compartilham o primeiro nome achado (o defeito do T10). */
+      const achado = nomeProcurado(t, vivos.map((n) => n.nome));
+      if (achado) return vivos.filter((n) => primeiroNome(n.nome) === primeiroNome(achado)).length > 1 ? null : vivos.find((n) => n.nome === achado);
       return vivos.length === 1 ? vivos[0] : null;
     } catch { return null; }
   };

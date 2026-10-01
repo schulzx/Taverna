@@ -50,3 +50,6 @@ Uma linha por decisão: `dd/mm · fila · título exato da pendência · o que v
 - 17/09 · desenho · (W1) a luta abre onde a sala é comprida, e ninguém decidiu isso · E6
 - 17/09 · desenho · (W1) os três verbos de teatro: dar-lhes motor, ou tirá-los da tela · já era a Fase Y
 - 17/09 · desenho · (E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela · E7
+- 30/09 · sistema · o teto diário da API (500 chamadas por endereço) · não se mexe agora; o caminho é tirar desperdício (MM15 (2)), não subir o teto
+- 30/09 · sistema · a voz do Narrador: primeira pessoa contra a segunda do Matt · passa à segunda pessoa, com "você" — etapa a seguir à MM15
+- 30/09 · sistema · começar a campanha com um companheiro · pode: alguém do elenco ligado ao passado do herói, no grupo que já existe, só em campanhas novas — etapa a seguir à MM15

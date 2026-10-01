@@ -299,8 +299,10 @@ sec("6. a fiação — App.jsx");
 {
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
-  t("App.jsx importa nomeComDono e notaDoHomonimo de npcs.js",
-    app.includes("nomeComDono, notaDoHomonimo } from \"./npcs.js\";"));
+  /* MM15 (5): o import ganhou primeiroNome, para a guarda do "Lina," em
+     pessoaNaFrente — movido com o motivo, não apagado. */
+  t("App.jsx importa nomeComDono, notaDoHomonimo e primeiroNome de npcs.js",
+    app.includes("nomeComDono, notaDoHomonimo, primeiroNome } from \"./npcs.js\";"));
   t("e jaMeViuAntes de interprete.js",
     app.includes('paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";'));
 
@@ -325,8 +327,12 @@ sec("6. a fiação — App.jsx");
   t("lê os marcos da espinha e o grupo",
     app.includes('for (const at of ((espinhaRef.current || {}).atos || [])) for (const m of (at.marcos || [])) if (m && m.quem) importantes.push({ nome: m.quem, onde: m.onde || "" });')
     && app.includes('for (const g of ((personagemRef.current || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });'));
-  t("lê o elenco do mundo COM a cidade dele (onde), não só o nome — senão um homônimo de quem ainda não foi encontrado seria recusado sem razão",
-    app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "" });'));
+  /* MM15 (5): o elenco passou a levar papel, sexo e de onde a pessoa vem
+     (o "de: mundo" que separa quem o mundo repete de quem a história
+     persegue, em npcs.js/DISTINTO_DE) — o texto antigo media só o nome e
+     a cidade; movido com o motivo, não apagado. */
+  t("lê o elenco do mundo COM a cidade, o papel, o sexo e a origem — senão um homônimo de quem ainda não foi encontrado seria recusado sem razão, ou um nome do mundo seria tratado como se a história o perseguisse",
+    app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });'));
   t("lê quem uma missão ativa pede",
     app.includes('for (const q of (missoesRef.current || [])) if (q && q.status === "ativa") for (const x of [q.dador, ...(q.etapas || []).map((e) => e && e.alvo)]) if (x) importantes.push({ nome: x });'));
 
