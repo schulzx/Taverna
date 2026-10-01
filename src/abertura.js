@@ -70,6 +70,7 @@ import { criarRelogio, envelopeCheio, TAMANHOS } from "./relogios.js";
 import { vocacaoDe } from "./comercio.js";
 import { fichaDaCidade } from "./cidade-por-dentro.js";
 import { comEm, contrair } from "./lugar.js";
+import { linhaDoCompanheiro } from "./companheiro-inicial.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -566,15 +567,21 @@ export function abrirAbertura(ctx) {
 /* O pedido do primeiro turno. Substitui o texto de `abrirACampanha` e o
    envelope da trama sorteada que ia junto: é o MESMO canal (a mensagem da
    abertura, cobrada uma vez), nunca o prompt fixo. As quatro partes estão
-   na ordem do Matt. `habilidades` é a lista de nomes que o sistema já deu. */
-export function pedidoDaAbertura(abertura, { habilidades = [] } = {}) {
+   na ordem do Matt. `habilidades` é a lista de nomes que o sistema já deu.
+   `companheiro` (30/09) é o companheiro de antes (`companheiroInicial`,
+   companheiro-inicial.js): quando há, a parte 2 diz que o herói não chegou
+   só, e com quem — uma frase, só neste pedido, nunca no prompt fixo. Sem
+   ele, o pedido é o de sempre, letra por letra. */
+export function pedidoDaAbertura(abertura, opcoes) {
+  const { habilidades = [], companheiro = null } = opcoes && typeof opcoes === "object" ? opcoes : {};
   const a = garantirAbertura(abertura);
   if (a.legado || !a.pista.nome) return "";
   const habs = (Array.isArray(habilidades) ? habilidades : []).filter(Boolean).join(", ") || "nenhuma";
+  const aoLado = linhaDoCompanheiro(companheiro);
   return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, nesta ordem, em prosa corrida e sem títulos, na 2ª pessoa — o herói é "você" ("você chegou", nunca "cheguei"):
 
 1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e uma lei daqui que não valeria noutro lugar. Concreto: um cheiro, um som, um preço.
-2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}. O que se vê e se ouve dali.
+2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}${aoLado}. O que se vê e se ouve dali.
 3) A PEQUENA HISTÓRIA DO LUGAR. ${a.historia}.
 4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: ${a.razao}. O que sabe: ${a.sabe}.
 

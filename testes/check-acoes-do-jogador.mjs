@@ -359,11 +359,17 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      O SEGREDO GUARDADO (frontend, MM15 (4), 30/09): 8279 -> 8285, +6. O
      import de segredo-guardado.js e o veto na pauta (logo após
      vetosDaAbertura) nascem ACIMA de `pushMsgs` no arquivo. Re-medido por
-     esta própria catraca; nada somado de cabeça. */
-  } else if (iPush + 1 !== 8285) {
-    falha(`pushMsgs saiu de src/App.jsx:8285 e agora está em :${iPush + 1}`,
+     esta própria catraca; nada somado de cabeça.
+     O COMPANHEIRO DE ANTES (frontend, 01/10): 8285 -> 8286, +1. O import
+     de companheiro-inicial.js no topo do arquivo empurra tudo abaixo dele
+     +1 — o mesmo degrau que qualquer import novo no topo sempre dá. A
+     fiação do companheiro em si nasce dentro de `iniciar`, bem abaixo de
+     `pushMsgs`, e por isso não soma nada aqui. Re-medido por esta própria
+     catraca; nada somado de cabeça. */
+  } else if (iPush + 1 !== 8286) {
+    falha(`pushMsgs saiu de src/App.jsx:8286 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8285, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8286, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

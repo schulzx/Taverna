@@ -15,7 +15,41 @@ Formato:
 ```
 
 ---
-## 30/09 23:45 · v9.346 · a voz do Mestre passa à segunda pessoa, como a do Matt · commit (o hash vai no próximo bloco)
+## 01/10 00:49 · v9.347 · a campanha começa com alguém de antes ao lado · commit (o hash vai no próximo bloco)
+
+- **por que andou:** decisão da pessoa, 30/09: *"A campanha pode começar com um companheiro."* Sem ele, o golpe final do
+  companheiro (MM3b) nunca se viu numa sessão: um companheiro pedia 13 dias de convívio. Sem chamadas pagas: provado em Node.
+- **estado inicial:** verde (`5e3b1a1`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **quem (`src/companheiro-inicial.js`):** alguém do **elenco**, pela semente do mundo, que vive no mundo, vivo, sem
+  propósito hostil, **nunca alguém que a história procura** (a pista, o alvo, a gente dos marcos — um homónimo da pista
+  fecharia o primeiro passo sem encontro), de preferência de outra cidade (veio com o herói: 192 de 192). Cinco ligações
+  ao passado (companheiro de armas, o mesmo sangue, companheiro de estrada, quem lhe ensinou o ofício, a pessoa a quem o
+  herói deve), pesadas pelo antecedente (em 120 campanhas o soldado traz armas 90 vezes; o órfão nunca traz sangue).
+- **o laço já feito, sem campo novo:** no grupo, a mesma ficha do convite (a suíte lê os números do App); no registo,
+  conhecido desde o dia 0 e um laço com a força da ligação; no elenco, visto no dia 1. O convite passa a contar o convívio
+  inteiro de quem é de antes (calculado, não gravado); a promoção nunca o tira.
+- **a abertura:** uma frase na parte 2 — "…e não chegou só: Cedric Sombravinda, antigo companheiro de armas do herói, vem
+  com ele — …; a razão que o trouxe é também dele" —, uma vez por campanha; sem companheiro, o pedido é igual letra a letra.
+  O pior caso do prompt não muda.
+- **a régua (a `simularCombate` da casa, níveis 1–3, três lutas de estrada):** herói só ganha 57/64/67% e cai 45/37/34%;
+  com o companheiro de armas ganha 86/89/92% e cai 32/20/18%. Nenhuma das 13 fichas possíveis torna a luta trivial (≥98% e
+  queda ≤5%), **menos o curandeiro**: um Clérigo ao lado dava 100% com o herói a cair 3,1% — a luta deixava de se poder
+  perder. **Decisão (média):** o ajuste é na tabela das classes (`CURANDEIROS_DE_FORA`: Clérigo, Druida, Bardo, Invocador
+  não vêm de antes), não no orçamento de encontro — que já cobra o companheiro (1 inimigo comum sozinho passa a 2 com ele).
+- **o golpe final do companheiro (MM3b):** vale desde a primeira luta (estar no grupo e de pé).
+- **os modos:** `historia` sim; `rapida` não (os pratos da Noite foram medidos com o herói só, e a Noite não passa pela
+  abertura da MM13); `duelo` não (PvP); nem capítulo novo, nem sala de dois (o outro jogador já ocupa o lugar), nem save
+  antigo.
+- **frontend:** o nascimento em `iniciar` em try/`calou`; `convivioCom` passa por `convivioDaFicha` (idêntico para os
+  outros, 21/21); o primeiro turno já vê o grupo (o `enviar` remonta grupo e cena a cada turno a partir da ficha);
+  `teste-convite`, `teste-mm13-abertura` e as medidas das ações do jogador acompanharam, com o motivo.
+- **a ver na sessão:** a base do mundo ainda põe o companheiro no seu antigo posto, na cidade dele — confirmar que não
+  aparece "de plantão" lá.
+- **para quem joga:** a campanha começa com alguém que já a conhece de antes, pela mesma razão — e com ele, a primeira luta
+  é a dois.
+
+## 30/09 23:45 · v9.346 · a voz do Mestre passa à segunda pessoa, como a do Matt · commit `5e3b1a1`
 
 - **por que andou:** decisão da pessoa, 30/09: *"Vamos passar a voz do mestre pra segunda pessoa, assim como o Matt."* Era
   a voz do Narrador em massa, que a lei reservava a ela; agora dada. "Você", o português do Brasil dela. Sem chamadas pagas:
@@ -41,6 +75,7 @@ Formato:
   migrar, o save não muda. **Um só prompt de Narrador** para os três modos.
 - **o teto, que só podia descer:** todas as portas **85.329 → 85.298**; pior cena real 74.709 → 74.644; com gente 81.214 →
   81.149; cada voz ~31 caracteres mais barata — a frase nova pagou-se com quatro cortes de texto que nada citava.
+- **orquestrador:** apliquei as seis trocas do App e a secção de fiação da suíte; o `teste-sala` (v9.120) pedia "o que vim fazer aqui" e passou a "o que veio fazer aqui", com o motivo — a mesma intenção na voz nova.
 - **fora do tema, à vista:** `rolarSonho` (`calendario.js:62`) usa `Math.random` cravado, contra a lei da semente — na pauta.
 - **para quem joga:** o Mestre fala consigo — "você vê", "a guarda aponta para a sua trouxa" — como numa mesa.
 

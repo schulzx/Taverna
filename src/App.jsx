@@ -183,6 +183,7 @@ import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guar
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
 import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
+import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
@@ -12601,7 +12602,31 @@ export default function Taverna() {
       missoesRef.current = [...(missoesRef.current || []).filter((m) => m.id !== ab.missao.id), ab.missao];
       setMissoes(missoesRef.current);
       aberturaMundoRef.current = ab.abertura;
-      enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome) }), pers, []);
+      /* O COMPANHEIRO DE ANTES (30/09, companheiro-inicial.js): só campanha
+         nova de Uma Vida, grupo vazio, com a abertura de pé — a razão dele
+         É a razão da abertura. Nasce AQUI, depois da pista escolhida, e
+         entra pelo mesmo juntar que grava grupo, registo e vistos de uma
+         vez. Dentro de calou: um companheiro que estourasse não pode
+         derrubar o primeiro turno da campanha. */
+      let persAb = pers, companheiroAb = null;
+      try {
+        if (podeTerCompanheiro({ modo: modoRef.current, capitulo: !!cap, grupo: pers.grupo, abertura: ab.abertura })) {
+          const ci = companheiroInicial({
+            semente: sementeMundo(), mapa: mapaRef.current, genero: generoMundo(), molde: moldeMundo(),
+            lex: (mundoAtual() || {}).lexico, espinha: espinhaRef.current, guildas: guildasRef.current,
+            base: baseMundoRef.current, cidade: cidadeAtualRef.current, antecedente: pers.antecedente,
+            heroi: pers, abertura: ab.abertura,
+          });
+          if (ci) {
+            const j = juntarCompanheiroInicial({ personagem: pers, npcs: npcsRef.current, elenco: elencoSaveRef.current }, ci, diaRef.current);
+            persAb = j.personagem; personagemRef.current = persAb; setPersonagem(persAb);
+            npcsRef.current = j.npcs; setNpcs(j.npcs);
+            elencoSaveRef.current = j.elenco;
+            companheiroAb = ci;
+          }
+        }
+      } catch (e) { calou("o companheiro de antes", e); }
+      enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb }), persAb, []);
     } else {
       aberturaMundoRef.current = garantirAbertura(null);
       { const env = talvezDarUmaTrama({ forcar: true }); if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; }
@@ -22007,13 +22032,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      desde a v9.136 esta pessoa tem traços, medo e, às vezes, um plano. */
   const convivioCom = (nome) => { try {
     const n = (npcsRef.current || {})[nome] || Object.values(npcsRef.current || {}).find((x) => x && (x.nome || "").toLowerCase() === String(nome).toLowerCase()) || {};
-    const l = garantirLaco(n.laco); /* v9.315: o laço de verdade, como pessoasDaCena (~7293) — a ficha nunca teve forcaDoLaco/euDevo soltos */
-    return {
-      dias: Math.max(0, diaRef.current - (n.conhecidoEm != null ? n.conhecidoEm : diaRef.current)),
-      forcaDoLaco: (l && !l.rompido && l.forca) || 0,
-      meDeve: !!n.meDeve, euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || "")) || (l && l.tipo === "divida"),
-      sabeDeMim: !!n.sabeDeMim, euSeiDela: !!n.euSeiDela, euGanhei: !!n.euGanhei,
-    };
+    /* 30/09: a mesma conta de sempre, agora em companheiro-inicial.js
+       (convivioDaFicha) — para quem não é de antes o resultado não muda
+       (a suíte do backend prova 21/21); quem é de antes (o companheiro
+       inicial) passa a ler "deAntes", que só esta conta sabe dizer. */
+    return convivioDaFicha(n, diaRef.current);
   } catch (e) { return calou("convivioCom", e); } };
 
   const vereditoDoConvite = (nome) => pesarConvite(indoleDe(sementeMundo(), { nome }), {

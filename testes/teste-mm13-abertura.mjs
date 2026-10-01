@@ -500,9 +500,15 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     && iniciar.indexOf("try {") < iniciar.indexOf("ab = abrirAbertura({") && iniciar.indexOf("ab = abrirAbertura({") < iniciar.indexOf('calou("a abertura", e)'));
   t("a principal da abertura substitui qualquer missão de mesmo id, sem apagar as outras",
     iniciar.includes("missoesRef.current = [...(missoesRef.current || []).filter((m) => m.id !== ab.missao.id), ab.missao];"));
+  /* 30/09: a linha ganhou o companheiro de antes (companheiro-inicial.js) —
+     o pedido agora leva `companheiro`, e quem segue não é mais `pers` mas
+     `persAb` (o mesmo herói, ou o herói com o grupo já aumentado). A
+     asserção move-se com o motivo: ainda é o MESMO pedido substituindo
+     abrirACampanha, só que agora o Narrador também sabe com quem o herói
+     chegou. */
   t("a abertura vai para o ref, e o pedido substitui abrirACampanha",
     iniciar.includes("aberturaMundoRef.current = ab.abertura;")
-    && iniciar.includes("enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome) }), pers, []);"));
+    && iniciar.includes("enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb }), persAb, []);"));
   {
     /* sem pista (abrirAbertura devolveu null): o caminho antigo — trama
        forçada + abrirACampanha — continua de pé, dentro do `else`. */

@@ -502,6 +502,9 @@ export function garantirConvivio(c) {
     meDeve: !!o.meDeve, euDevo: !!o.euDevo,
     sabeDeMim: !!o.sabeDeMim, euSeiDela: !!o.euSeiDela,
     euGanhei: !!o.euGanhei,
+    /* 30/09: quem o herói conhece de ANTES da campanha (o companheiro de
+       antes, companheiro-inicial.js). Só a balança do convite o lê. */
+    deAntes: !!o.deAntes,
   };
 }
 
@@ -655,9 +658,13 @@ function pesoDoConvite(i, c, fama0) {
 
   /* O TEMPO PESA MAIS QUE QUALQUER TRAÇO. Ninguém larga a vida para andar
      com quem conheceu ontem, por mais simpático que seja. */
-  const dias = Math.min(TEMPO_NO_CONVITE.teto, c.dias);
+  /* QUEM SE CONHECE DE ANTES (30/09) não se conheceu ontem: o tempo dele
+     já está todo dado — o teto inteiro, que é o que "ela já sabe quem você
+     é" quer dizer. Os dias da campanha não lhe acrescentam nada. */
+  const dias = c.deAntes ? TEMPO_NO_CONVITE.teto : Math.min(TEMPO_NO_CONVITE.teto, c.dias);
   peso += dias * TEMPO_NO_CONVITE.porDia;
-  if (c.dias <= 1) porques.push("vocês se conheceram ontem");
+  if (c.deAntes) porques.push("vocês se conhecem de antes disto tudo");
+  else if (c.dias <= 1) porques.push("vocês se conheceram ontem");
   else if (c.dias >= 10) porques.push(`vocês se conhecem há ${c.dias} dias`);
 
   peso += (c.forcaDoLaco || 0) * 7;

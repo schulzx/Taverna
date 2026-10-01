@@ -318,14 +318,27 @@ const APPn = APP.replace(/\r\n/g, "\n");
 
 sec("12. A FIAÇÃO LÊ O QUE O MOTOR ENTREGA");
 {
-  /* convivioCom: o laço de verdade, não um campo que a ficha nunca teve */
+  /* convivioCom: o laço de verdade, não um campo que a ficha nunca teve.
+     01/10: a fiação do companheiro de antes (MM, companheiro-inicial.js)
+     tirou a conta de dentro de `convivioCom` e pôs um nome nela —
+     `convivioDaFicha` — porque agora ela também precisa dizer "conhecido
+     de antes da campanha", e só uma função com nome pode ser chamada de
+     dois lugares (o App e o módulo do companheiro) sem duplicar o corpo.
+     As três asserções que liam o TEXTO da conta em App.jsx (garantirLaco,
+     forcaDoLaco, euDevo) passam a ler o texto de onde a conta mora agora;
+     o que prova que o resultado não mudou para quem não é de antes é a
+     comparação campo a campo em teste-companheiro-inicial.mjs (secção 4,
+     21/21 — `convivioDaFicha` bate com a conta antiga de `convivioCom`). */
   const CV = APPn.slice(APPn.indexOf("const convivioCom = (nome)"), APPn.indexOf("const vereditoDoConvite"));
   t("convivioCom existe", CV.length > 100);
-  t("lê o laço por garantirLaco, como pessoasDaCena", /const l = garantirLaco\(n\.laco\)/.test(CV));
-  t("a força vem do laço vivo, não de um campo solto", /forcaDoLaco: \(l && !l\.rompido && l\.forca\) \|\| 0/.test(CV));
+  t("e delegou a conta para convivioDaFicha (companheiro-inicial.js)", /return convivioDaFicha\(n, diaRef\.current\)/.test(CV));
+  const CI = readFileSync("../src/companheiro-inicial.js", "utf8");
+  const CDF = CI.slice(CI.indexOf("export function convivioDaFicha"), CI.indexOf("export function convivioDaFicha") + 800);
+  t("lá dentro, o laço de verdade é lido por garantirLaco, como pessoasDaCena", /const l = garantirLaco\(n\.laco\)/.test(CDF));
+  t("a força vem do laço vivo, não de um campo solto", /forcaDoLaco: \(l && !l\.rompido && l\.forca\) \|\| 0/.test(CDF));
   t("e não sobrou o campo que a ficha nunca teve", !/Number\(n\.forcaDoLaco\)/.test(CV));
   t("a linha morta que não lia nada saiu", !/\(elencoMemRef\.current \|\| \[\]\)\.find \? null : null/.test(CV));
-  t("euDevo se deriva das notas ou de uma dívida de verdade", /euDevo: \/d\[íi\]vida\|devo\|prometi\/i\.test\(String\(n\.notas \|\| ""\)\) \|\| \(l && l\.tipo === "divida"\)/.test(CV));
+  t("euDevo se deriva das notas ou de uma dívida de verdade", /euDevo: \/d\[íi\]vida\|devo\|prometi\/i\.test\(String\(n\.notas \|\| ""\)\) \|\| !!\(l && l\.tipo === "divida"\)/.test(CDF));
 
   /* primeiraVez: dia 0 é um dia conhecido, não "nunca vi essa pessoa" */
   t("primeiraVez usa == null, não a falsidade de 0", /primeiraVez: n\.conhecidoEm == null && !noGrupo/.test(APPn));
