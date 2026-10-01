@@ -15,6 +15,38 @@ Formato:
 ```
 
 ---
+## 30/09 21:12 · v9.343 · MM15 (3) · quando a ligação cai, o jogador lê que foi a ligação, e o mundo não anda · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o terceiro da MM15, pedido pelo coordenador **para qualquer falha da API**: no T11 da segunda sessão o
+  teto respondeu 429 e a tela disse "A porta não se abre para esta mão: o Mestre não conta esta história a quem bate
+  assim" — o jogador lê que fez algo proibido, tenta outra coisa e gasta mais —, e o relógio andou 10 minutos num turno
+  que não aconteceu.
+- **estado inicial:** verde (`999ae0a`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend — a causa:** o 429 do teto e o 403 de origem caíam na mesma classe (`recusado`), com uma frase só, de recusa de
+  conteúdo; e nada na classe era sobre o que o jogador escreveu. As recusas de conteúdo **verdadeiras** estavam noutra
+  (o SAFETY do Gemini, o "Content Exists Risk" do DeepSeek), misturadas com o provedor caído. O relógio: 5 min em
+  `agirInterno` e 5 em `talvezAndarNaCidade`, os dois antes da chamada; e o `catch` só repunha a nota. Antes da chamada o
+  turno mexe em ~40 campos do save (relógio, lugar, ficha, missões, o reino inteiro pelo `avancarDiasReino`).
+- **o conserto:** `MOTIVOS_DO_SILENCIO` — dez classes numa tabela, cada uma com a linha para o jogador e se há botão; nove
+  são de ligação ("A ligação caiu antes de o Mestre ouvir você", "A mesa do Mestre fechou por hoje: a ligação só volta às
+  21h do seu relógio") e uma é recusa de conteúdo, só quando **todos** os provedores recusaram. E o turno que falhou não
+  aconteceu: uma foto do save no início do turno e outra no envio; na falha o mundo volta à foto (menos o custo e as
+  marcas que sobrevivem), a frase volta à caixa, e o turno não fica guardado. A exceção de X3 fica de pé: o que os dados já
+  rolaram não se desfaz (contra a re-rolagem).
+- **frontend:** `retratoDoJogo()` extraído do `salvar` — **o save sai com as mesmas chaves**, provado contra o de HEAD;
+  `aplicarRetrato` estreito (não reaproveitei `continuar` inteiro: redispararia recap, despertar e migração a cada falha);
+  as fotos em `agirInterno`, no mapa e no topo de `enviar`; o `catch` desfaz, guarda ou não, grava **depois** de repor; a
+  segunda linha da falha na tela, com a peça de texto que já existia.
+- **a prova jogada (sem gastar: o teto devolve 429 ao nosso endereço de graça):** "Saio da taverna e vou ao mercado" → a tela
+  diz "A mesa do Mestre fechou por hoje: a ligação só volta às 21h do seu relógio" e "Nada do que você fez chegou a acontecer:
+  a sua frase espera por você", sem botão; relógio e lugar iguais; a frase na caixa; o histórico sem duplicar. Rede caída
+  (fetch rejeitado) → "A ligação caiu antes de o Mestre ouvir você", com "Tentar de novo".
+- **para a pessoa (infra, não mexi):** a mensagem da API diz "volta a zero à meia-noite", mas o teto conta pelo dia UTC — no
+  Brasil reabre às 21h. A tela já diz a hora local. E fica corrigido um bloqueio que ninguém via: um golpe já rolado que
+  apanhava o teto deixava a mesa trancada sem botão, mesmo depois de o teto reabrir.
+- **para quem joga:** quando a ligação cai, lê-se que foi a ligação; o mundo não anda; e a frase fica à espera.
+
 ## 30/09 19:32 · v9.342 · MM15 (2) · a boca que se pagava e nunca falava · commit `0a0f71e`
 
 - **por que andou:** o segundo da MM15 — a segunda sessão gastou 3,6 chamadas pagas por resposta (a primeira ~2,0), quatro

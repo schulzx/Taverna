@@ -71,7 +71,7 @@
 /* ============================================================
    A TABELA DOS SILÊNCIOS
 
-   As sete classes de queda estão MEDIDAS em `api/narrador.js` e
+   As classes de queda estão MEDIDAS em `api/narrador.js` e
    `api/_portao.js` — nenhuma foi imaginada. O que chega ao App é sempre
    uma string: `chamarModelo` lança `new Error(data.erro || "HTTP <n>")`,
    e o `catch` de `enviar` guarda `e.message`. Por isso a classificação
@@ -84,7 +84,7 @@
 
    · A recusa do portão por teto diário diz "Limite diário alcançado
      (500 chamadas)" — e traz um 500 dentro do texto. Se `provedor_caiu`
-     (que reclama o 500) viesse antes de `recusado`, o teto diário seria
+     (que reclama o 500) viesse antes de `teto_do_dia`, o teto diário seria
      lido como provedor fora do ar, e o jogo ofereceria "tentar de novo"
      a cada meia-noite que falta.
 
@@ -97,9 +97,43 @@
    `podeTentar` não é enfeite: é a diferença entre um botão que resolve e
    um botão que ensina o jogador a bater na porta trancada.
 
-   As frases de `casa` são VOZ DE MUNDO. Nenhuma delas diz erro, rede,
-   servidor, provedor, chave ou número: o jogador ouve o Mestre calar,
-   não a máquina tossir.
+   As frases de `casa` não dizem erro, rede, servidor, provedor, chave
+   nem número: o jogador não lê a máquina.
+
+   ------------------------------------------------------------
+   MM15 (3) — A FRASE QUE ACUSAVA O JOGADOR, e o que mudou por causa dela
+
+   Até aqui a linha do teto diário (e da origem recusada) dizia "A porta
+   não se abre para esta mão: o Mestre não conta esta história a quem bate
+   assim". Na segunda sessão de prova (`mente/mm11-sessao-2.md`, T11) a
+   API respondeu 429 — o teto do endereço, infra, nada que a jogadora
+   tivesse escrito — e foi ESTA frase que subiu. Ela lê-se como recusa do
+   conteúdo: "fiz uma coisa proibida". Quem a lê reescreve a ação, manda de
+   novo, e gasta mais — contra uma porta que abre sozinha à hora certa.
+
+   A voz de mundo tinha escondido a CAUSA, e a causa é a única coisa que
+   diz ao jogador o que fazer. Daí as duas regras novas desta tabela:
+
+   1. TODA LINHA DIZ DE QUEM FOI. `natureza` separa as três verdades:
+      · "ligacao" — o transporte: o Mestre nem chegou a ouvir. A linha diz
+        "a ligação", com essa palavra, e nenhuma soa a recusa.
+      · "conteudo" — a recusa verdadeira: os provedores leram e não
+        escreveram por causa do que foi pedido. É a ÚNICA que diz ao
+        jogador para dizer de outro modo.
+      · "jogo" — o Mestre respondeu e fomos nós que tropeçamos ao ler.
+        Não é ligação, e a linha não finge que é.
+   2. O TETO É O SEU PRÓPRIO SILÊNCIO. Deixou de dividir linha com a
+      origem recusada: um volta à hora certa, o outro não volta sozinho, e
+      "A porta não se abre" servia aos dois sem servir a nenhum.
+
+   O QUE A LEITURA MOSTROU SOBRE "RECUSA DE CONTEÚDO": nenhuma das marcas
+   da antiga linha `recusado` era de conteúdo — eram origem, teto, chave
+   e modelo, tudo transporte ou infra. As recusas de conteúdo REAIS
+   estavam escondidas noutra classe: o Gemini devolve `sem texto (SAFETY)`
+   (e PROHIBITED_CONTENT, BLOCKLIST, SPII, RECITATION) quando o filtro
+   dele barra a resposta, e o DeepSeek devolve 400 com "Content Exists
+   Risk" no corpo. Essas iam dar a `provedor_caiu` ("o Mestre perde o
+   fio"). É ELAS que se preserva — como classe própria, `conteudo`.
    ============================================================ */
 export const MOTIVOS_DO_SILENCIO = [
   {
@@ -109,23 +143,45 @@ export const MOTIVOS_DO_SILENCIO = [
        "insufficient balance" é o que o DeepSeek escreve no corpo do 402,
        e ele viaja nos 250 caracteres de `corpo` que o roteador anexa. */
     id: "sem_dinheiro",
+    natureza: "ligacao",
     codigos: [402],
     marcas: ["nenhuma chave configurada", "insufficient balance", "insufficient_quota", "billing"],
-    casa: "O Mestre fecha o livro e guarda a pena: por hoje não há mais o que contar.",
+    casa: "A mesa do Mestre está fechada por agora: a ligação não se abre, por mais que se insista.",
     podeTentar: false,
   },
   {
-    /* 401/403/404 e as duas recusas do portão (api/_portao.js): a de
-       origem ("Este endereço só responde ao jogo.", com `motivo` "sem
-       origem" ou "origem não autorizada") e a de teto diário ("Limite
-       diário alcançado"). O 404 entra aqui porque, nos dois provedores,
-       ele significa modelo que não existe — a porta certa, o nome
-       errado; e tentar de novo repete o mesmo nome. */
-    id: "recusado",
+    /* O TETO DIÁRIO DO PORTÃO (api/_portao.js, `deixarEntrar`): 429 com
+       "Limite diário alcançado (N chamadas)". Viaja SEM o número 429 na
+       string — `chamarModelo` lança `data.erro` quando ele existe, e o
+       status só aparece quando o corpo vem vazio —, por isso é a MARCA que
+       o acha. E vem antes de `demanda` (que reclama o 429) e de
+       `provedor_caiu` (que reclamaria o "500 chamadas" do texto).
+
+       É o caso do T11. Insistir agora não abre — `podeTentar` é falso —,
+       mas a porta abre SOZINHA à hora da virada, e é essa hora que a
+       linha diz quando o App passa o fuso (`HORA_DA_VIRADA`, abaixo). */
+    id: "teto_do_dia",
+    natureza: "ligacao",
+    codigos: [],
+    marcas: ["limite diario alcancado"],
+    casa: "A mesa do Mestre fechou por hoje: a ligação só volta quando o dia da mesa virar.",
+    /* a mesma frase com a hora local da virada; `HORA` é trocado por
+       `lerOSilencio` quando recebe o fuso. Sem fuso, vale `casa`. */
+    casaComHora: "A mesa do Mestre fechou por hoje: a ligação só volta às HORA do seu relógio.",
+    podeTentar: false,
+  },
+  {
+    /* 401/403/404 e a recusa de ORIGEM do portão ("Este endereço só
+       responde ao jogo.", com `motivo` "sem origem" ou "origem não
+       autorizada"). O 404 entra aqui porque, nos dois provedores, ele
+       significa modelo que não existe — a porta certa, o nome errado; e
+       tentar de novo repete o mesmo nome. Nada disto é o jogador: é o
+       endereço de onde ele joga, ou a configuração da mesa. */
+    id: "porta_fechada",
+    natureza: "ligacao",
     codigos: [401, 403, 404],
     marcas: [
       "este endereco so responde",
-      "limite diario alcancado",
       "sem origem",
       "origem nao autorizada",
       "invalid api key",
@@ -133,7 +189,7 @@ export const MOTIVOS_DO_SILENCIO = [
       "unauthorized",
       "permission denied",
     ],
-    casa: "A porta não se abre para esta mão: o Mestre não conta esta história a quem bate assim.",
+    casa: "Deste endereço não há ligação com a mesa do Mestre: a voz não chega até ele.",
     podeTentar: false,
   },
   {
@@ -149,9 +205,10 @@ export const MOTIVOS_DO_SILENCIO = [
        classe transformaria bug do jogo em "sem rede" — e mentir sobre a
        causa é pior do que dizer "desconhecido". */
     id: "sem_rede",
+    natureza: "ligacao",
     codigos: [],
     marcas: ["failed to fetch", "networkerror", "network request failed", "load failed", "err_internet_disconnected"],
-    casa: "A estrada até a mesa do Mestre está cortada; nenhuma palavra atravessa.",
+    casa: "A ligação caiu antes de o Mestre ouvir você.",
     podeTentar: true,
   },
   {
@@ -159,9 +216,43 @@ export const MOTIVOS_DO_SILENCIO = [
        entra aqui — ele é o roteador dizendo que o provedor demorou, e
        isso é `provedor_caiu`, que já cobre a família 5xx inteira. */
     id: "tempo_esgotado",
+    natureza: "ligacao",
     codigos: [408],
     marcas: ["abort", "timeout", "timed out", "etimedout", "tempo esgotado"],
-    casa: "O Mestre respira fundo, demora — e a frase não vem.",
+    casa: "A ligação ficou muda no caminho, e o Mestre não chegou a ouvir você.",
+    podeTentar: true,
+  },
+  {
+    /* A RECUSA VERDADEIRA — o único silêncio que é sobre o que se pediu.
+       Os filtros dos provedores: o Gemini devolve `sem texto (<motivo>)`
+       com o `finishReason` ou o `blockReason` (api/narrador.js, no fim de
+       `chamarGemini`) e o DeepSeek devolve 400 com "Content Exists Risk"
+       no corpo, que o roteador anexa ao `ultimoErro`.
+
+       `todos: true` É A REGRA QUE IMPEDE A ACUSAÇÃO FALSA. O roteador
+       junta as quedas dos provedores com " · " numa linha só; se UM
+       recusou pelo conteúdo e o OUTRO só estava fora do ar, o problema não
+       é a frase do jogador — é a ligação, e insistir pode passar pelo
+       outro. Só quando TODOS os provedores tentados recusaram pelo
+       conteúdo é que a linha diz ao jogador para dizer de outro modo.
+
+       `podeTentar` fica verdadeiro de propósito: o filtro do Gemini julga
+       a RESPOSTA que o modelo escreveu, e uma segunda escrita pode passar;
+       e num turno em que os dados já caíram, sem botão a mesa trancava. */
+    id: "conteudo",
+    natureza: "conteudo",
+    todos: true,
+    codigos: [],
+    marcas: [
+      "content exists risk",
+      "sem texto (safety)",
+      "sem texto (prohibited_content)",
+      "sem texto (blocklist)",
+      "sem texto (spii)",
+      "sem texto (recitation)",
+      "sem texto (image_safety)",
+    ],
+    casa: "O Mestre ouviu, e não narra isso desse jeito: diga de outro modo o que você faz.",
     podeTentar: true,
   },
   {
@@ -172,17 +263,21 @@ export const MOTIVOS_DO_SILENCIO = [
        `finishReason` ou o `blockReason` entre parênteses). O provedor
        falou; só não disse nada. Para o jogador dá no mesmo. */
     id: "provedor_caiu",
+    natureza: "ligacao",
     codigos: [500, 502, 503, 504],
     marcas: [
       "todos os provedores falharam",
       "resposta vazia",
       "sem texto",
+      /* MM15 (3): o que `chamarMestre` passa a lançar quando nem a segunda
+         escrita trouxe narrativa (`MOTIVO_SEM_NARRATIVA`, abaixo) */
+      "resposta sem narrativa",
       "internal server error",
       "bad gateway",
       "service unavailable",
       "gateway timeout",
     ],
-    casa: "O Mestre perde o fio no meio da frase e fica olhando o fogo.",
+    casa: "A ligação com o Mestre se partiu antes de a resposta chegar.",
     podeTentar: true,
   },
   {
@@ -193,9 +288,28 @@ export const MOTIVOS_DO_SILENCIO = [
        caso em que o 429 chega limpo — e ela existe porque a espera de um
        instante é uma resposta diferente de "o Mestre caiu". */
     id: "demanda",
+    natureza: "ligacao",
     codigos: [429],
     marcas: ["rate limit", "rate_limit", "too many requests", "resource_exhausted"],
-    casa: "Há vozes demais falando ao mesmo tempo, e o Mestre não se ouve pensar.",
+    casa: "A ligação está congestionada, e a voz do Mestre não passou.",
+    podeTentar: true,
+  },
+  {
+    /* O MESTRE RESPONDEU e o tropeço foi nosso: a resposta chegou e algo
+       ao aplicá-la estourou dentro do `try` de `enviar`. Não é ligação, e
+       dizer "a ligação caiu" seria mentir sobre a causa — que é a mentira
+       que esta etapa existe para acabar.
+
+       Sem código e sem marca DE PROPÓSITO: nenhuma string de erro diz
+       "o Mestre respondeu". Quem sabe isso é a fiação (a resposta voltou
+       ou não), e é `destinoDaFalha` que escolhe esta linha pelo nome
+       quando ela lhe diz `respondeu: true`. Pelo laço de marcas, nunca se
+       chega aqui. */
+    id: "tropeco",
+    natureza: "jogo",
+    codigos: [],
+    marcas: [],
+    casa: "A resposta do Mestre chegou, mas veio embaralhada e não se deixou ler.",
     podeTentar: true,
   },
   {
@@ -204,14 +318,53 @@ export const MOTIVOS_DO_SILENCIO = [
        um erro novo o jogador olharia para uma tela que não diz nada — ou,
        pior, para a mensagem crua da máquina. Sem código e sem marca de
        propósito: quem chega aqui chegou por não casar nenhuma das
-       outras. */
+       outras.
+
+       É ligação, e diz que é: o `try` que a pega começa na chamada ao
+       Mestre, e o tropeço DEPOIS da resposta tem a sua própria linha
+       (`tropeco`). O que sobra aqui é o transporte que ninguém nomeou. */
     id: "desconhecido",
+    natureza: "ligacao",
     codigos: [],
     marcas: [],
-    casa: "O Mestre se cala — a mesa espera.",
+    casa: "A ligação com o Mestre calou sem dizer por quê.",
     podeTentar: true,
   },
 ];
+
+/* ============================================================
+   A HORA DA VIRADA DO TETO
+
+   O teto diário conta por DIA UTC: `api/_portao.js` monta a chave com
+   `new Date().toISOString().slice(0, 10)`, que é a data em Greenwich. A
+   mensagem do portão diz "volta a zero à meia-noite" — e para quem joga
+   no Brasil (UTC−3) essa meia-noite é às 21h. Dizer "meia-noite" na tela
+   mandava o jogador esperar três horas a mais do que precisa.
+
+   Por isso a linha do teto diz a hora LOCAL, e ela sai daqui: a hora UTC
+   da virada, que é número de regra e mora numa tabela. A suíte confere
+   que o portão continua a contar pelo dia UTC — se um dia ele mudar de
+   fuso, esta linha e aquela mudam juntas ou a catraca grita.
+   ============================================================ */
+export const HORA_DA_VIRADA = {
+  /* a hora UTC em que a chave `uso:<dia>` do portão muda de dia */
+  horaUTC: 0,
+  /* minutos num dia: o módulo de volta ao relógio de 24 horas */
+  minutosNoDia: 1440,
+};
+
+/* `fuso` é o que o navegador dá em `new Date().getTimezoneOffset()`:
+   minutos a SOMAR à hora local para chegar a UTC (Brasília = 180). A
+   hora local da virada é, então, a hora UTC MENOS o fuso, dentro do dia.
+   Fuso torto (não número, fora de ±14h) devolve "" e a linha sem hora. */
+const horaLocalDaVirada = (fuso) => {
+  const f = Number(fuso);
+  if (typeof fuso !== "number" || !Number.isFinite(f) || Math.abs(f) > 14 * 60) return "";
+  const dia = HORA_DA_VIRADA.minutosNoDia;
+  const m = ((HORA_DA_VIRADA.horaUTC * 60 - f) % dia + dia) % dia;
+  const h = Math.floor(m / 60), min = m % 60;
+  return min ? `${h}h${String(min).padStart(2, "0")}` : `${h}h`;
+};
 
 /* Acentuação some antes da comparação porque a mesma recusa viaja com e
    sem acento dependendo de quem a escreve ("limite diário" no portão,
@@ -251,24 +404,50 @@ const linhaDoSilencio = (id) =>
    do desconhecido, que é a resposta honesta para "calou e não disse por
    quê".
    ============================================================ */
-export function lerOSilencio(motivoTecnico) {
+/* OS PEDAÇOS DA QUEDA (MM15). O roteador de `api/narrador.js` junta a
+   queda de cada provedor numa linha: "Todos os provedores falharam — A ·
+   B". Uma linha com `todos: true` só casa se CADA pedaço tiver uma das
+   suas marcas. Fora do roteador (um erro solto), a string inteira é o
+   único pedaço. */
+const CABECA_DO_ROTEADOR = "todos os provedores falharam";
+const pedacosDaQueda = (agulha) => {
+  const i = agulha.indexOf(CABECA_DO_ROTEADOR);
+  if (i < 0) return [agulha];
+  const resto = agulha.slice(i + CABECA_DO_ROTEADOR.length).replace(/^\s*[—-]\s*/, "");
+  const pedacos = resto.split(" · ").map((p) => p.trim()).filter(Boolean);
+  return pedacos.length ? pedacos : [agulha];
+};
+
+export function lerOSilencio(motivoTecnico, opcoes) {
   const tecnico =
     typeof motivoTecnico === "string"
       ? motivoTecnico
       : motivoTecnico == null
         ? ""
         : String(motivoTecnico);
+  /* `= {}` não cobre `null`: as opções são lidas uma a uma */
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const agulha = semAcento(tecnico);
   let achada = null;
   if (agulha) {
     for (const linha of MOTIVOS_DO_SILENCIO) {
-      const porMarca = (linha.marcas || []).some((m) => agulha.includes(m));
+      const marcas = linha.marcas || [];
+      const porMarca = linha.todos
+        ? marcas.length > 0 && pedacosDaQueda(agulha).every((p) => marcas.some((m) => p.includes(m)))
+        : marcas.some((m) => agulha.includes(m));
       const porCodigo = (linha.codigos || []).some((c) => temOCodigo(agulha, c));
       if (porMarca || porCodigo) { achada = linha; break; }
     }
   }
   const linha = achada || linhaDoSilencio("desconhecido");
-  return { id: linha.id, casa: linha.casa, podeTentar: linha.podeTentar !== false, tecnico };
+  const hora = linha.casaComHora ? horaLocalDaVirada(o.fuso) : "";
+  return {
+    id: linha.id,
+    casa: hora ? linha.casaComHora.replace("HORA", hora) : linha.casa,
+    podeTentar: linha.podeTentar !== false,
+    natureza: linha.natureza || "ligacao",
+    tecnico,
+  };
 }
 
 /* ============================================================
@@ -570,7 +749,9 @@ export function guardarTurno(args) {
     marca,
     histBase,
     persAtual,
-    silencio: Object.freeze(lerOSilencio(a.motivo)),
+    /* `fuso` é opcional (MM15): só a linha do teto o usa, para dizer a
+       hora local em que a mesa reabre */
+    silencio: Object.freeze(lerOSilencio(a.motivo, { fuso: a.fuso })),
     /* zero para turno novo; a conta do anterior quando é a MESMA queda
        insistindo — a regra inteira está em `tentativasHerdadas` */
     tentativas: tentativasHerdadas(a.anterior, marca),
@@ -641,4 +822,363 @@ export function travaODeclarar(guardado) {
   if (guardado.rolou === true) return true;
   if (guardado.rolou == null) return ehTurnoResolvido(guardado.conteudo);
   return false;
+}
+
+/* ============================================================
+   MM15 (3) — O TURNO QUE NÃO ACONTECEU
+
+   O defeito, medido no T11 da segunda sessão de prova: a API respondeu
+   429 três vezes, o Mestre não disse nada — e o relógio andou de 08:40
+   para 08:50. Dez minutos de mundo por um turno que não houve: cinco de
+   `MINUTOS_POR_TURNO`, cobrados por `agirInterno` antes de chamar
+   `enviar`, e cinco da caminhada que `talvezAndarNaCidade` registou
+   dentro de `enviar`, também antes da chamada. E não só o relógio: a
+   pauta daquele turno já trazia "[MOVIMENTO — REGISTRADO PELO SISTEMA]
+   … AGORA estou no Último Gomo" — o lugar tinha mudado, a nota estava
+   escrita, e nada disso se desfez quando o Mestre calou.
+
+   A REGRA: SE O MESTRE NÃO OUVIU, O TURNO NÃO CONTA. Nada do que o turno
+   avança por ter "acontecido" fica — relógio, dia, lugar, recursos,
+   missões, a rodada da frente, o sino, a nota, as linhas na tela. O
+   mundo volta ao retrato tirado antes, e a frase do jogador volta à caixa.
+
+   A EXCEÇÃO É A DE X3, E ELA É LEI: o que os DADOS já decidiram antes da
+   chamada não se desfaz. Desfazer um golpe rolado e deixar o jogador
+   declará-lo de novo é a re-rolagem que `travaODeclarar` existe para
+   impedir — uma queda de rede não pode ser segunda chance. Nesses turnos
+   desfaz-se só o que `enviar` avançou por conta própria (a pauta, a
+   frente, o sino), para o "tentar de novo" não o cobrar duas vezes; o
+   resultado dos dados fica, guardado, à espera de ser contado.
+
+   O QUE ESTE BLOCO NÃO FAZ: não conhece ref nenhuma, nem `useRef`, nem o
+   save. Recebe RETRATOS (objetos comuns), decide, e devolve o retrato a
+   repor. Quem tira a foto e quem a repõe é a fiação.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   A RESPOSTA SEM NARRATIVA
+
+   O terceiro silêncio que se disfarçava: `chamarMestre` tenta DUAS vezes
+   quando o JSON chega sem narrativa, e se a segunda também falha devolve
+   a primeira assim mesmo — com a narrativa de recurso que `extrairJSON`
+   põe no lugar ("O Mestre hesita por um instante… (toque em Tentar de
+   novo)", ou o "…" de `sanearResposta`). O turno então CONTA: o relógio
+   anda, as mudanças da resposta aplicam-se, e a tela mostra, como fala do
+   Mestre, uma instrução de botão. É uma falha de ligação vestida de
+   sucesso.
+
+   Os dois recursos são texto de `src/json.js`, e a suíte prova que
+   `narrativaFaltou` os reconhece pelo que `extrairJSON` devolve de
+   verdade — não por cópia. `MOTIVO_SEM_NARRATIVA` é o que o App lança
+   nesse caso, e cai em `provedor_caiu` pela marca que a tabela tem.
+   ------------------------------------------------------------ */
+export const NARRATIVA_QUE_NAO_VEIO = {
+  /* o que `sanearResposta` devolve quando o campo veio vazio */
+  vazias: ["…"],
+  /* o começo das duas frases de recurso de `extrairJSON` */
+  prefixos: ["O Mestre hesita"],
+};
+
+export const MOTIVO_SEM_NARRATIVA = "resposta sem narrativa depois da segunda escrita";
+
+export function narrativaFaltou(resp) {
+  if (!resp || typeof resp !== "object") return true;
+  const n = typeof resp.narrativa === "string" ? resp.narrativa.trim() : "";
+  if (!n) return true;
+  if (NARRATIVA_QUE_NAO_VEIO.vazias.includes(n)) return true;
+  return NARRATIVA_QUE_NAO_VEIO.prefixos.some((p) => n.startsWith(p));
+}
+
+/* ------------------------------------------------------------
+   OS TRÊS DESTINOS DE UMA FALHA
+
+   A ORDEM É A PRECEDÊNCIA, como na tabela dos silêncios.
+
+   · `mestre_respondeu` — a resposta CHEGOU e o tropeço foi nosso, ao
+     aplicá-la. O turno volta ao retrato do ENVIO (o que a resposta
+     aplicou pela metade sai; o que os dados decidiram antes fica), e o
+     "tentar de novo" pede a narração do mesmo envelope.
+   · `dados_ja_cairam` — o envelope (ou a nota que ia com ele) traz o selo
+     de turno resolvido, ou a luta está aberta — onde todo turno escrito
+     fecha com a vez do mundo ROLADA (`fecharMeuTurno`), mesmo quando o
+     envelope começa pela frase crua e escapa ao selo. Mesmo retrato do
+     envio, mesmo reenvio do envelope. E o botão aparece SEMPRE
+     (`botaoSempre`): com a trava levantada e sem botão, a mesa ficava
+     trancada para sempre — a porta sem chave de que X3 falava, agora
+     pelo lado de cá. Um 429 do teto num golpe já rolado era exatamente
+     isso: nem declarar, nem pedir que contassem, nem depois da virada.
+   · `turno_nao_houve` — o resto: nada rolou, nada se decidiu. O mundo
+     volta ao retrato do INÍCIO do turno, a frase volta à caixa, e o
+     turno não fica guardado (não há nada preso para contar).
+
+   `linha` é a segunda metade do que o jogador lê, depois da `casa` do
+   silêncio: a primeira diz o que aconteceu com a ligação, esta diz o que
+   aconteceu com o turno. As duas são verdade juntas.
+   ------------------------------------------------------------ */
+export const DESTINOS_DA_FALHA = [
+  {
+    id: "mestre_respondeu",
+    desfazer: "envio",
+    reenvio: "envelope",
+    devolverFrase: false,
+    guardar: true,
+    botaoSempre: false,
+    linha: "Nada do que a resposta trazia ficou na mesa; peça ao Mestre que conte outra vez.",
+  },
+  {
+    id: "dados_ja_cairam",
+    desfazer: "envio",
+    reenvio: "envelope",
+    devolverFrase: false,
+    guardar: true,
+    botaoSempre: true,
+    linha: "O que os dados decidiram fica decidido; falta só o Mestre contar.",
+  },
+  {
+    id: "turno_nao_houve",
+    desfazer: "turno",
+    reenvio: "frase",
+    devolverFrase: true,
+    guardar: false,
+    botaoSempre: false,
+    linha: "Nada do que você fez chegou a acontecer: a sua frase espera por você.",
+  },
+];
+
+const destinoPorId = (id) => DESTINOS_DA_FALHA.find((d) => d.id === id) || DESTINOS_DA_FALHA[DESTINOS_DA_FALHA.length - 1];
+
+/* ------------------------------------------------------------
+   O QUE SOBREVIVE AO DESFEITO
+
+   O retrato é o do save — é ele que enumera o mundo inteiro, e um órgão
+   novo que entra no save entra no desfeito sem ninguém se lembrar (uma
+   lista de refs à parte apodreceria no primeiro órgão novo). Mas nem
+   tudo o que o save leva é MUNDO. Estes campos ficam como estão AGORA:
+
+   · `custo`, `provedor`, `provedores` — a medida do que foi GASTO. As
+     chamadas do turno falhado foram pagas (as falas colhidas, as leves);
+     desfazer o turno não devolve o dinheiro, e apagar a conta mentiria
+     sobre ele. É esta conta que mostrou as 37 chamadas da sessão 2.
+   · `guardado` — o turno preso de X3. Quem decide o que ele vira é o
+     destino (`guardar`), não o retrato velho.
+   · `abasAbertas`, `preferenciaDaReacao` — escolhas da pessoa, não do
+     mundo; abrir uma aba durante a espera não é parte do turno.
+   · `backupEm`, `salvoEm` — marcas da gravação, não do jogo.
+   ------------------------------------------------------------ */
+export const SOBREVIVEM_AO_DESFEITO = [
+  "custo", "provedor", "provedores", "guardado",
+  "abasAbertas", "preferenciaDaReacao", "backupEm", "salvoEm",
+];
+
+/* ------------------------------------------------------------
+   O QUE O TURNO ANDA ANTES DE O MESTRE RESPONDER — medido no App.jsx
+
+   A lista não é o que se repõe (o que se repõe é o retrato inteiro): é a
+   PROVA de que o retrato cobre o que anda. Cada linha diz um campo, a
+   ref que o guarda e quem o move antes da chamada. A suíte confere que
+   cada campo `noSave` é chave do objeto que `salvar` grava, e que cada
+   função nomeada ainda existe no App — se uma for renomeada, ou um campo
+   sair do save, a catraca grita em vez de o desfeito passar a esquecê-lo
+   em silêncio.
+
+   `noSave: false` são os soltos: refs que o turno gasta e o save não
+   leva. A fiação fotografa-os ao lado do retrato (`soltos`), e é por eles
+   que a nota não volta com o "[MOVIMENTO — REGISTRADO]" de um passo que
+   se desfez, e o trabalho de oficina não se perde na queda.
+
+   `quem` é nome de função e não número de linha, de propósito: número de
+   linha de um arquivo de 25 mil apodrece no commit seguinte.
+   ------------------------------------------------------------ */
+export const O_QUE_O_TURNO_ANDA = [
+  { campo: "minuto", ref: "minutoRef", noSave: true, quem: ["agirInterno", "avancarMinutos", "moverParaLocal", "irAoLugarPeloMapa"] },
+  { campo: "dia", ref: "diaRef", noSave: true, quem: ["avancarMinutos", "avancarDiasReino"] },
+  { campo: "reino", ref: "reinoRef", noSave: true, quem: ["avancarMinutos", "avancarDiasReino"] },
+  { campo: "personagem", ref: "personagemRef", noSave: true, quem: ["mudarFicha", "avancarMinutos", "rodarAFrente", "talvezVirar", "avancarDiasReino"] },
+  { campo: "mensagens", ref: "mensagensRef", noSave: true, quem: ["agirInterno", "pushMsgs"] },
+  { campo: "confidencias", ref: "confidenciasRef", noSave: true, quem: ["agirInterno"] },
+  { campo: "conquistas", ref: "conqRef", noSave: true, quem: ["checarConquistas"] },
+  { campo: "abertura", ref: "aberturaMundoRef", noSave: true, quem: ["marcarTurnoDoMundo"] },
+  { campo: "turnosDeMundo", ref: "turnosDeMundoRef", noSave: true, quem: ["marcarTurnoDoMundo"] },
+  { campo: "relogios", ref: "relogiosRef", noSave: true, quem: ["marcarTurnoDoMundo"] },
+  { campo: "chao", ref: "chaoRef", noSave: true, quem: ["varrerChao"] },
+  { campo: "cidadeAtual", ref: "cidadeAtualRef", noSave: true, quem: ["talvezChegarSozinho"] },
+  { campo: "jornada", ref: "jornadaRef", noSave: true, quem: ["talvezChegarSozinho"] },
+  { campo: "lugar", ref: "lugarRef", noSave: true, quem: ["talvezChegarSozinho", "moverParaLocal", "irAoLugarPeloMapa"] },
+  { campo: "mapa", ref: "mapaRef", noSave: true, quem: ["talvezChegarSozinho", "avancarDiasReino"] },
+  { campo: "compasso", ref: "compassoRef", noSave: true, quem: ["talvezAndarOCompasso"] },
+  { campo: "estante", ref: "estanteRef", noSave: true, quem: ["talvezDarFormaACena"] },
+  { campo: "raid", ref: "raidRef", noSave: true, quem: ["rodarAFrente"] },
+  { campo: "missoes", ref: "missoesRef", noSave: true, quem: ["talvezVirar", "talvezDarUmaTrama"] },
+  { campo: "intencoesFeitas", ref: "intencoesFeitasRef", noSave: true, quem: ["talvezDarUmaTrama"] },
+  { campo: "tramasFeitas", ref: "tramasFeitasRef", noSave: true, quem: ["talvezDarUmaTrama"] },
+  { campo: "elencoMem", ref: "elencoMemRef", noSave: true, quem: ["enviar", "pautaDoTurno"] },
+  { campo: "baseMundo", ref: "baseMundoRef", noSave: true, quem: ["dispararPropositos"] },
+  { campo: "reviravolta", ref: "reviravoltaRef", noSave: true, quem: ["mexerNaReviravolta"] },
+  { campo: "reviravoltaMaior", ref: "reviravoltaMaiorRef", noSave: true, quem: ["mexerNaReviravolta"] },
+  { campo: "escada", ref: "escadaRef", noSave: true, quem: ["mexerNoEncalhe"] },
+  { campo: "postura", ref: "posturaRef", noSave: true, quem: ["mexerNaPostura"] },
+  { campo: "gestos", ref: "gestosRef", noSave: true, quem: ["mexerNaPostura"] },
+  { campo: "episodio", ref: "episodioRef", noSave: true, quem: ["mexerNoEpisodio", "mexerNaNoite"] },
+  { campo: "historia", ref: "historiaRef", noSave: true, quem: ["mexerNoEpisodio"] },
+  { campo: "promessas", ref: "promessasRef", noSave: true, quem: ["mexerNoEpisodio"] },
+  { campo: "noite", ref: "noiteRef", noSave: true, quem: ["mexerNaNoite"] },
+  { campo: "torneio", ref: "torneioRef", noSave: true, quem: ["mexerNaNoite"] },
+  { campo: "cobradas", ref: "cobradasRef", noSave: true, quem: ["pautaDoTurno"] },
+  { campo: "ultimaCobranca", ref: "ultimaCobrancaRef", noSave: true, quem: ["pautaDoTurno"] },
+  { campo: "formasCobradas", ref: "formasCobradasRef", noSave: true, quem: ["pautaDoTurno"] },
+  /* os soltos — fora do save, e por isso fotografados à parte */
+  { campo: "nota", ref: "notaRef", noSave: false, quem: ["moverParaLocal", "marcarTurnoDoMundo", "mexerNaPostura", "enviar"] },
+  { campo: "oficina", ref: "oficinaRef", noSave: false, quem: ["enviar"] },
+  { campo: "sino", ref: "sinoDoTurnoRef", noSave: false, quem: ["marcarTurnoDoMundo", "pautaDoTurno"] },
+  { campo: "ultimoPeso", ref: "ultimoPesoRef", noSave: false, quem: ["pautaDoTurno"] },
+  { campo: "fatosDoPeso", ref: "fatosDoPesoRef", noSave: false, quem: ["pautaDoTurno"] },
+];
+
+/* ------------------------------------------------------------
+   OS DADOS JÁ CAÍRAM?
+
+   Mais largo que `ehTurnoResolvido`, e de propósito. A trava só olha o
+   PRIMEIRO colchete do envelope, porque travar por engano pune o jogador.
+   Aqui o erro caro é o contrário: dizer "nada rolou" de um turno que
+   rolou desfaz o dado e devolve a re-rolagem. Então olha-se TODO cabeçalho
+   entre colchetes do envelope E da nota que já esperava por ele quando
+   `enviar` começou — é ali que o ritual, a oportunidade na retirada e o
+   que `agirInterno` resolveu antes deixam o selo. Frase de jogador quase
+   nunca tem colchete; e se tiver e casar, o erro é o seguro.
+   ------------------------------------------------------------ */
+const rolouNoTurno = (texto) => {
+  const s = typeof texto === "string" ? texto : "";
+  for (const m of s.matchAll(/\[([^\]]*)\]/g)) {
+    if (SELOS_DO_RESOLVIDO.some((selo) => selo.padrao.test(m[1]))) return true;
+  }
+  return false;
+};
+
+/* ------------------------------------------------------------
+   A FOTO DO TURNO
+
+   `retrato` é o objeto que o save gravaria agora (o mesmo literal de
+   `salvar`, sem gravar); `soltos` são os campos `noSave: false` de
+   `O_QUE_O_TURNO_ANDA`; `frase` é o que o jogador escreveu, crua, antes de
+   qualquer envelope — é ela que volta à caixa.
+
+   Cópia rasa, e basta pela lei da casa: estado é SUBSTITUÍDO, nunca
+   mutado, então a referência guardada agora é o valor de agora. Retrato
+   torto (não objeto) vira `null`, e sem retrato não há o que repor —
+   `turnoNaoAconteceu` responde `null` e a fiação segue como hoje.
+   ------------------------------------------------------------ */
+export function fotografarOTurno(args) {
+  const a = args && typeof args === "object" ? args : {};
+  const retrato = a.retrato && typeof a.retrato === "object" && !Array.isArray(a.retrato) ? { ...a.retrato } : null;
+  const soltos = a.soltos && typeof a.soltos === "object" && !Array.isArray(a.soltos) ? { ...a.soltos } : {};
+  const frase = typeof a.frase === "string" ? a.frase : "";
+  return Object.freeze({ frase, retrato: retrato && Object.freeze(retrato), soltos: Object.freeze(soltos) });
+}
+
+/* A linha do silêncio quando o Mestre RESPONDEU: a do `tropeco`, com o
+   técnico de verdade ao lado — o motivo continua a descer inteiro ao
+   console, só a frase da tela muda de dono. */
+const silencioDoTropeco = (motivo) => {
+  const l = linhaDoSilencio("tropeco");
+  const lido = lerOSilencio(motivo);
+  return { id: l.id, casa: l.casa, podeTentar: l.podeTentar !== false, natureza: l.natureza || "jogo", tecnico: lido.tecnico };
+};
+
+/* ------------------------------------------------------------
+   O DESTINO DA FALHA — a decisão inteira numa chamada
+
+   Entra o que o `catch` de `enviar` tem na mão:
+     motivo     a string do erro (o `e.message`)
+     conteudo   o envelope que ia ao Mestre
+     respondeu  `true` se `chamarMestre` já tinha devolvido quando estourou
+     emCombate  `!!combateRef.current`
+     fuso       `new Date().getTimezoneOffset()` (só a linha do teto o usa)
+     inicio     a foto do começo do turno (`agirInterno`), se houver
+     envio      a foto do topo de `enviar`
+
+   Sai: o silêncio (a linha da ligação), o destino (a linha do turno), a
+   FOTO a repor, a frase a devolver à caixa, e se há botão.
+
+   A foto do início só é usada quando nada rolou. Se o destino pede o
+   início e ele não existe — `enviar` chamado por um caminho que não tirou
+   foto no começo —, cai para a do envio, e aí não há frase crua para
+   devolver: o reenvio passa a ser o do envelope guardado. Mais vale
+   desfazer menos do que devolver uma frase que o jogador não escreveu.
+   ------------------------------------------------------------ */
+/* A FOTO DO INÍCIO É DESTE TURNO? `agirInterno` tira a foto antes de saber
+   se o turno chega a `enviar` — um comando, uma recusa de graça, uma porta
+   que resolve sem Mestre voltam antes. Se essa foto ficasse à espera e o
+   `enviar` seguinte viesse de OUTRO caminho (um botão, um descanso), a
+   queda dele desfaria o mundo até um instante que não é o seu. A prova de
+   que a foto é deste turno está no envelope: o turno escrito parte sempre
+   com a frase do jogador à frente (`${acao}${notaOp}${rvG.texto}…`, a
+   pergunta na luta, "Vou até X." do mapa). Envelope que não começa pela
+   frase da foto não é o turno dela. */
+const inicioEhDesteTurno = (inicio, conteudo) => {
+  const f = typeof inicio.frase === "string" ? inicio.frase.trim() : "";
+  const c = typeof conteudo === "string" ? conteudo.trimStart() : "";
+  return !!f && c.startsWith(f);
+};
+
+export function destinoDaFalha(args) {
+  const a = args && typeof args === "object" ? args : {};
+  const inicioDado = a.inicio && typeof a.inicio === "object" ? a.inicio : null;
+  const inicio = inicioDado && inicioEhDesteTurno(inicioDado, a.conteudo) ? inicioDado : null;
+  const envio = a.envio && typeof a.envio === "object" ? a.envio : null;
+  const notaDoEnvio = envio && envio.soltos && typeof envio.soltos.nota === "string" ? envio.soltos.nota : "";
+  const rolou = rolouNoTurno(a.conteudo) || rolouNoTurno(notaDoEnvio);
+  const id = a.respondeu === true ? "mestre_respondeu"
+    : (rolou || a.emCombate === true) ? "dados_ja_cairam"
+    : "turno_nao_houve";
+  let d = destinoPorId(id);
+  const silencio = a.respondeu === true ? silencioDoTropeco(a.motivo) : lerOSilencio(a.motivo, { fuso: a.fuso });
+  let foto = d.desfazer === "turno" && inicio && inicio.retrato ? inicio : null;
+  let frase = d.devolverFrase && foto && typeof foto.frase === "string" ? foto.frase : "";
+  /* sem foto do início, ou sem frase nela: o turno desfaz-se até ao envio
+     e o reenvio é o do envelope — nunca uma caixa com frase inventada */
+  if (d.desfazer === "turno" && (!foto || !frase.trim())) {
+    foto = null; frase = "";
+    d = { ...d, desfazer: "envio", reenvio: "envelope", devolverFrase: false, guardar: true };
+  }
+  if (!foto) foto = envio && envio.retrato ? envio : null;
+  return Object.freeze({
+    id: d.id,
+    silencio: Object.freeze(silencio),
+    natureza: silencio.natureza,
+    desfazer: foto ? d.desfazer : "nada",
+    foto,
+    frase,
+    reenvio: d.reenvio,
+    guardar: d.guardar,
+    podeTentar: silencio.podeTentar !== false || d.botaoSempre === true,
+    linha: d.linha,
+  });
+}
+
+/* ------------------------------------------------------------
+   O TURNO NÃO ACONTECEU — o retrato a repor
+
+   Recebe a foto (a que `destinoDaFalha` escolheu) e o retrato de AGORA, e
+   devolve o que a fiação põe de volta: o retrato de antes, com os campos
+   de `SOBREVIVEM_AO_DESFEITO` tirados de agora; os soltos de antes; e a
+   frase. Campo que não existia antes e passou a existir fica de fora — o
+   turno o criou, e o turno não houve.
+
+   Nada é mutado: nem a foto (congelada), nem o retrato de agora. Sem foto
+   não há o que repor, e a resposta é `null` — a fiação então não mexe em
+   nada, que é o comportamento de hoje, e não um estado inventado.
+   ------------------------------------------------------------ */
+export function turnoNaoAconteceu(foto, retratoAgora) {
+  if (!foto || typeof foto !== "object" || !foto.retrato || typeof foto.retrato !== "object") return null;
+  const agora = retratoAgora && typeof retratoAgora === "object" ? retratoAgora : {};
+  const retrato = { ...foto.retrato };
+  for (const campo of SOBREVIVEM_AO_DESFEITO) {
+    if (Object.prototype.hasOwnProperty.call(agora, campo)) retrato[campo] = agora[campo];
+  }
+  const soltos = foto.soltos && typeof foto.soltos === "object" ? { ...foto.soltos } : {};
+  return Object.freeze({
+    retrato: Object.freeze(retrato),
+    soltos: Object.freeze(soltos),
+    frase: typeof foto.frase === "string" ? foto.frase : "",
+  });
 }

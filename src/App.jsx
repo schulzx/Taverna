@@ -232,7 +232,7 @@ import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assento
    classificacao do silencio (voz de mundo para a tela, motivo integro para
    o console), o registro do turno resolvido que espera narracao e a trava
    que impede a re-rolagem. Nenhuma decisao mora aqui - so fiacao. */
-import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilencio, SEM_GUARDADO } from "./guardado.js";
+import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilencio, SEM_GUARDADO, narrativaFaltou, MOTIVO_SEM_NARRATIVA, fotografarOTurno, destinoDaFalha, turnoNaoAconteceu } from "./guardado.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, aplicarMudancas, bonusEquip, bonusEfeito, atributoEfetivo, tickEfeitos, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
@@ -367,6 +367,13 @@ async function chamarMestre(system, historico) {
       if (!resp2.mudancas && resp.mudancas) resp2.mudancas = resp.mudancas;
       resp = resp2;
     }
+    /* MM15 (3): nem a segunda escrita trouxe narrativa — antes disto o
+       turno CONTAVA com a frase de recurso na tela (o "…", ou "O Mestre
+       hesita…"), uma falha de ligação vestida de sucesso: o relógio
+       andava e a fala do Mestre era, na verdade, uma instrução de botão.
+       Agora é o próprio Mestre que cala, pela classe que já sabe
+       reconhecer este texto (`provedor_caiu`, em guardado.js). */
+    if (narrativaFaltou(resp)) throw new Error(MOTIVO_SEM_NARRATIVA);
   }
   return resp;
 }
@@ -5416,6 +5423,12 @@ export default function Taverna() {
      declarar e o `salvar` - todos fora do ciclo de render, e todos
      precisam do valor de AGORA, nao do valor da ultima pintura. */
   const guardadoRef = useRef(SEM_GUARDADO);
+  /* MM15 (3): a foto do INÍCIO do turno, tirada por `agirInterno` (ou pelo
+     mapa) antes de qualquer porta decidir — para o caso de o Mestre calar
+     e nada ter rolado ainda. `enviar` a recolhe e limpa no seu topo; o
+     turno que ela guarda tem de ser o mesmo que chega a `enviar` a
+     seguir (a prova está no envelope, em `destinoDaFalha`). */
+  const fotoInicioRef = useRef(null);
   const [statusSave, setStatusSave] = useState(null);
   /* R13: o `✓ SALVO` sobrevive ao cabeçalho que o alojava, e sobrevive
      custando ZERO px permanentes — aparece ao gravar e some sozinho. Num jogo
@@ -6605,6 +6618,10 @@ export default function Taverna() {
     if (alvo.onde === "cidade") {
       if (!lugarRef.current) return;
       const de = lugarRef.current.nome;
+      /* MM15 (3): a mesma foto que `agirInterno` tira para quem digita —
+         aqui quem inicia o turno é o clique no mapa, não a caixa de
+         texto, e a frase é a mesma que vai a `enviar` logo abaixo. */
+      try { fotoInicioRef.current = fotografarOTurno({ frase: `Volto para o meio de ${alvo.nome}.`, retrato: { ...retratoDoJogo(), personagem: fichaViva() || personagem }, soltos: soltosDoTurno() }); } catch (e) { calou("foto do inicio do turno (mapa)", e); }
       lugarRef.current = null; setLugar(null);
       avancarMinutos(10);
       pushMsgs([{ autor: "sistema", texto: `📍 Você voltou ao meio de ${alvo.nome}.` }]);
@@ -8284,6 +8301,102 @@ export default function Taverna() {
     } catch (e) { calou("a mesa espera", e); }
   };
 
+  /* MM15 (3): O RETRATO DO JOGO GANHOU NOME. É o mesmo objeto que
+     `salvar` grava — dali para fora, sem o `...extra` de quem chama —, e
+     é ele que `fotografarOTurno` fotografa antes de um turno partir. Uma
+     coisa só, com duas saídas: o disco (`salvar`) e a memória de um
+     instante (a foto). O save continua a sair byte a byte igual: a
+     suíte prova. */
+  const retratoDoJogo = () => {
+    const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
+    return {
+      nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
+      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
+      conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
+      masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
+      modo: garantirModo(modoRef.current),
+      historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      /* v9.115: quem respondeu. Duas linhas no save que valem por uma
+         investigação inteira quando a prosa sair torta de novo. */
+      provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
+      custo: custoRef.atual,
+      abasAbertas: abasAbertasRef.current,
+      /* K3: a preferencia de reacao e da PESSOA, nao da luta — e por isso
+         viaja no save. Sem ela a janela nao tem desligador (WCAG 2.2.1). */
+      preferenciaDaReacao: preferenciaDaReacaoRef.current,
+      sessao: sessaoRef.current,
+      /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
+         contou viaja no save. Sem isto, cair a rede e recarregar apagava um
+         golpe ja aplicado - ou o turno se completa, ou nao comecou. */
+      guardado: guardadoRef.current,
+      backupEm: backupEmRef.current,
+      rolagem: (dadoRolando ? null : rolagem), salvoEm: Date.now(),
+    };
+  };
+
+  /* MM15 (3): OS SOLTOS DO TURNO — o que fica de fora do save (a nota, a
+     oficina, o sino, o peso, os fatos do peso) e por isso precisa de foto
+     própria: sem ela, um turno desfeito voltaria com a nota do passo que
+     não houve ("[MOVIMENTO — REGISTRADO]") ou com o trabalho de oficina
+     perdido. */
+  const soltosDoTurno = () => ({
+    nota: notaRef.current, oficina: oficinaRef.current, sino: sinoDoTurnoRef.current,
+    ultimoPeso: ultimoPesoRef.current, fatosDoPeso: fatosDoPesoRef.current,
+  });
+
+  /* MM15 (3): O QUE UM TURNO REPÕE. Recebe um retrato (o formato de
+     `retratoDoJogo()`) e devolve ao jogo vivo só os campos que um turno
+     pode mexer — a lista é `O_QUE_O_TURNO_ANDA`, em guardado.js: o
+     relógio, o lugar, a ficha, as missões, as pontas do mundo. NÃO faz o
+     que só faz sentido ao abrir um save do disco — recapitular, acordar
+     o despertar, migrar formato antigo, avisar "sem nome": essas
+     continuam só em `continuar`, que passa a chamar esta função para a
+     parte que as duas dividem. Cada um destes campos já tem, mais abaixo
+     em `continuar`, a sua própria linha de migração/garantia — chamá-la
+     de lá não muda o que `continuar` faz, só poupa repetir aqui a
+     reposição que os dois precisam. */
+  const aplicarRetrato = (retrato) => {
+    const r = retrato && typeof retrato === "object" ? retrato : null;
+    if (!r) return;
+    minutoRef.current = r.minuto != null ? r.minuto : minutoRef.current; setMinuto(minutoRef.current);
+    diaRef.current = r.dia || diaRef.current; setDia(diaRef.current);
+    reinoRef.current = r.reino && typeof r.reino === "object" ? r.reino : reinoRef.current; setReino(reinoRef.current);
+    personagemRef.current = r.personagem || personagemRef.current; setPersonagem(personagemRef.current);
+    mensagensRef.current = Array.isArray(r.mensagens) ? r.mensagens : mensagensRef.current; setMensagens(mensagensRef.current);
+    confidenciasRef.current = r.confidencias !== undefined ? r.confidencias : confidenciasRef.current;
+    conqRef.current = r.conquistas || conqRef.current; setConquistas(conqRef.current);
+    aberturaMundoRef.current = r.abertura !== undefined ? r.abertura : aberturaMundoRef.current;
+    turnosDeMundoRef.current = Number.isFinite(r.turnosDeMundo) ? r.turnosDeMundo : turnosDeMundoRef.current;
+    relogiosRef.current = r.relogios || relogiosRef.current; setRelogios(relogiosRef.current);
+    chaoRef.current = r.chao || chaoRef.current; setChao(chaoRef.current);
+    cidadeAtualRef.current = r.cidadeAtual != null ? r.cidadeAtual : cidadeAtualRef.current;
+    jornadaRef.current = r.jornada !== undefined ? r.jornada : jornadaRef.current; setJornada(jornadaRef.current);
+    lugarRef.current = r.lugar !== undefined ? r.lugar : lugarRef.current; setLugar(lugarRef.current);
+    mapaRef.current = r.mapa || mapaRef.current; setMapa(mapaRef.current);
+    compassoRef.current = r.compasso !== undefined ? r.compasso : compassoRef.current;
+    estanteRef.current = r.estante !== undefined ? r.estante : estanteRef.current;
+    raidRef.current = r.raid !== undefined ? r.raid : raidRef.current; setRaid(raidRef.current);
+    missoesRef.current = Array.isArray(r.missoes) ? r.missoes : missoesRef.current; setMissoes(missoesRef.current);
+    intencoesFeitasRef.current = r.intencoesFeitas !== undefined ? r.intencoesFeitas : intencoesFeitasRef.current;
+    tramasFeitasRef.current = r.tramasFeitas !== undefined ? r.tramasFeitas : tramasFeitasRef.current;
+    elencoMemRef.current = r.elencoMem !== undefined ? r.elencoMem : elencoMemRef.current;
+    baseMundoRef.current = r.baseMundo !== undefined ? r.baseMundo : baseMundoRef.current; setBaseMundo(baseMundoRef.current);
+    reviravoltaRef.current = r.reviravolta !== undefined ? r.reviravolta : reviravoltaRef.current;
+    reviravoltaMaiorRef.current = r.reviravoltaMaior !== undefined ? r.reviravoltaMaior : reviravoltaMaiorRef.current;
+    escadaRef.current = r.escada !== undefined ? r.escada : escadaRef.current;
+    posturaRef.current = r.postura !== undefined ? r.postura : posturaRef.current;
+    gestosRef.current = r.gestos !== undefined ? r.gestos : gestosRef.current;
+    episodioRef.current = r.episodio !== undefined ? r.episodio : episodioRef.current;
+    historiaRef.current = r.historia !== undefined ? r.historia : historiaRef.current;
+    promessasRef.current = r.promessas !== undefined ? r.promessas : promessasRef.current;
+    noiteRef.current = r.noite !== undefined ? r.noite : noiteRef.current;
+    torneioRef.current = r.torneio !== undefined ? r.torneio : torneioRef.current;
+    cobradasRef.current = Array.isArray(r.cobradas) ? r.cobradas : cobradasRef.current;
+    ultimaCobrancaRef.current = Number.isFinite(r.ultimaCobranca) ? r.ultimaCobranca : ultimaCobrancaRef.current;
+    formasCobradasRef.current = Array.isArray(r.formasCobradas) ? r.formasCobradas : formasCobradasRef.current;
+  };
+
   const salvar = useCallback((extra = {}) => {
     /* v9.148: ANTES de montar `dados`, e a ordem é o conserto. `dados`
        carrega `abasAbertas: abasAbertasRef.current`; conferir depois
@@ -8321,31 +8434,10 @@ export default function Taverna() {
        esta e por construcao o desta campanha: um save so nasce depois de
        `TelaMundo` ter fixado o nome E o ref, logo nunca ha um save com nome
        de outra campanha neste espaco enquanto o estado esta vazio. */
-    const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
-    const dados = {
-      nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
-      mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
-      conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
-      masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
-      modo: garantirModo(modoRef.current),
-      historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
-      /* v9.115: quem respondeu. Duas linhas no save que valem por uma
-         investigação inteira quando a prosa sair torta de novo. */
-      provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
-      custo: custoRef.atual,
-      abasAbertas: abasAbertasRef.current,
-      /* K3: a preferencia de reacao e da PESSOA, nao da luta — e por isso
-         viaja no save. Sem ela a janela nao tem desligador (WCAG 2.2.1). */
-      preferenciaDaReacao: preferenciaDaReacaoRef.current,
-      sessao: sessaoRef.current,
-      /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
-         contou viaja no save. Sem isto, cair a rede e recarregar apagava um
-         golpe ja aplicado - ou o turno se completa, ou nao comecou. */
-      guardado: guardadoRef.current,
-      backupEm: backupEmRef.current,
-      rolagem: (extra.rolagem !== undefined ? extra.rolagem : (dadoRolando ? null : rolagem)), salvoEm: Date.now(), ...extra,
-    };
+    /* MM15 (3): `retratoDoJogo()` é este objeto — extraído sem o
+       `...extra`, que é de quem chama, não do jogo. O save sai byte a
+       byte igual: a suíte prova. */
+    const dados = { ...retratoDoJogo(), ...extra };
     /* GRAVAÇÃO À PROVA DE QUOTA (v7.0.2): o histórico completo do chat é o que
        incha o save (narrativas longas). O MUNDO, a ficha e o cânone NUNCA são
        podados — só o scrollback de mensagens, que tem cópia viva na sessão e
@@ -11670,6 +11762,20 @@ export default function Taverna() {
 
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null);
+    /* MM15 (3): A FOTO DO ENVIO — antes de qualquer coisa que este turno
+       ainda vai mexer (a caminhada da cidade, a frente, a virada). Se o
+       Mestre calar mais adiante, é a este instante que o desfeito volta
+       quando não há foto do início (ou ela não é deste turno); a foto do
+       início, quando existe, continua a primeira escolha — a exceção de
+       X3 é sempre a mesma: o que os dados já rolaram não desfaz.
+       `fotoInicioRef` só vale para ESTE turno, e por isso sai da ref
+       aqui, já limpa para o próximo. */
+    let fotoEnvio = null, fotoInicio = null;
+    try {
+      fotoEnvio = fotografarOTurno({ retrato: { ...retratoDoJogo(), personagem: fichaViva() || personagem }, soltos: soltosDoTurno() });
+      fotoInicio = fotoInicioRef.current;
+      fotoInicioRef.current = null;
+    } catch (e) { calou("foto do envio", e); }
     /* O que EU pedi neste turno — só a minha frase distingue "o Mestre me
        devolveu à cidade" de "eu voltei".
 
@@ -11917,8 +12023,13 @@ export default function Taverna() {
       /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */
       { npcs: npcsRef.current, elenco: nomesDoElenco() },
     );
+    let respondeu = false;
     try {
       const resp = await chamarMestre(systemRef.current, novoHist);
+      /* MM15 (3): O MESTRE FALOU — a partir daqui, se algo estourar, o
+         tropeço é nosso, não da ligação: `destinoDaFalha` usa esta
+         marca para diferençar isto de uma chamada que nunca voltou. */
+      respondeu = true;
       /* O MESTRE FALOU: o turno guardado morre AQUI (v9.256, Fase X - X3),
          antes do `salvar` la embaixo - que le a ref e grava o vazio junto,
          sem um salvamento a mais no caminho feliz. Sem try/catch de
@@ -12044,45 +12155,77 @@ export default function Taverna() {
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
+      /* MM15 (3): o valor de sempre, para o caso de nada mais abaixo
+         conseguir repor o retrato (sem foto nenhuma) — fica exatamente o
+         comportamento de antes desta etapa. */
       notaRef.current = nota;
-      /* ------------- O SILENCIO DO MESTRE (v9.256, Fase X - X3) -------------
-         Tres coisas acontecem aqui, e nenhuma delas e regra: quem decide
-         tudo e `guardado.js`.
+      /* ------------- O SILENCIO DO MESTRE (v9.256/MM15) -------------
+         Quem decide tudo e `guardado.js`: `destinoDaFalha` diz de quem foi
+         a queda (ligacao/conteudo/jogo) e o que fazer do turno (nada
+         rolou, os dados ja cairam, ou o Mestre respondeu e o tropeco foi
+         nosso). Este bloco so executa o que ela manda:
 
-         1. O TURNO FICA GUARDADO. O motor ja rolou e ja aplicou antes desta
-            chamada; o que faltou foi contar. `guardarTurno` congela o
-            envelope EXATO, e e ele - byte por byte - que o "tentar de novo"
-            manda de volta, em vez de recompor o turno por outro caminho.
-         2. O MOTIVO DESCE INTEGRO AO CONSOLE. Foi este vazamento que
-            permitiu diagnosticar duas quedas; quem apaga o motivo fica cego.
-            Ao lado dele vao o id do silencio, a conta de tentativas e a
-            marca do envelope - e e a marca que prova, depois, que o texto
-            narrado e o mesmo que o motor produziu.
-         3. O SAVE GRAVA A FICHA E O GUARDADO - e NAO o historico: o Mestre
-            nao respondeu, entao nao ha narracao para fingir que houve.
+         1. O DESFEITO. Se ha foto, o mundo volta a ela (menos o que
+            SOBREVIVEM_AO_DESFEITO tira) - e a excecao de X3 continua de
+            pe: o que os dados ja rolaram fica.
+         2. O TURNO FICA GUARDADO, so quando `destino.guardar` manda -
+            sem isso o "tentar de novo" reenviaria um turno que nunca
+            aconteceu.
+         3. O MOTIVO DESCE INTEGRO AO CONSOLE, ao lado do que o destino
+            decidiu do turno.
+         4. O SAVE GRAVA DEPOIS DE REPOR - gravar antes salvaria o passo
+            que acabou de se desfazer.
 
          Tudo em `calou`: um orgao que estoura durante a falha apaga
          exatamente o turno que ele existe para salvar. */
       const motivo = (e && e.message) ? String(e.message) : "erro desconhecido";
-      let g = SEM_GUARDADO;
+      const fuso = new Date().getTimezoneOffset();
+      const destino = destinoDaFalha({
+        motivo, conteudo, respondeu, emCombate: !!combateRef.current, fuso,
+        inicio: fotoInicio, envio: fotoEnvio,
+      });
+      /* O DESFEITO: so quando ha foto. Um orgao que estoura aqui nao pode
+         apagar o turno que ele existe para salvar - fica o retrato de
+         agora, que e o comportamento de hoje. */
       try {
-        /* `anterior` e o turno que JA estava preso quando esta queda
-           aconteceu. Se for a mesma queda insistindo - mesma marca -, o
-           MODULO continua a conta de tentativas em vez de voltar a zero.
-           A regra inteira mora em `guardado.js`, onde a suite a le de volta;
-           aqui so se entrega o que o App tem na mao. */
-        g = guardarTurno({ conteudo, histBase: base, persAtual, motivo, quando: Date.now(), anterior: guardadoRef.current });
-        guardadoRef.current = g;
-      } catch (err) { calou("guardar o turno", err); }
-      const silencio = (g && g.silencio) || lerOSilencio(motivo);
+        if (destino.foto) {
+          const repos = turnoNaoAconteceu(destino.foto, retratoDoJogo());
+          if (repos) {
+            aplicarRetrato(repos.retrato);
+            notaRef.current = repos.soltos.nota || "";
+            oficinaRef.current = repos.soltos.oficina !== undefined ? repos.soltos.oficina : oficinaRef.current;
+            sinoDoTurnoRef.current = repos.soltos.sino || "";
+            ultimoPesoRef.current = repos.soltos.ultimoPeso !== undefined ? repos.soltos.ultimoPeso : ultimoPesoRef.current;
+            fatosDoPesoRef.current = repos.soltos.fatosDoPeso !== undefined ? repos.soltos.fatosDoPeso : fatosDoPesoRef.current;
+          }
+        }
+      } catch (err) { calou("desfazer o turno", err); }
+      let g = SEM_GUARDADO;
+      if (!destino.guardar) {
+        guardadoRef.current = SEM_GUARDADO;
+      } else {
+        try {
+          /* `anterior` e o turno que JA estava preso quando esta queda
+             aconteceu. Se for a mesma queda insistindo - mesma marca -, o
+             MODULO continua a conta de tentativas em vez de voltar a zero.
+             A regra inteira mora em `guardado.js`, onde a suite a le de
+             volta; aqui so se entrega o que o App tem na mao. */
+          g = guardarTurno({ conteudo, histBase: base, persAtual, motivo, quando: Date.now(), anterior: guardadoRef.current, fuso });
+          guardadoRef.current = g;
+        } catch (err) { calou("guardar o turno", err); }
+      }
       try {
         if (typeof console !== "undefined" && console.warn) {
-          console.warn(`[taverna] o Mestre calou (${silencio.id}) · tentativa ${g ? (Number(g.tentativas) || 0) + 1 : 1} · turno ${g ? g.marca : "(nada guardado)"} · ${g && g.rolou ? "o motor ja rolou" : "nada rolou"}`, silencio.tecnico);
+          console.warn(`[taverna] o Mestre calou (${destino.silencio.id}) · tentativa ${g ? (Number(g.tentativas) || 0) + 1 : 1} · turno ${g ? g.marca : "(nada guardado)"} · ${g && g.rolou ? "o motor ja rolou" : "nada rolou"} · desfeito: ${destino.id}`, destino.silencio.tecnico);
         }
       } catch (err) { calou("o motivo do silencio", err); }
-      try { salvar({ personagem: personagemRef.current || persAtual || personagem, guardado: g }); } catch (err) { calou("salvar o turno guardado", err); }
-      /* a tela le a VOZ DE MUNDO e nada mais - o tecnico nao sobe daqui */
-      setFalha({ conteudo, persAtual, histBase: base, casa: silencio.casa, podeTentar: silencio.podeTentar !== false });
+      /* O SAVE GRAVA DEPOIS DE REPOR - a ficha ja voltada (se foi o caso)
+         e o guardado, nunca o historico: o Mestre nao respondeu. */
+      try { salvar({ personagem: personagemRef.current || persAtual || personagem, guardado: guardadoRef.current }); } catch (err) { calou("salvar o turno guardado", err); }
+      /* a tela le a VOZ DE MUNDO e o que aconteceu com o TURNO - o
+         tecnico nao sobe daqui */
+      setFalha({ conteudo, persAtual, histBase: base, casa: destino.silencio.casa, linha: destino.linha, podeTentar: destino.podeTentar, frase: destino.frase, reenvio: destino.reenvio });
+      if (destino.frase) { try { setEntrada(destino.frase); } catch (err) { calou("devolver a frase a caixa", err); } }
     } finally {
       /* o portão jamais pode engolir um turno: se a tela ficou retida por
          qualquer motivo, tudo o que estava preso sai aqui */
@@ -12101,6 +12244,12 @@ export default function Taverna() {
     if (!falha) return;
     const f = falha;
     setFalha(null);
+    /* MM15 (3): SE O TURNO NÃO ACONTECEU, tentar de novo é reescrever a
+       MESMA frase na caixa — `agirInterno(f.frase)`, o mesmo caminho de
+       qualquer texto digitado, porque para o motor é exatamente isso: um
+       turno que ainda não começou. O caminho de X3 (reenviar o envelope
+       guardado) só vale quando algo já rolou. */
+    if (f.reenvio === "frase" && f.frase) { agirInterno(f.frase); return; }
     let conteudo = f.conteudo;
     try {
       const preso = oQueNarrar(guardadoRef.current);
@@ -12457,6 +12606,12 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
        recado do anfitriao da sala, que chega por aqui a cada turno. */
     if (!silencioso) recomecarAPorta();
     try {
+      /* MM15 (3): a mesma reposição que uma falha de ligação usa para
+         devolver o turno ao que era — aqui, redundante de propósito: cada
+         campo que ela toca ganha, mais abaixo, a sua própria migração
+         (mapa, missões, jornada…), que a sobrescreve. O que ela poupa são
+         os campos simples, que não tinham migração nenhuma. */
+      aplicarRetrato(sv);
       const pers = migrarPersonagem(sv.personagem);
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
       setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(nomeDaCampanha(sv)); setPersonagem(pers);
@@ -12619,8 +12774,15 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
         guardadoRef.current = sv.guardado && typeof sv.guardado === "object" ? sv.guardado : SEM_GUARDADO;
         const gsv = guardadoRef.current;
         if (gsv) {
-          const sil = gsv.silencio && gsv.silencio.casa ? gsv.silencio : lerOSilencio(null);
-          setFalha({ conteudo: gsv.conteudo, persAtual: gsv.persAtual, histBase: gsv.histBase, casa: sil.casa, podeTentar: sil.podeTentar !== false });
+          /* MM15 (3): a `casa` gravada pode ser a frase de antes desta
+             etapa (save antigo) — reler pelo TÉCNICO, com o fuso de
+             agora, devolve a frase certa e a hora certa do teto.
+             `podeTentar` ganha a mesma exceção de X3 que `destinoDaFalha`
+             usa: um turno cujos dados já caíram nunca pode ficar sem
+             botão, mesmo quando o silêncio sozinho diria que não. */
+          const fusoCarregar = new Date().getTimezoneOffset();
+          const sil = lerOSilencio(gsv.silencio && gsv.silencio.tecnico, { fuso: fusoCarregar });
+          setFalha({ conteudo: gsv.conteudo, persAtual: gsv.persAtual, histBase: gsv.histBase, casa: sil.casa, podeTentar: sil.podeTentar !== false || travaODeclarar(gsv) });
         } else setFalha(null);
       } catch (e) { calou("o turno guardado do save", e); guardadoRef.current = SEM_GUARDADO; }
       mercadoRef.current = sv.mercado && typeof sv.mercado === "object"
@@ -14481,6 +14643,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        escreveu - e os chamadores internos, que mandam envelope montado, nao
        tem o que devolver a caixa nenhuma. */
     if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
+    /* MM15 (3): A FOTO DO INÍCIO — antes de qualquer porta do despachante
+       decidir, para o caso de o Mestre calar mais adiante e nada ter
+       rolado. Só ela permite devolver a frase à caixa: sem ela, uma queda
+       de rede aqui cai para o desfeito mais estreito (até ao envio), que
+       nunca inventa uma frase que o jogador não escreveu. */
+    try { fotoInicioRef.current = fotografarOTurno({ frase: acao, retrato: { ...retratoDoJogo(), personagem: fichaViva() || personagem }, soltos: soltosDoTurno() }); } catch (e) { calou("foto do inicio do turno", e); }
     /* ---------------- O TURNO DE QUEM CAIU (24/09) ----------------
        O botão de `Atacar` já recusa a 0 PV (`impedimentosDaFileira`), mas
        o campo de texto é OUTRA porta para o mesmo golpe: "Ataco o javali"
@@ -24626,6 +24794,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       tossir; e o botao acima so aparece quando insistir
                       resolve, porque oferece-lo contra credito, chave ou
                       recusa e mentir para quem vai clicar. */}
+                  {/* MM15 (3): a segunda metade do que o jogador le - nao
+                      so a ligacao, o que aconteceu com o TURNO. */}
+                  {falha.linha && <span className="tv-mono" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>{falha.linha}</span>}
                 </div>
               )}
 

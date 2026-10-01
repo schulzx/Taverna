@@ -159,14 +159,20 @@ sec("1. A QUEDA DO NARRADOR, ENCENADA — os erros reais, sem rede e sem chave")
     { classe: "sem_dinheiro", onde: "chamarModelo sem corpo", status: 402 },
     { classe: "sem_dinheiro", onde: "narrador.js:215 — fila vazia", status: 500,
       erro: "Nenhuma chave configurada (DEEPSEEK_API_KEY / GEMINI_API_KEY)" },
-    { classe: "recusado", onde: "_portao.js:164 — origem", status: 403,
+    /* MM15 (3): a antiga classe `recusado` partiu-se em duas. A origem, a
+       chave e o modelo vão a `porta_fechada`; o teto diário ganhou linha
+       própria, `teto_do_dia`. A razão está no T11 da sessão 2: a frase
+       única ("o Mestre não conta esta história a quem bate assim") lia-se
+       como recusa do CONTEÚDO num 429 que era só o teto do endereço. As
+       quedas medidas são as mesmas; mudou a classe que as recebe. */
+    { classe: "porta_fechada", onde: "_portao.js:164 — origem", status: 403,
       erro: "Este endereço só responde ao jogo.", motivo: "origem não autorizada", origem: "https://copia.exemplo" },
-    { classe: "recusado", onde: "_portao.js:164 — sem origem", status: 403,
+    { classe: "porta_fechada", onde: "_portao.js:164 — sem origem", status: 403,
       erro: "Este endereço só responde ao jogo.", motivo: "sem origem", origem: "(nenhuma)" },
-    { classe: "recusado", onde: "_portao.js:173 — teto diário", status: 429,
+    { classe: "teto_do_dia", onde: "_portao.js:173 — teto diário", status: 429,
       erro: "Limite diário alcançado (500 chamadas). Ele volta a zero à meia-noite — e se você chegou aqui jogando de verdade, me avise: o teto sobe." },
-    { classe: "recusado", onde: "chave inválida do provedor", status: 401, erro: "Invalid API key" },
-    { classe: "recusado", onde: "modelo que não existe", status: 404 },
+    { classe: "porta_fechada", onde: "chave inválida do provedor", status: 401, erro: "Invalid API key" },
+    { classe: "porta_fechada", onde: "modelo que não existe", status: 404 },
     { classe: "sem_rede", onde: "Chrome", erro: "Failed to fetch" },
     { classe: "sem_rede", onde: "Firefox", erro: "NetworkError when attempting to fetch resource." },
     { classe: "sem_rede", onde: "Safari", erro: "Load failed" },
@@ -179,7 +185,11 @@ sec("1. A QUEDA DO NARRADOR, ENCENADA — os erros reais, sem rede e sem chave")
       erro: "Todos os provedores falharam — deepseek (deepseek-chat: 429 (retentando…)) · gemini (gemini-2.5-flash: 503)" },
     { classe: "provedor_caiu", onde: "narrador.js:119 — DeepSeek mudo", status: 502,
       erro: "Todos os provedores falharam — deepseek (resposta vazia)" },
-    { classe: "provedor_caiu", onde: "narrador.js:191 — Gemini mudo", status: 502,
+    /* MM15 (3): o Gemini que devolve `sem texto (SAFETY)` NÃO está mudo —
+       o filtro dele barrou o que se pedia. Era a recusa de conteúdo real,
+       escondida em `provedor_caiu`; agora tem classe própria, `conteudo`.
+       A queda medida é a mesma. */
+    { classe: "conteudo", onde: "narrador.js:191 — Gemini barrado pelo filtro", status: 502,
       erro: "Todos os provedores falharam — gemini (sem texto (SAFETY))" },
     { classe: "demanda", onde: "429 limpo do provedor", status: 429 },
     { classe: "demanda", onde: "429 nomeado", status: 429, erro: "rate limit exceeded" },
@@ -202,20 +212,29 @@ sec("1. A QUEDA DO NARRADOR, ENCENADA — os erros reais, sem rede e sem chave")
   t(`as ${QUEDAS.length} quedas reais caem na classe certa${erradas.length ? " — " + erradas.join("; ") : ""}`, erradas.length === 0);
   t(`e NENHUMA cai em \`desconhecido\` por acidente${caiuNoDesconhecido.length ? " — " + caiuNoDesconhecido.join("; ") : ""}`, caiuNoDesconhecido.length === 0);
 
-  /* as sete classes da tabela, e todas exercitadas aqui: uma classe sem
-     caso medido é uma linha que ninguém prova */
+  /* as classes da tabela, e todas exercitadas aqui: uma classe sem caso
+     medido é uma linha que ninguém prova.
+     MM15 (3): eram sete, são nove — `recusado` partiu-se em
+     `teto_do_dia` e `porta_fechada`, nasceu `conteudo` (a recusa
+     verdadeira, que morava calada em `provedor_caiu`) e nasceu `tropeco`
+     (o Mestre respondeu e fomos nós que caímos). `tropeco` não tem marca
+     nem código de propósito — nenhuma string diz "o Mestre respondeu"; é a
+     fiação que o sabe —, e por isso fica fora da conta das exercitadas por
+     queda, como o resto. A prova dele está em teste-mm15-ligacao.mjs. */
   const ids = MOTIVOS_DO_SILENCIO.map((m) => m.id);
-  t("a tabela tem as sete classes, nesta ordem (a ordem É a precedência)",
-    ids.join(",") === "sem_dinheiro,recusado,sem_rede,tempo_esgotado,provedor_caiu,demanda,desconhecido");
+  t("a tabela tem as nove classes, nesta ordem (a ordem É a precedência)",
+    ids.join(",") === "sem_dinheiro,teto_do_dia,porta_fechada,sem_rede,tempo_esgotado,conteudo,provedor_caiu,demanda,tropeco,desconhecido");
   const exercitadas = new Set(QUEDAS.map((q) => q.classe));
-  t("seis das sete têm caso medido aqui (a sétima é o resto, provado logo abaixo)",
-    ids.filter((i) => i !== "desconhecido").every((i) => exercitadas.has(i)));
+  t("todas as que se acham por queda têm caso medido aqui (o resto e o tropeço provam-se à parte)",
+    ids.filter((i) => i !== "desconhecido" && i !== "tropeco").every((i) => exercitadas.has(i)));
 
   /* AS DUAS PRECEDÊNCIAS QUE A TABELA DECLARA — as duas medidas, as duas
      com consequência de jogo se invertidas */
   const teto = lerOSilencio("Limite diário alcançado (500 chamadas). Ele volta a zero à meia-noite.");
-  t("o teto diário é RECUSA, e não provedor caído — apesar do 500 dentro do texto",
-    teto.id === "recusado" && teto.podeTentar === false);
+  /* MM15 (3): continua a não ser provedor caído, e continua sem botão —
+     mas já não se chama recusa: é o teto do dia, com linha própria */
+  t("o teto diário é o TETO, e não provedor caído — apesar do 500 dentro do texto",
+    teto.id === "teto_do_dia" && teto.podeTentar === false);
   const credito = lerOSilencio('Todos os provedores falharam — deepseek (deepseek-chat: 402: {"error":{"message":"Insufficient Balance"}})');
   t("o 402 por dentro manda no 502 por fora: a causa real é o crédito",
     credito.id === "sem_dinheiro" && credito.podeTentar === false);
@@ -235,8 +254,11 @@ sec("1. A QUEDA DO NARRADOR, ENCENADA — os erros reais, sem rede e sem chave")
 
   /* o `podeTentar` não é enfeite: é o botão que resolve contra o botão
      que ensina a bater na porta trancada */
-  t("as duas classes sem conserto não oferecem tentar de novo",
-    MOTIVOS_DO_SILENCIO.filter((m) => m.podeTentar === false).map((m) => m.id).join(",") === "sem_dinheiro,recusado");
+  /* MM15 (3): as mesmas portas trancadas, agora em três linhas (o teto
+     saiu de `recusado` para a sua). `conteudo` fica COM botão: o filtro
+     julga a resposta escrita, e uma segunda escrita pode passar */
+  t("as três classes sem conserto não oferecem tentar de novo",
+    MOTIVOS_DO_SILENCIO.filter((m) => m.podeTentar === false).map((m) => m.id).join(",") === "sem_dinheiro,teto_do_dia,porta_fechada");
 
   /* e a encenação é encenação mesmo: nenhuma chamada saiu da máquina */
   const narrador = narradorQueCai({ status: 502, erro: "Todos os provedores falharam — deepseek (deepseek-chat: 500)" });
@@ -646,7 +668,7 @@ sec("8. A VOZ É DE MUNDO — o sistema não fala de si mesmo");
      estrada — não de uma máquina que tossiu */
   t("todas falam da cena, e nenhuma é um rótulo de estado",
     MOTIVOS_DO_SILENCIO.every((m) => m.casa.length > 20 && /[.!?…]$/.test(m.casa.trim())));
-  t("as sete frases são distintas — classe sem frase própria é classe que não diz nada",
+  t("as frases são todas distintas — classe sem frase própria é classe que não diz nada",
     new Set(MOTIVOS_DO_SILENCIO.map((m) => m.casa)).size === MOTIVOS_DO_SILENCIO.length);
 
   /* `casa` é DADO, não tela: sem cor, sem markup, sem instrução de botão.

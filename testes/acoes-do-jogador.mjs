@@ -494,8 +494,16 @@ export const NAO_CONTA_COMO_NUMERO = [
      do motivo. O ponto nasce bem acima do relógio no arquivo, e tudo
      abaixo andou junto. Re-medido por `check-acoes-do-jogador.mjs`, que
      deu o número certo no próprio erro; nada somado de cabeça. */
+  /* A FOTO DO TURNO (frontend, MM15 (3), 30/09): 14640 -> 14808, +168. A
+     foto do início do turno (`fotoInicioRef.current = fotografarOTurno(…)`)
+     nasce logo depois da trava, no TOPO de `agirInterno` — acima deste
+     ponto no arquivo —, e tudo abaixo andou junto. Nada mudou de forma: o
+     relógio continua a avançar sempre, faça o jogador o que fizer; é
+     exatamente esse "sempre" que MM15 (3) passou a desfazer quando o
+     Mestre cala, sem tocar na regra medida aqui. Re-medido por
+     `check-acoes-do-jogador.mjs`, que deu o número certo no próprio erro. */
   { o: "o relógio do mundo (45 min)", porque:
-    "src/App.jsx:14640 avança MINUTOS_POR_TURNO em todo turno fora de combate, faça o jogador o que fizer. Um número que muda sempre não distingue turno que fez de turno que não fez: incluí-lo daria 0% de esterilidade por construção e a medida perderia o sentido" },
+    "src/App.jsx:14808 avança MINUTOS_POR_TURNO em todo turno fora de combate, faça o jogador o que fizer. Um número que muda sempre não distingue turno que fez de turno que não fez: incluí-lo daria 0% de esterilidade por construção e a medida perderia o sentido" },
 ];
 
 export const TURNO_ESTERIL = {
@@ -1039,25 +1047,52 @@ export function contarPorTexto(contexto) {
    mudou de forma nem ganhou/perdeu `pushMsgs`. Re-medido por
    `check-acoes-do-jogador.mjs`, que falha nomeando o valor certo; nada
    somado de cabeça. */
+/* A LIGAÇÃO NÃO É O MESTRE (frontend, MM15 (3), 30/09): não-uniforme, por
+   trecho — a fiação nova é a foto do turno (`retratoDoJogo`/
+   `soltosDoTurno`/`aplicarRetrato`, MM15 (3)), que nasce logo ANTES de
+   `salvar` no arquivo:
+     +13 em `presencaNaLuta` (o import de `guardado.js` ganhou nomes novos
+         e o `fotoInicioRef` nasceu ao lado de `guardadoRef`, os dois acima
+         de todo o funil).
+     +17 em `aMesaEspera` (o bloco de `retratoDoJogo`/`soltosDoTurno`/
+         `aplicarRetrato` inteiro nasce entre ela e `salvar`).
+     +92 de `tentarReacaoNoGolpe` a `aflicaoDeCompanheiro` (o mesmo bloco,
+         que é maior que o literal de `salvar` que substituiu).
+     +162 de `resolverAtaqueJogador` a `resolverHabilidadeOfensiva` (idem,
+         mais a foto do topo de `enviar` e o `let respondeu = false`,
+         ambos acima destas).
+     +168 de `fecharSeTodosCairam` em diante — `agirInterno` também ganhou
+         a sua própria foto, logo depois da trava, e soma mais 6 linhas
+         só para quem vem depois dela no arquivo.
+   Nenhuma função do funil mudou de forma nem ganhou/perdeu `pushMsgs`.
+   Re-medido por `check-acoes-do-jogador.mjs`, que falha nomeando o valor
+   certo em cada função; os endereços internos (`linhas[].onde`) seguiram
+   o mesmo delta do trecho onde vivem, exceto as recusas de `agirInterno`
+   em RECUSAS_DO_COMBATE — a foto que a própria etapa acrescentou DENTRO
+   de `agirInterno` soma mais 6 além do delta da função, e a recusa `teto`
+   ainda leva +17 a mais que as outras porque mora no `else` do MESMO
+   bloco `if` das três de `economia`, abaixo delas no código (não é a
+   ordem em que a tabela as lista) — as seis foram re-medidas por
+   conteúdo, uma a uma, com o motivo escrito ao lado de cada uma. */
 export const FUNIL_DO_COMBATE = [
-  { fn: "presencaNaLuta", onde: "src/App.jsx:5995", anel: "nucleo",
+  { fn: "presencaNaLuta", onde: "src/App.jsx:6008", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:6032", evento: "presença divina na abertura da luta — condição imposta ao herói, ao grupo ou aos inimigos",
+      { onde: "src/App.jsx:6045", evento: "presença divina na abertura da luta — condição imposta ao herói, ao grupo ou aos inimigos",
         voz: "frase", nasce: "src/presenca-divina.js (resolverPresenca, presencaDoHeroiEmCombate)" },
     ] },
-  { fn: "aMesaEspera", onde: "src/App.jsx:8279", anel: "borda",
+  { fn: "aMesaEspera", onde: "src/App.jsx:8296", anel: "borda",
     linhas: [
-      { onde: "src/App.jsx:8283", evento: "a trava do turno guardado: o motor já rolou e a narração não chegou",
+      { onde: "src/App.jsx:8300", evento: "a trava do turno guardado: o motor já rolou e a narração não chegou",
         voz: "recusa", nasce: "src/App.jsx" },
     ] },
-  { fn: "tentarReacaoNoGolpe", onde: "src/App.jsx:8567", anel: "nucleo",
+  { fn: "tentarReacaoNoGolpe", onde: "src/App.jsx:8659", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:8585", evento: "a reação dispara (aparar, esquivar, retribuir)",
+      { onde: "src/App.jsx:8677", evento: "a reação dispara (aparar, esquivar, retribuir)",
         voz: "frase", nasce: "src/reacoes.js (resolverReacao)" },
-      { onde: "src/App.jsx:8626", evento: "o contra-ataque da reação acerta ou erra",
+      { onde: "src/App.jsx:8718", evento: "o contra-ataque da reação acerta ou erra",
         voz: "telegrama", nasce: "src/App.jsx" },
     ] },
-  { fn: "aplicarCondicoesDosGolpes", onde: "src/App.jsx:8633", anel: "nucleo",
+  { fn: "aplicarCondicoesDosGolpes", onde: "src/App.jsx:8725", anel: "nucleo",
     linhas: [
       /* R15: +28 com o comentário novo em `salvar`. Re-endereçado à mão
          porque o conteúdo desta linha (`pushMsgs([{ autor: "sistema", texto:
@@ -1067,31 +1102,31 @@ export const FUNIL_DO_COMBATE = [
          da salvaguarda logo acima.
          R17: 8197 -> 8290, pelo mesmo par (a outra ocorrência, dentro de
          `tentarReacaoNoGolpe`, está em :8234). */
-      { onde: "src/App.jsx:8657", evento: "o golpe do inimigo impõe (ou não) uma aflição ao herói",
+      { onde: "src/App.jsx:8749", evento: "o golpe do inimigo impõe (ou não) uma aflição ao herói",
         voz: "frase", nasce: "src/aflicoes.js (rolarAflicao)" },
     ] },
-  { fn: "limparConjuracoesDaLuta", onde: "src/App.jsx:8745", anel: "borda",
+  { fn: "limparConjuracoesDaLuta", onde: "src/App.jsx:8837", anel: "borda",
     linhas: [
-      { onde: "src/App.jsx:8752", evento: "a forma animal se desfaz ao fim da luta",
+      { onde: "src/App.jsx:8844", evento: "a forma animal se desfaz ao fim da luta",
         voz: "frase", nasce: "src/habilidades.js (desfazerForma)" },
-      { onde: "src/App.jsx:8759", evento: "a guarda do herói baixa ao fim da luta",
+      { onde: "src/App.jsx:8851", evento: "a guarda do herói baixa ao fim da luta",
         voz: "frase", nasce: "src/habilidades.js (baixarGuardas)" },
-      { onde: "src/App.jsx:8776", evento: "a guarda de cada companheiro baixa ao fim da luta",
+      { onde: "src/App.jsx:8868", evento: "a guarda de cada companheiro baixa ao fim da luta",
         voz: "frase", nasce: "src/habilidades.js (baixarGuardas)" },
-      { onde: "src/App.jsx:8782", evento: "a pressa acaba ao fim da luta",
+      { onde: "src/App.jsx:8874", evento: "a pressa acaba ao fim da luta",
         voz: "frase", nasce: "src/habilidades.js (baixarPressa)" },
     ] },
-  { fn: "aflicaoDeCompanheiro", onde: "src/App.jsx:9080", anel: "nucleo",
+  { fn: "aflicaoDeCompanheiro", onde: "src/App.jsx:9172", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:9087", evento: "a arma do companheiro envenena/queima o inimigo",
+      { onde: "src/App.jsx:9179", evento: "a arma do companheiro envenena/queima o inimigo",
         voz: "frase", nasce: "src/aflicoes.js (rolarAflicao)" },
     ] },
-  { fn: "resolverAtaqueJogador", onde: "src/App.jsx:12830", anel: "nucleo",
+  { fn: "resolverAtaqueJogador", onde: "src/App.jsx:12992", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:12988", evento: "atacou, apareceu — a invisibilidade se rompe pelo golpe",
+      { onde: "src/App.jsx:13150", evento: "atacou, apareceu — a invisibilidade se rompe pelo golpe",
         voz: "frase", nasce: "src/gatilhos.js (romperPorGatilho)" },
     ] },
-  { fn: "aplicarGolpeDoJogador", onde: "src/App.jsx:13010", anel: "nucleo",
+  { fn: "aplicarGolpeDoJogador", onde: "src/App.jsx:13172", anel: "nucleo",
     /* núcleo por COMPORTAMENTO e não por guarda própria: sem luta,
        `resolverAtaqueJogador` devolve `null` na primeira linha e ela sai em
        `:12682` com `false`, sem falar. É a função que a sessão A percorre
@@ -1104,9 +1139,9 @@ export const FUNIL_DO_COMBATE = [
        `continuarGolpeDoJogador(acao, pers, ataque, null)`, que é quem de
        fato aplica o dano e empurra aquela linha — nova entrada, logo abaixo. */
     linhas: [
-      { onde: "src/App.jsx:13016", evento: "recusa por alcance — o golpe digitado não alcança ninguém",
+      { onde: "src/App.jsx:13178", evento: "recusa por alcance — o golpe digitado não alcança ninguém",
         voz: "recusa", nasce: "src/App.jsx:12507 (o literal do motivo)" },
-      { onde: "src/App.jsx:13024", evento: "recusa por economia — a ação da rodada já saiu",
+      { onde: "src/App.jsx:13186", evento: "recusa por economia — a ação da rodada já saiu",
         voz: "recusa", nasce: "src/App.jsx" },
     ] },
   /* MM3 (frontend, 29/09): ENTRADA NOVA. `continuarGolpeDoJogador` nasceu da
@@ -1120,83 +1155,83 @@ export const FUNIL_DO_COMBATE = [
      dois dentro do ciclo do turno. É a mesma lógica que já classificava
      `aplicarGolpeDoJogador` de núcleo sem guarda própria, um degrau adiante
      na mesma cadeia. */
-  { fn: "continuarGolpeDoJogador", onde: "src/App.jsx:13060", anel: "nucleo",
+  { fn: "continuarGolpeDoJogador", onde: "src/App.jsx:13222", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:13149", evento: "o golpe do jogador: dano, PV do alvo e a aflição da arma",
+      { onde: "src/App.jsx:13311", evento: "o golpe do jogador: dano, PV do alvo e a aflição da arma",
         voz: "telegrama", misto: true, nasce: "src/App.jsx (o ⚔) + src/aflicoes.js (a aflição)" },
     ] },
-  { fn: "declararGolpe", onde: "src/App.jsx:13239", anel: "nucleo",
+  { fn: "declararGolpe", onde: "src/App.jsx:13401", anel: "nucleo",
     /* núcleo pela FIAÇÃO: o único chamador é o `onClick` das ACOES_PRONTAS
        sob `golpeVivo`, que exige `vdGolpe` — e `vereditoDoGolpeAgora`
        devolve `null` fora da luta. O botão não existe fora dela. */
     linhas: [
-      { onde: "src/App.jsx:13254", evento: "recusa por alcance — o clique chegou e o veredito diz não",
+      { onde: "src/App.jsx:13416", evento: "recusa por alcance — o clique chegou e o veredito diz não",
         voz: "recusa", nasce: "src/App.jsx:1191 (recusaDoGolpe)" },
     ] },
-  { fn: "resolverHabilidadeOfensiva", onde: "src/App.jsx:13274", anel: "nucleo",
+  { fn: "resolverHabilidadeOfensiva", onde: "src/App.jsx:13436", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:13300", evento: "a ceifa leva de uma vez quem estava abaixo do limiar",
+      { onde: "src/App.jsx:13462", evento: "a ceifa leva de uma vez quem estava abaixo do limiar",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:13302", evento: "a ceifa varre o campo e não acha ninguém abaixo do limiar",
+      { onde: "src/App.jsx:13464", evento: "a ceifa varre o campo e não acha ninguém abaixo do limiar",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:13401", evento: "o alvo está abaixo do limiar e a execução vale",
+      { onde: "src/App.jsx:13563", evento: "o alvo está abaixo do limiar e a execução vale",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:13629", evento: "a habilidade ofensiva resolvida: acerto, dano, dreno, imunidade por degrau",
+      { onde: "src/App.jsx:13791", evento: "a habilidade ofensiva resolvida: acerto, dano, dreno, imunidade por degrau",
         voz: "telegrama", misto: true, nasce: "src/App.jsx" },
     ] },
-  { fn: "fecharSeTodosCairam", onde: "src/App.jsx:15039", anel: "borda",
+  { fn: "fecharSeTodosCairam", onde: "src/App.jsx:15207", anel: "borda",
     linhas: [
-      { onde: "src/App.jsx:15078", evento: "a forma animal se desfaz quando a luta acaba",
+      { onde: "src/App.jsx:15246", evento: "a forma animal se desfaz quando a luta acaba",
         voz: "frase", nasce: "src/habilidades.js (desfazerForma)" },
-      { onde: "src/App.jsx:15092", evento: "a luta termina sem ninguém derrotado — sem espólios",
+      { onde: "src/App.jsx:15260", evento: "a luta termina sem ninguém derrotado — sem espólios",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15188", evento: "vitória: todos caíram, e os espólios",
+      { onde: "src/App.jsx:15356", evento: "vitória: todos caíram, e os espólios",
         voz: "telegrama", misto: true, nasce: "src/App.jsx" },
     ] },
-  { fn: "resolverRevide", onde: "src/App.jsx:15421", anel: "nucleo",
+  { fn: "resolverRevide", onde: "src/App.jsx:15589", anel: "nucleo",
     /* a maior boca do funil, e de longe: 31 das 59 chamadas do caminho de
        combate saem daqui (MM6 somou o "ser achado"; MM7 somou o golpe de
        oportunidade de quem recua para disparar). É a vez do mundo inteira
        — inimigos, grupo, prazos e quedas — num corpo só. */
     linhas: [
-      { onde: "src/App.jsx:15440", evento: "abre a vez do mundo e diz a rodada",
+      { onde: "src/App.jsx:15608", evento: "abre a vez do mundo e diz a rodada",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15440", evento: "o inimigo dá as costas e leva o golpe de oportunidade",
+      { onde: "src/App.jsx:15608", evento: "o inimigo dá as costas e leva o golpe de oportunidade",
         voz: "frase", nasce: "src/App.jsx" },
       /* MM7: ENTRADA NOVA — o mesmo golpe de oportunidade de cima, para quem
          recua em vez de fugir (o atirador que abre distância para disparar,
          `postoDoAtirador`/`m.provoca` em grid.js). Mesmo auxiliar
          (`golpeDeOportunidadeDoHeroi`), mesma família de voz; só o gatilho
          muda — recuo, não fuga. */
-      { onde: "src/App.jsx:15516", evento: "o atirador recua para disparar e leva o golpe de oportunidade do herói",
+      { onde: "src/App.jsx:15684", evento: "o atirador recua para disparar e leva o golpe de oportunidade do herói",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15492", evento: "o passo do inimigo no tabuleiro",
+      { onde: "src/App.jsx:15660", evento: "o passo do inimigo no tabuleiro",
         voz: "frase", nasce: "src/App.jsx:5742 (linhaDePasso)" },
-      { onde: "src/App.jsx:15549", evento: "o passo do aliado no tabuleiro",
+      { onde: "src/App.jsx:15717", evento: "o passo do aliado no tabuleiro",
         voz: "frase", nasce: "src/App.jsx:5742 (linhaDePasso)" },
-      { onde: "src/App.jsx:15563", evento: "alguém que estava de olho me acha (a passiva, a descoberto, ou quem procurou)",
+      { onde: "src/App.jsx:15731", evento: "alguém que estava de olho me acha (a passiva, a descoberto, ou quem procurou)",
         voz: "frase", nasce: "src/escondido.js (revisarEscondido)" },
-      { onde: "src/App.jsx:15732", evento: "o golpe de cada inimigo: acerto, dano, amortecimento, abrigo",
+      { onde: "src/App.jsx:15900", evento: "o golpe de cada inimigo: acerto, dano, amortecimento, abrigo",
         voz: "telegrama", misto: true, nasce: "src/App.jsx (o ⚔) + src/tracos.js (amortecerDano)" },
-      { onde: "src/App.jsx:15771", evento: "a concentração cai com o dano sofrido",
+      { onde: "src/App.jsx:15939", evento: "a concentração cai com o dano sofrido",
         voz: "frase", nasce: "src/combate.js (testeConcentracao)" },
-      { onde: "src/App.jsx:15783", evento: "o dano rompe a invisibilidade",
+      { onde: "src/App.jsx:15951", evento: "o dano rompe a invisibilidade",
         voz: "frase", nasce: "src/gatilhos.js (romperPorGatilho)" },
-      { onde: "src/App.jsx:15797", evento: "a Dádiva da Recuperação segura a queda",
+      { onde: "src/App.jsx:15965", evento: "a Dádiva da Recuperação segura a queda",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15805", evento: "a guarda segura a queda em 1 PV",
+      { onde: "src/App.jsx:15973", evento: "a guarda segura a queda em 1 PV",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15817", evento: "a fúria persistente segura a queda em 1 PV",
+      { onde: "src/App.jsx:15985", evento: "a fúria persistente segura a queda em 1 PV",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15849", evento: "Voz de Comando: as invocadas agem de novo",
+      { onde: "src/App.jsx:16017", evento: "Voz de Comando: as invocadas agem de novo",
         voz: "frase", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15895", evento: "a rolagem do golpe do companheiro (só com `mostrarRolagens`)",
+      { onde: "src/App.jsx:16063", evento: "a rolagem do golpe do companheiro (só com `mostrarRolagens`)",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15918", evento: "o golpe do companheiro: dano ou erro",
+      { onde: "src/App.jsx:16086", evento: "o golpe do companheiro: dano ou erro",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15922", evento: "a rolagem da habilidade do companheiro (só com `mostrarRolagens`)",
+      { onde: "src/App.jsx:16090", evento: "a rolagem da habilidade do companheiro (só com `mostrarRolagens`)",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15945", evento: "a arma do companheiro impõe aflição",
+      { onde: "src/App.jsx:16113", evento: "a arma do companheiro impõe aflição",
         voz: "frase", nasce: "src/aflicoes.js (rolarAflicao)" },
       /* MM3 (29/09): esta linha e a de "o herói chega a zero e rola a
          queda", abaixo, citavam o MESMO endereço que outra entrada desta
@@ -1204,23 +1239,23 @@ export const FUNIL_DO_COMBATE = [
          a nota de R17 logo abaixo já registrava o padrão). Com o arquivo
          inteiro re-medido por conteúdo nesta etapa, as duas ganham agora o
          endereço PRÓPRIO, distinto de qualquer outra entrada. */
-      { onde: "src/App.jsx:15948", evento: "a habilidade ofensiva do companheiro",
+      { onde: "src/App.jsx:16116", evento: "a habilidade ofensiva do companheiro",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15953", evento: "a cura do companheiro num aliado",
+      { onde: "src/App.jsx:16121", evento: "a cura do companheiro num aliado",
         voz: "telegrama", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:15958", evento: "o companheiro bebe uma poção",
+      { onde: "src/App.jsx:16126", evento: "o companheiro bebe uma poção",
         voz: "frase", nasce: "src/App.jsx:8639 (pocaoDeCompanheiro)" },
-      { onde: "src/App.jsx:15963", evento: "o companheiro ergue um buff",
+      { onde: "src/App.jsx:16131", evento: "o companheiro ergue um buff",
         voz: "frase", nasce: "src/App.jsx:8664 (buffDeCompanheiro)" },
-      { onde: "src/App.jsx:15948", evento: "e o que ele largou para erguê-lo",
+      { onde: "src/App.jsx:16116", evento: "e o que ele largou para erguê-lo",
         voz: "frase", nasce: "src/App.jsx:8664 (buffDeCompanheiro)" },
-      { onde: "src/App.jsx:15995", evento: "o companheiro ergue uma guarda",
+      { onde: "src/App.jsx:16163", evento: "o companheiro ergue uma guarda",
         voz: "frase", nasce: "src/habilidades.js (GUARDAS, erguerGuarda)" },
-      { onde: "src/App.jsx:16002", evento: "recusa por repetição — a guarda que já está de pé não sobe duas vezes",
+      { onde: "src/App.jsx:16170", evento: "recusa por repetição — a guarda que já está de pé não sobe duas vezes",
         voz: "recusa", nasce: "src/App.jsx (a recusa nasce em src/habilidades.js, erguerGuarda; a frase é do App)" },
-      { onde: "src/App.jsx:16037", evento: "o herói chega a zero e rola a queda",
+      { onde: "src/App.jsx:16205", evento: "o herói chega a zero e rola a queda",
         voz: "frase", nasce: "src/App.jsx:8781 (resolverQueda)" },
-      { onde: "src/App.jsx:16052", evento: "a forma animal vence o prazo",
+      { onde: "src/App.jsx:16220", evento: "a forma animal vence o prazo",
         voz: "frase", nasce: "src/habilidades.js (expirarForma)" },
       /* R17: 14867/14886/14893 (nesta ordem, no texto antigo) coincidiam
          por acidente com OUTRAS três linhas de pushMsgs já existentes no
@@ -1228,28 +1263,28 @@ export const FUNIL_DO_COMBATE = [
          varredor só verifica se a linha citada TEM um pushMsgs, não qual, e
          ficaria verde nos três apontando para o evento errado. Re-medidos
          por conteúdo contra o corpo de `expirarGuardas`/`expirarPressa`. */
-      { onde: "src/App.jsx:16060", evento: "a guarda do herói vence o prazo",
+      { onde: "src/App.jsx:16228", evento: "a guarda do herói vence o prazo",
         voz: "frase", nasce: "src/habilidades.js (expirarGuardas)" },
-      { onde: "src/App.jsx:16079", evento: "a guarda de cada companheiro vence o prazo",
+      { onde: "src/App.jsx:16247", evento: "a guarda de cada companheiro vence o prazo",
         voz: "frase", nasce: "src/habilidades.js (expirarGuardas)" },
-      { onde: "src/App.jsx:16086", evento: "a pressa vence o prazo",
+      { onde: "src/App.jsx:16254", evento: "a pressa vence o prazo",
         voz: "frase", nasce: "src/habilidades.js (expirarPressa)" },
-      { onde: "src/App.jsx:16093", evento: "o controle sobre o inimigo arrebenta",
+      { onde: "src/App.jsx:16261", evento: "o controle sobre o inimigo arrebenta",
         voz: "frase", nasce: "src/controle.js (expirarControles)" },
-      { onde: "src/App.jsx:16101", evento: "a invocação se desfaz no fim do prazo",
+      { onde: "src/App.jsx:16269", evento: "a invocação se desfaz no fim do prazo",
         voz: "frase", nasce: "src/invocacoes.js (expirarInvocacoes)" },
     ] },
-  { fn: "moverPara", onde: "src/App.jsx:16521", anel: "nucleo",
+  { fn: "moverPara", onde: "src/App.jsx:16689", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:16526", evento: "recusa — esta luta não tem terreno",
+      { onde: "src/App.jsx:16694", evento: "recusa — esta luta não tem terreno",
         voz: "recusa", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:16539", evento: "recusa — uma condição prende o herói no lugar",
+      { onde: "src/App.jsx:16707", evento: "recusa — uma condição prende o herói no lugar",
         voz: "recusa", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:16555", evento: "recusa por economia — o movimento da rodada acabou",
+      { onde: "src/App.jsx:16723", evento: "recusa por economia — o movimento da rodada acabou",
         voz: "recusa", nasce: "src/App.jsx" },
-      { onde: "src/App.jsx:16561", evento: "recusa do passo — fora do campo, ocupado, longe demais, já está aí",
+      { onde: "src/App.jsx:16729", evento: "recusa do passo — fora do campo, ocupado, longe demais, já está aí",
         voz: "recusa", nasce: "src/grid.js:473-508 (caminhar)" },
-      { onde: "src/App.jsx:16602", evento: "o passo sai: golpes de oportunidade de quem te alcança e o abrigo",
+      { onde: "src/App.jsx:16770", evento: "o passo sai: golpes de oportunidade de quem te alcança e o abrigo",
         voz: "frase", misto: true, nasce: "src/App.jsx" },
     ] },
   /* O crime (frontend, MM10, 30/09): 20095 -> 20098, +3 — o comentário que
@@ -1258,9 +1293,9 @@ export const FUNIL_DO_COMBATE = [
      crime nenhum, porque a vítima já lia como inimigo declarado) cresceu 3
      linhas na mesma função, ACIMA deste ponto. Re-medido por esta própria
      catraca; nada somado de cabeça. */
-  { fn: "virarChefeSePreciso", onde: "src/App.jsx:20207", anel: "nucleo",
+  { fn: "virarChefeSePreciso", onde: "src/App.jsx:20375", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:20221", evento: "o chefe da masmorra vira de fase",
+      { onde: "src/App.jsx:20389", evento: "o chefe da masmorra vira de fase",
         voz: "frase", nasce: "src/masmorras.js:722 (falaDaViradaDoChefe)" },
     ] },
 ];
@@ -1365,7 +1400,7 @@ export const FUNIL_DO_COMBATE = [
    cabeça. */
 export const RECUSAS_DO_COMBATE = [
   /* ---- alcance: a família que a Fase X inteira mede ---- */
-  { familia: "alcance", onde: "src/App.jsx:13016", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,
+  { familia: "alcance", onde: "src/App.jsx:13178", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,
     literal: "📏 ninguém está ao alcance do seu golpe — <alvo> está em <lugar>, a uns <n> m. Aproxime-se primeiro. / 📏 não há ninguém à vista para acertar — ou há parede no caminho (arma de longe)",
     nasce: "src/App.jsx:12507-12014" },
   /* RE-MEDIDA EM K2 (16/09), e o motivo tem de sobreviver à mudança: as três
@@ -1377,48 +1412,60 @@ export const RECUSAS_DO_COMBATE = [
      consegue ler — o que no App, dentro de JSX, nunca foi possível. O `onde`
      continua a ser o `pushMsgs` do App, porque é lá que a recusa é DITA; o
      `nasce` passa a apontar a tabela, porque é lá que ela é ESCRITA. */
-  { familia: "alcance", onde: "src/App.jsx:13254", fn: "declararGolpe", anel: "nucleo", formas: 3,
+  { familia: "alcance", onde: "src/App.jsx:13416", fn: "declararGolpe", anel: "nucleo", formas: 3,
     literal: "📏 <alvo> a <n> m — faltam <n> m. / 📏 <alvo> a <n> m — parede, contorne. / 📏 Ninguém de pé ao seu alcance.",
     nasce: "src/golpe.js (recusaDoGolpe, LINHAS_DO_GOLPE)" },
-  { familia: "alcance", onde: "src/App.jsx:14806", fn: "agirInterno", anel: "despachante", formas: 1,
+  /* MM15 (3): +168 nas duas — a foto do início do turno que `agirInterno`
+     tira logo depois da trava (para o desfeito de uma falha de ligação)
+     nasce ACIMA das duas no arquivo, e tudo abaixo andou junto. Re-medido
+     por conteúdo (o literal `desfechoH.motivo`/`desfechoC.motivo` ainda é
+     o mesmo `pushMsgs`), não por soma de delta. */
+  { familia: "alcance", onde: "src/App.jsx:14974", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "📏 <habilidade> não alcança ninguém daqui — <alvo> está em <lugar>, a uns <n> m[ e sem linha de visão]. O alcance de <habilidade> é <n> m.",
     nasce: "src/App.jsx:12859" },
-  { familia: "alcance", onde: "src/App.jsx:14870", fn: "agirInterno", anel: "despachante", formas: 1,
+  { familia: "alcance", onde: "src/App.jsx:15107", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "📏 <o mesmo motivo de :12241> — os <n> PM voltaram.",
     nasce: "src/App.jsx:12859" },
-  { familia: "alcance", onde: "src/App.jsx:16526", fn: "moverPara", anel: "nucleo", formas: 1,
+  { familia: "alcance", onde: "src/App.jsx:16694", fn: "moverPara", anel: "nucleo", formas: 1,
     literal: "📏 Esta luta não tem terreno definido.", nasce: "src/App.jsx" },
-  { familia: "alcance", onde: "src/App.jsx:16561", fn: "moverPara", anel: "nucleo", formas: 5,
+  { familia: "alcance", onde: "src/App.jsx:16729", fn: "moverPara", anel: "nucleo", formas: 5,
     literal: "📏 de onde você está, <lugar> fica longe demais para um deslocamento só. / esse lugar fica fora do campo. / esse lugar está ocupado. / você é <tamanho> demais para caber ali. / você já está aí.",
     nasce: "src/grid.js:473-508 (caminhar)" },
 
   /* ---- economia do turno: o que já foi gasto não volta ---- */
-  { familia: "economia", onde: "src/App.jsx:13024", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 1,
+  { familia: "economia", onde: "src/App.jsx:13186", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 1,
     literal: "⏳ Você já usou sua ação nesta rodada — o golpe fica para a próxima.",
     nasce: "src/App.jsx" },
-  { familia: "economia", onde: "src/App.jsx:14714", fn: "agirInterno", anel: "despachante", formas: 1,
+  /* MM15 (3): +168 nas três, mesmo motivo das duas de `alcance` acima —
+     a foto do início do turno nasce ACIMA delas em `agirInterno`. */
+  { familia: "economia", onde: "src/App.jsx:14882", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "Mana insuficiente para <habilidade> — parei antes dela.", nasce: "src/App.jsx" },
-  { familia: "economia", onde: "src/App.jsx:14716", fn: "agirInterno", anel: "despachante", formas: 1,
+  { familia: "economia", onde: "src/App.jsx:14884", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "⏳ <habilidade> está em recarga (<n>t) — pulei.", nasce: "src/App.jsx" },
-  { familia: "economia", onde: "src/App.jsx:14720", fn: "agirInterno", anel: "despachante", formas: 1,
+  { familia: "economia", onde: "src/App.jsx:14888", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "⏳ Sua ação deste turno já saiu — <habilidade> fica para a próxima rodada.",
     nasce: "src/App.jsx" },
-  { familia: "economia", onde: "src/App.jsx:16555", fn: "moverPara", anel: "nucleo", formas: 1,
+  { familia: "economia", onde: "src/App.jsx:16723", fn: "moverPara", anel: "nucleo", formas: 1,
     literal: "⏳ Você já cobriu os <n> m desta rodada — o próximo passo é no turno que vem.",
     nasce: "src/App.jsx" },
 
   /* ---- teto: uma por vez ---- */
-  { familia: "teto", onde: "src/App.jsx:14708", fn: "agirInterno", anel: "despachante", formas: 1,
+  /* MM15 (3): +185, não +168 como as outras de `agirInterno` — esta
+     recusa mora no `else if` que fecha o mesmo bloco das três de
+     `economia` acima, e por isso anda com elas E fica ABAIXO das três no
+     arquivo (a ordem do código, não a da tabela). Re-medida por
+     conteúdo, não por soma. */
+  { familia: "teto", onde: "src/App.jsx:14893", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "✦ <habilidade> fica para depois — fora de combate uso uma habilidade por vez.",
     nasce: "src/App.jsx" },
 
   /* ---- repetição: o que já está de pé não sobe duas vezes ---- */
-  { familia: "repeticao", onde: "src/App.jsx:16002", fn: "resolverRevide", anel: "nucleo", formas: 1,
+  { familia: "repeticao", onde: "src/App.jsx:16170", fn: "resolverRevide", anel: "nucleo", formas: 1,
     literal: "🛡 <companheiro> firma de novo a guarda que já sustenta — nada muda.",
     nasce: "src/habilidades.js (erguerGuarda recusa a repetida); a frase é do App" },
 
   /* ---- a trava do turno guardado ---- */
-  { familia: "turno-guardado", onde: "src/App.jsx:8283", fn: "aMesaEspera", anel: "borda", formas: 1,
+  { familia: "turno-guardado", onde: "src/App.jsx:8300", fn: "aMesaEspera", anel: "borda", formas: 1,
     literal: "⏳ O que você acabou de fazer ainda não foi contado, e a mesa não anda sem a palavra do Mestre.",
     nasce: "src/App.jsx (a decisão é de src/guardado.js, travaODeclarar)" },
 
@@ -1429,22 +1476,25 @@ export const RECUSAS_DO_COMBATE = [
      `responderGolpeFinal`) entram ANTES destas quatro no arquivo, e tudo
      abaixo anda junto. Re-medido por conteúdo, não por soma: as quatro
      linhas continuam `pushMsgs(` com o MESMO literal — só o endereço mudou. */
-  { familia: "conjuracao", onde: "src/App.jsx:14695", fn: "agirInterno", anel: "despachante", formas: 1,
+  /* MM15 (3): +168 nas duas — mesmo motivo das de `alcance`/`economia`
+     acima: a foto do início do turno em `agirInterno` nasce ACIMA. */
+  { familia: "conjuracao", onde: "src/App.jsx:14863", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "⛓ <habilidade> não sai: você não consegue conjurar vestindo <peça>. Tire a peça e tente de novo.",
     nasce: "src/App.jsx" },
-  { familia: "conjuracao", onde: "src/App.jsx:14702", fn: "agirInterno", anel: "despachante", formas: 1,
+  { familia: "conjuracao", onde: "src/App.jsx:14870", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "🐾 <habilidade> não sai: em <forma> você não tem mão nem voz para conjurar.",
     nasce: "src/App.jsx" },
   /* FUGA (frontend, R22): esta entrada citava :14133 antes da etapa — o
      MESMO endereço da recusa ⛓ acima, que nunca foi o dela (a régua
      tolerava porque as duas linhas tinham `pushMsgs(`, e o dente só olha
      se HÁ um pushMsgs, não QUAL). Re-medida por conteúdo contra o código:
-     a recusa 📕 é `if (!lanc.ok) { pushMsgs(...) }`, três linhas abaixo. */
-  { familia: "conjuracao", onde: "src/App.jsx:14706", fn: "agirInterno", anel: "despachante", formas: 1,
+     a recusa 📕 é `if (!lanc.ok) { pushMsgs(...) }`, três linhas abaixo.
+     MM15 (3): +168, mesmo motivo das duas acima. */
+  { familia: "conjuracao", onde: "src/App.jsx:14874", fn: "agirInterno", anel: "despachante", formas: 1,
     literal: "📕 <motivo de podeLancar>", nasce: "src/magias.js (podeLancar)" },
 
   /* ---- a condição que prende: a segunda que X3b não nomeou ---- */
-  { familia: "condicao", onde: "src/App.jsx:16539", fn: "moverPara", anel: "nucleo", formas: 1,
+  { familia: "condicao", onde: "src/App.jsx:16707", fn: "moverPara", anel: "nucleo", formas: 1,
     literal: "📏 Você não consegue se mover (<as fontes que prendem>).",
     nasce: "src/condicoes.js (as fontes) — a frase é do App" },
 ];
@@ -1644,8 +1694,13 @@ export const SESSAO_A_PELA_FRASE = {
      ACIMA destes três (a tabela `bocasDoTurno` no lugar do `.slice`, e a
      saída antecipada). O terceiro (o `enviar`) veio do erro do varredor
      (bloco 11); os dois primeiros são prosa e vão aqui à mão, como
-     sempre. */
-  ondeSai: "src/App.jsx:13016 (a recusa) — o `return true` de :13017 antecede o enviar de :13165",
+     sempre.
+     A LIGAÇÃO NÃO É O MESTRE (frontend, MM15 (3), 30/09): +162 nos três —
+     :13178, :13179, :13327 — mesmo delta de `aplicarGolpeDoJogador` no
+     FUNIL_DO_COMBATE acima (a foto do turno nasce ACIMA dela no arquivo).
+     O terceiro (o `enviar`) veio do erro do varredor (bloco 11); os dois
+     primeiros são prosa e vão aqui à mão, como sempre. */
+  ondeSai: "src/App.jsx:13178 (a recusa) — o `return true` de :13179 antecede o enviar de :13327",
   formula: "taxa_sem_narracao = turnos_sem_frase_de_evento / turnos_totais",
   procedimento: "node testes/sonda-turno-esteril.mjs — comparar a linha da sessão A″",
 };

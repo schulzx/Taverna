@@ -68,7 +68,16 @@ sec("2. a versão antiga ignora o campo, e um save sem ele joga igual");
      autosave da versão antiga. */
   const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   t("o load nunca percorre as chaves do save (Object.keys/entries/for-in de sv)", !/Object\.(keys|entries|values)\(sv\)|for \(const \w+ in sv\)/.test(APP));
-  t("o salvar monta os dados de novo a partir dos refs (a chave desconhecida não sobrevive, nem parte nada)", /const dados = \{\s*nomeCampanha: nomeVivo, mundo, personagem,/.test(APP));
+  /* MM15 (3): o literal que montava `dados` mudou de casa — saiu de
+     `salvar` (que agora só faz `{ ...retratoDoJogo(), ...extra }`) para
+     `retratoDoJogo()`, extraído para que a foto de um turno (antes de uma
+     falha) e o save usem o MESMO objeto. A prova continua a mesma: os
+     dois passos — o `dados` de `salvar` e o `return` de `retratoDoJogo`
+     que ele consome — seguem montados do zero a partir dos refs, nunca
+     de uma cópia do `sv` carregado. */
+  t("o salvar monta os dados de novo a partir dos refs (a chave desconhecida não sobrevive, nem parte nada)",
+    /const dados = \{ \.\.\.retratoDoJogo\(\), \.\.\.extra \};/.test(APP) &&
+    /return \{\s*nomeCampanha: nomeVivo, mundo, personagem,/.test(APP));
   /* um save sem o campo: tudo igual ao de antes */
   const semCampo = elencoDoMundo(SEM, MAPA, CTX);
   const campoVazio = elencoDoMundo(SEM, MAPA, { ...CTX, estado: garantirElencoDoSave(undefined), npcs: {} });
