@@ -436,7 +436,9 @@ O limite é o que um commit revertido não desfaz.
      2 do T11; o disfarce feito em v9.343 — qualquer falha da API diz que foi a ligação, e o turno que falhou não aconteceu* · **O gasto e o disfarce** — 3,6 chamadas por resposta (a primeira, ~2,0): quatro falas de personagem pagas e deitadas
      fora (nenhuma entra em pauta nem na tela; duas de alguém fora de cena). E o 429 aparece como recusa do Mestre ("a porta
      não se abre para esta mão") e anda o relógio num turno que não aconteceu. O teto em si é infra — da pessoa.
-  3. **Persuasão sem dado revela um segredo da espinha** (T10), contra a base (o Fundo do Poço é a casa de banhos), e o
+  3. ✓ *feito em v9.344 (fica: `pessoaNaFrente` só reconhece o nome inteiro — "Lina," não acha a Lina do Sal; o cânone já
+     gravado num save antigo não sai — apagar é dado de jogador; e a proposta de o "o que X esconde" ser o segredo da base
+     que já mora no local, eleito na criação do mundo)* · **Persuasão sem dado revela um segredo da espinha** (T10), contra a base (o Fundo do Poço é a casa de banhos), e o
      Cronista grava-o no cânone.
   4. **A regra dos nomes funde mal** — "Túlio da Runa" (sumido na estrada) fundido com Túlio, o músico (T5).
   5. **A gente da cidade segue a heroína pela cidade** (T7, T9, T10) — o resto já anotado do nº 9 da MM14.

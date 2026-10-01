@@ -59,6 +59,8 @@ import { NAO_E_AGRESSAO, RX_AGRESSAO } from "./agressao.js";
 import { soODeclarado, emProclise, NAO_E_DECLARACAO } from "./peneira.js";
 /* MM14: a pergunta de balcão não é performance — ver `impressionar` */
 import { falaSoPergunta } from "./perguntas.js";
+/* MM15 (4): o segredo que a espinha guarda — quem o arranca rola */
+import { pressionaSegredo, pedidoDoSegredo, ARRANCAR } from "./segredo-guardado.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -461,6 +463,37 @@ export const DESAFIOS = [
     rotulo: "convencer", dcPadrao: DC("incomum"), social: true,
   },
   {
+    /* ---------------- FAZER FALAR (MM15 · 4) ----------------
+       "Lina, ouve. Sou soldada, sei calar o que ouço — (…) Diz-me o que se
+       passa no Fundo do Poço." (T10 da segunda sessão de prova). Nenhum
+       verbo de `convencer` está ali, e a frase caiu em `livre`: o
+       Narrador inventou o que o marco 2 da espinha esconde, e o Cronista
+       gravou-o. Arrancar a alguém o que um lugar da espinha esconde é
+       teste — e SÓ isso: o `naoSeCom` pergunta ao contexto se a oração
+       pede o oculto de um segredo guardado (segredo-guardado.js). Sem
+       espinha no contexto, este desafio não existe (regressão zero).
+
+       O `rx` é o de `ARRANCAR` (o pedido e o esforço), e lê a frase COM a
+       fala (`leFala`): o pedido mora no que a heroína diz em voz alta, e
+       o catálogo lê o declarado, que já não tem a fala. Quem julga é o
+       `naoSeCom`, que recebe a frase inteira e passa pela peneira dele
+       (`pressionaSegredo`: a fala conta como dita; fora dela, a negação e
+       a hipótese não pedem nada, e a pergunta é de graça). Não é
+       `lePergunta`: este desafio não lê a pergunta — ela é balcão.
+       Vem DEPOIS de `convencer` (que fica o primeiro da Persuasão, para
+       `desafioPorPericia`) e ANTES de `impressionar` (que casaria "vou até
+       o balcão e digo: «diz-me o que se passa…»" como cantada). E cede a
+       vez a quem já tem verbo próprio — ameaçar é Intimidação, mentir é
+       Enganação —, que levam o mesmo preço pela conta social abaixo. */
+    id: "fazer_falar",
+    rx: new RegExp(`${ARRANCAR.PEDE.source}|${ARRANCAR.ESFORCO.source}`),
+    leFala: true,
+    naoSe: /\b(intimid|amea[cç]|meto medo|minto|mentir|blef|engano|finjo ser|me pass(o|ar) por)/,
+    naoSeCom: (t, ctx) => !pressionaSegredo(t, ctx && ctx.segredos),
+    pericia: "persuasao", alvo: "segredo", minutos: 10, barulho: false,
+    rotulo: "fazer falar", dcPadrao: DC("incomum"), social: true,
+  },
+  {
     /* ---------------- A APROXIMAÇÃO (v9.69) ----------------
        Relatado com a frase exata: "vou na elfa bonita que acabou de passar
        por mim e digo: você caiu do céu? porque você é um anjo". Hoje isso
@@ -706,6 +739,9 @@ const COMO_SE_DIZ = {
   furtar_se: "me esgueiro pela sombra até a porta dos fundos",
   bater_carteira: "surrupio a bolsa do cinto dele",
   convencer: "tento convencer o guarda a me deixar passar",
+  /* sem segredo guardado na mesa, a frase é lida como convencer — e é isso
+     mesmo: insistir só vira "fazer falar" quando há o que a cidade cala */
+  fazer_falar: "insisto com a taverneira até ela me dizer o que se passa no velho poço",
   intimidar: "ameaço o taverneiro para ele falar",
   mentir: "minto dizendo que sou o novo estalajadeiro",
   rastrear: "sigo as pegadas na lama",
@@ -1354,7 +1390,11 @@ export function lerAcao(texto, ctx = {}) {
   const inteira = emProclise(daAcao);
   let declarada = inteira;
   if (!pedido) { try { declarada = emProclise(soODeclarado(daAcao, TRAVAS_DO_CATALOGO)); } catch { declarada = inteira; } }
-  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)));
+  /* MM15 (4): `leFala` — o rx lê a frase COM a fala (o pedido mora no que a
+     heroína diz em voz alta), e a peneira fica com o `naoSeCom` do desafio,
+     que devolve a fala e tira o resto. Não é `lePergunta`: ali a pergunta é
+     o gesto; aqui ela é de graça. */
+  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta || x.leFala ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)));
   /* MM4: o que o catálogo não conhece, a família do verbo conhece. Vem
      DEPOIS do pedido de teste (pedir continua não sendo declarar) e ANTES do
      "sem dado" — "pego a cadeira e arremesso" tem um verbo de usar o que se
@@ -1421,7 +1461,13 @@ export function lerAcao(texto, ctx = {}) {
      lugar": é ESTE pedido a ESTA pessoa. Chavear pelo lugar faria o segundo
      pedido ao mesmo taverneiro — outro assunto, outro tamanho — ouvir "você
      já tentou isso aqui", que é falso e trava a conversa inteira. */
-  const conta = d.social ? dificuldadeSocial({ texto: cru, pessoa, pers: personagem, pericia: d.pericia, fama: ctx.fama }) : null;
+  /* MM15 (4): o pedido que arranca um segredo guardado custa o degrau do
+     segredo, qualquer que seja o verbo (convencer, fazer falar, ameaçar,
+     mentir) — e o que o sucesso compra é a verdade da BASE sobre o lugar,
+     nunca o que ele esconde. Sem espinha no contexto, nada muda. */
+  let segredo = null;
+  if (d.social) { try { segredo = pressionaSegredo(cru, ctx.segredos); } catch { segredo = null; } }
+  const conta = d.social ? dificuldadeSocial({ texto: cru, pessoa, pers: personagem, pericia: d.pericia, fama: ctx.fama, pedido: segredo ? pedidoDoSegredo(segredo) : null }) : null;
 
   const reg = garantirTentativas(tentativas);
   const chave = chaveDaTentativa(lugar, conta

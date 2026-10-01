@@ -15,7 +15,39 @@ Formato:
 ```
 
 ---
-## 30/09 21:12 · v9.343 · MM15 (3) · quando a ligação cai, o jogador lê que foi a ligação, e o mundo não anda · commit (o hash vai no próximo bloco)
+## 30/09 22:25 · v9.344 · MM15 (4) · o que a história guarda só sai pelo sistema · commit (o hash vai no próximo bloco)
+
+- **por que andou:** o quarto da MM15 — no T10 da segunda sessão a jogadora pressionou a taverneira ("diz-me o que se
+  passa no Fundo do Poço"), **não houve teste**, o Mestre fez da casa de banhos da base um poço maldito, e o Cronista
+  gravou-o no cânone: o marco 2 da espinha ganhou uma verdade que o sistema não elegeu. O coordenador: nenhum segredo da
+  história chega ao cânone sem passar pelo sistema. **Sem chamadas pagas hoje:** provado em Node.
+- **estado inicial:** verde (`daf3c12`).
+- **bastão:** tomado em nome deste ciclo para a mão `frontend`; devolvido com este commit.
+- **backend — as causas:** (b) a frase não tinha "?" (o "perguntar é de graça" nem foi consultado); o catálogo de persuasão
+  só conhecia "convenço/argumento/insisto", e "não saio do balcão" casou com "deslocar-se e olhar" — sem dado, `livre`.
+  (a) As duas portas do cânone (a do Narrador e a do Cronista) gravavam tudo o que chegava, sem olhar a espinha; e a espinha
+  não elege o conteúdo de um marco "descobrir" — elege o lugar e o momento, e o marco cai quando o lugar entra em cena.
+- **as regras (`src/segredo-guardado.js`, tabelas):** `peneirarCanone` recusa, em silêncio, a entrada que é o segredo de um
+  marco de pé (o lugar, o que lá estaria) e a que reescreve a espécie de um local da base; com o marco feito, passa.
+  **Decisão (média):** recusar e não guardar como boato — a figura de boato não existe (o cânone vai todo como fato) e
+  criá-la mexeria no save e no prompt. Na persuasão, o desafio `fazer_falar` (Persuasão; Intimidação e Enganação ao mesmo
+  preço) nasce só quando a frase arranca um segredo guardado; CD 16 na tabela, entre o favor (14) e quebrar uma regra (18) —
+  a Lina do T10 dá 17; o sucesso compra o que a base sabe, nunca o que o lugar esconde. A pergunta de balcão continua de
+  graça. E `vetoDoSegredo` vai ao `naoPode` sempre que o turno nomeia um segredo guardado (124–188 caracteres, pela pauta
+  dinâmica — nada de bloco estático; o teto de prompt fica).
+- **em número (24 mundos × 8 estruturas, 1155 marcos de pé):** frases de pressão sobre o segredo com teste ao preço do
+  segredo **1155 de 5775 (e ao preço de favor) → 5775**; com veto **0 → 5775**; entradas de cânone sobre o segredo que entram
+  **3465 → 0**; controles (gente da casa, promessas, locais pela própria espécie) recusados **0**. O T10 literal: `livre` →
+  teste Persuasão CD 17, e "Fundo do Poço" recusado no cânone.
+- **frontend:** o import, `mundoDaBase`, `segredos` no `ctxDesafio`, o veto depois dos da abertura, a peneira nas duas portas
+  com recuo para a lista original se estourar; 93 endereços das ações do jogador re-medidos por conteúdo.
+- **o que fica (na pauta):** "Lina," não acha a Lina do Sal (`pessoaNaFrente` só lê o nome inteiro); o "Fundo do Poço" já
+  gravado num save fica (apagar é dado de jogador); e a proposta de o "o que X esconde" ser o segredo que a base já põe
+  no local, eleito na criação do mundo.
+- **para quem joga:** o que a história guarda tem de se arrancar a alguém — com dado, e com preço — e o Mestre já não o
+  inventa nem o escreve na pedra.
+
+## 30/09 21:12 · v9.343 · MM15 (3) · quando a ligação cai, o jogador lê que foi a ligação, e o mundo não anda · commit `daf3c12`
 
 - **por que andou:** o terceiro da MM15, pedido pelo coordenador **para qualquer falha da API**: no T11 da segunda sessão o
   teto respondeu 429 e a tela disse "A porta não se abre para esta mão: o Mestre não conta esta história a quem bate

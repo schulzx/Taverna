@@ -296,17 +296,23 @@ export const ALAVANCAS = [
 
 export function alavancaPorId(id) { return ALAVANCAS.find((a) => a.id === id) || null; }
 
+/* MM15 (4): `pedido` é um degrau que a FRASE não diz e o contexto sabe —
+   hoje só o segredo guardado da espinha (`pedidoDoSegredo`,
+   segredo-guardado.js). Sem ele, o degrau é o da frase, como sempre. O ouro
+   desse degrau custa o `moedas` dele, quando a tabela do ouro não o tem. */
+const degrauDe = (texto, pedido) => (pedido && typeof pedido === "object" && Number.isFinite(pedido.dc) && pedido.id ? pedido : tamanhoDoPedido(texto));
+
 /* As alavancas que estão MESMO na mesa: a frase invoca, a ficha confirma.
    Devolve também as invocadas e não confirmadas, porque o jogador merece
    ouvir por que o blefe dele não contou. */
-export function alavancasNaMesa(texto, { pessoa = null, pers = null, pericia = "" } = {}) {
+export function alavancasNaMesa(texto, { pessoa = null, pers = null, pericia = "", pedido = null } = {}) {
   const t = norm(texto);
-  const tamanho = tamanhoDoPedido(texto);
+  const tamanho = degrauDe(texto, pedido);
   const valem = [], vazias = [];
   for (const a of ALAVANCAS) {
     if (!a.rx.test(t)) continue;
     if (a.so && a.so !== pericia) continue;
-    const preco = a.preco ? (a.preco[tamanho.id] || 0) : 0;
+    const preco = a.preco ? (a.preco[tamanho.id] || Number(tamanho.moedas) || 0) : 0;
     let ok = true;
     try { ok = a.confere({ pessoa, pers, preco }); } catch { ok = false; }
     if (ok) valem.push({ ...a, preco });
@@ -322,8 +328,8 @@ export function alavancasNaMesa(texto, { pessoa = null, pers = null, pericia = "
    o que ele não compra. Nada aqui é sorteado: tudo sai da ficha da
    pessoa, do registro e da bolsa do herói.
    ============================================================ */
-export function dificuldadeSocial({ texto = "", pessoa = null, pers = null, pericia = "", fama = 0 } = {}) {
-  const tamanho = tamanhoDoPedido(texto);
+export function dificuldadeSocial({ texto = "", pessoa = null, pers = null, pericia = "", fama = 0, pedido = null } = {}) {
+  const tamanho = degrauDe(texto, pedido);
   const partes = [];
   let dc = tamanho.dc;
   partes.push(tamanho.rotulo);
@@ -342,7 +348,7 @@ export function dificuldadeSocial({ texto = "", pessoa = null, pers = null, peri
   if (f >= 70) { dc -= 3; partes.push("seu nome chega antes de você (−3)"); }
   else if (f >= 40) { dc -= 1; partes.push("já ouviram falar de você (−1)"); }
 
-  const { valem, vazias } = alavancasNaMesa(texto, { pessoa, pers, pericia });
+  const { valem, vazias } = alavancasNaMesa(texto, { pessoa, pers, pericia, pedido });
   for (const a of valem) { dc += a.delta; partes.push(`${a.rotulo} (${a.delta})`); }
 
   return {

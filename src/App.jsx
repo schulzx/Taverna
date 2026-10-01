@@ -177,6 +177,7 @@ import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, item
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
 import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto } from "./saga.js";
+import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
@@ -6985,6 +6986,11 @@ export default function Taverna() {
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
     p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));
+    /* MM15 (4): o segredo que a espinha guarda não é a boca do Narrador —
+       o veto só nasce quando a frase do turno nomeia um segredo de pé. */
+    try {
+      p = porNaPauta(p, "naoPode", vetoDoSegredo(acaoDoTurno, segredosGuardados(espinhaRef.current, mundoDaBase()), { lugar: (lugarRef.current && lugarRef.current.nome) || "" }));
+    } catch (e) { calou("vetoDoSegredo", e); }
     /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
        maré do porto. Só parado em cidade: no meio da estrada a linha do
        andar de trás seria mentira sobre o lugar onde a cena está. */
@@ -9926,7 +9932,12 @@ export default function Taverna() {
     /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
     if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
       const c = { ...canoneRef.current };
-      for (const [nome, ficha] of Object.entries(resp.mudancas.canone)) {
+      /* MM15 (4): nenhum segredo que a espinha ainda guarda vira cânone
+         pela boca do Narrador — a peneira recusa em silêncio; se ela
+         estourar, segue o comportamento de hoje (nunca pior para o segredo). */
+      let canoneDoNarrador = resp.mudancas.canone;
+      try { canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }
+      for (const [nome, ficha] of Object.entries(canoneDoNarrador)) {
         if (!nome || !ficha || typeof ficha !== "object") continue;
         /* v9.36: registra em silêncio. O jogador acabou de LER a coisa na
            narração; avisá-lo de que ela foi arquivada é o sistema falando de
@@ -10527,6 +10538,10 @@ export default function Taverna() {
      usa, para o alvo sorteado ser sempre o mesmo lugar. */
   const mundoDasTarefas = () => ({ semente: sementeMundo(), mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, nivel: ((personagemRef.current || personagem || {}).nivel) || 1, dia: diaRef.current });
 
+  /* MM15 (4): o mundo que o segredo guardado precisa para saber o que um
+     lugar É na base e quem lá trabalha — o mesmo formato de mundoDasTarefas. */
+  const mundoDaBase = () => ({ semente: sementeMundo(), mapa: mapaRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, base: baseMundoRef.current });
+
   const cronistaDoTurno = async (pers, narrativa) => {
     if (!narrativa || narrativa.length < 60) return;
     try {
@@ -10711,7 +10726,13 @@ export default function Taverna() {
         if (r.canone && typeof r.canone === "object") {
           const c = { ...canoneRef.current };
           const novos = [];
-          for (const [nome, ficha] of Object.entries(r.canone)) {
+          /* MM15 (4): a mesma peneira da porta do Narrador — nenhum segredo
+             que a espinha ainda guarda vira cânone pela boca do Cronista.
+             Se a peneira estourar, segue o comportamento de hoje (nunca
+             pior para o segredo). */
+          let canoneDoCronista = r.canone;
+          try { canoneDoCronista = peneirarCanone(r.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }
+          for (const [nome, ficha] of Object.entries(canoneDoCronista)) {
             if (!nome || !ficha || typeof ficha !== "object") continue;
             const chaveExistente = Object.keys(c).find((k) => k.toLowerCase() === String(nome).toLowerCase());
             if (!chaveExistente) {
@@ -17927,6 +17948,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico, ondeSeProcura());
       } catch { return null; }
     },
+    /* MM15 (4): o que a espinha ainda guarda — só o desafio `fazer_falar`
+       (desafios.js) o lê, e só quando a frase nomeia um segredo. */
+    segredos: () => { try { return segredosGuardados(espinhaRef.current, mundoDaBase()); } catch (e) { calou("segredosGuardados", e); return []; } },
   });
 
   /* Devolve true quando ela própria resolveu o turno. É a porta única: o

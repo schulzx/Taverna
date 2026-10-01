@@ -599,8 +599,11 @@ sec("4. a definição operacional de 'número que muda'");
      mesmo lugar.
      A ligação não é o Mestre (frontend, MM15 (3), 30/09): 14640 -> 14808,
      +168 — a foto do início do turno em `agirInterno` nasce ACIMA do
-     relógio no arquivo; mesmo motivo, mesmo lugar. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14808/.test(relogio.porque));
+     relógio no arquivo; mesmo motivo, mesmo lugar.
+     O segredo guardado (frontend, MM15 (4), 30/09): 14808 -> 14829, +21 —
+     os cinco pontos de O SEGREDO GUARDADO nascem ACIMA do relógio no
+     arquivo; mesmo motivo, mesmo lugar. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14829/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -882,9 +885,12 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        A ligação não é o Mestre (frontend, MM15 (3), 30/09): 13149 ->
        13311, +162 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa
        (a foto do turno nasce ACIMA dela no arquivo). Re-medido por
-       check-acoes-do-jogador.mjs. */
+       check-acoes-do-jogador.mjs.
+       O segredo guardado (frontend, MM15 (4), 30/09): 13311 -> 13332,
+       +21 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa. Re-medido
+       por check-acoes-do-jogador.mjs. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13311").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13332").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1036,8 +1042,13 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        RECUSAS_DO_COMBATE. Re-medido por check-acoes-do-jogador.mjs.
        A ligação não é o Mestre (frontend, MM15 (3), 30/09): 13016 ->
        13178, +162 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa.
-       Re-medido por check-acoes-do-jogador.mjs. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13178" && x.familia === "alcance"));
+       Re-medido por check-acoes-do-jogador.mjs.
+       O segredo guardado (frontend, MM15 (4), 30/09): 13178 -> 13199,
+       +21 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa (os cinco
+       pontos de O SEGREDO GUARDADO, no cabeçalho de FUNIL_DO_COMBATE,
+       nascem ACIMA dela no arquivo). Re-medido por
+       check-acoes-do-jogador.mjs. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13199" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1115,8 +1126,12 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      A ligação não é o Mestre (frontend, MM15 (3), 30/09): 13165 -> 13327,
      +162 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa (a foto do
      turno nasce ACIMA dela no arquivo), re-medido por
+     check-acoes-do-jogador.mjs.
+     O segredo guardado (frontend, MM15 (4), 30/09): 13327 -> 13348, +21 —
+     o mesmo delta de `aplicarGolpeDoJogador` nesta etapa (os cinco pontos
+     de O SEGREDO GUARDADO nascem ACIMA dela no arquivo), re-medido por
      check-acoes-do-jogador.mjs. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13327/.test(S.ondeSai));
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13348/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));
