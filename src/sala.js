@@ -248,7 +248,11 @@ export function envelopeDaSala(sala) {
 /* Curto ao osso, e atrás de porta: numa campanha de um jogador este bloco
    seria uma regra sobre gente que não existe. O envelope da abertura diz o
    resto uma vez; o que precisa ser lembrado em TODO turno é só isto — não
-   jogar por quem não escreveu. */
-export const SALA_PROMPT = `MESA DE DOIS (v9.120):
+   jogar por quem não escreveu.
+   30/09: e, com a narração na segunda pessoa, o nome antes do "você" —
+   com dois heróis na cena, "você" sozinho não diz de quem é o corpo. A
+   linha pagou-se com a etiqueta de versão do título, que o Narrador não lia. */
+export const SALA_PROMPT = `MESA DE DOIS:
 - [JOGADOR 1] e [JOGADOR 2] são duas pessoas reais na mesma cena. Resolva as DUAS ações, na ordem, e deixe a segunda alcançar a primeira.
-- NUNCA decida por um deles nem o faça agir num turno em que ele não escreveu: quem ficou parado, ficou parado.`;
+- NUNCA decida por um deles nem o faça agir num turno em que ele não escreveu: quem ficou parado, ficou parado.
+- O nome antes do "você": "Lia, você vê…".`;

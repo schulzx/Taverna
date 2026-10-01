@@ -44,20 +44,23 @@ export const FESTIVAIS = [
 export const festivalDe = (dia) => FESTIVAIS.find((f) => f.diaDoAno === diaDoAno(dia)) || null;
 
 /* SONHOS DO ACAMPAMENTO (25% por noite): presságios, memórias, pesadelos.
-   Alguns deixam condição no dia seguinte — o Mestre só tece o sonho na ficção. */
+   Alguns deixam condição no dia seguinte — o Mestre só tece o sonho na ficção.
+   30/09: na SEGUNDA pessoa. O texto sobe à tela tal qual ("💭 …") e vai
+   entre aspas ao Narrador, que o tece — é texto que a narração copia, e
+   por isso fala como ela fala agora: o herói é "você". */
 export const SONHOS = [
-  { texto: "Sonhei com um lugar que nunca visitei — mas no sonho eu conhecia cada porta.", efeito: null },
-  { texto: "Sonhei com alguém do meu passado, me chamando por um nome que quase esqueci.", efeito: null },
-  { texto: "Pesadelo: caía sem fim, e algo embaixo esperava de boca aberta.", efeito: "perturbado" },
-  { texto: "Sonhei que voava sobre os meus próprios passos, vendo o caminho todo de cima.", efeito: "inspirado" },
-  { texto: "Uma voz sem dono repetiu três palavras que não entendi. Acordei com elas na boca.", efeito: null },
-  { texto: "Sonhei com uma porta trancada e uma chave na minha mão. Ao acordar, minha mão estava fechada.", efeito: null },
-  { texto: "Revivi a última batalha — mas, no sonho, eu via tudo de fora, como um corvo no galho.", efeito: null },
-  { texto: "Sonhei com água escura subindo devagar até cobrir tudo que amo.", efeito: "perturbado" },
-  { texto: "Alguém sentado na minha fogueira me contou um segredo. Acordei antes da parte importante.", efeito: null },
-  { texto: "Sonhei que era velho, olhando para trás com orgulho. Acordei leve.", efeito: "inspirado" },
-  { texto: "No sonho, todos os meus companheiros usavam coroas. Não sei se era promessa ou aviso.", efeito: null },
-  { texto: "Sonhei com um inimigo que ainda não tenho — um rosto que nunca vi, mas que me conhecia.", efeito: "perturbado" },
+  { texto: "Você sonhou com um lugar que nunca visitou — mas no sonho conhecia cada porta.", efeito: null },
+  { texto: "Você sonhou com alguém do seu passado, chamando você por um nome que quase esqueceu.", efeito: null },
+  { texto: "Pesadelo: você caía sem fim, e algo embaixo esperava de boca aberta.", efeito: "perturbado" },
+  { texto: "Você sonhou que voava sobre os seus próprios passos, vendo o caminho todo de cima.", efeito: "inspirado" },
+  { texto: "Uma voz sem dono repetiu três palavras que você não entendeu. Você acordou com elas na boca.", efeito: null },
+  { texto: "Você sonhou com uma porta trancada e uma chave na sua mão. Ao acordar, a sua mão estava fechada.", efeito: null },
+  { texto: "Você reviveu a última batalha — mas, no sonho, via tudo de fora, como um corvo no galho.", efeito: null },
+  { texto: "Você sonhou com água escura subindo devagar até cobrir tudo o que ama.", efeito: "perturbado" },
+  { texto: "Alguém sentado na sua fogueira lhe contou um segredo. Você acordou antes da parte importante.", efeito: null },
+  { texto: "Você sonhou que era velho, olhando para trás com orgulho. Acordou leve.", efeito: "inspirado" },
+  { texto: "No sonho, todos os seus companheiros usavam coroas. Você não sabe se era promessa ou aviso.", efeito: null },
+  { texto: "Você sonhou com um inimigo que ainda não tem — um rosto que nunca viu, mas que conhecia você.", efeito: "perturbado" },
 ];
 export const rolarSonho = () => SONHOS[Math.floor(Math.random() * SONHOS.length)];
 

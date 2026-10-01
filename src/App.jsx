@@ -12613,15 +12613,15 @@ export default function Taverna() {
      campanha inteira: é o turno que decide se o jogador entende onde está. */
   const abrirACampanha = (pers) => {
     const habs = (pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma";
-    return `[ABERTURA DA CAMPANHA] Este é o primeiro turno. Narre a abertura em QUATRO partes, nesta ordem e sem títulos — tudo em prosa corrida:
+    return `[ABERTURA DA CAMPANHA] Este é o primeiro turno. Narre a abertura em QUATRO partes, nesta ordem e sem títulos — tudo em prosa corrida, na 2ª pessoa: o herói é "você" ("você chegou", nunca "cheguei"):
 
 1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e a LEI dele — a coisa que aqui é verdade e não seria em outro lugar. Concreto: um cheiro, um som, um preço, uma regra que todo mundo obedece sem discutir.
-2) ONDE EU ESTOU. A cidade e o ponto exato dentro dela, com o que se vê e se ouve daqui. O sistema já decidiu o lugar — use o que está no envelope, não invente outro.
-3) QUEM EU SOU AQUI. Não repita a minha ficha: mostre o que o meu conceito e o meu passado significam NESTE mundo — como as pessoas daqui olham para alguém como eu, o que isso me abre e o que me fecha. E por que eu estou neste ponto agora, fazendo o que estou fazendo. Eu preciso terminar a leitura sabendo o que vim fazer aqui.
-4) O PRIMEIRO FIO. Ponha em cena a coisa que o sistema já mandou por envelope de missão e deixe-a puxar: alguém que fala comigo, um sinal, um pedido, um problema que me alcança. Não anuncie que é uma missão, não liste etapas e não peça a minha resposta — só faça o mundo vir até mim, de um jeito em que ficar parado seja a escolha mais difícil.
+2) ONDE O HERÓI ESTÁ. A cidade e o ponto exato dentro dela, com o que se vê e se ouve dali. O sistema já decidiu o lugar — use o que está no envelope, não invente outro.
+3) QUEM ELE É AQUI. Não repita a ficha dele: mostre o que o conceito e o passado dele significam NESTE mundo — como as pessoas daqui olham para alguém assim, o que isso lhe abre e o que lhe fecha. E por que ele está neste ponto agora, fazendo o que está fazendo. O jogador precisa terminar a leitura sabendo o que veio fazer aqui.
+4) O PRIMEIRO FIO. Ponha em cena a coisa que o sistema já mandou por envelope de missão e deixe-a puxar: alguém que fala com ele, um sinal, um pedido, um problema que o alcança. Não anuncie que é uma missão, não liste etapas e não peça a resposta dele — só faça o mundo vir até ele, de um jeito em que ficar parado seja a escolha mais difícil.
 
 Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que você faz?".
-(As minhas habilidades iniciais já foram concedidas pelo SISTEMA: ${habs} — NÃO envie "adicionar_habilidades".)`;
+(As habilidades iniciais dele já foram concedidas pelo SISTEMA: ${habs} — NÃO envie "adicionar_habilidades".)`;
   };
 
   const continuar = (comResumo, { silencioso = false } = {}) => {
@@ -21799,7 +21799,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (sn.efeito === "perturbado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Perturbado", tipo: "ruim", nota: "noite mal dormida, sonhos ruins" }] };
       setPersonagem(pers);
       pushMsgs([{ autor: "sistema", texto: `💭 ${sn.texto}` }]);
-      sonhoMsg = `\n[SONHO] Esta noite eu sonhei: "${sn.texto}"${sn.efeito ? ` (acordei ${sn.efeito === "inspirado" ? "INSPIRADO" : "PERTURBADO"} — condição já aplicada pelo sistema)` : ""}. Teça o sonho na ficção se quiser — presságio, memória ou puro delírio, você decide o quanto ele significa.`;
+      sonhoMsg = `\n[SONHO] O sonho desta noite: "${sn.texto}"${sn.efeito ? ` (acordei ${sn.efeito === "inspirado" ? "INSPIRADO" : "PERTURBADO"} — condição já aplicada pelo sistema)` : ""}. Teça o sonho na ficção se quiser — presságio, memória ou puro delírio, você decide o quanto ele significa.`;
     }
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";

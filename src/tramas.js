@@ -600,7 +600,7 @@ export function envelopeDoQueVira(virada, { alvo = "", quem = "", vilao = "" } =
     return `[A MISSÃO VIRA — DECIDIDO PELO SISTEMA] ${virada.onde || "No meio do caminho"}, gente armada fecha o caminho do herói, e o SISTEMA já abriu a luta com eles${vilao ? ` — eles trabalham para ${vilao} e sabem o nome do herói` : ""}. Narre a interceptação e o primeiro instante: quem são, o que dizem antes do aço. NÃO decida o desfecho e NÃO mate ninguém — o combate está aberto e é do jogador.`;
   }
   if (virada.tipo === "encontro") {
-    return `[A MISSÃO VIRA — DECIDIDO PELO SISTEMA] ${virada.onde || "Aqui"}, ${quem || "alguém"} aparece — ${virada.papel || "e estava esperando"}. Encene a chegada e o que essa pessoa quer, em 1ª pessoa. Ela tem ordem própria e não veio por acaso. NÃO abra combate por conta própria e NÃO resolva nada: devolva a vez ao jogador.`;
+    return `[A MISSÃO VIRA — DECIDIDO PELO SISTEMA] ${virada.onde || "Aqui"}, ${quem || "alguém"} aparece — ${virada.papel || "e estava esperando"}. Encene a chegada e o que essa pessoa quer, em fala direta (—). Ela tem ordem própria e não veio por acaso. NÃO abra combate por conta própria e NÃO resolva nada: devolva a vez ao jogador.`;
   }
   if (virada.tipo === "revelacao") {
     return `[A MISSÃO VIRA — DECIDIDO PELO SISTEMA] ${virada.onde || "Aqui"}, o herói encontra o que estava por baixo desta missão. O sistema já registrou o que mudou; a você cabe a CENA da descoberta — o que se vê, e nada do que aquilo significa. Sem explicação e sem quem explique.`;

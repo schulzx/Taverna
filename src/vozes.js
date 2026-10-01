@@ -49,7 +49,7 @@ export const VOZES = [
     de: "a alta fantasia de estrada: mundos velhos, línguas mortas, e a sensação de que a história é maior que quem a atravessa",
     resumo: "grave, largo e antigo — o mundo pesa mais que o herói",
     faz: [
-      "abra a cena PELO LUGAR e de longe: a paisagem, a hora, o que aquele lugar já era antes de nós",
+      "abra a cena PELO LUGAR e de longe: a paisagem, a hora, o que aquele lugar já era antes de você",
       "trate objetos e nomes como se tivessem idade — o que foi forjado, por quem, e quantas mãos passaram por ele",
       "dê peso de decisão às escolhas pequenas, sem dizer que são importantes",
       "use o silêncio e a distância: o que não se vê daqui é parte do que se vê",
@@ -167,7 +167,7 @@ export const VOZES = [
     frase: "muito curta. Uma ideia por frase. Repetição deliberada",
     boca: "poucas palavras e diretas. Xingamento seco, no meio da ação. Ninguém faz discurso enquanto corre",
     graca: "rara e afiada, quase sempre autodepreciativa",
-    exemplo: "A lâmina entra. Sai. O braço dele já não está onde estava, e é o meu braço que dói.",
+    exemplo: "A lâmina entra. Sai. O braço dele já não está onde estava, e é o seu braço que dói.",
   },
   {
     id: "fabula", nome: "Fábula", icone: "🌙",
@@ -205,7 +205,7 @@ export function vozPorId(id) { return VOZES.find((v) => v.id === id) || VOZES.fi
    ============================================================ */
 export function vozPrompt(id) {
   const v = vozPorId(id);
-  return `A SUA VOZ — ${v.nome.toUpperCase()} (${v.resumo}). É assim que você conta, em toda cena, do começo ao fim da campanha.
+  return `A SUA VOZ — ${v.nome.toUpperCase()} (${v.resumo}). É assim que você conta.
 O QUE ESTA VOZ FAZ: ${v.faz.map((x, i) => `(${i + 1}) ${x}`).join("; ")}.
 COMO ELA SOA: ${v.frase}.
 COMO AS PESSOAS FALAM: ${v.boca}.

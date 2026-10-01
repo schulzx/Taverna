@@ -15,6 +15,35 @@ Formato:
 ```
 
 ---
+## 30/09 23:45 · v9.346 · a voz do Mestre passa à segunda pessoa, como a do Matt · commit (o hash vai no próximo bloco)
+
+- **por que andou:** decisão da pessoa, 30/09: *"Vamos passar a voz do mestre pra segunda pessoa, assim como o Matt."* Era
+  a voz do Narrador em massa, que a lei reservava a ela; agora dada. "Você", o português do Brasil dela. Sem chamadas pagas:
+  provado pelo que o jogo envia; a jogada é a terceira sessão.
+- **estado inicial:** verde (`cf0afe5`).
+- **bastão:** tomado por mim para seis trocas de texto no `App.jsx` (deslocamento zero); devolvido com este commit.
+- **backend — a causa:** nenhuma regra do prompt pedia a primeira pessoa; o que a empurrava era **a convenção da casa** — os
+  envelopes falam como o "eu" do herói, e nenhum texto dizia ao Narrador que esse "eu" era o herói. E a abertura (o turno
+  que dá o tom à campanha inteira) pedia literalmente "ONDE EU ESTOU", "como memória minha" — a causa direta do "aponta para
+  minha trouxa" do M1 das duas sessões.
+- **a regra dos envelopes (escrita no cabeçalho de `src/prompt.js`, provada nos dois sentidos):** no envelope, "eu" é o
+  jogador a falar ao Mestre e "você" é o Narrador; o envelope pode contar na primeira pessoa o que o jogador fez, pediu,
+  tem, sabe ou sofreu; mas todo texto que a narração possa copiar tal qual (exemplo, frase-modelo, sonho, achado, o pedido
+  da abertura) vai na segunda, porque a narração devolve o "eu" do jogador como "você".
+- **mudou:** uma frase de ligação no ofício do prompt (o herói é "você", "a guarda aponta para a sua trouxa", nunca
+  "minha"); o pedido da abertura nos dois caminhos (`abertura.js` e o antigo no App); os exemplos das vozes (Febril, Épico);
+  os 12 sonhos (na segunda, neutros de género) e o envelope do sonho; o achado vazio; "em primeira pessoa" dos NPCs → "em
+  fala direta"; e a sala de dois ganha "o nome antes do você" ("Lia, você vê…") — com dois heróis, "você" sozinho não diz
+  de quem é o corpo (texto do prompt, não o protocolo).
+- **ficou (é o jogador a falar, marcado pelo colchete):** "Eu perguntei", "[CHEGADA] … AGORA ESTOU", "Procurei e ACHEI",
+  "ONDE EU ESTOU:" da pauta, os capítulos, "NÃO NARRE O QUE EU SINTO".
+- **a escolha de voz da criação é de tom, não de pessoa** (as oito vozes mudam tom e registo; a pessoa é a mesma) — nada a
+  migrar, o save não muda. **Um só prompt de Narrador** para os três modos.
+- **o teto, que só podia descer:** todas as portas **85.329 → 85.298**; pior cena real 74.709 → 74.644; com gente 81.214 →
+  81.149; cada voz ~31 caracteres mais barata — a frase nova pagou-se com quatro cortes de texto que nada citava.
+- **fora do tema, à vista:** `rolarSonho` (`calendario.js:62`) usa `Math.random` cravado, contra a lei da semente — na pauta.
+- **para quem joga:** o Mestre fala consigo — "você vê", "a guarda aponta para a sua trouxa" — como numa mesa.
+
 ## 30/09 23:17 · v9.345 · MM15 (5) · dois Túlios são duas pessoas, e "Lina," é a Lina do Sal · commit `dad3832`
 
 - **por que andou:** o último da MM15 — no T5 da segunda sessão o "Túlio da Runa" do cartaz, sumido na estrada, fundiu-se com

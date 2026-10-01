@@ -717,5 +717,5 @@ export function envelopeDoConvite(nome, veredito) {
     exige: `A resposta é UM TALVEZ com preço: ela quer ${(v.exigencia || {}).o}.`,
     recusa: "A resposta é NÃO.",
   }[v.resposta] || "";
-  return `[CONVITE — RESOLVIDO PELO SISTEMA] Você convidou ${nome} para andar com você. ${corpo} O que pesou: ${(v.porques || []).join("; ")}. Narre SÓ a reação e as palavras ${nome === "ela" ? "dela" : `de ${nome}`}, em primeira pessoa, aqui mesmo onde vocês estão, com ESTE desfecho e nenhum outro. Não invente outra resposta, não narre partida, despedida, preparativos nem passagem de tempo: ninguém saiu do lugar por causa de um convite.`;
+  return `[CONVITE — RESOLVIDO PELO SISTEMA] Você convidou ${nome} para andar com você. ${corpo} O que pesou: ${(v.porques || []).join("; ")}. Narre SÓ a reação e as palavras ${nome === "ela" ? "dela" : `de ${nome}`}, em fala direta (—), aqui mesmo onde vocês estão, com ESTE desfecho e nenhum outro. Não invente outra resposta, não narre partida, despedida, preparativos nem passagem de tempo: ninguém saiu do lugar por causa de um convite.`;
 }

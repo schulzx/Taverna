@@ -2283,7 +2283,7 @@ REGRA DESTE ENVELOPE (obrigatória): mostre a falha COM esta consequência, em u
    encostou o ouvido e o silêncio respondeu na hora. */
 export function envelopeSemOportunidade(v, oQueEuDisse = "") {
   const disse = oQueEuDisse ? ` Eu disse: "${String(oQueEuDisse).trim()}".` : "";
-  const nada = (v && v.oportunidade && v.oportunidade.nada) || "Não há aqui aquilo que eu procurava.";
+  const nada = (v && v.oportunidade && v.oportunidade.nada) || "Não há aqui aquilo que se procurava.";
   return `[SEM TESTE — O MUNDO RESPONDEU ANTES DO DADO]${disse} O sistema perguntou ao mundo se havia o que ${v && v.rotulo ? v.rotulo : "encontrar"} aqui, e a resposta foi NÃO. ${nada} Não houve rolagem porque não havia obstáculo — não se rola contra o que não existe.
 REGRA DESTE ENVELOPE (obrigatória): narre em UMA ou DUAS frases o gesto acontecendo e encontrando o vazio, e devolva a palavra para mim. NÃO invente meia-pista, NÃO diga que "algo ainda escapa", NÃO plante um som distante nem uma marca no chão para salvar a cena. O vazio é a resposta verdadeira e ele é uma informação que eu ganhei.`;
 }

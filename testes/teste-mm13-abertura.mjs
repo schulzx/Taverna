@@ -154,7 +154,12 @@ sec("3. toda abertura tem razão e pista — 24 mundos × estruturas × antecede
      nos 48 casos) — a abertura não pode custar mais do que custava, e o
      teto fica abaixo da soma com folga para nomes compridos. */
   t(`o pedido cabe em 1.500 caracteres (maior: ${Math.max(...pedidos)})`, Math.max(...pedidos) <= 1500);
-  t("o pedido diz que ninguém oferece trabalho", pedidoDaAbertura(R0.abertura).includes("ninguém me oferece trabalho"));
+  /* 30/09: a frase era "ninguém me oferece trabalho" — o pedido falava na
+     primeira pessoa do herói, e a narração da abertura saía nela (MM11,
+     M1: "aponta para minha trouxa"). O pedido passou a falar DO herói e a
+     pedir a segunda pessoa; a intenção desta asserção fica inteira: o
+     pedido diz que ninguém oferece trabalho nesta cena. */
+  t("o pedido diz que ninguém oferece trabalho", pedidoDaAbertura(R0.abertura).includes("ninguém oferece trabalho ao herói"));
 }
 
 /* ============================================================ */

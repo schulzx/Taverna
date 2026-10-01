@@ -571,15 +571,15 @@ export function pedidoDaAbertura(abertura, { habilidades = [] } = {}) {
   const a = garantirAbertura(abertura);
   if (a.legado || !a.pista.nome) return "";
   const habs = (Array.isArray(habilidades) ? habilidades : []).filter(Boolean).join(", ") || "nenhuma";
-  return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, nesta ordem, em prosa corrida e sem títulos:
+  return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, nesta ordem, em prosa corrida e sem títulos, na 2ª pessoa — o herói é "você" ("você chegou", nunca "cheguei"):
 
 1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e uma lei daqui que não valeria noutro lugar. Concreto: um cheiro, um som, um preço.
-2) ONDE EU ESTOU. Cheguei agora ${a.chegada}. O que se vê e se ouve daqui.
+2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}. O que se vê e se ouve dali.
 3) A PEQUENA HISTÓRIA DO LUGAR. ${a.historia}.
-4) PORQUE ESTOU AQUI E O QUE SEI — como memória minha, não como pedido de ninguém: ${a.razao}. O que sei: ${a.sabe}.
+4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: ${a.razao}. O que sabe: ${a.sabe}.
 
-Isto já está decidido e não é oferta: ninguém me pede nada nesta cena, e ninguém me oferece trabalho. Ainda NÃO estou ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que eu sei, sem o dizer por mim e sem perguntar "o que você faz?".
-(As minhas habilidades iniciais já foram concedidas: ${habs} — NÃO envie "adicionar_habilidades".)`;
+Isto já está decidido e não é oferta: ninguém lhe pede nada nesta cena, e ninguém oferece trabalho ao herói. Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
+(As habilidades iniciais dele já foram concedidas: ${habs} — NÃO envie "adicionar_habilidades".)`;
 }
 
 /* ============================================================

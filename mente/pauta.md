@@ -448,6 +448,8 @@ O limite é o que um commit revertido não desfaz.
      às 08:35; a Médica de Campo sem Medicina.
   **Por provar:** a luta inteira (o "como", o revide, a sala limpa, esconder, atirador, rendição) — a terceira sessão vai
   direita à porta do Fundo do Poço, com o teto zerado.
+- [ ] **`rolarSonho` sem semente** · leve · de: a voz na segunda pessoa, 30/09 · `src/calendario.js:62` usa `Math.random`
+  cravado — contra a lei da semente; o mesmo dia pode sonhar outra coisa noutra máquina.
 - [ ] **MM11 · para a pessoa decidir (pesado: muda o fluxo) — "perguntar" como jogada à parte** · do `jogo`, 30/09
   Um gesto "perguntar ao Mestre" ao lado da caixa, que nunca gasta tempo nem a vez; a pergunta junta todas as
   fichas que toca; a resposta numa linha curta, separada da narração. É onde a sessão perdeu 7 das 12 perguntas.
