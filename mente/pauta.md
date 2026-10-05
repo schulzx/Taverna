@@ -17,6 +17,20 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
+- [ ] **"Como você quer fazer isto?" — o momento que para a mesa** · do `jogo`, 01/10, da terceira sessão de prova · toca o fluxo da batalha
+  Quando um golpe derruba o último de pé (ou um chefe, ou um nomeado), **a batalha congela**: o tabuleiro escurece, quem
+  caiu fica no centro a meio da queda, e a pergunta ocupa o ecrã inteiro — "Como você quer fazer isto?" (ou "Como a
+  Iracema faz isto?"), com o foco já na caixa e o teclado aberto, e dois botões por baixo. Com `prefers-reduced-motion`, sem
+  o escurecer. Nada corre enquanto ela está aberta, e fechá-la sem escrever é o mesmo clique de hoje — nunca custa o turno.
+  **E a frase do jogador não passa pelo teto:** entra na pauta com prioridade de ferro, e o Mestre recebe a ordem de abrir
+  a narração por ela. **A prova:** **0 de 5 "como" chegaram em três sessões**; a caixa nasce **acima do ecrã** no painel de
+  310 px (y −85, y −118): em telemóvel escreve-se às cegas. Medida de entrada: 0 → 1 toque até escrever; a frase passa de
+  cortável a incortável. O golpe final da Iracema, com a fala "Ele não queria… Só queria sair", foi o melhor momento das
+  30 respostas e o Mestre narrou-o "no flanco" porque a frase nunca lhe chegou. **Porque espera:** é o fluxo da batalha e o
+  desenho está à espera da palavra dela (ordem de 28/09); a peça (o cartão em ecrã inteiro, o estado "a meio da queda") é
+  do `desenho`, o momento é do `jogo`, a linha de prioridade é do `backend` (MM16 nº 5, a parte do sistema, anda antes).
+  Texto inteiro em `mente/mm11-sessao-3.md`, "A proposta ambiciosa".
+
 - [ ] **"A sala à vista" — quem está aqui, em rostos, debaixo do nome do lugar** · do `jogo`, 30/09, da segunda sessão de prova
   Uma fila de retratos pequenos com quem o sistema dá como presente na cena, e só esses; tocar num rosto dirige a fala a
   essa pessoa (e a pergunta continua de graça). Numa mesa do Matt os jogadores veem as miniaturas; aqui essa verdade vive
@@ -432,7 +446,7 @@ O limite é o que um commit revertido não desfaz.
      Narrador a tirar a heroína de lá: 4 "[LUGAR — RECUSADO]" falsos em 10 respostas, uma saída falsa que passou (T10), e
      "saio do Último Gomo e vou ao Fundo do Poço" registou o Último Gomo (T11). Era aqui que a sessão partia.
   2. ✓ *o gasto feito em v9.342: as bocas pagas a zero (tabela), 3,6 → 3,2 por resposta; fica: 11 das 21 chamadas leves da
-     sessão 2 não são do Cronista (~1,1 por resposta) e sem o registo das chamadas não se atribuem — suspeitos o portão e as
+     sessão 2 não são do Cronista (~1,1 por resposta; **dono achado a 01/10, MM11 (3): o REVISOR DE CONTINUIDADE — 0,27 por resposta, 8 de 8 chamadas pagas por defeito do próprio sistema, 5 delas pela companheira com duas fichas; consertado em v9.349 (MM16 nº 3)**) e sem o registo das chamadas não se atribuíam — suspeitos o portão e as
      2 do T11; o disfarce feito em v9.343 — qualquer falha da API diz que foi a ligação, e o turno que falhou não aconteceu* · **O gasto e o disfarce** — 3,6 chamadas por resposta (a primeira, ~2,0): quatro falas de personagem pagas e deitadas
      fora (nenhuma entra em pauta nem na tela; duas de alguém fora de cena). E o 429 aparece como recusa do Mestre ("a porta
      não se abre para esta mão") e anda o relógio num turno que não aconteceu. O teto em si é infra — da pessoa.
@@ -448,6 +462,50 @@ O limite é o que um commit revertido não desfaz.
      às 08:35; a Médica de Campo sem Medicina.
   **Por provar:** a luta inteira (o "como", o revide, a sala limpa, esconder, atirador, rendição) — a terceira sessão vai
   direita à porta do Fundo do Poço, com o teto zerado.
+- [ ] **MM16 · o que a terceira sessão de prova partiu** · da MM11 (3), 05/10, `mente/mm11-sessao-3.md` · **à frente de tudo** · próxima: **nº 5, o "como"**
+  Jogada inteira (30 respostas, v9.347): **2,27 chamadas por resposta**, "[LUGAR — RECUSADO]" falso 12 em 30, perguntas do
+  sistema 4 de 15. A quarta sessão devia ser **uma descida inteira**: entrar, guardião, chave, chefe, sair — com uma
+  companheira que continua a ser quem é. Pela ordem em que partem a sessão (peso à frente; a Fase MM tem liberdade no motor,
+  o limite é o que um commit revertido não desfaz):
+  1. ✓ *feito em v9.348* · **A masmorra não se pode acabar e a sala vencida não fica vencida** — o guardião luta e larga a
+     chave, o portão do chefe abre (280 de 280 masmorras), o fecho do sistema resolve a sala; e o chefe vencido pelo golpe do
+     sistema conclui a masmorra. *Fica:* a sala abandonada a meio de uma luta volta com todos os inimigos, mesmo os mortos
+     (`salaEmCursoRef` já só resolve a sala atual, mas a fuga não guarda quem caiu).
+  2. **"Vou à masmorra que a cidade aponta" não leva à masmorra** · **pesado** (mecânica nova: a masmorra do mundo passa a
+     destino de viagem, campo de save novo e ignorado pela versão antiga — reversível, dentro da liberdade da fase) ·
+     "vou à Nave" abriu uma viagem sem destino pela direção, o relógio saltou **13 h** (08:30 → 21:29), e duas vezes um
+     toque deu duas respostas do Mestre (a segunda escrita pelo sistema na boca do herói). **E o veredito antes da porta**
+     (nº 10): "DIFÍCIL… 3.9×" foi dito a quem já entrara — passa a vir com o destino, antes do passo.
+  3. ✓ *feito em v9.349 (fica: o ofício do registo dos saves da v9.347 continua "vendedor de ervas" — o portão já não se engana;
+     as duas "Praça da Panela" — a de São da Onça, de onde ela vem, e a de São do Meio, do segredo — são a melhor ponta de
+     história que o sistema deu e ninguém a lê, **médio**, ligar o antigo posto da companheira à espinha quando o nome coincide;
+     o Náufrago pede "o mesmo barco" e não "a mesma guerra": a tabela das ligações permite uma que soa a soldado, **médio**;
+     `decidirAcaoCompanheiro` sorteia com `Math.random` fora da semente — `companheiros.js` ~276 e ~280 —, **médio**,
+     a semente tem de chegar por `turnoDosCompanheiros`)* · **A companheira tem duas fichas, uma homónima, e o revisor pago apaga-a.**
+  4. **A masmorra não chega à pauta, e o lugar volta a acusar o Mestre** · **médio** · ONDE diz "no posto da estrada · (aqui
+     isto é um forte)", sem a sala, sem quem lá está, sem distâncias: 4 perguntas perdidas e salões inventados; e
+     "[LUGAR — RECUSADO PELO SISTEMA]" **12 vezes em 30** (1 ao abrir a masmorra, 11 nas 14 respostas da luta); na cidade, zero.
+     A v9.341 fechou a porta do "cidade"; esta é a da masmorra e da luta. Os **fatos fora dos muros** (a estrada e a masmorra
+     sem ficha nenhuma) são o mesmo vazio, pela pauta dinâmica (nunca bloco estático).
+  5. **O "como" não chega — 0 de 2, e 0 de 5 em três sessões** · **médio** (a linha de prioridade da pauta; a caixa
+     fora do ecrã é do desenho e vai a "Para a pessoa decidir") · a escolha chega, a frase não; causa provável, não provada:
+     o teto da pauta (1212 de 1400 sem a linha; a linha tem ~230) com o ONDE a gastar ~550 caracteres de economia da cidade
+     dentro de uma masmorra. **Primeiro provar a causa** (medir a pauta na luta), depois a frase com prioridade de ferro.
+  6. **Esconder-se na luta rola e não esconde** (M18) · **leve** (bug com teste) · Furtividade 25 contra 18, e nenhum estado,
+     nenhuma linha, nenhuma ação gasta; o bloco que faz nascer o estado (`concluirRolagem`, MM6) não deixou rasto; causa por achar.
+  7. **Os homónimos que o sistema traz para a cena** · **médio** · ✓ *a procura sem nome já segue um placar escrito em v9.349
+     (PLACAR_DA_PROCURA); fica:* o SOCIAL que disse "essa pessoa" com "a Lourdes" na frase.
+  8. ✓ *feito em v9.349* · **O companheiro de plantão no antigo posto.**
+  9. **As perguntas que inventam na cidade** · **médio** · "quem manda" sem PERGUNTOU, a distância à masmorra e a uma cidade, o
+     posto que não veio; a v9.336 prometia a distância "a um lugar nomeado" e para a masmorra e para São do Meio não viajou.
+  10. **O veredito da masmorra depois da porta** — ver o nº 2.
+  11. **Miúdos, mas à vista** · **leve**, cada um com teste: "taverneiro(a)" na prosa; "rodada 3 · 1 de pé contra você" e
+      "Lobo 4/4" com o lobo morto; a poção "apanhada" por palavras fica no chão e a moeda "deixada" não sai; o Caçador sem
+      arma numa cidade sem arcos (◉ 15 para um montante de ◉ 88); o Feixe de Tochas recolhido não acende (masmorra "às escuras"
+      com 5 tochas na mochila); "a lâmina" de um herói desarmado; o lobo "foge" na prosa e fica no tabuleiro; a GENTE repete
+      "a noite da salina" três vezes; "Seguro a ação e observo, pronto para responder Turno dos inimigos" (duas frases
+      coladas); o rodapé do Mercado "O Narrador conta a conversa; quem cobra é o sistema" (o sistema a falar de si); a base
+      diz "12 salas" e a planta tem 6.
 - [ ] **`rolarSonho` sem semente** · leve · de: a voz na segunda pessoa, 30/09 · `src/calendario.js:62` usa `Math.random`
   cravado — contra a lei da semente; o mesmo dia pode sonhar outra coisa noutra máquina.
 - [ ] **MM11 · para a pessoa decidir (pesado: muda o fluxo) — "perguntar" como jogada à parte** · do `jogo`, 30/09

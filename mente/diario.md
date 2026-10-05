@@ -15,6 +15,75 @@ Formato:
 ```
 
 ---
+## 05/10 · v9.349 · fecho de MM11 (3) · a masmorra volta a acabar · a companheira com uma ficha só · commits `dceb455` (v9.348), `9737af7` (v9.349)
+
+- **ciclo morto, e retomado:** o ciclo de 01/10 00:58 (a terceira sessão de prova) **morreu no limite semanal da API** —
+  a sessão tinha sido jogada **inteira** (30 respostas) e a transcrição ficou em `mente/mm11-sessao-3.md`, sem commit; a trava
+  `.claude/ciclo-em-curso` e as duas entradas de `mente/agora.json` ficaram postas. Retomado a 05/10: árvore só com a
+  transcrição por commitar, `main` em `4dabfa5`, v9.347; **a sessão não se rejogou**. Trava tomada e devolvida; bastão do
+  `App.jsx` tomado às 19:05 (para o `frontend`, as duas etapas) e **devolvido ao fim da v9.349**.
+- **o veredito em números (da transcrição):** *"O nosso Mestre toca uma sessão à la Matt Mercer? Ainda não — e agora
+  sabe-se onde."* 30 respostas; **2,27 chamadas por resposta** (era ~2,0 → 3,6 → 2,27; as bocas a zero aguentaram), ~220
+  respostas por dia ao teto de 500; 69 de 69 com 200. Perguntas de mesa: **4 do sistema em 15** (3 de 7 na cidade, 1 de 8
+  fora; 4 inventadas +1 contradita, 5 perdidas — 5 das 6 más fora da cidade). "[LUGAR — RECUSADO]" falso: **12 em 30**
+  (0 na cidade, 12 na masmorra e na luta). O "como" do golpe final: **0 de 2** (0 de 5 em três sessões). O revide fere
+  (1 de 1); a sala limpa **não** ficava limpa; esconder-se não esconde; o golpe final da companheira, **pela primeira vez, sim**.
+  Os consertos de 30/09–01/10: v9.341, .342, .344, .346 aguentaram; v9.345 metade; v9.347 "está, e parte-se".
+  **Onde partiu:** a masmorra (M12–M15, o guardião mudo), não a sessão.
+- **o dono do ~1,1 chamadas por resposta (a pergunta aberta da MM15 nº 2):** é o **revisor de continuidade** (o portão,
+  `passarPeloPortao`): 8 chamadas (0,27 por resposta, 2.052 car., 2,1 s), provado por duas vias na transcrição (no código,
+  das chamadas leves por turno sem botão só sobra o revisor; e no registo é a única chamada leve que não é a do Cronista).
+  **E as 8 foram todas pagas por defeito do sistema:** 5 pela companheira (ofício do registo ≠ ofício do grupo; a homónima),
+  3 pelo lobo que o próprio sistema ressuscitou. Fechado em v9.348 (as 3 do lobo) e v9.349 (as 5 da companheira).
+- **a pergunta pendente: que medida era "o pior caso 85.329 → 85.298", contra o `<82000` de `teste-prompt.mjs`?** São
+  **duas medidas diferentes**. O 85.329 → 85.298 (diário de 30/09, v9.346) é a **soma sintética de todas as portas** do
+  prompt (`tetoComLex` — todos os blocos opcionais acesos ao mesmo tempo, um teto que nenhuma cena real atinge); e a asserção
+  `< 82000` (`teste-prompt.mjs` l.143 e a secção 7) é sobre a **PIOR CENA REAL** (herói de nível 20 desperto, com grupo,
+  léxico cheio) — que no mesmo relato desceu **74.709 → 74.644** (com gente: 81.214 → 81.149, a asserção é `<= 82000`).
+  Nunca se mediram uma contra a outra, e nunca houve ultrapassagem. E **72.618 de média** nesta sessão é o `system` real
+  enviado ao Narrador em 30 chamadas — uma cena comum, abaixo das duas.
+- **Parte B — o defeito 1 (v9.348, `dceb455`):** (a) a sala do Guardião (`chave`) não tinha ramo em `irParaSala`: agora
+  `SALAS_DE_LUTA` (tabela, `masmorras.js`) diz que `combate`, `chefe` e `chave` abrem luta, e entrar no guardião abre a luta
+  com quem o save lhe dá; vencer larga a chave **uma vez** (`desfechoDaLuta`, idempotente) e o portão do chefe abre — provado
+  em **280 masmorras reais** (7 níveis × 40 sementes: entrar → guardião → chefe fecha em todas). (b) a sala vencida pelo
+  fecho do sistema ficava `resolvida:false`: o fecho ("Todos os inimigos caíram") passa a chamar a mesma porta. **Achado do
+  mesmo defeito:** o **chefe** vencido pelo golpe do sistema nunca concluía a masmorra (recompensa, essência, tochas de volta
+  — só o ramo do Narrador o fazia, e ele depende de o combate ainda existir quando a resposta chega): o bloco virou
+  `concluirMasmorraDoChefe`, chamado pelos dois caminhos, inócuo na segunda vez. Suíte `teste-masmorra-fim`: 102 asserções
+  (11 falhavam antes do módulo, 19 antes da fiação). **Varredores:** os endereços de 84 entradas de
+  `acoes-do-jogador.mjs` deslocaram (re-medidos, nenhuma asserção afrouxada, cabeçalhos "A MASMORRA QUE SE ACABA"), e a
+  catraca do guardado (`check-guardado`) passou a **ler também o envelope que mudou de casa** (o total continua 9; **a
+  catraca não desceu**).
+- **Parte B — o defeito 3 (v9.349, `9737af7`):** a companheira com **uma** ficha: o registo grava o papel do grupo
+  (`PAPEL_NO_REGISTO`: ligação + classe), o ofício do elenco passa a passado; o primeiro nome de quem anda no grupo resolve
+  para essa pessoa e não para a homónima (`nomeComDono`, `mencionadosNaCena`, e o portão `detectarPapelTrocado` deixa de
+  morder a ficha do grupo — também **cura os saves da v9.347** sem os tocar); quem anda no grupo sai da lista de quem
+  trabalha no posto (`NO_GRUPO`); a procura segue um placar escrito (`PLACAR_DA_PROCURA`) e a escolha do companheiro evita
+  xarás (11 em 24 mundos → 1). Suítes: companheiro-inicial 152 (21 vermelhas antes), nomes 80, procura 75. Fiação: 3 linhas
+  no App, defensivas.
+- **decisões médias, com o motivo:** (1) o chefe pelo caminho do sistema entrou **neste** item e não na pauta — é o mesmo
+  buraco (duas portas de vitória, uma resolve), cabe em poucas linhas reaproveitando o bloco que já existia, e o jogador que
+  mata o chefe pelo golpe e não recebe o tesouro perde a sessão tanto quanto o do guardião mudo; (2) a catraca do guardado
+  **manteve o 9** em vez de descer para 8: uma catraca que desce sozinha aceita em silêncio que um envelope resolvido saia
+  da vista da trava; (3) `fecharSeTodosCairam` só resolve a sala em curso **se for a atual** (guarda do frontend: uma fuga
+  deixa `salaEmCursoRef` velho e resolveria a sala errada numa vitória posterior); (4) o ofício do elenco da companheira
+  passou a nota de passado e **não foi apagado** — o que ela fazia é matéria de história, não de registo; (5) a procura
+  segue um placar escrito em tabela em vez de uma regra solta (lei: se é número, é tabela).
+- **correção de modelos, a meio do ciclo:** a pessoa ordenou (via o coordenador) **Opus para quem programa, Sonnet só para
+  quem testa e quem joga**. A v9.348 (backend + frontend) correu em Sonnet, a etapa em curso quando a ordem chegou; **a v9.349
+  correu em Opus**. Os três ficheiros de agentes e a linha do `CLAUDE.md` são do coordenador, fora destes commits.
+- **para quem joga:** numa descida de masmorra, o guardião **luta** e larga a chave (antes nunca largava nenhuma, em 3
+  sessões), o portão do chefe **abre** (280 de 280 masmorras geradas), a sala vencida **fica vencida** ao voltar (já não
+  renasce o lobo de vida cheia) e o chefe vencido pelo golpe **paga** o tesouro. A companheira de antes deixa de ser
+  "vendedor de ervas" para o registo e de ficar de turno no antigo posto: das 8 chamadas de conserto que a sessão pagou
+  (~2 s cada, antes da narração), as 5 da companheira e as 3 do lobo não têm mais causa — esperado 8 → 0, **por provar na
+  quarta sessão**.
+- **o que ficou (na pauta, MM16):** o "como" do golpe final (0 de 5) — o próximo; "vou à Nave" que não leva à Nave
+  (e o veredito antes da porta); a masmorra sem lugar na pauta (12 "[LUGAR — RECUSADO]" em 30); esconder-se; as perguntas
+  inventadas fora da cidade; os miúdos. Para a pessoa: a proposta "Como você quer fazer isto?" (a batalha congela e a
+  pergunta ocupa o ecrã). `decidirAcaoCompanheiro` ainda sorteia com `Math.random` (a semente não chega lá sem mexer no
+  motor de combate).
+
 ## 01/10 00:49 · v9.347 · a campanha começa com alguém de antes ao lado · commit `170b735`
 
 - **por que andou:** decisão da pessoa, 30/09: *"A campanha pode começar com um companheiro."* Sem ele, o golpe final do
