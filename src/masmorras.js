@@ -394,6 +394,108 @@ export function marcarResolvida(mm, id, extras = {}) {
   return { ...mm, salas, chave: mm.chave || !!achouChave, saques: { moedas: (mm.saques?.moedas || 0) + (extras.moedas || 0), itens: (mm.saques?.itens || 0) + (extras.itens || 0) } };
 }
 
+/* ---------------- A MASMORRA SE ACABA (MM11, 3.ª sessão de prova) ----------------
+   A sala do Guardião (`tipo: "chave"`) tem inimigos e `guardaChave`, mas a
+   porta do App só abria combate para `combate` e `chefe`: a `chave` caía fora
+   de todos os ramos, o guardião nunca caía, a chave nunca soltava e o portão
+   do chefe nunca abria. Toda masmorra era um beco sem saída de fato — e o
+   gerador, que jura que a chave é alcançável, jurava a verdade e não adiantava.
+   Do outro lado, a luta que o SISTEMA fechava ("todos os inimigos caíram")
+   deixava a sala `resolvida:false`: só o ramo da resposta do Narrador a fechava.
+
+   Duas decisões, as duas puras, para as duas portas de vitória chamarem a
+   mesma coisa:
+
+   1) QUEM ABRE LUTA e o que cada um diz — `SALAS_DE_LUTA`. Cada tipo guarda o
+      aviso de tela, o rótulo do envelope e a fórmula da abertura. Combate e
+      chefe dizem EXATAMENTE o que o App dizia inline (regressão zero); o
+      guardião é o texto novo.
+   2) O DESFECHO de uma luta vencida — `desfechoDaLuta`: resolve a sala, larga
+      a chave se era a do guardião, e devolve o aviso e a nota. IDEMPOTENTE: a
+      segunda chamada (o outro caminho de vitória) não repete nem a chave nem o
+      aviso. O Narrador nunca decide se a chave caiu — o sistema decide, e o
+      envelope do guardião diz isso a ele. */
+export const SALAS_DE_LUTA = {
+  combate: {
+    aviso: "Emboscada na masmorra!", rotulo: "COMBATE",
+    abertura: "Avanço para a próxima sala e os inimigos saltam das sombras",
+    fecho: "",
+  },
+  chefe: {
+    aviso: "A sala do chefe!", rotulo: "CHEFE",
+    abertura: "Avanço para a próxima sala e os inimigos saltam das sombras",
+    fecho: " É o confronto final desta masmorra — narre à altura.",
+  },
+  chave: {
+    aviso: "O guardião da chave!", rotulo: "GUARDIÃO",
+    abertura: "Avanço para a próxima sala e o guardião se ergue entre as correntes e o selo na pedra",
+    fecho: " É quem guarda a chave do portão do chefe — narre o peso disso, mas NÃO diga que a chave caiu nem onde ela está: quem decide isso é o sistema, ao fim da luta.",
+  },
+};
+
+/* O que o guardião largou ao cair: o que a tela diz e o que o Narrador lê. */
+const DESPOJO_DA_CHAVE = {
+  aviso: "🗝 Entre os despojos: a CHAVE do portão lacrado. O caminho para o chefe se abre.",
+  nota: "[MASMORRA] Achei a chave do portão do chefe entre os restos do guardião. Mencione isso na narração.",
+};
+
+/* `{ aviso, rotulo, abertura, fecho }` se a sala abre luta; `null` se não
+   (tesouro, armadilha, santuário, enigma, entrada — ou lixo). */
+export function abreLuta(sala) {
+  if (!sala || typeof sala !== "object") return null;
+  const tipo = sala.tipo;
+  return typeof tipo === "string" && Object.prototype.hasOwnProperty.call(SALAS_DE_LUTA, tipo) ? SALAS_DE_LUTA[tipo] : null;
+}
+
+/* A linha que a tela mostra ao abrir a luta. `nomes` pode vir `null`. */
+export function linhaDaLuta(sala, nomes) {
+  const l = abreLuta(sala);
+  if (!l) return "";
+  return `⚔ ${l.aviso} ${(Array.isArray(nomes) ? nomes : []).join(", ")} — o combate está aberto.`;
+}
+
+/* O envelope que o Narrador recebe ao abrir a luta. `pos` é a posição que o
+   App já monta para os envelopes da masmorra; `lista` é "Nome (nv N, V PV), …";
+   `depois` é o que o App cola ao fim (desgaste do chefe, percepção, tempo).
+   As opções podem vir `null` (o `= {}` do destructuring não o cobre). */
+export function envelopeDaLuta(sala, opcoes) {
+  const l = abreLuta(sala);
+  if (!l) return "";
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const pos = o.pos == null ? "" : String(o.pos), lista = o.lista == null ? "" : String(o.lista), depois = o.depois == null ? "" : String(o.depois);
+  return `[MASMORRA — ${pos} · ${l.rotulo} — COMBATE JÁ ABERTO PELO SISTEMA] ${l.abertura}: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${l.fecho}${depois}`;
+}
+
+/* A luta da sala `id` acabou em vitória. Devolve
+   `{ mm, resolveuAgora, chaveNova, ehChefe, aviso, nota }`:
+   - `resolveuAgora`: a sala NÃO estava resolvida e agora está (só na 1.ª vez);
+   - `chaveNova`: a chave do portão caiu AGORA (só na 1.ª vez; um guardião
+     vencido com a chave já na mão, ou já resolvido, não a repete);
+   - `ehChefe`: a sala é a do chefe (a masmorra chegou ao fim) — fato da sala,
+     não do momento: quem quiser "só agora" combina com `resolveuAgora`;
+   - `aviso`/`nota`: a linha de tela e a nota ao Narrador sobre a chave, ou `""`.
+   Tolera `mm` null/sem salas e id inexistente (devolve o que veio, sem efeito).
+   Uma sala já resolvida devolve a MESMA masmorra, exceto num save que ficou
+   incoerente (guardião resolvido sem a chave — o defeito, preso no disco): aí
+   a chave cai, uma vez. */
+export function desfechoDaLuta(mm, id) {
+  const nada = { mm, resolveuAgora: false, chaveNova: false, ehChefe: false, aviso: "", nota: "" };
+  if (!mm || typeof mm !== "object" || !Array.isArray(mm.salas)) return nada;
+  const sala = mm.salas.find((s) => s && s.id === id);
+  if (!sala) return nada;
+  const ehChefe = sala.tipo === "chefe";
+  const jaResolvida = sala.resolvida === true;
+  const faltaChave = sala.guardaChave === true && !mm.chave;
+  if (jaResolvida && !faltaChave) return { ...nada, ehChefe };
+  const novo = marcarResolvida(mm, id);
+  const chaveNova = !mm.chave && novo.chave === true;
+  return {
+    mm: novo, resolveuAgora: !jaResolvida, chaveNova, ehChefe,
+    aviso: chaveNova ? DESPOJO_DA_CHAVE.aviso : "",
+    nota: chaveNova ? DESPOJO_DA_CHAVE.nota : "",
+  };
+}
+
 export function progressoMasmorra(mm) {
   if (!mm) return { visitadas: 0, total: 0, pct: 0 };
   const total = mm.salas.length;

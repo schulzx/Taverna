@@ -608,8 +608,14 @@ sec("4. a definição operacional de 'número que muda'");
      no arquivo; mesmo motivo, mesmo lugar.
      O companheiro de antes (frontend, 01/10): 14833 -> 14858, +25 — a
      fiação do companheiro nasce dentro de `iniciar`, ACIMA do relógio no
-     arquivo; mesmo motivo, mesmo lugar. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14858/.test(relogio.porque));
+     arquivo; mesmo motivo, mesmo lugar.
+     A MASMORRA QUE SE ACABA (v9.348, 05/10): 14858 -> 14846, -12. O bloco do
+     chefe saiu do ramo do Narrador e virou `concluirMasmorraDoChefe` (mais
+     abaixo no arquivo, ABAIXO do relógio), e o ramo ficou 12 linhas mais
+     curto ACIMA dele. Só o endereço andou — a asserção continua a exigir que
+     a exclusão do relógio venha com a linha certa; re-medido pelo bloco 8 de
+     check-acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14846/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -800,7 +806,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
      disparar (`m.provoca`, grid.js) ganhou a própria linha de chat dentro
      de `resolverRevide`, ao lado da de quem foge. Re-medido pelo próprio
      `check-acoes-do-jogador.mjs`, que re-deriva a contagem do código. */
-  t("são 59 chamadas de pushMsgs no funil", f.linhas === 59, String(f.linhas));
+  /* A MASMORRA QUE SE ACABA (v9.348, 05/10): +1 — `fecharSeTodosCairam`
+     ganhou o pushMsgs do chefe que cai (a masmorra se conclui por código,
+     `concluirMasmorraDoChefe`), telegrama puro que nasce no App. Uma chamada
+     nova e classificada na tabela, não um afrouxamento: 59 -> 60. */
+  t("são 60 chamadas de pushMsgs no funil", f.linhas === 60, String(f.linhas));
   /* a soma tem de fechar: uma linha sem voz declarada some da conta em
      silêncio, e é exatamente assim que uma régua passa a mentir */
   t("e toda chamada tem uma voz declarada",
@@ -902,9 +912,13 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        O companheiro de antes (frontend, 01/10): 13336 -> 13361, +25 — o
        mesmo delta de `aplicarGolpeDoJogador` nesta etapa (a fiação do
        companheiro nasce dentro de `iniciar`, ACIMA dela no arquivo).
-       Re-medido por check-acoes-do-jogador.mjs. */
+       Re-medido por check-acoes-do-jogador.mjs.
+       A masmorra que se acaba (v9.348, 05/10): 13361 -> 13349, -12 — o bloco
+       do chefe encolheu 12 linhas ACIMA de `continuarGolpeDoJogador` (virou
+       `concluirMasmorraDoChefe`, mais abaixo). Mesma linha, mesma voz;
+       só o endereço andou. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13361").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13349").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -920,7 +934,9 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
   t("parte da voz do combate já nasce fora do React", n.doModulo === 23, String(n.doModulo));
   /* MM7: +1 — a linha nova nasce em src/App.jsx (o mesmo golpe de
      oportunidade de `querFugir`, sem módulo próprio). */
-  t("e a maior parte ainda só existe no App.jsx", n.doApp === 36 && n.doApp > n.doModulo, String(n.doApp));
+  /* v9.348: +1 — a linha nova do chefe que cai também nasce em src/App.jsx
+     (as frases são de `concluirMasmorraDoChefe`, dentro do App). 36 -> 37. */
+  t("e a maior parte ainda só existe no App.jsx", n.doApp === 37 && n.doApp > n.doModulo, String(n.doApp));
 }
 
 sec("10. as recusas, contadas à parte — a correção de escopo de X3b");
@@ -1067,8 +1083,12 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        etapa. Re-medido por check-acoes-do-jogador.mjs.
        O companheiro de antes (frontend, 01/10): 13203 -> 13228, +25 — o
        mesmo delta de `aplicarGolpeDoJogador` nesta etapa. Re-medido por
-       check-acoes-do-jogador.mjs. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13228" && x.familia === "alcance"));
+       check-acoes-do-jogador.mjs.
+       A masmorra que se acaba (v9.348, 05/10): 13228 -> 13216, -12 — o mesmo
+       delta de `aplicarGolpeDoJogador` (o bloco do chefe encolheu ACIMA
+       dela). A recusa por alcance é a mesma, na mesma função; só mudou de
+       linha. A família continua a ser o que a asserção guarda. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13216" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1157,7 +1177,10 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      O companheiro de antes (frontend, 01/10): 13352 -> 13377, +25 — o
      mesmo delta de `aplicarGolpeDoJogador` nesta etapa, re-medido por
      check-acoes-do-jogador.mjs. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13377/.test(S.ondeSai));
+  /* A masmorra que se acaba (v9.348, 05/10): 13377 -> 13365, -12 — o mesmo
+     delta do funil (o bloco do chefe encolheu ACIMA do `enviar`). Só o
+     endereço andou; a asserção segue exigindo o `return true` e o endereço. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13365/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

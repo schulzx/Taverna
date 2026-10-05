@@ -19,7 +19,7 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -10220,23 +10220,11 @@ export default function Taverna() {
         let chefeCaido = false;
         const salaCorrente = masmorraRef.current ? masmorraRef.current.salas.find((x) => x.id === masmorraRef.current.atual) : null;
         if (salaCorrente && salaCorrente.tipo === "chefe") {
-          const mm = masmorraRef.current;
-          const sala = salaCorrente;
-          const rec = recompensaChefe(p2.nivel || 1, (mundoAtual() || {}).lexico);
-          /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
-          /* v9.54: o chefe deixa ESSÊNCIA, e é a maior fonte do jogo. É a
-             criatura mais carregada de poder que a masmorra põe na frente do
-             herói, e o momento em que ele mais quer forjar alguma coisa. */
-          const essChefe = essenciaDoChefe(p2.nivel || 1);
-          p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item],
-                 essencia: (p2.essencia || 0) + essChefe,
-                 suprimentos: { ...garantirSuprimentos(p2.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
-          msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ⚗ +${essChefe} essência · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
-          if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
-          masmorraRef.current = null; setMasmorra(null);
-          bumpCont("masmorrasConcluidas");
-          chefeCaido = true;
-          talvezFecharSessao("chefe");
+          /* MM11: o bloco que concluía a masmorra morava aqui, e só aqui — então a vitória que o
+             SISTEMA fecha (o golpe que derruba o chefe) nunca a concluía. Agora é um helper
+             (concluirMasmorraDoChefe) chamado pelas duas portas. */
+          const fimM = concluirMasmorraDoChefe(p2, msgs);
+          p2 = fimM.pers; chefeCaido = fimM.concluiu;
         } else if (masmorraRef.current && salaEmCursoRef.current !== null) {
           resolverSalaAposCombate();
         }
@@ -15408,6 +15396,30 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       { autor: "sistema", texto: `◉ Espólios: +${esp.moedas} moedas · +${esp.xp} XP` },
       ...msgsU.map((t) => ({ autor: "sistema", texto: t })),
     ]);
+    /* MM11 (defeito 1): a luta de uma sala da masmorra que o SISTEMA fecha também
+       resolve a sala — antes só a resposta do Narrador o fazia, e voltar à sala
+       refazia a luta com o lobo de vida cheia. O Guardião larga a chave aqui; o
+       chefe conclui a masmorra pelo mesmo helper do outro caminho. As duas portas
+       são idempotentes: a que correr depois não paga nem avisa de novo. */
+    let masmorraConcluida = false;
+    try {
+      if (masmorraRef.current && salaEmCursoRef.current !== null) {
+        const mmL = masmorraRef.current;
+        const salaL = mmL.salas.find((x) => x.id === salaEmCursoRef.current);
+        if (salaL && mmL.atual === salaL.id) {
+          if (salaL.tipo === "chefe") {
+            const msgsC = [];
+            const fimC = concluirMasmorraDoChefe(personagemRef.current || base0 || personagem, msgsC);
+            if (fimC.concluiu) {
+              masmorraConcluida = true;
+              personagemRef.current = fimC.pers; setPersonagem(fimC.pers);
+              salvar({ personagem: fimC.pers });
+              pushMsgs(msgsC.map((t) => ({ autor: "sistema", texto: t })));
+            }
+          } else resolverSalaAposCombate();
+        }
+      }
+    } catch (e) { calou("o desfecho da sala da masmorra", e); }
     /* DEICÍDIO (v9.6): esta é a vitória que o SISTEMA fecha sozinho (o golpe
        que derruba o último inimigo). O outro caminho — vitória vinda da
        resposta do Mestre — tem o mesmo gancho; um deus abatido abre o rito
@@ -15421,9 +15433,38 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       espolioNoChaoRef.current = [];
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${caiu.length
         ? ` FICOU CAÍDO no chão, entre os corpos: ${resumoDoChao(caiu)}. Você pode MOSTRAR isso na cena — o brilho no cinto, o couro que dá para tirar —, mas NÃO me entregue nada e NÃO envie "adicionar_itens" nem "adicionar_equipamento": quem se abaixa e recolhe sou eu, pelo sistema.`
-        : " Nada de aproveitável ficou no chão — não invente achados."}`;
+        : " Nada de aproveitável ficou no chão — não invente achados."}${masmorraConcluida ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
     }
     return personagemRef.current;
+  };
+
+  /* MM11: O CHEFE CAIU — a masmorra se conclui por código (moedas do fundo, item épico
+     ou lendário garantido, essência, as tochas voltam). UM bloco, DUAS portas: a vitória
+     declarada na resposta do Narrador e a que o SISTEMA fecha no golpe (fecharSeTodosCairam).
+     Antes só a primeira chamava, e quem derrubava o chefe no golpe ficava preso numa
+     masmorra "em curso" sem tesouro. Idempotente: larga a masmorra (masmorraRef = null),
+     então a segunda porta não encontra sala de chefe e devolve a ficha como veio.
+     Recebe a ficha e a lista de linhas de tela; devolve { pers, concluiu } e não muta nada. */
+  const concluirMasmorraDoChefe = (p2, msgs) => {
+    const mm = masmorraRef.current;
+    const sala = mm && Array.isArray(mm.salas) ? mm.salas.find((x) => x.id === mm.atual) : null;
+    if (!mm || !sala || sala.tipo !== "chefe") return { pers: p2, concluiu: false };
+    const rec = recompensaChefe(p2.nivel || 1, (mundoAtual() || {}).lexico);
+    /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
+    /* v9.54: o chefe deixa ESSÊNCIA, e é a maior fonte do jogo. É a
+       criatura mais carregada de poder que a masmorra põe na frente do
+       herói, e o momento em que ele mais quer forjar alguma coisa. */
+    const essChefe = essenciaDoChefe(p2.nivel || 1);
+    p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item],
+           essencia: (p2.essencia || 0) + essChefe,
+           suprimentos: { ...garantirSuprimentos(p2.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
+    msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ⚗ +${essChefe} essência · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
+    if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
+    masmorraRef.current = null; setMasmorra(null);
+    bumpCont("masmorrasConcluidas");
+    salaEmCursoRef.current = null;
+    talvezFecharSessao("chefe");
+    return { pers: p2, concluiu: true };
   };
 
   /* ---------------- O CUSTO DE QUEM SAI — AGORA COM DADO E COM DISPARO ----------------
@@ -20283,7 +20324,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       masmorraRef.current = marcarResolvida(mm2, id); setMasmorra(masmorraRef.current);
     }
     const extraTempo = avancarMinutos(ritmoPorId(mm2.ritmo).minutos);
-    if (sala.tipo === "combate" || sala.tipo === "chefe") {
+    if (abreLuta(sala)) {
+      /* MM11 (defeito 1): quem abre luta sai de SALAS_DE_LUTA (masmorras.js) — combate, chefe
+         e o Guardião da chave. O teste à mão "combate || chefe" que vivia aqui foi o
+         que deixou a chave de fora, e com ela o portão do chefe: a masmorra nunca se acabava. */
       /* COMBATE ABERTO PELO SISTEMA (v7.0): o app monta os inimigos pelo
          bestiário e abre o HUD na hora — sem depender do Mestre lembrar. */
       let inimigos = (sala.inimigos || []).map((i) => {
@@ -20313,8 +20357,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (ab.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}`;
       salaEmCursoRef.current = id;
       const lista = inimigos.map((i) => `${i.nome} (nv ${i.nivel || 1}, ${i.vida} PV)`).join(", ");
-      pushMsgs([{ autor: "sistema", texto: `⚔ ${sala.tipo === "chefe" ? "A sala do chefe!" : "Emboscada na masmorra!"} ${inimigos.map((i) => i.nome).join(", ")} — o combate está aberto.` }]);
-      enviar(`[MASMORRA — ${pos} · ${sala.tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${sala.tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${notaDesgaste}${avisoSegredo}${extraTempo}`, personagem);
+      pushMsgs([{ autor: "sistema", texto: linhaDaLutaDaSala(sala, inimigos.map((i) => i.nome)) }]);
+      enviar(envelopeDaLuta(sala, { pos, lista, depois: `${notaDesgaste}${avisoSegredo}${extraTempo}` }), personagem);
     } else if (sala.tipo === "armadilha") {
       /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
       const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
@@ -20563,15 +20607,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const resolverSalaAposCombate = () => {
     const mm = masmorraRef.current, id = salaEmCursoRef.current;
     if (!mm || id === null) return;
-    const sala = mm.salas.find((x) => x.id === id);
     salaEmCursoRef.current = null;
-    if (!sala) return;
-    const antes = mm.chave;
-    masmorraRef.current = marcarResolvida(mm, id); setMasmorra(masmorraRef.current);
-    if (!antes && masmorraRef.current.chave) {
-      pushMsgs([{ autor: "sistema", texto: "🗝 Entre os despojos: a CHAVE do portão lacrado. O caminho para o chefe se abre." }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MASMORRA] Achei a chave do portão do chefe entre os restos do guardião. Mencione isso na narração.`;
-    }
+    /* MM11: a decisão é pura (desfechoDaLuta, masmorras.js) e IDEMPOTENTE — as duas
+       portas de vitória (o golpe que fecha a luta e a resposta do Narrador) chamam
+       esta função, e a segunda não repete a chave nem o aviso. */
+    const r = desfechoDaLuta(mm, id);
+    if (r.mm !== mm) { masmorraRef.current = r.mm; setMasmorra(r.mm); }
+    if (r.aviso) pushMsgs([{ autor: "sistema", texto: r.aviso }]);
+    if (r.nota) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${r.nota}`;
   };
 
   const sairDaMasmorra = () => {

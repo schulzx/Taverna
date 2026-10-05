@@ -556,7 +556,9 @@ export const SELOS_DO_RESOLVIDO = [
     porque: "o preço já saiu da ficha; declarar de novo cobraria duas vezes",
     medidos: [
       /* medido em App.jsx: `pos` é "<nome> · camada N · V/T salas", e o
-         rótulo do meio alterna entre CHEFE e COMBATE */
+         rótulo do meio alterna entre CHEFE e COMBATE. Desde a v9.348 o
+         literal mora em `envelopeDaLuta` (src/masmorras.js) e o App manda
+         `enviar(envelopeDaLuta(…))`; check-guardado.mjs o segue até lá. */
       "[MASMORRA — Cripta dos Sussurros · camada 2 · 3/9 salas · CHEFE — COMBATE JÁ ABERTO PELO SISTEMA]",
       "[MASMORRA — Cripta dos Sussurros · camada 1 · 2/9 salas · COMBATE — COMBATE JÁ ABERTO PELO SISTEMA]",
       "[PECHINCHA — JÁ RESOLVIDA PELO SISTEMA]",

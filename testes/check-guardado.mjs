@@ -37,6 +37,8 @@ import { SELOS_DO_RESOLVIDO, ehTurnoResolvido } from "../src/guardado.js";
 process.chdir(dirname(fileURLToPath(import.meta.url)));
 
 const APP = readFileSync("../src/App.jsx", "utf8");
+const MASMORRAS_SRC = readFileSync("../src/masmorras.js", "utf8");
+const { envelopeDaLuta, SALAS_DE_LUTA } = await import("../src/masmorras.js");
 
 let maus = 0;
 const falha = (o, oQueFazer) => { maus++; console.log(`  XX  ${o}\n      → ${oQueFazer}`); };
@@ -106,12 +108,62 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
   ];
   const EXCLUI = [/\bRECUSAD[AO]S?\b/i, /\bGERAD[AO]S?\b/i, /\bREGISTR(O|AD[AO]S?)\b/i];
 
-  const candidatos = enviados.filter((e) =>
+  const doApp = enviados.filter((e) =>
     e.selo != null && ANUNCIA.some((r) => r.test(e.selo)) && !EXCLUI.some((r) => r.test(e.selo)));
+
+  /* O ENVELOPE QUE MUDOU DE CASA (v9.348, A MASMORRA QUE SE ACABA).
+     O envelope da luta de uma sala da masmorra — `[MASMORRA — … — COMBATE JÁ
+     ABERTO PELO SISTEMA]` — era um literal dentro de um `enviar(` do App, e
+     por isso a catraca o contava. A etapa o levou para `envelopeDaLuta`
+     (src/masmorras.js, junto de `SALAS_DE_LUTA`, para as duas portas de
+     vitória dizerem a mesma coisa), e o App passou a mandar
+     `enviar(envelopeDaLuta(…))` — um argumento opaco que o leitor de literais
+     acima não alcança. A conta do App caiu de 9 para 8 SEM que nenhum envelope
+     sumisse; baixar MEDIDOS_HOJE teria aceitado, calado, que o envelope mais
+     perigoso desta lista (abrir luta é rolar iniciativa) saísse da vista.
+     Então a catraca o segue até a casa nova, em três garantias:
+       1. o literal do cabeçalho, lido do corpo de `envelopeDaLuta`, entra na
+          conta de candidatos como qualquer outro (o total segue 9);
+       2. o App continua a mandá-lo por `enviar(envelopeDaLuta(` — se a
+          fiação sair, a catraca não pode seguir contando um envelope que
+          ninguém envia;
+       3. o envelope REAL, montado para cada tipo de sala de `SALAS_DE_LUTA`,
+          é lido por `ehTurnoResolvido` — a prova que o literal não dá, porque
+          o cabeçalho tem `${pos}` e `${l.rotulo}` interpolados. */
+  const daMasmorra = [];
+  {
+    const corpo = /export function envelopeDaLuta\([\s\S]*?\n\}/.exec(MASMORRAS_SRC);
+    const cab = corpo ? /return `\s*\[([^\]]*)\]/.exec(corpo[0]) : null;
+    if (!cab) {
+      falha("não achei o cabeçalho do envelope em `envelopeDaLuta` (src/masmorras.js)",
+        "a forma da função mudou. Atualize a âncora deste varredor — e confira à mão que o cabeçalho ainda anuncia `JÁ ABERTO PELO SISTEMA` e que `ehTurnoResolvido` o reconhece, porque é abrir luta (iniciativa rolada) o que ele protege");
+    } else {
+      const selo = cab[1].replace(/\$\{[^}]*\}/g, "x");
+      if (ANUNCIA.some((r) => r.test(selo)) && !EXCLUI.some((r) => r.test(selo))) {
+        daMasmorra.push({ linha: MASMORRAS_SRC.slice(0, MASMORRAS_SRC.indexOf(corpo[0])).split("\n").length, arquivo: "src/masmorras.js", selo });
+      }
+    }
+    if (!/enviar\(envelopeDaLuta\(/.test(APP)) {
+      falha("o App deixou de mandar o envelope da luta de masmorra por `enviar(envelopeDaLuta(`",
+        "a catraca conta o literal de `envelopeDaLuta` como um dos 9 envelopes resolvidos. Se o App passou a mandar por outro caminho, o literal novo tem de entrar na conta (e em `medidos`, src/guardado.js) — e este elo sai com o motivo escrito");
+    } else ok("o App manda o envelope da luta pela casa nova, `enviar(envelopeDaLuta(`");
+    let realOk = true;
+    for (const tipo of Object.keys(SALAS_DE_LUTA)) {
+      const real = envelopeDaLuta({ tipo }, { pos: "Cripta dos Sussurros · camada 1 · 2/9 salas", lista: "Lobo (nv 1, 7 PV)" });
+      if (!ehTurnoResolvido(real)) {
+        realOk = false;
+        falha(`o envelope REAL da sala \`${tipo}\` (envelopeDaLuta) não casa nenhum \`padrao\` de SELOS_DO_RESOLVIDO`,
+          "abrir luta rola a iniciativa: se uma queda de rede deixa esse turno re-declarável, a iniciativa rola de novo. O conserto é no selo (src/guardado.js, particípio de `ja_feito`) ou no cabeçalho de `envelopeDaLuta` — nunca afrouxando este elo");
+      }
+    }
+    if (realOk) ok(`o envelope real de cada sala de luta (${Object.keys(SALAS_DE_LUTA).join(", ")}) é turno resolvido para a trava`);
+  }
+  const candidatos = [...doApp, ...daMasmorra];
 
   /* ---------------- A CATRACA ----------------
      O NÚMERO MEDIDO HOJE: 9 envelopes resolvidos saem por `enviar(` com
-     o selo escrito no literal — e o número conta os CANDIDATOS, não os
+     o selo escrito no literal (8 no App e 1 em `envelopeDaLuta`, de
+     src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima) — e o número conta os CANDIDATOS, não os
      aprovados. É de propósito: se ele contasse só quem casa um `padrao`,
      consertar a tabela de selos mexeria na catraca, e uma catraca que se
      move quando se conserta o que ela acusa não acusa nada.
@@ -135,7 +187,7 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
   const escapam = candidatos.filter((e) => !ehTurnoResolvido("[" + e.selo + "]"));
   if (escapam.length) {
     for (const e of escapam) {
-      falha(`src/App.jsx:${e.linha} — o envelope \`[${e.selo}]\` anuncia turno já resolvido e NÃO casa nenhum \`padrao\` de SELOS_DO_RESOLVIDO`,
+      falha(`${e.arquivo || "src/App.jsx"}:${e.linha} — o envelope \`[${e.selo}]\` anuncia turno já resolvido e NÃO casa nenhum \`padrao\` de SELOS_DO_RESOLVIDO`,
         "este turno pode ser RE-ROLADO depois de uma queda de rede, em silêncio: `guardarTurno` grava `rolou: false` e `travaODeclarar` não morde. O conserto é em src/guardado.js — acrescente o particípio à lista FECHADA do selo `ja_feito` (hoje APLICAD|RESOLVID|PAG|REGISTRAD|COBRAD|NOMEAD) e ponha o literal em `medidos`, com o motivo escrito. Se a decisão for que este envelope NÃO deve travar, escreva a exclusão no comentário de SELOS_DO_RESOLVIDO e acrescente-a ao EXCLUI deste varredor — nunca afrouxe o detector sem a razão escrita ao lado");
     }
   } else ok(`os ${candidatos.length} envelopes resolvidos do App casam algum \`padrao\``);
@@ -147,7 +199,7 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
         : "sumiu um envelope resolvido. Se foi de propósito, tire o literal de `medidos` em src/guardado.js e baixe MEDIDOS_HOJE aqui, com o motivo escrito — uma catraca que desce sozinha deixa de ser catraca");
   } else ok(`a catraca segue em ${MEDIDOS_HOJE} envelopes resolvidos`);
 
-  for (const e of candidatos) console.log(`      ${e.linha}\t[${e.selo}]`);
+  for (const e of candidatos) console.log(`      ${e.arquivo ? e.arquivo + ":" : ""}${e.linha}\t[${e.selo}]`);
 
   /* O QUE NÃO DÁ PARA VER DAQUI, e fica MEDIDO para quem vier: dezenas
      de `enviar(` recebem o envelope por variável ou por função
