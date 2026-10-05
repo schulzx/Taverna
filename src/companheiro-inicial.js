@@ -41,7 +41,9 @@
       `desde` ANTES do dia 1 (um dia negativo, que `garantirLaco` já
       aceita), `conhecidoEm: 0` ("antes do registro de dias", a leitura que
       a crónica e o resumo das pessoas já fazem), e o dia em que foi visto
-      no `elenco.vistos`. Sem campo novo no save.
+      no `elenco.vistos`. Sem campo novo no save. E o papel do registo é o
+      do grupo — a ligação e a classe —, com o ofício do elenco nas notas,
+      no passado (`PAPEL_NO_REGISTO`, 05/10): uma pessoa, uma ficha.
 
    ---------------- O QUE ELE NÃO FAZ ----------------
 
@@ -58,12 +60,13 @@
 
 import { rngDe } from "./geografia.js";
 import { elencoDoMundo, AGENDA, registrarVisto, garantirElencoDoSave } from "./elenco.js";
-import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC } from "./npcs.js";
+import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC, primeiroNome } from "./npcs.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
 import { classePorNome } from "./classes.js";
 import { VINCULO_INICIAL, ganharVinculo } from "./vinculos.js";
 import { indoleDe } from "./indole.js";
 import { mesmaPessoa } from "./missoes.js";
+import { oQueExisteAqui } from "./mundo-base.js";
 import { DIAS_ANO } from "./calendario.js";
 import { MAX_COMPANHEIROS } from "./constantes.js";
 import { ANTECEDENTES } from "./antecedentes.js";
@@ -109,6 +112,16 @@ export const QUEM_PODE_SER = {
   fontes: ["doArco", "recorrente"],
   propositosDeFora: AGENDA.hostil.propositos,
   prefereOutraCidade: true,
+  /* SEM XARÁ (05/10, 3.ª sessão de prova, defeito 3): de preferência
+     ninguém que partilhe o PRIMEIRO nome com a gente da cidade de partida
+     (a base, que a primeira cena mostra) ou com outra pessoa do elenco. A
+     Iracema Sousa chegou a Vau Fincado onde servia uma "Iracema", e o nome
+     curto passou a ser das duas. Medido nos 24 mundos da suíte: 11 dos 24
+     companheiros nasciam com xará; com a preferência, 1 — o mundo em que
+     todos os que vêm de fora o têm (a outra cidade pesa mais: quem é da
+     partida tem lá o posto, logo na primeira cena). Nunca tira o
+     companheiro a ninguém: sem livres, fica a escolha de antes. */
+  semXara: true,
 };
 
 /* AS CLASSES QUE CURAM FICAM DE FORA, e é a régua que o diz. Medido com a
@@ -181,6 +194,20 @@ export const LIGACOES_AO_PASSADO = [
     porque: "o herói deve-lhe, e {ele} decidiu que a melhor maneira de cobrar é não o perder de vista",
   },
 ];
+
+/* O PAPEL NO REGISTO (05/10, 3.ª sessão de prova, defeito 3). Até aqui o
+   registo gravava o ofício do ELENCO ("vendedor de ervas") e o grupo
+   dizia "companheira de armas, Monge": duas fichas da mesma pessoa, e o
+   revisor de continuidade (`detectarPapelTrocado`, portao.js — uma
+   chamada paga, ~2 s antes da narração) via contradição sempre que ela
+   falava ou lutava. Enquanto anda com o herói, o papel dela no registo é o
+   que o herói conhece: a ligação e a classe (`papel`). O ofício do elenco
+   não se apaga — é o que ela FAZIA, e fica nas notas, no passado (`antes`),
+   onde não contradiz nada. */
+export const PAPEL_NO_REGISTO = {
+  papel: "{curto}, {classe}",
+  antes: "antes de andar com o herói: {oficio}",
+};
 
 /* OS PRONOMES, pelo género da pessoa (`genero_pessoa` da base). */
 export const PRONOMES_DO_COMPANHEIRO = {
@@ -279,7 +306,19 @@ export function companheiroInicial(ctx) {
   if (!cand.length) return null;
   const partida = norm(o.cidade);
   const deFora = cand.filter((p) => norm(p.cidade) !== partida);
-  const pool = QUEM_PODE_SER.prefereOutraCidade && deFora.length ? deFora : cand;
+  const pool0 = QUEM_PODE_SER.prefereOutraCidade && deFora.length ? deFora : cand;
+  /* sem xará, DENTRO de quem vem de fora: a outra cidade pesa mais, porque
+     quem é da partida tem o posto dele na primeira cena (o "de plantão"
+     da 3.ª sessão, logo no turno 1) */
+  let pool = pool0;
+  if (QUEM_PODE_SER.semXara) {
+    let daPartida = [];
+    try { daPartida = (obj(oQueExisteAqui(semente, o.mapa, String(o.cidade || ""), o.base, o.genero || "Fantasia medieval", o.molde, o.lex)).gente || []); } catch { daPartida = []; }
+    const outros = [...daPartida, ...el.pessoas].filter((p) => p && p.nome);
+    const xara = (p) => outros.some((x) => norm(x.nome) !== norm(p.nome) && primeiroNome(x.nome) === primeiroNome(p.nome));
+    const livres = pool0.filter((p) => !xara(p));
+    if (livres.length) pool = livres;
+  }
 
   const rnd = rngDe(`${semente}|companheiro-inicial|${String(o.cidade || "")}`);
   const pessoa = pool[Math.floor(rnd() * pool.length)];
@@ -298,20 +337,26 @@ export function companheiroInicial(ctx) {
   const F = FICHA_DO_COMPANHEIRO;
   const nivel = Math.max(F.nivelMinimo, (Number(heroi.nivel) || 1) - F.nivelAbaixoDoHeroi);
   const vidaMax = F.vidaBase + (nivel - 1) * F.vidaPorNivel;
-  const papel = txt(pessoa.papel, 60);
+  /* o ofício do elenco: o que ela FAZIA. Continua a dar a semente do
+     retrato (o mesmo rosto da v9.347), mas já não é o papel do registo */
+  const oficio = txt(pessoa.papel, 60);
+  const semente0 = `npc|${pessoa.nome}|${oficio}`;
   let comp = garantirFichaCompanheiro({
     nome: pessoa.nome, conceito: ligacao.curto[gen], nivel, xp: 0,
     vida: vidaMax, vidaMax, descricao: passado, classe,
     habilidades: [], inventario: [], equipamento: [], equipados: {},
-    semente: `npc|${pessoa.nome}|${papel}`,
+    semente: semente0,
     vinculo: VINCULO_INICIAL, marcos: [],
   });
   comp = ganharVinculo(comp, Math.max(0, ligacao.vinculo - VINCULO_INICIAL)).membro;
 
-  /* A FICHA DO REGISTO — o laço já feito, de antes do dia 1 */
+  /* A FICHA DO REGISTO — o laço já feito, de antes do dia 1, e o papel que
+     o grupo diz (PAPEL_NO_REGISTO) */
+  const papel = encher(PAPEL_NO_REGISTO.papel, { curto: ligacao.curto[gen], classe }).slice(0, 60);
+  const notas = oficio ? `${passado} · ${encher(PAPEL_NO_REGISTO.antes, { oficio })}` : passado;
   const npc = criarNPC(pessoa.nome, {
     papel, relacao: RELACOES_NPC[ligacao.relacao] ? ligacao.relacao : "aliado",
-    genero: gen, local: txt(o.cidade, 60), notas: passado,
+    genero: gen, local: txt(o.cidade, 60), notas, semente: semente0,
     conhecidoEm: 0,
     laco: { tipo: tipoDeLacoPorId(ligacao.laco) ? ligacao.laco : "amizade", forca: ligacao.forca, desde: 1 - anos * DIAS_ANO },
   });

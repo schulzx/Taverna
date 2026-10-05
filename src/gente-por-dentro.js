@@ -218,6 +218,20 @@ export const FAMILIAS_DE_OFICIO = [
 /* Onde a pessoa está quando não está no turno. O último é para a noite
    fora do turno: quem trabalha de dia dorme de noite. */
 export const FORA_DO_TURNO = ["em casa", "numa taverna da cidade", "na praça", "no templo", "a tratar de família"];
+/* QUEM ANDA NO GRUPO NÃO ESTÁ NO POSTO (05/10, 3.ª sessão de prova, defeito
+   8). A companheira de antes vem do elenco com uma casa de trabalho — a
+   Iracema Sousa vendia ervas na Praça da Panela de São da Onça —, e
+   "quem trabalha na Praça da Panela?" devolvia-a de turno, sem folga,
+   enquanto ela segurava a tocha ao lado do herói. Quem anda no grupo sai da
+   lista de quem trabalha, e o Mestre recebe o porquê que já é verdade —
+   nenhum facto novo: ela deixou o posto, e anda com o herói. `comPosto`
+   para quem tinha casa de trabalho; `semPosto` para quem não tinha. Na voz
+   da pauta, que é a do herói (a mesma de "anda comigo" da procura). */
+export const NO_GRUPO = {
+  saiu: "já não trabalha aqui",
+  comPosto: "deixou o posto — anda comigo",
+  semPosto: "anda comigo",
+};
 export const DORMINDO = "em casa, a dormir";
 
 /* ---------------- O PASSADO ----------------
@@ -512,11 +526,15 @@ function linhaDaFerida(f) {
   const ev = f.passado[f.passado.length - 1];
   return `${rotuloDe(f)}: não traz cicatriz no rosto${ev && ev.ha ? `; o pior que lhe aconteceu foi há ${anos(ev.ha)}: ${ev.o}` : ""}`;
 }
+/* quem anda no grupo não tem posto nem turno (NO_GRUPO): o porquê */
+const linhaDoGrupo = (f) => `${rotuloDe(f)}: ${f.casa ? NO_GRUPO.comPosto : NO_GRUPO.semPosto}`;
 function linhaDoPosto(f) {
+  if (f.noGrupo) return linhaDoGrupo(f);
   if (!f.posto) return "";
   return `${rotuloDe(f)} está no posto há ${anos(f.posto.ha)}: ${f.posto.o}`;
 }
 function linhaDaRotina(f) {
+  if (f.noGrupo) return linhaDoGrupo(f);
   const r = f.rotina;
   if (!r) return "";
   if (f.morta) return `${rotuloDe(f)}: não está em lado nenhum — morreu`;
@@ -537,16 +555,21 @@ function linhaDaCasa(semente, local, o, conhecidos = []) {
   const daqui = (Array.isArray(conhecidos) ? conhecidos : [])
     .filter((p) => p && p.nome && [p.casa, p.local].some((x) => txt(x) && norm(semArtigo(x)) === alvo));
   const vistos = new Set();
-  gente = [...daqui, ...gente]
-    .filter((p) => p && p.nome && !estaMorto(o.base, p.nome) && !norm(p.status).includes("mort") && !vistos.has(norm(p.nome)) && vistos.add(norm(p.nome)))
-    .slice(0, PESSOAS_POR_RESPOSTA);
-  if (!gente.length) return "";
+  /* quem anda no grupo saiu do posto (NO_GRUPO): fora da lista de quem
+     trabalha, e dito à parte com o porquê */
+  const doGrupo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => norm(g && g.nome)).filter(Boolean));
+  const vivos = [...daqui, ...gente]
+    .filter((p) => p && p.nome && !estaMorto(o.base, p.nome) && !norm(p.status).includes("mort") && !vistos.has(norm(p.nome)) && vistos.add(norm(p.nome)));
+  const sairam = vivos.filter((p) => doGrupo.has(norm(p.nome)));
+  gente = vivos.filter((p) => !doGrupo.has(norm(p.nome))).slice(0, PESSOAS_POR_RESPOSTA);
+  const saiu = sairam.length ? `${NO_GRUPO.saiu}: ${sairam.map((p) => `${p.nome} (${NO_GRUPO.comPosto})`).join(", ")}` : "";
+  if (!gente.length) return saiu ? `${comEm(local.nome)}, ${saiu}` : "";
   const cada = gente.map((p) => {
     const f = fichaDaPessoa(semente, p, o);
     const ag = f.rotina && f.rotina.deFolga ? `, de folga hoje: ${f.rotina.agora.replace(/^de folga hoje, /, "")}` : f.rotina && f.rotina.agora && !f.rotina.noTurno ? `, fora do turno: ${f.rotina.agora.replace(/^fora do turno, /, "")}` : "";
     return `${f.nome} (${f.papel || p.papel}${ag})`;
   });
-  return `quem trabalha ${comEm(local.nome)}: ${cada.join(", ")}`;
+  return `quem trabalha ${comEm(local.nome)}: ${cada.join(", ")}${saiu ? `; ${saiu}` : ""}`;
 }
 
 function linhaDaComparacao(fichas) {

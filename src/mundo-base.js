@@ -32,6 +32,7 @@ import { moldePorId } from "./moldes.js";
    entre si, um medo que só acorda quando a coisa está na cena, uma força e
    — se ela for de voltar — um propósito com condição de amadurecer. */
 import { indoleDe } from "./indole.js";
+import { primeiroNome } from "./npcs.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -651,10 +652,31 @@ export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantas
    narrativa, ela deixa de ser "estoque" e vira parte da história: o sistema
    marca como revelada, e a pessoa entra no registro do códex por código —
    sem depender de o Mestre lembrar de enviá-la. Daí em diante o prompt diz
-   "já apareceu", e ele para de reapresentar quem o jogador já conhece. */
+   "já apareceu", e ele para de reapresentar quem o jogador já conhece.
+
+   O NOME CURTO DE QUEM ANDA NO GRUPO (05/10, 3.ª sessão de prova, defeito
+   3). No M1 o Mestre escreveu "Iracema vem meio passo atrás" — a Iracema
+   Sousa, companheira de antes —, e esta porta acordou "Iracema", a serviçal
+   do Rabo do Diabo, que a base de Vau Fincado tinha: revelada, e no
+   registo como gente nova, sem o Narrador nem o Cronista a terem pedido.
+   Dali em diante havia duas Iracemas, e o revisor pago apagou a do grupo.
+   `opcoes.grupo` ([{ nome }] ou [nome]): a pessoa da base cujo nome inteiro
+   é o PRIMEIRO nome de quem anda no grupo não entra por esta porta — cada
+   "Iracema" da narração, solta ou dentro de "Iracema Sousa", é a do grupo.
+   Ela continua no mundo (a pauta e a procura acham-na pelo que ela é); só
+   não é acordada pelo nome da companheira. Sem `opcoes` (ou com lixo), a
+   porta é a de antes. */
 const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa, molde = null, lex = null) {
+export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narrativa, molde = null, lex = null, opcoes = null) {
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const doGrupo = (Array.isArray(op.grupo) ? op.grupo : [])
+    .map((g) => (g && typeof g === "object" ? g.nome : g))
+    .filter((n) => typeof n === "string" && n.trim());
+  const nomeCurtoDoGrupo = (nome) => {
+    const k = semAcento(nome).trim();
+    return doGrupo.some((g) => semAcento(g).trim() !== k && primeiroNome(g) === k);
+  };
   const texto = semAcento(narrativa);
   if (!texto.trim()) return { locais: [], gente: [] };
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
@@ -692,7 +714,7 @@ export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narra
   };
   return {
     locais: (q.locais || []).filter((l) => !foiRevelado(base, l.id || `${q.cidade.nome}|local|${l.nome}`) && cita(l.nome)),
-    gente: (q.gente || []).filter((p) => !foiRevelado(base, `${q.cidade.nome}|gente|${p.nome}`) && cita(p.nome)),
+    gente: (q.gente || []).filter((p) => !foiRevelado(base, `${q.cidade.nome}|gente|${p.nome}`) && !nomeCurtoDoGrupo(p.nome) && cita(p.nome)),
   };
 }
 

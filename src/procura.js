@@ -60,7 +60,25 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
    casar ("onde anda a Floripes do Sino?"), o primeiro nome também, e o
    sobrenome sem partícula ("Duarte") também.
    `lugares` (opcional): nomes de lugar que se tiram da frase antes de
-   procurar, porque o que o jogador diz de um lugar nunca é procura de gente. */
+   procurar, porque o que o jogador diz de um lugar nunca é procura de gente.
+
+   O NOME MAIS LONGO DITO, NÃO O NOME MAIS LONGO (05/10, 3.ª sessão de
+   prova, defeito 7). "Procuro a Lourdes ao balcão" achou a Lourdes
+   FERREIRA, a estudante da Livraria do Santo, duas vezes (M3, M7): a frase
+   casava o pedaço "lourdes" dela e o nome inteiro da taverneira, e ganhava
+   o nome mais comprido do registo — não o mais comprido DITO. E a frase
+   dizia DUAS pessoas ("com a Iracema ao lado ... Procuro a Lourdes"). O
+   placar, por esta ordem (`PLACAR_DA_PROCURA`):
+     · `aposVerbo`/`junto`: quem vem logo depois do verbo da procura
+       ("procuro a Lourdes") — a companhia dita antes não é o procurado.
+       Frase sem verbo (o "Lina," de `pessoaNaFrente`): não pesa;
+     · `dito`: o pedaço mais longo que a frase diz ("Lourdes Ferreira"
+       dito inteiro continua a ser ela);
+     · `perto`: quem está no grupo ou na cena (`perto`) — a procura que
+       só diz o primeiro nome nunca escolhe a homónima de quem está ao lado;
+     · `exato`: quem se chama exatamente assim;
+     · `longo`: o nome mais longo, como antes. */
+export const PLACAR_DA_PROCURA = ["aposVerbo", "junto", "dito", "perto", "exato", "longo"];
 export const ALCUNHA_DE_LUGAR = { particulas: ["de", "do", "da", "dos", "das", "del"], pedacoMinimo: 4, nomeMinimo: 3 };
 export function nomeProcurado(texto, nomes = [], opcoes = {}) {
   let t = norm(texto);
@@ -70,8 +88,17 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
     const nl = norm(l).replace(/^(o|a|os|as)\s+/, "");
     if (nl.length >= ALCUNHA_DE_LUGAR.nomeMinimo) t = t.split(nl).join(" ".repeat(nl.length));
   }
-  let achado = "";
+  const perto = new Set((Array.isArray(o.perto) ? o.perto : []).map((x) => norm(x && typeof x === "object" ? x.nome : x)).filter(Boolean));
+  let achado = "", melhor = null;
+  /* onde começa a procura: o primeiro verbo dela na frase (-1 = nenhum) */
+  const mv = VERBOS.exec(t);
+  const verbo = mv ? mv.index : -1;
+  const ganha = (a, b) => {
+    for (const k of PLACAR_DA_PROCURA) if (a[k] !== b[k]) return a[k] > b[k];
+    return false;
+  };
   for (const n of Array.isArray(nomes) ? nomes : []) {
+    if (typeof n !== "string") continue;
     const nn = norm(n);
     if (nn.length < ALCUNHA_DE_LUGAR.nomeMinimo) continue;
     /* o nome inteiro, ou um pedaço dele — a mesa chama Ione Vantel de Ione,
@@ -80,7 +107,17 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
     const pal = nn.split(/\s+/);
     const pedacos = [nn, ...pal.filter((x, i) => x.length >= ALCUNHA_DE_LUGAR.pedacoMinimo && !(i > 0 && ALCUNHA_DE_LUGAR.particulas.includes(pal[i - 1])))];
     for (const p of pedacos) {
-      if (new RegExp(`(^|[^a-z0-9])${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`).test(t) && n.length > achado.length) achado = n;
+      const rx = new RegExp(`(^|[^a-z0-9])${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "g");
+      const posicoes = [...t.matchAll(rx)].map((m) => m.index + m[1].length);
+      if (!posicoes.length) continue;
+      const depois = posicoes.filter((x) => x >= verbo);
+      const apos = verbo >= 0 && depois.length ? 1 : 0;
+      const placar = {
+        aposVerbo: apos,
+        junto: apos ? -(Math.min(...depois) - verbo) : 0,
+        dito: p.length, perto: perto.has(nn) ? 1 : 0, exato: p === nn ? 1 : 0, longo: n.length,
+      };
+      if (!melhor || ganha(placar, melhor)) { melhor = placar; achado = n; }
     }
   }
   return achado;

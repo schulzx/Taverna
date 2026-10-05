@@ -308,8 +308,12 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
     app.includes('for (const cz of (muralRef.current || [])) for (const e of ((cz && cz.etapas) || [])) if (e && e.tipo === "falar_com" && e.alvo) conhecidos.push({ nome: e.alvo, notas: cz.descricao || "" });'));
   t("a conversa recente entra por `recentes`, no mesmo padrão de ~6898 (try/calou)",
     app.includes('try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }'));
-  t("o retorno leva conhecidos, recentes, papel e notas ao motor novo",
-    app.includes('return { importantes, conhecidos, recentes, local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };'));
+  /* Movida de propósito (v9.349, a companheira com uma ficha só): a MESMA
+     intenção de antes — o retorno leva conhecidos, recentes, papel e notas ao
+     motor — com o campo novo `grupo` entre `recentes` e `local`, que é como
+     `nomeComDono` sabe que o nome já é de quem está ao lado do herói. */
+  t("o retorno leva conhecidos, recentes, grupo, papel e notas ao motor novo",
+    app.includes('return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };'));
 
   /* o "Lina," — o mesmo defeito de nomes, na mesma sessão: T10 não achou
      a Lina do Sal e foi contra "essa pessoa" porque `pessoaNaFrente` só
@@ -347,6 +351,34 @@ sec("10. a composição do T5 e da Lina, fora do App — Node puro");
   };
   t("'Lina,' com só a Lina do Sal presente: é ela", achar("Lina, diz-me o que sabes", ["Lina do Sal", "Otávio do Sal"]) === "Lina do Sal");
   t("'Lina,' com Lina do Sal E Lina Ferro presentes: ninguém — não se adivinha", achar("Lina, diz-me o que sabes", ["Lina do Sal", "Lina Ferro"]) === null);
+}
+
+/* ============================================================ */
+sec("11. o nome curto de quem anda no grupo (05/10, 3.ª sessão de prova, defeito 3)");
+{
+  /* A companheira de antes, Iracema Sousa, chegou a Vau Fincado onde servia
+     uma "Iracema"; o primeiro nome solto casava com a serviçal (pelo nome
+     exato e pelo lugar). Com `grupo` no contexto, o nome curto é de quem
+     anda ao lado do herói. */
+  const GRUPO = [{ nome: "Iracema Sousa", conceito: "companheira de armas", classe: "Monge" }];
+  const REG = {
+    "Iracema Sousa": criarNPC("Iracema Sousa", { papel: "companheira de armas, Monge", genero: "mulher", local: "Vau Fincado" }),
+    Iracema: criarNPC("Iracema", { papel: "serviçal da taverna", local: "Vau Fincado" }),
+  };
+  const antes = nomeComDono("Iracema", REG, { aqui: ["Vau Fincado"] });
+  t("sem o grupo, 'Iracema' é a serviçal (a regra antiga, intocada)", antes.decisao === "mesma" && antes.chave === "Iracema", J(antes));
+  const com = nomeComDono("Iracema", REG, { aqui: ["Vau Fincado"], grupo: GRUPO });
+  t("com o grupo, 'Iracema' é a Iracema Sousa", com.decisao === "mesma" && com.chave === "Iracema Sousa", J(com));
+  t("o grupo como lista de nomes também serve", nomeComDono("Iracema", REG, { grupo: ["Iracema Sousa"] }).chave === "Iracema Sousa");
+  t("noutra cidade continua a ser ela (anda onde o herói anda)", nomeComDono("Iracema", { "Iracema Sousa": REG["Iracema Sousa"] }, { aqui: ["São do Meio"], grupo: GRUPO }).chave === "Iracema Sousa");
+  const servical = nomeComDono("Iracema", { "Iracema Sousa": REG["Iracema Sousa"] }, { grupo: GRUPO, papel: "serviçal" });
+  t("dita serviçal: recusada (nunca uma segunda pessoa com o nome curto dela)", servical.decisao === "recusada" && servical.motivo === "oficio" && servical.dono === "Iracema Sousa", J(servical));
+  t("dita homem: recusada pelo sexo", nomeComDono("Iracema", REG, { grupo: GRUPO, genero: "homem" }).motivo === "sexo");
+  t("dita monge: é ela", nomeComDono("Iracema", REG, { grupo: GRUPO, papel: "monge" }).chave === "Iracema Sousa");
+  t("dois no grupo com o mesmo primeiro nome: não se adivinha pelo grupo (a regra antiga decide)",
+    J(nomeComDono("Iracema", REG, { aqui: ["Vau Fincado"], grupo: [...GRUPO, { nome: "Iracema Lopes" }] })) === J(antes));
+  t("as invocações não são gente", nomeComDono("Iracema", REG, { aqui: ["Vau Fincado"], grupo: [{ nome: "Iracema Sousa", invocada: true }] }).chave === "Iracema");
+  t("lixo no grupo não quebra", nomeComDono("Iracema", REG, { grupo: [null, 3, {}, { nome: "" }] }).decisao === antes.decisao);
 }
 
 console.log(`\n${ok} ok, ${mal} falhas`);

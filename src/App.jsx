@@ -9399,7 +9399,7 @@ export default function Taverna() {
     let recentes = [];
     try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }
     const mm = masmorraRef.current;
-    return { importantes, conhecidos, recentes, local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };
+    return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };
   };
 
   const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {
@@ -10257,7 +10257,7 @@ export default function Taverna() {
        Isto RATIFICA a narração, não a contradiz: por isso continua aqui,
        depois, e não no portão. */
     try {
-      const m = mencionadosNaCena(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), resp.narrativa, moldeMundo(), (mundoAtual() || {}).lexico);
+      const m = mencionadosNaCena(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), resp.narrativa, moldeMundo(), (mundoAtual() || {}).lexico, { grupo: (personagemRef.current || pers || {}).grupo || [] });
       /* MM13: a menção não é presença — a pista (ou o alvo) da abertura não
          conta como revelada nem entra no registo só por ser citada. */
       const genteRevelavel = m.gente.filter((p) => !aindaSoUmNome(aberturaMundoRef.current, p.nome, { lugar: lugarRef.current, missoes: missoesRef.current }));
@@ -18074,7 +18074,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const procurarAlguem = (acao) => {
     if (rolagem || carregando || combateRef.current) return false;
     if (!ehProcura(acao)) return false;
-    const nome = nomeProcurado(acao, nomesConhecidos());
+    const nome = nomeProcurado(acao, nomesConhecidos(), { perto: [...((personagemRef.current || personagem || {}).grupo || []), ...(pessoasDaCena() || [])] });
     if (!nome) return false;
     const r = procurarPessoa(nome, {
       npcs: npcsRef.current,

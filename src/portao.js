@@ -58,7 +58,7 @@
 
 import { detectarForaDeLugar, notaForaDeLugar, detectarVazamento, notaVazamento, ocorrenciaDoNome, contextoDoNome, AGINDO_NA_CENA } from "./cena.js";
 export { ocorrenciaDoNome } from "./cena.js";
-import { mesmoPapel, quemTemOPapel } from "./npcs.js";
+import { mesmoPapel, quemTemOPapel, familiasDoOficio, primeiroNome } from "./npcs.js";
 import { detectarAscensaoNarrada } from "./ascensao.js";
 import { detectarAlcanceImpossivel, notaAlcanceImpossivel, nomeDoLugar } from "./grid.js";
 import { detectarVoltaForcada, notaVoltaForcada } from "./lugar.js";
@@ -191,13 +191,37 @@ const ANTES_DO_NOME = /(?:^|[.,;:!?]\s*)(?:o |a )([a-zà-ÿ][a-zà-ÿ\s-]{3,44}?
    material de aventura, não erro de sistema. */
 const RELATO = /(contam que|dizem que|dizia que|se diz|ouvi dizer|ouviu dizer|segundo (o|a|os|as)|ao que parece|corre o boato|espalharam|acham que|acreditam que|juram que|pelo que dizem)/;
 
-export function detectarPapelTrocado(narrativa, npcs) {
+/* QUEM ANDA NO GRUPO (05/10, 3.ª sessão de prova, defeito 3). O registo
+   e o grupo diziam duas coisas da companheira de antes ("vendedor de
+   ervas" e "companheira de armas, Monge"), e este detector lia o resto da
+   frase como o papel dito: "O golpe do lobo acerta Iracema Sousa" era tê-la
+   chamado de "golpe do lobo acerta". Cinco das oito chamadas pagas da
+   sessão, e duas reescreveram-na "a serviçal da taverna". Para quem anda
+   no grupo (o `comGrupo` que o App já passa ao portão):
+     · as fichas dela são todas: o papel do registo, o conceito e a classe
+       do grupo — basta casar com uma (o save da v9.347, que gravou o ofício
+       do elenco, fica curado sem se lhe tocar);
+     · só morde um OFÍCIO que a casa conhece (OFICIOS, npcs.js) e de uma
+       família que nenhuma das fichas dela toca — o resto da frase à volta
+       do nome não é papel;
+     · e o NOME CURTO dela é dela: uma homónima do registo cujo nome
+       inteiro é o primeiro nome de quem anda no grupo ("Iracema", a
+       serviçal) não é julgada por "diz Iracema" — essa Iracema é a do
+       grupo. Quem NÃO anda no grupo é julgado como sempre foi. */
+const fichasDoGrupo = (g) => [g && g.conceito, g && g.classe, g && g.subclasse].filter((x) => typeof x === "string" && x.trim());
+
+export function detectarPapelTrocado(narrativa, npcs, grupo = []) {
   const texto = String(narrativa || "");
   if (!texto.trim()) return [];
   const out = [];
+  const doGrupo = (Array.isArray(grupo) ? grupo : []).filter((g) => g && typeof g.nome === "string" && g.nome.trim() && !g.invocada);
+  const membro = (nome) => doGrupo.find((g) => norm(g.nome) === norm(nome)) || null;
+  const nomeCurtoDoGrupo = (nome) => doGrupo.some((g) => norm(g.nome) !== norm(nome) && primeiroNome(g.nome) === norm(nome).trim());
   for (const n of Object.values(npcs || {})) {
     if (!n || !n.nome || !n.papel) continue;
     if (norm(n.status).includes("morto")) continue;
+    if (nomeCurtoDoGrupo(n.nome)) continue;
+    const g = membro(n.nome);
     const pos = ocorrenciaDoNome(texto, n.nome);
     if (pos < 0) continue;
     const { antes, depois, mencao, frase } = contextoDoNome(texto, pos, n.nome);
@@ -208,6 +232,13 @@ export function detectarPapelTrocado(narrativa, npcs) {
     const dito = (mA && mA[1]) || (mB && mB[1]) || "";
     if (!dito.trim()) continue;
     if (mesmoPapel(n.papel, dito)) continue;
+    if (g) {
+      const fichas = [n.papel, ...fichasDoGrupo(g)];
+      if (fichas.some((f) => mesmoPapel(f, dito))) continue;
+      const fam = familiasDoOficio(dito);
+      if (!fam.length) continue;
+      if (fichas.some((f) => familiasDoOficio(f).some((x) => fam.includes(x)))) continue;
+    }
     /* o degrau que prova: esse cargo já tem dono, e ele tem nome */
     const dono = quemTemOPapel(npcs, dito, n.nome);
     out.push({ nome: n.nome, registrado: n.papel, dito: dito.trim(), dono: dono ? dono.nome : null });
@@ -320,7 +351,7 @@ export function violacoesDoTurno(narrativa, ctx = {}) {
   }
 
   /* cânone: a pessoa que trocou de papel (v9.22) */
-  const trocados = detectarPapelTrocado(texto, ctx.npcs);
+  const trocados = detectarPapelTrocado(texto, ctx.npcs, ctx.comGrupo || []);
   if (trocados.length) {
     const desc = trocados.map((t) => `${t.nome} está no registro como ${t.registrado}, e você o chamou de "${t.dito}"${t.dono ? ` — cargo que pertence a ${t.dono}` : ""}`);
     v.push({

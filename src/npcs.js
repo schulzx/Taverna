@@ -808,7 +808,11 @@ const temRaiz = (texto, raizes) => {
   return raizes.some((r) => t.includes(` ${r}`));
 };
 const estaFora = (...textos) => textos.some((x) => typeof x === "string" && x.trim() && temRaiz(x, PARADEIRO.fora));
-const familiasDoOficio = (papel) => (typeof papel === "string" && papel.trim() ? OFICIOS.filter((f) => temRaiz(papel, f.raizes)).map((f) => f.id) : []);
+/* exportada em 05/10 (3.ª sessão de prova, defeito 3): o portão usa a mesma
+   régua para saber se o que o Mestre disse de quem anda no grupo é de facto
+   um OFÍCIO ("a serviçal da taverna") ou só a frase à volta do nome ("o
+   golpe do lobo acerta") — ver `detectarPapelTrocado`, portao.js. */
+export const familiasDoOficio = (papel) => (typeof papel === "string" && papel.trim() ? OFICIOS.filter((f) => temRaiz(papel, f.raizes)).map((f) => f.id) : []);
 /* -1 = de famílias que não se tocam; 1 = da mesma; 0 = não se sabe */
 function oficioCasa(a, b) {
   const fa = familiasDoOficio(a), fb = familiasDoOficio(b);
@@ -917,6 +921,36 @@ export function nomeComDono(nome, npcs, contexto = {}) {
     if (typeof o.nome === "string" && o.nome.trim()) conhecidos.push({ nome: o.nome.trim(), onde: txt(o.onde), papel: txt(o.papel), notas: txt(o.notas) });
   }
   const exata = Object.keys(reg).find((k) => semAcento(k) === alvo);
+  /* O NOME CURTO DE QUEM ANDA NO GRUPO (05/10, 3.ª sessão de prova,
+     defeito 3). A companheira de antes chamava-se Iracema Sousa, e na
+     cidade de partida servia uma "Iracema": o primeiro nome solto casava
+     com a homónima (pelo nome exato e pelo lugar), e daí em diante cada
+     "Iracema" da narração era a serviçal. Quem anda no grupo está ao lado
+     do herói e é de quem se fala: o primeiro nome solto que é o de UMA
+     pessoa do grupo resolve para ela — nunca para uma homónima do registo
+     ou da cidade, e o lugar da ficha dela não conta (anda onde o herói
+     anda). Só o sexo dito e um ofício de outra família a separam, e aí o
+     nome é recusado: nunca nasce uma segunda pessoa com o nome curto
+     dela. `grupo`: [{ nome, conceito, classe, subclasse }] ou [nome]. */
+  const grupo = (Array.isArray(c.grupo) ? c.grupo : [])
+    .map((g) => (g && typeof g === "object" ? g : { nome: g }))
+    .filter((g) => typeof g.nome === "string" && g.nome.trim() && !g.invocada);
+  if (pn.length >= HOMONIMO.primeiroMinimo && semArtigos(nome).length === 1) {
+    const doGrupo = grupo.filter((g) => primeiroNome(g.nome) === pn);
+    if (doGrupo.length === 1) {
+      const g = doGrupo[0];
+      const chave = Object.keys(reg).find((k) => semAcento(k) === semAcento(g.nome)) || "";
+      const ficha = chave && reg[chave] && typeof reg[chave] === "object" ? reg[chave] : {};
+      const s1 = sexoDe(novo.genero), s2 = sexoDe(g.genero || ficha.genero);
+      const fichas = [ficha.papel, g.conceito, g.classe, g.subclasse].filter((x) => typeof x === "string" && x.trim());
+      const fn = familiasDoOficio(novo.papel);
+      const oficio = fn.length > 0 && fichas.some((f) => familiasDoOficio(f).length) && !fichas.some((f) => familiasDoOficio(f).some((x) => fn.includes(x)));
+      const base = { dono: chave || g.nome };
+      if (s1 && s2 && s1 !== s2) return out("recusada", { ...base, motivo: "sexo" });
+      if (oficio) return out("recusada", { ...base, motivo: "oficio" });
+      return out("mesma", { ...base, nome: chave || g.nome, chave });
+    }
+  }
   /* o primeiro nome SOLTO, com dois ou mais a tê-lo: quem está mais perto */
   if (pn.length >= HOMONIMO.primeiroMinimo && semArtigos(nome).length === 1) {
     const vistos = new Map();

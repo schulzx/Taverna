@@ -23,13 +23,16 @@
      7. a régua: as primeiras lutas com ele não ficam triviais, e o
         orçamento já o cobra;
      8. o golpe final do companheiro (MM3b) vale desde a primeira luta;
-     9. a fiação no App.jsx (por texto) — pendente até a mão da tela a fazer.
+     9. a fiação no App.jsx (por texto) — pendente até a mão da tela a fazer;
+    10. as duas fichas e a homónima (3.ª sessão de prova, defeito 3): o
+        registo diz o que o grupo diz, o portão não a apaga, o nome curto
+        é dela, e ela não está de plantão no posto que deixou.
 
    Tudo por semente: nenhum `Math.random` decide uma asserção. */
 import fs from "node:fs";
 import {
   PORTA_DO_COMPANHEIRO, FICHA_DO_COMPANHEIRO, QUEM_PODE_SER, CURANDEIROS_DE_FORA, LIGACOES_AO_PASSADO,
-  PRONOMES_DO_COMPANHEIRO, NA_ABERTURA, NOTA_DO_PASSADO,
+  PRONOMES_DO_COMPANHEIRO, NA_ABERTURA, NOTA_DO_PASSADO, PAPEL_NO_REGISTO,
   podeTerCompanheiro, companheiroInicial, linhaDoCompanheiro, juntarCompanheiroInicial, lacoDeAntes, convivioDaFicha,
 } from "../src/companheiro-inicial.js";
 import { abrirAbertura, pedidoDaAbertura, garantirAbertura, aindaSoUmNome, PALAVRAS_DE_BASTIDOR } from "../src/abertura.js";
@@ -41,7 +44,12 @@ import { MOLDES } from "../src/moldes.js";
 import { generosDisponiveis } from "../src/nomes.js";
 import { guildasDoMundo } from "../src/guildas.js";
 import { elencoDoMundo, garantirElencoDoSave, promoverNoDia, diasVistosDe } from "../src/elenco.js";
-import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC } from "../src/npcs.js";
+import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC, mesmoPapel, nomeComDono, primeiroNome, familiasDoOficio } from "../src/npcs.js";
+import { detectarPapelTrocado, violacoesDoTurno } from "../src/portao.js";
+import { mencionadosNaCena, oQueExisteAqui } from "../src/mundo-base.js";
+import { genteParaPauta, NO_GRUPO } from "../src/gente-por-dentro.js";
+import { nomeProcurado, procurarPessoa } from "../src/procura.js";
+import { comEm } from "../src/lugar.js";
 import { indoleDe, pesarConvite, garantirConvivio } from "../src/indole.js";
 import { CLASSES, classePorNome } from "../src/classes.js";
 import { garantirFichaCompanheiro, ehCuraDeGrupo } from "../src/companheiros.js";
@@ -565,6 +573,174 @@ sec("9. a fiação no App.jsx (por texto)");
   prova("e o pedido da abertura leva-o", /pedidoDaAbertura\(ab\.abertura, \{[^}]*companheiro/.test(iniciar));
   prova("o load (`continuar`) nunca cria companheiro — save antigo fica como estava", !/companheiroInicial\(|juntarCompanheiroInicial\(/.test(continuar));
   prova("o convite lê o convívio pela mesma conta (convivioDaFicha)", /convivioDaFicha\(/.test(APP.slice(APP.indexOf("const convivioCom = (nome) =>"), APP.indexOf("const vereditoDoConvite"))));
+}
+
+/* ============================================================ */
+sec("10. as duas fichas e a homónima (3.ª sessão de prova, defeito 3)");
+{
+  /* mente/mm11-sessao-3.md, "Os defeitos" 3, 7 e 8, e "O custo": a
+     companheira de antes era "companheira de armas, Monge" no grupo e
+     "vendedor de ervas" no registo (o ofício do elenco), e no M1 a serviçal
+     "Iracema" da base de Vau Fincado entrou no registo pelo nome curto. O
+     revisor de continuidade (chamada paga, ~2 s antes da narração) via
+     contradição sempre que ela falava ou lutava: 5 das 8 chamadas de
+     conserto, e duas reescreveram-na "a serviçal da taverna". */
+  const J = (x) => JSON.stringify(x);
+  const ci = R0.ci;
+  const comp = ci.comp;
+  const elW0 = elencoDoMundo(W0.semente, W0.mapa, { genero: W0.genero, molde: W0.molde, espinha: R0.espinha, guildas: W0.guildas });
+  const pessoa = elW0.pessoas.find((p) => p.nome === ci.nome);
+  const encher = (m, v) => m.replace(/\{(\w+)\}/g, (_, k) => v[k]);
+  const pn = ci.nome.split(" ")[0];
+
+  /* (1) O OFÍCIO — o registo diz o que o grupo diz */
+  t("o papel do registo é o do grupo: a ligação e a classe (PAPEL_NO_REGISTO)",
+    ci.npc.papel === encher(PAPEL_NO_REGISTO.papel, { curto: comp.conceito, classe: ci.classe }), ci.npc.papel);
+  t("e já não é o ofício do elenco", !!pessoa && ci.npc.papel !== pessoa.papel, pessoa && pessoa.papel);
+  t("o registo e o grupo concordam (mesmoPapel com o conceito e com a classe)",
+    mesmoPapel(ci.npc.papel, comp.conceito) && mesmoPapel(ci.npc.papel, ci.classe));
+  t("o ofício de antes continua a existir, como o que fazia (nas notas, depois do passado)",
+    !!pessoa && ci.npc.notas.includes(encher(PAPEL_NO_REGISTO.antes, { oficio: pessoa.papel })) && ci.npc.notas.startsWith(comp.descricao.slice(0, 40)));
+  let todos = 0, concordam = 0;
+  MUNDOS.forEach((w) => { const r = montar(w, { antecedente: "Soldado Reformado" }); if (!r.ci) return; todos++; if (mesmoPapel(r.ci.npc.papel, r.ci.comp.conceito) && mesmoPapel(r.ci.npc.papel, r.ci.classe)) concordam++; });
+  t(`nos ${todos} mundos, o registo e o grupo concordam em todos (${concordam})`, todos > 0 && concordam === todos);
+
+  /* (1b) O PORTÃO lê o grupo. As frases são as da sessão (M12, M13, M20),
+     com o nome do companheiro deste mundo. O detector do papel trocado
+     lia "O golpe do lobo acerta Iracema Sousa" como "chamou-a de 'golpe
+     do lobo acerta'"; para quem anda no grupo só morde um ofício que a
+     casa conhece (OFICIOS) e que não é de nenhuma das fichas dela. */
+  const reg = { [ci.nome]: ci.npc };
+  const golpe = `O golpe do lobo acerta ${ci.nome} em cheio no ombro, e ela cai de joelhos.`;
+  const agachada = `— Devia estar ali — diz ${ci.nome}, agachada perto da porta.`;
+  const servical = `— Devia estar ali — diz ${ci.nome}, a serviçal da taverna, sem tirar os olhos do chão.`;
+  t("M20: o golpe que a acerta não é troca de papel", detectarPapelTrocado(golpe, reg, [comp]).length === 0, J(detectarPapelTrocado(golpe, reg, [comp])));
+  t("M12: 'agachada perto da porta' não é troca de papel", detectarPapelTrocado(agachada, reg, [comp]).length === 0);
+  t("mas 'a serviçal da taverna' continua a morder (o erro de verdade)", detectarPapelTrocado(servical, reg, [comp]).length === 1);
+  /* o save da v9.347 já gravou o ofício do elenco no registo: o portão,
+     que lê o grupo todos os turnos, deixa de a ver como outra pessoa sem
+     tocar no save */
+  /* o papel que a sessão gravou, tal e qual (o ofício do elenco dela) */
+  const regAntigo = { [ci.nome]: { ...ci.npc, papel: "vendedor de ervas" } };
+  t("save da v9.347 (o ofício do elenco no registo): o golpe não morde", detectarPapelTrocado(golpe, regAntigo, [comp]).length === 0);
+  t("save da v9.347: chamá-la pela classe não morde", detectarPapelTrocado(`${ci.nome}, a ${ci.classe.toLowerCase()}, ergue a tocha.`, regAntigo, [comp]).length === 0);
+  t("save da v9.347: a serviçal da taverna continua a morder", detectarPapelTrocado(servical, regAntigo, [comp]).length === 1);
+  t("quem NÃO anda no grupo é julgado como sempre foi (o aposto morde)",
+    detectarPapelTrocado(golpe, regAntigo, []).length === 1 && detectarPapelTrocado(agachada, regAntigo).length === 1);
+  const vs = violacoesDoTurno(`${golpe} ${agachada}`, { npcs: regAntigo, comGrupo: [comp], cidadeAtual: W0.cidade, mapa: W0.mapa });
+  t("o portão inteiro (violacoesDoTurno, com o comGrupo que o App já passa): nenhum conserto pago", !vs.some((v) => v.id === "papel"), J(vs.map((v) => v.id)));
+  t("familiasDoOficio: a serviçal é da taverna, a monge é da fé, 'golpe do lobo acerta' é de nenhuma",
+    familiasDoOficio("serviçal da taverna").includes("taverna") && familiasDoOficio("Monge").includes("fe") && familiasDoOficio("golpe do lobo acerta").length === 0);
+
+  /* (2) O NOME CURTO é de quem anda no grupo */
+  const homonima = criarNPC(pn, { papel: "serviçal da taverna", local: W0.cidade, conhecidoEm: 1 });
+  const regComHomonima = { ...reg, [pn]: homonima };
+  t("M13: com a homónima já no registo (save da sessão), o nome curto não é dela — o portão não morde",
+    detectarPapelTrocado(`— Devia estar ali — diz ${pn}, que já viu a mesma coisa.`, regComHomonima, [comp]).length === 0);
+  const ctxNome = (extra = {}) => ({ importantes: [{ nome: ci.nome }], grupo: [comp], aqui: [W0.cidade], ...extra });
+  const a1 = nomeComDono(pn, regComHomonima, ctxNome());
+  t(`"${pn}" com a homónima no registo resolve para ${ci.nome} (o grupo), não para ela`, a1.decisao === "mesma" && a1.chave === ci.nome, J(a1));
+  const a2 = nomeComDono(pn, reg, ctxNome({ papel: "serviçal" }));
+  t(`"${pn}", serviçal: nunca nasce segunda pessoa (recusada, dona ${ci.nome})`, a2.decisao === "recusada" && a2.dono === ci.nome && a2.motivo === "oficio", J(a2));
+  const a3 = nomeComDono(pn, reg, ctxNome({ aqui: ["Outra Cidade Qualquer"] }));
+  t("quem anda no grupo está sempre onde o herói está: o lugar da ficha não a separa", a3.decisao === "mesma" && a3.chave === ci.nome, J(a3));
+  const a4 = nomeComDono(pn, reg, ctxNome({ genero: ci.npc.genero === "mulher" ? "homem" : "mulher" }));
+  t("o sexo dito separa (e recusa — não cria)", a4.decisao === "recusada" && a4.motivo === "sexo", J(a4));
+  const a5 = nomeComDono(pn, regComHomonima, ctxNome({ grupo: [] }));
+  t("sem o grupo no contexto (a fiação antiga), a regra antiga fica como estava", a5.decisao === "mesma" && a5.chave === pn, J(a5));
+  t("o nome inteiro dela continua a ser ela", nomeComDono(ci.nome, regComHomonima, ctxNome()).chave === ci.nome);
+
+  /* a porta que de facto a criou no M1: a base da cidade "mencionada" na
+     narração (mencionadosNaCena). Um mundo com alguém da base de nome de
+     uma palavra só — o par da "Iracema" serviçal. */
+  let prova = null;
+  for (const w of MUNDOS) {
+    for (const c of w.mapa.cidades.slice(0, 3)) {
+      const q = oQueExisteAqui(w.semente, w.mapa, c.nome, null, w.genero, w.molde, null);
+      const p = (q && q.gente || []).find((x) => x && x.nome && !/\s/.test(x.nome.trim()) && x.nome.length >= 4);
+      if (p) { prova = { w, cidade: c.nome, p }; break; }
+    }
+    if (prova) break;
+  }
+  t("há um mundo de prova com gente da base de nome curto", !!prova);
+  if (prova) {
+    const { w, cidade, p } = prova;
+    const dela = { nome: `${p.nome} Sousa`, conceito: "companheira de armas", classe: "Monge" };
+    const n1 = `Você chega com a poeira da estrada. ${p.nome} vem meio passo atrás, como sempre veio.`;
+    const n2 = `${p.nome} Sousa ergue a tocha e espera.`;
+    const sem = (nar) => mencionadosNaCena(w.semente, w.mapa, cidade, null, w.genero, nar, w.molde, null).gente.map((x) => x.nome);
+    const com = (nar) => mencionadosNaCena(w.semente, w.mapa, cidade, null, w.genero, nar, w.molde, null, { grupo: [dela] }).gente.map((x) => x.nome);
+    t("a porta do M1 existe: sem o grupo, o nome curto acorda a homónima da base", sem(n1).includes(p.nome));
+    t("com o grupo, o nome curto é da companheira: a homónima não entra", !com(n1).includes(p.nome));
+    t("e o nome inteiro dela também não acorda a homónima (era casar o pedaço)", sem(n2).includes(p.nome) && !com(n2).includes(p.nome));
+    t("a homónima dita com o seu ofício também é recusada pelo registo (nomeComDono), nunca criada",
+      nomeComDono(p.nome, {}, { importantes: [{ nome: dela.nome }], grupo: [dela], papel: p.papel, aqui: [cidade] }).decisao !== "nova");
+    t("lixo nas opções não quebra a porta", J(mencionadosNaCena(w.semente, w.mapa, cidade, null, w.genero, n1, w.molde, null, null)) === J(mencionadosNaCena(w.semente, w.mapa, cidade, null, w.genero, n1, w.molde, null)));
+  }
+
+  /* e na escolha: um companheiro que partilha o primeiro nome com alguém
+     da cidade de partida ou do elenco nasce com a homónima à porta.
+     Medido antes do conserto: 11 dos 24 mundos (7 com xará na cidade de
+     partida). A outra cidade continua a pesar mais (secção 3), e o xará
+     escolhe-se DENTRO dela: só sobra quando todos os de fora o têm. */
+  let xaras = 0, vistos = 0, evitaveis = 0;
+  MUNDOS.forEach((w) => {
+    const r = montar(w, { antecedente: "Soldado Reformado" });
+    if (!r.ci) return;
+    vistos++;
+    const el = elencoDoMundo(w.semente, w.mapa, { genero: w.genero, molde: w.molde, espinha: r.espinha, guildas: w.guildas });
+    const q = oQueExisteAqui(w.semente, w.mapa, w.cidade, null, w.genero, w.molde, null);
+    const todos = [...((q && q.gente) || []), ...el.pessoas].filter((x) => x && x.nome);
+    const temXara = (nome) => todos.some((x) => x.nome !== nome && primeiroNome(x.nome) === primeiroNome(nome));
+    if (!temXara(r.ci.nome)) return;
+    xaras++;
+    const a = r.ab.abertura;
+    const marcos = (r.espinha.atos || []).flatMap((x) => x.marcos || []);
+    const procurados = [a.pista.nome, a.alvo.quem, ...marcos.flatMap((m) => [m.quem, m.alvo])].filter(Boolean);
+    const deFora = el.pessoas.filter((p) => p && p.nome && !p.morto && QUEM_PODE_SER.fontes.includes(p.fonte) && norm(p.cidade) !== norm(w.cidade)
+      && !procurados.some((x) => norm(x) === norm(p.nome) || mesmaPessoa(x, p.nome))
+      && !QUEM_PODE_SER.propositosDeFora.includes(indoleDe(w.semente, { nome: p.nome }).proposito));
+    if (deFora.some((p) => !temXara(p.nome))) evitaveis++;
+  });
+  t(`a escolha evita o xará: ${xaras} de ${vistos} com homónimo (eram 11 de 24), e nenhum que se pudesse evitar (${evitaveis})`, vistos > 0 && evitaveis === 0 && xaras < 11);
+
+  /* (2c) a PROCURA que achou a Lourdes Ferreira (M3, M7): "Procuro a
+     Lourdes" casava o pedaço "lourdes" de "Lourdes Ferreira", e o nome
+     mais comprido ganhava. A frase que só diz o primeiro nome é de quem se
+     chama exatamente assim — e, havendo grupo ou cena, de quem lá está. */
+  const NOMES = ["Iracema Sousa", "Iracema", "Lourdes", "Lourdes Ferreira", "Manuel"];
+  t("M3: 'Procuro a Lourdes ao balcão' procura a Lourdes, não a Lourdes Ferreira",
+    nomeProcurado("Atravesso a praça com a Iracema ao lado e entro no Rabo do Diabo. Procuro a Lourdes ao balcão.", NOMES) === "Lourdes");
+  t("dito o sobrenome, é a Lourdes Ferreira (o nome mais longo dito ganha)", nomeProcurado("Procuro a Lourdes Ferreira na livraria", NOMES) === "Lourdes Ferreira");
+  t("'procuro a Iracema' com a Iracema Sousa no grupo (perto): é ela", nomeProcurado("procuro a Iracema", NOMES, { perto: ["Iracema Sousa"] }) === "Iracema Sousa");
+  t("e mesmo sem `perto`, a procura responde 'anda comigo' (o grupo vem primeiro em procurarPessoa)",
+    procurarPessoa(nomeProcurado("procuro a Iracema", NOMES), { grupo: [{ nome: "Iracema Sousa" }] }).desfecho === "no_grupo");
+  t("'procuro a Lourdes' com a Lourdes Ferreira na cena (perto): é ela", nomeProcurado("procuro a Lourdes", NOMES, { perto: ["Lourdes Ferreira"] }) === "Lourdes Ferreira");
+
+  /* (3) O "DE PLANTÃO": quem anda no grupo não está no posto que deixou */
+  if (pessoa && pessoa.local) {
+    const ctxG = { semente: W0.semente, mapa: W0.mapa, cidade: pessoa.cidade, genero: W0.genero, molde: W0.molde, espinha: R0.espinha, guildas: W0.guildas, npcs: reg, heroi: "Brann" };
+    const pergunta = `Quem trabalha ${comEm(pessoa.local)}?`;
+    const antes = genteParaPauta({ ...ctxG, grupo: [], frase: pergunta }).pergunta.join(" | ");
+    const depois = genteParaPauta({ ...ctxG, grupo: [comp], frase: pergunta }).pergunta.join(" | ");
+    const trabalha = (linha) => { const m = linha.match(/quem trabalha [^:]*: ([^;|]*)/); return m ? m[1] : ""; };
+    t(`sem ela no grupo, ${ci.nome} trabalha ${comEm(pessoa.local)} (o elenco é verdade)`, trabalha(antes).includes(ci.nome), antes);
+    t("com ela no grupo, não está entre quem trabalha lá", !trabalha(depois).includes(ci.nome), depois);
+    t("e o Mestre tem o porquê, sem facto novo (NO_GRUPO)", depois.includes(`${ci.nome} (${NO_GRUPO.comPosto})`) && depois.includes(NO_GRUPO.saiu), depois);
+    const plantao = genteParaPauta({ ...ctxG, grupo: [comp], lugar: { nome: pessoa.local, cidade: pessoa.cidade, distancia: "dentro" }, frase: "Quem está de plantão aqui?" }).pergunta.join(" | ");
+    t("'quem está de plantão aqui?', no antigo posto: ela não está de turno", !trabalha(plantao).includes(ci.nome), plantao);
+    const rotina = genteParaPauta({ ...ctxG, grupo: [comp], frase: `A que horas ${ci.nome} pega no turno?` }).pergunta.join(" | ");
+    t(`'a que horas ${pn} pega no turno?': deixou o posto`, rotina.includes(NO_GRUPO.comPosto), rotina);
+    t("os textos não falam do mecanismo", Object.values(NO_GRUPO).every((x) => !PALAVRAS_DE_BASTIDOR.some((p) => palavra(p).test(x))));
+  } else t("o companheiro de prova tem posto no elenco", false);
+
+  /* A FIAÇÃO que o motor pede ao App: ligada na v9.349. Eram pendências
+     (`prova2`, contadas e ditas); agora mordem — se alguém desligar uma das três
+     linhas, a companheira volta a ter duas fichas e a suíte cai. */
+  const prova2 = (nome, cond) => t(nome, cond);
+  prova2("contextoDoNome passa o grupo a nomeComDono", /const contextoDoNome = \(n\) => \{[\s\S]{0,4000}?return \{ importantes, conhecidos, recentes, grupo:/.test(APP));
+  prova2("mencionadosNaCena recebe o grupo", /mencionadosNaCena\([^;]*\{ grupo: /.test(APP));
+  prova2("a procura passa quem está perto (o grupo e a cena)", /nomeProcurado\(acao, nomesConhecidos\(\), \{ perto: /.test(APP));
 }
 
 console.log(`\n${ok} ok · ${mal} falhas${pend ? ` · ${pend} pendentes (fiação)` : ""}`);

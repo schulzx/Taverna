@@ -136,5 +136,21 @@ sec("6. LIGADA AO JOGO");
   t("e o Narrador recebe o fato fechado", /envelopeDaProcura\(r\)/.test(APP));
 }
 
+sec("7. QUEM A FRASE PROCURA, entre homónimos (05/10, 3.ª sessão de prova, defeito 7)");
+{
+  /* "Procuro a Lourdes ao balcão" achou a Lourdes Ferreira (a estudante)
+     duas vezes: o nome mais comprido do registo ganhava, mesmo sem a frase
+     dizer o sobrenome. O placar mora numa tabela (PLACAR_DA_PROCURA). */
+  t("o placar é uma tabela, e o verbo vem antes do comprimento", Array.isArray(P.PLACAR_DA_PROCURA) && P.PLACAR_DA_PROCURA.indexOf("aposVerbo") < P.PLACAR_DA_PROCURA.indexOf("dito") && P.PLACAR_DA_PROCURA.indexOf("dito") < P.PLACAR_DA_PROCURA.indexOf("longo"));
+  const N = ["Iracema Sousa", "Iracema", "Lourdes", "Lourdes Ferreira", "Manuel"];
+  t("'Procuro a Lourdes' é a Lourdes, não a Lourdes Ferreira", P.nomeProcurado("Procuro a Lourdes ao balcão.", N) === "Lourdes");
+  t("a companhia dita antes do verbo não é a procurada", P.nomeProcurado("Entro com a Iracema ao lado. Procuro a Lourdes.", N) === "Lourdes");
+  t("'Lourdes Ferreira' dita inteira é ela", P.nomeProcurado("Procuro a Lourdes Ferreira", N) === "Lourdes Ferreira");
+  t("quem está perto ganha o empate do primeiro nome", P.nomeProcurado("procuro a Iracema", N, { perto: [{ nome: "Iracema Sousa" }] }) === "Iracema Sousa");
+  t("sem verbo, sem perto: quem se chama exatamente assim", P.nomeProcurado("Lourdes, diz-me o que sabes", N) === "Lourdes");
+  t("o caso de sempre: Ione Vantel por Ione", P.nomeProcurado("procuro por sinais de Ione", NOMES) === "Ione Vantel");
+  t("lixo na lista e nas opções não quebra", P.nomeProcurado("procuro a Lourdes", [null, 3, "Lourdes"], null) === "Lourdes");
+}
+
 console.log(`\nprocura v9.130: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);
