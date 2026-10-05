@@ -60,7 +60,7 @@ porque muda o seu passo 3:
 - `jogo` (Opus) — **as telas de jogo e o momento**: compõe o tabuleiro, as
   barras, o feedback, a tela de batalha — **com as peças do `desenho`**.
   Não escreve código.
-- `aprendiz` (Sonnet) — constrói fora do `App.jsx`: `ui.jsx`, os
+- `aprendiz` (Opus) — constrói fora do `App.jsx`: `ui.jsx`, os
   `painel-*.jsx`, os quatro desenhos.
 - `oficial` (Opus) — constrói **dentro do `App.jsx`**, com o bastão, por
   edição com âncora. É quem leva tela do App para casa própria.

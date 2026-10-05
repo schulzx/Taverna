@@ -350,7 +350,7 @@ todos. Os dois trabalham no mesmo arquivo do Figma; o que não se divide é a
 autoria da peça. Discordância se resolve escrita em `mente/formas.md`, com
 os dois lados — nunca em dois códigos diferentes.
 
-**Os dois executores:** `aprendiz` (Sonnet) constrói **fora** do `App.jsx`;
+**Os dois executores:** `aprendiz` (Opus) constrói **fora** do `App.jsx`;
 `oficial` (Opus) constrói **dentro** dele, com o bastão e por âncora.
 **Nunca os dois no mesmo arquivo.**
 
