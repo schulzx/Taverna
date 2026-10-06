@@ -5,6 +5,7 @@ import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdapt
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { mapaDaCriacao, mapaDaCampanhaNova } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
@@ -12557,7 +12558,27 @@ export default function Taverna() {
        ficha, que é bem antes daqui — e quando não chega, o mapa nasce com
        os nomes de sempre, que é o caminho seguro. */
     /* v9.218: numa Noite, o mundo minimo preparado substitui o continente */
-    const geo = geoDaNoiteRef.current || gerarGeografia(`${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`, moldePorId((mundo && mundo.molde) || MOLDE_PADRAO), (mundoAtual() || {}).lexico);
+    /* ---------------- A REGIÃO NA CRIAÇÃO (MM17, etapa B) ----------------
+       Uma campanha NOVA de Uma Vida, no molde continental, nasce numa
+       região delimitada (regiao.js): a base, 3–4 povoados e 5–8 lugares, tudo
+       a um dia de marcha. A escolha mora em `mapaDaCriacao`, que cai no
+       continente de sempre, com os mesmos argumentos de sempre, em qualquer
+       outro caso. Só aqui e só sem capítulo: um capítulo continua o mundo que
+       já existe, e o load nunca passa por este ponto — um save antigo fica
+       com o continente que tem. Se a região estourar, o continente; a
+       criação nunca pode custar a campanha. */
+    const sementeDoMapa = `${nomeCampanha || "aventura"}|${(mundo && mundo.genero) || ""}`;
+    const moldeDoMapa = moldePorId((mundo && mundo.molde) || MOLDE_PADRAO);
+    let geo = geoDaNoiteRef.current || null;
+    if (!geo && !cap) {
+      try {
+        geo = mapaDaCriacao({
+          semente: sementeDoMapa, molde: moldeDoMapa, genero: generoMundo(), lex: (mundoAtual() || {}).lexico,
+          estrutura: (mundo && mundo.estrutura) || historiaRef.current.estrutura, modo: modoRef.current,
+        });
+      } catch (e) { calou("a região na criação do mundo", e); geo = null; }
+    }
+    if (!geo || !Array.isArray(geo.cidades) || !geo.cidades.length) geo = gerarGeografia(sementeDoMapa, moldeDoMapa, (mundoAtual() || {}).lexico);
     /* NÉVOA (v9.14): o mundo nasce inteiro, mas o herói só conhece o chão em
        que está. A primeira cidade é a casa dele — abre de saída, senão o
        Mestre começaria sem lugar nenhum para narrar. O resto se descobre
@@ -12568,10 +12589,9 @@ export default function Taverna() {
         || geo.cidades[0])
       : geo.cidades[0];
     if (!cap) {
-      mapaRef.current = {
-        cidades: geo.cidades.map((c) => (c === inicial ? { ...c, descoberta: true } : c)),
-        faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas,
-      };
+      /* a primeira cidade abre (na região, a BASE); o mapa de região leva
+         `regiao` e `continentes` junto — o continente, as chaves de sempre */
+      mapaRef.current = mapaDaCampanhaNova(geo);
       setMapa(mapaRef.current);
       nevoaVersaoRef.current = 1;
       faccaoJogadorRef.current = "";

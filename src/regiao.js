@@ -58,6 +58,7 @@ import { kmEntre, rumoEntre } from "./coordenadas.js";
 import { rotaAteAMasmorra } from "./boca.js";
 import { criaturasDaRegiao, locaisDaCidade, chefesDoMundo, TIPOS_MASMORRA, EPITETOS, RUMORES } from "./mundo-base.js";
 import { estruturaPorId } from "./historia.js";
+import { garantirModo } from "./modos.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const entre = (rnd, [a, b]) => a + Math.floor(rnd() * (b - a + 1));
@@ -483,4 +484,49 @@ export function amarrarEspinha(mapa, espinha, ctx) {
     climax: fim ? { id: fim.id, nome: fim.nome, marco: fecho ? fecho.id : "", alvo } : null,
     todosDentro: marcos.every((x) => x.dentro),
   };
+}
+
+/* ============================================================
+   O MAPA DA CRIAÇÃO (MM17, etapa B) — a escolha, fora do App
+
+   A criação de uma campanha NOVA chama isto no lugar de `gerarGeografia`.
+   A escolha "região ou continente" mora aqui, e não embrulhada no App,
+   para que a suíte prove a fiação em Node em vez de ler texto:
+
+     · só os modos de MODOS_DA_REGIAO ganham região — o beta é Uma Vida
+       (ordem de 28/09); Uma Noite chega com o mundo mínimo dela e nem
+       passa por aqui, e o Duelo não cria campanha;
+     · só o molde continental (`gerarRegiao` devolve `null` nos outros);
+     · em qualquer outro caso, `gerarGeografia` com os MESMOS três
+       argumentos de sempre — o mapa de hoje, byte a byte.
+
+   O load NUNCA chama isto: um save antigo fica com o continente que tem
+   (`garantirGeografia` espalha o mapa e não inventa campo nenhum). */
+export const MODOS_DA_REGIAO = ["historia"];
+
+export function mapaDaCriacao(opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  if (MODOS_DA_REGIAO.includes(garantirModo(o.modo))) {
+    const reg = gerarRegiao({ semente: o.semente, molde: o.molde, genero: o.genero, lex: o.lex, estrutura: o.estrutura });
+    if (reg && Array.isArray(reg.cidades) && reg.cidades.length) return reg;
+  }
+  return gerarGeografia(String(o.semente == null ? "" : o.semente), moldePorId(o.molde && o.molde.id ? o.molde.id : o.molde), o.lex || null);
+}
+
+/* O `mapaRef` de uma campanha nova, a partir do que a criação gerou. A
+   primeira cidade é a casa do herói (na região, a BASE: `gerarRegiao` põe
+   a base em `cidades[0]`) e abre de saída; o resto nasce na névoa. As
+   chaves são as de sempre, na ordem de sempre — um continente sai daqui
+   igual ao literal que o App escrevia —, e só o mapa de região leva as
+   duas a mais: `continentes` (o canto do continente de onde ela é) e
+   `regiao`, o campo novo que a versão antiga ignora. */
+export function mapaDaCampanhaNova(geo) {
+  const g = geo && typeof geo === "object" ? geo : {};
+  const cidades = Array.isArray(g.cidades) ? g.cidades : [];
+  const mapa = {
+    cidades: cidades.map((c, i) => (i === 0 ? { ...c, descoberta: true } : c)),
+    faccoes: [], continente: g.continente, regioes: g.regioes, rotas: g.rotas,
+  };
+  if (g.regiao && typeof g.regiao === "object") return { ...mapa, continentes: g.continentes, regiao: g.regiao };
+  return mapa;
 }

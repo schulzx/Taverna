@@ -42,6 +42,9 @@ import { HORAS_MARCHA_POR_DIA } from "../src/viagem.js";
 import { gerarMasmorra, masmorraParaPauta } from "../src/masmorras.js";
 import { linhaDoLugar } from "../src/geografo.js";
 import { hashSemente, rng } from "../src/semente.js";
+import { resumoMapaParaPrompt, resumoDiplomacia } from "../src/mapa.js";
+import { moldePorId } from "../src/moldes.js";
+import * as G from "../src/geografia.js";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/^(o|a|os|as)\s+/, "").trim();
@@ -205,6 +208,47 @@ function resumo(rotulo, M) {
   ].join("\n");
 }
 
+/* ---------------- (f) a criação (MM17, etapa B) ----------------
+   Os mundos que o App cria de verdade: `mapaDaCriacao` (a escolha região
+   ou continente) e `mapaDaCampanhaNova` (o mapaRef). Pergunta: quantos
+   nascem com região, por molde e por modo; a que distância da base fica a
+   masmorra mais longe de cada mundo; quanto pesa o texto do mapa no system
+   prompt (o `mapaInfo` que o App monta com resumoMapaParaPrompt +
+   resumoDiplomacia: na criação e com o mapa todo aberto, o pior caso); e
+   quantas bases acordariam o cão de um passo pela régua antiga. */
+export function medirCriacao(R, N = 60) {
+  const out = ["(f) A CRIAÇÃO — mapaDaCriacao + mapaDaCampanhaNova (o que o App chama)"];
+  const info = (m) => (resumoMapaParaPrompt(m, "") + "\n" + resumoDiplomacia(m, "")).trim().length;
+  const aberto = (m) => ({ ...m, cidades: m.cidades.map((c) => ({ ...c, descoberta: true })) });
+  for (const m of MOLDES) {
+    for (const modo of ["historia", "rapida", "duelo"]) {
+      let com = 0;
+      for (let i = 0; i < N; i++) if (R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente: sementeDe(i), molde: moldePorId(m.id), genero: generoDe(i), modo })).regiao) com++;
+      if (m.id === "sobremundo" || modo === "historia") out.push(`    molde ${m.id} · modo ${modo}: ${com}/${N} com região`);
+    }
+  }
+  const longeKm = [], longeH = [], infoR = { ini: [], aberto: [] }, infoC = { ini: [], aberto: [] };
+  let acordava = 0, acordaHoje = 0;
+  for (let i = 0; i < N; i++) {
+    const semente = sementeDe(i), genero = generoDe(i), estrutura = ESTRUTURAS[i % ESTRUTURAS.length].id;
+    const mapa = R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente, molde: moldePorId("sobremundo"), genero, estrutura, modo: "historia" }));
+    const cont = R.mapaDaCampanhaNova(gerarGeografia(semente, moldePorId("sobremundo")));
+    const base = mapa.cidades[0];
+    const mms = masmorrasDoMundo(semente, mapa);
+    longeKm.push(Math.max(...mms.map((x) => kmEntre(base, x))));
+    longeH.push(Math.max(...mms.map((x) => horasAte(x, base))));
+    infoR.ini.push(info(mapa)); infoR.aberto.push(info(aberto(mapa)));
+    infoC.ini.push(info(cont)); infoC.aberto.push(info(aberto(cont)));
+    if (G.vizinhosDeUmPasso(mapa, base.nome, G.DIAS_DE_UM_PASSO).length) acordava++;
+    if (G.vizinhosDeUmPasso(mapa, base.nome).length || G.saidasDeUmPassoPrompt(mapa, base.nome)) acordaHoje++;
+  }
+  out.push(`    a masmorra mais longe da base, por mundo: mediana ${r1(mediana(longeKm))} km (${r1(mediana(longeH))} h), máx ${r1(maximo(longeKm))} km (${r1(maximo(longeH))} h)`);
+  out.push(`    o texto do mapa no system prompt — região: na criação mediana ${mediana(infoR.ini)}, máx ${maximo(infoR.ini)}; aberto mediana ${mediana(infoR.aberto)}, máx ${maximo(infoR.aberto)}`);
+  out.push(`                                      continente: na criação mediana ${mediana(infoC.ini)}, máx ${maximo(infoC.ini)}; aberto mediana ${mediana(infoC.aberto)}, máx ${maximo(infoC.aberto)}`);
+  out.push(`    o cão de um passo na base: pela régua antiga acordaria em ${acordava}/${N}; com tetoDeUmPasso, ${acordaHoje}/${N}`);
+  return out;
+}
+
 /* ---------------- quando corre sozinho ---------------- */
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   const N = Number(process.argv[2]) || 60;
@@ -218,6 +262,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
     console.log("\nDEPOIS — a região delimitada (gerarRegiao), as mesmas sementes");
     console.log(resumo("molde sobremundo", medir(regiao, { N, molde: "sobremundo" })));
     for (const m of MOLDES.filter((x) => x.id !== "sobremundo")) console.log(`  molde ${m.id}: ${gerarRegiao({ semente: sementeDe(0), molde: m.id }) === null ? "sem região (fica o mapa de sempre)" : "COM região"}`);
+    const R = await import(pathToFileURL(caminho).href);
+    if (typeof R.mapaDaCriacao === "function") console.log("\n" + medirCriacao(R, N).join("\n"));
   }
   console.log(`\n(e) a PIOR CENA REAL do prompt (teste-prompt.mjs): ${piorCenaReal()} caracteres (o teto é 82.000)`);
 }

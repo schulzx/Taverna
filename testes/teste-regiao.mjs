@@ -52,6 +52,11 @@ import { HORAS_MARCHA_POR_DIA, abrirViagem, progressoDaViagem } from "../src/via
 import { PLANTA_DA_MASMORRA } from "../src/masmorras.js";
 import { rastrearOTurno, linhaDoLugar } from "../src/geografo.js";
 import { sementeDe, generoDe, horasAte, diasPelasRotas, mediana, maximo } from "./medir-regiao.mjs";
+/* MM17 B: por espaço de nomes, como R abaixo — em HEAD v9.355 não há
+   tetoDeUmPasso, e a suíte tem de cair asserção a asserção, não no import */
+import * as G from "../src/geografia.js";
+import { moldePorId } from "../src/moldes.js";
+import { MODOS_DO_BETA } from "../src/modos.js";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const R = await import(pathToFileURL(join(AQUI, "..", "src", "regiao.js")).href).catch(() => ({}));
@@ -383,6 +388,153 @@ sec("10. a ligação — as exportações novas têm quem as leia");
   t("masmorrasDoMundo só entra no ramo da região quando o mapa tem `regiao`", /const daRegiao = mapa && mapa\.regiao && typeof mapa\.regiao === "object" && Array\.isArray\(mapa\.regiao\.lugares\)/.test(dist));
   t("a região usa as rotas de gerarRotas (o que o load recalcula)", vivos.every((w) => JSON.stringify(gerarRotas(w.mapa.cidades, "sobremundo")) === JSON.stringify(w.mapa.rotas)));
   t("e a escala de sempre (KM_POR_UNIDADE)", KM_POR_UNIDADE === 25 && vivos.every((w) => w.mapa.cidades.every((c) => c.x > 0 && c.x < 100 && c.y > 0 && c.y < 100)));
+}
+
+/* ============================================================
+   ETAPA B (v9.356 · a região na criação). Falha em HEAD v9.355: lá não há
+   mapaDaCriacao nem mapaDaCampanhaNova (o fn() devolve null e cada
+   asserção cai), o App não importa regiao.js e o teto de um passo não
+   conhece o campo "regiao" — o cão acordava em 115 das 200 bases.
+   ============================================================ */
+const mapaDaCriacao = fn("mapaDaCriacao");
+const mapaDaCampanhaNova = fn("mapaDaCampanhaNova");
+const J = (x) => JSON.stringify(x);
+/* o mapaRef que o App escrevia à mão até v9.355 — a régua do byte a byte */
+const literalAntigo = (geo) => ({
+  cidades: geo.cidades.map((c) => (c === geo.cidades[0] ? { ...c, descoberta: true } : c)),
+  faccoes: [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas,
+});
+const NC = 60;
+
+sec("11. a criação — a escolha \"região ou continente\" é uma função pura");
+{
+  const MR = R.MODOS_DA_REGIAO || [];
+  t("MODOS_DA_REGIAO: só Uma Vida, e só o que o beta abre", MR.length === 1 && MR[0] === "historia" && MR.every((m) => MODOS_DO_BETA.includes(m)));
+  let igualRegiao = 0, rapida = 0, duelo = 0, lixo = 0, outros = 0, outrosTotal = 0, ref = 0, base = 0, nevoa = 0, campos = 0, mms = 0, det = 0, contRef = 0;
+  for (let i = 0; i < NC; i++) {
+    const semente = sementeDe(i), genero = generoDe(i), estrutura = ESTRUTURAS[i % ESTRUTURAS.length].id;
+    const sobre = moldePorId("sobremundo");
+    const opc = { semente, molde: sobre, genero, estrutura };
+    const geo = tenta(() => mapaDaCriacao({ ...opc, modo: "historia" }), null);
+    if (geo && geo.regiao && J(geo) === J(gerarRegiao(opc))) igualRegiao++;
+    if (geo && J(geo) === J(tenta(() => mapaDaCriacao({ ...opc, modo: "historia" }), null))) det++;
+    /* os outros modos e os outros moldes: o continente de sempre, com os
+       MESMOS três argumentos que o App passava a gerarGeografia */
+    const antigo = gerarGeografia(semente, sobre, null);
+    if (J(tenta(() => mapaDaCriacao({ ...opc, modo: "rapida" }), null)) === J(antigo)) rapida++;
+    if (J(tenta(() => mapaDaCriacao({ ...opc, modo: "duelo" }), null)) === J(antigo)) duelo++;
+    /* modo ausente ou lixo é historia (garantirModo): o default absoluto */
+    const semModo = tenta(() => mapaDaCriacao(opc), null), modoLixo = tenta(() => mapaDaCriacao({ ...opc, modo: "xyz" }), null);
+    if (semModo && semModo.regiao && modoLixo && modoLixo.regiao) lixo++;
+    for (const m of MOLDES.filter((x) => x.id !== "sobremundo")) {
+      outrosTotal++;
+      const mo = moldePorId(m.id);
+      if (J(tenta(() => mapaDaCriacao({ semente, molde: mo, genero, estrutura, modo: "historia" }), null)) === J(gerarGeografia(semente, mo, null))) outros++;
+    }
+    /* o mapaRef */
+    const mr = tenta(() => mapaDaCampanhaNova(geo), null);
+    if (mr && mr.regiao === geo.regiao && mr.continentes === geo.continentes) ref++;
+    if (mr && mr.cidades && mr.cidades[0] && mr.cidades[0].nome === geo.regiao.base.nome) base++;
+    if (mr && mr.cidades && mr.cidades[0].descoberta === true && mr.cidades.slice(1).every((c) => c.descoberta === false)) nevoa++;
+    if (mr && J(Object.keys(mr)) === J(["cidades", "faccoes", "continente", "regioes", "rotas", "continentes", "regiao"]) && Array.isArray(mr.faccoes) && !mr.faccoes.length) campos++;
+    /* masmorrasDoMundo devolve os lugares por nível: compara-se o conjunto */
+    if (mr && J(masmorrasDoMundo(semente, mr).map((x) => x.id).sort()) === J(geo.regiao.lugares.map((l) => l.id).sort())) mms++;
+    if (J(tenta(() => mapaDaCampanhaNova(antigo), null)) === J(literalAntigo(antigo))) contRef++;
+  }
+  t(`Uma Vida no molde do beta: a criação é a região que as secções 1–10 provam (${igualRegiao}/${NC})`, igualRegiao === NC);
+  t(`e é a mesma a cada chamada (${det}/${NC})`, det === NC);
+  t(`Uma Noite fica com o continente de sempre, byte a byte (${rapida}/${NC})`, rapida === NC);
+  t(`o Duelo também (${duelo}/${NC})`, duelo === NC);
+  t(`modo ausente ou lixo é Uma Vida (${lixo}/${NC})`, lixo === NC);
+  t(`os moldes fora do beta ficam com gerarGeografia, byte a byte (${outros}/${outrosTotal})`, outros === outrosTotal && outrosTotal > 0);
+  t(`o mapaRef leva "regiao" e "continentes" (${ref}/${NC})`, ref === NC);
+  t(`a cidade inicial (cidades[0]) é a BASE da região (${base}/${NC})`, base === NC);
+  t(`e só ela abre: o resto nasce na névoa (${nevoa}/${NC})`, nevoa === NC);
+  t(`as chaves de sempre, na ordem de sempre, e as duas novas no fim (${campos}/${NC})`, campos === NC);
+  t(`os leitores de masmorra do App veem os lugares da região pelo mapaRef (${mms}/${NC})`, mms === NC);
+  t(`um continente sai de mapaDaCampanhaNova igual ao literal antigo do App (${contRef}/${NC})`, contRef === NC);
+  t("lixo não derruba: mapaDaCriacao(null) dá um continente, mapaDaCampanhaNova(null) um mapa vazio",
+    tenta(() => (mapaDaCriacao(null) || {}).cidades.length > 0, false) && tenta(() => J(mapaDaCampanhaNova(null).cidades) === "[]", false));
+}
+
+sec("12. o load — um save antigo não ganha região, e fica byte a byte");
+{
+  /* o save de hoje: o mapaRef que o App escrevia, gravado e lido de volta
+     (JSON), passando pelo garantirGeografia do load (App, "if (sv.mapa &&
+     sv.mapa.cidades ..."). O molde do beta volta igual letra a letra; os
+     outros não ganham campo nenhum (as rotas deles já eram recalculadas
+     sem molde antes desta etapa — não é desta etapa, e não muda). */
+  let igual = 0, semCampo = 0, tot = 0, regLida = 0;
+  for (let i = 0; i < NC; i++) {
+    const semente = sementeDe(i);
+    for (const m of MOLDES) {
+      tot++;
+      const sv = JSON.parse(J({ mapa: literalAntigo(gerarGeografia(semente, moldePorId(m.id), null)) }));
+      const lido = garantirGeografia(sv.mapa, "taverna|Fulano");
+      if (!("regiao" in lido) && !("continentes" in sv.mapa)) semCampo++;
+      if (m.id === "sobremundo" && J(lido) === J(sv.mapa)) igual++;
+    }
+    /* e um save de região, gravado e lido, volta com a região inteira */
+    const mr = tenta(() => mapaDaCampanhaNova(mapaDaCriacao({ semente, molde: "sobremundo", genero: generoDe(i), modo: "historia" })), null);
+    if (mr && mr.regiao) {
+      const sv = JSON.parse(J({ mapa: mr }));
+      if (J(garantirGeografia(sv.mapa, "taverna|Fulano")) === J(sv.mapa)) regLida++;
+    }
+  }
+  t(`save antigo (todos os moldes): o load não cria "regiao" (${semCampo}/${tot})`, semCampo === tot);
+  t(`save antigo do molde do beta: o mapa lido é o gravado, byte a byte (${igual}/${NC})`, igual === NC);
+  t(`save de região: o load devolve o mapa inteiro, byte a byte (${regLida}/${NC})`, regLida === NC);
+}
+
+sec("13. a fiação no App — um ponto só, na criação, com rede");
+{
+  const APP = tenta(() => readFileSync(join(AQUI, "..", "src", "App.jsx"), "utf8"), "");
+  const conta = (s) => APP.split(s).length - 1;
+  t("o App importa a escolha e o mapaRef de regiao.js", /import \{ mapaDaCriacao, mapaDaCampanhaNova \} from "\.\/regiao\.js";/.test(APP));
+  t("mapaDaCriacao é chamada num ponto só", conta("mapaDaCriacao(") === 1);
+  t("e gerarRegiao nunca direto (a escolha é dela)", conta("gerarRegiao") === 0);
+  const ini = APP.indexOf("const iniciar = (pers) => {");
+  const fimIni = ini >= 0 ? APP.indexOf("\n  const ", ini + 10) : -1;
+  const onde = APP.indexOf("mapaDaCriacao(");
+  t("o ponto é a criação (dentro de iniciar)", ini >= 0 && onde > ini && onde < fimIni);
+  const trecho = onde >= 0 ? APP.slice(Math.max(0, onde - 400), onde + 600) : "";
+  t("só sem capítulo e sem o mundo da Noite", /if \(!geo && !cap\) \{\s*try \{\s*geo = mapaDaCriacao\(/.test(trecho));
+  t("dentro de try, com calou e o continente de reserva", /catch \(e\) \{ calou\("a região na criação do mundo", e\); geo = null; \}/.test(trecho) && /if \(!geo \|\| !Array\.isArray\(geo\.cidades\) \|\| !geo\.cidades\.length\) geo = gerarGeografia\(/.test(trecho));
+  t("o modo vai junto (só Uma Vida ganha região)", /modo: modoRef\.current/.test(trecho));
+  t("o mapaRef da campanha nova sai de mapaDaCampanhaNova", conta("mapaRef.current = mapaDaCampanhaNova(geo);") === 1);
+  const l0 = APP.indexOf("if (sv.mapa && sv.mapa.cidades && sv.mapa.cidades.length) {");
+  const l1 = l0 >= 0 ? APP.indexOf("MIGRAÇÃO DA NÉVOA", l0) : -1;
+  const load = l0 >= 0 && l1 > l0 ? APP.slice(l0, l1) : "";
+  t("o load lê o mapa gravado com garantirGeografia, e não chama a região", !!load && load.includes("garantirGeografia(") && !load.includes("mapaDaCriacao") && !load.includes("gerarRegiao") && !load.includes("mapaDaCampanhaNova"));
+}
+
+sec("14. o cão de um passo dorme na região (a estrada é jornada)");
+{
+  const teto = G.tetoDeUmPasso || (() => G.DIAS_DE_UM_PASSO);
+  const menorRota = Math.min(...vivos.flatMap((w) => w.mapa.rotas.map((r) => Number(r.dias))));
+  t("DIAS_DE_UM_PASSO_NA_REGIAO fica abaixo da menor rota que a região escreve", Number.isFinite(G.DIAS_DE_UM_PASSO_NA_REGIAO) && G.DIAS_DE_UM_PASSO_NA_REGIAO < menorRota, `${G.DIAS_DE_UM_PASSO_NA_REGIAO} vs ${menorRota}`);
+  let acordava = 0, dorme = 0, semLinha = 0, semChegada = 0, frase = 0;
+  for (const w of vivos) {
+    const { regiao, ...semCampo } = w.mapa;
+    const base = w.mapa.cidades[0].nome;
+    const antes = G.vizinhosDeUmPasso(semCampo, base);
+    if (!antes.length) continue;
+    acordava++;
+    const ali = antes[0].nome;
+    const prosa = `Ao fim da manhã a estrada termina e você chega em ${ali}, com pó até os joelhos.`;
+    if (G.detectarChegada(prosa, { mapa: semCampo, cidade: base })) frase++;
+    if (w.mapa.cidades.every((c) => !G.vizinhosDeUmPasso(w.mapa, c.nome).length)) dorme++;
+    if (G.saidasDeUmPassoPrompt(w.mapa, base) === "") semLinha++;
+    if (!G.detectarChegada(prosa, { mapa: w.mapa, cidade: base })) semChegada++;
+  }
+  t(`sem o campo, o cão acordava nesta região em ${acordava}/${vivos.length} bases (o achado da etapa A)`, acordava > 0);
+  t(`e a frase de chegada é das que ele morde (${frase}/${acordava})`, frase === acordava);
+  t(`com o campo, nenhuma cidade da região tem saída de um passo (${dorme}/${acordava})`, dorme === acordava);
+  t(`nem nasce a linha SAÍDAS DAQUI no prompt (${semLinha}/${acordava})`, semLinha === acordava);
+  t(`e a chegada narrada não move o herói (${semChegada}/${acordava})`, semChegada === acordava);
+  const torre = gerarGeografia("teste|torre|1", moldePorId("torre"));
+  t("a Torre e todo mapa sem região seguem com DIAS_DE_UM_PASSO", teto(torre) === G.DIAS_DE_UM_PASSO && teto(null) === G.DIAS_DE_UM_PASSO && teto({ cidades: [] }) === G.DIAS_DE_UM_PASSO);
+  t("e o andar da Torre continua a um passo", G.vizinhosDeUmPasso(torre, torre.cidades.find((c) => c.z === 1).nome).length >= 1);
 }
 
 console.log(`\n${ok} ok, ${mal} falhas`);

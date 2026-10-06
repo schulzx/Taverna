@@ -106,7 +106,10 @@ sec("8. ligada ao jogo (M6)");
   t("o relógio-contrato vive: cena conta e o marco empurra", /cenaResolvida\(episodioRef\.current\)/.test(APP) && /tetoDoMarco\(/.test(APP) && /O MARCO EMPURRA/.test(APP));
   t("o fim fecha em veredito com as contas do Livro", /vereditoDaNoite\(\{/.test(APP) && /fecharNoite\(/.test(APP));
   t("a conversão pula a criação: o herói já existe", /convertidoRef\.current/.test(APP) && /converterParaCampanha\(fichaViva\(\)/.test(APP));
-  t("o mundo mínimo entra no lugar do continente", /geoDaNoiteRef\.current \|\| gerarGeografia/.test(APP));
+  /* v9.356 (MM17 B): a criação passou a escolher região ou continente
+     (mapaDaCriacao) antes da reserva gerarGeografia; o mundo da Noite
+     continua a vir primeiro e a calar as duas. */
+  t("o mundo mínimo entra no lugar do continente", /let geo = geoDaNoiteRef\.current \|\| null;\s*if \(!geo && !cap\) \{/.test(APP) && /if \(!geo \|\| !Array\.isArray\(geo\.cidades\) \|\| !geo\.cidades\.length\) geo = gerarGeografia\(/.test(APP));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

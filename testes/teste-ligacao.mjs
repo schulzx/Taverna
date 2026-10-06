@@ -137,7 +137,11 @@ sec("1. NENHUM MÓDULO MUDO");
      de uma campanha nova, no App.jsx. A entrada sai quando o App o importar,
      e a lista volta a ficar VAZIA. `mundo-base.js` já o serve (o ramo da
      região em `masmorrasDoMundo`) sem o importar. */
-  const AGUARDANDO = { "regiao.js": "o frontend, MM17 etapa B (gerarRegiao na criação do mundo)" };
+  /* e paga na etapa seguinte da MESMA fase (MM17 B, 06/10): o App.jsx importa
+     `regiao.js` — `mapaDaCriacao` escolhe a região na criação de uma
+     campanha nova de Uma Vida, e `mapaDaCampanhaNova` monta o mapaRef.
+     `teste-regiao.mjs` (secção 11) prova a fiação. A lista volta a ficar VAZIA. */
+  const AGUARDANDO = {};
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;

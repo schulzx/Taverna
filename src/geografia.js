@@ -671,12 +671,31 @@ export function descobrirVizinhanca(mapa, nome, teto = DIAS_DE_VIZINHANCA) {
    ============================================================ */
 export const DIAS_DE_UM_PASSO = 0.5;
 
+/* NA REGIÃO, A ESTRADA É JORNADA (MM17, etapa B). A região delimitada põe
+   os povoados a 3–7 horas de marcha da base, e a menor rota que
+   gerarRotas escreve é de meio dia — em 115 de 200 bases medidas há um
+   povoado exatamente "a um passo". Pela régua acima, o cão acordaria ali:
+   moveria o herói por uma frase da narração, cobraria meio dia, e a linha
+   "SAÍDAS DAQUI" (~360 caracteres) entraria em TODO turno na base.
+
+   Meio dia de estrada dentro da região não é "uma cena": o jogador viaja
+   de propósito ("vou à Vila do Vau"), a partida abre a jornada
+   (detectarPartida, rastro.js) e a jornada cobra o tempo e o caminho. É
+   o mesmo caso do continente, com o caminho mais curto — e a Torre, onde o
+   portal é mesmo um gesto, não tem região. Por isso, num mapa COM o campo
+   "regiao", o teto de um passo cai para zero: nenhuma rota cabe nele (a
+   menor tem meio dia), o cão dorme, a linha não nasce. Um mapa sem o campo
+   (todo save de hoje, a Torre, os outros moldes) segue com
+   DIAS_DE_UM_PASSO, letra a letra. */
+export const DIAS_DE_UM_PASSO_NA_REGIAO = 0;
+export const tetoDeUmPasso = (mapa) => (mapa && mapa.regiao ? DIAS_DE_UM_PASSO_NA_REGIAO : DIAS_DE_UM_PASSO);
+
 const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 /* "Andar 2 — das Máscaras" é anunciado na prosa como "Andar 2": a chave
    curta é o que vem antes do travessão. */
 const chaveCurta = (nome) => semA(nome).split(/\s+[—–-]\s+/)[0].trim();
 
-export function vizinhosDeUmPasso(mapa, cidade, teto = DIAS_DE_UM_PASSO) {
+export function vizinhosDeUmPasso(mapa, cidade, teto = tetoDeUmPasso(mapa)) {
   const aqui = semA(cidade);
   if (!aqui) return [];
   const out = [];
@@ -702,7 +721,7 @@ const fraseEm = (txt, pos) => {
   return txt.slice(ini, fim);
 };
 
-export function detectarChegada(narrativa, { mapa, cidade, teto = DIAS_DE_UM_PASSO } = {}) {
+export function detectarChegada(narrativa, { mapa, cidade, teto = tetoDeUmPasso(mapa) } = {}) {
   const txt = semA(narrativa);
   if (!txt.trim() || !cidade) return null;
   for (const v of vizinhosDeUmPasso(mapa, cidade, teto)) {
@@ -726,7 +745,7 @@ export function detectarChegada(narrativa, { mapa, cidade, teto = DIAS_DE_UM_PAS
    gesto. Sem isto ele inventa o nome do destino — e acertou por sorte,
    porque "Andar 2" é adivinhável. Só aparece quando existe saída de um
    passo, então em mundo de estrada esta linha nem é gerada. */
-export function saidasDeUmPassoPrompt(mapa, cidade, teto = DIAS_DE_UM_PASSO) {
+export function saidasDeUmPassoPrompt(mapa, cidade, teto = tetoDeUmPasso(mapa)) {
   const vs = vizinhosDeUmPasso(mapa, cidade, teto);
   if (!vs.length) return "";
   const horas = (d) => {

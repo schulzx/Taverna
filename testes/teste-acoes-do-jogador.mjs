@@ -639,7 +639,11 @@ sec("4. a definição operacional de 'número que muda'");
      `pautaDoTurno` (+5) e o gesto da tocha depois do ato que revela (+9),
      todos ACIMA do relógio. Só o endereço andou; re-medido pelo diff de
      App.jsx contra o HEAD, e conferido pelo varredor. */
-  t("e aponta a linha que avança o relógio", !!relogio && /15028/.test(relogio.porque));
+  /* (v9.356 · a região na criação) MM17 B, 06/10: 15028 -> 15048, +20 — o
+     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
+     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
+     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
+  t("e aponta a linha que avança o relógio", !!relogio && /15048/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -952,7 +956,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
      (+1), o mapa de luz junto de `fichaViva` (+23) e a seção A LUZ em
      `pautaDoTurno` (+5), ACIMA disto no arquivo. Só o endereço andou;
      re-medido pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-      .linhas.find((l) => l.onde === "src/App.jsx:13457").voz === "telegrama");
+    /* (v9.356 · a região na criação) 13457 -> 13477, +20 — o
+     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
+     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
+     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
+      .linhas.find((l) => l.onde === "src/App.jsx:13477").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1131,7 +1139,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      (+1), o mapa de luz junto de `fichaViva` (+23) e a seção A LUZ em
      `pautaDoTurno` (+5), ACIMA disto no arquivo. Só o endereço andou;
      re-medido pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13324" && x.familia === "alcance"));
+    /* (v9.356 · a região na criação) 13324 -> 13344, +20 — o
+     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
+     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
+     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13344" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1242,7 +1254,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      luz.js (+1), o mapa de luz junto de `fichaViva` (+23) e a seção A LUZ
      em `pautaDoTurno` (+5), ACIMA disto no arquivo. Só o endereço andou;
      re-medido pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13473/.test(S.ondeSai));
+  /* (v9.356 · a região na criação) MM17 B, 06/10: 13473 -> 13493, +20 — o
+     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
+     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
+     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13493/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));
