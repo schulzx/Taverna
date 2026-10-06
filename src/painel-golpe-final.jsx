@@ -5,13 +5,18 @@
    não mexe em PV, não escreve no log, não fecha a janela sozinho. A conta
    inteira mora em `golpe-final.js` — este arquivo só monta a tela.
 
-   MESMA FORMA DO CARTÃO DA REAÇÃO (`painel-reacao.jsx`, K3): nasce ANCORADO
-   na linha do veredito e cresce PARA CIMA, os mesmos tokens (`T`, `ALVOS`),
+   MESMA FORMA DO CARTÃO DA REAÇÃO (`painel-reacao.jsx`, K3): os mesmos tokens (`T`, `ALVOS`),
    a mesma largura máxima, o mesmo `Botao` e a mesma `PilulaDeEscolha` que já
    existem em `ui.jsx` — "uma ação, uma forma": esta é outra decisão que
    suspende a luta, e não podia ganhar uma segunda cara. A diferença com K3
    é que aqui NÃO HÁ RELÓGIO — é o turno do próprio jogador, e "pular é um
    clique": os dois botões aplicam de imediato, escrever é sempre opcional.
+
+   E POR NÃO TER RELÓGIO NÃO MORA ONDE A REAÇÃO MORA (MM16 nº 5). Nascia no slot
+   da reação, ancorado na linha do veredito e crescendo para cima; num ecrã
+   de 310 px o topo ficava fora dele e o foco não rolava até lá — o "como"
+   escrevia-se às cegas. Hoje a `TelaDeBatalha` desenha-o NO FLUXO, no
+   lugar dos verbos (prop `decisao`). A forma é a mesma; muda a morada.
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
@@ -52,7 +57,16 @@ export function PainelGolpeFinal({
      momento, e o jogador que quer escrever não deveria ter de clicar nela
      primeiro. Os dois botões continuam alcançáveis por Tab depois dele. */
   React.useEffect(() => {
-    if (campoRef.current) { try { campoRef.current.focus(); } catch (e) { console.warn("PainelGolpeFinal: foco do campo falhou", e); } }
+    const el = campoRef.current;
+    if (!el) return;
+    /* o foco SEM rolar: no primeiro quadro a tela ainda não sabe se é
+       telefone (a tira do herói ainda está lá), e o rolar do foco ficava
+       preso numa altura que deixa de existir um quadro depois — medido a
+       374 × 310, o cartão abria rolado 47 px, com a linha de quem caiu
+       escondida e o campo cortado em cima. Quem traz o campo à vista, se
+       faltar ecrã, é a tela que o recebe (`TelaDeBatalha`, prop `decisao`),
+       que sabe quando a altura assentou. */
+    try { el.focus({ preventScroll: true }); } catch (e) { console.warn("PainelGolpeFinal: foco do campo falhou", e); }
   }, []);
 
   const escolher = (id) => {

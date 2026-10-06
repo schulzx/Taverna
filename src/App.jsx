@@ -187,7 +187,7 @@ import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convi
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
-import { porNaPauta, textoDaPauta, garantirPauta } from "./pauta.js";
+import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, envelopeDasFalas, bocasDoTurno, falaDaResposta } from "./falas.js";
 import { indoleDe, linhaDaIndole, dispararProposito, pesarConvite, envelopeDoConvite } from "./indole.js";
@@ -6935,8 +6935,12 @@ export default function Taverna() {
     p = porNaPauta(p, "onde", g.onde);
     /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque
        é geografia antes de ser economia — a praça de um porto e a de uma
-       serra não se parecem, e o Narrador nunca teve como saber disso. */
-    p = porNaPauta(p, "onde", envelopeDoComercio(cidadeDoMapa(cidadeAtualRef.current), diaRef.current));
+       serra não se parecem, e o Narrador nunca teve como saber disso.
+       MM16 nº 5: a seção é "economia" (rótulo ONDE, prio 2,5). Como 4.ª
+       linha do ONDE ela tinha prio 1,3 e, numa masmorra, os 264 caracteres
+       de Vau Fincado tiravam do teto a frase do golpe final (sessão 3, M21
+       e M30). Na cidade lê-se igual; na luta cede (`cederNaCena`, abaixo). */
+    p = porNaPauta(p, "economia", envelopeDoComercio(cidadeDoMapa(cidadeAtualRef.current), diaRef.current));
     /* v9.139: e, se este chão for seu, o que você decidiu sobre ele. Só
        quando o herói está lá — governo de longe não é o que se vê na praça. */
     {
@@ -7156,6 +7160,15 @@ export default function Taverna() {
         if (peEsc) p = porNaPauta(p, "naoPode", peEsc.naoPode);
       }
     } catch (e) { /* o veto do escondido nunca pode custar o turno */ }
+    /* MM16 nº 5: O QUE CEDE ONDE. A tabela é do motor (`SECOES_QUE_CEDEM`);
+       aqui só se diz que cena é esta. `arredores` é FORA DOS MUROS — sem
+       cidade (estrada, jornada) ou num lugar marcado `distancia: "arredores"`
+       —, o mesmo sinal de `ondeSeProcura`; `lugarRef` sozinho não serve,
+       porque também guarda o lugar "dentro" (a taberna, a praça). */
+    try {
+      const fora = !cidadeAtualRef.current || !!(lugarRef.current && lugarRef.current.distancia === "arredores");
+      p = cederNaCena(p, { luta: !!combateRef.current, masmorra: !!masmorraRef.current, arredores: fora });
+    } catch (e) { calou("cederNaCena", e); }
     return p;
   };
 
@@ -24514,11 +24527,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     );
   })() : null;
 
-  /* MM3: o cartao do golpe final entra no MESMO slot do cartao da reacao
-     (K3) -- a mesma ancora, a mesma LinhaDoVeredito, sem tocar em
-     painel-batalha.jsx. Os dois nunca coexistem: o golpe final resolve-se
-     (aplicarGolpeDoJogador -> continuarGolpeDoJogador) ANTES de qualquer
-     revide, que e onde a janela da reacao nasce. */
+  /* MM3: o cartao do golpe final. Os dois (ele e o da reacao, K3) nunca
+     coexistem: o golpe final resolve-se (aplicarGolpeDoJogador ->
+     continuarGolpeDoJogador) ANTES de qualquer revide, que e onde a janela
+     da reacao nasce.
+     MM16 nº 5: ele SAIU do slot da reacao. Ancorado na linha do veredito e
+     crescendo para cima, num painel de 310 px o topo dele ficava em y -85
+     (fora do ecra) e o foco nao rolava ate la: escrevia-se o "como" as
+     cegas. A reacao tem relogio e o jogador le o campo enquanto decide --
+     sobrepor e certo para ela; o golpe final nao tem relogio, e vai pela
+     prop `decisao`, NO FLUXO, no lugar da fileira de verbos. */
   const golpeFinalDoJogadorNaBatalha = emBatalha && golpeFinalPendente ? (
     <LimiteErro>
       <PainelGolpeFinal quedas={golpeFinalPendente.quedas} aoEscolher={responderGolpeFinal} />
@@ -24548,7 +24566,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
   const golpeFinalDaBatalha = golpeFinalDoJogadorNaBatalha || golpeFinalDoGrupoNaBatalha;
 
-  const reacaoDaBatalha = golpeFinalDaBatalha || (emBatalha && janelaReacao ? (
+  const reacaoDaBatalha = (emBatalha && janelaReacao ? (
     <LimiteErro>
       <PainelReacao
         oferta={janelaReacao.abre} t0={janelaReacao.t0}
@@ -24608,6 +24626,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       aoAbrirGaveta={() => { setHabAbertas((v) => !v); }}
       gaveta={gavetaDaBatalha}
       reacao={reacaoDaBatalha}
+      decisao={golpeFinalDaBatalha}
       dado={dadoDaBatalha}
       passoM={passoDaBatalha.passoM}
       passoTotal={passoDaBatalha.passoTotal}

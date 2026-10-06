@@ -36,6 +36,38 @@
    ser copiada para a narração como está, ela está errada.
    ============================================================ */
 
+/* ---------------- O FERRO (MM16 nº 5, 05/10) ----------------
+
+   A PRIORIDADE ABAIXO DE TODAS. O que corta aqui só cede depois de tudo o
+   resto ter cedido — e por isso só pode morar aqui o que é do turno, curto
+   e insubstituível:
+
+   · o DESFECHO (o fato de quem caiu e o COMO que o jogador escreveu) e o
+     veto de quem caiu (`vetoDoDesfecho`) — é o que o jogador acabou de
+     dizer, e a narração deste turno abre por ele;
+   · a PRIMEIRA linha do ONDE (`ferro: 1`) — a cena sem lugar é a cena que
+     o Narrador vai inventar noutro lugar. Ela entra antes do desfecho no
+     empate (a ordem de SECOES decide), e por isso nenhum desfecho, por
+     maior que seja, tira o lugar da pauta.
+
+   A CAUSA, MEDIDA NO REGISTO DA 3.ª SESSÃO (mente/mm11-sessao-3.md, defeito
+   5): a frase do jogador não chegou em 0 de 2 golpes finais, e a pauta
+   enviada reconstrói-se byte a byte com estas funções. No M30 (a Iracema,
+   escrita ao teclado, 129/240) a cabeça (293) + o ONDE inteiro (4 linhas,
+   prio 1,0..1,3: 80+31+213+278) + o fato (89) davam 1164; a linha da cena
+   (273+14) levava a 1451 > 1400 — e o corte guloso, que andava por prio,
+   pulou-a e meteu A GENTE (prio 6, 69) no lugar. No M21 (o herói): 1149 +
+   310 = 1459. Nos dois, o que pesou foi a 4.ª linha do ONDE: 264 caracteres
+   da economia de Vau Fincado ("cheira a cera, tinta e perfume caro") dentro
+   de uma masmorra, a meio de uma luta, com prio 1,3 — à frente do DESFECHO
+   (prio 2). A MM14 tinha provado a cena com um ONDE só do Geógrafo, sem a
+   economia: o turno de prova não era o turno jogado.
+
+   0,5 e não 0: `prio` é lido como verdadeiro pela suíte do Geógrafo, e o
+   meio-ponto deixa cinco linhas de ferro (0,5..0,9) antes de qualquer linha
+   de prio 1. */
+export const PRIO_DE_FERRO = 0.5;
+
 /* `prio` é a ordem do CORTE, não a da leitura: quanto menor, mais tarde
    se corta. A ordem em que o Narrador lê é a ordem desta lista.
 
@@ -44,7 +76,20 @@
    lugar. NÃO PODE, porque cortar um veto é exatamente como a
    incoerência entra — e um veto cortado não avisa que foi cortado. */
 export const SECOES = [
-  { id: "onde", rotulo: "ONDE", prio: 1, o: "o lugar, e o que ele permite" },
+  { id: "onde", rotulo: "ONDE", prio: 1, ferro: 1, o: "o lugar, e o que ele permite" },
+  /* MM16 nº 5: O QUE O LUGAR PRODUZ E O QUE LHE FALTA (`envelopeDoComercio`,
+     comercio.js) morava como mais uma linha do ONDE, de prio 1 — e ia em
+     TODO turno, também dentro de uma masmorra e a meio de uma luta, onde
+     não há praça. Seção própria para poder CEDER por tabela
+     (`SECOES_QUE_CEDEM`, abaixo). O rótulo é o do ONDE de propósito: na
+     cidade o Narrador lê o mesmo bloco que lia, e `textoDaPauta` junta
+     seções vizinhas de rótulo igual. Prio 2,5: DEPOIS dos vetos, de A
+     FALA e do PESO (2), antes do MOMENTO (3). Como linha do ONDE ela tinha
+     prio 1,3 e passava à frente de todo veto — por acidente de morada, não
+     por decisão: a cor da praça não vale mais que o "não pode" da cena (é
+     assim que a incoerência entra, diz o cabeçalho). Na cidade cheia ela
+     cede antes de um veto; numa luta nem chega a ser candidata. */
+  { id: "economia", rotulo: "ONDE", prio: 2.5, o: "o que o lugar produz e o que lhe falta" },
   /* v9.118: O QUE SE ALCANÇA DAQUI, e por que é uma seção e não mais uma
      linha do ONDE. A lista de vizinhos com rumo e distância custa cerca de
      170 caracteres, e a sonda mostrou o preço exato de pendurá-la no ONDE
@@ -90,8 +135,11 @@ export const SECOES = [
      corte é guloso — quando ela não cabia, o CONTRA (prio 5) e o DAQUI (7)
      entravam no lugar dela, e o Mestre narrava outra morte. Prioridade 2 pela razão de A FALA:
      é o que alguém escreveu palavra por palavra, e a única vez em que o
-     jogador DIRIGE a cena. Vem logo depois de ACABOU na leitura. */
-  { id: "desfecho", rotulo: "DESFECHO", prio: 2, o: "quem saiu da luta agora, e como o jogador escreveu que foi" },
+     jogador DIRIGE a cena. Vem logo depois de ACABOU na leitura.
+     MM16 nº 5: e prio 2 ainda não bastou — o ONDE (prio 1) tinha quatro
+     linhas e a economia da cidade passava à frente. Agora é de FERRO (o
+     cabeçalho de PRIO_DE_FERRO tem os números da sessão). */
+  { id: "desfecho", rotulo: "DESFECHO", prio: PRIO_DE_FERRO, o: "quem saiu da luta agora, e como o jogador escreveu que foi" },
   /* MM12: e o que o jogador PERGUNTOU. Uma pergunta direta é o centro do
      turno — "quanto custa a diária?" cortada pelo teto seria o Narrador a
      inventar exatamente o que se quis saber. Prioridade 4, a de QUEM, e
@@ -110,6 +158,13 @@ export const SECOES = [
   /* v9.204: a gravidade da cena. Prioridade 2 porque e conteudo — cortar o
      peso de um velorio seria pior do que cortar o lugar onde ele acontece. */
   { id: "peso", rotulo: "O PESO", prio: 2, o: "a gravidade desta cena, e o que o mundo cala" },
+  /* MM16 nº 5: o veto de quem acabou de cair ("Grok morrer nesta cena: está
+     desacordado e vivo"), e os do MM9 (o rendido, o preso). Morava na frente
+     do NÃO PODE (2,0) e, com o DESFECHO de ferro, seria o único pedaço do
+     golpe final que ainda cedia. Seção própria, de ferro, com o rótulo do
+     NÃO PODE e logo antes dele: o Narrador lê um bloco de vetos só, com o
+     do turno na primeira linha — como lia. */
+  { id: "vetoDoDesfecho", rotulo: "NÃO PODE", prio: PRIO_DE_FERRO, o: "o veto de quem acabou de cair" },
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },
 ];
 
@@ -150,6 +205,44 @@ export function porNaPauta(pauta, id, ...linhas) {
 
 export function pautaVazia(p) { return Object.keys(garantirPauta(p)).length === 0; }
 
+/* ---------------- O QUE CEDE ONDE (MM16 nº 5) ----------------
+
+   Cada chave é uma condição da cena; a lista é das seções que, nela, não
+   dizem nada de verdade e só gastam o teto. Não é corte por falta de
+   espaço (isso é `textoDaPauta`): é a seção que nem chega a ser
+   candidata, porque o lugar onde a cena está não a tem.
+
+   · LUTA — a economia da praça, a vida da rua, a vizinhança com rumo e
+     distância e a diplomacia das potências. Ninguém sai a meio de uma
+     luta para o moinho de outra vila, e nenhuma potência muda o golpe que
+     vem a seguir.
+   · MASMORRA — a economia e a rua: lá dentro não há praça. A vizinhança
+     fica (a saída da masmorra é a pergunta de quem foge).
+   · ARREDORES — o herói está fora dos muros (o posto, a capela, as
+     salinas): a economia da cidade não é a do lugar, e a rua não está lá.
+
+   Quem diz a condição é o App (`combate`, `masmorra`, `lugar`); a
+   regra mora aqui. */
+export const SECOES_QUE_CEDEM = {
+  luta: ["economia", "cidade", "daqui", "mundo"],
+  masmorra: ["economia", "cidade"],
+  arredores: ["economia", "cidade"],
+};
+
+/* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.
+   `cena` é `{ luta, masmorra, arredores }` (verdadeiros soltos); lixo ou
+   `null` não tira nada. Nunca muta a recebida. */
+export function cederNaCena(pauta, cena) {
+  const p = garantirPauta(pauta);
+  const c = cena && typeof cena === "object" ? cena : {};
+  const saem = new Set();
+  for (const [chave, ids] of Object.entries(SECOES_QUE_CEDEM)) if (c[chave]) ids.forEach((id) => saem.add(id));
+  if (!saem.size) return p;
+  const out = {};
+  for (const [id, linhas] of Object.entries(p)) if (!saem.has(id)) out[id] = linhas;
+  return out;
+}
+
 /* ---------------- O TEXTO ----------------
    Monta na ordem de LEITURA e corta na ordem de PRIORIDADE. Uma seção
    com mais de uma linha perde as últimas antes de perder a primeira: a
@@ -178,7 +271,8 @@ export function textoDaPauta(p, { teto = TETO_DA_PAUTA, turno = 0 } = {}) {
   const cand = [];
   for (const s of SECOES) {
     const linhas = pauta[s.id] || [];
-    linhas.forEach((t, i) => cand.push({ secao: s.id, ordem: SECOES.indexOf(s), i, prio: s.prio + i * 0.1, texto: t }));
+    /* MM16: as primeiras `ferro` linhas cortam como PRIO_DE_FERRO */
+    linhas.forEach((t, i) => cand.push({ secao: s.id, ordem: SECOES.indexOf(s), i, prio: (i < (s.ferro || 0) ? PRIO_DE_FERRO : s.prio) + i * 0.1, texto: t }));
   }
   cand.sort((a, b) => a.prio - b.prio);
   let gasto = cabeca.length + pe.length;
@@ -189,12 +283,17 @@ export function textoDaPauta(p, { teto = TETO_DA_PAUTA, turno = 0 } = {}) {
     dentro.add(c);
     gasto += custo;
   }
-  const partes = [];
+  /* MM16: seções VIZINHAS de rótulo igual (ONDE + economia; o veto do
+     desfecho + NÃO PODE) saem num bloco só — o Narrador lê o que lia. */
+  const blocos = [];
   for (const s of SECOES) {
     const linhas = cand.filter((c) => c.secao === s.id && dentro.has(c)).sort((a, b) => a.i - b.i).map((c) => c.texto);
     if (!linhas.length) continue;
-    partes.push(`${s.rotulo.padEnd(9)} ${linhas.join("\n" + " ".repeat(10))}`);
+    const ultimo = blocos[blocos.length - 1];
+    if (ultimo && ultimo.rotulo === s.rotulo) ultimo.linhas.push(...linhas);
+    else blocos.push({ rotulo: s.rotulo, linhas });
   }
+  const partes = blocos.map((b) => `${b.rotulo.padEnd(9)} ${b.linhas.join("\n" + " ".repeat(10))}`);
   if (!partes.length) return "";
   return `${cabeca}\n${partes.join("\n")}`;
 }

@@ -785,10 +785,37 @@ export function TelaDeBatalha(props) {
   /* andar desarma, e é a terceira saída */
   const mover = (destino) => { setArmado(""); setRecusado(""); if (p.aoMover) p.aoMover(destino); };
 
+  /* A DECISÃO QUE ESPERA (MM16 nº 5): enquanto o cartão do golpe final está
+     aberto, o turno está PARADO nele — nenhum verbo arma, a vez não anda, a
+     linha do veredito não tem o que prever (cada botão do cartão diz a sua
+     consequência, e é ele o veredito deste clique). Por isso os controles do
+     turno saem e devolvem a altura ao cartão; o tabuleiro fica, e cede o
+     que sobrar. No telefone sai também a tira do herói (os PV não entram na
+     escolha entre poupar e matar): medido a 374 × 310, só assim o campo do
+     "como", o contador e os dois botões cabem sem rolar. Tudo volta no
+     clique que fecha o cartão. */
+  const esperando = !!p.decisao && !p.fim;
+  /* a segurança: se mesmo assim faltar ecrã, o campo onde se escreve vem à
+     vista — DEPOIS de a tela saber se é telefone. O primeiro quadro ainda é
+     o do monitor (a tira está lá), e rolar ali deixava o cartão preso numa
+     altura que some um quadro depois: medido a 374 × 310, abria rolado
+     47 px, com a linha de quem caiu escondida. Por isso o efeito depende de
+     `noTelefone`, e não de quadros contados. Se couber, nada se move. */
+  const decisaoRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!esperando) return;
+    try {
+      /* do zero a cada medida: a rolagem do quadro de antes não vale para este */
+      if (decisaoRef.current) decisaoRef.current.scrollTop = 0;
+      const el = decisaoRef.current && decisaoRef.current.querySelector("textarea");
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+    } catch (e) { console.warn("TelaDeBatalha: rolar até o campo da decisão falhou", e); }
+  }, [esperando, noTelefone]);
+
   const campo = (
     <section className="flex flex-col min-h-0 min-w-0 w-full"
       style={{ flex: `1 1 ${G.campo}px`, maxWidth: G.campo, gap: 4 }}>
-      <FaixaDaVez selos={selos} rotulo={rotuloDaVez(selos)} noTelefone={noTelefone} />
+      {!esperando && <FaixaDaVez selos={selos} rotulo={rotuloDaVez(selos)} noTelefone={noTelefone} />}
       {/* A JANELA SOBRE O CAMPO: a casa mede 48 e quem cede é a janela.
           O rolamento é desta caixa, e nunca do log — é a inversão.
 
@@ -809,7 +836,7 @@ export function TelaDeBatalha(props) {
           aoMedirOPasso={setCasasDoPasso}
           ladoFixo={ALVOS.piso} />
       </div>
-      <LinhaDoVeredito texto={linha} armado={!!armado} reacao={p.reacao} />
+      {!esperando && <LinhaDoVeredito texto={linha} armado={!!armado} reacao={p.reacao} />}
       {p.fim ? (
         /* A SAÍDA É CONFIRMADA, E SÓ NO FIM. Durante a luta não há porta
            nenhuma — o motivo é medido: o `⛺` encerrou uma luta por engano
@@ -819,6 +846,20 @@ export function TelaDeBatalha(props) {
           style={{ minHeight: ALVOS.piso, background: T.amber, color: T.onAccent, fontWeight: 600 }}>
           Respirar fundo →
         </button>
+      ) : p.decisao ? (
+        /* A DECISÃO SEM RELÓGIO ENTRA NO FLUXO (MM16 nº 5). O cartão do
+           golpe final ia no slot da reação, ancorado em cima da linha do
+           veredito; num ecrã de 310 px o topo dele ficava em y −85 e o foco
+           não rolava até lá — o "como" escrevia-se às cegas e não chegava.
+           A reação (K3) sobrepõe porque tem relógio e o jogador lê o campo
+           enquanto decide; o golpe final não tem relógio, e quem decide é
+           ele. Toma o lugar dos verbos (parados enquanto ele espera) e do
+           texto livre (o cartão tem o campo dele — dois `como?` no mesmo
+           ecrã seriam a mesma ação com duas caras), e o tabuleiro cede a
+           altura. Se ainda assim faltar ecrã, rola DENTRO dele. */
+        <div ref={decisaoRef} className="shrink min-h-0 overflow-y-auto tv-scroll" style={{ flex: "0 1 auto" }}>
+          {p.decisao}
+        </div>
       ) : (
         <FileiraDeVerbos verbos={verbos} armado={armado} impedidos={impedidos}
           aoTocar={tocarVerbo}
@@ -826,12 +867,12 @@ export function TelaDeBatalha(props) {
           bolsaAberta={bolsaAberta} aoAbrirBolsa={() => setBolsaAberta((v) => !v)}
           nBolsa={(p.bolsa || []).length} />
       )}
-      {p.gaveta}
+      {!p.decisao && p.gaveta}
       {/* O TEXTO LIVRE muda de papel: deixa de ser a sintaxe obrigatória e
           vira o tempero. O convite é `como? (opcional)`, e ele NUNCA é
           `disabled` enquanto há um verbo armado — escrever e mirar são
           compatíveis, e é esse o ponto inteiro. */}
-      <div className="flex items-center gap-2 rounded-lg px-2 shrink-0"
+      {!p.decisao && <div className="flex items-center gap-2 rounded-lg px-2 shrink-0"
         style={{ minHeight: G.textoLivre, background: T.bg, border: `1.5px solid ${armado ? T.amber : T.line}` }}>
         <input value={p.entrada || ""} onChange={(e) => p.aoEscrever && p.aoEscrever(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && p.aoAgir) { setArmado(""); p.aoAgir(p.entrada); } }}
@@ -844,7 +885,7 @@ export function TelaDeBatalha(props) {
           style={{ minHeight: G.veredito + 8, background: T.amber, color: T.onAccent, opacity: (p.bloqueado || !String(p.entrada || "").trim()) ? 0.4 : 1 }}>
           Agir →
         </button>
-      </div>
+      </div>}
       {p.dado}
     </section>
   );
@@ -914,7 +955,7 @@ export function TelaDeBatalha(props) {
       <div className="flex-1 min-h-0 min-w-0 flex flex-col-reverse md:flex-row md:justify-center"
         style={{ gap: G.goteira }}>
         {campo}
-        {lateral}
+        {!(esperando && noTelefone) && lateral}
       </div>
     </div>
   );

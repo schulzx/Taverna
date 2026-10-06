@@ -192,7 +192,13 @@ sec("4. O ENVELOPE");
     /acorda em 1 hora\b/.test(envelopeDoGolpeFinal({ alvo: aplicarEscolha(ogro(), "nao_letal", { sorte: () => 0 }), escolha: "nao_letal" }).acabou[0]));
   t("a cena dela vai inteira (cabe no teto)", CENA_DELA.length <= TETO_DA_CENA_DO_JOGADOR && eP.acabou[1].includes(CENA_DELA.replace(/"/g, "'")));
   t("a cena vai entre aspas", /“[^“”]+”/.test(eP.acabou[1]));
-  t("a cena manda narrar ampliada, sem copiar e sem desmentir", /ampliada/.test(eP.acabou[1]) && /sem copiar nem desmentir/.test(eP.acabou[1]));
+  /* MOVIDA NA MM16 nº 5 (05/10), com o motivo: a moldura passou de "Narre
+     ampliada" a "Abra a narração por isto, ampliado" — no M21 e no M30 da
+     3.ª sessão o Mestre abriu os dois golpes pelo mesmo "no flanco" que
+     ninguém escreveu. A intenção continua: ampliar, sem copiar nem desmentir;
+     e agora também abrir por ela. */
+  t("a cena manda abrir por ela e narrar ampliado, sem copiar e sem desmentir",
+    /Abra a narração por isto/.test(eP.acabou[1]) && /ampliado/.test(eP.acabou[1]) && /sem copiar nem desmentir/.test(eP.acabou[1]));
   /* A LEI DE Q5: se ele corta a cabeça de quem escolheu poupar, quem
      manda é a escolha, não a frase */
   t("não letal: \"quem manda é a escolha\" e o alvo ficou vivo", /quem manda é a escolha, não a frase/i.test(eP.acabou[1]) && /ficou vivo/.test(eP.acabou[1]));

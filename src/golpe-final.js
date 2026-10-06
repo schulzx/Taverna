@@ -48,10 +48,12 @@
      cena na lista `acabou` do envelope e, quando é poupar, o veto na
      `naoPode`. Nada de bloco estático no prompt: o texto do jogador é do
      turno e morre com ele.
-   · `golpeFinalNaPauta` (MM14) — ONDE esse envelope entra: a lista
-     `acabou` vai à seção DESFECHO (prio 2), não à ACABOU DE (prio 3). A
-     sessão de prova perdeu a frase do jogador 3 vezes em 3 pela seção
-     errada; a razão está no cabeçalho do teto, logo abaixo.
+   · `golpeFinalNaPauta` (MM14, MM16) — ONDE esse envelope entra: a lista
+     `acabou` vai à seção DESFECHO e a `naoPode` à `vetoDoDesfecho`, as
+     duas de FERRO (`PRIO_DE_FERRO`, pauta.js). A MM14 tirou a frase da
+     ACABOU DE (prio 3) para o DESFECHO de prio 2, e a 3.ª sessão ainda a
+     perdeu 2 em 2: a razão, com os números, está no cabeçalho do teto,
+     logo abaixo.
 
    PULAR É UM CLIQUE: escrever é opcional. Sem cena, o envelope leva só
    o fato — quem não quer escrever não é punido nem atrasado.
@@ -78,7 +80,7 @@
    ============================================================ */
 
 import { hashSemente, rng } from "./semente.js";
-import { porNaPauta, garantirPauta } from "./pauta.js";
+import { porNaPauta } from "./pauta.js";
 
 /* ---------------- AS DUAS ESCOLHAS ----------------
 
@@ -124,7 +126,8 @@ export const DADO_DO_DESPERTAR = { qtd: 1, lados: 4, unidade: "horas", unidadeUm
      cena que define o órgão. 240 dá-lhe ~28% de folga (duas frases
      longas a mais, ou uma fala de despedida).
    · A LINHA DA CENA, com a moldura (quem, a ordem de narrar, "a escolha
-     manda"), fica em 425 caracteres no pior caso medido pela suíte (nome
+     manda"), fica em 446 caracteres (425 até a MM16, que pôs na moldura
+     "abra a narração por isto") no pior caso medido pela suíte (nome
      de 36 letras, herói de 21, cena no teto) — menos de um terço do
      `TETO_DA_PAUTA` (1400). Era 467 até a MM14, que tirou da moldura o
      que não dizia nada novo ("com a sua voz", "se ela poupa, ajuste o
@@ -145,7 +148,21 @@ export const DADO_DO_DESPERTAR = { qtd: 1, lados: 4, unidade: "horas", unidadeUm
      cheia e poupando, também o segundo veto (o empate de prio 2 vai pela
      ordem de leitura, como o da FALA); no pior de todos (nome de 36
      letras, poupar, cena no teto, pauta cheia) é a cena que cede, nunca o
-     fato nem o veto. O teto (1400) não se move um caractere. */
+     fato nem o veto. O teto (1400) não se move um caractere.
+   · E A PRIO 2 AINDA NÃO BASTOU (MM16 nº 5, 05/10). A 3.ª sessão perdeu a
+     frase 2 em 2 (M21 e M30), e o registo das chamadas prova porquê: o
+     ONDE de um turno de luta numa masmorra tinha QUATRO linhas de prio 1 —
+     o lugar, as coordenadas, o que o espaço comporta e 264 caracteres da
+     economia da cidade — e o corte, guloso, enchia-as antes do DESFECHO.
+     No M30: 1164 gastos antes da cena, a cena com 287, o teto 1400. A MM14
+     tinha provado a frase com um ONDE só do Geógrafo, sem a economia. Agora
+     o DESFECHO e o veto de quem caiu são de FERRO (abaixo de toda prio, na
+     pauta.js; só a 1.ª linha do ONDE lhes ganha no empate), e a economia
+     cede em luta e masmorra (`SECOES_QUE_CEDEM`). Com a cena no teto, o
+     nome de 36 letras e poupando, o ferro inteiro (fato, cena e veto) gasta
+     774 de 1400, ao lado da cabeça (293) e do lugar: cabe sempre, e quem
+     cede é o que não é do turno.
+     Medido em teste-como-chega: 500 lutas semeadas, 500 frases inteiras. */
 export const TETO_DA_CENA_DO_JOGADOR = 240;
 
 /* ---------------- OS MOTIVOS (diagnóstico, nunca tela) ----------------
@@ -171,7 +188,10 @@ const TEXTOS = {
   heroiSemNome: "o herói",
   fatoLetal: (h, n) => `${h} deu o golpe final em ${n}, e foi para matar: ${n} está morto.`,
   fatoPoupar: (h, n, horas) => `${h} deu o golpe final em ${n} e o poupou: ${n} está desacordado, vivo, fora da luta${horas ? ` — acorda em ${horas} se ninguém fizer nada` : ""}.`,
-  cena: (h, cena) => `COMO ${h} FEZ, nas palavras do jogador: “${cena}”. Narre ampliada, sem copiar nem desmentir.`,
+  /* MM16 nº 5: "abra por ela" — a frase é o que o jogador acabou de dizer,
+     e o M21 e o M30 abriram os dois pelo mesmo "golpe no flanco" que
+     ninguém escreveu. +17 caracteres, pagos pelo ferro. */
+  cena: (h, cena) => `COMO ${h} FEZ, nas palavras do jogador: “${cena}”. Abra a narração por isto, ampliado, sem copiar nem desmentir.`,
   mandaLetal: (n) => ` Quem manda é a escolha, não a frase: ${n} morreu.`,
   mandaPoupar: (n) => ` Quem manda é a escolha, não a frase: ${n} ficou vivo.`,
   vetoPoupar: (n) => `${n} morrer nesta cena: está desacordado e vivo`,
@@ -321,25 +341,24 @@ export function envelopeDoGolpeFinal(entrada) {
    luta, todos coisas que o Narrador não pode desmentir. A lista `acabou`
    vai à seção `desfecho` (prio 2) e a `naoPode` à de veto.
 
-   E OS VETOS DESTE TURNO VÃO À FRENTE dos outros vetos. Com a cena na
-   segunda linha do DESFECHO (2,1), o veto do poupado, apendido no fim do
-   NÃO PODE, ficava em 2,2 ou pior e era ele que cedia numa pauta cheia —
-   o "Esqueleto morrer nesta cena" cortado para caber a frase que o mata
-   de mentira. À frente, ele é a linha 2,0 da seção: o fato e o veto de
-   quem acabou de cair nunca cedem; quem cede primeiro é o segundo veto
-   dos antigos (o de uma distância, que já vinha nos turnos anteriores).
+   E OS VETOS DESTE TURNO VÃO À SEÇÃO DELES (MM16). Na MM14 iam à frente
+   do NÃO PODE (2,0) — à frente dos outros vetos, mas atrás do ONDE
+   inteiro. Agora vão à `vetoDoDesfecho`, de FERRO como o DESFECHO, com o
+   rótulo do NÃO PODE e colada a ele: o Narrador lê o mesmo bloco de vetos
+   com o do turno na primeira linha, como lia, e o fato, a frase e o veto
+   de quem acabou de cair cedem só depois de tudo o resto.
 
    Recebe a pauta como está e devolve uma NOVA; a recebida fica intacta
    (`porNaPauta` não muta). Envelope de lixo — `null`, sem listas, listas
    tortas — devolve a pauta como veio: o golpe final nunca pode custar o
    turno. */
 const SECAO_DO_DESFECHO = "desfecho";
+const SECAO_DO_VETO = "vetoDoDesfecho";
 export function golpeFinalNaPauta(pauta, envelope) {
   const e = ehObj(envelope) ? envelope : {};
   const soTexto = (l) => (Array.isArray(l) ? l : []).filter((x) => typeof x === "string" && x.trim());
   const p = porNaPauta(pauta, SECAO_DO_DESFECHO, ...soTexto(e.acabou));
-  const vetos = soTexto(e.naoPode);
-  return vetos.length ? garantirPauta({ ...p, naoPode: [...vetos, ...(p.naoPode || [])] }) : p;
+  return porNaPauta(p, SECAO_DO_VETO, ...soTexto(e.naoPode));
 }
 
 /* ---------------- 5. AS QUEDAS DE UMA RODADA (MM3b · o golpe final é do grupo) ----------------

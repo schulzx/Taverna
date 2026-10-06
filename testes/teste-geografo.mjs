@@ -153,8 +153,19 @@ sec("7) O ORÇAMENTO DA PAUTA MORDE");
 {
   /* uma pauta gigantesca: dez seções com cinco linhas longas cada */
   let p = garantirPauta(null);
+  /* MOVIDA NA MM16 nº 5 (05/10), com o motivo: o DESFECHO e o veto de quem
+     caiu (`vetoDoDesfecho`) passaram a ser de FERRO — cortam depois de
+     tudo — porque são o turno, e o turno tem UMA queda (às vezes duas):
+     cinco linhas de 90 em cada uma das duas é uma pauta que nenhum jogo
+     monta, e gastaria 1040 dos 1400 só em ferro. Aqui o turno tem a forma
+     do golpe LETAL, o mais comum: uma linha de desfecho e nenhum veto de
+     quem caiu (o veto só nasce quando se poupa — e esse caso, com os dois
+     vetos a chegar, prova-se em teste-como-chega). A intenção da seção não
+     muda: o orçamento morde, o corte é por prioridade, e a 1.ª linha do
+     ONDE e a do veto ficam. */
+  const DO_TURNO = { desfecho: 1, vetoDoDesfecho: 0 };
   for (const s of SECOES) {
-    for (let i = 0; i < 5; i++) p = porNaPauta(p, s.id, `${s.id}-${i} ` + "z".repeat(90));
+    for (let i = 0; i < (s.id in DO_TURNO ? DO_TURNO[s.id] : 5); i++) p = porNaPauta(p, s.id, `${s.id}-${i} ` + "z".repeat(90));
   }
   const cru = tamanhoCruDaPauta(p);
   const t = textoDaPauta(p);
@@ -170,7 +181,11 @@ sec("7) O ORÇAMENTO DA PAUTA MORDE");
   ok(iP >= 0 && (iU < 0 || iU > iP), "dentro de uma seção, a primeira linha resiste mais");
   /* e a ordem de LEITURA é a da lista, não a do corte */
   const corpo2 = t.split("\n").slice(1).join("\n");
-  const pos = SECOES.map((s) => corpo2.indexOf("\n" + s.rotulo)).map((i, k) => (k === 0 && corpo2.startsWith(SECOES[0].rotulo) ? 0 : i)).filter((i) => i >= 0);
+  /* MM16: duas seções podem dividir um rótulo (ONDE + economia; o veto do
+     desfecho + NÃO PODE) e saem num bloco só — a ordem de leitura mede-se
+     por rótulo, uma vez cada um, na ordem da lista. */
+  const rotulos = SECOES.map((s) => s.rotulo).filter((r, i, a) => a.indexOf(r) === i);
+  const pos = rotulos.map((r) => corpo2.indexOf("\n" + r)).map((i, k) => (k === 0 && corpo2.startsWith(rotulos[0]) ? 0 : i)).filter((i) => i >= 0);
   ok(pos.every((v, i, a) => i === 0 || v > a[i - 1]), "e o texto sai na ordem de leitura, não na ordem do corte");
 }
 

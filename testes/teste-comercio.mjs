@@ -220,7 +220,13 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
   /* uma proposta por dia, e o preço da tela já é o preço com barganha */
   t("uma pechincha por mercador por dia", /if \(jah && jah\.dia === diaRef\.current\)/.test(APP));
   t("a barganha entra no preço da etiqueta", /precoDeCompraPara\(personagem, it\.preco\) \* aj/.test(APP));
-  t("o Narrador recebe o comércio do lugar", /porNaPauta\(p, "onde", envelopeDoComercio\(/.test(APP));
+  /* (v9.350 · o como chega) MM16 nº 5: a seção mudou de "onde" para
+     "economia" — o mesmo rótulo ONDE na pauta (na cidade o Narrador lê o
+     mesmo bloco), mas prio 2,5 e cede na luta, na masmorra e fora dos muros
+     (`SECOES_QUE_CEDEM`, pauta.js). Como 4.ª linha do ONDE ela tirava do teto
+     a frase do golpe final. A intenção desta asserção fica: o comércio do
+     lugar CHEGA ao Narrador — só a morada mudou (teste-como-chega.mjs, 6). */
+  t("o Narrador recebe o comércio do lugar", /porNaPauta\(p, "economia", envelopeDoComercio\(/.test(APP));
   t("e o estado novo é salvo", /salvar\(\{ mercado: mercadoRef\.current \}\)/.test(APP));
 }
 

@@ -14,7 +14,7 @@
      laço aplica `revideNoCampo` à cópia que publica.
    · Nº 3 — voltar a uma sala limpa refazia a luta (T34). Agora
      `entrarNaSala` diz `jaLimpa` e `voltarASalaLimpa` entrega a cena. */
-import { SECOES, porNaPauta, textoDaPauta, garantirPauta, TETO_DA_PAUTA } from "../src/pauta.js";
+import { SECOES, porNaPauta, textoDaPauta, garantirPauta, TETO_DA_PAUTA, PRIO_DE_FERRO, cederNaCena } from "../src/pauta.js";
 import { paraPauta } from "../src/geografo.js";
 import { aplicarEscolha, envelopeDoGolpeFinal, golpeFinalNaPauta, TETO_DA_CENA_DO_JOGADOR } from "../src/golpe-final.js";
 import { revideNoCampo } from "../src/reacoes.js";
@@ -69,8 +69,14 @@ sec("1. Nº 4 — a seção do desfecho");
   const d = SECOES.find((s) => s.id === "desfecho");
   const idx = (id) => SECOES.findIndex((s) => s.id === id);
   t("a seção existe, com rótulo e propósito", !!(d && d.rotulo && d.o));
-  t("prioridade 2, a de A FALA — corta depois do que o sistema resolveu (3)",
-    d && d.prio === 2 && d.prio === SECOES.find((s) => s.id === "fala").prio && d.prio < SECOES.find((s) => s.id === "acabou").prio);
+  /* MOVIDA NA MM16 nº 5 (05/10), com o motivo: prio 2 não bastou. Na 3.ª
+     sessão o ONDE de uma luta numa masmorra tinha quatro linhas de prio 1
+     (a última, 264 caracteres da economia da cidade) e a frase caiu 2 em 2
+     (teste-como-chega tem os números). O DESFECHO passou a ser de FERRO. A
+     intenção continua: corta depois do que o sistema resolveu (3) — e
+     agora depois de tudo. */
+  t("prioridade de ferro — corta depois de tudo, e antes dela só a 1.ª linha do ONDE",
+    d && d.prio === PRIO_DE_FERRO && SECOES.every((s) => s.id === d.id || s.id === "vetoDoDesfecho" || s.prio > d.prio) && d.prio < SECOES.find((s) => s.id === "acabou").prio);
   t("e na leitura vem logo depois de ACABOU DE", idx("desfecho") === idx("acabou") + 1);
 }
 
@@ -116,7 +122,12 @@ sec("3. Nº 4 — a pauta cheia, e o preço dentro do teto");
      linha de 110 — ONDE, FALA, PESO e NÃO PODE todos presentes, que numa
      luta já é mais do que a sessão viu. A cena no teto de 240. */
   let cheia = {};
-  for (const s of SECOES) if (s.id !== "desfecho") cheia = porNaPauta(cheia, s.id, `${s.id} linha ` + "x".repeat(110));
+  /* MM16: sem as duas seções do turno (o desfecho e o veto de quem caiu,
+     que o golpe é que enche) e cedida como numa luta (`cederNaCena`): a
+     economia da cidade, a rua, a vizinhança e as potências não estão numa
+     luta. Com elas, esta pauta "cheia" era uma luta que nenhum jogo monta. */
+  for (const s of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(s.id)) cheia = porNaPauta(cheia, s.id, `${s.id} linha ` + "x".repeat(110));
+  cheia = cederNaCena(cheia, { luta: true });
   const longa = ("desço a lâmina pela nuca dele e seguro-o antes de bater no chão ").repeat(6);
   for (const escolha of ["letal", "nao_letal"]) {
     const a = aplicarEscolha({ nome: "Esqueleto", vida: 2 }, escolha, { semente: "mm14" });
@@ -151,13 +162,22 @@ sec("3. Nº 4 — a pauta cheia, e o preço dentro do teto");
   const eP = envelopeDoGolpeFinal({ alvo: aP, escolha: "nao_letal", heroi: HEROI, comoFez: longa });
   const pP = golpeFinalNaPauta(cheia, eP);
   const comP = textoDaPauta(pP);
-  t("o veto do poupado é a primeira linha do NÃO PODE", pP.naoPode[0] === eP.naoPode[0]);
+  /* MOVIDA NA MM16: o veto do poupado mora na seção de ferro dele, que sai
+     no bloco do NÃO PODE, à frente — a intenção (o primeiro veto que o
+     Narrador lê é o de quem acabou de cair) prova-se no texto. */
+  t("o veto do poupado é a primeira linha do NÃO PODE",
+    pP.vetoDoDesfecho[0] === eP.naoPode[0] && comP.includes(`NÃO PODE  ${eP.naoPode[0]}`));
   const linhasDe = (txt) => SECOES.filter((s) => s.id !== "desfecho" && txt.includes(`${s.id} linha `)).map((s) => s.id);
   const antes = linhasDe(sem), depois = linhasDe(comP);
   const sairam = antes.filter((id) => !depois.includes(id));
   const prio = Object.fromEntries(SECOES.map((s) => [s.id, s.prio]));
-  t("o que sai para o desfecho entrar: prioridade 3 ou pior, e no máximo o veto antigo — o ONDE, a FALA e o PESO ficam",
-    sairam.every((id) => prio[id] >= 3 || id === "naoPode") && ["onde", "fala", "peso"].every((id) => depois.includes(id)), `saíram: ${sairam.join(", ")}`);
+  /* MOVIDA NA MM16, com o motivo: o desfecho é de FERRO — a pessoa pediu a
+     frase do jogador "acima de tudo, como o veto de quem caiu". O preço
+     deixa de ter piso de prioridade: numa pauta cheia, poupando e com a
+     frase no teto, cede o que corta primeiro na ordem da tabela. O que fica
+     escrito é o que NUNCA sai: o lugar (a 1.ª linha do ONDE). */
+  t("o que sai para o desfecho entrar nunca é o lugar",
+    !sairam.includes("onde") && depois.includes("onde"), `saíram: ${sairam.join(", ")}`);
   {
     const aL = aplicarEscolha({ nome: "Esqueleto", vida: 2 }, "letal", { semente: "mm14" });
     const txL = textoDaPauta(golpeFinalNaPauta(cheia, envelopeDoGolpeFinal({ alvo: aL, escolha: "letal", heroi: HEROI, comoFez: longa })));
@@ -188,7 +208,8 @@ sec("4. Nº 4 — a porta aguenta lixo e não muta");
     (p.desfecho || []).length === 2 && !(p.acabou || []).some((l) => env.acabou.includes(l)));
   const pp = golpe("Slime", "", "nao_letal");
   const p2 = golpeFinalNaPauta({}, pp);
-  t("poupar sem frase: só o fato no DESFECHO, e o veto no NÃO PODE", (p2.desfecho || []).length === 1 && (p2.naoPode || []).length === 1);
+  /* MOVIDA NA MM16: o veto vai à seção de ferro dele (rótulo NÃO PODE) */
+  t("poupar sem frase: só o fato no DESFECHO, e o veto no NÃO PODE", (p2.desfecho || []).length === 1 && (p2.vetoDoDesfecho || []).length === 1 && !p2.naoPode);
   const vazia = JSON.stringify(garantirPauta(base));
   t("envelope de lixo devolve a pauta como veio",
     [null, undefined, 3, "x", {}, { acabou: null }, { acabou: [null, 5, "  "] }, { acabou: "texto solto", naoPode: {} }]
