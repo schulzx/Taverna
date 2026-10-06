@@ -59,6 +59,7 @@ import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
 import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, pautaDoEscondido, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
+import { luzDaLuta, aplicarGestoDaLuz, luzParaPauta } from "./luz.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -5319,6 +5320,29 @@ export default function Taverna() {
      estado mais recente e `mudarFicha` grava nos dois lugares de uma vez, de
      modo que o próximo a ler nunca receba o passado. */
   const fichaViva = () => personagemRef.current || personagem;
+  /* 06/10 (a luz e a sombra): as tochas que há para acender — as da
+     masmorra lá dentro, as da mochila cá fora — e o mapa de luz da luta,
+     refeito a cada pergunta dos mesmos refs (nunca vai ao save; o que vai é
+     `combate.tochaDoHeroi`, campo novo e opcional). Null fora da luta, e
+     null se estourar: o veredito volta à regra de antes. */
+  const tochasAgora = () => {
+    const mm = masmorraRef.current;
+    if (mm && !mm.encerrada) return Math.max(0, Number(mm.tochas) || 0);
+    return Math.max(0, Number(((fichaViva() || {}).suprimentos || {}).tochas) || 0);
+  };
+  const luzDaLutaAgora = (comb) => {
+    try {
+      const c = comb || combateRef.current;
+      if (!c) return null;
+      const mm = masmorraRef.current;
+      return luzDaLuta({
+        grade: c.grade, heroi: c.heroi, aliados: c.aliados || [], inimigos: c.inimigos || [],
+        tochaDoHeroi: c.tochaDoHeroi, tochas: tochasAgora(), emMasmorra: !!(mm && !mm.encerrada),
+        noite: ehNoite(minutoRef.current), clima: (climaRef.current && climaRef.current.rotulo) || "",
+        pers: fichaViva(),
+      });
+    } catch (e) { calou("a luz da luta", e); return null; }
+  };
   /* ---------------- A AÇÃO BÔNUS TEM DONO (v9.43) ----------------
      No 5e ninguém tem ação bônus por existir: ela vem de um traço de classe
      (Surto de Ação, Ação Ardilosa, Rajada de Golpes, Fúria…) e quase sempre
@@ -6947,6 +6971,11 @@ export default function Taverna() {
     try {
       p = porNaPauta(p, "masmorra", masmorraParaPauta(masmorraRef.current, { luta: !!combateRef.current }));
     } catch (e) { calou("masmorraParaPauta", e); }
+    /* 06/10: A LUZ DA LUTA — o escuro, a minha tocha, quem enxerga no
+       escuro. Vazia com tudo claro; prio barata (pauta.js). */
+    try {
+      if (combateRef.current) p = porNaPauta(p, "luz", luzParaPauta(luzDaLutaAgora(), { heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }));
+    } catch (e) { calou("luzParaPauta", e); }
     /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque
        é geografia antes de ser economia — a praça de um porto e a de uma
        serra não se parecem, e o Narrador nunca teve como saber disso.
@@ -11957,7 +11986,7 @@ export default function Taverna() {
          so entao a linha do tabuleiro sai identica a de antes. */
       let qmvLuta = null;
       try {
-        qmvLuta = combateRef.current ? quemMeVe(p, { grade: combateRef.current.grade, heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }) : null;
+        qmvLuta = combateRef.current ? quemMeVe(p, { grade: combateRef.current.grade, heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [], luz: luzDaLutaAgora() }) : null;
       } catch (e) { calou("quemMeVe-na-luta", e); }
       const zon = combateRef.current ? resumoGridPrompt(combateRef.current.grade, {
         heroi: combateRef.current.heroi,
@@ -14893,6 +14922,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + rvA.nota;
       }
     } catch (e) { calou("revelarPorAto", e); }
+    /* 06/10: "baixo a tocha atrás das costas" — o gesto não custa ação (é
+       mexer no que se tem na mão), e por isso vem ANTES de tudo: quando a
+       mesma frase esconde, o veredito do esconder já vê a tocha baixada. */
+    try {
+      if (combateRef.current) {
+        const gl = aplicarGestoDaLuz(combateRef.current, acao, { tochas: tochasAgora(), emMasmorra: !!(masmorraRef.current && !masmorraRef.current.encerrada) });
+        if (gl.gesto && gl.combate !== combateRef.current) { combateRef.current = gl.combate; setCombate(gl.combate); }
+      }
+    } catch (e) { calou("o gesto da luz", e); }
     ultimoDesfechoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do
        desafio que rolou. A leitura antiga servia ao turno com dado e
@@ -15959,7 +15997,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* MM6: antes de o mundo agir, quem estava de olho pode ter me achado —
        a passiva de alguem, ou quem me tinha a descoberto o tempo todo. */
     try {
-      const rvE = revisarEscondido(persBase, { grade: gradeAtual, heroi: lugarHeroi, inimigos: combPos.inimigos });
+      const rvE = revisarEscondido(persBase, { grade: gradeAtual, heroi: lugarHeroi, inimigos: combPos.inimigos, luz: luzDaLutaAgora({ ...combPos, grade: gradeAtual, heroi: lugarHeroi }) });
       if (rvE.achadoAgora.length) {
         persBase = rvE.pers;
         mudarFicha(() => rvE.pers);
@@ -17915,6 +17953,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           if (temRecurso) {
             const ns = nascerEscondido(baseEsc, {
               total, grade: combEsc?.grade, heroi: combEsc?.heroi, inimigos: combEsc?.inimigos,
+              luz: combEsc ? luzDaLutaAgora(combEsc) : null, /* 06/10: o mesmo mapa do veredito */
               presentes: combEsc ? null : elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: baseEsc.grupo || [] }).aqui,
             });
             if (ns.ok) {
@@ -18856,6 +18895,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (combH && !v.palavra && ESCONDIDO.alvosQueEscondem.includes(v.alvoDoCusto)) {
         const ve = vereditoDoEsconder(fichaViva() || personagem, {
           grade: combH.grade, heroi: combH.heroi, inimigos: combH.inimigos || [], aliados: combH.aliados || [], economia: combH.economia,
+          luz: luzDaLutaAgora(combH), /* 06/10: a sombra conta como abrigo */
         });
         if (!ve.pode) {
           pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: ve.linha }]);

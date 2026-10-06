@@ -44,7 +44,11 @@ sec("0. as tabelas");
   t("o descanso limpa, pelos dois canais", (c.saiCom || []).includes("curto") && (c.saiCom || []).includes("longo"));
   t("nasce só da furtividade", ESCONDIDO.alvosQueEscondem.length === 1 && ESCONDIDO.alvosQueEscondem[0] === "furtividade");
   t("cai ao atacar e ao conjurar (os gatilhos de gatilhos.js)", ESCONDIDO.quebraCom.join(",") === "atacar,conjurar");
-  t("quem acha: quatro portas, cada uma com a sua frase", QUEM_ACHA.length === 4 && QUEM_ACHA.every((q) => q.id && q.diz));
+  /* 06/10 (a luz e a sombra): a quinta porta é `no_escuro` — quem enxerga
+     no escuro acha quem se escondeu só na sombra. A contagem sobe de 4 para
+     5 com a porta nomeada; as quatro de antes continuam lá, uma a uma. */
+  t("quem acha: cinco portas, cada uma com a sua frase", QUEM_ACHA.length === 5 && QUEM_ACHA.every((q) => q.id && q.diz)
+    && ["ja_achou", "passiva", "a_descoberto", "procurou", "no_escuro"].every((id) => QUEM_ACHA.some((q) => q.id === id)));
   t("os atos que revelam têm id, frase e regex", ATOS_QUE_REVELAM.length >= 4 && ATOS_QUE_REVELAM.every((a) => a.id && a.conta && a.rx instanceof RegExp));
   t("a passiva é 10 + mod", PERCEPCAO_PASSIVA.base === 10);
   t("o aliado do furtivo é o de 1,5 m (5 pés)", ATAQUE_FURTIVO.alcanceDoAliadoM === 1.5);
@@ -402,7 +406,11 @@ sec("12. a fiação no App.jsx");
 
   /* 6. SER ACHADO — em resolverRevide, antes de turnoDosInimigos. */
   {
-    const iRevE = APP.indexOf("const rvE = revisarEscondido(persBase, { grade: gradeAtual, heroi: lugarHeroi, inimigos: combPos.inimigos });");
+    /* 06/10 (a luz e a sombra): a chamada ganhou o mapa de luz no fim
+       (`luz: luzDaLutaAgora(...)`), para quem nasceu na sombra ser achado
+       pela luz de AGORA. A âncora vai até ao campo de antes e exige o novo,
+       em vez de casar a linha inteira — o resto da asserção não mudou. */
+    const iRevE = APP.indexOf("const rvE = revisarEscondido(persBase, { grade: gradeAtual, heroi: lugarHeroi, inimigos: combPos.inimigos, luz: luzDaLutaAgora(");
     const iTurno = APP.indexOf("const acoes = turnoDosInimigos({");
     t("6. resolverRevide chama revisarEscondido (dentro do calou)", iRevE > 0 && /calou\("revisarEscondido"/.test(APP));
     t("6. …ANTES de o mundo agir (turnoDosInimigos)", iTurno > iRevE);
@@ -411,7 +419,10 @@ sec("12. a fiação no App.jsx");
 
   /* 7. A LINHA DA LUTA — em enviar, dentro da chamada de resumoGridPrompt. */
   {
-    const iQmv = APP.indexOf('qmvLuta = combateRef.current ? quemMeVe(p, { grade: combateRef.current.grade, heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }) : null;');
+    /* 06/10 (a luz e a sombra): a linha da luta passou a perguntar com o
+       mapa de luz (`luz: luzDaLutaAgora()`) — quem me vê na sala às escuras
+       depende dele. A âncora acompanha a chamada; o que se prova é o mesmo. */
+    const iQmv = APP.indexOf('qmvLuta = combateRef.current ? quemMeVe(p, { grade: combateRef.current.grade, heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [], luz: luzDaLutaAgora() }) : null;');
     const iGrid = APP.indexOf("const zon = combateRef.current ? resumoGridPrompt(combateRef.current.grade, {");
     const iCampo = APP.indexOf("quemMeVe: qmvLuta,");
     t("7. quemMeVe é calculado dentro do calou (null se estourar)", iQmv > 0 && /calou\("quemMeVe-na-luta"/.test(APP));

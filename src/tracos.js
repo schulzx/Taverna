@@ -96,6 +96,12 @@ export function reducaoDeTraco(pers, tipo) {
 }
 
 export function iniciativaDeTraco(pers) { return Number(efeitoDe(pers).iniciativa) || 0; }
+/* A VISÃO NO ESCURO (06/10, a luz e a sombra): até quantos metros a raça
+   enxerga sem luz — as seis do 5e que a têm (Elfo, Anão, Meio-orc, Tiefling,
+   Gnomo, Meio-elfo), 18 m. A frase da criação diz o mesmo número. Quem lê
+   é luz.js: o herói que a tem vê o inimigo na sala às escuras — e continua
+   a esconder-se na sombra de quem não a tem. */
+export function veNoEscuroDeTraco(pers) { return Math.max(0, Number(efeitoDe(pers).veNoEscuro) || 0); }
 export function ignoraDificilPorTraco(pers) { return !!efeitoDe(pers).ignoraDificil; }
 export function oficioDeTraco(pers) { return Number(efeitoDe(pers).oficio) || 0; }
 

@@ -99,6 +99,21 @@ export const SECOES = [
      Fora da masmorra a função devolve nada e a seção não aparece; dentro,
      não está em SECOES_QUE_CEDEM — é a verdade do sítio. */
   { id: "masmorra", rotulo: "MASMORRA", prio: 2.45, o: "a planta à volta da sala: a camada, o que nela resta, as passagens e o fundo" },
+  /* 06/10 (a luz e a sombra): a luz da luta — o escuro, a minha tocha (acesa
+     ou baixada), quem do outro lado enxerga no escuro, e se eu enxergo
+     (`luzParaPauta`, luz.js). Só existe numa luta onde a luz muda a decisão
+     (masmorra, caverna, noite): com tudo claro a função devolve nada e a
+     seção nem é candidata. É a resposta a "o lobo me vê?" e não um veto —
+     quem decide se me escondi é o sistema, e isso chega pelo envelope do
+     teste. Por isso corta BARATO: prio 5.5, depois de todo veto, do
+     desfecho, da planta, de quem está e do contra; à frente só da gente, do
+     vilão, do aliado e do que fica longe. Medido em teste-luz-e-sombra: nas
+     500 lutas semeadas de estresse não tira desfecho, veto, frase nem planta
+     em nenhuma (500/500) e chega em 181 (a 4,5 chegaria em 229, tirando o
+     contra; a 2,5, em 314, tirando quem está); na pauta da chamada 68 da
+     sessão 3 (M30) chega inteira, com a frase do golpe. A linha é curta
+     (~90 caracteres) para caber na sobra. */
+  { id: "luz", rotulo: "A LUZ", prio: 5.5, o: "a luz da luta: o escuro, a minha tocha, quem enxerga no escuro" },
   /* MM16 nº 5: O QUE O LUGAR PRODUZ E O QUE LHE FALTA (`envelopeDoComercio`,
      comercio.js) morava como mais uma linha do ONDE, de prio 1 — e ia em
      TODO turno, também dentro de uma masmorra e a meio de uma luta, onde

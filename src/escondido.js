@@ -67,6 +67,10 @@
 import { temCobertura, linhaDeVisao, garantirGrade, ehParede, distanciaM, metrosTxt, nomeDoLugar, quadradosDe } from "./grid.js";
 import { criarCondicao } from "./condicoes.js";
 import { soODeclarado } from "./peneira.js";
+/* 06/10: a luz e a sombra. luz.js diz que luz banha um ponto e quem vê quem
+   com clareza; a decisão de onde sumir continua aqui. A seta aponta num
+   sentido só: luz.js não importa este arquivo. */
+import { porQueVe, semATochaDoHeroi, veNoEscuro } from "./luz.js";
 
 /* ---------------- A REGRA, EM UMA TABELA ----------------
    `alvosQueEscondem` são os `alvo` de desafio (desafios.js) cujo sucesso
@@ -112,6 +116,8 @@ export const QUEM_ACHA = [
   { id: "ja_achou", diz: "já o tinha achado" },
   { id: "passiva", diz: "a atenção dele passa o seu disfarce" },
   { id: "a_descoberto", diz: "tem você à vista, sem nada no meio" },
+  /* 06/10: a sombra não engana quem enxerga sem luz */
+  { id: "no_escuro", diz: "enxerga no escuro e vê você" },
   { id: "procurou", diz: "procurou e achou" },
 ];
 
@@ -128,7 +134,7 @@ export const ATOS_QUE_REVELAM = [
   { id: "aberto", conta: "você correu para o aberto",
     rx: /\b(corro|disparo|atravesso) (para |ate |pelo |pela )?(o |a )?(meio|centro|aberto|claro|salao|praca|patio)\b/ },
   { id: "luz", conta: "você acendeu uma luz",
-    rx: /\bacendo (a |uma |o |um )?(tocha|lanterna|vela|fogueira|lampiao|candeeiro)\b/ },
+    rx: /\b(acendo|reacendo|ergo|levanto|destapo|descubro) (a |uma |o |um |minha |a minha )?(tocha|lanterna|vela|fogueira|lampiao|candeeiro)\b/ },
 ];
 
 /* ---------------- LEITURA ---------------- */
@@ -166,21 +172,62 @@ export function percepcaoPassiva(quem) {
 /* ONDE SE ESCONDER. Fora da luta (sem grade), sempre há. Dentro, a
    cobertura no quadrado do herói ou nenhum inimigo vivo com linha de
    visão até ele. Devolve o porquê — é ele que a tela diz quando não dá. */
+/* 06/10, A SOMBRA COMO ABRIGO. Com o mapa de luz (`luz`, de luz.js), a
+   sombra conta como cobertura para quem não o vê com clareza: no escuro, ou
+   na penumbra a partir de `SOMBRA_QUE_ESCONDE`, e nunca de quem enxerga
+   no escuro dentro do alcance. Sem `luz`, a regra é a de antes, letra a
+   letra. Recusado, o porquê distingue o que o jogador pode fazer:
+     · "farol" — a tocha NA MINHA MÃO é o que me mostra; baixá-la bastaria;
+     · "no_escuro" — quem me vê, vê-me só porque enxerga no escuro;
+     · "a_descoberto" — a luz (do dia, de outra fonte) me mostra. */
 export function ondeSeEsconder(opcoes) {
-  const { grade = null, heroi = null, inimigos = [] } = opcoes || {};
+  const { grade = null, heroi = null, inimigos = [], luz = null } = opcoes || {};
   if (!grade || !posto(heroi)) return { pode: true, porque: "fora_da_luta" };
   if (temCobertura(grade, heroi.x, heroi.y)) return { pode: true, porque: "cobertura" };
   const olham = lista(inimigos).filter((e) => vivo(e) && posto(e) && linhaDeVisao(grade, e, heroi));
   if (!olham.length) return { pode: true, porque: "fora_de_vista" };
-  return { pode: false, porque: "a_descoberto", quem: olham.map(nomeDe) };
+  if (!luz || typeof luz !== "object") return { pode: false, porque: "a_descoberto", quem: olham.map(nomeDe) };
+  const veem = olham.filter((o) => porQueVe(luz, o, heroi));
+  if (!veem.length) return { pode: true, porque: "sombra" };
+  const semMinha = semATochaDoHeroi(luz);
+  const veemSem = olham.map((o) => ({ o, por: porQueVe(semMinha, o, heroi) })).filter((x) => x.por);
+  if (luz.tocha === "acesa" && !veemSem.length) return { pode: false, porque: "farol", quem: veem.map(nomeDe) };
+  if (veemSem.length && veemSem.every((x) => x.por === "olhos")) return { pode: false, porque: "no_escuro", quem: veemSem.map((x) => nomeDe(x.o)) };
+  return { pode: false, porque: "a_descoberto", quem: veem.map(nomeDe) };
+}
+
+/* A LINHA DA RECUSA, uma só para o veredito e para o nascer — o que o
+   jogador lê antes do dado é o que leria depois. Sem nome de mecanismo. */
+function linhaDaRecusa(onde) {
+  const quem = lista(onde && onde.quem).map(String);
+  const muitos = quem.length > 1;
+  if (onde && onde.porque === "farol") return "👁 Com a tocha acesa você é um farol — baixe-a primeiro.";
+  if (onde && onde.porque === "no_escuro") return `👁 ${juntarNomes(quem)} ${muitos ? "enxergam" : "enxerga"} no escuro: a sombra não esconde você.`;
+  return `👁 Não há onde sumir: ${juntarNomes(quem)} ${muitos ? "têm" : "tem"} você à vista, sem nada no meio.`;
 }
 
 /* Um observador me vê? Devolve o id de `QUEM_ACHA` ou null. */
-function porqueMeVe(estado, obs, { grade, heroi }) {
+/* 06/10: na sombra, "a descoberto" só vale para quem me vê com clareza. Com
+   o mapa (`luz`) a conta é inteira; sem ele — os chamadores antigos, o
+   golpe do inimigo em combate.js — o estado lembra que nasceu na sombra
+   (`sombra: true`) e só quem enxerga no escuro, ao alcance, me tem à
+   vista. Erguer a luz revela por ato (`ATOS_QUE_REVELAM`), e é isso que
+   mantém a memória honesta sem o mapa. */
+function porqueMeVe(estado, obs, { grade, heroi, luz = null }) {
   const nome = nomeDe(obs);
   if (lista(estado.achadoPor).includes(nome)) return "ja_achou";
   if (percepcaoPassiva(obs) > (Number(estado.total) || 0)) return "passiva";
-  if (grade && posto(heroi) && posto(obs) && linhaDeVisao(grade, obs, heroi) && !temCobertura(grade, heroi.x, heroi.y)) return "a_descoberto";
+  if (grade && posto(heroi) && posto(obs) && linhaDeVisao(grade, obs, heroi) && !temCobertura(grade, heroi.x, heroi.y)) {
+    if (luz && typeof luz === "object") {
+      const por = porQueVe(luz, obs, heroi);
+      return !por ? null : por === "olhos" ? "no_escuro" : "a_descoberto";
+    }
+    if (estado.sombra) {
+      const olhos = veNoEscuro(obs);
+      return olhos > 0 && distanciaM(obs, heroi) <= olhos ? "no_escuro" : null;
+    }
+    return "a_descoberto";
+  }
   return null;
 }
 
@@ -190,18 +237,19 @@ function porqueMeVe(estado, obs, { grade, heroi }) {
    opcional: sem ninguém nomeado, o estado nasce sem testemunha).
    Devolve a ficha NOVA — nunca muta a recebida. */
 export function nascerEscondido(pers, opcoes) {
-  const { total, grade = null, heroi = null, inimigos = null, presentes = null } = opcoes || {};
+  const { total, grade = null, heroi = null, inimigos = null, presentes = null, luz = null } = opcoes || {};
   const base = pers && typeof pers === "object" ? pers : {};
   const t = Math.round(Number(total));
   if (!Number.isFinite(t)) return { ok: false, pers: base, motivo: "sem_total", linhas: [] };
   const naLuta = !!(grade && posto(heroi));
   const obs = lista(naLuta ? inimigos : presentes).filter(vivo);
-  const onde = ondeSeEsconder({ grade, heroi, inimigos: obs });
+  const onde = ondeSeEsconder({ grade, heroi, inimigos: obs, luz: naLuta ? luz : null });
   if (!onde.pode) {
-    return { ok: false, pers: base, motivo: onde.porque, linhas: [`👁 Não há onde sumir: ${juntarNomes(onde.quem)} ${onde.quem.length > 1 ? "têm" : "tem"} você à vista, sem nada no meio.`] };
+    return { ok: false, pers: base, motivo: onde.porque, linhas: [linhaDaRecusa(onde)] };
   }
-  const molde = { total: t, achadoPor: [] };
-  const achadoPor = obs.filter((o) => porqueMeVe(molde, o, { grade, heroi })).map(nomeDe);
+  const naSombra = onde.porque === "sombra";
+  const molde = { total: t, achadoPor: [], ...(naSombra ? { sombra: true } : {}) };
+  const achadoPor = obs.filter((o) => porqueMeVe(molde, o, { grade, heroi, luz: naLuta ? luz : null })).map(nomeDe);
   if (obs.length && achadoPor.length === obs.length) {
     return { ok: false, pers: base, motivo: "todos_veem", linhas: [`👁 Você tenta sumir, mas ${juntarNomes(achadoPor)} não ${achadoPor.length > 1 ? "tiram" : "tira"} os olhos de você.`] };
   }
@@ -210,6 +258,8 @@ export function nascerEscondido(pers, opcoes) {
     total: t,
     achadoPor,
     quebraCom: [...ESCONDIDO.quebraCom],
+    /* 06/10: campo NOVO e só quando é verdade — a versão antiga não o lê */
+    ...(naSombra ? { sombra: true } : {}),
   };
   const conds = lista(base.condicoes).filter((c) => c.id !== ESCONDIDO.id);
   const novo = { ...base, condicoes: [...conds, inst] };
@@ -218,7 +268,7 @@ export function nascerEscondido(pers, opcoes) {
      catálogo: toda linha que abre com emoji precisa de decisão em
      `ASSUNTO_DO_EMOJI` (glifos.js), que é do desenho — um glifo próprio
      para "escondido" é pedido para lá, não decisão daqui */
-  return { ok: true, pers: novo, estado: inst, motivo: onde.porque, linhas: [`🌠 Você está escondido (furtividade ${t})${quemVe}.`] };
+  return { ok: true, pers: novo, estado: inst, motivo: onde.porque, linhas: [`🌠 Você está escondido${naSombra ? " na sombra" : ""} (furtividade ${t})${quemVe}.`] };
 }
 
 /* ---------------- QUEM ME VÊ ----------------
@@ -227,14 +277,14 @@ export function nascerEscondido(pers, opcoes) {
    escondido, e é esse null que mantém a linha da luta idêntica à de
    antes. */
 export function quemMeVe(pers, opcoes) {
-  const { grade = null, heroi = null, inimigos = null, presentes = null } = opcoes || {};
+  const { grade = null, heroi = null, inimigos = null, presentes = null, luz = null } = opcoes || {};
   const est = estadoEscondido(pers);
   if (!est) return null;
   const naLuta = !!(grade && posto(heroi));
   const obs = lista(naLuta ? inimigos : presentes).filter(vivo);
   const veem = [], naoVeem = [];
   for (const o of obs) {
-    const p = porqueMeVe(est, o, { grade, heroi });
+    const p = porqueMeVe(est, o, { grade, heroi, luz });
     if (p) veem.push({ nome: nomeDe(o), porque: p });
     else naoVeem.push(nomeDe(o));
   }
@@ -246,10 +296,10 @@ export function quemMeVe(pers, opcoes) {
    mim (`combate.js`). Com a geometria, confere também se ele me tem à
    vista agora; sem ela, fica com o que o estado sabe. */
 export function oculto(pers, quem, opcoes) {
-  const { grade = null, heroi = null } = opcoes || {};
+  const { grade = null, heroi = null, luz = null } = opcoes || {};
   const est = estadoEscondido(pers);
   if (!est || !quem) return false;
-  return !porqueMeVe(est, quem, { grade, heroi });
+  return !porqueMeVe(est, quem, { grade, heroi, luz });
 }
 
 /* ---------------- SER ACHADO ----------------
@@ -258,7 +308,7 @@ export function oculto(pers, quem, opcoes) {
    estado cai. `procuram` são os nomes que gastam a vez procurando: rolam
    d20 + (passiva − 10) contra o meu total, e a sorte entra por argumento. */
 export function revisarEscondido(pers, opcoes) {
-  const { grade = null, heroi = null, inimigos = null, presentes = null, procuram = [], sorte = Math.random } = opcoes || {};
+  const { grade = null, heroi = null, inimigos = null, presentes = null, procuram = [], sorte = Math.random, luz = null } = opcoes || {};
   const base = pers && typeof pers === "object" ? pers : {};
   const est = estadoEscondido(base);
   if (!est) return { pers: base, achadoAgora: [], caiu: false, linhas: [], nota: "" };
@@ -271,7 +321,7 @@ export function revisarEscondido(pers, opcoes) {
   for (const o of obs) {
     const nome = nomeDe(o);
     if (achadoPor.includes(nome)) continue;
-    let p = porqueMeVe(est, o, { grade, heroi });
+    let p = porqueMeVe(est, o, { grade, heroi, luz });
     if (!p && buscam.has(nome)) {
       const d20 = 1 + Math.floor(rolar() * 20);
       if (d20 + percepcaoPassiva(o) - PERCEPCAO_PASSIVA.base >= (Number(est.total) || 0)) p = "procurou";
@@ -369,22 +419,24 @@ function abrigoMaisPerto(grade, heroi, ocupantes) {
 }
 
 export function vereditoDoEsconder(pers, opcoes) {
-  const { grade = null, heroi = null, inimigos = null, aliados = null, economia = null } = opcoes || {};
+  const { grade = null, heroi = null, inimigos = null, aliados = null, economia = null, luz = null } = opcoes || {};
   if (!grade || !posto(heroi)) return { pode: true, custo: null, motivo: "fora_da_luta", linha: "" };
   const obs = lista(inimigos).filter(vivo);
-  const onde = ondeSeEsconder({ grade, heroi, inimigos: obs });
+  const onde = ondeSeEsconder({ grade, heroi, inimigos: obs, luz });
   if (!onde.pode) {
     const quem = onde.quem || [];
     const abrigo = abrigoMaisPerto(grade, heroi, [...obs, ...lista(aliados)]);
     /* na mesma região, o nome do lugar não ajuda ("fica no fundo da sala"
        para quem já está no fundo da sala): diz-se a distância e o "aqui" */
     const aqui = abrigo && abrigo.onde && abrigo.onde === nomeDoLugar(grade, heroi.x, heroi.y);
-    const dica = !abrigo ? ""
+    /* o farol já diz o que fazer (baixar a tocha): o abrigo seria a
+       segunda resposta para uma pergunta só */
+    const dica = !abrigo || onde.porque === "farol" ? ""
       : aqui ? ` Há abrigo a ${metrosTxt(abrigo.m)} m, aqui mesmo ${abrigo.onde}.`
       : ` O abrigo mais perto fica ${abrigo.onde}, a ${metrosTxt(abrigo.m)} m.`;
     return {
       pode: false, custo: null, motivo: onde.porque, quem,
-      linha: `👁 Não há onde sumir: ${juntarNomes(quem)} ${quem.length > 1 ? "têm" : "tem"} você à vista, sem nada no meio.${dica}`,
+      linha: `${linhaDaRecusa(onde)}${dica}`,
     };
   }
   const custo = custoDeEsconder(pers);
@@ -416,7 +468,12 @@ export function notaDoEscondido(opcoes) {
     return `[ESCONDER — FALHOU] Tentei esconder-me e não consegui${conta}: ${veem}. Não narre que sumi.`;
   }
   if (!ns || !ns.ok) {
-    return `[ESCONDER — RECUSADO PELO SISTEMA] Passei no teste${conta}, mas não sumi: ${(ns && ns.motivo) === "todos_veem" ? "ninguém tirou os olhos de mim" : "não há nada entre mim e quem me olha"}. Continuo à vista — não narre que me escondi.`;
+    const m = ns && ns.motivo;
+    const porque = m === "todos_veem" ? "ninguém tirou os olhos de mim"
+      : m === "farol" ? "a tocha acesa na minha mão me mostra a todos"
+      : m === "no_escuro" ? "quem me olha enxerga no escuro, e a sombra não me cobre"
+      : "não há nada entre mim e quem me olha";
+    return `[ESCONDER — RECUSADO PELO SISTEMA] Passei no teste${conta}, mas não sumi: ${porque}. Continuo à vista — não narre que me escondi.`;
   }
   const achou = lista(ns.estado && ns.estado.achadoPor);
   const naoVeem = obs.filter((n) => !achou.includes(n));
@@ -424,7 +481,8 @@ export function notaDoEscondido(opcoes) {
     ? `Estou escondido de ${juntarNomes(naoVeem)}: ${naoVeem.length > 1 ? "não me veem nem sabem" : "não me vê nem sabe"} onde estou.`
     : "Estou escondido: ninguém aqui me vê.";
   const viu = achou.length ? ` ${juntarNomes(achou)} ${achou.length > 1 ? "viram" : "viu"} para onde fui.` : "";
-  return `[ESCONDIDO — DECIDIDO PELO SISTEMA] Escondi-me${conta}. ${de}${viu} Narre em até três frases o instante em que eu somo, com o que o lugar já tem e sem esconderijo novo, e devolva a palavra. Daqui em diante ninguém me nota por conta própria: só o sistema diz quem me acha.`;
+  const naSombra = ns.motivo === "sombra" || !!(ns.estado && ns.estado.sombra);
+  return `[ESCONDIDO — DECIDIDO PELO SISTEMA] Escondi-me${naSombra ? " na sombra, sem luz em cima de mim" : ""}${conta}. ${de}${viu} Narre em até três frases o instante em que eu somo, com o que o lugar já tem e sem esconderijo novo, e devolva a palavra. Daqui em diante ninguém me nota por conta própria: só o sistema diz quem me acha.`;
 }
 
 /* ---------------- A LINHA FORA DA LUTA ----------------
