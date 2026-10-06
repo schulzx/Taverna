@@ -369,11 +369,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      (v9.350 · o como chega) MM16 nº 5, 05/10: 8286 -> 8299, +13. A economia da cidade foi
      para a seção dela (+4, comentário do porquê) e `cederNaCena` entrou
      no fim de `pautaDoTurno` (+9) — os dois ACIMA de `pushMsgs`. Só o
-     endereço andou. Re-medido por esta própria catraca. */
-  } else if (iPush + 1 !== 8299) {
-    falha(`pushMsgs saiu de src/App.jsx:8299 e agora está em :${iPush + 1}`,
+     endereço andou. Re-medido por esta própria catraca.
+     (v9.351 · a Nave como destino) MM16 nº 2, 05/10: 8299 -> 8326, +27. O
+     import de boca.js no topo (+1), a guarda da ida em `alvoLocalPedido`
+     (+7) e a chegada à boca em `talvezChegarSozinho` (+19) — os três ACIMA
+     de `pushMsgs`. Só o endereço andou. Re-medido por esta própria catraca. */
+  } else if (iPush + 1 !== 8326) {
+    falha(`pushMsgs saiu de src/App.jsx:8326 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8299, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8326, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

@@ -63,6 +63,9 @@ export function garantirSinais(s) {
     ehConjuracao: b("ehConjuracao"),
     ehPortal: b("ehPortal"),
     ehEntradaEmMasmorra: b("ehEntradaEmMasmorra"),
+    /* MM16 nº 2: a frase nomeia uma masmorra que o herói conhece como
+       destino ("vou à Nave de Ferro"; "entro na Nave" de longe) */
+    ehIdaAMasmorra: b("ehIdaAMasmorra"),
     ehSeguirViagem: b("ehSeguirViagem"),
     ehPartidaPorNome: b("ehPartidaPorNome"),
     querPartir: b("querPartir"),
@@ -103,9 +106,9 @@ export function garantirSinais(s) {
    arrumação: é a razão pela qual milagre e habilidades nunca puderam
    morar no mesmo laço que conjurar e movimento.
 
-   `faz` — o nome do executor. Seis portas de movimento apontam para o
+   `faz` — o nome do executor. Sete portas de movimento apontam para o
    MESMO executor, e é de propósito: `interceptarMovimento` já resolve
-   as seis por dentro. Sem este campo, uma porta que recusa faria o
+   as sete por dentro (a sétima, `ida`, nasceu em MM16 nº 2). Sem este campo, uma porta que recusa faria o
    turno chamar o mesmo código duas vezes — e a segunda chamada mexe
    em `sinalViagemRef` de novo.
 
@@ -188,6 +191,19 @@ export const PORTAS_DO_TURNO = [
     fase: "atalho", faz: "movimento", seRecusar: "seguinte",
     quando: (s) => s.ehEntradaEmMasmorra,
     porque: "'desço na cripta fora da cidade' é entrar num covil, não abrir estrada",
+  },
+  {
+    /* MM16 nº 2: A MASMORRA COMO DESTINO. Depois da entrada (à boca, "entro"
+       é entrar) e antes de tudo o que lê a mesma frase de outro jeito: a
+       estrada que segue, a partida pela DIREÇÃO ("pela estrada do poente"
+       abria estrada para lugar nenhum), o passo a pé (o nome "Templo
+       Afogado de Sal" casava o templo da cidade pelo tipo) e o destino por
+       descrição. O nome próprio de um lugar que o herói conhece é a
+       intenção mais específica da frase. */
+    id: "ida", rotulo: "Ida a uma masmorra conhecida", intercepta: false,
+    fase: "atalho", faz: "movimento", seRecusar: "seguinte",
+    quando: (s) => s.ehIdaAMasmorra,
+    porque: "'vou à Nave de Ferro, pela estrada do poente' nomeia o destino; a direção é o caminho, e uma estrada sem destino é a que a sessão de prova pagou com treze horas",
   },
   {
     id: "seguir", rotulo: "Avançar na estrada", intercepta: false,
@@ -308,7 +324,7 @@ export function portasQueAbrem(sinais) {
    O resultado era uma tabela que descrevia um turno parecido com o que
    o programa fazia, e "parecido" é onde moram os bugs de ordem.
 
-   Devolve as portas abertas em duas fases, sem repetir executor: seis
+   Devolve as portas abertas em duas fases, sem repetir executor: sete
    portas de movimento apontam para o mesmo `interceptarMovimento`, e
    chamá-lo duas vezes no mesmo turno mexeria nos sinais de viagem
    depois de ele já ter decidido não viajar. */

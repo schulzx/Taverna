@@ -58,8 +58,14 @@ t("o preço sai de `minutosPorAvanco`, que é o que `andar()` consome",
   "duas contas para o mesmo número seriam duas verdades");
 t("o retorno usa a gramática de `linhaDaViagem`",
   /turnosRestantes === 1 \? "avanco" : "avancos"/.test(R));
-t("o clique chama `viajar` com o destino do REF, não do estado",
-  /aoClicar: \(\) => viajar\(\(jornadaRef\.current \|\| \{\}\)\.para \|\| ""\)/.test(R),
+/* MM16 nº 2 (v9.351): `viajar` ganhou um segundo argumento — quem pediu a
+   estrada (`{ origem: "toque" }`, QUEM_RESPONDE em rastro.js: o toque é a
+   única origem que chama o Mestre ela mesma, porque não tem frase onde colar
+   o envelope). A intenção desta asserção não muda — o destino sai do REF —, e
+   ela passa a exigir também a origem "toque": sem ela o clique cairia na
+   origem "sinal", e a estrada andaria calada, sem Mestre nenhum. */
+t("o clique chama `viajar` com o destino do REF, não do estado, e diz que é um toque",
+  /aoClicar: \(\) => viajar\(\(jornadaRef\.current \|\| \{\}\)\.para \|\| "", \{ origem: "toque" \}\)/.test(R),
   "entre montar a lista e o dedo cair pode passar um turno");
 t("não entra acampado, em combate, chegado nem pausado",
   /jornada && jornada\.para && !acampado && !combate/.test(R)

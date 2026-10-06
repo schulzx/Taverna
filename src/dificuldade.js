@@ -122,9 +122,15 @@ export function dificuldadeDaMissao(missao, pers) {
   return avaliar({ nivel: Number(missao.nivel), tamanho: (missao.etapas || []).length, rotulo: missao.titulo || "" }, pers);
 }
 
+/* MM16 nº 2: a masmorra DO MUNDO (`masmorrasDoMundo`) traz `salas` como
+   NÚMERO — a planta só existe depois de se entrar. Antes daqui ela media
+   tamanho zero (`(12).length` é undefined); agora o veredito à boca, lido
+   antes da porta, conta as salas que o mundo anuncia. A planta gerada
+   (array) mede como sempre. */
 export function dificuldadeDaMasmorra(mm, pers) {
   if (!mm || !Number.isFinite(Number(mm.nivel)) || Number(mm.nivel) <= 0) return null;
-  return avaliar({ nivel: Number(mm.nivel), tamanho: (mm.salas || []).length, rotulo: mm.nome || "" }, pers);
+  const tamanho = Array.isArray(mm.salas) ? mm.salas.length : Number(mm.salas) || 0;
+  return avaliar({ nivel: Number(mm.nivel), tamanho, rotulo: mm.nome || "" }, pers);
 }
 
 /* ---------------- O QUE VAI PARA A TELA ---------------- */

@@ -40,6 +40,12 @@
    ============================================================ */
 
 import { progressoDaViagem } from "./viagem.js";
+/* MM16 nº 2: a masmorra do mundo como destino — onde fica a boca, quanto
+   custa lá chegar e o que se lê antes de entrar (boca.js); e a peneira da
+   casa, para que "dizer que vai" não seja ir (lugar.js, peneira.js) */
+import { masmorrasConhecidas, masmorraDaBoca, rotaAteAMasmorra, linhaDaIda, vereditoDaMasmorra } from "./boca.js";
+import { soODeclarado } from "./peneira.js";
+import { NAO_E_IDA, comDe } from "./lugar.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -124,6 +130,11 @@ export function detectarPartida(acao, ctx = {}) {
   if (ctx.emViagem) return null; // já está na estrada: quem avança é `detectarSeguirViagem`
   const txt = String(acao || "");
   if (!txt.trim()) return null;
+  /* MM16 nº 2: UMA FRASE, UM DESTINO. "Vou à Nave de Ferro, pela estrada do
+     poente" tem a direção ("pela estrada") e tem o lugar; a direção abria
+     uma estrada para lugar nenhum. Quando a frase nomeia uma masmorra que o
+     herói conhece, quem responde é `idaAMasmorra`, e esta porta cala. */
+  if (idaAMasmorra(txt, ctx)) return null;
   const aqui = norm(ctx.cidadeAtual);
   const nomeDeCidade = (t) => {
     for (const nome of ctx.cidades || []) {
@@ -201,8 +212,12 @@ export function detectarEntradaEmMasmorra(acao, ctx = {}) {
    (`masmorra:<nome>`, que até aqui abria sem pergunta nenhuma).
 
      1) um lugar que É masmorra no mundo (`ctx.masmorras`, a lista de
-        `masmorrasDoMundo`) abre sempre — pelo nome dito, ou por ser o
-        lugar onde o herói está; e abre com o nome DELE;
+        `masmorrasDoMundo`) abre À BOCA DELA — por ser o lugar onde o herói
+        está; e abre com o nome DELE. Pelo nome dito, de longe, NÃO abre
+        (MM16 nº 2): devolve `longe`, e a frase vira ida até à boca
+        (`idaAMasmorra`), onde o veredito se lê antes da porta. Sem nada que
+        diga onde o herói está (nem lugar, nem cidade, nem estrada), abre
+        como sempre abriu;
      2) dentro de um prédio (um local da cidade ou um cômodo, `distancia:
         "dentro"`) não abre: o salão, o porão e o quarto de cima da
         taverna são a taverna;
@@ -217,8 +232,15 @@ export function portaDaMasmorra({ texto = "", nome = "" } = {}, ctx = {}) {
   const t = ` ${norm(`${texto || ""} ${nome || ""}`).replace(/[^a-z0-9]+/g, " ")} `;
   const doMundo = (Array.isArray(o.masmorras) ? o.masmorras : []).filter((m) => m && m.nome);
   const lugar = o.lugar && typeof o.lugar === "object" ? o.lugar : null;
-  const achada = doMundo.find((m) => { const k = semArt(m.nome).replace(/[^a-z0-9]+/g, " ").trim(); return k.length > 3 && t.includes(` ${k} `); })
-    || (lugar && doMundo.find((m) => semArt(m.nome) === semArt(lugar.nome)));
+  const dita = doMundo.find((m) => { const k = semArt(m.nome).replace(/[^a-z0-9]+/g, " ").trim(); return k.length > 3 && t.includes(` ${k} `); }) || null;
+  const daBoca = masmorraDaBoca(lugar, doMundo);
+  /* MM16 nº 2: A PORTA NÃO ABRE DE LONGE. Na sessão de prova (J11) "entro
+     na Nave de Ferro" abriu-a do posto da estrada, e o veredito chegou com
+     a porta já aberta. Pelo nome, só se abre a masmorra a cuja boca se está. */
+  if (dita && (!daBoca || daBoca !== dita) && (lugar || o.cidadeAtual || o.emViagem)) {
+    return { ok: false, longe: true, doMundo: true, nome: String(dita.nome).slice(0, 50), motivo: `a entrada ${comDe(dita.nome)} não é aqui — é preciso ir até ela` };
+  }
+  const achada = dita || daBoca;
   if (achada) return { ok: true, nome: String(achada.nome).slice(0, 50), doMundo: true };
   if (lugar && (lugar.distancia === "dentro" || lugar.dentroDe)) {
     return { ok: false, motivo: `${lugar.nome} é um lugar ${lugar.dentroDe ? "do prédio" : "da cidade"}, não uma masmorra` };
@@ -306,8 +328,13 @@ export function pontoDoHeroi({ cidadeAtual = "", jornada = null, mapa = null, lu
   const cidades = (mapa && mapa.cidades) || [];
   const acha = (nome) => cidades.find((c) => norm(c.nome) === norm(nome)) || null;
   if (jornada) {
-    const a = acha(jornada.de);
-    const b = acha(jornada.para);
+    /* MM16 nº 2: a jornada até à boca de uma masmorra guarda o ponto de
+       partida e o da boca (`jornada.alvo`, boca.js) — nenhum dos dois é
+       cidade, e sem eles o herói ficava cravado na cidade de onde saiu */
+    const alvo = jornada.alvo && typeof jornada.alvo === "object" ? jornada.alvo : null;
+    const pt = (c, nome) => (c && Number.isFinite(Number(c.x)) && Number.isFinite(Number(c.y)) ? { nome: nome || "", x: Number(c.x), y: Number(c.y) } : null);
+    const a = (alvo && pt(alvo.origem, jornada.de)) || acha(jornada.de);
+    const b = acha(jornada.para) || (alvo && pt(alvo.coord, alvo.nome));
     const p = progressoDaViagem(jornada);
     const f = p ? Math.max(0, Math.min(1, p.fracao)) : 0.5;
     if (a && b) return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, naEstrada: true, de: a, para: b, fracao: f };
@@ -324,6 +351,196 @@ export function pontoDoHeroi({ cidadeAtual = "", jornada = null, mapa = null, lu
   }
   const c = acha(cidadeAtual);
   return c ? { x: c.x, y: c.y, naEstrada: false, de: null, para: null, coord: { x: c.x, y: c.y, z: c.z || 0, mx: 0, my: 0 } } : null;
+}
+
+/* ============================================================
+   IR À MASMORRA (MM16 nº 2) — "vou à Nave" leva à Nave
+
+   A frase da sessão de prova: "Saio da Viela da Fome e vou à Nave de
+   Ferro, pela estrada do poente". Nenhum leitor desta casa a entendia: a
+   masmorra só se ABRIA (verbo de entrada + covil), a partida só conhecia
+   CIDADES e DIREÇÕES, e o passo só os lugares a pé da cidade. Ficou a
+   direção, e a direção abriu estrada para lugar nenhum.
+
+   Aqui a masmorra do mundo é destino. A régua é a mesma do resto do
+   arquivo — o verbo e o nome na MESMA oração, a intenção não é movimento,
+   e só o que o herói declarou conta (a peneira tira a fala, a pergunta, o
+   plano e o futuro) — com três cuidados que só este caso pede:
+
+     · SÓ A QUE ELE CONHECE: as masmorras que a cidade aponta
+       (`masmorrasConhecidas`, a régua do prompt), mais a da boca onde está
+       e a do fim da estrada em que vai. Nome de outra região não move.
+     · O NOME INTEIRO, OU O NÚCLEO COM MAIÚSCULA: "a Nave de Ferro", "Nave
+       de Ferro", e "a Nave" quando escrita como nome próprio (com a
+       maiúscula, sozinha — "a Nave de Sal" é outro nome —, e só se nenhuma
+       outra masmorra conhecida nem cidade começa pela mesma palavra).
+       "vou à nave da igreja" não vai.
+     · DE ONDE SE SAI NÃO É PARA ONDE SE VAI: "saio da Nave", "deixo a
+       Nave", "venho da Nave" são a origem (a lição de MM15 no `lugar.js`).
+       E se a oração nomeia uma CIDADE antes da masmorra, o destino é a
+       cidade ("vou a Rio do Sul, perto da Nave").
+
+   De longe, o verbo de ENTRADA também é ida: "entro na Nave de Ferro" a
+   cento e tal quilómetros vira "vou até à boca" — a porta não abre
+   (`portaDaMasmorra`), e o segundo "entro", à boca, é que a abre.
+
+   `ctx`: o do rastro (`cidadeAtual`, `cidades`, `emCombate`, `acampado`,
+   `emMasmorra`, `emViagem`, `lugar`, `masmorras`) mais `mapa` (a cidade,
+   a região e o ponto), `jornada` (para seguir ou largar a estrada) e,
+   opcional, `pers` (o veredito na partida) e `origem` (o ponto, se quem
+   chama já o tiver). Devolve null, ou:
+
+     { acao: "partir" | "seguir" | "ficar", nome, masmorra, rota, origem,
+       deixaEstrada, linhas, veredito, motivo }
+
+   "partir" abre a ida (rota.modo "estrada": jornada; "a_pe": caminhada);
+   "seguir" é avançar na estrada que já vai para lá; "ficar" é estar já à
+   boca — nada a mover. `linhas` é o que vai à tela, como SISTEMA.
+   ============================================================ */
+const IDA_VERBO = /\b(parto|partimos|sigo|seguimos|vou|vamos|viajo|viajamos|rumo|marcho|marchamos|caminho|caminhamos|ando|andamos|cavalgo|cavalgamos|galopo|volto|voltamos|regresso|regressamos|me dirijo|dirijo-?me|nos dirigimos|me encaminho|encaminho-?me|me ponho a caminho|tomo a estrada|pego a estrada|chego|chegamos|entro|entramos|adentro|desco|descemos|invado|penetro|me embrenho)\b/;
+/* à boca, estes são entrar — e quem abre é `detectarEntradaEmMasmorra` */
+const SO_ENTRADA = /\b(entro|entramos|adentro|desco|descemos|invado|penetro|me embrenho)\b/;
+const DE_ONDE_SE_SAI = /\b(saio|saimos|sair|saindo|deixo|deixamos|largo|largamos|abandono|abandonamos|fujo|fugimos|venho|vimos|vindo|vinda|volto|voltamos|regresso|regressamos|retorno)\s+(de|da|do|das|dos)\s*$|\b(deixo|deixamos|largo|largamos|abandono|abandonamos)\s+(a|o|as|os)\s*$|\bdesde\s+((a|o|as|os)\s+)?$/;
+const PALAVRAS_DO_NOME = (s) => norm(s).trim().replace(/^(o|a|os|as)\s+/, "").split(/[^a-z0-9]+/).filter(Boolean);
+const rxDoNome = (palavras) => new RegExp(`(^|[^a-z0-9])${palavras.join("[^a-z0-9]+")}(?![a-z0-9])`);
+/* as orações com a posição de cada uma no texto (a peneira devolve o texto
+   com o mesmo tamanho, e a posição é o que liga a oração à maiúscula) */
+function oracoesComPosicao(s) {
+  const out = [];
+  const rx = /[.!?;\n]+|\s+(?:e|mas|porem|entao|depois|antes|enquanto|ou)\s+/g;
+  let ini = 0, m;
+  while ((m = rx.exec(s))) { out.push({ ini, txt: s.slice(ini, m.index) }); ini = m.index + m[0].length; }
+  out.push({ ini, txt: s.slice(ini) });
+  return out.filter((o) => o.txt.trim());
+}
+
+export function idaAMasmorra(acao, ctx = {}) {
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  if (!podeAbrirModulo(o).pode) return null;
+  const cru = String(acao || "");
+  if (!cru.trim() || cru.trimStart().startsWith("[")) return null;   // envelope do sistema não é pedido meu
+  const todas = (Array.isArray(o.masmorras) ? o.masmorras : []).filter((m) => m && m.nome);
+  if (!todas.length) return null;
+  const mapa = o.mapa && typeof o.mapa === "object" ? o.mapa : null;
+  const cidades = (mapa && Array.isArray(mapa.cidades)) ? mapa.cidades : [];
+  const aqui = norm(o.cidadeAtual);
+  const cidade = cidades.find((c) => c && norm(c.nome) === aqui) || (o.cidadeAtual ? { nome: String(o.cidadeAtual) } : null);
+  const jornada = o.jornada && typeof o.jornada === "object" ? o.jornada : null;
+  const lugar = o.lugar && typeof o.lugar === "object" ? o.lugar : null;
+  const daBoca = masmorraDaBoca(lugar, todas);
+  const doFim = jornada && jornada.alvo && jornada.alvo.nome ? masmorraDaBoca({ nome: jornada.alvo.nome }, todas) : null;
+  const conhecidas = [...new Set([...masmorrasConhecidas(todas, cidade), daBoca, doFim].filter(Boolean))];
+  if (!conhecidas.length) return null;
+
+  /* o que o herói declarou, sem acento e do mesmo tamanho do texto */
+  const decl = soODeclarado(cru, NAO_E_IDA);
+  const mesmoTamanho = norm(cru).length === decl.length;
+  const maiuscula = (pos, palavra) => {
+    if (mesmoTamanho) { const ch = cru[pos] || ""; return ch !== ch.toLowerCase(); }
+    return new RegExp(`(^|[^\\p{L}])${palavra[0].toUpperCase()}${palavra.slice(1)}(?![\\p{L}])`, "u").test(cru.normalize("NFD").replace(/[̀-ͯ]/g, ""));
+  };
+  /* as palavras de abertura de cada nome — o núcleo só vale se for único */
+  const cabeca = (nome) => { const p = PALAVRAS_DO_NOME(nome); return p.length > 1 && p[0].length >= 4 ? p[0] : ""; };
+  const cabecas = conhecidas.map((m) => cabeca(m.nome));
+  const cabecasDeCidade = new Set(cidades.map((c) => PALAVRAS_DO_NOME(c && c.nome)[0]).filter(Boolean));
+  const nomesDeCidade = cidades.map((c) => c && c.nome).filter((n) => n && norm(n) !== aqui).map((n) => PALAVRAS_DO_NOME(n)).filter((p) => p.length && p.join("").length > 3);
+
+  for (const or of oracoesComPosicao(decl)) {
+    const n = or.txt;
+    if (SO_INTENCAO.test(n) || !IDA_VERBO.test(n)) continue;
+    let melhor = null;
+    conhecidas.forEach((m, i) => {
+      const inteiro = PALAVRAS_DO_NOME(m.nome);
+      if (!inteiro.length || inteiro.join("").length <= 3) return;
+      const formas = [inteiro];
+      const cab = cabecas[i];
+      if (cab && cabecas.filter((c) => c === cab).length === 1 && !cabecasDeCidade.has(cab)) formas.push([cab]);
+      for (const f of formas) {
+        const rx = new RegExp(rxDoNome(f).source, "g");
+        let mm;
+        while ((mm = rx.exec(n))) {
+          const ini = mm.index + mm[1].length;
+          if (f.length === 1 && !maiuscula(or.ini + ini, f[0])) continue;   // o núcleo só como nome próprio
+          /* e só sozinho: "a Nave de Sal" e "a Gruta Corvos" são outros nomes,
+             não o núcleo da "Nave de Pedra Torta" nem da "Gruta Raízes"
+             (achados na varredura, nos andares da Torre) */
+          if (f.length === 1) {
+            const fim = mm.index + mm[0].length;
+            if (/^\s+(de|da|do|das|dos)\s+[a-z0-9]/.test(n.slice(fim))) continue;
+            if (mesmoTamanho && /^\s+\p{Lu}/u.test(cru.slice(or.ini + fim))) continue;
+          }
+          if (DE_ONDE_SE_SAI.test(n.slice(0, ini))) continue;               // a origem não é o destino
+          if (!melhor || ini < melhor.ini) melhor = { m, ini };
+          break;
+        }
+      }
+    });
+    if (!melhor) continue;
+    /* uma CIDADE dita antes, e não como origem, é o destino desta oração */
+    const cidadeAntes = nomesDeCidade.some((p) => {
+      const mm = rxDoNome(p).exec(n);
+      if (!mm) return false;
+      const ini = mm.index + mm[1].length;
+      return ini < melhor.ini && !DE_ONDE_SE_SAI.test(n.slice(0, ini));
+    });
+    if (cidadeAntes) continue;
+    const m = melhor.m;
+    if (daBoca && daBoca === m) {
+      if (SO_ENTRADA.test(n)) return null;   // à boca, entrar é entrar
+      return { acao: "ficar", nome: m.nome, masmorra: m, rota: null, origem: null, deixaEstrada: false, linhas: [], veredito: null, motivo: "o herói já está à boca dela" };
+    }
+    const veredito = o.pers ? vereditoDaMasmorra(m, o.pers) : null;
+    if (doFim && doFim === m && (o.emViagem || jornada)) {
+      return { acao: "seguir", nome: m.nome, masmorra: m, rota: null, origem: null, deixaEstrada: false, linhas: [], veredito, motivo: "a estrada em que vai já acaba nela" };
+    }
+    const ponto = o.origem || pontoDoHeroi({ cidadeAtual: o.cidadeAtual, jornada, mapa, lugar });
+    const origem = ponto && Number.isFinite(Number(ponto.x)) ? { x: Number(ponto.x), y: Number(ponto.y) } : null;
+    const rota = rotaAteAMasmorra(m, origem, { de: (lugar && lugar.nome) || o.cidadeAtual || "" });
+    if (!rota) return null;   // sem ponto, sem conta — e sem palpite
+    const linhas = [linhaDaIda(rota), rota.modo === "estrada" && veredito ? veredito.linha : ""].filter(Boolean);
+    return {
+      acao: "partir", nome: m.nome, masmorra: m, rota, origem,
+      deixaEstrada: !!(o.emViagem || jornada), linhas, veredito,
+      motivo: SO_ENTRADA.test(n) ? "entrar de longe é ir até à boca" : "a masmorra nomeada é o destino",
+    };
+  }
+  return null;
+}
+
+/* ============================================================
+   UMA FRASE, UMA RESPOSTA (MM16 nº 2)
+
+   Na sessão de prova um toque deu DUAS respostas do Mestre, duas vezes. O
+   mecanismo era o mesmo: o rastro armava um sinal; a frase do jogador ia
+   ao Mestre (resposta um); depois o sinal disparava a viagem ou a masmorra,
+   que escrevia uma fala NA BOCA DO HERÓI ("Sigo viagem pela estrada.",
+   "Encontrei uma entrada: …. Vou explorar.") e chamava o Mestre outra vez
+   (resposta dois). A segunda contradizia a primeira, o portão acusava o
+   Mestre do que o sistema fez, e o relógio andava duas vezes.
+
+   A regra: o jogador escreve uma vez, o Mestre responde uma vez, e o
+   sistema fala só em linhas de tela (SISTEMA) — NUNCA em nome do herói.
+   Quantas chamadas a ação do sistema faz depende de quem a pediu:
+
+     · "frase" — a frase do jogador pediu (o rastro leu a ida, a entrada,
+       o seguir). O efeito roda ANTES de a frase ir ao Mestre, e o envelope
+       do sistema vai NA MESMA chamada da frase. Zero chamadas próprias.
+     · "sinal" — o Mestre pediu, na resposta que já deu. O efeito roda
+       depois, e o envelope espera na nota pela próxima frase do jogador.
+       Zero chamadas próprias: a resposta já foi dada.
+     · "toque" — um botão. O toque É a ação do jogador, e não há frase
+       dele a quem colar o envelope: uma chamada, a do sistema.
+
+   `vozDoHeroi` é falso nas três, e está na tabela para que a suíte o leia
+   e para que ninguém o ligue sem ter de apagar esta frase primeiro.
+   ============================================================ */
+export const QUEM_RESPONDE = {
+  frase: { id: "frase", vozDoHeroi: false, chamadas: 0, envelope: "junto", porque: "a frase do jogador é a ação; o sistema age antes e o Mestre responde UMA vez, à frase, com o envelope junto" },
+  sinal: { id: "sinal", vozDoHeroi: false, chamadas: 0, envelope: "proximo", porque: "o Mestre já respondeu; o que o sistema rolou espera na nota pela próxima frase do jogador" },
+  toque: { id: "toque", vozDoHeroi: false, chamadas: 1, envelope: "proprio", porque: "o botão é a ação do jogador e não tem frase onde colar o envelope: uma chamada, a do sistema" },
+};
+export function quemResponde(origem) {
+  return QUEM_RESPONDE[origem] || QUEM_RESPONDE.sinal;
 }
 
 /* ---------------- OS ENVELOPES ---------------- */

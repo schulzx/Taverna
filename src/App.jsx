@@ -166,7 +166,7 @@ import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, env
 import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
-import { dificuldadeDaMasmorra, envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
+import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
 import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
@@ -203,7 +203,8 @@ import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
-import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra } from "./rastro.js";
+import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra, idaAMasmorra, quemResponde } from "./rastro.js";
+import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca } from "./boca.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
@@ -6557,7 +6558,14 @@ export default function Taverna() {
   const alvoLocalPedido = (texto) => {
     const cru = String(texto || "");
     if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
-    if (combateRef.current || acampadoRef.current) return null;
+    /* MM16 nº 2: dentro da masmorra não há passo pela cidade — e a entrada
+       pela frase abre a masmorra ANTES de a frase subir, então o passo
+       que roda no envio já a encontra aberta */
+    if (combateRef.current || acampadoRef.current || masmorraRef.current) return null;
+    /* MM16 nº 2: a masmorra que o herói conhece, nomeada como destino, não
+       é passo a pé: sem isto "vou ao Templo Afogado de Sal" casava o templo
+       da cidade pelo tipo, e o herói ia rezar em vez de ir à masmorra */
+    try { if (idaAMasmorra(cru, ctxDoRastro())) return null; } catch (e) { calou("ida no passo", e); }
     return lugarPedido(cru, lugaresDaqui());
   };
   /* Move de verdade: registra o lugar, cobra o tempo e entrega o fato pronto
@@ -8094,6 +8102,25 @@ export default function Taverna() {
     if (p && !p.chegou && !(diasNoCalendario >= (j.dias || 3) * 3)) return;
     if (!p && !socorro) return;
     const msgs = [];
+    /* MM16 nº 2: O FIM DA ESTRADA ATÉ UMA MASMORRA É A BOCA DELA, não uma
+       cidade. Sem este ramo a jornada da Nave de Ferro chegaria a uma
+       "cidade" chamada Nave de Ferro, e a porta abriria sem o veredito.
+       Aqui o herói fica DIANTE da entrada, do lado de fora (boca.js), a
+       cidade de referência não muda e o Mestre recebe a ordem de parar à
+       porta. A jornada fecha mesmo que a conta estoure: preso na estrada
+       para sempre é pior do que parado à beira dela. */
+    if (j.alvo && j.alvo.tipo === "masmorra") {
+      jornadaRef.current = null; setJornada(null);
+      try {
+        const ch = chegadaABoca(j.alvo, { cidade: cidadeAtualRef.current, dia: diaRef.current, pers: personagemRef.current || personagem, jornada: j });
+        if (ch) {
+          lugarRef.current = ch.lugar; setLugar(ch.lugar);
+          pushMsgs(ch.linhas.map((texto) => ({ autor: "sistema", texto })));
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ch.nota}`;
+        }
+      } catch (e) { calou("chegada à boca", e); }
+      return;
+    }
     cidadeAtualRef.current = j.para;
     jornadaRef.current = null; setJornada(null);
     if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
@@ -12101,10 +12128,10 @@ export default function Taverna() {
          narrativa — o app abre o sistema no turno seguinte, sem botão. */
       if (sinalViagemRef.current !== null) {
         const destino = sinalViagemRef.current; sinalViagemRef.current = null;
-        setTimeout(() => viajar(destino), 400);
+        setTimeout(() => viajar(destino, { origem: "sinal" }), 400);
       } else if (sinalMasmorraRef.current !== null) {
         const nomeMm = sinalMasmorraRef.current; sinalMasmorraRef.current = null;
-        setTimeout(() => entrarMasmorra(nomeMm), 400);
+        setTimeout(() => entrarMasmorra(nomeMm, { origem: "sinal" }), 400);
       } else if (sinalRaidRef.current !== null) {
         const chefeR = sinalRaidRef.current; sinalRaidRef.current = null;
         setTimeout(() => abrirONossoChamado(chefeR), 400);
@@ -14308,10 +14335,15 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
           enviar(`Tentei partir para ${escolhida.nome}, mas o caminho está fechado. Narre a tentativa e o que a impede.`, personagem);
           return true;
         }
-        sinalViagemRef.current = escolhida.nome; destinoViagemRef.current = escolhida.nome;
+        /* MM16 nº 2: UMA RESPOSTA. O sinal de viagem que ficava armado aqui
+           abria a estrada DEPOIS da resposta do Mestre — e a estrada chamava
+           o Mestre outra vez. Agora ela abre já, e o envelope dela vai junto
+           da partida, na mesma chamada. */
+        destinoViagemRef.current = escolhida.nome;
         pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `🧭 ${escolhida.nome} — a caminho.` }]);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(escolhida.nome, cidadeAtualRef.current)}`;
-        enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${escolhida.nome} entre as opções que o sistema me deu, e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`, personagem);
+        try { viajar(escolhida.nome, { origem: "frase" }); } catch (e) { calou("viajar pela escolha", e); }
+        enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${escolhida.nome} entre as opções que o sistema me deu, e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`, fichaViva());
         return true;
       }
       /* não era resposta: segue como ação normal, sem cobrar nada do jogador */
@@ -14324,25 +14356,77 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       if (mag) return abrirPortalUI(mag, acao);
     } catch { /* conjurar nunca pode custar o turno */ }
     try {
-      const ctxRastro = {
-        cidadeAtual: cidadeAtualRef.current,
-        cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
-        emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
-        emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: (() => { try { return masmorrasDoMundo(sementeMundo(), mapaRef.current); } catch (e) { return []; } })(),
+      /* MM16 nº 2: um contexto só — o mesmo que o despachante leu para
+         decidir (`ctxDoRastro`), que agora leva também o mapa, a jornada e
+         a ficha que a ida até à boca de uma masmorra precisa */
+      const ctxRastro = ctxDoRastro();
+      /* ---------------- UMA FRASE, UMA RESPOSTA (MM16 nº 2) ----------------
+         Até aqui estes ramos ARMAVAM um sinal (`sinalViagemRef`,
+         `sinalMasmorraRef`) e devolviam false: a frase ia ao Mestre
+         (resposta um) e, depois dela, o sinal abria a estrada ou a
+         masmorra, que escrevia uma fala NA BOCA DO HERÓI ("Sigo viagem pela
+         estrada.", "Encontrei uma entrada: …") e chamava o Mestre de novo
+         (resposta dois, que contradizia a primeira). A sessão de prova
+         pagou isto duas vezes (`mente/mm11-sessao-3.md`, J8 e J11).
+
+         Agora o efeito roda JÁ, antes de a frase subir, e o envelope do
+         sistema vai na MESMA chamada da frase (`QUEM_RESPONDE.frase`,
+         rastro.js): o jogador escreve uma vez, o Mestre responde uma vez,
+         e o sistema fala só em linhas de tela. O efeito que estoura não
+         leva a frase junto: ela sobe assim mesmo. */
+      const umaSoResposta = (efeito) => {
+        pushMsgs([{ autor: "jogador", texto: acao }]);
+        try { efeito(); } catch (e) { calou("efeito do movimento", e); }
+        try { marcarTurnoDoMundo(); } catch (e) { calou("turno do mundo no movimento", e); }
+        enviar(acao, fichaViva());
+        return true;
+      };
+      /* A IDA ATÉ À BOCA (MM16 nº 2): "partir" abre a estrada até lá (ou a
+         caminhada, quando a boca fica a pé), com a rota e o veredito na tela
+         ANTES de qualquer porta; "seguir" anda na estrada que já vai para
+         lá; "ficar" é estar já à boca — nada a mover, e a frase sobe. */
+      const irAteABoca = (ida) => {
+        if (ida.acao === "seguir") { viajar(ida.nome, { origem: "frase" }); return; }
+        if (ida.acao !== "partir" || !ida.rota) return;
+        if (ida.deixaEstrada) { jornadaRef.current = null; setJornada(null); }
+        if ((ida.linhas || []).length) pushMsgs(ida.linhas.map((texto) => ({ autor: "sistema", texto })));
+        if (ida.rota.modo === "a_pe") {
+          const tempo = avancarMinutos(Number(ida.rota.minutos) || 0);
+          const ch = chegadaABoca(ida.masmorra, { cidade: cidadeAtualRef.current, dia: diaRef.current, pers: fichaViva(), minutos: ida.rota.minutos });
+          if (ch) {
+            lugarRef.current = ch.lugar; setLugar(ch.lugar);
+            pushMsgs(ch.linhas.map((texto) => ({ autor: "sistema", texto })));
+            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ch.nota}${tempo || ""}`;
+          }
+          return;
+        }
+        destinoViagemRef.current = ida.nome;
+        viajar(ida.nome, { origem: "frase", ida });
       };
       if (sinalViagemRef.current === null && sinalMasmorraRef.current === null) {
         /* a masmorra vem primeiro: "desço na cripta fora da cidade" é entrar
-           num covil, não abrir estrada */
+           num covil, não abrir estrada. O envelope da entrada é o de
+           `entrarMasmorra`, e vai junto da frase */
         const mm = detectarEntradaEmMasmorra(acao, ctxRastro);
+        /* MM16 nº 2: A MASMORRA COMO DESTINO. "Vou à Nave de Ferro, pela
+           estrada do poente" nomeia um lugar que o herói conhece, e a
+           direção é só o caminho. "Entro na Nave" de longe também é ida: a
+           porta só abre à boca, com o veredito lido antes dela */
+        const ida = mm ? null : idaAMasmorra(acao, ctxRastro);
         if (mm) {
-          sinalMasmorraRef.current = mm.nome || "";
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeMasmorra(mm.nome)}`;
+          return umaSoResposta(() => entrarMasmorra(mm.nome || "", { origem: "frase" }));
+        } else if (ida) {
+          /* o porteiro da cidade vale para a estrada até à boca como para
+             qualquer estrada; a caminhada até ali é como ir aos arredores */
+          const tvIda = ida.acao === "partir" && ida.rota && ida.rota.modo === "estrada" ? travaDaFormaDaqui(ida.nome) : null;
+          if (tvIda) return umaSoResposta(() => recusarPartida(tvIda, ida.nome));
+          return umaSoResposta(() => irAteABoca(ida));
         } else if (detectarSeguirViagem(acao, ctxRastro)) {
           /* v9.56: quem já está na estrada AVANÇA nela. Enquanto a chegada
              vinha do calendário isto não era preciso — bastava o tempo
              passar. Com a viagem contando estrada percorrida, sem esta porta
              o herói ficaria a 7% do caminho para sempre. */
-          sinalViagemRef.current = jornadaRef.current.para || "";
+          return umaSoResposta(() => viajar(jornadaRef.current.para || "", { origem: "frase" }));
         } else {
           const part = detectarPartida(acao, ctxRastro);
           if (part) {
@@ -14351,9 +14435,9 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
             const tvLei = travaDaFormaDaqui(part.destino);
             if (tvLei) recusarPartida(tvLei, part.destino);
             else {
-              sinalViagemRef.current = part.destino || "";
               destinoViagemRef.current = part.destino || "";
               notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(part.destino, cidadeAtualRef.current)}`;
+              return umaSoResposta(() => viajar(part.destino || "", { origem: "frase" }));
             }
           } else if (querPartir(acao)) {
             /* ---------------- A TAVERNA NÃO É UMA CIDADE (v9.58) ----------------
@@ -14393,9 +14477,12 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
               const tvLei = travaDaFormaDaqui(nome);
               if (tvLei) recusarPartida(tvLei, nome);
               else {
-                sinalViagemRef.current = nome; destinoViagemRef.current = nome;
-                pushMsgs([{ autor: "sistema", texto: `🧭 Entendi "${acao.trim()}" como ${nome}${r.escolha.porque.length ? ` (${r.escolha.porque.join(", ")})` : ""}.` }]);
+                destinoViagemRef.current = nome;
                 notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
+                return umaSoResposta(() => {
+                  pushMsgs([{ autor: "sistema", texto: `🧭 Entendi "${acao.trim()}" como ${nome}${r.escolha.porque.length ? ` (${r.escolha.porque.join(", ")})` : ""}.` }]);
+                  viajar(nome, { origem: "frase" });
+                });
               }
             } else if (r.tipo === "ambiguo") {
               escolhaPendenteRef.current = { candidatos: r.candidatos, oQueDisse: acao };
@@ -14650,6 +14737,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       ehConjuracao: ler(() => magiaDeFuncaoNaAcao(acao)),
       ehPortal: ler(() => magiaDePortalNaAcao(acao)),
       ehEntradaEmMasmorra: ler(() => detectarEntradaEmMasmorra(acao, ctxDoRastro())),
+      ehIdaAMasmorra: ler(() => !!idaAMasmorra(acao, ctxDoRastro())),
       ehSeguirViagem: ler(() => detectarSeguirViagem(acao, ctxDoRastro())),
       ehPartidaPorNome: ler(() => detectarPartida(acao, ctxDoRastro())),
       querPartir: ler(() => querPartir(acao)),
@@ -14675,9 +14763,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       bloqueado: !!(carregando || rolagem),
     };
   };
-  /* o contexto do rastro montado uma vez — três detectores pedem o mesmo */
+  /* o contexto do rastro montado uma vez — três detectores pedem o mesmo.
+     MM16 nº 2: e o movimento também (era uma cópia à parte), com o mapa
+     (a cidade, a região e o ponto), a jornada (seguir ou largar a estrada)
+     e a ficha (o veredito na partida) que a ida a uma masmorra lê */
   const ctxDoRastro = () => ({
     cidadeAtual: cidadeAtualRef.current,
+    mapa: mapaRef.current, jornada: jornadaRef.current, pers: fichaViva() || personagem,
     cidades: ((mapaRef.current || {}).cidades || []).map((c) => c.nome),
     emCombate: !!combateRef.current, acampado: !!acampadoRef.current,
     emMasmorra: !!masmorraRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: (() => { try { return masmorrasDoMundo(sementeMundo(), mapaRef.current); } catch (e) { return []; } })(),
@@ -20136,7 +20228,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Entrar gera a masmorra; cada "avançar" rola a sala: combate (abre o painel
      pela instrução ao Mestre), armadilha/tesouro/santuário (resolvidos por
      código na hora), enigma (cena do Mestre) e o chefe no fundo. */
-  const entrarMasmorra = (nomeSugerido = "") => {
+  const entrarMasmorra = (nomeSugerido = "", opcoes = null) => {
+    /* MM16 nº 2: quem pediu a entrada diz quantas vezes o Mestre fala —
+       a frase do jogador (o envelope vai junto dela), o sinal do Mestre (ele
+       já respondeu; o envelope espera a próxima frase) ou um toque */
+    const qr = quemResponde(opcoes && opcoes.origem);
     if (acampadoRef.current || masmorraRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para explorar uma masmorra no meio de um combate." }]); return; }
     /* O NÍVEL VEM DO MAPA, quando o mapa conhece este lugar (v9.115).
@@ -20172,7 +20268,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const persIn = { ...pIn, suprimentos: { ...supIn, tochas: 0 } };
     setPersonagem(persIn); personagemRef.current = persIn;
     masmorraRef.current = mm; setMasmorra(mm);
-    pushMsgs([{ autor: "jogador", texto: `Encontrei uma entrada: ${mm.nome}. Vou explorar.` }]);
+    /* MM16 nº 2: aqui morava "Encontrei uma entrada: …. Vou explorar." com
+       `autor: "jogador"` — o sistema escrevendo na boca do herói, e a
+       segunda resposta do Mestre num toque só. O herói já disse o que faz;
+       o sistema fala só em linhas de tela. */
     pushMsgs([{ autor: "sistema", texto: mm.tochas > 0
       ? `🕯 Você acende a primeira das suas ${mm.tochas} tochas. Cada passagem consome uma — o que sobrar volta para a mochila na saída.`
       : `🕯 Você não tem uma única tocha. Vai entrar no escuro — desvantagem em tudo, e o que mora lá enxerga melhor que você.` }]);
@@ -20193,9 +20292,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        espada; ao NARRADOR vai só a instrução de cena, nunca o rótulo nem
        o número — rótulo de sistema na boca de personagem é o defeito que
        esta casa mais paga. */
-    const dif = dificuldadeDaMasmorra(mm, persIn);
-    if (dif) pushMsgs([{ autor: "sistema", texto: `${dif.patamar.icone} ${mm.nome} — ${dif.patamar.rotulo.toUpperCase()}: ${dif.patamar.nota}. (${dif.porque})` }]);
-    enviar(`${vestido ? vestido + " " : ""}${dif ? envelopeDaDificuldade(dif, `a masmorra "${mm.nome}"`) + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`, personagem);
+    /* MM16 nº 2: O VEREDITO ANTES DA PORTA. A masmorra do mundo é medida
+       pelo que o mundo anuncia dela (nível e salas do pergaminho), a mesma
+       conta que o jogador leu na partida e à boca (boca.js) — e se ele está
+       à boca dela, a linha já está na tela e não se repete. O covil sem
+       nome no mapa continua a mostrá-la aqui, como sempre mostrou. */
+    let dif = null;
+    try {
+      const v = vereditoDaMasmorra(doMapa || mm, persIn);
+      dif = v ? v.dif : null;
+      const jaLido = !!doMapa && !!masmorraDaBoca(lugarRef.current, [doMapa]);
+      if (v && !jaLido) pushMsgs([{ autor: "sistema", texto: v.linha }]);
+    } catch (e) { calou("veredito da masmorra", e); }
+    const envelopeDaEntrada = (`${vestido ? vestido + " " : ""}${dif ? envelopeDaDificuldade(dif, `a masmorra "${mm.nome}"`) + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`);
+    if (qr.chamadas) enviar(envelopeDaEntrada, persIn);
+    else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaEntrada}`;
   };
 
   /* ============================================================
@@ -22667,7 +22778,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     return c;
   };
 
-  const viajar = (destino = "") => {
+  const viajar = (destino = "", opcoes = null) => {
+    /* MM16 nº 2: quem pediu a estrada diz quantas vezes o Mestre fala
+       (`QUEM_RESPONDE`, rastro.js): a frase leva o envelope junto, o sinal
+       do Mestre o deixa à espera da próxima frase, e só o toque chama */
+    const qr = quemResponde(opcoes && opcoes.origem);
     if (acampadoRef.current) return;
     /* v9.165: a quarta boca do porteiro — botões e sinais do Mestre chegam
        direto aqui, sem passar pela interceptação. Confere ANTES de qualquer
@@ -22709,7 +22824,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     bumpCont("viagens");
     if (enc.tipo === "perigo") bumpCont("perigosEstrada");
     checarConquistas();
-    pushMsgs([{ autor: "jogador", texto: `Sigo viagem pela estrada. ${c.rotulo}` }]);
+    /* MM16 nº 2: aqui morava "Sigo viagem pela estrada." com `autor:
+       "jogador"` — o sistema escrevendo na boca do herói. O clima é do
+       sistema, e vai como linha dele, com o ícone do próprio clima
+       (encontros.js) e o que ele muda na estrada — um emoji novo na frente
+       pediria decisão na tabela de assuntos (glifos.js), que é do desenho */
+    pushMsgs([{ autor: "sistema", texto: `${c.icone ? c.icone + " " : ""}Na estrada: ${c.rotulo} — ${c.nota}.` }]);
     /* JORNADA: partir marca que saímos da cidade — até o sistema registrar
        chegada, eu estou NA ESTRADA (ou no mar), não em lugar nenhum. */
     if (!jornadaRef.current) {
@@ -22720,7 +22840,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* v9.56: a jornada nasce como REGISTRO — com a rota, a distância, o
          total de estrada e o estado. É o que permite dizer quanto falta. */
       const alvo = destino || destinoViagemRef.current || "";
-      jornadaRef.current = abrirViagem({
+      /* MM16 nº 2: a estrada até à boca de uma masmorra não está em
+         `mapa.rotas` (não há rota até um covil): a jornada nasce da rota
+         que a ida calculou, e sabe que acaba numa boca (`alvo`) */
+      let jIda = null;
+      if (opcoes && opcoes.ida) {
+        try { jIda = jornadaAteAMasmorra(opcoes.ida, { de: cidadeAtualRef.current || "a última parada", dia: diaRef.current }); } catch (e) { calou("jornada até a boca", e); }
+      }
+      jornadaRef.current = jIda || abrirViagem({
         de: cidadeAtualRef.current || "a última parada", para: alvo,
         dia: diaRef.current, rota: rotaEntre(cidadeAtualRef.current, alvo),
       });
@@ -22769,7 +22896,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (mf.exaustao > 0) {
         persV = { ...persV, exaustao: Math.min(6, (persV.exaustao || 0) + mf.exaustao) };
         const ex = efeitoExaustao(persV.exaustao);
-        setPersonagem(persV);
+        /* MM16 nº 2: o ref junto — quando a estrada é aberta pela frase,
+           quem sobe ao Mestre é a ficha viva, e sem o ref a exaustão sumia */
+        setPersonagem(persV); personagemRef.current = persV;
         pushMsgs([{ autor: "sistema", texto: `😩 Marcha forçada: +${horasExtras}h de estrada e ${mf.exaustao} nível(is) de exaustão — agora ${persV.exaustao}/6 (${ex.efeito}).` }]);
         notaMarcha = ` FORCEI A MARCHA por ${horasExtras} horas além do normal: o sistema rolou o Vigor e eu ganhei ${mf.exaustao} nível(is) de EXAUSTÃO (estou em ${persV.exaustao}/6 — ${ex.efeito}). Mostre o corpo cobrando: pés, respiração, silêncio no grupo. Não invente outro custo.`;
       } else {
@@ -22824,11 +22953,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         mercadoRef.current = { ...mercadoRef.current, ambulante: null }; setMercado(mercadoRef.current);
       }
     }
-    enviar(`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
+    /* MM16 nº 2: a estrada até à boca de uma masmorra não acaba numa
+       cidade, e o Mestre não pode registrar a chegada nem abrir a porta */
+    const paraBoca = !!(jornadaRef.current && jornadaRef.current.alvo && jornadaRef.current.alvo.tipo === "masmorra");
+    /* e quando este trecho é o último, a chegada à boca sobe na MESMA
+       chamada (`talvezChegarSozinho`, no envio): o trecho não pode dizer
+       "não chegue" enquanto a chegada diz "chegou" */
+    const ultimoTrecho = paraBoca && !!(progressoDaViagem(jornadaRef.current) || {}).chegou;
+    const textoDaViagem = (`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
 LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
-Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."} Termine me convidando a agir. RITMO DE MARCHA: ${rit.nome.toLowerCase()} — ${rit.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`, persV);
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". ${paraBoca ? (ultimoTrecho ? `Este trecho termina diante da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade: narre-o até ela ficar à vista, sem me pôr lá dentro e sem registrar "cidade_atual" — a chegada à boca é do sistema.` : `Estou a caminho da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade — aproxime-me dela, mas NÃO me faça chegar nem entrar, e NÃO registre "cidade_atual": a chegada à boca é do sistema, e ele avisa quando for.`) : `Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."}`} Termine me convidando a agir. RITMO DE MARCHA: ${rit.nome.toLowerCase()} — ${rit.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`);
+    if (qr.chamadas) enviar(textoDaViagem, persV);
+    else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${textoDaViagem}`;
   };
 
   /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a
@@ -23539,7 +23677,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             precisaDoNarrador: true,
             /* do ref e nao do estado: entre montar a lista e o dedo cair
                pode ter passado um turno, e quem anda e o destino de agora */
-            aoClicar: () => viajar((jornadaRef.current || {}).para || ""),
+            aoClicar: () => viajar((jornadaRef.current || {}).para || "", { origem: "toque" }),
           });
         }
       }

@@ -178,7 +178,12 @@ sec("6. as duas contradições antigas, pelo que o código faz");
      semeie (`chefesDoMundo` é só da semente); áreas secretas, sim, pelo
      sinal masmorra:<nome> (`entrarMasmorra`) */
   const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-  t("o código: o sinal masmorra:<nome> gera a área que o Narrador nomeou", /chave === "masmorra"/.test(APP) && /entrarMasmorra\(nomeMm\)/.test(APP));
+  /* MM16 nº 2 (v9.351): a chamada ganhou um segundo argumento — quem pediu a
+     entrada (`{ origem: "sinal" }`, QUEM_RESPONDE em rastro.js), para que o
+     sinal do Mestre não o chame de novo. A intenção desta asserção é a mesma:
+     o sinal abre a área com o NOME que o Narrador deu; por isso ela continua
+     a exigir `nomeMm` como primeiro argumento, e aceita o que vier depois. */
+  t("o código: o sinal masmorra:<nome> gera a área que o Narrador nomeou", /chave === "masmorra"/.test(APP) && /entrarMasmorra\(nomeMm[,)]/.test(APP));
   t("o prompt já não manda semear chefes", !/semeie chefes ocultos/.test(P));
   t("diz que os chefes são os do sistema, escondidos, e as áreas pelo sinal", /os chefes são os que o sistema já pôs no mundo/.test(P) && /manda "masmorra:<nome>"/.test(P));
 }
