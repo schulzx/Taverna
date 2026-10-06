@@ -1276,6 +1276,14 @@ esses dois modos — o Torneio, a arena, o selo e o roster do Duelo, a sala do
 Duelo — **não é a vez**, e fica onde está na pauta com esta nota por cima. Não
 se apaga nada: o beta é um corte de foco, não um descarte.
 
+- [ ] **A região seguinte — a continuação depois do fim** · pesado (formato do save: a
+  campanha passa a ter mais de uma região) · de: a pessoa, MM17 · 06/10
+  Quando a espinha fecha no clímax, a campanha pode seguir numa REGIÃO NOVA: um canto do
+  horizonte (`mapa.regiao.horizonte`, regiao.js) vira região com ficha, base, povoados e
+  lugares, e a anterior fica como lembrança jogável. A pessoa disse que **não é para agora**;
+  o desenho da MM17 deixa a porta aberta (o horizonte já nasce com nome e boato, e a região
+  é um campo do mapa, não o mapa inteiro). Plano em `mente/mm17-regiao.md`.
+
 ## Aberto (leve / médio — o ciclo pega daqui, o de maior valor primeiro)
 
 - [x] **"posso atacar o guarda?" abre uma luta** · feito 29/09, v9.309 (promovido pelo

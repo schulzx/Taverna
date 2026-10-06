@@ -351,7 +351,10 @@ export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex =
    não existiam no mundo, não tinham lugar, e ninguém podia ouvir falar delas
    antes. Agora estão no chão desde o primeiro dia, com nome, região, cidade
    mais próxima e nível — e o rumor pode chegar antes do herói. */
-const TIPOS_MASMORRA = [
+/* MM17: as três tabelas desta seção são exportadas porque a REGIÃO
+   DELIMITADA (regiao.js) nomeia e anuncia os lugares dela com elas — os
+   mesmos tipos, epítetos e rumores, e não uma segunda lista. */
+export const TIPOS_MASMORRA = [
   { tipo: "cripta", icone: "⚰", nomes: ["Cripta dos {x}", "Sepulcro de {x}", "Ossuário {x}"] },
   { tipo: "ruína", icone: "🏚", nomes: ["Ruínas de {x}", "O que sobrou de {x}", "Alicerces de {x}"] },
   { tipo: "caverna", icone: "🕳", nomes: ["Gruta {x}", "Fenda de {x}", "A Boca de {x}"] },
@@ -360,17 +363,34 @@ const TIPOS_MASMORRA = [
   { tipo: "templo", icone: "🛕", nomes: ["Templo Afogado de {x}", "Santuário Cego de {x}", "A Nave de {x}"] },
   { tipo: "forte", icone: "🏰", nomes: ["Forte Abandonado de {x}", "Bastião de {x}", "Muralha Quebrada de {x}"] },
 ];
-const EPITETOS = ["Ferro", "Cinzas", "Vidro", "Sal", "Névoa", "Espinhos", "Prata Podre", "Silêncio", "Sangue Velho", "Mil Bocas", "Corvos", "Pedra Torta", "Gelo Fundo", "Raízes"];
-const RUMORES = [
+export const EPITETOS = ["Ferro", "Cinzas", "Vidro", "Sal", "Névoa", "Espinhos", "Prata Podre", "Silêncio", "Sangue Velho", "Mil Bocas", "Corvos", "Pedra Torta", "Gelo Fundo", "Raízes"];
+export const RUMORES = [
   "dizem que ninguém que entrou de noite voltou", "um pastor jura ter visto luz lá dentro",
   "a guarda proibiu a estrada que leva até lá", "há uma recompensa antiga por notícias do lugar",
   "as pessoas da região não falam o nome em voz alta", "um mercador vende mapas duvidosos do interior",
   "contam que o dono ainda está lá, esperando", "crianças somem quando a neblina desce",
 ];
 
+/* MM17 (a região delimitada): um mapa que nasceu com "mapa.regiao" já traz
+   as masmorras dele POSTAS — cada lugar da região, com o ato e a ficha, a
+   no máximo um dia de marcha da base (regiao.js). Sortear outras aqui, a
+   oito unidades de uma cidade, seria ter dois mundos no mesmo mapa. Devolve
+   os lugares no formato de sempre (os mesmos campos, a mesma ordem por
+   nível), e por isso todo leitor desta função — a boca, a porta, a pauta,
+   o Geógrafo — serve a região sem mudar uma linha. Um mapa SEM o campo (o
+   continente de sempre, todo save que já existe) não entra aqui: a resposta
+   é a de antes, byte a byte (teste-regiao.mjs guarda os hashes). */
+const CAMPOS_DA_MASMORRA = ["id", "nome", "tipo", "icone", "regiao", "bioma", "cidadeProxima", "nivel", "salas", "rumor", "x", "y"];
+
 export function masmorrasDoMundo(semente, mapa) {
   const regioes = (mapa && mapa.regioes) || [];
   const cidades = (mapa && mapa.cidades) || [];
+  const daRegiao = mapa && mapa.regiao && typeof mapa.regiao === "object" && Array.isArray(mapa.regiao.lugares) ? mapa.regiao.lugares : null;
+  if (daRegiao) {
+    return daRegiao.filter((l) => l && typeof l === "object" && l.nome)
+      .map((l) => Object.fromEntries(CAMPOS_DA_MASMORRA.map((k) => [k, l[k]])))
+      .sort((a, b) => (Number(a.nivel) || 0) - (Number(b.nivel) || 0));
+  }
   if (!regioes.length) return [];
   const rnd = rngDe(`${semente}|masmorras`);
   const out = [];

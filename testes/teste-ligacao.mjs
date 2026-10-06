@@ -131,7 +131,13 @@ sec("1. NENHUM MÓDULO MUDO");
      memória, ~19440, e a situação da trama, ~16708). A entrada sai quando
      o App o importar, e a lista volta a ficar VAZIA. */
   /* e paga no mesmo dia: o App.jsx importa `promessaEmAberto`. A lista volta a ficar VAZIA. */
-  const AGUARDANDO = {};
+  /* 06/10 (Fase MM, MM17 · a região delimitada, etapa A): `regiao.js` nasce
+     no backend (o mapa de uma região, a amarração da espinha) e espera a
+     fiação da MESMA fase — a etapa B liga `gerarRegiao` à criação do mundo
+     de uma campanha nova, no App.jsx. A entrada sai quando o App o importar,
+     e a lista volta a ficar VAZIA. `mundo-base.js` já o serve (o ramo da
+     região em `masmorrasDoMundo`) sem o importar. */
+  const AGUARDANDO = { "regiao.js": "o frontend, MM17 etapa B (gerarRegiao na criação do mundo)" };
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;
