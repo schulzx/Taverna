@@ -87,6 +87,29 @@ export function masmorraDaBoca(lugar, masmorras) {
   return (Array.isArray(masmorras) ? masmorras : []).find((m) => m && m.nome && semArtigo(m.nome) === k) || null;
 }
 
+/* ---------------- AO ENTRAR, O LUGAR É A BOCA (MM16 nº 4) ----------------
+   Na sessão de prova a tela disse "Você está na Nave de Ferro" e, oito
+   linhas abaixo, "Você está no posto da estrada": abrir a masmorra não
+   tocava no lugar vigente, e o lugar que ficava era o de antes da porta —
+   o posto, a fogueira, a estrada. Era esse que o ONDE da pauta dizia lá
+   dentro ("no posto da estrada · (aqui isto é um forte)"), e era contra
+   esse que o sistema julgava cada lugar que a IA devolvia.
+
+   Entrar põe o lugar vigente na BOCA da masmorra — o mesmo lugar que
+   `chegadaABoca` regista quando se chega a pé ou pela estrada: o nome dela,
+   o ponto dela, a distância da boca. Lá dentro quem diz a sala é a planta
+   (`masmorraParaPauta`, masmorras.js); e ao sair o herói está onde de facto
+   está — diante da porta por onde saiu, não no posto de onde veio.
+
+   Quem já está à boca dela não muda (é o mesmo lugar, e o `desde` fica).
+   Devolve o lugar a registar, ou `null` quando não há masmorra com nome. */
+export function lugarAoEntrarNaMasmorra(masmorra, opcoes) {
+  const { cidade = "", dia = 0, lugar = null } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  if (!masmorra || typeof masmorra !== "object" || !masmorra.nome) return null;
+  if (masmorraDaBoca(lugar, [masmorra])) return lugar;
+  return definirLugar(String(masmorra.nome), { cidade, dia, distancia: IDA_A_MASMORRA.distanciaDaBoca, coord: coordDe(masmorra.coord || masmorra) });
+}
+
 /* ---------------- A ESTRADA ATÉ A BOCA ----------------
    `origem` é o ponto do herói (a cidade, o arredor onde está, o meio da
    estrada). Sem ponto de partida ou sem o ponto da masmorra não há conta,

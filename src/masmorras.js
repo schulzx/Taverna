@@ -146,19 +146,64 @@ function conteudoSala(tipo, genero, nivel, profunda) {
   return {};
 }
 
+/* ---------------- A PLANTA DO TAMANHO QUE O MUNDO ANUNCIA (MM16 nº 4) ----------------
+   O mundo anuncia cada masmorra com nível e número de salas ("🛕 A Nave de
+   Ferro (templo, nível 6, 12 salas)", `oQueExisteAqui`, mundo-base.js) — é
+   o que o Narrador lê no prompt, o que o povo comenta e o que o veredito à
+   porta mede (`vereditoDaMasmorra`, boca.js). E ao entrar o gerador fazia
+   a planta pelo NÍVEL, com 6 a 11 salas: na sessão de prova o mundo dizia
+   12 e a planta tinha 6 ("ENTRADA 1/6"). A v9.115 já tinha corrigido a
+   metade disto — o nível passou a vir do mapa —, e o tamanho ficou para
+   trás: o cartaz e o chão contando histórias diferentes outra vez.
+
+   Com `opcoes.salas`, a planta nasce com ESSE número exato de salas
+   (entrada e chefe incluídos), clampado à tabela. As larguras das camadas
+   saem da conta abaixo, sem sorte — o que muda de uma masmorra para outra
+   continua a ser o que mora em cada sala. Sem a opção, o gerador é o de
+   sempre, chamada a chamada (o mesmo número de sorteios, na mesma ordem).
+
+   `larguraMaxima` é a de sempre (2-3 por camada); `camadasMinimas` é a
+   profundidade mínima que o gerador sempre teve (a chave nunca na primeira
+   camada inteira quando há duas); o teto e o piso de salas cobrem o que o
+   mundo anuncia (5 a 12, mundo-base.js) com folga, e abaixo de 4 não há
+   miolo para a chave. */
+export const PLANTA_DA_MASMORRA = {
+  larguraMaxima: 3,
+  camadasMinimas: 2,
+  salasMinimas: 4,
+  salasMaximas: 20,
+};
+
+/* As larguras das camadas do miolo para uma planta de `n` salas no total
+   (entrada + miolo + chefe). As primeiras camadas ficam com a sobra: o
+   leque abre largo à porta e afunila para o fundo. `null` para lixo. */
+export function larguraDasCamadas(n) {
+  const T = PLANTA_DA_MASMORRA;
+  const num = typeof n === "number" ? n : typeof n === "string" && n.trim() ? Number(n) : NaN;
+  if (!Number.isFinite(num)) return null;
+  const total = Math.max(T.salasMinimas, Math.min(T.salasMaximas, Math.round(num)));
+  const miolo = total - 2;
+  const camadas = Math.max(T.camadasMinimas, Math.ceil(miolo / T.larguraMaxima));
+  const base = Math.floor(miolo / camadas), sobra = miolo % camadas;
+  return Array.from({ length: camadas }, (_, i) => base + (i < sobra ? 1 : 0));
+}
+
 /* ---------------- GERADOR: grafo em camadas ----------------
    entrada → camada 1 (2-3 salas) → camada 2 (2-3) → [camada 3] → chefe
    Cada sala liga a 2 salas da camada seguinte. Uma sala do miolo guarda
-   a CHAVE; sem ela o portão do chefe não abre. */
-export function gerarMasmorra(genero, nivel, nomeSugerido = "") {
+   a CHAVE; sem ela o portão do chefe não abre.
+   MM16 nº 4: `opcoes.salas` — a planta com o número que o mundo anuncia
+   (ver PLANTA_DA_MASMORRA, acima). `opcoes` pode vir `null`. */
+export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
   const nome = nomeSugerido || `${sortear(LUGARES)} ${sortear(EPITETOS)}`;
-  const nCamadas = nivel >= 8 ? 3 : 2;
+  const larguras = opcoes && typeof opcoes === "object" && opcoes.salas != null ? larguraDasCamadas(opcoes.salas) : null;
+  const nCamadas = larguras ? larguras.length : nivel >= 8 ? 3 : 2;
   const salas = [{ id: 0, tipo: "entrada", camada: 0, saidas: [], visitada: true, resolvida: true }];
   let idSeq = 1;
   let anterior = [0];
 
   for (let c = 1; c <= nCamadas; c++) {
-    const largura = 2 + (Math.random() < 0.45 ? 1 : 0);
+    const largura = larguras ? larguras[c - 1] : 2 + (Math.random() < 0.45 ? 1 : 0);
     const atual = [];
     for (let i = 0; i < largura; i++) {
       const r = Math.random();
@@ -504,6 +549,143 @@ export function progressoMasmorra(mm) {
 }
 
 export function noEscuro(mm) { return !mm || (mm.tochas || 0) <= 0; }
+
+/* ============================================================
+   A MASMORRA NA PAUTA (MM16 nº 4) — a sala onde estou, por turno
+
+   Na terceira sessão de prova (`mente/mm11-sessao-3.md`, M13) a heroína
+   parou à soleira e perguntou ao Mestre o que havia na câmara, quantos
+   eram, a quantos metros, e onde se esconder. A pauta não tinha a sala:
+   o ONDE dizia "no posto da estrada · (aqui isto é um forte)" — a fogueira
+   de antes da porta —, sem GUARDIÃO, sem quem lá estava (o save tinha um
+   Goblin e um Lobo), sem passagens nem distâncias. As quatro perguntas
+   perderam-se, e o Mestre inventou salões. A planta inteira estava no
+   estado da masmorra, e o sistema não a contava a quem narra.
+
+   Isto é a planta dita ao Narrador, no canal por turno (a seção MASMORRA
+   de `pauta.js`) — nunca bloco estático. Tudo se lê do estado: nada se
+   inventa, e o que o herói ainda não viu continua escondido (das salas por
+   abrir vai só a PISTA, o que se percebe da soleira, como na tela).
+
+     0. QUE SALA é esta não mora aqui: vai na 1.ª linha do ONDE, que é de
+        ferro (`salaEmPalavras`, lida por `linhaDoLugar` no geografo.js) —
+        "dentro da Nave de Ferro, na sala do guardião da chave". A sala onde
+        se está é o lugar, e o lugar nunca cai da pauta;
+     1. a planta: a camada, quantas salas se viram (o número da PLANTA,
+        não o que o mundo anuncia), a luz;
+     2. o que nela resta: quem lá está de pé, quem lá ficou caído, o que a
+        sala já deu (o `oQueFicou` da SALA_LIMPA), a tranca por abrir;
+     3. as passagens: para a frente, a pista de cada uma; para trás, a sala
+        de onde se veio; o portão do fundo;
+     4. o fundo: a quantas passagens fica o portão, e se a chave já caiu.
+
+   NA LUTA vai só a 1: quem está, onde e a quantos metros é o tabuleiro que
+   diz (o TERRENO DA LUTA e o CONTRA), e dizê-lo duas vezes seria duas
+   versões da mesma verdade. A ordem das linhas é a ordem do corte: a
+   primeira é a última a cair. */
+/* Que sala é esta, dito como lugar (o tipo, nunca o que há nela por ver).
+   É a frase que segue "dentro da <masmorra>," na 1.ª linha do ONDE. */
+export const SALA_EM_PALAVRAS = {
+  entrada: "à entrada",
+  combate: "numa sala de luta",
+  armadilha: "numa sala armadilhada",
+  tesouro: "numa sala de tesouro",
+  enigma: "diante de uma tranca",
+  santuario: "num refúgio",
+  chave: "na sala do guardião da chave",
+  chefe: "na sala do chefe",
+};
+
+/* A sala atual em palavras, ou "" (sem planta, sala perdida, tipo novo). */
+export function salaEmPalavras(mm) {
+  if (!mm || typeof mm !== "object" || !Array.isArray(mm.salas)) return "";
+  const sala = mm.salas.find((s) => s && s.id === mm.atual);
+  return (sala && Object.prototype.hasOwnProperty.call(SALA_EM_PALAVRAS, sala.tipo) && SALA_EM_PALAVRAS[sala.tipo]) || "";
+}
+
+export const MASMORRA_NA_PAUTA = {
+  /* nomes de quem está na sala, de pé ou caído (o resto vira "e mais N") */
+  maxNomes: 4,
+  /* passagens ditas, para a frente e para trás somadas */
+  maxPassagens: 4,
+};
+
+/* Quantas passagens separam a sala `de` da sala `para`, andando pela planta
+   nos dois sentidos (para a frente pelas saídas, para trás pelo recuo).
+   `null` quando não há caminho ou a planta é lixo. */
+export function passagensAte(mm, de, para) {
+  if (!mm || !Array.isArray(mm.salas)) return null;
+  const vizinhos = new Map(mm.salas.filter((s) => s && s.id != null).map((s) => [s.id, new Set()]));
+  for (const s of mm.salas) {
+    if (!s || !vizinhos.has(s.id)) continue;
+    for (const id of s.saidas || []) if (vizinhos.has(id)) { vizinhos.get(s.id).add(id); vizinhos.get(id).add(s.id); }
+  }
+  if (!vizinhos.has(de) || !vizinhos.has(para)) return null;
+  const dist = new Map([[de, 0]]); const fila = [de];
+  while (fila.length) {
+    const a = fila.shift();
+    if (a === para) return dist.get(a);
+    for (const b of vizinhos.get(a)) if (!dist.has(b)) { dist.set(b, dist.get(a) + 1); fila.push(b); }
+  }
+  return null;
+}
+
+/* "Lobo, Goblin ×2" — os nomes de uma lista de inimigos, contados, até ao teto */
+function nomesContados(lista) {
+  const conta = new Map();
+  for (const i of Array.isArray(lista) ? lista : []) {
+    const n = String((i && i.nome) || "").trim();
+    if (n) conta.set(n, (conta.get(n) || 0) + 1);
+  }
+  const todos = [...conta].map(([n, q]) => (q > 1 ? `${n} ×${q}` : n));
+  const max = MASMORRA_NA_PAUTA.maxNomes;
+  return todos.length > max ? `${todos.slice(0, max).join(", ")} e mais ${todos.length - max}` : todos.join(", ");
+}
+
+/* As linhas da seção MASMORRA para esta masmorra, ou `[]` (fora dela, ou
+   lixo). `opcoes.luta` (booleano) corta para a linha da sala. As opções
+   podem vir `null`. Nunca muta a masmorra. */
+export function masmorraParaPauta(mm, opcoes) {
+  const luta = !!(opcoes && typeof opcoes === "object" && opcoes.luta === true);
+  if (!mm || typeof mm !== "object" || !Array.isArray(mm.salas) || !mm.salas.length) return [];
+  const sala = mm.salas.find((s) => s && s.id === mm.atual);
+  if (!sala) return [];
+  const prog = progressoMasmorra(mm);
+  const chefe = mm.salas.find((s) => s && s.tipo === "chefe") || null;
+  const fundo = Math.max(...mm.salas.map((s) => Number(s && s.camada) || 0));
+  const rotulo = (s) => ROTULO_SALA[s && s.tipo] || "sala";
+  const luz = noEscuro(mm) ? "NO ESCURO: nenhuma tocha acesa" : `${mm.tochas} ${mm.tochas === 1 ? "tocha" : "tochas"} na mão`;
+  const linhas = [`camada ${Number(sala.camada) || 0} de ${fundo} · ${prog.visitadas} das ${prog.total} salas da planta já vistas · ${luz}`];
+  if (luta) return linhas;
+
+  /* 2. o que nela resta */
+  const nomes = nomesContados(sala.inimigos);
+  let resta = "";
+  if (sala.tipo === "entrada") resta = "a boca: por aqui se sai da masmorra";
+  else if (sala.resolvida === true) resta = `${(SALA_LIMPA[sala.tipo] || SALA_LIMPA.combate).oQueFicou}${nomes ? ` — caídos aqui: ${nomes}` : ""}`;
+  else if (nomes) resta = `de pé aqui: ${nomes}`;
+  else if (sala.tipo === "enigma") resta = `a tranca (${trancaPorId(sala.tranca).rotulo}) ainda por abrir`;
+  if (resta) linhas.push(resta);
+
+  /* 3. as passagens: para a frente, a pista; para trás, a sala de onde se veio */
+  const frente = saidasDe(mm).map((x) => (chefe && x.id === chefe.id
+    ? "o portão do fundo"
+    : x.visitada ? `${rotulo(x)} (${x.pista})` : x.pista));
+  const tras = saidasDeRecuo(mm).map((x) => `de volta: ${rotulo(x)}`);
+  const passagens = [...frente, ...tras].filter(Boolean);
+  const max = MASMORRA_NA_PAUTA.maxPassagens;
+  if (passagens.length) linhas.push(`passagens: ${passagens.slice(0, max).join(" · ")}${passagens.length > max ? ` · e mais ${passagens.length - max}` : ""}`);
+  else linhas.push("passagens: nenhuma para a frente — só se volta por onde se veio");
+
+  /* 4. o fundo: a distância na planta e a chave */
+  if (chefe && chefe.resolvida === true) linhas.push("o chefe já caiu: a masmorra está vencida");
+  else if (chefe && chefe.id !== sala.id) {
+    const d = passagensAte(mm, sala.id, chefe.id);
+    const onde = d == null ? "" : d === 1 ? "a uma passagem daqui" : `a ${d} passagens daqui`;
+    linhas.push(`o portão do fundo${onde ? `: ${onde}` : ""}, ${mm.chave ? "e a chave já caiu — abre" : "lacrado — a chave ainda não caiu"}`);
+  }
+  return linhas;
+}
 
 /* Tochas achadas ou compradas. O teto existe para o feixe não virar uma
    licença de varrer a masmorra inteira sem pensar. */

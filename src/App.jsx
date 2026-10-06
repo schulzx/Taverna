@@ -19,7 +19,7 @@ import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } fr
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -204,7 +204,7 @@ import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDe
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
 import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra, idaAMasmorra, quemResponde } from "./rastro.js";
-import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca } from "./boca.js";
+import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca, lugarAoEntrarNaMasmorra } from "./boca.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
@@ -6941,6 +6941,12 @@ export default function Taverna() {
       longe,
     });
     p = porNaPauta(p, "onde", g.onde);
+    /* MM16 nº 4: A PLANTA À VOLTA DA SALA (a sala mesma vai na 1.ª linha do
+       ONDE, que é de ferro). Fora da masmorra a função devolve nada. Na
+       luta, uma linha só: quem está e a quantos metros é do tabuleiro. */
+    try {
+      p = porNaPauta(p, "masmorra", masmorraParaPauta(masmorraRef.current, { luta: !!combateRef.current }));
+    } catch (e) { calou("masmorraParaPauta", e); }
     /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque
        é geografia antes de ser economia — a praça de um porto e a de uma
        serra não se parecem, e o Narrador nunca teve como saber disso.
@@ -6953,7 +6959,7 @@ export default function Taverna() {
        quando o herói está lá — governo de longe não é o que se vê na praça. */
     {
       const cd = cidadeDoMapa(cidadeAtualRef.current);
-      if (cd && cd.relacao === "jogador") {
+      if (cd && cd.relacao === "jogador" && !masmorraRef.current) { /* MM16 nº 4: o domínio é a praça, não a masmorra */
         p = porNaPauta(p, "onde", envelopeDoDominio(cd, (governosRef.current || {})[cd.nome], {
           felicidade: ((reinoRef.current || {})[cd.nome] || {}).felicidade,
           semente: sementeMundo(),
@@ -6968,7 +6974,7 @@ export default function Taverna() {
        colore tudo o que acontece dentro dele. */
     {
       const casa = minhaCasa();
-      if (casa) p = porNaPauta(p, "onde", envelopeDaGuilda(casa));
+      if (casa && !masmorraRef.current) p = porNaPauta(p, "onde", envelopeDaGuilda(casa)); /* MM16 nº 4: lá dentro a casa não é o lugar */
     }
     p = porNaPauta(p, "momento", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));
     /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
@@ -7007,7 +7013,7 @@ export default function Taverna() {
     /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
        maré do porto. Só parado em cidade: no meio da estrada a linha do
        andar de trás seria mentira sobre o lugar onde a cena está. */
-    if (!jornadaRef.current) {
+    if (!jornadaRef.current && !masmorraRef.current) { /* MM16 nº 4: a lei do andar é a da cidade, não a da masmorra */
       const lf = leiParaPauta({
         molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current,
         forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(),
@@ -7917,7 +7923,12 @@ export default function Taverna() {
      nenhum. Doze dias depois, a peça morreu sem a ter — e a prop, a
      referência e o efeito tinham de morrer com ela. */
 
-  const localAtualTxt = () => jornadaRef.current
+  /* MM16 nº 4: dentro da masmorra o Local do rodapé é a boca (o lugar que a
+     entrada registou), não a estrada: a jornada fica guardada para a saída,
+     e dizia "EM VIAGEM desde …" com o herói a três salas da porta. */
+  const localAtualTxt = () => (masmorraRef.current && lugarRef.current)
+    ? linhaDeLugar(lugarRef.current)
+    : jornadaRef.current
     ? `${(linhaDaViagem(jornadaRef.current) || `EM VIAGEM desde ${jornadaRef.current.de || "a última parada"}`).replace(/^🧭 /, "EM VIAGEM: ")} — não estou em cidade nenhuma`
     : lugarRef.current
       ? linhaDeLugar(lugarRef.current)
@@ -7930,22 +7941,21 @@ export default function Taverna() {
   const registrarLugar = (nome, fonte = "mestre") => {
     const cidade = cidadeAtualRef.current || "";
     const cru = String(nome || "").trim();
-    /* v9.48: NINGUÉM SE MOVE NO MEIO DE UMA LUTA. Achado jogando: o herói
-       subiu para o Andar 2, atacou um zumbi, e o turno seguinte o anunciou
-       "de volta ao Andar 1". Dentro do combate quem diz onde cada um está é
-       o tabuleiro, em metros — um campo de texto do Mestre não tem
-       autoridade para arrastar o herói um andar inteiro entre dois golpes. */
-    if (combateRef.current) {
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você mudou o meu lugar no meio de um combate. Não muda: enquanto a luta corre, quem diz onde cada um está é o tabuleiro do sistema. Continuo ${lugarRef.current ? comEm(lugarRef.current.nome) : `em ${cidade || "onde eu estava"}`}, e a cena é aqui.`;
-      return null;
-    }
+    /* MM16 nº 4: NA LUTA E NA MASMORRA O LUGAR É DO SISTEMA (era a v9.48:
+       ninguém se move no meio de uma luta). Aqui morava uma recusa de TUDO
+       o que chegasse com a luta aberta, antes de perguntar o que era — e na
+       3.ª sessão de prova ela acusou o Mestre 11 vezes em 14 respostas de
+       luta, por o Cronista repetir "câmara das correntes", o lugar onde o
+       herói já estava. A regra mudou-se para o motor (LUGAR_NA_CENA_DO_SISTEMA,
+       lugar.js): dentro de uma luta ou de uma masmorra, o lugar dito é
+       ignorado em silêncio — não move e não acusa. */
     /* MM15: quem diz o lugar (o Cronista ou o Mestre) decide o que o
        "cidade" significa — a régua vive em `lerLugarDito` (lugar.js), por
        QUEM_DIZ_O_LUGAR. Um órgão que estoura não pode custar o turno: se
        o motor falhar, não mover é o erro barato. */
     let lido;
     try {
-      lido = lerLugarDito(nome, { lugar: lugarRef.current, cidade, pedido: ultimoPedidoRef.current, fonte });
+      lido = lerLugarDito(nome, { lugar: lugarRef.current, cidade, pedido: ultimoPedidoRef.current, fonte, luta: !!combateRef.current, masmorra: !!masmorraRef.current });
     } catch (e) { calou("registrarLugar/lerLugarDito", e); return null; }
     if (lido.acao === "nada" || lido.acao === "ignora") return null;
     if (lido.acao === "recusa") {
@@ -9791,7 +9801,28 @@ export default function Taverna() {
       /* v9.39: onde estou, quando não é a cidade. Vem antes de `cidade_atual`
          de propósito: chegar a uma cidade apaga o sublocal, e a ordem inversa
          deixaria um fantasma de fazenda pendurado na cidade nova. */
-      if (Object.prototype.hasOwnProperty.call(md, "lugar_atual")) {
+      /* MM16 nº 4: O TURNO QUE ABRE A MASMORRA PELO SINAL. O lugar_atual
+         corre antes dos sinais, e a porta só abre 400 ms depois: um null do
+         Mestre à boca era julgado contra o lugar de antes da porta e virava
+         recusa — a mesma acusação falsa que a entrada já não faz pela frase.
+         Se a porta deste turno vai abrir (a mesma régua que o sinal usa, lida
+         antes), o lugar dito cala: quem põe o herói na boca é a entrada. Se
+         a régua estoura, segue o caminho de sempre. */
+      const abreAMasmorraAgora = (() => {
+        try {
+          if (combateRef.current || acampadoRef.current || masmorraRef.current) return false;
+          const sinais = Array.isArray(md.sinais) ? md.sinais.slice(0, 6) : [];
+          return sinais.some((bruto) => {
+            const txt = String(bruto || "").trim();
+            const ix = txt.indexOf(":");
+            if ((ix < 0 ? txt : txt.slice(0, ix)).trim().toLowerCase() !== "masmorra") return false;
+            const arg = ix < 0 ? "" : txt.slice(ix + 1).trim();
+            const pm = portaDaMasmorra({ nome: arg }, { cidadeAtual: cidadeAtualRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: masmorrasDoMundo(sementeMundo(), mapaRef.current) });
+            return !!(pm && pm.ok);
+          });
+        } catch (e) { calou("lugar_atual/abreAMasmorraAgora", e); return false; }
+      })();
+      if (Object.prototype.hasOwnProperty.call(md, "lugar_atual") && !abreAMasmorraAgora) {
         const aviso = registrarLugar(md.lugar_atual);
         if (aviso) msgs.push(aviso);
       }
@@ -11911,7 +11942,7 @@ export default function Taverna() {
       const p = personagem || personagemRef.current || {};
       const cond = resumoCondicoesPrompt(p, p.grupo || []);
       const nem = infoNemesis();
-      const merc = resumoMercadoPrompt(mercadoAqui);
+      const merc = masmorraRef.current ? "" : resumoMercadoPrompt(mercadoAqui); /* MM16 nº 4: na masmorra não há banca aberta */
       const grp = resumoGrupoPrompt(p.grupo || []);
       const rea = combateRef.current ? resumoReacoesPrompt(p) : "";
       /* v9.20: o terreno é fato, e o Mestre precisa dele para não teleportar
@@ -11941,7 +11972,10 @@ export default function Taverna() {
       /* v9.39: quando o herói está fora da cidade, o que a base descreve
          continua verdadeiro — mas é o mundo LÁ, não a cena aqui. A linha do
          lugar vem antes para o Mestre ler nessa ordem. */
-      const ondeEstou = resumoLugarPrompt(lugarRef.current, cidadeAtualRef.current);
+      /* MM16 nº 4: dentro da masmorra a cena é a sala, e quem a diz é a
+         planta (o ONDE e a seção MASMORRA da pauta). Este bloco pedia ao
+         Mestre "quem aparece na estrada" com o herói numa câmara. */
+      const ondeEstou = masmorraRef.current ? "" : resumoLugarPrompt(lugarRef.current, cidadeAtualRef.current);
       /* v9.40: a forma do mundo vem ANTES do que existe aqui — é ela que
          diz se "aqui" é uma cidade, um andar ou uma órbita, e sem essa
          ordem o Mestre lê a lista de locais já pensando em cidade. */
@@ -11983,7 +12017,7 @@ export default function Taverna() {
       /* A pausa diz ONDE parou: "no 4º trecho de 13, junto às três pedras".
          É o que impede o Mestre de resolver a luta num lugar genérico e
          depois retomar a estrada como se nada tivesse acontecido ali. */
-      const viag = jornadaRef.current
+      const viag = (jornadaRef.current && !masmorraRef.current) /* MM16 nº 4: a estrada espera à porta */
         ? resumoViagemPrompt(combateRef.current
           ? pausarViagem(jornadaRef.current, (() => {
             const tr = trechoAtual(jornadaRef.current);
@@ -20252,7 +20286,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       } catch { return null; }
     })();
     const nivelDaMasmorra = doMapa && doMapa.nivel > 0 ? doMapa.nivel : (personagem.nivel || 1);
-    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra);
+    /* MM16 nº 4: e o TAMANHO também vem do mapa. O mundo anuncia "12 salas"
+       (o prompt, o povo, o veredito à porta) e a planta nascia com 6. */
+    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null });
     /* LUZ DE VERDADE (v9.26): a masmorra inventava as próprias tochas, e as
        que o jogador comprava no mercado não serviam para nada. Agora a luz
        da expedição É a da mochila: as tochas saem dos suprimentos ao entrar
@@ -20268,6 +20304,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const persIn = { ...pIn, suprimentos: { ...supIn, tochas: 0 } };
     setPersonagem(persIn); personagemRef.current = persIn;
     masmorraRef.current = mm; setMasmorra(mm);
+    /* MM16 nº 4: ENTRAR PÕE O LUGAR NA BOCA. O lugar vigente ficava o de
+       antes da porta (o posto, a fogueira), e era ele que o ONDE dizia lá
+       dentro e contra ele que se julgava todo lugar dito. Ao sair, o herói
+       está diante da porta por onde saiu. */
+    try {
+      const naBoca = lugarAoEntrarNaMasmorra(mm, { cidade: cidadeAtualRef.current || "", dia: diaRef.current, lugar: lugarRef.current });
+      if (naBoca && naBoca !== lugarRef.current) { lugarRef.current = naBoca; setLugar(naBoca); }
+    } catch (e) { calou("lugarAoEntrarNaMasmorra", e); }
     /* MM16 nº 2: aqui morava "Encontrei uma entrada: …. Vou explorar." com
        `autor: "jogador"` — o sistema escrevendo na boca do herói, e a
        segunda resposta do Mestre num toque só. O herói já disse o que faz;

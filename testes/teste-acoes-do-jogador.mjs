@@ -625,7 +625,12 @@ sec("4. a definição operacional de 'número que muda'");
      à boca), todos ACIMA do relógio. Só o endereço andou; re-medido pelo diff
      de App.jsx contra o de antes da etapa e pelo bloco 8 de
      check-acoes-do-jogador.mjs. */
-  t("e aponta a linha que avança o relógio", !!relogio && /14951/.test(relogio.porque));
+  /* (v9.352 · a masmorra na pauta) MM16 nº 4, 06/10: 14951 -> 14985, +34: 
+     a seção MASMORRA em `pautaDoTurno` (+6), o Local do rodapé que lá dentro diz a boca e não a estrada (+5), a recusa de combate que saiu de `registrarLugar` (-1), a guarda do `lugar_atual` no turno que abre a masmorra pelo sinal (+21) e o ONDE EU ESTOU calado lá dentro (+3),
+     todos ACIMA do relógio. Só o endereço andou; re-medido pelo diff de
+     App.jsx contra o de antes da etapa e pelo bloco 8 de
+     check-acoes-do-jogador.mjs. */
+  t("e aponta a linha que avança o relógio", !!relogio && /14985/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -930,7 +935,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
     /* (v9.350 · o como chega) 13349 -> 13362, +13: a fiação de `pautaDoTurno`
        cresceu ACIMA. Mesma linha, mesma voz. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-      .linhas.find((l) => l.onde === "src/App.jsx:13389").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13423").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1101,7 +1106,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        dela). A recusa por alcance é a mesma, na mesma função; só mudou de
        linha. A família continua a ser o que a asserção guarda. */
     /* (v9.350 · o como chega) 13216 -> 13229, +13, o mesmo degrau. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13256" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13290" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1200,7 +1205,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      e a chegada à boca em `talvezChegarSozinho` (+19), todos ACIMA do
      `enviar`. Só o endereço andou; re-medido pelo diff de App.jsx contra o
      de antes da etapa, e conferido pelo varredor. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13405/.test(S.ondeSai));
+  /* (v9.352 · a masmorra na pauta) MM16 nº 4, 06/10: 13405 -> 13439, +34 —
+     o mesmo degrau do relógio, todo ACIMA do `enviar`. Só o endereço andou;
+     re-medido pelo diff de App.jsx contra o de antes da etapa, e conferido
+     pelo varredor. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13439/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

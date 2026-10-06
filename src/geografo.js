@@ -38,8 +38,9 @@
    ============================================================ */
 
 import { ondeEstou, pontoDoHeroi } from "./rastro.js";
-import { linhaDeLugar, pontoDoLugar } from "./lugar.js";
+import { linhaDeLugar, pontoDoLugar, comDe } from "./lugar.js";
 import { comoChamam } from "./lexico.js";
+import { salaEmPalavras } from "./masmorras.js";
 import { garantirCoord, coordDe, kmEntre, rumoEntre, enderecoDe, maisPertoDe, linhaDePonto, formatarDistancia } from "./coordenadas.js";
 import { arredoresDaCidade } from "./arredores.js";
 
@@ -290,9 +291,20 @@ export function linhaDoLugar(ctx = {}) {
   const { cidadeAtual = "", jornada = null, masmorra = null, mapa = null, lugar = null, lex = null, sitio = null, clima = "" } = ctx;
   const onde = ondeEstou({ cidadeAtual, jornada, masmorra, mapa });
   const partes = [];
+  /* MM16 nº 4: DENTRO DA MASMORRA, A MASMORRA GANHA DO LUGAR — como em
+     `ondeEstou` ("a masmorra ganha de tudo"). Aqui o lugar vinha primeiro,
+     e na sessão de prova o ONDE disse "no posto da estrada" lá dentro, a
+     fogueira de antes da porta, e "em câmara das correntes" quando o
+     Cronista a nomeou; o Narrador inventou salões. E sem o "câmara N": o N
+     é o id da sala na planta, não a ordem dela. No lugar dele vai QUE SALA
+     é (`salaEmPalavras`: "na sala do guardião da chave") — nesta linha,
+     que é de ferro, porque a sala onde se está É o lugar; a camada, o que
+     nela resta, as passagens e o fundo vão na seção MASMORRA da pauta
+     (`masmorraParaPauta`).
+     O artigo pelo `comDe` da casa: "d" + "A Nave" dava "dA Nave". */
   if (sitio && sitio.texto) partes.push(sitio.texto);
+  else if (onde.tipo === "masmorra") { const sala = salaEmPalavras(masmorra); partes.push(`dentro ${comDe(onde.rotulo)}${sala ? `, ${sala}` : ""}`); }
   else if (lugar && lugar.nome) partes.push(linhaDeLugar(lugar).split(" — ")[0].replace(/^FORA DA CIDADE, /, ""));
-  else if (onde.tipo === "masmorra") partes.push(`dentro ${/^[ao]s? /i.test(onde.rotulo) ? "d" + onde.rotulo : "de " + onde.rotulo}, ${onde.detalhe}`);
   else if (onde.tipo === "estrada") partes.push(onde.rotulo);
   else if (onde.tipo === "cidade") partes.push(`em ${onde.rotulo}${onde.detalhe ? ` (${onde.detalhe})` : ""}`);
   else partes.push("fora de qualquer lugar registrado");

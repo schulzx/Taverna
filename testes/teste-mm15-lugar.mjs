@@ -262,7 +262,13 @@ sec("6. a fiação no App.jsx");
   const APP = tenta(() => readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n"), "");
   t("o App importa lerLugarDito de lugar.js", /\blerLugarDito\b/.test(APP) && /from "\.\/lugar\.js"/.test(APP.slice(APP.indexOf("lerLugarDito") - 400, APP.indexOf("lerLugarDito") + 400)));
   t("o Cronista chama registrarLugar com a fonte \"cronista\"", /registrarLugar\(r\.lugar, "cronista"\)/.test(APP));
-  t("registrarLugar chama lerLugarDito com lugar, cidade, pedido e fonte", /lerLugarDito\(nome, \{ lugar: lugarRef\.current, cidade, pedido: ultimoPedidoRef\.current, fonte \}\)/.test(APP));
+  /* MOVIDA NA MM16 nº 4 (05/10), com o motivo: a chamada ganha `luta` e
+     `masmorra` no fim (a cena do sistema não move nem acusa —
+     `LUGAR_NA_CENA_DO_SISTEMA`, provado em teste-masmorra-na-pauta). A
+     intenção desta asserção não muda — o App decide o lugar pelo motor, com
+     o lugar, a cidade, o pedido e a fonte —, e por isso o que vier depois
+     de `fonte` é aceite aqui e exigido lá. */
+  t("registrarLugar chama lerLugarDito com lugar, cidade, pedido e fonte", /lerLugarDito\(nome, \{ lugar: lugarRef\.current, cidade, pedido: ultimoPedidoRef\.current, fonte(, [^}]*)? \}\)/.test(APP));
   t("a regex antiga (\"const voltou = /^(cidade|\") já não está no App — a régua mudou-se para QUEM_DIZ_O_LUGAR", !/const voltou = \/\^\(cidade\|/.test(APP));
 }
 

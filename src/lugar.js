@@ -765,6 +765,44 @@ export const QUEM_DIZ_O_LUGAR = {
   mestre: { dentroDosMuros: "recusa", foraDosMuros: "recusa" },
 };
 
+/* ============================================================
+   NA CENA DO SISTEMA, O LUGAR DITO NÃO MOVE NEM ACUSA (05/10, MM16 nº 4)
+
+   Na terceira sessão de prova (`mente/mm11-sessao-3.md`, defeito 4) o
+   "[LUGAR — RECUSADO PELO SISTEMA]" voltou 12 vezes em 30 respostas, todas
+   dentro da masmorra e da luta — e nenhuma era verdade. O registo das 69
+   chamadas diz o que veio em cada uma:
+
+   · 1 ao abrir a masmorra (chamada 22 → 24): o MESTRE mandou
+     `lugar_atual: null` na resposta a "entro na Nave de Ferro" — ele leu
+     bem: o herói deixou o posto. Mas o lugar vigente ainda era "o posto da
+     estrada" (fora dos muros), a frase não dizia "saio", e a regra do
+     Mestre fora dos muros é recusar: "Você me tirou de onde eu estava — o
+     posto da estrada". O Mestre obedeceu e devolveu o herói à fogueira.
+   · 11 nas 14 respostas da luta (chamadas 36 a 68): o Mestre não mandou
+     lugar nenhum. Foi o CRONISTA, que a cada turno lê a narração e diz
+     onde o herói ficou — e dizia, certo, "câmara das correntes", o MESMO
+     lugar que já estava registado. O App recusava tudo o que chegava com
+     uma luta aberta (v9.48), antes de olhar se era o mesmo sítio: "Você
+     mudou o meu lugar no meio de um combate". Uma acusação por cada turno
+     de luta, a quem não tinha mudado nada.
+
+   A regra: dentro de uma LUTA ou de uma MASMORRA, o lugar é do sistema —
+   o tabuleiro diz onde cada um está, em metros, e a planta diz em que sala
+   se está. O lugar que a IA devolve por cima é IGNORADO, em silêncio, venha
+   de quem vier: não move (o herói não sai da sala por um campo de texto) e
+   não acusa (o Mestre não mudou nada; quem mudou foi o sistema). Sair de
+   uma masmorra tem porta própria (`sairDaMasmorra`, o fim da luta do
+   chefe), e nenhuma delas passa por aqui. A acusação continua a valer onde
+   valia: numa cena livre, quando o Mestre de facto tirou o herói do sítio.
+
+   A ordem das chaves é a ordem em que se olha (a luta primeiro: é ela que
+   o `porque` nomeia quando as duas valem). */
+export const LUGAR_NA_CENA_DO_SISTEMA = {
+  luta: "ignora",
+  masmorra: "ignora",
+};
+
 /* O pedido de hoje trouxe-a PARA este lugar? (o nome dele, fora da origem,
    com um verbo de ir) */
 function pedidoTrazA(pedido, nome) {
@@ -796,7 +834,11 @@ function pedidoDeixa(pedido, nome) {
      "volta"  — a volta à cidade, pedida: apaga o lugar;
      "recusa" — tirou-a de onde está sem pedido: o envelope de recusa;
      "ignora" — não diz nada de novo: nem move nem acusa.
-   O combate fica com quem chama (é antes disto, e recusa tudo). */
+   MM16 nº 4: `ctx.luta` e `ctx.masmorra` (`true`, booleano) dizem que a
+   cena é do sistema — aí tudo é "ignora" (`LUGAR_NA_CENA_DO_SISTEMA`), e o
+   `porque` é a chave que valeu. O combate deixou de ficar com quem chama:
+   a recusa de tudo, que o App fazia antes de perguntar, era a acusação
+   falsa. */
 export function lerLugarDito(dito, ctx) {
   const o = ctx && typeof ctx === "object" ? ctx : {};
   const lugar = o.lugar && typeof o.lugar === "object" && o.lugar.nome ? o.lugar : null;
@@ -805,6 +847,7 @@ export function lerLugarDito(dito, ctx) {
   /* `null` é a volta do Mestre (o `lugar_atual: null` do LUGAR_PROMPT); o
      que não é texto nem nada não é lugar nenhum */
   if (dito != null && typeof dito !== "string") return { acao: "ignora", porque: "lixo" };
+  for (const [cena, acao] of Object.entries(LUGAR_NA_CENA_DO_SISTEMA)) if (o[cena] === true) return { acao, porque: cena };
   const cru = String(dito == null ? "" : dito).trim();
   const eCidade = !cru || QUEM_DIZ_O_LUGAR.voltou.test(cru) || ehAPropriaCidade(cru, cidade);
   if (!eCidade) {

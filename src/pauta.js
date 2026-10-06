@@ -77,6 +77,28 @@ export const PRIO_DE_FERRO = 0.5;
    incoerência entra — e um veto cortado não avisa que foi cortado. */
 export const SECOES = [
   { id: "onde", rotulo: "ONDE", prio: 1, ferro: 1, o: "o lugar, e o que ele permite" },
+  /* MM16 nº 4: A SALA ONDE ESTOU, dentro de uma masmorra (`masmorraParaPauta`,
+     masmorras.js) — o tipo, o que nela resta, quem lá está, as passagens e a
+     quantas passagens fica o portão do fundo. Na sessão de prova (M13) nada
+     disto chegava, e quatro perguntas à soleira perderam-se. Só existe lá
+     dentro: fora da masmorra a função devolve nada e a seção não aparece.
+
+     QUE SALA é não mora aqui: vai na 1.ª linha do ONDE, de FERRO
+     ("dentro da Nave de Ferro, na sala do guardião da chave" — `linhaDoLugar`,
+     geografo.js), porque a sala onde se está é o lugar, e o lugar nunca
+     cai. Aqui fica o resto da planta, e corta com prio 2,45: DEPOIS de todo
+     veto (o NÃO PODE é 2, e cada linha a mais soma 0,1 — cinco linhas de
+     veto vão até 2,4; um veto cortado não avisa, e é assim que a
+     incoerência entra), da fala e do peso; e à frente de tudo o resto — o
+     momento, o que acabou, quem está, a forma, a gente. Medido em
+     teste-masmorra-na-pauta (500 cenas por lado): com 2,05 a linha da
+     planta passava à frente do 2.º e 3.º vetos e tirava-os em 84 lutas e
+     24 cenas fora dela; com 0,95, numa pauta cheia, tirava até o 1.º. Com
+     2,45 não tira veto nenhum, e fora da luta a planta chega em 493/500.
+     Na leitura vem logo depois do ONDE (primeiro o lugar, depois a planta).
+     Fora da masmorra a função devolve nada e a seção não aparece; dentro,
+     não está em SECOES_QUE_CEDEM — é a verdade do sítio. */
+  { id: "masmorra", rotulo: "MASMORRA", prio: 2.45, o: "a planta à volta da sala: a camada, o que nela resta, as passagens e o fundo" },
   /* MM16 nº 5: O QUE O LUGAR PRODUZ E O QUE LHE FALTA (`envelopeDoComercio`,
      comercio.js) morava como mais uma linha do ONDE, de prio 1 — e ia em
      TODO turno, também dentro de uma masmorra e a meio de uma luta, onde
