@@ -25,6 +25,10 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **a esquiva com regra: `Esquivar` gasta a ação e pesa nos golpes contra o herói** · de: B1 (`regente`, a nova mesa de batalha) · 05/10 · médio
+  `VERBOS_DE_COMBATE` (`golpe.js`) traz `esquivar` com `motor: null`: a frase vai ao Mestre e vira ficção — os inimigos rolam como se nada fosse. A tela nova (Figma `151:1662`) desenha o botão; ele ficou **desligado** e, ao toque, diz *"a esquiva ainda não pesa nos golpes deles — use Mover"*.
+  **Para quê:** é o único dos seis verbos do quadro sem regra, e numa mesa *"eu esquivo"* é sempre uma jogada válida. **O que se pede:** a ação de esquiva no motor (até à próxima vez do herói, desvantagem nos ataques que ele vê — `protegido` já existe em `condicoes.js`, falta quem o conceda por declaração), com suíte, e o `motor` preenchido na tabela — **o botão acende sozinho**, porque a tela lê `!v.motor`. De caminho: a frase da recusa mora numa tabela local do painel (`RECUSA_DO_GESTO_SEM_MOTOR`); o lugar dela é `RECUSAS_DO_VERBO` em `tela-de-batalha.js`, e pode ir para lá quando a regra nascer (ou morrer junto).
+
 - [ ] **`vereditoDaFrase(frase, estado)` — o que a frase vai fazer, antes de partir** · de: V6b (`jogo`) · 28/09 · médio
   O que decide o turno já é código puro (`decidirTurno` e vizinhas em `turno.js`), mas só corre depois do envio. **Para quê:** enquanto o jogador escreve, a linha do veredito por cima do campo diz o que a frase vai fazer (*"Atacar o javali · Força contra 12"*) — a lei *o veredito antes do clique* a chegar ao texto livre. **O que se pede:** a mesma decisão, exposta pura e sem efeitos, com suíte; ligada ao pedido irmão *a frase é o lançamento* e a `chanceDoTeste`.
 

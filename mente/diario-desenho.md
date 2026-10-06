@@ -19,6 +19,83 @@ Formato:
 
 ---
 
+## 05/10 · v9.352 · **B1 — a nova mesa de batalha, igual ao quadro dela** · commit `HASH_B1`
+
+*Pedido direto da pessoa, com a fila do desenho parada (ordem de 28/09): a palavra
+dela vale só para esta tela. A forma: `mente/formas.md` §B1.*
+
+- **estado inicial:** sem `.claude/fila-pausada`; trava do desenho livre, tomada
+  às 22:42. `npm test` **258/258 e 15/15**, saída 0. O `orquestrador` vivo na
+  árvore (MM16, trava das 21:39), a subir v9.351 e a abrir v9.352 durante o ciclo.
+  **O bastão do `App.jsx` não foi pedido nem tocado:** a tela já tinha casa
+  própria desde E3 (`painel-batalha.jsx`), e todos os dados do quadro já chegavam
+  como props a `TelaDeBatalha`. *Mover já tinha sido feito; desta vez foi só
+  recompor dentro da casa.*
+- **jogo / desenho:** **não chamados**, e digo porquê: o quadro é da pessoa e
+  está acabado; o que faltava decidir (de onde sai cada dado, o que fica desligado,
+  a cor, a casa quadrada, o telefone) o `regente` escreveu em `formas.md` §B1
+  antes da construção, e o telefone segue o padrão já no Figma (E1 `40:447`, E4,
+  R21). Fica a dívida: o par antes/depois do telefone **não** entrou no Figma.
+- **aprendiz (Opus):** `painel-batalha.jsx` recomposto (cabeçalho com título da
+  região do herói, pílula AGORA, frase do Mestre, PARTICIPANTES; CAMPO DE BATALHA
+  com as zonas da planta no topo, que levam a janela até elas; SUA PRÓXIMA AÇÃO
+  com a linha do veredito, a fileira do quadro e o `como?` + `Agir` com o d20;
+  a coluna TURNO ATUAL · NESTA BATALHA · *"O próximo movimento é seu."*);
+  `grade-de-batalha.jsx` (a casa enche a janela, o chão com textura, o pé
+  `ÁREA DE MOVIMENTO · 3 · 6 · 9 — CUSTO NO TERRENO`); `estilo.js`
+  (`MESA_DE_BATALHA` com as medidas do quadro, que somam 1600;
+  `TERRENO_DO_TABULEIRO`); `glifos.js` (`campo`, `mira`, `pena`, `estrela`);
+  `check-tela-de-batalha` §10 (seis catracas novas) e `check-formas` (o teto de
+  cor literal da grade **desceu** 19 → 15). `public/terrenos/deserto.jpg` é a
+  imagem do próprio quadro.
+- **o Figma:** nada novo na biblioteca; a fonte é o quadro `151:1662` da pessoa.
+- **a prova:** build limpo; `npm test` **259/259 e 15/15, saída 0**. Luta real (campanha
+  de teste, `/tp` + `/combate Troll`, no deserto): **1600×1000** casa 64 px,
+  janela 1182×420, `scrollWidth` 1600; **1280×800** casa 48, janela 326;
+  **375×812** casa 48, janela 270, **`scrollWidth` 375** (também com a tira aberta).
+  Esquivar `aria-disabled` com a frase na linha; tocar a zona levou `scrollTop`
+  506 → 23 e voltou. Capturas na pasta da sessão (`prova-1600x1000.png`,
+  `prova-375x812.png` e mais três).
+- **decisões médias, com o motivo:**
+  1. **a cor é `T`, não a do arquivo dela** — as variáveis do quadro têm os nomes
+     de `T` e os valores de antes de V1; o desenho liga-se ao token. Vai à pessoa
+     em uma linha (pauta, *Para a pessoa decidir*).
+  2. **a casa fica quadrada** (no quadro, 62×51): a distância do jogo é por casa;
+     uma casa retangular mentiria os metros. Enche a largura, nunca abaixo de 48.
+  3. **Esquivar desligado** — é o único verbo do quadro sem regra
+     (`motor: null` em `golpe.js`); a frase virava ficção. Lê a tabela do motor,
+     logo acende sozinho. Pedido em `pedidos-ao-sistema.md`. Os outros cinco têm
+     motor e ficaram ligados; `esperar` fica ligado (faz a rodada do mundo correr).
+  4. **textura só no deserto** — é a única que a pessoa desenhou; as outras nove
+     plantas ficam lisas em vez de ganhar imagem escolhida pela mesa (B2).
+  5. **o que o quadro não mostra traduziu-se** (lei 3 da Fase V): a régua de letras
+     A–R (o endereço K14 de que o jogador depende), o véu fora do passo (mais leve,
+     0,35), o pé da arena a 48 px (carrega o `⤢ ampliar`), o rastro dos dados ao pé
+     da coluna, os alvos declarados em NESTA BATALHA.
+  6. **dois cortes por altura**, só com valores de tabela: abaixo de 1440 de largura
+     e de 900 de altura o cabeçalho e o compositor encolhem — a 1280×800 a fileira
+     partia em duas e a janela tinha 164 px; ficou com 326.
+- **o que ficou:**
+  - **o telefone perdeu campo:** 270 px de janela contra ~436 depois de E4 — B3 na
+    pauta, para o `jogo` medir o que cede.
+  - **`TAVERNA / MESA DE BATALHA`** roça a lei *o sistema não fala de si mesmo*;
+    está no quadro e foi pedido igual, e ficou.
+  - **o obstáculo** usa três tons do quadro que `T` não tem.
+  - **achado fora do meu território, não investigado:** numa das lutas de teste
+    `mercado.js:204` (`gerarMercador`) derrubou o App com *"Cannot read
+    properties of null (reading 'length')"*, uma vez, com o `App.jsx` do
+    `orquestrador` a meio de uma edição. Fica dito para a outra mente.
+  - **custo:** criar a campanha de teste chamou o `/api` do deploy algumas vezes.
+- **para quem joga:** a luta abre numa mesa só, à vista de uma vez — onde está
+  (*"Na areia solta"*), quem joga agora, a ordem, o chão com o terreno e o custo
+  de cada passo, o seu turno com PV e PM, e o inimigo com a distância. **Nove dos
+  dez controles do quadro respondem** (o décimo, Esquivar, diz porquê não); a
+  casa no monitor grande passa de 48 a **64 px** (+78 % de área por toque); a
+  375 px nada rola para o lado.
+- **a proposta ambiciosa:** *o inimigo é o alvo* — o cartão de NESTA BATALHA arma o
+  golpe nele e funde os alvos declarados (três caras do *em quem* viram uma). Na
+  pauta, *Para a pessoa decidir*, porque a fila espera a palavra dela.
+
 ## 29/09 · v9.320 · **R21k — um toque nunca é um arrasto: o alforje deixa de tremer e de engolir toques** · commit `0c68ecd`
 
 *A forma: `mente/formas.md` §`### R21k · o gesto de descer tinha de ser pedido, e

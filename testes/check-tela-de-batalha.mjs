@@ -55,8 +55,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { FORA_DA_TELA_DA_LUTA, REGIOES_DA_BATALHA } from "../src/tela-de-batalha.js";
-import { TELA_DE_BATALHA, ALVOS } from "../src/estilo.js";
+import { FORA_DA_TELA_DA_LUTA, REGIOES_DA_BATALHA, TETO_DA_RECUSA } from "../src/tela-de-batalha.js";
+import { TELA_DE_BATALHA, ALVOS, MESA_DE_BATALHA, TERRENO_DO_TABULEIRO } from "../src/estilo.js";
+import { PLANTAS } from "../src/grid.js";
+import { VERBOS_DE_COMBATE } from "../src/golpe.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -462,6 +464,51 @@ sec("9. toda componente é de módulo, nunca de render");
   /* a tela exporta UMA coisa: a lei do export morto pede >= 2 leitores, e
      uma tela com sete exports seria sete dívidas à espera */
   t("e a tela exporta só a tela", (cruTela.match(/^export /gm) || []).length === 1);
+}
+
+/* ============================================================
+   10. B1 · A NOVA MESA DE BATALHA (05/10) — o quadro `151:1662`
+   ============================================================ */
+sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desligado");
+{
+  /* A CONTA DO QUADRO: 32 + campo + 24 + 328 + 32 = 1600, com o campo a
+     ser o que sobra — 1184 no quadro. Um número que se soma com os outros
+     não pode ser afinado sozinho. */
+  const M = MESA_DE_BATALHA;
+  t("a mesa B1 soma os 1600 do quadro (32 + 1184 + 24 + 328 + 32)",
+    M.margem * 2 + 1184 + M.entreColunas + M.lateral === 1600, `${M.margem} · ${M.entreColunas} · ${M.lateral}`);
+  t("e a tela lê a tabela do quadro", /import \{ MESA_DE_BATALHA as M, VEU, alfa \} from "\.\/estilo\.js";/.test(TEL));
+
+  /* O CHÃO: só a planta que a pessoa desenhou tem textura, e a imagem é a
+     do próprio quadro. Uma chave que não é planta seria textura de chão
+     nenhum; um arquivo que não está em `public/` seria um buraco na tela. */
+  const chaves = Object.keys(TERRENO_DO_TABULEIRO);
+  t("todo terreno com textura é uma planta de grid.js", chaves.length > 0 && chaves.every((k) => k in PLANTAS), chaves.join(", "));
+  t("e o arquivo de cada um existe em public/", chaves.every((k) => existsSync(join(RAIZ, "public", TERRENO_DO_TABULEIRO[k].replace(/^\//, "")))));
+  t("só o deserto tem textura — as outras nove ficam no chão liso até a pessoa desenhar a delas",
+    chaves.length === 1 && chaves[0] === "deserto");
+  const GRADE_B1 = semProsa(ler("src/grade-de-batalha.jsx"));
+  t("o tabuleiro lê a textura pela tabela, pelo cenário da planta", /TERRENO_DO_TABULEIRO\[g\.cenario\]/.test(GRADE_B1));
+  /* A CASA ENCHE A JANELA E CONTINUA QUADRADA: o lado é a largura útil ÷
+     colunas, nunca abaixo do piso — e tudo o que o chão mede em píxeis é
+     dividido pelo lado REAL. Dividir pelo piso engrossaria o traço assim que
+     a casa crescesse. */
+  t("a casa cresce com a janela e nunca abaixo do piso",
+    /Math\.max\(ladoFixo, Math\.floor\(\(larguraDaJanela - CALHA_DA_REGUA\) \/ g\.largura\)\)/.test(GRADE_B1)
+    && /larguraDaJanela=\{larguraDaJanela\}/.test(TEL) && /new ResizeObserver\(/.test(TEL));
+  t("e o chão divide os píxeis pelo lado real, não pelo piso",
+    /const px = 1 \/ Math\.max\(1, ladoEmPx\(grande\)\);/.test(GRADE_B1) && !/\/ ALVOS\.piso/.test(GRADE_B1));
+  t("a câmara enquadra com o lado medido", /aoMedirOLado=\{aoMedirOLado\}/.test(TEL) && /const lado = ladoRef\.current \|\| ALVOS\.piso;/.test(TEL));
+
+  /* O GESTO SEM MOTOR FICA DESLIGADO — e a regra lê a TABELA do motor
+     (`!v.motor`), nunca um nome: no dia em que `golpe.js` der motor à
+     esquiva, ela acende sozinha. A frase cabe na linha do veredito. */
+  t("o gesto sem motor é desligado pela tabela do motor, não pelo nome",
+    /if \(v\.papel === "gesto" && !v\.motor\) \{/.test(TEL) && !/v\.id === "esquivar"/.test(TEL));
+  const frases = [...cruTela.matchAll(/esquivar: "([^"]+)"|RECUSA_DO_GESTO_SEM_MOTOR_EM_GERAL = "([^"]+)"/g)].map((m) => m[1] || m[2]);
+  t("e as frases da recusa cabem no teto da linha", frases.length === 2 && frases.every((f) => f.length <= TETO_DA_RECUSA), frases.map((f) => `${f.length}: ${f}`).join(" · "));
+  const semMotor = VERBOS_DE_COMBATE.filter((v) => !v.motor).map((v) => v.id);
+  t("todo gesto sem motor de hoje tem a frase dele", semMotor.every((id) => new RegExp(`${id}: "`).test(cruTela)), semMotor.join(", "));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

@@ -10631,3 +10631,65 @@ aplicado (LF e CRLF): build limpo, **218/218 · 15/15**; `App.jsx` com as mesmas
    distinguir do resultado (o número continua a trocar por JavaScript). A entrada
    sai do livro de perdões (`SEM_SAIDA_DE_MOVIMENTO`) pela regra anti-cemitério.
    Nenhum outro toque no ramo de combate.
+
+## B1 · a nova mesa de batalha (Figma `151:1662`, 05/10) — a decisão do `regente`
+
+*Pedido direto da pessoa, 05/10: a tela de batalha passa a ser a que ela
+desenhou em `ffWFqD7TueSb88Mkeg9bhW`, quadro **`151:1662` · Taverna · Batalha na
+areia solta** (1600×1001). Substitui `47:2`, que deixa de contar. A régua é a da
+v3: **igual ao Figma, com dados reais do jogo, sem imagem procedural nem
+inventada.** A tela já tinha casa própria (`painel-batalha.jsx`, E3) — o trabalho
+é recompor dentro dela, sem o `App.jsx`.*
+
+**O que o quadro desenha e de onde cada coisa sai (nada inventado):**
+
+| no Figma | sai de |
+|---|---|
+| `TAVERNA / MESA DE BATALHA` | legenda fixa da tela (mono 10, âmbar) |
+| título *"Na areia solta"* | `nomeDoLugar(grade, herói)` (`grid.js`), com maiúscula |
+| a frase da cena | `ultimasLinhasDoMestre` (a fala do Mestre que já estava no topo) |
+| pílula `AGORA: <nome>` + espadas | `faixaDaVez` → o selo `agora` |
+| PARTICIPANTES (chips com retrato) | `faixaDaVez` (ordem da iniciativa); retrato pela peça `Retrato`; inimigo com borda `danger`, a vez com borda âmbar e ponto |
+| `CAMPO DE BATALHA` + as zonas no topo | `PLANTAS[cenario].regioes` — a do herói acesa em âmbar; tocar uma zona leva a janela até ela (estado de tela) |
+| linhas numeradas, zonas com nome, hachura do difícil, obstáculos | o que `GridDeBatalha` já desenha (régua, `regioes`, `dificil`, `estorvos`) |
+| área de movimento tracejada com o custo em cada casa | `custosDe` / o conjunto que `GridDeBatalha` já mede |
+| `ÁREA DE MOVIMENTO` · `3 · 6 · 9 — CUSTO NO TERRENO` | os custos distintos presentes no conjunto aceso, em ordem |
+| textura do chão | **só no deserto**: é a imagem do próprio quadro (`public/terrenos/deserto.jpg`), por tabela `TERRENO_DO_TABULEIRO`; as outras nove plantas ficam no chão liso até a pessoa desenhar a delas — **não se gera nem se escolhe imagem** |
+| TURNO ATUAL (retrato 74 em moldura 90, nome, PV, PM, selo `ação`) | `personagem` + `combate.economia` + `temAcaoBonus` + os modificadores (`selosDaMecanica`) |
+| NESTA BATALHA (aliado; inimigo com distância e PV) | `grupo` + `combate.inimigos` + `veredito.alvos[].distanciaM` |
+| *"O próximo movimento é seu."* | texto fixo da tela |
+| SUA PRÓXIMA AÇÃO · alvo e distância | a linha do veredito que já existe (`vereditoDaTela`) |
+| Atacar · Mover · Esquivar · Empurrar · Derrubar · Saltar | `VERBOS_DE_COMBATE` (`golpe.js`) — **todos têm motor**; nenhum se esconde |
+| os dois ícones | ✦ a gaveta das habilidades e a bolsa de combate (as portas que já existiam) |
+| esperar · Fugir | `VERBO_DE_ESPERA`, `VERBO_DE_FUGA` |
+| `como? (opcional)` + `Agir →` com o d20 | **o mesmo campo e a mesma fiação** (`entrada`/`aoEscrever`/`aoAgir`) — não nasce segundo `como?`; com o cartão do golpe final aberto, o campo dele toma o lugar, como em MM16 nº 5 |
+
+**A cor é a de `T`, não a do arquivo dela.** As variáveis do quadro chamam-se
+`ambar/amber`, `tinta/ink`, `superficie/bg`… — os nomes de `T` —, mas guardam os
+valores de antes de V1 (`#E8A33D`, `#0E0C15`, os do ramo
+`backup-pre-redesign`). O desenho liga-se ao **token**; o token vale o que `T`
+vale hoje. Uma paleta para o jogo inteiro (*uma ação, uma forma*): trocar só esta
+tela faria a mesma luz ter dois âmbares. Se a pessoa preferir o âmbar do quadro,
+é uma linha de `T` e muda o jogo todo — fica dito no relato.
+
+**A casa continua quadrada e com o piso de 48.** No quadro as células medem
+62×51 (o quadro esticou a grelha); a distância do jogo é por casa, e uma casa
+retangular mentiria a distância. A casa enche a largura da janela (lado =
+largura útil ÷ colunas, nunca abaixo de `ALVOS.piso`) e a janela rola na
+vertical, como a barra que o próprio quadro desenha à direita.
+
+**O que o quadro não mostra e o jogo precisa — traduz-se, não se corta** (lei 3
+da Fase V): o rastro dos dados vai ao pé da coluna direita; os alvos declarados
+(mais de um inimigo e mais de um golpe) ficam em NESTA BATALHA; a bolsa e a
+gaveta abrem por cima da fileira; a reação (K3) continua a nascer na linha do
+veredito; o cartão do golpe final toma o lugar da fileira e do `como?`; o dado da
+rolagem fica por baixo do compositor; no fim, `Respirar fundo →` no lugar da
+fileira.
+
+**O telefone** (o quadro é só monitor) segue o padrão que a casa já tem e
+que está no Figma desde E1/E4 e R21: cabeçalho numa linha (título + `AGORA`), a
+frase numa linha, os participantes a rolar na horizontal; depois o campo; a
+**tira do herói numa linha** que, ao toque, **abre** o TURNO ATUAL e NESTA
+BATALHA por cima do campo (o HUD que se abre de R21: *acervo à vista vai a um
+toque, nunca sai*); a fileira em três linhas no arco do polegar; o `como?`.
+Prova a 375 sem rolagem lateral.

@@ -27,6 +27,16 @@ não o código**, e nada se apaga desta pauta: o que é só desses dois modos fi
 marcado **depois do beta** (a Fase S e os itens do Duelo). **A sala de dois fica**
 — é Uma Vida a dois.
 
+**05/10 — a pessoa falou, para uma tela só:** a nova mesa de batalha (Figma
+`151:1662`), que substitui `47:2`. Feita como **B1** (diário de 05/10). O resto
+da fila continua parado até ela falar do resto.
+
+- [x] **B1 · a nova mesa de batalha, igual ao quadro `151:1662`** · `regente` → `aprendiz` · 05/10 · a forma em `mente/formas.md` §B1
+- [ ] **B2 · o chão das outras nove plantas** · da B1 · leve quando houver arte
+  Só o deserto tem textura (é a imagem do quadro dela, `public/terrenos/deserto.jpg`, pela tabela `TERRENO_DO_TABULEIRO`). As outras nove plantas de `grid.js` ficam no chão liso: **não se gera nem se escolhe imagem** pela mesa. Quando a pessoa desenhar a delas, é uma linha na tabela.
+- [ ] **B3 · o telefone devolve casas ao campo** · da B1 · médio
+  A 375×812 a janela do tabuleiro ficou com **270 px** (era ~436 depois de E4): o título com a pílula, o pé da arena (que carrega o `⤢ ampliar` de 48) e o painel da ação comem altura. Medir com o `jogo` o que cede primeiro — a frase da cena numa linha só quando muda, o pé da arena a dobrar-se na tira — e provar a 375 e a 320.
+
 ## Deixado pela fila do sistema, para quando esta fila reabrir
 
 - [ ] **Peças mortas a aposentar** · da MM14 (v9.337), 30/09 · o sistema não mexeu (a fila está parada)
@@ -57,6 +67,11 @@ conserta**, porque é esse o limite do modelo de reversão que ela própria deu.
 
 *A pergunta deixou de ser "isto é pesado?" e passou a ser "um commit revertido
 conserta isto?". Se conserta, faz-se — e diz-se no relato.*
+
+- **[a proposta ambiciosa de B1] o inimigo é o alvo: tocar no cartão de NESTA BATALHA arma o golpe nele** · 05/10
+  Hoje há **três** sítios que dizem *em quem*: a ficha no tabuleiro, os alvos declarados (para quem tem mais de um golpe) e o cartão do inimigo na coluna. Proposta: o cartão **é** o seletor — tocar nele arma `Atacar` nesse alvo, acende no tabuleiro o caminho e a linha de visão até ele, e a linha do veredito mostra o preço (*"Troll a 18 m — faltam 16,5 m"*) antes do clique; os alvos declarados fundem-se no cartão (um selo `1º`/`2º` por golpe). *Uma ação, uma forma*: três caras do mesmo *em quem* viram uma. Um commit revertido desfaz tudo — **só vem aqui porque a fila do desenho espera a palavra dela** (ordem de 28/09).
+- **[a cor] o âmbar do quadro ou o do jogo** · 05/10
+  O quadro `151:1662` usa variáveis com os nomes de `T` mas os valores de antes de V1 (`#E8A33D`, fundo `#0E0C15`). A tela foi feita com `T` de hoje (`#FFB03A`), para a mesma luz não ter dois âmbares. Se ela preferir o do quadro, é uma linha de `T` — e muda o jogo inteiro, não só a batalha.
 
 ## A lei que a pessoa deu à mesa (14/09)
 

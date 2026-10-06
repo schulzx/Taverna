@@ -21,12 +21,20 @@
    ser teletransporte.
    ============================================================ */
 import React from "react";
+/* B1: o pé da arena mora na tela que monta (fora da janela que rola), e é
+   lá que o tabuleiro escreve a legenda do alcance — por portal, para a
+   lógica das tarjas (o passo, o golpe livre, a mira, o ampliar) continuar
+   num sítio só. */
+import { createPortal } from "react-dom";
 import { T, ALVOS } from "./constantes.js";
 import { garantirGrade, custosDe, ocupacaoDe, adjacentes, caminhar, quadradosDe, ladoDe, tamanhoDe, ehParede, ehEstorvo, terrenoDificil, temCobertura, nomeDoLugar, distanciaM, alcanceNatural, metrosTxt } from "./grid.js";
 /* E4: a geometria do que se escreve DENTRO da casa sai da tabela. `T` e
    `ALVOS` continuam a vir por `constantes.js`, que os reexporta deste
    mesmo arquivo — é o mesmo objeto, e não uma segunda paleta. */
 import { TELA_DE_BATALHA } from "./estilo.js";
+/* B1 (Figma `151:1662`): o chão desenhado do quadro — a textura de cada
+   planta (só o deserto tem) e as medidas do chão, em píxeis de tela. */
+import { MESA_DE_BATALHA as MB, TERRENO_DO_TABULEIRO } from "./estilo.js";
 /* v9.161: a ficha do tabuleiro ganha ROSTO — o mesmo da bolinha do grupo e
    da carta de tarô, porque uma pessoa com três caras conforme o painel é o
    defeito que o rosto único veio matar. E a faixa do chefe lê a MESMA
@@ -96,6 +104,14 @@ const TECLAS_DA_GRELHA = {
    já custou o foco de um campo de texto a esta casa. */
 function MedidorDoConjunto({ casas, aoMedir }) {
   React.useEffect(() => { if (aoMedir) aoMedir(casas); }, [casas, aoMedir]);
+  return null;
+}
+
+/* B1 · O LADO QUE A CASA GANHOU, dito a quem monta — é com ele que a
+   câmara enquadra. Pela mesma razão do medidor de cima: é aqui que a conta
+   acontece, e fazê-la outra vez na tela seria a segunda conta. */
+function MedidorDoLado({ lado, aoMedir }) {
+  React.useEffect(() => { if (aoMedir) aoMedir(lado); }, [lado, aoMedir]);
   return null;
 }
 
@@ -312,7 +328,7 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
    mesmo tempo, e nenhum dos quatro tamanhos de antes lá chegava (23,8 no
    embutido 16×16, 36,6 no ampliado). Zero (o defeito) mantém, byte a
    byte, a conta antiga — quem não pede janela continua com o relance. */
-export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null }) {
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, aoMedirOLado = null, pe = null, peCompacto = false }) {
   const [aberto, setAberto] = React.useState(false);
 
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
@@ -559,9 +575,17 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      É honesta em vez de medida, e o preço está escrito: não há ref nem
      observador de tamanho, então virar o telefone só muda QUANTOS rótulos
      aparecem até ao render seguinte — nunca o endereço de casa nenhuma. */
+  /* B1 · A CASA ENCHE A JANELA. Com `larguraDaJanela` medida, o lado é a
+     largura útil (sem a calha da régua) ÷ colunas — nunca abaixo do
+     `ladoFixo`, que é o piso do alvo. Sem ela, é o `ladoFixo` de sempre. A
+     casa continua QUADRADA: a distância do jogo é por casa, e uma casa
+     retangular (as 62 × 51 do quadro) mentiria a distância. */
+  const ladoNaJanela = ladoFixo > 0 && larguraDaJanela > 0
+    ? Math.max(ladoFixo, Math.floor((larguraDaJanela - CALHA_DA_REGUA) / g.largura))
+    : ladoFixo;
   const ladoEmPx = (grande) => {
     try {
-      if (!grande) return ladoFixo > 0 ? ladoFixo : Math.min(40, 380 / g.altura);
+      if (!grande) return ladoFixo > 0 ? ladoNaJanela : Math.min(40, 380 / g.altura);
       const vw = (typeof window !== "undefined" && window.innerWidth) || 1280;
       const vh = (typeof window !== "undefined" && window.innerHeight) || 860;
       return Math.min(0.94 * vw, (Math.round((68 * g.largura) / g.altura) * vh) / 100) / g.largura;
@@ -583,6 +607,16 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
        N = 1; no aperto máximo que existe — 18 colunas em 375 px, 18,8 px
        de lado — N = 2. A letra nunca precisa de sair. */
     const passoDoRotulo = Math.max(1, Math.ceil(LADO_QUE_CABE_UM_ROTULO / Math.max(1, ladoEmPx(grande))));
+    /* B1 · UM PÍXEL DE TELA EM UNIDADES DA GRELHA. O chão do quadro é medido
+       em píxeis (o traço de 2 px da casa do herói, o nome da zona a 11 px),
+       e o SVG mede em casas: dividir pelo lado REAL é o que mantém o traço
+       com 2 px numa casa de 48 e numa de 62. Dividir pelo piso, como antes,
+       engrossava tudo assim que a casa crescia. */
+    const px = 1 / Math.max(1, ladoEmPx(grande));
+    /* a zona onde o herói está acende no chão, como acende no topo do campo */
+    const zonaDoHeroi = heroi && heroi.x != null ? nomeDoLugar(grade, heroi.x, heroi.y) : "";
+    /* a textura do quadro — só a planta que a pessoa desenhou tem uma */
+    const chao = TERRENO_DO_TABULEIRO[g.cenario] || null;
     const parado = movimentoParado();
     /* O NÚMERO SÓ SE ESCREVE ONDE ELE SE LÊ. O corpo é dado em píxeis
        sobre a casa de `ALVOS.piso`, e dentro do SVG ele escala com a
@@ -673,8 +707,11 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           não se separava do fundo — volta a funcionar como foi desenhado. */}
       <svg viewBox={`0 0 ${g.largura} ${g.altura}`} style={{ width: "100%", height: "100%", display: "block", borderRadius: 10, background: T.bg, border: `1px solid ${T.line}` }}>
         <defs>
-          <pattern id="tv-lama" width="0.5" height="0.5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
-            <line x1="0" y1="0" x2="0" y2="0.5" stroke="rgba(190,150,90,0.30)" strokeWidth="0.07" />
+          {/* B1: as "Hachuras da areia" do quadro — o fio âmbar a 0,125, a
+              37,5°, com o passo medido em píxeis. Era um castanho literal a
+              0,30, mais grosso e mais denso. */}
+          <pattern id="tv-lama" width={MB.chao.passoDaHachura * px} height={MB.chao.passoDaHachura * px} patternUnits="userSpaceOnUse" patternTransform={`rotate(${MB.chao.anguloDaHachura})`}>
+            <line x1="0" y1="0" x2="0" y2={MB.chao.passoDaHachura * px} stroke={T.amber} strokeOpacity={MB.alfa.hachura} strokeWidth={MB.chao.malha * px} />
           </pattern>
         </defs>
 
@@ -682,20 +719,41 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             da porta", nunca "quadrado 3,8". Antes o nome só existia no balão
             de ajuda; agora está escrito no chão, e o jogador lê a cena com as
             mesmas palavras que vai ouvir de volta. */}
-        {g.regioes.map((r, i) => (
+        {/* B1 · O CHÃO DO QUADRO. A textura (só onde a pessoa a desenhou —
+            `TERRENO_DO_TABULEIRO`) e, por cima dela, o "Véu noturno" do
+            quadro: `bg` a 0,73. A imagem corta como o quadro corta (`slice`):
+            o campo nunca estica a areia. */}
+        {chao && (
+          <g style={{ pointerEvents: "none" }}>
+            <image href={chao} x="0" y="0" width={g.largura} height={g.altura} preserveAspectRatio="xMidYMid slice" />
+            <rect x="0" y="0" width={g.largura} height={g.altura} fill={T.bg} opacity={MB.alfa.veuDoTerreno} />
+          </g>
+        )}
+        {g.regioes.map((r, i) => {
+          const acesa = r.nome === zonaDoHeroi;
+          return (
           <g key={r.nome + i}>
-            <rect x={r.x0} y={r.y0} width={r.x1 - r.x0 + 1} height={r.y1 - r.y0 + 1}
-              fill={i % 2 ? "rgba(255,255,255,0.016)" : "transparent"} />
+            {/* a zona do herói acende no chão (B1: "Areia solta", o âmbar a
+                0,08) — a mesma que acende no topo do campo. As outras ficam
+                no chão como está: a alternância de faixas que havia aqui era
+                um branco literal a 0,016 que a textura apaga. */}
+            {acesa && (
+              <rect x={r.x0} y={r.y0} width={r.x1 - r.x0 + 1} height={r.y1 - r.y0 + 1}
+                fill={T.amber} opacity={MB.alfa.zonaAcesa} />
+            )}
             {/* no canto da faixa, e não no meio dela: o meio é onde as fichas
                 andam, e um nome de lugar por baixo de um inimigo não é nome
-                nenhum. No canto ele fica como legenda de planta baixa. */}
-            <text className="tv-mono" x={r.x0 + 0.22} y={r.y0 + 0.48} textAnchor="start" dominantBaseline="central"
-              fill={T.ink} opacity={0.26}
-              style={{ fontSize: Math.min(0.32, (r.x1 - r.x0 + 1) / (r.nome.length * 0.75)), pointerEvents: "none", textTransform: "uppercase", letterSpacing: 0.03 }}>
+                nenhum. No canto ele fica como legenda de planta baixa. B1:
+                na PRIMEIRA LINHA da zona, a 18 px da borda, mono 11 espaçado —
+                âmbar a da zona do herói, violeta as outras, como no quadro. */}
+            <text className="tv-mono" x={r.x0 + MB.chao.recuoDoNome * px} y={r.y0 + 0.5} textAnchor="start" dominantBaseline="central"
+              fill={acesa ? T.amberSoft : T.violetSoft} opacity={acesa ? MB.alfa.nomeDaZonaAcesa : MB.alfa.nomeDaZona}
+              style={{ fontSize: Math.min(MB.chao.corpoDoNome * px, (r.x1 - r.x0 + 1) / (r.nome.length * 0.75)), pointerEvents: "none", textTransform: "uppercase", letterSpacing: MB.chao.rastreioDoNome * px }}>
               {r.nome}
             </text>
           </g>
-        ))}
+          );
+        })}
 
         {/* terreno difícil e cobertura: o chão que cobra e o chão que protege */}
         {dificeis.map(([x, y]) => <rect key={`d${x},${y}`} x={x} y={y} width="1" height="1" fill="url(#tv-lama)" />)}
@@ -703,7 +761,9 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
 
         {/* a malha, fina o bastante para orientar e apagada o bastante para
             não competir com nada que esteja em cima dela */}
-        <g stroke={T.line} strokeWidth="0.025" opacity="0.9">
+        {/* B1: a malha do quadro é um fio claro a 0,16, de 1 px — sobre a
+            textura, o `line` de antes desaparecia */}
+        <g stroke={T.inkDim} strokeWidth={MB.chao.malha * px} opacity={MB.alfa.malha}>
           {Array.from({ length: g.largura - 1 }).map((_, i) => <line key={`v${i}`} x1={i + 1} y1="0" x2={i + 1} y2={g.altura} />)}
           {Array.from({ length: g.altura - 1 }).map((_, i) => <line key={`h${i}`} x1="0" y1={i + 1} x2={g.largura} y2={i + 1} />)}
         </g>
@@ -718,12 +778,22 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
 
         {/* o estorvo é a mesa virada, o barril, a estalagmite: não bloqueia
             passagem nem visão, e dá cobertura a quem se cola nele */}
-        {estorvos.map(([x, y]) => (
-          <g key={`e${x},${y}`}>
-            <ellipse cx={x + 0.5} cy={y + 0.58} rx="0.31" ry="0.26" fill="#2b2340" stroke="#544877" strokeWidth="0.045" />
-            <ellipse cx={x + 0.5} cy={y + 0.45} rx="0.31" ry="0.2" fill="#3a3157" stroke="#544877" strokeWidth="0.03" />
-          </g>
-        ))}
+        {/* B1: o "Obstáculo" do quadro — o topo, a base e a sombra, 38 × 34
+            numa casa de 62, desenhados na grelha dele e escalados à casa (o
+            `<svg>` de dentro recorta a sombra, como o quadro recorta). A base
+            é `panelSoft`; o topo e os dois fios são os do quadro, que `T` não
+            tem (eram três literais e são três). */}
+        {estorvos.map(([x, y]) => {
+          const w = MB.estorvo.largura / MB.estorvo.casa, h = MB.estorvo.altura / MB.estorvo.casa;
+          return (
+            <svg key={`e${x},${y}`} x={x + (1 - w) / 2} y={y + (1 - h) / 2} width={w} height={h}
+              viewBox={`0 0 ${MB.estorvo.largura} ${MB.estorvo.altura}`} style={{ pointerEvents: "none" }}>
+              <ellipse cx="19" cy="12.5" rx="18.5" ry="12" fill="#2B2540" stroke="#73628C" />
+              <ellipse cx="19" cy="21" rx="18" ry="12" fill={T.panelSoft} stroke="#5D527C" strokeWidth="2" />
+              <ellipse cx="19" cy="29" rx="23" ry="9" fill={T.bg} opacity={MB.estorvo.alfaDaSombra} />
+            </svg>
+          );
+        })}
 
         {/* O VÉU (v9.125): a primeira versão PINTAVA de dourado o que dá para
             alcançar — e o alcance quase sempre é a maior parte do tabuleiro,
@@ -736,7 +806,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             violeta é o alcance da habilidade. */}
         {alcance.size > 0 && (
           <g>
-            {veu.map(([x, y]) => <rect key={`v${x},${y}`} x={x} y={y} width="1" height="1" fill="rgba(7,5,12,0.46)" />)}
+            {/* B1: o véu fica (é ele que diz "isto não é seu neste turno"),
+                mas aliviado — a 0,46 de um quase-preto ele apagava a textura
+                inteira fora do passo. O dentro ganha o âmbar a 0,03 do quadro
+                ("Área de movimento"). */}
+            {veu.map(([x, y]) => <rect key={`v${x},${y}`} x={x} y={y} width="1" height="1" fill={T.bg} opacity={MB.alfa.foraDoPasso} />)}
+            {[...alcanceCheio].map((k) => { const [x, y] = k.split(",").map(Number); return <rect key={`d${k}`} x={x} y={y} width="1" height="1" fill={mirando ? T.violetSoft : T.amber} opacity={MB.alfa.dentroDoPasso} />; })}
             {/* O ROXO DO TRAÇO É O violetSoft: o tracejado da mira
                 dava 2,575:1 contra o pior chão real do tabuleiro, e a WCAG 2.1
                 SC 1.4.11 (Non-text Contrast, AA) pede 3:1 para o que não é
@@ -759,7 +834,9 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                 borda, lida contra o panel — o selo e o botão lá embaixo) e
                 violetSoft é tinta de TRAÇO sobre o tabuleiro. violet não
                 perde emprego. */}
-            <Contorno linhas={contorno(alcanceCheio)} cor={mirando ? T.violetSoft : T.amber} largura={0.045} tracejado="0.22 0.18" opacidade={0.6} />
+            {/* B1: o tracejado do quadro — 1,5 px, inteiro, com o traço em
+                píxeis (era 0,045 da casa a 0,6). */}
+            <Contorno linhas={contorno(alcanceCheio)} cor={mirando ? T.violetSoft : T.amber} largura={MB.chao.tracoDoPasso * px} tracejado={`${MB.chao.tracoDoPassoTracejado * px} ${MB.chao.tracoDoPassoTracejado * px}`} opacidade={1} />
           </g>
         )}
         {/* v9.128: a habilidade de alvo único não se mira, mas ALCANÇA — e é
@@ -828,13 +905,29 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
               return (
                 <text key={`custo${k}`} x={cx + 0.5} y={cy + TELA_DE_BATALHA.casa.linhaDoCusto}
                   textAnchor="middle" dominantBaseline="central" fill={T.amberSoft}
-                  style={{ fontSize: TELA_DE_BATALHA.casa.corpoDoCusto / ALVOS.piso, fontWeight: 700 }}>
+                  style={{ fontSize: TELA_DE_BATALHA.casa.corpoDoCusto * px }}>
                   {metrosTxt(metros)}
                 </text>
               );
             })}
           </g>
         )}
+
+        {/* B1 · A CASA DE QUEM ESTÁ NELA — "Casa atual" e "Casa aliada" do
+            quadro: o herói com o âmbar a 0,13 e o fio de 2 px; o aliado com o
+            verde a 0,08 e 1 px; o inimigo, com a mesma forma na cor dele. O
+            traço vai POR DENTRO da casa, para não pintar a vizinha. */}
+        <g style={{ pointerEvents: "none" }}>
+          {[...mapa.values()].filter((o) => o.chefe).map((o, i) => {
+            const n = ladoDe(o.ent), eu = o.tipo === "heroi";
+            const tr = (eu ? MB.chao.tracoDoHeroi : MB.chao.tracoDosOutros) * px;
+            const ox = eu && andando ? andando.rota[andando.i].x : o.ent.x, oy = eu && andando ? andando.rota[andando.i].y : o.ent.y;
+            return (
+              <rect key={`casa${i}`} x={ox + tr / 2} y={oy + tr / 2} width={n - tr} height={n - tr}
+                fill={o.cor} fillOpacity={eu ? MB.alfa.casaDoHeroi : MB.alfa.casaDosOutros} stroke={o.cor} strokeWidth={tr} />
+            );
+          })}
+        </g>
 
         {/* AS FICHAS */}
         <g style={{ pointerEvents: "none" }}>
@@ -886,11 +979,11 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             lado a lado para comparar. */}
         {!focada && podeIr.size > 0 && (
           <rect aria-hidden="true" pointerEvents="none" fill="none" stroke={T.inkDim}
-            strokeWidth={TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso}
-            x={casaDaParagem.x + TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso / 2}
-            y={casaDaParagem.y + TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso / 2}
-            width={1 - TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso}
-            height={1 - TELA_DE_BATALHA.casa.anelDaParagem / ALVOS.piso} />
+            strokeWidth={TELA_DE_BATALHA.casa.anelDaParagem * px}
+            x={casaDaParagem.x + TELA_DE_BATALHA.casa.anelDaParagem * px / 2}
+            y={casaDaParagem.y + TELA_DE_BATALHA.casa.anelDaParagem * px / 2}
+            width={1 - TELA_DE_BATALHA.casa.anelDaParagem * px}
+            height={1 - TELA_DE_BATALHA.casa.anelDaParagem * px} />
         )}
 
         {/* A CAMADA DO TOQUE, por último e por cima — e em E2 ela vira o
@@ -1024,11 +1117,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     );
   };
 
-  const cabecalho = (
-    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-      <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>
-        campo · {g.largura}×{g.altura} quadrados de 1,5 m
-      </span>
+  /* AS TARJAS DO CAMPO — o golpe livre, o passo, a rota, a mira, a área.
+     B1: são as mesmas nos dois sítios onde o campo as escreve (o cabeçalho
+     de sempre, e o pé da arena da tela da batalha), e por isso nascem uma
+     vez só. */
+  const tarjas = (
+    <>
       {colados.length > 0 && (
         <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
           <Glifo nome="espadas" tamanho={12} /> sair custa {colados.length === 1 ? "um golpe livre" : `${colados.length} golpes livres`}
@@ -1064,11 +1158,58 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           {previsao.aliados.length ? ` · PEGA ${previsao.aliados.join(", ")}` : " · nenhum aliado na área"}
         </span>
       )}
+    </>
+  );
+  const ampliar = (
       <button onClick={() => setAberto(true)} title="Abrir o campo em tela cheia"
         className="tv-anel-foco tv-mono text-[9px] ml-auto px-3 rounded-lg flex items-center justify-center"
         style={{ minHeight: ALVOS.piso, minWidth: ALVOS.piso, border: `1px solid ${T.line}`, color: T.inkDim }}>
         ⤢ ampliar
       </button>
+  );
+  const cabecalho = (
+    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+      <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>
+        campo · {g.largura}×{g.altura} quadrados de 1,5 m
+      </span>
+      {tarjas}
+      {ampliar}
+    </div>
+  );
+
+  /* ============================================================
+     B1 · O PÉ DA ARENA — a "Legenda do alcance" do quadro
+
+     À esquerda `ÁREA DE MOVIMENTO`; à direita os custos DISTINTOS que o
+     conjunto aceso tem, em ordem (no quadro, `3 · 6 · 9 — CUSTO NO
+     TERRENO`). Saem do MESMO mapa que escreve o número dentro de cada
+     casa (`custosDe`) — uma segunda busca divergiria no dia em que alguém
+     mexesse numa delas. Sem passo aceso, a legenda cala: dizer "área de
+     movimento" sem área nenhuma seria a tela a mentir.
+
+     As tarjas e o `⤢ ampliar` vêm junto: o quadro não as desenha, mas
+     são o passo que sobra, o golpe livre, a mira e a vista inteira — *nada
+     se corta, traduz-se* (lei 3 da Fase V). Moram no pé, fora da janela
+     que rola, como a legenda. ============================================ */
+  const custosAcesos = [...new Set(custoDoPasso.values())].sort((a, b) => a - b);
+  const legendaDoPe = { fontSize: MB.letra.legenda, letterSpacing: MB.rastreio, textTransform: "uppercase" };
+  const peDaArena = (
+    <div className="flex items-center flex-wrap w-full" style={{ gap: MB.entreVerbos, minHeight: MB.arenaPe }}>
+      {/* no telefone o pé tem de caber numa linha de 48: o rótulo sai (o
+          tracejado e o número dentro de cada casa já dizem que é a área), e
+          os custos ficam nus */}
+      {custosAcesos.length > 0 && !mirando && !peCompacto && (
+        <span className="tv-mono shrink-0" style={{ ...legendaDoPe, color: T.amberSoft }}>Área de movimento</span>
+      )}
+      {tarjas}
+      <span className="ml-auto flex items-center" style={{ gap: MB.chipLadoX }}>
+        {custosAcesos.length > 0 && !mirando && (
+          <span className="tv-mono" style={{ ...legendaDoPe, color: T.inkDim }}>
+            {custosAcesos.map((m) => metrosTxt(m)).join(" · ")}{peCompacto ? "" : " — custo no terreno"}
+          </span>
+        )}
+        {ampliar}
+      </span>
     </div>
   );
 
@@ -1079,7 +1220,9 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           fora dos dois tabuleiros — a medida é do conjunto, não do
           desenho dele. */}
       <MedidorDoConjunto casas={podeIr.size} aoMedir={aoMedirOPasso} />
-      {cabecalho}
+      {/* B1: e o lado que a casa ganhou, para a câmara enquadrar certo */}
+      <MedidorDoLado lado={ladoEmPx(false)} aoMedir={aoMedirOLado} />
+      {pe ? createPortal(peDaArena, pe) : cabecalho}
       {tabuleiro(false)}
       {aberto && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4" style={{ background: "rgba(8,6,14,0.92)", backdropFilter: "blur(3px)" }}

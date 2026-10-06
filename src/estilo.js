@@ -1079,11 +1079,147 @@ export const TELA_DE_BATALHA = {
      corpo do número é dado em píxeis sobre a casa de 48, e o desenho em
      SVG divide um pelo outro. Quem mudar o piso do alvo muda os dois. */
   casa: {
-    corpoDoCusto: 10,     /* mono 10 px na casa de 48 — E1, confirmado por medida em E4 */
-    linhaDoCusto: 0.72,   /* onde a linha de base cai, em fracção da casa: o centro da fenda `o custo` da peça (28+13/2 sobre 48) */
+    /* B1 (05/10, Figma `151:1662`): o quadro da pessoa escreve o custo a
+       mono 11, regular, no CENTRO da casa — e a casa deixou de ser sempre
+       48 (enche a largura da janela), por isso o corpo é dado em píxeis de
+       TELA e o SVG divide-o pelo lado real, nunca pelo piso. Eram 10 e 0,72
+       (E1/E4: o centro da fenda da peça de 48). */
+    corpoDoCusto: 11,     /* mono 11 px — o quadro B1 */
+    linhaDoCusto: 0.5,    /* o centro da casa, como no quadro B1 */
     anelDoFoco: 3,        /* px de `ink`, POR DENTRO: uma casa tem oito vizinhas coladas, e um anel por fora pinta por cima da borda de alcance das oito */
     anelDaParagem: 2,     /* px de `inkDim`, por dentro: onde o teclado VOLTA, contra os 3 px de onde ele ESTÁ */
   },
+};
+
+/* ============================================================
+   B1 · A NOVA MESA DE BATALHA (05/10) — o quadro `151:1662` da pessoa,
+   "Taverna · Batalha na areia solta" (1600 × 1001), em números.
+
+   POR QUE UMA TABELA NOVA E NÃO `TELA_DE_BATALHA`: aquela é a conta de E1
+   para o monitor de 1280 (16 + 888 + 16 + 344 + 16), e a suíte soma-a de
+   volta. O quadro B1 é OUTRA conta — 32 + campo + 24 + 328 + 32 = 1600,
+   com o campo a ser o que sobra (1184 no quadro) — e misturar as duas
+   numa tabela só faria uma das somas mentir. O que `TELA_DE_BATALHA`
+   ainda decide (o piso do veredito, a altura do verbo, a narração, a
+   reserva da reação, a folga da câmara, a tira do telefone) continua a
+   sair de lá; daqui sai só o que o quadro B1 mediu.
+
+   AS CORES NÃO ESTÃO AQUI: o quadro guarda os valores de antes de V1
+   (`#E8A33D`, `#0E0C15`…) nas variáveis com os NOMES de `T` — o desenho
+   liga-se ao token, e o token vale o que `T` vale hoje (`formas.md`, B1).
+   Só os ALFAS que o quadro aplica sobre esses tokens moram em `alfa`.
+
+   A LETRA ABAIXO DO PISO, e a exceção fica escrita: o quadro desenha as
+   legendas de máquina a mono 10 e 11 (`TAVERNA / MESA DE BATALHA`,
+   `PARTICIPANTES`, `TURNO ATUAL`, `PV`…), abaixo de `TIPOS.piso` (12).
+   É desenho da pessoa, pedido "igual ao Figma"; a letra vem desta tabela
+   com o motivo ao lado, como a de `RUNA`, e a catraca D5g não sobe.
+   ============================================================ */
+export const MESA_DE_BATALHA = {
+  /* a página: px-32 do quadro; 16 no telefone (a calha da casa) */
+  margem: 32,
+  margemNoTelefone: 16,
+  /* "Cena e turno": pt 24, pb 20, 16 entre as linhas */
+  cenaTopo: 24,
+  cenaBaixo: 20,
+  cenaEntre: 16,
+  /* "Mesa de combate": pt 8, pb 24, 24 entre as colunas, 16 entre os painéis */
+  mesaTopo: 8,
+  mesaBaixo: 24,
+  entreColunas: 24,
+  entrePaineis: 16,
+  lateral: 328,            /* "Painel de participantes" */
+  raio: 16,                /* os painéis */
+  raioControle: 8,         /* os verbos, os chips, os cartões de NESTA BATALHA */
+  raioSelo: 4,             /* o selo `ação` */
+  raioRedondo: 24,         /* a pílula AGORA, o `como?` e o `Agir` */
+  /* "Arena tática": cabeçalho 44 com 20 de lado; a legenda do alcance, 22 */
+  arenaCabecalho: 44,
+  arenaLado: 20,
+  arenaPe: 22,
+  /* a janela nunca encolhe abaixo de TRÊS casas: abaixo disso o herói e
+     quem está ao lado dele já não cabem juntos na mesma vista */
+  janelaMinima: 3,
+  /* "Escolhas de combate": p 20, 16 entre as faixas, 8 entre os verbos */
+  escolhasRespiro: 20,
+  escolhasRespiroNoTelefone: 8,
+  escolhasEntre: 16,
+  entreVerbos: 8,
+  separador: 24,           /* o fio entre a bolsa e `esperar`: 1 × 24 */
+  compositor: 62,          /* a caixa do `como?` e o `Agir` */
+  compositorLado: 20,
+  agir: 136,
+  /* "Personagem atual": p 24, 20 entre faixas, moldura 90, retrato 74, barra 6 */
+  turnoRespiro: 24,
+  turnoEntre: 20,
+  moldura: 90,
+  retratoDoHeroi: 74,
+  barra: 6,
+  /* "Outros participantes": p 16, 12 entre, cartão p 12, retrato 38 */
+  outrosRespiro: 16,
+  outrosEntre: 12,
+  cartao: 12,
+  retratoDosOutros: 38,
+  /* "Participante": retrato 28, 12 × 8 de respiro, 10 entre, ponto da vez 5 */
+  retratoDoChip: 28,
+  chipLadoX: 12,
+  chipLadoY: 8,
+  chipEntre: 10,
+  pontoDaVez: 5,
+  /* "Feedback do turno" (a pílula AGORA): 20 × 12, 12 entre, espadas 22 */
+  pilulaLadoX: 20,
+  pilulaLadoY: 12,
+  glifoDaPilula: 22,
+  glifo: 18,               /* scan, crosshair, sparkles, wallet, pen-line, swords da fileira */
+  glifoDoSelo: 12,
+  glifoDaRuna: 24,         /* o ✧ do quadro, desenhado (D5h: nenhuma família da casa o tem) */
+  glifoDoDado: 22,
+  /* a letra, em píxeis — ver o motivo no cabeçalho desta tabela */
+  letra: {
+    legenda: 10, chip: 11, veredito: 11, verbo: 12, agir: 13, valor: 13,
+    cena: 15, titulo: 38, tituloNoTelefone: 24, nomeDoHeroi: 32,
+    nomeDoAliado: 20, nomeDoInimigo: 23, valorDoOutro: 12, foco: 25, focoDiz: 13,
+  },
+  rastreio: 1,             /* tracking-[1px] das legendas mono */
+  /* OS ALFAS QUE O QUADRO APLICA SOBRE OS TOKENS */
+  alfa: {
+    brilho: 0.08,          /* o fundo âmbar da pílula AGORA, do `Agir` e da moldura do herói */
+    fio: 0.42,             /* o fio âmbar escuro (#765931 no quadro = `amber` a 0,42 sobre `bg`) */
+    veuDoTerreno: 0.73,    /* "Véu noturno": `bg` a 0,73 por cima da textura */
+    zonaAcesa: 0.08,       /* a zona do herói, acesa no chão ("Areia solta") */
+    dentroDoPasso: 0.03,   /* "Área de movimento": o dentro do tracejado */
+    foraDoPasso: 0.35,     /* o véu de v9.125 sobre o que não se alcança, aliviado: a textura tem de se ler */
+    malha: 0.16,           /* as linhas da grade */
+    nomeDaZonaAcesa: 0.5,
+    nomeDaZona: 0.44,
+    casaDoHeroi: 0.13,     /* "Casa atual" */
+    casaDosOutros: 0.08,   /* "Casa aliada" — e a do inimigo, com a cor dele */
+    hachura: 0.125,        /* "Hachuras da areia" */
+  },
+  /* O CHÃO DESENHADO, em píxeis de tela (o SVG divide pelo lado da casa) */
+  chao: {
+    recuoDoNome: 18,       /* o nome da zona começa 18 px dentro da primeira casa */
+    corpoDoNome: 11,
+    rastreioDoNome: 1.98,
+    tracoDoHeroi: 2,
+    tracoDosOutros: 1,
+    tracoDoPasso: 1.5,
+    tracoDoPassoTracejado: 4,
+    passoDaHachura: 19.5,  /* 24,6 px na horizontal, a 37,5° — o passo perpendicular */
+    anguloDaHachura: 37.5,
+    malha: 1,
+  },
+  /* o obstáculo do quadro: 38 × 34 dentro de uma casa de 62 */
+  estorvo: { largura: 38, altura: 34, casa: 62, alfaDaSombra: 0.31 },
+};
+
+/* O CHÃO DE CADA PLANTA (B1). SÓ o deserto tem textura, e é a imagem do
+   próprio quadro da pessoa (`public/terrenos/deserto.jpg`). As outras nove
+   plantas de `grid.js` ficam no chão liso até a pessoa desenhar a delas —
+   NÃO se gera nem se escolhe imagem (`formas.md`, B1). A chave é o
+   `cenario` de `PLANTAS`; quem não está aqui não tem textura. */
+export const TERRENO_DO_TABULEIRO = {
+  deserto: "/terrenos/deserto.jpg",
 };
 
 /* ============================================================
@@ -1555,6 +1691,16 @@ export const SUPERFICIES_CSS = `
    nasce fabricada e sem consumidor ainda; ganha o leitor na etapa
    seguinte. */
 .tv-coluna { max-width: 65ch; margin-inline: auto; font-weight: 300; }
+
+/* ---------------- B1 · AS DUAS SOMBRAS DA MESA DE BATALHA ----------------
+   O quadro 151:1662 dá sombra a dois painéis: a arena (0 8 24, preto a
+   0,25) e o turno atual (0 0 20, o ambar a 0,19 - o brilho de quem age).
+   Moram na folha e nao num style inline porque a tela da batalha proibe
+   boxShadow inline: o anel de foco tambem e box-shadow, e o inline venceria
+   sempre a folha. Nenhum dos dois paineis e focavel; o anel continua dos
+   controles de dentro. */
+.tv-mesa-arena { box-shadow: 0 8px 24px ${sombra(".25")}; }
+.tv-mesa-vez { box-shadow: 0 0 20px ${alfa(T.amber, 0.19)}; }
 
 /* ---------------- O ESPAÇO DO TRILHO (v9.156) ----------------
    O trilho de abas é lateral no monitor e barra inferior no telefone, e

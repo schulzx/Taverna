@@ -221,7 +221,7 @@ const TETO_DE_LITERAIS = {
      diferença é invisível a olho nu e paga duas coisas — sai um literal, e
      o vão de 2 px do anel de foco, que sobre `#141020` dava 1,04:1 e não
      se separava do fundo, volta a funcionar como foi desenhado. */
-  "src/grade-de-batalha.jsx": 19, /* 15/09 → 15/09 · E2, o endereço do tabuleiro */
+  "src/grade-de-batalha.jsx": 15, /* 05/10 · B1, o chão do quadro 151:1662: a hachura, a alternância branca das zonas e o véu fora do passo saíram para T/MESA_DE_BATALHA, e o obstáculo foi de quatro literais para três (o topo e os dois fios do quadro, que T não tem). 19 → 15. (Linha do desenho; desceu-a o aprendiz, porque a catraca tem folga zero.) · 15/09 → 15/09 · E2, o endereço do tabuleiro */
   "src/rosto.jsx": 10, /* 24/09 · V1: os dois brilhos das lentes eram T.ink escrito à mão */
 
   /* O RESTO (10) — migalhas, e o mais barato do projeto. */

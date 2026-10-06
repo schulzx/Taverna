@@ -146,6 +146,18 @@ export const GLIFOS = {
   /* a luz da cena: noite (21h–4h) · V3c: a luz do TEMPO e do cabecalho da pagina (luzDaHora) */
   noite: { de: "lucide:moon", d: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" },
   ban: { de: "lucide:ban", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M4.929 4.929l14.142 14.142" },
+  /* B1 · a mesa de batalha (Figma `151:1662`, 05/10) — os quatro que o quadro
+     desenha e a família não tinha. Os três primeiros são o Lucide que o próprio
+     quadro usa (scan, crosshair, pen-line, na grelha 18 → 24); o quarto é o ✧
+     do quadro, desenhado: nenhuma família da casa tem U+2727 (D5h). */
+  /* o campo de batalha: o cabeçalho da arena */
+  campo: { de: "lucide:scan", d: "M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" },
+  /* o alvo e a distância: a linha do veredito */
+  mira: { de: "lucide:crosshair", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M22 12h-4M6 12H2M12 6V2M12 22v-4" },
+  /* o `como?`: a frase que o jogador escreve */
+  pena: { de: "lucide:pen-line", d: "M13 21h8M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" },
+  /* a runa de quatro pontas — o ornamento dos fios da mesa */
+  estrela: { de: "casa", d: "M12 3C12.5 9 15 11.5 21 12C15 12.5 12.5 15 12 21C11.5 15 9 12.5 3 12C9 11.5 11.5 9 12 3Z" },
 };
 
 /* ============================================================
