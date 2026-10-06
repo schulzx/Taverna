@@ -462,7 +462,7 @@ O limite é o que um commit revertido não desfaz.
      às 08:35; a Médica de Campo sem Medicina.
   **Por provar:** a luta inteira (o "como", o revide, a sala limpa, esconder, atirador, rendição) — a terceira sessão vai
   direita à porta do Fundo do Poço, com o teto zerado.
-- [ ] **MM16 · o que a terceira sessão de prova partiu** · da MM11 (3), 05/10, `mente/mm11-sessao-3.md` · **à frente de tudo** · próxima: **nº 5, o "como"**
+- [ ] **MM16 · o que a terceira sessão de prova partiu** · da MM11 (3), 05/10, `mente/mm11-sessao-3.md` · **à frente de tudo** · **os nº 2, 4, 5 e 6 feitos a 05–06/10 (v9.350–v9.353); a quarta sessão (uma descida inteira) é a prova**
   Jogada inteira (30 respostas, v9.347): **2,27 chamadas por resposta**, "[LUGAR — RECUSADO]" falso 12 em 30, perguntas do
   sistema 4 de 15. A quarta sessão devia ser **uma descida inteira**: entrar, guardião, chave, chefe, sair — com uma
   companheira que continua a ser quem é. Pela ordem em que partem a sessão (peso à frente; a Fase MM tem liberdade no motor,
@@ -471,7 +471,7 @@ O limite é o que um commit revertido não desfaz.
      chave, o portão do chefe abre (280 de 280 masmorras), o fecho do sistema resolve a sala; e o chefe vencido pelo golpe do
      sistema conclui a masmorra. *Fica:* a sala abandonada a meio de uma luta volta com todos os inimigos, mesmo os mortos
      (`salaEmCursoRef` já só resolve a sala atual, mas a fuga não guarda quem caiu).
-  2. **"Vou à masmorra que a cidade aponta" não leva à masmorra** · **pesado** (mecânica nova: a masmorra do mundo passa a
+  2. ✓ *feito em v9.351 (fica: a masmorra do gerador fica em mediana a 168 km da cidade próxima, até 283 km — a mesma discrepância de 50× dos arredores —, logo "vou à Nave" passa a custar dias: **pesado**, muda o mapa de todos os mundos pela semente, reversível; da boca, "volto a Vau Fincado" apaga o lugar sem fazer estrada: **médio**; um botão "Entrar na X" na soleira é do `desenho`)* · **"Vou à masmorra que a cidade aponta" não leva à masmorra** · **pesado** (mecânica nova: a masmorra do mundo passa a
      destino de viagem, campo de save novo e ignorado pela versão antiga — reversível, dentro da liberdade da fase) ·
      "vou à Nave" abriu uma viagem sem destino pela direção, o relógio saltou **13 h** (08:30 → 21:29), e duas vezes um
      toque deu duas respostas do Mestre (a segunda escrita pelo sistema na boca do herói). **E o veredito antes da porta**
@@ -482,23 +482,23 @@ O limite é o que um commit revertido não desfaz.
      o Náufrago pede "o mesmo barco" e não "a mesma guerra": a tabela das ligações permite uma que soa a soldado, **médio**;
      `decidirAcaoCompanheiro` sorteia com `Math.random` fora da semente — `companheiros.js` ~276 e ~280 —, **médio**,
      a semente tem de chegar por `turnoDosCompanheiros`)* · **A companheira tem duas fichas, uma homónima, e o revisor pago apaga-a.**
-  4. **A masmorra não chega à pauta, e o lugar volta a acusar o Mestre** · **médio** · ONDE diz "no posto da estrada · (aqui
+  4. ✓ *feito em v9.352 (fica: o Cronista que chega antes dos 400 ms em que a porta abre ainda é julgado como cena livre; `resumoDaqui` e os arredores ainda saem do prompt dentro da masmorra; "a quantos metros" fora da luta segue sem resposta — o sistema não guarda metros fora do tabuleiro; o primeiro veto cai em 338 de 500 cenas de luta com golpe final, já assim antes: o ferro do desfecho e o ONDE o cortam, **médio**)* · **A masmorra não chega à pauta, e o lugar volta a acusar o Mestre** · **médio** · ONDE diz "no posto da estrada · (aqui
      isto é um forte)", sem a sala, sem quem lá está, sem distâncias: 4 perguntas perdidas e salões inventados; e
      "[LUGAR — RECUSADO PELO SISTEMA]" **12 vezes em 30** (1 ao abrir a masmorra, 11 nas 14 respostas da luta); na cidade, zero.
      A v9.341 fechou a porta do "cidade"; esta é a da masmorra e da luta. Os **fatos fora dos muros** (a estrada e a masmorra
      sem ficha nenhuma) são o mesmo vazio, pela pauta dinâmica (nunca bloco estático).
-  5. **O "como" não chega — 0 de 2, e 0 de 5 em três sessões** · **médio** (a linha de prioridade da pauta; a caixa
+  5. ✓ *feito em v9.350 (a causa era o corte: a economia da cidade, 264 car., gastava o teto na masmorra; 500 de 500 lutas semeadas chegam; o cartão nasce à vista — a batalha que congela em ecrã inteiro segue à espera da pessoa)* · **O "como" não chega — 0 de 2, e 0 de 5 em três sessões** · **médio** (a linha de prioridade da pauta; a caixa
      fora do ecrã é do desenho e vai a "Para a pessoa decidir") · a escolha chega, a frase não; causa provável, não provada:
      o teto da pauta (1212 de 1400 sem a linha; a linha tem ~230) com o ONDE a gastar ~550 caracteres de economia da cidade
      dentro de uma masmorra. **Primeiro provar a causa** (medir a pauta na luta), depois a frase com prioridade de ferro.
-  6. **Esconder-se na luta rola e não esconde** (M18) · **leve** (bug com teste) · Furtividade 25 contra 18, e nenhum estado,
+  6. ✓ *feito em v9.353 (a causa não era o bloco da MM6: no fundo da sala não havia onde sumir — a regra do 5e estava certa; o veredito vem agora antes do dado, a ação gasta-se, e o estado chega ao Mestre no mesmo turno; fica: a **luz como esconderijo** — "baixo a tocha e escondo-me na sombra" não dá cobertura porque a grade não modela luz, **pesado**: mecânica nova — e o herói não se move sozinho para o abrigo)* · **Esconder-se na luta rola e não esconde** (M18) · **leve** (bug com teste) · Furtividade 25 contra 18, e nenhum estado,
      nenhuma linha, nenhuma ação gasta; o bloco que faz nascer o estado (`concluirRolagem`, MM6) não deixou rasto; causa por achar.
   7. **Os homónimos que o sistema traz para a cena** · **médio** · ✓ *a procura sem nome já segue um placar escrito em v9.349
      (PLACAR_DA_PROCURA); fica:* o SOCIAL que disse "essa pessoa" com "a Lourdes" na frase.
   8. ✓ *feito em v9.349* · **O companheiro de plantão no antigo posto.**
   9. **As perguntas que inventam na cidade** · **médio** · "quem manda" sem PERGUNTOU, a distância à masmorra e a uma cidade, o
      posto que não veio; a v9.336 prometia a distância "a um lugar nomeado" e para a masmorra e para São do Meio não viajou.
-  10. **O veredito da masmorra depois da porta** — ver o nº 2.
+  10. ✓ *feito em v9.351 com o nº 2* · **O veredito da masmorra depois da porta** — ver o nº 2.
   11. **Miúdos, mas à vista** · **leve**, cada um com teste: "taverneiro(a)" na prosa; "rodada 3 · 1 de pé contra você" e
       "Lobo 4/4" com o lobo morto; a poção "apanhada" por palavras fica no chão e a moeda "deixada" não sai; o Caçador sem
       arma numa cidade sem arcos (◉ 15 para um montante de ◉ 88); o Feixe de Tochas recolhido não acende (masmorra "às escuras"

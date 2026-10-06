@@ -15,6 +15,62 @@ Formato:
 ```
 
 ---
+## 06/10 · v9.353 · MM16 nº 5, 2, 4 e 6 · o "como" chega · "vou à Nave" leva à Nave · a masmorra na pauta · esconder-se · commits `a914320` (v9.350), `148c1d5` (v9.351), `9e193d8` (v9.352), `015f9f0` (v9.353)
+
+- **por que andou:** pedido da pessoa, via o coordenador, em modo manual (sem tarefa agendada): resolver as quatro pendências da
+  MM16, uma de cada vez, cada uma numa versão. Ordem dada: o "como", a Nave, a masmorra na pauta, esconder-se. **Modelos:** Opus
+  para quem programa (`backend`, `frontend`), Sonnet só para quem testa. A etapa v9.349 e todas estas correram em Opus,
+  salvo o `testes` da v9.348 (Sonnet, antes da ordem).
+- **estado inicial:** verde (`bf6ddf7`, v9.349), árvore limpa, sem fila pausada. Trava tomada; bastão do `App.jsx` tomado só
+  durante cada etapa (para o `frontend`) e **devolvido ao fim de cada uma, nunca segurado entre etapas** — a pessoa desenha
+  uma tela nova no Figma e outra mão vai codá-la no App. A outra mão fez o commit B1 (`427c93c`, "v9.352", a luta numa mesa
+  só) no meio: o número de versão repetiu-se uma vez (o dela e o meu), a atual é v9.353.
+- **nº 5 · o "como" (v9.350, `a914320`) — a causa PROVADA com o registo real:** remontadas as pautas das chamadas M21 e M30
+  (batem byte a byte com as enviadas: 1369 e 1212 car.), o gasto antes da frase era 1149 e 1164 de um teto de 1400, e a frase
+  pedia mais 310 e 287; entrou A GENTE (prio 6) no lugar dela. O gasto vinha de 264 car. da economia da cidade ("cheira a cera,
+  tinta e perfume caro") dentro de uma masmorra, que passava à frente do DESFECHO. A MM14 provara que cabia — com um ONDE só do
+  Geógrafo: o turno de prova não era o turno jogado. Conserto: `PRIO_DE_FERRO` (o fato e a frase e o veto de quem caiu cortam
+  por último), a economia vira seção própria, `SECOES_QUE_CEDEM` por tabela. **500 de 500 lutas semeadas** (masmorra +
+  companheira + "como" até 300) entregam a frase, o fato, o veto e o lugar (eram 82 com o App de antes); `teste-como-chega`, 62.
+  **O cartão** deixa de nascer em y −119 a −51 (painel 374×310): campo em y 93–160 com foco, botões 191–295, no fluxo, no lugar
+  da fileira de verbos, pela mesma peça. Provado numa página de prova temporária (apagada), não no jogo real.
+- **nº 2 · a Nave (v9.351, `148c1d5`):** "vou à/sigo para X" com X masmorra conhecida é uma **ida** (`idaAMasmorra`, `boca.js`
+  novo): dias da tabela de terreno, chegada à **boca** (nunca dentro), veredito na partida e à boca, "entro" de longe vira ida e
+  só o segundo "entro" abre. **Uma frase, uma resposta** (`QUEM_RESPONDE`; o helper `umaSoResposta` do App): "Sigo viagem pela
+  estrada." e "Encontrei uma entrada… Vou explorar." deixam de existir. Campo de save novo e opcional: `jornada.alvo`.
+  `teste-nave-destino`: 94; 777 frases de ida em 24 mundos × 3 cidades chegam todas; 871 que não são ida não movem nada.
+- **nº 4 · a masmorra na pauta e o lugar (v9.352, `9e193d8`):** os **12 recusados lidos no registo**: 1 do Mestre (`lugar_atual`
+  null à boca, com o lugar vigente ainda no posto da estrada), **11 do Cronista** a repetir "câmara das correntes" — o lugar já
+  registado — e o `registrarLugar` recusava tudo com o combate aberto antes de ver se era o mesmo sítio. Agora dentro da luta e
+  da masmorra o lugar dito é ignorado em silêncio (`LUGAR_NA_CENA_DO_SISTEMA`; 2000 casos semeados). Seção `MASMORRA` (prio 2,45,
+  308 car.): camada, salas da planta vistas, tochas, quem está, passagens, o portão do fundo. Medida a prioridade: 2,05 tirava o
+  2.º e o 3.º veto em 84 de 500 lutas; 2,45 não tira nenhum. As "12 salas" vinham de `mundo-base.js` e a planta tinha 6:
+  `gerarMasmorra` ganha `{ salas }`. `teste-masmorra-na-pauta`: 99 (71 falhavam no HEAD).
+- **nº 6 · esconder-se (v9.353, `015f9f0`) — a hipótese do `jogo` estava errada:** o bloco da MM6 correu; o save da sessão guarda
+  "👁 Não há onde sumir: Lobo tem você à vista, sem nada no meio" e o jogador não a viu. A regra do 5e estava certa (no fundo da
+  sala não há cobertura). O defeito era o resto: o veredito vinha **depois** do dado, a recusa nunca chegava ao Mestre (que narrou
+  o herói escondido), a ação nunca se gastava, "fico escondido" não rolava, e o rodapé de `enviar` lia a ficha do render.
+  `teste-esconder-na-luta`: 54.
+- **decisões médias, com o motivo:** (1) **no nº 6 não obriguei o estado a nascer de qualquer teste passado**, como a letra do
+  pedido dizia: nascer sem cobertura seria quebrar uma regra do 5e que a casa já aplica e que o `jogo` não contestou; o jogador
+  passa a ver a recusa ANTES de rolar e onde há abrigo — a luz como esconderijo vai à pauta como **pesado**, para a pessoa;
+  (2) no nº 4 a seção da masmorra não cede ao ONDE de cidade (é a verdade do lugar), e a prioridade 2,45 saiu de medir três
+  alternativas, não de achar; (3) no nº 2 o veredito vem na partida E à boca (o mesmo texto de hoje, só mudou QUANDO); (4) o
+  cartão do "como" tira do ecrã, enquanto aberto, a faixa da vez, o veredito, o texto livre e (no telefone) a tira do herói,
+  para caber a 310 px — voltam no clique que fecha; não é a batalha congelada em ecrã inteiro, essa continua à espera da
+  pessoa; (5) `🌦` não tem lugar em `glifos.js` (do desenho): a linha do clima da viagem ficou com o ícone de `c.icone`.
+- **para quem joga, em número:** o "como" escrito chega ao Mestre em **500 de 500** lutas semeadas (era 0 de 5 nas sessões jogadas;
+  82 de 500 com o código de antes); o cartão passa de **fora do ecrã** (y −119) para **y 93** com foco; "vou à Nave" passa de
+  **13 h de estrada sem destino e duas respostas** para uma ida com destino, uma resposta e o veredito **antes** da porta (777 de 777
+  frases de ida resolvem); as recusas falsas de lugar na masmorra e na luta passam de **12 em 30** para **0** (2000 casos); a
+  masmorra diz a sala, quem está e as passagens (308 car.) em 108 de 108 masmorras testadas; esconder-se numa luta diz **antes do
+  dado** se há onde sumir, e gasta a ação.
+- **o que ficou (na pauta, MM16):** a luz como esconderijo (**pesado**); a masmorra a 168 km em mediana (**pesado**, muda o mapa
+  de todos os mundos); "volto a Vau Fincado" da boca; o Cronista antes dos 400 ms; o prompt dentro da masmorra ainda traz
+  `resumoDaqui` e os arredores; o primeiro veto cai em 338 de 500 lutas com golpe final (já assim antes); e nada disto foi
+  jogado — **a quarta sessão, uma descida inteira (entrar, guardião, chave, chefe, sair, com a companheira), é a prova.**
+
+
 ## 05/10 · v9.349 · fecho de MM11 (3) · a masmorra volta a acabar · a companheira com uma ficha só · commits `dceb455` (v9.348), `9737af7` (v9.349)
 
 - **ciclo morto, e retomado:** o ciclo de 01/10 00:58 (a terceira sessão de prova) **morreu no limite semanal da API** —
