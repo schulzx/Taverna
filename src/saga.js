@@ -89,11 +89,21 @@ export const FEITIOS = {
      esse marco como abertura da campanha — um marco impossível de cumprir,
      bem no lugar onde a história começa. Volta no dia em que a espinha
      souber pôr o objeto na mão de alguém. */
-  /* NÃO EXISTE AQUI UM FEITIO DE MASMORRA, e é a mesma ausência do de
-     entrega. "Descer em X" só se cumpriria por `ir_a` — chegar à boca da
-     mina —, e chegar não é descer. A masmorra sabe quais salas foram
-     resolvidas, mas não publica um sinal de CONCLUÍDA que as etapas saibam
-     ler. Volta no dia em que publicar. */
+  /* O FEITIO DE MASMORRA (MM17 C1, 06/10). Até aqui não existia, e a
+     ausência era a mesma do de entrega: "descer em X" só se cumpriria por
+     `ir_a` — chegar à boca da mina —, e chegar não é descer. Agora a
+     masmorra PUBLICA o fim: quando o chefe do fundo cai, o App grava o
+     lugar em `base.concluidas` (`concluirLugar`, mundo-base.js), e a etapa
+     `concluir_masmorra` (missoes.js) lê isso. O feitio NÃO entra na roleta
+     de `estenderEspinha` — o continente sai daqui igual, marco a marco; só
+     a amarração da região (`espinhaNaRegiao`, regiao.js) o põe nos lugares
+     do meio e do clímax, onde cada ato da história mora. */
+  descer: {
+    id: "descer", icone: "🕳", peso: "missao_forcada",
+    titulo: () => "Chegar ao fundo",
+    condicao: (m) => ({ tipo: "concluir_masmorra", alvo: m.onde }),
+    consequencia: "abre_caminho",
+  },
   confronto: {
     id: "confronto", icone: "☠", peso: "nemesis",
     titulo: (m) => `${m.alvo}`,

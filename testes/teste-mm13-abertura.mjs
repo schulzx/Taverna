@@ -486,7 +486,9 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   t("App.jsx importa as dez funções de abertura.js",
     app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora'));
   t("App.jsx importa chaveDoLugar de mundo-base.js",
-    app.includes("masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from \"./mundo-base.js\";"));
+    /* MM17 C1: a linha ganhou concluirLugar (a masmorra publica o fim); a
+       asserção continua a guardar chaveDoLugar no import de mundo-base.js */
+    app.includes("masmorrasDoMundo, chaveDoLugar, concluirLugar, BASE_PROMPT } from \"./mundo-base.js\";"));
 
   /* ---- 2. os refs ---- */
   t("a abertura vive num ref, garantido no nascimento", app.includes("const aberturaMundoRef = useRef(garantirAbertura(null));"));

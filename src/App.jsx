@@ -5,7 +5,7 @@ import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdapt
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
-import { mapaDaCriacao, mapaDaCampanhaNova } from "./regiao.js";
+import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
@@ -167,7 +167,7 @@ import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, en
 import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
 import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, concluirLugar, BASE_PROMPT } from "./mundo-base.js";
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
@@ -12618,6 +12618,15 @@ export default function Taverna() {
         estrutura: (mundo && mundo.estrutura) || historiaRef.current.estrutura,
         cidadeInicial: cidadeAtualRef.current,
       });
+      /* MM17 C1: A HISTÓRIA MORA NOS LUGARES. Só num mapa de região (campanha
+         nova de Uma Vida): cada ato do meio e o do fim descem ao SEU lugar, e
+         o confronto final é no clímax (espinhaNaRegiao, regiao.js). Sem
+         `mapa.regiao` não passa aqui, e se estourar fica a espinha de sempre. */
+      if (mapaRef.current && mapaRef.current.regiao) {
+        try {
+          espinhaRef.current = espinhaNaRegiao(mapaRef.current, espinhaRef.current, { semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico });
+        } catch (e) { calou("a espinha na região", e); }
+      }
     }
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
@@ -15664,6 +15673,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
     masmorraRef.current = null; setMasmorra(null);
     bumpCont("masmorrasConcluidas");
+    /* MM17 C1: A MASMORRA PUBLICA O FIM — qual, e não só quantas: é o que o
+       marco "descer" da espinha lê. Só num mapa de região; no continente a
+       base fica com as chaves de sempre. */
+    if (mapaRef.current && mapaRef.current.regiao) {
+      try { baseMundoRef.current = concluirLugar(baseMundoRef.current, mm.nome); setBaseMundo(baseMundoRef.current); } catch (e) { calou("a masmorra concluída na base", e); }
+    }
     salaEmCursoRef.current = null;
     talvezFecharSessao("chefe");
     return { pers: p2, concluiu: true };

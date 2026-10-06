@@ -44,8 +44,11 @@
    (`TERRENO_VIAGEM`); a ficha mede a ida com a MESMA conta da boca da
    masmorra (`rotaAteAMasmorra`, boca.js) — uma verdade só.
 
-   O QUE ESTE MÓDULO NÃO FAZ: não liga nada ao App (etapa B), não mexe na
-   espinha (etapa C — `amarrarEspinha` diz como, e não escreve nada), e não
+   A ESPINHA (etapa C1, v9.357): `amarrarEspinha` diz onde mora cada ato, e
+   `espinhaNaRegiao` escreve-o — o "descer" de cada lugar e o confronto no
+   clímax —, uma vez, na criação de uma campanha nova com região.
+
+   O QUE ESTE MÓDULO NÃO FAZ: não liga nada ao App (é o App que o chama), e não
    serve molde que não seja continental (a Torre já é delimitada pelos
    andares; o Arquipélago e o Braço estão fora do beta): devolve `null`, e
    quem chama fica com `gerarGeografia`.
@@ -55,9 +58,10 @@ import { gerarGeografia, gerarRotas, rngDe, populacaoDe, TERRENO_VIAGEM, KM_POR_
 import { moldePorId } from "./moldes.js";
 import { HORAS_MARCHA_POR_DIA } from "./viagem.js";
 import { kmEntre, rumoEntre } from "./coordenadas.js";
-import { rotaAteAMasmorra } from "./boca.js";
-import { criaturasDaRegiao, locaisDaCidade, chefesDoMundo, TIPOS_MASMORRA, EPITETOS, RUMORES } from "./mundo-base.js";
-import { estruturaPorId } from "./historia.js";
+import { rotaAteAMasmorra, horasPeloChao, IDA_NA_REGIAO } from "./boca.js";
+import { criaturasDaRegiao, locaisDaCidade, genteDoLocal, chefesDoMundo, TIPOS_MASMORRA, EPITETOS, RUMORES } from "./mundo-base.js";
+import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
+import { garantirEspinha, feitioDe } from "./saga.js";
 import { garantirModo } from "./modos.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
@@ -172,11 +176,25 @@ function kmDeHoras(horas, bioma) {
   return (Math.min(horas, ALCANCE_DA_REGIAO.horasMaximas) / HORAS_MARCHA_POR_DIA) * t.kmDia;
 }
 
+/* MM17 C1: os km de uma ida de `horas` da base (chão `deOnde`) a um lugar
+   do chão `bioma`, pela régua da região da boca (`horasPeloChao`): metade
+   da marcha em cada chão. A conta inversa da que a boca faz na ida — e por
+   isso o lugar fica às horas que a ficha diz. */
+function kmDaIda(horas, deOnde, bioma) {
+  const porKm = horasPeloChao(1, deOnde, bioma);
+  return porKm > 0 ? Math.min(horas, ALCANCE_DA_REGIAO.horasMaximas) / porKm : 0;
+}
+
+/* A versão da região que este gerador escreve: a que mede a ida pelo chão
+   (`IDA_NA_REGIAO`, boca.js). A v1 (v9.356) foi medida pela régua antiga
+   e continua a ser lida por ela. */
+const REGIAO_DESTA_VERSAO = { versao: IDA_NA_REGIAO.versaoMinima };
+
 /* As horas de uma ida pela régua da boca da masmorra: a pé em minutos,
    pela estrada em meios-dias de marcha. É o que a ficha diz e o que o jogo
    cobrará quando o herói for. */
 function idaEntre(destino, origem) {
-  const r = rotaAteAMasmorra(destino, origem);
+  const r = rotaAteAMasmorra(destino, origem, { regiao: REGIAO_DESTA_VERSAO });
   if (!r) return null;
   const horas = r.modo === "a_pe" ? r.minutos / 60 : r.dias * HORAS_MARCHA_POR_DIA;
   return { horas: duas(horas), km: duas(r.km), modo: r.modo, dias: r.dias, terreno: r.terreno, rumo: r.rumo ? r.rumo.rotulo : "" };
@@ -293,7 +311,7 @@ export function gerarRegiao(opcoes) {
     const t = pick(rnd, TIPOS_DE_LUGAR);
     const ang = giroL + (i * Math.PI * 2) / atos.length + (rnd() - 0.5) * 0.4;
     const horas = noIntervalo(rnd, ALCANCE_DA_REGIAO[ato]);
-    const km = kmDeHoras(horas, reg.bioma);
+    const km = kmDaIda(horas, coracao.bioma, reg.bioma);
     const x = duas(50 + Math.cos(ang) * (km / KM_POR_UNIDADE));
     const y = duas(50 + Math.sin(ang) * (km / KM_POR_UNIDADE));
     const j = porSub[reg.nome] || 0;
@@ -343,7 +361,7 @@ export function gerarRegiao(opcoes) {
     return {
       ...l,
       ficha: {
-        quem, perigo: perigoDe(l.nivel).id,
+        quem, perigo: perigoDe(l.nivel).id, perigoRotulo: perigoDe(l.nivel).rotulo,
         horas: daBase ? daBase.horas : null, km: daBase ? daBase.km : null,
         modo: daBase ? daBase.modo : "", rumo: daBase ? daBase.rumo : "",
         vizinhos,
@@ -386,7 +404,7 @@ export function gerarRegiao(opcoes) {
   return {
     ...mapa,
     regiao: {
-      versao: 1,
+      versao: REGIAO_DESTA_VERSAO.versao,
       nome: coracao.nome,
       base: { nome: base.nome, ato: "inicio" },
       povoados,
@@ -398,7 +416,7 @@ export function gerarRegiao(opcoes) {
 }
 
 /* ============================================================
-   A AMARRAÇÃO DA ESPINHA (para a etapa C — o App ainda não a lê)
+   A AMARRAÇÃO DA ESPINHA (o App lê-a pela `espinhaNaRegiao`, etapa C1)
 
    `estenderEspinha` (saga.js) já só aponta para o que o mapa tem: cidades,
    gente da base, bichos das regiões, chefes do mundo. Num mapa de região
@@ -484,6 +502,152 @@ export function amarrarEspinha(mapa, espinha, ctx) {
     climax: fim ? { id: fim.id, nome: fim.nome, marco: fecho ? fecho.id : "", alvo } : null,
     todosDentro: marcos.every((x) => x.dentro),
   };
+}
+
+/* ============================================================
+   A ESPINHA NA REGIÃO (MM17, etapa C1) — a história mora nos lugares
+
+   A pessoa, a 06/10: *"cada lugar amarrado a um ato da espinha: o início
+   na base, o meio em 2–3 lugares, o fim no lugar do clímax; os ganchos da
+   história apontam para lá."* `amarrarEspinha` DIZ onde mora cada ato; esta
+   função ESCREVE isso na espinha, uma vez, na criação de uma campanha nova
+   com região (o App chama-a só com `mapa.regiao`; sem ele devolve a espinha
+   como veio, e o continente nunca passa por aqui):
+
+     · cada ato do meio, e o do fim, ganha o marco "descer" (saga.js) no SEU
+       lugar — chegar ao fundo dele, que a masmorra publica ao cair o chefe.
+       Dois atos que dividem um lugar (a amarração reparte para fora) não
+       pedem duas vezes a mesma descida: fica com o primeiro;
+     · o fecho (o confronto com o antagonista principal) passa a ter `onde` =
+       o lugar do clímax, e o descer do clímax vem logo antes dele;
+     · O ATO CONTINUA DIMENSIONADO PELA CONTA DO ARCO (a terceira regra de
+       saga.js): a descida entra no peso, e os marcos sorteados do ato ficam
+       só até o peso fechar — nem um a mais. Era a falta de peso que deixava
+       5,7% dos atos da região sem marcos suficientes (medido a 06/10, quase
+       todos o último: a borda tinha pouca gente e poucos bichos livres); o
+       lugar é peça que não se gasta.
+
+   Pura e determinística: nenhum sorteio — a espinha estendida já os fez. */
+export function espinhaNaRegiao(mapa, espinha, ctx) {
+  const e = garantirEspinha(espinha);
+  let a = null;
+  try { a = amarrarEspinha(mapa, e, ctx); } catch { a = null; }
+  if (!a) return e;
+  const lugares = (mapa.regiao && Array.isArray(mapa.regiao.lugares)) ? mapa.regiao.lugares : [];
+  const est = estruturaPorId(e.estrutura);
+  const pesoDoFeitio = (f) => pesoDe(feitioDe(f).peso);
+  const descidos = new Set();
+  const alvos = new Set(e.atos.flatMap((x) => x.marcos).map((m) => norm(m.alvo)).filter(Boolean));
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  const comAto = new Set(a.atos.map((x) => x.lugar && x.lugar.id).filter(Boolean));
+  const semAto = lugares.filter((x) => !comAto.has(x.id))
+    .sort((p, q) => ((q.ficha && q.ficha.horas) || 0) - ((p.ficha && p.ficha.horas) || 0));
+  /* os bichos que podem guardar um lugar: os da ficha, os do chão dele e,
+     por fim, os dos outros chãos da região (que fica toda a um dia) — cada
+     chão do nível mais perto do lugar para o mais longe */
+  const cidades = (Array.isArray(mapa.cidades) ? mapa.cidades : []).filter((c) => c && c.nome);
+  const quens = new Set(e.atos.flatMap((x) => x.marcos).map((m) => norm(m.quem)).filter(Boolean));
+  const genteDe = (c) => {
+    try {
+      return locaisDaCidade(String(o.semente || ""), c, o.genero || "Fantasia medieval", o.molde || null, o.lex || null)
+        .flatMap((loc) => genteDoLocal(String(o.semente || ""), loc, o.genero || "Fantasia medieval", o.molde || null, o.lex || null));
+    } catch { return []; }
+  };
+  const bichosDoChao = {};
+  const doChao = (reg) => {
+    if (!bichosDoChao[reg.nome]) { try { bichosDoChao[reg.nome] = criaturasDaRegiao(String(o.semente || ""), reg, o.genero || "Fantasia medieval", o.lex || null); } catch { bichosDoChao[reg.nome] = []; } }
+    return bichosDoChao[reg.nome];
+  };
+  const bichosDe = (l) => {
+    const daFicha = (l.ficha && Array.isArray(l.ficha.quem)) ? l.ficha.quem : [];
+    const regs = (Array.isArray(mapa.regioes) ? mapa.regioes : []).filter((r) => r && r.nome);
+    const chaos = [...regs.filter((r) => r.nome === l.regiao), ...regs.filter((r) => r.nome !== l.regiao)];
+    const porNivel = (xs) => [...xs].sort((a, b) => Math.abs((a.nivel || 0) - l.nivel) - Math.abs((b.nivel || 0) - l.nivel));
+    return [...daFicha, ...chaos.flatMap((r) => porNivel(doChao(r)))];
+  };
+  /* O CLÍMAX ESCOLHE PRIMEIRO. Bichos e lugares sem ato são poucos numa
+     região pequena, e o meio, por ir antes, gastava-os todos: o último ato
+     — o que mais pesa — ficava sem com que fechar. O fim monta-se antes, o
+     meio depois, cada ato no seu lugar da lista. */
+  const montar = (ato, i) => {
+    const am = a.atos[i];
+    const l = am && am.lugar && am.lugar.tipo === "lugar" ? lugares.find((x) => x.id === am.lugar.id) : null;
+    if (!am || am.papel === "inicio" || !l) return ato;
+    const fecho = am.papel === "fim" ? ato.marcos.find((m) => m.feitio === "confronto") || null : null;
+    const sorteados = ato.marcos.filter((m) => m !== fecho);
+    const fechoAqui = fecho ? { ...fecho, onde: l.nome, regiao: l.regiao || fecho.regiao, ehLugar: true } : null;
+    if (descidos.has(l.id)) return { ...ato, marcos: fechoAqui ? [...sorteados, fechoAqui] : ato.marcos };
+    descidos.add(l.id);
+    const descer = { id: `espinha|${i}|d`, feitio: "descer", onde: l.nome, regiao: l.regiao || "", ehLugar: true };
+    descer.titulo = feitioDe("descer").titulo(descer);
+    descer.condicao = feitioDe("descer").condicao(descer);
+    const custo = custoDaEtapa(est, i);
+    let peso = pesoDoFeitio("descer") + (fechoAqui ? pesoDoFeitio("confronto") : 0);
+    let k = 0;
+    while (k < sorteados.length && peso < custo) { peso += pesoDoFeitio(sorteados[k].feitio); k++; }
+    /* O QUE GUARDA O LUGAR. Se os sorteados não fecham o peso, quem fecha é
+       o que anda por lá — os bichos da ficha (`ficha.quem`) e depois os do
+       mesmo chão, do nível mais perto do lugar: acabar com eles à porta, e
+       depois descer. Bicho que já é alvo de outro marco não serve (uma morte
+       fecharia dois). */
+    const guardas = [];
+    for (const q of bichosDe(l)) {
+      if (peso >= custo) break;
+      if (!q || !q.nome || alvos.has(norm(q.nome))) continue;
+      alvos.add(norm(q.nome));
+      const g = { id: `espinha|${i}|g${guardas.length}`, feitio: "enfrentar", alvo: q.nome, quantos: 1, onde: l.nome, regiao: l.regiao || "", ehLugar: true };
+      g.titulo = feitioDe("enfrentar").titulo(g);
+      g.condicao = feitioDe("enfrentar").condicao(g);
+      guardas.push(g);
+      peso += pesoDoFeitio("enfrentar");
+    }
+    /* O DESVIO. Num chão de poucos bichos, todos já são alvo de alguém; aí o
+       ato passa por um lugar que nenhum ato tem (um paralelo, do mais longe
+       ao mais perto — a história caminha para fora) e desce também lá. O
+       lugar não se gasta como gente e bicho, e cada um só se desce uma vez. */
+    const desvios = [];
+    for (const x of semAto) {
+      if (peso >= custo) break;
+      if (descidos.has(x.id)) continue;
+      descidos.add(x.id);
+      const v = { id: `espinha|${i}|v${desvios.length}`, feitio: "descer", onde: x.nome, regiao: x.regiao || "", ehLugar: true };
+      v.titulo = feitioDe("descer").titulo(v);
+      v.condicao = feitioDe("descer").condicao(v);
+      desvios.push(v);
+      peso += pesoDoFeitio("descer");
+    }
+    /* QUEM SABE DO LUGAR. Sem bicho livre nem lugar sem ato (o mundo mais
+       magro de 200 medidos), fecha o peso a gente da região que ainda não é
+       marco de ninguém — a da cidade mais perto do lugar primeiro: quem viu
+       a boca, quem perdeu alguém lá dentro. */
+    const testemunhas = [];
+    if (peso < custo) {
+      const perto = cidades.filter((c) => c.nome === l.cidadeProxima);
+      for (const c of [...perto, ...cidades.filter((c) => c.nome !== l.cidadeProxima)]) {
+        if (peso >= custo) break;
+        for (const p of genteDe(c)) {
+          if (peso >= custo) break;
+          if (!p || !p.nome || quens.has(norm(p.nome))) continue;
+          quens.add(norm(p.nome));
+          const w = { id: `espinha|${i}|t${testemunhas.length}`, feitio: "procurar", quem: p.nome, onde: p.local || c.nome, regiao: c.regiao || "", ehLugar: !!p.local };
+          w.titulo = feitioDe("procurar").titulo(w);
+          w.condicao = feitioDe("procurar").condicao(w);
+          testemunhas.push(w);
+          peso += pesoDoFeitio("procurar");
+        }
+      }
+    }
+    /* no meio, os sorteados que sobram depois do peso fechado ficam DEPOIS da
+       descida — são gente e lugares do mundo (o elenco e os segredos vêm
+       deles), e a história não precisa deles para andar; no fim, nada vem
+       entre a descida e o confronto, e o que sobra sai */
+    const resto = fechoAqui ? [] : sorteados.slice(k);
+    return { ...ato, marcos: [...sorteados.slice(0, k), ...testemunhas, ...desvios, ...guardas, descer, ...resto, ...(fechoAqui ? [fechoAqui] : [])] };
+  };
+  const ultimo = e.atos.length - 1;
+  const atos = [...e.atos];
+  for (const i of [ultimo, ...e.atos.map((_, j) => j).filter((j) => j !== ultimo)]) atos[i] = montar(e.atos[i], i);
+  return garantirEspinha({ ...e, atos });
 }
 
 /* ============================================================

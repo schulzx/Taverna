@@ -128,7 +128,10 @@ sec(`2. ${N} regiões — o tamanho (contra os ${ANTES.kmProximaMediana} km de h
     let pior = 0;
     for (const l of lugares) {
       km.push(kmEntre(base, l)); kmProx.push(kmEntre(mapa.cidades.find((c) => c.nome === l.cidadeProxima), l));
-      const h = horasAte(l, base); horas.push(h); pior = Math.max(pior, h);
+      /* MM17 C1: a ida mede-se pela régua da região (a ida pelo chão,
+         boca.js), que é a que o jogo cobra num mapa com `regiao` v2; a
+         régua antiga deixou de ser a deste mapa, e a asserção é a mesma */
+      const h = horasAte(l, base, mapa.regiao); horas.push(h); pior = Math.max(pior, h);
     }
     const dias = diasPelasRotas(mapa, base.nome);
     for (const c of mapa.cidades.slice(1)) {
@@ -141,10 +144,10 @@ sec(`2. ${N} regiões — o tamanho (contra os ${ANTES.kmProximaMediana} km de h
     }
     piores.push(pior);
     /* ponta a ponta pela base: de qualquer coisa à base, e daí a outra */
-    const idas = [...lugares.map((l) => horasAte(l, base)), ...mapa.cidades.slice(1).map((c) => (dias[c.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/^(o|a|os|as)\s+/, "").trim()] || 0) * DIA)].sort((a, b) => b - a);
+    const idas = [...lugares.map((l) => horasAte(l, base, mapa.regiao)), ...mapa.cidades.slice(1).map((c) => (dias[c.nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/^(o|a|os|as)\s+/, "").trim()] || 0) * DIA)].sort((a, b) => b - a);
     viaBase.push((idas[0] + idas[1]) / DIA);
     let dir = 0;
-    for (const a of lugares) for (const b of lugares) if (a !== b) dir = Math.max(dir, horasAte(b, a));
+    for (const a of lugares) for (const b of lugares) if (a !== b) dir = Math.max(dir, horasAte(b, a, mapa.regiao));
     diretos.push(dir / DIA);
   }
   const mk = Math.round(mediana(km) * 10) / 10, mh = Math.round(mediana(horas) * 10) / 10;
@@ -206,7 +209,9 @@ sec("4. a ficha — nenhum lugar da região sem ela");
       const f = l.ficha || {};
       if (Array.isArray(f.quem) && f.quem.length && Number.isFinite(f.horas) && f.perigo && Number(l.salas) > 0 && Array.isArray(f.vizinhos)) com++;
       /* a ficha diz o que a boca vai cobrar — uma verdade só */
-      const r = rotaAteAMasmorra(l, base);
+      /* MM17 C1: a boca do mapa de região mede pelo chão (`{ regiao }`) — e a
+         ficha com ela: a asserção (uma verdade só) não muda, muda a régua */
+      const r = rotaAteAMasmorra(l, base, { regiao: w.mapa.regiao });
       if (r && Math.abs((r.modo === "a_pe" ? r.minutos / 60 : r.dias * DIA) - f.horas) < 0.01 && f.modo === r.modo) idaCerta++;
       if (f.perigo === (R.PERIGO_POR_NIVEL || []).find((p) => l.nivel <= p.ate).id) perigoCerto++;
       if (f.vizinhos.length === T("FICHA_DO_LUGAR").vizinhos && f.vizinhos.every((v) => v.nome && Number.isFinite(v.horas) && v.horas <= 2 * DIA)) vizOk++;
@@ -332,8 +337,9 @@ sec("9. os leitores de `mapa` de sempre servem a região sem mudar uma linha");
        que a têm por "cidade próxima". Na região, todo lugar é conhecido de
        alguma cidade dela; que a BASE conheça todos é decisão da etapa C. */
     if (lista.every((m) => mapa.cidades.some((c) => masmorrasConhecidas(lista, c).includes(m)))) conhecidas++;
-    if (lista.every((m) => { const r = rotaAteAMasmorra(m, base, { de: base.nome }); return r && (r.modo === "a_pe" || r.dias <= 1); })) boca++;
-    const longe = lista.map((m) => rotaAteAMasmorra(m, base, { de: base.nome })).find((r) => r && r.modo === "estrada");
+    /* MM17 C1: com a régua da região (a que a boca usa neste mapa, ver acima) */
+    if (lista.every((m) => { const r = rotaAteAMasmorra(m, base, { de: base.nome, regiao: mapa.regiao }); return r && (r.modo === "a_pe" || r.dias <= 1); })) boca++;
+    const longe = lista.map((m) => rotaAteAMasmorra(m, base, { de: base.nome, regiao: mapa.regiao })).find((r) => r && r.modo === "estrada");
     const mLonge = longe && lista.find((m) => m.nome === longe.para);
     const j = longe ? jornadaAteAMasmorra({ rota: longe, masmorra: mLonge, origem: base }, { de: base.nome, dia: 1 }) : null;
     if (!longe || (j && j.alvo && j.alvo.nome === mLonge.nome && progressoDaViagem(j).turnosTotais <= 2)) jornada++;
@@ -490,7 +496,10 @@ sec("13. a fiação no App — um ponto só, na criação, com rede");
 {
   const APP = tenta(() => readFileSync(join(AQUI, "..", "src", "App.jsx"), "utf8"), "");
   const conta = (s) => APP.split(s).length - 1;
-  t("o App importa a escolha e o mapaRef de regiao.js", /import \{ mapaDaCriacao, mapaDaCampanhaNova \} from "\.\/regiao\.js";/.test(APP));
+  /* MM17 C1: a linha do import ganhou espinhaNaRegiao (a história amarrada,
+     teste-regiao-historia.mjs); o que a asserção guarda — a escolha e o
+     mapaRef chegam de regiao.js — é o mesmo */
+  t("o App importa a escolha e o mapaRef de regiao.js", /import \{ mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao \} from "\.\/regiao\.js";/.test(APP));
   t("mapaDaCriacao é chamada num ponto só", conta("mapaDaCriacao(") === 1);
   t("e gerarRegiao nunca direto (a escolha é dela)", conta("gerarRegiao") === 0);
   const ini = APP.indexOf("const iniciar = (pers) => {");

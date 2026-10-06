@@ -52,7 +52,7 @@ import { criarRelogio } from "./relogios.js";
    a fase 2 criou. `mundo-base.js` nao importa `missoes.js`, entao nao ha
    ciclo — e a alternativa seria copiar a normalizacao do nome para ca,
    que e como nascem duas verdades sobre a mesma pessoa. */
-import { situacaoDe, SITUACOES } from "./mundo-base.js";
+import { situacaoDe, SITUACOES, lugarConcluido } from "./mundo-base.js";
 /* MM13b: a preposição colada ao artigo ("na Corda Velha"), a mesma régua
    que a abertura e o "você está em" já usam. */
 import { comEm, contrair } from "./lugar.js";
@@ -303,6 +303,18 @@ export const ETAPAS = {
       return estaEm(m, e.onde || e.alvo, { cidade: achado.includes("|") ? achado.split("|")[0] : "" });
     },
   },
+  /* ---------------- CONCLUIR A MASMORRA (MM17 C1, 06/10) ----------------
+     O "descer" da espinha (saga.js): a masmorra publica o fim quando o
+     chefe do fundo cai (`concluirLugar`, mundo-base.js, numa lista NOVA do
+     save, `base.concluidas`), e esta etapa lê essa lista pelo nome, sem o
+     artigo. É da ESPINHA e só dela (`soDaEspinha`): `tipoDaEtapa` não a dá
+     a missão nenhuma, e o Mestre que escrever este tipo cai na régua de
+     sempre — a casa de quem joga no continente não sente esta linha. */
+  concluir_masmorra: {
+    id: "concluir_masmorra", icone: "🕳", soDaEspinha: true,
+    texto: (e) => `Chegar ao fundo de ${e.alvo}`,
+    ver: (e, m) => lugarConcluido(m && m.base, e.alvo),
+  },
   aguentar: {
     id: "aguentar", icone: "⏳",
     texto: (e) => `Sobreviver até o dia ${e.dia}`,
@@ -329,7 +341,8 @@ export function etapaDef(t) { return ETAPAS[t] || ETAPAS.ir_a; }
    vira `derrotar`, coisa vira `achar`. Se nada disso casar, aí sim `ir_a` —
    mas aí o texto do Mestre também não prometia mais do que chegar. */
 export function tipoDaEtapa(e, { estrito = false } = {}) {
-  if (ETAPAS[e && e.tipo]) return e.tipo;
+  /* MM17 C1: o tipo que é só da espinha não vira etapa de missão */
+  if (ETAPAS[e && e.tipo] && !ETAPAS[e.tipo].soDaEspinha) return e.tipo;
   const t = norm(e && e.tipo);
   /* v9.132: resgatar tem etapa propria agora. Escoltar e proteger ainda
      nao — sao promessas de DURACAO, e o sistema nao sabe medir "chegou

@@ -20,7 +20,11 @@ console.log("\n[1. SÓ EXISTE ETAPA QUE O CÓDIGO CONFERE]");
    aqui e tem de provar que ele se confere. */
 /* v9.132: NOVE. `resgatar` entrou na fase 3, e a condicao dele e a mudanca
    de SITUACAO que a fase 2 trouxe — encontrar alguem nao e tirar de la. */
-ok(Object.keys(ETAPAS).length === 9, "nove tipos de etapa, todos verificáveis");
+/* MM17 C1: DEZ. `concluir_masmorra` é o "descer" da espinha, e confere-se
+   pela lista que a masmorra publica ao cair o chefe (`base.concluidas`) — é
+   só da espinha (`soDaEspinha`): `tipoDaEtapa` nunca a dá a uma missão
+   (teste-regiao-historia.mjs prova as duas coisas). */
+ok(Object.keys(ETAPAS).length === 10, "dez tipos de etapa, todos verificáveis");
 ok(Object.values(ETAPAS).every((e) => typeof e.ver === "function" && typeof e.texto === "function"), "cada um sabe se olhar no espelho do estado e se descrever");
 const casos = [
   /* MM14 (30/09): a asserção mudou, e o motivo é a sessão de prova — o

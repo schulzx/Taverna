@@ -48,6 +48,7 @@ import { arredoresDaCidade } from "./arredores.js";
 import { oQueExisteAqui, idDaGente } from "./mundo-base.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { recompensaDe, noitesDePrazo } from "./missoes.js";
+import { comEm } from "./lugar.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -123,8 +124,8 @@ export const MOLDES = [
          comércio. O ninho é no ERMO, que é onde bicho faz ninho, e o
          `onde` da etapa é o que permite ao sistema fazer a presa aparecer
          quando o herói chegar lá. */
-      titulo: `Praga ${ermo && ermo.nome ? `em ${ermo.nome}` : "nos arredores"}`,
-      descricao: `${criatura.nome} se multiplicou ${ermo && ermo.nome ? `em ${ermo.nome}` : "nos arredores"} — são três, pelo menos. ${pessoa.nome} quer o lugar limpo${local && local.nome ? `: é perto demais de ${local.nome}` : ""}.`,
+      titulo: `Praga ${ermo && ermo.nome ? (ermo.em || `em ${ermo.nome}`) : "nos arredores"}`,
+      descricao: `${criatura.nome} se multiplicou ${ermo && ermo.nome ? (ermo.em || `em ${ermo.nome}`) : "nos arredores"} — são três, pelo menos. ${pessoa.nome} quer o lugar limpo${local && local.nome ? `: é perto demais de ${local.nome}` : ""}.`,
       etapas: [{ tipo: "derrotar", alvo: criatura.nome, quantos: 3, onde: (ermo && ermo.nome) || "" }],
       gancho: `${pessoa.nome} ${pessoa.vontade}, e a praga ameaça exatamente isso`,
     }),
@@ -230,7 +231,16 @@ function materialDe({ rnd, semente, pessoa, aqui, mapa, genero, nivel, molde = n
      nenhum molde tinha lido. É onde bicho faz ninho e onde gente some, e
      é a diferença entre uma caçada que tem endereço e uma que não tem. */
   const fora = arredoresDaCidade(semente, aqui.cidade);
-  const ermo = fora.length ? pick(rnd, fora) : null;
+  /* MM17 C1: NA REGIÃO, O ERMO É UM LUGAR COM FICHA. O mural é o trabalho de
+     entre um marco e outro — e a região já tem lugares para isso, os do ato
+     "paralelo" (regiao.js), com quem anda lá, a ida e o perigo; sem nenhum,
+     os do meio. Nunca o do clímax: o fim da história não é bico de mural. A
+     mesma única tirada da semente de sempre; o continente (sem
+     `mapa.regiao`) tira dos arredores, letra a letra. */
+  const daRegiao = lugaresDoMural(mapa);
+  const ermo = daRegiao.length
+    ? (({ nome }) => ({ nome, em: comEm(nome) }))(pick(rnd, daRegiao))
+    : fora.length ? pick(rnd, fora) : null;
   return {
     criatura, cidade, segredo, outro, local, ermo,
     objeto: segredo ? (OBJETO_DO_SEGREDO[segredo.tipo] || "objeto guardado") : null,
@@ -242,6 +252,13 @@ function materialDe({ rnd, semente, pessoa, aqui, mapa, genero, nivel, molde = n
        oferta que o jogador lê antes de aceitar. */
     sumido: nomePessoa(genero, undefined, rnd, lex),
   };
+}
+
+function lugaresDoMural(mapa) {
+  const r = mapa && typeof mapa === "object" && mapa.regiao && typeof mapa.regiao === "object" ? mapa.regiao : null;
+  const ls = r && Array.isArray(r.lugares) ? r.lugares.filter((l) => l && l.nome && l.ficha) : [];
+  const paralelos = ls.filter((l) => l.ato === "paralelo");
+  return paralelos.length ? paralelos : ls.filter((l) => l.ato === "meio");
 }
 
 function temMaterial(molde, mat) {

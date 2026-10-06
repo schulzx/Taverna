@@ -187,6 +187,10 @@ export const CHEGADAS = {
    vocação. */
 export const HISTORIA_DO_LUGAR = {
   comMasmorra: "{cidade} {vive}; perto dela fica {masmorra}, e {rumor}",
+  /* MM17 C1: na região, o lugar é o PRIMEIRO DO MEIO da história (o mais
+     perto da base), com a ida da ficha — a abertura manda à base e de lá
+     a ele, e a hora dita é a que a viagem cobra */
+  comLugarDaRegiao: "{cidade} {vive}; a {horas} de marcha dela, {rumo}, fica {masmorra}, e {rumor}",
   comChefe: "{cidade} {vive}; e fala-se baixo de {chefe}, que tem covil nestas bandas",
   soVocacao: "{cidade} {vive}, e toda a gente daqui sabe disso",
   semVocacao: "{cidade} é pequena e desconfiada, e conhece-se de cara quem vem de fora",
@@ -415,9 +419,22 @@ function ondeComMorada(local, cidade, aqui) {
   return longo.length <= ONDE_TETO ? longo : local;
 }
 
+/* o primeiro lugar do meio da região (o mais perto da base), ou null —
+   sem `mapa.regiao`, sempre null, e a história do lugar é a de sempre */
+function primeiroDoMeio(mapa) {
+  const r = mapa && typeof mapa === "object" && mapa.regiao && typeof mapa.regiao === "object" ? mapa.regiao : null;
+  const ls = r && Array.isArray(r.lugares) ? r.lugares.filter((l) => l && l.nome && l.ato === "meio" && l.ficha && Number.isFinite(l.ficha.horas)) : [];
+  return ls.sort((a, b) => a.ficha.horas - b.ficha.horas)[0] || null;
+}
+const horasEmTexto = (h) => `${String(Math.round(h * 2) / 2).replace(".", ",")} ${h === 1 ? "hora" : "horas"}`;
+
 function historiaDoLugar(semente, mapa, cidade, genero, lex) {
   const voc = vocacaoDe(cidade);
   const vive = voc ? voc.o : "";
+  const lm = primeiroDoMeio(mapa);
+  if (vive && lm) {
+    return { texto: encher(HISTORIA_DO_LUGAR.comLugarDaRegiao, { cidade: cidade.nome, vive, horas: horasEmTexto(lm.ficha.horas), rumo: lm.ficha.rumo || "por perto", masmorra: lm.nome, rumor: lm.rumor }), origem: lm.nome };
+  }
   let mm = [];
   try { mm = masmorrasDoMundo(semente, mapa).filter((m) => m.cidadeProxima === cidade.nome); } catch { mm = []; }
   if (vive && mm.length) {

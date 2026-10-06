@@ -429,7 +429,10 @@ export function idaAMasmorra(acao, ctx = {}) {
   const lugar = o.lugar && typeof o.lugar === "object" ? o.lugar : null;
   const daBoca = masmorraDaBoca(lugar, todas);
   const doFim = jornada && jornada.alvo && jornada.alvo.nome ? masmorraDaBoca({ nome: jornada.alvo.nome }, todas) : null;
-  const conhecidas = [...new Set([...masmorrasConhecidas(todas, cidade), daBoca, doFim].filter(Boolean))];
+  /* MM17 C1: na região, a base conhece todos os lugares, e a ida anda pelo
+     chão (boca.js); sem `mapa.regiao` as duas chamadas são as de sempre */
+  const regiao = mapa && mapa.regiao && typeof mapa.regiao === "object" ? mapa.regiao : null;
+  const conhecidas = [...new Set([...masmorrasConhecidas(todas, cidade, regiao ? { regiao } : null), daBoca, doFim].filter(Boolean))];
   if (!conhecidas.length) return null;
 
   /* o que o herói declarou, sem acento e do mesmo tamanho do texto */
@@ -494,8 +497,10 @@ export function idaAMasmorra(acao, ctx = {}) {
       return { acao: "seguir", nome: m.nome, masmorra: m, rota: null, origem: null, deixaEstrada: false, linhas: [], veredito, motivo: "a estrada em que vai já acaba nela" };
     }
     const ponto = o.origem || pontoDoHeroi({ cidadeAtual: o.cidadeAtual, jornada, mapa, lugar });
-    const origem = ponto && Number.isFinite(Number(ponto.x)) ? { x: Number(ponto.x), y: Number(ponto.y) } : null;
-    const rota = rotaAteAMasmorra(m, origem, { de: (lugar && lugar.nome) || o.cidadeAtual || "" });
+    /* na região, o chão de onde se sai: a boca onde está, ou a cidade */
+    const chao = regiao ? ((daBoca && daBoca.bioma) || (cidade && cidade.bioma) || "") : "";
+    const origem = ponto && Number.isFinite(Number(ponto.x)) ? { x: Number(ponto.x), y: Number(ponto.y), ...(chao ? { bioma: chao } : {}) } : null;
+    const rota = rotaAteAMasmorra(m, origem, regiao ? { de: (lugar && lugar.nome) || o.cidadeAtual || "", regiao } : { de: (lugar && lugar.nome) || o.cidadeAtual || "" });
     if (!rota) return null;   // sem ponto, sem conta — e sem palpite
     const linhas = [linhaDaIda(rota), rota.modo === "estrada" && veredito ? veredito.linha : ""].filter(Boolean);
     return {

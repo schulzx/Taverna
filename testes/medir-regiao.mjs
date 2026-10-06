@@ -58,9 +58,12 @@ export const maximo = (xs) => Math.max(...xs.filter(Number.isFinite));
 const pct = (a, b) => (b ? `${Math.round((a / b) * 1000) / 10}%` : "—");
 const r1 = (n) => (Number.isFinite(n) ? Math.round(n * 10) / 10 : n);
 
-/* as horas de uma ida pela régua da boca da masmorra (a que o jogo cobra) */
-export function horasAte(destino, origem) {
-  const r = rotaAteAMasmorra(destino, origem);
+/* as horas de uma ida pela régua da boca da masmorra (a que o jogo cobra).
+   MM17 C1: com `regiao` (o `mapa.regiao`), a régua da região — a ida pelo
+   chão (boca.js, IDA_NA_REGIAO), que é a que o jogo cobra nesse mapa; sem
+   ele, a de sempre (o continente mede igual ao que media). */
+export function horasAte(destino, origem, regiao) {
+  const r = rotaAteAMasmorra(destino, origem, regiao ? { regiao } : undefined);
   if (!r) return NaN;
   return r.modo === "a_pe" ? r.minutos / 60 : r.dias * HORAS_MARCHA_POR_DIA;
 }
@@ -136,7 +139,7 @@ export function medir(gerar, { N = 60, molde = "sobremundo", pautas = 2 } = {}) 
       M.kmBase.push(kmEntre(base, m));
       const prox = mapa.cidades.find((c) => c.nome === m.cidadeProxima);
       if (prox) M.kmProxima.push(kmEntre(prox, m));
-      const h = horasAte(m, base);
+      const h = horasAte(m, base, mapa.regiao);
       M.horasBase.push(h);
       pior = Math.max(pior, h);
     }
@@ -153,7 +156,7 @@ export function medir(gerar, { N = 60, molde = "sobremundo", pautas = 2 } = {}) 
       for (const mk of a.marcos) {
         const o = ondeDoMarco(mapa, semente, genero, molde, mk.onde);
         if (!o) { M.espinha.semLugar++; continue; }
-        const d = o.cidade ? (dias[norm(o.cidade.nome)] ?? Infinity) : horasAte(o.lugar, base) / HORAS_MARCHA_POR_DIA;
+        const d = o.cidade ? (dias[norm(o.cidade.nome)] ?? Infinity) : horasAte(o.lugar, base, mapa.regiao) / HORAS_MARCHA_POR_DIA;
         const longe = d > 1 ? 1 : 0;
         M.espinha[papel][0] += longe; M.espinha[papel][1]++;
         if (segredos.has(mk.id)) { M.espinha.segredo[0] += longe; M.espinha.segredo[1]++; }
@@ -236,7 +239,7 @@ export function medirCriacao(R, N = 60) {
     const base = mapa.cidades[0];
     const mms = masmorrasDoMundo(semente, mapa);
     longeKm.push(Math.max(...mms.map((x) => kmEntre(base, x))));
-    longeH.push(Math.max(...mms.map((x) => horasAte(x, base))));
+    longeH.push(Math.max(...mms.map((x) => horasAte(x, base, mapa.regiao))));
     infoR.ini.push(info(mapa)); infoR.aberto.push(info(aberto(mapa)));
     infoC.ini.push(info(cont)); infoC.aberto.push(info(aberto(cont)));
     if (G.vizinhosDeUmPasso(mapa, base.nome, G.DIAS_DE_UM_PASSO).length) acordava++;
@@ -247,6 +250,113 @@ export function medirCriacao(R, N = 60) {
   out.push(`                                      continente: na criação mediana ${mediana(infoC.ini)}, máx ${maximo(infoC.ini)}; aberto mediana ${mediana(infoC.aberto)}, máx ${maximo(infoC.aberto)}`);
   out.push(`    o cão de um passo na base: pela régua antiga acordaria em ${acordava}/${N}; com tetoDeUmPasso, ${acordaHoje}/${N}`);
   return out;
+}
+
+/* ---------------- (g) a história amarrada (MM17, etapa C1) ----------------
+   O que a campanha NOVA de região cria de verdade: `gerarRegiao`, a espinha
+   estendida e `espinhaNaRegiao` por cima (o que o App faz na criação). As
+   perguntas do pedido da C1:
+     (a) os lugares da espinha (início, meio, fim, segredo) dentro da região;
+     (b) os atos sem marcos que os pesem — a espinha estendida sozinha (o
+         antes) e amarrada (o depois);
+     (c) os ganchos que apontam para um lugar com ficha: a abertura (a
+         origem da pequena história do lugar), o mural (o ermo das caçadas
+         e pragas) e os boatos (os lugares que a base cita no turno);
+     (d) as idas base → lugar e lugar → lugar, em horas, e quantas
+         contradizem a ficha;
+   e, para comparar, as mesmas perguntas no continente (sem região). */
+export async function medirHistoria(R, N = 60) {
+  const { custoDaEtapa, pesoDe } = await import("../src/historia.js");
+  const { feitioDe } = await import("../src/saga.js");
+  const { abrirAbertura } = await import("../src/abertura.js");
+  const { ofertasDaqui } = await import("../src/ofertas.js");
+  const { amarrarEspinha } = R;
+  const M = {
+    mundos: 0,
+    dentro: [0, 0], segredo: [0, 0], atosNoLugar: [0, 0], fechoNoClimax: 0,
+    curtos: { antes: [0, 0], depois: [0, 0], continente: [0, 0] },
+    abertura: { regiao: [0, 0], continente: [0, 0] },
+    mural: { regiao: [0, 0], continente: [0, 0] },
+    boatos: { regiao: [0, 0], continente: [0, 0] },
+    idaBase: [], idaEntre: [], contradiz: 0, idas: 0, daqui: { regiao: [], continente: [] },
+  };
+  const curtos = (esp, est, alvo) => esp.atos.forEach((a, k) => {
+    alvo[1]++;
+    if (a.marcos.reduce((s, m) => s + pesoDe(feitioDe(m.feitio).peso), 0) < custoDaEtapa(est, k)) alvo[0]++;
+  });
+  const fichaDe = (mapa, nome) => ((mapa.regiao && mapa.regiao.lugares) || []).find((l) => l.ficha && norm(l.nome) === norm(nome)) || null;
+  for (let i = 0; i < N; i++) {
+    const semente = sementeDe(i), genero = generoDe(i), estrutura = ESTRUTURAS[i % ESTRUTURAS.length].id;
+    const mapa = R.gerarRegiao({ semente, molde: "sobremundo", genero, estrutura });
+    const cont = gerarGeografia(semente, moldePorId("sobremundo"));
+    if (!mapa || !mapa.regiao) continue;
+    M.mundos++;
+    const { estruturaPorId } = await import("../src/historia.js");
+    const est = estruturaPorId(estrutura);
+    for (const [mp, rot] of [[mapa, "regiao"], [cont, "continente"]]) {
+      const base = mp.cidades[0];
+      const crua = estenderEspinha({ semente, mapa: mp, genero, estrutura, cidadeInicial: base.nome });
+      const esp = mp.regiao ? R.espinhaNaRegiao(mp, crua, { semente, genero }) : crua;
+      if (mp.regiao) {
+        curtos(crua, est, M.curtos.antes); curtos(esp, est, M.curtos.depois);
+        const a = amarrarEspinha(mp, esp, { semente, genero });
+        M.dentro[1] += a.marcos.length; M.dentro[0] += a.marcos.filter((x) => x.dentro).length;
+        const seg = new Set(segredosGuardados(esp).map((s) => s.id));
+        for (const x of a.marcos) if (seg.has(x.id)) { M.segredo[1]++; if (x.dentro) M.segredo[0]++; }
+        /* cada ato no seu sítio: o início na base, o meio e o fim num lugar da região */
+        for (const x of a.atos) { M.atosNoLugar[1]++; if (x.lugar && (x.papel === "inicio" ? x.lugar.nome === mp.regiao.base.nome : !!fichaDe(mp, x.lugar.nome))) M.atosNoLugar[0]++; }
+        const ult = esp.atos[esp.atos.length - 1].marcos;
+        const fecho = ult[ult.length - 1];
+        if (fecho && fecho.feitio === "confronto" && a.climax && norm(fecho.onde) === norm(a.climax.nome)) M.fechoNoClimax++;
+      } else curtos(esp, est, M.curtos.continente);
+      /* (c) a abertura: a pequena história aponta para um lugar com ficha? */
+      const ab = abrirAbertura({ semente, mapa: mp, cidade: base.nome, espinha: esp, estrutura, genero, molde: "sobremundo", nivel: 1, dia: 1 });
+      if (ab) { M.abertura[rot][1]++; if (ab.abertura.alvo && fichaDe(mp, ab.abertura.alvo.origem)) M.abertura[rot][0]++; }
+      /* o mural: o ermo das caçadas e pragas (onde a presa está) */
+      for (const c of mp.cidades.slice(0, 3)) {
+        for (const of of ofertasDaqui({ semente, mapa: mp, cidade: c.nome, base: null, genero, nivel: 3, quantas: 12 })) {
+          for (const e of of.etapas) {
+            /* só o trabalho que aponta para um sítio (a caçada e a praga, que
+               dizem ONDE está a presa); o resgate não diz, e não conta */
+            if (e.tipo !== "derrotar" || !e.onde) continue;
+            M.mural[rot][1]++;
+            if (e.onde && fichaDe(mp, e.onde)) M.mural[rot][0]++;
+          }
+        }
+      }
+      /* os boatos: os lugares que a base cita no turno, pelo nome, e com ficha */
+      const daqui = resumoDaqui(semente, mp, base.nome, null, genero) || "";
+      M.daqui[rot].push(daqui.length);
+      for (const m of masmorrasDoMundo(semente, mp)) { M.boatos[rot][1]++; if (daqui.includes(m.nome) && fichaDe(mp, m.nome)) M.boatos[rot][0]++; }
+    }
+    /* (d) as idas — base → lugar e lugar → lugar, contra a ficha */
+    const base = mapa.cidades[0];
+    for (const l of mapa.regiao.lugares) {
+      const h = horasAte(l, base, mapa.regiao);
+      M.idaBase.push(h); M.idas++;
+      if (Math.abs(h - l.ficha.horas) > 0.01) M.contradiz++;
+      for (const v of l.ficha.vizinhos) {
+        const alvo = mapa.regiao.lugares.find((x) => x.id === v.id) || mapa.cidades.find((c) => c.nome === v.id);
+        const hv = horasAte(alvo, l, mapa.regiao);
+        M.idas++;
+        if (Math.abs(hv - v.horas) > 0.01) M.contradiz++;
+      }
+      for (const o of mapa.regiao.lugares) if (o !== l) M.idaEntre.push(horasAte(o, l, mapa.regiao));
+    }
+  }
+  return M;
+}
+
+export function resumoHistoria(M) {
+  const p = ([a, b]) => `${a}/${b} (${pct(a, b)})`;
+  return [
+    `(g) A HISTÓRIA AMARRADA — gerarRegiao + estenderEspinha + espinhaNaRegiao (${M.mundos} mundos)`,
+    `    (a) marcos da espinha dentro da região: ${p(M.dentro)} · segredos: ${p(M.segredo)} · atos no seu sítio (início na base, meio e fim num lugar com ficha): ${p(M.atosNoLugar)} · confronto no clímax: ${M.fechoNoClimax}/${M.mundos}`,
+    `    (b) atos sem marcos que os pesem: estendida ${p(M.curtos.antes)} → amarrada ${p(M.curtos.depois)} · continente ${p(M.curtos.continente)}`,
+    `    (c) ganchos para um lugar com ficha — abertura: região ${p(M.abertura.regiao)}, continente ${p(M.abertura.continente)} · mural (onde está a presa): região ${p(M.mural.regiao)}, continente ${p(M.mural.continente)} · boatos da base: região ${p(M.boatos.regiao)}, continente ${p(M.boatos.continente)}`,
+    `    (d) ida base → lugar: mediana ${r1(mediana(M.idaBase))} h, máx ${r1(maximo(M.idaBase))} h · lugar → lugar: mediana ${r1(mediana(M.idaEntre))} h, máx ${r1(maximo(M.idaEntre))} h · contradizem a ficha: ${M.contradiz}/${M.idas}`,
+    `        o que a base diz no turno (resumoDaqui, pauta dinâmica): região mediana ${mediana(M.daqui.regiao)}, máx ${maximo(M.daqui.regiao)} · continente mediana ${mediana(M.daqui.continente)}, máx ${maximo(M.daqui.continente)}`,
+  ].join("\n");
 }
 
 /* ---------------- quando corre sozinho ---------------- */
@@ -264,6 +374,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
     for (const m of MOLDES.filter((x) => x.id !== "sobremundo")) console.log(`  molde ${m.id}: ${gerarRegiao({ semente: sementeDe(0), molde: m.id }) === null ? "sem região (fica o mapa de sempre)" : "COM região"}`);
     const R = await import(pathToFileURL(caminho).href);
     if (typeof R.mapaDaCriacao === "function") console.log("\n" + medirCriacao(R, N).join("\n"));
+    if (typeof R.espinhaNaRegiao === "function") console.log("\n" + resumoHistoria(await medirHistoria(R, N)));
   }
   console.log(`\n(e) a PIOR CENA REAL do prompt (teste-prompt.mjs): ${piorCenaReal()} caracteres (o teto é 82.000)`);
 }

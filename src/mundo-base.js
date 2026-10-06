@@ -533,6 +533,11 @@ export function garantirBase(b) {
     mortos: Array.isArray(o.mortos) ? o.mortos : [],            // nome riscado no registro
     saqueados: Array.isArray(o.saqueados) ? o.saqueados : [],   // segredo já achado
     versao: 1,
+    /* MM17 C1: as masmorras da região que se concluíram (o chefe do fundo
+       caiu). Campo NOVO e só de quem o tem: a base de um save que nunca
+       concluiu uma masmorra de região sai daqui com as chaves de sempre,
+       byte a byte, e a versão antiga ignora a lista. */
+    ...(Array.isArray(o.concluidas) ? { concluidas: o.concluidas } : {}),
   };
 }
 const juntar = (lista, item) => (lista.includes(item) ? lista : [...lista, item]);
@@ -549,6 +554,24 @@ export function estaMorto(base, nome) {
 }
 export function foiRevelado(base, id) { return garantirBase(base).revelados.includes(id); }
 export function foiSaqueado(base, id) { return garantirBase(base).saqueados.includes(id); }
+
+/* ---------------- A MASMORRA PUBLICA O FIM (MM17 C1) ----------------
+   O "descer" da espinha precisava de um sinal que as etapas soubessem ler,
+   e a masmorra só contava ("masmorrasConcluidas", um número). Aqui ela
+   grava QUAL: o nome, sem o artigo e sem acento — "A Nave de Ferro" e
+   "Nave de Ferro" são o mesmo fundo. Quem escreve é o App, ao cair o chefe,
+   e só num mapa de região; quem lê é a etapa "concluir_masmorra". */
+const chaveDeLugar = (n) => chaveDeGente(n).replace(/^(o|a|os|as)\s+/, "").trim();
+export function concluirLugar(base, nome) {
+  const b = garantirBase(base);
+  const k = chaveDeLugar(nome);
+  if (!k) return b;
+  return { ...b, concluidas: juntar(b.concluidas || [], k) };
+}
+export function lugarConcluido(base, nome) {
+  const k = chaveDeLugar(nome);
+  return !!k && (garantirBase(base).concluidas || []).includes(k);
+}
 
 /* ---------------- O QUE SE ACHA PROCURANDO (v9.14) ----------------
    Este é o pedaço que fechava o ciclo e faltava. O filtro por `foiSaqueado`
@@ -662,7 +685,12 @@ export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantas
   const regiao = ((mapa && mapa.regioes) || []).find((r) => r.nome === cidade.regiao);
   const bichos = regiao ? criaturasDaRegiao(semente, regiao, genero, lex) : [];
   /* o que existe NO CHÃO por perto: masmorras e caches do ermo (v9.9) */
-  const perto = masmorrasDoMundo(semente, mapa).filter((m) => m.cidadeProxima === cidade.nome || m.regiao === cidade.regiao);
+  /* MM17 C1: na região (`mapa.regiao`), todos os lugares dela — a região
+     inteira fica a um dia da base, e a história manda o herói a cada um. É
+     a régua de `masmorrasConhecidas` (boca.js): o que o Mestre recebe é o
+     que o herói pode pedir para ir. O continente, a de sempre. */
+  const naRegiao = !!(mapa && mapa.regiao && typeof mapa.regiao === "object");
+  const perto = masmorrasDoMundo(semente, mapa).filter((m) => naRegiao || m.cidadeProxima === cidade.nome || m.regiao === cidade.regiao);
   const caches = tesourosDoMundo(semente, mapa).filter((t) => (t.perto === cidade.nome || t.regiao === cidade.regiao) && !foiSaqueado(base, t.id));
   return { cidade, locais, gente, segredos, criaturas: bichos, regiao, masmorras: perto, tesouros: caches };
 }
@@ -771,7 +799,14 @@ export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = nul
   const gente = q.gente.map((p) => `${p.nome}${marca(idDaGente(q.cidade.nome, p))} — ${p.raca}, ${p.papel}, ${p.traco}, ${p.modo}; ${p.vontade}`).join(" | ");
   const seg = q.segredos.map((s) => `${s.icone} em ${s.local}: ${s.o} (só com teste de ${s.acha}, dif. ${s.dc})`).join(" · ");
   const bichos = q.criaturas.map((c) => `${c.nome} (nv ${c.nivel}, ${c.comportamento})`).join(" · ");
-  const mms = (q.masmorras || []).map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas — ${m.rumor})`).join(" · ");
+  /* MM17 C1: o lugar da região leva o que a ficha sabe de fora — a ida da
+     base (as horas que a viagem cobra, e o rumo) e o perigo. É por aqui que
+     o povo comenta o rumor de cada lugar pelo nome; sem ficha, a linha de
+     sempre. */
+  const fichas = {};
+  for (const l of ((mapa && mapa.regiao && Array.isArray(mapa.regiao.lugares)) ? mapa.regiao.lugares : [])) if (l && l.id && l.ficha) fichas[l.id] = l.ficha;
+  const ida = (f) => (f && Number.isFinite(f.horas) ? ` · ${String(f.horas).replace(".", ",")} h${f.rumo ? ` ${f.rumo}` : ""} · ${f.perigoRotulo || `perigo ${f.perigo || "?"}`}` : "");
+  const mms = (q.masmorras || []).map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas${ida(fichas[m.id])} — ${m.rumor})`).join(" · ");
   const cofres = (q.tesouros || []).map((t) => `${t.icone} perto de ${t.perto}: ${t.onde} — ${t.conteudo} (percepção, dif. ${t.dc})`).join(" · ");
   return `O QUE EXISTE EM ${q.cidade.nome.toUpperCase()} (base do mundo — use ISTO, não invente):
 - Locais: ${locais || "—"}.

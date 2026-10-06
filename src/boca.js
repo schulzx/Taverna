@@ -37,7 +37,7 @@
 
 import { kmEntre, rumoEntre, coordDe, garantirCoord, minutosAPe, aPeEmTexto, formatarDistancia, KM_ATE_ONDE_SE_VAI_A_PE } from "./coordenadas.js";
 import { TERRENO_VIAGEM } from "./geografia.js";
-import { abrirViagem, progressoDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA } from "./viagem.js";
+import { abrirViagem, progressoDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO } from "./viagem.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade } from "./dificuldade.js";
 import { definirLugar, comDe } from "./lugar.js";
 
@@ -64,17 +64,70 @@ export const IDA_A_MASMORRA = {
   distanciaDaBoca: "perto",
 };
 
+/* ---------------- A IDA NA REGIÃO (MM17 C1, 06/10) ----------------
+   Achado da etapa A: até 15 km a ida era a 4 km/h em QUALQUER chão, e a
+   tabela de marcha (`TERRENO_VIAGEM`) diz 12 km por dia na montanha — a mina
+   da montanha ficava "a 3 h" quando a marcha dizia um dia. E a estrada usava
+   o chão do DESTINO para a viagem toda: entre dois lugares da região, direto,
+   havia idas de três dias e meio.
+
+   Num mapa de região (`mapa.regiao` com `versao` ≥ `versaoMinima`) a ida
+   anda pelo chão que pisa: a velocidade de cada chão é a marcha do dia dele
+   repartida pelas horas de marcha (`kmDia ÷ HORAS_MARCHA_POR_DIA`), e a ida
+   cruza dois chãos — `metadeNoChaoDeOrigem` dos km no de onde se sai, o
+   resto no de onde se chega. É a pé enquanto cabe num turno de estrada
+   (`MINUTOS_ESTRADA_POR_TURNO`); acima disso é estrada, em meios-dias, como
+   sempre. A ficha de cada lugar (`gerarRegiao`) mede com ESTA conta, e por
+   isso a hora da ficha é a hora da viagem.
+
+   O CONTINENTE NÃO SENTE ISTO: sem `regiao` nas opções (todo save que já
+   existe, e a região v1 de quem a criou antes desta versão, cuja ficha foi
+   medida pela régua antiga) a conta é a de antes, letra a letra. */
+export const IDA_NA_REGIAO = {
+  versaoMinima: 2,
+  metadeNoChaoDeOrigem: 0.5,
+  horasAPeAte: MINUTOS_ESTRADA_POR_TURNO / 60,
+};
+
+/* a região mede pelo chão? (o campo e a versão; lixo é não) */
+function idaPeloChao(regiao) {
+  return !!(regiao && typeof regiao === "object" && Number(regiao.versao) >= IDA_NA_REGIAO.versaoMinima);
+}
+
+const chaoDe = (bioma) => (TERRENO_VIAGEM[bioma] && TERRENO_VIAGEM[bioma].kmDia > 0 ? bioma : IDA_A_MASMORRA.terrenoPadrao);
+const kmPorHora = (chao) => TERRENO_VIAGEM[chao].kmDia / HORAS_MARCHA_POR_DIA;
+
+/* As horas de marcha de `km` de um chão a outro, pela régua da região. Sai
+   daqui para `gerarRegiao` pôr o lugar pelas horas e a boca medir a ida com
+   a MESMA conta — uma verdade só. */
+export function horasPeloChao(km, chaoDeOrigem, chaoDeDestino) {
+  const k = Math.max(0, Number(km) || 0);
+  const d = chaoDe(chaoDeDestino);
+  const o = chaoDeOrigem ? chaoDe(chaoDeOrigem) : d;
+  const m = IDA_NA_REGIAO.metadeNoChaoDeOrigem;
+  return (k * m) / kmPorHora(o) + (k * (1 - m)) / kmPorHora(d);
+}
+
 /* ---------------- QUAIS O HERÓI CONHECE ----------------
    As masmorras que a cidade aponta: a que tem a cidade por "cidade
    próxima" e as da mesma região. É a régua de `oQueExisteAqui`
    (mundo-base.js) — exatamente as que o Mestre recebe no prompt, com
    nível, salas e rumor. Uma masmorra de outra região, de que o herói
-   nunca ouviu falar, não vira destino por acaso de nome. */
-export function masmorrasConhecidas(masmorras, cidade) {
+   nunca ouviu falar, não vira destino por acaso de nome.
+
+   MM17 C1: NA REGIÃO, TODAS. A região inteira fica a um dia de marcha da
+   base (`ALCANCE_DA_REGIAO`, regiao.js), e a história manda o herói aos
+   lugares dela; a base (e todo povoado, que está a menos de um dia dela)
+   conhece todos. `opcoes.regiao` é o `mapa.regiao`: sem ele, a régua de
+   sempre. É a mesma de `oQueExisteAqui` — o que se pode pedir para ir é o
+   que o Mestre recebe. */
+export function masmorrasConhecidas(masmorras, cidade, opcoes) {
   const c = cidade && typeof cidade === "object" ? cidade : null;
   if (!c || !c.nome) return [];
+  const r = opcoes && typeof opcoes === "object" ? opcoes.regiao : null;
+  const naRegiao = !!(r && typeof r === "object");
   return (Array.isArray(masmorras) ? masmorras : [])
-    .filter((m) => m && m.nome && (m.cidadeProxima === c.nome || (!!c.regiao && m.regiao === c.regiao)));
+    .filter((m) => m && m.nome && (naRegiao || m.cidadeProxima === c.nome || (!!c.regiao && m.regiao === c.regiao)));
 }
 
 /* A masmorra cuja boca é o lugar onde o herói está, ou null. O lugar da
@@ -116,6 +169,7 @@ export function lugarAoEntrarNaMasmorra(masmorra, opcoes) {
    e não há palpite: `null` — o portão da casa, "na dúvida, não move". */
 export function rotaAteAMasmorra(masmorra, origem, opcoes) {
   const de = (opcoes && typeof opcoes === "object" && opcoes.de) || "";   // `= {}` não cobre null
+  const pelaRegiao = idaPeloChao(opcoes && typeof opcoes === "object" ? opcoes.regiao : null);
   if (!masmorra || typeof masmorra !== "object" || !masmorra.nome) return null;
   const q = coordDe(masmorra);
   const p = garantirCoord(origem);
@@ -126,6 +180,15 @@ export function rotaAteAMasmorra(masmorra, origem, opcoes) {
   const terreno = TERRENO_VIAGEM[bioma] && TERRENO_VIAGEM[bioma].kmDia > 0 ? bioma : IDA_A_MASMORRA.terrenoPadrao;
   const rumo = rumoEntre(p, q);
   const base = { de: String(de || ""), para: String(masmorra.nome), terreno, rumo };
+  if (pelaRegiao) {
+    /* MM17 C1: o chão que se pisa (ver IDA_NA_REGIAO, acima) */
+    const horas = horasPeloChao(km, origem && typeof origem === "object" ? origem.bioma : "", terreno);
+    if (horas <= IDA_NA_REGIAO.horasAPeAte) {
+      return { ...base, modo: "a_pe", km: Math.round(km * 10) / 10, dias: 0, minutos: Math.max(IDA_A_MASMORRA.minutosAPeMinimos, Math.round(horas * 60)) };
+    }
+    const diasR = Math.max(IDA_A_MASMORRA.diasMinimos, Math.round((horas / HORAS_MARCHA_POR_DIA) * 2) / 2);
+    return { ...base, modo: "estrada", km: Math.round(km), dias: diasR, minutos: minutosDaRota(diasR) };
+  }
   if (km <= IDA_A_MASMORRA.kmAPeAte) {
     return { ...base, modo: "a_pe", km: Math.round(km * 10) / 10, dias: 0, minutos: Math.max(IDA_A_MASMORRA.minutosAPeMinimos, minutosAPe(km)) };
   }
