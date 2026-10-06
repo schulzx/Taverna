@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 05/10 · v9.352 · **B1 — a nova mesa de batalha, igual ao quadro dela** · commit `HASH_B1`
+## 05/10 · v9.352 · **B1 — a nova mesa de batalha, igual ao quadro dela** · commit `427c93c`
 
 *Pedido direto da pessoa, com a fila do desenho parada (ordem de 28/09): a palavra
 dela vale só para esta tela. A forma: `mente/formas.md` §B1.*
