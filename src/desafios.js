@@ -436,14 +436,21 @@ export const DESAFIOS = [
   },
   {
     id: "furtar_se",
-    rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escond(o|er|erei)\b|fico na sombra|sigo sem que|me mistur(o|ar) (a|na|no|com a|entre a|entre o) (multid[aã]o|turba|gente|povo|plateia|prociss[aã]o|feira|romaria|fila)|me aproxim(o|ar) (sem (fazer )?(ru[ií]do|barulho)|em sil[eê]ncio|p[eé] ante p[eé]|na ponta dos p[eé]s|de mansinho)|me (agach|abaix)(o|ar) (atr[aá]s|detr[aá]s|nas? sombras?|entre|sob|debaixo|embaixo))/,
+    rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escond(o|er|erei)\b|fico (quiet[oa],? )?escondid[oa]\b|me encolho (atr[aá]s|detr[aá]s|no escuro|nas? sombras?)|fico na sombra|sigo sem que|me mistur(o|ar) (a|na|no|com a|entre a|entre o) (multid[aã]o|turba|gente|povo|plateia|prociss[aã]o|feira|romaria|fila)|me aproxim(o|ar) (sem (fazer )?(ru[ií]do|barulho)|em sil[eê]ncio|p[eé] ante p[eé]|na ponta dos p[eé]s|de mansinho)|me (agach|abaix)(o|ar) (atr[aá]s|detr[aá]s|nas? sombras?|entre|sob|debaixo|embaixo))/,
     /* Fase MM (a ênclise): "escondo-me" não rolava nada, e "tento me
        esconder" também não — a regra só conhecia "me escondo". A ênclise
        chega aqui já desfeita (emProclise, em lerAcao); o infinitivo é que
        faltava. E três jeitos de se esconder que a mesa usa e o catálogo não
        tinha: misturar-se na multidão, chegar sem ruído, agachar-se atrás de
        algo. Nenhum deles rola se for pergunta — o catálogo passou a ler a
-       peneira. */
+       peneira.
+
+       MM16 nº 6: "fico escondido na sombra" e "encolho-me no escuro atrás
+       dos caixotes" (a primeira sessão, J35) também não rolavam — a frase
+       caía na conversa e gastava a vez sem teste. "Fico escondido" é o
+       particípio do mesmo verbo; "me encolho atrás/no escuro" é o agachar
+       com outra palavra. "Continuo escondido" fica de fora de propósito:
+       quem já está escondido não rola de novo para continuar. */
     pericia: "furtividade", alvo: "furtividade", minutos: 5, barulho: false, testemunha: true,
     rotulo: "passar sem ser visto", dcPadrao: DC("incomum"),
   },

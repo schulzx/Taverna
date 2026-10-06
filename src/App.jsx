@@ -58,7 +58,7 @@ import { soPergunta, juntarRespostas } from "./perguntas.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, tickCondicoes, tentarSaidaNoFimDoTurno, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
-import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, pautaDoEscondido } from "./escondido.js";
+import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, pautaDoEscondido, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -11939,7 +11939,12 @@ export default function Taverna() {
       /* CONDIÇÕES (v9.0) e NÊMESIS: estado vivo, colado em TODO turno. É o que
          impede o Mestre de narrar um herói inteiro enquanto o sistema o mantém
          atordoado — ou uma nêmesis viva depois de o sistema tê-la enterrado. */
-      const p = personagem || personagemRef.current || {};
+      /* MM16 nº 6: a ficha DESTE turno. `personagem` aqui é o valor do
+         render em que `enviar` nasceu (o useCallback não o tem nas
+         dependências), e um estado posto no mesmo clique — o escondido que
+         acabou de nascer, a condição da falha crítica — só chegava ao
+         rodapé no turno seguinte. A mesma ordem do pedido logo abaixo. */
+      const p = persAtual || personagemRef.current || personagem || {};
       const cond = resumoCondicoesPrompt(p, p.grupo || []);
       const nem = infoNemesis();
       const merc = masmorraRef.current ? "" : resumoMercadoPrompt(mercadoAqui); /* MM16 nº 4: na masmorra não há banca aberta */
@@ -17891,13 +17896,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          luta cobra o recurso da ACAO (ou a bonus, com Acao Ardilosa); o custo
          so sai da bolsa quando o esconderijo de fato nasce — tentar e nao
          achar onde sumir nao e o mesmo gasto que sumir de verdade. */
+      /* MM16 nº 6: na luta, o recurso já saiu antes do dado (`vereditoDoEsconder`,
+         em `rolarDesafio`) — passe ou falhe, porque tentar esconder-se É a ação.
+         O desafio chega marcado `esconderPago`, e este ramo não cobra de novo;
+         a cobrança no nascer fica só para a rolagem que não passou por lá. */
+      /* MM16 nº 6: o que o Mestre sabe do esconder, NESTE turno — sem isto o
+         envelope dizia só "eu PASSEI, revele UMA coisa", e a prosa sumia o
+         herói que o tabuleiro tinha recusado (sessão 3, M18). */
+      let notaEsc = "";
       try {
         if (des && passou && ESCONDIDO.alvosQueEscondem.includes(des.alvoDoCusto)) {
           const combEsc = combateRef.current;
           const baseEsc = personagemRef.current || personagem;
           const custoEsc = custoDeEsconder(baseEsc);
           const ecoEsc = combEsc && combEsc.economia;
-          const temRecurso = !combEsc || (custoEsc === "bonus" ? !!(ecoEsc && ecoEsc.extra > 0) : !!(ecoEsc && ecoEsc.acao > 0));
+          const pagoEsc = !!des.esconderPago; /* MM16 nº 6: já pago antes do dado */
+          const temRecurso = !combEsc || pagoEsc || (custoEsc === "bonus" ? !!(ecoEsc && ecoEsc.extra > 0) : !!(ecoEsc && ecoEsc.acao > 0));
           if (temRecurso) {
             const ns = nascerEscondido(baseEsc, {
               total, grade: combEsc?.grade, heroi: combEsc?.heroi, inimigos: combEsc?.inimigos,
@@ -17905,13 +17919,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             });
             if (ns.ok) {
               personagemRef.current = ns.pers; setPersonagem(ns.pers);
-              if (combEsc) {
+              if (combEsc && !pagoEsc) {
                 const ecoNovo = custoEsc === "bonus" ? { ...ecoEsc, extra: ecoEsc.extra - 1 } : { ...ecoEsc, acao: ecoEsc.acao - 1 };
                 combateRef.current = { ...combEsc, economia: ecoNovo }; setCombate(combateRef.current);
               }
             }
             if (ns.linhas.length) pushMsgs(ns.linhas.map((t2) => ({ autor: "sistema", texto: t2 })));
+            if (combEsc) notaEsc = notaDoEscondido({ passou: true, ns, total, dc, inimigos: combEsc.inimigos || [] });
           }
+        } else if (des && !passou && combateRef.current && ESCONDIDO.alvosQueEscondem.includes(des.alvoDoCusto)) {
+          notaEsc = notaDoEscondido({ passou: false, total, dc, inimigos: combateRef.current.inimigos || [] });
         }
       } catch (e) { calou("nascerEscondido", e); }
       /* v9.70: o desfecho fica registrado para a cobranca poder recusar o que
@@ -18026,6 +18043,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           }
         } catch (e) { calou("consultaDeInformante", e); }
       }
+      /* MM16 nº 6: passou, a nota substitui o "revele UMA coisa" (num
+         esconder-se é ordem para inventar); falhou, soma-se ao envelope da falha */
+      if (notaEsc) env = passou ? notaEsc : `${env}\n${notaEsc}`;
       if (custo && !custo.porPouco) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`; else if (envQueda) env = `${envQueda}${env}`;
       if (des && des.testemunha && !passou) {
         const q = perguntarTestemunha(des);
@@ -18824,6 +18844,31 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         v = { ...v, dc: vp.cd, deOnde: vp.linha, palavra: { tipo: tipoP } };
       }
     } catch (e) { calou("a palavra na luta", e); }
+    /* ---------------- MM16 nº 6: ESCONDER-SE NA LUTA, O VEREDITO ANTES DO DADO ----------------
+       No molde da palavra, logo acima: sem onde sumir (o inimigo tem o herói
+       à vista, sem nada no meio) ou sem a ação, o dado nem rola — a linha
+       diz por quê e onde fica o abrigo. Com onde sumir, a ação (ou a bônus,
+       com Ação Ardilosa) sai da bolsa AQUI, antes do dado: tentar esconder-se
+       custa o mesmo que conseguir. O `esconderPago` viaja no desafio até
+       `concluirRolagem`, que então não cobra outra vez. */
+    try {
+      const combH = combateRef.current;
+      if (combH && !v.palavra && ESCONDIDO.alvosQueEscondem.includes(v.alvoDoCusto)) {
+        const ve = vereditoDoEsconder(fichaViva() || personagem, {
+          grade: combH.grade, heroi: combH.heroi, inimigos: combH.inimigos || [], aliados: combH.aliados || [], economia: combH.economia,
+        });
+        if (!ve.pode) {
+          pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: ve.linha }]);
+          return;
+        }
+        /* sem o herói posto no tabuleiro, o veredito não cobra (custo nulo) e
+           o caminho antigo de `concluirRolagem` cobra no nascer, como antes */
+        if (ve.custo && ve.economiaDepois) {
+          combateRef.current = { ...combH, economia: ve.economiaDepois }; setCombate(combateRef.current);
+          v = { ...v, esconderPago: ve.custo };
+        }
+      }
+    } catch (e) { calou("o veredito do esconder", e); }
     /* v9.71: a mesa fica sabendo que houve dado neste turno, e de que lado
        do jogo ele foi. O pilar sai do próprio desafio — quem pede algo a
        alguém está jogando o pilar social; quem força a fechadura está
@@ -18869,7 +18914,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* SEM DADO quando o bônus decide sozinho. Mantida a exceção do achado:
        a entrega do tesouro mora em `concluirRolagem`, e duplicá-la aqui é
        como se cria a divergência que ninguém acha depois. */
-    const auto = v.palavra ? null : resolucaoAutomatica(modT, v.dc, { permitir: !v.achado });
+    /* MM16 nº 6: o esconder-se na luta rola sempre — o estado nasce do TOTAL
+       (é a CD de quem procura), e o sucesso sem dado não tem total nenhum */
+    const auto = v.palavra ? null : resolucaoAutomatica(modT, v.dc, { permitir: !v.achado && !v.esconderPago });
     if (auto) {
       pushMsgs([{ autor: "sistema", texto: auto === "sucesso"
         ? `✓ Isto está abaixo do seu patamar — sucesso sem rolar.`

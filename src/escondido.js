@@ -64,7 +64,7 @@
    vantagem — que é a metade do furtivo que o escondido compra.
    ============================================================ */
 
-import { temCobertura, linhaDeVisao } from "./grid.js";
+import { temCobertura, linhaDeVisao, garantirGrade, ehParede, distanciaM, metrosTxt, nomeDoLugar, quadradosDe } from "./grid.js";
 import { criarCondicao } from "./condicoes.js";
 import { soODeclarado } from "./peneira.js";
 
@@ -322,6 +322,109 @@ export function custoDeEsconder(pers) {
   const nivelMin = ESCONDIDO.comoBonus[p.classe];
   if (nivelMin != null && (Number(p.nivel) || 1) >= nivelMin) return "bonus";
   return ESCONDIDO.custoPadrao;
+}
+
+/* ---------------- ESCONDER-SE NA LUTA: O VEREDITO ANTES DO DADO (MM16 nº 6) ----------------
+   A terceira sessão de prova (`mente/mm11-sessao-3.md`, J18/M18) jogou
+   isto: "escondo-me na sombra, colado à parede do fundo", numa luta, com o
+   herói NO FUNDO DA SALA da masmorra — região sem cobertura — e o Lobo a
+   12 m no vão da porta, com linha de visão. O sistema rolou (18 + 7 = 25
+   contra 18, sucesso) e SÓ DEPOIS perguntou a `ondeSeEsconder`, que
+   respondeu `a_descoberto`: "👁 Não há onde sumir: Lobo tem você à vista".
+   O estado não nasceu — e estava certo: o 5e não deixa ninguém se esconder
+   de quem o vê com clareza. O defeito era o resto:
+
+     1. o dado rolou para nada (o veredito veio DEPOIS do clique);
+     2. a recusa ficou na tela e não foi ao Mestre: o envelope dizia
+        "eu PASSEI. Revele UMA coisa", e ele narrou o herói sumido — a
+        prosa e o sistema discordaram, que foi o que a sessão viu;
+     3. a ação não se gastava, nem na falha (5e: esconder-se É a ação).
+
+   Este veredito corre ANTES do dado, no molde de `vereditoDaPalavra`
+   (MM9): sem onde sumir, ou sem a ação, não rola nada — a linha diz por
+   quê e, quando há, onde fica o abrigo mais perto. Com onde sumir, a ação
+   (ou a bônus, com Ação Ardilosa) sai da bolsa antes do dado, passe ou
+   falhe: tentar esconder-se custa o mesmo que conseguir.
+
+   Fora da luta não há tabuleiro nem ação a pagar: `pode` e custo nulo, e
+   o caminho de sempre segue intacto. */
+
+/* O abrigo mais perto: o quadrado livre com cobertura (a mesma pergunta de
+   `ondeSeEsconder`) de menor distância, desempate pelo primeiro na ordem da
+   grade — determinístico. É a frase que o Matt diria: "aí não, mas há o
+   vão da porta a 9 m". Null quando o lugar não tem cobertura nenhuma. */
+function abrigoMaisPerto(grade, heroi, ocupantes) {
+  const g = garantirGrade(grade);
+  if (!g || !posto(heroi)) return null;
+  const ocupado = new Set();
+  for (const o of lista(ocupantes)) if (posto(o) && o !== heroi) for (const q of quadradosDe(o)) ocupado.add(`${q.x},${q.y}`);
+  let melhor = null;
+  for (let y = 0; y < g.altura; y++) for (let x = 0; x < g.largura; x++) {
+    if (ehParede(grade, x, y) || ocupado.has(`${x},${y}`) || !temCobertura(grade, x, y)) continue;
+    const d = distanciaM(heroi, { x, y });
+    if (d <= 0) continue;
+    if (!melhor || d < melhor.m) melhor = { x, y, m: d, onde: nomeDoLugar(grade, x, y) };
+  }
+  return melhor;
+}
+
+export function vereditoDoEsconder(pers, opcoes) {
+  const { grade = null, heroi = null, inimigos = null, aliados = null, economia = null } = opcoes || {};
+  if (!grade || !posto(heroi)) return { pode: true, custo: null, motivo: "fora_da_luta", linha: "" };
+  const obs = lista(inimigos).filter(vivo);
+  const onde = ondeSeEsconder({ grade, heroi, inimigos: obs });
+  if (!onde.pode) {
+    const quem = onde.quem || [];
+    const abrigo = abrigoMaisPerto(grade, heroi, [...obs, ...lista(aliados)]);
+    /* na mesma região, o nome do lugar não ajuda ("fica no fundo da sala"
+       para quem já está no fundo da sala): diz-se a distância e o "aqui" */
+    const aqui = abrigo && abrigo.onde && abrigo.onde === nomeDoLugar(grade, heroi.x, heroi.y);
+    const dica = !abrigo ? ""
+      : aqui ? ` Há abrigo a ${metrosTxt(abrigo.m)} m, aqui mesmo ${abrigo.onde}.`
+      : ` O abrigo mais perto fica ${abrigo.onde}, a ${metrosTxt(abrigo.m)} m.`;
+    return {
+      pode: false, custo: null, motivo: onde.porque, quem,
+      linha: `👁 Não há onde sumir: ${juntarNomes(quem)} ${quem.length > 1 ? "têm" : "tem"} você à vista, sem nada no meio.${dica}`,
+    };
+  }
+  const custo = custoDeEsconder(pers);
+  const eco = economia && typeof economia === "object" ? economia : {};
+  const resta = custo === "bonus" ? Number(eco.extra) || 0 : Number(eco.acao) || 0;
+  if (resta <= 0) {
+    return {
+      pode: false, custo, motivo: "sem_acao",
+      linha: `Você já usou sua ${custo === "bonus" ? "ação bônus" : "ação"} nesta rodada — esconder-se fica para a próxima.`,
+    };
+  }
+  const economiaDepois = custo === "bonus" ? { ...eco, extra: resta - 1 } : { ...eco, acao: resta - 1 };
+  return { pode: true, custo, motivo: onde.porque, linha: "", economiaDepois };
+}
+
+/* ---------------- O QUE O MESTRE SABE DO ESCONDER (MM16 nº 6) ----------------
+   O envelope do teste comum manda "revele UMA coisa concreta e útil" — num
+   esconder-se, isso é uma ordem para inventar, e não diz o que importa: se
+   sumi, e de quem. Esta nota diz o estado com as palavras da casa, para a
+   prosa e o sistema contarem a mesma coisa no MESMO turno (a linha da luta,
+   `quemMeVe`, só chega no turno seguinte). `ns` é o retorno de
+   `nascerEscondido`; null quando o teste falhou. */
+export function notaDoEscondido(opcoes) {
+  const { passou = false, ns = null, total = null, dc = null, inimigos = null } = opcoes || {};
+  const conta = total != null && dc != null ? ` (${total} contra ${dc})` : "";
+  const obs = lista(inimigos).filter(vivo).map(nomeDe);
+  if (!passou) {
+    const veem = obs.length ? `${juntarNomes(obs)} ${obs.length > 1 ? "continuam" : "continua"} a ver-me e ${obs.length > 1 ? "sabem" : "sabe"} onde estou` : "quem está por perto continua a ver-me";
+    return `[ESCONDER — FALHOU] Tentei esconder-me e não consegui${conta}: ${veem}. Não narre que sumi.`;
+  }
+  if (!ns || !ns.ok) {
+    return `[ESCONDER — RECUSADO PELO SISTEMA] Passei no teste${conta}, mas não sumi: ${(ns && ns.motivo) === "todos_veem" ? "ninguém tirou os olhos de mim" : "não há nada entre mim e quem me olha"}. Continuo à vista — não narre que me escondi.`;
+  }
+  const achou = lista(ns.estado && ns.estado.achadoPor);
+  const naoVeem = obs.filter((n) => !achou.includes(n));
+  const de = naoVeem.length
+    ? `Estou escondido de ${juntarNomes(naoVeem)}: ${naoVeem.length > 1 ? "não me veem nem sabem" : "não me vê nem sabe"} onde estou.`
+    : "Estou escondido: ninguém aqui me vê.";
+  const viu = achou.length ? ` ${juntarNomes(achou)} ${achou.length > 1 ? "viram" : "viu"} para onde fui.` : "";
+  return `[ESCONDIDO — DECIDIDO PELO SISTEMA] Escondi-me${conta}. ${de}${viu} Narre em até três frases o instante em que eu somo, com o que o lugar já tem e sem esconderijo novo, e devolva a palavra. Daqui em diante ninguém me nota por conta própria: só o sistema diz quem me acha.`;
 }
 
 /* ---------------- A LINHA FORA DA LUTA ----------------
