@@ -113,3 +113,93 @@ cidade próxima, 0% de ficha) e **ficam como estão** — ver Decisões.
   painel aproximar a região (~2,7 unidades de lado num mapa de 100); grade/células na
   escala da região; o que a pessoa desenhar no Figma lê daqui.
 - **Depois do beta:** a região seguinte, como continuação (escrito em `pauta.md`).
+
+## D — o que a tela do mapa vivo vai poder mostrar (06/10, `src/mapa-vivo.js`)
+
+Para a pessoa e o desenho. `dadosDoMapaVivo(mapa, estado)` é a ponte: lê a região e onde o
+herói está, devolve o que se desenha, não desenha nada. Provado em
+`testes/teste-mapa-vivo.mjs` (79 asserções, N=200 mundos do molde do beta; 9 mutações do
+módulo, as 9 apanhadas). Tudo o que é número está numa tabela exportada.
+
+**Uma região de exemplo** (semente `regiao|0|…`, "Fronteiras da Serpente", estrutura jornada):
+o quadro tem **64 km de lado** (25,6 h de marcha pela floresta da base), régua de **15 km
+= 6 h**; 1 base, 4 povoados, 7 lugares (1 fim, 3 meio, 3 paralelo), 6 nomes no horizonte.
+No turno 1 a tela mostra **11 nós**: a base (visitada, "início", o herói lá), 4 povoados e
+5 lugares em **boato**, o lugar do primeiro gancho **conhecido** e marcado `proximo` (é o
+que a abertura já nomeia, com horas e rumo), e **1 oculto** — o clímax, que não aparece nem
+como ponto, nem como vizinho, nem como aresta. 14 arestas no turno 1, 27 com tudo aberto.
+
+**Em 200 mundos:** lado mediana 78 km (59–100), 19–30 h de marcha; 9–13 nós (povoados 3–4,
+lugares 5–8); no turno 1, 8–12 visíveis, sempre **1 oculto**; 10–21 arestas (17–30 aberto);
+3–6 nomes no horizonte. Nenhum nó em cima de outro (distância mínima 0,0034 do lado ≈ 260
+m); 17 pares em 200 mundos ficam a menos de 0,02 do lado (~1,5 km) — **ícones que se
+tocam: a tela afasta os rótulos, a posição não se mexe** (é a verdade das horas). A saída
+pesa ~11 KB de JSON; a tela deve memorizá-la pelos refs, não recalcular a cada render.
+
+**O que a tela recebe:**
+
+- `quadro` — `margem` (0,08), `ladoKm`, `ladoHoras`, `regua {km, fracao, horas}`. Fixo
+  desde a criação: é o quadro de TODOS os pontos, os escondidos incluídos — se crescesse com
+  a neblina, o pergaminho mexia e o tamanho contava que há coisa por achar.
+- `nos[]` — `{ id, nome, tipo: base|povoado|lugar, subtipo (porte ou tipo de lugar), icone,
+  x, y (0–1), estado, perigo, perigoRotulo, horasDaBase, vizinhos [{id, horas}], boato
+  (lugares), atoDaHistoria, momento: agora|passado|proximo|null, aqui }`.
+- `arestas[]` — `{ id, de, para, horas, horasDeVolta, tipoDeChao, modo: estrada|a_pe,
+  origem: rota|ficha, km, perigo }`. As horas são as que o jogo cobra: rota = dias × 8;
+  ida a um lugar = a ficha, que é a mesma conta da boca (0 contradições em 7.642 arestas).
+- `heroi` — num sítio só: `onde: base|povoado|boca|masmorra|arredor|viagem|nenhum`, `noId`,
+  `x, y`; lá dentro `masmorra {nome, camada, camadas, progresso}`; na estrada `jornada
+  {deId, paraId, arestaId, fracao, horasFeitas, horasQueFaltam, horasTotais, estado}` com a
+  posição interpolada pela estrada percorrida (sem saltos, de ponta a ponta).
+- `neblina {contagem por estado, ocultos}` — o "há N lugares que não conhece" do rodapé.
+- `horizonte[]` — `{nome, tipo, boato, rumo, rotulo, x, y}` no rebordo do quadrado, cada um
+  num dos 8 rumos da rosa (baralhados pela semente): nunca dois no mesmo rumo.
+- `relogio {dia, minuto, hora, fase, noite, luz 0–1, estacao}` — seis fases
+  (`FASES_DO_DIA`), a noite igual à do calendário minuto a minuto, a luz por curva
+  (`LUZ_DO_DIA`) para a tela pintar o céu.
+
+**O que anima:** o herói a andar na aresta a cada avanço (a fração vem da estrada, não do
+calendário); a neblina que abre (boato → conhecido → visitado → concluído); o gancho que
+acende `proximo` e passa a `agora` quando o ato chega; o dia e a noite pelo relógio.
+
+**O que fica oculto, e porquê** (`PISO_DA_NEBLINA`, `SINAIS_DA_NEBLINA`,
+`REVELACAO_DO_ATO`): (1) o **clímax** nasce desconhecido e só acorda quando a história chega
+ao ato dele, quando o herói vai lá (estrada, boca, porta) ou quando o App o diz conhecido —
+nunca pela vila ao pé (pode ser a base) nem pelo gancho do ato anterior; (2) o **ato** de
+um lugar ("meio", "fim") só se diz quando o ato chega; à boca do clímax antes da hora o
+herói vê o lugar, não o ato; (3) o **paralelo nunca leva rótulo** — se levasse, os sem
+rótulo seriam, por exclusão, os da história; (4) o **segredo** da espinha ("o que X
+esconde") mora num local dentro de uma cidade e nenhum texto de marco sai daqui — só o
+"descer" é lido, para saber o ato de cada lugar; (5) **boato não tem ficha**: sem perigo,
+sem vizinhos, e a aresta até ele sem cor de perigo.
+
+**O continente:** mapa sem `regiao` (todo save de antes da MM17) devolve `null` (200/200) e
+a tela fica com o pergaminho de sempre (`painel-mapa.jsx`). Região v1 desenha-se igual.
+
+**O que a tela precisaria que o App guardasse e hoje não guarda** (campos NOVOS, opcionais,
+que a versão antiga ignora — a função já os lê; quem os escreve é a fiação, não esta etapa):
+
+1. **`baseMundo.visitadas`** — a lista de lugares onde o herói já esteve, com a chave de
+   `concluidas` (`chaveDeLugar`: sem artigo e sem acento), escrita na chegada à boca
+   (`chegadaABoca`) e ao entrar na masmorra. Hoje "visitado" só vale enquanto se está lá: ao
+   sair, o lugar volta a conhecido (ou a boato). Passa-se como `estado.visitados`.
+2. **`baseMundo.ouvidas`** (opcional, depois) — lugares que alguém nomeou ao herói fora do
+   gancho (um NPC, o mural). Passa-se como `estado.conhecidos`; é a única porta, além da
+   história e da estrada, que acorda o clímax antes do seu ato.
+
+**O mapa de chamada** (o App, dentro de `calou`, memorizado pelos estados que já existem —
+`jornada`, `lugar`, `masmorra`, `dia`, `minuto`, `cidadeAtual`):
+
+```js
+dadosDoMapaVivo(mapaRef.current, {
+  cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current,
+  masmorra: masmorraRef.current, jornada: jornadaRef.current,
+  base: baseMundoRef.current, espinha: espinhaRef.current,
+  etapa: historiaRef.current.etapa,
+  dia: diaRef.current, minuto: minutoRef.current, semente: sementeMundo(),
+  // visitados: baseMundoRef.current.visitadas, conhecidos: … (quando existirem)
+}) // → null no continente: cai no pergaminho antigo
+```
+
+A dívida está em `AGUARDANDO` de `teste-ligacao.mjs` (credor: a tela do mapa em tempo real,
+do desenho/oficial) e sai quando o App ou um painel importar `mapa-vivo.js`.

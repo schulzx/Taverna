@@ -141,7 +141,15 @@ sec("1. NENHUM MÓDULO MUDO");
      `regiao.js` — `mapaDaCriacao` escolhe a região na criação de uma
      campanha nova de Uma Vida, e `mapaDaCampanhaNova` monta o mapaRef.
      `teste-regiao.mjs` (secção 11) prova a fiação. A lista volta a ficar VAZIA. */
-  const AGUARDANDO = {};
+  /* 06/10 (Fase MM, MM17 · etapa D, os dados do mapa vivo): `mapa-vivo.js`
+     nasce no backend — `dadosDoMapaVivo`, o que a tela do mapa em tempo
+     real lê (o quadro, os nós com a neblina, as arestas, o herói, o
+     horizonte, o relógio) — e espera a TELA, que a pessoa está a desenhar
+     no Figma e o desenho/oficial liga no App.jsx (`mente/mm17-regiao.md`,
+     secção D, tem o mapa de chamada). É dívida datada, não esquecimento: a
+     entrada sai quando o App (ou um painel) o importar, e a lista volta a
+     ficar VAZIA. `teste-mapa-vivo.mjs` é o primeiro leitor. */
+  const AGUARDANDO = { "mapa-vivo.js": "a tela do mapa em tempo real, do desenho/oficial (MM17 D, 06/10)" };
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;
