@@ -3591,9 +3591,12 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                 <div className="space-y-2">
                   {equipDisponivel.map((it, i) => (
                     <div key={i} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                      <div className="flex items-center justify-between gap-2">
+                      {/* (v9.359 · a Bolsa em duas linhas) o nome em cima, inteiro; as ações
+                          descem para a linha de baixo, em flex-wrap — na gaveta de ~340 px
+                          os quatro controlos lado a lado empurravam o ✕ para fora. */}
+                      <div className="flex flex-col gap-2">
                         <div className="min-w-0">
-                          <div className="tv-body text-sm truncate" style={{ color: T.ink }}>{it.nome}</div>
+                          <div className="tv-body text-sm" style={{ color: T.ink, overflowWrap: "anywhere" }}>{it.nome}</div>
                           <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>{SLOT_ROTULO[it.tipo] || it.tipo} · {it.raridade}{fichaDeCombateTexto(it) ? <span style={{ color: T.inkDim }}> · {fichaDeCombateTexto(it)}</span> : null}</div>
                           {/* A TROCA, e não só o valor da peça (v9.116). Na
                               mochila a pergunta do jogador não é "quanto isto
@@ -3618,12 +3621,12 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                             );
                           })()}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">{(personagem.grupo || []).length > 0 && (
-                          <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "equipamento", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
+                        <div className="flex flex-wrap items-center gap-1.5"><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button>{(personagem.grupo || []).length > 0 && (
+                          <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "equipamento", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}`, maxWidth: "7rem", textOverflow: "ellipsis", overflow: "hidden" }}>
                             <option value="">dar…</option>
                             {(personagem.grupo || []).map((g) => <option key={g.nome} value={g.nome}>{g.nome}</option>)}
                           </select>
-                        )}<button onClick={() => desmontarEquip("eu", it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={`Desmontar → +${essenciaDe(it)} ⚗ essência`}>⚒</button><button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button><button onClick={() => equipar(it)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>equipar</button></div>
+                        )}<button onClick={() => desmontarEquip("eu", it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={`Desmontar → +${essenciaDe(it)} ⚗ essência`}>⚒</button><button onClick={() => descartarEquip(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title="Descartar">✕</button></div>
                       </div>
                       {(it.atributos && Object.keys(it.atributos).length > 0) && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -3696,27 +3699,33 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                     const cons = comoConsumivel(it.nome);
                     return (
                     <li key={i} className="rounded-lg px-3 py-2.5" style={{ background: T.panelSoft }}>
-                      <div className="tv-body text-sm flex items-center gap-2.5" style={{ color: T.ink }}>
-                        <span style={{ color: T.amber }}>{cons ? cons.icone : "◆"}</span>
-                        <span className="flex-1 min-w-0">{it.nome}{it.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{it.qtd}</span> : null}</span>
+                      {/* (v9.359 · a Bolsa em duas linhas) a primeira linha é do nome, e nada
+                          passa por cima dele; as ações descem para a segunda, alinhadas com o
+                          nome (os mesmos 22px da descrição) e em flex-wrap. Antes, na gaveta de
+                          ~340 px, "Investigar" cobria o nome e o "soltar" saía cortado. */}
+                      <div className="tv-body text-sm flex items-start gap-2.5" style={{ color: T.ink }}>
+                        <span className="shrink-0" style={{ color: T.amber }}>{cons ? cons.icone : "◆"}</span>
+                        <span className="flex-1 min-w-0" style={{ overflowWrap: "anywhere" }}>{it.nome}{it.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{it.qtd}</span> : null}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5" style={{ paddingLeft: "22px" }}>
                         {cons && onUsarConsumivel && (
-                          <button onClick={() => onUsarConsumivel(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.violet, color: "#14101F", fontWeight: 600 }} title={descricaoCurta(cons)}>usar</button>
+                          <button onClick={() => onUsarConsumivel(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.violet, color: "#14101F", fontWeight: 600 }} title={descricaoCurta(cons)}>usar</button>
                         )}
                         {(() => {
                           /* a Reforma dos Itens em ato: se o item tem verbo, o botao
                              aparece; senao, so o soltar de sempre — que virou excecao */
                           const acao = !cons && onAcaoDeItem ? acaoDaBolsa(it.nome, it.descricao) : null;
                           return acao ? (
-                            <button onClick={() => onAcaoDeItem(it.nome, acao.verbo)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }} title={(verboPorId(acao.verbo) || {}).faz || ""}>{acao.rotulo}</button>
+                            <button onClick={() => onAcaoDeItem(it.nome, acao.verbo)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }} title={(verboPorId(acao.verbo) || {}).faz || ""}>{acao.rotulo}</button>
                           ) : null;
                         })()}
                         {(personagem.grupo || []).length > 0 && (
-                          <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "inventario", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1 shrink-0" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }}>
+                          <select value="" onChange={(e) => { if (e.target.value) transferirItem("eu", e.target.value, "inventario", it.nome); }} className="tv-mono text-[10px] rounded px-1 py-1" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}`, maxWidth: "7rem", textOverflow: "ellipsis", overflow: "hidden" }}>
                             <option value="">dar…</option>
                             {(personagem.grupo || []).map((g) => <option key={g.nome} value={g.nome}>{g.nome}</option>)}
                           </select>
                         )}
-                        <button onClick={() => descartarItem(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded shrink-0" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
+                        <button onClick={() => descartarItem(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>soltar</button>
                       </div>
                       {cons && <div className="tv-mono text-[10px] mt-1" style={{ color: T.violetSoft, paddingLeft: "22px" }}>{descricaoCurta(cons)}</div>}
                       {it.descricao && <div className="tv-body text-xs mt-1 italic" style={{ color: T.inkDim, paddingLeft: "22px" }}>{it.descricao}</div>}

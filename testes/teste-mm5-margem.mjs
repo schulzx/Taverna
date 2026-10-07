@@ -348,7 +348,17 @@ sec("10. A Aposta — três versões, e o teto");
 
   const i = app.indexOf("const concluirRolagem = (");
   t("(fixture) concluirRolagem existe", i >= 0);
-  const corpo = i >= 0 ? app.slice(i, i + 20000) : "";
+  /* A JANELA DE LEITURA DE `concluirRolagem` (v9.361): era 20000 caracteres, e a
+     chamada `envelopeDoCusto(custo,` mora a 19901 do começo da função na árvore
+     de trabalho (fins de linha LF) — uma folga de 99. Num checkout limpo o
+     Git entrega o arquivo com CRLF e a mesma distância passa a 20208: as duas
+     asserções do envelope do custo caíam FORA da janela e davam vermelho no
+     HEAD (assim subiu a v9.358) sem nenhum defeito no App. A intenção das
+     asserções não mudou — é o mesmo texto, no mesmo corpo —; só a janela
+     deixa de depender dos fins de linha e de a função não crescer (a luz e o
+     esconder-se, v9.353–v9.354, já a engordaram), e o texto lido passa a
+     normalizar CRLF para LF. */
+  const corpo = i >= 0 ? app.slice(i, i + 40000).replace(/\r\n/g, "\n") : "";
 
   const kCusto = corpo.indexOf("const custo = des ");
   const linhaCusto = kCusto >= 0 ? corpo.slice(kCusto, corpo.indexOf(";", kCusto) + 1) : "";

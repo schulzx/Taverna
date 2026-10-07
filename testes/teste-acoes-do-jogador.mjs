@@ -651,7 +651,11 @@ sec("4. a definição operacional de 'número que muda'");
      +26 — a ficha, o horizonte, a cena do system e o "aqui" por tabela,
      ACIMA disto no arquivo. Só o endereço andou; re-medido pelo diff de
      App.jsx contra o HEAD, e conferido pelo varredor. */
-  t("e aponta a linha que avança o relógio", !!relogio && /15083/.test(relogio.porque));
+  /* (v9.359 · a Bolsa em duas linhas) 06/10: 15083 -> 15092, +9 — a
+     linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
+     disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
+     contra o HEAD, e conferido pelo varredor. */
+  t("e aponta a linha que avança o relógio", !!relogio && /15092/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -976,7 +980,11 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
      ficha, o horizonte, a cena do system e o "aqui" por tabela, ACIMA disto
      no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra
      o HEAD, e conferido pelo varredor. */
-      .linhas.find((l) => l.onde === "src/App.jsx:13512").voz === "telegrama");
+    /* (v9.359 · a Bolsa em duas linhas) 06/10: 13512 -> 13521, +9 — a
+       linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
+       disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
+       contra o HEAD, e conferido pelo varredor. */
+      .linhas.find((l) => l.onde === "src/App.jsx:13521").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1167,7 +1175,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      ficha, o horizonte, a cena do system e o "aqui" por tabela, ACIMA disto
      no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra
      o HEAD, e conferido pelo varredor. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13379" && x.familia === "alcance"));
+    /* (v9.359 · a Bolsa em duas linhas) 06/10: 13379 -> 13388, +9 — a
+       linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
+       disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
+       contra o HEAD, e conferido pelo varredor. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13388" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1287,7 +1299,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
   /* (v9.358 · a masmorra sem a cidade) o enviar andou +26 (13502 -> 13528)
      com a masmorra sem a cidade (acoes-do-jogador.mjs, o cabeçalho da
      re-medida) */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13528/.test(S.ondeSai));
+  /* (v9.359 · a Bolsa em duas linhas) 06/10: 13528 -> 13537, +9 — a
+     linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
+     disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
+     contra o HEAD, e conferido pelo varredor. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13537/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));
