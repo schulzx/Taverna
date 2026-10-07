@@ -51,7 +51,14 @@ sec("1. o prompt encolhe conforme a cena");
      sistema). A asserção de baixo continua a medir os MESMOS 1500 de
      antes: o bloco desta porta é descontado pelo seu próprio texto, e não
      por um limite maior. */
-  const SE_EXCLUEM = ["descanso", "porte", "foraDaLuta"];
+  /* MM17 C2 (06/10): e a porta do ERMO entra no par, contra a da masmorra —
+     quem desceu a uma masmorra não está entre os assentamentos, está dentro
+     de um (`!emMasmorra`, prompt.js). Com tudo ligado havia `emViagem`, e o
+     ermo abria; agora a masmorra o fecha, como fecha o mercado e a cidade
+     lá dentro (`cenaNaMasmorra`). A asserção de baixo desconta o bloco
+     dele pelo seu próprio texto (`CELULAS_PROMPT`), como faz com o de
+     fora-da-luta: o limite de 1500 não cresce. */
+  const SE_EXCLUEM = ["descanso", "porte", "foraDaLuta", "ermo"];
   const abertas = portasAbertas(Object.fromEntries(["emCombate", "emMasmorra", "temChao", "emCidade", "temMercado", "temBancada", "temMissao", "conjura", "temGrupo", "temLegado", "temSintonia", "temEspecializacao", "despertou", "invoca", "temGatilho", "temDadiva", "temRegraPropria", "emViagem", "dentroDeUmLocal", "acampado", "emMasmorra", "temGente", "temVilao", "temCobranca", "emRaid", "temTrama", "emSala"].map((k) => [k, true])));
   const fechadas = Object.entries(abertas).filter(([, v]) => !v).map(([k]) => k);
   t("o contexto do teste abre todas as portas que não se excluem (senão a lista acima envelheceu)",
@@ -62,8 +69,10 @@ sec("1. o prompt encolhe conforme a cena");
   const fimFora = cheio.indexOf("\n", cheio.indexOf("- DIPLOMACIA:", iFora));
   const blocoForaDaLuta = iFora >= 0 && fimFora > iFora ? fimFora - iFora + 1 : 0;
   t("o bloco da porta fora-da-luta existe no prompt cheio e some na luta", blocoForaDaLuta > 0 && !tudo.includes("TURNO DO MUNDO (o mundo AGE"));
+  const blocoDoErmo = cheio.includes(CELULAS_PROMPT) && !tudo.includes(CELULAS_PROMPT) ? CELULAS_PROMPT.length + 1 : 0;
+  t("o bloco do ermo existe no prompt cheio e some com a masmorra aberta", blocoDoErmo > 0);
   t("com tudo ligado, o prompt fica perto do cheio, menos o que se exclui",
-    cheio.length - tudo.length > 0 && cheio.length - tudo.length - blocoForaDaLuta < 1500);
+    cheio.length - tudo.length > 0 && cheio.length - tudo.length - blocoForaDaLuta - blocoDoErmo < 1500);
 }
 
 sec("2. o que sai e o que NUNCA sai");

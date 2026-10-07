@@ -18,6 +18,9 @@
      (d) quanto pesa o ONDE e a seção MASMORRA lá dentro, e quanto do que
          vai junto é "locais da cidade" (o `resumoDaqui` e os arredores);
      (e) o pior caso do prompt (`teste-prompt.mjs`, a PIOR CENA REAL);
+     (f) a criação, (g) a história amarrada, (h) a masmorra sem a cidade
+         (MM17 C2: o turno lá dentro antes → depois, o turno de fora contra
+         a árvore de HEAD, e o horizonte que só fala quando perguntado);
      e o tamanho do elenco (24) e os moldes fora do beta.
 
    Uso: node testes/medir-regiao.mjs [N]   (N mundos por molde; 60 se omitido) */
@@ -25,7 +28,9 @@
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import { gerarGeografia } from "../src/geografia.js";
 import { MOLDES } from "../src/moldes.js";
 import { generosDisponiveis } from "../src/nomes.js";
@@ -359,6 +364,243 @@ export function resumoHistoria(M) {
   ].join("\n");
 }
 
+/* ---------------- (h) A MASMORRA SEM A CIDADE (MM17, etapa C2) ----------------
+   (A letra é "h" porque a "g" já é a história amarrada da C1.)
+   O turno que o App monta com o herói dentro de uma masmorra (e a meio de
+   uma luta nela), bloco a bloco, como `enviar` o monta: o "aqui" do rodapé
+   (a forma do mundo, o resumoDaqui, a forma da cidade, o ermo, os
+   arredores, as saídas), os chefes, a cena, a pauta (o Geógrafo, a planta,
+   a economia, a vizinhança da boca, os vetos, e o que cede) e o system
+   prompt (as portas da cena e a gente por conhecer).
+
+   `depois: false` é o App de HEAD v9.357 (só o lugar de antes da porta, a
+   estrada e as bancas calados — v9.352); `depois: true` é com a tabela de
+   `masmorra-sem-cidade.js`. As duas colunas correm sobre as MESMAS
+   sementes; nenhuma sorte fica de fora (a planta corre sobre um gerador
+   semeado, restaurado no fim). `teste-masmorra-sem-cidade.mjs` importa
+   `turnoNaMasmorra` e guarda os números como catraca.
+
+   O que conta como "da cidade" (nada a ver com a sala): os blocos de
+   `DENTRO_DA_MASMORRA` que calam, mais o que as portas da cidade, do
+   mercado e da estrada abrem no system e a gente por conhecer. Os chefes,
+   a cena (quem está e quem está longe), a ficha do herói e o mapa ficam:
+   não são a cidade, e a tabela diz por quê. */
+export const HEROI_DA_MEDIDA = { nome: "Brann", conceito: "druida", historia: "", nivel: 8, raca: "Humano", classe: "Druida", atributos: { forca: 1, destreza: 1, vigor: 4, intelecto: 4, presenca: 1, percepcao: 1 }, vidaMax: 61, manaMax: 48 };
+/* a cena do system lá dentro, como o App a monta (a cidade de onde se saiu
+   continua no registo: `emCidade` e `temMercado` eram "há cidade") */
+const CENA_DA_MEDIDA = { emMasmorra: true, emCidade: true, temMercado: true, conjura: true, temMissao: true, temGente: false };
+
+export async function turnoNaMasmorra({ semente, genero, mapa, m, cidade, luta = false, depois = true, molde = "sobremundo" }) {
+  const S = await import("../src/masmorra-sem-cidade.js");
+  const { resumoMoldePrompt } = await import("../src/moldes.js");
+  const { resumoChefesPrompt } = await import("../src/mundo-base.js");
+  const { celulaDaCidade, resumoCelulaPrompt } = await import("../src/celulas.js");
+  const { paraPauta } = await import("../src/geografo.js");
+  const P = await import("../src/pauta.js");
+  const { resumoCenaPrompt } = await import("../src/cena.js");
+  const { envelopeDoComercio } = await import("../src/comercio.js");
+  const { montarSystemPrompt } = await import("../src/prompt.js");
+  const { elencoParaPovoar } = await import("../src/elenco.js");
+  const md = moldePorId(molde);
+  const acaso = Math.random;
+  Math.random = rng(hashSemente(`masmorra-sem-cidade|${semente}|${m.nome}`));
+  let mm0;
+  try { mm0 = gerarMasmorra(genero, m.nivel, m.nome, { salas: m.salas }); } finally { Math.random = acaso; }
+  /* o App: o nome do mapa e a boca no ponto onde se entrou (`meuPonto`) */
+  const mm = { ...mm0, nome: m.nome, coord: { x: m.x, y: m.y, z: 0, mx: 0, my: 0 } };
+  const cid = (mapa.cidades || []).find((c) => c.nome === cidade) || null;
+  const lugar = lugarAoEntrarNaMasmorra(mm, { cidade });
+  const cel = (() => { try { return cid ? resumoCelulaPrompt(celulaDaCidade(semente, cid, { mapa, molde: md }), md) || "" : ""; } catch { return ""; } })();
+  /* o "aqui" do rodapé, nas chaves da tabela (ondeEstou, a estrada e os
+     cômodos já são "" lá dentro desde a v9.352; a forma da cidade só sai
+     sem lugar, e lá dentro o lugar é a boca) */
+  const blocos = {
+    forma: resumoMoldePrompt(md) || "",
+    ondeEstou: "",
+    comodos: "",
+    daqui: (depois && S.calaNaMasmorra("daqui", mm)) ? "" : resumoDaqui(semente, mapa, cidade, null, genero, molde) || "",
+    formaDaCidade: "",
+    viagem: "",
+    ermo: cel,
+    arredores: cid ? resumoArredoresPrompt(semente, cid) || "" : "",
+    saidas: G.saidasDeUmPassoPrompt(mapa, cidade) || "",
+  };
+  const aqui = depois ? S.aquiDoTurno(blocos, mm) : S.aquiDoTurno(blocos, null);
+  const chefes = resumoChefesPrompt(semente, mapa, null, genero) || "";
+  const cena = resumoCenaPrompt({}, cidade, mapa, { masmorra: mm }) || "";
+  const rodape = [aqui, chefes, cena].filter(Boolean).join("\n");
+  /* a cidade que ainda vai no rodapé: os blocos da tabela que calam */
+  const doAqui = Object.entries(blocos).filter(([id]) => S.DENTRO_DA_MASMORRA[id] && S.DENTRO_DA_MASMORRA[id].cala).reduce((s, [id, v]) => s + (aqui.includes(v) && v ? v.length : 0), 0);
+  /* o system: a cena e a gente por conhecer */
+  const cena0 = { ...CENA_DA_MEDIDA, ...(luta ? { emCombate: true, temChao: true } : {}) };
+  const cenaSys = depois ? S.cenaNaMasmorra(cena0) : cena0;
+  const povoar = (depois && S.calaNaMasmorra("povoar", mm)) ? [] : elencoParaPovoar(semente, mapa, { genero, molde, dia: 1, cidade, npcs: {} });
+  const mapaInfo = (resumoMapaParaPrompt(mapa, "") + "\n" + resumoDiplomacia(mapa, "")).trim();
+  const sysDe = (c, el) => montarSystemPrompt("C", { genero }, HEROI_DA_MEDIDA, {}, { elenco: el, cidades: [], tavernas: [] }, mapaInfo, "", "", "", "", "", "Mortal", c);
+  const sys = sysDe(cenaSys, povoar);
+  const semCidade = sysDe({ ...cenaSys, ...S.PORTAS_NA_MASMORRA }, []);
+  const doSystem = sys.length - semCidade.length;
+  /* a pauta */
+  const g = paraPauta({ cidadeAtual: cidade, masmorra: mm, mapa, lugar, semente, jornada: null });
+  let p = P.porNaPauta(P.garantirPauta(null), "onde", g.onde);
+  p = P.porNaPauta(p, "masmorra", masmorraParaPauta(mm, { luta }));
+  if (depois) p = P.porNaPauta(p, "masmorra", S.linhaDaFicha(mapa, mm, { luta }));
+  p = P.porNaPauta(p, "economia", envelopeDoComercio(cid, 1));
+  p = P.porNaPauta(p, "daqui", g.daqui);
+  p = P.porNaPauta(p, "naoPode", g.naoPode);
+  p = P.cederNaCena(p, { luta, masmorra: true });
+  const pauta = P.textoDaPauta(p);
+  return {
+    onde: g.onde.join("\n").length,
+    secao: (p.masmorra || []).join("\n").length,
+    ficha: depois ? S.linhaDaFicha(mapa, mm, { luta }).length : 0,
+    pauta: pauta.length, rodape: rodape.length, sys: sys.length,
+    total: sys.length + pauta.length + rodape.length,
+    cidade: doAqui + doSystem,
+    doAqui, doSystem, blocos: Object.fromEntries(Object.entries(blocos).map(([k, v]) => [k, aqui.includes(v) && v ? v.length : 0])),
+    textos: { pauta, rodape, sys },
+  };
+}
+
+/* `gerar(i)` → { semente, genero, mapa, cidade(m) } ; mede a 1.ª masmorra de cada mundo, fora e dentro da luta */
+export async function medirMasmorraSemCidade(gerar, N) {
+  const M = {};
+  const push = (k, v) => (M[k] = M[k] || []).push(v);
+  let mundos = 0;
+  for (let i = 0; i < N; i++) {
+    const w = gerar(i);
+    if (!w || !w.mapa) continue;
+    const mms = masmorrasDoMundo(w.semente, w.mapa);
+    if (!mms.length) continue;
+    mundos++;
+    const m = mms[0];
+    for (const luta of [false, true]) {
+      for (const depois of [false, true]) {
+        const r = await turnoNaMasmorra({ ...w, m, cidade: w.cidade(m), luta, depois });
+        const k = `${luta ? "luta" : "sala"}.${depois ? "depois" : "antes"}`;
+        for (const x of ["onde", "secao", "ficha", "pauta", "rodape", "sys", "total", "doAqui", "doSystem"]) push(`${k}.${x}`, r[x]);
+        push(`${k}.cidade`, r.cidade);
+      }
+    }
+  }
+  return { M, mundos };
+}
+
+export function resumoMasmorraSemCidade(rotulo, { M, mundos }) {
+  const md = (k) => mediana(M[k] || []), mx = (k) => maximo(M[k] || []);
+  const par = (cena, x) => `${md(`${cena}.antes.${x}`)} → ${md(`${cena}.depois.${x}`)} (máx ${mx(`${cena}.antes.${x}`)} → ${mx(`${cena}.depois.${x}`)})`;
+  const out = [`  ${rotulo} (${mundos} mundos; mediana antes → depois)`];
+  for (const cena of ["sala", "luta"]) {
+    out.push(`    ${cena === "sala" ? "na sala" : "na luta"}: ONDE ${par(cena, "onde")} · seção MASMORRA ${par(cena, "secao")} (a linha da ficha: ${md(`${cena}.depois.ficha`)})`);
+    out.push(`        pauta ${par(cena, "pauta")} · rodapé ${par(cena, "rodape")} · system ${par(cena, "sys")}`);
+    out.push(`        o turno inteiro ${par(cena, "total")}`);
+    out.push(`        "da cidade" no turno ${par(cena, "cidade")} — no rodapé ${par(cena, "doAqui")}, no system ${par(cena, "doSystem")}`);
+  }
+  return out.join("\n");
+}
+
+/* (h, fora) FORA DA MASMORRA, O TURNO DE HEAD, BYTE A BYTE.
+   A árvore de HEAD (git archive, numa pasta temporária) contra a de agora,
+   nas cenas em que o herói NÃO está numa masmorra aberta: a cidade parada,
+   dentro de um prédio, a estrada, o ermo, a luta na cidade e no ermo, e a
+   masmorra já encerrada. Por cena e por mundo: o system (HEAD: a cena
+   crua; agora: `cenaNaMasmorra(cena)`), o "aqui" do rodapé (HEAD: o
+   `[…].filter(Boolean).join` de sempre; agora: `aquiDoTurno`) e o que a
+   C2 poria na pauta (a linha da ficha e o horizonte para uma frase que
+   não pergunta por ele). Devolve quantos turnos saíram iguais. */
+export const CENAS_FORA = {
+  cidade: { emCidade: true, temMercado: true, temGente: true, conjura: true, temMissao: true },
+  predio: { emCidade: true, temMercado: true, dentroDeUmLocal: true, temGente: true },
+  estrada: { emViagem: true, emCidade: true, temMercado: true },
+  ermo: { emCidade: false, temMercado: false, conjura: true },
+  lutaNaCidade: { emCombate: true, temChao: true, emCidade: true, temMercado: true },
+  lutaNoErmo: { emCombate: true, temChao: true },
+  encerrada: { emMasmorra: false, emCidade: true, temMercado: true },
+};
+export function arvoreDeHEAD() {
+  const dir = mkdtempSync(join(tmpdir(), "taverna-head-"));
+  const tar = spawnSync("git", ["archive", "--format=tar", "HEAD", "src"], { cwd: join(AQUI, ".."), maxBuffer: 1 << 28 });
+  if (tar.status !== 0) throw new Error("git archive falhou");
+  const x = spawnSync("tar", ["-x"], { cwd: dir, input: tar.stdout, maxBuffer: 1 << 28 });
+  if (x.status !== 0) throw new Error("tar falhou: " + String(x.stderr));
+  return join(dir, "src");
+}
+export async function foraIgualAHEAD(gerar, N, srcHEAD) {
+  const de = (dir, f) => import(pathToFileURL(join(dir, f)).href);
+  const AGORA = join(AQUI, "..", "src");
+  const [PH, PA, MBH, MBA, MH, MA, AH, AA, CH, CA, S] = await Promise.all([
+    de(srcHEAD, "prompt.js"), de(AGORA, "prompt.js"), de(srcHEAD, "mundo-base.js"), de(AGORA, "mundo-base.js"),
+    de(srcHEAD, "moldes.js"), de(AGORA, "moldes.js"), de(srcHEAD, "arredores.js"), de(AGORA, "arredores.js"),
+    de(srcHEAD, "celulas.js"), de(AGORA, "celulas.js"), de(AGORA, "masmorra-sem-cidade.js"),
+  ]);
+  const hH = createHash("sha256"), hA = createHash("sha256");
+  let turnos = 0, iguais = 0, mundos = 0, pautaZero = 0;
+  for (let i = 0; i < N; i++) {
+    const w = gerar(i);
+    if (!w || !w.mapa) continue;
+    mundos++;
+    const { semente, genero, mapa } = w;
+    const md = moldePorId("sobremundo");
+    const mapaInfo = (resumoMapaParaPrompt(mapa, "") + "\n" + resumoDiplomacia(mapa, "")).trim();
+    for (const cid of (mapa.cidades || []).slice(0, 2)) {
+      const aquiDe = (MB, M, A, C) => {
+        const cel = (() => { try { return C.resumoCelulaPrompt(C.celulaDaCidade(semente, cid, { mapa, molde: md }), md) || ""; } catch { return ""; } })();
+        return { forma: M.resumoMoldePrompt(md) || "", ondeEstou: "", comodos: "", daqui: MB.resumoDaqui(semente, mapa, cid.nome, null, genero, "sobremundo") || "", formaDaCidade: "", viagem: "", ermo: cel, arredores: A.resumoArredoresPrompt(semente, cid) || "", saidas: G.saidasDeUmPassoPrompt(mapa, cid.nome) || "" };
+      };
+      const bH = aquiDe(MBH, MH, AH, CH), bA = aquiDe(MBA, MA, AA, CA);
+      const aquiH = [bH.forma, bH.ondeEstou, bH.comodos, bH.daqui, bH.formaDaCidade, bH.viagem, bH.ermo, bH.arredores, bH.saidas].filter(Boolean).join("\n\n");
+      for (const [id, cena] of Object.entries(CENAS_FORA)) {
+        /* a masmorra que o App teria no ref: nenhuma, ou a encerrada */
+        const mm = id === "encerrada" ? { nome: "Cripta da Medida", encerrada: true, salas: [] } : null;
+        const aquiA = S.aquiDoTurno(bA, mm);
+        const sysH = PH.montarSystemPrompt("C", { genero }, HEROI_DA_MEDIDA, {}, { elenco: [], cidades: [], tavernas: [] }, mapaInfo, "", "", "", "", "", "Mortal", cena);
+        const sysA = PA.montarSystemPrompt("C", { genero }, HEROI_DA_MEDIDA, {}, { elenco: [], cidades: [], tavernas: [] }, mapaInfo, "", "", "", "", "", "Mortal", S.cenaNaMasmorra(cena));
+        const extra = S.linhaDaFicha(mapa, mm, { luta: !!cena.emCombate }) + JSON.stringify(S.horizonteDaPergunta("Pago a cerveja e pergunto ao taverneiro pelo irmão dele.", mapa, { masmorra: mm, luta: !!cena.emCombate }) ? "x" : "");
+        if (extra === '""') pautaZero++;
+        hH.update(sysH + "\u0000" + aquiH + "\u0000");
+        hA.update(sysA + "\u0000" + aquiA + "\u0000");
+        turnos++;
+        if (sysH === sysA && aquiH === aquiA) iguais++;
+      }
+    }
+  }
+  return { mundos, turnos, iguais, pautaZero, head: hH.digest("hex").slice(0, 16), agora: hA.digest("hex").slice(0, 16) };
+}
+
+/* (h, horizonte) O HORIZONTE CUSTA ZERO A QUEM NÃO PERGUNTA. N mundos de
+   região × as cenas (cidade, estrada, masmorra, luta) × um corpo de frases
+   de jogo que não perguntam por terras de além — e as que perguntam,
+   dentro da masmorra e da luta. Os bytes que ele poria na mesa ("pergunta")
+   têm de ser 0 em todos; só na pergunta feita cá fora ele fala. */
+export const FRASES_SEM_HORIZONTE = [
+  "Ataco o goblin com a espada.", "Pergunto ao taverneiro quanto custa um quarto.", "Além do guarda, quem mais está aqui?",
+  "Há outras cidades por perto?", "Desço a escada devagar, com a tocha baixa.", "Sabe se o ferreiro abre amanhã?",
+  "Além disso, quero comprar corda.", "O que há além da porta?", "Procuro armadilhas no corredor.", "Vou para a Cripta.",
+  "Quanto falta até à vila?", "Ele conhece a minha irmã?", "Além do mais, estou cansado.", "Olho pela janela da torre.",
+];
+export const FRASES_DO_HORIZONTE = [
+  "Há reinos além das montanhas?", "O que existe do outro lado do rio?", "Quero saber do resto do mundo.",
+  "Já ouviu falar de outras terras?", "De onde vem o sal que vendem aqui?", "O que há para lá da fronteira?",
+];
+export async function horizonteCusta(gerar, N) {
+  const S = await import("../src/masmorra-sem-cidade.js");
+  const r = { mundos: 0, mudos: 0, perguntas: 0, falou: 0, laDentro: 0, linhas: [] };
+  const CENAS = { cidade: {}, estrada: {}, masmorra: { masmorra: { nome: "Cripta da Medida", salas: [] } }, luta: { luta: true } };
+  for (let i = 0; i < N; i++) {
+    const w = gerar(i);
+    if (!w || !w.mapa) continue;
+    r.mundos++;
+    for (const ctx of Object.values(CENAS)) {
+      for (const f of FRASES_SEM_HORIZONTE) { r.perguntas++; const h = S.horizonteDaPergunta(f, w.mapa, ctx); if (!h) r.mudos++; }
+      for (const f of FRASES_DO_HORIZONTE) {
+        const h = S.horizonteDaPergunta(f, w.mapa, ctx);
+        if (ctx.masmorra || ctx.luta) { if (h) r.laDentro++; } else if (h) { r.falou++; r.linhas.push(h.pergunta[0].length); }
+      }
+    }
+  }
+  return r;
+}
+
 /* ---------------- quando corre sozinho ---------------- */
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   const N = Number(process.argv[2]) || 60;
@@ -375,6 +617,28 @@ if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
     const R = await import(pathToFileURL(caminho).href);
     if (typeof R.mapaDaCriacao === "function") console.log("\n" + medirCriacao(R, N).join("\n"));
     if (typeof R.espinhaNaRegiao === "function") console.log("\n" + resumoHistoria(await medirHistoria(R, N)));
+    if (existsSync(join(AQUI, "..", "src", "masmorra-sem-cidade.js"))) {
+      const NR = Math.max(N, 200), NC = Math.max(Math.min(N, 60), 60);
+      console.log(`\n(h) A MASMORRA SEM A CIDADE — o turno lá dentro, antes (HEAD v9.357) → depois (a tabela)`);
+      const mapaRegiao = (i) => R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente: sementeDe(i), molde: moldePorId("sobremundo"), genero: generoDe(i), estrutura: ESTRUTURAS[i % ESTRUTURAS.length].id, modo: "historia" }));
+      /* a região: o herói desceu da base (a cidade que continua no registo);
+         o continente: da "cidade próxima" da masmorra (a medida (d)) */
+      console.log(resumoMasmorraSemCidade("região", await medirMasmorraSemCidade((i) => { const mapa = mapaRegiao(i); return { semente: sementeDe(i), genero: generoDe(i), mapa, cidade: () => mapa.cidades[0].nome }; }, NR)));
+      console.log(resumoMasmorraSemCidade("continente", await medirMasmorraSemCidade((i) => ({ semente: sementeDe(i), genero: generoDe(i), mapa: R.mapaDaCampanhaNova(gerarGeografia(sementeDe(i), moldePorId("sobremundo"))), cidade: (m) => m.cidadeProxima }), NC)));
+      const regW = (i) => ({ semente: sementeDe(i), genero: generoDe(i), mapa: mapaRegiao(i) });
+      const conW = (i) => ({ semente: sementeDe(i), genero: generoDe(i), mapa: R.mapaDaCampanhaNova(gerarGeografia(sementeDe(i), moldePorId("sobremundo"))) });
+      let srcHEAD = "";
+      try {
+        srcHEAD = arvoreDeHEAD();
+        for (const [rot, g, n] of [["região", regW, NR], ["continente", conW, NC]]) {
+          const f = await foraIgualAHEAD(g, n, srcHEAD);
+          console.log(`  fora da masmorra (${rot}, ${f.mundos} mundos × 2 cidades × ${Object.keys(CENAS_FORA).length} cenas = ${f.turnos} turnos): system + "aqui" iguais a HEAD em ${f.iguais}/${f.turnos} · hash HEAD ${f.head} = agora ${f.agora} · a C2 põe 0 bytes na pauta em ${f.pautaZero}/${f.turnos}`);
+        }
+      } catch (e) { console.log(`  fora da masmorra: a árvore de HEAD não se extraiu (${e.message})`); }
+      finally { try { if (srcHEAD) rmSync(dirname(srcHEAD), { recursive: true, force: true }); } catch { /* a pasta temporária fica; o sistema limpa */ } }
+      const hz = await horizonteCusta(regW, NR);
+      console.log(`  o horizonte (${hz.mundos} mundos × 4 cenas): frases que não perguntam → 0 bytes em ${hz.mudos}/${hz.perguntas} · perguntado na masmorra ou na luta → fala ${hz.laDentro} vezes · perguntado cá fora → fala ${hz.falou}/${hz.mundos * 2 * FRASES_DO_HORIZONTE.length}, a linha mediana ${mediana(hz.linhas)} car. (máx ${maximo(hz.linhas)})`);
+    }
   }
   console.log(`\n(e) a PIOR CENA REAL do prompt (teste-prompt.mjs): ${piorCenaReal()} caracteres (o teto é 82.000)`);
 }

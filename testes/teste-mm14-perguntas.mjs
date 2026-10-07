@@ -453,7 +453,8 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   const fichas = corpoApos(app, "const fichasDaMesa = (frase = \"\", presentes = null) => {");
   t("o corpo de fichasDaMesa não está vazio", fichas.length > 1500);
   t("pautaDoTurno chama fichasDaMesa com a frase do turno e quem está aqui, e destrutura as três fichas",
-    pauta.includes("const { cidade: fc, gente: gp, mercado: mc } = fichasDaMesa(acaoDoTurno, aqui);"));
+    /* MM17 C2: e a quarta, o horizonte (`hz`), no fim da mesma destruturação */
+    pauta.includes("const { cidade: fc, gente: gp, mercado: mc, horizonte: hz } = fichasDaMesa(acaoDoTurno, aqui);"));
   t("nomesDaMesa existe, uma vez só, dos NPCs e do lugar — dentro de fichasDaMesa",
     fichas.includes("const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || \"\"].filter(Boolean);"));
   t("fichaParaPauta recebe os nomes da mesa e o sino fora de hora",
@@ -461,13 +462,19 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   t("genteParaPauta recebe os mesmos nomes da mesa", fichas.includes("recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase,\n          nomes: nomesDaMesa,"));
   t("o mercado responde fora da luta, numa cidade, pela mesma frase do turno",
     fichas.includes('mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;'));
-  t("as três (fc, gp, mc) juntam-se numa mesa só, na secção \"pergunta\", de volta em pautaDoTurno",
-    pauta.includes('p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc]));'));
+  /* MM17 C2 (06/10): a mesa ganhou uma quarta ficha, o HORIZONTE (as terras
+     de além de uma campanha com região, masmorra-sem-cidade.js), que só fala
+     quando a frase pergunta por elas. A asserção continua exata — as três de
+     sempre, na ordem, numa mesa só —, só que agora com a quarta no fim. */
+  t("as três (fc, gp, mc) juntam-se numa mesa só, na secção \"pergunta\", de volta em pautaDoTurno (e o horizonte, hz, por último)",
+    pauta.includes('p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz]));'));
   {
     const iFc = fichas.indexOf("fc = fichaParaPauta(");
     const iGp = fichas.indexOf("gp = genteParaPauta(");
     const iMc = fichas.indexOf("mercadoParaPauta(mercadoAqui");
-    const iRetorna = fichas.indexOf('return { cidade: fc, gente: gp, mercado: mc };');
+    /* MM17 C2: o retorno ganhou `horizonte: hz` no fim (ver acima); a ordem
+       que esta asserção guarda é a mesma. */
+    const iRetorna = fichas.indexOf('return { cidade: fc, gente: gp, mercado: mc, horizonte: hz };');
     t("a ordem no código é cidade, gente, mercado, e só então fichasDaMesa devolve a mesa",
       iFc >= 0 && iGp > iFc && iMc > iGp && iRetorna > iMc, `${iFc}/${iGp}/${iMc}/${iRetorna}`);
   }

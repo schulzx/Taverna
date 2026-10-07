@@ -132,8 +132,13 @@ sec("1. as tabelas");
   t("a pergunta aberta é uma regex ancorada e lida sem acento", PERGUNTA_ABERTA instanceof RegExp && PERGUNTA_ABERTA.source.startsWith("^") && PERGUNTA_ABERTA.test("ha quanto tempo") && !PERGUNTA_ABERTA.test("há quanto tempo"));
   t("\"há quanto\", \"desde quando\", \"que horas\", \"de onde\" são abertas", ["ha quanto tempo", "desde quando", "que horas sao", "de onde vens", "faz quanto tempo", "a quantos passos"].every((x) => PERGUNTA_ABERTA.test(x)));
   t("a aberta no fim: \"fica onde?\", \"foi por quê?\"", ABERTA_NO_FIM.test("isso fica onde") && ABERTA_NO_FIM.test("isso foi por que") && !ABERTA_NO_FIM.test("isso fica aberto"));
+  /* MM17 C2: a lista do mundo ganhou "horizonte" (as terras de além de uma
+     campanha com região, masmorra-sem-cidade.js) — é ficha de forma das
+     coisas como as outras três, e o d100 não pode desmentir o mapa. A
+     asserção continua exata (a lista inteira, na ordem); só cresceu a
+     verdade que ela guarda. */
   t("o que a ficha decide, por tipo de pergunta: todas no mundo; só o mercado no social; nenhuma no perigo",
-    JSON.stringify(A_FICHA_DECIDE.mundo) === JSON.stringify(["cidade", "gente", "mercado"]) && JSON.stringify(A_FICHA_DECIDE.social) === JSON.stringify(["mercado"]) && A_FICHA_DECIDE.perigo.length === 0);
+    JSON.stringify(A_FICHA_DECIDE.mundo) === JSON.stringify(["cidade", "gente", "mercado", "horizonte"]) && JSON.stringify(A_FICHA_DECIDE.social) === JSON.stringify(["mercado"]) && A_FICHA_DECIDE.perigo.length === 0);
   t("e os tipos da tabela são os do oráculo (TIPOS)", Object.keys(A_FICHA_DECIDE).every((k) => TIPOS[k]) && Object.keys(TIPOS).every((k) => A_FICHA_DECIDE[k]));
   t("o tratamento diz o sexo de quem ouve: \"a senhora\" mulher, \"o senhor\" homem, \"você\" ninguém",
     TRATAMENTOS.find((x) => x.rx.test("a senhora tem"))?.genero === "mulher" && TRATAMENTOS.find((x) => x.rx.test("o senhor toca"))?.genero === "homem" && TRATAMENTOS.find((x) => x.rx.test("voce trabalha"))?.genero === "");

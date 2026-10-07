@@ -279,7 +279,12 @@ export const PORTAS_DA_CENA = [
   /* o avesso da porta da cidade: as regras do espaço ENTRE os lugares só
      valem para quem está nele */
   { id: "viagem", quando: (c) => !!c.emViagem, porque: "o relogio da estrada so importa a quem esta nela" },
-  { id: "ermo", quando: (c) => !c.emCidade || !!c.emViagem, porque: "o que há entre os assentamentos importa a quem está entre eles" },
+  /* MM17 C2: e quem está numa masmorra não está entre eles — está DENTRO de
+     um. Lá dentro `cenaNaMasmorra` (masmorra-sem-cidade.js) fecha a porta da
+     cidade e a da estrada, e sem este `!emMasmorra` o "não há cidade" abria
+     as regras do ermo no lugar das do mercado. Fora da masmorra, a mesma
+     regra de sempre. */
+  { id: "ermo", quando: (c) => !c.emMasmorra && (!c.emCidade || !!c.emViagem), porque: "o que há entre os assentamentos importa a quem está entre eles — e não a quem desceu a um deles" },
   /* v9.58: a planta do prédio só importa a quem entrou num. Quem está na
      rua tem a lista de LOCAIS; quem está dentro tem a de CÔMODOS, e mandar
      as duas juntas é convidar o Mestre a misturar as escalas. */

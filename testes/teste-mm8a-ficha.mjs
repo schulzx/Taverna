@@ -378,8 +378,11 @@ sec("10. a fiação — pautaDoTurno chama genteParaPauta de verdade");
      que a frase pediu cada coisa. A asserção move-se com o motivo: ainda
      prova que `gp` chega à secção "pergunta", só que pela mesa, não sozinho. */
   t("e o resultado sobe pela mesa (com o da cidade e o do mercado) na secção \"pergunta\"",
-    /const\s*\{\s*cidade:\s*fc,\s*gente:\s*gp,\s*mercado:\s*mc\s*\}\s*=\s*fichasDaMesa/.test(corpo)
-    && /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc\]\)\)/.test(corpo));
+    /* MM17 C2 (06/10): a mesa ganhou a quarta ficha, o horizonte (`hz`, só
+       quando a frase pergunta por terras de além) — `gp` continua a subir
+       pela mesma mesa; a asserção só aceita o quarto lugar depois de mc. */
+    /const\s*\{\s*cidade:\s*fc,\s*gente:\s*gp,\s*mercado:\s*mc,\s*horizonte:\s*hz\s*\}\s*=\s*fichasDaMesa/.test(corpo)
+    && /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc,\s*hz\]\)\)/.test(corpo));
   t("a chamada está guardada por calou (um órgão que estoura não derruba o turno) — agora dentro de fichasDaMesa", /try\s*\{[^]*?genteParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("genteParaPauta"/.test(corpoFichas));
   const iCidade = corpoFichas.indexOf("fichaParaPauta(");
   const iGente = corpoFichas.indexOf("genteParaPauta(");

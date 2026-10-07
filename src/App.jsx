@@ -190,6 +190,7 @@ import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeE
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
+import { calaNaMasmorra, aquiDoTurno, cenaNaMasmorra, linhaDaFicha, horizonteDaPergunta } from "./masmorra-sem-cidade.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, envelopeDasFalas, bocasDoTurno, falaDaResposta } from "./falas.js";
 import { indoleDe, linhaDaIndole, dispararProposito, pesarConvite, envelopeDoConvite } from "./indole.js";
@@ -6947,7 +6948,14 @@ export default function Taverna() {
     try {
       mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;
     } catch (e) { calou("mercadoParaPauta", e); }
-    return { cidade: fc, gente: gp, mercado: mc };
+    /* MM17 C2: as terras de além da região — só quando a frase pergunta por
+       elas, nunca na masmorra nem na luta. É ficha do mundo: o oráculo não
+       rola o que o mapa sabe (`A_FICHA_DECIDE`). */
+    let hz = null;
+    try {
+      hz = horizonteDaPergunta(frase, mapaRef.current, { masmorra: masmorraRef.current, luta: !!combateRef.current });
+    } catch (e) { calou("horizonteDaPergunta", e); }
+    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz };
   };
 
   const pautaDoTurno = (acaoDoTurno = "") => {
@@ -6972,6 +6980,12 @@ export default function Taverna() {
     try {
       p = porNaPauta(p, "masmorra", masmorraParaPauta(masmorraRef.current, { luta: !!combateRef.current }));
     } catch (e) { calou("masmorraParaPauta", e); }
+    /* MM17 C2: e, numa campanha com região, o que se sabe DE FORA do lugar
+       (a ficha: o tipo, o perigo, quem anda por lá, as horas até à base).
+       Na luta não entra: lá a secção é a linha do tabuleiro. */
+    try {
+      p = porNaPauta(p, "masmorra", linhaDaFicha(mapaRef.current, masmorraRef.current, { luta: !!combateRef.current }));
+    } catch (e) { calou("linhaDaFicha", e); }
     /* 06/10: A LUZ DA LUTA — o escuro, a minha tocha, quem enxerga no
        escuro. Vazia com tudo claro; prio barata (pauta.js). */
     try {
@@ -7027,11 +7041,11 @@ export default function Taverna() {
     /* MM14: as tres fichas da mesa (cidade, gente, mercado), pela mesma
        frase e o mesmo elenco desta cena — agora em fichasDaMesa, para que
        o sinal do oraculo tambem consiga perguntar. */
-    const { cidade: fc, gente: gp, mercado: mc } = fichasDaMesa(acaoDoTurno, aqui);
+    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz } = fichasDaMesa(acaoDoTurno, aqui);
     if (fc) p = porNaPauta(p, "cidade", fc.cidade);
     /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a
        frase pediu cada coisa — não pela ordem em que os módulos correram. */
-    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc]));
+    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz]));
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
     p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));
@@ -7642,7 +7656,7 @@ export default function Taverna() {
   const cenaDoPrompt = () => {
     const p = fichaViva() || personagem || {};
     const mm = masmorraRef.current;
-    return {
+    const cena = {
       emCombate: !!combateRef.current,
       emMasmorra: !!(mm && !mm.encerrada),
       /* v9.115: há um chamado em curso? É a porta da raid. */
@@ -7682,6 +7696,10 @@ export default function Taverna() {
       temRegraPropria: temRegraPropria(p),
       emViagem: !!jornadaRef.current,
     };
+    /* MM17 C2: lá dentro fecham o mercado, a cidade, a estrada e o prédio
+       (PORTAS_NA_MASMORRA): 2.768 car. de regras de compra e venda por
+       turno numa cripta. Fora dela, a mesma cena (o mesmo objeto). */
+    try { return cenaNaMasmorra(cena); } catch (e) { calou("cenaNaMasmorra", e); return cena; }
   };
 
   /* ---------------- ONDE O ERMO ESTÁ (v9.54) ----------------
@@ -12077,7 +12095,15 @@ export default function Taverna() {
           return resumoComodosPrompt(comodosDoLocal(sementeMundo(), dono, generoMundo(), moldeMundo()), dono.nome);
         } catch { return ""; }
       })();
-      const aqui = [forma, ondeEstou, comodosAqui, resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico), shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n");
+      /* MM17 C2: lá dentro a cena é a sala. A cidade (os locais, a gente, os
+         rumores, os arredores, o ermo, as saídas e a forma do mundo) cala por
+         tabela (`DENTRO_DA_MASMORRA`, masmorra-sem-cidade.js); fora dela o
+         "aqui" sai byte a byte o de antes. */
+      const daquiTxt = calaNaMasmorra("daqui", masmorraRef.current) ? "" : resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      let aqui = "";
+      try {
+        aqui = aquiDoTurno({ forma, ondeEstou, comodos: comodosAqui, daqui: daquiTxt, formaDaCidade: shape, viagem: viag, ermo: ermoAqui, arredores: fora, saidas }, masmorraRef.current);
+      } catch (e) { calou("aquiDoTurno", e); aqui = [forma, ondeEstou, comodosAqui, daquiTxt, shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n"); }
       const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico);
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
@@ -12139,7 +12165,7 @@ export default function Taverna() {
        muda sem haver turno (recalibrar, carregar save). */
     systemRef.current = montarSystemPrompt(
       nomeCampanhaRef.current || nomeCampanha, mundoAtual(), persAtual || personagemRef.current || personagem,
-      canoneRef.current, { ...bancoNomesRef.current, elenco: (() => { try { return elencoParaPovoar(sementeMundo(), mapaRef.current, { ...contextoDoElenco(), dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); } catch (e) { calou("elencoParaPovoar", e); return []; } })() },
+      canoneRef.current, { ...bancoNomesRef.current, elenco: (() => { try { if (calaNaMasmorra("povoar", masmorraRef.current)) return []; /* MM17 C2: a gente por conhecer é a da cidade */ return elencoParaPovoar(sementeMundo(), mapaRef.current, { ...contextoDoElenco(), dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); } catch (e) { calou("elencoParaPovoar", e); return []; } })() },
       (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(),
       resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((n) => c.includes(n)); } catch (e) { calou("emCena das pessoas", e); return []; } })(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao das pessoas", e); return []; } })() }),
       tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),
@@ -22162,7 +22188,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
-    const localMsg = jornadaRef.current
+    /* MM17 C2: quem dorme na masmorra acorda nela, mesmo com a jornada à porta */
+    const acordoCala = (() => { try { return calaNaMasmorra("acordo", masmorraRef.current); } catch (e) { calou("acordo na masmorra", e); return false; } })();
+    const localMsg = (jornadaRef.current && !acordoCala)
       ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
       : "";
     enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);

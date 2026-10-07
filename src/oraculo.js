@@ -252,14 +252,19 @@ function oQueSePergunta(texto) {
 
    Quando o oráculo rola na mesma, as fichas ainda chegam ao Narrador: a
    frase entra na pauta pelo "Eu perguntei" do envelope (`fraseDoJogador`,
-   perguntas.js) — a lei da cidade vai junto do "não" do guarda. */
+   perguntas.js) — a lei da cidade vai junto do "não" do guarda.
+
+   MM17 C2: e o HORIZONTE (masmorra-sem-cidade.js) é ficha do mundo. "Há
+   reinos além das montanhas?" é pergunta fechada de forma das coisas, e
+   numa campanha com região o mapa sabe a resposta (as terras de além, com
+   nome e boato): rolá-la seria o d100 a desmentir o mapa. */
 export const A_FICHA_DECIDE = {
-  mundo: ["cidade", "gente", "mercado"],
+  mundo: ["cidade", "gente", "mercado", "horizonte"],
   social: ["mercado"],
   perigo: [],
 };
 
-/* `fichas`: { cidade, gente, mercado } — as saídas de `fichaParaPauta`,
+/* `fichas`: { cidade, gente, mercado, horizonte } — as saídas de `fichaParaPauta`,
    `genteParaPauta` e `mercadoParaPauta` para ESTA frase —, ou uma função
    que as devolve (só é chamada quando a frase é mesmo pergunta fechada:
    as fichas custam, e quase nenhum turno pergunta). */
