@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 06/10 · v9.360 · **B1b — a mesa de batalha cabe na janela, sem rolar** · commit `HASH_B1B`
+## 06/10 · v9.360 · **B1b — a mesa de batalha cabe na janela, sem rolar** · commit `146cb5c`
 
 *Defeito da pessoa, com foto: "a tela de batalha deveria caber tudo sem precisar
 descer ou subir, assim como no figma". A forma: `mente/formas.md` §B1b.*
