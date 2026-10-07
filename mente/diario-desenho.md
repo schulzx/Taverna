@@ -19,6 +19,57 @@ Formato:
 
 ---
 
+## 06/10 · v9.360 · **B1b — a mesa de batalha cabe na janela, sem rolar** · commit `HASH_B1B`
+
+*Defeito da pessoa, com foto: "a tela de batalha deveria caber tudo sem precisar
+descer ou subir, assim como no figma". A forma: `mente/formas.md` §B1b.*
+
+- **estado inicial:** sem pausa; trava do desenho tomada às 21:06. **A versão é v9.360 e não v9.359** porque o `orquestrador` já tinha `v9.359` escrito na árvore para a etapa dele (por commitar); subo por cima com o número seguinte, e fica o maior. O bastão do
+  `App.jsx` era do `orquestrador` (MM17 C2, desde 20:50) — **não foi pedido nem
+  tocado**: a emenda mora inteira em `painel-batalha.jsx` e na grade.
+- **aprendiz (Opus):** a casa no monitor passa a caber nas duas direções (piso 32,
+  teto 64, em tabela); dois patamares de altura; os participantes sobem para a
+  linha do título; a frase do Mestre em 2 linhas; o TURNO ATUAL encolhe; NESTA
+  BATALHA rola só por dentro. Três catracas movidas com motivo (o piso do
+  `ampliar`, o piso da casa, o lado só pela largura) e sete novas em
+  `check-tela-de-batalha`; nenhuma relaxa o telefone.
+- **a prova** (luta real, deserto 18×14, troll):
+
+  | janela | casa | linhas à vista | rola por dentro | página rola | troll à vista |
+  |---|---|---|---|---|---|
+  | 1366×657 | 32 | 9/14 | sim | não | sim |
+  | 1440×789 | 32 | 14/14 (régua A–R fora) | sim, 21 px | não | sim |
+  | 1536×730 | 32 | 12/14 | sim | não | sim |
+  | **1907×845** (a dela) | 34 | **14/14** | não | não | sim |
+  | 1920×960 | 39 | 14/14 | não | não | sim |
+
+  Floresta 16×16: inteira só a 1920×960; nunca rola a página. Estrada com 4 lobos:
+  inteira a 1907×845 (casa 40); a 1366×657 NESTA BATALHA rola por dentro.
+  Telefone 375×812: casa 48, sem rolagem lateral, campo 270 → 279.
+  Build limpo. **Árvore:** 266/266 e 14/15 — o `check-acoes-do-jogador` vermelho
+  pelo `App.jsx` do `orquestrador` em voo. **HEAD + só os meus 4 arquivos:**
+  264/265 e 15/15 — o vermelho é `teste-mm5-margem.mjs`, que **falha no HEAD
+  limpo** (`311e0d4`, v9.358, já no remoto) sem nenhum arquivo meu: é da outra
+  mente. Subi assim mesmo, e é decisão: o vermelho já está no ar e a minha
+  emenda não o toca nem o piora; segurar o conserto que a pessoa pediu por um
+  vermelho que não é meu seria esperar, e o roteiro manda dizer e seguir.
+- **decisões médias, com o motivo:** (1) a casa de 48 cai a 32 **só no monitor**
+  (WCAG 2.5.8 AA = 24; o telefone mantém 48, 2.5.5 AAA = 44); (2) o patamar curto
+  subiu de 900 para 1000 — a 960 os respiros do quadro deixavam 31 px por casa e o
+  deserto não cabia por uma linha; (3) o título desce a 24 px no patamar baixo
+  (a medida do telefone) — sem isso a 1907×845 dava 31 px; (4) o `⤢ ampliar` no
+  monitor passa de 48 a 32 (custava 26 px ao tabuleiro); (5) o custo escreve-se a
+  partir de casa 32 no monitor (11 px fixos, "13,5" cabe); (6) a barra de ação fica
+  com 162 abaixo de 1000 de altura, e não os 198 do quadro.
+- **o que ficou:** a régua A–R some quando o tabuleiro rola por dentro (B4, do
+  `desenho`); a masmorra 7×18 não se provou (exige estar numa); B3 (o telefone)
+  só ganhou 9 px.
+- **para quem joga:** na janela da pessoa (1907×845) o tabuleiro passa de **4 para
+  14 linhas** à vista — o campo inteiro —, o troll volta à coluna, e **nada rola**
+  em nenhuma das cinco janelas de notebook provadas.
+- **a proposta ambiciosa:** fica a de B1 (*o inimigo é o alvo*), ainda à espera da
+  palavra dela; este ciclo foi um conserto pedido, e não abriu outra.
+
 ## 05/10 · v9.352 · **B1 — a nova mesa de batalha, igual ao quadro dela** · commit `427c93c`
 
 *Pedido direto da pessoa, com a fila do desenho parada (ordem de 28/09): a palavra

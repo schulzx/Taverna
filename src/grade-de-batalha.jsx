@@ -328,7 +328,7 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
    mesmo tempo, e nenhum dos quatro tamanhos de antes lá chegava (23,8 no
    embutido 16×16, 36,6 no ampliado). Zero (o defeito) mantém, byte a
    byte, a conta antiga — quem não pede janela continua com o relance. */
-export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, aoMedirOLado = null, pe = null, peCompacto = false }) {
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, alturaDaJanela = 0, tetoDoLado = 0, aoMedirOLado = null, pe = null, peCompacto = false }) {
   const [aberto, setAberto] = React.useState(false);
 
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
@@ -580,8 +580,16 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      `ladoFixo`, que é o piso do alvo. Sem ela, é o `ladoFixo` de sempre. A
      casa continua QUADRADA: a distância do jogo é por casa, e uma casa
      retangular (as 62 × 51 do quadro) mentiria a distância. */
+  /* B1b · E O TABULEIRO INTEIRO NA CAIXA. Com `alturaDaJanela` medida (só o
+     monitor a passa), o lado é o MENOR entre a largura útil ÷ colunas e a
+     altura útil ÷ linhas — a calha da régua sai das duas, porque ela mora
+     em cima e à esquerda —, com `tetoDoLado` por cima e `ladoFixo` por
+     baixo. O piso ganha sempre: abaixo dele é a janela que rola. Sem altura
+     (o telefone), é a conta de B1, byte a byte. */
+  const ladoPelaLargura = larguraDaJanela > 0 ? Math.floor((larguraDaJanela - CALHA_DA_REGUA) / g.largura) : Infinity;
+  const ladoPelaAltura = alturaDaJanela > 0 ? Math.floor((alturaDaJanela - CALHA_DA_REGUA) / g.altura) : Infinity;
   const ladoNaJanela = ladoFixo > 0 && larguraDaJanela > 0
-    ? Math.max(ladoFixo, Math.floor((larguraDaJanela - CALHA_DA_REGUA) / g.largura))
+    ? Math.max(ladoFixo, Math.min(tetoDoLado > 0 ? tetoDoLado : Infinity, ladoPelaLargura, ladoPelaAltura))
     : ladoFixo;
   const ladoEmPx = (grande) => {
     try {
@@ -618,11 +626,14 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     /* a textura do quadro — só a planta que a pessoa desenhou tem uma */
     const chao = TERRENO_DO_TABULEIRO[g.cenario] || null;
     const parado = movimentoParado();
-    /* O NÚMERO SÓ SE ESCREVE ONDE ELE SE LÊ. O corpo é dado em píxeis
-       sobre a casa de `ALVOS.piso`, e dentro do SVG ele escala com a
-       casa: numa casa de 24 px o 10 vira 5, e cinco píxeis de mono não
-       são um número, são sujidade. Abaixo do piso do alvo, nada. */
-    const escreveOCusto = !mirando && custoDoPasso.size > 0 && ladoEmPx(grande) >= ALVOS.piso;
+    /* O NÚMERO SÓ SE ESCREVE ONDE ELE SE LÊ. Era "abaixo do piso do alvo,
+       nada", porque o corpo escalava com a casa (numa casa de 24 px o 10
+       virava 5). Desde B1 o corpo é dado em píxeis de TELA (o SVG divide
+       pelo lado real): o número tem 11 px em qualquer casa, e "13,5" em
+       mono 11 mede ~27 px. B1b: logo o piso que decide é o piso da casa
+       que a tela impôs — 32 no monitor, 48 no telefone —, e o relance sem
+       piso imposto continua na regra de sempre (`ALVOS.piso`). */
+    const escreveOCusto = !mirando && custoDoPasso.size > 0 && ladoEmPx(grande) >= (ladoFixo > 0 ? ladoFixo : ALVOS.piso);
     /* a chave do mapa de casas leva o tamanho: os dois tabuleiros podem
        estar montados ao mesmo tempo, e sem isto o de tela cheia apagaria
        as casas do compacto do mapa — e a seta daria o foco ao invisível */
@@ -1160,10 +1171,15 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       )}
     </>
   );
+  /* B1b: no pé da arena do MONITOR o `⤢ ampliar` fica no piso da casa de
+     rato (32, WCAG 2.5.8 AA) — o pé do quadro mede 22, e um botão de 48 ali
+     comia 26 px ao tabuleiro, que é a vista que agora cabe inteira. No
+     telefone (`peCompacto`) e fora da mesa, o piso do dedo de sempre. */
+  const alvoDoAmpliar = pe && !peCompacto ? MB.casaMinimaNoMonitor : ALVOS.piso;
   const ampliar = (
       <button onClick={() => setAberto(true)} title="Abrir o campo em tela cheia"
         className="tv-anel-foco tv-mono text-[9px] ml-auto px-3 rounded-lg flex items-center justify-center"
-        style={{ minHeight: ALVOS.piso, minWidth: ALVOS.piso, border: `1px solid ${T.line}`, color: T.inkDim }}>
+        style={{ minHeight: alvoDoAmpliar, minWidth: alvoDoAmpliar, border: `1px solid ${T.line}`, color: T.inkDim }}>
         ⤢ ampliar
       </button>
   );
@@ -1214,7 +1230,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   );
 
   return (
-    <div className="mb-2">
+    /* B1b: dentro da janela da mesa (`pe`) o tabuleiro não leva margem por
+       baixo — oito píxeis a mais que o lado não conta seriam oito píxeis de
+       rolagem num tabuleiro que cabe */
+    <div className={pe ? "" : "mb-2"}>
       {/* quantas casas o passo acende, dito a quem monta a tela: é o
           número que decide se o verbo do passo pode armar. Uma vez só,
           fora dos dois tabuleiros — a medida é do conjunto, não do

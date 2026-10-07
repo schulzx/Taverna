@@ -405,8 +405,15 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
     "`box-shadow` não pinta em `<rect>`: o anel do SVG tem de ser `outline`.");
   /* e o controle que abre a única vista onde a luta inteira se vê não pode
      ser o mais pequeno da tela: media 68 × 19 contra o piso de 48 */
-  t("o `⤢ ampliar` chegou ao piso do alvo e ganhou anel",
-    /minHeight: ALVOS\.piso, minWidth: ALVOS\.piso/.test(GRADE)
+  /* MOVIDA EM B1b (06/10), com o motivo: no pé da arena do MONITOR o
+     `⤢ ampliar` desce ao piso da casa de rato (`casaMinimaNoMonitor`, 32 —
+     WCAG 2.5.8 AA pede 24), porque um botão de 48 num pé de 22 comia 26 px
+     ao tabuleiro, que agora cabe inteiro. A intenção sobrevive: nunca abaixo
+     do piso da casa ao lado dele, e no telefone (e fora da mesa) continua o
+     piso do dedo — é isso que a asserção passa a provar. */
+  t("o `⤢ ampliar` está no piso do alvo (48 no dedo, o da casa no monitor) e ganhou anel",
+    /const alvoDoAmpliar = pe && !peCompacto \? MB\.casaMinimaNoMonitor : ALVOS\.piso;/.test(GRADE)
+    && /minHeight: alvoDoAmpliar, minWidth: alvoDoAmpliar/.test(GRADE)
     && /className="tv-anel-foco tv-mono text-\[9px\] ml-auto/.test(GRADE));
 
   /* escrever e mirar são compatíveis, e é esse o ponto inteiro */
@@ -435,9 +442,14 @@ sec("8. a geometria sai de `TELA_DE_BATALHA`, nunca da cabeça de quem digitou")
   }
   t("nenhum número da tabela está escrito à mão numa medida de estilo",
     soltos.length === 0, soltos.join(" · "));
-  /* a casa não se negocia: 48, e ela é IMPOSTA ao tabuleiro */
-  t("a casa do tabuleiro é imposta pelo piso do alvo — a janela sobre o campo",
-    /ladoFixo=\{ALVOS\.piso\}/.test(TEL) && /ladoFixo = 0/.test(ler("src/grade-de-batalha.jsx")));
+  /* a casa é IMPOSTA ao tabuleiro. MOVIDA EM B1b (06/10), com o motivo:
+     era "48 sempre"; a pessoa pediu o tabuleiro inteiro à vista no monitor,
+     e ali o piso passa a ser o da casa de rato (`casaMinimaNoMonitor`, 32,
+     WCAG 2.5.8 AA). NO TELEFONE NADA MUDA — o piso continua `ALVOS.piso`,
+     e é isso que a asserção guarda com os dois lados escritos. */
+  t("a casa do tabuleiro é imposta por um piso — o do dedo no telefone, o do rato no monitor",
+    /ladoFixo=\{noTelefone \? ALVOS\.piso : M\.casaMinimaNoMonitor\}/.test(TEL) && /ladoFixo = 0/.test(ler("src/grade-de-batalha.jsx"))
+    && MESA_DE_BATALHA.casaMinimaNoMonitor >= 24 && MESA_DE_BATALHA.casaMinimaNoMonitor < ALVOS.piso);
   t("e o campo visível é que rola, nunca o alvo que encolhe",
     /flex-1 min-h-0 min-w-0 overflow-auto tv-scroll/.test(TEL));
   /* zero cor literal: a paleta é `T`, e a catraca global de `check-formas`
@@ -493,9 +505,42 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
      colunas, nunca abaixo do piso — e tudo o que o chão mede em píxeis é
      dividido pelo lado REAL. Dividir pelo piso engrossaria o traço assim que
      a casa crescesse. */
-  t("a casa cresce com a janela e nunca abaixo do piso",
-    /Math\.max\(ladoFixo, Math\.floor\(\(larguraDaJanela - CALHA_DA_REGUA\) \/ g\.largura\)\)/.test(GRADE_B1)
+  /* MOVIDA EM B1b (06/10), com o motivo: a casa já não enche só a LARGURA —
+     o lado é o menor entre largura ÷ colunas e altura ÷ linhas, para o
+     tabuleiro caber inteiro (o pedido da pessoa, com foto). O que a
+     asserção guardava continua: quadrada, medida, nunca abaixo do piso. */
+  t("a casa cabe na janela (largura E altura), com teto, e nunca abaixo do piso",
+    /const ladoPelaLargura = larguraDaJanela > 0 \? Math\.floor\(\(larguraDaJanela - CALHA_DA_REGUA\) \/ g\.largura\) : Infinity;/.test(GRADE_B1)
+    && /const ladoPelaAltura = alturaDaJanela > 0 \? Math\.floor\(\(alturaDaJanela - CALHA_DA_REGUA\) \/ g\.altura\) : Infinity;/.test(GRADE_B1)
+    && /Math\.max\(ladoFixo, Math\.min\(tetoDoLado > 0 \? tetoDoLado : Infinity, ladoPelaLargura, ladoPelaAltura\)\)/.test(GRADE_B1)
     && /larguraDaJanela=\{larguraDaJanela\}/.test(TEL) && /new ResizeObserver\(/.test(TEL));
+  /* B1b · A MESA CABE NA JANELA. O monitor passa a altura e o teto; o
+     telefone não passa nenhum dos dois (ali rolar é aceitável, e a conta de
+     B1 fica byte a byte). A altura e a largura saem da MESMA medida. */
+  t("só o monitor passa a altura e o teto ao tabuleiro",
+    /alturaDaJanela=\{noTelefone \? 0 : alturaDaJanela\} tetoDoLado=\{noTelefone \? 0 : M\.casaMaximaNoMonitor\}/.test(TEL)
+    && /setLarguraDaJanela\(el\.clientWidth \|\| 0\); setAlturaDaJanela\(el\.clientHeight \|\| 0\);/.test(TEL));
+  t("o piso e o teto da casa no monitor estão em tabela e fazem sentido",
+    MESA_DE_BATALHA.casaMinimaNoMonitor < MESA_DE_BATALHA.casaMaximaNoMonitor && MESA_DE_BATALHA.casaMaximaNoMonitor <= 1184 / 18 + 1,
+    `${MESA_DE_BATALHA.casaMinimaNoMonitor} · ${MESA_DE_BATALHA.casaMaximaNoMonitor}`);
+  /* os dois patamares de altura saem da tabela, e o curto é mais alto que o
+     baixo (senão o baixo nunca aconteceria sozinho) */
+  t("os patamares de altura saem da tabela",
+    /const CORTE_CURTO = `\(max-height: \$\{M\.patamares\.curto - 1\}px\)`;/.test(cruTela)
+    && /const CORTE_BAIXO = `\(max-height: \$\{M\.patamares\.baixo - 1\}px\)`;/.test(cruTela)
+    && MESA_DE_BATALHA.patamares.curto > MESA_DE_BATALHA.patamares.baixo);
+  /* A COLUNA CABE INTEIRA: NESTA BATALHA cede e rola por dentro, o foco
+     da escolha só aparece se couber inteiro (a altura dele é soma da
+     tabela que o desenha), e o rastro mora na sobra. */
+  t("NESTA BATALHA cede a altura no monitor e rola por dentro",
+    /flex: cede \? "0 1 auto" : "0 0 auto"/.test(TEL) && /cede=\{!noTelefone\}/.test(TEL));
+  t("o foco da escolha só aparece se couber inteiro na sobra",
+    /alturaDaSobra >= ALTURA_DO_FOCO && <FocoDaEscolha \/>/.test(TEL)
+    && /const ALTURA_DO_FOCO = Math\.ceil\(M\.escolhasRespiro \* 2 \+ M\.glifoDaRuna/.test(TEL));
+  /* A FRASE DO MESTRE: duas linhas com reticências, e o corte de verdade
+     continua a ser o do módulo, pelo começo */
+  t("a frase da cena tem o teto de linhas da tabela e o texto inteiro no title",
+    /WebkitLineClamp: NARRACAO\.linhas/.test(TEL) && /title=\{inteiro \|\| undefined\}/.test(TEL));
   t("e o chão divide os píxeis pelo lado real, não pelo piso",
     /const px = 1 \/ Math\.max\(1, ladoEmPx\(grande\)\);/.test(GRADE_B1) && !/\/ ALVOS\.piso/.test(GRADE_B1));
   t("a câmara enquadra com o lado medido", /aoMedirOLado=\{aoMedirOLado\}/.test(TEL) && /const lado = ladoRef\.current \|\| ALVOS\.piso;/.test(TEL));

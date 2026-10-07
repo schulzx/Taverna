@@ -80,10 +80,17 @@ const CORTE_DO_TELEFONE = "(max-width: 767px)";
    em cada um sai da MESMA tabela (nenhum número novo):
    · ESTREITO (< 1440): a margem da página e o respiro dos verbos descem
      ao do telefone e ao do chip — a fileira volta a caber numa linha;
-   · CURTO (< 900 de altura): o cabeçalho da cena e o compositor encolhem
-     ao piso do alvo — a janela ganha as casas que o ar lhe tirava. */
+   · CURTO (< 1000 de altura desde B1b; era 900): o cabeçalho da cena e o
+     compositor encolhem ao piso do alvo — a janela ganha as casas que o
+     ar lhe tirava;
+   · BAIXO (< 860, B1b): o título, os chips, a pílula e o turno atual
+     compactam, para o tabuleiro caber INTEIRO (ver `M.patamares`). */
+/* B1b (06/10): o CURTO subiu de 900 para a altura do próprio quadro
+   (1000) e nasceu o BAIXO (860) — os dois números e o motivo moram em
+   `MESA_DE_BATALHA.patamares`. */
 const CORTE_ESTREITO = "(max-width: 1439px)";
-const CORTE_CURTO = "(max-height: 899px)";
+const CORTE_CURTO = `(max-height: ${M.patamares.curto - 1}px)`;
+const CORTE_BAIXO = `(max-height: ${M.patamares.baixo - 1}px)`;
 function usarMidia(consulta) {
   const [casa, setCasa] = React.useState(false);
   React.useEffect(() => {
@@ -178,10 +185,14 @@ function FioComRuna({ dosDoisLados = false }) {
    seguido de quem está de pé); a cor diz o lado: âmbar a vez, `danger` o
    inimigo, `ok` o aliado. E A PALAVRA VEM JUNTA, nunca só a cor.
    ============================================================ */
-function FaixaDaVez({ selos, entes, noTelefone }) {
+/* B1b: no monitor a faixa deixou de ter linha própria — mora na linha do
+   título, entre ele e a pílula, e rola na horizontal se não couber (44 px
+   de chip mais 16 de respiro voltaram ao tabuleiro). No telefone continua
+   a ser a sua linha. `compacto` é o patamar baixo: o chip desce a 38. */
+function FaixaDaVez({ selos, entes, noTelefone, compacto = false }) {
   if (!selos.length) return null;
   return (
-    <div className="flex items-center shrink-0 overflow-x-auto tv-scroll" style={{ gap: M.chipEntre + 2 }}>
+    <div className={`flex items-center overflow-x-auto tv-scroll ${noTelefone ? "shrink-0" : "flex-1 min-w-0"}`} style={{ gap: M.chipEntre + 2 }}>
       {!noTelefone && <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.inkDim }}>Participantes</span>}
       {selos.map((s, i) => {
         const inimigo = s.lado === "inimigo";
@@ -190,7 +201,7 @@ function FaixaDaVez({ selos, entes, noTelefone }) {
         return (
           <span key={`${s.nome}-${i}`} className="flex items-center shrink-0"
             style={{
-              gap: M.chipEntre, padding: `${M.chipLadoY}px ${M.chipLadoX}px`, borderRadius: M.raioControle,
+              gap: M.chipEntre, padding: `${compacto ? M.aperto.chipLadoY : M.chipLadoY}px ${M.chipLadoX}px`, borderRadius: M.raioControle,
               background: s.agora ? T.panelSoft : T.panel, border: `1px solid ${borda}`,
               /* o chip do herói nunca sai da ponta esquerda: a única coisa
                  que ninguém pode ter de procurar rolando é a sua própria vez */
@@ -210,14 +221,17 @@ function FaixaDaVez({ selos, entes, noTelefone }) {
 /* A PÍLULA DA VEZ — `AGORA: <nome>`, com as espadas. É a resposta à
    pergunta "de quem é a vez?", e é por isso que a faixa não precisa de
    rótulo nenhum. */
-function PilulaDaVez({ rotulo, noTelefone }) {
+function PilulaDaVez({ rotulo, noTelefone, compacta = false }) {
   if (!rotulo) return null;
+  /* B1b: no patamar baixo do monitor a pílula veste a medida do telefone
+     (48 → 34 de altura) — é a mesma peça, e a medida já existia */
+  const pequena = noTelefone || compacta;
   return (
     <span className="flex items-center shrink-0" style={{
-      gap: M.pilulaLadoY, padding: noTelefone ? `${M.chipLadoY}px ${M.chipLadoX}px` : `${M.pilulaLadoY}px ${M.pilulaLadoX}px`,
+      gap: M.pilulaLadoY, padding: pequena ? `${M.chipLadoY}px ${M.chipLadoX}px` : `${M.pilulaLadoY}px ${M.pilulaLadoX}px`,
       borderRadius: M.raioRedondo, background: alfa(T.amber, M.alfa.brilho), border: `1px solid ${alfa(T.amber, M.alfa.fio)}`,
     }}>
-      <Glifo nome="espadas" tamanho={noTelefone ? M.glifoDoSelo + 4 : M.glifoDaPilula} cor={T.amber} />
+      <Glifo nome="espadas" tamanho={pequena ? M.glifoDoSelo + 4 : M.glifoDaPilula} cor={T.amber} />
       <span className="tv-mono truncate" style={{ ...LEGENDA, color: T.amberSoft, maxWidth: noTelefone ? 140 : 320 }}>{rotulo}</span>
     </span>
   );
@@ -388,10 +402,22 @@ function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, gavetaAberta, aoA
    narração fica.** No quadro B1 ela é a frase da cena, por baixo do
    título, na segunda voz (`inkMeio`).
    ============================================================ */
-function AUltimaFala({ texto, carregando, noTelefone }) {
+/* B1b: no monitor a frase tem DUAS linhas e reticências — o teto em
+   altura que já existia (`G.narracao`) cortava a seco no meio de uma
+   linha. O corte de verdade continua a ser o do módulo, PELO COMEÇO
+   (`ultimasLinhasDoMestre`: o fim é o que o jogador precisa); o clamp é só
+   o cinto, para o dia em que a coluna for mais estreita do que a conta de
+   caracteres supõe. A fala inteira fica no `title` e no relato. O clamp
+   vai em estilo inline, nunca na classe da CDN (R2: a classe mediu
+   `display: flow-root` ao vivo). */
+function AUltimaFala({ texto, inteiro = "", carregando, noTelefone }) {
   return (
     <div className="shrink-0 overflow-hidden" style={{ maxHeight: noTelefone ? G.narracaoNoTelefone : G.narracao }}>
-      <p className={`tv-body${noTelefone ? " truncate" : ""}`} style={{ fontSize: M.letra.cena, color: T.inkMeio, lineHeight: 1.625, margin: 0 }}>
+      <p className={`tv-body${noTelefone ? " truncate" : ""}`} title={inteiro || undefined}
+        style={{
+          fontSize: M.letra.cena, color: T.inkMeio, lineHeight: 1.625, margin: 0,
+          ...(noTelefone ? {} : { display: "-webkit-box", WebkitLineClamp: NARRACAO.linhas, WebkitBoxOrient: "vertical", overflow: "hidden" }),
+        }}>
         {carregando && !texto ? "" : texto}
       </p>
     </div>
@@ -468,20 +494,23 @@ function Recurso({ rotulo, atual, max, cor }) {
    O que fica é o que não tem outra casa: o nome, PV, PM, a economia da
    rodada e os modificadores do motor (E4 §6).
    ============================================================ */
-function TurnoAtual({ personagem, economia, acaoBonus, selos = [] }) {
+/* B1b: `compacto` é o patamar baixo — a moldura, o retrato, o nome e os
+   respiros descem aos de `M.aperto`; nenhum campo sai. */
+function TurnoAtual({ personagem, economia, acaoBonus, selos = [], compacto = false }) {
   const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
+  const m = compacto ? M.aperto : M;
   return (
     <div className="tv-mesa-vez flex flex-col shrink-0 w-full"
-      style={{ padding: M.turnoRespiro, gap: M.turnoEntre, borderRadius: M.raio, background: T.panel, border: `1px solid ${grave ? T.danger : alfa(T.amber, M.alfa.fio)}` }}>
+      style={{ padding: m.turnoRespiro, gap: m.turnoEntre, borderRadius: M.raio, background: T.panel, border: `1px solid ${grave ? T.danger : alfa(T.amber, M.alfa.fio)}` }}>
       <div className="flex items-center justify-between">
         <span className="tv-mono" style={{ ...LEGENDA, color: T.amber }}>Turno atual</span>
         <span className="flex items-center" style={{ gap: 6 }}><SelosDaRodada economia={economia} acaoBonus={acaoBonus} /></span>
       </div>
-      <div className="flex flex-col items-center" style={{ gap: M.cartao }}>
-        <span className="flex items-center justify-center" style={{ width: M.moldura, height: M.moldura, borderRadius: M.moldura, background: alfa(T.amber, M.alfa.brilho), border: `1px solid ${alfa(T.amber, M.alfa.fio)}` }}>
-          <RostoNaLuta ente={personagem} tamanho={M.retratoDoHeroi} anel={grave ? T.danger : T.amber} />
+      <div className="flex flex-col items-center" style={{ gap: compacto ? M.chipLadoY : M.cartao }}>
+        <span className="flex items-center justify-center" style={{ width: m.moldura, height: m.moldura, borderRadius: m.moldura, background: alfa(T.amber, M.alfa.brilho), border: `1px solid ${alfa(T.amber, M.alfa.fio)}` }}>
+          <RostoNaLuta ente={personagem} tamanho={m.retratoDoHeroi} anel={grave ? T.danger : T.amber} />
         </span>
-        <span className="tv-display text-center w-full truncate" style={{ fontSize: M.letra.nomeDoHeroi, color: T.ink, fontWeight: 600, lineHeight: 1.2 }}>{personagem.nome}</span>
+        <span className="tv-display text-center w-full truncate" style={{ fontSize: compacto ? M.aperto.nomeDoHeroi : M.letra.nomeDoHeroi, color: T.ink, fontWeight: 600, lineHeight: 1.2 }}>{personagem.nome}</span>
       </div>
       <div style={{ height: 1, background: alfa(T.amber, M.alfa.fio) }} />
       <Recurso rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={grave ? T.danger : T.amber} />
@@ -561,11 +590,19 @@ function ORastroDosDados({ linhas }) {
    Os caídos ficam, esmaecidos — a luta que se lê de relance inclui quem
    já caiu.
    ============================================================ */
-function QuemEstaDePe({ grupo, inimigos, veredito, children }) {
+/* B1b: o painel CEDE em altura (`flex: 0 1 auto`) e a lista rola DENTRO
+   dele — o rótulo fica, e todos os participantes continuam lá, a uma
+   rolagem. Antes ele era `shrink-0` e saía cortado pelo pé da coluna,
+   com o cartão do inimigo fora da tela (a foto da pessoa, 1907 × 845).
+   `cede` é só do monitor: no telefone o painel abre por cima do campo, e
+   ali quem rola é a folha inteira, como antes. */
+function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, cede = false }) {
+  const m = compacto ? M.aperto : M;
   return (
-    <div className="flex flex-col shrink-0 w-full"
-      style={{ padding: M.outrosRespiro, gap: M.outrosEntre, borderRadius: M.raio, background: T.panel, border: `1px solid ${T.line}` }}>
-      <span className="tv-mono" style={{ ...LEGENDA, color: T.inkDim }}>Nesta batalha</span>
+    <div className="flex flex-col w-full min-h-0 overflow-hidden"
+      style={{ flex: cede ? "0 1 auto" : "0 0 auto", padding: m.outrosRespiro, gap: m.outrosEntre, borderRadius: M.raio, background: T.panel, border: `1px solid ${T.line}` }}>
+      <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.inkDim }}>Nesta batalha</span>
+      <div className="flex flex-col min-h-0 overflow-y-auto tv-scroll" style={{ gap: m.outrosEntre }}>
       {grupo.map((g, gi) => {
         const pv = Math.max(0, g.vida || 0), pvMax = Math.max(1, g.vidaMax || 1);
         const caido = pv <= 0;
@@ -607,6 +644,7 @@ function QuemEstaDePe({ grupo, inimigos, veredito, children }) {
         );
       })}
       {children}
+      </div>
     </div>
   );
 }
@@ -679,12 +717,18 @@ function BolsaDeCombate({ pocoes, bolsa, aoUsar }) {
 /* ---------------- O FOCO DA ESCOLHA ----------------
    O fecho da coluna do quadro: os fios com a runa, e a frase que devolve
    a vez a quem joga. Texto fixo da tela — é a mesa a falar, não o sistema. */
+const ENTRELINHA_DO_FOCO = 1.2;
+const ENTRELINHA_DO_DIZ = 1.5;
+/* B1b: a altura que o foco pede, somada da MESMA tabela que o desenha —
+   relação, não número novo. É com ela que a coluna decide se ele cabe. */
+const ALTURA_DO_FOCO = Math.ceil(M.escolhasRespiro * 2 + M.glifoDaRuna + M.chipEntre * 2
+  + M.letra.foco * ENTRELINHA_DO_FOCO + M.letra.focoDiz * ENTRELINHA_DO_DIZ);
 function FocoDaEscolha() {
   return (
     <div className="flex flex-col shrink-0 w-full" style={{ padding: M.escolhasRespiro, gap: M.chipEntre }}>
       <FioComRuna dosDoisLados />
-      <p className="tv-display text-center" style={{ fontSize: M.letra.foco, color: T.ink, margin: 0, lineHeight: 1.2 }}>O próximo movimento é seu.</p>
-      <p className="tv-body text-center" style={{ fontSize: M.letra.focoDiz, color: T.inkDim, margin: 0, lineHeight: 1.5 }}>Escolha sua ação e descreva como.</p>
+      <p className="tv-display text-center" style={{ fontSize: M.letra.foco, color: T.ink, margin: 0, lineHeight: ENTRELINHA_DO_FOCO }}>O próximo movimento é seu.</p>
+      <p className="tv-body text-center" style={{ fontSize: M.letra.focoDiz, color: T.inkDim, margin: 0, lineHeight: ENTRELINHA_DO_DIZ }}>Escolha sua ação e descreva como.</p>
     </div>
   );
 }
@@ -707,6 +751,7 @@ export function TelaDeBatalha(props) {
   const noTelefone = usarTelefone();
   const estreito = usarMidia(CORTE_ESTREITO);
   const curto = usarMidia(CORTE_CURTO) && !noTelefone;
+  const baixo = usarMidia(CORTE_BAIXO) && !noTelefone;
   const [armado, setArmado] = React.useState("");
   const [bolsaAberta, setBolsaAberta] = React.useState(false);
   /* o turno atual e NESTA BATALHA abertos por cima do campo — só no
@@ -774,8 +819,14 @@ export function TelaDeBatalha(props) {
      enquadra: uma câmara que contasse 48 numa casa de 62 poria o herói
      uma fila e meia fora do sítio. Guardado num ref, porque mudar o lado
      não é razão para a câmara se mexer (regra 2, abaixo). */
+  /* B1b: E A ALTURA TAMBÉM. O tabuleiro passa a caber INTEIRO na caixa
+     (lado = o menor entre largura ÷ colunas e altura ÷ linhas), e por isso
+     a janela mede as duas. A altura dela não depende do tabuleiro — é o
+     que sobra na coluna (`flex: 1`, `min-height: 0`) —, logo medir e
+     redesenhar não se perseguem. */
   const janelaRef = React.useRef(null);
   const [larguraDaJanela, setLarguraDaJanela] = React.useState(0);
+  const [alturaDaJanela, setAlturaDaJanela] = React.useState(0);
   const ladoRef = React.useRef(ALVOS.piso);
   /* QUANDO O LADO MUDA, A CÂMARA VOLTA A PERGUNTAR — e só pergunta: a
      regra 2 continua a mandar (só se move se for obrigada). Medido no
@@ -794,7 +845,7 @@ export function TelaDeBatalha(props) {
     const el = janelaRef.current;
     if (!el) return undefined;
     try {
-      const mede = () => setLarguraDaJanela(el.clientWidth || 0);
+      const mede = () => { setLarguraDaJanela(el.clientWidth || 0); setAlturaDaJanela(el.clientHeight || 0); };
       mede();
       if (typeof ResizeObserver === "undefined") return undefined;
       const ro = new ResizeObserver(() => mede());
@@ -802,6 +853,25 @@ export function TelaDeBatalha(props) {
       return () => ro.disconnect();
     } catch (e) { console.warn("TelaDeBatalha: medir a janela do campo falhou", e); return undefined; }
   }, [noTelefone]);
+  /* B1b · O QUE SOBRA NA COLUNA DA DIREITA. O turno atual e NESTA BATALHA
+     vêm primeiro; o "foco da escolha" e o rastro dos dados moram no que
+     sobrar por baixo deles, e é o foco o PRIMEIRO a ceder: só aparece se
+     couber inteiro (meia frase cortada é pior do que nenhuma). A caixa da
+     sobra tem base zero, logo a altura dela não depende do que está dentro
+     — medir e mostrar não se perseguem. */
+  const [sobraEl, setSobraEl] = React.useState(null);
+  const [alturaDaSobra, setAlturaDaSobra] = React.useState(0);
+  React.useEffect(() => {
+    if (!sobraEl) return undefined;
+    try {
+      const mede = () => setAlturaDaSobra(sobraEl.clientHeight || 0);
+      mede();
+      if (typeof ResizeObserver === "undefined") return undefined;
+      const ro = new ResizeObserver(() => mede());
+      ro.observe(sobraEl);
+      return () => ro.disconnect();
+    } catch (e) { console.warn("TelaDeBatalha: medir a sobra da coluna falhou", e); return undefined; }
+  }, [sobraEl]);
   /* o pé da arena: o tabuleiro escreve lá a área de movimento, o custo no
      terreno e as suas tarjas (passo, golpe livre, mira, ampliar), fora da
      janela que rola — no quadro, a legenda do alcance */
@@ -980,6 +1050,8 @@ export function TelaDeBatalha(props) {
     linhas: noTelefone ? NARRACAO.linhasNoTelefone : NARRACAO.linhas,
     chars: noTelefone ? NARRACAO.charsPorLinhaNoTelefone : NARRACAO.charsPorLinha,
   });
+  /* a fala sem corte nenhum, para o `title` (B1b) — o mesmo módulo, sem teto */
+  const falaInteira = ultimasLinhasDoMestre(p.mensagens, { linhas: 1, chars: Infinity });
 
   const tocarVerbo = (v) => {
     /* O VERBO QUE NÃO PODE ARMAR RECUSA, E A LINHA DIZ PORQUÊ. Antes ele
@@ -1037,32 +1109,43 @@ export function TelaDeBatalha(props) {
   /* ============================================================
      A CENA E O TURNO — o cabeçalho do quadro
      ============================================================ */
+  /* B1b · O CABEÇALHO APERTA. No monitor os participantes sobem à linha
+     do título (entre ele e a pílula), e a frase fica em duas linhas com
+     reticências. No patamar baixo os respiros descem aos de `M.aperto`, o
+     título ao do telefone, e a pílula e os chips encolhem. No telefone,
+     nada muda: a faixa continua a ser a sua linha. */
+  const faixa = (<>{!esperando && <FaixaDaVez selos={selos} entes={enteDoSelo} noTelefone={noTelefone} compacto={baixo} />}</>);
+  const respiroDaCena = noTelefone || curto
+    ? (baixo ? { topo: M.aperto.cenaTopo, baixo: M.aperto.cenaBaixo, entre: M.aperto.cenaEntre } : { topo: M.chipLadoX, baixo: M.chipLadoY, entre: M.chipLadoY })
+    : { topo: M.cenaTopo, baixo: M.cenaBaixo, entre: M.cenaEntre };
   const cena = (
     <header className="flex flex-col shrink-0 min-w-0"
-      style={{ padding: noTelefone || curto ? `${M.chipLadoX}px ${margem}px ${M.chipLadoY}px` : `${M.cenaTopo}px ${margem}px ${M.cenaBaixo}px`, gap: noTelefone || curto ? M.chipLadoY : M.cenaEntre }}>
-      <div className="flex items-center justify-between min-w-0" style={{ gap: M.chipLadoX }}>
-        <div className="flex flex-col min-w-0" style={{ gap: 4 }}>
+      style={{ padding: `${respiroDaCena.topo}px ${margem}px ${respiroDaCena.baixo}px`, gap: respiroDaCena.entre }}>
+      <div className="flex items-center justify-between min-w-0" style={{ gap: noTelefone ? M.chipLadoX : M.entreColunas }}>
+        <div className="flex flex-col min-w-0" style={{ gap: 4, flex: "0 1 auto" }}>
           {!noTelefone && <span className="tv-mono" style={{ ...LEGENDA, color: T.amber }}>Taverna / mesa de batalha</span>}
           {titulo && (
-            <h2 className="tv-display truncate" style={{ fontSize: noTelefone ? M.letra.tituloNoTelefone : M.letra.titulo, color: T.ink, fontWeight: 600, lineHeight: 1.1, margin: 0 }}>{titulo}</h2>
+            <h2 className="tv-display truncate" style={{ fontSize: noTelefone || baixo ? M.letra.tituloNoTelefone : M.letra.titulo, color: T.ink, fontWeight: 600, lineHeight: 1.1, margin: 0 }}>{titulo}</h2>
           )}
         </div>
-        <PilulaDaVez rotulo={rotuloDaVez(selos)} noTelefone={noTelefone} />
+        {!noTelefone && faixa}
+        <PilulaDaVez rotulo={rotuloDaVez(selos)} noTelefone={noTelefone} compacta={baixo} />
       </div>
-      <AUltimaFala texto={fala} carregando={p.carregando} noTelefone={noTelefone} />
-      {!esperando && <FaixaDaVez selos={selos} entes={enteDoSelo} noTelefone={noTelefone} />}
+      <AUltimaFala texto={fala} inteiro={falaInteira} carregando={p.carregando} noTelefone={noTelefone} />
+      {noTelefone && faixa}
     </header>
   );
 
   /* ============================================================
      O CAMPO DE BATALHA — a arena do quadro
      ============================================================ */
+  const alturaDoCabecalhoDoCampo = baixo ? M.aperto.arenaCabecalho : M.arenaCabecalho;
   const campo = (
     <section className="tv-mesa-arena flex flex-col min-h-0 min-w-0 w-full overflow-hidden"
       style={{ flex: "1 1 auto", order: 1, borderRadius: M.raio, background: T.pagina, border: `1px solid ${T.line}` }}>
       {!noTelefone && (
         <div className="flex items-center justify-between shrink-0 min-w-0"
-          style={{ minHeight: M.arenaCabecalho, padding: `0 ${M.arenaLado}px`, background: T.panel, gap: M.chipLadoX }}>
+          style={{ minHeight: alturaDoCabecalhoDoCampo, padding: `0 ${M.arenaLado}px`, background: T.panel, gap: M.chipLadoX }}>
           <span className="flex items-center shrink-0" style={{ gap: M.entreVerbos }}>
             <Glifo nome="campo" tamanho={M.glifo} cor={T.amber} />
             <span className="tv-mono" style={{ ...LEGENDA, color: T.amberSoft }}>Campo de batalha</span>
@@ -1076,7 +1159,7 @@ export function TelaDeBatalha(props) {
                     {i > 0 && <span aria-hidden="true" className="shrink-0" style={{ width: 1, height: M.glifoDoSelo, background: T.line }} />}
                     <button onClick={() => irAZona(r)} aria-current={acesa ? "location" : undefined}
                       className="tv-anel-foco tv-mono shrink-0"
-                      style={{ ...LEGENDA, minHeight: M.arenaCabecalho, color: acesa ? T.amberSoft : T.inkDim }}>
+                      style={{ ...LEGENDA, minHeight: alturaDoCabecalhoDoCampo, color: acesa ? T.amberSoft : T.inkDim }}>
                       {r.nome}
                     </button>
                   </React.Fragment>
@@ -1086,9 +1169,9 @@ export function TelaDeBatalha(props) {
           )}
         </div>
       )}
-      {/* A JANELA SOBRE O CAMPO: a casa enche a largura e quem cede é a
-          janela, que rola na vertical. O rolamento é desta caixa, e nunca
-          do log — é a inversão.
+      {/* A JANELA SOBRE O CAMPO: o tabuleiro cabe inteiro nela (B1b) e,
+          só quando nem com a casa no piso cabe, é ela que rola. O rolamento
+          é desta caixa, e nunca do log — é a inversão.
 
           E O TOQUE NO CAMPO DESARMA: é a terceira saída de W1, a única
           que existe no telefone, onde não há `Esc`. Vive aqui e não na
@@ -1105,8 +1188,14 @@ export function TelaDeBatalha(props) {
           mira={p.mira} onMirar={p.aoMirar} alcanceMira={p.alcanceMira}
           aoMedirOPasso={setCasasDoPasso}
           /* o piso continua a ser imposto; a largura medida deixa a casa
-             crescer até encher a janela (B1) */
-          ladoFixo={ALVOS.piso} larguraDaJanela={larguraDaJanela} aoMedirOLado={aoMedirOLado}
+             crescer até encher a janela (B1). B1b: no monitor o piso é o
+             da casa de rato (32, WCAG 2.5.8 AA — o motivo mora em
+             `M.casaMinimaNoMonitor`), a ALTURA entra na conta para o
+             tabuleiro caber inteiro, e há teto; no telefone fica tudo como
+             estava (48, só a largura, sem teto). */
+          ladoFixo={noTelefone ? ALVOS.piso : M.casaMinimaNoMonitor} larguraDaJanela={larguraDaJanela}
+          alturaDaJanela={noTelefone ? 0 : alturaDaJanela} tetoDoLado={noTelefone ? 0 : M.casaMaximaNoMonitor}
+          aoMedirOLado={aoMedirOLado}
           pe={peDaArena} peCompacto={noTelefone} />
       </div>
       <div ref={setPeDaArena} className="shrink-0 min-w-0"
@@ -1193,8 +1282,8 @@ export function TelaDeBatalha(props) {
      ============================================================ */
   const consulta = (
     <>
-      <TurnoAtual personagem={personagem} economia={combate.economia} acaoBonus={p.acaoBonus} selos={modificadores} />
-      <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd}>
+      <TurnoAtual personagem={personagem} economia={combate.economia} acaoBonus={p.acaoBonus} selos={modificadores} compacto={baixo} />
+      <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd} compacto={baixo} cede={!noTelefone}>
         {/* OS ALVOS DECLARADOS ficam aqui, ao lado de quem eles nomeiam:
             são CONTROLES, e um controle que desaparece é função que a tela
             não tem. Só nascem quando há o que declarar (mais de um
@@ -1229,11 +1318,21 @@ export function TelaDeBatalha(props) {
       )}
     </aside>
   ) : (
+    /* B1b · A COLUNA CABE INTEIRA. O turno atual não cede; NESTA BATALHA
+       cede a altura e rola por dentro; o foco e o rastro vivem na SOBRA —
+       o foco só se mostra inteiro, e o rastro rola no que restar. A ordem
+       de quem cede é esta: o foco, depois o rastro, e só então a lista de
+       quem está nesta batalha. A rolagem da própria coluna fica como rede,
+       para uma janela mais baixa do que qualquer patamar. */
     <aside className="flex flex-col min-h-0 min-w-0 shrink-0 overflow-y-auto tv-scroll"
-      style={{ width: M.lateral, gap: M.entrePaineis }}>
+      style={{ width: M.lateral, gap: baixo ? M.aperto.entrePaineis : M.entrePaineis }}>
       {consulta}
-      {!p.fim && <FocoDaEscolha />}
-      <ORastroDosDados linhas={Array.isArray(combate.log) ? combate.log : []} />
+      <div ref={setSobraEl} className="flex flex-col min-h-0 overflow-hidden" style={{ flex: "1 1 0", gap: baixo ? M.aperto.entrePaineis : M.entrePaineis }}>
+        {!p.fim && alturaDaSobra >= ALTURA_DO_FOCO && <FocoDaEscolha />}
+        <div className="min-h-0 overflow-y-auto tv-scroll" style={{ flex: "0 1 auto" }}>
+          <ORastroDosDados linhas={Array.isArray(combate.log) ? combate.log : []} />
+        </div>
+      </div>
     </aside>
   );
 
@@ -1246,7 +1345,7 @@ export function TelaDeBatalha(props) {
           para a tira poder morar entre as duas metades dela. A ordem do DOM
           continua a ser a do turno: campo → veredito → verbos. */}
       <div className="flex-1 min-h-0 min-w-0 flex flex-col md:flex-row"
-        style={{ gap: noTelefone ? M.entreVerbos : estreito ? M.margemNoTelefone : M.entreColunas, padding: noTelefone || curto ? `0 ${margem}px ${margem}px` : `${M.mesaTopo}px ${margem}px ${M.mesaBaixo}px` }}>
+        style={{ gap: noTelefone ? M.entreVerbos : estreito ? M.margemNoTelefone : M.entreColunas, padding: noTelefone ? `0 ${margem}px ${margem}px` : curto ? `0 ${margem}px ${M.margemNoTelefone}px` : `${M.mesaTopo}px ${margem}px ${M.mesaBaixo}px` }}>
         <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", gap: curto ? M.chipLadoX : M.entrePaineis }}>
           {campo}
           {acao}

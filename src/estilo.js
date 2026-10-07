@@ -1211,6 +1211,51 @@ export const MESA_DE_BATALHA = {
   },
   /* o obstáculo do quadro: 38 × 34 dentro de uma casa de 62 */
   estorvo: { largura: 38, altura: 34, casa: 62, alfaDaSombra: 0.31 },
+
+  /* ============================================================
+     B1b (06/10) · A MESA CABE NA JANELA — o pedido da pessoa, com foto:
+     *"a tela de batalha deveria caber tudo sem precisar descer ou subir,
+     assim como no figma"*. Na foto (janela útil 1907 × 845) o tabuleiro
+     mostrava as linhas 11–14 de 14, com rolagem própria, e NESTA BATALHA
+     saía cortado por baixo, sem o cartão do inimigo.
+
+     A CASA NO MONITOR DESCE A 32, E SÓ NO MONITOR. O lado passa a ser o
+     MENOR entre a largura útil ÷ colunas e a altura útil ÷ linhas — o
+     tabuleiro INTEIRO na caixa —, entre um piso e um teto. O piso de 48
+     (`ALVOS.piso`, WCAG 2.5.5 AAA) era o alvo do dedo; num aparelho de rato
+     vale o tabuleiro inteiro à vista, e 32 cumpre com folga o WCAG 2.5.8
+     (AA, *Target Size (Minimum)*: 24 × 24). O telefone continua em 48: ali
+     o alvo é o dedo, e rolar é aceitável. Só abaixo do piso é que a janela
+     rola, centrada no herói (o enquadramento de E1). O teto é o lado que o
+     quadro dá a 1600 de largura (1184 ÷ 18 ≈ 64): acima dele a casa já não
+     ensina nada e só come altura. */
+  casaMinimaNoMonitor: 32,
+  casaMaximaNoMonitor: 64,
+  /* OS DOIS PATAMARES DE ALTURA (a janela, não a tela), medidos:
+     · CURTO (< 1000) — abaixo da altura do próprio quadro (1001). Com os
+       respiros do quadro, a 1920 × 960 sobravam 31 px por casa: o deserto
+       (18 × 14) não cabia por uma linha. O cabeçalho e a ação apertam
+       (o corte de ontem era 900, e a 960 já não chegava);
+     · BAIXO (< 860) — abaixo da altura em que o deserto inteiro cabe a 32
+       com o patamar curto (≈ 850). Aqui aperta tudo o que não é tabuleiro
+       nem barra de ação: o título desce ao do telefone, os chips e a pílula
+       encolhem, o TURNO ATUAL compacta. A 1907 × 845 — a janela da foto —
+       é este patamar que faz o tabuleiro caber inteiro.
+     Abaixo disso (1366 × 657) o deserto já não cabe a 32 com barra de ação
+     nenhuma, e é a janela que rola, centrada no herói. */
+  patamares: { curto: 1000, baixo: 860 },
+  /* o que muda no patamar BAIXO. O resto do aperto (o cabeçalho e a ação
+     no patamar CURTO) reusa números que a tabela já tem. */
+  aperto: {
+    cenaTopo: 8, cenaBaixo: 4, cenaEntre: 4,
+    chipLadoY: 4,          /* o chip do participante: 46 → 38 de altura */
+    arenaCabecalho: 32,    /* o cabeçalho do campo: os botões de zona ficam no mesmo piso de rato da casa */
+    entrePaineis: 12,
+    /* o TURNO ATUAL compacto: moldura 90 → 56, retrato na mesma razão
+       (74/90 ≈ 46/56), nome 32 → 24 */
+    turnoRespiro: 16, turnoEntre: 12, moldura: 56, retratoDoHeroi: 46, nomeDoHeroi: 24,
+    outrosRespiro: 12, outrosEntre: 8,
+  },
 };
 
 /* O CHÃO DE CADA PLANTA (B1). SÓ o deserto tem textura, e é a imagem do

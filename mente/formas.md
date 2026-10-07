@@ -10693,3 +10693,31 @@ frase numa linha, os participantes a rolar na horizontal; depois o campo; a
 BATALHA por cima do campo (o HUD que se abre de R21: *acervo à vista vai a um
 toque, nunca sai*); a fileira em três linhas no arco do polegar; o `como?`.
 Prova a 375 sem rolagem lateral.
+
+### B1b · a mesa cabe na janela (06/10, defeito da pessoa)
+
+*"a tela de batalha deveria caber tudo sem precisar descer ou subir, assim como
+no figma"* — na foto dela, a 1907×845, a página rolava, NESTA BATALHA saía
+cortado sem o troll e o tabuleiro mostrava 4 das 14 linhas. **A emenda a B1:**
+
+- **a mesa ocupa a altura da janela** e nunca rola como página; quem cede é o
+  tabuleiro, por último.
+- **a casa no monitor** passa a ser `min(largura ÷ colunas, altura ÷ linhas)`,
+  com **piso 32** (`MESA_DE_BATALHA.casaMinimaNoMonitor`) e teto 64. Isto revoga
+  *no monitor* a casa de 48 de B1: num aparelho de rato o tabuleiro inteiro à
+  vista vale mais que o alvo de dedo — WCAG 2.5.8 (AA) pede 24×24 e 32 cumpre;
+  2.5.5 (AAA) pede 44, e é o que **o telefone mantém** (48). Só se nem com 32
+  couber há rolagem interna, centrada no herói. O `⤢ ampliar` continua.
+- **dois patamares de altura**, em `MESA_DE_BATALHA.patamares`: *curto* (< 1000)
+  e *baixo* (< 860). A ordem do que cede: respiros → título 38→24, cabeçalho do
+  campo 44→32, TURNO ATUAL com moldura 90→56 e nome 32→24 → *"O próximo
+  movimento é seu."* (inteiro ou some) → o rastro dos dados → a lista de NESTA
+  BATALHA rola por dentro → a casa desce até 32 → rolagem interna.
+- **o cabeçalho numa faixa:** os PARTICIPANTES sobem para a linha do título; a
+  frase do Mestre fica em 2 linhas com reticências (o texto inteiro no relato e
+  no `title`).
+- **a barra SUA PRÓXIMA AÇÃO** fica com 198 (o quadro) a partir de 1000 de
+  altura e 162 abaixo disso.
+- **dívida declarada:** quando o tabuleiro rola por dentro, a régua de letras A–R
+  sai de vista (a 1440×789 faltam 21 px). Uma régua presa ao topo é peça nova —
+  é do `desenho` (B4 na pauta).

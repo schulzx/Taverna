@@ -32,6 +32,9 @@ marcado **depois do beta** (a Fase S e os itens do Duelo). **A sala de dois fica
 da fila continua parado até ela falar do resto.
 
 - [x] **B1 · a nova mesa de batalha, igual ao quadro `151:1662`** · `regente` → `aprendiz` · 05/10 · a forma em `mente/formas.md` §B1
+- [x] **B1b · a mesa cabe na janela, sem rolar** · defeito da pessoa, 06/10 · `formas.md` §B1b
+- [ ] **B4 · a régua de letras presa ao topo quando o tabuleiro rola** · da B1b · `desenho` · médio
+  Abaixo de ~790 de altura a casa chega ao piso de 32 e o tabuleiro rola por dentro; a régua A–R rola junto e some (a 1440×789 faltam 21 px). O endereço K14 é coisa de que o jogador depende — a régua tem de ficar à vista, como a de números.
 - [ ] **B2 · o chão das outras nove plantas** · da B1 · leve quando houver arte
   Só o deserto tem textura (é a imagem do quadro dela, `public/terrenos/deserto.jpg`, pela tabela `TERRENO_DO_TABULEIRO`). As outras nove plantas de `grid.js` ficam no chão liso: **não se gera nem se escolhe imagem** pela mesa. Quando a pessoa desenhar a delas, é uma linha na tabela.
 - [ ] **B3 · o telefone devolve casas ao campo** · da B1 · médio
