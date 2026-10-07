@@ -15,6 +15,59 @@ Formato:
 ```
 
 ---
+## 06–07/10 · v9.362 · a luz · MM17 a região delimitada (A–D) · a Bolsa · o vermelho do HEAD · commits `2fb5355` (v9.354), `eff2882` (v9.355), `81b8bca` (v9.356), `fe92895` (v9.357), `311e0d4` (v9.358), `779d254` (v9.361), `87eeda8` (v9.362)
+
+- **por que andou:** duas decisões da pessoa de 06/10, registadas em `mente/respondidas.md` com as palavras dela: (1) a luz — a mecânica
+  nova que estava como pesado ("baixo a tocha e escondo-me na sombra"); (2) a região delimitada, **MM17**: *"agora nossa campanha tem
+  estrutura, tem espinha, início, meio e fim… não precisamos de um mapa infinito"*. Modo manual (sem tarefa agendada). Modelos: Opus
+  para quem programa, Sonnet só para quem testa. Bastão do `App.jsx` tomado só durante cada etapa e devolvido ao fim de cada uma; a
+  trava devolvida no fim. Dois backends da C2 morreram (uma interrupção, um 401 de token) — a terceira mão retomou do diff.
+- **a luz (v9.354):** `luz.js`, tudo por tabela (escuro/penumbra/clara; raios do 5e; quem enxerga no escuro; Elfo, Anão, Gnomo, Meio-elfo,
+  Meio-orc e Tiefling a 18 m, o traço da criação passa a dizê-lo); a sombra esconde no escuro de qualquer distância, na penumbra de quem
+  está a 6 m ou mais, na luz nunca; baixar/apagar a tocha não custa ação e acontece no gesto da frase; seção A LUZ na pauta (prio 5.5, ~90
+  car.). `teste-luz-e-sombra`: 91 (64 falhavam no HEAD); 300 lutas semeadas, as quatro propriedades 300/300. Campos novos opcionais:
+  `combate.tochaDoHeroi`, `sombra:true` na condição `escondido`.
+- **MM17 A (v9.355):** `regiao.js` (`gerarRegiao`, `amarrarEspinha`) e a linha de base: da masmorra à cidade próxima, mediana 167,7 km (máx
+  282,8), 60/60 mundos com uma masmorra a mais de um dia; masmorras com ficha 0/495; locais da cidade dentro da masmorra mediana 3.210. Depois
+  (200 mundos): base→lugar mediana 3,5 h, pior 8 h; ponta a ponta 2 dias; marcos fora 0; fichas 100%. `teste-regiao`: 83 (54 falhavam).
+- **MM17 B (v9.356):** a criação usa a região só em campanhas NOVAS de Uma Vida (`mapaDaCriacao`, pura): 60/60 nascem com região, 0/60 nos
+  outros moldes e modos; saves antigos intocados (240/240, byte a byte no molde do beta); o cão de um passo dorme na região (acordaria em
+  115 de 200 bases, agora 0). Masmorra mais longe: mediana 24,9 km (8 h) contra 950 km.
+- **MM17 C1 (v9.357):** a espinha amarrada (`espinhaNaRegiao`): passo "descer" novo (`concluir_masmorra`, só da espinha), confronto final no
+  clímax, atos sem peso 54/950 → 0; ganchos (abertura 200/200, mural 1343/1343, boatos 1285/1285); `masmorrasConhecidas` abre todos; a ida a
+  pé respeita o chão só em região v2 (0/3855 contradições com a ficha). Hashes de HEAD iguais nos mapas continentais.
+- **MM17 C2 (v9.358):** a masmorra sem a cidade (`DENTRO_DA_MASMORRA`) e o horizonte só quando perguntado. "Da cidade" no turno, mediana
+  9.379 → 0 (região) e 7.466 → 0 (continente), na sala e na luta, em todos os mundos; turno inteiro na sala 69.656 → 60.457; fora da masmorra
+  o prompt é IDÊNTICO ao de HEAD (2.800/2.800 e 840/840, hashes iguais); o horizonte custa 0 bytes a quem não pergunta (11.200/11.200); pior
+  cena real 74.644 → 73.861. `teste-masmorra-sem-cidade`: 94.
+- **a Bolsa (v9.361, `779d254`):** o nome inteiro na 1.ª linha, as ações na 2.ª em flex-wrap, "dar…" com 7 rem; medido no navegador a 1600 e a
+  375 px: sem rolagem lateral, nenhum botão a cobrir o nome, tudo dentro da gaveta (a screenshot a 1600 saiu ilegível: ficam os números).
+- **LEI QUEBRADA, dita:** a C2 (`311e0d4`) **subiu com `npm test` a 0 na árvore de trabalho e o HEAD ficou vermelho num checkout limpo**
+  (`teste-mm5-margem`, 118/120). A causa: a suíte lê `concluirRolagem` numa janela de 20000 caracteres, e a chamada `envelopeDoCusto(` mora a
+  19901 do começo da função com fins de linha LF (folga de 99) e a 20208 com CRLF, que é como o Git entrega o arquivo num checkout. O verde da
+  árvore (LF) escondia o vermelho do repositório (CRLF). Consertado no commit da Bolsa (janela 40000 e CRLF→LF normalizado, com o porquê);
+  provado por `bash mente/so-o-meu.sh` e por `npm test` a 0. **A lição para a casa:** uma suíte que lê o `App.jsx` por distância em
+  caracteres depende dos fins de linha — o `so-o-meu.sh` copia o MEU arquivo (LF) por cima do archive (CRLF) e por isso não apanha isto; o
+  que apanha é rodar a suíte num `git archive HEAD` puro. Fica na pauta como varredor (leve).
+- **MM17 D (v9.362):** `mapa-vivo.js`, `dadosDoMapaVivo(mapa, estado)`: os dados para a tela do mapa em tempo real (quadro normalizado, nós
+  com estado de neblina, arestas com horas, o herói num sítio só, o horizonte, o relógio). Região de 59 a 100 km de lado (mediana 78 km, 19 a
+  30 h de marcha), 9 a 13 nós; 7.642 arestas sem contradição; o herói aparece num sítio só em 200/200 em oito estados; **o clímax e o segredo
+  não aparecem na tela antes do ato** (200/200); continente antigo → `null`. `teste-mapa-vivo`: 79; o relato do que a tela pode mostrar está
+  em `mente/mm17-regiao.md`, secção D. **Não desenhei a tela.**
+- **um achado do D:** ao mutar o módulo de propósito para ver se a suíte mordia (9 mutações, todas apanhadas), uma ficou no arquivo (o rumo do
+  horizonte lia `rosa[0]`); o `npm test` na árvore deu vermelho e foi corrigido no commit. Lição: mutar numa cópia.
+- **decisões médias, com o motivo:** (1) a luz não inventa a tabela: raios e visão no escuro são os do 5e que a casa já usa; (2) a região
+  escolhe horas, não km, e uma base capital com 3–4 povoados (com 2 o elenco completava em 20% dos mundos); (3) o clímax numa região é
+  escondido da tela até o ato, pela lei do Narrador (não vê a verdade eleita antes do turno da revelação); (4) o horizonte só no turno em
+  que se pergunta, para custar 0 ao prompt; (5) o mm5-margem: a janela alarga e normaliza, sem mudar a intenção das asserções.
+- **o que ficou (na pauta, MM17):** a planta de um lugar da região sorteia os seus inimigos e a ficha diz os bichos do chão (o Narrador
+  pode ouvir "Goblin, Lobo" numa cripta de Elementais); a ficha é a primeira linha a ceder ao teto em cenas sintéticas cheias; a ida direta
+  entre dois lugares lentos chega a 20 h; o Geógrafo ainda anda a 4 km/h; os campos opcionais `baseMundo.visitadas`/`ouvidas` para o mapa
+  vivo; o varredor de fins de linha; "dar uma vida" a quem acabou uma Noite usa o mundo da partida anterior; o load recalcula as rotas
+  sem o molde; a região seguinte (continuação) em "Depois do beta". E nada disto foi jogado: a quarta sessão de prova (uma descida
+  inteira, em região) é a prova que falta.
+
+
 ## 06/10 · v9.353 · MM16 nº 5, 2, 4 e 6 · o "como" chega · "vou à Nave" leva à Nave · a masmorra na pauta · esconder-se · commits `a914320` (v9.350), `148c1d5` (v9.351), `9e193d8` (v9.352), `015f9f0` (v9.353)
 
 - **por que andou:** pedido da pessoa, via o coordenador, em modo manual (sem tarefa agendada): resolver as quatro pendências da

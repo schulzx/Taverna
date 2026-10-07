@@ -491,7 +491,7 @@ O limite é o que um commit revertido não desfaz.
      fora do ecrã é do desenho e vai a "Para a pessoa decidir") · a escolha chega, a frase não; causa provável, não provada:
      o teto da pauta (1212 de 1400 sem a linha; a linha tem ~230) com o ONDE a gastar ~550 caracteres de economia da cidade
      dentro de uma masmorra. **Primeiro provar a causa** (medir a pauta na luta), depois a frase com prioridade de ferro.
-  6. ✓ *feito em v9.353 (a causa não era o bloco da MM6: no fundo da sala não havia onde sumir — a regra do 5e estava certa; o veredito vem agora antes do dado, a ação gasta-se, e o estado chega ao Mestre no mesmo turno; fica: a **luz como esconderijo** — "baixo a tocha e escondo-me na sombra" não dá cobertura porque a grade não modela luz, **pesado**: mecânica nova — e o herói não se move sozinho para o abrigo)* · **Esconder-se na luta rola e não esconde** (M18) · **leve** (bug com teste) · Furtividade 25 contra 18, e nenhum estado,
+  6. ✓ *feito em v9.353 (a causa não era o bloco da MM6: no fundo da sala não havia onde sumir — a regra do 5e estava certa; o veredito vem agora antes do dado, a ação gasta-se, e o estado chega ao Mestre no mesmo turno; ✓ a **luz como esconderijo** feita em v9.354 — a pessoa autorizou a mecânica nova a 06/10: `luz.js`, a sombra esconde, o veredito antes do dado; fica: lutar no escuro não dá desvantagem (o aviso das tochas a promete e o combate não a aplica), os companheiros não carregam tocha por padrão, sem fases da lua, e o herói não se move sozinho para o abrigo)* · **Esconder-se na luta rola e não esconde** (M18) · **leve** (bug com teste) · Furtividade 25 contra 18, e nenhum estado,
      nenhuma linha, nenhuma ação gasta; o bloco que faz nascer o estado (`concluirRolagem`, MM6) não deixou rasto; causa por achar.
   7. **Os homónimos que o sistema traz para a cena** · **médio** · ✓ *a procura sem nome já segue um placar escrito em v9.349
      (PLACAR_DA_PROCURA); fica:* o SOCIAL que disse "essa pessoa" com "a Lourdes" na frase.
@@ -506,6 +506,24 @@ O limite é o que um commit revertido não desfaz.
       "a noite da salina" três vezes; "Seguro a ação e observo, pronto para responder Turno dos inimigos" (duas frases
       coladas); o rodapé do Mercado "O Narrador conta a conversa; quem cobra é o sistema" (o sistema a falar de si); a base
       diz "12 salas" e a planta tem 6.
+- [ ] **MM17 · a região delimitada** · decisão da pessoa, 06/10 · **A, B, C1, C2 e D feitas (v9.355–v9.362) — a quarta sessão de prova é a prova** · plano e números em `mente/mm17-regiao.md`
+  A campanha nova de Uma Vida nasce numa região de 59–100 km de lado (mediana 78 km; 19–30 h de marcha), com base, 3–4 povoados, 5–8 lugares
+  com ficha, a espinha amarrada (início na base, meio em 2–3 lugares, fim no clímax), viagens em horas e o resto do mundo como horizonte.
+  Só campanhas NOVAS; saves existentes ficam com o mapa continental. O que fica, com peso:
+  1. **A planta de um lugar da região devia tirar os inimigos de `ficha.quem`** · **médio** · hoje `gerarMasmorra` sorteia os seus e a
+     ficha diz os bichos do chão: o Narrador pode ouvir "Goblin, Lobo" numa cripta de Elementais (a linha diz "de fora, sabe-se que…").
+  2. **A ficha é a primeira linha a ceder ao teto** em cenas sintéticas cheias (200 de 500; numa cena real chega quase sempre) · **leve** · medir
+     numa sessão real; se ceder, subir a prio.
+  3. **A ida direta entre dois lugares lentos chega a 20 h** (a boca não sabe passar pela base) e **o Geógrafo ainda anda a 4 km/h** ·
+     **médio** · uma verdade só para a hora: Geógrafo, boca e ficha.
+  4. **Campos opcionais para o mapa vivo** · **médio** · `baseMundo.visitadas` e `baseMundo.ouvidas` (novos, ignorados pela versão antiga):
+     sem eles um lugar só é "visitado" enquanto o herói lá está. É fiação do App, e a tela é do desenho (a pessoa a está a desenhar).
+  5. **Varredor de fins de linha** · **leve** · uma suíte que lê `App.jsx` por distância em caracteres depende de LF/CRLF; rodar a suíte num
+     `git archive HEAD` puro, no `rodar-tudo`, apanharia o que o `so-o-meu.sh` não apanha (ver o diário de 06–07/10).
+  6. **Defeitos antigos achados no caminho** · **leve/médio** · "dar uma vida" a quem acabou uma Noite corre `iniciar` com o mundo da
+     partida anterior (a semente do mapa sai diferente da da espinha); o load recalcula as rotas sem o molde (um save antigo da Torre já não
+     volta byte a byte); regiões v1 (campanhas feitas na v9.356) mantêm a regra de ida antiga, de propósito.
+  7. **Os outros moldes** (Torre, Arquipélago, Braço estelar) ficam como estão (`gerarRegiao` devolve `null`); fora do beta.
 - [ ] **`rolarSonho` sem semente** · leve · de: a voz na segunda pessoa, 30/09 · `src/calendario.js:62` usa `Math.random`
   cravado — contra a lei da semente; o mesmo dia pode sonhar outra coisa noutra máquina.
 - [ ] **MM11 · para a pessoa decidir (pesado: muda o fluxo) — "perguntar" como jogada à parte** · do `jogo`, 30/09
