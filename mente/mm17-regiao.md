@@ -144,6 +144,11 @@ pesa ~11 KB de JSON; a tela deve memorizá-la pelos refs, não recalcular a cada
 - `nos[]` — `{ id, nome, tipo: base|povoado|lugar, subtipo (porte ou tipo de lugar), icone,
   x, y (0–1), estado, perigo, perigoRotulo, horasDaBase, vizinhos [{id, horas}], boato
   (lugares), atoDaHistoria, momento: agora|passado|proximo|null, aqui }`.
+- `nos[].quem` (P3, 10/10) — os nomes dos bichos da ficha, na ordem dela e sem nível (com
+  léxico, os renomeados), lidos por `quemDoLugar`, a mesma porta que dá a planta: só nos
+  lugares cujo `perigo` a neblina mostra (boato e oculto ficam sem o campo). Nó = ficha =
+  planta em 2.823/2.823 nós de 200 mundos; o JSON cresce ~1% (mediana 9.382 → 9.510 chars,
+  pior mundo +316, 2,5%).
 - `arestas[]` — `{ id, de, para, horas, horasDeVolta, tipoDeChao, modo: estrada|a_pe,
   origem: rota|ficha, km, perigo }`. As horas são as que o jogo cobra: rota = dias × 8;
   ida a um lugar = a ficha, que é a mesma conta da boca (0 contradições em 7.642 arestas).

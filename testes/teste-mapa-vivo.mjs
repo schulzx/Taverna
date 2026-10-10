@@ -19,10 +19,14 @@
      8. o relógio;
      9. o continente antigo e o lixo: nunca estoura;
     10. a região v1;
-    11. determinismo, nenhum Math.random, entrada congelada intocada.
+    11. determinismo, nenhum Math.random, entrada congelada intocada;
+    12. QUEM LÁ ANDA (P3, 10/10): o `quem` de cada nó com ficha aberta é a
+        ficha e é a planta — as três vias concordam a 100% —, o boato e o
+        oculto não o têm, sem nível, e a saída quase não cresce.
 
    FALHA ANTES (HEAD v9.361): `src/mapa-vivo.js` não existe, e o import cai
-   na primeira linha. */
+   na primeira linha. A secção 12 falha antes da P3: nenhum nó tinha
+   `quem`, e a concordância dava 0 em todos os mundos. */
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -39,7 +43,10 @@ import { concluirLugar, garantirBase } from "../src/mundo-base.js";
 import { segredosGuardados } from "../src/segredo-guardado.js";
 import { ehNoite } from "../src/calendario.js";
 import { definirLugar } from "../src/lugar.js";
-import { sementeDe, generoDe } from "./medir-regiao.mjs";
+import { sementeDe, generoDe, LEXICO_DA_MEDIDA } from "./medir-regiao.mjs";
+import { gerarMasmorra } from "../src/masmorras.js";
+import { masmorrasDoMundo } from "../src/mundo-base.js";
+import { hashSemente, rng } from "../src/semente.js";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 let ok = 0, mal = 0;
@@ -470,6 +477,135 @@ sec("11. determinismo, nenhum Math.random, entrada congelada intocada");
   }
   t("entrada congelada a fundo: nada estoura (o modo estrito do módulo estouraria ao mutar)", estourou === 0, `${estourou}`);
   t("e nada mudou", mutou === 0, `${mutou}`);
+}
+
+sec("12. quem lá anda (P3): o nó, a ficha e a planta dizem os mesmos bichos");
+{
+  /* O cartão do lugar diz "Cultistas e esqueletos" — a primeira coisa que
+     um jogador pergunta antes de ir. A verdade é a da v9.363: a ficha é quem
+     lá está (`ficha.quem`), e a planta nasce dela à porta (`quemDoLugar` →
+     `gerarMasmorra(…, { salas, quem })`, o caminho do App). Esta secção
+     prova as TRÊS vias — nó = ficha = planta — e que a neblina as cala onde
+     cala o perigo. Antes da P3 nenhum nó tinha `quem`: a concordância dava
+     0/N e a secção caía. */
+  const ACASO = Math.random;
+  const semeado = (sm, f) => { Math.random = rng(hashSemente(sm)); try { return f(); } finally { Math.random = ACASO; } };
+  const ABERTOS = new Set(["conhecido", "visitado", "concluido"]);
+  const NIVEL = /\d|\bn[ií]vel\b|\bnv\b|\blvl\b/i;
+  const temQuem = (n) => Object.prototype.hasOwnProperty.call(n, "quem");
+  /* a planta de um lugar, pelo caminho do App (entrarMasmorra): a masmorra
+     do mapa (as salas dela) e o quem que a porta lê da ficha */
+  const plantaDe = (w, mms, l) => {
+    const doMapa = mms.find((x) => norm(x.nome) === norm(l.nome)) || null;
+    const quem = doMapa ? R.quemDoLugar(w.mapa, doMapa.id) : null;
+    const mm = semeado(`mapa-vivo|quem|${w.semente}|${l.nome}`, () => gerarMasmorra(w.genero, l.nivel, "", { salas: doMapa ? doMapa.salas : l.salas, quem }));
+    const luta = mm.salas.filter((x) => x.tipo === "combate" || x.tipo === "chave" || x.tipo === "chefe");
+    return new Set(luta.flatMap((x) => (x.inimigos || []).map((e) => e.nome)));
+  };
+  const mesmoConjunto = (a, b) => a.size === b.size && [...a].every((x) => b.has(x));
+  let nos = 0, noFicha = 0, noPlanta = 0, tres = 0, comNivel = 0, naoTexto = 0, semQuemAberto = 0;
+  let calados = 0, vazou = 0, naoLugar = 0, climaxAntes = 0, climaxNaBoca = 0, climaxNoFim = 0;
+  const estados = { conhecido: 0, visitado: 0, concluido: 0 };
+  let cresceMax = 0, cresceRel = 0;
+  const tamanhos = { antes: [], depois: [] };
+  for (const w of mundos) {
+    const mms = masmorrasDoMundo(w.semente, w.mapa);
+    const planta = new Map();
+    const lugar = (id) => w.mapa.regiao.lugares.find((l) => l.id === id);
+    /* três momentos: o mundo novo (o gancho conhecido), todos os lugares
+       pisados menos o clímax (visitado) e tudo concluído */
+    const pisados = novo(w, { visitados: w.mapa.regiao.lugares.filter((l) => l.ato !== "fim").map((l) => l.nome) });
+    const aberto = tudoAberto(w);
+    for (const [mapa, est] of [[w.mapa, novo(w)], [w.mapa, pisados], [aberto.mapa, aberto.estado]]) {
+      const d = MV.dadosDoMapaVivo(mapa, est);
+      for (const n of d.nos) {
+        if (n.tipo !== "lugar") { if (temQuem(n)) naoLugar++; continue; }
+        if (!ABERTOS.has(n.estado) || n.perigo == null) { calados++; if (temQuem(n)) vazou++; continue; }
+        if (!temQuem(n)) { semQuemAberto++; continue; }
+        nos++; estados[n.estado]++;
+        const l = lugar(n.id);
+        const ficha = l.ficha.quem.map((x) => x.nome);
+        const fichaOk = JSON.stringify(n.quem) === JSON.stringify(ficha);
+        if (fichaOk) noFicha++;
+        if (!planta.has(l.id)) planta.set(l.id, plantaDe(w, mms, l));
+        const p = planta.get(l.id);
+        const plantaOk = mesmoConjunto(new Set(n.quem), p);
+        if (plantaOk) noPlanta++;
+        if (fichaOk && plantaOk && mesmoConjunto(new Set(ficha), p)) tres++;
+        if (n.quem.some((x) => typeof x !== "string")) naoTexto++;
+        else if (n.quem.some((x) => NIVEL.test(x))) comNivel++;
+      }
+      /* o tamanho: a mesma saída sem o campo é a de antes da P3 (o campo só
+         se acrescenta; nada mais na saída mudou) */
+      const depois = JSON.stringify(d).length;
+      const antes = JSON.stringify({ ...d, nos: d.nos.map(({ quem, ...r }) => r) }).length;
+      tamanhos.antes.push(antes); tamanhos.depois.push(depois);
+      cresceMax = Math.max(cresceMax, depois - antes);
+      cresceRel = Math.max(cresceRel, (depois - antes) / antes);
+    }
+    /* o clímax: oculto no mundo novo (nem nó, logo nem quem); quando o ato
+       do fim chega, aparece com a ficha — e com o quem dela */
+    if (MV.dadosDoMapaVivo(w.mapa, novo(w)).nos.some((n) => n.id === w.climax.id)) climaxAntes++;
+    const c = MV.dadosDoMapaVivo(w.mapa, novo(w, { etapa: w.espinha.atos.length - 1 })).nos.find((n) => n.id === w.climax.id);
+    if (c && JSON.stringify(c.quem) === JSON.stringify(w.climax.ficha.quem.map((x) => x.nome))) climaxNoFim++;
+    /* à boca do clímax antes do ato: o herói está lá e vê quem lá anda (o
+       perigo já se mostrava), e o ato continua calado */
+    const bc = chegadaABoca(w.climax, { cidade: w.climax.cidadeProxima }).lugar;
+    const nb = MV.dadosDoMapaVivo(w.mapa, novo(w, { lugar: bc })).nos.find((n) => n.id === w.climax.id);
+    if (nb && nb.atoDaHistoria === null && Array.isArray(nb.quem) && nb.perigo != null) climaxNaBoca++;
+  }
+  console.log(`      ${nos} nós com ficha aberta (conhecido ${estados.conhecido}, visitado ${estados.visitado}, concluído ${estados.concluido}); ${calados} calados pela neblina`);
+  t(`há nós em todos os estados abertos (${N} mundos × 3 momentos)`, estados.conhecido >= N && estados.visitado > N && estados.concluido > N);
+  t(`todo lugar de ficha aberta tem quem (${semQuemAberto} sem)`, semQuemAberto === 0 && nos > 0);
+  t(`nó = ficha: os nomes, na ordem dela (${noFicha}/${nos})`, noFicha === nos);
+  t(`nó = planta: os bichos que a planta põe nas salas de luta (${noPlanta}/${nos})`, noPlanta === nos);
+  t(`as três vias concordam, nó = ficha = planta (${tres}/${nos}, 100%)`, tres === nos);
+  t("o quem é só nomes, em texto (nada de objeto com nível ou ameaça)", naoTexto === 0, `${naoTexto}`);
+  t("e nenhum nome traz nível", comNivel === 0, `${comNivel}`);
+  t(`o boato e o lugar sem perigo não têm quem (${calados} nós calados)`, vazou === 0 && calados > N, `${vazou} vazaram`);
+  t("povoado e base não têm quem", naoLugar === 0, `${naoLugar}`);
+  t("o clímax oculto num mundo novo não é nó (logo, não tem quem)", climaxAntes === 0, `${climaxAntes}`);
+  t(`quando o ato do fim chega, o clímax diz quem lá anda (${climaxNoFim}/${N})`, climaxNoFim === N);
+  t(`à boca do clímax antes do ato: quem lá anda sim, o ato não (${climaxNaBoca}/${N})`, climaxNaBoca === N);
+
+  /* o tamanho: a tela guarda a saída em estado (memorizada pelos refs) */
+  const med = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  const QUEM_CRESCE = { chars: 400, fracao: 0.03 };
+  console.log(`      JSON da saída: mediana ${med(tamanhos.antes)} → ${med(tamanhos.depois)} chars, máximo ${Math.max(...tamanhos.antes)} → ${Math.max(...tamanhos.depois)}; o pior mundo cresce ${cresceMax} chars (${(cresceRel * 100).toFixed(1)}%)`);
+  t(`a saída não cresce mais de ${QUEM_CRESCE.chars} chars nem ${QUEM_CRESCE.fracao * 100}% por mundo`, cresceMax <= QUEM_CRESCE.chars && cresceRel <= QUEM_CRESCE.fracao, `${cresceMax} chars, ${(cresceRel * 100).toFixed(1)}%`);
+
+  /* num mundo com léxico, os nomes são os renomeados: o nó diz o que a
+     ficha diz, não o nome do bestiário */
+  let lexNos = 0, lexOk = 0, lexDoLexico = 0;
+  const doLexico = new Set(LEXICO_DA_MEDIDA.criaturas.flatMap((c) => c.nomes));
+  for (let i = 0; i < 40; i++) {
+    const mapa = R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente: sementeDe(i), molde, genero: generoDe(i), lex: LEXICO_DA_MEDIDA, estrutura: ESTRUTURAS[i % ESTRUTURAS.length].id, modo: "historia" }));
+    const w = { mapa, base: mapa.cidades[0], semente: sementeDe(i), espinha: { atos: [{}] } };
+    const { mapa: ma, estado } = tudoAberto(w);
+    for (const n of MV.dadosDoMapaVivo(ma, estado).nos.filter((x) => x.tipo === "lugar")) {
+      lexNos++;
+      const l = mapa.regiao.lugares.find((x) => x.id === n.id);
+      if (JSON.stringify(n.quem) === JSON.stringify(l.ficha.quem.map((x) => x.nome))) lexOk++;
+      if (Array.isArray(n.quem) && n.quem.every((x) => doLexico.has(x))) lexDoLexico++;
+    }
+  }
+  t(`com léxico, o nó diz os nomes renomeados da ficha (${lexOk}/${lexNos}, 40 mundos)`, lexOk === lexNos && lexNos > 200);
+  t(`e todos são nomes do léxico (${lexDoLexico}/${lexNos})`, lexDoLexico === lexNos);
+
+  /* o lixo na ficha: a lista podre fica com o que é nome, o resto cai sem
+     estourar; e mexer na saída não mexe na ficha */
+  const w = mundos[2];
+  const { mapa: ma, estado } = tudoAberto(w);
+  const alvo = ma.regiao.lugares.find((l) => l.ato !== "fim");
+  const comFicha = (quem) => ({ ...ma, regiao: { ...ma.regiao, lugares: ma.regiao.lugares.map((l) => (l === alvo ? { ...l, ficha: { ...l.ficha, quem } } : l)) } });
+  const quemDe = (mapa) => { try { const n = MV.dadosDoMapaVivo(mapa, estado).nos.find((x) => x.id === alvo.id); return n ? (temQuem(n) ? n.quem : "sem") : "nó"; } catch { return "estourou"; } };
+  t("ficha podre: fica só o que é nome", JSON.stringify(quemDe(comFicha([null, 3, "Lobo", { nome: "" }, { nome: 7 }, { nome: "Urso", nivel: 4, ameaca: "elite" }]))) === JSON.stringify(["Urso"]));
+  t("ficha sem lista, ou vazia: sem quem, sem estourar", [null, undefined, "x", 5, {}, []].every((x) => quemDe(comFicha(x)) === "sem"));
+  const d = MV.dadosDoMapaVivo(ma, estado);
+  const n = d.nos.find((x) => x.id === alvo.id);
+  const antes = JSON.stringify(alvo.ficha.quem);
+  n.quem.push("Intruso"); n.quem[0] = "Trocado";
+  t("mexer no quem da saída não mexe na ficha (é cópia)", JSON.stringify(alvo.ficha.quem) === antes);
 }
 
 console.log(`\n${ok} ok, ${mal} falhas`);

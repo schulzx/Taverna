@@ -15,8 +15,9 @@
        escala — quantos km e quantas horas de marcha tem o lado, e uma régua
        redonda para o canto do pergaminho;
      · os NÓS: a base, os povoados e os lugares, cada um com a sua posição
-       normalizada, o seu estado de neblina, o perigo, as horas da base e dos
-       vizinhos, e o ato da história QUANDO o jogador já o pode saber;
+       normalizada, o seu estado de neblina, o perigo e QUEM lá anda (os
+       nomes da ficha, sem nível), as horas da base e dos vizinhos, e o ato
+       da história QUANDO o jogador já o pode saber;
      · as ARESTAS: as estradas entre povoados (`mapa.rotas`) e as idas aos
        lugares (as fichas), com as horas que o jogo cobra;
      · o HERÓI, num sítio só: na base, num povoado, à boca de um lugar, lá
@@ -69,7 +70,7 @@ import { rotaAteAMasmorra, masmorraDaBoca } from "./boca.js";
 import { pontoDoHeroi, jornadaValida } from "./rastro.js";
 import { lugarConcluido } from "./mundo-base.js";
 import { progressoMasmorra } from "./masmorras.js";
-import { PERIGO_POR_NIVEL, ROTA_DO_CLIMAX } from "./regiao.js";
+import { PERIGO_POR_NIVEL, ROTA_DO_CLIMAX, quemDoLugar } from "./regiao.js";
 import { RUMOS } from "./coordenadas.js";
 import { horaTxt, ehNoite, estacaoDe } from "./calendario.js";
 /* MM17 nº 3 (v9.364): as horas de cada aresta são as da conta única */
@@ -143,7 +144,9 @@ export const SINAIS_QUE_ACORDAM_O_CLIMAX = ["aHistoriaApontaLa", "ditoAoHeroi", 
 
 /* O que cada estado mostra. `aparece: false` é não estar na lista de nós
    (só na contagem); `perigo` e `vizinhos` são da ficha, que o boato não
-   tem — sabe-se que existe e para que lado, não quem lá anda. */
+   tem — sabe-se que existe e para que lado, não quem lá anda. O `quem` do
+   nó (os bichos da ficha) vai com o `perigo`: é a mesma ficha, e quem sabe
+   o perigo sabe porquê. */
 export const O_QUE_A_NEBLINA_MOSTRA = {
   desconhecido: { aparece: false, perigo: false, vizinhos: false },
   boato: { aparece: true, perigo: false, vizinhos: false },
@@ -427,6 +430,20 @@ export function dadosDoMapaVivo(mapa, estado) {
       aqui: false,
     };
     if (n.tipo === "lugar" && s.rumor) no.boato = String(s.rumor);
+    /* P3 (10/10, o cartão do lugar): QUEM LÁ ANDA. Os nomes da ficha, na
+       ordem dela e tal como estão (num mundo com léxico, os renomeados), sem
+       nível nem ameaça — o cartão diz "Cultistas e esqueletos", não a força.
+       Lidos pela MESMA porta que dá a planta à entrada (`quemDoLugar`,
+       regiao.js; `gerarMasmorra(…, { salas, quem })`): o que o mapa diz que
+       lá anda é o que lá está. Vai com o `perigo` da neblina — o boato não
+       tem ficha, e o nó oculto (o clímax antes do ato) nem chega aqui.
+       Lista vazia ou ficha podre: sem o campo, como o boato. */
+    if (n.tipo === "lugar" && v.perigo) {
+      let q = null;
+      try { q = quemDoLugar(m, String(s.id)); } catch { q = null; }
+      const nomes = lista(q).map((x) => x.nome);
+      if (nomes.length) no.quem = nomes;
+    }
     nos.push(no);
   }
   const noVisivel = new Map(nos.map((x) => [x.id, x]));

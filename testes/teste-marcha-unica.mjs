@@ -374,7 +374,12 @@ sec("8. a região v1 e o continente, byte a byte (hashes de HEAD v9.363)");
         h(`${k}:geografo`, GE.paraPauta({ cidadeAtual: c.nome, mapa: tudo, semente, longe: [{ nome: "Vera", onde: (mapa.cidades[2] || base).nome, dias: 1 }] }));
         for (const alvo of [...mapa.cidades.slice(0, 3), ...mms.slice(0, 3)]) h(`${k}:distancia`, CP.fichaParaPauta(c, { semente, mapa, frase: `Quanto tempo leva até ${alvo.nome}?` }).pergunta);
       }
-      if (k === "v1") h("v1:mapaVivo", MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, semente, conhecidos: mms.map((m) => m.nome) }));
+      /* P3 (10/10) acrescentou `nos[].quem` (os bichos da ficha) à saída do
+         mapa vivo — campo novo, só somado, provado em teste-mapa-vivo §12.
+         O hash continua a guardar o que guardava (o resto da saída, byte a
+         byte, igual ao de HEAD v9.363): tira-se o campo novo antes de
+         contar, em vez de regravar o hash e perder o "antes". */
+      if (k === "v1") { const d = MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, semente, conhecidos: mms.map((m) => m.nome) }); h("v1:mapaVivo", d && { ...d, nos: d.nos.map(({ quem, ...r }) => r) }); }
     }
   }
   for (const k of Object.keys(HEAD)) {
