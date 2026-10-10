@@ -534,7 +534,11 @@ sec("9. a fiação no App.jsx");
   t("e já não acusa o Mestre por uma luta aberta (a recusa de combate saiu)", !/Você mudou o meu lugar no meio de um combate/.test(APP));
   const ent = corpoDe("const entrarMasmorra = (nomeSugerido = \"\", opcoes = null) => {");
   t("entrarMasmorra põe o lugar vigente na boca (lugarAoEntrarNaMasmorra)", /lugarAoEntrarNaMasmorra\(mm, \{/.test(ent) && /from "\.\/boca\.js"/.test(APP));
-  t("entrarMasmorra gera a planta com as salas que o mundo anuncia", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null \}\);/.test(ent));
+  /* v9.363 (a ficha é a planta): a mesma chamada leva agora também `quem` —
+     os bichos da ficha do lugar da região (teste-ficha-e-planta.mjs prova o
+     resto). A asserção ficou MAIS estrita, não mais frouxa: as salas que o
+     mundo anuncia continuam exigidas letra a letra, e a ficha junto. */
+  t("entrarMasmorra gera a planta com as salas que o mundo anuncia (e quem a ficha diz)", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null, quem: quemDaFicha \}\);/.test(ent));
   const pt = corpoDe("const pautaDoTurno = (acaoDoTurno = \"\") => {");
   t("pautaDoTurno põe a planta na seção masmorra",
     /porNaPauta\(p, "masmorra", masmorraParaPauta\(masmorraRef\.current, \{ luta: !!combateRef\.current \}\)\)/.test(pt));

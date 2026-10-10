@@ -7,7 +7,7 @@
    já ganhou. Decisão, risco e informação: é isso que faz masmorra.
    Tudo rolado por tabela; a IA só narra o que o sistema entrega.
    ============================================================ */
-import { criaturasDoGenero } from "./bestiario.js";
+import { criaturasDoGenero, CRIATURAS_FANTASIA, ARQUETIPOS } from "./bestiario.js";
 import { gerarLoot } from "./loot.js";
 
 const d = (n) => Math.floor(Math.random() * n);
@@ -188,12 +188,123 @@ export function larguraDasCamadas(n) {
   return Array.from({ length: camadas }, (_, i) => base + (i < sobra ? 1 : 0));
 }
 
+/* ---------------- A FICHA É A PLANTA (MM17, pendência nº 1 · v9.363) ----------------
+   A região delimitada (regiao.js) dá a cada lugar uma FICHA, e nela `quem`:
+   os bichos daquele chão que andam por lá. É o que o povo comenta, o que o
+   mapa vivo mostra e o que a pauta lá dentro diz ao Narrador ("de fora,
+   sabe-se que por lá andam…"). E ao entrar a planta sorteava os PRÓPRIOS
+   bichos do bestiário do género (`rolarGrupo`): medido em 200 mundos
+   (`medir-regiao.mjs`, secção i), 0 dos 1.285 lugares tinham a planta toda
+   dentro da ficha, e só 1.210 dos 8.045 inimigos postos nas salas (15%)
+   eram bichos que a ficha nomeava — num mundo com léxico, 0. O Narrador
+   ouvia "Elemental Menor, Ogro" à porta e encontrava um Dragão Jovem na
+   primeira sala — o cartaz e o chão contando histórias diferentes outra vez
+   (a v9.115 corrigiu o nível; a MM16 nº 4, as salas; isto é o resto).
+
+   A ficha manda. Com `opcoes.quem` (a lista da ficha), a planta nasce como
+   sempre — os MESMOS sorteios, na mesma ordem, a mesma forma, as mesmas
+   salas, o mesmo tamanho de cada grupo — e no fim os inimigos de cada sala
+   de luta (combate, guardião, chefe) passam a ser os da ficha, por conta e
+   sem sorte nenhuma:
+     · o CHEFE é o mais forte da ficha (ameaça, depois nível), com a ameaça
+       erguida até `pisoDoChefe` — o alfa da matilha, não um Dragão que
+       ninguém anunciou;
+     · os outros lugares de cada grupo andam numa RODA pela ficha, os não
+       chefes primeiro: o guardião da chave (que existe em toda planta, e
+       vem antes do fundo) já põe o primeiro deles em cena, e por isso todo
+       bicho que a ficha nomeia aparece em alguma sala sempre que a planta
+       tem lugares de luta que cheguem (com a ficha de dois, sempre).
+   A ameaça de cada bicho vem da ficha (`ameaca`, que a região grava desde
+   esta versão); numa ficha de antes dela, do bestiário pelo nome; e, num
+   nome que o léxico do mundo deu, pela tabela do nível abaixo — o mesmo
+   degrau de onde o léxico tirou o nome.
+
+   Sem a opção, nada disto corre: a planta é a de antes, byte a byte
+   (teste-ficha-e-planta.mjs guarda os hashes). */
+export const FICHA_NA_PLANTA = {
+  /* a escada das ameaças, da mais fraca à mais forte (a de bestiario.js) */
+  ameacas: ["fraco", "comum", "competente", "elite", "lendario"],
+  /* o chefe da ficha nunca entra abaixo disto (o de sempre era elite ou lendário) */
+  pisoDoChefe: "elite",
+  /* a ameaça de um nome que nem a ficha nem o bestiário dizem, pelo nível —
+     os degraus do bestiário (fraco 1-2, comum 2-3, competente 4-5, elite 7-9,
+     lendário 10+) */
+  ameacaPeloNivel: [
+    { ate: 1, ameaca: "fraco" },
+    { ate: 3, ameaca: "comum" },
+    { ate: 6, ameaca: "competente" },
+    { ate: 9, ameaca: "elite" },
+    { ate: Infinity, ameaca: "lendario" },
+  ],
+  /* sem nível nem nada: o meio da escada */
+  ameacaSemNivel: "comum",
+  /* quantos bichos da ficha a planta aceita, e o tamanho de um nome — lixo
+     grande não vira planta */
+  maximo: 6,
+  nomeMaximo: 60,
+};
+
+const BESTIARIO_INTEIRO = [...CRIATURAS_FANTASIA, ...ARQUETIPOS];
+
+/* A lista da ficha, limpa: `[{ nome, ameaca, nivel }]` (nivel `null` quando
+   a ficha não o diz), sem repetidos, na ordem da ficha. Lixo é `[]`. */
+export function bichosDaFicha(quem) {
+  const T = FICHA_NA_PLANTA;
+  if (!Array.isArray(quem)) return [];
+  const vistos = new Set();
+  const out = [];
+  for (const q of quem) {
+    if (out.length >= T.maximo) break;
+    if (!q || typeof q !== "object") continue;
+    const nome = typeof q.nome === "string" ? q.nome.trim().slice(0, T.nomeMaximo) : "";
+    if (!nome || vistos.has(nome)) continue;
+    vistos.add(nome);
+    const nv = Number(q.nivel);
+    const nivel = q.nivel != null && Number.isFinite(nv) && nv > 0 ? Math.round(nv) : null;
+    const base = BESTIARIO_INTEIRO.find((c) => c.nome === nome);
+    const ameaca = T.ameacas.includes(q.ameaca) ? q.ameaca
+      : base ? base.ameaca
+      : nivel == null ? T.ameacaSemNivel
+      : T.ameacaPeloNivel.find((x) => nivel <= x.ate).ameaca;
+    out.push({ nome, ameaca, nivel });
+  }
+  return out;
+}
+
+/* A planta `mm` com os inimigos da ficha `quem` (ver o bloco acima). Pura:
+   devolve uma planta nova e não toca na recebida; sem bichos válidos na
+   ficha, ou planta lixo, devolve a MESMA. É para a planta que acaba de
+   nascer — numa já percorrida, renomearia quem já caiu. */
+export function plantaDaFicha(mm, quem) {
+  const bichos = bichosDaFicha(quem);
+  if (!bichos.length || !mm || typeof mm !== "object" || !Array.isArray(mm.salas)) return mm;
+  const T = FICHA_NA_PLANTA;
+  const degrau = (a) => T.ameacas.indexOf(a);
+  const chefe = bichos.reduce((m, b) => (degrau(b.ameaca) > degrau(m.ameaca) || (degrau(b.ameaca) === degrau(m.ameaca) && (b.nivel || 0) > (m.nivel || 0)) ? b : m));
+  const roda = [...bichos.filter((b) => b !== chefe), chefe];
+  let k = 0;
+  const daRoda = () => { const b = roda[k % roda.length]; k++; return { nome: b.nome, ameaca: b.ameaca }; };
+  const deLuta = (s) => !!(s && typeof s === "object" && Object.prototype.hasOwnProperty.call(SALAS_DE_LUTA, s.tipo) && Array.isArray(s.inimigos));
+  const quantos = (s) => Math.max(1, s.inimigos.length);
+  /* o miolo primeiro, na ordem da planta; o fundo por último — é o que põe
+     o guardião (e os não chefes) em cena antes de a roda chegar ao chefe */
+  const novos = new Map();
+  for (const s of mm.salas) if (deLuta(s) && s.tipo !== "chefe") novos.set(s, Array.from({ length: quantos(s) }, daRoda));
+  const ameacaDoChefe = degrau(chefe.ameaca) >= degrau(T.pisoDoChefe) ? chefe.ameaca : T.pisoDoChefe;
+  for (const s of mm.salas) {
+    if (deLuta(s) && s.tipo === "chefe") novos.set(s, [{ nome: chefe.nome, ameaca: ameacaDoChefe }, ...Array.from({ length: quantos(s) - 1 }, daRoda)]);
+  }
+  return { ...mm, salas: mm.salas.map((s) => (novos.has(s) ? { ...s, inimigos: novos.get(s) } : s)) };
+}
+
 /* ---------------- GERADOR: grafo em camadas ----------------
    entrada → camada 1 (2-3 salas) → camada 2 (2-3) → [camada 3] → chefe
    Cada sala liga a 2 salas da camada seguinte. Uma sala do miolo guarda
    a CHAVE; sem ela o portão do chefe não abre.
    MM16 nº 4: `opcoes.salas` — a planta com o número que o mundo anuncia
-   (ver PLANTA_DA_MASMORRA, acima). `opcoes` pode vir `null`. */
+   (ver PLANTA_DA_MASMORRA, acima). `opcoes` pode vir `null`.
+   MM17 (v9.363): `opcoes.quem` — a lista da ficha do lugar; os inimigos
+   saem dela (ver FICHA_NA_PLANTA, acima). */
 export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
   const nome = nomeSugerido || `${sortear(LUGARES)} ${sortear(EPITETOS)}`;
   const larguras = opcoes && typeof opcoes === "object" && opcoes.salas != null ? larguraDasCamadas(opcoes.salas) : null;
@@ -273,7 +384,8 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
      masmorra ("Poço de Raízes, nível 11") e quem entrava recebia outra,
      feita no nível do herói. O cartaz e o chão contando histórias
      diferentes sobre o mesmo lugar. */
-  return { nome, nivel: Math.max(1, Math.round(Number(nivel) || 1)), salas: completas, atual: 0, tochas: tochasIniciais(completas), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+  const planta = { nome, nivel: Math.max(1, Math.round(Number(nivel) || 1)), salas: completas, atual: 0, tochas: tochasIniciais(completas), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
+  return opcoes && typeof opcoes === "object" && opcoes.quem != null ? plantaDaFicha(planta, opcoes.quem) : planta;
 }
 
 /* ---------------- QUANTAS TOCHAS (v9.54) ----------------

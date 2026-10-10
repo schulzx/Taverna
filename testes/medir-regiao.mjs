@@ -21,6 +21,8 @@
      (f) a criação, (g) a história amarrada, (h) a masmorra sem a cidade
          (MM17 C2: o turno lá dentro antes → depois, o turno de fora contra
          a árvore de HEAD, e o horizonte que só fala quando perguntado);
+     (i) a ficha é a planta (MM17, pendência nº 1): quem a ficha diz que
+         anda num lugar contra quem a planta põe nas salas de luta;
      e o tamanho do elenco (24) e os moldes fora do beta.
 
    Uso: node testes/medir-regiao.mjs [N]   (N mundos por molde; 60 se omitido) */
@@ -34,7 +36,8 @@ import { createHash } from "node:crypto";
 import { gerarGeografia } from "../src/geografia.js";
 import { MOLDES } from "../src/moldes.js";
 import { generosDisponiveis } from "../src/nomes.js";
-import { masmorrasDoMundo, locaisDaCidade, resumoDaqui } from "../src/mundo-base.js";
+import { masmorrasDoMundo, locaisDaCidade, resumoDaqui, criaturasDaRegiao } from "../src/mundo-base.js";
+import { linhaDaFicha } from "../src/masmorra-sem-cidade.js";
 import { resumoArredoresPrompt } from "../src/arredores.js";
 import { estenderEspinha } from "../src/saga.js";
 import { ESTRUTURAS } from "../src/historia.js";
@@ -601,6 +604,108 @@ export async function horizonteCusta(gerar, N) {
   return r;
 }
 
+/* ---------------- (i) A FICHA É A PLANTA (MM17, pendência nº 1 · v9.363) ----------------
+   A ficha de cada lugar da região diz quem anda por lá (`ficha.quem`); a
+   planta, ao entrar, sorteava os seus do bestiário do género. Aqui, lugar
+   a lugar, o que o App faz à porta (`masmorrasDoMundo` → o lugar pelo nome
+   → `quemDoLugar` → `gerarMasmorra(…, { salas, quem })`) contra a ficha:
+     · por NOME: todo inimigo das salas de luta (combate, guardião, chefe)
+       é um bicho que a ficha nomeia?
+     · por FAMÍLIA: o bicho do bestiário por trás do nome (num mundo com
+       léxico o nome muda e a família não — `criaturasDaRegiao` guarda as
+       duas) é um dos da ficha?
+     · a ficha toda em cena: todo bicho que a ficha nomeia aparece em
+       alguma sala;
+     · o chefe da ficha, com a ameaça de chefe; os outros com a ameaça que
+       o bicho tem na região; a planta com a MESMA forma da de antes;
+     · a pauta: a linha "de pé aqui" de cada sala de luta só diz nomes que
+       a linha da ficha diz; e o que a secção MASMORRA pesa antes → depois.
+   `comFicha: false` é a planta de antes (sem a opção: o App de HEAD
+   v9.362); `semAmeaca: true` é uma ficha de antes desta versão (sem
+   `ameaca`), a de quem criou a região entre a v9.356 e a v9.362.
+   `teste-ficha-e-planta.mjs` importa isto e guarda os números como
+   catraca. */
+export const LEXICO_DA_MEDIDA = { criaturas: ["fraco", "comum", "competente", "elite", "lendario"].map((a) => ({ ameaca: a, nomes: [1, 2, 3, 4].map((k) => `Bicho ${a} ${k}`) })) };
+const DEGRAUS_DA_MEDIDA = ["fraco", "comum", "competente", "elite", "lendario"];
+const semAmeacaNaFicha = (mapa) => ({ ...mapa, regiao: { ...mapa.regiao, lugares: mapa.regiao.lugares.map((l) => ({ ...l, ficha: { ...l.ficha, quem: l.ficha.quem.map(({ ameaca, ...q }) => q) } })) } });
+export function medirFichaEPlanta(R, N = 200, { lex = null, comFicha = true, semAmeaca = false } = {}) {
+  const M = { mundos: 0, lugares: 0, tipos: {}, inimigos: 0, nomeNaFicha: 0, familiaNaFicha: 0, lugaresNome: 0, lugaresFamilia: 0,
+    fichaToda: 0, chefeDaFicha: 0, capangas: 0, ameacaCerta: 0, mesmaForma: 0, caminhoDoApp: 0, salasDeLuta: 0, salaNaFicha: 0,
+    linhasIguais: 0, linhaDaFichaIgual: 0, secaoAntes: [], secaoDepois: [] };
+  const acaso = Math.random;
+  const semeado = (sm, f) => { Math.random = rng(hashSemente(sm)); try { return f(); } finally { Math.random = acaso; } };
+  const nomesDaLinha = (txt) => String(txt || "").split(", ").map((x) => x.replace(/ ×\d+$/, "").trim()).filter(Boolean);
+  for (let i = 0; i < N; i++) {
+    const semente = sementeDe(i), genero = generoDe(i);
+    const mapa0 = R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente, molde: moldePorId("sobremundo"), genero, lex, estrutura: ESTRUTURAS[i % ESTRUTURAS.length].id, modo: "historia" }));
+    if (!mapa0 || !mapa0.regiao) continue;
+    /* a ficha de antes desta versão: a mesma lista, sem a ameaça */
+    const mapa = semAmeaca ? semAmeacaNaFicha(mapa0) : mapa0;
+    M.mundos++;
+    const familia = {}, ameacaDe = {};
+    for (const r of mapa.regioes || []) for (const c of criaturasDaRegiao(semente, r, genero, lex)) { familia[c.nome] = c.id.slice(c.id.indexOf("|") + 1); ameacaDe[c.nome] = c.ameaca; }
+    const fam = (n) => familia[n] || n;
+    const mms = masmorrasDoMundo(semente, mapa);
+    const linhaSemAmeaca = semAmeacaNaFicha(mapa);
+    for (const l of mapa.regiao.lugares) {
+      M.lugares++; M.tipos[l.tipo] = (M.tipos[l.tipo] || 0) + 1;
+      /* o caminho do App, à porta (entrarMasmorra) */
+      const doMapa = mms.find((m) => String(m.nome || "").toLowerCase().trim() === String(l.nome || "").toLowerCase().trim()) || null;
+      const daPorta = doMapa ? R.quemDoLugar(mapa, doMapa.id) : null;
+      if (JSON.stringify(daPorta) === JSON.stringify(l.ficha.quem)) M.caminhoDoApp++;
+      const quem = comFicha ? daPorta : null;
+      const sm = `ficha-e-planta|${semente}|${l.nome}`;
+      const salas = doMapa ? doMapa.salas : l.salas;
+      const mm = { ...semeado(sm, () => gerarMasmorra(genero, l.nivel, "", { salas, quem })), nome: l.nome };
+      const crua = { ...semeado(sm, () => gerarMasmorra(genero, l.nivel, "", { salas })), nome: l.nome };
+      const F = new Set(l.ficha.quem.map((q) => q.nome)), FF = new Set(l.ficha.quem.map((q) => fam(q.nome)));
+      const luta = mm.salas.filter((s) => s.tipo === "combate" || s.tipo === "chave" || s.tipo === "chefe");
+      let lugarNome = true, lugarFam = true;
+      for (const s of luta) for (const [k, e] of (s.inimigos || []).entries()) {
+        M.inimigos++;
+        if (F.has(e.nome)) M.nomeNaFicha++; else lugarNome = false;
+        if (FF.has(fam(e.nome))) M.familiaNaFicha++; else lugarFam = false;
+        if (s.tipo === "chefe" && k === 0) {
+          const d = DEGRAUS_DA_MEDIDA.indexOf(e.ameaca);
+          if (F.has(e.nome) && d >= DEGRAUS_DA_MEDIDA.indexOf("elite") && d >= DEGRAUS_DA_MEDIDA.indexOf(ameacaDe[e.nome])) M.chefeDaFicha++;
+        } else { M.capangas++; if (e.ameaca === ameacaDe[e.nome]) M.ameacaCerta++; }
+      }
+      if (lugarNome) M.lugaresNome++;
+      if (lugarFam) M.lugaresFamilia++;
+      const postos = new Set(luta.flatMap((s) => (s.inimigos || []).map((e) => e.nome)));
+      if ([...F].every((n) => postos.has(n))) M.fichaToda++;
+      /* a mesma planta: tudo igual menos QUEM (o tamanho de cada grupo incluído) */
+      const forma = (p) => JSON.stringify({ ...p, salas: p.salas.map((s) => (s.inimigos ? { ...s, inimigos: s.inimigos.length } : s)) });
+      if (forma(mm) === forma(crua)) M.mesmaForma++;
+      /* a pauta lá dentro: a linha da ficha (a ameaça nova não lhe soma um
+         byte) e a da sala (só nomes que a da ficha diz) */
+      const daFicha = linhaDaFicha(mapa, mm);
+      if (daFicha === linhaDaFicha(linhaSemAmeaca, mm)) M.linhaDaFichaIgual++;
+      const naLinhaDaFicha = new Set(l.ficha.quem.map((q) => q.nome).filter((n) => daFicha.includes(n)));
+      for (const s of luta) {
+        M.salasDeLuta++;
+        const depois = masmorraParaPauta({ ...mm, atual: s.id });
+        const antes = masmorraParaPauta({ ...crua, atual: s.id });
+        const dePe = depois.find((x) => x.startsWith("de pé aqui: "));
+        const ditos = dePe ? nomesDaLinha(dePe.slice("de pé aqui: ".length)) : [];
+        if (ditos.length && ditos.every((n) => F.has(n) && naLinhaDaFicha.has(n))) M.salaNaFicha++;
+        if (depois.length === antes.length) M.linhasIguais++;
+        M.secaoAntes.push(antes.join("\n").length); M.secaoDepois.push(depois.join("\n").length);
+      }
+    }
+  }
+  return M;
+}
+export function resumoFichaEPlanta(rotulo, M) {
+  return [
+    `  ${rotulo} (${M.mundos} mundos, ${M.lugares} lugares com planta: ${Object.entries(M.tipos).map(([k, v]) => `${k} ${v}`).join(", ")})`,
+    `    inimigos das salas de luta que a ficha nomeia: por nome ${M.nomeNaFicha}/${M.inimigos} (${pct(M.nomeNaFicha, M.inimigos)}) · por família ${M.familiaNaFicha}/${M.inimigos} (${pct(M.familiaNaFicha, M.inimigos)})`,
+    `    lugares com a planta toda dentro da ficha: por nome ${M.lugaresNome}/${M.lugares} (${pct(M.lugaresNome, M.lugares)}) · por família ${M.lugaresFamilia}/${M.lugares} · a ficha toda em cena ${M.fichaToda}/${M.lugares} (${pct(M.fichaToda, M.lugares)})`,
+    `    o chefe é o da ficha, com ameaça de chefe: ${M.chefeDaFicha}/${M.lugares} · os outros com a ameaça da região: ${M.ameacaCerta}/${M.capangas} · a mesma planta (forma, salas, grupos): ${M.mesmaForma}/${M.lugares} · o caminho do App acha a ficha: ${M.caminhoDoApp}/${M.lugares}`,
+    `    a pauta: "de pé aqui" só com nomes da linha da ficha ${M.salaNaFicha}/${M.salasDeLuta} salas de luta · as mesmas linhas ${M.linhasIguais}/${M.salasDeLuta} · a linha da ficha sem um byte da ameaça ${M.linhaDaFichaIgual}/${M.lugares} · a secção MASMORRA, mediana ${mediana(M.secaoAntes)} → ${mediana(M.secaoDepois)} car. (máx ${maximo(M.secaoAntes)} → ${maximo(M.secaoDepois)})`,
+  ].join("\n");
+}
+
 /* ---------------- quando corre sozinho ---------------- */
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   const N = Number(process.argv[2]) || 60;
@@ -638,6 +743,18 @@ if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
       finally { try { if (srcHEAD) rmSync(dirname(srcHEAD), { recursive: true, force: true }); } catch { /* a pasta temporária fica; o sistema limpa */ } }
       const hz = await horizonteCusta(regW, NR);
       console.log(`  o horizonte (${hz.mundos} mundos × 4 cenas): frases que não perguntam → 0 bytes em ${hz.mudos}/${hz.perguntas} · perguntado na masmorra ou na luta → fala ${hz.laDentro} vezes · perguntado cá fora → fala ${hz.falou}/${hz.mundos * 2 * FRASES_DO_HORIZONTE.length}, a linha mediana ${mediana(hz.linhas)} car. (máx ${maximo(hz.linhas)})`);
+    }
+  }
+  if (existsSync(caminho)) {
+    const R = await import(pathToFileURL(caminho).href);
+    if (typeof R.quemDoLugar === "function") {
+      const NF = Math.max(N, 200);
+      console.log(`\n(i) A FICHA É A PLANTA — quem a ficha diz contra quem a planta põe nas salas (${NF} mundos)`);
+      console.log(resumoFichaEPlanta("antes (a planta sorteia os seus: HEAD v9.362)", medirFichaEPlanta(R, NF, { comFicha: false })));
+      console.log(resumoFichaEPlanta("depois (a planta tira-os da ficha)", medirFichaEPlanta(R, NF)));
+      console.log(resumoFichaEPlanta("antes, num mundo com léxico", medirFichaEPlanta(R, NF, { comFicha: false, lex: LEXICO_DA_MEDIDA })));
+      console.log(resumoFichaEPlanta("depois, num mundo com léxico", medirFichaEPlanta(R, NF, { lex: LEXICO_DA_MEDIDA })));
+      console.log(resumoFichaEPlanta("depois, ficha de antes desta versão (sem ameaça), com léxico", medirFichaEPlanta(R, NF, { lex: LEXICO_DA_MEDIDA, semAmeaca: true })));
     }
   }
   console.log(`\n(e) a PIOR CENA REAL do prompt (teste-prompt.mjs): ${piorCenaReal()} caracteres (o teto é 82.000)`);

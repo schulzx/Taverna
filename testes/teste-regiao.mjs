@@ -498,8 +498,10 @@ sec("13. a fiação no App — um ponto só, na criação, com rede");
   const conta = (s) => APP.split(s).length - 1;
   /* MM17 C1: a linha do import ganhou espinhaNaRegiao (a história amarrada,
      teste-regiao-historia.mjs); o que a asserção guarda — a escolha e o
-     mapaRef chegam de regiao.js — é o mesmo */
-  t("o App importa a escolha e o mapaRef de regiao.js", /import \{ mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao \} from "\.\/regiao\.js";/.test(APP));
+     mapaRef chegam de regiao.js — é o mesmo. v9.363 (a ficha é a planta):
+     e ganhou quemDoLugar (a lista da ficha que a planta lê ao entrar,
+     teste-ficha-e-planta.mjs); a guarda continua a mesma, letra a letra. */
+  t("o App importa a escolha e o mapaRef de regiao.js", /import \{ mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar \} from "\.\/regiao\.js";/.test(APP));
   t("mapaDaCriacao é chamada num ponto só", conta("mapaDaCriacao(") === 1);
   t("e gerarRegiao nunca direto (a escolha é dela)", conta("gerarRegiao") === 0);
   const ini = APP.indexOf("const iniciar = (pers) => {");

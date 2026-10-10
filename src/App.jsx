@@ -5,7 +5,7 @@ import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdapt
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
-import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao } from "./regiao.js";
+import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
@@ -20445,7 +20445,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const nivelDaMasmorra = doMapa && doMapa.nivel > 0 ? doMapa.nivel : (personagem.nivel || 1);
     /* MM16 nº 4: e o TAMANHO também vem do mapa. O mundo anuncia "12 salas"
        (o prompt, o povo, o veredito à porta) e a planta nascia com 6. */
-    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null });
+    /* MM17 (v9.363 · a ficha é a planta): e QUEM ANDA LÁ também vem do mapa.
+       A ficha do lugar da região diz os bichos ("de fora, sabe-se que por lá
+       andam…") e a planta sorteava outros; agora ela nasce com os da ficha
+       (plantaDaFicha, masmorras.js). Sem região ou sem ficha, null: a planta
+       de sempre. */
+    const quemDaFicha = (() => {
+      if (!doMapa) return null;
+      try { return quemDoLugar(mapaRef.current, doMapa.id); } catch (e) { calou("quemDoLugar", e); return null; }
+    })();
+    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null, quem: quemDaFicha });
     /* LUZ DE VERDADE (v9.26): a masmorra inventava as próprias tochas, e as
        que o jogador comprava no mercado não serviam para nada. Agora a luz
        da expedição É a da mochila: as tochas saem dos suprimentos ao entrar

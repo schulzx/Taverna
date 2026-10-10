@@ -345,7 +345,11 @@ export function gerarRegiao(opcoes) {
      Quem anda por lá (os bichos daquele chão, os do nível mais perto do
      lugar), a ida da base e dos vizinhos (a régua da boca), o perigo e a
      planta. O interior da masmorra continua a nascer quando se entra; a
-     ficha é o que se SABE de fora. */
+     ficha é o que se SABE de fora — e, desde a v9.363, quem a ficha diz que
+     lá anda é quem a planta põe nas salas (`quemDoLugar`, abaixo, e
+     `plantaDaFicha`, masmorras.js). Por isso cada bicho leva a AMEAÇA
+     junto (campo novo, que a versão antiga ignora): num mundo com léxico o
+     nome não diz o degrau, e é o degrau que decide a força na luta. */
   const bichos = {};
   for (const r of regioes) { try { bichos[r.nome] = criaturasDaRegiao(semente, r, genero, lex); } catch { bichos[r.nome] = []; } }
   const comFicha = lugares.map((l) => {
@@ -357,7 +361,7 @@ export function gerarRegiao(opcoes) {
       .map((v) => ({ id: v.id, nome: v.nome, horas: v.horas, rumo: v.rumo }));
     const quem = [...(bichos[l.regiao] || [])]
       .sort((a, b) => Math.abs(a.nivel - l.nivel) - Math.abs(b.nivel - l.nivel))
-      .slice(0, FICHA_DO_LUGAR.quem).map((c) => ({ nome: c.nome, nivel: c.nivel }));
+      .slice(0, FICHA_DO_LUGAR.quem).map((c) => ({ nome: c.nome, nivel: c.nivel, ameaca: c.ameaca }));
     return {
       ...l,
       ficha: {
@@ -693,4 +697,26 @@ export function mapaDaCampanhaNova(geo) {
   };
   if (g.regiao && typeof g.regiao === "object") return { ...mapa, continentes: g.continentes, regiao: g.regiao };
   return mapa;
+}
+
+/* ============================================================
+   QUEM ANDA NO LUGAR (MM17, pendência nº 1 · v9.363)
+
+   A lista `ficha.quem` do lugar da região com este `id` (ou este nome —
+   sem caixa, acento nem artigo), copiada, para a planta nascer com ELA
+   (`gerarMasmorra(…, { salas, quem })`, masmorras.js): o que a ficha diz
+   que lá anda é o que lá está. `null` sem região, sem esse lugar, sem
+   ficha, ou com a lista vazia — e aí a planta sorteia os seus, como sempre
+   (o continente não passa por aqui). Nunca muta o mapa.
+   ============================================================ */
+export function quemDoLugar(mapa, lugar) {
+  const r = mapa && typeof mapa === "object" && mapa.regiao && typeof mapa.regiao === "object" ? mapa.regiao : null;
+  const chave = typeof lugar === "string" ? lugar : "";
+  if (!r || !Array.isArray(r.lugares) || !chave.trim()) return null;
+  const alvo = semArtigo(chave);
+  const l = r.lugares.find((x) => x && typeof x === "object" && x.id === chave)
+    || r.lugares.find((x) => x && typeof x === "object" && typeof x.nome === "string" && semArtigo(x.nome) === alvo);
+  const q = l && l.ficha && typeof l.ficha === "object" && Array.isArray(l.ficha.quem) ? l.ficha.quem : null;
+  const lista = q ? q.filter((x) => x && typeof x === "object" && typeof x.nome === "string" && x.nome.trim()).map((x) => ({ ...x })) : [];
+  return lista.length ? lista : null;
 }

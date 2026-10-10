@@ -1390,9 +1390,9 @@ export const FUNIL_DO_COMBATE = [
      crime nenhum, porque a vítima já lia como inimigo declarado) cresceu 3
      linhas na mesma função, ACIMA deste ponto. Re-medido por esta própria
      catraca; nada somado de cabeça. */
-  { fn: "virarChefeSePreciso", onde: "src/App.jsx:20797", anel: "nucleo",
+  { fn: "virarChefeSePreciso", onde: "src/App.jsx:20806", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:20811", evento: "o chefe da masmorra vira de fase",
+      { onde: "src/App.jsx:20820", evento: "o chefe da masmorra vira de fase",
         voz: "frase", nasce: "src/masmorras.js:722 (falaDaViradaDoChefe)" },
     ] },
 ];
@@ -1591,6 +1591,13 @@ export const FUNIL_DO_COMBATE = [
    todos. Re-medido pelo diff de App.jsx contra o HEAD, só nas linhas de
    código; os dois nus do `ondeSai` à mão (:13380 -> :13389, :13528 ->
    :13537). Conferido pelo varredor. */
+/* (v9.363 · a ficha é a planta) MM17, pendência nº 1, 10/10: dois endereços
+   andaram, e só andaram — nenhuma recusa nasceu nem sumiu, nenhum total
+   mudou. O degrau: a lista da ficha do lugar em `entrarMasmorra`
+   (`quemDaFicha`, +9, ~20448), abaixo de todo o combate que este mapa
+   cita e acima só de `virarChefeSePreciso` (:20797 -> :20806) e da fala
+   dele (:20811 -> :20820). O import de regiao.js ganhou um nome na mesma
+   linha (+0). Re-medido pelo varredor, nada somado de cabeça. */
 export const RECUSAS_DO_COMBATE = [
   /* ---- alcance: a família que a Fase X inteira mede ---- */
   { familia: "alcance", onde: "src/App.jsx:13388", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,
