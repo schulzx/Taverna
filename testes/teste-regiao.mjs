@@ -214,7 +214,16 @@ sec("4. a ficha — nenhum lugar da região sem ela");
       const r = rotaAteAMasmorra(l, base, { regiao: w.mapa.regiao });
       if (r && Math.abs((r.modo === "a_pe" ? r.minutos / 60 : r.dias * DIA) - f.horas) < 0.01 && f.modo === r.modo) idaCerta++;
       if (f.perigo === (R.PERIGO_POR_NIVEL || []).find((p) => l.nivel <= p.ate).id) perigoCerto++;
-      if (f.vizinhos.length === T("FICHA_DO_LUGAR").vizinhos && f.vizinhos.every((v) => v.nome && Number.isFinite(v.horas) && v.horas <= 2 * DIA)) vizOk++;
+      /* MM17 nº 3 (v9.364): a asserção mudou, e o porquê. Antes: SEMPRE os 2
+         mais perto, com horas até 2 dias (16 h) — e essa hora era a da ida
+         DIRETA, que a jornada já não anda quando passa de um dia (vai pelas
+         povoações: `caminhoNaRegiao`, marcha.js). Uma ficha que dissesse
+         "a 12 h" de um vizinho a que se chega em 9 seria a ficha a mentir.
+         Agora: vizinho é quem se alcança DIRETO, num dia
+         (`PROMESSA_DA_REGIAO.direta`) — o teto da hora APERTA de 16 para 8 —,
+         até FICHA_DO_LUGAR.vizinhos, e nunca nenhum: em 200 mundos, 1.278 de
+         1.285 lugares têm os dois, e os 7 da ponta de um chão duro têm um. */
+      if (f.vizinhos.length >= 1 && f.vizinhos.length <= T("FICHA_DO_LUGAR").vizinhos && f.vizinhos.every((v) => v.nome && Number.isFinite(v.horas) && v.horas <= R.PROMESSA_DA_REGIAO.direta)) vizOk++;
       const bichos = criaturasDaRegiao(w.semente, w.mapa.regioes.find((x) => x.nome === l.regiao), w.genero).map((c) => c.nome);
       if (f.quem.every((q) => bichos.includes(q.nome))) quemDaRegiao++;
     }

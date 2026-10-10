@@ -43,6 +43,8 @@ import { comoChamam } from "./lexico.js";
 import { salaEmPalavras } from "./masmorras.js";
 import { garantirCoord, coordDe, kmEntre, rumoEntre, enderecoDe, maisPertoDe, linhaDePonto, formatarDistancia } from "./coordenadas.js";
 import { arredoresDaCidade } from "./arredores.js";
+/* MM17 nº 3 (v9.364): na região, a hora é a da conta única */
+import { caminhoNaRegiao, origemDoHeroi, tempoDoCaminho } from "./marcha.js";
 
 /* ---------------- A SITUAÇÃO DO ESPAÇO ----------------
    Trinta campos que os `quando` do acervo sabem ler. Vale aqui a
@@ -484,9 +486,24 @@ export function rastrearOTurno(ctx = {}) {
      Na ESTRADA nem uma peneira nem outra tiram a origem: ela é um vizinho
      de verdade, com um lado e uma distância que crescem a cada avanço. */
   const daqui = eu.naEstrada ? new Set() : new Set([semAc((ctx.lugar && ctx.lugar.nome) || "")].filter(Boolean));
-  const perto = maisPertoDe(eu.coord, pontosDoMundo(ctx), { quantos: VIZINHOS_NA_LINHA + 3 })
+  const perto0 = maisPertoDe(eu.coord, pontosDoMundo(ctx), { quantos: VIZINHOS_NA_LINHA + 3 })
     .filter((p) => !daqui.has(semAc(p.nome)) && p.km > PASSO_QUE_NAO_CONTA)
     .slice(0, VIZINHOS_NA_LINHA);
+  /* MM17 nº 3 (v9.364): NA REGIÃO, A HORA DA POVOAÇÃO É A DA MARCHA. Os 4
+     km/h de `linhaDePonto` diziam "3,8 h a pé" de uma vila que a jornada
+     cobra num dia; aqui cada povoação leva o `tempo` da conta única
+     (marcha.js), de onde o herói está. Os arredores ficam com os seus
+     minutos — são a verdade deles (o arredor nasce dos minutos). Fora da
+     região, `origem` é null e a lista é a de sempre. */
+  let origem = null;
+  try { origem = origemDoHeroi(ctx.mapa, { cidadeAtual: ctx.cidadeAtual, lugar: ctx.lugar, jornada: ctx.jornada, ponto: eu.coord }); } catch { origem = null; }
+  const perto = origem == null ? perto0 : perto0.map((p) => {
+    if (p.tipo !== "assentamento") return p;
+    let c = null;
+    try { c = caminhoNaRegiao(ctx.mapa, origem, p.nome); } catch { c = null; }
+    const tempo = c ? tempoDoCaminho(c) : "";
+    return tempo ? { ...p, tempo } : p;
+  });
   const marcha = eu.naEstrada && eu.de && eu.para ? {
     rumo: rumoEntre(coordDe(eu.de), coordDe(eu.para)),
     feitos: kmEntre(coordDe(eu.de), eu.coord),
@@ -535,9 +552,17 @@ export function linhaDosVizinhos(r) {
 /* v9.118: e com QUANTO. Os dias já estavam certos; o que faltava era o
    lado e a distância — os dois fatos que transformam "está longe" em
    uma posição que o Narrador pode usar sem inventar nada por cima. */
-export function quemNaoChega(longe = [], { quantos = 2, mapa = null, coord = null } = {}) {
+/* MM17 nº 3 (v9.364): NA REGIÃO, OS DIAS SÃO HORAS DE MARCHA. A régua de
+   `diasEntre` (cena.js) arredonda a um dia inteiro e conta 24 h por dia: a
+   vila a quatro horas de marcha pedia "24h de estrada narradas". Com o mapa
+   da região de agora (e a ponta de partida do herói: `cidadeAtual`, `lugar`,
+   `jornada`), a linha diz a hora da conta única (marcha.js). Sem região, a de
+   sempre. */
+export function quemNaoChega(longe = [], { quantos = 2, mapa = null, coord = null, cidadeAtual = "", lugar = null, jornada = null } = {}) {
   const cidades = (mapa && mapa.cidades) || [];
   const aqui = garantirCoord(coord);
+  let origem = null;
+  try { origem = origemDoHeroi(mapa, { cidadeAtual, lugar, jornada, ponto: aqui }); } catch { origem = null; }
   return (longe || [])
     .filter((f) => f && f.nome && Number(f.dias) > 0)
     .sort((a, b) => a.dias - b.dias)
@@ -548,6 +573,9 @@ export function quemNaoChega(longe = [], { quantos = 2, mapa = null, coord = nul
       const p = aqui && c ? coordDe(c) : null;
       const r = p ? rumoEntre(aqui, p) : null;
       const quanto = p ? ` (${r ? `${r.rotulo}, ` : ""}${formatarDistancia(kmEntre(aqui, p))})` : "";
+      let cm = null;
+      if (origem != null) { try { cm = caminhoNaRegiao(mapa, origem, f.onde); } catch { cm = null; } }
+      if (cm) return `${f.nome} está em ${f.onde}${quanto}, a ${tempoDoCaminho(cm)} daqui — não entra nesta cena sem ${Math.max(1, Math.round(cm.escolhido.horas))}h de estrada narradas`;
       return `${f.nome} está em ${f.onde}${quanto}, a ${f.dias} ${f.dias === 1 ? "dia" : "dias"} daqui — não entra nesta cena sem ${h}h de estrada narradas`;
     });
 }
@@ -568,7 +596,7 @@ export function paraPauta(ctx = {}) {
   if (r.permite.length) onde.push(`comporta: ${r.permite.join("; ")}`);
   const naoPode = [];
   if (r.impede.length) naoPode.push(`o lugar não comporta: ${r.impede.join("; ")}`);
-  naoPode.push(...quemNaoChega(ctx.longe || [], { mapa: ctx.mapa, coord: rast && rast.coord }));
+  naoPode.push(...quemNaoChega(ctx.longe || [], { mapa: ctx.mapa, coord: rast && rast.coord, cidadeAtual: ctx.cidadeAtual, lugar: ctx.lugar, jornada: ctx.jornada }));
   return { onde, naoPode, daqui: rast ? [linhaDosVizinhos(rast)].filter(Boolean) : [] };
 }
 

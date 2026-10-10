@@ -230,9 +230,13 @@ export function maisPertoDe(coord, pontos = [], { raioKm = Infinity, quantos = 4
    conta certa que informa menos do que "cento e quarenta quilômetros". */
 export const KM_ATE_ONDE_SE_VAI_A_PE = 15;
 
+/* MM17 nº 3 (v9.364): na região, quem chama traz o `tempo` da conta única
+   (`tempoDoCaminho`, marcha.js: "4 h de marcha por colinas") — e é ele que se
+   diz, a qualquer distância, no lugar dos 4 km/h. Sem `tempo`, a linha de
+   sempre, letra a letra. */
 export function linhaDePonto(p) {
   if (!p || !p.nome) return "";
   const r = p.rumo ? `${p.rumo.rotulo}, ` : "";
-  const pe = p.km <= KM_ATE_ONDE_SE_VAI_A_PE ? `, ${aPeEmTexto(minutosAPe(p.km))}` : "";
+  const pe = typeof p.tempo === "string" && p.tempo ? `, ${p.tempo}` : p.km <= KM_ATE_ONDE_SE_VAI_A_PE ? `, ${aPeEmTexto(minutosAPe(p.km))}` : "";
   return `${p.nome} (${r}${formatarDistancia(p.km)}${pe})`;
 }

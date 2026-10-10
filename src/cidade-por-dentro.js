@@ -70,6 +70,8 @@ import { fraseDoJogador, assuntoDaFrase } from "./perguntas.js";
    do Geógrafo e dos arredores, nunca uma segunda */
 import { arredoresDaCidade, ondeFicaOArredor } from "./arredores.js";
 import { coordDe, kmEntre, rumoEntre, linhaDePonto } from "./coordenadas.js";
+/* MM17 nº 3 (v9.364): na região, a hora até lá é a da conta única */
+import { caminhoNaRegiao, tempoDoCaminho } from "./marcha.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -572,7 +574,7 @@ function linhaDaDistancia(cidade, f, o, frase) {
     try {
       for (const a of arredoresDaCidade(semente, cidade)) {
         const w = ondeFicaOArredor(cidade, a);
-        if (w) pontos.push({ nome: a.nome, coord: w.coord, km: w.km, rumo: w.rumo });
+        if (w) pontos.push({ nome: a.nome, coord: w.coord, km: w.km, rumo: w.rumo, arredor: true });
       }
     } catch { /* sem arredores, sem linha deles */ }
     try {
@@ -588,7 +590,7 @@ function linhaDaDistancia(cidade, f, o, frase) {
       if (!q) continue;
       const r = rotas.find((x) => x && ((semA(x.de) === semA(cidade.nome) && semA(x.para) === semA(c.nome)) || (semA(x.para) === semA(cidade.nome) && semA(x.de) === semA(c.nome))));
       const dias = r && Number(r.dias) > 0 ? Number(r.dias) : 0;
-      pontos.push({ nome: c.nome, coord: q, km: kmEntre(c0, q), rumo: rumoEntre(c0, q), mais: dias ? `${dias} dia${dias > 1 ? "s" : ""} de estrada` : "" });
+      pontos.push({ nome: c.nome, coord: q, km: kmEntre(c0, q), rumo: rumoEntre(c0, q), mais: dias ? `${dias} dia${dias > 1 ? "s" : ""} de estrada` : "", cidade: true });
     }
   }
   let alvo = null, onde = -1;
@@ -600,6 +602,17 @@ function linhaDaDistancia(cidade, f, o, frase) {
   if (!alvo) return "";
   if (alvo.dentro) return `distância: ${alvo.nome} fica dentro dos muros — minutos a pé`;
   if (!Number.isFinite(alvo.km)) return "";
+  /* MM17 nº 3 (v9.364): NA REGIÃO, A HORA DA MARCHA. Uma povoação ou um
+     lugar da região ganha o tempo da conta única (marcha.js) — o que a
+     jornada vai cobrar —, e a povoação perde os "N dias de estrada" da
+     rota, que eram a mesma hora dita de outro jeito. Fora da região (e para
+     os arredores, que têm os seus minutos), a linha de sempre. */
+  if (!alvo.arredor) {
+    let c = null;
+    try { c = caminhoNaRegiao(mapa, cidade.nome, alvo.nome); } catch { c = null; }
+    const tempo = c ? tempoDoCaminho(c) : "";
+    if (tempo) alvo = { ...alvo, tempo, mais: alvo.cidade ? "" : alvo.mais };
+  }
   return `distância: ${linhaDePonto(alvo)}${alvo.mais ? ` — ${alvo.mais}` : ""}`;
 }
 

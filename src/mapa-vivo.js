@@ -72,6 +72,8 @@ import { progressoMasmorra } from "./masmorras.js";
 import { PERIGO_POR_NIVEL, ROTA_DO_CLIMAX } from "./regiao.js";
 import { RUMOS } from "./coordenadas.js";
 import { horaTxt, ehNoite, estacaoDe } from "./calendario.js";
+/* MM17 nº 3 (v9.364): as horas de cada aresta são as da conta única */
+import { caminhoNaRegiao } from "./marcha.js";
 
 const obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : null);
 const lista = (v) => (Array.isArray(v) ? v : []);
@@ -348,6 +350,23 @@ export function dadosDoMapaVivo(mapa, estado) {
   };
   const rotas = lista(m.rotas).filter((x) => obj(x) && x.de && x.para && finito(x.dias));
   const horasDaRota = (x) => duas(Number(x.dias) * HORAS_MARCHA_POR_DIA);
+  /* MM17 nº 3 (v9.364): A MARCHA ÚNICA. Na região de agora, a hora de um par
+     é a da conta única (`caminhoNaRegiao`, marcha.js) — a mesma que a
+     jornada cobra —, e um par cujo caminho passa por uma povoação NÃO tem
+     traço reto: o herói vai pelas outras arestas, e um traço com a hora do
+     desvio por cima da serra seria a tela a mentir. `undefined` = a conta
+     única não fala deste mapa (região v1): fica a hora guardada, como antes. */
+  const marchaDe = new Map();
+  const marcha = (a, b) => {
+    const k = `${a}~${b}`;
+    if (!marchaDe.has(k)) { let c; try { c = caminhoNaRegiao(m, a, b); } catch { c = null; } marchaDe.set(k, c || undefined); }
+    return marchaDe.get(k);
+  };
+  const horasDoPar = (a, b, guardada) => {
+    const c = marcha(a, b);
+    if (c === undefined) return guardada;
+    return c.desvio ? null : c.escolhido.horas;
+  };
   const atoPublico = (n) => {
     const ato = n.tipo === "base" ? "inicio" : n.tipo === "lugar" ? n.src.ato : null;
     const regra = REVELACAO_DO_ATO[ato];
@@ -375,20 +394,23 @@ export function dadosDoMapaVivo(mapa, estado) {
       const p = povoadosR.get(n.nome);
       const rota = rotas.find((x) => (x.de === baseC.nome && x.para === n.nome) || (x.para === baseC.nome && x.de === n.nome));
       horasDaBase = p && finito(p.horas) ? Number(p.horas) : rota ? horasDaRota(rota) : null;
+      { const c = marcha(baseC.nome, n.nome); if (c) horasDaBase = c.escolhido.horas; }
     } else if (n.tipo === "lugar") {
       const f = obj(s.ficha) || {};
       horasDaBase = finito(f.horas) ? Number(f.horas) : null;
+      { const c = marcha(baseC.nome, String(s.id)); if (c) horasDaBase = c.escolhido.horas; }
       if (v.perigo && PERIGOS.includes(f.perigo)) { perigo = f.perigo; perigoRotulo = String(f.perigoRotulo || ""); }
     }
     if (v.vizinhos) {
       if (n.tipo === "lugar") {
         vizinhos = lista(obj(s.ficha) && s.ficha.vizinhos)
           .map((x) => ({ id: vizinhoId(x), horas: obj(x) && finito(x.horas) ? Number(x.horas) : null }))
+          .map((x) => (x.id ? { ...x, horas: horasDoPar(String(s.id), x.id.startsWith("cidade|") ? x.id.slice(7) : x.id, x.horas) } : x))
           .filter((x) => x.id && aparece(x.id) && x.horas != null);
       } else {
         vizinhos = rotas.filter((x) => x.de === n.nome || x.para === n.nome)
-          .map((x) => ({ id: `cidade|${x.de === n.nome ? x.para : x.de}`, horas: horasDaRota(x) }))
-          .filter((x) => aparece(x.id));
+          .map((x) => ({ id: `cidade|${x.de === n.nome ? x.para : x.de}`, horas: horasDoPar(n.nome, x.de === n.nome ? x.para : x.de, horasDaRota(x)) }))
+          .filter((x) => aparece(x.id) && x.horas != null);
       }
     }
     const no = {
@@ -438,7 +460,7 @@ export function dadosDoMapaVivo(mapa, estado) {
     arestas.push(a);
   };
   for (const x of rotas) {
-    juntar(`cidade|${x.de}`, `cidade|${x.para}`, horasDaRota(x), { tipoDeChao: String(x.terreno || ""), modo: "estrada", origem: "rota", km: finito(x.km) ? Number(x.km) : null });
+    juntar(`cidade|${x.de}`, `cidade|${x.para}`, horasDoPar(x.de, x.para, horasDaRota(x)), { tipoDeChao: String(x.terreno || ""), modo: "estrada", origem: "rota", km: finito(x.km) ? Number(x.km) : null });
   }
   /* as idas da ficha: da base a cada lugar visível (a hora que a ficha diz e
      a boca cobra), e de cada lugar com ficha aberta aos seus vizinhos. O
@@ -450,14 +472,17 @@ export function dadosDoMapaVivo(mapa, estado) {
     if (!aparece(n.id)) continue;
     const f = obj(n.src.ficha) || {};
     const daBase = ida(n.src, baseC);
-    if (finito(f.horas)) juntar(`cidade|${baseC.nome}`, n.id, Number(f.horas), { tipoDeChao: daBase ? daBase.terreno : String(n.src.bioma || ""), modo: f.modo || (daBase ? daBase.modo : ""), origem: "ficha", km: finito(f.km) ? Number(f.km) : null });
+    const hb = horasDoPar(baseC.nome, String(n.src.id), finito(f.horas) ? Number(f.horas) : null);
+    if (hb != null) juntar(`cidade|${baseC.nome}`, n.id, hb, { tipoDeChao: daBase ? daBase.terreno : String(n.src.bioma || ""), modo: f.modo || (daBase ? daBase.modo : ""), origem: "ficha", km: finito(f.km) ? Number(f.km) : null });
     if (!mostra(n.id).vizinhos) continue;
     for (const v of lista(f.vizinhos)) {
       const vid = vizinhoId(v);
       if (!vid || !obj(v) || !finito(v.horas)) continue;
       const alvo = porId.get(vid);
       const i = alvo ? ida(alvo.src, n.src) : null;
-      juntar(n.id, vid, Number(v.horas), { tipoDeChao: i ? i.terreno : "", modo: i ? i.modo : "", origem: "ficha", km: i ? i.km : null });
+      const hv = alvo ? horasDoPar(String(n.src.id), alvo.tipo === "lugar" ? String(alvo.src.id) : alvo.nome, Number(v.horas)) : Number(v.horas);
+      if (hv == null) continue;
+      juntar(n.id, vid, hv, { tipoDeChao: i ? i.terreno : "", modo: i ? i.modo : "", origem: "ficha", km: i ? i.km : null });
     }
   }
 

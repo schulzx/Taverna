@@ -234,8 +234,13 @@ export function jornadaAteAMasmorra(ida, opcoes) {
   if (!q) return null;
   const j = abrirViagem({ de: de || r.de, para: m.nome, dia, rota: { km: r.km, dias: r.dias, terreno: r.terreno } });
   const o = garantirCoord(ida.origem);
+  /* MM17 nº 3 (v9.364): o caminho com escalas que a conta única escolheu
+     (`rotaDoCaminho`, marcha.js) — campo NOVO, só quando existe; a versão
+     antiga ignora-o e a ida direta não o leva */
+  const per = Array.isArray(r.percurso) && r.percurso.length >= 2 ? { percurso: r.percurso.map((p) => ({ ...p })) } : {};
   return {
     ...j,
+    ...per,
     alvo: {
       tipo: "masmorra", nome: String(m.nome),
       coord: { x: q.x, y: q.y },

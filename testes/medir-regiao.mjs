@@ -23,6 +23,9 @@
          a árvore de HEAD, e o horizonte que só fala quando perguntado);
      (i) a ficha é a planta (MM17, pendência nº 1): quem a ficha diz que
          anda num lugar contra quem a planta põe nas salas de luta;
+     (j) a marcha única (MM17, pendência nº 3): a hora de cada viagem da
+         região pelas quatro contas (jornada, ficha, Geógrafo, mapa vivo),
+         antes (a árvore de HEAD) e depois, e quantas passam da promessa;
      e o tamanho do elenco (24) e os moldes fora do beta.
 
    Uso: node testes/medir-regiao.mjs [N]   (N mundos por molde; 60 se omitido) */
@@ -706,6 +709,130 @@ export function resumoFichaEPlanta(rotulo, M) {
   ].join("\n");
 }
 
+/* ============================================================
+   (j) A MARCHA ÚNICA (MM17, pendência nº 3 · v9.364)
+
+   Cada par ordenado de pontos da região (base, povoações, lugares) de N
+   mundos, e a hora que cada conta diz para ir de um ao outro:
+
+     · JORNADA — o que o jogo cobra. A um lugar: `idaAMasmorra` + a jornada
+       de `jornadaAteAMasmorra` (a pé, os minutos). A uma povoação: o que o
+       `viajar` do App abre — antes, `abrirViagem` com a rota de
+       `mapa.rotas` entre a cidade do registo (a base, quando se parte de
+       uma boca) e o destino, ou o piso de 3 dias sem rota; depois,
+       `partidaNaRegiao` (marcha.js), de onde o herói está.
+     · FICHA — o que o gerador guardou: base → lugar, lugar → vizinho,
+       base → povoação.
+     · GEÓGRAFO — o que a linha dos vizinhos (`rastrearOTurno`) e a resposta
+       "quanto tempo leva até…" (`fichaParaPauta`) dizem, lido do texto.
+     · MAPA VIVO — as arestas de `dadosDoMapaVivo` (com tudo à vista).
+
+   `src` é a pasta da árvore a medir: a de HEAD (`arvoreDeHEAD`) é o ANTES,
+   e a de agora o DEPOIS — as mesmas sementes, o mesmo laço. Uma conta
+   "discorda" quando a hora dela difere da da jornada mais do que 0,05 h (um
+   número guardado) ou mais do que o passo do texto (meia hora, ao dizer). */
+const horaDoTexto = (txt) => {
+  const s = String(txt || "");
+  const m = /(\d+(?:,\d+)?) (h|min)\b/.exec(s);
+  if (m) return Number(m[1].replace(",", ".")) / (m[2] === "min" ? 60 : 1);
+  /* a cidade-por-dentro de antes escrevia "0.5 dia de estrada", com ponto */
+  const d = /(\d+(?:[.,]\d+)?) dias? de estrada/.exec(s);
+  return d ? Number(d[1].replace(",", ".")) * HORAS_MARCHA_POR_DIA : NaN;
+};
+export async function medirMarcha(src, N = 200, opcoes = {}) {
+  /* `semViajar`: o App ainda abre a jornada para uma povoação como em HEAD
+     (a fiação de `partidaNaRegiao` no `viajar` espera o bastão) */
+  const semViajar = !!(opcoes && opcoes.semViajar);
+  const de = (f) => import(pathToFileURL(join(src, f)).href);
+  const [R, RA, BO, GE, CP, MV, MB, VI] = await Promise.all(["regiao.js", "rastro.js", "boca.js", "geografo.js", "cidade-por-dentro.js", "mapa-vivo.js", "mundo-base.js", "viagem.js"].map(de));
+  let MA = null;
+  try { MA = await de("marcha.js"); } catch { MA = null; }
+  const PROMESSA = R.PROMESSA_DA_REGIAO || { daBase: HORAS_MARCHA_POR_DIA, direta: HORAS_MARCHA_POR_DIA, pontaAPonta: 2 * HORAS_MARCHA_POR_DIA };
+  const contas = { jornada: [], ficha: [], geografo: [], mapaVivo: [] };
+  const porTipo = {};
+  const semA = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const M = { pares: 0, discord: 0, discordPorConta: { ficha: 0, geografo: 0, mapaVivo: 0 }, maior: 0, exemplo: null, alemDaPromessa: 0, alemDeUmDia: 0, piso3dias: 0, desvios: 0, linha: "", pior: null, contas, porTipo };
+  for (let i = 0; i < N; i++) {
+    const semente = sementeDe(i), genero = generoDe(i);
+    const mapa = R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente, molde: moldePorId("sobremundo"), genero, estrutura: ESTRUTURAS[i % ESTRUTURAS.length].id, modo: "historia" }));
+    if (!mapa || !mapa.regiao) continue;
+    const r = mapa.regiao, base = mapa.cidades[0];
+    const masmorras = MB.masmorrasDoMundo(semente, mapa);
+    const tudo = { ...mapa, cidades: mapa.cidades.map((c) => ({ ...c, descoberta: true })) };
+    const mv = MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, conhecidos: [...mapa.cidades.map((c) => c.nome), ...r.lugares.map((l) => l.nome)], semente });
+    const nomeDoNo = new Map(mv.nos.map((n) => [n.id, n.nome]));
+    const aresta = new Map();
+    for (const a of mv.arestas) { aresta.set(`${nomeDoNo.get(a.de)}~${nomeDoNo.get(a.para)}`, a.horas); aresta.set(`${nomeDoNo.get(a.para)}~${nomeDoNo.get(a.de)}`, a.horasDeVolta != null ? a.horasDeVolta : a.horas); }
+    const rota = (a, b) => (mapa.rotas || []).find((x) => (semA(x.de) === semA(a) && semA(x.para) === semA(b)) || (semA(x.de) === semA(b) && semA(x.para) === semA(a)));
+    const nos = [...mapa.cidades.map((c, j) => ({ tipo: j ? "povoado" : "base", src: c, nome: c.nome })), ...r.lugares.map((l) => ({ tipo: "lugar", src: l, nome: l.nome }))];
+    for (const a of nos) for (const b of nos) {
+      if (a === b) continue;
+      M.pares++;
+      const tipo = `${a.tipo}→${b.tipo}`;
+      const lugar = a.tipo === "lugar" ? { nome: a.nome, coord: { x: a.src.x, y: a.src.y }, distancia: "perto", cidade: base.nome } : null;
+      const cidadeAtual = a.tipo === "lugar" ? base.nome : a.nome;
+      let J = NaN;
+      if (b.tipo === "lugar") {
+        const ida = RA.idaAMasmorra(`Vou a ${b.nome}.`, { cidadeAtual, cidades: mapa.cidades.map((c) => c.nome), mapa, masmorras, lugar, jornada: null });
+        if (ida && ida.rota) {
+          J = ida.rota.modo === "a_pe" ? ida.rota.minutos / 60 : BO.jornadaAteAMasmorra(ida, { de: cidadeAtual }).totalMin / 60;
+          if (ida.rota.percurso && ida.rota.percurso.length > 2) { M.desvios++; if (!M.linha) M.linha = ida.linhas[0]; }
+        }
+      } else if (MA && MA.partidaNaRegiao && !semViajar) {
+        const p = MA.partidaNaRegiao(mapa, { cidadeAtual, lugar, destino: b.nome });
+        if (p) { J = p.jornada.totalMin / 60; if (p.rota.percurso && p.rota.percurso.length > 2) M.desvios++; }
+      } else if (semA(cidadeAtual) !== semA(b.nome)) {
+        /* o App de HEAD: `abrirViagem({ rota: rotaEntre(cidadeAtual, alvo) })` */
+        const rt = rota(cidadeAtual, b.nome);
+        if (!rt) M.piso3dias++;
+        J = VI.abrirViagem({ de: cidadeAtual, para: b.nome, rota: rt || null }).totalMin / 60;
+      }
+      let F = NaN;
+      if (a.tipo === "base" && b.tipo === "lugar") F = b.src.ficha.horas;
+      else if (a.tipo === "lugar") { const v = a.src.ficha.vizinhos.find((x) => x.nome === b.nome); if (v) F = v.horas; }
+      else if (a.tipo === "base" && b.tipo === "povoado") { const p = r.povoados.find((x) => x.nome === b.nome); if (p && p.horas != null) F = p.horas; }
+      let G = NaN;
+      if (b.tipo !== "lugar") {
+        const rs = GE.rastrearOTurno({ cidadeAtual, lugar, mapa: tudo, semente });
+        const p = rs && rs.perto.find((x) => x.nome === b.nome);
+        if (p) G = horaDoTexto(GE.linhaDosVizinhos({ perto: [p] }).slice(b.nome.length));
+      }
+      if (!Number.isFinite(G) && a.tipo !== "lugar") {
+        const l = CP.fichaParaPauta(a.src, { semente, mapa, frase: `Quanto tempo leva até ${b.nome}?` }).pergunta.find((x) => x.startsWith("distância:"));
+        if (l && l.includes(b.nome)) G = horaDoTexto(l.split(b.nome)[1]);
+      }
+      const V = aresta.has(`${a.nome}~${b.nome}`) ? aresta.get(`${a.nome}~${b.nome}`) : NaN;
+      const vals = { jornada: J, ficha: F, geografo: G, mapaVivo: V };
+      for (const [k, v] of Object.entries(vals)) if (Number.isFinite(v)) { contas[k].push(v); ((porTipo[k] ||= {})[tipo] ||= []).push(v); }
+      if (!Number.isFinite(J)) continue;
+      let discorda = false;
+      for (const k of ["ficha", "geografo", "mapaVivo"]) {
+        if (!Number.isFinite(vals[k])) continue;
+        const d = Math.abs(vals[k] - J);
+        if (d > (k === "geografo" ? 0.26 : 0.05)) { discorda = true; M.discordPorConta[k]++; if (d > M.maior) { M.maior = d; M.exemplo = { i, de: a.nome, para: b.nome, ...vals }; } }
+      }
+      if (discorda) M.discord++;
+      const teto = a.tipo === "base" || b.tipo === "base" ? PROMESSA.daBase : PROMESSA.pontaAPonta;
+      if (J > teto + 1e-6) M.alemDaPromessa++;
+      if (J > HORAS_MARCHA_POR_DIA + 1e-6) M.alemDeUmDia++;
+      if (!M.pior || J > M.pior.horas) M.pior = { horas: J, i, tipo, de: a.nome, para: b.nome };
+    }
+  }
+  return M;
+}
+export function resumoMarcha(rotulo, M) {
+  const f = (n) => (Number.isFinite(n) ? r1(n) : "—");
+  const tipos = ["base→lugar", "lugar→lugar", "povoado→lugar", "lugar→povoado", "povoado→povoado"];
+  return [
+    `  ${rotulo} — ${M.pares} pares`,
+    ...Object.entries(M.contas).map(([k, xs]) => `    ${k}: ${xs.length} pares com hora · mediana ${f(mediana(xs))} h · pior ${f(maximo(xs))} h`),
+    `    a jornada por tipo: ${tipos.map((t) => { const xs = (M.porTipo.jornada || {})[t] || []; return `${t} ${f(mediana(xs))}/${f(maximo(xs))}`; }).join(" · ")}  (mediana/pior)`,
+    `    discordâncias contra a jornada: ${M.discord} pares (ficha ${M.discordPorConta.ficha} · Geógrafo ${M.discordPorConta.geografo} · mapa vivo ${M.discordPorConta.mapaVivo}) · a maior ${f(M.maior)} h${M.exemplo ? ` (${M.exemplo.de} → ${M.exemplo.para}: jornada ${f(M.exemplo.jornada)}, ficha ${f(M.exemplo.ficha)}, Geógrafo ${f(M.exemplo.geografo)}, mapa ${f(M.exemplo.mapaVivo)})` : ""}`,
+    `    viagens além da promessa (da base > 8 h, entre dois > 16 h): ${M.alemDaPromessa} · além de um dia: ${M.alemDeUmDia} · cidade sem estrada no piso de 3 dias: ${M.piso3dias} · pelas povoações: ${M.desvios}`,
+    `    a pior: ${M.pior ? `${f(M.pior.horas)} h (${M.pior.tipo}, ${M.pior.de} → ${M.pior.para})` : "—"}${M.linha ? `\n    a linha de antes de partir: ${M.linha}` : ""}`,
+  ].join("\n");
+}
+
 /* ---------------- quando corre sozinho ---------------- */
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   const N = Number(process.argv[2]) || 60;
@@ -756,6 +883,17 @@ if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
       console.log(resumoFichaEPlanta("depois, num mundo com léxico", medirFichaEPlanta(R, NF, { lex: LEXICO_DA_MEDIDA })));
       console.log(resumoFichaEPlanta("depois, ficha de antes desta versão (sem ameaça), com léxico", medirFichaEPlanta(R, NF, { lex: LEXICO_DA_MEDIDA, semAmeaca: true })));
     }
+  }
+  if (existsSync(join(AQUI, "..", "src", "marcha.js"))) {
+    const NM = Math.max(N, 200);
+    console.log(`\n(j) A MARCHA ÚNICA — a hora de cada viagem da região pelas quatro contas (${NM} mundos)`);
+    let srcHEAD = "";
+    try {
+      srcHEAD = arvoreDeHEAD();
+      console.log(resumoMarcha("antes (a árvore de HEAD)", await medirMarcha(srcHEAD, NM)));
+    } catch (e) { console.log(`  antes: a árvore de HEAD não se extraiu (${e.message})`); }
+    finally { try { if (srcHEAD) rmSync(dirname(srcHEAD), { recursive: true, force: true }); } catch { /* fica */ } }
+    console.log(resumoMarcha("depois (a conta única)", await medirMarcha(join(AQUI, "..", "src"), NM)));
   }
   console.log(`\n(e) a PIOR CENA REAL do prompt (teste-prompt.mjs): ${piorCenaReal()} caracteres (o teto é 82.000)`);
 }

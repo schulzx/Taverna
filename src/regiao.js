@@ -100,6 +100,28 @@ export const ALCANCE_DA_REGIAO = {
   paralelo: [2, 6],
 };
 
+/* A PROMESSA DA REGIÃO (MM17, pendência nº 3 · v9.364), em HORAS DE MARCHA.
+   É o que o `ALCANCE_DA_REGIAO` acima já prometia e ninguém cobrava fora da
+   base: "de 2 a 3 dias de ponta a ponta, viagens em horas".
+
+     `daBase`      — da base a qualquer ponto da região: um dia de marcha. É o
+                     teto do alcance (e o gerador já o cumpria: 0 em 200).
+     `direta`      — uma ida DIRETA até isto vai direta. Acima, a conta única
+                     (`caminhoNaRegiao`, marcha.js) procura o caminho pelas
+                     povoações, e fica com o mais curto. É também o que faz
+                     de um lugar "vizinho" na ficha: chega-se lá direto.
+     `pontaAPonta` — entre quaisquer dois pontos, pelo melhor caminho: dois
+                     dias de marcha, ida à base e volta para fora.
+
+   Medido antes desta versão (`medir-regiao.mjs`, secção j, 200 mundos): a ida
+   direta entre dois lugares de chão lento chegava a 20 h, e de uma povoação
+   a outra sem estrada o jogo cobrava o piso de 3 dias (24 h). */
+export const PROMESSA_DA_REGIAO = {
+  daBase: HORAS_MARCHA_POR_DIA,
+  direta: HORAS_MARCHA_POR_DIA,
+  pontaAPonta: 2 * HORAS_MARCHA_POR_DIA,
+};
+
 /* ONDE SE MORA. Uma rota de cidade a cidade tem no mínimo 20 km
    (`gerarRotas`), e a 12 ou 15 km por dia (montanha, pântano, gelo,
    deserto) isso é dia e meio — nenhum povoado nesses chãos ficaria a um
@@ -354,9 +376,13 @@ export function gerarRegiao(opcoes) {
   for (const r of regioes) { try { bichos[r.nome] = criaturasDaRegiao(semente, r, genero, lex); } catch { bichos[r.nome] = []; } }
   const comFicha = lugares.map((l) => {
     const daBase = idaEntre(l, base);
-    /* os vizinhos: os outros lugares e os povoados (a base já é a ida) */
+    /* os vizinhos: os outros lugares e os povoados (a base já é a ida) — e
+       só os que se alcançam DIRETO (`PROMESSA_DA_REGIAO.direta`, v9.364):
+       acima disso a viagem vai pelas povoações (`caminhoNaRegiao`,
+       marcha.js), e a hora que a ficha dissesse não seria a que se anda */
     const vizinhos = [...lugares.filter((v) => v !== l), ...cidades.slice(1).map((c) => ({ ...c, id: c.nome }))]
       .map((v) => ({ id: v.id, nome: v.nome, ...idaEntre(v, l) }))
+      .filter((v) => Number.isFinite(v.horas) && v.horas <= PROMESSA_DA_REGIAO.direta)
       .sort((a, b) => a.horas - b.horas).slice(0, FICHA_DO_LUGAR.vizinhos)
       .map((v) => ({ id: v.id, nome: v.nome, horas: v.horas, rumo: v.rumo }));
     const quem = [...(bichos[l.regiao] || [])]

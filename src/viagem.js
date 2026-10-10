@@ -203,7 +203,10 @@ export function resumoViagemPrompt(jornada) {
   const ondeAgora = tr
     ? `\n- O TRECHO DE AGORA (o ${tr.indice + 1}º de ${tr.total}): ${tr.rotuloPerigo}. Há aqui ${tr.feicao.nome} — ${tr.feicao.desc}. Isto EXISTE e é permanente: na volta pelo mesmo caminho estará no mesmo lugar. Use se couber; não invente outro lugar por cima dele.`
     : "";
-  return `EM VIAGEM (do sistema — números exatos, obedeça): de ${jornada.de} para ${jornada.para}${jornada.meio ? `, de ${jornada.meio}` : ""}${jornada.terreno ? `, por ${jornada.terreno}` : ""}. Percorrido: ${p.pct}% do trecho (${p.horasFeitas} de ${p.horasTotais} horas de marcha${p.kmTotais ? `, ${p.kmFeitos} de ${p.kmTotais} km` : ""}). FALTAM ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"} de estrada (${p.diasRestantes} ${p.diasRestantes === 1 ? "dia" : "dias"} de marcha).${ondeAgora}
+  /* MM17 nº 3 (v9.364): o caminho com escalas passa por elas, e o Mestre
+     sabe-o — só quando a jornada as tem (a de sempre não muda um byte) */
+  const escalas = Array.isArray(jornada.percurso) ? jornada.percurso.slice(1, -1).map((q) => q && q.nome).filter(Boolean) : [];
+  return `EM VIAGEM (do sistema — números exatos, obedeça): de ${jornada.de} para ${jornada.para}${escalas.length ? `, passando por ${escalas.join(" e ")}` : ""}${jornada.meio ? `, de ${jornada.meio}` : ""}${jornada.terreno ? `, por ${jornada.terreno}` : ""}. Percorrido: ${p.pct}% do trecho (${p.horasFeitas} de ${p.horasTotais} horas de marcha${p.kmTotais ? `, ${p.kmFeitos} de ${p.kmTotais} km` : ""}). FALTAM ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"} de estrada (${p.diasRestantes} ${p.diasRestantes === 1 ? "dia" : "dias"} de marcha).${ondeAgora}
 - ${perto}
 - NÃO me faça chegar antes: quem registra a chegada é o sistema, e ele avisa. Enquanto faltar avanço, a cena acontece NO CAMINHO.
 - E nunca diga "turno", "avanço de estrada", porcentagem ou quilômetro na narração: esses números são meus, não da ficção. Traduza em imagem — a luz do dia, o cansaço, o que já dá para ver ao longe.`;

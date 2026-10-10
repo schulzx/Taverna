@@ -46,6 +46,8 @@ import { progressoDaViagem } from "./viagem.js";
 import { masmorrasConhecidas, masmorraDaBoca, rotaAteAMasmorra, linhaDaIda, vereditoDaMasmorra } from "./boca.js";
 import { soODeclarado } from "./peneira.js";
 import { NAO_E_IDA, comDe } from "./lugar.js";
+/* MM17 nº 3 (v9.364): na região, a hora da ida é a da conta única */
+import { caminhoNaRegiao, origemDoHeroi, rotaDoCaminho, linhaDoCaminho } from "./marcha.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -337,6 +339,20 @@ export function pontoDoHeroi({ cidadeAtual = "", jornada = null, mapa = null, lu
     const b = acha(jornada.para) || (alvo && pt(alvo.coord, alvo.nome));
     const p = progressoDaViagem(jornada);
     const f = p ? Math.max(0, Math.min(1, p.fracao)) : 0.5;
+    /* MM17 nº 3 (v9.364): o caminho com escalas (`jornada.percurso`, a conta
+       única de marcha.js) — o herói anda de ponto em ponto, pela hora a que
+       chega a cada um, e não em linha reta por cima da serra que contornou */
+    const per = Array.isArray(jornada.percurso) ? jornada.percurso.filter((q) => q && Number.isFinite(Number(q.x)) && Number.isFinite(Number(q.y)) && Number.isFinite(Number(q.h))) : [];
+    if (per.length >= 2 && Number(per[per.length - 1].h) > 0) {
+      const t = f * Number(per[per.length - 1].h);
+      let i = 1;
+      while (i < per.length - 1 && Number(per[i].h) < t) i++;
+      const q0 = per[i - 1], q1 = per[i];
+      const dh = Number(q1.h) - Number(q0.h);
+      const g = dh > 0 ? Math.max(0, Math.min(1, (t - Number(q0.h)) / dh)) : 1;
+      const ponta = (q) => ({ nome: String(q.nome || ""), x: Number(q.x), y: Number(q.y) });
+      return { x: Number(q0.x) + (Number(q1.x) - Number(q0.x)) * g, y: Number(q0.y) + (Number(q1.y) - Number(q0.y)) * g, naEstrada: true, de: ponta(per[0]), para: ponta(per[per.length - 1]), fracao: f };
+    }
     if (a && b) return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, naEstrada: true, de: a, para: b, fracao: f };
     if (a) return { x: a.x, y: a.y, naEstrada: true, de: a, para: null, fracao: f };
     return null;
@@ -500,9 +516,21 @@ export function idaAMasmorra(acao, ctx = {}) {
     /* na região, o chão de onde se sai: a boca onde está, ou a cidade */
     const chao = regiao ? ((daBoca && daBoca.bioma) || (cidade && cidade.bioma) || "") : "";
     const origem = ponto && Number.isFinite(Number(ponto.x)) ? { x: Number(ponto.x), y: Number(ponto.y), ...(chao ? { bioma: chao } : {}) } : null;
-    const rota = rotaAteAMasmorra(m, origem, regiao ? { de: (lugar && lugar.nome) || o.cidadeAtual || "", regiao } : { de: (lugar && lugar.nome) || o.cidadeAtual || "" });
+    let rota = rotaAteAMasmorra(m, origem, regiao ? { de: (lugar && lugar.nome) || o.cidadeAtual || "", regiao } : { de: (lugar && lugar.nome) || o.cidadeAtual || "" });
     if (!rota) return null;   // sem ponto, sem conta — e sem palpite
-    const linhas = [linhaDaIda(rota), rota.modo === "estrada" && veredito ? veredito.linha : ""].filter(Boolean);
+    /* MM17 nº 3 (v9.364): A MARCHA ÚNICA. Na região de agora, a ida que passa
+       de um dia procura o caminho pelas povoações (`caminhoNaRegiao`,
+       marcha.js); se o achar mais curto, é ele que se anda, e a linha de
+       antes de partir diz os dois. A ida direta dentro do dia fica a rota de
+       cima, byte a byte; fora da região, `caminho` é null. */
+    let linhaDoDesvio = "";
+    if (regiao) {
+      let c = null;
+      try { c = caminhoNaRegiao(mapa, origemDoHeroi(mapa, { cidadeAtual: o.cidadeAtual, lugar, jornada, ponto: origem }), m.id || m.nome); } catch { c = null; }
+      if (c && c.desvio) { rota = { ...rotaDoCaminho(c, { de: rota.de }), para: rota.para }; }
+      if (c) linhaDoDesvio = linhaDoCaminho(c);
+    }
+    const linhas = [linhaDoDesvio || linhaDaIda(rota), rota.modo === "estrada" && veredito ? veredito.linha : ""].filter(Boolean);
     return {
       acao: "partir", nome: m.nome, masmorra: m, rota, origem,
       deixaEstrada: !!(o.emViagem || jornada), linhas, veredito,
