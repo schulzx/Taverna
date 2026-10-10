@@ -15,6 +15,53 @@ Formato:
 ```
 
 ---
+## 10/10 · v9.366 · MM17: a ficha é a planta · a marcha única · P3 e P2 do mapa · commits `1b7f1ee` (v9.363), `fb4d12b` (v9.364, parte pura), `c0703ae` (v9.365), `432c92e` (v9.366)
+
+- **por que andou:** a pessoa escolheu duas pendências da MM17 (10/10) e o regente, que desenhou o mapa novo no Figma, pediu o P2 e o P3
+  de `mente/pedidos-ao-sistema.md`. Uma versão cada. Lei nova da C2, cumprida em todas: **o HEAD verde num checkout limpo
+  (`git archive HEAD`, fins de linha do repositório) ANTES de subir** — corri-o sobre o commit de cada versão, não só `npm test` na árvore.
+  Código em Opus (`backend`); eu conduzi. O bastão do App.jsx esteve sempre com o regente (a A1): não o tomei.
+- **v9.363 · a ficha é a planta:** `gerarMasmorra` ganha a opção `quem` (`FICHA_NA_PLANTA`, `bichosDaFicha`, `plantaDaFicha`): a planta sai
+  como antes e só depois os nomes dos inimigos são trocados pelos da ficha, por regra fixa (o chefe é a criatura mais forte da ficha,
+  elevada a pelo menos elite; a sala do guardião vem antes do chefe). Sem a opção, byte a byte a de HEAD (200 sementes × 2 géneros × 4
+  níveis). 200 mundos, 1.285 lugares, 8.045 inimigos: nomeados pela ficha **15% → 100%**; plantas inteiras que batem **0 → 1.285**;
+  toda criatura da ficha aparece numa sala **14% → 100%**; linha "quem está aqui" só com criaturas da ficha **365 de 4.811 → 4.811 de
+  4.811**; com léxico 0% → 100%. Prompt sem crescer (a linha da ficha igual byte a byte; seção MASMORRA mediana 224 → 225).
+- **v9.364 · a marcha única (PARTE PURA):** `marcha.js`; `PROMESSA_DA_REGIAO` = base→lugar 8 h, direta 8 h, ponta a ponta 16 h. 200 mundos,
+  22.070 pares: jornada mediana/pior **8/24 h → 8/16 h**; povoação→povoação 12/24 → 8/16; lugar→lugar 8/20 → 8/16; pares em que uma conta
+  discorda da jornada **3.309 → 0** (Geógrafo 3.109, ficha 1.032, mapa vivo 1.032); viagens além da promessa **891 → 0**; povoações
+  cobradas pelo piso de 3 dias 858 → 0. **MAS ISTO SÓ VALE NO JOGO DEPOIS DA FIAÇÃO:** a viagem a uma POVOAÇÃO continua a passar pelo
+  `abrirViagem` antigo até `viajar` (App.jsx) chamar `partidaNaRegiao`. **Sem a fiação sobram 1.984 discordâncias e 858 viagens além
+  da promessa** (todas idas a povoação; as idas a lugares já saem certas). Dito sem rodeios: **a pendência da pessoa — "nenhuma viagem
+  dentro da região pode passar da promessa" — está provada em Node e NÃO está ligada ao jogo.** Espera o bastão do App.jsx.
+- **v9.365 · P3:** `dadosDoMapaVivo` → `nos[].quem` (nomes da ficha, sem nível; só onde a neblina mostra o perigo). 2.823 nós com ficha
+  aberta: nó = ficha = planta em **2.823/2.823**; 632 nós calados, nenhum com `quem`; JSON +2,5% no pior mundo (9.382 → 9.510 mediana).
+- **v9.366 · P2:** `partida.js`, `vereditoDaPartida(dados, destinoId, estado)`: horas, dias, noites, chegada, perigo do lugar (nulo se oculto),
+  perigo da estrada, horas de volta, rota e pernas, desvio e motivo do chão, e os prazos. 22.070 pares: **0 contradições** com a jornada,
+  a rota e o relógio; marcha mediana/pior base→lugar 4/8 h, povoado→lugar 8/16 h; saindo às 08:00, 4 h chegam às 20:05 e 8 h às 08:10
+  do dia seguinte. **Prazo ou ameaça ao partir? Prazo de missão: NÃO (conta noites dormidas). Custos e ameaças: SIM** — exaustão (um dia
+  sem dormir já deixa o herói Exausto), invocações que expiram, petições do correio, domínio em fúria, o passo do plano da ameaça.
+- **achados:** o exemplo do pedido P2 (Torre Serena → Agulha de Ferro "por Pedra Serena") estava errado: é direta (8 h); o desvio vinha de
+  não haver traço no mapa vivo porque a ficha da Agulha não lista a Torre como vizinha — a tela desenha a perna a partir de `pernas`. A
+  jornada curta a uma povoação custa 12 h (97 min a pé, o relógio cobra 725) pelo piso do avanço de `viajar`: o veredito diz o que o jogo
+  cobra; a incoerência morre com a fiação. A cor do traço do mapa vivo lê o chão de um sentido só (1.002 pares).
+- **decisões médias, com o motivo:** (1) o P2 em módulo próprio (`partida.js`) e não em `marcha.js`: evita import circular com o mapa vivo;
+  (2) o veredito não tem conta própria — repete a da jornada, para a tela nunca prometer o que o jogo não cobra; (3) o `quem` do P3 vem de
+  `quemDoLugar`, a mesma função que dá a planta, para a verdade ser uma só; (4) `partida.js` e `mapa-vivo.js` na lista `AGUARDANDO` do
+  `teste-ligacao`, datadas, com o credor (a tela do mapa, do regente/oficial); (5) um hash do mapa vivo em `teste-marcha-unica` lia a saída
+  inteira: tirei o `quem` antes de contar em vez de o regravar (o hash voltou ao de HEAD).
+- **à espera do bastão (App.jsx):** a fiação de `partidaNaRegiao` em `viajar`: (1) `import { partidaNaRegiao } from "./marcha.js"`; (2) guardar
+  `lugarDaPartida = lugarRef.current` antes de limpar o lugar; (3) com `!jornadaRef.current && !(opcoes && opcoes.ida)` e mapa com `regiao`,
+  calcular `jM = partidaNaRegiao(mapaRef.current, { cidadeAtual, lugar: lugarDaPartida, destino, dia })`, mostrar `jM.linhas` e abrir
+  `jornadaRef.current = jIda || (jM && jM.jornada) || abrirViagem(...)`; (4) re-medir os endereços dos varredores com o cabeçalho
+  "(v9.367 · a marcha única, a fiação)". Corrige de caminho o piso de 12 h. O botão "Partir" da tela chama
+  `vereditoDaPartida(dados, no.id, { ...estado, mapa, ritmo })`.
+- **o que ficou:** a linha "O QUE EXISTE EM" (mundo-base) diz a hora a partir da base mesmo com o herói numa povoação (import circular);
+  a volta de uma boca à cidade segue narrada sem jornada; saves de região entre a v9.356 e a v9.362 em mundos com léxico têm fichas sem
+  ameaça (91% adivinhada pelo nível; nomes 100%) e uma masmorra em curso mantém a planta velha; o App passa só `{nome, ameaca}` a
+  `completarInimigo` (uma criatura renomeada pelo léxico entra ao nível do herói); o P1 e o P4 do mapa ficam na pauta. **Não comecei a
+  quarta sessão de prova.**
+
 ## 06–07/10 · v9.362 · a luz · MM17 a região delimitada (A–D) · a Bolsa · o vermelho do HEAD · commits `2fb5355` (v9.354), `eff2882` (v9.355), `81b8bca` (v9.356), `fe92895` (v9.357), `311e0d4` (v9.358), `779d254` (v9.361), `87eeda8` (v9.362)
 
 - **por que andou:** duas decisões da pessoa de 06/10, registadas em `mente/respondidas.md` com as palavras dela: (1) a luz — a mecânica

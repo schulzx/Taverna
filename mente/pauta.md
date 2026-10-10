@@ -506,15 +506,15 @@ O limite é o que um commit revertido não desfaz.
       "a noite da salina" três vezes; "Seguro a ação e observo, pronto para responder Turno dos inimigos" (duas frases
       coladas); o rodapé do Mercado "O Narrador conta a conversa; quem cobra é o sistema" (o sistema a falar de si); a base
       diz "12 salas" e a planta tem 6.
-- [ ] **MM17 · a região delimitada** · decisão da pessoa, 06/10 · **A, B, C1, C2 e D feitas (v9.355–v9.362) — a quarta sessão de prova é a prova** · plano e números em `mente/mm17-regiao.md`
+- [ ] **MM17 · a região delimitada** · decisão da pessoa, 06/10 · **A, B, C1, C2 e D feitas (v9.355–v9.362); 10/10: a ficha é a planta (v9.363), a marcha única (v9.364, SÓ A PARTE PURA), P3 (v9.365), P2 (v9.366) — a quarta sessão de prova é a prova** · plano e números em `mente/mm17-regiao.md`
   A campanha nova de Uma Vida nasce numa região de 59–100 km de lado (mediana 78 km; 19–30 h de marcha), com base, 3–4 povoados, 5–8 lugares
   com ficha, a espinha amarrada (início na base, meio em 2–3 lugares, fim no clímax), viagens em horas e o resto do mundo como horizonte.
   Só campanhas NOVAS; saves existentes ficam com o mapa continental. O que fica, com peso:
-  1. **A planta de um lugar da região devia tirar os inimigos de `ficha.quem`** · **médio** · hoje `gerarMasmorra` sorteia os seus e a
+  1. ✓ *feito em v9.363: 15% → 100% por nome, 0 → 1.285 plantas que batem; fica: fichas de saves entre a v9.356 e a v9.362 em mundos com léxico sem ameaça (91% adivinhada pelo nível), uma masmorra em curso mantém a planta velha, e o App passa só `{nome, ameaca}` a `completarInimigo`: uma criatura renomeada pelo léxico entra ao nível do herói, **médio**)* · hoje `gerarMasmorra` sorteia os seus e a
      ficha diz os bichos do chão: o Narrador pode ouvir "Goblin, Lobo" numa cripta de Elementais (a linha diz "de fora, sabe-se que…").
   2. **A ficha é a primeira linha a ceder ao teto** em cenas sintéticas cheias (200 de 500; numa cena real chega quase sempre) · **leve** · medir
      numa sessão real; se ceder, subir a prio.
-  3. **A ida direta entre dois lugares lentos chega a 20 h** (a boca não sabe passar pela base) e **o Geógrafo ainda anda a 4 km/h** ·
+  3. ◐ *a parte pura feita em v9.364 (jornada, ficha, Geógrafo e mapa vivo: 3.309 discordâncias → 0; viagens além da promessa 891 → 0; pior jornada 24 → 16 h) — **FALTA A FIAÇÃO em `viajar` (App.jsx, `partidaNaRegiao`; espera o bastão, que está com o regente): sem ela sobram 1.984 discordâncias e 858 viagens além da promessa, todas idas a povoação; a receita está no diário de 10/10; fica também a linha "O QUE EXISTE EM" a partir da base e a volta de uma boca sem jornada*; **médio** · **A ida direta entre dois lugares lentos chega a 20 h** (a boca não sabe passar pela base) e **o Geógrafo ainda anda a 4 km/h** ·
      **médio** · uma verdade só para a hora: Geógrafo, boca e ficha.
   4. **Campos opcionais para o mapa vivo** · **médio** · `baseMundo.visitadas` e `baseMundo.ouvidas` (novos, ignorados pela versão antiga):
      sem eles um lugar só é "visitado" enquanto o herói lá está. É fiação do App, e a tela é do desenho (a pessoa a está a desenhar).
