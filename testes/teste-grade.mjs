@@ -117,7 +117,11 @@ sec("6. A LEGENDA DESCREVE O QUE ESTÁ DESENHADO");
   /* v9.161: a inicial deu lugar ao ROSTO — a xilogravura fez a cara dizer
      mais que a letra, e a legenda acompanhou de novo */
   t("e saíram da legenda junto", semEmoji && /o rosto de cada um/.test(CODIGO));
-  t("a ficha desenha o rosto da casa", /<Rosto semente=\{sementeDe\(ent\)\} estado=\{estadoDe\(pv, pvMax, tipo === "inimigo"\)\} ente=\{ent\} \/>/.test(G));
+  /* MOVIDA (10/10, A1 · `formas.md` §A1 4): a ficha passa ao rosto os píxeis em que
+     ele é desenhado (`lado` = 2 × r × o lado da casa = 0,8 × a casa), para o sinal de
+     quem não é gente ter o traço do tamanho em que se vê. O que se guarda é o mesmo:
+     a ficha desenha o rosto da casa, com a pessoa inteira. */
+  t("a ficha desenha o rosto da casa", /<Rosto semente=\{sementeDe\(ent\)\} estado=\{estadoDe\(pv, pvMax, tipo === "inimigo"\)\} ente=\{ent\} lado=\{2 \* r \* \(pxDaCasa \|\| 1\)\} \/>/.test(G));
   t("o herói entra com a ficha completa por baixo", /<Ficha ent=\{\{ \.\.\.\(heroiFicha \|\| \{\}\), \.\.\.heroi \}\} rotulo="você"/.test(G));
   t("o balão de cada quadrado continua dizendo o lugar", /nomeDoLugar\(grade, x, y\)/.test(G));
 }

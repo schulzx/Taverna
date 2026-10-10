@@ -32,6 +32,11 @@ import { SUBS_GESTAO, falaDaNovidade } from "../src/abas.js";
 import { ALVOS, TIPOS, CAMPO_DO_TURNO } from "../src/estilo.js";
 
 const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+/* A1 · B1 (10/10): o relato saiu do `App.jsx` para `painel-relato.jsx` —
+   o laço de `agruparMensagens`, o `BlocoSistema` e as portas da seta mudaram
+   de casa sem mudar de forma. As asserções da seta e da
+   fala do Mestre leem-no lá; o que protegem é o mesmo. */
+const RELATO = readFileSync(new URL("../src/painel-relato.jsx", import.meta.url), "utf8");
 
 let bons = 0, maus = 0;
 const t = (o, cond, extra = "") => {
@@ -41,19 +46,19 @@ const t = (o, cond, extra = "") => {
 const sec = (s) => console.log("\n" + s);
 
 /* ---------------- a extração, que é ela própria uma asserção ---------------- */
-const extrair = (nome) => {
-  const i = APP.indexOf(`function ${nome}(`);
+const extrair = (nome, F = APP) => {
+  const i = F.indexOf(`function ${nome}(`);
   if (i < 0) return null;
   /* conta chaves a partir da primeira `{` da declaração: estas funções são
      pequenas e não têm chave dentro de string nenhuma — se um dia tiverem,
      a extração devolve algo que não roda e a suíte cai, que é o que se quer */
-  const a = APP.indexOf("{", i);
+  const a = F.indexOf("{", i);
   let n = 0, fim = -1;
-  for (let k = a; k < APP.length; k++) {
-    if (APP[k] === "{") n++;
-    else if (APP[k] === "}") { n--; if (n === 0) { fim = k; break; } }
+  for (let k = a; k < F.length; k++) {
+    if (F[k] === "{") n++;
+    else if (F[k] === "}") { n--; if (n === 0) { fim = k; break; } }
   }
-  return fim < 0 ? null : APP.slice(i, fim + 1);
+  return fim < 0 ? null : F.slice(i, fim + 1);
 };
 
 sec("1. O GESTO DO CAMPO — Enter manda, Shift+Enter quebra");
@@ -117,9 +122,10 @@ t("e quem parte devolve o campo ao repouso ANTES de mandar — e o `agir` fica d
 t("e `Agir →` continua existindo como botão", /<Dado estado=\{estadoDado\}/.test(APP) && /if \(estado === "pronto" \|\| estado === "lancado"\) return "Agir";/.test(readFileSync(new URL("../src/glifos.js", import.meta.url), "utf8")));
 
 sec("3. O SINAL DE SETA FICA RESERVADO AO QUE SE TOCA");
-const fonteDaPorta = extrair("portaDaLinhaDeSistema");
-const fonteDaSeta = APP.match(/const SETA_DA_PORTA = "[^"]+";/);
-const fonteDasPortas = APP.match(/const PORTAS_DO_SISTEMA = \[[\s\S]*?\n\];/);
+/* A1 · B1: a seta e as portas moram em `painel-relato.jsx` (ver RELATO, acima). */
+const fonteDaPorta = extrair("portaDaLinhaDeSistema", RELATO);
+const fonteDaSeta = RELATO.match(/const SETA_DA_PORTA = "[^"]+";/);
+const fonteDasPortas = RELATO.match(/const PORTAS_DO_SISTEMA = \[[\s\S]*?\n\];/);
 t("`portaDaLinhaDeSistema` existe no escopo do módulo", !!fonteDaPorta);
 t("e a tabela das portas sai de `SUBS_GESTAO`", !!fonteDasPortas && /SUBS_GESTAO\.map/.test(fonteDasPortas[0]),
   "alguém escreveu a lista de rótulos à mão. Ela envelhece calada: a linha continua a aparecer, só que morta outra vez");
@@ -145,7 +151,7 @@ if (fonteDaPorta && fonteDaSeta && fonteDasPortas) {
   t("uma linha sem seta nunca abre nada", porta("Mural — há um mural.") === null);
   t("e lixo não derruba", porta(null) === null && porta("") === null && porta("▸ ") === null);
 
-  const semSeta = new Function(`${fonteDaSeta[0]}\n${extrair("semSetaQueMente")}\nreturn semSetaQueMente;`)();
+  const semSeta = new Function(`${fonteDaSeta[0]}\n${extrair("semSetaQueMente", RELATO)}\nreturn semSetaQueMente;`)();
   t("a seta que não abre é REMOVIDA do texto",
     semSeta("▸ Firmamento — há o que ver ali.") === "Firmamento — há o que ver ali.");
   t("e o texto sem seta passa intacto", semSeta("a chuva começou.") === "a chuva começou.");
@@ -203,9 +209,10 @@ sec("4. O piso do alvo entra na tela principal, e sai de tabela");
 }
 /* V3b (25/09) · a porta deixou de ser uma pílula (fundo `paginaAlta`) e passou a
    ser a linha do ladrilho feita botão; a asserção guarda o mesmo — o alvo é a
-   linha inteira, a `ALVOS.piso`. */
+   linha inteira, a `ALVOS.piso`.
+   A1 · B1: a porta mora em `painel-relato.jsx` (RELATO). */
 t("a linha do sistema que abre uma porta lê `ALVOS.piso`",
-  /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(APP));
+  /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(RELATO));
 /* a conta é a mesma que `estilo.js` guarda, e é por isso que ela é tabela:
    um 48 escrito à mão aqui não teria como ser conferido de volta */
 t("e o piso continua a ser 48 e ≥ 44 (WCAG 2.5.5)", ALVOS.piso === 48 && ALVOS.piso >= 44);
@@ -231,7 +238,8 @@ t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outli
 /* V5: a resposta do Mestre começa pela RUNA com o botão de ouvir na ponta
    (o `jogo`, V5 §4), e não por `O MESTRE`. A coluna é a mesma; o que muda é
    o primeiro filho dela. */
-t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir /.test(APP));
+/* A1 · B1: a fala do Mestre mora em `painel-relato.jsx`. */
+t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir /.test(RELATO));
 /* mede o CÓDIGO e não a prosa: o comentário que explica por que as
    percentagens saíram cita-as, e um regex cego sobre o arquivo inteiro
    acusaria o próprio motivo de ser o defeito */
@@ -243,13 +251,14 @@ t("e não voltaram as percentagens que partiam os dois aparelhos",
    nó da pessoa. O tamanho continua `TIPOS.prosa`; a régua o lê onde ele mora. */
 { const UI = readFileSync(new URL("../src/ui.jsx", import.meta.url), "utf8");
   t("a prosa nasce em `TIPOS.prosa`", /const normal = \{ fontSize: TIPOS\.prosa, lineHeight: PAGINA\.entrelinha/.test(UI)
-    && /<Prosa texto=\{m\.texto\}/.test(APP) && TIPOS.prosa === 17); }
+    && /<Prosa texto=\{m\.texto\}/.test(RELATO) && TIPOS.prosa === 17); }
 /* V5: eram três usos de `A voz` — o timbre no topo da página, a prosa do Mestre
    e a fala do jogador. O do topo DESCEU para onde a resposta vai nascer (é o
    mesmo, esperando), e o da prosa virou a runa. Ficam dois, e os dois
    continuam a ser a peça, nunca um cabeçalho à mão. */
 t("`A voz` continua sendo a peça nos dois lugares onde ela ainda fala",
-  (APP.match(/<Voz quem=/g) || []).length >= 2 && /<Voz quem="mestre" voz="preparando" \/>/.test(APP) && /<Voz quem="voce"/.test(APP),
+  /* A1 · B1: a fala do jogador foi com o relato; a espera ficou no App. */
+  ((APP + RELATO).match(/<Voz quem=/g) || []).length >= 2 && /<Voz quem="mestre" voz="preparando" \/>/.test(APP) && /<Voz quem="voce"/.test(RELATO),
   "são dois usos: a espera do Mestre (onde a resposta nasce) e a fala do jogador");
 t("e o botão de ouvir deixou de medir 22", !/width: 22, height: 22, fontSize: 12/.test(APP));
 t("`A soleira` está montada com `A oferta` dentro", /<Soleira ofertas=\{vivas\.map\(\(o\) => \(/.test(APP) && /<Oferta key=\{o\.id\}/.test(APP));

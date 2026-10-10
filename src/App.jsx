@@ -68,7 +68,7 @@ import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } 
 import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, LADRILHO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -200,7 +200,7 @@ import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resu
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
-import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS, SUBS_GESTAO } from "./abas.js";
+import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
 import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
 import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
@@ -212,7 +212,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, LadrilhoDoAssunto, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, Prosa, BotaoDeOuvir, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -254,6 +254,82 @@ const calou = (onde, e) => {
   try { if (import.meta.env && import.meta.env.DEV) console.warn("[" + onde + "] calou:", e); } catch { /* fora do Vite */ }
   return [];
 };
+
+/* ---------------- A1 · B2 (10/10): O RECIBO DO TURNO E O FIM DA LUTA ----------------
+   Puros, e por isso FORA do componente: a suíte `teste-a1-relato` os lê
+   deste arquivo e os corre em Node, como já faz com o carimbo `naLuta`.
+
+   Dois campos NOVOS nas mensagens, que a versão antiga ignora (a ordem de
+   28/09 permite campo de save novo e ignorado — um commit revertido não
+   deixa nada para trás que ela não saiba ler):
+
+   · `recibo` — SÓ na resposta do Mestre: o que a FICHA mudou entre o
+     envio do turno e o fim dele (`reciboDoTurno`, glifos.js). Lê a ficha,
+     nunca a frase — por isso não consegue discordar da bolsa.
+   · `fimDaLuta` — na ÚLTIMA mensagem marcada `naLuta` de uma luta que
+     fechou: quem caiu, quantas rodadas, o recibo da luta inteira (da ficha
+     na abertura à ficha no fecho) e o desfecho.
+
+   As duas trocas são cópias: a lista nova só difere da velha na mensagem
+   marcada, e a marcada é um objeto novo. Quem não acha onde escrever
+   devolve a MESMA lista — e é por identidade que o App sabe que não há
+   nada a redesenhar. */
+const DESFECHOS_DA_LUTA = ["vitoria", "fuga", "queda", "encerrada"];
+function mensagensComRecibo(lista, { desde = 0, texto = null, recibo = [] } = {}) {
+  if (!Array.isArray(lista) || !Array.isArray(recibo) || !recibo.length) return lista;
+  for (let i = Math.max(0, Number(desde) || 0); i < lista.length; i++) {
+    const m = lista[i];
+    if (!m || m.autor !== "mestre") continue;
+    if (texto != null && m.texto !== texto) continue;
+    if (m.recibo) return lista;
+    return lista.map((x, k) => (k === i ? { ...x, recibo } : x));
+  }
+  return lista;
+}
+function mensagensComFimDaLuta(lista, fim, { desde = 0 } = {}) {
+  if (!Array.isArray(lista) || !fim) return lista;
+  for (let i = lista.length - 1; i >= Math.max(0, Number(desde) || 0); i--) {
+    const m = lista[i];
+    if (!m || m.naLuta !== true) continue;
+    if (m.fimDaLuta) return lista;
+    return lista.map((x, k) => (k === i ? { ...x, fimDaLuta: fim } : x));
+  }
+  return lista;
+}
+function caidosDaLuta(c) {
+  return ((c && c.inimigos) || [])
+    .filter((e) => e && !e.fugiu && (e.derrotado || (Number(e.vida) || 0) <= 0))
+    .map((e) => e.nome).filter(Boolean);
+}
+/* O desfecho que a tela e a dobra dizem. A queda do herói manda sobre
+   tudo menos a vitória (quem vence e fica a 0 venceu); a fuga vem de quem
+   viu o herói sair (`fugiu`). Fora da tabela, `encerrada`. */
+function desfechoDoFecho(fecho, ficha, fugiu = false) {
+  let d = fugiu ? "fuga" : (fecho && fecho.desfecho) || "encerrada";
+  if (!DESFECHOS_DA_LUTA.includes(d)) d = "encerrada";
+  const caiu = !!(ficha && (ficha.morto || (typeof ficha.vida === "number" && ficha.vida <= 0)));
+  if (caiu && d !== "vitoria") d = "queda";
+  return d;
+}
+/* A1 · B3: A PORTA DO ACEITE — "▸ Diário — {título} · próximo: {passo}".
+   O travessão é o separador que `portaDaLinhaDeSistema` (painel-relato)
+   lê para achar o nome da aba; o resto é o que se decide a seguir. Sem
+   preço (a soleira mostrou-o antes do clique) e sem os números da paga. */
+function portaDoAceite(m) {
+  if (!m) return "";
+  let e = null;
+  try { e = etapaAtual(m); } catch (err) { calou("a etapa da porta do aceite", err); }
+  return "\u25B8 Di\u00E1rio \u2014 " + (m.titulo || "") + (e ? " \u00B7 pr\u00F3ximo: " + textoDaEtapa(e) : "");
+}
+function fimDaLutaDe(fecho, depois) {
+  if (!fecho) return null;
+  return {
+    caidos: Array.from(new Set(fecho.caidos || [])),
+    rodadas: Math.max(1, Number(fecho.rodadas) || 1),
+    recibo: reciboDoTurno(fecho.fichaNaAbertura, depois),
+    desfecho: desfechoDoFecho(fecho, depois),
+  };
+}
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, leituraDaPeticao, processarDiaCorreio } from "./correio.js";
 import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, iniciativaDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
@@ -270,7 +346,7 @@ import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, eh
    trocaria um pelo outro calado. */
 import { aplicarPoder } from "./poder-de-classe.js";
 import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
-import { agruparMensagens } from "./resumo.js";
+import { Relato } from "./painel-relato.jsx";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -546,7 +622,7 @@ function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar, local = null, per
   );
 }
 
-function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer }) {
+function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer, emCombate = false }) {
   if (rolagem.auto) {
     return (
       <div className="fixed inset-0 z-40 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.85)", backdropFilter: "blur(3px)" }}>
@@ -600,6 +676,20 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
   const critico = faseD === "resultado" && valor === 20;
   const desastre = faseD === "resultado" && valor === 1;
   const passou = dc != null && (critico || (!desastre && total >= dc));
+  /* A1 · B8 (#27, #140): A MARGEM MORA NO VÉU. A linha "⚖ Passou por 1 — e
+     por um fio o mundo cobra…" chegava ao relato DEPOIS de o véu dizer
+     "Sucesso" — e, dois pontos abaixo da linha, o véu dizia "Falha" de um
+     teste que o motor dava por conseguido pagando. Um facto, um lugar: o
+     véu lê a MESMA conta que `concluirRolagem` vai correr
+     (`desfechoDaMargem`, desafios.js), e só ela — sem desafio, sem faixa do
+     meio, nada muda. */
+  let fio = null;
+  try {
+    if (faseD === "resultado" && dc != null && rolagem.origem === "pedido" && rolagem.desafio) {
+      const dm = desfechoDaMargem(rolagem.desafio, { total, dc, critico, desastre, emCombate: !!emCombate });
+      if (dm && dm.porPouco) fio = dm.faixa;
+    }
+  } catch (e) { calou("a margem no véu", e); }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.88)", backdropFilter: "blur(4px)" }}>
       <div className="tv-fade flex flex-col items-center text-center max-w-sm w-full">
@@ -653,9 +743,14 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
               {valor} {modificador !== 0 ? `${modificador > 0 ? "+" : "−"} ${Math.abs(modificador)} = ` : ""}
               <span style={{ color: T.ink, fontWeight: 600 }}>{total}</span>
             </div>
-            <div className="tv-display text-3xl mt-1" style={{ color: desastre ? T.danger : critico ? T.amberSoft : passou || dc == null ? T.ok : T.danger }}>
-              {critico ? "Crítico!" : desastre ? "Desastre!" : dc == null ? "Rolado" : passou ? "Sucesso" : "Falha"}
+            <div className="tv-display text-3xl mt-1" style={{ color: desastre ? T.danger : critico ? T.amberSoft : fio === "quase" ? T.amberSoft : passou || dc == null ? T.ok : T.danger }}>
+              {critico ? "Crítico!" : desastre ? "Desastre!" : dc == null ? "Rolado" : fio === "quase" ? "Por um fio" : passou ? "Sucesso" : "Falha"}
             </div>
+            {fio && !critico && !desastre && (
+              <div className="tv-mono text-[11px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
+                {fio === "quase" ? "e paga" : "por um fio"}
+              </div>
+            )}
             {refeito != null && (
               <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.violetSoft }}>
                 ✧ refeito — o primeiro dado deu {refeito}
@@ -935,7 +1030,7 @@ function RevelacaoDoEspolio({ item, fechar }) {
    caixa ("passo 1 de 2", "passo 2 de 2"), em dois lugares que ninguém
    obrigava a concordar. Agora são uma tabela, e a cerimônia da espera conta
    os mesmos passos que a caixa da decisão anuncia. */
-const PASSOS_DO_SAVE = ["A lenda do herói — nível, atributos, corpo", "O mundo e os seus sistemas — gente, potências, cidades, guilda"];
+const PASSOS_DO_SAVE = ["A lenda do herói — nível, atributos, corpo", "O mundo se reorganiza — gente, potências, cidades, guilda"];
 const PASSOS_DA_ASCENSAO = ["A ascensão divina — grau, fiéis e domínio"];
 
 /* ---------------- A RECALIBRAGEM (v9.182) — `momento-recalibrar-v2` --------
@@ -1842,7 +1937,16 @@ function primeiraLinhaDaProsa(texto) {
    Na larga isto é exactamente o que era — a coluna em fluxo de v9.170, e
    o que no telefone era barra inferior deixou de existir, em vez de ficar
    escrito para uma tela onde não aparece. */
-function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }) {
+/* A1 · B6 (10/10): O TRILHO É A MORADA DAS MARCAS (`a1-jogo.md` #8, #92).
+   Na mesa, a novidade acende NA PORTA DA COISA — a BOLSA, o DIÁRIO — e não
+   no retrato da cinta: no ANTES (T4) o ponto do retrato dizia "há novo na
+   bolsa" e o botão BOLSA, à vista, não dizia nada. A forma é a da fita do
+   alforje (`AbaComGlifo`, ui.jsx): `MarcaDaPorta` novo, no canto do glifo —
+   uma ação, uma forma, nas duas composições da aba.
+   E SAIU O CONTADOR VIOLETA DE GESTÃO (N3): era `nGrupo`, um número sem
+   nome que o `jogo` leu como enigma por dez turnos; os anéis da cinta já
+   mostram o grupo, cada um com o seu rosto. */
+function TrilhoAbas({ abaAtiva, aoClicar, marcas = [], desperto, codexAberto = true }) {
   return (
     <nav className="hidden md:flex shrink-0 flex-col justify-start gap-3"
       aria-label="Painéis" style={{ background: T.bg }}>
@@ -1857,13 +1961,17 @@ function TrilhoAbas({ abaAtiva, aoClicar, nGrupo, desperto, codexAberto = true }
               border: "1px solid " + (ativa ? T.amber : T.line),
               color: ativa ? T.amberSoft : T.inkDim,
             }}>
-            {Glifo
-              ? <Glifo tamanho={24} cor={ativa ? T.amberSoft : T.inkDim} />
-              : <span className="text-base leading-none">{aba.icone}</span>}
+            <span style={{ position: "relative", display: "inline-flex" }}>
+              {Glifo
+                ? <Glifo tamanho={24} cor={ativa ? T.amberSoft : T.inkDim} />
+                : <span className="text-base leading-none">{aba.icone}</span>}
+              {!ativa && Array.isArray(marcas) && marcas.includes(aba.id) && (
+                <span aria-hidden="true" style={{ position: "absolute", top: -6, right: -8, lineHeight: 0 }}>
+                  <MarcaDaPorta estado="novo" />
+                </span>
+              )}
+            </span>
             <span className="tv-mono text-[9px] uppercase tracking-[0.9px]">{aba.rotulo}</span>
-            {aba.id === "gestao" && nGrupo > 0 && (
-              <span className="absolute top-1 right-1 tv-mono text-[9px] leading-none rounded-full px-1" style={{ background: T.violet, color: T.onSecond }}>{nGrupo}</span>
-            )}
           </button>
         );
       })}
@@ -2868,7 +2976,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                 aria-pressed={!!mostrarRolagens}
                 style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: mostrarRolagens ? T.amberSoft : T.inkDim }}>
                 🎲 Rolagens do mundo à vista: <b>{mostrarRolagens ? "sim" : "não"}</b>
-                <span className="block" style={{ color: T.inkDim }}>quando o sistema rola por trás da cena, mostrar o dado e o alvo</span>
+                <span className="block" style={{ color: T.inkDim }}>mostrar os dados que o Mestre rola por trás do escudo</span>
               </button>
               {aoIrAoMenu && (
                 <button onClick={aoIrAoMenu}
@@ -2892,7 +3000,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
             className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
             style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: T.amberSoft }}>
             📜 Gerar crônica
-            <span className="block" style={{ color: T.inkDim }}>o Cronista escreve a campanha por extenso, a partir do que está aqui</span>
+            <span className="block" style={{ color: T.inkDim }}>escreve a campanha por extenso, como crônica</span>
           </button>
         )}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
@@ -3651,7 +3759,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
               </div>
               {!forjaAberta ? (
                 <>
-                  <div className="tv-body text-[11px] mb-2" style={{ color: T.inkDim }}>Desmonte equipamentos (botão ⚒) para ganhar essência e forje peças novas — o item sai pela tabela, na hora, sem gastar tokens.</div>
+                  <div className="tv-body text-[11px] mb-2" style={{ color: T.inkDim }}>Desmonte equipamentos (botão ⚒) para ganhar essência e forje peças novas, na hora.</div>
                   <button onClick={() => setForjaAberta(true)} className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>abrir a forja</button>
                 </>
               ) : (
@@ -3803,37 +3911,13 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
               </div>
             ))}
           </div>
-          <div className="tv-mono text-[9px]" style={{ color: T.inkDim }}>O sistema rola a bancada e consome o material. Falha comum salva metade; erro feio perde tudo. Uma hora de trabalho por tentativa.</div>
+          <div className="tv-mono text-[9px]" style={{ color: T.inkDim }}>A bancada rola e consome o material. Falha comum salva metade; erro feio perde tudo. Uma hora de trabalho por tentativa.</div>
         </div>
       )}
     </div>
   );
 }
 
-/* ---------------- O SINAL DE SETA FICA RESERVADO AO QUE SE TOCA (R3) ----------------
-   O defeito mais curto do estudo de R1, e o mais difícil de defender: o
-   Mestre fecha o turno escrevendo uma linha de sistema com o sinal de
-   seta — o glifo universal de "vá aqui" — e o que chega ao DOM é
-   `{tag:"SPAN", clicavel:false, cursor:"auto"}`. Nove afordâncias no
-   primeiro ecrã, zero tocáveis. O jogo desenha a porta e não põe a
-   maçaneta, e o que está do outro lado existe, funciona e é bom.
-
-   A LEI NOVA, escrita pelo `desenho` em R1 e aplicada aqui: o sinal de
-   seta fica reservado ao que se toca. Onde ele não puder abrir nada, ELE
-   SAI — não fica um glifo a mentir. As duas metades vivem juntas de
-   propósito: quem um dia acrescentar uma linha nova com seta ou lhe dá
-   destino, ou vê a seta desaparecer sozinha na tela.
-
-   O ROTULO SAI DA MESMA TABELA QUE ESCREVEU A LINHA. `falaDaNovidade`
-   monta o texto a partir de `SUBS_GESTAO`; ler o rótulo de volta da
-   MESMA lista é o que impede as duas pontas de divergirem. Uma lista de
-   nomes escrita à mão aqui envelheceria no dia em que uma aba mudasse de
-   nome — e envelheceria calada, porque a linha continuaria a aparecer,
-   só que morta outra vez.
-
-   (O Códex é o único que não está em `SUBS_GESTAO`: ele é aba de cima,
-   mora em `ABAS_COM_PORTA`, e lá o rótulo não é campo da tabela. É a
-   única cópia, e está aqui declarada em vez de escondida.) */
 /* ---------------- O GESTO DO CAMPO (R3) ----------------
    `Enter` manda e `Shift+Enter` quebra a linha. É o gesto mais repetido
    do jogo, e num `<input>` de uma linha ele era de graça: `Enter` era a
@@ -3857,100 +3941,6 @@ function gestoDoCampo(e) {
   if (e.isComposing || e.keyCode === 229) return "nada";
   if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return "quebrar";
   return "mandar";
-}
-
-const SETA_DA_PORTA = "\u25B8 ";
-const PORTAS_DO_SISTEMA = [
-  ...SUBS_GESTAO.map((sub) => ({ rotulo: sub.rotulo, aba: "gestao", sub: sub.id })),
-  { rotulo: "C\u00F3dex", aba: "codex", sub: null },
-];
-function portaDaLinhaDeSistema(texto) {
-  const linha = String(texto == null ? "" : texto);
-  if (!linha.startsWith(SETA_DA_PORTA)) return null;
-  const nome = linha.slice(SETA_DA_PORTA.length).split("\u2014")[0].trim();
-  if (!nome) return null;
-  return PORTAS_DO_SISTEMA.find((p) => p.rotulo.toLowerCase() === nome.toLowerCase()) || null;
-}
-function semSetaQueMente(texto) {
-  const linha = String(texto == null ? "" : texto);
-  return linha.startsWith(SETA_DA_PORTA) ? linha.slice(SETA_DA_PORTA.length) : linha;
-}
-
-/* ---------------- UMA CORRIDA DE LINHAS DO SISTEMA (v9.32) ----------------
-   O que não se dobra fica em cima, como sempre foi. O que é contabilidade
-   pura desce para uma linha só de saldo, que abre com um toque. A dobra
-   nasce FECHADA de propósito: quem quer conferir a conta clica; quem quer
-   ler a cena não precisa fazer nada. */
-function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
-  const [aberto, setAberto] = useState(false);
-  /* ---------------- A FORMA SEGUE O CONTEÚDO (v9.149) ----------------
-     A pílula centralizada foi feita para o aviso de uma linha ("⛔ item
-     equipado"), e serve muito bem para isso. O recap da retomada é uma
-     LISTA — lugar, o que pesou, o que ficou devendo — e dentro da pílula
-     ele virava um parágrafo corrido e centralizado: as quebras de linha
-     sumiam e seis fatos viravam um muro.
-
-     A regra não é "recap tem forma própria", é mais simples e vale para
-     o que vier depois: texto com quebra de linha é bloco, texto sem
-     quebra é pílula. Quem escreve a mensagem decide a forma sem precisar
-     saber que esta função existe. */
-  /* V3b (25/09) · A PÍLULA CENTRADA SAIU; cada fala é uma LINHA com o
-     `LadrilhoDoAssunto` (36, glifo 16 — a linha do registo da v3, `47:2`) e a
-     frase alinhada à coluna. O emoji do motor vira o assunto por
-     `assuntoDaLinha` (`glifos.js`); o motor não se toca. `⛔` vira o tom
-     Impedido (ladrilho oco, frase a cinza), não um glifo. Sem assunto, um
-     vazio de 36: as frases ficam na mesma coluna. A porta é a linha feita
-     botão: a seta no ladrilho (o assunto dela é IR), fio `lineStrong` e a
-     largura do texto (`v3-jogo.md` §9.2-1: sem fio, lia-se frase realçada).
-     O alvo continua o de R3: quem abre uma porta cumpre `ALVOS.piso`, e o
-     ladrilho nunca é o alvo — é a linha inteira. */
-  const linha = (txt, i) => {
-    const bruto = String(txt);
-    const porta = aoAbrir ? portaDaLinhaDeSistema(bruto) : null;
-    const { glifo, tom, resto } = assuntoDaLinha(semSetaQueMente(bruto));
-    const impedido = tom === "impedido", bloco = resto.includes("\n");
-    const miolo = (
-      <>
-        {porta ? <LadrilhoDoAssunto tom="porta" /> : glifo || impedido ? <LadrilhoDoAssunto glifo={glifo} tom={tom} /> : <span aria-hidden="true" className="shrink-0" style={{ width: LADRILHO.lado }} />}
-        <span className={(bloco ? "whitespace-pre-line " : "") + (porta ? "min-w-0" : "flex-1 min-w-0")} style={{ color: porta ? T.amberSoft : impedido ? T.inkDim : T.inkMeio }}>{resto}</span>
-        {/* a seta da porta mora no ladrilho, à esquerda: a coluna dos assuntos fica inteira */}
-      </>
-    );
-    return porta ? (
-      <button key={i} type="button" onClick={() => aoAbrir(porta)} className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"
-        style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, cursor: "pointer", border: "1px solid " + T.lineStrong, borderRadius: LADRILHO.raio, padding: "0 12px 0 5px", marginLeft: -6 }}>{miolo}</button>
-    ) : (
-      <div key={i} className={"tv-fade tv-mono flex " + (bloco ? "items-start" : "items-center")}
-        style={{ fontSize: TIPOS.maquina, gap: LADRILHO.espaco, minHeight: LADRILHO.lado }}>{miolo}</div>
-    );
-  };
-  const doSaldo = assuntoDaLinha(saldo);
-  return (
-    <div className="tv-coluna space-y-2">
-      {visiveis.map(linha)}
-      {dobradas.length > 0 && (
-        <div className="tv-fade flex flex-col gap-1.5">
-          <button onClick={() => setAberto((v) => !v)}
-            title={aberto ? "Esconder as rolagens e os golpes" : "Ver rolagem por rolagem, golpe por golpe"}
-            className="tv-anel-foco tv-mono w-full text-left flex items-center rounded-xl"
-            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, color: T.inkMeio }}>
-            <LadrilhoDoAssunto glifo={doSaldo.glifo || "dado"} />
-            <span style={{ color: T.amberSoft }}>{doSaldo.resto}</span>
-            <span style={{ opacity: 0.7 }}>{aberto ? "▴ esconder" : `▾ ${dobradas.length} linhas`}</span>
-          </button>
-          {aberto && (
-            <div className="w-full space-y-1" style={{ paddingLeft: LADRILHO.lado + LADRILHO.espaco }}>
-              {dobradas.map((t, i) => { const d = assuntoDaLinha(t); return (
-                <div key={i} className="tv-mono flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>
-                  {d.glifo ? <Glifo nome={d.glifo} tamanho={14} /> : null}<span>{d.resto}</span>
-                </div>
-              ); })}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 }
 
 
@@ -4146,7 +4136,7 @@ function TelaMundo({ concluir }) {
 
         {/* ---- a voz ---- */}
         <CabecalhoDeSecao sobre="A voz do Mestre" titulo="Como ele narra"
-          diz="Muda a BOCA, não o mundo: o que acontece continua vindo do sistema, e nenhuma voz inventa regra." />
+          diz="Muda a BOCA, não o mundo: o que acontece continua o mesmo." />
         {duasColunas(VOZES, (v) => (
           <CartaoDeEscolha key={v.id} ativo={voz === v.id} aoClicar={() => setVoz(v.id)}>
             <LinhaDoCartao titulo={`${v.icone} ${v.nome}`} ativo={voz === v.id} />
@@ -4310,8 +4300,8 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
             Ela não pede espera nem trava o botão: se o léxico não chegar, a
             campanha começa igual, só genérica. */}
         <div className="rounded-lg px-4 py-2.5 tv-body text-xs" style={{ background: T.panelSoft, border: `1px solid ${mundoLido ? T.violet : T.line}`, color: mundoLido ? T.violetSoft : T.inkDim }}>
-          {lendoMundo ? "📖 Lendo o seu mundo… — enquanto você monta a ficha, o sistema está traduzindo a sua descrição em gente, lugares e nomes próprios deste lugar."
-            : mundoLido ? "📖 O seu mundo foi lido: a gente, os ofícios, os lugares e as ameaças daqui entraram no sistema."
+          {lendoMundo ? "📖 Lendo a sua descrição… — enquanto você monta a ficha, ela vira gente, lugares e nomes próprios deste mundo."
+            : mundoLido ? "📖 O seu mundo foi lido: a gente, os ofícios, os lugares e as ameaças daqui já vivem nele."
               : "📖 O mundo será montado a partir da sua descrição."}
         </div>
 
@@ -5898,7 +5888,9 @@ export default function Taverna() {
     if (!comb || !(comb.inimigos || []).length) return { combate: comb, msgs };
     const panteao = (divindadeRef.current && divindadeRef.current.panteao) || [];
     let inimigos = reconciliarGraus(comb.inimigos, panteao);
-    inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ O sistema reconheceu ${e.nome} como divindade de GD ${e.gd} — Regra do Degrau em vigor.`));
+    /* A1 · B8 (#47): o número do GD mora na ficha do inimigo, na batalha; na
+       linha fica o que ele muda — e quem o diz é o mundo */
+    inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ ${e.nome} é de outra grandeza: o aço comum não o fere.`));
     const g = montarGrid(pers, inimigos);
     const ordem = rolarIniciativa([
       { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
@@ -6711,7 +6703,13 @@ export default function Taverna() {
         /* o número, e não o adjetivo: "faltam 11 rações" se resolve;
            "mal abastecido" se ignora */
         const oQue = [falta.faltamRacoes ? `${falta.faltamRacoes} ração(ões)` : "", falta.faltamAguas ? `${falta.faltamAguas} água(s)` : ""].filter(Boolean).join(" e ");
-        pushMsgs([{ autor: "sistema", texto: `🥖 ${falta.diz}${oQue ? ` Faltam ${oQue}.` : ""}${(balcaoAqui() || []).length ? " Há mantimentos à venda aqui — Gestão › Mercado." : ""}` }]);
+        /* A1 · B8 (#36): o caminho de menu ("Gestão › Mercado") virou A PORTA —
+           a linha com seta que o relato abre num toque. O mundo não dita
+           caminho de interface. */
+        pushMsgs([
+          { autor: "sistema", texto: `🥖 ${falta.diz}${oQue ? ` Faltam ${oQue}.` : ""}` },
+          ...((balcaoAqui() || []).length ? [{ autor: "sistema", texto: "▸ Mercado — há mantimentos à venda aqui" }] : []),
+        ]);
       }
     } catch (e) { calou("avisoDeComida", e); }
     setAba(null);
@@ -8390,7 +8388,170 @@ export default function Taverna() {
   const ultimoPedidoRef = useRef("");  // a última fala do jogador, crua
   const entregaRef = useRef(null);     // as linhas do turno, prontas menos o texto
 
+  /* ---------------- A1 · B2 (10/10): O ANTES DA FICHA ----------------
+     O recibo do turno e o recibo da luta são DIFERENÇAS de ficha, e uma
+     diferença precisa do "antes". Quatro refs guardam os "antes", e todas
+     morrem sozinhas — nenhuma vai ao save (o que vai ao save é o resultado,
+     nas mensagens):
+
+     · `lutaDoReciboRef` — a luta aberta: a ficha no instante em que ela
+       abriu, o chão que já existia, o índice da primeira mensagem dela e o
+       último retrato do combate que se viu (para contar quem caiu).
+     · `fechoDaLutaRef` — a luta que FECHOU e cujo turno ainda corre. É
+       ela que conserta o buraco do turno da vitória: enquanto o turno que
+       fechou a luta não acaba, o que entra ainda é da luta (o golpe final,
+       o espólio, o "acabou") e leva `naLuta`, mesmo com `combateRef` já
+       vazio. A luta aberta no COMEÇO do turno decide, não o instante do
+       push.
+     · `turnoDoReciboRef` — o turno em curso: a ficha no ENVIO, o índice
+       onde a resposta vai nascer, e se ele começou dentro de uma luta.
+     · `reciboPendenteRef` — o turno que acabou e espera o Cronista (a
+       cobrança pela narração e o que ele registra caem DEPOIS do fim do
+       `enviar`, e o recibo tem de os ver).
+
+     O fecho da luta também vai a um estado, `fechoNaTela`, porque é ele que
+     a tela da batalha desenha no fim (B7): o espólio e o chão. */
+  const lutaDoReciboRef = useRef(null);
+  const fechoDaLutaRef = useRef(null);
+  const turnoDoReciboRef = useRef(null);
+  const reciboPendenteRef = useRef(null);
+  const seqDoReciboRef = useRef(0);
+  const [fechoNaTela, setFechoNaTela] = useState(null);
+  const idsDoChao = (c) => (((c && c.itens) || []).map((it) => it && it.id).filter(Boolean));
+  /* troca a lista do relato por uma cópia, e só se alguma coisa mudou */
+  const aplicarNoRelato = (trocar) => {
+    const nova = trocar(mensagensRef.current);
+    if (nova && nova !== mensagensRef.current) { mensagensRef.current = nova; setMensagens(nova); }
+  };
+  const encerrarOFechoDaLuta = (fecho, depois) => {
+    if (!fecho) return;
+    aplicarNoRelato((lista) => mensagensComFimDaLuta(lista, fimDaLutaDe(fecho, depois), { desde: fecho.inicio }));
+  };
+  /* O fim de um turno no relato: o recibo na resposta do Mestre (se o turno
+     não começou dentro de uma luta — ali o recibo é o da luta, e dois
+     recibos contariam o mesmo golpe duas vezes) e, se a luta fechou neste
+     turno, o `fimDaLuta` na última mensagem dela. Quando a luta ABRIU no
+     meio do turno, o recibo do turno fecha na ficha da abertura: o que vem
+     depois é da luta. */
+  const fecharORecibo = (id, depois) => {
+    const p = reciboPendenteRef.current;
+    if (!p || p.id !== id) return;
+    reciboPendenteRef.current = null;
+    const recibo = p.lutaNoEnvio ? [] : reciboDoTurno(p.fichaNoEnvio, p.aberturaNoTurno || depois);
+    aplicarNoRelato((lista) => {
+      let l = mensagensComRecibo(lista, { desde: p.inicio, texto: p.texto, recibo });
+      if (p.fecho) l = mensagensComFimDaLuta(l, fimDaLutaDe(p.fecho, depois), { desde: p.fecho.inicio });
+      return l;
+    });
+  };
+  /* Quem fecha a luta e SABE como ela fechou diz aqui — a vitória que o
+     golpe fecha, a que a resposta do Mestre declara. Sem esta palavra o
+     fecho cai em `encerrada` e conta os caídos pelo último retrato visto.
+     Uma luta que abriu e fechou na mesma resposta nunca foi vista aberta:
+     nasce aqui, com a ficha de agora como abertura. */
+  const notarFechoDaLuta = ({ combate: c = null, desfecho = null, caidos = null } = {}) => {
+    try {
+      if (!lutaDoReciboRef.current && !fechoDaLutaRef.current) {
+        lutaDoReciboRef.current = { fichaNaAbertura: fichaViva(), idsNoChao: idsDoChao(chaoRef.current), inicio: mensagensRef.current.length + ((seguraRef.current || []).length), ultima: c, desfecho: null, caidos: null };
+      }
+      const ref = lutaDoReciboRef.current ? lutaDoReciboRef : fechoDaLutaRef;
+      const r = ref.current;
+      const comb = c || r.ultima;
+      ref.current = {
+        ...r,
+        ultima: comb,
+        desfecho: desfecho || r.desfecho,
+        caidos: Array.from(new Set([...(r.caidos || []), ...(comb ? caidosDaLuta(comb) : []), ...((caidos || []).filter(Boolean))])),
+        ...(comb && comb.rodada ? { rodadas: comb.rodada } : {}),
+      };
+    } catch (e) { calou("notar o fecho da luta", e); }
+  };
+  /* Corre a cada `pushMsgs`, ANTES do carimbo: é o funil por onde todo
+     caminho que abre ou fecha uma luta passa logo a seguir, e por isso o
+     único lugar que vê as duas pontas sem uma linha em cada um dos doze
+     sítios que zeram `combateRef`. */
+  const acompanharALuta = () => {
+    const viva = combateRef.current;
+    const aberta = lutaDoReciboRef.current;
+    if (viva) {
+      if (!aberta) {
+        /* uma luta nova com a anterior ainda por fechar: a anterior fecha já */
+        if (fechoDaLutaRef.current) { const f = fechoDaLutaRef.current; fechoDaLutaRef.current = null; encerrarOFechoDaLuta(f, fichaViva()); }
+        const nova = { fichaNaAbertura: fichaViva(), idsNoChao: idsDoChao(chaoRef.current), inicio: mensagensRef.current.length + ((seguraRef.current || []).length), ultima: viva, desfecho: null, caidos: null };
+        lutaDoReciboRef.current = nova;
+        const t = turnoDoReciboRef.current;
+        if (t && !t.lutaNoEnvio && !t.aberturaNoTurno) turnoDoReciboRef.current = { ...t, aberturaNoTurno: nova.fichaNaAbertura };
+        setFechoNaTela(null);
+      } else if (aberta.ultima !== viva) {
+        lutaDoReciboRef.current = { ...aberta, ultima: viva, ...(viva.rodada ? { rodadas: viva.rodada } : {}) };
+      }
+      return;
+    }
+    if (aberta) {
+      lutaDoReciboRef.current = null;
+      let fugiu = false;
+      try { fugiu = !!fugaAoSairRef.current; } catch (e) { calou("a fuga no fecho", e); }
+      const fecho = {
+        ...aberta,
+        id: ++seqDoReciboRef.current,
+        desfecho: aberta.desfecho || (fugiu ? "fuga" : "encerrada"),
+        caidos: Array.from(new Set([...(aberta.caidos || []), ...caidosDaLuta(aberta.ultima)])),
+        rodadas: aberta.rodadas || (aberta.ultima && aberta.ultima.rodada) || 1,
+        noChao: [],
+      };
+      fechoDaLutaRef.current = fecho;
+      /* A luta fechou FORA de um turno (o golpe que derruba o último, a fuga):
+         o turno que a narra começa já a seguir, no mesmo clique. Se nenhum
+         começar, o fecho não pode ficar a carimbar o que vier depois — no
+         próximo tique ele se encerra sozinho. */
+      if (!turnoDoReciboRef.current) {
+        const idF = fecho.id;
+        setTimeout(() => {
+          try {
+            const f = fechoDaLutaRef.current;
+            if (f && f.id === idF && !turnoDoReciboRef.current) { fechoDaLutaRef.current = null; encerrarOFechoDaLuta(f, fichaViva()); }
+          } catch (e) { calou("encerrar o fecho sem turno", e); }
+        }, 0);
+      }
+    }
+    /* o chão da luta: o que caiu desde a abertura, na ordem em que caiu — e
+       o que já foi recolhido continua na lista (a tela diz "na bolsa") */
+    const f = fechoDaLutaRef.current;
+    if (f) {
+      const ja = new Set((f.noChao || []).map((x) => x.id));
+      const novos = ((chaoRef.current && chaoRef.current.itens) || [])
+        .filter((it) => it && it.id && !(f.idsNoChao || []).includes(it.id) && !ja.has(it.id))
+        .map((it) => ({ id: it.id, nome: it.nome }));
+      if (novos.length) fechoDaLutaRef.current = { ...f, noChao: [...(f.noChao || []), ...novos] };
+      setFechoNaTela(fechoDaLutaRef.current);
+    }
+  };
+  /* Outra campanha, um save carregado, um turno desfeito: os "antes"
+     de agora não são de mais nada. */
+  const esquecerORecibo = () => {
+    lutaDoReciboRef.current = null; fechoDaLutaRef.current = null;
+    turnoDoReciboRef.current = null; reciboPendenteRef.current = null;
+    setFechoNaTela(null);
+  };
+
   const pushMsgs = useCallback((novas) => {
+    /* A1 · B1 (10/10): `naLuta` — CAMPO NOVO, que a versão antiga ignora.
+       Toda mensagem que entra com a luta aberta leva a marca, inclusive o
+       eco do jogador: é por ela que a dobra "A luta" (A3) junta o que
+       aconteceu na batalha sem adivinhar pelo texto. Carimba-se AQUI, no
+       instante da entrada, e não na hora de desenhar — quem relê o save
+       depois da luta não tem mais `combateRef` para perguntar. Imutável:
+       a mensagem marcada é uma cópia. Se o carimbo estourar, a mensagem
+       entra sem ele: nunca pode custar o turno.
+
+       B2: e a luta que FECHOU neste turno ainda carimba (`fechoDaLutaRef`) —
+       o golpe final, o espólio e o "acabou" eram as únicas linhas da luta
+       que ficavam de fora da dobra, porque chegavam com `combateRef` já
+       vazio. */
+    try { acompanharALuta(); } catch (e) { calou("acompanhar a luta", e); }
+    try {
+      if ((combateRef.current || fechoDaLutaRef.current) && Array.isArray(novas)) novas = novas.map((m) => (m && typeof m === "object" && !m.naLuta ? { ...m, naLuta: true } : m));
+    } catch (e) { calou("carimbar naLuta na mensagem", e); }
     if (seguraRef.current) { seguraRef.current = [...seguraRef.current, ...novas]; return; }
     mensagensRef.current = [...mensagensRef.current, ...novas];
     setMensagens(mensagensRef.current);
@@ -8411,7 +8572,7 @@ export default function Taverna() {
     try {
       const g = guardadoRef.current;
       const insistir = !(g && g.silencio && g.silencio.podeTentar === false);
-      pushMsgs([{ autor: "sistema", texto: "⏳ O que você acabou de fazer ainda não foi contado, e a mesa não anda sem a palavra do Mestre." + (insistir ? " Peça a ele que conte, e então siga." : "") }]);
+      pushMsgs([{ autor: "sistema", texto: "⏳ O Mestre ainda não contou o que você fez." + (insistir ? " Peça que conte." : "") }]);
     } catch (e) { calou("a mesa espera", e); }
   };
 
@@ -8478,6 +8639,7 @@ export default function Taverna() {
     reinoRef.current = r.reino && typeof r.reino === "object" ? r.reino : reinoRef.current; setReino(reinoRef.current);
     personagemRef.current = r.personagem || personagemRef.current; setPersonagem(personagemRef.current);
     mensagensRef.current = Array.isArray(r.mensagens) ? r.mensagens : mensagensRef.current; setMensagens(mensagensRef.current);
+    try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (turno desfeito)", e); }
     confidenciasRef.current = r.confidencias !== undefined ? r.confidencias : confidenciasRef.current;
     conqRef.current = r.conquistas || conqRef.current; setConquistas(conqRef.current);
     aberturaMundoRef.current = r.abertura !== undefined ? r.abertura : aberturaMundoRef.current;
@@ -9981,7 +10143,7 @@ export default function Taverna() {
         } else if (chave === "viagem") {
           if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
             sinalViagemRef.current = arg || "";
-            msgs.push(`🧭 Viagem iniciada${arg ? ` rumo a ${arg}` : ""} — o sistema assume clima, encontros e tempo.`);
+            msgs.push(arg ? `🧭 A caminho de ${arg}.` : "🧭 Pé na estrada.");
           }
         } else if (chave === "masmorra") {
           if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
@@ -10213,7 +10375,7 @@ export default function Taverna() {
           combateRef.current = { ...combateRef.current, inimigos: reconciliados };
           setCombate(combateRef.current);
         }
-        reconciliados.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ O sistema reconheceu ${e.nome} como divindade de GD ${e.gd} — Regra do Degrau em vigor.`));
+        reconciliados.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ ${e.nome} é de outra grandeza: o aço comum não o fere.`));
         const div = reconciliados.filter((e) => (e.gd || 0) >= 3).sort((a, b) => (b.gd || 0) - (a.gd || 0))[0];
         const res = div ? resolverPresenca({ fonte: div, jogador: pers, grupo: pers.grupo || [], gdJogador: grauDe(divindadeRef.current) }) : null;
         if (res) {
@@ -10265,6 +10427,9 @@ export default function Taverna() {
       /* vitória detectada por código: pede ao Mestre os espólios se ele ainda
          não os deu neste turno (evita esperar ele "perceber" a morte) */
       if (resp.mudancas.__vitoriaAuto) {
+        /* A1 · B2: a vitória que a resposta do Mestre declara — os caídos
+           são os da lista final, e o retrato é o de antes da resposta */
+        notarFechoDaLuta({ combate: combateAntes, desfecho: "vitoria", caidos: (resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome) });
         /* ESPÓLIOS POR CÓDIGO: moedas e XP por tabela; nível sobe sozinho.
            A IA só narra — e cria o item quando o app decide que caiu um. */
         /* v9.27: os nomes dos caídos alimentam as etapas "derrotar" */
@@ -10502,6 +10667,11 @@ export default function Taverna() {
        como sempre saiu. Com violação, as linhas ficam guardadas e a tela
        trava até o conserto voltar: quem solta é passarPeloPortao(). */
     {
+      /* A1 · B2: a mensagem do Mestre ganha `recibo` (o que a ficha mudou
+         no turno) — mas NÃO aqui: nasce sem ele, e no fim do turno, depois
+         do Cronista, `fecharORecibo` troca-a por uma cópia com o campo
+         (`reciboDoTurno`, glifos.js, da foto do envio à ficha do fim). Aqui
+         ainda faltaria o que o Cronista cobra. */
       const linhas = [{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))];
       if ((portaoRef.current || []).length) { seguraRef.current = []; entregaRef.current = linhas; }
       else { entregaRef.current = null; pushMsgs(linhas); }
@@ -10773,7 +10943,7 @@ export default function Taverna() {
           eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
           setEventos(eventosRef.current);
           marcarNoArco("global", `${g.nome} chegou ao fim`);
-          msgs.push(`🌍 ${g.nome}: desfecho alcançado (reconhecido pelo sistema) — a região entra numa nova era.`);
+          msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
           if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(500, 10, "uma era inteira reza seu nome"));
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EVENTO GLOBAL "${g.nome}" ENCERRADO pelo sistema — NÃO o continue nem o encerre de novo: a região vive a nova era. O gerador semeará um arco novo quando chegar a hora.]`;
         }
@@ -10915,7 +11085,7 @@ export default function Taverna() {
             const dc = dificuldadePorPerfil(modT, ts.perfil === "formidavel" ? "formidavel" : "dificil");
             const motivo = String(ts.motivo || "concessão grande demais para ser de graça").slice(0, 120);
             setRolagem({ atributo: attrT.nome, dificuldade: dc, motivo, origem: "cronista" });
-            msgs.push(`🎲 O sistema pediu prova — ${attrT.nome} (dificuldade ${dc}): ${motivo}`);
+            msgs.push(`🎲 O Mestre pede um teste de ${attrT.nome}: ${motivo}`);
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[TESTE EXIGIDO PELO SISTEMA] A concessão que você narrou (${motivo}) é grande demais para ser de graça: o sistema abriu um teste de ${attrT.nome} (dificuldade ${dc}). Se o herói PASSAR, tudo que você narrou é canon e selado; se FALHAR, narre a concessão se complicando (condição, preço, resistência parcial) — sem apagar o que foi dito, mas sem entregar o ouro inteiro de bandeja.`;
           }
         }
@@ -10924,11 +11094,14 @@ export default function Taverna() {
          por isso a saída não pode mais depender de haver mensagem: um turno
          que só arquivou gente ainda precisa gravar, ou o elenco se perde no
          próximo reload. */
-      if (!msgs.length && !tocouCanone && !tocouElenco) return;
+      if (!msgs.length && !tocouCanone && !tocouElenco) return p;
       /* o prompt precisa enxergar TUDO já no PRÓXIMO turno */
       if (tocouCanone || tocouElenco || msgs.length) systemRef.current = montarSystemPrompt(nomeCampanha, mundo, p, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
       salvar({ personagem: p });
+      /* A1 · B2: a ficha que o Cronista deixou é a do fim do turno — o recibo
+         a lê daqui (quem chama sem olhar o retorno não perde nada). */
+      return p;
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
   };
 
@@ -11249,7 +11422,7 @@ export default function Taverna() {
       /* SAVE VETERANO (v7.4.1): nível alto carregado do disco — o sistema
          abre a ascensão SEM cutucar o Mestre (evita dupla narração com o
          "Anteriormente…"); a ficha divina real se alinha no botão Recalibrar. */
-      pushMsgs([{ autor: "sistema", texto: "🌟 Ascensão desbloqueada (nível " + (pers.nivel || 1) + "). Se sua lenda já te fez divindade na história, use ⚖ Recalibrar no painel Ascensão — o sistema lê sua jornada e ajusta GD, fiéis e domínio." }]);
+      pushMsgs([{ autor: "sistema", texto: "🌟 Ascensão desbloqueada (nível " + (pers.nivel || 1) + "). Se sua lenda já te fez divindade na história, use ⚖ Recalibrar no painel Ascensão — a sua jornada acerta GD, fiéis e domínio." }]);
       salvar({ personagem: pers });
       return;
     }
@@ -11918,6 +12091,20 @@ export default function Taverna() {
       fotoInicio = fotoInicioRef.current;
       fotoInicioRef.current = null;
     } catch (e) { calou("foto do envio", e); }
+    /* A1 · B2: A FOTO DA FICHA NO ENVIO, para o recibo do turno. Um turno
+       anterior cujo Cronista ainda não respondeu fecha o recibo dele AGORA,
+       com a ficha de agora: o que o Cronista ainda cobrar cai no recibo
+       deste turno, e nunca nos dois. */
+    let pendDoTurno = null;
+    try {
+      if (reciboPendenteRef.current) fecharORecibo(reciboPendenteRef.current.id, fichaViva() || persAtual || personagem);
+      turnoDoReciboRef.current = {
+        inicio: mensagensRef.current.length,
+        fichaNoEnvio: fichaViva() || persAtual || personagem,
+        lutaNoEnvio: !!(combateRef.current || fechoDaLutaRef.current),
+        aberturaNoTurno: null,
+      };
+    } catch (e) { calou("a foto do recibo no envio", e); }
     /* O que EU pedi neste turno — só a minha frase distingue "o Mestre me
        devolveu à cidade" de "eu voltei".
 
@@ -12309,7 +12496,22 @@ export default function Taverna() {
         try { registroRef.current = podar(registroRef.current, { dia: diaRef.current }); } catch { /* podar nunca pode custar um turno */ }
       }
       /* FISCAL DE MISSÕES + ESCRIBA: correm em paralelo, sem travar o turno */
-      try { cronistaDoTurno(pers, narrativaFinal); } catch { /* idem */ }
+      /* A1 · B2: O RECIBO ESPERA O CRONISTA. A cobrança pela narração e o
+         que ele registra (o grupo que entrou, a fé) mudam a ficha DEPOIS
+         daqui; o recibo lê a ficha que ele devolve. Falhou ou calou, lê a
+         ficha do turno — o recibo nunca pode custar o turno, e o turno
+         nunca espera o recibo. */
+      let fimDoCronista = null;
+      try {
+        pendDoTurno = { ...(turnoDoReciboRef.current || {}), id: ++seqDoReciboRef.current, texto: narrativaFinal || "…", fecho: null };
+        reciboPendenteRef.current = pendDoTurno;
+        const idR = pendDoTurno.id;
+        fimDoCronista = (pc) => { try { fecharORecibo(idR, (pc && typeof pc === "object") ? pc : pers); } catch (e) { calou("o recibo do turno", e); } };
+      } catch (e) { calou("o recibo do turno (a espera)", e); }
+      try {
+        const doCronista = cronistaDoTurno(pers, narrativaFinal);
+        if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
+      } catch { if (fimDoCronista) fimDoCronista(null); }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
@@ -12388,6 +12590,20 @@ export default function Taverna() {
       /* o portão jamais pode engolir um turno: se a tela ficou retida por
          qualquer motivo, tudo o que estava preso sai aqui */
       try { if (seguraRef.current || entregaRef.current) liberarPortao(null); } catch { }
+      /* A1 · B2: o turno acabou — o que entra daqui em diante já não é dele.
+         A luta que fechou neste turno pára de carimbar `naLuta` aqui (o que
+         estava retido no portão já saiu, logo acima, e saiu carimbado) e o
+         `fimDaLuta` dela vai com o recibo, quando o Cronista responder. Turno
+         que caiu não tem recibo: a luta que fechou nele fecha já. */
+      try {
+        turnoDoReciboRef.current = null;
+        const f = fechoDaLutaRef.current;
+        if (f) {
+          fechoDaLutaRef.current = null;
+          if (pendDoTurno && reciboPendenteRef.current && reciboPendenteRef.current.id === pendDoTurno.id) reciboPendenteRef.current = { ...reciboPendenteRef.current, fecho: f };
+          else encerrarOFechoDaLuta(f, fichaViva());
+        }
+      } catch (e) { calou("o fim do turno no recibo", e); }
       setCarregando(false);
     }
   }, [historico, mensagens, aplicarResposta, salvar, nomeCampanha, mundo]);
@@ -12474,7 +12690,9 @@ export default function Taverna() {
       setVoz({ i, status: "tocando" });
     } catch (e) {
       setVoz(null);
-      pushMsgs([{ autor: "sistema", texto: `🔇 ${(e && e.message) || "Não consegui dar voz ao Mestre agora."}` }]);
+      /* A1 · B8 (#68): o motivo técnico desce ao console; a tela diz o facto */
+      calou("a voz do Mestre", e);
+      pushMsgs([{ autor: "sistema", texto: "🔇 A voz do Mestre não chegou desta vez." }]);
     }
   };
   useEffect(() => () => { if (vozAudioRef.current) { try { vozAudioRef.current.pause(); } catch {} } Object.values(vozCacheRef.current).forEach((u) => { try { URL.revokeObjectURL(u); } catch {} }); }, []);
@@ -12714,6 +12932,7 @@ export default function Taverna() {
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
+    try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     setCombate(null); combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
     /* v9.101: a mesa fica sabendo que o mundo dela foi lido. É a única
@@ -12825,6 +13044,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       const pers = migrarPersonagem(sv.personagem);
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
       setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(nomeDaCampanha(sv)); setPersonagem(pers);
+      try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (save carregado)", e); }
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
@@ -14360,7 +14580,10 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     try { agirInterno(texto); }
     catch (e) {
       const msg = String((e && e.message) || e).slice(0, 160);
-      pushMsgs([{ autor: "sistema", texto: `⚠ O sistema tropeçou ao resolver este turno (${msg}). A ação foi enviada assim mesmo — se repetir, me mostre esta mensagem.` }]);
+      /* A1 · B8 (#68): a falha continua dita, e honesta — a frase seguiu
+         para o Mestre —, mas sem falar da arquitetura; o motivo vai ao console */
+      calou("agir: " + msg, e);
+      pushMsgs([{ autor: "sistema", texto: "⚠ Algo se embaralhou nesta ação; o Mestre recebe a sua frase como você a escreveu." }]);
       try { enviar(String(texto || "").trim(), personagem); } catch { /* nem isso deu: a falha já está na tela */ }
     }
   };
@@ -15509,6 +15732,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           : { acabou: envPresos.acabou, naoPode: envPresos.naoPode };
       }
     } catch (e) { calou("os prisioneiros na pauta", e); }
+    /* A1 · B2: quem fecha aqui sabe como fechou — os caídos saem deste
+       retrato, o último em que o golpe final ainda está. Ninguém caiu (todos
+       fugiram) não é vitória. */
+    notarFechoDaLuta({ combate: c, desfecho: caidosDaLuta(c).length ? "vitoria" : "encerrada" });
     combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
     /* A LUTA DO TERRITÓRIO FECHA O RELÓGIO QUE A ABRIU (fuga.js): vencida,
        o bando que guardava o lugar já não guarda mais nada. */
@@ -16111,6 +16338,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* 🎏 em vez de 🛡 quando é a marionete batendo: o jogador precisa ver de
          relance que aquele golpe está do lado dele */
       const marcaGolpe = a.virado ? "🎏" : "🛡";
+      /* A1 · B9: onde mora a linha deste golpe — a reação, logo abaixo, pode
+         mudar o número, e a linha tem de dizer o que chegou, não o que veio */
+      const iDoGolpe = linhasSis.length, danoQueVeio = a.r.dano;
       linhasSis.push({ autor: "sistema", texto: a.r.dano > 0 ? `${marcaGolpe} ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: ${a.r.critico ? "CRÍTICO! " : ""}${a.r.dano} de dano` : `${marcaGolpe} ${a.inimigo}${a.golpeNome ? ` · ${a.golpeNome}` : ""} → ${a.alvoNome}: errou` });
       /* REAÇÃO (v9.5): a janela acontece AQUI, antes de o dano virar PV */
       if (a.alvoRef === "jogador") {
@@ -16140,6 +16370,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           ? (noGolpeDaReacao ? tentarReacaoNoGolpe(a, persBase, escolha.reacao) : null)
           : tentarReacaoNoGolpe(a, persBase);
         if (rc && rc.danoFinal != null) a.r.dano = rc.danoFinal; try { const rv = rc && rc.contraAtaca ? (ultimaReacaoRef.current || {}).revide : null; if (rv) combPos.inimigos = revideNoCampo(combPos.inimigos, rv); } catch (e) { calou("o revide no campo", e); } /* MM14: o revide era contado ao Narrador e depois apagado pela cópia do turno */
+        /* A1 · B9 (10/10): A LINHA DO GOLPE DIZ O DANO DEPOIS DA REAÇÃO. Ela
+           nascia acima com o número do golpe cru ("6 de dano") e a reação
+           cortava-o depois — a dobra da luta lia 6 e eu tinha sofrido 3 (o
+           "6 sofrido" do ANTES, T8). Agora a linha diz as duas pontas e quem
+           as separou: "6 → 3 de dano (Aparar)". */
+        try {
+          if (rc && rc.danoFinal != null && danoQueVeio > 0 && rc.danoFinal !== danoQueVeio && linhasSis[iDoGolpe]) {
+            const nomeDaReacao = ((ultimaReacaoRef.current || {}).reacao || {}).nome || "";
+            const quem = marcaGolpe + " " + a.inimigo + (a.golpeNome ? " · " + a.golpeNome : "") + " → " + a.alvoNome + ": " + (a.r.critico ? "CRÍTICO! " : "");
+            linhasSis[iDoGolpe] = { ...linhasSis[iDoGolpe], texto: quem + danoQueVeio + " → " + rc.danoFinal + " de dano" + (nomeDaReacao ? " (" + nomeDaReacao + ")" : "") };
+          }
+        } catch (e) { calou("a linha do golpe depois da reação", e); }
       }
       if (a.r.dano > 0) {
         if (a.alvoRef === "jogador") {
@@ -17625,7 +17867,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const r = encerrarLegado(missoesRef.current, id, comoFoi);
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
     missoesRef.current = r.missoes; setMissoes(r.missoes);
-    pushMsgs([{ autor: "sistema", texto: `${comoFoi === "falhada" ? "✗" : "✓"} ${r.missao.titulo}: encerrada por você (missão anterior ao sistema de etapas — sem recompensa automática).` }]);
+    pushMsgs([{ autor: "sistema", texto: `${comoFoi === "falhada" ? "✗" : "✓"} ${r.missao.titulo}: encerrada por você.` }]);
     salvar({});
   };
 
@@ -17639,8 +17881,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        pede sorrindo eu faço chorando" pedem cenas opostas, e essa escolha é do
        jogador. Então o envelope fica guardado e viaja na próxima fala dele. */
     if (aceita) {
-      const e = etapaAtual(m);
-      pushMsgs([{ autor: "sistema", texto: `${tipoMissao(m.tipo).icone} Missão aceita: ${m.titulo}${e ? ` — primeiro passo: ${textoDaEtapa(e)}` : ""} · paga ${textoDaPaga(m)}` }]);
+      /* A1 · B3: a mesma porta do cartaz do mural — o aceite cara a cara e o
+         aceite do papel são a mesma ação, e têm a mesma cara */
+      pushMsgs([{ autor: "sistema", texto: portaDoAceite(m) }]);
       /* o prazo só começa a correr quando o serviço é aceito: antes disso é
          uma condição da oferta, não um relógio na cabeça do jogador */
       const comPrazo = iniciarPrazo(m);
@@ -21024,6 +21267,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
       .some((q) => semNome(q.titulo) === semNome(cartaz.titulo));
     if (jaNoDiario) return false;
+    /* A1 · B4 (10/10): QUEM JÁ TEM TRABALHO COMIGO NÃO PREGA OUTRO. O título
+       muda de um turno para o outro ("O que há no Oratório" / "Encontrar a
+       guarda do portão") e a régua acima, que compara títulos, deixava
+       passar — no ANTES (T7) o mural anunciou o trabalho que eu tinha
+       aceite no turno anterior. É a lei de `ofertas.js` ("cada pessoa tem
+       UM trabalho"), que até aqui valia só para o que estava no mural e não
+       para o que já estava na mão. */
+    try {
+      const comigo = !!cartaz.dador && garantirMissoes(missoesRef.current)
+        .some((q) => q && q.status === "ativa" && q.dador && semNome(q.dador) === semNome(cartaz.dador));
+      if (comigo) return false;
+    } catch (e) { calou("o mural e quem já trabalha comigo", e); }
     const doMundo = atual.filter((c) => !c.oferecido);
     const oferecidos = [...atual.filter((c) => c.oferecido), cartaz].slice(-TETO_OFERECIDOS);
     muralRef.current = [...doMundo, ...oferecidos];
@@ -21114,10 +21369,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       setPersonagem(pers); personagemRef.current = pers;
     }
     setAba(null);
-    const e = etapaAtual(aceita);
+    /* A1 · B3 (10/10): O CLIQUE REGISTRA CALADO. Saiu o eco "Pego o cartaz:
+       …" na boca do jogador — ele não disse isso, e a mesa a falar por ele
+       era a peça N1 do ANTES ("Eu não disse isso"). E a linha de cinco
+       números virou A PORTA do aceite: o preço a soleira mostrou ANTES do
+       clique, e o que serve agora é o caminho para o cartão e o próximo
+       passo (`a1-jogo.md` #41). A porta é a linha com seta que o relato já
+       sabe abrir (`portaDaLinhaDeSistema`); o nome antes do travessão é a
+       aba. */
     pushMsgs([
-      { autor: "jogador", texto: `Pego o cartaz: ${c.titulo}` },
-      { autor: "sistema", texto: `${c.icone || "📜"} ${c.titulo} — paga ${textoDaPaga(aceita)}${e ? ` · primeiro passo: ${textoDaEtapa(e)}` : ""}` },
+      { autor: "sistema", texto: portaDoAceite(aceita) },
       ...(c.daItem ? [{ autor: "sistema", texto: `◆ ${c.daItem} — na sua bolsa.` }] : []),
     ]);
     /* e só então o relógio: a linha do prazo vem DEPOIS da linha que diz que
@@ -22087,7 +22348,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }
       if (r.localNovo) {
         partes.push(`[EVENTO LOCAL — FIO DO MUNDO] ${r.localNovo.icone} ${r.localNovo.texto} Gancho: ${r.localNovo.gancho} Apresente naturalmente (um grito, um boato, algo à vista). O jogador pode ignorar — se ignorar até o dia ${r.localNovo.expiraEm}, o fio se resolve sem ele.`);
-        pushMsgs([{ autor: "sistema", texto: `${r.localNovo.icone} Fio do mundo à vista — veja o Diário.` }]);
+        pushMsgs([{ autor: "sistema", texto: `${r.localNovo.icone} Um fio do mundo à vista.` }]);
       }
       r.expirados.forEach((l) => partes.push(`[EVENTO LOCAL — EXPIRADO] O fio "${l.texto}" se resolveu SEM a minha intervenção (o mundo seguiu sem mim). Mencione o desfecho como notícia de passagem, se couber.`));
       if (r.questNova) {
@@ -22960,7 +23221,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const c = { desbloqueadas: { ...conqRef.current.desbloqueadas }, ordem: [...conqRef.current.ordem] };
     const msgs = novas.map((n) => {
       c.desbloqueadas[n.id] = true; c.ordem.push(n.id);
-      return { autor: "sistema", texto: `🏆 Conquista desbloqueada: ${n.icone} ${n.nome} — título "${n.titulo}" (equipe no Códex)` };
+      return { autor: "sistema", texto: `🏆 Conquista desbloqueada: ${n.icone} ${n.nome} — título "${n.titulo}"` };
     });
     conqRef.current = c; setConquistas(c);
     pushMsgs(msgs);
@@ -23149,7 +23410,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          desenhava o herói cravado no meio do trecho — agora as duas contam a
          mesma marcha, e o jogador vê a casa da grade mudar embaixo do pé. */
       const r = (() => { try { return rastrearOTurno(contextoDoEspaco()); } catch (e) { calou("rastreioDaEstrada", e); return null; } })();
-      if (linha) pushMsgs([{ autor: "sistema", texto: `${linha}${r ? ` · ⌖ ${r.endereco}` : ""}${primeira ? " · escreva que segue viagem para avançar" : ""}` }]);
+      if (linha) pushMsgs([{ autor: "sistema", texto: `${linha}${r ? ` · ⌖ ${r.endereco}` : ""}` }]);
     }
     /* MERCADOR AMBULANTE (v9.2): uma carroça na estrada, com estoque de
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */
@@ -23158,7 +23419,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1, { lex: (mundoAtual() || {}).lexico });
       if (amb) {
         mercadoRef.current = { ...mercadoRef.current, ambulante: amb }; setMercado(mercadoRef.current);
-        pushMsgs([{ autor: "sistema", texto: `🐴 Uma carroça de mercador cruza seu caminho — veja o que ele traz em Gestão › Mercado.` }]);
+        pushMsgs([
+          { autor: "sistema", texto: "🐴 Uma carroça de mercador cruza seu caminho." },
+          { autor: "sistema", texto: "▸ Mercado — veja o que ele traz" },
+        ]);
         notaAmbulante = ` UM MERCADOR AMBULANTE apareceu no trecho (sorteado pelo sistema): uma carroça com ${amb.estoque.slice(0, 4).map((it) => it.nome).join(", ")}. Apresente o vendedor e a carroça na cena — dê nome e jeito a ele —, mas NÃO invente estoque nem preço: o que ele vende está no painel de Mercado do jogador.`;
       } else if (mercadoRef.current.ambulante) {
         /* a carroça do trecho anterior seguiu viagem */
@@ -23461,7 +23725,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
-    pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado. Confira Gestão: Grupo, Pessoas, Guilda, Domínios e Diplomacia agora contam a sua história." }]));
+    pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado: o grupo, as pessoas, a guilda, os domínios e a diplomacia agora contam a sua história." }]));
     setRecalM(null);
     setTimeout(() => checarConquistas(), 0);
   };
@@ -23510,7 +23774,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (!j.desperto) gd = 0;
     /* v8.3: o teto por nível vale também aqui — fé sem poder não faz deus */
     const tetoGd = gdMaximoPorNivel(personagem.nivel || 1);
-    if (gd > tetoGd) { msgs.push(`⛓ O arquivista propôs GD ${gd}, mas o nível ${personagem.nivel} comporta no máximo GD ${tetoGd} — ajustado.`); gd = tetoGd; }
+    if (gd > tetoGd) { msgs.push(`⛓ A lenda pedia GD ${gd}, mas o nível ${personagem.nivel} só sustenta GD ${tetoGd}.`); gd = tetoGd; }
     if (["fe", "deicidio", "reliquia"].includes(String(j.caminho || "").toLowerCase())) {
       dv.caminho = String(j.caminho).toLowerCase();
       if (dv.caminho !== "fe") msgs.push(`🌟 Caminho reconhecido: ${caminhoPorId(dv.caminho).nome}.`);
@@ -23521,7 +23785,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (gd > 0) fieis = Math.max(fieis, GRAUS[gd].fieis);
     const pf = Math.max(0, Math.min(500, Math.round(j.pf || 0)));
     dv.despertar = !!j.desperto && (personagem.nivel || 1) >= NIVEL_DESPERTAR;
-    if (!dv.despertar) { setRecalAsc(null); pushMsgs([{ autor: "sistema", texto: "⚖ O arquivista não encontrou sinais de divindade na sua lenda — a ascensão segue o curso normal." }]); return; }
+    if (!dv.despertar) { setRecalAsc(null); pushMsgs([{ autor: "sistema", texto: "⚖ A sua lenda não traz sinais de divindade — a ascensão segue o curso normal." }]); return; }
     const antes = grauDe(dv);
     /* v8.9: a fé que o arquivista encontrou na lenda é ANCORADA no mapa —
        espalhada pelas cidades conforme a população, não guardada num número. */
@@ -24204,7 +24468,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          E O NUMERO VAI NO RETORNO, nao num balao de rato: QUANTAS coisas
          estao ao alcance e exactamente o que o sistema sabe e o jogador nao
          adivinha — e `title` nao existe no telefone. */
-      const noChao = (chaoPerto || []).length;
+      /* A1 · B5 (10/10): O CHÃO FICA ONDE CAIU. A pilha é varrida no envio do
+         turno seguinte (`varrerChao`), e por isso, entre o turno que mudou o
+         herói de lugar e o próximo, a oferta seguia-o: no ANTES (T10)
+         "Examinar o chão · 1 coisa" foi da praça à estalagem. A pilha guarda
+         a cena onde nasceu (`chao.cena`); fora dela, a oferta não existe —
+         a coisa continua lá, quem saiu foi o herói. */
+      let noChao = (chaoPerto || []).length;
+      try { if (noChao && chao && chao.cena && chao.cena !== cenaDoChao()) noChao = 0; } catch (e) { calou("o chão preso ao lugar", e); }
       if (noChao) {
         lista.push({
           id: "chao|aqui",
@@ -24743,11 +25014,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (fase !== "jogo" || !personagem) return null;
       let vivo = false;
       try { const cs = chipsDoEstado(personagem); vivo = Array.isArray(cs) && cs.length > 0; } catch (e2) { calou("a altura da cinta, para o alforje", e2); }
-      const nGrupo = (personagem.grupo || []).length;
+      /* A1 · B6: o contador do grupo saiu da aba Gestão também aqui (N3) */
       return {
         abas: abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas())).map((a) => ({
           id: a.id, rotulo: a.rotulo, Glifo: GLIFO_DA_ABA[a.id],
-          novo: marcasDaPorta.includes(a.id), contador: a.id === "gestao" ? nGrupo : 0,
+          novo: marcasDaPorta.includes(a.id), contador: 0,
         })),
         aoEscolher: setAba,
         topo: emBatalha ? 0 : (vivo ? CINTA.alturaViva : CINTA.altura),
@@ -24756,7 +25027,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       };
     } catch (e) { calou("o alforje do painel", e); return null; }
   })();
-  const estadoDaPorta = aba ? "aberta" : marcasDaPorta.length ? "novo" : "porta";
+  /* A1 · B6 (10/10): na mesa o trilho está à vista e a novidade acende NA
+     PORTA DA COISA (`TrilhoAbas`); o retrato da cinta fica com a porta do
+     alforje e mais nada — dois sinais da mesma novidade eram um a mais, e o
+     do retrato era o que não dizia onde. No telefone o trilho recolhe (R21)
+     e a marca volta a morar no retrato. O corte é o da cinta (`useMesa`,
+     `CINTA.mesa`), o mesmo `md:` que esconde o trilho. */
+  const trilhoAVista = useMesa();
+  const estadoDaPorta = aba ? "aberta" : (marcasDaPorta.length && !trilhoAVista) ? "novo" : "porta";
   let nomeDaPortaAgora = "A ficha";
   try { nomeDaPortaAgora = nomeDaPorta(marcasDaPorta, ROTULOS_DA_PORTA); } catch (e) { calou("o nome da porta", e); }
 
@@ -24940,6 +25218,27 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     </div>
   ) : null;
 
+  /* A1 · B7 (10/10): O FIM DA LUTA É O MOMENTO DO GANHO, e é na própria
+     mesa de batalha (`formas.md` §A1 3). O App só entrega o que a peça lê —
+     o desfecho, o recibo da luta e o chão — e quem a desenha é
+     `painel-batalha.jsx`. O recibo é recalculado a cada pintura contra a
+     ficha VIVA: o que se recolhe no fim entra nele ("o recolher vai para o
+     recibo", `a1-jogo.md` #53), e a linha do chão passa a "na bolsa"
+     (`recolhido`, campo a mais do contrato: sem ele a peça teria de
+     adivinhar o que já saiu do chão). Sem fecho conhecido (save antigo, a
+     luta que abriu e fechou sem se ver), `null`: o fim de hoje. */
+  const espolioDaLuta = (() => {
+    try {
+      if (!emBatalha || combate || !fimDaLuta || !fechoNaTela || !personagem) return null;
+      const noChaoAgora = new Set(idsDoChao(chao));
+      return {
+        desfecho: desfechoDoFecho(fechoNaTela, personagem, !!fugiuNoFim),
+        recibo: reciboDoTurno(fechoNaTela.fichaNaAbertura, personagem),
+        noChao: (fechoNaTela.noChao || []).map((it) => ({ id: it.id, nome: it.nome, recolhido: !noChaoAgora.has(it.id) })),
+      };
+    } catch (e) { calou("o espólio do fim da luta", e); return null; }
+  })();
+
   const telaDaBatalha = emBatalha ? (
     <TelaDeBatalha
       combate={combateNaTela}
@@ -24968,6 +25267,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       linhaDaFuga={vFugaDaBatalha ? linhaDaFugaComAviso : ""}
       precoDaFuga={precoDaFugaNoCampo || precoDaPalavraNoCampo}
       fugiu={!!fugiuNoFim}
+      espolio={espolioDaLuta}
+      aoRecolher={(id) => { try { recolherDoChao([id]); } catch (e) { calou("recolher no fim da luta", e); } }}
       previsao={previsaoDeArea}
       mira={mira} aoMirar={definirMira} alcanceMira={alcanceDaHabilidade}
       acaoBonus={temAcaoBonus(personagem)}
@@ -25172,69 +25473,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   quem está no fim. A espera se diz UMA vez, onde a resposta vai
                   nascer — no fim do registro, na forma da `Voz`. */}
               {/* V5a: o cartão de v9.157 saiu daqui — o lugar mora no cabeçalho da página, acima. */}
-              {agruparMensagens(mensagens).map((item, k) => {
-                /* v9.32: as linhas do sistema chegam AGRUPADAS. Uma rodada de
-                   combate empurrava vinte balões iguais entre a ação do
-                   jogador e a narração — e a narração, que é o que ele quer
-                   ler, sumia no meio. Agora o que muda uma decisão continua na
-                   tela e a contabilidade vira uma linha de saldo, com o
-                   detalhe a um toque. */
-                if (item.tipo === "bloco") return <BlocoSistema key={`b${item.inicio}`} {...item} aoAbrir={abrirPortaDoSistema} />;
-                const i = item.i, m = item.m;
-                if (m.autor === "jogador") {
-                  /* R3: a fala do jogador FICA na página — um livro também
-                     regista o que você disse —, mas em itálico, recuada, em
-                     `inkMeio` e com filete próprio. Nunca tem a cor nem o peso
-                     da prosa do Mestre. Sai o balão alinhado à direita, que era
-                     a gramática do Messenger num RPG de texto.
-
-                     E o FILETE ÂMBAR enquanto se espera: o `jogo` mediu que,
-                     durante os 14,3 s com a tela apagada, a frase que o jogador
-                     acabou de escrever é o ÚNICO sinal de que o turno foi
-                     enviado. Uma espera muda de catorze segundos é o jogador a
-                     perguntar se clicou. A saída é o acontecimento, não o
-                     relógio: chegando a resposta, o filete assenta sozinho.
-
-                     O que FALTA, e fica dito em vez de improvisado: `formas.md`
-                     pede que este filete RESPIRE (pulso lento de 1,6 s, no
-                     filete e nunca no texto) e que `A voz` tenha um eixo
-                     `Resposta`. R2 não fabricou nem um nem outro — a peça só
-                     tem `quem` e `voz`. Pedido ao `desenho`, não inventado
-                     aqui. */
-                  const esperaResposta = carregando && i === mensagens.length - 1;
-                  return (
-                    <div key={i} className="tv-fade tv-coluna">
-                      <Voz quem="voce" voz="muda" />
-                      <div className="tv-body whitespace-pre-wrap mt-1 pl-4 pr-3 py-2 rounded-r-lg"
-                        style={{ fontSize: TIPOS.corpo, fontStyle: "italic", color: T.inkMeio, background: T.paginaAlta, borderLeft: `2px solid ${esperaResposta ? T.amber : T.line}` }}>{m.texto}</div>
-                    </div>
-                  );
-                }
-                /* A RESPOSTA DO MESTRE (R2 → V5).
-
-                   COMEÇA POR UMA RUNA, e não por `O MESTRE`: a runa ornamental
-                   do meio da prosa da pessoa (`129:20`) passa a ter um sentido
-                   só — *começa uma resposta* —, uma por resposta e nunca dentro
-                   dela (o `jogo`, V5 §4). O BOTÃO DE OUVIR NÃO SAI: fica na ponta
-                   direita da runa, com o alvo de 48 de R2, e o estado dele
-                   (preparando, lendo) passa a ser o glifo e o nome do botão.
-
-                   A PROSA É PARÁGRAFOS a 16 (`Prosa`, ui.jsx), como o nó, e não
-                   um bloco com linhas vazias de 27,6. A medida continua a de R2:
-                   `.tv-coluna` (65ch, centrada, peso 300) — é o único desvio
-                   grande da composição da pessoa, que corre a prosa a 1 086 px
-                   (~137 caracteres por linha; a WCAG 1.4.8 pede ≤ 80).
-
-                   A ABERTURA DE CERIMÔNIA (a primeira frase na letra de
-                   `ABERTURA`) só no turno que `abertura` marcou: a chegada a
-                   um lugar novo e a primeira resposta da sessão. */
-                return (
-                  <div key={i} data-msg={i} className="tv-fade tv-coluna" style={{ scrollMarginTop: ESBATIMENTO.altura }}>
-                    <DivisoriaRunica respiro={0} ponta={<BotaoDeOuvir estado={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"} aoOuvir={() => ouvirMestre(i, m.texto)} />} />
-                    <Prosa texto={m.texto} abertura={abertura === i ? "cerimonia" : "nenhuma"} />
-                  </div>
-                );
-              })}
+              {/* A1 · B1 (10/10): O RELATO MOROU AQUI ATÉ HOJE, e saiu para
+                  `painel-relato.jsx` — o laço de `agruparMensagens`, o
+                  `BlocoSistema` e as portas da seta. O App passa o que o laço lia
+                  do escopo dele (o estado, a porta, a voz) e mais nada: a mesa
+                  (a dobra da luta, o recibo) passa a trabalhar no relato sem o
+                  bastão deste arquivo. */}
+              <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} />
               {/* A ESPERA, dita uma vez e onde a resposta vai nascer (V5 §9): o dado
                   que rola (o de sempre, `tv-dice`, com a saída dele no reduced
                   motion) e a voz preparando — a forma da `Voz`, que era a do topo.
@@ -26090,7 +26335,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </main>
           )}
 
-          {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} nGrupo={(personagem.grupo || []).length} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
+          {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} marcas={marcasDaPorta} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
           <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
@@ -26180,7 +26425,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
 
-      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
+      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} emCombate={!!combate} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} personagem={personagem} local={cenaDoPalco()} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}

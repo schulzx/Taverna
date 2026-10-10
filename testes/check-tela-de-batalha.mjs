@@ -124,7 +124,12 @@ sec("1. a inversão: o tabuleiro saiu de dentro do rolador do log");
   t("e a saída é uma porta só, e só quando a luta acabou",
     /const \[fimDaLuta, setFimDaLuta\] = useState\(null\);/.test(APP)
     && /fim=\{!combate\}/.test(APP)
-    && /\{p\.fim \?/.test(TEL));
+    && /\{p\.fim \?/.test(TEL)
+    /* A1 (10/10): o fim ganhou o MOMENTO (`FimDaLuta`, com o espólio que o
+       App passa), que toma a secção inteira — e a porta continua UMA só, o
+       `Respirar fundo`, nas duas formas, e só quando a luta acabou */
+    && /const fimComEspolio = !!p\.fim && /.test(TEL) && /\{acaoDoFim \|\| acao\}/.test(TEL)
+    && (TEL.match(/Respirar fundo →/g) || []).length === 2);
 }
 
 sec("2. a fiação nova nunca pode custar o turno");
@@ -270,7 +275,8 @@ sec("6. o veredito antes do clique: linha permanente, nunca balão");
 sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
 {
   t("a fileira lê `fileiraDeVerbos()`, e não fabrica a segunda lista",
-    /const verbos = fileiraDeVerbos\(\);/.test(TEL)
+    /* A1: a mesma lista, com o gesto sem motor de fora (ver secção 10) */
+    /const verbos = fileiraDeVerbos\(\)\.filter\(temMotorOuNaoEGesto\);/.test(TEL)
     && !/rotulo: "Atacar"/.test(TEL));
   /* o estado que a norma já tem para "ligado" — é o que faz o bico e a
      inversão chegarem a quem não vê nem um nem outro */
@@ -548,12 +554,22 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
   /* O GESTO SEM MOTOR FICA DESLIGADO — e a regra lê a TABELA do motor
      (`!v.motor`), nunca um nome: no dia em que `golpe.js` der motor à
      esquiva, ela acende sozinha. A frase cabe na linha do veredito. */
-  t("o gesto sem motor é desligado pela tabela do motor, não pelo nome",
-    /if \(v\.papel === "gesto" && !v\.motor\) \{/.test(TEL) && !/v\.id === "esquivar"/.test(TEL));
-  const frases = [...cruTela.matchAll(/esquivar: "([^"]+)"|RECUSA_DO_GESTO_SEM_MOTOR_EM_GERAL = "([^"]+)"/g)].map((m) => m[1] || m[2]);
-  t("e as frases da recusa cabem no teto da linha", frases.length === 2 && frases.every((f) => f.length <= TETO_DA_RECUSA), frases.map((f) => `${f.length}: ${f}`).join(" · "));
+  /* MOVIDAS (10/10, A1 · peça 97 de `mente/a1-jogo.md`): em B1 o gesto sem
+     motor ficava DESLIGADO na fileira, e ao toque a linha dizia "a esquiva
+     ainda não pesa nos golpes deles — use Mover". O `jogo` decidiu em A1 que
+     um botão que só existe para dizer que não funciona é o sistema a
+     confessar um buraco, e ninguém pode depender dele: o gesto sem motor SAI
+     DA FILEIRA até ter regra. As três asserções de B1 (o desligar, as frases
+     da recusa, uma frase por gesto) protegiam uma forma que se aposentou; o
+     que elas guardavam e CONTINUA a valer é a metade da lei que não muda —
+     a regra lê a TABELA do motor (`!v.motor`), nunca um nome, logo o verbo
+     VOLTA sozinho no dia em que `golpe.js` lhe der motor. */
+  t("o gesto sem motor sai da fileira pela tabela do motor, não pelo nome",
+    /const temMotorOuNaoEGesto = \(v\) => !\(v\.papel === "gesto" && !v\.motor\);/.test(TEL)
+    && /const verbos = fileiraDeVerbos\(\)\.filter\(temMotorOuNaoEGesto\);/.test(TEL) && !/v\.id === "esquivar"/.test(TEL));
+  t("e a frase que confessava o buraco não voltou", !/a esquiva ainda não pesa/.test(cruTela) && !/RECUSA_DO_GESTO_SEM_MOTOR/.test(cruTela));
   const semMotor = VERBOS_DE_COMBATE.filter((v) => !v.motor).map((v) => v.id);
-  t("todo gesto sem motor de hoje tem a frase dele", semMotor.every((id) => new RegExp(`${id}: "`).test(cruTela)), semMotor.join(", "));
+  t("hoje é a esquiva que fica de fora — e só ela (o dia em que ganhar motor, esta linha muda)", semMotor.join(",") === "esquivar", semMotor.join(", "));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

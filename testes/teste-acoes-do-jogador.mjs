@@ -655,7 +655,17 @@ sec("4. a definição operacional de 'número que muda'");
      linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
      disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
      contra o HEAD, e conferido pelo varredor. */
-  t("e aponta a linha que avança o relógio", !!relogio && /15092/.test(relogio.porque));
+  /* (A1 · B1 · o relato sai do App) 10/10: 15092 -> 14990, -102 — o relato
+     saiu para `painel-relato.jsx` (-118) e `pushMsgs` ganhou o carimbo
+     `naLuta` (+11) e a mensagem do Mestre a reserva do `recibo` (+5), tudo
+     ACIMA disto. Só o endereço andou; re-medido pelo diff de App.jsx
+     contra o HEAD, e conferido pelo varredor. */
+  /* (A1 · B2–B9 · o recibo e o fim da luta) 10/10: 14990 -> 15315, +325 —
+     o recibo (as puras no topo, os refs acima de `pushMsgs`, a foto no
+     envio e a espera do Cronista em `enviar`) e as frases de B8 que
+     ganharam linhas, tudo ACIMA disto. Só o endereço andou; re-medido pelo
+     diff de App.jsx contra a árvore de B1, e conferido pelo varredor. */
+  t("e aponta a linha que avança o relógio", !!relogio && /15315/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -984,7 +994,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
        disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
        contra o HEAD, e conferido pelo varredor. */
-      .linhas.find((l) => l.onde === "src/App.jsx:13521").voz === "telegrama");
+      .linhas.find((l) => l.onde === "src/App.jsx:13741").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1179,7 +1189,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
        disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
        contra o HEAD, e conferido pelo varredor. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13388" && x.familia === "alcance"));
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13608" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1303,7 +1313,11 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
      disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
      contra o HEAD, e conferido pelo varredor. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13537/.test(S.ondeSai));
+  /* (A1 · B1 · o relato sai do App) 10/10: 13537 -> 13435, -102 — o mesmo
+     degrau do relógio, todo ACIMA do `enviar`. Só o endereço andou. */
+  /* (A1 · B2–B9) 10/10: 13435 -> 13757, +322 — o mesmo degrau do relógio,
+     todo ACIMA do `enviar` da recusa. Só o endereço andou. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13757/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

@@ -33,6 +33,10 @@
 import React from "react";
 import { tracos, feicoes, acentoDe } from "./semente.js";
 import { T } from "./estilo.js";
+/* A1 · o rosto de quem não é gente: a regra (`rostoDoEnte`) e o desenho do
+   sinal (`GLIFOS`) são tabela; a mente é a MESMA conta que decide a luta. */
+import { GLIFOS, rostoDoEnte, tracoNaGrelha } from "./glifos.js";
+import { menteDaCriatura } from "./adversario.js";
 
 /* A tinta é UMA: o mesmo quase-preto violeta da casa em todo traço.
    Xilogravura com três tons de linha vira desenho digital na hora. */
@@ -224,12 +228,47 @@ const TRAJES = {
   </g>),
 };
 
-/* ---------------- o rosto inteiro ---------------- */
-export function Rosto({ semente, estado = "normal", ente = null, fixo = false }) {
+/* ---------------- A1 · O SINAL DE QUEM NÃO É GENTE (`formas.md` §A1 4) ----------------
+   Um lobo com rosto de homem lia-se "bandido" (N6). De um bicho o jogador
+   só precisa de saber que TIPO de coisa é, e o sinal lê-se a 16 px onde
+   uma cabeça de lobo de traço seria uma mancha. O disco inteiro a
+   `T.panelSoft`; o glifo centrado, 36/64 do diâmetro (`translate(14 14)
+   scale(1.5)`), traço `T.inkMeio` (7,95:1 contra o disco — 1.4.11 pede 3)
+   e da espessura que o glifo teria no tamanho em que é DESENHADO
+   (`tracoNaGrelha(lado × 36 / 64)` — a mesma conta do `Glifo`, ui.jsx).
+   O glifo não muda de cor com a ferida: quem diz a ferida é o anel. */
+const DIAMETRO_DO_SINAL = 36 / 64;
+function SinalDoRosto({ forma, lado }) {
+  const g = GLIFOS[forma];
+  if (!g) return null;
+  return (
+    <g>
+      <circle cx={32} cy={32} r={32} fill={T.panelSoft} />
+      <g transform="translate(14 14) scale(1.5)">
+        <path d={g.d} fill="none" stroke={T.inkMeio} strokeWidth={tracoNaGrelha(lado * DIAMETRO_DO_SINAL)} strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </g>
+  );
+}
+
+/* ---------------- o rosto inteiro ----------------
+   A1: `lado` são os píxeis em que o rosto é DESENHADO (omissão 44, a do
+   `Retrato`; o tabuleiro passa 0,8 × o lado da casa) — só o sinal de quem
+   não é gente o lê, para o traço ter a espessura certa. `lex` é o léxico do
+   mundo, que `menteDaCriatura` consulta antes das regras gerais. */
+export function Rosto({ semente, estado = "normal", ente = null, fixo = false, lado = 44, lex = null }) {
   const { apresentacao } = React.useContext(AjusteDoRetrato);
   const grave = estado === "grave", ferido = estado === "ferido", furioso = estado === "furioso";
   const t = tracos(semente);
   const e = ente && typeof ente === "object" ? ente : {};
+  /* A1 · QUEM TEM CLASSE É GENTE, SEMPRE (o herói, o companheiro de classe);
+     sem classe, a mente da criatura decide — besta → fera, morto → morto. Se
+     a conta estourar, o rosto é de gente: nunca custa o retrato. */
+  let forma = "gente";
+  try {
+    if (e.nome && !e.classe) forma = rostoDoEnte(e, menteDaCriatura(e.nome, e.desc || e.descricao || "", lex));
+  } catch (erro) { forma = "gente"; }
+  if (forma !== "gente" && GLIFOS[forma]) return <SinalDoRosto forma={forma} lado={lado} />;
   const f = feicoes(semente, {
     genero: e.genero || "",
     apresentacao,

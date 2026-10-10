@@ -87,7 +87,7 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null, pistaMund
 
       {m.recompensa && !fim && (
         <div className="tv-mono text-[10px] mt-1.5" style={{ color: T.inkDim }}
-          title={m.recompensa.combinada ? "foi o preço dito na cena" : "arbitrado pelo sistema — ninguém falou em preço"}>
+          title={m.recompensa.combinada ? "foi o preço dito na cena" : "preço da praça"}>
           paga {textoDaPaga(m)}
         </div>
       )}
@@ -104,7 +104,7 @@ function CartaoMissao({ m, aoResponder, aoEncerrarLegado, pers = null, pistaMund
       {m.legado && m.status === "ativa" && aoEncerrarLegado && (
         <div className="mt-2">
           <div className="tv-body text-[10px] mb-1.5" style={{ color: T.inkDim }}>
-            Esta missão vem de antes do sistema de etapas — o código não tem como saber se você a terminou. Quem sabe é você.
+            Encerrável por você.
           </div>
           <div className="flex gap-2">
             <button onClick={() => aoEncerrarLegado(m.id, "concluida")} className="tv-mono text-[10px] px-2.5 py-1 rounded-lg"

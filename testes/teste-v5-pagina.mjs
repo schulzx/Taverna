@@ -26,6 +26,12 @@ const sec = (s) => console.log("\n" + s);
 const ler = (x) => readFileSync(x, "utf8").split(String.fromCharCode(13)).join("");
 const UI = ler("../src/ui.jsx");
 const APP = ler("../src/App.jsx");
+/* A1 · B1 (10/10): o relato saiu do `App.jsx` para `painel-relato.jsx` —
+   o laço de `agruparMensagens`, o `BlocoSistema` e as portas da seta mudaram
+   de casa sem mudar de forma. A runa com o botão de
+   ouvir e a prosa leem-se lá. O ouvir chega por prop (`aoOuvir`), que o App
+   liga a `ouvirMestre`: a asserção prova as duas pontas. */
+const RELATO = ler("../src/painel-relato.jsx");
 const EST = ler("../src/estilo.js");
 const GAVETA = ler("../src/painel-alforje.jsx");
 const trecho = (txt, ini, fim) => { const i = txt.indexOf(ini); return i < 0 ? "" : txt.slice(i, txt.indexOf(fim, i + ini.length)); };
@@ -95,8 +101,10 @@ sec("4. a fiação");
 {
   t("a região que rola é a página: .tv-pagina no lugar do px-5/py-6", /className="tv-scroll tv-esbate-topo[^"]*tv-pagina[^"]*"/.test(APP) && !/tv-esbate-topo[^"]*py-6/.test(APP));
   t("a resposta do Mestre começa pela runa com o botão de ouvir na ponta",
-    /<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir estado=\{[^}]*\} aoOuvir=\{\(\) => ouvirMestre\(i, m\.texto\)\} \/>\} \/>/.test(APP));
-  t("e a prosa é a peça, com a cerimônia só no turno marcado", /<Prosa texto=\{m\.texto\} abertura=\{abertura === i \? "cerimonia" : "nenhuma"\} \/>/.test(APP));
+    /<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir estado=\{[^}]*\} aoOuvir=\{\(\) => aoOuvir && aoOuvir\(i, m\.texto\)\} \/>\} \/>/.test(RELATO)
+    && /<Relato [^>\n]*aoOuvir=\{ouvirMestre\}/.test(APP));
+  t("e a prosa é a peça, com a cerimônia só no turno marcado", /<Prosa texto=\{m\.texto\} abertura=\{abertura === i \? "cerimonia" : "nenhuma"\} \/>/.test(RELATO)
+    && /<Relato [^>\n]*abertura=\{abertura\}/.test(APP));
   t("o `O MESTRE` do topo da página saiu: a voz do Mestre só existe na espera",
     (APP.match(/<Voz quem="mestre"/g) || []).length === 1 && /\{carregando && \(\s*<div className="tv-fade tv-coluna flex items-center gap-2">\s*<span className="tv-dice inline-flex"><IconeD20 tamanho=\{16\} cor=\{T\.inkMeio\} \/><\/span>\s*<div className="flex-1 min-w-0"><Voz quem="mestre" voz="preparando" \/><\/div>/.test(APP));
   t("e a espera mora no fim do registro, antes do fim da página", APP.indexOf('<Voz quem="mestre" voz="preparando"') < APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>"));

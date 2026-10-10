@@ -124,7 +124,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
       <>
         {abas}
         {!grupo.length ? (
-          <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho. Companheiros trazem as próprias habilidades — e o sistema joga com elas.</div>
+          <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho. Companheiros trazem as próprias habilidades — e lutam por conta própria.</div>
         ) : grupo.map((c) => (
           <div key={c.nome} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
             <div className="flex items-baseline justify-between gap-2 flex-wrap">
@@ -157,7 +157,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
           </div>
         ))}
         <div className="tv-body text-xs" style={{ color: T.inkDim }}>
-          O sistema joga por eles em combate: curam quem está caindo, dão buff no começo da luta e usam a magia certa. O Mestre só narra o que aconteceu.
+          Eles lutam por conta própria: curam quem está caindo, dão buff no começo da luta e usam a magia certa.
         </div>
       </>
     );

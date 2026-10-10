@@ -33,7 +33,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
           {podeDespertar && (
             <div className="mt-3 space-y-2">
               <button onClick={onDespertar} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.amber, color: "#1A1206" }}><Glifo nome="ascensao" tamanho={16} /> Despertar agora</button>
-              <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>{recalibrando ? "Lendo sua lenda…" : "Recalibrar com a IA"}</button>
+              <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>{recalibrando ? "Lendo sua lenda…" : "Recalibrar"}</button>
               <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>Já é divindade na história? A recalibração lê o livro da aventura e o cânone e ajusta GD, fiéis, domínio e panteão pelo que de fato aconteceu — nada é inventado.</div>
             </div>
           )}
@@ -151,7 +151,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
       <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
         <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.violetSoft }}>A Regra do Degrau</div>
         <div className="tv-body text-xs leading-relaxed" style={{ color: T.inkDim }}>
-          Cada degrau de diferença de GD dá <b style={{ color: T.ink }}>+2 ao mais forte e −2 ao mais fraco</b> em ataques, defesas e resistências (o sistema aplica nos dados). Mortais não ferem divindades de GD 3+ sem artefato lendário ou bênção. Fé se ganha com feitos testemunhados, santuários e conversões — e se gasta em milagres (pequeno ~5 PF, médio ~20, grande ~50).
+          Cada degrau de diferença de GD dá <b style={{ color: T.ink }}>+2 ao mais forte e −2 ao mais fraco</b> em ataques, defesas e resistências. Mortais não ferem divindades de GD 3+ sem artefato lendário ou bênção. Fé se ganha com feitos testemunhados, santuários e conversões — e se gasta em milagres (pequeno ~5 PF, médio ~20, grande ~50).
         </div>
       </div>
 
@@ -227,7 +227,7 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
       </div>
 
       <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-[10px] uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>
-        {recalibrando ? "Lendo sua lenda…" : "Recalibrar ascensão com a IA"}
+        {recalibrando ? "Lendo sua lenda…" : "Recalibrar ascensão"}
       </button>
     </div>
   );

@@ -73,7 +73,9 @@ sec("4. O ROSTO É UM SÓ — a bolinha e a carta desenham a mesma pessoa");
   /* v9.158: o rosto passou a receber a PESSOA além da semente — a classe
      veste o traje e o sexo dá a geometria. O que a lei protege é o mesmo
      de sempre: os dois desenham com a MESMA chamada, byte a byte. */
-  t("a bolinha a usa", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} \/>/.test(UI));
+  /* MOVIDA (10/10, A1 · `formas.md` §A1 4): a bolinha passa ao rosto `lado` e `lex`
+     (o sinal de quem não é gente precisa dos dois); a peça continua a ser A MESMA. */
+  t("a bolinha a usa", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} lado=\{tamanho\} lex=\{lex\} \/>/.test(UI));
   t("a carta usa a mesma", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} \/>/.test(CARTA));
   t("e ninguém mais redesenha traço de rosto", !/formatoRosto|penteado/.test(CARTA) && !/formatoRosto|penteado/.test(UI));
   /* a conta saiu do .jsx para poder ser provada — foi o que permitiu esta

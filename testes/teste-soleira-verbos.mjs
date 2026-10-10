@@ -50,9 +50,13 @@ sec("1. `Seguir viagem` — o verbo que a tela ensinava o jogador a escrever de 
    moveram o herói um metro; uma custou seis dias contra um prazo de quatro
    noites. */
 t("a estrada é uma oferta", /id: "viagem\|seguir"/.test(R));
-t("e o jogo continua a imprimir a senha que ela substitui",
-  /escreva que segue viagem para avançar/.test(APP),
-  "no dia em que esta frase sair da tela, esta oferta é a razão — e o dente cai junto");
+/* A1 · B8 (#33, 10/10): O DIA CHEGOU. A frase saiu da tela — o `jogo` a
+   cortou como instrução de interface dita no relato (`a1-jogo.md` #33), e é
+   ESTA oferta, com a cinta em viagem, que a substitui. O dente não cai: vira
+   a guarda do contrário — a senha não volta enquanto a porta existir. */
+t("e o jogo não imprime mais a senha que ela substitui",
+  !/escreva que segue viagem para avançar/.test(APP),
+  "a soleira é a porta da estrada; ensinar a frase de cor no relato é o que ela veio aposentar");
 t("o preço sai de `minutosPorAvanco`, que é o que `andar()` consome",
   /preco: emTempo\(minutosPorAvanco\(jornada\)\)/.test(R),
   "duas contas para o mesmo número seriam duas verdades");

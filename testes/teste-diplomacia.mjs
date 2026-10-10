@@ -232,7 +232,12 @@ sec("10. O JOGADOR VÊ ANTES DE APERTAR");
   t("a condição pendente aparece", /Ela exige \{f\.exigencia\.o\}/.test(PAINEL));
   t("com botão de cumprir", /onCumprir && onCumprir\(p\.nome\)/.test(PAINEL));
   t("o preço do presente é o desta potência", /◉ \{custo\} do cofre/.test(PAINEL));
-  t("e o rodapé diz quem decide", /Quem decide é o sistema, e não o Narrador/.test(PAINEL));
+  /* MOVIDA (10/10, A1 peça 114): o rodapé dizia "Quem decide é o sistema, e
+     não o Narrador" — a lei "o sistema não fala de si mesmo" quebrada na cara
+     de quem procura ajuda. O `jogo` reescreveu-o em língua de mesa. O que a
+     asserção protege não mudou: o rodapé diz que a resposta NÃO é capricho de
+     quem fala, e diz o que pesa. Só mudou quem o diz — o mundo, não a máquina. */
+  t("e o rodapé diz quem decide", /A resposta sai das forças em jogo, e não do humor de quem fala: pesa o apreço/.test(PAINEL) && !/Quem decide é o sistema/.test(PAINEL));
   t("guerra não é proposta, e o painel diz", /não se propõe: se declara/.test(PAINEL));
   /* o App entrega tudo o que o painel precisa */
   t("o App entrega as potências", /potencias=\{potenciasAqui\(\)\}/.test(APP));

@@ -188,21 +188,26 @@ sec("7. V3b · a tela principal");
 {
   const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
   const UI2 = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
+  /* A1 · B1 (10/10): o relato saiu do `App.jsx` para `painel-relato.jsx` —
+     o laço de `agruparMensagens`, o `BlocoSistema` e as portas da seta mudaram
+     de casa sem mudar de forma. As falas, a porta e o
+     botão de ouvir leem-se lá; o que se protege é o mesmo. */
+  const RELATO = readFileSync("../src/painel-relato.jsx", "utf8").replace(/\r\n/g, "\n");
   const { LADRILHO } = await import("../src/estilo.js");
   t("o ladrilho mede o que a v3 desenhou: 36, glifo 16, raio 12, 12 até à frase", LADRILHO.lado === 36 && LADRILHO.glifo === 16 && LADRILHO.raio === 12 && LADRILHO.espaco === 12);
   const LAD = corpo("LadrilhoDoAssunto");
   t("LadrilhoDoAssunto: Neutro cheio com fio line e glifo âmbar; Impedido oco com fio lineStrong e glifo inkDim",
     /background: impedido \? "transparent" : T\.panelSoft/.test(LAD) && /impedido \? T\.lineStrong : T\.line/.test(LAD) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD) && /aria-hidden="true"/.test(LAD));
-  t("o BlocoSistema traduz cada fala por assuntoDaLinha e desenha o ladrilho", /const \{ glifo, tom, resto \} = assuntoDaLinha\(semSetaQueMente\(bruto\)\);/.test(APP) && /<LadrilhoDoAssunto glifo=\{glifo\} tom=\{tom\} \/>/.test(APP));
+  t("o BlocoSistema traduz cada fala por assuntoDaLinha e desenha o ladrilho", /const \{ glifo, tom, resto \} = assuntoDaLinha\(semSetaQueMente\(bruto\)\);/.test(RELATO) && /<LadrilhoDoAssunto glifo=\{glifo\} tom=\{tom\} \/>/.test(RELATO));
   /* A asserção mudou depois da prova jogada (v3-jogo.md §9.2-1): a seta saiu do fim da
      linha e foi para o ladrilho (tom "porta"). O que ela guarda fica: alvo a ALVOS.piso,
      e a seta desenhada, não o carácter do motor. */
-  t("a porta continua um botão a ALVOS.piso, e a seta é desenhada", /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(APP) && /\{porta \? <LadrilhoDoAssunto tom="porta" \/>/.test(APP) && /tom === "porta" \? <IconeSeta /.test(LAD));
-  { const i = APP.indexOf("function BlocoSistema"); const BLOCO = APP.slice(i, APP.indexOf("\n}\n", i));
+  t("a porta continua um botão a ALVOS.piso, e a seta é desenhada", /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(RELATO) && /\{porta \? <LadrilhoDoAssunto tom="porta" \/>/.test(RELATO) && /tom === "porta" \? <IconeSeta /.test(LAD));
+  { const i = RELATO.indexOf("function BlocoSistema"); const BLOCO = RELATO.slice(i, RELATO.indexOf("\n}\n", i));
     t("a pílula centrada morreu: nenhum rounded-full no BlocoSistema", i > 0 && !/rounded-full/.test(BLOCO)); }
   /* V5: o botão de ouvir saiu de `A voz` para a ponta da runa, e é uma peça
      (`BotaoDeOuvir`, ui.jsx); o glifo mede `RUNA.glifoDeOuvir` (14, o de sempre). */
-  t("a voz desenha ouvir e pausa — o 🔊 e o ⏸ saíram do glifoDeOuvir", /<Glifo nome=\{estado === "lendo" \? "pausa" : "ouvir"\} tamanho=\{RUNA\.glifoDeOuvir\} \/>/.test(UI2) && /<BotaoDeOuvir /.test(APP) && !/"⏸"\) : "🔊"/.test(APP));
+  t("a voz desenha ouvir e pausa — o 🔊 e o ⏸ saíram do glifoDeOuvir", /<Glifo nome=\{estado === "lendo" \? "pausa" : "ouvir"\} tamanho=\{RUNA\.glifoDeOuvir\} \/>/.test(UI2) && /<BotaoDeOuvir /.test(RELATO) && !/"⏸"\) : "🔊"/.test(APP + RELATO));
   t("os chips do estado deixaram o emoji de condicoes.js: a favor / contra pela forma", /glifo: c\.tipo === "bom" \? "favor" : "contra", texto: c\.nome/.test(APP) && !/c\.icone \|\| \(c\.tipo === "bom"/.test(APP) && /glifo: "faisca", texto: e\.nome/.test(APP));
   /* V6: na tela principal o cartão do teste saiu — o teste é a linha do veredito
      (`linhaDoTeste`) e o d20 da casa está no DADO, ao lado; a batalha mantém o seu
@@ -240,9 +245,11 @@ sec("9. V3b · os consertos da prova jogada");
   { const i = APP.indexOf("function chipsDoEstado("); const CHIPS = APP.slice(i, APP.indexOf("\n}\n", i));
     t("chipsDoEstado traduz os selos por assuntoDaLinha e não escreve emoji", i > 0 && /assuntoDaLinha\(x\.texto\)/.test(CHIPS) && !/\p{Extended_Pictographic}/u.test(CHIPS));
     t("o selo 🎲 vantagem vira o dado e a palavra", JSON.stringify(assuntoDaLinha("🎲 vantagem")) === JSON.stringify({ glifo: "dado", tom: "neutro", resto: "vantagem" })); }
-  /* 5 — a porta: a seta no ladrilho, o fio de controlo, a largura do texto */
+  /* 5 — a porta: a seta no ladrilho, o fio de controlo, a largura do texto.
+     A1 · B1 (10/10): a porta mudou-se com o relato para `painel-relato.jsx`. */
+  { const RELATO = readFileSync("../src/painel-relato.jsx", "utf8").replace(/\r\n/g, "\n");
   t("a porta leva fio lineStrong, raio do ladrilho e a largura do texto",
-    /className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"/.test(APP) && /border: "1px solid " \+ T\.lineStrong, borderRadius: LADRILHO\.raio/.test(APP));
+    /className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"/.test(RELATO) && /border: "1px solid " \+ T\.lineStrong, borderRadius: LADRILHO\.raio/.test(RELATO)); }
   /* 6 — o Impedido ganha marca: o ladrilho oco sem assunto desenha o círculo cortado */
   { const i = UI3.indexOf("export function LadrilhoDoAssunto("); const LAD2 = UI3.slice(i, UI3.indexOf("\n}\n", i));
     t("o Impedido sem assunto desenha ban, em inkDim", !!GLIFOS.ban && /<Glifo nome=\{glifo \|\| "ban"\}/.test(LAD2) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD2)); }

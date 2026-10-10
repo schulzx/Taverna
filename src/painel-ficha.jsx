@@ -463,7 +463,7 @@ export function FichaVisual({
                 const fi = fichaDoItem(it);
                 const forma = fi ? [fi.rotulo, fi.mao === 2 ? "2 mãos" : "", ...(fi.props || [])].filter(Boolean).join(" · ") : "";
                 return (
-                <span key={slot} title={`${it.nome}${fi && fi.base && fi.base !== it.nome ? ` (o sistema vê: ${fi.base})` : ""}${forma ? ` — ${forma}` : ""}${it.poder ? ` — ${it.poder}` : ""}`}
+                <span key={slot} title={`${it.nome}${fi && fi.base && fi.base !== it.nome ? ` (conta como ${fi.base})` : ""}${forma ? ` — ${forma}` : ""}${it.poder ? ` — ${it.poder}` : ""}`}
                   className="tv-mono text-[10px] px-2 py-1 rounded-lg" style={{ background: T.panel, border: `1px solid ${T.line}`, color: T.ink, maxWidth: "100%" }}>
                   <span className="truncate block">
                   {it.nome}

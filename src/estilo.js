@@ -526,12 +526,18 @@ export const CINTA = {
   enchimento: 12,    /* lateral, e não 16 — ver a conta acima */
   ficha: 194,        /* o alvo da esquerda, MEDIDO: rosto · PV · PM · bolsa */
   fichaMinima: 170,  /* com os trilhos no mínimo — quem cede é sempre ela */
-  tempo: 145,        /* o alvo da direita, MEDIDO: a hora · O selo · o +N */
-  tempoMaximo: 174,  /* a última noite: o selo enche e passa de 76 a 105 */
+  /* A1 (10/10): a hora cheia encolheu o alvo da direita. MEDIDO no navegador, a
+     375, mono 12 Bold: `08:26` 36 px → `18h` 21,6 px (o pior caso, dois
+     algarismos; `8h` 14,4). O tempo era 145 com a hora antiga; menos 14,4 é
+     130,6, e arredonda-se PARA CIMA, que é o lado do pior caso: 131. Os
+     números que saem dele (a folga, o limiar do rótulo, o tempo máximo)
+     refazem-se com ele, cada um com a conta escrita. */
+  tempo: 131,        /* o alvo da direita, MEDIDO: a hora · O selo · o +N */
+  tempoMaximo: 160,  /* a última noite: o selo enche e passa de 76 a 105 (174 − 14,4 da hora cheia, para cima) */
   trilho: 56,        /* PV e PM em repouso */
   trilhoMinimo: 40,  /* o comprimento é uma razão, não uma medida */
-  folgaMinima: 12,   /* 375 − 24 − 194 − 145, MEDIDO e não orçado */
-  larguraParaORotulo: 436,  /* 24 + 194 + 145 + 74 − 1 — abaixo disto, só a varredura.
+  folgaMinima: 26,   /* 375 − 24 − 194 − 131, MEDIDO e não orçado (era 12 com a hora `08:26`) */
+  larguraParaORotulo: 422,  /* 24 + 194 + 131 + 74 − 1 — abaixo disto, só a varredura (era 436 com a hora antiga).
      O RESPIRO NÃO É TERMO DESTA CONTA, e isso é decisão e não esquecimento:
      o rótulo CENTRA-SE na folga, logo os pixels que sobram distribuem-se
      sozinhos à medida que o ecrã cresce. No limiar exacto ele tem 0 de cada
@@ -575,6 +581,12 @@ export const CINTA = {
   pilula: { raio: 20, lado: 16, cima: 6, entre: 12, entreTelefone: 7 },
   mesa: "(min-width: 768px)",  /* o corte da casa (o `md:` do Tailwind), dito por extenso */
   palavraCurtaAbaixoDe: 360,   /* abaixo disto, `esta noite` diz-se `hoje` (só a 320 o pior caso não cabe) */
+  /* A1 · A HORA CHEIA (`formas.md` §A1 5): a pílula diz `8h`, e não
+     `08:10`. Era a peça que mais aparecia no ANTES (9 de 50) e com ela
+     ninguém decidiu nada; o que decide no tempo (o prazo em noites, a
+     loja, esperar 6h) mede-se em hora e em noite. O minuto mora em O
+     TEMPO, no toque. A conta é `horaNaCinta` (glifos.js). */
+  passoDaHora: 60,
 };
 
 /* ============================================================
@@ -1341,6 +1353,37 @@ export const MARCA_DA_PORTA = { lado: 16, recorte: 2 };
 export const MUDOU_AGORA = { pulso: 1200, vezes: 3 };
 
 /* ============================================================
+   A1 · O RECIBO — o que a ficha mudou neste turno (`formas.md` §A1 1,
+   Figma `255:103`). Uma fila numa linha só, debaixo da prosa do Mestre.
+
+   A CONTA DO QUE CABE É PURA (`reciboQueCabe`, glifos.js) e não precisa
+   do DOM, porque a JetBrains Mono tem avanço fixo de 600/1000 em: um
+   carácter a 12 px mede 7,2 px, sempre. É `avancoMono` que deixa a fila
+   ser medida em Node e provada na suíte.
+
+   O TETO PROTEGE A PROSA, E A LARGURA MANDA ANTES DELE: 6 chips na mesa,
+   4 no telefone; o primeiro que não cabe fecha a fila (a ordem é lei, e
+   o corte também — nunca se salta para um menor depois dele), e o resto
+   diz-se `e mais N`. O item trunca com reticências, mas nunca abaixo de
+   `pisoDoNome` caracteres (o piso de §21: o teto de 45 caracteres ÷ 4).
+   ============================================================ */
+export const RECIBO = {
+  entre: 16, entreTelefone: 12,
+  tetoNaMesa: 6, tetoNoTelefone: 4,
+  avancoMono: 0.6,   /* JetBrains Mono: 600/1000 em — é o que deixa a conta ser pura */
+  pisoDoNome: 12,    /* §21: o teto de 45 caracteres ÷ 4, arredondado para cima */
+  entrelinha: 18,    /* TIPOS.maquina × 1,5 */
+};
+
+/* A1 · O FIM DA LUTA (`formas.md` §A1 3, Figma `255:295`) — o momento do
+   ganho, na própria mesa de batalha. O desfecho e os chips entram com
+   `.tv-fim-entra` (240 ms, cada chip 60 ms depois do anterior: ≤ 480 ms
+   no total); o `Respirar fundo` NÃO participa — está lá desde o primeiro
+   quadro. O chão mostra 2 coisas na mesa e 1 no telefone; o resto é uma
+   `A dobra`. */
+export const FIM_DA_LUTA = { entra: 240, passo: 60, tetoDoChao: 2, tetoDoChaoNoTelefone: 1 };
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
@@ -1617,6 +1660,14 @@ export const MOVIMENTO_CSS = `
 }
 .tv-mudou-agora { animation: tvMudouAgora ${MUDOU_AGORA.pulso}ms ease-in-out ${MUDOU_AGORA.vezes}; }
 
+/* A1 · O FIM DA LUTA ENTRA (formas.md, A1 peca 3): o desfecho e cada chip
+   do recibo sobem 4 px e acendem em 240 ms; o atraso de cada chip e do
+   painel-batalha (animationDelay, FIM_DA_LUTA.passo). O botao de sair NAO
+   leva esta classe: esta la antes de qualquer animacao comecar. A saida
+   esta no @media de baixo, escrita a nascenca. */
+@keyframes tvFimEntra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.tv-fim-entra { animation: tvFimEntra ${FIM_DA_LUTA.entra}ms ease both; }
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -1680,6 +1731,9 @@ export const MOVIMENTO_CSS = `
   .tv-agonia, .tv-anel-clarao { animation: none; }
   .tv-anel-cresce { transition: none; }
   .tv-anel-perdido { animation: none; opacity: ${ANEL.alfaParado}; }
+  /* A1 · O FIM DA LUTA entra parado: o desfecho e os chips ja estao no
+     estado final (opacity 1, sem subida) desde o primeiro quadro. */
+  .tv-fim-entra { animation: none; opacity: 1; transform: none; }
 }
 `;
 
@@ -2104,7 +2158,7 @@ export const SUPERFICIES_CSS = `
    Fica a varredura da marca da chapa, que ja era a degradacao escrita da
    peca — e o limiar deixa de ser um numero afinado a olho e passa a ser
    CINTA.larguraParaORotulo, que a suite le de volta. */
-@media (max-width: 436px) {
+@media (max-width: 422px) {
   .tv-guardado-rotulo { display: none; }
 }
 

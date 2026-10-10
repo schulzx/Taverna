@@ -149,7 +149,11 @@ sec("5. O AVISO DE PARTIR SEM COMIDA");
      frase, "Gestão, e lá dentro Mercado". A ASSERÇÃO NÃO MUDOU DE INTENÇÃO
      — continua a cobrar que o aviso diga ONDE resolver —, mudou o glifo
      que separa os dois degraus do caminho. */
-  t("e aponta onde resolver", /Gestão › Mercado/.test(APP));
+  /* A1 · B8 (#36, 10/10): o caminho de menu dentro da frase virou A PORTA —
+     a linha com seta que o relato abre num toque (`▸ Mercado — …`). A
+     intenção é a mesma, e mais forte: o aviso não diz só ONDE resolver,
+     leva lá. */
+  t("e aponta onde resolver", /"▸ Mercado — há mantimentos à venda aqui"/.test(APP));
 }
 
 sec("6. O GESTO COBRA O PREÇO DE AGORA");

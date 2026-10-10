@@ -51,9 +51,10 @@
 
 import React from "react";
 import { T, ALVOS, TELA_DE_BATALHA as G } from "./estilo.js";
+import { TIPOS, FIM_DA_LUTA } from "./estilo.js";
 import { MESA_DE_BATALHA as M, VEU, alfa } from "./estilo.js";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
-import { Retrato, Glifo } from "./ui.jsx";
+import { Retrato, Glifo, Recibo, Dobra } from "./ui.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { metrosTxt, podeDarUmPasso, garantirGrade, nomeDoLugar } from "./grid.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -114,25 +115,127 @@ const movimentoParado = () => {
   catch { return false; }
 };
 
-/* ---------------- O GESTO QUE O MOTOR NÃO SABE (B1) ----------------
+/* ---------------- O GESTO QUE O MOTOR NÃO SABE (B1 → A1) ----------------
    O quadro desenha `Esquivar` entre os verbos, e `VERBOS_DE_COMBATE`
    (`golpe.js`) diz dele `motor: null` — a frase não casa verbo de ataque
-   nem desafio e vira ficção. Por ordem do coordenador, o que o motor não
-   sabe fica DESLIGADO: desenhado no lugar do quadro (a fileira não muda de
-   forma no dia em que ele ganhar regra), `aria-disabled`, e ao toque a
-   linha do veredito diz porquê.
+   nem desafio e vira ficção. Em B1 ele ficou DESLIGADO no lugar do quadro,
+   e ao toque a linha dizia que a esquiva ainda não contava.
 
-   A REGRA LÊ A TABELA DO MOTOR, nunca um nome: é `!v.motor` que desliga,
-   logo o verbo acende sozinho no dia em que `golpe.js` lhe der motor. A
-   frase cabe no teto de 54 da linha (`TETO_DA_RECUSA`) e fala de jogo.
+   A1 (o `jogo`, `mente/a1-jogo.md` peça 97): *um botão que só existe para
+   dizer que não funciona é o sistema confessando um buraco* — e ninguém
+   pode depender dele, porque ele não faz nada. O gesto sem motor SAI DA
+   FILEIRA até ter regra. A REGRA CONTINUA A LER A TABELA DO MOTOR, nunca um
+   nome: é `!v.motor` que o tira, logo o verbo VOLTA sozinho no dia em que
+   `golpe.js` lhe der motor (o pedido aberto de B1). `esperar` também não
+   tem motor, mas é recuo — passar a vez —, e esse fica. */
+const temMotorOuNaoEGesto = (v) => !(v.papel === "gesto" && !v.motor);
 
-   DÍVIDA DECLARADA: a casa certa desta frase é `RECUSAS_DO_VERBO`, em
-   `tela-de-batalha.js` — que é território do sistema. Fica aqui, numa
-   tabela de módulo, até o pedido chegar lá. */
-const RECUSA_DO_GESTO_SEM_MOTOR = {
-  esquivar: "a esquiva ainda não pesa nos golpes deles — use Mover",
+/* ---------------- A1 · O FIM DA LUTA (`formas.md` §A1 3) ----------------
+   O MOMENTO DO GANHO, na própria mesa de batalha. No ANTES (nota 7) "ganhar
+   não tem momento": a primeira vitória da campanha passou como linha mono
+   no meio de seis. Toma a secção *Sua próxima ação* — saem a fileira, o
+   `como?` e a linha do veredito — em três faixas: o desfecho e o recibo da
+   luta (a MESMA peça do relato, em tamanho de momento); o chão, só na
+   vitória; e o `Respirar fundo →`, presente e tocável desde o primeiro
+   quadro — nunca anima, nunca fica desabilitado, nada o cobre.
+
+   As palavras dos desfechos são do `jogo` (é dele o que se comunica); a
+   forma é do `desenho`. Na fuga e na queda o recibo diz só a perda; a luta
+   encerrada diz o que houver (vazio: 0 px).
+
+   O FOCO vai ao TÍTULO (`tabIndex -1`, `role="status"`) e NÃO ao `Respirar
+   fundo`: um Enter que ainda viesse a caminho do `como?` sairia da batalha
+   sem o jogador ver o que ganhou. Depois, o `Tab` passa pelos `Recolher` e
+   chega ao `Respirar fundo`; ao recolher, o foco segue para o próximo
+   `Recolher` ou para o `Respirar fundo`, nunca para o vazio. */
+const DESFECHOS = {
+  vitoria:   { titulo: "Vitória",        recibo: "tudo",  chao: true },
+  fuga:      { titulo: "Você escapou",   recibo: "perda", chao: false },
+  queda:     { titulo: "Você tombou",    recibo: "perda", chao: false },
+  encerrada: { titulo: "A luta acabou",  recibo: "tudo",  chao: false },
 };
-const RECUSA_DO_GESTO_SEM_MOTOR_EM_GERAL = "este gesto ainda não pesa na luta";
+const ENTRE_DESFECHO_E_RECIBO = { mesa: 24, telefone: 12 };
+
+function CoisaNoChao({ coisa, recolhida, aoRecolher, telefone }) {
+  return (
+    <div className="flex items-center min-w-0" style={{ minHeight: ALVOS.piso, gap: telefone ? M.entreVerbos : M.chipLadoX }}>
+      <span className="tv-mono shrink-0" style={{ ...LEGENDA, fontSize: TIPOS.maquina, color: T.inkDim }}>no chão</span>
+      <span className="tv-body flex-1 min-w-0 truncate" style={{ fontSize: TIPOS.corpo, color: recolhida ? T.inkDim : T.ink }}>{coisa.nome}</span>
+      {recolhida ? (
+        <span className="tv-mono shrink-0" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>na bolsa</span>
+      ) : (
+        <button type="button" data-recolher="" onClick={aoRecolher}
+          className="tv-anel-foco tv-mono shrink-0"
+          style={{ minHeight: ALVOS.piso, padding: "0 16px", borderRadius: M.raioControle, background: T.panelSoft, border: `1px solid ${T.lineStrong}`, fontSize: TIPOS.rotulo, color: T.ink, cursor: "pointer" }}>
+          Recolher
+        </button>
+      )}
+    </div>
+  );
+}
+
+function FimDaLuta({ desfecho = "encerrada", recibo = [], chao = [], aoRecolher, aoSair, telefone = false }) {
+  const d = DESFECHOS[desfecho] || DESFECHOS.encerrada;
+  const tituloRef = React.useRef(null);
+  const faixaRef = React.useRef(null);
+  const sairRef = React.useRef(null);
+  const [recolhidas, setRecolhidas] = React.useState([]);
+  const [chaoAberto, setChaoAberto] = React.useState(false);
+  React.useEffect(() => { try { if (tituloRef.current) tituloRef.current.focus(); } catch (e) { /* sem foco, a tela continua */ } }, []);
+  const chips = (Array.isArray(recibo) ? recibo : []).filter((c) => c && (d.recibo === "tudo" || Number(c.delta) < 0));
+  /* o que foi recolhido continua na lista (a dizer "na bolsa") mesmo que o
+     App o tire do chão: a linha não some debaixo do dedo */
+  const coisas = (() => {
+    const vindas = (Array.isArray(chao) ? chao : []).filter((c) => c && c.id != null);
+    const ids = new Set(vindas.map((c) => String(c.id)));
+    return [...vindas, ...recolhidas.filter((c) => !ids.has(String(c.id)))];
+  })();
+  const recolhida = (c) => !!c.recolhido || recolhidas.some((r) => String(r.id) === String(c.id));
+  const recolher = (c, k) => {
+    try {
+      setRecolhidas((rs) => (rs.some((r) => String(r.id) === String(c.id)) ? rs : [...rs, { id: c.id, nome: c.nome }]));
+      if (aoRecolher) aoRecolher(c.id);
+    } catch (e) { console.warn("FimDaLuta: recolher falhou", e); }
+    /* depois de o React pintar a linha "na bolsa" (um tique do relógio, não um quadro contado) */
+    setTimeout(() => {
+      try {
+        const botoes = faixaRef.current ? [...faixaRef.current.querySelectorAll("[data-recolher]")] : [];
+        const proximo = botoes[k];
+        const alvo = proximo || sairRef.current; if (alvo) alvo.focus();
+      } catch (e) { /* o foco é cortesia; nunca custa a saída */ }
+    }, 0);
+  };
+  const teto = telefone ? FIM_DA_LUTA.tetoDoChaoNoTelefone : FIM_DA_LUTA.tetoDoChao;
+  const vistas = chaoAberto ? coisas : coisas.slice(0, teto);
+  const vencedor = desfecho === "vitoria";
+  return (
+    <>
+      <div className="flex items-center min-w-0" style={{ gap: telefone ? ENTRE_DESFECHO_E_RECIBO.telefone : ENTRE_DESFECHO_E_RECIBO.mesa }}>
+        <h3 ref={tituloRef} tabIndex={-1} role="status" className="tv-display tv-fim-entra shrink-0"
+          style={{ fontSize: telefone ? TIPOS.titulo : TIPOS.display, color: vencedor ? T.amberSoft : T.ink, fontWeight: 600, lineHeight: 1.2, margin: 0 }}>
+          {d.titulo}
+        </h3>
+        {chips.length > 0 && <div className="flex-1 min-w-0"><Recibo chips={chips} telefone={telefone} momento /></div>}
+      </div>
+      {d.chao && coisas.length > 0 && (
+        <div ref={faixaRef} className="flex flex-col min-w-0" style={{ gap: telefone ? M.entreVerbos : M.chipLadoX }}>
+          {vistas.map((c, k) => (
+            <CoisaNoChao key={String(c.id)} coisa={c} recolhida={recolhida(c)} telefone={telefone}
+              aoRecolher={() => recolher(c, vistas.slice(0, k).filter((x) => !recolhida(x)).length)} />
+          ))}
+          {coisas.length > teto && (
+            <Dobra quantos={coisas.length - teto} singular="coisa" plural="coisas"
+              estado={chaoAberto ? "aberta" : "dobrada"} aoAlternar={() => setChaoAberto((v) => !v)} />
+          )}
+        </div>
+      )}
+      <button ref={sairRef} onClick={aoSair} className="tv-anel-foco tv-display text-lg w-full"
+        style={{ minHeight: ALVOS.piso, borderRadius: M.raioControle, background: T.amber, color: T.onAccent, fontWeight: 600 }}>
+        Respirar fundo →
+      </button>
+    </>
+  );
+}
 
 /* "na areia solta" → "Na areia solta": o título da cena é o lugar do
    herói, com a mesma preposição que o Mestre usa. */
@@ -934,7 +1037,8 @@ export function TelaDeBatalha(props) {
     return () => { vivo = false; cancelAnimationFrame(id); };
   }, [casaDoHeroi, noTelefone]);
 
-  const verbos = fileiraDeVerbos();
+  /* A1: o gesto sem motor sai da fileira (lido da tabela, nunca pelo nome) */
+  const verbos = fileiraDeVerbos().filter(temMotorOuNaoEGesto);
   const selos = faixaDaVez(combate, personagem.nome);
   const dePe = inimigos.filter((e) => !e.derrotado).length;
 
@@ -1012,15 +1116,9 @@ export function TelaDeBatalha(props) {
        é ele que faz a rodada do mundo (e o teste de morte) rodar de novo. */
     inconsciente: (personagem.vida || 0) <= 0 || !!personagem.morrendo,
   });
-  /* B1 · o gesto sem motor fica desligado — lido da tabela do motor
-     (`!v.motor`), nunca do nome. A razão da regra ganha quando há uma
-     (fim da luta, desacordado): é ela a verdade mais forte. */
+  /* B1 desligava aqui o gesto sem motor; desde A1 ele nem entra na fileira
+     (ver `temMotorOuNaoEGesto`, acima) — as razões que ficam são as da regra. */
   const impedidos = { ...impedidosDaRegra };
-  for (const v of verbos) {
-    if (v.papel === "gesto" && !v.motor) {
-      impedidos[v.id] = impedidosDaRegra[v.id] || RECUSA_DO_GESTO_SEM_MOTOR[v.id] || RECUSA_DO_GESTO_SEM_MOTOR_EM_GERAL;
-    }
-  }
 
   /* FUGIR NÃO PASSA PELA LINHA GENÉRICA DO ARMADO. Os outros verbos que
      armam fazem uma PERGUNTA ("toque a casa", "diga em quem"), e a saída
@@ -1087,6 +1185,8 @@ export function TelaDeBatalha(props) {
      "como", o contador e os dois botões cabem sem rolar. Tudo volta no
      clique que fecha o cartão. */
   const esperando = !!p.decisao && !p.fim;
+  /* A1 · o fim da luta toma a secção da ação quando o App passa o espólio */
+  const fimComEspolio = !!p.fim && !!p.espolio && typeof p.espolio === "object";
   /* a segurança: se mesmo assim faltar ecrã, o campo onde se escreve vem à
      vista — DEPOIS de a tela saber se é telefone. O primeiro quadro ainda é
      o do monitor, e rolar ali deixava o cartão preso numa altura que some
@@ -1123,7 +1223,11 @@ export function TelaDeBatalha(props) {
       style={{ padding: `${respiroDaCena.topo}px ${margem}px ${respiroDaCena.baixo}px`, gap: respiroDaCena.entre }}>
       <div className="flex items-center justify-between min-w-0" style={{ gap: noTelefone ? M.chipLadoX : M.entreColunas }}>
         <div className="flex flex-col min-w-0" style={{ gap: 4, flex: "0 1 auto" }}>
-          {!noTelefone && <span className="tv-mono" style={{ ...LEGENDA, color: T.amber }}>Taverna / mesa de batalha</span>}
+          {/* A1 (peça 93): a FORMA do quadro fica — a legenda de máquina por
+              cima do título — e o conteúdo passa a ser de mundo: o lugar (que
+              o App passa em `lugar`) e a rodada. O que nomeava o produto e a
+              tela ("Taverna / mesa de batalha") sai: a lei 2 da Fase V. */}
+          {!noTelefone && <span className="tv-mono" style={{ ...LEGENDA, color: T.amber }}>{[p.lugar, `rodada ${combate.rodada || 1}`].filter(Boolean).join(" · ")}</span>}
           {titulo && (
             <h2 className="tv-display truncate" style={{ fontSize: noTelefone || baixo ? M.letra.tituloNoTelefone : M.letra.titulo, color: T.ink, fontWeight: 600, lineHeight: 1.1, margin: 0 }}>{titulo}</h2>
           )}
@@ -1196,7 +1300,7 @@ export function TelaDeBatalha(props) {
           ladoFixo={noTelefone ? ALVOS.piso : M.casaMinimaNoMonitor} larguraDaJanela={larguraDaJanela}
           alturaDaJanela={noTelefone ? 0 : alturaDaJanela} tetoDoLado={noTelefone ? 0 : M.casaMaximaNoMonitor}
           aoMedirOLado={aoMedirOLado}
-          pe={peDaArena} peCompacto={noTelefone} />
+          pe={peDaArena} peCompacto={noTelefone} legendaCede={!!p.reacao} />
       </div>
       <div ref={setPeDaArena} className="shrink-0 min-w-0"
         style={{ minHeight: M.arenaPe, padding: `0 ${noTelefone ? M.chipLadoX : M.arenaLado}px`, borderTop: `1px solid ${T.line}` }} />
@@ -1206,9 +1310,21 @@ export function TelaDeBatalha(props) {
   /* ============================================================
      A SUA PRÓXIMA AÇÃO — o veredito, os verbos e o `como?`
      ============================================================ */
+  /* A1 · O FIM DA LUTA toma a secção inteira — a MESMA caixa (fundo, raio,
+     enchimento e respiro de *Sua próxima ação*), com as três faixas dele no
+     lugar do veredito, dos verbos e do `como?`. É uma secção à parte, e não
+     um ramo dentro da de baixo, para a da luta continuar a ler-se como
+     sempre se leu. Sem `espolio` (um App que ainda não o escreve), a secção
+     de baixo e o `Respirar fundo →` de hoje. */
+  const respiroDaAcao = { order: 3, gap: noTelefone || curto ? M.entreVerbos : M.escolhasEntre, padding: noTelefone ? M.escolhasRespiroNoTelefone : curto ? M.chipLadoX : M.escolhasRespiro, borderRadius: M.raio, background: T.panel, border: `1px solid ${T.line}` };
+  const acaoDoFim = fimComEspolio ? (
+    <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
+      <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao}
+        aoRecolher={p.aoRecolher} aoSair={p.aoSair} telefone={noTelefone} />
+    </section>
+  ) : null;
   const acao = (
-    <section className="flex flex-col shrink-0 min-w-0 w-full"
-      style={{ order: 3, gap: noTelefone || curto ? M.entreVerbos : M.escolhasEntre, padding: noTelefone ? M.escolhasRespiroNoTelefone : curto ? M.chipLadoX : M.escolhasRespiro, borderRadius: M.raio, background: T.panel, border: `1px solid ${T.line}` }}>
+    <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
       {!esperando && <LinhaDoVeredito texto={linha} armado={!!armado} reacao={p.reacao} noTelefone={noTelefone} />}
       {/* a bolsa e a gaveta abrem POR CIMA da fileira (B1) */}
       {!p.decisao && bolsaAberta && <BolsaDeCombate pocoes={p.pocoes || []} bolsa={p.bolsa || []} aoUsar={p.aoUsarConsumivel} />}
@@ -1348,7 +1464,7 @@ export function TelaDeBatalha(props) {
         style={{ gap: noTelefone ? M.entreVerbos : estreito ? M.margemNoTelefone : M.entreColunas, padding: noTelefone ? `0 ${margem}px ${margem}px` : curto ? `0 ${margem}px ${M.margemNoTelefone}px` : `${M.mesaTopo}px ${margem}px ${M.mesaBaixo}px` }}>
         <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", gap: curto ? M.chipLadoX : M.entrePaineis }}>
           {campo}
-          {acao}
+          {acaoDoFim || acao}
         </div>
         {!(esperando && noTelefone) && lateral}
       </div>

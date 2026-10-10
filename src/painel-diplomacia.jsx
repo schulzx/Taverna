@@ -125,7 +125,7 @@ export function PainelDiplomacia({ potencias = [], dip = null, veredito, onDiplo
         );
       })}
       <div className="tv-body text-xs" style={{ color: T.inkDim }}>
-        Quem decide é o sistema, e não o Narrador: pesa o apreço, o que ela quer, o que ela teme, o poder dos dois lados, a sua fama e o que você fez desde a última vez. O Narrador encena a resposta — ele não a escolhe. Guerra não se propõe: se declara, e ela custa ânimo nos seus domínios todo dia.
+        A resposta sai das forças em jogo, e não do humor de quem fala: pesa o apreço, o que ela quer, o que ela teme, o poder dos dois lados, a sua fama e o que você fez desde a última vez. Guerra não se propõe: se declara, e ela custa ânimo nos seus domínios todo dia.
       </div>
     </div>
   );

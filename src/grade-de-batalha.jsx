@@ -45,6 +45,8 @@ import { Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { fasesDoChefe, viradaPorId } from "./masmorras.js";
 import { IconeEscudoAlerta, Glifo } from "./ui.jsx";
+/* A1 · o custo onde surpreende e a legenda do passo são contas puras */
+import { casasQueSurpreendem, legendaDoPasso } from "./glifos.js";
 /* E2 — A GRAMÁTICA DO ENDEREÇO NÃO É NOVA, E ISSO É LEI. `LETRAS_DA_GRADE`
    (`coordenadas.js:151`) é a única tabela de letras do jogo: o pergaminho
    escreve `H13` com ela desde a v9.118, e o tabuleiro escreve `K14` com a
@@ -280,7 +282,7 @@ const Contorno = ({ linhas, cor, largura = 0.05, tracejado = null, opacidade = 1
    atributo do SVG, porque só a propriedade do CSS aceita transição — é
    dela que sai o deslizamento. Quem move de verdade é o sistema; isto aqui
    só evita que a ficha pisque de um canto ao outro. */
-function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
+function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0 }) {
   /* o clipPath precisa de id único e ESTÁVEL: derivado de x,y ele trocaria
      no meio do deslizamento e o rosto piscaria a cada passo */
   const uid = React.useId();
@@ -305,7 +307,10 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
       <clipPath id={uid}><circle r={r * 0.94} /></clipPath>
       <g clipPath={`url(#${uid})`} style={{ pointerEvents: "none" }}>
         <g transform={`translate(${-32 * s} ${-30.5 * s}) scale(${s})`}>
-          <Rosto semente={sementeDe(ent)} estado={estadoDe(pv, pvMax, tipo === "inimigo")} ente={ent} />
+          {/* A1: o rosto sabe em quantos píxeis é desenhado — o disco da ficha
+              é 2 × r = 0,8 × o lado da casa —, para o sinal de quem não é
+              gente ter o traço do tamanho em que se vê */}
+          <Rosto semente={sementeDe(ent)} estado={estadoDe(pv, pvMax, tipo === "inimigo")} ente={ent} lado={2 * r * (pxDaCasa || 1)} />
         </g>
       </g>
       {frac != null && (
@@ -328,7 +333,11 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null }) {
    mesmo tempo, e nenhum dos quatro tamanhos de antes lá chegava (23,8 no
    embutido 16×16, 36,6 no ampliado). Zero (o defeito) mantém, byte a
    byte, a conta antiga — quem não pede janela continua com o relance. */
-export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, alturaDaJanela = 0, tetoDoLado = 0, aoMedirOLado = null, pe = null, peCompacto = false }) {
+/* A1 · `legendaCede` (N7): com a janela da reação aberta, a legenda do pé
+   sai — o "deixar passar" encavalava-se na "ÁREA DE MOVIMENTO". As tarjas e
+   o `ampliar` ficam; quem decide é a reação, e a área continua dita pelo
+   tracejado do chão. */
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, alturaDaJanela = 0, tetoDoLado = 0, aoMedirOLado = null, pe = null, peCompacto = false, legendaCede = false }) {
   const [aberto, setAberto] = React.useState(false);
 
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
@@ -496,6 +505,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      27 no primeiro fotograma, e o único sinal era o véu ser menor. */
   const custoDoPasso = (heroi && podeMover && !mirando) ? custosDe(grade, heroi, { ocupados, deslocamentoM: passoM, ignoraDificil }) : new Map();
   const podeIr = new Set(custoDoPasso.keys());
+  /* A1 · A EMENDA À LEI DE E4 (`formas.md` §A1 6): o número escreve-se onde
+     SURPREENDE — custo ≠ o que o olho conta —, e sempre sob o dedo. A área
+     de movimento (o tracejado e o véu de fora) diz o alvo; o número diz a
+     exceção. A conta é pura (`casasQueSurpreendem`, glifos.js) e lê o MESMO
+     mapa que a área. */
+  const surpreendem = (() => { try { return casasQueSurpreendem(custoDoPasso, heroi); } catch (e) { return new Set(custoDoPasso.keys()); } })();
   const naArea = new Set(((previsao && previsao.quadrados) || []).map((q) => K(q.x, q.y)));
   const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
 
@@ -908,10 +923,21 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             A CASA MUDA FICA MUDA, e a mudez é a informação: o que é alvo
             tem o custo escrito dentro; o que não tem nada escrito dentro
             não é alvo. Abaixo do piso do alvo nada se escreve — a 20–28
-            px o número não se lê, e o relance compacto não é para agir. */}
+            px o número não se lê, e o relance compacto não é para agir.
+
+            A1 · A EMENDA (assinada pelo `desenho`, `formas.md` §A1 6): a
+            medida de E4 continua certa — nas seis plantas de lama, na
+            abertura, 100 % das casas surpreendem e TODAS levam número —,
+            mas a lei cobrava o número também onde o olho acerta (na T8 do
+            ANTES, 0 de 80 casas surpreendiam: 80 números para dizer o que
+            o tracejado já diz). Agora: escreve-se onde SURPREENDE, e sempre
+            sob o dedo (o rato ou o foco do teclado) — o preço antes do
+            clique continua em todas as casas, só deixou de estar em todas
+            AO MESMO TEMPO. A metade antiga "o que não tem nada escrito não
+            é alvo" aposenta-se: quem diz o alvo é a área. */}
         {escreveOCusto && (
           <g className="tv-mono" style={{ pointerEvents: "none" }}>
-            {[...custoDoPasso].map(([k, metros]) => {
+            {[...custoDoPasso].filter(([k]) => surpreendem.has(k) || (sobre && k === K(sobre.x, sobre.y)) || (focada && k === K(focada.x, focada.y))).map(([k, metros]) => {
               const [cx, cy] = k.split(",").map(Number);
               return (
                 <text key={`custo${k}`} x={cx + 0.5} y={cy + TELA_DE_BATALHA.casa.linhaDoCusto}
@@ -943,16 +969,16 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         {/* AS FICHAS */}
         <g style={{ pointerEvents: "none" }}>
           {aliados.map((a, i) => (a.vida || 0) > 0 && a.x != null ? (
-            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={a.x} y={a.y} lado={ladoDe(a)} ms={260} grande={grande} />
+            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={a.x} y={a.y} lado={ladoDe(a)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)} />
           ) : null)}
           {inimigos.map((e, i) => e.x != null ? (
-            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={260} grande={grande} />
+            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)} />
           ) : null)}
           {heroi && heroi.x != null && (
             /* a ficha completa entra por baixo: a entidade da grade só tem
                nome e lugar, e o rosto precisa da classe e da vida — a
                posição da grade ganha por cima, que é a verdade do turno */
-            <Ficha ent={{ ...(heroiFicha || {}), ...heroi }} rotulo="você" tipo="heroi" cor={T.amber} lado={ladoDe(heroi)} grande={grande}
+            <Ficha ent={{ ...(heroiFicha || {}), ...heroi }} rotulo="você" tipo="heroi" cor={T.amber} lado={ladoDe(heroi)} grande={grande} pxDaCasa={ladoEmPx(grande)}
               x={andando ? andando.rota[andando.i].x : heroi.x}
               y={andando ? andando.rota[andando.i].y : heroi.y}
               ms={andando ? andando.ms : 260} />
@@ -1207,22 +1233,26 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      são o passo que sobra, o golpe livre, a mira e a vista inteira — *nada
      se corta, traduz-se* (lei 3 da Fase V). Moram no pé, fora da janela
      que rola, como a legenda. ============================================ */
+  /* A1 · A LEGENDA MUDA DE CONTEÚDO, NÃO DE FORMA (`formas.md` §A1 6): em vez
+     da lista dos custos distintos (uma planilha ao pé de outra), a regra e a
+     exceção em língua de mundo — `1,5 m por casa`, e `· na encosta, 3 m` só
+     quando o conjunto aceso tem terreno difícil (`legendaDoPasso`, glifos.js,
+     sobre o MESMO mapa). */
   const custosAcesos = [...new Set(custoDoPasso.values())].sort((a, b) => a - b);
   const legendaDoPe = { fontSize: MB.letra.legenda, letterSpacing: MB.rastreio, textTransform: "uppercase" };
+  const textoDaLegenda = (() => { try { return legendaDoPasso(custoDoPasso, grade, { ignoraDificil }); } catch (e) { return ""; } })();
   const peDaArena = (
     <div className="flex items-center flex-wrap w-full" style={{ gap: MB.entreVerbos, minHeight: MB.arenaPe }}>
       {/* no telefone o pé tem de caber numa linha de 48: o rótulo sai (o
           tracejado e o número dentro de cada casa já dizem que é a área), e
           os custos ficam nus */}
-      {custosAcesos.length > 0 && !mirando && !peCompacto && (
+      {custosAcesos.length > 0 && !mirando && !peCompacto && !legendaCede && (
         <span className="tv-mono shrink-0" style={{ ...legendaDoPe, color: T.amberSoft }}>Área de movimento</span>
       )}
       {tarjas}
       <span className="ml-auto flex items-center" style={{ gap: MB.chipLadoX }}>
-        {custosAcesos.length > 0 && !mirando && (
-          <span className="tv-mono" style={{ ...legendaDoPe, color: T.inkDim }}>
-            {custosAcesos.map((m) => metrosTxt(m)).join(" · ")}{peCompacto ? "" : " — custo no terreno"}
-          </span>
+        {custosAcesos.length > 0 && !mirando && !legendaCede && textoDaLegenda && (
+          <span className="tv-mono" style={{ ...legendaDoPe, color: T.inkDim }}>{textoDaLegenda}</span>
         )}
         {ampliar}
       </span>

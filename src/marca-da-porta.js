@@ -194,12 +194,48 @@ function normalizarDestinos(cidades) {
    `origem === "alforje"`: a mudança foi feita PELO JOGADOR dentro do
    alforje (comprar no Mercado, por exemplo) — nada acende, e a régua
    corta ANTES de olhar a tabela, para nenhuma linha dela precisar de
-   saber de onde a mudança veio. */
+   saber de onde a mudança veio.
+
+   A1 · A5 — `mostrado`: O QUE A TELA PRINCIPAL ACABOU DE MOSTRAR NÃO
+   ACENDE. É a lei que o cabeçalho deste arquivo já escrevia ("não acende o
+   que a tela principal já mostra"), aplicada às duas peças novas de A1: o
+   item que o RECIBO listou (os nomes de `itensMostrados`, glifos.js — os
+   que ficaram em "e mais N" não contam como mostrados e acendem) e a
+   missão que a PORTA DO ACEITE abriu (o id dela). No ANTES (T4) o ponto
+   dizia "há novo na bolsa" de uma poção que a prosa acabou de pôr na mão
+   do herói. `{ itens: [nomes], missoes: [ids] }`; ausente, nada muda.
+
+   A régua tira da foto de DEPOIS o que foi mostrado, como se lá já
+   estivesse antes — e só então pergunta à tabela. Nenhuma linha de
+   `MARCA_ACENDE` precisa de saber que o recibo existe. */
+function semOMostrado(antes, depois, mostrado) {
+  const m = mostrado && typeof mostrado === "object" ? mostrado : null;
+  if (!m) return depois;
+  const itens = Array.isArray(m.itens) ? m.itens.filter((x) => typeof x === "string" && x) : [];
+  const missoes = Array.isArray(m.missoes) ? m.missoes.filter((x) => x != null).map(String) : [];
+  if (!itens.length && !missoes.length) return depois;
+  const out = { ...depois };
+  if (itens.length && depois.itens && typeof depois.itens === "object") {
+    const a = (antes && antes.itens) || {};
+    const novo = { ...depois.itens };
+    for (const nome of itens) if (nome in novo) novo[nome] = Math.min(novo[nome], a[nome] || 0);
+    for (const nome of Object.keys(novo)) if (novo[nome] === 0 && !(nome in a)) delete novo[nome];
+    out.itens = novo;
+  }
+  if (missoes.length && depois.missoes && typeof depois.missoes === "object") {
+    const a = (antes && antes.missoes) || {};
+    const novo = { ...depois.missoes };
+    for (const id of missoes) { if (id in a) novo[id] = a[id]; else delete novo[id]; }
+    out.missoes = novo;
+  }
+  return out;
+}
+
 export function marcasQueAcendem(antes, depois, opts) {
   const o = opts && typeof opts === "object" ? opts : {};
   if (o.origem === "alforje") return [];
   const a = antes && typeof antes === "object" ? antes : {};
-  const d = depois && typeof depois === "object" ? depois : {};
+  const d = semOMostrado(a, depois && typeof depois === "object" ? depois : {}, o.mostrado);
   const acesas = [];
   for (const regra of MARCA_ACENDE) {
     let mudou = false;

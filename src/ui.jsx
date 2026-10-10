@@ -12,10 +12,10 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
-import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase, ESTADOS_DO_DADO } from "./glifos.js";
+import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase, ESTADOS_DO_DADO, reciboQueCabe, horaNaCinta } from "./glifos.js";
 /* A semente é conta (`semente.js`) e o rosto é desenho (`rosto.jsx`). O
    `Retrato` daqui é uma das duas molduras que usam esse rosto — a outra é a
    carta de tarô. É por isso que o rosto saiu deste arquivo: sem um dono só,
@@ -1119,7 +1119,7 @@ export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, e
         onKeyDown={abre ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setAberta(true); } } : undefined}
         style={{ borderRadius: "50%", border: anel ? `2px solid ${anel}` : "none", background: corSubstituta || t.fundo, display: "block", cursor: abre ? "pointer" : "default" }}>
         {abre ? <title>Ver a carta de {ente.nome || "quem é este"}</title> : null}
-        <Rosto semente={semente} estado={estado} ente={ente} />
+        <Rosto semente={semente} estado={estado} ente={ente} lado={tamanho} lex={lex} />
       </svg>
       {aberta && <CartaDeTaro ente={ente} inimigo={inimigo} legenda={legenda} lex={lex} aoFechar={() => setAberta(false)} />}
     </>
@@ -1571,8 +1571,9 @@ export function TextoComMoeda({ texto }) {
    `prefers-reduced-motion`: aparece e desaparece **sem transição** —
    cumprido por construção, porque esta peça não tem movimento nenhum
    para cortar. Nunca bloqueia e nunca atrasa o `Agir →`. */
-export function Dobra({ quantos = 0, singular = "oferta", plural = "ofertas", estado = "dobrada", aoAlternar }) {
+export function Dobra({ quantos = 0, singular = "oferta", plural = "ofertas", estado = "dobrada", aoAlternar, conteudo, cabecalho, recibo, telefone = false, children }) {
   const aberta = estado === "aberta";
+  if (conteudo) return <DobraComConteudo conteudo={conteudo} cabecalho={cabecalho} recibo={recibo} telefone={telefone} aberta={aberta} aoAlternar={aoAlternar}>{children}</DobraComConteudo>;
   return (
     <button type="button" onClick={aoAlternar} aria-expanded={aberta}
       className="tv-anel-foco tv-mono rounded-lg self-start inline-flex items-center gap-2"
@@ -1597,6 +1598,121 @@ export function Dobra({ quantos = 0, singular = "oferta", plural = "ofertas", es
     </button>
   );
 }
+
+/* A1 · O EIXO `Conteúdo` (`formas.md` §A1 2, Figma `255:199`) — É A MESMA
+   PEÇA, e não uma nova: revelar mais itens na própria lista. Ganha um eixo
+   porque o cabeçalho deixa de ser só `mais N ofertas` e passa a dizer o
+   RESUMO (`A luta · 2 lobos caíram · 2 rodadas`) com o recibo da luta na
+   mesma linha. A borda tracejada, o raio, o fundo e o alvo continuam os da
+   `Dobra`; muda o que vai dentro:
+   · o cabeçalho inteiro é o alvo (≥ `ALVOS.piso`), e fecha no mesmo alvo;
+   · à esquerda o `LadrilhoDoAssunto` do conteúdo, tom Neutro, a
+     `LADRILHO.espaco` do texto; o enchimento de cima, de baixo e da
+     esquerda é `(ALVOS.piso − LADRILHO.lado) / 2` — relação, não número —,
+     e 14 à direita, o da `Dobra` de hoje;
+   · o recibo vem 16 depois do texto na mesa, e na linha 2 (2 px abaixo) no
+     telefone; o recibo nunca quebra (é uma fila, com o seu teto);
+   · aberta, os filhos (as linhas) recuam até o texto do cabeçalho
+     (`enchimento + LADRILHO.lado + LADRILHO.espaco` = 54), 4 px entre eles
+     e 12 por baixo do último.
+   O nome acessível do botão é o cabeçalho e o recibo por extenso: o recibo
+   desenhado lá dentro é para o olho (os filhos de um botão não se lêem). */
+const GLIFO_DO_CONTEUDO = { luta: "espadas" };
+function DobraComConteudo({ conteudo, cabecalho = "", recibo = null, telefone = false, aberta = false, aoAlternar, children }) {
+  const enchimento = (ALVOS.piso - LADRILHO.lado) / 2;
+  const chips = Array.isArray(recibo) ? recibo.filter((c) => c && typeof c.texto === "string") : [];
+  const nome = [cabecalho, ...chips.map((c) => c.falado || c.texto)].filter(Boolean).join(", ");
+  return (
+    <div className="rounded-lg w-full" style={{ background: T.panel, border: `1px dashed ${T.lineStrong}` }}>
+      <button type="button" onClick={aoAlternar} aria-expanded={aberta} aria-label={nome || undefined}
+        className="tv-anel-foco tv-mono w-full text-left flex items-center rounded-lg"
+        style={{ minHeight: ALVOS.piso, padding: `${enchimento}px 14px ${enchimento}px ${enchimento}px`, gap: LADRILHO.espaco, cursor: "pointer", color: T.ink, fontSize: TIPOS.rotulo, lineHeight: `${RECIBO.entrelinha}px` }}>
+        <LadrilhoDoAssunto glifo={GLIFO_DO_CONTEUDO[conteudo] || null} />
+        <span className={"flex-1 min-w-0 flex " + (telefone ? "flex-col" : "flex-row items-center")} style={{ gap: telefone ? 2 : RECIBO.entre }}>
+          <span className={telefone ? "" : "shrink-0"}>{cabecalho}</span>
+          {chips.length > 0 && <span className="flex-1 min-w-0"><Recibo chips={chips} telefone={telefone} /></span>}
+        </span>
+        <span aria-hidden="true" className="inline-flex shrink-0" style={{ transform: `rotate(${aberta ? -90 : 90}deg)` }}>
+          <IconeSeta tamanho={14} cor={T.inkDim} />
+        </span>
+      </button>
+      {aberta && (
+        <div className="flex flex-col" style={{ gap: 4, padding: `0 14px 12px ${enchimento + LADRILHO.lado + LADRILHO.espaco}px` }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   A1 · O RECIBO — o que a ficha mudou neste turno (`formas.md` §A1 1,
+   Figma `255:103`)
+
+   Uma fila numa linha só, debaixo da última frase do Mestre. Lê a FICHA
+   (`reciboDoTurno`, glifos.js), nunca a frase — por isso não consegue
+   discordar da bolsa. A notação é a da cinta: número e glifo (`+7 ◉`), ou
+   número e palavra (`−3 PV`).
+
+   A COR NÃO É CANAL: tudo `T.inkMeio` (8,70:1 no pior ponto do poço), e a
+   perda não é vermelha — o recibo é a voz calma por baixo da prosa, e
+   `danger` aqui seria um alarme a cada compra. Ganho e perda dizem-se pelo
+   SINAL (`+` e U+2212).
+
+   O QUE CABE É CONTA (`reciboQueCabe`, pura): o teto (6 na mesa, 4 no
+   telefone) e a largura da fila, medida aqui por um `ResizeObserver` —
+   sem medida, só o teto decide. O que passa diz `e mais N` em `T.inkDim`,
+   NUNCA `+N` (no recibo o `+` é o sinal de ganho). Não é botão: o leitor
+   de tela lê TODOS (os escondidos vão num `sr-only`), só o olho tem teto.
+
+   `momento` é a mesma peça em tamanho de momento (o fim da luta, §A1 3):
+   mono Bold `TIPOS.corpo` na mesa e `TIPOS.rotulo` no telefone, `T.ink`,
+   glifo 16, e cada chip entra com `.tv-fim-entra`, `FIM_DA_LUTA.passo`
+   depois do anterior — nunca mais de 480 ms no total.
+
+   Recibo vazio não se desenha: 0 px, nem a margem. */
+const GLIFO_DO_MOMENTO = 16;
+const TETO_DA_ENTRADA = 480;
+export function Recibo({ chips, telefone = false, momento = false }) {
+  const lista = Array.isArray(chips) ? chips.filter((c) => c && typeof c.texto === "string") : [];
+  const ref = React.useRef(null);
+  const [largura, setLargura] = React.useState(0);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    try {
+      const medir = () => { try { setLargura(el.clientWidth || 0); } catch (e) { /* sem medida, o teto decide */ } };
+      medir();
+      if (typeof ResizeObserver === "undefined") return undefined;
+      const ro = new ResizeObserver(medir);
+      ro.observe(el);
+      return () => ro.disconnect();
+    } catch (e) { return undefined; }
+  }, [lista.length]);
+  if (!lista.length) return null;
+  const letra = momento ? (telefone ? TIPOS.rotulo : TIPOS.corpo) : TIPOS.maquina;
+  const glifo = momento ? GLIFO_DO_MOMENTO : TIPOS.piso;
+  const { visiveis, resto } = reciboQueCabe(lista, largura, { telefone, letra, glifo });
+  const atraso = (i) => ({ animationDelay: `${Math.min(i * FIM_DA_LUTA.passo, TETO_DA_ENTRADA - FIM_DA_LUTA.entra)}ms` });
+  return (
+    <div ref={ref} role="list" aria-label="o que mudou" className="tv-mono flex items-center min-w-0 w-full overflow-hidden whitespace-nowrap"
+      style={{ gap: telefone ? RECIBO.entreTelefone : RECIBO.entre, fontSize: letra, lineHeight: `${RECIBO.entrelinha}px`, fontWeight: momento ? 700 : 400, color: momento ? T.ink : T.inkMeio }}>
+      {visiveis.map((c, i) => (
+        <span key={i} role="listitem" aria-label={c.falado || c.texto} className={"inline-flex items-center shrink-0" + (momento ? " tv-fim-entra" : "")}
+          style={{ gap: c.glifo ? CINTA.entreNumeroEGlifo : 0, ...(momento ? atraso(i) : null) }}>
+          {c.glifo ? <>{c.valor}<Glifo nome={c.glifo} tamanho={glifo} /></> : c.texto}
+        </span>
+      ))}
+      {resto.length > 0 && (
+        <>
+          <span aria-hidden="true" className="shrink-0" style={{ color: T.inkDim, fontWeight: 400 }}>e mais {resto.length}</span>
+          {resto.map((c, i) => <span key={`r${i}`} role="listitem" className="sr-only">{c.falado || c.texto}</span>)}
+        </>
+      )}
+    </div>
+  );
+}
+
 
 /* ---------------- A CONSEQUÊNCIA (D4 → R17) ----------------
    "O QUE O JOGO DIZ QUE VAI ACONTECER" — declarada em `formas.md` desde
@@ -2196,7 +2312,10 @@ export function PilulaDoTempo({ luz = "dia", hora = "", data = "", prazo = null,
         ? { gap: P.entre, padding: `${P.cima}px ${P.lado}px`, borderRadius: P.raio, background: T.panelSoft, border: "1px solid " + T.mundo }
         : { gap: P.entreTelefone }}>
       {comGlifo && <span ref={refGlifo} className="inline-flex"><Glifo nome={luz} tamanho={TIPOS.piso} cor={T.mundo} rotulo={luz} /></span>}
-      <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo, fontWeight: 700 }}>{hora}</span>
+      {/* A1 · A HORA CHEIA (`formas.md` §A1 5): `8h`, e não `08:10`. O minuto
+          mora em O TEMPO, no toque; a conta é `horaNaCinta` (glifos.js). A
+          pílula não anima ao virar. */}
+      <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo, fontWeight: 700 }}>{horaNaCinta(hora)}</span>
       {mesa && data ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>{data}</span> : null}
       {prazo ? <SeloDePrazo noites={prazo.noites} quantos={quantos} urgente={prazo.noites <= 1} escondidoGrave={escondidoGrave} /> : null}
     </span>

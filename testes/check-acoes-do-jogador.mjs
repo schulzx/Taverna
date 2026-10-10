@@ -394,10 +394,18 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      dos equipamentos na mochila (+3) e a do item da Bolsa (+6), as duas no
      PainelLateral, ACIMA de `pushMsgs`. Só o endereço andou. Re-medido por
      esta própria catraca. */
-  } else if (iPush + 1 !== 8393) {
-    falha(`pushMsgs saiu de src/App.jsx:8393 e agora está em :${iPush + 1}`,
+  /* (A1 · B1 · o relato sai do App) 10/10: 8393 -> 8275, -118 — o
+     `BlocoSistema`, as portas da seta e o comentário delas saíram para
+     `painel-relato.jsx`, ACIMA disto no arquivo. Só o endereço andou. */
+  /* (A1 · B2–B9 · o recibo e o fim da luta) 10/10: 8275 -> 8537, +262 —
+     as funções puras do recibo (~+95, logo depois de `calou`, no topo do
+     arquivo) e os refs e ajudantes do antes da ficha (~+167, logo ACIMA
+     de `pushMsgs`). Só o endereço andou; re-medido pelo diff de App.jsx
+     contra a árvore de B1, e conferido por esta própria catraca. */
+  } else if (iPush + 1 !== 8537) {
+    falha(`pushMsgs saiu de src/App.jsx:8537 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8393, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8537, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;
@@ -557,7 +565,8 @@ console.log("\n10. as recusas do combate — o literal e o endereço");
     ["economia", "Você já cobriu os"],
     ["teto", "fora de combate uso uma habilidade por vez"],
     ["repeticao", "firma de novo a guarda que já sustenta"],
-    ["turno-guardado", "ainda não foi contado, e a mesa não anda sem a palavra do Mestre"],
+    /* A1 · B8 (#67): reescrita na voz da mesa; a âncora segue a cauda nova */
+    ["turno-guardado", "O Mestre ainda não contou o que você fez"],
     ["conjuracao", "você não consegue conjurar vestindo"],
     ["condicao", "Você não consegue se mover"],
   ];

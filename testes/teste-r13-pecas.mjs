@@ -255,8 +255,15 @@ sec("7. a cinta soma o que promete");
   const comDezasseis = 2 * 16 + CINTA.fichaMinima + CINTA.tempoMaximo;
   t(`o pior caso cabe: 24 + ${CINTA.fichaMinima} + ${CINTA.tempoMaximo} = ${comDoze} ≤ 375`,
     comDoze <= LARGURA_DE_REFERENCIA, `deu ${comDoze}`);
-  t("e o enchimento é 12 e não 16 — com 16 a última noite transbordaria",
-    CINTA.enchimento === 12 && comDezasseis > LARGURA_DE_REFERENCIA,
+  /* MOVIDA (10/10, A1 · `formas.md` §A1 5): a hora cheia (`18h` no pior caso, e
+     não `08:26`) devolveu 14,4 px ao tempo, MEDIDOS a 375 — e com eles a razão
+     escrita aqui ("com 16 a última noite transbordaria") deixou de ser verdade:
+     32 + 170 + 160 = 362 ≤ 375. O enchimento CONTINUA 12 (é decisão do
+     `desenho`, e voltar a 16 é dele, não de quem remede um número); o que a
+     asserção guarda agora é a conta verdadeira, e não a razão que caducou. A
+     dúvida vai ao `desenho` no relato da etapa. */
+  t("e o enchimento é 12 — e a medida de A1 diz que 16 voltaria a caber (a razão antiga caducou)",
+    CINTA.enchimento === 12 && comDezasseis <= LARGURA_DE_REFERENCIA,
     `com 16 daria ${comDezasseis}`);
   t("quem cede é a ficha, nunca o prazo: o trilho tem mínimo",
     CINTA.trilhoMinimo < CINTA.trilho && CINTA.fichaMinima < CINTA.ficha);
@@ -299,7 +306,11 @@ sec("8. o contrato de assinatura das peças (o App chama por estes nomes)");
        pé da página, sem a caixa ciano. Os campos de antes ficam na mesma ordem e
        com os mesmos padrões: as chamadas vivas não mudam uma letra. */
     ["Oferta", /export function Oferta\(\{ verbo, preco, retorno, quem, onde, tom = "convite", estado = "repouso", chegada = "assentada", janela, aoClicar, moldura = "caixa" \}\)/],
-    ["Dobra", /export function Dobra\(\{ quantos = 0, singular = "oferta", plural = "ofertas", estado = "dobrada", aoAlternar \}\)/],
+    /* MOVIDA (10/10, A1 · `formas.md` §A1 2): a `Dobra` ganhou o eixo `Conteúdo`
+       (`conteudo`, `cabecalho`, `recibo`, `telefone`, e as linhas como filhos) — a
+       dobra "A luta". É a MESMA peça; a assinatura de R15 fica inteira à frente, e
+       quem a chama sem o eixo não muda um pixel. */
+    ["Dobra", /export function Dobra\(\{ quantos = 0, singular = "oferta", plural = "ofertas", estado = "dobrada", aoAlternar, conteudo, cabecalho, recibo, telefone = false, children \}\)/],
   ];
   /* R15 — O TETO DE CAMPOS É LEI, E É VARRÍVEL. `SOLEIRA.camposDaOferta`
      é 4 — verbo · preço · retorno · janela — e **o quinto campo é

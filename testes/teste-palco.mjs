@@ -166,7 +166,10 @@ sec("5. A COSTURA — no topo, e sem inventar");
      isso mede-se contra `agruparMensagens(mensagens)`, não contra uma
      folga de texto. Deixo a observação para o `testes` em vez de mudar a
      asserção de outra mesa por minha conta. */
-  t("e vem antes da primeira palavra do Narrador", iCab < APP.indexOf("agruparMensagens(mensagens).map("));
+  /* A1 · B1 (10/10): a primeira mensagem passou a nascer de `<Relato`
+     (painel-relato.jsx), e é contra ele que se mede o "vem antes" — a
+     âncora que a nota acima pedia, a primeira mensagem, e não uma folga. */
+  t("e vem antes da primeira palavra do Narrador", iCab > 0 && iCab < APP.indexOf("<Relato mensagens="));
   /* V5a: as três asserções do VÉU (a cor do bioma como véu, a barra na
      borda, a força da luz) saíram com o cartão que o pintava. O tom do bioma
      (`TONS`) continua pintando o cartão da chegada, e é `teste-momentos` que

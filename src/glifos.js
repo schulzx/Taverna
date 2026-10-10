@@ -46,7 +46,14 @@
    interpola; fora da tabela, fica no degrau da ponta. */
 /* V4 · a régua do grave mora em `ANEL` (estilo.js), ao lado do desenho do anel;
    daqui só se lê. */
-import { ANEL, CHEGADA } from "./estilo.js";
+import { ANEL, CHEGADA, CINTA, RECIBO, TIPOS } from "./estilo.js";
+/* A1 · o custo que surpreende e a legenda do passo leem a MESMA régua do
+   tabuleiro; o relato arrumado reusa a forma de hoje da corrida (o saldo). */
+import { METROS_POR_QUADRADO, metrosTxt, terrenoDificil, nomeDoLugar } from "./grid.js";
+import { dividirBloco } from "./resumo.js";
+/* A1 · o recibo do turno conta o XP que atravessou um nível: a curva é a
+   mesma que `aplicarNivel` (regras-jogo.js) usa para descontar o vão. */
+import { XP_POR_NIVEL } from "./constantes.js";
 
 export const TRACO_DO_GLIFO = { 12: 1.25, 16: 1.5, 20: 1.75, 24: 2 };
 
@@ -158,6 +165,17 @@ export const GLIFOS = {
   pena: { de: "lucide:pen-line", d: "M13 21h8M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" },
   /* a runa de quatro pontas — o ornamento dos fios da mesa */
   estrela: { de: "casa", d: "M12 3C12.5 9 15 11.5 21 12C15 12.5 12.5 15 12 21C11.5 15 9 12.5 3 12C9 11.5 11.5 9 12 3Z" },
+  /* A1 · o rosto de quem não é gente (`formas.md` §A1 4, Figma `254:72`/`254:77`).
+     Um SINAL e não um rosto de lobo desenhado: o retrato de gente diz QUEM; de
+     um bicho o jogador só precisa de saber que tipo de coisa é — e o defeito
+     (N6) era o lobo de rosto humano ler-se "bandido". Quem os escolhe é
+     `ROSTO_DA_MENTE` (abaixo), e quem os desenha é o `Rosto` (rosto.jsx). */
+  /* o rosto de quem é bicho (menteDaCriatura = besta) */
+  fera: { de: "lucide:paw-print", d: "M9 4a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M16 8a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M18 16a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" },
+  /* o rosto de quem já morreu e anda (menteDaCriatura = morto). NÃO é a caveira:
+     `perigo` já é a caveira e quer dizer o perigo mortal (V3b); no retrato, o
+     morto-vivo ler-se-ia "isto está morto", e há o estado tombado que diz isso */
+  morto: { de: "lucide:bone", d: "M17 10c.7-.7 1.69 0 2.5 0a2.5 2.5 0 1 0 0-5 .5.5 0 0 1-.5-.5 2.5 2.5 0 1 0-5 0c0 .81.7 1.8 0 2.5l-7 7c-.7.7-1.69 0-2.5 0a2.5 2.5 0 0 0 0 5c.28 0 .5.22.5.5a2.5 2.5 0 1 0 5 0c0-.81-.7-1.8 0-2.5Z" },
 };
 
 /* ============================================================
@@ -613,4 +631,667 @@ export function rascunhoDe(bruto, campanha) {
     if (!r || typeof r.texto !== "string" || String(r.de) !== String(campanha || "")) return "";
     return r.texto;
   } catch { return ""; }
+}
+
+/* ============================================================
+   A1 · A MORADA DA LINHA (10/10) — o relato deixa de ser um livro-caixa
+
+   O PEDIDO: "há coisas e informações que aparecem que não são
+   necessárias, isso acaba confundindo o player mais do que ajudando".
+   O `jogo` jogou dez turnos e contou 50 peças além da prosa; 8 delas
+   (16%) desmentiam o Mestre. O veredito, família a família, está em
+   `mente/a1-jogo.md` §2.2; esta tabela é ele, escrito em código.
+
+   AS CINCO MORADAS:
+   · `cena`   — fica à vista. É o padrão de toda linha que não está aqui:
+                NA DÚVIDA, A LINHA APARECE (a lei de `resumo.js`);
+   · `recibo` — a linha não se desenha; o número dela aparece no recibo
+                do turno (`reciboDoTurno`, abaixo), que lê a FICHA e
+                nunca a frase — por isso não consegue discordar da bolsa;
+   · `luta`   — vai para a dobra "A luta", fechada;
+   · `cala`   — a cena ou a tela já o disse; não se desenha e fica no
+                save (calar é apresentação: a memória não perde nada);
+   · `dia`    — a dobra "O dia: n notícias" (#39).
+
+   É UMA LISTA BRANCA do que sai da cena: cada linha diz a morada, o
+   padrão da frase, as peças do inventário (`pecas`, os `#` de a1-jogo)
+   e o PORQUÊ escrito — a mesma lei de `MARCA_ACENDE`: uma regra sem o
+   porquê é como a próxima nasce torta. A primeira que casa, decide.
+
+   A ORDEM DE QUEM MANDA (moradaDaLinha):
+   1. as linhas com `padrao` — `cala` e `recibo` vencem até a luta (o que
+      a tela já disse não entra na dobra; o número da luta mora no recibo
+      dela), e uma linha `cena` aqui FURA a dobra (a porta, #65);
+   2. a mensagem marcada `naLuta` (quem a marca é o `App.jsx`) → `luta`;
+   3. a declaração por prefixo (`prefixos`) — a catraca de V3b estendida:
+      todo prefixo de `ASSUNTO_DO_EMOJI` tem morada declarada, e um
+      prefixo novo sem decisão quebra `teste-a1-relato`;
+   4. `cena`.
+   Os padrões só leem falas da mesa (`autor` ausente ou "sistema"): a
+   prosa do Mestre e a fala do jogador nunca se calam por um padrão.
+   ============================================================ */
+export const MORADA_DA_LINHA = [
+  /* ---------------- cala: a cena ou a tela já o disse ---------------- */
+  { morada: "cala", pecas: [31], padrao: /^📍 /u,
+    porque: "o cabeçalho da página é a morada do lugar; em 4 de 4 vezes a prosa abriu pelo lugar, e na T10 o 'De volta' desmentiu a prosa — três sinais para um fato" },
+  { morada: "cala", pecas: [31, 32], padrao: /^🧭 (?:Chegada: |Você está em )/u,
+    porque: "a faixa de chegada (#1) passa a ser a única voz da chegada, e o cabeçalho diz onde se está; o lugar novo no mapa já acende a marca do MAPA (`marca-da-porta.js`)" },
+  { morada: "cala", pecas: [32], padrao: /^🗺 (?:.+ entrou no seu mapa\.$|De .+ você fica sabendo de )/u,
+    porque: "o nome de um lugar ouvido serve a quem planeja a viagem, não ao meio da cena: vira marca no MAPA, onde se decide para onde ir" },
+  { morada: "cala", pecas: [33], padrao: /^🧭 .+ · [▰▱]+ \d+%/u,
+    porque: "a barra da viagem e o 'escreva que segue viagem' são instrução de interface no relato; a cinta em viagem e a soleira 'Seguir' já carregam isso" },
+  { morada: "cala", pecas: [46], padrao: /^\S+\s+Encontro (?:trivial|fácil|médio|difícil|mortal) — /u,
+    porque: "a mesa a contar a dificuldade é coisa que um Mestre nunca diz, e ainda chega DEPOIS da luta; corta de vez, nem a dobra a guarda" },
+  { morada: "cala", pecas: [18], padrao: /^⚖ PV aferido:/u,
+    porque: "é a correção feita em público; os PV de quem luta a mesa de batalha já mostra, e o envelope ao Narrador continua a ir" },
+  { morada: "cala", pecas: [25], padrao: /^🎲 d20 → /u,
+    porque: "o véu do dado (peça 140) acabou de mostrar o mesmo dado, com o mesmo alvo, a rolar e a parar" },
+  { morada: "cala", pecas: [22], padrao: /^✧ .+ ativo \(\+\d+ em .+, \d+ turnos?\)$/u,
+    porque: "o tique de todo turno: o chip da cinta (peça 138) já diz o efeito ativo; o fim dele ('se dissipou') fica, porque muda a próxima decisão" },
+  { morada: "cala", pecas: [44], padrao: /^(?!.*Começou a contar).*(?:●○|○●)/u,
+    porque: "o tique do relógio ('●●○○ — 4 noites') o selo da cinta (peça 136) já diz; avisa-se só quando aperta — 'Começou a contar' e o relógio cheio ficam" },
+  { morada: "cala", pecas: [65], padrao: /^▸ Códex — /u,
+    porque: "a aba nasce no trilho, com marca; a frase nomeava o mecanismo e, na T8, nasceu no meio do golpe" },
+  { morada: "cala", pecas: [53], padrao: /^🧺 No chão: .+ toque em EXAMINAR/u,
+    porque: "'toque em EXAMINAR' é manual de instruções; o chão já tem a soleira 'Examinar o chão · n coisas ao alcance', no lugar da mão" },
+  { morada: "cala", pecas: [53], padrao: /^⚔ O confronto se dissolve — o painel de combate se fecha\.$/u,
+    porque: "'o painel se fecha' é a interface a falar de si; a tela de batalha fechar-se já o diz" },
+
+  /* ---------------- recibo: o número mora no recibo do turno ---------------- */
+  { morada: "recibo", pecas: [12, 21], padrao: /^◉ [+−-]\d+ moedas$/u,
+    porque: "o número é verdade e a linha é ruído: a cinta já muda, e o recibo (que é a bolsa) diz ◉ ±n" },
+  { morada: "recibo", pecas: [13], padrao: /^Você (?:perdeu|recuperou) \d+ PV\.$/u,
+    porque: "a cena diz a ferida e o anel diz o resto; o recibo diz −n PV, lido da ficha" },
+  { morada: "recibo", pecas: [13], padrao: /^Você (?:gastou|recuperou) \d+ PM\.$/u,
+    porque: "o mesmo que os PV: a cinta e o recibo dizem o PM" },
+  { morada: "recibo", pecas: [14], padrao: /^✧ \+\d+ XP — /u,
+    porque: "o XP é o laço de recompensa e fica num chip do recibo; o comentário do juiz ('um feito de verdade') é bastidor" },
+  { morada: "recibo", pecas: [15], padrao: /^✦ NÍVEL \d+ ALCANÇADO!$/u,
+    porque: "o `ModalNivel` (peça 141) é o momento, e o recibo tem o chip do nível; a linha era a mesma coisa duas vezes e ainda podia sumir numa dobra" },
+  { morada: "recibo", pecas: [17], padrao: /^(?:Item (?:obtido|perdido): |⚔ Equipamento encontrado: )/u,
+    porque: "na T4 a prosa já tinha posto o frasco na mão; na T6 a linha era uma poção fantasma — o recibo lê a bolsa e não consegue inventar item" },
+  { morada: "recibo", pecas: [18], padrao: /^⚖ (?:Venda|Recompensa|Preço) aferid/u,
+    porque: "o Mestre corrigido em público, e errado duas vezes no ANTES (T4, T6); o débito real vai ao recibo, e o preço certo à boca do cambista (C1)" },
+  { morada: "recibo", pecas: [19], padrao: /^💥 Dano ambiental /u,
+    porque: "a queda é a prosa que narra; o '(calculado ...)' é a mesa a falar de si, e o −n PV vai ao recibo" },
+  { morada: "recibo", pecas: [20], padrao: /^⚡ .+ (?:foi|foram) para a bolsa\.$/u,
+    porque: "é a cobrança pela narração, e a prosa acabou de dizer o mesmo; o que entrou, o recibo diz" },
+  { morada: "recibo", pecas: [23], padrao: /^\p{Lu}\p{L}*(?: \+ \p{Lu}\p{L}*)*: [−-]\d+ PV \(\d+\/\d+\)$/u,
+    porque: "o tique da condição no herói: o chip da condição diz a causa, e o −n PV vai ao recibo ('✓ passou' fica; o tique no inimigo diz 'em X' e não casa aqui)" },
+  { morada: "recibo", pecas: [29], padrao: /^✧ \+\d+ pontos? de heroísmo /u,
+    porque: "o recurso vai ao recibo; o momento ('Dádiva do Destino') fica" },
+  { morada: "recibo", pecas: [30], padrao: /^◉ \d+ moedas mudaram de mão\.$/u,
+    porque: "a conta do teste social vai ao recibo; a relação nova ('passa a ver você como hostil') fica, porque decide quem ajuda" },
+  { morada: "recibo", pecas: [53], padrao: /^(?:◉ Espólios: |🤲 Você recolhe: )/u,
+    porque: "a vitória chegava como linha mono entre outras seis; o ganho vai ao recibo da luta (e ao fim da luta, A6)" },
+  { morada: "recibo", pecas: [56], padrao: /^(?:Você gastou \d+ PM|✦ .+ · gastou \d+ PM) · restam /u,
+    porque: "o preço vê-se ANTES (a pílula armada #79), não depois; o gasto vai à cinta e ao recibo, e a recarga a gaveta mostra" },
+
+  /* ---------------- dia: a dobra "O dia" ---------------- */
+  { morada: "dia", pecas: [39], padrao: /^👑 .+ em .+: /u,
+    porque: "o reino muda a cada dia, vários por dia um atrás do outro; o Matt abre o dia com uma frase e guarda o resto para quem perguntar" },
+  { morada: "dia", pecas: [39], padrao: /^\S+\s+Hoje é .+: /u,
+    porque: "a festa do dia é notícia do dia: entra na dobra, com a primeira à vista" },
+  { morada: "dia", pecas: [39], padrao: /^🗞 Corre a boca miúda: /u,
+    porque: "o boato do dia é notícia do dia" },
+  { morada: "dia", pecas: [39], padrao: /^🏛 Suas terras e contratos renderam /u,
+    porque: "a renda cai no COFRE da guilda, não na ficha do herói — o recibo (que lê a ficha) não a veria; por isso mora no dia e não no recibo" },
+
+  /* ---------------- luta: a dobra "A luta" (pela frase, quando a mensagem não diz) ---------------- */
+  { morada: "luta", pecas: [49], padrao: /^🌍 VEZ DO MUNDO/u,
+    porque: "é bastidor de turno; a mesa de batalha já mostrou de quem é a vez" },
+  { morada: "luta", pecas: [48, 49, 50], padrao: /^\S+\s+[^:→]+ → [^:·—]+: /u,
+    porque: "o golpe 'quem → alvo: ...' já foi visto na batalha, no rastro (peça 104); na T8 o mesmo golpe saiu em duas linhas seguidas (N2)" },
+  { morada: "luta", pecas: [46], padrao: /^(?:🗺 Terreno: |🎲 Iniciativa — |📏 .+ \(\d+×\d+ quadrados|⚔ .+ entra no combate!)/u,
+    porque: "a abertura da luta (terreno, tamanho, iniciativa, quem entra) a mesa de batalha mostra inteira" },
+  { morada: "luta", pecas: [51, 52], padrao: /^(?:⚔ REAÇÃO — |⚡ Ataque de oportunidade — |⚔ Todos os inimigos caíram|🏃 |☠ .+ — .+ de uma vez\.$)/u,
+    porque: "reação, oportunidade, golpe final e fuga a batalha já disse no instante" },
+  { morada: "luta", pecas: [49], padrao: /^👣 (?:Você vai |.+ (?:avança|recua) \d+ m — |[^:]+: .+ → )/u,
+    porque: "o passo de quem luta é a grade a mexer-se; no relato é eco" },
+
+  /* ---------------- cena que fura a dobra ---------------- */
+  { morada: "cena", pecas: [55], padrao: /^(?:💥 Seus PV chegam a zero|☠ Teste de morte: |💀 Você tomba\.|✨ Você volta |Você estabiliza — )/u,
+    porque: "a queda e a morte do herói: a vida está em jogo, e o regente decidiu que furam a dobra da luta — ficam na cena, no sítio onde aconteceram" },
+  { morada: "cena", pecas: [54], padrao: /^🌟 PODER ÚNICO DESPERTOU/u,
+    porque: "raro e é momento; furam a dobra da luta como a morte (decisão do regente sobre as perguntas abertas)" },
+  { morada: "cena", pecas: [65], padrao: /^▸ /u,
+    porque: "a porta para uma sub-aba é a única porta dela e é convite; nenhuma porta nasce dentro da dobra da luta, por isso fura-a" },
+
+  /* ---------------- a declaração por prefixo (V3b estendida) ---------------- */
+  { morada: "cena", prefixos: ["⚔", "⚡", "💢", "💥", "🏹", "🎯", "🏃", "👣", "📏", "🛡", "🪨", "⛰", "🎲", "🍀", "☠", "💀", "⚰", "🪤", "🪂"],
+    porque: "o golpe, o passo, a defesa, o dado e o perigo: na luta, quem leva à dobra é a marca `naLuta` da mensagem; fora dela o mesmo prefixo é recusa, queda, dano ambiental ou o modo criativo — e o que destes sai da cena, sai pela frase, acima" },
+  { morada: "cena", prefixos: ["⛔", "🚫", "📕", "🐾", "⛓", "🔒"],
+    porque: "a recusa: o jogador precisa saber por que não pôde, e na hora" },
+  { morada: "cena", prefixos: ["✨", "🌀", "🔮", "🌿", "📯", "⏪", "⏩", "✦", "✧", "🩸", "🩶", "🩹", "⚕", "🧪", "⛲", "🌠", "⬆", "🍲", "🥱", "😩", "🌑"],
+    porque: "a magia, a vida e o que pesa ou ajuda: o que nasce ou se desfaz muda a próxima decisão; o tique e o número saem pela frase, acima (#22, #29, #56)" },
+  { morada: "cena", prefixos: ["💰", "🛒", "⚗", "⚒", "🧺", "🤲", "🎒", "👥"],
+    porque: "a bolsa, o ofício e o grupo: o retorno de um clique em painel (#59) é do `App.jsx` (B); o que é só conta sai pela frase, acima (#17, #53)" },
+  { morada: "cena", prefixos: ["⏳", "🕐", "🧭", "🗺", "🏞", "🐴", "⛺", "🌙"],
+    porque: "o tempo, a estrada e o descanso: o prazo que aperta, o passo de missão e a pausa da viagem decidem; a chegada, o mapa e a barra saem pela frase, acima (#32, #33, #44)" },
+  { morada: "cena", prefixos: ["⚠", "💾", "🔇", "🥖", "💧", "🔎", "🔍", "👁", "📖"],
+    porque: "o aviso e a descoberta: são a razão de olhar, e ninguém os disse antes" },
+  { morada: "cena", prefixos: ["📋", "🆘", "🧹", "📦", "💌", "🔦", "📌", "📜", "✅", "✖", "📣", "🗡"],
+    porque: "o trabalho: o aceite vira porta e o mural velho some no `App.jsx` (B, #41, #45); a morada deles é a cena" },
+  { morada: "cena", prefixos: ["🕯", "🕳", "🗝"],
+    porque: "a masmorra: o estado dela decide a próxima sala (#62)" },
+  { morada: "cena", prefixos: ["🌟", "🌌", "⚱", "⚜", "🏆", "🔊"],
+    porque: "a ascensão, o herói e o que se venceu: raros, e são momento (#54, #57, #66)" },
+  { morada: "cena", prefixos: ["🏛", "🌍", "💪", "✋", "🎭", "🎏", "🤝", "✉", "🗞", "💭", "⚙", "🕊", "🚪", "👑", "🗣", "🌫", "🔥", "⚖", "🎁", "🚶", "🌈", "🏰", "♂", "♀"],
+    porque: "os que já perdem o emoji (V3b) e ficam com a palavra: o reino, a gente, o mundo; o que destes é do dia, da luta ou da correção sai pela frase, acima (#18, #39, #49)" },
+];
+
+const MORADAS = ["cena", "recibo", "luta", "cala", "dia"];
+
+/* Recebe a frase (string) ou a mensagem do relato (`{ autor, texto,
+   naLuta }`) e devolve uma das cinco moradas. Nunca lança: `null`, lixo
+   e o vazio dão `cena` — na dúvida, a linha aparece. */
+export function moradaDaLinha(linha) {
+  const msg = linha != null && typeof linha === "object" ? linha : null;
+  const bruto = msg ? msg.texto : linha;
+  const texto = String(bruto == null ? "" : bruto).replace(/️/g, "").trim();
+  const daMesa = !msg || msg.autor == null || msg.autor === "sistema";
+  if (daMesa) {
+    for (const r of MORADA_DA_LINHA) {
+      if (r.padrao && r.padrao.test(texto) && MORADAS.includes(r.morada)) return r.morada;
+    }
+  }
+  if (msg && msg.naLuta === true) return "luta";
+  if (daMesa) {
+    const m = texto.match(RX_PREFIXO_DA_LINHA);
+    if (m) {
+      const r = MORADA_DA_LINHA.find((x) => Array.isArray(x.prefixos) && x.prefixos.includes(m[1]));
+      if (r && MORADAS.includes(r.morada)) return r.morada;
+    }
+  }
+  return "cena";
+}
+
+/* ============================================================
+   A2 · O RECIBO DO TURNO — uma fila só, debaixo da prosa
+
+   O DEFEITO QUE ISTO MATA: no ANTES, a mesma compra dava "◉ 30" na
+   prosa, "◉ 20 pela tabela" na linha e "−15" na bolsa; a luta da T8
+   dizia "6 sofrido" quando o herói sofreu 3 (aparou 6 → 3). As duas
+   vinham da FRASE. O recibo compara duas fotos da FICHA — antes e depois
+   do turno — e por isso é a bolsa: não consegue discordar dela.
+
+   A ORDEM É FIXA E É A TABELA: ◉ · PV · PM · XP · nível · heroísmo ·
+   essência · itens. O sinal de menos é U+2212 (a lei de E4 §5). Os
+   itens são um multiconjunto de NOMES (`inventario` e `equipamento`; o
+   mesmo nome repetido é a quantidade, como a bolsa já lê); equipar não
+   mexe nesses dois arrays, por isso não vira chip.
+
+   Campo ausente ou não-número em qualquer das duas fichas: aquele chip
+   não sai (uma ficha migrada não pode render um "+ tudo"). Ficha `null`
+   ou não-objeto: `[]` — a lei da casa, `= {}` não cobre `null`. Recibo
+   vazio é `[]`, e o vazio não se desenha.
+   ============================================================ */
+const MENOS = "−";
+const FINO = " ";
+
+/* A NOTAÇÃO É A DA CINTA (`formas.md` §A1 1): o recibo é o delta do que a
+   cinta mostra, então fala exactamente como ela — número primeiro e glifo
+   depois (`+7 ◉`, `−4 ◆`), a palavra onde a cinta escreve palavra (`−3
+   PV`), e a palavra onde a cinta não mostra nada (`+14 XP`, `+1 heroísmo`).
+   O nível é um estado alcançado, sem sinal (`nível 4`). O item é o sinal,
+   um espaço fino e o nome; repetido, `× 2` no fim. NENHUM GLIFO NOVO:
+   inventar um glifo de XP só para o recibo seria a segunda cara de uma
+   coisa que ainda não tem a primeira.
+
+   `glifo` é o nome que o `Glifo` (ui.jsx) desenha depois do número;
+   `falado` é o que o leitor de tela diz no lugar do glifo — o `Glifo
+   moeda` já diz "moedas", o U+2212 lê-se "menos". */
+export const RECIBO_DO_TURNO = [
+  { tipo: "moedas", campo: "moedas", glifo: "moeda", falado: "moedas", forma: "numero", porque: "a bolsa; número primeiro e o glifo depois, como a cinta escreve `1.240 ◉`" },
+  { tipo: "pv", campo: "vida", rotulo: "PV", forma: "numero", porque: "a ferida do turno, lida do anel e não da soma da frase (T8: 3, não 6)" },
+  { tipo: "pm", campo: "mana", glifo: "mana", falado: "PM", forma: "numero", porque: "o que a magia custou; o glifo da cinta (`85 ◆`)" },
+  { tipo: "xp", campo: "xp", rotulo: "XP", forma: "numero", porque: "o laço de recompensa; conta o vão de cada nível atravessado, porque `aplicarNivel` desconta-o do XP" },
+  { tipo: "nivel", campo: "nivel", rotulo: "nível", forma: "marco", porque: "o nível novo, dito pelo número a que se chegou; o momento é do `ModalNivel`" },
+  { tipo: "heroismo", campo: "heroismo", rotulo: "heroísmo", forma: "numero", porque: "o recurso do destino, que a linha '✧ +1 ponto de heroísmo' dizia (#29)" },
+  { tipo: "essencia", campo: "essencia", rotulo: "essência", forma: "numero", porque: "a moeda do ofício" },
+  { tipo: "item", campos: ["inventario", "equipamento"], forma: "item", porque: "o que entrou e saiu da bolsa, pelo nome; repetido diz × n; os ganhos antes das perdas" },
+];
+
+const ehFicha = (f) => f != null && typeof f === "object" && !Array.isArray(f);
+const numeroDe = (f, campo) => (typeof f[campo] === "number" && Number.isFinite(f[campo]) ? f[campo] : null);
+const limpo = (n) => Number(n.toFixed(2));
+/* o número como a cinta o escreve: `1.240`, e o sinal à frente */
+const comSinal = (n) => (n > 0 ? "+" : MENOS) + Math.abs(n).toLocaleString("pt-BR");
+
+function deltaDe(regra, antes, depois) {
+  const a = numeroDe(antes, regra.campo), d = numeroDe(depois, regra.campo);
+  if (a == null || d == null) return null;
+  let delta = d - a;
+  if (regra.tipo === "xp") {
+    const na = numeroDe(antes, "nivel"), nd = numeroDe(depois, "nivel");
+    if (na != null && nd != null && nd > na) for (let n = na; n < nd; n++) delta += Number(XP_POR_NIVEL(n)) || 0;
+  }
+  return limpo(delta);
+}
+
+function nomeDoItem(x) {
+  if (typeof x === "string") return x.trim();
+  return x && typeof x === "object" && typeof x.nome === "string" ? x.nome.trim() : "";
+}
+
+function chipsDosItens(campos, antes, depois) {
+  const ca = new Map(), cd = new Map();
+  const ordemA = [], ordemD = [];
+  for (const campo of campos) {
+    if (!Array.isArray(antes[campo]) || !Array.isArray(depois[campo])) continue;
+    for (const x of antes[campo]) { const n = nomeDoItem(x); if (!n) continue; if (!ca.has(n)) ordemA.push(n); ca.set(n, (ca.get(n) || 0) + 1); }
+    for (const x of depois[campo]) { const n = nomeDoItem(x); if (!n) continue; if (!cd.has(n)) ordemD.push(n); cd.set(n, (cd.get(n) || 0) + 1); }
+  }
+  const chip = (nome, delta) => {
+    const sinal = delta > 0 ? "+" : MENOS;
+    const vezes = Math.abs(delta) > 1 ? ` × ${Math.abs(delta)}` : "";
+    return { tipo: "item", delta, texto: `${sinal}${FINO}${nome}${vezes}`, nome, falado: `${delta > 0 ? "mais" : "menos"} ${nome}${vezes ? `, ${Math.abs(delta)}` : ""}` };
+  };
+  const ganhos = ordemD.filter((n) => (cd.get(n) || 0) > (ca.get(n) || 0)).map((n) => chip(n, cd.get(n) - (ca.get(n) || 0)));
+  const perdas = ordemA.filter((n) => (ca.get(n) || 0) > (cd.get(n) || 0)).map((n) => chip(n, (cd.get(n) || 0) - ca.get(n)));
+  return [...ganhos, ...perdas];
+}
+
+/* Recebe duas fichas do herói (o `personagem` antes e depois do turno) e
+   devolve a fila de chips, na ordem da tabela:
+     { tipo, delta, texto, falado }            — todo chip
+     + { valor, glifo }                         — os que levam glifo (◉ ◆)
+     + { nome }                                 — os itens
+   `texto` é a frase inteira (para quem a lê como texto); `valor` + `glifo`
+   é o que a tela desenha; `falado` é o nome acessível, por extenso.
+   Puro: não muta nada, e a mesma entrada dá sempre a mesma fila. */
+export function reciboDoTurno(antes, depois) {
+  if (!ehFicha(antes) || !ehFicha(depois)) return [];
+  const fila = [];
+  for (const regra of RECIBO_DO_TURNO) {
+    if (regra.forma === "item") { fila.push(...chipsDosItens(regra.campos, antes, depois)); continue; }
+    const delta = deltaDe(regra, antes, depois);
+    if (!delta) continue;
+    if (regra.forma === "marco") {
+      const texto = `${regra.rotulo} ${numeroDe(depois, regra.campo)}`;
+      fila.push({ tipo: regra.tipo, delta, texto, falado: texto });
+      continue;
+    }
+    const valor = comSinal(delta);
+    if (regra.glifo) {
+      fila.push({ tipo: regra.tipo, delta, texto: `${valor} ${regra.glifo === "moeda" ? "◉" : "◆"}`, valor, glifo: regra.glifo, falado: `${valor} ${regra.falado}` });
+      continue;
+    }
+    fila.push({ tipo: regra.tipo, delta, texto: `${valor} ${regra.rotulo}`, falado: `${valor} ${regra.rotulo}` });
+  }
+  return fila;
+}
+
+/* ============================================================
+   A2 · O QUE CABE NA FILA — `formas.md` §A1 1, a conta pura
+
+   A JetBrains Mono tem avanço fixo (600/1000 em), logo a largura de um
+   chip é aritmética e não medida de DOM:
+
+     largura(chip) = caracteres × avanço  [+ entreNumeroEGlifo + glifo]
+     reserva       = largura("e mais 9") + entre
+
+   Entra o chip se `soma + entre + largura ≤ L − (ainda há chips depois ?
+   reserva : 0)` e o teto não foi atingido. A ORDEM É LEI E O CORTE TAMBÉM:
+   o primeiro chip que não cabe fecha a fila — nunca se salta para um menor
+   depois dele, senão o recibo mostraria XP e esconderia PV. O item, e só
+   ele, trunca com `…` até caber, mas nunca abaixo de `RECIBO.pisoDoNome`
+   caracteres: abaixo do piso vai para o resto (*um campo trunca, ou não se
+   desenha*).
+
+   `letra` e `glifo` são o tamanho da letra e do glifo (12 e 12 no relato;
+   o fim da luta desenha a mesma peça em tamanho de momento). `largura`
+   ausente ou inválida = só o teto decide. Devolve `{ visiveis, resto }`:
+   o que a tela desenha e o que vai para `e mais N`.
+   ============================================================ */
+const RESERVA_DO_RESTO = "e mais 9";
+export function reciboQueCabe(chips, largura, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const fila = Array.isArray(chips) ? chips.filter((c) => c && typeof c.texto === "string") : [];
+  const telefone = !!o.telefone;
+  const letra = Number(o.letra) > 0 ? Number(o.letra) : TIPOS.maquina;
+  const glifo = Number(o.glifo) > 0 ? Number(o.glifo) : TIPOS.piso;
+  const entre = telefone ? RECIBO.entreTelefone : RECIBO.entre;
+  const teto = telefone ? RECIBO.tetoNoTelefone : RECIBO.tetoNaMesa;
+  const avanco = RECIBO.avancoMono * letra;
+  const L = Number.isFinite(Number(largura)) && Number(largura) > 0 ? Number(largura) : Infinity;
+  const larguraDe = (c) => (c.glifo && typeof c.valor === "string"
+    ? c.valor.length * avanco + CINTA.entreNumeroEGlifo + glifo
+    : c.texto.length * avanco);
+  const reserva = RESERVA_DO_RESTO.length * avanco + entre;
+  const visiveis = [];
+  let soma = 0;
+  for (let i = 0; i < fila.length; i++) {
+    if (visiveis.length >= teto) break;
+    const c = fila[i];
+    const vao = visiveis.length ? entre : 0;
+    const limite = L - (i < fila.length - 1 ? reserva : 0);
+    const w = larguraDe(c);
+    if (soma + vao + w <= limite) { visiveis.push(c); soma += vao + w; continue; }
+    if (c.tipo === "item" && typeof c.nome === "string" && c.nome) {
+      const fixo = c.texto.length - c.nome.length;
+      const cabe = Math.floor((limite - soma - vao) / avanco) - fixo - 1;
+      if (cabe >= RECIBO.pisoDoNome && cabe < c.nome.length) {
+        visiveis.push({ ...c, texto: c.texto.replace(c.nome, c.nome.slice(0, cabe).trimEnd() + "…"), truncado: true });
+      }
+    }
+    break;
+  }
+  return { visiveis, resto: fila.slice(visiveis.length) };
+}
+
+/* A5 · O QUE O RECIBO MOSTROU NÃO ACENDE A MARCA (`marca-da-porta.js`). Os
+   nomes dos itens GANHOS que a fila desenhou — os que ficaram no resto
+   (`e mais N`) não contam como mostrados, e a marca da BOLSA acende para
+   eles (`formas.md` §A1 1). Recebe os `visiveis` de `reciboQueCabe` (ou
+   uma fila inteira, quando quem chama não mede). */
+export function itensMostrados(visiveis) {
+  const lista = Array.isArray(visiveis) ? visiveis : [];
+  return lista.filter((c) => c && c.tipo === "item" && c.delta > 0 && typeof c.nome === "string" && c.nome).map((c) => c.nome);
+}
+
+/* ============================================================
+   A4 · A HORA CHEIA NA CINTA (`formas.md` §A1 5)
+
+   `8h`, sem espaço e sem zero à esquerda — a forma da norma brasileira
+   para a hora do relógio (Manual de Redação da Presidência da República,
+   3.ª ed., 2018). Meia-noite é `0h`. A conta lê `CINTA.passoDaHora` (60):
+   floor(minuto / passo) mod 24. A luz da cinta (`luzDaHora`) já trunca a
+   hora, logo a pílula e o glifo lêem a MESMA hora cheia — às 7h59 os dois
+   dizem madrugada, às 8h00 viram juntos.
+
+   Aceita o minuto (número) ou o texto que a cinta já recebe (`08:10`).
+   Texto que não é hora volta como veio: nunca custa a cinta. */
+const RX_HORA = /^\s*(\d{1,2})\s*[:h]\s*(\d{0,2})/;
+export function horaNaCinta(minuto) {
+  let m = minuto;
+  if (typeof m === "string") {
+    const x = m.match(RX_HORA);
+    if (!x) return m;
+    m = Number(x[1]) * 60 + Number(x[2] || 0);
+  }
+  m = Number(m);
+  if (!Number.isFinite(m)) return "";
+  const h = ((Math.floor(m / CINTA.passoDaHora) % 24) + 24) % 24;
+  return `${h}h`;
+}
+
+/* ============================================================
+   A7 · O CUSTO ONDE SURPREENDE — a emenda à lei de E4 (`formas.md` §A1 6)
+
+   A lei de E1/E4 escrevia o custo em TODA casa alcançável. Ela existia por
+   uma medida (em seis das dez plantas o olho erra o custo), e a medida
+   continua certa; o que a lei cobrava a mais era o número onde o olho
+   acerta. Medido: na T8 do ANTES, 0 de 80 casas surpreendiam.
+
+   A casa surpreende quando o custo real é diferente do que o olho conta —
+   a distância de Chebyshev × `METROS_POR_QUADRADO` (o 1,5 é de `grid.js`,
+   nunca escrito aqui). Recebe o `Map` de `custosDe` (a MESMA busca que a
+   tela usa) e a posição do herói; devolve o `Set` das chaves que levam
+   número. Sob o dedo o custo escreve-se sempre — é a tela que o soma. */
+export function casasQueSurpreendem(custos, heroi) {
+  const out = new Set();
+  if (!custos || typeof custos.forEach !== "function" || !heroi || heroi.x == null || heroi.y == null) return out;
+  custos.forEach((metros, k) => {
+    const [x, y] = String(k).split(",").map(Number);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    const olho = Math.max(Math.abs(x - heroi.x), Math.abs(y - heroi.y)) * METROS_POR_QUADRADO;
+    if (Math.abs(Number(metros) - olho) > 1e-9) out.add(k);
+  });
+  return out;
+}
+
+/* A LEGENDA DO PÉ MUDA DE CONTEÚDO, NÃO DE FORMA: deixa de ser a lista dos
+   custos distintos (`3 · 6 · 9 — CUSTO NO TERRENO`, uma planilha ao pé de
+   outra) e passa a dizer a regra e a exceção em língua de mundo —
+   `1,5 m por casa`, e, só quando o conjunto aceso tem casa de terreno
+   difícil, `· na encosta, 3 m` (o nome sai de `nomeDoLugar`, a língua que o
+   Mestre já usa). Com `ignoraDificil`, só a regra.
+
+   O 2 do terreno difícil é o MESMO de `custosDe` (grid.js), que o escreve
+   em linha; a suíte corre `custosDe` contra uma planta e prova que os dois
+   não divergiram. A região dita é a que tem mais casas difíceis acesas (no
+   empate, a primeira na ordem da busca). */
+const PASSOS_DO_DIFICIL = 2;
+export function legendaDoPasso(custos, grade, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const regra = `${metrosTxt(METROS_POR_QUADRADO)} m por casa`;
+  if (o.ignoraDificil || !custos || typeof custos.forEach !== "function" || !grade) return regra;
+  const vezes = new Map();
+  custos.forEach((_, k) => {
+    const [x, y] = String(k).split(",").map(Number);
+    let dificil = false, nome = "";
+    try { dificil = terrenoDificil(grade, x, y); nome = dificil ? nomeDoLugar(grade, x, y) : ""; } catch { dificil = false; }
+    if (dificil && nome) vezes.set(nome, (vezes.get(nome) || 0) + 1);
+  });
+  if (!vezes.size) return regra;
+  let melhor = "", n = 0;
+  for (const [nome, q] of vezes) if (q > n) { melhor = nome; n = q; }
+  return `${regra} · ${melhor}, ${metrosTxt(METROS_POR_QUADRADO * PASSOS_DO_DIFICIL)} m`;
+}
+
+/* ============================================================
+   A8 · O ROSTO DE QUEM NÃO É GENTE (`formas.md` §A1 4)
+
+   UMA regra para os dois leitores (o `Retrato` e a ficha do tabuleiro), e
+   por isso mora no `Rosto`, que os dois já pedem:
+
+     se o ente TEM classe            → gente (o herói e o companheiro de classe)
+     senão menteDaCriatura(...):  besta → fera · morto → morto · pensa → gente
+
+   `menteDaCriatura` (adversario.js) é a mesma conta que decide `ehBicho` /
+   `ehMorto` na luta: o retrato e o comportamento não podem discordar.
+   LIMITE ESCRITO: golem, autômato, constructo e estátua viva caem em
+   `morto` porque a mente é a mesma (não teme, não negocia); o osso lê-se
+   mal neles. Se um construto entrar em jogo, nasce `construto` — hoje
+   seria glifo sem leitor. */
+export const ROSTO_DA_MENTE = { besta: "fera", morto: "morto" };
+
+export function rostoDoEnte(ente, mente) {
+  const e = ente && typeof ente === "object" ? ente : null;
+  if (!e || e.classe) return "gente";
+  return ROSTO_DA_MENTE[mente] || "gente";
+}
+
+/* ============================================================
+   A1 · A3 · O RELATO ARRUMADO — quem mora onde, numa conta só
+
+   O `Relato` (painel-relato.jsx) desenha o que esta função devolve; a
+   decisão de quem aparece, quem cala e quem vai para que dobra é TODA
+   daqui, e prova-se em Node. Os itens, na ordem da página:
+
+     { tipo: "jogador", i, m }                — a voz de quem joga
+     { tipo: "mestre",  i, m }                — a prosa (NUNCA numa dobra)
+     { tipo: "bloco",   inicio, visiveis, dobradas, saldo }
+                                              — as linhas de cena de uma
+                                                corrida (a forma de hoje,
+                                                `dividirBloco`)
+     { tipo: "dia",     inicio, linhas }      — a dobra "O dia" (#39)
+     { tipo: "luta",    inicio, fim, linhas, fimDaLuta }
+                                              — a dobra "A luta" (A3)
+
+   `recibo` e `cala` não se desenham (ficam no save). A LUTA é uma corrida
+   de mensagens marcadas `naLuta` que FECHA numa com `fimDaLuta` (o
+   `App.jsx` escreve-o quando a luta acaba): dentro dela a prosa do Mestre
+   fica no sítio, o que fura a dobra (a porta, a morte, o poder único)
+   fica no sítio, e o resto vai para UMA dobra, que mora onde a luta
+   fechou. Uma corrida `naLuta` SEM `fimDaLuta` (a luta ainda aberta, ou um
+   save de antes do campo) cai na forma de hoje — a dobra do saldo.
+
+   O ECO DO VERBO cala dentro da dobra; a frase livre do `como?` fica. Eco
+   é a fala do jogador que é SÓ a frase de um verbo da fileira (a tabela
+   de `golpe.js` / `tela-de-batalha.js`, que quem chama passa em
+   `frasesDosVerbos`), ou ela seguida do alvo — até `PALAVRAS_DO_ALVO`
+   palavras, sem pontuação. Quem escreveu mais do que isso escreveu um
+   `como`, e a voz dele não se cala.
+   ============================================================ */
+const PALAVRAS_DO_ALVO = 3;
+const RX_PONTUACAO = /[.,;:!?—–]/;
+
+export function ehEcoDoVerbo(texto, frases) {
+  const t = String(texto == null ? "" : texto).trim();
+  if (!t) return false;
+  for (const bruta of Array.isArray(frases) ? frases : []) {
+    const f = String(bruta == null ? "" : bruta).trim();
+    if (!f) continue;
+    if (t === f) return true;
+    if (t.startsWith(f + " ")) {
+      const resto = t.slice(f.length).trim();
+      if (!RX_PONTUACAO.test(resto) && resto.split(/\s+/).length <= PALAVRAS_DO_ALVO) return true;
+    }
+  }
+  return false;
+}
+
+const ehMsg = (m) => m != null && typeof m === "object";
+const textoDe = (m) => String(m.texto == null ? "" : m.texto);
+const temFimDaLuta = (m) => ehMsg(m) && m.fimDaLuta != null && typeof m.fimDaLuta === "object" && !Array.isArray(m.fimDaLuta);
+
+/* Uma corrida de linhas da mesa vira, na ordem em que aparecem, o bloco
+   de cena (a forma de hoje) e a dobra do dia. */
+function corridaDeLinhas(corrida, out) {
+  const cena = [], dia = [];
+  let diaPrimeiro = false;
+  for (const { texto, morada } of corrida.linhas) {
+    if (morada === "dia") { if (!cena.length && !dia.length) diaPrimeiro = true; dia.push(texto); }
+    else cena.push(texto);
+  }
+  const bloco = cena.length ? { tipo: "bloco", inicio: corrida.inicio, ...dividirBloco(cena) } : null;
+  const doDia = dia.length ? { tipo: "dia", inicio: corrida.inicio, linhas: dia } : null;
+  for (const x of diaPrimeiro ? [doDia, bloco] : [bloco, doDia]) if (x) out.push(x);
+}
+
+export function arrumarORelato(mensagens, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const frases = Array.isArray(o.frasesDosVerbos) ? o.frasesDosVerbos : [];
+  const lista = Array.isArray(mensagens) ? mensagens : [];
+  const out = [];
+
+  /* 1 · as lutas que fecharam: [inicio, fim] de cada corrida naLuta que
+     termina numa mensagem com `fimDaLuta` */
+  const lutas = new Map();
+  for (let i = 0; i < lista.length; i++) {
+    if (!(ehMsg(lista[i]) && lista[i].naLuta === true)) continue;
+    let j = i;
+    while (j < lista.length && ehMsg(lista[j]) && lista[j].naLuta === true && !temFimDaLuta(lista[j])) j++;
+    if (j < lista.length && ehMsg(lista[j]) && lista[j].naLuta === true && temFimDaLuta(lista[j])) { lutas.set(i, j); i = j; }
+    else i = j - 1;
+  }
+
+  let corrida = null;
+  const fechar = () => { if (corrida) { corridaDeLinhas(corrida, out); corrida = null; } };
+  const linhaDaMesa = (i, texto, morada) => {
+    if (!corrida) corrida = { inicio: i, linhas: [] };
+    corrida.linhas.push({ texto, morada });
+  };
+
+  for (let i = 0; i < lista.length; i++) {
+    const m = lista[i];
+    if (!ehMsg(m)) continue;
+    if (lutas.has(i)) {
+      const fim = lutas.get(i);
+      const linhas = [];
+      for (let k = i; k <= fim; k++) {
+        const x = lista[k];
+        if (!ehMsg(x)) continue;
+        if (x.autor === "mestre") { fechar(); out.push({ tipo: "mestre", i: k, m: x }); continue; }
+        if (x.autor === "jogador") {
+          if (!ehEcoDoVerbo(x.texto, frases)) linhas.push({ voz: "jogador", texto: textoDe(x) });
+          continue;
+        }
+        const morada = moradaDaLinha(x);
+        if (morada === "cala" || morada === "recibo") continue;
+        if (morada === "luta") { linhas.push({ texto: textoDe(x) }); continue; }
+        linhaDaMesa(k, textoDe(x), morada);
+      }
+      fechar();
+      out.push({ tipo: "luta", inicio: i, fim, linhas, fimDaLuta: lista[fim].fimDaLuta });
+      i = fim;
+      continue;
+    }
+    if (m.autor === "sistema") {
+      const morada = moradaDaLinha(m);
+      if (morada === "cala" || morada === "recibo") continue;
+      linhaDaMesa(i, textoDe(m), morada === "dia" ? "dia" : "cena");
+      continue;
+    }
+    fechar();
+    out.push({ tipo: m.autor === "jogador" ? "jogador" : "mestre", i, m });
+  }
+  fechar();
+  return out;
+}
+
+/* ---------------- O CABEÇALHO DA DOBRA DA LUTA ----------------
+   `A luta · {quem caiu} · {n} rodadas` (`formas.md` §A1 2). No telefone
+   as rodadas saem do cabeçalho (medido: a 303 px não cabem) e vivem
+   dentro, nos rótulos `rodada n`.
+
+   QUEM CAIU diz-se com o VERBO, e de propósito: "caíram" não tem género,
+   e "caídos" obrigaria a adivinhar o de cada bicho ("2 aranhas caídos").
+   Um só: `lobo 1 caiu`. Vários do mesmo nome (`lobo 1`, `lobo 2`): `2
+   lobos caíram` — o plural só quando o nome acaba em vogal e não em
+   `ão` (o resto não se adivinha); senão, a lista: `Kolvar e lobo 1
+   caíram`. Sem ninguém caído (fuga, queda), só as rodadas. */
+const RX_NUMERO_DO_NOME = /\s+\d+$/;
+export function quemCaiu(caidos) {
+  const nomes = (Array.isArray(caidos) ? caidos : []).map((x) => String(x == null ? "" : x).trim()).filter(Boolean);
+  if (!nomes.length) return "";
+  if (nomes.length === 1) return `${nomes[0]} caiu`;
+  const bases = nomes.map((n) => n.replace(RX_NUMERO_DO_NOME, ""));
+  const base = bases[0];
+  if (bases.every((b) => b === base) && /[aeiouáéíóúâêô]$/i.test(base) && !/ão$/i.test(base)) return `${nomes.length} ${base}s caíram`;
+  const lista = nomes.length === 2 ? `${nomes[0]} e ${nomes[1]}` : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+  return `${lista} caíram`;
+}
+
+export function cabecalhoDaLuta(fimDaLuta, opcoes) {
+  const f = fimDaLuta && typeof fimDaLuta === "object" ? fimDaLuta : {};
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const partes = ["A luta"];
+  const quem = quemCaiu(f.caidos);
+  if (quem) partes.push(quem);
+  const n = Number(f.rodadas);
+  if (!o.telefone && Number.isFinite(n) && n > 0) partes.push(`${n} ${n === 1 ? "rodada" : "rodadas"}`);
+  return partes.join(" · ");
+}
+
+/* ---------------- AS LINHAS DE DENTRO DA DOBRA ----------------
+   A gramática do rastro (peça 104), para a luta ter UMA cara de log: uma
+   linha por golpe — o `🎲` e o `⚔`/`🛡` do MESMO golpe (mesmo "quem →
+   alvo") fundem-se numa (N2: na T8 o golpe saía duas vezes); a linha
+   fundida leva o glifo do golpe e a conta do dado. O `☠` vira a palavra
+   `cai`. `🌍 VEZ DO MUNDO — rodada n` vira um rótulo `rodada n`. A fala
+   livre do jogador passa como está, marcada `voz: "jogador"`.
+   Devolve `{ glifo, texto }` · `{ rotulo }` · `{ voz, texto }`. */
+const RX_VEZ = /^🌍\s*VEZ DO MUNDO\s*—\s*rodada\s+(\d+)/u;
+const RX_QUEM_ALVO = /^(.+?)\s+→\s+(.+?):\s+(.+)$/u;
+const quemDoGolpe = (s) => s.replace(/\s+·\s+.+$/, "").trim();
+const semCaveira = (s) => s.replace(/☠/gu, "cai").replace(/\s{2,}/g, " ").trim();
+
+export function linhasDaLuta(linhas) {
+  const lista = Array.isArray(linhas) ? linhas : [];
+  const out = [];
+  for (let i = 0; i < lista.length; i++) {
+    const l = lista[i] || {};
+    const texto = String(l.texto == null ? "" : l.texto);
+    if (l.voz === "jogador") { out.push({ voz: "jogador", texto }); continue; }
+    const vez = texto.replace(/️/g, "").match(RX_VEZ);
+    if (vez) { out.push({ rotulo: `rodada ${vez[1]}` }); continue; }
+    const a = assuntoDaLinha(texto);
+    if (a.glifo === "dado") {
+      const dado = a.resto.match(RX_QUEM_ALVO);
+      const prox = lista[i + 1] && lista[i + 1].voz !== "jogador" ? assuntoDaLinha(String(lista[i + 1].texto || "")) : null;
+      const golpe = prox ? prox.resto.match(RX_QUEM_ALVO) : null;
+      if (dado && golpe && (prox.glifo === "espadas" || prox.glifo === "escudo")
+        && quemDoGolpe(golpe[1]) === dado[1].trim() && golpe[2].trim() === dado[2].trim()) {
+        const cai = /☠/u.test(prox.resto);
+        out.push({ glifo: prox.glifo, texto: `${dado[1]} → ${dado[2]}: ${dado[3]}${cai ? " · cai" : ""}` });
+        i++;
+        continue;
+      }
+    }
+    out.push({ glifo: a.glifo || null, texto: semCaveira(a.resto) });
+  }
+  return out;
 }
