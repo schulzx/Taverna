@@ -149,7 +149,17 @@ sec("1. NENHUM MÓDULO MUDO");
      secção D, tem o mapa de chamada). É dívida datada, não esquecimento: a
      entrada sai quando o App (ou um painel) o importar, e a lista volta a
      ficar VAZIA. `teste-mapa-vivo.mjs` é o primeiro leitor. */
-  const AGUARDANDO = { "mapa-vivo.js": "a tela do mapa em tempo real, do desenho/oficial (MM17 D, 06/10)" };
+  /* 10/10 (P2, o pedido do mapa): `partida.js` nasce no backend —
+     `vereditoDaPartida`, o preço inteiro de partir (as horas, a chegada,
+     as noites, o perigo, a volta, a rota e os prazos que vencem pelo
+     caminho) — e espera o MESMO credor do mapa vivo: o botão "Partir para
+     X" do cartão do lugar, que a tela do mapa (oficial) liga no App.jsx ou
+     num painel. `teste-veredito-da-partida.mjs` é o primeiro leitor. A
+     entrada sai quando a tela o importar, junto da do mapa vivo. */
+  const AGUARDANDO = {
+    "mapa-vivo.js": "a tela do mapa em tempo real, do desenho/oficial (MM17 D, 06/10)",
+    "partida.js": "a tela do mapa (oficial), o botão Partir do cartão do lugar (P2, 10/10)",
+  };
   const mudos = [];
   for (const f of arqs) {
     if (FOLHAS.test(f)) continue;

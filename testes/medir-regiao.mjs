@@ -26,6 +26,10 @@
      (j) a marcha única (MM17, pendência nº 3): a hora de cada viagem da
          região pelas quatro contas (jornada, ficha, Geógrafo, mapa vivo),
          antes (a árvore de HEAD) e depois, e quantas passam da promessa;
+     (k) o veredito da partida (P2): o preço de cada partida que o mapa
+         oferece, por tipo — as horas de marcha, o relógio que se gasta e
+         as noites na estrada (mediana e pior), e quantas discordam da
+         jornada que o jogo abre (não há "antes": o veredito não existia);
      e o tamanho do elenco (24) e os moldes fora do beta.
 
    Uso: node testes/medir-regiao.mjs [N]   (N mundos por molde; 60 se omitido) */
@@ -833,6 +837,58 @@ export function resumoMarcha(rotulo, M) {
   ].join("\n");
 }
 
+/* ---------------- (k) O VEREDITO DA PARTIDA (P2, 10/10) ----------------
+   Cada par ordenado (de uma povoação, da base ou da boca de um lugar, a cada
+   lugar e povoação) de N mundos, com tudo à vista e o herói a partir às
+   08:00: o veredito (`vereditoDaPartida`, partida.js) contra a jornada que o
+   jogo abre (`idaAMasmorra` + `jornadaAteAMasmorra` a um lugar, a caminhada
+   a pé; `partidaNaRegiao` a uma povoação). Uma "contradição" é uma hora que
+   difere mais do que 0,005 h, ou um par sem veredito. */
+export async function medirVeredito(R, N = 200) {
+  const src = join(AQUI, "..", "src");
+  const de = (f) => import(pathToFileURL(join(src, f)).href);
+  const [PA, RA, BO, MA, MV, MB] = await Promise.all(["partida.js", "rastro.js", "boca.js", "marcha.js", "mapa-vivo.js", "mundo-base.js"].map(de));
+  const M = { pares: 0, contra: 0, exemplo: null, horas: {}, relogio: {}, noites: {} };
+  for (let i = 0; i < N; i++) {
+    const semente = sementeDe(i), genero = generoDe(i);
+    const mapa = R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente, molde: moldePorId("sobremundo"), genero, estrutura: ESTRUTURAS[i % ESTRUTURAS.length].id, modo: "historia" }));
+    if (!mapa || !mapa.regiao) continue;
+    const base = mapa.cidades[0], masmorras = MB.masmorrasDoMundo(semente, mapa);
+    const nos = [...mapa.cidades.map((c, j) => ({ tipo: j ? "povoado" : "base", src: c, nome: c.nome, id: `cidade|${c.nome}` })), ...mapa.regiao.lugares.map((l) => ({ tipo: "lugar", src: l, nome: l.nome, id: String(l.id) }))];
+    for (const a of nos) {
+      const lugar = a.tipo === "lugar" ? { nome: a.nome, coord: { x: a.src.x, y: a.src.y }, distancia: "perto", cidade: base.nome } : null;
+      const e = { cidadeAtual: a.tipo === "lugar" ? base.nome : a.nome, lugar, dia: 1, minuto: 480, semente, conhecidos: nos.map((n) => n.nome), mapa };
+      const dados = MV.dadosDoMapaVivo(mapa, e);
+      for (const b of nos) {
+        if (a === b) continue;
+        M.pares++;
+        const tipo = `${a.tipo === "lugar" ? "boca" : a.tipo}→${b.tipo}`;
+        const v = PA.vereditoDaPartida(dados, b.id, e);
+        let J = NaN;
+        if (b.tipo === "lugar") {
+          const ida = RA.idaAMasmorra(`Vou a ${b.nome}.`, { cidadeAtual: e.cidadeAtual, cidades: mapa.cidades.map((c) => c.nome), mapa, masmorras, lugar, jornada: null });
+          if (ida && ida.rota) J = ida.rota.modo === "a_pe" ? ida.rota.minutos / 60 : BO.jornadaAteAMasmorra(ida, { de: e.cidadeAtual }).totalMin / 60;
+        } else {
+          const p = MA.partidaNaRegiao(mapa, { cidadeAtual: e.cidadeAtual, lugar, destino: b.nome });
+          if (p) J = p.jornada.totalMin / 60;
+        }
+        if (!v || !(Math.abs(v.horas - J) <= 0.005)) { M.contra++; if (!M.exemplo) M.exemplo = { i, de: a.nome, para: b.nome, veredito: v && v.horas, jornada: J }; continue; }
+        (M.horas[tipo] ||= []).push(v.horas);
+        (M.relogio[tipo] ||= []).push(Math.round((v.minutosDeRelogio / 60) * 100) / 100);
+        (M.noites[tipo] ||= []).push(v.noites);
+      }
+    }
+  }
+  return M;
+}
+export function resumoVeredito(M) {
+  const f = (n) => (Number.isFinite(n) ? r1(n) : "—");
+  return [
+    `  ${M.pares} partidas · ${M.contra} contradições com a jornada do jogo${M.exemplo ? ` (ex.: ${JSON.stringify(M.exemplo)})` : ""}`,
+    ...Object.keys(M.horas).sort().map((k) => `    ${k}: marcha ${f(mediana(M.horas[k]))}/${f(maximo(M.horas[k]))} h · relógio ${f(mediana(M.relogio[k]))}/${f(maximo(M.relogio[k]))} h · noites ${f(mediana(M.noites[k]))}/${f(maximo(M.noites[k]))}  (mediana/pior)`),
+  ].join("\n");
+}
+
 /* ---------------- quando corre sozinho ---------------- */
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
   const N = Number(process.argv[2]) || 60;
@@ -894,6 +950,11 @@ if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
     } catch (e) { console.log(`  antes: a árvore de HEAD não se extraiu (${e.message})`); }
     finally { try { if (srcHEAD) rmSync(dirname(srcHEAD), { recursive: true, force: true }); } catch { /* fica */ } }
     console.log(resumoMarcha("depois (a conta única)", await medirMarcha(join(AQUI, "..", "src"), NM)));
+  }
+  if (existsSync(join(AQUI, "..", "src", "partida.js")) && existsSync(caminho)) {
+    const NV = Math.max(N, 200);
+    console.log(`\n(k) O VEREDITO DA PARTIDA — o preço de cada partida do mapa, por tipo (${NV} mundos, partindo às 08:00)`);
+    console.log(resumoVeredito(await medirVeredito(await import(pathToFileURL(caminho).href), NV)));
   }
   console.log(`\n(e) a PIOR CENA REAL do prompt (teste-prompt.mjs): ${piorCenaReal()} caracteres (o teto é 82.000)`);
 }
