@@ -10721,3 +10721,699 @@ cortado sem o troll e o tabuleiro mostrava 4 das 14 linhas. **A emenda a B1:**
 - **dívida declarada:** quando o tabuleiro rola por dentro, a régua de letras A–R
   sai de vista (a 1440×789 faltam 21 px). Uma régua presa ao topo é peça nova —
   é do `desenho` (B4 na pauta).
+
+---
+
+## Mapa · o mapa vivo da região (MM17) — `desenho`, 10/10, com o `jogo`
+
+*Pedido directo da pessoa (10/10): "um mapa que faça jus a um grande RPG AAA" —
+no lugar do banner da gameplay-v3 e do mesmo tamanho, o mapa em tempo real; e a
+tela grande do mapa. Só Figma; quem coda é outro. Desenhado com DADOS REAIS: a
+semente 0 do molde do beta (`sementeDe(0)`, "Fronteiras da Serpente", jornada),
+`mapaDaCriacao` + `espinhaNaRegiao` + `dadosDoMapaVivo` corridos em Node nos
+estados que o Figma mostra.*
+
+**Figma** — ficheiro da pessoa `ffWFqD7TueSb88Mkeg9bhW`, página **`07 · Mapa`**
+(`160:48`). As peças vivem aí como componentes locais (a biblioteca
+`e5wJUzInAssoebx5npssKc` não está publicada, e instância entre ficheiros sem
+publicação não existe); a colecção de variáveis é **`Mapa vivo (MAPA_VIVO)`**
+(`VariableCollectionId:160:2`, modos **Dia · Entardecer · Noite**).
+
+| o quê | nó |
+|---|---|
+| as peças (secção) | `160:49` |
+| o par comparável — a gameplay-v3 antes (cópia intocada) e depois | `173:1886` · antes `173:1887` · depois `173:2035` |
+| a faixa do rumo — começo · viagem · noite · lá dentro · telefone | `172:1466` · `172:1467` · `172:1539` · `172:1617` · `172:1695` · `172:1714` |
+| a tela grande, mesa 1600×1000 — 1 começo · 2 meio · 3 viagem · 4 noite · 5 perigo · 6 horizonte | `166:88` · `167:299` · `168:680` · `167:603` · `168:996` · `168:1318` · `167:913` |
+| a tela grande, telefone 375×812 — começo · viagem | `173:1454` · `173:1455` · `173:1669` |
+| a prancha das fontes, do contraste e dos pedidos | `175:1752` |
+
+**Voz do jogo: você.** O jogo fala português do Brasil, na segunda pessoa com
+"você" (a voz do Mestre desde v9.346). Todo texto do mapa segue: *Você está em
+Torre Serena* · *caminho conhecido* · *você já esteve lá* · *você chega na manhã
+do dia 7* · *Toque num lugar*. Nunca "tu", "estás", "sabes", "chegas".
+
+### 1 · A tese: duas vistas do mesmo dado, e nenhuma é um mapa encolhido
+
+**No lugar do banner vai um panorama, não um recorte de cima.** O banner era a
+xilogravura de 96 px (R13-B), na largura da página (1142 na mesa de 1280), fora
+da área que rola; V5a tirou-a. 96 px de altura sobre uma região quadrada são uma
+tira de 12:1: um recorte cartográfico de cima com essa altura deixa **a maioria
+dos 9–13 lugares fora do quadro**, a virar setas na borda. O formato pede o que
+Skyrim faz com a bússola: **o horizonte de 360° desenrolado a partir de onde o
+herói está, cada lugar no seu rumo real.** A tela grande, a um toque, é que é a
+carta de cima. O `jogo` assinou esta escolha contra a alternativa (§9).
+
+**A faixa do rumo** (1142×96 · telefone 343×48):
+- **o centro é a frente, não o norte** (condição do `jogo`): na cidade, o rumo
+  do nó com `momento` `proximo` (ou `agora` onde não se está); na estrada, o rumo
+  do destino; sem gancho, o norte. Centrada no norte, o primeiro gancho da
+  semente 0 (4 h **ao sul**) caía na emenda, partido entre as duas pontas. Os
+  rumos (N NE L SE S SO O NO) correm em cima; a frente é um triângulo âmbar —
+  **o âmbar é o herói**, aqui o olhar dele;
+- **cada lugar no seu rumo** (`atan2` a partir de `heroi.x,y`), **maior e mais
+  baixo quanto mais perto** — a profundidade sai da régua FIXA
+  (`quadro.ladoKm ÷ 2` é o "longe"), nunca do nó visível mais distante: se a
+  escala se ajustasse ao que se vê, tudo encolhia no dia em que o fim aparece;
+- **só o alvo do feixe leva nome e horas**; o resto é ícone. Tocar num ícone
+  abre a tela grande **com o cartão desse lugar** (2 toques, não 3);
+- **as duas cristas** são o chão de cada rumo lido do mesmo terreno da tela
+  grande (a ~24 km e a ~10 km): gelo → picos, mata → copas. O céu é
+  `ceuAlto/ceuBaixo` pelo modo, **o astro anda pelo minuto** (o sol nasce a
+  leste, põe-se a oeste; a lua do lado de lá), as estrelas pela opacidade
+  `mapa/medida/estrelas` (0 · 0,3 · 0,9);
+- **o horizonte de fora** (`horizonte[]`) escrito no seu rumo, em duas filas
+  alternadas; **o nome cede ao feixe** (some a menos de 30 px dele);
+- **em viagem**: a linha de baixo é a estrada (`jornada.fracao` em âmbar, o
+  resto em `linha`) e o alvo diz `faltam 2,2 h` (`horasQueFaltam`);
+- **lá dentro** (`heroi.onde === "masmorra"`): a faixa vira **a descida** —
+  peça nova: os estratos `0…camadas` (à entrada · primeira descida · … · o
+  fundo), o herói no estrato `camada`, a linha andada em `progresso.pct`, o nome
+  do lugar e `2 de 4 salas`; em cima, 18 px de "lá fora" com a hora;
+- **em combate recolhe a zero** e volta sem animar (a B1b precisa da janela);
+- **telefone**: 140° à frente, 48 px, só ícones, sem horizonte.
+
+**A tela grande** (mesa 1600×1000 · telefone 375×812):
+- **a carta** 920×920 (rebordo de 30 onde moram os nomes do horizonte, cada um
+  no seu rumo com a seta para fora); o quadro é fixo, **a câmara é que se move**:
+  abre com zoom **1,5** centrada no herói, presa ao quadro (no telefone 1,8,
+  sangra até à borda). Medido: na semente 0 os lugares ocupam só o miolo do
+  quadro (x 0,28–0,73) — sem câmara, metade da carta era névoa vazia;
+- **a coluna da direita** (560): a região e a hora, `onde você está` (com a barra da
+  estrada em viagem), o **cartão do lugar** tocado, a **legenda** (recolhe para
+  `LEGENDA ▸` se o cartão não deixar sítio). Fechar: 44 px, `Esc`;
+- **telefone**: barra de 56 (voltar · região · hora), a carta 375×375, o lugar
+  tocado sobe numa **folha** (pega de 40) e **o verbo fica preso ao pé** — nunca
+  rola para fora.
+
+### 2 · As peças (biblioteca do mapa, `160:49`)
+
+| peça | nó | o que lê de `dadosDoMapaVivo` | a regra |
+|---|---|---|---|
+| `Mapa/Glifo` (16) | `160:98` | `nos[].subtipo` | grade 24, traço 1,75 em `mapa/tinta`; um por porte e por tipo de lugar (capital = a base); `boato` = "?"; `perigo` = a caveira; `concluido` = o selo. **O emoji do motor (`icone`) não entra na tela:** emoji não herda variável de cor |
+| `Mapa/Marcador de lugar` (7) | `161:39` | `estado`, `momento` | *Estado* Boato·Conhecido·Visitado·Concluido × *Proximo*. Alvo de toque = a caixa de 44. Boato troca o glifo por "?" (Witcher 3). `desconhecido` **não tem marcador** |
+| `Mapa/Perigo` (8) | `161:78` | `perigo` | *Nivel* × *Forma* Selo·Linha. **A contagem é o canal** (0·1·2·3 caveiras); a cor só reforça de `alto` para cima (WCAG 1.4.1). No mapa, selo só a partir de médio |
+| `Mapa/Herói` (3) | `161:94` | `heroi` | losango âmbar, Mesa 22 · Telefone 18 · Faixa 14; no sítio, encostado ao canto do marcador (não o tapa); em viagem, **na curva da estrada pela `jornada.fracao`** (a tela curva as estradas; o `x,y` interpolado em linha recta é só o recurso) |
+| `Mapa/Feixe` | `161:95` | `momento` | a orientação da graça: nasce em `proximo` (ou `agora` onde o herói não está; ou o destino da estrada). **Lê só `momento`**, nunca `atoDaHistoria` |
+| `Mapa/Rótulo` (6) | `161:117` | `nome`, `tipo`, `estado` | base Cormorant SemiBold 19 · povoado SemiBold 16 · lugar Medium Italic 16 · boato Italic 15 apagado · chão versaletes 13 · horizonte mono 12. Halo de 3 px em `mapa/halo`. **Colisão: a posição do nó não se mexe, o nome é que se afasta** (baixo → direita → esquerda → cima → segunda fila) |
+| `Mapa/Estrada` (6) | `161:132` | `arestas[].origem`, `modo` | rota = estrada sólida com casca · ficha+estrada = trilha (traço 7/5) · a pé = pontos · percorrida/por percorrer · rio (P4). **A forma é o canal, não a cor.** Aresta a um boato a 45 % |
+| `Mapa/Terreno · Fronteiras da Serpente` | `163:39` | (P1/P4) | o fundo, fixo; ver §4 |
+| `Mapa/Partir` (3) | `164:52` | (P2) | **é `O verbo com preço`** (biblioteca `64:2446`) — mesma anatomia, papéis e medidas; só o preço sobe a 12 (o piso da casa). *Armado* quando o destino é o do feixe; *Gesto* para os outros; *Impedido* na estrada ou dentro |
+| `Mapa/Cartão de lugar` (4) | `164:179` | ficha + P2 + P3 | *Tamanho* Mesa 560·Telefone 375 × *Saber* Ficha·Boato. A ordem é a da decisão: o que é → quem anda lá → o preço (perigo do lugar + o da estrada, ida e volta) → o que fica perto → o que se diz → o verbo com o preço por baixo. O boato diz *"Ninguém sabe. É o preço de não ter ido ver."* — esconder seria mentir |
+| `Mapa/Legenda` | `165:58` | — | dez sinais na língua do jogador: *só se ouviu falar · caminho conhecido · você já esteve lá · terminado · você está aqui · para onde a história chama · estrada · trilha · a pé · perigo* |
+| `Mapa/Rosa dos ventos` · `Mapa/Régua` | `165:131` · `165:141` | `quadro.regua` | norte em cima na tela grande; a régua diz km **e horas** (`15 km · 6 h de marcha`), porque é em horas que o jogo cobra |
+
+**Aposenta-se** o botão violeta `Viajar para X` do pergaminho (`painel-mapa.jsx`
+~l.447): a mesma acção ganha a forma da casa (`O verbo com preço`). Uma acção,
+uma forma. O pergaminho de sempre **fica** para o save sem `regiao`
+(`dadosDoMapaVivo` devolve `null`).
+
+### 3 · A tabela `MAPA_VIVO` (cor é número, logo é tabela)
+
+Para `src/estilo.js`, ao lado de `T` e `MATERIAIS`. O que é igual a `T` **é** `T`
+(referência, não cópia): `heroi` = `T.amber`, `heroiTinta` = `T.onAccent`,
+`gancho` = `T.amberSoft`, `perigo` = `T.danger`, `concluido` = `T.ok`, `tinta`
+= `T.ink`, `tintaMeio` = `T.inkMeio`, `tintaDim`/`trilha` = `T.inkDim`,
+`estrada` = `T.inkMeio`, `halo`/`estradaBorda` = `T.pagina`, `medalhao`/`painel`
+= `T.panel`, `painelAlto` = `T.panelSoft`, `medalhaoBorda` = `T.lineStrong`,
+`linha` = `T.line`, `moldura` = `T.bg`, `aguaLuz` = `T.mundoSoft`. Os que nascem
+aqui, em três modos (Dia · Entardecer · Noite; a tela escolhe o modo por
+`relogio.fase` e pode interpolar por `relogio.luz`):
+
+| token | Dia | Entardecer | Noite |
+|---|---|---|---|
+| `chao.floresta` · `gelo` · `planicie` · `colina` | `#17241F` · `#232A38` · `#25222F` · `#2A2530` | `#1A2120` · `#2A2633` · `#2B2230` · `#30242C` | `#0F1520` · `#161B28` · `#17161F` · `#1A1820` |
+| `chao.costa` · `pantano` · `deserto` · `montanha` | `#1F2433` · `#1D2422` · `#2E2822` · `#26232E` | `#262233` · `#221F21` · `#342620` · `#2C222B` | `#141824` · `#121716` · `#1D1A17` · `#18161E` |
+| `mata` · `arvore` · `arvoreLuz` | `#1E3229` · `#3E6B55` · `#6FA386` | `#22302A` · `#3F5F4C` · `#8A9670` | `#121D1B` · `#26443A` · `#3E6656` |
+| `pico` · `picoSombra` | `#B9C6DA` · `#4A5570` | `#D9B7A6` · `#4F4560` | `#7D8AA6` · `#2C3348` |
+| `agua` | `#3A8FBF` | `#4C7FA0` | `#2A5F86` |
+| `nevoa` | `#0B0914` | `#0B0914` | `#06050C` |
+| `ceuAlto` · `ceuBaixo` | `#2B2545` · `#4A3F6B` | `#3A2440` · `#8A4A4A` | `#0E0F22` · `#1A1A3A` |
+| `cristaLonge` · `cristaPerto` | `#3A3458` · `#1E1A33` | `#4A2E46` · `#221829` | `#1C1A33` · `#100E1C` |
+| `astro` | `#F2ECE0` | `#F5C9A0` | `#C9D2E6` (nunca âmbar) |
+| `veu` (rgba) | transparente | `#50202A` 22 % | `#05071C` 50 % |
+| `janela` (rgba) · `estrelas` (opacidade) | `#FFD08A` 0 % · 0 | 60 % · 0,3 | 100 % · 0,9 |
+
+Medidas (`MAPA_VIVO.medidas`): medalhão 32 mesa · 28 telefone; alvo 44; faixa 96
+· 48; névoa (fracção do lado) visitado/concluído **0,15**, conhecido **0,09**,
+boato **0,04**, o herói na estrada **0,08**; câmara zoom **1,5** mesa · **1,8**
+telefone; faixa 360° · **140°** no telefone; o "longe" da faixa = `ladoKm/2`.
+
+### 4 · O fundo (relevo, matas, gelo, rios) — e porque não conta segredos
+
+Medido em Figma a partir da semente: **o bioma de cada ponto = o do nó mais
+perto, com ruído de borda**, e **o clímax não entra** — uma mancha de gelo sem
+lugar em cima denunciá-lo-ia (o `jogo`). Os nós usados são os que existem desde o
+turno 1, logo **o fundo é fixo** como o quadro. Mata densa onde o ruído sobe,
+clareiras onde desce (massas, não papel de parede); pinheiro de dois tons (face
+acesa à esquerda); picos em perfil que crescem para o interior do gelo, os do
+miolo com talho de neve; **a luz vem de noroeste** (Imhof). O fundo é um
+**`<svg>` gerado uma vez por campanha** (memorizado sobre `mapa.regiao`) — a
+mesma função pura serve as duas cristas da faixa. Hoje ele *infere* os chãos; o
+pedido **P1** dá-os de verdade. **Os rios são o pedido P4** e a camada nasce
+desligada: o mapa não desenha água que o Mestre não conhece.
+
+### 5 · O que nunca se mostra (o sistema não fala de si, e o mapa não estraga)
+
+1. o lugar do fim não aparece antes do seu ato — nem ponto, nem aresta, nem
+   vizinho, nem mancha de fundo (os três primeiros já os garante
+   `dadosDoMapaVivo`; o quarto garante-o esta forma);
+2. o feixe lê só `momento`; **nenhum** brilho, tamanho ou moldura distingue um
+   lugar da história de um paralelo, nem depois de concluído;
+3. **`neblina.ocultos` nunca vai para a tela** — no turno 1 vale sempre 1, e no
+   dia em que fosse 0 anunciava o fim (o `jogo`);
+4. a névoa é uniforme (nunca "menos densa onde há algo"); abre só à volta do que
+   aparece;
+5. nenhuma estrada acaba no vazio (aresta só entre dois nós visíveis);
+6. o perigo da estrada (selo a meio da aresta) **só nas arestas do sítio onde se
+   está e do lugar tocado** — no estado de perigo, com tudo aberto, sete selos
+   eram ruído (medido: 7 → 2);
+7. nada de nome de mecanismo: "para onde a história chama", nunca "gancho";
+   "só se ouviu falar", nunca "boato" na legenda.
+
+### 6 · O movimento (o momento é do `jogo`; a forma é esta)
+
+Anima **só na transição de estado** (anterior → actual), nunca ao montar nem ao
+carregar o save: a névoa a abrir 600–800 ms ease-out; o feixe acende com um
+*bloom* de ~800 ms quando o próximo muda e **fica parado**; o herói na aresta,
+*tween* de 300–500 ms da fracção antiga à nova; o céu, *crossfade* de ~1 s na
+mudança de fase. **Nunca:** nada em laço (feixe, nuvens, água), nada na periferia
+enquanto a narração se escreve (Bartram, Ware & Calvert, *Moticons*, 2003),
+nenhum voo de câmara ao abrir, a tela grande nunca abre sozinha, nenhuma
+animação bloqueia a entrada. `prefers-reduced-motion`: tudo instantâneo ou
+*crossfade* ≤ 150 ms. Teclado: `M` abre/fecha, `Esc` fecha, setas andam de nó em
+nó (o mais perto no rumo da seta), `Enter` = o verbo do cartão; foco visível com
+o anel da casa.
+
+### 7 · Acessibilidade, medida
+
+Texto (WCAG 1.4.3, ≥ 4,5): tinta/painel **13,88** · tintaMeio **8,90** · tintaDim
+**6,00** · gancho **12,27** · onAccent sobre o âmbar **10,04** · rótulo com halo
+**15,25** (tinta) / **6,60** (tintaDim) · faixa, tintaDim sobre o céu: dia
+**4,93**, entardecer **4,76**, noite **6,45**. Gráfico (1.4.11, ≥ 3): âmbar sobre
+a mata **8,81**, o gelo **7,89**, a névoa **10,84** · estrada **8,12** · trilha
+**5,47** · água **4,48** · borda do medalhão **3,56** · perigo **6,34**. As árvores
+(**2,63**) ficam abaixo de 3 **de propósito**: são textura, não informação.
+**Piso de letra da casa** (`letra/maquina` 12 ponteiro · 13 dedo): todo o mono do
+mapa foi subido a 12/13 no Figma (170 textos) — inclusive o preço do Partir, que
+em `O verbo com preço` da biblioteca ainda está a 10 (dívida da biblioteca, não
+do mapa: fica na pauta do desenho).
+
+### 8 · As fontes, e o que cada uma deu
+
+Baldur's Gate 3 (névoa que se desfaz; o mesmo desenho no grande e no pequeno) ·
+The Witcher 3 (o "?" do que se sabe que existe; a caveira acima do nível) ·
+Elden Ring (a orientação da graça; o mapa ganho por pedaços) · Skyrim (a bússola
+em faixa) · Dragon Age: Origins (a viagem como trilho interrompível) e
+Inquisition (a mesa de guerra: o mapa como decisão) · Divinity: Original Sin 2
+(poucos sinais, legenda curta) · os mapas de Exandria do Critical Role (hierarquia
+de letra, matas em árvores, serras em perfil) · o mapa da Terra-média de Tolkien
+e *Fantastic Maps* de Jonathan Roberts (montanha em perfil; rios descem e
+juntam-se, nunca se dividem) · Eduard Imhof, *Cartographic Relief Presentation*
+(luz de noroeste) · WCAG 2.2 (1.4.1, 1.4.3, 1.4.11, 2.5.5/2.5.8, 2.3.3) · Apple
+HIG (44 pt) · Bartram, Ware & Calvert, *Moticons* (2003).
+
+### 9 · A assinatura do `jogo` (10/10), e a discordância resolvida
+
+> *"O jogo assina a faixa-panorama, com as três condições, e a tela grande,
+> porque mostram ao jogador para onde ir e o que existe sem lhe contar o que
+> ainda não conquistou. **Não assina o cartão de partir** enquanto o sistema não
+> der a chegada e as noites na estrada: um preço sem a hora de chegada é meio
+> veredito."*
+
+As três condições (frente no centro, profundidade da régua fixa, só o alvo com
+nome) entraram todas. **Uma discordância, resolvida por escrito:** a proposta
+inicial desenhava o herói no centro de baixo da faixa; tirei-o — com a frente
+ao centro, o losango caía **em cima do alvo do feixe** (visto nos três estados da
+semente 0). O olhar do herói já é o triângulo âmbar da frente; dois âmbares no
+mesmo eixo eram a mesma coisa dita duas vezes. O `jogo` pode reabrir aqui.
+
+**Os números no Figma que dependem de pedidos estão marcados como tal:** as
+horas de chegada e as noites ao relento do `Partir` (P2), o `quem anda lá` (P3),
+os rios (P4). Até lá, o código mostra o verbo com as horas da ficha e sem
+chegada, e o `jogo` não assina essa metade.
+
+### 10 · Para quem coda (o `frontend`, com o bastão)
+
+- `MAPA_VIVO` em `estilo.js` (§3), lido de volta por uma suíte como `T`;
+- a matemática da faixa (rumo, profundidade, janela de 140°, a frente) e a
+  colocação dos rótulos sem colisão são **conta**, não tela: módulo puro
+  (ex.: `src/faixa-do-rumo.js`) com suíte própria — determinístico, sem React;
+- `PainelMapa` ganha o ramo da região (`dadosDoMapaVivo` não `null`), o
+  pergaminho fica para o continente; a faixa entra no topo do papel como
+  `FaixaDoRumo`, fora da área que rola, com o mesmo orçamento de 96 px que R13
+  pagava (a prosa da mesa perde 96 de 572 px, como antes de V5a);
+- `dadosDoMapaVivo` chamado dentro de `calou`, memorizado pelos estados que já
+  existem (o mapa de chamada está em `mente/mm17-regiao.md` §D).
+
+**Pesos.** A faixa e a tela grande: **médio** de design (criar o que não existe;
+reorganizar sem mudar o fluxo — o botão `Mapa` continua onde está). O `Partir`
+como forma da casa no cartão: médio (aposenta a forma violeta da mesma acção).
+**Decidir a viagem no mapa em vez de a escrever** muda o fluxo: é a proposta
+ambiciosa, para a pessoa decidir.
+
+## A1 · a informação que chega ao jogador
+
+### A1 · a fabricação — as seis peças que o `jogo` pediu (`desenho`, 10/10)
+
+*O momento é do `jogo` (`mente/a1-jogo.md` §1–§4, §7): ele decidiu o que se
+corta, o que muda e o que fica. Aqui está **de que** cada peça é feita, com as
+medidas e os tokens que o `aprendiz` usa sem perguntar. Figma: biblioteca
+`e5wJUzInAssoebx5npssKc`, página **`A1 · a informação`** (`254:67`), com o par
+antes/depois de cada peça (o ANTES é a foto do jogo vivo, árvore `15c1595`).
+Contas reproduzíveis no scratchpad do ciclo: `a1-contraste.mjs` (WCAG 2.x com as
+cores de `T`), `a1-custo.mjs` (o custo que surpreende, sobre `grid.js`).*
+
+**Os contrastes que valem para as seis**, medidos contra os quatro chãos onde
+elas moram (o "pior" do poço é `T.pagina` com a parada mais clara de `AMBIENTE`):
+
+| tinta | poço | poço + ambiente (pior) | `panel` | `panelSoft` |
+|---|---|---|---|---|
+| `ink` | 15,25 | 13,57 | 13,88 | 12,40 |
+| `inkMeio` | 9,78 | **8,70** | 8,90 | 7,95 |
+| `inkDim` | 6,60 | **5,87** | 6,00 | 5,36 |
+| `amberSoft` | 13,48 | 11,99 | 12,27 | 10,96 |
+| `amber` | 10,61 | 9,44 | 9,65 | 8,62 |
+
+Bordas de controlo: `lineStrong` 3,81:1 no poço com ambiente e 3,90:1 sobre
+`panel` (1.4.11 pede 3). `onAccent` sobre `amber`: 10,04:1.
+
+---
+
+#### 1 · `O recibo` — o que a ficha mudou neste turno (`255:103`)
+
+**O que é:** uma fila, numa linha só, **debaixo da última frase do Mestre**,
+que diz o que mudou na ficha entre o envio do turno e o fim dele. Lê a FICHA
+(`reciboDoTurno(antes, depois)`, `glifos.js`), nunca a frase — por isso **não
+consegue discordar da bolsa**. É o par T4 do Figma: o antes diz `◉ 20` e `◉ 30`
+em duas linhas de sistema; o depois diz `−15 ◉ · + Poção de Cura`, que é o que a
+bolsa de facto perdeu.
+
+**A notação é a da cinta, e esta é a decisão que responde ao "diz os glifos":**
+o recibo é o delta do que a cinta mostra, então fala exactamente como ela —
+*uma ação, uma forma*.
+
+| chip | forma | exemplo | porquê |
+|---|---|---|---|
+| moedas | número com sinal + `Glifo moeda` (o da cinta, quadro 12), 6 px entre os dois (`CINTA.entreNumeroEGlifo`) | `+7 ◉` · `−15 ◉` | a cinta escreve `1.240 ◉`: número primeiro |
+| PM | número com sinal + `Glifo mana` | `−4 ◆` | idem |
+| PV | número com sinal + a palavra | `−3 PV` | a cinta escreve `17/20 PV`: palavra |
+| XP | número com sinal + a palavra | `+14 XP` | a cinta não mostra XP; a palavra é o único nome que o jogador conhece |
+| nível | `nível 4`, sem sinal | `nível 4` | é um estado alcançado, não um delta (o `ModalNivel` é o momento) |
+| heroísmo · essência | número com sinal + a palavra | `+1 heroísmo` · `+3 essência` | a cinta não os mostra |
+| item | sinal + `U+2009` (espaço fino) + o nome; repetido: `× 2` no fim | `+ Poção de Cura` · `− Corda` | o nome é a identidade |
+
+**Nenhum glifo novo.** `XP`, `nível`, `heroísmo` e `essência` levam palavra e
+não glifo porque a cinta não lhes dá forma; inventar um glifo de XP só para o
+recibo seria a segunda cara de uma coisa que ainda não tem a primeira.
+
+**A gramática, sem excepção:**
+
+- **Ganho e perda: o sinal.** `+` (U+002B) e `−` (**U+2212**, a lei de E4 §5 —
+  o hífen ASCII tem o traço a outra altura numa fila mono). **A cor não é
+  canal:** tudo `T.inkMeio` — **8,70:1** no pior ponto do poço. A perda não é
+  vermelha: o recibo é a voz calma por baixo da prosa, e `danger` aqui seria
+  um alarme a cada compra (R1: cor viva só no que se toca ou tem de se notar).
+- **Letra:** JetBrains Mono `TIPOS.maquina` (12), regular, entrelinha **18**.
+  Glifo a `TIPOS.piso` (12), `cor` omitida (veste `currentColor`).
+- **Lugar:** dentro do bloco da resposta, depois do último parágrafo, a
+  `PAGINA.entreParagrafos` (16) dele; alinhado à esquerda **da prosa** (não ao
+  recuo de 48 das linhas de sistema — o recibo pertence à resposta).
+- **Custo em altura: 34 px quando existe (16 + 18), 0 px quando vazio** — nem a
+  margem. Recibo vazio não se desenha (`chips.length === 0` → `null`).
+- **Ordem fixa:** ◉ · PV · PM · XP · nível · heroísmo · essência · itens (os
+  ganhos de item antes das perdas). **A ordem é lei, e o corte também:** o
+  primeiro chip que não cabe fecha a fila — não se salta para um menor
+  depois dele, senão o recibo mostraria `XP` e esconderia `PV`.
+- **Espaço entre chips:** `RECIBO.entre` **16** na mesa, `RECIBO.entreTelefone`
+  **12** no telefone.
+
+**O teto, e a largura manda antes dele.** `RECIBO.tetoNaMesa` **6**,
+`RECIBO.tetoNoTelefone` **4**. A conta é pura e mora em `glifos.js`
+(`reciboQueCabe(chips, largura, { telefone })`), e **não precisa do DOM**:
+JetBrains Mono tem avanço fixo de **600/1000 em**, logo um carácter mede
+`RECIBO.avancoMono` (0,6) × 12 = **7,2 px**, e
+
+```
+largura(chip) = caracteres × 7,2  [+ 6 + 12 se leva glifo]
+reserva       = largura("e mais 9") + entre = 57,6 + entre
+```
+
+Entra o chip se `soma + entre + largura ≤ L − (ainda há chips depois ? reserva : 0)`
+e o teto não foi atingido. **O item trunca** com `…` até caber, mas **nunca abaixo
+de `RECIBO.pisoDoNome` = 12 caracteres** — o piso de §21 (`⌈45 / 4⌉`; o 45 ainda
+não vive em código, e no dia em que nascer este número passa a ser a conta). Abaixo
+do piso, o item vai para o resto: *um campo trunca, ou não se desenha.*
+
+Medido com a conta, a coluna da prosa a 375 é **303 px** (375 − 2 × 16 do cartão
+− 2 × `PAGINA.ladoTelefone`): `+120 ◉ · −12 PV · +140 XP · nível 4 · e mais 2` =
+**296,4 px** (folga 6,6). O pior caso de quatro números grandes
+(`+1.240 ◉ · −120 PV · −20 ◆ · +1.400 XP`) dá 321,6 com a reserva — a conta
+manda o quarto para o resto e mostra três + `e mais 4`. Na mesa a coluna mede
+**536 px** (medido a 1440) e o teto de 6 chega antes da largura.
+
+**O que passa: `e mais N`, em `T.inkDim` (5,87:1) — e NUNCA `+N`.** Ver a
+discordância 1, abaixo. Não é botão (não cabe um alvo de 24 numa linha de 18
+sem pisar a prosa): **o leitor de tela lê todos** (os chips escondidos vão num
+`<span className="sr-only">`), só o olho tem teto; e **os itens que ficaram no
+resto não contam como mostrados** — a marca da BOLSA acende para eles (A5).
+
+**O momento** (do `jogo`): chega com a prosa, nunca antes, nunca sozinho. Se B2
+o calcula depois do Cronista, ele **aparece no fim do bloco sem movimento** e só
+cresce para baixo — não desloca nada que já se lia (a lei de V5e).
+`prefers-reduced-motion`: nada a cortar, não anima.
+
+**Acessível:** `aria-label` de cada chip por extenso (`Glifo moeda` já diz
+*moedas*; U+2212 é lido *menos*). A fila é `role="list"` com `aria-label="o que
+mudou"`.
+
+**Para o `aprendiz`:** `export function Recibo({ chips, telefone })` em `ui.jsx`
+(peça da biblioteca: a dobra da luta e o fim da luta também a usam) e a tabela
+
+```js
+export const RECIBO = {
+  entre: 16, entreTelefone: 12,
+  tetoNaMesa: 6, tetoNoTelefone: 4,
+  avancoMono: 0.6,   /* JetBrains Mono: 600/1000 em — é o que deixa a conta ser pura */
+  pisoDoNome: 12,    /* §21: ⌈45 / 4⌉ */
+  entrelinha: 18,    /* TIPOS.maquina × 1,5 */
+};
+```
+
+Os outros números são de tabelas que já existem (`TIPOS`, `PAGINA`, `CINTA`).
+
+---
+
+#### 2 · `A dobra`, eixo `Conteúdo=Luta` (`255:199`)
+
+**É A dobra de R15 §5, e não uma peça nova:** revelar mais itens na própria
+lista. Ganha um eixo de conteúdo porque o cabeçalho deixa de ser só `mais N
+ofertas` e passa a dizer o resumo. O ANTES (T8) era a linha `4 golpes · 3 de
+dano causado · 6 sofrido · 2 rolagens ▾ 8 linhas` — que **mentia** (sofri 3) e
+deixava treze peças soltas à volta.
+
+| | Dobrada · mesa | Dobrada · telefone | Aberta · mesa |
+|---|---|---|---|
+| alvo | o cabeçalho inteiro, ≥ `ALVOS.piso` (48) | idem | idem — fecha no mesmo alvo |
+| caixa | raio 8, fundo `T.panel`, borda 1 px `T.lineStrong` **tracejada** (porta da LISTA, R15) | idem | idem |
+| à esquerda | `LadrilhoDoAssunto` `espadas`, tom Neutro (`LADRILHO`: 36, glifo 16 `amber`, raio 12), 12 px até o texto | idem | idem |
+| linha 1 | `A luta · {quem caiu} · {n} rodadas`, mono `TIPOS.rotulo` (13) `T.ink`, entrelinha 18 | `A luta · {quem caiu}` | como a mesa |
+| recibo | **o mesmo `Recibo`**, na mesma linha, 16 depois do texto | na linha 2, debaixo (2 px) | como a mesa |
+| à direita | chevron 14 `T.inkDim`, para baixo | idem | para cima |
+
+- **Enchimento do cabeçalho:** 6 em cima, em baixo e à esquerda —
+  `(ALVOS.piso − LADRILHO.lado) / 2`, relação e não número —, 14 à direita (o
+  da `Dobra` de hoje). No telefone a caixa mede 6 + 18 + 2 + 18 + 6 = **50 px**.
+- **O telefone perde o `· {n} rodadas` do cabeçalho**, medido: a 303 px, com
+  ladrilho e chevron, sobram ~195 px de texto, e `A luta · 2 lobos caídos · 2
+  rodadas` pede 273. As rodadas não se perdem: vivem dentro, nos rótulos.
+  `{quem caiu}` longo **quebra** em duas linhas (o cabeçalho cresce); o recibo
+  nunca quebra (é uma fila, com o seu teto).
+- **Aberta — a gramática do rastro (#104), para a luta ter uma cara de log:**
+  uma linha por golpe (N2 fundido: o `🎲` e o `⚔` do mesmo golpe são **uma**
+  linha), glifo 12 `T.inkDim` do assunto (`assuntoDaLinha`: `dado`, `espadas`,
+  `escudo`, `passo`…) + 8 + o resto em mono `TIPOS.maquina` (12) `T.inkMeio`,
+  entrelinha 18, **4 px** entre linhas. Recuo **54** = 6 + `LADRILHO.lado` +
+  `LADRILHO.espaco` — alinha ao texto do cabeçalho (relação, não número). O
+  `🌍 VEZ DO MUNDO — rodada n` vira um **rótulo de máquina** `rodada n`
+  (mono 12, `T.inkDim`, rastreio 1, maiúsculas) — o `☠` vira a palavra `cai`.
+  12 px por baixo da última linha.
+- **Mesa no rastro e no relato, letra diferente, de propósito:** o rastro da
+  batalha está a mono 10 (exceção escrita de B1, desenho da pessoa); no relato
+  a letra volta ao piso (`TIPOS.maquina`) — o relato não herda a exceção.
+- **Nenhuma porta nasce dentro dela** (#65). **Mora onde a luta FECHOU** (depois
+  da última mensagem `naLuta`), como o recibo mora depois da prosa.
+- `prefers-reduced-motion`: a `Dobra` não tem movimento; abrir e fechar é
+  instantâneo. Nunca bloqueia nada.
+
+**Para o `aprendiz`:** `Dobra` (ui.jsx) ganha a forma de cabeçalho com
+conteúdo (`conteudo="luta"`, `cabecalho`, `recibo`, `aberta`, `aoAlternar`, e os
+filhos são as linhas), e `painel-relato.jsx` compõe `DobraDaLuta` com ela. A
+borda tracejada, o raio, o fundo e o alvo continuam os da `Dobra` — **uma** peça.
+
+---
+
+#### 3 · `O fim da luta` (`255:295`)
+
+**O que é:** o momento do ganho, **na própria mesa de batalha**, no lugar onde
+hoje está só `Respirar fundo →`. Toma a secção *Sua próxima ação* (fundo
+`T.panel`, raio `MESA_DE_BATALHA.raio` 16, enchimento `escolhasRespiro` 20 /
+`escolhasRespiroNoTelefone` 8, entre faixas `escolhasEntre` 16 / `entreVerbos`
+8): sai a fileira de verbos, o `como?` e a linha do veredito.
+
+**As três faixas, de cima para baixo:**
+
+1. **O desfecho + o recibo da luta.** O desfecho em Cormorant Garamond
+   SemiBold (`tv-display`), `TIPOS.display` **28** na mesa, `TIPOS.titulo`
+   **20** no telefone. `Vitória` em `T.amberSoft` (**12,27:1**) — é a luz do
+   herói; os outros desfechos em `T.ink` (13,88:1), porque não há luz a
+   celebrar. À direita, 24 / 12 px depois, **o mesmo `Recibo`** em tamanho de
+   momento: mono **Bold** `TIPOS.corpo` (15) na mesa, `TIPOS.rotulo` (13) no
+   telefone, `T.ink`, glifo 16. É a mesma conta (`reciboDoTurno` da ficha da
+   abertura à do fecho, B2/B7).
+2. **No chão** (só na Vitória): uma linha por coisa, alvo de 48 —
+   rótulo de máquina `no chão` (`T.inkDim`, rastreio 1, maiúsculas) · o nome em
+   Spectral `TIPOS.corpo` (15) `T.ink` · e, à direita, **`Recolher`** (botão
+   secundário: 48 de alto, 16 de lado, raio 8, fundo `T.panelSoft`, borda 1 px
+   `T.lineStrong` 3,90:1, mono 13 `T.ink`). Recolhida, a linha fica com o nome
+   a `T.inkDim` e `na bolsa` no lugar do botão — **sem alvo**. Teto: **2 na
+   mesa, 1 no telefone**; o resto é uma `A dobra` (`mais 2 coisas`), a forma
+   que já existe.
+3. **`Respirar fundo →`** — o botão de hoje (amber, `onAccent` 10,04:1,
+   `ALVOS.piso`, Cormorant 18), largura inteira. **Presente e tocável desde o
+   primeiro quadro; nunca anima, nunca fica desabilitado, nada o cobre.**
+
+**Os desfechos** (prop `desfecho`, que o `oficial` passa em B7; sem ela,
+`encerrada`):
+
+| desfecho | título | recibo | no chão |
+|---|---|---|---|
+| `vitoria` | Vitória | o ganho e a perda | sim |
+| `fuga` | Você escapou | só a perda | não |
+| `queda` | Você tombou | só a perda | não |
+| `encerrada` | A luta acabou | o que houver (pode ser vazio: 0 px) | não |
+
+*As palavras são do `jogo` (é dele o que se comunica); assinei-as como forma e
+ele pode trocá-las sem tocar na peça.*
+
+**A altura, e é ela que impede o tabuleiro de saltar:** na mesa, Vitória com
+uma coisa no chão = 34 + 16 + 48 + 16 + 48 + 2 × 20 = **202 px**, contra os
+**206** que a ação mede durante a luta (24 + 16 + 48 + 16 + 62 + 40). O fim
+cabe no lugar da luta, e o tabuleiro não se mexe. No telefone, 26 + 8 + 48 + 8
++ 48 + 16 = **154 px** contra os 144 do arco do polegar: o campo cede 10 px —
+aceitável porque a luta acabou e o campo já não decide nada.
+
+**Movimento, e a saída dele:** o desfecho e os chips entram com uma classe nova
+`tv-fim-entra` (opacidade 0 → 1 e 4 px de subida), **`FIM_DA_LUTA.entra` 240 ms**,
+cada chip `FIM_DA_LUTA.passo` **60 ms** depois do anterior (≤ 480 ms no total).
+Com `prefers-reduced-motion`: `animation: none` — entra parado. O botão não
+participa: está lá antes de qualquer animação começar.
+
+**Foco e anúncio:** ao chegar, o foco vai ao **título** do desfecho
+(`tabIndex={-1}`, `role="status"`) — e **não** ao `Respirar fundo`, porque um
+Enter que ainda viesse a caminho do `como?` sairia da batalha sem o jogador ver
+o que ganhou. O próximo `Tab` é o primeiro `Recolher`, depois `Respirar fundo`.
+Ao recolher, o foco passa ao `Recolher` seguinte ou ao `Respirar fundo`, nunca
+ao vazio.
+
+**Para o `aprendiz`:** `FimDaLuta({ desfecho, recibo, chao, aoRecolher, aoSair,
+telefone })` em `painel-batalha.jsx`, e em `estilo.js`
+`export const FIM_DA_LUTA = { entra: 240, passo: 60, tetoDoChao: 2, tetoDoChaoNoTelefone: 1 };`
+mais a classe `tv-fim-entra` em `MOVIMENTO_CSS` (sem crase no comentário —
+a lei de 24/09) e a linha dela no `@media (prefers-reduced-motion: reduce)`.
+
+---
+
+#### 4 · Os glifos `fera` e `morto` (`254:72`, `254:77`)
+
+**As formas**, na família de `GLIFOS` (grelha 24, área viva 2–22, traço
+redondo, sem enchimento, `TRACO_DO_GLIFO`):
+
+```js
+/* o rosto de quem é bicho (menteDaCriatura = besta) · A1 */
+fera: { de: "lucide:paw-print", d: "M9 4a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M16 8a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M18 16a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z" },
+/* o rosto de quem já morreu e anda (menteDaCriatura = morto) · A1 */
+morto: { de: "lucide:bone", d: "M17 10c.7-.7 1.69 0 2.5 0a2.5 2.5 0 1 0 0-5 .5.5 0 0 1-.5-.5 2.5 2.5 0 1 0-5 0c0 .81.7 1.8 0 2.5l-7 7c-.7.7-1.69 0-2.5 0a2.5 2.5 0 0 0 0 5c.28 0 .5.22.5.5a2.5 2.5 0 1 0 5 0c0-.81-.7-1.8 0-2.5Z" },
+```
+
+(Geometria conferida no `lucide-static` 0.469.0, ISC — a mesma licença e o
+mesmo cabeçalho que já estão no topo de `glifos.js`; os círculos da pata
+escritos como `path`, como a casa faz.)
+
+**Por que um SINAL e não um rosto de lobo desenhado:** o retrato de gente diz
+*quem*; de um bicho o jogador só precisa de saber *que tipo de coisa* é — e o
+defeito do `jogo` (N6) é precisamente o lobo de rosto humano ler-se *bandido*.
+A 28 px (o chip), uma cabeça de lobo de traço é uma mancha; a pegada lê-se a 16
+de glifo. **E `morto` não é a caveira:** `Glifo/perigo` já é a caveira e quer
+dizer *o perigo mortal* (V3b); pô-la num retrato faria o morto-vivo ler-se
+*isto está morto* — e há um estado *tombado* que diz isso. Osso = *o que já
+morreu e anda*: uma forma, um sentido.
+
+**A regra de escolha** — e é **uma** regra para os dois leitores (o `Retrato`
+e a ficha do tabuleiro), por isso mora no `Rosto`, que os dois já pedem:
+
+```
+se o ente TEM classe            → gente (o herói e o companheiro de classe, sempre)
+senão menteDaCriatura(nome, desc, lex):
+      "besta" → fera
+      "morto" → morto
+      "pensa" → gente
+```
+
+`menteDaCriatura` (adversario.js) é a mesma conta que já decide `ehBicho` /
+`ehMorto` na luta (`App.jsx:6834`) e que C7 vai usar para o golpe final — **o
+retrato e o comportamento não podem discordar**. O mapa é tabela em
+`glifos.js`: `ROSTO_DA_MENTE = { besta: "fera", morto: "morto" }`; quem não está
+lá é gente. Suíte: o lobo → `fera`, o lobo esquelético → `morto` (RX_MORTO vem
+antes), o bandido → gente, um herói chamado *Lobo* com classe → gente.
+**Limite escrito:** `golem`, `autômato`, `constructo`, `estátua viva` caem em
+`morto` porque a mente é a mesma (não teme, não negocia); o osso lê-se mal
+neles. Se um construto entrar em jogo, nasce `construto` — hoje seria glifo sem
+leitor.
+
+**O desenho dentro do retrato** (quadro 64 do `Rosto`): o disco inteiro a
+`T.panelSoft`; o glifo centrado, **36/64 do diâmetro** (`translate(14 14)
+scale(1.5)`), traço `T.inkMeio` (**7,95:1** contra o disco — 1.4.11 pede 3),
+`strokeWidth = tracoNaGrelha(lado × 36 / 64)`. O `Rosto` ganha a prop `lado`
+(px desenhados; omissão 44, a do `Retrato`); o tabuleiro passa `0,8 × lado da
+casa` (a ficha é `r = 0,40`). **O anel continua a dizer o lado** (`danger`
+inimigo, `ok` aliado) e os estados continuam os do retrato (tombado: apagado a
+`ANEL.apagado`); o glifo não muda de cor com a ferida — quem diz a ferida é o
+arco. Medidas no Figma a 28 · 38 · 74 (chip · NESTA BATALHA · carta).
+
+Cada entrada nasce com leitor (`check-formas` D5h): o leitor é o `Rosto`.
+
+---
+
+#### 5 · `PilulaDoTempo`, estado `Hora=Cheia` (`254:107`)
+
+- **Formato: `8h`, sem espaço, sem zero à esquerda.** É o da norma brasileira
+  para a **hora do relógio** — *Manual de Redação da Presidência da República*
+  (3.ª ed., 2018): `8h`, `14h30`, sem ponto nem espaço. O espaço que o SI pede
+  entre número e unidade (`6 h`) é para **grandeza** (uma duração), não para a
+  hora do dia; e a casa já escreve `Esperar 6h` (`App.jsx:1721`), que fica igual.
+  Meia-noite: `0h`.
+- **A conta:** `horaNaCinta(minuto) = Math.floor(minuto / CINTA.passoDaHora) mod 24 + "h"`
+  (`glifos.js`, puro), com `CINTA.passoDaHora = 60` — na tabela da cinta, onde a
+  pílula mora (o `jogo` sugeriu `TEMPO_NA_CINTA`; uma tabela nova para um
+  número que tem casa seria a segunda tabela).
+- **A virada da luz:** a mesma de hoje, `luzDaHora` sobre `HORARIO_DA_LUZ` (4 ·
+  8 · 18 · 21), que já trunca a hora (`Math.floor`). A pílula e o glifo lêem a
+  **mesma hora cheia** — *nunca discordam*: às 7h59 a pílula diz `7h` e o céu
+  madrugada; às 8h00 os dois viram juntos. `luzDaHora("8h")` já lê o formato (a
+  regex aceita `h`). A pílula **não anima** ao virar.
+- **Vale na mesa e no telefone** (a pílula é uma peça; a mesa leva moldura, o
+  telefone é nu, como em V4). Ganho de largura, medido a 12 px mono:
+  `08:26` 36 px → `8h` 14,4 px (−21,6); `18h` 21,6 (−14,4). **`CINTA.tempo`
+  (145) é MEDIDO** — o `aprendiz` remede-o no navegador e troca o número, e
+  `CINTA.larguraParaORotulo` (soma) refaz-se sozinho.
+- **O minuto mora em O TEMPO** (#139, o toque na pílula): lá continua
+  `22:10 · 2 de Brumal`. O `aria-label` do botão d'O TEMPO diz a hora cheia
+  (`8 horas`), como a pílula.
+
+---
+
+#### 6 · Emenda à lei de E4 — **o custo onde surpreende** (`254:127`)
+
+**A lei de E1/E4 era:** *o que é alvo tem o custo escrito dentro; o que não tem
+nada escrito dentro não é alvo.* Ela existia por uma medida (E4): em seis das
+dez plantas o olho erra o custo, e ali o número é o único canal. **A medida
+continua certa; a lei cobrava o número também onde o olho acerta.** Medido
+agora (`a1-custo.mjs`, sobre `custosDe`, a mesma busca que a tela usa;
+"o olho" = Chebyshev × `METROS_POR_QUADRADO`):
+
+| caso | casas alcançáveis | custo ≠ o que o olho conta |
+|---|---|---|
+| **T8 do ANTES** (taverna, Brida em G9) | 80 | **0** (0 %) |
+| abertura, as 10 plantas | 444 | 167 (37,6 %) — **100 %** nas 6 de lama, **0 %** nas 4 lisas |
+| herói no meio do mapa, as 10 | 1243 | 150 (12,1 %) — a fronteira da lama e os desvios |
+
+(O `jogo` esperava < 10 de ~100 na T8; deu 0 de 80.)
+
+> **LEI (emenda A1): o custo escreve-se dentro da casa ONDE SURPREENDE — custo
+> ≠ distância × 1,5 m — e SEMPRE sob o dedo e em *Confirmando*. A área de
+> movimento diz o alvo; o número diz a exceção. O que não está na área não é
+> alvo.**
+
+- **O que diz "alvo" passa a ser a área**, que já existe desde B1: o tracejado
+  âmbar de 1,5 px à volta do conjunto (`MESA_DE_BATALHA.chao.tracoDoPasso`; âmbar
+  contra a mesa ≥ 9:1) e o véu de fora (`alfa.foraDoPasso` 0,35). A metade antiga
+  *"o que não tem nada escrito dentro não é alvo"* aposenta-se: com a área a
+  dizê-lo, ela obrigava a escrever 80 números para dizer uma coisa que o
+  tracejado já diz.
+- **O número que fica é o mesmo de hoje:** mono `TELA_DE_BATALHA.casa.corpoDoCusto`
+  (11), `T.amberSoft` (**12,52:1** sobre a casa acesa), no centro.
+- **Sob o dedo e em *Confirmando*** o custo escreve-se sempre — *o preço antes
+  do clique* continua em todas as casas, só deixou de estar em todas **ao mesmo
+  tempo**.
+- **O denominador continua proibido** (E4: *um orçamento falso não pode viver
+  de todo*).
+- **Nas seis plantas de lama, na abertura, nada muda:** 100 % das casas
+  surpreendem, e todas levam número — a razão de E4 fica inteira.
+- **A legenda do pé muda de conteúdo, não de forma** (o quadro B1 da pessoa
+  escreve os custos distintos, `3 · 6 · 9 — CUSTO NO TERRENO`): passa a dizer a
+  regra e a exceção em língua de mundo — `1,5 m por casa`, e, só quando o
+  conjunto aceso tem casa de terreno difícil, `· {nome da região}, 3 m`
+  (`na encosta, 3 m`; o nome sai de `nomeDoLugar`, a língua que o Mestre já
+  usa). Com `ignoraDificil`, só `1,5 m por casa`. A lista de custos era uma
+  planilha ao pé de outra.
+- **A conta é pura** e prova-se em Node: `casasQueSurpreendem(custos, heroi)` em
+  `glifos.js` — recebe o `Map` de `custosDe` e a posição, devolve o `Set` das
+  chaves com `metros !== Math.max(|dx|, |dy|) × 1,5` (o 1,5 é
+  `METROS_POR_QUADRADO`, importado de `grid.js`, nunca escrito). Suíte: a T8
+  (0 de 80), a abertura da floresta (26 de 26), a estrada com o herói ao meio
+  (18 de 62 na janela do Figma).
+
+---
+
+### A1 · o que divergi do `jogo`, com os dois lados
+
+1. **`+N` → `e mais N`.** *O `jogo`:* o que passa do teto vira `+N`, a gramática
+   da soleira. *Eu:* no recibo o `+` **é o sinal de ganho** — um `+2` no fim de
+   `+7 ◉ · +14 XP · +2` lê-se *ganhei 2 de qualquer coisa*; e a própria lei de
+   `A dobra` (R15) recusa o número sozinho (*"diz o número E o substantivo"*).
+   **Decisão:** `e mais N`, em `inkDim`. O `+N` da soleira continua o que é.
+2. **O chão do contraste.** *O `jogo`:* ≥ 4,5:1 sobre `panel`. *Eu:* o recibo
+   mora no **poço** com o ambiente, que é mais escuro e varia; medi nos dois.
+   **Decisão:** a régua é o pior ponto do poço (8,70:1 para `inkMeio`). Não muda
+   a peça, muda onde se prova.
+3. **As rodadas no telefone.** *O `jogo`:* o cabeçalho diz quem caiu **e** as
+   rodadas. *Eu:* a 303 px não cabem (273 px de texto em ~195). **Decisão:** no
+   telefone o cabeçalho diz quem caiu; as rodadas vivem dentro (`rodada n`).
+4. **A prosa do Mestre nunca entra na dobra** — é uma condição a B1, não uma
+   discordância de forma. Se `naLuta` marcar a narração do Mestre durante a luta,
+   a dobra **não a leva**: a dobra leva só linhas que não são cena (as de sistema
+   e os ecos). *A prosa é a protagonista*, e não se dobra.
+5. **O eco do verbo dentro da dobra cala; a frase livre fica.** Proposta minha ao
+   `jogo` (é dele o *quê*): `Ataco lobo 1` é o mesmo facto da linha do golpe
+   (N2) e cala; o que o jogador escreveu no `como?` fica, em Spectral itálico
+   `TIPOS.rotulo` `inkMeio` — é a voz dele, e a lei V3c é que a voz dele não leva
+   carimbo.
+6. **`TEMPO_NA_CINTA` → `CINTA.passoDaHora`.** Um número com casa não ganha
+   tabela nova.
+
+### A1 · a proposta ambiciosa — **o espólio cai no tabuleiro**
+
+Hoje o chão é uma lista (`no chão: Retalho de Couro [Recolher]`, a peça 3). Numa
+mesa de verdade, o lobo cai **numa casa**, e o que ele deixa fica **ali**: o
+Mestre pousa a ficha de papelão no sítio. Proponho que, na vitória, **cada coisa
+no chão seja uma ficha na casa onde o inimigo caiu** (`Glifo bolsa` 16 num disco
+`panelSoft` de `0,8 × lado`, anel `amber` — a mesma gramática da ficha de gente),
+e que **recolher seja tocar a ficha**: se está ao alcance do passo, o herói anda
+e apanha (o custo escreve-se — é uma casa sob o dedo); se não está, o veredito
+diz `faltam 3 m`. O fim da luta ganha **geografia**: o loot longe custa
+movimento, o loot ao lado é imediato, e a luta acaba com o jogador a olhar para
+o campo que acabou de ganhar em vez de para uma lista. A lista da peça 3 fica
+como a forma acessível (teclado, leitor de tela). **Conta:** +1 toque por coisa
+longe, 0 por coisa ao lado; nenhum painel novo. **Por que é para a pessoa:** muda
+o que o jogador faz no fim de toda luta (a ordem e o gesto) — é o tipo de coisa
+que um commit revertido desfaz, mas que o `jogo` deve jogar antes e depois.
+*(Para o `regente` pôr em "Para a pessoa decidir" da `pauta-desenho`.)*
+
+### A1 · pesos
+
+Recibo, dobra · Luta, fim da luta, glifos, hora cheia: **médio** de design (criar
+o que não existe / alterar a forma do que existe, sem mudar o fluxo). A emenda de
+E4: **médio** (altera a forma de uma lei de tela; o jogador não reaprende nada —
+o preço continua sob o dedo). A proposta do espólio no tabuleiro: **pesado**
+(muda o gesto do fim da luta).
