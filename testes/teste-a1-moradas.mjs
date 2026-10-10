@@ -154,6 +154,34 @@ sec("2b. A ordem de quem manda");
   t("null, undefined, vazio, número e {texto:null} não estouram e dão cena", [null, undefined, "", 42, { texto: null }].every((x) => moradaDaLinha(x) === "cena"));
   t("o seletor de variação (U+FE0F) não muda a morada", moradaDaLinha("📍️ Você está aqui.") === "cala");
   t("a mesma frase dá sempre a mesma morada (sem memória)", [1, 2, 3].every(() => moradaDaLinha("Item obtido: Corda") === "recibo"));
+
+  /* B3: a porta do aceite ABRE o Diário. `portaDaLinhaDeSistema` não é
+     exportada e o `.jsx` não se importa em Node — lê-se a fonte, como
+     `teste-r3-campo-do-turno` faz (seta + tabela + função, num Function).
+     Sem a entrada `Diário` em PORTAS_DO_SISTEMA a seta mentia: a linha
+     nascia, com cara de porta, e não abria nada. */
+  const { readFileSync } = await import("node:fs");
+  const { SUBS_GESTAO } = await import(S + "abas.js");
+  const RELATO = readFileSync(new URL("../src/painel-relato.jsx", import.meta.url), "utf8");
+  const fonte = (nome) => {
+    const i = RELATO.indexOf(`function ${nome}(`);
+    if (i < 0) return null;
+    const a = RELATO.indexOf("{", i);
+    for (let k = a, n = 0; k < RELATO.length; k++) {
+      if (RELATO[k] === "{") n++;
+      else if (RELATO[k] === "}" && --n === 0) return RELATO.slice(i, k + 1);
+    }
+    return null;
+  };
+  const seta = RELATO.match(/const SETA_DA_PORTA = "[^"]+";/);
+  const portas = RELATO.match(/const PORTAS_DO_SISTEMA = \[[\s\S]*?\n\];/);
+  const fn = fonte("portaDaLinhaDeSistema");
+  const linhaDoAceite = "▸ Diário — O lobo da colina · próximo: falar com Isen";
+  let p = null;
+  try { p = new Function("SUBS_GESTAO", `${seta[0]}\n${portas[0]}\n${fn}\nreturn portaDaLinhaDeSistema;`)(SUBS_GESTAO)(linhaDoAceite); } catch (e) { p = null; }
+  t("B3: a porta do aceite (▸ Diário — …) abre a aba de cima `diario`", !!p && p.aba === "diario" && p.sub === null, JSON.stringify(p));
+  t("B3: e a linha do aceite mora na cena (fora e dentro da luta: nenhuma porta nasce na dobra)",
+    moradaDaLinha({ autor: "sistema", texto: linhaDoAceite }) === "cena" && moradaDaLinha({ autor: "sistema", texto: linhaDoAceite, naLuta: true }) === "cena");
 }
 
 /* ============================================================ */

@@ -66,7 +66,12 @@ const RX_PALAVRA = /\bsistemas?\b|\bIA\b|\bNarrador(?:es)?\b|\bCronista\b|\btoke
    sistema resolve" e o `title` do estoque do mercado ("O estoque é do
    sistema"). Só desce. */
 const TETO = {
-  "App.jsx": 3,
+  /* "App.jsx": 3 → 0, e a linha sai (A1, terceira etapa, o `oficial`):
+     as três reescritas na voz do mundo, com o número que decide mantido —
+     o rodapé do Mercado (a pessoa citou-o pelo nome), "Dificuldade N
+     (porquê). Seu bônus: +M" e "— o corpo reage antes de você". Arquivo
+     fora desta tabela tem teto 0: daqui em diante, qualquer fala da
+     máquina na tela é vermelho. */
 };
 
 /* ---------------- AS EXCEÇÕES, uma a uma ----------------

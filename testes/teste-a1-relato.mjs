@@ -21,7 +21,8 @@
    já faz com o gesto do campo.
    ============================================================ */
 import { readFileSync } from "node:fs";
-import { reciboDoTurno } from "../src/glifos.js";
+import { reciboDoTurno, reciboQueCabe, itensMostrados } from "../src/glifos.js";
+import { fotoDoAcervo, marcasQueAcendem } from "../src/marca-da-porta.js";
 import { etapaAtual, textoDaEtapa } from "../src/missoes.js";
 
 const ler = (x) => readFileSync(new URL(x, import.meta.url), "utf8").split(String.fromCharCode(13)).join("");
@@ -193,8 +194,15 @@ t("os 'antes' esquecem-se na campanha nova, no save carregado e no turno desfeit
   (APP.match(/try \{ esquecerORecibo\(\); \} catch \(e\) \{ calou\("esquecer o recibo/g) || []).length === 3);
 t("quem fecha a luta e sabe como diz: a vitória do golpe e a vitória declarada",
   /notarFechoDaLuta\(\{ combate: c, desfecho: caidosDaLuta\(c\)\.length \? "vitoria" : "encerrada" \}\);\s*\n\s*combateRef\.current = null;/.test(APP)
-  && /if \(resp\.mudancas\.__vitoriaAuto\) \{[\s\S]{0,300}?notarFechoDaLuta\(\{ combate: combateAntes, desfecho: "vitoria"/.test(APP));
-t("`reciboDoTurno` vem de glifos.js (a conta é uma, a da mesa)", /rascunhoDe, reciboDoTurno \} from "\.\/glifos\.js";/.test(APP));
+  /* (A1 · as pontas) o retrato da vitória declarada passou de `combateAntes`
+     a `retratoComOsFinais(combateAntes, finais)`: a tela do fim desenha esse
+     retrato, e com o de antes o último lobo ficava de pé. A intenção da
+     asserção (quem fecha e sabe como, diz) não muda. */
+  && /if \(resp\.mudancas\.__vitoriaAuto\) \{[\s\S]{0,300}?notarFechoDaLuta\(\{ combate: retratoComOsFinais\(combateAntes, resp\.mudancas\.__inimigosFinais\), desfecho: "vitoria"/.test(APP));
+/* (A1 · as pontas) o import ganhou `reciboQueCabe`, `itensMostrados` e
+   `horaNaCinta` depois de `reciboDoTurno` — a mesma origem; a âncora deixa
+   de exigir que ele feche a lista. */
+t("`reciboDoTurno` vem de glifos.js (a conta é uma, a da mesa)", /rascunhoDe, reciboDoTurno[^}]*\} from "\.\/glifos\.js";/.test(APP));
 
 sec("6. B3 — o clique registra calado, e o aceite é uma porta");
 t("o eco \"Pego o cartaz\" saiu da boca do jogador", !/autor: "jogador", texto: `Pego o cartaz/.test(APP));
@@ -262,6 +270,37 @@ t("a linha guarda o seu lugar e o dano que veio antes da reação",
   /const iDoGolpe = linhasSis\.length, danoQueVeio = a\.r\.dano;/.test(APP));
 t("e é reescrita com as duas pontas e quem as separou, em try/calou",
   /danoQueVeio \+ " → " \+ rc\.danoFinal \+ " de dano" \+ \(nomeDaReacao \? " \(" \+ nomeDaReacao \+ "\)" : ""\)/.test(APP) && /calou\("a linha do golpe depois da reação", e\)/.test(APP));
+
+sec("11. as pontas — o lugar, a marca que o recibo já mostrou, a hora falada e o lobo caído");
+/* a cadeia pura que a fiação usa, provada em Node: o item que o recibo
+   desenha não acende a BOLSA; sem `mostrado`, acende (a regra de antes) */
+{
+  const a = { moedas: 10, vida: 20, vidaMax: 20, xp: 0, nivel: 1, inventario: ["Corda"] };
+  const d = { ...a, moedas: 17, inventario: ["Corda", "Poção de Cura"] };
+  const vis = itensMostrados(reciboQueCabe(reciboDoTurno(a, d), 0, { telefone: false }).visiveis);
+  const fa = fotoDoAcervo({ itens: a.inventario }), fd = fotoDoAcervo({ itens: d.inventario });
+  t("o recibo mostra a poção, e ela não acende a Bolsa",
+    vis.includes("Poção de Cura") && marcasQueAcendem(fa, fd, { origem: "turno" }).includes("inv")
+    && !marcasQueAcendem(fa, fd, { origem: "turno", mostrado: { itens: vis } }).includes("inv"));
+}
+t("a marca da porta passa `mostrado` (o recibo fechado e o que corre), em try/calou",
+  /const acesas = marcasQueAcendem\(antes, foto, \{ origem: aba && !houveTurno \? "alforje" : "turno", mostrado \}\)/.test(APP)
+  && /try \{ mostrado = oQueATelaMostra\(\); \} catch \(e\) \{ calou\("o que a tela mostra", e\); \}/.test(APP));
+t("o recibo do turno e o da luta anotam o que mostraram; o turno novo esquece",
+  /mostrarNaTela\(\{ itens: \[\.\.\.itensQueOReciboMostra\(recibo\), \.\.\.\(fim \? itensQueOReciboMostra\(fim\.recibo\) : \[\]\)\] \}\);/.test(APP)
+  && /if \(fim\) mostrarNaTela\(\{ itens: itensQueOReciboMostra\(fim\.recibo\) \}\);/.test(APP)
+  && /mostradoRef\.current = \{ itens: \[\], missoes: \[\] \};\s*\n\s*turnoDoReciboRef\.current = \{/.test(APP));
+t("a missão que a porta do aceite abriu não acende o Diário (os dois aceites)",
+  (APP.match(/mostrarNaTela\(\{ missoes: /g) || []).length === 2);
+t("o cabeçalho da batalha recebe o lugar da cena",
+  /combate=\{combateNaTela\}\s*\n\s*lugar=\{lugarDaCena\(\)\}/.test(APP));
+t("o botão d'O TEMPO diz a hora cheia por extenso",
+  /aria-label=\{\["O tempo", horaCheiaFalada\(horaTxt\(minuto\)\)\]\.filter\(Boolean\)\.join\(", "\)\}/.test(APP)
+  && /return h === 1 \? "1 hora" : h \+ " horas";/.test(APP));
+t("o fim da luta desenha o retrato de DEPOIS do golpe final",
+  /if \(c\) retratoDoFimRef\.current = c;/.test(APP)
+  && /setFimDaLuta\(retratoDoFimRef\.current \|\| ultimoCombateRef\.current\);/.test(APP)
+  && /if \(!ultimoCombateRef\.current\) retratoDoFimRef\.current = null;/.test(APP));
 
 console.log(`\n${bons} ok, ${maus} falhas`);
 process.exit(maus ? 1 : 0);

@@ -212,7 +212,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -320,6 +320,38 @@ function portaDoAceite(m) {
   let e = null;
   try { e = etapaAtual(m); } catch (err) { calou("a etapa da porta do aceite", err); }
   return "\u25B8 Di\u00E1rio \u2014 " + (m.titulo || "") + (e ? " \u00B7 pr\u00F3ximo: " + textoDaEtapa(e) : "");
+}
+/* A1 · A4: A HORA CHEIA, FALADA (`formas.md` §A1 5). O olho lê `8h` na
+   pílula; quem ouve a cinta ouve "8 horas" no botão d'O TEMPO — a mesma
+   hora cheia de `horaNaCinta`, nunca o minuto (o minuto mora lá dentro). */
+function horaCheiaFalada(hora) {
+  try {
+    const h = parseInt(horaNaCinta(hora), 10);
+    if (!Number.isFinite(h)) return "";
+    return h === 1 ? "1 hora" : h + " horas";
+  } catch (e) { return ""; }
+}
+/* A1 · O LOBO CAÍDO NO FIM. A vitória que a resposta do Mestre declara
+   chega com o retrato de ANTES da resposta (`combateAntes`) e a lista
+   final dos inimigos à parte (`__inimigosFinais`). A tela do fim desenha
+   o retrato — e com o de antes, o último inimigo ficava de pé com PV
+   cheio. Junta-se aqui: cada inimigo do retrato leva a vida e o
+   `derrotado` da lista final (pelo nome, como `regras-jogo.js` os
+   casa); quem não está nela fica como estava. */
+function retratoComOsFinais(antes, finais) {
+  if (!antes || typeof antes !== "object") return antes || null;
+  const lista = Array.isArray(finais) ? finais.filter((f) => f && f.nome) : [];
+  if (!lista.length) return antes;
+  const porNome = new Map(lista.map((f) => [String(f.nome).toLowerCase(), f]));
+  return {
+    ...antes,
+    inimigos: ((antes.inimigos) || []).map((e) => {
+      const f = e && e.nome ? porNome.get(String(e.nome).toLowerCase()) : null;
+      if (!f) return e;
+      const vida = typeof f.vida === "number" ? f.vida : e.vida;
+      return { ...e, vida, derrotado: !!(f.derrotado || (Number(vida) || 0) <= 0) };
+    }),
+  };
 }
 function fimDaLutaDe(fecho, depois) {
   if (!fecho) return null;
@@ -1484,8 +1516,10 @@ const GLIFO_DA_ABA = {
    Aqui morava a conta ORÇADA de R13 (ficha 186, tempo 98, folga 67), e
    ela envelheceu dentro do código que se abre para mexer na cinta: a
    tabela diz hoje `CINTA.ficha` e `CINTA.tempo` MEDIDOS, e a folga a
-   375 px é `CINTA.folgaMinima` — doze, e sete na última noite, quando o
-   selo enche. Um número que envelhece num comentário é lido como verdade
+   375 px é `CINTA.folgaMinima`, com a conta escrita ao lado dele (e mais
+   apertada na última noite, quando o selo enche: `CINTA.tempoMaximo`). Em
+   A1 a hora passou a cheia e o número mudou lá sem mudar aqui — este
+   comentário dizia "doze" quando a tabela já dizia outra coisa. Um número que envelhece num comentário é lido como verdade
    por quem vem a seguir; por isso este aponta para onde o número vive, e
    não o repete. (R21, `formas.md` §R21 · a fabricação, 0.1.)
 
@@ -1710,7 +1744,7 @@ function ACinta({ personagem, minuto, dia, prazos, guardado, falhaAoGuardar, red
             (a conta d'O TEMPO e do cabeçalho da página), a hora, o dia na mesa,
             e o selo do prazo, cujo +N herda o pior do que esconde. */}
         <button onClick={aoAbrirTempo} title="O tempo — esperar, acampar, os prazos"
-          aria-label="O tempo" aria-expanded={!!tempoAberto}
+          aria-label={["O tempo", horaCheiaFalada(horaTxt(minuto))].filter(Boolean).join(", ")} aria-expanded={!!tempoAberto}
           className="tv-anel-foco rounded-lg flex items-center shrink-0"
           style={{ height: CINTA.altura, background: "transparent", border: "none", padding: 0 }}>
           <PilulaDoTempo luz={luzDaHora(horaTxt(minuto))} hora={horaTxt(minuto)} data={dataTxt(dia || 1)} prazo={prazo}
@@ -3192,7 +3226,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                 );
               })()}
               <div className="tv-body text-xs" style={{ color: T.inkDim }}>
-                O estoque é do sistema e gira a cada semana de jogo — a mesma banca, no mesmo dia, tem sempre as mesmas coisas. O preço vem do que este lugar produz e do que lhe falta, da estação, e do quanto você mesmo já levou daqui. Cada mercador ouve uma proposta por dia, e tem um fundo de gaveta. O Narrador conta a conversa; quem cobra é o sistema.
+                As bancas renovam a mercadoria a cada semana. O preço sobe com o que falta a este lugar e desce com o que ele produz, muda com a estação, e encarece com o quanto você mesmo já levou daqui. Cada mercador ouve uma proposta por dia, e só paga até onde a gaveta dele alcança.
               </div>
             </>
           );
@@ -8412,6 +8446,20 @@ export default function Taverna() {
      O fecho da luta também vai a um estado, `fechoNaTela`, porque é ele que
      a tela da batalha desenha no fim (B7): o espólio e o chão. */
   const lutaDoReciboRef = useRef(null);
+  /* A1 · O RETRATO DO FIM: o combate DEPOIS do golpe que fechou a luta.
+     O golpe final zera `combateRef` e chama `setCombate(null)` sem nunca
+     ter posto na tela o retrato com o último inimigo caído — e a tela do
+     fim (`fimDaLuta`) segurava o último retrato VISTO, o de antes do
+     golpe: o lobo de pé, de PV cheio, por baixo de "Vitória". Quem fecha a
+     luta e sabe como (`notarFechoDaLuta`) deixa aqui o retrato de depois;
+     o efeito do fim prefere-o ao último visto. Limpa ao abrir uma luta
+     nova e ao ser consumido. */
+  const retratoDoFimRef = useRef(null);
+  /* A1 · A5 — O QUE A TELA MOSTROU NÃO ACENDE A MARCA (`marcasQueAcendem`,
+     `mostrado`). Os itens que o recibo do turno (ou o da luta) desenhou e
+     a missão que a porta do aceite abriu. Vale até o turno seguinte
+     começar — cada turno tem o seu recibo. */
+  const mostradoRef = useRef({ itens: [], missoes: [] });
   const fechoDaLutaRef = useRef(null);
   const turnoDoReciboRef = useRef(null);
   const reciboPendenteRef = useRef(null);
@@ -8423,9 +8471,47 @@ export default function Taverna() {
     const nova = trocar(mensagensRef.current);
     if (nova && nova !== mensagensRef.current) { mensagensRef.current = nova; setMensagens(nova); }
   };
+  /* os itens que uma fila de recibo DESENHA — o teto da mesa ou do
+     telefone, como o `Recibo` (ui.jsx); a largura medida só o `Recibo` a
+     tem, e sem ela só o teto decide (`reciboQueCabe`). */
+  const itensQueOReciboMostra = (recibo) => {
+    try {
+      let telefone = false;
+      try { telefone = !window.matchMedia(CINTA.mesa).matches; } catch (e) { telefone = false; }
+      return itensMostrados(reciboQueCabe(recibo, 0, { telefone }).visiveis);
+    } catch (e) { calou("o que o recibo mostra", e); return []; }
+  };
+  const mostrarNaTela = (parte) => {
+    try {
+      const p = parte && typeof parte === "object" ? parte : {};
+      const m = mostradoRef.current || { itens: [], missoes: [] };
+      mostradoRef.current = {
+        itens: Array.from(new Set([...(m.itens || []), ...((p.itens || []).filter(Boolean))])),
+        missoes: Array.from(new Set([...(m.missoes || []), ...((p.missoes || []).filter((x) => x != null).map(String))])),
+      };
+    } catch (e) { calou("o que a tela mostrou", e); }
+  };
+  /* O que a tela mostra AGORA, para a marca da porta: o que já se fechou
+     (`mostradoRef`) e o recibo que ainda está a correr — a ficha muda a
+     meio do turno, a marca decide nesse instante, e o recibo só se escreve
+     no fim; logo a marca lê o recibo que o turno TERÁ com a ficha de agora. */
+  const oQueATelaMostra = () => {
+    const m = mostradoRef.current || { itens: [], missoes: [] };
+    const itens = [...(m.itens || [])];
+    try {
+      const ficha = fichaViva();
+      const tr = turnoDoReciboRef.current || reciboPendenteRef.current;
+      if (tr && !tr.lutaNoEnvio && tr.fichaNoEnvio && ficha) itens.push(...itensQueOReciboMostra(reciboDoTurno(tr.fichaNoEnvio, tr.aberturaNoTurno || ficha)));
+      const l = lutaDoReciboRef.current || fechoDaLutaRef.current;
+      if (l && l.fichaNaAbertura && ficha) itens.push(...itensQueOReciboMostra(reciboDoTurno(l.fichaNaAbertura, ficha)));
+    } catch (e) { calou("o recibo que corre", e); }
+    return { itens: Array.from(new Set(itens)), missoes: [...(m.missoes || [])] };
+  };
   const encerrarOFechoDaLuta = (fecho, depois) => {
     if (!fecho) return;
-    aplicarNoRelato((lista) => mensagensComFimDaLuta(lista, fimDaLutaDe(fecho, depois), { desde: fecho.inicio }));
+    const fim = fimDaLutaDe(fecho, depois);
+    if (fim) mostrarNaTela({ itens: itensQueOReciboMostra(fim.recibo) });
+    aplicarNoRelato((lista) => mensagensComFimDaLuta(lista, fim, { desde: fecho.inicio }));
   };
   /* O fim de um turno no relato: o recibo na resposta do Mestre (se o turno
      não começou dentro de uma luta — ali o recibo é o da luta, e dois
@@ -8438,9 +8524,11 @@ export default function Taverna() {
     if (!p || p.id !== id) return;
     reciboPendenteRef.current = null;
     const recibo = p.lutaNoEnvio ? [] : reciboDoTurno(p.fichaNoEnvio, p.aberturaNoTurno || depois);
+    const fim = p.fecho ? fimDaLutaDe(p.fecho, depois) : null;
+    mostrarNaTela({ itens: [...itensQueOReciboMostra(recibo), ...(fim ? itensQueOReciboMostra(fim.recibo) : [])] });
     aplicarNoRelato((lista) => {
       let l = mensagensComRecibo(lista, { desde: p.inicio, texto: p.texto, recibo });
-      if (p.fecho) l = mensagensComFimDaLuta(l, fimDaLutaDe(p.fecho, depois), { desde: p.fecho.inicio });
+      if (p.fecho) l = mensagensComFimDaLuta(l, fim, { desde: p.fecho.inicio });
       return l;
     });
   };
@@ -8457,6 +8545,7 @@ export default function Taverna() {
       const ref = lutaDoReciboRef.current ? lutaDoReciboRef : fechoDaLutaRef;
       const r = ref.current;
       const comb = c || r.ultima;
+      if (c) retratoDoFimRef.current = c;
       ref.current = {
         ...r,
         ultima: comb,
@@ -8531,6 +8620,7 @@ export default function Taverna() {
   const esquecerORecibo = () => {
     lutaDoReciboRef.current = null; fechoDaLutaRef.current = null;
     turnoDoReciboRef.current = null; reciboPendenteRef.current = null;
+    retratoDoFimRef.current = null; mostradoRef.current = { itens: [], missoes: [] };
     setFechoNaTela(null);
   };
 
@@ -10429,7 +10519,7 @@ export default function Taverna() {
       if (resp.mudancas.__vitoriaAuto) {
         /* A1 · B2: a vitória que a resposta do Mestre declara — os caídos
            são os da lista final, e o retrato é o de antes da resposta */
-        notarFechoDaLuta({ combate: combateAntes, desfecho: "vitoria", caidos: (resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome) });
+        notarFechoDaLuta({ combate: retratoComOsFinais(combateAntes, resp.mudancas.__inimigosFinais), desfecho: "vitoria", caidos: (resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome) });
         /* ESPÓLIOS POR CÓDIGO: moedas e XP por tabela; nível sobe sozinho.
            A IA só narra — e cria o item quando o app decide que caiu um. */
         /* v9.27: os nomes dos caídos alimentam as etapas "derrotar" */
@@ -12098,6 +12188,8 @@ export default function Taverna() {
     let pendDoTurno = null;
     try {
       if (reciboPendenteRef.current) fecharORecibo(reciboPendenteRef.current.id, fichaViva() || persAtual || personagem);
+      /* um turno novo, um recibo novo: o que o anterior mostrou já não conta */
+      mostradoRef.current = { itens: [], missoes: [] };
       turnoDoReciboRef.current = {
         inicio: mensagensRef.current.length,
         fichaNoEnvio: fichaViva() || persAtual || personagem,
@@ -17883,6 +17975,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (aceita) {
       /* A1 · B3: a mesma porta do cartaz do mural — o aceite cara a cara e o
          aceite do papel são a mesma ação, e têm a mesma cara */
+      mostrarNaTela({ missoes: m && m.id != null ? [m.id] : [] });
       pushMsgs([{ autor: "sistema", texto: portaDoAceite(m) }]);
       /* o prazo só começa a correr quando o serviço é aceito: antes disso é
          uma condição da oferta, não um relógio na cabeça do jogador */
@@ -19430,7 +19523,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     pushMsgs([
       { autor: "jogador", texto: `Peço um teste de ${rotulo}${motivo ? ` — ${motivo}` : ""}` },
-      { autor: "sistema", texto: `O sistema fixou a dificuldade em ${dcFinal} (${explic}). Seu bônus: +${modT}${selo}. Role o dado.` },
+      { autor: "sistema", texto: `Dificuldade ${dcFinal} (${explic}). Seu bônus: +${modT}${selo}. Role o dado.` },
     ]);
     setRolagem({
       atributo: attrNome, rotulo, pericia: periciaId,
@@ -19771,7 +19864,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const sofrido = sv.passou ? (fonte.meia ? Math.floor(cheio / 2) : 0) : cheio;
     const cond = sv.passou ? "" : condicaoDaFonte(fonte.id);
     pushMsgs([
-      { autor: "sistema", texto: `⚠ ${fonte.diz.charAt(0).toUpperCase()}${fonte.diz.slice(1)} — o sistema resolve.` },
+      { autor: "sistema", texto: `⚠ ${fonte.diz.charAt(0).toUpperCase()}${fonte.diz.slice(1)} — o corpo reage antes de você.` },
       { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
     ]);
     const r = sofrerNaPele({ dano: sofrido, condicao: cond, motivo: fonte.diz, porque: fonte.diz });
@@ -21377,6 +21470,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        passo (`a1-jogo.md` #41). A porta é a linha com seta que o relato já
        sabe abrir (`portaDaLinhaDeSistema`); o nome antes do travessão é a
        aba. */
+    mostrarNaTela({ missoes: aceita && aceita.id != null ? [aceita.id] : [] });
     pushMsgs([
       { autor: "sistema", texto: portaDoAceite(aceita) },
       ...(c.daItem ? [{ autor: "sistema", texto: `◆ ${c.daItem} — na sua bolsa.` }] : []),
@@ -24834,9 +24928,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const [fugiuNoFim, setFugiuNoFim] = useState(false);
   useEffect(() => {
     try {
-      if (combate) { ultimoCombateRef.current = combate; if (fimDaLuta) setFimDaLuta(null); if (fugiuNoFim) setFugiuNoFim(false); return; }
+      if (combate) { if (!ultimoCombateRef.current) retratoDoFimRef.current = null; ultimoCombateRef.current = combate; if (fimDaLuta) setFimDaLuta(null); if (fugiuNoFim) setFugiuNoFim(false); return; }
       if (ultimoCombateRef.current) {
-        setFimDaLuta(ultimoCombateRef.current);
+        /* o retrato de DEPOIS do golpe final, quando quem fechou o deixou */
+        setFimDaLuta(retratoDoFimRef.current || ultimoCombateRef.current);
+        retratoDoFimRef.current = null;
         setFugiuNoFim(!!fugaAoSairRef.current);
         ultimoCombateRef.current = null;
         fugaAoSairRef.current = false;
@@ -24955,7 +25051,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const houveTurno = !!carregando || turnoAgora !== turnoDaFotoRef.current;
       turnoDaFotoRef.current = turnoAgora;
       if (!antes) return;
-      const acesas = marcasQueAcendem(antes, foto, { origem: aba && !houveTurno ? "alforje" : "turno" })
+      let mostrado = null;
+      try { mostrado = oQueATelaMostra(); } catch (e) { calou("o que a tela mostra", e); }
+      const acesas = marcasQueAcendem(antes, foto, { origem: aba && !houveTurno ? "alforje" : "turno", mostrado })
         .filter((x) => x !== aba);
       if (!acesas.length) return;
       setMarcasDaPorta((ms) => [...ms.filter((x) => !acesas.includes(x)), ...acesas]);
@@ -25242,6 +25340,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const telaDaBatalha = emBatalha ? (
     <TelaDeBatalha
       combate={combateNaTela}
+      lugar={lugarDaCena()}
       fim={!combate}
       aoSair={() => setFimDaLuta(null)}
       personagem={personagem}

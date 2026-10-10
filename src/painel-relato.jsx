@@ -71,9 +71,14 @@ const FRASES_DOS_VERBOS = (() => { try { return fileiraDeVerbos().map((v) => v.f
    mora em `ABAS_COM_PORTA`, e lá o rótulo não é campo da tabela. É a
    única cópia, e está aqui declarada em vez de escondida.) */
 const SETA_DA_PORTA = "\u25B8 ";
+/* (A1 \u00B7 B3: o Di\u00E1rio \u00E9 a segunda aba de cima com porta \u2014 a do aceite,
+   "\u25B8 Di\u00E1rio \u2014 {t\u00EDtulo} \u00B7 pr\u00F3ximo: {passo}", que `portaDoAceite` escreve no
+   App. Sem esta entrada a seta mentia: a linha nascia e n\u00E3o abria nada. O id
+   \u00E9 o de `ABAS` no App, o mesmo que `abrirPortaDoSistema` passa a `setAba`.) */
 const PORTAS_DO_SISTEMA = [
   ...SUBS_GESTAO.map((sub) => ({ rotulo: sub.rotulo, aba: "gestao", sub: sub.id })),
   { rotulo: "C\u00F3dex", aba: "codex", sub: null },
+  { rotulo: "Di\u00E1rio", aba: "diario", sub: null },
 ];
 function portaDaLinhaDeSistema(texto) {
   const linha = String(texto == null ? "" : texto);
