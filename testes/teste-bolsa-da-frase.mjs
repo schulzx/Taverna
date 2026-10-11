@@ -68,6 +68,10 @@ ok(/JÁ REGISTRADA PELO SISTEMA/.test(envelopeDaCompra(c)), "o envelope é o da 
 const deb = oQueFaltaDebitar(`Você paga ${c.total} moedas ao merceeiro.`, {}, { bolsa: 50, envelopes: envelopeDaCompra(c) });
 ok(!deb.temAlgo, "e a cobrança reconhece-o: a prosa que diz o pagamento não cobra duas vezes");
 ok(/^🛒/.test(falaDaCompra(c)) && falaDaCompra(c).includes(`restam ◉ ${50 - c.total}`), "o recibo na tela");
+/* achado na prova viva (11/10): a frase diz "as tochas" e depois "duas
+   tochas", e a primeira versão comprou três — valia a menção sem número */
+const viva = compraNaFrase("Então fico só com as tochas: compro duas tochas e pago.", { balcao: BALCAO, bolsa: 15 });
+ok(viva && viva.fecha && viva.itens.length === 1 && viva.itens[0].quantos === 2, "a menção com número vence o plural solto (duas tochas, não três)");
 
 console.log("\n[o que não compra]");
 for (const f of ["pago a bebida e saio", "se eu comprar rações, chegam?", "levo a tocha acesa à frente", "não compro rações hoje", "conto as tochas que tenho"]) {

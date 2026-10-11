@@ -89,30 +89,40 @@ const oracoes = (frase) => {
   return out;
 };
 
-/* quantas de um mantimento a oração pede, a partir da palavra achada */
+/* quantas de um mantimento a oração pede, a partir da palavra achada;
+   `dito` diz se a frase deu o número (ou os dias) — e não o plural */
 function quantasDe(oracao, idx, palavra, porDia) {
   const q = QUANTIDADE_DA_FRASE;
   const antes = oracao.slice(0, idx).trim().split(/\s+/).slice(-q.palavrasAntes);
   for (let i = antes.length - 1; i >= 0; i--) {
     const n = valor(antes[i]);
-    if (n > 0) return Math.min(q.teto, n);
+    if (n > 0) return { n: Math.min(q.teto, n), dito: true };
   }
   if (porDia) {
     const depois = oracao.slice(idx + palavra.length);
     const d = depois.match(new RegExp(`^[^.!?;]{0,30}?\\b(?:para|pra|por)\\s+(?:uns\\s+|umas\\s+|os\\s+|as\\s+)?(\\d+|${NUM})\\s+dias?\\b`));
-    if (d && valor(d[1]) > 0) return Math.min(q.teto, valor(d[1]));
+    if (d && valor(d[1]) > 0) return { n: Math.min(q.teto, valor(d[1])), dito: true };
   }
-  return /s$/.test(palavra) ? q.pluralSemNumero : q.singular;
+  return { n: /s$/.test(palavra) ? q.pluralSemNumero : q.singular, dito: false };
 }
 
-/* os mantimentos de uma oração, cada id uma vez (o primeiro dito vale) */
+/* os mantimentos de uma oração, cada id uma vez. Quando a mesma coisa é
+   dita duas vezes, vale a menção com número: na prova viva, "fico só com
+   as tochas: compro duas tochas" comprou TRÊS — valia o primeiro "as
+   tochas", plural sem número. Sem número em nenhuma, vale a primeira. */
 function mantimentosDa(oracao) {
   const out = [];
   for (const m of MANTIMENTO_NA_FRASE) {
     const rx = new RegExp(m.rx.source, "g");
-    const x = rx.exec(oracao);
-    if (!x) continue;
-    out.push({ id: m.id, palavra: x[0], idx: x.index, quantos: m.unico ? 1 : quantasDe(oracao, x.index, x[0], m.porDia), unico: !!m.unico });
+    let x, primeira = null, comNumero = null;
+    while ((x = rx.exec(oracao))) {
+      const q = m.unico ? { n: 1, dito: false } : quantasDe(oracao, x.index, x[0], m.porDia);
+      const achada = { id: m.id, palavra: x[0], idx: x.index, quantos: q.n, unico: !!m.unico };
+      if (!primeira) primeira = achada;
+      if (q.dito && !comNumero) comNumero = achada;
+    }
+    const v = comNumero || primeira;
+    if (v) out.push({ ...v, idx: primeira.idx });
   }
   return out.sort((a, b) => a.idx - b.idx);
 }

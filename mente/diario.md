@@ -16,6 +16,39 @@ Formato:
 
 ---
 
+## 11/10 · v9.397–v9.405 · MM11 #5: o jogo regista o que o jogador fez (`frontend`, à mão) · 22b6ec8, 4709c21, 0ca1f4d e este
+
+- **bastão:** `.claude/app-jsx` tomado ao começar, devolvido (apagado) ao fechar. O backend andou em paralelo no laço
+  da história (missoes/saga/abertura/ofertas) — não toquei nesses; o vermelho de `teste-missoes` a meio era dele
+  (provado com `so-o-meu.sh`: HEAD + só os meus, tudo verde).
+- **J6 (v9.397):** "saio para a praça e procuro o mural" rolava Percepção na taverna. Mural/cartaz entram em
+  `PROCURAR_PARA_IR`; e quando a frase tem destino E um ato que o catálogo julgaria, `adjudicarAcao` move primeiro
+  (o passo morava só no envio, que corre depois do desafio). Suíte `teste-passo-antes-do-ato` (falha 11× em HEAD).
+- **M10 + M35 (v9.400, juntos porque partilham a fiação):** `bolsa-da-frase.js` — a compra declarada de mantimento ao
+  preço do balcão (a quantia dita é teto; a pergunta de preço nunca compra) e a dádiva de ração/água/tocha a quem está
+  na cena. Corre antes do despachante (o oráculo tinha ganho o M10). Fecha → débito + envelope de compra registada;
+  não fecha → a linha do porquê + veto em `naoPode` (`naoPodeDoTurnoRef`, um turno). Dar: mochila desce, companheiro
+  ganha vínculo, quem não é do grupo grava `meDeve` (campo novo do npc; acende o sinal do Intérprete que ninguém
+  dava). O preço do balcão perguntado (J9) entra na ficha do mercado da pauta.
+- **M32 (v9.403):** a Intuição de "ele" rolou sem pessoa (Hakon + Edric em cena). `pessoaNaFrente` escolhe o único de
+  fora do grupo; o "sim, mente" do mundo viaja com o dado; `leitura-de-pessoa.js` dá ao envelope do sucesso UMA
+  verdade da ficha (mente / quer / sabe de um marco / esconde / dívida / quem é), duas no crítico; o conteúdo do que
+  se esconde só no crítico, o que a espinha guarda nunca.
+- **"paper" (item 5):** veio do modelo — aparece primeiro na RESPOSTA da chamada 15 do registo, não está em pedido
+  nenhum nem em tabela/léxico do projeto. Anotado, sem conserto (não há filtro de anglicismo na prosa; seria órgão novo).
+- **prova viva (v9.405):** campanha nova no dev server. "Agradeço, termino a cerveja e saio para a praça. Procuro o
+  mural" → nenhum dado, o herói saiu do Punhal Solitário e o Mestre narrou o mural na praça. "Compro rações para dois
+  dias e duas tochas" com ◉ 15 → "◉ Não chega … ◉ 16", bolsa intacta, o vendedor não entregou. "Compro duas tochas" →
+  fechou, mas comprou TRÊS (o "as tochas" de antes, plural sem número, ganhava) — corrigido aqui: a menção com número
+  vence, e a suíte tem o caso. "Entrego uma tocha a Wren" → tochas 3 → 2, vínculo dela subiu. A Intuição ficou só na
+  suíte (não montei a cena com NPC).
+- **localStorage:** antes só `taverna_cfg_golpe_final` e `taverna_cfg_rolagens` (guardados em scratchpad); a prova
+  criou `taverna_save_v1`; removido com o jogo desmontado e conferido por leitura (as duas cfg intactas).
+- **decisões médias:** o kit é "a corda" do balcão (é o único lugar com corda); plural sem número = 3 (tabela
+  `QUANTIDADE_DA_FRASE`); mercadoria de banca não fecha pela frase (fica o veto) — o painel continua a porta dela.
+- **o que ficou:** a compra de banca pela frase; Edric precisa de estar no registo para a dívida gravar (só grava em npc
+  registado); o 📍 do passo-antes aparece acima da fala do jogador quando há dado.
+
 ## 11/10 · v9.404 · MM, o laço da história (6/6): a lei da cidade é uma só (`backend`) · este commit
 
 - **tocados:** `cidade-por-dentro.js` (`leiDaCidade`, tabela `LEI_DA_CIDADE`; as respostas "lei" e "reconhecer"),
