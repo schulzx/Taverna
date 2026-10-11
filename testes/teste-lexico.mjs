@@ -330,7 +330,12 @@ sec("5) O QUE SOBE AO PROMPT, E SÓ QUANDO A CENA PEDE");
   const noPortal = lexicoPrompt(CACADORES);
   ok(naTaverna === noPortal, "o bloco fixo é o mesmo em qualquer cena — é isso que o torna cacheável");
   ok(/portal/.test(naTaverna), "o vocabulário entra sempre");
-  ok(/A LEI DESTE MUNDO/.test(naTaverna), "a lei do mundo também");
+  /* MOVIDA em 11/10 (a 5.ª sessão de prova), com o motivo: o rótulo era "A
+     LEI DESTE MUNDO", e o Narrador deu a regra do mundo ao taverneiro como
+     a lei da cidade, por cima do salvo-conduto da porta (duas leis). O
+     campo continua a entrar sempre; muda o rótulo, que passa a dizer que é
+     a regra do MUNDO (teste-lei-uma-so prova o resto). */
+  ok(/A REGRA DO MUNDO: /.test(naTaverna) && !/A LEI DESTE MUNDO/.test(naTaverna), "a regra do mundo também — com o rótulo de regra, não de lei");
   /* v9.162: a adaptação DA CENA mudou de porta-voz — saiu do bloco fixo
      (que agora é o mesmo para a campanha inteira, e é isso que o torna
      cacheável) e entrou em lexicoDaCena, que desce para o fim do prompt.

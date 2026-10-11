@@ -68,7 +68,7 @@ import { oQueExisteAqui, masmorrasDoMundo, chefesDoMundo, chaveDoLugar, locaisDa
 import { criarMissao, etapaAtual, garantirMissoes, mesmaPessoa, rumoDaEtapa, ETAPAS_DE_CAMINHO } from "./missoes.js";
 import { criarRelogio, envelopeCheio, TAMANHOS } from "./relogios.js";
 import { vocacaoDe } from "./comercio.js";
-import { fichaDaCidade } from "./cidade-por-dentro.js";
+import { fichaDaCidade, leiDaCidade } from "./cidade-por-dentro.js";
 import { comEm, contrair } from "./lugar.js";
 import { linhaDoCompanheiro } from "./companheiro-inicial.js";
 
@@ -586,7 +586,8 @@ export function abrirAbertura(ctx) {
   try {
     const ficha = fichaDaCidade(q.cidade, { semente, mapa: o.mapa, genero, lex: o.lex || null, molde: o.molde || null });
     sinal = ficha.hoje.sinal || "";
-    porta = ficha.reconhecimento || "";
+    /* 11/10: a lei da cidade é uma só — o mesmo campo que a pauta responde (LEI_DA_CIDADE) */
+    porta = leiDaCidade(ficha).porta || "";
   } catch { sinal = ""; porta = ""; }
   const titulo = encher(TITULO_DO_FEITIO[alvo.feitio] || TITULO_DO_FEITIO.procurar, alvo).slice(0, 70);
 

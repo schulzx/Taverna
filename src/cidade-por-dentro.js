@@ -258,6 +258,28 @@ export const RECONHECIMENTO = {
   5: ["um salvo-conduto com selo e nome, pedido na porta e cobrado nas pontes", "uma medalha de cobre de visitante, devolvida na saída"],
 };
 
+/* ---------------- A LEI DA CIDADE É UMA SÓ (11/10, a 5.ª sessão de prova) ----------------
+   O guarda da porta cobrou o salvo-conduto (a abertura, `LEI_DA_PORTA`, lê
+   o `reconhecimento` desta ficha); duas cenas depois o herói perguntou ao
+   taverneiro "o que preciso de saber da lei daqui?" e ouviu "mantenha o seu
+   juramento, e nada lhe cobram" — a regra do MUNDO do Léxico, dita como lei
+   da cidade. A resposta da ficha à pergunta pela lei dizia só QUEM a
+   guarda, e o salvo-conduto ficou um garrancho na parede. Duas leis.
+
+   A lei da cidade é uma, e quem fala dela lê daqui: a regra que se cobra à
+   porta (`reconhecimento`) e quem a cobra (`instituicoes.lei`). A abertura
+   mostra-a a acontecer; a pauta responde com ela quando se pergunta pela
+   lei ou pela porta. */
+export const LEI_DA_CIDADE = {
+  lei: "quem guarda a lei: {quem}; e a lei, à porta: {porta}",
+  porta: "como se reconhece quem é bem-vindo: {porta} — é essa a lei daqui",
+};
+export function leiDaCidade(f) {
+  const o = f && typeof f === "object" ? f : {};
+  const inst = o.instituicoes && typeof o.instituicoes === "object" ? o.instituicoes : {};
+  return { porta: typeof o.reconhecimento === "string" ? o.reconhecimento : "", quem: typeof inst.lei === "string" ? inst.lei : "" };
+}
+
 /* ---------------- A DÁDIVA ----------------
    O que vale uma coisa dada. É costume da cidade, não preço de item:
    decide se "ela me dá isto de graça?" é gentileza, dívida ou armadilha. */
@@ -518,7 +540,12 @@ function resposta(id, f, h, frase = "") {
   if (id === "lingua") return linhaDaLingua(f);
   if (id === "magia") return `quem estuda ${f.palavras.magia}: ${f.instituicoes.magia}`;
   if (id === "cura") return `quem cura: ${f.instituicoes.cura}`;
-  if (id === "lei") return `quem guarda a lei: ${f.instituicoes.lei}`;
+  if (id === "lei" || id === "reconhecer") {
+    /* uma lei só (LEI_DA_CIDADE): a mesma regra da porta e quem a cobra */
+    const l = leiDaCidade(f);
+    if (!l.porta) return l.quem ? `quem guarda a lei: ${l.quem}` : "";
+    return LEI_DA_CIDADE[id === "lei" ? "lei" : "porta"].replace("{porta}", l.porta).replace("{quem}", l.quem || "ninguém em especial");
+  }
   if (id === "vigia") {
     const v = f.vigilancia;
     return `quem vigia a rua ${h.noite ? "de noite (agora)" : "de dia (agora)"}: ${h.noite ? v.noite : v.dia}; ${h.noite ? "de dia" : "de noite"}: ${h.noite ? v.dia : v.noite}; a brecha: ${v.brecha}`;
@@ -532,7 +559,6 @@ function resposta(id, f, h, frase = "") {
     const alheio = TODAS_AS_GIRIAS.find((a) => frase && frase.includes(norm(a)) && !f.giria.some((g) => g.palavra === a));
     return alheio ? `${linha}; "${alheio}" não se diz aqui` : linha;
   }
-  if (id === "reconhecer") return `como se reconhece quem é bem-vindo: ${f.reconhecimento}`;
   if (id === "dadiva") return `o costume com o que se dá: ${f.dadiva.o}`;
   if (id === "hoje") {
     const hj = linhaDoHoje(f, h, { inteira: true });

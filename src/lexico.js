@@ -110,6 +110,9 @@ const TETOS = {
 export const TETO_DO_BLOCO = 2000;
 /* o bloco da cena (v9.162) tem orçamento separado e menor: ver lexicoDaCena */
 export const TETO_DA_CENA = 700;
+/* o rótulo de `aLei` no bloco fixo: a regra do MUNDO, que não é a lei de
+   cidade nenhuma (ver lexicoPrompt, 11/10) */
+export const ROTULO_DA_REGRA = "A REGRA DO MUNDO";
 
 const limpar = (s, max) => String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, max);
 /* Corta no fim de uma PALAVRA. Onde o texto é frase, cortar no
@@ -927,7 +930,13 @@ export function lexicoPrompt(l) {
     return c ? `${c.padrao} = ${v}` : "";
   }).filter(Boolean);
   if (ap.length) fila.push(`COMO AS COISAS SE CHAMAM AQUI (use SEMPRE a palavra da direita; a da esquerda é a etiqueta interna do sistema): ${ap.join(" · ")}.`);
-  if (x.aLei) fila.push(`A LEI DESTE MUNDO: ${x.aLei}`);
+  /* 11/10 (a 5.ª sessão de prova): "A REGRA", e não "A LEI". O campo é a
+     regra que rege o MUNDO ("todo juramento tem peso…"), e com o rótulo de
+     lei o Narrador deu-a ao taverneiro como a lei da cidade, por cima do
+     salvo-conduto que o guarda tinha acabado de cobrar à porta. A lei de
+     cada cidade é a da ficha dela (`cidade-por-dentro.js#LEI_DA_CIDADE`).
+     O rótulo é mais curto que o de antes: o bloco fixo não cresce. */
+  if (x.aLei) fila.push(`${ROTULO_DA_REGRA}: ${x.aLei}`);
   /* v9.166: o passado logo depois da lei — é o segundo fato que toda boca
      do mundo cita, e ele é imutável pela campanha inteira: cacheável */
   const pas = passadoDo(x);

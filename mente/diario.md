@@ -16,6 +16,20 @@ Formato:
 
 ---
 
+## 11/10 · v9.404 · MM, o laço da história (6/6): a lei da cidade é uma só (`backend`) · este commit
+
+- **tocados:** `cidade-por-dentro.js` (`leiDaCidade`, tabela `LEI_DA_CIDADE`; as respostas "lei" e "reconhecer"),
+  `abertura.js` (a lei da porta lê `leiDaCidade`), `lexico.js` (`ROTULO_DA_REGRA`); suíte `teste-lei-uma-so` (18);
+  `teste-lexico` §… asserção movida com o motivo escrito (o rótulo mudou, o campo continua a entrar sempre).
+- **o defeito (sessão 5, coerência 8):** o guarda cobrou o salvo-conduto à porta; o taverneiro, perguntado pela lei, citou
+  "mantenha seu juramento" — a regra do MUNDO do Léxico, rotulada "A LEI DESTE MUNDO". A resposta da ficha à lei dizia só quem a guarda.
+- **o que muda:** perguntar pela lei responde "quem guarda a lei: …; e a lei, à porta: <a mesma regra que a abertura
+  cobrou>"; perguntar pela porta diz "— é essa a lei daqui"; o Léxico chama à regra do mundo "A REGRA DO MUNDO" (1 caractere
+  mais curto: o bloco fixo não cresce).
+- **números:** a frase do J4 em 24 campanhas — a resposta à lei traz a regra da porta da abertura **0 → 24 de 24**.
+- **fiação do App:** nenhuma. Nota para o desenho: `falaDoLexico` (a frase da mesa ao criar o mundo) ainda diz "📖 A lei
+  deste mundo" ao jogador — texto de tela, não mexi.
+
 ## 11/10 · v9.402 · MM, o laço da história (5/6): os guardiões do marco não pregam no mural (`backend`) · este commit
 
 - **tocados:** `ofertas.js` (`genteDaHistoria`, `casaDaHistoria`, `ofertasDaqui`), `batidas.js` (`GUARDA_NA_CENA`, a frase do
