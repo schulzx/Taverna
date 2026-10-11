@@ -1191,3 +1191,408 @@ está escrito aqui, o orquestrador corrige a etapa na pauta e diz no diário.
   sempre os mesmos 500. Vale varrer as outras suítes atrás do mesmo vício:
   qualquer `t(...)` cuja verdade dependa de `Math.random` é uma prova que
   mente uma vez a cada tantas — e a casa não sabe quantas são.
+
+- [x] **MM0 · Uma Vida é o único modo do beta** · ordem da pessoa, 28/09 · feito 29/09, v9.304
+  `MODOS_DO_BETA = ["historia"]` + `modoNaPorta(id)` em `modos.js`; o menu lê a
+  função. Nenhuma linha de `rapida`/`duelo` apagada; os saves ficam nos seus espaços,
+  intocados (o boot só lê `taverna_save_v1`). Voltar = pôr o id na tabela.
+  *Uma Noite* e *Duelo* saem do menu (`TelaMenu`, `App.jsx:~5100`). Por tabela,
+  não por `if`: `MODOS_DO_BETA` em `src/modos.js`, lida pelo menu. **Sai a
+  porta, não o código** — módulos, suítes e saves ficam; voltar é mudar a
+  tabela. Confirmar que um save de *Uma Noite* ou *Duelo* já existente não
+  quebra o menu nem se perde. A *sala de dois* (Uma Vida a dois) fica.
+
+- [x] **MM1 · a sonda da mesa: as 157 perguntas viram régua** · feito 28/09
+  **O número de partida: 66/157 chega · 1 sabe e não conta · 82 ninguém decide ·
+  8 código resolve** (`testes/teste-mm1-sonda-da-mesa.mjs`, casos em
+  `testes/sonda-da-mesa-casos.mjs`; `PISO_CHEGA = 66`, `TETO_SABE_E_NAO_CONTA = 1`).
+  Dos 82 *ninguém decide*, 36 são cenário (sabor, aceitável) e **46 são defeito**:
+  29 de mundo, 13 de regra, 3 de licença, 1 de posição. O achado que corrige a
+  leitura à mão: **a distância já chega** (`grid.js#resumoGridPrompt`, no rodapé
+  de cada turno de luta); o que o sistema calcula e esconde é a **cobertura**
+  (`temCobertura`, caso #138) e a **linha de visão** (`linhaDeVisao`, só vira
+  aviso de tela).
+  As perguntas dos jogadores de C1E1 (`https://www.kryogenix.org/crsearch/html/cr1-1.html`),
+  **traduzidas e parafraseadas** em casos de teste (nunca o texto original),
+  cada uma com o FATO que a responde e o sítio do sistema onde ele vive.
+  **Sem chamada de IA:** mede se o fato **chega à pauta** do Narrador. Três
+  resultados por pergunta: *chega* · *o sistema sabe e não conta* · *ninguém
+  decide* (sabor — aceitável). O número de hoje é o ponto de partida, e cada
+  etapa seguinte tem de o mover. Juntar as perguntas do *Honey Heist 3*
+  (`cr1-115.14`) só se acrescentarem um tipo novo.
+
+- [x] **MM2 · o Narrador vê o tabuleiro** · feito 29/09, v9.305 · sonda 66 → 68/157,
+  sabe-e-não-conta 1 → 0 (cobertura #138 e a ordem da rodada #142 passaram a chegar
+  pela linha da luta, `resumoGridPrompt`; +439 chars no pior caso, só no rodapé) · *escopo corrigido pela sonda (MM1):
+  distância e região já chegam por `resumoGridPrompt`; faltam cobertura e linha
+  de visão, e é nelas que a etapa mexe — dentro da mesma linha, sem bloco novo*
+  Em combate, uma linha na pauta com cada inimigo: **distância** (a que o motor
+  já mede), **linha de visão** (`linhaDeVisao`, `grid.js`) e **cobertura**
+  (`temCobertura`). Dentro do `TETO_DA_PAUTA`; se não couber tudo, corta-se
+  pela prioridade, nunca se soma bloco estático. É a resposta a *"a quantos
+  metros estou da criatura?"*.
+
+- [x] **MM3 · o golpe final é seu** · Q3 + Q5, aprovadas pela pessoa em 14–15/09 · feito 29/09, v9.306
+  `golpe-final.js` + `painel-golpe-final.jsx`; a escolha antes de aplicar, a cena do
+  jogador na pauta (`acabou`, 240 chars) e o veto do poupado em `naoPode`. A sonda não
+  se move (68/157): nenhuma das 157 era do golpe final — a frase é do Matt, não dos
+  jogadores. **Falta a prova jogada do Poupar depois do conserto** (ver o diário).
+  Quando o golpe **levaria** o alvo a 0: letal ou não letal (Q3), e **"como
+  você faz isso?"** (Q5) — o que o jogador escrever é o que o Narrador narra,
+  ampliado e nunca desmentido. É o momento mais famoso do Critical Role. O
+  texto inteiro das duas está na Fase Q, abaixo.
+
+- [x] **MM3b · o golpe final é do grupo** · decisão do coordenador da fase, 29/09 · feito 29/09, v9.313
+  Quando é um companheiro a derrubar, o cartão aparece na mesma e o jogador narra como o
+  companheiro o faz; uma escolha por rodada; o ☠ só sai depois da escolha. Os companheiros
+  não evitam o último golpe. Falta: o golpe de oportunidade do herói (fuga, recuo) — MM3c.
+  **O Poupar foi jogado** (o golpe do herói): "(poupado)", fim de luta, o Narrador não matou.
+
+- [x] **MM4 · toda ação ganha um dado** · feito 29/09, v9.307 · sonda 68 → 69/157
+  `FAMILIAS_DO_IMPROVISO` (seis famílias → atributo) e `CD_DO_IMPROVISO` (13; uma
+  palavra de ousadia sobe a 15) em `desafios.js`; `lerAcao` devolve o improviso no
+  ramo em que nenhum desafio casa, e o App rola-o pelo caminho de sempre. Fica
+  **desligado em combate** (ver o diário): lá o dado improvisado pede três coisas
+  que ainda não existem — cobrar a ação, 1d4 da arma improvisada, `disputa.js`.
+  Hoje a frase que não casa com o catálogo de desafios **vira ficção sem dado**
+  e o Narrador decide sozinho. O Matt nunca diz *"isso não dá"*: escolhe o
+  atributo e manda rolar. Aqui: o atributo mais próximo por tabela, uma CD de
+  tabela, e o resultado vai à pauta. As hipóteses e as figuras de linguagem
+  continuam fora (a peneira de `agressao.js` já sabe distingui-las).
+
+- [x] **MM5 · o sucesso com preço** · feito 29/09, v9.308 · sonda não se move (69/157)
+  `FAIXAS_DA_MARGEM` (margem = total − CD: +2 limpo · 0/+1 "consegue, mas" · −1/−2 "por um
+  fio, e paga" · −3 falha; 20 e 1 naturais nunca são o meio) e `desfechoDaMargem`;
+  preço do meio por tabela e cobrado pelo sistema (barulho, mordida por degrau, condição,
+  tempo); *A Aposta* com a terceira versão em 25 das 40 situações. Jogado: um salto
+  falhado por 1 virou "a mão alcança a beira" e custou 1 de vida, narrado nas duas metades.
+  *A Aposta* prepara duas versões (sim/não). O Matt usa três: na runa de C1E1,
+  um 15 é *"recuas a tempo, mas levas 8"*. Passar por pouco ou falhar por
+  pouco ganha a versão do meio — por tabela, com a margem que a define.
+
+- [x] **MM6 · escondido é um estado** · feito 29/09, v9.310 · sonda 69 → 72/157
+  `escondido.js` + a condição `escondido`; o furtivo pela regra do 5e com Ação Ardilosa
+  (Ladino sozinho: −21% de dano sem ela, −5% com ela); "quem me vê" na linha da luta
+  e em `naoPode` fora dela. Jogado fora da luta: nasce, cala o mundo, cai ao gritar.
+  O teste de furtividade existe (`desafios.js`), o estado não: no turno
+  seguinte nada lembra que o herói está escondido, e isso não dá vantagem.
+  Condição que dura até agir ou ser achado; dá vantagem e o ataque furtivo
+  (hoje o do Ladino é sempre, por classe); e vai à pauta — **quem te vê**. É a
+  resposta a *"o anão está me vendo?"*.
+
+- [x] **MM7 · os atiradores atiram** · feito 29/09, v9.312 · sonda não se move (72/157)
+  `atirador.js` (a tabela saiu de `fuga.js`), `postoDoAtirador` em `grid.js`, o disparo em
+  `turnoDosInimigos`, a voz da intenção do atirador; o golpe de oportunidade do herói no recuo.
+  Dano ao herói −11% / +13% / −16% nos três cenários (catraca ±20%).
+  Achado da fuga (v9.294): o inimigo de distância é atirador na fuga e lutador
+  colado dentro da luta. Passa a manter a distância e a disparar.
+
+- [x] **MM12 · a cidade por dentro (e o mapa das perguntas que ninguém decide)** · feito 29/09, v9.318 · sonda 72 → 81/157 · de: orquestrador, 29/09, pedido do
+  coordenador da fase · *posição: depois de MM7, antes de MM8*
+  **O achado:** a sonda (MM1) contou **82 *ninguém decide***; 36 são cenário (sabor,
+  aceitável) e **46 são defeito** — 29 de mundo, 13 de regra, 3 de licença, 1 de posição.
+  MM2 fechou uma (#142), ficam **45**. É mais do que o resto da Fase MM junto. Lidas
+  uma a uma, não são 45 buracos: são
+  **cinco blocos**, e três já têm órgão na fila.
+  | bloco | casos | quem paga |
+  |---|---|---|
+  | **a gente por dentro** — passado, motivo, aparência, reputação, paradeiro | 12 | **MM8** (o elenco; escrito lá) |
+  | **a cidade por dentro** — língua, preço do pouso, quem estuda magia, gíria, salvo-conduto, o sino que toca, o preço do que se dá | 9 (#6, #14, #15, #31, #37, #38, #80, #107, #110) | **esta etapa** |
+  | **que teste é este?** e a licença criativa | 6 (#33, #93, #102, #76, #78, #152) | **MM4** (toda ação ganha um dado) |
+  | **escondido e flanco** | 4 (#70, #74, #124, #153) | **MM6** (escondido é um estado) |
+  | regras de classe e de criatura não tabeladas, objetos da cena, a biografia do herói | 9 (#48, #99, #121, #136, #137, #141, #91, #92, #114) | um a um, pelo peso — não é um órgão |
+  **E 5 não são defeito:** #57, #65, #82, #97, #116 têm fato "nenhum" (convite, gesto,
+  logística na ficção) — é ficção livre, como o cenário. Ao tocar a sonda, passam a
+  *ninguém decide* aceitável, com o motivo escrito; o defeito real é **40** (12 + 9 + 6 + 4 + 9).
+  **O que esta etapa faz:** a cidade ganha **ficha** — por semente, na criação do mundo,
+  como o comércio já tem (`envelopeDoComercio`): a língua que se fala e quem não a fala,
+  o preço de uma noite de pouso (por tabela, pelo porte e pela riqueza da cidade), as
+  instituições (quem estuda magia, quem cura, quem guarda a lei), duas ou três gírias e
+  apelidos do léxico local (`lexico.js` já existe), o costume de reconhecimento
+  (salvo-conduto, senha, marca) e **o que está a acontecer hoje** (o sino, a feira, o
+  luto) a partir do relógio do mundo. Vai à pauta pela secção `onde`, curta e por
+  prioridade — nunca bloco estático. **Critério:** as 9 da cidade passam a *chega* e a
+  sonda sobe na mesma medida. Um órgão paga 9; é o segundo maior bloco e o único sem dono.
+  **Porque não antes:** MM4 fecha 6 e toca toda cena; MM6 fecha 4 e é da luta; esta
+  toca toda cidade e é barata, mas assenta melhor com o elenco logo a seguir — a
+  reputação de uma família (#60–#62) é da gente e não da cidade, e as duas etapas
+  devem partilhar a semente.
+
+- [x] **MM13 · o mundo puxa o herói** · da pessoa, 29/09 · feito 30/09, v9.322 · a prova longa do `jogo` no diário
+  *"Quando o jogo inicia o mestre já joga uma quest logo de cara… nos RPGs do Matt, o player é
+  induzido à quest da história principal… o mundo joga ele na quest. Um sistema de quests é
+  necessário para o player não se perder… como um sandbox sem tutorial."* E depois: *"ele diz o
+  mundo, onde o personagem está, e uma pequena história do local… conforme o mestre trabalha o
+  mundo, vai induzindo o player para a quest. Não sei se deve ser logo na primeira cena."*
+  **O que falha:** a casa já força a principal (`missoes.js`, `forcada: true`; a abertura força
+  uma trama e pede um "primeiro fio"), mas **na tela o primeiro turno mostra ofertas do mural com
+  Aceitar** — o cardápio chega antes do mundo, e a trama não se vê.
+  **O desenho (os três movimentos do Matt em C1E1, conferidos no texto):**
+  1. **O propósito antes da cena** — o herói chega já com a razão de estar ali (da espinha e do
+     antecedente, por tabela e semente) como memória, nunca como oferta; a principal nasce aceita
+     dessa razão, com **uma pista concreta** que é o primeiro passo (quem procurar, onde).
+  2. **A ordem da narração:** o mundo → onde estou → a pequena história do lugar → porque estou
+     aqui e o que sei. O próximo passo sai da pista, e é o jogador que o diz.
+  3. **O mundo pinga fios** — a cidade (MM12) e as pessoas (MM8) vão deixando pistas ligadas à
+     principal.
+  4. **A escalada é o sino do Matt**: um acontecimento que obriga a enfrentar a história, quando o
+     jogador já conhece o lugar ou quando se afasta dela — um relógio (`relogios.js`); por bem ou
+     por mal, mas nunca no primeiro minuto. Nunca um bloqueio.
+  5. **Nenhuma oferta avulsa antes de estar orientado** (o mural só depois do primeiro passo da
+     principal, ou de N turnos, por tabela); as secundárias continuam opcionais.
+  6. **O próximo passo sempre à vista** — uma linha no sítio que já existe; peça nova, pede-se ao
+     desenho.
+  **A prova:** o `jogo` começa uma campanha nova e responde, a cada um dos primeiros turnos,
+  *porque estou aqui?*, *o que sei?* e *qual é o meu próximo passo?* — as três com resposta **no
+  primeiro turno**, sem nenhum cartão de Aceitar; e conta em que turno chega a escalada, e se
+  chegou depois de ele já ter explorado.
+
+- [x] **MM13b · a pista tem morada** · feito 30/09, v9.323 · da prova jogada de MM13, 30/09
+  *Resta, da pessoa:* os saves já partidos (léxico que chegou tarde e renomeou a planta) não se
+  reparam — repará-los reescreveria o léxico gravado do jogador. *Proposta ao desenho:* o "Começar"
+  esperar pela leitura do mundo. *Item à parte:* em `saga.js`, qualquer homónimo encontrado em jogo
+  fecha um marco da espinha fora de ordem (`falar_com` casa pelo primeiro nome).
+  A pista e o sino apontam para lugares que **não estão na planta da cidade**: "o Círculo Rachado"
+  (da base do mundo) é, na planta de Monte do Norte, o "Picadeiro Central"; "a Corda Velha" do
+  segundo passo não está na planta nem na fala de quem a deu. **Duas fontes de nomes para os
+  mesmos lugares** (a base e a planta) — achar qual manda e fazê-las uma. Junto: "🔎 Encontrar
+  Orin — O Armazém Velho" (T2) contradiz a pista e o diário (de onde vem?); e o passo "procurar
+  alguém" conta um turno depois de chegar e diz "Chegar a" em vez de "Procurar".
+
+- [x] **o sistema fala de si no descanso longo** · feito 30/09, v9.324 · da prova jogada de MM13, 30/09
+  "Fio local: d20 = 16 vs 10 → acontece · Nova missão: d20 = 3 vs 13 → nada · Arco regional…" na
+  tela — viola a lei "o sistema não fala de si".
+
+- [x] **uma missão "do Mestre" antes do primeiro passo da principal** · feito em v9.339 · da prova jogada de MM13
+  No T8, "Tirar Anya de lá… não se recusa", com o próprio herói como contratante ("Varek paga para
+  trazer de volta") e erros de texto ("de o casarão", "Chegar a o casarão", "vivo" para Anya). O
+  mural abriu no mesmo turno com o mesmo molde. Uma segunda história forçada antes de a primeira
+  andar é o cardápio outra vez.
+
+- [x] **MM8c-0 · a parte fixa do prompt emagrece ~6k** · feito 30/09, v9.325 · a pior cena solta 87 563 → 81 181
+  **O que ficou:** (1) o cânone de **lugares e itens** continua sem teto — com 819 de folga, qualquer
+  teto faria o Narrador esquecer artefactos e lugares antigos ("verdade imutável"): é decisão, não
+  emagrecimento; (2) **as descrições que o Cronista regista nunca chegam ao Narrador** (`formatarCanone`
+  só imprime tipo, papel, local, status, notas) — um artefacto sobe como "Nome — artefato, em X": é
+  "sabe e não conta"; (3) **o Cronista recebe o cânone inteiro e todos os nomes** (App ~10302) — a
+  fiação com teto está proposta; (4) duas contradições antigas do prompt: "semeie chefes ocultos"
+  contra "não invente outros chefes", e "envie o PV de cada inimigo" contra "o PV que mandar é
+  ignorado". **Folgas curtas:** 819 caracteres nos 82k; o guarda do cache a 0,9093 (sobram ~480 de
+  regra fixa para descer a portas).
+  Encolher o fixo, nunca subir o teto (subir é custo em todos os turnos de todos os jogadores).
+  Sem perder regra: o que se repete entre blocos, o que a pauta dinâmica já diz, o que entra sem
+  a cena pedir. A suíte do pior caso passa a incluir as pessoas, com a meta de caber nos 82k com a
+  campanha solta (187 pessoas). Antes/depois bloco a bloco. Cortar uma regra que muda o que o
+  Narrador faz já não é emagrecer: pára e diz-se qual. Os lugares e itens do cânone e o que o
+  Cronista recebe entram se couberem.
+
+- [x] **MM9 · a luta sem espada** · feito 30/09, v9.331 · prender, levar e o interrogatório com teste ficam para Q4
+  Intimidar, convencer, envergonhar muda a intenção do inimigo até se render.
+  Hoje a vontade da oposição só vira pela vida (`adversario.js`, as `quebra`).
+  No Honey Heist o clímax resolveu-se assim.
+
+- [x] **MM10 · o crime** · feito 30/09, v9.332 · render-se à guarda e pagar a multa ficam escritos; a legítima defesa por "quem me atacou nesta cena" também
+  Atacar o taverneiro abre uma luta (`agressao.js`) e não um crime: ninguém
+  chama a guarda, não há recompensa pela cabeça, a porta não fecha, as
+  testemunhas não contam. Assenta no elenco: contra alguém do elenco, a
+  consequência é de história; contra um figurante, é da cidade.
+
+- [x] **MM11 · a sessão de prova** · jogada 30/09 sobre v9.332 · **veredito: ainda não** · transcrição em
+  `mente/mm11-sessao.md` · 49 respostas do Mestre. A voz já é de mesa, e quando o fato chega à pauta ele
+  acerta número a número; o que falta é a continuidade, e é o próprio sistema que a parte.
+  **Das 12 perguntas que o mundo sabe responder: 5 certas, 2 pela metade, 4 inventadas, 1 contradita, 1 perdida.**
+
+- [x] **H3 · a cura tem relógio** (cura por turno) · **FEITA 16/09 · v9.275 · commit `7bd9291`** · de: pessoa · 16/09
+  **O espelho ficou no EFEITO, e quem decidiu foi a contagem de chamadores
+  vivos:** `tickCondicoes` tem 3 e **os três estão no `App.jsx`**;
+  `tickEfeitos` tem 4, e um é **`arena.js:360`**, módulo puro. Um `curaTurno`
+  na condição nasceria **inerte** — o pecado que a Fase F existe para pagar.
+  Um sítio contra zero: a cura pousa em PV **hoje**, com **zero linhas de
+  `App.jsx`**. Ficou um **ponteiro** ao lado da documentação de `danoTurno`
+  para ninguém refazer a pergunta nem criar a régua duas vezes.
+  **Onde a cura entra na fila: fora dela.** A fila do dano (abafo → invocação
+  → abrigo → PV temporário → PV real → a queda) corre no **meio** do turno; o
+  relógio corre no **fim**, junto com o irmão que cobra o veneno. Provado:
+  vida 9, veneno 2, regeneração 3, golpe 6 → 9→3, 3→1, 1→**4**; e com 3 de
+  vida contra um golpe de 4, **curar antes apagaria a queda**. **O relógio
+  não levanta os caídos** (guarda espelhada de `App.jsx:8350`).
+  **Medido e não reequilibrado:** catraca da arena idêntica número a número, e
+  a causa trancada na suíte — nenhum dos 8 prontos regenera. Viva: um duelista
+  com Chamado da Chuva dá 8 prazos, 14 pousos, 27 PV devolvidos.
+  **Herda-se daqui:** a fiação dos três tiques do `App.jsx` (uma linha de
+  `pousarCura` em cada, dentro de `calou`), a porta `aflicaoDe` (o mesmo
+  portão que F1 mediu), a cura de **grupo**, e a zona do Círculo Sagrado (H6).
+  `AGUARDAM` continua **39** — as três dívidas foram **trocadas, não
+  apagadas** —, e `SEM_DONO_HOJE` desceu de 6 para 4.
+  **Para a pessoa:** o relógio deve levantar quem caiu? Hoje não levanta.
+
+- [x] **H4 · a marca** (efeito preso a um alvo que soma dano) · **PRIMEIRA METADE FEITA 16/09 · v9.276 · commit `408a841`** · de: pessoa · 16/09
+  **O buraco era maior do que este item dizia, e a medição o desnudou:** não
+  era uma falta, era **confusão de línguas**. `danoExtra`/`danoReduzido` falam
+  do dano que o portador **causa** — a prova é a descrição que o jogador lê
+  (*"enfraquecido: −2 no dano causado"*), não o comentário, que mentia por
+  omissão. `combate.js:127` lia `modAtk.danoExtra` do lado certo e
+  `modAlvo.danoReduzido` **do lado errado**. Golpe de 10: **10** sem a Maldição
+  do Patrono, **8** com ela — amaldiçoar **endurecia** o inimigo.
+  **Nasceu UM campo, `danoRecebidoExtra`, e o espelho não nasceu:** *"apanhar
+  menos"* já tem dois donos vivos (o abafo de F1, o abrigo de P3) na fila do
+  dano; um terceiro seria a mesma regra em três cabeças com uma paga. Ponteiro
+  no catálogo e asserção que **acende** se alguém o criar.
+  **A marca entra PLANA e a montante de tudo:** `resolverAtaque` produz o
+  número **antes** da fila (abafo → invocação → abrigo → PV temporário → PV
+  real → a queda) — não é estação, é o golpe que chega mais pesado à primeira.
+  Base 10 + `fortalecido` + alvo `marcado` = **14**; em crítico **26**, não 28.
+  **Medido e não reequilibrado:** arena e régua idênticas número a número, as
+  duas causas trancadas na suíte. Viva onde morde: +15,5 % em 600 golpes. E o
+  que as réguas **não** veem, dito: `enfraquecido` chega por 6 frases do
+  acervo, e o conserto **vira o sinal** — 4 pontos de troca por golpe.
+  `AGUARDAM` **39 → 38** (saiu Julgamento), `SEM_DONO_HOJE` 4 → 2.
+
+- [x] **Q3 · letal ou não letal** · de: pessoa · 14/09 · feito em MM3 (v9.306)
+  Quando o golpe **levaria** o alvo a 0, o jogador escolhe antes de aplicar
+  — é a lei *o veredito antes do clique* na sua forma mais pura. Não letal
+  derruba desacordado, e ele acorda em **1d4 horas**. A pergunta só aparece
+  quando há escolha (não em dano de área, não em morte instantânea), e
+  existe uma preferência padrão para quem não quer ser perguntado toda vez.
+  A forma do controle é da mesa de design; a regra é daqui.
+
+- [x] **Q5 · o golpe final é seu** · de: pessoa · 15/09 · feito em MM3 (v9.306)
+  **Ideia da pessoa (15/09), e ela é barata porque Q3 já fez o caro:** quando
+  o inimigo chega a 0 e o jogador escolhe a letalidade, o sistema pergunta
+  ***"como você faz isso?"*** — e o que ele escrever é o que o Narrador narra.
+  A cena que ela deu como exemplo: *"vou correndo em direção a ele, deslizo
+  no chão e passo no meio das pernas dele cortando as duas, e enquanto ele
+  cai eu me levanto e corto a cabeça dele dizendo 'mexeu com a pessoa
+  errada'"*.
+  **Por que isto é maior do que parece:** é o único momento do jogo em que o
+  jogador **dirige** em vez de agir — e cai exatamente onde a emoção já está
+  no pico. O sistema já decidiu tudo que importa (o golpe acerta, o dano
+  mata, a escolha foi feita); a prosa é livre porque **não há regra em
+  disputa**. É o oposto de deixar a IA decidir o combate: aqui ela narra o
+  que o código já resolveu, que é a lei da casa na sua melhor forma.
+  Cuidados: **pular é um clique** (quem não quer escrever não é punido nem
+  atrasado); o texto é do turno, viaja pela `pauta` dinâmica e **não soma
+  bloco estático** ao prompt; e o Narrador recebe junto o que de fato
+  aconteceu, para narrar a cena do jogador **sem contradizer o número** —
+  se ele descreve cortar a cabeça de algo que ficou desacordado, quem manda
+  é a escolha, não a frase.
+
+
+
+- [x] **F1 · `amortece` (8)** · **FEITA 16/09 · v9.274 · commit `c1038e5`** · de: pessoa · 14/09
+  **O molde está posto, e é este:** tabela irmã (`AMORTECIMENTO_DO_BUFF`,
+  colada a `ABSORCAO_DO_BUFF`) + chave que **só nasce quando existe** +
+  **estação na fila do dano** + seção no varredor. Zero linhas de `App.jsx`:
+  `amortecerDano` já rodava em produção e já escrevia ficha e dano de volta.
+  **Onde entra:** primeira estação da fila do herói (`amortecerDano` →
+  `repartirDano` → abrigo → PV temporário → PV real → a queda), **sobre o golpe
+  cheio** — proporção morde o número cheio, valor fixo morde o que sobrou; e
+  dentro de `amortecerDano`, depois das duas metades de origem e antes da
+  redução fixa, para a porta `d >= 4` da Pele de Pedra continuar a ver o número
+  que vê hoje. **Medido e não reequilibrado:** régua e catraca da arena
+  idênticas ao byte.
+  **Três coisas que F2 herda por escrito:**
+  1. **A porta, e é o maior achado:** as 8 nascem com número, mas **só 2
+     atravessam a produção de hoje** (`Postura Defensiva`, `Proteção contra
+     Energia`). As outras 6 não casam com `aflicaoDe`, e
+     `aplicarBuffDeHabilidade` (`App.jsx:8136`) sai **antes** de `efeitoDeBuff`.
+     **É `App.jsx` e pede o bastão.**
+  2. **A arena, medida e não ligada:** ligar `amortecerDano` em `arena.js`
+     acenderia junto os traços raciais de **3 dos 8 prontos** (Goliath,
+     Tiefling, Anão) e **quebra a catraca** (muralha 46,8 → 62,5; 66,9 em "bb";
+     amplitude 21,8 contra teto 20). Ligar exige tratar a Pele de Pedra antes.
+  3. **O teto em 25% recusa a letra da ficção** ("metade"), porque metade
+     durante turnos seria a Pele de Pedra ligada a toda a cena por 3 PM. Está
+     em tabela, logo desfeito num commit se a pessoa quiser a metade literal.
+
+- [x] **F2 · `protege` (8)** · **FEITA 16/09 · v9.278 · commit `3bac9b6`** · de: pessoa · 14/09
+  **O que distingue `protege` das irmãs não é quanto, é EM QUEM** — `absorve`
+  compra pontos, `amortece` proporção, e esta promete **um corpo que não é o de
+  quem usou**. Quatro entradas de `AGUARDAM` já o diziam: *"a guarda sobe em
+  QUEM USA"*, *"o abrigo no corpo errado"*.
+  **E a máquina já existia:** `PORTADORES` tem a coluna `alvo` com
+  `"aliados"` vivo e **três leitores**. Nasce o portador `amparo`, e **6 das 8**
+  passam a cair no corpo certo — Muralha, Círculo Sagrado, Espírito Guardião,
+  Muralha Viva, Espírito Vigia, Totem de Guarda. **Zero linhas de `App.jsx`.**
+  (Armadura Sombria fica em `proprio`: promete o próprio corpo, e está certa.)
+  **Quatro das seis não tinham portador nenhum por UMA LETRA:** `prote[çc]`
+  casa "proteção" e **não casa "protege"**, que é o verbo que a ficha usa — a
+  armadilha exata que H1 apanhou em "protetoras", de pé há versões.
+  **O recorte exige duas coisas na frase** (o verbo *proteger* **e** um corpo
+  declarado), e **não** as palavras de abrigo: trocar uma pela outra leva o
+  recorte de 9 para 12, e as três que entrariam não protegem ninguém. As três
+  estão **nomeadas em asserção**, mais um teto no varredor — é o cuidado que
+  H4 comprou: a frase tem de prometer o que a família paga.
+  **Mas a moeda vale zero, e isso é o achado maior da etapa** — subiu para
+  "Para a pessoa decidir", no topo desta pauta, com o preço inteiro medido.
+  **`AGUARDAM` fica em 38:** nada pago, **quatro dívidas trocadas e escritas**
+  — uma delas estava **factualmente errada** (Elixir de Combate dizia *"é
+  guarda desde a v9.53"*, e não é: `aflicaoDe` devolve `null`).
+  **Herda-se:** o alvo único (`Espírito Guardião`, `Muralha` prometem **um**
+  aliado adjacente; `"aliados"` é *eu + o grupo*) pede um quarto valor de
+  `alvo` com leitor novo em `App.jsx:7725` e `:7825` — **bastão**.
+
+- [x] **F3 · `intocado` (18)** · **FEITA 16/09 · v9.280 · commit `f706cf2`** · de: pessoa · 14/09
+  **A colisão declarada não existia, e o veredito é este: `intocado` não é uma
+  família — são TRÊS promessas debaixo de um rótulo.** 8 prometem *o golpe que
+  erra* (a escada de `GUARDAS`, e é o que F3 paga), 5 prometem *imunidade a
+  condição* (o catálogo de condições), 5 prometem *zona e fuga* (o lugar e o
+  movimento). `estaIntocavel` responde à promessa **de prazo**, e a v9.53 já a
+  respondeu — absoluta por 1 turno (8 PM), entortada por 3–4. **O que a família
+  traz é o degrau de BAIXO, que a escada nunca teve: 2 e 4 PM.**
+  **E a régua já estava escrita sem ninguém a ter lido:** as três esquivas da
+  v9.53 obedecem, sem exceção, a `floor(PM / 2)`; as cinco de `tipo: "defesa"`
+  **não** obedecem, o que a confirma (lá o preço é a CA, aqui é o prazo). Virou
+  `ESCADA_DA_GUARDA`, lida de volta por duas provas. **F3 não inventou regra.**
+  **5 passam a cumprir** (Esquiva Ágil, Defesa Fluida, Dança das Sombras,
+  Antevisão, Corte de Espelhos); **3 já cumpriam e ninguém sabia** — o rótulo de
+  P1 nasceu **por cima de mecânica viva**; **10 não passam**, com o motivo
+  nomeado em asserção. **O recorte morde 5 frases e só 5** nas 593, e os quatro
+  alargamentos tentadores estão medidos com as intrusas nomeadas.
+  **Onde morde:** 600 golpes → **68,5 % de acerto nu contra 47,2 %** com esquiva
+  de pé (−35,8 % de dano); o absoluto, **0/600**. Paridade: ~4 de dano evitado
+  por 2 PM, o que `absorve` compra a 2 PM.
+  **`AGUARDAM` fica em 38** — nada pago, **três dívidas trocadas**: a escada paga
+  *desvantagem* e as fichas dizem *"anula"*, a mesma distância que
+  `AMORTECIMENTO_DO_BUFF` mantém. O absoluto barato foi **recusado**: entregá-lo
+  a 2 PM desfaria a escada pelo degrau mais barato.
+
+- [x] **"posso atacar o guarda?" abre uma luta** · feito 29/09, v9.309 (promovido pelo
+  coordenador da fase: a ênclise é a forma normal de bater em português) · de: sistema/MM4 · 29/09
+  *E o avesso, visto a jogar em MM5:* "avanço para socá-lo" **não** abriu luta — o soco
+  virou acidente de cena (barris, queda, salvaguarda). A `RX_AGRESSAO` tem `soco` e não
+  a ênclise (`socá-lo`, `esmurrá-lo`, `chutá-lo`). Os dois lados da mesma peneira.
+  `ehDeclaracaoDeAtaque("posso atacar o guarda?")` dá `true` (`agressao.js`): uma
+  pergunta ao Mestre, com o guarda presente, vira agressão. A peneira do improviso
+  (`NAO_E_IMPROVISO`) já barra perguntas; a da agressão não. Bug com teste que prova.
+
+- [x] **"escondo-me" não esconde** · feito 29/09, v9.311 · de: sistema/MM6 · 29/09
+  O catálogo de desafios (`desafios.js`, a furtividade) casa "me escondo" e não a ênclise
+  "escondo-me" — o mesmo defeito que a peneira da agressão teve, agora no catálogo. Varrer
+  os `rx` do catálogo pela ênclise dos verbos que têm pronome (esconder-se, esgueirar-se,
+  agachar-se, atirar-se…), com corpus.
+
+- [x] **o convite para o grupo não andou em 8 dias** · feito 29/09, v9.315 — **era o caso geral** · de: sistema/MM3b · 29/09
+  Na prova jogada, o pedido "mais 5 dias de estrada" para aceitar alguém no grupo não se
+  moveu depois de 8 dias avançados pelo painel do tempo. **Não é** o `conhecidoEm` nunca
+  escrito (a mão só o procurou em `src/*.js`; o App escreve-o em ~9713, ~9722, ~9990):
+  investigar o que conta como "estrada" (dias de viagem? `convivio`?) e se o painel do
+  tempo o move. Se o convite nunca abre, nenhum companheiro novo entra no grupo.
+
+- [x] **"Sussurro assombrado" inspira o bando** · feito 29/09, v9.314 · de: sistema/MM7 · 29/09
+  O golpe do Necromante casa o portador `inspiracao` porque "assombrado" contém "brado";
+  "sombra" dá `furtivo` a quem lança. O casamento de portadores por substring precisa de
+  fronteira de palavra. Bug com teste que prova.
+
+- [x] **os inimigos empilham na mesma casa** · feito 29/09, v9.316 (promovido: é verdade contada ao Narrador) · de: sistema/v9.314 · 29/09
+  `moverInimigos` calcula a ocupação com as posições de antes do turno: quem anda depois
+  não vê quem já andou. Na estrada, três soldados vão todos para (4,6). Antigo e no ar.
+  Consertar muda o passo em campo aberto — medir pela sonda das paredes.
+
+- [x] **"Golpe consagrado" abençoa o bando do monstro** · feito 29/09, v9.316 · de: sistema/v9.314 · 29/09
+  Não é pedaço de palavra: o nome do golpe promete bênção e o portador `bencao` dá-a aos
+  aliados de quem o lança. Nomeado em `teste-afl`. (E "silencioso" cai em `quietude` antes
+  de `sombra`, pela ordem da tabela.)
+  `moverInimigos` é gulosa em linha reta: na planta da taverna, o conjurador de antes
+  empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
+  (o herói da sonda já o tem), medido pela régua.

@@ -12,8 +12,11 @@ classes do Tailwind (CDN). Os tokens vivem em `src/estilo.js` (`T`,
 `MATERIAIS`, `FONT_CSS`, `MOVIMENTO_CSS`, `SUPERFICIES_CSS`), as primitivas
 em `src/ui.jsx`.
 
-Leia o `CLAUDE.md` primeiro, e depois `mente/formas.md` — **antes de
-escrever qualquer controle**. Você não inventa forma: se ela não está lá (e
+Leia o `CLAUDE.md` primeiro, e depois, em `mente/formas.md`, **a secção da
+peça que vai tocar** — **antes de escrever qualquer controle**. Nunca o arquivo
+inteiro: Grep `^## ` dá o índice, e o Read com `offset`/`limit` lê a secção
+(lei "ler por âncora"). No `App.jsx` vale o mesmo: busque a âncora, leia a
+vizinhança. Você não inventa forma: se ela não está lá (e
 no Figma), **pare e peça ao `desenho`**. Não inventa regra: número de jogo
 sai de tabela do `backend`.
 

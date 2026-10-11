@@ -656,3 +656,608 @@ Aqui fica a prova.
   **Quatro buracos declarados com número**, porque buraco calado é mentira: 1
   nome CSS, 18 `transition` fora da folha, **o contraste** (o `#fff` 3,42:1 de
   `App.jsx:2541` que nenhum dos três dentes vê) e 2 animadores em JS.
+- [x] **(R1) a cena ganha um rosto, e o jogo nunca lho deu** · **FEITO em
+  R13-B, `643294a`, v9.284.** A xilogravura por semente esta na tela: 96 px,
+  sete gramaticas de silhueta sobre 30 biomas, quatro luzes pela hora, **32
+  pares medidos e zero reprovas**. O custo que esta proposta orcava em duas
+  linhas de prosa **nao se pagou**: a etapa A devolvera 334 px antes, e a
+  pagina ficou em 490 px contra os 151 de origem. *A condicao de R1 era R12, e
+  ninguem o sabia ate R6 medir o telefone.* · de: desenho · 23/09
+
+  **O diagnóstico, e é uma frase:** este é um RPG de texto em que **nada na tela
+  mostra onde você está**. O bioma existe no motor — há `VinhetaDaCena`, há
+  `biomaDaqui()` — e o que ele produz é uma mudança de tom que **a medição não
+  distingue do fundo**. O jogo descreve uma taverna, uma estrada, uma cripta, e o
+  ecrã é sempre o mesmo retângulo.
+
+  **A proposta.** A página ganha um **cabeçalho de cena** — uma faixa de 96 px no
+  topo do papel, com uma **xilogravura gerada pela mesma semente do mundo**, o
+  nome do lugar, e a hora do dia a mudar a luz da faixa. **Não é ilustração
+  comprada: é o gerador de retrato que a casa já tem, apontado para o lugar em
+  vez de para a cara.** *Determinismo por semente continua a valer* — a mesma
+  semente dá a mesma cripta, em qualquer máquina, que é a primeira lei do
+  `CLAUDE.md` aplicada a uma imagem.
+
+  **O custo, escrito antes de ser perguntado, para poder ser recusado:** 96 px
+  saem dos 418 da página no telefone, que passa a 322 — de 51,5 % para 39,6 % do
+  ecrã. Com a coluna de 65ch e 17 px, ainda dá **11 linhas de prosa contra as 13
+  de hoje**. **Duas linhas é o preço.**
+
+  **Por que é dela:** acrescenta ao ecrã uma coisa de que o jogador passa a
+  depender para saber onde está, e **muda o que o produto é** — de *"um log com
+  uma barra de vida"* para *"um livro ilustrado que responde"*. Isso não é uma
+  tela mais bonita; é outro produto, e a régua desta casa manda trazer isso à
+  pessoa mesmo com o número do nosso lado.
+
+
+- [x] **(K3) a janela pergunta sobre o golpe que menos importa — e há número** · **APROVADA 17/09 — virou a Fase J** (a pergunta muda de golpe). Move-se a resposta, não a pergunta: a saída que o `jogo` e o `desenho` acharam melhor **não bate na trava de K2**, e derruba o dano sem pergunta de 62,4% para 33,4%. ·
+  pesado · de: jogo · 16/09
+  **O diagnóstico, corrido em 20 000 sementes sobre o motor real** (ladino nv 3 +
+  2 companheiros contra 4 comuns, a mesa mais parecida com a campanha):
+  a janela abre **no maior golpe da rodada em 36,09 %** das vezes; o golpe sobre
+  o qual ele **é perguntado** faz **3,56** de dano, e o que chega **coberto, sem
+  pergunta**, faz **5,86**. **63 % do dano da rodada chega sem ninguém lhe
+  perguntar** (75 % para o ladino solo). E **metade das perguntas é sobre um
+  golpe que errou** (50,09 %): *revidar · 0 PM* não é uma decisão, é um sim com
+  relógio — e K1 matou `inimigo_cai` com exactamente esta frase (*«uma pergunta
+  cuja resposta é sempre sim não é pergunta, é um diálogo de confirmação com
+  relógio»*). **A janela abre em 98,6–100 % das rodadas** para sete das doze
+  classes: **não existe rodada de descanso.**
+  **As duas propostas, e a segunda é a forte:** (a) a janela **não abre num erro
+  do inimigo** — corta 45–50 % das perguntas e põe as restantes no momento que
+  dói; (b) a janela abre **no MAIOR golpe da rodada**, não no primeiro que
+  qualifica — sobe de **36,09 % para 100 %** a fracção de perguntas feitas sobre
+  o golpe que mais dói.
+  **E o obstáculo, dito antes de a pessoa o descobrir:** **a trava de K2 proíbe as
+  duas.** A asserção 05 exige `abre.ordem <= ordemDaReacaoDeHoje`; saltar um golpe
+  faz a replicação de [R1] começar mais à frente e **o contra-ataque do golpe 0
+  deixa de acontecer** — isso é regressão medida, não estilo. *A ordem da pergunta
+  está soldada à ordem dos golpes, e foi a trava que a soldou.* **Vem à pessoa
+  porque muda mecânica e porque contradiz uma asserção que ela já aprovou.**
+  **O que se perde, dito por mim:** o jogador deixa de poder **recusar** o
+  contra-ataque — e recusar compra alguma coisa de verdade.
+  **[K4, 16/09] MEDIDO OUTRA VEZ, e ele não exagerou em nada.** Corrido de novo
+  sobre o código de hoje: 63 % → **62,42 %**; 50,09 % → **50,66 %**; 36,09 % →
+  **35,54 %**; 98,60 % → **98,51 %**; 75 % → **75,24 %**. **A única divergência
+  fora do ruído sai contra ele**, e o golpe real confirmou-o na tela: três das
+  cinco janelas abriram num erro, e em três rodadas seguidas o dano grande chegou
+  coberto. **A proposta (a) — *a janela não abre num erro do inimigo* — leva
+  agora também a assinatura do `desenho`**, por razão de forma e independente da
+  razão de dano: abrir só em golpe que acerta multiplica por **50** a informação
+  da aparição da peça (0,020 → 1,023 bits) pagando com **metade** das
+  interrupções. **A proposta (b) foi superada:** a de K4, no topo desta lista,
+  chega ao mesmo lugar **sem bater na trava de K2** — mova-se a resposta, não a
+  pergunta.
+
+
+- [x] **(K3) no modo de alto contraste o Taverna não tem foco nenhum** · **APROVADA 17/09 — virou a Fase A11** (acessibilidade do foco). `forced-colors` remove `box-shadow` por especificação, e o anel da casa inteira é `box-shadow`: para quem usa alto contraste, **o foco não é fraco, é zero**. ·
+  pesado · de: desenho · 16/09
+  **Não é «fraco»: é zero.** `forced-colors: active` — o alto contraste do
+  Windows, que muita gente com baixa visão usa o dia inteiro — **remove
+  `box-shadow` por especificação**, e o anel de foco da casa inteira é
+  `box-shadow`. Logo, para esse jogador, **o indicador de foco de um RPG de texto
+  jogado com teclado é nenhum**, que é exactamente o público que mais depende
+  dele. **Medida, não adjectivo:** indicadores de foco visíveis sob
+  `forced-colors` hoje = **0**; depois = todos.
+  **E hoje ficou mais barata:** K3 fabricou `.tv-anel-foco` com as duas linhas de
+  `outline` do `forced-colors` já dentro, e aplicou-a ao cartão e às quatro
+  pílulas da ficha. **A peça existe e está provada.** O que falta é **alcance**, e
+  é por isso que é pesado: passá-la pelos **215 `<button>`** que K2 contou e pelos
+  **86 alvos do tabuleiro** com `outline: none` à mão
+  (`grade-de-batalha.jsx:515-519`) é trabalho de etapa e muda o que um jogador
+  vive. **Paga também a dívida de E1**, que está aberta desde 15/09.
+
+
+- [x] **(K2) o combate ganha uma semente, e o Duelo já provou que dá** · **APROVADA 17/09 — virou a Fase SE** (a semente do combate). São **205 chamadas a `Math.random`** na campanha contra **zero** em `duelo.js`: a primeira lei da casa — *mesma semente, mesmo resultado* — vale hoje metade do jogo, e o Duelo já provou que a outra metade é possível. ·
+  pesado · de: jogo · 16/09
+  **O diagnóstico, com o número.** A primeira lei desta casa diz *mesma semente,
+  mesmo resultado, em qualquer máquina — é o único árbitro que um sistema sem
+  servidor tem*. **Mas a campanha não tem semente nenhuma:** são **205 chamadas a
+  `Math.random`** por ~50 módulos, sem um fio que as ligue. **E `src/duelo.js`
+  tem zero** — `duelar(A, B, { semente })` e `sementeDaSala(...)` fazem o Duelo
+  reprodutível de ponta a ponta desde D2/D3, e `src/semente.js` já exporta o
+  gerador. ***A peça existe; falta ligá-la ao combate.***
+  **A proposta, e a ordem é o que a torna barata:** `src/dado.js` com
+  `fioDaLuta({ save, luta, rodada })`; o combate passa a receber **o rolador por
+  parâmetro**, com `rolar = Math.random` por omissão — **exactamente a assinatura
+  que `reacaoDoSilencio` já leva desde hoje**. Nada quebra no dia 1: quem não
+  passa o rolador tem o jogo de hoje. **A reação é a primeira, porque K2 já a
+  pagou**; depois `combate.js`, uma função por versão, cada uma com a varredura
+  de sementes a provar que a extracção foi de graça.
+  **Por que muda o que o jogador vive, e não é higiene:** hoje, quando ele perde
+  e quer perceber porquê, a resposta é *"azar"*; com semente é *"a mesma luta,
+  outra vez, igual"* — **e a diferença entre as duas frases é a diferença entre um
+  jogo que se pode entender e um que se tem de aceitar.** O *"eu juro que apareceu
+  diferente"* deixa de ser indecidível. **E toda etapa futura passa a poder PROVAR
+  «o depois é igual ao antes» em vez de o declarar:** K2 gastou um ciclo inteiro a
+  construir à mão, para **uma** função, a prova que uma semente daria de graça
+  para o motor inteiro.
+  **O risco, dito pelo próprio `jogo`:** são 205 chamadas, e tocá-las todas de uma
+  vez é o tipo de mudança que parte o jogo em silêncio. **A defesa é não as
+  tocar** — é o rolador por parâmetro, função a função, com `Math.random` a
+  continuar a ser o valor por omissão até ao último dia. **Reversível em qualquer
+  ponto.** O que ele não sabe dizer é quantas versões leva.
+  **Por que é dela:** mexe no motor inteiro, não numa tela. *E a alternativa
+  honesta seria apagar a linha do `CLAUDE.md`, que a mesa não tem autoridade para
+  propor.*
+
+
+- [x] **(W1) a luta abre onde a sala é comprida, e ninguém decidiu isso** · **APROVADA 17/09 — vai para a Fase E** (E6). A distância de abertura é a **altura da planta e mais nada** (`grid.js:569-575`): a masmorra abre a 25,5 m por ser estreita, não por ser longe. Passa a sair de tabela, como todo número desta casa. ·
+  pesado · de: jogo · 16/09
+  **O acidente, e é de uma linha.** A abertura de toda luta sai de `posicionar`
+  (`grid.js:569-575`): o herói em `y = altura − 1`, os inimigos em `y = 0`. Logo
+  **a distância de abertura é a altura da planta, e mais nada.**
+  > **A masmorra abre a 25,5 m porque é ESTREITA (7×18), não porque é longe.
+  > A taverna abre a 12 m porque é BAIXA (12×9), não porque é apertada.
+  > A razão de aspecto do desenho da planta decide a distância do combate.**
+
+  **A conta, corrida em Node sobre `PLANTAS` × `posicionar`:** abertura média
+  **19,95 m**; **10 de 10 plantas** recusam o corpo a corpo no turno 1; **1,4
+  rodadas por luta são só caminhada** (2 na masmorra, no navio, no gelo e na
+  floresta). **E o arqueiro não paga nada disto** — alcança em 10/10 no turno 1.
+  *O jogo cobra um imposto de caminhada a quem luta de perto, e cobra-o por
+  engano.*
+  **A proposta.** A distância de abertura **sai de uma tabela** — por cenário e
+  por como a luta começou — e **nunca dos cantos da planta**. A emboscada abre
+  colada; a perseguição abre longe; a rixa de taverna abre a 3 m porque uma
+  taverna é pequena. A regra: **pelo menos um inimigo dentro do primeiro passo
+  de alguém.** *(O embrião já existe e ninguém reparou: `posicionar:573` já abre
+  o inimigo `agil` a meio campo. Falta ser tabela em vez de booleano.)*
+  **Porque muda o que o jogador vive:** hoje a primeira coisa que toda luta lhe
+  ensina é *"ande em frente"*; com isto é *"onde é que eu me ponho"* — e o campo
+  já tem tudo para essa pergunta valer (cobertura, terreno que cobra, golpe
+  livre, alcance por tamanho). **A regra está toda lá; falta a luta começar perto
+  o bastante para alguém a usar.**
+  **Porque é dela:** é tabela nova e é `backend`; e o jogador reaprende uma coisa
+  só, mas grande — **que a luta começa em contacto**. Isso é fluxo.
+  **O risco, dito pelo próprio `jogo`:** a aproximação é onde a posição vale
+  alguma coisa, e abrir tudo colado achataria o combate no sentido oposto. **A
+  defesa é a própria tabela:** ela não diz "colado", diz *"dentro do primeiro
+  passo de alguém"* — e "alguém" pode ser o arqueiro, o que deixa o corpo a corpo
+  com uma rodada de aproximação que passa a ser **uma escolha** (avançar sob fogo
+  ou cobrir-se) em vez de uma caminhada.
+
+
+- [x] **(W1) os três verbos de teatro: dar-lhes motor, ou tirá-los da tela** · **APROVADA 17/09 — já é a Fase Y**, que a pessoa aprovou em 15/09 e está em 1 de 3 (Y1 deu motor a Empurrar e Derrubar em v9.271). `Esquivar` é Y2; a barra fixa só os mostra quando cumprirem. ·
+  pesado · de: jogo · 16/09
+  `golpe.js:222-254` escreve, com o motivo, que **`Esquivar`, `Empurrar` e
+  `Derrubar` não chegam a motor nenhum** — X2 preferiu **escrever o buraco a
+  remendá-lo**, e teve razão. **Está na mesa há uma fase, e W1 obriga-o a sair de
+  lá:** uma barra fixa não pode carregar teatro, e foi por isso que a fileira de
+  seis de E1 virou uma de quatro. *Uma barra fixa em que metade dos alvos não faz
+  nada mecânico ensina, em duas lutas, a não confiar na barra.*
+  **Duas saídas, e as duas são dela.**
+  **Dar-lhes motor.** `Empurrar` e `Derrubar` são disputa de força, e o motor não
+  tem disputa entre duas fichas — é a peça que falta. **`Esquivar` é a mais
+  barata e a que mais muda o combate:** a condição `protegido` **já existe em
+  `condicoes.js`** e nada a concede a partir de uma declaração do jogador; é a
+  única decisão defensiva que o jogador hoje não tem.
+  **Tirá-los.** Com W2 a transformar a caixa em fala, *"empurro com força"* passa
+  a ser **uma fala**, e uma fala num sítio onde a fala mora não é uma perda. **O
+  `jogo` defende esta, se só houver uma** — os doze botões de `Ações` são,
+  medidos, **um teclado de atalhos**, e um teclado de atalhos é o oposto do que
+  esta fase entrega. *Mas tira ao jogador coisa de que ele depende, logo é dela.*
+
+
+- [x] **(E2) a régua mostra a planta INTEIRA, e a janela é uma marca dentro dela** · **APROVADA 17/09 — vai para a Fase E** (E7). A régua deixa de responder *"como se chama isto que vejo"* e passa a responder **"o que existe que eu não vejo"** — a pergunta que um campo de 33% faz o tempo inteiro. ·
+  pesado · de: desenho · 15/09
+  **A proposta.** A régua deixa de rotular só as casas que estão na tela e passa
+  a rotular **a planta toda** — as 18 colunas cabem nos 337 px do telefone a
+  18,7 px cada, que é exatamente o `N = 2` que E1 já calculou; **a letra nunca
+  sai, e custa zero casas**. A janela do campo vira um trecho realçado *dentro*
+  da régua, como a alça de uma barra de rolagem que soubesse dizer nomes.
+  **O porquê, e é uma frase:** hoje a régua responde *"como se chama isto que eu
+  vejo"*, e a pergunta que um campo de **33 %** faz o tempo inteiro é **"o que
+  existe que eu não vejo"** — que nada na tela responde. É a frase de E1 (*"uma
+  régua que começa em F conta que A–E existem"*) feita à letra em vez de por
+  inferência, e é o que torna *"vou até K14"* dizível sobre uma casa que o
+  jogador nunca viu.
+  **Por que é dela e não da mesa:** a régua deixa de bater casa a casa com o
+  tabuleiro — deixa de ser o cabeçalho congelado da planilha e passa a ser um
+  mapa do campo. Isso é o jogador a reaprender o que a borda significa, e **o
+  risco só se resolve jogando**: pode ser que duas escalas na mesma tela
+  confundam mais do que a borda muda informa.
+  *(A alternativa barata, se a pessoa recusar: a régua fica como está e a
+  **marca de borda** — `A marca de borda` `53:43`, já desenhada, variante
+  *Quem = A casa* — passa a falar pela casa que está fora da janela. Resolve o
+  caso agudo e não resolve a pergunta geral. **Depende de E3**, porque hoje o
+  tabuleiro sempre cabe e nada fica fora da janela.)*
+
+
+- [x] **A ação principal tem a mesma cara nos três modos** · feita · texto em `mente/arquivo/pauta-desenho-feitas.md`
+
+
+
+- [x] **V1 · a folha da v3** (paleta e tokens) · `desenho` + `jogo` → `aprendiz`
+  · **FEITO 24/09, no ar** — a decisão em `mente/formas.md` §V1, o spec em
+  `mente/v1-desenho.md`, a prova jogada em `mente/v1-jogo.md` §10. `T` veste os
+  valores da v3; a página castanha de R2 morre (sobre ela todos os acentos
+  perdiam 33 % de contraste); `T.mundo` passa a ciano; nasce `T.rosa` (o que
+  está escolhido agora) e a tabela `AMBIENTE` (o gradiente âmbar·ciano·rosa da
+  v3, pintado no corpo da história). Prosa sobre o corpo **11,08 → 13,59:1** no
+  pior ponto do gradiente; borda dos avisos da página **2,30 → 3,41** (antes
+  reprovava a 1.4.11 e ninguém tinha medido); PV grave contra normal **+37 %** de
+  separação (+27 % em deuteranopia); **0 px** de leiaute mexido.
+
+- [x] **V1b · as pontas de V1 que moram no `App.jsx`** · **FEITO 25/09 com V3b, `e9b3531`** · `oficial`, com o
+  bastão · leve — o contorno do cartão separa-se do controlo (`T.line` no
+  cartão, `T.lineStrong` nos chips e no botão flutuante; `paginaFio`
+  aposenta-se e a asserção 6 de `teste-v1-folha` muda com motivo); o comentário
+  de `App.jsx` ≈l.23066 que ainda diz que a narração é "a única coisa QUENTE";
+  **o `Continuar aventura` em `T.danger`** (`App.jsx:5057`, e a sombra com o
+  literal `rgba(216,106,91,…)` de R2): o primeiro botão de cada sessão tem a
+  cor do perigo — passa a `T.rosa`. Detalhe em `v1-desenho.md` §10 e
+  `v1-jogo.md` §10.4. *Vai junto da primeira etapa que tomar o bastão.*
+
+- [x] **V3 · os ícones desenhados** · **FEITO 25/09: V3a `afaffd8`, V3b `e9b3531`, V3c `29debdf`; o resíduo é V3f, depois de V7** (~20: os do trilho, o dado, as quatro luzes,
+  `◉`, `◆`, `✦`, a coroa) — **paga R8 na tela principal**; varredor: zero emoji
+  do SO na mesa. O dado é um d20 de verdade (o Lucide não tem).
+  - [x] **V3a · fora do `App.jsx`** · **FEITO 25/09, no ar** — a decisão em
+    `formas.md` §V3, o spec em `mente/v3-desenho.md`, o censo jogado em
+    `mente/v3-jogo.md`. `src/glifos.js` (16 glifos, um assunto cada, geometria
+    Lucide ISC), a peça `Glifo` em `ui.jsx`, 12 `Icone*` antigos a delegar, o d20
+    icosaedro provado como geometria, `DegrausDaAmeaca` no Bestiário. **101 → 0
+    emoji do SO** nos 14 arquivos fora do `App.jsx`: todas as telas a um toque
+    da mesa ficam sem emoji do sistema. A catraca D5h congela o `App.jsx` em 595
+    e só o deixa descer.
+  - [x] **V3b · o `App.jsx`** · `oficial`, com o bastão · **FEITO 25/09, no
+    ar** — as falas do sistema traduzidas por tabela (`ASSUNTO_DO_EMOJI` e
+    `assuntoDaLinha` em `glifos.js`, não 296 sítios) com `O ladrilho do assunto`
+    (Neutro cheio, Impedido oco com a marca `ban`, Porta com contorno
+    `lineStrong`), a voz, `chipsDoEstado` com setas a favor/contra, o teste
+    pendente, a gaveta `✦`, o trilho (Gestão → herói, Códex → ânfora); e **V1b**
+    junto (o cartão a `T.line`, `paginaFio` aposentado, o `Continuar aventura`
+    de perigo para rosa com a seta a 6,02:1 — era 2,19). A prova jogada
+    (`v3-jogo.md` §9) pediu cinco consertos antes de subir, e subiram com ela.
+  - [x] **V3c · FEITO 25/09, no ar** (o spec em `mente/v3c-desenho.md`, o
+    momento e a prova jogada em `mente/v3c-jogo.md`) — a soleira com o selo de
+    prazo e a moeda desenhada, XP e fama fora dela (nunca desempatam dois
+    contratos), o dinheiro em coluna; O TEMPO numa linha com o céu da hora e os
+    botões de esperar com o céu de chegada; *guardada* deixa de parecer recusa;
+    "Novo arco iniciado" sai; masmorra, acampamento e falas do jogador sem
+    emoji; o `↓` na margem do cartão. **O que sobra, e é V3f:** a passagem
+    visitada da masmorra ainda imprime `ICONE_SALA` (`App.jsx` ~:23504); o
+    acampamento atrás de "mais 2 ofertas" com o herói a sangrar (o que estanca
+    uma perda por turno passa à frente do que não tem prazo — `v3c-jogo.md`
+    §1); a dobra a dizer "mais 1 trabalho"; os 11 `◉` de frase nos painéis
+    (`TextoComMoeda` já serve — `aprendiz`); o raid, com a tela de combate.
+  - [ ] **V3g · a escolha é uma mesa de cartas** · `desenho` · médio · a
+    ambiciosa de V3c (`formas.md` §V3c) — na mesa, duas ofertas lado a lado
+    como dois cartazes com o dinheiro grande; a soleira desce de 116 para ~96
+    px e comparar vira olhar dois números à mesma altura.
+  - [ ] **V3h · esperar até à luz** · `jogo` · médio · a ambiciosa de V3c
+    (`v3c-jogo.md` §8) — os botões de esperar passam a `1h`, `2h` e as três
+    luzes seguintes com as horas de cada uma (*"até a madrugada · 6h"*); a
+    página amanhece enquanto o Mestre escreve, sem prolongar a espera. Depende
+    de V1c.
+  - [x] ~~**V3c · o que V3 deixou**~~ (o texto original, para o registo) · `oficial` + `aprendiz` — **a soleira ainda
+    escreve `prazo 4 noites` e `◉ 140` como texto nu: o `SeloDePrazo` e o glifo
+    do dinheiro na `Oferta` são o maior ganho que falta** (o prazo tem quatro
+    caras — `v3-jogo.md` §1); O TEMPO (cinco emoji numa linha → um glifo, o céu
+    de `LUZ_DA_CENA`; começo de V4); masmorra, acampamento, raid; as falas do
+    jogador sem carimbo; **`App.jsx` ~:20679 escreve *"Novo arco iniciado"* no
+    registo — o sistema a falar de si mesmo**, sai (hoje leva um prefixo
+    `null`, ladrilho vazio). **O `📕 X: guardada` (~:18654) cai no tom
+    *Impedido***, e guardar uma magia não é recusa — a entrada `📕` da tabela
+    tem de separar *guardada* de *proibida*. A 375 o botão flutuante `↓` tapa o
+    contorno da segunda Porta (já tapava a linha antiga). O `oficial` pôs `🔮`
+    (faísca) no interrogatório dos mortos (~:13774/:13778) — confira o `jogo`.
+    Âncoras em `v3-desenho.md` §7.6. O pedido das noites que faltam já está em `pedidos-ao-sistema.md`.
+  - [ ] **V3d · o dado que rola é o sólido** · `desenho` · médio · a ambiciosa
+    de V3 (`formas.md` §V3.6) — o que rola no véu é o icosaedro, 20 faces
+    numeradas como um d20 de mesa (opostas somam 21), a cambalhota tirada da
+    mesma semente do resultado (a mesma jogada, a mesma queda, em qualquer
+    máquina), 700 ms, nunca bloqueia; `reduced-motion` mostra só a pose final.
+    Vai com V6 e depende do pedido `rolarTeste` por semente.
+  - [ ] **V3e · o glifo viaja** · `jogo` · médio · a ambiciosa de V3
+    (`v3-jogo.md` §7) — o mesmo glifo na promessa (a `Oferta`), no pagamento (a
+    pílula) e no contador da cinta, e o recurso voa da pílula ao contador em
+    400 ms; nada espera a animação. Depois de V4 (os anéis são o destino).
+
+- [x] **V4 · a cinta com os anéis** · **FEITO 25/09, no ar** — o estudo em
+  `mente/v4-jogo.md` (e a prova jogada no fim dele), a forma em `formas.md` §V4
+  e `mente/v4-desenho.md`. Os companheiros entram na tela principal (**0 → até
+  4**), o anel tem quatro estados (calma, grave, ferida agora, **tombado** —
+  traço diagonal, lê-se em cinzento), o disco `+N` herda o pior do que esconde,
+  a pílula do tempo no centro, o toque num companheiro abre o Grupo no cartão
+  dele; **a barra de PV que encolhia a 0–3 px no telefone com prazo deixou de
+  existir** (é o arco), e **o pulso de agonia passa a três pulsos e repouso, e
+  a zero com `reduce`**.
+
+- [x] ~~**V4 · a cinta com os anéis** (o texto original)~~ — os retratos do grupo com anel de PV (âmbar
+  bem, perigo grave: em cinzento âmbar×perigo separa 1,52, ciano×perigo só
+  1,25 — por isso o anel ciano da v3 não entra), a pílula do tempo (hora do
+  mundo + selo de prazo; o `2h 15m` de sessão sai; o toque abre O TEMPO), bolsa
+  e PM (violeta, a cor da gaveta). *A coroa marca o SEU herói, não liderança —
+  o jogo não tem essa regra.*
+
+- [x] **V5a · o cabeçalho da pessoa** · **FEITO 25/09, no ar** · ordem direta
+  da pessoa: *"ainda existe uma imagem procedural, vamos tirar ela e deixar
+  exatamente igual à imagem do Figma"* (`129:4`). **A xilogravura por semente
+  (R13-B) sai**, e com ela o motor da gravura; o cabeçalho é o `parchment-header`
+  ao píxel, com conteúdo de mundo (o lugar à esquerda em âmbar, a luz e o clima à
+  direita; na masmorra, a camada e as tochas); a runa e os floreados do rodapé no
+  fim do registo, a 0 px. Decisão em `formas.md` §V5a, spec `mente/v5a-desenho.md`,
+  momento e prova `mente/v5a-jogo.md`. **Isto desfaz a "fusão" que V5 planeava:
+  não há fusão, há remoção.**
+
+- [x] ~~**V5b · a cartela de chegada**~~ · **FECHADA dentro de V5 pelo `jogo`:** o nome do lugar em grande repetiria o cabeçalho de V5a a 80 px — o mesmo defeito do painel da sala. O que ficou dela é a abertura (a primeira frase grande), em V5. · `jogo` · médio · a ambiciosa de V5a — no
+  turno em que o lugar muda, a prosa abre com o nome do lugar grande e a runa por
+  baixo (os títulos de área de Dark Souls e Hollow Knight); nos outros turnos, 0
+  px. Usa o eixo `chegada`, que já vai na chamada e não faz nada desde R13-B.
+  **Leva junto:** na masmorra o painel da sala repete o lugar logo abaixo do
+  cabeçalho (`ANDAR 1 — DO SILÊNCIO` contra `ANDAR 1 · DO SILÊNCIO`) — o mesmo
+  facto duas vezes, com dois separadores (a prova de V5a).
+
+- [x] ~~**V5 · a página (o resto)**~~ (o texto original) — coluna de 65ch, a soleira no pé do cartão (0
+  px sem oferta), a abertura grande como cerimónia. *(O texto original abaixo
+  falava de fundir o cabeçalho com o rosto da cena; V5a substituiu essa parte.)*
+  ~~o cabeçalho da v3 **funde-se com o rosto da cena**~~
+  (168 → 96 px): as etiquetas viram a legenda da gravura, o lugar à esquerda
+  (`lugarDaCena()`), a luz e o clima à direita (na masmorra, a camada e as
+  tochas); a runa na borda de baixo; coluna de 65ch; a soleira no pé do cartão
+  (0 px sem oferta); o `CabecalhoDaCena` antigo aposenta-se.
+
+- [x] **V6 · o compositor e o dado** · **FEITO 28/09, no ar** (`mente/v6-jogo.md` §7, `mente/v6-desenho.md`, `formas.md` §V6; os 15 desvios no quadro `146:2`) — o dado da v3 com o d20 de verdade e cinco estados; **um dado só na tela** (o `Rolar d20` de 132×28 e o `Agir →` aposentam-se); o teste pendente é uma linha por cima do campo com a dificuldade na face do dado; o `✦` no canto da pílula. **Por medir, e não bloqueia:** a catraca de R6 (≥15 de 20 turnos pelo campo) e "Enter contra toque" pedem uma sessão real de 20 turnos a 375 (~20 chamadas) — de preferência com a pessoa a jogar os 5 primeiros sem lhe explicarem o dado. **Anotado para quando o combate abrir:** a linha do veredito da batalha é a mesma peça (2 linhas no ramo de combate). — *(texto original:)* um dado só, cinco estados (Repouso ·
+  Pronto · Lançado · À espera · Rolar), `✦` no lugar da caneta, a linha do
+  veredito por cima do campo só quando há veredito; `Enter`/`Shift+Enter`
+  intactos; o `Rolar d20` aposenta-se; a catraca de R6 (15 de 20 turnos ainda
+  pelo campo).
+
+- [x] **R6 · a prova jogada do *depois*** · de: jogo · 23/09 · **PAGA** — o
+  escrito em `mente/r6-jogo.md`. **15 dos 20 turnos usaram o campo de texto**:
+  a premissa aguentou, os 20 verbos genéricos nao fizeram falta uma unica vez,
+  e o jogo **nao** virou point-and-click. Mas a soleira so aprendeu dois verbos
+  e **so em 2 dos 20 ofereceu a coisa que o jogador ia mesmo fazer** — *o ganho
+  esta provado e quase todo por gastar*. E a medicao do telefone achou o reu
+  que ninguem tinha na conta e que virou R13.
+  **A catraca que o `jogo` escreveu contra si mesmo** e que esta fase ainda não
+  pagou: 20 turnos, **contando quantos usaram o campo de texto**. Perto de zero
+  é **regressão** — o jogo teria virado *point-and-click* e a prosa deixado de
+  ser respondida —, e é ele quem tem de o dizer. *A proposta tem duas das três
+  provas; falta a terceira, e falta por não existir ainda o depois para jogar.*
+
+- [x] **R12 · o telefone paga a fase, e é onde eu olharia a seguir** · de:
+  regente · 23/09 · **RE-MIRADO, DESENHADO E CONSTRUIDO em R13-A (`fc3efb1`)**
+  — a pagina do telefone foi de 151 para **586 px sem oferta**, e a moldura
+  deixou de crescer a cada contrato. *O item original acusava a soleira e
+  falhava os 334 px de cabecalho, barra e prazos.* — a forma fechada
+  está em `mente/formas.md` §*R13 · a fabricação*, a composição em
+  `mente/r13-mesa.md`, o par 375×812 e as peças no Figma. **Falta construir.**
+  *R12 acusava a soleira (149 px) e falhou o réu maior:* a barra de estado (180)
+  mais a fita de prazos (81) são **261**, e nenhum dos dois tinha sido medido.
+  **E falhou um terceiro que ninguém tinha na conta: o cabeçalho, 73 px para
+  escrever o nome do produto a quem já está dentro dele.** As três morrem e
+  entra `A cinta`, 48 px: a página passa de **151 para 503** (3,33×) e para
+  **586** nos turnos sem oferta — quase metade deles.
+  **Medido:** a prosa no telefone foi de **51,5 % para 37,3 %** com uma oferta na
+  soleira. Na mesa voltou acima do ponto de partida (58,1 → 58,3 %); **no
+  telefone não voltou.** A causa é geometria e não desleixo: **a peça cresce e o
+  ecrã não** — a 375 px um cartão que na mesa partilha uma linha precisa de duas.
+  *E o telefone é o aparelho que mais recebeu desta fase* (o preço estava em
+  `title`, que lá não existe; 21 de 26 alvos estavam abaixo do piso) — **o que
+  não torna o custo menor, torna-o pago.**
+  **O que eu experimentaria, por ordem:** a soleira no telefone virar **uma linha
+  de altura de uma oferta só, com o resto atrás da porta** em vez de empilhar; ou
+  o cartão curto voltar aos 54 px e só o longo crescer. **Não decido aqui** — é
+  forma, é do `desenho` com o `jogo`, e quero a prova jogada de R6 antes.
+
+
+- [x] **R11 · o terceiro acento existe e ainda não fez o trabalho por que foi
+  criado** · de: regente · 23/09 · **CONVERTIDO E CONSTRUIDO em R13-A
+  (`fc3efb1`)** — `T.mundo` ganhou uma *regiao* (a metade direita da cinta:
+  hora, prazo, o tempo) em vez de uma lista de usos, e passou de **zero
+  leitores** aos cinco significados que R2 lhe prometera tirar ao ambar.
+  A conversão não foi feita significado a significado, como se supunha: foi
+  feita **de uma vez, por geometria.** A metade direita de `A cinta` é o alvo
+  do tempo, e **é toda `T.mundo`** — relógio, data, estação, lugar e a espera
+  passam a viver num sítio só, numa cor só. `T.onMundo` deixa de ter zero
+  leitores no dia em que a cinta for construída. *Uma cor nova que não tira
+  trabalho a nenhuma outra é só mais uma cor — e esta passa a tirar cinco de
+  uma vez porque lhe deram uma REGIÃO, não uma lista de usos.*
+  `mundo` nasceu em R2 com uma justificação exata: *o âmbar carrega **24
+  significados** e `mundo` tira-lhe **cinco** — relógio, data, estação, lugar, a
+  espera — devolvendo-lhe uma função só.* Contei os leitores hoje: `T.mundo` é
+  lido **duas vezes**, ambas nas peças novas (`Oferta` *tom=convite* e `Voz`
+  *quem=mundo*), e **`T.onMundo` tem zero**. *Os cinco significados continuam
+  âmbar.* **Logo o âmbar não desceu de 24, e esta fase não pode dizer que
+  desceu.** O acento está certo e a conversão é que falta — relógio, data,
+  estação, lugar e a espera, um de cada vez, medindo. *Uma cor nova que não tira
+  trabalho a nenhuma outra é só mais uma cor.*
+
+
+- [x] **E3 · a tela existe** · de: pessoa · 14/09 · **feito v9.277**
+  **A tela da batalha existe, e a condição de entrada foi paga primeiro:** o
+  tabuleiro **saiu de dentro do rolador do log** — a batalha é agora irmã do log,
+  não filha dele, e a catraca morde se voltar a ser. Os **429 px abaixo da borda**
+  eram essa árvore, e só a inversão os resolvia.
+  **O ganho que a fila queria não é a tela, é o que saiu com ela:**
+  `App.jsx` **22 219 → 21 939 linhas (−280)** — saíram **453 de tela** e entraram
+  173 de fiação. Nasceram `src/painel-batalha.jsx` (a tela), `src/tela-de-batalha.js`
+  (a decisão, provável em Node) e `src/painel-habilidades.jsx` (as duas gavetas,
+  levadas byte a byte). Os números de E1 viraram a tabela **`TELA_DE_BATALHA`**
+  (`src/estilo.js`, ao lado de `ALVOS`), e a suíte lê de volta a soma que a
+  justifica: `respiro + campo + goteira + lateral + respiro = 1280`.
+  **O que o jogador vê:** duas colunas, casa de **48 px medida no navegador**, a
+  narração encolhida às duas últimas linhas do Mestre, a faixa `agora: <nome>`, a
+  linha do veredito **nunca vazia**, os sete verbos, a ficha curta a 344 px. A luta
+  começa e **a tela vira sozinha**; durante ela **não há porta nenhuma**; no fim há
+  **uma**. **Zero sobreviventes** dos treze controlos proibidos, e **nada na tela
+  diz que ela é uma tela**.
+  **E a conferência viva pagou o ciclo inteiro:** com **198 suítes e 14 varredores
+  verdes**, a luta real achou **`outline: "none"` inline em 67 dos 80 elementos
+  focáveis** — a doença de K4 aplicada casa a casa. Corrigida, e com ela nasceu a
+  **quarta maneira de apagar um anel**, que não estava escrita em lado nenhum:
+  **`box-shadow` não pinta em elemento SVG** — a regra é aceite, a propriedade diz
+  que o anel existe, e nada é desenhado. Nasceu `.tv-anel-foco-no-campo`
+  (`outline`, não sombra): **15,31:1, medido com o `Tab` e não com `.focus()`**.
+  O escrito fica em `mente/formas.md` (*A tela da batalha existe*),
+  `mente/e3-jogo.md` e `mente/e3-desenho.md`.
+
+  **As duas medidas de E1 que a construção desmentiu, e viraram os dois itens
+  abaixo:** o campo mede **583 px e não 828** (828 nunca coube na própria mobília
+  de E1: a soma dá 1 116 contra 860 de tela), logo cabem **2 das 10 plantas** e não
+  nove; e no telefone são **6 filas e não 12**, porque a tira de consulta come
+  **144 px** que o orçamento de E2 não tinha.
+
+- [x] **E4 · mover é fazer** · de: pessoa · 14/09 · **feito v9.281**
+  **A pergunta da etapa era "quantas rodadas o jogador consegue se mover de facto,
+  contra as zero de hoje" — e a resposta veio de onde ninguém procurava.** O passo
+  não era descontado porque **a luta nascia sem `economia`**: `equiparCombate`
+  (`App.jsx:4929`, a porta única de `abrirCombate`) montava a luta sem ela, e o
+  desconto fazia `eco ? … : eco` — **sem `eco`, evaporava**. A rodada 1 inteira era
+  de graça. O motor entregou a peça pura (`PASSO_NA_RODADA`, `passoQueResta`,
+  `podeDarUmPasso`, `passoAposAndar`) e **as seis linhas endereçadas**; o bastão era
+  nosso e nós ligámo-las. **Medido vivo: `👣 9 de 9` → `0 de 9` depois de um passo**
+  — a primeira vez que a rodada 1 debita. A catraca `check-passo-na-rodada.mjs`
+  **falha com 7 asserções antes e passa com 10 depois**: *falha antes, passa depois*,
+  no caso mais limpo que a fase teve.
+  **E a mesma chave em falta tinha um segundo sintoma que ninguém tinha ligado:** a
+  guarda da ação estava atrás de `if (eco)`, logo *"Você já usou sua ação nesta
+  rodada"* **nunca disparava na rodada 1** — o que explica as **zero chamadas** que
+  W2 contou sem saber porquê. **O segundo golpe na primeira rodada passa a ser
+  recusado, e nunca tinha sido.**
+  **O que o jogador ganha, com número medido em duas lutas:**
+  o **custo nasce escrito dentro da casa** em *Alcançável* (83 números em `cidade`,
+  38 em `estrada`), em `amberSoft` a **12,40:1** — a peça pintava `#000000`, que
+  daria **1,08:1**, e o `desenho` curou-a antes de ser construída; o **roving
+  tabindex** levou as paragens de `Tab` até ao `Atacar` de **84 (ou 1, na mesma
+  luta) para 3, com variância 0** — *não era longo, era impossível de aprender,
+  porque mudava*; e no telefone a **tira de consulta foi desfeita** (149 → 44 px,
+  campo 296 → 396, **12 → 36 casas inteiras**), o que era **repor o que E1 desenhara**
+  e a construção de E3 empilhara.
+  **O achado que só o número dentro da casa revela:** em **6 das 10 plantas o herói
+  abre dentro da lama**, e as oito vizinhas custam **3 m, não 1,5** — o erro de quem
+  contava quadrados era exatamente um anel, e o único sinal era o véu ser menor.
+  **Duas mentiras da tela, corrigidas:** `Mover` **armava com o conjunto vazio**
+  (`aria-pressed=true` e a linha a mandar tocar uma casa que não existia); e o campo
+  **perdia as 216 casas focáveis** quando o passo acabava, em silêncio.
+  **E o defeito que só a luta viva apanhou, com a suíte verde — o de E3 outra vez:**
+  `impedimentosDaFileira` estava certa e provada em Node, e **a tela nunca a
+  chamava** — o botão engolia o toque e a linha continuava a falar da distância do
+  inimigo. *Uma suíte verde sobre uma regra que a tela não invoca é a pior espécie
+  de verde.* Corrigido com dente novo em `check-tela-de-batalha.mjs`.
+  **A dívida de entrada paga:** `custosDe` nasceu em `src/grid.js`, que é território
+  do sistema, e `alcancaveisDe` passou a ser a leitura das chaves dele. A asserção
+  que o justifica carrega a busca **antiga** íntegra e prova conjunto idêntico em
+  **dez plantas × três passos × dois modos = 60 buscas, 1.739 casas**.
+  O escrito fica em `mente/e4-jogo.md`, `mente/e4-desenho.md` e no bloco de E4 de
+  `mente/formas.md`.
+
+  **O que NÃO coube, e fica endereçado para não se perder** *(a mesa parou aqui por
+  ordem da pessoa, para ela avaliar — não por falta de caminho)*:
+  1. **A mira na criatura** — `src/grade-de-batalha.jsx`, a linha
+     `const clicavel = mirando ? tiro : indo;` na camada do toque; `podeIr` ×
+     `noAlcance` já vivem separados ali ao lado. Peça `A mira`, conjunto `172:5328`.
+     **Decidido e não construído:** o alvo é a **casa**, nunca a ficha (a ficha mede
+     **38,4 px**, abaixo do piso de 48), e **armar um verbo de criatura apaga o véu
+     do passo** — 83 casas âmbar e 1 alvo âmbar seriam uma cor a dizer duas coisas.
+  2. **O varredor do anel** — as cinco maneiras de o apagar já estão em prosa na
+     caixa de `.tv-anel-foco` (`src/estilo.js`), e **a lei já está no código**
+     (`outline` a carregar, `box-shadow` só no vão). Falta **o dente que a prenda** —
+     e ele paga **A11** de brinde, que é a irmã exata da quarta maneira.
+  3. **A marca na borda** — **desbloqueada e não montada, por tempo e não por falta
+     de dados**: `combate.js:441`, `lugarDaAcao` devolve `onde`, `alvoOnde` e
+     `metros`. Peça `A marca de borda`, `53:43`, 8 variantes.
+  4. **Buraco declarado pelo `oficial`:** a marca `a paragem` só desenha com
+     `podeIr.size > 0` — **com o passo gasto a paragem existe e não se vê**.
+     `src/grade-de-batalha.jsx`, a linha `{!focada && podeIr.size > 0 && (`.
+  5. **Por que 3 paragens de `Tab` e não 2:** a primeira é o `⤢ ampliar`, que K4/E3
+     puseram na ordem de propósito. **A variância é 0, que era o que a catraca
+     queria.** Para chegar a 2, o que sai é o `⤢` — e isso é decisão de desenho.
+  6. **`usarTelefone()` não reage a mudança de viewport depois de montado**
+     (`src/painel-batalha.jsx:66-78`). *Ressalva honesta do `oficial`:* pode ser a
+     emulação a não disparar o `change`, e uma rotação real dispararia — **não se
+     sabe distinguir sem um telefone de verdade**. O custo de estar errado é o
+     telefone abrir em arranjo de mesa.
+
+- [x] **dois números que E3 leva de graça, e um deles é uma reprovação viva**
+  · leve · de: desenho · 15/09 (E1) · **fechado em E3 — e nenhum dos dois foi pago
+  por E3**
+  **O primeiro tinha-se corrigido sozinho, de lado, e ninguém deu por isso.** A
+  conta estava certa: `T.violet` a 60 % sobre `bg` dá **2,689:1** e reprova o WCAG
+  1.4.11. Mas **W2 trocou o token para `T.violetSoft`** por outro motivo, e o
+  contorno mede hoje **3,786:1 — passa com folga**. O `oficial` mediu antes de
+  aplicar e **não tocou na linha**. *É o melhor argumento que esta mesa tem para a
+  regra de medir de novo antes de corrigir um número escrito noutro ciclo.*
+  **O segundo já tinha sido pago por E2**, e a catraca
+  `check-endereco-do-tabuleiro.mjs` §6 morde se `#141020` voltar.
+  **De brinde, um terceiro que ninguém tinha contado:** um `#14101F` escrito à mão
+  dentro de `PainelHabilidades` — `T.onSecond` byte a byte —, achado e morto ao
+  levar a gaveta para casa própria.
+  *(o texto original:)*
+  Os dois são de **E3**, e ficam aqui para não se perderem se E3 demorar.
+  (1) **O contorno da mira REPROVA o piso de não-texto hoje.**
+  `grade-de-batalha.jsx:433` desenha a união com `opacidade={0.6}`, e **violeta a
+  60% sobre `bg` dá 2,68:1** contra os 3:1 do WCAG 1.4.11 — o âmbar a 60% dá
+  3,85:1 e passa, o violeta não. **0,6 → 0,7** dá 3,24:1 e passa. É um número, e
+  só se viu porque a discordância da borda obrigou a medir o contorno sozinho.
+  (2) **`#141020` → `T.bg`** no fundo do tabuleiro (`grade-de-batalha.jsx:367`):
+  é **literal solto** que a catraca D5a conta **e** está a **1,04:1** de `T.bg`,
+  o que faz o vão de 2 px do anel de foco não se separar. A troca é invisível a
+  olho nu — 1,04:1 é menos que a diferença entre `panel` e `bg`, que é 1,07:1 —
+  e **conserta os dois de uma vez**.
+
+
+- [x] **R17a · `A Consequência` ganha `Saída` no código** · **FEITA no próprio
+  ciclo R17** · de: desenho · médio
+  32 variantes no Figma, `minHeight` ligado a `alvo/piso`. Em código a peça
+  **nunca existiu** (105 `title` fazem-lhe as vezes). Constrói-se junto com o
+  primeiro construtor, que é o cartaz. Forma fechada em `formas.md` §R17 §§1-4.
+  **Nasceu em `src/ui.jsx` com os cinco canais e a cor igual nos dois estados.**
+  `Forma=Balão` **não** foi construída e degrada para `linha`: `formas.md` fixa o
+  movimento do balão e não a **forma de repouso**, e o `aprendiz` recusou-se a
+  inventá-la — bem. *Fica como pergunta ao `desenho` para o dia em que houver o
+  primeiro consumidor; hoje não há nenhum.*
+
+- [x] **R17b · a fenda `o que colidiu`** · **FEITA no próprio ciclo R17** · de: desenho · leve
+  Segunda propriedade de texto de `Consequencia`, vazia por omissão. **É ela
+  que torna o falso positivo visível** (`formas.md` §R17 §4). Especificada,
+  não desenhada.
+
+- [x] **R20 · a coluna estreita perde a fita das abas** · **FEITO em R21 (24/09), pela ideia da pessoa: a HUD recolhida — ver `formas.md` §R21 e `mente/diario-desenho.md`** · de: jogo · 24/09 ·
+  **a proposta ambiciosa de R17** · médio, **e só acontece se o censo a
+  sustentar**
+
+  **O que se propõe.** A fita de cinco abas — `GESTÃO · DIÁRIO · BOLSA · MAPA ·
+  CÓDEX` — ocupa **76 px permanentes, 9,4 % da altura do telefone**, e as cinco
+  são **acervo** pela régua de R17, que manda acervo para trás de um toque nos
+  dois aparelhos. A fita cumpre a letra (é um toque) e falha o espírito: são
+  **cinco portas sempre abertas para cinco salas que ninguém compara com a
+  cena**. É, hoje, a maior faixa permanente da tela sem um leitor na prosa.
+
+  **E há um argumento mais forte do que o uso: as salas já têm porta.** R13 fez
+  da cinta inteira **um alvo só** que abre a ficha — e PV, bolsa, relógio e prazo,
+  que estão na cinta, são exactamente o **estado** cujo **acervo** mora em
+  `GESTÃO`, `BOLSA` e `DIÁRIO`. *É a mesma conta com que o `desenho` fechou a
+  porta `+N` uma faixa acima: quando a sala já tem porta, a segunda porta não é
+  acesso — é mobília.*
+
+  **O que a pessoa ganharia, em número:** a página a ler passa de **359 para
+  435 px — 53,6 %**, acima da linha que a mesa assinou em R5a, e **1,42× a
+  página de hoje**. Peças permanentes na tela: **6 → 5**.
+  *(Conta refeita em `formas.md` §R17 depois de o campo ganhar piso 90: a minha
+  primeira versão dizia 475 e 1,55×, e assentava num campo de 66 px que a medida
+  do `desenho` desmentiu.)*
+
+  **A catraca, e ela é o corpo da proposta e não um apêndice:** esta é a coisa
+  mais *reaprender* que a mesa propôs desde que a ordem de 23/09 lhe deu a
+  decisão, e por isso **não se faz por argumento — faz-se por censo.** Vinte
+  turnos, contando **quantas vezes cada aba é aberta e a partir de onde**. R13
+  aposentou quatro botões de cabeçalho exactamente assim (`🎲` 0 usos, `📜` 0
+  usos), e **a fita é a última peça da tela principal que nunca passou por um
+  censo**. Aba aberta com frequência a partir da tela principal fica, e a
+  proposta encolhe para as outras. *Uma proposta ambiciosa que se recusa a ser
+  medida é só uma proposta arrojada.*
+
+  *Não vai a "Para a pessoa decidir" porque um commit revertido conserta isto
+  inteiro — é uma faixa de leiaute. Pela régua de 23/09, é da mesa, e fica
+  escrita com o mesmo cuidado com que iria para lá: o que muda é quem decide,
+  não o rigor.*
+
+
+- [x] **R18 está ASSINADO pelo `jogo`, com duas condições** — e o argumento dele
+  é melhor que o meu: *uma cortiça verdadeira **é** uma parede de títulos; a
+  tábua de papéis todos abertos é que nunca foi uma tábua.* **R18 deixa de ser
+  um ganho de densidade e passa a ser uma reparação de metáfora que dá densidade
+  de lucro.**

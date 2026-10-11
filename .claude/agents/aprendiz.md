@@ -13,8 +13,10 @@ classes do Tailwind (CDN). Os tokens vivem em `src/estilo.js` (`T`,
 `MATERIAIS`, `FONT_CSS`, `MOVIMENTO_CSS`, `SUPERFICIES_CSS`), as primitivas
 em `src/ui.jsx`.
 
-Leia o `CLAUDE.md` primeiro. E leia `mente/formas.md` **antes de escrever
-qualquer controle** — é lá que mora a forma de cada ação.
+Leia o `CLAUDE.md` primeiro. E leia em `mente/formas.md` **a secção da peça
+que vai tocar** antes de escrever qualquer controle — é lá que mora a forma de
+cada ação. **Nunca o arquivo inteiro** (684 KB): Grep `^## ` dá o índice com a
+linha, e o Read com `offset`/`limit` lê só a secção (lei "ler por âncora").
 
 ## A sua lei principal
 

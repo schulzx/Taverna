@@ -141,12 +141,41 @@ Na dúvida entre médio e pesado, é pesado. Os arquivos da mente:
   aponta para lá. **Nada se apaga** — o valor de uma fase fechada é de
   consulta, e consulta não precisa estar no bolso. Rode quando a mesa pesar;
   `--medir` mostra o ganho sem mover nada.
-- **Continuar um agente é mais barato que criar outro.** Um agente retomado
-  ainda tem na cabeça o `CLAUDE.md`, o roteiro e a pauta que já leu; um agente
-  novo relê tudo. Quando a etapa seguinte é da **mesma fase**, ou quando um
-  ciclo morreu no meio, **retome o mesmo agente** em vez de nascer um. É o que
-  mais se aproxima de "manter o agente vivo" — não há processo que segure
-  estado entre chamadas, mas há conversa que continua.
+- **Continuar um agente é mais barato que criar outro — até certo ponto.** Um
+  agente retomado ainda tem na cabeça o `CLAUDE.md`, o roteiro e a pauta que já
+  leu; um agente novo relê tudo. Retome o mesmo agente **dentro da mesma
+  tarefa** (a etapa seguinte da mesma fase, ou um ciclo que morreu no meio).
+  **Mas cada passo de um agente reenvia a história inteira dele:** em 10/10 um
+  agente vivo desde 05/10 (MM11, MM16, MM17, a Bolsa, P2, P3) gastava 300–400
+  mil tokens por rodada. **Tarefa grande nova = agente novo, com um briefing
+  curto que já diz o que ler.** E troque de agente quando a história dele
+  passar de ~200 mil tokens.
+
+### A economia de tokens (decisão da pessoa, 10/10/2026)
+
+*"Nosso limite de sessão está acabando muito rápido... quero ver se
+conseguimos diminuir o uso de tokens sem perder o ritmo e eficiência."* —
+*"Pode fazer tudo."* Medido nesse dia: a mente lia 1.256 KB por ciclo
+(`formas.md` sozinho 684 KB, ~170 mil tokens), e um agente lia isso antes
+de escrever uma linha. As regras:
+
+- **Ler por âncora.** `mente/formas.md`, `mente/pauta*.md`, `mente/diario*.md`
+  e `src/App.jsx` **nunca se leem inteiros.** Ache a secção com Grep (`^## `
+  ou `^### ` dá o índice com o número da linha; ou o nome da peça, da etapa,
+  da função) e leia só ela, com `offset`/`limit`. Do diário, só o bloco do
+  ciclo em curso e o último. Da pauta, "Para a pessoa decidir" e o item que
+  vai fazer. Um agente que lê um destes arquivos inteiro está a gastar o
+  limite da pessoa.
+- **Arquivar com a mesa pesada.** `node mente/arquivar.mjs` sempre que a
+  pauta ou um diário passar de ~150 KB (`--medir` mostra o ganho).
+- **Menos camadas.** Tarefa de um item só (um defeito, uma fiação, um pedido
+  ao sistema) vai direto à mão (`backend`, `frontend`, `oficial`,
+  `aprendiz`), sem passar pelo `orquestrador` ou pelo `regente` — cada camada
+  relê o `CLAUDE.md`, o roteiro e a pauta. O maestro é para fase inteira.
+- **No máximo dois agentes ao mesmo tempo.** Três em paralelo gastam o limite
+  três vezes mais depressa.
+- **O briefing diz o que ler.** Quem nasce um agente passa-lhe os arquivos e
+  as linhas que importam, para ele não ter de descobrir lendo tudo.
 - `mente/diario.md` — um bloco por ciclo: quem fez o quê, cada decisão média
   com o motivo. É por aqui que a pessoa vê o processo.
 
