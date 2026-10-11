@@ -19,6 +19,15 @@ Formato:
 
 ---
 
+## 11/10 · sem versão (só Figma e `mente/`) · **A fogueira — a tela** · liberada pela pessoa
+- **estado inicial:** a pessoa aprovou e liberou só esta tela (*"pode liberar a tela da fogueira"*). Só Figma e `mente/`; não toquei `src/` (um `backend` trabalha lá) nem tomei o bastão.
+- **jogo / desenho:** o lado do `jogo` é o §6 de `coracao-c1-c2.md`; a forma em `formas.md` §Fogueira. Decisões minhas: a noite **só toma a tela quando alguém tem o que dizer** (vazio = uma linha na manhã, zero cliques); a ordem dos lugares é a dos papéis, nunca por urgência; escolher um lado fecha a noite; os dois lados são `O verbo com preço` Gesto, do mesmo peso.
+- **o Figma:** página `09 · Fogueira` (`196:2`): 6 estados × 2 tamanhos (Mesa `200:62` `200:300` `200:515` `201:175` `201:365` `201:2678`; Baixa `202:206` `202:345` `202:405` `202:474` `202:543` `202:594`), a decisão `203:378`, o par `203:397`; peças novas `Fogueira/Lugar` `198:156`, `Fogueira/Brasa` `197:7`, `Fogueira/O fogo` `197:34` e dois espelhos (`197:65`, `197:66`); coleções `Fogueira (FOGUEIRA)` (uma cor nova, `lugarAceso` #31252D) e `T · V1`.
+- **a prova:** cliques por noite 1 → vazio 1 · sem conversa 2 · conversa 3 · escolha 3; todo texto ≥ 4,5 (o pior, inkDim/lugarAceso 5,00), todo gráfico ≥ 3 (lineStrong/lugarAceso 3,25); alvos ≥ 48; a 800×451 o estado mais justo usa 320 de 323. Estudo: BG3, Darkest Dungeon, Persona 5, Dragon Age: Origins, WCAG 2.2.
+- **o que ficou:** os seis pedidos ao motor (`formas.md` §Fogueira 7) e a construção (`aprendiz` + `oficial`, F1 na pauta); a proposta ambiciosa *o lugar vazio* em "Para a pessoa decidir".
+
+---
+
 ## 11/10 · sem versão (só Figma e `mente/`) · **Retratos — a pintura que escala** · pedido direto da pessoa
 - **estado inicial:** pedido dela fora da fila (*"criar as imagens de perfil dos personagens digno de um RPG AAA"*); só Figma, sem código de produção. Não tomei o bastão do `App.jsx`. Na árvore, trabalho da outra mente em `src/` (MM18, `escuta.js`), que não toquei.
 - **desenho:** o sistema é um **misto** — pintura por biblioteca (feras por espécie; gente por raça × sexo × traje, traje = classe ou ofício, 2 variantes), moldura e estado por código, marcas por cima. Escrito em `formas.md` §Retratos, com as fontes (Pillars, Pathfinder WotR, BG3, DOS2, Darkest Dungeon, Critical Role, Battle Brothers, Wildermyth, WCAG 1.4.1/1.4.11, o estudo do WebP).

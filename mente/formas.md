@@ -11720,3 +11720,141 @@ enquadramento (§4) diz onde está cada olho. Uma marca é `{ tipo, lado, desde 
 pede ao Narrador:** nada novo no prompt — a marca entra pela `pauta` quando o
 herói é descrito (*"tem a cicatriz do troll de Vau Fincado"*), e assim o Mestre
 responde *"de onde é essa cicatriz?"* com a verdade.
+
+---
+
+## Fogueira · a noite em que se escolhe com quem se senta (`desenho`, 11/10)
+
+**O pedido:** a pessoa aprovou a fogueira (11/10) e liberou a tela. O lado do
+`jogo` é o §6 de `mente/coracao-c1-c2.md` (uma cena, um turno, uma pessoa por
+noite; o vilão não se senta; a porta só aberta pelo jogador). Esta secção é a forma.
+
+**Onde está.** Figma `ffWFqD7TueSb88Mkeg9bhW`, página **`09 · Fogueira`** (`196:2`):
+a decisão `203:378` · o par antes × depois `203:397` · a biblioteca `197:2`.
+
+| estado | Mesa 1280×912 | Baixa 800×451 | o que mostra |
+|---|---|---|---|
+| A · com quem você se senta | `200:62` | `202:206` | a roda: até 5 lugares em arco sobre o fogo; a brasa em quem tem o que dizer; «Dormir já» (Recuo) |
+| B · a fala | `200:300` | `202:345` | o retrato Ficha sobre o clarão, a página na voz dela; os outros «ao redor do fogo», sem borda (não são alvo); «Dormir» |
+| C · com escolha | `200:515` | `202:405` | os dois lados como `O verbo com preço` Gesto, do mesmo peso, preço em mundo; «Dormir sem responder» **só** se o relógio da batida aguenta a noite |
+| B2 · a porta | `201:175` | `202:474` | «Ficar mais um pouco, só vocês dois» ao lado de Dormir — **só** quando o jogador a abriu |
+| D · depois | `201:365` | `202:543` | a manhã abre com `O ladrilho do assunto` (glifo brasa): o que ficou decidido + o recibo do descanso |
+| E · vazio | `201:2678` | `202:594` | presentes, ninguém com o que dizer: **a noite não toma a tela** — vira a linha do ladrilho na manhã |
+
+As de Mesa são o `126:5` da pessoa clonado (cinta, trilho, compositor dela) com
+a página trocada; as de Baixa têm a moldura em tokens.
+
+### 1 · O fluxo — onde entra, e o que não muda
+
+- O toque **«Descanso longo»** do acampamento (`App.jsx` ~26643, R13 §4.2) continua
+  a ser o **único** que cobra, com o preço onde já está. A linha *devolve* ganha
+  `· uma conversa à fogueira` quando alguém presente tem o que dizer — o veredito
+  antes do clique inclui o que se ganha.
+- Depois do toque: **ninguém do núcleo presente → nada muda** (zero cliques);
+  **presentes e ninguém com o que dizer → E** (zero cliques); **alguém com o que
+  dizer → A**. Sentar = um turno do Narrador (B/C/B2). Escolher um lado **fecha a
+  noite** (a reação dela e a manhã vêm no mesmo turno). Dormir fecha a noite sem
+  lado. A manhã abre sempre com o ladrilho (D/E).
+- **Pesado?** Não pela régua de 23/09: um commit revertido tira-a inteira, e o
+  campo que guarda quem já contou o quê é novo e ignorado pela versão antiga.
+
+### 2 · As peças (biblioteca `197:2`, para todos)
+
+| peça | nó | a regra |
+|---|---|---|
+| `Fogueira/Lugar` (12) | `198:156` | *Tamanho* Mesa 176×≥180 · Baixa 336×56 × *Voz* Tem o que dizer · Calado × *Estado* Repouso · Foco · Escolhido. É **botão**. *Tem*: a brasa + `lugarAceso` + gesto em `inkMeio` (três canais); *Calado*: `panel`, gesto em `inkDim`, sem brasa — **continua clicável** (sentar-se ao lado de quem não fala também é escolha). *Escolhido* = a gramática de `A escolha` com a cor da mão de V1 (contorno `rosa` 1 + filete de 3 embaixo). Propriedades: Nome · Gesto · Atalho |
+| `Fogueira/Brasa` | `197:7` | 20; disco `pagina` com contorno de 1,25 em `pagina` (separa do retrato sem cor); a chama em `chama`/`cerne` |
+| `Fogueira/O fogo` | `197:34` | *Tamanho* Mesa 240×132 · Baixa 160×48; o clarão é gradiente radial âmbar com a opacidade do nó em `claraoCentro`. **Decorativo** (aria-hidden) |
+| `O verbo com preço` (espelho de `64:2446`) | `197:65` | mesma anatomia; preço a 12 (o piso, como `Mapa/Partir`); cresce em altura quando o preço parte |
+| `O ladrilho do assunto` (espelho de `229:125`) | `197:66` | LADRILHO 36·16·12·12; glifo da brasa; Frase · Recibo · Com recibo |
+
+**Ordem dos lugares: a dos papéis** (companheiro, elo, voz, balança, porta),
+**nunca** por quem tem o que dizer — o jogador aprende onde cada um se senta, e
+os atalhos 1–5 não trocam de dono de noite para noite. Posições na roda (fração
+da largura, y em px), por contagem — tabela `FOGUEIRA.lugares`:
+`1: [.5,0]` · `2: [.36,8] [.64,8]` · `3: [.22,96] [.5,0] [.78,96]` ·
+`4: [.14,104] [.36,8] [.64,8] [.86,104]` · `5: [.10,120] [.29,24] [.5,0] [.71,24] [.90,120]`;
+o fogo ao centro, y 176. Baixa: grade de duas colunas na mesma ordem.
+
+### 3 · A tabela `FOGUEIRA` (para `src/estilo.js`, ao lado de `MAPA_VIVO`)
+
+O que é igual a `T` **é** `T`: `chama` = `T.amber`, `cerne` = `T.amberSoft`,
+`clarao` = `T.amber`, `lenha` = `T.panelSoft`, `lenhaFio` = `T.lineStrong`,
+`escolhido` = `T.rosa`. **Uma cor nova:** `lugarAceso: "#31252D"` (= `panel` +
+10 % de âmbar). Números: `claraoCentro: 0.2`, `lugar: { mesa: 176, baixa: 56 }`,
+`brasa: 20`, `fogo: { mesa: 132, baixa: 48 }`, `raio: 12`, `lugaresMax: 5`, e
+`lugares` acima. No Figma: coleções `Fogueira (FOGUEIRA)` (`196:18`) e
+`T · V1 (espelho da biblioteca)` (`196:3`, 14 cores com `codeSyntax` `T.*`).
+
+### 4 · O melhor, provado
+
+- **Medida — cliques por noite:** hoje 1. Vazio 1 · sem conversa 2 · uma conversa 3
+  · com escolha 3. Chamada ao Narrador só quando o jogador se senta.
+- **Medida — contraste** (WCAG 2.1, fórmula da norma): ink/pagina 15,25 ·
+  ink/lugarAceso 11,56 · inkMeio/lugarAceso 7,41 · inkDim/lugarAceso 5,00 ·
+  inkDim/panel 6,00 · amberSoft/pagina 13,48 · onAccent/amber 10,04. Gráfico:
+  lineStrong/lugarAceso 3,25 · lineStrong/panel 3,90 · rosa/lugarAceso 4,82 · anel
+  ink/bg 14,80. Todo texto ≥ 4,5, todo gráfico ≥ 3; a brasa é forma (1.4.1).
+- **Medida — orçamento a 800×451** (página de 323): A 299 · B 258 · C 320 (o mais
+  justo; um preço de três linhas rola a página, como a página já rola) · D/E 211.
+  Em Baixa sai «ao redor do fogo» e a etiqueta da voz (o nome já está sob o retrato).
+- **Estudo citado:** Baldur's Gate 3 (Larian, 2023) — o acampamento no descanso
+  longo, o sinal sobre quem quer falar, o romance só por iniciativa do jogador →
+  a brasa e a porta. Darkest Dungeon (Red Hook, 2016) — o acampamento como tela
+  própria com o fogo ao centro → a roda e o clarão. Persona 5 (Atlus, 2016) — o
+  fim do dia com UMA pessoa, a escassez é que faz a escolha → uma por noite.
+  Dragon Age: Origins (BioWare, 2009) — o acampamento que vira menu → o nosso é
+  cena, não hub. WCAG 2.2: 1.4.1, 1.4.3, 1.4.11, 2.4.7, 2.3.3.
+- **Experiência jogada:** ainda não — é a prova do F1, com o `jogo`.
+
+### 5 · Movimento e teclado
+
+tv-fade 240 ms na entrada; lugares em sequência de 60 ms (≤ 300 ms); a chama
+respira 2,4 s (escala .96–1,04 na base) e as faíscas usam tv-flutua; o escolhido
+vira o retrato grande em 200 ms. **prefers-reduced-motion: tudo pronto, chama
+parada.** Nada segura um clique. Os lugares são uma fila com cursor errante
+(«a paragem»): setas, Enter, atalhos 1–5. `aria-label`: «Sentar-me com
+Sargenta Ayo — quer falar com você». O fogo é `aria-hidden`.
+
+### 6 · O que o sistema nunca diz
+
+batida, ficha, núcleo, papel, subtrama, romance, afinidade, pedido. O jogador lê
+um gesto (*«enrola a corda de treze nós nos dedos»*) ou *«quer falar com você»*.
+
+### 7 · Para quem constrói
+
+- **Pedidos ao motor (`backend`, `nucleo.js`, ao lado de `fichaNaVoz`):**
+  (1) `quemAoFogo(nucleo, ctx)` → `[{ pessoa, voz: "pedido"|"ficha"|null, gesto }]`
+  na ordem dos papéis, sem o vilão, só quem está presente (grupo; na estalagem,
+  quem está na cidade); (2) a tabela dos **gestos** por campo (`carrega` objeto →
+  o objeto à vista; dívida/culpa/quer/linha/teme → um gesto que não diz a coisa) e
+  «quer falar com você» para a batida madura; (3) se a batida **aguenta a noite**
+  (é o que acende «Dormir sem responder»); (4) a porta aberta (C3); (5) a frase
+  verdadeira do ladrilho de D/E; (6) os `contados` no campo `coracao` do save
+  (novo, ignorado pela versão antiga).
+- **`aprendiz`** (fora do App): `painel-fogueira.jsx` com `Lugar`, `Brasa`, `OFogo`
+  e a roda; `FOGUEIRA` em `estilo.js`. **`oficial`** (com o bastão): o desvio no
+  «Descanso longo» (~26643) — o toque abre a fogueira em vez de aplicar logo, e
+  `aplicarLongo` corre ao Dormir / ao lado escolhido; o ladrilho da manhã; a linha
+  *devolve* nova. **Nunca pode custar o turno:** a fiação em `calou(...)`; se a
+  fogueira estoura, o descanso corre como hoje.
+
+### 8 · As armadilhas do Figma que esta etapa pagou
+
+1. **Opacidade ligada a variável lê-se em %:** 0,2 virou 0,002; a variável guarda
+   20 (o código guarda 0,2 — escrito na descrição dela).
+2. **O `spread` da sombra só desenha com `clipsContent`** — sem isso o anel de foco
+   da casa (2 `bg` + 4 `ink`) não aparece, e não dá erro.
+3. **`setProperties({ Papel })` num `Retrato` clonado repõe a pintura da variante**
+   — o rosto troca de pessoa em silêncio (a Velka virou a Dona Pipa). Reaplique a
+   `Pintura` **depois** de trocar o papel.
+4. **Uma paragem de gradiente ligada a variável herda o alfa da variável** (1): o
+   clarão saiu âmbar chapado. A transparência vai na opacidade do nó.
+
+### 9 · Dívida declarada
+
+As peças vivem no ficheiro das telas, como as do Mapa e dos Retratos: **sobem
+para a biblioteca `e5wJUzInAssoebx5npssKc` quando ela voltar a ser publicada** —
+copiar, não redesenhar; os dois espelhos (`197:65`, `197:66`) são então apagados
+em favor dos originais. A tipografia vai por `TIPOS` à mão (os estilos de texto
+deste ficheiro são os de antes de V1).

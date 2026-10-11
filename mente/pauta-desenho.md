@@ -29,6 +29,9 @@ marcado **depois do beta** (a Fase S e os itens do Duelo). **A sala de dois fica
 
 **11/10 — a pessoa falou, para mais uma tela: a fogueira.** *"A fogueira está aprovada, ótima sugestão, continue assim, pode liberar a tela da fogueira."* A proposta é a do §6 de `mente/coracao-c1-c2.md` (no descanso longo, o jogador escolhe com quem se senta; a personagem do núcleo avança a sua cena ou conta, na própria voz, uma coisa da ficha; a porta do romance aberto pelo jogador). Liberada **só esta tela**; o resto da fila continua à espera.
 
+- [x] **F0 · a fogueira desenhada** · `desenho` · 11/10 · Figma `196:2` · `formas.md` §Fogueira
+- [ ] **F1 · a fogueira construída** · `backend` (os seis pedidos de §Fogueira 7) → `aprendiz` (`painel-fogueira.jsx`, `FOGUEIRA` em `estilo.js`) → `oficial` (o desvio no «Descanso longo», a manhã com o ladrilho) · médio
+
 **05/10 — a pessoa falou, para uma tela só:** a nova mesa de batalha (Figma
 `151:1662`), que substitui `47:2`. Feita como **B1** (diário de 05/10). O resto
 da fila continua parado até ela falar do resto.
@@ -84,6 +87,8 @@ conserta isto?". Se conserta, faz-se — e diz-se no relato.*
 - **[Retratos, a proposta ambiciosa] o retrato guarda a campanha** · 11/10 · `formas.md` §Retratos 10 · pedido R6
   O rosto do herói ganha as marcas do que lhe aconteceu — a cicatriz do crítico do troll, a queimadura do dragão, o cabelo que embranquece com os anos —, por cima da pintura, posto pelo contrato do enquadramento. O jogador vê a campanha dele em cada chip, e o Mestre responde "de onde é essa cicatriz?" com a verdade. Campo de save novo e ignorado pela versão antiga (reversível pela lei de 28/09); vem aqui por ser a primeira vez que a história escreve no rosto.
 
+- **[Fogueira, a proposta ambiciosa] o lugar vazio** · 11/10 · `formas.md` §Fogueira
+  Quando alguém do núcleo morre ou parte, **o lugar dele fica na roda** — vazio, com o que ele carregava pousado no tronco (a corda de treze nós). Sentar-se ali é uma noite de memória: o Narrador conta **um momento verdadeiro** com essa pessoa, tirado do que o jogo registou (nunca inventado), e o lugar só se apaga quando o jogador o deixar ir. É o luto como coisa que se faz, não que se lê. Pede ao motor um campo de save **novo** (quem se sentou, quem se foi, o momento guardado), reversível; vem aqui por ser a primeira vez que a morte de alguém muda uma tela de descanso.
 - **[D1 · A1] a reação só abre quando há escolha com preço** · 10/10 · `mente/a1-jogo.md` §6
   Com uma opção só e grátis (aparar · 0 PM) a janela com relógio não é decisão, é teste de reflexo — e no roteiro expirou enquanto o `jogo` lia. Proposta: abre só com duas reações de preços diferentes, ou quando a única custa; fora disso o instinto decide e o rastro mostra *"aparou: 6 → 3"*. Tira da luta um momento que o jogador vive hoje — por isso é dela. O conserto mora em `ritmo-da-reacao.js` (motor).
 - **[D2 · A1, a proposta ambiciosa] o Mestre diz o número, a mesa só anota** · 10/10
