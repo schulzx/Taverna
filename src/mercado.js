@@ -197,7 +197,12 @@ export function gerarMercador({ cidade, semente, nivel = 1, tipo = null, dia = 1
      caírem no mesmo nome: com quatro nomes no léxico e três bancas
      sorteando cada uma por conta própria, "Praça de Escambo" saía duas
      vezes na mesma praça. */
-  const doMundo = lex ? nomesDeLugar(lex, "mercado") : [];
+  /* v9.370: o `|| []` é o conserto de uma página em branco. `nomesDeLugar`
+     devolve `null` — não lista vazia — quando o mundo tem menos de dois
+     nomes de mercado, e o `doMundo.length` logo abaixo derrubava o render
+     inteiro ("Cannot read properties of null"), visto em 05/10 e 10/10.
+     Mundo magro de nomes cai no banco genérico, como mundo sem léxico. */
+  const doMundo = (lex && nomesDeLugar(lex, "mercado")) || [];
   const generico = (() => { const a = pick(rnd, NOMES_LOJA_A); const b = pick(rnd, NOMES_LOJA_B); return `${a.nome} ${a.f ? b[1] : b[0]}`; })();
   const nome = t.id === "ambulante"
     ? (doMundo.length ? `${doMundo[Math.floor(rnd() * doMundo.length)]} (ambulante)` : "Carroça na estrada")

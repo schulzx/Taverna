@@ -25,7 +25,7 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
-- [ ] **`mercado.js:200` derruba o jogo inteiro num mundo com poucos nomes de mercado** · de: A1 (`oficial`, visto duas vezes: B1 em 05/10 e A1 em 10/10) · 10/10 · **leve, mas urgente**
+- [x] **`mercado.js:200` derruba o jogo inteiro num mundo com poucos nomes de mercado** · de: A1 (`oficial`, visto duas vezes: B1 em 05/10 e A1 em 10/10) · 10/10 · **leve, mas urgente** · **atendido 10/10 (v9.370): `|| []` em `gerarMercador`, `teste-mercado-sem-nomes.mjs`**
   `nomesDeLugar` (`lexico.js:670`) devolve `null` quando o léxico do mundo tem menos de 2 nomes de mercado, e `doMundo.length` em `gerarMercador` (`mercado.js:200`) estoura o render: página em branco (*"Cannot read properties of null (reading 'length')"*). Está no HEAD desde `7b2fd16` (agosto). **Para quê:** é a única falha vista nesta auditoria que tira o jogo ao jogador. **O que se pede:** tratar `null` explícito (a lei: `= {}` não cobre `null`) e cair nos nomes genéricos; suíte com um léxico de 0 e de 1 nome.
 
 - [ ] **o preço de uma compra decide-se antes da prosa, e a bolsa que não chega recusa** · de: A1 (jogo) · 10/10 · médio
