@@ -157,6 +157,13 @@ export const SECOES = [
      caracteres e é a resposta à pergunta "onde estou". */
   { id: "daqui", rotulo: "DAQUI", prio: 7, o: "o que se alcança daqui, com rumo e distância" },
   { id: "quem", rotulo: "QUEM", prio: 4, o: "quem está presente" },
+  /* MM-C (C1, o núcleo): QUEM É — a ficha de uma pessoa do núcleo que está
+     em cena (o que quer, como fala, o que traz, o que teme — nunca o que
+     esconde), uma por turno no máximo e a mesma pessoa só de seis em seis
+     turnos (`nucleo.js#quemEParaPauta`, ≤ 130 caracteres). Prio 4,5: depois
+     de QUEM e de PERGUNTOU (4), à frente do CONTRA e da FORMA (5) — é cor,
+     não é verdade da cena (`mente/coracao-c1-c2.md` §3.2). Na luta cede. */
+  { id: "quemE", rotulo: "QUEM É", prio: 4.5, o: "quem é, por dentro, a pessoa que importa e está em cena: o que quer, como fala, o que traz" },
   /* MM19: A FRENTE DO MOMENTO. A 1.ª linha é a BATIDA da espinha em curso
      (a cena, o que está em jogo, a pergunta — `envelopeDaEspinha`) e a 2.ª
      o que o fio mudou no mundo (a marca do antagonista, ou o JÁ SE SABE —
@@ -330,7 +337,8 @@ export const SECOES_QUE_CEDEM = {
      dado por falta de estado. A batida da história não muda o golpe que
      vem a seguir; com a frente nova (2,475) ela passaria à frente do
      CONTRA e da luz. Na luta, cede. */
-  luta: ["economia", "cidade", "daqui", "mundo", "momento"],
+  /* MM-C (C1): e o QUEM É — a ficha é cor, e a luta não para para ela. */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE"],
   masmorra: ["economia", "cidade"],
   arredores: ["economia", "cidade"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:
