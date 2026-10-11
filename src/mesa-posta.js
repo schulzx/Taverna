@@ -83,7 +83,7 @@ const S = (id, grupo, nome, atributo, pericia, sobe, moeda, falha, chaves, meio 
 
 export const SITUACOES = [
   /* ---- CORPO ---- */
-  S("escalar_muralha", "corpo", "Escalar a muralha na chuva", "forca", "atletismo", "altura; chuva −; corda e gancho +; armadura pesada −", "posicao", "desce ao meio, com barulho — a ronda se aproxima", ["escalar", "muralha", "muro", "subir", "parede"], "chega ao topo, mas sem fôlego e com a ronda a olhar para cima"),
+  S("escalar_muralha", "corpo", "Escalar a muralha na chuva", "forca", "atletismo", "altura; chuva −; corda e gancho +; armadura pesada −", "posicao", "desce ao meio, com barulho — a ronda se aproxima", ["escalar", "escalo", "trepar", "trepo", "subo a muralha", "subo o muro", "subo a parede", "subir a muralha", "subir o muro"], "chega ao topo, mas sem fôlego e com a ronda a olhar para cima"),
   S("saltar_fenda", "corpo", "Saltar a fenda com corrida", "forca", "atletismo", "vão vs. deslocamento; carga −; impulso +", "posicao", "pendurado na borda: segunda decisão, agora pior", ["saltar", "pular", "fenda", "abismo", "vão"], "alcança o outro lado, e o corpo bate na borda"),
   S("nadar_armadura", "corpo", "Nadar vestindo armadura", "forca", "atletismo", "correnteza −; metal −; margem perto +", "recurso", "larga o escudo ou afunda um degrau da régua", ["nadar", "atravessar o rio", "correnteza", "afogar"], "chega à margem sem ar, e a correnteza leva alguma coisa"),
   S("arrombar_porta", "corpo", "Arrombar a porta reforçada", "forca", "", "material; pé-de-cabra +; pressa −", "ruido", "o estrondo: quem estava perto agora sabe", ["arrombar", "derrubar a porta", "forçar a porta", "quebrar a porta"], "a porta cede, e cede com estrondo"),
@@ -91,8 +91,8 @@ export const SITUACOES = [
 
   /* ---- FURTIVIDADE ---- */
   S("passar_posto", "furtividade", "Passar pelo posto de guarda", "destreza", "furtividade", "luz −; neblina +; armadura ruidosa −; guarda distraído +", "posicao", "visto, ainda não alcançado — a perseguição é a próxima cena", ["esgueirar", "passar despercebido", "furtivo", "sorrateiro", "escapulir", "passar pela guarda"], "passa, mas deixa um som para trás"),
-  S("palmear_chave", "furtividade", "Palmear a chave do carcereiro", "destreza", "prestidigitacao", "multidão +; alvo sóbrio −; distração armada +", "ruido", "a mão agarrada no pulso — e agora?", ["roubar", "furtar", "palmear", "surrupiar", "batedor de carteira", "bolso"], "a chave vem, e vem tilintando"),
-  S("seguir_feira", "furtividade", "Seguir alguém pela feira", "destreza", "furtividade", "multidão +; alvo desconfiado −; segundo seguidor +", "info", "despistado — e o alvo muda a rotina de amanhã", ["seguir", "perseguir discreto", "ir atrás sem", "rastrear na cidade"], "não o perde, mas ele olha para trás uma vez"),
+  S("palmear_chave", "furtividade", "Palmear a chave do carcereiro", "destreza", "prestidigitacao", "multidão +; alvo sóbrio −; distração armada +", "ruido", "a mão agarrada no pulso — e agora?", ["roubar", "furtar", "furto", "palmear", "palmeio", "surrupiar", "surripio", "bato a carteira", "tiro do bolso d"], "a chave vem, e vem tilintando"),
+  S("seguir_feira", "furtividade", "Seguir alguém pela feira", "destreza", "furtividade", "multidão +; alvo desconfiado −; segundo seguidor +", "info", "despistado — e o alvo muda a rotina de amanhã", ["sigo-o", "sigo-a", "sigo de longe", "seguir de longe", "vou atrás dele", "vou atrás dela", "perseguir discreto", "ir atrás sem", "rastrear na cidade"], "não o perde, mas ele olha para trás uma vez"),
   S("esconder_adaga", "furtividade", "Esconder a adaga na revista", "destreza", "prestidigitacao", "rigor do posto −; bainha dissimulada +", "recurso", "confiscada, nome anotado no registro da guarda", ["esconder a arma", "revista", "passar pela revista", "ocultar a lâmina"], "a adaga passa, e o guarda demora os olhos em você"),
   S("fechadura_pressao", "furtividade", "Abrir a fechadura sob pressão", "destreza", "ferramentas", "qualidade da gazua +; escuro −; turnos contados −", "recurso", "a gazua parte DENTRO — a fechadura trava para todos", ["arrombar a fechadura", "abrir o cadeado", "gazua", "picklock", "destrancar"], "abre, e a gazua sai torta — não serve outra vez"),
 
@@ -148,6 +148,16 @@ export const situacoesDoGrupo = (g) => SITUACOES.filter((s) => s.grupo === g);
    aparece no que o jogador escreveu. Errar para menos (não casar) é
    barato — o Mestre segue sem a dica; casar errado poluiria a cena. Por
    isso as chaves são específicas, e a primeira que casar ganha. */
+/* MM18 (11/10): AS CHAVES QUE ERAM SUBSTANTIVO. A 4.ª sessão de prova pôs
+   na pauta "Se passa: escalar a muralha na chuva" em quatro turnos em que
+   ninguém escalava nada — a palavra "muralha" estava no NOME da masmorra
+   (Muralha Quebrada de Silêncio), "parede" em "encosto-o à parede" —,
+   "palmear a chave do carcereiro" porque a carta saiu "do bolso", e
+   "seguir alguém pela feira" porque a mulher podia "seguir connosco". O
+   Narrador recebia a aposta de uma ação que não houve, e é daí que saem as
+   frases sem sentido. A chave forte é o VERBO conjugado na boca de quem
+   faz, nunca o lugar ou o objeto: "muralha", "muro", "parede", "subir",
+   "bolso", "seguir" e "batedor de carteira" (o ofício de alguém) saíram. */
 export function situacaoQueCasa(texto) {
   const t = " " + String(texto || "").toLowerCase() + " ";
   if (t.trim().length < 3) return null;

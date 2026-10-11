@@ -203,6 +203,18 @@ export const SECOES = [
      do turno na primeira linha — como lia. */
   { id: "vetoDoDesfecho", rotulo: "NÃO PODE", prio: PRIO_DE_FERRO, o: "o veto de quem acabou de cair" },
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },
+  /* MM18 (o Mestre que escuta): O RUMO — a ordem do turno, dita uma vez:
+     primeiro reage ao que eu fiz ou responde ao que perguntei; depois, e por
+     dentro da resposta, UMA coisa só aponta para o próximo passo da
+     história (a ponte); e, quando empaco, o mundo dá um sinal, vem
+     buscar-me ou cobra (`escuta.js#linhaDoRumo`). É a ÚLTIMA na leitura —
+     a linha da pauta mais perto da minha frase. Corta com prio 2,42: depois
+     dos cinco primeiros vetos (2,0..2,4) e antes da planta (2,45), da
+     economia da praça (2,5), do momento (3), da gente (6). Na 4.ª sessão o
+     que chegava em cada turno era o contrário: até três linhas de agenda de
+     gente e um envelope a plantar outra história, e nenhuma a dizer qual
+     era o destino. */
+  { id: "rumo", rotulo: "O RUMO", prio: 2.42, o: "a ordem do turno: reagir e responder primeiro, depois uma ponte para o próximo passo" },
 ];
 
 export function secaoPorId(id) { return SECOES.find((s) => s.id === id) || null; }
@@ -264,6 +276,15 @@ export const SECOES_QUE_CEDEM = {
   luta: ["economia", "cidade", "daqui", "mundo"],
   masmorra: ["economia", "cidade"],
   arredores: ["economia", "cidade"],
+  /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:
+     é a própria pauta — há linha em PERGUNTOU quando uma ficha respondeu à
+     minha pergunta. No J6 da 4.ª sessão ("quanto tempo até à Muralha? onde
+     dormir, a quanto o quarto?") a resposta do pouso foi cortada pelo teto
+     e a economia da praça (274 caracteres, "Cheira a cera, tinta e perfume
+     caro") ficou — a cor da praça a ganhar à resposta. E a mesma linha, em
+     todo turno de cidade, é a fonte do "cheiro de cera" que abre 7 das 26
+     narrações fora da luta. Numa pergunta, a resposta passa à frente. */
+  pergunta: ["economia", "cidade", "daqui"],
 };
 
 /* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.
@@ -271,7 +292,7 @@ export const SECOES_QUE_CEDEM = {
    `null` não tira nada. Nunca muta a recebida. */
 export function cederNaCena(pauta, cena) {
   const p = garantirPauta(pauta);
-  const c = cena && typeof cena === "object" ? cena : {};
+  const c = { ...(cena && typeof cena === "object" ? cena : {}), pergunta: !!(p.pergunta && p.pergunta.length) };
   const saem = new Set();
   for (const [chave, ids] of Object.entries(SECOES_QUE_CEDEM)) if (c[chave]) ids.forEach((id) => saem.add(id));
   if (!saem.size) return p;
@@ -301,8 +322,11 @@ export function textoDaPauta(p, { teto = TETO_DA_PAUTA, turno = 0 } = {}) {
      assim que sai uma fala que não é de ninguém.
 
      Custa cerca de cem caracteres do orçamento da Pauta, e paga: uma linha
-     de seção a menos vale menos que uma fala inteira que não existe. */
-  const cabeca = `[PAUTA DO TURNO${turno ? ` ${turno}` : ""} — decidido pelo SISTEMA. Ligue os pontos e conte COMO aconteceu; o que está aqui é o QUE e o COM QUEM, e não se discute. Estas palavras são ETIQUETA DE SISTEMA: nenhuma delas entra na narrativa, e nenhuma entra na boca de um personagem — ninguém neste mundo fala em rótulo.]`;
+     de seção a menos vale menos que uma fala inteira que não existe.
+     MM18: "Ligue os pontos e conte COMO aconteceu" virou "Abra pelo que eu
+     fiz ou perguntei e conte COMO" — o mesmo tamanho (95), e a primeira
+     ordem do turno passa a ser a do Matt: reagir antes de empurrar. */
+  const cabeca = `[PAUTA DO TURNO${turno ? ` ${turno}` : ""} — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. Estas palavras são ETIQUETA DE SISTEMA: nenhuma delas entra na narrativa, e nenhuma entra na boca de um personagem — ninguém neste mundo fala em rótulo.]`;
   const pe = "";
   /* candidatas: uma entrada por LINHA, para o corte ser fino */
   const cand = [];

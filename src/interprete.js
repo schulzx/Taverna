@@ -97,10 +97,21 @@ const RX_ATO = [
   ["ignorei", /\b(ignoro|viro as costas|saio|vou embora|deixo (ele|ela|eles)|n[ãa]o respondo)\b/i],
   ["cheguei", /\b(entro|chego|apare[çc]o|me aproximo|volto (para|ao|à))\b/i],
 ];
+/* MM18 (o Mestre que escuta): A PERGUNTA VENCE O GESTO MIÚDO. "Pago a
+   bebida, agradeço a Inocência e saio" tem "pago" e foi lido como PAGUEI
+   (J6 da 4.ª sessão) — e Inocência "quer ver antes de aceitar, e conta na
+   frente de mim", que o Narrador leu como ela a exigir-me a confissão.
+   "O que sabes de Noé?" não tinha verbo nenhum da lista e era NADA. Uma
+   frase com "?" pergunta, e a pergunta é o que a cena tem de responder: ela
+   vence os atos desta lista; os de peso (mentir, ameaçar, ferir, acusar)
+   continuam a mandar, porque mudam o que a pergunta quer dizer. */
+export const ATOS_QUE_A_PERGUNTA_VENCE = ["paguei", "ajudei", "revelei", "elogiei", "cheguei", "ignorei", "nada"];
 export function atoDoTexto(texto) {
   const t = String(texto || "");
-  for (const [id, rx] of RX_ATO) if (rx.test(t)) return id;
-  return "nada";
+  let id = "nada";
+  for (const [k, rx] of RX_ATO) if (rx.test(t)) { id = k; break; }
+  if (t.includes("?") && ATOS_QUE_A_PERGUNTA_VENCE.includes(id)) return "pedi";
+  return id;
 }
 
 /* ---------------- A SITUAÇÃO DE UMA PESSOA ----------------
@@ -381,13 +392,15 @@ export function marcarMovimento(elenco, nome, id, gesto) {
 /* ---------------- A CONSULTA ----------------
    Um movimento quebrado NÃO passa: a mesma decisão do Bibliotecário na
    v9.85, e pela mesma razão — uma lacuna nunca vira permissão. */
-export function consultarInterprete(pessoa, { sorte = Math.random, elenco = null, ignorarMemoria = false } = {}) {
+export function consultarInterprete(pessoa, { sorte = Math.random, elenco = null, ignorarMemoria = false, fora = [] } = {}) {
   const p = garantirPessoa(pessoa);
   const proibidos = new Set(gestosProibidos(p));
   const mem = garantirElenco(elenco)[p.nome] || { feitos: [], gestos: [] };
+  const vetados = new Set(Array.isArray(fora) ? fora : []);
   const candidatos = [];
   for (const m of MOVIMENTOS) {
     if (proibidos.has(m.gesto)) continue;
+    if (vetados.has(m.id)) continue;
     if (!ignorarMemoria && mem.feitos.includes(m.id)) continue;
     if (!ignorarMemoria && mem.gestos.includes(m.gesto) && m.peso < 4) continue;
     let vale = false;
@@ -410,8 +423,36 @@ export function consultarInterprete(pessoa, { sorte = Math.random, elenco = null
    conhecidos vira seis linhas e a cena vira assembleia. */
 export const QUANTAS_PESSOAS = 3;
 
+/* ---------------- QUANDO ME PERGUNTAM (MM18) ----------------
+   A 4.ª sessão de prova mandou ao Narrador, em turnos em que o jogador
+   tinha feito uma pergunta, "responde com outra pergunta", "encontra um
+   serviço urgente para fazer bem agora", "aceita, e pede uma coisa em
+   troca que não tem a ver com o assunto", "cala uma coisa que sabe de mim"
+   e "lembra do que eu devo" — e ele cumpriu: J2 ("de onde nos
+   conhecemos?") recebeu "isso a gente conta depois do almoço, agora eu
+   preciso de um favor". A pessoa leu isto como o Mestre que não responde.
+
+   Numa pergunta, a cena é de quem responde. Por isso: UMA pessoa só faz
+   alguma coisa (as outras estão lá, caladas — o Narrador escolhe quem
+   fala), e nenhum destes movimentos sai, porque cada um é uma maneira de
+   NÃO responder ou de puxar a conversa para a agenda de quem fala. Os que
+   esquivam com motivo de ficha — o segredo tocado (`muda_de_assunto`), o
+   medo (`esconde_o_medo`) — ficam: aí não responder é a resposta. */
+export const QUANDO_ME_PERGUNTAM = {
+  quantas: 1,
+  nunca: [
+    "responde_com_pergunta", "atrasa", "chama_outro", "finge_nao_ouvir", "olha_o_grupo",
+    "propoe_troca", "quer_o_que_quer", "pede_favor_pequeno", "oferece_trabalho",
+    "lembra_a_divida", "conta_os_dias", "cita_o_que_prometi", "cobra_a_promessa",
+    "cala_pelo_outro", "olha_e_nao_diz", "comenta_o_lugar", "lembra_de_antes",
+  ],
+};
+
 export function paraPauta(pessoas = [], { sorte = Math.random, elenco = null, quantas = QUANTAS_PESSOAS } = {}) {
   const linhas = [], marcas = [];
+  const perguntaram = (pessoas || []).some((p) => p && p.ato === "pedi");
+  if (perguntaram) quantas = Math.min(quantas, QUANDO_ME_PERGUNTAM.quantas);
+  const fora = perguntaram ? QUANDO_ME_PERGUNTAM.nunca : [];
   /* quem tem laço mais forte fala primeiro: é de quem o jogador espera
      reação, e é de quem a falta de reação mais dói */
   const ordenadas = [...(pessoas || [])]
@@ -421,7 +462,7 @@ export function paraPauta(pessoas = [], { sorte = Math.random, elenco = null, qu
     .slice(0, quantas);
   const movimentos = [];
   for (const p of ordenadas) {
-    const m = consultarInterprete(p, { sorte, elenco });
+    const m = consultarInterprete(p, { sorte, elenco, fora });
     if (!m) continue;
     linhas.push(`${p.nome} ${m.faz}`);
     marcas.push({ nome: p.nome, id: m.id, gesto: m.gesto });

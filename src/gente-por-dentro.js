@@ -278,7 +278,11 @@ export const PERGUNTAS_DA_GENTE = [
   { id: "adversario", rx: /\b(adversari|enfrentou|lutou contra|inimigo mais|rival mais|mais famos)/ },
   { id: "ferida", rx: /\b(se feriu|se machucou|ferid[oa]|machucad[oa]|cicatriz|como (ele|ela) perdeu)/ },
   /* MM14: "e de onde vens?" (T44) — o tu e o presente também perguntam */
-  { id: "passado", rx: /\b(quanto tempo|ha quanto|faz quanto|quando (isso|foi|aconteceu)|aconteceu com|historia d|passado|de onde ((ele|ela|voce|tu) )?(veio|vem|vens|vieste|e|es)\b)/ },
+  /* MM18: "Quanto tempo LEVA a pé daqui até à Muralha?" (J6 da 4.ª sessão) é
+     a estrada, não a vida de quem ouve — e a ficha de Inocência ("nasceu em
+     Alto do Sal… rompeu com Gertrudes") tomou o lugar da distância e do
+     preço do quarto. O tempo de caminho é da cidade (`distancia`). */
+  { id: "passado", rx: /\b(quanto tempo(?! (ate|leva|demora|se leva|levo|levamos|de caminh|de marcha|a pe|daqui))|ha quanto|faz quanto|quando (isso|foi|aconteceu)|aconteceu com|historia d|passado|de onde ((ele|ela|voce|tu) )?(veio|vem|vens|vieste|e|es)\b)/ },
   /* MM8b: a CASA como família — o que a cidade diz dela e se é popular —,
      e cada um dela: quem é bem-visto e quem não */
   { id: "familia", rx: /\b(o que (dizem|falam)|nesta casa|desta casa|dessa casa|essa casa|esta casa|familia|parentes|popular|reputacao|fama da casa|casa nobre)/ },

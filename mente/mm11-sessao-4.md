@@ -710,3 +710,84 @@ que mais mudaria o que o jogador vive** é o conserto 1+2 da secção acima: *um
 | chamadas por resposta | ~2,0 | 3,6 | 2,27 (8 de 8 consertos pagos por defeito do sistema) | **2,19** (7 de 8 por defeito do sistema) |
 | pedido do Narrador (car.) | — | — | 126.675 | **138.059** (system 72.383; teto aguenta) |
 | nota da campanha | — | — | — | **3,0 de 5 (3,7 na 1.ª metade; 1,6 na 2.ª)** |
+
+
+---
+
+## A escuta, turno a turno (MM18, 11/10)
+
+*A pedido da pessoa: "muitas frases e diálogos sem sentido, alguns nem respondem a pergunta … o mestre não parece estar
+interessado em reagir ou responder o player e sim somente em sair jogando informações".* Medido no registo (as 42 chamadas do
+Narrador), por script, sem ler o registo inteiro. **Empurrões** = envelopes que puxam história que ninguém pediu (compasso, forma
+da cena, mural, trama, evento global, o mundo que se mexe, o passado que volta, boato, correio, sonho, relógio aberto), contados por
+`escuta.js#empurraoDe`; "depois" = o que `escutarOTurno` + `seguraOMundo` deixariam passar no mesmo turno. **Origem** de cada coisa
+sem nexo: **(a)** veio pronta da pauta ou do prompt; **(b)** o modelo juntou dois fatos do sistema que não casam; **(c)** inventou sem base.
+
+| T | o jogador | perg. | reage 1.º | respondeu | empurrões | o que não faz sentido · origem | o sistema sabia? · entregou? |
+|---|---|---|---|---|---|---|---|
+| 1 | (abertura) | — | — | — | 0→0 | "A lei aqui é o Sino", sem consequência nenhuma (a: `abertura.js` pede "uma lei daqui" + a lei do Léxico) · "Inocência Bordão, músico … ele" (a: abertura, ofício no masculino) | — |
+| 1b | de onde nos conhecemos? por que vieste? | sim | sim | **não** ("depois do almoço") | 0→0 | a esquiva veio pronta: A GENTE "Euzébio encontra um serviço urgente" (a: `interprete.js#atrasa`, que dispara com `euDevo` — o movimento de quem foge de uma dívida, dado ao credor) | **sabia** (PESSOAS CONHECIDAS: 3 anos, a dívida) · entregou, e outra linha mandou esquivar |
+| 2 | onde encontro Inocência? quem manda? | sim | sim | sim, 2/2 | 1→0 | Euzébio "pago, se me disseres onde arranjar um serviço urgente" (a: `atrasa` outra vez) · "o Belmira" que vira "a mulher do balcão" (b: homónimos da base) | sistema (PERGUNTOU) · entregou |
+| 3 | o que sabes de Noé, onde está? | sim | **não** (abre pelo "músico" do turno anterior) | parcial, inventado ("perto do Cálice Magro") (c) | 1→0 | a briga dos padeiros e moedores (a: compasso PREPARAÇÃO julgamento) · PERGUNTOU "como se reconhece quem é bem-vindo" (a: `cidade-por-dentro`, por "Reconheço esta letra") | **sabia**: Noé Laminado é gente da base em Rua dos Retalhos, Rio Cinzento (`oQueExisteAqui`; `abertura.alvo.onde`), e Inocência é a pista que o sabe · **não entregou**: nenhuma secção diz o que a pista sabe do alvo, e a pergunta foi lida como outra |
+| 4 | que apelido? o que sabes de Noé? | sim | sim | sim, inventado ("entrou na Muralha"), contradito no T10 (c) | 1→0 | os guardas a olhar (a: compasso APERTA) | igual ao T3 · PERGUNTOU deu a gíria pelo "apelido" |
+| 5 | quanto tempo à Muralha? onde dormir, a quanto o quarto? | sim | sim | 3/3, o preço inventado (20 lâminas) (c) | 0→0 | o sino fora de hora (a: o SINO da abertura, a contar turnos "sem avanço" com o jogador a falar com a pista) | distância: sistema · **pouso: sabia** (`PRECOS_DO_POUSO`) · **não entregou**: cortado pelo teto (a economia de 274 caracteres ficou) e a pergunta lida como o passado de Inocência ("quanto tempo") |
+| 6 | quanto custa a resma e a tinta? | sim | sim | sim, inventado (10 e 5) (c) | 1→0 | Inocência aparece no mercado (a: PROCURA "procurei Inocência" — "agradeço a Inocência" lido como procura) · "conte a verdade na frente dela" (a: A GENTE `quer_ver`, "Pago a bebida" lido como PAGUEI) · o julgamento (a: compasso A UM PASSO) | **sabia** que nenhuma banca vende papel (mercado) · não entregou: nenhuma secção diz "aqui não há" |
+| 7 | (a confissão) | — | sim | — | 1→1 | "o julgamento começa" (a: compasso AGORA) · PERGUNTOU gíria (a: "me chamam" lido como gíria) | — |
+| 8 | de que acusam Caetano? quem? | sim | sim | sim, inventado (c) | 2→1 | o preso é Caetano (a: o assunto do compasso sem matéria; o Narrador escolheu o homónimo) | **não sabia**: o assunto "julgamento" não traz quem nem de quê |
+| 9 | defendo Caetano | — | sim | — | 2→1 | o preso no coreto "já pregou o cartaz no mural" (a: `ofertas.js` × compasso no mesmo turno; à vista no rodapé 26 turnos) | — |
+| 10 | Noé nos registos? livros do Sino? | sim | sim | 1/2 (os livros, evasiva) | 0→0 | "Caetano, o arquivista" (b: o registo casou o nome curto com o homónimo, e o Portão corrigiu para o ofício errado) · "Rua dos Retalhos" sem cidade (a: PROCURA) | Noé: sistema · livros: não sabia |
+| 11 | que dívida, quanto, desde quando? | sim | sim | parcial (o couro; quanto e desde quando, não) | 1→0 | o couro que "fala sozinho" (a: forma da cena — virou a resposta) | sabia "mais do que dinheiro; 3 anos" · entregou; o quanto não existe |
+| 12 | o nome do irmão? | sim | sim | sim, inventado (Norberto) (c) | 1→0 | Filhos do Sino de fita, "cortesia exagerada" (a: compasso PREPARAÇÃO intriga) · Inocência chama "a mulher de capa verde" (b: duas linhas de A GENTE para duas Inocências — partiu-se em duas) | não sabia |
+| 13 | parto para Rio Cinzento | — | sim | — | 0→0 | — | — |
+| 14 | (o correio) | — | — | — | 2→1 | "a Câmara do Dragão" num mundo onde os dragões das histórias antigas NÃO EXISTEM (a: correio × Léxico) | — |
+| 15 | o óleo; e Noé? | sim | sim | sim (é ele) | 2→1 | cartaz "A caçada de Noé Laminado", assinado por Noé (a: `ofertas.js` — o alvo da principal a oferecer trabalho) | sistema |
+| 16 | foi Norberto? a gaveta errada? | sim | sim | sim, inventado (c) | 2→1 | "Hildebrando Cobre, A Boca do Mundo" (a: o mundo se mexe; o epíteto é também o do Dragão Ancião — b) | não sabia |
+| 17 | quantas chaves? que marca? quem são? | sim | sim | **não** | 0→0 | Noé Laminado entra ferido, com o herói ao lado dele (a+b: o SINO tocou "Noé chega a Alto do Sal ferido" porque a etapa `falar_com` nunca fechou) | chaves: não sabia · atropelada pelo acontecimento |
+| 18 | quem de vós é Noé? | sim | sim | sim, inventado "Noé Cantoneiro" (c, a remendar o T17) | 1→0 | "Sibi" nasce (a: A GENTE `usa_o_nome` — "passa a me chamar pelo apelido que só ela usa": a origem do defeito 6) | **sabia** (o boticário é Noé, base) · entregou, e entregou o contrário (o sino) |
+| 19 | o que quer a Muralha? onde fica a porta? | sim | sim | sim, inventado; "Rua dos Retalhos de Alto do Sal" (b: PROCURA sem cidade × mapa) | 1→0 | o homem da fita (a: compasso AGORA) | não sabia |
+| 20 | quem és, quem te manda? | sim | **não** (abre pela dívida) | sim, inventado ("eu sou o recado") | 1→1 | Euzébio à frente (a: A GENTE `lembra_a_divida`) · O PASSADO VOLTA "Inocência reaparece" com o ONDE a dizer "Inocência está a 8 h, não entra sem 8 h narradas" (a: dois órgãos contraditórios no mesmo pedido) | não sabia |
+| 21 | vou à Muralha | — | sim | — | 1→1 | "a corte de Rio Cinzento já escolheu o teu lado" numa aldeia pastoril de uma rua, sem guarda (a: compasso O QUE FICOU, intriga de corte × a ficha do lugar) | — |
+| 22–23 | (acampamento, manhã) | — | — | — | 4→1 | Euzébio "pulei no rio atrás de ti" (a: A GENTE `lembra_de_antes` × o rodapé "NUNCA invente memórias") · Belmira à porta da Muralha, a 20 km (a: A GENTE contou-a presente) · "o Torneio das Coroas mexeu com ela" (a: evento global, que toma a DIREÇÃO do arco no lugar de Noé) | — |
+| 24–25 | entro na Muralha | — | sim | — | 3→2 | — | — |
+| 26 | desço | — | sim | — | 1→1 | abre a Fortaleza das Brasas, não a Muralha (a: a porta da masmorra, defeito 1) | — |
+
+**Os números.**
+- **Respondeu à pergunta em 11 de 16** turnos com pergunta (14 de 16 contando as 3 parciais; sem resposta: T1b e T17).
+  **Reagiu primeiro em 14 de 16** (T3 e T20 abrem por outra coisa — nos dois, uma linha de A GENTE).
+- **Empurrões: 23 em 18 dos 24 turnos do jogador**, e 4 de uma vez num turno do sistema. **12 dos 18 chegaram com o jogador em
+  cima do fio** (a perguntar por Noé ou a ir à Muralha); **nenhum** chegou porque o jogador tivesse empacado — a escada do encalhe
+  conta dias e nunca disparou. Com a escuta: **10 empurrões em 10 turnos, nunca mais de 1**, e 6 dos 10 tocam o fio (a ponte sai
+  da própria história).
+- **A GENTE: 25 linhas**; nos 16 turnos de pergunta, **15 eram maneiras de não responder** (responder com outra pergunta, o serviço
+  urgente, a troca sem nada a ver, lembrar a dívida, chamar terceiro, calar o que sabe). Agora: uma pessoa só, e nenhuma destas.
+- **A frase do jogador** ia a 7–14 mil caracteres do fim do pedido (debaixo da base do mundo). Com a fiação, é a última linha.
+- **Turnos sem avanço da espinha antes de o mundo empurrar:** antes, **0** (empurrava de qualquer maneira); com a escada, o maior
+  desvio do fio desta sessão (o julgamento, 4 turnos seguidos) chega ao degrau do sinal no 5.º.
+- **Origem das 28 coisas sem nexo:** **(a) 19** vieram prontas da pauta ou do prompt · **(b) 4** o modelo juntou dois fatos que não
+  casam · **(c) 5** inventou — e em 2 destas 5 (o quarto, o paradeiro de Noé) o sistema **sabia** a resposta.
+- **Sabia e não entregou:** das **10 perguntas que falharam** (sem resposta, esquivadas ou inventadas), o sistema **sabia em 5**
+  (de onde nos conhecemos; onde está Noé; o quarto; o papel; quem é Noé). Em 2 entregou, e outra linha mandou o contrário (A GENTE a
+  esquivar; o sino a trazer outro Noé); em 3 **não entregou** — uma por nenhuma secção tratar "o que a pista sabe do alvo", uma por o
+  fato ser cortado pelo teto e a pergunta mal lida, uma por nenhuma secção dizer "aqui não há". **As outras 5 eram matéria que o
+  sistema não tem** (a acusação do julgamento, o irmão, as chaves, o que quer a Muralha, quanto é a dívida) — todas de fios que o
+  próprio sistema abriu sem conteúdo (o assunto do compasso) ou que o Narrador inventou e ninguém guardou.
+- **A C2 (a cidade fora do prompt dentro da masmorra)** não deixou nenhuma pergunta sem resposta nesta sessão: dentro da Fortaleza
+  não se perguntou nada da cidade.
+
+**As contradições entre órgãos** (para a auditoria de coerência que vem a seguir — só a 12 foi consertada aqui):
+1. **O sino da abertura × a missão × a cena:** a etapa `falar_com` não fecha (o Cronista põe Noé no cânone, não em `pessoas`), o sino
+   conta turnos "sem avanço" e toca "Noé chega ferido a Alto do Sal" com o herói ao lado dele em Rio Cinzento → um segundo Noé.
+2. **O compasso × a ficha do lugar:** o assunto "intriga de corte" numa aldeia pastoril de uma rua só → "a corte de Rio Cinzento".
+3. **O passado que volta × o Geógrafo:** "Inocência reaparece agora" e "Inocência está a 8 h, não entra sem 8 h narradas", no mesmo pedido.
+4. **A GENTE × o rodapé:** "menciona uma coisa que fizemos juntos" e "NUNCA invente memórias", no mesmo pedido.
+5. **O mural × a principal:** o alvo da principal (Noé) prega "A caçada de Noé Laminado"; o preso (Caetano) prega um cartaz no turno
+   do julgamento dele.
+6. **O Léxico × os chefes × o correio:** dragões "não existem neste mundo", e há um Dragão Ancião, uma Câmara do Dragão, e dois chefes
+   com o mesmo epíteto (A Boca do Mundo).
+7. **O evento global × a espinha:** depois do Torneio, a DIREÇÃO DO MOMENTO passa a ser o Torneio, e Noé sai das peças na mesa.
+8. **A procura × o mapa:** "Noé está em Rua dos Retalhos", sem cidade; o Narrador pôs a rua em Alto do Sal duas vezes.
+9. **O Intérprete × a ficha:** `atrasa` ("encontra um serviço urgente") dispara com `euDevo` e é dado ao credor.
+10. **A base × o registo × o Portão:** três pares de homónimos nas oito primeiras pessoas; 7 das 8 chamadas do Portão.
+11. **O género:** "Inocência Bordão, músico … ele" (abertura) contra a mulher do alaúde; "Noé … ela" (procura) contra "o vendedor de ervas".
+12. **A Mesa Posta × a ação:** "escalar a muralha na chuva" em 4 turnos em que ninguém escalava — **consertado na MM18** (as chaves
+    eram substantivos: "muralha" estava no nome da masmorra, "parede", "bolso", "seguir").

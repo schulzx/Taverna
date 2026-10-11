@@ -159,6 +159,14 @@ sec("1. NENHUM MÓDULO MUDO");
   const AGUARDANDO = {
     "mapa-vivo.js": "a tela do mapa em tempo real, do desenho/oficial (MM17 D, 06/10)",
     "partida.js": "a tela do mapa (oficial), o botão Partir do cartão do lugar (P2, 10/10)",
+    /* 11/10 (Fase MM, MM18 · o Mestre que escuta): `escuta.js` nasce no
+       backend — o pedido lido uma vez, os empurrões contados e cortados a
+       um por turno, a escada por turnos sem avanço, a linha do RUMO e o
+       fecho do pedido — e espera a fiação em `enviar` (App.jsx), que o
+       backend não toca; o mapa de chamada está no diário de 11/10.
+       `teste-mm18-escuta.mjs` é o primeiro leitor. A entrada sai quando o
+       App o importar. */
+    "escuta.js": "a fiação em enviar/pautaDoTurno no App.jsx, do frontend (MM18, 11/10)",
   };
   const mudos = [];
   for (const f of arqs) {

@@ -454,8 +454,15 @@ export const PERGUNTAS_DA_CIDADE = [
   { id: "cura", rx: /\b(curandeir|quem cura|curar|medico|templo|sacerdot)/ },
   { id: "lei", rx: /\b(guarda|milicia|xerife|autoridade|lei\b|prender|preso)/ },
   { id: "vigia", rx: /\b(vigi|ronda|patrulh|sentinela|sem ser vist|despercebid|recolher)/ },
-  { id: "giria", rx: /\b(chamam|apelid|giria|xinga|no sentido|quer dizer|significa)/ },
-  { id: "reconhecer", rx: /\b(distintivo|salvo-conduto|salvo conduto|senha|insignia|reconhec|credencial|passe\b)/ },
+  /* MM18: "não sei se me chamam para me perdoar" (J8 da 4.ª sessão, uma
+     confissão) levou a gíria da cidade à pauta. Quem me chama não pergunta
+     como se chama a coisa. */
+  { id: "giria", rx: /\b((?<!\b(me|nos|te) )chamam|apelid|giria|xinga|no sentido|quer dizer|significa)/ },
+  /* MM18: "Reconheço esta letra." (J4 da 4.ª sessão) é o herói a falar de
+     si, e levou à pauta "como se reconhece quem é bem-vindo: uma medalha de
+     cobre" a uma pergunta sobre Noé. A primeira pessoa (reconheço) não
+     pergunta pela porta; "como se reconhece", "reconhecem" perguntam. */
+  { id: "reconhecer", rx: /\b(distintivo|salvo-conduto|salvo conduto|senha|insignia|reconhec(?!o\b)|credencial|passe\b)/ },
   { id: "hoje", rx: /\b(sino|badal|corneta|sirene|festa|festival|feira|luto|enterro)/ },
   { id: "dadiva", rx: /\b(de graca|gratis|presente|sem cobrar|nao cobra|de oferta)/ },
   /* MM14: "a que distância fica o Poço de Sal?" — a sessão de prova levou o

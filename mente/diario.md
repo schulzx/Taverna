@@ -15,6 +15,50 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.372 · MM18, o Mestre que escuta (a queixa de 11/10, tarefa 1) · este commit
+
+- **quem:** `backend`, à mão, a pedido da pessoa. Sem bastão: nada em `App.jsx`.
+- **a medida (registo da 4.ª sessão, tabela inteira no fim de `mente/mm11-sessao-4.md`):** respondeu à pergunta em **11 de 16**
+  (14 com as parciais); reagiu primeiro em 14 de 16. **23 empurrões em 18 dos 24 turnos do jogador**, 12 deles com o jogador em
+  cima do fio; nenhum porque tivesse empacado. A GENTE: 25 linhas, 15 delas maneiras de não responder numa pergunta. Origem das 28
+  coisas sem nexo: **19 prontas da pauta/prompt**, 4 de dois fatos que não casam, 5 inventadas. Das 10 perguntas que falharam o
+  sistema **sabia 5** (3 não entregues, 2 entregues junto com o contrário).
+- **o que já muda, sem fiação (módulos que o App já chama):** `interprete.js` — "?" é pergunta (vence pagar/agradecer/chegar) e,
+  numa pergunta, **uma pessoa só age e nenhum dos 17 movimentos de não responder sai** (`QUANDO_ME_PERGUNTAM`); `pauta.js` — o
+  cabeçalho manda abrir pelo que eu fiz (mesmos 95 caracteres), secção nova **O RUMO** (prio 2,42, a última na leitura) e, numa
+  pergunta respondida, a economia, a rua e a vizinhança **cedem** (`SECOES_QUE_CEDEM.pergunta`: no J6 o preço do quarto era cortado
+  pela linha "Cheira a cera, tinta…", que também abria 7 das 26 narrações); `mesa-posta.js` — sem chaves-substantivo (a "aposta"
+  de escalar a muralha em 4 turnos sem escalada); `gente-por-dentro.js` / `cidade-por-dentro.js` — "quanto tempo leva" não é o
+  passado de ninguém, "reconheço" não é a porta, "me chamam" não é gíria; `prompt.js` — PRIMEIRO EU no ofício da cena, o guia de
+  cena só fecha com saídas quando se chega ou se pergunta, o turno do mundo deixa de mandar injetar (−44 caracteres no prompt).
+- **o que espera a fiação (`escuta.js`, lista de espera em `teste-ligacao`):** a escada por turnos (0 · 4 · 7 · 10, as formas do
+  `encalhe.js`), o corte a um empurrão por turno com o do fio primeiro, o adiado que espera uma vez, e a frase do jogador por último.
+  **Mapa de chamada para o `frontend`** (âncoras de hoje):
+  1. `import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";`
+     e `escutaRef = useRef(garantirEscuta(null))` + `adiadosEscutaRef = useRef([])`; save `escuta: escutaRef.current` (lista do
+     save, ~8685), load `garantirEscuta(sv.escuta)` (~13284), zera na campanha nova (~11719, junto de `escadaRef`).
+  2. `enviar`, antes de `const doCompasso = talvezAndarOCompasso(conteudo);` (~12220), em `try/calou`: `pedidoEsc = lerOPedido(conteudo)`,
+     `fioEsc = fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })`,
+     `degrauEsc = degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco)`, `segurarEsc = seguraOMundo(pedidoEsc, degrauEsc)`.
+  3. `talvezAndarOCompasso(conteudo, { segurar: segurarEsc })` → no `avancarCompasso` (~20263) `segurar: segurarExtra || !!combateRef.current || …`;
+     e `const formaDaCena = doCompasso || segurarEsc ? "" : talvezDarFormaACena(conteudo);`.
+  4. `pautaDoTurno`, antes do `return p;` (~7272), fora da luta: `p = porNaPauta(p, "rumo", linhaDoRumo({ pedido: lerOPedido(acaoDoTurno), degrau: degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco), passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }), semente: diaRef.current }))`.
+  5. A nota (~12267): `envs = [oficina, ...separarEnvelopes(umSoLugar(notaRef.current)), doCompasso, formaDaCena, daFrente, daVirada, daTrama]`;
+     `r = escutarOTurno({ envelopes: envs, fio: fioEsc, semAvanco: …, adiadosAntes: adiadosEscutaRef.current })`;
+     `nota = [pauta, ...r.ficam].filter(Boolean).join("\n")`; depois de `notaRef.current = ""`: `notaRef.current = r.adiados.join("\n"); adiadosEscutaRef.current = r.adiados;`.
+  6. Depois da pauta: `escutaRef.current = andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco({ missoes: missoesRef.current, espinha: espinhaRef.current }), pausa: !!combateRef.current })`.
+  7. O pedido (~12442): no turno do jogador, `content: \`${nota ? nota + "\n" : ""}${rodape}\n${fechoDoPedido(pedidoEsc)}\``;
+     no do sistema, como hoje. O histórico (~12503) continua a guardar `corpo` (sem rodapé).
+- **a prova:** `testes/teste-mm18-escuta.mjs` (102 asserções, com os casos do registo) — vermelho em HEAD (o módulo não existe;
+  o Intérprete dava 3 linhas e esquivas numa pergunta; as 6 apostas falsas casavam), verde agora. 275/275 suítes, build limpo,
+  o prompt continua abaixo de 82 mil (pior 80.667).
+- **o que a 5.ª sessão mede:** (1) respondeu em X de Y (hoje 11/16) e reagiu primeiro em X de Y (14/16); (2) empurrões por resposta
+  (hoje até 2 no turno do jogador e 4 no do sistema; meta: nunca mais de 1, e a maioria a tocar o fio); (3) turnos fora do fio
+  antes de o mundo vir buscar (meta: o sinal ao 5.º, ninguém antes); (4) origem do que não faz sentido (hoje 19/28 da pauta).
+- **o que ficou:** o seletor do turno (as três camadas: a verdade, o que o mundo sabe, o que o jogador viu) — "sabia e não
+  entregou" é 5 de 10, metade, e a outra metade é matéria que nenhum órgão tem; e as 11 contradições entre órgãos, para a auditoria
+  de coerência.
+
 ## 10/10 21:40 · v9.371 · a marcha única, a fiação (MM17, pendência nº 3) · este commit
 
 - **quem:** `frontend`, à mão, sem maestro. Bastão do `App.jsx` tomado às 21:38 e devolvido ao fim.
