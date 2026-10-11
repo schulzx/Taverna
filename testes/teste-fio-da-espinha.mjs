@@ -138,7 +138,15 @@ sec("4. o lugar guarda uma coisa concreta, sempre a mesma");
     a.forEach((x, j) => {
       if (x.m.feitio !== "descobrir") return;
       desc++;
-      if (FIO && FIO.objetos.some((o) => x.env.includes(o))) comObjeto++;
+      /* MOVIDA A 11/10 (a campanha que prende, batidas.js), com o motivo: a
+         espinha nova guarda o SEGREDO de cada "descobrir" — uma coisa do
+         Escondido da cidade e o que ela prova — e o envelope diz essa coisa
+         em vez de um objeto de FIO.objetos, que não dizia nada; a espinha
+         antiga (sem segredo) continua a dizer o objeto. A intenção fica: o
+         lugar guarda uma coisa concreta, e sempre a mesma. No fecho do
+         primeiro ato o que o lugar entrega é a REVIRAVOLTA, e é ela que se diz. */
+      const coisa = x.m.segredo ? x.m.segredo.coisa : null;
+      if (x.m.reviravolta ? x.env.includes("REVIRAVOLTA") : coisa ? x.env.includes(coisa) : FIO && FIO.objetos.some((o) => x.env.includes(o))) comObjeto++;
       if (x.env === b[j].env) iguais++;
     });
   }

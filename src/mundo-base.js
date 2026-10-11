@@ -199,7 +199,9 @@ export function genteDoLocal(semente, local, genero = "Fantasia medieval", molde
 /* ---------------- O QUE ESTÁ ESCONDIDO ----------------
    O exemplo do autor: "na taverna tem um baú escondido". Cada cidade guarda
    uma ou duas coisas, num local NOMEADO — e só aparecem por teste ou busca. */
-const SEGREDOS = [
+/* Exportada (MM, a campanha que prende): o "descobrir" da espinha guarda
+   uma destas quando o lugar dele não tem a sua no Escondido (batidas.js). */
+export const SEGREDOS = [
   { tipo: "bau", icone: "🧰", o: "um baú escondido sob o assoalho", acha: "percepcao", dc: 15 },
   { tipo: "alcapao", icone: "🕳", o: "um alçapão atrás de uma prateleira", acha: "percepcao", dc: 16 },
   { tipo: "carta", icone: "✉", o: "uma carta lacrada que ninguém entregou", acha: "intelecto", dc: 14 },

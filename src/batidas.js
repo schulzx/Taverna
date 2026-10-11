@@ -26,21 +26,38 @@
    abater, o fundo a alcançar — continuam lá e continuam a contar para o
    arco; passam a ser o CAMINHO entre batidas, e o Narrador lê-os assim.
 
-   O que aqui se escreve são TEXTOS com um buraco que só se enche na hora:
-   {sombra}, o antagonista no tamanho do ato ("quem está por trás de tudo",
-   o título, o nome; `FIO.curta`, saga.js). Assim a sombra cresce com a
-   história sem que o save guarde três versões de cada frase.
+   E mais duas coisas que a quarta sessão pedia, no mesmo sítio porque são
+   da mesma natureza (o que a espinha guarda e o Narrador só recebe na hora):
+
+   1. O SEGREDO DE CADA "DESCOBRIR". O marco fechava por o herói entrar no
+      lugar, e o lugar "guardava uma carta" que não dizia nada. Agora guarda
+      uma coisa do Escondido da cidade (o mesmo baú, alçapão, livro-caixa
+      que `segredosDaCidade` já põe no mundo; sem o do lugar, um da mesma
+      tabela, pela semente) e o que ela PROVA: um facto que muda o que o
+      jogador sabe e aponta para a peça seguinte.
+
+   2. A REVIRAVOLTA DO ATO 0. A abertura já planta o laço do antecedente
+      ("e um antigo companheiro de armas anda metido nisto",
+      `LACOS_DO_ANTECEDENTE`, abertura.js) e ninguém o colhia. O fecho do
+      primeiro ato colhe-o: a verdade sobre aquele laço, ligada à sombra do
+      fim e à peça seguinte.
+
+   O que aqui se escreve são TEXTOS com dois buracos que só se enchem na
+   hora: {sombra}, o antagonista no tamanho do ato ("quem está por trás de
+   tudo", o título, o nome; `FIO.curta`, saga.js), e {leva}, a peça
+   seguinte que ainda está de pé. Assim a sombra cresce com a história sem
+   que o save guarde três versões de cada frase.
 
    Puro, determinístico pela semente, sem tocar no que recebe. A espinha de
    um save antigo não tem batidas, e o envelope dela continua o de sempre.
    ============================================================ */
 import { rngDe } from "./geografia.js";
-import { locaisDaCidade, genteDoLocal, chefesDoMundo } from "./mundo-base.js";
+import { locaisDaCidade, genteDoLocal, chefesDoMundo, segredosDaCidade, SEGREDOS } from "./mundo-base.js";
 import { ANTECEDENTES } from "./antecedentes.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
-/* enche só o que sabe; {sombra} fica para a hora */
+/* enche só o que sabe; {sombra} e {leva} ficam para a hora */
 const encher = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (m, k) => (v[k] == null ? m : String(v[k])));
 
 /* ---------------- O TAMANHO DE UM ATO ---------------- */
@@ -140,6 +157,45 @@ export const PERGUNTAS = {
   ],
 };
 
+/* ---------------- O QUE O SEGREDO PROVA ----------------
+   Uma linha por tipo do Escondido (`SEGREDOS`, mundo-base.js): o facto que
+   muda o que o jogador sabe, e o caminho para a peça seguinte. "aponta
+   para"/"leva a" porque {leva} é gente, lugar ou "o que X esconde". */
+export const SEGREDO_DIZ = {
+  bau: "os pertences de alguém dado por morto e um recibo recente com o sinal de {sombra} — quem morreu trabalhava para ele; o recibo aponta para {leva}",
+  alcapao: "um túnel com pegadas de poucas noites: gente de {sombra} entra e sai por aqui sem ser vista, e o túnel vai dar a {leva}",
+  carta: "a carta avisa que {sombra} já comprou meia cidade por dentro; quem a escreveu mandava procurar {leva}",
+  passagem: "um quarto murado usado ontem: velas, um mapa, e marcado a carvão como próximo sítio o caminho para {leva}",
+  cofre: "um contrato com o sinal de {sombra}, que paga o silêncio de quem manda aqui; a próxima entrega aponta para {leva}",
+  corpo: "os ossos são de alguém que fazia perguntas sobre {sombra}; no forro da roupa, o caminho para {leva}",
+  registro: "há meses que alguém paga a {sombra} por este lugar, e os pagamentos levam a {leva}",
+  relicario: "dentro, um nome que não devia estar ali — o de quem serve {sombra} — e o caminho para {leva} escrito no forro",
+};
+
+/* o teste que acha o segredo, dito como a mesa o diz */
+const NOME_DO_TESTE = { percepcao: "Percepção", intelecto: "Intelecto" };
+
+/* ---------------- A REVIRAVOLTA DO ATO 0 ----------------
+   A verdade do laço que a abertura plantou, uma por antecedente, revelada
+   no fecho do primeiro ato. Cada uma faz três coisas: muda o que o herói
+   sabe do próprio passado, liga-o à sombra do fim, e aponta para o ato
+   seguinte ({leva}). Sem antecedente: o que o trouxe não foi acaso. */
+export const REVIRAVOLTA_DO_ATO0 = {
+  orfao: "o nome parecido com o da família do herói é o de verdade: há alguém do sangue dele vivo, que serve {sombra} — e o rasto dessa pessoa aponta para {leva}",
+  soldado: "o antigo companheiro de armas metido nisto recruta para {sombra}: foi ele quem deu o nome do herói a quem o esperava, e o rasto dele aponta para {leva}",
+  nobre_caido: "a dívida que pesa sobre o nome da família do herói foi comprada por {sombra}: quem a cobra agora é ele, e a cobrança começa por {leva}",
+  erudito: "o texto proibido que o herói leu foi escrito para {sombra} — é um mapa, e a página seguinte aponta para {leva}",
+  ladrao: "a guilda dos dedos já vendeu o herói a {sombra}: tudo o que ele descobre chega lá antes dele, e o próximo recado da guilda aponta para {leva}",
+  acolito: "a ordem de que o herói fugiu serve {sombra}, e quer o herói de volta para lho entregar; o rasto da ordem aponta para {leva}",
+  pragado: "a febre que poupou o herói não foi acaso: foi a primeira obra de {sombra}, e quem a espalhou anda pelo caminho de {leva}",
+  artista: "quem ensinou ao herói a canção servia {sombra}; o último verso, que o herói nunca cantou, aponta para {leva}",
+  cacador: "o alvo antigo que escapou ao herói trabalha agora para {sombra}, e foi ele quem pôs a recompensa a correr — a próxima pista leva a {leva}",
+  ferreiro: "quem tomou a forja da família do herói fê-lo por ordem de {sombra}, e o que lá se forja agora segue para {leva}",
+  ex_cultista: "os antigos irmãos servem {sombra}, e é o herói que eles querem de volta; o rasto deles aponta para {leva}",
+  naufrago: "o naufrágio não foi tempestade: foi {sombra}, que queria o que o navio levava — e a bússola aponta para {leva} porque é lá que isso está agora",
+  sem: "o que trouxe o herói a {cidade} não foi acaso: alguém que serve {sombra} pô-lo no caminho dele de propósito, e já sabe que chegou; o rasto dessa gente aponta para {leva}",
+};
+
 /* ---------------- QUEM É O HERÓI ----------------
    A ficha guarda o NOME do antecedente ("Soldado Reformado"); a criação, às
    vezes, o id. Os dois servem — a mesma porta dupla de `lacoDoAntecedente`. */
@@ -156,7 +212,7 @@ export function antecedenteDe(ref) {
    espinha nova (sem passar pela catraca: quem chama passa-a por
    `garantirEspinha`). Sem atos, devolve-a como veio.
    ============================================================ */
-const LIMPAR = ["batida"];
+const LIMPAR = ["batida", "segredo", "reviravolta"];
 export function marcarBatidas(espinha, ctx) {
   const e = espinha && typeof espinha === "object" ? espinha : null;
   if (!e || !Array.isArray(e.atos) || !e.atos.length) return e;
@@ -250,6 +306,16 @@ export function marcarBatidas(espinha, ctx) {
         coisa: pick(r, coisas),
         vontade: p && p.vontade ? p.vontade : "tem as suas razões para falar pouco",
       };
+      /* O SEGREDO: todo "descobrir", batida ou caminho — o do Escondido do
+         lugar, quando o lugar tem um; senão um da mesma tabela, pela semente */
+      if (m.feitio === "descobrir") {
+        const c = cidadeDe(m.cidade);
+        let sg = null;
+        if (c) { try { sg = segredosDaCidade(semente, c, genero, molde, lex).find((x) => norm(x.local) === norm(m.onde)) || null; } catch { sg = null; } }
+        const escondido = !!sg;
+        if (!sg) sg = SEGREDOS[Math.floor(rngDe(semente + "|segredo|" + m.id)() * SEGREDOS.length)];
+        m.segredo = { coisa: sg.o, diz: SEGREDO_DIZ[sg.tipo] || SEGREDO_DIZ.registro, acha: NOME_DO_TESTE[sg.acha] || sg.acha, dc: sg.dc, escondido };
+      }
       if (!escolhidos.has(i)) return;
       const feitio = ehChefe(m) ? "enfrentar" : m.feitio;
       const cena = feitio === "procurar"
@@ -270,6 +336,13 @@ export function marcarBatidas(espinha, ctx) {
       };
     });
 
+    /* A REVIRAVOLTA: o fecho do primeiro ato colhe o laço da abertura (só
+       quando há um ato depois, para onde ela aponte) */
+    if (k === 0 && e.atos.length > 1) {
+      const f = ms[fecho];
+      const cidadeDoAto = [...ms].reverse().map((m) => m.cidade).find(Boolean) || f.onde || "";
+      f.reviravolta = encher(REVIRAVOLTA_DO_ATO0[ant || "sem"], { cidade: cidadeDoAto });
+    }
     return { ...a, marcos: ms };
   });
   const fio = e.fio && e.fio.antagonista && ant ? { ...e.fio, antecedente: ant } : e.fio;

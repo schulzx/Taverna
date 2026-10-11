@@ -174,6 +174,16 @@ export function garantirEspinha(e) {
           pergunta: String(m.batida.pergunta || "").slice(0, 160),
           fecho: !!m.batida.fecho,
         } } : {}),
+        /* o SEGREDO de um "descobrir" (o que o lugar guarda e o que prova) e
+           a REVIRAVOLTA do fecho do primeiro ato — batidas.js; só aditivos */
+        ...(m && m.segredo && typeof m.segredo === "object" && m.segredo.coisa && m.segredo.diz ? { segredo: {
+          coisa: String(m.segredo.coisa).slice(0, 80),
+          diz: String(m.segredo.diz).slice(0, 280),
+          acha: String(m.segredo.acha || "percepcao").slice(0, 20),
+          dc: Math.max(5, Math.min(30, Number(m.segredo.dc) || 15)),
+          escondido: !!m.segredo.escondido,
+        } } : {}),
+        ...(m && m.reviravolta && typeof m.reviravolta === "string" ? { reviravolta: m.reviravolta.slice(0, 320) } : {}),
       })),
     })),
   };
@@ -469,6 +479,12 @@ export const FIO = {
      batida acrescenta (a cena, o que está em jogo, a pergunta) paga-se com
      o que esta frase tinha de repetido — a pauta tem teto (TETO_DA_PAUTA) */
   dizCurto: "O FIO (do sistema — a verdade desta peça): {da}; puxado até ao fim, leva a {sombra}. Só se diz quando o herói chega; não invente outra razão.",
+  /* o que um lugar guarda quando a espinha nasceu com o segredo dele: a
+     coisa, o que ela prova, e o teste — que decide o preço, não se se acha:
+     uma pista central que o dado esconde é uma história que pára */
+  segredo: "guarda-se aqui {coisa}: {diz} (procurando: {acha} CD {dc}; falhar custa tempo, não o segredo)",
+  /* a reviravolta do ato 0 é a verdade da peça — o que ela dá */
+  reviravolta: "a REVIRAVOLTA do ato, que esta cena entrega inteira: {rev}",
 };
 
 const encherFio = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => (v[k] == null ? "" : String(v[k])));
@@ -485,6 +501,12 @@ function sombraDe(e) {
 
 /* A linha do fio para o marco `m` (o atual do ato `ato`). "" sem sombra. */
 function linhaDoFio(e, m, ato, { curto = false } = {}) {
+  const p = pecasDoFio(e, m, ato, { curto });
+  return p ? contrair(encherFio(curto ? FIO.dizCurto : FIO.diz, p)) : "";
+}
+
+/* as peças da linha do fio: o que esta peça dá, a sombra, e a peça seguinte */
+function pecasDoFio(e, m, ato, { curto = false } = {}) {
   const s = sombraDe(e);
   if (!s) return "";
   const ultimo = e.atos.length - 1;
@@ -501,13 +523,15 @@ function linhaDoFio(e, m, ato, { curto = false } = {}) {
   let da;
   if (m.feitio === "confronto") da = encherFio(FIO.da.desfecho, { sombra: curta, onde: m.onde });
   else if (m.feitio === "descer") da = encherFio(FIO.da.fundo, { onde: m.onde, leva });
+  else if (curto && m.reviravolta) da = encherFio(FIO.reviravolta, { rev: encherFio(m.reviravolta, { sombra: curta, leva }) });
+  else if (curto && m.segredo) da = encherFio(FIO.segredo, { ...m.segredo, diz: encherFio(m.segredo.diz, { sombra: curta, leva }) });
   else {
     const c = feitioDe(m.feitio).consequencia;
     const r = rngDe(`${e.semente}|fio|${m.id}`);
     const objeto = FIO.objetos[Math.floor(r() * FIO.objetos.length)];
     da = encherFio(FIO.da[c] || FIO.da.conhece, { ...m, leva, objeto });
   }
-  return contrair(encherFio(curto ? FIO.dizCurto : FIO.diz, { da, sombra }));
+  return { da, sombra, curta, leva };
 }
 
 /* a sombra curta no tamanho do ato — o que enche o {sombra} das batidas */
@@ -524,8 +548,8 @@ function sombraCurta(e, ato) {
    a mesma, dita uma vez e curta. */
 const maiuscula = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
 export const ENVELOPE_DAS_BATIDAS = {
-  fecho: "Fecho do ato: acabe a cena numa escolha com preço, não num presságio.",
-  regra: "Decidido na criação do mundo: puxe para aí sem anunciar; NUNCA diga ao jogador que existe uma estrutura. Se ele for a outro lado, isto espera.",
+  fecho: "Fecho do ato: acabe numa escolha com preço, não num presságio.",
+  regra: "Puxe para aí sem anunciar; NUNCA diga ao jogador que existe uma estrutura. Se ele for a outro lado, isto espera.",
 };
 function envelopeDasBatidas(e, m, ato, nome) {
   const ms = marcosDoAto(e, ato);
@@ -538,7 +562,8 @@ function envelopeDasBatidas(e, m, ato, nome) {
     /* a cena já diz quem e onde; o título ("Encontrar X") seria a mesma
        coisa duas vezes */
     partes.push(`ESPINHA — ${nome ? `${nome}, ` : ""}batida ${i + 1} de ${bats.length}: ${feitioDe(m.feitio).icone} ${enche(m.batida.cena)}.`);
-    partes.push(`EM JOGO: ${enche(m.batida.emJogo)}. A PERGUNTA: ${maiuscula(enche(m.batida.pergunta))}`);
+    /* na batida da reviravolta, ela é o que está em jogo (diz-se no fio) */
+    partes.push(`${m.reviravolta ? "" : `EM JOGO: ${enche(m.batida.emJogo)}. `}A PERGUNTA: ${maiuscula(enche(m.batida.pergunta))}`);
   } else {
     /* o caminho leva à batida seguinte — a deste ato, ou, depois do fecho,
        a primeira do ato que vem */

@@ -30,6 +30,8 @@
 import * as SG from "../src/saga.js";
 import * as R from "../src/regiao.js";
 import * as G from "../src/geografia.js";
+import * as MB from "../src/mundo-base.js";
+import * as AB from "../src/abertura.js";
 import { ANTECEDENTES } from "../src/antecedentes.js";
 import { ESTRUTURAS, estruturaPorId, custoDaEtapa, pesoDe } from "../src/historia.js";
 import { moldePorId } from "../src/moldes.js";
@@ -148,7 +150,8 @@ sec("4. os marcos não mudam: a batida é uma leitura deles");
   const n = 20;
   for (let i = 0; i < n; i++) {
     const a = campanha(i), b = campanha(i, { antecedente: "" });
-    const sem = (e) => J(e.atos.map((x) => x.marcos.map(({ batida, ...m }) => m)));
+    /* o que depende do herói: a batida e a reviravolta (o segredo do lugar não depende) */
+    const sem = (e) => J(e.atos.map((x) => x.marcos.map(({ batida, reviravolta, ...m }) => m)));
     if (sem(a.esp) === sem(b.esp)) iguais++;
     /* o arco continua a virar quando o peso dos marcos do ato chega */
     if (a.esp.atos.every((x, k) => x.marcos.reduce((s, m) => s + pesoDe(SG.feitioDe(m.feitio).peso), 0) >= Math.min(custoDaEtapa(a.est, k), 1))) pesoIgual++;
@@ -169,7 +172,7 @@ sec("5. o envelope diz a cena, o que está em jogo e a pergunta");
       if (/\{\w+\}/.test(x.env)) buraco++;
       if (x.m.batida) {
         bat++;
-        if (/batida \d+ de \d+/.test(x.env) && x.env.includes("EM JOGO:") && x.env.includes("A PERGUNTA:") && x.env.includes("?")) batOk++;
+        if (/batida \d+ de \d+/.test(x.env) && (x.m.reviravolta ? x.env.includes("REVIRAVOLTA") : x.env.includes("EM JOGO:")) && x.env.includes("A PERGUNTA:") && x.env.includes("?")) batOk++;
         if (x.m.batida.fecho) { fechos++; if (x.env.includes(SG.ENVELOPE_DAS_BATIDAS.fecho)) fechoOk++; }
       } else {
         cam++;
@@ -221,6 +224,84 @@ sec("7. determinismo e imutabilidade");
   t("nem o envelope nem marcarBatidas mutam a espinha", J(a.esp) === antes);
   const re = tenta(() => SG.garantirEspinha(B.marcarBatidas(a.esp, { semente: a.semente, mapa: a.mapa, genero: a.genero, molde: a.molde })), null);
   t("marcar outra vez dá o mesmo (as batidas velhas saem antes)", !!re && J(re) === J(a.esp));
+}
+
+/* ============================================================
+   O SEGREDO E A REVIRAVOLTA (v9.389)
+   A quarta sessão: os dois "descobrir" fecharam por presença, "com um
+   vendedor de papel e um preço"; e a reviravolta do sistema era null — as
+   três que houve saíram todas do Mestre. O laço do antecedente que a
+   abertura planta ("e um antigo companheiro de armas anda metido nisto")
+   nunca era colhido.
+   ============================================================ */
+sec("8. todo \"descobrir\" guarda um segredo de verdade");
+{
+  let desc = 0, comSegredo = 0, doEscondido = 0, escondidoCerto = 0, envOk = 0, envDesc = 0, dizTabela = 0;
+  for (let i = 0; i < 40; i++) {
+    const c = campanha(i, { regiao: i % 4 !== 0 });
+    const todos = c.esp.atos.flatMap((a) => a.marcos);
+    for (const m of todos.filter((x) => x.feitio === "descobrir")) {
+      desc++;
+      if (m.segredo && MB.SEGREDOS.some((s) => s.o === m.segredo.coisa)) comSegredo++;
+      if (m.segredo && B.SEGREDO_DIZ && Object.values(B.SEGREDO_DIZ).includes(m.segredo.diz)) dizTabela++;
+      if (m.segredo && m.segredo.escondido) {
+        doEscondido++;
+        const cid = c.mapa.cidades.find((x) => x.nome === m.cidade);
+        const sg = cid ? MB.segredosDaCidade(c.semente, cid, c.genero, c.molde, null).find((x) => norm(x.local) === norm(m.onde)) : null;
+        if (sg && sg.o === m.segredo.coisa) escondidoCerto++;
+      }
+    }
+    for (const x of envelopes(c.esp, c.est)) {
+      if (x.m.feitio !== "descobrir" || !x.m.batida || x.m.reviravolta) continue;
+      envDesc++;
+      const prox = todos.slice(todos.indexOf(x.m) + 1).find((m) => !m.feito);
+      const chave = prox ? norm(prox.quem || prox.alvo || prox.onde).replace(/^(o|a|os|as) /, "") : "";
+      if (x.env.includes(x.m.segredo.coisa) && !/\{\w+\}/.test(x.env) && (!prox || norm(x.env).includes(chave)) && /CD \d+/.test(x.env)) envOk++;
+    }
+  }
+  t(`todo "descobrir" guarda uma coisa do Escondido (${comSegredo}/${desc})`, desc > 0 && comSegredo === desc);
+  t(`e o que ela prova sai da tabela (${dizTabela}/${desc})`, dizTabela === desc);
+  t(`quando o lugar tem o seu no Escondido do mundo, é esse (${escondidoCerto}/${doEscondido})`, doEscondido > 0 && escondidoCerto === doEscondido);
+  t(`o envelope diz a coisa, o que prova, o teste, e aponta para a peça seguinte (${envOk}/${envDesc})`, envDesc > 0 && envOk === envDesc);
+  t("todo tipo do Escondido tem o que prova, e todo o que prova aponta para a peça seguinte", !!B.SEGREDO_DIZ && MB.SEGREDOS.every((s) => typeof B.SEGREDO_DIZ[s.tipo] === "string" && B.SEGREDO_DIZ[s.tipo].includes("{leva}")));
+  const volta = SG.garantirEspinha(JSON.parse(J(campanha(3).esp)));
+  t("o segredo sobrevive ao save", J(volta) === J(campanha(3).esp) && volta.atos.some((a) => a.marcos.some((m) => m.segredo)));
+  const lixo = SG.garantirEspinha({ atos: [{ marcos: [{ id: "a", segredo: { coisa: "x" } }, { id: "b", segredo: { coisa: "c", diz: "d", dc: 999 } }, { id: "k", reviravolta: 3 }] }] });
+  t("segredo sem o que prova não passa; a CD fica na régua; reviravolta que não é texto não passa", !("segredo" in lixo.atos[0].marcos[0]) && lixo.atos[0].marcos[1].segredo.dc === 30 && !("reviravolta" in lixo.atos[0].marcos[2]));
+}
+
+sec("9. a reviravolta do ato 0 colhe o laço que a abertura plantou");
+{
+  t("todo laço da abertura tem a sua verdade, e há uma sem antecedente", !!B.REVIRAVOLTA_DO_ATO0 && Object.keys(AB.LACOS_DO_ANTECEDENTE).every((k) => typeof B.REVIRAVOLTA_DO_ATO0[k] === "string") && typeof B.REVIRAVOLTA_DO_ATO0.sem === "string");
+  t("e toda verdade liga a sombra à peça seguinte", !!B.REVIRAVOLTA_DO_ATO0 && Object.values(B.REVIRAVOLTA_DO_ATO0).every((v) => v.includes("{sombra}") && v.includes("{leva}")));
+  let n = 0, uma = 0, noFecho = 0, plantada = 0, envOk = 0, semNome = 0;
+  for (let i = 0; i < 36; i++) {
+    const c = campanha(i, { regiao: i % 3 !== 0 });
+    if (c.esp.atos.length < 2) continue;
+    n++;
+    const revs = c.esp.atos.flatMap((a) => a.marcos).filter((m) => m.reviravolta);
+    if (revs.length === 1) uma++;
+    const a0 = c.esp.atos[0].marcos;
+    const f0 = a0.find((m) => m.batida && m.batida.fecho);
+    if (f0 && f0.reviravolta) noFecho++;
+    /* a abertura do mesmo herói diz o laço que a reviravolta colhe */
+    const ab = tenta(() => AB.abrirAbertura({ semente: c.semente, mapa: c.mapa, cidade: c.mapa.cidades[0].nome, espinha: c.esp, estrutura: c.estrutura, antecedente: c.antecedente, genero: c.genero, molde: c.molde, nivel: 1, dia: 1 }), null);
+    const laco = AB.LACOS_DO_ANTECEDENTE[c.antecedente];
+    if (ab && laco && ab.abertura.razao.includes(laco.o)) plantada++;
+    const x = envelopes(c.esp, c.est).find((y) => f0 && y.m.id === f0.id);
+    const prox = c.esp.atos[1].marcos[0];
+    const chave = prox ? norm(prox.quem || prox.alvo || prox.onde).replace(/^(o|a|os|as) /, "") : "";
+    if (x && x.env.includes("REVIRAVOLTA") && norm(x.env).includes(chave)) envOk++;
+    if (x && c.esp.fio && !x.env.includes(c.esp.fio.antagonista) && !x.env.includes(c.esp.fio.titulo)) semNome++;
+  }
+  t(`toda campanha com mais de um ato tem UMA reviravolta (${uma}/${n})`, n > 0 && uma === n);
+  t(`e ela mora no fecho do primeiro ato (${noFecho}/${n})`, noFecho === n);
+  t(`plantada na abertura: a razão do herói diz o laço que ela colhe (${plantada}/${n})`, plantada === n);
+  t(`o envelope do fecho diz a REVIRAVOLTA e aponta para o ato seguinte (${envOk}/${n})`, envOk === n);
+  t(`e ainda não diz o nome nem o título do antagonista (${semNome}/${n})`, semNome === n);
+  const s = campanha(4, { antecedente: "" });
+  const r = s.esp.atos.flatMap((a) => a.marcos).find((m) => m.reviravolta);
+  t("sem antecedente: o que o trouxe não foi acaso, na cidade dele", !!r && r.reviravolta.includes("não foi acaso") && s.mapa.cidades.some((cc) => r.reviravolta.includes(cc.nome)));
 }
 
 console.log(`\nbatidas: ${ok} passaram, ${mal} falharam`);
