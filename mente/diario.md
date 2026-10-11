@@ -16,6 +16,17 @@ Formato:
 
 ---
 
+## 11/10 · v9.399 · MM, o laço da história (3/6): o passo sai de onde o herói está (`backend`) · este commit
+
+- **tocados:** `abertura.js` (`proximoPasso` com `aqui`: a pessoa da etapa atual, ou de uma adiante por cima de caminho, que
+  está no sítio onde o herói está; `PASSO_AQUI.pessoa`); suíte `teste-passo-de-onde-estou` (26), sobre `registo-s5-pauta.json`.
+- **o defeito (sessão 5, defeito 3):** O RUMO disse "Procurar Osric Pé-Leve na Candeia Faiscante" em 22 pautas com o herói em
+  Ponte Lenta, à espera do Edric que a missão procurava.
+- **números (as pautas reais da sessão, recalculadas):** na Ponte Lenta a apontar para a Candeia **22 → 0** (as 22 passam a
+  "falar com Edric, que está aqui"); dentro da Candeia a "procurar" **3 → 0**. Fora dos sítios da missão (a estrada, o mercado,
+  a Boca) o passo continua o da missão — com a v9.396 ligada, a missão fecha na ponte e esse passo deixa de existir.
+- **fiação do App:** nenhuma (`linhaDoRumo` já recebe `mundo.aqui`).
+
 ## 11/10 · v9.398 · MM, o laço da história (2/6): um lugar não é gente (`backend`) · este commit
 
 - **tocados:** `npcs.js` (`nomeComDono`, `notaDoHomonimo`, tabela `LUGAR_NAO_E_GENTE`), `abertura.js` (`proximoPasso` lê

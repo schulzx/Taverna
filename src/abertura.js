@@ -65,7 +65,7 @@ import { rngDe } from "./geografia.js";
 import { marcoAtual } from "./saga.js";
 import { estruturaPorId } from "./historia.js";
 import { oQueExisteAqui, masmorrasDoMundo, chefesDoMundo, chaveDoLugar, locaisDaCidade, genteDoLocal } from "./mundo-base.js";
-import { criarMissao, etapaAtual, garantirMissoes, mesmaPessoa, rumoDaEtapa } from "./missoes.js";
+import { criarMissao, etapaAtual, garantirMissoes, mesmaPessoa, rumoDaEtapa, ETAPAS_DE_CAMINHO } from "./missoes.js";
 import { criarRelogio, envelopeCheio, TAMANHOS } from "./relogios.js";
 import { vocacaoDe } from "./comercio.js";
 import { fichaDaCidade } from "./cidade-por-dentro.js";
@@ -823,6 +823,12 @@ export function aindaSoUmNome(abertura, nome, ctx = {}) {
 export const PASSO_AQUI = {
   pista: "falar com {nome}, {papel} daqui, que diz ao herói o próprio nome logo que lhe fala",
   pistaSemPapel: "falar com {nome}, que está aqui e diz ao herói o próprio nome logo que lhe fala",
+  /* O PASSO DE ONDE O HERÓI ESTÁ (a mesma sessão, defeito 3): o herói foi
+     direto à Ponte Lenta e a ponte do rumo continuou a apontar para a
+     Candeia, 12 km atrás. Quem a missão procura e está aqui é o passo —
+     a pessoa da etapa atual, ou a de uma etapa adiante a que se chega por
+     cima de caminho só (a régua de `conferir`, missoes.js) */
+  pessoa: "falar com {nome}, que está aqui",
 };
 /* `aqui` é a frase do ONDE ("na Candeia Faiscante, dentro de Casa da
    Fonte"): o lugar está nela pelo nome inteiro, sem o artigo */
@@ -845,6 +851,17 @@ export function proximoPasso(estado) {
   if (aqui && daAbertura && et.tipo === "falar_com" && norm(et.alvo) === norm(a.pista.nome) && ondeEstaAqui(aqui, et.onde || a.pista.local)) {
     const papel = txt(a.pista.papel, 40);
     return contrair((papel ? PASSO_AQUI.pista : PASSO_AQUI.pistaSemPapel).replace("{nome}", a.pista.nome).replace("{papel}", papel));
+  }
+  if (aqui) {
+    const i = m.etapas.indexOf(et);
+    for (let k = i; k < m.etapas.length; k++) {
+      const x = m.etapas[k];
+      if (k > i && !ETAPAS_DE_CAMINHO.includes(m.etapas[k - 1].tipo)) break;
+      if (x.feito || !ETAPAS_DE_CAMINHO.includes(x.tipo)) continue;
+      const onde = x.onde || (daAbertura && x.tipo === "falar_com" && norm(x.alvo) === norm(a.alvo.quem) ? a.alvo.onde : "");
+      if (!onde || !ondeEstaAqui(aqui, onde)) continue;
+      return x.tipo === "falar_com" ? contrair(PASSO_AQUI.pessoa.replace("{nome}", x.alvo)) : rumoDaEtapa(x);
+    }
   }
   if (et.tipo === "ir_a" && et.lugar && daAbertura && norm(et.alvo) === norm(a.pista.local)) {
     return `Procurar ${a.pista.nome} ${comEm(a.pista.local)}`;
