@@ -6,6 +6,59 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## 11/10 · v9.389–v9.392 · MM, a campanha que prende: a espinha — batidas, segredos, o relógio do antagonista, a trama amarrada (`backend`) · 1bc1375 · ee3d3fc · 872ea11 · este commit
+
+- **quem:** `backend`, à mão, sem tocar no `App.jsx` nem no que é do outro `backend` (`promessas.js`, `compasso.js`, `fecho.js`, os
+  fios das viagens). Módulo novo `src/batidas.js`; `saga.js`; `regiao.js` (uma linha: as batidas releem-se sobre a forma final do ato);
+  `mundo-base.js` (`SEGREDOS` passa a ser exportada). `pauta.js` não foi tocado.
+- **o diagnóstico (a pessoa: "de morna para frio"):** com nexo, a espinha ainda era lista de tarefas — 280 marcos em 12 campanhas, 4,9
+  por ato, nenhum com algo em jogo nem pergunta; os "descobrir" guardavam "uma carta" sem conteúdo e fechavam por presença; a
+  reviravolta do sistema era nula; o antagonista não mexia até a fama o fazer nascer (na 4.ª sessão, nunca).
+- **v9.389 · as batidas:** de 3 a 5 por ato (211 em 12 campanhas, 3,70 por ato, 57/57 atos na faixa), cada uma com a cena (quem, ofício,
+  onde), o que está em jogo para ESTE herói (`EM_JOGO`: a coisa do antecedente, três jeitos por antecedente) e a pergunta da cena
+  (`PERGUNTAS`), sem o mesmo modelo duas vezes seguidas. O fecho do ato é a cena que o vira (o confronto; a descida ao lugar do ato, ou
+  o chefe que espera depois dela; a última cena forte) e pede "uma escolha com preço, não um presságio". O resto é caminho, e o
+  envelope diz para que cena leva. Os marcos não mudam (sem o campo novo, o hash da espinha é o de antes, byte a byte).
+- **v9.390 · o segredo e a reviravolta:** todo "descobrir" guarda uma coisa do Escondido (a do lugar, quando a cidade a pôs lá; senão
+  da mesma tabela) e o que ela PROVA, a apontar para a peça seguinte (`SEGREDO_DIZ`): 64/64. O teste diz o preço, não se se acha. O
+  fecho do ato 0 colhe o laço que a abertura planta (`REVIRAVOLTA_DO_ATO0`, uma por laço + uma sem antecedente): 12/12, sem nome nem
+  título do antagonista.
+- **v9.391 · o relógio do antagonista:** o antagonista do fio anda desde o dia 1 pelos passos do plano de `vilao.js` antes do rosto
+  (rumor → marca → mão: a obra dele, um bilhete dele, os servos dele), uma etapa por ato a mirar o fecho dele, prazo =
+  `DIAS_POR_PASSO` + 2 dias por ato desde a etapa anterior (`RELOGIO_DO_FIO`). Chegar antes trava-a; demorar deixa a marca. 45 etapas,
+  43 com sítio no mundo; o herói ligeiro trava as 45, o lento encontra as 45 cumpridas. `conferirEspinha` grava o dia em que o marco
+  cai; `momentoDoFio` dá a linha à parte (a marca do momento, o JÁ SE SABE do segredo/reviravolta que acabou de cair, o que o mundo
+  lembra de quem chegou a tempo), calada quando a nêmesis do fio já fala; a nêmesis que a fama faça nascer herda o passo do relógio.
+- **v9.392 · a trama amarrada (o pedido do outro `backend`, v9.388):** `montarTrama` ganha a porta `amarra` ({ fio, prometido, nomes },
+  o contexto de `fiosNovosNaEstrada`): com ela, a trama que não toca a gente do fio, uma promessa aberta nem um nome que importa
+  (`amarraDoFio`) não nasce; a que toca nasce com `amarra`, e o envelope diz "Isto amarra-se a X: traga-o por aí". Sem a porta
+  (a trama forçada da abertura, o App de hoje), a mesma trama, byte a byte. Suíte `teste-trama-amarrada` (12).
+- **a régua das 9 (sessão 4) sobre o texto que o motor monta, 12 campanhas (`prende.mjs`, no scratchpad):** antes **1,95** → depois
+  **3,72** — gancho 4→5, lugar 3,5→4, gente 2→3, em jogo 1,1→4,5, reviravolta 1→4, escalada 2→3,5, agência 1→3, prosa 2→3, fecho
+  de ato 1→3,5. É teto do motor, não da mesa: a 5.ª sessão diz quanto disto o Narrador entrega.
+- **decisões médias:** (a) o envelope da batida troca a regra longa da espinha por uma curta (`FIO.dizCurto`,
+  `ENVELOPE_DAS_BATIDAS.regra`) — o teto da pauta é um só; mediana do envelope ~700 como antes, máximo ~930 em 80 campanhas (teto da suíte, 1000); a
+  marca e o JÁ SE SABE vão em linhas à parte, que cortam sozinhas; (b) duas asserções movidas, com o motivo escrito
+  (`teste-espinha`: "marco 1 de" → "batida 1 de"; `teste-fio-da-espinha`: o objeto do lugar passa a ser o segredo), e o hash da
+  espinha do continente (`teste-regiao-historia`) três vezes, cada uma medida: tirando os campos novos, volta a f8252233ebb5614e;
+  (c) a pista central não fica atrás do dado — o teste decide o preço (Gumshoe).
+- **a prova:** `teste-batidas` (55), `teste-relogio-do-fio` (41) e `teste-trama-amarrada` (12), todas vermelhas em HEAD. Cada versão
+  sobre HEAD limpo: verde (312, 312, 313, 314 suítes).
+  Build limpo.
+- **a fiação que fica para o App (frontend, com o bastão), exata:**
+  1. em `iniciar` (~13050), no `estenderEspinha({ ... })`: `antecedente: pers.antecedente, dia: diaRef.current,` — sem isto o que está
+     em jogo é "o que trouxe o herói até aqui", a reviravolta do ato 0 é a genérica, e o relógio conta do dia 1.
+  2. em `pautaDoTurno` (~7077), logo depois do `porNaPauta(p, "momento", envelopeDaEspinha(...))`, em `try/calou`:
+     `p = porNaPauta(p, "momento", momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current }));`
+     (`momentoDoFio` de `./saga.js`; devolve uma lista, que `porNaPauta` aceita).
+  3. em `tentarSurgirNemesis` (~21760): `vilaoDoFio(n0, espinhaRef.current, { derrotados: ..., dia: diaRef.current })`. Sem `dia` já
+     funciona pelo último dia que a espinha conhece.
+  4. em `talvezDarUmaTrama` (~17710): `montarTrama({ situacao: situacaoDaTrama(), material: materialDaTrama(), amarra: forcar ? null : { fio, prometido: prometidoRef.current, nomes: [nome da nêmesis, se houver] } })`
+     — o mesmo `fio` (`fioDaHistoria`) e o mesmo contexto do item 4 da fiação do v9.388; `forcar` (a abertura sem pista) passa sem porta.
+  5. para o `fecho.js` do outro `backend`: `fimDeAto` é `!!(marcoAtual(espinhaRef.current, etapa) || {}).batida?.fecho`.
+- **o que ficou:** a 5.ª sessão deve medir se o Narrador entrega o segredo no turno da chegada e a reviravolta inteira; e as entradas
+  deste diário desde a v9.386 estão dentro do bloco de código do "Formato" — arrumar numa passada.
+
 ## 11/10 · v9.388 · MM, a campanha que prende, item 3: os fios das viagens (`backend`) · este commit
 
 - **o defeito:** três viagens e um acampamento (M22–M26, 36 h) sem uma frase de história, e três fios novos sem relação com ela

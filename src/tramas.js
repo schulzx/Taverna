@@ -67,6 +67,7 @@
 import { FASES, faseDe } from "./vilao.js";
 import { comDe, comEm, contrair } from "./lugar.js";
 import { mesmaPessoa } from "./missoes.js";
+import { amarraDoFio } from "./fios-da-estrada.js";
 
 const limpar = (v, n) => String(v == null ? "" : v).replace(/\s+/g, " ").trim().slice(0, n);
 const inteiro = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) : d);
@@ -522,7 +523,20 @@ export function veiculoPorId(id) { return VEICULOS.find((v) => v.id === id) || n
    entre este arquivo e o mural: lá se sorteia um molde e o resultado é o
    que for; aqui se decide o que tem de acontecer e só então se procura
    como fazer acontecer. */
-export function montarTrama({ situacao, material, semente = "trama", rnd = null } = {}) {
+/* A TRAMA AMARRADA (MM, a campanha que prende, 11/10). Na quarta sessão uma
+   viagem, um acampamento e um correio trouxeram três fios novos que nada
+   tinham a ver com o herói — a Câmara do Dragão, o Torneio das Coroas, o
+   pedido de Ondine —, e o Mestre, obrigado a tocá-los, dispersou a única
+   linha que havia. "Fios sem ligação ao herói não são tensão: são ruído."
+
+   `amarra` ({ fio, prometido, nomes }, o mesmo contexto de
+   `fiosNovosNaEstrada`) é a porta: com ela, a trama montada só nasce se o
+   que diz (título, descrição, quem pede, os alvos das etapas) tocar a gente
+   do fio, uma promessa aberta ou um nome que importa (`amarraDoFio`,
+   fios-da-estrada.js); e nasce a dizer a que se amarra. Sem `amarra` (a
+   trama forçada da abertura, o save que ainda não a passa), é como sempre
+   foi. */
+export function montarTrama({ situacao, material, semente = "trama", rnd = null, amarra = null } = {}) {
   const s = garantirSituacao(situacao);
   const r = rnd || (() => Math.random());
   const mat0 = material && typeof material === "object" ? material : {};
@@ -553,6 +567,15 @@ export function montarTrama({ situacao, material, semente = "trama", rnd = null 
   const corpo = veiculo.montar({ ...mat, sumido: mat.sumido || "quem sumiu", objeto: mat.objeto || "pacote" });
   if (!corpo || !corpo.etapas || !corpo.etapas.length) return null;
 
+  let amarradaA = "";
+  if (amarra && typeof amarra === "object") {
+    const diz = [corpo.titulo, corpo.descricao, mat.pessoa && mat.pessoa.nome, ...corpo.etapas.map((e) => e && e.alvo)].filter(Boolean).join(" · ");
+    let a = null;
+    try { a = amarraDoFio(diz, amarra); } catch { a = null; }
+    if (!a) return null;
+    amarradaA = String(a).slice(0, 120);
+  }
+
   return {
     id: `tr_${veiculo.id}_${intencao.id}`.slice(0, 40),
     veiculo: veiculo.id,
@@ -568,6 +591,7 @@ export function montarTrama({ situacao, material, semente = "trama", rnd = null 
        acontecer — guardá-la em outro lugar seria a mesma separação que
        deixou os lobos sem aparecer */
     virada: { ...veiculo.virada, feita: false },
+    ...(amarradaA ? { amarra: amarradaA } : {}),
   };
 }
 
@@ -590,7 +614,7 @@ export function envelopeDaTrama(trama) {
   const i = intencaoDaTramaPorId(trama && trama.intencao);
   if (!i) return "";
   return `[MISSÃO DO SISTEMA — "${trama.titulo}"] ${trama.descricao} Esta missão JÁ ESTÁ no diário do herói e é do sistema: não a proponha de novo, não a conclua e não a resolva.
-A INTENÇÃO desta missão, e ela é obrigatória: ${i.aoMestre}. Apresente o pedido na ficção — quem pede, como pede, o que não diz — e devolva a vez. O que acontece no meio do caminho chega a você por envelope quando for a hora; não antecipe.`;
+A INTENÇÃO desta missão, e ela é obrigatória: ${i.aoMestre}. Apresente o pedido na ficção — quem pede, como pede, o que não diz — e devolva a vez. O que acontece no meio do caminho chega a você por envelope quando for a hora; não antecipe.${trama.amarra ? `\nIsto amarra-se a ${trama.amarra}: traga-o por aí, e não como assunto à parte.` : ""}`;
 }
 
 export function envelopeDoQueVira(virada, { alvo = "", quem = "", vilao = "" } = {}) {
