@@ -124,6 +124,12 @@ const ANCORAS_HELPERS = [
      para "sabe-e-nao-conta" por um motivo falso: elas continuam a alimentar
      a pauta, só que por dentro de uma função vizinha. */
   "const fichasDaMesa = (",
+  /* (MM, o laço da história ligado, 11/10): o mesmo motivo do de cima —
+     `enviar` deixou de chamar `resumoChefesPrompt` por nome e passou a
+     chamar `chefesDoFio`, que lhe passa a espinha (um vilão só) e cai na
+     chamada de antes se ela estourar. Os chefes continuam a chegar ao
+     prompt, por dentro desta vizinha. */
+  "const chefesDoFio = () => {",
 ];
 const ANCORAS_GOLPE = [
   "const resolverAtaqueJogador = (acao, pers) => {",

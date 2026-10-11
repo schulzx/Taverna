@@ -46,6 +46,10 @@ Formato:
   criou `taverna_save_v1`; removido com o jogo desmontado e conferido por leitura (as duas cfg intactas).
 - **decisões médias:** o kit é "a corda" do balcão (é o único lugar com corda); plural sem número = 3 (tabela
   `QUANTIDADE_DA_FRASE`); mercadoria de banca não fecha pela frase (fica o veto) — o painel continua a porta dela.
+- **pedido do coordenador (v9.406):** as duas fiações do laço da história na mesma vez do bastão — `espinha` em
+  `mundoDasMissoes` (a missão fecha pelo marco que a espinha fechou) e `chefesDoFio` (o prompt e o `/chefes` passam
+  `{ espinha }` a `resumoChefesPrompt`, com recuo à lista de antes em try/calou). Asserções no §9 de `teste-fiacao-prende`;
+  a sonda da mesa ganhou `chefesDoFio` como vizinha de `enviar` (com o motivo).
 - **o que ficou:** a compra de banca pela frase; Edric precisa de estar no registo para a dívida gravar (só grava em npc
   registado); o 📍 do passo-antes aparece acima da fala do jogador quando há dado.
 

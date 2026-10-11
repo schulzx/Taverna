@@ -168,5 +168,22 @@ sec("8. o rumo leva o mundo (MM19, v9.394): o degrau do encalhe vira cena com no
   t("dentro do try/calou do rumo", iR > 0 && APP.indexOf('calou("o rumo na pauta", e)', iR) > iR && APP.indexOf('calou("o rumo na pauta", e)', iR) - iR < 1200);
 }
 
+sec("9. o laço da história chega ao App (v9.396 e v9.401 do backend, ligados na v9.406)");
+{
+  /* o fio é um só: a missão fecha pelo marco que a espinha já fechou —
+     "O rasto de Edric" (sessão 5) ficava em 0/2 sem este campo */
+  const M = corpo("const mundoDasMissoes = (persAtual) => {");
+  t("mundoDasMissoes leva a espinha", /espinha: espinhaRef\.current,/.test(M));
+  /* um vilão só: as duas leituras dos chefes (o prompt e o /chefes) passam a
+     espinha, e caem na lista de antes se a leitura nova estourar */
+  const C = corpo("const chefesDoFio = () => {");
+  t("chefesDoFio passa { espinha } como sexto argumento, em try/calou",
+    /^const chefesDoFio = \(\) => \{\s*try \{ return resumoChefesPrompt\(/.test(C)
+      && C.includes("(mundoAtual() || {}).lexico, { espinha: espinhaRef.current }); }")
+      && C.includes('catch (e) { calou("os chefes do fio", e); return resumoChefesPrompt('));
+  t("o prompt e o /chefes leem por ela", /const chefes = chefesDoFio\(\);/.test(APP) && /const t = chefesDoFio\(\);\s*godLinha\(t \|\| "⚡ Nenhum chefe vivo neste mundo\."\)/.test(APP));
+  t("e nenhuma chamada a resumoChefesPrompt fica sem a espinha fora do recuo", (APP.match(/resumoChefesPrompt\(/g) || []).length === 2);
+}
+
 console.log(`\n${bons} ok, ${maus} falharam`);
 if (maus) process.exit(1);

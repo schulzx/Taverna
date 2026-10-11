@@ -6450,7 +6450,7 @@ export default function Taverna() {
           return true;
         }
         case "chefes": {
-          const t = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico);
+          const t = chefesDoFio();
           godLinha(t || "⚡ Nenhum chefe vivo neste mundo.");
           return true;
         }
@@ -11056,7 +11056,19 @@ export default function Taverna() {
          NOME do lugar, e a base grava a chave "Cidade|tipo" quando revela.
          Sem isto, nenhuma missão de descobrir fechava sozinha. */
       chaveDoLugar: (n) => chaveDoLugar(sementeMundo(), mapaRef.current, n, { genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, cidade: cidadeAtualRef.current }),
+      /* 11/10 (MM, o laço da história 1/6, v9.396 do backend): o fio é um só —
+         a missão fecha pelo marco que a espinha já fechou. Sem isto "O rasto
+         de Edric" (sessão 5) ficava em 0/2 com o marco caído. Ler um ref não
+         lança; quem lê o campo (`conferirMissoes`) é que o trata. */
+      espinha: espinhaRef.current,
     };
+  };
+  /* 11/10 (MM, o laço da história 4/6, v9.401 do backend): um vilão só — a
+     lista de chefes obedece ao antagonista do fio. Se a leitura com a espinha
+     estourar, a lista de antes volta: o prompt nunca fica sem chefes. */
+  const chefesDoFio = () => {
+    try { return resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico, { espinha: espinhaRef.current }); }
+    catch (e) { calou("os chefes do fio", e); return resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico); }
   };
 
   /* MM14 (30/09, os canais): o mundo que a conversão da lista antiga
@@ -12615,7 +12627,7 @@ export default function Taverna() {
       try {
         aqui = aquiDoTurno({ forma, ondeEstou, comodos: comodosAqui, daqui: daquiTxt, formaDaCidade: shape, viagem: viag, ermo: ermoAqui, arredores: fora, saidas }, masmorraRef.current);
       } catch (e) { calou("aquiDoTurno", e); aqui = [forma, ondeEstou, comodosAqui, daquiTxt, shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n"); }
-      const chefes = resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico);
+      const chefes = chefesDoFio();
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
          de teletransportar e o estranho de saber o que não ouviu. */
