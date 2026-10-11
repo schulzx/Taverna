@@ -39,7 +39,7 @@ import { kmEntre, rumoEntre, coordDe, garantirCoord, minutosAPe, aPeEmTexto, for
 import { TERRENO_VIAGEM } from "./geografia.js";
 import { abrirViagem, progressoDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO } from "./viagem.js";
 import { dificuldadeDaMasmorra, envelopeDaDificuldade } from "./dificuldade.js";
-import { definirLugar, comDe } from "./lugar.js";
+import { definirLugar, comDe, mesmoSitioPeloNome } from "./lugar.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 const semArtigo = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "").trim();
@@ -133,11 +133,23 @@ export function masmorrasConhecidas(masmorras, cidade, opcoes) {
 /* A masmorra cuja boca é o lugar onde o herói está, ou null. O lugar da
    boca tem o nome da masmorra (é assim que `chegadaABoca` o registra), e
    o artigo não conta: "Nave de Ferro" e "A Nave de Ferro" são a mesma. */
+/* 4.ª sessão de prova (nº 1): A BOCA POR OUTRO NOME. Um save que já tem o
+   lugar rebatizado pelo Cronista ("forte da Muralha Quebrada", à boca da
+   "Muralha Quebrada de Silêncio") não o perde: fora dos muros, o lugar cujo
+   nome partilha o NÚCLEO com o de UMA só masmorra (`mesmoSitioPeloNome`,
+   lugar.js) é a boca dela. Duas candidatas, nenhuma — na dúvida, não é. E
+   dentro dos muros nunca: um cômodo da cidade não é a boca de nada. */
+const exataDaBoca = (lugar, lista) => {
+  const k = semArtigo(lugar.nome);
+  return k ? lista.find((m) => m && m.nome && semArtigo(m.nome) === k) || null : null;
+};
 export function masmorraDaBoca(lugar, masmorras) {
   if (!lugar || typeof lugar !== "object" || !lugar.nome) return null;
-  const k = semArtigo(lugar.nome);
-  if (!k) return null;
-  return (Array.isArray(masmorras) ? masmorras : []).find((m) => m && m.nome && semArtigo(m.nome) === k) || null;
+  const lista = Array.isArray(masmorras) ? masmorras : [];
+  const exata = exataDaBoca(lugar, lista);
+  if (exata || lugar.distancia === "dentro" || lugar.dentroDe) return exata;
+  const pelo = lista.filter((m) => m && m.nome && mesmoSitioPeloNome(String(lugar.nome), String(m.nome)));
+  return pelo.length === 1 ? pelo[0] : null;
 }
 
 /* ---------------- AO ENTRAR, O LUGAR É A BOCA (MM16 nº 4) ----------------
@@ -159,7 +171,9 @@ export function masmorraDaBoca(lugar, masmorras) {
 export function lugarAoEntrarNaMasmorra(masmorra, opcoes) {
   const { cidade = "", dia = 0, lugar = null } = opcoes && typeof opcoes === "object" ? opcoes : {};
   if (!masmorra || typeof masmorra !== "object" || !masmorra.nome) return null;
-  if (masmorraDaBoca(lugar, [masmorra])) return lugar;
+  /* só a boca de NOME (a exata) fica: a boca por outro nome tinha o ponto da
+     cidade (4.ª sessão), e entrar regista a verdadeira, com o ponto dela */
+  if (lugar && typeof lugar === "object" && lugar.nome && exataDaBoca(lugar, [masmorra])) return lugar;
   return definirLugar(String(masmorra.nome), { cidade, dia, distancia: IDA_A_MASMORRA.distanciaDaBoca, coord: coordDe(masmorra.coord || masmorra) });
 }
 

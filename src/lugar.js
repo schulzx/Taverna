@@ -761,9 +761,79 @@ export function pediuParaVoltar(textoDoJogador, cidade) {
 export const QUEM_DIZ_O_LUGAR = {
   /* a palavra combinada para "voltei para dentro dela" (era do App, v9.48) */
   voltou: /^(cidade|na cidade|a cidade|de volta|dentro da cidade)$/i,
-  cronista: { dentroDosMuros: "ignora", foraDosMuros: "recusa" },
-  mestre: { dentroDosMuros: "recusa", foraDosMuros: "recusa" },
+  cronista: { dentroDosMuros: "ignora", foraDosMuros: "recusa", sitioNovoAoLonge: "soComPedido" },
+  mestre: { dentroDosMuros: "recusa", foraDosMuros: "recusa", sitioNovoAoLonge: "novo" },
 };
+
+/* ============================================================
+   O MESMO SÍTIO, DITO DE OUTRA FORMA (11/10, 4.ª sessão de prova, nº 1)
+
+   A heroína chegou pela estrada à boca da "Muralha Quebrada de Silêncio" —
+   o lugar registado com o nome e o ponto da masmorra, a 21 km de Rio
+   Cinzento. O Mestre narrou "o forte se agiganta", e o Cronista, que lê a
+   narração, devolveu `lugar: "forte da Muralha Quebrada"`. Era um nome que
+   não casava letra a letra com o da boca, e por isso virou um sítio NOVO:
+   ancorado na cidade, "nos arredores de Rio Cinzento", a 2,8 km dela. O
+   herói foi teletransportado vinte quilómetros para trás sem dar um passo,
+   e dali "entro na Muralha" passou a ser uma ida de 22 km — três vezes, 36 h
+   de relógio, e uma masmorra errada no fim (`mente/mm11-sessao-4.md`).
+
+   Duas regras, as duas só LONGE (`distancias`: a meio dia ou mais, onde
+   está a boca de uma masmorra — dentro dos muros "a botica da Rua dos
+   Retalhos" é outro sítio da "Rua dos Retalhos", e lá vale a régua de
+   sempre):
+
+   1) O NÚCLEO DO NOME. O núcleo é o nome sem artigo até ao primeiro
+      conector ("Muralha Quebrada" em "Muralha Quebrada de Silêncio"); com
+      menos de `palavrasMinimas` palavras, é o nome inteiro sem conectores
+      ("fortaleza brasas"). Se o núcleo de um aparece, palavra a palavra e
+      seguido, no outro, é o mesmo sítio: não move e não acusa. Uma palavra
+      só nunca basta — "forte" está em metade dos nomes do mundo.
+   2) O CRONISTA NÃO MUDA O HERÓI DE SÍTIO AO LONGE. Ele só lê; um nome lido
+      na prosa não traz ponto nenhum, e o ponto que `definirLugar` lhe dá é
+      o da cidade — o teletransporte. Lá fora, um sítio novo dito por ele só
+      vale quando o pedido do jogador o levou até lá (`sitioNovoAoLonge`).
+   ============================================================ */
+export const NUCLEO_DO_NOME = {
+  distancias: ["perto"],
+  palavrasMinimas: 2,
+  conectores: ["de", "da", "do", "das", "dos", "d"],
+};
+const palavrasDoSitio = (nome) => norm(nome).replace(/^(o|a|os|as)\s+/, "").split(/[^a-z0-9]+/).filter(Boolean);
+function nucleoDoNome(nome) {
+  const ps = palavrasDoSitio(nome);
+  const corte = ps.findIndex((p) => NUCLEO_DO_NOME.conectores.includes(p));
+  const cabeca = corte === -1 ? ps : ps.slice(0, corte);
+  return cabeca.length >= NUCLEO_DO_NOME.palavrasMinimas ? cabeca : ps.filter((p) => !NUCLEO_DO_NOME.conectores.includes(p));
+}
+/* O núcleo do dono (`agulha`, tirado de `dono`) aparece seguido no
+   `palheiro`? E o que vem DEPOIS dele no palheiro não contradiz o resto do
+   dono: "Santuário Cego de Silêncio" e "Santuário Cego de Raízes" partilham
+   o núcleo e são dois sítios — cada um tem o seu complemento, e eles
+   diferem. "forte da Muralha Quebrada" não tem complemento nenhum depois do
+   núcleo: não contradiz "de Silêncio". */
+const contemSeguido = (palheiro, agulha, dono) => {
+  if (agulha.length < NUCLEO_DO_NOME.palavrasMinimas || agulha.length > palheiro.length) return false;
+  const resto = dono.slice(agulha.length);
+  for (let i = 0; i + agulha.length <= palheiro.length; i++) {
+    if (!agulha.every((p, k) => palheiro[i + k] === p)) continue;
+    const depois = palheiro.slice(i + agulha.length);
+    if (depois.length && resto.length && depois.join(" ") !== resto.join(" ")) continue;
+    return true;
+  }
+  return false;
+};
+/* "forte da Muralha Quebrada" e "Muralha Quebrada de Silêncio" são o mesmo
+   sítio? (o núcleo de um, inteiro e seguido, no outro; lixo é não) */
+export function mesmoSitioPeloNome(a, b) {
+  if (!a || !b || typeof a !== "string" || typeof b !== "string") return false;
+  const sem = (n) => palavrasDoSitio(n).filter((p) => !NUCLEO_DO_NOME.conectores.includes(p));
+  const nb = nucleoDoNome(b), na = nucleoDoNome(a);
+  /* o dono só tem resto quando o núcleo é a cabeça (o nome inteiro não tem) */
+  const donoB = nb.length < sem(b).length && sem(b).slice(0, nb.length).join(" ") === nb.join(" ") ? sem(b) : nb;
+  const donoA = na.length < sem(a).length && sem(a).slice(0, na.length).join(" ") === na.join(" ") ? sem(a) : na;
+  return contemSeguido(sem(a), nb, donoB) || contemSeguido(sem(b), na, donoA);
+}
 
 /* ============================================================
    NA CENA DO SISTEMA, O LUGAR DITO NÃO MOVE NEM ACUSA (05/10, MM16 nº 4)
@@ -853,6 +923,12 @@ export function lerLugarDito(dito, ctx) {
   if (!eCidade) {
     /* o sítio de onde ela acabou de sair não a leva de volta */
     if (lugar && !ehOMesmoLugar({ nome: cru }, lugar) && pedidoDeixa(o.pedido, cru)) return { acao: "ignora", porque: "origem" };
+    /* 4.ª sessão, nº 1: ao longe, o mesmo sítio por outro nome não move, e
+       o Cronista não muda o herói de sítio sem o pedido (ver NUCLEO_DO_NOME) */
+    if (lugar && NUCLEO_DO_NOME.distancias.includes(lugar.distancia) && !ehOMesmoLugar({ nome: cru }, lugar)) {
+      if (mesmoSitioPeloNome(cru, lugar.nome)) return { acao: "ignora", porque: "mesmoSitio" };
+      if (regra.sitioNovoAoLonge === "soComPedido" && !pedidoTrazA(o.pedido, cru)) return { acao: "ignora", porque: "longe" };
+    }
     return { acao: "novo", porque: "nome" };
   }
   if (!lugar) return { acao: "nada", porque: "semLugar" };

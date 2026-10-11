@@ -36,6 +36,7 @@
    ============================================================ */
 
 import { poderDe, poderDoGrupo, poderDoConteudo, formatarPoder } from "./poder.js";
+import { mecanicaDe, condicaoPorId, normalizarCondicao } from "./condicoes.js";
 
 /* ---------------- OS PATAMARES ----------------
    `de` é o piso da RAZÃO (poder do grupo ÷ poder do conteúdo). Lê-se de
@@ -78,28 +79,98 @@ export function patamarDaRazao(razao) {
   return PATAMARES.find((p) => r >= p.de) || PATAMARES[PATAMARES.length - 1];
 }
 
+/* ---------------- O ESTADO À PORTA (11/10, 4.ª sessão de prova, nº 2) ----------------
+   "◐ Fortaleza das Brasas — MÉDIO: é do seu tamanho: dá para ganhar" foi o
+   que leu uma heroína de nível 1, Exausta (desvantagem em tudo), sem uma
+   única tocha ("o que mora lá enxerga melhor que você") — a linha que a
+   própria tela tinha acabado de mostrar. Acertou 0 de 2 golpes e morreu em
+   três rodadas. A conta media a FICHA (o nível, o equipamento, o grupo) e
+   não o CORPO que ia entrar: o preço antes do clique estava errado.
+
+   A régua passa a ser o poder que entra pela porta, e não o que a ficha
+   promete. Três coisas o rebaixam, todas lidas do que o sistema já sabe:
+
+   · `desvantagem` — qualquer condição que a dá (Exausto, Envenenado…) OU o
+     escuro. Não somam entre si, que é a regra da casa (`estadoDeRolagem`,
+     5e): duas desvantagens são uma. O fator é o que a desvantagem faz a um
+     golpe típico: acertar 55% vira acertar 30% (0,55²) — pouco mais de
+     metade do dano que se entrega.
+   · `escuro` — sem tocha, além da desvantagem, o que mora lá vê melhor: o
+     golpe deles entra mais. É a outra metade do mesmo escuro.
+   · `pv` — o corpo ferido. O poder do herói pesa pela fração de PV que lhe
+     resta, com `piso`: quem está a meio ainda bate com a mesma força; o que
+     perdeu foi a margem para apanhar.
+
+   Só a masmorra sente isto (`dificuldadeDaMasmorra`): é a porta que se
+   cruza AGORA. Uma missão é de dias, e o corpo de hoje não é o de amanhã.
+   O que não se sabe não pesa: sem `suprimentos` na ficha, a luz é
+   desconhecida, e o veredito não inventa um escuro. */
+export const ESTADO_NA_PORTA = {
+  desvantagem: { fator: 0.55, rotulo: (nome) => nome ? nome.toLowerCase() : "em desvantagem" },
+  escuro: { fator: 0.8, rotulo: "sem uma tocha" },
+  pv: { piso: 0.4 },
+};
+
+/* O fator do corpo que entra, e as palavras que o dizem. `mm.tochas` (a
+   planta que já leva as tochas da mochila) ganha da ficha; sem nenhum dos
+   dois, a luz não entra na conta. Lixo é estado nenhum: fator 1. */
+export function estadoNaPorta(pers, mm) {
+  const p = pers && typeof pers === "object" ? pers : null;
+  const nada = { fator: 1, motivos: [] };
+  if (!p) return nada;
+  const m = mm && typeof mm === "object" ? mm : {};
+  const tochas = m.tochas != null && Number.isFinite(Number(m.tochas)) ? Number(m.tochas)
+    : p.suprimentos && typeof p.suprimentos === "object" ? Number(p.suprimentos.tochas) || 0 : null;
+  const escuro = tochas === 0;
+  const conds = Array.isArray(p.condicoes) ? p.condicoes.filter((c) => c && typeof c === "object") : [];
+  const mec = mecanicaDe(conds);
+  const deQuem = conds.map((c) => condicaoPorId(c.id) || normalizarCondicao(c.nome || c.id || "")).find((c) => c && c.desvantagem) || null;
+  let fator = 1;
+  const motivos = [];
+  if (mec.desvantagem || escuro) {
+    fator *= ESTADO_NA_PORTA.desvantagem.fator;
+    if (mec.desvantagem) motivos.push(ESTADO_NA_PORTA.desvantagem.rotulo(deQuem && deQuem.rotulo));
+  }
+  if (escuro) { fator *= ESTADO_NA_PORTA.escuro.fator; motivos.push(ESTADO_NA_PORTA.escuro.rotulo); }
+  const vida = Number(p.vida), max = Number(p.vidaMax);
+  if (Number.isFinite(vida) && Number.isFinite(max) && max > 0 && vida < max) {
+    const f = Math.max(0, vida) / max;
+    fator *= ESTADO_NA_PORTA.pv.piso + (1 - ESTADO_NA_PORTA.pv.piso) * f;
+    motivos.push(`com ${Math.max(0, Math.round(vida))} de ${Math.round(max)} PV`);
+  }
+  return { fator: Math.round(fator * 1000) / 1000, motivos };
+}
+
 /* ---------------- A AVALIAÇÃO ----------------
    Devolve o patamar E os dois números que o produziram. Os dois, sempre:
    um rótulo sem a conta é um número mágico, e o jogador não saberia se
    falta nível, gente ou espada. */
-export function avaliar({ nivel = 1, tamanho = 0, rotulo = "" } = {}, pers) {
+export function avaliar({ nivel = 1, tamanho = 0, rotulo = "" } = {}, pers, estado = null) {
   const grupo = poderDoGrupo(pers);
   const conteudo = poderDoConteudo({ nivel, tamanho });
-  const razao = conteudo > 0 ? grupo.total / conteudo : 0;
+  /* 4.ª sessão: o poder que ENTRA (o estado à porta); sem estado, a ficha */
+  const e = estado && typeof estado === "object" && Number.isFinite(estado.fator) ? estado : null;
+  const efetivo = e ? Math.round(grupo.total * e.fator) : grupo.total;
+  const razao = conteudo > 0 ? efetivo / conteudo : 0;
   return {
     patamar: patamarDaRazao(razao), rotulo,
     razao: Math.round(razao * 100) / 100,
-    poderDoGrupo: grupo.total,
+    poderDoGrupo: efetivo,
     poderDoConteudo: conteudo,
     grupo,
-    porque: porqueAssim(grupo, conteudo, razao),
+    estado: e,
+    porque: porqueAssim(grupo, conteudo, razao, e),
   };
 }
 
-export function porqueAssim(grupo, conteudo, razao) {
-  const seu = grupo.quantos
+export function porqueAssim(grupo, conteudo, razao, estado = null) {
+  const daFicha = grupo.quantos
     ? `${formatarPoder(grupo.total)} de poder (você ${formatarPoder(grupo.heroi)} + ${grupo.quantos} no grupo${grupo.aparado ? ", aparado pelo teto" : ""})`
     : `${formatarPoder(grupo.total)} de poder`;
+  /* o corpo que entra, dito com as palavras do que o rebaixou */
+  const seu = estado && estado.fator < 1 && estado.motivos && estado.motivos.length
+    ? `${daFicha}, mas ${estado.motivos.join(", ")}: entram ${formatarPoder(Math.round(grupo.total * estado.fator))}`
+    : daFicha;
   /* PERTO DE UM NÃO SE DIZ EM VEZES. "1,1× menos do que isto pede" é a
      frase de um empate, escrita como se fosse uma diferença — e foi o que
      apareceu na tela na primeira vez que isto rodou. Entre 0,8 e 1,25 a
@@ -130,7 +201,7 @@ export function dificuldadeDaMissao(missao, pers) {
 export function dificuldadeDaMasmorra(mm, pers) {
   if (!mm || !Number.isFinite(Number(mm.nivel)) || Number(mm.nivel) <= 0) return null;
   const tamanho = Array.isArray(mm.salas) ? mm.salas.length : Number(mm.salas) || 0;
-  return avaliar({ nivel: Number(mm.nivel), tamanho, rotulo: mm.nome || "" }, pers);
+  return avaliar({ nivel: Number(mm.nivel), tamanho, rotulo: mm.nome || "" }, pers, estadoNaPorta(pers, mm));
 }
 
 /* ---------------- O QUE VAI PARA A TELA ---------------- */

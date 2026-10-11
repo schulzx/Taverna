@@ -15,6 +15,23 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.380– · MM, os defeitos da 4.ª sessão de prova, um por versão (`mente/mm11-sessao-4.md`)
+
+- **quem:** `backend`, à mão, sem tocar no `App.jsx` (o `frontend` tem o bastão), nem em `missoes.js`/`saga.js`.
+- **v9.380 · a masmorra certa (lugar.js, boca.js, dificuldade.js):** a causa não era a ida nem a escolha da masmorra — era o
+  **Cronista**. À boca da Muralha ele devolveu `lugar: "forte da Muralha Quebrada"` três vezes (chamadas 51, 58, 60); o nome não
+  casava letra a letra com o da boca, virou um sítio novo ancorado na cidade (2,8 km de Rio Cinzento), e o herói recuou 20 km
+  sem andar. Dali "entro na Muralha" era uma ida (2 × 12 h), e "desço para dentro da masmorra" não tinha boca nenhuma: abriu um
+  covil GERADO com nome sorteado, a "Fortaleza das Brasas". Agora: ao longe o mesmo sítio por outro nome não move
+  (`NUCLEO_DO_NOME`, `mesmoSitioPeloNome`), o Cronista não muda o herói de sítio sem o pedido do jogador
+  (`sitioNovoAoLonge`), e um save que já tem o forte reconhece-o como a boca. O veredito à porta passa a contar o corpo que
+  entra (`ESTADO_NA_PORTA`: desvantagem ×0,55, sem tocha ×0,8, PV com piso 0,4): a Fortaleza da sessão deixa de ler MÉDIO
+  (1,16×) e lê DIFÍCIL (0,51×) para a heroína Exausta e às escuras. Suíte `teste-masmorra-certa.mjs` (50; 28 falham em HEAD).
+  A semente do mundo não está no registo; o mundo é reconstruído com os nomes e os números da tela (131 e 372 batem).
+- **fiação que fica para o `frontend`:** em `entrarMasmorra`, `vereditoDaMasmorra(doMapa || mm, persIn)` passa a ficha com as
+  tochas já tiradas da mochila — para a masmorra do mundo que não se está à boca, passe `{ ...persIn, suprimentos: supIn }`.
+
+---
 ## 11/10 · v9.376–v9.379 · MM, a auditoria de coerência: a espinha primeiro (a pessoa, 11/10) · 2b8f781 · c1ca0ad · 849a904 · este commit
 
 - **quem:** `backend`, à mão, sem tocar no `App.jsx` (bastão do `frontend`), na `escuta.js` nem na `ofertas.js`.
