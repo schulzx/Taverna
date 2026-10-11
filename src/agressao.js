@@ -368,6 +368,116 @@ function ultimoCitado(recentes, vivos) {
   return null;
 }
 
+/* ============================================================
+   O QUE O MESTRE MOSTROU (MM-C · C0, 11/10 — a 6.ª sessão de prova)
+
+   "Tem um cão sem pelo que anda pela paliçada norte… Ela não late. Só
+   espera." — a imagem mais forte do primeiro ato, e o marco "Acabar com
+   cão sem pelo" de pé. A heroína escreveu "Ataco o cão sem pelo antes que
+   ele avance" e o jogo respondeu "Dário da Cova não é inimigo: atacar é um
+   crime": o "ele" foi ao último NOME citado na conversa, e o cão não era
+   nome de ninguém. Noutra frase ("procuro o cão sem pelo, perto da casa de
+   Nira. Quando o vir, ataco primeiro") o alvo foi Nira — citada noutra
+   oração, só como lugar.
+
+   O que a trava da casa diz continua a valer: o SISTEMA não inventa o
+   alvo. Mas quem o pôs ali foi o MESTRE, na resposta anterior — e o que ele
+   mostra existe na cena. Então, nesta ordem:
+     1. a pessoa do registo citada NA ORAÇÃO DO GOLPE ("ataco Dário");
+     2. a CRIATURA que o jogador nomeia e o Mestre mostrou (`mostrado`, as
+        últimas respostas dele): entra como combatente, com o nome que a
+        prosa lhe deu ("cão sem pelo");
+     3. o de sempre (o nome citado na frase; o pronome).
+   E no pronome sem nome, o único bicho da última resposta vem antes do
+   último nome citado — o "ele" de uma frase sobre o cão é o cão.
+
+   `CRIATURA_NA_PROSA.cabecas` são os substantivos que fazem de um nome um
+   bicho (raízes sem acento, palavra inteira); o complemento é o que a
+   prosa lhe pendura ("sem pelo", "de sola"): um conector e uma palavra. */
+export const CRIATURA_NA_PROSA = {
+  cabecas: [
+    "cao", "caes", "cachorro", "cachorros", "lobo", "lobos", "loba", "rato", "ratos", "ratazana", "lagarto", "lagartos",
+    "aranha", "aranhas", "serpente", "serpentes", "cobra", "cobras", "urso", "ursa", "javali", "javalis", "corvo", "corvos",
+    "morcego", "morcegos", "verme", "vermes", "sapo", "escorpiao", "besouro", "centopeia", "sanguessuga", "abutre",
+    "criatura", "criaturas", "coisa", "bicho", "bichos", "fera", "feras", "besta", "monstro", "monstros", "voraz", "vorazes",
+    "esqueleto", "esqueletos", "zumbi", "zumbis", "carnical", "espectro", "fantasma", "goblin", "goblins", "kobold", "orc", "ogro", "troll", "gnoll", "harpia", "gargula",
+  ],
+  conectores: ["sem", "de", "do", "da", "com"],
+  /* a ameaça de quem só a prosa conhece: o de sempre, gente comum armada do
+     que tiver — o bestiário dá a dele quando o nome é de lá (`conhecidas`) */
+  ameaca: "comum",
+  porque: "o Mestre mostrou-o na cena, e o jogador o nomeou: existe, e é contra ele o golpe",
+};
+const CABECAS = new Set(CRIATURA_NA_PROSA.cabecas);
+const palavrasDe = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
+/* as criaturas de um texto: a cabeça e, se houver, o conector e a palavra */
+function criaturasDe(texto) {
+  const ps = palavrasDe(texto);
+  const out = [];
+  ps.forEach((p, i) => {
+    if (!CABECAS.has(p)) return;
+    const c = ps[i + 1], w = ps[i + 2];
+    const comp = c && w && CRIATURA_NA_PROSA.conectores.includes(c) && w.length >= 3 && !CABECAS.has(w) ? [c, w] : [];
+    out.push({ cabeca: p, palavras: [p, ...comp] });
+  });
+  return out;
+}
+const textosDe = (x) => (Array.isArray(x) ? x : [x]).filter((s) => typeof s === "string" && s.trim());
+const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+/* o nome como a prosa o escreveu (com acento): a mesma posição no texto
+   cru, quando tirar o acento não muda o tamanho; senão, o sem acento */
+function comoEscrito(palavras, textos) {
+  const rx = new RegExp("(^|[^a-z0-9])(" + palavras.join("[^a-z0-9]+") + ")(?![a-z0-9])");
+  for (const t of textos) {
+    const n = norm(t);
+    if (n.length !== t.length) continue;
+    const m = n.match(rx);
+    if (m) return t.slice(m.index + m[1].length, m.index + m[1].length + m[2].length).toLowerCase();
+  }
+  return palavras.join(" ");
+}
+
+/* A criatura que o jogador NOMEIA e o Mestre MOSTROU, ou null. `mostrado`:
+   o texto (ou os textos) das últimas respostas do Mestre. `conhecidas`:
+   [{ nome, ameaca }] — o bicho de um marco ou do bestiário, cujo nome e
+   ameaça valem quando a cabeça casa. O nome é o da prosa: o complemento do
+   jogador se o Mestre o disse, senão o do Mestre. */
+export function criaturaMostrada(texto, mostrado, conhecidas = []) {
+  const doMestre = textosDe(mostrado).flatMap(criaturasDe);
+  if (!doMestre.length) return null;
+  const doJogador = criaturasDe(texto);
+  for (const j of doJogador) {
+    const vistas = doMestre.filter((m) => m.cabeca === j.cabeca);
+    if (!vistas.length) continue;
+    const igual = vistas.find((m) => m.palavras.join(" ") === j.palavras.join(" "));
+    const comComplemento = vistas.find((m) => m.palavras.length > 1);
+    const palavras = igual ? igual.palavras : j.palavras.length > 1 ? j.palavras : (comComplemento || vistas[0]).palavras;
+    return comAmeaca(comoEscrito(palavras, [...textosDe(mostrado), String(texto || "")]), j.cabeca, conhecidas);
+  }
+  return null;
+}
+function comAmeaca(nome, cabeca, conhecidas) {
+  const lista = (Array.isArray(conhecidas) ? conhecidas : []).filter((c) => c && c.nome);
+  const k = lista.find((c) => norm(c.nome) === norm(nome)) || lista.find((c) => palavrasDe(c.nome).includes(cabeca));
+  return k
+    ? { nome: String(k.nome), ameaca: String(k.ameaca || CRIATURA_NA_PROSA.ameaca), criatura: true }
+    : { nome: capital(nome), ameaca: CRIATURA_NA_PROSA.ameaca, criatura: true };
+}
+/* o único bicho que a ÚLTIMA resposta mostra (para o pronome sem nome) */
+function unicaCriaturaDa(mostrado, conhecidas) {
+  const ts = textosDe(mostrado);
+  const ultima = ts.length ? criaturasDe(ts[ts.length - 1]) : [];
+  const cabecas = [...new Set(ultima.map((c) => c.cabeca))];
+  if (cabecas.length !== 1) return null;
+  const c = ultima.find((x) => x.palavras.length > 1) || ultima[0];
+  return comAmeaca(comoEscrito(c.palavras, ts), c.cabeca, conhecidas);
+}
+/* as orações que DECLARAM o golpe (o resto da frase pode citar quem não apanha) */
+function oracoesDoGolpe(texto) {
+  const os = String(texto || "").split(/[.!?;\n]+|\s+(?:e|mas|porem|porém|depois|enquanto)\s+/i).filter((s) => s.trim());
+  return os.filter((s) => { try { return ehDeclaracaoDeAtaque(s); } catch { return false; } });
+}
+
 export function alvoDaAgressao(texto, opcoes) {
   const o = opcoes || {};
   const presentes = Array.isArray(o.presentes) ? o.presentes : [];
@@ -385,11 +495,24 @@ export function alvoDaAgressao(texto, opcoes) {
        ambígua custa mais do que ganha */
     ? { nome: alvo.nome, doGrupo: true, ...extra }
     : { nome: alvo.nome, papel: alvo.papel || "", relacao: alvo.relacao, doGrupo: false, ...extra });
+  /* MM-C · C0: com o que o Mestre mostrou na mão, a ordem de cima */
+  const temMostrado = textosDe(o.mostrado).length > 0;
+  if (temMostrado) {
+    const doGolpe = norm(oracoesDoGolpe(texto).join(" . "));
+    const naOracao = doGolpe ? citados.filter((n) => doGolpe.includes(norm(n.nome))) : [];
+    if (naOracao.length) return forma(naOracao[0], {});
+    const bicho = criaturaMostrada(texto, o.mostrado, o.conhecidas);
+    if (bicho) return { ...bicho, doGrupo: false, deOnde: "prosa" };
+  }
   if (citados.length) return forma(citados[0], {});
   /* sem nome: só o pronome abre a segunda pergunta */
   let porPronome = false;
   try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }
   if (!porPronome) return null;
+  if (temMostrado) {
+    const so = unicaCriaturaDa(o.mostrado, o.conhecidas);
+    if (so) return { ...so, doGrupo: false, porPronome: true, deOnde: "prosa" };
+  }
   const doPapo = ultimoCitado(o.recentes, vivos);
   if (doPapo) return forma(doPapo, { porPronome: true, deOnde: "conversa" });
   const hostis = vivos.filter((n) => !doGrupo.has(norm(n.nome)) && PRONOME_DO_ALVO.hostil.test(norm(n.relacao)));
@@ -407,7 +530,7 @@ export function lerAgressao(texto, opcoes) {
   const grupo = Array.isArray(o.grupo) ? o.grupo : [];
   const nomes = presentes.map((n) => n && n.nome).filter(Boolean);
   if (!ehDeclaracaoDeAtaque(texto, { nomes })) return null;
-  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes });
+  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado: o.mostrado, conhecidas: o.conhecidas });
   if (!alvo) {
     let porPronome = false;
     try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }
@@ -419,6 +542,15 @@ export function lerAgressao(texto, opcoes) {
   }
   if (alvo.doGrupo) {
     return { tipo: "companheiro", nome: alvo.nome, porque: "quem viaja comigo não vira inimigo por uma frase" };
+  }
+  /* MM-C · C0: o bicho que o Mestre mostrou — não é gente, não é crime
+     (`lerCrime` recusa `criatura`), e a ameaça é a dele */
+  if (alvo.criatura) {
+    return {
+      tipo: "agressao", nome: alvo.nome, papel: "", criatura: true,
+      ameaca: alvo.ameaca, porqueDoPeso: CRIATURA_NA_PROSA.porque,
+      porque: "eu declarei o primeiro golpe contra o que o Mestre pôs na cena",
+    };
   }
   const peso = ameacaDoPapel(alvo.papel);
   return {
@@ -459,4 +591,37 @@ REGRA DESTE ENVELOPE (obrigatória): decida UMA das duas coisas, e só uma:
 1) HÁ alvo aqui — então DECLARE "combate_iniciar" com ele agora, nesta mesma resposta, e narre só a investida. Não resolva a luta.
 2) NÃO há alvo aqui — então diga isso na ficção, curto ("não há ninguém para atacar"), e devolva a palavra para mim.
 O que você NÃO pode fazer é narrar a briga acontecendo sem abrir o combate: sem o painel aberto, nada do que você contar tem número atrás, e eu fico lendo uma luta que não está acontecendo.`;
+}
+
+/* ============================================================
+   A LUTA QUE SÓ A PROSA COMEÇOU (MM-C · C0, 11/10 — a 6.ª sessão, M47)
+
+   "Avanço pelo túnel com Vando e enfrento o que vier ao nosso encontro" —
+   e o Mestre escreveu "Não há recuo. A luta começa", descreveu golpes, e
+   não mandou `combate_iniciar`: nenhum botão de luta, nenhum número atrás
+   dos golpes, a heroína a ler uma luta que não acontecia. Só o "Ataco o
+   lagarto" do turno seguinte a abriu.
+
+   O veto é do CANAL DINÂMICO (`naoPode` da pauta), nunca bloco estático: só
+   entra no turno em que há luta à vista e nenhum combate aberto — quando o
+   jogador declara enfrentar (`jogador`) ou quando a última resposta do
+   Mestre já narrou a luta a começar (`prosa`). Fora disso, não custa um
+   carácter ao teto. Lido sem acento. */
+export const LUTA_SEM_PAINEL = {
+  jogador: /\b(enfrento|enfrentamos|enfrentar|luto contra|lutamos contra|encaro a luta|parto para a luta|vamos a luta|sem recuar|nao recuo|nao recuamos|avanco contra|avancamos contra)\b/,
+  prosa: /\b(a luta (comeca|começa|esta lancada|explode)|comeca a luta|o combate (comeca|começa)|nao ha recuo|partem para cima|se arremessa(m)? (sobre|contra)|investe contra (voce|vos|vando|o grupo))\b/,
+  veto: "narrar a luta a começar ou golpe trocado sem combate aberto pelo sistema: se há luta nesta cena, declare combate_iniciar nesta resposta e narre só a investida; se não há, pare antes do primeiro golpe",
+};
+
+/* O veto do turno, numa lista (o molde de `porNaPauta`): [] fora do caso.
+   `texto`: a frase do jogador; `mostrado`: a última resposta do Mestre;
+   `emCombate`: há painel aberto (aí a luta é do sistema e nada a vetar). */
+export function vetoDaLutaSemPainel(texto, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  if (o.emCombate) return [];
+  const j = norm(texto);
+  const ultima = textosDe(o.mostrado).slice(-1).map(norm)[0] || "";
+  let declara = false;
+  try { declara = LUTA_SEM_PAINEL.jogador.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { declara = LUTA_SEM_PAINEL.jogador.test(j); }
+  return declara || LUTA_SEM_PAINEL.prosa.test(ultima) ? [LUTA_SEM_PAINEL.veto] : [];
 }

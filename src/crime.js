@@ -105,6 +105,10 @@ export function lerCrime(agressao, ctx, gravidade = "ferir") {
   const a = obj(agressao);
   const o = obj(ctx);
   if (a.tipo !== "agressao" || !nomeDe(a)) return null;
+  /* MM-C · C0: o bicho que o Mestre mostrou (`criatura`, agressao.js) não é
+     vítima de crime — a 6.ª sessão viu o ataque ao cão virar crime contra o
+     coveiro, e a régua é que um cão não tem lei que o vingue */
+  if (a.criatura) return null;
   const nome = nomeDe(a);
   const g = GRAVIDADES[gravidade] ? gravidade : "ferir";
   const registo = obj(o.npcs);

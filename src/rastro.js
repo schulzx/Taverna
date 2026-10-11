@@ -79,8 +79,50 @@ function oracoes(txt) {
     .filter(Boolean);
 }
 
-/* Verbo de partida de verdade — sair daqui rumo a outro lugar. */
-const PARTIDA = /\b(parto|partir|saio|sair|sigo|seguir|vou|ir|viajo|viajar|rumo|marcho|marchar|cavalgo|cavalgar|galopo|voo|voar|embarco|embarcar|zarpo|zarpar|navego|navegar|atravesso|atravessar|tomo a estrada|pego a estrada|caio na estrada|ponho o pe na estrada|deixo a cidade|deixo a vila|abandono a cidade|me ponho a caminho|retomo a viagem|continuo a viagem|sigo viagem)\b/i;
+/* Verbo de partida de verdade — sair daqui rumo a outro lugar. É TABELA
+   (MM-C · C0, 11/10): a 6.ª sessão de prova abriu uma viagem por uma
+   pergunta, e a régua de "o que é partir" passou a ser lida pela suíte. O
+   plural entra (o herói raramente parte sozinho: "saímos", "seguimos");
+   "vamos" fica de fora — "vamos conversar sobre Fogão Queimada" não é
+   estrada, e o falso negativo é só o comportamento de antes. */
+export const VERBOS_DE_PARTIDA = [
+  "parto", "partir", "partimos", "saio", "sair", "saimos", "sigo", "seguir", "seguimos",
+  "vou", "ir", "viajo", "viajar", "viajamos", "rumo", "rumamos", "marcho", "marchar", "marchamos",
+  "cavalgo", "cavalgar", "cavalgamos", "galopo", "voo", "voar", "embarco", "embarcar", "embarcamos",
+  "zarpo", "zarpar", "zarpamos", "navego", "navegar", "navegamos", "atravesso", "atravessar", "atravessamos",
+  "tomo a estrada", "pego a estrada", "caio na estrada", "ponho o pe na estrada", "deixo a cidade",
+  "deixo a vila", "abandono a cidade", "me ponho a caminho", "retomo a viagem", "continuo a viagem", "sigo viagem",
+];
+const PARTIDA = new RegExp(`\\b(${VERBOS_DE_PARTIDA.join("|")})\\b`, "i");
+
+/* ---------------- UMA PERGUNTA É UMA PERGUNTA (MM-C · C0, 11/10) ----------------
+   A 6.ª sessão (J19): "Sigo Zeca para os fundos com Vando, e pergunto
+   baixo: o que é o Fogão da Meia-Noite, como se chega a Fogão Queimada, e
+   quanto tempo leva?" abriu a jornada Serra do Bode → Fogão Queimada (20
+   km, navegação, chuva, 4 h 35 no relógio) com a prosa parada nos fundos
+   da taverna. O "sigo" era seguir o Zeca; a cidade estava DENTRO da
+   pergunta, e o destino era procurado no período inteiro.
+   A regra: o período que termina em "?" é pergunta — do princípio, ou dos
+   dois-pontos que a abrem ("pergunto baixo: …?") até ao fim. Nada dentro
+   dele parte, e nada dentro dele é destino. */
+export const PERGUNTA_NAO_PARTE = {
+  fim: /\?\s*$/,
+  abre: ":",
+  /* a oração que pergunta o rumo sem "?" ("pergunto como se chega a X e
+     sigo") também não dá destino a outra; "quero chegar a X" dá */
+  rumo: /\b(como (se )?cheg\w*|quanto tempo|onde fica|qual (e )?o caminho|a quantos|fica longe|e longe|quantos dias|quantas horas|pergunt\w*|indag\w*|questiono)\b/,
+  porque: "perguntar o caminho, a distância ou o tempo não é tomar a estrada",
+};
+/* o texto que a frase DECLARA: sem os períodos de pergunta (só o que vem
+   antes dos dois-pontos que os abrem fica) */
+function semPerguntas(txt) {
+  const periodos = String(txt || "").match(/[^.!?\n]+[.!?]*/g) || [];
+  return periodos.map((p) => {
+    if (!PERGUNTA_NAO_PARTE.fim.test(p)) return p;
+    const i = p.indexOf(PERGUNTA_NAO_PARTE.abre);
+    return i > 0 ? `${p.slice(0, i)}.` : "";
+  }).filter((p) => p.trim()).join(" ");
+}
 
 /* Direção sem destino nomeado ainda abre estrada: "sigo para o sul",
    "estrada afora", "para fora dos portões". */
@@ -149,12 +191,17 @@ export function detectarPartida(acao, ctx = {}) {
   /* a oração que contém o verbo de partida é a que manda: "pergunto o
      caminho e sigo para Rio do Sul" parte de verdade, e o exame por período
      inteiro dizia que não. */
-  for (const o0 of oracoes(txt)) {
+  /* MM-C · C0: só o que a frase DECLARA — a pergunta não parte nem dá
+     destino; e o destino de fora da oração do verbo só vem de oração que
+     também não seja intenção ("pergunto como se chega a X" não é X) */
+  const declarado = semPerguntas(txt);
+  const ondeSeVai = oracoes(declarado).map(norm).filter((o) => !PERGUNTA_NAO_PARTE.rumo.test(o)).join(" . ");
+  for (const o0 of oracoes(declarado)) {
     /* MM14: sem acento, pela mesma fronteira de ASCII que abria a masmorra
        da lâmina (ver `detectarEntradaEmMasmorra`) */
     const o = norm(o0);
     if (!PARTIDA.test(o) || SO_INTENCAO.test(o)) continue;
-    const destino = nomeDeCidade(o) || nomeDeCidade(norm(txt));
+    const destino = nomeDeCidade(o) || nomeDeCidade(ondeSeVai);
     if (destino) return { destino, motivo: "destino nomeado no mapa" };
     /* sem cidade nomeada, só a direção explícita serve. E ela ganha do lugar
        interno: "sigo para fora dos portões" é sair, mesmo com "portão" na

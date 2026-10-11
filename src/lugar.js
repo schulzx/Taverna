@@ -873,6 +873,48 @@ export const LUGAR_NA_CENA_DO_SISTEMA = {
   masmorra: "ignora",
 };
 
+/* ============================================================
+   O SÍTIO DO MARCO NÃO SE TROCA (MM-C · C0, 11/10 — a 6.ª sessão)
+
+   "Caminhamos a noite inteira. Quando chegamos a Serra do Bode, vou direto
+   ao Posto da Baixa e pergunto pelo Elmo" — e o Mestre pôs na curva "o
+   posto da estrada", uma casa com duas irmãs que ninguém pediu; o Cronista
+   leu-o, e o lugar do save passou a ser esse. "Encontrar Elmo" (o marco, no
+   Posto da Baixa) não fechou em quatro respostas de conversa com ele.
+
+   `ctx.doMarco` são os sítios dos marcos de pé (o `onde` de cada um). Duas
+   regras, as duas só quando o nome DITO não é nenhum deles:
+     · `pedido` — o jogador pediu para ir a um sítio de marco e a IA disse
+       outro: vale o do pedido (o `nome` da resposta, com "novo");
+     · `fica` — o herói JÁ está num sítio de marco e a IA diz outro sem o
+       jogador o ter pedido: não move.
+   O pedido do jogador para outro sítio continua a valer: o marco não
+   prende ninguém, só não se deixa trocar por um nome inventado. */
+export const LUGAR_DO_MARCO = {
+  pedido: "pedidoDoMarco", fica: "sitioDoMarco",
+  /* chegar também é ir: "chegamos ao Posto da Baixa" */
+  chegar: /\b(chego|chegamos|chegar|seguimos|vamos|entramos|voltamos)\b/,
+};
+/* O pedido leva ao sítio do marco? Período a período, sem a pergunta. Não
+   passa pela peneira inteira de propósito: na frase da sessão, o "Respondo
+   que sim," da abertura apagava (`falaDita`) tudo o que vinha depois — a
+   viagem de uma noite e a chegada ao Posto. Aqui o período que nomeia o
+   sítio é que tem de ter o verbo, e não pode ser aquele de onde se sai. */
+function pedeOSitio(pedido, nome) {
+  const cru = falaDoJogador(pedido);
+  const inteiro = semArtigoL(nome);
+  if (!cru || !inteiro) return false;
+  /* o nome INTEIRO: "o posto da estrada" não é pedido por "Posto da Baixa" */
+  for (const p of cru.split(/(?<=[.!?\n])/)) {
+    const t = norm(p);
+    if (!t.trim() || /\?\s*$/.test(t) || !t.includes(inteiro)) continue;
+    const alvo = semAOrigem(t);
+    if (!alvo.includes(inteiro)) continue;
+    if (RX_VOU.test(alvo) || RX_ATE.test(alvo) || LUGAR_DO_MARCO.chegar.test(alvo)) return true;
+  }
+  return false;
+}
+
 /* O pedido de hoje trouxe-a PARA este lugar? (o nome dele, fora da origem,
    com um verbo de ir) */
 function pedidoTrazA(pedido, nome) {
@@ -920,6 +962,14 @@ export function lerLugarDito(dito, ctx) {
   for (const [cena, acao] of Object.entries(LUGAR_NA_CENA_DO_SISTEMA)) if (o[cena] === true) return { acao, porque: cena };
   const cru = String(dito == null ? "" : dito).trim();
   const eCidade = !cru || QUEM_DIZ_O_LUGAR.voltou.test(cru) || ehAPropriaCidade(cru, cidade);
+  /* MM-C · C0: o sítio de um marco não se troca pelo que a IA inventa
+     (ver LUGAR_DO_MARCO, abaixo) */
+  const doMarco = (Array.isArray(o.doMarco) ? o.doMarco : []).filter((n) => typeof n === "string" && n.trim());
+  if (!eCidade && doMarco.length && !doMarco.some((n) => ehOMesmoLugar({ nome: cru }, { nome: n }))) {
+    const pedido = doMarco.find((n) => pedeOSitio(o.pedido, n));
+    if (pedido && !pedeOSitio(o.pedido, cru)) return { acao: "novo", porque: LUGAR_DO_MARCO.pedido, nome: pedido };
+    if (lugar && doMarco.some((n) => ehOMesmoLugar(lugar, { nome: n })) && !pedeOSitio(o.pedido, cru)) return { acao: "ignora", porque: LUGAR_DO_MARCO.fica };
+  }
   if (!eCidade) {
     /* o sítio de onde ela acabou de sair não a leva de volta */
     if (lugar && !ehOMesmoLugar({ nome: cru }, lugar) && pedidoDeixa(o.pedido, cru)) return { acao: "ignora", porque: "origem" };

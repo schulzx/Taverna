@@ -137,18 +137,47 @@ function mantimentosDa(oracao) {
        declarado, jaTem: [nomes], daBanca: [palavras], fecha, porque }
    `porque` (quando não fecha): "sem_fundos" | "pouco" | "so_banca" | "ja_tem".
    ============================================================ */
-export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false } = {}) {
+/* ---------------- O ACENTO QUE SEPARA (MM-C · C0, 11/10) ----------------
+   "Compro uma maçã de uma vendedora ambulante" (a 6.ª sessão, J12) deu
+   "🛒 maca compra-se nas bancas": sem acento, a maçã é a MAÇA das armas.
+   Antes de tirar o acento, o que só o acento distingue troca-se por uma
+   palavra que nenhuma tabela de compra conhece — a fruta não é do balcão
+   nem da banca, e o falso negativo é o comportamento de antes. */
+export const O_ACENTO_SEPARA = [
+  { rx: /\bmaçãs?(?![\p{L}])/giu, vira: "fruta" },
+];
+const semConfusao = (frase) => O_ACENTO_SEPARA.reduce((s, x) => s.replace(x.rx, x.vira), String(frase == null ? "" : frase));
+
+/* ---------------- A CONTA EM DOIS PASSOS (MM-C · C0, 11/10) ----------------
+   J7: "compro duas tochas e uma corda… Quanto é?" — o balcão respondeu
+   (◉ 37). J8: "Sim, amarre as tochas. Pago as sete fichas." — o "pago" não
+   repetia o item, e a frase não era lida como compra: nem recibo, nem
+   veto, e a prosa entregou tudo por sete. O pagamento SEM ITEM herda os
+   mantimentos da frase anterior (`anterior`), quando ela perguntou o preço
+   ou declarou a compra — e a conta é a do balcão, como sempre: sete não
+   paga trinta e sete. */
+const RX_PAGO_SO = /\b(pago|paguei|fechado|fecho negocio)\b/;
+function herdaDe(anterior) {
+  const t = norm(semConfusao(anterior));
+  if (!t.trim() || !(RX_PERGUNTA_DE_PRECO.test(t) || RX_COMPRA.test(t))) return [];
+  return mantimentosDa(t);
+}
+
+export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false, anterior = "" } = {}) {
   const prateleira = Array.isArray(balcao) ? balcao.filter((b) => b && b.id) : [];
   const itens = [], jaTem = [], daBanca = [];
-  let declarado = null, viu = false;
+  let declarado = null, viu = false, pagouSemItem = false;
+  frase = semConfusao(frase);
   if (RX_PERGUNTA_DE_PRECO.test(norm(frase))) return null;
   for (const o of oracoes(frase)) {
-    if (o.pergunta || !RX_COMPRA.test(o.texto) || RX_HIPOTESE.test(o.texto)) continue;
+    if (o.pergunta || !(RX_COMPRA.test(o.texto) || RX_PAGO_SO.test(o.texto)) || RX_HIPOTESE.test(o.texto)) continue;
     viu = true;
     /* a quantia dita: "pago as onze cunhas", "pago 11 moedas", "pago ◉ 11" */
     const d = o.texto.match(new RegExp(`\\b(?:pago|paguei)\\s+(?:as\\s+|os\\s+|so\\s+|apenas\\s+|◉\\s*)?(\\d+|${NUM})\\b(?!\\s+(?:racao|racoes|tochas?|odres?|kits?|cordas?|archotes?))`));
     if (d && declarado == null) declarado = valor(d[1]) || null;
-    for (const m of mantimentosDa(o.texto)) {
+    const daqui = mantimentosDa(o.texto);
+    if (!daqui.length && RX_PAGO_SO.test(o.texto)) pagouSemItem = true;
+    for (const m of daqui) {
       if (itens.some((x) => x.id === m.id)) continue;
       const p = prateleira.find((b) => b.id === m.id);
       if (m.id === "kit" && (temKit || !p)) { if (temKit) jaTem.push("kit"); continue; }
@@ -159,6 +188,16 @@ export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false } 
     for (const mc of MERCADORIAS) {
       const x = o.texto.match(mc.rx);
       if (x) daBanca.push(x[0]);
+    }
+  }
+  /* a conta em dois passos: pagou sem dizer o quê, e nada foi dito agora */
+  if (pagouSemItem && !itens.length && !jaTem.length && !daBanca.length) {
+    for (const m of herdaDe(anterior)) {
+      const p = prateleira.find((b) => b.id === m.id);
+      if (m.id === "kit" && (temKit || !p)) { if (temKit) jaTem.push("kit"); continue; }
+      if (!p) continue;
+      const preco = Math.max(0, Number(p.preco) || 0);
+      itens.push({ id: m.id, nome: p.nome, icone: p.icone || "", quantos: m.quantos, preco, custo: preco * m.quantos });
     }
   }
   if (!viu || (!itens.length && !jaTem.length && !daBanca.length)) return null;

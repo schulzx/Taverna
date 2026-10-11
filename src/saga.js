@@ -389,14 +389,23 @@ export function progressoDoAto(espinha, ato) {
    A condição já é do vocabulário de `missoes.js`, então conferir um marco é
    a mesma pergunta que conferir uma etapa — e é de propósito: dois jeitos
    de dizer "cumprido" seriam dois jeitos de discordar. */
-export function conferirEspinha(espinha, mundo, verEtapa) {
+/* MM-C · C0 (11/10, a 6.ª sessão): NA ORDEM DO ATO. "O que Banca do Avesso
+   esconde", marco do ATO 4, caiu no turno 8 só por a heroína estar na
+   banca; "Acabar com voraz de boca larga" (ato 2) caiu no calabouço do ato
+   0. Com `opcoes.ato` (o ato do arco, historia.js), marco de ato POSTERIOR
+   não fecha — fica para quando a história lá chegar; os de atos anteriores
+   ainda por fechar continuam a poder (a história deixou-os para trás, o
+   fato não). Sem `ato`, a conferência de sempre. */
+export function conferirEspinha(espinha, mundo, verEtapa, opcoes) {
   const e = garantirEspinha(espinha);
   const cumpridos = [];
   let mudou = false;
+  const atoAgora = opcoes && typeof opcoes === "object" && Number.isFinite(opcoes.ato) ? opcoes.ato : null;
   const atos = e.atos.map((a) => ({
     ...a,
     marcos: a.marcos.map((m) => {
       if (m.feito || !m.condicao) return m;
+      if (atoAgora != null && a.ato > atoAgora) return m;
       /* MM14 (30/09): "Encontrar Delfina — A Porta Aberta" caiu no turno 4
          da sessão de prova com a Delfina a 146 km. A condição do marco
          "procurar" é só o nome (`FEITIOS.procurar.condicao`), e o marco
@@ -420,6 +429,64 @@ export function conferirEspinha(espinha, mundo, verEtapa) {
     }),
   }));
   return { espinha: mudou ? { ...e, atos } : e, cumpridos };
+}
+
+/* ============================================================
+   O FATO QUE FECHA (MM-C · C0, 11/10 — a 6.ª sessão de prova)
+
+   O marco da espinha COM CENA (a batida, batidas.js) fecha pelo que lá
+   acontece, e não por o herói lá estar. `fatosQueFecham` diz ao mundo das
+   missões o que a história guarda para um fato (`mundo.soPeloFato`,
+   missoes.js) — e porque a missão do fio nasce da condição do marco
+   (abertura.js), as duas portas passam a esperar o mesmo fato:
+     · o "descobrir" que nasceu com o SEGREDO dele (a coisa, o que prova, o
+       teste) — o lugar;
+     · o "procurar" que tem batida — a pessoa: encontrá-la é falar com ela.
+   A espinha antiga (sem batidas nem segredo) não entra: a régua dela é a
+   de sempre. Só os marcos de pé. Lixo devolve listas vazias. */
+export function fatosQueFecham(espinha) {
+  const out = { lugares: [], pessoas: [] };
+  const atos = espinha && Array.isArray(espinha.atos) ? espinha.atos : [];
+  for (const a of atos) for (const m of (a && Array.isArray(a.marcos) ? a.marcos : [])) {
+    if (!m || typeof m !== "object" || m.feito) continue;
+    if (m.feitio === "descobrir" && m.segredo && m.onde) out.lugares.push(String(m.onde));
+    if (m.feitio === "procurar" && m.batida && m.quem) out.pessoas.push(String(m.quem));
+  }
+  return out;
+}
+
+/* O SEGREDO REVELADO NESTE TURNO — o fato que fecha o "descobrir". Dois
+   caminhos, os dois com o herói NO LUGAR do marco (é lá que se descobre):
+     · o TESTE passou: `teste` = { pericia, sucesso } do turno, e a perícia
+       é a do segredo (`segredo.acha`) ou uma das que procuram
+       (`PERICIAS_QUE_ACHAM`) — "falhar custa tempo, não o segredo" (FIO):
+       a falha não fecha, e a busca seguinte pode;
+     · a PISTA foi dada: a resposta do Mestre (`narrativa`) diz a coisa
+       guardada — as palavras de conteúdo dela (`PISTA_DADA`).
+   Devolve a lista de lugares (o `onde` do marco), para `mundo.
+   segredosRevelados`. `lugar`: o nome do lugar onde o herói está. */
+export const PERICIAS_QUE_ACHAM = ["percepcao", "investigacao"];
+export const PISTA_DADA = { palavrasMinimas: 2, tamanhoMinimo: 4, vazias: ["nunca", "ninguem", "onde", "olha", "desta", "deste", "terra", "alguem", "devia", "estado", "riscado"] };
+const palavrasDeConteudo = (s) => norm(s).split(/[^a-z0-9]+/).filter((w) => w.length >= PISTA_DADA.tamanhoMinimo && !PISTA_DADA.vazias.includes(w));
+export function segredosReveladosNoTurno(espinha, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const aqui = norm(String(o.lugar || "")).replace(/^(o|a|os|as)\s+/, "").trim();
+  if (!aqui) return [];
+  const t = o.teste && typeof o.teste === "object" ? o.teste : null;
+  const narr = ` ${norm(o.narrativa).replace(/[^a-z0-9]+/g, " ")} `;
+  const out = [];
+  const atos = espinha && Array.isArray(espinha.atos) ? espinha.atos : [];
+  for (const a of atos) for (const m of (a && Array.isArray(a.marcos) ? a.marcos : [])) {
+    if (!m || m.feito || m.feitio !== "descobrir" || !m.segredo || !m.onde) continue;
+    if (norm(m.onde).replace(/^(o|a|os|as)\s+/, "").trim() !== aqui) continue;
+    const pericia = t ? norm(t.pericia) : "";
+    const passou = !!(t && t.sucesso && pericia && (pericia === norm(m.segredo.acha) || PERICIAS_QUE_ACHAM.includes(pericia)));
+    const ps = [...new Set(palavrasDeConteudo(m.segredo.coisa))];
+    const precisa = Math.min(PISTA_DADA.palavrasMinimas, ps.length);
+    const dada = precisa > 0 && ps.filter((w) => narr.includes(` ${w} `)).length >= precisa;
+    if (passou || dada) out.push(String(m.onde));
+  }
+  return out;
 }
 
 /* ---------------- O QUE VAI À PAUTA ---------------- */

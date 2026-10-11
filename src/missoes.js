@@ -174,7 +174,46 @@ function conversouCom(e, mundo) {
   if (!lista.some((n) => n && (norm(n) === norm(alvo) || mesmaPessoa(n, alvo)))) return false;
   const cid = semArtigo(e.cidade || moradaDe(e.onde).cidade);
   const a = aquiDe(mundo);
-  return !cid || !a.cidade || cid === a.cidade;
+  /* MM-C · C0 (11/10, a 6.ª sessão): "Encontrar Elmo" não fechou em quatro
+     respostas de conversa com ele, em Serra do Bode, porque o lugar do save
+     era "o posto da estrada" — um sítio que o Mestre INVENTOU na estrada, e
+     que guardava a cidade de onde ela vinha. A cidade do herói vale pelas
+     duas pontas: a do lugar e a `cidadeAtual`; só a que não é nenhuma das
+     duas reprova (a Delfina a 146 km continua de fora). */
+  const cidadeAgora = semArtigo(mundo && mundo.cidadeAtual);
+  return !cid || !a.cidade || cid === a.cidade || cid === cidadeAgora;
+}
+
+/* ============================================================
+   SÓ PELO FATO (MM-C · C0, 11/10 — a 6.ª sessão de prova)
+
+   "O que Fogueira da Beira esconde" e "Encontrar Dário da Cova" caíram os
+   dois NA CHEGADA, antes de Dário falar; a missão do fio, a espinha e a
+   recompensa (81 moedas, um anel) caíram à porta do Fogão, antes da tábua
+   que a heroína ainda ia falhar. A presença fechava o que só o FATO devia
+   fechar.
+
+   `mundo.soPeloFato` ({ lugares: [nome], pessoas: [nome] }, de
+   `fatosQueFecham`, saga.js) diz que lugares e que pessoas a história
+   guarda para um fato — e aí, para a etapa e para o marco que os nomeiem
+   (as duas portas leem o mesmo mundo, e não discordam):
+     · DESCOBRIR o que o lugar esconde só cai quando o segredo foi revelado
+       neste turno (`mundo.segredosRevelados`: o teste passou, ou a pista
+       foi dada na cena) — além de lá estar, como sempre;
+     · ENCONTRAR a pessoa só cai pela conversa frente a frente (`falouCom`,
+       o Cronista) — estar no lugar dela já não basta.
+   Sem `soPeloFato` (os saves de antes, as tarefas de guilda), a régua é a
+   de sempre. */
+const nomeIgual = (a, b) => !!semArtigo(a) && semArtigo(a) === semArtigo(b);
+function guardaPeloFato(mundo, campo, alvo) {
+  const f = mundo && mundo.soPeloFato && typeof mundo.soPeloFato === "object" ? mundo.soPeloFato : null;
+  const lista = f && Array.isArray(f[campo]) ? f[campo] : [];
+  return lista.some((n) => nomeIgual(n, alvo) || (campo === "pessoas" && mesmaPessoa(n, alvo)));
+}
+function segredoRevelado(e, mundo) {
+  const lista = mundo && Array.isArray(mundo.segredosRevelados) ? mundo.segredosRevelados : [];
+  const alvo = moradaDe(e.alvo).lugar || e.alvo;
+  return lista.some((n) => nomeIgual(n, alvo) || nomeIgual(n, e.alvo));
 }
 
 /* ---------------- OS TIPOS DE ETAPA ----------------
@@ -242,7 +281,8 @@ export const ETAPAS = {
   falar_com: {
     id: "falar_com", icone: "💬",
     texto: (e) => `Encontrar ${e.alvo}`,
-    ver: (e, m) => estaCom(e, m) || conversouCom(e, m),
+    /* MM-C · C0: quem a história guarda para a conversa só se encontra por ela */
+    ver: (e, m) => (guardaPeloFato(m, "pessoas", e.alvo) ? conversouCom(e, m) : estaCom(e, m) || conversouCom(e, m)),
   },
   levar_a: {
     id: "levar_a", icone: "📦",
@@ -316,6 +356,8 @@ export const ETAPAS = {
        que é a única ponta que a sabe. Gente (`Cidade|gente|Nome`) continua
        como era: não é um sítio onde se esteja. */
     ver: (e, m) => {
+      /* MM-C · C0: o lugar cujo segredo a história guarda só cai pelo fato */
+      if (guardaPeloFato(m, "lugares", moradaDe(e.alvo).lugar || e.alvo) && !segredoRevelado(e, m)) return false;
       const ids = (m.revelados || []).map(norm);
       let achado = ids.find((id) => !!norm(e.alvo) && id.includes(norm(e.alvo))) || "";
       if (!achado) {

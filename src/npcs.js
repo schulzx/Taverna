@@ -721,6 +721,8 @@ export const MOTIVO_DO_HOMONIMO = {
   oficio: "o ofício é outro",
   ambiguo: "há mais de uma pessoa com este nome",
   lugar_nao_e_gente: "é o nome de um lugar, não de uma pessoa",
+  heroi: "é o herói, e o herói não é gente da cena",
+  descritor: "é uma descrição, não um nome",
 };
 /* a saída que o Narrador recebe, por motivo: o que fazer se era ela */
 export const SAIDA_DO_HOMONIMO = {
@@ -732,7 +734,38 @@ export const SAIDA_DO_HOMONIMO = {
   oficio: "use o nome dela",
   ambiguo: "diga o nome inteiro",
   lugar_nao_e_gente: "quem trabalha num lugar tem nome próprio: dê-lho, ou diga-o pelo ofício (o taverneiro, a guarda)",
+  heroi: "fale com o herói na segunda pessoa — ele está em cena, sempre",
+  descritor: "quem não tem nome continua sem ficha: dê-lhe nome próprio quando ele importar",
 };
+/* ---------------- QUEM NÃO É GENTE DA CENA (MM-C · C0, 11/10) ----------------
+   A 6.ª sessão de prova: o Cronista leu o "E aí, Tamsin?" de Vando e
+   registou a HEROÍNA como "Tamsin — companheiro de jornada"; daí a pauta
+   passou a dizê-la "em Serra do Bode, a 3,5 h daqui — não entra nesta cena".
+   E três DESCRIÇÕES viraram gente: "o carroceiro" e "o mercador viajante"
+   (o mesmo homem, duas testemunhas de um crime) e "o homem que manda".
+     · o herói (`contexto.heroi`): o nome dele, ou o primeiro nome solto,
+       nunca entra no registo;
+     · a descrição: um nome SEM NENHUMA palavra com maiúscula (o artigo e o
+       ofício, "o carroceiro"; a perífrase, "o homem que manda") não é nome
+       próprio. Se o registo tem UMA pessoa com esse ofício na cena, é ela
+       (o alias óbvio funde-se); senão, fica sem ficha até ter nome.
+   `maiuscula` é a régua do nome próprio; `curto` o tamanho abaixo do qual
+   a palavra com maiúscula não chega a nome ("O" no começo da frase). */
+export const QUEM_NAO_E_GENTE = { maiuscula: /[A-ZÀ-Ý]/, curto: 3 };
+export function ehDescritor(nome) {
+  if (typeof nome !== "string") return false;
+  const cru = nome.trim();
+  if (!cru) return false;
+  const palavras = cru.split(/[\s,]+/).filter(Boolean);
+  const proprias = palavras.filter((p, i) => QUEM_NAO_E_GENTE.maiuscula.test(p[0]) && p.length >= QUEM_NAO_E_GENTE.curto
+    && !(i === 0 && HOMONIMO.artigos.includes(semAcento(p))));
+  return proprias.length === 0;
+}
+/* o ofício casa de verdade: os dois dizem um ofício, e partilham palavra */
+function papelEstrito(papel, descricao) {
+  const pa = palavrasDoPapel(papel || ""), pb = palavrasDoPapel(descricao || "");
+  return pa.length > 0 && pb.length > 0 && pa.some((w) => pb.includes(w));
+}
 /* ---------------- UM LUGAR NÃO É GENTE (11/10, a 5.ª sessão de prova) ----------------
    O Cronista registou o taverneiro da Candeia Faiscante como "Taverna
    Candeia Faiscante" — papel taverneiro, relação neutro — e a pessoa que a
@@ -944,6 +977,20 @@ export function nomeComDono(nome, npcs, contexto = {}) {
   const nomeLimpo = String(nome == null ? "" : nome).trim();
   const out = (decisao, extra = {}) => ({ decisao, nome: nomeLimpo, chave: "", dono: "", motivo: "", ...extra });
   if (!alvo) return out("nova", { nome: "" });
+  /* MM-C · C0: o HERÓI nunca é gente da cena (ver QUEM_NAO_E_GENTE) */
+  const heroi = semArtigos(c.heroi).join(" ");
+  if (heroi && (alvo === semAcento(c.heroi) || (semArtigos(nome).length === 1 && primeiroNome(nome) === primeiroNome(c.heroi)))) {
+    return out("recusada", { dono: nomeLimpo, motivo: "heroi" });
+  }
+  /* e a DESCRIÇÃO não é nome: "o carroceiro" é de quem tem esse ofício na
+     cena, quando é um só; senão, fica sem ficha até ter nome */
+  if (ehDescritor(nome) && !Object.keys(reg).some((k) => semAcento(k) === alvo)) {
+    const reg0 = Object.entries(reg).filter(([, n]) => n && typeof n === "object");
+    const aquiNomes = (Array.isArray(c.aqui) ? c.aqui : []).filter((x) => typeof x === "string" && x.trim());
+    const doOficio = reg0.filter(([k, n]) => papelEstrito(n.papel, nome) && (!aquiNomes.length || !n.local || aquiNomes.some((a) => lugarCasa(a, n.local))));
+    if (doOficio.length === 1) return out("mesma", { nome: doOficio[0][0], chave: doOficio[0][0], dono: doOficio[0][0], motivo: "descritor" });
+    return out("recusada", { dono: nomeLimpo, motivo: "descritor" });
+  }
   const pn = primeiroNome(nome);
   const txt = (x) => (typeof x === "string" ? x : "");
   const novo = {
