@@ -11417,3 +11417,306 @@ o que não existe / alterar a forma do que existe, sem mudar o fluxo). A emenda 
 E4: **médio** (altera a forma de uma lei de tela; o jogador não reaprende nada —
 o preço continua sob o dedo). A proposta do espólio no tabuleiro: **pesado**
 (muda o gesto do fim da luta).
+
+---
+
+## Retratos · a pintura que escala (`desenho`, 11/10)
+
+**O pedido, dito pela pessoa:** *"colocar o designer pra trabalhar no Figma e
+criar as imagens de perfil dos personagens digno de um RPG AAA, tanto dos
+personagens quanto dos monstros e feras."* Só Figma, sem código de produção.
+
+**Onde está.** Figma `ffWFqD7TueSb88Mkeg9bhW`, página **`08 · Retratos`**
+(`181:2`):
+
+| quadro | nó |
+|---|---|
+| Retratos · o sistema (a decisão, o contrato, o peso) | `188:409` |
+| Amostra · os vinte nos três tamanhos | `184:2` |
+| Leitura · a 32 px, na mesa (antes × depois) | `187:236` |
+| Matrizes · as 20 pinturas-fonte (1024) | `189:409` |
+| **Retrato/Chip** (32) · conjunto, 25 variantes | `183:142` |
+| **Retrato/Cartão** (64) · conjunto, 25 variantes | `183:2033` |
+| **Retrato/Ficha** (160) · conjunto, 25 variantes | `183:2174` |
+| coleção de variáveis **Retrato (RETRATO)** | `VariableCollectionId:182:2` |
+
+A peça mora no ficheiro das telas, ao lado da coleção `Mapa vivo` (§Mapa), e
+não em `e5wJUzInAssoebx5npssKc` (§D3). É a mesma dívida que o Mapa e B1 já
+declaram: **as três peças sobem para a biblioteca quando a biblioteca voltar a
+ser publicada** — copiar, não redesenhar.
+
+### 1 · O que hoje existe, e por que não chega
+
+`rosto.jsx` desenha por código uma **xilogravura** em SVG (quadro 64, quatro
+eixos: semente, sexo, classe, subclasse) e, para quem não é gente, um **sinal**
+(A1 · `GLIFOS`: pata para `besta`, osso para `morto`). É leve (0 KB),
+determinístico e coerente. Não é AAA: é traço, e a régua que a pessoa pôs agora
+é pintura. Na mesa de batalha (`151:1662`) o chip tem **28 px** e o rosto lê-se
+como um boneco; o TURNO ATUAL tem 74 em moldura 90.
+
+**O que fica de A1, e é lei:** *de uma fera o jogador só precisa de saber que
+TIPO de coisa ela é.* A pintura por espécie cumpre isto melhor que o sinal (a
+32 px um lobo pintado de perfil lê-se lobo — `187:236`, fileira de baixo), e o
+sinal continua a ser o recurso quando não há pintura (§3, "sem a célula").
+
+### 2 · As fontes — o que cada um faz bem, e o que tiramos de cada um
+
+- **Pillars of Eternity** (Obsidian, 2015) — retratos **pintados à mão**, e cada
+  retrato existe em **dois arquivos**, um grande e um pequeno; o formato de
+  retrato personalizado do jogo pede os dois. O pequeno é **recorte próprio**, não
+  o grande encolhido. → *Tiramos:* o recorte depende do tamanho.
+- **Pathfinder: Wrath of the Righteous** (Owlcat, 2021) — o retrato
+  personalizado são **três** arquivos (`Small`, `Medium`, `FullLength`), cada um
+  com o seu enquadramento. → *Tiramos:* três tamanhos, três enquadramentos — os
+  nossos são chip, cartão e ficha.
+- **Baldur's Gate 3** (Larian, 2023) — a barra de iniciativa e o grupo mostram
+  **só o rosto, recortado justo**; o corpo fica para a ficha. → *Tiramos:* a 32 px
+  o que se lê é o olhar, nunca o traje.
+- **Divinity: Original Sin 2** (Larian, 2017) — os retratos saem do modelo do
+  próprio personagem, com **a mesma câmera e a mesma luz para todos**; a
+  coerência não vem do pintor, vem da regra. → *Tiramos:* UM bloco de estilo,
+  imutável, para toda a biblioteca (§4).
+- **Darkest Dungeon** (Red Hook, 2016) — uma só mão de tinta e sombra pesada;
+  inimigos com **arte por tipo**, lidos por silhueta e valor (claro/escuro), não
+  por detalhe. → *Tiramos:* um retrato por **espécie**; contraluz que recorta a
+  silhueta.
+- **Critical Role** (as artes oficiais das personagens) — busto em três quartos,
+  luz de chave quente, fundo escuro texturado, e **um objeto-símbolo** por
+  personagem (o símbolo sagrado, o arco, o livro). → *Tiramos:* a classe e o
+  ofício são **um gesto**: o gorjal, o capuz, o círculo de madeira, a pena atrás
+  da orelha (`184:2`).
+- **Battle Brothers** (Overhype, 2017) e **Wildermyth** (Worldwalker, 2021) — os
+  dois compõem personagens **por camadas, por semente**; Wildermyth ainda envelhece
+  o rosto e põe-lhe as marcas do que lhe aconteceu na campanha. → *Tiramos:* as
+  camadas ficam para o que é **traço** (moldura, estado, marcas), e a proposta
+  ambiciosa (§10).
+- **WCAG 2.2**, critério **1.4.1** (*Use of Color*: a cor não pode ser o único
+  canal) e **1.4.11** (*Non-text Contrast*: 3:1 para o gráfico que se precisa
+  para entender). → o papel diz-se por **cor e por forma** (§5).
+- **Google, *WebP Compression Study*** — WebP com perdas fica 25–34 % menor que
+  JPEG de qualidade equivalente. Medimos o nosso (§6): **−44 %** na ficha.
+
+### 3 · A decisão: um MISTO
+
+**O jogo nunca pinta: escolhe e compõe.** Três camadas, e só a primeira é imagem.
+
+1. **A pintura — biblioteca finita, com chave que o motor sabe dar.**
+   - **Feras e monstros:** um retrato **por espécie do bestiário**. A chave é o
+     nome **de base** (`Lobo`, `Troll`), nunca o nome que o léxico do mundo dá
+     ao bicho (pedido R1). Bandido é *espécie* também (é gente do bestiário).
+   - **Gente:** uma matriz por **raça × sexo × traje**. O traje é a **classe**
+     (12, `CLASSES`) para quem tem classe, e o **ofício** (12, `OFICIOS` de
+     `npcs.js`: música, taverna, comércio, fé, forja, armas, letras, mar, crime,
+     morte, cura, campo) para o elenco. **Duas variantes** por célula. A semente
+     escolhe a variante; **o mundo não repete** um rosto enquanto houver variante
+     livre (pedido R5).
+2. **A moldura e o estado — código** (as três peças, §5). Nada disto está na
+   pintura; por isso o mesmo arquivo serve ao herói, ao aliado e ao inimigo.
+3. **As marcas — semente, e amanhã a história.** Cicatriz, tapa-olho, pintura de
+   guerra, queimadura: traço SVG por cima da pintura, posto pelo **contrato do
+   enquadramento** (§4). A semente já sorteia `marca` (30 %, `semente.js`).
+
+**Sem a célula, o rosto de hoje.** Povo do léxico sem raça-base, género de mundo
+sem acervo, espécie nova: cai no `Rosto` de xilogravura (ou no sinal de A1).
+Nunca um buraco, nunca o rosto de outra coisa. É também o que torna a mudança
+**incremental**: a biblioteca entra célula a célula, e cada célula vazia
+continua a funcionar.
+
+**Por que não os outros dois, pesados** (o quadro `188:409` tem a tabela):
+
+| | camadas pintadas por semente | biblioteca por arquétipo | **misto** |
+|---|---|---|---|
+| qualidade AAA | média (¹) | alta | **alta** |
+| variedade | infinita | finita | 960 rostos de gente + espécies + marcas |
+| peso por rosto | ~0 KB (SVG) ou várias peças | 8,4 KB | **8,4 KB** |
+| um mundo carrega | — | ~300 KB | **~300 KB, sob demanda** |
+| compõe por semente | sim | só escolhe | **escolhe e compõe** |
+| conta a história | não | não | **sim (marcas)** |
+
+(¹) Camadas pintadas (cabeça, cabelo, traje em peças) funcionam em Battle
+Brothers e Wildermyth porque um artista pinta **cada peça com a mesma luz**.
+Geradas por peça, a luz não casa e o rosto parece colado — foi o que fez a
+pintura ser inteira e as camadas ficarem para o traço.
+
+**A conta da variedade.** Gente: 10 raças × 2 sexos × 24 trajes = **480
+células**, × 2 variantes = **960 rostos**. Feras: 18 espécies na fantasia (o
+`CRIATURAS_FANTASIA` de hoje) e as dos outros géneros. Um mundo tem 24 do
+elenco + figurantes + companheiros + o herói + 3 a 5 espécies por região.
+
+### 4 · O contrato do enquadramento (é ele que deixa o código recortar)
+
+**Toda matriz** é 1024 × 1024, busto em três quartos virado à esquerda, **olhos a
+40 % da altura**, cabeça ≈ metade do quadro, luz de chave âmbar da esquerda,
+contraluz violeta da direita, fundo violeta-sépia escuro com vinheta. Cada
+matriz leva no **manifesto** o centro do rosto: `cx` (0–1) e `olhos` (0–1).
+
+Os três recortes (quadrado, em fração do lado da matriz; `clamp` ao quadro):
+
+| tamanho | lado do recorte | centro | o que mostra |
+|---|---|---|---|
+| chip 32 | 0,40 | (`cx`, `olhos` + 0,06) | o olhar |
+| cartão 64 | 0,62 | (`cx`, `olhos` + 0,12) | cabeça e ombros |
+| ficha 160 | 0,88 | ((`cx` + 0,5)/2, 0,47) | o busto |
+
+**O bloco de estilo, palavra a palavra** — a única coisa que mantém a biblioteca
+coerente quando ela crescer. Muda o sujeito; **o resto não se toca**:
+
+> Painterly fantasy role-playing game character portrait. Subject: «sujeito».
+> Composition: head-and-shoulders bust, three-quarter view turned slightly to
+> the left, head centered horizontally, eyes exactly at 40 percent from the top,
+> head occupying about half the frame height, shoulders cropped at the bottom
+> edge. Style: hand-painted digital oil painting with visible confident
+> brushstrokes, classic isometric computer RPG portrait tradition, dramatic
+> chiaroscuro, warm amber key light from upper left, cool violet rim light on
+> the right edge, deep dark violet-umber background with soft vignette and
+> subtle painterly texture, muted desaturated palette with amber accents, strong
+> readable silhouette. No text, no border, no frame, no watermark.
+
+Para feras, o mesmo bloco com *"dark fantasy … creature portrait"*, *"gothic
+dark-fantasy mood"* e *"head and neck bust"* quando o bicho não tem ombros; para
+o morto-vivo, *"not gory"*. O sujeito descreve **um gesto de classe ou de
+ofício** e **um traço de pessoa** (a cicatriz, a idade, a orelha cortada). Modelo
+usado: `gemini-3.1-flash-image`, pela geração de imagem do Figma (plano Pro da
+equipe, 20 chamadas, nenhuma recusa). Os 20 sujeitos estão nos nomes das
+matrizes (`189:409`).
+
+**O que a amostra mostrou do contrato** (centros estimados à mão na miniatura de
+256 px — a ferramenta de produção deve medi-los, não um olho): 18 das 20
+matrizes caíram com os olhos entre 35 % e 43 %; o **ferreiro** (29 %, o golias é alto) e a **quimera** (47 %,
+três cabeças) não. É por isso que `cx`/`olhos` são **por matriz**, no
+manifesto, e não uma constante: a constante teria cortado a testa do golias no
+chip.
+
+### 5 · A peça `Retrato` — três tamanhos, Papel × Estado
+
+Três conjuntos, um por tamanho (o anel não escala linearmente, e 75 variantes
+num conjunto passava do teto de 30 por matriz). **Cada um é Papel (5) × Estado
+(5) = 25.** A pintura é o fill de imagem da camada `Pintura`; a instância troca-o.
+
+**As medidas** (variáveis `retrato/medida/*` e `retrato/anel/*`):
+
+| | lado | anel | marca | chefe: anel / aro |
+|---|---|---|---|---|
+| Chip | 32 | 2 | 7 | 3 / aro 1, vão 2 |
+| Cartão | 64 | 3 | 10 | 4 / aro 1,5, vão 2 |
+| Ficha | 160 | 4 | 16 | 5 / aro 2, vão 4 |
+
+**O papel diz-se por cor E por forma** (WCAG 1.4.1). As cores saem da coleção
+`Retrato (RETRATO)`, **aliases** das que já existem (nenhum número novo):
+
+| papel | cor (alias de) | forma | contraste com `bg` · `panel` · `panelSoft` |
+|---|---|---|---|
+| Herói | `mapa/heroi` #FFB03A | **losango** no topo do anel | 10,65 · 10,00 · 9,32 |
+| Aliado | `mapa/concluido` #8FE0A2 | anel liso | 12,34 · 11,58 · 10,79 |
+| Neutro | `tinta/inkDim` #9B93AC | anel liso | 6,62 · 6,21 · 5,79 |
+| Inimigo | `mapa/perigo` #FF6B6B | **presa** (triângulo para baixo) no pé | 6,99 · 6,57 · 6,12 |
+| Chefe | `mapa/perigo` + `mapa/gancho` #FFD08A | **coroa** no topo + presa + **aro** dourado | 6,99 / 13,53 |
+
+**Por que a forma, com número:** âmbar contra vermelho mede **1,52:1** e verde
+contra vermelho **1,76:1** — dois lados que só a cor separa confundem-se num
+olho com protanopia e num ecrã ao sol. O losango e a presa ficam em **lados
+opostos** do anel (topo e pé), e por isso também se separam pela posição.
+**Neutro** é novo: o elenco não é aliado até a história dizer (o padre e a
+guarda da amostra são aliados; a taverneira não).
+
+A marca leva **contorno de 1,25 px (2 na ficha) em `retrato/separa` (= `bg`)**,
+por fora: separa-a da pintura e do anel sem depender de cor.
+
+**Os estados** — a pintura nunca é outra; o estado é filtro e anel:
+
+| estado | anel | pintura | marca | o que se lê |
+|---|---|---|---|---|
+| Repouso | cheio, cor do papel | intacta | cor do papel | — |
+| **Vez** | cheio + **aro externo** (vão 2/2/4, traço 1,5/2/3) + brilho na cor do papel | intacta | idem | *é agora* |
+| **Ferido** | **arco = PV/PVmáx** (início às 12 h, horário) sobre `retrato/trilho`; na peça, 45 % | vinheta interior em `estado/danger` (raio lado/3, lado/4 na ficha) | idem | *quanto falta* |
+| **Caído** | `retrato/apagado` a **0,8** (4,21:1 no pior fundo; a 0,6 dava 2,83 e foi corrigido) | dessaturada, exposição −0,35, contraste −0,2 + **risco** diagonal | apagada | *fora* — e o lado ainda se lê pela forma |
+| **Escondido** | **tracejado** na cor do papel a 0,85 | exposição −0,55, saturação −0,5, desfoque lado/24 | intacta | *está lá, e não se vê bem* |
+
+**O movimento, com a saída escrita à nascença:** o aro da **Vez** é parado — é
+ele que diz a vez. O código pode acender um pulso (o `tv-pulse` que já existe)
+**por cima**, e com `prefers-reduced-motion: reduce` o pulso cala e o aro fica.
+Nenhum estado depende de animação para ser lido.
+
+### 6 · O peso, medido
+
+As 20 matrizes recortadas a **2×** e codificadas no Chromium (`canvas.toBlob`,
+`scratchpad/retratos/medir.html`):
+
+| recorte a 2× | WebP q 0,75 | WebP q 0,6 | JPEG q 0,8 |
+|---|---|---|---|
+| chip 64 px | 1,5 KB (1,2–1,9) | 1,4 | 2,0 |
+| cartão 128 px | 3,0 KB (2,2–3,7) | 2,6 | 4,4 |
+| ficha 320 px | **8,4 KB (6,3–10,8)** | 7,0 | 15,1 |
+
+**Um arquivo só serve aos três:** o recorte do chip e o do cartão cabem dentro
+do da ficha (o do chip tem 145 px de origem para 64 de tela — 2,3× de sobra).
+Logo: **um WebP de 320 × 320 por rosto, ~8,4 KB**. 1 020 rostos (960 de gente +
+~60 espécies nos géneros) ≈ **8,6 MB no CDN**; um mundo pede ~30–40 ≈ **300 KB,
+sob demanda e em cache**. O rosto de hoje custa 0 KB — é o preço da régua AAA, e
+é pago só pelo que aparece.
+
+### 7 · O par comparável (`187:236`)
+
+À esquerda, intactos, a fileira PARTICIPANTES e o TURNO ATUAL de `151:1662`; à
+direita, os mesmos com a peça nova. **O que muda para quem joga:** o troll lê-se
+troll e não *pessoa de anel vermelho*; o herói e o inimigo separam-se pela forma;
+a vez tem aro e não só a cor do contorno da pílula. **O que custa:** o chip passa
+de 28 a **32**, e a pílula do participante de 44 a **48** — que é exactamente o
+piso de alvo da casa (`ALVOS`, §K). A fileira de baixo mostra os vinte a 32 e a
+28 lado a lado, para o `jogo` decidir com os olhos.
+
+### 8 · O que quem codar precisa
+
+1. **A tabela** (o motor — pedidos R1–R5): `RETRATOS` num módulo puro, uma
+   entrada por matriz: `{ chave, arquivo, cx, olhos }`, com chave
+   `especie:Lobo` ou `gente:<raca>|<sexo>|<traje>|<variante>`. E
+   `retratoDe(ente, mundo)` → a entrada, ou `null` (→ o `Rosto` de hoje).
+   Determinístico pela semente, provado em Node.
+2. **Os arquivos:** `public/retratos/<chave>.webp`, 320 × 320, q 0,75, recorte
+   de **ficha** (§4). Carregar com `loading="lazy"` e `decoding="async"`.
+3. **A peça** (`aprendiz`, em `rosto.jsx`, porque é o leitor que os dois já
+   pedem): `Retrato({ lado, papel, estado, pv, pvMax, ente })`. O recorte é CSS
+   sobre o arquivo da ficha. Com `kf = 0,88` e `(xf, yf)` o canto do recorte da
+   ficha, e `kc`, `(xc, yc)` o do tamanho pedido:
+   `background-size: (kf/kc × 100)%` e
+   `background-position: ((xc−xf)/(kf−kc) × 100)% ((yc−yf)/(kf−kc) × 100)%`
+   (na ficha, `100%` e `0 0`). Disco com `border-radius: 50%`.
+4. **Tudo de tabela:** as cores são `RETRATO.papel.*`, `RETRATO.coroa`,
+   `RETRATO.fundo`, `RETRATO.trilho`, `RETRATO.apagado`, `RETRATO.separa` (o
+   `codeSyntax` WEB de cada variável já é este caminho); as medidas são
+   `RETRATO.lado.*` e `RETRATO.anel.*`. Os filtros dos estados (§5) entram na
+   mesma tabela. **Nenhum literal** no componente.
+5. **O arco do Ferido** é `conic-gradient` (ou um `circle` SVG com
+   `stroke-dasharray`) a partir das 12 h, horário — o mesmo arco que o `Rosto`
+   já desenha hoje; muda a pintura por baixo, não a regra.
+6. **Acessibilidade:** o `Retrato` é imagem: `role="img"` e `aria-label` com o
+   nome e o estado (*"Clara Peverell, a sua vez"*; *"Troll, ferido"*) — nunca o
+   papel em palavras de mecanismo.
+
+### 9 · Pesos
+
+- **A peça `Retrato` nova e a troca do rosto de xilogravura pela pintura:**
+  **médio** de design (alterar a forma do que existe; o retrato fica onde está,
+  ninguém reaprende nada). Um commit revertido desfaz.
+- **O chip de 28 → 32:** médio, e o `jogo` assina (`187:236` é a prova).
+- **Gerar a biblioteca inteira (~1 000 matrizes):** **custa créditos de IA** —
+  é da pessoa (`pauta-desenho`, *Para a pessoa decidir*). A amostra gastou 20.
+- **A proposta ambiciosa (§10):** um campo de save **novo e ignorado pela versão
+  antiga** — reversível; vai à pessoa por ser a primeira vez que a história
+  escreve no rosto.
+
+### 10 · A proposta ambiciosa — o retrato guarda a campanha
+
+**O rosto do herói muda com o que lhe aconteceu.** O golpe crítico do troll
+deixa uma cicatriz na face onde caiu; a maldição deixa os olhos da cor dela; o
+fogo do dragão deixa a queimadura no pescoço; os anos de campanha tiram a cor ao
+cabelo. Não é sorteio: é a ficha a lembrar-se, e o jogador **vê** a campanha
+dele no retrato em cada chip, em cada turno. É o que Wildermyth fez e nenhum CRPG
+AAA faz com o retrato: lá ele é uma foto de criação; aqui seria um diário.
+
+**Por que dá:** a camada 3 (§3) já é por cima da pintura e o contrato do
+enquadramento (§4) diz onde está cada olho. Uma marca é `{ tipo, lado, desde }`
+— traço SVG de tabela, não pintura nova. **O que pede ao motor:** R6. **O que
+pede ao Narrador:** nada novo no prompt — a marca entra pela `pauta` quando o
+herói é descrito (*"tem a cicatriz do troll de Vau Fincado"*), e assim o Mestre
+responde *"de onde é essa cicatriz?"* com a verdade.

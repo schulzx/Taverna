@@ -19,6 +19,16 @@ Formato:
 
 ---
 
+## 11/10 · sem versão (só Figma e `mente/`) · **Retratos — a pintura que escala** · pedido direto da pessoa
+- **estado inicial:** pedido dela fora da fila (*"criar as imagens de perfil dos personagens digno de um RPG AAA"*); só Figma, sem código de produção. Não tomei o bastão do `App.jsx`. Na árvore, trabalho da outra mente em `src/` (MM18, `escuta.js`), que não toquei.
+- **desenho:** o sistema é um **misto** — pintura por biblioteca (feras por espécie; gente por raça × sexo × traje, traje = classe ou ofício, 2 variantes), moldura e estado por código, marcas por cima. Escrito em `formas.md` §Retratos, com as fontes (Pillars, Pathfinder WotR, BG3, DOS2, Darkest Dungeon, Critical Role, Battle Brothers, Wildermyth, WCAG 1.4.1/1.4.11, o estudo do WebP).
+- **o Figma:** página `08 · Retratos` (`181:2`); coleção `Retrato (RETRATO)` (aliases, nenhum número novo); `Retrato/Chip` `183:142`, `Retrato/Cartão` `183:2033`, `Retrato/Ficha` `183:2174` (cada um Papel 5 × Estado 5); amostra dos 20 `184:2`; par antes/depois na mesa `187:236`; o sistema `188:409`; as matrizes `189:409`. 20 imagens geradas (`gemini-3.1-flash-image`, plano Pro, nenhuma recusa).
+- **a prova:** contraste do anel por papel 5,79–12,34:1 no pior fundo; o Caído media 2,83 a 0,6 e subiu a 0,8 → 4,21. Âmbar × vermelho = 1,52:1 — é por isso que o papel também é forma. Peso medido no Chromium: WebP q 0,75 a 2× = 1,5 / 3,0 / 8,4 KB (chip / cartão / ficha); um só arquivo de 320 serve aos três.
+- **decisões médias tomadas:** a peça nova e a troca do rosto pela pintura (o retrato fica no mesmo sítio); o papel **Neutro** (o elenco não é aliado até a história dizer); o chip 28 → 32 proposto ao `jogo` (a pílula passa a 48, o piso de `ALVOS`).
+- **o que ficou:** gerar a biblioteca (~1 020 matrizes, créditos) e a proposta ambiciosa (*o retrato guarda a campanha*) foram para *Para a pessoa decidir*; R1–R6 em `pedidos-ao-sistema.md`. As três peças ainda não subiram ao ficheiro da biblioteca (`e5wJ…`), a mesma dívida do Mapa e de B1.
+
+---
+
 ## 10/10 · v9.367 a v9.369 · **A1 — a auditoria da informação que chega ao jogador** · commits `b7c31dd`, `92f48de`, `4110491`
 
 *Ordem da pessoa, 10/10: "há coisas e informações que aparecem que não são

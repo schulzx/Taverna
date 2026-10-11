@@ -77,6 +77,11 @@ conserta**, porque é esse o limite do modelo de reversão que ela própria deu.
 *A pergunta deixou de ser "isto é pesado?" e passou a ser "um commit revertido
 conserta isto?". Se conserta, faz-se — e diz-se no relato.*
 
+- **[Retratos] gerar a biblioteca pintada — custa créditos de IA** · 11/10 · `formas.md` §Retratos · Figma `181:2`
+  O sistema está decidido e a amostra está feita (20 matrizes, 20 chamadas de `gemini-3.1-flash-image` no plano Pro). A biblioteca inteira são ~480 células de gente × 2 variantes + ~60 espécies ≈ **1 020 matrizes** (≈ 1 500 com a idade, R4). É dinheiro — por isso é dela. Proposta de ordem, cada fase utilizável sozinha: **F1** as 18 feras do bestiário de fantasia (18 chamadas); **F2** o herói, 10 raças × 2 sexos × 12 classes (240); **F3** o elenco por ofício (240); **F4** a segunda variante.
+- **[Retratos, a proposta ambiciosa] o retrato guarda a campanha** · 11/10 · `formas.md` §Retratos 10 · pedido R6
+  O rosto do herói ganha as marcas do que lhe aconteceu — a cicatriz do crítico do troll, a queimadura do dragão, o cabelo que embranquece com os anos —, por cima da pintura, posto pelo contrato do enquadramento. O jogador vê a campanha dele em cada chip, e o Mestre responde "de onde é essa cicatriz?" com a verdade. Campo de save novo e ignorado pela versão antiga (reversível pela lei de 28/09); vem aqui por ser a primeira vez que a história escreve no rosto.
+
 - **[D1 · A1] a reação só abre quando há escolha com preço** · 10/10 · `mente/a1-jogo.md` §6
   Com uma opção só e grátis (aparar · 0 PM) a janela com relógio não é decisão, é teste de reflexo — e no roteiro expirou enquanto o `jogo` lia. Proposta: abre só com duas reações de preços diferentes, ou quando a única custa; fora disso o instinto decide e o rastro mostra *"aparou: 6 → 3"*. Tira da luta um momento que o jogador vive hoje — por isso é dela. O conserto mora em `ritmo-da-reacao.js` (motor).
 - **[D2 · A1, a proposta ambiciosa] o Mestre diz o número, a mesa só anota** · 10/10

@@ -25,6 +25,24 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
 
 ## Abertos
 
+- [ ] **R1 · a `especie` (o nome de base do bestiário) em toda criatura e todo inimigo** · de: Retratos (`desenho`, 11/10) · leve
+  O léxico do mundo renomeia o bicho (`criaturasDaRegiao`, `mundo-base.js:270`) e o nome de base só sobrevive dentro do `id` (`` `${regiao}|${c.nome}` ``); os inimigos de combate vêm por outros caminhos. **Para quê:** o retrato de uma fera é por espécie (`formas.md` §Retratos), e a chave não pode ser o nome que o mundo inventou — senão o "Uivante das Dunas" fica sem rosto, ou com o de outra coisa. **O que se pede:** campo `especie` (o `nome` do `CRIATURAS_*`) na criatura da região e no inimigo montado para a luta (`completarInimigo` ou onde ele nasce). Campo novo, ignorado pela versão antiga.
+
+- [ ] **R2 · o `oficio` da pessoa como campo, decidido uma vez** · de: Retratos (`desenho`, 11/10) · leve
+  `genteDoLocal` guarda `papel` em texto livre ("taverneira", "dono da forja"); `OFICIOS` de `npcs.js:748` já sabe ler o ofício pelas raízes. **Para quê:** o traje do retrato do elenco é o ofício (12), e a tela não pode reler o texto a cada render — nem mudar o rosto de alguém porque o Mestre reescreveu o papel. **O que se pede:** `oficio` (o `id` de `OFICIOS`, ou `null`) na pessoa, na criação, pela mesma função de raízes; suíte com os seis da amostra (taverneira → taverna, ferreiro → forja, sacerdote → fé, mercador → comércio, guarda → armas, estudante → letras).
+
+- [ ] **R3 · a raça-base visual de cada povo do léxico** · de: Retratos (`desenho`, 11/10) · médio
+  `pessoaDiversa` tira a raça de `povosDo(lex)` quando o mundo tem povos próprios. **Para quê:** a biblioteca é por raça × sexo × traje com as 10 `RACAS`; um povo inventado precisa de dizer com qual delas se parece, senão cai sempre no rosto de xilogravura. **O que se pede:** cada povo do léxico nasce com `pareceCom` ∈ `RACAS` (ou `null`, e então o rosto de hoje), determinístico pela semente do mundo.
+
+- [ ] **R4 · a idade aparente da pessoa (jovem · adulta · velha)** · de: Retratos (`desenho`, 11/10) · leve
+  Não existe hoje. **Para quê:** é o eixo que mais separa dois rostos do mesmo ofício (a estudante e o padre da amostra só funcionam porque o sujeito disse a idade), e é também verdade que o Mestre pode dizer. **O que se pede:** `idade` ∈ {`jovem`, `adulta`, `velha`} na pessoa, pela semente, com o ofício a pesar (estudante tende a jovem). Se entrar, a matriz passa a 3 variantes por célula, uma por idade. Campo novo, ignorado pela versão antiga.
+
+- [ ] **R5 · `retratoDe(ente, mundo)` e o mundo que não repete rosto** · de: Retratos (`desenho`, 11/10) · médio
+  **Para quê:** escolher a pintura é regra (chave, variante, recurso ao rosto de hoje), e regra prova-se em Node, não na tela. **O que se pede:** função pura que devolva `{ chave, arquivo, cx, olhos }` de uma tabela `RETRATOS` (o manifesto), ou `null`; a variante sai da semente da pessoa e, **dentro de um mundo, nenhum rosto se repete enquanto a célula tiver variante livre** (desempate determinístico pela ordem do elenco). Suíte: mesma semente, mesmo rosto; 24 do elenco sem repetição; célula vazia → `null`.
+
+- [ ] **R6 · as marcas que a história deixa (só se a proposta ambiciosa de Retratos for aceite)** · de: Retratos (`desenho`, 11/10) · médio · campo de save novo
+  **Para quê:** o retrato do herói passa a mostrar a campanha — a cicatriz do crítico do troll, a queimadura do dragão, o cabelo que embranquece com os anos (`formas.md` §Retratos 10). **O que se pede:** `marcas: [{ tipo, lado, desde }]` no herói (e nos companheiros), escritas pelo motor em eventos que já existem (crítico recebido que deixa o herói em grave, dano de fogo acima de um limiar, maldição, os anos do calendário), com teto por tipo; e uma linha na `pauta` quando o herói é descrito. Nada de bloco estático.
+
 - [x] **`mercado.js:200` derruba o jogo inteiro num mundo com poucos nomes de mercado** · de: A1 (`oficial`, visto duas vezes: B1 em 05/10 e A1 em 10/10) · 10/10 · **leve, mas urgente** · **atendido 10/10 (v9.370): `|| []` em `gerarMercador`, `teste-mercado-sem-nomes.mjs`**
   `nomesDeLugar` (`lexico.js:670`) devolve `null` quando o léxico do mundo tem menos de 2 nomes de mercado, e `doMundo.length` em `gerarMercador` (`mercado.js:200`) estoura o render: página em branco (*"Cannot read properties of null (reading 'length')"*). Está no HEAD desde `7b2fd16` (agosto). **Para quê:** é a única falha vista nesta auditoria que tira o jogo ao jogador. **O que se pede:** tratar `null` explícito (a lei: `= {}` não cobre `null`) e cair nos nomes genéricos; suíte com um léxico de 0 e de 1 nome.
 
