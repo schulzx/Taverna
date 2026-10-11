@@ -19,7 +19,7 @@ Formato:
 
 ---
 
-## 10/10 · v9.367 a v9.369 · **A1 — a auditoria da informação que chega ao jogador** · commits `b7c31dd`, `92f48de`, `HASH_A1C`
+## 10/10 · v9.367 a v9.369 · **A1 — a auditoria da informação que chega ao jogador** · commits `b7c31dd`, `92f48de`, `4110491`
 
 *Ordem da pessoa, 10/10: "há coisas e informações que aparecem que não são
 necessárias, isso acaba confundindo o player mais do que ajudando, coloque na mão
