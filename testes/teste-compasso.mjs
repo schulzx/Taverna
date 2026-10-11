@@ -262,15 +262,21 @@ sec("8. A LIGAÇÃO NO APP");
   t("o compasso vive num ref", /compassoRef = useRef\(garantirCompasso\(null\)\)/.test(app));
   t("é salvo", /compasso: compassoRef\.current/.test(app));
   t("e recarregado", /compassoRef\.current = garantirCompasso\(sv\.compasso\)/.test(app));
-  t("anda no ponto único do turno", /const doCompasso = talvezAndarOCompasso\(conteudo\);/.test(app));
+  /* MM18 (11/10): quem chama pode segurar a onda (a pergunta do jogador,
+     no degrau da escuta) — o ponto continua único, com um segundo argumento */
+  t("anda no ponto único do turno", /const doCompasso = talvezAndarOCompasso\(conteudo(, \{ segurar: segurarEsc \})?\);/.test(app));
   /* v9.104: a PAUTA passou a abrir a nota — casar com a lista literal
      quebraria a cada sistema que se mudasse para dentro dela. */
-  t("e entra na nota", /const nota = \[pauta, [^\]]*doCompasso[^\]]*\]/.test(app));
+  /* MM18 (11/10): os envelopes do turno ganharam nome (`doTurno`) para a
+     escuta os cortar antes da nota; a nota é `[pauta, ...doTurno]`. */
+  t("e entra na nota", /let doTurno = \[[^\]]*doCompasso[^\]]*\]/.test(app) && /const nota = \[pauta, \.\.\.doTurno\]/.test(app));
   t("e a PAUTA vem antes de tudo — o Narrador precisa saber ONDE antes do que fazer lá", /const nota = \[pauta, /.test(app));
 
   const g = app.split("const talvezAndarOCompasso")[1].split("\n  };")[0];
   /* SEGURA em combate, masmorra e viagem */
-  t("segura quando há cena grande", /segurar: !!combateRef\.current \|\| !!masmorraRef\.current \|\| !!jornadaRef\.current/.test(g));
+  /* MM18 (11/10): `segurarExtra` (a escuta) entra à frente; os três de
+     sempre continuam a segurar */
+  t("segura quando há cena grande", /segurar: (segurarExtra \|\| )?!!combateRef\.current \|\| !!masmorraRef\.current \|\| !!jornadaRef\.current/.test(g));
   t("usa a mesma situação do Bibliotecário", /situacaoDaMesa\(\)/.test(g));
   t("e o holofote escolhe a família", /preferir: sit\.pilarFaminto/.test(g));
   t("protegida por try", /try \{/.test(g) && /catch \{ return ""/.test(g));
@@ -278,7 +284,8 @@ sec("8. A LIGAÇÃO NO APP");
   /* A FORMA CEDE A VEZ: o envelope do compasso já diz do que a cena trata
      e em que tempo; uma forma por cima seria o sistema dando duas
      instruções de composição para a mesma cena */
-  t("a forma da cena cede a vez ao compasso", /const formaDaCena = doCompasso \? "" : talvezDarFormaACena/.test(app));
+  /* MM18 (11/10): e também à escuta (`segurarEsc`); a vez do compasso fica */
+  t("a forma da cena cede a vez ao compasso", /const formaDaCena = doCompasso (\|\| segurarEsc )?\? "" : talvezDarFormaACena/.test(app));
 
   t("o ritmo sobe junto do arco", /resumoDoArco = \(\) => \[resumoHistoria\([\s\S]{0,60}?resumoDoRitmo\(\)\]/.test(app));
   /* UMA chamada: a definicao e `const resumoDoRitmo = () =>`, que nao

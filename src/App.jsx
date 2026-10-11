@@ -21,7 +21,7 @@ import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta } from "./masmorras.js";
-import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA } from "./ofertas.js";
+import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
@@ -191,6 +191,7 @@ import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeE
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
+import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
 import { calaNaMasmorra, aquiDoTurno, cenaNaMasmorra, linhaDaFicha, horizonteDaPergunta } from "./masmorra-sem-cidade.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, envelopeDasFalas, bocasDoTurno, falaDaResposta } from "./falas.js";
@@ -5763,6 +5764,13 @@ export default function Taverna() {
   /* a escada do encalhe: 0 = solto; sobe um degrau por vez enquanto o
      jogador estiver parado, e desce a zero ao primeiro movimento. */
   const escadaRef = useRef(garantirEscada(null));
+  /* MM18 (11/10, o Mestre que escuta): os turnos do jogador sem tocar o fio
+     nem avançar a história — a escada por TURNOS de `escuta.js`, irmã da do
+     encalhe (que conta dias). Campo novo do save, ignorado pela versão
+     antiga. `adiadosEscutaRef` guarda os empurrões que já esperaram um
+     turno: o que perde de novo cai. */
+  const escutaRef = useRef(garantirEscuta(null));
+  const adiadosEscutaRef = useRef([]);
   /* a postura ativa do mundo, com sua permanencia; e o ultimo peso visto,
      para a postura ler luto/gloria/vergonha por um ou dois dias. */
   const posturaRef = useRef(garantirPosturaAtiva(null));
@@ -7260,6 +7268,23 @@ export default function Taverna() {
         if (peEsc) p = porNaPauta(p, "naoPode", peEsc.naoPode);
       }
     } catch (e) { /* o veto do escondido nunca pode custar o turno */ }
+    /* MM18: O RUMO — reagir e responder primeiro, depois UMA ponte para o
+       próximo passo da principal; e, se o jogador está fora do fio há
+       turnos, o degrau da escada (o sinal, quem vem buscar, a cobrança).
+       Fora da luta: lá a ordem do turno é a do tabuleiro. Entra ANTES de
+       `cederNaCena` porque nada vem depois dele, e não cede: "rumo" não
+       está em nenhuma lista de `SECOES_QUE_CEDEM`. */
+    try {
+      if (!combateRef.current && modoRef.current !== "rapida") {
+        const rumo = linhaDoRumo({
+          pedido: lerOPedido(acaoDoTurno),
+          degrau: degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco),
+          passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
+          semente: diaRef.current,
+        });
+        if (rumo) p = porNaPauta(p, "rumo", rumo);
+      }
+    } catch (e) { calou("o rumo na pauta", e); }
     /* MM16 nº 5: O QUE CEDE ONDE. A tabela é do motor (`SECOES_QUE_CEDEM`);
        aqui só se diz que cena é esta. `arredores` é FORA DOS MUROS — sem
        cidade (estrada, jornada) ou num lugar marcado `distancia: "arredores"`
@@ -8682,7 +8707,7 @@ export default function Taverna() {
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       modo: garantirModo(modoRef.current),
-      historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, escuta: escutaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -8752,6 +8777,7 @@ export default function Taverna() {
     reviravoltaRef.current = r.reviravolta !== undefined ? r.reviravolta : reviravoltaRef.current;
     reviravoltaMaiorRef.current = r.reviravoltaMaior !== undefined ? r.reviravoltaMaior : reviravoltaMaiorRef.current;
     escadaRef.current = r.escada !== undefined ? r.escada : escadaRef.current;
+    try { escutaRef.current = r.escuta !== undefined ? garantirEscuta(r.escuta) : escutaRef.current; } catch (e) { calou("a escuta no retrato", e); }
     posturaRef.current = r.postura !== undefined ? r.postura : posturaRef.current;
     gestosRef.current = r.gestos !== undefined ? r.gestos : gestosRef.current;
     episodioRef.current = r.episodio !== undefined ? r.episodio : episodioRef.current;
@@ -10990,7 +11016,7 @@ export default function Taverna() {
             /* se a cena disse um preço e o Cronista não o repetiu, o preço da
                cena ainda vale — o jogador leu aquele número */
             { ...prop, paga: Number.isFinite(Number(prop.paga)) ? prop.paga : precoNoTexto(narrativa) },
-            { cidade: cidadeAtualRef.current, nivel: p.nivel || 1 });
+            { cidade: cidadeAtualRef.current, nivel: p.nivel || 1, historia: historiaDoMural() });
           if (cartaz) {
             /* MM14 · 10a: um dador homônimo de quem já importa não prega —
                "Delfina da Névoa" recrutadora não vira cartaz ao lado da
@@ -11717,6 +11743,8 @@ export default function Taverna() {
     reviravoltaRef.current = null;
     reviravoltaMaiorRef.current = null;
     escadaRef.current = garantirEscada(null);
+    escutaRef.current = garantirEscuta(null);
+    adiadosEscutaRef.current = [];
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
     episodioRef.current = null;
@@ -12217,8 +12245,23 @@ export default function Taverna() {
     if (oficina) oficinaRef.current = criarOficina();
     talvezChegarSozinho();
     talvezAndarNaCidade(conteudo);
-    const doCompasso = talvezAndarOCompasso(conteudo);
-    const formaDaCena = doCompasso ? "" : talvezDarFormaACena(conteudo);
+    /* ---------------- MM18: O MESTRE QUE ESCUTA ----------------
+       A frase lida uma vez, o fio da história, o degrau da escada (por
+       turnos sem tocar o fio). Numa pergunta, no degrau da escuta, o
+       compasso e a forma da cena SEGURAM pela porta que já têm: cortar o
+       envelope depois seria o sistema andar uma história que ninguém
+       contou. `pedidoEsc` nulo = a escuta não está (a Noite, ou um erro):
+       o turno segue como era. */
+    let pedidoEsc = null, fioEsc = [], segurarEsc = false;
+    try {
+      if (modoRef.current !== "rapida") {
+        pedidoEsc = lerOPedido(conteudo);
+        fioEsc = fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current });
+        segurarEsc = seguraOMundo(pedidoEsc, degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco));
+      }
+    } catch (e) { calou("a escuta lê o pedido", e); pedidoEsc = null; fioEsc = []; segurarEsc = false; }
+    const doCompasso = talvezAndarOCompasso(conteudo, { segurar: segurarEsc });
+    const formaDaCena = doCompasso || segurarEsc ? "" : talvezDarFormaACena(conteudo);
     /* A FRENTE ANDA UMA RODADA POR TURNO MEU (v9.115), e anda aqui, no
        mesmo lugar em que todo sistema de turno anda. Uma rodada por turno,
        nunca um laço: se a frente resolvesse tudo de uma vez, o jogador
@@ -12264,8 +12307,29 @@ export default function Taverna() {
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
-    const nota = [pauta, oficina, umSoLugar(notaRef.current), doCompasso, formaDaCena, daFrente, daVirada, daTrama].filter(Boolean).join("\n"); /* MM14: a pauta nunca leva duas versões do lugar */
+    /* MM18: no máximo UM empurrão por turno (dois no degrau da cobrança), e
+       o que toca o fio entra primeiro; o que pode esperar volta à nota do
+       turno seguinte, uma vez só. Os fatos do turno vão sempre. Se a
+       escuta estoura, a nota é a de antes, inteira. */
+    const daNota = umSoLugar(notaRef.current); /* MM14: a pauta nunca leva duas versões do lugar */
+    let doTurno = [oficina, daNota, doCompasso, formaDaCena, daFrente, daVirada, daTrama], adiadosEsc = null;
+    if (pedidoEsc) {
+      try {
+        const rEsc = escutarOTurno({
+          envelopes: [oficina, ...separarEnvelopes(daNota), doCompasso, formaDaCena, daFrente, daVirada, daTrama],
+          fio: fioEsc, semAvanco: garantirEscuta(escutaRef.current).semAvanco, adiadosAntes: adiadosEscutaRef.current,
+        });
+        doTurno = rEsc.ficam;
+        adiadosEsc = rEsc.adiados;
+      } catch (e) { calou("a escuta do turno", e); adiadosEsc = null; }
+    }
+    const nota = [pauta, ...doTurno].filter(Boolean).join("\n");
     notaRef.current = "";
+    if (adiadosEsc) { notaRef.current = adiadosEsc.join("\n"); adiadosEscutaRef.current = adiadosEsc; }
+    /* a escada anda depois da pauta: o degrau deste turno é o de antes dele */
+    try {
+      if (pedidoEsc) escutaRef.current = andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco({ missoes: missoesRef.current, espinha: espinhaRef.current }), pausa: !!combateRef.current });
+    } catch (e) { calou("a escuta anda", e); }
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
        (não fica no histórico — custo ~zero) reforçando as regras que o
@@ -12439,7 +12503,15 @@ export default function Taverna() {
       return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${prf ? `\n${prf}` : ""}${ivc ? `\n${ivc}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
-    const novoHist = [...base, { role: "user", content: `${corpo}\n${rodape}` }];
+    /* MM18: a frase do jogador é a ÚLTIMA coisa que o Narrador lê — depois
+       do rodapé, com a etiqueta de `escuta.js`. Na 4.ª sessão ela ia a 7–14
+       mil caracteres do fim. O histórico continua a guardar `corpo`. */
+    let pedidoFinal = `${corpo}\n${rodape}`;
+    try {
+      const fecho = fechoDoPedido(pedidoEsc);
+      if (fecho) pedidoFinal = `${nota ? nota + "\n" : ""}${rodape}\n${fecho}`;
+    } catch (e) { calou("a frase do jogador por último", e); }
+    const novoHist = [...base, { role: "user", content: pedidoFinal }];
     /* ---------------- O PROMPT SE REFAZ A CADA TURNO (v9.54) ----------------
        Enquanto o prompt era o mesmo em toda cena, remontá-lo em onze eventos
        espalhados bastava. Com as portas da cena isso deixou de bastar, e o
@@ -13282,6 +13354,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       reviravoltaRef.current = garantirReviravolta(sv.reviravolta);
       reviravoltaMaiorRef.current = garantirReviravolta(sv.reviravoltaMaior);
       escadaRef.current = garantirEscada(sv.escada);
+      try { escutaRef.current = garantirEscuta(sv.escuta); adiadosEscutaRef.current = []; } catch (e) { calou("a escuta no load", e); }
       posturaRef.current = garantirPosturaAtiva(sv.postura);
       episodioRef.current = garantirEpisodio(sv.episodio);
       modoRef.current = modoDoSave(sv);
@@ -17919,6 +17992,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Conservador de propósito: fora de combate, fora de masmorra, no máximo
      um por dia e só quando o diário está com espaço. Trabalho oferecido
      demais vira ruído, e ruído é o oposto de uma oferta que importa. */
+  /* MM18 (11/10): A HISTÓRIA NÃO SE OFERECE. A preferência por quem o herói
+     já conhece punha no mural, no começo, justamente a gente da história —
+     o alvo da principal pregou "A caçada de Noé Laminado" (4.ª sessão).
+     Quem é da história (a pista, o alvo, quem as missões que não se
+     recusam e os marcos por fazer nomeiam) fica fora do mural e da
+     proposta do Mestre. E o papel pregado vence (`CARTAZ_ESPERA`). */
+  const historiaDoMural = () => {
+    try { return genteDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, espinha: espinhaRef.current }); }
+    catch (e) { calou("a gente da história", e); return []; }
+  };
+  const cartazJaVenceu = (c) => {
+    try { return cartazVencido(c, diaRef.current); }
+    catch (e) { calou("o cartaz vencido", e); return false; }
+  };
   const oferecerTrabalhoDaqui = () => {
     /* MM13: nenhuma oferta avulsa antes de o herói estar orientado. */
     if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;
@@ -17933,6 +18020,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       base: baseMundoRef.current, genero: generoMundo(), nivel: p.nivel || 1, quantas: 6,
       molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
       evitar: abertas.flatMap((q) => [q.titulo, q.dador]),
+      historia: historiaDoMural(),
     });
     if (!candidatas.length) return;
     const conhecidos = new Set(Object.keys(npcsRef.current || {}).map((n) => n.toLowerCase()));
@@ -20238,7 +20326,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch (e) { return {}; }
   };
 
-  const talvezAndarOCompasso = (conteudo) => {
+  const talvezAndarOCompasso = (conteudo, opcoes) => {
+    /* MM18: quem chama pode segurar a onda (a pergunta do jogador, no
+       degrau da escuta) — a mesma porta do combate e da viagem */
+    const segurarExtra = !!(opcoes && opcoes.segurar);
     try {
       if (String(conteudo || "").trimStart().startsWith("[")) return "";
       /* ---------------- O VILÃO PASSA NA FRENTE (v9.93) ----------------
@@ -20263,7 +20354,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          Nunca muda a ordem dos movimentos — so quantos turnos cada um dura. */
       const leitura = lerTermometro(snapshotDoTermometro());
       const r = avancarCompasso(compassoRef.current, sit, {
-        segurar: !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current || seguraOCompasso((pesoDaCena(fatosDoPesoRef.current) || {}).peso),
+        segurar: segurarExtra || !!combateRef.current || !!masmorraRef.current || !!jornadaRef.current || seguraOCompasso((pesoDaCena(fatosDoPesoRef.current) || {}).peso),
         preferir: sit.pilarFaminto,
         elenco: elencoDaOnda(),
         folego: folegoDaLeitura(leitura.leitura),
@@ -21326,13 +21417,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       evitar: garantirMissoes(missoesRef.current)
         .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
         .flatMap((q) => [q.titulo, q.dador]),
+      historia: historiaDoMural(),
     });
     /* v9.119: OS OFERECIDOS ATRAVESSAM A RENOVAÇÃO. Os do mundo são a
        janela para o que esta cidade quer feito e se refazem a cada descanso
        longo; os oferecidos são de alguém que falou com o herói e pregou o
        papel — apagá-los num descanso seria o mundo esquecer um pedido que
        ele mesmo fez. Ficam abaixo dos do mundo, na seção própria. */
-    const oferecidos = (muralRef.current || []).filter((c) => c && c.oferecido).slice(-TETO_OFERECIDOS);
+    const oferecidos = (muralRef.current || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c)).slice(-TETO_OFERECIDOS);
     muralRef.current = [...mundo, ...oferecidos];
     setMural(muralRef.current);
   };
@@ -21374,7 +21466,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (comigo) return false;
     } catch (e) { calou("o mural e quem já trabalha comigo", e); }
     const doMundo = atual.filter((c) => !c.oferecido);
-    const oferecidos = [...atual.filter((c) => c.oferecido), cartaz].slice(-TETO_OFERECIDOS);
+    /* MM18: o papel nasce com data — vence ao fim de CARTAZ_ESPERA */
+    const oferecidos = [...atual.filter((c) => c.oferecido), { ...cartaz, pregadoEm: cartaz.pregadoEm != null ? cartaz.pregadoEm : diaRef.current }].slice(-TETO_OFERECIDOS);
     muralRef.current = [...doMundo, ...oferecidos];
     setMural(muralRef.current);
     return true;
@@ -24544,7 +24637,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          o jogador — e a casa não oferece o que vai recusar. O papel pregado
          na tábua é o mundo a falar sozinho, e o mundo não apaga o que já
          disse: esse fica, e encolhe. */
-      for (const c of (mural || []).filter((c) => c && c.oferecido && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {
+      for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {
         const rec = recompensaDe({ tipo: c.tipo || "contrato", nivel: c.nivel || (personagem && personagem.nivel) || 1, etapas: (c.etapas || []).length || 3, moedasPrometidas: c.paga });
         const paga = retornoDaSoleira({ moedas: c.paga, xp: rec.xp, item: rec.item }); /* V3c: XP e fama ficam no Mural e no Diário */
         lista.push({

@@ -1,0 +1,187 @@
+{
+ "origem": "registo da 4.a sessao de prova (11/10), 93 chamadas; aqui so os 23 turnos do jogador fora da luta: a frase e a primeira linha (ate 240 caracteres) de cada envelope da nota, sem a pauta. Ver mente/mm11-sessao-4.md, A escuta, turno a turno.",
+ "turnos": [
+  {
+   "chamada": 4,
+   "jogador": "Olho para o Euzébio, sem baixar a voz: \"De onde é que a gente se conhece, afinal? E por que é que tu vieste comigo?\"",
+   "envelopes": []
+  },
+  {
+   "chamada": 7,
+   "jogador": "Respondo à mulher do alaúde: \"Vim. Procuro Inocência Bordão, o músico de canto. Sabe onde o encontro?\" E pergunto: \"Quem manda de facto nesta cidade, o Sino ou a guarda?\"",
+   "envelopes": [
+    "[CORREÇÃO DO SISTEMA — CÂNONE: QUEM É QUEM] Caetano está no registro como arquivista, e você o chamou de \"chega aqui\". O registro da campanha manda: essa pessoa continua sendo o que sempre foi. Ninguém troca de ofício ou de cargo entre uma ",
+    "[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] Deixe a cena ter graça — e que a graça venha de alguém sendo exatamente quem é, não de uma piada colocada por cima."
+   ]
+  },
+  {
+   "chamada": 9,
+   "jogador": "Sento no banco, em frente a Inocência, e tiro a carta sem assinatura do bolso. \"Reconheço esta letra. É dos meus antigos irmãos. O que sabes de Noé Laminado, e onde ele está?\"",
+   "envelopes": [
+    "[PREPARAÇÃO — DECISÃO DO SISTEMA] Comece a preparar um JULGAMENTO: mostre uma acusação circulando, com as duas versões vivas e nenhuma prova ainda."
+   ]
+  },
+  {
+   "chamada": 12,
+   "jogador": "Olho para o Caetano, que ficou a meio da frase. \"Acaba o que ias dizer. Que apelido, e o que sabes de Noé Laminado?\"",
+   "envelopes": [
+    "[GUARDA DE CONTINUIDADE — LEMBRETE DE REGRA] O papel de cada pessoa está no registro e não muda por narração. Um camponês não vira capitão entre duas cenas — quem muda de vida muda por acontecimento, e o acontecimento vem do sistema.",
+    "[APERTA — DECISÃO DO SISTEMA] A data é marcada e as pessoas começam a se posicionar — inclusive gente que eu conheço, e nem sempre do lado que eu esperava."
+   ]
+  },
+  {
+   "chamada": 14,
+   "jogador": "Pergunto a Inocência, baixinho: \"Quanto tempo leva a pé daqui até à Muralha Quebrada? E onde posso dormir esta noite, e a quanto fica um quarto?\"",
+   "envelopes": []
+  },
+  {
+   "chamada": 16,
+   "jogador": "Pago a bebida, agradeço a Inocência e saio do Sino Quieto. Vou ao Mercado da Cinza e pergunto a um vendedor de papel quanto custa uma resma e um frasco de tinta.",
+   "envelopes": [
+    "[PROCURA — RESOLVIDA PELO SISTEMA] Procurei Inocência e ELA ESTÁ AQUI (Alto do Sal). Encontrei sem dificuldade. Narre a descoberta em 1-2 frases, pelo que o herói vê e ouve. NÃO invente outro paradeiro, não faça a pessoa aparecer se ela não",
+    "[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei dentro de Alto do Sal e AGORA estou em Mercado da Cinza. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não ",
+    "[A UM PASSO — DECISÃO DO SISTEMA] Está prestes a acontecer: um julgamento público. É de manhã na praça, e já há gente escolhendo lugar para ver."
+   ]
+  },
+  {
+   "chamada": 18,
+   "jogador": "Respiro fundo e conto a verdade a Inocência, diante da mulher de capa verde: fui escriba de um culto, copiei os livros dele durante anos, fugi, e ainda copio às escondidas o que consigo para provar o que eles fizeram. A carta é dos meus antigos irmãos, e não sei se me chamam para me perdoar ou para me calar.",
+   "envelopes": [
+    "[AGORA — DECISÃO DO SISTEMA] Agora ACONTECE: o julgamento corre à vista de todos, e o que decide não é a verdade."
+   ]
+  },
+  {
+   "chamada": 21,
+   "jogador": "Abro caminho pela multidão até ao pé do coreto e pergunto em voz alta, para quem ouvir, de que é que o Caetano é acusado e quem o acusa. Se ninguém responder, peço a palavra em defesa dele.",
+   "envelopes": [
+    "[GUARDA DE CONTINUIDADE — LEMBRETE DE REGRA] O papel de cada pessoa está no registro e não muda por narração. Um camponês não vira capitão entre duas cenas — quem muda de vida muda por acontecimento, e o acontecimento vem do sistema.",
+    "[RELÓGIO ABERTO — REGISTRADO PELO SISTEMA] Começou a contar: \"O julgamento do Sino Quieto\" (ameaça, 4 passos, a cada noite inteira). Deixe isso PRESENTE na ficção de agora em diante — um sinal aqui, um comentário ali, a sensação de que algo",
+    "[O QUE FICOU — DECISÃO DO SISTEMA] Mostre o que a sentença fez com a cidade: quem comemora, quem some, e o que passa a ser dito em voz baixa."
+   ]
+  },
+  {
+   "chamada": 24,
+   "jogador": "Subo os degraus do coreto e digo à praça: quem fecha a banca cedo e depois acusa o primeiro batedor que apanha é quem tem pesos falsos a esconder. Peço que se confira a balança coberta do cambista antes de se puxar a corda do Caetano.",
+   "envelopes": [
+    "[TRABALHO PREGADO NO MURAL — PELO SISTEMA] Caetano Bronze, batedor de carteiras, em Mercado da Cinza quer uma coisa feita e já pregou o cartaz no mural: \"O que há em O Campo Trêmulo\". Caetano Bronze diz que há uma carta lacrada que ninguém ",
+    "[GUARDA DE CONTINUIDADE — LEMBRETE DE REGRA] O papel de cada pessoa está no registro e não muda por narração. Um camponês não vira capitão entre duas cenas — quem muda de vida muda por acontecimento, e o acontecimento vem do sistema.",
+    "[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] Não faça nada chegar: faça eu NOTAR QUE FALTA. Uma coisa que devia estar aqui não está, e a cena não explica por quê."
+   ]
+  },
+  {
+   "chamada": 26,
+   "jogador": "Deixo a praça e sigo para O Livro Morto, a biblioteca. Procuro quem lá guarda os registos e pergunto se há alguma entrada com o nome de Noé Laminado, e que livros a casa tem sobre o Sino.",
+   "envelopes": [
+    "[PROCURA — RESOLVIDA PELO SISTEMA] Noé Laminado NÃO está aqui. O que se apura é que ela está em Rua dos Retalhos. Diga isso pela boca de quem responderia — ninguém aqui sabe mais do que isso. Narre a descoberta em 1-2 frases, pelo que o her",
+    "[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei dentro de Alto do Sal e AGORA estou no Livro Morto. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não me de"
+   ]
+  },
+  {
+   "chamada": 28,
+   "jogador": "Saio com Euzébio para a rua, longe dos ouvidos, e encosto-o à parede: \"Já falaste três vezes numa dívida. Que dívida é essa, Euzébio? Quanto te devo, e desde quando?\"",
+   "envelopes": [
+    "[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] Isto chega como COISA, não como pessoa nem como palavra: um objeto que está onde não devia, e que fala sozinho."
+   ]
+  },
+  {
+   "chamada": 30,
+   "jogador": "Estendo a mão e pego o couro. Antes de abrir, olho Euzébio nos olhos: \"O teu irmão. Como se chamava, e o que lhe aconteceu nessa noite?\" Depois abro o couro devagar e leio o que lá está escrito.",
+   "envelopes": [
+    "[PREPARAÇÃO — DECISÃO DO SISTEMA] Comece a preparar uma INTRIGA: mostre duas facções de corte se tratando com cortesia perfeita, e mostre uma delas me sendo simpática de graça."
+   ]
+  },
+  {
+   "chamada": 32,
+   "jogador": "Guardo o couro na mochila. \"Vamos. Vou à Rua dos Retalhos, em Rio Cinzento, procurar Noé Laminado e a botica.\" Parto a pé com Euzébio, e deixo a mulher de capa verde seguir connosco se quiser.",
+   "envelopes": [
+    "[VIAGEM ABERTA PELO SISTEMA — eu saí de Alto do Sal] Eu pus o pé na estrada rumo a Rio Cinzento. O sistema assumiu a jornada: clima, encontros, terreno, ritmo de marcha e passagem de tempo são dele, e ele já os rolou. Eu NÃO estou mais em A",
+    "[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]"
+   ]
+  },
+  {
+   "chamada": 36,
+   "jogador": "Vou pela rua até à botica, no fim, e entro primeiro, como o Euzébio quer. Pergunto ao boticário pelo óleo de mirra para a mulher de capa verde, e depois, em voz baixa, por Noé Laminado.",
+   "envelopes": [
+    "[TRABALHO PREGADO NO MURAL — PELO SISTEMA] Noé Laminado, vendedor de ervas, em Rua dos Retalhos quer uma coisa feita e já pregou o cartaz no mural: \"A caçada de Noé Laminado\". Serpente do Erval ronda Colinas da Lua Baixa — coleciona coisas ",
+    "[PROCURA — RESOLVIDA PELO SISTEMA] mulher de capa verde NÃO está aqui. O que se apura é que ela está em Alto do Sal a 13 km para a nordeste. Diga isso pela boca de quem responderia — ninguém aqui sabe mais do que isso. Narre a descoberta em",
+    "[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei dentro de Rio Cinzento e AGORA estou em Rua dos Retalhos. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não",
+    "[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] Este lugar foi feito para uma coisa e está sendo usado para OUTRA. Mostre os dois usos ao mesmo tempo."
+   ]
+  },
+  {
+   "chamada": 38,
+   "jogador": "Pouso o couro escuro no balcão, diante de Noé, e leio-lhe em voz baixa a frase: \"O primeiro que ler, que diga a Noé que a chave do Sino está na gaveta errada.\" Observo o rosto dele. \"Foi Norberto, o irmão do Euzébio, quem a escreveu? E o que quer dizer a gaveta errada?\"",
+   "envelopes": [
+    "[O MUNDO SE MEXE — ESCOLHIDO PELO SISTEMA] Enquanto eu fazia o que fiz, um nome grande desta região se mexe, e o movimento respinga: Hildebrando Cobre, A Boca do Mundo.",
+    "[APERTA — DECISÃO DO SISTEMA] A simpatia vira convite, o convite vira pedido pequeno, e recusar já começa a ter custo."
+   ]
+  },
+  {
+   "chamada": 40,
+   "jogador": "Pego a caixinha de chaves pretas e guardo-a no cinto. Depois espreito pelo vidro opaco os dois vultos à porta e tento perceber quem são e se me seguiram desde Alto do Sal. Quantas chaves são, e há alguma marca gravada nelas?",
+   "envelopes": [
+    "[RELÓGIO COMPLETO — ACONTECIMENTO DO SISTEMA] O relógio \"O rebate em Alto do Sal\" (ameaça) encheu: ●●●●●●●●. chega a notícia de Alto do Sal, trazida por quem fugiu: Noé Laminado chega a Alto do Sal às pressas, ferido(a), com gente atrás — e"
+   ]
+  },
+  {
+   "chamada": 42,
+   "jogador": "Olho para o homem ferido que acaba de entrar e para o boticário atrás do balcão: \"Quem de vocês é Noé Laminado, afinal?\" E ajudo o ferido a sentar-se, para ver a ferida do flanco.",
+   "envelopes": [
+    "[A UM PASSO — DECISÃO DO SISTEMA] Está prestes a acontecer: uma intriga de corte. Os dois lados me procuraram no mesmo dia, e cada um acha que eu já escolhi."
+   ]
+  },
+  {
+   "chamada": 45,
+   "jogador": "Viro-me para o boticário e pergunto sem rodeios: \"O que é que a Muralha quer de ti, Noé Laminado? E o que abrem estas cinco chaves? Quem as pode usar, e onde fica a porta?\"",
+   "envelopes": [
+    "[GUARDA DE CONTINUIDADE — LEMBRETE DE REGRA] O papel de cada pessoa está no registro e não muda por narração. Um camponês não vira capitão entre duas cenas — quem muda de vida muda por acontecimento, e o acontecimento vem do sistema.",
+    "[AGORA — DECISÃO DO SISTEMA] Agora ACONTECE: os dois lados chocam em público e o que eu fiz — ou não fiz — aparece como prova."
+   ]
+  },
+  {
+   "chamada": 48,
+   "jogador": "Fecho a mão sobre o molho de chaves e dou um passo para ficar entre o homem da fita vermelha e o balcão. \"Quem és tu, quem te manda, e o que queres de um boticário e de um ferido?\" Peço ao Euzébio que fique atrás da porta e vigie a rua.",
+   "envelopes": [
+    "[CORREÇÃO DO SISTEMA — QUEM ESTÁ ONDE] Você colocou em cena Norberto (que está em Alto do Sal, a 1 dia daqui), mas essa pessoa NÃO está em Rio Cinzento e não teve tempo de chegar. Refaça mentalmente: ou não é ela (é outra pessoa da cidade),",
+    "[CORREÇÃO DO SISTEMA — CÂNONE: QUEM É QUEM] Noé Cantoneiro está no registro como mercador, e você o chamou de \"ferido no banco\". O registro da campanha manda: essa pessoa continua sendo o que sempre foi. Ninguém troca de ofício ou de cargo ",
+    "[O PASSADO VOLTA — ESCOLHIDO PELO SISTEMA] alguém que você conheceu e deixou para trás reaparece: Inocência."
+   ]
+  },
+  {
+   "chamada": 50,
+   "jogador": "Não respondo ao homem da fita. Aperto as chaves no cinto, faço sinal ao Euzébio e saio da botica sem pressa. Vou à Muralha Quebrada de Silêncio, procurar o que Norberto escondeu.",
+   "envelopes": [
+    "[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]",
+    "[CHEGADA À BOCA — REGISTRADA PELO SISTEMA] A estrada acabou: eu ESTOU DIANTE DA ENTRADA de Muralha Quebrada de Silêncio, do lado de FORA. Narre a chegada — a fachada, o que se vê da boca, o rasto de quem entrou antes — e pare aqui. NÃO me p",
+    "[O QUE FICOU — DECISÃO DO SISTEMA] Mostre de que lado a corte decidiu que eu estou, independentemente do que eu queria."
+   ]
+  },
+  {
+   "chamada": 57,
+   "jogador": "Respondo a Belmira que ainda não sei o que enterro, e peço-lhe que volte para Alto do Sal. Depois acendo uma tocha, faço sinal ao Euzébio e entro na Muralha Quebrada de Silêncio, passo a passo, com as chaves prontas.",
+   "envelopes": [
+    "[GUARDA DE CONTINUIDADE — LEMBRETE DE REGRA] O papel de cada pessoa está no registro e não muda por narração. Um camponês não vira capitão entre duas cenas — quem muda de vida muda por acontecimento, e o acontecimento vem do sistema.",
+    "[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]",
+    "[O PASSADO VOLTA — ESCOLHIDO PELO SISTEMA] notícia chega do lugar que você descobriu e não voltou a ver: Campo Seco.",
+    "[CHEGADA À BOCA — REGISTRADA PELO SISTEMA] A estrada acabou: eu ESTOU DIANTE DA ENTRADA de Muralha Quebrada de Silêncio, do lado de FORA. Narre a chegada — a fachada, o que se vê da boca, o rasto de quem entrou antes — e pare aqui. NÃO me p"
+   ]
+  },
+  {
+   "chamada": 59,
+   "jogador": "Passo entre os dois soldados da fita vermelha, sem lhes tocar, e atravesso o arco: entro na Muralha Quebrada de Silêncio com o Euzébio, a tocha à frente.",
+   "envelopes": [
+    "[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]",
+    "[CHEGADA À BOCA — REGISTRADA PELO SISTEMA] A estrada acabou: eu ESTOU DIANTE DA ENTRADA de Muralha Quebrada de Silêncio, do lado de FORA. Narre a chegada — a fachada, o que se vê da boca, o rasto de quem entrou antes — e pare aqui. NÃO me p",
+    "[O MUNDO LEMBROU — CANON] contaram que você correu, e quem conta não estava lá para saber por quê — por \"Respiro fundo e conto a verdade a Inocência, diante da mulher de capa verde: fui escriba…\", há 3 dias, Mercado da Cinza. Isto é o mundo",
+    "[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] Ponha na cena alguém de passagem com UM traço marcante e nenhuma função. Uma frase. Não volte a ela."
+   ]
+  },
+  {
+   "chamada": 61,
+   "jogador": "Respiro fundo e desço para dentro da masmorra, para as salas, com a tocha à frente. Euzébio vem logo atrás.",
+   "envelopes": [
+    "[NESTE MUNDO — O LUGAR PERIGOSO] Um Sítio Maldito aparece quando um Assombro se instala num lugar e começa a vazar; o mundo ao redor apodrece, e a entrada é um arco de pedra ou uma porta que ninguém lemb As regras e os números do sistema co"
+   ]
+  }
+ ]
+}

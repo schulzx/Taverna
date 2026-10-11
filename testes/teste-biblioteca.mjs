@@ -413,7 +413,10 @@ sec("7. A LIGAÇÃO — o mestre consulta nas quatro portas");
      envelope do compasso já diz do que a cena trata e em que tempo da onda
      ela está, e uma forma por cima disso seria o sistema dando duas
      instruções de composição para a mesma cena. */
-  t("a cena comum entra no ponto único do turno", /const formaDaCena = doCompasso \? "" : talvezDarFormaACena\(conteudo\);/.test(app));
+  /* MM18 (11/10): a forma também cede à ESCUTA — numa pergunta do jogador,
+     no degrau da escuta, nem compasso nem forma nascem (`seguraOMundo`,
+     escuta.js). A regra desta linha (a forma cede ao compasso) continua. */
+  t("a cena comum entra no ponto único do turno", /const formaDaCena = doCompasso (\|\| segurarEsc )?\? "" : talvezDarFormaACena\(conteudo\);/.test(app));
   /* v9.104: a PAUTA entrou na frente da nota, e casar com a lista inteira
      quebra a cada sistema que se muda para dentro dela. O que importa
      afirmar é que a peça continua na nota e que a Pauta vem primeiro. */
@@ -422,10 +425,14 @@ sec("7. A LIGAÇÃO — o mestre consulta nas quatro portas");
      entrou depois da forma da cena e o teste caiu sem que nada tivesse
      piorado. Agora afirma-se o que importa: a Pauta abre, a peça está
      dentro, e o compasso vem antes da forma. */
-  const listaDaNota = (app.match(/const nota = \[([^\]]*)\]/) || [])[1] || "";
+  /* MM18 (11/10): a lista dos envelopes do turno passou a ter nome
+     (`doTurno`), porque a escuta a corta a um empurrão antes de ela entrar
+     na nota; a nota é `[pauta, ...doTurno]`. Afirma-se o mesmo: a peça
+     está na lista, a Pauta abre a nota, o compasso vem antes da forma. */
+  const listaDaNota = (app.match(/let doTurno = \[([^\]]*)\]/) || [])[1] || "";
   const pecas = listaDaNota.split(",").map((x) => x.trim());
   t("e vai junto da nota", pecas.includes("formaDaCena"), listaDaNota);
-  t("com a Pauta na frente", pecas[0] === "pauta", listaDaNota);
+  t("com a Pauta na frente", /const nota = \[pauta, \.\.\.doTurno\]/.test(app), listaDaNota);
   t("e o compasso antes da forma", pecas.indexOf("doCompasso") >= 0 && pecas.indexOf("doCompasso") < pecas.indexOf("formaDaCena"), listaDaNota);
   const g = app.split("const talvezDarFormaACena")[1].split("\n  };")[0];
   /* duas formas no mesmo turno é o sistema falando por cima de si mesmo */

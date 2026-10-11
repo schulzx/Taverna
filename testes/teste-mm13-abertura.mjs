@@ -557,8 +557,11 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural",
     cronista.length > 200 && cronista.includes('if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) {'));
   const soleira = corpoApos(app, "const ofertasDaSoleira = () => {");
+  /* MM18 (11/10): o filtro ganhou `!cartazJaVenceu(c)` — o papel pregado
+     vence ao fim de CARTAZ_ESPERA e sai do rodapé. A régua desta linha (o
+     mural fechado não oferece) continua inteira, no mesmo `filter`. */
   t("a soleira não oferece cartaz oferecido antes do mural abrir",
-    soleira.length > 200 && soleira.includes("for (const c of (mural || []).filter((c) => c && c.oferecido && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {"));
+    soleira.length > 200 && soleira.includes("for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {"));
   const pauta = corpoApos(app, 'const pautaDoTurno = (acaoDoTurno = "") => {');
   t("o corpo de pautaDoTurno não está vazio", pauta.length > 3000);
   t("o veto do mural vai à pauta (NÃO PODE), junto do veto do geógrafo",

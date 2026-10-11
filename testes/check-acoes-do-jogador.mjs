@@ -412,10 +412,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      import de `partidaNaRegiao` (marcha.js) entrou na linha 156, no topo
      do arquivo, e tudo abaixo andou uma linha. Só o endereço andou;
      re-medido por esta própria catraca, que deu o número no erro. */
-  } else if (iPush + 1 !== 8628) {
-    falha(`pushMsgs saiu de src/App.jsx:8628 e agora está em :${iPush + 1}`,
+  /* (MM18 · a fiação da escuta e do mural, o frontend) 11/10: 8628 -> 8653,
+     +25 — o import de `escuta.js` (+1, linha 194), os refs `escutaRef` e
+     `adiadosEscutaRef` com o comentário (+7, junto de `escadaRef`) e a
+     linha do RUMO em `pautaDoTurno` (+17), tudo ACIMA de `pushMsgs`. Só o
+     endereço andou; re-medido pelo diff de App.jsx contra o HEAD (7452e3a). */
+  } else if (iPush + 1 !== 8653) {
+    falha(`pushMsgs saiu de src/App.jsx:8653 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8628, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8653, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

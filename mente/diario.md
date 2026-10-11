@@ -15,6 +15,32 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.375 · MM18, a fiação: o Mestre que escuta e o mural sem a gente da história · este commit
+
+- **quem:** `frontend`, à mão. Bastão `.claude/app-jsx` tomado às 00:56 para isto e devolvido no fim.
+- **o que liga (`App.jsx`, tudo em `try/calou`):** `escuta.js` em `enviar` — o pedido lido antes do compasso; numa pergunta, no
+  degrau da escuta, compasso e forma da cena seguram (`talvezAndarOCompasso(conteudo, { segurar })`); a nota passa por
+  `escutarOTurno` (no máximo 1 empurrão, o do fio primeiro; o que adia volta à nota uma vez); a escada anda depois da pauta; a frase
+  do jogador fecha o pedido, depois do rodapé (o histórico guarda o `corpo` de sempre). O RUMO entra em `pautaDoTurno`, fora da luta,
+  antes de `cederNaCena`. Campo novo `escuta` no save (retrato, load, turno desfeito), ignorado pela versão antiga. O mural:
+  `historia: genteDaHistoria(...)` nos dois sorteios e na proposta do Mestre; o cartaz nasce com `pregadoEm` e o vencido sai do
+  mural renovado e do rodapé. A Noite fica de fora (a escuta é de Uma Vida).
+- **a prova:** `testes/teste-mm18-fiacao.mjs` (38) — vermelho em HEAD (28 falham: nada ligado), verde agora. Lê a fiação e repassa
+  `testes/registo-s4-escuta.json` (os 23 turnos do jogador da 4.ª sessão, tirados do registo): **23 empurrões em 18 turnos → 10
+  em 10, nunca mais de 1**; 200 mundos novos com os argumentos do App: **149 → 0** com gente da história no mural (os 156 do
+  backend eram outro lote de sementes; o zero é o mesmo). `escuta.js` saiu da lista de espera da `teste-ligacao`.
+- **jogado (vite preview, origem 4173, campanha nova "Prova MM18"):** a abertura mostra a regra da porta a acontecer (o guarda pede
+  o salvo-conduto). Pergunta ao taverneiro por Wystan e pelo quarto: a última linha do pedido é a minha frase (etiqueta a 14.190 de
+  14.401 caracteres, o rodapé a 1.838), O RUMO na pauta ("responda primeiro … uma coisa só aponta para: Procurar Wystan na Coroa
+  Pálida"), zero empurrões; o save tem `escuta`. O mural da cidade de partida, no mesmo mundo: sem a lista, "Dagny o Manco" (pelo
+  primeiro nome de um marco) pregava; com a lista, ninguém — e o mural ainda está fechado no começo (MM13).
+- **localStorage:** origens 4173 e 5173, antes só `taverna_cfg_golpe_final`/`taverna_cfg_rolagens` (guardadas em arquivo no
+  scratchpad). Nasceu `taverna_save_v1` em 4173; tirado com o jogo desmontado, e as duas origens conferidas por leitura iguais a antes.
+- **decisões médias:** as asserções literais da nota e do compasso (`teste-biblioteca`, `teste-compasso`, `teste-mm13-abertura`)
+  aceitam a forma nova, com o motivo escrito ao lado; o RUMO entra antes de `cederNaCena` para não mexer na régua de `teste-como-chega`
+  (ele não cede). Os endereços da tabela das ações re-medidos pelo diff contra 7452e3a, só em texto de dado (94 → 0).
+- **o que ficou:** o mural só se vê depois de a principal orientar o herói; a prova viva do cartaz que vence (3 dias) fica para a 5.ª sessão.
+
 ## 11/10 · v9.374 · MM18, a história não se oferece (a queixa de 11/10, tarefa 3) · este commit
 
 - **quem:** `backend`, à mão. O conserto inteiro precisa do `App.jsx`: a parte do motor está feita e provada; a fiação fica

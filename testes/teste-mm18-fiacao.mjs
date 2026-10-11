@@ -1,0 +1,181 @@
+/* A FIAÇÃO DA MM18 (Fase MM, 11/10) — o Mestre que escuta, e a história
+   que não se oferece, ligados no App.jsx
+
+   O backend fechou o motor em três versões (v9.372–v9.374) e deixou no
+   diário o mapa de chamada: sem a fiação, `escuta.js` não tinha leitor no
+   jogo e o mural continuava a receber a gente da história pelo nome. Esta
+   suíte prova as duas metades da fiação, e as duas falhavam antes dela:
+
+     1. o App LÊ o que o motor expõe — os pontos de chamada, na ordem certa
+        (o pedido lido antes do compasso; a nota cortada antes da escada
+        andar; a frase do jogador depois do rodapé), o campo novo do save
+        e o mural que recusa a gente da história e deixa o papel vencer;
+     2. os números, com a fiação ligada:
+        · o registo da 4.ª sessão (`registo-s4-escuta.json`: os 23 turnos do
+          jogador fora da luta, a frase e o cabeçalho de cada envelope que
+          o pedido levou), repassado pelo MESMO caminho que `enviar` faz —
+          23 empurrões em 18 turnos → no máximo 10, nunca mais de 1;
+        · 200 mundos novos, o mural da cidade de partida com os argumentos
+          que o App passa — N com gente da história → 0. */
+import fs from "node:fs";
+
+const RAIZ = "../src/";
+const E = await import(RAIZ + "escuta.js");
+const O = await import(RAIZ + "ofertas.js");
+const A = await import(RAIZ + "abertura.js");
+const G = await import(RAIZ + "geografia.js");
+const S = await import(RAIZ + "saga.js");
+
+let bons = 0, maus = 0;
+const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
+const sec = (s) => console.log("\n" + s);
+
+const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const pos = (frag) => APP.indexOf(frag);
+const quantas = (frag) => APP.split(frag).length - 1;
+
+/* o corpo de `enviar`, do envio à chamada: a ordem só vale lá dentro */
+const iEnviar = pos("ultimoPedidoRef.current = String(conteudo || \"\").trimStart().startsWith(\"[\")");
+const iChamada = pos("await chamarMestre(systemRef.current, novoHist)");
+const ENVIAR = iEnviar >= 0 && iChamada > iEnviar ? APP.slice(iEnviar, iChamada) : "";
+const ord = (...frags) => {
+  let ultimo = -1;
+  for (const f of frags) { const i = ENVIAR.indexOf(f, ultimo + 1); if (i < 0) return false; ultimo = i; }
+  return true;
+};
+
+sec("1. o App importa a escuta e as duas peças novas do mural");
+{
+  const imp = APP.match(/import \{([^}]*)\} from "\.\/escuta\.js";/);
+  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta", "andarAEscuta", "contarOAvanco", "degrauDaEscuta", "seguraOMundo", "linhaDoRumo", "escutarOTurno", "separarEnvelopes", "fechoDoPedido"];
+  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])), imp ? "" : "sem import");
+  const of = APP.match(/import \{([^}]*)\} from "\.\/ofertas\.js";/);
+  t("ofertas.js entrega genteDaHistoria e cartazVencido", !!of && /\bgenteDaHistoria\b/.test(of[1]) && /\bcartazVencido\b/.test(of[1]));
+}
+
+sec("2. o estado: um campo novo do save, ignorado pela versão antiga");
+{
+  t("o ref nasce do garantir (lixo vira zero)", quantas("const escutaRef = useRef(garantirEscuta(null));") === 1);
+  t("vai no retrato que o save grava", /escada: escadaRef\.current, escuta: escutaRef\.current,/.test(APP));
+  t("volta no load pelo garantir (save antigo sem o campo começa em zero)", /escutaRef\.current = garantirEscuta\(sv\.escuta\)/.test(APP));
+  t("e o turno desfeito devolve a escada que havia", /escutaRef\.current = r\.escuta !== undefined \? garantirEscuta\(r\.escuta\)/.test(APP));
+  t("os adiados não atravessam um load (são de um turno só)", /garantirEscuta\(sv\.escuta\); adiadosEscutaRef\.current = \[\];/.test(APP));
+}
+
+sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
+{
+  t("o corpo de enviar foi achado", ENVIAR.length > 1000);
+  t("o pedido é lido ANTES de o compasso decidir", ord("pedidoEsc = lerOPedido(conteudo)", "seguraOMundo(pedidoEsc", "talvezAndarOCompasso(conteudo, { segurar: segurarEsc })"));
+  t("numa pergunta segura, a forma da cena também não sai", ENVIAR.includes("doCompasso || segurarEsc ? \"\" : talvezDarFormaACena(conteudo)"));
+  t("o compasso aceita o segurar de quem chama, pela porta de sempre", /segurar: segurarExtra \|\| !!combateRef\.current/.test(APP));
+  t("a nota passa pela escuta, envelope a envelope, com os adiados de antes",
+    ord("textoDaPauta(pautaDoTurno(conteudo)", "const daNota = umSoLugar(notaRef.current);", "escutarOTurno({", "separarEnvelopes(daNota)", "adiadosAntes: adiadosEscutaRef.current"));
+  t("a pauta vem primeiro, e o que fica depois", ord("doTurno = rEsc.ficam;", "const nota = [pauta, ...doTurno]"));
+  t("o que espera volta à nota do turno seguinte", ord("notaRef.current = \"\";", "notaRef.current = adiadosEsc.join(\"\\n\")"));
+  t("a escada anda DEPOIS da pauta (o degrau do turno é o de antes)", ord("escutarOTurno({", "andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco("));
+  t("a luta pausa a escada", ENVIAR.includes("pausa: !!combateRef.current });"));
+  t("a frase do jogador fecha o pedido, depois do rodapé", ord("fechoDoPedido(pedidoEsc)", "pedidoFinal = `${nota ? nota + \"\\n\" : \"\"}${rodape}\\n${fecho}`", "content: pedidoFinal"));
+  t("o histórico continua a guardar o corpo (sem rodapé nem etiqueta)", /\{ role: "user", content: corpo \}, \{ role: "assistant"/.test(APP));
+  t("se a escuta estoura, a nota é a de antes, inteira", ENVIAR.includes("let doTurno = [oficina, daNota, doCompasso, formaDaCena, daFrente, daVirada, daTrama], adiadosEsc = null;"));
+  const calados = ["a escuta lê o pedido", "a escuta do turno", "a escuta anda", "a frase do jogador por último", "o rumo na pauta", "a gente da história", "o cartaz vencido"];
+  t("toda peça nova cala o próprio erro (nunca custa o turno)", calados.every((c) => APP.includes(`calou("${c}"`)), calados.filter((c) => !APP.includes(`calou("${c}"`)).join(", "));
+}
+
+sec("4. O RUMO na pauta, fora da luta");
+{
+  const i = pos("p = porNaPauta(p, \"rumo\", rumo)");
+  const j = pos("const pautaDoTurno = (acaoDoTurno");
+  t("a linha do rumo entra na pauta do turno", i > j && j >= 0);
+  t("com o degrau da escada e o próximo passo da principal",
+    /linhaDoRumo\(\{\s*pedido: lerOPedido\(acaoDoTurno\),\s*degrau: degrauDaEscuta\(garantirEscuta\(escutaRef\.current\)\.semAvanco\),\s*passo: proximoPasso\(/.test(APP));
+  /* antes de `cederNaCena`, que é a última coisa da pauta (teste-como-chega);
+     o rumo não está em nenhuma lista de SECOES_QUE_CEDEM, logo não cede */
+  t("antes do que cede na cena, que fecha a pauta (o rumo não cede)", i > 0 && i < pos("p = cederNaCena(p, {"));
+  t("e nunca na luta", /if \(!combateRef\.current && modoRef\.current !== "rapida"\) \{\s*const rumo = linhaDoRumo/.test(APP));
+}
+
+sec("5. o mural recusa a gente da história, e o papel vence");
+{
+  t("a lista da história sai de abertura, missões e espinha", /genteDaHistoria\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current, espinha: espinhaRef\.current \}\)/.test(APP));
+  t("os dois sorteios do mural passam a lista (oferecer e garantir)", quantas("historia: historiaDoMural(),\n    });") === 2);
+  t("a proposta do Mestre também", APP.includes("{ cidade: cidadeAtualRef.current, nivel: p.nivel || 1, historia: historiaDoMural() });"));
+  t("o papel pregado nasce com data", /pregadoEm: cartaz\.pregadoEm != null \? cartaz\.pregadoEm : diaRef\.current/.test(APP));
+  t("o mural renovado deixa o vencido para trás", APP.includes("c && c.oferecido && !cartazJaVenceu(c)).slice(-TETO_OFERECIDOS)"));
+  t("e o rodapé não oferece \"Aceitar\" de papel vencido", APP.includes("c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c)"));
+}
+
+sec("6. a 4.ª sessão, repassada pela fiação: os empurrões");
+{
+  const REG = JSON.parse(fs.readFileSync(new URL("./registo-s4-escuta.json", import.meta.url), "utf8"));
+  /* o fio da 4.ª sessão: o mesmo de `teste-mm18-escuta.mjs` */
+  const ABERTURA = A.garantirAbertura({
+    principalId: "mis_principal", cidade: "Alto do Sal", chegada: "à porta", razao: "uma carta", sabe: "Inocência",
+    historia: "a 8 horas fica Muralha Quebrada de Silêncio", titulo: "O rasto de Noé Laminado",
+    pista: { nome: "Inocência Bordão", papel: "músico de canto", local: "Sino Quieto" },
+    alvo: { feitio: "procurar", quem: "Noé Laminado", onde: "Rua dos Retalhos", alvo: "", origem: "Muralha Quebrada de Silêncio" },
+  });
+  const MISSOES = [{ id: "mis_principal", titulo: "O rasto de Noé Laminado", tipo: "principal", status: "ativa",
+    etapas: [{ tipo: "falar_com", alvo: "Inocência Bordão", onde: "Sino Quieto" }, { tipo: "falar_com", alvo: "Noé Laminado", onde: "Rua dos Retalhos" }] }];
+  /* o caminho de `enviar`, passo a passo (as asserções da seção 3 provam
+     que é este o caminho): ler → segurar (o compasso e a forma não nascem)
+     → cortar com os adiados de antes → os adiados voltam à nota → a escada
+     anda. A principal ficou 0/2 a sessão inteira: etapas e marcos zero. */
+  let escuta = E.garantirEscuta(null), nota = [], adiadosAntes = [];
+  let antes = 0, turnosAntes = 0, depois = 0, turnosDepois = 0, maxPorTurno = 0, frasesUltimas = 0;
+  for (const turno of REG.turnos) {
+    const fio = E.fioDaHistoria({ abertura: ABERTURA, missoes: MISSOES });
+    const pedido = E.lerOPedido(turno.jogador);
+    const segurar = E.seguraOMundo(pedido, E.degrauDaEscuta(escuta.semAvanco));
+    const n0 = turno.envelopes.filter((x) => E.empurraoDe(x)).length;
+    antes += n0; if (n0) turnosAntes++;
+    const nascem = segurar ? turno.envelopes.filter((x) => { const em = E.empurraoDe(x); return !(em && (em.id === "compasso" || em.id === "forma")); }) : turno.envelopes;
+    const r = E.escutarOTurno({ envelopes: [...E.separarEnvelopes(nota.join("\n")), ...nascem], fio, semAvanco: escuta.semAvanco, adiadosAntes });
+    const ficou = r.ficam.filter((x) => E.empurraoDe(x)).length;
+    depois += ficou; if (ficou) turnosDepois++; maxPorTurno = Math.max(maxPorTurno, ficou);
+    nota = r.adiados; adiadosAntes = r.adiados;
+    escuta = E.andarAEscuta(escuta, { pedido, fio, etapas: 0, marcos: 0, pausa: false });
+    /* o pedido montado como o App monta: a última linha é a frase */
+    const pedidoFinal = `[PAUTA]\n${r.ficam.join("\n")}\n[RODAPÉ DO SISTEMA] …\n${E.fechoDoPedido(pedido)}`;
+    if (pedidoFinal.trimEnd().split("\n").pop() === turno.jogador.trim()) frasesUltimas++;
+  }
+  console.log(`      registo: ${antes} empurrões em ${turnosAntes} turnos → ${depois} em ${turnosDepois}, no máximo ${maxPorTurno} por turno`);
+  t(`o registo tem os 23 turnos do jogador fora da luta (${REG.turnos.length})`, REG.turnos.length === 23);
+  t(`antes: 23 empurrões em 18 turnos (${antes} em ${turnosAntes}) — o número do diário`, antes === 23 && turnosAntes === 18);
+  t(`depois: no máximo 10 (${depois})`, depois <= 10);
+  t(`nunca mais de 1 por turno (${maxPorTurno})`, maxPorTurno <= 1);
+  t(`a frase do jogador é a última linha em todos (${frasesUltimas}/${REG.turnos.length})`, frasesUltimas === REG.turnos.length);
+}
+
+sec("7. 200 mundos novos: o mural da cidade de partida, com os argumentos do App");
+{
+  const genero = "Fantasia medieval";
+  let mundos = 0, antes = 0, depois = 0;
+  for (let i = 0; i < 200; i++) {
+    const semente = `Sonda MM18 mural|${i}`;
+    const mapa = G.gerarGeografia(semente, "sobremundo");
+    const cidade = mapa.cidades[0].nome;
+    let espinha = null;
+    try { espinha = S.estenderEspinha({ semente, mapa, genero, cidadeInicial: cidade }); } catch { espinha = null; }
+    const ab = A.abrirAbertura({ semente, mapa, cidade, espinha, genero, nivel: 1, dia: 1 });
+    if (!ab) continue;
+    mundos++;
+    const missoes = [ab.missao];
+    const gente = O.genteDaHistoria({ abertura: ab.abertura, missoes, espinha });
+    const evitar = missoes.flatMap((q) => [q.titulo, q.dador]);
+    /* as duas chamadas do App: `oferecerTrabalhoDaqui` (6) e `garantirMural` (3) */
+    const mural = (historia) => [6, 3].flatMap((q) => O.ofertasDaqui({ semente, mapa, cidade, base: null, genero, nivel: 1, quantas: q, evitar, ...(historia ? { historia } : {}) }));
+    const daHistoria = (ofs) => ofs.some((o) => O.ehDaHistoria(o.dador, { historia: gente }));
+    if (daHistoria(mural(null))) antes++;
+    if (daHistoria(mural(gente))) depois++;
+  }
+  console.log(`      mural: ${antes} de ${mundos} mundos com gente da história → ${depois}`);
+  t(`os 200 mundos abrem (${mundos})`, mundos === 200);
+  /* o piso é só a prova de que a medida morde: o número exato muda com a
+     base e a espinha (o backend mexe nelas em paralelo — em 11/10 deu 149
+     numa árvore e 79 noutra), e o que esta suíte guarda é o zero de baixo */
+  t(`sem a lista, há gente da história no mural (${antes} de ${mundos})`, antes >= 20);
+  t(`com a lista que o App passa, em nenhum (${depois})`, depois === 0);
+}
+
+console.log(`\nmm18-fiacao: ${bons} passaram, ${maus} falharam`);
+process.exit(maus ? 1 : 0);
