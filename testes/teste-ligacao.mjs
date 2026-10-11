@@ -162,18 +162,11 @@ sec("1. NENHUM MÓDULO MUDO");
     /* 11/10 (Fase MM, MM18): `escuta.js` esperou aqui a fiação em `enviar`
        e `pautaDoTurno`; o App passou a importá-lo no mesmo dia (frontend),
        e a entrada saiu. */
-    /* 11/10 (Fase MM, a campanha que prende): `prometido.js` nasce no
-       backend — as promessas do Narrador guardadas pelo Cronista e cobradas
-       na pauta (O QUE VOLTA) — e espera a fiação do App.jsx na MESMA leva
-       (o Cronista e `pautaDoTurno`, descrita no diário de 11/10). A entrada
-       sai quando o App o importar. */
-    "prometido.js": "a fiação do Cronista e da pauta no App.jsx, pelo frontend (a campanha que prende, 11/10)",
-    /* e `fecho.js` (item 2), que espera a mesma mão: `escolherFecho` em
-       `pautaDoTurno` (O FECHO) e `fechoDaNarrativa` depois da resposta. */
-    "fecho.js": "a fiação de O FECHO em pautaDoTurno, pelo frontend (a campanha que prende, 11/10)",
-    /* e `fios-da-estrada.js` (item 3): o encontro da viagem, a noite do
-       acampamento e o fio novo que só entra amarrado. */
-    "fios-da-estrada.js": "a fiação da viagem, do acampamento e da nota em enviar, pelo frontend (a campanha que prende, 11/10)",
+    /* 11/10 (Fase MM, a campanha que prende): `prometido.js`, `fecho.js` e
+       `fios-da-estrada.js` nasceram no backend (v9.386–v9.388) e esperaram
+       aqui a fiação do App.jsx; o frontend ligou-os na v9.393 (o Cronista,
+       a pauta, a resposta, a viagem, o acampamento e `enviar`), e as três
+       entradas saíram. */
   };
   const mudos = [];
   for (const f of arqs) {

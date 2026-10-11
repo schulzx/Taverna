@@ -680,7 +680,8 @@ sec("4. a definição operacional de 'número que muda'");
      ref da conversa, a mente da ameaça, o mundo das missões e o Cronista
      (falou_com), tudo acima. Só o endereço andou; re-medido pelo diff de
      App.jsx contra o HEAD (ecc0346). */
-  t("e aponta a linha que avança o relógio", !!relogio && /15505/.test(relogio.porque));
+  /* (v9.393 · a fiação da campanha que prende) 15505 -> 15581, +76: o degrau todo acima do relógio */
+  t("e aponta a linha que avança o relógio", !!relogio && /15581/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -1009,7 +1010,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
        disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
        contra o HEAD, e conferido pelo varredor. */
-      .linhas.find((l) => l.onde === "src/App.jsx:13931").voz === "telegrama"); /* (A1 · as pontas) 13741 -> 13833, +92: o mesmo degrau do relógio, todo acima. (v9.371 · a marcha única, a fiação) 13833 -> 13834, +1: o import de marcha.js no topo. (MM18 · a fiação da escuta) 13834 -> 13907, +73: o import, os refs, o rumo e a escuta em enviar, todos acima. (nexo · as três fiações, o frontend) 11/10: 13907 -> 13931, +24: o ref da conversa e o Cronista, acima; re-medido pelo diff. */
+      .linhas.find((l) => l.onde === "src/App.jsx:14007").voz === "telegrama"); /* (A1 · as pontas) 13741 -> 13833, +92: o mesmo degrau do relógio, todo acima. (v9.371 · a marcha única, a fiação) 13833 -> 13834, +1: o import de marcha.js no topo. (MM18 · a fiação da escuta) 13834 -> 13907, +73: o import, os refs, o rumo e a escuta em enviar, todos acima. (nexo · as três fiações, o frontend) 11/10: 13907 -> 13931, +24: o ref da conversa e o Cronista, acima; re-medido pelo diff. */ /* (v9.393 · a fiação da campanha que prende) 13931 -> 14007, +76: o degrau todo acima */
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1204,7 +1205,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
        disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
        contra o HEAD, e conferido pelo varredor. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13798" && x.familia === "alcance")); /* (A1 · as pontas) 13608 -> 13700, +92: o mesmo degrau, todo acima. (v9.371 · a marcha única, a fiação) 13700 -> 13701, +1: o mesmo import. (MM18 · a fiação da escuta) 13701 -> 13774, +73: o mesmo degrau. (nexo · as três fiações, o frontend) 11/10: 13774 -> 13798, +24: o mesmo degrau. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13874" && x.familia === "alcance")); /* (A1 · as pontas) 13608 -> 13700, +92: o mesmo degrau, todo acima. (v9.371 · a marcha única, a fiação) 13700 -> 13701, +1: o mesmo import. (MM18 · a fiação da escuta) 13701 -> 13774, +73: o mesmo degrau. (nexo · as três fiações, o frontend) 11/10: 13774 -> 13798, +24: o mesmo degrau. */ /* (v9.393 · a fiação da campanha que prende) 13798 -> 13874, +76: o degrau todo acima */
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1340,7 +1341,8 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
      mesmo degrau, todo acima. Só o endereço andou. */
   /* (nexo · as três fiações, o frontend) 11/10: 13923 -> 13947, +24 — o mesmo
      degrau, todo acima (o ref da conversa e o Cronista). Só o endereço andou. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /13947/.test(S.ondeSai));
+  /* v9.393: o enviar desceu de :13947 para :14023 (a fiação da campanha que prende acima dele, +76) — o mesmo endereço, re-medido */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /14023/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

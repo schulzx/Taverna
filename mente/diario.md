@@ -6,6 +6,42 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## dd/mm hh:mm · vX.YYY · <título do item> · commit <hash>
+- **estado inicial:** suítes verdes/vermelhas, o que a pauta tinha
+- **conselheiro:** o que propôs (ou "não chamado")
+- **backend / frontend / testes:** o que cada um entregou, em uma linha cada
+- **decisões médias tomadas:** cada uma com o motivo (é o que a pessoa audita)
+- **o que ficou:** o que não coube, o que dormiu, o que foi para "pesado"
+```
+
+---
+
+## 11/10 · v9.393 · MM, a campanha que prende: a fiação no App (`frontend`) · este commit
+
+- **quem:** `frontend`, à mão, com o bastão do `App.jsx` (tomado no início, devolvido no fim). Liga o que os dois `backend`
+  fecharam em v9.386–v9.392, pelas receitas deste diário; nenhum módulo do motor tocado.
+- **o que liga:** `prometido.js` (o ref no save e no load, a secção e as abertas no Cronista, `pagar`/`guardar` depois do
+  parse, `cobrarNoTurno` uma vez por turno em `pautaDoTurno`, fora da Noite); `fecho.js` (`escolherFecho` depois do RUMO, com
+  `fimDeAto` lido da batida do marco atual e sorte semeada; `fechoDaNarrativa` depois da resposta); `fios-da-estrada.js` (o
+  encontro de cena da viagem, a conversa da noite no envelope do sítio, o fio novo filtrado no fim do acampamento e em `enviar`,
+  antes da escuta — o seguro volta à nota); a espinha nasce com `antecedente` e `dia`; `momentoDoFio` logo depois do envelope
+  da espinha; `vilaoDoFio` com `dia`; `montarTrama` com a `amarra` (a abertura forçada passa sem porta). Tudo em `try/calou`.
+  Os três módulos saíram da lista de espera da `teste-ligacao`.
+- **o pedido real, numa campanha nova de Uma Vida (6 turnos ao Narrador, `vite dev`, lido por gancho no `fetch`):** O FECHO em
+  todos (corte → silêncio → silêncio → escolha → escolha → consequência); MOMENTO com a obra do antagonista ("um carroceiro sem
+  rosto recruta os sem-casa…") nos turnos de ato; o Cronista guardou "Greta sabe o que o Altar guarda, mas não diz aqui" no
+  turno 2 do relógio, e no turno 5 a pauta levou **O QUE VOLTA** com ela, e o save fechou-a como `cobrada`. O EM JOGO da batida
+  1 já é o do antecedente (o órfão: "a ponta do último rasto da família"). O save ganhou `prometido`.
+- **decisões médias:** (a) na abertura e nos turnos densos o MOMENTO (prio 3) cai pelo teto da pauta — o envelope da espinha
+  já caía antes; a linha curta do momento do fio entra quando a longa não cabe. Não mexi em prioridades (são do motor). (b) Os
+  endereços de `acoes-do-jogador` (151, nenhum em linha mudada), o `pushMsgs` do varredor (8658 → 8702) e três asserções de
+  `teste-acoes-do-jogador` re-medidos pelo diff de App.jsx contra o HEAD, cada um com o motivo ao lado.
+- **a prova:** `teste-fiacao-prende.mjs` (50 asserções; em HEAD 11 ok e 39 falham). Build limpo, `npm test` verde.
+- **a arrumação:** as entradas de v9.386 a v9.392 estavam dentro do bloco de código do "Formato"; o bloco fecha agora logo
+  depois do modelo, e o texto delas não mudou.
+- **localStorage:** só `localhost:5173`; antes havia `taverna_cfg_golpe_final` e `taverna_cfg_rolagens`. Nasceu
+  `taverna_save_v1` (a campanha de prova), apagado com o jogo desmontado; as duas de antes conferidas por leitura.
+
 ## 11/10 · v9.389–v9.392 · MM, a campanha que prende: a espinha — batidas, segredos, o relógio do antagonista, a trama amarrada (`backend`) · 1bc1375 · ee3d3fc · 872ea11 · este commit
 
 - **quem:** `backend`, à mão, sem tocar no `App.jsx` nem no que é do outro `backend` (`promessas.js`, `compasso.js`, `fecho.js`, os
@@ -165,15 +201,6 @@ Formato:
 - **o que ficou:** o vermelho de `teste-regiao-historia.mjs` na árvore é do outro `backend` (saga.js/regiao.js/batidas.js em voo);
   com HEAD + só os meus caminhos a suíte inteira é verde (`so-o-meu.sh`).
 
-## dd/mm hh:mm · vX.YYY · <título do item> · commit <hash>
-- **estado inicial:** suítes verdes/vermelhas, o que a pauta tinha
-- **conselheiro:** o que propôs (ou "não chamado")
-- **backend / frontend / testes:** o que cada um entregou, em uma linha cada
-- **decisões médias tomadas:** cada uma com o motivo (é o que a pessoa audita)
-- **o que ficou:** o que não coube, o que dormiu, o que foi para "pesado"
-```
-
----
 ## 11/10 · v9.385 · MM, as três fiações da auditoria de coerência e da 4.ª sessão (`frontend`) · este commit
 
 - **quem:** `frontend`, com o bastão do `App.jsx` (tomado no início, devolvido no fim deste trabalho), e a regra em `missoes.js` e

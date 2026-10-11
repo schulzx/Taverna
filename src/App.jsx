@@ -179,7 +179,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio } from "./saga.js";
+import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, marcoAtual, momentoDoFio } from "./saga.js";
 import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
@@ -192,6 +192,10 @@ import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
+/* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
+import { garantirPrometido, guardarSementes, pagarSementes, cobrarNoTurno, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
+import { escolherFecho, fechoDaNarrativa } from "./fecho.js";
+import { encontroComFio, linhaDoAcampamento, fiosNovosNaEstrada } from "./fios-da-estrada.js";
 import { calaNaMasmorra, aquiDoTurno, cenaNaMasmorra, linhaDaFicha, horizonteDaPergunta } from "./masmorra-sem-cidade.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
 import { dossieDe, promptDoAtor, pedidoDoAtor, envelopeDasFalas, bocasDoTurno, falaDaResposta } from "./falas.js";
@@ -5775,6 +5779,14 @@ export default function Taverna() {
      turno: o que perde de novo cai. */
   const escutaRef = useRef(garantirEscuta(null));
   const adiadosEscutaRef = useRef([]);
+  /* A CAMPANHA QUE PRENDE (11/10). `prometidoRef`: as promessas que a narração
+     plantou, guardadas pelo Cronista e cobradas na pauta (O QUE VOLTA) — campo
+     novo do save, que a versão antiga ignora. `fechoRef`: o fecho do último
+     turno, para o próximo não o repetir (não vai ao save). `ultimoTemaRef`: o
+     tema de história que a estrada usou por último, para não o repetir. */
+  const prometidoRef = useRef(garantirPrometido(null));
+  const fechoRef = useRef("");
+  const ultimoTemaRef = useRef("");
   /* a postura ativa do mundo, com sua permanencia; e o ultimo peso visto,
      para a postura ler luto/gloria/vergonha por um ou dois dias. */
   const posturaRef = useRef(garantirPosturaAtiva(null));
@@ -7075,6 +7087,9 @@ export default function Taverna() {
       if (casa && !masmorraRef.current) p = porNaPauta(p, "onde", envelopeDaGuilda(casa)); /* MM16 nº 4: lá dentro a casa não é o lugar */
     }
     p = porNaPauta(p, "momento", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));
+    /* v9.391: a marca do antagonista no momento, o JÁ SE SABE do segredo que
+       acabou de cair, o que o mundo lembra de quem chegou a tempo */
+    try { p = porNaPauta(p, "momento", momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current })); } catch (e) { calou("o momento do fio", e); }
     /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
        dentro da batida — o cerco que a Jornada esta vivendo agora. */
     if (episodioRef.current && episodioRef.current.aberto) p = porNaPauta(p, "momento", envelopeDoEpisodio(episodioRef.current));
@@ -7290,6 +7305,35 @@ export default function Taverna() {
         if (rumo) p = porNaPauta(p, "rumo", rumo);
       }
     } catch (e) { calou("o rumo na pauta", e); }
+    /* A CAMPANHA QUE PRENDE (item 1): O QUE VOLTA — a promessa que a narração
+       plantou e o sistema guardou volta quando amadurece. Anda o relógio, por
+       isso UMA vez por turno (pautaDoTurno só é chamada em `enviar`). Fora da
+       Noite: lá não há campanha para prometer. */
+    try {
+      if (modoRef.current !== "rapida") {
+        const rv = cobrarNoTurno(prometidoRef.current, {
+          pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current,
+          fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
+          mortos: (baseMundoRef.current || {}).mortos || [],
+        });
+        prometidoRef.current = rv.estado;
+        if (rv.linha) p = porNaPauta(p, "volta", rv.linha);
+      }
+    } catch (e) { calou("o que volta na pauta", e); }
+    /* (item 2): O FECHO — como acaba a resposta deste turno, nunca o anterior;
+       no fim do ato, a escolha com preço (a batida que vira o ato). */
+    try {
+      let fimDeAto = false;
+      try { fimDeAto = !!((marcoAtual(espinhaRef.current, historiaRef.current.etapa) || {}).batida || {}).fecho; } catch (e) { calou("o fim do ato", e); }
+      const fx = escolherFecho({
+        pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current, fimDeAto,
+        gente: (pessoasDaCena() || []).length > 0 || ((personagemRef.current || {}).grupo || []).length > 0,
+        ultimo: fechoRef.current,
+        sorte: rng(hashSemente(sementeMundo() + "|fecho|" + turnoDeRegistroRef.current)),
+      });
+      fechoRef.current = fx.id;
+      p = porNaPauta(p, "fecho", fx.linha);
+    } catch (e) { calou("o fecho na pauta", e); }
     /* MM16 nº 5: O QUE CEDE ONDE. A tabela é do motor (`SECOES_QUE_CEDEM`);
        aqui só se diz que cena é esta. `arredores` é FORA DOS MUROS — sem
        cidade (estrada, jornada) ou num lugar marcado `distancia: "arredores"`
@@ -8712,7 +8756,7 @@ export default function Taverna() {
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
       modo: garantirModo(modoRef.current),
-      historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, escuta: escutaRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
+      historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, escuta: escutaRef.current, prometido: prometidoRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
@@ -10963,7 +11007,7 @@ export default function Taverna() {
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]}}",
+        "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]},\"promessas\":[],\"promessas_pagas\":[]}",
         "SEÇÃO missoes: \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
@@ -10979,6 +11023,7 @@ export default function Taverna() {
         "CAMPO \"prazo\": só quando a CENA impôs pressa em número de noites (\"até a próxima lua\", \"antes que ela morra\", \"tenho três dias\") — use 4, 6 ou 8, o mais próximo do que foi dito. Sem pressa dita, \"prazo\": 0. Não invente urgência: prazo em toda missão não pressiona em nenhuma.",
         "UM TRABALHO É UMA MISSÃO SÓ: se a proposta desta cena é o mesmo serviço de uma missão que já está na lista (o cartaz no mural e a pessoa que vem falar dele são a mesma coisa), missao_oferecida é null. E a etapa \"falar_com\" nunca aponta para quem está oferecendo — o herói já está diante dele.",
         "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
+        SECAO_DO_CRONISTA,
         "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
       ].join("\n");
       const evG = eventosRef.current && eventosRef.current.global;
@@ -10988,10 +11033,17 @@ export default function Taverna() {
       const jaNoDiario = garantirMissoes(missoesRef.current)
         .filter((q) => ["ativa", "oferecida"].includes(q.status))
         .map((q) => `- "${q.titulo}"${q.dador ? ` (de ${q.dador})` : ""} — ${q.descricao || "—"}`).join("\n");
-      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\nELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
+      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\n${(() => { try { const ab = abertasParaOCronista(prometidoRef.current); return ab ? ab + "\n\n" : ""; } catch (e) { calou("as abertas ao Cronista", e); return ""; } })()}ELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
       const txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve");
       const r = parseObjetoTolerante(txt);
       if (!r || typeof r !== "object") return;
+      /* ---- SEÇÃO promessas (a campanha que prende) ----
+         Primeiro paga o que a narração pagou, depois guarda o que plantou:
+         o filtro do lembrete de cena e o caderno de seis são do motor. */
+      try {
+        const pg = pagarSementes(prometidoRef.current, r.promessas_pagas).estado;
+        prometidoRef.current = guardarSementes(pg, r.promessas).estado;
+      } catch (e) { calou("as promessas do Cronista", e); }
       const msgs = [];
       let p = pers;
       let tocouElenco = false;
@@ -11769,6 +11821,7 @@ export default function Taverna() {
     escadaRef.current = garantirEscada(null);
     escutaRef.current = garantirEscuta(null);
     adiadosEscutaRef.current = [];
+    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = "";
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
     episodioRef.current = null;
@@ -12337,10 +12390,24 @@ export default function Taverna() {
        escuta estoura, a nota é a de antes, inteira. */
     const daNota = umSoLugar(notaRef.current); /* MM14: a pauta nunca leva duas versões do lugar */
     let doTurno = [oficina, daNota, doCompasso, formaDaCena, daFrente, daVirada, daTrama], adiadosEsc = null;
+    /* A CAMPANHA QUE PRENDE (item 3): na estrada (em viagem ou acampado), o
+       envelope que abre fio novo só entra se se amarra à história, e entra
+       com a amarra dita; o resto fica seguro na nota até à chegada. */
+    let envDoTurno = null, seguraEstrada = [];
+    try {
+      const naEstrada = !!jornadaRef.current || !!acampadoRef.current;
+      if (naEstrada) {
+        const fe = fiosNovosNaEstrada([oficina, ...separarEnvelopes(daNota), doCompasso, formaDaCena, daFrente, daVirada, daTrama], {
+          naEstrada, fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
+          prometido: prometidoRef.current, nomes: [(nemesisRef.current || {}).nome].filter(Boolean),
+        });
+        if (fe.seguram.length || fe.amarrados.length) { envDoTurno = fe.ficam; seguraEstrada = fe.seguram; doTurno = fe.ficam; }
+      }
+    } catch (e) { calou("os fios novos na estrada", e); envDoTurno = null; seguraEstrada = []; }
     if (pedidoEsc) {
       try {
         const rEsc = escutarOTurno({
-          envelopes: [oficina, ...separarEnvelopes(daNota), doCompasso, formaDaCena, daFrente, daVirada, daTrama],
+          envelopes: envDoTurno || [oficina, ...separarEnvelopes(daNota), doCompasso, formaDaCena, daFrente, daVirada, daTrama],
           fio: fioEsc, semAvanco: garantirEscuta(escutaRef.current).semAvanco, adiadosAntes: adiadosEscutaRef.current,
         });
         doTurno = rEsc.ficam;
@@ -12350,6 +12417,7 @@ export default function Taverna() {
     const nota = [pauta, ...doTurno].filter(Boolean).join("\n");
     notaRef.current = "";
     if (adiadosEsc) { notaRef.current = adiadosEsc.join("\n"); adiadosEscutaRef.current = adiadosEsc; }
+    if (seguraEstrada.length) notaRef.current = [notaRef.current, ...seguraEstrada].filter(Boolean).join("\n");
     /* a escada anda depois da pauta: o degrau deste turno é o de antes dele */
     try {
       if (pedidoEsc) escutaRef.current = andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco({ missoes: missoesRef.current, espinha: espinhaRef.current }), pausa: !!combateRef.current });
@@ -12596,6 +12664,8 @@ export default function Taverna() {
       const narrativaFinal = (portaoRef.current || []).length
         ? await passarPeloPortao(resp.narrativa || "")
         : (resp.narrativa || "");
+      /* o "anterior" do fecho é o que se leu, quando o Narrador fechou de outro jeito */
+      try { const lido = fechoDaNarrativa(narrativaFinal); if (lido === "pergunta" || lido === "corte") fechoRef.current = lido; } catch (e) { calou("o fecho lido", e); }
       const histFinal = [...base, { role: "user", content: corpo }, { role: "assistant", content: JSON.stringify({ narrativa: narrativaFinal }) }];
       setHistorico(histFinal);
       /* v9.31: a ALTERNÂNCIA morreu. Fora de combate não existe mais "vez do
@@ -13059,7 +13129,12 @@ export default function Taverna() {
            mais abaixo. */
         estrutura: (mundo && mundo.estrutura) || historiaRef.current.estrutura,
         cidadeInicial: cidadeAtualRef.current,
+        /* v9.389–v9.391: o que está em jogo é o do antecedente, a reviravolta
+           do ato 0 colhe o laço dele, e o relógio do antagonista conta daqui */
+        antecedente: (pers && pers.antecedente) || "",
+        dia: diaRef.current,
       });
+      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = "";
       /* MM17 C1: A HISTÓRIA MORA NOS LUGARES. Só num mapa de região (campanha
          nova de Uma Vida): cada ato do meio e o do fim descem ao SEU lugar, e
          o confronto final é no clímax (espinhaNaRegiao, regiao.js). Sem
@@ -13379,6 +13454,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       reviravoltaMaiorRef.current = garantirReviravolta(sv.reviravoltaMaior);
       escadaRef.current = garantirEscada(sv.escada);
       try { escutaRef.current = garantirEscuta(sv.escuta); adiadosEscutaRef.current = []; } catch (e) { calou("a escuta no load", e); }
+      try { prometidoRef.current = garantirPrometido(sv.prometido); fechoRef.current = ""; ultimoTemaRef.current = ""; } catch (e) { calou("o prometido no load", e); prometidoRef.current = garantirPrometido(null); }
       posturaRef.current = garantirPosturaAtiva(sv.postura);
       episodioRef.current = garantirEpisodio(sv.episodio);
       modoRef.current = modoDoSave(sv);
@@ -17707,7 +17783,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          onde a indução tem de começar. */
       const c = garantirCompasso(compassoRef.current);
       if (!forcar && c.movimento === "respiro") return "";
-      const t = montarTrama({ situacao: situacaoDaTrama(), material: materialDaTrama() });
+      /* v9.392: fora da abertura forçada, a trama só nasce amarrada ao fio */
+      let amarra = null;
+      if (!forcar) {
+        try { amarra = { fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }), prometido: prometidoRef.current, nomes: [(nemesisRef.current || {}).nome].filter(Boolean) }; } catch (e) { calou("a amarra da trama", e); amarra = null; }
+      }
+      const t = montarTrama({ situacao: situacaoDaTrama(), material: materialDaTrama(), amarra });
       if (!t) return "";
       const m = criarMissao({
         id: `${t.id}_${diaRef.current}`, titulo: t.titulo, tipo: "trama", status: "ativa",
@@ -21753,7 +21834,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        o corpo e as fases continuam a ser os do vilão. Save sem fio, ou com o
        antagonista já caído: o de sempre. */
     let n = n0;
-    try { n = vilaoDoFio(n0, espinhaRef.current, { derrotados: mundoDasMissoes().derrotados }) || n0; } catch (e) { calou("vilaoDoFio", e); n = n0; }
+    try { n = vilaoDoFio(n0, espinhaRef.current, { derrotados: mundoDasMissoes().derrotados, dia: diaRef.current }) || n0; } catch (e) { calou("vilaoDoFio", e); n = n0; }
     nemesisRef.current = n; setNemesis(n);
     /* O REGISTRO DE PESSOAS NÃO O RECEBE AINDA. Antes ele entrava no elenco
        no dia em que nascia, com "NÊMESIS do herói" escrito na ficha — e o
@@ -22465,7 +22546,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch (e) { calou("pouso recusado ao procurado", e); }
     sitioRef.current = sitio; setSitio(sitio);
     pushMsgs([{ autor: "sistema", texto: `${falaDoSitio(sitio)} O tempo pausa — converse à vontade, arrume o que precisar levar, e escolha como sair.` }]);
-    enviar(envelopeDoSitio(sitio), personagem);
+    /* a campanha que prende (item 3): a conversa da noite volta à história,
+       pela boca de quem anda comigo (sozinho, nada) */
+    let envSitio = envelopeDoSitio(sitio);
+    try {
+      const la = linhaDoAcampamento({
+        fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
+        prometido: prometidoRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], ultimoTema: ultimoTemaRef.current,
+      });
+      if (la) envSitio = envSitio + "\n" + la;
+    } catch (e) { calou("a noite do acampamento", e); }
+    enviar(envSitio, personagem);
   };
 
   /* ---------------- LEVANTAR SEM DESCANSAR (v9.99) ----------------
@@ -22622,7 +22713,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           }
         }
       }
-      if (partes.length) eventosMsg = "\n" + partes.join("\n");
+      /* a campanha que prende (item 3): o fio novo da manhã só entra amarrado */
+      let partesFicam = partes;
+      try {
+        const fe = fiosNovosNaEstrada(partes, {
+          naEstrada: true, fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
+          prometido: prometidoRef.current, nomes: [(nemesisRef.current || {}).nome].filter(Boolean),
+        });
+        partesFicam = fe.ficam;
+        if (fe.seguram.length) notaRef.current = [notaRef.current, ...fe.seguram].filter(Boolean).join("\n");
+      } catch (e) { calou("os fios novos do acampamento", e); partesFicam = partes; }
+      if (partesFicam.length) eventosMsg = "\n" + partesFicam.join("\n");
     }
     let reinoMsg = "";
     let guardaMsg = "";
@@ -23534,6 +23635,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
     const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null);
+    /* a campanha que prende (item 3): o encontro de CENA ganha o tema da
+       história; o perigo e o achado ficam com a tabela. `enc.tipo` conta. */
+    let encV = enc;
+    try {
+      encV = encontroComFio(enc, { fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }), prometido: prometidoRef.current, ultimoTema: ultimoTemaRef.current }) || enc;
+      if (encV.tema) ultimoTemaRef.current = encV.tema.texto;
+    } catch (e) { calou("o encontro com fio", e); encV = enc; }
     /* CÓDEX: viagens e perigos da estrada contam para as conquistas */
     bumpCont("viagens");
     if (enc.tipo === "perigo") bumpCont("perigosEstrada");
@@ -23694,7 +23802,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const textoDaViagem = (`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
 LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
-ENCONTRO DO TRECHO (${enc.tipo}): ${enc.detalhe}
+ENCONTRO DO TRECHO (${enc.tipo}): ${encV.detalhe}
 Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". ${paraBoca ? (ultimoTrecho ? `Este trecho termina diante da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade: narre-o até ela ficar à vista, sem me pôr lá dentro e sem registrar "cidade_atual" — a chegada à boca é do sistema.` : `Estou a caminho da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade — aproxime-me dela, mas NÃO me faça chegar nem entrar, e NÃO registre "cidade_atual": a chegada à boca é do sistema, e ele avisa quando for.`) : `Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."}`} Termine me convidando a agir. RITMO DE MARCHA: ${rit.nome.toLowerCase()} — ${rit.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`);
     if (qr.chamadas) enviar(textoDaViagem, persV);
     else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${textoDaViagem}`;

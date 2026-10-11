@@ -422,10 +422,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      junto de `espinhaRef`) e a linha da mente da ameaça (+1) entraram ACIMA
      de `pushMsgs`. Só o endereço andou; re-medido pelo diff de App.jsx
      contra o HEAD (ecc0346). */
-  } else if (iPush + 1 !== 8658) {
-    falha(`pushMsgs saiu de src/App.jsx:8658 e agora está em :${iPush + 1}`,
+  /* (v9.393 · a fiação da campanha que prende, o frontend) 11/10: 8658 -> 8702,
+     +44 — os imports de prometido.js, fecho.js e fios-da-estrada.js (+4), os
+     três refs novos (+8) e o momento do fio, O QUE VOLTA e O FECHO em
+     `pautaDoTurno` (+32), tudo ACIMA de `pushMsgs`. Só o endereço andou;
+     re-medido pelo diff de App.jsx contra o HEAD (ebf9b68). */
+  } else if (iPush + 1 !== 8702) {
+    falha(`pushMsgs saiu de src/App.jsx:8702 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8658, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8702, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;
