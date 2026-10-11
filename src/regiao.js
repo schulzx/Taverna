@@ -62,6 +62,7 @@ import { rotaAteAMasmorra, horasPeloChao, IDA_NA_REGIAO } from "./boca.js";
 import { criaturasDaRegiao, locaisDaCidade, genteDoLocal, chefesDoMundo, TIPOS_MASMORRA, EPITETOS, RUMORES, NOMES_DO_MUNDO } from "./mundo-base.js";
 import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
 import { garantirEspinha, feitioDe } from "./saga.js";
+import { marcarBatidas } from "./batidas.js";
 import { garantirModo } from "./modos.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
@@ -681,7 +682,10 @@ export function espinhaNaRegiao(mapa, espinha, ctx) {
   const ultimo = e.atos.length - 1;
   const atos = [...e.atos];
   for (const i of [ultimo, ...e.atos.map((_, j) => j).filter((j) => j !== ultimo)]) atos[i] = montar(e.atos[i], i);
-  return garantirEspinha({ ...e, atos });
+  /* MM (a campanha que prende): o ato mudou de forma — a descida, os guardas,
+     o fecho no clímax —, e as batidas releem-se sobre a forma final (o
+     último marco de cada ato é o fecho dele). O antecedente vem do fio. */
+  return garantirEspinha(marcarBatidas({ ...e, atos }, { semente: o.semente, mapa, genero: o.genero, molde: o.molde, lex: o.lex }));
 }
 
 /* ============================================================

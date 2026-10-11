@@ -47,6 +47,7 @@ import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
 import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
 import { contrair } from "./lugar.js";
+import { marcarBatidas, antecedenteDe } from "./batidas.js";
 
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
@@ -141,6 +142,9 @@ export function garantirEspinha(e) {
       titulo: String(f.titulo || "").slice(0, 40),
       especie: String(f.especie || "").slice(0, 40),
       motivo: String(f.motivo || "").slice(0, 80),
+      /* MM (a campanha que prende): o passado do herói, de onde sai o que
+         está em jogo em cada batida (batidas.js). Só aditivo. */
+      ...(antecedenteDe(f.antecedente) ? { antecedente: antecedenteDe(f.antecedente) } : {}),
     } } : {}),
     atos: atos.map((a, i) => ({
       ato: Number.isFinite(a && a.ato) ? a.ato : i,
@@ -161,6 +165,15 @@ export function garantirEspinha(e) {
         quantos: Math.max(1, Number(m && m.quantos) || 1),
         condicao: (m && m.condicao) || null,
         feito: !!(m && m.feito),
+        /* MM (a campanha que prende): a BATIDA — a cena, o que está em jogo,
+           a pergunta (batidas.js). Campo novo, só aditivo: a espinha antiga
+           não o tem e o envelope dela continua o de sempre. */
+        ...(m && m.batida && typeof m.batida === "object" && m.batida.cena ? { batida: {
+          cena: String(m.batida.cena).slice(0, 140),
+          emJogo: String(m.batida.emJogo || "").slice(0, 240),
+          pergunta: String(m.batida.pergunta || "").slice(0, 160),
+          fecho: !!m.batida.fecho,
+        } } : {}),
       })),
     })),
   };
@@ -170,7 +183,7 @@ export function garantirEspinha(e) {
    Uma vez só, na criação do mundo. Determinística: a mesma semente estende
    a mesma espinha, sempre — é o que permite dizer que a história ESTAVA ali
    antes de o jogador perguntar. */
-export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia medieval", molde = null, lex = null, estrutura = "jornada", cidadeInicial = "" } = {}) {
+export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia medieval", molde = null, lex = null, estrutura = "jornada", cidadeInicial = "", antecedente = "" } = {}) {
   const est = estruturaPorId(estrutura);
   const cidades = (mapa && mapa.cidades) || [];
   const regioes = (mapa && mapa.regioes) || [];
@@ -318,7 +331,11 @@ export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia 
     especie: principal.especie || "",
     motivo: principal.motivo || "",
   } : null;
-  return garantirEspinha({ estrutura: est.id, semente, atos, fio });
+  /* AS BATIDAS (batidas.js): no máximo cinco cenas por ato, cada uma com o
+     que está em jogo para ESTE herói e a pergunta que responde. Os marcos
+     não mudam — a mesma semente estende a mesma espinha de antes; o que
+     nasce é a leitura deles. */
+  return garantirEspinha(marcarBatidas({ estrutura: est.id, semente, atos, fio }, { semente, mapa, genero, molde, lex, antecedente }));
 }
 
 /* ---------------- ONDE ESTAMOS ----------------
@@ -448,6 +465,10 @@ export const FIO = {
   /* o nome curto da sombra, quando é a peça seguinte */
   curta: { inicio: "quem está por trás de tudo", meio: "{titulo}", fim: "{nome}" },
   diz: "O FIO (do sistema — é a verdade desta peça): {da}; e o fio inteiro, puxado até ao fim, leva a {sombra}. O que a peça sabe ou guarda só se diz quando o herói chega a ela, e não há outra razão para ela estar aqui — não invente uma.",
+  /* a mesma regra em metade do tamanho, para a espinha com batidas: o que a
+     batida acrescenta (a cena, o que está em jogo, a pergunta) paga-se com
+     o que esta frase tinha de repetido — a pauta tem teto (TETO_DA_PAUTA) */
+  dizCurto: "O FIO (do sistema — a verdade desta peça): {da}; puxado até ao fim, leva a {sombra}. Só se diz quando o herói chega; não invente outra razão.",
 };
 
 const encherFio = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => (v[k] == null ? "" : String(v[k])));
@@ -463,7 +484,7 @@ function sombraDe(e) {
 }
 
 /* A linha do fio para o marco `m` (o atual do ato `ato`). "" sem sombra. */
-function linhaDoFio(e, m, ato) {
+function linhaDoFio(e, m, ato, { curto = false } = {}) {
   const s = sombraDe(e);
   if (!s) return "";
   const ultimo = e.atos.length - 1;
@@ -486,15 +507,62 @@ function linhaDoFio(e, m, ato) {
     const objeto = FIO.objetos[Math.floor(r() * FIO.objetos.length)];
     da = encherFio(FIO.da[c] || FIO.da.conhece, { ...m, leva, objeto });
   }
-  return contrair(encherFio(FIO.diz, { da, sombra }));
+  return contrair(encherFio(curto ? FIO.dizCurto : FIO.diz, { da, sombra }));
+}
+
+/* a sombra curta no tamanho do ato — o que enche o {sombra} das batidas */
+function sombraCurta(e, ato) {
+  const s = sombraDe(e);
+  if (!s) return "quem está por trás de tudo";
+  const ultimo = e.atos.length - 1;
+  return encherFio(FIO.curta[ato <= 0 ? "inicio" : ato >= ultimo ? "fim" : "meio"], s);
+}
+
+/* ---------------- O ENVELOPE DA ESPINHA COM BATIDAS ----------------
+   A batida diz a cena, o que está em jogo e a pergunta; o caminho (o bicho,
+   o fundo) diz para que batida leva. A regra de não anunciar a estrutura é
+   a mesma, dita uma vez e curta. */
+const maiuscula = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
+export const ENVELOPE_DAS_BATIDAS = {
+  fecho: "Fecho do ato: acabe a cena numa escolha com preço, não num presságio.",
+  regra: "Decidido na criação do mundo: puxe para aí sem anunciar; NUNCA diga ao jogador que existe uma estrutura. Se ele for a outro lado, isto espera.",
+};
+function envelopeDasBatidas(e, m, ato, nome) {
+  const ms = marcosDoAto(e, ato);
+  const bats = ms.filter((x) => x.batida);
+  const i = bats.findIndex((x) => x.id === m.id);
+  const curta = sombraCurta(e, ato);
+  const enche = (x) => encherFio(x, { sombra: curta });
+  const partes = [];
+  if (m.batida) {
+    /* a cena já diz quem e onde; o título ("Encontrar X") seria a mesma
+       coisa duas vezes */
+    partes.push(`ESPINHA — ${nome ? `${nome}, ` : ""}batida ${i + 1} de ${bats.length}: ${feitioDe(m.feitio).icone} ${enche(m.batida.cena)}.`);
+    partes.push(`EM JOGO: ${enche(m.batida.emJogo)}. A PERGUNTA: ${maiuscula(enche(m.batida.pergunta))}`);
+  } else {
+    /* o caminho leva à batida seguinte — a deste ato, ou, depois do fecho,
+       a primeira do ato que vem */
+    const ordem = e.atos.flatMap((a) => a.marcos);
+    const alvo = ordem.slice(ordem.findIndex((x) => x.id === m.id) + 1).find((x) => x.batida && !x.feito) || null;
+    partes.push(`ESPINHA — ${nome ? `${nome}, ` : ""}a caminho${alvo ? ` de ${encherFio(alvo.batida.cena, { sombra: curta })}` : ""}: ${linhaDoMarco(m)}.`);
+  }
+  let fio = "";
+  try { fio = linhaDoFio(e, m, ato, { curto: true }); } catch { fio = ""; }
+  if (fio) partes.push(fio);
+  if (m.batida && m.batida.fecho) partes.push(ENVELOPE_DAS_BATIDAS.fecho);
+  partes.push(ENVELOPE_DAS_BATIDAS.regra);
+  return contrair(partes.join(" "));
 }
 
 export function envelopeDaEspinha(espinha, ato, est) {
   const e = garantirEspinha(espinha);
   const m = marcoAtual(e, ato);
   if (!m) return "";
-  const p = progressoDoAto(e, ato);
   const nome = ((est && est.etapas && est.etapas[ato]) || {}).nome || "";
+  /* a espinha que nasceu com batidas fala por elas; a de um save antigo,
+     como sempre falou */
+  if (e.atos.some((a) => a.marcos.some((x) => x.batida))) return envelopeDasBatidas(e, m, ato, nome);
+  const p = progressoDoAto(e, ato);
   let fio = "";
   try { fio = linhaDoFio(e, m, ato); } catch { fio = ""; }
   return `ESPINHA — ${nome ? `${nome}, ` : ""}marco ${p.feitos + 1} de ${p.total}: ${linhaDoMarco(m)}.${fio ? ` ${fio}` : ""} Isto foi decidido na criação do mundo e não é sugestão sua: puxe a cena para esse rumo sem anunciá-lo, e NUNCA diga ao jogador que existe uma estrutura. Ele não é obrigado a ir agora — se ele for para outro lado, o mundo espera e o marco continua de pé.`;

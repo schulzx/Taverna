@@ -182,7 +182,7 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
 {
   /* Gravados ANTES de qualquer linha desta etapa (06/10), com este laço,
      sobre a árvore de HEAD v9.356 (git archive). */
-  const HEAD = { espinha: "f8252233ebb5614e", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  const HEAD = { espinha: "fb6ef95e1b69fb39", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
   /* 11/10 (MM18 · a lei da porta): `abertura` mudou de fff026b80b9be705
      para cdff91d82c5067eb porque a abertura passa a guardar `porta` (a regra
      da porta da cidade, da ficha). Medido com o mesmo laço: SEM o campo
@@ -200,7 +200,12 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
      o chefe SEM nome próprio casa pelo nome inteiro em vez da espécie
      (`chaveDoChefe`, saga.js). Medido com o mesmo laço: tirando o `fio` e a
      `cidade` e devolvendo a chave antiga a esses chefes, o hash volta a
-     5223fea98f7cc861, byte a byte. */
+     5223fea98f7cc861, byte a byte.
+     11/10 (a campanha que prende · as batidas): `espinha` mudou de
+     f8252233ebb5614e para fb6ef95e1b69fb39 por uma razão só: os marcos que
+     são cena ganham `batida` (a cena, o que está em jogo, a pergunta;
+     batidas.js). Medido com o mesmo laço: tirando a `batida` de cada marco,
+     o hash volta a f8252233ebb5614e, byte a byte — nenhum marco mudou. */
   const hs = {};
   const h = (k, v) => { (hs[k] ||= createHash("sha256")).update(J(v) ?? "u"); };
   for (const molde of ["sobremundo", "torre"]) for (let i = 0; i < 200; i++) {

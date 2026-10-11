@@ -168,8 +168,14 @@ sec("8. A CATRACA E O QUE VAI À PAUTA");
   t("e não tem marco atual", marcoAtual(vazia, 0) === null);
   t("nem envelope", envelopeDaEspinha(vazia, 0, est) === "");
   const env = envelopeDaEspinha(espinha, 0, est);
-  t("o envelope diz onde estamos", env.includes("marco 1 de"));
-  t("e traz o marco de verdade", env.includes(marcoAtual(espinha, 0).titulo));
+  /* MOVIDAS A 11/10 (a campanha que prende, batidas.js), com o motivo: a
+     espinha nova fala por BATIDAS — a cena, o que está em jogo, a pergunta —
+     e não por marcos numerados; "marco 1 de 7" contava a lista de tarefas
+     que a pessoa achou fria. A intenção fica: o envelope diz em que ponto do
+     ato estamos e traz a peça de verdade (quem e onde), não uma inventada. */
+  const m0 = marcoAtual(espinha, 0);
+  t("o envelope diz onde estamos", /batida 1 de [0-9]+/.test(env));
+  t("e traz o marco de verdade (quem, ou o lugar, e onde)", env.includes(m0.quem || m0.onde) && !!m0.batida && env.includes(m0.batida.cena.split(",")[0]));
   /* o Narrador não pode contar que existe estrutura — é o que transformaria
      "vivi isso" em "cumpri a etapa 3 de 6" */
   t("e manda não contar ao jogador", /NUNCA diga ao jogador que existe uma estrutura/.test(env));
