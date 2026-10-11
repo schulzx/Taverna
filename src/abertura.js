@@ -130,7 +130,12 @@ export const RAZOES_DA_ESTRUTURA = {
    inteira. */
 export const LACOS_DO_ANTECEDENTE = {
   orfao: { nome: "Órfão da Estrada", o: "e um nome parecido com o da família que perdeu anda ligado a isto" },
-  soldado: { nome: "Soldado Reformado", o: "e quem mandou o recado foi um antigo companheiro de armas" },
+  /* nexo (11/10): era "e quem mandou o recado foi um antigo companheiro de
+     armas" — e a razão ao lado dizia "uma carta SEM ASSINATURA" ou "alguém
+     a quem devia a vida pediu-lhe, antes de morrer": dois remetentes, ou um
+     anónimo com nome, na mesma frase. O laço diz quem está METIDO nisto,
+     nunca quem mandou — assim casa com todas as razões. */
+  soldado: { nome: "Soldado Reformado", o: "e um antigo companheiro de armas anda metido nisto" },
   nobre_caido: { nome: "Sangue Nobre Caído", o: "e o nome da família ainda abre esta porta — e ainda deve alguma coisa a ela" },
   erudito: { nome: "Erudito de Arquivo", o: "e o texto proibido que leu falava deste lugar" },
   ladrao: { nome: "Filho da Guilda dos Dedos", o: "e a guilda dos dedos quer saber o que ele descobrir: é a dívida que ela cobra" },
@@ -157,6 +162,30 @@ export const TITULO_DO_FEITIO = {
   descobrir: "O que {onde} guarda",
   enfrentar: "A sombra de {alvo}",
 };
+
+/* O OFÍCIO NO GÉNERO DE QUEM O TEM (nexo, 11/10). A base escreve o papel
+   neutro ("taverneiro(a)", "dono(a) da casa") ou no masculino ("músico"), e
+   a abertura copiava-o: "Inocência Bordão, músico", e o Narrador seguiu com
+   "ele" para a mulher do alaúde (4.ª sessão). A pessoa tem `genero_pessoa`
+   na base; o ofício concorda com ele. Só a PRIMEIRA palavra flexiona ("dona
+   da casa", "empresária da arena") — a locução que vem depois não concorda. */
+export const OFICIO_NO_GENERO = {
+  /* o neutro "(a)": a mulher fica com o "a" ("dono(a)" -> "dona"), o homem sem nada */
+  neutro: { mulher: [["ão(ã)", "ã"], ["e(isa)", "isa"], ["o(a)", "a"], ["(a)", "a"]], homem: [["(ã)", ""], ["(isa)", ""], ["(a)", ""]] },
+  /* sem neutro, a primeira palavra no feminino, pelo fim dela */
+  fimFeminino: [["ão", "ã"], ["or", "ora"], ["o", "a"]],
+};
+export function oficioNoGenero(papel, generoPessoa) {
+  const p = String(papel == null ? "" : papel);
+  const g = String(generoPessoa || "");
+  const neutro = OFICIO_NO_GENERO.neutro[g];
+  if (!neutro || !p) return p;
+  if (/\((a|ã|isa)\)/.test(p)) return neutro.reduce((s, [de, por]) => s.split(de).join(por), p);
+  if (g !== "mulher") return p;
+  const [primeira, ...resto] = p.split(" ");
+  const r = OFICIO_NO_GENERO.fimFeminino.find(([de]) => primeira.endsWith(de));
+  return r ? [primeira.slice(0, -r[0].length) + r[1], ...resto].join(" ") : p;
+}
 
 /* O QUE SE SABE: a pista é o marco em pessoa (o Nostoc do Matt, o único
    nome que se tinha) ou é quem, nesta cidade, sabe mais do marco. */
@@ -244,8 +273,14 @@ export const PRENUNCIOS = {
 /* O ACONTECIMENTO — o que o sino traz, pelo feitio do que a história pede
    agora. {origem} é a masmorra perto da cidade, ou o lugar do marco. */
 export const ACONTECIMENTOS_DO_SINO = {
+  /* nexo (11/10): o primeiro era "{quem} chega a {cidade} às pressas,
+     ferido(a)" — e {quem} MORA noutro sítio: a procura, o diário e a ficha
+     dizem onde, e nenhum deles muda quando o sino toca. Na 4.ª sessão o
+     herói estava ao lado de Noé em Rio Cinzento quando o sino trouxe "Noé"
+     ferido a Alto do Sal: um segundo Noé. O sino move a PRESSÃO, nunca quem
+     a história procura — vem um recado dele, ou vem quem o caça. */
   procurar: [
-    "{quem} chega a {cidade} às pressas, ferido(a), com gente atrás — e pergunta por quem anda a perguntar por si",
+    "chega a {cidade}, às pressas, um recado de {quem}: há gente armada no rasto, e quer saber quem anda a perguntar",
     "gente armada entra em {cidade} a perguntar por {quem}, e já sabe que o herói também pergunta",
   ],
   descobrir: [
@@ -531,6 +566,7 @@ export function abrirAbertura(ctx) {
     pista = pick(rnd, deConversa);
   }
   alvo.objeto = objetoDe(alvo);
+  pista = { ...pista, papel: oficioNoGenero(pista.papel, pista.genero_pessoa) };
 
   const est = estruturaPorId(o.estrutura);
   const razoes = RAZOES_DA_ESTRUTURA[est.id] || RAZOES_DA_ESTRUTURA.jornada;
