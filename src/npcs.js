@@ -720,6 +720,7 @@ export const MOTIVO_DO_HOMONIMO = {
   paradeiro: "ela está em casa, e esta sumiu",
   oficio: "o ofício é outro",
   ambiguo: "há mais de uma pessoa com este nome",
+  lugar_nao_e_gente: "é o nome de um lugar, não de uma pessoa",
 };
 /* a saída que o Narrador recebe, por motivo: o que fazer se era ela */
 export const SAIDA_DO_HOMONIMO = {
@@ -730,6 +731,23 @@ export const SAIDA_DO_HOMONIMO = {
   paradeiro: "use o nome dela",
   oficio: "use o nome dela",
   ambiguo: "diga o nome inteiro",
+  lugar_nao_e_gente: "quem trabalha num lugar tem nome próprio: dê-lho, ou diga-o pelo ofício (o taverneiro, a guarda)",
+};
+/* ---------------- UM LUGAR NÃO É GENTE (11/10, a 5.ª sessão de prova) ----------------
+   O Cronista registou o taverneiro da Candeia Faiscante como "Taverna
+   Candeia Faiscante" — papel taverneiro, relação neutro — e a pessoa que a
+   missão mandava procurar (Osric Pé-Leve, o dono da casa) nunca entrou no
+   registo: "falar com Osric" ficou aberto a sessão inteira. Um nome que
+   abre por um tipo de lugar (`abre`, a primeira palavra sem o artigo) é o
+   nome de uma casa, não de alguém. E o motor sabe quem é a gente daquela
+   casa: se a casa é a de UMA pessoa que importa e o herói está lá, quem o
+   Cronista viu é ela; senão, o registo recusa e diz porquê. Raízes sem
+   acento, a palavra inteira. */
+export const LUGAR_NAO_E_GENTE = {
+  abre: ["taverna", "estalagem", "hospedaria", "albergue", "pousada", "bodega", "cantina", "botequim",
+    "mercado", "feira", "bazar", "templo", "capela", "santuario", "ermida", "forja", "ferraria", "oficina",
+    "biblioteca", "arquivo", "quartel", "caserna", "cadeia", "prisao", "docas", "doca", "cais", "porto",
+    "arena", "cemiterio", "guilda", "loja", "armazem", "moinho", "azenha", "ponte", "praca", "torre", "mina"],
 };
 /* o que acontece a um homónimo que se distingue do dono, por quem o dono é */
 export const DISTINTO_DE = {
@@ -879,6 +897,26 @@ function contraODono(nome, dono, reg, novo) {
   return { decisao: "recusada", ...base, motivo: "soNome" };
 }
 
+/* a casa que um nome nomeia: o que vem depois do tipo de lugar ("Taverna
+   Candeia Faiscante" → "candeia faiscante"), ou o nome inteiro quando é,
+   sem o artigo, o lugar de alguém que importa ("A Candeia Faiscante") */
+function casaDoNome(nome, gente) {
+  const partes = semArtigos(nome);
+  if (partes.length && LUGAR_NAO_E_GENTE.abre.includes(partes[0])) return partes.slice(1).join(" ") || partes[0];
+  const inteiro = partes.join(" ");
+  return gente.some((d) => d.onde && semArtigos(d.onde).join(" ") === inteiro) ? inteiro : "";
+}
+/* duas casas são a mesma: igual sem o artigo, ou uma dentro da outra
+   quando as duas têm duas palavras ou mais ("Candeia Faiscante" e "A
+   Candeia Faiscante, em Casa da Fonte"); uma palavra solta não casa por
+   pedaço — "Velha" não é toda a "Ponte Velha" */
+function mesmaCasa(a, b) {
+  const x = semArtigos(a).join(" "), y = semArtigos(b).join(" ");
+  if (!x || !y) return false;
+  if (x === y) return true;
+  return x.split(" ").length >= 2 && y.split(" ").length >= 2 && (` ${x} `.includes(` ${y} `) || ` ${y} `.includes(` ${x} `));
+}
+
 /* o primeiro nome solto, com dois ou mais a tê-lo: a pontuação de cada um */
 function pontosDoSolto(p, reg, novo, recentes) {
   const ficha = p.chave && reg[p.chave] && typeof reg[p.chave] === "object" ? reg[p.chave] : {};
@@ -919,6 +957,25 @@ export function nomeComDono(nome, npcs, contexto = {}) {
   for (const x of Array.isArray(c.conhecidos) ? c.conhecidos : []) {
     const o = x && typeof x === "object" ? x : { nome: x };
     if (typeof o.nome === "string" && o.nome.trim()) conhecidos.push({ nome: o.nome.trim(), onde: txt(o.onde), papel: txt(o.papel), notas: txt(o.notas) });
+  }
+  /* UM LUGAR NÃO É GENTE (LUGAR_NAO_E_GENTE, acima): a casa de UMA pessoa
+     que importa, com o herói lá dentro, é ela; senão, recusa-se */
+  const casa = casaDoNome(nome, [...lista, ...conhecidos]);
+  if (casa) {
+    const vistos = new Set();
+    const donos = [...lista, ...conhecidos].filter((d) => {
+      if (!d.onde || !mesmaCasa(casa, d.onde) || oficioCasa(novo.papel, d.papel) < 0) return false;
+      const k = semAcento(d.nome);
+      if (vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    });
+    const dono = donos.length === 1 ? donos[0] : null;
+    if (dono && novo.aqui.some((a) => mesmaCasa(semArtigos(a).join(" "), dono.onde))) {
+      const chave = Object.keys(reg).find((k) => semAcento(k) === semAcento(dono.nome)) || "";
+      return out("mesma", { nome: chave || dono.nome, chave, dono: dono.nome, motivo: "lugar_nao_e_gente" });
+    }
+    return out("recusada", { dono: nomeLimpo, motivo: "lugar_nao_e_gente" });
   }
   const exata = Object.keys(reg).find((k) => semAcento(k) === alvo);
   /* O NOME CURTO DE QUEM ANDA NO GRUPO (05/10, 3.ª sessão de prova,
@@ -1001,11 +1058,17 @@ export function nomeComDono(nome, npcs, contexto = {}) {
    uma linha por recusa, e a saída (outro nome, o nome dela, ou ela não
    está aqui) — a de cada motivo, em SAIDA_DO_HOMONIMO. */
 export function notaDoHomonimo(recusas) {
-  const rs = (Array.isArray(recusas) ? recusas : []).filter((r) => r && r.decisao === "recusada" && r.nome && r.dono);
-  if (!rs.length) return "";
+  const todas = (Array.isArray(recusas) ? recusas : []).filter((r) => r && r.decisao === "recusada" && r.nome && r.dono);
+  /* o lugar que veio como gente tem a sua linha: não é homónimo de ninguém */
+  const casas = todas.filter((r) => r.motivo === "lugar_nao_e_gente");
+  const rs = todas.filter((r) => r.motivo !== "lugar_nao_e_gente");
+  const deCasa = casas.length
+    ? `[CORREÇÃO DO SISTEMA — NOMES] ${casas.map((r) => `"${r.nome}" — ${MOTIVO_DO_HOMONIMO.lugar_nao_e_gente}`).join("; ")}. O registo não o aceitou como pessoa; ${SAIDA_DO_HOMONIMO.lugar_nao_e_gente}.`
+    : "";
+  if (!rs.length) return deCasa;
   const l = rs.map((r) => (r.motivo === "ambiguo"
     ? `"${r.nome}" — ${MOTIVO_DO_HOMONIMO.ambiguo} nesta história (${r.dono})`
     : `"${r.nome}" — ${r.dono} já é outra pessoa desta história (${MOTIVO_DO_HOMONIMO[r.motivo] || MOTIVO_DO_HOMONIMO.lugar})`)).join("; ");
   const saidas = [...new Set(rs.map((r) => SAIDA_DO_HOMONIMO[r.motivo] || SAIDA_DO_HOMONIMO.lugar))].join("; ");
-  return `[CORREÇÃO DO SISTEMA — NOMES] ${l}. O registo não aceitou este nome. Se é alguém novo, dê-lhe um nome que não comece pelo de quem já importa; se era para ser ${rs.length > 1 ? "essas pessoas" : rs[0].motivo === "ambiguo" ? "uma delas" : rs[0].dono}, ${saidas}.`;
+  return `${deCasa ? `${deCasa}\n` : ""}[CORREÇÃO DO SISTEMA — NOMES] ${l}. O registo não aceitou este nome. Se é alguém novo, dê-lhe um nome que não comece pelo de quem já importa; se era para ser ${rs.length > 1 ? "essas pessoas" : rs[0].motivo === "ambiguo" ? "uma delas" : rs[0].dono}, ${saidas}.`;
 }

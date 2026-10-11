@@ -811,6 +811,28 @@ export function aindaSoUmNome(abertura, nome, ctx = {}) {
 /* O que fazer agora, dito como o mundo o diria ("Procurar Nostoc no
    mercado"). Lê a principal; num save antigo, a trama ativa. Vazio quando
    não há história em curso. Onde ela aparece é da tela. */
+/* ---------------- QUEM ESTÁ AQUI DIZ O NOME (11/10, a 5.ª sessão) ----------------
+   O herói entrou na Candeia Faiscante para falar com o Osric e a pauta
+   continuou a dizer "Procurar Osric Pé-Leve na Candeia Faiscante" — com ele
+   já lá dentro. O Narrador pôs um draconato de um olho atrás do balcão e
+   nunca lhe deu o nome; o Cronista registou-o como "Taverna Candeia
+   Faiscante"; Hakon: "o lagarto do balcão só nos enrolou"; e "falar com
+   Osric" nunca pôde fechar. A pista é uma pessoa da ficha da cidade, com
+   nome e ofício — e quem a mesa manda procurar, quando é encontrado, diz
+   quem é. `{papel}` vem da ficha; sem papel, a variante sem ele. */
+export const PASSO_AQUI = {
+  pista: "falar com {nome}, {papel} daqui, que diz ao herói o próprio nome logo que lhe fala",
+  pistaSemPapel: "falar com {nome}, que está aqui e diz ao herói o próprio nome logo que lhe fala",
+};
+/* `aqui` é a frase do ONDE ("na Candeia Faiscante, dentro de Casa da
+   Fonte"): o lugar está nela pelo nome inteiro, sem o artigo */
+const semArtigoA = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "");
+function ondeEstaAqui(aqui, onde) {
+  const lugar = semArtigoA(String(onde || "").replace(/\s*,\s*(em|no|na|nos|nas)\s+.+$/i, ""));
+  const a = ` ${norm(aqui).replace(/[^a-z0-9]+/g, " ")} `;
+  return !!lugar && a.includes(` ${lugar.replace(/[^a-z0-9]+/g, " ").trim()} `);
+}
+
 export function proximoPasso(estado) {
   const e = obj(estado);
   const a = garantirAbertura(e.abertura);
@@ -819,6 +841,11 @@ export function proximoPasso(estado) {
   const et = etapaAtual(m);
   if (!et) return "";
   const daAbertura = !a.legado && m.id === a.principalId;
+  const aqui = txt(e.aqui, 200);
+  if (aqui && daAbertura && et.tipo === "falar_com" && norm(et.alvo) === norm(a.pista.nome) && ondeEstaAqui(aqui, et.onde || a.pista.local)) {
+    const papel = txt(a.pista.papel, 40);
+    return contrair((papel ? PASSO_AQUI.pista : PASSO_AQUI.pistaSemPapel).replace("{nome}", a.pista.nome).replace("{papel}", papel));
+  }
   if (et.tipo === "ir_a" && et.lugar && daAbertura && norm(et.alvo) === norm(a.pista.local)) {
     return `Procurar ${a.pista.nome} ${comEm(a.pista.local)}`;
   }

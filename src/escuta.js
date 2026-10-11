@@ -58,7 +58,7 @@
 
 import { soPergunta } from "./perguntas.js";
 import { intervencaoDoDegrau } from "./encalhe.js";
-import { garantirAbertura } from "./abertura.js";
+import { garantirAbertura, proximoPasso } from "./abertura.js";
 import { garantirMissoes } from "./missoes.js";
 import { garantirEspinha, marcoAtual } from "./saga.js";
 import { relogioDoFio, fatoDaEtapa } from "./batidas.js";
@@ -295,7 +295,15 @@ export function linhaDoRumo(opcoes) {
   const { pedido = null, degrau = null, passo = "", semente = 0, mundo = null } = obj(opcoes);
   const p = obj(pedido);
   const d = degrau && typeof degrau === "object" ? degrau : ESCADA_DA_ESCUTA[0];
-  const ps = String(passo || "").trim();
+  let ps = String(passo || "").trim();
+  /* O PASSO DE ONDE O HERÓI ESTÁ (11/10, a 5.ª sessão): com o mundo na mão,
+     o passo calcula-se aqui, a partir de `aqui` — a pista que já está à
+     frente do herói diz o nome, em vez de "procurar" quem ele já achou
+     (`abertura.js#proximoPasso`). Sem mundo, o passo que veio. */
+  const mu = mundo && typeof mundo === "object" ? mundo : {};
+  if (mu.aqui && mu.abertura) {
+    try { const daqui = proximoPasso({ abertura: mu.abertura, missoes: mu.missoes, aqui: mu.aqui }); if (daqui) ps = daqui; } catch { /* fica o passo que veio */ }
+  }
   if (!p.doJogador && !(d.n > 0)) return "";
   const abre = p.doJogador ? (p.pergunta ? RUMOS.pergunta : RUMOS.ato) : "";
   /* o degrau que vira cena não depende do passo: a cena traz o seu nome e

@@ -16,6 +16,21 @@ Formato:
 
 ---
 
+## 11/10 · v9.398 · MM, o laço da história (2/6): um lugar não é gente (`backend`) · este commit
+
+- **tocados:** `npcs.js` (`nomeComDono`, `notaDoHomonimo`, tabela `LUGAR_NAO_E_GENTE`), `abertura.js` (`proximoPasso` lê
+  `aqui`, tabela `PASSO_AQUI`), `escuta.js` (`linhaDoRumo` recalcula o passo com `mundo.aqui`); suíte `teste-lugar-nao-e-gente` (41).
+- **o defeito (sessão 5, coerência 1):** o Cronista registou o taverneiro como "Taverna Candeia Faiscante"; a pauta mandava
+  "Procurar Osric Pé-Leve na Candeia Faiscante" com o herói lá dentro; o Osric nunca teve cara, e "falar com Osric" nunca fechou.
+- **o que muda:** um nome que abre por um tipo de lugar (ou que é, sem artigo, a casa de quem importa) não nasce pessoa: se a
+  casa é de UMA pessoa que importa e o herói está lá, é ela (o Osric entra no registo e a etapa fecha); senão, recusa com a
+  linha "é o nome de um lugar, não de uma pessoa". E com o herói na casa da pista, O RUMO diz "falar com Osric Pé-Leve,
+  taverneiro daqui, que diz ao herói o próprio nome logo que lhe fala" — o nome e o ofício da ficha.
+- **números:** a ficha da sessão: "nova" → resolvida para o Osric; missão 0/2 → 1/2 na Candeia; 3000 nomes do gerador, 0
+  lidos como lugar; dentro da Candeia, 3 pautas a "procurar" quem estava à frente → 0.
+- **fiação do App:** nenhuma — o registo já passa por `nomeComDono` com `aqui` no contexto, e `linhaDoRumo` já recebe o
+  `mundo` (fiação do MM19).
+
 ## 11/10 · v9.396 · MM, o laço da história (1/6): o fio é um só (`backend`) · este commit
 
 - **quem:** `backend`, à mão, sem o bastão (o `frontend` está no `App.jsx` com as ações que o jogo não regista). Tocados:
