@@ -582,9 +582,14 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
    A 0 PV o combatente cai inconsciente e "morrendo": a cada turno
    rola um d20 puro. 10+ é sucesso, <10 é falha. 3 sucessos estabiliza
    (vivo, inconsciente); 3 falhas morre. 20 natural revive com 1 PV.
-   Qualquer cura reergue na hora e zera os contadores. */
-export function testeDeMorte() {
-  const rolo = d(20);
+   Qualquer cura reergue na hora e zera os contadores.
+
+   `rolar` (MM, a luta tem saída): opcional, o gerador preso à semente.
+   Sem ele é o Math.random de sempre — quem já chamava sem argumento não
+   vê diferença. Com ele, o resto dos testes de quem ficou caído depois de
+   a luta acabar sai igual em qualquer máquina (`saida-da-luta.js`). */
+export function testeDeMorte(rolar) {
+  const rolo = d(20, rolar);
   if (rolo === 20) return { rolo, tipo: "revive", texto: "20 natural — volta à luta com 1 PV!" };
   if (rolo === 1) return { rolo, tipo: "falha2", texto: "1 natural — duas falhas!" };
   if (rolo >= 10) return { rolo, tipo: "sucesso", texto: `${rolo} — resiste (sucesso)` };

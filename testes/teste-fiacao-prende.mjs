@@ -157,5 +157,16 @@ sec("7. a espinha enxuta, o relógio do antagonista e a trama amarrada");
   t("a amarra tem o fio, o prometido e o nome da nêmesis", /amarra = \{ fio: fioDaHistoria\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current \}\), prometido: prometidoRef\.current, nomes: \[\(nemesisRef\.current \|\| \{\}\)\.nome\]\.filter\(Boolean\) \}/.test(T));
 }
 
+sec("8. o rumo leva o mundo (MM19, v9.394): o degrau do encalhe vira cena com nome e lugar");
+{
+  const iR = pos("const rumo = linhaDoRumo({");
+  const bloco = iR > 0 ? APP.slice(iR, APP.indexOf("});", iR)) : "";
+  t("linhaDoRumo recebe `mundo: { aqui:` — o lugar de agora, da primeira linha do ONDE",
+    /mundo: \{ aqui: \(g\.onde \|\| \[\]\)\[0\] \|\| "", abertura: aberturaMundoRef\.current, missoes: missoesRef\.current,/.test(bloco));
+  t("e a espinha, o ato, o dia e a nêmesis",
+    /espinha: espinhaRef\.current, ato: historiaRef\.current\.etapa, dia: diaRef\.current, vilao: nemesisRef\.current \}/.test(bloco));
+  t("dentro do try/calou do rumo", iR > 0 && APP.indexOf('calou("o rumo na pauta", e)', iR) > iR && APP.indexOf('calou("o rumo na pauta", e)', iR) - iR < 1200);
+}
+
 console.log(`\n${bons} ok, ${maus} falharam`);
 if (maus) process.exit(1);

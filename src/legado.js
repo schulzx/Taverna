@@ -116,12 +116,24 @@ export function heranca(pers, { mapa, guilda, faccaoJogador } = {}) {
   };
 }
 
-export function envelopeDoHerdeiro(morto, novo, h) {
+/* MM (a luta tem saída, 11/10): `daLuta` é a linha do fim da luta em que o
+   outro caiu — a luta JÁ FECHOU quando este envelope parte (o App fecha-a
+   antes de abrir o herdeiro), e quem chega chega depois, numa cena nova.
+   Na quinta sessão a herdeira "chegava de carroça pela manhã" com a luta
+   aberta e o dragão a 1,5 m: o Narrador não tinha como saber que não. Sem
+   `daLuta` (o herói morreu fora de luta), o envelope é o de sempre. */
+export function envelopeDoHerdeiro(morto, novo, h, { daLuta = "", horas = 0 } = {}) {
+  const linhaDaLuta = String(daLuta || "").trim();
+  const cenaNova = linhaDaLuta
+    ? `
+
+A LUTA EM QUE ${morto.toUpperCase()} CAIU JÁ ACABOU, e acabou assim: ${linhaDaLuta} Ninguém daquela luta está em cena agora e ela NÃO continua. ${novo} chega ${horas ? `${horas} horas` : "horas"} depois, numa cena NOVA, e sabe o que aconteceu — pelo que viu ao chegar ou por quem lhe contou.`
+    : "";
   return `[NOVO HERÓI — O MUNDO CONTINUA] ${morto} morreu, e a campanha não termina com ${morto === novo ? "ele" : "ela"}. Quem pega o fio agora é ${novo}, nível ${h.nivel}, no MESMO mundo: as mesmas cidades, o mesmo mapa, a mesma gente, as mesmas dívidas.
 
 REGRA DESTE ENVELOPE: o mundo NÃO foi reiniciado. ${h.dominios ? `As ${h.dominios} cidade(s) da ${h.faccao} continuam sendo dela. ` : ""}${h.guardado.length ? `Os objetos de poder de ${morto} foram enterrados/perdidos com ${morto === novo ? "ele" : "ela"} — ${h.guardado.join(", ")} — e podem virar tesouro de uma aventura futura, nas mãos de outro. ` : ""}As pessoas do registro conheceram ${morto}, não ${novo}: elas reagem ao nome antigo com o que sentiam por ele, e ao nome novo com desconfiança, curiosidade ou esperança — nunca com intimidade que ${novo} não construiu.
 
-Abra a cena com ${novo} chegando ao lugar onde a história parou. Diga em três ou quatro frases quem ${novo} é e por que herdou isto, use o que já existe no mundo, e me devolva a palavra.`;
+Abra a cena com ${novo} chegando ao lugar onde a história parou. Diga em três ou quatro frases quem ${novo} é e por que herdou isto, use o que já existe no mundo, e me devolva a palavra.${cenaNova}`;
 }
 
 export function resumoLegadoPrompt(pers) {

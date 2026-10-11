@@ -16,6 +16,33 @@ Formato:
 
 ---
 
+## 11/10 11:40 · v9.395 · MM, a luta tem saída (`frontend`) · este commit
+
+- **quem:** `frontend`, à mão, com o bastão do `App.jsx` (tomado 10:40, devolvido ao commit). Tocados: `saida-da-luta.js` (novo),
+  `combate.js` (`testeDeMorte` aceita o gerador), `legado.js` (o envelope do herdeiro sabe da luta), `painel-batalha.jsx` (a
+  frase do fim), `App.jsx`; suítes novas `teste-saida-da-luta` (51), `teste-herdeiro-luta-fechada` (18), `teste-vista-da-luta` (16).
+- **o defeito (sessão 5, defeito 1):** o Dragão a 3/29 não tinha em quem bater (`turnoDosInimigos` só mira quem tem PV) e o
+  "esperar" girou 18 vezes; o estável voltava a rolar testes (o ramo `estavel` deixava `morrendo` ligado e zerava tudo).
+- **item 1:** a luta em que ninguém pode agir acaba — o meu lado todo no chão, o herói morto com o grupo de pé (recuo), ou 3
+  rodadas paradas. Quem ficou de pé decide por tabela (cabeça × sangrando, a intenção do Adversário manda primeiro): foge,
+  abandona, saqueia, leva prisioneiros, acaba com eles. Fecha por uma porta própria (`fecharSemSaida`), **não** pela da
+  vitória (que daria o tesouro do chefe a quem o chefe deixou no chão). A tela do fim ganha o título "Derrota" e a frase.
+- **item 2:** "Passar o fio" fecha a luta aberta (`forcar`) antes da herança; o herdeiro chega 12 h depois (tabela), numa
+  cena nova, com a frase do fim no envelope; a mesa de batalha sai com o fio.
+- **item 3:** a vista da luta entra na pauta (QUEM, o veto, NÃO PODE): quem está de pé e a que distância, quem está no chão
+  não age, quem está de pé não sumiu, os golpes que o sistema nomeou. Pauta da luta medida: 1141 → 1365 de 1400.
+- **e a fiação do MM19** pedida pelo backend: `linhaDoRumo` recebe `mundo: { aqui, … }` (asserção em `teste-fiacao-prende`).
+- **decisões médias:** (a) `terminar`/`acabar_o_ferido` **não** mandam executar — na 1.ª prova viva dois salteadores
+  executaram o grupo, porque essas intenções disparam em toda luta perdida; (b) "Derrota" e não "Vocês caíram" (a 2.ª prova
+  tinha uma heroína só); (c) as três etapas vão numa versão só: dividem a fiação do `App.jsx` e as tabelas de endereço dos
+  varredores, e partir em três commits deixaria dois deles vermelhos.
+- **prova viva:** campanha nova no navegador, três lutas perdidas — abate (morte → herdeiro "doze horas depois", luta
+  fechada), saque (a bolsa vai, os dados de quem ficou a morrer rolam até ao fim), prisioneiros ("Derrota", acorda com 1 PV
+  de mãos atadas, 2 h depois). Só `taverna_save_v1` nasceu e foi apagado com o jogo desmontado; as duas `taverna_cfg_*`
+  conferidas iguais ao que estava. Endereços de `acoes-do-jogador` re-medidos pelo diff (133).
+- **o que ficou:** o golpe em quem já está no chão (`GOLPE_NO_CAIDO`, queda.js) continua por ligar; a linha do inimigo a
+  "CAIU" antes da Fúria/Aparar corrigirem ainda nasce em `linhaParaMestre` — a vista do fim da rodada é que a desmente.
+
 ## 11/10 · v9.394 · MM19, o que já existe chega à cena (`backend`) · este commit
 
 - **quem:** `backend`, à mão; sem bastão (o `App.jsx` e o combate são de um `frontend` no ar). Tocados: `pauta.js`,

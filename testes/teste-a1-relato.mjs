@@ -156,7 +156,12 @@ if (P) {
 
   t("caídos: derrotado ou a 0, e quem fugiu não caiu",
     JSON.stringify(P.caidosDaLuta({ inimigos: [{ nome: "a", derrotado: true }, { nome: "b", vida: 0 }, { nome: "c", vida: 0, fugiu: true }, { nome: "d", vida: 5 }] })) === '["a","b"]');
-  t("os desfechos são os do contrato", JSON.stringify(P.DESFECHOS_DA_LUTA) === '["vitoria","fuga","queda","encerrada"]');
+  /* MM (a luta tem saída, 11/10): o contrato ganhou um quinto desfecho,
+     `derrota` — o meu lado inteiro caiu e acordou, e quem ficou de pé fez o
+     que quis com os caídos (`saida-da-luta.js`). Os quatro de antes ficam
+     onde estavam e na mesma ordem: um save antigo continua a ler os seus. */
+  t("os desfechos são os do contrato", JSON.stringify(P.DESFECHOS_DA_LUTA) === '["vitoria","fuga","queda","encerrada","derrota"]');
+  t("quem caiu e acordou foi derrotado — e quem não acordou tombou", P.desfechoDoFecho({ desfecho: "derrota" }, { vida: 1 }) === "derrota" && P.desfechoDoFecho({ desfecho: "derrota" }, { vida: 0, morto: true }) === "queda");
   t("quem fugiu escapou", P.desfechoDoFecho({ desfecho: "vitoria" }, { vida: 5 }, true) === "fuga");
   t("o herói a 0 tombou — menos quando venceu", P.desfechoDoFecho({ desfecho: "encerrada" }, { vida: 0 }) === "queda" && P.desfechoDoFecho({ desfecho: "vitoria" }, { vida: 0 }) === "vitoria");
   t("fora da tabela, `encerrada`", P.desfechoDoFecho({ desfecho: "empate" }, { vida: 3 }) === "encerrada" && P.desfechoDoFecho(null, null) === "encerrada");

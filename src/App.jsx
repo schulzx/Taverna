@@ -225,6 +225,9 @@ import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./semente.js";
+/* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
+   ficou de pé decide o que faz com os caídos — por tabela. */
+import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
 import { FichaVisual } from "./painel-ficha.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
@@ -280,7 +283,7 @@ const calou = (onde, e) => {
    marcada, e a marcada é um objeto novo. Quem não acha onde escrever
    devolve a MESMA lista — e é por identidade que o App sabe que não há
    nada a redesenhar. */
-const DESFECHOS_DA_LUTA = ["vitoria", "fuga", "queda", "encerrada"];
+const DESFECHOS_DA_LUTA = ["vitoria", "fuga", "queda", "encerrada", "derrota"];
 function mensagensComRecibo(lista, { desde = 0, texto = null, recibo = [] } = {}) {
   if (!Array.isArray(lista) || !Array.isArray(recibo) || !recibo.length) return lista;
   for (let i = Math.max(0, Number(desde) || 0); i < lista.length; i++) {
@@ -5584,6 +5587,12 @@ export default function Taverna() {
   const rolagemConsumidaRef = useRef(null);
   const mundoContRef = useRef(0);
   const combateOciosoRef = useRef(0);      // turnos sem troca de golpes
+  /* MM (a luta tem saída): os golpes da última vez do mundo, com a rodada em
+     que caíram — a pauta da luta diz ao Narrador o golpe REAL; e o fim da
+     última luta sem saída, que o herdeiro precisa de saber (campo novo do
+     save, ignorado pela versão antiga). */
+  const golpesDaRodadaRef = useRef(null);
+  const fimSemSaidaRef = useRef(null);
   const ataqueResolvidoRef = useRef(false);
   const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano
   const mortosSessaoRef = useRef(null);   // as cinco perguntas em curso (v9.31)
@@ -7057,6 +7066,23 @@ export default function Taverna() {
     try {
       if (combateRef.current) p = porNaPauta(p, "luz", luzParaPauta(luzDaLutaAgora(), { heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }));
     } catch (e) { calou("luzParaPauta", e); }
+    /* MM (a luta tem saída): A VISTA DA LUTA. Na quinta sessão a prosa disse
+       "o dragão sumiu" com ele a 1,5 m, pôs Hakon a gritar a 0/12 e trocou a
+       cabeçada pelo sopro — o Narrador lia os golpes do meio da rodada e
+       nunca o estado do fim dela. Três linhas, dentro do teto da pauta: quem
+       está de pé e no chão, os vetos de quem caiu e de quem não sumiu, e os
+       golpes que o sistema nomeou. */
+    try {
+      const cV = combateRef.current;
+      if (cV) {
+        const gR = golpesDaRodadaRef.current;
+        const vista = vistaDaLuta({ heroi: fichaViva(), inimigos: cV.inimigos || [], lugar: cV.heroi || null,
+          golpes: gR && gR.rodada === (cV.rodada || 1) - 1 ? gR.golpes : [] });
+        p = porNaPauta(p, "quem", vista.quem);
+        p = porNaPauta(p, "vetoDoDesfecho", vista.vetos);
+        p = porNaPauta(p, "naoPode", vista.naoPode);
+      }
+    } catch (e) { calou("a vista da luta na pauta", e); }
     /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque
        é geografia antes de ser economia — a praça de um porto e a de uma
        serra não se parecem, e o Narrador nunca teve como saber disso.
@@ -7301,6 +7327,11 @@ export default function Taverna() {
           degrau: degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco),
           passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
           semente: diaRef.current,
+          /* MM19 (v9.394, o backend): o mundo que o degrau do encalhe precisa
+             para virar cena com nome e lugar — onde estou, o fio aberto, a
+             espinha e o ato, o dia, e quem anda contra mim */
+          mundo: { aqui: (g.onde || [])[0] || "", abertura: aberturaMundoRef.current, missoes: missoesRef.current,
+                   espinha: espinhaRef.current, ato: historiaRef.current.etapa, dia: diaRef.current, vilao: nemesisRef.current },
         });
         if (rumo) p = porNaPauta(p, "rumo", rumo);
       }
@@ -8612,7 +8643,7 @@ export default function Taverna() {
      fecho cai em `encerrada` e conta os caídos pelo último retrato visto.
      Uma luta que abriu e fechou na mesma resposta nunca foi vista aberta:
      nasce aqui, com a ficha de agora como abertura. */
-  const notarFechoDaLuta = ({ combate: c = null, desfecho = null, caidos = null } = {}) => {
+  const notarFechoDaLuta = ({ combate: c = null, desfecho = null, caidos = null, linha = null } = {}) => {
     try {
       if (!lutaDoReciboRef.current && !fechoDaLutaRef.current) {
         lutaDoReciboRef.current = { fichaNaAbertura: fichaViva(), idsNoChao: idsDoChao(chaoRef.current), inicio: mensagensRef.current.length + ((seguraRef.current || []).length), ultima: c, desfecho: null, caidos: null };
@@ -8625,6 +8656,9 @@ export default function Taverna() {
         ...r,
         ultima: comb,
         desfecho: desfecho || r.desfecho,
+        /* MM (a luta tem saída): o que o inimigo fez com quem caiu — a frase
+           que a tela do fim mostra debaixo do título */
+        ...(linha ? { linha } : {}),
         caidos: Array.from(new Set([...(r.caidos || []), ...(comb ? caidosDaLuta(comb) : []), ...((caidos || []).filter(Boolean))])),
         ...(comb && comb.rodada ? { rodadas: comb.rodada } : {}),
       };
@@ -8751,7 +8785,7 @@ export default function Taverna() {
     const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     return {
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -9666,6 +9700,12 @@ export default function Taverna() {
     }
     if (pers.morto) return pers;
     if (morteRoladaRef.current) { morteRoladaRef.current = false; return pers; }
+    /* MM (a luta tem saída): QUEM ESTABILIZOU NÃO ROLA DE NOVO. O ramo
+       `estavel` abaixo zerava os contadores e deixava `morrendo` ligado, e o
+       giro seguinte rolava outra vez como se nada fosse — na quinta sessão,
+       "Você estabiliza" e logo dois testes falhados. No 5e o estável fica
+       quieto até alguém o curar ou ele acordar; é o que `morte.estavel` diz. */
+    if (pers.morte && pers.morte.estavel) return pers;
     /* SEGUNDO FÔLEGO (v9.32): a Dádiva da Recuperação vale em qualquer
        queda, não só na que acontece no turno dos inimigos. */
     if (segundoFolegoDisponivel(pers, diaRef.current)) {
@@ -9717,7 +9757,7 @@ export default function Taverna() {
     if (ap.desfecho === "estavel") {
       msgs.push("Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar.");
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou a 0 PV e ESTABILIZEI: inconsciente, respirando, sem poder agir. Narre a cena de quem está caído — e quem estiver por perto pode me socorrer. NÃO me faça levantar, andar ou falar.`;
-      return { ...pers, morrendo: true, morte: { sucessos: 0, falhas: 0, rolagens: [] } };
+      return { ...pers, morrendo: true, morte: { sucessos: 0, falhas: 0, rolagens: [], estavel: true } };
     }
     if (ap.desfecho === "morto") {
       msgs.push("💀 Você tomba. O que vem depois é escolha sua — e custa.");
@@ -13313,6 +13353,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
+      try { fimSemSaidaRef.current = garantirFimSemSaida(sv.fimSemSaida); } catch (e) { calou("o fim sem saída no load", e); fimSemSaidaRef.current = null; }
       registroRef.current = garantirRegistro(sv.registro);
       /* v9.112: o livro-razão. Sem ele o mundo cobraria de novo, a cada
          recarga, todas as contas que já cobrou. */
@@ -15977,6 +16018,69 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      CREDITA coisas, e quem chamava seguia usando a própria cópia da ficha na
      linha seguinte: as moedas, o XP e a bolsa apareciam na tela e sumiam no
      mesmo turno. Quem chama passa a ficha viva e recebe a nova. */
+  /* ---------------- A LUTA SEM SAÍDA (MM, 11/10) ----------------
+     A luta em que ninguém pode agir ACABA (`decidirSemSaida`, saida-da-luta.js):
+     o meu lado inteiro no chão, o herói morto com o grupo de pé, ou três vezes
+     o mundo agiu e nada mudou. Quem ficou de pé decide o que faz com os caídos,
+     e a decisão é tabela (`aplicarSemSaida`): foge, abandona, saqueia, leva
+     prisioneiros ou acaba com eles.
+
+     NÃO passa por `fecharSeTodosCairam`, e de propósito: aquela porta é a da
+     VITÓRIA — credita espólio, resolve a sala, conclui a masmorra do chefe e
+     manda narrar o triunfo. Numa luta perdida isso daria o tesouro do Dragão a
+     quem o Dragão deixou no chão. Aqui fecha-se o que é de toda luta (a ficha
+     da tela, a conjuração, a intenção) e só isso.
+
+     `forcar`: o herdeiro não pode entrar numa luta aberta, e quem o chama quer
+     a luta fechada mesmo que ninguém do outro lado esteja de pé para decidir.
+     Devolve `{ pers, envelope, linha }` ou `null` (a luta continua). */
+  const fecharSemSaida = (persBase, { forcar = false } = {}) => {
+    try {
+      const c = combateRef.current;
+      let pers = persBase || personagemRef.current || personagem;
+      if (!c || !pers) return null;
+      const dec = decidirSemSaida({
+        heroi: pers, grupo: pers.grupo || [], inimigos: c.inimigos || [], paradas: c.paradas || 0,
+        intencao: intencaoRef.current || "", lex: (mundoAtual() || {}).lexico,
+      });
+      if (!dec && !forcar) return null;
+      const r = dec ? aplicarSemSaida({
+        heroi: pers, inimigos: c.inimigos || [], decisao: dec,
+        rolar: rng(hashSemente(sementeMundo() + "|saida|" + diaRef.current + "|" + minutoRef.current + "|" + (c.rodada || 1))),
+      }) : null;
+      const fimDaLuta = r ? { ...c, inimigos: r.inimigos } : c;
+      if (r) pers = r.heroi;
+      /* quem morreu de verdade nesta luta continua morto — a vitória não é
+         a única porta por onde um nome sai do mundo */
+      try {
+        const mortos = (fimDaLuta.inimigos || []).filter((e) => e && !e.fugiu && !e.rendido && !e.desacordado && (e.derrotado || (e.vida || 0) <= 0));
+        mortos.forEach((e) => registrarMorte(e.nome));
+        if (mortos.length) derrotadosDaSessaoRef.current = [...derrotadosDaSessaoRef.current, ...mortos.map((e) => e.nome).filter(Boolean)].slice(-120);
+      } catch (e) { calou("os mortos da luta sem saída", e); }
+      /* quem não acordou tombou: o título do fim é dele, e não muda quando a
+         ficha viva passar a ser a do herdeiro */
+      notarFechoDaLuta({ combate: fimDaLuta, desfecho: (!r || dec.motivo === "parada") ? "encerrada" : (r.heroi && r.heroi.morto) ? "queda" : "derrota", linha: r ? r.linha : null });
+      combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
+      territorioEmLutaRef.current = null;
+      golpesDaRodadaRef.current = null;
+      try { const pL = limparConjuracoesDaLuta(pers); if (pL) pers = pL; } catch (e) { calou("a conjuração da luta sem saída", e); }
+      pers = mudarFicha(() => pers) || pers;
+      if (!r) return { pers, envelope: "", linha: "" };
+      const linhas = [{ autor: "sistema", texto: r.linha }];
+      if (r.moedasLevadas > 0) linhas.push({ autor: "sistema", texto: "A bolsa foi junto: -" + r.moedasLevadas + " moedas." });
+      if (r.mortosDoGrupo.length) linhas.push({ autor: "sistema", texto: r.mortosDoGrupo.join(" e ") + (r.mortosDoGrupo.length > 1 ? " não acordam." : " não acorda.") });
+      if (r.horas && !pers.morto) linhas.push({ autor: "sistema", texto: r.horas + (r.horas === 1 ? " hora" : " horas") + " depois, você acorda com " + SAIDA_DA_LUTA.pvAoAcordar + " PV." });
+      pushMsgs(linhas);
+      let envelope = r.envelope;
+      if (r.horas && !pers.morto) {
+        try { const extra = avancarMinutos(r.horas * 60); if (typeof extra === "string" && extra.trim()) envelope += " " + extra.trim(); } catch (e) { calou("as horas da luta sem saída", e); }
+      }
+      fimSemSaidaRef.current = garantirFimSemSaida({ linha: r.linha, horas: r.horas });
+      if (r.morreu && !(persBase && persBase.morto)) setTimeout(() => { try { abrirDesfechoDaMorte(); } catch (e) { calou("a morte da luta sem saída", e); } }, 400);
+      return { pers, envelope, linha: r.linha };
+    } catch (e) { calou("fechar a luta sem saída", e); return null; }
+  };
+
   const fecharSeTodosCairam = (persBase = null) => {
     const c = combateRef.current;
     let base0 = persBase || personagemRef.current || personagem || null;
@@ -17057,6 +17161,24 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         morteRoladaRef.current = true;
       }
 
+      /* MM (a luta tem saída): A VEZ DO MUNDO NÃO GIRA EM FALSO. Os golpes desta
+         rodada ficam para a pauta da seguinte (o golpe REAL), a rodada parada
+         conta, e se ninguém pode mais agir a luta acaba AQUI, com o desfecho
+         que quem ficou de pé escolheu. Na quinta sessão o botão de esperar
+         girou dezoito vezes sobre o mesmo quadro. */
+      let envelopeSemSaida = "";
+      try {
+        golpesDaRodadaRef.current = { rodada: rodadaAgora, golpes: acoes.filter((a) => a && a.golpeNome).map((a) => ({ quem: a.inimigo, golpe: a.golpeNome })) };
+        const cAgora = combateRef.current;
+        if (cAgora) {
+          const depois = assinaturaDaLuta({ heroi: persAtual, grupo: persAtual.grupo || [], inimigos: cAgora.inimigos || [], lugares: [cAgora.heroi, ...(cAgora.aliados || [])].filter(Boolean) });
+          const paradas = contarParadas({ antes: cAgora.assinatura || "", depois, houveAcao: acoes.length > 0 || partesComp.length > 0, paradas: cAgora.paradas || 0 });
+          combateRef.current = { ...cAgora, assinatura: depois, paradas };
+          const fimSem = fecharSemSaida(persAtual);
+          if (fimSem) { persAtual = fimSem.pers; envelopeSemSaida = " " + fimSem.envelope; }
+        }
+      } catch (e) { calou("a vez do mundo sem saída", e); }
+
       /* v9.46: O PRAZO DA CONJURAÇÃO. Vence na virada da rodada, que é o
          único relógio que a luta tem. Sai do grupo E do tabuleiro na mesma
          operação — deixar a figura no grid depois de a criatura sumir seria
@@ -17129,8 +17251,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
       }
       const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
-      const morteTxt = persAtual.vida <= 0 ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
-      entregar({ pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}` });
+      const morteTxt = (!envelopeSemSaida && persAtual.vida <= 0) ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
+      entregar({ pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}${envelopeSemSaida}` });
     };
 
     /* A RODADA SUSPENDE AQUI quando há queda com escolha de verdade e a
@@ -19862,7 +19984,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   const seguirComHerdeiro = (nome) => {
     recomecarAPorta();   /* R21: ficha nova, primeira foto so grava */
-    const p = personagemRef.current || personagem;
+    let p = personagemRef.current || personagem;
+    /* MM (a luta tem saída): O FIO SÓ PASSA COM A LUTA FECHADA. Na quinta
+       sessão a herdeira entrou na luta que matou o outro — o Dragão a 1,5 m,
+       Hakon a 0/12 — e caiu à primeira rodada. Agora a luta fecha aqui, com o
+       desfecho de quem ficou de pé, e o herdeiro chega depois, numa cena nova,
+       sabendo o que aconteceu (`daLuta`). */
+    let daLuta = null;
+    try {
+      if (combateRef.current) { const fimH = fecharSemSaida(p, { forcar: true }); if (fimH && fimH.pers) p = fimH.pers; }
+      daLuta = fimSemSaidaRef.current; fimSemSaidaRef.current = null;
+    } catch (e) { calou("o fio passa com a luta fechada", e); }
+    /* e a mesa de batalha sai com ela: o herdeiro abre numa cena nova, não na
+       tela do fim de uma luta que não foi dele */
+    try { setFimDaLuta(null); ultimoCombateRef.current = null; retratoDoFimRef.current = null; } catch (e) { calou("a mesa do fim sai com o fio", e); }
     const h = heranca(p, { mapa: mapaRef.current, guilda: guildaRef.current, faccaoJogador: faccaoJogadorRef.current });
     const nomeNovo = String(nome || "").trim().slice(0, 30) || "O Herdeiro";
     const base = {
@@ -19884,8 +20019,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       { autor: "sistema", texto: `⚜ ${p.nome} descansa. ${nomeNovo} pega o fio — nível ${h.nivel}, ◉ ${h.moedas}, e o mundo inteiro como estava.` },
       ...(h.guardado.length ? [{ autor: "sistema", texto: `⚰ Enterrado com ${p.nome}: ${h.guardado.join(", ")} — pode virar tesouro de outra aventura.` }] : []),
     ]);
+    /* o herdeiro não chega no minuto em que o outro caiu: a notícia corre */
+    let horasH = 0;
+    try { if (daLuta) { horasH = SAIDA_DA_LUTA.horasAteOHerdeiro; avancarMinutos(horasH * 60); } } catch (e) { calou("as horas do herdeiro", e); horasH = 0; }
     salvar({ personagem: np });
-    enviar(envelopeDoHerdeiro(p.nome, nomeNovo, h), np);
+    enviar(envelopeDoHerdeiro(p.nome, nomeNovo, h, { daLuta: daLuta ? daLuta.linha : "", horas: horasH }), np);
   };
 
   /* ---------------- PERGUNTAR AO MUNDO (v9.24) ----------------
@@ -25600,6 +25738,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const noChaoAgora = new Set(idsDoChao(chao));
       return {
         desfecho: desfechoDoFecho(fechoNaTela, personagem, !!fugiuNoFim),
+        linha: typeof fechoNaTela.linha === "string" ? fechoNaTela.linha : "",
         recibo: reciboDoTurno(fechoNaTela.fichaNaAbertura, personagem),
         noChao: (fechoNaTela.noChao || []).map((it) => ({ id: it.id, nome: it.nome, recolhido: !noChaoAgora.has(it.id) })),
       };

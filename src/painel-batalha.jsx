@@ -153,6 +153,11 @@ const DESFECHOS = {
   fuga:      { titulo: "Você escapou",   recibo: "perda", chao: false },
   queda:     { titulo: "Você tombou",    recibo: "perda", chao: false },
   encerrada: { titulo: "A luta acabou",  recibo: "tudo",  chao: false },
+  /* MM (a luta tem saída, 11/10): o meu lado inteiro caiu e acordou — quem
+     ficou de pé fez o que quis com os caídos, e a frase de baixo diz o quê.
+     "Derrota" e não "Vocês caíram": o par de "Vitória", e serve a quem caiu
+     sozinho (a segunda prova viva lia "Vocês" sobre uma heroína só). */
+  derrota:   { titulo: "Derrota",        recibo: "perda", chao: false },
 };
 const ENTRE_DESFECHO_E_RECIBO = { mesa: 24, telefone: 12 };
 
@@ -174,7 +179,10 @@ function CoisaNoChao({ coisa, recolhida, aoRecolher, telefone }) {
   );
 }
 
-function FimDaLuta({ desfecho = "encerrada", recibo = [], chao = [], aoRecolher, aoSair, telefone = false }) {
+/* `linha` (MM, a luta tem saída): o que quem ficou de pé fez com os caídos —
+   "o Dragão Jovem, ferido, foge e deixa vocês no chão". É gameplay, não o
+   nome da regra; vazia, 0 px. */
+function FimDaLuta({ desfecho = "encerrada", recibo = [], chao = [], linha = "", aoRecolher, aoSair, telefone = false }) {
   const d = DESFECHOS[desfecho] || DESFECHOS.encerrada;
   const tituloRef = React.useRef(null);
   const faixaRef = React.useRef(null);
@@ -217,6 +225,9 @@ function FimDaLuta({ desfecho = "encerrada", recibo = [], chao = [], aoRecolher,
         </h3>
         {chips.length > 0 && <div className="flex-1 min-w-0"><Recibo chips={chips} telefone={telefone} momento /></div>}
       </div>
+      {typeof linha === "string" && linha.trim() && (
+        <p data-fim-linha="" className="tv-body min-w-0" style={{ fontSize: TIPOS.corpo, color: T.ink, lineHeight: 1.45, margin: 0 }}>{linha}</p>
+      )}
       {d.chao && coisas.length > 0 && (
         <div ref={faixaRef} className="flex flex-col min-w-0" style={{ gap: telefone ? M.entreVerbos : M.chipLadoX }}>
           {vistas.map((c, k) => (
@@ -1319,7 +1330,7 @@ export function TelaDeBatalha(props) {
   const respiroDaAcao = { order: 3, gap: noTelefone || curto ? M.entreVerbos : M.escolhasEntre, padding: noTelefone ? M.escolhasRespiroNoTelefone : curto ? M.chipLadoX : M.escolhasRespiro, borderRadius: M.raio, background: T.panel, border: `1px solid ${T.line}` };
   const acaoDoFim = fimComEspolio ? (
     <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
-      <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao}
+      <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao} linha={p.espolio.linha || ""}
         aoRecolher={p.aoRecolher} aoSair={p.aoSair} telefone={noTelefone} />
     </section>
   ) : null;
