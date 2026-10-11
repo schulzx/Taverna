@@ -275,6 +275,11 @@ export const PROCURAR_PARA_IR = {
     "portao", "portoes", "saida", "estrada", "rua", "bairro", "distrito", "avenida", "ponte", "farol",
     "moinho", "fazenda", "cidade", "vila", "aldeia", "vilarejo", "caravana", "barco", "navio", "embarcacao",
     "carona", "transporte", "diligencia", "lugar", "sitio", "canto para", "canto onde",
+    /* 11/10 (MM11, 5.ª sessão, J6): o que está pregado à vista de todos. "Saio
+       para a praça e procuro o mural" rolou Percepção DENTRO da taverna e
+       deixou "o lugar remexido": procurar o mural é ir até ele, como se vai
+       à forja — ninguém revira uma praça atrás de um quadro de avisos */
+    "mural", "cartaz", "quadro de avisos", "quadro d[ae] edita",
     /* o pouso e a mesa */
     "quarto", "cama", "pouso", "pernoite", "estadia", "refeicao", "bebida", "comida",
     /* gente por ofício ou laço */

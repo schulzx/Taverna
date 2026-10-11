@@ -19281,6 +19281,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const adjudicarAcao = (acao) => {
+    /* ---------------- O PASSO ANTES DO ATO (11/10, MM11 · 5.ª sessão, J6) ----------------
+       "Agradeço, termino a cerveja e saio para a praça. Procuro o mural de
+       cartazes" rolou Percepção DENTRO da taverna: o catálogo julgou a
+       frase no lugar de onde ela saía, e quem anda (`talvezAndarNaCidade`)
+       só corre em `enviar` — depois de o desafio já ter resolvido o turno,
+       e com um envelope à frente, que ele não lê. A frase com saída e
+       destino move PRIMEIRO; o que ela faz depois é julgado onde o herói
+       chegou. O mesmo detector e o mesmo `moverParaLocal` do envio e do
+       mapa: a porta é uma só.
+       Só quando a frase TEM um ato que o catálogo julgaria: sem ato, quem
+       anda continua a ser o envio, na ordem de sempre (a fala do jogador e
+       depois o lugar), e este passo não muda turno nenhum que não rolasse. */
+    try {
+      const passo = alvoLocalPedido(acao);
+      if (passo && veredictoDaAcao(acao)) moverParaLocal(passo);
+    } catch (e) { calou("o passo antes do ato", e); }
     /* a procura vem ANTES: se a frase nomeia gente, ela nunca foi um desafio
        de vasculhar, e deixar o catalogo julgar primeiro era exatamente o
        caminho que pagava tesouro por perguntar de alguem */

@@ -1404,9 +1404,9 @@ export const FUNIL_DO_COMBATE = [
      crime nenhum, porque a vítima já lia como inimigo declarado) cresceu 3
      linhas na mesma função, ACIMA deste ponto. Re-medido por esta própria
      catraca; nada somado de cabeça. */
-  { fn: "virarChefeSePreciso", onde: "src/App.jsx:21486", anel: "nucleo",
+  { fn: "virarChefeSePreciso", onde: "src/App.jsx:21502", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:21500", evento: "o chefe da masmorra vira de fase",
+      { onde: "src/App.jsx:21516", evento: "o chefe da masmorra vira de fase",
         voz: "frase", nasce: "src/masmorras.js:722 (falaDaViradaDoChefe)" },
     ] },
 ];
