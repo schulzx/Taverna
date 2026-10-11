@@ -45,10 +45,11 @@
 import { rngDe } from "./geografia.js";
 import { nomePessoa } from "./nomes.js";
 import { arredoresDaCidade } from "./arredores.js";
-import { oQueExisteAqui, idDaGente } from "./mundo-base.js";
+import { oQueExisteAqui, idDaGente, genteDoLocal } from "./mundo-base.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { recompensaDe, noitesDePrazo, mesmaPessoa, garantirMissoes } from "./missoes.js";
 import { comEm } from "./lugar.js";
+import { GUARDA_NA_CENA } from "./batidas.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -393,9 +394,43 @@ export function genteDaHistoria(estado) {
     if (m.dador) por(m.dador);
     for (const et of m.etapas || []) if (et && (et.tipo === "falar_com" || et.tipo === "derrotar" || et.tipo === "entregar")) por(et.alvo);
   }
+  /* 11/10 (a 5.ª sessão de prova): e TODOS os guardiões de marco. O único
+     cartaz da sessão foi "A caçada de Corwin o Silencioso" — o arquivista
+     d'A Biblioteca do Peregrino, que a espinha guarda para o marco 2 ("à
+     guarda de Corwin o Silencioso"). O filtro só lia quem um marco procura
+     (`quem`); o marco de um lugar não procura ninguém, e quem o guarda
+     passava. Agora entram: o alvo de "acabar com", quem a cena de um marco
+     diz que o guarda (`GUARDA_NA_CENA`, batidas.js), e a CASA de um marco de
+     lugar ("A Biblioteca do Peregrino, em Casa da Fonte"), de onde o mural
+     tira o guardião quando a cena não o nomeou: o primeiro da gente da casa,
+     o mesmo que batidas.js põe "à guarda" (`casaDaHistoria`, abaixo). Só
+     ele — a casa inteira calada esvaziava 10 de 111 murais (eram 2). */
   const atos = e.espinha && Array.isArray(e.espinha.atos) ? e.espinha.atos : [];
-  for (const at of atos) for (const mc of (at && Array.isArray(at.marcos) ? at.marcos : [])) if (mc && !mc.feito) por(mc.quem);
+  for (const at of atos) for (const mc of (at && Array.isArray(at.marcos) ? at.marcos : [])) {
+    if (!mc || mc.feito) continue;
+    por(mc.quem);
+    if (mc.feitio === "enfrentar" || mc.feitio === "confronto") por(mc.alvo);
+    const cena = mc.batida && typeof mc.batida.cena === "string" ? mc.batida.cena : "";
+    const k = cena.indexOf(`, ${GUARDA_NA_CENA} `);
+    if (k >= 0) por(cena.slice(k + GUARDA_NA_CENA.length + 3));
+    if ((mc.feitio === "descobrir" || mc.feitio === "descer") && mc.onde) por(mc.cidade ? `${mc.onde}, em ${mc.cidade}` : mc.onde);
+  }
   return out;
+}
+
+/* A casa de quem prega é uma casa da história? `historia` traz a casa como
+   "Lugar, em Cidade" (ou só "Lugar"); compara-se sem o artigo, e a cidade
+   só quando as duas pontas a dizem — "A Biblioteca do Peregrino" de outra
+   cidade é outra casa. */
+export function casaDaHistoria(local, cidade, historia) {
+  const sem = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "");
+  const l = sem(local);
+  if (!l) return false;
+  return (Array.isArray(historia) ? historia : []).some((h) => {
+    const m = String(h || "").match(/^(.*\S)\s*,\s*em\s+(.+)$/i);
+    const hl = sem(m ? m[1] : h), hc = m ? sem(m[2]) : "";
+    return hl === l && (!hc || !cidade || hc === sem(cidade));
+  });
 }
 
 /* É da história? Pelo nome (`mesmaPessoa`: "Noé" casa com "Noé Laminado")
@@ -434,6 +469,14 @@ export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia m
   const aqui = oQueExisteAqui(semente, mapa, cidade, base, genero, molde, lex);
   if (!aqui || !aqui.gente || !aqui.gente.length) return [];
   const proibido = new Set(evitar.map(norm));
+  /* os guardiões das casas da história nesta cidade (ver genteDaHistoria) */
+  const guardioes = new Set();
+  for (const l of aqui.locais || []) {
+    if (!casaDaHistoria(l.nome, cidade, historia)) continue;
+    let g = null;
+    try { g = genteDoLocal(semente, l, genero, molde, lex)[0] || null; } catch { g = null; }
+    if (g && g.nome) guardioes.add(norm(g.nome));
+  }
   const todas = [];
   for (const p of aqui.gente) {
     const of = ofertaDePessoa({ semente, pessoa: p, aqui, mapa, genero, nivel, molde, lex });
@@ -441,6 +484,8 @@ export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia m
     if (proibido.has(norm(of.titulo)) || proibido.has(norm(of.dador))) continue;
     /* MM18: quem é da história não prega no mural */
     if (ehDaHistoria(of.dador, { historia, titulos: evitar })) continue;
+    /* 11/10: nem o guardião da casa de um marco */
+    if (guardioes.has(norm(of.dador))) continue;
     todas.push(of);
   }
   /* embaralho de verdade (Fisher-Yates), semeado pela cidade: o mural muda de

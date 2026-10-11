@@ -171,6 +171,14 @@ export const PERGUNTAS = {
   ],
 };
 
+/* ---------------- QUEM GUARDA O MARCO ----------------
+   A cena de um "descobrir" nomeia quem o guarda ("A Biblioteca do
+   Peregrino, em Casa da Fonte, à guarda de Corwin o Silencioso"). É gente da
+   história: o mural lê a mesma frase para não o pôr a pregar trabalho
+   (`ofertas.js#genteDaHistoria`, a 5.ª sessão de prova). Uma frase só, para
+   quem a escreve e quem a lê não se desencontrarem. */
+export const GUARDA_NA_CENA = "à guarda de";
+
 /* ---------------- O QUE O SEGREDO PROVA ----------------
    Uma linha por tipo do Escondido (`SEGREDOS`, mundo-base.js): o facto que
    muda o que o jogador sabe, e o caminho para a peça seguinte. "aponta
@@ -367,7 +375,7 @@ export function marcarBatidas(espinha, ctx) {
       const cena = feitio === "procurar"
         ? `${m.quem}${p && p.papel && !/\(/.test(p.papel) ? `, ${p.papel}` : ""}, em ${m.onde}${naCidade(m)}`
         : feitio === "descobrir"
-          ? `${m.onde}${naCidade(m)}${guarda ? `, à guarda de ${guarda.nome}` : ""}`
+          ? `${m.onde}${naCidade(m)}${guarda ? `, ${GUARDA_NA_CENA} ${guarda.nome}` : ""}`
           : feitio === "enfrentar" ? `${m.alvo}, em ${m.onde}`
             : feitio === "descer" ? `o fundo de ${m.onde}`
               : `{sombra}, em ${m.onde}`;

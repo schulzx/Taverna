@@ -16,6 +16,19 @@ Formato:
 
 ---
 
+## 11/10 · v9.402 · MM, o laço da história (5/6): os guardiões do marco não pregam no mural (`backend`) · este commit
+
+- **tocados:** `ofertas.js` (`genteDaHistoria`, `casaDaHistoria`, `ofertasDaqui`), `batidas.js` (`GUARDA_NA_CENA`, a frase do
+  guardião num sítio só); suíte `teste-guardioes-do-marco` (30).
+- **o defeito (sessão 5, defeito 6):** o único cartaz foi "A caçada de Corwin o Silencioso", o arquivista que a espinha põe "à
+  guarda" d'A Biblioteca do Peregrino (marco 2). O filtro da v9.374 só lia quem um marco procura.
+- **o que muda:** entram na gente da história o alvo de "acabar com" e do confronto, quem a cena de um marco diz que o guarda,
+  e a casa de cada marco de lugar ("Lugar, em Cidade"), de onde o mural tira o guardião quando a cena não o nomeou (o
+  primeiro da gente da casa, o mesmo que batidas.js escolhe). Só o guardião se cala; a outra gente da casa continua a pregar.
+- **números (24 campanhas, 126 marcos de descobrir):** o guardião no mural **99 → 0**; murais vazios nas cidades desses marcos
+  3 → 4. **Decisão média:** calar a casa inteira esvaziava 10 de 111 murais (eram 2) e tirava 33% das ofertas — ficou só o guardião.
+- **fiação do App:** nenhuma (`historiaDoMural` já passa a espinha a `genteDaHistoria`).
+
 ## 11/10 · v9.401 · MM, o laço da história (4/6): um vilão só (`backend`) · este commit
 
 - **tocados:** `mundo-base.js` (`resumoChefesPrompt(…, lex, { espinha })`, tabela `UM_VILAO_SO`); suíte `teste-um-vilao-so` (23).
