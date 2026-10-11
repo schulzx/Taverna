@@ -15,10 +15,10 @@ Formato:
 ```
 
 ---
-## 11/10 · v9.383 · MM, as três fiações da auditoria de coerência e da 4.ª sessão (`frontend`) · este commit
+## 11/10 · v9.383 · MM, as três fiações da auditoria de coerência e da 4.ª sessão (`frontend`) · o bloco e a `VERSAO` subiram varridos no `11fb9ad` (a entrada do `backend` di-lo); o código é o commit seguinte
 
 - **quem:** `frontend`, com o bastão do `App.jsx` (tomado no início, devolvido no fim deste trabalho), e a regra em `missoes.js` e
-  `saga.js`; sem tocar em `viagem.js`, `partida.js`, masmorra nem `json.js` (o `backend` em paralelo). A v9.382 é dele (ainda na árvore);
+  `saga.js`; sem tocar em `viagem.js`, `partida.js`, masmorra nem `json.js` (o `backend` em paralelo). A v9.382 é dele (`11fb9ad`);
   esta fica com a v9.383.
 - **1 · a principal nas peças do arco (contradição 7, fechada):** `motorDoArco` passa `principal` (o título da missão principal), e
   ela sai de `impostas` para não ir duas vezes à mesma linha.
@@ -44,7 +44,7 @@ Formato:
   ao último ato?
 
 ---
-## 11/10 · v9.380– · MM, os defeitos da 4.ª sessão de prova, um por versão (`mente/mm11-sessao-4.md`)
+## 11/10 · v9.380–v9.384 · MM, os defeitos da 4.ª sessão de prova, um por versão (`mente/mm11-sessao-4.md`) · 62115e8 · 51786f5 · 11fb9ad · este commit
 
 - **quem:** `backend`, à mão, sem tocar no `App.jsx` (o `frontend` tem o bastão), nem em `missoes.js`/`saga.js`.
 - **v9.380 · a masmorra certa (lugar.js, boca.js, dificuldade.js):** a causa não era a ida nem a escolha da masmorra — era o
@@ -69,8 +69,18 @@ Formato:
   → 36 noites e 8 h. O passo não muda. **Asserções movidas, com o motivo escrito:** `teste-veredito-da-partida.mjs` (a conta
   "de outra maneira" passa a ser a forma fechada; meio dia chega às 12:05 e não às 20:05; a jornada curta cobra os minutos;
   a secção dos prazos parte às 20:00 para atravessar a meia-noite). Suíte `teste-relogio-da-marcha.mjs` (16; 11 falham em HEAD).
-- **fiação que fica para o `frontend`:** em `entrarMasmorra`, `vereditoDaMasmorra(doMapa || mm, persIn)` passa a ficha com as
-  tochas já tiradas da mochila — para a masmorra do mundo que não se está à boca, passe `{ ...persIn, suprimentos: supIn }`.
+- **v9.384 · a carroça semeada (mercado.js):** `talvezAmbulante` decidia com dois `Math.random` cravados. Agora a sorte entra
+  por argumento: `semente` vira um gerador semeado (as duas tiradas, pela mesma ordem), senão a `sorte` de quem chama; sem
+  nenhuma, a de sempre (é a chamada que o App ainda faz). Frequência medida em 3.000 sementes: 12,1% contra 12% da tabela. As
+  opções `null` deixaram de estourar. Suíte `teste-ambulante-semeado.mjs` (12; 4 falham em HEAD).
+- **fiação que fica para o `frontend` (duas linhas, nenhuma urgente):** (1) em `entrarMasmorra`, `vereditoDaMasmorra(doMapa ||
+  mm, persIn)` passa a ficha com as tochas já tiradas da mochila — para a masmorra do mundo a cuja boca não se está, passe
+  `{ ...persIn, suprimentos: supIn }`; (2) em `viajar`, `talvezAmbulante(dia, nivel, { lex, semente:
+  ``${sementeMundo()}|${j.de}>${j.para}|${j.andadoMin}`` })`, com `j` a jornada depois de `andar` — e o determinismo fecha.
+- **a verdade sobre o 11fb9ad:** entre o meu bump da v9.382 e o commit, o `frontend` escreveu a entrada dele neste diário e subiu
+  `VERSAO` para v9.383 na mesma árvore; o `git commit -- src/constantes.js mente/diario.md` levou as duas coisas. O 11fb9ad diz
+  v9.382 e traz `VERSAO = "v9.383"` e a entrada dele (o código dele não: só os seis caminhos meus). Não se reescreve — fica
+  dito aqui. Na colisão fica o maior: este commit leva a v9.384.
 
 ---
 ## 11/10 · v9.376–v9.379 · MM, a auditoria de coerência: a espinha primeiro (a pessoa, 11/10) · 2b8f781 · c1ca0ad · 849a904 · este commit

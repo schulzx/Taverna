@@ -281,11 +281,25 @@ export function mercadoresDaCidade(cidade, dia = 1, nivel = 1, lex = null, { pre
   return tipos.map((t, i) => gerarMercador({ cidade, semente: `${cidade.nome}|${semana}|${t}|${i}`, nivel, tipo: t, dia, lex, ordem: desloc + i, pressoes, oficina }));
 }
 
-/* Mercador ambulante: chance pequena por dia de viagem. */
+/* Mercador ambulante: chance pequena por avanço de estrada.
+
+   11/10 (4.ª sessão de prova, item 4): a carroça saía de dois Math.random
+   cravados — se aparecia e o que trazia. Contra a lei da casa: mesma semente,
+   mesmo mundo; e a suíte não tinha como provar o que a estrada dá. A sorte
+   passa a entrar por argumento: 'semente' (uma chave da estrada, que quem
+   chama monta — o mundo, a jornada, quanto já se andou) vira um gerador
+   semeado, e as DUAS tiradas saem dele, pela mesma ordem; sem semente, a
+   'sorte' que quem chama passar; sem nenhuma das duas, a de sempre (a
+   versão que o App ainda chama, até a fiação passar a semente). */
 export const CHANCE_AMBULANTE = 0.12;
-export function talvezAmbulante(dia, nivel, { chance = CHANCE_AMBULANTE, lex = null } = {}) {
-  if (Math.random() > chance) return null;
-  return gerarMercador({ cidade: null, semente: `ambulante|${dia}|${Math.floor(Math.random() * 1e6)}`, nivel, tipo: "ambulante", dia, lex });
+export function talvezAmbulante(dia, nivel, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};   // `= {}` não cobre null
+  const chance = Number.isFinite(o.chance) ? o.chance : CHANCE_AMBULANTE;
+  const lex = o.lex || null;
+  const temSemente = o.semente != null && String(o.semente) !== "";
+  const rnd = temSemente ? rngDe(`ambulante|${dia}|${o.semente}`) : typeof o.sorte === "function" ? o.sorte : Math.random;
+  if (rnd() > chance) return null;
+  return gerarMercador({ cidade: null, semente: `ambulante|${dia}|${Math.floor(rnd() * 1e6)}`, nivel, tipo: "ambulante", dia, lex });
 }
 
 /* Resumo curto para o Mestre — ele narra a banca que EXISTE. */
