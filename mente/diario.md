@@ -6,6 +6,42 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## 11/10 · v9.388 · MM, a campanha que prende, item 3: os fios das viagens (`backend`) · este commit
+
+- **o defeito:** três viagens e um acampamento (M22–M26, 36 h) sem uma frase de história, e três fios novos sem relação com ela
+  (a Câmara do Dragão pelo correio no M15; o Torneio das Coroas e o pedido de Ondine na manhã do acampamento, M24), mais o boato
+  das luzes no pântano (M15). Os encontros de cena saíam de uma tabela solta ("um marco de pedra com oferendas recentes").
+- **o módulo:** `src/fios-da-estrada.js`. `temaDaEstrada` tira o tema do que a história já tem, por ordem (`ORDEM_DO_TEMA`): a
+  promessa aberta que toca o fio, outra promessa (a mais pesada, pela tabela de `prometido.js`), a pessoa do fio, o lugar do fio;
+  o tema anterior cede ao seguinte. `encontroComFio` reescreve o detalhe dos encontros de CENA (`COMO_O_FIO_ENTRA`: o viajante, o
+  sinal, o trecho calmo); o perigo e o achado ficam com a tabela (são mecânica, e amarrar um lobo a Noé seria inventar).
+  `linhaDoAcampamento` dá o tema à conversa da noite pela boca de quem anda comigo (sozinho, nada: seria narrar o que eu sinto).
+  `fiosNovosNaEstrada`: na estrada e no acampamento, o envelope que abre fio novo (`FIOS_NOVOS`: correio, arco maior, missão
+  gerada, mural, boato) só entra se se amarra (`amarraDoFio`, `O_QUE_AMARRA`: a pessoa do fio, a promessa aberta — a sua pessoa
+  dita inteira ou duas palavras de cinco letras em comum —, um nome que o App dê; o lugar sozinho não amarra), e entra com a amarra
+  dita; o resto fica seguro.
+- **os números, contra o registo:** **os 4 fios novos que entraram na estrada ficam seguros, 0 amarrados** (nenhum tocava Noé,
+  Inocência, a carta ou o culto). Dos 5 trechos, os 2 de cena ganham tema da história — o M15 (o sinal toca "a carta com nome de
+  morto", de Inocência) e o M22 (a conversa volta às chaves pretas de Noé) —, sem repetir; o achado (M14) e os dois perigos (M25,
+  M26) ficam com a tabela; a noite do M23 volta a uma promessa pela boca de Euzébio.
+- **decisões médias:** (a) a pessoa da promessa casa INTEIRA: na primeira prova "a mulher de capa verde" amarrava Ondine ("anão
+  mulher") pela palavra "mulher". (b) O lugar não amarra: Ondine é "em Rio Cinzento", a cidade onde se dorme, não a história.
+- **a prova:** `testes/teste-fios-da-estrada.mjs` (42 asserções, vermelha em HEAD), com os quatro envelopes do registo embutidos.
+- **a fiação que fica para o App (frontend, com o bastão), exata:**
+  1. `import { encontroComFio, linhaDoAcampamento, fiosNovosNaEstrada } from "./fios-da-estrada.js";` e `const ultimoTemaRef = useRef("");`
+     — e tirar `fios-da-estrada.js` de `AGUARDANDO` em `teste-ligacao.mjs`. Precisa do `prometidoRef` do item 1.
+  2. Na viagem (~23536), depois de `rolarEncontro`, em `try/calou`: `const encV = encontroComFio(enc, { fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }), prometido: prometidoRef.current, ultimoTema: ultimoTemaRef.current }); if (encV.tema) ultimoTemaRef.current = encV.tema.texto;`
+     e o envelope usa `encV.detalhe` em "ENCONTRO DO TRECHO"; `enc.tipo` continua a contar as conquistas.
+  3. No acampamento (~22468, `enviar(envelopeDoSitio(sitio), …)`): juntar ao envelope
+     `linhaDoAcampamento({ fio, prometido: prometidoRef.current, grupo: (personagemRef.current || {}).grupo, ultimoTema: ultimoTemaRef.current })` (vazia sem grupo ou sem tema).
+  4. No fim do acampamento (~22625, antes de `partes.join`): `const fe = fiosNovosNaEstrada(partes, { naEstrada: true, fio, prometido: prometidoRef.current, nomes: [nome da nêmesis, se houver] });`
+     — `partes` passa a `fe.ficam`, e `fe.seguram` vai a `notaRef` (o turno seguinte). E em `enviar` (~12343), antes de
+     `escutarOTurno`, a mesma chamada sobre os envelopes, com `naEstrada: !!jornadaRef.current || acampadoRef.current`; o que fica seguro
+     volta a `notaRef` — na estrada continua seguro, e depois da chegada a escuta decide como sempre (adia uma vez, depois cai).
+- **o que ficou:** o portão ideal é na GERAÇÃO (a missão de Ondine já nasce registada no diário quando o envelope chega): quem
+  sorteia a trama e o arco maior pode perguntar `amarraDoFio(descrição, ctx)` antes de registar. `tramas.js` é do outro `backend`
+  nesta leva; fica como pedido, não como edição.
+
 ## 11/10 · v9.387 · MM, a campanha que prende, item 2: o fecho variado (`backend`) · este commit
 
 - **o que empurrava o fecho para o presságio:** duas linhas do ofício da cena no prompt fixo, lidas juntas — "Termine na imagem,

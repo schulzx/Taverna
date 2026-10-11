@@ -171,6 +171,9 @@ sec("1. NENHUM MÓDULO MUDO");
     /* e `fecho.js` (item 2), que espera a mesma mão: `escolherFecho` em
        `pautaDoTurno` (O FECHO) e `fechoDaNarrativa` depois da resposta. */
     "fecho.js": "a fiação de O FECHO em pautaDoTurno, pelo frontend (a campanha que prende, 11/10)",
+    /* e `fios-da-estrada.js` (item 3): o encontro da viagem, a noite do
+       acampamento e o fio novo que só entra amarrado. */
+    "fios-da-estrada.js": "a fiação da viagem, do acampamento e da nota em enviar, pelo frontend (a campanha que prende, 11/10)",
   };
   const mudos = [];
   for (const f of arqs) {
