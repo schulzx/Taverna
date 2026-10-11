@@ -94,7 +94,12 @@ const M = await medirHistoria(R, N).catch(() => null);
     t(`(a) cada ato no seu sítio: o início na base, o meio e o fim num lugar com ficha (${aIn}/${aTot})`, aTot > 600 && aIn === aTot);
     t(`(a) o confronto final é no lugar do clímax (${M.fechoNoClimax}/${N})`, M.fechoNoClimax === N);
     /* a linha de base: 54/950, medida em HEAD v9.356 — e é ela que esta etapa leva a zero */
-    t(`(b) a espinha estendida sozinha ainda deixa atos curtos (${M.curtos.antes[0]}/${M.curtos.antes[1]}, a linha de base)`, M.curtos.antes[0] === 54 && M.curtos.antes[1] === 950);
+    /* 11/10 (nexo): 54 → 53. Os mundos de região nascem agora com as regras
+       novas dos nomes dos chefes (`NOMES_DO_MUNDO`, mundo-base.js: sem epíteto
+       repetido, sem primeiro nome repetido), e um chefe secundário a mais fica
+       livre para a roleta da espinha CRUA. É a linha de base de antes da
+       amarração; a amarrada continua a zero, que é o que esta etapa prometia. */
+    t(`(b) a espinha estendida sozinha ainda deixa atos curtos (${M.curtos.antes[0]}/${M.curtos.antes[1]}, a linha de base)`, M.curtos.antes[0] === 53 && M.curtos.antes[1] === 950);
     t(`(b) amarrada à região, nenhum (${M.curtos.depois[0]}/${M.curtos.depois[1]})`, M.curtos.depois[1] === 950 && M.curtos.depois[0] === 0);
     t(`(c) a abertura conta um lugar com ficha (${M.abertura.regiao[0]}/${M.abertura.regiao[1]}; continente ${M.abertura.continente[0]})`, M.abertura.regiao[1] === N && M.abertura.regiao[0] === N && M.abertura.continente[0] === 0);
     t(`(c) o mural põe a presa num lugar com ficha (${M.mural.regiao[0]}/${M.mural.regiao[1]}; continente ${M.mural.continente[0]})`, M.mural.regiao[1] > 1000 && M.mural.regiao[0] === M.mural.regiao[1] && M.mural.continente[0] === 0);
@@ -177,7 +182,7 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
 {
   /* Gravados ANTES de qualquer linha desta etapa (06/10), com este laço,
      sobre a árvore de HEAD v9.356 (git archive). */
-  const HEAD = { espinha: "5223fea98f7cc861", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  const HEAD = { espinha: "f8252233ebb5614e", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
   /* 11/10 (MM18 · a lei da porta): `abertura` mudou de fff026b80b9be705
      para cdff91d82c5067eb porque a abertura passa a guardar `porta` (a regra
      da porta da cidade, da ficha). Medido com o mesmo laço: SEM o campo
@@ -189,6 +194,13 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
      → "taverneira"). Medido com o mesmo laço: devolvendo à pista o ofício da
      base (e à frase `sabe`, que o cita), o hash volta a cdff91d82c5067eb, byte a
      byte. */
+  /* 11/10 (nexo · o fio da espinha): `espinha` mudou de 5223fea98f7cc861
+     para f8252233ebb5614e por três razões, e só por elas: a espinha passa a
+     guardar `fio` (o antagonista e o que quer) e a `cidade` de cada marco, e
+     o chefe SEM nome próprio casa pelo nome inteiro em vez da espécie
+     (`chaveDoChefe`, saga.js). Medido com o mesmo laço: tirando o `fio` e a
+     `cidade` e devolvendo a chave antiga a esses chefes, o hash volta a
+     5223fea98f7cc861, byte a byte. */
   const hs = {};
   const h = (k, v) => { (hs[k] ||= createHash("sha256")).update(J(v) ?? "u"); };
   for (const molde of ["sobremundo", "torre"]) for (let i = 0; i < 200; i++) {

@@ -24,7 +24,7 @@ import { rngDe } from "./geografia.js";
 import { pessoaDiversa, nomeTaverna, nomePessoa } from "./nomes.js";
 /* v9.103: o léxico nomeia lugar e bicho. O TIPO e a AMEAÇA continuam
    sendo do código — o que vem daqui é só a palavra. */
-import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca, titulosDo } from "./lexico.js";
+import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca, titulosDo, garantirLexico } from "./lexico.js";
 import { nomeDeLocal } from "./toponimia.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { moldePorId } from "./moldes.js";
@@ -36,6 +36,7 @@ import { primeiroNome } from "./npcs.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
+const norm = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 /* ---------------- LOCAIS ----------------
    Quantos e quais dependem do porte: uma aldeia não tem arena, uma
@@ -306,6 +307,48 @@ const PERSONALIDADES_CHEFE = [
   "pede desculpas antes de matar", "chama todo mundo pelo nome certo",
 ];
 
+/* ---------------- OS NOMES DE UM MUNDO NOVO (nexo, 11/10) ----------------
+   Lidos como roteiro, os chefes de 12 campanhas novas tinham 14 epítetos
+   repetidos ("Quimera a Viúva de Ferro" e "Orla, a Viúva de Ferro" no
+   mesmo mundo; na 4.ª sessão, dois chefes "A Boca do Mundo"), dois chefes
+   com o mesmo primeiro nome ("Bryna" e "Bryna"), e — com um Léxico que diz
+   "dragões não existem neste mundo" — 18 chefes de espécie proibida: o
+   Dragão Ancião da 4.ª sessão. Três órgãos a dizer coisas diferentes do
+   mesmo mundo.
+
+   A regra nova vale SÓ para o mundo que nasce com ela: `gerarRegiao` grava
+   `regiao.nomes` (campo novo, que a versão antiga ignora), e um save de
+   antes — cuja espinha já guarda os nomes dos chefes de hoje — continua a
+   ver exatamente os mesmos chefes. O sorteio de sempre não muda de ordem:
+   quem troca, troca por um gerador derivado (`|chefes|nexo|i`).
+     · `tentativas` — quantas vezes se tira outro título/nome antes de ceder;
+     · `raiz` — o tamanho mínimo da raiz que casa uma espécie com o que o
+       Léxico diz que não existe ("dragões" e "Dragão" dão "drag");
+     · `plural` e `fim` — as terminações que se tiram, por esta ordem. */
+export const NOMES_DO_MUNDO = {
+  versao: 1,
+  tentativas: 8,
+  raiz: 4,
+  plural: [["oes", "ao"], ["aes", "ao"], ["ais", "al"], ["eis", "el"], ["es", ""], ["s", ""]],
+  fim: ["ao", "a", "o", "e"],
+};
+const raizDe = (palavra) => {
+  let w = norm(palavra);
+  const p = NOMES_DO_MUNDO.plural.find(([de]) => w.endsWith(de) && w.length - de.length >= NOMES_DO_MUNDO.raiz);
+  if (p) w = w.slice(0, -p[0].length) + p[1];
+  const f = NOMES_DO_MUNDO.fim.find((de) => w.endsWith(de) && w.length - de.length >= NOMES_DO_MUNDO.raiz);
+  return f ? w.slice(0, -f.length) : w;
+};
+const raizesDe = (texto) => String(texto || "").split(/[\s,;/-]+/).filter((x) => norm(x).length >= NOMES_DO_MUNDO.raiz).map(raizDe);
+/* a espécie é proibida quando uma palavra dela tem a raiz de uma palavra do
+   que o Léxico diz que NÃO existe neste mundo */
+export function especieProibida(especie, lex) {
+  let nao = [];
+  try { nao = garantirLexico(lex).naoExiste || []; } catch { nao = []; }
+  const proibidas = new Set(nao.flatMap(raizesDe));
+  return !!proibidas.size && raizesDe(especie).some((r) => proibidas.has(r));
+}
+
 export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex = null) {
   const regioes = (mapa && mapa.regioes) || [];
   const cidades = (mapa && mapa.cidades) || [];
@@ -314,16 +357,28 @@ export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex =
   const banco = criaturasDoGenero(genero).filter((c) => c.nivelRef >= 4);
   const quantos = entre(rnd, 4, 6);
   const out = [];
+  const nomesNovos = !!(mapa && mapa.regiao && Number(mapa.regiao.nomes) >= NOMES_DO_MUNDO.versao);
+  const permitidos = nomesNovos ? banco.filter((b) => !especieProibida(b.nome, lex)) : banco;
+  const titulosUsados = new Set(), nomesUsados = new Set();
   for (let i = 0; i < quantos; i++) {
     const principal = i === 0;
-    const base = pick(rnd, banco);
+    let base = pick(rnd, banco);
     const humanoide = rnd() < 0.45;
-    const nome = humanoide ? nomePessoa(genero, undefined, rnd, lex) : base.nome;
+    let nome = humanoide ? nomePessoa(genero, undefined, rnd, lex) : base.nome;
     /* v9.166: o título sai do léxico quando o mundo tem os seus — "o Rei
        Emprestado" num mundo cyberpunk denunciava o gerador na primeira
        aparição. Uma chamada de rnd num caso e no outro: o mundo sem
        léxico sorteia exatamente o que sempre sorteou. */
-    const titulo = pick(rnd, titulosDo(lex) || TITULOS);
+    let titulo = pick(rnd, titulosDo(lex) || TITULOS);
+    if (nomesNovos) {
+      const r2 = rngDe(`${semente}|chefes|nexo|${i}`);
+      if (permitidos.length && !permitidos.includes(base)) { base = pick(r2, permitidos); if (!humanoide) nome = base.nome; }
+      const tits = titulosDo(lex) || TITULOS;
+      for (let k = 0; k < NOMES_DO_MUNDO.tentativas && titulosUsados.has(norm(titulo)); k++) titulo = pick(r2, tits);
+      if (humanoide) for (let k = 0; k < NOMES_DO_MUNDO.tentativas && nomesUsados.has(norm(String(nome).split(" ")[0])); k++) nome = nomePessoa(genero, undefined, r2, lex);
+    }
+    titulosUsados.add(norm(titulo));
+    if (humanoide) nomesUsados.add(norm(String(nome).split(" ")[0]));
     const reg = regioes.length ? pick(rnd, regioes) : null;
     const covil = cidades.length ? pick(rnd, cidades) : null;
     /* o principal é o teto do mundo; os secundários variam muito de propósito */
@@ -343,6 +398,14 @@ export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex =
       desc: base.desc,
     });
   }
+  /* O COVIL DO PRINCIPAL É O CLÍMAX (nexo, 11/10). Numa região, a espinha
+     põe o confronto final no lugar do clímax (`espinhaNaRegiao`), e esta
+     ficha continuava a dizer "covil perto de Nova clara" — no mesmo prompt,
+     dois sítios para o mesmo antagonista, nas 12 campanhas lidas. A verdade
+     é a da história: o principal espera onde ela acaba. Sem região (o
+     continente), nada muda; sorteio nenhum muda (é depois do laço). */
+  const fim = mapa && mapa.regiao && Array.isArray(mapa.regiao.lugares) ? mapa.regiao.lugares.find((l) => l && l.ato === "fim" && l.nome) : null;
+  if (fim && out[0]) out[0] = { ...out[0], covil: fim.nome, regiao: fim.regiao || out[0].regiao };
   return out;
 }
 

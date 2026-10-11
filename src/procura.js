@@ -185,22 +185,30 @@ export function procurarPessoa(nome, ctx = {}) {
   }
 
   /* 6 — prometida pela espinha: existe no mundo, em outro canto */
+  /* nexo (11/10): e A CIDADE. "Noé está em Rua dos Retalhos" não dizia em
+     que terra ficava a rua, e o Narrador pô-la duas vezes na cidade onde o
+     herói estava (4.ª sessão, contradição 8). A espinha nova guarda a cidade
+     do marco; com ela, o onde diz a rua E a cidade, e o rumo sai da cidade
+     (o nome de uma rua não está no mapa). A espinha antiga fica como era. */
   const doMarco = marcoComNome(espinha, alvo);
   if (doMarco) {
-    return { nome: doMarco.quem || doMarco.alvo, onde: doMarco.onde, situacao: sit, desfecho: "noutro_lugar", ...rumoPara(mapa, cidadeAtual, doMarco.onde) };
+    const naCidade = doMarco.cidade && norm(doMarco.cidade) !== norm(doMarco.onde);
+    return { nome: doMarco.quem || doMarco.alvo, onde: naCidade ? `${doMarco.onde}, em ${doMarco.cidade}` : doMarco.onde, situacao: sit, desfecho: "noutro_lugar", ...rumoPara(mapa, cidadeAtual, doMarco.cidade || doMarco.onde) };
   }
 
   /* 7 — ninguém. E isto é resposta, não fracasso. */
   return { nome, onde: "", situacao: sit, desfecho: "ninguem" };
 }
 
+/* nexo (11/10): o nome INTEIRO primeiro. Por pedaço, "Vex" achava "Vex
+   Valdez", um marco antes, e a procura mandava o herói à cidade do outro —
+   3 em 227 procuras de 40 campanhas. Só sem nome inteiro vale o pedaço. */
 function marcoComNome(espinha, alvo) {
   const atos = (espinha && espinha.atos) || [];
-  for (const a of atos) for (const m of a.marcos || []) {
-    if (m.feito) continue;
-    if (norm(m.quem).includes(alvo) || norm(m.alvo).includes(alvo)) return m;
-  }
-  return null;
+  const vivos = atos.flatMap((a) => a.marcos || []).filter((m) => m && !m.feito);
+  return vivos.find((m) => norm(m.quem) === alvo || norm(m.alvo) === alvo)
+    || vivos.find((m) => norm(m.quem).includes(alvo) || norm(m.alvo).includes(alvo))
+    || null;
 }
 
 /* O rumo e a distância saem das coordenadas que o mundo já tem. Sem cidade
@@ -228,13 +236,13 @@ export function envelopeDaProcura(r) {
   const onde = r.onde ? ` (${r.onde})` : "";
   const rumo = r.rumo ? ` a ${r.distancia} para ${r.rumo}` : "";
   const cabeca = "[PROCURA — RESOLVIDA PELO SISTEMA]";
-  const fim = " Narre a descoberta em 1-2 frases, pelo que o herói vê e ouve. NÃO invente outro paradeiro, não faça a pessoa aparecer se ela não está aqui, e não transforme isto em achado de tesouro.";
+  const fim = " Narre a descoberta em 1-2 frases, pelo que o herói vê e ouve. NÃO invente outro paradeiro, não faça aparecer quem não está aqui, e não transforme isto em achado de tesouro.";
   switch (r.desfecho) {
     case "no_grupo": return `${cabeca} ${r.nome} anda comigo — está aqui do meu lado.${fim}`;
-    case "aqui": return `${cabeca} Procurei ${r.nome} e ELA ESTÁ AQUI${onde}${r.papel ? `, ${r.papel}` : ""}. Encontrei sem dificuldade.${fim}`;
-    case "aqui_escondida": return `${cabeca} ${r.nome} está aqui${onde}, mas ${r.situacao === SITUACOES.cativa ? "não está livre para aparecer" : "não quer ser encontrada"}. Achá-la exige o teste que o sistema já pediu — narre a procura, não o encontro.${fim}`;
-    case "noutro_lugar": return `${cabeca} ${r.nome} NÃO está aqui. O que se apura é que ela está em ${r.onde}${rumo}. Diga isso pela boca de quem responderia — ninguém aqui sabe mais do que isso.${fim}`;
-    case "morta": return `${cabeca} ${r.nome} está MORTA${onde}, e isso já é fato do mundo. Não a faça aparecer viva por engano nem sugira que possa estar enganado.${fim}`;
+    case "aqui": return `${cabeca} Procurei ${r.nome}, e ESTÁ AQUI${onde}${r.papel ? `, ${r.papel}` : ""}. Encontrei sem dificuldade.${fim}`;
+    case "aqui_escondida": return `${cabeca} ${r.nome} está aqui${onde}, mas ${r.situacao === SITUACOES.cativa ? "não está livre para aparecer" : "não quer aparecer"}. Chegar até lá exige o teste que o sistema já pediu — narre a procura, não o encontro.${fim}`;
+    case "noutro_lugar": return `${cabeca} ${r.nome} NÃO está aqui. O que se apura é que está em ${r.onde}${rumo}. Diga isso pela boca de quem responderia — ninguém aqui sabe mais do que isso.${fim}`;
+    case "morta": return `${cabeca} ${r.nome} MORREU${onde}, e isso já é fato do mundo. Não traga de volta com vida por engano nem sugira que possa estar enganado.${fim}`;
     default: return `${cabeca} Procurei ${r.nome} e NINGUÉM com esse nome passou por aqui — não há rastro, e quem eu perguntei não conhece o nome. Isto é o que o mundo tem a dizer: não invente uma pista, não mande o herói a lugar nenhum e não transforme a procura em outra coisa.${fim}`;
   }
 }
@@ -246,7 +254,7 @@ export function linhaDaProcura(r) {
     case "aqui": return `🔎 ${r.nome} está aqui${r.onde ? ` — ${r.onde}` : ""}.`;
     case "aqui_escondida": return `🔎 ${r.nome} está por aqui, mas não à vista.`;
     case "noutro_lugar": return `🧭 ${r.nome} está em ${r.onde}${r.rumo ? ` — ${r.distancia} para ${r.rumo}` : ""}.`;
-    case "morta": return `☠ ${r.nome} está morta${r.onde ? ` — ${r.onde}` : ""}.`;
+    case "morta": return `☠ ${r.nome} morreu${r.onde ? ` — ${r.onde}` : ""}.`;
     default: return `🔎 Ninguém com o nome de ${r.nome} passou por aqui.`;
   }
 }

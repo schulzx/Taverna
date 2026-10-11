@@ -470,8 +470,19 @@ export function resumoHistoria(h, motor = {}) {
   const et = est.etapas[i];
   const ultima = i >= est.etapas.length - 1;
   const pecas = [];
+  /* nexo (11/10): O FIO DA HISTÓRIA VEM PRIMEIRO. Na 4.ª sessão, depois do
+     Torneio das Coroas, as peças na mesa eram só o evento global — "que
+     engole a região" —, e a busca por Noé, que era a história, saiu delas:
+     o Narrador passou a conduzir o Torneio (contradição 7). Quando o motor
+     diz qual é a história principal (`motor.principal`, o título dela), ela
+     abre a lista, e o evento global corre AO LADO dela, sem a substituir.
+     Quem espera no fim NÃO vai aqui — esta linha sobe em todo turno, e a
+     sombra do antagonista tem o tamanho do ato (o fio, saga.js). Sem o
+     campo, a frase é a de sempre. */
+  const principal = typeof motor.principal === "string" ? motor.principal.trim().slice(0, 70) : "";
+  if (principal) pecas.push(`a história principal, "${principal}" — é o fio, e nada abaixo o substitui`);
   if (motor.nemesis) pecas.push(`a nêmesis ${motor.nemesis}, que já caça o herói`);
-  if (motor.global) pecas.push(`o evento global "${motor.global}", que engole a região`);
+  if (motor.global) pecas.push(principal ? `o evento global "${motor.global}", que corre ao lado da história principal sem tomar o lugar dela` : `o evento global "${motor.global}", que engole a região`);
   if ((motor.impostas || []).length) pecas.push(`o que o mundo impôs: ${motor.impostas.join(", ")}`);
   if ((motor.relogios || []).length) pecas.push(`relógios correndo: ${motor.relogios.join(", ")}`);
   /* v9.84: O NOME DA ETAPA NÃO SOBE MAIS. Ele ia como `momento interno

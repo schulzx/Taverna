@@ -379,7 +379,11 @@ export const FIOS_DA_MEMORIA = [
     id: "nome", peso: 4,
     quando: (c) => !!(c.nomeEsquecido && c.nomeEsquecido.nome),
     fio: (c) => `${c.nomeEsquecido.nome}${c.nomeEsquecido.vontade ? ` (${c.nomeEsquecido.vontade})` : ""}`,
-    diz: "alguém que você conheceu e deixou para trás reaparece",
+    /* nexo (11/10): era "reaparece" — e no MESMO pedido o Geógrafo dizia
+       "Inocência está a 8 h, não entra sem 8 h narradas" (4.ª sessão,
+       contradição 3). O fio diz QUE volta, não COMO: quem está longe volta
+       por notícia, e em pessoa só quem já está aqui. */
+    diz: "alguém que você conheceu e deixou para trás volta à história — em pessoa só se já estiver aqui; de longe, por notícia ou pela boca de outro",
     porque: "gente que some do jogo depois de uma cena ensina o jogador que ninguém importa",
   },
   {

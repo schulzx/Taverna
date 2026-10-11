@@ -59,7 +59,7 @@ import { moldePorId } from "./moldes.js";
 import { HORAS_MARCHA_POR_DIA } from "./viagem.js";
 import { kmEntre, rumoEntre } from "./coordenadas.js";
 import { rotaAteAMasmorra, horasPeloChao, IDA_NA_REGIAO } from "./boca.js";
-import { criaturasDaRegiao, locaisDaCidade, genteDoLocal, chefesDoMundo, TIPOS_MASMORRA, EPITETOS, RUMORES } from "./mundo-base.js";
+import { criaturasDaRegiao, locaisDaCidade, genteDoLocal, chefesDoMundo, TIPOS_MASMORRA, EPITETOS, RUMORES, NOMES_DO_MUNDO } from "./mundo-base.js";
 import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
 import { garantirEspinha, feitioDe } from "./saga.js";
 import { garantirModo } from "./modos.js";
@@ -435,6 +435,10 @@ export function gerarRegiao(opcoes) {
     ...mapa,
     regiao: {
       versao: REGIAO_DESTA_VERSAO.versao,
+      /* nexo (11/10): as regras dos nomes dos chefes com que este mundo nasce
+         (`NOMES_DO_MUNDO`, mundo-base.js) — campo novo, e só um mundo que
+         nasce com ele as usa; o save de antes vê os chefes de sempre */
+      nomes: NOMES_DO_MUNDO.versao,
       nome: coracao.nome,
       base: { nome: base.nome, ato: "inicio" },
       povoados,
@@ -659,7 +663,7 @@ export function espinhaNaRegiao(mapa, espinha, ctx) {
           if (peso >= custo) break;
           if (!p || !p.nome || quens.has(norm(p.nome))) continue;
           quens.add(norm(p.nome));
-          const w = { id: `espinha|${i}|t${testemunhas.length}`, feitio: "procurar", quem: p.nome, onde: p.local || c.nome, regiao: c.regiao || "", ehLugar: !!p.local };
+          const w = { id: `espinha|${i}|t${testemunhas.length}`, feitio: "procurar", quem: p.nome, onde: p.local || c.nome, cidade: c.nome, regiao: c.regiao || "", ehLugar: !!p.local };
           w.titulo = feitioDe("procurar").titulo(w);
           w.condicao = feitioDe("procurar").condicao(w);
           testemunhas.push(w);

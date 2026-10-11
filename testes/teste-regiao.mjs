@@ -362,7 +362,11 @@ sec("9. os leitores de `mapa` de sempre servem a região sem mudar uma linha");
     if (linhaDoLugar({ cidadeAtual: base.nome, mapa }).startsWith(`em ${base.nome}`)) onde++;
     if (resumoGeografiaPrompt({ ...mapa, cidades: mapa.cidades.map((c) => ({ ...c, descoberta: true })) }, "").includes(base.nome)) prompt++;
     const nomes = new Set(mapa.cidades.map((c) => c.nome)), regs = new Set(mapa.regioes.map((r) => r.nome));
-    if (chefesDoMundo(semente, mapa, genero).every((c) => nomes.has(c.covil) && regs.has(c.regiao))) chefes++;
+    /* 11/10 (nexo): o principal tem covil no lugar do CLÍMAX (onde a espinha
+       o põe a esperar), não numa cidade — antes desta etapa, o mesmo prompt
+       dava-lhe dois sítios. Os secundários continuam numa cidade da região. */
+    const fimR = mapa.regiao.lugares.find((l) => l.ato === "fim");
+    if (chefesDoMundo(semente, mapa, genero).every((c) => (c.linha === "principal" ? !!fimR && c.covil === fimR.nome : nomes.has(c.covil)) && regs.has(c.regiao))) chefes++;
     if (tesourosDoMundo(semente, mapa).every((x) => nomes.has(x.perto) || regs.has(x.perto))) tesouros++;
     const esp = estenderEspinha({ semente, mapa, genero, estrutura: w.estrutura, cidadeInicial: base.nome });
     const el = elencoDoMundo(semente, mapa, { genero, espinha: esp, guildas: guildasDoMundo(semente, mapa, genero) }).pessoas;

@@ -46,10 +46,22 @@ import { rngDe } from "./geografia.js";
 import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
 import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
+import { contrair } from "./lugar.js";
 
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+/* ---------------- A CHAVE DE UM CHEFE (nexo, 11/10) ----------------
+   O chefe sem nome próprio ("Quimera o Colecionador") tinha por nome curto
+   a ESPÉCIE, e a etapa `derrotar` casa por pedaço do nome de quem caiu
+   (missoes.js): o fim da campanha fechava ao matar QUALQUER quimera — o
+   bicho do mato, ou o chefe secundário da mesma espécie. Em 12 campanhas
+   lidas como roteiro, o principal não tinha nome próprio em 6, e 10 tinham
+   dois chefes da mesma espécie. Quem tem nome
+   próprio casa pelo nome (é como o mundo o regista); quem não tem, pelo
+   nome inteiro, que só ele usa. */
+const chaveDoChefe = (c) => (c.nomeCurto && norm(c.nomeCurto) !== norm(c.especie) ? c.nomeCurto : c.nome);
 
 /* ---------------- OS FEITIOS DE MARCO ----------------
    Cada feitio sabe três coisas: que peso ele tem para o arco (o mesmo
@@ -117,9 +129,19 @@ export function feitioDe(id) { return FEITIOS[id] || FEITIOS.procurar; }
 export function garantirEspinha(e) {
   const o = e && typeof e === "object" ? e : {};
   const atos = Array.isArray(o.atos) ? o.atos : [];
+  const f = o.fio && typeof o.fio === "object" ? o.fio : null;
   return {
     estrutura: estruturaPorId(o.estrutura).id,
     semente: String(o.semente || ""),
+    /* O FIO (nexo, 11/10): quem está no fim da espinha e o que quer. Campo
+       NOVO no save, e só aditivo — a versão antiga ignora-o, e a espinha
+       antiga, sem ele, tira o antagonista do próprio confronto (`sombraDe`). */
+    ...(f && f.antagonista ? { fio: {
+      antagonista: String(f.antagonista || "").slice(0, 60),
+      titulo: String(f.titulo || "").slice(0, 40),
+      especie: String(f.especie || "").slice(0, 40),
+      motivo: String(f.motivo || "").slice(0, 80),
+    } } : {}),
     atos: atos.map((a, i) => ({
       ato: Number.isFinite(a && a.ato) ? a.ato : i,
       marcos: (Array.isArray(a && a.marcos) ? a.marcos : []).map((m) => ({
@@ -130,6 +152,10 @@ export function garantirEspinha(e) {
         alvo: String((m && m.alvo) || "").slice(0, 40),
         item: String((m && m.item) || "").slice(0, 40),
         onde: String((m && m.onde) || "").slice(0, 50),
+        /* nexo (11/10): a CIDADE do marco, quando o onde é um local dela ("Rua
+           dos Retalhos" não diz em que terra fica). Campo novo, só aditivo:
+           a espinha antiga não o tem e continua como era. */
+        ...(m && m.cidade ? { cidade: String(m.cidade).slice(0, 50) } : {}),
         regiao: String((m && m.regiao) || "").slice(0, 40),
         ehLugar: !!(m && m.ehLugar),
         quantos: Math.max(1, Number(m && m.quantos) || 1),
@@ -208,16 +234,16 @@ export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia 
       fecho.titulo = feitioDe(fecho.feitio).titulo(fecho);
       /* a condição casa pelo nome CURTO, que é como o motor registra quem
          caiu; o título leva o nome inteiro, que é como o mundo o chama */
-      fecho.condicao = { tipo: "derrotar", alvo: principal.nomeCurto || principal.nome, quantos: 1 };
+      fecho.condicao = { tipo: "derrotar", alvo: chaveDoChefe(principal), quantos: 1 };
       peso += pesoDe(feitioDe(fecho.feitio).peso);
-      marcarUso(principal.nomeCurto || principal.nome);
+      marcarUso(principal.nomeCurto || principal.nome); marcarUso(chaveDoChefe(principal));
     }
 
     while (peso < custo && tentativas < 24) {
       tentativas += 1;
       const cidade = cidadeDoAto(i, n);
       const regiao = regioes.find((r) => r.nome === cidade.regiao) || (regioes.length ? pick(rnd, regioes) : null);
-      const m = { id: `espinha|${i}|${marcos.length}`, onde: cidade.nome, regiao: cidade.regiao || (regiao ? regiao.nome : "") };
+      const m = { id: `espinha|${i}|${marcos.length}`, onde: cidade.nome, cidade: cidade.nome, regiao: cidade.regiao || (regiao ? regiao.nome : "") };
 
       /* o sorteio do feitio é enviesado pelo momento: os primeiros atos
          apresentam gente e lugares, os do meio cobram briga, e o penúltimo
@@ -246,7 +272,7 @@ export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia 
         const chefe = secundarios.filter((c) => livre(c.nomeCurto || c.nome))[0];
         const bichos = regiao ? criaturasDaRegiao(semente, regiao, genero, lex).filter((c) => livre(c.nome)) : [];
         if (chefe && rnd() < 0.4) {
-          m.alvo = chefe.nomeCurto || chefe.nome; m.onde = chefe.covil || cidade.nome; m.regiao = chefe.regiao || m.regiao;
+          m.alvo = chaveDoChefe(chefe); marcarUso(chefe.nomeCurto || chefe.nome); m.onde = chefe.covil || cidade.nome; m.cidade = chefe.covil || cidade.nome; m.regiao = chefe.regiao || m.regiao;
         } else if (bichos.length) {
           const b = pick(rnd, bichos);
           m.alvo = b.nome;
@@ -284,7 +310,15 @@ export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia 
     atos.push({ ato: i, marcos });
   }
 
-  return garantirEspinha({ estrutura: est.id, semente, atos });
+  /* O FIO: quem espera no fim, e o que quer — dito do chefe que o mundo já
+     criou (o título e o motivo são dele, `chefesDoMundo`), nunca inventado */
+  const fio = principal ? {
+    antagonista: principal.nome,
+    titulo: principal.nome.includes(", ") ? principal.nome.split(", ").slice(1).join(", ") : principal.nome.slice(String(principal.especie || "").length).trim(),
+    especie: principal.especie || "",
+    motivo: principal.motivo || "",
+  } : null;
+  return garantirEspinha({ estrutura: est.id, semente, atos, fio });
 }
 
 /* ---------------- ONDE ESTAMOS ----------------
@@ -346,12 +380,121 @@ export function linhaDoMarco(m) {
   return `${f.icone} ${m.titulo}${m.onde ? ` — ${m.onde}` : ""}`;
 }
 
+/* ============================================================
+   O FIO (nexo, 11/10) — cada peça sabe por que está ali
+
+   A pessoa: *"temos que ver também se essa espinha que criamos tem nexo,
+   pois as vezes as coisas sem sentido podem estar vindo dela."* Vinham.
+   Lida como um editor lê um roteiro, a espinha de 12 campanhas novas era
+   uma lista de chamada: "Encontrar Sigrun", "O que o Mercado da Bota
+   esconde", "Acabar com Lobo" — 280 marcos, e NENHUM dizia por que
+   importava, o que a pessoa sabia, o que o lugar escondia, nem o que tinha
+   a ver com o antagonista do fim, que só aparecia no último marco. O
+   Narrador recebia "puxe a cena para esse rumo" e tinha de inventar o
+   rumo: a razão de procurar Sigrun, o segredo da taverna, a ligação com o
+   resto. Inventava uma por turno, e as invenções não casavam.
+
+   O fio é a verdade que faltava, e sai do que a espinha JÁ é — ninguém
+   sorteia nada novo:
+     · cada peça aponta para a SEGUINTE (a pista que leva à próxima, a
+       estrutura de uma investigação): a pessoa SABE o caminho para ela, o
+       lugar GUARDA o que aponta para ela, o bicho GUARDA o caminho, o fundo
+       da masmorra TEM o que aponta para ela;
+     · e o fio inteiro, puxado até ao fim, leva ao antagonista do confronto
+       — que se vê aos poucos: no primeiro ato é "alguém que {motivo}", no
+       meio tem o título que o mundo lhe dá, no fim tem o nome.
+   Só o momento vai ao Narrador: a peça de agora, o que ela dá, e a sombra
+   no tamanho deste ato. O resto ele não precisa de saber para narrar.
+   ============================================================ */
+export const FIO = {
+  /* o que a peça de agora dá, pela consequência do feitio */
+  da: {
+    conhece: "{quem} sabe o caminho para {leva}",
+    revela: "{onde} guarda {objeto}, e é isso que aponta para {leva}",
+    abre_caminho: "{alvo} guarda o caminho para {leva}; enquanto estiver de pé, ninguém passa",
+    fundo: "no fundo de {onde} está o que aponta para {leva}",
+    desfecho: "é aqui que o fio acaba: {sombra} espera em {onde}",
+  },
+  /* como se diz a peça seguinte, do ponto de vista de quem aponta */
+  leva: {
+    procurar: "{quem}, em {onde}{naCidade}",
+    descobrir: "o que {onde} esconde{naCidade}",
+    enfrentar: "{alvo}, em {onde}",
+    descer: "{onde}",
+    confronto: "{sombra}, em {onde}",
+  },
+  /* o que um lugar guarda: concreto, para o Narrador não ter de eleger o
+     segredo (é o que `segredo-guardado.js` lhe proíbe) — escolhido pela
+     semente do marco, sempre o mesmo */
+  objetos: [
+    "uma carta que nunca foi entregue",
+    "um livro de contas com uma página arrancada",
+    "um selo partido de quem não devia ter estado ali",
+    "um mapa riscado à mão",
+    "um nome escrito onde ninguém olha",
+    "uma coisa que não é desta terra",
+  ],
+  /* a sombra, no tamanho do ato: o herói vai sabendo quem é */
+  sombra: {
+    inicio: "alguém que {motivo}",
+    meio: "{titulo}, que {motivo}",
+    fim: "{nome}, que {motivo}",
+  },
+  /* a espinha antiga não guardou o motivo: a sombra diz-se sem ele */
+  semMotivo: { inicio: "quem está por trás de tudo", meio: "{titulo}", fim: "{nome}" },
+  /* o nome curto da sombra, quando é a peça seguinte */
+  curta: { inicio: "quem está por trás de tudo", meio: "{titulo}", fim: "{nome}" },
+  diz: "O FIO (do sistema — é a verdade desta peça): {da}; e o fio inteiro, puxado até ao fim, leva a {sombra}. O que a peça sabe ou guarda só se diz quando o herói chega a ela, e não há outra razão para ela estar aqui — não invente uma.",
+};
+
+const encherFio = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => (v[k] == null ? "" : String(v[k])));
+
+/* quem está no fim: o fio gravado na criação, ou — espinha antiga — o
+   próprio confronto (nome e título, sem motivo) */
+function sombraDe(e) {
+  if (e.fio && e.fio.antagonista) return { nome: e.fio.antagonista, titulo: e.fio.titulo || e.fio.antagonista, motivo: e.fio.motivo || "" };
+  const f = e.atos.flatMap((a) => a.marcos).filter((m) => m.feitio === "confronto").pop();
+  if (!f || !f.alvo) return null;
+  const nome = f.alvo;
+  return { nome, titulo: nome.includes(", ") ? nome.split(", ").slice(1).join(", ") : nome, motivo: "" };
+}
+
+/* A linha do fio para o marco `m` (o atual do ato `ato`). "" sem sombra. */
+function linhaDoFio(e, m, ato) {
+  const s = sombraDe(e);
+  if (!s) return "";
+  const ultimo = e.atos.length - 1;
+  const fase = ato <= 0 ? "inicio" : ato >= ultimo ? "fim" : "meio";
+  const sombra = encherFio((s.motivo ? FIO.sombra : FIO.semMotivo)[fase], s);
+  const curta = encherFio(FIO.curta[fase], s);
+  /* a peça seguinte: a primeira de pé depois desta, na ordem da espinha */
+  const ordem = e.atos.flatMap((a) => a.marcos);
+  const i = ordem.findIndex((x) => x.id === m.id);
+  const prox = ordem.slice(i + 1).find((x) => !x.feito) || null;
+  /* a cidade da peça seguinte, quando o onde é um local dela */
+  const naCidade = prox && prox.cidade && norm(prox.cidade) !== norm(prox.onde) ? `, em ${prox.cidade}` : "";
+  const leva = prox ? encherFio(FIO.leva[prox.feitio] || FIO.leva.descer, { ...prox, sombra: curta, naCidade }) : curta;
+  let da;
+  if (m.feitio === "confronto") da = encherFio(FIO.da.desfecho, { sombra: curta, onde: m.onde });
+  else if (m.feitio === "descer") da = encherFio(FIO.da.fundo, { onde: m.onde, leva });
+  else {
+    const c = feitioDe(m.feitio).consequencia;
+    const r = rngDe(`${e.semente}|fio|${m.id}`);
+    const objeto = FIO.objetos[Math.floor(r() * FIO.objetos.length)];
+    da = encherFio(FIO.da[c] || FIO.da.conhece, { ...m, leva, objeto });
+  }
+  return contrair(encherFio(FIO.diz, { da, sombra }));
+}
+
 export function envelopeDaEspinha(espinha, ato, est) {
-  const m = marcoAtual(espinha, ato);
+  const e = garantirEspinha(espinha);
+  const m = marcoAtual(e, ato);
   if (!m) return "";
-  const p = progressoDoAto(espinha, ato);
+  const p = progressoDoAto(e, ato);
   const nome = ((est && est.etapas && est.etapas[ato]) || {}).nome || "";
-  return `ESPINHA — ${nome ? `${nome}, ` : ""}marco ${p.feitos + 1} de ${p.total}: ${linhaDoMarco(m)}. Isto foi decidido na criação do mundo e não é sugestão sua: puxe a cena para esse rumo sem anunciá-lo, e NUNCA diga ao jogador que existe uma estrutura. Ele não é obrigado a ir agora — se ele for para outro lado, o mundo espera e o marco continua de pé.`;
+  let fio = "";
+  try { fio = linhaDoFio(e, m, ato); } catch { fio = ""; }
+  return `ESPINHA — ${nome ? `${nome}, ` : ""}marco ${p.feitos + 1} de ${p.total}: ${linhaDoMarco(m)}.${fio ? ` ${fio}` : ""} Isto foi decidido na criação do mundo e não é sugestão sua: puxe a cena para esse rumo sem anunciá-lo, e NUNCA diga ao jogador que existe uma estrutura. Ele não é obrigado a ir agora — se ele for para outro lado, o mundo espera e o marco continua de pé.`;
 }
 
 /* NAO HA resumo de progresso exportado, e a ausencia e a propria regra do

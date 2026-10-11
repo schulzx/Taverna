@@ -15,6 +15,42 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.376–v9.379 · MM, a auditoria de coerência: a espinha primeiro (a pessoa, 11/10) · 2b8f781 · c1ca0ad · 849a904 · este commit
+
+- **quem:** `backend`, à mão, sem tocar no `App.jsx` (bastão do `frontend`), na `escuta.js` nem na `ofertas.js`.
+- **a leitura de editor:** 12 campanhas novas de Uma Vida (sementes `nexo|0..11`), escritas como roteiro e julgadas por uma régua
+  explícita (o script e as 12 histórias, antes e depois, ficaram no scratchpad da sessão). **Nota de nexo média 0,31 → 3,94 de 5.**
+  A espinha era uma lista de chamada: 280 marcos sem porquê, 64 "o que X esconde" sem conteúdo, o antagonista ausente de todo
+  envelope antes do fim em 9/12, o covil dele numa cidade e o confronto no clímax em 12/12.
+- **v9.376 · a gente (interprete.js):** `lembra_de_antes` só com passado real (`viuAntes`) e só o que a ficha diz; `atrasa` e
+  `pede_desculpa` passam a quem deve (`meDeve`); `usa_o_nome` sem apelido inventado ("Sibi"). Contradições 4 e 9, e o defeito 6.
+- **v9.377 · o compasso tem chão (compasso.js):** o assunto que não cabe no lugar de agora espera que eu volte; 6 turnos e
+  dissolve. Contradição 2 ("a corte de Rio Cinzento").
+- **v9.378 · a abertura (abertura.js):** o sino nunca move quem se procura (contradição 1, o segundo Noé); o laço do soldado já não
+  diz quem mandou a carta sem assinatura; o ofício da pista no género dela (contradição 11).
+- **v9.379 · o fio da espinha (saga.js, mundo-base.js, regiao.js, procura.js, mestria.js, historia.js):** cada marco diz ao
+  Narrador o que dá (aponta para a peça seguinte) e a sombra do antagonista no tamanho do ato; o chefe sem nome próprio casa pelo
+  nome inteiro (o fim fechava ao matar qualquer bicho da espécie); o covil do principal é o clímax; os nomes de um mundo novo sem
+  epíteto repetido nem espécie que o Léxico proíbe (`regiao.nomes`, só aditivo); o marco guarda a cidade e a procura diz-a
+  (contradição 8); o passado volta por notícia (3); a principal abre as peças do arco (7, falta a fiação).
+- **as contradições da lista:** de 12, a 12 já estava; ficam consertadas 1, 2, 3, 4, 6, 8, 9, 11 (oito); a 7 tem a regra e espera a
+  fiação; a 5 é da `ofertas.js` (parte feita na v9.374); a 10 (homónimos na base) ficou — só a procura passou a preferir o nome
+  inteiro.
+- **a prova:** seis suítes novas, todas vermelhas em HEAD e verdes agora (`teste-gente-sem-invencao`, `teste-compasso-no-chao`,
+  `teste-abertura-com-nexo`, `teste-fio-da-espinha`, `teste-nomes-do-mundo`, `teste-um-fato-um-lugar`). Teto de prompt: pior
+  caso real 73979, igual a HEAD.
+- **decisões médias:** três asserções antigas movidas, com o motivo ao lado (o nome curto do chefe sem nome próprio, o covil do
+  principal, a linha de base 54 → 53); os hashes do continente que mudaram vêm com a conta que os devolve ao de HEAD.
+- **para o frontend (não feito — é App):** `motorDoArco` passar `principal: (ms.find((m) => m.tipo === "principal") || {}).titulo`;
+  e a nêmesis da fama (`tentarSurgirNemesis`) nascer do antagonista da espinha (`espinhaRef.current.fio`) em vez de um nome novo —
+  hoje há dois antagonistas em toda campanha.
+- **o que ficou:** a gente do fio quer coisas que não tocam a história (12/12, as VONTADES da base); atos de mais de 6 peças (9);
+  4 pares de homónimos entre as peças.
+- **a 5.ª sessão deve medir:** quantas respostas do Narrador sobre um marco casam com o FIO dele (a pessoa disse o que sabe? o lugar
+  guardou o objeto dito?); se o antagonista aparece antes do fim como sombra e só no fim pelo nome; quantas contradições entre
+  órgãos sobram no mesmo pedido; e se a nêmesis e o antagonista da espinha se cruzam.
+
+---
 ## 11/10 · v9.375 · MM18, a fiação: o Mestre que escuta e o mural sem a gente da história · este commit
 
 - **quem:** `frontend`, à mão. Bastão `.claude/app-jsx` tomado às 00:56 para isto e devolvido no fim.

@@ -97,7 +97,13 @@ sec("4. O DESFECHO É O ÚLTIMO, E COM QUEM O MUNDO PROMETEU");
   const ultimo = ultimoAto.marcos[ultimoAto.marcos.length - 1];
   t("o último marco do último ato é o confronto", ultimo.feitio === "confronto");
   t("e ele é com o chefe principal do mundo", ultimo.alvo === principal.nome);
-  t("a condição casa pelo nome curto, que é como o motor registra quem caiu", ultimo.condicao.alvo === (principal.nomeCurto || principal.nome));
+  /* 11/10 (nexo): a asserção dizia "pelo nome curto" sem excepção. Movida
+     porque o nome curto de um chefe SEM nome próprio é a espécie, e
+     `derrotar` casa por pedaço do nome: o fim fechava ao matar qualquer
+     bicho da mesma espécie. Quem tem nome próprio continua a casar pelo
+     nome curto; quem não tem, pelo nome inteiro. */
+  const semNomeProprio = principal.nomeCurto === principal.especie;
+  t("a condição casa pelo nome curto, que é como o motor registra quem caiu (o nome inteiro, se o curto é a espécie)", ultimo.condicao.alvo === (semNomeProprio ? principal.nome : principal.nomeCurto));
   t("não há confronto em nenhum outro ato", espinha.atos.slice(0, -1).every((a) => a.marcos.every((m) => m.feitio !== "confronto")));
   /* a v9.129 nasceu com o confronto em PRIMEIRO lugar do ato, e o resto do
      ato acontecia depois do clímax */
