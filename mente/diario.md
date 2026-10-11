@@ -15,6 +15,32 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.374 · MM18, a história não se oferece (a queixa de 11/10, tarefa 3) · este commit
+
+- **quem:** `backend`, à mão. O conserto inteiro precisa do `App.jsx`: a parte do motor está feita e provada; a fiação fica
+  descrita abaixo para o `frontend`.
+- **a causa:** não eram principais a nascer como oferta — a principal nasce ATIVA (`abrirAbertura`). Era o **mural**: ele prefere
+  quem o herói já conhece (`oferecerTrabalhoDaqui`, v9.37), e no começo quem se conhece é a gente da história. Na 4.ª sessão o
+  alvo da principal ("O rasto de Noé Laminado") pregou **"A caçada de Noé Laminado"**, e Caetano, preso no coreto, pregou "O que há
+  em O Campo Trêmulo" — que ficou **26 turnos** no rodapé com "Aceitar". Para quem joga, a história a pedir aceite. Medido em 200
+  mundos novos: em **156** o estoque do mural da cidade de partida tem gente da história (a pista, o alvo, quem os marcos nomeiam);
+  em 93 a própria pista ou o próprio alvo.
+- **o motor (`ofertas.js`):** `genteDaHistoria` (a pista e o alvo da abertura, dador e alvos das missões que não se recusam, quem os
+  marcos por fazer nomeiam); `ehDaHistoria` (pelo nome, ou pelo título do diário que o App já manda em `evitar`); `ofertasDaqui` e
+  `cartazDaProposta` recusam a gente da história (`historia`); `cartazVencido` + `CARTAZ_ESPERA` (3 dias desde `pregadoEm`).
+  **Sem a fiação** já sai quem está no título da principal (93 → 79 em 200); **com a fiação, 156 → 0.**
+- **Mapa de chamada para o `frontend`** (âncoras de hoje):
+  1. linha 24: somar `genteDaHistoria, cartazVencido` ao import de `./ofertas.js`.
+  2. `oferecerTrabalhoDaqui` (~17931) e `garantirMural` (~21320): `ofertasDaqui({ …, historia: genteDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, espinha: espinhaRef.current }) })`.
+  3. a proposta do Mestre (~10989): `cartazDaProposta(…, { cidade, nivel, historia: genteDaHistoria({…}) })` — `null` quando é da história.
+  4. `pregarNoMural` (~21346): o cartaz entra com `pregadoEm: diaRef.current`; e `garantirMural` e o rodapé (~24546, o
+     `filter` dos oferecidos) passam a deixar de fora `cartazVencido(c, diaRef.current)`.
+- **a prova:** `testes/teste-mm18-missoes.mjs` (22) — vermelho em HEAD (o alvo pelo título continuava no mural; não havia
+  `historia` nem validade), verde agora; o mural de quem não é da história fica igual byte a byte.
+- **o registo em `respondidas.md`:** a decisão "a principal é induzida pelo mundo, por bem ou por mal" não está lá — o briefing
+  dizia que estava. Fica a pedir uma linha da pessoa (ou de quem a ouviu) com a data.
+- **o que a 5.ª sessão mede:** nenhum cartaz assinado por alguém da história; nenhum "Aceitar" no rodapé mais de três dias.
+
 ## 11/10 · v9.373 · MM18, a lei do mundo (a queixa de 11/10, tarefa 2) · este commit
 
 - **quem:** `backend`, à mão. Nada em `App.jsx`: o App já manda `pedidoDaAbertura(ab.abertura, …)` e já guarda a abertura no save.

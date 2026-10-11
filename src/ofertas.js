@@ -47,7 +47,7 @@ import { nomePessoa } from "./nomes.js";
 import { arredoresDaCidade } from "./arredores.js";
 import { oQueExisteAqui, idDaGente } from "./mundo-base.js";
 import { criaturasDoGenero } from "./bestiario.js";
-import { recompensaDe, noitesDePrazo } from "./missoes.js";
+import { recompensaDe, noitesDePrazo, mesmaPessoa, garantirMissoes } from "./missoes.js";
 import { comEm } from "./lugar.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
@@ -359,10 +359,71 @@ export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia
   };
 }
 
+/* ---------------- A HISTÓRIA NÃO SE OFERECE (MM18, 11/10) ----------------
+   A pessoa: "algumas quests principais estão aparecendo pra serem aceitas,
+   e ficam acumulando na tela inicial até que sejam aceitas". E a decisão
+   dela: a principal é INDUZIDA pelo mundo, por bem ou por mal — nunca um
+   papel para aceitar.
+
+   A causa, lida na 4.ª sessão: o mural PREFERE quem o herói já conhece
+   ("um rosto conhecido pedindo ajuda vale mais que um estranho",
+   `oferecerTrabalhoDaqui`, v9.37), e quem o herói conhece no começo é a
+   gente da história. Noé Laminado — o alvo da principal, "O rasto de Noé
+   Laminado" — pregou "A caçada de Noé Laminado", e Caetano, preso no coreto
+   no turno do julgamento, pregou "O que há em O Campo Trêmulo". Os dois
+   ficaram no rodapé com "Aceitar" (o segundo, 26 turnos): para quem joga,
+   a história a pedir aceite, ao lado da que já tinha.
+
+   A regra: quem é da história não prega no mural. A história chega pela
+   principal e pelas tramas, que não se recusam; o mural é trabalho de quem
+   não está nela. `genteDaHistoria` diz quem é: a pista e o alvo da
+   abertura, quem as etapas das missões que não se recusam procuram, e quem
+   os marcos da espinha nomeiam. */
+const MISSOES_DA_HISTORIA = ["principal", "trama"];
+export function genteDaHistoria(estado) {
+  const e = estado && typeof estado === "object" ? estado : {};
+  const out = [];
+  const por = (n) => { const x = String(n || "").trim(); if (x && !out.some((y) => norm(y) === norm(x))) out.push(x); };
+  const a = e.abertura && typeof e.abertura === "object" && !e.abertura.legado ? e.abertura : null;
+  if (a) { por(a.pista && a.pista.nome); por(a.alvo && a.alvo.quem); }
+  let ms = [];
+  try { ms = garantirMissoes(e.missoes); } catch { ms = []; }
+  for (const m of ms) {
+    if (!m || m.status !== "ativa" || !MISSOES_DA_HISTORIA.includes(m.tipo)) continue;
+    if (m.dador) por(m.dador);
+    for (const et of m.etapas || []) if (et && (et.tipo === "falar_com" || et.tipo === "derrotar" || et.tipo === "entregar")) por(et.alvo);
+  }
+  const atos = e.espinha && Array.isArray(e.espinha.atos) ? e.espinha.atos : [];
+  for (const at of atos) for (const mc of (at && Array.isArray(at.marcos) ? at.marcos : [])) if (mc && !mc.feito) por(mc.quem);
+  return out;
+}
+
+/* É da história? Pelo nome (`mesmaPessoa`: "Noé" casa com "Noé Laminado")
+   ou pelo título de uma missão da história que o traz no nome ("O rasto de
+   Noé Laminado") — é assim que o mural sabe, mesmo antes de quem chama lhe
+   passar a lista, porque o App já lhe manda os títulos do diário em
+   `evitar`. Nome com menos de LETRAS_DE_NOME letras não se procura dentro
+   de título (um "Ana" não pode tirar do mural toda "Mariana"). */
+export const LETRAS_DE_NOME = 4;
+export function ehDaHistoria(nome, opcoes) {
+  const { historia = [], titulos = [] } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const n = norm(nome);
+  if (!n) return false;
+  if ((Array.isArray(historia) ? historia : []).some((h) => norm(h) === n || mesmaPessoa(h, nome))) return true;
+  if (n.length < LETRAS_DE_NOME) return false;
+  /* palavra inteira dentro do título: sem regex montado à mão, só índices */
+  const letra = (c) => !!c && /[a-z0-9]/.test(c);
+  return (Array.isArray(titulos) ? titulos : []).some((tt) => {
+    const s = norm(tt);
+    for (let i = s.indexOf(n); i >= 0; i = s.indexOf(n, i + 1)) if (!letra(s[i - 1]) && !letra(s[i + n.length])) return true;
+    return false;
+  });
+}
+
 /* ---------------- O QUE ESTA CIDADE TEM PARA OFERECER ----------------
    Uma volta pela base do mundo, uma oferta por pessoa. Não é o mural:
    é o estoque de que o mural (e o Mestre) tiram. */
-export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia medieval", nivel = 1, quantas = 3, evitar = [], molde = null, lex = null }) {
+export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia medieval", nivel = 1, quantas = 3, evitar = [], molde = null, lex = null, historia = [] }) {
   /* v9.113: `molde` e `lex` chegam aqui, e a falta deles era visível na
      primeira cena do jogo: num mundo de caçadores modernos o mural
      oferecia "Jarl Mata-Lobos" mandando o herói a "Pedra da Serpente".
@@ -378,6 +439,8 @@ export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia m
     const of = ofertaDePessoa({ semente, pessoa: p, aqui, mapa, genero, nivel, molde, lex });
     if (!of) continue;
     if (proibido.has(norm(of.titulo)) || proibido.has(norm(of.dador))) continue;
+    /* MM18: quem é da história não prega no mural */
+    if (ehDaHistoria(of.dador, { historia, titulos: evitar })) continue;
     todas.push(of);
   }
   /* embaralho de verdade (Fisher-Yates), semeado pela cidade: o mural muda de
@@ -450,10 +513,15 @@ Reconheça na ficção que eu peguei o cartaz — o papel na mão, quem olhou, o
    O preço obedece a mesma regra de sempre: o que a cena prometeu vale; o
    sistema só calcula o que ninguém combinou. Sem etapa que o código saiba
    conferir, não há cartaz — a trava da v9.27 continua inteira. */
-export function cartazDaProposta(prop, { cidade = "", nivel = 1, icone = "📋" } = {}) {
+export function cartazDaProposta(prop, opcoes) {
+  const { cidade = "", nivel = 1, icone = "📋", historia = [] } = opcoes && typeof opcoes === "object" ? opcoes : {};
   if (!prop || !String(prop.titulo || "").trim()) return null;
   const etapas = (Array.isArray(prop.etapas) ? prop.etapas : []).filter((e) => e && e.tipo && e.alvo);
   if (!etapas.length) return null;
+  /* MM18: o trabalho que o Mestre inventou para alguém da história, ou que
+     manda procurar alguém da história, É a história — e a história não se
+     oferece: vem pela principal e pelas tramas. */
+  if (ehDaHistoria(prop.dador, { historia }) || etapas.some((e) => ehDaHistoria(e.alvo, { historia }))) return null;
   const titulo = String(prop.titulo).trim().slice(0, 60);
   const dador = String(prop.dador || "").trim().slice(0, 40);
   const tipo = prop.tipo === "contrato" ? "contrato" : "favor";
@@ -474,6 +542,21 @@ export function cartazDaProposta(prop, { cidade = "", nivel = 1, icone = "📋" 
        mundo, é de alguém que falou com o herói */
     oferecido: true,
   };
+}
+
+/* ---------------- O CARTAZ QUE ESPERA (MM18) ----------------
+   O cartaz que alguém pregou para o herói não fica para sempre à espera do
+   "Aceitar": na 4.ª sessão o de Caetano ficou 26 turnos no rodapé, assinado
+   por um preso que tinha sumido. Ao fim de `dias` desde `pregadoEm`, o
+   papel sai (quem o pregou arranjou outra pessoa, ou desistiu). Cartaz sem
+   data (save de antes) não vence — sem data, não há como saber. */
+export const CARTAZ_ESPERA = { dias: 3 };
+export function cartazVencido(cartaz, dia) {
+  const c = cartaz && typeof cartaz === "object" ? cartaz : null;
+  if (!c) return false;
+  const desde = Number(c.pregadoEm), hoje = Number(dia);
+  if (!Number.isFinite(desde) || !Number.isFinite(hoje)) return false;
+  return hoje - desde >= CARTAZ_ESPERA.dias;
 }
 
 /* A oferta vira a proposta que `aceitarProposta` sabe validar. Um lugar
