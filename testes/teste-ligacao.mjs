@@ -162,6 +162,12 @@ sec("1. NENHUM MÓDULO MUDO");
     /* 11/10 (Fase MM, MM18): `escuta.js` esperou aqui a fiação em `enviar`
        e `pautaDoTurno`; o App passou a importá-lo no mesmo dia (frontend),
        e a entrada saiu. */
+    /* 11/10 (Fase MM, a campanha que prende): `prometido.js` nasce no
+       backend — as promessas do Narrador guardadas pelo Cronista e cobradas
+       na pauta (O QUE VOLTA) — e espera a fiação do App.jsx na MESMA leva
+       (o Cronista e `pautaDoTurno`, descrita no diário de 11/10). A entrada
+       sai quando o App o importar. */
+    "prometido.js": "a fiação do Cronista e da pauta no App.jsx, pelo frontend (a campanha que prende, 11/10)",
   };
   const mudos = [];
   for (const f of arqs) {

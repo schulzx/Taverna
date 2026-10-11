@@ -203,6 +203,15 @@ export const SECOES = [
      do turno na primeira linha — como lia. */
   { id: "vetoDoDesfecho", rotulo: "NÃO PODE", prio: PRIO_DE_FERRO, o: "o veto de quem acabou de cair" },
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },
+  /* A campanha que prende (item 1): O QUE VOLTA — a promessa que o próprio
+     Narrador plantou e que o sistema traz de volta agora
+     (`prometido.js#cobrarNoTurno`), uma por turno no máximo e nunca numa
+     pergunta. Na leitura vem antes do RUMO (a ordem do turno fica a última
+     linha). Corta com prio 2,47: depois dos vetos, do rumo e da planta da
+     masmorra (2,45), e à frente da economia da praça (2,5) — na 4.ª sessão
+     a cor da praça chegava em todo turno de cidade e o couro de Norberto
+     não chegou em nenhum. */
+  { id: "volta", rotulo: "O QUE VOLTA", prio: 2.47, o: "a promessa plantada antes que volta agora" },
   /* MM18 (o Mestre que escuta): O RUMO — a ordem do turno, dita uma vez:
      primeiro reage ao que eu fiz ou responde ao que perguntei; depois, e por
      dentro da resposta, UMA coisa só aponta para o próximo passo da

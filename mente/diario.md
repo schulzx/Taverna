@@ -6,6 +6,46 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## 11/10 · v9.386 · MM, a campanha que prende, item 1: as promessas do Narrador, cobradas (`backend`) · este commit
+
+- **a queixa:** *"achei a história de morna para frio, não prendeu muito"*. Na 4.ª sessão o couro de Norberto, a gaveta errada, as
+  cinco chaves e "Eu sou o recado" saíram do Narrador e morreram lá: `promessas.sementes` vazio do primeiro ao último turno.
+- **o módulo:** `src/prometido.js` (e não `cobranca.js`, que já é a cobrança das moedas). O Cronista ganha uma secção curta
+  (`SECAO_DO_CRONISTA`: `promessas` e `promessas_pagas`) e vê as abertas (`abertasParaOCronista`); `guardarSementes` filtra o
+  lembrete de cena (`NAO_E_SEMENTE`: a tarefa, o estado, o presságio de ambiente) e guarda; `cobrarNoTurno` anda o relógio só nos
+  turnos do jogador fora da luta e escolhe pela tabela de prazos (`TIPOS_DE_SEMENTE`: madura, vence, expira, peso) no máximo UMA
+  madura, nunca num turno de pergunta (`lerOPedido`, escuta.js); cobrada fecha, a que a narração pagou fecha como `paga`, a que passa
+  do prazo, perde quem a fazia ou cede o lugar no caderno cheio fecha como `expirada`. A pauta ganha a secção `volta` ("O QUE VOLTA",
+  prio 2,47: depois dos vetos, do rumo e da planta; antes da economia da praça), antes do RUMO na leitura.
+- **os números, contra o registo:** em 22 turnos do jogador fora da luta, **16 foram perguntas** — sobram 6 turnos de ato numa
+  sessão inteira, e é por isso que a escolha pesa. Com as sementes que um Cronista com a secção devolveria (18 oferecidas, lidas à mão
+  das narrações): **13 guardadas** (antes: 0), 3 recusadas por lembrete (a tarefa, o sino, o cheiro), 1 por repetida ("Eu sou o
+  recado" é a mesma promessa que "o nome é o teu"); **voltam 4, em M8, M10, M22 e M26** (a carta dos antigos irmãos, "Euzébio passa
+  sem som", "A dívida não dorme", a mulher de capa verde e o óleo de mirra — esta antes da masmorra, quando na sessão nunca voltou);
+  2 pagas pela própria narração (o couro no M13, a gaveta no M19) e por isso nunca cobradas; 2 cederam o lugar; 5 abertas no fim,
+  nenhuma pendurada. O cânone real do Cronista, mapeado como proxy, guardaria 8 e devolveria 3 — e guardaria "a lei do Sino" como
+  promessa: é por isso que a secção é própria e não um mapa do cânone.
+- **decisões médias:** (a) um cofre separado do Livro (`promessas.js`): o Livro esconde do Narrador a verdade da semente; aqui o
+  Narrador sabe o que disse — juntar obrigava a inventar uma das 39 formas para cada frase. (b) Caderno de 6 com troca por peso: na
+  primeira prova o caderno encheu no M14 com frases menores e recusou as chaves e "Eu sou o recado". (c) "nome" sozinho não faz duas
+  promessas iguais (`comuns: 2`).
+- **a prova:** `testes/teste-prometido.mjs` (61 asserções, vermelha em HEAD: o módulo e a secção não existem), com a sessão 4
+  turno a turno embutida (a forma de cada turno do registo). `teste-ligacao` ganha a entrada de espera de `prometido.js`.
+- **a fiação que fica para o App (frontend, com o bastão), exata:**
+  1. `import { garantirPrometido, guardarSementes, pagarSementes, cobrarNoTurno, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";`
+     — e tirar a entrada `prometido.js` de `AGUARDANDO` em `testes/teste-ligacao.mjs`.
+  2. `const prometidoRef = useRef(garantirPrometido(null));` · no save (~8715) `prometido: prometidoRef.current` · no load (~13377)
+     `prometidoRef.current = garantirPrometido(sv.prometido);` · na campanha nova, `garantirPrometido(null)`. Campo novo, a versão
+     antiga ignora.
+  3. No Cronista (`cronistaDoTurno`, ~10964): `SECAO_DO_CRONISTA` entra no array `sys` antes da "REGRA GERAL"; o molde JSON ganha
+     `"promessas":[],"promessas_pagas":[]`; no `user`, depois do CÂNONE ATUAL, `abertasParaOCronista(prometidoRef.current)`. Depois do
+     parse, em `try/calou`: `let e = pagarSementes(prometidoRef.current, r.promessas_pagas).estado; prometidoRef.current = guardarSementes(e, r.promessas).estado;`
+  4. Em `pautaDoTurno` (~7282, ao lado do RUMO, antes de `cederNaCena`), em `try/calou`, fora da Noite:
+     `const rv = cobrarNoTurno(prometidoRef.current, { pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current, fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }), mortos: (baseMundoRef.current || {}).mortos || [] }); prometidoRef.current = rv.estado; if (rv.linha) p = porNaPauta(p, "volta", rv.linha);`
+     — uma vez por turno (`pautaDoTurno` só é chamada em `enviar`, ~12330), porque anda o relógio.
+- **o que ficou:** o vermelho de `teste-regiao-historia.mjs` na árvore é do outro `backend` (saga.js/regiao.js/batidas.js em voo);
+  com HEAD + só os meus caminhos a suíte inteira é verde (`so-o-meu.sh`).
+
 ## dd/mm hh:mm · vX.YYY · <título do item> · commit <hash>
 - **estado inicial:** suítes verdes/vermelhas, o que a pauta tinha
 - **conselheiro:** o que propôs (ou "não chamado")
