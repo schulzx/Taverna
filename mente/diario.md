@@ -16,6 +16,28 @@ Formato:
 
 ---
 
+## 11/10 · v9.396 · MM, o laço da história (1/6): o fio é um só (`backend`) · este commit
+
+- **quem:** `backend`, à mão, sem o bastão (o `frontend` está no `App.jsx` com as ações que o jogo não regista). Tocados:
+  `missoes.js` (`conferir`), `abertura.js` (`aindaSoUmNome`); suíte nova `teste-fio-um-so` (32).
+- **o defeito (sessão 5, defeito 4):** "O rasto de Edric" em 0/2 depois de dez respostas com o Edric, a espinha com "Encontrar
+  Edric" fechado no mesmo turno. Duas causas: o conferente só pergunta a etapa atual (o Osric, que nunca disse o nome), e a
+  etapa e o marco perguntam o mesmo fato com moradas diferentes ("A Ponte Lenta" × "…, em Rio Profundo", o herói "nos arredores
+  de Casa da Fonte").
+- **o que muda:** (a) o caminho salta-se — uma etapa de caminho (`ETAPAS_DE_CAMINHO`: falar_com, ir_a, revelar) não segura uma
+  etapa de caminho adiante que já se cumpriu; a saltada fica `feito`+`pulada` (campo novo, só aditivo); derrotar/achar/levar
+  nunca se saltam nem saltam; (b) o marco que a espinha já fechou cumpre a etapa das missões da história com o mesmo tipo e o
+  mesmo alvo (e o mesmo lugar, se o primeiro nome é o que casa) — lido de `mundo.espinha`; (c) o alvo da abertura no lugar
+  dele deixa de ser "só um nome".
+- **números:** a sessão reconstruída — 0/2 → **2/2** (com a espinha no mundo); mesma cidade, alvo sem a pista: 0/2 → 2/2 já
+  sem fiação nenhuma.
+- **a fiação que fica para o App (uma linha, `mundoDasMissoes`, ~l. 11011):** acrescentar `espinha: espinhaRef.current,` ao
+  objeto devolvido. `conferirAsMissoes` chama `mundoDasMissoes(p)` de novo DEPOIS de gravar a espinha conferida, então a
+  missão lê o marco fechado no mesmo turno. Sem esta linha só vale a porta (a); com ela, o caso da sessão fecha. Prova da
+  fiação: `teste-fio-um-so` §1 já usa o formato.
+- **decisão média:** o salto exige caminho dos DOIS lados — "matar os três antes de chegar não pula a chegada" (teste-missoes
+  §3) continua de pé, sem mover asserção.
+
 ## 11/10 11:40 · v9.395 · MM, a luta tem saída (`frontend`) · este commit
 
 - **quem:** `frontend`, à mão, com o bastão do `App.jsx` (tomado 10:40, devolvido ao commit). Tocados: `saida-da-luta.js` (novo),

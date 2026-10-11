@@ -794,6 +794,13 @@ export function aindaSoUmNome(abertura, nome, ctx = {}) {
   if (!m || m.id !== a.principalId || m.status !== "ativa") return false;
   if (m.etapas[0] && m.etapas[0].feito) return false;
   const aqui = norm(obj(o.lugar).nome || o.lugar);
+  /* 11/10 (5.ª sessão): e o ALVO no lugar dele também é presença. O herói
+     foi direto à Ponte Lenta sem passar pela pista, e "Edric" continuava a
+     ser só um nome à frente do próprio Edric — a porta do Narrador não o
+     registava, e o fio partia-se entre quem a cena via e quem a missão
+     procurava. Sem artigo dos dois lados ("A Ponte Lenta" é "Ponte Lenta"). */
+  const semArt = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "");
+  if (n === norm(a.alvo.quem) && a.alvo.onde && semArt(obj(o.lugar).nome || o.lugar) === semArt(a.alvo.onde)) return false;
   return aqui !== norm(a.pista.local);
 }
 

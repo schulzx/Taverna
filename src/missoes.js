@@ -610,6 +610,56 @@ export const VIRADAS_QUE_ESPERAM = ["emboscada", "encontro", "revelacao"];
 const viradaPorVir = (m) => !!(m && m.virada && !m.virada.feita && VIRADAS_QUE_ESPERAM.includes(m.virada.tipo));
 const segura = (m, mundo) => viradaPorVir(m) || !!(m && m.virada && mundo.emLuta);
 
+/* ---------------- O FATO É UM SÓ (11/10, a 5.ª sessão de prova) ----------------
+   "O rasto de Edric" ficou em 0 de 2 etapas depois de dez respostas a falar
+   com o Edric, enquanto a espinha fechava "Encontrar Edric" no mesmo turno.
+   A missão era [falar com Osric na Candeia, falar com Edric na Ponte Lenta],
+   o taverneiro nunca disse o nome, e o conferente só olha a etapa ATUAL —
+   a segunda nunca chegou a ser perguntada. E a prova de ter falado (a
+   conversa vista pelo Cronista, `falouCom`) só vive no turno em que
+   acontece: no turno seguinte já não há como a perguntar. Três órgãos, três
+   respostas para o mesmo fato.
+
+   A régua de mesa: um fato cumprido fecha em todos os órgãos que o seguem.
+   Duas portas, as duas com a mesma fonte da verdade:
+     · O CAMINHO SE SALTA. A etapa ATUAL que é só caminho (achar quem sabe,
+       chegar a um lugar, descobrir o que ele guarda) não segura uma etapa
+       adiante, também de caminho, que já se cumpriu: quem achou o Edric sem o Osric não precisa
+       de voltar à Candeia para lhe ouvir dizer onde o Edric estava. Só o
+       caminho se salta — derrotar, achar, levar e resgatar continuam a
+       exigir que aconteçam, porque são o que a história cobra, não o
+       caminho até lá.
+     · O QUE A ESPINHA JÁ FECHOU, ESTÁ FECHADO. Um marco cumprido (`feito`,
+       gravado por `conferirEspinha` pelo mesmo `ver`) cumpre a etapa das
+       missões da história que pede o mesmo — o mesmo tipo e o mesmo alvo
+       (e, se as duas pontas dizem onde, o mesmo lugar). É o que segura o
+       fato depois de o turno passar: `mundo.espinha`, opcional; sem ela,
+       só a primeira porta. */
+export const ETAPAS_DE_CAMINHO = ["falar_com", "ir_a", "revelar"];
+const MISSOES_QUE_LEEM_A_ESPINHA = ["principal", "trama"];
+
+/* a etapa `e` pede o que o marco `mc` já cumpriu? */
+function mesmoFato(e, mc) {
+  const c = mc && mc.condicao;
+  if (!c || !e || c.tipo !== e.tipo || !e.alvo || !c.alvo) return false;
+  if (e.tipo === "derrotar") return norm(e.alvo).includes(norm(c.alvo)) || norm(c.alvo).includes(norm(e.alvo));
+  const igual = norm(e.alvo) === norm(c.alvo);
+  if (!igual && !(e.tipo === "falar_com" && mesmaPessoa(e.alvo, c.alvo))) return false;
+  /* o primeiro nome casa — o lugar decide, quando as duas pontas o dizem */
+  const l1 = semArtigo(moradaDe(e.onde).lugar), l2 = semArtigo(moradaDe(c.onde || mc.onde).lugar);
+  return igual || !l1 || !l2 || l1 === l2;
+}
+function naEspinha(e, m, mundo) {
+  if (!m || !MISSOES_QUE_LEEM_A_ESPINHA.includes(m.tipo)) return false;
+  const esp = mundo && mundo.espinha && typeof mundo.espinha === "object" ? mundo.espinha : null;
+  const atos = esp && Array.isArray(esp.atos) ? esp.atos : [];
+  return atos.some((a) => (a && Array.isArray(a.marcos) ? a.marcos : []).some((mc) => mc && mc.feito && mesmoFato(e, mc)));
+}
+const cumprida = (e, m, mundo) => {
+  try { if (etapaDef(e.tipo).ver(e, mundo)) return true; } catch { /* etapa torta não fecha */ }
+  return naEspinha(e, m, mundo);
+};
+
 export function conferir(lista, mundo = {}) {
   const ms = garantirMissoes(lista);
   mundo = mundo && typeof mundo === "object" ? mundo : {};
@@ -645,11 +695,23 @@ export function conferir(lista, mundo = {}) {
         return perdida;
       }
     }
-    if (!etapaDef(e.tipo).ver(e, mundo)) return m;
-    const etapas = m.etapas.map((x, k) => (k === i ? { ...x, feito: true } : x));
+    /* a etapa atual; senão, a mais adiante que se cumpriu, por cima de um
+       caminho só (ETAPAS_DE_CAMINHO, acima) */
+    let j = cumprida(e, m, mundo) ? i : -1;
+    if (j < 0) {
+      for (let k = i + 1; k < m.etapas.length && ETAPAS_DE_CAMINHO.includes(m.etapas[k - 1].tipo); k++) {
+        /* e o que fecha à frente também é caminho: chegar, achar alguém,
+           descobrir — prova que o herói ESTEVE lá. "Matar os três antes de
+           chegar" não pula a chegada (teste-missoes §3): derrotar não diz
+           onde, e a missão é sequência quando a ordem é a história. */
+        if (ETAPAS_DE_CAMINHO.includes(m.etapas[k].tipo) && !m.etapas[k].feito && cumprida(m.etapas[k], m, mundo)) j = k;
+      }
+    }
+    if (j < 0) return m;
+    const etapas = m.etapas.map((x, k) => (k === j ? { ...x, feito: true } : k >= i && k < j && !x.feito ? { ...x, feito: true, pulada: true } : x));
     const fim = etapas.every((x) => x.feito) && !segura(m, mundo);
     const novo = { ...m, etapas, status: fim ? "concluida" : "ativa" };
-    avancos.push({ missao: novo, etapa: e, indice: i, total: etapas.length });
+    avancos.push({ missao: novo, etapa: m.etapas[j], indice: j, total: etapas.length });
     if (fim) concluidas.push(novo);
     return novo;
   });
