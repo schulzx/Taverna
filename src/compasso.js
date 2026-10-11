@@ -232,6 +232,22 @@ export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null
    que o jogador já está travando são duas cenas grandes no mesmo turno, e
    a segunda apaga a primeira.
    ============================================================ */
+/* O que um assunto pede da cena que NÃO é o lugar — o momento, a fama, quem
+   está por perto — vale como cumprido: isso a semente já pesou, e mudar
+   não desfaz a onda. Fica a pergunta do CHÃO (cidade, porte, bioma,
+   masmorra, estrada, a vizinha a dias, o combate). */
+export const O_QUE_NAO_E_LUGAR = {
+  momento: 1, fama: 100, nivel: 99, ordemDaFase: 99,
+  pessoaNaCena: true, temGrupo: true, gentePorPerto: true, genteLonge: true,
+  temGenteConhecida: true, temPassado: true, temPromessa: true, temDerrotado: true, pvBaixo: true,
+};
+/* turnos que a onda espera, depois da hora de virar, que eu volte ao chão */
+export const ESPERA_DO_LUGAR = 6;
+export function cabeNoLugar(assunto, sit = {}) {
+  if (!assunto || typeof assunto.quando !== "function") return true;
+  try { return !!assunto.quando({ ...(sit && typeof sit === "object" ? sit : {}), ...O_QUE_NAO_E_LUGAR }); } catch { return true; }
+}
+
 export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, preferirTom = null, elenco = null, folego = null } = {}) {
   const c = garantirCompasso(compasso);
   if (segurar) return { compasso: c, virou: false, porque: "a onda espera: já há cena grande em curso" };
@@ -244,6 +260,26 @@ export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segur
 
   const prox = movimentoPorOrdem((mov.ordem + 1) % MOVIMENTOS.length);
   const voltou = prox.ordem === 0;
+
+  /* O ASSUNTO TEM CHÃO (nexo, 11/10). O assunto nasce na semente, com a
+     cena de então (a "intriga de corte" só abre numa capital), e os
+     movimentos seguintes iam ao Narrador onde quer que o herói estivesse:
+     na 4.ª sessão, a intriga semeada em Alto do Sal chegou ao "O QUE FICOU"
+     numa aldeia pastoril de uma rua só, e o Narrador escreveu "a corte de
+     Rio Cinzento" — o compasso contra a ficha do lugar. Agora, na virada
+     para um movimento que fala, o assunto tem de caber no CHÃO de agora
+     (`cabeNoLugar`): se não cabe, a onda espera que eu volte; e se eu não
+     volto em `ESPERA_DO_LUGAR` turnos, a história de lá seguiu sem mim. */
+  const atual = assuntoPorId(c.assunto);
+  if (atual && prox.fala && prox.id !== "semente" && !cabeNoLugar(atual, sit)) {
+    if (turnos - c.alvo >= ESPERA_DO_LUGAR) {
+      return {
+        compasso: { ...c, movimento: "respiro", turnos: 0, alvo: sortearDuracao(MOVIMENTOS[0], sorte, folego), assunto: "", quem: "", quem2: "" },
+        virou: false, porque: "o assunto ficou noutro lugar: a história de lá seguiu sem mim",
+      };
+    }
+    return { compasso: { ...c, turnos }, virou: false, movimento: mov, porque: "o assunto é de outro lugar: a onda espera que eu volte" };
+  }
   let assunto = c.assunto;
   let quem = c.quem;
   let quem2 = c.quem2;
