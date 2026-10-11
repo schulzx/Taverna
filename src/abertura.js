@@ -316,6 +316,10 @@ export function garantirAbertura(a) {
       objeto: txt(al.objeto, 90), origem: txt(al.origem, 60),
     },
     sinal: txt(a.sinal, 30),
+    /* MM18 · a lei: a regra da porta da cidade de partida (a ficha da
+       cidade, `reconhecimento`), que a abertura mostra a acontecer. Campo
+       novo, ignorado pela versão antiga; save sem ele abre sem lei. */
+    porta: txt(a.porta, LEI_DA_PORTA.teto),
     turnos: inteiro(a.turnos),
     semAvanco: inteiro(a.semAvanco),
     feitas: inteiro(a.feitas),
@@ -542,8 +546,12 @@ export function abrirAbertura(ctx) {
      Norte" apontava para uma taverna que a planta desta cidade não tem. */
   const fora = !!cidadeAlvo && norm(cidadeAlvo) !== norm(q.cidade.nome);
   alvo.origem = hl.origem || (fora && alvo.feitio !== "enfrentar" ? cidadeAlvo : alvo.onde) || "";
-  let sinal = "";
-  try { sinal = fichaDaCidade(q.cidade, { semente, mapa: o.mapa, genero, lex: o.lex || null, molde: o.molde || null }).hoje.sinal || ""; } catch { sinal = ""; }
+  let sinal = "", porta = "";
+  try {
+    const ficha = fichaDaCidade(q.cidade, { semente, mapa: o.mapa, genero, lex: o.lex || null, molde: o.molde || null });
+    sinal = ficha.hoje.sinal || "";
+    porta = ficha.reconhecimento || "";
+  } catch { sinal = ""; porta = ""; }
   const titulo = encher(TITULO_DO_FEITIO[alvo.feitio] || TITULO_DO_FEITIO.procurar, alvo).slice(0, 70);
 
   /* A PRINCIPAL NASCE ACEITA. Primeiro passo: ENCONTRAR a pista, no lugar
@@ -572,7 +580,7 @@ export function abrirAbertura(ctx) {
   const abertura = garantirAbertura({
     principalId: missao.id, cidade: q.cidade.nome, chegada, razao, sabe, historia: hl.texto, titulo,
     pista: { nome: pista.nome, papel: pista.papel, local: pista.local },
-    alvo, sinal, turnos: 0, semAvanco: 0, feitas: 0, visitados: [], cheios: 0,
+    alvo, sinal, porta, turnos: 0, semAvanco: 0, feitas: 0, visitados: [], cheios: 0,
   });
   return { abertura, missao };
 }
@@ -580,6 +588,31 @@ export function abrirAbertura(ctx) {
 /* ============================================================
    O QUE A ABERTURA PEDE AO NARRADOR — uma vez por campanha
    ============================================================ */
+
+/* ---------------- A LEI DA PORTA (MM18, 11/10) ----------------
+   O pedido da abertura mandava o Narrador dizer "uma lei daqui que não
+   valeria noutro lugar" — e não lhe dava lei nenhuma. Ele inventava, e
+   inventava em forma de lema: "A lei do lugar? Papel vale mais que ouro, e
+   quem rasga um contrato dorme no Coice do Cão" (3.ª sessão), "a lei aqui é
+   o Sino — cada entrada de marcado dobra uma vez" (4.ª). A pessoa: "não
+   entendi a questão da lei do mundo que é citada no começo da campanha,
+   algumas nem parecem fazer sentido". Não faziam: nenhuma tinha dono no
+   sistema, nenhuma voltava a valer, e a ficha da cidade, perguntada depois
+   ("como se reconhece quem é bem-vindo?"), dava outra.
+
+   A decisão: a lei da abertura passa a SER do sistema, e é a regra que vale
+   no instante em que o herói chega — a da porta. A ficha da cidade já a
+   tem (`cidade-por-dentro.js#RECONHECIMENTO`: o salvo-conduto selado que
+   vale sete dias, a senha do dia, a medalha de cobre de visitante, a fita
+   no pulso), e é a mesma que a pauta responde quando se pergunta. O
+   Narrador mostra-a a ACONTECER com o herói (quem a cobra, o que lhe dão ou
+   lhe pedem), nunca como lema. Sem regra (save antigo), a abertura não
+   fala de lei — o mundo continua a ter a sua no Léxico, mas a abertura já
+   não pede uma inventada. `teto` é o tamanho que a regra pode ter. */
+export const LEI_DA_PORTA = {
+  teto: 160,
+  diz: "À porta vale já a regra daqui: {porta} — mostre-a acontecer, sem lema",
+};
 
 /* O pedido do primeiro turno. Substitui o texto de `abrirACampanha` e o
    envelope da trama sorteada que ia junto: é o MESMO canal (a mensagem da
@@ -597,12 +630,12 @@ export function pedidoDaAbertura(abertura, opcoes) {
   const aoLado = linhaDoCompanheiro(companheiro);
   return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, nesta ordem, em prosa corrida e sem títulos, na 2ª pessoa — o herói é "você" ("você chegou", nunca "cheguei"):
 
-1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e uma lei daqui que não valeria noutro lugar. Concreto: um cheiro, um som, um preço.
-2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}${aoLado}. O que se vê e se ouve dali.
+1) O MUNDO. Que lugar é este, por dentro: o que o move, quem manda, do que vive. Concreto: um cheiro, um som, um preço.
+2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}${aoLado}. O que se vê e se ouve dali.${a.porta ? ` ${LEI_DA_PORTA.diz.replace("{porta}", a.porta)}.` : ""}
 3) A PEQUENA HISTÓRIA DO LUGAR. ${a.historia}.
 4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: ${a.razao}. O que sabe: ${a.sabe}.
 
-Isto já está decidido e não é oferta: ninguém lhe pede nada nesta cena, e ninguém oferece trabalho ao herói. Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
+Isto já está decidido: nesta cena ninguém lhe pede nada, e ninguém oferece trabalho ao herói. Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
 (As habilidades iniciais dele já foram concedidas: ${habs} — NÃO envie "adicionar_habilidades".)`;
 }
 

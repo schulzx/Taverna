@@ -15,6 +15,27 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.373 · MM18, a lei do mundo (a queixa de 11/10, tarefa 2) · este commit
+
+- **quem:** `backend`, à mão. Nada em `App.jsx`: o App já manda `pedidoDaAbertura(ab.abertura, …)` e já guarda a abertura no save.
+- **o que era:** duas leis, nenhuma jogável. (1) O pedido da abertura mandava dizer "uma lei daqui que não valeria noutro lugar" e
+  não dava lei nenhuma — o Narrador inventava um lema: "A lei do lugar? Papel vale mais que ouro, e quem rasga um contrato dorme no
+  Coice do Cão" (3.ª sessão), "a lei aqui é o Sino — cada entrada de marcado dobra uma vez" (4.ª). (2) A LEI DESTE MUNDO do Léxico
+  (prompt fixo) é lore do mundo, coerente, mas sem nada que a cobre. Nenhuma das duas voltava a valer, e a ficha da cidade,
+  perguntada depois ("como se reconhece quem é bem-vindo?"), respondia outra coisa (a medalha de cobre).
+- **a decisão (pesado de motor, dentro da Fase MM):** a lei da abertura passa a ser do sistema e concreta — **a regra da porta**
+  da cidade de partida (`cidade-por-dentro.js#RECONHECIMENTO`: o salvo-conduto que vale sete dias, a senha do dia, a medalha de
+  visitante, a fita no pulso), guardada na abertura (`porta`, campo novo ignorado pela versão antiga) e mostrada a ACONTECER com o
+  herói à chegada, na parte 2 ("À porta vale já a regra daqui: … — mostre-a acontecer, sem lema"). É a mesma que a pauta responde
+  quando se pergunta: uma verdade só. A lei do Léxico fica no prompt (é a identidade do mundo e o Narrador usa-a bem: "Euzébio não
+  tem marca. Ele passa sem som"), mas a abertura já não pede lei inventada. Save antigo (sem `porta`) abre sem lei.
+- **o custo:** o pedido da abertura continua abaixo dos 1.500 da MM13 (maior 1.495 em 48 mundos; a frase nova paga-se com
+  "uma lei daqui…" a sair e duas frases encurtadas).
+- **a prova:** `testes/teste-mm18-lei.mjs` (15) — vermelho em HEAD ("uma lei daqui" no pedido, sem `porta`), verde agora, em 24
+  mundos: a regra é a da ficha da cidade em 24/24, vai na parte 2, sem bastidor, determinística, save antigo sem lei.
+- **o que a 5.ª sessão mede:** a abertura mostra a regra da porta a acontecer (quem a cobra, o que se dá); perguntada depois, a
+  resposta é a mesma; nenhum lema de lei inventado.
+
 ## 11/10 · v9.372 · MM18, o Mestre que escuta (a queixa de 11/10, tarefa 1) · este commit
 
 - **quem:** `backend`, à mão, a pedido da pessoa. Sem bastão: nada em `App.jsx`.

@@ -177,7 +177,12 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
 {
   /* Gravados ANTES de qualquer linha desta etapa (06/10), com este laço,
      sobre a árvore de HEAD v9.356 (git archive). */
-  const HEAD = { espinha: "5223fea98f7cc861", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "fff026b80b9be705", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  const HEAD = { espinha: "5223fea98f7cc861", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "cdff91d82c5067eb", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  /* 11/10 (MM18 · a lei da porta): `abertura` mudou de fff026b80b9be705
+     para cdff91d82c5067eb porque a abertura passa a guardar `porta` (a regra
+     da porta da cidade, da ficha). Medido com o mesmo laço: SEM o campo
+     `porta` o hash é fff026b80b9be705, o de antes, byte a byte — nada mais
+     da abertura do continente mudou. */
   const hs = {};
   const h = (k, v) => { (hs[k] ||= createHash("sha256")).update(J(v) ?? "u"); };
   for (const molde of ["sobremundo", "torre"]) for (let i = 0; i < 200; i++) {
