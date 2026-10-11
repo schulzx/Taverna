@@ -153,6 +153,7 @@ import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, re
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
+import { partidaNaRegiao } from "./marcha.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
@@ -23365,6 +23366,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
     /* pôr o pé na estrada de verdade encerra o sublocal: viagem entre cidades
        e um ponto nos arredores são estados que não convivem */
+    /* v9.371 (a marcha única, a fiação): de onde se parte é guardado ANTES de
+       limpar o lugar — a boca de um lugar da região é ponto de partida, e a
+       conta única (`partidaNaRegiao`, marcha.js) mede dali, não da cidade */
+    const lugarDaPartida = lugarRef.current;
     if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
     /* v9.18: pôr o pé na estrada deixa rastro — é o gatilho das caçadas. */
     tiquear("viagem", { porque: "você se moveu, e rastro fica" });
@@ -23414,7 +23419,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (opcoes && opcoes.ida) {
         try { jIda = jornadaAteAMasmorra(opcoes.ida, { de: cidadeAtualRef.current || "a última parada", dia: diaRef.current }); } catch (e) { calou("jornada até a boca", e); }
       }
-      jornadaRef.current = jIda || abrirViagem({
+      /* v9.371 (a marcha única, a fiação): numa região delimitada, a ida a
+         uma povoação é a da conta única — a mesma hora que a ficha, o
+         Geógrafo e o mapa vivo dizem, pelas povoações quando o direto passa
+         de um dia, e nunca o piso de três dias de quem não tem estrada. O
+         jogador lê o caminho antes de andar (`linhas`, vazia na ida reta).
+         Mapa sem `regiao` (todo save de antes da MM17) não entra aqui, e
+         um estouro cai no `abrirViagem` de sempre. */
+      let jM = null;
+      if (!(opcoes && opcoes.ida) && mapaRef.current && mapaRef.current.regiao) {
+        try {
+          jM = partidaNaRegiao(mapaRef.current, { cidadeAtual: cidadeAtualRef.current, lugar: lugarDaPartida, destino: alvo, dia: diaRef.current });
+          if (jM && Array.isArray(jM.linhas) && jM.linhas.length) pushMsgs(jM.linhas.map((texto) => ({ autor: "sistema", texto })));
+        } catch (e) { calou("partida na região", e); jM = null; }
+      }
+      jornadaRef.current = jIda || (jM && jM.jornada) || abrirViagem({
         de: cidadeAtualRef.current || "a última parada", para: alvo,
         dia: diaRef.current, rota: rotaEntre(cidadeAtualRef.current, alvo),
       });

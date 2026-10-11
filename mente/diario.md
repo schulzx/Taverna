@@ -15,6 +15,28 @@ Formato:
 ```
 
 ---
+## 10/10 21:40 · v9.371 · a marcha única, a fiação (MM17, pendência nº 3) · este commit
+
+- **quem:** `frontend`, à mão, sem maestro. Bastão do `App.jsx` tomado às 21:38 e devolvido ao fim.
+- **o que mudou para quem joga:** a ida a uma povoação da região passa a custar o que a ficha, o Geógrafo e o mapa vivo dizem.
+  Em 200 mundos semeados: **1.984 → 0** pares em que uma conta discordava da jornada, **858 → 0** viagens além da promessa (as
+  858 povoações sem estrada, que caíam no piso de três dias: 24 h em vez de 8). Quando o direto passa de um dia, o jogador lê o
+  caminho antes de andar ("🧭 Forte do Rei fica a oeste: o caminho direto leva 12 h…; por Casa das Águias, 8 h — é por lá que se
+  vai") e a jornada anda pelo percurso (o ⌖ passa pela cidade do meio). Jogado no navegador (campanha nova de Uma Vida): Nova Seco
+  → Forte do Rei abriu com 480 min (antes 1.440), percurso Nova Seco → Casa das Águias → Forte do Rei, a 50% o herói em Casa das
+  Águias. O `localStorage` do painel: só `taverna_save_v1` nasceu (não existia), apagado com o jogo desmontado e conferido.
+- **a fiação:** `import { partidaNaRegiao }`; `lugarDaPartida` guardado antes de limpar o lugar; com região e fora da ida a uma
+  boca, `partidaNaRegiao` em try/`calou`, as `linhas` ao jogador, e `jIda || jM.jornada || abrirViagem(...)`. Mapa sem
+  `regiao` não entra no ramo (322/322 partidas continentais iguais à de sempre).
+- **a prova:** `testes/teste-marcha-na-viagem.mjs` (20 asserções) lê a fiação do App e mede com a jornada que ELE abre — vermelho
+  em HEAD (o import não existe e a medida dá 1.984/858), verde agora. Endereços re-medidos: o import somou +1 a tudo abaixo da
+  linha 156 — 146 em texto de dado de `acoes-do-jogador.mjs`, 2 em `check-acoes-do-jogador.mjs`, 4 em
+  `teste-acoes-do-jogador.mjs` (96 divergências → 0); os endereços dentro de comentário ficaram como foram escritos.
+- **o que ficou:** o **piso de 12 h por avanço não morre com esta fiação.** Uma jornada a pé de 97 min ainda anda um avanço inteiro
+  (`minutosPorAvanco` tem piso de 240 min de estrada = 720 de relógio), e o veredito (`partida.js`) e a sua suíte travam esse
+  piso como o que o jogo cobra. Tirá-lo é mexer em `viagem.js` + `partida.js` + duas suítes: do `backend`, como item próprio.
+  O backend subiu a v9.370 (`0a60254`, o mercado) enquanto isto se fazia; esta fiação sobe como v9.371.
+
 ## 10/10 · v9.366 · MM17: a ficha é a planta · a marcha única · P3 e P2 do mapa · commits `1b7f1ee` (v9.363), `fb4d12b` (v9.364, parte pura), `c0703ae` (v9.365), `432c92e` (v9.366)
 
 - **por que andou:** a pessoa escolheu duas pendências da MM17 (10/10) e o regente, que desenhou o mapa novo no Figma, pediu o P2 e o P3
