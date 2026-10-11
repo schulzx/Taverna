@@ -16,6 +16,21 @@ Formato:
 
 ---
 
+## 11/10 · v9.401 · MM, o laço da história (4/6): um vilão só (`backend`) · este commit
+
+- **tocados:** `mundo-base.js` (`resumoChefesPrompt(…, lex, { espinha })`, tabela `UM_VILAO_SO`); suíte `teste-um-vilao-so` (23).
+- **o defeito (sessão 5, "5c" e coerência 7):** quatro candidatos — o fio "Dragão Jovem a Mão Fria", a lista "Golem de Pedra a
+  Mão Fria — LINHA PRINCIPAL" (a mesma vaga sorteada outra vez com o Léxico que proíbe dragões, que a espinha não tinha ao
+  nascer), "Dragão Jovem/Elemental Menor a Viúva de Ferro", e seis chefes cada um com o seu querer.
+- **o que muda:** com a espinha, o topo da lista é o antagonista do fio (nome e querer da espinha, covil e nível do chefe
+  principal); os outros vêm UMA vez sob "os que o servem (nenhum quer nada por conta própria)", sem querer próprio, e o
+  secundário que a espinha prometeu num marco tem o nome dela. Sem espinha, fio cumprido ou antagonista morto: a lista de sempre.
+- **números (24 campanhas, a espinha sem Léxico e a lista com ele, como na sessão):** topo = antagonista do fio **10 → 24 de
+  24**; vontades de vilão por prompt **4–6 → 1**; a lista nunca cresce (1222 → 1056 caracteres na 1.ª campanha).
+- **a fiação que fica para o App (duas chamadas):** `resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current,
+  generoMundo(), (mundoAtual() || {}).lexico, { espinha: espinhaRef.current })` — a do prompt (~l. 12592, `const chefes = …`) e
+  a do `/chefes` do modo deus (~l. 6446). Sem isto, a lista é a de sempre: o ganho só chega ao Narrador com a fiação.
+
 ## 11/10 · v9.399 · MM, o laço da história (3/6): o passo sai de onde o herói está (`backend`) · este commit
 
 - **tocados:** `abertura.js` (`proximoPasso` com `aqui`: a pessoa da etapa atual, ou de uma adiante por cima de caminho, que

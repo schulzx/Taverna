@@ -896,11 +896,67 @@ export function criaturaPorNome(semente, mapa, genero, nome, lex = null) {
   return null;
 }
 
-export function resumoChefesPrompt(semente, mapa, base, genero, lex = null) {
+/* ---------------- UM VILÃO SÓ (11/10, a 5.ª sessão de prova) ----------------
+   A sessão contou QUATRO candidatos a vilão no mesmo prompt: o fio da
+   espinha dizia "Dragão Jovem a Mão Fria"; esta lista dizia "Golem de Pedra
+   a Mão Fria — LINHA PRINCIPAL" (a mesma vaga, sorteada outra vez com o
+   Léxico que a espinha não tinha quando nasceu); o ato 1 prometia "Dragão
+   Jovem a Viúva de Ferro" e a lista "Elemental Menor a Viúva de Ferro"; e
+   cada um dos seis chefes trazia o seu próprio querer ("quer apagar o
+   próprio nome da história", duas vezes). Seis vontades de vilão e nenhuma
+   era a da história.
+
+   Com a espinha na mão (`opcoes.espinha`), quem a lista põe no topo é o
+   antagonista do FIO — o nome e o querer que a espinha gravou ao nascer —,
+   e os outros chefes são dele: dizem a quem servem e não trazem querer
+   próprio. O nome de um secundário que a espinha já prometeu num marco
+   ("Acabar com …") é o da espinha, pelo mesmo título. Sem espinha (save
+   antigo), ou com o fio já cumprido ou morto, a lista é a de sempre. */
+export const UM_VILAO_SO = {
+  principal: "o antagonista desta história, e o único",
+  /* uma vez, antes dos secundários: dizê-lo em cada um custava o nome
+     inteiro do antagonista por chefe, e o teto do prompt é sagrado */
+  servos: "os que o servem (nenhum quer nada por conta própria)",
+};
+
+export function resumoChefesPrompt(semente, mapa, base, genero, lex = null, opcoes = null) {
   const cs = chefesDoMundo(semente, mapa, genero, lex).filter((c) => !estaMorto(base, c.nome) && !estaMorto(base, c.nomeCurto));
   if (!cs.length) return "";
-  const linha = (c) => `${c.nome} — ${c.linha === "principal" ? "LINHA PRINCIPAL" : "secundário"}, nível ${c.nivel}${c.gd ? `, GD ${c.gd}` : ""}, ${c.regiao ? `nos arredores de ${c.regiao}` : "paradeiro incerto"}${c.covil ? ` (covil perto de ${c.covil})` : ""}; ${c.personalidade}; ${c.motivo}`;
-  return `CHEFES QUE JÁ EXISTEM NESTE MUNDO (do sistema — apresente-os quando a história pedir, na ordem que você achar melhor; NÃO invente outros): ${cs.map(linha).join(" || ")}.`;
+  const lugar = (c) => `nível ${c.nivel}${c.gd ? `, GD ${c.gd}` : ""}, ${c.regiao ? `nos arredores de ${c.regiao}` : "paradeiro incerto"}${c.covil ? ` (covil perto de ${c.covil})` : ""}`;
+  const cabeca = "CHEFES QUE JÁ EXISTEM NESTE MUNDO (do sistema — apresente-os quando a história pedir, na ordem que você achar melhor; NÃO invente outros): ";
+  const fio = doFio(opcoes && opcoes.espinha, base);
+  if (fio) {
+    const principal = cs.find((c) => c.linha === "principal") || null;
+    const topo = `${fio.antagonista} — ${UM_VILAO_SO.principal}, ${principal ? lugar(principal) : "paradeiro incerto"}${principal ? `; ${principal.personalidade}` : ""}${fio.motivo ? `; ${fio.motivo}` : ""}`;
+    const outros = cs.filter((c) => c !== principal).map((c) => `${nomeNaEspinha(c, fio.alvos)} — ${lugar(c)}; ${c.personalidade}`);
+    return `${cabeca}${topo}${outros.length ? ` || ${UM_VILAO_SO.servos}: ${outros.join(" || ")}` : ""}.`;
+  }
+  const linha = (c) => `${c.nome} — ${c.linha === "principal" ? "LINHA PRINCIPAL" : "secundário"}, ${lugar(c)}; ${c.personalidade}; ${c.motivo}`;
+  return `${cabeca}${cs.map(linha).join(" || ")}.`;
+}
+
+/* o fio da espinha, enquanto vale: o antagonista vivo e o confronto por
+   cumprir. `alvos`: quem os marcos de "acabar com" prometem. Lido sem
+   `saga.js` (que já lê este arquivo — um círculo entre os dois). */
+function doFio(espinha, base) {
+  const e = espinha && typeof espinha === "object" ? espinha : null;
+  const f = e && e.fio && typeof e.fio === "object" ? e.fio : null;
+  const antagonista = f ? String(f.antagonista || "").trim() : "";
+  if (!antagonista) return null;
+  const marcos = (Array.isArray(e.atos) ? e.atos : []).flatMap((a) => (a && Array.isArray(a.marcos) ? a.marcos : [])).filter((m) => m && typeof m === "object");
+  if (marcos.some((m) => m.feitio === "confronto" && m.feito)) return null;
+  const curto = antagonista.split(", ")[0];
+  if (estaMorto(base, antagonista) || estaMorto(base, curto)) return null;
+  return { antagonista, motivo: String(f.motivo || "").trim(), alvos: marcos.filter((m) => m.feitio === "enfrentar" && m.alvo).map((m) => String(m.alvo)) };
+}
+/* o secundário que a espinha já nomeou num marco: o mesmo título ("a
+   Viúva de Ferro"), outra espécie — vale o nome que a história prometeu */
+function nomeNaEspinha(c, alvos) {
+  if (String(c.nome).includes(", ")) return c.nome;
+  const titulo = norm(String(c.nome).slice(String(c.especie || "").length));
+  if (titulo.length < 4) return c.nome;
+  const achado = (alvos || []).find((a) => norm(a) !== norm(c.nome) && norm(a).endsWith(` ${titulo}`));
+  return achado || c.nome;
 }
 
 export const BASE_PROMPT = `BASE DO MUNDO (v9.8 — o mundo já existe; você o revela, não o inventa):
