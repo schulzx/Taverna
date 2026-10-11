@@ -427,14 +427,15 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      três refs novos (+8) e o momento do fio, O QUE VOLTA e O FECHO em
      `pautaDoTurno` (+32), tudo ACIMA de `pushMsgs`. Só o endereço andou;
      re-medido pelo diff de App.jsx contra o HEAD (ebf9b68). */
+  /* (MM11 #5, a bolsa da frase, 11/10: o import, o ref do veto, o preço do balcão, o veto na pauta e o meDeve, acima): 8736 -> 8761, +25 — re-medido pelo diff de App.jsx contra o HEAD; só o endereço andou. */
   /* (MM (a luta tem saída, o frontend) 11/10): 8702 -> 8736, +34 — o import de saida-da-luta.js (+3), o mundo do rumo (+5, MM19), os
      dois refs da luta sem saída (+6), a vista da luta em `pautaDoTurno` (+17) e
      a frase do fecho em `notarFechoDaLuta` (+3), tudo ACIMA de `pushMsgs`. Só o endereço andou; re-medido pelo diff de App.jsx contra o
      HEAD (e5b6736; o App.jsx é o mesmo de c3de7af). */
-  } else if (iPush + 1 !== 8736) {
-    falha(`pushMsgs saiu de src/App.jsx:8736 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 8761) {
+    falha(`pushMsgs saiu de src/App.jsx:8761 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8736, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8761, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

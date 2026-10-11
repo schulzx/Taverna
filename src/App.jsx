@@ -191,6 +191,7 @@ import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeE
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
+import { compraNaFrase, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
 import { garantirPrometido, guardarSementes, pagarSementes, cobrarNoTurno, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
@@ -5632,6 +5633,11 @@ export default function Taverna() {
      prenúncio do sino não é save: é um aviso de um turno só. */
   const aberturaMundoRef = useRef(garantirAbertura(null));
   const sinoDoTurnoRef = useRef("");
+  /* 11/10 (MM11 · 5.ª sessão): o que a frase do jogador tentou trocar e o
+     sistema NÃO fechou — a compra sem dinheiro, a dádiva do que não há.
+     Vale um turno: limpo no começo de cada `agirInterno`, lido na pauta
+     (secção naoPode). Não é save. */
+  const naoPodeDoTurnoRef = useRef([]);
   /* v9.135: o Interprete lido deste turno, e as falas que os atores
      devolveram. Os dois vivem entre `enviar` e a montagem da Pauta. */
   const interpreteRef = useRef(null);
@@ -7023,6 +7029,17 @@ export default function Taverna() {
     try {
       mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;
     } catch (e) { calou("mercadoParaPauta", e); }
+    /* 11/10 (MM11 · 5.ª sessão, J9): o preço do BALCÃO de mantimentos — as
+       rações, as tochas, a corda do kit. A banca não os vende, e a pauta
+       ia vazia: o Mestre inventou "dez cunhas, mais uma pela corda boa".
+       Entra na mesma ficha do mercado (é ela que cala o oráculo). */
+    try {
+      if (!combateRef.current && cidadeAtualRef.current) {
+        const p0 = personagemRef.current || personagem || {};
+        const bc = balcaoParaPauta(frase, { balcao: balcaoAqui(cidadeDoMapa(cidadeAtualRef.current)), temKit: garantirSuprimentos(p0.suprimentos).kit });
+        if (bc.pergunta.length) mc = { pergunta: [...((mc && mc.pergunta) || []), ...bc.pergunta], em: [...((mc && mc.em) || []), ...bc.em] };
+      }
+    } catch (e) { calou("balcaoParaPauta", e); }
     /* MM17 C2: as terras de além da região — só quando a frase pergunta por
        elas, nunca na masmorra nem na luta. É ficha do mundo: o oráculo não
        rola o que o mapa sabe (`A_FICHA_DECIDE`). */
@@ -7142,6 +7159,10 @@ export default function Taverna() {
        frase pediu cada coisa — não pela ordem em que os módulos correram. */
     p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz]));
     p = porNaPauta(p, "naoPode", g.naoPode);
+    /* 11/10 (MM11 · 5.ª sessão, M10): a compra ou a dádiva que a frase
+       declarou e o sistema não fechou — o Narrador não entrega o que a
+       bolsa não pagou */
+    try { p = porNaPauta(p, "naoPode", naoPodeDoTurnoRef.current || []); } catch (e) { calou("o veto da bolsa da frase", e); }
     /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
     p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));
     /* MM15 (4): o segredo que a espinha guarda não é a boca do Narrador —
@@ -7673,6 +7694,10 @@ export default function Taverna() {
           forcaDoLaco: (l && !l.rompido && l.forca) || 0,
           rompido: !!(l && l.rompido),
           euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || "")) || (l && l.tipo === "divida"),
+          /* 11/10 (MM11 · 5.ª sessão, M35): quem recebeu de mim sem que eu
+             pedisse nada fica a dever (`registarABolsaDaFrase`) — o sinal
+             que o Intérprete e a índole já liam e ninguém acendia */
+          meDeve: !!n.meDeve,
           sabeDeMim: confid.some((c) => (c.ouvintes || []).includes(nome)),
           euSeiDela: !!n.segredo,
           primeiraVez: n.conhecidoEm == null && !noGrupo, /* v9.315: dia 0 é conhecido, não "nunca vi" (!n.conhecidoEm tratava os dois igual) */
@@ -15525,6 +15550,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         if (gl.gesto && gl.combate !== combateRef.current) { combateRef.current = gl.combate; setCombate(gl.combate); }
       }
     } catch (e) { calou("o gesto da luz", e); }
+    /* ---------------- A BOLSA DA FRASE (11/10, MM11 · 5.ª sessão, M10 e M35) ----------------
+       A compra declarada e a dádiva declarada passam pela mochila ANTES de
+       o turno ir a quem quer que seja: o oráculo ganhou o M10 ("pago as
+       onze cunhas… anão, viste Edric?") e a compra nunca fechou. Seja qual
+       for a porta que a seguir ganhe, o recibo (ou o veto) já viaja. */
+    naoPodeDoTurnoRef.current = [];
+    try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
     ultimoDesfechoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do
        desafio que rolou. A leitura antiga servia ao turno com dado e
@@ -23454,11 +23486,65 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      praça andou) e cobrar o número antigo seria deixar o jogador
      comprar no preço de ontem. Quem decide o preço é sempre o mesmo
      lugar, no instante do gesto. */
-  const balcaoAqui = () => balcaoDeMantimentos(cidadeMercado, {
+  const balcaoAqui = (cid = cidadeMercado) => balcaoDeMantimentos(cid, {
     dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {},
     extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }),
     temKit: garantirSuprimentos((personagemRef.current || personagem).suprimentos).kit,
   });
+
+  /* ---------------- A BOLSA DA FRASE (11/10, MM11 · 5.ª sessão) ----------------
+     A frase que declara comprar mantimento ou dar mantimento a alguém
+     mexe na mochila AQUI, pelo módulo puro (`bolsa-da-frase.js`): o que
+     fecha vira recibo na tela e fato no envelope; o que não fecha vira a
+     linha do porquê e o veto do turno. Só fora da luta. */
+  const registarABolsaDaFrase = (acao) => {
+    const txt = String(acao || "");
+    if (!txt.trim() || txt.trimStart().startsWith("[") || txt.startsWith("/") || combateRef.current) return;
+    const nota = (env) => { if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; };
+    const vetar = (vs) => { if (vs && vs.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vs]; };
+    /* a compra: só numa cidade, que é onde há balcão */
+    try {
+      const cid = cidadeAtualRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
+      if (cid && !jornadaRef.current && !masmorraRef.current) {
+        const p = personagemRef.current || personagem;
+        const sup = garantirSuprimentos(p.suprimentos);
+        const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit });
+        if (c) {
+          if (c.fecha) {
+            const novo = { ...sup };
+            for (const x of c.itens) { if (x.id === "kit") novo.kit = true; else novo[x.id] = (novo[x.id] || 0) + x.quantos; }
+            const np = { ...p, moedas: (p.moedas || 0) - c.total, suprimentos: novo };
+            personagemRef.current = np; setPersonagem(np);
+            salvar({ personagem: np });
+            nota(envelopeDaCompra(c));
+          } else vetar(vetoDaCompra(c));
+          pushMsgs([{ autor: "sistema", texto: falaDaCompra(c) }]);
+        }
+      }
+    } catch (e) { calou("a compra da frase", e); }
+    /* a dádiva: a quem está na cena */
+    try {
+      const p = personagemRef.current || personagem;
+      const pessoas = (pessoasDaCena() || []).map((x) => ({ nome: x.nome, companheiro: !!x.ehCompanheiro }));
+      const sup = garantirSuprimentos(p.suprimentos);
+      const d = dadivaNaFrase(txt, { pessoas, suprimentos: sup });
+      if (!d) return;
+      if (!d.da) { vetar(vetoDaDadiva(d)); pushMsgs([{ autor: "sistema", texto: falaDaDadiva(d) }]); return; }
+      const depois = mochilaDepoisDaDadiva(sup, d);
+      let np = { ...p, suprimentos: depois };
+      if (d.companheiro) {
+        np = { ...np, grupo: (np.grupo || []).map((m) => (m && m.nome === d.quem ? ganharVinculo(m, MARCA_DA_DADIVA.vinculoDoCompanheiro).membro : m)) };
+      } else if ((npcsRef.current || {})[d.quem]) {
+        const n = npcsRef.current[d.quem];
+        npcsRef.current = { ...npcsRef.current, [d.quem]: { ...n, meDeve: { dia: diaRef.current, o: d.itens.map((x) => `${x.quantos} ${x.id}`).join(", ") } } };
+        setNpcs(npcsRef.current);
+      }
+      personagemRef.current = np; setPersonagem(np);
+      salvar({ personagem: np });
+      nota(envelopeDaDadiva(d));
+      pushMsgs([{ autor: "sistema", texto: falaDaDadiva(d, depois) }]);
+    } catch (e) { calou("a dádiva da frase", e); }
+  };
 
   const comprarSuprimento = (id, quantos = 1) => {
     const p = personagemRef.current || personagem;
