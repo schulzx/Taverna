@@ -683,7 +683,8 @@ sec("4. a definição operacional de 'número que muda'");
   /* (v9.393 · a fiação da campanha que prende) 15505 -> 15581, +76: o degrau todo acima do relógio */
   /* (MM (a luta tem saída, o frontend) 11/10) 15581 -> 15622, +41: o mesmo degrau de cima do enviar, todo acima do relógio. Re-medido pelo diff contra o HEAD (e5b6736; o App.jsx é o mesmo de c3de7af). */
   /* (MM11 #5, a bolsa da frase, 11/10) 15622 -> 15654, +32: o import, o ref do veto, o preço do balcão, o veto na pauta, o meDeve e o gancho da bolsa no agirInterno, todos acima do relógio. Re-medido pelo diff contra o HEAD. */
-  t("e aponta a linha que avança o relógio", !!relogio && /15654/.test(relogio.porque));
+  /* (MM11 #5, a leitura de pessoa, 11/10) 15654 -> 15655, +1: o import de leitura-de-pessoa.js. Re-medido pelo diff contra o HEAD. */
+  t("e aponta a linha que avança o relógio", !!relogio && /15655/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -767,7 +768,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:18059 → veredictoDaAcao — MM3b,
+     adjudicador usa (src/App.jsx:18060 → veredictoDaAcao — MM3b,
      frontend, 29/09: re-medido por busca direta no arquivo, não por soma
      de delta, porque a referência já vinha desatualizada de antes desta
      etapa; MM8c-1, frontend, 29/09: 17762 -> 17782, +20 — o mesmo delta
@@ -1012,7 +1013,7 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
        linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
        disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
        contra o HEAD, e conferido pelo varredor. */
-      .linhas.find((l) => l.onde === "src/App.jsx:14073").voz === "telegrama"); /* (A1 · as pontas) 13741 -> 13833, +92: o mesmo degrau do relógio, todo acima. (v9.371 · a marcha única, a fiação) 13833 -> 13834, +1: o import de marcha.js no topo. (MM18 · a fiação da escuta) 13834 -> 13907, +73: o import, os refs, o rumo e a escuta em enviar, todos acima. (nexo · as três fiações, o frontend) 11/10: 13907 -> 13931, +24: o ref da conversa e o Cronista, acima; re-medido pelo diff. */ /* (v9.393 · a fiação da campanha que prende) 13931 -> 14007, +76: o degrau todo acima */ /* (MM · a luta tem saída, o frontend) 11/10: 14007 -> 14048, +41: o mesmo degrau, todo acima. */
+      .linhas.find((l) => l.onde === "src/App.jsx:14074").voz === "telegrama"); /* (A1 · as pontas) 13741 -> 13833, +92: o mesmo degrau do relógio, todo acima. (v9.371 · a marcha única, a fiação) 13833 -> 13834, +1: o import de marcha.js no topo. (MM18 · a fiação da escuta) 13834 -> 13907, +73: o import, os refs, o rumo e a escuta em enviar, todos acima. (nexo · as três fiações, o frontend) 11/10: 13907 -> 13931, +24: o ref da conversa e o Cronista, acima; re-medido pelo diff. */ /* (v9.393 · a fiação da campanha que prende) 13931 -> 14007, +76: o degrau todo acima */ /* (MM · a luta tem saída, o frontend) 11/10: 14007 -> 14048, +41: o mesmo degrau, todo acima. */
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
@@ -1207,7 +1208,7 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
        linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
        disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
        contra o HEAD, e conferido pelo varredor. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13940" && x.familia === "alcance")); /* (A1 · as pontas) 13608 -> 13700, +92: o mesmo degrau, todo acima. (v9.371 · a marcha única, a fiação) 13700 -> 13701, +1: o mesmo import. (MM18 · a fiação da escuta) 13701 -> 13774, +73: o mesmo degrau. (nexo · as três fiações, o frontend) 11/10: 13774 -> 13798, +24: o mesmo degrau. */ /* (v9.393 · a fiação da campanha que prende) 13798 -> 13874, +76: o degrau todo acima */ /* (MM · a luta tem saída, o frontend) 11/10: 13874 -> 13915, +41: o mesmo degrau, todo acima. */
+    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:13941" && x.familia === "alcance")); /* (A1 · as pontas) 13608 -> 13700, +92: o mesmo degrau, todo acima. (v9.371 · a marcha única, a fiação) 13700 -> 13701, +1: o mesmo import. (MM18 · a fiação da escuta) 13701 -> 13774, +73: o mesmo degrau. (nexo · as três fiações, o frontend) 11/10: 13774 -> 13798, +24: o mesmo degrau. */ /* (v9.393 · a fiação da campanha que prende) 13798 -> 13874, +76: o degrau todo acima */ /* (MM · a luta tem saída, o frontend) 11/10: 13874 -> 13915, +41: o mesmo degrau, todo acima. */
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
@@ -1346,7 +1347,8 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
   /* v9.393: o enviar desceu de :13947 para :14023 (a fiação da campanha que prende acima dele, +76) — o mesmo endereço, re-medido */
   /* (MM (a luta tem saída, o frontend) 11/10) o enviar desceu de :14023 para :14064, +41: o import da saída da luta (+3), os dois refs (+6), a vista da luta na pauta (+17), o mundo do rumo (+5, MM19), o fecho com a frase (+3), o estável que não rola de novo (+6) e o load do fim sem saída (+1), tudo acima. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (e5b6736; o App.jsx é o mesmo de c3de7af). */
   /* (MM11 #5, a bolsa da frase, 11/10: o import, o ref do veto, o preço do balcão, o veto na pauta e o meDeve, acima) o enviar desceu de :14064 para :14089, +25; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /14089/.test(S.ondeSai));
+  /* (MM11 #5, a leitura de pessoa, 11/10: o import de leitura-de-pessoa.js, acima) o enviar desceu de :14089 para :14090, +1; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /14090/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

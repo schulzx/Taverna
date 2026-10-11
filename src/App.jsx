@@ -191,6 +191,7 @@ import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeE
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
+import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
@@ -18796,6 +18797,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          comprou, e o que ele não comprou. Um sucesso em Persuasão não
          escala para o favor seguinte, e essa era a improvisação mais cara
          que ainda sobrava para a IA. */
+      /* ---------------- A LEITURA (11/10, MM11 · 5.ª sessão, M32) ----------------
+         Intuição 19 contra 15, SUCESSO, e nem uma linha de leitura: o
+         envelope mandava "revele uma coisa concreta" e o Narrador não tinha
+         coisa nenhuma. A verdade sai da ficha da pessoa
+         (`leitura-de-pessoa.js`), na camada que o teste compra. */
+      try {
+        if (passou && des && des.pericia === "intuicao" && !combateRef.current) {
+          const cena = pessoasDaCena() || [];
+          const alvoL = (des.pessoa && des.pessoa.nome && cena.find((x) => x.nome === des.pessoa.nome))
+            || (() => { const fora = cena.filter((x) => !x.ehCompanheiro); return fora.length === 1 ? fora[0] : null; })();
+          let segL = [];
+          try { segL = segredosGuardados(espinhaRef.current, mundoDaBase()); } catch (e2) { calou("segredos da leitura", e2); }
+          const l = leituraDaPessoa(alvoL, { mente: des.mente || null, pergunta: r.frase || r.motivo || "", critico, segredos: segL });
+          if (l) env = `${env}\n${envelopeDaLeitura(l)}`;
+        }
+      } catch (e) { calou("a leitura da pessoa", e); }
       if (des && des.social) {
         const quem = des.quem || "essa pessoa";
         env = envelopeSocial(des.social, { passou, quem, oQueEuDisse: r.frase || r.motivo || "", rotulo: des.rotulo });
@@ -18946,7 +18963,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          presentes compartilham o primeiro nome achado (o defeito do T10). */
       const achado = nomeProcurado(t, vivos.map((n) => n.nome));
       if (achado) return vivos.filter((n) => primeiroNome(n.nome) === primeiroNome(achado)).length > 1 ? null : vivos.find((n) => n.nome === achado);
-      return vivos.length === 1 ? vivos[0] : null;
+      if (vivos.length === 1) return vivos[0];
+      /* 11/10 (MM11 · 5.ª sessão, M32): "tento ler se ELE está mentindo",
+         na ponte, com Hakon ao lado e Edric à frente — dois vivos, nenhum
+         nome, e o teste rolou sem pessoa (sem o "está a mentir?" do mundo e
+         sem leitura nenhuma). O companheiro está COMIGO, não à minha
+         frente: havendo um só de fora do grupo, é ele. */
+      const doGrupo = new Set((((personagemRef.current || personagem) || {}).grupo || []).map((g) => g && g.nome).filter(Boolean));
+      const deFora = vivos.filter((n) => !doGrupo.has(n.nome));
+      return deFora.length === 1 ? deFora[0] : null;
     } catch { return null; }
   };
 
@@ -19387,6 +19412,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          encostou o ouvido e ouviu o silêncio, que é uma informação de
          verdade e não um fracasso. E o lugar fica marcado, para que insistir
          não vire uma segunda consulta com outra resposta. */
+      let menteDoMundo = null;
       if (v.oportunidade) {
         const q = perguntarOportunidade(v);
         if (q && !/^sim/.test(q.grau.id)) {
@@ -19407,9 +19433,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
            depois de o mundo ter dito que havia voz nele */
         if (q) {
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaPerguntaDoSistema(q, { oQue: `Eu tentei ${v.rotulo}` })}`;
+          if (v.oportunidade.pergunta === "estaMentindo") menteDoMundo = "sim";
         }
       }
-      rolarDesafio(v, acao);
+      /* 11/10 (MM11 · 5.ª sessão, M32): o "sim, essa pessoa mente" chega
+         ao fim do dado — é ele que a leitura diz quando o teste passa */
+      rolarDesafio(menteDoMundo ? { ...v, mente: menteDoMundo } : v, acao);
       return true;
     }
     pushMsgs([
