@@ -60,6 +60,7 @@ import { antecedenteDe, EM_JOGO, REVIRAVOLTA_DO_ATO0, RELOGIO_DO_FIO } from "./b
 import { FIO } from "./saga.js";
 import { ANTECEDENTES } from "./antecedentes.js";
 import { LIGACOES_AO_PASSADO } from "./companheiro-inicial.js";
+import { sexoDoNome } from "./nomes.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -296,10 +297,11 @@ export const TIQUES_PROIBIDOS = ["fica calado à espera", "sem tirar os olhos", 
 /* ---------------- §1.4 A TEIA — cada pessoa aponta para outra ----------------
    `laco` é o tipo do registo (`TIPOS_DE_LACO`) quando o fio tem um; `sabe`
    diz quem sabe ("dois", "a" ou "b"). `forcada` só nasce por regra, nunca
-   por sorteio. */
+   por sorteio. `concorda` (C2, 11/10): de quem é o género que a frase
+   flexiona — a C1 dava "Corwin foi noivo(a) de Perrin" ao Narrador. */
 export const TEIA_DO_NUCLEO = [
   { id: "t_vida", o: "{a} deve a vida a {b}", laco: "divida", sabe: "dois" },
-  { id: "t_noivos", o: "{a} foi noivo(a) de {b}, e ninguém sabe porque acabou", laco: "amor", rompido: true, sabe: "dois" },
+  { id: "t_noivos", o: "{a} foi noivo(a) de {b}, e ninguém sabe porque acabou", laco: "amor", rompido: true, sabe: "dois", concorda: "a" },
   { id: "t_denunciou", o: "{a} denunciou {b} uma vez, e {b} não sabe", laco: "rivalidade", sabe: "a" },
   { id: "t_ensinou", o: "{a} ensinou {b} a lutar", laco: "aprendizado", sabe: "dois" },
   { id: "t_sangue_calado", o: "{a} e {b} são do mesmo sangue e não o dizem", laco: "familia", sabe: "dois" },
@@ -307,7 +309,7 @@ export const TEIA_DO_NUCLEO = [
   { id: "t_salvou_cobra", o: "{a} salvou {b}, e cobra-o em silêncio", laco: "divida", sabe: "dois" },
   { id: "t_matou_dele", o: "{a} matou alguém de {b}", laco: "rivalidade", sabe: "a" },
   { id: "t_fugiram", o: "{a} e {b} fugiram juntos de um sítio, e contam histórias diferentes", laco: "amizade", sabe: "dois" },
-  { id: "t_morto_vivo", o: "{a} julga {b} morto", laco: "amizade", sabe: "b", forcada: true },
+  { id: "t_morto_vivo", o: "{a} julga {b} morto(a)", laco: "amizade", sabe: "b", forcada: true, concorda: "b" },
 ];
 
 /* ---------------- §1.5 O ELO — o antecedente com rosto ----------------
@@ -411,11 +413,118 @@ export const QUEM_E = {
   proibidas: ["subtrama", "arco", "pedido", "crise", "escolha", "pista", "núcleo", "nucleo"],
 };
 
+/* ---------------- O GÉNERO DE QUEM FALA (C2, 11/10) ----------------
+   A C1 escreveu as tabelas no masculino e deixou passar duas frases ao
+   Narrador que não concordavam com quem as vivia: a teia dava "Corwin foi
+   noivo(a) de Perrin", e a fogueira dava "Perrine (… dito por ele …)". O
+   Narrador segue o pronome que lê — a 4.ª sessão já pagou um "ele" para a
+   mulher do alaúde (`OFICIO_NO_GENERO`, abertura.js).
+
+   A pessoa tem `genero_pessoa` na base ("mulher" | "homem"); o vilão do
+   fio não tem, e diz-se pelo primeiro nome, quando é dos bancos de nomes
+   (`sexoDoNome`, nomes.js). O artigo do título NÃO serve: "Yorick
+   Ventoforte, a Mão Fria" é ele, e o "a" é da mão. Sem nenhum dos dois (o
+   Golem, o Lich), vale o masculino genérico da língua.
+
+   A flexão é POR FRASE INTEIRA, só no texto da própria pessoa: `feminino`
+   troca as frases das tabelas que falam dela no masculino; `masculino`, a
+   única que o `jogo` escreveu no feminino ("a irmã de votos"). O "(a)" de
+   uma palavra ("noivo(a)", "morto(a)") resolve-se pelo género; e os buracos
+   {ele}, {dele}, {o} enchem-se com o pronome. Frase inteira e não palavra
+   solta porque "o" e "ele" também são o herói e a sombra ("e ela forja
+   para ele agora"). A suíte varre 120 mundos: nenhuma linha produzida com
+   "(a)", nem com a frase do outro género. */
+export const GENERO_NA_FICHA = {
+  pronomes: {
+    homem: { ele: "ele", Ele: "Ele", dele: "dele", o: "o", sozinho: "sozinho" },
+    mulher: { ele: "ela", Ele: "Ela", dele: "dela", o: "a", sozinho: "sozinha" },
+  },
+  feminino: [
+    /* QUER */
+    ["de quem o humilhou", "de quem a humilhou"],
+    ["ser chamado mestre", "ser chamada mestra"],
+    /* TEME */
+    ["ser deixado para trás", "ser deixada para trás"],
+    ["que o herói o veja como ele se vê", "que o herói a veja como ela se vê"],
+    ["ser chamado cobarde", "ser chamada cobarde"],
+    ["tornar-se o pai", "tornar-se igual ao pai"],
+    ["envelhecer sozinho", "envelhecer sozinha"],
+    ["e o tenham visto", "e a tenham visto"],
+    /* ESCONDE, as pistas e o que revela */
+    ["é desertor, e o regimento ainda o procura", "é desertora, e o regimento ainda a procura"],
+    ["foi mandado vigiar", "foi mandada vigiar"],
+    ["foi dado como morto, e há quem o chore", "foi dada como morta, e há quem a chore"],
+    ["quando o chamam", "quando a chamam"],
+    ["a campa com o nome dele", "a campa com o nome dela"],
+    ["um credor que o cumprimenta", "um credor que a cumprimenta"],
+    ["escrito na letra dele", "escrito na letra dela"],
+    ["procura-o", "procura-a"],
+    ["quem o chora ainda espera", "quem a chora ainda espera"],
+    /* CARREGA */
+    ["os que confiavam nele", "os que confiavam nela"],
+    ["e o dono ainda o procura", "e o dono ainda a procura"],
+    /* LINHA */
+    ["menos do que ele", "menos do que ela"],
+    /* O ELO: quem era ao herói, o que esconde, as pistas */
+    ["o terceiro da companhia — outro camarada", "a terceira da companhia — outra camarada"],
+    ["o homem de negócios", "a mulher de negócios"],
+    ["o copista que", "a copista que"],
+    ["o mestre de recados", "a mestra de recados"],
+    ["o físico que", "a física que"],
+    ["o antigo parceiro de caça", "a antiga parceira de caça"],
+    ["o aprendiz que", "a aprendiz que"],
+    ["o irmão de culto", "a irmã de culto"],
+    ["o outro sobrevivente", "a outra sobrevivente"],
+    ["ele sabe porque o copiou", "ela sabe porque o copiou"],
+    ["é ele quem leva", "é ela quem leva"],
+    ["e ele forja para ele", "e ela forja para ele"],
+    ["e ele é o anzol", "e ela é o anzol"],
+    ["; ele abriu o porão", "; ela abriu o porão"],
+    ["e ele levou-a", "e ela levou-a"],
+    ["a culpa do naufrágio foi dele", "a culpa do naufrágio foi dela"],
+    ["a faca dele", "a faca dela"],
+    ["as cartas que ele guarda", "as cartas que ela guarda"],
+    /* a reviravolta do soldado (batidas.js), dita pela boca do elo */
+    ["o antigo companheiro de armas metido nisto", "a antiga companheira de armas metida nisto"],
+    ["foi ele quem deu o nome", "foi ela quem deu o nome"],
+    ["e o rasto dele aponta", "e o rasto dela aponta"],
+    /* A FERIDA DO VILÃO */
+    ["foi um herói, como este", "foi uma heroína, como este herói"],
+    ["o exército dele é feito de gente que ele salvou", "o exército dela é feito de gente que ela salvou"],
+    ["foi traído pela cidade", "foi traída pela cidade"],
+    ["quer que alguém o trave", "quer que alguém a trave"],
+    ["não sabe quem ele é", "não sabe quem ela é"],
+  ],
+  masculino: [
+    ["a irmã de votos que ficou", "o irmão de votos que ficou"],
+  ],
+};
+
+/* o género de uma pessoa do núcleo: o da base, ou o do primeiro nome */
+export function generoDaPessoa(pessoa) {
+  const p = obj(pessoa);
+  const g = norm(p.genero || p.genero_pessoa);
+  if (g === "mulher" || g === "homem") return g;
+  const s = sexoDoNome(p.nome);
+  return s === "fem" ? "mulher" : s === "masc" ? "homem" : "";
+}
+
+/* a frase no género de quem a vive (sem género: o masculino genérico) */
+export function noGenero(texto, genero) {
+  const g = genero === "mulher" ? "mulher" : "homem";
+  const pares = g === "mulher" ? GENERO_NA_FICHA.feminino : GENERO_NA_FICHA.masculino;
+  let x = String(texto == null ? "" : texto);
+  for (const [de, por] of pares) if (x.includes(de)) x = x.split(de).join(por);
+  x = g === "mulher" ? x.replace(/(\p{L}+)o\(a\)/gu, "$1a").replace(/\(a\)/g, "a") : x.replace(/\(a\)/g, "");
+  const pr = GENERO_NA_FICHA.pronomes[g];
+  return x.replace(/\{(ele|Ele|dele|o|sozinho)\}/g, (m, k) => pr[k]);
+}
+
 /* ============================================================
    A ESCOLHA DO NÚCLEO
    ============================================================ */
 
-const mesmoNome = (a, b) => {
+export const mesmoNome = (a, b) => {
   const x = norm(a), y = norm(b);
   if (!x || !y) return false;
   if (x === y) return true;
@@ -501,7 +610,7 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
      entra no núcleo noutro papel */
   const curtoDoVilao = nomeVilao.split(",")[0].trim();
   const ehVilao = (n) => !!nomeVilao && (mesmoNome(n, nomeVilao) || mesmoNome(n, curtoDoVilao));
-  if (nomeVilao && !tem(nomeVilao)) pessoas.push({ nome: nomeVilao, cidade: "", fonte: "fio", genero: "", papel: "vilao", motivo: String(fio.motivo || "") });
+  if (nomeVilao && !tem(nomeVilao)) pessoas.push({ nome: nomeVilao, cidade: "", fonte: "fio", genero: generoDaPessoa({ nome: nomeVilao }), papel: "vilao", motivo: String(fio.motivo || "") });
 
   /* 3. O ELO — do elenco que vive no mundo, da cidade do ato 0, vivo, sem
      nome de marco; quem já tem papel não serve (o companheiro nunca é o
@@ -519,7 +628,7 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
   const poolElo = [semBrigaDoElo(daCidade0), daCidade0, semBrigaDoElo(candElo), candElo].find((l) => l.length) || [];
   const elo = escolhe(rnd("elo", "quem"), poolElo);
   const julgadoMorto = !!(elo && membro && eloRow.ligacao && eloRow.ligacao === ligacao);
-  if (elo) pessoas.push({ ...pessoaDe(elo), papel: "elo", eraDoHeroi: eloRow.quem, ...(julgadoMorto ? { julgadoMorto: true } : {}) });
+  if (elo) pessoas.push({ ...pessoaDe(elo), papel: "elo", eraDoHeroi: noGenero(eloRow.quem, generoDaPessoa(pessoaDe(elo))), ...(julgadoMorto ? { julgadoMorto: true } : {}) });
 
   /* 4. A VOZ — a pessoa da primeira batida `procurar` do ato 0 (sem batida
      marcada, do primeiro `procurar`); no ato 1 se o 0 não tiver. Um papel
@@ -569,10 +678,12 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
   /* ---------------- A TEIA ---------------- */
   const teia = [];
   const fioCom = (a, b) => teia.some((t) => (t.a === a && t.b === b) || (t.a === b && t.b === a));
+  const generoDeNome = (n) => generoDaPessoa(pessoas.find((p) => p.nome === n));
   const porFio = (id, a, b) => {
     const row = TEIA_DO_NUCLEO.find((t) => t.id === id);
     if (!row || !a || !b || a === b || fioCom(a, b)) return;
-    teia.push({ id, a, b, o: encher(row.o, { a, b }), laco: row.laco, sabe: row.sabe, ...(row.rompido ? { rompido: true } : {}) });
+    const o = noGenero(encher(row.o, { a, b }), generoDeNome(row.concorda === "b" ? b : a));
+    teia.push({ id, a, b, o, laco: row.laco, sabe: row.sabe, ...(row.rompido ? { rompido: true } : {}) });
   };
   if (julgadoMorto) porFio("t_morto_vivo", membro.nome, elo.nome);
 
@@ -652,11 +763,14 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
        nome, nem o Narrador */
     const par = parceiro(p.nome);
     const v = { outro: vilao && par === vilao.nome ? "{sombra}" : par, cidade: cidadeDe(p), assinatura };
-    /* {sombra} fica: enche-se na hora, no tamanho do ato */
+    /* {sombra} fica: enche-se na hora, no tamanho do ato. Tudo no género
+       de quem o vive (`noGenero`, C2). */
+    const gen = generoDaPessoa(p);
+    const ng = (x) => noGenero(x, gen);
     const fil = (x) => (x ? {
-      ...x, o: encher(x.o, v),
-      ...(typeof x.revela === "string" ? { revela: encher(x.revela, v) } : {}),
-      ...(Array.isArray(x.pistas) ? { pistas: x.pistas.map((pi) => ({ ...pi, o: encher(pi.o, v) })) } : {}),
+      ...x, o: ng(encher(x.o, v)),
+      ...(typeof x.revela === "string" ? { revela: ng(encher(x.revela, v)) } : {}),
+      ...(Array.isArray(x.pistas) ? { pistas: x.pistas.map((pi) => ({ ...pi, o: ng(encher(pi.o, v)) })) } : {}),
     } : null);
     const incl = p.papel === "companheiro" ? obj(COMPANHEIRO_POR_LIGACAO[ligacao]) : {};
     const ficha = { quer: null, teme: null, esconde: null, carrega: null, linha: null, fala: null };
@@ -665,18 +779,18 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
       /* o motivo do chefe já diz "quer…" às vezes: o campo guarda só o desejo */
       const motivo = String(p.motivo || "").replace(/^quer\s+/i, "").trim();
       ficha.quer = motivo ? { id: "v_motivo", cat: "sombra", o: motivo } : null;
-      ficha.esconde = ferida ? { id: ferida.id, grav: "ferida", o: ferida.o, sombra: false } : null;
-      ficha.linha = sortear("linha", p, LINHA, { semBriga: true });
-      ficha.fala = sortear("fala", p, COMO_FALA);
+      ficha.esconde = ferida ? { id: ferida.id, grav: "ferida", o: ng(ferida.o), sombra: false } : null;
+      ficha.linha = fil(sortear("linha", p, LINHA, { semBriga: true }));
+      ficha.fala = fil(sortear("fala", p, COMO_FALA));
     } else if (p.papel === "elo") {
       const q = QUER.find((x) => x.id === eloRow.quer);
-      ficha.quer = { id: eloRow.quer, cat: q ? q.cat : "", o: encher(eloRow.querDiz, v) };
+      ficha.quer = { id: eloRow.quer, cat: q ? q.cat : "", o: ng(encher(eloRow.querDiz, v)) };
       ficha.teme = eloRow.teme ? fil(TEME.find((x) => x.id === eloRow.teme)) : fil(sortear("teme", p, TEME, { estrita: true }));
-      const pistas = (PISTAS_DO_ELO[chaveAnt] || PISTAS_DO_ELO.sem).map((t, i) => ({ forma: i === 0 ? "fala" : "objeto", o: encher(t, v) }));
+      const pistas = (PISTAS_DO_ELO[chaveAnt] || PISTAS_DO_ELO.sem).map((t, i) => ({ forma: i === 0 ? "fala" : "objeto", o: ng(encher(t, v)) }));
       const daEspinha = antecedenteDe(fio.antecedente) === ant ? arr(obj(atos[0]).marcos).map((m) => m && m.reviravolta).find((x) => typeof x === "string" && x) : "";
       const rev = daEspinha || encher(REVIRAVOLTA_DO_ATO0[chaveAnt] || REVIRAVOLTA_DO_ATO0.sem, { cidade: cidadeDe(p) });
-      ficha.esconde = { id: `elo_${chaveAnt}`, grav: "lealdade", o: encher(eloRow.esconde, v), pistas, revela: rev, sombra: true };
-      ficha.carrega = { tipo: "objeto", id: `elo_${chaveAnt}`, o: eloRow.carrega, ...(eloRow.gemeo && itemDoHeroi ? { gemeo: itemDoHeroi } : {}), pedacoDe: coisa };
+      ficha.esconde = { id: `elo_${chaveAnt}`, grav: "lealdade", o: ng(encher(eloRow.esconde, v)), pistas, revela: ng(rev), sombra: true };
+      ficha.carrega = { tipo: "objeto", id: `elo_${chaveAnt}`, o: ng(eloRow.carrega), ...(eloRow.gemeo && itemDoHeroi ? { gemeo: itemDoHeroi } : {}), pedacoDe: coisa };
       ficha.linha = fil(sortear("linha", p, LINHA));
       ficha.fala = fil(sortear("fala", p, COMO_FALA));
     } else {
@@ -701,7 +815,7 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
       const c = sortear("carrega", p, todos, { inclina: arr(incl.carrega), chave: "tipo" });
       if (c) {
         const credor = p.papel === "companheiro" && ligacao === "credor" && c.aoContrario;
-        ficha.carrega = { tipo: c.tipo, id: c.id, o: encher(credor ? c.aoContrario : c.o, v) };
+        ficha.carrega = { tipo: c.tipo, id: c.id, o: ng(encher(credor ? c.aoContrario : c.o, v)) };
       }
       ficha.linha = fil(sortear("linha", p, LINHA));
       ficha.fala = fil(sortear("fala", p, COMO_FALA));
@@ -787,8 +901,14 @@ export function quemEParaPauta(nucleo, cena) {
   const ultimo = Math.max(ato, Math.floor(Number(c.ultimoAto)) || 0);
   const ultimas = obj(c.ultimas), cenas = obj(c.cenas);
   const valor = (mapa, nome) => { const k = Object.keys(mapa).find((x) => mesmoNome(x, nome)); return k == null ? null : Number(mapa[k]); };
+  /* C2: quem já leva a linha QUEM CARREGA neste turno não leva também a
+     ficha — "a batida e a ficha da mesma pessoa no mesmo turno é
+     redundante: a batida já traz o tique" (§3.2). O App passa o `quem` de
+     `avancarCoracao` em `cena.jaCarrega`. */
+  const jaCarrega = String(c.jaCarrega || "");
   for (const p of arr(n.pessoas)) {
     if (!p || !p.nome || !emCena.some((x) => mesmoNome(x, p.nome))) continue;
+    if (jaCarrega && mesmoNome(jaCarrega, p.nome)) continue;
     const u = valor(ultimas, p.nome);
     if (u != null && Number.isFinite(u) && turno - u < QUEM_E.intervalo) continue;
     const linha = linhaQuemE(p, { tamanho: tamanhoDoAto(ato, ultimo), fio: c.fio, cenas: valor(cenas, p.nome) || 0 });
@@ -816,16 +936,18 @@ export function quemEParaPauta(nucleo, cena) {
    ============================================================ */
 export const FOGUEIRA_CONTA = {
   ordem: ["carrega", "quer", "linha", "teme"],
-  /* `{o}` é o campo; a frase é fechada e manda (é fato, entra nesta resposta) */
+  /* `{campo}` é o campo; a frase é fechada e manda (é fato, entra nesta
+     resposta). C2: {ele} e {o} são o pronome de quem fala (`noGenero`) — a
+     C1 dizia "dito por ele" da Perrine. */
   modelos: {
-    objeto: "conta, sem que lho peçam, de onde lhe veio o que traz: {o}",
-    divida: "conta a dívida que carrega: {o}",
-    culpa: "diz, porque é noite e há fogo, o que de dia não diz: {o}",
-    quer: "diz o que quer para si, fora do herói: {o}",
-    linha: "conta a noite em que aprendeu que {o}",
-    teme: "confessa o que o tira do sono: {o}",
+    objeto: "conta, sem que lho peçam, de onde lhe veio o que traz: {campo}",
+    divida: "conta a dívida que carrega: {campo}",
+    culpa: "diz, porque é noite e há fogo, o que de dia não diz: {campo}",
+    quer: "diz o que quer para si, fora do herói: {campo}",
+    linha: "conta a noite em que aprendeu que {campo}",
+    teme: "confessa o que {o} tira do sono: {campo}",
   },
-  cabeca: "{nome} (é fato: entra nesta resposta, dito por ele, à volta do fogo): ",
+  cabeca: "{nome} (é fato: entra nesta resposta, dito por {ele}, à volta do fogo): ",
   max: 220,
 };
 
@@ -843,8 +965,9 @@ export function fichaNaVoz(pessoa, { contados = [], tamanho = "inicio", fio = nu
     if (ja.has(campo) || !x || !x.o) continue;
     const modelo = FOGUEIRA_CONTA.modelos[campo === "carrega" ? x.tipo : campo];
     if (!modelo) continue;
-    const cab = encher(FOGUEIRA_CONTA.cabeca, { nome: p.nome });
-    let linha = `${cab}${encher(modelo, { o: encher(x.o, { sombra }) })}.`;
+    const gen = generoDaPessoa(p);
+    const cab = noGenero(encher(FOGUEIRA_CONTA.cabeca, { nome: p.nome }), gen);
+    let linha = `${cab}${noGenero(encher(modelo, { campo: encher(x.o, { sombra }) }), gen)}.`;
     const tique = f.fala && f.fala.o ? ` Fala assim: ${f.fala.o}.` : "";
     if ((linha + tique).length <= FOGUEIRA_CONTA.max) linha += tique;
     if (linha.length > FOGUEIRA_CONTA.max) continue;
@@ -860,8 +983,15 @@ export function fichaNaVoz(pessoa, { contados = [], tamanho = "inicio", fio = nu
    novo a partir dos refs, e a chave some no primeiro autosave — perde-se
    o arco começado, e o núcleo continua derivável). Nenhum campo existente
    muda. A C1 só o garante; quem o escreve é a C2.
+   C2 (11/10): além do §2.7, cada arco pode guardar `posta` (o dia em que
+   os dois lados foram postos ao herói — é dele que conta o prazo da
+   omissão), `ato` (o ato em que a crise caiu: é a revelação, e
+   `revelacaoPermitida` precisa dele), `porque` (o herói perguntou
+   porquê), e para a fogueira `contados` (os campos que a pessoa já contou)
+   e `noites` (quantas noites o herói se sentou ao lado dela). Tudo
+   opcional e ainda `v: 1`: a versão antiga não lê o que não conhece.
    ============================================================ */
-export const CORACAO_DO_SAVE = { v: 1, arcosMax: 12, pistasMax: 2, escolhaMax: 40, respostas: ["aceitou", "recusou"] };
+export const CORACAO_DO_SAVE = { v: 1, arcosMax: 12, pistasMax: 2, escolhaMax: 40, respostas: ["aceitou", "recusou"], contadosMax: 4, noitesMax: 999 };
 
 const PROIBIDAS = new Set(["__proto__", "constructor", "prototype"]);
 const diaOuNulo = (v) => { if (v == null || v === "") return null; const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 0 ? n : null; };
@@ -879,6 +1009,11 @@ export function garantirCoracaoDoSave(x) {
       crise: diaOuNulo(a.crise),
       escolha: typeof a.escolha === "string" ? a.escolha.slice(0, CORACAO_DO_SAVE.escolhaMax) : "",
       pistas: arr(a.pistas).map(diaOuNulo).filter((d) => d != null).slice(0, CORACAO_DO_SAVE.pistasMax),
+      posta: diaOuNulo(a.posta),
+      ato: diaOuNulo(a.ato),
+      porque: a.porque === true,
+      contados: [...new Set(arr(a.contados).filter((c) => FOGUEIRA_CONTA.ordem.includes(c)))].slice(0, CORACAO_DO_SAVE.contadosMax),
+      noites: Math.min(CORACAO_DO_SAVE.noitesMax, diaOuNulo(a.noites) || 0),
     };
     if (Object.keys(arcos).length >= CORACAO_DO_SAVE.arcosMax) break;
   }

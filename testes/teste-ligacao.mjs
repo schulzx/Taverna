@@ -159,6 +159,13 @@ sec("1. NENHUM MÓDULO MUDO");
   const AGUARDANDO = {
     "mapa-vivo.js": "a tela do mapa em tempo real, do desenho/oficial (MM17 D, 06/10)",
     "partida.js": "a tela do mapa (oficial), o botão Partir do cartão do lugar (P2, 10/10)",
+    /* 11/10 (Fase MM-C, C2): `subtramas.js` nasce no backend — os arcos de
+       três batidas, as pistas e a revelação do elo, a linha QUEM CARREGA, o
+       campo `coracao` escrito, e as peças do motor da fogueira — e espera a
+       fiação do App.jsx pela mão do frontend na MESMA fase (a pauta, o
+       save, as escolhas na forma `A escolha`, o descanso longo). A entrada
+       sai quando o App o importar. `teste-subtramas.mjs` é o primeiro leitor. */
+    "subtramas.js": "a fiação do App.jsx, do frontend (MM-C C2, 11/10)",
     /* 11/10 (Fase MM, MM18): `escuta.js` esperou aqui a fiação em `enviar`
        e `pautaDoTurno`; o App passou a importá-lo no mesmo dia (frontend),
        e a entrada saiu. */

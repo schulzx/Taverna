@@ -26,9 +26,10 @@
 import {
   PAPEIS_DO_NUCLEO, NUCLEO, QUER, QUER_DO_PROPOSITO, TEME, ESCONDE, ESCONDE_POR_PAPEL, ESCONDE_DA_MASCARA, CARREGA, LINHA, COMO_FALA,
   TIQUES_PROIBIDOS, TEIA_DO_NUCLEO, ELO_DO_ANTECEDENTE, PISTAS_DO_ELO, COMPANHEIRO_POR_LIGACAO, FERIDA_DO_VILAO, VILAO_POR_TAMANHO,
-  ATO_DA_REVELACAO, QUEM_E, CORACAO_DO_SAVE, FOGUEIRA_CONTA,
-  nucleoDaCampanha, revelacaoPermitida, linhaQuemE, quemEParaPauta, garantirCoracaoDoSave, fichaNaVoz,
+  ATO_DA_REVELACAO, QUEM_E, CORACAO_DO_SAVE, FOGUEIRA_CONTA, GENERO_NA_FICHA,
+  nucleoDaCampanha, revelacaoPermitida, linhaQuemE, quemEParaPauta, garantirCoracaoDoSave, fichaNaVoz, generoDaPessoa, noGenero,
 } from "../src/nucleo.js";
+import { sexoDoNome } from "../src/nomes.js";
 import { TRACOS, PROPOSITOS, indoleDe } from "../src/indole.js";
 import { TIPOS_DE_LACO } from "../src/npcs.js";
 import { FORMAS_DE_SEMENTE } from "../src/promessas.js";
@@ -368,7 +369,17 @@ sec("7. a linha QUEM É");
 
   /* a pauta: a secção existe, corta onde a especificação diz, cede na luta */
   const s = secaoPorId("quemE");
-  t("a secção QUEM É existe, com prio 4,5 — depois de QUEM e de PERGUNTOU, à frente de CONTRA e FORMA", !!s && s.rotulo === "QUEM É" && s.prio === 4.5 && secaoPorId("quem").prio < s.prio && secaoPorId("pergunta").prio < s.prio && secaoPorId("contra").prio > s.prio);
+  /* MOVIDA NA C2 (11/10), com o motivo: era "prio 4,5 — depois de QUEM e
+     de PERGUNTOU". A prova viva da C1 (v9.410) mediu a pauta de um turno de
+     cidade em ~1323 de 1400 e a linha QUEM É a cair primeiro, vencida pela
+     economia da praça (2,5) e pela cauda do ONDE (2,49) — decoração. A
+     intenção que fica: nunca à frente de um veto, do desfecho, do coração
+     nem da batida; sempre à frente da decoração; e numa pergunta cede à
+     resposta (a lei da escuta). */
+  t("a secção QUEM É existe, com prio 2,485 — depois dos vetos, do coração e da batida; à frente da cauda do ONDE e da economia", !!s && s.rotulo === "QUEM É" && s.prio === 2.485
+    && secaoPorId("naoPode").prio < s.prio && secaoPorId("coracao").prio < s.prio && secaoPorId("momento").frente.every((x) => x < s.prio)
+    && secaoPorId("onde").cauda.prio > s.prio && secaoPorId("economia").prio > s.prio);
+  t("numa pergunta, o QUEM É cede (a resposta passa à frente)", SECOES_QUE_CEDEM.pergunta.includes("quemE") && !(cederNaCena({ quemE: ["x: y."], pergunta: ["quanto custa? três moedas."] }, {}).quemE || []).length);
   t("na luta, o QUEM É cede", SECOES_QUE_CEDEM.luta.includes("quemE") && !(cederNaCena({ quemE: ["x: y."] }, { luta: true }).quemE || []).length);
   t("o teto da pauta não subiu", TETO_DA_PAUTA === 1400);
   let cortou = 0;
@@ -418,6 +429,54 @@ sec("7b. a ficha na própria voz (a peça que a fogueira vai chamar)");
   t("lixo: nada estoura, e devolve null", [null, undefined, "x", 7, {}].every((x) => fichaNaVoz(x, x || undefined) === null));
   const p0 = W0.nucleo.pessoas.find((p) => p.papel !== "vilao");
   t("a primeira noite conta o que a pessoa traz", fichaNaVoz(p0, { fio: W0.espinha.fio }).campo === "carrega");
+}
+
+/* ============================================================ */
+sec("7c. o género de quem fala (C2: a teia dava \"noivo(a)\", a fogueira \"dito por ele\" da Perrine)");
+{
+  /* a tabela não envelhece: cada frase que ela flexiona existe mesmo nas tabelas */
+  const fonteC1 = JSON.stringify([QUER, TEME, ESCONDE, CARREGA, LINHA, ELO_DO_ANTECEDENTE, PISTAS_DO_ELO, FERIDA_DO_VILAO, REVIRAVOLTA_DO_ATO0]);
+  const velhas = [...GENERO_NA_FICHA.feminino, ...GENERO_NA_FICHA.masculino].map(([de]) => de).filter((de) => !fonteC1.includes(de));
+  t("toda frase que GENERO_NA_FICHA troca existe nas tabelas (nenhuma morta)", velhas.length === 0, velhas.join(" | "));
+  t("os pronomes dos dois géneros, com as mesmas chaves", Object.keys(GENERO_NA_FICHA.pronomes.homem).join() === Object.keys(GENERO_NA_FICHA.pronomes.mulher).join());
+  t("noGenero: \"noivo(a)\" vira noiva para ela, noivo para ele", noGenero("{a} foi noivo(a) de {b}", "mulher").includes("foi noiva de") && noGenero("{a} foi noivo(a) de {b}", "homem").includes("foi noivo de"));
+  t("noGenero: sem género, o masculino genérico, e nunca \"(a)\"", noGenero("julga-o morto(a)", "") === "julga-o morto");
+  t("noGenero: os pronomes", noGenero("dito por {ele}; {Ele} sabe; o nome {dele}; chama-{o}; {sozinho}", "mulher") === "dito por ela; Ela sabe; o nome dela; chama-a; sozinha");
+  t("noGenero: a frase do outro, não — \"e ela forja para ele\" (o segundo é a sombra)", noGenero("a forja foi tomada, e ele forja para ele agora", "mulher") === "a forja foi tomada, e ela forja para ele agora");
+  t("generoDaPessoa: o da base primeiro", generoDaPessoa({ nome: "Yorick", genero: "mulher" }) === "mulher" && generoDaPessoa({ nome: "x", genero_pessoa: "homem" }) === "homem");
+  t("generoDaPessoa: o vilão pelo primeiro nome — e o artigo do título NÃO conta (\"a Mão Fria\" é dele)", generoDaPessoa({ nome: "Yorick Ventoforte, a Mão Fria" }) === "homem" && generoDaPessoa({ nome: "Petra, a Boca da Cova" }) === "mulher");
+  t("generoDaPessoa: o que não é nome de gente fica sem género (o Golem)", generoDaPessoa({ nome: "Golem de Pedra a Viúva de Ferro" }) === "" && generoDaPessoa(null) === "");
+  t("sexoDoNome: o nome dos dois bancos não decide", sexoDoNome("Nyx") === "" && sexoDoNome("Aldric Vale") === "masc" && sexoDoNome("Dahlia") === "fem" && sexoDoNome(null) === "");
+
+  /* 120 mundos: tudo o que o núcleo produz, por pessoa */
+  const errados = [], comA = [], pron = [];
+  let noivos = 0, mortos = 0, mulheres = 0, homens = 0;
+  for (const w of MUNDOS) {
+    for (const f of w.nucleo.teia) {
+      if (/\(a\)/.test(f.o)) comA.push(f.o);
+      const g = (n) => generoDaPessoa(w.nucleo.pessoas.find((p) => p.nome === n));
+      if (f.id === "t_noivos") { noivos++; if (f.o.includes(g(f.a) === "mulher" ? "foi noivo de" : "foi noiva de")) errados.push(f.o); }
+      if (f.id === "t_morto_vivo") { mortos++; if (/ morto$/.test(f.o) === (g(f.b) === "mulher")) errados.push(f.o); }
+    }
+    for (const p of w.nucleo.pessoas) {
+      const g = generoDaPessoa(p);
+      if (g === "mulher") mulheres++; else homens++;
+      const fi = p.ficha || {};
+      const linhas = [p.eraDoHeroi || "", ...["quer", "teme", "esconde", "carrega", "linha", "fala"].flatMap((k) => fi[k] ? [fi[k].o, fi[k].revela || "", ...(fi[k].pistas || []).map((x) => x.o)] : [])];
+      for (const tam of ["inicio", "meio", "fim"]) for (const cenas of [0, 3]) linhas.push(linhaQuemE(p, { tamanho: tam, fio: w.espinha.fio, cenas }));
+      const contados = [];
+      for (let k = 0; k < 5; k++) { const r = fichaNaVoz(p, { contados, fio: w.espinha.fio }); if (!r) break; contados.push(r.campo); linhas.push(r.linha); if (/dito por (ele|ela)/.test(r.linha) && !r.linha.includes(g === "mulher" ? "dito por ela" : "dito por ele")) pron.push(r.linha); }
+      const outro = g === "mulher" ? GENERO_NA_FICHA.feminino.map(([de]) => de) : GENERO_NA_FICHA.masculino.map(([de]) => de);
+      for (const l of linhas) {
+        if (/\(a\)/.test(l)) comA.push(l);
+        const x = outro.find((de) => l.includes(de));
+        if (x) errados.push(`${p.nome} (${g || "?"}): ${x}`);
+      }
+    }
+  }
+  t(`${N_MUNDOS} mundos (${mulheres} mulheres, ${homens} homens ou sem género): nenhuma linha com "(a)"`, comA.length === 0, comA[0]);
+  t(`nenhuma frase no género do outro (a teia: ${noivos} noivados, ${mortos} julgados mortos)`, errados.length === 0, errados.slice(0, 3).join(" | "));
+  t("a fogueira diz \"dito por ela\" dela e \"dito por ele\" dele", pron.length === 0, pron[0]);
 }
 
 /* ============================================================ */

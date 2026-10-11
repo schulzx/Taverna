@@ -121,6 +121,22 @@ export function nomePessoa(genero, sexo, rnd = Math.random, lex = null) {
 }
 export function generosDisponiveis() { return Object.keys(BANCO); }
 
+/* O SEXO DE UM PRIMEIRO NOME (MM-C · C2, 11/10). Quem nasce do elenco traz
+   `genero_pessoa`; o vilão do fio não traz — o chefe humanoide recebe um
+   nome destes bancos, e é por ele que se sabe. Devolve "masc", "fem" ou ""
+   (o nome que está nos dois bancos, como "Wren" ou "Sable", e o que não
+   está em nenhum, como "Golem"). Lido pelo núcleo (`generoDaPessoa`). */
+export function sexoDoNome(nome) {
+  const p = String(nome == null ? "" : nome).trim().split(/[\s,]+/)[0].toLowerCase();
+  if (!p) return "";
+  let m = false, f = false;
+  for (const b of Object.values(BANCO)) {
+    if ((b.masc || []).some((x) => x.toLowerCase() === p)) m = true;
+    if ((b.fem || []).some((x) => x.toLowerCase() === p)) f = true;
+  }
+  return m && !f ? "masc" : f && !m ? "fem" : "";
+}
+
 /* ---------------- ELENCO DIVERSO ----------------
    Gera pessoas prontas com variedade real (gênero equilibrado, raças
    variadas, traços), para o Mestre POVOAR o mundo sem cair em monotonia

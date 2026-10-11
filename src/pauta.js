@@ -160,10 +160,33 @@ export const SECOES = [
   /* MM-C (C1, o núcleo): QUEM É — a ficha de uma pessoa do núcleo que está
      em cena (o que quer, como fala, o que traz, o que teme — nunca o que
      esconde), uma por turno no máximo e a mesma pessoa só de seis em seis
-     turnos (`nucleo.js#quemEParaPauta`, ≤ 130 caracteres). Prio 4,5: depois
-     de QUEM e de PERGUNTOU (4), à frente do CONTRA e da FORMA (5) — é cor,
-     não é verdade da cena (`mente/coracao-c1-c2.md` §3.2). Na luta cede. */
-  { id: "quemE", rotulo: "QUEM É", prio: 4.5, o: "quem é, por dentro, a pessoa que importa e está em cena: o que quer, como fala, o que traz" },
+     turnos (`nucleo.js#quemEParaPauta`, ≤ 130 caracteres). Na luta cede.
+     C2 (11/10), MOVIDA de 4,5 para 2,485, com o motivo: a prova viva da C1
+     (frontend, v9.410) mediu um turno comum de cidade com a pauta já em
+     ~1323 de 1400, e a linha QUEM É era a PRIMEIRA a cair — só entrava na
+     cena de pergunta, onde a economia cede. Com 4,5 ela perdia para a
+     economia da praça (2,5) e para a cauda do ONDE (2,49), que são a
+     decoração; o §3.2 reserva-lhe, com a linha QUEM CARREGA, até 350
+     caracteres, e diz que o que cede é a economia, a cidade, o daqui. Agora
+     corta depois dos vetos, do coração (2,46), do que volta (2,47) e da
+     batida da espinha (2,475, 2,48), e à frente da cauda do ONDE e da
+     economia. Numa pergunta CEDE (`SECOES_QUE_CEDEM.pergunta`): a lei da
+     escuta — a resposta passa à frente da cor. Provado em
+     teste-subtramas (a cidade cheia de ~1323: a linha entra, nenhum veto
+     nem desfecho sai). */
+  { id: "quemE", rotulo: "QUEM É", prio: 2.485, o: "quem é, por dentro, a pessoa que importa e está em cena: o que quer, como fala, o que traz" },
+  /* MM-C (C2, as subtramas): QUEM CARREGA — a batida de uma pessoa do
+     núcleo que está em cena: o que ela pede, o que lhe chega, as duas
+     saídas que o herói tem de decidir, a pista do elo, a revelação
+     (`subtramas.js#avancarCoracao`, ≤ 220 caracteres, uma por turno no
+     máximo). Prio 2,46: depois de todo veto (2..2,4) e da planta da
+     masmorra (2,45); à frente do que volta (2,47) e da batida da espinha
+     (2,475) — quando uma pessoa do núcleo está a pedir, a decidir ou a ser
+     revelada, é ela o coração da cena (`mente/coracao-c1-c2.md` §3.2). NÃO
+     entra em SECOES_QUE_CEDEM: na luta é o motor que só a deixa passar
+     quando o tom da batida é batalha (o irmão do outro lado está NA luta).
+     O teto não subiu; o que cede é o de prio mais baixa. */
+  { id: "coracao", rotulo: "QUEM CARREGA", prio: 2.46, o: "o que uma pessoa que importa pede, carrega ou tem de ver decidido, nesta cena" },
   /* MM19: A FRENTE DO MOMENTO. A 1.ª linha é a BATIDA da espinha em curso
      (a cena, o que está em jogo, a pergunta — `envelopeDaEspinha`) e a 2.ª
      o que o fio mudou no mundo (a marca do antagonista, ou o JÁ SE SABE —
@@ -354,7 +377,13 @@ export const SECOES_QUE_CEDEM = {
      Edric", e a ficha dele à vista) a batida ganhava à resposta. É a lei da
      escuta: numa pergunta, responde-se, e o único empurrão é a ponte do
      RUMO. */
-  pergunta: ["economia", "cidade", "daqui", "momento"],
+  /* MM-C (C2): e o QUEM É, que passou a cortar à frente da decoração
+     (2,485) — numa pergunta, a resposta não perde para a ficha. E o QUEM
+     CARREGA (2,46): medido em teste-subtramas, na cidade cheia a batida de
+     220 tirava a resposta (PERGUNTOU, 4) e deixava a cauda do ONDE. Ceder
+     aqui não perde a batida: o App só a dá por cumprida quando a linha
+     entrou na pauta, e ela volta no turno seguinte. */
+  pergunta: ["economia", "cidade", "daqui", "momento", "quemE", "coracao"],
 };
 
 /* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.
