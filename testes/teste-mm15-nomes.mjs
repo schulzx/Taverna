@@ -312,8 +312,11 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
      intenção de antes — o retorno leva conhecidos, recentes, papel e notas ao
      motor — com o campo novo `grupo` entre `recentes` e `local`, que é como
      `nomeComDono` sabe que o nome já é de quem está ao lado do herói. */
+  /* E movida outra vez na MM-C · C0 (11/10): o mesmo retorno, com `heroi` no
+     fim — `nomeComDono` recusa o nome do herói ("E aí, Tamsin?") como gente
+     da cena (npcs.js, contexto.heroi). */
   t("o retorno leva conhecidos, recentes, grupo, papel e notas ao motor novo",
-    app.includes('return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };'));
+    app.includes('return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };'));
 
   /* o "Lina," — o mesmo defeito de nomes, na mesma sessão: T10 não achou
      a Lina do Sal e foi contra "essa pessoa" porque `pessoaNaFrente` só

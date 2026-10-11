@@ -196,7 +196,12 @@ sec("9. LIGADA AO JOGO");
   /* a seção `momento` existia declarada em pauta.js desde a v9.104 e nunca
      era preenchida — a espinha é o leitor que faltava */
   t("e enche a seção `momento` da Pauta", /porNaPauta\(p, "momento", envelopeDaEspinha\(/.test(APP));
-  t("o marco confere pela MESMA porta das missões", /conferirEspinha\(espinhaRef\.current, mundoAgora, \(cond, m\) => etapaDef\(cond\.tipo\)\.ver\(cond, m\)\)/.test(APP));
+  /* MOVIDA NA MM-C · C0 (11/10), com o motivo: a mesma porta continua a ser
+     a intenção (o `ver` das etapas), e a chamada ganhou o 4.º argumento —
+     `{ ato }`, a ordem do ato: marco de ato posterior não fecha. A regex
+     antiga exigia o `)` logo depois do `ver(cond, m)`. */
+  t("o marco confere pela MESMA porta das missões", /conferirEspinha\(espinhaRef\.current, mundoAgora, \(cond, m\) => etapaDef\(cond\.tipo\)\.ver\(cond, m\)(, \{ ato: [^}]+\})?\)/.test(APP));
+  t("e na ordem do ato (MM-C · C0)", /conferirEspinha\(espinhaRef\.current, mundoAgora, [^\n]*\{ ato: \(historiaRef\.current \|\| \{\}\)\.etapa \}\)/.test(APP));
   /* MOVIDA NA MM14 (30/09), com o motivo: a linha que esta asserção guardava
      era o defeito — gravava o retorno de registrarMarco ({historia, ganhou})
      no lugar do arco, e cada marco cumprido reiniciava o arco. O marco passa

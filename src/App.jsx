@@ -97,7 +97,7 @@ import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobran
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
-import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO } from "./agressao.js";
+import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL } from "./agressao.js";
 import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
@@ -179,7 +179,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, marcoAtual, momentoDoFio } from "./saga.js";
+import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, marcoAtual, momentoDoFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
 import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
@@ -264,6 +264,19 @@ import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VI
 const calou = (onde, e) => {
   try { if (import.meta.env && import.meta.env.DEV) console.warn("[" + onde + "] calou:", e); } catch { /* fora do Vite */ }
   return [];
+};
+
+/* MM-C · C0 (11/10, a 6.ª sessão): o que o Mestre MOSTROU na conversa — as
+   últimas falas dele, para o alvo do golpe sair da prosa ("ataco o cão sem
+   pelo") e para o veto da luta que só a prosa começou. E a frase anterior
+   do jogador, para o "pago as sete fichas" herdar o item do "quanto é".
+   Leem `mensagensRef`, que já guarda tudo isto: não é estado novo, nem save. */
+const LEITURA_DA_CONVERSA = { falasDoMestre: 2 };
+const falasDoMestre = (msgs, n = LEITURA_DA_CONVERSA.falasDoMestre) =>
+  (Array.isArray(msgs) ? msgs : []).filter((m) => m && m.autor === "mestre" && typeof m.texto === "string" && m.texto.trim()).slice(-n).map((m) => m.texto);
+const fraseAnteriorDoJogador = (msgs) => {
+  const js = (Array.isArray(msgs) ? msgs : []).filter((m) => m && m.autor === "jogador" && typeof m.texto === "string");
+  return js.length ? js[js.length - 1].texto : "";
 };
 
 /* ---------------- A1 · B2 (10/10): O RECIBO DO TURNO E O FIM DA LUTA ----------------
@@ -5629,6 +5642,17 @@ export default function Taverna() {
      Cronista. Vive só durante a conferência que ele dispara — não vai ao
      save, e é esvaziado logo depois (missoes.js, `conversouCom`). */
   const falouComRef = useRef([]);
+  /* MM-C · C0: o segredo de um marco "descobrir" revelado NESTE turno (o
+     teste que passou ou a pista dada) — o molde do `falouComRef`: vive só
+     na conferência que o Cronista dispara e é esvaziado logo a seguir. E o
+     teste do turno ({ pericia, sucesso }), limpo no começo de cada
+     `agirInterno`. Nenhum dos dois é save. */
+  const segredosReveladosRef = useRef([]);
+  const testeDoTurnoRef = useRef(null);
+  /* MM-C · C0: a frase anterior do jogador, para o "pago" sem item herdar o
+     "quanto é" (bolsa-da-frase.js, `anterior`). Posta no começo de cada
+     `agirInterno`, lida pela bolsa da frase. Não é save. */
+  const fraseAnteriorRef = useRef("");
   /* MM13: a abertura (a razão, a pista, o sino) — save novo e aditivo; um
      save sem ela é legado (mural sempre aberto, sino nunca liga). O
      prenúncio do sino não é save: é um aviso de um turno só. */
@@ -7163,6 +7187,9 @@ export default function Taverna() {
     /* 11/10 (MM11 · 5.ª sessão, M10): a compra ou a dádiva que a frase
        declarou e o sistema não fechou — o Narrador não entrega o que a
        bolsa não pagou */
+    /* MM-C · C0: se o próprio turno abriu o combate (a agressão declarada), o
+       veto da luta sem painel já não é verdade e não viaja */
+    try { if (combateRef.current && (naoPodeDoTurnoRef.current || []).includes(LUTA_SEM_PAINEL.veto)) naoPodeDoTurnoRef.current = naoPodeDoTurnoRef.current.filter((v) => v !== LUTA_SEM_PAINEL.veto); } catch (e) { calou("o veto da luta com o combate aberto", e); }
     try { p = porNaPauta(p, "naoPode", naoPodeDoTurnoRef.current || []); } catch (e) { calou("o veto da bolsa da frase", e); }
     /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
     p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));
@@ -8161,7 +8188,11 @@ export default function Taverna() {
      `null` significa "voltei para dentro da cidade". */
   const registrarLugar = (nome, fonte = "mestre") => {
     const cidade = cidadeAtualRef.current || "";
-    const cru = String(nome || "").trim();
+    let cru = String(nome || "").trim();
+    /* MM-C · C0: o sítio de cada marco de pé — o nome que a IA inventa não
+       o troca (lugar.js, LUGAR_DO_MARCO) */
+    let doMarco = [];
+    try { doMarco = ((espinhaRef.current || {}).atos || []).flatMap((at) => ((at && at.marcos) || []).filter((m) => m && !m.feito && typeof m.onde === "string" && m.onde.trim()).map((m) => m.onde)); } catch (e) { calou("o sitio do marco", e); doMarco = []; }
     /* MM16 nº 4: NA LUTA E NA MASMORRA O LUGAR É DO SISTEMA (era a v9.48:
        ninguém se move no meio de uma luta). Aqui morava uma recusa de TUDO
        o que chegasse com a luta aberta, antes de perguntar o que era — e na
@@ -8176,9 +8207,11 @@ export default function Taverna() {
        o motor falhar, não mover é o erro barato. */
     let lido;
     try {
-      lido = lerLugarDito(nome, { lugar: lugarRef.current, cidade, pedido: ultimoPedidoRef.current, fonte, luta: !!combateRef.current, masmorra: !!masmorraRef.current });
+      lido = lerLugarDito(nome, { lugar: lugarRef.current, cidade, pedido: ultimoPedidoRef.current, fonte, luta: !!combateRef.current, masmorra: !!masmorraRef.current, doMarco });
     } catch (e) { calou("registrarLugar/lerLugarDito", e); return null; }
     if (lido.acao === "nada" || lido.acao === "ignora") return null;
+    /* o pedido apontou o sítio do marco: é ele que se regista */
+    if (lido.acao === "novo" && typeof lido.nome === "string" && lido.nome.trim()) cru = lido.nome.trim();
     if (lido.acao === "recusa") {
       /* v9.48: SAIR DAQUI TAMBÉM É UM MOVIMENTO, e movimento é do jogador.
          O cão de guarda de `lugar.js` já defendia a NARRATIVA que devolvia o
@@ -9900,7 +9933,7 @@ export default function Taverna() {
     let recentes = [];
     try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }
     const mm = masmorraRef.current;
-    return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean) };
+    return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };
   };
 
   const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {
@@ -11043,6 +11076,11 @@ export default function Taverna() {
       /* 11/10: com quem falei neste turno — só na conferência que o
          Cronista dispara (`falouComRef`); fora dela, vazio */
       falouCom: falouComRef.current || [],
+      /* MM-C · C0: o marco com cena fecha pelo FATO (saga.js, fatosQueFecham)
+         — o segredo revelado, a conversa — e não por o herói lá estar. Os
+         segredos revelados só existem na conferência que o Cronista dispara. */
+      soPeloFato: (() => { try { return fatosQueFecham(espinhaRef.current); } catch (e) { calou("os fatos que fecham", e); return null; } })(),
+      segredosRevelados: segredosReveladosRef.current || [],
       derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
       inventario: p.inventario || [], equipamento: p.equipamento || [],
       npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current, emLuta: !!combateRef.current,
@@ -11082,6 +11120,9 @@ export default function Taverna() {
 
   const cronistaDoTurno = async (pers, narrativa) => {
     if (!narrativa || narrativa.length < 60) return;
+    /* MM-C · C0: o teste deste turno, lido ANTES da espera — o jogador pode
+       agir de novo enquanto o Cronista pensa, e o turno seguinte limpa-o */
+    const testeDoTurno = testeDoTurnoRef.current;
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
@@ -11250,6 +11291,20 @@ export default function Taverna() {
           if (missoesRef.current !== antesM || espinhaRef.current !== antesE) tocouElenco = true;
         }
       } catch (e) { calou("falou_com do Cronista", e); }
+      /* ---- SEÇÃO o segredo revelado (isolada) — MM-C · C0 ----
+         O "descobrir" com segredo fecha quando o segredo se revela: o teste
+         que passou, ou a pista dada na prosa, com o herói NO lugar do marco.
+         Conferido aqui, uma vez, e a lista some logo a seguir. */
+      try {
+        let seg = [];
+        try { seg = segredosReveladosNoTurno(espinhaRef.current, { lugar: lugarRef.current && lugarRef.current.nome, teste: testeDoTurno, narrativa }); } catch (e) { calou("segredosReveladosNoTurno", e); seg = []; }
+        if (Array.isArray(seg) && seg.length) {
+          const antesM = missoesRef.current, antesE = espinhaRef.current;
+          segredosReveladosRef.current = seg;
+          try { p = conferirAsMissoes(p) || p; } finally { segredosReveladosRef.current = []; }
+          if (missoesRef.current !== antesM || espinhaRef.current !== antesE) tocouElenco = true;
+        }
+      } catch (e) { calou("o segredo revelado", e); }
       /* ---- SEÇÃO fé (isolada) ---- */
       try {
         if (r.fe && typeof r.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
@@ -15569,8 +15624,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        onze cunhas… anão, viste Edric?") e a compra nunca fechou. Seja qual
        for a porta que a seguir ganhe, o recibo (ou o veto) já viaja. */
     naoPodeDoTurnoRef.current = [];
+    fraseAnteriorRef.current = "";
+    try { fraseAnteriorRef.current = fraseAnteriorDoJogador(mensagensRef.current); } catch (e) { calou("a frase anterior do jogador", e); }
     try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
+    /* MM-C · C0: "enfrento o que vier" ou "A luta começa" sem combate aberto
+       — o veto vai pelo canal do turno (naoPode), e só neste caso. */
+    try {
+      const vl = vetoDaLutaSemPainel(acao, { emCombate: !!combateRef.current, mostrado: falasDoMestre(mensagensRef.current) });
+      if (vl && vl.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vl];
+    } catch (e) { calou("o veto da luta sem painel", e); }
     ultimoDesfechoRef.current = null;
+    testeDoTurnoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do
        desafio que rolou. A leitura antiga servia ao turno com dado e
        deixava de fora o que mais acontece — a conversa: um turno inteiro
@@ -18150,7 +18214,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        marco cai pelo mesmo fato que faria uma missao andar. */
     {
       const mundoAgora = mundoDasMissoes(p);
-      const ce = conferirEspinha(espinhaRef.current, mundoAgora, (cond, m) => etapaDef(cond.tipo).ver(cond, m));
+      /* MM-C · C0: na ordem do ato — marco de ato posterior não fecha */
+      const ce = conferirEspinha(espinhaRef.current, mundoAgora, (cond, m) => etapaDef(cond.tipo).ver(cond, m), { ato: (historiaRef.current || {}).etapa });
       if (ce.cumpridos.length) {
         espinhaRef.current = ce.espinha;
         for (const m of ce.cumpridos) {
@@ -18749,6 +18814,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* v9.70: o desfecho fica registrado para a cobranca poder recusar o que
          a narracao prometer depois de uma falha. O dado manda mais que ela. */
       ultimoDesfechoRef.current = passou ? "sucesso" : "falha";
+      try { testeDoTurnoRef.current = { pericia: (r && r.pericia) || "", sucesso: !!passou }; } catch (e) { calou("o teste do turno", e); }
       let envQueda = "";
       if (custo) {
         pushMsgs([{ autor: "sistema", texto: falaDoCusto(custo) }]);
@@ -19404,6 +19470,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           { autor: "sistema", texto: falaDaConcessao(conc) },
         ]);
         ultimoDesfechoRef.current = "sucesso";
+        try { testeDoTurnoRef.current = { pericia: (v && v.pericia) || "", sucesso: true }; } catch (e) { calou("o teste concedido", e); }
         fecharTentativa(v, true);
         cobrarTempoDoDesafio(v);
         enviar(envelopeDaConcessao(conc), fichaViva() || personagem);
@@ -19585,7 +19652,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        `mensagensRef` já existe e já guarda isto; não é estado novo. */
     let recentes = [];
     try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes para o pronome da agressao", e); }
-    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes });
+    /* MM-C · C0: e o que o MESTRE mostrou (as últimas falas dele), para o
+       bicho da prosa ser o alvo antes do último nome da conversa */
+    let mostrado = [];
+    try { mostrado = falasDoMestre(mensagensRef.current); } catch (e) { calou("o mostrado para o alvo da agressao", e); }
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado });
     if (!a) return false;
     if (a.tipo === "companheiro") {
       pushMsgs([
@@ -23549,7 +23620,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (cid && !jornadaRef.current && !masmorraRef.current) {
         const p = personagemRef.current || personagem;
         const sup = garantirSuprimentos(p.suprimentos);
-        const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit });
+        const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit, anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "" });
         if (c) {
           if (c.fecha) {
             const novo = { ...sup };

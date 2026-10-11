@@ -536,7 +536,11 @@ sec("9. a fiação no App.jsx");
   const reg = corpoDe("const registrarLugar = (nome, fonte = \"mestre\") => {");
   t("registrarLugar existe", reg.length > 0);
   t("registrarLugar diz a lerLugarDito se a cena é da luta e da masmorra",
-    /lerLugarDito\(nome, \{ lugar: lugarRef\.current, cidade, pedido: ultimoPedidoRef\.current, fonte, luta: !!combateRef\.current, masmorra: !!masmorraRef\.current \}\)/.test(reg));
+    /* MOVIDA NA MM-C · C0 (11/10), com o motivo: a intenção é a mesma (a luta
+       e a masmorra chegam ao motor), e a chamada ganhou `doMarco` no fim —
+       o sítio de cada marco de pé, que o nome inventado pela IA não troca. */
+    /lerLugarDito\(nome, \{ lugar: lugarRef\.current, cidade, pedido: ultimoPedidoRef\.current, fonte, luta: !!combateRef\.current, masmorra: !!masmorraRef\.current(, doMarco)? \}\)/.test(reg));
+  t("e o sítio dos marcos de pé (MM-C · C0)", /masmorra: !!masmorraRef\.current, doMarco \}\)/.test(reg) && /if \(lido\.acao === "novo" && typeof lido\.nome === "string"/.test(reg));
   t("e já não acusa o Mestre por uma luta aberta (a recusa de combate saiu)", !/Você mudou o meu lugar no meio de um combate/.test(APP));
   const ent = corpoDe("const entrarMasmorra = (nomeSugerido = \"\", opcoes = null) => {");
   t("entrarMasmorra põe o lugar vigente na boca (lugarAoEntrarNaMasmorra)", /lugarAoEntrarNaMasmorra\(mm, \{/.test(ent) && /from "\.\/boca\.js"/.test(APP));
