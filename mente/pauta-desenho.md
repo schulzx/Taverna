@@ -27,6 +27,8 @@ não o código**, e nada se apaga desta pauta: o que é só desses dois modos fi
 marcado **depois do beta** (a Fase S e os itens do Duelo). **A sala de dois fica**
 — é Uma Vida a dois.
 
+**11/10 — a pessoa falou, para mais uma tela: a fogueira.** *"A fogueira está aprovada, ótima sugestão, continue assim, pode liberar a tela da fogueira."* A proposta é a do §6 de `mente/coracao-c1-c2.md` (no descanso longo, o jogador escolhe com quem se senta; a personagem do núcleo avança a sua cena ou conta, na própria voz, uma coisa da ficha; a porta do romance aberto pelo jogador). Liberada **só esta tela**; o resto da fila continua à espera.
+
 **05/10 — a pessoa falou, para uma tela só:** a nova mesa de batalha (Figma
 `151:1662`), que substitui `47:2`. Feita como **B1** (diário de 05/10). O resto
 da fila continua parado até ela falar do resto.

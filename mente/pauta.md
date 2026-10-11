@@ -385,6 +385,7 @@ marcos; dá-se-lhe coração. Nada entra como bloco estático: só a pauta por t
   do vilão.
 - **C5 · a cena pronta** — batida e degrau do encalhe chegam com a primeira
   fala de quem vem, escrita pelo sistema; o Narrador encena.
+- **C6 · a fogueira** (aprovada pela pessoa, 11/10, com a tela): o motor no `acampamento`, a tela pela mesa de design (`mente/pauta-desenho.md`).
 - Fecha com a **7.ª sessão de prova**, contra 3,2.
 
 ### Fase H — a porta das habilidades de classe
