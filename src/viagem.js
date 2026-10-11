@@ -94,8 +94,39 @@ export function minutosPorAvanco(jornada) {
   const total = Math.max(60, num(jornada && jornada.totalMin, minutosDaRota(jornada && jornada.dias)));
   return Math.max(MINUTOS_ESTRADA_POR_TURNO, Math.ceil(total / TETO_DE_AVANCOS));
 }
+/* ---------------- O RELÓGIO É O DA MARCHA (11/10, 4.ª sessão de prova, nº 8) ----------------
+   Até aqui cada avanço custava ao calendário o passo INTEIRO vezes três
+   (8 h de marcha num dia de 24) — e o passo tem piso de 4 h de estrada.
+   Logo todo avanço custava 12 h, por mais curto que fosse: uma caminhada de
+   97 minutos até uma vila gastava 12 h de relógio, e a ida de 4 h à Muralha
+   da quarta sessão também — três vezes, e cada chegada rendia uma condição
+   (Exausto). A conta dizia meio dia porque o piso dizia, não porque a
+   estrada pedisse.
+
+   Agora o relógio é o TEMPO REAL da marcha: o que se anda neste avanço
+   (o passo, ou o que falta, se falta menos), mais as NOITES que a estrada
+   atravessa. Um dia de estrada tem HORAS_MARCHA_POR_DIA de marcha; quem
+   passa delas dormiu a noite pelo caminho, e a noite custa o resto do dia
+   (RELOGIO_POR_ESTRADA: as 16 h que não se anda). Quem chega no fim da
+   marcha de um dia não paga a noite seguinte — já chegou.
+
+   Os números: 97 min a pé custam 97 min; a ida de 4 h custa 4 h; dois dias
+   de marcha (16 h) custam 32 h — uma noite pelo caminho, e não as 48 h de
+   quatro meios-dias inteiros. O PASSO (minutosPorAvanco) não muda: a
+   estrada anda o mesmo; o que mudou foi o que o calendário cobra por ela. */
+const MARCHA_DO_DIA = HORAS_MARCHA_POR_DIA * 60;
+/* os minutos de calendário de 'm' minutos de marcha desde a partida */
+function relogioDaMarcha(m) {
+  const k = Math.max(0, Math.round(num(m)));
+  if (!k) return 0;
+  const noites = Math.floor((k - 1) / MARCHA_DO_DIA);
+  return k + noites * Math.round(MARCHA_DO_DIA * (RELOGIO_POR_ESTRADA - 1));
+}
 export function relogioDoAvanco(jornada) {
-  return Math.round(minutosPorAvanco(jornada) * RELOGIO_POR_ESTRADA);
+  const total = Math.max(1, num(jornada && jornada.totalMin, minutosDaRota(jornada && jornada.dias)));
+  const feito = Math.min(total, Math.max(0, num(jornada && jornada.andadoMin)));
+  const passo = Math.min(minutosPorAvanco(jornada), total - feito);
+  return relogioDaMarcha(feito + passo) - relogioDaMarcha(feito);
 }
 
 /* Andou. `minutos` é ESTRADA, não relógio — quem passa a noite acampado

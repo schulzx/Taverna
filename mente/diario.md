@@ -15,6 +15,35 @@ Formato:
 ```
 
 ---
+## 11/10 · v9.383 · MM, as três fiações da auditoria de coerência e da 4.ª sessão (`frontend`) · este commit
+
+- **quem:** `frontend`, com o bastão do `App.jsx` (tomado no início, devolvido no fim deste trabalho), e a regra em `missoes.js` e
+  `saga.js`; sem tocar em `viagem.js`, `partida.js`, masmorra nem `json.js` (o `backend` em paralelo). A v9.382 é dele (ainda na árvore);
+  esta fica com a v9.383.
+- **1 · a principal nas peças do arco (contradição 7, fechada):** `motorDoArco` passa `principal` (o título da missão principal), e
+  ela sai de `impostas` para não ir duas vezes à mesma linha.
+- **2 · um antagonista por campanha:** a nêmesis da fama nasce do fio da espinha (`vilaoDoFio`, saga.js) — o nome pelo qual a
+  espinha casa o chefe, o título e o motivo do fio; o plano, o corpo e as fases continuam os do vilão. Em 48 campanhas, 48/48 com o
+  nome que fecha o confronto final. O rosto (a revelação do nome, passo 5 de 9) espera o último ato, que é onde o fio diz o nome
+  (`oRostoEspera`); e o chefe do fio caído EM COMBATE cai em qualquer fase (`caiuOFio`) — "ele escapa" seria mentira. Save sem
+  fio, confronto feito ou antagonista morto: o de sempre. Campo novo `daEspinha` no vilão, só aditivo.
+- **3 · "falar com" fecha pela conversa (defeito 5 da 4.ª sessão):** o Cronista devolve `falou_com` (quem falou com o herói frente
+  a frente; citar, lembrar e procurar não contam), e a conferência que ele dispara fecha a etapa mesmo fora do lugar da ficha e sem
+  ficha no registo (`conversouCom`, missoes.js) — na cidade da pessoa, quando se sabe qual é (o marco empresta a sua `cidade`).
+- **decisões médias:** (a) o nome da nêmesis só vai ao Narrador depois do rosto — o arco, a mente da ameaça, o prisioneiro dos
+  capangas e o fio do oráculo levavam-no desde o dia em que ela nascia, contra a regra do próprio `vilao.js`; com a nêmesis do fio
+  entregariam o nome que a espinha guarda para o último ato. O oráculo perde o movimento "nêmesis" antes do rosto (a sombra já está
+  na pauta por `resumoVilaoPrompt`). (b) O chefe sem nome próprio ("Quimera o Colecionador") fica com o título do arquétipo, para
+  "nome, título" não dizer o epíteto duas vezes.
+- **a prova:** três suítes, vermelhas em HEAD e verdes agora — `teste-arco-com-principal` (9; 3 falham em HEAD),
+  `teste-nemesis-do-fio` (37; 26 falham), `teste-falar-com-em-cena` (24; 12 falham). Build limpo, `npm test` 291/291 e 16/16. O
+  App andou +5/+24 linhas: endereços de `acoes-do-jogador` re-medidos pelo diff, os nus à mão, com o motivo ao lado. A aba nova
+  abre no menu, sem `LimiteErro` (sem tocar em save nenhum).
+- **o que ficou:** o pedido do `backend` em `entrarMasmorra` (o veredito com as tochas já tiradas, `{ ...persIn, suprimentos: supIn }`)
+  não entrou aqui. A 5.ª sessão deve medir: a etapa "falar com" fecha no turno da conversa? a nêmesis aparece só como sombra até
+  ao último ato?
+
+---
 ## 11/10 · v9.380– · MM, os defeitos da 4.ª sessão de prova, um por versão (`mente/mm11-sessao-4.md`)
 
 - **quem:** `backend`, à mão, sem tocar no `App.jsx` (o `frontend` tem o bastão), nem em `missoes.js`/`saga.js`.
@@ -33,6 +62,13 @@ Formato:
   fecha a string quando o que vem a seguir é estrutura de JSON (`ASPA_QUE_FECHA`): repara-se e lê-se; se nem assim abrir, o
   resgate leva o campo inteiro. A resposta real chega com 1.650 caracteres, a fala de Euzébio e o fim da cena. Nenhuma das 42
   respostas bem formadas do registo muda. Suíte `teste-aspa-na-prosa.mjs` com a resposta real como fixture (21; 11 falham em HEAD).
+- **v9.382 · o relógio da marcha (viagem.js):** cada avanço custava o passo inteiro × 3 com piso de 4 h — 12 h, sempre: a
+  caminhada de 97 min gastava 12 h, e a ida de 4 h à Muralha também (×3 na sessão = 36 h). Agora `relogioDoAvanco` cobra o
+  que se anda neste avanço mais as noites que a estrada atravessa (8 h de marcha por dia; a noite custa as 16 h que não se
+  andam; quem chega no fim da marcha não paga a noite seguinte). 97 min → 97 min; 4 h → 4 h; 2 dias → 32 h (era 48); 37 dias
+  → 36 noites e 8 h. O passo não muda. **Asserções movidas, com o motivo escrito:** `teste-veredito-da-partida.mjs` (a conta
+  "de outra maneira" passa a ser a forma fechada; meio dia chega às 12:05 e não às 20:05; a jornada curta cobra os minutos;
+  a secção dos prazos parte às 20:00 para atravessar a meia-noite). Suíte `teste-relogio-da-marcha.mjs` (16; 11 falham em HEAD).
 - **fiação que fica para o `frontend`:** em `entrarMasmorra`, `vereditoDaMasmorra(doMapa || mm, persIn)` passa a ficha com as
   tochas já tiradas da mochila — para a masmorra do mundo que não se está à boca, passe `{ ...persIn, suprimentos: supIn }`.
 

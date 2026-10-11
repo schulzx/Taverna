@@ -77,14 +77,30 @@ const estadoEm = (w, a, extra = {}) => ({
 });
 const dadosDe = (w, e) => MV.dadosDoMapaVivo(w.mapa, e);
 
-/* O relógio que `viajar` cobra, contado de OUTRA maneira: o número de
-   avanços é o de `progressoDaViagem` (turnosTotais), e cada um custa o
-   relógio do avanço vezes o ritmo, mais o turno. A pé até à boca, os
-   minutos da caminhada e o turno. */
-const relogioCobrado = (jornada, minutosAPe, fator = 1) => {
+/* O relógio que `viajar` cobra, contado de OUTRA maneira.
+   MOVIDO em 11/10 (4.ª sessão de prova, nº 8): até aqui era "avanços × o
+   relógio de UM avanço", porque todo avanço custava o mesmo — o passo
+   inteiro vezes três, com o piso de 4 h de estrada, isto é, 12 h por
+   avanço, até para uma caminhada de 97 minutos. Agora o relógio é o tempo
+   real da marcha (viagem.js): as horas que se andam mais uma noite (16 h)
+   por cada dia de marcha completo que fica para trás antes do último. A
+   conta de outra maneira passa a ser essa forma fechada — as horas de
+   marcha da jornada, as noites, e o turno de cada avanço —, e não o laço.
+   A pé até à boca, os minutos da caminhada e o turno, como antes. */
+const MARCHA_DO_DIA = VI.HORAS_MARCHA_POR_DIA * 60;
+const relogioCobrado = (jornada, minutosAPe) => {
   if (!jornada) return minutosAPe + MINUTOS_POR_TURNO;
+  const T = Math.round(Number(jornada.totalMin));
+  const noites = Math.floor((T - 1) / MARCHA_DO_DIA);
   const n = VI.progressoDaViagem(jornada).turnosTotais;
-  return n * (Math.round(VI.relogioDoAvanco(jornada) * fator) + MINUTOS_POR_TURNO);
+  return T + noites * (1440 - MARCHA_DO_DIA) + n * MINUTOS_POR_TURNO;
+};
+/* com o fator do ritmo, que o App aplica avanço a avanço (arredondando cada
+   um): o laço de `viajar`, sem os dados */
+const relogioComRitmo = (jornada, fator) => {
+  let j = jornada, s = 0, n = 0;
+  while (j && j.estado !== VI.ESTADOS.concluida && n < 60) { s += Math.round(VI.relogioDoAvanco(j) * fator) + MINUTOS_POR_TURNO; j = VI.andar(j, VI.minutosPorAvanco(j)); n++; }
+  return s;
 };
 
 /* ============================================================ */
@@ -243,8 +259,10 @@ sec("4. o ritmo de marcha — mexe no relógio, não na estrada");
       if (vr.horas === vn.horas && vl.horas === vn.horas && J(vr.rota) === J(vn.rota)) horasIguais++;
       if (vr.minutosDeRelogio < vn.minutosDeRelogio) rapidoMenos++;
       if (vl.minutosDeRelogio > vn.minutosDeRelogio) lentoMais++;
-      const j = { totalMin: Math.round(vn.horas * 60) };
-      if (vr.minutosDeRelogio === vr.avancos * (Math.round(VI.relogioDoAvanco(j) * T.relogioDoRitmo.rapido) + MINUTOS_POR_TURNO)) cobrado++;
+      /* MOVIDO em 11/10: o avanço deixou de custar sempre o mesmo (as noites
+         caem no avanço que as atravessa) — o laço de viajar, com o fator */
+      const j = { totalMin: Math.round(vn.horas * 60), andadoMin: 0, estado: VI.ESTADOS.emCurso };
+      if (vr.minutosDeRelogio === relogioComRitmo(j, T.relogioDoRitmo.rapido)) cobrado++;
     }
   }
   t(`as horas e a rota não mudam com o ritmo (${horasIguais}/${n})`, n > 300 && horasIguais === n);
@@ -307,13 +325,17 @@ sec("6. o veredito antes de partir — o pedido do mapa, em número");
   const ida = RA.idaAMasmorra("Vou à Agulha de Ferro.", { cidadeAtual: de.nome, cidades: w.mapa.cidades.map((c) => c.nome), mapa: w.mapa, masmorras: w.masmorras, lugar: null, jornada: null });
   t(`Torre Serena → Agulha de Ferro: ${v && v.horas} h, ${v && v.noites} noite, chega dia ${v && v.chegada.dia} às ${v && v.chegada.hora}`, !!v && v.horas === BO.jornadaAteAMasmorra(ida, { de: de.nome }).totalMin / 60 && J(v.rota) === J([de.id, para.id]));
   t("o mapa vivo não desenha esse traço — e o veredito leva a perna para a tela o desenhar", !d.arestas.some((a) => (a.de === de.id && a.para === para.id) || (a.para === de.id && a.de === para.id)) && v.pernas.length === 1);
-  /* meio dia de marcha custa meio dia de calendário; um dia, um dia */
+  /* MOVIDO em 11/10: meio dia de marcha (4 h) custa as 4 h que se andam —
+     era meio dia de calendário (12 h), o piso de um avanço. Chega à hora
+     do almoço, e não ao fim da tarde. */
   const meio = w.nos.find((n) => n.nome === "Muralha Quebrada de Prata Podre");
   const eC = estadoEm(w, w.nos[0], { minuto: 480 }), dC = dadosDe(w, eC);
   const vMeio = PA.vereditoDaPartida(dC, meio.id, eC);
-  t(`meio dia de marcha (${vMeio.horas} h): parte às 08:00, chega às ${vMeio.chegada.hora} (${vMeio.chegada.fase}), sem noite`, vMeio.horas === 4 && vMeio.noites === 0 && vMeio.chegada.minuto === 480 + 720 + MINUTOS_POR_TURNO);
-  /* o achado (v9.364) que fica no relato: uma vila a minutos de uma boca,
-     aberta como jornada, cobra um avanço inteiro de relógio */
+  t(`meio dia de marcha (${vMeio.horas} h): parte às 08:00, chega às ${vMeio.chegada.hora} (${vMeio.chegada.fase}), sem noite`, vMeio.horas === 4 && vMeio.noites === 0 && vMeio.chegada.minuto === 480 + 240 + MINUTOS_POR_TURNO);
+  /* o achado (v9.364) que ficou no relato: uma vila a minutos de uma boca,
+     aberta como jornada, cobrava um avanço inteiro de relógio (12 h por 97
+     minutos). MOVIDO em 11/10 (4.ª sessão, nº 8): agora cobra os minutos que
+     se andam, e o veredito diz isso, porque é o que viajar cobra. */
   let curta = null;
   for (const x of mundos) {
     for (const l of x.nos.filter((n) => n.tipo === "lugar")) for (const c of x.nos.filter((n) => n.tipo === "povoado")) {
@@ -322,8 +344,8 @@ sec("6. o veredito antes de partir — o pedido do mapa, em número");
     }
     if (curta) break;
   }
-  if (curta) console.log(`      a jornada curta: ${curta.de} → ${curta.para}, ${Math.round(curta.v.horas * 60)} min de caminhada, e o relógio cobra ${curta.v.minutosDeRelogio} min (um avanço de estrada)`);
-  t("a jornada curta a uma povoação: o veredito diz o avanço inteiro que viajar cobra", !!curta && curta.v.avancos === 1 && curta.v.minutosDeRelogio === VI.relogioDoAvanco({ totalMin: 1 }) + MINUTOS_POR_TURNO);
+  if (curta) console.log(`      a jornada curta: ${curta.de} → ${curta.para}, ${Math.round(curta.v.horas * 60)} min de caminhada, e o relógio cobra ${curta.v.minutosDeRelogio} min (era 725)`);
+  t("a jornada curta a uma povoação: o veredito diz os minutos da caminhada que viajar cobra, e não 12 h", !!curta && curta.v.avancos === 1 && curta.v.minutosDeRelogio === Math.round(curta.v.horas * 60) + MINUTOS_POR_TURNO && curta.v.minutosDeRelogio < VI.MINUTOS_RELOGIO_POR_TURNO);
 }
 
 /* ============================================================ */
@@ -375,14 +397,19 @@ sec("8. o que anda enquanto se anda — os prazos (a pergunta do jogo)");
   t("a virada do dia corre o reino (avancarDiasReino), não as missões", /while \(minutoRef\.current >= 1440\) \{\s*minutoRef\.current -= 1440;\s*const evs = avancarDiasReino\(1\)/.test(app));
 
   const w = mundos[3], base = w.nos[0], p = w.nos.find((x) => x.tipo === "povoado");
-  const e0 = estadoEm(w, base, { dia: 10, minuto: 8 * 60 });
+  /* MOVIDO em 11/10: parte às 20:00, e não às 08:00. Um dia de marcha (8 h)
+     custava um dia de calendário (2 avanços de 12 h) e virava sempre o dia;
+     no tempo real da marcha custa 8 h, e só vira o dia quem parte à noite —
+     que é o caso que esta secção precisa (o que anda quando a estrada
+     atravessa a meia-noite). */
+  const e0 = estadoEm(w, base, { dia: 10, minuto: 20 * 60 });
   const d0 = dadosDe(w, e0);
   const v0 = PA.vereditoDaPartida(d0, p.id, e0);
-  t(`um dia de estrada (${v0.minutosDeRelogio} min): nada no estado, nenhum prazo`, J(v0.prazos) === "[]" && v0.chegada.dia === 11);
-  const agora = (10 - 1) * 1440 + 480, chegada = (v0.chegada.dia - 1) * 1440 + v0.chegada.minuto;
+  t(`um dia de marcha saindo às 20:00 (${v0.minutosDeRelogio} min): nada no estado, nenhum prazo`, J(v0.prazos) === "[]" && v0.chegada.dia === 11);
+  const agora = (10 - 1) * 1440 + 20 * 60, chegada = (v0.chegada.dia - 1) * 1440 + v0.chegada.minuto;
   const e = {
     ...e0,
-    acordouAbs: agora - 6 * 60,                                     // acordado há 6 h: passa das 20 h na estrada
+    acordouAbs: agora - 14 * 60,                                    // acordado há 14 h: passa das 20 h na estrada
     ficha: { grupo: [
       { nome: "Lobo Espectral", invocada: true, expiraMin: agora + 60 },     // vence pelo caminho
       { nome: "Corvo", invocada: true, expiraMin: chegada + 60 },           // vence depois de chegar

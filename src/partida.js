@@ -22,11 +22,12 @@
        um anda `minutosPorAvanco` de estrada e custa `relogioDoAvanco` de
        calendário vezes o fator do ritmo de marcha (`relogioDoRitmo`, abaixo
        — o espelho do que o App multiplica; a suíte lê o App e prova que é o
-       mesmo número). Uma ida de meio dia de marcha custa meio dia de
-       calendário, porque oito horas de marcha são um dia inteiro (viagem.js:
-       `RELOGIO_POR_ESTRADA`). O piso do avanço vale também para a jornada
-       curta: uma vila a dez minutos da boca, se aberta como jornada, cobra
-       um avanço inteiro — e o veredito diz isso, porque é o que se cobra;
+       mesmo número). Desde 11/10 (4.ª sessão de prova, nº 8) o relógio é o
+       tempo real da marcha: uma ida de meio dia de marcha custa as 4 h que
+       se andam, e só quem passa das oito horas de marcha de um dia paga a
+       noite pelo caminho (viagem.js, `relogioDoAvanco`). A vila a minutos da
+       boca, aberta como jornada, cobra os minutos dela — e não mais as 12 h
+       do piso de um avanço; o veredito diz o que se cobra;
      · e cada partida e cada avanço é um TURNO, e o turno paga os seus
        minutos (`MINUTOS_POR_TURNO`, calendario.js — o `enviar` do App os
        soma a todo turno fora da luta, do acampamento e da masmorra).
