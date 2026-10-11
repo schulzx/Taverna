@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, VERBO_COM_PRECO, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
 import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase, ESTADOS_DO_DADO, reciboQueCabe, horaNaCinta } from "./glifos.js";
@@ -187,8 +187,12 @@ export function DegrausDaAmeaca({ nivel = 0, de = 5, tamanho = 16, cor = "curren
      glifo próprio, o ladrilho oco leva a marca `ban` (sem ela, o quadrado vazio
      lia-se caixa por marcar: `v3-jogo.md` §9.1);
    · PORTA — como Neutro, e o glifo é a seta: o assunto de uma porta é ir.
-   É `aria-hidden`: a frase ao lado diz tudo o que ele diz. */
-export function LadrilhoDoAssunto({ glifo, tom = "neutro" }) {
+   É `aria-hidden`: a frase ao lado diz tudo o que ele diz.
+   `children` (F1, NOVO — padrão nenhum): o glifo que não é de traço. A
+   fogueira pede a BRASA (a chama cheia em dois tons, `197:68`), que não é
+   um `Glifo` de grelha — e redesenhar o ladrilho à volta dela seria a
+   mesma peça com duas caras. Sem `children`, a peça é byte a byte a de ontem. */
+export function LadrilhoDoAssunto({ glifo, tom = "neutro", children }) {
   const impedido = tom === "impedido";
   return (
     <span aria-hidden="true" className="inline-flex items-center justify-center shrink-0"
@@ -197,7 +201,8 @@ export function LadrilhoDoAssunto({ glifo, tom = "neutro" }) {
         background: impedido ? "transparent" : T.panelSoft,
         border: `1px solid ${impedido ? T.lineStrong : T.line}`,
       }}>
-      {tom === "porta" ? <IconeSeta tamanho={LADRILHO.glifo} cor={T.amber} />
+      {children ? children
+        : tom === "porta" ? <IconeSeta tamanho={LADRILHO.glifo} cor={T.amber} />
         : glifo || impedido ? <Glifo nome={glifo || "ban"} tamanho={LADRILHO.glifo} cor={impedido ? T.inkDim : T.amber} /> : null}
     </span>
   );
@@ -1238,6 +1243,46 @@ export function CampoDeBrasas({ className = "" }) {
   }, []);
 
   return <canvas ref={telaRef} aria-hidden className={`absolute inset-0 w-full h-full pointer-events-none ${className}`} />;
+}
+
+/* ---------------- O VERBO COM PREÇO (biblioteca `64:2446`, F1) ----------------
+   O botão que funciona e diz o preço na tela — o veredito antes do clique.
+   Três papéis, e é a forma que os separa, não só a cor:
+   · `gesto` — o que se faz: poço (`pagina`), fio de controlo, verbo em `ink`;
+   · `recuo` — o que se deixa: a mesma caixa, o verbo baixa a `inkMeio`;
+   · `armado` — o que o Enter faz: âmbar cheio, tinta `onAccent` (10,04:1),
+     e o atalho é o ↵.
+   O preço é fala da máquina (mono, `TIPOS.maquina`, `inkDim`), e é MUNDO,
+   nunca mecanismo: «três dias de desvio · a Serra espera». O atalho é
+   `aria-hidden` (o `aria-keyshortcuts` diz-o ao leitor) e a peça CRESCE em
+   altura quando o preço parte — `minHeight`, nunca `height`. O foco é o anel
+   da casa (`tv-anel-foco`), nunca um segundo desenho de foco.
+   Medidas em `VERBO_COM_PRECO` (`estilo.js`). Hoje lê-a a fogueira; a mesa
+   de batalha tem o seu `Verbo` privado e o `Mapa/Partir` é a mesma anatomia:
+   no dia em que forem tocados, é esta peça que os serve. */
+export function VerboComPreco({ verbo, preco, atalho, papel = "gesto", aoTocar, className = "", style }) {
+  const armado = papel === "armado";
+  const V = VERBO_COM_PRECO;
+  const tinta = armado ? T.onAccent : T.inkDim;
+  const tecla = atalho === "↵" ? "Enter" : atalho ? String(atalho) : undefined;
+  return (
+    <button type="button" onClick={aoTocar} aria-keyshortcuts={tecla}
+      aria-label={[verbo, preco].filter(Boolean).join(" — ")}
+      className={`tv-anel-foco flex items-center text-left ${className}`}
+      style={{
+        minHeight: ALVOS.piso, padding: `${V.cima}px ${V.lado}px`, gap: V.entre, borderRadius: V.raio,
+        background: armado ? T.amber : T.pagina,
+        border: `1px solid ${armado ? T.amber : T.lineStrong}`,
+        color: armado ? T.onAccent : papel === "recuo" ? T.inkMeio : T.ink,
+        cursor: "pointer", ...style,
+      }}>
+      <span className="flex flex-col flex-1 min-w-0" style={{ gap: V.palavras }}>
+        <span className="tv-body" style={{ fontSize: TIPOS.corpo, fontWeight: 500 }}>{verbo}</span>
+        {preco ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: tinta }}>{preco}</span> : null}
+      </span>
+      {atalho ? <span aria-hidden="true" className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: tinta }}>{atalho}</span> : null}
+    </button>
+  );
 }
 
 /* ============================================================

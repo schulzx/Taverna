@@ -19,6 +19,15 @@ Formato:
 
 ---
 
+## 11/10 · v9.413 · **F1 · a fogueira construída (fora do App)** · `aprendiz`
+- **estado inicial:** suítes verdes; um `backend` em `nucleo.js`/`subtramas.js`/`pauta.js`/`nomes.js` (não toquei); o bastão do `App.jsx` livre e não tomado — a ligação é do `oficial`.
+- **aprendiz:** `src/painel-fogueira.jsx` (`PainelFogueira`, puro de apresentação, contrato de props no topo; os seis estados: A roda Mesa/Baixa, B fala, C com escolha, B2 a porta, D/E a linha do ladrilho; `Lugar`, `Brasa`, `OFogo` fora do render; atalhos 1–5/Enter que nunca roubam a tecla do compositor; a paragem com setas). `FOGUEIRA` e `VERBO_COM_PRECO` em `estilo.js` — `lugarAceso` é a receita feita conta (`panel` + 10 % de âmbar = #31252D), sem literal novo; o movimento `.tv-fogueira-*` em `MOVIMENTO_CSS` com saída no reduced-motion. Em `ui.jsx`: `VerboComPreco` (a peça `64:2446` sobe à biblioteca de código; a batalha ainda tem o seu `Verbo` privado) e `LadrilhoDoAssunto` ganha `children` (a brasa não é glifo de grelha). `testes/teste-painel-fogueira.mjs`: 85 asserções.
+- **a prova:** vivo, numa página temporária fora do commit: Mesa 1280×912 — A 467 px de página (o nó 466), C 344 (o nó 340), as posições da roda batem com `200:213`; Baixa 800×451 — A 243, C 300 (o desenho previa 320 de 323), B2 153; lugares 56 / verbos ≥ 55 (≥ 48); os atalhos e cliques chamam os callbacks certos; zero erros na consola.
+- **decisões médias tomadas:** o corte Mesa × Baixa (o desenho fixou os quadros, não o corte) é medido: largura da roda tirada da própria tabela de lugares, altura = página do estado + a moldura do quadro Mesa (396) — `FOGUEIRA.mesaPede`; o `oficial` pode forçar com `formato`. O retrato é o `Retrato` de hoje com anel `line` (a peça de § Retratos ainda não existe em código). O preço de «Dormir sem responder» sem `escolha.adiar` é a frase neutra.
+- **o que ficou:** a ligação no «Descanso longo» (`App.jsx` 26643, `sairDoAcampamento("longo")`) — do `oficial`; a experiência jogada com o `jogo` (§4 ainda diz «ainda não»).
+
+---
+
 ## 11/10 · sem versão (só Figma e `mente/`) · **A fogueira — a tela** · liberada pela pessoa
 - **estado inicial:** a pessoa aprovou e liberou só esta tela (*"pode liberar a tela da fogueira"*). Só Figma e `mente/`; não toquei `src/` (um `backend` trabalha lá) nem tomei o bastão.
 - **jogo / desenho:** o lado do `jogo` é o §6 de `coracao-c1-c2.md`; a forma em `formas.md` §Fogueira. Decisões minhas: a noite **só toma a tela quando alguém tem o que dizer** (vazio = uma linha na manhã, zero cliques); a ordem dos lugares é a dos papéis, nunca por urgência; escolher um lado fecha a noite; os dois lados são `O verbo com preço` Gesto, do mesmo peso.

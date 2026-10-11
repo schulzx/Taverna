@@ -1383,6 +1383,109 @@ export const RECIBO = {
    `A dobra`. */
 export const FIM_DA_LUTA = { entra: 240, passo: 60, tetoDoChao: 2, tetoDoChaoNoTelefone: 1 };
 
+/* `O VERBO COM PREÇO` (biblioteca `64:2446`; o espelho da fogueira é o
+   `197:65`) — o botão que FUNCIONA e diz o preço na tela. Nasceu na
+   biblioteca em D4 porque o `Botao` só tinha fenda de razão quando recusa;
+   no código vivia só por dentro da mesa de batalha (`Verbo`, privado de
+   `painel-batalha.jsx`, com as medidas de `TELA_DE_BATALHA`). A fogueira é
+   o segundo leitor, e por isso a peça sobe a `ui.jsx` (`VerboComPreco`) com
+   as medidas do nó: 14 de lado, 6 em cima e em baixo, 10 entre as palavras
+   e o atalho, 1 entre o verbo e o preço, raio 8. A altura é `ALVOS.piso`,
+   nunca a soma do enchimento. O preço vai a 12 (o piso), como `Mapa/Partir`. */
+export const VERBO_COM_PRECO = { lado: 14, cima: 6, entre: 10, palavras: 1, raio: 8 };
+
+/* A MISTURA DE DUAS CORES DE `T`, em percentagem INTEIRA. Privada: só a
+   fogueira a pede hoje. Inteira de propósito — `0.1` em vírgula flutuante
+   arredonda o azul do `lugarAceso` para baixo (44,4999…) e a cor sai
+   `#31252C`; com 10 sobre 100 a conta é exata e sai `#31252D`, a do nó. */
+const misturar = (a, b, pct) => "#" + [1, 3, 5].map((i) => {
+  const x = parseInt(a.slice(i, i + 2), 16), y = parseInt(b.slice(i, i + 2), 16);
+  return Math.round((x * (100 - pct) + y * pct) / 100).toString(16).padStart(2, "0");
+}).join("").toUpperCase();
+
+/* ============================================================
+   F1 · A FOGUEIRA (`formas.md` § Fogueira, Figma `09 · Fogueira` `196:2`,
+   biblioteca `197:2`, coleção `Fogueira (FOGUEIRA)` `196:18`).
+
+   O QUE É IGUAL A `T` É `T` (§3): a chama é o âmbar, o cerne o âmbar que
+   se lê, a lenha o erguido com o fio de controlo, o escolhido a tua mão.
+   UMA cor nova, `lugarAceso` — e ela não entra como literal: é a própria
+   receita do desenho (`panel` + 10 % de âmbar) feita conta, e a suíte
+   (`teste-painel-fogueira.mjs`) prende o resultado em `#31252D`. No dia em
+   que o âmbar mudar, o lugar aceso muda com ele — que é o que a receita diz.
+
+   As medidas de §3 estão com os nomes de §3 (`lugar`, `brasa`, `fogo`,
+   `raio`, `lugaresMax`, `lugares`). O resto saiu dos nós citados ao lado de
+   cada linha, lido no `get_design_context` — nenhum afinado a olho.
+   ============================================================ */
+export const FOGUEIRA = {
+  chama: T.amber,
+  cerne: T.amberSoft,
+  clarao: T.amber,
+  lenha: T.panelSoft,
+  lenhaFio: T.lineStrong,
+  escolhido: T.rosa,
+  lugarAceso: misturar(T.panel, T.amber, 10),   /* = #31252D (11,56:1 com ink) */
+  claraoCentro: 0.2,
+  /* as paragens do gradiente radial do clarão: [onde, opacidade] (nó `197:34`) */
+  claraoParadas: [[0, 1], [0.55, 0.35], [1, 0]],
+
+  lugar: { mesa: 176, baixa: 56 },   /* Mesa: a LARGURA do lugar · Baixa: a ALTURA */
+  brasa: 20,
+  fogo: { mesa: 132, baixa: 48 },    /* a altura do fogo (as larguras em `roda.fogo`) */
+  raio: 12,
+  lugaresMax: 5,
+  /* §2 — [fração da largura, y em px] por contagem, NA ORDEM DOS PAPÉIS */
+  lugares: {
+    1: [[0.5, 0]],
+    2: [[0.36, 8], [0.64, 8]],
+    3: [[0.22, 96], [0.5, 0], [0.78, 96]],
+    4: [[0.14, 104], [0.36, 8], [0.64, 8], [0.86, 104]],
+    5: [[0.10, 120], [0.29, 24], [0.5, 0], [0.71, 24], [0.90, 120]],
+  },
+
+  /* A RODA DA MESA (`200:213`): 316 de alto, o fogo ao centro em y 176 */
+  roda: { altura: 316, fogoY: 176, fogo: { mesa: 240, baixa: 160 } },
+  /* o lugar na Mesa (`198:8`): ≥180 de alto, 18 em cima, 16 em baixo, 12 de
+     lado, 8 entre o rosto, o nome e o gesto; o atalho no canto (11, 9); a
+     brasa sobre o rosto em (48, −2) */
+  lugarMesa: { altura: 180, cima: 18, baixo: 16, lado: 12, entre: 8, atalho: [11, 9], brasa: [48, -2] },
+  /* o lugar na Baixa (`198:79`): 12 à esquerda, 14 à direita, 8 em cima, 12 entre */
+  lugarBaixa: { esquerda: 12, direita: 14, cima: 8, entre: 12 },
+  filete: 3,          /* o escolhido: o filete de 3 embaixo (a gramática de `A escolha`) */
+  rosto: { ficha: 160, cartao: 64, chip: 32 },
+  letra: { nomeNoLugar: 19, nomeDaFala: 22, rastreioDaVoz: 0.08, rastreioDoRedor: 0.06, entrelinhaDaFala: 1.65 },
+  /* a fala na Mesa (`200:663`): a coluna de quem fala (220, o rosto ao fogo
+     num quadrado de 220 com o retrato a (30, 20) e o fogo a (−10, 120)), 40
+     até à página, 20 entre os blocos dela, 12 entre os dois lados */
+  fala: { coluna: 220, rostoEm: [30, 20], fogoEm: [-10, 120], entreRostoENome: 10, entre: 40, ritmo: 20, entreLados: 12, chip: 8, entreChips: 16 },
+  /* a Baixa (`202:206`, `202:405`): duas colunas com 8 entre elas; a coluna
+     de quem fala com o rosto Cartão; 12 entre os blocos */
+  baixa: { entre: 8, ritmo: 12, coluna: 96, entreColunas: 24 },
+  /* os verbos que não são de lado (Dormir já, Dormir sem responder): 300 */
+  verboSo: 300,
+  /* entre a abertura, a pergunta, a roda e o Dormir já (`200:210`) */
+  ritmoDaRoda: 12,
+  /* a manhã (D/E): o ladrilho e a linha que a separa da prosa */
+  manha: { respiro: 24, palavras: 2 },
+
+  /* §5 — tv-fade 240 na entrada, lugares em sequência de 60 (≤ 300), a
+     chama respira 2,4 s (0,96–1,04 na base), o escolhido vira o retrato
+     grande em 200. As faíscas usam a curva de `tv-flutua` (1,35 s), em
+     laço e desencontradas por um terço do ciclo. */
+  movimento: { entra: 240, passo: 60, tetoDoPasso: 300, respira: 2400, respiraMin: 0.96, respiraMax: 1.04, vira: 200, faisca: 1350 },
+
+  /* QUANDO A MESA CABE — a decisão mais simples, anotada (o desenho fixou
+     os dois formatos, 1280×912 e 800×451, e não o corte entre eles). A
+     altura: a página que cada estado pede (A 466, `200:210`; a fala 340,
+     `200:663`) mais a moldura que a página tem à volta no quadro da Mesa
+     (912 − 572 do corpo + 2 × 28 de enchimento = 396). A largura sai da
+     própria tabela dos lugares (nenhum lugar por cima do vizinho) e, na
+     fala, de duas colunas de verbo de 300. O `oficial` pode forçar o
+     formato pela prop `formato`. */
+  mesaPede: { roda: 466, fala: 340, moldura: 396 },
+};
+
 /* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
@@ -1668,6 +1771,21 @@ export const MOVIMENTO_CSS = `
 @keyframes tvFimEntra { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .tv-fim-entra { animation: tvFimEntra ${FIM_DA_LUTA.entra}ms ease both; }
 
+/* F1 · A FOGUEIRA (formas.md, Fogueira 5). A noite entra num fade de 240;
+   cada lugar entra 60 depois do anterior (o atraso e do painel, pela
+   variavel --tv-ordem, com teto de 300); a chama respira pela base; as
+   faiscas sobem com a curva de tvFlutua, em laco; o retrato de quem fala
+   cresce em 200. Nada segura um clique, e a saida esta no media de baixo,
+   escrita a nascenca: tudo pronto, chama parada. */
+@keyframes tvFogueiraEntra { from { opacity: 0; } to { opacity: 1; } }
+.tv-fogueira-entra { animation: tvFogueiraEntra ${FOGUEIRA.movimento.entra}ms ease both; }
+.tv-fogueira-lugar { animation: tvFogueiraEntra ${FOGUEIRA.movimento.entra}ms ease both; animation-delay: calc(min(var(--tv-ordem, 0) * ${FOGUEIRA.movimento.passo}ms, ${FOGUEIRA.movimento.tetoDoPasso}ms)); }
+@keyframes tvFogueiraRespira { 0%, 100% { transform: scale(${FOGUEIRA.movimento.respiraMin}); } 50% { transform: scale(${FOGUEIRA.movimento.respiraMax}); } }
+.tv-fogueira-chama { transform-box: fill-box; transform-origin: 50% 100%; animation: tvFogueiraRespira ${FOGUEIRA.movimento.respira}ms ease-in-out infinite; }
+.tv-fogueira-faisca { transform-box: fill-box; animation: tvFlutua ${FOGUEIRA.movimento.faisca}ms ease-out infinite; animation-delay: calc(var(--tv-ordem, 0) * ${FOGUEIRA.movimento.faisca / 3}ms); }
+@keyframes tvFogueiraVira { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+.tv-fogueira-vira { animation: tvFogueiraVira ${FOGUEIRA.movimento.vira}ms ease-out both; }
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -1734,6 +1852,11 @@ export const MOVIMENTO_CSS = `
   /* A1 · O FIM DA LUTA entra parado: o desfecho e os chips ja estao no
      estado final (opacity 1, sem subida) desde o primeiro quadro. */
   .tv-fim-entra { animation: none; opacity: 1; transform: none; }
+  /* F1 · A FOGUEIRA pronta desde o primeiro quadro: os lugares acesos, a
+     chama parada na escala cheia, as faiscas paradas e visiveis (o seu
+     estado de repouso e opacity 1), o retrato ja grande. */
+  .tv-fogueira-entra, .tv-fogueira-lugar, .tv-fogueira-vira { animation: none; opacity: 1; transform: none; }
+  .tv-fogueira-chama, .tv-fogueira-faisca { animation: none; transform: none; opacity: 1; }
 }
 `;
 
