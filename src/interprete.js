@@ -203,7 +203,11 @@ export const MOVIMENTOS = [
   { id: "olha_a_porta", gesto: "esquiva", peso: 2, quando: (p) => p.teme && p.quantosEscutam >= 2, faz: "olha para a porta antes de responder, e responde menos do que sabe" },
   { id: "arruma_as_maos", gesto: "esquiva", peso: 2, quando: (p) => p.ato === "acusei", faz: "arruma alguma coisa com as mãos para não ter de olhar de volta" },
   { id: "responde_com_pergunta", gesto: "esquiva", peso: 3, quando: (p) => p.ato === "pedi" && p.relacao !== "amigo", faz: "responde com outra pergunta, e a pergunta dela é sobre mim" },
-  { id: "atrasa", gesto: "esquiva", peso: 2, quando: (p) => p.euDevo, faz: "encontra um serviço urgente para fazer bem agora" },
+  /* nexo (11/10): era `p.euDevo` — EU devo a ELA, e ela é que fugia ao
+     assunto. É o gesto de quem DEVE, e foi dado ao credor: na 4.ª sessão,
+     Euzébio, a quem o herói devia, "encontra um serviço urgente" quando lhe
+     perguntaram de onde se conheciam. Foge quem deve: `meDeve`. */
+  { id: "atrasa", gesto: "esquiva", peso: 2, quando: (p) => p.meDeve, faz: "encontra um serviço urgente para fazer bem agora" },
   { id: "ri_errado", gesto: "esquiva", peso: 2, quando: (p) => p.ato === "revelei", faz: "ri no lugar errado da frase e não explica por quê" },
   { id: "finge_nao_ouvir", gesto: "esquiva", peso: 2, quando: (p) => p.quantosEscutam >= 3 && p.ato !== "nada", faz: "finge que não ouviu, e a plateia percebe que ela ouviu" },
   { id: "chama_outro", gesto: "esquiva", peso: 2, quando: (p) => p.quantosEscutam >= 2 && !p.aSos, faz: "chama uma terceira pessoa para dentro da conversa" },
@@ -214,12 +218,22 @@ export const MOVIMENTOS = [
 
   /* ============ APROXIMA — encurtar distância ============ */
   { id: "senta_junto", gesto: "aproxima", peso: 3, quando: (p) => p.laco === "amizade" && !p.rompido, faz: "senta do lado sem pedir licença" },
-  { id: "usa_o_nome", gesto: "aproxima", peso: 3, quando: (p) => p.forcaDoLaco >= 2, faz: "passa a me chamar pelo nome curto, ou pelo apelido que só ela usa" },
+  /* nexo (11/10): "o apelido que só ela usa" mandava o Narrador INVENTAR um
+     apelido — e ele inventou "Sibi" na 4.ª sessão, que passou a ser usado
+     em 18 das 42 narrações, até em terceira pessoa, como se fosse outra
+     pessoa na cena. O nome do herói está na ficha; o gesto usa-o. */
+  { id: "usa_o_nome", gesto: "aproxima", peso: 3, quando: (p) => p.forcaDoLaco >= 2, faz: "passa a me tratar pelo meu primeiro nome, sem cerimónia, como a um velho conhecido" },
   { id: "toca_o_braco", gesto: "aproxima", peso: 2, quando: (p) => p.relacao === "romance" || p.relacao === "conjuge", faz: "encosta a mão no meu braço no meio da frase, e deixa lá um instante" },
   { id: "oferece_bebida", gesto: "aproxima", peso: 2, quando: (p) => /taverneir|estalajad|serviç/.test(p.papel), faz: "põe alguma coisa na minha frente sem eu ter pedido" },
   { id: "conta_dela", gesto: "aproxima", peso: 3, quando: (p) => p.ato === "revelei" && p.relacao !== "inimigo", faz: "conta uma coisa dela do mesmo tamanho, para empatar" },
   { id: "puxa_pro_canto", gesto: "aproxima", peso: 3, quando: (p) => p.euSeiDela && p.quantosEscutam >= 2, faz: "me puxa para um canto antes de dizer o resto" },
-  { id: "lembra_de_antes", gesto: "aproxima", peso: 2, quando: (p) => !p.primeiraVez && p.forcaDoLaco >= 1, faz: "menciona uma coisa que fizemos juntos, sem contexto, como quem sabe que eu lembro" },
+  /* nexo (11/10): "menciona uma coisa que fizemos juntos, sem contexto" ia
+     no MESMO pedido que o rodapé "NUNCA invente memórias" — dois órgãos a
+     mandar o contrário (a 4.ª sessão: Euzébio "pulei no rio atrás de ti",
+     que nunca aconteceu). Agora só vale para quem me viu num dia anterior
+     (`viuAntes`, a mesma prova do `repara_em_mim`), e o que se lembra é o
+     que a ficha dela diz de nós — nunca uma cena nova. */
+  { id: "lembra_de_antes", gesto: "aproxima", peso: 2, quando: (p) => p.viuAntes && p.forcaDoLaco >= 1, faz: "lembra, de passagem, o que nos liga — o que a ficha dela diz de nós, e nada que não tenha acontecido" },
   { id: "espera_por_mim", gesto: "aproxima", peso: 2, quando: (p) => p.ehCompanheiro, faz: "espera eu decidir antes de fazer o que já ia fazer" },
   { id: "arruma_meu_lugar", gesto: "aproxima", peso: 2, quando: (p) => p.relacao === "familia" || p.relacao === "conjuge", faz: "arruma alguma coisa minha que estava torta, sem comentar" },
   { id: "vem_de_longe", gesto: "aproxima", peso: 2, quando: (p) => p.ato === "cheguei" && p.forcaDoLaco >= 2, faz: "atravessa o lugar inteiro para chegar antes que eu procure" },
@@ -268,7 +282,9 @@ export const MOVIMENTOS = [
   /* ============ RECUA — diminuir ============ */
   { id: "abaixa_a_voz", gesto: "recua", peso: 3, quando: (p) => p.ato === "ameacei", faz: "abaixa a voz e concorda com o que eu disser" },
   { id: "sai_de_cena", gesto: "recua", peso: 3, quando: (p) => p.ato === "ameacei" && /covarde|medroso/.test(p.temperamento), faz: "arruma uma desculpa e sai do lugar" },
-  { id: "pede_desculpa", gesto: "recua", peso: 2, quando: (p) => p.ato === "acusei" && p.euDevo, faz: "pede desculpas por uma coisa menor que a que foi cobrada" },
+  /* nexo (11/10): o mesmo engano do `atrasa` — quem pede desculpa pelo que
+     foi cobrado é quem deve, e era dado a quem EU devia */
+  { id: "pede_desculpa", gesto: "recua", peso: 2, quando: (p) => p.ato === "acusei" && p.meDeve, faz: "pede desculpas por uma coisa menor que a que foi cobrada" },
   { id: "deixa_passar", gesto: "recua", peso: 2, quando: (p) => p.ato === "ignorei", faz: "deixa passar, e o rosto dela diz que anotou" },
   { id: "cede_o_lugar", gesto: "recua", peso: 2, quando: (p) => p.fama >= 45 && p.relacao !== "inimigo", faz: "cede o lugar dela e fica de pé" },
   { id: "evita_o_olho", gesto: "recua", peso: 2, quando: (p) => p.sabeDeMim && p.ato === "acusei", faz: "para de olhar nos olhos e responde para o balcão" },
