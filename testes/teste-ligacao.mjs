@@ -168,6 +168,9 @@ sec("1. NENHUM MÓDULO MUDO");
        (o Cronista e `pautaDoTurno`, descrita no diário de 11/10). A entrada
        sai quando o App o importar. */
     "prometido.js": "a fiação do Cronista e da pauta no App.jsx, pelo frontend (a campanha que prende, 11/10)",
+    /* e `fecho.js` (item 2), que espera a mesma mão: `escolherFecho` em
+       `pautaDoTurno` (O FECHO) e `fechoDaNarrativa` depois da resposta. */
+    "fecho.js": "a fiação de O FECHO em pautaDoTurno, pelo frontend (a campanha que prende, 11/10)",
   };
   const mudos = [];
   for (const f of arqs) {

@@ -224,6 +224,16 @@ export const SECOES = [
      gente e um envelope a plantar outra história, e nenhuma a dizer qual
      era o destino. */
   { id: "rumo", rotulo: "O RUMO", prio: 2.42, o: "a ordem do turno: reagir e responder primeiro, depois uma ponte para o próximo passo" },
+  /* A campanha que prende (item 2): O FECHO — como acaba a resposta deste
+     turno (`fecho.js#escolherFecho`): uma pergunta de alguém em cena, uma
+     escolha posta, um corte seco, uma consequência, ou o silêncio que
+     espera; nunca o mesmo dois turnos seguidos, e nunca o ambiente a
+     pressagiar (27 das 42 respostas da 4.ª sessão fechavam assim). Vem
+     DEPOIS do RUMO na leitura, que deixa de ser a última linha: a ordem
+     do turno diz o que fazer, o fecho diz onde parar — e é a última coisa
+     que se lê antes de escrever a última frase. Linha curta (~130); corta
+     com prio 2,43, logo depois do rumo e antes da planta (2,45). */
+  { id: "fecho", rotulo: "O FECHO", prio: 2.43, o: "como acaba a resposta deste turno" },
 ];
 
 export function secaoPorId(id) { return SECOES.find((s) => s.id === id) || null; }

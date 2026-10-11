@@ -6,6 +6,36 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## 11/10 · v9.387 · MM, a campanha que prende, item 2: o fecho variado (`backend`) · este commit
+
+- **o que empurrava o fecho para o presságio:** duas linhas do ofício da cena no prompt fixo, lidas juntas — "Termine na imagem,
+  não no resumo do que ela significa" e "Termine SEMPRE com uma situação aberta — a cena descrita, o silêncio depois dela".
+  Imagem + cena descrita + silêncio = a linha de ambiente; e nada variava de turno para turno. As duas foram reescritas sem
+  crescer o prompt (a PIOR CENA REAL desce de 73.979 para 73.971): a última frase é um fato, uma fala ou um gesto, e devolve a
+  palavra "nunca no cheiro, no som ou no ar que pressagia (O FECHO da pauta diz como)". O "CORTE ANTES DE EXPLICAR" e o veto às
+  listas de opções ficam.
+- **o módulo:** `src/fecho.js` — cinco fechos (`FECHOS`: a pergunta de alguém em cena, a escolha posta pela ficção, o corte seco,
+  a consequência, o silêncio que espera), pesados por momento (`FECHO_POR_MOMENTO`: pergunta, ato, sistema, luta, fim de ato —
+  este, a escolha com preço, a mesma regra do fecho das batidas da espinha), nunca o anterior, sem gente nunca pergunta nem
+  silêncio, sorte por gerador semeado. `fechoDaNarrativa` lê a última frase de uma resposta (pergunta, fala, presságio, corte,
+  ação). A pauta ganha `O FECHO` (prio 2,43), a última na leitura, depois do RUMO.
+- **os números, contra o registo:** **27 das 42 respostas fechavam em presságio (21 das 30 fora da luta)**. A escolha nova para
+  os mesmos 42 turnos: consequência 13, corte 12, silêncio 7, pergunta 5, escolha 5 — zero repetições seguidas, nenhum passa de
+  um terço, e nas perguntas quem respondeu fica à espera ou devolve a pergunta na maioria.
+- **decisões médias:** (a) a voz do Narrador em massa (as duas linhas do ofício) era "pesado e da pessoa" na nota da sessão 4; a
+  ordem de 28/09 dá à Fase MM liberdade igual à do desenho, e um commit revertido desfaz isto — fez-se. (b) `teste-mm18-escuta`
+  dizia "O RUMO é a última na leitura"; com O FECHO depois dele, a asserção passou a "depois do RUMO só O FECHO", com o motivo no
+  comentário.
+- **a prova:** `testes/teste-fecho.mjs` (48 asserções, vermelha em HEAD), com as 42 últimas frases da sessão embutidas.
+- **a fiação que fica para o App (frontend, com o bastão), exata:**
+  1. `import { escolherFecho, fechoDaNarrativa } from "./fecho.js";` — e tirar `fecho.js` de `AGUARDANDO` em `teste-ligacao.mjs`.
+  2. `const fechoRef = useRef("");` (não vai ao save: é o fecho de um turno).
+  3. Em `pautaDoTurno`, logo depois do RUMO e antes de `cederNaCena`, em `try/calou`:
+     `const fx = escolherFecho({ pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current, gente: pessoasDaCena().length > 0 || ((personagemRef.current || {}).grupo || []).length > 0, ultimo: fechoRef.current, sorte: rng(hashSemente(sementeMundo() + "|fecho|" + turnoDeRegistroRef.current)) }); fechoRef.current = fx.id; p = porNaPauta(p, "fecho", fx.linha);`
+     — e `fimDeAto: true` quando a batida do ato em curso for o fecho do ato (o outro `backend`, `batidas.js`, quando subir).
+  4. Depois da resposta (onde `narrativaFinal` existe, ~12700): `const lido = fechoDaNarrativa(narrativaFinal); if (lido === "pergunta" || lido === "corte") fechoRef.current = lido;`
+     — o "anterior" passa a ser o que se leu quando o Narrador fechou de outro jeito.
+
 ## 11/10 · v9.386 · MM, a campanha que prende, item 1: as promessas do Narrador, cobradas (`backend`) · este commit
 
 - **a queixa:** *"achei a história de morna para frio, não prendeu muito"*. Na 4.ª sessão o couro de Norberto, a gaveta errada, as

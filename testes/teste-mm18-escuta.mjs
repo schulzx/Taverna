@@ -238,7 +238,13 @@ sec("9. o Intérprete, quando me perguntam (falhava antes: J2, J9, J12)");
 sec("10. a pauta: o rumo, o cabeçalho e a pergunta que passa à frente");
 {
   const rumo = P.secaoPorId("rumo");
-  t("a secção O RUMO existe, e é a última na leitura", rumo && P.SECOES[P.SECOES.length - 1].id === "rumo" && rumo.rotulo === "O RUMO");
+  /* 11/10 (a campanha que prende, item 2): a asserção dizia "é a última na
+     leitura". O FECHO (fecho.js) passou a vir depois dela: a ordem do turno
+     diz o que fazer, o fecho diz onde parar, e é a última coisa que se lê
+     antes da última frase. A intenção de cá fica — nada de cena, de gente
+     ou de vilão entre o rumo e a frase do jogador: depois do RUMO só o FECHO. */
+  t("a secção O RUMO existe, e depois dela só vem O FECHO", rumo && rumo.rotulo === "O RUMO"
+    && P.SECOES.slice(P.SECOES.findIndex((s) => s.id === "rumo") + 1).every((s) => s.id === "fecho"));
   t("corta depois dos cinco primeiros vetos e antes da planta e da economia",
     rumo.prio > P.secaoPorId("naoPode").prio + 0.4 && rumo.prio < P.secaoPorId("masmorra").prio && rumo.prio < P.secaoPorId("economia").prio);
   const txt = P.textoDaPauta(P.porNaPauta(null, "rumo", "responda primeiro ao que perguntei"), { turno: 3 });
