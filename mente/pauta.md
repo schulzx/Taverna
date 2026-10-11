@@ -360,6 +360,33 @@ O limite é o que um commit revertido não desfaz.
   do beta.
 
 
+### Fase MM-C — o coração da campanha (aprovada pela pessoa, 11/10)
+
+**De onde vem.** A 6.ª sessão (`mente/mm11-sessao-6.md`, média 3,2) mostrou
+que a história esfria pelo **sistema**, não pela prosa (M16–M36, só conversa,
+~3,8), que o que mais subiu foram **as personagens** (3 → 4), e que o
+Narrador cumpre **frase fechada** e ignora **ordem aberta**. A pessoa pediu
+uma campanha que prenda — suspense, emoção, romance, batalhas, provações — e
+aprovou: *"Perfeito, faça como disse."* Não se revê a espinha nem se somam
+marcos; dá-se-lhe coração. Nada entra como bloco estático: só a pauta por turno.
+
+- **C0 · as mãos** — os 3 consertos da 6.ª: pergunta de rumo não abre viagem;
+  o alvo do "ataco X" sai do que o Mestre mostrou; marco fecha pelo fato, na
+  ordem, e o herói nunca é NPC; o "pago" herda o item do "quanto é".
+- **C1 · o núcleo** — 4–6 personagens principais por campanha (companheiro e
+  vilão incluídos), ficha dramática por tabela e semente: quer · teme ·
+  esconde · carrega · a linha que não cruza; parte nasce do antecedente.
+- **C2 · as subtramas** — cada um com um arco de 3 batidas (pedido, crise,
+  escolha) amarrado a um ato; o segredo de um deles é a reviravolta do ato 1.
+- **C3 · os laços que mudam** — confiança/lealdade/rivalidade por escolha;
+  romance só aberto pelo jogador, nunca forçado.
+- **C4 · a partitura** — cada batida com um tom (suspense, emoção, romance,
+  batalha, provação, alívio), alternância garantida; a masmorra sai da obra
+  do vilão.
+- **C5 · a cena pronta** — batida e degrau do encalhe chegam com a primeira
+  fala de quem vem, escrita pelo sistema; o Narrador encena.
+- Fecha com a **7.ª sessão de prova**, contra 3,2.
+
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
 mas precisamos de uma solução para as 12 restantes."*
