@@ -35,7 +35,7 @@ import {
   quemAoFogo, gestoAoFogo, aguentaANoite, portaAberta, sentarAoFogo, fraseDaManha,
 } from "../src/subtramas.js";
 import {
-  PAPEIS_DO_NUCLEO, QUER, TEME, ESCONDE, CARREGA, LINHA, ELO_DO_ANTECEDENTE, TIQUES_PROIBIDOS, QUEM_E, FOGUEIRA_CONTA,
+  PAPEIS_DO_NUCLEO, QUER, TEME, ESCONDE, CARREGA, COMO_FALA, LINHA, ELO_DO_ANTECEDENTE, TIQUES_PROIBIDOS, QUEM_E, FOGUEIRA_CONTA,
   nucleoDaCampanha, garantirCoracaoDoSave, generoDaPessoa, quemEParaPauta,
 } from "../src/nucleo.js";
 import { FORMAS_DE_SEMENTE, semear, regar, pagar, sementePorId } from "../src/promessas.js";
@@ -109,7 +109,7 @@ sec("1. as tabelas");
   t("os efeitos são só os que já existem (EFEITOS_DO_LADO)", efs.every((e) => Object.prototype.hasOwnProperty.call(EFEITOS_DO_LADO, e.tipo)), efs.filter((e) => !EFEITOS_DO_LADO[e.tipo]).map((e) => e.tipo).join());
   t("o propósito que o perdão do elo usa existe na índole", efs.filter((e) => e.tipo === "proposito").every((e) => PROPOSITOS.some((p) => p.id === e.id)));
   t("todo lado tem verbo, o que a pessoa diz, e o preço em mundo", ARCOS.every((a) => a.escolha.lados.every((l) => l.verbo && l.diz && l.preco)) && ARCOS.every((a) => a.escolha.omissao.preco));
-  t("o preço nunca fala do mecanismo (\"lado A\", \"escolha\", \"opção\" — \"do teu lado\" é mundo)", ARCOS.every((a) => [...a.escolha.lados, a.escolha.omissao].every((l) => !/\blado [ab12]\b|\bescolha\b|\bop[cç][aã]o\b/i.test(`${l.verbo || ""} ${l.preco}`))));
+  t("o preço nunca fala do mecanismo (\"lado A\", \"escolha\", \"opção\" — \"do seu lado\" é mundo)", ARCOS.every((a) => [...a.escolha.lados, a.escolha.omissao].every((l) => !/\blado [ab12]\b|\bescolha\b|\bop[cç][aã]o\b/i.test(`${l.verbo || ""} ${l.preco}`))));
   t("PEDIDO_DO_ELO: um para cada desejo da tabela do elo", Object.values(ELO_DO_ANTECEDENTE).every((e) => PEDIDO_DO_ELO[e.quer]) && !!PEDIDO_DO_ELO.outro);
   t("o pedido do elo é pequeno (≤ 70) e nunca diz a sombra", Object.values(PEDIDO_DO_ELO).every((f) => f.length <= 70 && !/\{sombra\}/.test(f)));
   t("ARCO_DE_RESERVA: um arco que existe para cada tipo do que se carrega", Object.keys(ARCO_DE_RESERVA).sort().join() === Object.keys(CARREGA).sort().join() && Object.values(ARCO_DE_RESERVA).every((id) => ARCOS.some((a) => a.id === id)));
@@ -377,6 +377,42 @@ sec("7. o veredito antes do clique");
 }
 
 /* ============================================================ */
+sec("7b. o jogo trata o jogador por você");
+/* A tela diz "sua/seu" (182 contra 2 "tua/teu") e o Narrador fala em
+   segunda pessoa com "você" desde a v9.346; os textos da C2 nasceram em
+   "tu" ("a Casa fica tua inimiga", "ao teu lado até ao fim"). Esta catraca
+   varre o que vai à TELA (os lados da decisão, as opções do pedido, a frase
+   da manhã) e o que vai ao Narrador como fala ao herói (as linhas da
+   simulação, as noites ao fogo, os exemplos de voz), nos 120 mundos. */
+{
+  const TU = /(?<![\p{L}])(tua|teu|tuas|teus|contigo|convosco)(?![\p{L}])|-te(?![\p{L}])/iu;
+  const tela = [], narr = [];
+  MUNDOS.forEach((w, i) => {
+    for (const s of w.subs) {
+      tela.push(...opcoesDoPedido(s).map((o) => o.verbo + " | " + o.preco));
+      const C = { v: 1, arcos: { [s.nome]: { pedido: 1, crise: 3, posta: 4 } } };
+      for (const e of escolhasAbertas(C, w.nucleo, ctxDe(w, { dia: 4, ato: 1 }))) {
+        tela.push(e.contexto, ...e.lados.map((l) => l.verbo + " | " + l.preco));
+        for (const l of e.lados) tela.push(fraseDaManha({ tipo: "lado", nome: s.nome, genero: s.genero, preco: l.preco }));
+      }
+      for (const tipo of Object.keys(MANHA_DA_FOGUEIRA)) tela.push(fraseDaManha({ tipo, nome: s.nome, genero: s.genero, preco: "x" }));
+      if (s.papel !== "vilao") {
+        let Cf = null;
+        for (let noite = 0; noite < 6; noite++) { const r = sentarAoFogo(Cf, w.nucleo, s.nome, ctxDe(w, { dia: 2 + noite, ato: 0 })); Cf = r.coracao; narr.push(r.linha, ...r.lados.map((l) => l.preco)); }
+      }
+    }
+    for (const e of SIM[i].eventos) narr.push(e.linha || "");
+  });
+  const telaTu = tela.filter((x) => TU.test(x)), narrTu = narr.filter((x) => TU.test(x));
+  t(`na tela, nenhum texto trata o jogador por tu (${tela.length} textos)`, tela.length > 1000 && telaTu.length === 0, telaTu.slice(0, 3).join(" ‖ "));
+  t(`ao Narrador, nenhuma fala ao herói em tu (${narr.filter(Boolean).length} linhas)`, narr.filter(Boolean).length > 500 && narrTu.length === 0, narrTu.slice(0, 3).join(" ‖ "));
+  /* e nas tabelas, de onde tudo isto sai: nenhum texto em tu, nem "Ficaste" */
+  const textos = [JSON.stringify(ARCOS), JSON.stringify(PEDIDO_DO_ELO), JSON.stringify(RESPOSTAS_AO_PEDIDO), JSON.stringify(MANHA_DA_FOGUEIRA), JSON.stringify(SEM_NOME), JSON.stringify(GESTOS_DA_FOGUEIRA)];
+  t("as tabelas da C2 dizem você (nem tu/teu/contigo, nem o verbo em tu)", textos.every((x) => !TU.test(x) && !/\b(Ficaste|digas|vires|perguntes|viste)\b/.test(x)));
+  t("os exemplos de voz e as falas das pistas dizem você (o registo é do tique, não do pronome)", COMO_FALA.every((c) => !TU.test(c.exemplo) && !/(?<![\p{L}])(tu|tens|vieste|disseste)(?![\p{L}])/iu.test(c.exemplo)) && ESCONDE.every((e) => (e.pistas || []).every((p) => !TU.test(p.o) && !/(?<![\p{L}])te(?![\p{L}])/u.test(p.o))));
+}
+
+/* ============================================================ */
 sec("8. a pauta — a cidade cheia, e as 500 cenas");
 {
   const x = (n, c = "a") => (c + " ").repeat(Math.ceil(n / 2)).slice(0, n).trim();
@@ -503,7 +539,7 @@ sec("9. a fogueira — as peças do motor");
   }
   t("sem porta no núcleo, nunca aberta", portaAberta(null, { pessoas: [] }) === false);
   /* a manhã */
-  const m = ["vazio", "dormir", "ficha", "pedido", "lado", "porta", "semResposta"].map((tipo) => fraseDaManha({ tipo, nome: "Nira", genero: "mulher", preco: "Vando vai só — e tu segues sem ele até à Serra" }));
+  const m = ["vazio", "dormir", "ficha", "pedido", "lado", "porta", "semResposta"].map((tipo) => fraseDaManha({ tipo, nome: "Nira", genero: "mulher", preco: "Vando vai só — e você segue sem ele até a Serra" }));
   t("a frase da manhã: verdadeira, cheia, fechada, sem bastidor", m.every((f) => f && !/[{}]/.test(f) && /[.!?]$/.test(f) && !BASTIDOR.test(f)));
   t("o que ficou decidido diz o preço", m[4].includes("Vando vai só"));
   t("sem nome, a manhã vazia (nunca um buraco)", fraseDaManha({ tipo: "ficha" }) === MANHA_DA_FOGUEIRA.vazio && fraseDaManha(null) === MANHA_DA_FOGUEIRA.vazio);

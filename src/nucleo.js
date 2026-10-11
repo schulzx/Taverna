@@ -166,7 +166,7 @@ export const ESCONDE = [
   { id: "e_carga", grav: "crime", o: "a carga que guarda não é o que diz", pistas: [{ forma: "cenario", o: "os cães não passam pelo armazém dele" }, { forma: "objeto", o: "um saco rasgado com pó que não é sal" }], revela: "quem compra a carga é gente de {sombra}", sombra: true },
   { id: "e_desertor", grav: "crime", o: "é desertor, e o regimento ainda o procura", pistas: [{ forma: "fala", o: "sabe toques de corneta de cor" }, { forma: "objeto", o: "o distintivo com o número raspado" }], revela: "o regimento chega a {cidade}", sombra: false },
   { id: "e_paga_sombra", grav: "lealdade", o: "recebe dinheiro de {sombra} desde antes de conhecer o herói", pistas: [{ forma: "fala", o: "sabe o que o herói fez ontem, longe" }, { forma: "objeto", o: "moeda estrangeira, nova, no bolso", semente: "moeda_estrangeira" }], revela: "", arco: "a_revelacao", sombra: true },
-  { id: "e_vendeu_nome", grav: "lealdade", o: "deu o nome do herói a quem o procurava", pistas: [{ forma: "fala", o: "\"soube que te saíste bem na estrada\"", semente: "elogio_que_vigia" }, { forma: "documento", o: "o nome do herói escrito na letra dele" }], revela: "", arco: "a_revelacao", sombra: true },
+  { id: "e_vendeu_nome", grav: "lealdade", o: "deu o nome do herói a quem o procurava", pistas: [{ forma: "fala", o: "\"soube que você se saiu bem na estrada\"", semente: "elogio_que_vigia" }, { forma: "documento", o: "o nome do herói escrito na letra dele" }], revela: "", arco: "a_revelacao", sombra: true },
   { id: "e_irmao_lado", grav: "lealdade", o: "tem um irmão a servir {sombra}, e manda-lhe notícias", pistas: [{ forma: "ausencia", o: "falta a um encontro sem razão" }, { forma: "objeto", o: "uma carta por mandar, sem nome" }], revela: "", arco: "a_irmao_do_outro_lado", sombra: true },
   { id: "e_vigiar", grav: "lealdade", o: "foi mandado vigiar o herói — e já não sabe por quem o faz", pistas: [{ forma: "comportamento", o: "está sempre onde o herói vai, um dia antes" }, { forma: "documento", o: "uma lista dos sítios do herói" }], revela: "perdão possível", arco: "a_revelacao", sombra: true },
   { id: "e_sabe_onde", grav: "lealdade", o: "sabe onde {sombra} se esconde, e cala-o por medo", pistas: [{ forma: "fala", o: "corrige o herói sobre um caminho que nunca andou" }, { forma: "cenario", o: "evita um bairro inteiro" }], revela: "dá o caminho — a que preço", sombra: true },
@@ -264,29 +264,31 @@ export const LINHA = [
 /* ---------------- §1.3.6 COMO FALA — tiques de VOZ, nunca de corpo ----------------
    A 6.ª mediu o gesto a virar muleta ("fica calado, à espera" em 21 de 67
    respostas). A frase não serve a toda a gente — é de alguém. O exemplo
-   (≤ 50 caracteres) vai só nas primeiras cenas da pessoa. */
+   (≤ 50 caracteres) vai só nas primeiras cenas da pessoa, e diz VOCÊ como
+   o jogo inteiro: o registo da personagem está no tique, não no pronome —
+   um exemplo em "tu" ensinava o Narrador a tratar o herói por tu. */
 export const COMO_FALA = [
   { id: "f_dias", o: "conta tudo em dias", exemplo: "\"Três dias. É o que ela tem.\"", briga: [] },
-  { id: "f_pergunta", o: "responde com outra pergunta", exemplo: "\"E tu, vieste porquê?\"", briga: [] },
-  { id: "f_oficio", o: "chama cada um pelo ofício, nunca pelo nome", exemplo: "\"Ó boticária, passa-me isso.\"", briga: [] },
+  { id: "f_pergunta", o: "responde com outra pergunta", exemplo: "\"E você, veio por quê?\"", briga: [] },
+  { id: "f_oficio", o: "chama cada um pelo ofício, nunca pelo nome", exemplo: "\"Ô boticária, me passa isso.\"", briga: [] },
   { id: "f_avo", o: "cita a avó, e cita mal", exemplo: "\"A minha avó dizia: quem cala, come.\"", briga: ["calado"] },
   { id: "f_terceira", o: "fala de si na terceira pessoa", exemplo: "\"O Vando não gosta disto.\"", briga: [] },
   { id: "f_acaba", o: "acaba as frases dos outros", exemplo: "\"…e não voltou. Pois.\"", briga: ["calado"] },
   { id: "f_jura_pequeno", o: "jura por coisas pequenas", exemplo: "\"Pela minha bota esquerda.\"", briga: [] },
   { id: "f_numeros", o: "diz os números exatos", exemplo: "\"Trinta e sete passos até à porta.\"", briga: ["sonhador"] },
   { id: "f_comida", o: "põe comida em toda a metáfora", exemplo: "\"Esse plano ainda está cru.\"", briga: [] },
-  { id: "f_nao_e", o: "acaba tudo a pedir razão", exemplo: "\"…não é? Diz que é.\"", briga: [] },
-  { id: "f_desculpa", o: "pede desculpa antes de discordar", exemplo: "\"Perdoa. Mas não.\"", briga: ["orgulhoso"] },
-  { id: "f_mar", o: "fala como marinheiro em terra firme", exemplo: "\"Amarra isso, que vem vento.\"", briga: [] },
+  { id: "f_nao_e", o: "acaba tudo a pedir razão", exemplo: "\"…não é? Diga que é.\"", briga: [] },
+  { id: "f_desculpa", o: "pede desculpa antes de discordar", exemplo: "\"Me desculpe. Mas não.\"", briga: ["orgulhoso"] },
+  { id: "f_mar", o: "fala como marinheiro em terra firme", exemplo: "\"Amarre isso, que vem vento.\"", briga: [] },
   { id: "f_proverbio", o: "inventa provérbios", exemplo: "\"Lobo que uiva não janta.\"", briga: [] },
-  { id: "f_gramatica", o: "corrige a gramática dos outros, até em perigo", exemplo: "\"Fugimos, não fugemos. Corre.\"", briga: [] },
+  { id: "f_gramatica", o: "corrige a gramática dos outros, até em perigo", exemplo: "\"Fugimos, não fugemos. Corra.\"", briga: [] },
   { id: "f_sem_eu", o: "nunca diz \"eu\"", exemplo: "\"Cá se viu. Cá se cala.\"", briga: ["tagarela"] },
-  { id: "f_crianca", o: "trata toda a gente por \"criança\", até velhos", exemplo: "\"Senta-te, criança. Tens sessenta anos.\"", briga: [] },
+  { id: "f_crianca", o: "trata toda a gente por \"criança\", até velhos", exemplo: "\"Sente-se, criança. Você tem sessenta anos.\"", briga: [] },
   { id: "f_alcunha", o: "dá alcunha a cada um na primeira frase", exemplo: "\"Olá, Botas.\"", briga: [] },
   { id: "f_santos", o: "reza a meio da frase a um santo de cada coisa", exemplo: "\"…São Bento das portas, que não range…\"", briga: [] },
   { id: "f_passado", o: "fala de si no passado, como quem já morreu", exemplo: "\"Eu era bom nisto.\"", briga: ["brincalhao"] },
   { id: "f_ri", o: "ri-se antes das más notícias", exemplo: "\"Ha. Morreu.\"", briga: ["compassivo"] },
-  { id: "f_preco", o: "pergunta o preço de tudo, até do silêncio", exemplo: "\"Quanto custa isso que não disseste?\"", briga: ["generoso"] },
+  { id: "f_preco", o: "pergunta o preço de tudo, até do silêncio", exemplo: "\"Quanto custa isso que você não disse?\"", briga: ["generoso"] },
   { id: "f_curto", o: "três palavras, nunca quatro", exemplo: "\"Não. Amanhã. Sozinho.\"", briga: ["tagarela"] },
 ];
 

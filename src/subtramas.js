@@ -144,7 +144,7 @@ export const SEM_NOME = {
   lugar: "uma casa fora dos muros",
   casa: "casa grande da praça",
   outro: "alguém que lhe é caro",
-  alvo: "quem anda contigo",
+  alvo: "quem anda com você",
 };
 
 /* §2.3 — OS ARCOS (11). `chave`: os ids da ficha (esconde, carrega, quer,
@@ -161,17 +161,21 @@ export const SEM_NOME = {
    provação", e o §2.6 diz que a escolha NUNCA é alívio (o alívio é o
    depois): ficou provação. (2) O "à casa {casa}" do amor proibido ficou
    "à {casa}" — o elenco já chama às casas "Casa X". (3) A crise "pior" que
-   a tabela não deu repete a crise com a perda à vista. */
+   a tabela não deu repete a crise com a perda à vista. (4) O jogo trata
+   o jogador por VOCÊ (a tela, e o Narrador desde a v9.346): todo texto
+   dirigido ao herói — o preço, a frase da manhã, e a fala de quem pede —
+   diz você/seu/lhe, nunca tu/teu/contigo. A personagem guarda o registo no
+   tique (COMO_FALA), não no pronome; a catraca está em teste-subtramas. */
 export const ARCOS = [
   {
     id: "a_carta", chave: ["c_carta", "d_moribundo"],
-    pedido: { tom: ["emoção"], fala: "Leva esta carta a {destino}. Eu não posso entrar lá." },
+    pedido: { tom: ["emoção"], fala: "Leve esta carta a {destino}. Eu não posso entrar lá." },
     crise: { tom: ["suspense"], o: "o destinatário da carta de {nome} morreu — ou é gente de {sombra}; a carta é o que {sombra} procura", pior: "a carta de {nome} foi roubada, e é o que {sombra} procura" },
     escolha: {
       tom: ["provação"], contexto: "a carta de {nome} está nas mãos do herói, e {sombra} quere-a",
       lados: [
-        { id: "entregar", diz: "entregá-la como prometido", verbo: "Entregar a carta", preco: "a palavra cumpre-se — e quem a recebe fica a saber o que tu sabes", efeitos: [{ tipo: "missao", o: "levar a carta de {nome} a {destino}" }] },
-        { id: "queimar", diz: "abri-la e queimá-la", verbo: "Abrir e queimar", preco: "o que dizia fica contigo — e {nome} perde a única coisa que {o} ligava ao morto", efeitos: [{ tipo: "laco", delta: -1 }] },
+        { id: "entregar", diz: "entregá-la como prometido", verbo: "Entregar a carta", preco: "a palavra cumpre-se — e quem a recebe fica sabendo o que você sabe", efeitos: [{ tipo: "missao", o: "levar a carta de {nome} a {destino}" }] },
+        { id: "queimar", diz: "abri-la e queimá-la", verbo: "Abrir e queimar", preco: "o que dizia fica com você — e {nome} perde a única coisa que {o} ligava ao morto", efeitos: [{ tipo: "laco", delta: -1 }] },
       ],
       omissao: { id: "abrir_sem_queimar", preco: "a carta abre-se e não arde, e o que dizia corre a cidade", efeitos: [{ tipo: "laco", delta: -1 }] },
     },
@@ -183,7 +187,7 @@ export const ARCOS = [
     escolha: {
       tom: ["batalha", "provação"], contexto: "o credor tem o penhor e quer {preco} moedas",
       lados: [
-        { id: "pagar", diz: "pagar as {preco} moedas", verbo: "Pagar ◉ {preco}", preco: "◉ {preco} da tua bolsa — e o credor esquece {nome}", efeitos: [{ tipo: "bolsa", preco: "{preco}" }, { tipo: "laco", delta: 1, firma: "divida" }] },
+        { id: "pagar", diz: "pagar as {preco} moedas", verbo: "Pagar ◉ {preco}", preco: "◉ {preco} da sua bolsa — e o credor esquece {nome}", efeitos: [{ tipo: "bolsa", preco: "{preco}" }, { tipo: "laco", delta: 1, firma: "divida" }] },
         { id: "forca", diz: "ir buscar o penhor à força", verbo: "Ir buscá-lo à força", preco: "uma luta com os homens do credor — e um inimigo nesta cidade", efeitos: [{ tipo: "combate", contra: "os homens do credor" }, { tipo: "relacao", com: "o credor", valor: "inimigo" }] },
       ],
       omissao: { id: "penhor_fica", preco: "o penhor fica com o credor", efeitos: [{ tipo: "laco", delta: -1 }] },
@@ -191,7 +195,7 @@ export const ARCOS = [
   },
   {
     id: "a_nome_falso", chave: ["e_nome_morto", "e_dado_morto", "e_titulo"],
-    pedido: { tom: ["suspense"], fala: "Nesta cidade não digas o meu nome. Nenhum dos dois." },
+    pedido: { tom: ["suspense"], fala: "Nesta cidade não diga o meu nome. Nenhum dos dois." },
     crise: { tom: ["emoção"], o: "alguém reconhece {nome} e chama-{o} pelo nome verdadeiro, em público", pior: "alguém reconhece {nome}, chama-{o} pelo nome verdadeiro, e a praça inteira ouve" },
     escolha: {
       tom: ["provação"], contexto: "chamaram {nome} pelo nome verdadeiro, e a praça espera a resposta",
@@ -204,12 +208,12 @@ export const ARCOS = [
   },
   {
     id: "a_irmao_do_outro_lado", chave: ["e_irmao_lado"],
-    pedido: { tom: ["suspense"], fala: "Se vires um homem com {assinatura} no braço, não o mates. Deixa-mo." },
+    pedido: { tom: ["suspense"], fala: "Se vir um homem com {assinatura} no braço, não o mate. Deixe-o para mim." },
     crise: { tom: ["batalha"], o: "o irmão de {nome} está entre os servos de {sombra}, na luta — e rende-se em vez de cair", pior: "o irmão de {nome} está entre os servos de {sombra}, na luta, e não sabe que é ele", efeitos: [{ tipo: "combate", rendido: "o irmão" }] },
     escolha: {
       tom: ["emoção"], contexto: "o irmão de {nome} está rendido aos pés do herói",
       lados: [
-        { id: "poupar", diz: "poupá-lo", verbo: "Poupar o irmão", preco: "ele foge e leva notícias a {sombra} — e {nome} fica do teu lado até ao fim", efeitos: [{ tipo: "laco", delta: "max" }, { tipo: "dias", n: 1 }] },
+        { id: "poupar", diz: "poupá-lo", verbo: "Poupar o irmão", preco: "ele foge e leva notícias a {sombra} — e {nome} fica do seu lado até o fim", efeitos: [{ tipo: "laco", delta: "max" }, { tipo: "dias", n: 1 }] },
         { id: "nao_poupar", diz: "não o poupar", verbo: "Não o poupar", preco: "a luta fica mais fácil — e o laço com {nome} rompe-se e não volta", efeitos: [{ tipo: "laco", delta: "rompe" }] },
       ],
       omissao: { id: "poupa_sem_dizer", preco: "{nome} poupa-o por conta própria, e o herói não o soube", efeitos: [{ tipo: "dias", n: 1 }] },
@@ -243,25 +247,25 @@ export const ARCOS = [
   },
   {
     id: "a_amor_proibido", chave: ["e_ama_proibido"],
-    pedido: { tom: ["romance"], fala: "Leva isto à {casa}. Não perguntes a quem." },
+    pedido: { tom: ["romance"], fala: "Leve isto à {casa}. Não pergunte a quem." },
     crise: { tom: ["suspense"], o: "{nome} e quem ama foram descobertos; a {casa} exige reparação", pior: "{nome} e quem ama foram descobertos diante de todos; a {casa} exige reparação" },
     escolha: {
       tom: ["provação"], contexto: "a {casa} exige reparação pelo amor de {nome}",
       lados: [
-        { id: "fugir", diz: "ajudá-los a fugir", verbo: "Ajudá-los a fugir", preco: "a {casa} fica tua inimiga — e os dois partem juntos, até um ato depois", efeitos: [{ tipo: "relacao", com: "{casa}", valor: "inimigo" }, { tipo: "sai", volta: 1 }] },
-        { id: "separar", diz: "separá-los", verbo: "Separá-los", preco: "a {casa} fica tua aliada — e {nome} passa a falar-te menos, e mais curto", efeitos: [{ tipo: "relacao", com: "{casa}", valor: "aliado" }, { tipo: "laco", delta: -1 }, { tipo: "tique", para: "f_curto" }] },
+        { id: "fugir", diz: "ajudá-los a fugir", verbo: "Ajudá-los a fugir", preco: "a {casa} fica sua inimiga — e os dois partem juntos, até um ato depois", efeitos: [{ tipo: "relacao", com: "{casa}", valor: "inimigo" }, { tipo: "sai", volta: 1 }] },
+        { id: "separar", diz: "separá-los", verbo: "Separá-los", preco: "a {casa} fica sua aliada — e {nome} passa a falar menos com você, e mais curto", efeitos: [{ tipo: "relacao", com: "{casa}", valor: "aliado" }, { tipo: "laco", delta: -1 }, { tipo: "tique", para: "f_curto" }] },
       ],
       omissao: { id: "separados_a_forca", preco: "separam-nos à força, sem o herói", efeitos: [{ tipo: "laco", delta: -1 }, { tipo: "tique", para: "f_curto" }] },
     },
   },
   {
     id: "a_guerra", chave: ["e_fugiu", "e_desertor", "u_ordem", "t_guerra_volta"],
-    pedido: { tom: ["suspense"], fala: "Se alguém do regimento perguntar, nunca me viste." },
+    pedido: { tom: ["suspense"], fala: "Se alguém do regimento perguntar, você nunca me viu." },
     crise: { tom: ["provação"], o: "um velho camarada de {nome} aparece e acusa-{o} em voz alta", pior: "um velho camarada de {nome} aparece com mais dois, e acusa-{o} em voz alta" },
     escolha: {
       tom: ["emoção", "batalha"], contexto: "o velho camarada acusa {nome} diante de todos",
       lados: [
-        { id: "defender", diz: "o herói defender a versão {dele}", verbo: "Defender a versão {dele}", preco: "o camarada desafia-te para um duelo", efeitos: [{ tipo: "duelo", contra: "o velho camarada" }] },
+        { id: "defender", diz: "o herói defender a versão {dele}", verbo: "Defender a versão {dele}", preco: "o camarada desafia você para um duelo", efeitos: [{ tipo: "duelo", contra: "o velho camarada" }] },
         { id: "confessar", diz: "deixá-{o} confessar", verbo: "Deixá-{o} confessar", preco: "o camarada vai-se — e {nome} fica, mais leve, sem o medo que {o} roía", efeitos: [{ tipo: "teme", desliga: true }] },
       ],
       omissao: { id: "confessa_so", preco: "{nome} confessa sem o herói ao lado", efeitos: [{ tipo: "laco", delta: -1 }] },
@@ -274,7 +278,7 @@ export const ARCOS = [
     escolha: {
       tom: ["provação"], contexto: "procuram a criança que {nome} esconde",
       lados: [
-        { id: "levar", diz: "levá-la com o grupo", verbo: "Levá-la convosco", preco: "um fardo e um laço — as lutas passam a ter quem proteger", efeitos: [{ tipo: "convite", quem: "a criança" }] },
+        { id: "levar", diz: "levá-la com o grupo", verbo: "Levá-la com vocês", preco: "um fardo e um laço — as lutas passam a ter quem proteger", efeitos: [{ tipo: "convite", quem: "a criança" }] },
         { id: "entregar", diz: "entregá-la a quem a procura", verbo: "Entregá-la", preco: "paz — e {nome} nunca mais fala disso", efeitos: [] },
       ],
       omissao: { id: "levam_na", preco: "levam-na, e ninguém a viu partir", efeitos: [{ tipo: "laco", delta: -1 }] },
@@ -282,7 +286,7 @@ export const ARCOS = [
   },
   {
     id: "a_oferta", chave: ["vilao"],
-    pedido: { tom: ["suspense"], fala: "Deixa {cidade} e nenhum dos teus sofre — nem {alvo}." },
+    pedido: { tom: ["suspense"], fala: "Deixe {cidade} e nenhum dos seus sofre — nem {alvo}." },
     crise: { tom: ["provação"], o: "o herói descobre de {sombra} uma coisa que não faz: {linha} — e que a pode usar", pior: "o herói descobre de {sombra} uma coisa que não faz: {linha} — e que a pode usar" },
     escolha: {
       tom: ["batalha", "emoção"], contexto: "{sombra} está diante do herói, e o herói conhece o que {ele} não faz",
@@ -300,7 +304,7 @@ export const ARCOS = [
     escolha: {
       tom: ["emoção", "provação"], contexto: "{nome} disse a verdade, e espera o que o herói faz dela",
       lados: [
-        { id: "perdoar", diz: "o herói perdoá-{o}", verbo: "Perdoar", preco: "{nome} fica do teu lado por dentro, a mandar notícias falsas a {sombra} — e pode ser apanhad{o} um ato depois", efeitos: [{ tipo: "proposito", id: "sabotar_de_dentro" }] },
+        { id: "perdoar", diz: "o herói perdoá-{o}", verbo: "Perdoar", preco: "{nome} fica do seu lado por dentro, a mandar notícias falsas a {sombra} — e pode ser apanhad{o} um ato depois", efeitos: [{ tipo: "proposito", id: "sabotar_de_dentro" }] },
         { id: "expulsar", diz: "entregá-{o} ou mandá-{o} embora", verbo: "Expulsá-{o}", preco: "{nome} volta para {sombra} e leva o que sabe — o que {sombra} prepara chega mais cedo", efeitos: [{ tipo: "sai" }, { tipo: "dias", n: 2 }] },
       ],
       omissao: { id: "foge", preco: "{nome} foge, e leva o que sabe", efeitos: [{ tipo: "sai" }, { tipo: "dias", n: 2 }, { tipo: "laco", delta: -1 }] },
@@ -312,18 +316,18 @@ export const ARCOS = [
    jogador INVESTE ANTES DE SABER (§2.3, a_revelacao). Um por desejo da
    tabela do elo (ELO_DO_ANTECEDENTE, nucleo.js). */
 export const PEDIDO_DO_ELO = {
-  q_comprar: "Ajuda-me a juntar o que falta. Depois disso, sou livre.",
-  q_divida_fim: "Ajuda-me a pagar ao homem do porto. Depois disso, estou livre.",
-  q_cadeira: "Diz uma palavra por mim a quem manda aqui. Só uma.",
-  q_esquecer: "Se eu falar a dormir, acorda-me. E não perguntes.",
-  q_juramento: "Leva este cordão a um templo longe daqui. Eu não posso.",
-  q_aldeia: "Leva estas mantas à aldeia do vale antes da neve.",
-  q_mestria: "Vê o que faço uma vez, e diz-me se presta.",
-  q_partir: "Guarda-me isto até eu partir. É pouco, mas é tudo.",
-  q_reconstruir: "Ajuda-me a erguer uma parede. Só uma; o resto faço eu.",
-  q_segredo_outro: "Se alguém perguntar por ti, eu nunca te vi. Faz o mesmo por mim.",
-  q_razao_guerra: "Diz-me se a culpa foi minha. Ninguém mais mo diz.",
-  outro: "Paga-me um copo e ouve-me um bocado. É só isso.",
+  q_comprar: "Me ajude a juntar o que falta. Depois disso, sou livre.",
+  q_divida_fim: "Me ajude a pagar o homem do porto. Depois disso, estou livre.",
+  q_cadeira: "Diga uma palavra por mim a quem manda aqui. Só uma.",
+  q_esquecer: "Se eu falar dormindo, me acorde. E não pergunte.",
+  q_juramento: "Leve este cordão a um templo longe daqui. Eu não posso.",
+  q_aldeia: "Leve estas mantas à aldeia do vale antes da neve.",
+  q_mestria: "Veja o que faço uma vez, e me diga se presta.",
+  q_partir: "Guarde isto para mim até eu partir. É pouco, mas é tudo.",
+  q_reconstruir: "Me ajude a erguer uma parede. Só uma; o resto faço eu.",
+  q_segredo_outro: "Se alguém perguntar por você, eu nunca vi você. Faça o mesmo por mim.",
+  q_razao_guerra: "Me diga se a culpa foi minha. Ninguém mais me diz.",
+  outro: "Me pague um copo e me ouça um pouco. É só isso.",
 };
 
 /* quando nenhum id da ficha casa com um arco: o tipo do que a pessoa
@@ -828,9 +832,9 @@ export function escolhasAbertas(coracao, nucleo, ctx) {
 /* o pedido como opções (aceitar, recusar, perguntar porquê) — ignorar é
    não responder, e o relógio corre */
 export const RESPOSTAS_AO_PEDIDO = [
-  { id: "aceitou", verbo: "Aceitar", preco: "{nome} conta contigo" },
+  { id: "aceitou", verbo: "Aceitar", preco: "{nome} conta com você" },
   { id: "recusou", verbo: "Recusar", preco: "{nome} fica {sozinho} com isto" },
-  { id: "porque", verbo: "Perguntar porquê", preco: "{nome} diz-te o que quer, sem custo" },
+  { id: "porque", verbo: "Perguntar porquê", preco: "{nome} lhe diz o que quer, sem custo" },
 ];
 export function opcoesDoPedido(inst) {
   const i = obj(inst);
@@ -1071,11 +1075,11 @@ export function sentarAoFogo(coracao, nucleo, nome, ctx) {
 export const MANHA_DA_FOGUEIRA = {
   vazio: "Ninguém tinha muito a dizer à volta do fogo; dormiu-se cedo.",
   dormir: "Dormiu-se sem conversa à volta do fogo.",
-  ficha: "Ficou contigo, da noite, o que {nome} contou ao pé do fogo.",
-  pedido: "{nome} pediu-te uma coisa à volta do fogo, e a manhã ainda a traz.",
+  ficha: "Ficou com você, da noite, o que {nome} contou ao pé do fogo.",
+  pedido: "{nome} lhe pediu uma coisa à volta do fogo, e a manhã ainda a traz.",
   lado: "Ficou decidido à volta do fogo: {preco}.",
-  porta: "Ficaste mais um pouco com {nome}, só vocês dois.",
-  semResposta: "{nome} esperou a tua resposta, e a manhã ainda a traz.",
+  porta: "Você ficou mais um pouco com {nome}, só vocês dois.",
+  semResposta: "{nome} esperou a sua resposta, e a manhã ainda a traz.",
 };
 export function fraseDaManha(noite) {
   const x = obj(noite);
