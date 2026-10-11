@@ -405,6 +405,29 @@ sec("4. reciboQueCabe — a ordem é lei, e o corte também (formas.md §A1 1)")
   t("e o nome truncado tem ≥ 12 caracteres (o piso de §21)", nome.length >= RECIBO.pisoDoNome, nome);
   t("abaixo do piso o item vai para o resto", reciboQueCabe(item, 90).visiveis.length === 0);
   t("vazio, null e lixo: nada", reciboQueCabe(null, 300).visiveis.length === 0 && reciboQueCabe([null, 3, {}], 300).visiveis.length === 0);
+  /* A1 (10/10, o defeito que o `jogo` achou a 1440): a dobra "A luta" dizia
+     `+7 ◉ e mais 2` e escondia `−10 PV +14 XP` com 58 px vazios ao lado. A
+     largura estava certa; a conta guardava a reserva do `e mais 9` mesmo
+     quando nada ia sobrar. A largura ao lado do cabeçalho, a 1440, sai da
+     cadeia de medidas da peça (formas.md §A1 2), e o DOM vivo mediu 151:
+     coluna 536 − borda 2 − enchimento 6 − direita 14 − ladrilho 36 − 12 −
+     chevron 14 − 12 − `A luta · 2 lobos caíram · 3 rodadas` (35 × 7,8) − 16. */
+  const luta = reciboDoTurno({ moedas: 15, vida: 20, xp: 0, nivel: 1, inventario: [] }, { moedas: 22, vida: 10, xp: 14, nivel: 1, inventario: [] });
+  const aoLado = 536 - 2 - (48 - 36) / 2 - 14 - 36 - 12 - 14 - 12 - 35 * RECIBO.avancoMono * 13 - RECIBO.entre;
+  const naMesa = reciboQueCabe(luta, aoLado);
+  t("a dobra da luta a 1440: `+7 ◉ · −10 PV · +14 XP` cabe inteira em 151 px — a fila que cabe não paga reserva",
+    Math.round(aoLado) === 151 && naMesa.visiveis.length === 3 && naMesa.resto.length === 0, `${aoLado} px → ${textos(naMesa.visiveis).join(" · ")}`);
+  /* um px a menos e a fila já não cabe: aí o `e mais N` vai nascer, e a
+     reserva volta inteira — o corte continua o da spec */
+  const apertado = reciboQueCabe(luta, aoLado - 1);
+  t("um px a menos: a reserva volta e o corte é o da spec (`+7 ◉ e mais 2`)", apertado.visiveis.length === 1 && apertado.resto.length === 2, textos(apertado.visiveis).join(" · "));
+  /* no telefone o recibo desce para a linha 2 e tem 199 px (medido a 375):
+     os mesmos três cabem; com mais que o teto, o telefone corta em 4 */
+  const tel3 = reciboQueCabe(luta, 199, { telefone: true });
+  const tel6 = reciboQueCabe([...luta, ...luta], 199, { telefone: true });
+  t("no telefone (199 px na linha 2): os três da luta cabem; seis cortam no teto de 4 ou antes, com resto",
+    tel3.visiveis.length === 3 && tel3.resto.length === 0 && tel6.visiveis.length <= RECIBO.tetoNoTelefone && tel6.resto.length >= 2,
+    `${textos(tel3.visiveis).join(" · ")} | ${textos(tel6.visiveis).join(" · ")} e mais ${tel6.resto.length}`);
   t("A5: itensMostrados devolve só os itens GANHOS que a fila desenhou",
     JSON.stringify(itensMostrados(reciboDoTurno({ inventario: ["Corda"] }, { inventario: ["Tocha"] }))) === JSON.stringify(["Tocha"])
     && JSON.stringify(itensMostrados(tel.visiveis)) === "[]" && JSON.stringify(itensMostrados(null)) === "[]");

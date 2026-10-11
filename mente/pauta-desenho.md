@@ -35,6 +35,12 @@ da fila continua parado até ela falar do resto.
 - [x] **B1b · a mesa cabe na janela, sem rolar** · defeito da pessoa, 06/10 · `formas.md` §B1b
 - [ ] **B4 · a régua de letras presa ao topo quando o tabuleiro rola** · da B1b · `desenho` · médio
   Abaixo de ~790 de altura a casa chega ao piso de 32 e o tabuleiro rola por dentro; a régua A–R rola junto e some (a 1440×789 faltam 21 px). O endereço K14 é coisa de que o jogador depende — a régua tem de ficar à vista, como a de números.
+
+**10/10 — a ordem da pessoa sobre a informação na tela:** feita como **A1** (diário de 10/10; decisão em `mente/a1-jogo.md`, formas em `mente/formas.md` §A1).
+
+- [x] **A1 · a auditoria da informação que chega ao jogador** · `jogo` decide, `desenho` fabrica, `oficial` + `aprendiz` constroem · 10/10 · 5,0 → 1,8 peças por turno
+- [ ] **A1b · as pontas que a prova do DEPOIS achou** · do `jogo` · leve/médio
+  (1) no fim da luta o tabuleiro já não mostra os lobos — nem de pé nem caídos; devia mostrá-los caídos, como a grade desenha derrotados; (2) o segundo Poupar/Matar pergunta sobre um lobo que o companheiro derrubou, e o painel mostra um `0/240` sem explicação; (3) a janela de reação encavala na legenda ÁREA DE MOVIMENTO e não mostra o relógio; (4) o disco branco gigante depois de Mover (confirmar fora do headless); (5) o recibo no cabeçalho da dobra cabe a 1440 por 0,27 px — um nome maior volta a esconder o preço da luta: o `desenho` decide a forma (descer à linha 2 também na mesa?) e emenda a fórmula da reserva em `formas.md` §A1 1, que o código já não segue; (6) o recibo do fim da luta pode dizer `+14 XP` e a dobra `+31 XP` quando o XP do Mestre chega depois (visto uma vez pelo `oficial`, não na prova); (7) o recibo de uma compra ainda não se viu numa partida real (a compra do roteiro não aconteceu); (8) B10 — o retorno dos cliques nos painéis (#59–61) fica no painel.
 - [ ] **B2 · o chão das outras nove plantas** · da B1 · leve quando houver arte
   Só o deserto tem textura (é a imagem do quadro dela, `public/terrenos/deserto.jpg`, pela tabela `TERRENO_DO_TABULEIRO`). As outras nove plantas de `grid.js` ficam no chão liso: **não se gera nem se escolhe imagem** pela mesa. Quando a pessoa desenhar a delas, é uma linha na tabela.
 - [ ] **B3 · o telefone devolve casas ao campo** · da B1 · médio
@@ -71,6 +77,14 @@ conserta**, porque é esse o limite do modelo de reversão que ela própria deu.
 *A pergunta deixou de ser "isto é pesado?" e passou a ser "um commit revertido
 conserta isto?". Se conserta, faz-se — e diz-se no relato.*
 
+- **[D1 · A1] a reação só abre quando há escolha com preço** · 10/10 · `mente/a1-jogo.md` §6
+  Com uma opção só e grátis (aparar · 0 PM) a janela com relógio não é decisão, é teste de reflexo — e no roteiro expirou enquanto o `jogo` lia. Proposta: abre só com duas reações de preços diferentes, ou quando a única custa; fora disso o instinto decide e o rastro mostra *"aparou: 6 → 3"*. Tira da luta um momento que o jogador vive hoje — por isso é dela. O conserto mora em `ritmo-da-reacao.js` (motor).
+- **[D2 · A1, a proposta ambiciosa] o Mestre diz o número, a mesa só anota** · 10/10
+  Depois de o motor deixar de mentir (os pedidos de A1: o preço antes da prosa, a poção fantasma, o lugar, o aceite, a recolha), o recibo vira redundância honesta. Aposenta-se também: a cinta **anota** o que a voz disse (o ◉ desce com um "−20" que sobe e some em 1,2 s; o item cai na BOLSA com a marca) e o relato fica só prosa, portas e recusas. Previsão do `jogo`: ~1,4 peças por turno e zero linhas de livro-caixa. *A mesa só mostra número quando se decide com ele, e quem diz o número é o mundo.*
+- **[D3 · A1] a vitória é narrada na própria mesa de batalha** · 10/10
+  As últimas palavras do fim da luta **são** a narração da vitória, e "Respirar fundo →" já cai na cena seguinte. Muda a ordem do que se vê.
+- **[A1, do `desenho`] o espólio cai no tabuleiro** · 10/10 · `formas.md` §A1
+  O que o inimigo larga fica como ficha na casa onde ele caiu, e recolher é tocar nela — o chão da luta passa a ser lugar, não lista.
 - **[a proposta ambiciosa de B1] o inimigo é o alvo: tocar no cartão de NESTA BATALHA arma o golpe nele** · 05/10
   Hoje há **três** sítios que dizem *em quem*: a ficha no tabuleiro, os alvos declarados (para quem tem mais de um golpe) e o cartão do inimigo na coluna. Proposta: o cartão **é** o seletor — tocar nele arma `Atacar` nesse alvo, acende no tabuleiro o caminho e a linha de visão até ele, e a linha do veredito mostra o preço (*"Troll a 18 m — faltam 16,5 m"*) antes do clique; os alvos declarados fundem-se no cartão (um selo `1º`/`2º` por golpe). *Uma ação, uma forma*: três caras do mesmo *em quem* viram uma. Um commit revertido desfaz tudo — **só vem aqui porque a fila do desenho espera a palavra dela** (ordem de 28/09).
 - **[a cor] o âmbar do quadro ou o do jogo** · 05/10

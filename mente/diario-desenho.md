@@ -19,6 +19,93 @@ Formato:
 
 ---
 
+## 10/10 · v9.367 a v9.369 · **A1 — a auditoria da informação que chega ao jogador** · commits `b7c31dd`, `92f48de`, `HASH_A1C`
+
+*Ordem da pessoa, 10/10: "há coisas e informações que aparecem que não são
+necessárias, isso acaba confundindo o player mais do que ajudando, coloque na mão
+do designer de games todas as informações… e veja se é realmente necessário, e se
+for, se a forma… é a melhor". Quem decidiu foi o `jogo`: `mente/a1-jogo.md`.*
+
+- **estado inicial:** sem pausa; trava tomada às 15:00. O `orquestrador` vivo na
+  árvore (MM17, P2, P3), a subir v9.363 a v9.366 durante o ciclo. **O bastão do
+  `App.jsx`** foi tomado para o `oficial` às 15:37 (B1), renovado às 16:20 (B2–B9),
+  17:21 e 19:56 (B11, depois do limite de sessão), e **devolvido às 20:25**, antes
+  da prova jogada. **A1 (rascunho) entrou em `3a2d041` junto com o Mapa** — o
+  designer do mapa commitou `formas.md` com a secção §A1 dentro; o coordenador
+  decidiu não reescrever, e ela está certa no sítio.
+- **o ciclo caiu uma vez** no limite de sessão da API (429), no começo da terceira
+  etapa; retomado depois do reposto, sem perda (a etapa não tinha escrito nada).
+- **o inventário (Explore):** 145 peças do código, com arquivo:linha, o que dispara
+  e quantas vezes (`scratchpad/auditoria/inventario.md`). O achado de base: **não
+  há sistema de toasts** — tudo passa pelo funil `pushMsgs` (482 chamadas), e só 7
+  prefixos dobravam.
+- **jogo (o ANTES, jogado):** 10 turnos de um roteiro fixo a 1440×900, numa cópia
+  do HEAD: **5,0 interrupções por turno** (50), 3,2 sem a luta; **8 contradiziam a
+  prosa ou a ficha**, 14 repetiam a prosa. *"O que mais confunde é a contradição,
+  não o excesso."*
+- **jogo (o veredito):** 153 peças — **corta 24, muda a forma 53, ficam 76**; o
+  plano em quatro: A (fora do App, 10), B (App, 10), C (motor, 10 pedidos), D (a
+  pessoa, 3).
+- **desenho:** as seis peças em `formas.md` §A1 e no Figma (biblioteca, página
+  `A1 · a informação` `254:67`): O recibo, A dobra·Luta, O fim da luta, os glifos
+  fera e morto, a hora cheia (`8h`), e a emenda à lei de E4 (*o custo onde
+  surpreende*: 0 números em 80 casas na luta do roteiro). Seis divergências com o
+  `jogo`, escritas com os dois lados.
+- **oficial (Opus):** B1 — o relato sai do App para `painel-relato.jsx` (byte a
+  byte, `innerHTML` idêntico ao HEAD); `naLuta`, `recibo` e `fimDaLuta` nas
+  mensagens (campos novos, ignorados pela versão antiga); B2 o recibo pela foto da
+  ficha; B3 sem "Pego o cartaz", o aceite dá a porta do Diário; B4 o mural; B5 o
+  chão preso à cena; B6 o "1" de GESTÃO sai; B7 o espólio vai à batalha; B8 as
+  frases que falavam do sistema; B9 o dano depois da reação; B11 as pontas (o
+  rodapé do Mercado que a pessoa citou, o lugar no cabeçalho da batalha, a marca
+  que não repete o recibo).
+- **aprendiz (Opus):** `MORADA_DA_LINHA`/`reciboDoTurno`/`arrumarORelato` puros
+  em `glifos.js`; O recibo, a dobra da luta e a dobra do dia no relato; O fim da
+  luta na batalha; a hora cheia; o custo onde surpreende; Esquivar fora da fileira;
+  os glifos fera/morto; os rodapés dos painéis; o varredor novo
+  `check-sistema-nao-fala` (22 → 0, congelado em 0); a porta do Diário; e o
+  conserto da reserva do recibo que a prova achou (a dobra escondia `−10 PV +14 XP`
+  a 1440 por guardar espaço para um "e mais N" que não ia aparecer).
+- **a prova (o DEPOIS, jogado pelo `jogo` no `92f48de`, mesmo roteiro):**
+
+  | medida | ANTES | DEPOIS |
+  |---|---|---|
+  | interrupções por turno | 5,0 (50) | **1,8** (18) |
+  | sem a luta | 3,2 | **1,0** |
+  | a luta sozinha | 21 | 9 |
+  | contradizem a prosa/ficha | 8 | **3** (as três do motor) |
+  | repetem a prosa | 14 | **4** |
+  | turnos só com prosa | 0 | **4 de 10** |
+  | o sistema a falar de si à vista | 3 | **0** |
+
+  O `jogo`: *"Ficou melhor, e muito… Nada do que se cortou me fez falta."* E o aviso:
+  *"com o ruído calado, é o silêncio que mente"* — no T4 o cambista entrega a poção
+  e nada muda; a prioridade seguinte é o motor. **Ressalva honesta:** parte da queda
+  do T4 é a compra não ter acontecido; o recibo de uma compra real ainda não se viu
+  numa partida (A1b).
+  Build limpo e `npm test` 272/272 · 16/16 em cada fatia, e **o HEAD verde num
+  worktree limpo antes de cada subida**.
+- **decisões médias, com o motivo:** (1) o relato saiu do App (*mover vale mais que
+  remendar*: o relato inteiro passa a ser da mesa); (2) a morada é **lista branca** —
+  o que não está na tabela continua à vista, porque calar por engano é pior que
+  mostrar; (3) o recibo calcula-se pela ficha e não pelas linhas, e por isso não pode
+  desmentir a bolsa; (4) a hora cheia na cinta (era a peça que mais aparecia, 9 em 50,
+  e ninguém decidia nada com o minuto); (5) Esquivar sai da fileira (revoga o
+  "desligado" de B1: um botão que só diz que não faz nada é ruído); (6) morte e poder
+  único furam a dobra da luta; os cinco graus de "Encontro…" calam; (7) a catraca
+  `check-sistema-nao-fala` fica em 0 e só pode descer.
+- **correção ao commit `92f48de`:** a mensagem diz que o último lobo "aparece caído"
+  na tela da vitória; na prova ele **some** do tabuleiro. Fica em A1b (1).
+- **o que ficou:** 11 pedidos ao sistema (`pedidos-ao-sistema.md`: os 10 do `jogo` e
+  o `mercado.js:200` que derruba o jogo, visto duas vezes); A1b na pauta (8 pontas
+  da prova); para a pessoa: D1, D2, D3 e *o espólio cai no tabuleiro*.
+- **para quem joga:** em 4 de cada 10 turnos a tela é só a prosa e o campo; a luta
+  volta como uma dobra fechada em vez de 13 linhas; a vitória tem momento (Vitória,
+  o ganho, o que ficou no chão); o jogo deixou de dizer "sistema", "Narrador",
+  "tokens" ou "aferido" em qualquer frase à vista.
+- **a proposta ambiciosa:** D2 — *o Mestre diz o número, a mesa só anota* (aposentar
+  também o recibo depois de o motor deixar de mentir; cerca de 1,4 peças por turno).
+
 ## 06/10 · v9.360 · **B1b — a mesa de batalha cabe na janela, sem rolar** · commit `146cb5c`
 
 *Defeito da pessoa, com foto: "a tela de batalha deveria caber tudo sem precisar

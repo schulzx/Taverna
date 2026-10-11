@@ -931,8 +931,10 @@ export function reciboDoTurno(antes, depois) {
      largura(chip) = caracteres × avanço  [+ entreNumeroEGlifo + glifo]
      reserva       = largura("e mais 9") + entre
 
-   Entra o chip se `soma + entre + largura ≤ L − (ainda há chips depois ?
-   reserva : 0)` e o teto não foi atingido. A ORDEM É LEI E O CORTE TAMBÉM:
+   Se a fila inteira cabe em L e no teto, entra inteira (sem reserva: não
+   haverá `e mais N`). Senão, entra o chip se `soma + entre + largura ≤ L −
+   (ainda há chips depois ? reserva : 0)` e o teto não foi atingido. A
+   ORDEM É LEI E O CORTE TAMBÉM:
    o primeiro chip que não cabe fecha a fila — nunca se salta para um menor
    depois dele, senão o recibo mostraria XP e esconderia PV. O item, e só
    ele, trunca com `…` até caber, mas nunca abaixo de `RECIBO.pisoDoNome`
@@ -959,6 +961,16 @@ export function reciboQueCabe(chips, largura, opcoes) {
     ? c.valor.length * avanco + CINTA.entreNumeroEGlifo + glifo
     : c.texto.length * avanco);
   const reserva = RESERVA_DO_RESTO.length * avanco + entre;
+  /* A RESERVA SÓ SE GUARDA PARA O QUE VAI SER DITO. `e mais N` só se desenha
+     quando sobra alguém; se a fila inteira cabe em L (e no teto), não sobra
+     ninguém, e guardar 57,6 + entre para uma frase que não nasce é cortar à
+     toa. Foi o defeito da dobra "A luta" a 1440 (A1, 10/10): ao lado do
+     cabeçalho sobram 151 px, `+7 ◉ · −10 PV · +14 XP` mede 151,0, e a
+     reserva mandava o PV e o XP para o resto — o preço e o prémio da luta
+     escondidos, com 58 px vazios onde estava o `e mais 2`. Quando algo vai
+     ficar de fora, a reserva volta inteira (a conta de baixo, sem mudança). */
+  const total = fila.reduce((s, c, i) => s + (i ? entre : 0) + larguraDe(c), 0);
+  if (fila.length <= teto && total <= L) return { visiveis: fila.slice(), resto: [] };
   const visiveis = [];
   let soma = 0;
   for (let i = 0; i < fila.length; i++) {
