@@ -47,7 +47,8 @@ import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
 import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
 import { contrair } from "./lugar.js";
-import { marcarBatidas, antecedenteDe } from "./batidas.js";
+import { marcarBatidas, antecedenteDe, relogioDoFio, marcaDaEtapa, depoisDaEtapa } from "./batidas.js";
+import { FASE_DO_PASSO, FASES } from "./vilao.js";
 
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
@@ -145,6 +146,10 @@ export function garantirEspinha(e) {
       /* MM (a campanha que prende): o passado do herói, de onde sai o que
          está em jogo em cada batida (batidas.js). Só aditivo. */
       ...(antecedenteDe(f.antecedente) ? { antecedente: antecedenteDe(f.antecedente) } : {}),
+      /* o relógio do antagonista (batidas.js): o dia em que a espinha nasceu
+         e o bilhete sem palavras que ele deixa */
+      ...(Number.isFinite(f.inicio) ? { inicio: f.inicio } : {}),
+      ...(f.assinatura ? { assinatura: String(f.assinatura).slice(0, 60) } : {}),
     } } : {}),
     atos: atos.map((a, i) => ({
       ato: Number.isFinite(a && a.ato) ? a.ato : i,
@@ -184,6 +189,14 @@ export function garantirEspinha(e) {
           escondido: !!m.segredo.escondido,
         } } : {}),
         ...(m && m.reviravolta && typeof m.reviravolta === "string" ? { reviravolta: m.reviravolta.slice(0, 320) } : {}),
+        /* a etapa do relógio do antagonista que mira este fecho, e o dia em
+           que o marco se cumpriu (conferirEspinha) — só aditivos */
+        ...(m && m.relogio && typeof m.relogio === "object" && Number.isFinite(m.relogio.passo) ? { relogio: {
+          passo: Math.max(0, Math.min(8, Math.round(m.relogio.passo))),
+          gente: String(m.relogio.gente || "").slice(0, 60),
+          cidade: String(m.relogio.cidade || "").slice(0, 60),
+        } } : {}),
+        ...(m && Number.isFinite(m.dia) ? { dia: m.dia } : {}),
       })),
     })),
   };
@@ -193,7 +206,7 @@ export function garantirEspinha(e) {
    Uma vez só, na criação do mundo. Determinística: a mesma semente estende
    a mesma espinha, sempre — é o que permite dizer que a história ESTAVA ali
    antes de o jogador perguntar. */
-export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia medieval", molde = null, lex = null, estrutura = "jornada", cidadeInicial = "", antecedente = "" } = {}) {
+export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia medieval", molde = null, lex = null, estrutura = "jornada", cidadeInicial = "", antecedente = "", dia = null } = {}) {
   const est = estruturaPorId(estrutura);
   const cidades = (mapa && mapa.cidades) || [];
   const regioes = (mapa && mapa.regioes) || [];
@@ -340,6 +353,9 @@ export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia 
     titulo: principal.nome.includes(", ") ? principal.nome.split(", ").slice(1).join(", ") : principal.nome.slice(String(principal.especie || "").length).trim(),
     especie: principal.especie || "",
     motivo: principal.motivo || "",
+    /* o dia em que a história começa a correr: o relógio do antagonista
+       conta daqui (batidas.js) */
+    ...(Number.isFinite(dia) ? { inicio: dia } : {}),
   } : null;
   /* AS BATIDAS (batidas.js): no máximo cinco cenas por ato, cada uma com o
      que está em jogo para ESTE herói e a pergunta que responde. Os marcos
@@ -397,7 +413,10 @@ export function conferirEspinha(espinha, mundo, verEtapa) {
       if (!ok) return m;
       mudou = true;
       cumpridos.push(m);
-      return { ...m, feito: true };
+      /* o dia em que se cumpriu: é por ele que o relógio do antagonista
+         sabe se o herói chegou antes (batidas.js, relogioDoFio) */
+      const dia = mundo && Number.isFinite(mundo.dia) ? mundo.dia : null;
+      return { ...m, feito: true, ...(dia != null ? { dia } : {}) };
     }),
   }));
   return { espinha: mudou ? { ...e, atos } : e, cumpridos };
@@ -593,6 +612,57 @@ export function envelopeDaEspinha(espinha, ato, est) {
   return `ESPINHA — ${nome ? `${nome}, ` : ""}marco ${p.feitos + 1} de ${p.total}: ${linhaDoMarco(m)}.${fio ? ` ${fio}` : ""} Isto foi decidido na criação do mundo e não é sugestão sua: puxe a cena para esse rumo sem anunciá-lo, e NUNCA diga ao jogador que existe uma estrutura. Ele não é obrigado a ir agora — se ele for para outro lado, o mundo espera e o marco continua de pé.`;
 }
 
+/* ============================================================
+   O MOMENTO DO FIO — o que o mundo já mudou, numa linha à parte
+
+   Duas coisas que não cabem no envelope da batida (o teto da pauta é um
+   só, e a batida já o enche), e que por isso vão em linhas próprias na
+   mesma secção `momento` — cada uma corta sozinha se faltar espaço:
+
+     · JÁ SE SABE — o segredo ou a reviravolta da peça que acabou de cair.
+       O marco "descobrir" fecha por o herói estar no lugar; se a cena não
+       chegou a mostrar o que lá estava, o Narrador mostra-o agora, e o
+       jogador fica a saber o que o sistema sabe. Uma vez: só enquanto a
+       peça seguinte está de pé.
+     · A MARCA DO ANTAGONISTA — a etapa do relógio do ato de agora
+       (batidas.js): a corrida, se o herói ainda pode chegar antes; a
+       perda, se chegaram primeiro. E no começo do ato seguinte, o que o
+       mundo lembra de quem chegou a tempo.
+
+   `dia` é o dia de agora (sem ele, o último que a espinha conhece).
+   `vilao`: a nêmesis que já nasceu DO FIO fala pelos envelopes dela
+   (`vilao.js`) — aí o relógio cala-se, para o antagonista não andar duas
+   vezes. Devolve as linhas (0 a 3); `porNaPauta` aceita a lista.
+   ============================================================ */
+export function momentoDoFio(espinha, ato, { dia, vilao } = {}) {
+  const e = garantirEspinha(espinha);
+  if (!e.atos.some((a) => a.marcos.some((x) => x.batida))) return [];
+  const m = marcoAtual(e, ato);
+  if (!m) return [];
+  const out = [];
+  const ordem = e.atos.flatMap((a) => a.marcos.map((x) => ({ x, k: a.ato })));
+  const i = ordem.findIndex((y) => y.x.id === m.id);
+  const ant = i > 0 ? ordem[i - 1] : null;
+  if (ant && ant.x.feito && (ant.x.reviravolta || ant.x.segredo)) {
+    let leva = "";
+    try { leva = (pecasDoFio(e, ant.x, ant.k, { curto: true }) || {}).leva || ""; } catch { leva = ""; }
+    const txt = encherFio(ant.x.reviravolta || ant.x.segredo.diz, { sombra: sombraCurta(e, ant.k), leva });
+    out.push(contrair(`JÁ SE SABE (do sistema — o herói achou-o em ${ant.x.onde}; se a cena ainda não o mostrou, mostre-o agora): ${txt}.`));
+  }
+  const vivo = vilao && typeof vilao === "object" && vilao.daEspinha && vilao.status !== "derrotada";
+  if (!vivo) {
+    const etapas = relogioDoFio(e, { dia });
+    const et = etapas.find((x) => x.ato === ato);
+    const assin = (e.fio && e.fio.assinatura) || "";
+    const primeiro = e.atos.find((a) => a.ato === ato);
+    const noComeco = primeiro && primeiro.marcos.length && primeiro.marcos[0].id === m.id;
+    const antes = etapas.find((x) => x.ato === ato - 1);
+    if (noComeco && antes && antes.como === "travada") out.push(contrair(maiuscula(depoisDaEtapa(antes)) + "."));
+    if (et) out.push(contrair(marcaDaEtapa(et, assin)));
+  }
+  return out;
+}
+
 /* NAO HA resumo de progresso exportado, e a ausencia e a propria regra do
    modulo: uma barra dizendo "12 de 29 marcos" conta ao jogador que existe uma
    estrutura, e saber que faltam dezessete e saber que a historia nao acaba
@@ -625,7 +695,7 @@ export function envelopeDaEspinha(espinha, ato, est) {
 
    Fica o de hoje (o vilão como veio) quando: a espinha não tem fio (save
    antigo), o confronto final já se cumpriu, ou o antagonista já caiu. */
-export function vilaoDoFio(vilao, espinha, { derrotados = [] } = {}) {
+export function vilaoDoFio(vilao, espinha, { derrotados = [], dia } = {}) {
   if (!vilao || typeof vilao !== "object") return vilao;
   const e = garantirEspinha(espinha);
   const f = e.fio;
@@ -637,8 +707,22 @@ export function vilaoDoFio(vilao, espinha, { derrotados = [] } = {}) {
   const nome = humanoide ? partes[0].trim() : String(f.antagonista).trim();
   if (!nome) return vilao;
   if ((Array.isArray(derrotados) ? derrotados : []).some((d) => norm(d).includes(norm(nome)))) return vilao;
+  /* O MESMO RELÓGIO. O antagonista do fio anda desde o primeiro dia
+     (batidas.js, relogioDoFio). Se a fama o faz nascer como nêmesis depois de
+     ele já ter dado passos, ela nasce no passo onde ele está — o plano não
+     volta ao rumor —, e dali anda pelo relógio dela (vilao.js). */
+  let plano = {};
+  try {
+    const caidas = relogioDoFio(e, { dia }).filter((x) => x.como);
+    const ult = caidas[caidas.length - 1];
+    if (ult && ult.passo > (Number(vilao.passo) || 0)) {
+      const fase = (FASES[FASE_DO_PASSO[ult.passo]] || FASES[0]).id;
+      plano = { passo: ult.passo, fase, status: ult.passo >= 2 ? "ativa" : vilao.status, ...(ult.caiu != null ? { ultimoPasso: ult.caiu } : {}) };
+    }
+  } catch { plano = {}; }
   return {
     ...vilao,
+    ...plano,
     nome,
     titulo: humanoide && f.titulo ? f.titulo : vilao.titulo,
     ...(f.motivo ? { motivo: f.motivo } : {}),

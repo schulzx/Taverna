@@ -26,7 +26,7 @@
    abater, o fundo a alcançar — continuam lá e continuam a contar para o
    arco; passam a ser o CAMINHO entre batidas, e o Narrador lê-os assim.
 
-   E mais duas coisas que a quarta sessão pedia, no mesmo sítio porque são
+   E mais três coisas que a quarta sessão pedia, no mesmo sítio porque são
    da mesma natureza (o que a espinha guarda e o Narrador só recebe na hora):
 
    1. O SEGREDO DE CADA "DESCOBRIR". O marco fechava por o herói entrar no
@@ -42,6 +42,18 @@
       primeiro ato colhe-o: a verdade sobre aquele laço, ligada à sombra do
       fim e à peça seguinte.
 
+   3. O RELÓGIO DO ANTAGONISTA. O plano de `vilao.js` (os nove passos, as
+      fases rumor → marca → mão) só corria quando a fama fazia nascer uma
+      nêmesis — e na quarta sessão nunca nasceu. Aqui o antagonista do fio
+      anda desde o primeiro dia, pelos MESMOS passos do plano (ligado, não
+      duplicado: `PASSOS_DO_PLANO`, `FASE_DO_PASSO`, `DIAS_POR_PASSO`): cada
+      ato até ao último tem uma etapa, que mira o fecho desse ato. Se o
+      herói chega ao fecho antes do prazo, apanha-os a meio (TRAVADA); se
+      demora, chegaram primeiro (CUMPRIDA) e o mundo mostra a marca. Antes
+      do nome, o herói cruza com a obra dele, um bilhete dele, os servos
+      dele — a escada das fases. O Narrador recebe só a marca do momento,
+      nunca o plano.
+
    O que aqui se escreve são TEXTOS com dois buracos que só se enchem na
    hora: {sombra}, o antagonista no tamanho do ato ("quem está por trás de
    tudo", o título, o nome; `FIO.curta`, saga.js), e {leva}, a peça
@@ -54,9 +66,11 @@
 import { rngDe } from "./geografia.js";
 import { locaisDaCidade, genteDoLocal, chefesDoMundo, segredosDaCidade, SEGREDOS } from "./mundo-base.js";
 import { ANTECEDENTES } from "./antecedentes.js";
+import { PASSOS_DO_PLANO, FASE_DO_PASSO, FASES, DIAS_POR_PASSO } from "./vilao.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
+const finito = (v) => typeof v === "number" && Number.isFinite(v);
 /* enche só o que sabe; {sombra} e {leva} ficam para a hora */
 const encher = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (m, k) => (v[k] == null ? m : String(v[k])));
 
@@ -133,7 +147,7 @@ export const PERGUNTAS = {
     "o que {quem} pede em troca — e o herói pode pagá-lo?",
     "{quem} está do lado do herói, ou do lado de quem paga mais?",
     "{quem} diz a verdade inteira, ou só a que lhe convém?",
-    "o herói tira a verdade a {quem} sem pôr {quem} em perigo?",
+    "o herói tira a verdade a {quem} sem pôr essa pessoa em perigo?",
   ],
   descobrir: [
     "quem mais sabe o que aqui se guarda — e está a ver?",
@@ -196,6 +210,33 @@ export const REVIRAVOLTA_DO_ATO0 = {
   sem: "o que trouxe o herói a {cidade} não foi acaso: alguém que serve {sombra} pô-lo no caminho dele de propósito, e já sabe que chegou; o rasto dessa gente aponta para {leva}",
 };
 
+/* ---------------- O RELÓGIO DO ANTAGONISTA ----------------
+   Os passos são os do plano de `vilao.js` que vêm ANTES do rosto (o nome é
+   do último ato, `FIO.sombra`): fases rumor, marca e mão. O que o herói
+   cruza em cada fase sai da escada das fases — a obra dele, um bilhete
+   dele, os servos dele. O prazo de cada etapa é o passo do plano
+   (`DIAS_POR_PASSO`) mais uns dias por ato, contados desde a etapa
+   anterior: o herói ligeiro faz o antagonista correr; o lento deixa-o
+   ganhar. */
+export const RELOGIO_DO_FIO = {
+  passos: [0, 1, 2, 3, 4],
+  diasAMaisPorAto: 2,
+  rosto: { rumor: "A OBRA DELE", marca: "UM BILHETE DELE", mao: "OS SERVOS DELE" },
+  /* a assinatura que ele deixa — o bilhete sem palavras */
+  assinaturas: ["três riscos de carvão", "um nó de corda vermelha", "cera preta sem selo", "um prego dobrado em gancho", "uma pena queimada na ponta", "um círculo de sal"],
+  /* por passo do plano: a corrida (travada) e a perda (cumprida).
+     {gente}, {cidade}, {onde}, {assinatura}. */
+  marcas: [
+    { travada: "em {cidade} um carroceiro sem rosto recruta os sem-casa a moeda por cabeça, e a carroça ainda não partiu", cumprida: "os sem-casa de {cidade} sumiram das soleiras numa noite só e voltaram calados, de botas novas, a guardar {onde}" },
+    { travada: "em {cidade}, {gente} recebeu uma bolsa para calar o que sabe e ainda não decidiu se a aceita", cumprida: "em {cidade}, {gente} aceitou a bolsa: já não fala com estranhos, e a moeda nova ainda lhe brilha na mão" },
+    { travada: "vieram tomar {onde} e foram interrompidos: na porta deixaram {assinatura}, feito a meio", cumprida: "{onde} mudou de dono de um dia para o outro, e na porta deixaram {assinatura}" },
+    { travada: "no poço de {cidade} há um bilhete com {assinatura} a dizer que ninguém vem, e o povo ainda não acredita nele", cumprida: "o bilhete com {assinatura} no poço de {cidade}, a dizer que ninguém vem, já todos o leram, e quem pedia ajuda calou-se" },
+    { travada: "os servos dele estão em {cidade} a virar {gente}, que ainda hesita; sabem o nome do herói e não o esperavam tão cedo", cumprida: "{gente} passou para o lado dele: os servos dele já sabem o nome do herói e esperam-no em {onde}" },
+  ],
+  /* o que o mundo diz, no ato seguinte, a quem chegou antes deles */
+  depois: "em {cidade} o herói chegou antes deles — {gente} sabe-o, e a sombra também",
+};
+
 /* ---------------- QUEM É O HERÓI ----------------
    A ficha guarda o NOME do antecedente ("Soldado Reformado"); a criação, às
    vezes, o id. Os dois servem — a mesma porta dupla de `lacoDoAntecedente`. */
@@ -212,7 +253,7 @@ export function antecedenteDe(ref) {
    espinha nova (sem passar pela catraca: quem chama passa-a por
    `garantirEspinha`). Sem atos, devolve-a como veio.
    ============================================================ */
-const LIMPAR = ["batida", "segredo", "reviravolta"];
+const LIMPAR = ["batida", "segredo", "reviravolta", "relogio"];
 export function marcarBatidas(espinha, ctx) {
   const e = espinha && typeof espinha === "object" ? espinha : null;
   if (!e || !Array.isArray(e.atos) || !e.atos.length) return e;
@@ -259,6 +300,11 @@ export function marcarBatidas(espinha, ctx) {
     ultimaVez.set(chave, lista[i]);
     return lista[i];
   };
+
+  const ultimo = e.atos.length - 1;
+  const nEtapas = Math.max(0, ultimo);
+  const P = RELOGIO_DO_FIO.passos;
+  const temFio = !!(e.fio && e.fio.antagonista);
 
   const atos = e.atos.map((a, k) => {
     const ms = (Array.isArray(a && a.marcos) ? a.marcos : []).map((m) => {
@@ -343,8 +389,71 @@ export function marcarBatidas(espinha, ctx) {
       const cidadeDoAto = [...ms].reverse().map((m) => m.cidade).find(Boolean) || f.onde || "";
       f.reviravolta = encher(REVIRAVOLTA_DO_ATO0[ant || "sem"], { cidade: cidadeDoAto });
     }
+    /* O RELÓGIO: uma etapa por ato antes do último, a mirar o fecho dele —
+       o passo do plano espalhado pelos atos, do rumor à mão */
+    if (temFio && k < ultimo && nEtapas > 0) {
+      const f = ms[fecho];
+      const passo = P[Math.round((k * (P.length - 1)) / Math.max(1, nEtapas - 1))];
+      const cidade = [...ms].reverse().map((m) => m.cidade).find(Boolean) || f.onde || "";
+      const gente = f.feitio === "procurar" ? f.quem : (ms.filter((m) => m.feitio === "procurar" && m.batida).pop() || ms.filter((m) => m.feitio === "procurar").pop() || {}).quem || "";
+      f.relogio = { passo: passo == null ? P[0] : passo, gente, cidade };
+    }
     return { ...a, marcos: ms };
   });
-  const fio = e.fio && e.fio.antagonista && ant ? { ...e.fio, antecedente: ant } : e.fio;
+  const fio = temFio
+    ? { ...e.fio, ...(ant ? { antecedente: ant } : {}), assinatura: pick(rngDe(semente + "|assinatura"), RELOGIO_DO_FIO.assinaturas) }
+    : e.fio;
   return { ...e, atos, ...(fio ? { fio } : {}) };
+}
+
+/* ============================================================
+   O RELÓGIO NA HORA — o que já caiu, e como
+   Sem estado guardado: deriva-se da espinha (as etapas marcadas na criação,
+   o dia em que cada marco se cumpriu — `conferirEspinha` grava-o) e do dia
+   de agora. Sem o dia de agora, vale o último dia que a espinha conhece.
+   Devolve uma lista, na ordem dos atos:
+     { ato, passo, fase, prazo, como: "travada" | "cumprida" | "", caiu,
+       gente, cidade, onde }
+   ============================================================ */
+export function relogioDoFio(espinha, { dia } = {}) {
+  const e = espinha && typeof espinha === "object" && Array.isArray(espinha.atos) ? espinha : null;
+  if (!e) return [];
+  const inicio = e.fio && finito(e.fio.inicio) ? e.fio.inicio : 1;
+  const dias = e.atos.flatMap((a) => (a && Array.isArray(a.marcos) ? a.marcos : []).map((m) => m && m.dia)).filter(finito);
+  const agora = finito(dia) ? dia : dias.length ? Math.max(inicio, ...dias) : inicio;
+  const out = [];
+  let desde = inicio, k = 0;
+  e.atos.forEach((a, ato) => {
+    for (const m of (a && Array.isArray(a.marcos) ? a.marcos : [])) {
+      if (!m || !m.relogio || !finito(m.relogio.passo)) continue;
+      const passo = m.relogio.passo;
+      const prazo = desde + DIAS_POR_PASSO + RELOGIO_DO_FIO.diasAMaisPorAto * k;
+      let como = "", caiu = null;
+      if (m.feito && (!finito(m.dia) || m.dia <= prazo)) { como = "travada"; caiu = finito(m.dia) ? m.dia : null; }
+      else if (agora >= prazo) { como = "cumprida"; caiu = prazo; }
+      const fase = (FASES[FASE_DO_PASSO[passo]] || FASES[0]).id;
+      out.push({ ato, passo, fase, prazo, como, caiu, gente: m.relogio.gente || "", cidade: m.relogio.cidade || m.onde || "", onde: m.onde || "", diz: (PASSOS_DO_PLANO[passo] || {}).diz || "" });
+      desde = caiu != null ? caiu : prazo;
+      k += 1;
+    }
+  });
+  return out;
+}
+
+/* A marca de uma etapa, dita como fato do mundo. A forma (obra, bilhete,
+   servos) vem da fase; o texto, do passo e de como caiu. */
+export function marcaDaEtapa(et, assinatura = "") {
+  if (!et) return "";
+  const tpl = RELOGIO_DO_FIO.marcas[et.passo] || RELOGIO_DO_FIO.marcas[0];
+  const v = { gente: et.gente || "quem manda em " + et.cidade, cidade: et.cidade, onde: et.onde, assinatura: assinatura || RELOGIO_DO_FIO.assinaturas[0] };
+  const rosto = RELOGIO_DO_FIO.rosto[et.fase] || RELOGIO_DO_FIO.rosto.rumor;
+  return et.como === "cumprida"
+    ? rosto + " (já aconteceu — fato do mundo; não diga de quem é): " + encher(tpl.cumprida, v) + "."
+    : rosto + " (corre agora — fato do mundo; não diga de quem é): " + encher(tpl.travada, v) + "; se o herói tardar, chegam primeiro.";
+}
+
+/* O que o mundo lembra, no ato seguinte, de quem chegou antes deles. */
+export function depoisDaEtapa(et) {
+  if (!et || et.como !== "travada") return "";
+  return encher(RELOGIO_DO_FIO.depois, { cidade: et.cidade, gente: et.gente || "a gente de " + et.cidade });
 }
