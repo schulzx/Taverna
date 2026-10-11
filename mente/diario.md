@@ -28,6 +28,11 @@ Formato:
   entra (`ESTADO_NA_PORTA`: desvantagem ×0,55, sem tocha ×0,8, PV com piso 0,4): a Fortaleza da sessão deixa de ler MÉDIO
   (1,16×) e lê DIFÍCIL (0,51×) para a heroína Exausta e às escuras. Suíte `teste-masmorra-certa.mjs` (50; 28 falham em HEAD).
   A semente do mundo não está no registo; o mundo é reconstruído com os nomes e os números da tela (131 e 372 batem).
+- **v9.381 · a aspa na prosa (json.js):** a resposta do turno da chamada 9 trazia `o apelido "Navarro" já no ar` sem escape; o
+  resgate de `extrairJSON` levava "até à primeira aspa" (449 de 1.650 caracteres), e o Revisor recebeu o toco. Agora uma aspa só
+  fecha a string quando o que vem a seguir é estrutura de JSON (`ASPA_QUE_FECHA`): repara-se e lê-se; se nem assim abrir, o
+  resgate leva o campo inteiro. A resposta real chega com 1.650 caracteres, a fala de Euzébio e o fim da cena. Nenhuma das 42
+  respostas bem formadas do registo muda. Suíte `teste-aspa-na-prosa.mjs` com a resposta real como fixture (21; 11 falham em HEAD).
 - **fiação que fica para o `frontend`:** em `entrarMasmorra`, `vereditoDaMasmorra(doMapa || mm, persIn)` passa a ficha com as
   tochas já tiradas da mochila — para a masmorra do mundo que não se está à boca, passe `{ ...persIn, suprimentos: supIn }`.
 

@@ -54,6 +54,53 @@ export function parseObjetoTolerante(texto) {
   return null;
 }
 
+/* ---------------- A ASPA DENTRO DA PROSA (11/10, 4.ª sessão de prova, nº 3) ----------------
+   O Narrador escreveu 'o apelido "Navarro" já no ar' dentro do campo
+   "narrativa" sem escapar as aspas. O JSON não abria, e o resgate por campo
+   pegava tudo "até à próxima aspa": o jogador leu 449 de ~1.690 caracteres,
+   a frase acabou a meio, e o Revisor recebeu o toco como se fosse a cena —
+   e foi pago para o "corrigir". Uma resposta em 42 (2,4%): uma por dia de
+   jogo.
+
+   A regra: uma aspa dentro de uma string só FECHA a string quando o que vem
+   a seguir é estrutura de JSON — dois-pontos (fim de chave), vírgula e outra
+   aspa (a próxima chave ou o próximo item), fecho de objeto ou de lista, ou
+   o fim do texto. Qualquer outra aspa é da prosa, e escapa-se. Se nem assim
+   abrir, o resgate leva a narrativa INTEIRA até à aspa que fecha o campo,
+   e não até à primeira aspa que aparece. Nunca se perde a narração.
+   'olhar' é quantos caracteres adiante se olha para decidir. */
+export const ASPA_QUE_FECHA = { depois: /^\s*(?::|,\s*"|[}\]]|$)/, olhar: 40 };
+const fecha = (texto, i) => ASPA_QUE_FECHA.depois.test(texto.slice(i + 1, i + 1 + ASPA_QUE_FECHA.olhar));
+function repararAspasInternas(bruto) {
+  let saida = "", emStr = false, esc = false;
+  for (let i = 0; i < bruto.length; i++) {
+    const c = bruto[i];
+    if (esc) { esc = false; saida += c; continue; }
+    if (c === "\\") { esc = emStr; saida += c; continue; }
+    if (c !== '"') { saida += c; continue; }
+    if (!emStr) { emStr = true; saida += c; continue; }
+    if (fecha(bruto, i)) { emStr = false; saida += c; continue; }
+    saida += '\\"';
+  }
+  return saida;
+}
+/* O campo "narrativa" inteiro, numa resposta que não abre: do começo dele
+   até à aspa que é seguida de estrutura (ASPA_QUE_FECHA), ou até ao fim do
+   texto quando ele veio truncado. */
+function narrativaInteira(bruto) {
+  const m = /"narrativa"\s*:\s*"/.exec(bruto);
+  if (!m) return null;
+  const resto = bruto.slice(m.index + m[0].length);
+  let esc = false;
+  for (let i = 0; i < resto.length; i++) {
+    const c = resto[i];
+    if (esc) { esc = false; continue; }
+    if (c === "\\") { esc = true; continue; }
+    if (c === '"' && fecha(resto, i)) return resto.slice(0, i);
+  }
+  return resto.replace(/"?\s*}?\s*$/, "");
+}
+
 /* Extrai a resposta do Mestre de forma à prova de falhas.
    Nunca deixa JSON cru, aspas ou \n escapar para a tela — mesmo que
    a resposta venha truncada no meio (sem o } final). */
@@ -70,14 +117,17 @@ export function extrairJSON(texto) {
   if (fim > inicio) {
     try { return sanearResposta(JSON.parse(bruto)); } catch { /* segue */ }
     try { return sanearResposta(JSON.parse(bruto.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]"))); } catch { /* segue */ }
+    /* 4.ª sessão: a aspa da prosa sem escape (ver ASPA_QUE_FECHA) */
+    try { return sanearResposta(JSON.parse(repararAspasInternas(bruto))); } catch { /* segue */ }
   }
 
   // 2) resgate por campo — funciona mesmo com JSON truncado/torto.
   //    Pega tudo depois de "narrativa":" até a próxima chave conhecida ou o fim.
   let narrativa = "";
-  const mNarr = bruto.match(/"narrativa"\s*:\s*"((?:[^"\\]|\\.)*)"?/);
-  if (mNarr && mNarr[1]) {
-    narrativa = decodificarTexto(mNarr[1]);
+  /* 4.ª sessão: o campo inteiro, e não até à primeira aspa da prosa */
+  const inteira = narrativaInteira(bruto);
+  if (inteira) {
+    narrativa = decodificarTexto(inteira);
   } else {
     // sem sequer o campo: descarta chaves/rótulos e mostra o que sobrar legível
     narrativa = decodificarTexto(
