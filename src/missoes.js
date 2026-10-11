@@ -152,6 +152,31 @@ export function estaCom(e, mundo, ficha = null) {
   return pertoDe(mundo, n.local);
 }
 
+/* FALAR É ESTAR (11/10, a 4.ª sessão de prova). `estaCom` exige o herói no
+   lugar da pessoa — e a cena não é o lugar: o Narrador pôs a Inocência a
+   tocar no mercado, e não no Sino Quieto da ficha, e quatro turnos de
+   conversa com ela deixaram "falar com Inocência Bordão" em falso; o Noé
+   foi achado no turno 16, e o Cronista guardou-o no cânone, não no registo,
+   onde a etapa o procura. A missão principal nunca andou.
+
+   A prova de ter falado com alguém é a CONVERSA, e quem a vê é o Cronista: ele
+   devolve, por turno, com quem o herói falou frente a frente (`falou_com`),
+   e o App põe essa lista no mundo das missões só na conferência desse turno
+   (`mundo.falouCom`). Citar, lembrar, procurar e ouvir falar não entram —
+   é a régua do MM14 (o nome dito não conta), agora com a cena a dizer quem
+   esteve. E a cidade continua a contar: falar com a Delfina a 146 km não é
+   possível, então a conversa só vale na cidade da pessoa, quando se sabe
+   qual é (a da etapa, ou a do `onde`). */
+function conversouCom(e, mundo) {
+  const lista = mundo && Array.isArray(mundo.falouCom) ? mundo.falouCom : [];
+  const alvo = e && e.alvo;
+  if (!alvo || !lista.length) return false;
+  if (!lista.some((n) => n && (norm(n) === norm(alvo) || mesmaPessoa(n, alvo)))) return false;
+  const cid = semArtigo(e.cidade || moradaDe(e.onde).cidade);
+  const a = aquiDe(mundo);
+  return !cid || !a.cidade || cid === a.cidade;
+}
+
 /* ---------------- OS TIPOS DE ETAPA ----------------
    Cada um sabe se olhar no espelho do estado do jogo. `ver` recebe o
    mundo inteiro e devolve true quando a etapa está cumprida. */
@@ -217,7 +242,7 @@ export const ETAPAS = {
   falar_com: {
     id: "falar_com", icone: "💬",
     texto: (e) => `Encontrar ${e.alvo}`,
-    ver: (e, m) => estaCom(e, m),
+    ver: (e, m) => estaCom(e, m) || conversouCom(e, m),
   },
   levar_a: {
     id: "levar_a", icone: "📦",

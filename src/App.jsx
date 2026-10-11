@@ -179,7 +179,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto } from "./saga.js";
+import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio } from "./saga.js";
 import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
@@ -5610,6 +5610,10 @@ export default function Taverna() {
      dali so encolhe: cada marco que cai fica marcado e nunca volta. Ela
      nao decide nada em tempo de turno — ja decidiu tudo antes. */
   const espinhaRef = useRef(garantirEspinha(null));
+  /* 11/10: com quem o herói falou frente a frente NESTE turno, dito pelo
+     Cronista. Vive só durante a conferência que ele dispara — não vai ao
+     save, e é esvaziado logo depois (missoes.js, `conversouCom`). */
+  const falouComRef = useRef([]);
   /* MM13: a abertura (a razão, a pista, o sino) — save novo e aditivo; um
      save sem ela é legado (mural sempre aberto, sino nunca liga). O
      prenúncio do sino não é save: é um aviso de um turno só. */
@@ -7191,7 +7195,8 @@ export default function Taverna() {
        encenando um vilão que acertou ou um que se enganou. */
     {
       const r = respostaDaAmeaca();
-      if (r) p = porNaPauta(p, "vilao", vilaoParaPauta(r, { nome: (nemesisRef.current || {}).nome || "a ameaça" }));
+      /* nexo (11/10): o nome só depois do rosto — o mesmo motivo do arco */
+      if (r) p = porNaPauta(p, "vilao", vilaoParaPauta(r, { nome: ((nemesisRef.current || {}).conhecido && (nemesisRef.current || {}).nome) || "a ameaça" }));
     }
     /* v9.112: O MUNDO LEMBROU. Raro de propósito — uma vez a cada cinco
        dias, no máximo. A dívida só é marcada como cobrada DEPOIS de a
@@ -10925,6 +10930,9 @@ export default function Taverna() {
          uma torre caída ou a uma boca de mina não tem como ser conferida
          por `cidadeAtual` — o herói chegava e o diário não sabia. */
       lugarAtual: lugarRef.current || null,
+      /* 11/10: com quem falei neste turno — só na conferência que o
+         Cronista dispara (`falouComRef`); fora dela, vazio */
+      falouCom: falouComRef.current || [],
       derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],
       inventario: p.inventario || [], equipamento: p.equipamento || [],
       npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current, emLuta: !!combateRef.current,
@@ -10959,6 +10967,7 @@ export default function Taverna() {
         "SEÇÃO missoes: \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
         "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
+        "SEÇÃO falou_com (lista de nomes): as pessoas com quem o herói FALOU frente a frente NESTE turno — estavam na cena com ele e trocaram palavras com ele. Quem só foi citado, lembrado, procurado ou descrito de longe NÃO entra. Na dúvida, lista vazia.",
         "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real. Para gestos comuns, fieis 10 a 500, pf 1 a 10; na dúvida, 0. Para GRANDES acontecimentos de fé, NÃO chute números: preencha \"acontecimento\":{\"tipo\":\"alianca_reino|libertacao|milagre_publico|santuario|conversao_lider|vitoria_lendaria|pregacao\",\"local\":\"nome da cidade/reino\"} e deixe fieis/pf em 0 — o SISTEMA calcula pela população do local. Um povo/reino inteiro prometendo sua fé ao herói É \"alianca_reino\" (ou \"libertacao\", se o herói o libertou) — NUNCA deixe isso passar sem registrar.",
         "O CAMPO \"local\" É O MAIS IMPORTANTE DA SEÇÃO fe: a devoção mora em cidades reais do mapa, não no ar. Use SEMPRE o nome exato da cidade onde o feito foi testemunhado (vale também no campo \"local\" solto, junto de fieis/pf). Sem local reconhecível, a fé vira \"andarilhos\" — conta muito menos e míngua rápido.",
         "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
@@ -11096,6 +11105,21 @@ export default function Taverna() {
           if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); tocouElenco = true; }
         }
       } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- SEÇÃO falou_com (isolada) — 11/10, a 4.ª sessão ----
+         Quatro turnos a falar com a Inocência e a etapa "falar com Inocência
+         Bordão" ficou em falso: a conferência do turno corre ANTES do
+         Cronista, e só sabia do lugar. Agora a conversa que ele viu é
+         conferida aqui, uma vez, e a lista some logo a seguir. */
+      try {
+        const falou = Array.isArray(r.falou_com)
+          ? r.falou_com.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim().slice(0, 60)).slice(0, 6) : [];
+        if (falou.length) {
+          const antesM = missoesRef.current, antesE = espinhaRef.current;
+          falouComRef.current = falou;
+          try { p = conferirAsMissoes(p) || p; } finally { falouComRef.current = []; }
+          if (missoesRef.current !== antesM || espinhaRef.current !== antesE) tocouElenco = true;
+        }
+      } catch (e) { calou("falou_com do Cronista", e); }
       /* ---- SEÇÃO fé (isolada) ---- */
       try {
         if (r.fe && typeof r.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
@@ -15890,7 +15914,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     try {
       const envPresos = envelopeDosPrisioneiros(c.inimigos, {
         heroi: (base0 || personagemRef.current || personagem).nome,
-        doVilao: !!c.doVilao, quemMandou: (c.doVilao && nemesisRef.current && nemesisRef.current.nome) || "",
+        doVilao: !!c.doVilao, quemMandou: (c.doVilao && nemesisRef.current && nemesisRef.current.conhecido && nemesisRef.current.nome) || "", /* nexo 11/10: o nome só depois do rosto */
       });
       if (envPresos.acabou.length || envPresos.naoPode.length) {
         golpeFinalEnvelopeRef.current = golpeFinalEnvelopeRef.current
@@ -17541,9 +17565,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const g = (eventosRef.current || {}).global;
     const ms = missoesAtivas(missoesRef.current);
     return { marcosPendentes: (() => { try { const pa = progressoDoAto(espinhaRef.current, (historiaRef.current || {}).etapa || 0); return Math.max(0, pa.total - pa.feitos); } catch (e) { return undefined; } })(),
-      nemesis: n && n.status !== "derrotada" && n.nome ? n.nome : null,
+      /* nexo (11/10): o nome da nêmesis só sobe DEPOIS do rosto. Esta linha
+         vai ao prompt em todo turno, e levava o nome desde o dia em que ela
+         nascia — e a nêmesis agora é o antagonista da espinha (`vilaoDoFio`),
+         cujo nome o fio guarda para o último ato. Antes do rosto ela já está
+         na mesa como SOMBRA (`resumoVilaoPrompt`), sem nome. */
+      nemesis: n && n.status !== "derrotada" && n.nome && n.conhecido ? n.nome : null,
       global: g && g.nome ? g.nome : null,
-      impostas: ms.filter((m) => tipoMissao(m.tipo).forcada).map((m) => `"${m.titulo}"`).slice(0, 3),
+      /* nexo (11/10, contradição 7): a história principal abre as peças do
+         arco, e o evento global corre ao lado dela (`resumoHistoria`). Sai
+         de `impostas` para não ir duas vezes à mesma linha. */
+      principal: (() => { try { return (ms.find((m) => m.tipo === "principal") || {}).titulo; } catch (e) { calou("a principal do arco", e); return undefined; } })(),
+      impostas: ms.filter((m) => tipoMissao(m.tipo).forcada && m.tipo !== "principal").map((m) => `"${m.titulo}"`).slice(0, 3),
       relogios: (relogiosRef.current || []).map((r) => `${r.nome} ${barraDe(r)}`).slice(0, 3),
     };
   };
@@ -20497,7 +20530,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         missaoComPrazo: mis ? { titulo: mis.titulo || mis.nome } : null,
         faccaoHostil: faccao ? faccao.nome : null,
         npcComVontade: alguem ? { nome: alguem.nome, vontade: alguem.vontade } : null,
-        nemesis: (nemesisRef.current && nemesisRef.current.nome) || null,
+        nemesis: (nemesisRef.current && nemesisRef.current.conhecido && nemesisRef.current.nome) || null, /* nexo 11/10: o fio do oráculo vai ao Narrador; o nome só depois do rosto */
         /* v9.167: os fios que o jogo já mantinha e o oráculo não via.
            Cada um é material vivo de outro sistema — a trava do "só fio
            que existe" é cumprida por construção. */
@@ -20937,7 +20970,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        nome no mapa continua a mostrá-la aqui, como sempre mostrou. */
     let dif = null;
     try {
-      const v = vereditoDaMasmorra(doMapa || mm, persIn);
+      const v = vereditoDaMasmorra(doMapa || mm, { ...persIn, suprimentos: supIn }); /* v9.385: as tochas que levo (persIn já as tirou da mochila para a planta; a masmorra do mundo lê-as da ficha) */
       dif = v ? v.dif : null;
       const jaLido = !!doMapa && !!masmorraDaBoca(lugarRef.current, [doMapa]);
       if (v && !jaLido) pushMsgs([{ autor: "sistema", texto: v.linha }]);
@@ -21699,7 +21732,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (nemesisRef.current && nemesisRef.current.status !== "derrotada") return;
     if (famaAtual() < 20) return;
     if (Math.random() > 0.35) return;
-    const n = gerarVilao({
+    const n0 = gerarVilao({
       nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval", undefined, Math.random, (mundoAtual() || {}).lexico),
       cont: contRef.current,
       /* v9.167: o retrato ficou mais rico — os arquétipos novos leem
@@ -21714,6 +21747,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       },
       dia: diaRef.current,
     });
+    /* nexo (11/10): QUEM JURA O MEU FIM É QUEM ESPERA NO FIM DO FIO. Toda
+       campanha corria com dois antagonistas — o da espinha e este, de nome
+       novo. Agora a identidade vem do fio (`vilaoDoFio`, saga.js); o plano,
+       o corpo e as fases continuam a ser os do vilão. Save sem fio, ou com o
+       antagonista já caído: o de sempre. */
+    let n = n0;
+    try { n = vilaoDoFio(n0, espinhaRef.current, { derrotados: mundoDasMissoes().derrotados }) || n0; } catch (e) { calou("vilaoDoFio", e); n = n0; }
     nemesisRef.current = n; setNemesis(n);
     /* O REGISTRO DE PESSOAS NÃO O RECEBE AINDA. Antes ele entrava no elenco
        no dia em que nascia, com "NÊMESIS do herói" escrito na ficha — e o
@@ -21772,7 +21812,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        custando alguma coisa. Uma peça dele fica para trás, um plano
        atrasa, alguém que estava com ele morre no lugar. É o que
        transforma cada encontro num degrau em vez de um empate. */
-    if (!podeCair(n)) {
+    /* nexo (11/10): a nêmesis do fio é o chefe do confronto final; caída EM
+       COMBATE, quem decidiu foi o dado, e "ele escapa" seria mentira
+       (`caiuOFio`, saga.js). A morte só narrada passa pela porta de sempre. */
+    let caiuEmCombate = false;
+    try { caiuEmCombate = caiuOFio(n, mundoDasMissoes().derrotados); } catch (e) { calou("caiuOFio", e); }
+    if (!podeCair(n) && !caiuEmCombate) {
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaQuedaCedoDemais(n)}`;
       return false;
     }
@@ -21907,6 +21952,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }, Math.random, nemesisRef.current.marcas || []);
     const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });
     if (!r) return;
+    /* nexo (11/10): a nêmesis do fio só mostra o rosto no último ato — é lá
+       que a espinha diz o nome (`oRostoEspera`, saga.js). O passo fica por
+       dar, e o plano tenta de novo amanhã. */
+    try { if (oRostoEspera(espinhaRef.current, (historiaRef.current || {}).etapa || 0, r)) return; } catch (e) { calou("oRostoEspera", e); }
     nemesisRef.current = r.vilao; setNemesis(r.vilao);
 
     /* ---------------- O VILAO ESCREVE NO LIVRO (v9.199) ----------------
@@ -23622,7 +23671,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */
     let notaAmbulante = "";
     {
-      const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1, { lex: (mundoAtual() || {}).lexico });
+      const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1, { lex: (mundoAtual() || {}).lexico, semente: (() => { try { const j = jornadaRef.current; return j ? `${sementeMundo()}|${j.de}>${j.para}|${j.andadoMin || 0}` : ""; } catch (e) { calou("semente do ambulante", e); return ""; } })() }); /* v9.385: a carroça sai da semente — o mundo, o trecho e o já andado (mercado.js); sem jornada, a sorte de sempre */
       if (amb) {
         mercadoRef.current = { ...mercadoRef.current, ambulante: amb }; setMercado(mercadoRef.current);
         pushMsgs([

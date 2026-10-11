@@ -360,8 +360,11 @@ export function conferirEspinha(espinha, mundo, verEtapa) {
          sabe ONDE a pessoa está — o `onde` que a linha do marco mostra.
          Encontrar é estar lá (`estaCom`, missoes.js): o marco empresta a
          morada à condição, aqui, sem mudar o que a espinha gravou. */
+      /* 11/10: e a CIDADE, quando o marco a guarda (v9.379) — é ela que diz
+         se a conversa vista pelo Cronista (`falouCom`, missoes.js) foi no
+         sítio certo. `estaCom` não a lê; só a conversa. */
       const cond = m.condicao.tipo === "falar_com" && !m.condicao.onde && m.onde
-        ? { ...m.condicao, onde: m.onde } : m.condicao;
+        ? { ...m.condicao, onde: m.onde, ...(m.cidade ? { cidade: m.cidade } : {}) } : m.condicao;
       let ok = false;
       try { ok = !!verEtapa(cond, mundo); } catch { ok = false; }
       if (!ok) return m;
@@ -506,3 +509,73 @@ export function envelopeDaEspinha(espinha, ato, est) {
    `momento` da Pauta, onde ela chega com o fato ao lado. Um bloco fixo no
    prompt repetiria a mesma frase em todo turno, inclusive nos turnos em que
    a espinha nao tem nada a dizer. */
+
+/* ============================================================
+   A NÊMESIS É QUEM ESTÁ NO FIM (11/10, a auditoria de coerência)
+
+   A fama fazia nascer uma nêmesis com um nome NOVO (`tentarSurgirNemesis`,
+   App), e a espinha já tinha o seu antagonista desde a criação do mundo (o
+   fio). Toda campanha corria com dois: um que caçava o herói pelos passos do
+   plano (`vilao.js`) e outro que esperava no fim do fio — e o Narrador
+   recebia os dois no mesmo prompt, sem nada que os ligasse.
+
+   Agora quem jura o fim do herói é o próprio antagonista do fio. O vilão
+   continua a ser o de `vilao.js` (o arquétipo, o corpo, o plano, as fases);
+   só a identidade vem do fio: o nome pelo qual o mundo o regista, o título
+   que o fio lhe dá e o que ele quer.
+
+   O nome é o que a espinha casa (`chaveDoChefe`): quem tem nome próprio é
+   ele ("Kael Vento", de "Kael Vento, o Devorador"), e o título vai à parte;
+   quem não tem é o nome inteiro ("Quimera do Poço Seco") — o bicho da mesma
+   espécie não é ele —, e aí o título do arquétipo fica, para não dizer o
+   epíteto duas vezes.
+
+   Fica o de hoje (o vilão como veio) quando: a espinha não tem fio (save
+   antigo), o confronto final já se cumpriu, ou o antagonista já caiu. */
+export function vilaoDoFio(vilao, espinha, { derrotados = [] } = {}) {
+  if (!vilao || typeof vilao !== "object") return vilao;
+  const e = garantirEspinha(espinha);
+  const f = e.fio;
+  if (!f || !f.antagonista) return vilao;
+  const fim = e.atos.flatMap((a) => a.marcos).filter((m) => m.feitio === "confronto").pop();
+  if (fim && fim.feito) return vilao;
+  const partes = String(f.antagonista).split(", ");
+  const humanoide = partes.length > 1 && !!partes[0].trim();
+  const nome = humanoide ? partes[0].trim() : String(f.antagonista).trim();
+  if (!nome) return vilao;
+  if ((Array.isArray(derrotados) ? derrotados : []).some((d) => norm(d).includes(norm(nome)))) return vilao;
+  return {
+    ...vilao,
+    nome,
+    titulo: humanoide && f.titulo ? f.titulo : vilao.titulo,
+    ...(f.motivo ? { motivo: f.motivo } : {}),
+    /* campo NOVO no save, só aditivo: a versão antiga ignora-o */
+    daEspinha: true,
+  };
+}
+
+/* O ROSTO ESPERA O FIM. A espinha diz o antagonista por camadas — "alguém
+   que…" no primeiro ato, o título no meio, o nome só no último (`FIO.sombra`)
+   — e o plano do vilão chega ao rosto (a revelação do nome) pelo próprio
+   relógio, no quinto passo de nove. Para a nêmesis que nasceu do fio, a
+   revelação espera o último ato: o passo que a traria fica por dar, e o plano
+   tenta de novo no dia seguinte. A nêmesis que não veio do fio anda como
+   sempre andou. */
+export function oRostoEspera(espinha, ato, avanco) {
+  if (!avanco || !avanco.revelacao || !avanco.vilao || !avanco.vilao.daEspinha) return false;
+  const e = garantirEspinha(espinha);
+  if (!e.fio || !e.atos.length) return false;
+  return (Number(ato) || 0) < e.atos.length - 1;
+}
+
+/* A QUEDA DE VERDADE. O vilão não cai antes da hora (`podeCair`, vilao.js):
+   a narração que o mata cedo recebe "ele escapa". Mas a nêmesis do fio é o
+   chefe do confronto final, e quando ELE cai em combate quem decidiu foi o
+   dado, não a narração — o confronto da espinha fecha pelo mesmo nome
+   (`derrotar`). Dizer "ele escapa" nesse instante seria a contradição que
+   esta etapa veio tirar. Só a morte em combate conta (`derrotados`); a dita
+   pela narração continua a passar pela porta de sempre. */
+export function caiuOFio(vilao, derrotados = []) {
+  if (!vilao || !vilao.daEspinha || !vilao.nome) return false;
+  return (Array.isArray(derrotados) ? derrotados : []).some((d) => norm(d).includes(norm(vilao.nome)));
+}

@@ -15,11 +15,12 @@ Formato:
 ```
 
 ---
-## 11/10 · v9.383 · MM, as três fiações da auditoria de coerência e da 4.ª sessão (`frontend`) · o bloco e a `VERSAO` subiram varridos no `11fb9ad` (a entrada do `backend` di-lo); o código é o commit seguinte
+## 11/10 · v9.385 · MM, as três fiações da auditoria de coerência e da 4.ª sessão (`frontend`) · este commit
 
 - **quem:** `frontend`, com o bastão do `App.jsx` (tomado no início, devolvido no fim deste trabalho), e a regra em `missoes.js` e
-  `saga.js`; sem tocar em `viagem.js`, `partida.js`, masmorra nem `json.js` (o `backend` em paralelo). A v9.382 é dele (`11fb9ad`);
-  esta fica com a v9.383.
+  `saga.js`; sem tocar em `viagem.js`, `partida.js`, masmorra nem `json.js` (o `backend` em paralelo). Este bloco e uma `VERSAO = "v9.383"`
+  subiram varridos da árvore no `11fb9ad` (a entrada do `backend` di-lo) e o `6b3fd24` levou a v9.384; o código desta
+  entrada só sobe agora, e na colisão fica o maior: v9.385.
 - **1 · a principal nas peças do arco (contradição 7, fechada):** `motorDoArco` passa `principal` (o título da missão principal), e
   ela sai de `impostas` para não ir duas vezes à mesma linha.
 - **2 · um antagonista por campanha:** a nêmesis da fama nasce do fio da espinha (`vilaoDoFio`, saga.js) — o nome pelo qual a
@@ -30,17 +31,19 @@ Formato:
 - **3 · "falar com" fecha pela conversa (defeito 5 da 4.ª sessão):** o Cronista devolve `falou_com` (quem falou com o herói frente
   a frente; citar, lembrar e procurar não contam), e a conferência que ele dispara fecha a etapa mesmo fora do lugar da ficha e sem
   ficha no registo (`conversouCom`, missoes.js) — na cidade da pessoa, quando se sabe qual é (o marco empresta a sua `cidade`).
+- **4 · as duas linhas do `backend` (v9.380, v9.384):** o veredito à porta de uma masmorra do mundo recebe a ficha com as tochas
+  que levo (`{ ...persIn, suprimentos: supIn }`) — dizia "sem uma tocha" a quem levava cinco; e a carroça da estrada sai da
+  semente (o mundo, o trecho e o já andado), a mesma em toda máquina. Uma linha por uma linha: nenhum endereço andou.
 - **decisões médias:** (a) o nome da nêmesis só vai ao Narrador depois do rosto — o arco, a mente da ameaça, o prisioneiro dos
   capangas e o fio do oráculo levavam-no desde o dia em que ela nascia, contra a regra do próprio `vilao.js`; com a nêmesis do fio
   entregariam o nome que a espinha guarda para o último ato. O oráculo perde o movimento "nêmesis" antes do rosto (a sombra já está
   na pauta por `resumoVilaoPrompt`). (b) O chefe sem nome próprio ("Quimera o Colecionador") fica com o título do arquétipo, para
   "nome, título" não dizer o epíteto duas vezes.
 - **a prova:** três suítes, vermelhas em HEAD e verdes agora — `teste-arco-com-principal` (9; 3 falham em HEAD),
-  `teste-nemesis-do-fio` (37; 26 falham), `teste-falar-com-em-cena` (24; 12 falham). Build limpo, `npm test` 291/291 e 16/16. O
+  `teste-nemesis-do-fio` (37; 26 falham), `teste-falar-com-em-cena` (24; 12 falham), `teste-tochas-e-carroca` (11; 4 falham). Build limpo, `npm test` e os varredores verdes. O
   App andou +5/+24 linhas: endereços de `acoes-do-jogador` re-medidos pelo diff, os nus à mão, com o motivo ao lado. A aba nova
   abre no menu, sem `LimiteErro` (sem tocar em save nenhum).
-- **o que ficou:** o pedido do `backend` em `entrarMasmorra` (o veredito com as tochas já tiradas, `{ ...persIn, suprimentos: supIn }`)
-  não entrou aqui. A 5.ª sessão deve medir: a etapa "falar com" fecha no turno da conversa? a nêmesis aparece só como sombra até
+- **o que ficou:** a 5.ª sessão deve medir: a etapa "falar com" fecha no turno da conversa? a nêmesis aparece só como sombra até
   ao último ato?
 
 ---
