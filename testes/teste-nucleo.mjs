@@ -26,8 +26,8 @@
 import {
   PAPEIS_DO_NUCLEO, NUCLEO, QUER, QUER_DO_PROPOSITO, TEME, ESCONDE, ESCONDE_POR_PAPEL, ESCONDE_DA_MASCARA, CARREGA, LINHA, COMO_FALA,
   TIQUES_PROIBIDOS, TEIA_DO_NUCLEO, ELO_DO_ANTECEDENTE, PISTAS_DO_ELO, COMPANHEIRO_POR_LIGACAO, FERIDA_DO_VILAO, VILAO_POR_TAMANHO,
-  ATO_DA_REVELACAO, QUEM_E, CORACAO_DO_SAVE,
-  nucleoDaCampanha, revelacaoPermitida, linhaQuemE, quemEParaPauta, garantirCoracaoDoSave,
+  ATO_DA_REVELACAO, QUEM_E, CORACAO_DO_SAVE, FOGUEIRA_CONTA,
+  nucleoDaCampanha, revelacaoPermitida, linhaQuemE, quemEParaPauta, garantirCoracaoDoSave, fichaNaVoz,
 } from "../src/nucleo.js";
 import { TRACOS, PROPOSITOS, indoleDe } from "../src/indole.js";
 import { TIPOS_DE_LACO } from "../src/npcs.js";
@@ -382,6 +382,42 @@ sec("7. a linha QUEM É");
     if (com.length > TETO_DA_PAUTA) cortou++;
   }
   t(`${N_MUNDOS} pautas cheias: a linha QUEM É não tira veto nem desfecho, e o teto aguenta`, cortou === 0);
+}
+
+/* ============================================================ */
+sec("7b. a ficha na própria voz (a peça que a fogueira vai chamar)");
+{
+  const PROIB = new RegExp(`(?<![\\p{L}])(${QUEM_E.proibidas.join("|")})(?![\\p{L}])`, "iu");
+  t("a ordem da noite: o que traz, o que quer, a linha, o que tira o sono — nunca o esconde", FOGUEIRA_CONTA.ordem.join() === "carrega,quer,linha,teme" && !FOGUEIRA_CONTA.ordem.includes("esconde"));
+  t("há modelo para cada tipo do carrega e cada campo", [...Object.keys(CARREGA), "quer", "linha", "teme"].every((k) => FOGUEIRA_CONTA.modelos[k]));
+  let longas = [], vazou = [], bastidor = [], semNome = [], repetiu = 0, noites = 0;
+  for (const w of MUNDOS) {
+    for (const p of w.nucleo.pessoas) {
+      if (p.papel === "vilao") { if (fichaNaVoz(p, { fio: w.espinha.fio }) !== null) vazou.push("vilão"); continue; }
+      const contados = [];
+      for (let noite = 0; noite < 6; noite++) {
+        const r = fichaNaVoz(p, { contados, fio: w.espinha.fio });
+        if (!r) break;
+        noites++;
+        if (contados.includes(r.campo)) repetiu++;
+        contados.push(r.campo);
+        if (r.linha.length > FOGUEIRA_CONTA.max) longas.push(r.linha);
+        if (PROIB.test(r.linha)) bastidor.push(r.linha);
+        if (!r.linha.startsWith(p.nome)) semNome.push(r.linha);
+        const esc = p.ficha.esconde;
+        if (esc && [esc.o, esc.revela].filter((x) => x && x.length > 8).some((x) => r.linha.includes(x.replace(/\{sombra\}/g, "").slice(0, 24)))) vazou.push(r.linha);
+        if (/\{/.test(r.linha)) vazou.push(r.linha);
+      }
+      if (contados.length > FOGUEIRA_CONTA.ordem.length) repetiu++;
+    }
+  }
+  t(`${noites} noites contadas: cada campo uma vez só, e a pessoa acaba por se calar`, repetiu === 0 && noites > 0);
+  t("toda linha cabe em 220 e começa pelo nome de quem conta", longas.length === 0 && semNome.length === 0, longas[0] || semNome[0]);
+  t("nunca o segredo, nunca buraco por encher, e o vilão não se senta ao fogo", vazou.length === 0, vazou[0]);
+  t("nenhuma palavra de bastidor", bastidor.length === 0, bastidor[0]);
+  t("lixo: nada estoura, e devolve null", [null, undefined, "x", 7, {}].every((x) => fichaNaVoz(x, x || undefined) === null));
+  const p0 = W0.nucleo.pessoas.find((p) => p.papel !== "vilao");
+  t("a primeira noite conta o que a pessoa traz", fichaNaVoz(p0, { fio: W0.espinha.fio }).campo === "carrega");
 }
 
 /* ============================================================ */

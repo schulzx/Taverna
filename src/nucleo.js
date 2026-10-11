@@ -801,6 +801,59 @@ export function quemEParaPauta(nucleo, cena) {
 }
 
 /* ============================================================
+   A FICHA NA PRÓPRIA VOZ — o que a fogueira (§6) vai pedir
+
+   A pessoa aprovou a fogueira (11/10): no descanso longo o jogador escolhe
+   com quem se senta, e — sem batida madura dessa pessoa — ela conta UM
+   campo da ficha na voz dela ("Sabes porque é que a corda tem treze
+   nós?"). A fogueira (a escolha, a tela, o descanso) NÃO é desta etapa;
+   isto é só a peça do motor que ela vai chamar, pronta e provada.
+
+   A ordem é a da noite: primeiro o que ela traz (a coisa, a dívida, a
+   culpa que só se diz de noite), depois o que quer para si, depois a linha
+   que não cruza, e por fim o que a tira do sono. NUNCA o que esconde —
+   isso é da crise (C2) — e nunca o vilão, que não se senta ao fogo.
+   ============================================================ */
+export const FOGUEIRA_CONTA = {
+  ordem: ["carrega", "quer", "linha", "teme"],
+  /* `{o}` é o campo; a frase é fechada e manda (é fato, entra nesta resposta) */
+  modelos: {
+    objeto: "conta, sem que lho peçam, de onde lhe veio o que traz: {o}",
+    divida: "conta a dívida que carrega: {o}",
+    culpa: "diz, porque é noite e há fogo, o que de dia não diz: {o}",
+    quer: "diz o que quer para si, fora do herói: {o}",
+    linha: "conta a noite em que aprendeu que {o}",
+    teme: "confessa o que o tira do sono: {o}",
+  },
+  cabeca: "{nome} (é fato: entra nesta resposta, dito por ele, à volta do fogo): ",
+  max: 220,
+};
+
+/* `pessoa`: uma do núcleo. `contados`: os campos que ela já contou noutras
+   noites (quem chama guarda-os). Devolve { campo, linha } com o próximo
+   campo por contar — ou null (o vilão, ninguém, ou já contou tudo). */
+export function fichaNaVoz(pessoa, { contados = [], tamanho = "inicio", fio = null } = {}) {
+  const p = obj(pessoa);
+  const f = obj(p.ficha);
+  if (!p.nome || p.papel === "vilao") return null;
+  const ja = new Set(arr(contados).map(String));
+  const sombra = sombraNoTamanho(fio, tamanho);
+  for (const campo of FOGUEIRA_CONTA.ordem) {
+    const x = f[campo];
+    if (ja.has(campo) || !x || !x.o) continue;
+    const modelo = FOGUEIRA_CONTA.modelos[campo === "carrega" ? x.tipo : campo];
+    if (!modelo) continue;
+    const cab = encher(FOGUEIRA_CONTA.cabeca, { nome: p.nome });
+    let linha = `${cab}${encher(modelo, { o: encher(x.o, { sombra }) })}.`;
+    const tique = f.fala && f.fala.o ? ` Fala assim: ${f.fala.o}.` : "";
+    if ((linha + tique).length <= FOGUEIRA_CONTA.max) linha += tique;
+    if (linha.length > FOGUEIRA_CONTA.max) continue;
+    return { campo, linha };
+  }
+  return null;
+}
+
+/* ============================================================
    O CAMPO DE SAVE (§2.7) — `coracao`
    Novo, no topo, ignorado pela versão antiga (o load antigo lê o save
    chave a chave e nunca olha para esta; o salvar antigo monta o objeto de
