@@ -444,12 +444,22 @@ export function relogioDoFio(espinha, { dia } = {}) {
    servos) vem da fase; o texto, do passo e de como caiu. */
 export function marcaDaEtapa(et, assinatura = "") {
   if (!et) return "";
-  const tpl = RELOGIO_DO_FIO.marcas[et.passo] || RELOGIO_DO_FIO.marcas[0];
-  const v = { gente: et.gente || "quem manda em " + et.cidade, cidade: et.cidade, onde: et.onde, assinatura: assinatura || RELOGIO_DO_FIO.assinaturas[0] };
   const rosto = RELOGIO_DO_FIO.rosto[et.fase] || RELOGIO_DO_FIO.rosto.rumor;
   return et.como === "cumprida"
-    ? rosto + " (já aconteceu — fato do mundo; não diga de quem é): " + encher(tpl.cumprida, v) + "."
-    : rosto + " (corre agora — fato do mundo; não diga de quem é): " + encher(tpl.travada, v) + "; se o herói tardar, chegam primeiro.";
+    ? rosto + " (já aconteceu — fato do mundo; não diga de quem é): " + fatoDaEtapa(et, assinatura) + "."
+    : rosto + " (corre agora — fato do mundo; não diga de quem é): " + fatoDaEtapa(et, assinatura) + "; se o herói tardar, chegam primeiro.";
+}
+
+/* O fato de uma etapa, sem a moldura: a corrida (travada, ou ainda por
+   cair) ou a perda (cumprida), com a gente, a cidade, o lugar e a
+   assinatura cheios. MM19: é também o que a escada da escuta cobra quando
+   o herói empaca (`escuta.js#cenaDoDegrau`) — o mesmo fato, para a pauta
+   não dizer duas coisas. */
+export function fatoDaEtapa(et, assinatura = "") {
+  if (!et) return "";
+  const tpl = RELOGIO_DO_FIO.marcas[et.passo] || RELOGIO_DO_FIO.marcas[0];
+  const v = { gente: et.gente || "quem manda em " + et.cidade, cidade: et.cidade, onde: et.onde, assinatura: assinatura || RELOGIO_DO_FIO.assinaturas[0] };
+  return encher(et.como === "cumprida" ? tpl.cumprida : tpl.travada, v);
 }
 
 /* O que o mundo lembra, no ato seguinte, de quem chegou antes deles. */

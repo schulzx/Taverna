@@ -16,6 +16,47 @@ Formato:
 
 ---
 
+## 11/10 · v9.394 · MM19, o que já existe chega à cena (`backend`) · este commit
+
+- **quem:** `backend`, à mão; sem bastão (o `App.jsx` e o combate são de um `frontend` no ar). Tocados: `pauta.js`,
+  `saga.js`, `escuta.js`, `batidas.js`, a suíte nova `teste-batida-na-cena.mjs` (+ a fixture `registo-s5-pauta.json`, 24 KB,
+  as 66 pautas enviadas na 5.ª sessão) e sete suítes antigas com asserções movidas, cada uma com o motivo.
+- **faltou por quê (medido no registo da 5.ª sessão, linha a linha):**
+  | o quê | chegou | porque não |
+  |---|---|---|
+  | a batida da espinha | **0 de 66** | uma linha só de 650–910 caracteres (batida + fio + regra), prio 3; antes dela o teto já ia em 897–1398 de 1400. **Teto, sempre** — e o corte guloso metia a economia (2,5) e o "comporta" do ONDE (1,2) no lugar |
+  | a obra do antagonista (MOMENTO) | **24 de 46** fora da luta, **20 de 20** na luta | os 22 que faltaram: **todos teto** (gasto ≥ 1176 antes da prio 3,1); na luta com o Dragão gastava 223 por turno sem mudar um golpe |
+  | o degrau (sinal 4.º, vem buscar 7.º, cobra 10.º) | **9 de 9** turnos levaram a linha (o rumo é 2,42) | não a prio: **a cena**. A forma do encalhe ("um presságio — clima, ave, sonho", "um NPC procura o herói NA TAVERNA", "desabamento, enchente"), e o passo "Procurar Osric na Candeia" com o herói em Ponte Lenta |
+  Médias fora da luta: ONDE 322, NÃO PODE 210, RUMO 192, FECHO 133, cabeça 293.
+- **o conserto:** (1) o envelope da espinha é **só a batida** (cena, em jogo, pergunta; ~240–320); o fio e a regra foram para a
+  última linha de `momentoDoFio` — o App já põe as duas na mesma secção, **sem fiação nova**. (2) `SECOES.momento.frente`
+  [2,475; 2,48]: a batida e a obra passam à frente da cauda do ONDE e da economia, atrás dos vetos, do rumo, do fecho, da planta
+  e do que volta. (3) `SECOES.onde.cauda`: da 3.ª linha do ONDE em diante (o lugar repetido) corta com 2,49. (4) a planta da
+  masmorra sobe um milésimo por linha (inteira antes da batida). (5) o momento **cede na luta** e **numa pergunta que uma ficha
+  respondeu** (a resposta passa à frente; o único empurrão é a ponte). (6) `escuta.js#cenaDoDegrau` + `DEGRAU_EM_CENA`: cada
+  degrau é um fato com nome e lugar **onde o herói está** (`batidas.js#fatoDaEtapa` dá ao "cobra" o mesmo fato do MOMENTO).
+- **decisão média, com o motivo — a cabeça da pauta encurtou (293 → 228), a mesma regra.** Com a batida a caber, a obra do
+  antagonista caía de 24 para 11 de 46: as duas (~270 + ~223) não cabem com o lugar, os vetos, o rumo e o fecho. Medi a folga
+  que faltava (+40 → 23; **+70 → 29**; +120 → 31) e tirei-a do maior custo fixo, pago em todo turno — só a repetição
+  ("Estas palavras… nenhuma delas… — ninguém neste mundo fala em rótulo"). O teto (1400) não se mexeu; o pior caso do prompt
+  só desce. Se a pessoa preferir a frase longa, é um commit — e a obra volta a 11.
+- **a prova (a 5.ª sessão reconstruída com as funções do jogo):** batida **41 de 46** turnos fora da luta (era **0 de 66**);
+  obra do antagonista **29 de 46** (era 24), e onde falta só a história lhe tirou o lugar; na luta, momento **0 de 20** (eram
+  20) e o CONTRA em todos; degraus com fato e lugar certos **3 de 3** (9 de 9 turnos: "em Ponte Lenta, ouve-se o nome de
+  Edric…", "Edric vem ter com o herói em Ponte Lenta…", "em Ponte Lenta, um prego dobrado em gancho à vista…"), nunca "na
+  taverna" nem a Candeia; nenhuma linha de veto, rumo, fecho, planta, volta ou resposta que chegou na sessão deixa de chegar.
+  `teste-batida-na-cena.mjs` (51; em HEAD falha). `npm test` 303/303 + 16/16.
+- **A FIAÇÃO QUE FICA PARA O APP (frontend), e só esta:** sem ela o degrau continua a ser a forma de antes (a batida e o
+  momento já chegam sem nada). Em `pautaDoTurno`, no bloco "MM18: O RUMO", a chamada de `linhaDoRumo` ganha **um campo**:
+  ```js
+  mundo: { aqui: (g.onde || [])[0] || "", abertura: aberturaMundoRef.current, missoes: missoesRef.current,
+           espinha: espinhaRef.current, ato: historiaRef.current.etapa, dia: diaRef.current, vilao: nemesisRef.current },
+  ```
+  (`g` é o `paraPauta(...)` do topo de `pautaDoTurno`; `g.onde[0]` é a linha de ferro do ONDE, o sítio onde o herói está.) Já
+  dentro do `try/calou` que lá está. Prova: uma asserção em `teste-fiacao-prende.mjs` que leia `mundo: { aqui:` no App.
+- **o que ficou:** a PONTE (degrau 0) continua a apontar para o passo da missão, que na 5.ª sessão era a Candeia já deixada — é
+  o defeito 4 do relatório (o fio que parte em três), não este. O fio da peça (linha 3,x) chega só quando sobra lugar.
+
 ## 11/10 · v9.393 · MM, a campanha que prende: a fiação no App (`frontend`) · este commit
 
 - **quem:** `frontend`, à mão, com o bastão do `App.jsx` (tomado no início, devolvido no fim). Liga o que os dois `backend`

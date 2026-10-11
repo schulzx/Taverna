@@ -167,7 +167,11 @@ sec("8. A CATRACA E O QUE VAI À PAUTA");
   t("espinha de save antigo não quebra", Array.isArray(vazia.atos) && vazia.atos.length === 0);
   t("e não tem marco atual", marcoAtual(vazia, 0) === null);
   t("nem envelope", envelopeDaEspinha(vazia, 0, est) === "");
-  const env = envelopeDaEspinha(espinha, 0, est);
+  /* MOVIDA NA MM19 (11/10): o envelope é só a batida; a regra de não
+     anunciar a estrutura vai com o fio, na última linha do momento
+     (momentoDoFio), na mesma secção da pauta. O que se lê é o par. */
+  const { momentoDoFio } = await import(S + "saga.js");
+  const env = [envelopeDaEspinha(espinha, 0, est), ...momentoDoFio(espinha, 0, {})].join(" ");
   /* MOVIDAS A 11/10 (a campanha que prende, batidas.js), com o motivo: a
      espinha nova fala por BATIDAS — a cena, o que está em jogo, a pergunta —
      e não por marcos numerados; "marco 1 de 7" contava a lista de tarefas

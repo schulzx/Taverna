@@ -421,13 +421,19 @@ const medir = ({ luta }) => {
     const prio = s.prio;
     s.prio = 0.95;
     let perdeu = 0;
+    /* MOVIDA NA MM19, com o motivo: o ONDE ficou mais leve (da 3.ª linha em
+       diante é a cauda, 2,49) e a cabeça da pauta encurtou 65 caracteres;
+       com quatro linhas por secção sobrava lugar para o 1.º veto até com a
+       planta a 0,95. A prova do contrafactual pede a pauta mais cheia: seis
+       linhas por secção. A intenção fica: à frente dos vetos, a planta
+       tiraria o primeiro; com a prio da tabela, não tira. */
     try {
       let cheia = {};
-      for (const x of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(x.id)) for (let k = 0; k < 4; k++) cheia = porNaPauta(cheia, x.id, `${x.id}-${k} ` + "z".repeat(90));
+      for (const x of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(x.id)) for (let k = 0; k < 6; k++) cheia = porNaPauta(cheia, x.id, `${x.id}-${k} ` + "z".repeat(90));
       if (!textoDaPauta(cheia).includes("naoPode-0")) perdeu++;
     } finally { s.prio = prio; }
     let cheia = {};
-    for (const x of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(x.id)) for (let k = 0; k < 4; k++) cheia = porNaPauta(cheia, x.id, `${x.id}-${k} ` + "z".repeat(90));
+    for (const x of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(x.id)) for (let k = 0; k < 6; k++) cheia = porNaPauta(cheia, x.id, `${x.id}-${k} ` + "z".repeat(90));
     const tx = textoDaPauta(cheia);
     t("com prio 0,95, numa pauta cheia, o primeiro veto cairia; com a da tabela, fica", perdeu === 1 && tx.includes("naoPode-0"));
   } else t("a seção existe para medir", false);

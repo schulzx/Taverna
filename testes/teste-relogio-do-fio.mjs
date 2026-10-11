@@ -156,7 +156,11 @@ sec("5. o momento: a marca, nunca o plano");
         const ls = momento(e2, k, { dia });
         for (const l of ls) {
           linhas++;
-          maior = Math.max(maior, l.length);
+          /* MOVIDA NA MM19: desde que o fio da peça (com a regra) é a
+             última linha do momento, o teto de 420 é o das linhas do
+             RELÓGIO — a do fio é a que o envelope da batida trazia, e corta
+             sozinha, atrás de tudo (prio 3 e mais). */
+          if (!/^O FIO \(do sistema/.test(l)) maior = Math.max(maior, l.length);
           if (/\{\w+\}/.test(l)) buraco++;
           /* a sombra cresce como no fio: no primeiro ato nem nome nem título;
              no meio o título (o que o mundo lhe chama), nunca o nome */

@@ -570,7 +570,25 @@ export const ENVELOPE_DAS_BATIDAS = {
   fecho: "Fecho do ato: acabe numa escolha com preço, não num presságio.",
   regra: "Puxe para aí sem anunciar; NUNCA diga ao jogador que existe uma estrutura. Se ele for a outro lado, isto espera.",
 };
-function envelopeDasBatidas(e, m, ato, nome) {
+/* A BATIDA NUMA LINHA QUE CABE (MM19, 11/10 — a 5.ª sessão de prova).
+
+   O envelope desta espinha era UMA linha da pauta com tudo dentro: a cena,
+   o que está em jogo, a pergunta, o fio inteiro e a regra — 650 a 910
+   caracteres nas campanhas do gerador. A pauta corta por LINHA, e o teto
+   (TETO_DA_PAUTA, 1400) já ia gasto em 897 a 1398 caracteres antes de a
+   linha da espinha (prio 3) ser vista: em 66 de 66 pedidos da 5.ª sessão a
+   batida não coube, e o corte guloso, que salta e segue, meteu a economia
+   da praça (prio 2,5) no lugar dela. Medido no registo
+   (mente/mm11-sessao-5.md; testes/teste-batida-na-cena.mjs).
+
+   Agora o envelope é SÓ a batida — a cena, o que está em jogo e a pergunta
+   (e o fecho, no fim do ato) —, e o fio com a regra mudou-se para a última
+   linha de `momentoDoFio`, que o App já põe na mesma secção logo a seguir:
+   cada pedaço corta sozinho, e o que move a história (a batida) passa à
+   frente do que a decora (`SECOES.momento.frente`, pauta.js). O nome da
+   etapa da estrutura ("O Chamado") saiu: o Narrador não o usa, e custava
+   uma dezena de caracteres em todo turno. */
+function envelopeDasBatidas(e, m, ato) {
   const ms = marcosDoAto(e, ato);
   const bats = ms.filter((x) => x.batida);
   const i = bats.findIndex((x) => x.id === m.id);
@@ -580,7 +598,7 @@ function envelopeDasBatidas(e, m, ato, nome) {
   if (m.batida) {
     /* a cena já diz quem e onde; o título ("Encontrar X") seria a mesma
        coisa duas vezes */
-    partes.push(`ESPINHA — ${nome ? `${nome}, ` : ""}batida ${i + 1} de ${bats.length}: ${feitioDe(m.feitio).icone} ${enche(m.batida.cena)}.`);
+    partes.push(`ESPINHA — batida ${i + 1} de ${bats.length}: ${feitioDe(m.feitio).icone} ${enche(m.batida.cena)}.`);
     /* na batida da reviravolta, ela é o que está em jogo (diz-se no fio) */
     partes.push(`${m.reviravolta ? "" : `EM JOGO: ${enche(m.batida.emJogo)}. `}A PERGUNTA: ${maiuscula(enche(m.batida.pergunta))}`);
   } else {
@@ -588,14 +606,17 @@ function envelopeDasBatidas(e, m, ato, nome) {
        a primeira do ato que vem */
     const ordem = e.atos.flatMap((a) => a.marcos);
     const alvo = ordem.slice(ordem.findIndex((x) => x.id === m.id) + 1).find((x) => x.batida && !x.feito) || null;
-    partes.push(`ESPINHA — ${nome ? `${nome}, ` : ""}a caminho${alvo ? ` de ${encherFio(alvo.batida.cena, { sombra: curta })}` : ""}: ${linhaDoMarco(m)}.`);
+    partes.push(`ESPINHA — a caminho${alvo ? ` de ${encherFio(alvo.batida.cena, { sombra: curta })}` : ""}: ${linhaDoMarco(m)}.`);
   }
+  if (m.batida && m.batida.fecho) partes.push(ENVELOPE_DAS_BATIDAS.fecho);
+  return contrair(partes.join(" "));
+}
+
+/* o fio desta peça com a regra de não anunciar — a última linha do momento */
+function fioDaBatida(e, m, ato) {
   let fio = "";
   try { fio = linhaDoFio(e, m, ato, { curto: true }); } catch { fio = ""; }
-  if (fio) partes.push(fio);
-  if (m.batida && m.batida.fecho) partes.push(ENVELOPE_DAS_BATIDAS.fecho);
-  partes.push(ENVELOPE_DAS_BATIDAS.regra);
-  return contrair(partes.join(" "));
+  return contrair([fio, ENVELOPE_DAS_BATIDAS.regra].filter(Boolean).join(" "));
 }
 
 export function envelopeDaEspinha(espinha, ato, est) {
@@ -605,7 +626,7 @@ export function envelopeDaEspinha(espinha, ato, est) {
   const nome = ((est && est.etapas && est.etapas[ato]) || {}).nome || "";
   /* a espinha que nasceu com batidas fala por elas; a de um save antigo,
      como sempre falou */
-  if (e.atos.some((a) => a.marcos.some((x) => x.batida))) return envelopeDasBatidas(e, m, ato, nome);
+  if (e.atos.some((a) => a.marcos.some((x) => x.batida))) return envelopeDasBatidas(e, m, ato);
   const p = progressoDoAto(e, ato);
   let fio = "";
   try { fio = linhaDoFio(e, m, ato); } catch { fio = ""; }
@@ -632,7 +653,10 @@ export function envelopeDaEspinha(espinha, ato, est) {
    `dia` é o dia de agora (sem ele, o último que a espinha conhece).
    `vilao`: a nêmesis que já nasceu DO FIO fala pelos envelopes dela
    (`vilao.js`) — aí o relógio cala-se, para o antagonista não andar duas
-   vezes. Devolve as linhas (0 a 3); `porNaPauta` aceita a lista.
+   vezes. Devolve as linhas (0 a 4); `porNaPauta` aceita a lista.
+
+     · O FIO — desde a MM19, a verdade desta peça e a regra de não anunciar
+       a estrutura, que moravam no envelope da batida. Sempre a última.
    ============================================================ */
 export function momentoDoFio(espinha, ato, { dia, vilao } = {}) {
   const e = garantirEspinha(espinha);
@@ -660,6 +684,12 @@ export function momentoDoFio(espinha, ato, { dia, vilao } = {}) {
     if (noComeco && antes && antes.como === "travada") out.push(contrair(maiuscula(depoisDaEtapa(antes)) + "."));
     if (et) out.push(contrair(marcaDaEtapa(et, assin)));
   }
+  /* MM19: e por último o FIO desta peça, com a regra de não anunciar — saiu
+     do envelope da batida para a batida caber (envelopeDasBatidas). É a
+     última linha porque é a que mais pode esperar: só se diz quando o
+     herói chega à peça. */
+  const fio = fioDaBatida(e, m, ato);
+  if (fio) out.push(fio);
   return out;
 }
 

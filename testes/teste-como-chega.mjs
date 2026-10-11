@@ -97,7 +97,12 @@ sec("1. AS DUAS FRASES DA SESSÃO, nas pautas que foram enviadas");
 for (const [m, s] of Object.entries(SESSAO)) {
   /* a reconstrução: a mesma pauta, só com o fato (o que chegou) */
   const soFato = textoDaPauta(golpeFinalNaPauta(pautaDaSessao(s), envDe(s, "")), { turno: s.turno });
-  t(`${m}: a pauta remontada tem o tamanho da enviada na chamada ${s.chamada} (${soFato.length}/${s.enviada})`, soFato.length === s.enviada);
+  /* MOVIDA NA MM19, com o motivo: a cabeça da pauta encurtou (a mesma
+     regra em 228 caracteres, não 293 — pauta.js); a pauta remontada é a
+     enviada menos essa diferença, e só ela. */
+  const cabecaDaSessao = `[PAUTA DO TURNO ${s.turno} — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. Estas palavras são ETIQUETA DE SISTEMA: nenhuma delas entra na narrativa, e nenhuma entra na boca de um personagem — ninguém neste mundo fala em rótulo.]`.length;
+  const encurtou = cabecaDaSessao - soFato.split("\n")[0].length;
+  t(`${m}: a pauta remontada tem o tamanho da enviada na chamada ${s.chamada}, menos o que a cabeça encurtou (${soFato.length} + ${encurtou}/${s.enviada})`, soFato.length + encurtou === s.enviada);
   t(`${m}: e traz o fato do DESFECHO, como a enviada`, soFato.includes(`DESFECHO  ${s.heroi} deu o golpe final em Lobo, e foi para matar`));
   /* e a frase escrita, pelo mesmo caminho */
   const env = envDe(s, s.frase);

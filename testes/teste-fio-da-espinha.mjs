@@ -70,7 +70,17 @@ function envelopes(esp, est) {
   const todos = esp.atos.flatMap((a, k) => a.marcos.map((m) => ({ m, k })));
   return todos.map(({ m, k }, j) => {
     const e2 = { ...esp, atos: esp.atos.map((a) => ({ ...a, marcos: a.marcos.map((x) => ({ ...x, feito: todos.findIndex((y) => y.m === x) < j })) })) };
-    return { m, k, prox: todos[j + 1] ? todos[j + 1].m : null, env: SG.envelopeDaEspinha(e2, k, est) || "" };
+    /* MOVIDA NA MM19 (11/10), com o motivo: na 5.ª sessão o envelope da
+       espinha — a batida, o fio inteiro e a regra numa linha só, 650–910
+       caracteres — não coube na pauta em nenhum dos 66 pedidos
+       (teste-batida-na-cena). O envelope passou a ser SÓ a batida, e o fio com
+       a regra mudou-se para a última linha de `momentoDoFio`, que o App põe
+       na mesma secção MOMENTO logo a seguir. O que esta suíte prova do fio
+       continua de pé, agora sobre o que o Narrador lê nessa secção: o
+       envelope e as linhas do momento, juntos (`env`). O tamanho que conta é
+       o do envelope sozinho (`bat`): é ele a linha que tem de caber. */
+    const bat = SG.envelopeDaEspinha(e2, k, est) || "";
+    return { m, k, prox: todos[j + 1] ? todos[j + 1].m : null, bat, env: [bat, ...SG.momentoDoFio(e2, k, {})].filter(Boolean).join(" ") };
   });
 }
 
@@ -94,7 +104,7 @@ for (const regiao of [true, false]) {
     const c = campanha(i, { regiao });
     for (const x of envelopes(c.esp, c.est)) {
       marcos++;
-      maior = Math.max(maior, x.env.length);
+      maior = Math.max(maior, x.bat.length);
       if (/O FIO \(do sistema/.test(x.env)) comFio++;
       const chaves = x.prox ? [x.prox.quem, x.prox.onde, x.prox.alvo].filter(Boolean) : [];
       if (!x.prox || chaves.some((k) => norm(x.env).includes(norm(k)))) ligados++;

@@ -60,7 +60,9 @@ import { soPergunta } from "./perguntas.js";
 import { intervencaoDoDegrau } from "./encalhe.js";
 import { garantirAbertura } from "./abertura.js";
 import { garantirMissoes } from "./missoes.js";
-import { garantirEspinha } from "./saga.js";
+import { garantirEspinha, marcoAtual } from "./saga.js";
+import { relogioDoFio, fatoDaEtapa } from "./batidas.js";
+import { comEm, comDe, contrair } from "./lugar.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
@@ -284,13 +286,28 @@ export const RUMOS = {
   cobra: "e esperar já custa: {forma}, e aponta para {passo}",
 };
 
+/* `mundo` (MM19, opcional): { aqui, abertura, missoes, espinha, ato, dia,
+   vilao } — o lugar onde o herói está (a 1.ª linha do ONDE da pauta) e o
+   fio. Com ele, o degrau da escada deixa de ser uma forma ("um NPC procura
+   o herói na taverna") e passa a ser a CENA de `cenaDoDegrau`, ali onde o
+   herói está; sem ele, a linha é a de antes. */
 export function linhaDoRumo(opcoes) {
-  const { pedido = null, degrau = null, passo = "", semente = 0 } = obj(opcoes);
+  const { pedido = null, degrau = null, passo = "", semente = 0, mundo = null } = obj(opcoes);
   const p = obj(pedido);
   const d = degrau && typeof degrau === "object" ? degrau : ESCADA_DA_ESCUTA[0];
   const ps = String(passo || "").trim();
   if (!p.doJogador && !(d.n > 0)) return "";
   const abre = p.doJogador ? (p.pergunta ? RUMOS.pergunta : RUMOS.ato) : "";
+  /* o degrau que vira cena não depende do passo: a cena traz o seu nome e
+     o seu lugar, e o passo da missão pode ser o de um sítio já deixado */
+  if (d.n > 0 && mundo && DEGRAU_EM_CENA.rumo[d.id]) {
+    let cena = "";
+    try { cena = cenaDoDegrau(d, { ...obj(mundo), semente }); } catch { cena = ""; }
+    if (cena) {
+      const s = DEGRAU_EM_CENA.rumo[d.id].replace("{cena}", cena) + DEGRAU_EM_CENA.rumo.fato;
+      return abre ? `${abre}; ${s}` : s;
+    }
+  }
   if (!ps) return abre;
   let segue = RUMOS.ponte;
   if (d.n > 0 && RUMOS[d.id]) {
@@ -299,6 +316,152 @@ export function linhaDoRumo(opcoes) {
   }
   const s = segue.replace("{passo}", ps);
   return abre ? `${abre}; ${s}` : s;
+}
+
+/* ============================================================
+   O DEGRAU VIRA CENA (MM19, 11/10 — a 5.ª sessão de prova)
+
+   Na 5.ª sessão a escada subiu nos turnos exatos (4, 7 e 10 sem avanço) e
+   0 de 3 degraus virou cena: a linha dizia "um presságio gratuito — clima,
+   ave, sonho", "um NPC procura o herói NA TAVERNA" (o herói estava num
+   rio) e "desabamento, enchente, bloqueio", e apontava para "Procurar
+   Osric Pé-Leve na Candeia Faiscante" — o sítio que o herói tinha deixado
+   havia 12 km. Uma forma não é um fato: o Narrador respondeu com uma águia
+   e uma anedota de Hakon, e nada no mundo se mexeu.
+
+   Agora cada degrau entrega UM fato com nome e lugar, ONDE O HERÓI ESTÁ:
+     · o sinal — algo que ele vê ou ouve ali, com o nome de quem a história
+       procura agora (a peça de agora da espinha) e onde essa pessoa está;
+     · o "vem buscar" — uma pessoa com nome, do fio, chega até ele, e diz
+       de onde vem quando vem de longe;
+     · o "cobra" — o relógio do antagonista (batidas.js) com marca no mundo:
+       a assinatura dele à vista, ali, e o fato da etapa — o mesmo que o
+       MOMENTO diz, para a pauta não contar duas histórias.
+   Quem: a peça de agora da espinha (a pessoa, ou o lugar que guarda),
+   depois a pista e o alvo da abertura. O sítio onde a coisa acontece é
+   sempre `aqui`; o passo da missão não entra, porque pode ser o de um sítio
+   já deixado.
+   ============================================================ */
+export const DEGRAU_EM_CENA = {
+  sinal: {
+    pessoaAqui: [
+      "{aqui}, alguém aponta {quem} ao herói — está ali mesmo, a poucos passos, e ainda não o viu",
+      "{aqui}, ouve-se o nome de {quem} dito baixo por quem passa: está aqui, e não fica muito tempo",
+    ],
+    pessoaLonge: [
+      "{aqui}, quem passa diz em voz alta o nome de {quem}: está {emOnde}, e mais alguém pergunta por ele",
+      "{aqui}, um viajante conta que viu {quem} {emOnde}, e que não era o único a procurá-lo",
+    ],
+    lugarAqui: [
+      "{aqui}, uma coisa fora do sítio chama o olho do herói: é aqui mesmo que se esconde o que a história procura",
+    ],
+    lugarLonge: [
+      "{aqui}, quem passa fala baixo {deOnde}: o que lá se esconde tem dono, e o dono já pergunta pelo herói",
+    ],
+  },
+  vem_buscar: "{quem} vem ter com o herói {aqui}{vindo}: {motivo}",
+  motivos: [
+    "traz o que sabe, e quer uma coisa em troca",
+    "ouviu que o herói perguntava, e tem pressa — mais alguém o procura",
+    "tem um recado que não confia a mais ninguém",
+  ],
+  cobra: "{aqui}, {assinatura} à vista onde o herói pára: os dele passaram por aqui primeiro — {fato}",
+  /* sem relógio (a nêmesis do fio já fala pelos envelopes dela): a forma do
+     encalhe, mas no sítio onde o herói está */
+  cobraSemRelogio: "{aqui}: {forma}",
+  /* o lugar quando o App não o diz */
+  semAqui: "aqui, onde o herói está",
+  rumo: {
+    sinal: "e o mundo dá um sinal, aqui e agora: {cena}",
+    vem_buscar: "e alguém vem até mim, aqui e agora: {cena}",
+    cobra: "e esperar já custa, aqui e agora: {cena}",
+    fato: " — é fato: entra nesta resposta, com o nome dito",
+  },
+};
+
+const encherCena = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (_, k) => (v[k] == null ? "" : String(v[k])));
+const semArtigo = (x) => norm(x).replace(ARTIGOS, "");
+/* o sítio `onde` é o de `aqui`? `aqui` é a frase do ONDE ("em Ponte Lenta",
+   "na Candeia Faiscante, dentro de Casa da Fonte"): casa o nome inteiro,
+   ou as duas primeiras palavras dele — a mesma régua de `tocaOFio`. */
+function estaAqui(aquiNorm, onde) {
+  const nome = semArtigo(onde);
+  if (!nome || !aquiNorm) return false;
+  if (aquiNorm.includes(nome)) return true;
+  const pal = nome.split(" ").filter(Boolean);
+  return pal.length >= 2 && aquiNorm.includes(pal.slice(0, 2).join(" "));
+}
+const escolher = (lista, semente) => (Array.isArray(lista) && lista.length ? lista[Math.abs(Math.floor(Number(semente) || 0)) % lista.length] : "");
+
+/* Quem a história procura agora, e quem pode vir buscar o herói: a peça de
+   agora da espinha (a pessoa, ou o lugar que guarda), a pista e o alvo da
+   abertura — por esta ordem, sem repetir nome. */
+function gentesDoFio(ctx) {
+  const o = obj(ctx);
+  const out = [];
+  let e = null;
+  try { e = garantirEspinha(o.espinha); } catch { e = null; }
+  let m = null;
+  try { m = e ? marcoAtual(e, Number.isFinite(Number(o.ato)) ? Number(o.ato) : 0) : null; } catch { m = null; }
+  if (m && !m.feito) {
+    if (m.quem) out.push({ nome: m.quem, onde: m.onde || m.cidade || "", tipo: "pessoa" });
+    else if (m.onde && (m.feitio === "descobrir" || m.feitio === "descer")) out.push({ nome: m.onde, onde: m.onde, tipo: "lugar" });
+  }
+  let a = { legado: true };
+  try { a = garantirAbertura(o.abertura); } catch { a = { legado: true }; }
+  if (!a.legado) {
+    if (a.pista && a.pista.nome) out.push({ nome: a.pista.nome, onde: a.pista.local || "", tipo: "pessoa" });
+    if (a.alvo && a.alvo.quem) out.push({ nome: a.alvo.quem, onde: a.alvo.onde || a.alvo.origem || "", tipo: "pessoa" });
+  }
+  return { gentes: out.filter((x, i) => out.findIndex((y) => norm(y.nome) === norm(x.nome)) === i), espinha: e, marco: m };
+}
+
+/* A cena do degrau `degrau` (de `degrauDaEscuta`), ou "" quando não há fio
+   de onde a tirar. `ctx`: { aqui, abertura, missoes, espinha, ato, dia,
+   vilao, semente }. Determinística pela semente; nunca muta o recebido. */
+export function cenaDoDegrau(degrau, ctx) {
+  const d = obj(degrau);
+  const c = obj(ctx);
+  if (!(d.n > 0) || !d.id) return "";
+  const aquiTxt = String(c.aqui == null ? "" : c.aqui).replace(/\s+/g, " ").trim();
+  const aqui = aquiTxt || DEGRAU_EM_CENA.semAqui;
+  const aquiNorm = norm(aquiTxt);
+  const { gentes, espinha, marco } = gentesDoFio(c);
+  if (d.id === "sinal") {
+    const alvo = gentes[0];
+    if (!alvo) return "";
+    const perto = estaAqui(aquiNorm, alvo.onde);
+    const lista = DEGRAU_EM_CENA.sinal[(alvo.tipo === "lugar" ? "lugar" : "pessoa") + (perto ? "Aqui" : "Longe")];
+    return contrair(encherCena(escolher(lista, c.semente), {
+      aqui, quem: alvo.nome,
+      emOnde: alvo.onde ? comEm(alvo.onde) : "longe daqui",
+      deOnde: alvo.onde ? comDe(alvo.onde) : "de longe",
+    }));
+  }
+  if (d.id === "vem_buscar") {
+    const quem = gentes.find((x) => x.tipo === "pessoa");
+    if (!quem) return "";
+    const vindo = quem.onde && !estaAqui(aquiNorm, quem.onde) ? `, vindo ${comDe(quem.onde)}` : "";
+    return contrair(encherCena(DEGRAU_EM_CENA.vem_buscar, { aqui, quem: quem.nome, vindo, motivo: escolher(DEGRAU_EM_CENA.motivos, c.semente) }));
+  }
+  if (d.id === "cobra") {
+    const vilao = obj(c.vilao);
+    const vivo = !!vilao.daEspinha && vilao.status !== "derrotada";
+    const ato = Number.isFinite(Number(c.ato)) ? Number(c.ato) : 0;
+    let et = null;
+    if (espinha && !vivo) {
+      try { et = relogioDoFio(espinha, { dia: c.dia }).find((x) => x.ato === ato) || null; } catch { et = null; }
+    }
+    if (et) {
+      const assinatura = (espinha.fio && espinha.fio.assinatura) || "";
+      const fato = fatoDaEtapa(et, assinatura);
+      if (fato) return contrair(encherCena(DEGRAU_EM_CENA.cobra, { aqui, assinatura: assinatura || "a marca dele", fato }));
+    }
+    const iv = intervencaoDoDegrau(d.encalhe, c.semente);
+    if (!iv || (!marco && !gentes.length)) return "";
+    return contrair(encherCena(DEGRAU_EM_CENA.cobraSemRelogio, { aqui, forma: iv.diz }));
+  }
+  return "";
 }
 
 /* ---------------- ESCUTAR O TURNO ----------------

@@ -191,8 +191,13 @@ sec("3. Nº 4 — a pauta cheia, e o preço dentro do teto");
   const semS = textoDaPauta(turnoDeLuta()), comS = textoDaPauta(golpeFinalNaPauta(turnoDeLuta(), envS));
   const linhasS = Object.values(garantirPauta(turnoDeLuta())).flat();
   const perdeu = linhasS.filter((l) => semS.includes(l) && !comS.includes(l));
-  t("no turno da sessão, nenhum veto nem o ONDE saem para a frase entrar",
-    perdeu.every((l) => !G.naoPode.includes(l) && !G.onde.includes(l)), perdeu.join(" | "));
+  /* MOVIDA NA MM19, com o motivo: da 3.ª linha em diante o ONDE é a cauda
+     — o "comporta: …" que se repete em todo turno no mesmo sítio — e corta
+     com 2,49, depois da história (pauta.js, SECOES.onde.cauda). O que
+     nunca sai para a frase entrar é o LUGAR: as duas primeiras linhas (o
+     sítio e o endereço) e todo veto. */
+  t("no turno da sessão, nenhum veto nem o lugar (as duas primeiras linhas do ONDE) saem para a frase entrar",
+    perdeu.every((l) => !G.naoPode.includes(l) && !G.onde.slice(0, 2).includes(l)), perdeu.join(" | "));
   console.log(`      (o preço no turno do T28: ${perdeu.length ? perdeu.map((l) => l.slice(0, 40)).join(" | ") : "nada"})`);
 }
 

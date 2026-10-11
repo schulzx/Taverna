@@ -61,11 +61,21 @@ function campanha(i, { regiao = true, antecedente = ANTS[i % ANTS.length] } = {}
   return { semente, genero, molde, estrutura, mapa, esp, est: estruturaPorId(estrutura), antecedente };
 }
 /* o envelope do j-ésimo marco quando ele é o de agora (tudo antes, feito) */
+/* MOVIDA NA MM19 (11/10), com o motivo: na 5.ª sessão o envelope da
+   espinha — a batida, o fio inteiro e a regra numa linha só, 650–910
+   caracteres — não coube na pauta em nenhum dos 66 pedidos
+   (teste-batida-na-cena). O envelope passou a ser SÓ a batida, e o fio com
+   a regra mudou-se para a última linha de `momentoDoFio`, que o App põe
+   na mesma secção MOMENTO logo a seguir. O que esta suíte prova do fio
+   continua de pé, agora sobre o que o Narrador lê nessa secção: o
+   envelope e as linhas do momento, juntos (`env`). O tamanho que conta é
+   o do envelope sozinho (`bat`): é ele a linha que tem de caber. */
 function envelopes(esp, est) {
   const todos = esp.atos.flatMap((a, k) => a.marcos.map((m) => ({ m, k })));
   return todos.map(({ m, k }, j) => {
     const e2 = { ...esp, atos: esp.atos.map((a) => ({ ...a, marcos: a.marcos.map((x) => ({ ...x, feito: todos.findIndex((y) => y.m === x) < j })) })) };
-    return { m, k, j, env: SG.envelopeDaEspinha(e2, k, est) || "" };
+    const bat = SG.envelopeDaEspinha(e2, k, est) || "";
+    return { m, k, j, bat, env: [bat, ...SG.momentoDoFio(e2, k, {})].filter(Boolean).join(" ") };
   });
 }
 
@@ -168,7 +178,7 @@ sec("5. o envelope diz a cena, o que está em jogo e a pergunta");
     const f = c.esp.fio;
     const todos = c.esp.atos.flatMap((a) => a.marcos);
     for (const x of envelopes(c.esp, c.est)) {
-      maior = Math.max(maior, x.env.length);
+      maior = Math.max(maior, x.bat.length);
       if (/\{\w+\}/.test(x.env)) buraco++;
       if (x.m.batida) {
         bat++;

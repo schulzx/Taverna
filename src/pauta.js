@@ -76,7 +76,18 @@ export const PRIO_DE_FERRO = 0.5;
    lugar. NÃO PODE, porque cortar um veto é exatamente como a
    incoerência entra — e um veto cortado não avisa que foi cortado. */
 export const SECOES = [
-  { id: "onde", rotulo: "ONDE", prio: 1, ferro: 1, o: "o lugar, e o que ele permite" },
+  /* MM19 (a 5.ª sessão de prova): A CAUDA DO ONDE. A 1.ª linha (o lugar) é
+     de ferro e a 2.ª (o endereço ⌖, ~30 caracteres) continua a prio 1,1. Da
+     3.ª em diante é O LUGAR REPETIDO — o "comporta: correr, cercar, atirar
+     de longe…" do Geógrafo (~190), o domínio, a guilda —, a mesma frase em
+     todo turno passado no mesmo sítio, e cortava com prio 1,2..1,3: à
+     frente de todo veto, do rumo, do fecho e da batida. Na 5.ª sessão o
+     ONDE gastou em média 322 dos 1400 fora da luta, e a batida da espinha
+     não coube em nenhum dos 66 pedidos. Agora a cauda corta com 2,49 (mais
+     0,1 por linha): depois do que volta (2,47), da batida e do momento
+     (2,475, 2,48); à frente da economia da praça (2,5), que é a outra
+     metade da decoração. O que o lugar IMPEDE não muda: é veto, e mora no NÃO PODE. */
+  { id: "onde", rotulo: "ONDE", prio: 1, ferro: 1, cauda: { desde: 2, prio: 2.49 }, o: "o lugar, e o que ele permite" },
   /* MM16 nº 4: A SALA ONDE ESTOU, dentro de uma masmorra (`masmorraParaPauta`,
      masmorras.js) — o tipo, o que nela resta, quem lá está, as passagens e a
      quantas passagens fica o portão do fundo. Na sessão de prova (M13) nada
@@ -97,8 +108,13 @@ export const SECOES = [
      2,45 não tira veto nenhum, e fora da luta a planta chega em 493/500.
      Na leitura vem logo depois do ONDE (primeiro o lugar, depois a planta).
      Fora da masmorra a função devolve nada e a seção não aparece; dentro,
-     não está em SECOES_QUE_CEDEM — é a verdade do sítio. */
-  { id: "masmorra", rotulo: "MASMORRA", prio: 2.45, o: "a planta à volta da sala: a camada, o que nela resta, as passagens e o fundo" },
+     não está em SECOES_QUE_CEDEM — é a verdade do sítio.
+     MM19: e a planta corta INTEIRA antes da batida da história: as linhas
+     dela sobem um milésimo cada (`passo`), não 0,1 — com 0,1 a 2.ª e a 3.ª
+     (quem está, o que resta, as passagens: 2,55 e 2,65) caíam atrás da
+     batida (2,475) e do momento, e o Narrador da 5.ª sessão disse "dois
+     caminhos" numa sala com três. */
+  { id: "masmorra", rotulo: "MASMORRA", prio: 2.45, passo: 0.001, o: "a planta à volta da sala: a camada, o que nela resta, as passagens e o fundo" },
   /* 06/10 (a luz e a sombra): a luz da luta — o escuro, a minha tocha (acesa
      ou baixada), quem do outro lado enxerga no escuro, e se eu enxergo
      (`luzParaPauta`, luz.js). Só existe numa luta onde a luz muda a decisão
@@ -141,7 +157,23 @@ export const SECOES = [
      caracteres e é a resposta à pergunta "onde estou". */
   { id: "daqui", rotulo: "DAQUI", prio: 7, o: "o que se alcança daqui, com rumo e distância" },
   { id: "quem", rotulo: "QUEM", prio: 4, o: "quem está presente" },
-  { id: "momento", rotulo: "MOMENTO", prio: 3, o: "a batida da história" },
+  /* MM19: A FRENTE DO MOMENTO. A 1.ª linha é a BATIDA da espinha em curso
+     (a cena, o que está em jogo, a pergunta — `envelopeDaEspinha`) e a 2.ª
+     o que o fio mudou no mundo (a marca do antagonista, ou o JÁ SE SABE —
+     `momentoDoFio`, que o App põe logo a seguir). Com prio 3 elas vinham
+     DEPOIS da economia da praça (2,5) e da cauda do ONDE, e na 5.ª sessão a
+     batida chegou em 0 de 66 pedidos e o momento do vilão em 24 de 46
+     fora da luta — os 22 que faltaram, todos cortados pelo teto. A régua: o
+     que move a história ganha do que a decora. Cortam com 2,475 e 2,48
+     (`frente`, uma prio por linha): depois dos vetos (2,0..2,4), do rumo
+     (2,42), do fecho (2,43), da planta da masmorra (2,45) e do que volta
+     (2,47, a promessa que amadureceu, que é uma por turno e curta) — a
+     escuta e o veto não cedem a ninguém —, e à frente da cauda do ONDE
+     (2,49) e da economia (2,5). O resto do momento (o fio desta peça, o
+     episódio) corta como sempre, 3 mais 0,1 por linha. Na luta o momento
+     cede inteiro, e numa pergunta que uma ficha respondeu também
+     (`SECOES_QUE_CEDEM`). */
+  { id: "momento", rotulo: "MOMENTO", prio: 3, frente: [2.475, 2.48], o: "a batida da história" },
   { id: "forma", rotulo: "FORMA", prio: 5, o: "o formato desta cena" },
   { id: "gente", rotulo: "A GENTE", prio: 6, o: "o que cada um faz" },
   /* v9.135: e o que cada um DISSE, palavra por palavra. Prioridade 2 porque
@@ -292,7 +324,13 @@ export function pautaVazia(p) { return Object.keys(garantirPauta(p)).length === 
    Quem diz a condição é o App (`combate`, `masmorra`, `lugar`); a
    regra mora aqui. */
 export const SECOES_QUE_CEDEM = {
-  luta: ["economia", "cidade", "daqui", "mundo"],
+  /* MM19: e o MOMENTO. Na 5.ª sessão a obra do antagonista ("em Casa da
+     Fonte um carroceiro sem rosto recruta…", 223 caracteres) ia em 20 de 20
+     turnos da luta com o Dragão, e a luta tinha a prosa a contradizer o
+     dado por falta de estado. A batida da história não muda o golpe que
+     vem a seguir; com a frente nova (2,475) ela passaria à frente do
+     CONTRA e da luz. Na luta, cede. */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento"],
   masmorra: ["economia", "cidade"],
   arredores: ["economia", "cidade"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:
@@ -302,8 +340,13 @@ export const SECOES_QUE_CEDEM = {
      e a economia da praça (274 caracteres, "Cheira a cera, tinta e perfume
      caro") ficou — a cor da praça a ganhar à resposta. E a mesma linha, em
      todo turno de cidade, é a fonte do "cheiro de cera" que abre 7 das 26
-     narrações fora da luta. Numa pergunta, a resposta passa à frente. */
-  pergunta: ["economia", "cidade", "daqui"],
+     narrações fora da luta. Numa pergunta, a resposta passa à frente.
+     MM19: e o MOMENTO também. A resposta (PERGUNTOU) corta com 4, e a
+     batida da frente (2,475) tirava-a — no M35 da 5.ª sessão ("Tu és o
+     Edric", e a ficha dele à vista) a batida ganhava à resposta. É a lei da
+     escuta: numa pergunta, responde-se, e o único empurrão é a ponte do
+     RUMO. */
+  pergunta: ["economia", "cidade", "daqui", "momento"],
 };
 
 /* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.
@@ -318,6 +361,24 @@ export function cederNaCena(pauta, cena) {
   const out = {};
   for (const [id, linhas] of Object.entries(p)) if (!saem.has(id)) out[id] = linhas;
   return out;
+}
+
+/* ---------------- A PRIORIDADE DE UMA LINHA ----------------
+   A i-ésima linha da secção `s` corta com: PRIO_DE_FERRO nas primeiras
+   `ferro` (MM16); a da FRENTE, uma por linha, nas primeiras (MM19, o
+   momento); a prio da CAUDA da linha `cauda.desde` em diante (MM19, o
+   lugar repetido), 0,1 a mais por linha; e no resto a da secção, mais
+   `passo` (0,1 se a secção não diz outro) por linha — a primeira linha
+   de uma secção costuma ser a que a resume. Exportada para a suíte ler a
+   régua de volta. */
+export function prioDaLinha(s, i) {
+  const sec = s && typeof s === "object" ? s : {};
+  const n = Number.isFinite(Number(i)) ? Math.max(0, Math.floor(Number(i))) : 0;
+  const base = Number.isFinite(Number(sec.prio)) ? Number(sec.prio) : 9;
+  if (n < (sec.ferro || 0)) return PRIO_DE_FERRO + n * 0.1;
+  if (Array.isArray(sec.frente) && n < sec.frente.length) return sec.frente[n];
+  if (sec.cauda && n >= sec.cauda.desde) return sec.cauda.prio + (n - sec.cauda.desde) * 0.1;
+  return base + n * (Number.isFinite(sec.passo) ? sec.passo : 0.1);
 }
 
 /* ---------------- O TEXTO ----------------
@@ -344,15 +405,24 @@ export function textoDaPauta(p, { teto = TETO_DA_PAUTA, turno = 0 } = {}) {
      de seção a menos vale menos que uma fala inteira que não existe.
      MM18: "Ligue os pontos e conte COMO aconteceu" virou "Abra pelo que eu
      fiz ou perguntei e conte COMO" — o mesmo tamanho (95), e a primeira
-     ordem do turno passa a ser a do Matt: reagir antes de empurrar. */
-  const cabeca = `[PAUTA DO TURNO${turno ? ` ${turno}` : ""} — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. Estas palavras são ETIQUETA DE SISTEMA: nenhuma delas entra na narrativa, e nenhuma entra na boca de um personagem — ninguém neste mundo fala em rótulo.]`;
+     ordem do turno passa a ser a do Matt: reagir antes de empurrar.
+     MM19: a mesma regra em menos palavras (293 → 228 caracteres). A
+     cabeça é o maior custo fixo da pauta, pago em TODO turno; na 5.ª
+     sessão, com a batida da espinha a caber, a obra do antagonista ficava
+     de fora em 35 de 46 turnos por falta de ~70 caracteres. Medido na
+     reconstrução do registo (teste-batida-na-cena): com a cabeça de antes,
+     batida 39 e obra 11 de 46; com esta, 41 e 29 (eram 0 e 24). Sai só a
+     repetição ("Estas palavras… nenhuma delas… e nenhuma… — ninguém neste
+     mundo fala em rótulo"); fica tudo o que manda: abrir pelo que eu fiz,
+     o QUE e o COM QUEM não se discutem, e nada daqui entra na narrativa
+     nem na boca de alguém. */
+  const cabeca = `[PAUTA DO TURNO${turno ? ` ${turno}` : ""} — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. É ETIQUETA DE SISTEMA: nenhuma palavra daqui entra na narrativa nem na boca de ninguém.]`;
   const pe = "";
   /* candidatas: uma entrada por LINHA, para o corte ser fino */
   const cand = [];
   for (const s of SECOES) {
     const linhas = pauta[s.id] || [];
-    /* MM16: as primeiras `ferro` linhas cortam como PRIO_DE_FERRO */
-    linhas.forEach((t, i) => cand.push({ secao: s.id, ordem: SECOES.indexOf(s), i, prio: (i < (s.ferro || 0) ? PRIO_DE_FERRO : s.prio) + i * 0.1, texto: t }));
+    linhas.forEach((t, i) => cand.push({ secao: s.id, ordem: SECOES.indexOf(s), i, prio: prioDaLinha(s, i), texto: t }));
   }
   cand.sort((a, b) => a.prio - b.prio);
   let gasto = cabeca.length + pe.length;
