@@ -18,6 +18,7 @@ import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGu
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
+import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta } from "./masmorras.js";
@@ -5799,6 +5800,13 @@ export default function Taverna() {
   /* a reviravolta eleita deste mundo: null ate uma se eleger. Determinada
      pela semente do mundo, semeada no Livro, revelada pela catraca. */
   const reviravoltaRef = useRef(null);
+  /* MM-C C1: O NÚCLEO (nucleo.js) — o cache do núcleo derivado (nunca vai ao
+     save: deriva-se da semente), o ritmo da linha QUEM É (de quem foi a
+     ficha e quando; também fora do save) e o campo `coracao` do save, que
+     a C1 só garante e a C2 vai escrever. */
+  const nucleoCacheRef = useRef(null);
+  const quemERef = useRef({ ultimas: {}, cenas: {} });
+  const coracaoRef = useRef(garantirCoracaoDoSave(null));
   /* R3 (v9.229): a virada MAIOR, irma da menor e com o mesmo ciclo (eleger,
      semear, regar, revelar). Mora num REF PROPRIO, e nao num campo dentro do
      outro, porque tem alvo proprio, sementes proprias e ritmo proprio — e
@@ -5943,6 +5951,40 @@ export default function Taverna() {
      PESA na narração (resumoCenaPrompt, resumoNPCsParaPrompt, o cânone),
      não a lista para povoar (essa é `elencoParaPovoar`, mais abaixo). */
   const contextoDoElenco = () => ({ genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, espinha: espinhaRef.current, guildas: guildasRef.current, base: baseMundoRef.current, estado: elencoSaveRef.current, npcs: npcsRef.current });
+  /* MM-C C1: o núcleo desta campanha, memorizado pelo que o muda — o mesmo
+     critério do cache do elenco (identidade dos refs) mais o companheiro,
+     o antecedente e a reviravolta eleita. Recalcular a cada turno daria o
+     mesmo núcleo pelo dobro do preço. */
+  const nucleoAgora = () => {
+    const pers = personagemRef.current || personagem || {};
+    const semente = sementeMundo(), mapa = mapaRef.current, ctx = contextoDoElenco();
+    const comp = (pers.grupo || []).find((g) => g && g.nome && !g.invocada) || {};
+    const rv = reviravoltaRef.current || null;
+    const chave = [comp.nome || "", comp.conceito || "", comp.ligacao || "", pers.antecedente || "", (rv && rv.forma) || "", (rv && rv.alvo) || ""].join("|");
+    const c = nucleoCacheRef.current;
+    if (c && c.semente === semente && c.mapa === mapa && c.espinha === ctx.espinha && c.guildas === ctx.guildas && c.base === ctx.base && c.estado === ctx.estado && c.chave === chave) return c.nucleo;
+    const nucleo = nucleoDaCampanha(semente, mapa, { ...ctx, grupo: pers.grupo || [], antecedente: pers.antecedente || "", reviravolta: rv && rv.forma ? { forma: rv.forma, alvo: rv.alvo } : null });
+    nucleoCacheRef.current = { semente, mapa, espinha: ctx.espinha, guildas: ctx.guildas, base: ctx.base, estado: ctx.estado, chave, nucleo };
+    return nucleo;
+  };
+  /* quem do núcleo está em cena: citado nas duas últimas falas do Mestre
+     (pelo nome inteiro ou pelo primeiro, como o Mestre o chama) ou a andar
+     no grupo. O registo de NPCs não basta: o elo e o vilão podem ainda não
+     estar lá quando o Mestre já os pôs a falar. */
+  const nucleoEmCena = (nucleo) => {
+    const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const fala = " " + sem((mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ")).replace(/[^a-z0-9]+/g, " ") + " ";
+    const grupo = ((personagemRef.current || personagem || {}).grupo || []).filter((g) => g && g.nome && !g.invocada).map((g) => sem(g.nome));
+    const out = [];
+    for (const p of ((nucleo && nucleo.pessoas) || [])) {
+      if (!p || !p.nome) continue;
+      const inteiro = sem(String(p.nome).split(",")[0]).replace(/[^a-z0-9]+/g, " ").trim();
+      const prim = inteiro.split(" ")[0] || "";
+      const citado = (inteiro && fala.includes(" " + inteiro + " ")) || (prim.length >= 3 && fala.includes(" " + prim + " "));
+      if (citado || grupo.includes(sem(p.nome))) out.push(p.nome);
+    }
+    return out;
+  };
   const elencoCacheRef = useRef(null);
   const nomesDoElenco = () => {
     try {
@@ -7308,7 +7350,20 @@ export default function Taverna() {
        você. Vai em O MUNDO porque é o mundo em volta — e vai SEMPRE, não
        só quando o mundo cobra uma dívida antiga. */
     p = porNaPauta(p, "mundo", envelopeDasPotencias(potenciasAqui(), diplomaciaRef.current));
-    try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }
+    try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); }
+    /* MM-C C1: QUEM É — a ficha por dentro de quem do núcleo está em cena,
+       uma pessoa por turno, e a mesma só de tantos em tantos turnos
+       (nucleo.js), no turno que a pauta leva. O ritmo só conta se a linha
+       CHEGA ao texto (o teto pode cortá-la): fica pendente, e o envio confirma. */
+    try {
+      const nucleo = nucleoAgora();
+      const esp = espinhaRef.current || {};
+      const turnoQ = turnoDeRegistroRef.current + 1;
+      const q = { ultimas: {}, cenas: {}, ...(quemERef.current || {}), pendente: null };
+      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null });
+      p = porNaPauta(p, "quemE", ...(r.quemE || []));
+      quemERef.current = { ...q, pendente: r.quem && r.quemE && r.quemE[0] ? { quem: r.quem, turno: turnoQ, linha: r.quemE[0] } : null };
+    } catch (e) { calou("quemEParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }
     p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
       onde: linhaDoLugarDaMesa(),
       quem: (elencoDaOnda().aqui || []),
@@ -8844,7 +8899,7 @@ export default function Taverna() {
     const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     return {
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -12513,7 +12568,7 @@ export default function Taverna() {
     mexerNoEpisodio();
     mexerNaNoite();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
-    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 });
+    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
@@ -13191,6 +13246,8 @@ export default function Taverna() {
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
+    /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
+    try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; } catch (e) { calou("o coração da campanha nova", e); }
     /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
        retomar dele, nunca voltar a zero (é a mesma régua do load) */
     if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
@@ -13452,7 +13509,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador

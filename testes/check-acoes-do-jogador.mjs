@@ -434,10 +434,11 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
      a frase do fecho em `notarFechoDaLuta` (+3), tudo ACIMA de `pushMsgs`. Só o endereço andou; re-medido pelo diff de App.jsx contra o
      HEAD (e5b6736; o App.jsx é o mesmo de c3de7af). */
   /* (MM-C · C0, as mãos do coração, o frontend, 11/10: o alvo do golpe, o veto da luta sem painel, a ordem do ato, os fatos e o segredo no mundo das missões, o sítio do marco, o herói no registo e a frase anterior da bolsa): 8762 -> 8795, +33 — os helpers de módulo da conversa (+13), os refs de turno (+11), o veto na pauta (+3) e o sítio do marco (+6), ACIMA de `pushMsgs`. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (0f4cede). */
-  } else if (iPush + 1 !== 8795) {
-    falha(`pushMsgs saiu de src/App.jsx:8795 e agora está em :${iPush + 1}`,
+  /* (MM-C · C1, o núcleo, o frontend, 11/10: o import de nucleo.js, os três refs, nucleoAgora/nucleoEmCena e a linha QUEM É em pautaDoTurno, acima): 8795 -> 8850, +55 — o import (+1), os refs (+7) e nucleoAgora/nucleoEmCena (+34) e QUEM É na pauta (+13), ACIMA de `pushMsgs`. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (309c8b1). */
+  } else if (iPush + 1 !== 8850) {
+    falha(`pushMsgs saiu de src/App.jsx:8850 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8795, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8850, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;
