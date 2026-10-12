@@ -19,6 +19,8 @@ Formato:
 
 ---
 
+## 11/10 · v9.416 · **F2 · a fogueira ligada no App** · `oficial` — o «Descanso longo» abre a roda no lugar da página quando alguém junto tem o que dizer; sentar é um turno do Narrador; Dormir/um lado/ficar fecham a noite; a manhã abre com o ladrilho. Provado vivo (A, B, D; Mesa e 800×451). **Para o desenho:** a 467 px a grade de Baixa corta o nome numa letra — o detalhe em `mente/diario.md`, bloco v9.416.
+
 ## 11/10 · v9.413 · **F1 · a fogueira construída (fora do App)** · `aprendiz`
 - **estado inicial:** suítes verdes; um `backend` em `nucleo.js`/`subtramas.js`/`pauta.js`/`nomes.js` (não toquei); o bastão do `App.jsx` livre e não tomado — a ligação é do `oficial`.
 - **aprendiz:** `src/painel-fogueira.jsx` (`PainelFogueira`, puro de apresentação, contrato de props no topo; os seis estados: A roda Mesa/Baixa, B fala, C com escolha, B2 a porta, D/E a linha do ladrilho; `Lugar`, `Brasa`, `OFogo` fora do render; atalhos 1–5/Enter que nunca roubam a tecla do compositor; a paragem com setas). `FOGUEIRA` e `VERBO_COM_PRECO` em `estilo.js` — `lugarAceso` é a receita feita conta (`panel` + 10 % de âmbar = #31252D), sem literal novo; o movimento `.tv-fogueira-*` em `MOVIMENTO_CSS` com saída no reduced-motion. Em `ui.jsx`: `VerboComPreco` (a peça `64:2446` sobe à biblioteca de código; a batalha ainda tem o seu `Verbo` privado) e `LadrilhoDoAssunto` ganha `children` (a brasa não é glifo de grelha). `testes/teste-painel-fogueira.mjs`: 85 asserções.

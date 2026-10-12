@@ -13,13 +13,14 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
-import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo } from "./subtramas.js";
+import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha } from "./subtramas.js";
+import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta } from "./masmorras.js";
@@ -5319,6 +5320,17 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
 
 /* regras do jogo extraídas para ./regras-jogo.js (v8.7) */
 
+/* A FOGUEIRA NUNCA PODE CUSTAR A NOITE (MM-C · C6, F2): se o painel estoura
+   no render, ele cala-se (null) e avisa quem o abriu — o acampamento volta
+   com os três botões de sempre, e o descanso corre como hoje. O LimiteErro
+   de baixo tapa a tela inteira, e uma noite não vale isso. */
+class LimiteDaFogueira extends React.Component {
+  constructor(props) { super(props); this.state = { erro: null }; }
+  static getDerivedStateFromError(erro) { return { erro }; }
+  componentDidCatch(erro) { try { console.error("Taverna · a fogueira calou:", erro); if (this.props.aoEstourar) this.props.aoEstourar(erro); } catch (e) { /* nada mais a fazer */ } }
+  render() { return this.state.erro ? null : this.props.children; }
+}
+
 class LimiteErro extends React.Component {
   constructor(props) { super(props); this.state = { erro: null }; }
   static getDerivedStateFromError(erro) { return { erro }; }
@@ -8120,6 +8132,17 @@ export default function Taverna() {
      e é lá que o jogador escolhe entre a noite inteira e o cochilo —
      escolher sem ver onde se está dormindo é escolher no escuro. */
   const [sitio, setSitio] = useState(null);
+  /* A FOGUEIRA (MM-C · C6, F2): a noite aberta (quem está à roda, com quem
+     me sentei, o que o motor devolveu e ainda não se gravou) e o ladrilho
+     que abre a manhã, ancorado no índice do relato onde a manhã começa.
+     Nenhum dos dois vai ao save: o que fica da noite é o coração, e esse já
+     viaja no retrato. */
+  const [fogueira, setFogueira] = useState(null);
+  const fogueiraRef = useRef(null);
+  const definirFogueira = (v) => { fogueiraRef.current = v; setFogueira(v); };
+  const fogueiraEstourouRef = useRef(false);
+  const [manhaDaFogueira, setManhaDaFogueira] = useState(null);
+  const fogueiraNaPagina = !!(fogueira && acampado);
   /* MURAL DE CONTRATOS (v6.3): 3 trabalhos por tabela, recompensa paga por código */
   /* no máximo um trabalho oferecido por dia — o mundo tem gente precisando de
      ajuda, não uma fila de recrutadores no seu ombro */
@@ -10067,6 +10090,10 @@ export default function Taverna() {
        aplicar. Vale tanto para undefined quanto para null. */
     let pers = persAtual || personagemRef.current || personagem;
     if (!pers) return null;
+    /* a ficha do envio, nunca nula: o CÓDEX lá embaixo comparava com
+       persAtual cru, e uma chamada sem ficha calava o Mestre com a
+       resposta na mão (MM-C · C6: a petição do correio fazia isso) */
+    const persDoEnvio = pers;
     const msgs = [];
     /* trava anti-cobrança-dupla: no turno de [HABILIDADE] o custo já foi
        descontado pelo app; qualquer mana negativa do Mestre é ignorada */
@@ -11119,12 +11146,12 @@ export default function Taverna() {
     setRolagem(null);
     /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */
     {
-      const antes = (persAtual.grupo || []).length, agora = (pers.grupo || []).length;
+      const antes = (persDoEnvio.grupo || []).length, agora = (pers.grupo || []).length;
       if (agora > antes) bumpCont("recrutados", agora - antes);
       let tocouVinculo = false;
       /* VÍNCULO: chegar a 0 PV e sobreviver une o grupo (+4); deixar um
          companheiro cair pesa (−6 só para quem caiu) */
-      if ((persAtual.vida || 0) > 0 && (pers.vida || 0) <= 0) {
+      if ((persDoEnvio.vida || 0) > 0 && (pers.vida || 0) <= 0) {
         bumpCont("quaseMorte", 1);
         pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 4, null) };
         /* CICATRIZ (v6.6): sobreviver por um fio pode deixar marca permanente */
@@ -11140,7 +11167,7 @@ export default function Taverna() {
         tocouVinculo = true;
       }
       (pers.grupo || []).forEach((g) => {
-        const antesG = (persAtual.grupo || []).find((a) => a.nome === g.nome);
+        const antesG = (persDoEnvio.grupo || []).find((a) => a.nome === g.nome);
         if (antesG && (antesG.vida || 0) > 0 && (g.vida || 0) <= 0) {
           pers = { ...pers, grupo: aplicarVinculo(pers.grupo, g.nome, -6, null) };
           tocouVinculo = true;
@@ -13311,7 +13338,7 @@ export default function Taverna() {
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
-    try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; } catch (e) { calou("o coração da campanha nova", e); }
+    try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração da campanha nova", e); }
     /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
        retomar dele, nunca voltar a zero (é a mesma régua do load) */
     if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
@@ -13573,7 +13600,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -15063,6 +15090,9 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       const foco = typeof document !== "undefined" ? document.activeElement : null;
       if (foco && typeof foco.blur === "function") foco.blur();
     } catch (e) { calou("devolver o campo ao repouso quando o turno parte", e); }
+    /* a roda aberta e eu escrevo: a frase é minha, e a página volta. Depois
+       da fala dela, escrever é responder-lhe — a fogueira fica. */
+    try { const f = fogueiraRef.current; if (f && !falouAoFogo(f)) definirFogueira(null); } catch (e) { calou("o campo fecha a fogueira", e); }
     agir(texto);
   };
 
@@ -22872,6 +22902,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           const forcaDe = (n) => (garantirLaco(n && n.laco) || {}).forca || 0;
           let novo = npc;
           if (e.delta === "rompe") novo = romperLaco(npc, diaRef.current);
+          else if (e.delta === -1) novo = afrouxarLaco(npc);
           else if (e.delta === 1) novo = firmarLaco(npc, e.firma || tipoDe(npc) || "amizade", diaRef.current);
           else if (e.delta === "max") { let ant = -1; while (ant !== forcaDe(novo)) { ant = forcaDe(novo); novo = firmarLaco(novo, e.firma || tipoDe(novo) || "amizade", diaRef.current); } }
           if (novo !== npc) { npcs = { ...npcs, [k]: novo }; mudou = true; }
@@ -23023,7 +23054,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     correioRef.current = c; setCorreio(c);
     aplicarEfeitosCorreio(ef);
     pushMsgs([{ autor: "sistema", texto: `✉️ Petição de ${p.de}: ${aceite ? "ACEITA" : "RECUSADA"}${ef.nota ? ` — ${ef.nota}` : ""}.` }]);
-    enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.${SO_ISSO}`);
+    enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.${SO_ISSO}`, fichaViva() || personagem);
   };
 
   /* ---------------- A CAMPANHA SAI DO NAVEGADOR (v9.147) ----------------
@@ -23158,6 +23189,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const MINUTOS_ARRUMANDO = 20;
   const levantarSemDescansar = () => {
     if (!acampadoRef.current || bloqueado) return;
+    try { definirFogueira(null); } catch (e) { calou("fechar a fogueira", e); }
     definirAcampado(false);
     const reinoMsg = avancarMinutos(MINUTOS_ARRUMANDO);
     setSitio(null);
@@ -23178,8 +23210,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     pushMsgs([{ autor: "sistema", texto: r.texto }]);
   };
 
-  const sairDoAcampamento = (tipo) => {
+  const sairDoAcampamento = (tipo, extra) => {
     if (!acampadoRef.current) return;
+    try { definirFogueira(null); } catch (e) { calou("fechar a fogueira", e); }
     /* UM LONGO POR DIA (v9.17): sem teto, acampar duas vezes seguidas é
        sempre a jogada certa e o relógio do mundo deixa de significar nada.
        O segundo do dia não é recusado — ele rende o benefício CURTO, que é
@@ -23395,7 +23428,178 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const localMsg = (jornadaRef.current && !acordoCala)
       ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
       : "";
-    enviar(`[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);
+    enviar(((extra && extra.antes) ? extra.antes + "\n" : "") + `[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);
+  };
+
+  /* ---------------- A FOGUEIRA (MM-C · C6, F2 — aprovada pela pessoa, 11/10) ----------------
+     A forma é de «mente/formas.md» § Fogueira; o motor é de «subtramas.js»
+     (quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta, fraseDaManha); o
+     painel é «painel-fogueira.jsx». Daqui só sai a fiação:
+     · «Descanso longo» continua o ÚNICO que cobra. Ninguém do núcleo junto
+       → nada muda; junto e ninguém com o que dizer → o descanso corre e a
+       manhã abre com a linha (E); alguém com o que dizer → a roda (A).
+     · Sentar = um turno do Narrador: a linha do motor vai pela pauta
+       (coracaoFalaRef, secção CORAÇÃO), e a frase do turno só pede a fala.
+     · O que o motor devolveu ao sentar só se grava quando a noite FECHA
+       (Dormir, um lado, ficar): um Mestre que cala no meio não deixa uma
+       coisa "contada" que ninguém ouviu.
+     · Tudo em calou: se a fogueira estoura, o descanso corre como hoje. */
+  const ABERTURA_DA_FOGUEIRA = "A lenha estala. Ninguém tem pressa de dormir.";
+  /* o veredito do botão e o recibo da manhã saem da MESMA conta (R13 §4.2):
+     duas contas para o mesmo preço seriam duas verdades */
+  const contasDoLongo = () => {
+    const bocas = 1 + ((personagem.grupo || []).length);
+    const cd = consumoDiario(bocas);
+    const nPrazos = prazosDaCinta(relogios).length;
+    const dobra = podeDescansoLongo(personagem, dia).pode;
+    const curadas = limparPorDescanso(personagem.condicoes || [], "longo").removidas
+      .map((c) => c && c.nome).filter(Boolean);
+    const custa = [
+      "uma noite inteira",
+      cd.racoes + (cd.racoes === 1 ? " ração" : " rações") + " e " + cd.agua + (cd.agua === 1 ? " água" : " águas"),
+      nPrazos ? "+1 noite em " + nPrazos + (nPrazos === 1 ? " prazo" : " prazos") : "",
+    ].filter(Boolean).join(" · ");
+    const devolveSo = [
+      dobra ? "PV e PM cheios" : "o mesmo que um curto (já dormiu hoje)",
+      dobra ? "metade dos dados de vida" : "",
+      curadas.length ? "cura " + curadas.join(", ") : "",
+    ].filter(Boolean).join(" · ");
+    let conversa = false;
+    try { const rf = dobra ? rodaDaFogueira() : null; conversa = !!(rf && rf.lista.some((x) => x && x.voz != null)); } catch (e) { calou("a conversa à fogueira no veredito", e); }
+    return { custa, devolve: devolveSo + (conversa ? " · uma conversa à fogueira" : ""), devolveSo, conversa };
+  };
+  /* quem está junto ao fogo: o grupo (sem invocações) e, numa cidade fora
+     de viagem, quem do núcleo mora nela. O vilão o motor tira. */
+  const rodaDaFogueira = () => {
+    try {
+      if (!acampadoRef.current || fogueiraEstourouRef.current) return null;
+      const pers = personagemRef.current || personagem || {};
+      if (!podeDescansoLongo(pers, diaRef.current).pode) return null;
+      const nucleo = nucleoAgora();
+      if (!nucleo || !(nucleo.pessoas || []).length) return null;
+      const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      const presentes = (pers.grupo || []).filter((g) => g && g.nome && !g.invocada).map((g) => g.nome);
+      const cidade = !jornadaRef.current ? sem(cidadeAtualRef.current) : "";
+      if (cidade) for (const p of nucleo.pessoas) if (p && p.nome && sem(p.cidade) === cidade && !presentes.includes(p.nome)) presentes.push(p.nome);
+      if (!presentes.length) return null;
+      const ctx = { ...contextoDoCoracao(nucleo), coracao: coracaoRef.current, presentes };
+      const lista = quemAoFogo(nucleo, ctx);
+      return lista.length ? { nucleo, ctx, lista } : null;
+    } catch (e) { calou("quem se senta à fogueira", e); return null; }
+  };
+  /* o rosto à roda é o mesmo que o jogador já conhece: o do grupo, o do
+     registo; o núcleo só dá o nome. «nomeNoNucleo» é o fio de volta ao motor. */
+  const enteDoFogo = (nome) => {
+    const pers = personagemRef.current || personagem || {};
+    const g = (pers.grupo || []).find((x) => x && x.nome === nome);
+    const n = (npcsRef.current || {})[nome];
+    const base = g || (n && typeof n === "object" ? { ...n, nome } : { nome });
+    return { ...base, nomeNoNucleo: nome };
+  };
+  /* a fala dela chegou? (a última resposta do Mestre desde que me sentei) */
+  const falaDesde = (lista, inicio) => {
+    const ms = (lista || []).slice(inicio).filter((m) => m && m.autor === "mestre" && m.texto);
+    return ms.length ? ms[ms.length - 1].texto : "";
+  };
+  const falouAoFogo = (f) => !!(f && f.fase === "fala" && falaDesde(mensagensRef.current, f.inicio));
+  /* fechar a noite: o ladrilho da manhã fica ancorado onde a manhã começa,
+     e o descanso corre como sempre correu */
+  const fecharANoite = (manha, antes) => {
+    try { if (manha && manha.frase) setManhaDaFogueira({ frase: manha.frase, recibo: manha.recibo || "", inicio: mensagensRef.current.length }); } catch (e) { calou("a manhã da fogueira", e); }
+    sairDoAcampamento("longo", antes ? { antes } : null);
+  };
+  const descansoLongo = () => {
+    if (!acampadoRef.current || bloqueado || carregando) return;
+    let rf = null;
+    try { rf = rodaDaFogueira(); } catch (e) { calou("a roda da fogueira", e); rf = null; }
+    let recibo = "";
+    try { recibo = rf ? "uma noite inteira · " + contasDoLongo().devolveSo : ""; } catch (e) { calou("o recibo da noite", e); }
+    try {
+      if (rf && rf.lista.some((x) => x && x.voz != null)) {
+        try { setTimeout(() => { try { if (areaRef.current) areaRef.current.scrollTop = 0; } catch (e2) { /* a roda abre mesmo assim */ } }, 0); } catch (e) { calou("a página ao topo da noite", e); }
+        definirFogueira({ fase: "roda", lista: rf.lista, roda: rf.lista.map((x) => ({ pessoa: enteDoFogo(x.pessoa), voz: x.voz, gesto: x.gesto })), quem: null, inicio: 0, sentado: null, recibo });
+        return;
+      }
+    } catch (e) { calou("abrir a fogueira", e); definirFogueira(null); }
+    let manha = null;
+    try { if (rf) manha = { frase: fraseDaManha({ tipo: "vazio" }), recibo }; } catch (e) { calou("a manhã sem conversa", e); }
+    fecharANoite(manha, "");
+  };
+  const sentarAoFogoUI = (pessoa) => {
+    try {
+      const f = fogueiraRef.current;
+      if (!f || carregando || falouAoFogo(f)) return;
+      const nome = pessoa && (pessoa.nomeNoNucleo || pessoa.nome);
+      if (!nome) return;
+      const nucleo = nucleoAgora();
+      const ctx = { ...contextoDoCoracao(nucleo), coracao: coracaoRef.current };
+      const r = sentarAoFogo(coracaoRef.current, nucleo, nome, ctx);
+      const p = ((nucleo && nucleo.pessoas) || []).find((x) => x && x.nome === nome) || {};
+      let aguenta = true, porta = false;
+      try { aguenta = aguentaANoite(r.coracao, nome, ctx); } catch (e) { calou("a noite aguenta?", e); }
+      try { porta = p.papel === "porta" && portaDoCoracaoAberta(r.coracao, nucleo); } catch (e) { calou("a porta da fogueira", e); }
+      definirFogueira({ ...f, fase: "fala", quem: nome, genero: p.genero || "", inicio: mensagensRef.current.length, sentado: r, aguenta, porta });
+      coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
+      enviar("[À FOGUEIRA — SENTO-ME AO LADO DE " + nome + "] É noite no acampamento e escolhi sentar-me junto de " + nome + ". Narre só o que " + nome + " diz e faz à volta do fogo, em fala direta (—), aqui mesmo; a noite ainda não acabou: nada de sono, nada de manhã." + SO_ISSO, fichaViva() || personagem);
+    } catch (e) { calou("sentar-se à fogueira", e); }
+  };
+  const dormirAoFogo = () => {
+    try {
+      const f = fogueiraRef.current;
+      if (!f || carregando) return;
+      let manha = { frase: fraseDaManha({ tipo: "dormir" }), recibo: f.recibo };
+      if (f.sentado && falouAoFogo(f)) {
+        coracaoRef.current = garantirCoracaoDoSave(f.sentado.coracao);
+        const r = f.sentado;
+        const tipo = (r.lados || []).length >= 2 ? "semResposta" : r.voz === "pedido" ? "pedido" : r.voz === "ficha" ? "ficha" : "dormir";
+        manha = { frase: fraseDaManha({ tipo, nome: f.quem, genero: f.genero }), recibo: f.recibo };
+      }
+      fecharANoite(manha, "");
+    } catch (e) { calou("dormir à fogueira", e); definirFogueira(null); sairDoAcampamento("longo"); }
+  };
+  /* um lado fecha a noite: a reação dela e a manhã vêm no mesmo turno. É
+     irreversível, e os dois lados estavam na tela com o preço (o painel). */
+  const escolherAoFogo = (ab) => {
+    try {
+      const f = fogueiraRef.current;
+      if (!f || carregando || !falouAoFogo(f) || !f.sentado) return;
+      const lado = (f.sentado.lados || [])[ab === "b" ? 1 : 0];
+      if (!lado) return;
+      const nucleo = nucleoAgora();
+      const r = escolherLado(f.sentado.coracao, nucleo, f.quem, lado.id, contextoDoCoracao(nucleo));
+      const pers = fichaViva() || personagem || {};
+      const custo = custoDoCoracao(r.efeitos);
+      if (custo > (pers.moedas || 0)) { pushMsgs([{ autor: "sistema", texto: "Não chega: custa " + custo + " moedas, e você tem " + (pers.moedas || 0) + "." }]); return; }
+      coracaoRef.current = garantirCoracaoDoSave(r.coracao);
+      try { aplicarEfeitosDoCoracao(r.efeitos); } catch (e) { calou("os efeitos da decisão à fogueira", e); }
+      if (custo) { const np = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - custo) }; personagemRef.current = np; setPersonagem(np); }
+      coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
+      fecharANoite({ frase: fraseDaManha({ tipo: "lado", nome: f.quem, genero: f.genero, preco: lado.preco }), recibo: f.recibo },
+        "[À FOGUEIRA — A DECISÃO SOBRE " + f.quem + ", TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre primeiro a reação de " + f.quem + ", ainda à volta do fogo; só depois a noite passa.");
+    } catch (e) { calou("decidir à fogueira", e); }
+  };
+  const ficarAoFogo = () => {
+    try {
+      const f = fogueiraRef.current;
+      if (!f || carregando || !f.porta || !falouAoFogo(f) || !f.sentado) return;
+      coracaoRef.current = garantirCoracaoDoSave(f.sentado.coracao);
+      fecharANoite({ frase: fraseDaManha({ tipo: "porta", nome: f.quem, genero: f.genero }), recibo: f.recibo },
+        "[À FOGUEIRA — FICO MAIS UM POUCO COM " + f.quem + ", SÓ NÓS DOIS] Os outros já dormem. Narre primeiro esse momento breve, os dois junto às brasas, sem decidir nada por mim; só depois a noite passa.");
+    } catch (e) { calou("ficar à fogueira", e); }
+  };
+  /* o que o painel recebe neste render — chamado como função, nunca um
+     componente definido aqui dentro (o foco) */
+  const propsDaFogueira = () => {
+    const f = fogueira;
+    const base = { roda: f.roda, abertura: ABERTURA_DA_FOGUEIRA, aoSentar: sentarAoFogoUI, aoEscolher: escolherAoFogo, aoDormir: dormirAoFogo, aoFicar: ficarAoFogo };
+    if (f.fase !== "fala") return base;
+    const item = f.roda.find((x) => x && x.pessoa && (x.pessoa.nomeNoNucleo || x.pessoa.nome) === f.quem);
+    const pessoa = item ? item.pessoa : { nome: f.quem };
+    const texto = carregando ? "" : falaDesde(mensagens, f.inicio);
+    if (!texto) return { ...base, escolhido: pessoa };
+    const lados = (f.sentado && f.sentado.lados) || [];
+    const escolha = lados.length >= 2 ? { a: { verbo: lados[0].verbo, preco: lados[0].preco }, b: { verbo: lados[1].verbo, preco: lados[1].preco } } : null;
+    return { ...base, fala: { pessoa, texto }, escolha, aguentaNoite: !!f.aguenta, portaAberta: !!f.porta };
   };
 
   /* Escolher/trocar caminho (classe). Regras:
@@ -26473,7 +26677,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 transiciona a cada turno é um piscar por turno, e o que muda
                 entre cenas é o texto, nunca a altura. */}
             <CabecalhoDaPagina {...etiquetasDaPagina({ lugar: lugarDaCena(), cena: cenaDoPalco(),
-              luz: luzDaHora(Math.floor((minuto || 0) / 60)), clima })} />
+              luz: luzDaHora(Math.floor((minuto || 0) / 60)), clima })} {...(fogueiraNaPagina ? { lugar: "A noite · " + ((sitio && sitio.nome) || lugarDaCena()) } : {})} />
             {/* V5 · a região que rola ganha um invólucro: é contra ele que a seta
                 do fim se posiciona, e por isso ela fica sempre ACIMA do pé do
                 cartão (a soleira), nunca por cima de uma oferta. */}
@@ -26491,7 +26695,32 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   do escopo dele (o estado, a porta, a voz) e mais nada: a mesa
                   (a dobra da luta, o recibo) passa a trabalhar no relato sem o
                   bastão deste arquivo. */}
-              <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} />
+              {/* A FOGUEIRA (MM-C · C6, F2): com a roda aberta, a página É a
+                  noite (formas.md § Fogueira, estados A–C) — o relato volta
+                  quando ela fecha, com a fala dela dentro. Depois, a manhã
+                  abre com o ladrilho, ancorado onde ela começa: o relato
+                  parte-se em dois ali, e os índices da segunda metade
+                  (a voz, a abertura, o ouvir) andam com o corte. */}
+              {fogueiraNaPagina ? (
+                <div className="w-full px-4 md:px-8 py-4">
+                  <LimiteDaFogueira aoEstourar={() => { fogueiraEstourouRef.current = true; definirFogueira(null); }}>
+                    <PainelFogueira {...propsDaFogueira()} />
+                  </LimiteDaFogueira>
+                </div>
+              ) : (() => {
+                const mf = manhaDaFogueira;
+                const k = mf ? mf.inicio : -1;
+                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} />;
+                return (
+                  <>
+                    <Relato mensagens={mensagens.slice(0, k)} carregando={false} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} />
+                    <div className="tv-coluna">
+                      <LimiteDaFogueira aoEstourar={() => setManhaDaFogueira(null)}><PainelFogueira manha={mf} /></LimiteDaFogueira>
+                    </div>
+                    <Relato mensagens={mensagens.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} />
+                  </>
+                );
+              })()}
               {/* A ESPERA, dita uma vez e onde a resposta vai nascer (V5 §9): o dado
                   que rola (o de sempre, `tv-dice`, com a saída dele no reduced
                   motion) e a voz preparando — a forma da `Voz`, que era a do topo.
@@ -26712,7 +26941,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               );
             })()}
 
-            {acampado && (
+            {acampado && !fogueiraNaPagina && (
               <div className="tv-fade tv-margem-abas mx-4 md:mx-8 mb-2 rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>Acampamento — o tempo está pausado</div>
                 {/* v9.100: ONDE se está dormindo, e o que isso custa. A
@@ -26838,22 +27067,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     cobrar.
                     ============================================================ */}
                 {(() => {
-                  const bocas = 1 + ((personagem.grupo || []).length);
-                  const cd = consumoDiario(bocas);
-                  const nPrazos = prazosDaCinta(relogios).length;
-                  const dobra = podeDescansoLongo(personagem, dia).pode;
-                  const curadas = limparPorDescanso(personagem.condicoes || [], "longo").removidas
-                    .map((c) => c && c.nome).filter(Boolean);
-                  const precoLongo = [
-                    "uma noite inteira",
-                    cd.racoes + (cd.racoes === 1 ? " ração" : " rações") + " e " + cd.agua + (cd.agua === 1 ? " água" : " águas"),
-                    nPrazos ? "+1 noite em " + nPrazos + (nPrazos === 1 ? " prazo" : " prazos") : "",
-                  ].filter(Boolean).join(" · ");
-                  const devolveLongo = [
-                    dobra ? "PV e PM cheios" : "o mesmo que um curto (já dormiu hoje)",
-                    dobra ? "metade dos dados de vida" : "",
-                    curadas.length ? "cura " + curadas.join(", ") : "",
-                  ].filter(Boolean).join(" · ");
+                  /* MM-C · C6: a conta mudou-se para contasDoLongo — o recibo
+                     da manhã lê a mesma; e a linha devolve ganha «· uma
+                     conversa à fogueira» quando alguém junto tem o que dizer */
+                  const { custa: precoLongo, devolve: devolveLongo } = contasDoLongo();
                   const saida = (chave, aoClicar, nome, custa, devolve, primaria) => (
                     <button key={chave} onClick={aoClicar} disabled={bloqueado}
                       className="tv-anel-foco w-full rounded-lg px-3 py-2 text-left"
@@ -26874,7 +27091,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   );
                   return (
                     <div className="flex flex-col gap-2">
-                      {saida("longo", () => sairDoAcampamento("longo"), "Descanso longo", precoLongo, devolveLongo, true)}
+                      {saida("longo", descansoLongo, "Descanso longo", precoLongo, devolveLongo, true)}
                       {saida("curto", () => sairDoAcampamento("curto"), "Descanso curto", "cerca de uma hora · nenhum prazo anda, nada se come", "parte do PM — o PV sai dos dados de vida, um a um", false)}
                       {saida("arrumar", levantarSemDescansar, "Sair sem descansar", MINUTOS_ARRUMANDO + " minutos · nenhum prazo anda, nada se come", "nada — você só arrumou o que leva", false)}
                     </div>
@@ -26971,6 +27188,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   </PeDaPagina>
                 );
               }
+              /* MM-C C6: com a roda aberta, a noite É a decisão do turno — os
+                 verbos dela moram na página (formas.md § Fogueira, A–C: só o
+                 compositor fica). A soleira volta quando a noite fecha. */
+              if (fogueiraNaPagina) return null;
               const vivas = ofertasDaSoleira();
               /* MM-C C2: o que alguém do núcleo pede ou deixa ao herói decidir — por
                  cima da soleira, que continua (não disputam a mesma decisão). */

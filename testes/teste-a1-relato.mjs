@@ -59,8 +59,18 @@ t("os componentes do relato são do módulo, nunca de dentro de um render",
   !/^\s+(const|function) [A-Z]\w* = \(|^\s+function [A-Z]\w*\(/m.test(RELATO));
 
 sec("2. O APP PASSA O QUE O LAÇO LIA, E SÓ ISSO");
-const chamada = (APP.match(/<Relato [^\n]*\/>/) || [""])[0];
-t("o App renderiza `<Relato …/>` uma vez", (APP.match(/<Relato /g) || []).length === 1 && !!chamada);
+/* MM-C · C6 (F2, 11/10) — ASSERÇÃO MOVIDA, e o motivo: a manhã da fogueira
+   abre com o ladrilho ACIMA da prosa do Narrador, e o relato parte-se em dois
+   no índice onde a manhã começa. O App passa a ter três chamadas: a inteira
+   e, enquanto há uma manhã ancorada, as duas metades. A intenção desta
+   asserção sobrevive inteira: a chamada INTEIRA continua a ser uma só e a
+   passar exatamente o que o laço lia (as seis abaixo); as metades passam as
+   mesmas seis props (a segunda com os índices andados pelo corte). */
+const chamadas = APP.match(/<Relato [^\n]*\/>/g) || [];
+const chamada = chamadas.find((c) => c.includes("mensagens={mensagens}")) || "";
+t("o App renderiza `<Relato …/>` inteiro uma vez (e, na manhã da fogueira, as duas metades com as mesmas props)",
+  chamadas.filter((c) => c.includes("mensagens={mensagens}")).length === 1 && (APP.match(/<Relato /g) || []).length === chamadas.length && chamadas.length <= 3
+  && chamadas.every((c) => ["mensagens=", "carregando=", "voz=", "abertura=", "aoAbrir=", "aoOuvir="].every((p) => c.includes(p))));
 for (const [prop, de] of [["mensagens", "mensagens"], ["carregando", "carregando"], ["voz", "voz"], ["abertura", "abertura"], ["aoAbrir", "abrirPortaDoSistema"], ["aoOuvir", "ouvirMestre"]]) {
   t(`  ${prop}={${de}}`, chamada.includes(`${prop}={${de}}`));
 }

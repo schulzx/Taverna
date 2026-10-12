@@ -440,12 +440,21 @@ t("o que já foi aceite sai da soleira, pelo MESMO ensaio seco que o aceite apli
   {
     const iSaidas = APP.indexOf("R13 · §4.2 — O ACAMPAMENTO ESCREVE O QUE COBRA");
     const rSaidas = iSaidas < 0 ? "" : APP.slice(iSaidas, iSaidas + 4200);
+    /* MM-C · C6 (F2, 11/10) — ASSERÇÃO MOVIDA, e o motivo: a conta do
+       descanso longo saiu do corpo do botão para `contasDoLongo`, porque a
+       manhã da fogueira mostra o recibo da mesma noite e duas contas para o
+       mesmo preço seriam duas verdades (a lei que este bloco guarda). A
+       intenção sobrevive: o botão lê `contasDoLongo()`, e é lá que as quatro
+       funções que vão cobrar continuam a fazer a conta. */
+    const iContas = APP.indexOf("  const contasDoLongo = () => {");
+    const rContas = iContas < 0 ? "" : APP.slice(iContas, APP.indexOf("\n  };", iContas));
     t("e a conta INTEIRA está no toque que a cobra — o descanso longo",
       rSaidas.length > 500
-      && /consumoDiario\(bocas\)/.test(rSaidas)
-      && /\+1 noite em /.test(rSaidas)
-      && /limparPorDescanso\(personagem\.condicoes \|\| \[\], "longo"\)/.test(rSaidas)
-      && /podeDescansoLongo\(personagem, dia\)/.test(rSaidas),
+      && /= contasDoLongo\(\);/.test(rSaidas)
+      && /consumoDiario\(bocas\)/.test(rContas)
+      && /\+1 noite em /.test(rContas)
+      && /limparPorDescanso\(personagem\.condicoes \|\| \[\], "longo"\)/.test(rContas)
+      && /podeDescansoLongo\(personagem, dia\)/.test(rContas),
       "medido em R6: `Descanso longo` dizia 'tudo, uma vez por dia' e cobrou a noite de um prazo, a comida e a água — três preços irreversíveis, nenhum na cara do botão");
     t("e as três saídas dizem, cada uma, o que custam e o que devolvem",
       (rSaidas.match(/saida\("/g) || []).length === 3 && /custa \{custa\}/.test(rSaidas) && /devolve \{devolve\}/.test(rSaidas),
