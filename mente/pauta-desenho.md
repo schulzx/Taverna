@@ -82,6 +82,7 @@ conserta**, porque é esse o limite do modelo de reversão que ela própria deu.
 *A pergunta deixou de ser "isto é pesado?" e passou a ser "um commit revertido
 conserta isto?". Se conserta, faz-se — e diz-se no relato.*
 
+- **12/10 — a pessoa liberou os rostos e o mapa:** *"Também aprove o agente designer para continuar os desenhos dos rostos no Figma, já temos um início de projeto para trocar os rostos e cards, também temos o mapa que ainda não foi codado e está pronto."* Retratos: começa pela **F1 (as 18 feras)**; antes da F2 (240 chamadas) a pessoa vê a F1 e o custo. Os cards e o mapa (a faixa panorâmica e a tela grande `166:88`, página 07) passam a construir.
 - **[Retratos] gerar a biblioteca pintada — custa créditos de IA** · 11/10 · `formas.md` §Retratos · Figma `181:2`
   O sistema está decidido e a amostra está feita (20 matrizes, 20 chamadas de `gemini-3.1-flash-image` no plano Pro). A biblioteca inteira são ~480 células de gente × 2 variantes + ~60 espécies ≈ **1 020 matrizes** (≈ 1 500 com a idade, R4). É dinheiro — por isso é dela. Proposta de ordem, cada fase utilizável sozinha: **F1** as 18 feras do bestiário de fantasia (18 chamadas); **F2** o herói, 10 raças × 2 sexos × 12 classes (240); **F3** o elenco por ofício (240); **F4** a segunda variante.
 - **[Retratos, a proposta ambiciosa] o retrato guarda a campanha** · 11/10 · `formas.md` §Retratos 10 · pedido R6
