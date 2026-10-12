@@ -13,6 +13,7 @@
 import {
   TIPOS_DE_LACO, tipoDeLacoPorId, FORCA_MAX, garantirLaco, RELACOES_NPC,
   firmarLaco, romperLaco, comLaco, criarNPC, firmarEntre, paresEntre, resumoNPCsParaPrompt,
+  AFROUXAR_LACO, afrouxarLaco,
 } from "../src/npcs.js";
 import { ASSUNTOS, assuntoPorId, escolherAssunto, garantirCompasso, avancarCompasso, envelopeDoCompasso } from "../src/compasso.js";
 import { garantirSituacao } from "../src/biblioteca.js";
@@ -52,6 +53,29 @@ sec("1. O REGISTRO DO LAÇO");
   t("reatar limpa a marca", reatado.laco.rompido === false);
   t("mas não devolve a força", reatado.laco.forca < n2.laco.forca);
   t("romper o que não existe não quebra", romperLaco(n0, 5).laco === null);
+}
+
+sec("1b. AFROUXAR — o laço −1 das subtramas (C2, 11/10)");
+/* A prova viva da C2 (v9.414) achou o −1 de quinze lados das subtramas a
+   chegar ao Narrador só como fato: havia firmar e romper, e nada no meio. */
+{
+  t("a tabela: um passo, e o piso é 1", AFROUXAR_LACO.passo === 1 && AFROUXAR_LACO.piso === 1);
+  let n = criarNPC("Dora");
+  for (let i = 0; i < 3; i++) n = firmarLaco(n, "divida", 4);
+  const congelado = Object.freeze({ ...n, laco: Object.freeze({ ...n.laco }) });
+  const a = afrouxarLaco(congelado);
+  t("afrouxar tira um passo de força", n.laco.forca === 3 && a.laco.forca === 2);
+  t("e não mexe no resto do laço (tipo, desde, marca)", a.laco.tipo === "divida" && a.laco.desde === 4 && a.laco.rompido === false);
+  t("não muta o recebido", congelado.laco.forca === 3 && a !== congelado);
+  const b = afrouxarLaco(afrouxarLaco(a));
+  t("para no piso: afrouxar não parte um laço (partir é romperLaco)", b.laco.forca === AFROUXAR_LACO.piso && b.laco.rompido === false);
+  t("no piso devolve o MESMO objeto (o App só grava o que mudou)", afrouxarLaco(b) === b);
+  const r = romperLaco(n, 9);
+  t("o rompido não afrouxa", afrouxarLaco(r) === r);
+  const s0 = criarNPC("Irineu");
+  t("sem laço, nada", afrouxarLaco(s0) === s0);
+  t("lixo não estoura", [null, undefined, {}, 7, "x"].every((x) => afrouxarLaco(x) === x));
+  t("firmar depois de afrouxar sobe de novo", firmarLaco(a, "divida", 5).laco.forca === 3);
 }
 
 sec("2. AS PERGUNTAS QUE O MESTRE FAZ");

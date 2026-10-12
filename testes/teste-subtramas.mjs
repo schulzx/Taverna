@@ -24,7 +24,8 @@
      7. o veredito antes do clique: os lados, o pedido, a escolha;
      8. a pauta: a cidade cheia (~1323) em que a linha do núcleo entra, e as
         500 cenas em que ela não tira veto nem desfecho;
-     9. a fogueira; 10. o Livro de Promessas; 11. o lixo e a imutabilidade.
+     9. a fogueira; 10. o Livro de Promessas; 11. o lixo e a imutabilidade;
+    12. a voz presa ao nome e o género na linha (a prova viva da v9.414).
 
    Tudo por semente: nenhum `Math.random` decide uma asserção. */
 import {
@@ -37,6 +38,7 @@ import {
 import {
   PAPEIS_DO_NUCLEO, QUER, TEME, ESCONDE, CARREGA, COMO_FALA, LINHA, ELO_DO_ANTECEDENTE, TIQUES_PROIBIDOS, QUEM_E, FOGUEIRA_CONTA,
   nucleoDaCampanha, garantirCoracaoDoSave, generoDaPessoa, quemEParaPauta,
+  VOZ_PRESA, vozPresa, GENERO_NA_LINHA, temGenero, comGenero, linhaQuemE, fichaNaVoz,
 } from "../src/nucleo.js";
 import { FORMAS_DE_SEMENTE, semear, regar, pagar, sementePorId } from "../src/promessas.js";
 import { ANTECEDENTES } from "../src/antecedentes.js";
@@ -442,8 +444,9 @@ sec("8. a pauta — a cidade cheia, e as 500 cenas");
   const vetos = cidade().naoPode;
   t(`a linha QUEM É de quem está em cena entra (${qe[0].length} caracteres)`, qe.length === 1 && com1.includes(qe[0]));
   t("…sem tirar veto, rumo, fecho nem a batida da espinha", vetos.every((v) => com1.includes(v)) && com1.includes(cidade().rumo[0]) && com1.includes(cidade().fecho[0]) && com1.includes(cidade().momento[0]) && com1.length <= TETO_DA_PAUTA);
-  /* a batida da pessoa (220): entra, e o que cede é a decoração */
-  const cor = "Vando (é fato: entra nesta resposta, dito por ele): traz ao pescoço a tábua da irmã, num cordão de couro, e PEDE ao herói: \"Se a carroça partir comigo, leva isto à Lia.\" Conta tudo em dias. " + x(10, "z");
+  /* a batida da pessoa (220): entra, e o que cede é a decoração. (v9.415:
+     a voz na forma nova, presa ao nome — o corte a 220 não muda) */
+  const cor = "Vando (é fato: entra nesta resposta, dito por ele): traz ao pescoço a tábua da irmã, num cordão de couro, e PEDE ao herói: \"Se a carroça partir comigo, leva isto à Lia.\" (voz do Vando: conta tudo em dias). " + x(10, "z");
   const corLinha = cor.slice(0, 220);
   const com2 = textoDaPauta(porNaPauta(cidade(), "coracao", corLinha));
   t("a linha QUEM CARREGA (220) entra no mesmo turno de cidade", com2.includes(corLinha));
@@ -587,6 +590,94 @@ sec("11. o lixo e a imutabilidade");
   } catch (e) { erro = e.message; }
   t("nada muta o núcleo, os arcos, o coração nem o contexto (congelados)", erro === "", erro);
   t("as tabelas não são mutadas pelo uso", ARCOS.every((a) => a.escolha.lados.length === 2) && JSON.stringify(ARCOS).includes("{nome}"));
+}
+
+sec("12. a voz presa ao nome e o género na linha (a prova viva da v9.414)");
+/* A prova viva da fiação da C2 achou duas coisas que nenhuma suíte via:
+   (1) o tique colado ao fim da linha como frase solta ("…Treze dias."
+   Pergunta o preço de tudo, até do silêncio.") foi lido como prosa — o
+   Mestre repetiu "Jura por coisas pequenas." tal e qual, e uma vez deu o
+   tique da Dora ao Irineu; (2) a Dora, "ela" na ficha, saiu "um homem" na
+   narração. Esta catraca varre as três linhas que levam a voz (QUEM É,
+   QUEM CARREGA, a fogueira) e as do coração nos 120 mundos. */
+{
+  const PRIM = (n) => String(n).trim().split(/[\s,]+/)[0];
+  const maiusc = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+  t("a tabela: um marcador por género, e o modelo põe o nome dentro dele", VOZ_PRESA.marcador.mulher === "(voz da " && VOZ_PRESA.marcador.homem === "(voz do " && VOZ_PRESA.marcador[""] === "(voz de " && VOZ_PRESA.modelo.includes("{marcador}{nome}: {tique}"));
+  t("a marca do género é curta", Object.values(GENERO_NA_LINHA.marca).every((m) => m.length <= 6));
+
+  /* (1) cada linha com o tique de alguém tem-no preso ao nome dessa pessoa,
+     pelo marcador do género dela — e em mais lado nenhum da linha */
+  const comVoz = { quemE: 0, carrega: 0, fogo: 0 }, soltas = [], longas = [], abertas = [], generoErrado = [];
+  const ver = (tipo, l, p, max) => {
+    if (!l || !p || !p.ficha || !p.ficha.fala) return;
+    const tq = p.ficha.fala.o;
+    if (l.length > max) longas.push(l);
+    if (!/[.!?…]"?$/.test(l)) abertas.push(l);
+    const vezes = l.split(tq).length - 1;
+    if (!vezes) return;
+    comVoz[tipo]++;
+    const g = generoDaPessoa(p);
+    const presa = VOZ_PRESA.marcador[g] + PRIM(p.nome) + ": " + tq;
+    if (l.split(presa).length - 1 !== vezes || l.includes(maiusc(tq) + ".")) soltas.push(l);
+    if ((g === "mulher" && l.includes(VOZ_PRESA.marcador.homem)) || (g === "homem" && l.includes(VOZ_PRESA.marcador.mulher))) generoErrado.push(l);
+  };
+  MUNDOS.forEach((w, i) => {
+    const ultimo = w.espinha.atos.length - 1;
+    for (const p of w.nucleo.pessoas) {
+      for (const ato of [0, 1, ultimo]) for (const cenas of [0, 1, 3]) {
+        const tamanho = ato <= 0 ? "inicio" : ato >= ultimo ? "fim" : "meio";
+        ver("quemE", linhaQuemE(p, { tamanho, fio: w.espinha.fio, cenas }), p, QUEM_E.max);
+      }
+      const contados = [];
+      for (let k = 0; k < 5; k++) { const r = fichaNaVoz(p, { contados, fio: w.espinha.fio }); if (!r) break; contados.push(r.campo); ver("fogo", r.linha, p, FOGUEIRA_CONTA.max); }
+    }
+    for (const ev of SIM[i].eventos) {
+      if (!ev.linha || ev.longe) continue;
+      ver("carrega", ev.linha, w.nucleo.pessoas.find((p) => p.nome === ev.nome), LINHA_DO_CORACAO.max);
+    }
+  });
+  t(`as três linhas levam a voz (QUEM É ${comVoz.quemE}, QUEM CARREGA ${comVoz.carrega}, fogueira ${comVoz.fogo})`, comVoz.quemE > 500 && comVoz.carrega > 100 && comVoz.fogo > 100);
+  t("toda linha com tique tem-no preso ao nome (\"(voz da Dora: …)\"), nunca como frase solta", soltas.length === 0, soltas[0]);
+  t("o artigo do marcador concorda com quem fala (nunca \"voz do\" de uma mulher)", generoErrado.length === 0, generoErrado[0]);
+  t("e as linhas continuam a caber (130 / 220) e fechadas", longas.length === 0 && abertas.length === 0, longas[0] || abertas[0]);
+  t("a voz sem tique é vazia, e o lixo não estoura", vozPresa({ nome: "X", ficha: {} }) === "" && [null, undefined, 7, "x", {}].every((x) => vozPresa(x) === ""));
+
+  /* (2) o género: toda linha do coração sobre alguém de género conhecido
+     di-lo — pela voz, pelo "dito por ela", por uma frase flexionada, ou
+     pela marca curta; e a marca só entra onde faz falta */
+  const semGenero = [], marcaDobrada = [];
+  let comMarca = 0, vistas = 0;
+  MUNDOS.forEach((w, i) => {
+    for (const ev of SIM[i].eventos) {
+      if (!ev.linha || ev.longe) continue;
+      const p = w.nucleo.pessoas.find((x) => x.nome === ev.nome);
+      const g = generoDaPessoa(p);
+      if (!p || !g || !ev.linha.includes(PRIM(p.nome))) continue;
+      if (p.papel === "vilao" && !ev.linha.startsWith(p.nome.split(",")[0])) continue; /* o servo do vilão fala por ele */
+      vistas++;
+      if (!temGenero(ev.linha, g)) semGenero.push(ev.linha);
+      const m = GENERO_NA_LINHA.marca[g];
+      if (ev.linha.includes(m)) { comMarca++; if (temGenero(ev.linha.replace(m, ""), g)) marcaDobrada.push(ev.linha); }
+    }
+  });
+  t(`toda linha do coração diz o género de quem a vive (${vistas} linhas, ${comMarca} com a marca)`, vistas > 500 && semGenero.length === 0, semGenero[0]);
+  t("a marca só onde nada mais o diz (nunca junto do \"dito por ela\" ou da voz)", marcaDobrada.length === 0, marcaDobrada[0]);
+  /* a QUEM É: na estreia diz o género; depois não gasta a marca */
+  const estreiaSem = [], depoisCom = [];
+  for (const w of MUNDOS) for (const p of w.nucleo.pessoas) {
+    const g = generoDaPessoa(p);
+    if (!g) continue;
+    const l0 = linhaQuemE(p, { fio: w.espinha.fio, cenas: 0 }), l3 = linhaQuemE(p, { fio: w.espinha.fio, cenas: 3 });
+    if (l0 && !temGenero(l0, g)) estreiaSem.push(l0);
+    if (l3.includes(GENERO_NA_LINHA.marca[g])) depoisCom.push(l3);
+  }
+  t("a QUEM É diz o género na estreia da pessoa", estreiaSem.length === 0, estreiaSem[0]);
+  t("e depois da estreia não gasta a marca", depoisCom.length === 0, depoisCom[0]);
+  /* as peças */
+  t("comGenero: põe a marca depois do nome, só quando falta", comGenero("Dora (é fato: entra nesta resposta): x.", { nome: "Dora", genero: "mulher" }) === "Dora (ela) (é fato: entra nesta resposta): x." && comGenero("Dora (é fato: entra nesta resposta, dito por ela): x.", { nome: "Dora", genero: "mulher" }) === "Dora (é fato: entra nesta resposta, dito por ela): x.");
+  t("comGenero: sem género conhecido, ou sem o nome na linha, não inventa", comGenero("Golem: x.", { nome: "Golem" }) === "Golem: x." && comGenero("Outra: x.", { nome: "Dora", genero: "mulher" }) === "Outra: x.");
+  t("temGenero: o lixo não estoura", [null, undefined, 7].every((x) => temGenero(x, "mulher") === false) && temGenero("x", "") === true && comGenero(null, null) === "");
 }
 
 console.log(`\n${ok} ok, ${mal} mal`);

@@ -55,7 +55,7 @@ import { rngDe } from "./geografia.js";
 import { FIO } from "./saga.js";
 import { relogioDoFio, RELOGIO_DO_FIO } from "./batidas.js";
 import { contrair } from "./lugar.js";
-import { mesmoNome, revelacaoPermitida, fichaNaVoz, generoDaPessoa, noGenero, garantirCoracaoDoSave } from "./nucleo.js";
+import { mesmoNome, revelacaoPermitida, fichaNaVoz, generoDaPessoa, noGenero, garantirCoracaoDoSave, vozPresa, comGenero } from "./nucleo.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -354,8 +354,10 @@ export const LINHA_DO_CORACAO = {
   oferta: "Um servo de {sombra} (é fato: entra nesta resposta, à mesa, sem se sentar): diz ao herói \"{fala}\"",
   sobreVilao: "Sobre {sombra} (é fato: entra nesta resposta): {crise}.",
   decidido: "{nome} (é fato: entra nesta resposta): o herói decidiu, e é assim — {preco}.",
-  /* o que a linha corta primeiro quando passa do máximo: o tique, depois o que traz */
-  tique: " {tique}.",
+  /* o que a linha corta primeiro quando passa do máximo: a voz, depois o
+     que traz. A voz já não mora aqui: era " {tique}." — frase solta, lida
+     como prosa na prova viva da v9.414 — e passou a `vozPresa` (nucleo.js),
+     a mesma forma da QUEM É e da fogueira. */
 };
 
 /* as poucas frases de outras tabelas que dizem a palavra de bastidor
@@ -535,7 +537,10 @@ function linhaDe(tipo, inst, extra, ctx) {
   const v = { ...inst.vars, ...extra, sombra };
   const g = inst.genero;
   const ench = (t) => semBastidor(noGenero(encher(encher(t, v), { sombra }), g));
-  return caber(fechar(ench(LINHA_DO_CORACAO[tipo])));
+  /* o género depois do nome quando a linha não o diz (`comGenero`); o
+     servo do vilão não é o vilão, e não o leva */
+  const x = fechar(ench(LINHA_DO_CORACAO[tipo]));
+  return caber(tipo === "oferta" ? x : comGenero(x, inst));
 }
 
 /* o pedido: a fala é obrigatória; o tique e o que traz entram se couberem */
@@ -547,7 +552,8 @@ function linhaDoPedido(inst, pessoa, ctx) {
   const g = inst.genero;
   const ench = (t, x) => semBastidor(noGenero(encher(encher(t, { ...inst.vars, ...x }), { sombra }), g));
   const fala = encher(inst.pedido.fala, { sombra });
-  const tique = f.fala && f.fala.o ? encher(LINHA_DO_CORACAO.tique, { tique: maiuscula(f.fala.o) }) : "";
+  const voz = vozPresa(pessoa);
+  const tique = voz ? ` ${voz}.` : "";
   const traz = f.carrega && f.carrega.tipo === "objeto" ? f.carrega.o : "";
   const max = LINHA_DO_CORACAO.max;
   const tentativas = [
@@ -555,7 +561,7 @@ function linhaDoPedido(inst, pessoa, ctx) {
     ench(LINHA_DO_CORACAO.pedido, { fala }) + tique,
     traz ? ench(LINHA_DO_CORACAO.pedidoTraz, { fala, carrega: traz }) : "",
     ench(LINHA_DO_CORACAO.pedido, { fala }),
-  ].filter(Boolean);
+  ].filter(Boolean).map((t) => comGenero(t, inst));
   return tentativas.find((t) => t.length <= max) || caber(tentativas[tentativas.length - 1]);
 }
 
@@ -565,8 +571,8 @@ function linhaDaEscolha(inst, ctx) {
   const [A, B] = inst.escolha.lados;
   const v = { ...inst.vars, contexto: inst.escolha.contexto, ladoA: A.diz, ladoB: B.diz, sombra };
   const ench = (t) => semBastidor(noGenero(encher(encher(t, v), { sombra }), inst.genero));
-  const cheia = ench(LINHA_DO_CORACAO.escolha);
-  return cheia.length <= LINHA_DO_CORACAO.max ? cheia : caber(ench(LINHA_DO_CORACAO.escolhaCurta));
+  const cheia = comGenero(ench(LINHA_DO_CORACAO.escolha), inst);
+  return cheia.length <= LINHA_DO_CORACAO.max ? cheia : caber(comGenero(ench(LINHA_DO_CORACAO.escolhaCurta), inst));
 }
 
 /* ============================================================

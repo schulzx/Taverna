@@ -187,6 +187,25 @@ export function romperLaco(npc, dia = 0) {
   return { ...npc, laco: { ...atual, rompido: true, rompidoEm: dia } };
 }
 
+/* AFROUXAR (C2, 11/10) — o "laço −1" de quinze lados das subtramas
+   ("separá-los", o voto quebrado, a mentira que se descobre). Havia firmar
+   (+1, ou criar) e romper, e nada no meio: o −1 só chegava ao Narrador
+   como fato, e o laço no registo ficava igual. Afrouxar tira um passo de
+   força e para no piso: um laço de força 1 não se parte por afrouxar —
+   partir é outra decisão (`romperLaco`), e fundir as duas apagaria a
+   diferença entre "falar menos" e "não falar mais". O rompido já está no
+   fundo e não afrouxa; sem laço, nada. Devolve o MESMO objeto quando nada
+   muda — o App só grava o que mudou. */
+export const AFROUXAR_LACO = { passo: 1, piso: 1 };
+
+export function afrouxarLaco(npc) {
+  const atual = garantirLaco(npc && npc.laco);
+  if (!atual || atual.rompido) return npc;
+  const forca = Math.max(AFROUXAR_LACO.piso, atual.forca - AFROUXAR_LACO.passo);
+  if (forca === atual.forca) return npc;
+  return { ...npc, laco: { ...atual, forca } };
+}
+
 /* ---------------- AS PERGUNTAS QUE O MESTRE FAZ ----------------
    Todas devolvem NOMES, porque é com nome que o envelope fala. E todas
    ignoram os mortos: um amor que termina com quem já morreu não é um

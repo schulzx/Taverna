@@ -444,6 +444,9 @@ export const GENERO_NA_FICHA = {
   feminino: [
     /* QUER */
     ["de quem o humilhou", "de quem a humilhou"],
+    /* o "quer" do elo sem antecedente (ELO_DO_ANTECEDENTE.sem) — a sonda da
+       voz presa (v9.415) achou-o a passar no masculino à Lysa */
+    ["de quem o mandou", "de quem a mandou"],
     ["ser chamado mestre", "ser chamada mestra"],
     /* TEME */
     ["ser deixado para trás", "ser deixada para trás"],
@@ -461,6 +464,7 @@ export const GENERO_NA_FICHA = {
     ["um credor que o cumprimenta", "um credor que a cumprimenta"],
     ["escrito na letra dele", "escrito na letra dela"],
     ["procura-o", "procura-a"],
+    ["pelo armazém dele", "pelo armazém dela"],
     ["quem o chora ainda espera", "quem a chora ainda espera"],
     /* CARREGA */
     ["os que confiavam nele", "os que confiavam nela"],
@@ -520,6 +524,79 @@ export function noGenero(texto, genero) {
   x = g === "mulher" ? x.replace(/(\p{L}+)o\(a\)/gu, "$1a").replace(/\(a\)/g, "a") : x.replace(/\(a\)/g, "");
   const pr = GENERO_NA_FICHA.pronomes[g];
   return x.replace(/\{(ele|Ele|dele|o|sozinho)\}/g, (m, k) => pr[k]);
+}
+
+/* ---------------- O GÉNERO NA LINHA (prova viva da v9.414) ----------------
+   A ficha flexiona as frases, mas a linha que chega ao Narrador nem sempre
+   leva uma: "Dora (é fato: entra nesta resposta): {crise}." não diz se a
+   Dora é ela ou ele — e o Narrador, sem sinal, chamou-a "um homem". A
+   linha leva a marca curta "(ela)"/"(ele)" logo depois do nome SÓ quando
+   não traz já nenhuma palavra que diga o género (o "dito por ela", uma
+   frase flexionada de `GENERO_NA_FICHA`, a voz "da Dora" de `VOZ_PRESA`):
+   seis caracteres onde fazem
+   falta, zero onde a linha já fala por si. Sem género conhecido (o Golem),
+   nada — a marca não inventa. A QUEM É só a leva na estreia da pessoa (é
+   a linha que se repete); as do coração, sempre que lhes falta. */
+export const GENERO_NA_LINHA = {
+  marca: { mulher: " (ela)", homem: " (ele)" },
+  ditas: { mulher: ["dito por ela", "sozinha"], homem: ["dito por ele", "sozinho"] },
+};
+
+/* a linha já diz o género de quem a vive? (sem género conhecido: sim —
+   não há nada a dizer) */
+export function temGenero(linha, genero) {
+  const g = genero === "mulher" || genero === "homem" ? genero : "";
+  if (!g) return true;
+  const x = String(linha == null ? "" : linha);
+  const frases = g === "mulher"
+    ? GENERO_NA_FICHA.feminino.map(([, por]) => por)
+    : [...GENERO_NA_FICHA.masculino.map(([, por]) => por), ...GENERO_NA_FICHA.feminino.map(([de]) => de)];
+  return [GENERO_NA_LINHA.marca[g].trim(), VOZ_PRESA.marcador[g], ...GENERO_NA_LINHA.ditas[g], ...frases].some((f) => x.includes(f));
+}
+
+/* a marca do género depois da primeira vez que o nome aparece — só se a
+   linha não o disser já (o nome do vilão é o que vem antes da vírgula) */
+export function comGenero(linha, pessoa) {
+  const x = String(linha == null ? "" : linha);
+  const p = obj(pessoa);
+  const g = generoDaPessoa(p);
+  if (!x || !g || temGenero(x, g)) return x;
+  const nome = String(p.nome || "").split(",")[0].trim();
+  const i = nome ? x.indexOf(nome) : -1;
+  if (i < 0) return x;
+  const fim = i + nome.length;
+  return x.slice(0, fim) + GENERO_NA_LINHA.marca[g] + x.slice(fim);
+}
+
+/* ---------------- A VOZ PRESA AO NOME (prova viva da v9.414) ----------------
+   A C2 colava o tique ao fim da linha como frase solta — `…"Treze dias."
+   Pergunta o preço de tudo, até do silêncio.` — e o Narrador leu-o como
+   prosa: repetiu "Jura por coisas pequenas." tal e qual na narração, e uma
+   vez deu o tique da Dora ao Irineu. O tique é instrução de voz, não
+   fala: vai sempre entre parênteses (o sinal da casa para o que é dito ao
+   Narrador, como o "(é fato: …)") e com o nome de quem o tem lá dentro,
+   pelo marcador fixo. Uma forma só para as três linhas que o levam (QUEM
+   É, QUEM CARREGA, a fogueira); a catraca procura o marcador. O nome é o
+   primeiro — o que o Narrador já leu à cabeça da mesma linha.
+   E o marcador diz o género de graça: "voz da Dora", "voz do Irineu" — o
+   artigo antes do nome é a flexão mais curta que a língua tem (zero
+   caracteres a mais que "voz de"), e é ele que dá à linha que leva a voz
+   o género inequívoco que a prova viva pediu. Sem género conhecido (o
+   Golem), "voz de". */
+export const VOZ_PRESA = {
+  marcador: { mulher: "(voz da ", homem: "(voz do ", "": "(voz de " },
+  modelo: "{marcador}{nome}: {tique})",
+  exemplo: "{tique}, como em {exemplo}",
+};
+
+/* a voz de uma pessoa do núcleo, presa ao nome; "" sem tique */
+export function vozPresa(pessoa, { exemplo = false } = {}) {
+  const p = obj(pessoa);
+  const f = obj(obj(p.ficha).fala);
+  const nome = String(p.nome == null ? "" : p.nome).trim().split(/[\s,]+/)[0];
+  if (!nome || !f.o) return "";
+  const tique = exemplo && f.exemplo ? encher(VOZ_PRESA.exemplo, { tique: f.o, exemplo: f.exemplo }) : String(f.o);
+  return encher(VOZ_PRESA.modelo, { marcador: VOZ_PRESA.marcador[generoDaPessoa(p)] || VOZ_PRESA.marcador[""], nome, tique });
 }
 
 /* ============================================================
@@ -872,24 +949,43 @@ export function linhaQuemE(pessoa, { tamanho = "inicio", fio = null, cenas = 0 }
   const ench = (x) => encher(x, { sombra });
   const nome = p.papel === "vilao" ? String(p.nome).split(",")[0].trim() : String(p.nome);
   const comExemplo = (Number(cenas) || 0) < QUEM_E.cenasComExemplo;
-  const fala = f.fala ? `${f.fala.o}${comExemplo && f.fala.exemplo ? `: ${f.fala.exemplo}` : ""}` : "";
-  const falaCurta = f.fala ? f.fala.o : "";
-  let partes;
+  /* o tique já não entra na lista do corpo: vai à cabeça, preso ao nome
+     (`vozPresa`) — "Dora (voz de Dora: …): quer …; teme …." A ordem de
+     antes fica: o que quer primeiro (a voz nunca o empurra para fora),
+     depois a voz (com o exemplo nas primeiras cenas, senão sem ele), e só
+     depois o que traz e o que teme. No vilão a voz vai primeiro, como ia. */
+  let partes, querFica = "", comVoz;
   if (p.papel === "vilao") {
     const vai = VILAO_POR_TAMANHO[tamanho] || VILAO_POR_TAMANHO.inicio;
-    partes = vai.map((c) => (c === "fala" ? fala : c === "quer" ? (f.quer ? `quer ${f.quer.o}` : "") : c === "linha" ? (f.linha ? f.linha.o : "") : c === "esconde" ? (f.esconde ? f.esconde.o : "") : ""));
+    comVoz = vai.includes("fala");
+    partes = vai.map((c) => (c === "quer" ? (f.quer ? `quer ${f.quer.o}` : "") : c === "linha" ? (f.linha ? f.linha.o : "") : c === "esconde" ? (f.esconde ? f.esconde.o : "") : ""));
   } else {
+    comVoz = true;
     const traz = f.carrega && f.carrega.tipo === "objeto" && !(Number(cenas) > 0) ? `traz ${f.carrega.o}` : "";
-    partes = [f.quer ? `quer ${ench(f.quer.o)}` : "", fala, traz, f.teme ? `teme ${f.teme.o}` : ""];
+    querFica = f.quer ? `quer ${ench(f.quer.o)}` : "";
+    partes = [querFica, traz, f.teme ? `teme ${f.teme.o}` : ""];
   }
-  const cab = `${nome}: `;
-  let dentro = cortarFrase(partes, QUEM_E.max - cab.length);
-  /* se a fala com exemplo não coube, vai o tique sem ele */
-  if (fala && falaCurta !== fala && !dentro.includes(fala)) dentro = cortarFrase(partes.map((x) => (x === fala ? falaCurta : x)), QUEM_E.max - cab.length);
-  if (!dentro.length) return "";
-  const corpo = `${cab}${dentro.join("; ")}`;
-  /* a frase fecha uma vez: o exemplo já traz o ponto dentro das aspas */
-  return /[.!?…]"$/.test(corpo) ? corpo : `${corpo}.`;
+  const vozes = comVoz ? [comExemplo ? vozPresa(p, { exemplo: true }) : "", vozPresa(p)].filter(Boolean) : [];
+  const montar = (marca) => {
+    for (const voz of [...vozes, ""]) {
+      const cab = `${nome}${marca}${voz ? ` ${voz}` : ""}`;
+      const dentro = cortarFrase(partes, QUEM_E.max - cab.length - 2);
+      if (voz && querFica && !dentro.includes(querFica)) continue;
+      if (!dentro.length) {
+        if (voz && `${cab}.`.length <= QUEM_E.max) return `${cab}.`;
+        continue;
+      }
+      const corpo = `${cab}: ${dentro.join("; ")}`;
+      /* a frase fecha uma vez: se o corpo já acaba em aspas com ponto, fica */
+      return /[.!?…]"$/.test(corpo) ? corpo : `${corpo}.`;
+    }
+    return "";
+  };
+  const linha = montar("");
+  /* na estreia da pessoa, a linha diz o género se nada nela o diz */
+  const g = generoDaPessoa(p);
+  if (linha && g && !(Number(cenas) > 0) && !temGenero(linha, g)) return montar(GENERO_NA_LINHA.marca[g]) || linha;
+  return linha;
 }
 
 export function quemEParaPauta(nucleo, cena) {
@@ -970,7 +1066,10 @@ export function fichaNaVoz(pessoa, { contados = [], tamanho = "inicio", fio = nu
     const gen = generoDaPessoa(p);
     const cab = noGenero(encher(FOGUEIRA_CONTA.cabeca, { nome: p.nome }), gen);
     let linha = `${cab}${noGenero(encher(modelo, { campo: encher(x.o, { sombra }) }), gen)}.`;
-    const tique = f.fala && f.fala.o ? ` Fala assim: ${f.fala.o}.` : "";
+    /* a voz presa ao nome, como nas outras duas linhas (era " Fala assim:
+       …", frase solta que o Narrador podia ler como prosa) */
+    const voz = vozPresa(p);
+    const tique = voz ? ` ${voz}.` : "";
     if ((linha + tique).length <= FOGUEIRA_CONTA.max) linha += tique;
     if (linha.length > FOGUEIRA_CONTA.max) continue;
     return { campo, linha };
