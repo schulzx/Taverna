@@ -109,7 +109,14 @@ sec("3. o achado da estrada: entra na bolsa no rolar, e não paga duas vezes");
   t("com a marca contada como declarada, a cobrança não paga o achado de novo", !oQueFaltaCreditar(narr, { moedas: 12 }).temAlgo);
   t("o App credita o achado no rolar, em viajar()", /enc && enc\.tipo === "achado" \? Math\.max\(0, Math\.floor\(Number\(enc\.moedas\) \|\| 0\)\) : 0/.test(app) && /persV = \{ \.\.\.persV, moedas: \(persV\.moedas \|\| 0\) \+ nAchado \}/.test(app));
   t("e o crédito vai antes do envio (o Narrador recebe a ficha com o dinheiro)", app.indexOf("persV = { ...persV, moedas: (persV.moedas || 0) + nAchado }") > 0 && app.indexOf("persV = { ...persV, moedas: (persV.moedas || 0) + nAchado }") < app.indexOf("if (qr.chamadas) enviar(textoDaViagem, persV)"));
-  t("a cobrança do App lê a marca nos envelopes do turno", /moedasDoAchadoNoEnvelope\(op\.envelopes \|\| ""\)/.test(app) && /oQueFaltaCreditar\(resp\.narrativa, jaDoAchado > 0 \?/.test(app));
+  /* asserção movida em v9.429 (8.ª sessão): desde a v9.428 quem lê a marca
+     é o próprio `oQueFaltaCreditar`, pelos `envelopes` (cobranca.js). O App
+     que somava a marca ao declarado E passava os envelopes descontaria o
+     achado duas vezes — então a prova agora é: os envelopes vão por nome, e
+     a soma à parte no App deixou de existir. */
+  t("a cobrança do App passa os envelopes do turno (a marca é lida no módulo) e não soma o achado à parte",
+    /oQueFaltaCreditar\(resp\.narrativa, resp\.mudancas, \{[^}]*envelopes: op\.envelopes \|\| ""/.test(app) && !/jaDoAchado/.test(app));
+  t("e o módulo desconta a marca dos envelopes (o achado não credita de novo)", !oQueFaltaCreditar(narr, null, { envelopes: "◉ 12 já na bolsa (creditadas pelo sistema)" }).temAlgo);
 }
 
 console.log(`\nnarrador só narra (E3, a fiação): ${ok} passaram, ${mal} falharam`);

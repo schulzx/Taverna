@@ -15,7 +15,7 @@ import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHisto
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome, fichaDoCronista } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
-import { rolarClima, rolarEncontro, moedasDoAchadoNoEnvelope } from "./encontros.js";
+import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
@@ -155,7 +155,7 @@ import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as 
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
-import { abrirViagem, andar, pausarViagem, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
+import { abrirViagem, andar, pausarViagem, jornadaSemDestino, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { partidaNaRegiao } from "./marcha.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
@@ -8560,7 +8560,10 @@ export default function Taverna() {
     try { return celulasNaRota(sementeMundo(), A, B, { mapa: mapaRef.current, molde: moldeMundo() }); } catch { return []; }
   };
   const talvezChegarSozinho = () => {
-    const j = jornadaRef.current;
+    /* 8.ª sessão: a jornada sem destino, andada até ao fim, fecha na cidade
+       de onde partiu (viagem.js) — a saída dos saves que já a têm */
+    let j = jornadaRef.current;
+    try { j = jornadaSemDestino(jornadaRef.current); } catch (e) { calou("a jornada sem destino", e); j = jornadaRef.current; }
     if (!j || !j.para) return;
     const p = progressoDaViagem(j);
     const diasNoCalendario = diaRef.current - (Number(j.desde) || diaRef.current);
@@ -10415,11 +10418,11 @@ export default function Taverna() {
     try {
       /* E3 (a fiação): o achado da estrada já entrou na bolsa no rolar, e o
          envelope di-lo com uma marca (encontros.js); o que ela diz conta como
-         declarado, para a narração do achado não o pagar outra vez */
-      let jaDoAchado = 0;
-      try { jaDoAchado = moedasDoAchadoNoEnvelope(op.envelopes || ""); } catch (e) { calou("o achado já na bolsa", e); jaDoAchado = 0; }
-      const mdC = resp.mudancas && typeof resp.mudancas === "object" ? resp.mudancas : {};
-      const falta = oQueFaltaCreditar(resp.narrativa, jaDoAchado > 0 ? { ...mdC, moedas: Math.max(0, Number(mdC.moedas) || 0) + jaDoAchado } : resp.mudancas);
+         declarado, para a narração do achado não o pagar outra vez.
+         8.ª sessão (v9.429): quem desconta a marca é o próprio módulo, pelos
+         `envelopes` — somá-la aqui também descontaria o achado duas vezes. E a
+         moeda do mundo ("você acha 10 escamas") vai pelo nome, a mesma do débito */
+      const falta = oQueFaltaCreditar(resp.narrativa, resp.mudancas, { moeda: typeof op.moeda === "string" ? op.moeda : "", envelopes: op.envelopes || "" });
       /* O DADO MANDA MAIS QUE A NARRAÇÃO. Achado na prova desta versão: o
          teste falhou, o Mestre narrou o roubo dando certo assim mesmo, e a
          cobrança creditou. A peça feita para a ficha obedecer à ficção tinha
@@ -15449,8 +15452,11 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
           /* v9.56: quem já está na estrada AVANÇA nela. Enquanto a chegada
              vinha do calendário isto não era preciso — bastava o tempo
              passar. Com a viagem contando estrada percorrida, sem esta porta
-             o herói ficaria a 7% do caminho para sempre. */
-          return umaSoResposta(() => viajar(jornadaRef.current.para || "", { origem: "frase" }));
+             o herói ficaria a 7% do caminho para sempre.
+             8.ª sessão: numa jornada SEM destino, a frase que o nomeia dá-lho
+             ("sigo para Ponte Brumoso", "voltamos para casa") — `seg.destino` */
+          const seg = detectarSeguirViagem(acao, ctxRastro) || {};
+          return umaSoResposta(() => viajar(jornadaRef.current.para || seg.destino || "", { origem: "frase" }));
         } else {
           const part = detectarPartida(acao, ctxRastro);
           if (part) {
@@ -19940,7 +19946,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        bicho da prosa ser o alvo antes do último nome da conversa */
     let mostrado = [];
     try { mostrado = falasDoMestre(mensagensRef.current); } catch (e) { calou("o mostrado para o alvo da agressao", e); }
-    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado });
+    /* 8.ª sessão: QUEM ANDA COMIGO sem ser do grupo — a companheira de
+       viagem. O que o sistema já sabe disso é o registo de pessoas: quem lá
+       está como "companheiro", vivo e fora do grupo. Por pronome é recusado
+       como o grupo; pelo nome abre, com o cartão antes (crime.js) */
+    let comigo = [];
+    try {
+      const doGrupo = new Set((p.grupo || []).map((g) => String((g && g.nome) || "").toLowerCase()));
+      comigo = Object.values(npcsRef.current || {})
+        .filter((n) => n && n.nome && String(n.relacao || "").toLowerCase() === "companheiro" && String(n.status || "vivo").toLowerCase() === "vivo" && !doGrupo.has(String(n.nome).toLowerCase()))
+        .map((n) => n.nome);
+    } catch (e) { calou("quem anda comigo", e); comigo = []; }
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo });
     if (!a) return false;
     if (a.tipo === "companheiro") {
       pushMsgs([
@@ -24738,7 +24755,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       } catch (e) { calou("a marca da jornada inferida", e); }
     } else if (destino && !jornadaRef.current.para) {
       const r = rotaEntre(jornadaRef.current.de, destino);
-      jornadaRef.current = { ...jornadaRef.current, para: destino, km: (r && Number(r.km)) || 0, terreno: (r && r.terreno) || "", dias: (r && Number(r.dias)) || 3, totalMin: minutosDaRota(r && r.dias) };
+      /* 8.ª sessão: sem rota no mapa (a volta à cidade de onde se partiu, que
+         rotaEntre não liga a si mesma), a jornada guarda o tamanho que já
+         tinha — senão a volta recomeçava do zero com três dias novos */
+      const j0 = jornadaRef.current;
+      jornadaRef.current = r
+        ? { ...j0, para: destino, km: Number(r.km) || 0, terreno: r.terreno || "", dias: Number(r.dias) || 3, totalMin: minutosDaRota(r.dias) }
+        : { ...j0, para: destino, km: Number(j0.km) || 0, terreno: j0.terreno || "", dias: Number(j0.dias) || 3, totalMin: Number(j0.totalMin) > 0 ? Number(j0.totalMin) : minutosDaRota(Number(j0.dias) || 3) };
       setJornada(jornadaRef.current);
     }
     /* v9.54: O TRECHO GANHA ROSTO. Até aqui o dia de estrada era clima mais
