@@ -40,6 +40,7 @@
    ============================================================ */
 
 import { CONSUMIVEIS } from "./pocoes.js";
+import { moedasDoAchadoNoEnvelope } from "./encontros.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -229,25 +230,57 @@ export function lerGastos(narrativa, opcoes = {}) {
 }
 
 /* O trecho do pagamento, apagado — para a frase do gasto não ser lida
-   como ganho. Troca por espaços do mesmo tamanho e nada mais. */
-const semOsPagamentos = (f) => f.replace(RX_TRECHO_DE_PAGAR, (s) => " ".repeat(s.length)).replace(RX_TE_CUSTOU, (s) => " ".repeat(s.length));
+   como ganho. Troca por espaços do mesmo tamanho e nada mais. Com a moeda
+   do mundo, as réguas do gasto são as dela: "você recebe o pão e paga dez
+   escamas" não credita dez. */
+const semOsPagamentos = (f, moeda) => {
+  const { trecho, custou } = regrasDoGasto(moeda);
+  return f.replace(trecho, (s) => " ".repeat(s.length)).replace(custou, (s) => " ".repeat(s.length));
+};
+
+/* O GANHO COM A MOEDA DO MUNDO (12/10, MM11 · 8.ª sessão). A v9.427 deu a
+   palavra do léxico ao lado de pagar; o de ganhar ficou surdo a ela: "você
+   acha 10 escamas" não entrava na bolsa. A régua do ganho com a moeda do
+   mundo aceita o número e o extenso ("dez escamas") — o Narrador escreve a
+   quantia como no preço —, mas SÓ com a palavra do mundo: a régua antiga
+   das moedas de sempre fica como estava (algarismo), para nenhum ganho que
+   hoje não credita passar a creditar por este conserto. */
+const REGRA_DO_GANHO_POR_MOEDA = new Map();
+function regraDoGanho(moeda) {
+  const raiz = raizDaMoeda(moeda);
+  if (!raiz) return null;
+  if (!REGRA_DO_GANHO_POR_MOEDA.has(raiz)) {
+    REGRA_DO_GANHO_POR_MOEDA.set(raiz, new RegExp(`\\b(\\d{1,5}|(?:${EXTENSO})(?:\\s+e\\s+(?:${EXTENSO}))?)\\s+(?:${raiz})\\b`, "g"));
+  }
+  return REGRA_DO_GANHO_POR_MOEDA.get(raiz);
+}
 
 /* ============================================================
    O QUE A NARRAÇÃO PROMETEU
    ============================================================ */
-export function lerGanhos(narrativa) {
+export function lerGanhos(narrativa, opcoes = {}) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const moeda = typeof o.moeda === "string" ? o.moeda : "";
+  const doMundo = regraDoGanho(moeda);
   const out = { moedas: 0, consumiveis: [], frases: [], aparado: false };
   for (const frase of frasesDe(narrativa)) {
     if (!RX_GANHO.test(norm(frase))) continue;
     if (RX_NEGA.test(norm(frase))) continue;
     let contou = false;
     /* 30/09: sem o trecho em que o herói paga — ver `lerGastos` */
-    const f = semOsPagamentos(norm(frase));
+    const f = semOsPagamentos(norm(frase), moeda);
     RX_MOEDAS.lastIndex = 0;
     let m;
     while ((m = RX_MOEDAS.exec(f))) {
       const n = parseInt(m[1], 10);
       if (Number.isFinite(n) && n > 0) { out.moedas += n; contou = true; }
+    }
+    if (doMundo) {
+      doMundo.lastIndex = 0;
+      while ((m = doMundo.exec(f))) {
+        const n = valorDe(m[1]);
+        if (n > 0) { out.moedas += n; contou = true; }
+      }
     }
     const cons = consumiveisNaFrase(frase);
     for (const c of cons) { out.consumiveis.push(c); contou = true; }
@@ -265,10 +298,16 @@ export function lerGanhos(narrativa) {
    direito — que é o caso comum — não sobra nada para cobrar, e o
    arquivo inteiro não faz nada, que é o comportamento certo.
    ============================================================ */
-export function oQueFaltaCreditar(narrativa, mudancas) {
-  const prometido = lerGanhos(narrativa);
+/* `opcoes.moeda`: a palavra do léxico (`comoChamam(lex, "moeda")`), como no
+   débito. `opcoes.envelopes`: o que foi ao Narrador neste turno — o achado
+   da estrada que o sorteio já creditou vem lá com a marca de encontros.js,
+   e conta como declarado, para a narração dele não o pagar outra vez. */
+export function oQueFaltaCreditar(narrativa, mudancas, opcoes = {}) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const prometido = lerGanhos(narrativa, { moeda: typeof o.moeda === "string" ? o.moeda : "" });
   const m = mudancas && typeof mudancas === "object" ? mudancas : {};
-  const declaradas = Math.max(0, Number(m.moedas) || 0);
+  const jaDoAchado = moedasDoAchadoNoEnvelope(typeof o.envelopes === "string" ? o.envelopes : "");
+  const declaradas = Math.max(0, Number(m.moedas) || 0) + jaDoAchado;
   const itensDeclarados = (m.adicionar_itens || []).map((x) => norm(typeof x === "string" ? x : (x && x.nome) || ""));
 
   const moedas = Math.max(0, prometido.moedas - declaradas);

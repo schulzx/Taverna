@@ -110,7 +110,8 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
     const pedacos = [nn, ...pal.filter((x, i) => x.length >= ALCUNHA_DE_LUGAR.pedacoMinimo && !(i > 0 && ALCUNHA_DE_LUGAR.particulas.includes(pal[i - 1])))];
     for (const p of pedacos) {
       const rx = new RegExp(`(^|[^a-z0-9])${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "g");
-      const posicoes = [...t.matchAll(rx)].map((m) => m.index + m[1].length);
+      /* 8.ª sessão (M8): "Deixo Ursa" não procura Ursa (PROCURA_NAO_E_AQUI) */
+      const posicoes = [...t.matchAll(rx)].map((m) => m.index + m[1].length).filter((x) => !PROCURA_NAO_E_AQUI.deixa.test(t.slice(Math.max(0, x - 32), x)));
       if (!posicoes.length) continue;
       const depois = posicoes.filter((x) => x >= verbo);
       const apos = verbo >= 0 && depois.length ? 1 : 0;
@@ -129,7 +130,39 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
    por Ione" contam; "mato Ione" não — a frase nomeia alguém, mas o que ela
    pede não é achar. */
 const VERBOS = /\b(procur|busc|pergunt|onde (esta|está|anda|para|foi)|sinais? de|rastro de|pista de|atras de|atrás de|not[ií]cias? de|paradeiro|encontr|acho ela|acho ele|localiz|indag|investigo o sumi)/;
-export function ehProcura(texto) { return VERBOS.test(norm(texto)); }
+
+/* A PROCURA NÃO PÕE NINGUÉM ONDE A CENA JÁ DISSE OUTRA COISA (12/10, MM11 ·
+   8.ª sessão, M8 e M13). "Deixo Ursa e vou até a banca do Martelo Velho.
+   Pergunto ao ferreiro…" resolveu uma procura por Ursa — a prisioneira que
+   a prosa deixara na cela — e respondeu "Ursa o Andarilho está aqui — O
+   Armazém do Silêncio". "…volto às Celas Trêmulas com Freya. Procuro Nyla,
+   a carcereira" respondeu "Nyla está aqui — A Serpente & o Elmo": a procura
+   corre ANTES do passo, e o "aqui" era a taverna de onde a heroína saía.
+   Duas regras:
+     · `ida`: a frase que vai a outro sítio ANTES de procurar não é uma
+       procura daqui — quem lá está di-lo a cena da chegada (e a guarda do
+       vasculhar, `ehPessoaConhecida`, continua a ler o nome);
+     · `deixa`: o nome logo depois de um verbo de deixar não é procurado. */
+export const PROCURA_NAO_E_AQUI = {
+  ida: /\b(vou|vamos|volto|voltamos|sigo|seguimos|entro|entramos|subo|subimos|desco|descemos|parto|partimos|regresso|regressamos|retorno|retornamos|caminho|caminhamos|atravesso|atravessamos|corro|corremos|me dirijo|nos dirigimos)\s+(?:[a-z]+\s+){0,2}?(a|ao|aos|as|ate|para|pra|em|no|na|nos|nas)\s/g,
+  deixa: /\b(deixo|deixamos|largo|largamos|abandono|abandonamos|me despeco de|despeco-me de|saio de perto de)\s+(?:(?:o|a|os|as)\s+)?$/,
+};
+/* a frase vai a outro sítio antes do primeiro verbo de procura? */
+function vaiAntesDeProcurar(t) {
+  const mv = VERBOS.exec(t);
+  if (!mv) return false;
+  const rx = new RegExp(PROCURA_NAO_E_AQUI.ida.source, "g");
+  let m;
+  while ((m = rx.exec(t))) {
+    if (m.index >= mv.index) break;
+    if (!VERBOS.test(m[0])) return true;
+  }
+  return false;
+}
+export function ehProcura(texto) {
+  const t = norm(texto);
+  return VERBOS.test(t) && !vaiAntesDeProcurar(t);
+}
 
 /* ---------------- ONDE ELA ESTÁ ----------------
    Cinco degraus, do mais perto ao mais longe, e o primeiro que responder

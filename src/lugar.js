@@ -432,6 +432,43 @@ function foraDosNomes(cru, p, spans) {
   return RX_PEDACO(p).test(resto);
 }
 
+/* ============================================================
+   O QUE É PARTE DO LUGAR NÃO É OUTRO LUGAR (12/10, MM11 · 8.ª sessão, M21–M23)
+
+   Nas Celas Trêmulas, a heroína desceu "a escada dos fundos … até onde dá
+   para ver o poço", e o Cronista devolveu `lugar: "Poço de Silêncio"` — a
+   masmorra a quatro horas dali, cujo nome tem a palavra "poço". No turno
+   seguinte ("Examino o poço … Procuro o que as Celas escondem") disse
+   "Alicerces de Silêncio", e o cabeçalho pôs a heroína noutra masmorra
+   enquanto ela estava no subsolo da cadeia. Depois, "subo a escada de volta
+   até a guarita" achou o TIPO `posto` pela palavra "guarita", e o sistema
+   registou "AGORA estou no posto da estrada" — um arredor a 1,3 h da cidade.
+   Dali em diante o ONDE, os preços e a economia da pauta foram do sítio
+   errado (a chegada recusada, a viagem que não fechou, a cama sem preço).
+
+   A regra: um SUBSTANTIVO COMUM que é parte de um lugar (`palavras`: o poço,
+   a guarita, a cela, a porta, o balcão, a escada…) é parte do lugar onde o
+   herói está, nunca outro sítio do mapa. Só um NOME de lugar — ou o lugar
+   pedido pelo jogador com verbo de ir, pelo nome ou pelo tipo do prédio —
+   muda o `lugar`. Em duas portas:
+     · `lugarPedido` — a palavra de parte não é tipo de destino ("até a
+       guarita" não é o posto da estrada);
+     · `lerLugarDito` (`fontes`) — com o herói num lugar, o nome dito que
+       só casa com o pedido por uma palavra de parte (o resto do nome nem
+       está no pedido nem é do lugar onde ele está) é a IA a promover o
+       substantivo a nome: `porque`. E o pedido que fala do lugar onde o
+       herói está, sem dizer que sai dele nem nomear o sítio dito, deixa-o
+       lá: `fica`. Os dois são "ignora": não move e não acusa. */
+export const PARTE_DO_LUGAR = {
+  palavras: ["poco", "pocos", "guarita", "guaritas", "cela", "porta", "portas", "portinhola", "balcao", "escada", "escadas", "degrau", "degraus",
+    "corredor", "patio", "porao", "fundos", "parede", "paredes", "chao", "janela", "telhado", "umbral", "alcapao", "corda", "borda", "bordas", "fresta", "grade", "grades"],
+  fontes: ["cronista", "mestre"],
+  porque: "parteDoLugar",
+  fica: "ficaAqui",
+};
+const RX_PARTE_DO_LUGAR = new RegExp(`\\b(${PARTE_DO_LUGAR.palavras.join("|")})\\b`, "g");
+const semAsPartes = (t) => String(t || "").replace(RX_PARTE_DO_LUGAR, (m) => " ".repeat(m.length));
+
 export function lugarPedido(texto, lugares = []) {
   /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
   const t = soODeclarado(texto, NAO_E_IDA);
@@ -479,7 +516,9 @@ export function lugarPedido(texto, lugares = []) {
      errado. A palavra de tipo que vem DENTRO de um nome próprio ("Posto da
      Baixa": maiúscula, e outra maiúscula logo a seguir, com ou sem "da/do")
      é esse sítio, não o tipo; aqui não há nada com esse nome. */
-  const tipos = tiposPedidos(alvo).filter((tp) => !tipoEmNomeProprio(texto, tp));
+  /* 8.ª sessão (M23): a palavra de parte de um lugar não é tipo de destino
+     (ver PARTE_DO_LUGAR, acima) */
+  const tipos = tiposPedidos(semAsPartes(alvo)).filter((tp) => !tipoEmNomeProprio(texto, tp));
   if (!tipos.length) return null;
   const doTipo = lugares.filter((l) => l && tipos.includes(l.tipo));
   if (!doTipo.length) return null;
@@ -999,6 +1038,29 @@ function pedidoDeixa(pedido, nome) {
    `porque` é a chave que valeu. O combate deixou de ficar com quem chama:
    a recusa de tudo, que o App fazia antes de perguntar, era a acusação
    falsa. */
+/* O nome `dito` saiu de uma palavra de parte do pedido, ou o pedido deixa o
+   herói no `lugar` onde está? Devolve a chave de PARTE_DO_LUGAR que vale,
+   ou "". */
+function parteDoLugarDita(pedido, dito, lugar) {
+  const cru = falaDoJogador(pedido);
+  if (!cru) return "";
+  const t = soODeclarado(cru, NAO_E_IDA);
+  if (!t.trim()) return "";
+  const doPedido = new Set(t.split(/[^a-z0-9]+/).filter(Boolean));
+  const doLugar = new Set(palavrasDoSitio(lugar.nome));
+  const doDito = palavrasDoSitio(dito).filter((p) => !NUCLEO_DO_NOME.conectores.includes(p) && !VAZIAS.has(p));
+  if (!doDito.length) return "";
+  /* o nome inteiro (sem artigo) no pedido: foi pedido pelo nome */
+  const inteiro = semArtigoL(dito);
+  if (inteiro && t.includes(inteiro)) return "";
+  const partes = doDito.filter((p) => PARTE_DO_LUGAR.palavras.includes(p) && doPedido.has(p));
+  const resto = doDito.filter((p) => !PARTE_DO_LUGAR.palavras.includes(p) && !doPedido.has(p) && !doLugar.has(p));
+  if (partes.length && resto.length) return PARTE_DO_LUGAR.porque;
+  /* o pedido fala do lugar onde está, não sai dele e não diz o sítio dito */
+  if (!casaNome(t, dito) && casaNome(semAOrigem(t), lugar.nome) && !pedidoDeixa(pedido, lugar.nome)) return PARTE_DO_LUGAR.fica;
+  return "";
+}
+
 export function lerLugarDito(dito, ctx) {
   const o = ctx && typeof ctx === "object" ? ctx : {};
   const lugar = o.lugar && typeof o.lugar === "object" && o.lugar.nome ? o.lugar : null;
@@ -1021,6 +1083,12 @@ export function lerLugarDito(dito, ctx) {
   if (!eCidade) {
     /* o sítio de onde ela acabou de sair não a leva de volta */
     if (lugar && !ehOMesmoLugar({ nome: cru }, lugar) && pedidoDeixa(o.pedido, cru)) return { acao: "ignora", porque: "origem" };
+    /* 8.ª sessão (M21–M22): a parte do lugar não é outro lugar (ver
+       PARTE_DO_LUGAR, acima) */
+    if (lugar && PARTE_DO_LUGAR.fontes.includes(o.fonte) && !ehOMesmoLugar({ nome: cru }, lugar)) {
+      const parte = parteDoLugarDita(o.pedido, cru, lugar);
+      if (parte) return { acao: "ignora", porque: parte };
+    }
     /* 4.ª sessão, nº 1: ao longe, o mesmo sítio por outro nome não move, e
        o Cronista não muda o herói de sítio sem o pedido (ver NUCLEO_DO_NOME) */
     if (lugar && NUCLEO_DO_NOME.distancias.includes(lugar.distancia) && !ehOMesmoLugar({ nome: cru }, lugar)) {

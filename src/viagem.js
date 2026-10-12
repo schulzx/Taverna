@@ -151,6 +151,30 @@ export function retomarViagem(jornada) {
   return { ...jornada, estado: ESTADOS.emCurso, motivoPausa: "" };
 }
 
+/* ---------------- A JORNADA SEM DESTINO TEM SAÍDA (12/10, MM11 · 8.ª sessão) ----------------
+   Uma jornada aberta só por direção ("pela estrada", "para o norte") nasce
+   com \`para\` vazio, e tudo o que fecha uma viagem pergunta pelo \`para\`:
+   \`progressoDaViagem\` devolve nulo, e a chegada (o App) nem olha. Na 8.ª
+   sessão a volta do Poço de Silêncio ficou assim do M35 ao fim — 720 min em
+   curso, a chegada narrada pelo Mestre recusada, o acampamento "na estrada"
+   com a heroína numa pensão.
+
+   A saída: andada a estrada inteira (\`andadoMin\` ≥ \`totalMin\`), a jornada
+   sem destino FECHA AO FIM DO TRECHO, no único sítio que o sistema conhece
+   dela — a cidade de onde partiu, que é a referência que o herói nunca
+   deixou de ter (\`jornadaValida\` exige \`de\` = a cidade de agora). Devolve
+   a jornada com \`para\` = \`de\` e a marca \`semDestino\`, para quem a fecha
+   seguir a régua de sempre; com destino, ou ainda a meio, devolve-a igual. */
+export const JORNADA_SEM_DESTINO = { fecha: "de", marca: "semDestino" };
+export function jornadaSemDestino(jornada) {
+  if (!jornada || typeof jornada !== "object" || jornada.para) return jornada || null;
+  const de = typeof jornada.de === "string" ? jornada.de.trim() : "";
+  if (!de || de === "a última parada") return jornada;
+  const total = Math.max(1, num(jornada.totalMin, minutosDaRota(jornada.dias)));
+  if (num(jornada.andadoMin) < total && jornada.estado !== ESTADOS.concluida) return jornada;
+  return { ...jornada, para: jornada[JORNADA_SEM_DESTINO.fecha], [JORNADA_SEM_DESTINO.marca]: true };
+}
+
 /* ---------------- O PROGRESSO ----------------
    Tudo o que o Mestre e a tela precisam saber, calculado num lugar só. */
 export function progressoDaViagem(jornada) {

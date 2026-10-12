@@ -172,17 +172,74 @@ const COISA_DE_ESTRADA = /\b(viagem|viajando|estrada|caminho|jornada|rota|marcha
 /* e o que o desqualifica: seguir uma pessoa, uma conversa, uma pista */
 const SEGUIR_OUTRA_COISA = /\b(conversa|conversando|falando|discurso|rastro|pegada|pista|cheiro|sangue|instru|ordem|conselho|receita|ritual|liturgia|leitura|estudo)\b/;
 
+/* ---------------- A VOLTA TEM DESTINO (12/10, MM11 · 8.ª sessão, M35–M69) ----------------
+   "Digo a Ursa que venha conosco. Viajamos de volta para Ponte Brumoso pela
+   estrada" — a heroína estava à boca do Poço de Silêncio, a meio dia da
+   cidade, e a cidade de referência (`cidadeAtual`) continuava a ser Ponte
+   Brumoso. `detectarPartida` não aceita a cidade de agora como destino
+   (ninguém parte para onde já está), e a frase tinha "pela estrada": abriu
+   uma jornada Ponte Brumoso → "" que nunca fechou — 720 minutos em curso, o
+   Mestre narrou a chegada (M44) e o sistema recusou-a, e o acampamento
+   apareceu "na estrada" com o herói numa pensão.
+
+   A regra: VOLTAR TEM DESTINO IMPLÍCITO — a cidade de onde se veio. É a
+   última origem do rastro: a da jornada em curso (`jornada.de`), ou, longe
+   dela (`longe`: um lugar a meio dia, como a boca de uma masmorra), a cidade
+   desse lugar. Vale quando a oração diz a volta ("volto", "regresso", "de
+   volta") sem apontar outro sítio, ou nomeia a própria cidade de origem.
+   Dentro dos muros e nos arredores nada muda: voltar à cidade dali é um
+   passo (`pediuParaVoltar`, lugar.js), não uma estrada. */
+export const VOLTA_TEM_DESTINO = {
+  longe: ["perto"],
+  rx: /\b(volto|voltamos|voltar|voltando|regresso|regressamos|regressar|retorno|retornamos|retornar|de volta)\b/,
+  /* o que vem depois da volta e aponta OUTRO sítio: "volto à mina", "de
+     volta para a taverna" — a volta é para lá, não para a cidade */
+  outroSitio: /\b(volto|voltamos|voltar|voltando|regresso|regressamos|regressar|retorno|retornamos|retornar|de volta)\s+(?:(?:para|pra|a|ao|aos|as|à|às|até|ate)\s+)(?:(?:o|a|os|as)\s+)?([a-z]+)/,
+  /* as palavras que, depois da volta, ainda são a cidade */
+  aCidade: ["cidade", "vila", "casa", "aldeia", "povoado", "estrada", "caminho", "pela", "com", "agora", "logo", "ja", "depressa"],
+};
+/* A cidade de onde se veio: a origem da jornada em curso, ou a cidade do
+   lugar longe onde o herói está. Fora disso, nenhuma. */
+export function cidadeDeOrigem(ctx) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  if (c.jornada && typeof c.jornada === "object" && typeof c.jornada.de === "string" && c.jornada.de && c.jornada.de !== "a última parada") return c.jornada.de;
+  const l = c.lugar && typeof c.lugar === "object" ? c.lugar : null;
+  if (l && VOLTA_TEM_DESTINO.longe.includes(l.distancia)) return String(l.cidade || c.cidadeAtual || "");
+  return "";
+}
+/* A oração (normalizada) leva de volta à cidade `origem`? */
+function voltaAOrigem(o, origem) {
+  const n = norm(origem);
+  if (!n) return false;
+  if (o.includes(n)) return true;
+  if (!VOLTA_TEM_DESTINO.rx.test(o) || NAO_E_PARTIDA.rx.test(o)) return false;
+  const m = o.match(VOLTA_TEM_DESTINO.outroSitio);
+  return !m || VOLTA_TEM_DESTINO.aCidade.includes(m[2]);
+}
+
 export function detectarSeguirViagem(acao, ctx = {}) {
   if (!ctx.emViagem) return null;
   if (ctx.emCombate || ctx.acampado || ctx.emMasmorra) return null;
   const txt = String(acao || "");
   if (!txt.trim() || txt.trimStart().startsWith("[")) return null;   // envelope do sistema não é pedido meu
-  for (const o of oracoes(txt)) {
+  /* 8.ª sessão (M37, M43, M44): numa jornada SEM destino, a frase que o
+     nomeia dá-lho — "Sigo viagem para Ponte Brumoso", "parto agora para
+     Ponte Brumoso", "sigo pela estrada até chegar às portas de Ponte
+     Brumoso". Quem chama põe `destino` em `para` (viajar, no App). */
+  const semPara = !!(ctx.jornada && typeof ctx.jornada === "object" && !ctx.jornada.para);
+  const destinoDaFrase = (n) => {
+    if (!semPara) return "";
+    for (const nome of ctx.cidades || []) { const c = norm(nome); if (c && c.length >= 3 && n.includes(c)) return nome; }
+    const origem = cidadeDeOrigem(ctx);
+    return origem && voltaAOrigem(n, origem) ? origem : "";
+  };
+  const declarado = semPerguntas(txt);
+  for (const o of oracoes(declarado)) {
     const n = norm(o);
-    if (!SEGUIR.test(n) || SEGUIR_OUTRA_COISA.test(n)) continue;
-    if (COISA_DE_ESTRADA.test(n) || /^\s*(sigo|continuo|seguimos|prossigo|avanco|marcho)\s*[.!]?\s*$/.test(n)) {
-      return { motivo: "o jogador escreveu que segue caminho" };
-    }
+    if (SO_INTENCAO.test(n) || NAO_E_PARTIDA.rx.test(n)) continue;
+    const seguir = SEGUIR.test(n) && !SEGUIR_OUTRA_COISA.test(n) && (COISA_DE_ESTRADA.test(n) || /^\s*(sigo|continuo|seguimos|prossigo|avanco|marcho)\s*[.!]?\s*$/.test(n));
+    const destino = (seguir || PARTIDA.test(n) || VOLTA_TEM_DESTINO.rx.test(n)) ? destinoDaFrase(n) : "";
+    if (seguir || destino) return destino ? { motivo: "o jogador escreveu que segue caminho", destino } : { motivo: "o jogador escreveu que segue caminho" };
   }
   return null;
 }
@@ -214,14 +271,18 @@ export function detectarPartida(acao, ctx = {}) {
      destino; e o destino de fora da oração do verbo só vem de oração que
      também não seja intenção ("pergunto como se chega a X" não é X) */
   const declarado = semPerguntas(txt);
+  const origem = cidadeDeOrigem({ lugar: ctx.lugar, cidadeAtual: ctx.cidadeAtual });
   const ondeSeVai = oracoes(declarado).map(norm).filter((o) => !PERGUNTA_NAO_PARTE.rumo.test(o)).join(" . ");
   for (const o0 of oracoes(declarado)) {
     /* MM14: sem acento, pela mesma fronteira de ASCII que abria a masmorra
        da lâmina (ver `detectarEntradaEmMasmorra`) */
     const o = norm(o0);
-    if (!PARTIDA.test(o) || SO_INTENCAO.test(o) || NAO_E_PARTIDA.rx.test(o)) continue;
+    if (!(PARTIDA.test(o) || (origem && VOLTA_TEM_DESTINO.rx.test(o))) || SO_INTENCAO.test(o) || NAO_E_PARTIDA.rx.test(o)) continue;
     const destino = nomeDeCidade(o) || nomeDeCidade(ondeSeVai);
     if (destino) return { destino, motivo: "destino nomeado no mapa" };
+    /* 8.ª sessão (M35): longe dela, a cidade de onde se veio é destino —
+       nomeada ou dita pela volta (ver VOLTA_TEM_DESTINO, acima) */
+    if (origem && voltaAOrigem(o, origem)) return { destino: origem, motivo: "a volta à cidade de onde se veio" };
     /* sem cidade nomeada, só a direção explícita serve. E ela ganha do lugar
        interno: "sigo para fora dos portões" é sair, mesmo com "portão" na
        lista de lugares da cidade. */
@@ -643,7 +704,14 @@ export function quemResponde(origem) {
 }
 
 /* ---------------- OS ENVELOPES ---------------- */
+/* 8.ª sessão (M35): a VOLTA à cidade de onde se veio parte de longe dela
+   (a boca de uma masmorra) e tem a própria cidade por destino — o envelope
+   de sempre diria "saí de Ponte Brumoso rumo a Ponte Brumoso… não me devolva
+   para lá". A volta diz o que é: a caminho dela, ainda não dentro. */
 export function envelopeDePartida(destino, de) {
+  if (destino && de && norm(destino).trim() === norm(de).trim()) {
+    return `[VIAGEM ABERTA PELO SISTEMA — a volta a ${destino}] Eu pus o pé na estrada de volta a ${destino}. O sistema assumiu a jornada: clima, encontros, terreno, ritmo de marcha e passagem de tempo são dele, e ele já os rolou. Eu ainda NÃO estou em ${destino} — a cena acontece no caminho, não descreva ruas, tavernas nem gente da cidade. E não me faça chegar agora: a chegada é do sistema, e ele avisa quando for.`;
+  }
   return `[VIAGEM ABERTA PELO SISTEMA — eu saí de ${de || "onde estava"}] Eu pus o pé na estrada${destino ? ` rumo a ${destino}` : ""}. O sistema assumiu a jornada: clima, encontros, terreno, ritmo de marcha e passagem de tempo são dele, e ele já os rolou. Eu NÃO estou mais em ${de || "cidade nenhuma"} — não me devolva para lá, não descreva ruas, tavernas nem gente da cidade. A cena acontece no caminho. E não me faça chegar ao destino agora: a chegada é do sistema, e ele avisa quando for.`;
 }
 
