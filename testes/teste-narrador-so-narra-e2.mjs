@@ -63,7 +63,10 @@ sec("1. o escrivão sem uso já não é oferecido (0 usos em 137 turnos, e um do
   for (const [nome, rx] of LOTE_1) t(`fora do prompt inteiro: ${nome}`, !rx.test(pTodo));
   t("o MAPA vazio já não manda registrar cidade nova", !/ao apresentar uma cidade nova, registre-a/.test(pTodo));
   /* E3 (12/10), MOVIDA: o "moedas" saiu do exemplo com o 2.º lote */
-  t("o exemplo do formato só leva os campos que ficam", /"vida": -3, "mana": 2, "dano_ambiental": null,/.test(pTodo) && !/Tipos de equipamento:/.test(pTodo));
+  /* E4 (12/10), MOVIDA: a vida, a mana, o dano e o combate saíram do
+     exemplo com a E4 (a prova está em teste-narrador-so-narra-e4); o que
+     esta guardava da E2 — o formato sem os tipos de equipamento — fica */
+  t("o exemplo do formato só leva os campos que ficam", /"mudancas": null\r?\n\}/.test(pTodo) && !/"vida": -3/.test(pTodo) && !/Tipos de equipamento:/.test(pTodo));
 }
 
 /* ============================================================ */
@@ -102,11 +105,12 @@ sec("3. o que NÃO podia sair (§6 do relatório)");
     ["as datas de encontro", /DATAS DE ENCONTRO/],
     ["o escopo do envelope", /ESCOPO DO ENVELOPE/],
     ["o tempo do sistema", /TEMPO É DO SISTEMA/],
-    ["o perigo", /"perigo" é UMA frase curta/],
+    /* E4 (12/10), MOVIDAS: o perigo, combate_iniciar e dano_ambiental
+       saíram com a E4; a prova de que saíram, e de quem os faz agora, está
+       em teste-narrador-so-narra-e4 */
     /* E3 (12/10), MOVIDAS: o 2.º lote (moedas, cidade_atual, jornada_meio,
        canone, npcs) saiu com a E3 e a prova de que saiu está na suíte dela;
        aqui fica o que a E3 também não podia tirar */
-    ["a E4: combate_iniciar", /"combate_iniciar"/], ["a E4: dano_ambiental", /"dano_ambiental"/],
     ["o espólio é do sistema", /ESPÓLIO DE COMBATE É DO SISTEMA/],
     /* E3, MOVIDA: o Narrador já não desconta; a guarda virou "só narre um
        pagamento que eu fiz ou aceitei" (a cena que paga, desce a bolsa) */

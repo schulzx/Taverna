@@ -82,7 +82,10 @@ sec("1c. \"A luta começa\" sem combate aberto vira veto do turno (M47)");
   t("a prosa que já começou a luta leva o veto no turno seguinte", A.vetoDaLutaSemPainel("Olho em volta.", { mostrado: [M47] }).length === 1);
   t("com o painel aberto, nada a vetar", A.vetoDaLutaSemPainel(J47, { emCombate: true, mostrado: [M47] }).length === 0);
   t("turno sem luta à vista não custa um carácter", A.vetoDaLutaSemPainel("Bebo a cerveja.", { mostrado: ["Pipa serve a caneca."] }).length === 0);
-  t("o veto pede combate_iniciar ou parar antes do golpe (tabela)", /combate_iniciar/.test(A.LUTA_SEM_PAINEL.veto) && A.vetoDaLutaSemPainel(J47, {})[0] === A.LUTA_SEM_PAINEL.veto);
+  /* E4 (12/10): o veto já não manda o Narrador abrir a luta — quem a abre é
+     o sistema (o golpe do jogador, a sala, a estrada, a lei). A guarda desta
+     asserção era "nunca a luta sem painel", e continua; muda o remédio. */
+  t("o veto manda parar antes do golpe, e já não pede combate_iniciar (tabela; E4)", !/combate_iniciar/.test(A.LUTA_SEM_PAINEL.veto) && /quem abre a luta é o sistema/.test(A.LUTA_SEM_PAINEL.veto) && /pare antes do primeiro golpe/.test(A.LUTA_SEM_PAINEL.veto) && A.vetoDaLutaSemPainel(J47, {})[0] === A.LUTA_SEM_PAINEL.veto);
   t("lixo não estoura", A.vetoDaLutaSemPainel(null, null).length === 0);
 }
 

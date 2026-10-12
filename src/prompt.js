@@ -7,7 +7,6 @@
 import { vozPrompt, VOZ_PADRAO } from "./vozes.js";
 /* MM8c-1: a recência das pessoas é a do registo */
 import { ordemDaImportancia } from "./npcs.js";
-import { criaturasDoGenero } from "./bestiario.js";
 import { resumoPatamar } from "./combate.js";
 import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
 import { ECONOMIA_PROMPT } from "./economia.js";
@@ -436,6 +435,32 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
        nomes que o Narrador inventava vêm agora dos NOMES À MÃO, registados
        pelo código. A guarda fica: o cânone NUNCA é contradito.
      O App continua a ler os seis campos (tolerante): a reversão é um commit. */
+  /* O NARRADOR SÓ NARRA · E4 (12/10): A LUTA E O DANO SAEM DO NARRADOR.
+     Nos três registos (6.ª, 7.ª, 8.ª: 209 respostas) os canais da luta e do
+     dano foram usados 5 vezes: 2 certos que hoje têm porta do sistema, 1
+     pedido do próprio sistema (o golpe sem alvo), 2 nocivos — o M64 da 8.ª,
+     um SUCESSO (21 vs 13) respondido com dois lobos e vida −1, e o lagarto
+     da 6.ª, que feriu pelo `perigo` antes da vez dele. E 0 usos de
+     combate_inimigo_vida, combate_atualizar, combate_encerrar, dano_ambiental
+     e mana em 209. O que saiu, e quem o faz agora:
+     · ABERTURA NO MESMO TURNO, o "abra com a vida reduzida", o BESTIÁRIO
+       ("ao abrir combate envie só o nome e a ameaça"), o exemplo do formato
+       e o "registre o GD no combate_iniciar": a luta abre pelo golpe do
+       jogador (agressao.js), pela sala (masmorras.js), pela estrada
+       (encontros.js#investidaDaEstrada) e pela lei (crime.js); o GD sai da
+       base do mundo (chefePorNome, reconciliarGraus). O pedido que fica é
+       o do sistema, e leva o formato no próprio envelope (envelopeSemAlvo).
+     · "perigo" (o formato e CONDIÇÕES, condicoes.js): os 4 usos foram
+       bichos a investir, nenhum armadilha; a armadilha é da sala, a queda é
+       da salvaguarda, a falha crítica é de consequencias.js.
+     · DANO AMBIENTAL, o DANO DE GOLPE ("vida/combate_inimigo_vida para o
+       dano que nenhum ataque causou"), combate_atualizar/encerrar, e a
+       COBRANÇA ÚNICA da mana: o dano é do dado; quando todos caem o
+       sistema fecha, e a fuga e a rendição são do painel.
+     A guarda é agressao.js#podarONarrador: o que a resposta ainda trouxer
+     disto sai antes de o App a aplicar, e a resposta de um teste que passou
+     não traz luta nem ferida. O App continua a saber ler (reversão = um
+     commit). */
   const chamado = !cena || (Number(personagem.nivel) || 1) >= NIVEL_MINIMO_DO_CHAMADO
     ? "O CHAMADO: diante de uma ameaça que ninguém derruba sozinho, mande em mudancas \"sinais\": [\"raid:<nome da coisa>\"] — o sistema convoca quem atende, monta a horda e conduz a frente.\n"
     : "";
@@ -604,7 +629,6 @@ HABILIDADES E EFEITOS TEMPORÁRIOS:
 - CUSTO, DURAÇÃO E BÔNUS SÃO DO CATÁLOGO. Quando o jogador usa uma habilidade, o sistema já cobrou o PM, já aplicou o buff que ela concede e já conta os turnos. Não declare efeito, não escolha número e não diga por quantos turnos algo dura: se o envelope não mencionou um efeito, ele não existe.
 - SEJA FIRME, NÃO COMPLACENTE (o jogo só é bom se houver limite): declaração de poder é DESEJO, não fato — e quem recusa a declaração impossível é o sistema, não você (ele lê a ficha, o dano e o rito, e devolve a recusa por envelope). O seu trabalho é o outro lado: quando o desejo é grande e legítimo, não o conceda nem o negue — mostre o CAMINHO e o preço dele (o rito longo, o sacrifício, a inimizade que sobra). "Não assim, mas talvez através de..." é a melhor frase que você tem. Desafio é respeito.
 - NÃO ATIVE HABILIDADE POR MENÇÃO: se o jogador apenas CITA o nome de uma habilidade numa conversa ("você conhece Bola de Fogo?", "aprendi Curar"), isso NÃO é usá-la — não gaste PM nem produza o efeito. Só trate como uso quando houver intenção clara de usar agora (o app sinaliza com [HABILIDADE], ou o jogador diz "uso/lanço/conjuro X").
-- COBRANÇA ÚNICA (importante): ao responder a [HABILIDADE], NUNCA envie "mana" negativa em mudancas — o custo JÁ foi descontado; mana negativa nesse turno é cobrança dupla (bug). Só use mana positiva (recuperação) nesse turno.
 - Efeitos ativos aparecem na ficha: considere-os na narração.
 
 COMBATE, ESPÓLIOS E ACHADOS:
@@ -613,14 +637,10 @@ COMBATE, ESPÓLIOS E ACHADOS:
 FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - COESÃO DE RESULTADO (regra absoluta): DANO E MORTE SÃO DECIDIDOS SÓ PELO SISTEMA (envelopes [COMBATE — RESOLVIDO] e o PV do painel). As palavras do jogador são empolgação e figura de linguagem ("te estraçalho!", "moro comigo!") — NUNCA resultado: um golpe narrado pelo jogador como devastador vale exatamente o dano que o sistema aplicou, nem um ponto a mais. Se o inimigo tem PV no painel, ele está VIVO e age normalmente — proibido matá-lo na prosa, fazê-lo "sumir", "virar cinzas" ou dar "última investida póstuma". Quando o sistema corrigir uma narração de morte indevida, retome com o inimigo vivo sem cerimônia.
   · O app converte em SUCESSO SEM ROLAGEM o que é trivial para o patamar do herói — então nem toda ação difícil na sua cabeça vira dado.
-- BESTIÁRIO (prefira estas criaturas — nomes conhecidos ganham números coerentes automaticamente): ${criaturasDoGenero((mundo || {}).genero).map((c) => `${c.nome} (${c.ameaca})`).join(", ")}. Ao abrir combate envie só o NOME e a AMEAÇA de cada inimigo (fraco, comum, competente, elite, lendario) — o sistema calcula PV, defesa e nível proporcionais ao herói. A ameaça é a sua alavanca de dificuldade, e basta: um PV que você mande só vale dentro da faixa daquela criatura.
 - COMO O MUNDO O CHAMA: o título dele está em ESTADO DESTE TURNO. Use ESSE nome, e nenhum outro, ao falar do que ele é.
   · Três medidas que não se confundem: o TÍTULO diz o que ele é; o PATAMAR, só o que aguenta em combate; a FAMA, quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) são EXCLUSIVAS da fé: nível alto não torna ninguém divino — nunca chame de deus quem o sistema não declarou deus.
 - PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate ou feito). O patamar de agora está em ESTADO DESTE TURNO.
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
-- ABERTURA NO MESMO TURNO (PRIORIDADE MÁXIMA): no instante em que QUALQUER hostilidade começa — inimigo ameaça/ataca/embosca, OU o jogador ataca, OU alguém saca arma com intenção — envie "combate_iniciar" NESSA MESMA resposta, SEMPRE. Se a cena tem inimigo hostil presente, o combate já deve estar aberto. É terminantemente proibido narrar golpes, flechas, dano ou tentativas de ataque com o combate fechado.
-- Se algum dano legítimo ocorreu antes da abertura (ex.: o jogador golpeou primeiro com uma habilidade), abra o inimigo JÁ com a vida reduzida por esse dano — nunca com vida cheia.
-- DANO AMBIENTAL do herói: não invente número — envie "dano_ambiental": "leve"|"moderado"|"grave" e o sistema calcula proporcional ao PV dele.
 
 MUNDO ESCALÁVEL (o desafio cresce com o herói):
 - Os PERIGOS novos escalam com o herói — pelo NÍVEL NATURAL dele, NUNCA pelo equipamento: o item poderoso é o prêmio, e deve deixá-lo acima do desafio por um tempo. Não anule o loot escalando o mundo junto.
@@ -657,19 +677,9 @@ VARIEDADE DE LINGUAGEM (anti-repetição — leve a sério):
 Responda com UM ÚNICO objeto JSON válido, começando com { e terminando com }. SEM markdown, SEM crases, SEM texto fora do JSON. Todas as chaves entre aspas. Não repita chaves. Estrutura:
 {
   "narrativa": "texto da cena com diálogos",
-  "perigo": null,
   "mudancas": null
 }
-"perigo" é UMA frase curta, e só quando o MUNDO agir contra o herói: "a teia desaba do teto sobre ele", "o degrau cede", "a taça estava envenenada". Escreva o que aconteceu, nunca o efeito — o sistema decide salvaguarda, dificuldade, dano e condição.
-Quando algo mudar, "mudancas" é um objeto (inclua só os campos que mudaram):
-{
-  "vida": -3, "mana": 2, "dano_ambiental": null,
-  "combate_iniciar": [{"nome":"Capitão Bandido","ameaca":"elite","gd":0},{"nome":"Lacaio","ameaca":"fraco"}],
-  "combate_inimigo_vida": [{"nome":"Lacaio","vida":-8}],
-  "combate_atualizar": [{"nome":"Capitão Bandido","ameaca":"enfurecido, sangrando"}],
-  "combate_encerrar": false
-}
-${chamado}Regras do formato: "perigo" e "mudancas" são null quando não há; nunca os coloque dentro de "narrativa". "narrativa" é sempre uma string simples. Só use campos "combate_" quando houver um confronto de verdade em andamento.
+${chamado}Regras do formato: "mudancas" é null, salvo o que este texto ou um envelope do sistema pedir; nunca o coloque dentro de "narrativa", que é sempre uma string simples.
 ═══════════════ REGRAS DA CENA ABERTA ═══════════════
 Os blocos daqui até ESTADO DESTE TURNO entram e saem conforme a cena e a ficha os têm: cada um só aparece quando existe no jogo a coisa que ele governa, e vale exatamente como as regras permanentes acima enquanto estiver presente.
 
@@ -725,11 +735,9 @@ ${so("combate", `- ATAQUES MÚLTIPLOS DO HERÓI: a partir do nível 5 o herói r
 ${so("combate", `- COMBATE RESOLVIDO PELO SISTEMA: no envelope [COMBATE — RESOLVIDO PELO SISTEMA] o app JÁ rolou tudo e JÁ aplicou o dano — do herói, dos companheiros E dos inimigos. Sua função é narrar o que o envelope descreve: quem acertou quem, com que intensidade, e as decisões táticas (quem recuou, avançou, mudou de alvo). Você comanda a FICÇÃO; o sistema cuida de toda a matemática.`)}
 ${so("combate", `- INTENSIDADE FIEL (regra dura): cada linha de dano vem com o rótulo calculado pelo sistema (arranhão, golpe leve, golpe sólido, golpe pesado, golpe devastador, abate) e um guia de como narrar. OBEDEÇA ao rótulo. Um "arranhão" JAMAIS pode virar estraçalhar, dilacerar ou quase matar; "abate" é o único caso que autoriza linguagem de aniquilação. Narrar acima da intensidade real quebra a confiança do jogador nos números que ele vê na tela.`)}
 ${so("combate", `- AÇÃO DE TURNO DO HERÓI (fiel ao D&D 5e — o sistema resolve, você narra): nem todo herói ataca várias vezes. Marciais ganham Ataque Extra com o nível (o Guerreiro é o único que chega a 4 golpes); conjuradores fazem UMA conjuração por turno, e o que cresce são os DADOS de dano; o Ladino dá um golpe só, somando dados de Ataque Furtivo. O envelope de combate informa quantos golpes saíram — narre exatamente essa quantidade, nunca invente golpes a mais nem transforme uma conjuração em rajada de ataques.`)}
-${so("combate", `- Em combate, mantenha a narrativa CURTA (2-4 frases) para não faltar espaço aos campos "combate_" no JSON.`)}
+${so("combate", `- Em combate, mantenha a narrativa CURTA (2-4 frases).`)}
 ${so("combate", `- Cada inimigo tem competência implícita coerente com sua ameaça (um lacaio erra muito; um mestre-de-armas raramente erra). Companheiros do jogador também rolam para acertar e podem falhar — eles não são infalíveis.`)}
-${so("combate", `- DANO DE GOLPE NÃO PASSA POR VOCÊ: em combate, quem rola e aplica é o sistema — do herói, dos companheiros E dos inimigos. "combate_inimigo_vida", "vida" e "grupo_vida" servem APENAS para o dano que nenhum ataque causou: a queda do parapeito, o teto que desaba, o inimigo empurrado no fogo. Usá-los para golpes cobra o dano duas vezes.`)}
-${so("combate", `- Use "combate_atualizar" para mudar a ameaça de um inimigo ("enfurecido", "cambaleando", "em fuga") ou revelar um inimigo novo que chega. Se a luta acaba por fuga, rendição ou trégua, feche com "combate_encerrar": true — quando todos caem, o sistema fecha sozinho.`)}
-${so("combate", `- ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você narra): a cada rodada o jogador tem 2 movimentos (ação + ação extra). O HUD mostra o que resta e o sistema avisa "[TURNO AINDA MEU]" ou "nova rodada". Inimigos NUNCA agem antes da vez deles (o sistema rola a revide e te entrega o resumo). Se o inimigo é uma divindade, registre o GD dela no "combate_iniciar" (campo "gd", 0-4 — use o GD das divindades do panteão quando forem elas) — o sistema aplica a Regra do Degrau e a presença divina por código.`)}
+${so("combate", `- ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você narra): a cada rodada o jogador tem 2 movimentos (ação + ação extra). O HUD mostra o que resta e o sistema avisa "[TURNO AINDA MEU]" ou "nova rodada". Inimigos NUNCA agem antes da vez deles (o sistema rola a revide e te entrega o resumo).`)}
 
 ═══════════════ ESTADO DESTE TURNO ═══════════════
 Tudo acima é permanente. Isto aqui é o que mudou — e é a única parte que muda de uma jogada para a outra.

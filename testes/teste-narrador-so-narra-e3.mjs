@@ -91,7 +91,9 @@ sec("2. o prompt já não cita nenhum canal do 1.º e do 2.º lote");
   t("o CÂNONE já não manda registar (fica a guarda)", !/registre em "canone"/.test(pTodo) && /O que está lá NUNCA é contradito/.test(pTodo));
   t("as PESSOAS CONHECIDAS já não pedem ficha ao Narrador", !/NPC RELEVANTE/.test(pTodo) && /PESSOAS CONHECIDAS \(registro persistente/.test(pTodo));
   t("o ELENCO já não manda registar no cânone", !/registre no cânone/.test(pTodo));
-  t("o exemplo do formato só leva o que fica (vida, mana, dano, combate)", /"vida": -3, "mana": 2, "dano_ambiental": null,/.test(pTodo) && /"combate_encerrar": false\r?\n\}/.test(pTodo));
+  /* E4 (12/10), MOVIDA: a vida, a mana, o dano e o combate saíram do
+     exemplo com a E4; fica a guarda da E3 — o 2.º lote não volta a ele */
+  t("o exemplo do formato não leva o 2.º lote (e, desde a E4, nem a luta)", /"mudancas": null\r?\n\}/.test(pTodo) && !/"moedas": /.test(pTodo) && !/"combate_iniciar"/.test(pTodo));
   /* os textos dos módulos que vão ao Narrador por turno, lidos no fonte:
      nenhum ensina mais o 2.º lote */
   const ENSINA = /(registre|mande|envie|DECLARE|declarar|registrar|via)[^.\n`]{0,40}\\?"(moedas|cidade_atual|lugar_atual|jornada_meio|canone|npcs)\\?"/;
@@ -125,8 +127,8 @@ sec("3. o que a E3 não podia tirar");
     ["as datas de encontro", /DATAS DE ENCONTRO/],
     ["o escopo do envelope", /ESCOPO DO ENVELOPE/],
     ["o tempo do sistema", /TEMPO É DO SISTEMA/],
-    ["o perigo", /"perigo" é UMA frase curta/],
-    ["a E4: combate_iniciar e dano_ambiental", /"combate_iniciar"[\s\S]*"dano_ambiental"/],
+    /* E4 (12/10), MOVIDAS: o perigo, combate_iniciar e dano_ambiental
+       saíram com a E4 (teste-narrador-so-narra-e4 prova quem os faz agora) */
     ["só se narra um pagamento feito ou aceite", /só narre um pagamento que eu fiz ou aceitei/],
     ["a viagem: a cidade só chega quando o sistema regista", /Só me coloque numa cidade quando o sistema registrar a chegada/],
     ["O CHAMADO (a raid não tem outra porta)", /O CHAMADO: /],

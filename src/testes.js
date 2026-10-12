@@ -150,6 +150,14 @@ export function detectarPedidoDeTeste(texto) {
   return null;
 }
 
+/* UM SUCESSO NUNCA É CASTIGADO (E4 de "o Narrador só narra", 12/10). Na
+   8.ª sessão (M64) o dado deu 21 contra 13 para não se perder, e a resposta
+   trouxe dois lobos e uma ferida — o envelope mandava "sem iniciar cena
+   nova" e não bastou. Os três envelopes do sim dizem-no por extenso; quem o
+   garante é a guarda (agressao.js#podarONarrador), que tira da resposta de
+   um sucesso a luta e o dano que o Narrador lá ponha. */
+export const SUCESSO_SEM_CASTIGO = "sem luta nem ferida que eu não tinha";
+
 /* ---------------- OS ENVELOPES ----------------
    O ponto inteiro do pedido: no fracasso o Mestre não pode ser generoso.
    "Se eu não passar no teste o mestre não inventa nada" — é regra, não estilo. */
@@ -197,7 +205,7 @@ export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, 
       ? `O que eu declarei ACONTECE${motivo ? ` (${motivo})` : ""}, do jeito que declarei — e o efeito é esse, não maior.`
       : `Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade inventada agora.`;
     return `${cabeca} POR UM FIO (${doMeio.onde}) — COM PREÇO.
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense. Devolva a palavra para mim, sem iniciar cena nova e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense. Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
   if (gesto && !passou) {
     return `${cabeca}
@@ -205,14 +213,14 @@ REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. O que eu declarei NÃO acontece 
   }
   if (gesto) {
     return `${cabeca}
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. O que eu declarei ACONTECE, do jeito que declarei${motivo ? ` (${motivo})` : ""} — narre o gesto dando certo, com o corpo e o lugar, em até três frases. ${critico ? "Foi crítico: o gesto sai mais bonito ou mais limpo do que eu esperava — mas o efeito é o que eu declarei, não maior." : "O efeito é o que eu declarei, nem mais nem menos."} NÃO acrescente achado, item, aliado ou informação que eu não busquei. Devolva a palavra para mim, sem iniciar cena nova e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. O que eu declarei ACONTECE, do jeito que declarei${motivo ? ` (${motivo})` : ""} — narre o gesto dando certo, com o corpo e o lugar, em até três frases. ${critico ? "Foi crítico: o gesto sai mais bonito ou mais limpo do que eu esperava — mas o efeito é o que eu declarei, não maior." : "O efeito é o que eu declarei, nem mais nem menos."} NÃO acrescente achado, item, aliado ou informação que eu não busquei. Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
   if (!passou) {
     return `${cabeca}
 REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. Você NÃO revela nada, NÃO entrega meia-informação, NÃO oferece uma pista "de consolo" e NÃO deixa a resposta escapar numa descrição. Narre em duas ou três frases apenas o meu esforço e o silêncio dele — ${desastre ? "e, como foi falha crítica, acrescente um pequeno custo: perdi tempo, chamei atenção ou tirei a conclusão errada" : "sem custo extra, só a ausência de resultado"}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;
   }
   return `${cabeca}
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade conveniente inventada agora, e nunca um item ou aliado de brinde. ${critico ? "Foi crítico: pode ser algo especialmente valioso ou específico." : "Uma coisa só, do tamanho de um teste bem-sucedido."} Se estivermos em combate, uma fraqueza real do inimigo serve. Diga em até três frases e devolva a palavra para mim, sem iniciar cena nova, sem viagem e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade conveniente inventada agora, e nunca um item ou aliado de brinde. ${critico ? "Foi crítico: pode ser algo especialmente valioso ou específico." : "Uma coisa só, do tamanho de um teste bem-sucedido."} Se estivermos em combate, uma fraqueza real do inimigo serve. Diga em até três frases e devolva a palavra para mim, sem iniciar cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
 }
 
 /* ============================================================

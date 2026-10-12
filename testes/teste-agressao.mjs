@@ -129,7 +129,10 @@ sec("6. os envelopes — o que a IA não pode mais fazer");
   const s = lerAgressao("Ataco o dragão ancião.", { presentes: [] });
   const env2 = envelopeSemAlvo(s, "Ataco o dragão ancião.");
   t("sem alvo, o envelope dá DUAS saídas e só duas", /decida UMA das duas coisas/.test(env2));
-  t("uma delas é abrir o combate agora", /DECLARE "combate_iniciar"/.test(env2));
+  /* E4 (12/10): o formato do campo saiu do prompt (o Narrador já não abre
+     luta por conta própria), e este é o único pedido que fica — o jogador
+     declarou o golpe. O envelope passa a levar o formato consigo. */
+  t("uma delas é abrir o combate agora, com o formato no próprio envelope", /DECLARE em mudancas "combate_iniciar": \[\{"nome"/.test(env2));
   t("a outra é dizer que não há ninguém", /NÃO há alvo aqui/.test(env2));
   t("e o que ela não pode é narrar a briga sem painel", /narrar a briga acontecendo sem abrir o combate/.test(env2));
   t("sem veredicto não há envelope", envelopeDaAgressao(null) === "" && envelopeSemAlvo(null) === "");

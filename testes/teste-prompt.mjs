@@ -209,7 +209,13 @@ sec("2. todo campo pedido tem quem o leia");
      "jornada_meio" e "lugar_atual" (e "moedas", "canone", "npcs", que não
      têm sublinhado). Ficam os do combate (E4), o "dano_ambiental" e o
      "grupo_vida". */
-  t("e ha campos de verdade sendo checados", pedidos.size >= 6);
+  /* E4 (12/10): saíram os últimos — combate_*, "dano_ambiental" e o
+     "grupo_vida" (que só o DANO DE GOLPE pedia). O texto fixo já não pede
+     campo nenhum com sublinhado, e a varredura de cima fica a guardar que
+     nenhum volte sem leitor. O único que um envelope ainda pede
+     (combate_iniciar, no golpe sem alvo) tem o leitor provado abaixo. */
+  t("o texto fixo já não pede campo com sublinhado (E4: o escrivão saiu)", pedidos.size === 0);
+  t("e o que o envelope do golpe sem alvo pede tem quem o leia", /combate_iniciar/.test(fs.readFileSync(SRC + "agressao.js", "utf8")) && /resp\.mudancas\.combate_iniciar/.test(codigo));
 }
 
 sec("3. o que o codigo tirou do Mestre nao pode voltar pelo prompt");
@@ -240,7 +246,11 @@ sec("4. nenhuma regua de numero que o sistema ja calcula");
      porque não pede teste nenhum — não há régua nenhuma do lado dela. */
   t("nao ha perfil de dificuldade para a IA escolher", !/"facil"\|"digno"\|"dificil"\|"formidavel"/.test(P));
   t("e o contrato nao tem mais campo de rolagem", !/"rolagem":/.test(P));
-  t("tem o campo perigo no lugar", /"perigo": null/.test(P));
+  /* E4 (12/10), MOVIDA: o "perigo" saiu — nas sessões 6–8 os 4 usos foram
+     bichos a investir, nenhum armadilha; o mundo age por tabela (a estrada,
+     a sala, a lei, a falha crítica). O que esta guardava — o canal de
+     rolagem não volta — é a de cima. */
+  t("e o perigo também saiu (E4): o mundo age por tabela", !/"perigo"/.test(P));
   t("e diz que ela NUNCA pede rolagem", /voc[eê] N[AÃ]O pede nenhuma, nunca/i.test(P));
 
   /* preco: havia DUAS tabelas com numeros diferentes para a mesma coisa */
@@ -249,7 +259,11 @@ sec("4. nenhuma regua de numero que o sistema ja calcula");
 
   /* PV de inimigo */
   t("nao ha tabela de PV por ameaca", !/35% do meu PV/.test(P));
-  t("mas a ameaca continua sendo pedida", /fraco, comum, competente, elite, lendario/.test(P));
+  /* E4 (12/10), MOVIDA: a lista das ameaças ia com o BESTIÁRIO ("ao abrir
+     combate envie só o nome e a ameaça"), que saiu com a abertura do
+     Narrador. A ameaça continua a ser a única coisa pedida, e só no pedido
+     que fica (o golpe sem alvo), no próprio envelope. */
+  t("a ameaça viaja no envelope do pedido, não no prompt (E4)", !/fraco, comum, competente, elite, lendario/.test(P) && /"ameaca":"comum"/.test(fs.readFileSync(SRC + "agressao.js", "utf8")));
 
   /* buff */
   t("nao ha teto de bonus ensinado ao Mestre", !/soma \+2 \(N[ÃA]O \+4/.test(P));
@@ -280,7 +294,8 @@ sec("6. o que NAO pode ter sido perdido na faxina");
     ["diversidade viva", /DIVERSIDADE VIVA/],
     ["blindagem de memória", /BLINDAGEM DE MEMÓRIA/],
     ["intensidade fiel", /INTENSIDADE FIEL/],
-    ["abertura no mesmo turno", /ABERTURA NO MESMO TURNO/],
+    /* E4 (12/10): "abertura no mesmo turno" saiu daqui — era o Narrador a
+       abrir a luta, e quem a abre agora é o sistema (teste-narrador-so-narra-e4) */
     ["formato JSON", /UM ÚNICO objeto JSON/],
     /* E2 (12/10): a linha SINAIS saiu (a medição: 0 usos de cada sinal em
        137 turnos, e todos com outra porta); fica o único sem outra porta */

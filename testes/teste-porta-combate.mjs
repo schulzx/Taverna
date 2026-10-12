@@ -70,13 +70,19 @@ const SO_NA_LUTA = [
   ["AÇÃO DE TURNO DO HERÓI", /AÇÃO DE TURNO DO HERÓI/],
   ["narrativa curta em combate", /mantenha a narrativa CURTA/],
   ["competência implícita do inimigo", /competência implícita/],
-  ["DANO DE GOLPE NÃO PASSA POR VOCÊ", /DANO DE GOLPE NÃO PASSA POR VOCÊ/],
-  ["combate_atualizar", /Use "combate_atualizar"/],
+  /* E4 (12/10), MOVIDAS: "DANO DE GOLPE NÃO PASSA POR VOCÊ" e o "Use
+     combate_atualizar" eram licenças de canal (o dano "que nenhum ataque
+     causou", a ameaça e o encerrar pelo Narrador) — 0 usos em 209 respostas
+     das sessões 6–8. Saíram da luta e de toda cena; a prova de que saíram,
+     e de quem decide agora, está em teste-narrador-so-narra-e4. */
   ["ECONOMIA DE TURNO DO JOGADOR", /ECONOMIA DE TURNO DO JOGADOR/],
 ];
 for (const [nome, rx] of SO_NA_LUTA) {
   t(`"${nome}" fora da taverna`, !rx.test(TAVERNA));
   t(`"${nome}" dentro da luta`, rx.test(LUTA));
+}
+for (const [nome, rx] of [["DANO DE GOLPE NÃO PASSA POR VOCÊ", /DANO DE GOLPE NÃO PASSA POR VOCÊ/], ["combate_atualizar", /combate_atualizar/]]) {
+  t(`"${nome}" saiu de toda cena (E4)`, !rx.test(TAVERNA) && !rx.test(LUTA));
 }
 
 sec("4. A FRONTEIRA — o que governa o INSTANTE em que a luta abre");
@@ -85,18 +91,29 @@ sec("4. A FRONTEIRA — o que governa o INSTANTE em que a luta abre");
      Narrador ainda não recebeu envelope de combate nenhum: se as regras
      que impedem o dano inventado estiverem atrás da porta, elas chegam um
      turno tarde demais — no único turno em que fazem falta. */
+  /* E4 (12/10), MOVIDAS: a ABERTURA NO MESMO TURNO, o "como abrir o
+     combate" (combate_iniciar), o dano anterior à abertura e o BESTIÁRIO
+     ensinavam o Narrador a abrir a luta. Desde a E4 quem a abre é o sistema
+     (o golpe do jogador, a sala, a estrada, a lei) e a guarda
+     agressao.js#podarONarrador tira da resposta o que lá venha. O que esta
+     secção protegia — nenhuma regra do instante da abertura atrás da porta —
+     continua: as que ficam estão sempre, e as que saíram não estão em lado
+     nenhum (nem a meio: atrás da porta seria o pior). */
   const SEMPRE = [
-    ["ABERTURA NO MESMO TURNO", /ABERTURA NO MESMO TURNO/],
-    ["como abrir o combate", /combate_iniciar/],
-    ["o dano anterior à abertura", /dano legítimo ocorreu antes da abertura/],
     ["COESÃO DE RESULTADO", /COESÃO DE RESULTADO/],
-    ["o bestiário sugerido", /BESTIÁRIO \(prefira estas criaturas/],
     ["o patamar de combate", /PATAMAR DE COMBATE DO HERÓI/],
   ];
   for (const [nome, rx] of SEMPRE) {
     t(`"${nome}" na taverna`, rx.test(TAVERNA));
     t(`"${nome}" na luta`, rx.test(LUTA));
   }
+  const SAIRAM = [
+    ["ABERTURA NO MESMO TURNO", /ABERTURA NO MESMO TURNO/],
+    ["como abrir o combate", /combate_iniciar/],
+    ["o dano anterior à abertura", /dano legítimo ocorreu antes da abertura/],
+    ["o bestiário sugerido", /BESTIÁRIO \(prefira estas criaturas/],
+  ];
+  for (const [nome, rx] of SAIRAM) t(`"${nome}" saiu da taverna e da luta (E4)`, !rx.test(TAVERNA) && !rx.test(LUTA));
 }
 
 sec("5. E O CORTE FOI PARA ALGUM LUGAR");

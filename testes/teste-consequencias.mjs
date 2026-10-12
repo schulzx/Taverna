@@ -33,8 +33,13 @@ sec("2. o Mestre perdeu os dois campos");
   /* v9.68: o caminho certo deixou de ser pedir a rolagem — a IA nao pede
      nenhuma. Ela narra o perigo e o descreve no campo `perigo`; o sistema
      escolhe a salvaguarda, rola e cobra. */
-  t("e aponta o caminho certo: narrar o perigo, nao pedir dado", /campo "perigo"/.test(CONDICOES_PROMPT));
-  t("e diz explicitamente que ela nao pede rolagem", /Voc[eê] n[aã]o pede rolagem nenhuma/.test(CONDICOES_PROMPT));
+  /* E4 (12/10): o caminho do `perigo` saiu — nos 209 turnos das sessões 6–8
+     os 4 usos foram bichos a investir e nenhum armadilha; a armadilha é da
+     sala, a queda da salvaguarda, a falha crítica deste módulo. O que esta
+     asserção guardava (a IA não pede dado nem aplica condição) continua
+     dito, e agora sem lhe ensinar canal nenhum. */
+  t("o caminho do perigo saiu (E4): o prompt já não ensina o campo", !/"perigo"/.test(CONDICOES_PROMPT));
+  t("e continua a dizer que só o combate, o tempo e a falha crítica põem condição", /Só três coisas põem uma condição/.test(CONDICOES_PROMPT) && /Nenhuma delas passa por você/.test(CONDICOES_PROMPT));
 }
 
 sec("3. so o corpo paga pelo corpo");

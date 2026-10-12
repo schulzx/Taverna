@@ -9,6 +9,8 @@
 import { criaturasDoGenero } from "./bestiario.js";
 import { gerarEspolios } from "./combate.js";
 import { BIAS_CLIMA } from "./calendario.js";
+import { completarInimigo } from "./bestiario.js";
+import { quantosPara } from "./orcamento.js";
 
 const d100 = () => 1 + Math.floor(Math.random() * 100);
 
@@ -113,10 +115,16 @@ export function rolarEncontro(genero, nivel, nomeViajante) {
     if (pool.length) {
       const c = pool[Math.floor(Math.random() * pool.length)];
       const qtd = c.ameaca === "fraco" ? 2 + Math.floor(Math.random() * 3) : c.ameaca === "comum" ? 1 + Math.floor(Math.random() * 2) : 1;
+      /* E4 (12/10): o detalhe já não ensina "combate_iniciar". A criatura
+         está à vista e não ataca por conta do Narrador: se investe, quem o
+         decide é a tabela (`investidaDaEstrada`), e o golpe do jogador
+         abre a luta pela agressão. `criatura`/`ameaca`/`quantos` vão em
+         dado, para a investida montar o encontro sem reler o texto. */
       return {
         tipo: "perigo",
         titulo: qtd > 1 ? `${c.nome} (×${qtd})` : c.nome,
-        detalhe: `Criatura do bestiário: ${c.nome} — ${c.desc}. Se a coisa engrossar, inicie o combate mandando em "combate_iniciar" só ${qtd > 1 ? `${qtd} entradas de ` : ""}{"nome":"${c.nome}","ameaca":"${c.ameaca}"} — PV, defesa e dano o app preenche pela tabela. Não é obrigado a virar luta: dá para evitar, fugir, negociar.`,
+        criatura: c.nome, ameaca: c.ameaca, quantos: qtd,
+        detalhe: `Criatura do bestiário: ${qtd > 1 ? `${qtd}× ` : ""}${c.nome} — ${c.desc}. Está no caminho, à vista, e não ataca primeiro: dá para evitar, contornar, negociar ou atacar, e quem decide sou eu.`,
       };
     }
   }
@@ -138,4 +146,63 @@ export function rolarEncontro(genero, nivel, nomeViajante) {
     return { tipo: "cena", titulo: "sinais no caminho", detalhe: `Na estrada: ${CENAS[Math.floor(Math.random() * CENAS.length)]}. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.` };
   }
   return { tipo: "tranquilo", titulo: "estrada tranquila", detalhe: "O trecho passa sem sobressaltos — use o clima e a paisagem para dar textura ao mundo (e, se houver, avance fofoca, tensão ou pista sutil da trama)." };
+}
+
+/* ============================================================
+   A ESTRADA QUE INVESTE (E4 de "o Narrador só narra", 12/10)
+
+   Até aqui o encontro de perigo dizia ao Narrador "se a coisa engrossar,
+   inicie o combate" — e quem engrossava era ele. Na 8.ª sessão (M24) o
+   Zumbi da estrada virou luta pelo `perigo` do Narrador, sem o jogador
+   ter feito nada; nos outros dois perigos das três sessões (o Capanga da
+   6.ª, o Cultista da 8.ª) a criatura ficou à vista e o jogador seguiu.
+   Um em três: é a medida, e é a base da tabela.
+
+   Agora quem decide se a criatura vem em cima é esta tabela, no momento
+   em que o encontro é rolado. O clima pesa como a própria tabela de
+   CLIMAS já o diz (a neblina "favorece emboscadas", o vento esconde a
+   aproximação). Se investe, o App abre a luta com estes inimigos e manda
+   ao Narrador o envelope da investida; se não, a criatura fica à vista e
+   o primeiro gesto é do jogador (o golpe dele abre a luta, lerAgressao).
+   A quantidade é a rolada, aparada pelo orçamento do herói da frente
+   (o mesmo teto da emboscada: o degrau "mortal").
+   ============================================================ */
+export const INVESTIDA_DA_ESTRADA = {
+  base: 1 / 3,
+  porClima: { neblina: 0.2, vento: 0.1, tempestade: 0.1, chuva: 0.05 },
+  teto: 0.6,
+  faixaTeto: "mortal",
+  porque: "nas sessões 6–8, 1 de 3 criaturas da estrada investiu; o resto ficou à vista e o jogador decidiu",
+};
+
+/* `enc`: o que `rolarEncontro` devolveu. `opcoes`: { sorte, clima (o id),
+   pers (a ficha, para o orçamento) }. Devolve null fora do perigo. */
+export function investidaDaEstrada(enc, opcoes) {
+  if (!enc || typeof enc !== "object" || enc.tipo !== "perigo" || !enc.criatura) return null;
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const sorte = typeof o.sorte === "function" ? o.sorte : Math.random;
+  const T = INVESTIDA_DA_ESTRADA;
+  const extra = (o.clima && T.porClima[o.clima]) || 0;
+  const chance = Math.min(T.teto, T.base + extra);
+  const investe = sorte() < chance;
+  const criatura = String(enc.criatura);
+  const ameaca = String(enc.ameaca || "comum");
+  const pedidos = Math.max(1, Math.floor(Number(enc.quantos) || 1));
+  let quantos = pedidos;
+  if (o.pers && typeof o.pers === "object") {
+    try {
+      const modelo = completarInimigo({ nome: criatura, ameaca }, Number(o.pers.nivel) || 1);
+      quantos = Math.max(1, Math.min(pedidos, quantosPara(modelo, o.pers, T.faixaTeto, { max: 12 })));
+    } catch { quantos = pedidos; }
+  }
+  const inimigos = Array.from({ length: quantos }, (_, i) => ({ nome: quantos > 1 ? `${criatura} ${i + 1}` : criatura, ameaca }));
+  return { investe, criatura, ameaca, quantos, pedidos, inimigos, chance, porque: T.porque };
+}
+
+/* O envelope do trecho quando a criatura investe e o App já abriu a luta:
+   vai no lugar do `detalhe` do encontro. */
+export function envelopeDaInvestida(inv) {
+  if (!inv || !inv.investe) return "";
+  const quem = inv.quantos > 1 ? `${inv.quantos}× ${inv.criatura}` : inv.criatura;
+  return `Criatura do bestiário: ${quem} (${inv.ameaca}) ${inv.quantos > 1 ? "investem" : "investe"} contra mim no caminho, e o painel de combate JÁ ESTÁ ABERTO com as fichas prontas. Narre o instante da investida em uma ou duas frases e me passe a vez; quem acerta e quanto dói é o dado.`;
 }

@@ -171,9 +171,15 @@ sec("6. as duas contradições antigas, pelo que o código faz");
   t("o código: um PV exagerado é aparado à faixa da criatura", exagerado.vidaMax < esperado * 10 && exagerado.vidaMax <= esperado * 1.5 + 1 && !!exagerado.pvAferido);
   t("o código: a vida reduzida de quem já apanhou é honrada", ferido.vida === 3 && ferido.vidaMax >= 3);
   t("o prompt já não diz que o PV é ignorado", !/número de PV que você mandar é ignorado/.test(P));
-  t("diz o que o código faz: só vale dentro da faixa", /um PV que você mande só vale dentro da faixa daquela criatura/.test(P));
+  /* E4 (12/10): a frase saiu com o BESTIÁRIO do prompt — o Narrador já não
+     abre luta nem manda PV; o código (as duas asserções de cima) continua a
+     aparar o PV à faixa de quem quer que o mande. */
+  t("o prompt já não ensina a mandar PV ao abrir (E4)", !/um PV que você mande/.test(P) && !/Ao abrir combate envie/.test(P));
   t("e já não manda listar PV atual e máximo ao abrir", !/listando cada inimigo com nome, PV atual e máximo/.test(P));
-  t("a regra do dano anterior à abertura continua (o código a honra)", /dano legítimo ocorreu antes da abertura/.test(P));
+  /* E4 (12/10): a regra era do Narrador a abrir a luta ("abra o inimigo já
+     com a vida reduzida"); quem abre agora é o sistema, e o código continua
+     a honrar a vida reduzida (a asserção "o código: a vida reduzida…"). */
+  t("a regra do dano anterior à abertura saiu com a abertura do Narrador (E4)", !/dano legítimo ocorreu antes da abertura/.test(P));
   /* 1. os chefes: nenhuma porta do código regista chefe que o Narrador
      semeie (`chefesDoMundo` é só da semente); áreas secretas, sim, pelo
      sinal masmorra:<nome> (`entrarMasmorra`) */

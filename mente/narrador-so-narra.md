@@ -578,3 +578,97 @@ do `talvezChegarSozinho`); sem destino fica até o destino dito na frase virar `
 o destino a `detectarSeguirViagem` quando a fiação for pedida). (2) creditar `enc.moedas` do achado da
 estrada no rolar — aí o `backend` tira o *"via moedas"* do detalhe e a espera da suíte esvazia. (3)
 opcional: `genero` no esquema das `pessoas` do Cronista.
+
+---
+
+## E4 — medida (12/10, `backend`, v9.430)
+
+**Os usos, contados por script** (`registo-s6.jsonl`, `registo-s7.jsonl`, `registo-s8.jsonl`: 209 respostas do
+Narrador; cada `perigo`, cada campo de `mudancas` com combate, vida, mana ou dano):
+
+| sessão · turno da pauta | o que o jogador fez | o que o Narrador mandou | juízo | a porta do sistema que o cobre |
+|---|---|---|---|---|
+| 6.ª T42 (masmorra) | "sigo para o ronco… Vando e eu o enfrentamos" | `combate_iniciar` Rato de Calabouço + `perigo` (a mordida) | **meio certo**: o jogador quis a luta; o bicho e a mordida eram do Narrador | a sala (`masmorras.js`) e o veto da luta sem painel; o golpe do jogador abre pela agressão |
+| 6.ª T47 | "ataco o lagarto" → `[ATAQUE DECLARADO — SEM ALVO]` | `combate_iniciar` Lagarto (**certo**, era o pedido) + `perigo` "acerta-o no ombro" (**nocivo**: feriu antes da vez dele) | 1 certo, 1 nocivo | o pedido fica; hoje o próprio `lerAgressao` acha o lagarto que o Mestre mostrou |
+| 7.ª T60 | "ataco o pescador" → SEM ALVO | `combate_iniciar: null`, "não há ninguém" | **certo** (não é uso) | — |
+| 8.ª T24 | "parto para o Poço" (ENCONTRO DO TRECHO: Zumbi) | `perigo` "o zumbi avança" → a emboscada abriu | **meio certo**: o encontro era do sistema; a investida, do Narrador | **nova:** `investidaDaEstrada` (encontros.js) |
+| 8.ª M64 | Sobrevivência **21 vs 13, SUCESSO** | `perigo` + `combate_iniciar` 2 Lobos + `vida: −1` | **nocivo** (o sucesso castigado) | nenhuma: um sucesso não traz luta nem ferida |
+
+**Zero usos** em 209 de `combate_inimigo_vida`, `combate_atualizar`, `combate_encerrar`, `combate_remover`,
+`dano_ambiental` e `mana`. Dos 4 `perigo`, os 4 foram bichos a investir; **nenhum foi armadilha**. Dos 3
+encontros de perigo da estrada nas três sessões (Capanga, Zumbi, Cultista), 1 virou luta — é a base da tabela.
+
+**O mapa das portas da luta, depois da E4:**
+
+| quem abre | onde | estado |
+|---|---|---|
+| o golpe do jogador (o nome, o bicho e a pessoa armada que o Mestre mostrou) | `agressao.js#lerAgressao` | existia |
+| a sala com ocupante, e a armadilha da sala | `masmorras.js` | existia |
+| a guarda que vem buscar o procurado | `crime.js` (A LEI CHEGOU) | existia |
+| a luta prometida no lado da decisão | `agressao.js#alvoPrometido` | existia |
+| o 1 natural que fere (a condição) | `consequencias.js` | existia |
+| **o encontro da estrada que investe** | **`encontros.js#investidaDaEstrada`** + `INVESTIDA_DA_ESTRADA` (1/3; neblina +0,2, vento e tempestade +0,1, chuva +0,05; teto 0,6; o número aparado pelo orçamento, degrau "mortal") | **criada** |
+| o Narrador, **só a pedido**: o jogador declarou o golpe e o sistema não achou o alvo | `envelopeSemAlvo` (leva agora o formato no envelope) | fica |
+
+**A regra, e a guarda que a faz valer.** `agressao.js#podarONarrador(resp, { envelopes })` (tabela
+`O_NARRADOR_NAO_ABRE`): da resposta do Narrador saem **sempre** o `perigo`, `combate_iniciar` (salvo o
+pedido), `combate_inimigo_vida`, `combate_atualizar`, `combate_remover`, `dano_ambiental`, e a `vida`/`mana`
+**negativas**. Ficam a cura, `combate_encerrar` e os `sinais` (O CHAMADO). **Um sucesso nunca é castigado**:
+com `Resultado: SUCESSO` ou `eu PASSEI` nos envelopes do turno (`sucessoNoTurno`), sai tudo isso, mesmo com
+pedido — e os três envelopes do sim (`testes.js`) dizem-no: *"sem luta nem ferida que eu não tinha"*
+(`SUCESSO_SEM_CASTIGO`, só nos turnos de sucesso). O veto da luta sem painel (`LUTA_SEM_PAINEL`) já não manda
+abrir: *"quem abre a luta é o sistema; mostre quem está à frente e pare antes do primeiro golpe"*.
+
+**O que saiu do prompt** (prompt.js e condicoes.js; comentário E4 acima do `return`): ABERTURA NO MESMO
+TURNO; "abra o inimigo já com a vida reduzida"; o BESTIÁRIO ("ao abrir combate envie só o nome e a ameaça",
+com a lista de criaturas — o `import` saiu junto); DANO AMBIENTAL; o `perigo` do formato e do CONDIÇÕES; o
+exemplo de `mudancas` (vida, mana, dano, combate_*); "só use campos combate_"; o DANO DE GOLPE ("vida e
+combate_inimigo_vida para o dano que nenhum ataque causou"); "Use combate_atualizar… combate_encerrar"; o
+"registre o GD no combate_iniciar" (o GD sai da base do mundo); a COBRANÇA ÚNICA da mana; e o "para não
+faltar espaço aos campos combate_" da narrativa curta. **O que ficou, e porquê:** a COESÃO DE RESULTADO e o
+PATAMAR (governam a prosa da luta), O CHAMADO (a raid não tem outra porta), e os "NÃO envie combate_iniciar"
+dos envelopes de luta já aberta (agressão, emboscada, masmorra, lei) — são dinâmicos, só custam no turno em
+que a luta abre, e com a guarda ligada tornam-se redundantes (saem quando a fiação provar a guarda).
+
+**O tamanho** (as três cenas sintéticas, re-renderizadas):
+
+| | E3 | **E4** | saiu |
+|---|---|---|---|
+| típica | 51.880 | **49.048** | −2.832 (−5,5%) |
+| PIOR CENA REAL (luta, masmorra, nível 20) | 64.824 | **61.122** | −3.702 |
+| prompt inteiro (todas as portas) | 78.019 | **74.317** | −3.702 |
+| pior caso com gente (o mesmo corte do texto fixo) | 73.934 | **≈ 70.230** | ≈ −3.700 |
+
+Desde a medição: típica 59.094 → 49.048 (**−17%**); pior com gente 80.475 → ≈ 70.230, **≈ 11,8 mil de folga**
+no teto de 82 mil. Canais de luta e dano citados no texto fixo: típica 15 → **0**, pior real 20 → **0**; o texto
+fixo já não pede campo nenhum com sublinhado. Caixa alta: típica 61 → **60**, pior real 72 → **70**.
+
+**Testes.** Nova `teste-narrador-so-narra-e4.mjs` (81; falha na árvore de v9.429): o M64 com a resposta real,
+os cinco usos e a porta de cada um, a guarda (corta, deixa, lixo, imutável, determinística), a estrada por
+tabela, o prompt, os leitores do App, a catraca do tamanho. **Asserções movidas, com o motivo escrito:**
+`teste-agressao` (o formato no envelope), `teste-consequencias` (2: o perigo saiu do CONDIÇÕES),
+`teste-mm-c0` (o veto), `teste-mm8c2-quem-importa` (2: o PV e o dano anterior à abertura), `teste-narrador-so-narra-e2`
+(o exemplo, o FICA do perigo e da E4), `teste-narrador-so-narra-e3` (idem), `teste-porta-combate` (6: o DANO DE
+GOLPE, o combate_atualizar e a FRONTEIRA da abertura passam a "saiu de toda cena"), `teste-prompt` (4: o piso de
+campos 6 → 0, o perigo, a ameaça no envelope, a abertura).
+
+**A fiação (para o `frontend`; sem ela o prompt já não ensina, mas a guarda dorme e a estrada nunca investe):**
+1. `import { …, podarONarrador } from "./agressao.js"` e `import { …, investidaDaEstrada, envelopeDaInvestida } from "./encontros.js"`.
+2. **A guarda**, no topo de `aplicarResposta` (~10153, logo a seguir a `const op = …`):
+   `try { resp = podarONarrador(resp, { envelopes: op.envelopes || "" }).resp || resp; } catch (e) { calou("a porta da luta", e); }`
+   — `op.envelopes` já é `conteudo + "\n" + nota` (é por lá que chegam o envelope do teste e o do golpe sem alvo).
+3. **A estrada**, em `viajar`, logo depois do `try` do `encontroComFio` (~24696), pelo mesmo molde da sala (~21829):
+   `const inv = investidaDaEstrada(enc, { clima: c && c.id, pers: personagemRef.current || personagem });` e, se
+   `inv && inv.investe && !combateRef.current`: `abrirCombate(inv.inimigos, { pers })` (pers, msgs e nota como na
+   sala) e `encV = { ...encV, detalhe: envelopeDaInvestida(inv) }`. Tudo em `try/calou`.
+
+**Para a 9.ª sessão:** luta sem luta = 0; criatura fora da planta = 0; **sucesso seguido de luta ou ferida = 0**;
+respostas com `mudancas` de luta ou dano que chegam ao App = 0 (a guarda corta; anota-se o `cortes`); e, das
+criaturas da estrada, ~1 em 3 a investir.
+
+**O que fica.** (1) O texto da masmorra não anda por palavras: "desço para a camada seguinte" não move a planta,
+e a sala com ocupante só abre pelo botão — a 6.ª T42 teria aberto o ocupante da planta, não o rato do Narrador.
+(2) O golpe do jogador numa matilha da estrada abre contra **um** (o que `criaturaMostrada` lê); passar o
+encontro à vista para o `lerAgressao` (`conhecidas`) e abrir a matilha inteira é a próxima porta (pequena).
+(3) A emboscada pelo `perigo` (`montarEmboscada`) e os envelopes `envelopeSemCriatura`/`envelopeDesproporcional`
+ficam no código, inertes com a guarda ligada — reversão = um commit.

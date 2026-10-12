@@ -876,7 +876,7 @@ export function envelopeSemAlvo(a, oQueEuDisse = "") {
     : "não tem, no registro deste lugar, ninguém com o nome que eu citei — quem está aí pode ser uma criatura que só você descreveu";
   return `[ATAQUE DECLARADO — SEM ALVO NO REGISTRO] Eu disse: "${String(oQueEuDisse).slice(0, 160)}". Isso é uma declaração de violência, e não uma pergunta. O sistema não abriu o combate porque ${porque}.
 REGRA DESTE ENVELOPE (obrigatória): decida UMA das duas coisas, e só uma:
-1) HÁ alvo aqui — então DECLARE "combate_iniciar" com ele agora, nesta mesma resposta, e narre só a investida. Não resolva a luta.
+1) HÁ alvo aqui — então DECLARE em mudancas "combate_iniciar": [{"nome":"…","ameaca":"comum"}] com ele agora, nesta mesma resposta, e narre só a investida. Não resolva a luta.
 2) NÃO há alvo aqui — então diga isso na ficção, curto ("não há ninguém para atacar"), e devolva a palavra para mim.
 O que você NÃO pode fazer é narrar a briga acontecendo sem abrir o combate: sem o painel aberto, nada do que você contar tem número atrás, e eu fico lendo uma luta que não está acontecendo.`;
 }
@@ -898,7 +898,10 @@ O que você NÃO pode fazer é narrar a briga acontecendo sem abrir o combate: s
 export const LUTA_SEM_PAINEL = {
   jogador: /\b(enfrento|enfrentamos|enfrentar|luto contra|lutamos contra|encaro a luta|parto para a luta|vamos a luta|sem recuar|nao recuo|nao recuamos|avanco contra|avancamos contra)\b/,
   prosa: /\b(a luta (comeca|começa|esta lancada|explode)|comeca a luta|o combate (comeca|começa)|nao ha recuo|partem para cima|se arremessa(m)? (sobre|contra)|investe contra (voce|vos|vando|o grupo))\b/,
-  veto: "narrar a luta a começar ou golpe trocado sem combate aberto pelo sistema: se há luta nesta cena, declare combate_iniciar nesta resposta e narre só a investida; se não há, pare antes do primeiro golpe",
+  /* E4 (12/10): o veto já não manda o Narrador abrir a luta — quem a abre é
+     o sistema (o golpe do jogador, a sala, a estrada, a lei). Ele mostra quem
+     está à frente e pára; o golpe do jogador no turno seguinte abre-a. */
+  veto: "narrar a luta a começar ou golpe trocado sem combate aberto pelo sistema: quem abre a luta é o sistema; mostre quem está à frente e pare antes do primeiro golpe",
 };
 
 /* O veto do turno, numa lista (o molde de `porNaPauta`): [] fora do caso.
@@ -912,4 +915,106 @@ export function vetoDaLutaSemPainel(texto, opcoes) {
   let declara = false;
   try { declara = LUTA_SEM_PAINEL.jogador.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { declara = LUTA_SEM_PAINEL.jogador.test(j); }
   return declara || LUTA_SEM_PAINEL.prosa.test(ultima) ? [LUTA_SEM_PAINEL.veto] : [];
+}
+
+/* ============================================================
+   O NARRADOR NÃO ABRE A LUTA (E4 de "o Narrador só narra", 12/10)
+
+   "Se a cena tem inimigo hostil presente, o combate já deve estar
+   aberto" — era a ABERTURA NO MESMO TURNO do prompt, e foi por ela que
+   o M64 da 8.ª sessão aconteceu: o jogador pediu Sobrevivência para não
+   se perder, o dado deu 21 contra 13, SUCESSO, e o Narrador respondeu
+   com dois lobos (`perigo` + `combate_iniciar`) e `vida: −1`. O sistema
+   não os pedira; o dado tinha dito que correu bem.
+
+   Contados os três registos (6.ª, 7.ª, 8.ª: 209 respostas), os canais
+   da luta e do dano foram usados 5 vezes. Cada caso certo tinha, ou tem
+   agora, uma porta do sistema:
+     · o golpe do jogador ............ lerAgressao (o nome, o bicho e a
+                                       pessoa armada que o Mestre mostrou)
+     · a sala com ocupante ........... masmorras.js (e a armadilha da sala)
+     · o encontro da estrada ......... encontros.js#investidaDaEstrada
+     · a guarda que vem buscar ....... crime.js (A LEI CHEGOU)
+     · o 1 natural que fere .......... consequencias.js
+   E o único pedido que fica ao Narrador é o do próprio sistema: o jogador
+   DECLAROU o golpe e o sistema não achou o alvo (`envelopeSemAlvo`) — aí
+   o Narrador dá-lhe o nome, porque a luta já é do jogador.
+
+   Esta função é a guarda do lado de cá: o que a resposta do Narrador
+   traz e ele não decide sai dela antes de o App a aplicar. O App
+   continua a saber ler tudo (reversão = um commit); o que muda é que o
+   campo não chega. Sem mutação: devolve uma resposta nova.
+   ============================================================ */
+export const O_NARRADOR_NAO_ABRE = {
+  /* o mundo age contra o herói só por tabela (a estrada, a sala, a lei, a
+     falha crítica): nas três sessões, os 4 `perigo` foram bichos a investir
+     e nenhum foi armadilha */
+  perigo: "o mundo age contra o herói só por tabela: a estrada, a sala da masmorra, a lei, a falha crítica",
+  /* os campos que saem sempre (com valor) */
+  campos: {
+    combate_iniciar: "a luta abre por porta do sistema; o Narrador só nomeia o alvo que o jogador atacou e o sistema não achou",
+    combate_inimigo_vida: "o dano do inimigo é do dado",
+    combate_atualizar: "a ficha do inimigo é do bestiário",
+    combate_remover: "o inimigo só sai do painel por dado, fuga ou rendição",
+    dano_ambiental: "o dano do mundo é da salvaguarda, da sala e da queda",
+  },
+  /* os que saem quando tiram (o número negativo) */
+  tiram: {
+    vida: "o Narrador nunca tira vida",
+    mana: "o custo da magia já foi cobrado pelo sistema",
+  },
+  /* o pedido do sistema (o jogador declarou o golpe e o alvo não foi achado) */
+  pedidos: ["[ATAQUE DECLARADO — SEM ALVO NO REGISTRO]"],
+  /* o teste que passou, como os envelopes de testes.js o dizem */
+  sucesso: [/\bresultado:\s*sucesso\b/i, /\beu passei\b/i],
+  porqueDoSucesso: "um sucesso nunca é castigado: a resposta do teste que passou não traz luta nem ferida",
+};
+
+/* O teste que passou neste turno, lido dos envelopes que foram ao Narrador. */
+export function sucessoNoTurno(envelopes) {
+  if (typeof envelopes !== "string" || !envelopes) return false;
+  return O_NARRADOR_NAO_ABRE.sucesso.some((rx) => rx.test(envelopes));
+}
+
+const temValor = (v) => v != null && v !== false && v !== "" && !(Array.isArray(v) && !v.length);
+
+/* `resp`: a resposta do Narrador já parseada ({ narrativa, perigo,
+   mudancas }). `opcoes.envelopes`: o que foi ao Narrador neste turno (o
+   mesmo texto que a bolsa lê). Devolve { resp, cortes, sucesso, pedido }:
+   `cortes` diz cada campo que saiu e porquê (é a prova, e o diário). */
+export function podarONarrador(resp, opcoes) {
+  if (!resp || typeof resp !== "object" || Array.isArray(resp)) return { resp, cortes: [], sucesso: false, pedido: false };
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const env = typeof o.envelopes === "string" ? o.envelopes : "";
+  const T = O_NARRADOR_NAO_ABRE;
+  const sucesso = sucessoNoTurno(env);
+  const pedido = !sucesso && T.pedidos.some((m) => env.includes(m));
+  const porque = (p) => (sucesso ? T.porqueDoSucesso : p);
+  const cortes = [];
+  let novo = resp;
+  if (temValor(resp.perigo)) {
+    cortes.push({ campo: "perigo", porque: porque(T.perigo) });
+    novo = { ...novo, perigo: null };
+  }
+  const m = resp.mudancas;
+  if (m && typeof m === "object" && !Array.isArray(m)) {
+    const nm = { ...m };
+    let tocou = false;
+    for (const [campo, p] of Object.entries(T.campos)) {
+      if (!Object.prototype.hasOwnProperty.call(nm, campo)) continue;
+      if (campo === "combate_iniciar" && pedido) continue;
+      if (temValor(nm[campo])) cortes.push({ campo, porque: porque(p) });
+      delete nm[campo];
+      tocou = true;
+    }
+    for (const [campo, p] of Object.entries(T.tiram)) {
+      if (Number(nm[campo]) < 0) {
+        cortes.push({ campo, porque: porque(p) });
+        delete nm[campo];
+        tocou = true;
+      }
+    }
+    if (tocou) novo = { ...novo, mudancas: Object.keys(nm).length ? nm : null };
+  }
+  return { resp: novo, cortes, sucesso, pedido };
 }
