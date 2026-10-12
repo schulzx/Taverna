@@ -43,8 +43,12 @@ sec("1. A tabela: o que é igual a T é T, e uma cor nova só");
      o panel mudarem, ESTA linha é a que avisa que o nó do Figma ficou para trás */
   t("lugarAceso = #31252D (panel + 10 % de âmbar, a cor do nó)", FOGUEIRA.lugarAceso === "#31252D", FOGUEIRA.lugarAceso);
   t("claraoCentro = 0,2 (o código guarda 0,2; a variável do Figma guarda 20)", FOGUEIRA.claraoCentro === 0.2);
-  t("§3: lugar 176 / 56, brasa 20, fogo 132 / 48, raio 12, até 5",
-    FOGUEIRA.lugar.mesa === 176 && FOGUEIRA.lugar.baixa === 56 && FOGUEIRA.brasa === 20
+  /* a Baixa era 56 (o nó 198:79) e desceu ao piso do alvo na 7.ª sessão de
+     prova: com o cabeçalho de página de 69 do jogo (o Figma tinha 41) a roda
+     não cabia na página de 323 a 800×451 — formas.md § Fogueira 10, e a
+     secção 9 desta suíte prova a conta */
+  t("§3: lugar 176 / 48 (o piso), brasa 20, fogo 132 / 48, raio 12, até 5",
+    FOGUEIRA.lugar.mesa === 176 && FOGUEIRA.lugar.baixa === ALVOS.piso && FOGUEIRA.brasa === 20
     && FOGUEIRA.fogo.mesa === 132 && FOGUEIRA.fogo.baixa === 48 && FOGUEIRA.raio === 12 && FOGUEIRA.lugaresMax === 5);
   t("o lugar da Baixa é alvo (≥ ALVOS.piso)", FOGUEIRA.lugar.baixa >= ALVOS.piso);
 }
@@ -143,6 +147,40 @@ sec("8. O verbo com preço: a peça sobe a ui.jsx, com a sua tabela");
   t("as medidas do nó 64:2446: 14 · 6 · 10 · 1 · raio 8",
     VERBO_COM_PRECO.lado === 14 && VERBO_COM_PRECO.cima === 6 && VERBO_COM_PRECO.entre === 10 && VERBO_COM_PRECO.palavras === 1 && VERBO_COM_PRECO.raio === 8);
   t("o armado veste onAccent sobre o âmbar", /function VerboComPreco[\s\S]{0,700}armado \? T\.onAccent : T\.inkDim/.test(UI));
+}
+
+sec("9. A régua das larguras (7.ª sessão de prova, § Fogueira 10)");
+{
+  /* MEDIDAS DO NAVEGADOR, escritas aqui porque Node não mede letra (página
+     temporária de prova, 11/10, a 800×451 e 467×851): a abertura da noite
+     tem 365 px na Cormorant 20; o «Dormir já» (verbo + preço) 55 de alto; o
+     cabeçalho da página (V5a) 69; o enchimento do App por cima da noite 16.
+     A página baixa é a régua do desenho: 323. A roda baixa tem 536 de largo
+     a 800 (264 por lugar, como a sessão mediu) e 364–403 a 467. */
+  const ABERTURA = 365, DORMIR = 55, CABECALHO = 69, ENCHIMENTO = 16, PAGINA = 323;
+  const B = FOGUEIRA.baixa;
+  const colunas = (w) => ((w - B.entre) / 2 >= B.lugarMin ? 2 : 1);
+  const alturaDaRoda = (n, w) => {
+    const c = colunas(w), linhas = Math.ceil((n + 1) / c);   /* os lugares + o Dormir já, na grade */
+    return FOGUEIRA.fogo.baixa + B.ritmo + (linhas - 1) * (FOGUEIRA.lugar.baixa + B.entre) + Math.max(DORMIR, FOGUEIRA.lugar.baixa);
+  };
+  t("a 800 (536) a roda tem duas colunas", colunas(536) === 2);
+  t("a 467 (403, e os 364 que a sessão mediu) a roda tem uma coluna", colunas(403) === 1 && colunas(364) === 1);
+  t("em duas colunas cada lugar tem ≥ lugarMin", (536 - B.entre) / 2 >= B.lugarMin);
+  t("o lugar da Baixa é ≥ o piso do alvo (48)", FOGUEIRA.lugar.baixa >= 48 && FOGUEIRA.lugar.baixa >= ALVOS.piso);
+  t("o nome e o gesto (36) cabem no lugar com o enchimento de cima", FOGUEIRA.lugar.baixa - 2 * FOGUEIRA.lugarBaixa.cima >= 36);
+  const coluna = 536 - (FOGUEIRA.roda.fogo.baixa - B.fogoCede) - B.ritmo;
+  t("a abertura cabe numa linha ao lado do fogo a 800 (" + coluna + " ≥ " + ABERTURA + ")", coluna >= ABERTURA);
+  const cabe = PAGINA - CABECALHO - ENCHIMENTO;
+  for (const n of [1, 2, 3, 4, 5]) {
+    const h = alturaDaRoda(n, 536);
+    t("800×451: a roda de " + n + " + «Dormir já» cabe na página (" + h + " ≤ " + cabe + ")", h <= cabe);
+  }
+  t("o fogo só cede o clarão, nunca a lenha nem as faíscas (acabam em x 106)", FOGUEIRA.roda.fogo.baixa - B.fogoCede >= 106);
+  t("o painel escolhe as colunas pela largura medida", CODIGO.includes("colunas={colunasDaBaixa(largura)}") && CODIGO.includes("repeat(${colunas}, minmax(0, 1fr))"));
+  t("as setas cima/baixo andam uma linha da grade, seja qual for", CODIGO.includes("const linha = mesa ? 1 : colunas;"));
+  t("o primeiro nome nunca se corta; o sobrenome é que cede", CODIGO.includes("\"shrink-0 whitespace-nowrap\">{primeiro}") && CODIGO.includes("\"truncate min-w-0\">{\"\\u00A0\" + resto}"));
+  t("o fogo pequeno cede o clarão pela tabela", CODIGO.includes("marginRight: -FOGUEIRA.baixa.fogoCede"));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

@@ -19,6 +19,8 @@ Formato:
 
 ---
 
+## 11/10 · v9.417 · **A roda estreita: a fogueira cabe a 800×451 e o nome inteiro a 467** · `aprendiz` — da 7.ª sessão de prova (`mm11-sessao-7.md` 283–284). **A causa a 800×451:** o quadro `202:206` tem cabeçalho de página de 41 e o jogo tem o de V5a, de 69; na página de 323 a roda de quatro + «Dormir já» media 266 (a abertura, 365 px, partia a 364) e o «Dormir já» saía 28 px. **Agora** o lugar da Baixa é 48 (`ALVOS.piso`, era 56), o fogo pequeno cede 32 px do clarão à abertura (`baixa.fogoCede`), e a roda mede 227 — acaba 11 px antes do fim, com 4 ou 5 lugares. **A 467:** abaixo de 240 por lugar (`baixa.lugarMin`) a roda vira uma coluna (403 de largo, nome e gesto inteiros; antes 178 e «Jaco F…»); o primeiro nome nunca se corta, quem cede é o sobrenome. **1280×912:** Mesa sem mudança (lugares 176×180, painel 467). Medido numa página temporária fora do commit, sem save. **Fica de fora:** com a cinta viva (72) a página desce a 299 e o «Dormir já» sai 13 px (os quatro lugares cabem). `formas.md` § Fogueira 10; suíte `teste-painel-fogueira` +16 (a régua das larguras); 317/317 suítes, 16/16 varredores.
+
 ## 11/10 · v9.416 · **F2 · a fogueira ligada no App** · `oficial` — o «Descanso longo» abre a roda no lugar da página quando alguém junto tem o que dizer; sentar é um turno do Narrador; Dormir/um lado/ficar fecham a noite; a manhã abre com o ladrilho. Provado vivo (A, B, D; Mesa e 800×451). **Para o desenho:** a 467 px a grade de Baixa corta o nome numa letra — o detalhe em `mente/diario.md`, bloco v9.416.
 
 ## 11/10 · v9.413 · **F1 · a fogueira construída (fora do App)** · `aprendiz`

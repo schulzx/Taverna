@@ -140,6 +140,16 @@ const CHAMA_PEQUENA = {
 
 const chaveDe = (p) => (p && (p.id != null ? p.id : p.nome)) || null;
 const nomeDe = (p) => (p && p.nome) || "";
+/* o primeiro nome e o resto: na roda estreita o primeiro nunca se corta, e é
+   o sobrenome que cede (§ Fogueira 10) */
+const partesDoNome = (nome) => {
+  const s = String(nome || "").trim();
+  const i = s.indexOf(" ");
+  return i < 0 ? [s, ""] : [s.slice(0, i), s.slice(i + 1)];
+};
+/* quantas colunas a roda da Baixa tem nesta largura: duas só se cada lugar
+   ficar com FOGUEIRA.baixa.lugarMin */
+const colunasDaBaixa = (largura) => ((largura - FOGUEIRA.baixa.entre) / 2 >= FOGUEIRA.baixa.lugarMin ? 2 : 1);
 const paragrafos = (texto) => (Array.isArray(texto) ? texto : String(texto || "").split(/\n\s*\n/))
   .map((s) => String(s || "").trim()).filter(Boolean);
 
@@ -209,6 +219,7 @@ const Lugar = React.forwardRef(function Lugar({ item, atalho, formato, escolhido
   const mesa = formato === "mesa";
   const LM = FOGUEIRA.lugarMesa, LB = FOGUEIRA.lugarBaixa;
   const nome = nomeDe(p);
+  const [primeiro, resto] = partesDoNome(nome);
   const rotulo = `${PALAVRAS.sentar} ${nome}${item.gesto ? " — " + item.gesto : ""}`;
   const corDoGesto = tem ? T.inkMeio : T.inkDim;
   return (
@@ -240,7 +251,10 @@ const Lugar = React.forwardRef(function Lugar({ item, atalho, formato, escolhido
       ) : (
         <>
           <span className="flex flex-col flex-1 min-w-0" style={{ lineHeight: "normal" }}>
-            <span className="tv-body truncate" style={{ fontSize: TIPOS.corpo, fontWeight: 500, color: T.ink }}>{nome}</span>
+            <span className="tv-body flex min-w-0" style={{ fontSize: TIPOS.corpo, fontWeight: 500, color: T.ink }}>
+              <span className="shrink-0 whitespace-nowrap">{primeiro}</span>
+              {resto ? <span className="truncate min-w-0">{"\u00A0" + resto}</span> : null}
+            </span>
             {item.gesto ? <span className="tv-body truncate" style={{ fontSize: TIPOS.piso, fontStyle: "italic", color: corDoGesto }}>{item.gesto}</span> : null}
           </span>
           {tem ? <Brasa /> : null}
@@ -286,6 +300,9 @@ function useFormato(el, forcado, estado, n) {
     window.addEventListener("resize", medir);
     return () => { if (obs) obs.disconnect(); window.removeEventListener("resize", medir); };
   }, [el]);
+  return [formatoDe(medida, forcado, estado, n), medida.largura];
+}
+function formatoDe(medida, forcado, estado, n) {
   if (forcado === "mesa" || forcado === "baixa") return forcado;
   const M = FOGUEIRA.mesaPede;
   if (estado === "roda") return medida.largura >= larguraDaRoda(n) && medida.altura >= M.roda + M.moldura ? "mesa" : "baixa";
@@ -303,7 +320,7 @@ const focoLivre = (el) => !el || el === document.body || !/^(BUTTON|A|INPUT|TEXT
    ============================================================ */
 
 /* A · com quem você se senta */
-function ARoda({ roda, abertura, formato, escolhido, aoSentar, aoDormir }) {
+function ARoda({ roda, abertura, formato, colunas = 2, escolhido, aoSentar, aoDormir }) {
   const mesa = formato === "mesa";
   const n = roda.length;
   const refs = React.useRef([]);
@@ -313,9 +330,9 @@ function ARoda({ roda, abertura, formato, escolhido, aoSentar, aoDormir }) {
   const chaveEscolhida = escolhido && typeof escolhido === "object" ? chaveDe(escolhido) : escolhido;
   const sentar = (item) => { if (chaveEscolhida == null && aoSentar) aoSentar(item.pessoa); };
   /* a paragem: setas andam, Home/End vão às pontas; na Baixa, cima/baixo
-     saltam a linha da grade de duas colunas */
+     saltam a linha da grade (duas colunas, ou uma na roda estreita) */
   const teclar = (i) => (e) => {
-    const linha = mesa ? 1 : 2;
+    const linha = mesa ? 1 : colunas;
     const vai = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + linha, ArrowUp: i - linha, Home: 0, End: n - 1 }[e.key];
     if (vai == null) return;
     e.preventDefault();
@@ -348,18 +365,19 @@ function ARoda({ roda, abertura, formato, escolhido, aoSentar, aoDormir }) {
       </div>
     );
   }
-  /* Baixa: o fogo pequeno ao lado da abertura; a grade de duas colunas na
-     mesma ordem; o Dormir já na grade, depois do último lugar */
+  /* Baixa: o fogo pequeno ao lado da abertura (a ponta do clarão cede-lhe
+     `fogoCede`); a grade de duas colunas na mesma ordem — uma, quando o lugar
+     não cabe em `lugarMin`; o Dormir já na grade, depois do último lugar */
   return (
     <div className="flex flex-col" style={{ gap: FOGUEIRA.baixa.ritmo }}>
       <div className="flex items-center" style={{ gap: FOGUEIRA.baixa.ritmo }}>
-        <OFogo formato="baixa" style={{ flexShrink: 0 }} />
+        <OFogo formato="baixa" style={{ flexShrink: 0, marginRight: -FOGUEIRA.baixa.fogoCede }} />
         <div className="flex flex-col min-w-0">
           {abertura ? <p className="tv-display" style={{ fontSize: TIPOS.titulo, fontWeight: 500, color: T.ink, lineHeight: "normal" }}>{abertura}</p> : null}
           <p className="tv-body" style={{ fontSize: TIPOS.corpo, fontStyle: "italic", color: T.inkMeio, lineHeight: "normal" }}>{PALAVRAS.pergunta}</p>
         </div>
       </div>
-      <div role="group" aria-label={PALAVRAS.pergunta} className="grid" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: FOGUEIRA.baixa.entre }}>
+      <div role="group" aria-label={PALAVRAS.pergunta} className="grid" style={{ gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr))`, gap: FOGUEIRA.baixa.entre }}>
         {roda.map((item, i) => lugar(item, i))}
         {dormirJa}
       </div>
@@ -475,7 +493,7 @@ export function PainelFogueira({
   const lista = (Array.isArray(roda) ? roda : []).filter((r) => r && r.pessoa).slice(0, FOGUEIRA.lugaresMax);
   const estado = manha && manha.frase ? "manha" : fala && fala.pessoa ? "fala" : lista.length ? "roda" : null;
   const [raiz, setRaiz] = React.useState(null);
-  const forma = useFormato(raiz, formato, estado, lista.length);
+  const [forma, largura] = useFormato(raiz, formato, estado, lista.length);
 
   /* OS ATALHOS — números e Enter, nunca quando a tecla é de um campo de
      escrever. Um handler que estoura não pode custar a noite. */
@@ -513,7 +531,7 @@ export function PainelFogueira({
     <section ref={setRaiz} aria-label={PALAVRAS.roda} className="w-full">
       <div key={estado} className="tv-fogueira-entra">
       {estado === "roda" ? (
-        <ARoda roda={lista} abertura={abertura} formato={forma} escolhido={escolhido} aoSentar={aoSentar} aoDormir={aoDormir} />
+        <ARoda roda={lista} abertura={abertura} formato={forma} colunas={colunasDaBaixa(largura)} escolhido={escolhido} aoSentar={aoSentar} aoDormir={aoDormir} />
       ) : estado === "fala" ? (
         <AFala roda={lista} fala={fala} escolha={escolha} aguentaNoite={aguentaNoite} portaAberta={portaAberta} formato={forma}
           aoEscolher={aoEscolher} aoDormir={aoDormir} aoFicar={aoFicar} />

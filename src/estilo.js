@@ -1430,7 +1430,12 @@ export const FOGUEIRA = {
   /* as paragens do gradiente radial do clarão: [onde, opacidade] (nó `197:34`) */
   claraoParadas: [[0, 1], [0.55, 0.35], [1, 0]],
 
-  lugar: { mesa: 176, baixa: 56 },   /* Mesa: a LARGURA do lugar · Baixa: a ALTURA */
+  /* Mesa: a LARGURA do lugar · Baixa: a ALTURA. A Baixa era 56 (`198:79`) e
+     passou ao piso do alvo (48) na 7.ª sessão de prova (v9.416): o quadro do
+     Figma tinha um cabeçalho de página de 41, o jogo tem o de V5a, de 69, e a
+     roda de quatro + «Dormir já» passava 28 px do fim da página de 323 a
+     800×451 (medido; `formas.md` § Fogueira, 10). O nome e o gesto pedem 36. */
+  lugar: { mesa: 176, baixa: ALVOS.piso },
   brasa: 20,
   fogo: { mesa: 132, baixa: 48 },    /* a altura do fogo (as larguras em `roda.fogo`) */
   raio: 12,
@@ -1450,8 +1455,9 @@ export const FOGUEIRA = {
      lado, 8 entre o rosto, o nome e o gesto; o atalho no canto (11, 9); a
      brasa sobre o rosto em (48, −2) */
   lugarMesa: { altura: 180, cima: 18, baixo: 16, lado: 12, entre: 8, atalho: [11, 9], brasa: [48, -2] },
-  /* o lugar na Baixa (`198:79`): 12 à esquerda, 14 à direita, 8 em cima, 12 entre */
-  lugarBaixa: { esquerda: 12, direita: 14, cima: 8, entre: 12 },
+  /* o lugar na Baixa (`198:79`): 12 à esquerda, 14 à direita, 12 entre; em
+     cima 6 desde que a altura é 48 ((48 − 36 do nome e do gesto) / 2; era 8 a 56) */
+  lugarBaixa: { esquerda: 12, direita: 14, cima: 6, entre: 12 },
   filete: 3,          /* o escolhido: o filete de 3 embaixo (a gramática de `A escolha`) */
   rosto: { ficha: 160, cartao: 64, chip: 32 },
   letra: { nomeNoLugar: 19, nomeDaFala: 22, rastreioDaVoz: 0.08, rastreioDoRedor: 0.06, entrelinhaDaFala: 1.65 },
@@ -1461,7 +1467,18 @@ export const FOGUEIRA = {
   fala: { coluna: 220, rostoEm: [30, 20], fogoEm: [-10, 120], entreRostoENome: 10, entre: 40, ritmo: 20, entreLados: 12, chip: 8, entreChips: 16 },
   /* a Baixa (`202:206`, `202:405`): duas colunas com 8 entre elas; a coluna
      de quem fala com o rosto Cartão; 12 entre os blocos */
-  baixa: { entre: 8, ritmo: 12, coluna: 96, entreColunas: 24 },
+  baixa: { entre: 8, ritmo: 12, coluna: 96, entreColunas: 24,
+    /* A RODA ESTREITA (7.ª sessão de prova, § Fogueira 10). `fogoCede`: o
+       clarão do fogo pequeno é 160 de largo e a lenha e as faíscas acabam
+       em x 106; os 32 da ponta direita (o clarão a ~4 % de âmbar) deixam a
+       abertura pousar neles — sem isso, «A lenha estala. Ninguém tem pressa
+       de dormir.» (365 px) partia a 364 e a roda descia 25.
+       `lugarMin`: abaixo disto o lugar não divide a linha — a roda vira uma
+       coluna. 240 = os 122 do que não é texto (12 + rosto 32 + 12 + 12 +
+       brasa 20 + 12 + atalho 8 + 14) e 118 de nome, ~15 letras a 15 px
+       (medido: «Tônia Lodoso» 92). A 467 a coluna dupla dava 178 e cortava
+       «Jaco F…». */
+    fogoCede: 32, lugarMin: 240 },
   /* os verbos que não são de lado (Dormir já, Dormir sem responder): 300 */
   verboSo: 300,
   /* entre a abertura, a pergunta, a roda e o Dormir já (`200:210`) */

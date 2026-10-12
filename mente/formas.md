@@ -11858,3 +11858,11 @@ para a biblioteca `e5wJUzInAssoebx5npssKc` quando ela voltar a ser publicada** �
 copiar, não redesenhar; os dois espelhos (`197:65`, `197:66`) são então apagados
 em favor dos originais. A tipografia vai por `TIPOS` à mão (os estilos de texto
 deste ficheiro são os de antes de V1).
+
+### 10 · A roda estreita (`aprendiz`, 11/10, da 7.ª sessão de prova)
+
+- **Baixa, o lugar a 48 (`ALVOS.piso`), não 56.** O quadro `202:206` tem cabeçalho de página de 41; o jogo tem o de V5a, de 69. Medido a 800×451 (página de 323, roda de 536): a roda de quatro + «Dormir já» media 266 e o «Dormir já» saía 28 px do fim da página; agora mede 227 e acaba 11 px antes, com quatro ou cinco lugares. Em cima 6 (o nome e o gesto pedem 36).
+- **O fogo pequeno cede 32 do clarão à abertura** (`baixa.fogoCede`): a lenha e as faíscas acabam em x 106; a ponta do clarão está a ~4 % de âmbar. A abertura (365 px) partia a 364 e empurrava a roda 25 px.
+- **Uma coluna abaixo de `baixa.lugarMin` (240) por lugar** — 122 do que não é texto + 118 de nome. A 467 a coluna dupla dava 178 e cortava «Jaco F…»; agora 403 de largura, nome e gesto inteiros, e há altura de sobra (~400 px vazios antes). As setas cima/baixo andam uma linha da grade, seja qual for.
+- **O primeiro nome nunca se corta; quem cede é o sobrenome** (reticência só nele). Cor, contraste e brasa não mudam.
+- **Fica de fora:** com a cinta viva (72) a página baixa a 299 e o «Dormir já» sai 13 px — os quatro lugares cabem; o atalho do teclado e o scroll alcançam-no.
