@@ -203,7 +203,11 @@ t("`ir a <lugar>` não entrou — é a tábua da cidade com outra roupa",
   "está lá em todo turno de toda cidade e cresce com o mapa: mobília");
 t("o mercado continua fora", !/id: "mercado\|aqui"/.test(R));
 t("e a soleira continua a ser ZERO px quando não tem o que oferecer",
-  /if \(!vivas\.length\) return null;/.test(APP),
+  /* MOVIDA na C2 (11/10, frontend): o pé da página passou a levar também o
+     que alguém do núcleo pede ou deixa decidir (cartaoDoCoracao), por cima
+     da soleira. A lei é a mesma — sem soleira E sem coração, zero px —, e a
+     âncora aceita a segunda condição em vez de a proibir. */
+  /if \(!vivas\.length( && !doCoracao)?\) return null;/.test(APP),
   "região que reserva espaço para nada é mobília a mentir");
 
 console.log(`\n${maus === 0 ? "TUDO VERDE" : "VERMELHO"} — ${bons} passaram, ${maus} falharam`);

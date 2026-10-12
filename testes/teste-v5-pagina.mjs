@@ -126,7 +126,11 @@ sec("4. a fiação");
   t("e nunca custa o turno", /calou\("marcar a abertura de cerimonia", e\)/.test(ABRE));
   t("e não vai ao save (é um momento, não um fato)", !/aberturaRef\.current[^\n]*(?:localStorage|salvar)/.test(APP) && !/\babertura: abertura\b/.test(APP));
   const pe = APP.indexOf("<PeDaPagina>"), fim = APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>");
-  t("a soleira mora no pé do cartão, e há UMA soleira só", pe > fim && (APP.match(/<Soleira /g) || []).length === 1 && /<PeDaPagina>\s*<Soleira ofertas=\{vivas\.map/.test(APP));
+  t("a soleira mora no pé do cartão, e há UMA soleira só", pe > fim && (APP.match(/<Soleira /g) || []).length === 1 && /<PeDaPagina>\s*(?:\{doCoracao\}\s*\{vivas\.length \? )?<Soleira ofertas=\{vivas\.map/.test(APP));
+  /* MOVIDA na C2 (11/10, frontend): o cartão do coração (o que alguém do
+     núcleo pede ou deixa decidir) mora no MESMO pé, por cima da soleira —
+     continua a haver UMA soleira só, no pé do cartão; a âncora aceita o
+     cartão antes dela e a soleira condicional (sem ofertas, só o coração). */
   t("fora do que rola: entre o fim da página e o pé se fecha a região da rolagem", /<div ref=\{fimRef\}><FimDaPagina \/><\/div>\s*<\/div>/.test(APP.slice(fim - 10, pe)));
   /* V5e: a seta é a peça `SetaDaLeitura` — o que se prende é o mesmo lugar: entre o
      fim da página e o pé, dentro do invólucro da rolagem. */

@@ -19,6 +19,7 @@ import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
+import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo } from "./subtramas.js";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta } from "./masmorras.js";
@@ -221,7 +222,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -5807,6 +5808,14 @@ export default function Taverna() {
   const nucleoCacheRef = useRef(null);
   const quemERef = useRef({ ultimas: {}, cenas: {} });
   const coracaoRef = useRef(garantirCoracaoDoSave(null));
+  /* MM-C C2: as subtramas (derivadas do núcleo, em cache como ele), o ritmo
+     de quem já levou linha (não vai ao save, como o do QUEM É), a batida
+     que espera saber se chegou ao texto, e o que um clique decidiu e vai
+     uma vez à pauta do turno que ele próprio envia. */
+  const subtramasCacheRef = useRef(null);
+  const coracaoRitmoRef = useRef({ ultimas: {} });
+  const coracaoPendenteRef = useRef(null);
+  const coracaoFalaRef = useRef(null);
   /* R3 (v9.229): a virada MAIOR, irma da menor e com o mesmo ciclo (eleger,
      semear, regar, revelar). Mora num REF PROPRIO, e nao num campo dentro do
      outro, porque tem alvo proprio, sementes proprias e ritmo proprio — e
@@ -5984,6 +5993,37 @@ export default function Taverna() {
       if (citado || grupo.includes(sem(p.nome))) out.push(p.nome);
     }
     return out;
+  };
+  /* MM-C C2: as subtramas do núcleo, memorizadas pelo próprio núcleo (que
+     nucleoAgora já memoriza pelo que o muda). O elenco do mundo dá as casas. */
+  const subtramasAgora = (nucleo) => {
+    const c = subtramasCacheRef.current;
+    if (c && c.nucleo === nucleo) return c.lista;
+    const semente = sementeMundo();
+    let elenco = null;
+    try { elenco = elencoDoMundo(semente, mapaRef.current, contextoDoElenco()); } catch (e) { calou("o elenco das subtramas", e); }
+    const lista = subtramasDoNucleo(nucleo, { semente, espinha: espinhaRef.current, elenco });
+    subtramasCacheRef.current = { nucleo, elenco, lista };
+    return lista;
+  };
+  /* o contexto do coração neste instante — o mesmo para o turno, para a tela
+     e para o clique. A máscara do aliado que já caiu (reviravoltas.js) vai
+     em `reveladas`, com o ato em que caiu, para a do elo nunca cair no mesmo. */
+  const contextoDoCoracao = (nucleo, extra) => {
+    const esp = espinhaRef.current || {};
+    const lista = subtramasAgora(nucleo);
+    const ato = (historiaRef.current || {}).etapa || 0;
+    const mortos = Object.values(npcsRef.current || {}).filter((n) => n && n.nome && String(n.status || "").toLowerCase() === "morto").map((n) => n.nome);
+    let reveladas = [];
+    try {
+      const rv = reviravoltaRef.current;
+      const mascara = ((nucleo && nucleo.pessoas) || []).find((x) => x && x.papel !== "elo" && x.revelaNoAto != null);
+      if (rv && rv.revelada && mascara) {
+        const k = (esp.atos || []).findIndex((a) => { const ms = ((a && a.marcos) || []).filter(Boolean); const f = ms.find((m) => m.batida && m.batida.fecho) || ms[ms.length - 1]; return !!(f && f.feito && Number(f.dia) >= (rv.reveladaEm || 0)); });
+        reveladas = [{ nome: mascara.nome, ato: k >= 0 ? k : ato }];
+      }
+    } catch (e) { calou("a máscara que já caiu", e); }
+    return { semente: sementeMundo(), espinha: esp, elenco: (subtramasCacheRef.current || {}).elenco || null, dia: diaRef.current, ato, turno: turnoDeRegistroRef.current + 1, emCena: nucleoEmCena(nucleo), ultimas: (coracaoRitmoRef.current || {}).ultimas || {}, luta: !!combateRef.current, mortos, reveladas, subtramas: lista, frase: "", maoDoVilao: false, ...(extra || {}) };
   };
   const elencoCacheRef = useRef(null);
   const nomesDoElenco = () => {
@@ -7199,7 +7239,8 @@ export default function Taverna() {
     p = porNaPauta(p, "momento", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));
     /* v9.391: a marca do antagonista no momento, o JÁ SE SABE do segredo que
        acabou de cair, o que o mundo lembra de quem chegou a tempo */
-    try { p = porNaPauta(p, "momento", momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current })); } catch (e) { calou("o momento do fio", e); }
+    let maoDoVilao = false; /* MM-C C2: a marca ou os servos do fio nesta cena (o vilão do núcleo só pede pela mão) */
+    try { const mf = momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current }); p = porNaPauta(p, "momento", mf); const assin = String(((espinhaRef.current || {}).fio || {}).assinatura || ""); if (assin && (mf || []).some((l) => String(l).includes(assin))) maoDoVilao = true; } catch (e) { calou("o momento do fio", e); }
     /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
        dentro da batida — o cerco que a Jornada esta vivendo agora. */
     if (episodioRef.current && episodioRef.current.aberto) p = porNaPauta(p, "momento", envelopeDoEpisodio(episodioRef.current));
@@ -7327,6 +7368,7 @@ export default function Taverna() {
        encenando um vilão que acertou ou um que se enganou. */
     {
       const r = respostaDaAmeaca();
+      if (r) maoDoVilao = true;
       /* nexo (11/10): o nome só depois do rosto — o mesmo motivo do arco */
       if (r) p = porNaPauta(p, "vilao", vilaoParaPauta(r, { nome: ((nemesisRef.current || {}).conhecido && (nemesisRef.current || {}).nome) || "a ameaça" }));
     }
@@ -7351,6 +7393,24 @@ export default function Taverna() {
        só quando o mundo cobra uma dívida antiga. */
     p = porNaPauta(p, "mundo", envelopeDasPotencias(potenciasAqui(), diplomaciaRef.current));
     try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); }
+    /* MM-C C2: QUEM CARREGA — uma batida por turno, da subtrama de quem está
+       em cena (subtramas.js). Como a QUEM É, só conta se chegar ao texto:
+       fica pendente, e o envio confirma (confirmarCoracao). O que um clique
+       decidiu (a decisão, o porquê) entra uma vez, no turno que ele envia. */
+    let quemCarrega = "";
+    try {
+      const fala = coracaoFalaRef.current;
+      coracaoFalaRef.current = null;
+      if (fala && fala.linha) p = porNaPauta(p, fala.secao === "pergunta" ? "pergunta" : "coracao", fala.linha);
+      const nucleo = nucleoAgora();
+      const frase = String(acaoDoTurno || "").trimStart().startsWith("[") ? "" : String(acaoDoTurno || "");
+      const ctx = contextoDoCoracao(nucleo, { frase, maoDoVilao });
+      const r = fala && fala.proprio ? { coracao: coracaoRef.current, linha: "", quem: "", efeitos: [], longe: [], batida: null } : avancarCoracao(coracaoRef.current, nucleo, ctx); /* o turno que o próprio coração envia é a batida dele: nenhuma outra no mesmo fôlego */
+      if (r.linha) p = porNaPauta(p, "coracao", r.linha);
+      if ((r.longe || []).length) p = porNaPauta(p, "foraDeCena", r.longe.map((x) => x && x.texto).filter(Boolean));
+      quemCarrega = r.quem || "";
+      coracaoPendenteRef.current = { r, turno: ctx.turno, emCena: ctx.emCena };
+    } catch (e) { calou("avancarCoracao", e); coracaoPendenteRef.current = null; }
     /* MM-C C1: QUEM É — a ficha por dentro de quem do núcleo está em cena,
        uma pessoa por turno, e a mesma só de tantos em tantos turnos
        (nucleo.js), no turno que a pauta leva. O ritmo só conta se a linha
@@ -7360,7 +7420,7 @@ export default function Taverna() {
       const esp = espinhaRef.current || {};
       const turnoQ = turnoDeRegistroRef.current + 1;
       const q = { ultimas: {}, cenas: {}, ...(quemERef.current || {}), pendente: null };
-      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null });
+      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega });
       p = porNaPauta(p, "quemE", ...(r.quemE || []));
       quemERef.current = { ...q, pendente: r.quem && r.quemE && r.quemE[0] ? { quem: r.quem, turno: turnoQ, linha: r.quemE[0] } : null };
     } catch (e) { calou("quemEParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }
@@ -8980,6 +9040,10 @@ export default function Taverna() {
     episodioRef.current = r.episodio !== undefined ? r.episodio : episodioRef.current;
     historiaRef.current = r.historia !== undefined ? r.historia : historiaRef.current;
     promessasRef.current = r.promessas !== undefined ? r.promessas : promessasRef.current;
+    /* MM-C C2: o coração volta com o Livro. A batida confirma-se no envio, antes
+       de o Mestre responder: se ele calar, a pista regada no Livro e a batida no
+       coração desfazem-se juntas — nunca uma sem a outra. */
+    try { coracaoRef.current = r.coracao !== undefined ? garantirCoracaoDoSave(r.coracao) : coracaoRef.current; } catch (e) { calou("o coração no retrato", e); }
     noiteRef.current = r.noite !== undefined ? r.noite : noiteRef.current;
     torneioRef.current = r.torneio !== undefined ? r.torneio : torneioRef.current;
     cobradasRef.current = Array.isArray(r.cobradas) ? r.cobradas : cobradasRef.current;
@@ -12568,7 +12632,7 @@ export default function Taverna() {
     mexerNoEpisodio();
     mexerNaNoite();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
-    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } /* MM-C C1: a ficha só conta se chegou ao texto */
+    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
@@ -13247,7 +13311,7 @@ export default function Taverna() {
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
-    try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; } catch (e) { calou("o coração da campanha nova", e); }
+    try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; } catch (e) { calou("o coração da campanha nova", e); }
     /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
        retomar dele, nunca voltar a zero (é a mesma régua do load) */
     if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
@@ -13509,7 +13573,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -22780,6 +22844,172 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   /* Aceitar/recusar petição recebida — efeitos imediatos, IA só narra. */
+  /* ---------------- MM-C C2 · O CORAÇÃO NA MESA ----------------
+     A batida do turno confirma-se aqui, depois do texto da pauta: o Livro
+     semeia as duas pistas do elo na estreia dele (vale coubesse ou não),
+     e o resto só se a linha COUBE (ou não havia linha) — o coração novo,
+     o ritmo de quem falou, os efeitos (a omissão de quem não decidiu) e
+     a rega ou a paga das pistas. */
+  const custoDoCoracao = (efeitos) => (Array.isArray(efeitos) ? efeitos : []).filter((e) => e && e.tipo === "bolsa").reduce((soma, e) => soma + Math.max(0, Math.floor(Number(e.preco)) || 0), 0);
+  /* os efeitos que o App já sabe aplicar pelos seus próprios sistemas: o
+     laço do herói com a pessoa (firmar, ao máximo, romper — npcs.js) e a
+     relação com quem está no registo. A bolsa sai no clique, com o
+     veredito antes. O resto (a luta, o teste, a missão, os dias, o tique)
+     chega ao Narrador como fato, na linha da decisão, e é o motor de cada
+     um que o faz acontecer na resposta. */
+  const aplicarEfeitosDoCoracao = (efeitos) => {
+    let npcs = npcsRef.current || {};
+    const chaveDe = (nome) => Object.keys(npcs).find((k) => k.toLowerCase() === String(nome || "").toLowerCase());
+    let mudou = false;
+    for (const e of (Array.isArray(efeitos) ? efeitos : [])) {
+      try {
+        if (!e) continue;
+        if (e.tipo === "laco" && !e.com) {
+          const k = chaveDe(e.nome);
+          if (!k) continue;
+          const npc = npcs[k];
+          const tipoDe = (n) => (garantirLaco(n && n.laco) || {}).tipo;
+          const forcaDe = (n) => (garantirLaco(n && n.laco) || {}).forca || 0;
+          let novo = npc;
+          if (e.delta === "rompe") novo = romperLaco(npc, diaRef.current);
+          else if (e.delta === 1) novo = firmarLaco(npc, e.firma || tipoDe(npc) || "amizade", diaRef.current);
+          else if (e.delta === "max") { let ant = -1; while (ant !== forcaDe(novo)) { ant = forcaDe(novo); novo = firmarLaco(novo, e.firma || tipoDe(novo) || "amizade", diaRef.current); } }
+          if (novo !== npc) { npcs = { ...npcs, [k]: novo }; mudou = true; }
+        } else if (e.tipo === "relacao" && e.com && e.valor) {
+          const k = chaveDe(e.com);
+          if (!k) continue;
+          npcs = { ...npcs, [k]: { ...npcs[k], relacao: String(e.valor) } };
+          mudou = true;
+        }
+      } catch (e2) { calou("um efeito do coração", e2); }
+    }
+    if (mudou) { npcsRef.current = npcs; setNpcs(npcs); }
+  };
+  const confirmarCoracao = (pauta) => {
+    const pend = coracaoPendenteRef.current;
+    coracaoPendenteRef.current = null;
+    if (!pend || !pend.r) return;
+    const r = pend.r;
+    const nucleo = nucleoAgora();
+    const elo = ((nucleo && nucleo.pessoas) || []).find((x) => x && x.papel === "elo") || null;
+    const specs = elo ? sementesDoElo(nucleo, { dia: diaRef.current }) : [];
+    const dela = (x) => !!(specs.length && x && x.dona === specs[0].dona && x.alvo === elo.nome);
+    try {
+      if (elo && specs.length && (pend.emCena || []).includes(elo.nome)) {
+        let L = garantirLivro(promessasRef.current);
+        if (!L.sementes.some(dela)) { for (const sp of specs) L = semear(L, sp).livro; promessasRef.current = L; }
+      }
+    } catch (e) { calou("as sementes do elo", e); }
+    if (r.linha && !String(pauta || "").includes(r.linha)) return;
+    coracaoRef.current = garantirCoracaoDoSave(r.coracao);
+    if (r.quem) { const rt = coracaoRitmoRef.current || {}; coracaoRitmoRef.current = { ...rt, ultimas: { ...(rt.ultimas || {}), [r.quem]: pend.turno } }; }
+    try { aplicarEfeitosDoCoracao(r.efeitos); } catch (e) { calou("os efeitos do coração", e); }
+    try {
+      const b = r.batida;
+      if (elo && b && b.nome === elo.nome) {
+        let L = garantirLivro(promessasRef.current);
+        if ((b.tipo === "pistaA" || b.tipo === "pistaB") && specs[b.pista]) {
+          const sm = L.sementes.find((x) => dela(x) && x.forma === specs[b.pista].forma && x.estado !== "paga" && x.estado !== "murcha");
+          if (sm) L = regar(L, sm.id, { dia: diaRef.current, cena: elo.nome }).livro;
+        } else if (b.tipo === "revelacao" || b.tipo === "corpo") {
+          for (const sm of L.sementes.filter((x) => dela(x) && x.estado === "madura")) L = pagar(L, sm.id, { dia: diaRef.current }).livro;
+        }
+        promessasRef.current = L;
+      }
+    } catch (e) { calou("o Livro do coração", e); }
+  };
+  /* O herói responde ao que alguém lhe pede: aceitar, recusar, perguntar
+     porquê (que não fecha nada e traz a razão, na secção PERGUNTOU). */
+  const responderAoCoracao = (nome, resposta) => {
+    try {
+      if (carregando) return;
+      const nucleo = nucleoAgora();
+      const antes = JSON.stringify(garantirCoracaoDoSave(coracaoRef.current));
+      const r = responderPedido(coracaoRef.current, nucleo, nome, resposta, contextoDoCoracao(nucleo));
+      if (JSON.stringify(r.coracao) === antes) return;
+      coracaoRef.current = r.coracao;
+      coracaoFalaRef.current = { secao: "pergunta", linha: r.linha || "", proprio: true };
+      const frase = { aceitou: "Eu aceito o que " + nome + " me pede.", recusou: "Eu recuso o que " + nome + " me pede.", porque: "Pergunto a " + nome + " porquê." }[resposta] || "";
+      enviar("[RESPOSTA A " + nome + " — DADA POR MIM] " + frase + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO, fichaViva() || personagem);
+    } catch (e) { calou("responder ao coração", e); }
+  };
+  /* O herói decide pela pessoa. Irreversível: os dois lados estavam na tela
+     com o preço antes do clique; a bolsa sai aqui, o laço e a relação logo
+     a seguir, e a linha da decisão vai à pauta deste mesmo turno. */
+  const escolherNoCoracao = (nome, ladoId) => {
+    try {
+      if (carregando) return;
+      const nucleo = nucleoAgora();
+      const ctx = contextoDoCoracao(nucleo);
+      const aberta = escolhasAbertas(coracaoRef.current, nucleo, ctx).find((x) => x.nome === nome);
+      const lado = aberta && aberta.lados.find((l) => l.id === ladoId);
+      if (!lado) return;
+      const r = escolherLado(coracaoRef.current, nucleo, nome, ladoId, ctx);
+      const pers = fichaViva() || personagem || {};
+      const custo = custoDoCoracao(r.efeitos);
+      if (custo > (pers.moedas || 0)) { pushMsgs([{ autor: "sistema", texto: "Não chega: custa " + custo + " moedas, e você tem " + (pers.moedas || 0) + "." }]); return; }
+      coracaoRef.current = r.coracao;
+      try { aplicarEfeitosDoCoracao(r.efeitos); } catch (e) { calou("os efeitos da decisão", e); }
+      coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
+      enviar("[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.", custo ? { ...pers, moedas: Math.max(0, (pers.moedas || 0) - custo) } : pers);
+    } catch (e) { calou("decidir no coração", e); }
+  };
+  /* O que o cartão mostra: a decisão posta, com os lados que a bolsa paga —
+     os dois juntos, irreversível. Uma de cada vez. */
+  const decisaoDoCoracao = () => {
+    const nucleo = nucleoAgora();
+    if (!nucleo || !(nucleo.pessoas || []).length) return null;
+    const ctx = contextoDoCoracao(nucleo);
+    const C = garantirCoracaoDoSave(coracaoRef.current);
+    const bolso = (fichaViva() || personagem || {}).moedas || 0;
+    for (const a of escolhasAbertas(C, nucleo, ctx)) {
+      const lados = a.lados.filter((l) => custoDoCoracao(escolherLado(C, nucleo, a.nome, l.id, ctx).efeitos) <= bolso);
+      if (lados.length) return { quem: a.nome, botoes: lados.map((l) => ({ id: l.id, verbo: l.verbo, preco: l.preco, aoTocar: () => escolherNoCoracao(a.nome, l.id) })) };
+    }
+    return null;
+  };
+  /* O PEDIDO MORA NA SOLEIRA, como a petição (R15: a pessoa em cena que
+     tem verbo). Na prova viva da C2, o cartão de três opções por cima da
+     soleira deixou UMA linha de prosa num telefone de 812: o pedido não é
+     irreversível como a decisão, e a soleira já sabe caber (1 no telefone,
+     o resto na dobra). Só de quem está em cena, ou no dia em que pediu. */
+  const pedidosDoCoracao = () => {
+    const nucleo = nucleoAgora();
+    if (!nucleo || !(nucleo.pessoas || []).length) return [];
+    const ctx = contextoDoCoracao(nucleo);
+    const C = garantirCoracaoDoSave(coracaoRef.current);
+    const out = [];
+    for (const inst of ctx.subtramas) {
+      const a = C.arcos[inst.nome];
+      if (!a || a.pedido == null || a.resposta || a.crise != null) continue;
+      if (!ctx.emCena.includes(inst.nome) && a.pedido !== ctx.dia) continue;
+      for (const o of opcoesDoPedido(inst)) {
+        if (o.id === "porque" && a.porque) continue;
+        const verbo = o.id === "aceitou" ? "Aceitar o que " + inst.nome + " pede" : o.id === "recusou" ? "Recusar o que " + inst.nome + " pede" : "Perguntar a " + inst.nome + " porquê";
+        out.push({ id: "coracao|" + inst.nome + "|" + o.id, verbo, preco: [o.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => responderAoCoracao(inst.nome, o.id) });
+      }
+    }
+    return out;
+  };
+  /* a peça é a VerboComPreco que a fogueira já usa (ui.jsx): o verbo e o
+     preço em mundo, nunca "lado A". Chama-se como função, nunca como
+     componente definido aqui dentro (o foco). */
+  const cartaoDoCoracao = () => {
+    try {
+      const d = decisaoDoCoracao();
+      if (!d) return null;
+      return (
+        <div className="tv-chamado-entra px-4 md:px-8 pt-2 pb-1 flex flex-col gap-1.5" role="group" aria-label={d.quem}>
+          <span className="tv-mono" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>{d.quem}</span>
+          {/* no telefone, um por linha: três colunas de 110 px partiam o preço palavra a palavra */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            {d.botoes.map((b) => <VerboComPreco key={b.id} verbo={b.verbo} preco={b.preco} aoTocar={b.aoTocar} className="flex-1 min-w-0" />)}
+          </div>
+        </div>
+      );
+    } catch (e) { calou("o cartão do coração", e); return null; }
+  };
+
   const responderPeticao = (id, aceite) => {
     const c = garantirCorreio(correioRef.current);
     const p = c.recebidas.find((x) => x.id === id && x.status === "pendente");
@@ -25049,6 +25279,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         for (const o of daPeticao) lista.push(o);
       }
 
+      /* MM-C C2: o que alguém do núcleo, em cena, pede ao herói — aceitar,
+         perguntar porquê, recusar (ignorar é não responder, e o relógio dela corre) */
+      try { for (const o of pedidosDoCoracao()) lista.push(o); } catch (e) { calou("o pedido na soleira", e); }
+
       /* 1 · A MISSÃO QUE PEDE RESPOSTA. Alguém propôs cara a cara e está à
          espera: é a oferta mais perecível que o jogo tem. */
       for (const m of (missoes || [])) {
@@ -26738,11 +26972,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 );
               }
               const vivas = ofertasDaSoleira();
-              if (!vivas.length) return null;
+              /* MM-C C2: o que alguém do núcleo pede ou deixa ao herói decidir — por
+                 cima da soleira, que continua (não disputam a mesma decisão). */
+              const doCoracao = cartaoDoCoracao();
+              if (!vivas.length && !doCoracao) return null;
               const jaTinha = soleiraAntesRef.current;
               return (
                 <PeDaPagina>
-                  <Soleira ofertas={vivas.map((o) => (
+                  {doCoracao}
+                  {vivas.length ? <Soleira ofertas={vivas.map((o) => (
                     <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
                       quem={o.quem} onde={o.onde} tom={o.tom} janela={o.janela}
                       estado={o.precisaDoNarrador && bloqueado ? "impedida" : "repouso"}
@@ -26754,7 +26992,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                          `formas.md` §R15) */
                       chegada={o.fila === "B" || (jaTinha && jaTinha.has(o.id)) ? "assentada" : "agora"}
                       aoClicar={o.aoClicar} moldura="aberta" />
-                  ))} />
+                  ))} /> : null}
                 </PeDaPagina>
               );
             })()}

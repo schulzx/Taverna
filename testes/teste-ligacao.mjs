@@ -165,7 +165,12 @@ sec("1. NENHUM MÓDULO MUDO");
        fiação do App.jsx pela mão do frontend na MESMA fase (a pauta, o
        save, as escolhas na forma `A escolha`, o descanso longo). A entrada
        sai quando o App o importar. `teste-subtramas.mjs` é o primeiro leitor. */
-    "subtramas.js": "a fiação do App.jsx, do frontend (MM-C C2, 11/10)",
+    /* e paga na MESMA fase (C2, 11/10, frontend): o App.jsx importa
+       `subtramas.js` — avancarCoracao na pauta (QUEM CARREGA), confirmada
+       só quando a linha chega ao texto; a decisão e o pedido na tela
+       (escolhasAbertas/escolherLado, opcoesDoPedido/responderPedido); as
+       pistas do elo no Livro (sementesDoElo). As peças da fogueira têm o
+       leitor da suíte e esperam a etapa seguinte (o oficial). A entrada saiu. */
     /* 11/10 (Fase MM, MM18): `escuta.js` esperou aqui a fiação em `enviar`
        e `pautaDoTurno`; o App passou a importá-lo no mesmo dia (frontend),
        e a entrada saiu. */
