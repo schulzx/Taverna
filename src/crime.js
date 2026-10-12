@@ -320,9 +320,18 @@ export function envelopeDaGuarda(vinda, cidade) {
 /* ---------------- O VEREDITO ANTES DO CLIQUE ----------------
    O preço, dito antes: "isto é um crime em X; a guarda…". Para um cartão
    de confirmação — vazio quando não é crime. */
+/* 8.ª sessão de prova (M39): quem anda com o herói sem ser do grupo — a
+   companheira de viagem, dita pelo nome (`comigo`, agressao.js) — só vira
+   alvo com o preço à vista, como o cartão de Falk. Fora da cidade não há
+   crime e não havia cartão nenhum; e o que se perde não é a lei, é ela. A
+   frase vem antes da do crime, quando também o é. */
+export const VEREDITO_DE_QUEM_ANDA_COMIGO = "{nome} anda com você: atacar é romper com quem caminha ao seu lado — e isso não se desfaz.";
 export function veredictoDoCrime(agressao, ctx, mundo) {
+  const a = obj(agressao);
+  const doLado = a.tipo === "agressao" && a.comigo && nomeDe(a) ? VEREDITO_DE_QUEM_ANDA_COMIGO.replace("{nome}", nomeDe(a)) : "";
   const crime = lerCrime(agressao, ctx);
-  if (!crime) return "";
+  if (!crime) return doLado;
+  if (doLado) { const r = veredictoDoCrime({ ...a, comigo: false }, ctx, mundo); return r ? `${doLado} ${r}` : doLado; }
   const cons = consequenciaDoCrime(crime, mundo);
   if (!cons) return "";
   const nomeCidade = String(obj(obj(mundo).cidade).nome || "esta cidade");

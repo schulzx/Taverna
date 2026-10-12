@@ -48,7 +48,18 @@ export function provasDoCaminho(caminho) {
    pode depender do Mestre lembrar de avisar. */
 const MARCA_DIVINA = /\b(divindade|deus|deusa|semideus|avatar de|arauto divino|encarna[çc][ãa]o de)\b/i;
 
+/* 12/10, a 8.ª sessão de prova (M68): "⚱ Lobo tombou, mas o rito não abre:
+   você ainda não despertou." — na tela, a um jogador que nunca viu rito nem
+   despertar. Duas causas, e as duas eram daqui:
+   · o App monta a ficha de todo inimigo da base do mundo com `gd: 0`
+     (`ficha.gd || e.gd || 0`), e `e.gd != null` lia o zero como marca
+     divina: todo lobo era um deus. O grau que conta é o de cima do mortal
+     (GRAUS[0] é "Mortal");
+   · e quem não despertou não tem rito a abrir nem a recusar — dizer-lhe
+     porquê é o sistema a falar de si (a lei da casa). Sem despertar, o deus
+     abatido é só um inimigo que caiu, e o rito cala. */
 export function identificarDivindadeAbatida(inimigos, divindade) {
+  if (!divindade || !divindade.despertar) return null;
   const lista = (inimigos || []).filter((e) => e && (e.derrotado || (e.vida != null && e.vida <= 0)));
   if (!lista.length) return null;
   const panteao = (divindade && divindade.panteao) || [];
@@ -58,7 +69,7 @@ export function identificarDivindadeAbatida(inimigos, divindade) {
     if (jaTomados.has(nome.toLowerCase())) continue;
     const doPanteao = panteao.find((d) => d.nome && nome.toLowerCase().includes(String(d.nome).toLowerCase()));
     if (doPanteao) return { nome: doPanteao.nome, gd: doPanteao.gd || 3, fieis: doPanteao.fieis || 0, dominio: doPanteao.dominio || "", icone: doPanteao.icone || "✦", doPanteao: true };
-    if (e.divindade || e.gd != null) return { nome, gd: Number(e.gd) || 3, fieis: Number(e.fieis) || 0, dominio: e.dominio || "", icone: "✦", doPanteao: false };
+    if (e.divindade || Number(e.gd) > 0) return { nome, gd: Number(e.gd) || 3, fieis: Number(e.fieis) || 0, dominio: e.dominio || "", icone: "✦", doPanteao: false };
     if (MARCA_DIVINA.test(`${nome} ${e.desc || ""}`)) return { nome, gd: 3, fieis: 0, dominio: "", icone: "✦", doPanteao: false };
   }
   return null;

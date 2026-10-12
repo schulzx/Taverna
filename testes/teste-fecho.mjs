@@ -169,7 +169,13 @@ sec("5. a sessão 4");
     escolhidos.push(x);
   }
   console.log(`      DEPOIS: ${Object.entries(novos).map(([k, v]) => `${k} ${v}`).join(" · ")}`);
-  t("DEPOIS: nenhum turno pede presságio, e todo turno leva o veto", escolhidos.every((x) => x.id !== "pressagio" && x.linha.includes(F.VETO_DO_FECHO)));
+  /* 12/10 (8.ª sessão): os fechos de GENTE trocam o veto do ambiente pelo
+     do gesto (`VETO_DO_GESTO`), que traz o ar em versão curta — o
+     `silencio` mandava "fica calado à espera" e 14 das 17 respostas
+     trouxeram a muleta (fecho.js, o cabeçalho de FECHOS). A asserção era
+     "todo turno leva VETO_DO_FECHO"; a intenção — nenhum fecho sem veto, e
+     o ar a pressagiar vetado em todos — continua, lida pelos dois. */
+  t("DEPOIS: nenhum turno pede presságio, e todo turno leva o veto", escolhidos.every((x) => x.id !== "pressagio" && (x.linha.includes(F.VETO_DO_FECHO) || (F.VETO_DO_GESTO && x.linha.includes(F.VETO_DO_GESTO))) && /o ar a pressagiar/.test(x.linha)));
   t("DEPOIS: nunca o mesmo fecho dois turnos seguidos", rep === 0);
   t("DEPOIS: nenhum fecho passa de um terço da sessão", Object.values(novos).every((v) => v <= FORMA.length / 3));
   t("DEPOIS: as perguntas fecham com quem respondeu (silêncio ou pergunta) na maioria",

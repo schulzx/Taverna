@@ -435,6 +435,43 @@ export const SECOES_QUE_CEDEM = {
   pergunta: ["economia", "cidade", "daqui", "momento", "quemE", "coracao", "preco", "nomes"],
 };
 
+/* ---------------- O QUE NÃO CEDE À PERGUNTA (12/10, a 8.ª sessão de prova) ----------------
+   A C2 pôs o QUEM CARREGA a ceder numa pergunta ("ceder aqui não perde a
+   batida: ela volta no turno seguinte"). A 8.ª sessão mostrou o caso em que
+   a batida É a resposta: o confronto com o elo é uma pergunta ("Foi você
+   quem deu o meu nome…, não foi?"), a ficha dela responde-a (PERGUNTOU
+   "Petra está no posto há 21 anos"), e a cedência tirou a REVELAÇÃO nos
+   três confrontos (M59–M61) — o motor decidia certo (`porConfronto`), a
+   pauta cortava, e o jogador que insistia voltava a perguntar, com o
+   PERGUNTOU de volta: nunca chegava. O Narrador inventou o álibi, e a 3.ª
+   resposta foi a 2.ª palavra por palavra (mente/mm11-sessao-8.md, "A
+   revelação: por que não caiu").
+
+   A régua: o que a linha do coração ORDENA como fato desta resposta não é
+   decoração — é a verdade que o jogador foi buscar, ou a coisa que alguém
+   do núcleo diz agora. A marca é a da própria frase fechada
+   (`subtramas.js#LINHA_DO_CORACAO`, "é fato: entra nesta resposta"); a
+   escolha ("a decisão é do herói") não a tem, e continua a ceder (os lados
+   estão na tela). O que cede numa pergunta continua a ser a economia, a
+   rua, o daqui, o momento, a ficha, o preço e os nomes. Só vale para a
+   PERGUNTA: se outra condição da cena tira a secção (hoje nenhuma tira o
+   coração), tira-a inteira. Medido nas pautas reais do M59 e do M61
+   (teste-sessao-8, registo-s8-pauta.json): a revelação entra (as pautas
+   passam de 1331 e 1337 a 1356 e 1362 de 1400) e o que lhe dá lugar é a
+   cauda do ONDE ("comporta: usar a plateia…", a decoração do sítio) —
+   nenhum veto, nem o PERGUNTOU, nem o rumo, nem o fecho, nem o lugar sai.
+
+   E a resposta continua a passar à frente. Nas 500 pautas de pergunta
+   semeadas da suíte, deixar o fato ficar sem mais nada tirava o PERGUNTOU
+   em 171 — a razão por que a C2 o fazia ceder. Por isso, quando um fato
+   fica, a cauda do ONDE (`daLugar`, da linha `cauda.desde` em diante) dá-
+   -lhe lugar; e se nem assim a resposta coubesse com ele, o fato volta a
+   ceder, como na C2 (o App só o dá por cumprido quando a linha entra, e ele
+   volta no turno seguinte). Medido: a resposta não sai em nenhuma das 500,
+   nem veto, nem rumo, nem fecho, nem o lugar; e o fato entra em 396 (a C2
+   deixava-o em 0). */
+export const FICA_NA_PERGUNTA = { marcas: { coracao: "é fato: entra nesta resposta" }, daLugar: "onde" };
+
 /* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.
    `cena` é `{ luta, masmorra, arredores }` (verdadeiros soltos); lixo ou
    `null` não tira nada. Nunca muta a recebida. */
@@ -442,11 +479,34 @@ export function cederNaCena(pauta, cena) {
   const p = garantirPauta(pauta);
   const c = { ...(cena && typeof cena === "object" ? cena : {}), pergunta: !!(p.pergunta && p.pergunta.length) };
   const saem = new Set();
-  for (const [chave, ids] of Object.entries(SECOES_QUE_CEDEM)) if (c[chave]) ids.forEach((id) => saem.add(id));
+  const porOutra = new Set();
+  for (const [chave, ids] of Object.entries(SECOES_QUE_CEDEM)) {
+    if (!c[chave]) continue;
+    ids.forEach((id) => { saem.add(id); if (chave !== "pergunta") porOutra.add(id); });
+  }
   if (!saem.size) return p;
   const out = {};
-  for (const [id, linhas] of Object.entries(p)) if (!saem.has(id)) out[id] = linhas;
-  return out;
+  const ficaram = [];
+  for (const [id, linhas] of Object.entries(p)) {
+    if (!saem.has(id)) { out[id] = linhas; continue; }
+    const marca = porOutra.has(id) ? "" : FICA_NA_PERGUNTA.marcas[id] || "";
+    const ficam = marca ? linhas.filter((l) => l.includes(marca)) : [];
+    if (ficam.length) { out[id] = ficam; ficaram.push(id); }
+  }
+  if (!ficaram.length) return out;
+  /* o que era a C2: o fato cedido, a cauda no sítio */
+  const c2 = { ...out };
+  ficaram.forEach((id) => { delete c2[id]; });
+  /* a decoração do sítio dá lugar ao fato */
+  const s = secaoPorId(FICA_NA_PERGUNTA.daLugar);
+  const com = { ...out };
+  if (s && s.cauda && Array.isArray(com[s.id]) && com[s.id].length > s.cauda.desde) com[s.id] = com[s.id].slice(0, s.cauda.desde);
+  /* a resposta não sai por ele. A cabeça cresce com o número do turno, que
+     aqui não se sabe: a C2 lê-se com a cabeça mais curta e o fato com a
+     mais longa — se cabe assim, cabe em qualquer turno */
+  const t2 = textoDaPauta(c2), t1 = textoDaPauta(com, { turno: 99999 });
+  const perdeu = (c2.pergunta || []).some((l) => t2.includes(l) && !t1.includes(l));
+  return perdeu ? c2 : com;
 }
 
 /* ---------------- A PRIORIDADE DE UMA LINHA ----------------

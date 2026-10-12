@@ -240,6 +240,19 @@ export const NAO_E_AGRESSAO = [
     rx: /\b(de brincadeira|brincando|de mentirinha|de mentira|de faz de conta|finj\w*|fingindo|simul\w*)\b[^.!?;]{0,40}\b(atac|golpe|soc[oa]|socar|murro|esmurr|chut|esfaque|apunhal|estoc|briga|luta)|\b(atac|golpe|soc[oa]|socar|murro|esmurr|chut|esfaque|apunhal|estoc)\w*\b[^.!?;]{0,40}\b(de brincadeira|brincando|de mentirinha|de mentira|de faz de conta)\b|\b(tapas?|tapinhas?|soquinhos?) (amigave\w+|nas costas|no ombro)/,
     porque: "o soco de brincadeira no ombro do amigo e a finta para distrair não são o primeiro golpe de uma luta",
   },
+  {
+    /* 8.ª sessão (M41): O RECUO. "Foi um engano, eu queria atacar a
+       encapuzada da corrente, não Ursa. Volto ao posto, levanto as mãos e
+       peço desculpa" — o sistema leu "atacar" e reabriu a luta contra a
+       mesma companheira. O imperfeito do herói ("queria atacar", "ia
+       golpear") é o que ele QUIS, contado, e o engano dito é recuo: a
+       oração cai, e a frase que pede desculpa fecha a luta em vez de a
+       abrir. Só a oração do recuo: "foi engano. Agora ataco o guarda" é o
+       ataque. */
+    id: "recuo",
+    rx: /\b(foi|era|e) (so )?(um |uma )?(engano|equivoco|mal-entendido|mal entendido)\b|\bpor engano\b|\bsem querer\b|\b(eu )?(queria|quis|ia|pretendia|tentava) (atac|golpe|ferir|bater|socar|esfaque|apunhal|acert|mat)\w*|\bpe(co|dir) (desculpa|perdao)|\bdesculp(a|e|em)\b/,
+    porque: "dizer que foi engano, o que se queria ter feito ou pedir desculpa é recuar — a luta não reabre por isso",
+  },
 ];
 
 /* `nomes`, opcional: quem o sistema sabe que está na cena. Serve para o
@@ -410,12 +423,70 @@ export const CRIATURA_NA_PROSA = {
 };
 const CABECAS = new Set(CRIATURA_NA_PROSA.cabecas);
 const palavrasDe = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
-/* as criaturas de um texto: a cabeça e, se houver, o conector e a palavra */
-function criaturasDe(texto) {
+
+/* ---------------- O NOME QUE É BICHO (12/10, a 8.ª sessão de prova, M39) ----------------
+   "Ursa o Andarilho" é gente — a prisioneira que fugiu das Celas, e que
+   viajava com o herói. "Ursa" está no banco de nomes (nomes.js) e é também
+   uma cabeça de bicho desta tabela. O jogador escreveu "ataco a que leva a
+   corrente, por trás, antes que ELA vá embora"; o "ela" foi ao único bicho
+   da última resposta do Mestre — e o único bicho era a palavra "Ursa", em
+   "Ursa, ao seu lado, mantém o pão apertado contra o peito". A luta abriu
+   contra a companheira de viagem, como CRIATURA: sem cartão (um bicho não
+   é crime), e com ela a fuga, a nêmesis e o pedido de desculpa a reabrir a
+   luta (mente/mm11-sessao-8.md, "O alvo errado").
+
+   A régua: na prosa do Mestre, uma cabeça de bicho escrita SEMPRE com
+   maiúscula e NUNCA depois de um determinante ("a ursa", "dois lobos", "do
+   cão") é um nome, não um bicho; e o primeiro nome de quem o sistema sabe
+   que é gente (`pessoas`: quem está na cena, o grupo e quem anda comigo)
+   também, salvo se a prosa mostrar o bicho com artigo. Um bicho na
+   prosa leva artigo ou número quase sempre — "Lobos uivam" no começo da
+   frase, sem nenhum "os lobos" depois, é o preço desta régua, e o preço é
+   pequeno: sem bicho, o ataque vai ao Mestre com a ordem das duas saídas. */
+export const NOME_NAO_E_BICHO = {
+  determinantes: ["o", "a", "os", "as", "um", "uma", "uns", "umas", "dois", "duas", "tres", "quatro", "cinco", "varios", "varias",
+    "esse", "essa", "esses", "essas", "este", "esta", "estes", "estas", "aquele", "aquela", "aqueles", "aquelas",
+    "do", "da", "dos", "das", "no", "na", "nos", "nas", "ao", "aos", "pelo", "pela", "pelos", "pelas", "num", "numa",
+    "outro", "outra", "outros", "outras", "seu", "sua", "seus", "suas", "meu", "minha", "cada", "nenhum", "nenhuma"],
+  porque: "o nome de alguém não vira bicho por coincidir com um: quem a prosa escreve sempre com maiúscula e sem artigo é gente",
+};
+const DETERMINANTES = new Set(NOME_NAO_E_BICHO.determinantes);
+/* as cabeças de bicho que, nestes textos, são NOME de alguém */
+function cabecasQueSaoNome(textos, pessoas) {
+  const out = new Set();
+  const deGente = new Set();
+  for (const n of Array.isArray(pessoas) ? pessoas : []) {
+    const p = palavrasDe(n && typeof n === "object" ? n.nome : n)[0];
+    if (p && CABECAS.has(p)) deGente.add(p);
+  }
+  const visto = new Map();
+  for (const t of textos) {
+    const cru = semAcento(t);
+    let antes = "";
+    for (const m of cru.matchAll(/[A-Za-z0-9]+/g)) {
+      const w = m[0].toLowerCase();
+      if (CABECAS.has(w)) {
+        const v = visto.get(w) || { nome: true };
+        const maiuscula = m[0][0] !== w[0];
+        if (!maiuscula || DETERMINANTES.has(antes)) v.nome = false;
+        visto.set(w, v);
+      }
+      antes = w;
+    }
+  }
+  for (const [w, v] of visto) if (v.nome) out.add(w);
+  /* o nome de quem é gente conta — a não ser que a prosa mostre, com
+     artigo, o bicho do mesmo nome ("Lobo, o ferreiro" e "o lobo cinzento") */
+  for (const w of deGente) if (!visto.has(w) || visto.get(w).nome) out.add(w);
+  return out;
+}
+/* as criaturas de um texto: a cabeça e, se houver, o conector e a palavra.
+   `fora`: as cabeças que ali são nome de alguém (`cabecasQueSaoNome`) */
+function criaturasDe(texto, fora) {
   const ps = palavrasDe(texto);
   const out = [];
   ps.forEach((p, i) => {
-    if (!CABECAS.has(p)) return;
+    if (!CABECAS.has(p) || (fora && fora.has(p))) return;
     const c = ps[i + 1], w = ps[i + 2];
     const comp = c && w && CRIATURA_NA_PROSA.conectores.includes(c) && w.length >= 3 && !CABECAS.has(w) ? [c, w] : [];
     out.push({ cabeca: p, palavras: [p, ...comp] });
@@ -442,10 +513,11 @@ function comoEscrito(palavras, textos) {
    [{ nome, ameaca }] — o bicho de um marco ou do bestiário, cujo nome e
    ameaça valem quando a cabeça casa. O nome é o da prosa: o complemento do
    jogador se o Mestre o disse, senão o do Mestre. */
-export function criaturaMostrada(texto, mostrado, conhecidas = []) {
-  const doMestre = textosDe(mostrado).flatMap(criaturasDe);
+export function criaturaMostrada(texto, mostrado, conhecidas = [], pessoas = []) {
+  const fora = cabecasQueSaoNome(textosDe(mostrado), pessoas);
+  const doMestre = textosDe(mostrado).flatMap((t) => criaturasDe(t, fora));
   if (!doMestre.length) return null;
-  const doJogador = criaturasDe(texto);
+  const doJogador = criaturasDe(texto, fora);
   for (const j of doJogador) {
     const vistas = doMestre.filter((m) => m.cabeca === j.cabeca);
     if (!vistas.length) continue;
@@ -464,9 +536,9 @@ function comAmeaca(nome, cabeca, conhecidas) {
     : { nome: capital(nome), ameaca: CRIATURA_NA_PROSA.ameaca, criatura: true };
 }
 /* o único bicho que a ÚLTIMA resposta mostra (para o pronome sem nome) */
-function unicaCriaturaDa(mostrado, conhecidas) {
+function unicaCriaturaDa(mostrado, conhecidas, pessoas) {
   const ts = textosDe(mostrado);
-  const ultima = ts.length ? criaturasDe(ts[ts.length - 1]) : [];
+  const ultima = ts.length ? criaturasDe(ts[ts.length - 1], cabecasQueSaoNome(ts, pessoas)) : [];
   const cabecas = [...new Set(ultima.map((c) => c.cabeca))];
   if (cabecas.length !== 1) return null;
   const c = ultima.find((x) => x.palavras.length > 1) || ultima[0];
@@ -505,7 +577,7 @@ export const PESSOA_NA_PROSA = {
   fim: ["com", "e", "que", "sem", "ate", "enquanto", "antes", "pela", "pelo", "na", "no", "nas", "nos", "em", "a", "o", "os", "as"],
   armas: [
     "faca", "facas", "lamina", "laminas", "punhal", "adaga", "espada", "espadas", "porrete", "clava", "machado", "machadinha", "foice", "arpao",
-    "gancho", "tocha", "tochas", "besta", "arco", "lanca", "cutelo", "navalha", "corrente", "bastao", "cajado", "garrucha", "pistola",
+    "gancho", "tocha", "tochas", "archote", "archotes", "besta", "arco", "lanca", "cutelo", "navalha", "corrente", "correntes", "bastao", "cajado", "garrucha", "pistola",
     "desafia", "desafio", "duelo", "ameaca", "ameacando", "saca", "sacou", "empunha", "empunhando",
   ],
   porque: "o Mestre pôs essa pessoa armada à frente do herói, e o jogador a nomeou: existe, e é contra ela o golpe",
@@ -561,6 +633,61 @@ export function pessoaMostrada(texto, mostrado) {
   return null;
 }
 
+/* ---------------- QUEM SE DESCREVE PELA ARMA (12/10, a 8.ª sessão de prova, M37–M39) ----------------
+   "Duas sombras de túnicas escuras descem a trilha… Um deles carrega um
+   archote apagado, o outro, uma corrente fina." — e o jogador: "ataco A
+   QUE LEVA A CORRENTE". Não há cabeça de gente na frase (é "a que", não "a
+   mulher"), e por isso `pessoaMostrada` não a via; o golpe caiu no pronome
+   e o pronome na companheira de viagem (`NOME_NAO_E_BICHO`). Quem se
+   descreve pela arma que o Mestre lhe pôs na mão é a mesma pessoa armada:
+   a descrição resolve primeiro para quem o Mestre MOSTROU, e nunca para
+   quem anda com o herói.
+   O nome é o que a prosa lhe dá: a cabeça vaga mais perto ANTES da arma
+   (`vagas` — sombra, vulto, figura, e as cabeças de gente), no singular, e
+   a arma: "Sombra da corrente"; sem cabeça perto, `generico`. O "da"/"do"
+   sai do artigo que a prosa pôs na arma ("uma corrente", "um archote"). */
+/* "a que leva a corrente", "o do archote", "quem carrega a tocha" — e não
+   "ataco-o com a espada": o "com" é o meio do golpe, e o "o" é pronome */
+const LEVA = "(?:leva|levava|carrega|carregava|tem|tinha|segura|segurava|traz|trazia|empunha|empunhava|arrasta|arrastava|balanca|balancava)";
+export const ARMADO_DESCRITO = {
+  rx: new RegExp("(?:^|[^a-z-])(?:(?:o|a|os|as|aquele|aquela|aqueles|aquelas)\\s+(?:que\\s+" + LEVA + "|d[oa]s?)|quem\\s+" + LEVA + ")\\s+(?:(?:o|a|os|as|um|uma|sua|seu)\\s+)?([a-z]+)"),
+  vagas: ["sombra", "sombras", "vulto", "vultos", "figura", "figuras", "encapuzado", "encapuzada", "encapuzados", "encapuzadas"],
+  perto: 30,
+  generico: "Vulto",
+  porque: "o jogador descreveu pela arma quem o Mestre pôs armado à frente dele: existe, e é contra essa pessoa o golpe",
+};
+const NAO_SAO_ARMA = new Set(["desafia", "desafio", "duelo", "ameaca", "ameacando", "saca", "sacou", "empunha", "empunhando"]);
+const ARMAS_NOME = new Set(PESSOA_NA_PROSA.armas.filter((w) => !NAO_SAO_ARMA.has(w)));
+const VAGAS = new Set([...ARMADO_DESCRITO.vagas, ...PESSOA_NA_PROSA.cabecas]);
+const singular = (w) => (w.endsWith("s") && VAGAS.has(w.slice(0, -1)) ? w.slice(0, -1) : w.endsWith("es") && VAGAS.has(w.slice(0, -2)) ? w.slice(0, -2) : w);
+export function armadoDescrito(texto, mostrado) {
+  const ts = textosDe(mostrado);
+  if (!ts.length) return null;
+  const golpe = oracoesDoGolpe(texto);
+  const m = norm(golpe.length ? golpe.join(" . ") : texto).match(ARMADO_DESCRITO.rx);
+  const arma = m ? m[1] : "";
+  if (!ARMAS_NOME.has(arma)) return null;
+  /* a arma tem de estar nas falas do Mestre, e de lá sai quem a leva: a
+     menção mais nova que tenha uma cabeça perto; senão, a mais nova */
+  let achada = null;
+  for (const t of ts.slice().reverse()) {
+    const ps = palavrasDe(t);
+    for (let i = ps.length - 1; i >= 0; i--) {
+      if (ps[i] !== arma) continue;
+      let cab = "";
+      for (let k = i - 1; k >= Math.max(0, i - ARMADO_DESCRITO.perto); k--) if (VAGAS.has(ps[k])) { cab = singular(ps[k]); break; }
+      const art = ps[i - 1];
+      const de = art === "um" || art === "o" || art === "seu" ? "do" : art === "uma" || art === "a" || art === "sua" ? "da" : "de";
+      if (!achada || (cab && !achada.cab)) achada = { cab, de };
+      if (cab) break;
+    }
+    if (achada && achada.cab) break;
+  }
+  if (!achada) return null;
+  const nome = `${capital(achada.cab || ARMADO_DESCRITO.generico.toLowerCase())} ${achada.de} ${comoEscrito([arma], ts)}`;
+  return { nome, ameaca: ameacaDoPapel(achada.cab).ameaca, pessoa: true, armadoNaProsa: true, descrito: true };
+}
+
 /* ---------------- A LUTA QUE O CARTÃO PROMETE (MM-C · 7.ª sessão de prova, M59–M61) ----------------
    "Defender a versão dela — o camarada desafia você para um duelo": o
    jogador escolheu o lado caro, e o duelo não existia (M61, "sem alvo no
@@ -614,6 +741,14 @@ export function alvoDaAgressao(texto, opcoes) {
   if (!t.trim()) return null;
   const doGrupo = new Set(grupo.map((g) => norm(g && g.nome)).filter(Boolean));
   const vivos = presentes.filter((n) => n && n.nome && String(n.nome).length >= 3);
+  /* 8.ª sessão: QUEM ANDA COMIGO sem ser do grupo — a companheira de viagem
+     (`comigo`: os nomes, ou { nome }, de quem o App sabe a caminhar com o
+     herói). Por pronome ou descrição é recusada como o grupo; pelo NOME
+     abre — com o cartão antes (`comigo`, crime.js#veredictoDoCrime) */
+  const listaComigo = (Array.isArray(o.comigo) ? o.comigo : []).map((x) => String(x && typeof x === "object" ? x.nome || "" : x || "")).filter((n) => n.length >= 3);
+  const primeiro = (n) => norm(n).split(/[^a-z0-9]+/).filter(Boolean)[0] || "";
+  const ehComigo = (nome) => listaComigo.some((c) => norm(c) === norm(nome) || (primeiro(c).length >= 3 && primeiro(c) === primeiro(nome)));
+  const pessoas = [...vivos, ...grupo, ...listaComigo];
   const citados = vivos
     .filter((n) => t.includes(norm(n.nome)))
     .sort((a, b) => String(b.nome).length - String(a.nome).length);
@@ -622,31 +757,42 @@ export function alvoDaAgressao(texto, opcoes) {
        vínculo e elenco, e fazer isso em silêncio a partir de uma frase
        ambígua custa mais do que ganha */
     ? { nome: alvo.nome, doGrupo: true, ...extra }
-    : { nome: alvo.nome, papel: alvo.papel || "", relacao: alvo.relacao, doGrupo: false, ...extra });
+    : ehComigo(alvo.nome) && extra && extra.porPronome
+      /* quem anda comigo nunca é o alvo de um pronome: recusa-se como o grupo */
+      ? { nome: alvo.nome, doGrupo: true, comigo: true, ...extra }
+      : { nome: alvo.nome, papel: alvo.papel || "", relacao: alvo.relacao, doGrupo: false, ...(ehComigo(alvo.nome) ? { comigo: true } : {}), ...extra });
+  /* o nome dito de quem anda comigo, ainda que o registo da cena não o
+     tenha (a companheira de viagem não é "daqui"): abre, com o cartão */
+  const comigoDito = listaComigo.find((n) => primeiro(n).length >= 3 && palavrasDe(oracoesDoGolpe(texto).join(" . ") || texto).includes(primeiro(n)));
   /* MM-C · C0: com o que o Mestre mostrou na mão, a ordem de cima */
   const temMostrado = textosDe(o.mostrado).length > 0;
   if (temMostrado) {
     const doGolpe = norm(oracoesDoGolpe(texto).join(" . "));
     const naOracao = doGolpe ? citados.filter((n) => doGolpe.includes(norm(n.nome))) : [];
     if (naOracao.length) return forma(naOracao[0], {});
-    const bicho = criaturaMostrada(texto, o.mostrado, o.conhecidas);
+    if (comigoDito) return forma({ nome: comigoDito }, {});
+    const bicho = criaturaMostrada(texto, o.mostrado, o.conhecidas, pessoas);
     if (bicho) return { ...bicho, doGrupo: false, deOnde: "prosa" };
     /* 7.ª sessão: e a GENTE armada que o Mestre mostrou, depois do bicho */
     const gente = pessoaMostrada(texto, o.mostrado);
     if (gente) return { ...gente, doGrupo: false, deOnde: "prosa" };
+    /* 8.ª sessão: e quem o jogador descreve pela arma que o Mestre lhe pôs na mão */
+    const descrito = armadoDescrito(texto, o.mostrado);
+    if (descrito) return { ...descrito, doGrupo: false, deOnde: "prosa" };
   }
   if (citados.length) return forma(citados[0], {});
+  if (comigoDito) return forma({ nome: comigoDito }, {});
   /* sem nome: só o pronome abre a segunda pergunta */
   let porPronome = false;
   try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }
   if (!porPronome) return null;
   if (temMostrado) {
-    const so = unicaCriaturaDa(o.mostrado, o.conhecidas);
+    const so = unicaCriaturaDa(o.mostrado, o.conhecidas, pessoas);
     if (so) return { ...so, doGrupo: false, porPronome: true, deOnde: "prosa" };
   }
   const doPapo = ultimoCitado(o.recentes, vivos);
   if (doPapo) return forma(doPapo, { porPronome: true, deOnde: "conversa" });
-  const hostis = vivos.filter((n) => !doGrupo.has(norm(n.nome)) && PRONOME_DO_ALVO.hostil.test(norm(n.relacao)));
+  const hostis = vivos.filter((n) => !doGrupo.has(norm(n.nome)) && !ehComigo(n.nome) && PRONOME_DO_ALVO.hostil.test(norm(n.relacao)));
   if (hostis.length === 1) return forma(hostis[0], { porPronome: true, deOnde: "hostil" });
   return null;
 }
@@ -661,7 +807,7 @@ export function lerAgressao(texto, opcoes) {
   const grupo = Array.isArray(o.grupo) ? o.grupo : [];
   const nomes = presentes.map((n) => n && n.nome).filter(Boolean);
   if (!ehDeclaracaoDeAtaque(texto, { nomes })) return null;
-  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado: o.mostrado, conhecidas: o.conhecidas });
+  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado: o.mostrado, conhecidas: o.conhecidas, comigo: o.comigo });
   if (!alvo) {
     let porPronome = false;
     try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }
@@ -688,7 +834,7 @@ export function lerAgressao(texto, opcoes) {
   if (alvo.pessoa) {
     return {
       tipo: "agressao", nome: alvo.nome, papel: "", pessoa: true, armadoNaProsa: true,
-      ameaca: alvo.ameaca, porqueDoPeso: PESSOA_NA_PROSA.porque,
+      ameaca: alvo.ameaca, porqueDoPeso: alvo.descrito ? ARMADO_DESCRITO.porque : PESSOA_NA_PROSA.porque,
       porque: "eu declarei o golpe contra quem o Mestre pôs armado à minha frente",
     };
   }
@@ -697,7 +843,9 @@ export function lerAgressao(texto, opcoes) {
     tipo: "agressao",
     nome: alvo.nome, papel: alvo.papel || "",
     ameaca: peso.ameaca, porqueDoPeso: peso.porque,
-    porque: "eu declarei o primeiro golpe contra alguém que está aqui",
+    /* 8.ª sessão: quem anda comigo, pelo nome — o cartão vem antes (crime.js) */
+    ...(alvo.comigo ? { comigo: true } : {}),
+    porque: alvo.comigo ? "eu declarei, pelo nome, o primeiro golpe contra quem anda comigo" : "eu declarei o primeiro golpe contra alguém que está aqui",
   };
 }
 

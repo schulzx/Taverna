@@ -152,11 +152,25 @@ export function extrairJSON(texto) {
   if (mPer) perigo = mPer[1];
 
   return {
-    narrativa: narrativa || "O Mestre hesita…",
+    narrativa: semJsonNaProsa(narrativa) || "O Mestre hesita…",
     perigo, rolagem: null, mudancas,
     sugestoes: Array.isArray(sugestoes) ? sugestoes : [],
   };
 }
+
+/* ---------------- O CANAL DENTRO DA FALA (12/10, a 8.ª sessão de prova, M47) ----------------
+   "Duas camas, até o sol, são oito escamas {"total":8}. E água quente é
+   mais duas." — o Narrador imitou o canal `mudancas` dentro da prosa, e a
+   chave apareceu na boca da estalajadeira. Nenhum envelope lhe mostra um
+   objeto assim (o registo não tem "total" em lado nenhum do pedido): é a
+   forma da resposta a escorrer para o texto. Um objeto JSON plano — chaves
+   entre aspas, valores de texto, número ou verdade — nunca é prosa: sai
+   inteiro, com o espaço que o antecede. Um texto entre chavetas sem a forma
+   de chave ("{o que ela disse}") fica. */
+const VALOR_PLANO = '(?:"[^"{}\\n]*"|-?\\d+(?:[.,]\\d+)?|true|false|null)';
+const PAR_PLANO = '"[A-Za-z_][A-Za-z0-9_]*"\\s*:\\s*' + VALOR_PLANO;
+export const JSON_NA_PROSA = new RegExp("\\s*\\{\\s*" + PAR_PLANO + "(?:\\s*,\\s*" + PAR_PLANO + ")*\\s*\\}", "g");
+const semJsonNaProsa = (t) => String(t || "").replace(JSON_NA_PROSA, "");
 
 /* Garante que a narrativa é string e os campos têm o tipo certo,
    mesmo que o modelo tenha aninhado coisas onde não devia. */
@@ -169,7 +183,7 @@ export function sanearResposta(obj) {
     else if (narrativa && typeof narrativa === "object" && typeof narrativa.texto === "string") narrativa = narrativa.texto;
     else narrativa = "";
   }
-  narrativa = decodificarTexto(narrativa);
+  narrativa = semJsonNaProsa(decodificarTexto(narrativa));
   /* v9.68: o campo de rolagem morreu — a IA nao pede teste. Fica `perigo`,
      que e UMA frase de ficcao: o sistema le, escolhe a salvaguarda e cobra. */
   const perigo = typeof obj.perigo === "string" ? obj.perigo.slice(0, 240) : "";

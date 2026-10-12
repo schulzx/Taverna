@@ -471,7 +471,15 @@ sec("8. a pauta — a cidade cheia, e as 500 cenas");
   /* numa pergunta, a resposta passa à frente da ficha */
   const perg = porNaPauta(porNaPauta(cidade(), "pergunta", "A diária na Fonte: três moedas, com ceia; " + x(120, "resposta")), "quemE", qe[0]);
   const pc = textoDaPauta(cederNaCena(porNaPauta(perg, "coracao", corLinha), {}));
-  t("numa pergunta: a resposta entra; a batida e a ficha cedem (a lei da escuta)", pc.includes(perg.pergunta[0]) && !pc.includes(corLinha) && !pc.includes(qe[0]) && vetos.every((v) => pc.includes(v)));
+  /* 12/10 (a 8.ª sessão de prova): a asserção era "a batida e a ficha
+     cedem". A batida que é FATO desta resposta ("é fato: entra nesta
+     resposta") já não cede — foi assim que a revelação do elo se perdeu nos
+     três confrontos (M59–M61), que são perguntas (pauta.js,
+     FICA_NA_PERGUNTA). A intenção da C2 continua: a resposta entra e nenhum
+     veto sai; a ficha cede; e a linha da ESCOLHA, que não é fato, cede. */
+  t("numa pergunta: a resposta entra; a ficha cede e a batida que é fato fica (a lei da escuta, e a 8.ª sessão)", pc.includes(perg.pergunta[0]) && pc.includes(corLinha) && !pc.includes(qe[0]) && vetos.every((v) => pc.includes(v)));
+  const escolhaLinha = "Vando (a decisão é do herói: não a feche): diz-lhe as duas saídas — levar a tábua à Lia, ou ficar com ela.";
+  t("…e a linha da escolha, que não é fato, cede à resposta", !textoDaPauta(cederNaCena(porNaPauta(perg, "coracao", escolhaLinha), {})).includes(escolhaLinha));
 
   /* as 500 cenas semeadas (a catraca do §7): o que entra sem as linhas do
      núcleo continua a entrar com elas — nenhum veto, nenhum desfecho */

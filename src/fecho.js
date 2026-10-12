@@ -43,12 +43,32 @@ const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 /* ---------------- OS CINCO FECHOS ----------------
    `gente`: só existe com alguém em cena para o fazer (o companheiro
    conta). `diz` é O QUE a última frase é — nunca o como (pauta.js). */
+/* 12/10, a 8.ª sessão de prova — AS MULETAS DOBRARAM, e a pauta pedia-as.
+   Medido no registo das 71 respostas (testes/registo-s8-pauta.json): com
+   o fecho `silencio` — que dizia, à letra, "alguém fica calado à espera da
+   minha resposta" — 14 de 17 respostas trouxeram a muleta (calado/à espera/
+   braços cruzados/sem tirar os olhos); com `pergunta`, 10 de 15 (a pergunta
+   e depois "Ela cruza os braços e espera sua resposta."); com os três
+   fechos sem gente, 14 de 38. "Fica calado à espera" é o primeiro dos
+   TIQUES_PROIBIDOS do núcleo (nucleo.js) — que não chegavam ao Narrador por
+   canal nenhum: a lista só era lida por uma suíte. O fecho mandava fazer o
+   que o núcleo proíbe. (A outra suspeita, a regra nova "quem fala não sabe,
+   desconversa": só 6 das 71 respostas têm alguém a esquivar-se, 3 com a
+   muleta — não é ela.)
+   O conserto é no canal dinâmico, e a linha fica perto do tamanho que
+   tinha (121 e 131 caracteres; agora 149 e 145, dentro de um teto de 1400
+   que não sobe): o `silencio` deixa de ser "fica calado à espera" e passa a ser a
+   FALA QUE NÃO ACABA (a mesma devolução da palavra, sem o corpo parado a
+   esperar); a `pergunta` acaba NA pergunta; e os dois fechos de gente
+   levam o veto do gesto (`VETO_DO_GESTO`) com o do ar em versão curta — 4
+   das 17 respostas do `silencio` ainda acabaram em presságio com o veto
+   inteiro, e ele não sai. O id `silencio` fica: é o que o App guarda. */
 export const FECHOS = [
-  { id: "pergunta", gente: true, diz: "alguém em cena faz-me uma pergunta direta, que pede resposta minha" },
+  { id: "pergunta", gente: true, diz: "alguém em cena faz-me uma pergunta direta, e ela é a última frase" },
   { id: "escolha", gente: false, diz: "a ficção põe-me nas mãos duas coisas que não cabem juntas, e as duas custam (sem lista de opções)" },
   { id: "corte", gente: false, diz: "um corte seco: um facto ou uma ação, numa frase curta" },
   { id: "consequencia", gente: false, diz: "a consequência do que eu fiz, visível agora" },
-  { id: "silencio", gente: true, diz: "alguém fica calado à espera da minha resposta, e a frase é sobre essa pessoa" },
+  { id: "silencio", gente: true, diz: "alguém em cena deixa uma fala a meio, e a resposta acaba nela" },
 ];
 const fechoPorId = (id) => FECHOS.find((f) => f.id === id) || null;
 
@@ -75,6 +95,9 @@ export const FECHO_POR_MOMENTO = {
 
 /* o veto que acompanha todo fecho: o ambiente a pressagiar não fecha */
 export const VETO_DO_FECHO = "nunca o cheiro, o som ou o ar a pressagiar";
+/* e o dos fechos de gente: o corpo parado a esperar não fecha (os
+   TIQUES_PROIBIDOS do núcleo que são gesto, ditos de uma vez) */
+export const VETO_DO_GESTO = "sem braços cruzados, olhar fixo, ninguém à espera nem o ar a pressagiar";
 
 /* ---------------- O MOMENTO ----------------
    `ctx`: { pedido (escuta.js#lerOPedido), luta, fimDeAto }. Lixo = sistema. */
@@ -108,7 +131,8 @@ export function escolherFecho(ctx) {
   let r = Math.max(0, Math.min(0.999999, Number(sorte()) || 0)) * total;
   let id = cand[cand.length - 1][0];
   for (const [k, p] of cand) { if (r < p) { id = k; break; } r -= p; }
-  return { id, momento, linha: `termine em ${fechoPorId(id).diz}; ${VETO_DO_FECHO}` };
+  const f = fechoPorId(id);
+  return { id, momento, linha: `termine em ${f.diz}; ${f.gente ? VETO_DO_GESTO : VETO_DO_FECHO}` };
 }
 
 /* ---------------- O QUE A RESPOSTA FEZ ----------------
