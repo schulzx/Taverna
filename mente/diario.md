@@ -16,6 +16,9 @@ Formato:
 
 ---
 
+## 12/10 · v9.425 · o nome com epíteto é a mesma pessoa (`backend`) · este commit
+- **o defeito da prova viva de v9.424, com teste que falhava (13 de 28 no HEAD):** o Cronista registou "Ivarr" ao lado de "Ivarr o Exilado" — `nomeComDono` só comparava o primeiro nome com quem a história persegue. Agora o nome curto e o mesmo primeiro nome com epíteto (tabela nova `EPITETO`: artigo/partícula logo depois do nome, a vírgula, o composto com hífen) são a mesma ficha quando ela é a **única** portadora do primeiro nome (registo, quem importa, conhecidos, grupo) e `contraODono` não os separa (sexo, ofício, lugar, paradeiro); separados, o figurante novo nasce. Dois Ivarr não se fundem; "Ivarr Mendes" (sobrenome sem marca) nasce próprio; MM15 intacta. Nova `teste-nome-com-epiteto.mjs` (28). `App.jsx` não tocado.
+
 ## 12/10 · v9.424 · o Narrador só narra, E3: a fiação (`frontend`) · este commit
 - **estado inicial:** HEAD `5e9a925` (v9.423), suítes verdes; só `mente/agora.json` na árvore (não é meu, não foi no commit). **Bastão** `.claude/app-jsx` tomado 03:42 ("frontend E3") para as três pontas abaixo, devolvido ao fim do commit.
 - **o gênero das pessoas (a perda da E3):** o esquema do Cronista ganhou `"genero":"ele|ela"` e a SEÇÃO pessoas diz como ler (pronome, artigo, senhor/senhora; sem saber, `""`, nunca chute). `fichaDoCronista` (npcs.js) passa a ficha a `homem`/`mulher` — a forma que o registo, os NOMES À MÃO e a fogueira já usam — e **não reescreve** quem já tem gênero (a troca da 6.ª e da 7.ª era exatamente uma leitura errada a vencer). A linha das PESSOAS CONHECIDAS que vai ao Narrador já o levava. De passagem: o líder de um bando de decreto recebia `genero: mundo.genero` ("Fantasia medieval") — passou a vazio.

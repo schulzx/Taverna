@@ -828,6 +828,25 @@ export const LUGAR_NAO_E_GENTE = {
     "biblioteca", "arquivo", "quartel", "caserna", "cadeia", "prisao", "docas", "doca", "cais", "porto",
     "arena", "cemiterio", "guilda", "loja", "armazem", "moinho", "azenha", "ponte", "praca", "torre", "mina"],
 };
+/* ---------------- O NOME COM EPÍTETO (12/10, a prova viva de v9.424) ----------------
+   No Sino dos Andarilhos o Cronista registou "Ivarr" ao lado de "Ivarr o
+   Exilado" (este vindo dos NOMES À MÃO): duas fichas para o mesmo
+   taverneiro. O primeiro nome só se comparava com quem a história persegue
+   (`quemImporta`); um figurante registado com epíteto não era dono de
+   ninguém, e o nome curto nascia outra vez. Agora o primeiro nome solto e
+   o mesmo primeiro nome com epíteto são a mesma pessoa quando ela é a
+   ÚNICA portadora daquele primeiro nome (registo, quem importa, conhecidos,
+   grupo) e nada os separa (sexo, ofício, lugar, paradeiro — `contraODono`).
+   Dois "Ivarr" diferentes não se fundem: é a lição de MM15 ("dois Túlios
+   são duas pessoas"). O epíteto é o que vem logo depois do primeiro nome e
+   abre por uma destas palavras ("o Exilado", "da Pedra"), pela vírgula
+   ("Ivarr, o Ferreiro"), ou é um composto com hífen ("Barba-Ruiva"). Um
+   sobrenome solto ("Mendes") não é epíteto: o mundo repete nomes. */
+export const EPITETO = {
+  abre: ["o", "a", "da", "do", "das", "dos", "de", "del", "von", "van"],
+  virgula: ",",
+  hifen: "-",
+};
 /* o que acontece a um homónimo que se distingue do dono, por quem o dono é */
 export const DISTINTO_DE = {
   /* quem a história persegue: dois com o mesmo nome confundem quem joga */
@@ -935,6 +954,19 @@ function quemImporta(reg, c) {
     if (n && typeof n === "object" && investimentoDe({ ...n, nome: n.nome || k }, {}).length) lista.push({ nome: String(n.nome || k), onde: "", genero: "", papel: "", notas: "", de: "historia" });
   }
   return lista;
+}
+
+/* `longo` é `curto` mais um epíteto (EPITETO): o mesmo primeiro nome, e o
+   resto abre por artigo/partícula, pela vírgula, ou é um composto com hífen */
+function soEpiteto(curto, longo) {
+  const a = semArtigos(curto), b = semArtigos(longo);
+  if (a.length !== 1 || b.length < 2 || a[0] !== b[0]) return false;
+  const resto = b.slice(1);
+  if (EPITETO.abre.includes(resto[0])) return resto.length > 1;
+  if (resto.length === 1 && resto[0].includes(EPITETO.hifen)) return true;
+  const [antes, ...depois] = semAcento(longo).split(EPITETO.virgula);
+  const ate = semArtigos(antes);
+  return depois.join("").trim() !== "" && ate.length === 1 && ate[0] === a[0];
 }
 
 /* o veredito contra UM dono — devolve a decisão e o motivo */
@@ -1141,7 +1173,21 @@ export function nomeComDono(nome, npcs, contexto = {}) {
   /* cada dono do primeiro nome dá o seu veredito: um que a reconheça
      ganha; senão, uma recusa da história; senão, nasce própria */
   const donos = lista.filter((d) => primeiroNome(d.nome) === pn && semAcento(d.nome) !== alvo);
-  if (!donos.length) return out("nova");
+  if (!donos.length) {
+    /* O NOME COM EPÍTETO (EPITETO, acima): a única portadora do primeiro
+       nome, registada com o nome curto ou com o epíteto, é ela — se nada
+       os separa; separados, o figurante novo nasce (é gente do mundo) */
+    const portadores = new Set();
+    for (const n of [...Object.keys(reg), ...lista.map((d) => d.nome), ...conhecidos.map((d) => d.nome), ...grupo.map((g) => g.nome)]) {
+      if (primeiroNome(n) === pn) portadores.add(semAcento(n));
+    }
+    const chave = portadores.size === 1 ? Object.keys(reg).find((k) => portadores.has(semAcento(k))) : "";
+    if (chave && reg[chave] && typeof reg[chave] === "object" && (soEpiteto(nome, chave) || soEpiteto(chave, nome))) {
+      const v = contraODono(nome, { nome: chave, onde: "", genero: "", papel: "", notas: "", de: "mundo" }, reg, novo);
+      if (v.decisao === "mesma") return out("mesma", v);
+    }
+    return out("nova");
+  }
   const vereditos = donos.map((d) => contraODono(nome, d, reg, novo));
   const v = vereditos.find((x) => x.decisao === "mesma") || vereditos.find((x) => x.decisao === "recusada") || vereditos[0];
   return out(v.decisao, v);
