@@ -1055,9 +1055,17 @@ export function nomeComDono(nome, npcs, contexto = {}) {
   const nomeLimpo = String(nome == null ? "" : nome).trim();
   const out = (decisao, extra = {}) => ({ decisao, nome: nomeLimpo, chave: "", dono: "", motivo: "", ...extra });
   if (!alvo) return out("nova", { nome: "" });
-  /* MM-C · C0: o HERÓI nunca é gente da cena (ver QUEM_NAO_E_GENTE) */
+  /* MM-C · C0: o HERÓI nunca é gente da cena (ver QUEM_NAO_E_GENTE).
+     9.ª sessão de prova (12/10): nem pelo NOME DE FAMÍLIA. O herói era
+     "Rufo Tamanqueiro"; o COMO SE CHAMA manda os estranhos tratá-lo por
+     "Tamanqueiro" — e um taverneiro disse "Tá procurando alguém,
+     Tamanqueiro?", e o registo ganhou "Tamanqueiro — taverneiro do Machado e
+     a Rosa". Só o primeiro nome era o herói. Agora qualquer palavra do nome
+     dele (sem partícula, com o tamanho mínimo do primeiro nome), dita
+     SOZINHA, é ele. */
   const heroi = semArtigos(c.heroi).join(" ");
-  if (heroi && (alvo === semAcento(c.heroi) || (semArtigos(nome).length === 1 && primeiroNome(nome) === primeiroNome(c.heroi)))) {
+  const palavrasDoHeroi = [primeiroNome(c.heroi), ...semArtigos(c.heroi).slice(1).filter((w) => w.length >= HOMONIMO.primeiroMinimo && !HOMONIMO.particulas.includes(w))];
+  if (heroi && (alvo === semAcento(c.heroi) || (semArtigos(nome).length === 1 && palavrasDoHeroi.includes(primeiroNome(nome))))) {
     return out("recusada", { dono: nomeLimpo, motivo: "heroi" });
   }
   /* e a DESCRIÇÃO não é nome: "o carroceiro" é de quem tem esse ofício na

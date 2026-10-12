@@ -38,6 +38,8 @@ import { situacaoDe, SITUACOES } from "./mundo-base.js";
 import { rumoEntre, formatarDistancia, coordDe, garantirCoord, kmEntre } from "./coordenadas.js";
 /* E1 (12/10): a hora e a distância são as do Geógrafo — uma medida só */
 import { caminhoNaRegiao, origemDoHeroi, tempoDoCaminho } from "./marcha.js";
+/* 9.ª sessão (12/10): o elo procura-se pelo papel do passado do herói */
+import { PROCURA_DO_ELO } from "./nucleo.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -164,11 +166,51 @@ export function ehProcura(texto) {
   return VERBOS.test(t) && !vaiAntesDeProcurar(t);
 }
 
+/* ---------------- QUEM SE PROCURA PELO PAPEL (9.ª sessão de prova, 12/10) ----------------
+   "Cresci na guilda dos dedos. Procuro meu antigo mestre de recados, que
+   devia estar aqui em Buraco Norte" (M47). O sistema sabia quem era — o
+   elo do núcleo, Oren Trançado, `eraDoHeroi` "o mestre de recados da
+   guilda", a viver ali mesmo — e a procura só lia NOMES: a frase não tinha
+   nenhum, e o Mestre inventou "o velho que foi para Vau de Pedra". O
+   jogador perguntou pelo mesmo papel quatro vezes na sessão.
+   A frase que nomeia o elo pelas palavras do passado do herói
+   (`PROCURA_DO_ELO`, nucleo.js — todas as raízes de uma alternativa, no
+   começo de palavra) resolve-se para ele: devolve { nome, papel, cidade },
+   e o App passa-o a `procurarPessoa` em `ctx.porPapel`. O papel ganha ao
+   nome dito: "pergunto à Dara quem leva os recados da guilda" procura o
+   mestre de recados, não a Dara. Morto ou sem elo: null. */
+export function papelProcurado(texto, nucleo) {
+  const t = ` ${norm(texto).replace(/[^a-z0-9]+/g, " ")} `;
+  if (!t.trim()) return null;
+  const n = nucleo && typeof nucleo === "object" ? nucleo : {};
+  const elo = (Array.isArray(n.pessoas) ? n.pessoas : []).find((p) => p && p.papel === "elo" && p.nome && !p.morto);
+  if (!elo) return null;
+  const alts = PROCURA_DO_ELO[n.antecedente] || PROCURA_DO_ELO.sem;
+  const tem = (raiz) => t.includes(` ${norm(raiz)}`);
+  if (!alts.some((a) => Array.isArray(a) && a.length && a.every(tem))) return null;
+  return { nome: String(elo.nome), papel: String(elo.eraDoHeroi || ""), cidade: String(elo.cidade || "") };
+}
+
 /* ---------------- ONDE ELA ESTÁ ----------------
    Cinco degraus, do mais perto ao mais longe, e o primeiro que responder
    ganha. A ordem é a da certeza: quem está na sua frente vale mais do que
    quem a base diz que mora aqui. */
 export function procurarPessoa(nome, ctx = {}) {
+  const r = procurarPeloNome(nome, ctx);
+  /* 9.ª sessão: procurado pelo papel (`papelProcurado`) — a resposta diz
+     de quem se trata, e quem o mundo não acha está onde o núcleo o põe */
+  const pp = ctx && typeof ctx === "object" && ctx.porPapel && typeof ctx.porPapel === "object" ? ctx.porPapel : null;
+  if (!r || !pp || !pp.papel) return r;
+  if (r.desfecho === "ninguem" && pp.cidade) {
+    const c = ctx || {};
+    const aqui = norm(pp.cidade) === norm(c.cidadeAtual);
+    return aqui
+      ? { ...r, onde: pp.cidade, desfecho: "aqui", porPapel: pp.papel }
+      : { ...r, onde: pp.cidade, desfecho: "noutro_lugar", porPapel: pp.papel, ...rumoPara(c.mapa, pp.cidade, { cidadeAtual: c.cidadeAtual, coord: c.coord, lugar: c.lugar, jornada: c.jornada }) };
+  }
+  return { ...r, porPapel: pp.papel };
+}
+function procurarPeloNome(nome, ctx = {}) {
   const alvo = norm(nome);
   if (!alvo) return null;
   const {
@@ -292,7 +334,8 @@ export function envelopeDaProcura(r) {
   const onde = r.onde ? ` (${r.onde})` : "";
   /* E1: o rótulo do rumo já traz a preposição ("ao sul") — "para ao sul" saía torto */
   const rumo = r.rumo ? ` a ${r.distancia} ${r.rumo}${r.tempo ? `, ${r.tempo} daqui` : ""}` : "";
-  const cabeca = "[PROCURA — RESOLVIDA PELO SISTEMA]";
+  /* 9.ª sessão: quem foi procurado pelo papel é dito pelo nome, em fato */
+  const cabeca = `[PROCURA — RESOLVIDA PELO SISTEMA]${r.porPapel ? encherPapel(PROCURA_PELO_PAPEL.envelope, r) : ""}`;
   const fim = " Narre a descoberta em 1-2 frases, pelo que o herói vê e ouve. NÃO invente outro paradeiro, não faça aparecer quem não está aqui, e não transforme isto em achado de tesouro.";
   switch (r.desfecho) {
     case "no_grupo": return `${cabeca} ${r.nome} anda comigo — está aqui do meu lado.${fim}`;
@@ -304,8 +347,18 @@ export function envelopeDaProcura(r) {
   }
 }
 
-export function linhaDaProcura(r) {
-  if (!r) return "";
+/* 9.ª sessão (12/10): a frase do procurado pelo papel — no envelope (o
+   Narrador recebe o nome que o sistema sabe, como fato) e na linha que o
+   jogador lê (o papel ao lado do nome, para ele ligar os dois) */
+export const PROCURA_PELO_PAPEL = {
+  envelope: " Quem procuro — {papel}, do meu passado — chama-se {nome} (é fato: conheço essa pessoa de antes, e quem me responde pode dizer-lhe o nome).",
+  linha: "{nome} ({papel})",
+};
+const encherPapel = (tpl, r) => String(tpl).replace(/\{(papel|nome)\}/g, (m, k) => String((k === "papel" ? r.porPapel : r.nome) || ""));
+
+export function linhaDaProcura(r0) {
+  if (!r0) return "";
+  const r = r0.porPapel ? { ...r0, nome: encherPapel(PROCURA_PELO_PAPEL.linha, r0) } : r0;
   switch (r.desfecho) {
     case "no_grupo": return `👥 ${r.nome} anda com você.`;
     case "aqui": return `🔎 ${r.nome} está aqui${r.onde ? ` — ${r.onde}` : ""}.`;

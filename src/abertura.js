@@ -71,6 +71,7 @@ import { vocacaoDe } from "./comercio.js";
 import { fichaDaCidade, leiDaCidade } from "./cidade-por-dentro.js";
 import { comEm, contrair } from "./lugar.js";
 import { linhaDoCompanheiro } from "./companheiro-inicial.js";
+import { oficioNoGenero } from "./nomes.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -163,29 +164,13 @@ export const TITULO_DO_FEITIO = {
   enfrentar: "A sombra de {alvo}",
 };
 
-/* O OFÍCIO NO GÉNERO DE QUEM O TEM (nexo, 11/10). A base escreve o papel
-   neutro ("taverneiro(a)", "dono(a) da casa") ou no masculino ("músico"), e
-   a abertura copiava-o: "Inocência Bordão, músico", e o Narrador seguiu com
-   "ele" para a mulher do alaúde (4.ª sessão). A pessoa tem `genero_pessoa`
-   na base; o ofício concorda com ele. Só a PRIMEIRA palavra flexiona ("dona
-   da casa", "empresária da arena") — a locução que vem depois não concorda. */
-export const OFICIO_NO_GENERO = {
-  /* o neutro "(a)": a mulher fica com o "a" ("dono(a)" -> "dona"), o homem sem nada */
-  neutro: { mulher: [["ão(ã)", "ã"], ["e(isa)", "isa"], ["o(a)", "a"], ["(a)", "a"]], homem: [["(ã)", ""], ["(isa)", ""], ["(a)", ""]] },
-  /* sem neutro, a primeira palavra no feminino, pelo fim dela */
-  fimFeminino: [["ão", "ã"], ["or", "ora"], ["o", "a"]],
-};
-export function oficioNoGenero(papel, generoPessoa) {
-  const p = String(papel == null ? "" : papel);
-  const g = String(generoPessoa || "");
-  const neutro = OFICIO_NO_GENERO.neutro[g];
-  if (!neutro || !p) return p;
-  if (/\((a|ã|isa)\)/.test(p)) return neutro.reduce((s, [de, por]) => s.split(de).join(por), p);
-  if (g !== "mulher") return p;
-  const [primeira, ...resto] = p.split(" ");
-  const r = OFICIO_NO_GENERO.fimFeminino.find(([de]) => primeira.endsWith(de));
-  return r ? [primeira.slice(0, -r[0].length) + r[1], ...resto].join(" ") : p;
-}
+/* O OFÍCIO NO GÉNERO DE QUEM O TEM (nexo, 11/10) mudou-se para nomes.js na
+   9.ª sessão de prova (12/10): a lista da gente da cidade (`resumoDaqui`,
+   mundo-base.js) também o lê — "Kira do Vale, taverneiro(a)" deixou o
+   Narrador pôr um homem magro ao balcão dela —, e mundo-base.js não pode
+   ler da abertura (a abertura lê dele). A abertura continua a dá-lo a quem
+   o pedia aqui. */
+export { OFICIO_NO_GENERO, oficioNoGenero } from "./nomes.js";
 
 /* O QUE SE SABE: a pista é o marco em pessoa (o Nostoc do Matt, o único
    nome que se tinha) ou é quem, nesta cidade, sabe mais do marco. */

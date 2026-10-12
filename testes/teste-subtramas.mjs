@@ -617,7 +617,12 @@ sec("12. a voz presa ao nome e o género na linha (a prova viva da v9.414)");
 {
   const PRIM = (n) => String(n).trim().split(/[\s,]+/)[0];
   const maiusc = (x) => x.charAt(0).toUpperCase() + x.slice(1);
-  t("a tabela: um marcador por género, e o modelo põe o nome dentro dele", VOZ_PRESA.marcador.mulher === "(voz da " && VOZ_PRESA.marcador.homem === "(voz do " && VOZ_PRESA.marcador[""] === "(voz de " && VOZ_PRESA.modelo.includes("{marcador}{nome}: {tique}"));
+  /* 9.ª sessão de prova (12/10): o marcador passou de "(voz da " a "(voz só
+     da " — o "criança" da Brina saiu em 14 de 48 respostas, na boca de
+     toda a gente, e a voz não dizia que era só dela (teste-sessao-9-
+     historia.mjs, secção 2). A asserção continua a mesma: um marcador por
+     género, com o nome dentro. */
+  t("a tabela: um marcador por género, e o modelo põe o nome dentro dele", VOZ_PRESA.marcador.mulher === "(voz só da " && VOZ_PRESA.marcador.homem === "(voz só do " && VOZ_PRESA.marcador[""] === "(voz só de " && VOZ_PRESA.modelo.includes("{marcador}{nome}: {tique}"));
   t("a marca do género é curta", Object.values(GENERO_NA_LINHA.marca).every((m) => m.length <= 6));
 
   /* (1) cada linha com o tique de alguém tem-no preso ao nome dessa pessoa,
@@ -632,7 +637,9 @@ sec("12. a voz presa ao nome e o género na linha (a prova viva da v9.414)");
     if (!vezes) return;
     comVoz[tipo]++;
     const g = generoDaPessoa(p);
-    const presa = VOZ_PRESA.marcador[g] + PRIM(p.nome) + ": " + tq;
+    /* 9.ª sessão: o nome da voz é o primeiro, ou o inteiro (`vozNome`)
+       quando outra pessoa à volta divide o primeiro */
+    const presa = VOZ_PRESA.marcador[g] + (p.vozNome || PRIM(p.nome)) + ": " + tq;
     if (l.split(presa).length - 1 !== vezes || l.includes(maiusc(tq) + ".")) soltas.push(l);
     if ((g === "mulher" && l.includes(VOZ_PRESA.marcador.homem)) || (g === "homem" && l.includes(VOZ_PRESA.marcador.mulher))) generoErrado.push(l);
   };

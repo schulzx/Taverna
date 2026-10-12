@@ -1,0 +1,3040 @@
+{
+ "origem": "mente/mm11-sessao-9.md · o save final e o registo das chamadas ao Narrador da 9.ª sessão (v9.432), recortado: só o que a suíte lê",
+ "campanha": {
+  "nomeCampanha": "Prova da Mesa IX",
+  "genero": "Fantasia medieval",
+  "molde": "sobremundo",
+  "lexico": {
+   "v": 1,
+   "gerado": true,
+   "chamado": {
+    "heroi": "chamados",
+    "grupo": "companhia",
+    "taverna": "estalagens",
+    "masmorra": "ruínas",
+    "monstro": "aberrações",
+    "faccao": "casas",
+    "cidade": "vilas",
+    "moeda": "marcos",
+    "magia": "a Arte",
+    "relicario": "relíquias"
+   },
+   "funciona": {
+    "heroi": "Os chamados são aqueles que ouvem o eco das ruínas e respondem. Tornam-se um ao sobreviver a uma ruína e sair com uma relíquia, sendo reconhecidos pela marca que essa rel",
+    "poder": "O poder vem das relíquias e do conhecimento das ruínas. Ao absorver ecos, o chamado fortalece sua marca e ganha novas capacidades; a dor e a prática lapidam isso em nívei",
+    "fama": "A reputação se mede em cicatrizes e relíquias exibidas; os estalajadeiros e os arautos das casas registram e espalham os feitos. Quando sobe, as casas oferecem patrocínio",
+    "ameaca": "Um antagonista de verdade é um chamado caído, corrompido pelo eco de uma ruína, ou um senhor de uma casa que usa relíquias para controlar. Ninguém o parou porque o poder ",
+    "masmorra": "As ruínas são restos de uma era antiga que emergem do solo em noites de neblina. Entra-se por frestas que se abrem sozinhas; no fundo há um eco-mor, uma criatura ou guard",
+    "combate": "Luta-se com armas forjadas com fragmentos de relíquias. Os chamados lutam em companhia, cobrindo uns aos outros; golpe baixo é atacar pelas costas; honra é enfrentar de f",
+    "morte": "Quem cai é levado pela companhia ou fica na ruína. O corpo é queimado com uma lasca de relíquia para que a alma não vire eco. Diz-se: 'que a terra o esqueça'.",
+    "tesouro": "O equipamento raro sai das ruínas, das mãos dos caídos ou dos cofres das casas. Os avaliadores das estalagens e os joalheiros das casas o avaliam; eles compram e revendem",
+    "viagem": "Viaja-se por estradas de pedra antiga, mal conservadas. Quem viaja são mercadores, mensageiros e chamados; camponeses raramente deixam suas vilas. No caminho, o perigo sã",
+    "passagem": "Quando um caminho está travado, é preciso uma relíquia-chave ou o sangue de um chamado. A abertura se mostra como um brilho dourado que se espalha pela pedra ou pela port",
+    "cidade": "Uma vila é um aglomerado de casas de pedra e madeira ao redor de uma estalagem e um poço. Na rua, veem-se mercadores, artesãos e pedintes. Quem manda é um senhor de uma c",
+    "justica": "Quem quebra a lei é preso pela guarda da casa dominante e julgado pelo senhor ou conselho. Pune-se com multa, prisão ou exílio. O que todos fazem e ninguém pune é esconde",
+    "fe": "As pessoas veneram os ecos dos antigos, pedindo proteção. Nas casas, há altares com lascas de relíquia; nas ruas, amuletos entalhados. A fé promete que, se você cumprir o",
+    "mercado": "Compra-se e vende-se nas feiras semanais de cada vila, com marcos ou troca. Não se vende em público relíquias de alto grau; isso é feito em salas secretas.",
+    "missao": "O trabalho vem das casas, que contratam por arautos ou mensagens seladas, e dos estalajadeiros, que indicam pedidos dos moradores. O pagamento se combina antes, geralment",
+    "acampamento": "Gente como o herói descansa em acampamentos fora das vilas, sob lonas, ou em quartos de estalagem. Nas horas paradas, reparam equipamento, contam histórias das ruínas e e",
+    "grupo": "Um grupo se forma por contrato diante do estalajadeiro ou de um tabelião. Combinam-se as partes do tesouro e a liderança. A divisão é por acordo registrado; brigas são re",
+    "ermo": "Entre as vilas, há campos abandonados, bosques retorcidos e ruínas menores. As pessoas evitam por medo de ecos e aberrações; atravessam em caravanas armadas ou com um cha"
+   },
+   "povos": [
+    "os aldeões",
+    "os viajantes",
+    "os eremitas",
+    "os remanescentes",
+    "os coletores"
+   ],
+   "oficios": [
+    "ferreiro",
+    "taverneiro",
+    "escriba",
+    "curandeiro",
+    "carpinteiro",
+    "padeiro",
+    "alfaiate",
+    "caçador de peles",
+    "minerador",
+    "mercador",
+    "soldado da guarda",
+    "coletor de relíquias"
+   ],
+   "criaturas": [
+    {
+     "ameaca": "fraco",
+     "mente": "besta",
+     "nomes": [
+      "rato de ruína",
+      "corvo faminto",
+      "lagarto de pedra"
+     ]
+    },
+    {
+     "ameaca": "comum",
+     "mente": "besta",
+     "nomes": [
+      "lobo cinzento",
+      "javali do ermo",
+      "serpente de espinho"
+     ]
+    },
+    {
+     "ameaca": "competente",
+     "mente": "besta",
+     "nomes": [
+      "urso de musgo",
+      "pantera das sombras",
+      "toupeira gigante"
+     ]
+    },
+    {
+     "ameaca": "elite",
+     "mente": "pensa",
+     "nomes": [
+      "chamado caído",
+      "senhor de casa",
+      "caçador de relíquias"
+     ]
+    },
+    {
+     "ameaca": "lendario",
+     "mente": "pensa",
+     "nomes": [
+      "o Primeiro Eco",
+      "o Rei sem Nome",
+      "a Voz da Ruína"
+     ]
+    }
+   ],
+   "naoExiste": [
+    "pólvora e armas de fogo",
+    "cavalos e montarias",
+    "magia de cura instantânea",
+    "dragões vivos",
+    "oceanos e grandes mares",
+    "impressão em massa de livros"
+   ],
+   "cidades": [
+    "Pedrabaixa",
+    "Vau do Rio",
+    "Muralha",
+    "Trilho Fundo",
+    "Clareira Alta",
+    "Poço Seco",
+    "Encruzilhada",
+    "Fenda Leste"
+   ],
+   "tavernas": [
+    "O Cão Prateado",
+    "A Lareira Fria",
+    "O Machado e a Rosa",
+    "A Taverna da Ponte"
+   ],
+   "lugares": [
+    {
+     "tipo": "taverna",
+     "chamado": "estalagem",
+     "nomes": [
+      "O Cão Prateado",
+      "A Lareira Fria",
+      "O Machado e a Rosa",
+      "A Taverna da Ponte"
+     ]
+    },
+    {
+     "tipo": "mercado",
+     "chamado": "feira",
+     "nomes": [
+      "Feira de Pedrabaixa",
+      "Mercado das Sombras",
+      "Praça dos Trilhos"
+     ]
+    },
+    {
+     "tipo": "templo",
+     "chamado": "santuário",
+     "nomes": [
+      "Santuário de Ecos",
+      "Capela da Lasca",
+      "Altar dos Antigos"
+     ]
+    },
+    {
+     "tipo": "forja",
+     "chamado": "forja",
+     "nomes": [
+      "Forja de Aço-Eco",
+      "Bigorna Quebrada",
+      "Ferraria do Leste"
+     ]
+    },
+    {
+     "tipo": "quartel",
+     "chamado": "posto da guarda",
+     "nomes": [
+      "Posto da Casa Verrus",
+      "Quartel de Muralha",
+      "Torre de Vigia"
+     ]
+    },
+    {
+     "tipo": "cadeia",
+     "chamado": "calabouço",
+     "nomes": [
+      "Calabouço da Vila",
+      "Poço dos Esquecidos",
+      "Cela de Pedra"
+     ]
+    },
+    {
+     "tipo": "biblioteca",
+     "chamado": "sala de mapas",
+     "nomes": [
+      "Sala de Mapas de Orin",
+      "Arquivo do Mosteiro",
+      "Estante dos Perdidos"
+     ]
+    },
+    {
+     "tipo": "docas",
+     "chamado": "ancoradouro",
+     "nomes": [
+      "Ancoradouro do Rio Largo",
+      "Cais de Pedra",
+      "Porto Fluvial"
+     ]
+    },
+    {
+     "tipo": "arena",
+     "chamado": "poço de provas",
+     "nomes": [
+      "Poço de Provas de Vald",
+      "Arena da Casa Krel",
+      "Círculo de Luta"
+     ]
+    },
+    {
+     "tipo": "cemitério",
+     "chamado": "campo de cinzas",
+     "nomes": [
+      "Campo de Cinzas",
+      "Colina dos Esquecidos",
+      "Túmulos de Pedra"
+     ]
+    },
+    {
+     "tipo": "guilda",
+     "chamado": "casa de ofício",
+     "nomes": [
+      "Casa dos Ferreiros",
+      "Guilda dos Coletores",
+      "Salão dos Mercadores"
+     ]
+    },
+    {
+     "tipo": "casa de banhos",
+     "chamado": "termas",
+     "nomes": [
+      "Termas da Água Clara",
+      "Casa Quente",
+      "Banhos do Rio"
+     ]
+    }
+   ],
+   "faccoes": [
+    {
+     "nome": "Casa Verrus",
+     "quer": "controlar as minas de aço-eco"
+    },
+    {
+     "nome": "Casa Krel",
+     "quer": "monopolizar o comércio de relíquias"
+    },
+    {
+     "nome": "Ordem dos Ecos",
+     "quer": "preservar as ruínas e impedir seu uso"
+    },
+    {
+     "nome": "Coletadores Livres",
+     "quer": "acesso livre às ruínas sem o jugo das casas"
+    }
+   ],
+   "nomes": {
+    "masc": [
+     "Aldric",
+     "Bram",
+     "Corvin",
+     "Dain",
+     "Elric",
+     "Fenn",
+     "Garran",
+     "Halden",
+     "Ilar",
+     "Joran",
+     "Kael",
+     "Lorin",
+     "Marek",
+     "Nolan",
+     "Oren",
+     "Petyr",
+     "Quill",
+     "Rorik",
+     "Sander",
+     "Tomas"
+    ],
+    "fem": [
+     "Alba",
+     "Brina",
+     "Calla",
+     "Dara",
+     "Elara",
+     "Fira",
+     "Gwen",
+     "Hilda",
+     "Isolde",
+     "Jara",
+     "Kira",
+     "Lena",
+     "Mara",
+     "Nissa",
+     "Ora",
+     "Petra",
+     "Quinn",
+     "Rhea",
+     "Sari",
+     "Talia"
+    ],
+    "sobrenome": [
+     "Carvoeiro",
+     "do Vale",
+     "Caldeira",
+     "Ferreiro",
+     "Pedra",
+     "Espinheiro",
+     "dos Rios",
+     "Corvo",
+     "Sem-Terra",
+     "da Fenda",
+     "Lobo",
+     "Moinho",
+     "Cinzento",
+     "Arqueiro",
+     "do Poço",
+     "Trançado"
+    ],
+    "cidadeA": [
+     "Pedra",
+     "Vau",
+     "Alto",
+     "Trilho",
+     "Clareira",
+     "Poço",
+     "Fenda",
+     "Muralha",
+     "Porto",
+     "Campo",
+     "Lago",
+     "Serra",
+     "Buraco",
+     "Água",
+     "Colina",
+     "Rio"
+    ],
+    "cidadeB": [
+     "baixa",
+     "do Rio",
+     "da Muralha",
+     "Fundo",
+     "Alta",
+     "Seco",
+     "Leste",
+     "Oeste",
+     "Norte",
+     "Sul",
+     "de Pedra",
+     "de Cinzas",
+     "Verde",
+     "Negro",
+     "Redondo",
+     "Esquecido"
+    ],
+    "continente": "Terras do Eco"
+   },
+   "racas": [
+    {
+     "raca": "Humano",
+     "chamado": "aldeão"
+    },
+    {
+     "raca": "Elfo",
+     "chamado": "remanescente antigo"
+    },
+    {
+     "raca": "Anão",
+     "chamado": "escavador"
+    },
+    {
+     "raca": "Halfling",
+     "chamado": "pequenino"
+    },
+    {
+     "raca": "Meio-orc",
+     "chamado": "marcado"
+    },
+    {
+     "raca": "Draconato",
+     "chamado": "descendente de eco"
+    },
+    {
+     "raca": "Tiefling",
+     "chamado": "tocado pelo Vazio"
+    },
+    {
+     "raca": "Gnomo",
+     "chamado": "inventor de bugigangas"
+    },
+    {
+     "raca": "Meio-elfo",
+     "chamado": "mestiço"
+    },
+    {
+     "raca": "Goliath",
+     "chamado": "colosso das montanhas"
+    }
+   ],
+   "equipamento": {
+    "arma_leve_uma": [
+     "adaga de eco",
+     "punhal de vidro",
+     "faca de osso",
+     "lâmina curta"
+    ],
+    "arma_simples_uma": [
+     "clava de madeira",
+     "machado de mão",
+     "lança curta",
+     "martelo de pedra"
+    ],
+    "arma_simples_dist": [
+     "arco de madeira",
+     "funda de couro",
+     "azagaia",
+     "besta leve"
+    ],
+    "arma_marcial_uma": [
+     "espada longa de aço-eco",
+     "machado de guerra",
+     "florete",
+     "cimitarra"
+    ],
+    "arma_marcial_duas": [
+     "montante de aço-eco",
+     "machado grande",
+     "martelo de guerra",
+     "lança longa"
+    ],
+    "arma_marcial_dist": [
+     "arco longo de teixo",
+     "besta pesada",
+     "arco composto",
+     "besta de repetição"
+    ],
+    "foco_uma": [
+     "lasca de relíquia",
+     "cajado curto",
+     "orbe de vidro",
+     "grimório de bolso"
+    ],
+    "foco_duas": [
+     "cajado longo",
+     "bastão de carvalho",
+     "livro de ecos",
+     "foco de pedra"
+    ],
+    "escudo": [
+     "escudo de madeira",
+     "broquel de bronze",
+     "escudo de ferro",
+     "pavês leve"
+    ],
+    "armadura_panos": [
+     "túnica de linho",
+     "manto de viagem",
+     "roupas de andarilho"
+    ],
+    "armadura_leve": [
+     "couro curtido",
+     "gibão acolchoado",
+     "pelego de lobo"
+    ],
+    "armadura_media": [
+     "cota de malha",
+     "peitoral de bronze",
+     "couraça de escamas"
+    ],
+    "armadura_pesada": [
+     "armadura de placas",
+     "cota completa de aço-eco",
+     "armadura de cerimônia"
+    ],
+    "elmo": [
+     "capuz de malha",
+     "elmo de bronze",
+     "capacete de couro",
+     "elmo de aço-eco"
+    ],
+    "botas": [
+     "botas de couro",
+     "botas de viagem",
+     "sapatos de lã",
+     "botas de ferro"
+    ],
+    "anel": [
+     "anel de cobre",
+     "anel de prata",
+     "anel de osso",
+     "anel de vidro"
+    ],
+    "amuleto": [
+     "amuleto de lasca",
+     "pingente de eco",
+     "talismã de pedra",
+     "colar de dentes"
+    ]
+   },
+   "profissoes": [
+    {
+     "profissao": "Ferreiro",
+     "chamado": "forjador de aço-eco"
+    },
+    {
+     "profissao": "Alquimista",
+     "chamado": "destilador de essências"
+    },
+    {
+     "profissao": "Herborista",
+     "chamado": "coletor de ervas"
+    },
+    {
+     "profissao": "Cartógrafo",
+     "chamado": "mapeador de ruínas"
+    },
+    {
+     "profissao": "Escriba",
+     "chamado": "escrivão de contratos"
+    },
+    {
+     "profissao": "Cozinheiro",
+     "chamado": "mestre de caldeirão"
+    },
+    {
+     "profissao": "Joalheiro",
+     "chamado": "lapidador de relíquias"
+    },
+    {
+     "profissao": "Curtidor",
+     "chamado": "curtidor de peles"
+    },
+    {
+     "profissao": "Minerador",
+     "chamado": "mineiro de aço-eco"
+    },
+    {
+     "profissao": "Caçador de Recompensas",
+     "chamado": "caçador de chamados caídos"
+    },
+    {
+     "profissao": "Mercador",
+     "chamado": "mercador de relíquias"
+    },
+    {
+     "profissao": "Médico de Campo",
+     "chamado": "curandeiro de batalha"
+    }
+   ],
+   "afixos": {
+    "prefixos": {
+     "0": [
+      "gasto",
+      "rachado",
+      "remendado",
+      "enferrujado",
+      "lascado"
+     ],
+     "1": [
+      "polido",
+      "afiado",
+      "reforçado",
+      "bem-feito",
+      "entrelaçado"
+     ],
+     "2": [
+      "ecoico",
+      "rúnico",
+      "entalhado",
+      "vidrado",
+      "temperado"
+     ],
+     "3": [
+      "antigo",
+      "lendário",
+      "marcado",
+      "vivo",
+      "soberano"
+     ],
+     "4": [
+      "primordial",
+      "sem-nome",
+      "do Vazio",
+      "da Ruína",
+      "eterno"
+     ]
+    },
+    "sufixos": [
+     "do Eco",
+     "da Última Guerra",
+     "da Fenda",
+     "do Primeiro Rei",
+     "da Casa Verrus",
+     "do Vale Esquecido",
+     "da Chama Fria",
+     "do Sangue Antigo",
+     "das Três Luas",
+     "do Silêncio",
+     "da Montanha que Canta"
+    ]
+   },
+   "aLei": "Toda relíquia exige um preço: quem a usa perde algo, seja uma memória, um sentimento ou um pedaço da própria sombra.",
+   "comoSeFala": "Fala-se em tom baixo e direto, com gírias de estrada como 'eco' para dinheiro e 'ruína' para problema. É tabu dizer o nome de um chamado caído.",
+   "passado": [
+    "A Última Guerra, há três séculos, abriu fendas no mundo e deixou as ruínas.",
+    "O Primeiro Eco foi um rei que tentou absorver todas as relíquias e se perdeu, virando um monstro.",
+    "As casas surgiram quando os coletores começaram a vender relíquias e a disputar território.",
+    "A Queda das Três Luas, há uma geração, escureceu os céus e fortaleceu os ecos."
+   ],
+   "titulos": [
+    "o Mão de Cinza",
+    "a Voz da Ruína",
+    "o Senhor dos Ecos",
+    "a Sombra Ambulante",
+    "o Coletor de Almas",
+    "o Rei sem Nome",
+    "a Damada Fenda",
+    "o Lobo das Ruínas",
+    "o Andarilho Eterno",
+    "a Chama Fria"
+   ]
+  }
+ },
+ "mapa": {
+  "cidades": [
+   {
+    "nome": "Buraco Norte",
+    "tipo": "capital",
+    "porte": "capital",
+    "populacao": 36840,
+    "regiao": "Chãs Quebradas",
+    "continente": "Terras do Eco",
+    "bioma": "floresta",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 50,
+    "y": 50,
+    "descoberta": true,
+    "pisada": true
+   },
+   {
+    "nome": "Vau de Pedra",
+    "tipo": "vila",
+    "porte": "vila",
+    "populacao": 1330,
+    "regiao": "Chãs Altos",
+    "continente": "Terras do Eco",
+    "bioma": "floresta",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 50.26,
+    "y": 49.83,
+    "descoberta": true,
+    "deOuvir": true
+   },
+   {
+    "nome": "Rio do Rio",
+    "tipo": "fortaleza",
+    "porte": "fortaleza",
+    "populacao": 710,
+    "regiao": "Chãs Quebradas",
+    "continente": "Terras do Eco",
+    "bioma": "floresta",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 49.84,
+    "y": 50.46,
+    "descoberta": true,
+    "pisada": true
+   },
+   {
+    "nome": "Campo baixa",
+    "tipo": "cidade",
+    "porte": "cidade",
+    "populacao": 3280,
+    "regiao": "Chãs Altos",
+    "continente": "Terras do Eco",
+    "bioma": "floresta",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 49.63,
+    "y": 49.58,
+    "descoberta": true,
+    "deOuvir": true
+   }
+  ],
+  "faccoes": [],
+  "continente": "Terras do Eco",
+  "regioes": [
+   {
+    "nome": "Chãs Quebradas",
+    "continente": "Terras do Eco",
+    "bioma": "floresta",
+    "cx": 49.93,
+    "cy": 50.05
+   },
+   {
+    "nome": "Chãs Altos",
+    "continente": "Terras do Eco",
+    "bioma": "deserto",
+    "cx": 50.04,
+    "cy": 49.91
+   }
+  ],
+  "rotas": [
+   {
+    "de": "Buraco Norte",
+    "para": "Vau de Pedra",
+    "terreno": "floresta",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Buraco Norte",
+    "para": "Rio do Rio",
+    "terreno": "floresta",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Vau de Pedra",
+    "para": "Campo baixa",
+    "terreno": "floresta",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Rio do Rio",
+    "para": "Vau de Pedra",
+    "terreno": "floresta",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Campo baixa",
+    "para": "Buraco Norte",
+    "terreno": "floresta",
+    "km": 20,
+    "dias": 1
+   }
+  ],
+  "continentes": [
+   {
+    "nome": "Terras do Eco",
+    "regioes": [
+     "Chãs Quebradas",
+     "Chãs Altos"
+    ]
+   }
+  ],
+  "regiao": {
+   "versao": 2,
+   "nomes": 1,
+   "nome": "Chãs Quebradas",
+   "base": {
+    "nome": "Buraco Norte",
+    "ato": "inicio"
+   },
+   "povoados": [
+    {
+     "nome": "Vau de Pedra",
+     "porte": "vila",
+     "horas": 8,
+     "km": 20,
+     "terreno": "floresta",
+     "rumo": "a nordeste"
+    },
+    {
+     "nome": "Rio do Rio",
+     "porte": "fortaleza",
+     "horas": 8,
+     "km": 20,
+     "terreno": "floresta",
+     "rumo": "ao sul"
+    },
+    {
+     "nome": "Campo baixa",
+     "porte": "cidade",
+     "horas": 8,
+     "km": 20,
+     "terreno": "floresta",
+     "rumo": "a noroeste"
+    }
+   ],
+   "lugares": [
+    {
+     "id": "masmorra|Chãs Quebradas|0",
+     "nome": "Ruínas de Gelo Fundo",
+     "tipo": "ruína",
+     "icone": "🏚",
+     "regiao": "Chãs Quebradas",
+     "bioma": "floresta",
+     "cidadeProxima": "Campo baixa",
+     "nivel": 11,
+     "salas": 12,
+     "rumor": "contam que o dono ainda está lá, esperando",
+     "x": 49.74,
+     "y": 49.25,
+     "ato": "fim",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "caçador de relíquias",
+        "nivel": 8,
+        "ameaca": "elite"
+       },
+       {
+        "nome": "pantera das sombras",
+        "nivel": 5,
+        "ameaca": "competente"
+       }
+      ],
+      "perigo": "alto",
+      "perigoRotulo": "perigo alto",
+      "horas": 8,
+      "km": 20,
+      "modo": "estrada",
+      "rumo": "ao norte",
+      "vizinhos": [
+       {
+        "id": "Campo baixa",
+        "nome": "Campo baixa",
+        "horas": 3.48,
+        "rumo": "ao sul"
+       },
+       {
+        "id": "masmorra|Chãs Altos|0",
+        "nome": "Santuário Cego de Pedra Torta",
+        "horas": 8,
+        "rumo": "a sudeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Chãs Altos|0",
+     "nome": "Santuário Cego de Pedra Torta",
+     "tipo": "templo",
+     "icone": "🛕",
+     "regiao": "Chãs Altos",
+     "bioma": "deserto",
+     "cidadeProxima": "Vau de Pedra",
+     "nivel": 5,
+     "salas": 9,
+     "rumor": "um pastor jura ter visto luz lá dentro",
+     "x": 50.3,
+     "y": 49.75,
+     "ato": "meio",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "lobo cinzento",
+        "nivel": 3,
+        "ameaca": "comum"
+       },
+       {
+        "nome": "javali do ermo",
+        "nivel": 3,
+        "ameaca": "comum"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 4,
+      "km": 10,
+      "modo": "estrada",
+      "rumo": "a nordeste",
+      "vizinhos": [
+       {
+        "id": "Vau de Pedra",
+        "nome": "Vau de Pedra",
+        "horas": 1.05,
+        "rumo": "a sudoeste"
+       },
+       {
+        "id": "masmorra|Chãs Quebradas|0",
+        "nome": "Ruínas de Gelo Fundo",
+        "horas": 8,
+        "rumo": "a noroeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Chãs Quebradas|1",
+     "nome": "Ossuário Cinzas",
+     "tipo": "cripta",
+     "icone": "⚰",
+     "regiao": "Chãs Quebradas",
+     "bioma": "floresta",
+     "cidadeProxima": "Vau de Pedra",
+     "nivel": 3,
+     "salas": 9,
+     "rumor": "as pessoas da região não falam o nome em voz alta",
+     "x": 50.53,
+     "y": 50.36,
+     "ato": "meio",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "rato de ruína",
+        "nivel": 1,
+        "ameaca": "fraco"
+       },
+       {
+        "nome": "corvo faminto",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "baixo",
+      "perigoRotulo": "perigo baixo",
+      "horas": 8,
+      "km": 16,
+      "modo": "estrada",
+      "rumo": "a sudeste",
+      "vizinhos": [
+       {
+        "id": "Vau de Pedra",
+        "nome": "Vau de Pedra",
+        "horas": 4,
+        "rumo": "a noroeste"
+       },
+       {
+        "id": "masmorra|Chãs Altos|0",
+        "nome": "Santuário Cego de Pedra Torta",
+        "horas": 8,
+        "rumo": "ao norte"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Chãs Altos|1",
+     "nome": "Poço de Sal",
+     "tipo": "mina",
+     "icone": "⛏",
+     "regiao": "Chãs Altos",
+     "bioma": "deserto",
+     "cidadeProxima": "Rio do Rio",
+     "nivel": 4,
+     "salas": 9,
+     "rumor": "um mercador vende mapas duvidosos do interior",
+     "x": 49.96,
+     "y": 50.49,
+     "ato": "meio",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "lobo cinzento",
+        "nivel": 3,
+        "ameaca": "comum"
+       },
+       {
+        "nome": "javali do ermo",
+        "nivel": 3,
+        "ameaca": "comum"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 4,
+      "km": 12,
+      "modo": "estrada",
+      "rumo": "ao sul",
+      "vizinhos": [
+       {
+        "id": "Rio do Rio",
+        "nome": "Rio do Rio",
+        "horas": 1.45,
+        "rumo": "a oeste"
+       },
+       {
+        "id": "masmorra|Chãs Quebradas|2",
+        "nome": "Veio Gelo Fundo",
+        "horas": 4,
+        "rumo": "a noroeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Chãs Quebradas|2",
+     "nome": "Veio Gelo Fundo",
+     "tipo": "mina",
+     "icone": "⛏",
+     "regiao": "Chãs Quebradas",
+     "bioma": "floresta",
+     "cidadeProxima": "Rio do Rio",
+     "nivel": 1,
+     "salas": 5,
+     "rumor": "um pastor jura ter visto luz lá dentro",
+     "x": 49.55,
+     "y": 50.18,
+     "ato": "paralelo",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "rato de ruína",
+        "nivel": 1,
+        "ameaca": "fraco"
+       },
+       {
+        "nome": "corvo faminto",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "baixo",
+      "perigoRotulo": "perigo baixo",
+      "horas": 4,
+      "km": 12,
+      "modo": "estrada",
+      "rumo": "a oeste",
+      "vizinhos": [
+       {
+        "id": "masmorra|Chãs Altos|1",
+        "nome": "Poço de Sal",
+        "horas": 4,
+        "rumo": "a sudeste"
+       },
+       {
+        "id": "Rio do Rio",
+        "nome": "Rio do Rio",
+        "horas": 4,
+        "rumo": "a sudeste"
+       }
+      ]
+     }
+    }
+   ],
+   "horizonte": [
+    {
+     "nome": "Colinas Quebradas",
+     "tipo": "regiao",
+     "boato": "contam que a estrada para lá está fechada desde o inverno"
+    },
+    {
+     "nome": "Chãs do Vento",
+     "tipo": "regiao",
+     "boato": "contam que a estrada para lá está fechada desde o inverno"
+    },
+    {
+     "nome": "Vales Verdes",
+     "tipo": "regiao",
+     "boato": "contam que a estrada para lá está fechada desde o inverno"
+    },
+    {
+     "nome": "Colinas Verdes",
+     "tipo": "regiao",
+     "boato": "contam que a estrada para lá está fechada desde o inverno"
+    },
+    {
+     "nome": "Pedra Esquecido",
+     "tipo": "cidade",
+     "boato": "é de lá que vêm os cobradores"
+    },
+    {
+     "nome": "Campo Esquecido",
+     "tipo": "cidade",
+     "boato": "quem tem dinheiro para fugir foge para lá"
+    }
+   ],
+   "quadro": {
+    "x0": 49.05,
+    "y0": 48.75,
+    "x1": 51.03,
+    "y1": 50.99
+   }
+  }
+ },
+ "espinha": {
+  "estrutura": "jornada",
+  "semente": "Prova da Mesa IX|Fantasia medieval",
+  "fio": {
+   "antagonista": "Gigante a Damada Fenda",
+   "titulo": "a Damada Fenda",
+   "especie": "Gigante",
+   "motivo": "cumpre uma ordem de quem já morreu",
+   "antecedente": "ladrao",
+   "inicio": 1,
+   "assinatura": "três riscos de carvão"
+  },
+  "atos": [
+   {
+    "ato": 0,
+    "marcos": [
+     {
+      "id": "espinha|0|0",
+      "feitio": "descobrir",
+      "titulo": "O que Ferraria do Leste esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Ferraria do Leste",
+      "cidade": "Buraco Norte",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "Ferraria do Leste",
+       "chave": "Buraco Norte|forja"
+      },
+      "feito": true,
+      "batida": {
+       "cena": "Ferraria do Leste, em Buraco Norte, à guarda de Tomas",
+       "emJogo": "o que aqui se esconde é a prova de a dívida que a guilda dos dedos cobra ao herói que {sombra} quer apagada",
+       "pergunta": "quem mais sabe o que aqui se guarda — e está a ver?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "um livro-caixa com contas que não fecham",
+       "diz": "há meses que alguém paga a {sombra} por este lugar, e os pagamentos levam a {leva}",
+       "acha": "Intelecto",
+       "dc": 15,
+       "escondido": true
+      },
+      "dia": 1
+     },
+     {
+      "id": "espinha|0|1",
+      "feitio": "procurar",
+      "titulo": "Encontrar Brina Pedra",
+      "quem": "Brina Pedra",
+      "alvo": "",
+      "item": "",
+      "onde": "Ferraria do Leste",
+      "cidade": "Buraco Norte",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Brina Pedra"
+      },
+      "feito": true,
+      "batida": {
+       "cena": "Brina Pedra, aprendiz, em Ferraria do Leste, em Buraco Norte",
+       "emJogo": "Brina Pedra sabe uma coisa sobre o preço que a guilda pôs na cabeça do herói; se {sombra} chegar primeiro, essa boca fecha-se",
+       "pergunta": "o que Brina Pedra pede em troca — e o herói pode pagá-lo?",
+       "fecho": false
+      },
+      "dia": 1
+     },
+     {
+      "id": "espinha|0|2",
+      "feitio": "descobrir",
+      "titulo": "O que Mercado das Sombras esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Mercado das Sombras",
+      "cidade": "Buraco Norte",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "Mercado das Sombras",
+       "chave": "Buraco Norte|mercado"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Mercado das Sombras, em Buraco Norte, à guarda de Dara",
+       "emJogo": "aqui está a ponta de o preço que a guilda pôs na cabeça do herói, e quem a guardou não a quer achada",
+       "pergunta": "depois de saber, o herói ainda pode fingir que não sabe?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "um cofre pequeno atrás de um quadro",
+       "diz": "um contrato com o sinal de {sombra}, que paga o silêncio de quem manda aqui; a próxima entrega aponta para {leva}",
+       "acha": "Percepção",
+       "dc": 16,
+       "escondido": true
+      }
+     },
+     {
+      "id": "espinha|0|3",
+      "feitio": "procurar",
+      "titulo": "Encontrar Dain",
+      "quem": "Dain",
+      "alvo": "",
+      "item": "",
+      "onde": "Casa Quente",
+      "cidade": "Buraco Norte",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Dain"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Dain, em Casa Quente, em Buraco Norte",
+       "emJogo": "Dain acredita numa profecia que ninguém leva a sério — e sabe mais do que diz sobre o segredo que a guilda quer comprar ao herói",
+       "pergunta": "o herói tira a verdade a Dain sem pôr essa pessoa em perigo?",
+       "fecho": true
+      },
+      "reviravolta": "a guilda dos dedos já vendeu o herói a {sombra}: tudo o que ele descobre chega lá antes dele, e o próximo recado da guilda aponta para {leva}",
+      "relogio": {
+       "passo": 0,
+       "gente": "Dain",
+       "cidade": "Buraco Norte"
+      }
+     }
+    ]
+   },
+   {
+    "ato": 1,
+    "marcos": [
+     {
+      "id": "espinha|1|0",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com Troll o Mão de Cinza",
+      "quem": "",
+      "alvo": "Troll o Mão de Cinza",
+      "item": "",
+      "onde": "Campo baixa",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": false,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "Troll o Mão de Cinza",
+       "quantos": 1
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Troll o Mão de Cinza, em Campo baixa",
+       "emJogo": "Troll o Mão de Cinza guarda o caminho de a dívida que a guilda dos dedos cobra ao herói, e ninguém voltou para o contar",
+       "pergunta": "o herói passa por Troll o Mão de Cinza sem deixar lá ninguém?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|1|d",
+      "feitio": "descer",
+      "titulo": "Chegar ao fundo",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Santuário Cego de Pedra Torta",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "concluir_masmorra",
+       "alvo": "Santuário Cego de Pedra Torta"
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|1|1",
+      "feitio": "descobrir",
+      "titulo": "O que O Cão Prateado esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "O Cão Prateado",
+      "cidade": "Rio do Rio",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "O Cão Prateado",
+       "chave": "Rio do Rio|taverna"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "O Cão Prateado, em Rio do Rio, à guarda de Kira do Vale",
+       "emJogo": "o que aqui se guarda prova uma coisa sobre o preço que a guilda pôs na cabeça do herói; deixá-lo é deixá-lo a {sombra}",
+       "pergunta": "o que aqui se esconde vale ser visto a procurá-lo?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "uma carta lacrada que ninguém entregou",
+       "diz": "a carta avisa que {sombra} já comprou meia cidade por dentro; quem a escreveu mandava procurar {leva}",
+       "acha": "Intelecto",
+       "dc": 14,
+       "escondido": false
+      }
+     },
+     {
+      "id": "espinha|1|2",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com corvo faminto",
+      "quem": "",
+      "alvo": "corvo faminto",
+      "item": "",
+      "onde": "Rio do Rio",
+      "cidade": "Rio do Rio",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": false,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "corvo faminto",
+       "quantos": 1
+      },
+      "feito": false,
+      "batida": {
+       "cena": "corvo faminto, em Rio do Rio",
+       "emJogo": "corvo faminto está entre o herói e o preço que a guilda pôs na cabeça do herói",
+       "pergunta": "quanto sangue custa corvo faminto — e de quem?",
+       "fecho": true
+      },
+      "relogio": {
+       "passo": 1,
+       "gente": "",
+       "cidade": "Rio do Rio"
+      }
+     }
+    ]
+   },
+   {
+    "ato": 2,
+    "marcos": [
+     {
+      "id": "espinha|2|0",
+      "feitio": "procurar",
+      "titulo": "Encontrar Kira do Vale",
+      "quem": "Kira do Vale",
+      "alvo": "",
+      "item": "",
+      "onde": "O Cão Prateado",
+      "cidade": "Rio do Rio",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Kira do Vale"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Kira do Vale, em O Cão Prateado, em Rio do Rio",
+       "emJogo": "Kira do Vale tem um preço para falar de o segredo que a guilda quer comprar ao herói, e {sombra} já ofereceu mais",
+       "pergunta": "Kira do Vale confia no herói antes de confiar no medo?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|2|1",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com rato de ruína",
+      "quem": "",
+      "alvo": "rato de ruína",
+      "item": "",
+      "onde": "Rio do Rio",
+      "cidade": "Rio do Rio",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": false,
+      "quantos": 2,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "rato de ruína",
+       "quantos": 2
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|2|2",
+      "feitio": "procurar",
+      "titulo": "Encontrar Dain Cinzento",
+      "quem": "Dain Cinzento",
+      "alvo": "",
+      "item": "",
+      "onde": "Mercado das Sombras",
+      "cidade": "Rio do Rio",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Dain Cinzento"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Dain Cinzento, em Mercado das Sombras, em Rio do Rio",
+       "emJogo": "Dain Cinzento promete todo ano que vai embora na primavera — e sabe mais do que diz sobre a dívida que a guilda dos dedos cobra ao herói",
+       "pergunta": "o que Dain Cinzento pede em troca — e o herói pode pagá-lo?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|2|3",
+      "feitio": "descobrir",
+      "titulo": "O que Poço dos Esquecidos esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Poço dos Esquecidos",
+      "cidade": "Rio do Rio",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "Poço dos Esquecidos",
+       "chave": "Rio do Rio|cadeia"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Poço dos Esquecidos, em Rio do Rio, à guarda de Sari",
+       "emJogo": "alguém escondeu aqui a verdade sobre o preço que a guilda pôs na cabeça do herói, e há de voltar para a buscar",
+       "pergunta": "depois de saber, o herói ainda pode fingir que não sabe?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "uma carta lacrada que ninguém entregou",
+       "diz": "a carta avisa que {sombra} já comprou meia cidade por dentro; quem a escreveu mandava procurar {leva}",
+       "acha": "Intelecto",
+       "dc": 14,
+       "escondido": false
+      }
+     },
+     {
+      "id": "espinha|2|4",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com Golem de Pedra o Rei sem Nome",
+      "quem": "",
+      "alvo": "Golem de Pedra o Rei sem Nome",
+      "item": "",
+      "onde": "Buraco Norte",
+      "cidade": "Buraco Norte",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": false,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "Golem de Pedra o Rei sem Nome",
+       "quantos": 1
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Golem de Pedra o Rei sem Nome, em Buraco Norte",
+       "emJogo": "Golem de Pedra o Rei sem Nome guarda o caminho de o segredo que a guilda quer comprar ao herói, e ninguém voltou para o contar",
+       "pergunta": "o herói passa por Golem de Pedra o Rei sem Nome sem deixar lá ninguém?",
+       "fecho": true
+      },
+      "relogio": {
+       "passo": 2,
+       "gente": "Dain Cinzento",
+       "cidade": "Buraco Norte"
+      }
+     }
+    ]
+   },
+   {
+    "ato": 3,
+    "marcos": [
+     {
+      "id": "espinha|3|0",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com Calla",
+      "quem": "",
+      "alvo": "Calla",
+      "item": "",
+      "onde": "Vau de Pedra",
+      "cidade": "Vau de Pedra",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": false,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "Calla",
+       "quantos": 1
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Calla, em Vau de Pedra",
+       "emJogo": "cair diante de Calla é perder o segredo que a guilda quer comprar ao herói de vez",
+       "pergunta": "quanto sangue custa Calla — e de quem?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|3|1",
+      "feitio": "descobrir",
+      "titulo": "O que Salão dos Mercadores esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Salão dos Mercadores",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "Salão dos Mercadores",
+       "chave": "Campo baixa|guilda"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Salão dos Mercadores, em Campo baixa, à guarda de Ora",
+       "emJogo": "o que aqui se esconde é a prova de a dívida que a guilda dos dedos cobra ao herói que {sombra} quer apagada",
+       "pergunta": "o que aqui se esconde vale ser visto a procurá-lo?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "uma passagem murada por dentro",
+       "diz": "um quarto murado usado ontem: velas, um mapa, e marcado a carvão como próximo sítio o caminho para {leva}",
+       "acha": "Percepção",
+       "dc": 17,
+       "escondido": false
+      }
+     },
+     {
+      "id": "espinha|3|2",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com javali do ermo",
+      "quem": "",
+      "alvo": "javali do ermo",
+      "item": "",
+      "onde": "Campo baixa",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": false,
+      "quantos": 3,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "javali do ermo",
+       "quantos": 3
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|3|d",
+      "feitio": "descer",
+      "titulo": "Chegar ao fundo",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Poço de Sal",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "concluir_masmorra",
+       "alvo": "Poço de Sal"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "o fundo de Poço de Sal",
+       "emJogo": "o fundo de Poço de Sal guarda a prova de a dívida que a guilda dos dedos cobra ao herói, e {sombra} sabe-o",
+       "pergunta": "o que o fundo cobra para devolver o herói?",
+       "fecho": true
+      },
+      "relogio": {
+       "passo": 3,
+       "gente": "Fira Cinzento",
+       "cidade": "Campo baixa"
+      }
+     },
+     {
+      "id": "espinha|3|3",
+      "feitio": "procurar",
+      "titulo": "Encontrar Fira Cinzento",
+      "quem": "Fira Cinzento",
+      "alvo": "",
+      "item": "",
+      "onde": "Praça dos Trilhos",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Fira Cinzento"
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|3|4",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com lobo cinzento",
+      "quem": "",
+      "alvo": "lobo cinzento",
+      "item": "",
+      "onde": "Campo baixa",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": false,
+      "quantos": 2,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "lobo cinzento",
+       "quantos": 2
+      },
+      "feito": false
+     }
+    ]
+   },
+   {
+    "ato": 4,
+    "marcos": [
+     {
+      "id": "espinha|4|0",
+      "feitio": "procurar",
+      "titulo": "Encontrar Dara Trançado",
+      "quem": "Dara Trançado",
+      "alvo": "",
+      "item": "",
+      "onde": "A Taverna da Ponte",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Dara Trançado"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Dara Trançado, em A Taverna da Ponte, em Campo baixa",
+       "emJogo": "o que Dara Trançado cala custa o preço que a guilda pôs na cabeça do herói; o que diz pode custar-lhe a pele",
+       "pergunta": "Dara Trançado está do lado do herói, ou do lado de quem paga mais?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|4|1",
+      "feitio": "descobrir",
+      "titulo": "O que Capela da Lasca esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Capela da Lasca",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "Capela da Lasca",
+       "chave": "Campo baixa|templo"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Capela da Lasca, em Campo baixa, à guarda de Dain Cinzento",
+       "emJogo": "alguém escondeu aqui a verdade sobre o segredo que a guilda quer comprar ao herói, e há de voltar para a buscar",
+       "pergunta": "o herói leva a prova, ou deixa-a onde está e finge que não viu?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "uma passagem murada por dentro",
+       "diz": "um quarto murado usado ontem: velas, um mapa, e marcado a carvão como próximo sítio o caminho para {leva}",
+       "acha": "Percepção",
+       "dc": 17,
+       "escondido": false
+      }
+     },
+     {
+      "id": "espinha|4|2",
+      "feitio": "procurar",
+      "titulo": "Encontrar Quill Cinzento",
+      "quem": "Quill Cinzento",
+      "alvo": "",
+      "item": "",
+      "onde": "A Taverna da Ponte",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Quill Cinzento"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Quill Cinzento, músico de canto, em A Taverna da Ponte, em Campo baixa",
+       "emJogo": "Quill Cinzento tem um preço para falar de a dívida que a guilda dos dedos cobra ao herói, e {sombra} já ofereceu mais",
+       "pergunta": "o que Quill Cinzento pede em troca — e o herói pode pagá-lo?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|4|3",
+      "feitio": "descobrir",
+      "titulo": "O que Banhos do Rio esconde",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Banhos do Rio",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "revelar",
+       "alvo": "Banhos do Rio",
+       "chave": "Campo baixa|casa de banhos"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Banhos do Rio, em Campo baixa, à guarda de Elric",
+       "emJogo": "o que aqui se esconde é a prova de a dívida que a guilda dos dedos cobra ao herói que {sombra} quer apagada",
+       "pergunta": "quem mais sabe o que aqui se guarda — e está a ver?",
+       "fecho": false
+      },
+      "segredo": {
+       "coisa": "um livro-caixa com contas que não fecham",
+       "diz": "há meses que alguém paga a {sombra} por este lugar, e os pagamentos levam a {leva}",
+       "acha": "Intelecto",
+       "dc": 15,
+       "escondido": false
+      }
+     },
+     {
+      "id": "espinha|4|4",
+      "feitio": "procurar",
+      "titulo": "Encontrar Ora",
+      "quem": "Ora",
+      "alvo": "",
+      "item": "",
+      "onde": "Salão dos Mercadores",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Ora"
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|4|t0",
+      "feitio": "procurar",
+      "titulo": "Encontrar Corvin Carvoeiro",
+      "quem": "Corvin Carvoeiro",
+      "alvo": "",
+      "item": "",
+      "onde": "O Machado e a Rosa",
+      "cidade": "Vau de Pedra",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Corvin Carvoeiro"
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|4|v0",
+      "feitio": "descer",
+      "titulo": "Chegar ao fundo",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Veio Gelo Fundo",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "concluir_masmorra",
+       "alvo": "Veio Gelo Fundo"
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|4|d",
+      "feitio": "descer",
+      "titulo": "Chegar ao fundo",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Ossuário Cinzas",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "concluir_masmorra",
+       "alvo": "Ossuário Cinzas"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "o fundo de Ossuário Cinzas",
+       "emJogo": "lá dentro ficou o último que foi atrás de o preço que a guilda pôs na cabeça do herói",
+       "pergunta": "o herói sobe com o que foi buscar, e inteiro?",
+       "fecho": true
+      },
+      "relogio": {
+       "passo": 4,
+       "gente": "Quill Cinzento",
+       "cidade": "Vau de Pedra"
+      }
+     }
+    ]
+   },
+   {
+    "ato": 5,
+    "marcos": [
+     {
+      "id": "espinha|5|0",
+      "feitio": "procurar",
+      "titulo": "Encontrar Calla Espinheiro",
+      "quem": "Calla Espinheiro",
+      "alvo": "",
+      "item": "",
+      "onde": "A Taverna da Ponte",
+      "cidade": "Campo baixa",
+      "regiao": "Chãs Altos",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "falar_com",
+       "alvo": "Calla Espinheiro"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "Calla Espinheiro, serviçal, em A Taverna da Ponte, em Campo baixa",
+       "emJogo": "Calla Espinheiro sabe uma coisa sobre a dívida que a guilda dos dedos cobra ao herói; se {sombra} chegar primeiro, essa boca fecha-se",
+       "pergunta": "Calla Espinheiro confia no herói antes de confiar no medo?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|5|g0",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com caçador de relíquias",
+      "quem": "",
+      "alvo": "caçador de relíquias",
+      "item": "",
+      "onde": "Ruínas de Gelo Fundo",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "caçador de relíquias",
+       "quantos": 1
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|5|g1",
+      "feitio": "enfrentar",
+      "titulo": "Acabar com pantera das sombras",
+      "quem": "",
+      "alvo": "pantera das sombras",
+      "item": "",
+      "onde": "Ruínas de Gelo Fundo",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "pantera das sombras",
+       "quantos": 1
+      },
+      "feito": false
+     },
+     {
+      "id": "espinha|5|d",
+      "feitio": "descer",
+      "titulo": "Chegar ao fundo",
+      "quem": "",
+      "alvo": "",
+      "item": "",
+      "onde": "Ruínas de Gelo Fundo",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "concluir_masmorra",
+       "alvo": "Ruínas de Gelo Fundo"
+      },
+      "feito": false,
+      "batida": {
+       "cena": "o fundo de Ruínas de Gelo Fundo",
+       "emJogo": "o fundo de Ruínas de Gelo Fundo guarda a prova de a dívida que a guilda dos dedos cobra ao herói, e {sombra} sabe-o",
+       "pergunta": "o que o herói deixa lá em baixo para conseguir voltar?",
+       "fecho": false
+      }
+     },
+     {
+      "id": "espinha|5|z",
+      "feitio": "confronto",
+      "titulo": "Gigante a Damada Fenda",
+      "quem": "",
+      "alvo": "Gigante a Damada Fenda",
+      "item": "",
+      "onde": "Ruínas de Gelo Fundo",
+      "regiao": "Chãs Quebradas",
+      "ehLugar": true,
+      "quantos": 1,
+      "condicao": {
+       "tipo": "derrotar",
+       "alvo": "Gigante a Damada Fenda",
+       "quantos": 1
+      },
+      "feito": false,
+      "batida": {
+       "cena": "{sombra}, em Ruínas de Gelo Fundo",
+       "emJogo": "{sombra} tem nas mãos a dívida que a guilda dos dedos cobra ao herói — e sabe o nome do herói",
+       "pergunta": "quando {sombra} disser o que quer, o herói ainda o quer morto?",
+       "fecho": true
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "guildas": [
+  {
+   "id": "guilda|saber",
+   "nome": "A Casa Cambaleante",
+   "oficio": "saber",
+   "sede": "Buraco Norte",
+   "lema": "Toda dívida tem folha",
+   "mestre": "Rorik Trançado",
+   "poder": 62,
+   "cofre": 2140,
+   "dizimo": 5,
+   "mensalidade": 7,
+   "presencaDias": 21,
+   "leis": [
+    "mensalidade",
+    "presenca",
+    "exclusividade"
+   ],
+   "membros": [
+    {
+     "nome": "Dain Moinho",
+     "posto": 3,
+     "papel": "que ninguém encara",
+     "fora": false
+    },
+    {
+     "nome": "Alba dos Rios",
+     "posto": 1,
+     "papel": "que todos devem favor",
+     "fora": false
+    },
+    {
+     "nome": "Petyr",
+     "posto": 0,
+     "papel": "que ninguém encara",
+     "fora": false
+    },
+    {
+     "nome": "Mara Moinho",
+     "posto": 0,
+     "papel": "que todos devem favor",
+     "fora": false
+    },
+    {
+     "nome": "Nolan do Vale",
+     "posto": 2,
+     "papel": "que todos devem favor",
+     "fora": false
+    },
+    {
+     "nome": "Oren",
+     "posto": 1,
+     "papel": "recém-chegado",
+     "fora": false
+    },
+    {
+     "nome": "Joran",
+     "posto": 2,
+     "papel": "que fala demais",
+     "fora": false
+    },
+    {
+     "nome": "Garran Ferreiro",
+     "posto": 1,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Brina Carvoeiro",
+     "posto": 0,
+     "papel": "que todos devem favor",
+     "fora": false
+    },
+    {
+     "nome": "Quill Carvoeiro",
+     "posto": 0,
+     "papel": "que todos devem favor",
+     "fora": false
+    }
+   ],
+   "membro": false,
+   "emProva": false,
+   "posto": 0,
+   "contribuicao": 0,
+   "faltas": 0,
+   "vistoEm": 0,
+   "pagouEm": 0,
+   "entrouEm": 0,
+   "doJogador": false,
+   "atrito": {},
+   "contados": {},
+   "guerraCom": ""
+  },
+  {
+   "id": "guilda|ordem",
+   "nome": "A Ordem do Arqueiro",
+   "oficio": "ordem",
+   "sede": "Buraco Norte",
+   "lema": "O voto antes do sangue",
+   "mestre": "Aldric",
+   "poder": 68,
+   "cofre": 1980,
+   "dizimo": 12,
+   "mensalidade": 0,
+   "presencaDias": 21,
+   "leis": [
+    "dizimo",
+    "presenca",
+    "sangue"
+   ],
+   "membros": [
+    {
+     "nome": "Jara",
+     "posto": 3,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Nissa Lobo",
+     "posto": 0,
+     "papel": "que fala demais",
+     "fora": false
+    },
+    {
+     "nome": "Bram do Poço",
+     "posto": 1,
+     "papel": "que já foi melhor",
+     "fora": false
+    },
+    {
+     "nome": "Talia",
+     "posto": 0,
+     "papel": "que todos devem favor",
+     "fora": false
+    },
+    {
+     "nome": "Nolan",
+     "posto": 2,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Lorin Sem-Terra",
+     "posto": 0,
+     "papel": "que ninguém encara",
+     "fora": false
+    },
+    {
+     "nome": "Dain Espinheiro",
+     "posto": 2,
+     "papel": "que já foi melhor",
+     "fora": false
+    },
+    {
+     "nome": "Hilda Ferreiro",
+     "posto": 1,
+     "papel": "recém-chegado",
+     "fora": false
+    },
+    {
+     "nome": "Fira",
+     "posto": 0,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Bram",
+     "posto": 1,
+     "papel": "que já foi melhor",
+     "fora": false
+    }
+   ],
+   "membro": false,
+   "emProva": false,
+   "posto": 0,
+   "contribuicao": 0,
+   "faltas": 0,
+   "vistoEm": 0,
+   "pagouEm": 0,
+   "entrouEm": 0,
+   "doJogador": false,
+   "atrito": {},
+   "contados": {},
+   "guerraCom": ""
+  },
+  {
+   "id": "guilda|rotas",
+   "nome": "A Companhia da Serpente",
+   "oficio": "rotas",
+   "sede": "Buraco Norte",
+   "lema": "Conta fechada, amizade inteira",
+   "mestre": "Kael da Fenda",
+   "poder": 71,
+   "cofre": 2712,
+   "dizimo": 15,
+   "mensalidade": 10,
+   "presencaDias": 23,
+   "leis": [
+    "dizimo",
+    "mensalidade",
+    "exclusividade"
+   ],
+   "membros": [
+    {
+     "nome": "Lena",
+     "posto": 3,
+     "papel": "recém-chegado",
+     "fora": false
+    },
+    {
+     "nome": "Tomas Espinheiro",
+     "posto": 1,
+     "papel": "recém-chegado",
+     "fora": false
+    },
+    {
+     "nome": "Oren Ferreiro",
+     "posto": 0,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Gwen",
+     "posto": 2,
+     "papel": "que já foi melhor",
+     "fora": false
+    },
+    {
+     "nome": "Alba",
+     "posto": 1,
+     "papel": "recém-chegado",
+     "fora": false
+    },
+    {
+     "nome": "Hilda",
+     "posto": 0,
+     "papel": "que ninguém encara",
+     "fora": false
+    },
+    {
+     "nome": "Tomas",
+     "posto": 2,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Nissa Carvoeiro",
+     "posto": 2,
+     "papel": "de poucas palavras",
+     "fora": false
+    },
+    {
+     "nome": "Rorik",
+     "posto": 2,
+     "papel": "que fala demais",
+     "fora": false
+    },
+    {
+     "nome": "Fenn Moinho",
+     "posto": 2,
+     "papel": "de poucas palavras",
+     "fora": false
+    }
+   ],
+   "membro": false,
+   "emProva": false,
+   "posto": 0,
+   "contribuicao": 0,
+   "faltas": 0,
+   "vistoEm": 0,
+   "pagouEm": 0,
+   "entrouEm": 0,
+   "doJogador": false,
+   "atrito": {},
+   "contados": {},
+   "guerraCom": ""
+  }
+ ],
+ "baseMundo": {
+  "revelados": [
+   "Buraco Norte|forja",
+   "Buraco Norte|taverna",
+   "Buraco Norte|gente|Halden Caldeira",
+   "Buraco Norte|gente|Tomas",
+   "Buraco Norte|gente|Brina",
+   "Buraco Norte|gente|Brina Pedra",
+   "Buraco Norte|mercado",
+   "Buraco Norte|gente|Dara",
+   "Rio do Rio|gente|Sari",
+   "Rio do Rio|taverna",
+   "Rio do Rio|mercado"
+  ],
+  "situacoes": {},
+  "propositos": {},
+  "mortos": [],
+  "saqueados": [],
+  "versao": 1
+ },
+ "elencoMem": {
+  "Sari": {
+   "feitos": [
+    "usa_o_nome",
+    "cobra_a_promessa",
+    "chama_outro",
+    "espera_por_mim"
+   ],
+   "gestos": [
+    "esquiva",
+    "aproxima"
+   ]
+  },
+  "Tomas": {
+   "feitos": [
+    "comenta_o_lugar",
+    "fala_mais_baixo",
+    "quer_o_que_quer",
+    "olha_o_grupo"
+   ],
+   "gestos": [
+    "oferece",
+    "testa"
+   ]
+  },
+  "Halden Caldeira": {
+   "feitos": [
+    "quer_o_que_quer",
+    "finge_nao_ouvir",
+    "pede_favor_pequeno",
+    "toca_a_vida"
+   ],
+   "gestos": [
+    "testa",
+    "cala"
+   ]
+  },
+  "Ilar": {
+   "feitos": [
+    "chama_outro",
+    "toca_a_vida",
+    "comenta_o_lugar",
+    "finge_nao_ouvir"
+   ],
+   "gestos": [
+    "aproxima",
+    "esquiva"
+   ]
+  }
+ },
+ "npcsAntes": {
+  "Sari": {
+   "conhecidoEm": 0,
+   "nome": "Sari",
+   "papel": "mestra de ofício, Monge",
+   "relacao": "aliado",
+   "genero": "mulher",
+   "local": "Buraco Norte",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "a mestra que ensinou ao herói o ofício; conhecem-se há 7 anos — ensinou-lhe quase tudo o que ele sabe, e o que o herói veio procurar é coisa que ela quer ver com os próprios olhos · antes de andar com o herói: carcereiro(a)",
+   "laco": {
+    "tipo": "aprendizado",
+    "forca": 2,
+    "desde": -2519,
+    "rompido": false,
+    "rompidoEm": 0
+   },
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Sari|carcereiro(a)"
+  },
+  "Tomas": {
+   "conhecidoEm": 1,
+   "nome": "Tomas",
+   "papel": "ferreiro da Ferraria do Leste",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "a Ferraria do Leste",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "ferreiro largo, barba cinzenta, forja seca",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Tomas|ferreiro da Ferraria do Leste"
+  },
+  "Halden Caldeira": {
+   "conhecidoEm": 1,
+   "nome": "Halden Caldeira",
+   "papel": "sacerdote(isa)",
+   "relacao": "desconhecido",
+   "genero": "",
+   "local": "Buraco Norte",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "orgulhoso; quer guarda o quarto de alguém como estava no último dia",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Halden Caldeira|sacerdote(isa)"
+  },
+  "Ilar": {
+   "conhecidoEm": 1,
+   "nome": "Ilar",
+   "papel": "dono da taverna",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "cidade",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "dono da taverna, cobra caro de forasteiros",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Ilar|dono da taverna"
+  }
+ },
+ "npcs": {
+  "Sari": {
+   "conhecidoEm": 0,
+   "nome": "Sari",
+   "papel": "mestra de ofício, Monge",
+   "relacao": "aliado",
+   "genero": "mulher",
+   "local": "Buraco Norte",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "a mestra que ensinou ao herói o ofício; conhecem-se há 7 anos — ensinou-lhe quase tudo o que ele sabe, e o que o herói veio procurar é coisa que ela quer ver com os próprios olhos · antes de andar com o herói: carcereiro(a)",
+   "laco": {
+    "tipo": "aprendizado",
+    "forca": 2,
+    "desde": -2519,
+    "rompido": false,
+    "rompidoEm": 0
+   },
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Sari|carcereiro(a)"
+  },
+  "Tomas": {
+   "conhecidoEm": 1,
+   "nome": "Tomas",
+   "papel": "ferreiro da Ferraria do Leste",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "a Ferraria do Leste",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "ferreiro largo, barba cinzenta, forja seca",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Tomas|ferreiro da Ferraria do Leste"
+  },
+  "Halden Caldeira": {
+   "conhecidoEm": 1,
+   "nome": "Halden Caldeira",
+   "papel": "sacerdote(isa)",
+   "relacao": "desconhecido",
+   "genero": "",
+   "local": "Buraco Norte",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "orgulhoso; quer guarda o quarto de alguém como estava no último dia",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Halden Caldeira|sacerdote(isa)"
+  },
+  "Ilar": {
+   "conhecidoEm": 1,
+   "nome": "Ilar",
+   "papel": "dono da taverna",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "cidade",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "dono da taverna, cobra caro de forasteiros",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Ilar|dono da taverna"
+  },
+  "Brina": {
+   "conhecidoEm": 1,
+   "nome": "Brina",
+   "papel": "serviçal",
+   "relacao": "desconhecido",
+   "genero": "",
+   "local": "Buraco Norte",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "sonhador; quer quer ver o mar uma vez, só uma",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Brina|serviçal"
+  },
+  "Brina Pedra": {
+   "conhecidoEm": 1,
+   "nome": "Brina Pedra",
+   "papel": "aprendiz",
+   "relacao": "desconhecido",
+   "genero": "",
+   "local": "Buraco Norte",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "acolhedor; quer espera um navio que talvez não venha",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Brina Pedra|aprendiz"
+  },
+  "Dara": {
+   "conhecidoEm": 1,
+   "nome": "Dara",
+   "papel": "mercador(a)",
+   "relacao": "neutro",
+   "genero": "mulher",
+   "local": "cidade",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "cambista, cobra taxa e quer fofoca",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Dara|mercador(a)",
+   "_papelConflito": {
+    "nome": "Dara",
+    "antes": "mercador(a)",
+    "agora": "cambista"
+   }
+  },
+  "Kira do Vale": {
+   "conhecidoEm": 1,
+   "nome": "Kira do Vale",
+   "papel": "",
+   "relacao": "neutro",
+   "genero": "",
+   "local": "cidade",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Kira do Vale|"
+  },
+  "Mulher do manto cinza": {
+   "conhecidoEm": 1,
+   "nome": "Mulher do manto cinza",
+   "papel": "vendeu o livro de contas a um comprador desconhecido",
+   "relacao": "neutro",
+   "genero": "mulher",
+   "local": "cidade",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "manto cinza, mãos inquietas, quer sair",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Mulher do manto cinza|vendeu o livro de contas a um comprador desconhecido"
+  },
+  "Homem da carroça": {
+   "conhecidoEm": 1,
+   "nome": "Homem da carroça",
+   "papel": "vendedor ambulante",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "estrada do oeste",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "carroça de frascos, anel de ferro",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Homem da carroça|vendedor ambulante"
+  },
+  "Tamanqueiro": {
+   "conhecidoEm": 2,
+   "nome": "Tamanqueiro",
+   "papel": "taverneiro do Machado e a Rosa",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "cidade",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "cobra por informação, sabe do velho",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Tamanqueiro|taverneiro do Machado e a Rosa"
+  }
+ },
+ "baseAntes": {
+  "revelados": [
+   "Buraco Norte|forja",
+   "Buraco Norte|taverna",
+   "Buraco Norte|gente|Halden Caldeira",
+   "Buraco Norte|gente|Tomas"
+  ],
+  "situacoes": {},
+  "propositos": {},
+  "mortos": [],
+  "saqueados": [],
+  "versao": 1
+ },
+ "personagem": {
+  "nome": "Rufo Tamanqueiro",
+  "antecedente": "Filho da Guilda dos Dedos",
+  "grupo": [
+   {
+    "nome": "Sari",
+    "conceito": "mestra de ofício",
+    "nivel": 1,
+    "xp": 0,
+    "vida": 12,
+    "vidaMax": 12,
+    "descricao": "a mestra que ensinou ao herói o ofício; conhecem-se há 7 anos — ensinou-lhe quase tudo o que ele sabe, e o que o herói veio procurar é coisa que ela quer ver com os próprios olhos",
+    "classe": "Monge",
+    "habilidades": [
+     {
+      "nome": "Rajada de Golpes",
+      "custo": 2,
+      "tipo": "ataque",
+      "descricao": "Vários ataques rápidos desarmados.",
+      "nivel": 1
+     },
+     {
+      "nome": "Defesa Fluida",
+      "custo": 2,
+      "tipo": "defesa",
+      "descricao": "Desvia do próximo ataque automaticamente.",
+      "nivel": 1
+     }
+    ],
+    "inventario": [],
+    "equipamento": [],
+    "equipados": {},
+    "semente": "npc|Sari|carcereiro(a)",
+    "vinculo": 25,
+    "marcos": [
+     25
+    ],
+    "subclasse": "",
+    "manaMax": 11,
+    "mana": 11
+   }
+  ]
+ },
+ "m12": {
+  "linha": "Brina Pedra (é fato: entra nesta resposta, dito por ela): PEDE ao herói: \"Faltam-me 60 moedas. Treze dias.\" (voz da Brina: trata toda a gente por \"criança\", até velhos)."
+ },
+ "turnos": [
+  {
+   "m": 2,
+   "turno": 1,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Olho em volta na praça. Quanto custa uma caneca de cerveja aqui? E quanto tempo leva a pé até a forja do Tomas?"
+  },
+  {
+   "m": 3,
+   "turno": 2,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pergunto à mulher do pão onde fica a estalagem mais barata e quanto custa uma cama para a noite."
+  },
+  {
+   "m": 4,
+   "turno": 3,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Quero comprar um pão dela."
+  },
+  {
+   "m": 5,
+   "turno": 4,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pago as duas moedas e pego o pão."
+  },
+  {
+   "m": 6,
+   "turno": 5,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Sigo pela rua principal até a forja do Tomas com Sari."
+  },
+  {
+   "m": 7,
+   "turno": 6,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Digo meu nome, Rufo, e pergunto a Tomas o que a Ferraria do Leste guarda que a guilda dos dedos quer apagar. E quanto ele cobra para afiar minha faca?"
+  },
+  {
+   "m": 8,
+   "turno": 7,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Aguento. Pode falar. Quem quer pôr fogo nisso, e o que é que está escondido aqui?"
+  },
+  {
+   "m": 9,
+   "turno": 8,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Respondo que devo um favor à guilda e vim saber o que eles querem apagar. Vou até o canto e levanto a tábua solta."
+  },
+  {
+   "m": 11,
+   "turno": 10,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pergunto a Tomas quem mexeu aqui antes de mim, e onde fica a casa da guilda dos dedos nesta cidade."
+  },
+  {
+   "m": 12,
+   "turno": 11,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Respondo que vai me custar o que eu ainda não sei. Pergunto onde encontro Brina Pedra, a aprendiz, e vou procurá-la com Sari."
+  },
+  {
+   "m": 13,
+   "turno": 12,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Vou ao Mercado das Sombras procurar Brina Pedra, e olho as barracas pelo caminho."
+  },
+  {
+   "m": 14,
+   "turno": 13,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Vou atrás da mulher dos figos e pergunto se ela é Brina Pedra, a aprendiz do Tomas."
+  },
+  {
+   "m": 16,
+   "turno": 14,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Pergunto a Brina quanto ela precisa de mim e para quê, e se conhece alguém da guilda dos dedos que leva recados nesta cidade."
+  },
+  {
+   "m": 17,
+   "turno": 15,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Conto sessenta escamas na mão de Brina e pago."
+  },
+  {
+   "m": 18,
+   "turno": 16,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Sigo até a fonte atrás da vendedora de peixe seco, e antes compro um peixe seco dela. Quanto é?"
+  },
+  {
+   "m": 19,
+   "turno": 17,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Pago duas moedas pelo peixe seco e pergunto a ela quem leva os recados da guilda dos dedos nesta cidade."
+  },
+  {
+   "m": 20,
+   "turno": 18,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Vou à banca dos cambistas falar com Dara. Peço que troque uma moeda de prata minha por cobres miúdos e quanto ela cobra pela troca."
+  },
+  {
+   "m": 21,
+   "turno": 19,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Pago a taxa das duas moedas. Depois pergunto a Dara quem, nesta cidade, entrega os recados da guilda dos dedos, e quem andou mexendo na forja do Tomas."
+  },
+  {
+   "m": 22,
+   "turno": 20,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Respondo que vim atrás do que ela carregava. E pergunto a Dara o que sabe do preço que a guilda pôs na minha cabeça."
+  },
+  {
+   "m": 23,
+   "turno": 21,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Digo a Dara que não é só um recado e agradeço. Saio do mercado e vou até o portão leste da cidade. Tento convencer o guarda do portão a me dizer quem saiu ontem com um embornal."
+  },
+  {
+   "m": 25,
+   "turno": 23,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Corro com Sari até a forja do Tomas para ajudar a apagar o incêndio."
+  },
+  {
+   "m": 26,
+   "turno": 24,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Pego um balde e corro para o depósito de madeira para impedir que o fogo pegue lá."
+  },
+  {
+   "m": 27,
+   "turno": 25,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Jogo meu balde na barrica de carvão em chamas e tento abafar o fogo com um saco molhado antes que se espalhe."
+  },
+  {
+   "m": 28,
+   "turno": 26,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pergunto a Tomas o que esse fogo abriu, e se alguém da guilda dos dedos esteve na forja hoje."
+  },
+  {
+   "m": 29,
+   "turno": 27,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pego uma tocha, acendo, e desço a escada do alçapão com Sari logo atrás de mim."
+  },
+  {
+   "m": 31,
+   "turno": 29,
+   "dia": 1,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Subo do porão. Digo a Tomas que vou ao Santuário Cego de Pedra Torta, a nordeste, procurar quem mandou queimar a forja. Partimos agora, Sari e eu."
+  },
+  {
+   "m": 32,
+   "turno": 30,
+   "dia": 1,
+   "cidade": "",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Mudo de ideia: o guarda disse que a mulher do embornal foi para Rio do Rio. Saímos da cidade e viajamos para Rio do Rio pela estrada do leste."
+  },
+  {
+   "m": 34,
+   "turno": 32,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Digo a Sari para andar mais depressa e seguimos viagem até Rio do Rio, de olho nas árvores."
+  },
+  {
+   "m": 35,
+   "turno": 33,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Sento no banco com ela. Pergunto se viu chegar uma mulher com um embornal, e quanto custa uma cama de estalagem aqui em Rio do Rio."
+  },
+  {
+   "m": 36,
+   "turno": 34,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Respondo a Sari: as duas coisas. Vamos ao Cão Prateado, e lá peço duas camas para a noite, uma para mim e outra para ela. Quanto é?"
+  },
+  {
+   "m": 37,
+   "turno": 35,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pago as cinco moedas, sem jantar. E pergunto ao taverneiro em que quarto está a mulher do manto cinza."
+  },
+  {
+   "m": 38,
+   "turno": 36,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Subo a escada com Sari e bato à porta do quarto da mulher do manto cinza."
+  },
+  {
+   "m": 39,
+   "turno": 37,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Digo pela porta: Sou Rufo, vim de Buraco Norte, da forja do Tomas. Só quero conversar sobre o livro de contas. Abra, por favor."
+  },
+  {
+   "m": 40,
+   "turno": 38,
+   "dia": 1,
+   "cidade": "Rio do Rio",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Entro com Sari e fecho a porta. Pergunto a ela, com calma, a quem entregou o livro de contas, e o que ela ganhou com isso."
+  },
+  {
+   "m": 41,
+   "turno": 39,
+   "dia": 1,
+   "cidade": "",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Deixo duas moedas sobre a cama dela, agradeço, e digo a Sari que voltamos para Buraco Norte agora, pela mesma estrada."
+  },
+  {
+   "m": 42,
+   "turno": 40,
+   "dia": 1,
+   "cidade": "",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Paro diante do mercador ambulante e olho os frascos. Quanto custa um frasco de cura? Compro um."
+  },
+  {
+   "m": 43,
+   "turno": 41,
+   "dia": 1,
+   "cidade": "",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pergunto quanto custa o anel com nome gravado por dentro, e também as ataduras de linho. Quero ver o nome dentro do anel."
+  },
+  {
+   "m": 44,
+   "turno": 42,
+   "dia": 1,
+   "cidade": "",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Compro as ataduras de linho e pago as cinco moedas que ele pediu."
+  },
+  {
+   "m": 45,
+   "turno": 43,
+   "dia": 2,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Pergunto às pessoas que passam o que houve em Vau de Pedra e sigo viagem com Sari para Buraco Norte."
+  },
+  {
+   "m": 47,
+   "turno": 45,
+   "dia": 2,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Cresci na guilda dos dedos. Procuro meu antigo mestre de recados, que devia estar aqui em Buraco Norte. Vou à taverna O Machado e a Rosa perguntar por ele ao taverneiro."
+  },
+  {
+   "m": 48,
+   "turno": 46,
+   "dia": 2,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari",
+    "Brina Pedra"
+   ],
+   "frase": "Pergunto ao taverneiro que nome o velho deixou para quem viesse perguntar, e qual era o nome dele."
+  },
+  {
+   "m": 49,
+   "turno": 47,
+   "dia": 2,
+   "cidade": "Buraco Norte",
+   "emCena": [
+    "Sari"
+   ],
+   "frase": "Agradeço e deixo uma moeda no balcão. Digo a Sari que vamos até Veio Gelo Fundo, a mina a oeste, ver a luz que o pastor jura ter visto. Partimos agora."
+  }
+ ],
+ "narrativas": {
+  "14": "Você alcança a mulher dos figos antes que ela dobre a próxima banca, mas ela não para. Anda rápido, como quem tem sempre um outro lugar para estar, e só desvia o rosto quando você a chama. 'Criança, este mercado não é escola de ninguém. E eu não sou aprendiz de ferreiro.' Ela baixa a voz, sem desacelerar: 'Mas conheço quem furta figo e conhece o Tomas. Brina Pedra está no beco atrás das bancas, contando moedas que não são dela.' Um vendedor de ânforas grita mais alto, e a mulher some atrás de uma cortina de contas sem se despedir. Sari toca o ombro uma vez e diz, olhando na direção do beco: 'Parece que hoje toda Brina desta cidade quer te falar alguma coisa.'",
+  "16": "Brina Pedra desvia o olhar para as moedas na bolsa, depois para você, como se tentasse decidir se vale a pena falar. 'Preciso de sessenta moedas, criança. Não é para mim, é para uma dívida que não é minha. E se você quer saber de recados da guilda, há uma mulher que vende peixe seco perto da fonte. Ela não é da guilda, mas conhece quem é. E cobra menos do que eu.' Ela faz uma pausa, mordendo o lábio, e acrescenta, baixo: 'Mas se for atrás dela, não diga que fui eu.'",
+  "17": "Você conta sessenta moedas, uma a uma, e as deixa na palma estendida de Brina Pedra. Ela não as conta de volta; apenas fecha os dedos devagar, como quem embrulha um segredo, e guarda a bolsa por dentro do avental. 'Então vá, criança. Vá atrás daquilo que já não te pertence.' Ela dá um passo para trás, engolida pela penumbra do beco, e some entre os cestos sem olhar para você. Sari a segue com os olhos, imóvel, e depois vira o rosto para o outro lado, como se não tivesse ouvido nada. O cheiro de limo e peixe velho sobe do chão do mercado.",
+  "36": "Sari ajeita o cajado e acompanha você até o Cão Prateado. O salão é baixo e escuro, com três mesas ocupadas e um menino que varre a porta. O taverneiro, um homem magro de olhos que não param, seca um copo com um pano sujo e olha para vocês dois. 'Duas camas? Para a noite? Dez moedas, com jantar. Cinco sem. E se um de vocês roncar, é no estábulo.' Ele coloca os copos na prateleira e se vira, sem pressa. 'A mulher do manto cinza também quis cama ontem. Pagou três adiantadas e não desceu para jantar.' Sari descansa o cajado na parede e inclina a cabeça para você. 'Parece que ela ainda está na vila.'",
+  "47": "A neblina da rua fica para trás quando você empurra a porta do Machado e a Rosa. O salão está quente e cheio do cheiro de cerveja rala e sebo queimado. Um homem magro, de avental manchado, encara você de trás do balcão. 'Tá procurando alguém, Tamanqueiro? Aqui quem pergunta paga, e quem responde cobra o dobro.' Ele seca um caneco com um pano sujo e morde a ponta de um pão dormido. 'Mas se for o velho que carregava recados, ele não pisa aqui faz três noites. Dizem que foi pra Vau de Pedra antes da ponte cair. Dizem também que ele deixou um nome pra quem viesse perguntar.'"
+ }
+}

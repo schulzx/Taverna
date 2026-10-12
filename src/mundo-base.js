@@ -21,7 +21,7 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
-import { pessoaDiversa, nomeTaverna, nomePessoa } from "./nomes.js";
+import { pessoaDiversa, nomeTaverna, nomePessoa, oficioNoGenero } from "./nomes.js";
 /* v9.103: o léxico nomeia lugar e bicho. O TIPO e a AMEAÇA continuam
    sendo do código — o que vem daqui é só a palavra. */
 import { nomesDeLugar, chamadoDoLugar, criaturasDaAmeaca, titulosDo, garantirLexico } from "./lexico.js";
@@ -825,9 +825,24 @@ export function mencionadosNaCena(semente, mapa, nomeCidade, base, genero, narra
        que ainda identifica; um nome que fosse só o artigo, não. */
     return nu !== alvo && casa(nu);
   };
+  /* O NOME CURTO DENTRO DO NOME LONGO (9.ª sessão de prova, 12/10). Buraco
+     Norte tinha a Brina (serviçal) e a Brina Pedra (a voz do núcleo). O
+     Mestre escreveu "Brina Pedra encosta na parede", e esta porta acordou
+     as DUAS — "Brina" é palavra inteira dentro de "Brina Pedra" —: o
+     registo ganhou uma Brina serviçal que ninguém pôs em cena, e dali em
+     diante cada "Brina" da prosa tinha duas donas. O "Pedra" não é
+     partícula nem epíteto (`EPITETO`, npcs.js): é sobrenome solto, e o
+     mundo repete primeiros nomes. Entre a gente DESTA cidade cujo nome
+     inteiro é o começo do nome de outra, o curto não acorda quando o
+     longo já entrou em cena (revelado) ou entra nesta mesma prosa: é dele
+     que se fala, como o nome curto de quem anda no grupo (acima). */
+  const gente0 = q.gente || [];
+  const chaveG = (p) => semAcento(p.nome).trim();
+  const longosDe = (p) => gente0.filter((x) => x !== p && chaveG(x).startsWith(`${chaveG(p)} `));
+  const curtoDeOutro = (p) => longosDe(p).some((x) => foiRevelado(base, `${q.cidade.nome}|gente|${x.nome}`) || cita(x.nome));
   return {
     locais: (q.locais || []).filter((l) => !foiRevelado(base, l.id || `${q.cidade.nome}|local|${l.nome}`) && cita(l.nome)),
-    gente: (q.gente || []).filter((p) => !foiRevelado(base, `${q.cidade.nome}|gente|${p.nome}`) && !nomeCurtoDoGrupo(p.nome) && cita(p.nome)),
+    gente: gente0.filter((p) => !foiRevelado(base, `${q.cidade.nome}|gente|${p.nome}`) && !nomeCurtoDoGrupo(p.nome) && !curtoDeOutro(p) && cita(p.nome)),
   };
 }
 
@@ -861,7 +876,10 @@ export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = nul
   if (!q) return "";
   const marca = (id) => (foiRevelado(base, id) ? " ✓" : "");
   const locais = q.locais.map((l) => `${l.icone} ${l.nome} (${l.tipo})${marca(idDoLocal(q.cidade.nome, l))}`).join(" · ");
-  const gente = q.gente.map((p) => `${p.nome}${marca(idDaGente(q.cidade.nome, p))} — ${p.raca}, ${p.papel}, ${p.traco}, ${p.modo}; ${p.vontade}`).join(" | ");
+  /* 9.ª sessão (12/10): o ofício no género de quem o tem (`oficioNoGenero`)
+     — "Kira do Vale, taverneiro(a)" deixou o Narrador pôr "um homem magro"
+     ao balcão do Cão Prateado; "taverneira" é mais curto e não deixa */
+  const gente = q.gente.map((p) => `${p.nome}${marca(idDaGente(q.cidade.nome, p))} — ${p.raca}, ${oficioNoGenero(p.papel, p.genero_pessoa)}, ${p.traco}, ${p.modo}; ${p.vontade}`).join(" | ");
   const seg = q.segredos.map((s) => `${s.icone} em ${s.local}: ${s.o} (só com teste de ${s.acha}, dif. ${s.dc})`).join(" · ");
   const bichos = q.criaturas.map((c) => `${c.nome} (nv ${c.nivel}, ${c.comportamento})`).join(" · ");
   /* MM17 C1: o lugar da região leva o que a ficha sabe de fora — a ida da

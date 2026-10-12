@@ -384,6 +384,31 @@ export const LINHA_DO_CORACAO = {
      a mesma forma da QUEM É e da fogueira. */
 };
 
+/* ---------------- A PORTA DO ELO (9.ª sessão de prova, 12/10) ----------------
+   Oren Trançado, o elo, esteve na lista da gente da cidade em TODAS as
+   pautas da 9.ª até à viagem — e em nenhuma fala (0 de 48). Toda batida do
+   coração espera que a pessoa esteja em cena (`emCena`: citada nas duas
+   últimas falas do Mestre), e o elo só entraria em cena se o Mestre o
+   trouxesse por acaso: o arco dele nem chegou a abrir, a pista A veio
+   inventada e sem ele, e a revelação — o centro da régua — não pôde ser
+   tentada. O ato 1 andava, e o antecedente do herói não tinha rosto.
+   O elo não espera o acaso: é ELE quem vem ter com o herói. Com o herói na
+   cidade do elo (`ctx.cidade`, que o App passa vazio em viagem e na
+   masmorra), a partir do turno `turnoMin` da campanha, e de `volta` em
+   `volta` turnos sem linha dele, a batida devida do elo (o pedido, as
+   pistas, a revelação — enquanto a verdade não caiu) entra como se ele
+   estivesse em cena, e a linha di-lo a chegar (`chega`). Na estreia (o
+   pedido), a linha diz também QUEM ELE É para o herói (`quem`, com o
+   `eraDoHeroi`) — é a ponte que a lista da cidade não fazia ("acólito" ×
+   "mestre de recados"). Fora da luta, como toda batida que não é de luta. */
+export const PORTA_DO_ELO = {
+  turnoMin: 6,
+  volta: 6,
+  marca: "(é fato: entra nesta resposta",
+  chega: "(é fato: vem ter com o herói e entra nesta resposta",
+  quem: "({era}, do passado do herói; é fato: vem ter com o herói e entra nesta resposta",
+};
+
 /* as poucas frases de outras tabelas que dizem a palavra de bastidor
    (a reviravolta do caçador diz "a próxima pista") */
 export const SEM_BASTIDOR = [["a próxima pista leva a", "o próximo rasto leva a"]];
@@ -585,8 +610,20 @@ function linhaDe(tipo, inst, extra, ctx, { cortar = true } = {}) {
   return cortar ? caber(y) : y;
 }
 
-/* o pedido: a fala é obrigatória; o tique e o que traz entram se couberem */
-function linhaDoPedido(inst, pessoa, ctx) {
+/* a linha de quem chega pela porta do elo: a marca "entra nesta resposta"
+   passa a "vem ter com o herói" (e, com `era`, diz quem ele é) — só
+   se couber; senão fica a de sempre */
+function pelaPortaDoElo(linha, era = "") {
+  const x = String(linha || "");
+  if (!x.includes(PORTA_DO_ELO.marca)) return x;
+  const y = x.replace(PORTA_DO_ELO.marca, era ? encher(PORTA_DO_ELO.quem, { era }) : PORTA_DO_ELO.chega);
+  return y.length <= LINHA_DO_CORACAO.max ? y : x;
+}
+
+/* o pedido: a fala é obrigatória; o tique e o que traz entram se couberem.
+   `porta` (9.ª sessão): o elo que vem ter com o herói — quem ele é e a
+   fala vêm antes do tique e do que traz */
+function linhaDoPedido(inst, pessoa, ctx, { porta = false } = {}) {
   const o = obj(ctx);
   const f = obj(obj(pessoa).ficha);
   const sombra = sombraDoAto(o.espinha, o.ato);
@@ -604,6 +641,13 @@ function linhaDoPedido(inst, pessoa, ctx) {
     traz ? ench(LINHA_DO_CORACAO.pedidoTraz, { fala, carrega: traz }) : "",
     ench(LINHA_DO_CORACAO.pedido, { fala }),
   ].filter(Boolean).map((t) => comGenero(t, inst));
+  if (porta) {
+    const era = String(obj(pessoa).eraDoHeroi || "");
+    const comEra = era ? tentativas.map((t) => pelaPortaDoElo(t, era)).filter((t) => t.includes(era)) : [];
+    const chega = tentativas.map((t) => pelaPortaDoElo(t)).filter((t) => t.includes(PORTA_DO_ELO.chega));
+    const ok = [...comEra, ...chega].find((t) => t.length <= max);
+    if (ok) return ok;
+  }
   return tentativas.find((t) => t.length <= max) || caber(tentativas[tentativas.length - 1]);
 }
 
@@ -788,13 +832,23 @@ export function avancarCoracao(coracao, nucleo, ctx) {
   const jaCrise = Object.values(arcos).some((a) => a && a.crise === dia);
   const rev = reveladas(comPrazos, insts, o);
   const espacado = (nome, diaAntes) => { const u = ultimaDe(nome); return u != null && Number.isFinite(u) ? turno - u >= R.turnosEntreBatidas : dia > (diaAntes == null ? -1 : diaAntes); };
+  /* A PORTA DO ELO (PORTA_DO_ELO): o herói na cidade dele, a verdade por
+     cair, o turno mínimo e a volta desde a última linha dele */
+  const cidadeDoHeroi = norm(o.cidade);
+  const naPortaDoElo = (inst, p, a) => {
+    if (inst.papel !== "elo" || !cidadeDoHeroi || a.crise != null || o.luta) return false;
+    if (norm(obj(p).cidade || inst.vars.cidade) !== cidadeDoHeroi || turno < PORTA_DO_ELO.turnoMin) return false;
+    const u = ultimaDe(inst.nome);
+    return u == null || !Number.isFinite(u) || turno - u >= PORTA_DO_ELO.volta;
+  };
   for (const inst of insts) {
     const p = pessoaDe(inst.nome);
     const a = arcoDe(inst.nome);
     const vilao = inst.papel === "vilao";
     const presente = vilao ? (!!o.maoDoVilao || esta(inst.nome)) : esta(inst.nome);
     const eloMorto = inst.papel === "elo" && morto(inst.nome);
-    if (!presente && !eloMorto) continue;
+    const pelaPorta = !presente && !eloMorto && naPortaDoElo(inst, p, a);
+    if (!presente && !eloMorto && !pelaPorta) continue;
     let tipo = null;
     let porConfronto = false;
     /* quem repara chega antes: o elo confrontado com o que já se viu */
@@ -821,7 +875,7 @@ export function avancarCoracao(coracao, nucleo, ctx) {
     const pior = ehCrise && a.pedido != null && !a.resposta && dia - a.pedido >= R.esperaDoPedido;
     let linha = "";
     let novo = a;
-    if (tipo === "pedido") { linha = linhaDoPedido(inst, p, o); novo = { ...a, pedido: dia }; }
+    if (tipo === "pedido") { linha = linhaDoPedido(inst, p, o, { porta: pelaPorta }); novo = { ...a, pedido: dia }; }
     else if (tipo === "pistaA" || tipo === "pistaB") {
       const i = tipo === "pistaA" ? 0 : 1;
       const pista = obj(arr(obj(obj(p).ficha.esconde).pistas)[i]).o || "";
@@ -843,11 +897,12 @@ export function avancarCoracao(coracao, nucleo, ctx) {
       novo = { ...a, posta: dia };
     }
     if (!linha) continue;
+    if (pelaPorta && tipo !== "pedido") linha = pelaPortaDoElo(linha);
     arcos[inst.nome] = novo;
     out.coracao = { v: C0.v, arcos: { ...arcos } };
     out.linha = linha;
     out.quem = inst.nome;
-    out.batida = { nome: inst.nome, tipo, tom: tom.slice(), ...(pior ? { pior: true } : {}), ...(porConfronto ? { porConfronto: true } : {}), ...(tipo === "escolha" ? { lados: ladosParaTela(inst, o) } : {}), ...(["pistaA", "pistaB"].includes(tipo) ? { pista: tipo === "pistaA" ? 0 : 1 } : {}) };
+    out.batida = { nome: inst.nome, tipo, tom: tom.slice(), ...(pior ? { pior: true } : {}), ...(porConfronto ? { porConfronto: true } : {}), ...(pelaPorta ? { pelaPorta: true } : {}), ...(tipo === "escolha" ? { lados: ladosParaTela(inst, o) } : {}), ...(["pistaA", "pistaB"].includes(tipo) ? { pista: tipo === "pistaA" ? 0 : 1 } : {}) };
     break;
   }
   out.coracao = garantirCoracaoDoSave(out.coracao);

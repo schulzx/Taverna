@@ -61,6 +61,8 @@ import { FIO } from "./saga.js";
 import { ANTECEDENTES } from "./antecedentes.js";
 import { LIGACOES_AO_PASSADO } from "./companheiro-inicial.js";
 import { sexoDoNome } from "./nomes.js";
+/* 9.ª sessão (12/10): a gente da cidade, para a voz de quem divide o nome */
+import { oQueExisteAqui } from "./mundo-base.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -363,6 +365,36 @@ export const PISTAS_DO_ELO = {
   sem: ["sabe de onde o herói vem, sem que ninguém lho tenha dito", "a carta que trouxe o herói, a mesma letra, em duplicado"],
 };
 
+/* ---------------- O ELO PELAS PALAVRAS DO PASSADO (9.ª sessão de prova, 12/10) ----------------
+   A 9.ª provou-o pelo avesso (mm11-sessao-9.md, "A revelação: por que não
+   houve"): o elo era Oren Trançado, `eraDoHeroi` "o mestre de recados da
+   guilda", e o jogador — de Filho da Guilda — perguntou por ele QUATRO
+   vezes com as palavras que o próprio sistema escreveu ("quem leva os
+   recados da guilda", "procuro meu antigo mestre de recados"). Nada ligava
+   a frase à pessoa: a lista da cidade dizia "Oren Trançado, acólito", e o
+   Mestre inventou "o velho que foi para Vau de Pedra".
+   Cada linha diz como o jogador nomeia o elo SEM lhe saber o nome: uma
+   lista de alternativas, e cada alternativa é um conjunto de raízes (sem
+   acento, no começo da palavra) que TÊM DE ESTAR TODAS na frase. Raízes
+   largas sozinhas ("recado", "aprendiz") não bastam — "deixo um recado ao
+   Tomas" não procura ninguém; por isso "recados" pede "mestre", "guilda",
+   "leva" ou "entrega" ao lado. Quem lê é `papelProcurado` (procura.js). */
+export const PROCURA_DO_ELO = {
+  orfao: [["nome da minha familia"], ["meu parente"], ["minha parente"], ["do meu sangue"]],
+  soldado: [["camarada"], ["companhia", "guerra"], ["regimento"]],
+  nobre_caido: [["divida da casa"], ["divida da familia"], ["comprou a divida"], ["credor da familia"]],
+  erudito: [["copista"], ["texto proibido"]],
+  ladrao: [["mestre de recados"], ["mestra de recados"], ["recados", "guilda"], ["leva", "recados"], ["entrega", "recados"]],
+  acolito: [["irma de votos"], ["irmao de votos"], ["irma da ordem"], ["irmao da ordem"]],
+  pragado: [["fisico"], ["febre", "aldeia"]],
+  artista: [["ensinou a cancao"], ["ensinou", "cancao"], ["mestre de musica"], ["mestra de musica"]],
+  cacador: [["parceiro de caca"], ["parceira de caca"], ["antigo parceiro"], ["antiga parceira"]],
+  ferreiro: [["aprendiz", "forja"], ["aprendiz", "meu pai"]],
+  ex_cultista: [["irmao de culto"], ["irma de culto"], ["irmaos do culto"]],
+  naufrago: [["sobrevivente"], ["naufragio"]],
+  sem: [["quem me mandou"], ["quem me trouxe"], ["quem me pos no caminho"], ["quem escreveu a carta"]],
+};
+
 /* §1.5 — o companheiro por ligação: INCLINA a ficha para o que a ligação
    já diz, sem a fixar (as listas são tentadas primeiro; se a índole ou a
    unicidade as recusam, a tabela inteira fica). */
@@ -582,18 +614,34 @@ export function comGenero(linha, pessoa) {
    artigo antes do nome é a flexão mais curta que a língua tem (zero
    caracteres a mais que "voz de"), e é ele que dá à linha que leva a voz
    o género inequívoco que a prova viva pediu. Sem género conhecido (o
-   Golem), "voz de". */
+   Golem), "voz de".
+
+   O NOME INTEIRO, E "SÓ DELA" (9.ª sessão de prova, 12/10). A pauta do
+   M12 disse da Brina Pedra `(voz da Brina: trata toda a gente por
+   "criança", até velhos)`, e "criança" saiu em 14 das 48 respostas — da
+   Brina, de uma vendedora de figos, de uma de peixe, da Dara, de um
+   guarda, do Tomas. Duas coisas a soltavam do dono: (1) nada dizia que a
+   voz não era de mais ninguém — "trata toda a gente por…" lê-se como ordem
+   à mesa —, e (2) o primeiro nome não era dela só: a cidade tinha OUTRA
+   Brina, a serviçal, na lista da gente. Agora (1) o marcador diz a posse —
+   "(voz só da Brina: …)", três caracteres; medido nos 120 mundos da suíte,
+   o nome inteiro com ", só dela" custava a voz em 28% das QUEM É e 30% das
+   fogueiras (o teto delas é 130 e 220), e o "só" custa 3% e 5% —, e (2) o
+   nome é o primeiro, a não ser que outra pessoa do mundo à volta dela tenha
+   o mesmo primeiro nome: aí vai o inteiro (`vozNome`, que
+   `nucleoDaCampanha` põe só em quem precisa). */
 export const VOZ_PRESA = {
-  marcador: { mulher: "(voz da ", homem: "(voz do ", "": "(voz de " },
+  marcador: { mulher: "(voz só da ", homem: "(voz só do ", "": "(voz só de " },
   modelo: "{marcador}{nome}: {tique})",
   exemplo: "{tique}, como em {exemplo}",
 };
 
-/* a voz de uma pessoa do núcleo, presa ao nome; "" sem tique */
+/* a voz de uma pessoa do núcleo, presa ao nome (o inteiro, quando o
+   primeiro é de mais alguém); "" sem tique */
 export function vozPresa(pessoa, { exemplo = false } = {}) {
   const p = obj(pessoa);
   const f = obj(obj(p.ficha).fala);
-  const nome = String(p.nome == null ? "" : p.nome).trim().split(/[\s,]+/)[0];
+  const nome = String(p.vozNome || "").trim() || String(p.nome == null ? "" : p.nome).trim().split(/[\s,]+/)[0];
   if (!nome || !f.o) return "";
   const tique = exemplo && f.exemplo ? encher(VOZ_PRESA.exemplo, { tique: f.o, exemplo: f.exemplo }) : String(f.o);
   return encher(VOZ_PRESA.modelo, { marcador: VOZ_PRESA.marcador[generoDaPessoa(p)] || VOZ_PRESA.marcador[""], nome, tique });
@@ -752,6 +800,28 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
   if (!pessoas.length) return vazio;
   const ordemDe = (papel) => (PAPEIS_DO_NUCLEO.find((x) => x.id === papel) || { ordem: 9 }).ordem;
   pessoas.sort((a, b) => ordemDe(a.papel) - ordemDe(b.papel));
+
+  /* O NOME DA VOZ (9.ª sessão, VOZ_PRESA): quem divide o primeiro nome com
+     outra pessoa à volta — do núcleo, do elenco, ou da gente da cidade dela
+     (a Brina Pedra e a Brina serviçal de Buraco Norte) — leva a voz com o
+     nome inteiro; os outros, com o primeiro, como sempre */
+  const genteDe = new Map();
+  const genteDaCidade = (cidade) => {
+    if (!cidade) return [];
+    if (!genteDe.has(cidade)) {
+      let g = [];
+      try { g = arr(obj(oQueExisteAqui(s, mapa, cidade, o.base, o.genero || "Fantasia medieval", o.molde, o.lex)).gente); } catch { g = []; }
+      genteDe.set(cidade, g.map((x) => x && x.nome).filter(Boolean));
+    }
+    return genteDe.get(cidade);
+  };
+  for (const p of pessoas) {
+    const curto = String(p.nome).split(",")[0].trim();
+    const prim = primeiro(curto);
+    if (!prim || !curto.includes(" ")) continue;
+    const outros = [...pessoas.filter((q) => q !== p).map((q) => q.nome), ...elenco.map((e) => e.nome), ...genteDaCidade(p.cidade)];
+    if (outros.some((x) => primeiro(x) === prim && norm(String(x).split(",")[0]) !== norm(curto))) p.vozNome = curto;
+  }
   const quem = (papel) => pessoas.find((p) => p.papel === papel) || null;
 
   /* ---------------- A TEIA ---------------- */

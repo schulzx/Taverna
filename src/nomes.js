@@ -12,6 +12,30 @@ import { povosDo, oficiosDo, nomesDo } from "./lexico.js";
 /* E1 (12/10): os NOMES À MÃO saem semeados pelo dia e pela cidade */
 import { rngDe } from "./geografia.js";
 
+/* O OFÍCIO NO GÉNERO DE QUEM O TEM (nexo, 11/10). A base escreve o papel
+   neutro ("taverneiro(a)", "dono(a) da casa") ou no masculino ("músico"), e
+   a abertura copiava-o: "Inocência Bordão, músico", e o Narrador seguiu com
+   "ele" para a mulher do alaúde (4.ª sessão). A pessoa tem `genero_pessoa`
+   na base; o ofício concorda com ele. Só a PRIMEIRA palavra flexiona ("dona
+   da casa", "empresária da arena") — a locução que vem depois não concorda. */
+export const OFICIO_NO_GENERO = {
+  /* o neutro "(a)": a mulher fica com o "a" ("dono(a)" -> "dona"), o homem sem nada */
+  neutro: { mulher: [["ão(ã)", "ã"], ["e(isa)", "isa"], ["o(a)", "a"], ["(a)", "a"]], homem: [["(ã)", ""], ["(isa)", ""], ["(a)", ""]] },
+  /* sem neutro, a primeira palavra no feminino, pelo fim dela */
+  fimFeminino: [["ão", "ã"], ["or", "ora"], ["o", "a"]],
+};
+export function oficioNoGenero(papel, generoPessoa) {
+  const p = String(papel == null ? "" : papel);
+  const g = String(generoPessoa || "");
+  const neutro = OFICIO_NO_GENERO.neutro[g];
+  if (!neutro || !p) return p;
+  if (/\((a|ã|isa)\)/.test(p)) return neutro.reduce((s, [de, por]) => s.split(de).join(por), p);
+  if (g !== "mulher") return p;
+  const [primeira, ...resto] = p.split(" ");
+  const r = OFICIO_NO_GENERO.fimFeminino.find(([de]) => primeira.endsWith(de));
+  return r ? [primeira.slice(0, -r[0].length) + r[1], ...resto].join(" ") : p;
+}
+
 /* utilitário de sorteio determinístico opcional ou aleatório */
 /* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
    sempre os mesmos nomes. Sem ele, continua aleatório como antes. */

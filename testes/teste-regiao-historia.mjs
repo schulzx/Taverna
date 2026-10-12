@@ -182,7 +182,13 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
 {
   /* Gravados ANTES de qualquer linha desta etapa (06/10), com este laço,
      sobre a árvore de HEAD v9.356 (git archive). */
-  const HEAD = { espinha: "6e8b1ca944f99770", daqui: "95cd7e6d96a3b3c4", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  const HEAD = { espinha: "6e8b1ca944f99770", daqui: "3afa3ec98b995b21", existe: "3c382cb16bc77d3c", ofertas: "fa1541a849421fc2", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  /* 12/10 (9.ª sessão de prova · a taverneira que o Mestre fez homem):
+     `daqui` mudou de 95cd7e6d96a3b3c4 para 3afa3ec98b995b21 por uma razão
+     só: a lista da gente (`resumoDaqui`) diz o ofício no género de quem o
+     tem (`oficioNoGenero`, agora em nomes.js: "Kira do Vale, taverneiro(a)"
+     → "taverneira"). Medido com o mesmo laço: devolvendo à lista o ofício
+     da base (`p.papel`), o hash volta a 95cd7e6d96a3b3c4, byte a byte. */
   /* 11/10 (MM18 · a lei da porta): `abertura` mudou de fff026b80b9be705
      para cdff91d82c5067eb porque a abertura passa a guardar `porta` (a regra
      da porta da cidade, da ficha). Medido com o mesmo laço: SEM o campo
