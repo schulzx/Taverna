@@ -162,22 +162,70 @@ export function raizDaMoeda(chamado) {
   return raiz.length >= 3 ? `${raiz}s?` : "";
 }
 
+/* O NOME DA MOEDA NA LINHA DO PREÇO (12/10, MM11 · 9.ª sessão, M42–M43).
+   A pauta dava o preço só com o "◉", e o Mestre pôs-lhe a unidade que quis:
+   "Vinte e cinco marcos o elixir", "Cem marcos" — num mundo de moedas. A
+   linha que leva um preço leva também a palavra do mundo, no número certo
+   ("1 moeda", "29 moedas", "3 escamas"). Sem palavra, nada: a linha fica
+   como era. */
+export function nomeDaMoeda(n, chamado) {
+  const w = String(chamado == null ? "" : chamado).trim().toLowerCase().split(/\s+/)[0] || "";
+  if (!/^[a-zà-ú]{3,24}$/.test(w)) return "";
+  return Number(n) === 1 && w.endsWith("s") ? w.slice(0, -1) : w;
+}
+
 /* o verbo, até três palavras, a quantia e a moeda — "paga as 3 moedas",
    "deixa ◉ 6 no balcão" não (a moeda tem de vir), "entrega duas moedas de
    cobre" sim */
 const RX_TRECHO_DE_PAGAR = new RegExp(`\\b(${PAGAR})\\s+${ENTRE}{0,3}?${QUANTIA_E_MOEDA}`, "g");
 /* e o "custou-te", em que o herói paga sem ser sujeito */
 const RX_TE_CUSTOU = new RegExp(`(?:\\b(?:te|lhe)\\s+cust(?:a|ou)|\\bcust(?:a|ou)-(?:te|lhe))\\s+${ENTRE}{0,2}?${QUANTIA_E_MOEDA}`, "g");
-/* as mesmas duas, com a moeda do mundo — fabricadas uma vez por palavra */
+
+/* "CONTO N … E PAGO" (12/10, MM11 · 9.ª sessão, M17). "Conto sessenta
+   moedas na mão de Brina e pago." — a quantia está com o verbo de CONTAR, e
+   o "pago" vem sozinho no fim: a régua do trecho (o verbo de pagar com a
+   quantia logo a seguir) não via nada, e sessenta moedas narradas não
+   saíram. O gesto é um só: preparar o dinheiro (contar, separar, tirar,
+   pôr na mão) e, na mesma frase, ligado por "e", dá-lo. Contar sozinho
+   continua a não pagar ("conta as moedas do morto"): sem o "e pago" depois,
+   nada sai. Na terceira pessoa vale com o herói de sujeito ("você conta
+   sessenta moedas, uma a uma, e as deixa na palma dela"). */
+export const PREPARAR_E_PAGAR = {
+  preparar: ["conto", "contei", "separo", "separei", "tiro", "tirei", "junto", "juntei", "ponho", "coloco", "coloquei", "estendo", "estendi",
+    "conta", "contou", "separa", "separou", "tira", "tirou", "junta", "juntou", "coloca", "colocou", "estende", "estendeu"],
+  primeiraPessoa: ["conto", "contei", "separo", "separei", "tiro", "tirei", "junto", "juntei", "ponho", "coloco", "coloquei", "estendo", "estendi"],
+  pagar: ["pago", "paguei", "entrego", "entreguei", "deixo", "deixei", "dou", "passo", "paga", "pagou", "entrega", "entregou", "deixa", "deixou", "da", "passa"],
+  /* o que pode ficar entre a quantia e o "e pago": a mão, o balcão, "uma a uma" */
+  entreMax: 80,
+};
+const preparoEPago = (q) => new RegExp(`\\b(${PREPARAR_E_PAGAR.preparar.join("|")})\\s+${ENTRE}{0,3}?${q}[^.!?]{0,${PREPARAR_E_PAGAR.entreMax}}?\\be\\s+(?:(?:as|os|a|o|lhe|lhes)\\s+)?(?:${PREPARAR_E_PAGAR.pagar.join("|")})\\b`, "g");
+const RX_PREPARO_E_PAGO = preparoEPago(QUANTIA_E_MOEDA);
+const PREPARO_NA_PRIMEIRA = new Set(PREPARAR_E_PAGAR.primeiraPessoa);
+
+/* "AS CINCO MOEDAS QUE ELE PEDIU" (12/10, MM11 · 9.ª sessão, M44). A
+   oração relativa que diz DE ONDE veio o número não é um pedido nem uma
+   hipótese: "pago as cinco moedas que ele pediu" paga cinco. Mas o "pediu"
+   dela caía na trava do pedido (a oferta ainda não é pagamento) e matava a
+   frase inteira. A relativa sai antes das travas — e só ela: com "não",
+   "nunca" ou "nem" lá dentro, fica, e a trava faz o que sempre fez. */
+export const RELATIVA_DO_PRECO = {
+  verbos: ["pediu", "pede", "pedia", "pedira", "cobrou", "cobra", "cobrava", "quer", "queria", "disse", "dissera", "combinou", "combinamos", "combinei", "devo", "devia", "custa", "custava"],
+  palavrasAntes: 3,
+};
+const RX_RELATIVA_DO_PRECO = new RegExp(`\\bque\\s+(?:(?!(?:nao|nunca|nem)\\b)[a-z]+\\s+){0,${RELATIVA_DO_PRECO.palavrasAntes}}?(?:${RELATIVA_DO_PRECO.verbos.join("|")})\\b`, "g");
+const semARelativa = (f) => String(f || "").replace(RX_RELATIVA_DO_PRECO, (s) => " ".repeat(s.length));
+
+/* as mesmas três, com a moeda do mundo — fabricadas uma vez por palavra */
 const REGRAS_POR_MOEDA = new Map();
 function regrasDoGasto(moeda) {
   const raiz = raizDaMoeda(moeda);
-  if (!raiz) return { trecho: RX_TRECHO_DE_PAGAR, custou: RX_TE_CUSTOU };
+  if (!raiz) return { trecho: RX_TRECHO_DE_PAGAR, custou: RX_TE_CUSTOU, preparo: RX_PREPARO_E_PAGO };
   if (!REGRAS_POR_MOEDA.has(raiz)) {
     const q = quantiaEMoeda(raiz);
     REGRAS_POR_MOEDA.set(raiz, {
       trecho: new RegExp(`\\b(${PAGAR})\\s+${ENTRE}{0,3}?${q}`, "g"),
       custou: new RegExp(`(?:\\b(?:te|lhe)\\s+cust(?:a|ou)|\\bcust(?:a|ou)-(?:te|lhe))\\s+${ENTRE}{0,2}?${q}`, "g"),
+      preparo: preparoEPago(q),
     });
   }
   return REGRAS_POR_MOEDA.get(raiz);
@@ -206,10 +254,11 @@ function heroiPaga(f, idx, verbo) {
 
 export function lerGastos(narrativa, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
-  const { trecho, custou } = regrasDoGasto(o.moeda);
+  const { trecho, custou, preparo } = regrasDoGasto(o.moeda);
   const out = { moedas: 0, frases: [] };
   for (const frase of frasesDe(narrativa)) {
-    const f = norm(frase);
+    /* 9.ª sessão: a relativa que diz de onde veio o número sai antes das travas */
+    const f = semARelativa(norm(frase));
     if (RX_NAO_PAGOU.test(f)) continue;
     let contou = false;
     trecho.lastIndex = 0;
@@ -218,6 +267,16 @@ export function lerGastos(narrativa, opcoes = {}) {
       if (!heroiPaga(f, m.index, m[1])) continue;
       const n = valorDe(m[2] || m[3]);
       if (n > 0) { out.moedas += n; contou = true; }
+    }
+    /* 9.ª sessão: "conto N … e pago" — só quando o verbo de pagar não
+       trouxe quantia própria (senão o mesmo dinheiro contaria duas vezes) */
+    if (!contou) {
+      preparo.lastIndex = 0;
+      while ((m = preparo.exec(f))) {
+        if (!PREPARO_NA_PRIMEIRA.has(m[1]) && !heroiPaga(f, m.index, m[1])) continue;
+        const n = valorDe(m[2] || m[3]);
+        if (n > 0) { out.moedas += n; contou = true; }
+      }
     }
     custou.lastIndex = 0;
     while ((m = custou.exec(f))) {
@@ -234,9 +293,19 @@ export function lerGastos(narrativa, opcoes = {}) {
    do mundo, as réguas do gasto são as dela: "você recebe o pão e paga dez
    escamas" não credita dez. */
 const semOsPagamentos = (f, moeda) => {
-  const { trecho, custou } = regrasDoGasto(moeda);
-  return f.replace(trecho, (s) => " ".repeat(s.length)).replace(custou, (s) => " ".repeat(s.length));
+  const { trecho, custou, preparo } = regrasDoGasto(moeda);
+  return f.replace(trecho, (s) => " ".repeat(s.length)).replace(custou, (s) => " ".repeat(s.length)).replace(preparo, (s) => " ".repeat(s.length));
 };
+
+/* A COMPRA NÃO É ACHADO (12/10, MM11 · 9.ª sessão, M44). "Você pega as
+   ataduras de linho e entrega as cinco moedas." — o verbo de aquisição com
+   o herói de sujeito e um item do catálogo: a cobrança creditou as Ataduras
+   de graça ("+ Ataduras de Linho", bolsa 93 → 93), e o débito, que não via
+   o herói nesse "entrega", não tirou nada. Uma frase em que o herói PAGA ou
+   COMPRA é uma compra, e compra é da banca, pelo preço do estoque (a compra
+   da frase, bolsa-da-frase.js#compraNaBanca) — nunca da narração. O item
+   dessa frase não entra por aqui; as moedas que ela ACHA, sim, como antes. */
+export const COMPRA_NAO_E_ACHADO = /\b(compra|comprou|compro|comprei|comprado|comprada|paga|pagou|pago|paguei|pagando|em troca de)\b/;
 
 /* O GANHO COM A MOEDA DO MUNDO (12/10, MM11 · 8.ª sessão). A v9.427 deu a
    palavra do léxico ao lado de pagar; o de ganhar ficou surdo a ela: "você
@@ -269,6 +338,8 @@ export function lerGanhos(narrativa, opcoes = {}) {
     let contou = false;
     /* 30/09: sem o trecho em que o herói paga — ver `lerGastos` */
     const f = semOsPagamentos(norm(frase), moeda);
+    /* 9.ª sessão: a frase em que o herói paga ou compra não dá item de graça */
+    const compra = f !== norm(frase) || COMPRA_NAO_E_ACHADO.test(norm(frase));
     RX_MOEDAS.lastIndex = 0;
     let m;
     while ((m = RX_MOEDAS.exec(f))) {
@@ -282,7 +353,7 @@ export function lerGanhos(narrativa, opcoes = {}) {
         if (n > 0) { out.moedas += n; contou = true; }
       }
     }
-    const cons = consumiveisNaFrase(frase);
+    const cons = compra ? [] : consumiveisNaFrase(frase);
     for (const c of cons) { out.consumiveis.push(c); contou = true; }
     if (contou) out.frases.push(frase.slice(0, 120));
   }
@@ -308,10 +379,15 @@ export function oQueFaltaCreditar(narrativa, mudancas, opcoes = {}) {
   const m = mudancas && typeof mudancas === "object" ? mudancas : {};
   const jaDoAchado = moedasDoAchadoNoEnvelope(typeof o.envelopes === "string" ? o.envelopes : "");
   const declaradas = Math.max(0, Number(m.moedas) || 0) + jaDoAchado;
-  const itensDeclarados = (m.adicionar_itens || []).map((x) => norm(typeof x === "string" ? x : (x && x.nome) || ""));
+  /* 9.ª sessão: o que a compra da frase já pôs na mochila (o envelope
+     "[COMPRA — JÁ REGISTRADA PELO SISTEMA]" diz o nome) conta como declarado:
+     a narração do vendedor a entregá-lo não o dá outra vez */
+  const comprado = String(o.envelopes || "").split("\n").filter((l) => JA_PAGO_PELO_SISTEMA[0].test(l)).map(norm).join(" ");
+  const itensDeclarados = (Array.isArray(m.adicionar_itens) ? m.adicionar_itens : []).map((x) => norm(typeof x === "string" ? x : (x && x.nome) || "")).filter(Boolean);
+  const jaComprado = (c) => !!comprado && comprado.includes(norm(c.nome));
 
   const moedas = Math.max(0, prometido.moedas - declaradas);
-  const consumiveis = prometido.consumiveis.filter((c) => !itensDeclarados.some((n) => n.includes(norm(c.nome)) || norm(c.nome).includes(n)));
+  const consumiveis = prometido.consumiveis.filter((c) => !jaComprado(c) && !itensDeclarados.some((n) => n.includes(norm(c.nome)) || norm(c.nome).includes(n)));
 
   return {
     moedas, consumiveis,
@@ -344,6 +420,12 @@ export const JA_PAGO_PELO_SISTEMA = [
   /\[MAPA COMPRADO — JÁ APLICADO PELO SISTEMA\]/,
   /\[VENDA — JÁ REGISTRADA PELO SISTEMA\]/,
 ];
+/* E A COMPRA QUE O SISTEMA RECUSOU (12/10, MM11 · 9.ª sessão). Quando a
+   compra da frase não fecha — o preço da banca ou do balcão é outro, ou a
+   bolsa não chega —, o veto do turno diz "a compra não fechou" (bolsa-da-
+   frase.js#vetoDaCompra). O "pago as cinco moedas" da mesma frase não é
+   então pagamento nenhum: debitá-lo cobraria por uma coisa que não veio. */
+export const COMPRA_RECUSADA_PELO_SISTEMA = [/a compra não fechou/];
 
 /* ============================================================
    A FRASE DO JOGADOR TAMBÉM PAGA (12/10, "o Narrador só narra", E3)
@@ -386,7 +468,8 @@ function gastoDoPedido(envelopes, narrativa, pedido, moeda) {
   if (!texto || RX_CENA_RECUSA.test(norm(narrativa))) return { moedas: 0, frases: [] };
   const out = { moedas: 0, frases: [] };
   for (const frase of frasesDe(texto)) {
-    if (RX_PEDIDO_NAO_PAGA.test(norm(frase))) continue;
+    /* 9.ª sessão: "que ele pediu"/"que ele queria" não é o jogador a pedir */
+    if (RX_PEDIDO_NAO_PAGA.test(semARelativa(norm(frase)))) continue;
     const g = lerGastos(frase, { moeda });
     if (g.moedas > 0) { out.moedas += g.moedas; out.frases.push(...g.frases); }
   }
@@ -398,6 +481,7 @@ export function oQueFaltaDebitar(narrativa, mudancas, opcoes = {}) {
   const vazio = { moedas: 0, frases: [], temAlgo: false, semFundos: false, narrado: 0 };
   const envelopes = String(o.envelopes || "");
   if (JA_PAGO_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
+  if (COMPRA_RECUSADA_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
   const moeda = typeof o.moeda === "string" ? o.moeda : "";
   const daCena = lerGastos(narrativa, { moeda });
   const doPedido = gastoDoPedido(envelopes, narrativa, o.pedido, moeda);

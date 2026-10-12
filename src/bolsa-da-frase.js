@@ -32,10 +32,10 @@
      · a quantia que o jogador disse é um teto: pagar onze pelo que custa
        dezasseis não fecha nada — o vendedor diz o preço e espera.
    ============================================================ */
-import { NUMERO_POR_EXTENSO } from "./cobranca.js";
+import { NUMERO_POR_EXTENSO, nomeDaMoeda } from "./cobranca.js";
 import { MERCADORIAS } from "./mercado.js";
 /* E1 (12/10): o acento que separa mora em economia.js (o círculo com mercado.js) */
-import { semConfusao } from "./economia.js";
+import { semConfusao, nomeiaACoisa } from "./economia.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -77,8 +77,12 @@ const NUM = Object.keys(NUMERO_POR_EXTENSO).sort((a, b) => b.length - a.length).
 const valor = (tok) => {
   const s = String(tok || "");
   if (/^\d+$/.test(s)) return parseInt(s, 10);
-  return NUMERO_POR_EXTENSO[s] || 0;
+  /* 9.ª sessão: "vinte e nove" é 29, não 20 — a quantia dita por extenso
+     compõe-se pelo "e", como em cobranca.js */
+  return s.split(/\s+e\s+/).reduce((acc, w) => acc + (NUMERO_POR_EXTENSO[w] || 0), 0);
 };
+/* a quantia que o jogador DIZ que paga: "pago as onze", "pago 29", "pago ◉ 11", "pago vinte e nove" */
+const QUANTIA_DITA = `(?:as\\s+|os\\s+|so\\s+|apenas\\s+|◉\\s*)?(\\d+|(?:${NUM})(?:\\s+e\\s+(?:${NUM}))?)\\b`;
 const oracoes = (frase) => {
   const t = norm(frase);
   const out = [];
@@ -157,17 +161,24 @@ function herdaDe(anterior) {
   return mantimentosDa(t);
 }
 
-export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false, anterior = "" } = {}) {
+export function compraNaFrase(frase, opcoes) {
+  /* `= {}` não cobre `null` */
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const balcao = op.balcao || [], bolsa = op.bolsa || 0, temKit = !!op.temKit, anterior = op.anterior || "";
   const prateleira = Array.isArray(balcao) ? balcao.filter((b) => b && b.id) : [];
   const itens = [], jaTem = [], daBanca = [];
   let declarado = null, viu = false, pagouSemItem = false;
+  /* 9.ª sessão: com as bancas na mão (`bancas`), o que a frase nomeia DELAS
+     é compra da banca (`compraNaBanca`) — e deixa de ser o veto "isso
+     vende-se nas bancas" deste balcão */
+  const daBancaJa = Array.isArray(op.bancas) && op.bancas.length ? compraNaBanca(frase, { bancas: op.bancas, bolsa }) : null;
   frase = semConfusao(frase);
   if (RX_PERGUNTA_DE_PRECO.test(norm(frase))) return null;
   for (const o of oracoes(frase)) {
     if (o.pergunta || !(RX_COMPRA.test(o.texto) || RX_PAGO_SO.test(o.texto)) || RX_HIPOTESE.test(o.texto)) continue;
     viu = true;
     /* a quantia dita: "pago as onze cunhas", "pago 11 moedas", "pago ◉ 11" */
-    const d = o.texto.match(new RegExp(`\\b(?:pago|paguei)\\s+(?:as\\s+|os\\s+|so\\s+|apenas\\s+|◉\\s*)?(\\d+|${NUM})\\b(?!\\s+(?:racao|racoes|tochas?|odres?|kits?|cordas?|archotes?))`));
+    const d = o.texto.match(new RegExp(`\\b(?:pago|paguei)\\s+${QUANTIA_DITA}(?!\\s+(?:racao|racoes|tochas?|odres?|kits?|cordas?|archotes?))`));
     if (d && declarado == null) declarado = valor(d[1]) || null;
     const daqui = mantimentosDa(o.texto);
     if (!daqui.length && RX_PAGO_SO.test(o.texto)) pagouSemItem = true;
@@ -180,7 +191,7 @@ export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false, a
       itens.push({ id: m.id, nome: p.nome, icone: p.icone || "", quantos: m.quantos, preco, custo: preco * m.quantos });
     }
     for (const mc of MERCADORIAS) {
-      const x = o.texto.match(mc.rx);
+      const x = daBancaJa ? null : o.texto.match(mc.rx);
       if (x) daBanca.push(x[0]);
     }
   }
@@ -204,6 +215,67 @@ export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false, a
   return { itens, total, declarado, jaTem, daBanca, fecha: !porque, porque, bolsa: moedas };
 }
 
+/* ============================================================
+   A COMPRA À BANCA (12/10, MM11 · 9.ª sessão, M44)
+
+   "Compro as ataduras de linho e pago as cinco moedas que ele pediu." O
+   ambulante tinha as Ataduras de Linho no estoque, a ◉ 29. Ninguém fechou
+   a compra: este arquivo só conhecia o balcão de mantimentos, e a mercadoria
+   das bancas "ficava no painel". O Mestre pôs as ataduras na mão do herói
+   pelas cinco moedas que ele próprio inventara, e a cobrança (cobranca.js)
+   creditou-as como achado — de graça, bolsa 93 → 93.
+
+   A banca vende pela frase como o balcão: a coisa que a frase COMPRA,
+   nomeada pelo nome dela (economia.js#nomeiaACoisa), entra pelo preço do
+   ESTOQUE, da banca que a tem. As travas são as do balcão — só a frase que
+   declara ("compro", "pago"), nunca a que pergunta; a quantia dita é um
+   teto (cinco não paga vinte e nove: o vendedor diz o preço e espera); e a
+   bolsa tem de chegar.
+
+   `bancas`: as bancas daqui como o painel as mostra (`mercadoAqui`, com o
+   ambulante da estrada) — { id, nome, estoque: [{ nome, preco, tipo }] }.
+   Devolve null quando a frase não compra nada delas; senão a forma de
+   `compraNaFrase` ({ itens, total, declarado, fecha, porque, bolsa }), com
+   `lugar: "banca"` e, em cada item, `mercadorId`, `banca` e `item` (a
+   entrada do estoque, inteira, para o App a pôr na mochila).
+   ============================================================ */
+export function compraNaBanca(frase, opcoes) {
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const bancas = (Array.isArray(op.bancas) ? op.bancas : []).filter((b) => b && Array.isArray(b.estoque));
+  if (!bancas.length) return null;
+  const f = semConfusao(frase);
+  if (!f.trim() || RX_PERGUNTA_DE_PRECO.test(norm(f))) return null;
+  const itens = [];
+  let declarado = null, viu = false;
+  for (const o of oracoes(f)) {
+    if (o.pergunta || !RX_COMPRA.test(o.texto) || RX_HIPOTESE.test(o.texto)) continue;
+    viu = true;
+    const d = o.texto.match(new RegExp(`\\b(?:pago|paguei)\\s+${QUANTIA_DITA}`));
+    if (d && declarado == null) declarado = valor(d[1]) || null;
+    for (const b of bancas) {
+      for (const it of b.estoque) {
+        if (!it || !it.nome || itens.some((x) => x.nome === it.nome) || !nomeiaACoisa(o.texto, it.nome)) continue;
+        const preco = Math.max(0, Number(it.preco) || 0);
+        itens.push({ id: it.nome, nome: it.nome, icone: it.icone || "", quantos: 1, preco, custo: preco, mercadorId: b.id, banca: b.nome || "", item: it });
+      }
+    }
+  }
+  if (!viu || !itens.length) return null;
+  const total = itens.reduce((s, x) => s + x.custo, 0);
+  const moedas = Math.max(0, Number(op.bolsa) || 0);
+  let porque = "";
+  if (total > moedas) porque = "sem_fundos";
+  else if (declarado != null && declarado < total) porque = "pouco";
+  return { itens, total, declarado, jaTem: [], daBanca: [], fecha: !porque, porque, bolsa: moedas, lugar: "banca" };
+}
+
+/* as palavras de cada lado: o balcão de mantimentos e a banca */
+export const PALAVRAS_DA_COMPRA = {
+  balcao: { onde: "no balcão", preco: "ao preço do balcão", leva: "Os mantimentos já estão na minha mochila" },
+  banca: { onde: "na banca", preco: "ao preço da banca", leva: "O que comprei já está comigo" },
+};
+const palavrasDe = (c) => PALAVRAS_DA_COMPRA[c && c.lugar === "banca" ? "banca" : "balcao"];
+
 /* ---------------- O PREÇO DO BALCÃO, PERGUNTADO (o J9) ----------------
    "Quero comprar tochas, uma corda e rações para uns três dias. Quanto
    custa tudo?" — `mercadoParaPauta` só conhecia a mercadoria das bancas,
@@ -211,7 +283,11 @@ export function compraNaFrase(frase, { balcao = [], bolsa = 0, temKit = false, a
    uma pela corda boa". A resposta mora no balcão de hoje: o preço de cada
    coisa e a conta do que a frase pediu. Mesmo molde de `mercadoParaPauta`
    ({ pergunta: [linha], em: [pos] }), para entrar em `juntarRespostas`. */
-export function balcaoParaPauta(frase, { balcao = [], temKit = false } = {}) {
+export function balcaoParaPauta(frase, opcoes) {
+  /* `= {}` não cobre `null`; `moeda` (9.ª sessão): a unidade do mundo no total */
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const balcao = op.balcao || [], temKit = !!op.temKit;
+  const w = nomeDaMoeda(2, typeof op.moeda === "string" ? op.moeda : "");
   const out = { pergunta: [], em: [] };
   const t = norm(frase);
   const q = t.search(RX_PERGUNTA_DE_PRECO);
@@ -232,7 +308,7 @@ export function balcaoParaPauta(frase, { balcao = [], temKit = false } = {}) {
     total += m.p.preco * m.quantos;
   }
   if (!partes.length) return out;
-  out.pergunta.push(`no balcão de mantimentos: ${partes.join(", ")}${conta.length ? ` — ${conta.join(", ")} dá ◉ ${total}` : ""}`);
+  out.pergunta.push(`no balcão de mantimentos: ${partes.join(", ")}${conta.length ? ` — ${conta.join(", ")} dá ◉ ${total}${w ? ` ${nomeDaMoeda(total, w)}` : ""}` : ""}`);
   out.em.push(q);
   return out;
 }
@@ -244,7 +320,7 @@ export function falaDaCompra(c) {
   if (!c) return "";
   if (c.fecha) return `🛒 ${listaDe(c.itens)} — ◉ ${c.total} (restam ◉ ${c.bolsa - c.total}).`;
   if (c.porque === "sem_fundos") return `◉ Não chega: ${listaDe(c.itens)} custa ◉ ${c.total}, e a bolsa tem ◉ ${c.bolsa}.`;
-  if (c.porque === "pouco") return `◉ ${listaDe(c.itens)} custa ◉ ${c.total} no balcão — ◉ ${c.declarado} não paga.`;
+  if (c.porque === "pouco") return `◉ ${listaDe(c.itens)} custa ◉ ${c.total} ${palavrasDe(c).onde} — ◉ ${c.declarado} não paga.`;
   if (c.porque === "ja_tem") return "🎒 A corda já vem no kit que você carrega.";
   return `🛒 ${c.daBanca.join(", ")} compra-se nas bancas, com o preço de cada uma.`;
 }
@@ -253,7 +329,8 @@ export function falaDaCompra(c) {
    cobrança (`JA_PAGO_PELO_SISTEMA`) reconhece para não cobrar duas vezes */
 export function envelopeDaCompra(c) {
   if (!c || !c.fecha) return "";
-  return `[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei ${listaDe(c.itens)} por ◉ ${c.total}, ao preço do balcão. Os mantimentos já estão na minha mochila e as moedas já saíram — não envie item nem moeda, e não diga outro preço. Narre a troca e quem vende, se a cena estiver acontecendo agora.`;
+  const p = palavrasDe(c);
+  return `[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei ${listaDe(c.itens)} por ◉ ${c.total}, ${p.preco}. ${p.leva} e as moedas já saíram — não envie item nem moeda, e não diga outro preço. Narre a troca e quem vende, se a cena estiver acontecendo agora.`;
 }
 
 /* o veto (secção `naoPode` da pauta), quando NÃO fechou */

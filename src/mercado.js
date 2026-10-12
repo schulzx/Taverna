@@ -17,8 +17,8 @@
 import { gerarLoot, RARIDADE_ROTULO } from "./loot.js";
 import { SUPRIMENTOS, garantirSuprimentos } from "./ermos.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./pocoes.js";
-import { valorDeItem, PRECO_VENDA, PRECOS_COMUNS, PRECOS_DA_RUA, precoComum, semConfusao, GRAFIA_DA_RUA } from "./economia.js";
-import { NUMERO_POR_EXTENSO } from "./cobranca.js";
+import { valorDeItem, PRECO_VENDA, PRECOS_COMUNS, PRECOS_DA_RUA, precoComum, semConfusao, GRAFIA_DA_RUA, nomeiaACoisa } from "./economia.js";
+import { NUMERO_POR_EXTENSO, nomeDaMoeda } from "./cobranca.js";
 import { PORTES } from "./geografia.js";
 import { nomesDeLugar } from "./lexico.js";
 import { fatorDoLugar, generoDoItem, vocacaoDe } from "./comercio.js";
@@ -349,15 +349,61 @@ const raiz = (p) => p.replace(/(oes|ais|eis)$/, (x) => ({ oes: "ao", ais: "al", 
    se comprou); `frase`: o que o jogador disse (já sem envelope). Devolve
    { pergunta: [linha], em: [pos] } — ou vazios, se a frase não pergunta um
    preço de mercadoria. */
-export function mercadoParaPauta(mercadores, frase, { onde = "" } = {}) {
+/* A COISA DA BANCA, PERGUNTADA OU APONTADA PELO NOME (12/10, MM11 · 9.ª
+   sessão, M42–M44). O ambulante tinha "Elixir de Destreza ◉ 140", "Ataduras
+   de Linho ◉ 29" e "Anel com nome gravado por dentro ◉ 100"; "quanto custa
+   o anel… e as ataduras?" não levou número à pauta, porque nem "anel" nem
+   "ataduras" são um GÉNERO de `MERCADORIAS` — e o Mestre vendeu em
+   "marcos", a 25, 100 e 5. A coisa que o jogador nomeia pelo nome dela
+   (economia.js#nomeiaACoisa) numa oração que pergunta o preço, compra ou
+   aponta, sobe com o preço do estoque e a banca. "Pago" sozinho não conta:
+   "pago a lâmina e pergunto a quantos passos fica o poço" pede a distância. */
+export const APONTA_OU_COMPRA = /\b(compro|comprei|quero comprar|vou comprar|levo|levarei|aponto|apontando|mostre|mostra-me|mostre-me|examino|olho de perto)\b/;
+/* `opcoes.moeda`: a palavra do mundo para a moeda (`comoChamam(lex,
+   "moeda")`) — com ela, o preço diz a unidade ("◉ 29 moedas"), e o Mestre
+   não a inventa (a 9.ª: "marcos"). Sem ela, o "◉" sozinho, como era. */
+const comMoeda = (n, moeda) => { const w = nomeDaMoeda(n, moeda); return `◉ ${n}${w ? ` ${w}` : ""}`; };
+
+export function mercadoParaPauta(mercadores, frase, opcoes) {
+  /* `= {}` não cobre `null` */
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const onde = typeof op.onde === "string" ? op.onde : "";
+  const moeda = typeof op.moeda === "string" ? op.moeda : "";
   const out = { pergunta: [], em: [] };
+  const bancas = (Array.isArray(mercadores) ? mercadores : []).filter((b) => b && Array.isArray(b.estoque));
+  const itens = bancas.flatMap((b) => b.estoque.filter((it) => it && it.nome).map((it) => ({ it, banca: b.nome || b.rotulo || "uma banca" })));
+  const lista = (xs) => xs.slice(0, ITENS_POR_RESPOSTA).map(({ it, banca }) => `${it.nome} ${comMoeda(it.preco, moeda)} (${banca})`).join(", ");
+  const aqui = onde ? ` em ${onde}` : " aqui";
+  /* 9.ª sessão: a coisa nomeada pelo nome, na frase inteira do jogador */
+  const nomeados = [];
+  let emNomeado = Infinity;
+  {
+    const crua = semAcentoM(semConfusao(fraseDoJogador(frase)));
+    const rxO = /[^.!?;\n]+[.!?;\n]*/g;
+    let oo;
+    while ((oo = rxO.exec(crua))) {
+      const or = oo[0];
+      if (!(PERGUNTA_DE_PRECO.test(or) || APONTA_OU_COMPRA.test(or))) continue;
+      for (const x of itens) {
+        if (nomeados.includes(x) || !nomeiaACoisa(or, x.it.nome)) continue;
+        nomeados.push(x);
+        emNomeado = Math.min(emNomeado, oo.index);
+      }
+    }
+  }
   /* a frase do jogador (não o envelope), e só a parte que PERGUNTA: "pago
      a lâmina e pergunto a quantos passos fica o poço" não pede preço de
      lâmina nenhuma. Os nomes ficam — "a Lâmina de Névoa" é a mercadoria. */
   /* E1 (12/10): o acento antes de tudo — "o preço das maçãs" não pergunta
      pela maça das armas (o J13 da 6.ª sessão levou "não há macas à venda") */
   const t = assuntoDaFrase(semConfusao(fraseDoJogador(frase)), [], { nomesProprios: false });
-  if (!t.trim()) return out;
+  const soNomeados = () => {
+    if (!nomeados.length) return out;
+    out.pergunta.push(`à venda${aqui}: ${lista(nomeados)}`);
+    out.em.push(emNomeado);
+    return out;
+  };
+  if (!t.trim()) return soNomeados();
   /* a mercadoria de que se pergunta o preço é a da MESMA oração da
      pergunta, e de preferência a que vem depois dela: "aponto para as
      facas: «quanto custa uma adaga?»" pergunta pela adaga */
@@ -380,14 +426,17 @@ export function mercadoParaPauta(mercadores, frase, { onde = "" } = {}) {
     }
     if (melhor) achada = { ...melhor, preco: o.index + preco.index };
   }
-  if (!achada) return out;
-  const bancas = (Array.isArray(mercadores) ? mercadores : []).filter((b) => b && Array.isArray(b.estoque));
-  const itens = bancas.flatMap((b) => b.estoque.filter((it) => it && it.nome).map((it) => ({ it, banca: b.nome || b.rotulo || "uma banca" })));
+  if (!achada) return soNomeados();
   const alvo = raiz(achada.palavra);
   const pelaPalavra = itens.filter(({ it }) => semAcentoM(`${it.nome} ${it.base || ""}`).split(/[^a-z]+/).some((w) => raiz(w) === alvo));
   const doTipo = itens.filter(({ it }) => it.tipo === achada.m.tipo);
-  const lista = (xs) => xs.slice(0, ITENS_POR_RESPOSTA).map(({ it, banca }) => `${it.nome} ◉ ${it.preco} (${banca})`).join(", ");
-  const aqui = onde ? ` em ${onde}` : " aqui";
+  /* 9.ª sessão: o que foi nomeado pelo nome vem primeiro, e a palavra do
+     género junta-se-lhe sem repetir */
+  if (nomeados.length) {
+    out.pergunta.push(`à venda${aqui}: ${lista([...nomeados, ...pelaPalavra.filter((x) => !nomeados.includes(x))])}`);
+    out.em.push(Math.min(emNomeado, achada.preco, achada.pos));
+    return out;
+  }
   let linha;
   if (pelaPalavra.length) linha = `à venda${aqui}: ${lista(pelaPalavra)}`;
   else if (doTipo.length) linha = `não há ${achada.palavra} à venda${aqui}; ${achada.m.rotulo} à venda: ${lista(doTipo)}`;
@@ -429,6 +478,8 @@ function quantosAntes(t, idx) {
 export function precoComumParaPauta(frase, opcoes) {
   /* `= {}` não cobre `null` */
   const fator = opcoes && typeof opcoes === "object" ? opcoes.fator : 1;
+  /* 9.ª sessão: a unidade do mundo, como na banca (`comMoeda`) */
+  const moeda = opcoes && typeof opcoes === "object" && typeof opcoes.moeda === "string" ? opcoes.moeda : "";
   const out = { pergunta: [], em: [] };
   const t = semAcentoM(semConfusao(fraseDoJogador(frase)));
   if (!t.trim()) return out;
@@ -445,7 +496,7 @@ export function precoComumParaPauta(frase, opcoes) {
     const preco = precoComum(p.id, fator);
     /* E2: a palavra com a grafia da tabela ("pães", nunca o "paes" da frase lida sem acento) */
     const nome = p.porPalavra ? GRAFIA_DA_RUA[palavra] || palavra : p.nome;
-    return quantos > 1 ? `${quantos}× ${nome} ◉ ${preco} cada, dá ◉ ${preco * quantos}` : `${nome} ◉ ${preco}`;
+    return quantos > 1 ? `${quantos}× ${nome} ◉ ${preco} cada, dá ${comMoeda(preco * quantos, moeda)}` : `${nome} ${comMoeda(preco, moeda)}`;
   });
   out.pergunta.push(`o preço daqui: ${ditos.join(" · ")}`);
   out.em.push(achados[0].idx);

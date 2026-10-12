@@ -414,6 +414,9 @@ export const CRIATURA_NA_PROSA = {
     "morcego", "morcegos", "verme", "vermes", "sapo", "escorpiao", "besouro", "centopeia", "sanguessuga", "abutre",
     "criatura", "criaturas", "coisa", "bicho", "bichos", "fera", "feras", "besta", "monstro", "monstros", "voraz", "vorazes",
     "esqueleto", "esqueletos", "zumbi", "zumbis", "carnical", "espectro", "fantasma", "goblin", "goblins", "kobold", "orc", "ogro", "troll", "gnoll", "harpia", "gargula",
+    /* 9.ª sessão: o plural que faltava a quem só tinha o singular */
+    "lobas", "ursos", "ursas", "ratazanas", "sapos", "escorpioes", "besouros", "centopeias", "sanguessugas", "abutres",
+    "bestas", "carnicais", "espectros", "fantasmas", "kobolds", "orcs", "ogros", "trolls", "gnolls", "harpias", "gargulas",
   ],
   conectores: ["sem", "de", "do", "da", "com"],
   /* a ameaça de quem só a prosa conhece: o de sempre, gente comum armada do
@@ -423,6 +426,44 @@ export const CRIATURA_NA_PROSA = {
 };
 const CABECAS = new Set(CRIATURA_NA_PROSA.cabecas);
 const palavrasDe = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
+
+/* ---------------- O RATO E OS RATOS (12/10, a 9.ª sessão de prova, M32–M33) ----------------
+   O sistema pôs dois Ratos Gigantes na estrada, o Mestre pintou-os ("dois
+   ratos gigantes rosnam à beira da estrada"), e o jogador escreveu "ataco o
+   rato gigante da frente com a minha faca". Saiu SEM ALVO: a cabeça do
+   jogador ("rato") comparava-se letra a letra com a da prosa ("ratos"), e o
+   Mestre, obediente à ordem das duas saídas, desmentiu a cena que ele
+   próprio pintara um turno antes ("Não há ninguém para atacar").
+
+   Quem ataca UM dos bichos que a prosa mostrou no plural fala no singular —
+   é o jeito normal de escrever. Então a cabeça casa pela RAIZ: o número sai
+   ("ratos" → "rato") e o género também ("loba" → "lobo", "ursa" → "urso":
+   a prosa diz "a loba" e o jogador "o lobo", e o bicho é o mesmo). O nome
+   do combatente é de UM: a cabeça no singular — a do jogador, se ele a
+   escreveu assim; a da tabela, com o acento, se ele escreveu o plural.
+
+   `singular`: o plural (sem acento, como em `cabecas`) → o singular como se
+   escreve; `macho`: a fêmea → o macho, só para casar (o nome fica o que foi
+   escrito). */
+export const NUMERO_DO_BICHO = {
+  singular: {
+    caes: "cão", cachorros: "cachorro", lobos: "lobo", lobas: "loba", ratos: "rato", ratazanas: "ratazana",
+    lagartos: "lagarto", aranhas: "aranha", serpentes: "serpente", cobras: "cobra", ursos: "urso", ursas: "ursa",
+    javalis: "javali", corvos: "corvo", morcegos: "morcego", vermes: "verme", sapos: "sapo", escorpioes: "escorpião",
+    besouros: "besouro", centopeias: "centopeia", sanguessugas: "sanguessuga", abutres: "abutre",
+    criaturas: "criatura", bichos: "bicho", feras: "fera", bestas: "besta", monstros: "monstro", vorazes: "voraz",
+    esqueletos: "esqueleto", zumbis: "zumbi", carnicais: "carniçal", espectros: "espectro", fantasmas: "fantasma",
+    goblins: "goblin", kobolds: "kobold", orcs: "orc", ogros: "ogro", trolls: "troll", gnolls: "gnoll",
+    harpias: "harpia", gargulas: "gárgula",
+  },
+  macho: { loba: "lobo", ursa: "urso", ratazana: "rato" },
+  porque: "quem ataca um dos bichos que a prosa mostrou no plural fala no singular: é o mesmo bicho",
+};
+/* a raiz de uma cabeça (sem acento): sem número e sem género */
+function raizDoBicho(w) {
+  const s = norm(NUMERO_DO_BICHO.singular[w] || w);
+  return NUMERO_DO_BICHO.macho[s] || s;
+}
 
 /* ---------------- O NOME QUE É BICHO (12/10, a 8.ª sessão de prova, M39) ----------------
    "Ursa o Andarilho" é gente — a prisioneira que fugiu das Celas, e que
@@ -451,13 +492,18 @@ export const NOME_NAO_E_BICHO = {
   porque: "o nome de alguém não vira bicho por coincidir com um: quem a prosa escreve sempre com maiúscula e sem artigo é gente",
 };
 const DETERMINANTES = new Set(NOME_NAO_E_BICHO.determinantes);
-/* as cabeças de bicho que, nestes textos, são NOME de alguém */
+/* as cabeças de bicho que, nestes textos, são NOME de alguém — pela RAIZ
+   (9.ª sessão, M32: "dois ratos gigantes farejam… 'Rato de esgoto não foge
+   por educação', diz ela" — o "Rato" do começo da fala, sozinho com a
+   maiúscula, fazia de TODO "rato" um nome, e o golpe do jogador no "rato
+   gigante da frente" ficava sem bicho; o plural com o "dois" à frente diz
+   que a raiz é de bicho) */
 function cabecasQueSaoNome(textos, pessoas) {
   const out = new Set();
   const deGente = new Set();
   for (const n of Array.isArray(pessoas) ? pessoas : []) {
     const p = palavrasDe(n && typeof n === "object" ? n.nome : n)[0];
-    if (p && CABECAS.has(p)) deGente.add(p);
+    if (p && CABECAS.has(p)) deGente.add(raizDoBicho(p));
   }
   const visto = new Map();
   for (const t of textos) {
@@ -466,10 +512,11 @@ function cabecasQueSaoNome(textos, pessoas) {
     for (const m of cru.matchAll(/[A-Za-z0-9]+/g)) {
       const w = m[0].toLowerCase();
       if (CABECAS.has(w)) {
-        const v = visto.get(w) || { nome: true };
+        const r = raizDoBicho(w);
+        const v = visto.get(r) || { nome: true };
         const maiuscula = m[0][0] !== w[0];
         if (!maiuscula || DETERMINANTES.has(antes)) v.nome = false;
-        visto.set(w, v);
+        visto.set(r, v);
       }
       antes = w;
     }
@@ -486,7 +533,7 @@ function criaturasDe(texto, fora) {
   const ps = palavrasDe(texto);
   const out = [];
   ps.forEach((p, i) => {
-    if (!CABECAS.has(p) || (fora && fora.has(p))) return;
+    if (!CABECAS.has(p) || (fora && fora.has(raizDoBicho(p)))) return;
     const c = ps[i + 1], w = ps[i + 2];
     const comp = c && w && CRIATURA_NA_PROSA.conectores.includes(c) && w.length >= 3 && !CABECAS.has(w) ? [c, w] : [];
     out.push({ cabeca: p, palavras: [p, ...comp] });
@@ -518,19 +565,29 @@ export function criaturaMostrada(texto, mostrado, conhecidas = [], pessoas = [])
   const doMestre = textosDe(mostrado).flatMap((t) => criaturasDe(t, fora));
   if (!doMestre.length) return null;
   const doJogador = criaturasDe(texto, fora);
+  const textos = [...textosDe(mostrado), String(texto || "")];
   for (const j of doJogador) {
-    const vistas = doMestre.filter((m) => m.cabeca === j.cabeca);
+    /* 9.ª sessão: pela raiz — "o rato" é um dos "ratos" que a prosa mostrou */
+    const r = raizDoBicho(j.cabeca);
+    const vistas = doMestre.filter((m) => raizDoBicho(m.cabeca) === r);
     if (!vistas.length) continue;
-    const igual = vistas.find((m) => m.palavras.join(" ") === j.palavras.join(" "));
+    const resto = (p) => p.slice(1).join(" ");
+    const igual = vistas.find((m) => m.palavras.length === j.palavras.length && resto(m.palavras) === resto(j.palavras));
     const comComplemento = vistas.find((m) => m.palavras.length > 1);
     const palavras = igual ? igual.palavras : j.palavras.length > 1 ? j.palavras : (comComplemento || vistas[0]).palavras;
-    return comAmeaca(comoEscrito(palavras, [...textosDe(mostrado), String(texto || "")]), j.cabeca, conhecidas);
+    const escrito = comoEscrito(palavras, textos);
+    /* o nome é de UM: a cabeça no singular — a do jogador, como ele a
+       escreveu, ou a da tabela quando ele disse o plural */
+    const umSo = NUMERO_DO_BICHO.singular[j.cabeca] || comoEscrito([j.cabeca], [String(texto || "")]);
+    const nome = palavras[0] === j.cabeca && !NUMERO_DO_BICHO.singular[j.cabeca] ? escrito : [umSo, ...escrito.split(/\s+/).slice(1)].join(" ");
+    return comAmeaca(nome, j.cabeca, conhecidas);
   }
   return null;
 }
 function comAmeaca(nome, cabeca, conhecidas) {
   const lista = (Array.isArray(conhecidas) ? conhecidas : []).filter((c) => c && c.nome);
-  const k = lista.find((c) => norm(c.nome) === norm(nome)) || lista.find((c) => palavrasDe(c.nome).includes(cabeca));
+  const r = raizDoBicho(cabeca);
+  const k = lista.find((c) => norm(c.nome) === norm(nome)) || lista.find((c) => palavrasDe(c.nome).some((w) => raizDoBicho(w) === r));
   return k
     ? { nome: String(k.nome), ameaca: String(k.ameaca || CRIATURA_NA_PROSA.ameaca), criatura: true }
     : { nome: capital(nome), ameaca: CRIATURA_NA_PROSA.ameaca, criatura: true };
@@ -539,7 +596,7 @@ function comAmeaca(nome, cabeca, conhecidas) {
 function unicaCriaturaDa(mostrado, conhecidas, pessoas) {
   const ts = textosDe(mostrado);
   const ultima = ts.length ? criaturasDe(ts[ts.length - 1], cabecasQueSaoNome(ts, pessoas)) : [];
-  const cabecas = [...new Set(ultima.map((c) => c.cabeca))];
+  const cabecas = [...new Set(ultima.map((c) => raizDoBicho(c.cabeca)))];
   if (cabecas.length !== 1) return null;
   const c = ultima.find((x) => x.palavras.length > 1) || ultima[0];
   return comAmeaca(comoEscrito(c.palavras, ts), c.cabeca, conhecidas);

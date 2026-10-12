@@ -105,3 +105,45 @@ export const O_ACENTO_SEPARA = [
   { rx: /\bmaçãs?(?![\p{L}])/giu, vira: "fruta" },
 ];
 export const semConfusao = (frase) => O_ACENTO_SEPARA.reduce((s, x) => s.replace(x.rx, x.vira), String(frase == null ? "" : frase));
+
+/* ---------------- A COISA DA BANCA, NOMEADA (12/10, MM11 · 9.ª sessão, M43–M44) ----------------
+   "Pergunto quanto custa o anel com nome gravado por dentro, e também as
+   ataduras de linho." — o ambulante tinha os dois no estoque (◉ 100 e
+   ◉ 29), e a pauta não levou número nenhum: a régua do preço perguntado só
+   conhecia GÉNEROS de mercadoria (adaga, espada, poção…), e nem "anel" nem
+   "ataduras" eram um. O Mestre disse "cem marcos" e "cinco". No turno
+   seguinte, "compro as ataduras e pago as cinco moedas que ele pediu"
+   entrou de graça.
+
+   A coisa à venda nomeia-se pelo NOME DELA, que o jogador lê no painel e na
+   prosa: a cabeça do nome, as palavras antes do primeiro conector ("Anel |
+   com nome gravado", "Ataduras | de Linho", "Elixir | de Destreza"), duas
+   no máximo, quatro letras ou mais, e nenhuma das que só qualificam. O
+   singular e o plural casam ("a atadura", "as ataduras"). Mora aqui, num
+   módulo sem importações, porque mercado.js (a pauta) e bolsa-da-frase.js
+   (a compra) leem a mesma régua — e bolsa-da-frase.js importa mercado.js. */
+export const NOME_DA_COISA = {
+  conectores: ["de", "do", "da", "dos", "das", "com", "sem", "em", "para", "por", "que"],
+  palavras: 2,
+  minimo: 4,
+  soQualificam: ["grande", "pequeno", "pequena", "medio", "media", "velho", "velha", "novo", "nova", "bom", "boa", "simples", "comum", "raro", "rara", "antigo", "antiga", "demais", "muito", "pouco"],
+};
+const semAcentoE = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const raizE = (p) => p.replace(/(oes|aes|ais|eis)$/, (x) => ({ oes: "ao", aes: "ao", ais: "al", eis: "el" })[x]).replace(/s$/, "");
+/* as palavras que nomeiam a coisa (sem acento, na raiz) */
+export function cabecaDaCoisa(nome) {
+  const ps = semAcentoE(nome).split(/[^a-z]+/).filter(Boolean);
+  const out = [];
+  for (const p of ps) {
+    if (NOME_DA_COISA.conectores.includes(p) || out.length >= NOME_DA_COISA.palavras) break;
+    if (p.length >= NOME_DA_COISA.minimo && !NOME_DA_COISA.soQualificam.includes(p)) out.push(raizE(p));
+  }
+  return out;
+}
+/* a frase nomeia esta coisa? (`texto` cru ou já sem acento) */
+export function nomeiaACoisa(texto, nome) {
+  const cab = cabecaDaCoisa(nome);
+  if (!cab.length) return false;
+  const ws = new Set(semAcentoE(texto).split(/[^a-z]+/).filter(Boolean).map(raizE));
+  return cab.some((c) => ws.has(c));
+}
