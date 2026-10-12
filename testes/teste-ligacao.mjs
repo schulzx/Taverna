@@ -188,6 +188,14 @@ sec("1. NENHUM MÓDULO MUDO");
        sai quando o App o importar. — 12/10: o frontend ligou-o (pautaDoTurno,
        depois de cederNaCena; o ref da lista de antes; declararAgressao lê a
        frase contra a lista), e a entrada saiu. */
+    /* 12/10 (Fase F2, F2b · F2c · F2d): `fichas.js` nasce no backend — a
+       ficha e o cartão de cada coisa em cena (fichaParaTela, fichasDaCena),
+       o id da ficha tocada no envio (quemNoEnvio, bancasDoToque) e a memória
+       com rosto (o campo de save `memoria`, a página do Códice, a procura
+       fora de cena) — e espera a fiação do App.jsx pelo `oficial` na MESMA
+       fase, depois do painel do `aprendiz`. `teste-fichas.mjs` é o primeiro
+       leitor. A entrada sai quando o App o importar. */
+    "fichas.js": "o pé da página com as fichas, o cartão e a memória no save (oficial, F2b–F2d, 12/10)",
   };
   const mudos = [];
   for (const f of arqs) {

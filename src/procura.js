@@ -197,6 +197,20 @@ export function papelProcurado(texto, nucleo) {
    quem a base diz que mora aqui. */
 export function procurarPessoa(nome, ctx = {}) {
   const r = procurarPeloNome(nome, ctx);
+  /* F2d (12/10, fichas.js): a pessoa que tem página na memória do herói
+     ("procuro Oren", fora de cena) e que o mundo não acha — fora do registo,
+     da base e da espinha, como o elo do núcleo antes de ser apresentado —
+     está onde o herói a viu por último. O registo continua a ganhar: a
+     memória só responde ao "ninguém". */
+  const dm = ctx && typeof ctx === "object" && ctx.daMemoria && typeof ctx.daMemoria === "object" ? ctx.daMemoria : null;
+  if (r && dm && dm.cidade && r.desfecho === "ninguem" && norm(dm.nome) === norm(nome)) {
+    const c = ctx || {};
+    const aqui = norm(dm.cidade) === norm(c.cidadeAtual);
+    const comPapel = dm.papel ? { papel: String(dm.papel) } : {};
+    return aqui
+      ? { ...r, nome: String(dm.nome), onde: dm.cidade, desfecho: "aqui", ...comPapel }
+      : { ...r, nome: String(dm.nome), onde: dm.cidade, desfecho: "noutro_lugar", ...comPapel, ...rumoPara(c.mapa, dm.cidade, { cidadeAtual: c.cidadeAtual, coord: c.coord, lugar: c.lugar, jornada: c.jornada }) };
+  }
   /* 9.ª sessão: procurado pelo papel (`papelProcurado`) — a resposta diz
      de quem se trata, e quem o mundo não acha está onde o núcleo o põe */
   const pp = ctx && typeof ctx === "object" && ctx.porPapel && typeof ctx.porPapel === "object" ? ctx.porPapel : null;

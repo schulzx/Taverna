@@ -383,7 +383,10 @@ sec("5. o jogo trata o jogador por você (a linha EM CENA, 120 mundos)");
   const { guildasDoMundo } = await import(S + "guildas.js");
   const { elencoDoMundo } = await import(S + "elenco.js");
   const { ANTECEDENTES } = await import(S + "antecedentes.js");
-  const TU = /(?<![\p{L}])(tua|teu|tuas|teus|contigo|convosco)(?![\p{L}])|-te(?![\p{L}])/iu;
+  /* 12/10 (F2b, fichas.js): o que a lista diz que o herói sabe vai agora à
+     tela, no cartão — e o lugar dizia "onde estás", que a catraca de antes
+     não via (só olhava pronomes). Passa a ver também o verbo na 2.ª pessoa. */
+  const TU = /(?<![\p{L}])(tua|teu|tuas|teus|contigo|convosco|estás|és|tens|vês|sabes|queres|podes|vais|foste)(?![\p{L}])|-te(?![\p{L}])/iu;
   const G = "Fantasia medieval";
   const ANTS = ["", ...ANTECEDENTES.map((a) => a.id)];
   const ruins = [];
@@ -401,7 +404,7 @@ sec("5. o jogo trata o jogador por você (a linha EM CENA, 120 mundos)");
     const grupo = ci ? [ci.comp] : [];
     const elenco = elencoDoMundo(semente, mapa, { genero: G, molde: M, espinha, guildas });
     const nucleo = NU.nucleoDaCampanha(semente, mapa, { genero: G, molde: M, espinha, guildas, antecedente, grupo, elenco });
-    const lista = montarEmCena({ semente, turno: 7, cidade, grupo, emCena: (nucleo.pessoas || []).slice(0, 2).map((p) => p.nome), nucleo, encontro: { criatura: "Lobo Cinzento", quantos: 2 }, bancas: [AMB], moeda: "moedas" });
+    const lista = montarEmCena({ semente, turno: 7, cidade, grupo, emCena: (nucleo.pessoas || []).slice(0, 2).map((p) => p.nome), nucleo, encontro: { criatura: "Lobo Cinzento", quantos: 2 }, bancas: [AMB], moeda: "moedas", lugar: { nome: cidade }, saidas: ["a porta do norte"], perto: [{ nome: "o Moinho Velho", distancia: "2 h", rumo: "norte" }] });
     const linha = emCenaParaPauta(lista, {});
     if (linha) linhas++;
     if (grupo.length && linha.includes("(" + (EC.EM_CENA_TRATO || {}).comigo + ")")) comGrupo++;
@@ -409,6 +412,7 @@ sec("5. o jogo trata o jogador por você (a linha EM CENA, 120 mundos)");
   }
   console.log(`      (${linhas} linhas EM CENA em 120 mundos; ${comGrupo} com o companheiro "(com você)")`);
   t("a tabela do trato existe e fala por você", (EC.EM_CENA_TRATO || {}).comigo === "com você" && !Object.values(EC.EM_CENA_TRATO || {}).some((x) => TU.test(x)));
+  t("o lugar onde o herói está diz «onde você está», não «onde estás» (F2b)", (EC.EM_CENA_TRATO || {}).ondeEsta === "onde você está" && (montarEmCena({ semente: "x", lugar: { nome: "Buraco Norte" } }).find((x) => x.tipo === "lugar") || { sabe: [] }).sabe.includes("onde você está"));
   t("nenhum tu/teu/contigo na linha EM CENA nem no que a lista diz que o herói sabe, nos 120 mundos", ruins.length === 0, J(ruins.slice(0, 5)));
   t("…e a varredura tem o que varrer: a linha em todos os mundos, o companheiro com «(com você)» na maioria", linhas === 120 && comGrupo >= 60, `${linhas}/${comGrupo}`);
 }

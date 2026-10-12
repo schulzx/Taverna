@@ -77,11 +77,14 @@ export const EM_CENA_MEMORIA = { turnos: 6, aVista: 1 };
 /* O TRATO. O jogo trata o jogador por "você" (a tela e o Narrador desde a
    v9.346; catraca em teste-subtramas §7b). A F2a nasceu a dizer "Sari
    (contigo)" e "do teu passado" — e a linha EM CENA vai ao Narrador, que
-   copia o registo que lê. As palavras que falam do herói saem daqui. */
+   copia o registo que lê. As palavras que falam do herói saem daqui.
+   12/10 (F2b): o lugar dizia "onde estás" — e o que a lista diz que o
+   herói sabe vai agora à tela, no cartão (fichas.js). */
 export const EM_CENA_TRATO = {
   comigo: "com você",
   andaComigo: "anda com você",
   doPassado: "do seu passado",
+  ondeEsta: "onde você está",
 };
 
 /* ---------------- O ID ----------------
@@ -274,7 +277,7 @@ export function montarEmCena(ctx) {
   /* 7. os lugares: o sítio, as saídas, o que fica perto */
   const lugares = [];
   const lg = nomeDe(c.lugar);
-  if (lg) lugares.push({ tipo: "lugar", nome: lg, aqui: true, deOnde: "lugar", sabe: ["onde estás"] });
+  if (lg) lugares.push({ tipo: "lugar", nome: lg, aqui: true, deOnde: "lugar", sabe: [EM_CENA_TRATO.ondeEsta] });
   for (const s of arr(c.saidas)) {
     const nome = String((s && typeof s === "object" ? s.nome || s.pista : s) || "").trim();
     if (nome) lugares.push({ tipo: "lugar", nome, aqui: true, deOnde: "saida", saida: true, sabe: ["uma saída daqui"] });
