@@ -86,6 +86,25 @@ const CENAS = [
   "uma ponte caída que obriga um desvio longo — ou uma travessia perigosa",
 ];
 
+/* O ACHADO JÁ NA BOLSA (E3, a fiação). O ◉ do achado entra na bolsa no
+   momento em que é rolado, e o envelope da estrada di-lo com esta marca.
+   A cobrança (cobranca.js) lê ganhos na narração e credita o que o Narrador
+   narrou sem declarar; sem a marca, "você acha 12 moedas na vala" pagaria
+   o achado duas vezes. Quem escreve a marca e quem a lê é o mesmo módulo,
+   para as duas pontas nunca discordarem. */
+const marcaDoAchado = (n) => `◉ ${n} já na bolsa (creditadas pelo sistema)`;
+const RX_MARCA_DO_ACHADO = /◉ (\d+) já na bolsa \(creditadas pelo sistema\)/g;
+
+export function moedasDoAchadoNoEnvelope(envelopes) {
+  if (typeof envelopes !== "string" || !envelopes) return 0;
+  let total = 0;
+  for (const m of envelopes.matchAll(RX_MARCA_DO_ACHADO)) {
+    const n = parseInt(m[1], 10);
+    if (Number.isFinite(n) && n > 0) total += n;
+  }
+  return total;
+}
+
 export function rolarEncontro(genero, nivel, nomeViajante) {
   const r = d100();
   if (r <= 32) {
@@ -106,12 +125,14 @@ export function rolarEncontro(genero, nivel, nomeViajante) {
   }
   if (r <= 66) {
     const esp = gerarEspolios([{ ameaca: Math.random() < 0.3 ? "competente" : "comum" }]);
-    const partes = [`◉ ${esp.moedas}`];
+    const partes = [esp.moedas > 0 ? marcaDoAchado(esp.moedas) : "nenhuma moeda"];
     if (esp.caiItem) partes.push("1 item útil");
-    /* E3 do "o Narrador só narra" (12/10): o ◉ rolado vai também em número,
-       para o App o creditar no rolar — o "via moedas" do detalhe é a última
-       porta do canal, e sai quando essa fiação entrar */
-    return { tipo: "achado", titulo: "algo à beira da estrada", moedas: esp.moedas, detalhe: `Achado rolado pelas tabelas: ${partes.join(" + ")} — entregue de verdade, via "moedas" e, se couber, "itens"/"equipamento_novo". Crie o contexto (um esconderijo, um corpo na vala, um altar esquecido), mas o CONTEÚDO é este; não invente mais nada.` };
+    /* E3 do "o Narrador só narra" (12/10): o ◉ rolado vai em número e o App
+       credita-o no rolar (`viajar`); o detalhe diz ao Narrador que o dinheiro
+       já está na bolsa, e a cobrança lê a mesma marca no envelope para não o
+       somar outra vez quando ele o narrar achado (`moedasDoAchadoNoEnvelope`).
+       O "via moedas" saiu com esta fiação — era a última porta do canal. */
+    return { tipo: "achado", titulo: "algo à beira da estrada", moedas: esp.moedas, detalhe: `Achado rolado pelas tabelas: ${partes.join(" + ")}${esp.caiItem ? ` — o item entra, se couber, por "itens"/"equipamento_novo"` : ""}. Crie o contexto (um esconderijo, um corpo na vala, um altar esquecido) e narre o achado, mas o CONTEÚDO é este; não invente mais nada.` };
   }
   if (r <= 85) {
     return { tipo: "cena", titulo: "sinais no caminho", detalhe: `Na estrada: ${CENAS[Math.floor(Math.random() * CENAS.length)]}. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.` };

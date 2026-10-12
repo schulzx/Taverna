@@ -325,7 +325,9 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
      presentes que partilham o primeiro nome achado. */
   t("App.jsx importa nomeProcurado e primeiroNome para a guarda do \"Lina,\"",
     app.includes("import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from \"./procura.js\";")
-    && app.includes("nomeComDono, notaDoHomonimo, primeiroNome } from \"./npcs.js\";"));
+    /* movida na fiação da E3 (12/10, v9.424): o import do npcs.js ganhou
+       fichaDoCronista no fim; basta que primeiroNome esteja nele */
+    && /nomeComDono, notaDoHomonimo, primeiroNome(, [A-Za-z]+)* \} from "\.\/npcs\.js";/.test(app));
   t("pessoaNaFrente acha pelo motor da procura, não por substring do nome inteiro",
     app.includes("const achado = nomeProcurado(t, vivos.map((n) => n.nome));"));
   t("e a guarda: dois presentes com o mesmo primeiro nome não se adivinha qual",

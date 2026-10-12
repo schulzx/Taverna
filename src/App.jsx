@@ -13,9 +13,9 @@ import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
-import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome } from "./npcs.js";
+import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome, fichaDoCronista } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
-import { rolarClima, rolarEncontro } from "./encontros.js";
+import { rolarClima, rolarEncontro, moedasDoAchadoNoEnvelope } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
@@ -10413,7 +10413,13 @@ export default function Taverna() {
        isso aqui só entram QUANTIA e ITEM DE CATÁLOGO, com verbo de aquisição
        e o herói como sujeito — nunca um estado, nunca uma metáfora. */
     try {
-      const falta = oQueFaltaCreditar(resp.narrativa, resp.mudancas);
+      /* E3 (a fiação): o achado da estrada já entrou na bolsa no rolar, e o
+         envelope di-lo com uma marca (encontros.js); o que ela diz conta como
+         declarado, para a narração do achado não o pagar outra vez */
+      let jaDoAchado = 0;
+      try { jaDoAchado = moedasDoAchadoNoEnvelope(op.envelopes || ""); } catch (e) { calou("o achado já na bolsa", e); jaDoAchado = 0; }
+      const mdC = resp.mudancas && typeof resp.mudancas === "object" ? resp.mudancas : {};
+      const falta = oQueFaltaCreditar(resp.narrativa, jaDoAchado > 0 ? { ...mdC, moedas: Math.max(0, Number(mdC.moedas) || 0) + jaDoAchado } : resp.mudancas);
       /* O DADO MANDA MAIS QUE A NARRAÇÃO. Achado na prova desta versão: o
          teste falhou, o Mestre narrou o roubo dando certo assim mesmo, e a
          cobrança creditou. A peça feita para a ficha obedecer à ficção tinha
@@ -11364,10 +11370,10 @@ export default function Taverna() {
     try {
       const sys = [
         "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]},\"promessas\":[],\"promessas_pagas\":[]}",
+        "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"genero\":\"ele|ela\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]},\"promessas\":[],\"promessas_pagas\":[]}",
         "SEÇÃO missoes: \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
         "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
-        "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora.",
+        "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora. \"genero\": \"ele\" ou \"ela\", pelo que a narrativa diz da pessoa (o pronome, o artigo, senhor/senhora); se a cena não deixa saber, \"\" — nunca chute.",
         "SEÇÃO falou_com (lista de nomes): as pessoas com quem o herói FALOU frente a frente NESTE turno — estavam na cena com ele e trocaram palavras com ele. Quem só foi citado, lembrado, procurado ou descrito de longe NÃO entra. Na dúvida, lista vazia.",
         "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real. Para gestos comuns, fieis 10 a 500, pf 1 a 10; na dúvida, 0. Para GRANDES acontecimentos de fé, NÃO chute números: preencha \"acontecimento\":{\"tipo\":\"alianca_reino|libertacao|milagre_publico|santuario|conversao_lider|vitoria_lendaria|pregacao\",\"local\":\"nome da cidade/reino\"} e deixe fieis/pf em 0 — o SISTEMA calcula pela população do local. Um povo/reino inteiro prometendo sua fé ao herói É \"alianca_reino\" (ou \"libertacao\", se o herói o libertou) — NUNCA deixe isso passar sem registrar.",
         "O CAMPO \"local\" É O MAIS IMPORTANTE DA SEÇÃO fe: a devoção mora em cidades reais do mapa, não no ar. Use SEMPRE o nome exato da cidade onde o feito foi testemunhado (vale também no campo \"local\" solto, junto de fieis/pf). Sem local reconhecível, a fé vira \"andarilhos\" — conta muito menos e míngua rápido.",
@@ -11512,8 +11518,14 @@ export default function Taverna() {
             const nomeCerto = (id && id.nome) || n.nome;
             const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
             if (!tocou) { reg = { ...reg }; tocou = true; }
-            if (chave) reg[chave] = mesclarNPC(reg[chave], n);
-            else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
+            /* E3 do "o Narrador só narra" (a fiação): sem o canal npcs do
+               Narrador, o gênero vem do Cronista ("ele"/"ela"), entra no
+               registo como "homem"/"mulher" e não se reescreve em quem já
+               o tem (fichaDoCronista, npcs.js) */
+            let nF = n;
+            try { nF = fichaDoCronista(n, chave ? reg[chave] : null); } catch (e) { calou("o gênero do Cronista", e); nF = n; }
+            if (chave) reg[chave] = mesclarNPC(reg[chave], nF);
+            else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
           });
           if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoHomonimo(homonimos)}`;
           if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); tocouElenco = true; }
@@ -22313,7 +22325,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO ACEITO — ${d.alvo}] A ${grupo.bando} (${grupo.membros.map((m) => m.nome).join(", ")}, força ${grupo.forca}) aceitou meu decreto: "${d.descricao}" Recompensa de ◉ ${d.recompensa} já está retida pelo sistema. Eles partiram; o resultado chegará pelo sistema em alguns dias — até lá, eles estão FORA DE CENA, em missão.`;
           /* o líder vira uma pessoa conhecida */
           if (!npcsRef.current[grupo.lider]) {
-            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: mundo && mundo.genero, notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current } };
+            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: "", notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current } };
             setNpcs(npcsRef.current);
           }
         } else {
@@ -24763,6 +24775,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         notaMarcha = ` FORCEI A MARCHA por ${horasExtras} horas além do normal e o sistema diz que aguentei sem exaustão. Mostre o esforço — mas eu chego de pé.`;
       }
     }
+    /* O ACHADO DA ESTRADA ENTRA NA BOLSA NO ROLAR (E3 do "o Narrador só
+       narra", a fiação). O dinheiro já vem em número da tabela (encontros.js); até
+       aqui quem o creditava era o Narrador, pelo campo de moedas, e o canal
+       saiu do prompt. O envelope do trecho diz que o dinheiro já está na
+       bolsa, e a cobrança lê a mesma marca para não o pagar outra vez
+       quando a narração o contar achado. */
+    try {
+      const nAchado = enc && enc.tipo === "achado" ? Math.max(0, Math.floor(Number(enc.moedas) || 0)) : 0;
+      if (nAchado > 0) {
+        persV = { ...persV, moedas: (persV.moedas || 0) + nAchado };
+        setPersonagem(persV); personagemRef.current = persV;
+        pushMsgs([{ autor: "sistema", texto: `Achado na estrada: ${nAchado} ${nAchado === 1 ? "moeda" : "moedas"} para a bolsa.` }]);
+      }
+    } catch (e) { calou("o achado da estrada na bolsa", e); }
     /* ---------------- O TURNO DE ESTRADA (v9.56) ----------------
        Um avanço cobre QUATRO horas de marcha — meio dia dos oito que se
        caminha — e o relógio anda meio dia de calendário. Antes o relógio
@@ -24820,11 +24846,19 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        chamada (`talvezChegarSozinho`, no envio): o trecho não pode dizer
        "não chegue" enquanto a chegada diz "chegou" */
     const ultimoTrecho = paraBoca && !!(progressoDaViagem(jornadaRef.current) || {}).chegou;
+    /* E3 do "o Narrador só narra" (a fiação): com destino na jornada, a
+       chegada é do sistema (talvezChegarSozinho, no envio, que no último
+       trecho sobe na MESMA chamada) e o meio sai do terreno da rota — o
+       trecho já não ensina o campo da cidade nem o do meio. Sem destino, as
+       duas instruções ficam: é ainda a única porta de chegada por palavras
+       (detectarSeguirViagem não lê o destino da frase). */
+    const paraCidade = !paraBoca && jornadaRef.current && jornadaRef.current.para ? String(jornadaRef.current.para) : "";
+    const ultimoTrechoCidade = (() => { try { return !!paraCidade && !!(progressoDaViagem(jornadaRef.current) || {}).chegou; } catch (e) { calou("o último trecho até à cidade", e); return false; } })();
     const textoDaViagem = (`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
 LOCAL ATUAL: ${localAtualTxt()}.
 CLIMA AGORA: ${c.rotulo} — ${c.nota}.
 ENCONTRO DO TRECHO (${enc.tipo}): ${encV.detalhe}
-Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. Se o meio de viagem mudar, registre "jornada_meio". ${paraBoca ? (ultimoTrecho ? `Este trecho termina diante da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade: narre-o até ela ficar à vista, sem me pôr lá dentro e sem registrar "cidade_atual" — a chegada à boca é do sistema.` : `Estou a caminho da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade — aproxime-me dela, mas NÃO me faça chegar nem entrar, e NÃO registre "cidade_atual": a chegada à boca é do sistema, e ele avisa quando for.`) : `Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."}`} Termine me convidando a agir. RITMO DE MARCHA: ${rit.nome.toLowerCase()} — ${rit.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`);
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. ${paraBoca ? (ultimoTrecho ? `Este trecho termina diante da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade: narre-o até ela ficar à vista, sem me pôr lá dentro — a chegada à boca é do sistema.` : `Estou a caminho da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade — aproxime-me dela, mas NÃO me faça chegar nem entrar: a chegada à boca é do sistema, e ele avisa quando for.`) : paraCidade ? (ultimoTrechoCidade ? `Este trecho termina em ${paraCidade}: a chegada vem no envelope do sistema, e é como ele diz que se narra.` : `Estou a caminho de ${paraCidade} — aproxime-me desse destino, sem me pôr lá dentro: a chegada é do sistema, e ele avisa quando for.`) : `Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."}`} Termine me convidando a agir. RITMO DE MARCHA: ${rit.nome.toLowerCase()} — ${rit.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`);
     if (qr.chamadas) enviar(textoDaViagem, persV);
     else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${textoDaViagem}`;
   };

@@ -302,7 +302,9 @@ sec("6. a fiação — App.jsx");
   /* MM15 (5): o import ganhou primeiroNome, para a guarda do "Lina," em
      pessoaNaFrente — movido com o motivo, não apagado. */
   t("App.jsx importa nomeComDono, notaDoHomonimo e primeiroNome de npcs.js",
-    app.includes("nomeComDono, notaDoHomonimo, primeiroNome } from \"./npcs.js\";"));
+    /* movida na fiação da E3 (12/10, v9.424): o import ganhou fichaDoCronista
+       no fim; a intenção (os três vêm de npcs.js) é a mesma */
+    /nomeComDono, notaDoHomonimo, primeiroNome(, [A-Za-z]+)* \} from "\.\/npcs\.js";/.test(app));
   t("e jaMeViuAntes de interprete.js",
     app.includes('paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";'));
 
@@ -345,8 +347,11 @@ sec("6. a fiação — App.jsx");
     && app.includes(": criarNPC(nomeCerto, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });"));
   t("a porta do cânone (com `continue`) mescla quando a chave já existe — nunca criarNPC por cima (apagaria laço e consultas)",
     app.includes('reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);'));
+  /* asserção movida na fiação da E3 (12/10, v9.424): a ficha do Cronista
+     passa antes por fichaDoCronista (o gênero, npcs.js) e chega como `nF`
+     em vez de `n`. A intenção — nomeCerto na chave e no criarNPC — é a mesma. */
   t("a porta do Cronista (`pessoas`, com slice(0, 40)) idem, com nomeCerto",
-    app.includes('else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });'));
+    app.includes('else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });'));
   t("as duas portas do registo somam a nota do Narrador quando há recusa",
     app.split('if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\\n" : ""}${notaDoHomonimo(homonimos)}`;').length - 1 === 2);
   t("o mural só prega se o dador não for recusado por homônimo",

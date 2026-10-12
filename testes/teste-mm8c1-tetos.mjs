@@ -265,8 +265,11 @@ sec("9. a fiação no App.jsx (prova por texto)");
      passou a ser `nomeCerto` (o que `nomeComDono` decide), não mais o
      `n.nome` cru — um homônimo de quem já importa mescla-se na ficha
      dela em vez de abrir uma segunda pessoa com o apelido. */
+  /* asserção movida na fiação da E3 (12/10, v9.424): a ficha do Cronista
+     chega como `nF` (passou por fichaDoCronista, o gênero); o turno atual
+     continua a ser o que marca a gente nova. */
   tem("o Cronista marca a gente nova com o turno atual, não com o padrão (zero)",
-    "criarNPC(String(nomeCerto).slice(0, 40), { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });");
+    "criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });");
 
   /* ponto 8 — o QUEM do rodapé recebe emCena (citados nas 2 últimas falas) */
   tem("o rodapé calcula quem foi citado nas duas últimas falas do Mestre",

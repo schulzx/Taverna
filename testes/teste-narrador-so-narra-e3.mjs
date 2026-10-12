@@ -95,14 +95,17 @@ sec("2. o prompt já não cita nenhum canal do 1.º e do 2.º lote");
   /* os textos dos módulos que vão ao Narrador por turno, lidos no fonte:
      nenhum ensina mais o 2.º lote */
   const ENSINA = /(registre|mande|envie|DECLARE|declarar|registrar|via)[^.\n`]{0,40}\\?"(moedas|cidade_atual|lugar_atual|jornada_meio|canone|npcs)\\?"/;
-  /* a única espera, com data (12/10): o achado da estrada (encontros.js)
-     rola ◉ e ainda o entrega pelo campo — até o App o creditar no rolar
-     (hand-off ao frontend da E3). Esvazia quando a fiação entrar. */
-  const ESPERA = new Set(["encontros.js"]);
+  /* a espera com data (12/10) era o achado da estrada (encontros.js), que
+     rolava ◉ e o entregava pelo campo até o App o creditar no rolar.
+     ESVAZIOU na fiação da E3 (frontend, v9.424): o App credita o achado em
+     viajar() e o detalhe diz que o dinheiro já está na bolsa. Asserção
+     movida — de "a espera é só o achado" para "não há espera": a intenção
+     (nenhum módulo ensina o 2.º lote) ficou inteira, sem exceção. */
+  const ESPERA = new Set();
   const quem = readdirSync(new URL("../src/", import.meta.url)).filter((f) => f.endsWith(".js")).filter((f) => ENSINA.test(readFileSync(new URL("../src/" + f, import.meta.url), "utf8")));
   const fora = quem.filter((f) => !ESPERA.has(f));
   t(`nenhum módulo (src/*.js) ensina o 2.º lote ao Narrador, fora a espera${fora.length ? " — ainda: " + fora.join(", ") : ""}`, fora.length === 0);
-  t("e a espera é mesmo só o achado da estrada", quem.length <= 1 && /entregue de verdade, via "moedas"/.test(readFileSync(new URL("../src/encontros.js", import.meta.url), "utf8")));
+  t("e já não há espera: o achado da estrada deixou de pedir o campo", quem.length === 0 && !/via "moedas"/.test(readFileSync(new URL("../src/encontros.js", import.meta.url), "utf8")));
   t("e o achado já leva o ◉ em número, para o App o creditar no rolar", /tipo: "achado", titulo: "algo à beira da estrada", moedas: esp\.moedas/.test(readFileSync(new URL("../src/encontros.js", import.meta.url), "utf8")));
   t("o LUGAR já não pede lugar_atual", !/lugar_atual/.test(LUGAR_PROMPT) && /Quem regista onde o herói está é o sistema/.test(LUGAR_PROMPT));
   t("nem o ONDE EU ESTOU de um sítio", !/lugar_atual/.test(resumoLugarPrompt({ nome: "a fazenda de Jessa", cidade: "Vau", distancia: "arredores" }, "Vau")));

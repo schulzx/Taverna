@@ -395,6 +395,33 @@ export function mesclarNPC(ficha, dados0 = {}) {
   return out;
 }
 
+/* ============================================================
+   O GÊNERO QUE O CRONISTA LÊ (E3 do "o Narrador só narra", 12/10)
+
+   Até a E3 quem registava o gênero de uma pessoa era o Narrador, no canal
+   `npcs` ("genero":"mulher"). O canal saiu, e o Cronista — que corre
+   depois do turno e regista as pessoas novas — não tinha o campo: a 6.ª e
+   a 7.ª sessões já tinham trocado o gênero de gente na narração, e sem
+   registo a troca deixa de ter quem a desminta. O Cronista diz "ele" ou
+   "ela" (o pronome que leu na cena, a resposta mais curta de acertar); o
+   registo guarda "homem"/"mulher", a forma que o resto da casa já escreve
+   (`criarNPC`, os NOMES À MÃO, a fogueira) e que `sexoDe` lê.
+
+   O gênero não se reescreve: quem já o tem fica com ele. Uma leitura
+   errada do Cronista num turno não pode trocar o que a pessoa é — era
+   esse o defeito. Um valor que não diz gênero nenhum (lixo de save antigo)
+   não conta como "já tem".
+   ============================================================ */
+const GENERO_DO_REGISTO = { f: "mulher", m: "homem" };
+
+export function fichaDoCronista(pessoa, existente = null) {
+  const p = pessoa && typeof pessoa === "object" ? pessoa : {};
+  const { genero, ...resto } = p;
+  const lido = GENERO_DO_REGISTO[sexoDe(typeof genero === "string" ? genero : "")] || "";
+  const ja = existente && typeof existente === "object" ? sexoDe(typeof existente.genero === "string" ? existente.genero : "") : "";
+  return lido && !ja ? { ...resto, genero: lido } : resto;
+}
+
 /* Quem já ocupa este papel no registro — é o que transforma "Yorick virou
    capitão" numa contradição PROVÁVEL em vez de uma suspeita: a guarda já
    tem capitão, e ele tem nome. */
