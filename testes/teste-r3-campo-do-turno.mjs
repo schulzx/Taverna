@@ -31,7 +31,9 @@ import { readFileSync } from "node:fs";
 import { SUBS_GESTAO, falaDaNovidade } from "../src/abas.js";
 import { ALVOS, TIPOS, CAMPO_DO_TURNO } from "../src/estilo.js";
 
-const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+/* As quebras de linha normalizam-se: um checkout com CRLF (o git archive no
+   Windows) não pode ficar vermelho por uma régua que mede o fim de linha. */
+const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 /* A1 · B1 (10/10): o relato saiu do `App.jsx` para `painel-relato.jsx` —
    o laço de `agruparMensagens`, o `BlocoSistema` e as portas da seta mudaram
    de casa sem mudar de forma. As asserções da seta e da
