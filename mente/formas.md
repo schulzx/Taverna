@@ -11721,6 +11721,133 @@ pede ao Narrador:** nada novo no prompt — a marca entra pela `pauta` quando o
 herói é descrito (*"tem a cicatriz do troll de Vau Fincado"*), e assim o Mestre
 responde *"de onde é essa cicatriz?"* com a verdade.
 
+### 11 · A F1 feita — as 18 feras (`desenho`, 12/10)
+
+**Onde:** quadro **`Bestiário · F1 · as 18 feras de fantasia`** `222:409`, ao
+lado das matrizes — a fileira das 18 em ficha 160 + cartão 64 + chip 32
+(`222:413`, cartões `222:414` … `222:779`, na ordem de `CRIATURAS_FANTASIA`) e a
+**leitura a 32 px** (`222:817`). As matrizes novas são `f9`–`f18` na grelha
+`189:413` (imagens `221:410` · `:413` · `:416` · `:419` · `:422` · `:425` ·
+`:428` · `:431` · `:434` · `:437`); o quadro passou a *as 30 pinturas-fonte*.
+
+**O gasto: 10 chamadas, não 18.** Oito das dezoito já estavam pintadas na
+amostra de 11/10 com o mesmo bloco de estilo (Lobo, Goblin, Bandido, Esqueleto,
+Zumbi, Troll, Quimera, Dragão Jovem) — gerá-las de novo seria pagar duas vezes
+pela mesma célula. As dez novas saíram todas dentro do contrato à primeira
+(`gemini-3.1-flash-image`, plano Pro, nenhuma recusa, nenhuma repetição). A
+ferramenta do Figma **não devolve o custo** da chamada; o saldo vê-se no painel
+de créditos de IA do plano. A proporção para decidir a F2: **F2 = 240 chamadas
+= 24 × esta F1**.
+
+**O manifesto** (centro do rosto em fração da matriz; estimado na miniatura,
+como na amostra — a ferramenta de corte mede e corrige):
+
+| espécie | arquivo | cx | olhos | | espécie | arquivo | cx | olhos |
+|---|---|---|---|---|---|---|---|---|
+| Slime | `slime` | 0,41 | 0,36 | | Cultista | `cultista` | 0,44 | 0,39 |
+| Rato Gigante | `rato-gigante` | 0,47 | 0,37 | | Ogro | `ogro` | 0,47 | **0,30** |
+| Lobo | `lobo` | 0,43 | 0,39 | | Troll | `troll` | 0,45 | 0,39 |
+| Goblin | `goblin` | 0,49 | 0,39 | | Elemental Menor | `elemental-menor` | 0,44 | 0,45 |
+| Bandido | `bandido` | 0,45 | 0,39 | | Golem de Pedra | `golem-de-pedra` | 0,43 | 0,39 |
+| Esqueleto | `esqueleto` | 0,47 | 0,41 | | Quimera | `quimera` | 0,41 | **0,47** |
+| Zumbi | `zumbi` | 0,47 | 0,37 | | Gigante | `gigante` | 0,45 | 0,33 |
+| Lobo Atroz | `lobo-atroz` | 0,45 | 0,37 | | Dragão Jovem | `dragao-jovem` | 0,45 | 0,37 |
+| | | | | | Lich | `lich` | 0,46 | 0,36 |
+| | | | | | Dragão Ancião | `dragao-anciao` | 0,42 | **0,46** |
+
+Três fogem dos 35–43 % do contrato (o Ogro de cabeça pequena em ombros enormes;
+a Quimera e o Dragão Ancião, de pescoço comprido) — é a mesma razão de §4 para
+`olhos` ser por matriz.
+
+**A leitura a 32 px, sem adjetivo do que não se mediu:** as dezoito separam-se
+umas das outras pela silhueta e pelo valor na tira `222:817`. As duas mais
+fracas são o **Lobo Atroz** e o **Dragão Ancião** — bicho escuro em fundo
+escuro, onde quem diz *que coisa é* é o olho âmbar e o contorno violeta, não a
+massa. Não se pagou outra chamada por elas: o anel do papel já separa o disco
+do fundo (§5) e o Lobo Atroz distingue-se do Lobo pelo valor (negro × cinzento).
+Se o `jogo` as confundir jogando, é uma chamada cada, e é dele dizer.
+
+**O rótulo dos cartões é o do código.** A amostra escreveu *BESTA* no Troll, na
+Quimera e no Dragão Jovem; `menteDaCriatura` (`adversario.js`) diz **pensa**
+dos três (o Troll e o Dragão casam com `RX_PENSA`; a Quimera cai no padrão). O
+quadro novo segue o código, e o chefe é quem `CRIATURAS_FANTASIA` declara
+`importante` (Dragão Jovem, Lich, Dragão Ancião) — a Quimera, que a amostra pôs
+chefe, aqui é inimigo.
+
+### 12 · A troca no código — o contrato para quem constrói
+
+**Um só sítio troca tudo.** Todo rosto do jogo passa por `Rosto` (`rosto.jsx`):
+os doze chamadores de `Retrato` (`ui.jsx` 1112 — `App.jsx` 599, 870, 886, 2049,
+2192, 4706; `painel-batalha` 268/270; `painel-ficha` 220; `painel-fichas` 217;
+`painel-fogueira` 242, 396, 448, 452; `ui.jsx` 2289) e os dois que o chamam
+direto (`carta-taro` 143, `grade-de-batalha` 313). **A troca não precisa do
+`App.jsx`**: é `rosto.jsx` + um módulo puro + os arquivos.
+
+1. **Os arquivos** (`aprendiz`). A fonte é a matriz 1024 PNG no Figma (os nós
+   da grelha `189:413`; as cópias no scratchpad de uma sessão não são acervo).
+   Corta-se **o recorte da ficha** (lado 0,88 da matriz, canto
+   `((cx+0,5)/2 − 0,44 , 0,03)`, `clamp` a [0, 0,12]) e codifica-se **WebP
+   320 × 320, q 0,75** (§6: ~8,4 KB). Destino:
+   `public/retratos/especie/<arquivo>.webp` e
+   `public/retratos/gente/<raca>-<sexo>-<traje>-<v>.webp` — minúsculas, sem
+   acento, hífen (`dragao-anciao`, `meio-orc-f-ladino-1`). O mesmo padrão dos 30
+   `public/cenas/*.webp`. A ferramenta de corte vive **fora de `src/`** e não
+   entra no bundle: uma página que desenha no `canvas` e chama
+   `toBlob('image/webp', 0.75)` (o método de `medir.html`, §6) — **nenhuma
+   dependência nova** no `package.json`.
+2. **A tabela** (`backend`, território do sistema — pedido R1–R5): `src/retratos.js`,
+   puro. `RETRATOS` = uma entrada por arquivo, `{ chave, arquivo, cx, olhos }`,
+   chave `especie:Lobo Atroz` ou `gente:<Raca>|<m|f>|<traje>|<v>` (raças de
+   `RACAS`, trajes de `CLASSES` e de `OFICIOS` de `npcs.js`, os nomes exactos
+   do código). Duas funções, as duas provadas em Node:
+   - `retratoDe(ente, mundo)` → a entrada ou `null`. Quem tem `classe` é gente
+     (a mesma regra de A1); quem tem ofício é gente com traje = ofício; o resto é
+     espécie. Variante pela semente, e o mundo não repete rosto enquanto houver
+     variante livre (R5). `null` → o `Rosto` de hoje (xilogravura ou o sinal de
+     A1). **Nunca um buraco, nunca o rosto de outra coisa.**
+   - `recorteDoRetrato(entrada, lado)` → `{ largura, esquerda, topo }` em px
+     (abaixo).
+   **A armadilha, medida hoje:** a espécie acha-se pelo **nome mais longo
+   primeiro**. `completarInimigo` (`bestiario.js` 123) procura com `includes` na
+   ordem da lista, e `"lobo atroz".includes("lobo")` acerta o Lobo antes:
+   `completarInimigo({nome:"Lobo Atroz"}, 3)` devolve **fraco, nível 1** (a
+   tabela diz comum, 3). No retrato isso pintaria um lobo cinzento no alfa
+   negro; na regra, já hoje, dá ao Lobo Atroz a ficha do Lobo — **é defeito do
+   sistema, e vai a `pedidos-ao-sistema.md`.**
+3. **O recorte é aritmética, não CSS mágico.** O arquivo é o recorte da ficha
+   (canto `(xf, yf)`, lado `kf = 0,88`); o tamanho pedido usa o seu recorte
+   (§4: canto `(xc, yc)`, lado `kc`). Com `s = lado / kc`: a `<img>` tem
+   **largura `kf·s`**, **`left = (xf − xc)·s`**, **`top = (yf − yc)·s`**, dentro
+   de um disco `overflow: hidden; border-radius: 50%`. Qual recorte: `lado ≤ 40`
+   → chip (0,40); `lado ≤ 100` → cartão (0,62); maior → ficha (0,88). Os
+   tamanhos de hoje caem assim: a casa da grade e os chips da fogueira → chip;
+   46–80 (grupo, inimigos, fichas, a carta) → cartão; a ficha do herói → ficha.
+   Os três recortes e os três limiares saem de `RETRATO.recorte.*` e
+   `RETRATO.limiar.*` na tabela de estilo — nenhum literal no componente.
+4. **O que `rosto.jsx` passa a mostrar** (`aprendiz`): no topo de `Rosto`,
+   `const r = calou(() => retratoDe(ente, mundo))`; com `r`, a
+   `PinturaDoRetrato` (definida **fora** do render) — `<img loading="lazy"
+   decoding="async" alt="">` posta pela conta do item 3; sem `r`, ou no
+   `onError` da imagem, o caminho de hoje. A moldura (`Retrato` em `ui.jsx`)
+   **não muda**. Na batalha, as espécies do encontro pré-carregam quando a luta
+   abre (um `new Image()` por espécie), para o primeiro turno não piscar.
+5. **O que fica por código, e nunca entra na pintura:** o anel e a cor do papel
+   (`RETRATO.papel.*`); a **forma** do papel — losango (herói), presa
+   (inimigo), coroa + aro (chefe); os estados (§5: o aro da Vez, o arco de PV do
+   Ferido, a dessaturação e o risco do Caído, o tracejado do Escondido — os
+   filtros CSS saem da mesma tabela); as marcas por cima (§3, e §10 quando a
+   pessoa decidir); o `role="img"` e o `aria-label` com o nome e o estado. Por
+   isso um arquivo serve ao herói, ao aliado e ao inimigo.
+6. **As fichas da página 10** (`painel-fichas`, F2b): a fera **com** célula
+   mostra a pintura no recorte de cartão; a **pata** fica como o que é — o
+   recurso de quem não tem pintura.
+7. **A prova:** suíte `teste-retratos` (o nome mais longo vence; espécie
+   desconhecida → `null`; todo recorte cai dentro de [0, 1]; mesma semente →
+   mesma entrada); e, no navegador, os 18 a 32, 64 e 160 contra o quadro
+   `222:409` (aba nova — HMR mente depois de arquivo novo).
+8. **Peso:** médio de design (a forma muda, o retrato fica onde está, ninguém
+   reaprende). Os arquivos somam ~150 KB para as 18 (§6), sob demanda.
+
 ---
 
 ## Fogueira · a noite em que se escolhe com quem se senta (`desenho`, 11/10)
