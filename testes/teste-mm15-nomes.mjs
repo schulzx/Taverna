@@ -324,7 +324,10 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
      (`nomeProcurado`), com a guarda de não adivinhar entre duas pessoas
      presentes que partilham o primeiro nome achado. */
   t("App.jsx importa nomeProcurado e primeiroNome para a guarda do \"Lina,\"",
-    app.includes("import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from \"./procura.js\";")
+    /* movida na fiação da 9.ª sessão (12/10, v9.435): o import da procura
+       ganhou papelProcurado (o elo procurado pelo papel); basta que
+       nomeProcurado esteja nele */
+    /import \{[^}]*\bnomeProcurado\b[^}]*\} from "\.\/procura\.js";/.test(app)
     /* movida na fiação da E3 (12/10, v9.424): o import do npcs.js ganhou
        fichaDoCronista no fim; basta que primeiroNome esteja nele */
     && /nomeComDono, notaDoHomonimo, primeiroNome(, [A-Za-z]+)* \} from "\.\/npcs\.js";/.test(app));

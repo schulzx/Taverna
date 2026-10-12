@@ -190,5 +190,20 @@ sec("3. o registo de gente");
   t("e a lista não cresceu (o bloco estático é sagrado)", gente(resumoRR).length <= gente(resumoRR).replace(/taverneira/g, "taverneiro(a)").length);
 }
 
+/* a fiação (frontend, v9.435): o motor só vale se o App lhe passa o que ele lê */
+{
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("fiação · o App importa papelProcurado da procura", /import \{[^}]*\bpapelProcurado\b[^}]*\} from "\.\/procura\.js"/.test(app));
+  t("fiação · contextoDoCoracao leva a cidade, vazia em viagem e na masmorra aberta",
+    app.includes('cidade: (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? "" : (cidadeAtualRef.current || ""),'));
+  const i = app.indexOf("const procurarAlguem = (acao) => {");
+  const corpo = app.slice(i, app.indexOf("enviar(acao, fichaViva() || personagem);", i));
+  t("fiação · procurarAlguem pergunta pelo papel ANTES do nome, num calou, e passa porPapel",
+    i > 0 && corpo.indexOf("papelProcurado(acao, nucleoAgora())") > 0
+    && corpo.indexOf("papelProcurado(acao, nucleoAgora())") < corpo.indexOf("nomeProcurado(acao,")
+    && corpo.includes("const nome = (pp && pp.nome) || nomeProcurado(") && corpo.includes("porPapel: pp,")
+    && corpo.includes('calou("quem se procura pelo papel"'));
+}
+
 console.log(`\nsessão 9 (história): ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

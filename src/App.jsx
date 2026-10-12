@@ -192,10 +192,10 @@ import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetos
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
-import { ehProcura, nomeProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
+import { ehProcura, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
-import { compraNaFrase, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
+import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
 import { garantirPrometido, guardarSementes, pagarSementes, cobrarNoTurno, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
@@ -5904,6 +5904,10 @@ export default function Taverna() {
      remontado com campanha sem nome e mundo vazio toda vez que o cânone ou o
      registro de pessoas mudava, e o Mestre perdia contexto sem ninguém ver. */
   const mundoAtual = () => mundoRef.current || mundo || null;
+  /* 9.ª sessão (v9.433): a palavra do mundo para a moeda, para o preço que
+     vai à pauta dizer a unidade — o Mestre vendia em "marcos" num mundo de
+     moedas. Vazio quando o léxico não a tem (o "◉" sozinho, como era). */
+  const moedaDoMundo = () => { try { return comoChamam((mundoAtual() || {}).lexico, "moeda") || ""; } catch (e) { calou("a moeda do mundo", e); return ""; } };
   /* ---------------- A LEITURA DO MUNDO (v9.101) ----------------
      A única chamada de IA desta casa que NÃO narra nada. Ela roda uma vez
      por campanha, entre a tela do mundo e a do personagem, e o que ela
@@ -6049,7 +6053,12 @@ export default function Taverna() {
         reveladas = [{ nome: mascara.nome, ato: k >= 0 ? k : ato }];
       }
     } catch (e) { calou("a máscara que já caiu", e); }
-    return { semente: sementeMundo(), espinha: esp, elenco: (subtramasCacheRef.current || {}).elenco || null, dia: diaRef.current, ato, turno: turnoDeRegistroRef.current + 1, emCena: nucleoEmCena(nucleo), ultimas: (coracaoRitmoRef.current || {}).ultimas || {}, luta: !!combateRef.current, mortos, reveladas, subtramas: lista, frase: "", maoDoVilao: false, ...(extra || {}) };
+    return { semente: sementeMundo(), espinha: esp, elenco: (subtramasCacheRef.current || {}).elenco || null, dia: diaRef.current, ato, turno: turnoDeRegistroRef.current + 1, emCena: nucleoEmCena(nucleo), ultimas: (coracaoRitmoRef.current || {}).ultimas || {}, luta: !!combateRef.current, mortos, reveladas, subtramas: lista, frase: "", maoDoVilao: false,
+      /* 9.ª sessão (v9.434): a cidade onde o herói ESTÁ — a porta do elo
+         (subtramas.js, PORTA_DO_ELO) só o traz quando é a dele. Em viagem e
+         na masmorra aberta vai vazia: o elo não aparece na estrada. */
+      cidade: (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? "" : (cidadeAtualRef.current || ""),
+      ...(extra || {}) };
   };
   const elencoCacheRef = useRef(null);
   const nomesDoElenco = () => {
@@ -7173,7 +7182,10 @@ export default function Taverna() {
        luta (ali nao ha banca) nem fora de cidade (nao ha onde comprar). */
     let mc = null;
     try {
-      mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;
+      /* 9.ª sessão (v9.433): também na estrada, quando há carroça — e com a
+         moeda do mundo, para o preço dizer a unidade */
+      const bancas = bancasDaCena();
+      mc = (!combateRef.current && bancas.length) ? mercadoParaPauta(bancas, frase, { onde: jornadaRef.current ? "" : (cidadeAtualRef.current || ""), moeda: moedaDoMundo() }) : null;
     } catch (e) { calou("mercadoParaPauta", e); }
     /* 11/10 (MM11 · 5.ª sessão, J9): o preço do BALCÃO de mantimentos — as
        rações, as tochas, a corda do kit. A banca não os vende, e a pauta
@@ -7182,7 +7194,7 @@ export default function Taverna() {
     try {
       if (!combateRef.current && cidadeAtualRef.current) {
         const p0 = personagemRef.current || personagem || {};
-        const bc = balcaoParaPauta(frase, { balcao: balcaoAqui(cidadeDoMapa(cidadeAtualRef.current)), temKit: garantirSuprimentos(p0.suprimentos).kit });
+        const bc = balcaoParaPauta(frase, { balcao: balcaoAqui(cidadeDoMapa(cidadeAtualRef.current)), temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });
         if (bc.pergunta.length) mc = { pergunta: [...((mc && mc.pergunta) || []), ...bc.pergunta], em: [...((mc && mc.em) || []), ...bc.em] };
       }
     } catch (e) { calou("balcaoParaPauta", e); }
@@ -7198,7 +7210,7 @@ export default function Taverna() {
        a pauta ia vazia: o Mestre inventava o número. */
     let pc = null;
     try {
-      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso() }) : null;
+      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;
     } catch (e) { calou("precoComumParaPauta", e); }
     return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };
   };
@@ -19434,9 +19446,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const procurarAlguem = (acao) => {
     if (rolagem || carregando || combateRef.current) return false;
     if (!ehProcura(acao)) return false;
-    const nome = nomeProcurado(acao, nomesConhecidos(), { perto: [...((personagemRef.current || personagem || {}).grupo || []), ...(pessoasDaCena() || [])] });
+    /* 9.ª sessão (v9.434): "procuro meu antigo mestre de recados" — a frase
+       sem nome que nomeia o elo pelas palavras do passado do herói é ele
+       (procura.js, papelProcurado), e o papel ganha ao nome dito */
+    let pp = null;
+    try { pp = papelProcurado(acao, nucleoAgora()); } catch (e) { calou("quem se procura pelo papel", e); pp = null; }
+    const nome = (pp && pp.nome) || nomeProcurado(acao, nomesConhecidos(), { perto: [...((personagemRef.current || personagem || {}).grupo || []), ...(pessoasDaCena() || [])] });
     if (!nome) return false;
     const r = procurarPessoa(nome, {
+      porPapel: pp,
       npcs: npcsRef.current,
       grupo: (personagemRef.current || personagem || {}).grupo || [],
       genteDaqui: genteDaqui(),
@@ -19966,7 +19984,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         .filter((n) => n && n.nome && String(n.relacao || "").toLowerCase() === "companheiro" && String(n.status || "vivo").toLowerCase() === "vivo" && !doGrupo.has(String(n.nome).toLowerCase()))
         .map((n) => n.nome);
     } catch (e) { calou("quem anda comigo", e); comigo = []; }
-    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo });
+    /* 9.ª sessão (v9.433, M33): a criatura do trecho que ficou à vista sem
+       investir dá nome e ameaça ao bicho da prosa ("um dos ratos" é o Rato
+       Gigante do encontro, não um rato sem ficha). Só na mesma viagem. */
+    let conhecidas = [];
+    try {
+      const v = criaturaAVistaRef.current, j = jornadaRef.current;
+      if (v && j && v.trecho === (j.de || "") + ">" + (j.para || "")) conhecidas = [{ nome: v.nome, ameaca: v.ameaca }];
+    } catch (e) { calou("a criatura à vista para a agressão", e); conhecidas = []; }
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo, conhecidas });
     if (!a) return false;
     if (a.tipo === "companheiro") {
       pushMsgs([
@@ -24252,6 +24278,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      a única barganha que cada um aceita por dia. As três são ESTADO — o
      resto do mercado continua derivado da semente e não ocupa save. */
   const mercadoRef = useRef({ comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} });
+  /* 9.ª sessão: a criatura do trecho que ficou à vista sem investir
+     ({ nome, ameaca, trecho }). Vive o turno de estrada; não vai ao save. */
+  const criaturaAVistaRef = useRef(null);
   const [mercado, setMercado] = useState(mercadoRef.current);
   const cidadeMercado = cidadeDoMapa(cidadeAtualRef.current);
   const mercadoAqui = (() => {
@@ -24301,6 +24330,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     });
   })();
 
+  /* 9.ª sessão (v9.433): as bancas que estão NA CENA — na cidade, as de
+     sempre; na estrada, só a carroça do ambulante (a cidade de partida ficou
+     para trás); na masmorra aberta, nenhuma. É daqui que a pauta tira o
+     preço e a frase compra. */
+  const bancasDaCena = () => {
+    if (masmorraRef.current && !masmorraRef.current.encerrada) return [];
+    const todas = Array.isArray(mercadoAqui) ? mercadoAqui : [];
+    if (jornadaRef.current) return todas.filter((m) => m && m.tipo === "ambulante");
+    return cidadeAtualRef.current ? todas : [];
+  };
+
   /* ---------------- COMPRAR MANTIMENTO (v9.150) ----------------
      O preço é recalculado AQUI, e não lido do que a tela mostrou: a
      tela pode estar velha (o dia virou, a estação mudou, a pressão da
@@ -24312,6 +24352,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }),
     temKit: garantirSuprimentos((personagemRef.current || personagem).suprimentos).kit,
   });
+
+  /* o que se compra e vai ao CORPO (o equipamento), e não à mochila — o
+     botão do painel e a frase que compra leem a mesma lista */
+  const VAI_AO_CORPO = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"];
 
   /* ---------------- A BOLSA DA FRASE (11/10, MM11 · 5.ª sessão) ----------------
      A frase que declara comprar mantimento ou dar mantimento a alguém
@@ -24329,7 +24373,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (cid && !jornadaRef.current && !masmorraRef.current) {
         const p = personagemRef.current || personagem;
         const sup = garantirSuprimentos(p.suprimentos);
-        const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit, anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "" });
+        const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit, anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "", bancas: bancasDaCena() });
         if (c) {
           if (c.fecha) {
             const novo = { ...sup };
@@ -24343,6 +24387,47 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         }
       }
     } catch (e) { calou("a compra da frase", e); }
+    /* 9.ª sessão (v9.433, M44): a compra À BANCA — "compro as ataduras de
+       linho e pago as cinco". A coisa do estoque nomeada entra pelo preço do
+       estoque (bolsa-da-frase.js, compraNaBanca), na cidade e na estrada (a
+       carroça); fecha → o mesmo que o botão do painel faz (comprarNoMercado);
+       não fecha → o veto, e o Mestre diz o preço certo e espera. */
+    try {
+      const bancas = bancasDaCena();
+      if (bancas.length) {
+        const p = personagemRef.current || personagem;
+        const c = compraNaBanca(txt, { bancas, bolsa: p.moedas || 0 });
+        if (c) {
+          if (c.fecha) {
+            let np = { ...p, moedas: (p.moedas || 0) - c.total };
+            let merc = mercadoRef.current || {};
+            let mapaNovo = null;
+            for (const x of c.itens) {
+              const it = x.item || {};
+              const doMercador = ((merc.comprados || {})[x.mercadorId]) || [];
+              merc = { ...merc, comprados: { ...(merc.comprados || {}), [x.mercadorId]: [...doMercador, it.nome] } };
+              if (it.tipo === "mapa") {
+                const dsc = descobrirRegiao(mapaNovo || mapaRef.current, it.regiao);
+                if (dsc.novas.length) mapaNovo = dsc.mapa;
+                continue;
+              }
+              const { preco, detalhe, ...limpo } = it;
+              np = VAI_AO_CORPO.includes(it.tipo)
+                ? { ...np, equipamento: [...(np.equipamento || []), limpo] }
+                : { ...np, inventario: [...(np.inventario || []), limpo] };
+              merc = { ...merc, pressoes: apertarProcura(merc.pressoes, cidadeMercado, generoDoItem(it), diaRef.current) };
+            }
+            personagemRef.current = np; setPersonagem(np);
+            mercadoRef.current = merc; setMercado(merc);
+            if (mapaNovo) { mapaRef.current = mapaNovo; setMapa(mapaNovo); }
+            salvar({ personagem: np, mercado: merc, ...(mapaNovo ? { mapa: mapaNovo } : {}) });
+            nota(envelopeDaCompra(c));
+            try { checarConquistas(np); } catch (e) { calou("as conquistas da compra à banca", e); }
+          } else vetar(vetoDaCompra(c));
+          pushMsgs([{ autor: "sistema", texto: falaDaCompra(c) }]);
+        }
+      }
+    } catch (e) { calou("a compra à banca da frase", e); }
     /* a dádiva: a quem está na cena */
     try {
       const p = personagemRef.current || personagem;
@@ -24409,7 +24494,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       salvar({ personagem: pm, mapa: mapaRef.current });
       return;
     }
-    const ehEquip = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"].includes(it.tipo);
+    const ehEquip = VAI_AO_CORPO.includes(it.tipo);
     const { preco, detalhe, ...limpo } = it;
     const p = {
       ...personagem,
@@ -24842,6 +24927,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     try {
       const inv = investidaDaEstrada(enc, { clima: c && c.id, pers: persV });
       const fugiuDela = !!(inv && inv.investe) && folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "emboscada", criatura: inv.criatura });
+      /* 9.ª sessão: a que não veio em cima fica à vista — e é ela que a
+         frase do golpe acha (lerAgressao, `conhecidas`). Turno a turno, sem save. */
+      try {
+        const jv = jornadaRef.current;
+        criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv) ? { nome: inv.criatura, ameaca: inv.ameaca, trecho: (jv.de || "") + ">" + (jv.para || "") } : null;
+      } catch (e) { calou("a criatura à vista", e); criaturaAVistaRef.current = null; }
       if (inv && inv.investe && !fugiuDela && !combateRef.current) {
         const ab = abrirCombate(inv.inimigos, { pers: persV });
         if (ab.pers !== persV) { persV = ab.pers; personagemRef.current = ab.pers; setPersonagem(ab.pers); }

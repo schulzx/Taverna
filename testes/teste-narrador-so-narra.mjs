@@ -410,7 +410,10 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
   t("o porte da terra sai da ficha da cidade (pouso.fator), num calou que devolve 1",
     /const fatorDoPouso = \(\) => \{[^]*?f\.pouso\.fator[^]*?calou\("fatorDoPouso", e\); return 1;/.test(app));
   t("o preço comum é a 5.ª ficha da mesa, num calou, fora da luta e numa cidade",
-    fichas.includes("pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso() }) : null;")
+    /* 9.ª sessão (v9.433, a fiação): a linha ganhou a moeda do mundo
+       (moedaDoMundo), para o preço comum dizer a unidade — o Mestre vendia em
+       "marcos". O resto (fora da luta, numa cidade, o porte da terra) é igual. */
+    fichas.includes("pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;")
     && fichas.includes('calou("precoComumParaPauta", e)')
     && pauta.includes("juntarRespostas([fc, gp, mc, hz, pc])"));
   t("o oráculo cala também pelo preço comum (pela ficha do mercado)",

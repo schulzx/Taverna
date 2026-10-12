@@ -440,10 +440,11 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   /* (MM-C · 7.ª sessão de prova, a fiação, o frontend, 12/10: os imports, os dois refs da chegada inferida, a régua do querPartir, o naoParte do resolver e o porteiro do mural, tudo ACIMA): 8933 -> 8949, +16 — os dois refs (+9), o querPartir (+3) e a chegada inferida (+4), ACIMA de pushMsgs. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (5f51baf). */
   /* (o Narrador só narra, E1 — a fiação, o frontend, 12/10: os imports, os dois refs dos nomes à mão, o fatorDoPouso, o preço comum em fichasDaMesa, fichasDoOraculo, a rua e os nomes em pautaDoTurno, tudo ACIMA): 8949 -> 9001, +52. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (5398c7b). */
   /* (os consertos de motor da 8.ª sessão, a fiação, o frontend, 12/10: a jornada sem destino em talvezChegarSozinho, ACIMA): 9001 -> 9004, +3. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (c5142cf). */
-  } else if (iPush + 1 !== 9004) {
-    falha(`pushMsgs saiu de src/App.jsx:9004 e agora está em :${iPush + 1}`,
+  /* (os consertos de motor da 9.ª sessão, a fiação, o frontend, 12/10: a moeda do mundo, a cidade de contextoDoCoracao e as bancas da cena em fichasDaMesa, tudo ACIMA): 9004 -> 9016, +12. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (7419ced). */
+  } else if (iPush + 1 !== 9016) {
+    falha(`pushMsgs saiu de src/App.jsx:9016 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:9004, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:9016, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

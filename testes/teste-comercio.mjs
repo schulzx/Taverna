@@ -207,7 +207,11 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
   t("comprar aperta a procura", /pressoes: apertarProcura\(mercadoRef\.current\.pressoes, cidadeMercado, generoDoItem\(it\), diaRef\.current\)/.test(APP));
   /* comprar E vender apertam a praça: dois pontos, e nenhum a mais —
      medido por contagem, e não por distância no arquivo */
-  t("vender também", (APP.match(/pressoes: apertarProcura\(/g) || []).length === 2);
+  /* 9.ª sessão (v9.435, a fiação): a frase que compra à banca ("compro as
+     ataduras e pago") é o MESMO gesto do botão de comprar, e aperta a praça
+     como ele — terceiro ponto, contado aqui para que um quarto continue a
+     acender esta asserção. Comprar (botão e frase) e vender; nenhum a mais. */
+  t("vender também", (APP.match(/pressoes: apertarProcura\(/g) || []).length === 3);
   /* a etiqueta e o cofre saem da MESMA função — o que o texto promete, a
      bolsa entrega */
   t("o botão de vender lê a oferta", /const of = ofertaPor \? ofertaPor\(v\.it\) :/.test(APP));

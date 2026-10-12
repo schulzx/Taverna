@@ -150,5 +150,36 @@ sec("4. o preço da banca chega à pauta, na moeda do mundo (M42–M43)");
   t("determinístico", J(M.mercadoParaPauta([AMBULANTE], M43, { moeda: "moedas" })) === J(M.mercadoParaPauta([AMBULANTE], M43, { moeda: "moedas" })));
 }
 
+/* a fiação (frontend, v9.435): sem ela a frase do M44 tira as moedas pela
+   narração e as Ataduras não chegam — o motor só vale com o App a chamá-lo */
+{
+  sec("[a fiação no App]");
+  const fs = await import("node:fs");
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const corpoDe = (de, ate) => { const i = app.indexOf(de); return i < 0 ? "" : app.slice(i, app.indexOf(ate, i + de.length)); };
+  const bolsa = corpoDe("const registarABolsaDaFrase = (acao) => {", "const comprarSuprimento = ");
+  t("fiação · o App importa compraNaBanca", /import \{[^}]*\bcompraNaBanca\b[^}]*\} from "\.\/bolsa-da-frase\.js"/.test(app));
+  t("fiação · a frase compra à banca pelas bancas da cena, num calou próprio",
+    bolsa.includes("const c = compraNaBanca(txt, { bancas, bolsa: p.moedas || 0 });") && bolsa.includes("const bancas = bancasDaCena();")
+    && bolsa.includes('calou("a compra à banca da frase"'));
+  t("fiação · fecha → moedas, mochila/corpo, comprados, pressões e o envelope; não fecha → o veto; e o recibo nos dois",
+    bolsa.includes("moedas: (p.moedas || 0) - c.total") && bolsa.includes("VAI_AO_CORPO.includes(it.tipo)")
+    && bolsa.includes("comprados: { ...(merc.comprados || {}), [x.mercadorId]:") && bolsa.includes("apertarProcura(merc.pressoes")
+    && bolsa.includes("nota(envelopeDaCompra(c));") && bolsa.includes("} else vetar(vetoDaCompra(c));")
+    && bolsa.includes('pushMsgs([{ autor: "sistema", texto: falaDaCompra(c) }]);'));
+  t("fiação · o balcão sabe das bancas (não veta «isso vende-se nas bancas» o que a banca vende)",
+    bolsa.includes("bancas: bancasDaCena() });"));
+  const cena = corpoDe("const bancasDaCena = () => {", "};");
+  t("fiação · as bancas da cena: nenhuma na masmorra aberta, só a carroça na estrada",
+    cena.includes("masmorraRef.current && !masmorraRef.current.encerrada") && cena.includes('m.tipo === "ambulante"'));
+  t("fiação · a criatura à vista vai a lerAgressao em `conhecidas`, só no mesmo trecho",
+    /lerAgressao\(acao, \{[^}]*\bconhecidas \}\)/.test(app) && app.includes("criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv)"));
+  t("fiação · a moeda do mundo vai ao balcão e ao preço comum",
+    app.includes("temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });") && app.includes("precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() })"));
+  t("fiação · o veto viaja na pauta (naoPode) e a pauta vai aos envelopes que a cobrança lê",
+    app.includes('p = porNaPauta(p, "naoPode", naoPodeDoTurnoRef.current || []);') && app.includes("const nota = [pauta, ...doTurno]")
+    && app.includes('envelopes: conteudo + "\\n" + nota'));
+}
+
 console.log(`\nsessão 9 (o golpe e o dinheiro): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

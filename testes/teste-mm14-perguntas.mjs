@@ -461,8 +461,15 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   t("fichaParaPauta recebe os nomes da mesa e o sino fora de hora",
     fichas.includes("nomes: nomesDaMesa, foraDeHora,") && /foraDeHora = sinosForaDeHora\(aberturaMundoRef\.current, \{ dia: diaRef\.current, cidade: cidadeAtualRef\.current \}\)/.test(fichas));
   t("genteParaPauta recebe os mesmos nomes da mesa", fichas.includes("recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase,\n          nomes: nomesDaMesa,"));
-  t("o mercado responde fora da luta, numa cidade, pela mesma frase do turno",
-    fichas.includes('mc = (!combateRef.current && cidadeAtualRef.current) ? mercadoParaPauta(mercadoAqui, frase, { onde: cidadeAtualRef.current }) : null;'));
+  /* 9.ª sessão (v9.433, a fiação): a asserção mudou porque o mercado passou a
+     responder também NA ESTRADA, quando há carroça de ambulante — o preço das
+     Ataduras não ia à pauta e o Mestre vendeu em "marcos". As bancas saem de
+     bancasDaCena() (na cidade, as de sempre; na estrada, só o ambulante; na
+     masmorra aberta, nenhuma), e a moeda do mundo vai junto. A intenção — fora
+     da luta, pela mesma frase do turno — continua exata. */
+  t("o mercado responde fora da luta, pelas bancas da cena, pela mesma frase do turno e com a moeda do mundo",
+    fichas.includes('mc = (!combateRef.current && bancas.length) ? mercadoParaPauta(bancas, frase, { onde: jornadaRef.current ? "" : (cidadeAtualRef.current || ""), moeda: moedaDoMundo() }) : null;')
+    && fichas.includes("const bancas = bancasDaCena();"));
   /* MM17 C2 (06/10): a mesa ganhou uma quarta ficha, o HORIZONTE (as terras
      de além de uma campanha com região, masmorra-sem-cidade.js), que só fala
      quando a frase pergunta por elas. A asserção continua exata — as três de
@@ -473,7 +480,10 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   {
     const iFc = fichas.indexOf("fc = fichaParaPauta(");
     const iGp = fichas.indexOf("gp = genteParaPauta(");
-    const iMc = fichas.indexOf("mercadoParaPauta(mercadoAqui");
+    /* 9.ª sessão (v9.433, a fiação): o mercado lê as bancas da cena
+       (bancasDaCena — na estrada, a carroça), não mais mercadoAqui direto;
+       a âncora mudou, a ordem guardada é a mesma */
+    const iMc = fichas.indexOf("mercadoParaPauta(bancas, frase");
     /* MM17 C2: o retorno ganhou `horizonte: hz` no fim (ver acima); a ordem
        que esta asserção guarda é a mesma. */
     /* E1 (12/10): e `preco: pc` depois do horizonte; a ordem guardada é a mesma */
