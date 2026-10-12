@@ -185,8 +185,9 @@ sec("1. NENHUM MÓDULO MUDO");
        lista (`quemNaFrase`) — e espera a fiação do App.jsx pela mão do
        frontend na MESMA fase (pautaDoTurno, depois de cederNaCena; o ref da
        lista de antes). `teste-em-cena.mjs` é o primeiro leitor. A entrada
-       sai quando o App o importar. */
-    "em-cena.js": "a fiação de pautaDoTurno e de enviar no App.jsx, pelo frontend (F2a, 12/10)",
+       sai quando o App o importar. — 12/10: o frontend ligou-o (pautaDoTurno,
+       depois de cederNaCena; o ref da lista de antes; declararAgressao lê a
+       frase contra a lista), e a entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

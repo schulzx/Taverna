@@ -101,6 +101,7 @@ import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL, podarONarrador } from "./agressao.js";
+import { montarEmCena, pautaComEmCena, quemNaFrase } from "./em-cena.js";
 import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
@@ -7226,6 +7227,44 @@ export default function Taverna() {
     const mc = f.mercado || {};
     return { ...f, mercado: { pergunta: [...(mc.pergunta || []), ...pc.pergunta], em: [...(mc.em || []), ...(pc.em || [])] } };
   };
+  /* ---------------- F2a · EM CENA: o que existe à volta do herói ----------------
+     O contexto de `montarEmCena` (em-cena.js), um só para a pauta e para a
+     leitura do golpe: o grupo e quem anda comigo, o registo daqui, o núcleo
+     em cena, o que o Mestre mostrou, a criatura da estrada (só no mesmo
+     trecho), a luta, a sala, a banca à vista (o critério de bancasDaCena),
+     a moeda do mundo, a frase e o lugar. Cada fonte num calou: uma que
+     estoura deixa a lista mais curta, nunca o turno sem ela. */
+  const quemAndaComigo = (grupo) => {
+    const doGrupo = new Set((grupo || []).map((g) => String((g && g.nome) || "").toLowerCase()));
+    return Object.values(npcsRef.current || {})
+      .filter((n) => n && n.nome && String(n.relacao || "").toLowerCase() === "companheiro" && String(n.status || "vivo").toLowerCase() === "vivo" && !doGrupo.has(String(n.nome).toLowerCase()))
+      .map((n) => n.nome);
+  };
+  const contextoDoEmCena = (frase, aqui) => {
+    const p0 = personagemRef.current || personagem || {};
+    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    const nucleo = vale("EM CENA · o núcleo", () => nucleoAgora(), null);
+    const mm = masmorraRef.current;
+    return {
+      semente: sementeMundo(),
+      turno: turnoDeRegistroRef.current + 1,
+      cidade: cidadeAtualRef.current || "",
+      presentes: aqui || [],
+      grupo: p0.grupo || [],
+      comigo: vale("EM CENA · quem anda comigo", () => quemAndaComigo(p0.grupo), []),
+      emCena: nucleo ? vale("EM CENA · o núcleo em cena", () => nucleoEmCena(nucleo), []) : [],
+      nucleo,
+      mostrado: vale("EM CENA · o que o Mestre mostrou", () => falasDoMestre(mensagensRef.current), []),
+      encontro: vale("EM CENA · a criatura da estrada", () => { const v = criaturaAVistaRef.current, j = jornadaRef.current; return (v && j && v.trecho === (j.de || "") + ">" + (j.para || "")) ? v : null; }, null),
+      combate: combateRef.current,
+      sala: vale("EM CENA · a sala", () => (mm && !mm.encerrada && Array.isArray(mm.salas)) ? (mm.salas.find((x) => x.id === mm.atual) || null) : null, null),
+      bancas: vale("EM CENA · as bancas", () => bancasDaCena(), []),
+      moeda: moedaDoMundo(),
+      frase: String(frase || ""),
+      lugar: lugarRef.current,
+      antes: emCenaRef.current,
+    };
+  };
   const pautaDoTurno = (acaoDoTurno = "") => {
     let p = garantirPauta(null);
     cobrouAgoraRef.current = false;
@@ -7623,6 +7662,15 @@ export default function Taverna() {
       const fora = !cidadeAtualRef.current || !!(lugarRef.current && lugarRef.current.distancia === "arredores");
       p = cederNaCena(p, { luta: !!combateRef.current, masmorra: !!masmorraRef.current, arredores: fora });
     } catch (e) { calou("cederNaCena", e); }
+    /* F2a · EM CENA: o sistema entrega ao Mestre a lista do que existe, e a
+       linha engole os NOMES À MÃO (que continuam a ser confirmados pela linha
+       deles, que vai dentro). Depois do cederNaCena: na luta não entra (a
+       vista da luta já é a lista), e a linha encolhe até não tirar nada. */
+    try {
+      const lista = montarEmCena(contextoDoEmCena(acaoDoTurno, aqui));
+      emCenaRef.current = lista;
+      p = pautaComEmCena(p, lista, { luta: !!combateRef.current, turno: turnoDeRegistroRef.current + 1 });
+    } catch (e) { calou("EM CENA", e); }
     return p;
   };
 
@@ -19978,12 +20026,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        está como "companheiro", vivo e fora do grupo. Por pronome é recusado
        como o grupo; pelo nome abre, com o cartão antes (crime.js) */
     let comigo = [];
-    try {
-      const doGrupo = new Set((p.grupo || []).map((g) => String((g && g.nome) || "").toLowerCase()));
-      comigo = Object.values(npcsRef.current || {})
-        .filter((n) => n && n.nome && String(n.relacao || "").toLowerCase() === "companheiro" && String(n.status || "vivo").toLowerCase() === "vivo" && !doGrupo.has(String(n.nome).toLowerCase()))
-        .map((n) => n.nome);
-    } catch (e) { calou("quem anda comigo", e); comigo = []; }
+    try { comigo = quemAndaComigo(p.grupo); } catch (e) { calou("quem anda comigo", e); comigo = []; }
     /* 9.ª sessão (v9.433, M33): a criatura do trecho que ficou à vista sem
        investir dá nome e ameaça ao bicho da prosa ("um dos ratos" é o Rato
        Gigante do encontro, não um rato sem ficha). Só na mesma viagem. */
@@ -19992,6 +20035,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const v = criaturaAVistaRef.current, j = jornadaRef.current;
       if (v && j && v.trecho === (j.de || "") + ">" + (j.para || "")) conhecidas = [{ nome: v.nome, ameaca: v.ameaca }];
     } catch (e) { calou("a criatura à vista para a agressão", e); conhecidas = []; }
+    /* F2a · EM CENA: a frase lê-se contra a lista do que existe (refeita
+       agora, com a última fala do Mestre — a do turno passado ainda não a
+       tinha). O bicho que a oração do golpe aponta dá o nome e a ameaça. */
+    try {
+      const lista = montarEmCena(contextoDoEmCena(acao, elenco.aqui || []));
+      const alvo = quemNaFrase(acao, lista)[0];
+      const bicho = (alvo && alvo.tipo === "criatura" && alvo.faz === "golpe") ? lista.find((x) => x.id === alvo.id) : null;
+      if (bicho) conhecidas = [{ nome: bicho.nome, ameaca: bicho.ameaca || "" }, ...conhecidas.filter((c) => c.nome !== bicho.nome)];
+    } catch (e) { calou("a frase contra a lista (agressão)", e); }
     const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo, conhecidas });
     if (!a) return false;
     if (a.tipo === "companheiro") {
@@ -24281,6 +24333,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* 9.ª sessão: a criatura do trecho que ficou à vista sem investir
      ({ nome, ameaca, trecho }). Vive o turno de estrada; não vai ao save. */
   const criaturaAVistaRef = useRef(null);
+  /* F2a · EM CENA: a lista do que está em cena no turno passado (em-cena.js).
+     Só guarda o que a prosa mostrou por uns turnos (`antes`); refaz-se a
+     cada turno das fontes que já se salvam, e por isso não vai ao save. */
+  const emCenaRef = useRef(null);
   const [mercado, setMercado] = useState(mercadoRef.current);
   const cidadeMercado = cidadeDoMapa(cidadeAtualRef.current);
   const mercadoAqui = (() => {
@@ -24931,7 +24987,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          frase do golpe acha (lerAgressao, `conhecidas`). Turno a turno, sem save. */
       try {
         const jv = jornadaRef.current;
-        criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv) ? { nome: inv.criatura, ameaca: inv.ameaca, trecho: (jv.de || "") + ">" + (jv.para || "") } : null;
+        criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv) ? { nome: inv.criatura, ameaca: inv.ameaca, quantos: inv.quantos, trecho: (jv.de || "") + ">" + (jv.para || "") } : null;
       } catch (e) { calou("a criatura à vista", e); criaturaAVistaRef.current = null; }
       if (inv && inv.investe && !fugiuDela && !combateRef.current) {
         const ab = abrirCombate(inv.inimigos, { pers: persV });

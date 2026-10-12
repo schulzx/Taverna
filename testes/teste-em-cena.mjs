@@ -220,7 +220,10 @@ const NOMES = N.linhaDosNomesAMao([{ nome: "Aldric", genero: "ele" }, { nome: "A
 
   const l33 = emCenaParaPauta(montarEmCena(c9r), {});
   console.log(`      (9.ª M33: "${l33}" — ${l33.length} caracteres)`);
-  t("9.ª M33: a linha diz a Sari e os dois ratos gigantes", l33 === "Rato Gigante ×2 (hostil); Sari (contigo)" || l33 === "Sari (contigo); Rato Gigante ×2 (hostil)", l33);
+  /* 12/10 (fiação da F2a, frontend): "Sari (contigo)" passou a "Sari (com
+     você)" — o jogo trata o jogador por você (teste-subtramas §7b), e a
+     linha vai ao Narrador, que copia o registo que lê (EM_CENA_TRATO) */
+  t("9.ª M33: a linha diz a Sari e os dois ratos gigantes", l33 === "Rato Gigante ×2 (hostil); Sari (com você)" || l33 === "Sari (com você); Rato Gigante ×2 (hostil)", l33);
   const l44 = emCenaParaPauta(montarEmCena(c9a("Compro as ataduras de linho.")), {});
   console.log(`      (9.ª M44: "${l44}" — ${l44.length} caracteres)`);
   t("9.ª M44: o que está à venda vai com o preço do estoque e a moeda uma vez", /à venda, em marcos: /.test(l44) && /◉29/.test(l44) && (l44.match(/marcos/g) || []).length === 1, l44);
@@ -308,7 +311,61 @@ sec("4. o Narrador limitado à lista");
   /* a fiação é do frontend, na mesma fase (teste-ligacao: AGUARDANDO).
      Até lá a regra aponta EM CENA, e a linha dos nomes continua a vir na
      secção deles — o Narrador lê "a quem não tem nome:" pela própria linha. */
-  t("fiação · ainda por fazer: o App não importa em-cena.js (a lista de espera o diz)", !/from "\.\/em-cena\.js"/.test(app) || /pautaComEmCena\(/.test(app));
+  /* 12/10: a fiação chegou (frontend, F2a). A asserção de espera ("o App
+     ainda não importa") virou a prova da fiação, ponto a ponto. */
+  const pdt = (app.split("const pautaDoTurno = ")[1] || "").split("\n  };\n")[0];
+  const decl = (app.split("const declararAgressao = ")[1] || "").split("const a = lerAgressao(")[0];
+  t("fiação · o App importa as três de em-cena.js", /import \{ montarEmCena, pautaComEmCena, quemNaFrase \} from "\.\/em-cena\.js";/.test(app));
+  t("fiação · pautaDoTurno monta a lista DEPOIS do cederNaCena, guarda-a e põe a linha, num calou próprio", pdt.indexOf('calou("cederNaCena"') > 0 && pdt.indexOf("montarEmCena(") > pdt.indexOf('calou("cederNaCena"') && /emCenaRef\.current = lista;/.test(pdt) && /p = pautaComEmCena\(p, lista, \{ luta: !!combateRef\.current/.test(pdt) && pdt.includes('calou("EM CENA"'));
+  t("fiação · a lista de antes vai de um turno ao outro (antes: emCenaRef.current)", /antes: emCenaRef\.current/.test(app));
+  t("fiação · a criatura à vista guarda quantos", /criaturaAVistaRef\.current = \(inv[^;]*quantos: inv\.quantos/.test(app));
+  t("fiação · declararAgressao lê a frase contra a lista, e o bicho do golpe vai em conhecidas", /quemNaFrase\(acao, /.test(decl) && /faz === "golpe"/.test(decl) && /conhecidas = \[/.test(decl));
+  t("fiação · a lista não vai ao save (refaz-se das fontes que já se salvam)", !/emCena(Ref)?:\s*emCenaRef/.test(app));
+}
+
+/* ============================================================ */
+sec("5. o jogo trata o jogador por você (a linha EM CENA, 120 mundos)");
+/* A catraca de teste-subtramas §7b, estendida à linha EM CENA e ao que a
+   lista diz que o herói sabe: nasceu "Sari (contigo)" e "do teu passado".
+   Os mundos são os do núcleo (o companheiro inicial, o elo com o papel do
+   passado), com o grupo, a cidade, a estrada e uma banca à vista. */
+{
+  const { companheiroInicial } = await import(S + "companheiro-inicial.js");
+  const { abrirAbertura } = await import(S + "abertura.js");
+  const { gerarGeografia } = await import(S + "geografia.js");
+  const { estenderEspinha } = await import(S + "saga.js");
+  const { MOLDES } = await import(S + "moldes.js");
+  const { guildasDoMundo } = await import(S + "guildas.js");
+  const { elencoDoMundo } = await import(S + "elenco.js");
+  const { ANTECEDENTES } = await import(S + "antecedentes.js");
+  const TU = /(?<![\p{L}])(tua|teu|tuas|teus|contigo|convosco)(?![\p{L}])|-te(?![\p{L}])/iu;
+  const G = "Fantasia medieval";
+  const ANTS = ["", ...ANTECEDENTES.map((a) => a.id)];
+  const ruins = [];
+  let linhas = 0, comGrupo = 0;
+  for (let i = 0; i < 120; i++) {
+    const M = MOLDES[i % MOLDES.length];
+    const semente = `Sonda Em Cena|${i}`;
+    const mapa = gerarGeografia(semente, M);
+    const cidade = mapa.cidades[0].nome;
+    const guildas = guildasDoMundo(semente, mapa, G, null);
+    const antecedente = ANTS[i % ANTS.length];
+    const espinha = estenderEspinha({ semente, mapa, genero: G, molde: M, estrutura: "jornada", cidadeInicial: cidade, antecedente, dia: 1 });
+    const ab = abrirAbertura({ semente, mapa, cidade, espinha, estrutura: "jornada", antecedente, genero: G, molde: M, nivel: 1, dia: 1 });
+    const ci = ab && ab.abertura ? companheiroInicial({ semente, mapa, genero: G, molde: M, espinha, guildas, cidade, antecedente, heroi: { nome: "Brann", nivel: 1, classe: "Guerreiro" }, abertura: ab.abertura }) : null;
+    const grupo = ci ? [ci.comp] : [];
+    const elenco = elencoDoMundo(semente, mapa, { genero: G, molde: M, espinha, guildas });
+    const nucleo = NU.nucleoDaCampanha(semente, mapa, { genero: G, molde: M, espinha, guildas, antecedente, grupo, elenco });
+    const lista = montarEmCena({ semente, turno: 7, cidade, grupo, emCena: (nucleo.pessoas || []).slice(0, 2).map((p) => p.nome), nucleo, encontro: { criatura: "Lobo Cinzento", quantos: 2 }, bancas: [AMB], moeda: "moedas" });
+    const linha = emCenaParaPauta(lista, {});
+    if (linha) linhas++;
+    if (grupo.length && linha.includes("(" + (EC.EM_CENA_TRATO || {}).comigo + ")")) comGrupo++;
+    for (const tx of [linha, ...lista.flatMap((x) => x.sabe || [])]) if (TU.test(tx)) ruins.push(`${i}: ${tx}`);
+  }
+  console.log(`      (${linhas} linhas EM CENA em 120 mundos; ${comGrupo} com o companheiro "(com você)")`);
+  t("a tabela do trato existe e fala por você", (EC.EM_CENA_TRATO || {}).comigo === "com você" && !Object.values(EC.EM_CENA_TRATO || {}).some((x) => TU.test(x)));
+  t("nenhum tu/teu/contigo na linha EM CENA nem no que a lista diz que o herói sabe, nos 120 mundos", ruins.length === 0, J(ruins.slice(0, 5)));
+  t("…e a varredura tem o que varrer: a linha em todos os mundos, o companheiro com «(com você)» na maioria", linhas === 120 && comGrupo >= 60, `${linhas}/${comGrupo}`);
 }
 
 console.log(`\nem cena (F2a): ${ok} passaram, ${mal} falharam`);

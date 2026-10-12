@@ -74,6 +74,16 @@ export const EM_CENA_NA_PAUTA = { pessoa: 3, criatura: 2, coisa: 3, papel: 3 };
    ser apontado pelo nome, pela arma, pela raiz. */
 export const EM_CENA_MEMORIA = { turnos: 6, aVista: 1 };
 
+/* O TRATO. O jogo trata o jogador por "você" (a tela e o Narrador desde a
+   v9.346; catraca em teste-subtramas §7b). A F2a nasceu a dizer "Sari
+   (contigo)" e "do teu passado" — e a linha EM CENA vai ao Narrador, que
+   copia o registo que lê. As palavras que falam do herói saem daqui. */
+export const EM_CENA_TRATO = {
+  comigo: "com você",
+  andaComigo: "anda com você",
+  doPassado: "do seu passado",
+};
+
 /* ---------------- O ID ----------------
    Estável pela semente e pela chave de cada coisa (o nome da pessoa, a
    banca e o nome da coisa, a origem e a raiz do bicho): o mesmo rato é o
@@ -151,9 +161,9 @@ export function montarEmCena(ctx) {
   for (const g of arr(c.grupo)) {
     const nome = nomeDe(g);
     if (!nome) continue;
-    porPessoa(nome, (p) => ({ ...p, comigo: true, aqui: true, deOnde: p.deOnde || "grupo", papel: p.papel || String(obj(g).conceito || ""), sabe: [...p.sabe, "anda contigo"] }));
+    porPessoa(nome, (p) => ({ ...p, comigo: true, aqui: true, deOnde: p.deOnde || "grupo", papel: p.papel || String(obj(g).conceito || ""), sabe: [...p.sabe, EM_CENA_TRATO.andaComigo] }));
   }
-  for (const nome of comigo) porPessoa(nome, (p) => ({ ...p, comigo: true, aqui: true, deOnde: p.deOnde || "grupo", sabe: p.sabe.includes("anda contigo") ? p.sabe : [...p.sabe, "anda contigo"] }));
+  for (const nome of comigo) porPessoa(nome, (p) => ({ ...p, comigo: true, aqui: true, deOnde: p.deOnde || "grupo", sabe: p.sabe.includes(EM_CENA_TRATO.andaComigo) ? p.sabe : [...p.sabe, EM_CENA_TRATO.andaComigo] }));
   /* 2. o registo: à vista se a cena a põe aqui ou o Mestre a citou */
   for (const r of arr(c.presentes)) {
     const n = obj(r);
@@ -192,7 +202,7 @@ export function montarEmCena(ctx) {
       aqui: !!(p.aqui || emCena || citado(nome)),
       deOnde: p.deOnde || "nucleo",
       ...(n.papel === "elo" && era ? { antecedente: String(nu.antecedente || "") } : {}),
-      sabe: [...p.sabe, ...(era ? [`${era}, do teu passado`] : []), ...(revelados.has(norm(nome)) && esc && !esc.includes("{") ? [esc] : [])],
+      sabe: [...p.sabe, ...(era ? [`${era}, ${EM_CENA_TRATO.doPassado}`] : []), ...(revelados.has(norm(nome)) && esc && !esc.includes("{") ? [esc] : [])],
     }));
   }
   /* 4. o que o Mestre mostrou e ninguém registou: a gente armada */
@@ -324,7 +334,7 @@ function contradiz(frase, nome) {
    A LINHA DA PAUTA
    `emCenaParaPauta(lista, { moeda, jaDito, nomes })`: o que está à vista,
    numa frase fechada e curta — a gente (com o papel em três palavras, ou
-   "contigo"), os bichos (com quantos, e se vêm hostis), o que está à venda
+   "com você"), os bichos (com quantos, e se vêm hostis), o que está à venda
    à vista (o preço do estoque, com a moeda uma vez), e, no fim, os nomes à
    mão (a linha deles inteira, para o App os reconhecer chegados). O que
    outra secção já diz (`jaDito`: a resposta, a planta da sala, o coração)
@@ -343,7 +353,7 @@ function escolher(lista, jaDito) {
   return [...gente, ...bichos, ...coisas];
 }
 function rotuloDaPessoa(x) {
-  if (x.comigo) return "contigo";
+  if (x.comigo) return EM_CENA_TRATO.comigo;
   if (x.armado) return "";
   const papel = String(x.papel || "").split(",")[0].trim().split(/\s+/).slice(0, EM_CENA_NA_PAUTA.papel).join(" ");
   return papel || x.genero || "";
