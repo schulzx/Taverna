@@ -275,8 +275,38 @@ export const PLANTAS = {
 /* O cenário vem do lugar da cena — a mesma regra do zonas.js, palavra por
    palavra, porque ela funciona: quem está numa masmorra luta numa masmorra
    mesmo que o bioma lá fora seja floresta. */
-export function cenarioDe({ emMasmorra = false, local = "", bioma = "" } = {}) {
-  if (emMasmorra) return "masmorra";
+/* A LUTA NA ESTRADA (12/10, a prova viva da E4). Dois Goblins investiram a
+   caminho do Monte do Sul e o tabuleiro abriu "no meio da praça · sob a
+   arcada · no beco estreito". A jornada não muda a cidade atual, e o lugar
+   que chega aqui durante a viagem é a linha "EM VIAGEM: Ponto do Sul →
+   Monte do Sul … — não estou em cidade nenhuma": a palavra "cidade" da
+   própria NEGAÇÃO casava a planta da cidade, e um destino chamado Porto
+   casaria o convés. Na viagem, os nomes de cidade da linha não dizem onde
+   se pisa — quem diz é o trecho: o bioma dele, ou o chão da rota (a
+   travessia por mar). `marca` é o começo da linha que o App já monta, para a
+   luta acertar mesmo antes de o App dizer `emViagem` às claras. */
+export const PLANTA_DA_ESTRADA = {
+  marca: /^\s*em viagem\b/,
+  porBioma: {
+    planicie: "estrada", colina: "estrada", montanha: "estrada", costa: "estrada",
+    floresta: "floresta", pantano: "floresta", ilha_selva: "floresta",
+    deserto: "deserto", ilha_seca: "deserto",
+    gelo: "gelo",
+    mar_aberto: "navio", recife: "navio", enseada: "navio", bruma: "navio", abissal: "navio",
+  },
+  porChao: { maritima: "navio" },
+  padrao: "estrada",
+};
+
+export function cenarioDe(ctx) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const local = c.local || "", bioma = c.bioma || "";
+  if (c.emMasmorra) return "masmorra";
+  if (c.emViagem === true || PLANTA_DA_ESTRADA.marca.test(N(local))) {
+    const T = PLANTA_DA_ESTRADA;
+    const de = (tab, k) => (Object.prototype.hasOwnProperty.call(tab, k) ? tab[k] : "");
+    return de(T.porChao, N(c.chao)) || de(T.porBioma, N(bioma)) || T.padrao;
+  }
   const t = N(`${local} ${bioma}`);
   if (/taverna|estalagem|salao|tasca|bar\b/.test(t)) return "taverna";
   if (/navio|barco|conves|porto|galera/.test(t)) return "navio";

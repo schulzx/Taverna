@@ -119,7 +119,8 @@ sec("6. os envelopes — o que a IA não pode mais fazer");
 {
   const a = lerAgressao("Ataco Doran.", { presentes: [{ nome: "Doran", papel: "guarda" }] });
   const env = envelopeDaAgressao(a);
-  t("proíbe abrir o combate de novo", /NÃO envie "combate_iniciar"/.test(env));
+  /* MOVIDA (12/10, a prova viva da E4): o veto "NÃO envie combate_iniciar" saiu do envelope — com `podarONarrador` ligada no topo de `aplicarResposta`, o combate_iniciar do Narrador sai sempre que o turno não traz o pedido do golpe sem alvo, e este envelope nunca o traz. O texto pagava caracteres por uma garantia que o código já dá; a asserção passa a exigir que ele não volte, e teste-prova-viva-e4 prova que a guarda o corta com este envelope. */
+  t("já não gasta texto a proibir o combate_iniciar (a guarda corta-o)", !/combate_iniciar/.test(env) && /JÁ ESTÁ ABERTO/.test(env));
   /* a parte que mais importa: sem isto a IA resolve a luta na prosa e o
      painel vira decoração */
   t("proíbe decidir se acertou", /NÃO decida se o golpe acertou/.test(env));

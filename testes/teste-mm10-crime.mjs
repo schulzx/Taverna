@@ -140,7 +140,8 @@ sec("5. o procurado: registo, preço, pauta, guarda e prazo");
   console.log(`      12 dias procurado numa ${CIDADE.porte}: a guarda veio ${vezes} vez(es)`);
   t("a guarda vem às vezes, e nunca duas no mesmo dia", vezes >= 1 && t.repetida === null);
   t("fora do prazo, não vem", guardaQueVem(lei, mundo({ dia: 40 })) === null);
-  t("o envelope da guarda diz que o painel já está aberto e proíbe outro combate_iniciar", /JÁ ESTÁ ABERTO/.test(envelopeDaGuarda(t.ultima.inimigos.length ? t.ultima : { inimigos: [{ nome: "Guarda" }], quem: "a guarda" }, CIDADE)) && /NÃO envie "combate_iniciar"/.test(envelopeDaGuarda({ inimigos: [{ nome: "G" }] }, CIDADE)) && envelopeDaGuarda({ inimigos: [] }, CIDADE) === "");
+  /* MOVIDA (12/10, a prova viva da E4): o veto "NÃO envie combate_iniciar" saiu do envelope — com `podarONarrador` ligada no topo de `aplicarResposta`, o combate_iniciar do Narrador sai sempre que o turno não traz o pedido do golpe sem alvo, e este envelope nunca o traz. O texto pagava caracteres por uma garantia que o código já dá; a asserção passa a exigir que ele não volte, e teste-prova-viva-e4 prova que a guarda o corta com este envelope. */
+  t("o envelope da guarda diz que o painel já está aberto e já não gasta texto com o combate_iniciar", /JÁ ESTÁ ABERTO/.test(envelopeDaGuarda(t.ultima.inimigos.length ? t.ultima : { inimigos: [{ nome: "Guarda" }], quem: "a guarda" }, CIDADE)) && !/combate_iniciar/.test(envelopeDaGuarda({ inimigos: [{ nome: "G" }] }, CIDADE)) && envelopeDaGuarda({ inimigos: [] }, CIDADE) === "");
   t("determinística", JSON.stringify(guardaQueVem(lei, mundo({ dia: 12 }))) === JSON.stringify(guardaQueVem(lei, mundo({ dia: 12 }))));
   const nenhum = registrarCrime(null, consequenciaDoCrime({ ...c, testemunhas: [] }, mundo({ cidade: ALDEIA || CIDADE, noite: true })), c, 10);
   t("crime sem olhos não põe ninguém procurado", ALDEIA ? Object.keys(nenhum.porCidade).length === 0 : true);

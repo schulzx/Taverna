@@ -174,6 +174,83 @@ export function pesoDoPapel(papel) {
 }
 
 /* ============================================================
+   QUEM A FRASE DESCREVE (12/10, a prova viva da E4)
+
+   "Tento convencer o guarda do portão a me deixar passar." rolou
+   "🎯 convencer Lysa": Lysa era a única pessoa registada na cena, e quem
+   resolve o alvo no App devolve a única quando a frase não diz nome. Mas a
+   frase dizia QUEM — pelo ofício. O guarda do portão é um anónimo do
+   mundo; Lysa é uma mercadora que estava ali. O teste, a conta e o
+   envelope iam todos para a pessoa errada.
+
+   A tabela reconhece o OFÍCIO dito com artigo ("o guarda", "da
+   taverneira", "com o ferreiro"). Palavra que não é ofício — "o homem",
+   "a elfa", "o velho" — não descreve ninguém o bastante para vetar: aí a
+   única pessoa da cena continua a ser o alvo. Cada `rx` testa UMA palavra
+   inteira, a da frase e cada uma do papel da pessoa.
+   ============================================================ */
+export const OFICIOS_DO_ALVO = [
+  { id: "guarda", rx: /^(guardas?|sentinel\w*|soldad\w*|vigias?|patrulh\w*|milicia\w*|carcereir\w*|porteir\w*|xerife\w*|capitao|capita|capitaes|sargent\w*|alabardeir\w*)$/ },
+  { id: "taverneiro", rx: /^(taverneir\w*|estalajadeir\w*|bodegueir\w*|hospedeir\w*)$/ },
+  { id: "mercador", rx: /^(mercador\w*|comerciant\w*|vendedor\w*|vendedeir\w*|negociant\w*|lojist\w*|feirant\w*|mascates?|merceeir\w*|quitandeir\w*)$/ },
+  { id: "ferreiro", rx: /^(ferreir\w*|armeir\w*)$/ },
+  { id: "sacerdote", rx: /^(sacerdot\w*|padres?|clerig\w*|monges?|monja\w*|frei|freiras?|acolit\w*|prior\w*|abades?|abadessa\w*|bispos?|pregador\w*)$/ },
+  { id: "nobre", rx: /^(nobres?|barao|baronesa\w*|condes?|condessa\w*|duques?|duquesa\w*|lordes?|principes?|princesa\w*|rei|reis|rainha\w*|regente\w*)$/ },
+  { id: "barqueiro", rx: /^(barqueir\w*|marinheir\w*|marujo\w*|pescador\w*|balseir\w*)$/ },
+  { id: "cocheiro", rx: /^(cocheir\w*|carroceir\w*|estribeir\w*|cavalari\w*)$/ },
+  { id: "curandeiro", rx: /^(curandeir\w*|medic[oa]s?|boticari\w*|herbalist\w*|parteir\w*)$/ },
+  { id: "sabio", rx: /^(magos?|magas?|feiticeir\w*|bruxa\w*|bruxos?|alquimist\w*|escribas?|escrivao|escrivaes|bibliotecari\w*)$/ },
+  { id: "mendigo", rx: /^(mendig\w*|pedintes?)$/ },
+  { id: "criado", rx: /^(criad[oa]s?|servos?|servas?|servica\w*|camareir\w*|cozinheir\w*)$/ },
+  { id: "campones", rx: /^(campones\w*|fazendeir\w*|lavrador\w*|pastor\w*|lenhador\w*)$/ },
+  { id: "bardo", rx: /^(bardos?|bardas?|menestre\w*|trovador\w*|saltimbanc\w*)$/ },
+  { id: "fora_da_lei", rx: /^(ladra|ladrao|ladroes|bandid\w*|salteador\w*|contrabandist\w*|piratas?|capangas?|mercenari\w*|assassin[oa]s?)$/ },
+  { id: "autoridade", rx: /^(prefeit\w*|burgomestre\w*|alcaide\w*|magistrad\w*|juiz|juiza|juizes|cobrador\w*|coletor\w*|fiscal|fiscais|meirinho\w*|conselheir\w*)$/ },
+];
+
+const oficioDaPalavra = (w) => OFICIOS_DO_ALVO.find((o) => o.rx.test(w)) || null;
+/* o artigo (ou a contração que o traz) diante do ofício, e um complemento
+   curto ("do portão", "da ponte") que entra na descrição */
+const ART_E_OFICIO = /(?:^|[^a-z])(o|a|os|as|do|da|dos|das|ao|aos|no|na|nos|nas|pelo|pela|pelos|pelas)\s+([a-z]+)((?:\s+(?:de|do|da|dos|das)\s+[a-z]+)?)/g;
+const artigoDe = (w) => (w.endsWith("as") ? "as" : w.endsWith("os") ? "os" : w.endsWith("a") ? "a" : "o");
+
+/* O ofício que a frase descreve com artigo — { oficio, descricao } ou null.
+   A descrição sai com os acentos da frase ("o guarda do portão"). */
+export function alvoDescrito(texto) {
+  if (typeof texto !== "string" || !texto.trim()) return null;
+  const t = norm(texto);
+  /* o `norm` só tira acento: uma frase em NFC tem o mesmo comprimento e os
+     índices batem; se não baterem, a descrição sai sem acento */
+  const original = texto.normalize("NFC");
+  const fonte = original.length === t.length ? original : t;
+  for (const m of t.matchAll(ART_E_OFICIO)) {
+    const of = oficioDaPalavra(m[2]);
+    if (!of) continue;
+    const ini = m.index + m[0].indexOf(m[1]) + m[1].length;
+    const fim = m.index + m[0].length;
+    const resto = fonte.slice(ini, fim).trim().toLowerCase();
+    return { oficio: of.id, descricao: `${artigoDe(m[1])} ${resto}` };
+  }
+  return null;
+}
+
+/* A pessoa veste o ofício? Lê cada palavra do papel (e do título). */
+function vesteOficio(pessoa, oficio) {
+  const of = OFICIOS_DO_ALVO.find((o) => o.id === oficio);
+  if (!of || !pessoa || typeof pessoa !== "object") return false;
+  return norm(`${pessoa.papel || ""} ${pessoa.titulo || ""}`).split(/[^a-z]+/).some((w) => w && of.rx.test(w));
+}
+
+/* Entre os candidatos (as pessoas da cena), o ÚNICO que veste o ofício que
+   a frase descreve; dois guardas, ou nenhum, é null — não se adivinha. */
+export function quemADescricaoAponta(texto, candidatos) {
+  const al = alvoDescrito(texto);
+  if (!al || !Array.isArray(candidatos)) return null;
+  const vestem = candidatos.filter((p) => vesteOficio(p, al.oficio));
+  return vestem.length === 1 ? vestem[0] : null;
+}
+
+/* ============================================================
    QUEM VIVE DE CONTAR
 
    A tabela de cima diz o que a pessoa tem A PERDER. Esta diz outra

@@ -111,7 +111,8 @@ sec("5. os envelopes — o que a IA não pode mais fazer");
 {
   const e = montarEmboscada("Três bandidos saltam do mato.", { pers: nv10 });
   const env = envelopeDaEmboscada(e);
-  t("proíbe abrir o combate de novo", /NÃO envie "combate_iniciar"/.test(env));
+  /* MOVIDA (12/10, a prova viva da E4): o veto "NÃO envie combate_iniciar" saiu do envelope — com `podarONarrador` ligada no topo de `aplicarResposta`, o combate_iniciar do Narrador sai sempre que o turno não traz o pedido do golpe sem alvo, e este envelope nunca o traz. O texto pagava caracteres por uma garantia que o código já dá; a asserção passa a exigir que ele não volte, e teste-prova-viva-e4 prova que a guarda o corta com este envelope. */
+  t("já não gasta texto a proibir o combate_iniciar (a guarda corta-o)", !/combate_iniciar/.test(env) && /JÁ ESTÁ ABERTO/.test(env));
   t("proíbe decidir se alguém acertou", /NÃO decida se alguém acertou/.test(env));
   t("proíbe matar e proíbe fazer fugir", /NÃO mate ninguém/.test(env) && /recuarem ou fugirem/.test(env));
   t("a linha do jogador diz quantos são", /3× Bandido/.test(falaDaEmboscada(e)));

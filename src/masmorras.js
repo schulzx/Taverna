@@ -620,7 +620,7 @@ export function envelopeDaLuta(sala, opcoes) {
   if (!l) return "";
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const pos = o.pos == null ? "" : String(o.pos), lista = o.lista == null ? "" : String(o.lista), depois = o.depois == null ? "" : String(o.depois);
-  return `[MASMORRA — ${pos} · ${l.rotulo} — COMBATE JÁ ABERTO PELO SISTEMA] ${l.abertura}: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${l.fecho}${depois}`;
+  return `[MASMORRA — ${pos} · ${l.rotulo} — COMBATE JÁ ABERTO PELO SISTEMA] ${l.abertura}: ${lista}. O HUD de combate JÁ ESTÁ ABERTO. Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${l.fecho}${depois}`;
 }
 
 /* A luta da sala `id` acabou em vitória. Devolve

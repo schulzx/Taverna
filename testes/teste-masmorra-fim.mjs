@@ -54,7 +54,8 @@ const pequena = () => ({
    copiado aqui como a referencia de regressao zero: o texto de combate e de
    chefe nao pode mudar uma virgula */
 const aviso_antigo = (tipo, nomes) => `⚔ ${tipo === "chefe" ? "A sala do chefe!" : "Emboscada na masmorra!"} ${nomes.join(", ")} — o combate está aberto.`;
-const envelope_antigo = (tipo, pos, lista, depois) => `[MASMORRA — ${pos} · ${tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO — NÃO envie "combate_iniciar". Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${depois}`;
+/* MOVIDA (12/10, a prova viva da E4): o veto "NÃO envie combate_iniciar" saiu do envelope — com `podarONarrador` ligada no topo de `aplicarResposta`, o combate_iniciar do Narrador sai sempre que o turno não traz o pedido do golpe sem alvo, e o envelope da sala nunca o traz. O texto pagava caracteres por uma garantia que o código já dá; a referência de regressão zero perde só esse trecho, e o resto continua byte a byte, e teste-prova-viva-e4 prova que a guarda o corta com este envelope. */
+const envelope_antigo = (tipo, pos, lista, depois) => `[MASMORRA — ${pos} · ${tipo === "chefe" ? "CHEFE" : "COMBATE"} — COMBATE JÁ ABERTO PELO SISTEMA] Avanço para a próxima sala e os inimigos saltam das sombras: ${lista}. O HUD de combate JÁ ESTÁ ABERTO. Descreva a sala e a investida inicial em 1-2 frases e me passe a vez (eu ajo pelos botões de combate).${tipo === "chefe" ? " É o confronto final desta masmorra — narre à altura." : ""}${depois}`;
 
 sec("1. quais salas abrem luta", () => {
   const abre = (tipo) => M.abreLuta({ id: 1, tipo, inimigos: [{ nome: "X" }] });
@@ -85,7 +86,8 @@ sec("2. o texto: combate e chefe IGUAIS ao de hoje (regressão zero), o Guardiã
   const env = M.envelopeDaLuta(g, { pos, lista: "Carcereiro (nv 3, 20 PV)", depois });
   t("guardião: a linha de tela traz o aviso e o nome de quem luta", linha.startsWith("⚔ ") && linha.includes("Carcereiro") && linha.includes("o combate está aberto"));
   t("guardião: o aviso não é o de emboscada nem o do chefe", !linha.includes("Emboscada") && !linha.includes("sala do chefe"));
-  t("guardião: o envelope abre o HUD e proíbe 'combate_iniciar'", env.includes("COMBATE JÁ ABERTO PELO SISTEMA") && env.includes('NÃO envie "combate_iniciar"'));
+  /* MOVIDA (12/10): o veto saiu — a guarda `podarONarrador` corta o combate_iniciar; ver o comentário do envelope_antigo acima. */
+  t("guardião: o envelope abre o HUD e já não gasta texto com o combate_iniciar", env.includes("COMBATE JÁ ABERTO PELO SISTEMA") && !env.includes("combate_iniciar"));
   t("guardião: o envelope leva a posição, a lista e o 'depois'", env.includes(pos) && env.includes("Carcereiro (nv 3, 20 PV)") && env.endsWith(depois));
   t("guardião: o rótulo do envelope é GUARDIÃO", env.includes("· GUARDIÃO —"));
   t("guardião: o Narrador é proibido de dar a chave (quem decide é o sistema)", /chave/i.test(env) && /sistema/i.test(env));

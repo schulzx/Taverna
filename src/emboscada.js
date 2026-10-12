@@ -187,7 +187,7 @@ export function envelopeDaEmboscada(e) {
     ? ` Você descreveu ${e.pedidos}; o sistema pôs ${e.quantos}, porque ${e.pedidos} contra mim não seria um encontro difícil, seria um acidente. Narre o número que o sistema pôs — quem não veio, não veio.`
     : "";
   return `[EMBOSCADA — COMBATE ABERTO PELO SISTEMA] Você narrou uma investida e o sistema montou o encontro: ${e.quantos}× ${e.criatura} (${e.ameaca}). O painel JÁ ESTÁ ABERTO com as fichas prontas.${corte}
-REGRA DESTE ENVELOPE (obrigatória): NÃO envie "combate_iniciar" — já está feito, e mandar de novo dobra os inimigos. Narre o instante da investida em uma ou duas frases e me passe a vez: eu ajo pelos botões de combate.
+REGRA DESTE ENVELOPE (obrigatória): narre o instante da investida em uma ou duas frases e me passe a vez: eu ajo pelos botões de combate.
 NÃO decida se alguém acertou, NÃO diga quanto doeu, NÃO mate ninguém e NÃO faça eles recuarem ou fugirem por conta própria — quem resolve tudo isso é o dado, e ele ainda não foi rolado.`;
 }
 

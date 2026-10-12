@@ -314,7 +314,7 @@ export function envelopeDaGuarda(vinda, cidade) {
   const v = obj(vinda);
   if (!Array.isArray(v.inimigos) || !v.inimigos.length) return "";
   const nome = nomeDe(cidade) || "esta cidade";
-  return `[A LEI CHEGOU — RESOLVIDO PELO SISTEMA] ${maiuscula(v.quem || "a guarda")} me encontrou em ${nome}: sou procurado aqui, e vieram me buscar. O painel de combate JÁ ESTÁ ABERTO com ${v.inimigos.length} deles. NÃO envie "combate_iniciar". Narre a chegada em uma ou duas frases — quem os chamou, o que gritam — e me passe a vez.`;
+  return `[A LEI CHEGOU — RESOLVIDO PELO SISTEMA] ${maiuscula(v.quem || "a guarda")} me encontrou em ${nome}: sou procurado aqui, e vieram me buscar. O painel de combate JÁ ESTÁ ABERTO com ${v.inimigos.length} deles. Narre a chegada em uma ou duas frases — quem os chamou, o que gritam — e me passe a vez.`;
 }
 
 /* ---------------- O VEREDITO ANTES DO CLIQUE ----------------

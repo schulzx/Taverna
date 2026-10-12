@@ -54,7 +54,7 @@
 import { rngDe } from "./geografia.js";
 import { periciaPorId } from "./pericias.js";
 import { detectarPedidoDeTeste, semOPedidoDeTeste, nomeDoAtributo } from "./testes.js";
-import { dificuldadeSocial, foraDaConversa, envelopeForaDaConversa } from "./social.js";
+import { dificuldadeSocial, foraDaConversa, envelopeForaDaConversa, alvoDescrito, quemADescricaoAponta } from "./social.js";
 import { NAO_E_AGRESSAO, RX_AGRESSAO } from "./agressao.js";
 import { soODeclarado, emProclise, NAO_E_DECLARACAO } from "./peneira.js";
 /* MM14: a pergunta de balcão não é performance — ver `impressionar` */
@@ -63,6 +63,12 @@ import { falaSoPergunta } from "./perguntas.js";
 import { pressionaSegredo, pedidoDoSegredo, ARRANCAR } from "./segredo-guardado.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* o nome (ou um pedaço dele) dito como palavra inteira na frase */
+const PARTICULAS_DO_NOME = ["dos", "das", "del", "von"];
+const ditoNaFrase = (txt, nome) => {
+  const t = norm(txt);
+  return norm(nome).split(/[^a-z]+/).some((p) => p.length >= 3 && !PARTICULAS_DO_NOME.includes(p) && new RegExp("(^|[^a-z])" + p + "([^a-z]|$)").test(t));
+};
 
 /* ============================================================
    OS TRÊS TIPOS DE ROLAGEM
@@ -1450,7 +1456,16 @@ export function lerAcao(texto, ctx = {}) {
      nos que só perguntam "isto é desafio?" — seria varrer o elenco da cena
      à toa dezenas de vezes por partida. */
   const pessoaDe = typeof ctx.pessoaDe === "function" ? ctx.pessoaDe : null;
-  const pessoa = (d.social || d.alvoNomeado) && pessoaDe ? pessoaDe(cru) : null;
+  const achada = (d.social || d.alvoNomeado) && pessoaDe ? pessoaDe(cru) : null;
+  /* 12/10 (a prova viva da E4): "Tento convencer o guarda do portão…" rolou
+     "convencer Lysa" — a única registada na cena ganhava o teste mesmo com
+     a frase a descrever outra pelo ofício. Quem a frase DESCREVE (o guarda)
+     e que a achada não veste não é ela; o nome dito na frase vence sempre.
+     Sem ninguém, a conta é a de quem não está no registo — a mesma de uma
+     cena vazia —, e o teste chama-se pelo que a frase disse. */
+  const descrito = (d.social || d.alvoNomeado) ? alvoDescrito(cru) : null;
+  const pessoa = achada && descrito && !ditoNaFrase(cru, achada.nome) && !quemADescricaoAponta(cru, [achada]) ? null : achada;
+  const quemDescrito = !pessoa && descrito ? descrito.descricao : "";
 
   /* ---------------- O QUE CONVERSA NENHUMA COMPRA ----------------
      Antes do livro de tentativas de propósito: pedir a alguém que se mate
@@ -1463,7 +1478,7 @@ export function lerAcao(texto, ctx = {}) {
       return {
         tipo: "foraDaConversa", rotulo: d.rotulo,
         porque: fora.porque, comoSeria: fora.comoSeria,
-        quem: (pessoa && pessoa.nome) || "",
+        quem: (pessoa && pessoa.nome) || quemDescrito,
       };
     }
   }
@@ -1623,7 +1638,7 @@ export function lerAcao(texto, ctx = {}) {
     /* v9.65: a conta social inteira viaja junto — o que o sucesso compra,
        o que ele não compra, o que foi pago e o blefe que não colou. */
     social,
-    quem: (pessoa && pessoa.nome) || "",
+    quem: (pessoa && pessoa.nome) || quemDescrito,
     pessoa: pessoa || null,
     /* v9.65: o que a falha cobra. Sai do ALVO e não do id, porque é o alvo
        que diz a natureza da coisa — e os alvos sociais não estão na tabela

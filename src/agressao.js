@@ -865,7 +865,7 @@ export function falaDoCompanheiro(a) {
 export function envelopeDaAgressao(a) {
   if (!a || a.tipo !== "agressao") return "";
   return `[COMBATE ABERTO PELO SISTEMA] Eu declarei o primeiro golpe contra ${a.nome}${a.papel ? ` (${a.papel})` : ""} e o painel de combate JÁ ESTÁ ABERTO, com a ficha do alvo montada pelo sistema.
-REGRA DESTE ENVELOPE (obrigatória): NÃO envie "combate_iniciar" — já está feito, e mandar de novo cria um segundo inimigo. Narre o instante da investida em uma ou duas frases — o aço saindo da bainha, a cara de quem entendeu tarde demais, quem se levanta em volta — e me passe a vez: eu ajo pelos botões de combate.
+REGRA DESTE ENVELOPE (obrigatória): narre o instante da investida em uma ou duas frases — o aço saindo da bainha, a cara de quem entendeu tarde demais, quem se levanta em volta — e me passe a vez: eu ajo pelos botões de combate.
 NÃO decida se o golpe acertou, NÃO diga quanto doeu e NÃO faça ${a.nome} recuar, fugir, se render ou "desviar por pouco": o dado resolve isso e ainda não foi rolado. E não desfaça o que eu fiz — não há versão desta cena em que eu não ataquei.`;
 }
 
