@@ -697,7 +697,34 @@ function naEspinha(e, m, mundo) {
   const atos = esp && Array.isArray(esp.atos) ? esp.atos : [];
   return atos.some((a) => (a && Array.isArray(a.marcos) ? a.marcos : []).some((mc) => mc && mc.feito && mesmoFato(e, mc)));
 }
+/* ---------------- A CHEGADA QUE NINGUÉM FEZ (MM-C · 7.ª sessão de prova, M50–M51) ----------------
+   "Me volto para Lia" abriu uma viagem por inferência ("🧭 Entendi … como
+   Sul Molhado"); a jornada chegou sozinha, `cidadeAtual` virou Sul Molhado
+   com a prosa no galpão de Quebrado do Leste, e "A palavra dada a Jaco
+   Faro: ir a Sul Molhado" fechou com +57 moedas e +89 XP. O jogador nunca
+   pôs o pé na estrada.
+   A regra: uma chegada que o sistema INFERIU (a viagem que o resolver
+   abriu, não a que o jogador declarou pelo nome) não cumpre as etapas que
+   se cumprem só de estar lá, até o jogador a confirmar — nomear a cidade
+   ou um lugar dela numa frase sua (`chegadaConfirmada`). Quem chama põe
+   `mundo.chegadaInferida` = a cidade a que se chegou assim, e apaga-o
+   quando a chegada se confirma. Sem o campo, tudo como antes. */
+export const CHEGADA_INFERIDA = {
+  naoFecham: ["ir_a", "levar_a"],
+  porque: "uma viagem que o sistema inferiu não paga missão sem o jogador ter chegado de facto",
+};
+const chegouSoPorInferencia = (mundo) => !!(mundo && mundo.chegadaInferida && norm(mundo.chegadaInferida) === norm(mundo.cidadeAtual));
+/* a frase do jogador confirma a chegada a `cidade`? Nomeia a cidade, ou um
+   dos `lugares` dela (nomes que quem chama sabe). Palavra inteira, sem
+   acento; o envelope do sistema ("[…") não é frase do jogador. */
+export function chegadaConfirmada(texto, cidade, lugares = []) {
+  const t = ` ${norm(texto).replace(/[^a-z0-9]+/g, " ")} `;
+  if (!t.trim() || String(texto || "").trimStart().startsWith("[")) return false;
+  const nomes = [cidade, ...(Array.isArray(lugares) ? lugares : [])].map((x) => semArtigo(x).replace(/[^a-z0-9]+/g, " ").trim()).filter((x) => x.length >= 3);
+  return nomes.some((n) => t.includes(` ${n} `));
+}
 const cumprida = (e, m, mundo) => {
+  if (CHEGADA_INFERIDA.naoFecham.includes(e && e.tipo) && chegouSoPorInferencia(mundo)) return false;
   try { if (etapaDef(e.tipo).ver(e, mundo)) return true; } catch { /* etapa torta não fecha */ }
   return naEspinha(e, m, mundo);
 };

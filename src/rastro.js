@@ -95,6 +95,25 @@ export const VERBOS_DE_PARTIDA = [
 ];
 const PARTIDA = new RegExp(`\\b(${VERBOS_DE_PARTIDA.join("|")})\\b`, "i");
 
+/* ---------------- VIRAR-SE NÃO É PARTIR (MM-C · 7.ª sessão de prova, M50) ----------------
+   "Digo a Jaco que não vou confiar em ninguém aqui. Depois me volto para
+   Lia e aponto a pena queimada na mão dela" abriu a jornada Quebrado do
+   Leste → Sul Molhado (20 km, +4 h), fechou uma missão com +57 moedas e
+   +89 XP, e deixou a prosa no galpão e o sistema noutra cidade. O "volto
+   para" era o herói a VIRAR-SE para uma pessoa à frente dele — o ponto
+   alto do ato — e a régua de querer ir (o App) leu-o como "voltar para".
+   A C0 fechou a pergunta; isto fecha o verbo.
+   A tabela: o reflexivo de virar-se (me volto, volto-me, me viro, viro-me,
+   nos voltamos), e o olhar/gesto dirigido (volto os olhos para, aponto
+   para, olho para). A oração que o traz não parte e não dá destino. Quem
+   a lê: `detectarPartida` (aqui) e `resolverLugar` (resolver.js), que é a
+   porta do "Entendi … como" que abriu a viagem de M50. Sem acento: a
+   régua corre sobre o texto normalizado. */
+export const NAO_E_PARTIDA = {
+  rx: /\b(me volto|volto-me|volto me|nos voltamos|voltamo-nos|me voltando|voltando-me|me viro|viro-me|viro me|nos viramos|me virando|virando-me|(volto|viro) (os olhos|o olhar|o rosto|a cabeca|o corpo|as costas)|aponto para|olho para|encaro)\b/,
+  porque: "virar-se para alguém em cena, ou olhar para ele, não é tomar a estrada",
+};
+
 /* ---------------- UMA PERGUNTA É UMA PERGUNTA (MM-C · C0, 11/10) ----------------
    A 6.ª sessão (J19): "Sigo Zeca para os fundos com Vando, e pergunto
    baixo: o que é o Fogão da Meia-Noite, como se chega a Fogão Queimada, e
@@ -200,7 +219,7 @@ export function detectarPartida(acao, ctx = {}) {
     /* MM14: sem acento, pela mesma fronteira de ASCII que abria a masmorra
        da lâmina (ver `detectarEntradaEmMasmorra`) */
     const o = norm(o0);
-    if (!PARTIDA.test(o) || SO_INTENCAO.test(o)) continue;
+    if (!PARTIDA.test(o) || SO_INTENCAO.test(o) || NAO_E_PARTIDA.rx.test(o)) continue;
     const destino = nomeDeCidade(o) || nomeDeCidade(ondeSeVai);
     if (destino) return { destino, motivo: "destino nomeado no mapa" };
     /* sem cidade nomeada, só a direção explícita serve. E ela ganha do lugar

@@ -472,6 +472,134 @@ function unicaCriaturaDa(mostrado, conhecidas) {
   const c = ultima.find((x) => x.palavras.length > 1) || ultima[0];
   return comAmeaca(comoEscrito(c.palavras, ts), c.cabeca, conhecidas);
 }
+/* ---------------- A PESSOA ARMADA QUE O MESTRE MOSTROU (MM-C · 7.ª sessão de prova, M20 e M61) ----------------
+   A C0 resolveu o BICHO; a 7.ª sessão não teve bicho nenhum, e as duas
+   lutas que o jogador declarou eram contra GENTE que o Mestre pôs à frente
+   dele, armada:
+     M18–M20: Jaco — "Tem dois carregando tocha na ladeira do porto." →
+       "ataco o homem da tocha" → "A ladeira está vazia" (evaporou);
+     M60–M61: "Ele tira uma faca de pesca…" → "ataco o pescador de barba
+       ruiva com os punhos" → [SEM ALVO NO REGISTRO].
+   O que a trava da casa protege continua protegido: o jogador não ESCREVE
+   o inimigo — quem o pôs ali foi o Mestre, com uma arma na mão, nas falas
+   dele (`mostrado`). Então a pessoa entra como combatente quando:
+     1) a oração do golpe nomeia gente por uma CABEÇA da tabela (homem,
+        pescador, camarada, guarda…), com o complemento que a prosa lhe
+        pendura ("da tocha", "de barba ruiva");
+     2) o Mestre a mostrou: a cabeça, ou uma palavra do complemento, está
+        nas falas dele;
+     3) e as falas dele trazem uma ARMA ou um gesto de ameaça (`armas`).
+   O nome é o da frase do jogador, como ele o escreveu; a ameaça, a do
+   papel quando a cabeça o diz (`ameacaDoPapel`), senão a de gente comum.
+   `armadoNaProsa`: quem puxou a faca ao herói não é vítima de crime
+   (`lerCrime`) — é a luta que o próprio Mestre armou. */
+export const PESSOA_NA_PROSA = {
+  cabecas: [
+    "homem", "homens", "mulher", "mulheres", "sujeito", "sujeitos", "tipo", "pescador", "pescadores", "camarada", "marinheiro", "marinheiros",
+    "guarda", "guardas", "soldado", "soldados", "capanga", "capangas", "bandido", "bandidos", "ladrao", "ladroes", "brutamontes", "mercenario",
+    "mercenarios", "encapuzado", "encapuzados", "estranho", "estranhos", "velho", "rapaz", "moco", "grandalhao", "valentao", "assassino",
+    "cacador", "estivador", "estivadores", "contrabandista", "contrabandistas", "salteador", "salteadores", "carrasco", "acusador",
+  ],
+  conectores: ["de", "do", "da", "dos", "das"],
+  /* o que acaba o complemento: o meio do golpe e o resto da oração */
+  fim: ["com", "e", "que", "sem", "ate", "enquanto", "antes", "pela", "pelo", "na", "no", "nas", "nos", "em", "a", "o", "os", "as"],
+  armas: [
+    "faca", "facas", "lamina", "laminas", "punhal", "adaga", "espada", "espadas", "porrete", "clava", "machado", "machadinha", "foice", "arpao",
+    "gancho", "tocha", "tochas", "besta", "arco", "lanca", "cutelo", "navalha", "corrente", "bastao", "cajado", "garrucha", "pistola",
+    "desafia", "desafio", "duelo", "ameaca", "ameacando", "saca", "sacou", "empunha", "empunhando",
+  ],
+  porque: "o Mestre pôs essa pessoa armada à frente do herói, e o jogador a nomeou: existe, e é contra ela o golpe",
+};
+const CABECAS_DE_GENTE = new Set(PESSOA_NA_PROSA.cabecas);
+/* a pessoa que o golpe nomeia: { cabeca, palavras } — a cabeça e, se houver,
+   um conector e até duas palavras de complemento */
+function pessoasDe(texto, maxComp = 2) {
+  const ps = palavrasDe(texto);
+  const out = [];
+  ps.forEach((p, i) => {
+    if (!CABECAS_DE_GENTE.has(p)) return;
+    const comp = [];
+    if (PESSOA_NA_PROSA.conectores.includes(ps[i + 1])) {
+      for (let k = i + 2; k < ps.length && comp.length < maxComp; k++) {
+        const w = ps[k];
+        if (w.length < 3 || PESSOA_NA_PROSA.fim.includes(w) || CABECAS_DE_GENTE.has(w)) break;
+        comp.push(w);
+      }
+    }
+    out.push({ cabeca: p, palavras: comp.length ? [p, ps[i + 1], ...comp] : [p], comp });
+  });
+  return out;
+}
+/* o nome como a prosa o escreveu, COM a caixa dos nomes próprios ("camarada
+   de Tônia"): a primeira letra é a do começo do nome, e sobe */
+function nomeDaProsa(palavras, textos) {
+  const rx = new RegExp("(^|[^a-z0-9])(" + palavras.join("[^a-z0-9]+") + ")(?![a-z0-9])");
+  for (const t of textos) {
+    const n = norm(t);
+    if (n.length !== t.length) continue;
+    const m = n.match(rx);
+    if (m) { const cru = t.slice(m.index + m[1].length, m.index + m[1].length + m[2].length); return capital(cru[0].toLowerCase() + cru.slice(1)); }
+  }
+  return capital(palavras.join(" "));
+}
+/* A pessoa armada que o jogador NOMEIA no golpe e o Mestre MOSTROU, ou null.
+   `mostrado`: o texto (ou os textos) das últimas respostas do Mestre. */
+export function pessoaMostrada(texto, mostrado) {
+  const ts = textosDe(mostrado);
+  if (!ts.length) return null;
+  const doMestre = ` ${ts.map((x) => palavrasDe(x).join(" ")).join(" ")} `;
+  const armado = PESSOA_NA_PROSA.armas.some((w) => doMestre.includes(` ${w} `));
+  if (!armado) return null;
+  const golpe = oracoesDoGolpe(texto);
+  for (const j of pessoasDe(golpe.length ? golpe.join(" . ") : texto)) {
+    const viu = doMestre.includes(` ${j.cabeca} `) || j.comp.some((w) => w.length >= 4 && doMestre.includes(` ${w} `));
+    if (!viu) continue;
+    const nome = nomeDaProsa(j.palavras, [String(texto || ""), ...ts]);
+    const peso = ameacaDoPapel(j.cabeca);
+    return { nome, ameaca: peso.ameaca, pessoa: true, armadoNaProsa: true };
+  }
+  return null;
+}
+
+/* ---------------- A LUTA QUE O CARTÃO PROMETE (MM-C · 7.ª sessão de prova, M59–M61) ----------------
+   "Defender a versão dela — o camarada desafia você para um duelo": o
+   jogador escolheu o lado caro, e o duelo não existia (M61, "sem alvo no
+   registro"); o lado seguro saía de graça. Um cartão que promete uma luta
+   tem de a poder abrir. `alvoPrometido(contra)` devolve SEMPRE com quem é a
+   luta que o efeito `combate`/`duelo` de um lado diz (`contra`, "o velho
+   camarada"): (1) a pessoa do registo da cena cujo papel ou nome traz a
+   cabeça do `contra` (o Marlo que o Cronista registou "camarada de Tônia");
+   (2) a que o Mestre mostrou com essa cabeça; (3) o próprio `contra`, com
+   nome de gente. A ameaça é a do papel; a da sombra (o vilão, "De frente")
+   é a da tabela. */
+export const LUTA_PROMETIDA = {
+  ameaca: "comum",
+  sombra: "elite",
+  porque: "o lado da decisão prometeu esta luta antes do clique, e a promessa abre-a",
+};
+export function alvoPrometido(contra, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const txt = String(contra || "").trim();
+  const semArt = txt.replace(/^(o|a|os|as|um|uma)\s+/i, "").trim();
+  if (o.sombra && semArt) return { nome: capital(semArt), ameaca: LUTA_PROMETIDA.sombra, deOnde: "sombra" };
+  const cabecas = palavrasDe(txt).filter((w) => CABECAS_DE_GENTE.has(w));
+  const cabeca = cabecas[cabecas.length - 1] || "";
+  if (cabeca) {
+    const raiz = cabeca.replace(/(es|s)$/, "");
+    const reg = (Array.isArray(o.presentes) ? o.presentes : []).filter((p) => p && p.nome && !p.doGrupo)
+      .find((p) => palavrasDe(`${p.papel || ""} ${p.nome}`).some((w) => w === cabeca || w.replace(/(es|s)$/, "") === raiz));
+    if (reg) return { nome: String(reg.nome), ameaca: ameacaDoPapel(reg.papel || "").ameaca, deOnde: "registo" };
+    const ts = textosDe(o.mostrado);
+    for (const t of ts.slice().reverse()) {
+      /* da prosa, um só nome de complemento: "camarada de Tônia", nunca
+         "camarada de Tônia aparece" */
+      const vista = pessoasDe(t, 1).find((x) => x.cabeca === cabeca && x.comp.length);
+      if (vista) return { nome: nomeDaProsa(vista.palavras, ts), ameaca: ameacaDoPapel(cabeca).ameaca, deOnde: "prosa" };
+    }
+  }
+  return { nome: capital(semArt || "Quem o desafiou"), ameaca: cabeca ? ameacaDoPapel(cabeca).ameaca : LUTA_PROMETIDA.ameaca, deOnde: "cartao" };
+}
+
 /* as orações que DECLARAM o golpe (o resto da frase pode citar quem não apanha) */
 function oracoesDoGolpe(texto) {
   const os = String(texto || "").split(/[.!?;\n]+|\s+(?:e|mas|porem|porém|depois|enquanto)\s+/i).filter((s) => s.trim());
@@ -503,6 +631,9 @@ export function alvoDaAgressao(texto, opcoes) {
     if (naOracao.length) return forma(naOracao[0], {});
     const bicho = criaturaMostrada(texto, o.mostrado, o.conhecidas);
     if (bicho) return { ...bicho, doGrupo: false, deOnde: "prosa" };
+    /* 7.ª sessão: e a GENTE armada que o Mestre mostrou, depois do bicho */
+    const gente = pessoaMostrada(texto, o.mostrado);
+    if (gente) return { ...gente, doGrupo: false, deOnde: "prosa" };
   }
   if (citados.length) return forma(citados[0], {});
   /* sem nome: só o pronome abre a segunda pergunta */
@@ -550,6 +681,15 @@ export function lerAgressao(texto, opcoes) {
       tipo: "agressao", nome: alvo.nome, papel: "", criatura: true,
       ameaca: alvo.ameaca, porqueDoPeso: CRIATURA_NA_PROSA.porque,
       porque: "eu declarei o primeiro golpe contra o que o Mestre pôs na cena",
+    };
+  }
+  /* 7.ª sessão: a pessoa que o Mestre armou à frente do herói — luta, não
+     crime (`lerCrime` recusa `armadoNaProsa`) */
+  if (alvo.pessoa) {
+    return {
+      tipo: "agressao", nome: alvo.nome, papel: "", pessoa: true, armadoNaProsa: true,
+      ameaca: alvo.ameaca, porqueDoPeso: PESSOA_NA_PROSA.porque,
+      porque: "eu declarei o golpe contra quem o Mestre pôs armado à minha frente",
     };
   }
   const peso = ameacaDoPapel(alvo.papel);

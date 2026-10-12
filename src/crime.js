@@ -109,6 +109,10 @@ export function lerCrime(agressao, ctx, gravidade = "ferir") {
      vítima de crime — a 6.ª sessão viu o ataque ao cão virar crime contra o
      coveiro, e a régua é que um cão não tem lei que o vingue */
   if (a.criatura) return null;
+  /* 7.ª sessão de prova (M60–M61): quem o Mestre pôs ARMADO à frente do
+     herói (`armadoNaProsa`, agressao.js) — o camarada que puxou a faca de
+     pesca e desafiou para o duelo — não é vítima: é a luta que a cena armou */
+  if (a.armadoNaProsa) return null;
   const nome = nomeDe(a);
   const g = GRAVIDADES[gravidade] ? gravidade : "ferir";
   const registo = obj(o.npcs);

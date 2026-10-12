@@ -29,7 +29,46 @@
    mais barato do que preferir adivinhar.
    ============================================================ */
 
+import { NAO_E_PARTIDA } from "./rastro.js";
+
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+
+/* ---------------- O DESTINO MORA NA ORAÇÃO DO VERBO (MM-C · 7.ª sessão, M50) ----------------
+   O resolver procurava o destino no PERÍODO INTEIRO. Na 7.ª sessão de
+   prova: "Digo a Jaco que não vou confiar em ninguém aqui. Depois me volto
+   para Lia e aponto a pena queimada na mão dela: o verso que você cantou e
+   essa pena no seu caderno vêm do mesmo lugar." — o "volto para" passou a
+   régua de querer ir do App, e o resolver achou Sul Molhado porque "O
+   Peixe Cego" (do cânone) tem por tipo "lugar", e a frase dizia "do mesmo
+   LUGAR", noutra oração. Resultado: "🧭 Entendi … como Sul Molhado", uma
+   viagem que ninguém pediu, uma missão paga.
+   Três regras, uma tabela:
+     1) quando a frase tem o verbo de querer ir (`verbo`, a mesma régua do
+        App), só as orações que o trazem dão destino — o resto da frase é
+        outra coisa;
+     2) a oração que é virar-se para alguém (`NAO_E_PARTIDA`, rastro.js)
+        não dá destino nenhum; se só havia essa, devolve `naoParte`, e quem
+        chama segue a cascata sem envelope de destino;
+     3) os termos do cânone que são CLASSE e não nome (`genericos`) não
+        apontam cidade, e os outros casam por palavra inteira.
+   Sem verbo nenhum (quem chama com a descrição pura), a frase inteira,
+   como sempre. */
+export const DESTINO_NA_ORACAO = {
+  verbo: /\b(vou para|vamos para|vou pra|vamos pra|vou a|vamos a|vou ate|vamos ate|parto para|partimos para|sigo para|seguimos para|viajo para|viajamos para|rumo a|rumo ao|quero ir|queremos ir|preciso ir|vamos voltar para|volto para|voltamos para|me leve para|partir para|viajar para|ir para|ir ate|parto|partimos|viajo|viajamos|rumo)\b/,
+  separa: /[.!?;:\n]+|\s+(?:e|mas|porem|entao|depois|antes|enquanto|ou)\s+/,
+  genericos: ["lugar", "local", "pessoa", "gente", "objeto", "item", "coisa", "faccao", "criatura", "cidade", "npc", "outro", "outra", "alguem"],
+  porque: "o destino é o que a oração de partir diz, não o que o resto da frase menciona",
+};
+/* o texto onde o destino pode estar: { texto, naoParte } */
+function ondeMoraODestino(texto) {
+  const t = norm(texto);
+  const oracoes = t.split(DESTINO_NA_ORACAO.separa).map((x) => x.trim()).filter(Boolean);
+  const comVerbo = oracoes.filter((o) => DESTINO_NA_ORACAO.verbo.test(o));
+  if (!comVerbo.length) return { texto: t, naoParte: false };
+  const valem = comVerbo.filter((o) => !NAO_E_PARTIDA.rx.test(o));
+  return valem.length ? { texto: valem.join(" . "), naoParte: false } : { texto: "", naoParte: true };
+}
+const palavraInteira = (t, termo) => new RegExp(`(^|[^a-z0-9])${termo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`).test(t);
 
 /* ---------------- O QUE SE PODE DIZER DE UM LUGAR ----------------
    Cada linha é uma maneira de descrever sem nomear. `campo` é onde a
@@ -96,9 +135,11 @@ function casaPeloNome(texto, nome) {
    as pessoas conhecidas. Cada entrada é { cidade, termos } — os termos
    são o que aquela cidade também "responde". */
 export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
-  const t = norm(texto);
+  const onde = ondeMoraODestino(texto);
+  const t = onde.texto;
   const todas = conhecidas(mapa);
   const alvo = todas.filter((c) => norm(c.nome) !== norm(excluir));
+  if (onde.naoParte) return { tipo: "nada", naoParte: true, candidatos: [], conhecidas: alvo };
   if (!t.trim() || !alvo.length) return { tipo: "nada", candidatos: [], conhecidas: alvo };
 
   const pontos = new Map();
@@ -126,7 +167,7 @@ export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
     if (!e || !e.cidade || !Array.isArray(e.termos)) continue;
     for (const termo of e.termos) {
       const n = norm(termo);
-      if (n.length > 3 && t.includes(n)) {
+      if (n.length > 3 && !DESTINO_NA_ORACAO.genericos.includes(n) && palavraInteira(t, n)) {
         const c = alvo.find((x) => norm(x.nome) === norm(e.cidade));
         if (c) soma(c, 3, e.porque || `você conhece ${termo} de lá`);
       }

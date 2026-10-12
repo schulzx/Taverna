@@ -254,7 +254,13 @@ function simular(w, { confronto = false, responde = false, decide = false } = {}
         const precisa = { crise: ["pedido"], escolha: ["pedido", "crise"], pistaA: ["pedido"], pistaB: ["pistaA"], revelacao: ["pistaA", "pistaB"] }[e.tipo] || [];
         if (!precisa.every((x) => v.includes(x) || (x === "crise" && v.includes("revelacao")))) falhas.ordem.push(`${e.nome}: ${e.tipo} antes de ${precisa.join("+")}`);
         if (e.tipo !== "mente") v.push(e.tipo);
-        if (["crise", "revelacao", "corpo"].includes(e.tipo)) { crisesDia[e.dia] = (crisesDia[e.dia] || 0) + 1; if (crisesDia[e.dia] > 1) falhas.duasCrises.push(`dia ${e.dia}`); }
+        /* MOVIDA (7.ª sessão de prova, M52–M55): a revelação que o JOGADOR
+           ganhou pelo confronto (`porConfronto`) já não espera por o dia não
+           ter outra crise — `CONFRONTO.furaODia`. A regra "uma crise por
+           dia" continua inteira para o que o SISTEMA põe na cena; a sessão
+           provou que, aplicada à verdade que o jogador foi buscar, ela
+           deixava o Narrador sem a linha e com um álibi por inventar. */
+        if (["crise", "revelacao", "corpo"].includes(e.tipo) && !e.porConfronto) { crisesDia[e.dia] = (crisesDia[e.dia] || 0) + 1; if (crisesDia[e.dia] > 1) falhas.duasCrises.push(`dia ${e.dia}`); }
         if (["revelacao", "corpo"].includes(e.tipo)) { revelou = true; revAto[e.ato] = (revAto[e.ato] || 0) + 1; if (revAto[e.ato] > 1) falhas.duasRev.push(`ato ${e.ato}`); }
         if (e.luta && !e.tom.includes("batalha")) falhas.luta.push(`${e.tipo}:${e.tom.join("/")}`);
         if (e.tipo === "escolha" && !(e.lados && e.lados.length === 2 && e.lados.every((x) => x.verbo && x.preco && !/[{}]/.test(x.verbo + x.preco)))) falhas.lados.push(e.nome);

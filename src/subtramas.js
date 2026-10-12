@@ -52,6 +52,7 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+import { alvoPrometido } from "./agressao.js";
 import { FIO } from "./saga.js";
 import { relogioDoFio, RELOGIO_DO_FIO } from "./batidas.js";
 import { contrair } from "./lugar.js";
@@ -349,6 +350,8 @@ export const LINHA_DO_CORACAO = {
   pistaA: "{nome} (é fato: entra nesta resposta): {pista}. Sem o explicar; se o herói perguntar, {nome} muda de assunto.",
   pistaB: "{nome} (é fato: entra nesta resposta, à vista): {pista}. Mostre-o sem o explicar; se o herói perguntar, {nome} muda de assunto.",
   revelacao: "{nome} (é fato: entra nesta resposta, dito por {ele}, inteiro): {revela}.",
+  /* a mesma verdade, pela porta da fogueira (7.ª sessão, a proposta aprovada) */
+  revelacaoAoFogo: "{nome} (é fato: entra nesta resposta, dito por {ele}, inteiro, à volta do fogo): {revela}.",
   corpo: "No que {nome} levava (é fato: entra nesta resposta, achado pelo herói): {carrega}, com {assinatura} no forro — {revela}.",
   mente: "{nome} (é fato: entra nesta resposta): mente ao herói sobre isso, e o herói percebe que mente; a verdade não sai.",
   oferta: "Um servo de {sombra} (é fato: entra nesta resposta, à mesa, sem se sentar): diz ao herói \"{fala}\"",
@@ -531,7 +534,7 @@ function caber(texto, max = LINHA_DO_CORACAO.max) {
 }
 const fechar = (t) => (/[.!?…]"?$/.test(t) ? t : `${t}.`);
 
-function linhaDe(tipo, inst, extra, ctx) {
+function linhaDe(tipo, inst, extra, ctx, { cortar = true } = {}) {
   const o = obj(ctx);
   const sombra = sombraDoAto(o.espinha, o.ato);
   const v = { ...inst.vars, ...extra, sombra };
@@ -540,7 +543,8 @@ function linhaDe(tipo, inst, extra, ctx) {
   /* o género depois do nome quando a linha não o diz (`comGenero`); o
      servo do vilão não é o vilão, e não o leva */
   const x = fechar(ench(LINHA_DO_CORACAO[tipo]));
-  return caber(tipo === "oferta" ? x : comGenero(x, inst));
+  const y = tipo === "oferta" ? x : comGenero(x, inst);
+  return cortar ? caber(y) : y;
 }
 
 /* o pedido: a fala é obrigatória; o tique e o que traz entram se couberem */
@@ -578,17 +582,31 @@ function linhaDaEscolha(inst, ctx) {
 /* ============================================================
    QUEM REPARA — a frase do jogador casa o elo e uma pista que já viu
    ============================================================ */
-export const CONFRONTO = { tamanhoMinimo: 5, vazias: ["sempre", "mesma", "mesmo", "outra", "outro", "nunca", "ninguem", "quando", "baixinho", "dele", "dela", "desta", "deste", "terra", "minuto", "certo"] };
+/* MM-C · 7.ª sessão de prova (M55): "entro no galpão… ponho diante DELA o
+   verso e a pena queimada. Digo que isso é a marca de quem ela serve, e
+   quero o nome" — o elo em cena, as duas pistas vistas e as duas na frase,
+   e a revelação não veio: o confronto exigia o primeiro NOME do elo, e o
+   jogador disse "dela". Com o elo em cena e um sinal de CADA pista vista na
+   frase (`semNome.pistas`), o nome não é preciso — ninguém aponta duas
+   provas a quem não está à frente dele. Com uma pista só, o nome continua
+   a ser preciso ("de onde vem isso, verso?" não é acusação a ninguém).
+   E `furaODia`: a revelação que o JOGADOR ganhou pelo confronto não espera
+   por o dia não ter outra crise (a de Tônia caiu no mesmo dia, M52) — a
+   regra "uma crise por dia" é do ritmo do sistema, não um veto à verdade
+   que o jogador foi buscar. A sessão provou o preço de esperar: o
+   Narrador, sem a linha, inventa o álibi e adia. */
+export const CONFRONTO = { tamanhoMinimo: 5, vazias: ["sempre", "mesma", "mesmo", "outra", "outro", "nunca", "ninguem", "quando", "baixinho", "dele", "dela", "desta", "deste", "terra", "minuto", "certo"], semNome: { pistas: 2 }, furaODia: true };
 function confrontou(frase, inst, pessoa, pistasVistas) {
   const f = norm(frase);
   if (!f || !pistasVistas) return false;
   const nome = norm(inst.nome).split(/\s+/)[0];
   const disse = nome.length >= 3 && f.split(/[^a-z0-9]+/).includes(nome);
-  if (!disse) return false;
   const pistas = arr(obj(obj(obj(pessoa).ficha).esconde).pistas).slice(0, pistasVistas).map((x) => x.o || "");
   const palavras = (t) => norm(t).split(/[^a-z0-9]+/).filter((w) => w.length >= CONFRONTO.tamanhoMinimo && !CONFRONTO.vazias.includes(w));
   const ditas = new Set(palavras(f));
-  return pistas.some((t) => palavras(t).some((w) => ditas.has(w)));
+  const citadas = pistas.filter((t) => palavras(t).some((w) => ditas.has(w))).length;
+  if (disse) return citadas > 0;
+  return pistas.length >= CONFRONTO.semNome.pistas && citadas >= CONFRONTO.semNome.pistas;
 }
 
 /* ============================================================
@@ -740,9 +758,11 @@ export function avancarCoracao(coracao, nucleo, ctx) {
     const eloMorto = inst.papel === "elo" && morto(inst.nome);
     if (!presente && !eloMorto) continue;
     let tipo = null;
+    let porConfronto = false;
     /* quem repara chega antes: o elo confrontado com o que já se viu */
     if (inst.papel === "elo" && !eloMorto && a.crise == null && a.pistas.length && confrontou(o.frase, inst, p, a.pistas.length)) {
       tipo = a.pistas.length >= ANCORA_DO_PAPEL.elo.crise.pistas ? "revelacao" : "mente";
+      porConfronto = true;
     }
     if (eloMorto) tipo = a.crise == null && diaDoFecho(o.espinha, ANCORA_DO_PAPEL.elo.crise.fechoDoAto) != null ? "corpo" : null;
     if (!tipo) {
@@ -755,7 +775,7 @@ export function avancarCoracao(coracao, nucleo, ctx) {
     }
     /* nunca duas crises no mesmo dia; nunca duas revelações no mesmo ato */
     const ehCrise = ["crise", "revelacao", "corpo"].includes(tipo);
-    if (ehCrise && jaCrise) continue;
+    if (ehCrise && jaCrise && !(porConfronto && CONFRONTO.furaODia)) continue;
     if (["revelacao", "corpo"].includes(tipo) && !revelacaoPermitida(n, inst.nome, ato, rev)) continue;
     /* na luta, só o que é da luta (o irmão do outro lado está NA luta) */
     const tom = tipo === "pedido" ? inst.pedido.tom : ehCrise ? inst.crise.tom : tipo === "escolha" ? inst.escolha.tom : [];
@@ -771,9 +791,7 @@ export function avancarCoracao(coracao, nucleo, ctx) {
       linha = linhaDe(tipo, inst, { pista: encher(pista, { sombra: sombraDoAto(o.espinha, ato) }) }, o);
       novo = { ...a, pistas: [...a.pistas, dia] };
     } else if (tipo === "revelacao" || tipo === "corpo") {
-      const leva = levaDoFecho(o.espinha);
-      const revela = encher(inst.crise.o, { sombra: sombraDoAto(o.espinha, 0), leva: leva || "o que vem a seguir", cidade: inst.vars.cidade });
-      linha = linhaDe(tipo, inst, { revela, carrega: obj(obj(p).ficha.carrega).o || "" }, o);
+      linha = linhaDaRevelacao(tipo, inst, p, o);
       novo = { ...a, crise: dia, ato };
     } else if (tipo === "mente") {
       linha = linhaDe("mente", inst, {}, o);
@@ -791,11 +809,28 @@ export function avancarCoracao(coracao, nucleo, ctx) {
     out.coracao = { v: C0.v, arcos: { ...arcos } };
     out.linha = linha;
     out.quem = inst.nome;
-    out.batida = { nome: inst.nome, tipo, tom: tom.slice(), ...(pior ? { pior: true } : {}), ...(tipo === "escolha" ? { lados: ladosParaTela(inst, o) } : {}), ...(["pistaA", "pistaB"].includes(tipo) ? { pista: tipo === "pistaA" ? 0 : 1 } : {}) };
+    out.batida = { nome: inst.nome, tipo, tom: tom.slice(), ...(pior ? { pior: true } : {}), ...(porConfronto ? { porConfronto: true } : {}), ...(tipo === "escolha" ? { lados: ladosParaTela(inst, o) } : {}), ...(["pistaA", "pistaB"].includes(tipo) ? { pista: tipo === "pistaA" ? 0 : 1 } : {}) };
     break;
   }
   out.coracao = garantirCoracaoDoSave(out.coracao);
   return out;
+}
+
+/* a linha da verdade do elo — a mesma pelas duas portas (o confronto, de
+   pé, e a fogueira, por convite): `tipo` é "revelacao", "corpo" ou
+   "revelacaoAoFogo" (que, se não couber, cai na de pé — a verdade inteira
+   vale mais do que dizer onde) */
+function linhaDaRevelacao(tipo, inst, pessoa, ctx) {
+  const o = obj(ctx);
+  const leva = levaDoFecho(o.espinha);
+  const revela = encher(inst.crise.o, { sombra: sombraDoAto(o.espinha, 0), leva: leva || "o que vem a seguir", cidade: inst.vars.cidade });
+  const extra = { revela, carrega: obj(obj(obj(pessoa).ficha).carrega).o || "" };
+  if (tipo === "revelacaoAoFogo") {
+    const aoFogo = linhaDe("revelacaoAoFogo", inst, extra, o, { cortar: false });
+    if (aoFogo.length <= LINHA_DO_CORACAO.max) return aoFogo;
+    return linhaDe("revelacao", inst, extra, o);
+  }
+  return linhaDe(tipo, inst, extra, o);
 }
 
 /* a peça seguinte depois do fecho do ato 0 — o {leva} da reviravolta, como
@@ -876,7 +911,7 @@ export function responderPedido(coracao, nucleo, nome, resposta, ctx) {
    o "fica ou parte" do nome falso decide-se pela semente. */
 export function escolherLado(coracao, nucleo, nome, ladoId, ctx) {
   const C = garantirCoracaoDoSave(coracao);
-  const out = { coracao: C, efeitos: [], linha: "" };
+  const out = { coracao: C, efeitos: [], linha: "", luta: null };
   const o = obj(ctx);
   const insts = Array.isArray(o.subtramas) ? o.subtramas : subtramasDoNucleo(nucleo, o);
   const inst = insts.find((i) => mesmoNome(i.nome, nome));
@@ -895,7 +930,37 @@ export function escolherLado(coracao, nucleo, nome, ladoId, ctx) {
   out.coracao = garantirCoracaoDoSave({ ...C, arcos: { ...C.arcos, [inst.nome]: { ...a, escolha: lado.id } } });
   out.linha = linhaDe("decidido", inst, { preco: encher(lado.preco, { sombra }) }, o);
   out.efeitos = out.efeitos.map((e) => Object.fromEntries(Object.entries(e).map(([k, v]) => [k, typeof v === "string" ? semBastidor(v) : v])));
+  /* 7.ª sessão (M59–M61): o lado que promete uma luta devolve com quem ela é
+     — o App abre-a com isto (`abrirCombate([{ nome, ameaca }])`), sem
+     depender do registo. `ctx.presentes` (o elenco da cena) e
+     `ctx.mostrado` (as últimas falas do Mestre) afinam o nome. */
+  const brigas = lado.efeitos.filter((e) => e && ["combate", "duelo"].includes(e.tipo) && e.contra);
+  if (brigas.length) {
+    const e = brigas[0];
+    const contra = semBastidor(encher(e.contra, { sombra }));
+    out.luta = { ...alvoPrometido(contra, { presentes: o.presentes, mostrado: o.mostrado, sombra: e.contra === "{sombra}" }), duelo: e.tipo === "duelo", contra };
+  }
   return out;
+}
+
+/* ---------------- UM FAVOR, UMA FORMA (7.ª sessão de prova, M26–M27) ----------------
+   Hilda pediu ao herói pela linha do coração ("Leve esta carta a Sal
+   Morto") e, no mesmo turno, o Cronista pregou o mesmo favor no mural: a
+   soleira ficou com "Aceitar o que Hilda pede" E "Aceitar: A carta para Sal
+   Morto · +59 XP". O jogador tocou no primeiro; o envelope do mural ("o
+   papel está no mural") ganhou, e o Mestre devolveu o envelope — o aceite
+   desmentido. A regra: quem do núcleo já fez o pedido ao herói (o arco tem
+   `pedido`) não tem cartaz no mural — o favor é o pedido. Devolve o nome
+   da pessoa do núcleo que já pediu (o App não prega o cartaz), ou "". */
+export function favorJaPedido(dador, coracao, nucleo) {
+  /* "Hilda, a taverneira" / "Hilda (Peixe Cego)" é a Hilda */
+  const d = String(dador == null ? "" : dador).split(/[,(—–]/)[0].trim();
+  if (!d) return "";
+  const p = arr(obj(nucleo).pessoas).find((x) => x && x.nome && x.papel !== "vilao" && mesmoNome(x.nome, d));
+  if (!p) return "";
+  const C = garantirCoracaoDoSave(coracao);
+  const k = Object.keys(C.arcos).find((x) => mesmoNome(x, p.nome));
+  return k != null && C.arcos[k].pedido != null ? p.nome : "";
 }
 
 /* §2.5 — as duas sementes do elo para o Livro de Promessas (o App semeia-as
@@ -957,10 +1022,39 @@ export const PORTA_DO_CORACAO = { noitesParaAbrir: 2 };
    decisão que está posta. A crise e as pistas são da cena, não da noite. */
 const BATIDAS_DA_NOITE = ["pedido", "escolha"];
 
+/* ---------------- A VERDADE AO LUME (7.ª sessão de prova — a proposta aprovada pela pessoa, 11/10) ----------------
+   A sessão provou que, de pé, o Narrador adia a verdade: com as duas pistas
+   dadas e o elo a ser confrontado (M45–M55), inventou o álibi ("a pena é
+   da minha mãe, o verso é do meu pai") e mandou esperar "a maré baixa". A
+   fogueira já é o sítio onde o jogo diz "o que de dia não diz", e as
+   frases fechadas dela foram cumpridas 10 de 10. Então a fogueira é a
+   SEGUNDA PORTA da revelação: com as duas pistas vistas e a verdade ainda
+   por cair (e permitida neste ato, `revelacaoPermitida`), o elo à roda
+   tem um gesto que diz que há uma coisa (nunca qual), e sentar-se ao lado
+   dele traz a revelação, inteira, na voz dele — por CONVITE, não por
+   confronto. As duas portas dão a mesma linha (`linhaDaRevelacao`) e
+   gravam o mesmo `crise`/`ato` no arco: a que abrir primeiro fecha a
+   outra. Uma só vez.
+   `voz` fica "ficha" (a forma que a roda e a manhã já sabem ler: "o que
+   {nome} contou ao pé do fogo" é verdade) e `revela: true` diz ao App que
+   esta noite é a da verdade (o Livro paga as duas sementes, como no
+   confronto). */
+export const REVELACAO_AO_FOGO = {
+  gesto: "olha o fogo como quem pesa o que vai dizer",
+  manha: "revelacao",
+  porque: "as revelações que se lembram não são ditas numa discussão, são ditas ao lume",
+};
+
 function batidaDaNoite(inst, pessoa, c, ctx, todos) {
   const a = { ...arcoVazio(), ...(c.arcos[inst.nome] || {}) };
   if (a.posta != null && !a.escolha) return "escolha";
-  if (inst.papel === "elo") return a.pedido == null ? "pedido" : null;
+  if (inst.papel === "elo") {
+    if (a.pedido == null) return "pedido";
+    const o = obj(ctx);
+    const ato = Math.max(0, Math.floor(Number(o.ato)) || 0);
+    const madura = a.crise == null && a.pistas.length >= ANCORA_DO_PAPEL.elo.crise.pistas;
+    return madura && revelacaoPermitida(o.nucleo, inst.nome, ato, reveladas(c, arr(todos && todos.insts), o)) ? "revelacao" : null;
+  }
   const t = devida(inst, a, pessoa, c, ctx, todos);
   return BATIDAS_DA_NOITE.includes(t) ? t : null;
 }
@@ -977,7 +1071,7 @@ export function quemAoFogo(nucleo, ctx) {
   const presentes = arr(o.presentes).map(String).filter(Boolean);
   const C = garantirCoracaoDoSave(o.coracao);
   const insts = Array.isArray(o.subtramas) ? o.subtramas : subtramasDoNucleo(n, o);
-  const todos = { elo: insts.find((i) => i.papel === "elo") || null };
+  const todos = { elo: insts.find((i) => i.papel === "elo") || null, insts };
   const ordem = ["companheiro", "elo", "voz", "balanca", "porta"];
   const out = [];
   for (const papel of ordem) {
@@ -986,6 +1080,10 @@ export function quemAoFogo(nucleo, ctx) {
       const inst = insts.find((i) => i.nome === p.nome);
       const batida = inst ? batidaDaNoite(inst, p, C, { ...o, nucleo: n, emCena: [p.nome] }, todos) : null;
       const contados = obj(C.arcos[p.nome]).contados || [];
+      if (batida === "revelacao") {
+        out.push({ pessoa: p.nome, papel: p.papel, voz: "ficha", gesto: REVELACAO_AO_FOGO.gesto, batida, revela: true });
+        continue;
+      }
       const ficha = batida ? null : fichaNaVoz(p, { contados, fio: obj(o.espinha).fio });
       const voz = batida ? "pedido" : ficha ? "ficha" : null;
       out.push({ pessoa: p.nome, papel: p.papel, voz, gesto: gestoAoFogo(p, voz, ficha ? ficha.campo : "", o), batida });
@@ -1040,16 +1138,24 @@ export function sentarAoFogo(coracao, nucleo, nome, ctx) {
   const o = obj(ctx);
   const n = obj(nucleo);
   const C = garantirCoracaoDoSave(coracao);
-  const out = { coracao: C, voz: null, linha: "", lados: [], campo: "" };
+  const out = { coracao: C, voz: null, linha: "", lados: [], campo: "", revela: false };
   const p = arr(n.pessoas).find((x) => x && x.nome && mesmoNome(x.nome, nome) && x.papel !== "vilao");
   if (!p) return out;
   const insts = Array.isArray(o.subtramas) ? o.subtramas : subtramasDoNucleo(n, o);
   const inst = insts.find((i) => i.nome === p.nome);
-  const todos = { elo: insts.find((i) => i.papel === "elo") || null };
+  const todos = { elo: insts.find((i) => i.papel === "elo") || null, insts };
   const dia = Math.floor(Number(o.dia)) || 0;
   const a = { ...arcoVazio(), ...(C.arcos[p.nome] || {}) };
   const noite = { ...a, noites: a.noites + 1 };
   const batida = inst ? batidaDaNoite(inst, p, C, { ...o, nucleo: n, emCena: [p.nome] }, todos) : null;
+  if (batida === "revelacao") {
+    const ato = Math.max(0, Math.floor(Number(o.ato)) || 0);
+    out.voz = "ficha";
+    out.revela = true;
+    out.linha = linhaDaRevelacao("revelacaoAoFogo", inst, p, o);
+    out.coracao = garantirCoracaoDoSave({ ...C, arcos: { ...C.arcos, [p.nome]: { ...noite, crise: dia, ato } } });
+    return out;
+  }
   if (batida === "escolha") {
     out.voz = "pedido";
     out.linha = linhaDaEscolha(inst, o);
@@ -1086,6 +1192,7 @@ export const MANHA_DA_FOGUEIRA = {
   lado: "Ficou decidido à volta do fogo: {preco}.",
   porta: "Você ficou mais um pouco com {nome}, só vocês dois.",
   semResposta: "{nome} esperou a sua resposta, e a manhã ainda a traz.",
+  revelacao: "Ficou com você, da noite, o que {nome} confessou ao pé do fogo.",
 };
 export function fraseDaManha(noite) {
   const x = obj(noite);
