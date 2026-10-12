@@ -19,7 +19,7 @@ import { rolarClima, rolarEncontro } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
-import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha } from "./subtramas.js";
+import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha, favorJaPedido } from "./subtramas.js";
 import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
@@ -151,7 +151,7 @@ import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, riv
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt } from "./missoes.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
@@ -217,7 +217,7 @@ import { janelaAncorada } from "./janela.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
-import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra, idaAMasmorra, quemResponde } from "./rastro.js";
+import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra, idaAMasmorra, quemResponde, NAO_E_PARTIDA } from "./rastro.js";
 import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca, lugarAoEntrarNaMasmorra } from "./boca.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
@@ -5656,6 +5656,15 @@ export default function Taverna() {
      Cronista. Vive só durante a conferência que ele dispara — não vai ao
      save, e é esvaziado logo depois (missoes.js, `conversouCom`). */
   const falouComRef = useRef([]);
+  /* MM-C · 7.ª sessão de prova (M50–M51): a viagem que o RESOLVER abriu
+     (não a que o jogador declarou pelo nome) chega "inferida" — e a chegada
+     inferida não paga missão de ir/levar até o jogador a confirmar
+     (missoes.js, CHEGADA_INFERIDA). jornadaInferidaRef: o destino da
+     jornada aberta por inferência; chegadaInferidaRef: a cidade a que se
+     chegou assim, até uma frase do jogador a nomear (chegadaConfirmada) ou
+     uma partida declarada. Vivem na sessão: não vão ao save. */
+  const jornadaInferidaRef = useRef("");
+  const chegadaInferidaRef = useRef("");
   /* MM-C · C0: o segredo de um marco "descobrir" revelado NESTE turno (o
      teste que passou ou a pista dada) — o molde do `falouComRef`: vive só
      na conferência que o Cronista dispara e é esvaziado logo a seguir. E o
@@ -8463,7 +8472,10 @@ export default function Taverna() {
   const RX_QUER_PARTIR = /\b(vou para|vamos para|vou pra|vamos pra|vou a|vamos a|vou ate|vamos ate|parto para|partimos para|sigo para|seguimos para|viajo para|viajamos para|rumo a|rumo ao|quero ir|queremos ir|preciso ir|vamos voltar para|volto para|voltamos para|me leve para|partir para|viajar para|ir para|ir ate)\b/;
   const querPartir = (texto) => {
     const t = String(texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    return !!t.trim() && !t.trimStart().startsWith("[") && RX_QUER_PARTIR.test(t);
+    /* MM-C · 7.ª sessão (M50): "me volto para Lia" casava "volto para" e
+       abriu 20 km de estrada. O reflexivo de virar-se e o olhar dirigido
+       (NAO_E_PARTIDA, rastro.js) não são querer partir. */
+    return !!t.trim() && !t.trimStart().startsWith("[") && RX_QUER_PARTIR.test(t) && !NAO_E_PARTIDA.rx.test(t);
   };
 
   /* O que o cânone e o elenco sabem de cada lugar — é assim que "a cidade
@@ -8524,6 +8536,10 @@ export default function Taverna() {
       return;
     }
     cidadeAtualRef.current = j.para;
+    try {
+      chegadaInferidaRef.current = jornadaInferidaRef.current && jornadaInferidaRef.current === j.para ? j.para : "";
+      jornadaInferidaRef.current = "";
+    } catch (e) { calou("a chegada inferida", e); }
     jornadaRef.current = null; setJornada(null);
     if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
     const dias = p ? Math.max(0.5, Math.round((p.horasTotais / HORAS_MARCHA_POR_DIA) * 10) / 10) : Math.round(diasNoCalendario);
@@ -11245,6 +11261,9 @@ export default function Taverna() {
          de Edric" (sessão 5) ficava em 0/2 com o marco caído. Ler um ref não
          lança; quem lê o campo (`conferirMissoes`) é que o trata. */
       espinha: espinhaRef.current,
+      /* MM-C · 7.ª sessão (M51): a cidade a que só se chegou por inferência
+         — ir_a/levar_a esperam a confirmação (CHEGADA_INFERIDA) */
+      chegadaInferida: chegadaInferidaRef.current || "",
     };
   };
   /* 11/10 (MM, o laço da história 4/6, v9.401 do backend): um vilão só — a
@@ -11349,7 +11368,12 @@ export default function Taverna() {
                Delfina que a principal já persegue a 146 km. */
             let semHomonimo = true;
             try { semHomonimo = nomeComDono(cartaz.dador, npcsRef.current, contextoDoNome({})).decisao !== "recusada"; } catch (e) { calou("nomeComDono do mural", e); }
-            if (semHomonimo && pregarNoMural(cartaz)) {
+            /* MM-C · 7.ª sessão (M26–M27): quem do núcleo já fez o pedido
+               ao herói pela linha do coração não tem cartaz — o favor é o
+               pedido, e dois botões para a mesma coisa desmentem o aceite */
+            let semPedido = true;
+            try { semPedido = !favorJaPedido(cartaz.dador, coracaoRef.current, nucleoAgora()); } catch (e) { calou("o favor já pedido", e); }
+            if (semHomonimo && semPedido && pregarNoMural(cartaz)) {
               msgs.push(`📋 ${cartaz.dador || "Alguém"} tem um trabalho no mural.`);
               notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(cartaz)}`;
             }
@@ -15376,6 +15400,11 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
                quanto o que faz: na dúvida, não move. Um resolver que chuta
                teleporta o herói para o lugar errado, e isso custa a sessão. */
             const r = resolverLugar(acao, mapaRef.current, { extra: pistasDoCanone(), excluir: cidadeAtualRef.current });
+            /* MM-C · 7.ª sessão (M50): a única oração com verbo de ida era
+               virar-se para alguém — não houve destino nenhum, e o envelope
+               "DESTINO NÃO RECONHECIDO" seria falar de viagem a quem não
+               viajou. A cascata segue como se esta porta não existisse. */
+            if (r && r.naoParte) return false;
             if (r.tipo === "achei") {
               const nome = r.escolha.cidade.nome;
               /* v9.165: o mesmo porteiro da porta de cima — quatro bocas,
@@ -15387,7 +15416,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
                 notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
                 return umaSoResposta(() => {
                   pushMsgs([{ autor: "sistema", texto: `🧭 Entendi "${acao.trim()}" como ${nome}${r.escolha.porque.length ? ` (${r.escolha.porque.join(", ")})` : ""}.` }]);
-                  viajar(nome, { origem: "frase" });
+                  viajar(nome, { origem: "frase", inferida: true });
                 });
               }
             } else if (r.tipo === "ambiguo") {
@@ -15778,6 +15807,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     fraseAnteriorRef.current = "";
     try { fraseAnteriorRef.current = fraseAnteriorDoJogador(mensagensRef.current); } catch (e) { calou("a frase anterior do jogador", e); }
     try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
+    /* MM-C · 7.ª sessão (M51): a chegada inferida confirma-se quando o
+       jogador nomeia a cidade ou um lugar dela — aí as missões de ir/levar
+       voltam a fechar só de estar lá */
+    try {
+      const ci = chegadaInferidaRef.current;
+      if (ci && chegadaConfirmada(acao, ci, lugaresDaqui().map((l) => l && l.nome).filter(Boolean))) chegadaInferidaRef.current = "";
+    } catch (e) { calou("a chegada confirmada", e); }
     /* MM-C · C0: "enfrento o que vier" ou "A luta começa" sem combate aberto
        — o veto vai pelo canal do turno (naoPode), e só neste caso. */
     try {
@@ -22967,6 +23003,27 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* O herói decide pela pessoa. Irreversível: os dois lados estavam na tela
      com o preço antes do clique; a bolsa sai aqui, o laço e a relação logo
      a seguir, e a linha da decisão vai à pauta deste mesmo turno. */
+  /* MM-C · 7.ª sessão (M59–M61): o lado de combate/duelo devolve com quem é
+     a luta (escolherLado → luta). O motor afina o nome pelo elenco da cena
+     e pelo que o Mestre mostrou; aqui só se lhe dá isso e se abre a luta,
+     pela mesma porta da agressão declarada. */
+  const contextoDaLutaPrometida = () => {
+    let presentes = [], mostrado = [];
+    try { presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (fichaViva() || personagem || {}).grupo || [] }).aqui || []; } catch (e) { calou("o elenco da luta prometida", e); }
+    try { mostrado = falasDoMestre(mensagensRef.current); } catch (e) { calou("o mostrado da luta prometida", e); }
+    return { presentes, mostrado };
+  };
+  const abrirLutaPrometida = (luta, pers) => {
+    try {
+      if (!luta || !luta.nome || combateRef.current) return pers;
+      const ab = abrirCombate([{ nome: luta.nome, ameaca: luta.ameaca }], { pers });
+      if (ab.pers !== pers) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
+      if (ab.msgs && ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
+      texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
+      if (ab.nota) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + ab.nota;
+      return ab.pers;
+    } catch (e) { calou("a luta que o lado prometeu", e); return pers; }
+  };
   const escolherNoCoracao = (nome, ladoId) => {
     try {
       if (carregando) return;
@@ -22975,14 +23032,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const aberta = escolhasAbertas(coracaoRef.current, nucleo, ctx).find((x) => x.nome === nome);
       const lado = aberta && aberta.lados.find((l) => l.id === ladoId);
       if (!lado) return;
-      const r = escolherLado(coracaoRef.current, nucleo, nome, ladoId, ctx);
+      const r = escolherLado(coracaoRef.current, nucleo, nome, ladoId, { ...ctx, ...contextoDaLutaPrometida() });
       const pers = fichaViva() || personagem || {};
       const custo = custoDoCoracao(r.efeitos);
       if (custo > (pers.moedas || 0)) { pushMsgs([{ autor: "sistema", texto: "Não chega: custa " + custo + " moedas, e você tem " + (pers.moedas || 0) + "." }]); return; }
       coracaoRef.current = r.coracao;
       try { aplicarEfeitosDoCoracao(r.efeitos); } catch (e) { calou("os efeitos da decisão", e); }
       coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
-      enviar("[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.", custo ? { ...pers, moedas: Math.max(0, (pers.moedas || 0) - custo) } : pers);
+      const pago = custo ? { ...pers, moedas: Math.max(0, (pers.moedas || 0) - custo) } : pers;
+      const naLuta = r.luta ? abrirLutaPrometida(r.luta, pago) : pago;
+      enviar("[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.", naLuta);
     } catch (e) { calou("decidir no coração", e); }
   };
   /* O que o cartão mostra: a decisão posta, com os lados que a bolsa paga —
@@ -23543,6 +23602,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       enviar("[À FOGUEIRA — SENTO-ME AO LADO DE " + nome + "] É noite no acampamento e escolhi sentar-me junto de " + nome + ". Narre só o que " + nome + " diz e faz à volta do fogo, em fala direta (—), aqui mesmo; a noite ainda não acabou: nada de sono, nada de manhã." + SO_ISSO, fichaViva() || personagem);
     } catch (e) { calou("sentar-se à fogueira", e); }
   };
+  /* MM-C · 7.ª sessão (v9.418 do backend): a fogueira é a segunda porta da
+     revelação. Quando o motor devolve "revela", o Livro paga as sementes
+     maduras do elo como na revelação pelo confronto (confirmarCoracao). */
+  const pagarSementesDoElo = () => {
+    try {
+      const nucleo = nucleoAgora();
+      const elo = ((nucleo && nucleo.pessoas) || []).find((x) => x && x.papel === "elo") || null;
+      const specs = elo ? sementesDoElo(nucleo, { dia: diaRef.current }) : [];
+      if (!elo || !specs.length) return;
+      const dela = (x) => !!(x && x.dona === specs[0].dona && x.alvo === elo.nome);
+      let L = garantirLivro(promessasRef.current);
+      for (const sm of L.sementes.filter((x) => dela(x) && x.estado === "madura")) L = pagar(L, sm.id, { dia: diaRef.current }).livro;
+      promessasRef.current = L;
+    } catch (e) { calou("o Livro da revelação ao fogo", e); }
+  };
   const dormirAoFogo = () => {
     try {
       const f = fogueiraRef.current;
@@ -23551,7 +23625,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (f.sentado && falouAoFogo(f)) {
         coracaoRef.current = garantirCoracaoDoSave(f.sentado.coracao);
         const r = f.sentado;
-        const tipo = (r.lados || []).length >= 2 ? "semResposta" : r.voz === "pedido" ? "pedido" : r.voz === "ficha" ? "ficha" : "dormir";
+        if (r.revela) pagarSementesDoElo();
+        const tipo = r.revela ? "revelacao" : (r.lados || []).length >= 2 ? "semResposta" : r.voz === "pedido" ? "pedido" : r.voz === "ficha" ? "ficha" : "dormir";
         manha = { frase: fraseDaManha({ tipo, nome: f.quem, genero: f.genero }), recibo: f.recibo };
       }
       fecharANoite(manha, "");
@@ -23566,13 +23641,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const lado = (f.sentado.lados || [])[ab === "b" ? 1 : 0];
       if (!lado) return;
       const nucleo = nucleoAgora();
-      const r = escolherLado(f.sentado.coracao, nucleo, f.quem, lado.id, contextoDoCoracao(nucleo));
+      const r = escolherLado(f.sentado.coracao, nucleo, f.quem, lado.id, { ...contextoDoCoracao(nucleo), ...contextoDaLutaPrometida() });
       const pers = fichaViva() || personagem || {};
       const custo = custoDoCoracao(r.efeitos);
       if (custo > (pers.moedas || 0)) { pushMsgs([{ autor: "sistema", texto: "Não chega: custa " + custo + " moedas, e você tem " + (pers.moedas || 0) + "." }]); return; }
       coracaoRef.current = garantirCoracaoDoSave(r.coracao);
       try { aplicarEfeitosDoCoracao(r.efeitos); } catch (e) { calou("os efeitos da decisão à fogueira", e); }
       if (custo) { const np = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - custo) }; personagemRef.current = np; setPersonagem(np); }
+      /* a luta que o lado prometeu abre antes de a noite fechar: o descanso
+         corre sobre a ficha que já está na luta, e o Narrador recebe a nota
+         da luta no mesmo turno da manhã */
+      if (r.luta) abrirLutaPrometida(r.luta, personagemRef.current || pers);
       coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
       fecharANoite({ frase: fraseDaManha({ tipo: "lado", nome: f.quem, genero: f.genero, preco: lado.preco }), recibo: f.recibo },
         "[À FOGUEIRA — A DECISÃO SOBRE " + f.quem + ", TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre primeiro a reação de " + f.quem + ", ainda à volta do fogo; só depois a noite passa.");
@@ -23583,6 +23662,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const f = fogueiraRef.current;
       if (!f || carregando || !f.porta || !falouAoFogo(f) || !f.sentado) return;
       coracaoRef.current = garantirCoracaoDoSave(f.sentado.coracao);
+      if (f.sentado.revela) pagarSementesDoElo();
       fecharANoite({ frase: fraseDaManha({ tipo: "porta", nome: f.quem, genero: f.genero }), recibo: f.recibo },
         "[À FOGUEIRA — FICO MAIS UM POUCO COM " + f.quem + ", SÓ NÓS DOIS] Os outros já dormem. Narre primeiro esse momento breve, os dois junto às brasas, sem decidir nada por mim; só depois a noite passa.");
     } catch (e) { calou("ficar à fogueira", e); }
@@ -24537,6 +24617,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          pelo mesmo caminho reencontra as mesmas coisas. */
       jornadaRef.current = comTrechos(jornadaRef.current, trechosDaRota(cidadeAtualRef.current, alvo));
       setJornada(jornadaRef.current);
+      /* MM-C · 7.ª sessão: a jornada que nasce aqui é a do jogador (declarada)
+         ou a do resolver (inferida). Uma partida declarada apaga a marca de
+         uma chegada inferida anterior. */
+      try {
+        jornadaInferidaRef.current = opcoes && opcoes.inferida ? String(alvo || "") : "";
+        chegadaInferidaRef.current = "";
+      } catch (e) { calou("a marca da jornada inferida", e); }
     } else if (destino && !jornadaRef.current.para) {
       const r = rotaEntre(jornadaRef.current.de, destino);
       jornadaRef.current = { ...jornadaRef.current, para: destino, km: (r && Number(r.km)) || 0, terreno: (r && r.terreno) || "", dias: (r && Number(r.dias)) || 3, totalMin: minutosDaRota(r && r.dias) };

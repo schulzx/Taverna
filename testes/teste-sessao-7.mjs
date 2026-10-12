@@ -259,5 +259,28 @@ if (W) {
   t("quem não é do núcleo, livre; lixo, livre", favorJaPedido("Otto", pediu, W.nucleo) === "" && favorJaPedido(null, null, null) === "");
 }
 
+sec("5. a fiação no App (frontend, 12/10) — o motor só vale se o jogo o chamar");
+{
+  /* O motor desta etapa (v9.418) estava provado e ninguém o chamava: a
+     viagem fantasma, a chegada que paga, a luta que o lado promete e o
+     favor em dobro no mural continuavam vivos no jogo. Estas asserções
+     leem o App como texto — não provam a regra (isso é das secções acima),
+     provam que a porta está ligada e protegida. */
+  const { readFileSync } = await import("node:fs");
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("querPartir recusa virar-se para alguém (NAO_E_PARTIDA)", /RX_QUER_PARTIR\.test\(t\) && !NAO_E_PARTIDA\.rx\.test\(t\)/.test(app));
+  t("o naoParte do resolver segue a cascata sem o envelope de destino", /if \(r && r\.naoParte\) return false;\s*\n\s*if \(r\.tipo === "achei"\)/.test(app));
+  t("a viagem que o resolver achou vai marcada como inferida", app.includes('viajar(nome, { origem: "frase", inferida: true });'));
+  t("a jornada nova marca a inferência e apaga a chegada anterior", /jornadaInferidaRef\.current = opcoes && opcoes\.inferida \? String\(alvo \|\| ""\) : "";\s*\n\s*chegadaInferidaRef\.current = "";/.test(app));
+  t("a chegada guarda a cidade só quando a jornada era inferida", app.includes('chegadaInferidaRef.current = jornadaInferidaRef.current && jornadaInferidaRef.current === j.para ? j.para : "";'));
+  t("o mundo das missões leva chegadaInferida", app.includes('chegadaInferida: chegadaInferidaRef.current || "",'));
+  t("a frase do jogador que nomeia a cidade confirma a chegada", /chegadaConfirmada\(acao, ci, lugaresDaqui\(\)/.test(app));
+  t("a fogueira com revela: manhã de revelação e o Livro pago", app.includes('const tipo = r.revela ? "revelacao"') && /if \(r\.revela\) pagarSementesDoElo\(\);/.test(app));
+  t("os dois cliques de lado levam presentes e mostrado ao motor", (app.match(/\.\.\.contextoDaLutaPrometida\(\)/g) || []).length === 2);
+  t("o lado que promete luta abre-a (no cartão e à fogueira)", /const naLuta = r\.luta \? abrirLutaPrometida\(r\.luta, pago\) : pago;/.test(app) && /if \(r\.luta\) abrirLutaPrometida\(r\.luta, personagemRef\.current \|\| pers\);/.test(app));
+  t("a luta prometida abre pela porta do combate, e nunca por cima de outra", /if \(!luta \|\| !luta\.nome \|\| combateRef\.current\) return pers;\s*\n\s*const ab = abrirCombate\(\[\{ nome: luta\.nome, ameaca: luta\.ameaca \}\], \{ pers \}\);/.test(app));
+  t("o mural não prega o favor que o núcleo já pediu", /semPedido = !favorJaPedido\(cartaz\.dador, coracaoRef\.current, nucleoAgora\(\)\);[^\n]*calou/.test(app) && app.includes("if (semHomonimo && semPedido && pregarNoMural(cartaz)) {"));
+}
+
 console.log(`\nsessão 7: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

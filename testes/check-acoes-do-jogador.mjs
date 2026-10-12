@@ -437,10 +437,11 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   /* (MM-C · C1, o núcleo, o frontend, 11/10: o import de nucleo.js, os três refs, nucleoAgora/nucleoEmCena e a linha QUEM É em pautaDoTurno, acima): 8795 -> 8850, +55 — o import (+1), os refs (+7) e nucleoAgora/nucleoEmCena (+34) e QUEM É na pauta (+13), ACIMA de `pushMsgs`. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (309c8b1). */
   /* (MM-C · C2, as subtramas, o frontend, 11/10: o import de subtramas.js, os quatro refs, subtramasAgora/contextoDoCoracao, a mão do vilão e QUEM CARREGA em pautaDoTurno, acima): 8850 -> 8910, +60 — o import (+1), os refs (+8), subtramasAgora/contextoDoCoracao (+31), a mão do vilão (+2) e QUEM CARREGA (+18), ACIMA de `pushMsgs`. Só o endereço andou. */
   /* (MM-C · C6, a fogueira ligada, o oficial, 11/10: o import do painel e dos cinco do motor, o LimiteDaFogueira, o estado da noite e a ficha do envio em aplicarResposta, tudo ACIMA): 8910 -> 8933, +23 — o import (+1), o LimiteDaFogueira (+11) e o estado da noite (+11), ACIMA de pushMsgs. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (42b2cb1). */
-  } else if (iPush + 1 !== 8933) {
-    falha(`pushMsgs saiu de src/App.jsx:8933 e agora está em :${iPush + 1}`,
+  /* (MM-C · 7.ª sessão de prova, a fiação, o frontend, 12/10: os imports, os dois refs da chegada inferida, a régua do querPartir, o naoParte do resolver e o porteiro do mural, tudo ACIMA): 8933 -> 8949, +16 — os dois refs (+9), o querPartir (+3) e a chegada inferida (+4), ACIMA de pushMsgs. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (5f51baf). */
+  } else if (iPush + 1 !== 8949) {
+    falha(`pushMsgs saiu de src/App.jsx:8949 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:8933, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:8949, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

@@ -351,7 +351,10 @@ sec("6. a fiação — App.jsx");
     app.split('if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\\n" : ""}${notaDoHomonimo(homonimos)}`;').length - 1 === 2);
   t("o mural só prega se o dador não for recusado por homônimo",
     app.includes('semHomonimo = nomeComDono(cartaz.dador, npcsRef.current, contextoDoNome({})).decisao !== "recusada";')
-    && app.includes("if (semHomonimo && pregarNoMural(cartaz)) {"));
+    /* 7.ª sessão (M26–M27), asserção movida: a porta do mural ganhou um
+       segundo porteiro (favorJaPedido, quem do núcleo já pediu não tem
+       cartaz); o homônimo continua a barrar, agora ao lado dele. */
+    && app.includes("if (semHomonimo && semPedido && pregarNoMural(cartaz)) {"));
 }
 
 console.log(`\nmm14 · a gente: ${ok} passaram, ${mal} falharam`);
