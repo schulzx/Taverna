@@ -417,6 +417,7 @@ pessoa leva o retrato.
 - **F2b · as fichas tocáveis** (o `desenho` e o `jogo` no Figma; o
   `aprendiz`/`oficial` constroem): tocar escreve a frase editável e leva o id.
 - **F2c · o cartão** com o que o herói sabe e as ações com preço/veredito.
+- **F2d · a memória tem rosto** (aprovada com o desenho, 12/10: *"Pode construir as duas"*): cada cartão visto vira página do Códice, de onde também se aponta ("procuro Oren" chega a ele fora de cena). Campo de save novo, ignorado pela versão antiga.
 - **A prova:** 0 de 10 mal lidos e 0 de 10 mal cobrados (9.ª: 0 de 1, 0 de 1, 0 de 1).
 - Começa depois dos consertos da 9.ª no ar.
 
