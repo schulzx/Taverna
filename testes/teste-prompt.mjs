@@ -205,7 +205,11 @@ sec("2. todo campo pedido tem quem o leia");
   /* E2 (12/10): o piso desceu de 10 para 8 — saíram do prompt os campos que
      o Narrador nunca usou (mapa_*, grupo_*, adicionar_itens, missao_oferecida,
      evento_global_encerrar, relogio_novo…). Os que ficam são os que ele usa. */
-  t("e ha campos de verdade sendo checados", pedidos.size >= 8);
+  /* E3 (12/10): o piso desceu de 8 para 6 — saíram "cidade_atual",
+     "jornada_meio" e "lugar_atual" (e "moedas", "canone", "npcs", que não
+     têm sublinhado). Ficam os do combate (E4), o "dano_ambiental" e o
+     "grupo_vida". */
+  t("e ha campos de verdade sendo checados", pedidos.size >= 6);
 }
 
 sec("3. o que o codigo tirou do Mestre nao pode voltar pelo prompt");

@@ -47,10 +47,15 @@ sec("1. UMA ORDEM SÓ SOBRE QUEM INVENTA");
      "liberdade criativa" — onde era a terceira cópia da mesma frase. */
   t("a divisão está escrita, e agora na abertura", /o sistema decide o QUE existe e o QUE acontece; você decide COMO aquilo se parece/.test(prompt));
   t("o envelope é fato consumado", /Chegou COM envelope: aquilo já aconteceu/.test(prompt));
-  t("com a ousadia redirecionada para dentro dele", /Gaste a ousadia inteira DENTRO do que os envelopes governam/.test(prompt));
+  /* E3 do "o Narrador só narra" (12/10), MOVIDAS as duas: a ousadia já não
+     vai "para dentro dos envelopes" nem a invenção é livre fora deles. A
+     regra O QUE É FATO diz que número, nome e consequência vêm do sistema, e
+     a ousadia aponta à textura e às vozes, que é onde continua inteira. A
+     ordem continua UMA só sobre quem inventa. */
+  t("com a ousadia redirecionada para a textura e as vozes", /Gaste a ousadia inteira na textura e nas vozes/.test(prompt));
   /* e o que sobra continua sendo dela: sem isto a correção viraria uma
      coleira, e a coleira é o defeito que a linha original veio curar */
-  t("fora dos envelopes, invenção livre", /Fora do que os envelopes governam, invente à vontade/.test(prompt));
+  t("e a regra diz o que é fato e o que é textura", /O QUE É FATO: número, nome próprio e consequência vêm do sistema; a textura é sua/.test(prompt) && !/Fora do que os envelopes governam, invente à vontade/.test(prompt));
 }
 
 sec("2. UM VILÃO SÓ");

@@ -102,13 +102,16 @@ export function rolarEncontro(genero, nivel, nomeViajante) {
     }
   }
   if (r <= 50) {
-    return { tipo: "viajante", titulo: nomeViajante || "um desconhecido", detalhe: `${nomeViajante ? `${nomeViajante} aparece como` : "Aparece"} ${VIAJANTES[Math.floor(Math.random() * VIAJANTES.length)]}. Se ele(a) for marcante, registre em "npcs".` };
+    return { tipo: "viajante", titulo: nomeViajante || "um desconhecido", detalhe: `${nomeViajante ? `${nomeViajante} aparece como` : "Aparece"} ${VIAJANTES[Math.floor(Math.random() * VIAJANTES.length)]}.` };
   }
   if (r <= 66) {
     const esp = gerarEspolios([{ ameaca: Math.random() < 0.3 ? "competente" : "comum" }]);
     const partes = [`◉ ${esp.moedas}`];
     if (esp.caiItem) partes.push("1 item útil");
-    return { tipo: "achado", titulo: "algo à beira da estrada", detalhe: `Achado rolado pelas tabelas: ${partes.join(" + ")} — entregue de verdade, via "moedas" e, se couber, "itens"/"equipamento_novo". Crie o contexto (um esconderijo, um corpo na vala, um altar esquecido), mas o CONTEÚDO é este; não invente mais nada.` };
+    /* E3 do "o Narrador só narra" (12/10): o ◉ rolado vai também em número,
+       para o App o creditar no rolar — o "via moedas" do detalhe é a última
+       porta do canal, e sai quando essa fiação entrar */
+    return { tipo: "achado", titulo: "algo à beira da estrada", moedas: esp.moedas, detalhe: `Achado rolado pelas tabelas: ${partes.join(" + ")} — entregue de verdade, via "moedas" e, se couber, "itens"/"equipamento_novo". Crie o contexto (um esconderijo, um corpo na vala, um altar esquecido), mas o CONTEÚDO é este; não invente mais nada.` };
   }
   if (r <= 85) {
     return { tipo: "cena", titulo: "sinais no caminho", detalhe: `Na estrada: ${CENAS[Math.floor(Math.random() * CENAS.length)]}. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.` };

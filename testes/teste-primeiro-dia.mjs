@@ -200,7 +200,10 @@ sec("2. a narração do pagamento desce as moedas");
   t("com fundos, debita", oQueFaltaDebitar("Você paga 6 moedas.", null, { bolsa: 6 }).moedas === 6);
 
   t("a linha do jogador é a do débito declarado", falaDoDebito(d1) === "◉ −6 moedas");
-  t("o bilhete ao Narrador pede o campo da próxima vez", /"moedas" negativo/.test(envelopeDoDebito(d1)));
+  /* E3 do "o Narrador só narra" (12/10), MOVIDA: o campo "moedas" saiu do
+     prompt, e a bolsa lê a frase do jogador e a cena. O bilhete diz que a
+     bolsa é do sistema, e já não pede o campo */
+  t("o bilhete ao Narrador diz que a bolsa é do sistema (e não pede o campo que saiu)", /A bolsa é do sistema/.test(envelopeDoDebito(d1)) && !/"moedas"/.test(envelopeDoDebito(d1)));
   t("nada a debitar, nada a dizer", falaDoDebito(oQueFaltaDebitar("", null)) === "" && envelopeDoDebito(null) === "");
 
   t("lixo não quebra", oQueFaltaDebitar(null, null, null).temAlgo === false && lerGastos(undefined).moedas === 0);

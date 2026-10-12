@@ -153,7 +153,7 @@ export function resumoArredoresPrompt(semente, cidade) {
     return `${a.icone} ${a.nome} (${o && o.rumo ? `${o.rumo.rotulo}, ` : ""}${tempoDeIda(a)}; ${a.dono})`;
   }).join(" · ")}.
 - Estes lugares são PAISAGEM, não segredo: qualquer morador sabe apontar o caminho. O que acontece DENTRO deles é que é descoberta.
-- Quando o herói for a um deles, registre "lugar_atual" com o nome exato daqui. A ida custa MINUTOS, nunca dias — não transforme em viagem.`;
+- Quando o herói for a um deles, diga-o com o nome exato daqui. A ida custa MINUTOS, nunca dias — não transforme em viagem.`;
 }
 
 /* v9.118: O BLOCO FIXO DOS ARREDORES SAIU DAQUI, e não foi para caber.

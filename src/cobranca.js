@@ -272,12 +272,49 @@ export const JA_PAGO_PELO_SISTEMA = [
   /\[VENDA — JÁ REGISTRADA PELO SISTEMA\]/,
 ];
 
+/* ============================================================
+   A FRASE DO JOGADOR TAMBÉM PAGA (12/10, "o Narrador só narra", E3)
+
+   Até à E3 o Narrador tinha o canal `moedas`: 3 usos em 137 turnos da
+   6.ª e da 7.ª sessões, 2 nocivos, e 1 certo que nenhuma régua daqui
+   apanhava — "Pago os dois cobres." (7.ª, M9), narrado como "Você tira
+   dois cobres do bolso e os põe no balcão". "Tira" não é verbo de pagar,
+   e sem o canal a caneca saía de graça. Com o canal fora do prompt, a
+   frase do JOGADOR é lida também: ela vai ao Narrador logo depois da
+   etiqueta do pedido (escuta.js, ETIQUETA_DO_PEDIDO), e por isso está nos
+   envelopes que o App já passa a esta função.
+
+   As travas: só a primeira pessoa com a quantia ("pago os dois cobres",
+   a régua de `lerGastos`); a condição, a pergunta e a oferta não pagam
+   ("se ele aceitar, pago dois", "pago dois?", "ofereço dois"); e a cena
+   que recusa o dinheiro ganha ("empurra as moedas de volta", "é por
+   conta da casa"). O mesmo pagamento dito pelos dois lados conta uma vez:
+   o maior dos dois.
+   ============================================================ */
+const RX_O_PEDIDO = /\[O QUE EU FAÇO AGORA[^\]\n]*\]\s*\n([\s\S]*?)(?=\n\[|$)/;
+const RX_PEDIDO_NAO_PAGA = /\?|\b(se|caso|quanto|ofereco|proponho|posso|quero|queria|talvez)\b/;
+const RX_CENA_RECUSA = /\b(recusa|recusou|devolve|devolveu|de volta|nao aceita|nao quer|por conta da casa|fica por conta|sem cobrar|de graca)\b/;
+
+function gastoDoPedido(envelopes, narrativa) {
+  const m = String(envelopes || "").match(RX_O_PEDIDO);
+  if (!m || RX_CENA_RECUSA.test(norm(narrativa))) return { moedas: 0, frases: [] };
+  const out = { moedas: 0, frases: [] };
+  for (const frase of frasesDe(m[1])) {
+    if (RX_PEDIDO_NAO_PAGA.test(norm(frase))) continue;
+    const g = lerGastos(frase);
+    if (g.moedas > 0) { out.moedas += g.moedas; out.frases.push(...g.frases); }
+  }
+  return out;
+}
+
 export function oQueFaltaDebitar(narrativa, mudancas, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const vazio = { moedas: 0, frases: [], temAlgo: false, semFundos: false, narrado: 0 };
   const envelopes = String(o.envelopes || "");
   if (JA_PAGO_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
-  const narrado = lerGastos(narrativa);
+  const daCena = lerGastos(narrativa);
+  const doPedido = gastoDoPedido(envelopes, narrativa);
+  const narrado = doPedido.moedas > daCena.moedas ? doPedido : daCena;
   const m = mudancas && typeof mudancas === "object" ? mudancas : {};
   const declarado = Math.max(0, -(Number(m.moedas) || 0));
   const moedas = Math.max(0, narrado.moedas - declarado);
@@ -299,11 +336,11 @@ export function falaDoDebito(d) {
 export function envelopeDoDebito(d) {
   if (!d || !d.temAlgo) return "";
   if (d.semFundos) {
-    return `[COMPRA SEM FUNDOS — DECISÃO DO SISTEMA] Você narrou que eu paguei ${d.faltou} moedas, e eu só tenho ${d.bolsa}. Esse pagamento NÃO aconteceu, e o que ele comprava não é meu.
+    return `[COMPRA SEM FUNDOS — DECISÃO DO SISTEMA] O pagamento de ${d.faltou} moedas não cabe na minha bolsa: eu só tenho ${d.bolsa}. Esse pagamento NÃO aconteceu, e o que ele comprava não é meu.
 REGRA DESTE ENVELOPE (obrigatória): na próxima fala, não finja que eu paguei nem que tenho o que ele comprava; siga daqui — quem vendia espera o dinheiro, ou regateia, ou recusa. O que está na minha bolsa é o que eu posso gastar.`;
   }
-  return `[DÉBITO — APLICADO PELO SISTEMA] Você narrou que eu paguei ${d.moedas} moedas e não registrou isso em "mudancas". O sistema leu a sua cena e JÁ TIROU da minha bolsa, para que o texto e a bolsa não se contradigam.
-REGRA DESTE ENVELOPE (obrigatória): não cobre de novo e não repita o pagamento na próxima cena. Da próxima vez que eu pagar alguma coisa, DECLARE em "mudancas" com "moedas" negativo — o campo existe para isso.`;
+  return `[DÉBITO — APLICADO PELO SISTEMA] Eu paguei ${d.moedas} moedas, e o sistema JÁ TIROU da minha bolsa, para que o texto e a bolsa não se contradigam.
+REGRA DESTE ENVELOPE (obrigatória): não cobre de novo e não repita o pagamento na próxima cena. A bolsa é do sistema: ele lê o que eu digo que pago e o que a cena conta.`;
 }
 
 /* ============================================================
@@ -347,6 +384,6 @@ export function falaDaCobranca(d) {
 export function envelopeDaCobranca(d) {
   if (!d || !d.temAlgo) return "";
   const lista = [d.moedas > 0 ? `${d.moedas} moedas` : "", ...d.consumiveis.map((c) => c.nome)].filter(Boolean).join(" e ");
-  return `[COBRANÇA — APLICADA PELO SISTEMA] Você narrou que eu ganhei ${lista} e não registrou isso em "mudancas". O sistema leu a sua cena e JÁ CREDITOU na minha ficha, para que o texto e a bolsa não se contradigam.
-REGRA DESTE ENVELOPE (obrigatória): não entregue de novo, não repita o achado na próxima cena e não invente que houve engano. Da próxima vez que der algo ao herói, DECLARE em "mudancas" — o campo existe para isso, e o que passa por ele é conferido pelo sistema (preço, peso, raridade) antes de entrar na bolsa.${d.aparado ? " E cuidado com a quantia: o valor narrado passava do teto de um turno e foi aparado." : ""}`;
+  return `[COBRANÇA — APLICADA PELO SISTEMA] Você narrou que eu ganhei ${lista}. O sistema leu a sua cena e JÁ CREDITOU na minha ficha, para que o texto e a bolsa não se contradigam.
+REGRA DESTE ENVELOPE (obrigatória): não entregue de novo, não repita o achado na próxima cena e não invente que houve engano. O que o herói ganha vem do sistema: narre um ganho quando um envelope o entregar, com o número dele.${d.aparado ? " E cuidado com a quantia: o valor narrado passava do teto de um turno e foi aparado." : ""}`;
 }

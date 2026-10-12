@@ -62,7 +62,8 @@ sec("1. o escrivão sem uso já não é oferecido (0 usos em 137 turnos, e um do
   ];
   for (const [nome, rx] of LOTE_1) t(`fora do prompt inteiro: ${nome}`, !rx.test(pTodo));
   t("o MAPA vazio já não manda registrar cidade nova", !/ao apresentar uma cidade nova, registre-a/.test(pTodo));
-  t("o exemplo do formato só leva os campos que ficam", /"vida": -3, "mana": 2, "moedas": -10, "dano_ambiental": null,/.test(pTodo) && !/Tipos de equipamento:/.test(pTodo));
+  /* E3 (12/10), MOVIDA: o "moedas" saiu do exemplo com o 2.º lote */
+  t("o exemplo do formato só leva os campos que ficam", /"vida": -3, "mana": 2, "dano_ambiental": null,/.test(pTodo) && !/Tipos de equipamento:/.test(pTodo));
 }
 
 /* ============================================================ */
@@ -85,8 +86,9 @@ sec("2. as licenças contrárias saíram (§4a do relatório)");
   t("a DIPLOMACIA diz quem decide: o envelope do sistema", /\[DIPLOMACIA — RESOLVIDA PELO SISTEMA\]/.test(pTodo));
   t("o CONTEÚDO ESCONDIDO: chefes e lugares secretos são os do sistema", /os chefes e os lugares secretos são os que o sistema já pôs no mundo/.test(pTodo));
   t("OFERTAS e MISSÕES já não oferecem o campo", !/missao_oferecida/.test(OFERTAS_PROMPT) && !/missao_oferecida/.test(MISSOES_PROMPT));
-  /* a E3 troca esta pela regra O QUE É FATO; até lá, fica */
-  t("o «invente à vontade» da abertura fica para a E3 (sai no mesmo commit da regra)", /invente à vontade/.test(pTodo));
+  /* E3 (12/10), MOVIDA: a E3 trocou-a pela regra O QUE É FATO, no mesmo
+     commit (teste-narrador-so-narra-e3.mjs prova a regra) */
+  t("o «invente à vontade» da abertura saiu com a E3, no mesmo commit da regra", !/invente à vontade/.test(pTodo) && /O QUE É FATO:/.test(pTodo));
 }
 
 /* ============================================================ */
@@ -101,12 +103,14 @@ sec("3. o que NÃO podia sair (§6 do relatório)");
     ["o escopo do envelope", /ESCOPO DO ENVELOPE/],
     ["o tempo do sistema", /TEMPO É DO SISTEMA/],
     ["o perigo", /"perigo" é UMA frase curta/],
-    ["a E3: moedas, cidade_atual, jornada_meio, canone, npcs", /"moedas"/],
-    ["a E3: cidade_atual", /"cidade_atual"/], ["a E3: jornada_meio", /"jornada_meio"/],
-    ["a E3: canone", /"canone"/], ["a E3: npcs", /"npcs"/],
+    /* E3 (12/10), MOVIDAS: o 2.º lote (moedas, cidade_atual, jornada_meio,
+       canone, npcs) saiu com a E3 e a prova de que saiu está na suíte dela;
+       aqui fica o que a E3 também não podia tirar */
     ["a E4: combate_iniciar", /"combate_iniciar"/], ["a E4: dano_ambiental", /"dano_ambiental"/],
     ["o espólio é do sistema", /ESPÓLIO DE COMBATE É DO SISTEMA/],
-    ["não desconta moedas sem a compra aceita", /NUNCA desconte moedas sem o jogador aceitar a compra/],
+    /* E3, MOVIDA: o Narrador já não desconta; a guarda virou "só narre um
+       pagamento que eu fiz ou aceitei" (a cena que paga, desce a bolsa) */
+    ["só se narra um pagamento feito ou aceite", /só narre um pagamento que eu fiz ou aceitei/],
   ];
   for (const [nome, rx] of FICA) t(`fica: ${nome}`, rx.test(pTodo));
 }

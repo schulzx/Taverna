@@ -82,7 +82,7 @@ export function temaDaEstrada(ctx) {
    `perigo` e o `achado` não estão aqui e passam como vieram. `{tema}` é a
    promessa ou o nome; o texto é O QUE, o como é do Narrador. */
 export const COMO_O_FIO_ENTRA = {
-  viajante: "Alguém na estrada traz notícia de {tema} — ouviu, viu ou carrega alguma coisa disso, e quer algo em troca. Se ele(a) for marcante, registre em \"npcs\".",
+  viajante: "Alguém na estrada traz notícia de {tema} — ouviu, viu ou carrega alguma coisa disso, e quer algo em troca.",
   cena: "Na estrada, um sinal que toca {tema}: um rasto, um objeto, uma marca que só faz sentido a quem segue esse fio. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.",
   tranquilo: "O trecho passa sem sobressaltos, e a conversa do caminho volta a {tema}: quem anda comigo tem uma lembrança, uma dúvida ou um medo sobre isso.",
 };

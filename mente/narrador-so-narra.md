@@ -455,3 +455,126 @@ assim que os nomes entravam.
 **Fica para depois:** o `feito` pelo Cronista (é fiação do App: hoje ninguém julga um feito fora da luta,
 como já não julgava — 0 em 137); as 18 de 65 batidas em que nem a linha curta cabe (a pauta já cheia de
 vetos e da batida, e o que sobra é o que não cede).
+
+---
+
+## E3 — medida (12/10, `backend`, v9.423)
+
+**A regra que entrou** (no lugar de *"Fora do que os envelopes governam, invente à vontade — gente de
+passagem, boato, detalhe, o que há atrás de uma porta que ninguém abriu"*, no mesmo commit, logo a seguir
+à DIVISÃO; 649 caracteres, nenhuma caixa alta):
+
+> O QUE É FATO: número, nome próprio e consequência vêm do sistema; a textura é sua. Preço, distância,
+> hora, quantia, gente com nome e papel, criatura ou pessoa armada, lugar novo, item e o começo de uma luta
+> existem quando estão na pauta, num envelope ou no estado, e então vão como vieram (o preço está em
+> PERGUNTOU e O PREÇO; quem precisa de nome leva um dos NOMES À MÃO). Quando não estão, quem fala na cena
+> não sabe, desconversa ou diz sem número: "não sai barato", "um bom pedaço de estrada". A textura é
+> inteira sua, e quanto mais ousada melhor: cheiro, gesto, voz, figurante sem nome, boato vago, o que há
+> atrás de uma porta que não muda nada.
+
+A LIBERDADE CRIATIVA ficou inteira (regra-mestra, "ousadia total", as vozes, as personagens sem amarras).
+Mudou uma frase: *"Gaste a ousadia inteira DENTRO do que os envelopes governam"* passou a *"Gaste a ousadia
+inteira na textura e nas vozes: o fato chega pronto, e é sobre ele que ela rende."*
+
+**Os seis canais saíram do prompt, cada um com o dono provado.** Os casos são os 11 usos das duas sessões
+(§2a), passados pelo código de hoje sem o campo do Narrador:
+
+| canal | usos s6+s7 | o que o sistema faz agora sem ele | prova |
+|---|---|---|---|
+| `moedas` | 3 (2 nocivos) | `oQueFaltaDebitar` (cobranca.js) lê a **frase do jogador** além da cena: "Pago os dois cobres." vai ao Narrador depois da etiqueta do pedido, e a função já recebia esses envelopes. Só a 1.ª pessoa com quantia; pergunta, condição e oferta não pagam; a cena que recusa o dinheiro ganha; o mesmo pagamento dito pelos dois lados conta uma vez. | s7 M9 (o certo): desce 2 (antes, sem o canal, 0). s6 M3 e s7 M11 (os nocivos): 0. E apanha duas omissões que o canal deixava passar: s7 M14 "Pago os cinco cobres" (5) e M18 a gorjeta (1). |
+| `cidade_atual` | 2 (1 nocivo, 1 redundante) | a jornada com destino chega sozinha (`talvezChegarSozinho`), a partida avisa que "a chegada é do sistema" (rastro.js), a travessia de um passo narrada é ratificada (`detectarChegada`), a região viaja por jornada | M11 marcou Sul Molhado **à partida**, com a jornada já aberta pelo sistema; M36 repetiu a cidade em que a pauta já estava |
+| `lugar_atual` | 1 (redundante) | o Cronista diz o lugar (`SEÇÃO lugar`, 102 vezes nas duas sessões), pela régua `lerLugarDito` com o pedido do jogador | M43: o ONDE da pauta já dizia "no galpão de Lia Cinzela"; o campo só lhe pendurou um "dentro de Píer Norte" |
+| `jornada_meio` | 1 ("a pé") | o mar sai da rota: `TERRENO_VIAGEM.maritima.meio = "navio"` (geografia.js), e o acampamento lê-o | `escolherSitio` numa rota marítima sem meio: a bordo |
+| `canone` | 2 | o Cronista (`SEÇÃO canone`, 13 vezes), que corre **depois** de aplicada a resposta e vê o CÂNONE ATUAL — e não reescreve identidade, só preenche o vazio | nos 2 turnos o Cronista devolveu `{}`: o fato já lá estava, posto pelo Narrador um instante antes |
+| `npcs` | 2 | o Cronista (`SEÇÃO pessoas`, 11 vezes) e, para quem o Narrador inventava, os NOMES À MÃO registados pelo código (`nomesAMaoNaProsa`, E1) | idem: `pessoas: []` nos 2 turnos, com o ELENCO já a contê-los |
+
+**O que se perde, e é de propósito.** O `canone` do Narrador punha no mapa um lugar novo que ele inventasse
+(a "rede de segurança do MAPA"), e o `npcs` levava `genero`, `segredo` e `status`. Pela regra nova, lugar
+novo, segredo e morte são consequência, e vêm do sistema. O `genero` é a perda real: o esquema das
+`pessoas` do Cronista não o tem (proposta abaixo, para o `frontend`).
+
+**O que ainda ensina um canal fora do prompt, e porquê.** (1) O envelope de cada trecho de estrada
+(App.jsx, `Descreva o trecho sob esse clima…`) ainda diz *"registre jornada_meio"* e *"se chegarmos,
+registre cidade_atual"* — é texto do App. Com destino, a chegada é do sistema e o campo só a antecipa; sem
+destino, é hoje a única porta de chegada por palavras (`detectarSeguirViagem` não lê o destino da frase).
+(2) O achado da estrada (`encontros.js`) rola ◉ e entrega-o *"via moedas"*: o achado leva agora o número
+(`moedas`), para o App o creditar no rolar. É a única espera da suíte, com data.
+
+**O tamanho** (as sintéticas re-renderizadas; as reais com os mesmos cortes aplicados ao texto enviado):
+
+| | E2 | **E3** | saiu |
+|---|---|---|---|
+| típica (sintética) | 52.971 | **51.880** | −1.091 |
+| real · mediana s6 | 63.652 | **62.693** | −959 |
+| real · mediana s7 | 62.264 | **61.305** | −959 |
+| real · maior s7 | 66.103 | **64.950** | −1.153 |
+| PIOR CENA REAL (sem gente, nível 20) | 65.917 | **64.826** | −1.091 |
+| **pior caso com gente** | 75.025 | **73.934** | −1.091 |
+| prompt inteiro (todas as portas) | 79.306 | **78.021** | −1.285 |
+
+O 2.º lote pesava ~1,74 mil brutos (a medição previa ~1,64); a regra come 651. Desde a medição: típica
+59.094 → 51.880 (−12,2%), pior com gente 80.475 → 73.934 — **8,1 mil de folga** no teto de 82 mil.
+
+**A anatomia** (mesmo classificador):
+
+| categoria | típica E2 → E3 | real mediana s7 E2 → E3 | pior com gente E2 → E3 |
+|---|---|---|---|
+| OFÍCIO | 16,5% → 17,5% | 14,3% → 15,2% | 14,3% → 15,0% |
+| REGRA | 20,4% → 20,8% | 18,2% → 18,3% | 19,7% → 19,9% |
+| CONTRATO | 23,2% → 25,0% | 19,8% → 20,9% | 23,6% → 24,8% |
+| PROIBIÇÃO | 25,2% → 25,0% | 20,8% → 20,6% | 21,8% → 21,6% |
+| **ESCRIVÃO** | **7,4% → 4,2%** (3.909 → 2.184) | **6,3% → 4,2%** (3.909 → 2.550) | **6,1% → 3,9%** (4.578 → 2.853) |
+| ESTADO | 6,2% → 6,3% | 19,6% → 19,9% | 13,8% → 14,0% |
+| FORMATO | 1,1% → 1,1% | 0,9% → 0,9% | 0,8% → 0,8% |
+
+A regra conta como CONTRATO (cita o sistema). O escrivão que resta é o combate (E4), o `dano_ambiental`, o
+`perigo`, o "não envie mana/vida" das curas, e dois falsos positivos do classificador ("sinais, boatos" dos
+relógios; "Lugar assim NÃO é viagem"). **Caixa alta:** típica 63 → **61**; real mediana s7 73 → **71**; real
+maior s7 79 → **77**; pior com gente 76 → **74**. A regra e o que mudou ao lado dela não têm nenhuma.
+
+### A 8.ª sessão: o protocolo
+
+**A régua** é `testes/ab-invencoes.mjs`, modo 2: `node testes/ab-invencoes.mjs <registo-s8.jsonl>` (o
+registo do `api/narrador`, no formato da 7.ª). Por resposta do Narrador, conta as **candidatas fora da
+entrada** por tipo — `preco`, `dist`, `nome`, `luta` — e, desde a E3, as três vigias: `nao_sei` (o "não
+sei"/desconversa a uma pergunta do jogador), o **escrivão** (respostas com `mudancas`, por campo, marcando
+os seis que saíram) e as **palavras por narrativa**. As candidatas lêem-se à mão contra tudo o que o
+Narrador recebeu (system, pauta, mensagens) e entram na tabela do §3 por tipo (preço, distância/tempo,
+pessoa, lugar, criatura/armado, item/estado, luta, revelação) e por origem (não tinha, errou, não mandou,
+ignorou). Conta-se a **primeira aparição**; não conta o que o jogador disse nem o idioma ("um dia").
+
+**A 7.ª pela mesma régua** (a linha de base, para comparar candidata com candidata): preço 7, distância 10,
+nome 3, luta 1; "não sei" 1 em 19 perguntas; escrivão 6 de 70 respostas; palavras mediana 140, média 144.
+(A 6.ª: 5, 4, 0, 1; 1 em 14; 4 de 67; mediana 134.) A leitura à mão da 7.ª deu 4 preços, 1 distância e 3
+nomes inventados (§3): é esse o número que o alvo compara.
+
+| medida | 7.ª (à mão) | alvo da 8.ª |
+|---|---|---|
+| preço inventado (sem dado) | 4 | **≤ 1** |
+| preço com dado, cumprido | 2 de 2 | todos |
+| distância/tempo fora do sistema | 1 | **0** |
+| pessoa nomeada fora do sistema (sem NOMES À MÃO) | 3 | **≤ 1** |
+| criatura/armado fora do sistema | 1 | **0** |
+| luta sem luta | 0 | **0** |
+| escrivão nocivo | 2 | **0** |
+| respostas com `mudancas` | 6 de 70 | **≤ 2 em 70** (só `perigo` e o combate) |
+| um dos seis canais que saíram ainda a chegar | — | **0** (o App lê-o; se vier, aplica, e anota-se) |
+| a bolsa: cada "pago N" do jogador desce N uma vez | 2 de 4 (M14 e a gorjeta do M18 ficaram) | **todos** |
+| **vigia:** nota da **prosa** | 3 | **≥ 3** |
+| **vigia:** nota do **mundo e lugar** | 3 | **≥ 3** |
+| **vigia:** nota das **personagens** | 4 | **≥ 4** |
+| **vigia:** "não sei"/desconversa a uma pergunta que o sistema podia ter respondido | 1 em 19 (candidatas) | **≤ 1 em 10** |
+| **vigia:** palavras por narrativa (mediana) | 140 | **119–161** (±15%) |
+
+As notas são as da 7.ª (`mente/mm11-sessao-7.md`, de 1 a 5, dadas por quem joga, antes de ver a
+contagem). **A decisão:** alvos de invenção cumpridos e vigias de pé → E4 (o combate sai do Narrador).
+Invenção no alvo e prosa, mundo ou personagens abaixo → a regra está a secar a mesa: revê-se a linha da
+textura antes da E4 (a regra é um commit). "Não sei" acima de 1 em 10 → o sistema cala onde devia
+responder: é pedido à pauta (PERGUNTOU), não à regra.
+
+**Para o `frontend`** (nada obrigatório; o App continua a ler os seis campos): (1) no envelope do trecho
+de estrada, tirar o *"registre jornada_meio"* e, **com destino**, o *"registre cidade_atual"* (a chegada é
+do `talvezChegarSozinho`); sem destino fica até o destino dito na frase virar `para` (o `backend` acrescenta
+o destino a `detectarSeguirViagem` quando a fiação for pedida). (2) creditar `enc.moedas` do achado da
+estrada no rolar — aí o `backend` tira o *"via moedas"* do detalhe e a espera da suíte esvazia. (3)
+opcional: `genero` no esquema das `pessoas` do Cronista.

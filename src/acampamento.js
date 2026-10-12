@@ -43,6 +43,7 @@
    ============================================================ */
 
 import { localDeDescanso } from "./mapa.js";
+import { TERRENO_VIAGEM } from "./geografia.js";
 import { comEm, comDe } from "./lugar.js";
 
 const pick = (sorte, arr) => arr[Math.floor(sorte() * arr.length)] || arr[0];
@@ -218,7 +219,9 @@ export function escolherSitio(ctx = {}, sorte = Math.random) {
 
   /* 3. EM VIAGEM — e o meio da viagem decide se há chão embaixo */
   if (c.jornada) {
-    const meio = String(c.jornada.meio || "");
+    /* E3 (12/10): sem o "jornada_meio" do Narrador, o meio da rota diz-se
+       pelo terreno (TERRENO_VIAGEM, geografia.js): a rota marítima é navio */
+    const meio = String(c.jornada.meio || (TERRENO_VIAGEM[c.jornada.terreno] || {}).meio || "");
     if (POR_AGUA.test(meio)) {
       const s = pick(sorte, SITIOS_EMBARCADOS);
       return { ...s, chave, tipo: "embarcado", texto: `${s.nome}, a bordo (${meio.trim()})`, proibido: "Estou EMBARCADO: proibido me pôr em terra, em estalagem ou em cidade. O descanso acontece a bordo." };

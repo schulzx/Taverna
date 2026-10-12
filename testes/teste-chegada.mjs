@@ -78,12 +78,17 @@ sec("5. os textos");
   const nota = notaDaChegada(ch, andar1);
   t("a nota diz que o sistema já moveu", /REGISTRADA PELO SISTEMA/.test(nota));
   t("e nomeia de onde e para onde", nota.includes(andar1) && nota.includes(andar2));
-  t("e cobra o registro da próxima vez", /cidade_atual/.test(nota));
+  /* E3 do "o Narrador só narra" (12/10), MOVIDA: o "cidade_atual" saiu do
+     prompt; a nota já não ensina o canal — quem regista é este cão, e ele
+     continua a dizer que já moveu */
+  t("e já não ensina o canal que saiu (a chegada é do sistema)", !/cidade_atual/.test(nota));
   t("nota de nada é vazia", notaDaChegada(null) === "");
   const saidas = saidasDeUmPassoPrompt(torre, andar1);
   t("o Mestre recebe a saída daqui", saidas.includes(andar2));
   t("com as horas da travessia", /6 horas/.test(saidas));
-  t("e a ordem de mandar cidade_atual", /cidade_atual/.test(saidas));
+  /* E3, MOVIDA: em vez de "mande cidade_atual", a linha pede a chegada
+     narrada com o nome exato — é o que `detectarChegada` ratifica */
+  t("e pede a chegada narrada com o nome exato (o sistema regista)", !/cidade_atual/.test(saidas) && /narre a chegada com o nome EXATO/.test(saidas) && /o sistema regista/.test(saidas));
 }
 
 /* ============ 2. UMA PESSOA, UM TRABALHO ============ */

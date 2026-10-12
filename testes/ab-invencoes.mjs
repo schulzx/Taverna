@@ -51,6 +51,11 @@ if (registos.length) {
   const DIST = new RegExp(NUM + "\\s+(km|quilômetros?|léguas?|horas?|dias?(?! de)|semanas?|milhas?)(\\s+de\\s+(marcha|caminhada|estrada|viagem|barco|carroça))?", "gi");
   const DIST2 = /(meio dia|meia hora|uma hora|dois dias|três dias)( de (marcha|caminhada|estrada|viagem|perna))?/gi;
   const LUTA = /(a luta começa|começa a luta|parte para cima|investe contra|saca(m)? (a |uma )?(faca|espada|lâmina|adaga|punhal|arma)|puxa(m)? (a |uma )?(faca|espada|lâmina|adaga|punhal))/gi;
+  /* os canais que a E3 tirou do prompt (o App ainda os lê, tolerante) */
+  const SAIRAM = ["moedas", "cidade_atual", "lugar_atual", "jornada_meio", "canone", "npcs"];
+  const NAO_SEI = /(não sei|não sabe|ninguém sabe|não saberia|não faço ideia|difícil dizer|quem sabe\?|não tenho como saber|não é coisa que se saiba)/i;
+  const escrivao = [], palavras = [];
+  let perguntas = 0;
   const STOP = new Set("Você Vocês Ele Ela Eles Elas Mas Se Não Nem Quando Então Depois Antes Agora Aqui Ali Lá Um Uma Uns Umas O A Os As De Do Da Dos Das No Na Nos Nas Em Por Para Com Sem Que Quem Como Onde Isso Isto Aquilo Esse Essa Este Esta Já Ainda Só Sim Tudo Nada Ninguém Alguém Cada Outro Outra Seu Sua Meu Minha Pois Porque Talvez Logo Eu Tu Nós Lhe Te Me Dia Deus Santo Santa São Ah Oh Ei Olha Vai Vem Bom Boa Certo Pronto E É Ou Ao Aos Foi Era Tem Há Está Estão Senhor Senhora Dona".split(" "));
   const nomes = (txt) => {
     const out = new Set();
@@ -62,7 +67,7 @@ if (registos.length) {
     const L = readFileSync(f, "utf8").trim().split("\n").map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
     let turno = 0;
     const antes = [];
-    const conta = { preco: [], dist: [], nome: [], luta: [] };
+    const conta = { preco: [], dist: [], nome: [], luta: [], nao_sei: [] };
     for (const o of L) {
       let r, res;
       try { r = JSON.parse(o.req); res = JSON.parse(o.res); } catch { continue; }
@@ -89,13 +94,34 @@ if (registos.length) {
       const last = r.messages[r.messages.length - 1];
       const sistemaLuta = /\[COMBATE|INIMIGOS EM CAMPO/i.test(typeof last.content === "string" ? last.content : JSON.stringify(last.content));
       for (const mm of nar.matchAll(LUTA)) if (!sistemaLuta) conta.luta.push(`M${turno} «${mm[0]}»${abriu ? " (abriu pelo canal)" : ""}`);
+      /* E3 (12/10): as vigias da 8.ª sessão (mente/narrador-so-narra.md,
+         "E3 — medida"). O escrivão que ainda chega (por campo, e se é um dos
+         canais que saíram do prompt), as palavras por narrativa (a vigia
+         contra o burocrático: ±15% da 7.ª) e o "não sei" a uma pergunta do
+         jogador (teto: 1 em 10). Candidatas, como o resto: lê-se à mão. */
+      const md = j.mudancas && typeof j.mudancas === "object" ? j.mudancas : null;
+      const campos = md ? Object.entries(md).filter(([, v]) => v !== null && v !== false && v !== "" && !(Array.isArray(v) && !v.length) && !(typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length)).map(([k]) => k) : [];
+      if (campos.length) escrivao.push(`M${turno} ${campos.map((k) => (SAIRAM.includes(k) ? `${k} (saiu do prompt)` : k)).join(", ")}`);
+      palavras.push(nar.split(/\s+/).filter(Boolean).length);
+      const pedidoTxt = String((typeof last.content === "string" ? last.content : JSON.stringify(last.content)).split("[O QUE EU FAÇO AGORA").pop() || "");
+      if (/\?/.test(pedidoTxt)) {
+        perguntas++;
+        const ns = nar.match(NAO_SEI);
+        if (ns) conta.nao_sei.push(`M${turno} «${ns[0]}»`);
+      }
       antes.push(nar);
     }
     console.log(`\n### ${f} — ${turno} respostas do Narrador`);
     for (const [k, v] of Object.entries(conta)) {
-      console.log(`${k}: ${v.length} candidata(s) fora da entrada`);
+      console.log(`${k}: ${v.length} candidata(s)${k === "nao_sei" ? ` em ${perguntas} pergunta(s) do jogador (teto: 1 em 10)` : " fora da entrada"}`);
       for (const x of v) console.log(`   ${x}`);
     }
+    console.log(`escrivão: ${escrivao.length} de ${turno} respostas com mudancas (alvo da 8.ª: ≤ 2 em 70, só "perigo" e o combate)`);
+    for (const x of escrivao) console.log(`   ${x}`);
+    const ord = [...palavras].sort((a, b) => a - b);
+    const med = ord.length ? ord[Math.floor(ord.length / 2)] : 0;
+    console.log(`palavras por narrativa: mediana ${med}, média ${ord.length ? Math.round(ord.reduce((a, b) => a + b, 0) / ord.length) : 0} (vigia: ±15% da 7.ª)`);
+    escrivao.length = 0; palavras.length = 0; perguntas = 0;
   }
   process.exit(0);
 }

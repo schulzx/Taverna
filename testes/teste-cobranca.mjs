@@ -24,7 +24,10 @@ sec("1. o caso do relato");
   t("sem declaração, falta creditar tudo", d.moedas === 100 && d.consumiveis.length === 1);
   t("a linha do jogador diz o que entrou", /100 moedas/.test(falaDaCobranca(d)));
   t("o envelope proíbe entregar de novo", /não entregue de novo/.test(envelopeDaCobranca(d)));
-  t("e ensina o caminho certo", /DECLARE em "mudancas"/.test(envelopeDaCobranca(d)));
+  /* E3 do "o Narrador só narra" (12/10), MOVIDA: o caminho "certo" era o
+     canal "moedas", que saiu do prompt (2 nocivos em 3 usos). O envelope
+     ensina agora o contrato novo: o ganho vem do sistema, com o número dele */
+  t("e ensina o caminho certo (o ganho vem do sistema, não de um campo)", /vem do sistema/.test(envelopeDaCobranca(d)) && !/mudancas/.test(envelopeDaCobranca(d)));
 }
 
 sec("2. a subtração — o caso comum é NÃO fazer nada");

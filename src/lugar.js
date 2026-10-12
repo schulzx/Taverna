@@ -720,7 +720,7 @@ export function resumoLugarPrompt(l, cidade) {
 - Este lugar é REAL e o sistema o guarda entre turnos. A lista de locais e de gente da cidade abaixo é o que existe LÁ, não aqui: use-a como o mundo ao redor, não como a cena.
 - ${d.volta.charAt(0).toUpperCase() + d.volta.slice(1)} — ${d.dentro ? "nunca transforme sair de um cômodo numa expedição, e nunca cobre horas por uma escada." : "nunca transforme a volta numa viagem de dias."}
 - Se eu esperar, vigiar, dormir ou deixar o tempo passar, isso acontece AQUI. Faça o mundo vir até mim: ${d.dentro ? "quem sobe a escada, o que se ouve pelo assoalho, a porta que range" : "quem aparece na estrada, o que se ouve ao longe, o que cai na armadilha"}.
-- Só saio daqui quando EU escrever que saio. Se eu voltar ${d.dentro ? "para fora" : "à cidade"}, registre "lugar_atual": null.`;
+- Só saio daqui quando EU escrever que saio.`;
 }
 
 /* ---------------- O CÃO DE GUARDA ----------------
@@ -1068,8 +1068,8 @@ export function notaVoltaForcada(achado) {
 
 export const LUGAR_PROMPT = `ONDE O HERÓI ESTÁ (v9.39):
 - Além das cidades e das viagens, existe um terceiro lugar: um ponto NOMEADO fora da cidade e perto dela — uma fazenda, um moinho, uma gruta, o acampamento onde a armadilha está armada.
-- Quando o herói chegar a um lugar assim, registre "lugar_atual": "a fazenda de Jessa" (nome curto, como se diz em voz alta). Quando ele voltar para dentro da cidade, registre "lugar_atual": null.
+- Quem regista onde o herói está é o sistema, pela frase dele e pela sua cena: diga o lugar pelo nome curto, como se diz em voz alta ("a fazenda de Jessa").
 - Enquanto houver um lugar registrado, o herói ESTÁ nele. Não o devolva à cidade por conta própria — nem para passar o tempo, nem para dormir, nem para "reapresentar a cena". Esperar de tocaia é uma cena legítima e acontece onde a tocaia está.
-- SAIR DE UM LUGAR É UM MOVIMENTO, e movimento é do jogador: o sistema só aceita "lugar_atual": null quando o próprio herói escreveu que sai. Se você mandar sem isso, é recusado e você recebe um aviso — não insista.
+- SAIR DE UM LUGAR É UM MOVIMENTO, e movimento é do jogador: o herói só volta à cidade quando ele próprio escreveu que sai.
 - DENTRO DE UM COMBATE o lugar não muda, em hipótese nenhuma: enquanto a luta corre quem diz onde cada um está é o tabuleiro do sistema, em metros. Nada de arrastar o herói um andar acima entre dois golpes.
 - Lugar assim NÃO é viagem: ir e voltar custa HORAS. Nunca invente dias de marcha para o que fica nos arredores — viagem de verdade tem sistema próprio e começa por outro caminho.`;

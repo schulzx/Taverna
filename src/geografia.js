@@ -159,7 +159,10 @@ export const TERRENO_VIAGEM = {
   deserto:   { kmDia: 15, rotulo: "deserto" },
   montanha:  { kmDia: 12, rotulo: "passo de montanha" },
   gelo:      { kmDia: 12, rotulo: "gelo" },
-  maritima:  { kmDia: 90, rotulo: "rota marítima" },
+  /* E3 (12/10): o meio da rota marítima é do mapa, não do Narrador — o
+     "jornada_meio" saiu do prompt, e o acampamento lê daqui que se dorme a
+     bordo (acampamento.js). */
+  maritima:  { kmDia: 90, rotulo: "rota marítima", meio: "navio" },
   /* v9.40: travessias que não se medem em quilômetros. Ficam na tabela
      porque quem lê uma rota pergunta pelo terreno dela, e um `undefined`
      aqui derrubaria o cálculo de dias no meio de uma viagem. */
@@ -752,12 +755,12 @@ export function saidasDeUmPassoPrompt(mapa, cidade, teto = tetoDeUmPasso(mapa)) 
     const h = Math.round((Number(d) || 0) * 24);
     return h <= 1 ? "quase na hora" : `cerca de ${h} horas`;
   };
-  return `SAÍDAS DAQUI (fato do sistema): de ${cidade} dá para alcançar ${vs.map((v) => `${v.nome} (${horas(v.dias)})`).join(", ")} numa travessia só — não é jornada, é uma cena. Estes nomes você PODE dizer. Se a cena me levar a uma delas, mande "cidade_atual" com o nome EXATO acima, na mesma resposta em que narrar a chegada; sem isso eu continuo aqui.`;
+  return `SAÍDAS DAQUI (fato do sistema): de ${cidade} dá para alcançar ${vs.map((v) => `${v.nome} (${horas(v.dias)})`).join(", ")} numa travessia só — não é jornada, é uma cena. Estes nomes você PODE dizer. Se eu for a uma delas, narre a chegada com o nome EXATO acima: o sistema regista-a pela sua cena.`;
 }
 
 export function notaDaChegada(a, de) {
   if (!a) return "";
-  return `[CHEGADA — REGISTRADA PELO SISTEMA] Você narrou que eu cheguei a ${a.nome} e não mandou "cidade_atual". O sistema me moveu: eu saí de ${de || "onde estava"} e AGORA ESTOU em ${a.nome}; o relógio andou o que a travessia custa e o lugar entrou no meu mapa. Trate isso como fato — não me devolva ao lugar anterior e não narre a travessia de novo. Da próxima vez, mande "cidade_atual" junto com a cena.`;
+  return `[CHEGADA — REGISTRADA PELO SISTEMA] Você narrou que eu cheguei a ${a.nome}. O sistema me moveu: eu saí de ${de || "onde estava"} e AGORA ESTOU em ${a.nome}; o relógio andou o que a travessia custa e o lugar entrou no meu mapa. Trate isso como fato — não me devolva ao lugar anterior e não narre a travessia de novo.`;
 }
 
 /* Um mapa comprado abre a região inteira de uma vez — é para isso que
