@@ -185,7 +185,10 @@ sec("1. o tamanho — a razao da faxina");
   /* AS DUAS CONTRADIÇÕES QUE SAÍRAM, e elas são o motivo de o bloco ter
      cabido no orçamento sem crescer nada. */
   t("o prompt não manda mais narrar a viagem inteira", !/NUNCA resolva grandes deslocamentos num pulo/.test(P));
-  t("porque a viagem é do sistema desde a v9.56", /viagem:<destino>/.test(P) && /NÃO narre a viagem inteira/.test(P));
+  /* E2 (12/10), MOVIDA: a linha SINAIS saiu (o "viagem:<destino>" e o seu
+     "NÃO narre a viagem inteira" iam nela); a viagem abre pelo Intérprete
+     (rastro.js), e o tempo dela continua a ser do envelope [VIAGEM]. */
+  t("porque a viagem é do sistema desde a v9.56 (o tempo dela chega pelo [VIAGEM])", /TEMPO É DO SISTEMA/.test(P) && /\[VIAGEM\]/.test(P) && !/viagem:<destino>/.test(P));
   t("e não manda mais oferecer alternativas prontas", !/apresente ganchos concretos/.test(P));
   t("logo acima de proibir exatamente isso", /NUNCA ofereça opções/.test(P));
 }
@@ -199,7 +202,10 @@ sec("2. todo campo pedido tem quem o leia");
   ).test(codigo);
   const orfaos = [...pedidos].filter((c) => !ehLido(c));
   t(`nenhum campo orfao (achou: ${orfaos.join(", ") || "nenhum"})`, orfaos.length === 0);
-  t("e ha campos de verdade sendo checados", pedidos.size >= 10);
+  /* E2 (12/10): o piso desceu de 10 para 8 — saíram do prompt os campos que
+     o Narrador nunca usou (mapa_*, grupo_*, adicionar_itens, missao_oferecida,
+     evento_global_encerrar, relogio_novo…). Os que ficam são os que ele usa. */
+  t("e ha campos de verdade sendo checados", pedidos.size >= 8);
 }
 
 sec("3. o que o codigo tirou do Mestre nao pode voltar pelo prompt");
@@ -253,7 +259,9 @@ sec("5. o que o codigo passou a fazer e ele precisa saber");
   t("condicao vem de tres fontes, nenhuma dele", /VOCÊ NÃO APLICA NEM REMOVE CONDIÇÃO/.test(P));
   t("falha critica cobra o corpo pelo sistema", /O PREÇO DE FALHAR/.test(P));
   t("limiar de PV existe e e do sistema", /LIMIAR/.test(P));
-  t("equipamento vem do sinal loot", /loot:comum\|incomum\|raro\|epico\|lendario/.test(P));
+  /* E2 (12/10), MOVIDA: o "loot:" teve 0 usos em 137 turnos; o espólio é do
+     sistema e chega no envelope de vitória. */
+  t("equipamento é do espólio do sistema (e o prompt já não ensina o loot:)", /ESPÓLIO DE COMBATE É DO SISTEMA/.test(P) && !/loot:comum/.test(P));
 }
 
 sec("6. o que NAO pode ter sido perdido na faxina");
@@ -270,7 +278,9 @@ sec("6. o que NAO pode ter sido perdido na faxina");
     ["intensidade fiel", /INTENSIDADE FIEL/],
     ["abertura no mesmo turno", /ABERTURA NO MESMO TURNO/],
     ["formato JSON", /UM ÚNICO objeto JSON/],
-    ["sinais", /SINAIS \(canal barato/],
+    /* E2 (12/10): a linha SINAIS saiu (a medição: 0 usos de cada sinal em
+       137 turnos, e todos com outra porta); fica o único sem outra porta */
+    ["o chamado (o sinal que ficou)", /O CHAMADO: /],
   ];
   for (const [nome, rx] of essenciais) t(`"${nome}" continua lá`, rx.test(P));
 }

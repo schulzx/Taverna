@@ -619,5 +619,4 @@ export function propostaDaOferta(of) {
 export const OFERTAS_PROMPT = `TRABALHO DO MUNDO (v9.119 — só o MURAL, nunca a cena):
 - NINGUÉM oferece missão ao herói numa conversa. Um morador que quer alguma coisa feita PREGA UM CARTAZ NO MURAL e, no máximo, menciona isso — "deixei um papel no mural", "tem um serviço meu pregado lá". Nunca pergunte se o herói aceita, nunca negocie preço, nunca comece o serviço: quem tira o papel do mural é ele, quando quiser.
 - Quando o sistema pregar um cartaz por causa desta cena, você recebe um envelope pronto. Encene a MENÇÃO em uma ou duas frases e siga; o resto está no mural.
-- O campo "missao_oferecida" continua servindo para a ficção que você inventa — mas ele vira CARTAZ, não proposta: o sistema prega no mural e o herói decide lá. Só o que se traduz em etapas concretas vira papel.
 - Missão que é da HISTÓRIA não passa por aqui e não se recusa: ela chega pelo envelope de missão do sistema, já ativa.`;

@@ -87,7 +87,11 @@ sec("3. as regras que o Mestre lê");
   t("o bloco das ofertas diz que ninguém oferece na conversa", /NINGUÉM oferece missão ao herói numa conversa/.test(of));
   t("e manda pregar no mural", /PREGA UM CARTAZ NO MURAL/.test(of));
   t("e diz que a missão da história não se recusa", /não se recusa/.test(of));
-  t("o bloco das missões manda o campo virar cartaz", /vira CARTAZ, não proposta/.test(of) || /transforma em cartaz do mural/.test(mi));
+  /* E2 (12/10), MOVIDA: o Narrador nunca usou "missao_oferecida" (0 em 137
+     turnos) e o Cronista propôs 4 — a instrução saiu dos dois blocos, junto
+     com o "DIGA O PREÇO NA CENA… paga" (o número da recompensa inventado).
+     O cartaz continua a nascer da proposta (cartazDaProposta, abaixo). */
+  t("os blocos já não oferecem o campo ao Narrador (quem propõe é o Cronista)", !/missao_oferecida/.test(of) && !/missao_oferecida/.test(mi) && !/DIGA O PREÇO NA CENA/.test(mi));
   t("e separa o fio do trabalho", /chegam ATIVAS e não se recusam/.test(mi));
   /* OS DOIS BLOCOS ENTRAM PELA MESMA PORTA (`missao`): dizer a mesma regra
      nos dois é pagar duas vezes por uma lição que se aprende uma. */

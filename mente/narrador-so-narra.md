@@ -376,3 +376,82 @@ existem e sem exports, para não acordar a catraca. Fica para quem fizer a E1.
    célula da tabela §3 é de ±1–2 casos. Os 77% do lado do sistema são robustos na direção, não na casa
    decimal. A troca da frase de identidade **não foi testada sozinha**. A recomendação é não a fazer
    sozinha: sem a E1, uma regra "não invente" diante de um sistema que cala só troca invenção por silêncio.
+
+---
+
+## E2 — medida (12/10, `backend`, v9.422)
+
+**O que saiu.** Do 1.º lote (§4c), a instrução de cada canal com 0 usos e dono no código ou no Cronista:
+`mapa_cidades`/`mapa_faccoes` (e o "ao apresentar uma cidade nova, registre-a"), `adicionar_habilidades`
+(a frase que o proibia), `evento_global_encerrar`, `adicionar_itens`/`remover_itens` (ITENS COM
+DESCRIÇÃO), `loot:` (EQUIPAMENTO NÃO SE ESCREVE À MÃO, os tipos e as raridades do formato), `grupo_*`,
+`feito`, `missao_oferecida`+`paga`, `relogio_novo`, e a linha `SINAIS` inteira (1,5 mil). As oito
+licenças do §4a saíram ou viraram o avesso (a 1.ª linha da ECONOMIA diz agora que o preço dito é o do
+sistema; a DIPLOMACIA, que a decisão vem no `[DIPLOMACIA — RESOLVIDA PELO SISTEMA]` — é do código desde a
+v9.142). Mais duas que a leitura achou: "Companheiros e inimigos podem ganhar habilidades livremente" e
+"podem partir ou trair" (a consequência que só existia pelo `grupo_remover`). O porquê de cada uma está no
+comentário acima do `return` de `montarSystemPrompt`.
+
+**O que ficou, e porquê.** O CHAMADO (`raid:`): a raid só se abre por esse sinal (App, `sinalRaidRef`),
+e tirá-lo era desligar a raid — fica numa linha de 180, **só a partir do `NIVEL_MINIMO` de `raids.js`**
+(abaixo dele o sistema recusava de qualquer modo). Os falsos positivos do estimador (o "sinais, boatos"
+dos relógios, "Lugar assim NÃO é viagem", "Estar num cômodo não é… viagem") são prosa de coerência e
+ficam. A E3 e a E4 intactas (moedas, vida/mana, `cidade_atual`, `lugar_atual`, `jornada_meio`, `canone`,
+`npcs`, `combate_*`, `dano_ambiental`), o `perigo`, e o "invente à vontade" da abertura (a E3 troca-o pela
+regra). Fé, milagre e ascensão continuam ensinados nos blocos que só entram para quem tem fé
+(`DIVINDADE_PROMPT`, `CAMINHOS_PROMPT`).
+
+**Os leitores no `App.jsx`** (contados antes; nenhum foi tocado — a instrução saiu, o leitor fica inerte
+e tolerante): `mapa_cidades` 2, `mapa_faccoes` 1, `adicionar_habilidades` 3, `relogio_novo` 2,
+`evento_global_encerrar` 1, `adicionar_itens` 3, `grupo_adicionar` 3, `grupo_vida` 2, `missao_oferecida` 4
+(é por onde a proposta do Cronista vira cartaz), os sinais (`fe`, `milagre`, `viagem`, `masmorra`, `raid`,
+`loot`) num só despachante; `remover_itens`, `grupo_remover/atualizar/itens` 0 no App (lidos em
+`regras-jogo.js`).
+
+**O tamanho** (as cenas sintéticas re-renderizadas; as reais com os mesmos cortes aplicados ao texto
+enviado — a típica sintética bate ao caractere com o render, 52.971):
+
+| | antes | depois | saiu |
+|---|---|---|---|
+| típica (sintética) | 59.094 | **52.971** | −6.123 (−10,4%) |
+| real · mediana s6 | 69.732 | **63.652** | −6.080 |
+| real · mediana s7 | 68.344 | **62.264** | −6.080 (−8,9%) |
+| real · maior s7 | 72.183 | **66.103** | −6.080 |
+| PIOR CENA REAL (sem gente, nível 20) | 71.367 | **65.917** | −5.450 (já com +180 do CHAMADO) |
+| **pior caso com gente** | 80.475 | **75.025** | −5.450 |
+| prompt inteiro (todas as portas) | 85.249 | 79.304 | −5.945 |
+
+Cerca de **1,5 mil tokens a menos por chamada**. O teto de 82 mil ganhou 7 mil de folga no pior caso.
+
+**A anatomia** (mesmo classificador do §1):
+
+| categoria | típica antes → depois | real mediana s7 antes → depois | pior com gente antes → depois |
+|---|---|---|---|
+| OFÍCIO | 15,2% → 16,5% | 13,5% → 14,3% | 13,6% → 14,3% |
+| REGRA | 19,0% → 20,4% | 17,3% → 18,2% | 18,9% → 19,7% |
+| CONTRATO | 20,2% → 23,2% | 17,5% → 19,8% | 21,7% → 23,6% |
+| PROIBIÇÃO | 22,8% → 25,2% | 19,1% → 20,8% | 20,3% → 21,8% |
+| **ESCRIVÃO** | **15,9% → 7,4%** (9.405 → 3.909) | **13,8% → 6,3%** | **11,7% → 6,1%** (9.450 → 4.578) |
+| ESTADO | 5,6% → 6,2% | 17,8% → 19,6% | 12,9% → 13,8% |
+| FORMATO | 1,2% → 1,1% | 1,0% → 0,9% | 0,9% → 0,8% |
+
+O escrivão que resta é o 2.º lote (E3, ~1,7 mil), o combate (E4, 770–1.360), o `perigo` e frases
+genéricas (~1,2 mil). **Caixa alta** (NÃO, NUNCA, PROIBIDO…): típica 68 → **63**; real mediana s7 78 →
+**73**; real maior s7 84 → **79**; pior com gente 81 → **76**. Negações em qualquer caixa (mediana s7):
+339 → 322. As oito licenças pesavam ~1,9 mil brutos, mas quase todas citavam um canal e o classificador
+já as contava como escrivão: fora dele, a E2 tirou ~630 caracteres.
+
+**Os dois defeitos da E1** (vistos na prova viva do `frontend`): "Dois paes?" — a linha do preço
+perguntado diz agora a grafia da tabela (`GRAFIA_DA_RUA`, economia.js: "2× pães ◉ 1"), com ou sem til na
+frase. NOMES À MÃO cortava em 2,488, depois da batida, da marca do fio e da ficha; corta agora em
+**2,477** (logo depois da batida 2,475, à frente da marca do fio 2,48 e da ficha 2,485), e a linha
+encurtou 9 ("a quem não tem nome:"). Nas 138 pautas enviadas da 6.ª e da 7.ª
+(`testes/registo-s6-s7-pauta.json`), a linha passa a caber em **47 de 65 turnos de batida (eram 25)** e
+em 80 de 124 fora da luta e sem PERGUNTOU (eram 55), sem tirar veto, desfecho, resposta, fala, rumo,
+fecho, coração, o que volta, planta, batida ou lugar. O passo dos vetos desceu de 0,1 para 0,05: com 0,1
+o 6.º veto cortava em 2,5, e "Tamsin está em Serra do Bode… não entra nesta cena" caía em 4 dessas pautas
+assim que os nomes entravam.
+
+**Fica para depois:** o `feito` pelo Cronista (é fiação do App: hoje ninguém julga um feito fora da luta,
+como já não julgava — 0 em 137); as 18 de 65 batidas em que nem a linha curta cabe (a pauta já cheia de
+vetos e da batida, e o que sobra é o que não cede).

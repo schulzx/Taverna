@@ -185,7 +185,11 @@ sec("6. as duas contradições antigas, pelo que o código faz");
      a exigir `nomeMm` como primeiro argumento, e aceita o que vier depois. */
   t("o código: o sinal masmorra:<nome> gera a área que o Narrador nomeou", /chave === "masmorra"/.test(APP) && /entrarMasmorra\(nomeMm[,)]/.test(APP));
   t("o prompt já não manda semear chefes", !/semeie chefes ocultos/.test(P));
-  t("diz que os chefes são os do sistema, escondidos, e as áreas pelo sinal", /os chefes são os que o sistema já pôs no mundo/.test(P) && /manda "masmorra:<nome>"/.test(P));
+  /* E2 (12/10), MOVIDA: o "semeia-as você… manda masmorra:<nome>" das áreas
+     secretas era licença para inventar o lugar (mente/narrador-so-narra.md
+     §4a); os lugares secretos passaram a ser, como os chefes, os que o
+     sistema já pôs no mundo. O código do sinal fica (a asserção acima). */
+  t("diz que os chefes e os lugares secretos são os do sistema, escondidos — e já não manda semear área pelo sinal", /os chefes e os lugares secretos são os que o sistema já pôs no mundo/.test(P) && !/manda "masmorra:<nome>"/.test(P));
 }
 
 /* A FIAÇÃO — o App deixa de sortear a gente do banco e passa a pedir ao

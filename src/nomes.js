@@ -280,11 +280,15 @@ export function nomesAMao(opcoes) {
   return out;
 }
 
-/* A linha da pauta (secção NOMES À MÃO): curta, e diz para que servem. */
+/* A linha da pauta (secção NOMES À MÃO): curta, e diz para que servem.
+   E2 (12/10): "a quem não tem nome:" (era "para quem ainda não tem nome:",
+   9 a mais) — cada caractere desta linha é o que a faz caber num turno de
+   batida (pauta.js, a secção). O "a quem" fica: sem ele, dois nomes soltos
+   sob a etiqueta leem-se como gente em cena. */
 export function linhaDosNomesAMao(nomes) {
   const ns = (Array.isArray(nomes) ? nomes : []).filter((n) => n && n.nome);
   if (!ns.length) return "";
-  return `para quem ainda não tem nome: ${ns.map((n) => `${n.nome} (${n.genero})`).join(" · ")}`;
+  return `a quem não tem nome: ${ns.map((n) => `${n.nome} (${n.genero})`).join(" · ")}`;
 }
 
 /* Quais dos oferecidos a narração usou. Pelo primeiro nome, palavra

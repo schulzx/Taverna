@@ -2,7 +2,7 @@
    Bloco de texto injetado no prompt do sistema (zero tokens de raciocínio —
    é só referência). Valores em moedas de ouro (◉), calibrados ao que o app
    realmente entrega (mural, decretos, espólios, renda). */
-export const ECONOMIA_PROMPT = `ECONOMIA DO MUNDO (âncoras OBRIGATÓRIAS — qualquer preço/salário/recompensa que você citar na ficção DEVE respeitar estas faixas; nunca invente valores fora delas):
+export const ECONOMIA_PROMPT = `ECONOMIA DO MUNDO (a escala das coisas — o preço dito na cena é o que o sistema mandou; sem número dele, quem fala diz sem número):
 ESCALA DE RIQUEZA: ◉ 10 sustenta um pobre por uma semana · ◉ 50 é um mês de vida simples · ◉ 200 compra equipamento de aventureiro respeitável · ◉ 1.000 é uma pequena fortuna (casa modesta, navio velho) · ◉ 10.000 é riqueza de nobre. Um camponês ganha ◉ 2–5 por dia de trabalho; um artesão, ◉ 5–10; um guarda, ◉ 8–15; um cavaleiro a serviço, ◉ 20–40.
 PREÇOS COMUNS: refeição simples ◉ 1–2 · refeição boa com bebida ◉ 3–5 · noite em estalagem simples ◉ 3–6 (quarto bom ◉ 8–15, luxo ◉ 25+) · caneca de cerveja ◉ 1 · garrafa de vinho bom ◉ 5–12 · ferradura/reparo simples ◉ 2–5 · poção de cura comum ◉ 25–50.
 EQUIPAMENTO: arma simples ◉ 10–25 · arma de qualidade ◉ 40–100 · armadura leve ◉ 15–40 · armadura pesada ◉ 60–150 · escudo ◉ 10–20 · item mágico menor ◉ 150–400 (raros e poderosos NÃO se vendem em loja comum).
@@ -68,6 +68,12 @@ export const PRECOS_COMUNS = [
   { id: "informacao", nome: "uma informação, de quem a vende", base: 3, faixa: null, rx: /\b(quanto (voce |tu |o senhor |a senhora )?(quer|queres|cobra|cobras|pede|pedes|leva|levas) (por|pra|para) (saber|dizer|contar|falar|mostrar|guiar|abrir a boca|isso)|(preco|quanto) (da|de uma|pela|por uma) informac(ao|oes))/ },
   { id: "pedagio", nome: "pedágio da porta, por cabeça", base: 1, faixa: null, rx: /\b(pedagios?|portagem|taxa de entrada|imposto da porta)\b/ },
 ];
+/* A GRAFIA (E2, 12/10). `rx` lê a frase sem acento, e a linha perguntada
+   (`porPalavra`) dizia a palavra assim: "2× paes ◉ 2" — e o Mestre copiou,
+   "Dois paes? Quatro coroas." (a prova viva da E1, T9). A palavra que a
+   linha diz sai daqui, com o acento que a língua lhe dá, escreva o jogador
+   com ou sem til. Só as que levam acento; as outras seguem tal qual. */
+export const GRAFIA_DA_RUA = Object.freeze({ pao: "pão", paes: "pães" });
 /* a ordem da linha de rua: o que se bebe, o que se come à mesa, o que se come de pé */
 export const PRECOS_DA_RUA = PRECOS_COMUNS.filter((p) => p.rua).map((p) => p.id);
 /* o fator do porte nunca leva o preço para fora de metade ou do dobro (a

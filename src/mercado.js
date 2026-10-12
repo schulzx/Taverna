@@ -17,7 +17,7 @@
 import { gerarLoot, RARIDADE_ROTULO } from "./loot.js";
 import { SUPRIMENTOS, garantirSuprimentos } from "./ermos.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./pocoes.js";
-import { valorDeItem, PRECO_VENDA, PRECOS_COMUNS, PRECOS_DA_RUA, precoComum, semConfusao } from "./economia.js";
+import { valorDeItem, PRECO_VENDA, PRECOS_COMUNS, PRECOS_DA_RUA, precoComum, semConfusao, GRAFIA_DA_RUA } from "./economia.js";
 import { NUMERO_POR_EXTENSO } from "./cobranca.js";
 import { PORTES } from "./geografia.js";
 import { nomesDeLugar } from "./lexico.js";
@@ -443,7 +443,8 @@ export function precoComumParaPauta(frase, opcoes) {
   achados.sort((a, b) => a.idx - b.idx);
   const ditos = achados.slice(0, COMUNS_POR_RESPOSTA).map(({ p, quantos, palavra }) => {
     const preco = precoComum(p.id, fator);
-    const nome = p.porPalavra ? palavra : p.nome;
+    /* E2: a palavra com a grafia da tabela ("pães", nunca o "paes" da frase lida sem acento) */
+    const nome = p.porPalavra ? GRAFIA_DA_RUA[palavra] || palavra : p.nome;
     return quantos > 1 ? `${quantos}× ${nome} ◉ ${preco} cada, dá ◉ ${preco * quantos}` : `${nome} ◉ ${preco}`;
   });
   out.pergunta.push(`o preço daqui: ${ditos.join(" · ")}`);

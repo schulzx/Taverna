@@ -1207,8 +1207,6 @@ Trate as etapas como o que elas são: o que EU preciso fazer. Você pode encenar
    aqui também seria pagar duas vezes por uma lição que se aprende uma. */
 export const MISSOES_PROMPT = `MISSÕES (v9.119 — a quest é do MESTRE; o resto é papel no mural):
 - Missão é uma sequência de ETAPAS que o SISTEMA confere sozinho. Você não abre, não avança, não encerra e não paga — tudo isso chega por envelope.
-- Quando a ficção pedir um trabalho que você inventou, use "missao_oferecida": o sistema transforma em cartaz do mural. Proponha só o que se traduz em etapas concretas (chegar a um lugar, derrotar alguém, encontrar um objeto, entregar algo, encontrar uma pessoa). "Ganhar a confiança de alguém" não é etapa — é cena, e cena você já sabe fazer.
-- DIGA O PREÇO NA CENA e mande o mesmo número no campo "paga": o cartaz que promete 15 moedas e o diário que anuncia 43 são duas verdades sobre o mesmo trabalho. Se o combinado não é dinheiro — um favor, uma informação, uma dívida —, "paga": 0, e não invente moedas depois.
 - UM TRABALHO, UMA MISSÃO. O contrato no mural e a pessoa que vem falar dele são a MESMA missão: não ofereça de novo com outro título. E nunca peça ao jogador que "encontre" quem está falando com ele agora.
 - As missões da HISTÓRIA (a trama do sistema, nêmesis, evento global, abalo divino) chegam ATIVAS e não se recusam. Elas são o fio; o mural é trabalho.
 - PRAZO é do sistema. Algumas missões correm contra o tempo, e isso vira um relógio que anda uma casa por NOITE dormida. Você pode encenar a pressa — a viúva que olha a porta, o mercador que fala em "antes da lua cheia" —, mas NUNCA conte as noites, nunca diga que o prazo venceu e nunca dê tempo extra: quando esgota, o sistema avisa por envelope.

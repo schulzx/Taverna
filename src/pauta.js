@@ -217,8 +217,20 @@ export const SECOES = [
      quando o sistema tem a resposta (PERGUNTOU com linha); fica quando não
      a tem — foram três perguntas assim ("quem era o velho?", "o nome
      dele?", "quem era o homem?") que pediram nome. Na luta cede (ninguém se
-     apresenta a meio de um golpe). */
-  { id: "nomes", rotulo: "NOMES À MÃO", prio: 2.488, o: "nomes prontos da cultura do lugar, para quem ainda não tem nome" },
+     apresenta a meio de um golpe).
+     E2 (12/10), MOVIDA de 2,488 para 2,477, com o motivo: a prova viva da
+     E1 (frontend, v9.421) viu os turnos 2–6 de uma campanha nova, com a
+     batida 1 da espinha (~330 caracteres) e a pauta a 1311–1360, sem a
+     linha nunca caber — e o Narrador inventou Jaina, Dren e Jorik
+     exatamente nesses turnos. Com 2,488 ela cortava depois da batida
+     (2,475), da marca do fio (a 2.ª linha do momento, 2,48) e da ficha
+     (2,485). A batida move a história e fica à frente; a marca do fio e a
+     ficha são cor de quem já tem nome, e passam a ceder aos nomes. Nas 138
+     pautas reais da 6.ª e da 7.ª (registo-s6-s7-pauta.json) a linha entra
+     em 47 dos 65 turnos de batida (eram 25), e nenhum veto, desfecho,
+     resposta, rumo, fecho, coração, o que volta, planta ou batida que
+     chegava deixa de chegar. A linha também encurtou (nomes.js). */
+  { id: "nomes", rotulo: "NOMES À MÃO", prio: 2.477, o: "nomes prontos da cultura do lugar, para quem ainda não tem nome" },
   /* v9.135: e o que cada um DISSE, palavra por palavra. Prioridade 2 porque
      e o conteudo da cena: cortar a fala de alguem que ja falou seria pior do
      que cortar o lugar onde ele falou. */
@@ -286,7 +298,13 @@ export const SECOES = [
      NÃO PODE e logo antes dele: o Narrador lê um bloco de vetos só, com o
      do turno na primeira linha — como lia. */
   { id: "vetoDoDesfecho", rotulo: "NÃO PODE", prio: PRIO_DE_FERRO, o: "o veto de quem acabou de cair" },
-  { id: "naoPode", rotulo: "NÃO PODE", prio: 2, o: "os vetos desta cena" },
+  /* E2 (12/10), o passo dos vetos: 0,05 por linha (era 0,1). Com 0,1 o 6.º
+     veto cortava com 2,5 — atrás da ficha, dos nomes, da cauda do ONDE e ao
+     lado da economia — e na 6.ª sessão "Tamsin está em Serra do Bode… não
+     entra nesta cena sem 4h de estrada" caía assim que NOMES À MÃO entrava
+     (4 pautas reais, registo-s6-s7-pauta.json). O veto não cede à cor: com
+     0,05 os nove primeiros cortam até 2,4, à frente do rumo e da planta. */
+  { id: "naoPode", rotulo: "NÃO PODE", prio: 2, passo: 0.05, o: "os vetos desta cena" },
   /* A campanha que prende (item 1): O QUE VOLTA — a promessa que o próprio
      Narrador plantou e que o sistema traz de volta agora
      (`prometido.js#cobrarNoTurno`), uma por turno no máximo e nunca numa

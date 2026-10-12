@@ -286,5 +286,4 @@ Use isto como TENSÃO DE FUNDO: quanto mais cheio, mais a ficção deve sentir a
 
 export const RELOGIOS_PROMPT = `RELÓGIOS DE PROGRESSO (v9.18):
 - Certas ameaças e obras longas têm um contador que o SISTEMA mantém. Você recebe o estado deles a cada turno e deve deixá-los presentes na ficção — sinais, boatos, pressa — sem nunca citar números, barras ou a palavra "relógio".
-- Você NUNCA avança um relógio e NUNCA faz a consequência acontecer por conta própria. Ela chega por envelope, e aí é obrigatória.
-- Você PODE PROPOR um relógio novo quando a ficção pedir (um ritual em curso, uma perseguição que começa, uma obra que o jogador iniciou), pelo campo "relogio_novo" da sua resposta. Propor não é criar: o sistema aceita, apara ou recusa. Proponha no máximo um por turno, e só quando algo de fato começou em cena.`;
+- Você NUNCA avança um relógio e NUNCA faz a consequência acontecer por conta própria. Ela chega por envelope, e aí é obrigatória.`;

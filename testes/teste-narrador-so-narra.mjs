@@ -18,7 +18,9 @@
      9. a pauta: as secções novas, o que cede, e o teto (nenhum veto sai);
     10. a régua: `ab-invencoes.mjs` conta ≥ 27 das 31 com o dado.
 
-   Cada secção falha na árvore de v9.419 e passa nesta. */
+   Cada secção falha na árvore de v9.419 e passa nesta. A §14 (E2, 12/10)
+   são os dois defeitos que a prova viva da E1 viu — "paes" sem til e NOMES
+   À MÃO sem lugar nos turnos de batida —, e falha na árvore de v9.421. */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -148,7 +150,9 @@ sec("5. NOMES À MÃO, e o registo que os reconhece (7.ª: Ambrósio, Pregado, D
   const c = N.nomesAMao({ ...base, lex });
   t("o léxico do mundo manda no nome (como em nomePessoa)", lex.nomes.masc.includes(primeiro(c[0].nome)) && lex.nomes.fem.includes(primeiro(c[1].nome)), J(c));
   const linha = N.linhaDosNomesAMao(a);
-  t("a linha da pauta: curta, os dois nomes com o género", linha === `para quem ainda não tem nome: ${a[0].nome} (ele) · ${a[1].nome} (ela)` && linha.length < 100, linha);
+  /* E2 (12/10), MOVIDA: "para quem ainda não tem nome:" virou "a quem não tem
+     nome:" — 9 caracteres que fazem a linha caber nos turnos de batida (§14). */
+  t("a linha da pauta: curta, os dois nomes com o género", linha === `a quem não tem nome: ${a[0].nome} (ele) · ${a[1].nome} (ela)` && linha.length < 100, linha);
   t("lixo não estoura", J(N.nomesAMao(null)).startsWith("[") && N.linhaDosNomesAMao(null) === "" && N.linhaDosNomesAMao([null, {}]) === "" && J(N.nomesAMao({ usados: "x" })).length > 2);
   /* o registo reconhece */
   const d = primeiro(a[0].nome);
@@ -289,7 +293,11 @@ sec("10. a luta que só a prosa começaria: o veto já cobre os dois turnos medi
 sec("11. a pauta: as secções novas, o que cede, e o teto");
 {
   const nomes = PA.secaoPorId("nomes"), preco = PA.secaoPorId("preco");
-  t("NOMES À MÃO: depois de todo veto, do coração e da ficha; antes da decoração", nomes && nomes.prio > PA.secaoPorId("quemE").prio && nomes.prio < PA.secaoPorId("economia").prio && nomes.prio < 2.49 && nomes.prio > PA.secaoPorId("naoPode").prio + 0.4);
+  /* E2 (12/10), MOVIDA: a linha passou de 2,488 para 2,477 — À FRENTE da ficha
+     (2,485) e da marca do fio (2,48), logo depois da batida (2,475): nos turnos
+     de batida ela nunca cabia (a prova viva da E1; §14 prova-o com as pautas
+     reais da 6.ª e da 7.ª). Continua depois de todo veto e do coração. */
+  t("NOMES À MÃO: depois de todo veto, do coração e da batida; antes da ficha e da decoração", nomes && nomes.prio < PA.secaoPorId("quemE").prio && nomes.prio > PA.secaoPorId("coracao").prio && nomes.prio > PA.secaoPorId("momento").frente[0] && nomes.prio < PA.secaoPorId("economia").prio && nomes.prio < 2.49 && nomes.prio > PA.secaoPorId("naoPode").prio + 0.4);
   t("O PREÇO da rua: decoração com número (depois da gente, antes do daqui)", preco && preco.prio > PA.secaoPorId("gente").prio && preco.prio < PA.secaoPorId("daqui").prio);
   t("na luta cedem o preço e os nomes", PA.SECOES_QUE_CEDEM.luta.includes("preco") && PA.SECOES_QUE_CEDEM.luta.includes("nomes"));
   t("na masmorra e fora dos muros cede o preço; os nomes ficam", ["masmorra", "arredores"].every((k) => PA.SECOES_QUE_CEDEM[k].includes("preco") && !PA.SECOES_QUE_CEDEM[k].includes("nomes")));
@@ -428,6 +436,65 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
     app.includes("coord: meuPonto(), lugar: lugarRef.current, jornada: jornadaRef.current,"));
   t("a figura do arco entra no registo só quando a linha que a nomeia coube no texto",
     /const confirmarCoracao = \(pauta\) => \{[^]*?if \(r\.linha && !String\(pauta \|\| ""\)\.includes\(r\.linha\)\) return;[^]*?i\.figura && i\.figura\.nome[^]*?r\.linha\.includes\(inst\.figura\.nome\)[^]*?calou\("a figura do arco no registo", e\)/.test(app));
+}
+
+/* ============================================================ */
+sec("14. os dois defeitos que a prova viva da E1 viu (frontend, v9.421) — consertados no motor (E2, 12/10)");
+{
+  /* (a) "Dois paes? Quatro coroas." — a linha do preço perguntado dizia a
+     palavra da frase SEM acento ("2× paes ◉ 2"), e o Narrador copiou-a. A
+     linha diz agora a palavra com a grafia da tabela (`GRAFIA_DA_RUA`,
+     economia.js), escreva o jogador com ou sem til. */
+  const doisPaes = M.precoComumParaPauta("compro dois pães", { fator: 1 }).pergunta[0] || "";
+  t("«compro dois pães» → a linha diz «pães», nunca «paes»", /2× pães ◉/.test(doisPaes) && !/\bpaes\b/.test(doisPaes), doisPaes);
+  const semTil = M.precoComumParaPauta("compro dois paes", { fator: 1 }).pergunta[0] || "";
+  t("escrito sem til, a linha leva o til da tabela", /2× pães ◉/.test(semTil), semTil);
+  const umPao = M.precoComumParaPauta("quanto custa um pão?", { fator: 1 }).pergunta[0] || "";
+  t("«um pão» → «pão»", /pão ◉/.test(umPao) && !/\bpao\b/.test(umPao), umPao);
+  const figo = M.precoComumParaPauta("quanto custa um figo?", { fator: 1 }).pergunta[0] || "";
+  t("a palavra que não leva acento segue tal qual (figo)", /\bfigo ◉/.test(figo), figo);
+  const rua = E.PRECOS_COMUNS.find((p) => p.id === "rua");
+  t("toda grafia da tabela é de uma palavra que a linha da rua conhece", Object.keys(E.GRAFIA_DA_RUA).length > 0 && Object.keys(E.GRAFIA_DA_RUA).every((k) => rua.rx.test(k)) && Object.isFrozen(E.GRAFIA_DA_RUA));
+  t("a linha da rua não usa a palavra sem acento", !/\bpao\b|\bpaes\b/.test(M.precosDaRua(1)), M.precosDaRua(1));
+
+  /* (b) NOMES À MÃO perdia o teto nos turnos de batida: com 2,488 a linha
+     cortava DEPOIS da batida (2,475), da 2.ª linha do momento (2,48) e da
+     ficha (2,485); nos turnos 2–6 da prova viva nunca coube, e o Narrador
+     inventou Jaina, Dren e Jorik exatamente aí. Corta agora logo depois da
+     batida (que move a história e não cede) e à frente do que a decora (a
+     marca do fio, a ficha, a cauda do ONDE, a economia); a linha encurtou
+     ("a quem não tem nome:" no lugar de "para quem ainda não tem nome:").
+     E os vetos andam de 0,05 em 0,05: com 0,1 o 6.º veto cortava com 2,5 —
+     atrás dos nomes — e "Tamsin está em Serra do Bode… não entra nesta
+     cena" caía em 4 pautas reais da 6.ª sessão. */
+  const nomes = PA.secaoPorId("nomes"), mom = PA.secaoPorId("momento"), qe = PA.secaoPorId("quemE");
+  t("NOMES À MÃO corta depois da batida, à frente da marca do fio e da ficha", nomes.prio > mom.frente[0] && nomes.prio < mom.frente[1] && nomes.prio < qe.prio, String(nomes.prio));
+  t("os nove primeiros vetos cortam à frente da planta da masmorra (nenhum perde para os nomes nem para a decoração)", [0, 1, 2, 3, 4, 5, 6, 7, 8].every((i) => PA.prioDaLinha(PA.secaoPorId("naoPode"), i) < PA.secaoPorId("masmorra").prio));
+  const ln = N.linhaDosNomesAMao([{ nome: "Aldric", genero: "ele" }, { nome: "Alba da Pedra", genero: "ela" }]);
+  t("a linha encurtou e ainda diz para quê", ln === "a quem não tem nome: Aldric (ele) · Alba da Pedra (ela)", ln);
+
+  /* a prova com pautas reais de turno de batida: as 138 ENVIADAS da 6.ª e
+     da 7.ª sessões (registo-s6-s7-pauta.json), 65 delas com a batida da
+     espinha fora da luta. Antes deste conserto a linha entrava em 25 das 65. */
+  const REG = JSON.parse(readFileSync(new URL("./registo-s6-s7-pauta.json", import.meta.url), "utf8"));
+  let cand = 0, entra = 0, bat = 0, batEntra = 0, tira = 0, teto = 0; const tirou = [];
+  for (const tu of REG.turnos) {
+    const base = {};
+    for (const [id, ix] of Object.entries(tu.secoes)) base[id] = ix.map((i) => REG.linhas[i]);
+    const cena = { luta: tu.luta, masmorra: tu.masmorra };
+    const com = tu.luta ? base : { ...base, nomes: [ln] };
+    const tx0 = PA.textoDaPauta(PA.cederNaCena(base, cena)), tx1 = PA.textoDaPauta(PA.cederNaCena(com, cena));
+    if (tx1.length > PA.TETO_DA_PAUTA) teto++;
+    const guardadas = [...(base.naoPode || []), ...(base.desfecho || []), ...(base.vetoDoDesfecho || []), ...(base.pergunta || []), ...(base.fala || []), ...(base.rumo || []), ...(base.fecho || []), ...(base.coracao || []), ...(base.volta || []), ...(base.masmorra || []), (base.momento || [])[0], (base.onde || [])[0]].filter(Boolean);
+    for (const v of guardadas) if (tx0.includes(v) && !tx1.includes(v)) { tira++; tirou.push(v.slice(0, 60)); }
+    if (tu.luta || (base.pergunta || []).length) continue;
+    cand++; if (tx1.includes(ln)) entra++;
+    if ((base.momento || []).length) { bat++; if (tx1.includes(ln)) batEntra++; }
+  }
+  console.log("      (6.ª e 7.ª, " + REG.turnos.length + " pautas reais: NOMES À MÃO entra em " + batEntra + "/" + bat + " turnos de batida e em " + entra + "/" + cand + " fora da luta e sem PERGUNTOU; antes: 25/65 e 55/124)");
+  t("o teto nunca passa nas 138", teto === 0);
+  t("nenhum veto, desfecho, resposta, fala, rumo, fecho, coração, o que volta, planta, batida ou lugar que chegava deixa de chegar", tira === 0, J(tirou));
+  t("nos turnos de batida a linha passa a caber em 70% ou mais (antes 25/65)", batEntra >= bat * 0.7, batEntra + "/" + bat);
 }
 
 console.log(`\nnarrador só narra (E1): ${ok} passaram, ${mal} falharam`);

@@ -82,13 +82,16 @@ sec("4. O CANAL VELHO FECHOU");
   t("`m.xp` não é mais lido", !/Math\.max\(0, m\.xp \|\| 0\)/.test(RJ));
   t("quem manda é o grau", /grauValido\(m\.feito\)/.test(RJ));
   t("o companheiro herda do mesmo número", /xpComp = Math\.floor\(xpGanho \* 0\.6\)/.test(RJ));
-  /* e o prompt tem de ensinar o canal novo, senão o jogo emudece */
-  t("o prompt pede o grau", /"feito": "pequeno" \| "feito" \| "marco"/.test(PR));
-  t("e proíbe o número", /NÃO envie "xp"/.test(PR));
-  t("o exemplo de JSON foi junto", /"feito": "marco"/.test(PR));
+  /* O Narrador só narra · E2 (12/10), MOVIDAS: as quatro asserções que
+     exigiam o "feito" no prompt ("o prompt pede o grau", "proíbe o número",
+     "o exemplo foi junto", "separa combate de feito") viraram o avesso. A
+     medição contou 0 usos do "feito" em 137 turnos da 6.ª e da 7.ª sessões:
+     a instrução era paga em todo turno e não rendia nada. O canal fica no
+     código (o App lê `m.feito`, `grauValido` decide, `xpDoFeito` converte)
+     para quem o mandar — o Cronista, quando o App o ligar —, e a reversão é
+     um commit. */
+  t("o prompt já não ensina o feito (E2: 0 usos em 137 turnos)", !/"feito":/.test(PR) && !/XP — VOCÊ DIZ O TAMANHO/.test(PR));
   t("e não sobrou `xp` no exemplo", !/"xp": \d/.test(PR));
-  /* combate não paga duas vezes: o espólio já é o pagamento da luta */
-  t("o prompt separa combate de feito", /nada de "feito" em turno de combate/.test(PR));
 }
 
 sec("5. O ESPÓLIO ESCALA, E TEM TETO");
