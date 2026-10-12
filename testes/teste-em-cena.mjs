@@ -298,6 +298,51 @@ const NOMES = N.linhaDosNomesAMao([{ nome: "Aldric", genero: "ele" }, { nome: "A
   t("não muta a pauta", J(viva) === copia);
   t("lixo não estoura", [null, {}, 7].every((p) => typeof pautaComEmCena(p, null, null) === "object"));
   t("a tabela do que a linha não tira diz o porquê", !!(EC.EM_CENA_NAO_TIRA || {}).porque && EC.EM_CENA_NAO_TIRA.secoes.includes("naoPode") && EC.EM_CENA_NAO_TIRA.secoes.includes("pergunta"));
+
+  /* v9.438: o "já dito" lê o TEXTO que chega ao Narrador, não a pauta. A
+     QUEM É corta depois da EM CENA (2,485 contra 2,477): numa pauta cheia
+     ela cai no teto, e quem ela nomeava saía da EM CENA por "já dito" —
+     sumia das duas. Na abertura viva foi o companheiro Lucan. Prova-se nas
+     pautas enviadas (6.ª a 8.ª, fora da luta), com uma QUEM É do
+     companheiro por cima de cada uma: onde a QUEM É não chega e a linha
+     dele caberia, ele TEM de estar na EM CENA; onde a QUEM É chega, ele
+     não se repete; e o teto e as linhas guardadas ficam como estavam. */
+  {
+    const QE = "Lucan Varro, que anda consigo: quer provar que não é covarde, fala curto e seco, traz a espada velha do pai e a dívida dele";
+    const lucan = [{ id: "p:lucan", tipo: "pessoa", nome: "Lucan Varro", aqui: true, comigo: true }];
+    const so = "Lucan Varro (" + EC.EM_CENA_TRATO.comigo + ")";
+    let cortada = 0, cabia = 0, some = 0, chega = 0, repete = 0, teto = 0, tira = 0;
+    const tirou = [];
+    for (const { b, cena } of pautas) {
+      if (cena.luta) continue;
+      const com0 = PA.cederNaCena({ ...b, nomes: [NOMES], quemE: [QE] }, cena);
+      const tx0 = PA.textoDaPauta(com0, { turno: 99 });
+      const p1 = pautaComEmCena(com0, lucan, { turno: 99 });
+      const tx1 = PA.textoDaPauta(p1, { turno: 99 });
+      const naLinha = (p1.emCena || []).some((l) => l.includes("Lucan") && tx1.includes(l));
+      if (tx1.length > PA.TETO_DA_PAUTA) teto++;
+      const guardadas = EC.EM_CENA_NAO_TIRA.secoes.flatMap((id) => com0[id] || []).concat(EC.EM_CENA_NAO_TIRA.primeira.map((id) => (com0[id] || [])[0])).filter(Boolean);
+      for (const v of guardadas) if (tx0.includes(v) && !tx1.includes(v)) { tira++; tirou.push(v.slice(0, 50)); }
+      if (tx1.includes(QE)) { chega++; if (naLinha) repete++; continue; }
+      cortada++;
+      /* a linha dele, sozinha, chegaria ao texto sem tirar nada que chegava
+         (o teto a engolir tudo, ou um veto que sairia, é recusa certa)? */
+      const so1 = PA.textoDaPauta(PA.garantirPauta({ ...com0, nomes: undefined, emCena: [so + "; " + NOMES] }), { turno: 99 });
+      if (!so1.includes(so) || guardadas.some((v) => tx0.includes(v) && !so1.includes(v))) continue;
+      cabia++;
+      if (!naLinha) some++;
+    }
+    console.log(`      (a QUEM É do companheiro: chega em ${chega}, cortada em ${cortada}; dessas, a linha dele cabia em ${cabia})`);
+    t("a QUEM É cortada pelo teto não esconde a pessoa: onde a linha dela cabia, ela está na EM CENA", cabia > 0 && some === 0, `some em ${some}/${cabia}`);
+    t("onde a QUEM É chega ao texto, a pessoa não se repete na EM CENA", chega > 0 && repete === 0, `${repete}/${chega}`);
+    t("com a QUEM É por cima: o teto nunca passa", teto === 0, String(teto));
+    t("com a QUEM É por cima: nenhum veto, desfecho, resposta, fala, rumo, fecho, coração, o que volta, planta, batida ou lugar que chegava deixa de chegar", tira === 0, J(tirou));
+    /* o caso mínimo, à mão: a cabeça e uma pauta que só cabe uma das duas */
+    const cheia = { onde: ["em Vau, na estalagem do Corvo"], naoPode: ["x".repeat(1000)], quemE: [QE] };
+    const pc = pautaComEmCena(cheia, lucan, { turno: 1 });
+    const txc = PA.textoDaPauta(pc, { turno: 1 });
+    t("à mão: a QUEM É não cabe, o veto fica, e o companheiro vem na EM CENA", !txc.includes(QE) && txc.includes("x".repeat(1000)) && txc.includes(so), txc.slice(-160));
+  }
 }
 
 /* ============================================================ */

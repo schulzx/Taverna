@@ -16,6 +16,13 @@ Formato:
 
 ---
 
+## 12/10 · v9.438 · F2a · o "já dito" da EM CENA lê o texto, não a pauta (`backend`) · este commit
+- **estado inicial:** HEAD `8f9b2ff` (v9.437); só `mente/agora.json` na árvore (não é meu, não vai). Nenhum outro agente. App.jsx não tocado.
+- **o defeito:** `pautaComEmCena` tirava da linha EM CENA quem a QUEM É / QUEM CARREGA / PERGUNTOU já nomeavam lendo a PAUTA. A QUEM É corta a 2,485, depois da EM CENA (2,477): numa pauta cheia caía no teto e a pessoa sumia das duas — na abertura viva, o companheiro Lucan. Medido nas 137 pautas de fora da luta da 6.ª/7.ª com uma QUEM É dele por cima: sumia em 76.
+- **o conserto:** só conta como dita a linha que CHEGA ao texto (em todo turno conferido). Monta-se com as que chegavam sem a EM CENA; se alguma deixou de chegar com ela, sai do dito e monta-se de novo (o dito só encolhe, logo acaba). A montagem passou a `montarLinha` (interna, sem export).
+- **testes:** 5 asserções novas em `teste-em-cena` sobre as pautas enviadas (6.ª–8.ª) com a QUEM É do companheiro por cima: onde ela não chega e a linha dele cabia sem tirar nada guardado, ele está na EM CENA (antes: some em 46/53; agora 0); onde ela chega, ele não se repete; o teto nunca passa; nenhum veto/desfecho/resposta sai; e um caso à mão. As 30 em que nem a linha sozinha cabia são do teto, não do defeito.
+- **o App:** nenhuma fiação nova — a assinatura é a mesma.
+
 ## 12/10 · v9.437 · F2a · EM CENA, a fiação (`frontend`) · este commit
 - **estado inicial:** HEAD `e6edf61` (v9.436), 331 suítes verdes; só `mente/agora.json` na árvore (não é meu, não vai). Nenhum outro agente. **Bastão** `.claude/app-jsx` tomado ("frontend F2a") para esta fiação e devolvido ao fechar.
 - **a fiação:** `import { montarEmCena, pautaComEmCena, quemNaFrase }` e `emCenaRef` (ao lado de `criaturaAVistaRef`, sem save — a lista refaz-se das fontes que já se salvam). `contextoDoEmCena(frase, aqui)` é UM contexto para a pauta e para o golpe: grupo, `quemAndaComigo` (o leitor da 8.ª, agora comum — `declararAgressao` passou a chamá-lo em vez de o repetir), o registo daqui, `nucleoEmCena(nucleoAgora())`, `falasDoMestre`, a criatura à vista só no mesmo trecho, o combate, a sala atual (masmorra aberta), `bancasDaCena()`, `moedaDoMundo()`, a frase, o lugar e a lista de antes — cada fonte num calou próprio. Em `pautaDoTurno`, depois do `cederNaCena`, em `calou("EM CENA")`: monta, guarda, `pautaComEmCena`. `criaturaAVistaRef` guarda `quantos`. Em `declararAgressao`, a frase lê-se contra uma lista **refeita na hora** (a do turno passado foi montada antes da última fala do Mestre — o rato que ele acabou de pintar não estaria nela): o bicho que a oração do golpe aponta (`faz === "golpe"`) vai à frente em `conhecidas`, com o nome e a ameaça da lista.

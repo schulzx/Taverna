@@ -394,6 +394,18 @@ export function emCenaParaPauta(lista, opcoes) {
    A cabeça cresce com o número do turno: confere-se com o turno dado e,
    sem ele, com a cabeça mais curta e a mais longa. Na luta não entra: a
    vista da luta (QUEM) já é a lista de quem está de pé.
+
+   O "já dito" lê o TEXTO, não a pauta (12/10, v9.438). Até aqui quem a
+   linha QUEM É (ou QUEM CARREGA, ou a resposta) nomeava saía da EM CENA
+   por já estar dito — mas o dito era a pauta, e o Narrador lê o texto
+   depois do teto. A QUEM É corta a 2,485, depois da EM CENA (2,477): numa
+   pauta cheia ela caía, e a pessoa sumia das duas. Na abertura viva o
+   companheiro Lucan ficou fora da linha EM CENA assim; nas 137 pautas de
+   fora da luta da 6.ª e da 7.ª, com uma QUEM É dele por cima, sumia em 76.
+   Agora só conta como dita a linha que chega ao texto em todo turno
+   conferido: monta-se com as que chegavam sem a EM CENA; se alguma deixou
+   de chegar com ela, sai do dito e monta-se de novo (o dito só encolhe,
+   logo acaba). É o molde da QUEM É, que só se confirma se a linha chegou.
    ============================================================ */
 export const EM_CENA_NAO_TIRA = {
   secoes: ["naoPode", "vetoDoDesfecho", "desfecho", "pergunta", "fala", "rumo", "fecho", "coracao", "volta", "masmorra"],
@@ -409,11 +421,20 @@ export function pautaComEmCena(pauta, lista, opcoes) {
   const nomes = p.nomes || [];
   const resto = { ...p };
   delete resto.nomes;
-  const jaDito = EM_CENA_NAO_TIRA.jaDito.flatMap((id) => resto[id] || []).join(" ");
+  const turnos = Number.isFinite(Number(o.turno)) && o.turno != null ? [Number(o.turno)] : [0, 99999];
+  const chega = (pt, linhas) => { const txs = turnos.map((turno) => textoDaPauta(pt, { turno })); return linhas.filter((l) => txs.every((tx) => tx.includes(l))); };
+  let ditas = chega(p, EM_CENA_NAO_TIRA.jaDito.flatMap((id) => resto[id] || []));
+  for (;;) {
+    const com = montarLinha(p, resto, nomes, turnos, lista, o, ditas.join(" "));
+    const ficam = chega(com, ditas);
+    if (ficam.length === ditas.length) return com;
+    ditas = ficam;
+  }
+}
+function montarLinha(p, resto, nomes, turnos, lista, o, jaDito) {
   const itens = escolher(lista, jaDito);
   if (!itens.length && !nomes.length) return p;
   const moeda = String(o.moeda || (itens.find((x) => x.moeda) || {}).moeda || "");
-  const turnos = Number.isFinite(Number(o.turno)) && o.turno != null ? [Number(o.turno)] : [0, 99999];
   const guardadas = (tx) => [
     ...EM_CENA_NAO_TIRA.secoes.flatMap((id) => p[id] || []),
     ...EM_CENA_NAO_TIRA.primeira.map((id) => (p[id] || [])[0]),
