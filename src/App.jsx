@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao, nomesAMaoNaProsa } from "./nomes.js";
 import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
-import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario } from "./lexico.js";
+import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario, comoChamam } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
@@ -10450,7 +10450,7 @@ export default function Taverna() {
        registrada pelo sistema", a compra já saiu da bolsa por outro
        caminho, e debitar de novo cobraria duas vezes. */
     try {
-      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "" });
+      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "", pedido: typeof op.pedido === "string" ? op.pedido : "", moeda: typeof op.moeda === "string" ? op.moeda : "" });
       if (deb.temAlgo && !deb.semFundos) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - deb.moedas) }; msgs.push(falaDoDebito(deb)); }
       if (deb.temAlgo) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoDebito(deb)}`;
     } catch (e) { calou("oQueFaltaDebitar", e); }
@@ -13032,7 +13032,16 @@ export default function Taverna() {
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
          sem nenhum ganho de memória (os efeitos já vivem no estado do app). */
-      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota }) || personagemRef.current || personagem;
+      /* MM11 · 8.ª sessão: a frase que paga não debitava (0 de 6, 27 moedas).
+         A bolsa procurava a frase do jogador pela etiqueta do pedido, e a
+         etiqueta só vai em `pedidoFinal` — aqui passava `conteudo` sem ela.
+         Agora a frase vai POR NOME (a mesma leitura da escuta: só o que é
+         do jogador, nunca um envelope do sistema), e com ela a palavra do
+         mundo para moeda ("as dez escamas"). Ver cobranca.js. */
+      let pedidoDaBolsa = "", moedaDaBolsa = "";
+      try { const pb = lerOPedido(conteudo); pedidoDaBolsa = pb && pb.doJogador ? pb.texto : ""; } catch (e) { calou("a frase do jogador para a bolsa", e); }
+      try { moedaDaBolsa = comoChamam((mundoAtual() || {}).lexico, "moeda") || ""; } catch (e) { calou("a moeda do mundo para a bolsa", e); }
+      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
          na bolsa). Custa zero: é comparação com o que já está na mão.

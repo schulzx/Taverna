@@ -199,7 +199,14 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
   t("canone", /resp\.mudancas\.canone/.test(app));
   t("npcs", /resp\.mudancas\.npcs/.test(app));
   t("moedas (e a bolsa ainda o desconta do que leu, para não cobrar duas vezes)", /oQueFaltaDebitar\(resp\.narrativa, resp\.mudancas/.test(app));
-  t("e a frase do jogador chega à bolsa pelos envelopes que o App já passa", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo/.test(app) && /envelopes: op\.envelopes/.test(app));
+  /* 12/10 (8.ª sessão): esta asserção passava e a bolsa não descia. Ela
+     provava que os envelopes chegavam, não que a frase estivesse neles — a
+     etiqueta do pedido só vai em `pedidoFinal`, e `conteudo` chega sem ela.
+     A frase passou a ir por nome (`pedido:`), e quem prova que paga, com as
+     seis frases reais, é teste-frase-que-paga.mjs. Fica aqui o que ela de
+     facto prova: os envelopes continuam a chegar (a porta do JÁ PAGO). */
+  t("e os envelopes do turno chegam à bolsa (a porta do já pago pelo sistema)", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo/.test(app) && /envelopes: op\.envelopes/.test(app));
+  t("e a frase do jogador chega à bolsa por nome", /pedido: pedidoDaBolsa/.test(app));
 }
 
 /* ============================================================ */
