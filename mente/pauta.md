@@ -388,6 +388,38 @@ marcos; dá-se-lhe coração. Nada entra como bloco estático: só a pauta por t
 - **C6 · a fogueira** (aprovada pela pessoa, 11/10, com a tela): o motor no `acampamento`, a tela pela mesa de design (`mente/pauta-desenho.md`).
 - Fecha com a **7.ª sessão de prova**, contra 3,2.
 
+### Fase F2 — a ficha de tudo (aprovada pela pessoa, 12/10)
+
+**De onde vem.** A 8.ª e a 9.ª sessões provaram a mesma classe de erro em
+ruas diferentes: o rato que o Mestre pintou e a frase não acha, as ataduras
+cobradas pelo que a frase disse e não pelo estoque, o elo procurado pelo
+ofício que não chega a ele. A pergunta da pessoa fechou o desenho: *"hoje o
+mestre diz uma coisa que está em cena e o sistema tenta adivinhar, não
+deveria ser o contrário? O sistema entrega ao mestre e ele usa?"* — e, à
+proposta: *"Perfeito, ótima sugestão, pode fazer."*
+
+**A regra:** é a da espinha estendida à cena inteira. Antes de cada resposta
+o sistema monta EM CENA — cada pessoa, criatura, coisa e lugar com ficha
+(id, nome, papel, gênero, quantos, hostil, preço, distância, saídas). O
+Narrador só mostra o que tem ficha; o que precisar a mais, o sistema dá
+(NOMES À MÃO e afins), nunca ele cria. A frase do jogador continua livre e
+lida — mas contra a lista de 1–4 coisas em cena, não contra a prosa.
+
+**As duas regras da tela (a pessoa concordou):** a ficha mostra só o que o
+herói SABE (cresce com a descoberta; nunca entrega o segredo); e o sistema
+não fala de si (sem id, sem nome de mecanismo, a ficha nunca diz "ficha").
+Mais: lembra (último encontro, promessas, dívidas); máx. 4 fichas, somem na
+resposta seguinte; o veredito antes do clique dentro do cartão; a ficha da
+pessoa leva o retrato.
+
+- **F2a · EM CENA** (motor + fiação, sem tela nova): a lista na pauta, o
+  reconhecimento por id, o Narrador limitado a ela.
+- **F2b · as fichas tocáveis** (o `desenho` e o `jogo` no Figma; o
+  `aprendiz`/`oficial` constroem): tocar escreve a frase editável e leva o id.
+- **F2c · o cartão** com o que o herói sabe e as ações com preço/veredito.
+- **A prova:** 0 de 10 mal lidos e 0 de 10 mal cobrados (9.ª: 0 de 1, 0 de 1, 0 de 1).
+- Começa depois dos consertos da 9.ª no ar.
+
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
 mas precisamos de uma solução para as 12 restantes."*
