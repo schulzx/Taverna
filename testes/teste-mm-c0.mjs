@@ -198,7 +198,10 @@ sec("3. o que o jogador pagou, o jogo debita (J7–J8, J12, J23)");
   /* J12: a maçã */
   t("\"Compro uma maçã de uma vendedora ambulante\" não é a maça das armas", B.compraNaFrase("Compro uma maçã de uma vendedora ambulante e como sentada na fonte, vendendo o povo passar.", { balcao, bolsa: 14 }) === null);
   t("a maça de guerra continua a ser das bancas", (B.compraNaFrase("Compro uma maça de guerra.", { balcao, bolsa: 14 }) || {}).porque === "so_banca");
-  t("o que o acento separa é tabela", B.O_ACENTO_SEPARA.length >= 1);
+  /* E1 (12/10): a tabela mudou-se para economia.js — bolsa-da-frase.js e
+     mercado.js liam-na em círculo, e o mercado ficava sem ela (o "não há
+     macas" do J13). A asserção segue a tabela para a casa nova. */
+  t("o que o acento separa é tabela", (await import(S + "economia.js")).O_ACENTO_SEPARA.length >= 1);
   /* J23: o item na mesma frase, a quantia dita é teto */
   const c23 = B.compraNaFrase("Pago as sete fichas ao vendedor e guardo as duas tochas e as três rações na mochila.", { balcao, bolsa: 14 });
   t("J23: duas tochas e três rações custam ◉ 8, e sete não paga", c23 && c23.total === 8 && c23.porque === "pouco", J(c23));

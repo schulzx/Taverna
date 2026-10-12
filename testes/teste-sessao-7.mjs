@@ -235,7 +235,11 @@ sec("3b. o lado \"duelo\" do cartão diz com quem é a luta (M59–M61)");
     const posta = congelar({ v: 1, arcos: { [inst.nome]: { pedido: 1, crise: 3, posta: 4 } } });
     const ctx = { semente: w.semente, espinha: w.espinha, elenco: w.elenco, subtramas: subs, dia: 4, ato: 0 };
     const sem = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", ctx);
-    t("Defender: a luta prometida vem com nome e ameaça, mesmo sem registo (era «sem alvo»)", sem.luta && sem.luta.nome === "Velho camarada" && sem.luta.ameaca && sem.luta.duelo === true, J(sem.luta));
+    /* E1 (12/10): o nome deixou de ser o papel ("Velho camarada"): o arco
+       a_guerra dá à figura um nome do banco do mundo desde a linha da crise
+       (FIGURA_DO_ARCO), e é esse o combatente quando o registo e a prosa
+       calam. A intenção fica: sem registo, a luta tem nome e ameaça. */
+    t("Defender: a luta prometida vem com nome e ameaça, mesmo sem registo (era «sem alvo»)", sem.luta && inst.figura && sem.luta.nome === inst.figura.nome && sem.luta.deOnde === "figura" && sem.luta.ameaca && sem.luta.duelo === true, J(sem.luta));
     const comMarlo = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", { ...ctx, presentes: PRESENTES });
     t("com o camarada no registo da cena (o Marlo do Cronista), a luta é com ele", comMarlo.luta && comMarlo.luta.nome === "Marlo" && comMarlo.luta.deOnde === "registo", J(comMarlo.luta));
     const pelaProsa = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", { ...ctx, mostrado: ["Perto da meia-noite, um velho camarada de Tônia aparece na soleira, pingando."] });

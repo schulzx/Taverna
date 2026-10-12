@@ -35,7 +35,9 @@
    para quem estiver vasculhando o lugar de verdade.
    ============================================================ */
 import { situacaoDe, SITUACOES } from "./mundo-base.js";
-import { rumoEntre, formatarDistancia, coordDe } from "./coordenadas.js";
+import { rumoEntre, formatarDistancia, coordDe, garantirCoord, kmEntre } from "./coordenadas.js";
+/* E1 (12/10): a hora e a distância são as do Geógrafo — uma medida só */
+import { caminhoNaRegiao, origemDoHeroi, tempoDoCaminho } from "./marcha.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -139,7 +141,10 @@ export function procurarPessoa(nome, ctx = {}) {
   const {
     npcs = {}, grupo = [], genteDaqui = [], espinha = null, base = null,
     cidadeAtual = "", lugarAtual = "", mapa = null, presentes = [],
-  } = ctx;
+  } = ctx && typeof ctx === "object" ? ctx : {};
+  /* E1: de ONDE o herói está (o ponto do rastreio, o lugar, a jornada) — os
+     mesmos três que o Geógrafo recebe para a linha "não entra nesta cena" */
+  const origem = { cidadeAtual, coord: ctx && ctx.coord, lugar: ctx && ctx.lugar, jornada: ctx && ctx.jornada };
 
   const sit = base ? situacaoDe(base, nome) : SITUACOES.livre;
   const casa = (x) => x && norm(x).includes(alvo);
@@ -172,7 +177,7 @@ export function procurarPessoa(nome, ctx = {}) {
     if (aqui || !noElenco.local) {
       return { nome: noElenco.nome, onde: noElenco.local || cidadeAtual, papel: noElenco.papel || "", situacao: sit, desfecho: escondida(sit) ? "aqui_escondida" : "aqui" };
     }
-    return { nome: noElenco.nome, onde: noElenco.local, papel: noElenco.papel || "", situacao: sit, desfecho: "noutro_lugar", ...rumoPara(mapa, cidadeAtual, noElenco.local) };
+    return { nome: noElenco.nome, onde: noElenco.local, papel: noElenco.papel || "", situacao: sit, desfecho: "noutro_lugar", ...rumoPara(mapa, noElenco.local, origem) };
   }
 
   /* 5 — gente da base desta cidade: existe aqui e ainda não foi apresentada */
@@ -193,7 +198,7 @@ export function procurarPessoa(nome, ctx = {}) {
   const doMarco = marcoComNome(espinha, alvo);
   if (doMarco) {
     const naCidade = doMarco.cidade && norm(doMarco.cidade) !== norm(doMarco.onde);
-    return { nome: doMarco.quem || doMarco.alvo, onde: naCidade ? `${doMarco.onde}, em ${doMarco.cidade}` : doMarco.onde, situacao: sit, desfecho: "noutro_lugar", ...rumoPara(mapa, cidadeAtual, doMarco.cidade || doMarco.onde) };
+    return { nome: doMarco.quem || doMarco.alvo, onde: naCidade ? `${doMarco.onde}, em ${doMarco.cidade}` : doMarco.onde, situacao: sit, desfecho: "noutro_lugar", ...rumoPara(mapa, doMarco.cidade || doMarco.onde, origem) };
   }
 
   /* 7 — ninguém. E isto é resposta, não fracasso. */
@@ -213,19 +218,37 @@ function marcoComNome(espinha, alvo) {
 
 /* O rumo e a distância saem das coordenadas que o mundo já tem. Sem cidade
    conhecida dos dois lados não há rumo, e a resposta fica só com o nome do
-   lugar — que continua sendo mais do que "você não achou nada". */
-function rumoPara(mapa, deNome, paraNome) {
+   lugar — que continua sendo mais do que "você não achou nada".
+
+   UMA MEDIDA SÓ (o Narrador só narra · E1, 12/10). Na 6.ª sessão (M30) a
+   mesma pauta disse Serra do Bode a "6,6 km, a 2,1 h a pé" (o Geógrafo, do
+   ponto do herói) e a "13 km" (esta procura, do centro da cidade de onde se
+   partira, por uma conta própria — `hypot × 25`), e a jornada contava 20 km
+   e 8 h. O Narrador ficou com "meio dia de marcha". Agora a distância é a
+   do Geógrafo (`kmEntre`, do ponto do herói quando o App o passa — senão
+   da cidade) e a hora é a da conta única (`caminhoNaRegiao` a partir de
+   `origemDoHeroi`, marcha.js) — as duas mesmas funções da linha "não entra
+   nesta cena sem…" (`quemNaoChega`, geografo.js). Sem região, só a
+   distância, como antes. */
+function rumoPara(mapa, paraNome, origem) {
+  const o = origem && typeof origem === "object" ? origem : {};
   const cidades = (mapa && mapa.cidades) || [];
   const acha = (n) => cidades.find((c) => norm(c.nome) === norm(n)) || cidades.find((c) => norm(n).includes(norm(c.nome)));
-  const a = acha(deNome), b = acha(paraNome);
-  if (!a || !b || a === b) return {};
-  const ca = coordDe(a), cb = coordDe(b);
+  const a = acha(o.cidadeAtual), b = acha(paraNome);
+  if (!b || a === b) return {};
+  const ca = garantirCoord(o.coord) || (a ? coordDe(a) : null), cb = coordDe(b);
   if (!ca || !cb) return {};
   const r = rumoEntre(ca, cb);
   /* `rumoEntre` devolve o RUMO inteiro — id, curto, rotulo e graus. O que
      entra numa frase e o rotulo ("a nordeste"); jogar o objeto no texto
      escrevia `[object Object]` na cara do jogador. */
-  return { rumo: (r && r.rotulo) || "", distancia: formatarDistancia(Math.hypot(cb.x - ca.x, cb.y - ca.y) * 25) };
+  let tempo = "";
+  try {
+    const de = origemDoHeroi(mapa, { cidadeAtual: o.cidadeAtual, lugar: o.lugar, jornada: o.jornada, ponto: o.coord });
+    const c = de != null ? caminhoNaRegiao(mapa, de, b.nome) : null;
+    tempo = c ? tempoDoCaminho(c) : "";
+  } catch { tempo = ""; }
+  return { rumo: (r && r.rotulo) || "", distancia: formatarDistancia(kmEntre(ca, cb)), ...(tempo ? { tempo } : {}) };
 }
 
 /* ---------------- O QUE O NARRADOR RECEBE ----------------
@@ -234,7 +257,8 @@ function rumoPara(mapa, deNome, paraNome) {
 export function envelopeDaProcura(r) {
   if (!r) return "";
   const onde = r.onde ? ` (${r.onde})` : "";
-  const rumo = r.rumo ? ` a ${r.distancia} para ${r.rumo}` : "";
+  /* E1: o rótulo do rumo já traz a preposição ("ao sul") — "para ao sul" saía torto */
+  const rumo = r.rumo ? ` a ${r.distancia} ${r.rumo}${r.tempo ? `, ${r.tempo} daqui` : ""}` : "";
   const cabeca = "[PROCURA — RESOLVIDA PELO SISTEMA]";
   const fim = " Narre a descoberta em 1-2 frases, pelo que o herói vê e ouve. NÃO invente outro paradeiro, não faça aparecer quem não está aqui, e não transforme isto em achado de tesouro.";
   switch (r.desfecho) {
@@ -253,7 +277,7 @@ export function linhaDaProcura(r) {
     case "no_grupo": return `👥 ${r.nome} anda com você.`;
     case "aqui": return `🔎 ${r.nome} está aqui${r.onde ? ` — ${r.onde}` : ""}.`;
     case "aqui_escondida": return `🔎 ${r.nome} está por aqui, mas não à vista.`;
-    case "noutro_lugar": return `🧭 ${r.nome} está em ${r.onde}${r.rumo ? ` — ${r.distancia} para ${r.rumo}` : ""}.`;
+    case "noutro_lugar": return `🧭 ${r.nome} está em ${r.onde}${r.rumo ? ` — ${r.distancia} ${r.rumo}${r.tempo ? `, ${r.tempo}` : ""}` : ""}.`;
     case "morta": return `☠ ${r.nome} morreu${r.onde ? ` — ${r.onde}` : ""}.`;
     default: return `🔎 Ninguém com o nome de ${r.nome} passou por aqui.`;
   }

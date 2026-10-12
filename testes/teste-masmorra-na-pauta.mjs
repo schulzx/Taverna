@@ -285,7 +285,10 @@ for (const w of MUNDOS) for (const m of masmorrasDoMundo(w.semente, w.mapa).slic
       /* o fundo: a distância na planta e a chave */
       if (chefe.id !== sala.id) {
         c.fundo++;
-        const lf = linhas[linhas.length - 1] || "";
+        /* E1 (12/10): o fundo deixou de ser a ÚLTIMA linha — depois dele vem
+           "à frente, só à vista de quem entra" (quem espera atrás das
+           passagens), que é a primeira a cortar. Acha-se o fundo pelo que diz. */
+        const lf = linhas.find((x) => /^(o portão do fundo|o chefe já caiu)/.test(x)) || "";
         const d = passagensAte(mm, sala.id, chefe.id);
         const certo = chefe.resolvida ? /o chefe já caiu/.test(lf)
           : lf.includes(d === 1 ? "a uma passagem daqui" : `a ${d} passagens daqui`) && (mm.chave ? /a chave já caiu/.test(lf) : /a chave ainda não caiu/.test(lf));

@@ -34,6 +34,8 @@
    ============================================================ */
 import { NUMERO_POR_EXTENSO } from "./cobranca.js";
 import { MERCADORIAS } from "./mercado.js";
+/* E1 (12/10): o acento que separa mora em economia.js (o círculo com mercado.js) */
+import { semConfusao } from "./economia.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -137,16 +139,8 @@ function mantimentosDa(oracao) {
        declarado, jaTem: [nomes], daBanca: [palavras], fecha, porque }
    `porque` (quando não fecha): "sem_fundos" | "pouco" | "so_banca" | "ja_tem".
    ============================================================ */
-/* ---------------- O ACENTO QUE SEPARA (MM-C · C0, 11/10) ----------------
-   "Compro uma maçã de uma vendedora ambulante" (a 6.ª sessão, J12) deu
-   "🛒 maca compra-se nas bancas": sem acento, a maçã é a MAÇA das armas.
-   Antes de tirar o acento, o que só o acento distingue troca-se por uma
-   palavra que nenhuma tabela de compra conhece — a fruta não é do balcão
-   nem da banca, e o falso negativo é o comportamento de antes. */
-export const O_ACENTO_SEPARA = [
-  { rx: /\bmaçãs?(?![\p{L}])/giu, vira: "fruta" },
-];
-const semConfusao = (frase) => O_ACENTO_SEPARA.reduce((s, x) => s.replace(x.rx, x.vira), String(frase == null ? "" : frase));
+/* O ACENTO QUE SEPARA (MM-C · C0) mudou-se para economia.js na E1 (12/10):
+   `semConfusao` vem de lá, e o `mercadoParaPauta` lê a mesma tabela. */
 
 /* ---------------- A CONTA EM DOIS PASSOS (MM-C · C0, 11/10) ----------------
    J7: "compro duas tochas e uma corda… Quanto é?" — o balcão respondeu

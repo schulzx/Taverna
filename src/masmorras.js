@@ -720,6 +720,11 @@ export const MASMORRA_NA_PAUTA = {
   maxNomes: 4,
   /* passagens ditas, para a frente e para trás somadas */
   maxPassagens: 4,
+  /* E1 (12/10): quem espera atrás das passagens ainda não vistas, no máximo
+     estas (a mais próxima primeiro: a ordem da planta) */
+  maxAFrente: 2,
+  /* e a passagem diz-se pelas primeiras palavras da pista, que já vai inteira na linha de cima */
+  palavrasDaPista: 3,
 };
 
 /* Quantas passagens separam a sala `de` da sala `para`, andando pela planta
@@ -796,6 +801,23 @@ export function masmorraParaPauta(mm, opcoes) {
     const onde = d == null ? "" : d === 1 ? "a uma passagem daqui" : `a ${d} passagens daqui`;
     linhas.push(`o portão do fundo${onde ? `: ${onde}` : ""}, ${mm.chave ? "e a chave já caiu — abre" : "lacrado — a chave ainda não caiu"}`);
   }
+  /* 5. QUEM ESPERA À FRENTE (o Narrador só narra · E1, 12/10). Na 6.ª
+     sessão a planta tinha, atrás de "ouve-se respiração pesada lá dentro",
+     um voraz de boca larga; a pauta só levava a pista, e quando a heroína
+     avançou ("sigo direto em direção ao ronco… e o enfrentamos", M43) o
+     Narrador tirou um rato de calabouço da lista de ameaças da região e
+     abriu a luta com ele; três salas depois, um lagarto de sola. O ocupante
+     da sala de trás de cada passagem não vista vai em frase fechada, com a
+     pista que o anuncia — e com a regra de que só se mostra a quem entra:
+     até lá, é o som e o cheiro da pista. */
+  const aFrente = saidasDe(mm)
+    .filter((x) => !x.visitada && !(chefe && x.id === chefe.id))
+    .map((x) => ({ x, sala: mm.salas.find((y) => y && y.id === x.id) }))
+    .filter(({ sala: y }) => y && nomesContados(y.inimigos))
+    .slice(0, MASMORRA_NA_PAUTA.maxAFrente)
+    .map(({ x, sala: y }) => `${nomesContados(y.inimigos)}, pela «${String(x.pista).split(/\s+/).slice(0, MASMORRA_NA_PAUTA.palavrasDaPista).join(" ")}»`);
+  if (aFrente.length) linhas.push(`à frente, só à vista de quem entra: ${aFrente.join("; ")}`);
+
   return linhas;
 }
 

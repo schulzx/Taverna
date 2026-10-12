@@ -61,7 +61,7 @@ import { vocacaoDe } from "./comercio.js";
 import { festivalDe, ehNoite } from "./calendario.js";
 import { locaisDaCidade, masmorrasDoMundo } from "./mundo-base.js";
 import { comoChamam, chamadoDaRaca, GENEROS_FUTURISTAS } from "./lexico.js";
-import { comEm } from "./lugar.js";
+import { comEm, pontoDoLugar } from "./lugar.js";
 /* MM14: a frase do jogador sem os nomes próprios (o "Sino" do Sino Calado
    sequestrou seis respostas), e a posição de cada assunto na frase para a
    mesa juntar as respostas pela ordem em que foram pedidas */
@@ -69,7 +69,7 @@ import { fraseDoJogador, assuntoDaFrase } from "./perguntas.js";
 /* MM14: a distância até um lugar nomeado — a mesma conta e a mesma escrita
    do Geógrafo e dos arredores, nunca uma segunda */
 import { arredoresDaCidade, ondeFicaOArredor } from "./arredores.js";
-import { coordDe, kmEntre, rumoEntre, linhaDePonto } from "./coordenadas.js";
+import { coordDe, garantirCoord, kmEntre, rumoEntre, linhaDePonto, formatarDistancia, aPeEmTexto, KMH_A_PE } from "./coordenadas.js";
 /* MM17 nº 3 (v9.364): na região, a hora até lá é a da conta única */
 import { caminhoNaRegiao, tempoDoCaminho } from "./marcha.js";
 
@@ -597,6 +597,26 @@ function citaLugar(frase, nome) {
   return melhor;
 }
 
+/* ---------------- DENTRO DOS MUROS, COM NÚMERO (o Narrador só narra · E1) ----------------
+   "Como se chega ao Píer Rachado daqui, e quanto tempo leva a pé?" (a 7.ª
+   sessão, M2): a linha dizia "fica dentro dos muros — minutos a pé", e o
+   Narrador escreveu "meia hora de perna" para um sítio a 170 m do centro.
+   O ponto do local é o que o ⌖ do ONDE já usa (`pontoDoLugar`, "dentro"); a
+   origem é `aqui` (o ponto do herói, quando o App o passa), senão o centro
+   — a mesma régua do "(172 m do centro)" do endereço. Os minutos são os da
+   marcha a pé de sempre (`KMH_A_PE`), a mesma de arredores e Geógrafo. */
+export const DENTRO_DOS_MUROS = { minimoMinutos: 1, ondeMesmo: 0.03 };
+function linhaDentroDosMuros(cidade, nome, aqui) {
+  const ponto = pontoDoLugar(nome, cidade, "dentro");
+  const origem = garantirCoord(aqui) || coordDe(cidade);
+  const km = ponto && origem ? kmEntre(origem, ponto) : null;
+  if (!Number.isFinite(km)) return `distância: ${nome} fica dentro dos muros`;
+  if (km < DENTRO_DOS_MUROS.ondeMesmo) return `distância: ${nome} é aqui mesmo, dentro dos muros`;
+  const r = rumoEntre(origem, ponto);
+  const min = Math.max(DENTRO_DOS_MUROS.minimoMinutos, Math.round((km / KMH_A_PE) * 60));
+  return `distância: ${nome}, dentro dos muros: ${formatarDistancia(km)}${r ? ` ${r.rotulo}` : ""} daqui, ${aPeEmTexto(min)}`;
+}
+
 function linhaDaDistancia(cidade, f, o, frase) {
   const semente = String(o.semente == null ? "" : o.semente);
   const mapa = o.mapa && typeof o.mapa === "object" ? o.mapa : {};
@@ -633,7 +653,7 @@ function linhaDaDistancia(cidade, f, o, frase) {
     if (!alvo || i < onde || (i === onde && String(p.nome).length > String(alvo.nome).length)) { alvo = p; onde = i; }
   }
   if (!alvo) return "";
-  if (alvo.dentro) return `distância: ${alvo.nome} fica dentro dos muros — minutos a pé`;
+  if (alvo.dentro) return linhaDentroDosMuros(cidade, alvo.nome, o.aqui);
   if (!Number.isFinite(alvo.km)) return "";
   /* MM17 nº 3 (v9.364): NA REGIÃO, A HORA DA MARCHA. Uma povoação ou um
      lugar da região ganha o tempo da conta única (marcha.js) — o que a

@@ -395,6 +395,43 @@ function semAOrigem(t) {
   return s;
 }
 
+/* A palavra do tipo `tipo` aparece, no texto CRU (com as maiúsculas), como
+   cabeça de um nome próprio? Sem acento, com caixa. */
+export const NOME_PROPRIO_DO_SITIO = { ligas: ["da", "do", "de", "das", "dos"] };
+function tipoEmNomeProprio(texto, tipo) {
+  const cru = String(texto == null ? "" : texto).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const palavras = PALAVRAS_DO_TIPO[tipo] || [];
+  const ligas = NOME_PROPRIO_DO_SITIO.ligas.join("|");
+  return palavras.some((p) => {
+    const cap = p.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return new RegExp(`(^|[^A-Za-z])${cap}s?\\s+(?:(?:${ligas})\\s+)?[A-Z]`).test(cru);
+  });
+}
+
+/* Os nomes próprios de duas palavras ou mais no texto cru ("Posto da Baixa",
+   "Serra do Bode"), cada um como a lista das suas palavras sem acento. Um
+   pedaço do nome `nome` que casou só dentro de um destes, que tem palavra
+   que o `nome` não tem, é o pedaço de outro sítio. */
+function pedacoDeOutroNome(texto, nome) {
+  const cru = String(texto == null ? "" : texto).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const ligas = NOME_PROPRIO_DO_SITIO.ligas.join("|");
+  const spans = cru.match(new RegExp(`[A-Z][a-z]+(?:\\s+(?:(?:${ligas})\\s+)?[A-Z][a-z]+)+`, "g")) || [];
+  if (!spans.length) return false;
+  const meus = new Set(pedacos(nome).map(singular));
+  const t = norm(texto);
+  const achados = pedacos(nome).filter((p) => RX_PEDACO(p).test(t)).map(singular);
+  if (!achados.length) return false;
+  const deOutro = spans.map((s) => pedacos(s).map(singular)).filter((ws) => ws.some((w) => !meus.has(w)));
+  /* todo pedaço achado mora num nome de outro sítio, e não fora dele */
+  return achados.every((p) => deOutro.some((ws) => ws.includes(p)) && !foraDosNomes(cru, p, spans));
+}
+/* o pedaço aparece também solto, fora de qualquer nome próprio? */
+function foraDosNomes(cru, p, spans) {
+  let resto = norm(cru);
+  for (const s of spans) resto = resto.split(norm(s)).join(" ");
+  return RX_PEDACO(p).test(resto);
+}
+
 export function lugarPedido(texto, lugares = []) {
   /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
   const t = soODeclarado(texto, NAO_E_IDA);
@@ -424,6 +461,9 @@ export function lugarPedido(texto, lugares = []) {
   for (const l of lugares) {
     if (!l || !l.nome || !casaNome(alvo, l.nome)) continue;
     const inteiro = alvo.includes(norm(l.nome)) ? 100 : 0;
+    /* E1: o pedaço que casou está dentro do nome próprio de OUTRO sítio
+       ("Posto da Baixa" não é "o posto da estrada") — ver o tipo, abaixo */
+    if (!inteiro && pedacoDeOutroNome(texto, l.nome)) continue;
     const p = inteiro + pedacos(l.nome).length;
     if (p > pontos) { pontos = p; melhor = l; }
   }
@@ -431,7 +471,15 @@ export function lugarPedido(texto, lugares = []) {
   /* O NOME GANHA DO TIPO, sempre: quem escreveu "Santuário das Cinzas" já
      disse qual é, e discutir com ele seria o mesmo erro do "salão" contra a
      "sala dos fundos". O tipo só entra quando nome nenhum casou. */
-  const tipos = tiposPedidos(alvo);
+  /* E1 (12/10): O NOME PRÓPRIO DE OUTRO SÍTIO NÃO É TIPO. "Quando chegamos a
+     Serra do Bode, vou direto ao Posto da Baixa" (6.ª sessão, M30): o Posto
+     da Baixa é o local de outra cidade, nenhum lugar daqui casou pelo nome,
+     e a palavra "posto" achou o arredor daqui — "o posto da estrada", com
+     duas irmãs que ninguém pediu. Dois postos do mesmo sistema, e o herói no
+     errado. A palavra de tipo que vem DENTRO de um nome próprio ("Posto da
+     Baixa": maiúscula, e outra maiúscula logo a seguir, com ou sem "da/do")
+     é esse sítio, não o tipo; aqui não há nada com esse nome. */
+  const tipos = tiposPedidos(alvo).filter((tp) => !tipoEmNomeProprio(texto, tp));
   if (!tipos.length) return null;
   const doTipo = lugares.filter((l) => l && tipos.includes(l.tipo));
   if (!doTipo.length) return null;

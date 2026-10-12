@@ -206,6 +206,19 @@ export const SECOES = [
   { id: "momento", rotulo: "MOMENTO", prio: 3, frente: [2.475, 2.48], o: "a batida da história" },
   { id: "forma", rotulo: "FORMA", prio: 5, o: "o formato desta cena" },
   { id: "gente", rotulo: "A GENTE", prio: 6, o: "o que cada um faz" },
+  /* O Narrador só narra · E1 (12/10): NOMES À MÃO — dois nomes livres da
+     cultura do lugar (`nomesAMao`, nomes.js), para o figurante que a cena
+     precisar de nomear. Na 7.ª sessão três dos figurantes mais vivos
+     (Ambrósio, Pregado, Dário) foram nomeados pelo Narrador sem o sistema
+     saber, e o Dário ficou registado vivo depois de morto. A linha custa
+     ~80 com a etiqueta e corta com 2,488: DEPOIS de todo veto, do coração,
+     do que volta, da batida e da ficha (2,485) — e À FRENTE da decoração (a
+     cauda do ONDE, 2,49, e a economia da praça, 2,5). Numa pergunta CEDE
+     quando o sistema tem a resposta (PERGUNTOU com linha); fica quando não
+     a tem — foram três perguntas assim ("quem era o velho?", "o nome
+     dele?", "quem era o homem?") que pediram nome. Na luta cede (ninguém se
+     apresenta a meio de um golpe). */
+  { id: "nomes", rotulo: "NOMES À MÃO", prio: 2.488, o: "nomes prontos da cultura do lugar, para quem ainda não tem nome" },
   /* v9.135: e o que cada um DISSE, palavra por palavra. Prioridade 2 porque
      e o conteudo da cena: cortar a fala de alguem que ja falou seria pior do
      que cortar o lugar onde ele falou. */
@@ -224,6 +237,15 @@ export const SECOES = [
      lista decide, e numa cena cheia a gente ganha do sino. É o precedente
      do DAQUI (v9.118), medido de novo em teste-mm12-cidade. */
   { id: "cidade", rotulo: "A CIDADE", prio: 7, o: "o dia de hoje e a língua da rua" },
+  /* O Narrador só narra · E1 (12/10): O PREÇO DA RUA — a caneca, a refeição
+     e a comida de rua ao preço daqui (`precosDaRua`, mercado.js), para o
+     preço que a cena diz sem ninguém perguntar ("tem peixe seco na tenda
+     por três cobre", 7.ª, M43). É decoração com número: corta com 6,5, à
+     frente só do DAQUI, do MUNDO, da CIDADE e do ANTES — entra quando há
+     folga, e numa cena cheia a gente ganha dela. O preço PERGUNTADO não mora
+     aqui: vai em PERGUNTOU (`precoComumParaPauta`, prio 4), e numa pergunta
+     esta cede. Na luta, na masmorra e fora dos muros não há rua. */
+  { id: "preco", rotulo: "O PREÇO", prio: 6.5, o: "o que se bebe e come na rua, ao preço daqui" },
   { id: "antes", rotulo: "ANTES", prio: 8, o: "o que já aconteceu aqui" },
   { id: "acabou", rotulo: "ACABOU DE", prio: 3, o: "o que o sistema resolveu agora" },
   /* MM14: O DESFECHO — quem saiu da luta neste turno, e COMO o jogador
@@ -361,9 +383,12 @@ export const SECOES_QUE_CEDEM = {
      vem a seguir; com a frente nova (2,475) ela passaria à frente do
      CONTRA e da luz. Na luta, cede. */
   /* MM-C (C1): e o QUEM É — a ficha é cor, e a luta não para para ela. */
-  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE"],
-  masmorra: ["economia", "cidade"],
-  arredores: ["economia", "cidade"],
+  /* E1 (12/10): e o PREÇO da rua e os NOMES À MÃO — na luta ninguém compra
+     nem se apresenta; na masmorra e fora dos muros não há rua (os nomes
+     ficam: a prisioneira da cripta também precisa de um). */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes"],
+  masmorra: ["economia", "cidade", "preco"],
+  arredores: ["economia", "cidade", "preco"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:
      é a própria pauta — há linha em PERGUNTOU quando uma ficha respondeu à
      minha pergunta. No J6 da 4.ª sessão ("quanto tempo até à Muralha? onde
@@ -383,7 +408,13 @@ export const SECOES_QUE_CEDEM = {
      220 tirava a resposta (PERGUNTOU, 4) e deixava a cauda do ONDE. Ceder
      aqui não perde a batida: o App só a dá por cumprida quando a linha
      entrou na pauta, e ela volta no turno seguinte. */
-  pergunta: ["economia", "cidade", "daqui", "momento", "quemE", "coracao"],
+  /* E1: e o PREÇO da rua — o perguntado já vai em PERGUNTOU — e os NOMES À
+     MÃO: quando há linha em PERGUNTOU, o sistema sabia a resposta, e ela
+     passa à frente dos nomes (com 2,488 eles tiravam-na). Quando a pergunta
+     é a que o sistema não sabe responder ("quem era o velho?", o nome do
+     barqueiro, a 7.ª M7/M12/M24), PERGUNTOU está vazia e os nomes ficam —
+     é aí que fazem falta. */
+  pergunta: ["economia", "cidade", "daqui", "momento", "quemE", "coracao", "preco", "nomes"],
 };
 
 /* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.

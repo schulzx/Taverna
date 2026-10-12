@@ -9,6 +9,8 @@ import { nomeDeTaverna } from "./toponimia.js";
 /* v9.101: o LEXICO entra antes do genero nos bancos de gente. Devolve
    null quando o mundo nao tem um, e ai a linha e a de sempre. */
 import { povosDo, oficiosDo, nomesDo } from "./lexico.js";
+/* E1 (12/10): os NOMES À MÃO saem semeados pelo dia e pela cidade */
+import { rngDe } from "./geografia.js";
 
 /* utilitário de sorteio determinístico opcional ou aleatório */
 /* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
@@ -218,6 +220,88 @@ export function elencoDiverso(genero, n = 6, lex = null) {
     if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem", Math.random, lex); }
     else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc", Math.random, lex); }
     out.push(p);
+  }
+  return out;
+}
+
+/* ============================================================
+   NOMES À MÃO (o Narrador só narra · E1, 12/10)
+
+   Da 7.ª sessão, os figurantes mais vivos foram os que o Narrador batizou
+   sozinho: Ambrósio, o velho do Peixe Cego ("quem era o velho que ensinava
+   lá?", M7), Pregado, o barqueiro ("pergunto ao homem magro o nome dele",
+   M12), Dário, o morto da canção ("quem era o homem que me deu a canção",
+   M24). Nenhum vinha do sistema, e o Dário foi registado como VIVO. Uma
+   regra seca ("não invente nomes") faria deles "um velho" sem nome — o
+   risco 1 do relatório. A saída é a do Mestre de mesa: uma lista de nomes
+   prontos na ponta da mesa, da cultura do lugar.
+
+   `nomesAMao` dá DOIS nomes livres (um de homem, um de mulher) do banco do
+   mundo (o léxico primeiro, como `nomePessoa`), que ninguém do registo nem
+   do elenco usa. Determinístico pelo dia e pela cidade: o Narrador vê os
+   mesmos dois o dia inteiro, e o que ele usar entra no registo e sai da
+   lista (o próximo toma-lhe o lugar). `nomesAMaoNaProsa` diz quais dos
+   oferecidos a narração usou — e se a frase os pôs mortos ("se chamava",
+   "morreu", "enterrado"), para o registo não guardar um morto como vivo.
+   ============================================================ */
+export const NOMES_A_MAO = {
+  quantos: { masc: 1, fem: 1 },
+  /* quantos sorteios tenta antes de desistir de um nome livre */
+  tentativas: 24,
+  /* a frase que põe a pessoa morta, lida sem acento, na mesma oração do nome */
+  morto: /\b(se chamava|chamava-se|morreu|morto|morta|mortos|enterrad[oa]|falecid[oa]|que descanse|defunt[oa]|matara?m)\b/,
+};
+
+const semAcentoN = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const primeiroDe = (n) => semAcentoN(n).trim().split(/\s+/)[0] || "";
+
+/* `usados`: os nomes do registo (npcs), do elenco e do grupo — qualquer
+   forma (texto ou objeto com `nome`). Compara-se o PRIMEIRO nome: dois
+   "Ambrósio" na mesma campanha são a confusão que esta lista existe para
+   evitar. Devolve [{ nome, genero: "ele"|"ela" }]. */
+export function nomesAMao(opcoes) {
+  /* `= {}` não cobre `null`: o objeto vem tratado à mão */
+  const { semente = "", dia = 0, cidade = "", genero = "", lex = null, usados = [] } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const ja = new Set((Array.isArray(usados) ? usados : []).map((u) => primeiroDe(u && typeof u === "object" ? u.nome : u)).filter(Boolean));
+  const rnd = rngDe(`${semente}|nomesAMao|${Number(dia) || 0}|${semAcentoN(cidade)}`);
+  const out = [];
+  for (const [sexo, quantos] of Object.entries(NOMES_A_MAO.quantos)) {
+    for (let k = 0; k < quantos; k++) {
+      for (let i = 0; i < NOMES_A_MAO.tentativas; i++) {
+        const nome = nomePessoa(genero || "Fantasia medieval", sexo, rnd, lex);
+        const p = primeiroDe(nome);
+        if (!p || ja.has(p)) continue;
+        ja.add(p);
+        out.push({ nome, genero: sexo === "masc" ? "ele" : "ela" });
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+/* A linha da pauta (secção NOMES À MÃO): curta, e diz para que servem. */
+export function linhaDosNomesAMao(nomes) {
+  const ns = (Array.isArray(nomes) ? nomes : []).filter((n) => n && n.nome);
+  if (!ns.length) return "";
+  return `para quem ainda não tem nome: ${ns.map((n) => `${n.nome} (${n.genero})`).join(" · ")}`;
+}
+
+/* Quais dos oferecidos a narração usou. Pelo primeiro nome, palavra
+   inteira; `morto` quando a oração do nome o põe morto. */
+export function nomesAMaoNaProsa(narrativa, oferecidos) {
+  const txt = String(narrativa == null ? "" : narrativa);
+  if (!txt.trim()) return [];
+  const oracoes = semAcentoN(txt).split(/(?<=[.!?…\n])/);
+  const out = [];
+  for (const o of Array.isArray(oferecidos) ? oferecidos : []) {
+    if (!o || !o.nome) continue;
+    const p = primeiroDe(o.nome);
+    if (p.length < 2) continue;
+    const rx = new RegExp(`(^|[^a-z])${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`);
+    const onde = oracoes.filter((x) => rx.test(x));
+    if (!onde.length) continue;
+    out.push({ nome: o.nome, genero: o.genero || "", morto: onde.some((x) => NOMES_A_MAO.morto.test(x)) });
   }
   return out;
 }

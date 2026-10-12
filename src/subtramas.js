@@ -52,6 +52,8 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* E1 (12/10): a figura que o arco põe em cena nasce com nome */
+import { nomePessoa } from "./nomes.js";
 import { alvoPrometido } from "./agressao.js";
 import { FIO } from "./saga.js";
 import { relogioDoFio, RELOGIO_DO_FIO } from "./batidas.js";
@@ -146,7 +148,26 @@ export const SEM_NOME = {
   casa: "casa grande da praça",
   outro: "alguém que lhe é caro",
   alvo: "quem anda com você",
+  figura: "alguém",
 };
+
+/* ---------------- A FIGURA COM NOME (o Narrador só narra · E1, 12/10) ----------------
+   A 7.ª sessão (M52): a linha QUEM CARREGA disse "um velho camarada de
+   Tônia Lodoso aparece e acusa-a em voz alta" — uma pessoa que o SISTEMA
+   pôs em cena, sem nome e sem registo. O Narrador chamou-o Marlo (a frase
+   fechada obedece-se; o buraco preenche-se), e o duelo que o cartão
+   prometia ficou sem combatente até à v9.418. Cada arco que traz alguém de
+   fora do núcleo diz aqui quem é: `papel` (como a linha o chama) e `sexo`
+   (do banco de nomes). O nome sai de `nomePessoa`, semeado pela pessoa do
+   núcleo — o mesmo camarada em toda a campanha — e vai na linha
+   ({figura}) e em `inst.figura`, para o App o registar quando a batida
+   entra na pauta. `tentativas`: quantos sorteios até achar um primeiro
+   nome que ninguém do núcleo nem do elenco use. */
+export const FIGURA_DO_ARCO = {
+  a_guerra: { papel: "velho camarada", sexo: "masc" },
+  a_irmao_do_outro_lado: { papel: "irmão", sexo: "masc" },
+};
+export const FIGURA_TENTATIVAS = 16;
 
 /* §2.3 — OS ARCOS (11). `chave`: os ids da ficha (esconde, carrega, quer,
    teme ou linha) que dão este arco. Os textos têm buracos: {nome},
@@ -210,9 +231,9 @@ export const ARCOS = [
   {
     id: "a_irmao_do_outro_lado", chave: ["e_irmao_lado"],
     pedido: { tom: ["suspense"], fala: "Se vir um homem com {assinatura} no braço, não o mate. Deixe-o para mim." },
-    crise: { tom: ["batalha"], o: "o irmão de {nome} está entre os servos de {sombra}, na luta — e rende-se em vez de cair", pior: "o irmão de {nome} está entre os servos de {sombra}, na luta, e não sabe que é ele", efeitos: [{ tipo: "combate", rendido: "o irmão" }] },
+    crise: { tom: ["batalha"], o: "{figura}, o irmão de {nome}, está entre os servos de {sombra}, na luta — e rende-se em vez de cair", pior: "{figura}, o irmão de {nome}, está entre os servos de {sombra}, na luta, e não sabe que é ele", efeitos: [{ tipo: "combate", rendido: "o irmão" }] },
     escolha: {
-      tom: ["emoção"], contexto: "o irmão de {nome} está rendido aos pés do herói",
+      tom: ["emoção"], contexto: "{figura}, o irmão de {nome}, está rendido aos pés do herói",
       lados: [
         { id: "poupar", diz: "poupá-lo", verbo: "Poupar o irmão", preco: "ele foge e leva notícias a {sombra} — e {nome} fica do seu lado até o fim", efeitos: [{ tipo: "laco", delta: "max" }, { tipo: "dias", n: 1 }] },
         { id: "nao_poupar", diz: "não o poupar", verbo: "Não o poupar", preco: "a luta fica mais fácil — e o laço com {nome} rompe-se e não volta", efeitos: [{ tipo: "laco", delta: "rompe" }] },
@@ -262,12 +283,12 @@ export const ARCOS = [
   {
     id: "a_guerra", chave: ["e_fugiu", "e_desertor", "u_ordem", "t_guerra_volta"],
     pedido: { tom: ["suspense"], fala: "Se alguém do regimento perguntar, você nunca me viu." },
-    crise: { tom: ["provação"], o: "um velho camarada de {nome} aparece e acusa-{o} em voz alta", pior: "um velho camarada de {nome} aparece com mais dois, e acusa-{o} em voz alta" },
+    crise: { tom: ["provação"], o: "{figura}, velho camarada de {nome}, aparece e acusa-{o} em voz alta", pior: "{figura}, velho camarada de {nome}, aparece com mais dois, e acusa-{o} em voz alta" },
     escolha: {
-      tom: ["emoção", "batalha"], contexto: "o velho camarada acusa {nome} diante de todos",
+      tom: ["emoção", "batalha"], contexto: "{figura}, o velho camarada, acusa {nome} diante de todos",
       lados: [
-        { id: "defender", diz: "o herói defender a versão {dele}", verbo: "Defender a versão {dele}", preco: "o camarada desafia você para um duelo", efeitos: [{ tipo: "duelo", contra: "o velho camarada" }] },
-        { id: "confessar", diz: "deixá-{o} confessar", verbo: "Deixá-{o} confessar", preco: "o camarada vai-se — e {nome} fica, mais leve, sem o medo que {o} roía", efeitos: [{ tipo: "teme", desliga: true }] },
+        { id: "defender", diz: "o herói defender a versão {dele}", verbo: "Defender a versão {dele}", preco: "{figura} desafia você para um duelo", efeitos: [{ tipo: "duelo", contra: "o velho camarada" }] },
+        { id: "confessar", diz: "deixá-{o} confessar", verbo: "Deixá-{o} confessar", preco: "{figura} vai-se — e {nome} fica, mais leve, sem o medo que {o} roía", efeitos: [{ tipo: "teme", desliga: true }] },
       ],
       omissao: { id: "confessa_so", preco: "{nome} confessa sem o herói ao lado", efeitos: [{ tipo: "laco", delta: -1 }] },
     },
@@ -455,7 +476,9 @@ export function subtramasDoNucleo(nucleo, ctx) {
       const casasPerto = casasOk.filter((c) => norm(c.cidade) === norm(cidade));
       const casa = (casasPerto.length ? casasPerto : casasOk)[0];
       const alvo = pessoas.find((x) => x.papel === "companheiro") || pessoas.find((x) => !["vilao"].includes(x.papel));
+      const fig = FIGURA_DO_ARCO[id] ? figuraDo(FIGURA_DO_ARCO[id], p, s, o, pessoas) : null;
       const vars = {
+        figura: fig ? fig.nome : SEM_NOME.figura,
         nome: p.papel === "vilao" ? "{sombra}" : p.nome,
         destino: dest ? (dest.cidade && norm(dest.cidade) !== norm(dest.onde) ? `${dest.onde}, em ${dest.cidade}` : dest.onde) : SEM_NOME.destino,
         cidade: cidade || SEM_NOME.lugar,
@@ -482,10 +505,25 @@ export function subtramasDoNucleo(nucleo, ctx) {
         pedido, crise,
         escolha: { tom: A.escolha.tom, contexto: ench(A.escolha.contexto), lados: A.escolha.lados.map(lado), omissao: { id: A.escolha.omissao.id, preco: ench(A.escolha.omissao.preco), efeitos: enchEf(A.escolha.omissao.efeitos) } },
         vars,
+        ...(fig ? { figura: fig } : {}),
       });
     }
   }
   return out;
+}
+
+/* a figura do arco: um nome do banco do mundo, semeado pela pessoa do
+   núcleo, que ninguém do núcleo nem do elenco usa (pelo primeiro nome) */
+function figuraDo(f, p, semente, o, pessoas) {
+  const ocupados = new Set([...pessoas.map((x) => x.nome), ...arr(obj(o.elenco).pessoas).map((x) => x && x.nome)].filter(Boolean).map((n) => norm(n).split(/\s+/)[0]));
+  const rnd = rngDe(`${semente}|figura|${p.nome}`);
+  let nome = "";
+  for (let i = 0; i < FIGURA_TENTATIVAS && !nome; i++) {
+    const n = nomePessoa(String(o.genero || "Fantasia medieval"), f.sexo, rnd, o.lex || null);
+    if (!ocupados.has(norm(n).split(/\s+/)[0])) nome = n;
+  }
+  if (!nome) return null;
+  return { nome, papel: `${f.papel} de ${p.nome}`, genero: f.sexo === "fem" ? "ela" : "ele", de: p.nome };
 }
 
 /* ============================================================
@@ -938,7 +976,11 @@ export function escolherLado(coracao, nucleo, nome, ladoId, ctx) {
   if (brigas.length) {
     const e = brigas[0];
     const contra = semBastidor(encher(e.contra, { sombra }));
-    out.luta = { ...alvoPrometido(contra, { presentes: o.presentes, mostrado: o.mostrado, sombra: e.contra === "{sombra}" }), duelo: e.tipo === "duelo", contra };
+    const alvo = alvoPrometido(contra, { presentes: o.presentes, mostrado: o.mostrado, sombra: e.contra === "{sombra}" });
+    /* E1: a figura do arco tem nome desde a linha da crise — o cartão já não
+       luta contra "Velho camarada" quando o registo e a prosa calam */
+    const comFigura = alvo.deOnde === "cartao" && inst.figura && inst.figura.nome ? { ...alvo, nome: inst.figura.nome, deOnde: "figura" } : alvo;
+    out.luta = { ...comFigura, duelo: e.tipo === "duelo", contra };
   }
   return out;
 }

@@ -17,7 +17,8 @@
 import { gerarLoot, RARIDADE_ROTULO } from "./loot.js";
 import { SUPRIMENTOS, garantirSuprimentos } from "./ermos.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./pocoes.js";
-import { valorDeItem, PRECO_VENDA } from "./economia.js";
+import { valorDeItem, PRECO_VENDA, PRECOS_COMUNS, PRECOS_DA_RUA, precoComum, semConfusao } from "./economia.js";
+import { NUMERO_POR_EXTENSO } from "./cobranca.js";
 import { PORTES } from "./geografia.js";
 import { nomesDeLugar } from "./lexico.js";
 import { fatorDoLugar, generoDoItem, vocacaoDe } from "./comercio.js";
@@ -353,7 +354,9 @@ export function mercadoParaPauta(mercadores, frase, { onde = "" } = {}) {
   /* a frase do jogador (não o envelope), e só a parte que PERGUNTA: "pago
      a lâmina e pergunto a quantos passos fica o poço" não pede preço de
      lâmina nenhuma. Os nomes ficam — "a Lâmina de Névoa" é a mercadoria. */
-  const t = assuntoDaFrase(fraseDoJogador(frase), [], { nomesProprios: false });
+  /* E1 (12/10): o acento antes de tudo — "o preço das maçãs" não pergunta
+     pela maça das armas (o J13 da 6.ª sessão levou "não há macas à venda") */
+  const t = assuntoDaFrase(semConfusao(fraseDoJogador(frase)), [], { nomesProprios: false });
   if (!t.trim()) return out;
   /* a mercadoria de que se pergunta o preço é a da MESMA oração da
      pergunta, e de preferência a que vem depois dela: "aponto para as
@@ -392,6 +395,70 @@ export function mercadoParaPauta(mercadores, frase, { onde = "" } = {}) {
   out.pergunta.push(linha);
   out.em.push(Math.min(achada.preco, achada.pos));
   return out;
+}
+
+/* ============================================================
+   O PREÇO DO QUE NÃO ESTÁ NA BANCA (o Narrador só narra · E1, 12/10)
+
+   A banca e o balcão respondem pelo que vendem (`mercadoParaPauta`,
+   `balcaoParaPauta`); o que se bebe, se come e se paga a alguém não estava
+   em lado nenhum, e foi aí que a 6.ª e a 7.ª sessões inventaram oito preços.
+   "Peço a Frida duas canecas de cerveja… Quanto é?" (7.ª, M8), "quanto uma
+   refeição quente?" (6.ª, M3), "Compro uma maçã" (6.ª, M12), "Quanto você
+   quer por saber onde ele está?" (7.ª, M13).
+
+   Sobe à pauta, no molde das outras fichas da mesa ({ pergunta, em }, para
+   `juntarRespostas`), quando a frase PERGUNTA um preço ou PEDE/COMPRA, e
+   nomeia uma coisa de `PRECOS_COMUNS` (economia.js). O preço é o da tabela
+   pelo fator do porte (`fator`: o `pouso.fator` da ficha da cidade, para
+   a caneca e o quarto falarem da mesma terra). Com quantidade dita, a conta.
+   Frase fechada, curta: o Narrador diz o número que lá está. */
+const RX_PEDE_OU_COMPRA = /\b(compro|comprei|quero comprar|vou comprar|peco|pedimos|pego|pago|pagamos|quero|queremos|traga|tragam|me ve|me da|uma rodada)\b/;
+const RX_PERGUNTA_PRECO_COMUM = /\b(quanto (voce |tu |o senhor |a senhora )?(custa|custam|e|sao|sai|saem|fica|ficam|vale|valem|cobra|cobras|cobram|pede|pedes|pedem|quer|queres|querem|leva|levas)|qual (e )?o preco|que preco|o preco (d[aoe]s?|de)|a quanto|quanto pela?|se vendem?|vendem?\s+(outra|outro|mais))\b/;
+const NUM_COMUM = Object.keys(NUMERO_POR_EXTENSO).sort((a, b) => b.length - a.length).join("|");
+export const COMUNS_POR_RESPOSTA = 3;
+
+/* quantos, pelo número dito logo antes da palavra ("duas canecas") */
+function quantosAntes(t, idx) {
+  const m = t.slice(Math.max(0, idx - 16), idx).match(new RegExp(String.raw`(\d+|${NUM_COMUM})\s+(?:\w+\s+)?$`));
+  if (!m) return 1;
+  const n = /^\d+$/.test(m[1]) ? parseInt(m[1], 10) : NUMERO_POR_EXTENSO[m[1]] || 1;
+  return Math.max(1, Math.min(20, n));
+}
+
+export function precoComumParaPauta(frase, opcoes) {
+  /* `= {}` não cobre `null` */
+  const fator = opcoes && typeof opcoes === "object" ? opcoes.fator : 1;
+  const out = { pergunta: [], em: [] };
+  const t = semAcentoM(semConfusao(fraseDoJogador(frase)));
+  if (!t.trim()) return out;
+  const pergunta = RX_PERGUNTA_PRECO_COMUM.test(t);
+  if (!pergunta && !RX_PEDE_OU_COMPRA.test(t)) return out;
+  const achados = [];
+  for (const p of PRECOS_COMUNS) {
+    const m = t.match(p.rx);
+    if (m) achados.push({ p, idx: m.index, quantos: quantosAntes(t, m.index), palavra: m[0] });
+  }
+  if (!achados.length) return out;
+  achados.sort((a, b) => a.idx - b.idx);
+  const ditos = achados.slice(0, COMUNS_POR_RESPOSTA).map(({ p, quantos, palavra }) => {
+    const preco = precoComum(p.id, fator);
+    const nome = p.porPalavra ? palavra : p.nome;
+    return quantos > 1 ? `${quantos}× ${nome} ◉ ${preco} cada, dá ◉ ${preco * quantos}` : `${nome} ◉ ${preco}`;
+  });
+  out.pergunta.push(`o preço daqui: ${ditos.join(" · ")}`);
+  out.em.push(achados[0].idx);
+  return out;
+}
+
+/* A rua de uma cidade: o que se bebe e come, ao preço daqui — a cena mostra
+   preços sem ninguém perguntar ("tem peixe seco na tenda por três", a 7.ª,
+   M43), e é melhor que os mostre certos. Uma linha, para a secção O PREÇO
+   da pauta (prio baixa: cede a tudo o que move a cena). */
+export function precosDaRua(fator = 1) {
+  const ps = PRECOS_DA_RUA.map((id) => PRECOS_COMUNS.find((p) => p.id === id)).filter(Boolean);
+  if (!ps.length) return "";
+  return `na rua: ${ps.map((p) => `${p.curto || p.nome} ◉ ${precoComum(p.id, fator)}`).join(" · ")}`;
 }
 
 export const MERCADO_PROMPT = `MERCADO E COMÉRCIO (v9.2 — o sistema tem o estoque, você tem a cena):
