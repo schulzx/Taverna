@@ -11866,3 +11866,220 @@ deste ficheiro são os de antes de V1).
 - **Uma coluna abaixo de `baixa.lugarMin` (240) por lugar** — 122 do que não é texto + 118 de nome. A 467 a coluna dupla dava 178 e cortava «Jaco F…»; agora 403 de largura, nome e gesto inteiros, e há altura de sobra (~400 px vazios antes). As setas cima/baixo andam uma linha da grade, seja qual for.
 - **O primeiro nome nunca se corta; quem cede é o sobrenome** (reticência só nele). Cor, contraste e brasa não mudam.
 - **Fica de fora:** com a cinta viva (72) a página baixa a 299 e o «Dormir já» sai 13 px — os quatro lugares cabem; o atalho do teclado e o scroll alcançam-no.
+
+---
+
+## Fichas · o que o Mestre mostrou, o jogador aponta (`desenho`, 12/10 · F2b · F2c)
+
+**O pedido:** a Fase F2 (`pauta.md` §Fase F2, aprovada pela pessoa em 12/10). A camada de
+baixo (F2a, `src/em-cena.js`) já entrega a lista do que está em cena, com id; esta secção é a
+forma de **apontar** para ela. As regras da pessoa: a ficha mostra só o que o herói SABE; o
+sistema não fala de si; lembra; máx. 4, somem na resposta seguinte; o veredito antes do clique
+dentro do cartão; a pessoa leva o retrato.
+
+**Onde está.** Figma `ffWFqD7TueSb88Mkeg9bhW`, página **`10 · Fichas`** (`208:21`): a decisão
+`218:2472` · o par antes × depois `218:2081` · a biblioteca `210:2`.
+
+| estado | Mesa 1280×912 | Baixa 800×451 | Telefone 467×860 |
+|---|---|---|---|
+| A · a cena (as fichas no pé; com uma oferta) | `213:302` | `215:843` | `216:4913` |
+| B · o toque, depois («Ataco o rato gigante da frente») | `214:338` | `216:889` | `217:1517` |
+| C1 · cartão — pessoa conhecida (Oren) | `214:577` | `216:1013` | `217:1628` |
+| C2 · cartão — pessoa desconhecida (a encapuzada) | `214:873` | `216:1196` | `217:1798` |
+| C3 · cartão — segredo meio descoberto (Padre Ilvo) | `214:1146` | `216:1363` | `217:1952` |
+| C4 · cartão — criatura (ratos, hostis) | `214:1422` | `216:1533` | `217:2109` |
+| C5 · cartão — coisa à venda, cabe (bolsa ◉ 93) | `214:1716` | `216:1714` | `217:2277` |
+| C6 · cartão — coisa à venda, NÃO cabe (bolsa ◉ 23) | `214:2003` | `216:1888` | `217:2438` |
+| C7 · cartão — lugar (o Moinho Velho) | `214:2290` | `216:2062` | `217:2599` |
+
+O antes do toque é A. As de Mesa e Baixa são as da Fogueira (o `126:5` da pessoa) clonadas;
+a de Telefone é a Baixa refeita a 467.
+
+### 1 · O lugar: o pé da página, por cima da soleira
+
+A ordem do ecrã, de cima a baixo, é a ordem da leitura: **a prosa** (o que aconteceu) → **as
+fichas** (o que está aqui) → **a soleira** (o que o mundo abriu) → **o campo** (o que você faz).
+As fichas vivem em `O pé da página` (V5), fora do que rola, numa fileira de altura 48.
+
+- **Não coladas à resposta.** A 375–467 a vista aterra no começo da resposta (V5e); coladas ao
+  fim, as fichas ficavam um ecrã abaixo de quem lê. No pé estão à vista enquanto se lê o nome.
+  E tirá-las do rolo quando chega a seguinte saltaria a página por cima de quem lê.
+- **0 px vazias** (a lei da soleira). **Trocam no lugar** quando chega a resposta seguinte (sai
+  120 ms, entra 160 ms com 40 de escalonado); **ficam durante a espera** — o jogador pode ainda
+  apontar enquanto o Mestre prepara.
+- **A ordem é a da lista do motor**, e o `desenho` pede que seja **a ordem em que a prosa as
+  mostrou** (lê-se o rato e acha-se o rato no mesmo sítio da fila). Teto `FICHAS.max` = 4.
+- **Baixa (altura < 560) com oferta:** fichas e soleira numa linha só, **a oferta primeiro**,
+  rola de lado com `O esbatimento` à direita. **Telefone e Mesa:** empilhadas (a fileira rola de
+  lado no telefone, com o esbatimento). A régua é a altura, não a largura.
+
+### 2 · O gesto: toque escreve, SEGUNDO toque abre — e não «segurar»
+
+- **Toque 1** (Repouso → *Escrita*): a frase entra no campo, **editável, nunca mandada**, e o id
+  vai junto. **Não foca o campo no telefone** (o teclado não sobe, a página não salta); na mesa
+  o foco fica na ficha. O dado passa a Pronto.
+- **Campo com texto do jogador:** o toque **insere só o nome** (com artigo) no cursor — a
+  menção do Slack/Discord. *"ataco o rato e grito para Oren"* leva os dois ids.
+- **Outra ficha com a frase intacta no campo:** troca a frase e passa-lhe a *Escrita*.
+- **Toque 2** na ficha *Escrita* → *Aberta*: o cartão. **Toque 3, ×, Esc, toque fora** → fecha,
+  volta a *Escrita*, o foco volta à ficha.
+- **A linha do veredito** (V6, por cima da pílula) diz **quem** a frase aponta e o preço:
+  *"o rato gigante da frente · abre a luta contra os três"*. Se o jogador apagar o nome, o id
+  cai e a linha volta a 0 px (a frase é lida livre, como hoje).
+
+**Por que não segurar (medida e estudo):** (a) é gesto escondido — a Apple manda que o que está
+num menu de toque-e-segure exista também na interface (HIG, *Context menus*); (b) não tem par no
+rato nem no teclado, e a WCAG 2.1.1 exige o teclado: o segundo toque é Enter, Enter; (c) no
+navegador do telefone segurar abre a seleção de texto e o balão do sistema (`-webkit-touch-callout`);
+(d) os dois toques são **reversíveis** (escrever não manda, abrir não age) — um duplo toque por
+engano custa zero. **A ficha armada mostra ⌄**: o segundo toque vê-se, não se adivinha.
+
+### 3 · As peças (biblioteca `210:2`, para todos)
+
+| peça | nó | a regra |
+|---|---|---|
+| `Ficha` (20) | `210:244` | *Tipo* Pessoa · Criatura · Criatura hostil · Coisa · Lugar × *Estado* Repouso · Foco · Escrita · Aberta. Alto 48 (`ALVOS.piso`), largo ≤ 240 (cede o sobrenome; o primeiro nome nunca). Marca 32 + nome (Spectral 500 15/18 `ink`) + linha (pessoa: Spectral 13 `inkMeio` — o papel; os outros: mono 12 — quantos `inkMeio`, **hostis `danger`**, preço `amberSoft`, distância `inkMeio`). Fundo `panelSoft`, contorno `lineStrong`. *Foco*: o anel da casa (o da `Fogueira/Lugar`). *Escrita/Aberta*: a gramática de `A escolha` com a cor da mão — contorno `rosa` 1 + filete 3 em baixo — e ⌄ / ⌃. Propriedades: Nome · Linha; a marca troca-se por instância |
+| `Ficha/Marca` (8) | `210:49` | *Forma* Bolsa · Lugar · Pata · Pata hostil × *Tamanho* 32 · 64. A coisa e o lugar: ladrilho `panel` com fio `line`, glifo `inkMeio`. O bicho sem pintura: o sinal de A1 (pata) num disco `retrato/fundo`; hostil = anel `danger` + **presa** no pé (a do `Retrato` Inimigo). Gente e bicho pintado usam o `Retrato/Chip` (32) e o `Retrato/Cartão` (64) |
+| `Cartão/Cabeça` | `211:83` | marca 64 + nome Cormorant 500 22/26 `ink` + quem Spectral 13 `inkMeio` + **×** de 48 (glifo 16 `inkDim`). Propriedades: Nome · Quem |
+| `Cartão/Rótulo` | `211:66` | mono 12 `inkDim`, maiúsculas por estilo (o texto guarda-se em caixa normal) |
+| `Cartão/Linha` (3) | `211:82` | *Tom* **Sabe** (ponto 4) · **Lembra** (anel oco 7 — encontro, dívida, promessa) · **Segredo** (meia-lua + itálico `inkMeio` + fio tracejado à esquerda: a gramática do `Retrato` Escondido — *está lá e não se vê bem*). Spectral 15/22 |
+| `O verbo com preço` (espelho `197:65`) | `210:2952` · `210:2957` | **ganhou** *Gesto/Impedido* (oco, contorno tracejado `lineStrong`, verbo `inkMeio`, a razão `inkDim` diz quanto falta, o atalho cala) e *Papel=Sem volta* (contorno `danger` 1,5 + barra de 3 à esquerda + o preço em `danger`; **a palavra** — «é crime aqui» — diz, a cor é a segunda leitura) |
+
+`O cartão` não é componente: é a composição destas peças, em três larguras (§5).
+
+### 4 · A tabela `FICHAS` (para `src/estilo.js`, ao lado de `FOGUEIRA`)
+
+O que é igual a `T` **é** `T`: `fundo` = `T.panelSoft`, `fio` = `T.lineStrong`, `escrita` =
+`T.rosa`, `preco` = `T.amberSoft`, `hostil` = `T.danger`, `marcaFundo` = `T.panel`,
+`cartao.fundo` = `T.panel`. Números: `altura` = `ALVOS.piso`, `marca` = `RETRATO.lado.chip` (32),
+`raio` = 12, `larguraMax` = 240, `max` = 4, `vao` = 8, `cartao: { largura: 376, marca: 64, raio: 12,
+folhaMax: 0.62, colunaVerbos: 320 }`, `pe: { cima: 6, baixo: 4 }` (= `PE_DA_PAGINA`),
+`baixaAltura: 560` (abaixo disto, fichas e soleira numa linha), e o movimento `{ entra: 160,
+escalonado: 40, sai: 120, cartao: 160 }`. **Nenhuma cor nova.** No Figma: coleção `Fichas
+(FICHAS)` (`VariableCollectionId:208:3`, 17 variáveis com `codeSyntax` `FICHAS.*`); `danger`
+entrou no espelho de `T` (`VariableID:208:2`).
+
+### 5 · O cartão em três formatos
+
+- **Mesa (≥ 560 de altura, ≥ 768 de largura):** popover de **376** por cima da ficha (8 acima
+  dela, alinhado à esquerda, preso à borda da página). Cresce até à página; o que se sabe rola por
+  dentro, **os verbos ficam fixos no pé** (o preço sempre à vista).
+- **Baixa (< 560 de altura):** **toma a página** (a ficha fica por baixo; o nome está na
+  cabeça), duas colunas: o que se sabe à esquerda (344, rola, com esbatimento) e os verbos à
+  direita (320, alinhados ao fundo). O campo fica à vista.
+- **Telefone (< 768 de largura):** **a folha** sobe do campo, largura inteira, raio 16 em cima,
+  pega de 36×4 (decorativa; arrastar para baixo também fecha), até `folhaMax` (62 %) — **nunca
+  cobre o campo nem a linha do veredito**.
+
+**Nada no cartão age.** O verbo escreve a frase dele no campo (troca a da ficha se intacta),
+fecha o cartão, a ficha fica *Escrita*. Quem manda é o dado — uma só maneira de agir na tela
+(V6). O *Impedido* não escreve (aria-disabled, com nome e foco).
+
+### 6 · O melhor, provado
+
+- **Contraste** (WCAG 2.1, a fórmula da norma): ficha sobre `panelSoft` — nome `ink` 12,40 ·
+  papel `inkMeio` 7,95 · preço `amberSoft` 10,96 · hostis `danger` 5,66; contorno
+  `lineStrong`/página 4,29 (≥ 3, 1.4.11); a mão `rosa`/página 6,36. Cartão sobre `panel` — `ink`
+  13,88 · `inkMeio` 8,90 · rótulos e × `inkDim` 6,00 · `danger` 6,34. Verbos sobre a página —
+  `ink` 15,25 · preço `inkDim` 6,60 · crime `danger` 6,97; tracejado `lineStrong`/`panel` 3,90.
+  **Todo texto ≥ 5,66, todo contorno ≥ 3,48.** Hostil = palavra + presa + cor (1.4.1).
+- **Alvos:** ficha 48 × 127–209; × 48; verbo 54. Piso da casa 48 (WCAG 2.5.8 pede 24).
+- **Orçamento** (linhas de prosa à vista a 17/1,625): o pé com fichas custa **58 px** na Mesa
+  (21,4 → 19,3) e 58 + 12 de vão nas outras — Baixa com o cabeçalho real de 69 (V5a; o quadro
+  tem 41): **8,5 → 6,0**; com oferta, numa linha só, **5,8**; Telefone 467×860: **24,3 → 21,8**.
+- **Cliques:** apontar o rato hoje = escrever 30 caracteres (10,7 s por frase escrita, R6) e
+  esperar que a leitura o ache (0 de 1 na 9.ª); com a ficha = **1 toque + o dado**. Ver o preço
+  das ataduras hoje = perguntar ao Mestre (um turno); com o cartão = **2 toques, 0 turnos**.
+- **A régua do F2** (a do `jogo`, na próxima sessão de prova): **0 de 10 mal lidos e 0 de 10 mal
+  cobrados** (9.ª: rato 0/1, ataduras 0/1, mestre de recados 0/1).
+- **Estudo citado:** Baldur's Gate 3 (Larian, 2023) — nome e hostilidade à vista, a ação padrão
+  no clique, o resto noutro gesto → toque escreve, cartão no segundo. Disco Elysium (ZA/UM, 2019)
+  — a coisa do mundo é o alvo, e o que se sabe dela cresce com os testes → SABE cresce, nunca
+  entrega. Pentiment (Obsidian, 2022) — o glossário abre por cima da página, sem sair dela → o
+  cartão é popover, não outra tela. Slack / Discord — a menção insere uma entidade com id dentro
+  do texto livre → o toque com o campo cheio. Apple HIG (*Context menus*, *Sheets*) e Material 3
+  (*Bottom sheets*) → a folha. WCAG 2.2: 1.4.1, 1.4.3, 1.4.11, 2.1.1, 2.4.7, 2.5.8, 2.3.3.
+  WAI-ARIA APG: *Dialog (non-modal)* e o *roving tabindex*.
+- **Experiência jogada:** ainda não — é a prova do F2 com o `jogo`.
+
+### 7 · Para quem constrói
+
+**Pedido ao motor (`backend`, puro, ao lado de `montarEmCena` — entra por
+`mente/pedidos-ao-sistema.md`):** `fichaParaTela(item, ctx)` →
+`{ id, tipo, nome, linha, retrato, frase, sabe[], lembra[], pista, verbos[] }`, onde
+- `linha` — a segunda linha da ficha (o papel; `"3 · hostis"`; `"◉ 29"`; `"a 2 h, norte"`);
+- `frase` — a frase do toque, por tabela `FRASE_DO_TOQUE` (pessoa → *Falo com X*; criatura
+  hostil → *Ataco o X da frente* se `quantos > 1`; criatura → *Observo X*; coisa à venda →
+  *Compro X*; coisa no chão → *Pego X*; lugar → *Vou até X*; saída → *Saio por X*). **A tabela
+  é do `jogo` assinar** — o `desenho` só a propõe;
+- `lembra` — o último encontro, as dívidas, as promessas com essa pessoa (de quem já os guarda:
+  o Livro de Promessas, a bolsa, o registo);
+- `pista` — a frase de que **há** um segredo (a Intuição o viu), **nunca** o segredo; `null`;
+- `verbos` — `[{ verbo, frase, preco, tom: "gesto"|"semVolta", impedido: string|null }]`, com o
+  preço do estoque e o veredito do crime saídos das tabelas (o mesmo número que debita). É o que
+  fecha a M44: **o toque de compra é o único que debita pelo estoque**.
+- Os 4 da fileira: os `aqui` da lista, na ordem da prosa, `FICHAS.max`.
+- *Achado de passagem:* `em-cena.js` escreve `sabe: ["onde estás"]` no lugar — é o trato do «tu»
+  que `EM_CENA_TRATO` existe para impedir. Se `sabe` vai à tela, passa a «onde você está».
+
+**`aprendiz` (fora do App):** `painel-fichas.jsx` com `Ficha`, `FileiraAVista`, `CartaoDaFicha`
+(as três larguras pela régua do §5), `FICHAS` em `estilo.js`. O contrato:
+
+```
+<FileiraAVista itens={fichas} escrita={id|null} aberta={id|null}
+  onToque={(ficha) => …} onAbrir={(ficha) => …} onFechar={() => …}
+  onVerbo={(ficha, verbo) => …} baixa={altura < FICHAS.baixaAltura} />
+```
+
+`Ficha({ ficha, estado: "repouso"|"escrita"|"aberta", onToque })` — `<button>` com
+`aria-label` = nome + linha (*"Ratos gigantes, três, hostis"*), `aria-haspopup="dialog"`,
+`aria-expanded`; a fileira é `role="group" aria-label="À vista"` com *roving tabindex* (←/→,
+Enter/Espaço = toque; Enter na *Escrita* = abre). `CartaoDaFicha` é `role="dialog"` não-modal,
+`aria-labelledby` no nome; Esc fecha e devolve o foco à ficha; os atalhos 1–3 escrevem o verbo.
+O retrato é o `Retrato` (§Retratos 8) a 32 e 64; sem célula, `Ficha/Marca`.
+
+**`oficial` (com o bastão):** em `O pé da página`, **antes** da `Soleira`:
+`{fichas.length > 0 && <FileiraAVista … />}` — dentro de `calou(...)`: se estoura, a fileira
+não aparece e o turno corre como hoje. O estado da ligação é `{ id, texto }` ao lado de
+`entrada` (nunca no save; o rascunho pode levá-lo, na mesma chave de V6a); o envio passa o
+`id` ao turno, e o `quemNaFrase` da F2a fica como leitura de reserva quando não há id. A linha do
+veredito (V6) ganha a fonte *"a ficha ligada"*.
+
+**Movimento:** entrada `tv-fade` 160 ms, 40 ms de escalonado (≤ 280); saída 120 ms; o cartão
+`tv-fade` 160 ms + 4 px de subida. **`prefers-reduced-motion`: tudo pronto, nada sobe.** Nada
+segura um clique; nada anima enquanto o Mestre escreve.
+
+### 8 · O que nunca se escreve na tela
+
+id · ficha · EM CENA · lista · «hostil» como campo · «segredo» · papel no sentido do motor ·
+«desconhecido». O desconhecido chama-se pelo que se vê (*"A encapuzada · você não sabe o nome
+dela"*). O segredo nunca — só que há um. «À vista» é só nome acessível, não letra.
+
+### 9 · A proposta ambiciosa — a memória tem rosto
+
+O cartão vira página do Códice quando a ficha some; dali também se aponta (*"Procuro Oren"*
+chega a ele fora de cena). Em `pauta-desenho.md`, *Para a pessoa decidir*.
+
+### 10 · As armadilhas do Figma que esta etapa pagou
+
+1. **`setBoundVariableForPaint` sobre uma cor-base preta pode pintar PRETO** — a variável nova
+   (`danger`, criada na mesma sessão) e um clone de variante desenharam a base, não o valor. Passe
+   **a cor resolvida** como base e ligue a variável por cima.
+2. **Uma propriedade `INSTANCE_SWAP` no conjunto força o mesmo valor em TODAS as variantes** — a
+   coisa e o lugar passaram a ter retrato. A marca troca-se por instância, sem propriedade.
+3. **Variante clonada para dentro do conjunto perde `componentPropertyReferences`** — o texto das
+   novas do verbo ficou fixo; religue-as à mão.
+4. **`layoutShrink` não existe no `FRAME`** — o script cai inteiro (sem resto na tela).
+5. **`resize()` depois de `primaryAxisSizingMode = 'AUTO'` volta a FIXED** — as fichas nasceram
+   todas com 160 de largo.
+
+### 11 · Dívida declarada
+
+- **Baixa com oferta e fichas: 5,8 linhas** (piso pretendido 6). A saída é do cabeçalho de V5a
+  (69), que a 800×451 é o maior pedaço de mobília da página — não é desta etapa.
+- **As peças moram no ficheiro das telas**, como as do Mapa, dos Retratos e da Fogueira: sobem para
+  `e5wJUzInAssoebx5npssKc` quando a biblioteca voltar a publicar; o espelho do verbo (`197:65`) e
+  a oferta destas telas (desenhada pela mesma anatomia) dão então lugar aos originais (`64:2446`,
+  `235:233`).
+- **A frase do toque e os verbos são proposta**: o `jogo` assina `FRASE_DO_TOQUE` e o momento
+  (quanto duram as fichas, se a espera as mantém) antes do `oficial` ligar.
