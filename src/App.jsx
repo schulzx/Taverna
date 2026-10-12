@@ -15,7 +15,7 @@ import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHisto
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome, fichaDoCronista } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
-import { rolarClima, rolarEncontro } from "./encontros.js";
+import { rolarClima, rolarEncontro, investidaDaEstrada, envelopeDaInvestida } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
@@ -100,7 +100,7 @@ import { oQueFaltaCreditar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobran
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
-import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL } from "./agressao.js";
+import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL, podarONarrador } from "./agressao.js";
 import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
@@ -10151,6 +10151,15 @@ export default function Taverna() {
 
   const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {
     const op = opts && typeof opts === "object" ? opts : {};
+    /* E4 do "o Narrador só narra" (a fiação): A PORTA DA LUTA É DO SISTEMA.
+       Antes de qualquer coisa ler a resposta, a guarda tira dela o que o
+       Narrador já não decide — o perigo, abrir luta (salvo o pedido do golpe
+       sem alvo), o dano e a ficha do inimigo, a vida e a mana negativas — e,
+       num turno em que o teste passou, tudo isso mesmo com pedido: um sucesso
+       nunca é castigado (8.ª sessão, M64). A regra mora em agressao.js
+       (O_NARRADOR_NAO_ABRE); aqui só se aplica, e uma resposta nova substitui
+       a antiga (a guarda não muta). Os envelopes são os mesmos que a bolsa lê. */
+    try { resp = podarONarrador(resp, { envelopes: op.envelopes || "" }).resp || resp; } catch (e) { calou("a porta da luta", e); }
     /* v9.32: FICHA NUNCA NULA. O erro "undefined is not an object (evaluating
        'e.efeitos')" que apareceu em jogo era isto: alguma chamada de enviar()
        passou `persAtual` vazio, `tickEfeitos(pers)` é a PRIMEIRA coisa que
@@ -24821,6 +24830,27 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         pushMsgs([{ autor: "sistema", texto: `Achado na estrada: ${nAchado} ${nAchado === 1 ? "moeda" : "moedas"} para a bolsa.` }]);
       }
     } catch (e) { calou("o achado da estrada na bolsa", e); }
+    /* E4 do "o Narrador só narra" (a fiação): A ESTRADA QUE INVESTE. Quem
+       decide se a criatura do trecho vem em cima é a tabela
+       (INVESTIDA_DA_ESTRADA, encontros.js), no rolar — não o perigo do
+       Narrador, que a guarda de aplicarResposta agora corta. Se investe, a
+       luta abre aqui pela porta única (o molde da sala da masmorra) e o
+       envelope do trecho diz que o painel já está aberto; se não, a criatura
+       fica à vista e o primeiro golpe é do jogador (lerAgressao). Vem depois
+       da marcha e do achado para a ficha que abre a luta ser a viva (persV),
+       e respeita o fôlego da fuga como a emboscada respeitava. */
+    try {
+      const inv = investidaDaEstrada(enc, { clima: c && c.id, pers: persV });
+      const fugiuDela = !!(inv && inv.investe) && folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "emboscada", criatura: inv.criatura });
+      if (inv && inv.investe && !fugiuDela && !combateRef.current) {
+        const ab = abrirCombate(inv.inimigos, { pers: persV });
+        if (ab.pers !== persV) { persV = ab.pers; personagemRef.current = ab.pers; setPersonagem(ab.pers); }
+        if (ab.msgs.length) pushMsgs(ab.msgs.map((tx) => ({ autor: "sistema", texto: tx })));
+        if (ab.nota) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + ab.nota;
+        texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
+        encV = { ...encV, detalhe: envelopeDaInvestida(inv) };
+      }
+    } catch (e) { calou("a investida da estrada", e); }
     /* ---------------- O TURNO DE ESTRADA (v9.56) ----------------
        Um avanço cobre QUATRO horas de marcha — meio dia dos oito que se
        caminha — e o relógio anda meio dia de calendário. Antes o relógio
