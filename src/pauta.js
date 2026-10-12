@@ -157,6 +157,17 @@ export const SECOES = [
      caracteres e é a resposta à pergunta "onde estou". */
   { id: "daqui", rotulo: "DAQUI", prio: 7, o: "o que se alcança daqui, com rumo e distância" },
   { id: "quem", rotulo: "QUEM", prio: 4, o: "quem está presente" },
+  /* F2a (12/10, a ficha de tudo): EM CENA — o que existe à vista agora, do
+     sistema (em-cena.js#pautaComEmCena): a gente com o papel, os bichos com
+     quantos, o que está à venda com o preço do estoque, e no fim os NOMES À
+     MÃO, cuja linha vai dentro desta (a secção deles fica vazia). Corta com
+     a prioridade que era dos nomes (2,477): depois dos vetos, do coração, do
+     que volta e da batida; à frente da ficha e da decoração. E a função não
+     a deixa entrar se, com ela, um veto, o desfecho, a resposta, a fala, o
+     rumo, o fecho, o coração, o que volta, a planta, a batida ou o lugar
+     que chegavam deixassem de chegar: encolhe-se primeiro, e sem caber não
+     entra. Na luta cede (a vista da luta é a lista de quem está de pé). */
+  { id: "emCena", rotulo: "EM CENA", prio: 2.477, o: "o que existe à vista agora: gente, bicho, o que está à venda" },
   /* MM-C (C1, o núcleo): QUEM É — a ficha de uma pessoa do núcleo que está
      em cena (o que quer, como fala, o que traz, o que teme — nunca o que
      esconde), uma por turno no máximo e a mesma pessoa só de seis em seis
@@ -404,7 +415,8 @@ export const SECOES_QUE_CEDEM = {
   /* E1 (12/10): e o PREÇO da rua e os NOMES À MÃO — na luta ninguém compra
      nem se apresenta; na masmorra e fora dos muros não há rua (os nomes
      ficam: a prisioneira da cripta também precisa de um). */
-  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes"],
+  /* F2a (12/10): e EM CENA — na luta, a lista é a vista da luta (QUEM). */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena"],
   masmorra: ["economia", "cidade", "preco"],
   arredores: ["economia", "cidade", "preco"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:

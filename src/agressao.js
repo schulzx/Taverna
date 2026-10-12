@@ -745,6 +745,88 @@ export function armadoDescrito(texto, mostrado) {
   return { nome, ameaca: ameacaDoPapel(achada.cab).ameaca, pessoa: true, armadoNaProsa: true, descrito: true };
 }
 
+/* ---------------- O QUE A PROSA MOSTROU, COMO LISTA (F2a · EM CENA, 12/10) ----------------
+   As três leituras de cima (o bicho, a pessoa armada, a descrição pela
+   arma) respondem a UMA pergunta — "contra quem é este golpe?" — e lêem a
+   prosa outra vez a cada frase. A Fase F2 inverte a ordem: o sistema
+   monta a lista do que está em cena ANTES da resposta (em-cena.js), e a
+   frase do jogador lê-se contra a lista. O que o Mestre já mostrou e
+   ninguém registou (o cão sem pelo da 6.ª, os dois da tocha da 7.ª, as
+   duas sombras da 8.ª) entra nessa lista por aqui, uma vez, com a mesma
+   régua das leituras de cima: o bicho pela cabeça da tabela (e não o nome
+   de gente que coincide com um, `cabecasQueSaoNome`), a pessoa pela arma
+   que a prosa lhe pôs na mão.
+
+   Quem leva a arma é o primeiro que se encontra ANDANDO PARA TRÁS a partir
+   dela (até `ARMADO_DESCRITO.perto` palavras): uma cabeça vaga ou de gente
+   ("sombras", "pescador") dá o nome; o primeiro nome de quem o sistema já
+   conhece (`pessoas`: "Sari segura o cajado") diz que a arma é de alguém
+   com ficha, e não nasce ninguém; um número de gente ("tem DOIS carregando
+   tocha") dá o vulto genérico. Nada disso perto: não é de ninguém que se
+   veja ("pois que fale com a lâmina"). E a arma negada ("sem faca") não
+   arma ninguém. `quantos`: o número escrito antes do bicho, ou dois para o
+   plural sem número. */
+export const VISTO_NA_PROSA = {
+  quantos: { um: 1, uma: 1, dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5, seis: 6 },
+  gente: ["dois", "duas", "tres", "quatro", "cinco", "varios", "varias"],
+  artigos: ["o", "a", "um", "uma", "seu", "sua"],
+  negam: ["sem"],
+  /* as cabeças que, na prosa, quase nunca são um bicho à vista ("uma coisa
+     que só eu sei", 8.ª M39): o jogador ainda as pode dizer ("ataco a
+     coisa"), mas a lista não nasce delas */
+  vagas: ["coisa", "coisas"],
+  pluralSemNumero: 2,
+  porque: "o que o Mestre mostrou e ninguém registou entra na lista da cena uma vez, com nome; a frase do jogador lê-se contra ela",
+};
+export function vistosNaProsa(mostrado, pessoas = []) {
+  const ts = textosDe(mostrado);
+  if (!ts.length) return [];
+  const fora = cabecasQueSaoNome(ts, pessoas);
+  const conhecidos = new Set((Array.isArray(pessoas) ? pessoas : [])
+    .map((n) => palavrasDe(n && typeof n === "object" ? n.nome : n)[0]).filter((p) => p && p.length >= 3));
+  const bichos = new Map();
+  const gente = new Map();
+  for (const t of ts) {
+    const ps = palavrasDe(t);
+    ps.forEach((p, i) => {
+      /* o bicho */
+      if (CABECAS.has(p) && !fora.has(raizDoBicho(p)) && !VISTO_NA_PROSA.vagas.includes(p)) {
+        const raiz = raizDoBicho(p);
+        const c = ps[i + 1], w = ps[i + 2];
+        const comp = c && w && CRIATURA_NA_PROSA.conectores.includes(c) && w.length >= 3 && !CABECAS.has(w) ? [c, w] : [];
+        const quantos = VISTO_NA_PROSA.quantos[ps[i - 1]] || (NUMERO_DO_BICHO.singular[p] ? VISTO_NA_PROSA.pluralSemNumero : 1);
+        const umSo = NUMERO_DO_BICHO.singular[p] || comoEscrito([p], ts);
+        const nome = capital([umSo, ...(comp.length ? comoEscrito([p, ...comp], ts).split(/\s+/).slice(1) : [])].join(" "));
+        const ja = bichos.get(raiz);
+        /* o primeiro visto dá o nome; o complemento só o troca quando vem
+           com artigo ou número ("o cão sem pelo") — "Rato de esgoto", na
+           boca de alguém, é figura de fala, não o bicho */
+        if (!ja || (comp.length && ja.nome.split(" ").length === 1 && DETERMINANTES.has(ps[i - 1]))) bichos.set(raiz, { tipo: "criatura", nome, raiz, quantos: Math.max(quantos, ja ? ja.quantos : 0) });
+        else if (quantos > ja.quantos) bichos.set(raiz, { ...ja, quantos });
+      }
+      /* a pessoa armada */
+      if (!ARMAS_NOME.has(p) || VISTO_NA_PROSA.negam.includes(ps[i - 1])) return;
+      let cab = "", generico = false;
+      for (let k = i - 1; k >= Math.max(0, i - ARMADO_DESCRITO.perto); k--) {
+        const w = ps[k];
+        if (k === i - 1 && VISTO_NA_PROSA.artigos.includes(w)) continue;
+        if (VAGAS.has(w)) { cab = singular(w); break; }
+        if (conhecidos.has(w)) break;
+        if (VISTO_NA_PROSA.gente.includes(w)) { generico = true; break; }
+      }
+      if (!cab && !generico) return;
+      /* o nome: o que a prosa pendura na cabeça ("pescador de barba ruiva");
+         senão a cabeça e a arma ("Sombra da corrente") */
+      const comComp = cab ? pessoasDe(t, 2).find((x) => x.cabeca === cab && x.comp.length && !x.comp.includes(p)) : null;
+      const art = ps[i - 1];
+      const de = art === "um" || art === "o" || art === "seu" ? "do" : art === "uma" || art === "a" || art === "sua" ? "da" : "de";
+      const nome = comComp ? nomeDaProsa(comComp.palavras, ts) : `${capital(cab || ARMADO_DESCRITO.generico.toLowerCase())} ${de} ${comoEscrito([p], ts)}`;
+      if (!gente.has(norm(nome))) gente.set(norm(nome), { tipo: "pessoa", nome, cabeca: cab, arma: p, palavras: comComp ? comComp.comp : [] });
+    });
+  }
+  return [...bichos.values(), ...gente.values()];
+}
+
 /* ---------------- A LUTA QUE O CARTÃO PROMETE (MM-C · 7.ª sessão de prova, M59–M61) ----------------
    "Defender a versão dela — o camarada desafia você para um duelo": o
    jogador escolheu o lado caro, e o duelo não existia (M61, "sem alvo no

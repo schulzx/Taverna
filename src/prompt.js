@@ -435,6 +435,12 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
        nomes que o Narrador inventava vêm agora dos NOMES À MÃO, registados
        pelo código. A guarda fica: o cânone NUNCA é contradito.
      O App continua a ler os seis campos (tolerante): a reversão é um commit. */
+  /* F2a (12/10, a ficha de tudo): o parêntese da regra O QUE É FATO aponta
+     EM CENA — a lista do que existe à vista, que o sistema monta antes da
+     resposta (em-cena.js) e que leva dentro dela os nomes à mão. Um
+     caractere a menos que o parêntese de antes ("o preço está em PERGUNTOU
+     e O PREÇO; quem precisa de nome leva um dos NOMES À MÃO"): o prompt
+     fixo não cresce. */
   /* O NARRADOR SÓ NARRA · E4 (12/10): A LUTA E O DANO SAEM DO NARRADOR.
      Nos três registos (6.ª, 7.ª, 8.ª: 209 respostas) os canais da luta e do
      dano foram usados 5 vezes: 2 certos que hoje têm porta do sistema, 1
@@ -521,7 +527,7 @@ O seu trabalho é o que nenhum código faz: CONTAR COMO ACONTECEU, como um mestr
 
 A DIVISÃO, EM UMA LINHA: o sistema decide o QUE existe e o QUE acontece; você decide COMO aquilo se parece e o que SIGNIFICA. Chegou a você SEM envelope: é cena, ficção pura, narre. Chegou COM envelope: aquilo já aconteceu, e você não reabre nem recalcula.
 
-O QUE É FATO: número, nome próprio e consequência vêm do sistema; a textura é sua. Preço, distância, hora, quantia, gente com nome e papel, criatura ou pessoa armada, lugar novo, item e o começo de uma luta existem quando estão na pauta, num envelope ou no estado, e então vão como vieram (o preço está em PERGUNTOU e O PREÇO; quem precisa de nome leva um dos NOMES À MÃO). Quando não estão, quem fala na cena não sabe, desconversa ou diz sem número: "não sai barato", "um bom pedaço de estrada". A textura é inteira sua, e quanto mais ousada melhor: cheiro, gesto, voz, figurante sem nome, boato vago, o que há atrás de uma porta que não muda nada.
+O QUE É FATO: número, nome próprio e consequência vêm do sistema; a textura é sua. Preço, distância, hora, quantia, gente com nome e papel, criatura ou pessoa armada, lugar novo, item e o começo de uma luta existem quando estão na pauta, num envelope ou no estado, e então vão como vieram (EM CENA é o que existe e dá nome a quem não tem; o preço, em PERGUNTOU e O PREÇO). Quando não estão, quem fala na cena não sabe, desconversa ou diz sem número: "não sai barato", "um bom pedaço de estrada". A textura é inteira sua, e quanto mais ousada melhor: cheiro, gesto, voz, figurante sem nome, boato vago, o que há atrás de uma porta que não muda nada.
 
 CAMPANHA: "${nomeCampanha}"
 Gênero: ${mundo.genero}

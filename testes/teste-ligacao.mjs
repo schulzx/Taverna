@@ -179,6 +179,14 @@ sec("1. NENHUM MÓDULO MUDO");
        aqui a fiação do App.jsx; o frontend ligou-os na v9.393 (o Cronista,
        a pauta, a resposta, a viagem, o acampamento e `enviar`), e as três
        entradas saíram. */
+    /* 12/10 (Fase F2, F2a · EM CENA): `em-cena.js` nasce no backend — a
+       lista do que está em cena (`montarEmCena`), a linha da pauta que
+       engole os NOMES À MÃO (`pautaComEmCena`) e a frase lida contra a
+       lista (`quemNaFrase`) — e espera a fiação do App.jsx pela mão do
+       frontend na MESMA fase (pautaDoTurno, depois de cederNaCena; o ref da
+       lista de antes). `teste-em-cena.mjs` é o primeiro leitor. A entrada
+       sai quando o App o importar. */
+    "em-cena.js": "a fiação de pautaDoTurno e de enviar no App.jsx, pelo frontend (F2a, 12/10)",
   };
   const mudos = [];
   for (const f of arqs) {

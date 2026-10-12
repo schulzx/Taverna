@@ -65,7 +65,11 @@ const regra = (pT.match(/^O QUE É FATO: [^\n]*/m) || [""])[0];
   t("nomeia o que só existe se o sistema o disse (preço, distância, hora, gente, armado, lugar, item, luta)", tipos.every((x) => regra.includes(x)), tipos.filter((x) => !regra.includes(x)).join(", "));
   t("diz onde o fato está: na pauta, num envelope ou no estado", /na pauta, num envelope ou no estado/.test(regra));
   const rotulos = new Set(SECOES.map((s) => s.rotulo));
-  t("e aponta as ferramentas da E1, que são secções reais da pauta (PERGUNTOU, O PREÇO, NOMES À MÃO)", ["PERGUNTOU", "O PREÇO", "NOMES À MÃO"].every((r) => regra.includes(r) && rotulos.has(r)));
+  /* F2a (12/10), MOVIDA: os NOMES À MÃO passaram a ir DENTRO da linha EM
+     CENA (em-cena.js#pautaComEmCena), e a regra aponta-a no lugar deles —
+     com um caractere a menos. A intenção fica: a regra só cita secções que
+     existem na pauta. */
+  t("e aponta as ferramentas da E1 e da F2a, que são secções reais da pauta (PERGUNTOU, O PREÇO, EM CENA)", ["PERGUNTOU", "O PREÇO", "EM CENA"].every((r) => regra.includes(r) && rotulos.has(r)));
   t("quando o sistema cala: não sabe, desconversa ou diz sem número", /não sabe, desconversa ou diz sem número/.test(regra) && /"não sai barato"/.test(regra));
   t("e a textura continua inteira dele, e ousada", /A textura é inteira sua, e quanto mais ousada melhor/.test(regra));
   t("a textura com exemplos: cheiro, gesto, voz, figurante sem nome, boato vago, a porta que não muda nada", ["cheiro", "gesto", "voz", "figurante sem nome", "boato vago", "porta que não muda nada"].every((x) => regra.includes(x)));
