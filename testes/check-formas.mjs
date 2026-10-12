@@ -394,6 +394,7 @@ const TETO_DE_CONTADOR_DE_QUADRO = {
      zero não faz nada, em silêncio. Nada aqui é relógio, nada aqui se
      repete, e o efeito cancela o pedido ao sair. */
   "src/painel-batalha.jsx": 2,   /* o enquadramento de abertura espera o leiaute, não conta tempo */
+  "src/painel-fichas.jsx": 1,    /* 12/10 · F2b: o cartão das fichas mede onde pousa no quadro SEGUINTE ao resize — no próprio evento o leiaute ainda é o de antes (medido: a folha pousava 37 px à esquerda ao passar da Mesa ao telefone). Uma batida por medida, cancelada ao sair; não conta tempo, a mesma razão do enquadramento de cima */
   "src/ui.jsx": 2,               /* as brasas, e elas estão certas: `performance.now()` */
   "src/App.jsx": 2,              /* o d20, e ele está certo: `Date.now() - inicio > 1200` */
   "src/grade-de-batalha.jsx": 1, /* DÍVIDA: `grade-de-batalha.jsx:385` conta TIQUES

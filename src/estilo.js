@@ -1392,7 +1392,10 @@ export const FIM_DA_LUTA = { entra: 240, passo: 60, tetoDoChao: 2, tetoDoChaoNoT
    as medidas do nó: 14 de lado, 6 em cima e em baixo, 10 entre as palavras
    e o atalho, 1 entre o verbo e o preço, raio 8. A altura é `ALVOS.piso`,
    nunca a soma do enchimento. O preço vai a 12 (o piso), como `Mapa/Partir`. */
-export const VERBO_COM_PRECO = { lado: 14, cima: 6, entre: 10, palavras: 1, raio: 8 };
+/* F2c (o cartão das fichas, nós `210:2952` e `210:2957`) deu-lhe dois
+   estados: o *Impedido* (oco, contorno tracejado, o atalho cala) e o *Sem
+   volta* (contorno `danger` de 1,5 e a barra de 3 à esquerda). */
+export const VERBO_COM_PRECO = { lado: 14, cima: 6, entre: 10, palavras: 1, raio: 8, fioSemVolta: 1.5, barraSemVolta: 3 };
 
 /* A MISTURA DE DUAS CORES DE `T`, em percentagem INTEIRA. Privada: só a
    fogueira a pede hoje. Inteira de propósito — `0.1` em vírgula flutuante
@@ -1501,6 +1504,87 @@ export const FOGUEIRA = {
      fala, de duas colunas de verbo de 300. O `oficial` pode forçar o
      formato pela prop `formato`. */
   mesaPede: { roda: 466, fala: 340, moldura: 396 },
+};
+
+/* ============================================================
+   F2b · F2c · AS FICHAS E O CARTÃO (`formas.md` § Fichas, Figma `10 ·
+   Fichas` `208:21`, biblioteca `210:2`, coleção `Fichas (FICHAS)`
+   `VariableCollectionId:208:3`).
+
+   O QUE É IGUAL A `T` É `T` (§4), e NENHUMA COR NOVA: o fundo da ficha é o
+   erguido, o fio o de controlo, a mão o rosa, o preço o âmbar que se lê, o
+   hostil o perigo, o ladrilho da marca e o cartão o `panel`. As medidas de
+   §4 estão com os nomes de §4 (`altura`, `marca`, `raio`, `larguraMax`,
+   `max`, `vao`, `cartao`, `pe`, `baixaAltura`, `movimento`); o resto saiu dos
+   nós citados ao lado de cada linha, lido no `get_design_context` — nenhum
+   afinado a olho.
+
+   DUAS COISAS QUE O APRENDIZ NÃO SOUBE, e escolheu o mais simples:
+   · `marca` = 32 é o `RETRATO.lado.chip` de § Retratos, e essa tabela ainda
+     não nasceu em código. Fica o número, com o nome dele; no dia em que
+     `RETRATO` existir, esta linha passa a alias.
+   · o disco do bicho sem pintura é `retrato/fundo` (#1E1930) no Figma, que
+     também não existe em `T`. Para não abrir cor nova, vai o `panel` (o
+     mesmo ladrilho da coisa e do lugar — 0,9 % de luz de diferença, e o
+     `inkMeio` da pata continua a 8,90:1). Pergunta escrita ao `desenho`.
+   ============================================================ */
+export const FICHAS = {
+  fundo: T.panelSoft,
+  fio: T.lineStrong,
+  escrita: T.rosa,
+  preco: T.amberSoft,
+  hostil: T.danger,
+  marcaFundo: T.panel,
+  /* a sombra do popover da Mesa (nó `214:816`): 0 12 32, preto a 0,55 —
+     profundidade, não cor do tema (a mesma razão de `sombra()`) */
+  sombra: `0 12px 32px ${sombra(".55")}`,
+
+  altura: ALVOS.piso,
+  marca: 32,
+  raio: 12,
+  larguraMax: 240,
+  max: 4,
+  vao: 8,
+  /* a ficha por dentro (nós `210:50` e `210:144`): 8 à esquerda; 14 à
+     direita em Repouso e 8 na armada, onde o ⌄ (16) entra com os 10 de vão
+     — a ficha armada é 20 mais larga, como no nó; 10 entre a marca e as
+     palavras; o filete da mão 3 (a gramática de `A escolha`) */
+  ficha: { esquerda: 8, direita: 14, direitaArmada: 8, entre: 10, mais: 16, filete: 3 },
+  /* a letra (§3): o nome Spectral 500 15/18; a linha da pessoa Spectral 13,
+     a dos outros mono 12, as duas em 16 de entrelinha */
+  letra: { nome: 15, nomeAltura: 18, linhaAltura: 16, nomeDoCartao: 22, nomeDoCartaoAltura: 26, quemAltura: 18, linhaDoCartao: 22, rastreioDoRotulo: 0.08, rotuloAltura: 16 },
+  /* `Ficha/Marca` (nó `210:49`): o ladrilho da coisa e do lugar tem raio 8 a 32
+     e 16 a 64, e o glifo 16 / 28; o disco do bicho tem anel de 2 / 3 */
+  ladrilho: { raio: { 32: 8, 64: 16 }, glifo: { 32: 16, 64: 28 }, anel: { 32: 2, 64: 3 } },
+
+  cartao: {
+    fundo: T.panel, largura: 376, marca: 64, raio: 12, folhaMax: 0.62, colunaVerbos: 320,
+    /* o cartão por dentro (nós `214:816`, `211:83`, `211:82`): 16 de
+       enchimento, 12 entre a cabeça, o fio, o que se sabe e os verbos; 12
+       entre os dois blocos do que se sabe, 4 do rótulo às linhas e entre
+       elas; 8 entre os verbos. A cabeça: 12 entre a marca e o nome, 2 entre
+       o nome e o quem, o × de 48 com o glifo de 16 e raio 8 */
+    enchimento: 16, entre: 12, entreBlocos: 12, entreLinhas: 4, entreVerbos: 8,
+    cabeca: { entre: 12, palavras: 2, fechar: ALVOS.piso, glifo: 16, raioDoFechar: 8 },
+    /* `Cartão/Linha`: a marca numa coluna de 12, 10 até à frase; o ponto de
+       Sabe tem raio 2, o anel de Lembra raio 2,875 com fio 1,25; o Segredo
+       tem o fio tracejado de 2 à esquerda e 10 de recuo, e a meia-lua 12 */
+    linha: { marca: 12, entre: 10, ponto: 2, anel: 2.875, fioDoAnel: 1.25, fioDoSegredo: 2, recuoDoSegredo: 10, meiaLua: 12 },
+    /* o telefone (nó `217:1739`): a folha com raio 16 em cima e a pega de
+       36 × 4 numa faixa de 8, a 9 do topo. Arrastar a pega para baixo uma
+       distância de alvo (o piso, 48) fecha — o número é do aprendiz, e está
+       escrito como pergunta ao `desenho` */
+    folha: { raio: 16, pega: { largura: 36, altura: 4, faixa: 8, cima: 9 }, arrasto: ALVOS.piso },
+    /* a Baixa (nó `216:1838`): duas colunas com 16 entre elas */
+    entreColunas: 16,
+  },
+
+  pe: { cima: PE_DA_PAGINA.cima, baixo: PE_DA_PAGINA.baixo },
+  baixaAltura: 560,
+
+  /* §7 — a ficha entra em `tv-fade` de 160 com 40 de escalonado (≤ 280) e sai
+     em 120; o cartão entra em 160 com 4 px de subida */
+  movimento: { entra: 160, escalonado: 40, tetoDoEscalonado: 280, sai: 120, cartao: 160, subida: 4 },
 };
 
 /* ============================================================
@@ -1803,6 +1887,19 @@ export const MOVIMENTO_CSS = `
 @keyframes tvFogueiraVira { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
 .tv-fogueira-vira { animation: tvFogueiraVira ${FOGUEIRA.movimento.vira}ms ease-out both; }
 
+/* F2b · AS FICHAS (formas.md, Fichas 7). Cada ficha entra num fade de 160,
+   40 depois da anterior (o atraso e do painel, pela variavel --tv-ordem; o
+   teto faz a fileira inteira caber em 280); a fileira que sai apaga em 120
+   antes de a seguinte entrar; o cartao entra em 160 subindo 4 px. Nada
+   segura um clique, e a saida esta no media de baixo, escrita a nascenca:
+   tudo pronto, nada sobe. */
+@keyframes tvFichaEntra { from { opacity: 0; } to { opacity: 1; } }
+.tv-ficha-entra { animation: tvFichaEntra ${FICHAS.movimento.entra}ms ease both; animation-delay: calc(min(var(--tv-ordem, 0) * ${FICHAS.movimento.escalonado}ms, ${FICHAS.movimento.tetoDoEscalonado - FICHAS.movimento.entra}ms)); }
+@keyframes tvFichaSai { from { opacity: 1; } to { opacity: 0; } }
+.tv-ficha-sai { animation: tvFichaSai ${FICHAS.movimento.sai}ms ease both; }
+@keyframes tvCartaoEntra { from { opacity: 0; transform: translateY(${FICHAS.movimento.subida}px); } to { opacity: 1; transform: none; } }
+.tv-cartao-entra { animation: tvCartaoEntra ${FICHAS.movimento.cartao}ms ease-out both; }
+
 /* A ORDEM É A REGRA (2/2): este @media tem de vir DEPOIS das tres
    classes acima. Uma media query nao soma especificidade nenhuma — ela
    so envolve. Quem decide o empate e a ordem, e so por estar embaixo
@@ -1874,6 +1971,11 @@ export const MOVIMENTO_CSS = `
      estado de repouso e opacity 1), o retrato ja grande. */
   .tv-fogueira-entra, .tv-fogueira-lugar, .tv-fogueira-vira { animation: none; opacity: 1; transform: none; }
   .tv-fogueira-chama, .tv-fogueira-faisca { animation: none; transform: none; opacity: 1; }
+  /* F2b · AS FICHAS prontas desde o primeiro quadro, e o cartao ja no
+     lugar; a fileira que sai pousa invisivel (o painel troca-a logo, sem
+     esperar os 120). */
+  .tv-ficha-entra, .tv-cartao-entra { animation: none; opacity: 1; transform: none; }
+  .tv-ficha-sai { animation: none; opacity: 0; }
 }
 `;
 
@@ -2247,6 +2349,23 @@ export const SUPERFICIES_CSS = `
 }
 @media (forced-colors: active) {
   .tv-esbate-topo { -webkit-mask-image: none; mask-image: none; }
+}
+/* F2b · O ESBATIMENTO, nos outros dois lados (formas.md, Fichas 1 e 5): a
+   fileira das fichas que rola de lado esbate a ponta direita (ha mais a
+   direita), e o que se sabe no cartao esbate o fundo (o que se sabe
+   continua). A mesma rampa, a mesma altura, so a direcao muda; o painel so
+   poe a classe quando ha mesmo mais para ver. Sai inteiro em alto contraste
+   pela mesma razao do de cima. */
+.tv-esbate-fim {
+  -webkit-mask-image: linear-gradient(to left, ${RAMPA_DO_ESBATIMENTO});
+  mask-image: linear-gradient(to left, ${RAMPA_DO_ESBATIMENTO});
+}
+.tv-esbate-baixo {
+  -webkit-mask-image: linear-gradient(to top, ${RAMPA_DO_ESBATIMENTO});
+  mask-image: linear-gradient(to top, ${RAMPA_DO_ESBATIMENTO});
+}
+@media (forced-colors: active) {
+  .tv-esbate-fim, .tv-esbate-baixo { -webkit-mask-image: none; mask-image: none; }
 }
 /* V5 · A PAGINA (o parchment-body do no 129:15): o enchimento e o ritmo
    entre blocos saem de PAGINA. No telefone os lados sao mais estreitos que

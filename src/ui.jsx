@@ -1259,28 +1259,52 @@ export function CampoDeBrasas({ className = "" }) {
    da casa (`tv-anel-foco`), nunca um segundo desenho de foco.
    Medidas em `VERBO_COM_PRECO` (`estilo.js`). Hoje lê-a a fogueira; a mesa
    de batalha tem o seu `Verbo` privado e o `Mapa/Partir` é a mesma anatomia:
-   no dia em que forem tocados, é esta peça que os serve. */
-export function VerboComPreco({ verbo, preco, atalho, papel = "gesto", aoTocar, className = "", style }) {
-  const armado = papel === "armado";
+   no dia em que forem tocados, é esta peça que os serve.
+
+   F2c (o cartão das fichas, `formas.md` § Fichas 3) deu-lhe mais dois:
+   · `papel="semVolta"` — o que não se desfaz: contorno `danger` de 1,5, a
+     barra de 3 à esquerda e o preço em `danger`. A PALAVRA (`é crime aqui`)
+     diz; a cor é a segunda leitura (1.4.1);
+   · `impedido` (a razão, texto) — o que não se pode agora: oco, contorno
+     TRACEJADO `lineStrong`, o verbo em `inkMeio`, a linha de baixo é o preço
+     seguido da razão (`◉ 29 · faltam ◉ 6 — a bolsa tem ◉ 23`) em `inkDim`, e
+     o atalho CALA. Continua focável e com nome (`aria-disabled`, nunca
+     `disabled`: quem navega por teclado tem de poder ler porquê), e o toque
+     não faz nada.
+   O preço passa por `TextoComMoeda`: o ◉ vira a moeda da casa. Num preço sem
+   ◉ (os da fogueira) a peça é a de ontem. */
+/* a linha de baixo: o preço, e no impedido a razão DEPOIS dele */
+const linhaDoVerbo = (preco, impedido) => (impedido ? [preco, typeof impedido === "string" ? impedido : ""].filter(Boolean).join(" · ") : preco);
+/* o nome acessível: o verbo e a linha, e o ◉ diz «moedas» */
+const nomeDoVerbo = (verbo, linha) => [verbo, linha].filter(Boolean).join(" — ").replace(/\u25C9[ \u00A0]?(\S+)/g, "$1 moedas");
+export function VerboComPreco({ verbo, preco, atalho, papel = "gesto", impedido = null, aoTocar, className = "", style }) {
+  const armado = papel === "armado" && !impedido;
+  const semVolta = papel === "semVolta" && !impedido;
   const V = VERBO_COM_PRECO;
-  const tinta = armado ? T.onAccent : T.inkDim;
-  const tecla = atalho === "↵" ? "Enter" : atalho ? String(atalho) : undefined;
+  const tintaDoAtalho = armado ? T.onAccent : T.inkDim;
+  const tinta = semVolta ? T.danger : tintaDoAtalho;
+  const linha = linhaDoVerbo(preco, impedido);
+  const tecla = impedido ? undefined : atalho === "↵" ? "Enter" : atalho ? String(atalho) : undefined;
+  const fio = semVolta ? V.fioSemVolta : 1;
   return (
-    <button type="button" onClick={aoTocar} aria-keyshortcuts={tecla}
-      aria-label={[verbo, preco].filter(Boolean).join(" — ")}
-      className={`tv-anel-foco flex items-center text-left ${className}`}
+    <button type="button" onClick={impedido ? undefined : aoTocar} aria-keyshortcuts={tecla}
+      aria-disabled={impedido ? "true" : undefined}
+      aria-label={nomeDoVerbo(verbo, linha)}
+      className={`tv-anel-foco relative flex items-center text-left ${className}`}
       style={{
         minHeight: ALVOS.piso, padding: `${V.cima}px ${V.lado}px`, gap: V.entre, borderRadius: V.raio,
-        background: armado ? T.amber : T.pagina,
-        border: `1px solid ${armado ? T.amber : T.lineStrong}`,
-        color: armado ? T.onAccent : papel === "recuo" ? T.inkMeio : T.ink,
-        cursor: "pointer", ...style,
+        background: impedido ? "transparent" : armado ? T.amber : T.pagina,
+        border: `${fio}px ${impedido ? "dashed" : "solid"} ${armado ? T.amber : semVolta ? T.danger : T.lineStrong}`,
+        color: armado ? T.onAccent : impedido || papel === "recuo" ? T.inkMeio : T.ink,
+        overflow: semVolta ? "hidden" : undefined,
+        cursor: impedido ? "default" : "pointer", ...style,
       }}>
+      {semVolta ? <span aria-hidden="true" className="absolute" style={{ left: 0, top: 0, bottom: 0, width: V.barraSemVolta, background: T.danger }} /> : null}
       <span className="flex flex-col flex-1 min-w-0" style={{ gap: V.palavras }}>
         <span className="tv-body" style={{ fontSize: TIPOS.corpo, fontWeight: 500 }}>{verbo}</span>
-        {preco ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: tinta }}>{preco}</span> : null}
+        {linha ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: tinta }}><TextoComMoeda texto={linha} /></span> : null}
       </span>
-      {atalho ? <span aria-hidden="true" className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: tinta }}>{atalho}</span> : null}
+      {atalho && !impedido ? <span aria-hidden="true" className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: tintaDoAtalho }}>{atalho}</span> : null}
     </button>
   );
 }
