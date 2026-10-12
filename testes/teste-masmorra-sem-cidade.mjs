@@ -368,7 +368,7 @@ sec("8. a fiação no App e no system (por texto)");
   t("o [ONDE ACORDO] da estrada cala lá dentro", /calaNaMasmorra\("acordo", masmorraRef\.current\)/.test(app) && /\(jornadaRef\.current && !acordoCala\)/.test(app));
   t("a cena do system passa por cenaNaMasmorra (num try que devolve a cena crua)", /try \{ return cenaNaMasmorra\(cena\); \} catch \(e\) \{ calou\("cenaNaMasmorra", e\); return cena; \}/.test(app));
   t("a ficha entra na seção MASMORRA da pauta, num try", /p = porNaPauta\(p, "masmorra", linhaDaFicha\(mapaRef\.current, masmorraRef\.current, \{ luta: !!combateRef\.current \}\)\);/.test(app));
-  t("o horizonte é a quarta ficha da mesa (e o sinal do oráculo a lê)", /hz = horizonteDaPergunta\(frase, mapaRef\.current, \{ masmorra: masmorraRef\.current, luta: !!combateRef\.current \}\);/.test(app) && app.includes("return { cidade: fc, gente: gp, mercado: mc, horizonte: hz };") && app.includes("juntarRespostas([fc, gp, mc, hz])"));
+  t("o horizonte é a quarta ficha da mesa (e o sinal do oráculo a lê)", /hz = horizonteDaPergunta\(frase, mapaRef\.current, \{ masmorra: masmorraRef\.current, luta: !!combateRef\.current \}\);/.test(app) && /* E1 (12/10): a mesa ganhou a 5.ª fonte, o preço comum (`pc`) — o horizonte segue a quarta, logo antes dela */ app.includes("return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };") && app.includes("juntarRespostas([fc, gp, mc, hz, pc])"));
   t("a porta do ermo, no system, não abre lá dentro", /\{ id: "ermo", quando: \(c\) => !c\.emMasmorra && \(!c\.emCidade \|\| !!c\.emViagem\)/.test(pr));
 }
 

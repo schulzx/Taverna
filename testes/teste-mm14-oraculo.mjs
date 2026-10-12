@@ -343,8 +343,14 @@ sec("9. a fiação no App.jsx — o sinal passa as fichas");
      com a frase (sem `presentes`: o sinal roda antes do elenco da cena ter
      sido recalculado para este turno, e fichasDaMesa sabe calcular sozinha
      quando falta). */
-  t("o App passa as fichas ao sinal: ehPerguntaAoMundo(acao, { fichas: () => fichasDaMesa(acao) })",
-    /ehPerguntaAoMundo:\s*ler\(\(\)\s*=>\s*ehPerguntaAoMundo\(acao,\s*\{\s*fichas:\s*\(\)\s*=>\s*fichasDaMesa\(acao\)\s*\}\)\)/.test(app));
+  /* E1 (12/10): o sinal lê as fichas por `fichasDoOraculo`, que é a mesma
+     fichasDaMesa com o preço comum somado à ficha do mercado (o oráculo lê
+     por chave, e "preco" não é uma das dele). A asserção move-se com o
+     motivo e continua a provar a ligação: o sinal leva as fichas da mesa. */
+  t("o App passa as fichas ao sinal: ehPerguntaAoMundo(acao, { fichas: () => fichasDoOraculo(acao) })",
+    /ehPerguntaAoMundo:\s*ler\(\(\)\s*=>\s*ehPerguntaAoMundo\(acao,\s*\{\s*fichas:\s*\(\)\s*=>\s*fichasDoOraculo\(acao\)\s*\}\)\)/.test(app));
+  t("e fichasDoOraculo parte de fichasDaMesa (a mesma mesa), com o preço na ficha do mercado",
+    /const fichasDoOraculo = \(frase = ""\) => \{\n\s*const f = fichasDaMesa\(frase\);/.test(app) && app.includes("return { ...f, mercado: { pergunta: [...(mc.pergunta || []), ...pc.pergunta]"));
   t("e fichasDaMesa existe no App, como a função que junta as três fichas",
     /const fichasDaMesa = \(frase = "", presentes = null\) => \{/.test(app));
 }

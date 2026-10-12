@@ -389,5 +389,46 @@ sec("12. a régua: as 31 invenções, contra o motor de hoje (ab-invencoes.mjs)"
   t("as 6 em que o sistema errou passam a estar certas", res && res.porOrigem.errou.tem === 6);
 }
 
+sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega chega à mesa");
+{
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const corpo = (ancora) => { const i = app.indexOf(ancora); return i < 0 ? "" : app.slice(i, i + 16000); };
+  const fichas = corpo("const fichasDaMesa = (frase = \"\", presentes = null) => {");
+  const pauta = corpo("const pautaDoTurno = (acaoDoTurno = \"\") => {");
+  t("o App importa as peças do motor (mercado, nomes, cidade-por-dentro)",
+    /import \{[^}]*\bprecoComumParaPauta\b[^}]*\bprecosDaRua\b[^}]*\} from "\.\/mercado\.js"/.test(app)
+    && /import \{[^}]*\bnomesAMao\b[^}]*\blinhaDosNomesAMao\b[^}]*\bnomesAMaoNaProsa\b[^}]*\} from "\.\/nomes\.js"/.test(app)
+    && /import \{[^}]*\bfichaDaCidade\b[^}]*\} from "\.\/cidade-por-dentro\.js"/.test(app));
+  t("o porte da terra sai da ficha da cidade (pouso.fator), num calou que devolve 1",
+    /const fatorDoPouso = \(\) => \{[^]*?f\.pouso\.fator[^]*?calou\("fatorDoPouso", e\); return 1;/.test(app));
+  t("o preço comum é a 5.ª ficha da mesa, num calou, fora da luta e numa cidade",
+    fichas.includes("pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso() }) : null;")
+    && fichas.includes('calou("precoComumParaPauta", e)')
+    && pauta.includes("juntarRespostas([fc, gp, mc, hz, pc])"));
+  t("o oráculo cala também pelo preço comum (pela ficha do mercado)",
+    app.includes("fichas: () => fichasDoOraculo(acao)") && /const fichasDoOraculo[^]*?mercado: \{ pergunta: \[\.\.\.\(mc\.pergunta \|\| \[\]\), \.\.\.pc\.pergunta\]/.test(app));
+  t("a rua entra na secção O PREÇO só com rua (cidade, sem jornada, masmorra nem luta)",
+    pauta.includes('if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso()));'));
+  t("os nomes à mão vão à secção NOMES À MÃO, com o registo, o elenco e o grupo como usados",
+    pauta.includes("...Object.values(npcsRef.current || {}), ...nomesDoElenco(), ...(p0.grupo || [])")
+    && pauta.includes('p = porNaPauta(p, "nomes", linha); nomesPendentesRef.current = { nomes, linha };'));
+  /* a prova viva (12/10) mostrou o Narrador a usar no turno 8 o nome oferecido
+     no 7, com a linha do 8 cortada pelo teto: os oferecidos ficam até a linha
+     voltar, e o usado sai da lista seguinte por estar no registo */
+  t("os nomes só contam como oferecidos se a linha chegou ao texto (o molde do QUEM É), e ficam até ela voltar",
+    app.includes("if (np && np.linha && pauta.includes(np.linha)) nomesOferecidosRef.current = np.nomes;") && !app.includes("nomesOferecidosRef.current = [];"));
+  t("ao fim do turno, o nome usado na prosa entra no registo — e morto, se a oração o pôs morto",
+    app.includes("const usados = nomesAMaoNaProsa(resp.narrativa, nomesOferecidosRef.current || []);")
+    && app.includes("...(u.morto ? { status: \"morto\" } : {})") && app.includes('calou("os nomes à mão na prosa", e)'));
+  t("os refs dos nomes vivem no turno, não no save",
+    !/nomesOferecidos\s*:/.test(app) && !/nomesPendentes\s*:/.test(app));
+  t("a ficha da cidade mede do ponto do herói (aqui: meuPonto())",
+    fichas.includes("aqui: meuPonto(),"));
+  t("a procura recebe os três do Geógrafo (coord, lugar, jornada)",
+    app.includes("coord: meuPonto(), lugar: lugarRef.current, jornada: jornadaRef.current,"));
+  t("a figura do arco entra no registo só quando a linha que a nomeia coube no texto",
+    /const confirmarCoracao = \(pauta\) => \{[^]*?if \(r\.linha && !String\(pauta \|\| ""\)\.includes\(r\.linha\)\) return;[^]*?i\.figura && i\.figura\.nome[^]*?r\.linha\.includes\(inst\.figura\.nome\)[^]*?calou\("a figura do arco no registo", e\)/.test(app));
+}
+
 console.log(`\nnarrador só narra (E1): ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
+import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao, nomesAMaoNaProsa } from "./nomes.js";
 import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
@@ -52,9 +52,9 @@ import { PainelReacao } from "./painel-reacao.jsx";
 import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, golpeFinalNaPauta } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
-import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta } from "./mercado.js";
+import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta, precosDaRua } from "./mercado.js";
 import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
-import { fichaParaPauta } from "./cidade-por-dentro.js";
+import { fichaParaPauta, fichaDaCidade } from "./cidade-por-dentro.js";
 import { genteParaPauta } from "./gente-por-dentro.js";
 /* MM14: as perguntas ao Mestre — perguntar é de graça, e as várias fichas
    juntam a resposta pela ordem em que a frase as pediu */
@@ -5836,6 +5836,11 @@ export default function Taverna() {
   const subtramasCacheRef = useRef(null);
   const coracaoRitmoRef = useRef({ ultimas: {} });
   const coracaoPendenteRef = useRef(null);
+  /* E1 (o Narrador só narra): os NOMES À MÃO do turno — os oferecidos na
+     pauta (pendentes até o texto confirmar que a linha coube) e os que de
+     facto chegaram ao Narrador. Vivem no turno: o save não muda. */
+  const nomesPendentesRef = useRef(null);
+  const nomesOferecidosRef = useRef([]);
   const coracaoFalaRef = useRef(null);
   /* R3 (v9.229): a virada MAIOR, irma da menor e com o mesmo ciclo (eleger,
      semear, regar, revelar). Mora num REF PROPRIO, e nao num campo dentro do
@@ -7111,6 +7116,17 @@ export default function Taverna() {
      (`ehPerguntaAoMundo`) tambem possa perguntar as fichas antes de rolar
      o d100. Quando `presentes` nao vem pronto (o sinal so tem a frase),
      calcula-se aqui pelo mesmo elenco da cena que `pautaDoTurno` usa. */
+  /* E1: o porte da terra em número (o `pouso.fator` da ficha da cidade) —
+     a caneca e o quarto falam da mesma terra. 1 quando não há cidade. */
+  const fatorDoPouso = () => {
+    try {
+      const cd = cidadeDoMapa(cidadeAtualRef.current);
+      if (!cd) return 1;
+      const f = fichaDaCidade(cd, { semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo() });
+      const n = Number(f && f.pouso && f.pouso.fator);
+      return Number.isFinite(n) && n > 0 ? n : 1;
+    } catch (e) { calou("fatorDoPouso", e); return 1; }
+  };
   const fichasDaMesa = (frase = "", presentes = null) => {
     if (!Array.isArray(presentes)) {
       try {
@@ -7131,6 +7147,8 @@ export default function Taverna() {
           semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico,
           genero: generoMundo(), molde: moldeMundo(), dia: diaRef.current, minuto: minutoRef.current, frase,
           nomes: nomesDaMesa, foraDeHora,
+          /* E1: "dentro dos muros" com número — do ponto do herói, não do centro */
+          aqui: meuPonto(),
         });
       }
     } catch (e) { calou("fichaParaPauta", e); }
@@ -7175,9 +7193,27 @@ export default function Taverna() {
     try {
       hz = horizonteDaPergunta(frase, mapaRef.current, { masmorra: masmorraRef.current, luta: !!combateRef.current });
     } catch (e) { calou("horizonteDaPergunta", e); }
-    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz };
+    /* E1 (o Narrador só narra): o preço COMUM perguntado (a caneca, o prato
+       quente, o pão) — a tabela pelo porte da terra. A banca não os vende e
+       a pauta ia vazia: o Mestre inventava o número. */
+    let pc = null;
+    try {
+      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso() }) : null;
+    } catch (e) { calou("precoComumParaPauta", e); }
+    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };
   };
 
+  /* E1 (o Narrador só narra): o oráculo lê as fichas por chave
+     (`A_FICHA_DECIDE`, oraculo.js) e não conhece "preco" — o preço comum é
+     do naipe do mercado, e é pela ficha do mercado que ele cala o d100 ("vendem
+     cerveja?" tem resposta na tabela). Na pauta ele é a 5.ª fonte, à parte. */
+  const fichasDoOraculo = (frase = "") => {
+    const f = fichasDaMesa(frase);
+    const pc = f && f.preco;
+    if (!pc || !(pc.pergunta || []).length) return f;
+    const mc = f.mercado || {};
+    return { ...f, mercado: { pergunta: [...(mc.pergunta || []), ...pc.pergunta], em: [...(mc.em || []), ...(pc.em || [])] } };
+  };
   const pautaDoTurno = (acaoDoTurno = "") => {
     let p = garantirPauta(null);
     cobrouAgoraRef.current = false;
@@ -7282,11 +7318,27 @@ export default function Taverna() {
     /* MM14: as tres fichas da mesa (cidade, gente, mercado), pela mesma
        frase e o mesmo elenco desta cena — agora em fichasDaMesa, para que
        o sinal do oraculo tambem consiga perguntar. */
-    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz } = fichasDaMesa(acaoDoTurno, aqui);
+    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);
     if (fc) p = porNaPauta(p, "cidade", fc.cidade);
     /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a
        frase pediu cada coisa — não pela ordem em que os módulos correram. */
-    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz]));
+    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz, pc]));
+    /* E1 (o Narrador só narra): O PREÇO da rua — a cena mostra preços sem
+       ninguém perguntar, e é melhor que os mostre certos. Só com rua. */
+    try {
+      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso()));
+    } catch (e) { calou("precosDaRua", e); }
+    /* E1: NOMES À MÃO — dois nomes livres da cultura, para o figurante que a
+       cena pede. Ninguém do registo, do elenco nem do grupo. Ficam pendentes:
+       só contam como oferecidos se a linha chegar ao texto. */
+    nomesPendentesRef.current = null;
+    try {
+      const p0 = personagemRef.current || personagem || {};
+      const usados = [...Object.values(npcsRef.current || {}), ...nomesDoElenco(), ...(p0.grupo || []), p0.nome || ""].filter(Boolean);
+      const nomes = nomesAMao({ semente: sementeMundo(), dia: diaRef.current, cidade: cidadeAtualRef.current || "", genero: generoMundo(), lex: (mundoAtual() || {}).lexico, usados });
+      const linha = linhaDosNomesAMao(nomes);
+      if (linha) { p = porNaPauta(p, "nomes", linha); nomesPendentesRef.current = { nomes, linha }; }
+    } catch (e) { calou("nomesAMao", e); nomesPendentesRef.current = null; }
     p = porNaPauta(p, "naoPode", g.naoPode);
     /* 11/10 (MM11 · 5.ª sessão, M10): a compra ou a dádiva que a frase
        declarou e o sistema não fechou — o Narrador não entrega o que a
@@ -10997,6 +11049,27 @@ export default function Taverna() {
           if (tocou) { npcsRef.current = reg; setNpcs(reg); }
         }
       }
+      /* E1 (o Narrador só narra): o NOME À MÃO que a narração usou vira
+         gente do registo — e morto, se a oração o pôs morto. Sai da lista
+         do turno seguinte por estar no registo. */
+      try {
+        /* não se limpa: o usado sai da lista seguinte por estar no registo */
+        const usados = nomesAMaoNaProsa(resp.narrativa, nomesOferecidosRef.current || []);
+        if (usados.length) {
+          let reg = npcsRef.current, tocou = false;
+          for (const u of usados) {
+            const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(u.nome).toLowerCase());
+            if (chave) {
+              if (u.morto && String(reg[chave].status || "vivo").toLowerCase() === "vivo") { if (!tocou) { reg = { ...reg }; tocou = true; } reg[chave] = { ...reg[chave], status: "morto" }; }
+              continue;
+            }
+            if (!tocou) { reg = { ...reg }; tocou = true; }
+            const nome = String(u.nome).slice(0, 40);
+            reg[nome] = criarNPC(nome, { genero: u.genero === "ela" ? "mulher" : "homem", local: cidadeAtualRef.current || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current, ...(u.morto ? { status: "morto" } : {}) });
+          }
+          if (tocou) { npcsRef.current = reg; setNpcs(reg); }
+        }
+      } catch (e) { calou("os nomes à mão na prosa", e); }
       /* ---- O PESO DO DEUS QUE ENTROU (v9.14) ----
          `presencaDoHeroi` estava escrita e testada desde a v9.8, e nunca foi
          importada: o herói virava GD 4 e ninguém na taverna sentia nada. O
@@ -12683,7 +12756,7 @@ export default function Taverna() {
     mexerNoEpisodio();
     mexerNaNoite();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
-    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
+    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = nomesPendentesRef.current; nomesPendentesRef.current = null; if (np && np.linha && pauta.includes(np.linha)) nomesOferecidosRef.current = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;
@@ -15686,7 +15759,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return ehDeclaracaoDeAtaque(acao, { nomes });
       }),
       ehDesafio: ler(() => !!veredictoDaAcao(acao)),
-      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao, { fichas: () => fichasDaMesa(acao) })),
+      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao, { fichas: () => fichasDoOraculo(acao) })),
       temMilagreArmado: !!milagreSel,
       /* v9.79: OU o texto nomeou uma habilidade que eu TENHO. É a metade
          positiva da conferência da ficha: a v9.78 passou a recusar quando
@@ -19337,6 +19410,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       lugarAtual: (lugarRef.current && lugarRef.current.nome) || "",
       mapa: mapaRef.current,
       presentes: pessoasDaCena(),
+      /* E1: os mesmos três que o Geógrafo recebe — a procura e o "não entra
+         nesta cena" dizem o mesmo número */
+      coord: meuPonto(), lugar: lugarRef.current, jornada: jornadaRef.current,
     });
     if (!r || procuraPedeDado(r)) return false;
     pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: linhaDaProcura(r) }]);
@@ -22969,6 +23045,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch (e) { calou("as sementes do elo", e); }
     if (r.linha && !String(pauta || "").includes(r.linha)) return;
     coracaoRef.current = garantirCoracaoDoSave(r.coracao);
+    /* E1 (o Narrador só narra): a figura que o arco pôs em cena tem nome
+       (`inst.figura`, subtramas.js) — e, se a linha que a nomeia coube no
+       texto, entra no registo, para o Narrador não a rebatizar depois. */
+    try {
+      const b = r.batida;
+      const inst = b ? (subtramasAgora(nucleo) || []).find((i) => i && i.nome === b.nome && i.figura && i.figura.nome) : null;
+      if (inst && r.linha && r.linha.includes(inst.figura.nome)) {
+        const fig = inst.figura;
+        const reg = npcsRef.current || {};
+        if (!Object.keys(reg).some((k) => k.toLowerCase() === String(fig.nome).toLowerCase())) {
+          const novo = { ...reg, [String(fig.nome).slice(0, 40)]: criarNPC(String(fig.nome).slice(0, 40), { papel: fig.papel || "", genero: fig.genero === "ela" ? "mulher" : "homem", local: cidadeAtualRef.current || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current }) };
+          npcsRef.current = novo; setNpcs(novo);
+        }
+      }
+    } catch (e) { calou("a figura do arco no registo", e); }
     if (r.quem) { const rt = coracaoRitmoRef.current || {}; coracaoRitmoRef.current = { ...rt, ultimas: { ...(rt.ultimas || {}), [r.quem]: pend.turno } }; }
     try { aplicarEfeitosDoCoracao(r.efeitos); } catch (e) { calou("os efeitos do coração", e); }
     try {

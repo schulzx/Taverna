@@ -454,7 +454,8 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   t("o corpo de fichasDaMesa não está vazio", fichas.length > 1500);
   t("pautaDoTurno chama fichasDaMesa com a frase do turno e quem está aqui, e destrutura as três fichas",
     /* MM17 C2: e a quarta, o horizonte (`hz`), no fim da mesma destruturação */
-    pauta.includes("const { cidade: fc, gente: gp, mercado: mc, horizonte: hz } = fichasDaMesa(acaoDoTurno, aqui);"));
+    /* E1 (12/10): e a quinta, o preço comum (`pc`), depois do horizonte */
+    pauta.includes("const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);"));
   t("nomesDaMesa existe, uma vez só, dos NPCs e do lugar — dentro de fichasDaMesa",
     fichas.includes("const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || \"\"].filter(Boolean);"));
   t("fichaParaPauta recebe os nomes da mesa e o sino fora de hora",
@@ -467,14 +468,16 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
      quando a frase pergunta por elas. A asserção continua exata — as três de
      sempre, na ordem, numa mesa só —, só que agora com a quarta no fim. */
   t("as três (fc, gp, mc) juntam-se numa mesa só, na secção \"pergunta\", de volta em pautaDoTurno (e o horizonte, hz, por último)",
-    pauta.includes('p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz]));'));
+    /* E1 (12/10): a 5.ª fonte, o preço comum (`pc`), entra depois do horizonte */
+    pauta.includes('p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz, pc]));'));
   {
     const iFc = fichas.indexOf("fc = fichaParaPauta(");
     const iGp = fichas.indexOf("gp = genteParaPauta(");
     const iMc = fichas.indexOf("mercadoParaPauta(mercadoAqui");
     /* MM17 C2: o retorno ganhou `horizonte: hz` no fim (ver acima); a ordem
        que esta asserção guarda é a mesma. */
-    const iRetorna = fichas.indexOf('return { cidade: fc, gente: gp, mercado: mc, horizonte: hz };');
+    /* E1 (12/10): e `preco: pc` depois do horizonte; a ordem guardada é a mesma */
+    const iRetorna = fichas.indexOf('return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };');
     t("a ordem no código é cidade, gente, mercado, e só então fichasDaMesa devolve a mesa",
       iFc >= 0 && iGp > iFc && iMc > iGp && iRetorna > iMc, `${iFc}/${iGp}/${iMc}/${iRetorna}`);
   }

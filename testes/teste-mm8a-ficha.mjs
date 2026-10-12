@@ -381,8 +381,9 @@ sec("10. a fiação — pautaDoTurno chama genteParaPauta de verdade");
     /* MM17 C2 (06/10): a mesa ganhou a quarta ficha, o horizonte (`hz`, só
        quando a frase pergunta por terras de além) — `gp` continua a subir
        pela mesma mesa; a asserção só aceita o quarto lugar depois de mc. */
-    /const\s*\{\s*cidade:\s*fc,\s*gente:\s*gp,\s*mercado:\s*mc,\s*horizonte:\s*hz\s*\}\s*=\s*fichasDaMesa/.test(corpo)
-    && /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc,\s*hz\]\)\)/.test(corpo));
+    /* E1 (12/10): e a quinta, o preço comum (`pc`), depois do horizonte */
+    /const\s*\{\s*cidade:\s*fc,\s*gente:\s*gp,\s*mercado:\s*mc,\s*horizonte:\s*hz,\s*preco:\s*pc\s*\}\s*=\s*fichasDaMesa/.test(corpo)
+    && /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc,\s*hz,\s*pc\]\)\)/.test(corpo));
   t("a chamada está guardada por calou (um órgão que estoura não derruba o turno) — agora dentro de fichasDaMesa", /try\s*\{[^]*?genteParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("genteParaPauta"/.test(corpoFichas));
   const iCidade = corpoFichas.indexOf("fichaParaPauta(");
   const iGente = corpoFichas.indexOf("genteParaPauta(");
