@@ -120,7 +120,16 @@ export function criaturasDoGenero(genero) {
    mandar só nome+ameaca; o resto o sistema resolve). */
 export function completarInimigo(e, nivelJogador) {
   const nome = e.nome || "Inimigo";
-  const base = [...CRIATURAS_FANTASIA, ...ARQUETIPOS].find((c) => nome.toLowerCase().includes(c.nome.toLowerCase()));
+  /* R7 (12/10): A BASE É A DE NOME MAIS LONGO QUE CASA. Com `find` na ordem
+     da lista, "lobo atroz".includes("lobo") acertava o Lobo antes: o Lobo
+     Atroz (comum, nível 3, alfa de presas longas) lutava com a ficha do
+     Lobo (fraco, nível 1). A ordem da tabela é de ameaça, não de busca — e o
+     nome mais específico é sempre o mais longo dos que cabem no nome dado.
+     Empate de comprimento fica com o primeiro da lista, como antes. */
+  const nomeMin = nome.toLowerCase();
+  const base = [...CRIATURAS_FANTASIA, ...ARQUETIPOS]
+    .filter((c) => nomeMin.includes(c.nome.toLowerCase()))
+    .reduce((melhor, c) => (!melhor || c.nome.length > melhor.nome.length ? c : melhor), null) || undefined;
   const ameaca = e.ameaca || (base ? base.ameaca : "comum");
   const nivel = e.nivel || (base ? base.nivelRef : Math.max(1, nivelJogador || 1));
   /* ---------------- O PV É SUGESTÃO, NÃO DECRETO (v9.154) ----------------

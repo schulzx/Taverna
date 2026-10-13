@@ -202,6 +202,13 @@ sec("1. NENHUM MÓDULO MUDO");
        ligou-o (as fichas no pé da página, por cima da soleira; o id da ficha
        tocada no golpe, na compra à banca e na procura; o campo `memoria` no
        save e no load; as páginas no Códice), e a entrada saiu. */
+    /* 12/10 (Retratos §12): `retratos.js` nasce no backend — o manifesto
+       das 18 feras e dos 164 heróis pintados (RETRATOS), quem recebe qual
+       pintura (retratoDe) e a conta do disco (recorteDoRetrato) — e espera
+       `rosto.jsx`, que o `aprendiz` troca na MESMA leva (a PinturaDoRetrato
+       no topo de `Rosto`, com os arquivos de public/retratos). A entrada
+       sai quando o rosto o importar. `teste-retratos.mjs` é o primeiro leitor. */
+    "retratos.js": "rosto.jsx (aprendiz, Retratos §12, 12/10)",
   };
   const mudos = [];
   for (const f of arqs) {
