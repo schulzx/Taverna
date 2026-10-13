@@ -15,9 +15,11 @@
    ============================================================ */
 import { readFileSync } from "node:fs";
 
-const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-const PAINEL = readFileSync(new URL("../src/painel-mapa-vivo.jsx", import.meta.url), "utf8");
-const FICHAS = readFileSync(new URL("../src/painel-fichas.jsx", import.meta.url), "utf8");
+/* As quebras de linha normalizam-se: um checkout com CRLF (o git archive no
+   Windows) não pode ficar vermelho por uma régua que mede o fim de linha. */
+const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const PAINEL = readFileSync(new URL("../src/painel-mapa-vivo.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const FICHAS = readFileSync(new URL("../src/painel-fichas.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
