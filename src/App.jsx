@@ -24290,12 +24290,12 @@ REGRA DESTE ENVELOPE (obrigatÃ³ria): trate o resto da minha frase normalmente â€
     const fichaElenco = Object.values(npcsRef.current || {}).find((n) => n && (n.nome || "").toLowerCase() === String(nome).toLowerCase());
     const nivelC = Math.max(1, ((p && p.nivel) || 1) - 2);
     const vidaMaxC = 10 + (nivelC - 1) * 3;
-    return {
+    const f = {
       nome, conceito: (fichaElenco && fichaElenco.papel) || "", nivel: nivelC,
       vida: vidaMaxC, vidaMax: vidaMaxC, descricao: (fichaElenco && fichaElenco.notas) || "",
       habilidades: [], semente: `npc|${nome}|${(fichaElenco && fichaElenco.papel) || ""}`,
       vinculo: VINCULO_INICIAL, marcos: [],
-    };
+    }; try { return garantirFichaCompanheiro({ ...f, genero: (fichaElenco && fichaElenco.genero) || "" }); } catch (e) { calou("a ficha do companheiro recrutado", e); return f; }
   };
 
   const notaDoRecrutamento = (comp) =>

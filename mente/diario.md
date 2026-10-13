@@ -6,6 +6,10 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## 13/10 · v9.454 · o companheiro recrutado ganha retrato no mesmo turno
+
+O coordenador, com o bastão por dez minutos. `fichaDeCompanheiro` passa a devolver a ficha por `garantirFichaCompanheiro`, com o gênero do registo, dentro de `calou`; antes, o recrutado só ganhava raça (e pintura) no load seguinte. A fiação 2 do backend (dar `genero` aos companheiros iniciais dos saves antigos no load) NÃO foi feita: mudaria a cara de quem já está a jogar. Régua em `teste-retratos.mjs`.
+
 ## 12/10 · v9.444 · a faixa recolhe na janela baixa
 
 O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) mediu 2 linhas de prosa à vista a 800×451 com a faixa e as fichas (6 sem a faixa). Decisão média, pelo número: na altura em que as fichas já tomam a página (`FICHAS.baixaAltura`), a faixa recolhe como na luta; o mapa continua pela tecla M, pela aba e pelo toque nas fichas de lugar. Uma linha no App, a régua em `teste-painel-mapa-vivo.mjs`.
