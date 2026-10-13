@@ -307,5 +307,28 @@ sec("13. Os acertos de 12/10 (aprendiz): o nome do rumo, o foco, o artigo, as qu
   t("(4) a chegada às HH:MM, a hora do relógio", /dúvida 4 da v9\.441/.test(PAINEL) && /você chega às \$\{v\.chegada\.hora\}/.test(CODIGO));
 }
 
+sec("A tela grande cabe na janela baixa (MM11 · 10.ª sessão, 13/10, foto 13)");
+{
+  /* A 800×451 a soma era 40 + 320 + 40 + 560 + 40 = 1.000 px, e o
+     justify-center com transbordo mandava 64 px da carta para a ESQUERDA,
+     onde nenhuma rolagem chega (medido numa página de prova com o painel
+     real: carta em x = −64, a caixa a rolar 856 de 792). Depois: carta
+     40..360, coluna 400..752 (352), nada a rolar de lado; a 1280×912 nada
+     muda (carta 592, coluna 560). */
+  const tela = (CODIGO.match(/export function TelaDoMapa\([\s\S]*?\n\}/) || [""])[0];
+  const C = MAPA_VIVO.coluna, K = MAPA_VIVO.carta;
+  t("os dois pisos estão em tabela (a carta e a coluna)", K.minimo === 320 && C.minimo === 320 && C.minimo < C.largura);
+  t("e o 320 escrito à mão saiu do painel", !/minWidth: 320\b/.test(tela) && /minWidth: MV\.carta\.minimo/.test(tela));
+  t("a coluna cede primeiro, de 560 ao piso dela, em % da caixa (a barra de rolagem não conta)",
+    /const larguraDaColuna = `clamp\(\$\{C\.minimo\}px, calc\(100% - \$\{C\.vao \+ MV\.carta\.minimo\}px\), \$\{C\.largura\}px\)`;/.test(tela)
+    && /width: larguraDaColuna/.test(tela));
+  t("a carta fica com o resto, e nunca mede pela viewport inteira (100vw)", /calc\(100% - \$\{C\.vao\}px - \$\{larguraDaColuna\}\)/.test(tela) && !/100vw/.test(tela));
+  t("o transbordo, se houver, vai para o lado que rola (safe center)", /justifyContent: "safe center"/.test(tela) && !/justify-center/.test(tela.slice(tela.indexOf("const larguraDaColuna"))));
+  t("a carta fica presa ao topo enquanto a coluna rola", /position: "sticky", top: MV\.carta\.margem/.test(tela));
+  /* a conta, na janela mais estreita que ainda é a tela grande (768): as
+     duas colunas nos pisos cabem */
+  t("a 768 de largura as duas cabem nos pisos", 2 * K.margem + K.minimo + C.vao + C.minimo <= MAPA_VIVO.medidas.telefoneAte);
+}
+
 console.log(`\n${bons} ok, ${maus} falha(s)`);
 if (maus) process.exit(1);

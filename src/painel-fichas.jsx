@@ -62,11 +62,11 @@
                               duas colunas. Sem ela: a Mesa (≥ 768 de largo,
                               `useMesa`) é o popover de 376; o telefone a folha.
      ofertas  = [<Oferta …/>] | null   · § Fichas 1: «Baixa com oferta: fichas
-                              e soleira numa LINHA SÓ, a oferta primeiro, rola
-                              de lado com O esbatimento». Com ofertas, a fileira
-                              desenha-as à frente das fichas, na mesma fila que
-                              rola, numa região «O que o mundo oferece agora»
-                              (a mesma etiqueta da `Soleira`). Sem teto nem
+                              e soleira numa LINHA SÓ, rola de lado com O
+                              esbatimento». Com ofertas, a fileira desenha-as
+                              DEPOIS das fichas (`FICHAS.ordemNaLinha`), na
+                              mesma fila que rola, numa região «O que o mundo
+                              oferece agora» (a mesma etiqueta da `Soleira`). Sem teto nem
                               `A dobra`: o teto da soleira poupa ALTURA, e
                               numa linha que rola de lado a altura não cresce.
                               Quem liga: na Baixa, com fichas E ofertas, o App
@@ -693,23 +693,25 @@ export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToq
       onToque={velha ? undefined : () => tocar(f)} aoTeclar={velha ? undefined : teclar(i)} />
   ));
   /* a linha só da Baixa com oferta (§1): a fila que rola leva as duas
-     regiões, a oferta primeiro; sem ofertas, a fila É o grupo, como antes */
+     regiões, NA ORDEM DA TABELA (`FICHAS.ordemNaLinha`: as fichas
+     primeiro, desde a 10.ª sessão — o porquê, com o número, mora lá); sem
+     ofertas, a fila É o grupo, como antes */
   const daOferta = (Array.isArray(ofertas) ? ofertas : []).filter(Boolean);
   const linhaSo = daOferta.length > 0;
+  const regiaoDaOferta = linhaSo ? (
+    <div key="oferta" role="region" aria-label={PALAVRAS.oferta} className="flex shrink-0 items-stretch" style={{ gap: FICHAS.vao }}>
+      {daOferta.map((o, i) => <div key={(o && o.key) || "oferta-" + i} className="shrink-0 flex items-center">{o}</div>)}
+    </div>
+  ) : null;
+  const grupoAVista = linhaSo ? <div key="fichas" role="group" aria-label={PALAVRAS.aVista} className="flex shrink-0" style={{ gap: FICHAS.vao }}>{fichas}</div> : null;
+  const regioes = { fichas: grupoAVista, oferta: regiaoDaOferta };
   return (
     <div ref={setRaiz} className="relative w-full">
       <div ref={setFila} role={linhaSo ? undefined : "group"} aria-label={linhaSo ? undefined : PALAVRAS.aVista}
         key={velha ? "sai:" + velha.chave : chave}
         className={`flex overflow-x-auto ${velha ? "tv-ficha-sai" : ""} ${haMais ? "tv-esbate-fim" : ""}`}
         style={{ gap: FICHAS.vao, padding: folgaDoAnel, margin: -folgaDoAnel, scrollbarWidth: "none" }}>
-        {linhaSo ? (
-          <>
-            <div role="region" aria-label={PALAVRAS.oferta} className="flex shrink-0 items-stretch" style={{ gap: FICHAS.vao }}>
-              {daOferta.map((o, i) => <div key={(o && o.key) || "oferta-" + i} className="shrink-0 flex items-center">{o}</div>)}
-            </div>
-            <div role="group" aria-label={PALAVRAS.aVista} className="flex shrink-0" style={{ gap: FICHAS.vao }}>{fichas}</div>
-          </>
-        ) : fichas}
+        {linhaSo ? FICHAS.ordemNaLinha.map((qual) => regioes[qual]) : fichas}
       </div>
       {fichaAberta && pos && !velha ? (() => {
         const cartao = (

@@ -345,6 +345,18 @@ sec("6. A FIAÇÃO EM src/App.jsx E NO PAINEL (texto, corpo por âncora)");
     /ESCOLHAS_DO_GOLPE_FINAL\.nao_letal\.rotulo/.test(PAINEL) && /ESCOLHAS_DO_GOLPE_FINAL\.letal\.rotulo/.test(PAINEL));
   t("o painel importa o teto da cena do próprio módulo, não um número solto",
     /TETO_DA_CENA_DO_JOGADOR/.test(PAINEL) && /from "\.\/golpe-final\.js"/.test(PAINEL));
+
+  /* MM11 · 10.ª sessão (13/10), 467×850: Poupar/Matar partiam o texto em
+     colunas. O `Botao corpo` é inline-flex, e o rótulo solto + o <span> da
+     consequência eram DOIS itens flex (medido numa página de prova com o
+     componente real: 134×92 e 90×92 a 467; 317×48 e 409×48 depois, um em
+     cada linha). O miolo passa a ser UM <span>, e a base é a largura
+     natural (flex-auto), para o flex-wrap decidir sozinho. */
+  const botoes = (PAINEL.match(/<div className="flex gap-2 flex-wrap"[\s\S]*?<\/div>/) || [""])[0];
+  t("os dois botões crescem da largura natural (flex-auto), não de zero (flex-1)",
+    (botoes.match(/<Botao corpo[^>]*className="flex-auto"/g) || []).length === 2 && !/className="flex-1"/.test(botoes));
+  t("e o miolo de cada um é UM span só — o rótulo e a consequência quebram como texto",
+    (botoes.match(/\)\}>\s*<span style=\{\{ textAlign: "center" \}\}>\{ESCOLHAS_DO_GOLPE_FINAL\.(nao_letal|letal)\.rotulo\}\{"\\u00a0"\}<span style=\{\{ opacity: 0\.75 \}\}>— [^<]+<\/span><\/span>\s*<\/Botao>/g) || []).length === 2);
 }
 
 sec("7. O GOLPE FINAL É DO GRUPO (MM3b) — quedasComEscolhaNaRodada, o passeio seco");

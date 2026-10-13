@@ -241,10 +241,22 @@ sec("11. Os acertos de 12/10 (aprendiz): a fera pintada, a linha só da Baixa, o
   t("a hostil pintada leva a presa, como a de pata", /if \(fera\) \{[\s\S]*?hostil \? <Presa lado=\{grande\} \/> : null/.test(marca));
   t("a pergunta à tabela não custa a ficha (try)", /function feraPintada\(f\) \{[\s\S]*?try \{[\s\S]*?retratoDe\(ente, null\)[\s\S]*?catch/.test(CODIGO));
 
-  /* a Baixa com oferta: numa linha só, a oferta primeiro (§1) */
+  /* a Baixa com oferta: numa linha só (§1) */
   const fileira = (CODIGO.match(/export function FileiraAVista\([\s\S]*?\n\}/) || [""])[0];
   t("a fileira recebe `ofertas`", /ofertas = null \}\) \{/.test(fileira));
-  t("com ofertas, a região delas vem ANTES do grupo das fichas, na mesma fila", /role="region" aria-label=\{PALAVRAS\.oferta\}[\s\S]*?role="group" aria-label=\{PALAVRAS\.aVista\}/.test(fileira));
+  /* MOVIDA (13/10, MM11 · 10.ª sessão): esta asserção dizia «a região da
+     oferta vem ANTES do grupo das fichas». A 800×451 a oferta à largura
+     natural pôs as fichas a x ≈ 1.900 de 2.663 px — fora da vista —, e as
+     fichas foram o atalho de 14 ações contra 4 do «Aceitar». A ordem passa a
+     ser da TABELA (`FICHAS.ordemNaLinha`), e a tabela põe as fichas primeiro.
+     O que a asserção guardava e continua a valer: as duas regiões, com as
+     duas etiquetas, na MESMA fila que rola. */
+  t("com ofertas, as duas regiões (oferta e «À vista») vão na mesma fila",
+    /role="region" aria-label=\{PALAVRAS\.oferta\}/.test(fileira) && /role="group" aria-label=\{PALAVRAS\.aVista\}/.test(fileira));
+  t("a ordem delas é a da tabela, e a tabela põe as FICHAS primeiro",
+    /linhaSo \? FICHAS\.ordemNaLinha\.map\(\(qual\) => regioes\[qual\]\)/.test(fileira)
+    && JSON.stringify(FICHAS.ordemNaLinha) === JSON.stringify(["fichas", "oferta"]));
+  t("e cada região tem a sua chave (a ordem troca sem remontar as fichas)", /key="oferta" role="region"/.test(fileira) && /key="fichas" role="group"/.test(fileira));
   t("a fila que rola é uma só, com o esbatimento", (fileira.match(/overflow-x-auto/g) || []).length === 1 && /tv-esbate-fim/.test(fileira));
   t("sem ofertas, a fila É o grupo «À vista», como antes", /role=\{linhaSo \? undefined : "group"\} aria-label=\{linhaSo \? undefined : PALAVRAS\.aVista\}/.test(fileira));
   t("a etiqueta é a mesma da Soleira", /aria-label="O que o mundo oferece agora"/.test(UI) && /oferta: "O que o mundo oferece agora"/.test(PAINEL));

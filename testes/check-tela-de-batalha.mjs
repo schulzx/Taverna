@@ -535,6 +535,28 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
     /const CORTE_CURTO = `\(max-height: \$\{M\.patamares\.curto - 1\}px\)`;/.test(cruTela)
     && /const CORTE_BAIXO = `\(max-height: \$\{M\.patamares\.baixo - 1\}px\)`;/.test(cruTela)
     && MESA_DE_BATALHA.patamares.curto > MESA_DE_BATALHA.patamares.baixo);
+  /* O TERCEIRO PATAMAR, a janela baixa (MM11 · 10.ª sessão, 13/10): a
+     800×451 o campo cedia até 87 px (medido numa página de prova com a tela
+     real: o cabeçalho, o pé e meia fila de casas) e Mover não tinha onde
+     tocar. Abaixo de 560 a janela do campo tem altura própria — 7 casas no
+     piso do monitor (224 px, medido 224) —, a página da luta rola (693 de
+     451), a coluna da direita não lhe dá altura, e armar um verbo traz o
+     campo à vista (medido: do campo em y −124 a y 0 ao tocar Mover). */
+  t("a janela baixa é o terceiro patamar, da tabela, abaixo do baixo",
+    /const CORTE_JANELA_BAIXA = `\(max-height: \$\{M\.patamares\.janelaBaixa - 1\}px\)`;/.test(cruTela)
+    && MESA_DE_BATALHA.patamares.baixo > MESA_DE_BATALHA.patamares.janelaBaixa
+    && /const janelaBaixa = usarMidia\(CORTE_JANELA_BAIXA\) && !noTelefone;/.test(TEL));
+  t("na janela baixa a janela do campo tem altura própria (casas × piso do monitor), que não depende do tabuleiro",
+    /const alturaDaJanelaNaBaixa = M\.casaMinimaNoMonitor \* M\.janelaBaixa\.casas;/.test(TEL)
+    && /style=\{janelaBaixa \? \{ flex: "0 0 auto", height: alturaDaJanelaNaBaixa \} : \{ minHeight: ALVOS\.piso \* M\.janelaMinima \}\}/.test(TEL)
+    && MESA_DE_BATALHA.casaMinimaNoMonitor * MESA_DE_BATALHA.janelaBaixa.casas >= ALVOS.piso * MESA_DE_BATALHA.janelaMinima);
+  t("e é a página da luta que rola, com a coluna fora da conta da altura",
+    /janelaBaixa \? "overflow-y-auto tv-scroll" : "overflow-hidden"/.test(TEL)
+    && /flex: janelaBaixa \? "1 0 auto" : undefined/.test(TEL)
+    && /contain: janelaBaixa \? "size" : undefined/.test(TEL));
+  t("armar um verbo na janela baixa traz o campo à vista (e nunca custa o turno)",
+    /if \(!armado \|\| !janelaBaixa\) return;\s*try \{ if \(campoRef\.current && campoRef\.current\.scrollIntoView\) campoRef\.current\.scrollIntoView\(\{ block: "nearest" \}\); \}/.test(TEL)
+    && /<section ref=\{campoRef\}/.test(TEL));
   /* A COLUNA CABE INTEIRA: NESTA BATALHA cede e rola por dentro, o foco
      da escolha só aparece se couber inteiro (a altura dele é soma da
      tabela que o desenha), e o rastro mora na sobra. */

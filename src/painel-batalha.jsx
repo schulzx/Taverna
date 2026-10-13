@@ -92,6 +92,13 @@ const CORTE_DO_TELEFONE = "(max-width: 767px)";
 const CORTE_ESTREITO = "(max-width: 1439px)";
 const CORTE_CURTO = `(max-height: ${M.patamares.curto - 1}px)`;
 const CORTE_BAIXO = `(max-height: ${M.patamares.baixo - 1}px)`;
+/* MM11 · 10.ª sessão (13/10): o TERCEIRO patamar, a janela baixa (800×451).
+   Ali a mesa ainda cabia por obrigação, e quem cedia era o campo — por
+   último, como B1b manda —, até a 72 px: o cabeçalho dele e meia fila de
+   casas. Mover pede uma casa tocada, e não havia casa onde tocar. Abaixo
+   deste corte o campo deixa de ceder: tem altura própria (ver `M.janelaBaixa`)
+   e é a PÁGINA da luta que rola. */
+const CORTE_JANELA_BAIXA = `(max-height: ${M.patamares.janelaBaixa - 1}px)`;
 function usarMidia(consulta) {
   const [casa, setCasa] = React.useState(false);
   React.useEffect(() => {
@@ -866,6 +873,7 @@ export function TelaDeBatalha(props) {
   const estreito = usarMidia(CORTE_ESTREITO);
   const curto = usarMidia(CORTE_CURTO) && !noTelefone;
   const baixo = usarMidia(CORTE_BAIXO) && !noTelefone;
+  const janelaBaixa = usarMidia(CORTE_JANELA_BAIXA) && !noTelefone;
   const [armado, setArmado] = React.useState("");
   const [bolsaAberta, setBolsaAberta] = React.useState(false);
   /* o turno atual e NESTA BATALHA abertos por cima do campo — só no
@@ -913,6 +921,19 @@ export function TelaDeBatalha(props) {
     window.addEventListener("keydown", ouve);
     return () => window.removeEventListener("keydown", ouve);
   }, [armado]);
+
+  /* NA JANELA BAIXA, ARMAR TRAZ O CAMPO À VISTA. A página da luta rola ali,
+     e a fileira dos verbos mora por baixo do campo: quem toca Mover está a
+     olhar para os verbos, com o campo meio fora do ecrã por cima. O verbo
+     armado pede uma casa — então a casa vem até ao dedo (`nearest`: se o
+     campo já está inteiro à vista, nada se move). Só a janela baixa: nas
+     outras o campo já está sempre à vista. */
+  const campoRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!armado || !janelaBaixa) return;
+    try { if (campoRef.current && campoRef.current.scrollIntoView) campoRef.current.scrollIntoView({ block: "nearest" }); }
+    catch (e) { console.warn("TelaDeBatalha: trazer o campo à vista falhou", e); }
+  }, [armado, janelaBaixa]);
 
   /* a ficha aberta por cima do campo fecha por toque no fundo, pelo botão
      e por `Esc` — as três portas de saída de um véu (R21) */
@@ -1255,9 +1276,17 @@ export function TelaDeBatalha(props) {
      O CAMPO DE BATALHA — a arena do quadro
      ============================================================ */
   const alturaDoCabecalhoDoCampo = baixo ? M.aperto.arenaCabecalho : M.arenaCabecalho;
+  /* na janela baixa a JANELA do campo tem altura PRÓPRIA — fixa,
+     `M.janelaBaixa.casas` casas no piso do monitor —, e a secção mede o que
+     leva dentro (o cabeçalho, a janela, o pé com a legenda). Nada disto
+     depende do tabuleiro: medir e redesenhar continuam a não se perseguir.
+     (Fixar a secção inteira não chegava: o pé cresce com a legenda do
+     passo, e medido a 800 × 451 comia 49 px à janela — 5,5 casas em vez
+     de 7.) */
+  const alturaDaJanelaNaBaixa = M.casaMinimaNoMonitor * M.janelaBaixa.casas;
   const campo = (
-    <section className="tv-mesa-arena flex flex-col min-h-0 min-w-0 w-full overflow-hidden"
-      style={{ flex: "1 1 auto", order: 1, borderRadius: M.raio, background: T.pagina, border: `1px solid ${T.line}` }}>
+    <section ref={campoRef} className="tv-mesa-arena flex flex-col min-h-0 min-w-0 w-full overflow-hidden"
+      style={{ flex: janelaBaixa ? "0 0 auto" : "1 1 auto", order: 1, borderRadius: M.raio, background: T.pagina, border: `1px solid ${T.line}` }}>
       {!noTelefone && (
         <div className="flex items-center justify-between shrink-0 min-w-0"
           style={{ minHeight: alturaDoCabecalhoDoCampo, padding: `0 ${M.arenaLado}px`, background: T.panel, gap: M.chipLadoX }}>
@@ -1292,7 +1321,7 @@ export function TelaDeBatalha(props) {
           que existe no telefone, onde não há `Esc`. Vive aqui e não na
           casa porque a casa fora do alcance não tem ouvinte nenhum. */}
       <div ref={janelaRef} className="flex-1 min-h-0 min-w-0 overflow-auto tv-scroll"
-        style={{ minHeight: ALVOS.piso * M.janelaMinima }}
+        style={janelaBaixa ? { flex: "0 0 auto", height: alturaDaJanelaNaBaixa } : { minHeight: ALVOS.piso * M.janelaMinima }}
         onPointerDown={() => setArmado("")}>
         <GridDeBatalha combate={combate} grupo={grupo} heroiFicha={personagem}
           previsao={p.previsao} passoM={p.passoM} passoTotal={p.passoTotal}
@@ -1451,8 +1480,12 @@ export function TelaDeBatalha(props) {
        de quem cede é esta: o foco, depois o rastro, e só então a lista de
        quem está nesta batalha. A rolagem da própria coluna fica como rede,
        para uma janela mais baixa do que qualquer patamar. */
+    /* na janela baixa a coluna NÃO dá altura à página (`contain: size`):
+       quem a dá é o campo e a ação; a coluna estica até lá e rola por
+       dentro, como sempre — senão o rastro inteiro dos dados esticava a
+       página da luta. */
     <aside className="flex flex-col min-h-0 min-w-0 shrink-0 overflow-y-auto tv-scroll"
-      style={{ width: M.lateral, gap: baixo ? M.aperto.entrePaineis : M.entrePaineis }}>
+      style={{ width: M.lateral, gap: baixo ? M.aperto.entrePaineis : M.entrePaineis, contain: janelaBaixa ? "size" : undefined }}>
       {consulta}
       <div ref={setSobraEl} className="flex flex-col min-h-0 overflow-hidden" style={{ flex: "1 1 0", gap: baixo ? M.aperto.entrePaineis : M.entrePaineis }}>
         {!p.fim && alturaDaSobra >= ALTURA_DO_FOCO && <FocoDaEscolha />}
@@ -1464,7 +1497,7 @@ export function TelaDeBatalha(props) {
   );
 
   return (
-    <div className="flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden" style={{ background: T.bg }}>
+    <div className={`flex-1 min-h-0 min-w-0 flex flex-col ${janelaBaixa ? "overflow-y-auto tv-scroll" : "overflow-hidden"}`} style={{ background: T.bg }}>
       {cena}
       {/* DUAS COLUNAS no monitor: o campo e a ação à esquerda, a consulta à
           direita. No telefone, uma — o campo, a tira, a ação, nesta ordem
@@ -1472,7 +1505,7 @@ export function TelaDeBatalha(props) {
           para a tira poder morar entre as duas metades dela. A ordem do DOM
           continua a ser a do turno: campo → veredito → verbos. */}
       <div className="flex-1 min-h-0 min-w-0 flex flex-col md:flex-row"
-        style={{ gap: noTelefone ? M.entreVerbos : estreito ? M.margemNoTelefone : M.entreColunas, padding: noTelefone ? `0 ${margem}px ${margem}px` : curto ? `0 ${margem}px ${M.margemNoTelefone}px` : `${M.mesaTopo}px ${margem}px ${M.mesaBaixo}px` }}>
+        style={{ flex: janelaBaixa ? "1 0 auto" : undefined, gap: noTelefone ? M.entreVerbos : estreito ? M.margemNoTelefone : M.entreColunas, padding: noTelefone ? `0 ${margem}px ${margem}px` : curto ? `0 ${margem}px ${M.margemNoTelefone}px` : `${M.mesaTopo}px ${margem}px ${M.mesaBaixo}px` }}>
         <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", gap: curto ? M.chipLadoX : M.entrePaineis }}>
           {campo}
           {acaoDoFim || acao}

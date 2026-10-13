@@ -1255,7 +1255,20 @@ export const MESA_DE_BATALHA = {
        é este patamar que faz o tabuleiro caber inteiro.
      Abaixo disso (1366 × 657) o deserto já não cabe a 32 com barra de ação
      nenhuma, e é a janela que rola, centrada no herói. */
-  patamares: { curto: 1000, baixo: 860 },
+  /* · JANELA BAIXA (< 560, MM11 · 10.ª sessão, 13/10) — a mesma régua da
+       Baixa das fichas (`FICHAS.baixaAltura`): o notebook baixo da mesa,
+       800 × 451. Com todos os apertos de cima, o campo ficava com 72 px (o
+       cabeçalho e meia fila) e Mover não tinha casa onde tocar. Aqui o campo
+       deixa de ceder e a página da luta rola (ver `janelaBaixa`). */
+  patamares: { curto: 1000, baixo: 860, janelaBaixa: 560 },
+  /* QUANTAS CASAS O CAMPO GUARDA NA JANELA BAIXA: 7, no piso do monitor (32)
+     = 224 px de chão. O herói ao meio e 3 casas para cada lado: 4,5 m, o
+     passo de quem já andou metade, e a casa do inimigo corpo a corpo com
+     folga. É a JANELA que tem esta altura (o pé cresce com a legenda do
+     passo, e não lha pode comer). Medido a 800 × 451 numa página de prova
+     com a tela real: janela 224, campo 329 (antes: 87, com ≈ 31 px de chão),
+     a página da luta rola 242 px, e tocar Mover traz o campo de y −124 a 0. */
+  janelaBaixa: { casas: 7 },
   /* o que muda no patamar BAIXO. O resto do aperto (o cabeçalho e a ação
      no patamar CURTO) reusa números que a tabela já tem. */
   aperto: {
@@ -1581,6 +1594,19 @@ export const FICHAS = {
 
   pe: { cima: PE_DA_PAGINA.cima, baixo: PE_DA_PAGINA.baixo },
   baixaAltura: 560,
+  /* A ORDEM DA LINHA SÓ (Baixa com oferta, §1). Nasceu «a oferta primeiro»;
+     a 10.ª sessão de prova (MM11, 13/10) mediu-a a 800×451: a oferta à
+     largura natural (o verbo, quem/onde, o preço, a janela) empurrava as
+     fichas para x ≈ 1.900 de 2.663 px — fora da vista, sem sinal de que
+     existiam. E as fichas são o atalho mais usado da tela: 14 ações por
+     ficha contra 4 por «Aceitar» na mesma sessão (3,5 ×). Com as fichas
+     primeiro, elas começam em x = 0 (as quatro cabem em ≤ 4 × 240 + 3 × 8),
+     e a oferta abre logo a seguir, com o verbo dela à esquerda da região —
+     a uma ficha ou duas de distância, e não a um ecrã e meio. Medido a
+     800 × 451 com o painel real, três fichas e a oferta da sessão: o grupo
+     das fichas de x = 893 (fila útil 46..754) para x = 50; a oferta começa
+     em x = 479, ainda à vista. */
+  ordemNaLinha: ["fichas", "oferta"],
 
   /* §7 — a ficha entra em `tv-fade` de 160 com 40 de escalonado (≤ 280) e sai
      em 120; o cartão entra em 160 com 4 px de subida */
@@ -1752,6 +1778,10 @@ export const MAPA_VIVO = {
   /* A TELA GRANDE (mesa 1600×1000), `167:299` */
   carta: {
     lado: 920, rebordo: 30, margem: 40,
+    /* o piso da carta na tela grande (era o 320 escrito à mão no painel): a
+       tela grande só existe de 768 para cima, e 40 + 320 + 40 + 320 + 40 =
+       760 cabe — a carta e a coluna, cada uma no seu piso (MM11 · 10.ª, 800×451) */
+    minimo: 320,
     rosa: { lado: 40, dentro: 16 },
     regua: { x: 20, y: 20, barra: 5, segmentos: 4 },
     feixe: { altura: 90, largura: 6, fio: 1.5 },
@@ -1764,6 +1794,9 @@ export const MAPA_VIVO = {
   },
   coluna: {
     largura: 560, vao: 40, titulo: 38, relogio: 15,
+    /* a coluna cede ANTES da carta, de 560 até aqui (o cartão do lugar tem 28
+       de enchimento: 264 de texto, o verbo com o preço numa linha) */
+    minimo: 320,
     onde: { altura: 58, raio: 12, lado: 14, entre: 12 },
     cartao: { raio: 16, enchimento: 28, entre: 18, medalhao: 56, glifo: 28, fio: 1.5, titulo: 30, tituloAltura: 1.05, sub: 14, selo: 26, seloRaio: 12, seloLado: 10, rotulo: 12, rastreio: 0.12, quem: 16, preco: 14, perto: 15, dizem: 19, entreLinhas: 6 },
     /* a legenda (`165:58`): linhas de 32 com 6 entre elas; em cima 6, porque

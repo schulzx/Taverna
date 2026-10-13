@@ -10722,6 +10722,19 @@ cortado sem o troll e o tabuleiro mostrava 4 das 14 linhas. **A emenda a B1:**
   sai de vista (a 1440×789 faltam 21 px). Uma régua presa ao topo é peça nova —
   é do `desenho` (B4 na pauta).
 
+### B1c · a janela baixa (13/10, `aprendiz`, da 10.ª sessão)
+
+A 800 × 451 «quem cede é o tabuleiro, por último» levava-o a **87 px** (≈ 31 de chão): **Mover não
+tinha casa**. Um terceiro patamar, `patamares.janelaBaixa` (< 560, a régua da Baixa das fichas): a
+**janela do campo tem altura própria**, `janelaBaixa.casas` (7) × a casa de rato (32) = **224**, e
+**é a página da luta que rola** (a 800 × 451, 242 px); a coluna da direita não dá altura à página
+(`contain: size`) e rola por dentro; **armar um verbo traz o campo à vista** (`nearest`; medido:
+de y −124 a 0 ao tocar Mover). Acima de 560 nada muda.
+
+**E o cartão do golpe final** (Poupar · Matar): o miolo do botão é **um texto só** e a base é a
+largura natural (`flex-auto`) — a 467 os dois partiam-se em colunas (134 × 92 e 90 × 92); agora
+cada um numa linha (409 × 48), lado a lado quando cabem.
+
 ---
 
 ## Mapa · o mapa vivo da região (MM17) — `desenho`, 10/10, com o `jogo`
@@ -10992,6 +11005,15 @@ O mais simples e coerente com a casa, cada uma escrita onde mora no código:
 E os dois defeitos da prova viva: **o nome do rumo não sai da faixa** (encosta a
 `horizonte.borda` = 16, o lado da descida; era «EIRAS QUEBRADAS»), e **a tela grande
 devolve o foco** a quem o tinha ao fechar (WAI-ARIA APG, *Dialog (Modal)*).
+
+### 12 · A tela grande na janela baixa (`aprendiz`, 13/10, da 10.ª sessão)
+
+A 800 × 451 a soma das duas colunas dava **1.000 px** (40 + 320 + 40 + 560 + 40) e o centrar com
+transbordo mandava **64 px da carta para a esquerda**, onde não se rola. Agora a **coluna cede
+primeiro** (560 → `coluna.minimo` 320), depois a carta (até `carta.minimo` 320, que era um literal
+no painel); as contas são em % da caixa (a barra de rolagem não conta); o transbordo, se o houver, é
+`safe center`; e a carta fica **presa ao topo** (`sticky`) enquanto a coluna rola. Medido: carta
+40..360 e coluna 352, sem rolar de lado; a 1280 × 912 **nada muda** (592 · 560).
 
 ## A1 · a informação que chega ao jogador
 
@@ -12356,3 +12378,12 @@ chega a ele fora de cena). Em `pauta-desenho.md`, *Para a pessoa decidir*.
   monta o texto em `tocarFicha` e guarda `nomes` no registo do toque.
 - **A fera pintada** mostra a pintura no recorte de cartão; a pata fica para quem não tem
   (§ Retratos 14).
+
+### 13 · Os acertos de 13/10 (`aprendiz`, da 10.ª sessão de prova)
+
+- **A linha só da Baixa troca de ordem: as fichas primeiro** (`FICHAS.ordemNaLinha`). «A oferta
+  primeiro» (§1, §12) foi medida a 800 × 451 com a oferta da sessão à largura natural: as fichas
+  ficavam a **x ≈ 1.900 de 2.663** (na página de prova, x = 893 numa fila útil de 46..754) — fora
+  da vista. E na sessão as fichas deram **14 ações contra 4** do «Aceitar». Agora o grupo começa em
+  **x = 50** e a oferta em **x = 479**, ainda à vista. **Para o `desenho` confirmar** (a decisão foi
+  minha, com o número, por ordem do `regente`); voltar é trocar a tabela.

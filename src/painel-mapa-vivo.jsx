@@ -965,14 +965,32 @@ export function TelaDoMapa({ dados, estadoDaPartida = null, chegada = null, tele
     );
   }
 
+  /* AS DUAS COLUNAS CABEM NA JANELA (MM11 · 10.ª sessão, foto 13). A carta
+     pedia `100vw − (560 + 40 + 80)` e tinha piso de 320, a coluna era
+     rígida em 560: a 800×451 a soma dava 40 + 320 + 40 + 560 + 40 = 1.000 px
+     numa janela de 800, e o `justify-center` com transbordo centrava o
+     excesso — 100 px da carta saíam pela ESQUERDA, onde nenhuma rolagem
+     chega, e o cartão do lugar saía pela direita. Agora:
+       · a COLUNA cede primeiro, de 560 até ao piso dela (`coluna.minimo`),
+         e só depois a carta, até ao piso dela (`carta.minimo`);
+       · as contas são em % da caixa (a largura útil, sem a barra de
+         rolagem), não em `vw`, que conta a barra;
+       · `safe center`: se ainda assim faltar (abaixo dos 768 é o telefone,
+         que tem a sua forma), o excesso vai para a direita, que rola;
+       · a carta fica PRESA no topo (`sticky`) enquanto a coluna, mais alta
+         que a janela baixa, rola — o lugar que se lê fica ao lado do mapa.
+     Medido a 800×451 com o painel real: carta 40..360, coluna 400..752
+     (352), nada a rolar de lado — antes, carta em x = −64 e a caixa a rolar
+     856 de 792. A 1280×912 nada muda (carta 592, coluna 560). */
+  const larguraDaColuna = `clamp(${C.minimo}px, calc(100% - ${C.vao + MV.carta.minimo}px), ${C.largura}px)`;
   return (
     <div ref={raiz} tabIndex={-1} onKeyDown={aoTeclar} role="dialog" aria-modal="true" aria-label={`Mapa de ${titulo}`}
       className="fixed inset-0 z-50 overflow-auto tv-scroll" style={{ background: MV.moldura, outline: "none" }}>
-      <div className="flex items-start justify-center" style={{ padding: MV.carta.margem, gap: C.vao, minHeight: "100%" }}>
-        <div className="shrink" style={{ width: `min(${MV.carta.lado}px, calc(100vh - ${2 * MV.carta.margem}px), calc(100vw - ${C.largura + C.vao + 2 * MV.carta.margem}px))`, minWidth: 320 }}>
+      <div className="flex items-start" style={{ padding: MV.carta.margem, gap: C.vao, minHeight: "100%", justifyContent: "safe center" }}>
+        <div className="shrink" style={{ width: `min(${MV.carta.lado}px, calc(100vh - ${2 * MV.carta.margem}px), calc(100% - ${C.vao}px - ${larguraDaColuna}))`, minWidth: MV.carta.minimo, position: "sticky", top: MV.carta.margem }}>
           <Carta dados={dados} telefone={false} selecionado={selecionado} aoSelecionar={setSelecionado} alvoId={alvoId} />
         </div>
-        <div className="flex flex-col shrink-0" style={{ width: C.largura, gap: 16 }}>
+        <div className="flex flex-col shrink-0" style={{ width: larguraDaColuna, gap: 16 }}>
           <div className="flex items-start" style={{ gap: 16 }}>
             <div className="flex flex-col flex-1 min-w-0" style={{ gap: 4 }}>
               <h2 className="tv-display" style={{ fontSize: C.titulo, lineHeight: 1.2, fontWeight: 600, color: MV.tinta, margin: 0 }}>{titulo}</h2>

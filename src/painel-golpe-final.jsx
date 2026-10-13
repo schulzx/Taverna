@@ -109,12 +109,24 @@ export function PainelGolpeFinal({
         {comoFez.length}/{TETO_DA_CENA_DO_JOGADOR}
       </div>
 
+      {/* OS DOIS BOTÕES QUEBRAM COMO TEXTO, NUNCA EM COLUNAS (MM11 · 10.ª
+          sessão, 467×850). O `Botao corpo` é `inline-flex`: o rótulo solto e
+          o <span> da consequência eram DOIS itens flex, cada um encolhia para
+          o seu lado e a frase partia-se em duas colunas — e o espaço entre
+          eles morria («Poupar— cai…», visível até no monitor). Agora o miolo
+          é UM <span> só, e quebra como prosa; o «—» cola-se ao rótulo por um
+          espaço que não parte. E a base é a LARGURA NATURAL (`flex: 1 1 auto`,
+          não `flex-1`, cuja base é 0): é o `flex-wrap` que decide, como na
+          oferta (R5d) — os dois cabem lado a lado no cartão de 560 (≈ 265 +
+          243 + 8 = 516 de 534 úteis), e no telefone (≈ 409 úteis) cada um
+          desce para a sua linha, inteiro e numa linha só. Alvo: o piso da
+          casa (`ALVOS.piso`, 48), que o `Botao corpo` já garante. */}
       <div className="flex gap-2 flex-wrap" style={{ marginTop: 8 }}>
-        <Botao corpo primario className="flex-1" onClick={() => escolher(ESCOLHAS_DO_GOLPE_FINAL.nao_letal.id)}>
-          {ESCOLHAS_DO_GOLPE_FINAL.nao_letal.rotulo} <span style={{ opacity: 0.75 }}>— cai desacordado, vivo</span>
+        <Botao corpo primario className="flex-auto" onClick={() => escolher(ESCOLHAS_DO_GOLPE_FINAL.nao_letal.id)}>
+          <span style={{ textAlign: "center" }}>{ESCOLHAS_DO_GOLPE_FINAL.nao_letal.rotulo}{"\u00a0"}<span style={{ opacity: 0.75 }}>— cai desacordado, vivo</span></span>
         </Botao>
-        <Botao corpo className="flex-1" onClick={() => escolher(ESCOLHAS_DO_GOLPE_FINAL.letal.id)}>
-          {ESCOLHAS_DO_GOLPE_FINAL.letal.rotulo} <span style={{ opacity: 0.75 }}>— não se levanta mais</span>
+        <Botao corpo className="flex-auto" onClick={() => escolher(ESCOLHAS_DO_GOLPE_FINAL.letal.id)}>
+          <span style={{ textAlign: "center" }}>{ESCOLHAS_DO_GOLPE_FINAL.letal.rotulo}{"\u00a0"}<span style={{ opacity: 0.75 }}>— não se levanta mais</span></span>
         </Botao>
       </div>
 
