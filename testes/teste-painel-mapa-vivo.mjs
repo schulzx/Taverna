@@ -55,7 +55,14 @@ function mundo(i) {
   const semente = sementeDe(i), genero = generoDe(i), estrutura = ESTRUTURAS[i % ESTRUTURAS.length].id;
   const mapa = R.mapaDaCampanhaNova(R.mapaDaCriacao({ semente, molde, genero, estrutura, modo: "historia" }));
   const e0 = estenderEspinha({ semente, mapa, genero, molde, estrutura, cidadeInicial: mapa.cidades[0].nome });
-  const espinha = R.espinhaNaRegiao(mapa, e0, { semente, genero, molde });
+  const espinha0 = R.espinhaNaRegiao(mapa, e0, { semente, genero, molde });
+  /* S10a (13/10) — MOTIVO DA MUDANÇA: a faixa do Figma foi desenhada com o
+     feixe no GANCHO (a Muralha, o ato seguinte). Desde a S10a o feixe aponta
+     primeiro o marco de pé do ato de agora, e na semente 0 ele mora na base,
+     onde o herói está (feixe nenhum). Os números do Figma continuam a valer
+     para o caso que eles desenham: o ato 0 cumprido, a frente a cair no
+     gancho. A regra nova prova-se em teste-mapa-vivo.mjs (secção 13). */
+  const espinha = { ...espinha0, atos: espinha0.atos.map((a, k) => (k === 0 ? { ...a, marcos: a.marcos.map((m) => ({ ...m, feito: true })) } : a)) };
   const estado = { cidadeAtual: mapa.cidades[0].nome, espinha, etapa: 0, dia: 1, minuto: 480, semente };
   return { mapa, estado, dados: MVM.dadosDoMapaVivo(mapa, estado) };
 }

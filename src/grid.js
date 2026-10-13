@@ -960,33 +960,135 @@ export function deslocarForcado(grade, ent, direcao, casas, opcoes) {
 
 /* ---------------- POSICIONAR ----------------
    Herói e grupo de um lado, inimigos do outro — a distância inicial é o
-   que dá sentido ao primeiro turno. Bicho ágil começa no meio pelo mesmo
-   motivo de sempre: ele é rápido, e o sistema deve mostrar isso antes de
-   o jogador descobrir apanhando. */
-export function posicionar(grade, { heroi, grupo = [], inimigos = [] }) {
+   que dá sentido ao primeiro turno. Bicho ágil começa mais perto pelo
+   mesmo motivo de sempre: ele é rápido, e o sistema deve mostrar isso
+   antes de o jogador descobrir apanhando.
+
+   A DISTÂNCIA SAI DA SITUAÇÃO (S10b, 13/10 — a 10.ª sessão de prova). Até
+   aqui o herói nascia na última fila e o inimigo na fila 0: na planta
+   `estrada` (18 × 12), 11 casas — 16,5 m —, com a prosa a dizer «aos seus
+   pés». E em todas as dez plantas a abertura ficava entre 12 e 25,5 m (o
+   achado X1, testes/acoes-do-jogador.mjs): o golpe corpo a corpo nunca
+   alcançava no turno 1. A distância passa a ser da CENA, em casas entre as
+   caixas mais próximas (`distanciaQuadrados`), por esta tabela:
+
+     · `declarada` — o herói investe contra quem está à frente: o alvo
+       (o primeiro inimigo) colado, corpo a corpo, ou a um passo;
+     · `encontro`  — o encontro na estrada, na rua, no mato: perto, à
+       distância de uma conversa que azedou;
+     · `emboscada` — saem da vala, de trás da carroça: perto também;
+     · `masmorra`  — a porta da sala: a sala é o que separa, e o
+       corredor estreito (7 casas de largo) não aguenta mais do que isso.
+
+   `semSorte` é a casa usada quando quem chama não passa gerador; com
+   `sorte` (um gerador semeado), sorteia-se entre `min` e `max`. A situação
+   `pelaCena` ("cena") deixa a planta dizer: a masmorra é `masmorra`, o
+   resto é `padrao` — e é para onde cai qualquer situação que a tabela não
+   conhece. Nunca mais longe do que a planta deixa: o herói fica sempre
+   dentro do tabuleiro, e a dupla nasce no meio da planta — na estrada,
+   «na estrada», e não com o herói na encosta e o bicho na vala.
+
+   SEM SITUAÇÃO NENHUMA (`undefined`/`null`) fica a abertura de antes, fila
+   contra fila, byte a byte: é a geometria em que o X1 mediu a abertura
+   (testes/acoes-do-jogador.mjs) e as sondas do MM6 e do MM7 calibraram o
+   furtivo e os atiradores. Trocá-la por baixo delas seria mudar o
+   equilíbrio que mediram sem as voltar a medir; quem abre a luta de
+   verdade (o App) passa a situação, e a re-medida é um passo à parte. */
+export const ABERTURA_DA_LUTA = {
+  situacoes: {
+    declarada: { min: 1, max: 2, semSorte: 1 },
+    encontro: { min: 2, max: 4, semSorte: 3 },
+    emboscada: { min: 2, max: 4, semSorte: 2 },
+    masmorra: { min: 3, max: 5, semSorte: 4 },
+  },
+  padrao: "encontro",
+  pelaCena: "cena",
+  porPlanta: { masmorra: "masmorra" },
+  /* o ágil nasce estas casas mais perto que os outros (nunca menos de 1) */
+  agilAdianta: 1,
+};
+
+/* A situação de uma luta, lida da tabela: a pedida, se existe; nenhuma
+   (`undefined`/`null`) é `null` — a abertura de antes; qualquer outra (a
+   `pelaCena`, ou lixo) é a da planta, senão o padrão. */
+export function situacaoDaAbertura(grade, situacao) {
+  const T = ABERTURA_DA_LUTA;
+  const tem = (k) => typeof k === "string" && Object.prototype.hasOwnProperty.call(T.situacoes, k);
+  if (tem(situacao)) return situacao;
+  if (situacao === undefined || situacao === null) return null;
+  const c = grade && typeof grade === "object" ? grade.cenario : "";
+  const daPlanta = typeof c === "string" && Object.prototype.hasOwnProperty.call(T.porPlanta, c) ? T.porPlanta[c] : "";
+  return tem(daPlanta) ? daPlanta : T.padrao;
+}
+
+export function posicionar(grade, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const heroi = o.heroi;
+  const grupo = Array.isArray(o.grupo) ? o.grupo.filter((x) => x && typeof x === "object") : [];
+  const inimigos = Array.isArray(o.inimigos) ? o.inimigos.filter((x) => x && typeof x === "object") : [];
   const g = garantirGrade(grade);
   if (!g) return { heroi, grupo, inimigos };
   const ocupados = new Set();
-  const poe = (ent, xIni, yIni) => {
+  /* em anéis a partir do ponto pedido; com `aceita`, só a casa que ela
+     aceita (a distância da tabela) — e, se nenhuma servir, a primeira livre */
+  const poe = (ent, xIni, yIni, aceita = null) => {
     const lado = ladoDe(ent);
-    for (let raio = 0; raio < Math.max(g.largura, g.altura); raio++) {
-      for (let dy = -raio; dy <= raio; dy++) for (let dx = -raio; dx <= raio; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== raio) continue;
-        const x = xIni + dx, y = yIni + dy;
-        if (!livrePara(grade, x, y, lado, ocupados)) continue;
-        for (const q of quadradosDe({ ...ent, x, y })) ocupados.add(chave(q.x, q.y));
-        return { ...ent, x, y };
+    for (const filtro of aceita ? [aceita, null] : [null]) {
+      for (let raio = 0; raio < Math.max(g.largura, g.altura); raio++) {
+        for (let dy = -raio; dy <= raio; dy++) for (let dx = -raio; dx <= raio; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== raio) continue;
+          const x = xIni + dx, y = yIni + dy;
+          if (!livrePara(grade, x, y, lado, ocupados)) continue;
+          if (filtro && !filtro({ ...ent, x, y })) continue;
+          for (const q of quadradosDe({ ...ent, x, y })) ocupados.add(chave(q.x, q.y));
+          return { ...ent, x, y };
+        }
       }
     }
     return { ...ent, x: xIni, y: yIni };
   };
+  const T = ABERTURA_DA_LUTA;
+  const qual = situacaoDaAbertura(g, o.situacao);
+  if (!qual) {
+    /* a abertura de antes (ver o cabeçalho): o herói na última fila, o
+       inimigo na fila 0 e o ágil a meio */
+    const meioX = Math.floor(g.largura / 2);
+    const h = poe(heroi || { nome: "você" }, meioX, g.altura - 1);
+    const gr = grupo.map((c, i) => poe(c, meioX + (i % 2 ? 1 : -1) * (1 + Math.floor(i / 2)), g.altura - 1));
+    const in2 = inimigos.map((e, i) => poe(e, meioX + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 2, e.agil ? Math.floor(g.altura / 2) : 0));
+    return { heroi: h, grupo: gr, inimigos: in2 };
+  }
+  const sit = T.situacoes[qual];
+  const sorteada = typeof o.sorte === "function"
+    ? sit.min + Math.min(sit.max - sit.min, Math.floor(Math.max(0, Number(o.sorte()) || 0) * (sit.max - sit.min + 1)))
+    : sit.semSorte;
+  const he = heroi && typeof heroi === "object" ? heroi : { nome: "você" };
+  const ladoH = ladoDe(he);
+  /* o que cabe: a caixa do maior inimigo, as casas entre os dois (1 casa
+     = colados, 1,5 m) e a caixa do herói, dentro das filas da planta */
+  const ladoI = inimigos.reduce((a, e) => Math.max(a, ladoDe(e)), 1);
+  const casas = Math.max(1, Math.min(sorteada, g.altura - ladoH - ladoI + 1));
+  /* a dupla no meio da planta: o herói nunca fora dela */
+  const vao = ladoI + casas - 1 + ladoH;
+  const yI = Math.max(0, Math.floor((g.altura - vao) / 2));
+  const yH = Math.min(g.altura - ladoH, yI + ladoI - 1 + casas);
   const meioX = Math.floor(g.largura / 2);
-  const h = poe(heroi || { nome: "você" }, meioX, g.altura - 1);
-  const gr = (grupo || []).map((c, i) => poe(c, meioX + (i % 2 ? 1 : -1) * (1 + Math.floor(i / 2)), g.altura - 1));
-  const in2 = (inimigos || []).map((e, i) => {
-    const agil = !!e.agil;
-    const y = agil ? Math.floor(g.altura / 2) : 0;
-    return poe(e, meioX + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 2, y);
+  const h = poe(he, meioX, yH);
+  const gr = grupo.map((c, i) => poe(c, meioX + (i % 2 ? 1 : -1) * (1 + Math.floor(i / 2)), yH));
+  /* a distância conta-se ao herói onde ele de facto ficou (uma parede no
+     meio da planta empurra-o): o primeiro inimigo — o alvo, na luta
+     declarada — às `casas` da tabela; os outros nunca mais perto que o
+     `min` da situação; o ágil um passo à frente, sem furar o `min` */
+  const a = (d) => (x) => distanciaQuadrados(h, x) === d;
+  const pelo = (x) => distanciaQuadrados(h, x) >= sit.min;
+  const in2 = inimigos.map((e, i) => {
+    const l = ladoDe(e);
+    /* encostado à linha da distância: o grandão ocupa para trás, não para a frente */
+    const y0 = yI + (ladoI - l);
+    const ag = !!e.agil && casas - T.agilAdianta >= sit.min;
+    const y = ag ? y0 + T.agilAdianta : y0;
+    const aceita = i === 0 ? a(ag ? casas - T.agilAdianta : casas) : ag ? a(casas - T.agilAdianta) : pelo;
+    return poe(e, meioX + (i % 2 ? 1 : -1) * Math.ceil(i / 2) * 2, Math.max(0, y), aceita);
   });
   return { heroi: h, grupo: gr, inimigos: in2 };
 }

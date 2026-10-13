@@ -43,9 +43,12 @@
         se os paralelos levassem rótulo, os lugares sem rótulo seriam, por
         exclusão, os da história — o segredo sairia pela ausência.
      3. O SEGREDO não tem nó: o "o que X esconde" da espinha mora num local
-        DENTRO de uma cidade, e esta função não lê marco nenhum além do
-        "descer" (o lugar do ato) — nem título, nem alvo, nem "onde" de
-        outro feitio. O que sai daqui não carrega texto de marco.
+        DENTRO de uma cidade, e o local nunca vira nó. Desta função só sai
+        de marco o "descer" (o lugar do ato) e A FRENTE (S10a, abaixo): o
+        nó — a cidade, nunca o local — onde mora o próximo marco de pé do
+        ato de agora, que é a missão que o diário já mostra. Nem título,
+        nem alvo, nem o nome do local: o que sai daqui não carrega texto
+        de marco.
      4. O QUADRO É DE TODOS os pontos, os escondidos incluídos. Se o quadro
         crescesse à medida que a neblina abre, o pergaminho mexeria-se sob o
         dedo, e o tamanho do quadro diria que há coisa por descobrir. Ele é o
@@ -242,6 +245,36 @@ function atoDosLugares(espinha) {
   return out;
 }
 
+/* ---------------- A FRENTE (S10a, 13/10 — a 10.ª sessão de prova) ----------------
+   «Para onde a história chama» apontava o Bastião de Pedra Torta (o
+   "descer" do ato SEGUINTE) com a missão ativa a dizer «Descobrir o que o
+   Rossio Torto esconde, em Nova Profundo». A causa estava aqui: o mapa só
+   lia marcos "descer", e o ato de agora, quando o marco dele era de outro
+   feitio, não morava em nó nenhum — o gancho do próximo ato ficava com o
+   feixe. Se o mapa diz um lugar e o diário outro, o jogador aprende a
+   desconfiar do mapa.
+
+   A regra: a frente é o nó do PRÓXIMO MARCO DE PÉ do ato ATUAL que tenha
+   lugar no mapa, de qualquer feitio (procurar, descobrir, enfrentar,
+   descer…), na ordem do ato; só quando nenhum marco de pé do ato tem lugar
+   visível a frente cai no gancho do ato seguinte (`proximo`). Se a frente é
+   onde o herói está, a história chama AQUI, e o feixe não aponta para fora.
+
+   O lugar de um marco, pela ordem desta tabela: o `onde` quando é uma
+   cidade ou um lugar da região; senão a `cidade` do marco (o local "O
+   Rossio Torto" mora em Nova Profundo — a cidade é o nó, o local nunca);
+   senão a cidade da `chave` do "descobrir" (`Cidade|tipo`, a espinha de
+   antes do campo `cidade`). */
+export const ONDE_MORA_O_MARCO = ["onde", "cidade", "chave"];
+
+function nomeDoMarco(mk, campo) {
+  /* a chave do "descobrir" viaja na condição (`garantirEspinha` guarda a
+     `condicao` inteira e não o campo solto) */
+  const v = campo === "chave" ? mk.chave || (obj(mk.condicao) && mk.condicao.chave) : mk[campo];
+  if (typeof v !== "string" || !v.trim()) return "";
+  return campo === "chave" ? v.split("|")[0] : v;
+}
+
 /* ============================================================
    A FUNÇÃO
    `estado` (tudo opcional; lixo é ausência):
@@ -360,6 +393,21 @@ export function dadosDoMapaVivo(mapa, estado) {
   const mostra = (id) => O_QUE_A_NEBLINA_MOSTRA[estadoDe.get(id)] || O_QUE_A_NEBLINA_MOSTRA.desconhecido;
   const aparece = (id) => !!(porId.has(id) && mostra(id).aparece);
 
+  /* A FRENTE (S10a): o nó do próximo marco de pé do ato de agora — só nó
+     visível (o clímax antes da hora não é frente de nada, e a neblina já o
+     esconde). Sem nenhum, `null`, e o feixe cai no gancho. */
+  const frenteId = (() => {
+    const ato = espinha ? lista(espinha.atos)[etapa] : null;
+    for (const mk of lista(obj(ato) && ato.marcos)) {
+      if (!obj(mk) || mk.feito) continue;
+      for (const campo of ONDE_MORA_O_MARCO) {
+        const n = acha(nomeDoMarco(mk, campo));
+        if (n && aparece(n.id)) return n.id;
+      }
+    }
+    return null;
+  })();
+
   /* ---------------- OS NÓS ---------------- */
   const vizinhoId = (v) => {
     if (!obj(v)) return null;
@@ -452,9 +500,12 @@ export function dadosDoMapaVivo(mapa, estado) {
       horasDaBase: finito(horasDaBase) && Number(horasDaBase) > 0 ? horasDaBase : null,
       vizinhos,
       atoDaHistoria: atoPublico(n),
-      momento: momentoDe(n),
+      /* a frente, sem momento próprio, é onde o ato de agora mora */
+      momento: momentoDe(n) || (n.id === frenteId ? "agora" : null),
       aqui: false,
     };
+    /* S10a: a frente — UM nó no máximo; o feixe lê-a antes do gancho */
+    if (n.id === frenteId) no.chama = true;
     if (n.tipo === "lugar" && s.rumor) no.boato = String(s.rumor);
     /* P3 (10/10, o cartão do lugar): QUEM LÁ ANDA. Os nomes da ficha, na
        ordem dela e tal como estão (num mundo com léxico, os renomeados), sem

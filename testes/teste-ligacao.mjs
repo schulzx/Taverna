@@ -211,6 +211,14 @@ sec("1. NENHUM MÓDULO MUDO");
        — 12/10: o aprendiz ligou-o na MESMA leva (`0bd4866`: a pintura no
        topo de `Rosto`, com `retratoDe`, `recorteDoRetrato` e `RETRATO`),
        e a entrada saiu. */
+    /* 13/10 (MM11 · 10.ª sessão, S10b): `kit-inicial.js` nasce no backend —
+       a arma da classe na mão da ficha nova (KIT_INICIAL, armaInicial,
+       equiparKitInicial) — e espera a fiação da tela de criação do App.jsx
+       pela mão do `oficial`/`frontend` na MESMA leva: `concluir(
+       equiparKitInicial(comDom({...})))`, SÓ na criação, nunca no load.
+       `teste-kit-inicial.mjs` é o primeiro leitor. A entrada sai quando o
+       App o importar. */
+    "kit-inicial.js": "o oficial/frontend, na tela de criação (S10b, 13/10)",
   };
   const mudos = [];
   for (const f of arqs) {

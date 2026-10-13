@@ -9,6 +9,7 @@ import {
   detectarAlcanceImpossivel, notaAlcanceImpossivel, METROS_PARA_MORDER, DESLOCAMENTO_PADRAO,
   ESPECIES, QUALIFICADORES, ESCADA, degrauDeTamanho,
   PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar,
+  ABERTURA_DA_LUTA, situacaoDaAbertura,
 } from "../src/grid.js";
 import {
   deslocamentoDe, passoEfetivo, velocidadeDaRaca, deslocamentoDeCriatura,
@@ -197,6 +198,9 @@ sec("10. posicionar e adjacência");
   t("o herói ganhou posição", p.heroi.x != null && p.heroi.y != null);
   t("o grupo ganhou posição", p.grupo.every((g) => g.x != null));
   t("os inimigos ganharam posição", p.inimigos.every((e) => e.x != null));
+  /* S10b (13/10): sem situação, posicionar dá a abertura de antes (fila
+     contra fila) — a geometria que X1, MM6 e MM7 mediram. A luta de
+     verdade passa a situação; a secção S10b prova esse caminho. */
   t("o herói começa longe dos inimigos", p.inimigos.every((e) => distanciaM(e, p.heroi) > 6));
   t("o ágil começa mais perto que o lento", distanciaM(p.inimigos[1], p.heroi) < distanciaM(p.inimigos[0], p.heroi));
   const todos = [p.heroi, ...p.grupo, ...p.inimigos];
@@ -707,5 +711,79 @@ sec("MM2. o Narrador vê o tabuleiro — cobertura e linha de visão na linha da
   console.log(`      custo total da MM2 no pior caso (rótulos + ordem de 7): +${ganhoTotal} caracteres`);
   t("custo total da MM2 no pior caso abaixo de 480 caracteres", ganhoTotal < 480);
 }
+sec("S10b. a luta abre perto, pela situação (13/10, a 10.ª sessão de prova)");
+{
+  /* A luta da 10.ª abriu a 16,5 m (estrada, 18 × 12: o herói na última
+     fila, o inimigo na fila 0) com a prosa a dizer «aos seus pés». A
+     distância passa a ser da cena, pela tabela ABERTURA_DA_LUTA.
+     FALHA ANTES (HEAD v9.458): ABERTURA_DA_LUTA e situacaoDaAbertura não
+     existem (o import cai), e posicionar ignora a situação — 11 casas na
+     estrada para qualquer cena. */
+  const A = ABERTURA_DA_LUTA;
+  t("as quatro situações, com min ≤ semSorte ≤ max e min ≥ 1",
+    ["declarada", "encontro", "emboscada", "masmorra"].every((k) => { const s = A.situacoes[k]; return s && s.min >= 1 && s.min <= s.semSorte && s.semSorte <= s.max; }));
+  t("o pedido da sessão: encontro e emboscada de 2 a 4 casas, declarada de 1 a 2",
+    A.situacoes.encontro.min === 2 && A.situacoes.encontro.max === 4 && A.situacoes.emboscada.min === 2 && A.situacoes.emboscada.max === 4
+      && A.situacoes.declarada.min === 1 && A.situacoes.declarada.max === 2);
+  t("a declarada sem sorte é corpo a corpo (1 casa = 1,5 m)", A.situacoes.declarada.semSorte === 1);
+  t("pela cena: a masmorra é masmorra, o resto é o padrão", situacaoDaAbertura(montarGrade({ emMasmorra: true }), A.pelaCena) === "masmorra" && situacaoDaAbertura(campo, A.pelaCena) === A.padrao);
+  t("situação lixo cai na da planta", situacaoDaAbertura(campo, "xyz") === A.padrao && situacaoDaAbertura(null, 7) === A.padrao && situacaoDaAbertura(campo, "emboscada") === "emboscada");
+  /* sem situação nenhuma, a abertura de antes, byte a byte — a das sondas */
+  const antes = posicionar(campo, { heroi: { nome: "Barbaforte" }, inimigos: [{ nome: "Capanga", vida: 9 }] });
+  t("sem situação: null, e a abertura de antes (11 casas na estrada, a das sondas X1/MM6/MM7)", situacaoDaAbertura(campo) === null && situacaoDaAbertura(campo, null) === null && distanciaQuadrados(antes.heroi, antes.inimigos[0]) === 11);
+  const sessao = posicionar(campo, { heroi: { nome: "Barbaforte" }, inimigos: [{ nome: "Capanga", vida: 9 }], situacao: A.pelaCena });
+  t(`o caso da sessão (estrada 18 × 12, pela cena): ${distanciaM(sessao.heroi, sessao.inimigos[0])} m, de 3 a 6 m — e não 16,5`,
+    distanciaQuadrados(sessao.heroi, sessao.inimigos[0]) >= A.situacoes.encontro.min && distanciaQuadrados(sessao.heroi, sessao.inimigos[0]) <= A.situacoes.encontro.max);
+  const decl = posicionar(campo, { heroi: { nome: "Barbaforte" }, inimigos: [{ nome: "Capanga", vida: 9 }], situacao: "declarada" });
+  t("a luta declarada a quem está à frente abre corpo a corpo: o golpe alcança no turno 1",
+    distanciaQuadrados(decl.heroi, decl.inimigos[0]) === 1 && alcanca(campo, decl.heroi, decl.inimigos[0], { alcanceM: alcanceNatural(decl.heroi) }).ok);
+  t("a dupla nasce «na estrada», e não na encosta nem na vala",
+    regiaoDe(campo, sessao.heroi.x, sessao.heroi.y).nome === "na estrada" && regiaoDe(campo, sessao.inimigos[0].x, sessao.inimigos[0].y).nome === "na estrada");
+
+  /* todas as plantas × todas as situações × com e sem grupo, com o grandão e o ágil */
+  let foraDaTabela = 0, foraDoTabuleiro = 0, colisoes = 0, alvoErrado = 0, maisPerto = 0, n = 0;
+  const comSorte = (seq) => { let i = 0; return () => seq[i++ % seq.length]; };
+  for (const planta of Object.keys(PLANTAS)) {
+    const grade = montarGrade(planta === "masmorra" ? { emMasmorra: true } : { local: planta });
+    for (const situacao of [A.pelaCena, "declarada", "encontro", "emboscada", "masmorra"]) {
+      for (const sorte of [undefined, comSorte([0]), comSorte([0.999]), comSorte([0.5])]) {
+        for (const grupo of [[], [{ nome: "Saoirse" }, { nome: "Torvald" }, { nome: "Helga" }]]) {
+          n++;
+          const inimigos = [{ nome: "Capanga", vida: 9 }, { nome: "Ogro", vida: 50, tamanho: "grande" }, { nome: "Goblin", vida: 8, agil: true }, { nome: "Arqueira", vida: 9 }];
+          const p = posicionar(grade, { heroi: { nome: "H" }, grupo, inimigos, situacao, sorte });
+          const sit = A.situacoes[situacaoDaAbertura(grade, situacao)];
+          const todos = [p.heroi, ...p.grupo, ...p.inimigos];
+          if (!todos.every((e) => quadradosDe(e).every((q) => dentro(grade, q.x, q.y)))) foraDoTabuleiro++;
+          const vistos = new Set();
+          for (const e of todos) for (const q of quadradosDe(e)) { const k = `${q.x},${q.y}`; if (vistos.has(k)) colisoes++; vistos.add(k); }
+          const perto = Math.min(...p.inimigos.map((e) => distanciaQuadrados(p.heroi, e)));
+          if (perto < sit.min || perto > sit.max) foraDaTabela++;
+          const d0 = distanciaQuadrados(p.heroi, p.inimigos[0]);
+          if (d0 < sit.min || d0 > sit.max) alvoErrado++;
+          if (p.inimigos.some((e) => distanciaQuadrados(p.heroi, e) < sit.min)) maisPerto++;
+        }
+      }
+    }
+  }
+  t(`${n} aberturas (10 plantas × 5 situações × 4 sortes × 2 grupos): ninguém fora do tabuleiro`, foraDoTabuleiro === 0, `${foraDoTabuleiro}`);
+  t("ninguém nasce em cima de ninguém", colisoes === 0, `${colisoes}`);
+  t("o inimigo mais perto está dentro da faixa da situação", foraDaTabela === 0, `${foraDaTabela}`);
+  t("o primeiro (o alvo da luta declarada) também", alvoErrado === 0, `${alvoErrado}`);
+  t("e nenhum inimigo mais perto que o mínimo da situação", maisPerto === 0, `${maisPerto}`);
+  const s1 = posicionar(campo, { heroi: { nome: "H" }, inimigos: [{ nome: "X" }], situacao: "encontro", sorte: comSorte([0.999]) });
+  const s0 = posicionar(campo, { heroi: { nome: "H" }, inimigos: [{ nome: "X" }], situacao: "encontro", sorte: comSorte([0]) });
+  t("com sorte, o gerador escolhe na faixa: 0 → min, quase 1 → max",
+    distanciaQuadrados(s0.heroi, s0.inimigos[0]) === A.situacoes.encontro.min && distanciaQuadrados(s1.heroi, s1.inimigos[0]) === A.situacoes.encontro.max);
+  const ent = { heroi: Object.freeze({ nome: "H" }), inimigos: Object.freeze([Object.freeze({ nome: "X", vida: 9 })]) };
+  const ent2 = { ...ent, situacao: "encontro" };
+  const r1 = posicionar(campo, ent2), r2 = posicionar(campo, ent2);
+  t("determinístico sem sorte, e não muta o que recebe", JSON.stringify(r1) === JSON.stringify(r2) && ent.heroi.x === undefined && ent.inimigos[0].x === undefined);
+  let lixo = true;
+  for (const o of [null, undefined, {}, { heroi: null, grupo: null, inimigos: null }, { inimigos: [null, 3] }, { situacao: "encontro", heroi: null, inimigos: [null] }]) {
+    try { const r = posicionar(campo, o); if (!r || !r.heroi || r.heroi.x == null) lixo = false; } catch { lixo = false; }
+  }
+  t("lixo nas opções (null inclusive) não estoura e o herói ganha casa", lixo);
+}
+
 console.log(`\n${ok} ok, ${mau} falhas`);
 process.exit(mau ? 1 : 0);

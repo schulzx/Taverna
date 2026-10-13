@@ -32,6 +32,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as MV from "../src/mapa-vivo.js";
+import * as FR from "../src/faixa-do-rumo.js";
 import * as R from "../src/regiao.js";
 import { gerarGeografia } from "../src/geografia.js";
 import { moldePorId } from "../src/moldes.js";
@@ -606,6 +607,66 @@ sec("12. quem lá anda (P3): o nó, a ficha e a planta dizem os mesmos bichos");
   const antes = JSON.stringify(alvo.ficha.quem);
   n.quem.push("Intruso"); n.quem[0] = "Trocado";
   t("mexer no quem da saída não mexe na ficha (é cópia)", JSON.stringify(alvo.ficha.quem) === antes);
+}
+
+sec("13. a frente da história (S10a, 13/10): o marco de pé do ato de agora, antes do gancho");
+{
+  /* A 10.ª sessão: a missão ativa era «Descobrir o que o Rossio Torto
+     esconde, em Nova Profundo» e o feixe estava no Bastião de Pedra Torta —
+     o "descer" do ato SEGUINTE. O mapa só lia marcos "descer"; o ato de
+     agora, de outro feitio, não morava em nó nenhum.
+     FALHA ANTES (HEAD v9.457): nenhum nó tem `chama`, e `alvoDoFeixe` dá o
+     gancho (o lugar do ato 1) em vez de Nova Profundo. */
+  t("a tabela de onde mora o marco, lida de volta", JSON.stringify(MV.ONDE_MORA_O_MARCO) === JSON.stringify(["onde", "cidade", "chave"]));
+  const w = mundos[0];
+  const nova = w.mapa.cidades.find((c) => c.nome !== w.base.nome);   // o papel de Nova Profundo
+  const comAto0 = (marcos) => ({ ...w.espinha, atos: w.espinha.atos.map((a, k) => (k === 0 ? { ...a, marcos } : a)) });
+  const rossio = { id: "espinha|0|0", feitio: "descobrir", onde: "O Rossio Torto", cidade: nova.nome, titulo: "O que O Rossio Torto esconde" };
+  const gancho = (d) => d.nos.find((n) => n.momento === "proximo");
+  const dS = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([rossio]) }));
+  const nN = dS.nos.find((n) => n.id === `cidade|${nova.nome}`);
+  t("o caso da sessão: a cidade do «esconde» é a frente (chama, momento agora)", !!nN && nN.chama === true && nN.momento === "agora");
+  t("e só ela chama", dS.nos.filter((n) => n.chama).length === 1);
+  t("o feixe aponta a cidade da missão, e não o próximo calabouço", (FR.alvoDoFeixe(dS) || {}).id === `cidade|${nova.nome}`, (FR.alvoDoFeixe(dS) || {}).nome);
+  t("o gancho continua marcado (a neblina e a abertura lêem-no)", !!gancho(dS) && !gancho(dS).chama);
+  t("o local do segredo não vira nó nem texto", !JSON.stringify(dS).includes("Rossio") && !dS.nos.some((n) => norm(n.nome) === norm(rossio.onde)));
+  const dAqui = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([rossio]), cidadeAtual: nova.nome }));
+  t("com o herói na cidade da missão, a história chama aqui: feixe nenhum", FR.alvoDoFeixe(dAqui) === null);
+  const dFeito = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([{ ...rossio, feito: true }]) }));
+  t("marco cumprido: a frente cai no gancho do ato seguinte", !dFeito.nos.some((n) => n.chama) && (FR.alvoDoFeixe(dFeito) || {}).id === (gancho(dFeito) || {}).id);
+  const semCidade = { ...rossio, cidade: undefined, condicao: { tipo: "revelar", alvo: rossio.onde, chave: `${nova.nome}|praca` } };
+  t("espinha de antes do campo cidade: a chave da condição dá a cidade", (MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([semCidade]) })).nos.find((n) => n.chama) || {}).nome === nova.nome);
+  const outra = w.mapa.cidades.find((c) => c.nome !== w.base.nome && c.nome !== nova.nome) || nova;
+  const procurar = { id: "espinha|0|1", feitio: "procurar", quem: "Nyla", onde: outra.nome };
+  const semLugar = { id: "espinha|0|2", feitio: "procurar", quem: "Ninguém", onde: "" };
+  const dOrdem = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([semLugar, procurar, rossio]) }));
+  t("na ordem do ato: o primeiro marco de pé COM lugar (procurar, de qualquer feitio)", (dOrdem.nos.find((n) => n.chama) || {}).nome === outra.nome);
+  const dSo = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([semLugar]) }));
+  t("ato sem marco com lugar: o feixe é o gancho, como antes", !dSo.nos.some((n) => n.chama) && (FR.alvoDoFeixe(dSo) || {}).id === (gancho(dSo) || {}).id);
+  /* um "enfrentar" no clímax (não um "descer": esse acordaria a neblina pela regra do ato, que não é a desta secção) */
+  const noClimax = { id: "espinha|0|3", feitio: "enfrentar", alvo: "O Fim", onde: w.climax.nome };
+  const dC = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: comAto0([noClimax, rossio]) }));
+  t("o clímax escondido nunca é frente (salta para o marco seguinte)", !JSON.stringify(dC).includes(w.climax.id) && (dC.nos.find((n) => n.chama) || {}).nome === nova.nome);
+  /* os 200 mundos, na espinha que nasce: a frente é UMA, visível, e é a do marco de pé do ato */
+  let varias = 0, foraDoAto = 0, feixeMal = 0, comFrente = 0, aqui = 0;
+  for (const x of mundos) {
+    for (const etapa of [0, 1]) {
+      const d = MV.dadosDoMapaVivo(x.mapa, novo(x, { etapa }));
+      const cs = d.nos.filter((n) => n.chama);
+      if (cs.length > 1) varias++;
+      if (!cs.length) continue;
+      comFrente++;
+      const c = cs[0];
+      const doAto = x.espinha.atos[etapa].marcos.filter((m) => !m.feito).map((m) => norm(m.onde) === norm(c.nome) || norm(m.cidade) === norm(c.nome));
+      if (!doAto.some(Boolean)) foraDoAto++;
+      const a = FR.alvoDoFeixe(d);
+      if (c.aqui) { aqui++; if (a !== null) feixeMal++; } else if (!a || a.id !== c.id) feixeMal++;
+    }
+  }
+  t(`a frente é uma só (${N} mundos × 2 atos)`, varias === 0, `${varias}`);
+  t(`e mora num marco de pé do ato de agora (${comFrente} frentes, ${aqui} aqui)`, foraDoAto === 0 && comFrente > N, `${foraDoAto}`);
+  t("o feixe segue a frente: fora, aponta-a; aqui, nada", feixeMal === 0, `${feixeMal}`);
+  t("lixo na espinha: sem frente, sem estourar", [null, {}, { atos: null }, { atos: [null, { marcos: [null, 3, { feitio: "x" }] }] }].every((esp) => { try { const d = MV.dadosDoMapaVivo(w.mapa, novo(w, { espinha: esp })); return !d.nos.some((n) => n.chama); } catch { return false; } }));
 }
 
 console.log(`\n${ok} ok, ${mal} falhas`);

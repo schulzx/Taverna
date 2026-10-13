@@ -55,9 +55,10 @@ export function modoDaLuz(relogio) {
 
 /* ---------------- A FRENTE ----------------
    O alvo do feixe (§1, a condição do `jogo`): na estrada, o destino; fora
-   dela, o nó com `momento` "proximo", ou "agora" onde o herói não está;
-   sem nenhum, ninguém — e a frente é o norte. Lê SÓ `momento` (§2, o
-   feixe nunca lê `atoDaHistoria`). */
+   dela, a frente da história (`chama`, S10a), e sem ela o nó com `momento`
+   "proximo", ou "agora" onde o herói não está; sem nenhum, ninguém — e a
+   frente é o norte. Lê `chama` e `momento` (§2, o feixe nunca lê
+   `atoDaHistoria`). */
 export function alvoDoFeixe(dados) {
   const d = obj(dados);
   if (!d) return null;
@@ -67,6 +68,13 @@ export function alvoDoFeixe(dados) {
     const id = obj(h.jornada) && h.jornada.paraId;
     return (id && nos.find((n) => n.id === id)) || null;
   }
+  /* S10a (13/10): A FRENTE PRIMEIRO. O nó que o motor marca `chama` é o do
+     próximo marco de pé do ato de agora (`dadosDoMapaVivo`); se o herói já
+     lá está, a história chama aqui e o feixe não aponta para fora. Só sem
+     frente cai no gancho do ato seguinte — era o gancho primeiro, e o feixe
+     apontava o próximo calabouço com a missão noutra cidade. */
+  const chama = nos.find((n) => n.chama === true);
+  if (chama) return chama.aqui || chama.id === h.noId ? null : chama;
   return nos.find((n) => n.momento === "proximo")
     || nos.find((n) => n.momento === "agora" && !n.aqui && n.id !== h.noId)
     || null;
