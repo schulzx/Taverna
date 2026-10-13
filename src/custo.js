@@ -51,7 +51,14 @@ export const PRECOS = {
      13/10 (mente/ab-provedores.md). O Sol entra pelo preço de ESCRITA do
      cache (2,5, e não os 2,0 de lista): foi o que a conta cobrou de
      verdade pela entrada nova, e a tabela erra para o lado caro. */
-  "gemini-3.8-flash":  { entrada: 0.75, cache: 0.075, saida: 3.75 },
+  "gemini-3.8-flash":  { entrada: 0.75, cache: 0.075, saida: 3.75, armazenamento: 0.50 },
+  /* MM11 · 11.ª sessão (13/10): o Cronista passa ao Flash-Lite do Google
+     (api/narrador.js, CRONISTA), e o 3.8 Flash ganha o cache EXPLÍCITO —
+     que cobra a GUARDA por milhão de tokens por hora (`armazenamento`).
+     Preços da página oficial do Google em 13/10, nível padrão, até
+     31/12/2026 (o 3.8 Flash dobra em 01/01/2027). */
+  "gemini-3.5-flash-lite": { entrada: 0.30, cache: 0.03, saida: 2.50, armazenamento: 1.00 },
+  "gemini-3.1-flash-lite": { entrada: 0.25, cache: 0.025, saida: 1.50, armazenamento: 1.00 },
   "gpt-5.6-sol":       { entrada: 2.50, cache: 0.20, saida: 10.0 },
 };
 
@@ -67,8 +74,8 @@ export const PRECOS = {
    "openai/gpt-5.6-sol" (a casa na frente) e às vezes o id datado
    ("…-20260709"); o Google pode devolver um sufixo de revisão ("…-001").
    O preço é o mesmo modelo, então o nome se apara antes de procurar. */
-const MAIS_CARO = ["entrada", "cache", "saida"].reduce(
-  (acc, k) => ({ ...acc, [k]: Math.max(...Object.values(PRECOS).map((p) => p[k])) }), {});
+const MAIS_CARO = ["entrada", "cache", "saida", "armazenamento"].reduce(
+  (acc, k) => ({ ...acc, [k]: Math.max(...Object.values(PRECOS).map((p) => p[k] || 0)) }), {});
 export const precoDe = (modelo) => {
   const m = String(modelo || "");
   const aparado = m.replace(/-(\d{8}|\d{3})$/, "");
@@ -77,25 +84,34 @@ export const precoDe = (modelo) => {
 
 /* ---------------- A CONTA ----------------
    `entrada` do provedor JÁ inclui os tokens que vieram do cache — os dois
-   campos se sobrepõem, e somar os dois cobraria o cache duas vezes. */
-export function custoDaChamada({ modelo, entrada = 0, saida = 0, cache = 0 }) {
+   campos se sobrepõem, e somar os dois cobraria o cache duas vezes.
+
+   O CACHE EXPLÍCITO TEM DUAS LINHAS A MAIS (11.ª sessão): `escrita` são os
+   tokens escritos num cache novo, que o Google cobra a preço de ENTRADA
+   (é ela que faz refazer o cache a cada turno sair mais caro do que não
+   ter cache); `guardado` são tokens×hora de guarda do cache que acabou
+   de ser trocado e apagado, ao preço de `armazenamento`. Sem as duas, o
+   cache pareceria de graça — e é o erro que engana. */
+export function custoDaChamada({ modelo, entrada = 0, saida = 0, cache = 0, escrita = 0, guardado = 0 }) {
   const p = precoDe(modelo);
   const novos = Math.max(0, (Number(entrada) || 0) - (Number(cache) || 0));
-  return (novos * p.entrada + (Number(cache) || 0) * p.cache + (Number(saida) || 0) * p.saida) / 1e6;
+  return (novos * p.entrada + (Number(cache) || 0) * p.cache + (Number(saida) || 0) * p.saida
+    + (Number(escrita) || 0) * p.entrada + (Number(guardado) || 0) * (p.armazenamento || 0)) / 1e6;
 }
 
 /* ---------------- O ACUMULADO ----------------
    Guarda o mínimo que responde às perguntas que se faz de verdade:
    quanto esta campanha já custou, quanto custa um turno em média, e para
    onde o dinheiro está indo — entrada nova, entrada relida ou saída. */
-export const CUSTO_ZERO = () => ({ chamadas: 0, entrada: 0, cache: 0, saida: 0, dolares: 0, porTarefa: {}, porModelo: {} });
+export const CUSTO_ZERO = () => ({ chamadas: 0, entrada: 0, cache: 0, saida: 0, escrita: 0, dolares: 0, porTarefa: {}, porModelo: {} });
 
 export function somarChamada(acc, uso) {
   const a = acc && typeof acc === "object" ? acc : CUSTO_ZERO();
   if (!uso || typeof uso !== "object") return a;
   const entrada = Number(uso.entrada) || 0, saida = Number(uso.saida) || 0, cache = Number(uso.cache) || 0;
   if (!entrada && !saida) return a;   /* provedor que não contou não vira zero na média */
-  const d = custoDaChamada({ modelo: uso.modelo, entrada, saida, cache });
+  const escrita = Number(uso.escrita) || 0;
+  const d = custoDaChamada({ modelo: uso.modelo, entrada, saida, cache, escrita, guardado: Number(uso.guardado) || 0 });
   const tarefa = String(uso.tarefa || "narrador");
   const modelo = String(uso.modelo || "?");
   return {
@@ -103,6 +119,8 @@ export function somarChamada(acc, uso) {
     entrada: a.entrada + entrada,
     cache: a.cache + cache,
     saida: a.saida + saida,
+    /* campo novo (11.ª sessão): o save antigo não o tem, e a versão antiga o ignora */
+    escrita: (Number(a.escrita) || 0) + escrita,
     dolares: a.dolares + d,
     porTarefa: { ...a.porTarefa, [tarefa]: (a.porTarefa[tarefa] || 0) + d },
     porModelo: { ...a.porModelo, [modelo]: (a.porModelo[modelo] || 0) + d },
@@ -126,6 +144,7 @@ export function linhasDoCusto(acc, { dia = 0 } = {}) {
     `entrada ${a.entrada.toLocaleString("pt-BR")} tokens (${fatia(a.entrada)}%), destes ${a.cache ? `${Math.round((100 * a.cache) / a.entrada)}% relidos do cache` : "NENHUM do cache"}`,
     `saída ${a.saida.toLocaleString("pt-BR")} tokens (${fatia(a.saida)}%)`,
   ];
+  if (Number(a.escrita) > 0) out.push(`cache escrito ${Number(a.escrita).toLocaleString("pt-BR")} tokens (pago como entrada)`);
   const modelos = Object.entries(a.porModelo).sort((x, y) => y[1] - x[1]);
   if (modelos.length) out.push("por modelo: " + modelos.map(([m, d]) => `${m} ${cents(d)}`).join(" · "));
   const tarefas = Object.entries(a.porTarefa).sort((x, y) => y[1] - x[1]);

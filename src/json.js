@@ -201,3 +201,31 @@ export function sanearResposta(obj) {
 
 /* gerarLivro vivia aqui e foi para App.jsx (v9.7): ela chama o modelo, e este
    arquivo é o pedaço puro — parsing, sem estado e sem rede. */
+
+/* ---------------- A RESPOSTA QUE O TETO CORTOU (MM11 · 11.ª sessão, 13/10) ----------------
+   O Narrador base (Gemini 3.8 Flash) escreveu 262 palavras de mediana
+   contra as 60–140 pedidas, e o servidor passou a ter uma REDE de saída
+   (`maxOutputTokens`) — só para o desembestado, nunca para o comum. Mas
+   rede que corta deixa um JSON sem fim, e JSON truncado é pior do que
+   longo: o `extrairJSON` acima resgata a narrativa, mas ela chega à
+   tela no meio de uma frase.
+
+   O conserto é aparar onde a última FRASE acaba (com a aspa ou o
+   travessão que a fecham) e devolver um JSON inteiro, com `mudancas`
+   nula — o canal das mudanças de um texto cortado não é de confiança.
+   Se não sobra uma narrativa que se aguente (`minPalavras`), devolve
+   vazio, e o servidor passa o turno à reserva: o turno nunca quebra. */
+export const APARO_DO_TRUNCADO = { minPalavras: 25, fimDeFrase: /[.!?…]["'”»)]?(?=\s|$)/g };
+
+export function repararJsonTruncado(texto) {
+  const t = String(texto == null ? "" : texto);
+  try { JSON.parse(t); return t; } catch { /* segue */ }
+  const r = extrairJSON(t);
+  const n = String(r.narrativa || "");
+  if (!n || n === "…" || n.startsWith("O Mestre hesita")) return "";
+  let fim = -1;
+  for (const m of n.matchAll(APARO_DO_TRUNCADO.fimDeFrase)) fim = m.index + m[0].length;
+  const aparada = (fim > 0 ? n.slice(0, fim) : "").trim();
+  if (aparada.split(/\s+/).filter(Boolean).length < APARO_DO_TRUNCADO.minPalavras) return "";
+  return JSON.stringify({ narrativa: aparada, mudancas: null });
+}

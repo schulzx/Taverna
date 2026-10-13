@@ -216,7 +216,7 @@ import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
 import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
-import { janelaAncorada } from "./janela.js";
+import { janelaAncorada } from "./janela.js"; import { semFalaInventada } from "./fala-do-heroi.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -447,13 +447,16 @@ export const ultimoProvedorRef = { atual: "", historico: [] };
    modo criativo, que é o canal que já existe para este tipo de pergunta. */
 export const custoRef = { atual: CUSTO_ZERO() };
 
-async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "narrador") {
+/* A FICHA DO CACHE EXPLÍCITO (MM11 · 11.ª sessão): o servidor não lembra nada entre pedidos — o nome do cache do Gemini vive aqui, FORA do save (um jogo recarregado escreve outro, e o velho morre no prazo dele), e volta no turno seguinte. A conta mora em janela.js. */
+const fichaDoCacheRef = { atual: null };
+async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto", tarefa = "narrador", comCache = false) {
   const response = await fetch("/api/narrador", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, messages, maxTokens, formato, tarefa }),
+    body: JSON.stringify({ system, messages, maxTokens, formato, tarefa, ...(comCache ? { cache: fichaDoCacheRef.atual || {} } : {}) }),
   });
   const data = await response.json().catch(() => ({}));
+  if (comCache && response.ok) fichaDoCacheRef.atual = data.cache && typeof data.cache === "object" ? data.cache : null;
   if (!response.ok) {
     /* v9.256 (Fase X - X3): `motivo` e `origem` chegam do portao
        (api/_portao.js) e MORRIAM aqui - e sao exatamente a pista que falta
@@ -494,21 +497,16 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
    em janela.js: âncora fixa, salto raro, prefixo vivo. */
 
 async function chamarMestre(system, historico) {
-  /* histórico já está no formato Messages API: [{role, content}, ...] */
-  /* 18 mensagens bastam: o cânone (fatos imutáveis) e o livro (resumo do arco)
-     vão no system prompt — o histórico bruto só precisa do contexto imediato.
-     Corta ~metade dos tokens de entrada por turno. */
-  /* Teto 3600: a resposta JSON carrega narrativa + mudancas + sugestões, e o
-     DeepSeek escreve prosa MAIS longa que o Gemini — com 2600 a resposta
-     truncava no meio do JSON e a tela mostrava "…". O teto não custa —
-     só se paga pelo que é gerado. */
+  /* histórico no formato Messages API, recortado pela janela ancorada (janela.js). Teto 3600: com 2600 o JSON truncava; é rede, não meta —
+     o tamanho pede-se na etiqueta do pedido (escuta.js, 11.ª sessão). O turno leva a ficha do cache explícito; o reforço lá embaixo
+     não (a mensagem a mais faria o servidor reescrever o cache por um pedido que não volta). */
   /* O PEDIDO NA ORDEM DO CACHE (v9.465): o system sai daqui igual a campanha
      inteira, e o que vira a cada turno (as regras da cena aberta e o ESTADO)
      desce para a mensagem do turno, antes do rodapé. A conta e o porquê
      moram em prompt.js. Se a arrumação estourar, o pedido vai como vinha. */
   let pedido = { system, messages: janelaAncorada(historico) };
   try { pedido = pedidoNaOrdemDoCache(system, pedido.messages); } catch (e) { calou("o pedido na ordem do cache", e); }
-  let texto = await chamarModelo(pedido.system, pedido.messages, 3600, "json");
+  let texto = await chamarModelo(pedido.system, pedido.messages, 3600, "json", "narrador", true);
   let resp = extrairJSON(texto);
   /* REDE DE SEGURANÇA (v7.0.2): se veio JSON válido mas SEM narrativa (o "…"
      na tela), tenta UMA segunda vez com um empurrão explícito antes de
@@ -532,6 +530,8 @@ async function chamarMestre(system, historico) {
        reconhecer este texto (`provedor_caiu`, em guardado.js). */
     if (narrativaFaltou(resp)) throw new Error(MOTIVO_SEM_NARRATIVA);
   }
+  /* A FALA DO HERÓI É DO JOGADOR (11.ª sessão: o Mestre a escreveu em 16 de 62) — só sai o que é seguro; a régua mora em fala-do-heroi.js */
+  try { const ultima = pedido.messages[pedido.messages.length - 1]; const podada = semFalaInventada(resp.narrativa, ultima && ultima.content); if (podada.cortadas.length) resp = { ...resp, narrativa: podada.narrativa }; } catch (e) { calou("a fala do herói", e); }
   return resp;
 }
 

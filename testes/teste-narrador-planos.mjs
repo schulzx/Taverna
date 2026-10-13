@@ -28,7 +28,7 @@ const sec = (s) => console.log("\n" + s);
 
 /* chaves de mentira — o teste só precisa de que EXISTAM */
 const TODAS = { GEMINI_API_KEY: "g-falsa", DEEPSEEK_API_KEY: "d-falsa", OPENROUTER_API_KEY: "o-falsa" };
-const rota = (pedido, env) => N.rotaDoPedido(pedido, env);
+const rota = (pedido, env, opcoes) => N.rotaDoPedido(pedido, env, opcoes);
 const ids = (r) => r.passos.map((p) => `${p.provedor}:${p.modelo}`).join(" > ");
 
 sec("1. A ROTA SAI DA TABELA");
@@ -37,12 +37,24 @@ sec("1. A ROTA SAI DA TABELA");
   t("sem pedir nada, o plano é o base", r.plano === "base");
   t("o base é o Gemini 3.8 Flash, direto no Google", r.passos[0].provedor === "gemini" && r.passos[0].modelo === "gemini-3.8-flash");
   t("e o padrão mora na tabela, não solto", N.PLANOS.base.padrao === "gemini-3.8-flash" && N.PLANOS.superior.padrao === "openai/gpt-5.6-sol");
+  /* MM11 · 11.ª sessão (13/10): a fila do Narrador ganhou o Cronista (o
+     Flash-Lite) no FIM — outra cota da mesma casa, para o dia do 429 com a
+     DeepSeek sem saldo. A asserção antiga ("… > deepseek-v4-flash") mudou
+     por isso, não por a reserva ter deixado de ser o DeepSeek v4-pro. */
   t("a reserva é o DeepSeek v4-pro, depois o que houver",
-    ids(r) === "gemini:gemini-3.8-flash > deepseek:deepseek-v4-pro > deepseek:deepseek-v4-flash");
-  /* o Cronista não é do plano: é burocracia, e fica no barato */
+    ids(r) === "gemini:gemini-3.8-flash > deepseek:deepseek-v4-pro > deepseek:deepseek-v4-flash > gemini:gemini-3.5-flash-lite");
+  /* o Cronista não é do plano: é burocracia, e fica no barato. MM11 ·
+     11.ª sessão: era o DeepSeek Flash, e a conta da DeepSeek estava sem
+     saldo — cada chamada leve pagava dois 402 antes de o Gemini 3.8 a
+     atender. Agora é o Flash-Lite do Google, e o DeepSeek é a reserva. */
   const leve = rota({ tarefa: "leve" }, TODAS);
-  t("o Cronista é o DeepSeek Flash", ids(leve) === "deepseek:deepseek-v4-flash > deepseek:deepseek-v4-pro > gemini:gemini-3.8-flash");
-  t("e pedir o superior não muda o Cronista", rota({ tarefa: "leve", plano: "superior" }, { ...TODAS, PLANO_SUPERIOR_LIGADO: "1" }).passos[0].modelo === "deepseek-v4-flash");
+  t("o Cronista é o Flash-Lite do Google, com o DeepSeek de reserva", ids(leve) === "gemini:gemini-3.5-flash-lite > deepseek:deepseek-v4-flash > gemini:gemini-3.8-flash");
+  t("e pedir o superior não muda o Cronista", rota({ tarefa: "leve", plano: "superior" }, { ...TODAS, PLANO_SUPERIOR_LIGADO: "1" }).passos[0].modelo === "gemini-3.5-flash-lite");
+  /* a casa sem saldo sai da fila inteira, pelo prazo da tabela */
+  const riscada = rota({ tarefa: "leve" }, TODAS, { semSaldo: { deepseek: 5000 }, agora: 1000 });
+  t("uma casa riscada por 402 não entra na fila", !riscada.passos.some((p) => p.provedor === "deepseek"));
+  t("e volta quando o prazo passa", rota({ tarefa: "leve" }, TODAS, { semSaldo: { deepseek: 5000 }, agora: 6000 }).passos.some((p) => p.provedor === "deepseek"));
+  t("opções nulas não estouram a rota", rota({}, TODAS, null).passos.length === 4 && N.SEM_SALDO.minutos > 0 && N.SEM_SALDO.status.includes(402));
   /* trocar o modelo é mudar UMA variável — a casa vem do nome */
   const outro = rota({}, { ...TODAS, NARRADOR_BASE: "deepseek-v4-pro" });
   t("NARRADOR_BASE com um DeepSeek vai à DeepSeek", outro.passos[0].provedor === "deepseek" && outro.passos[0].modelo === "deepseek-v4-pro");
@@ -74,7 +86,7 @@ sec("2. O SUPERIOR NÃO SE LIGA PELO NAVEGADOR");
   t("com as três coisas, é o superior", sup.plano === "superior");
   t("e o superior é o GPT-5.6 Sol pelo OpenRouter", sup.passos[0].provedor === "openrouter" && sup.passos[0].modelo === "openai/gpt-5.6-sol");
   t("a reserva do superior é a mesma: DeepSeek v4-pro, depois o base",
-    ids(sup) === "openrouter:openai/gpt-5.6-sol > deepseek:deepseek-v4-pro > gemini:gemini-3.8-flash > deepseek:deepseek-v4-flash");
+    ids(sup) === "openrouter:openai/gpt-5.6-sol > deepseek:deepseek-v4-pro > gemini:gemini-3.8-flash > deepseek:deepseek-v4-flash > gemini:gemini-3.5-flash-lite");
   t("ligado, quem não pede continua no base", rota({}, ligado).plano === "base");
   t("PLANO_PADRAO=superior vale para quem não pede", rota({}, { ...ligado, PLANO_PADRAO: "superior" }).plano === "superior");
   t("mas nunca sem a trava", rota({}, { ...TODAS, PLANO_PADRAO: "superior" }).plano === "base");
@@ -87,6 +99,11 @@ const LIMPAR = ["VERCEL_URL", "ORIGENS_EXTRA", "KV_REST_API_URL", "KV_REST_API_T
   "GEMINI_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY", "PLANO_SUPERIOR_LIGADO", "PLANO_PADRAO", "NARRADOR_BASE", "NARRADOR_SUPERIOR",
   "CRONISTA_MODELO", "GM_PENSAMENTO", "GM_PENALIDADE", "GM_TEMPERATURA", "OR_TEMPERATURA", "OR_PROVEDORES", "VERCEL_PROJECT_PRODUCTION_URL", "PROVEDOR"];
 const fetchVerdadeiro = globalThis.fetch;
+/* MM11 · 11.ª sessão: o servidor lembra as casas que disseram 402 por
+   alguns minutos (SEM_SALDO). Cada `rodar` anda o relógio uma hora, para
+   que o 402 de uma prova não risque a casa da prova seguinte. */
+const agoraVerdadeiro = Date.now;
+let relogio = Date.UTC(2026, 9, 13, 12);
 
 const resp = (status, corpo) => ({ ok: status >= 200 && status < 300, status, json: async () => corpo, text: async () => JSON.stringify(corpo) });
 const okGemini = (texto) => resp(200, { candidates: [{ content: { parts: [{ text: texto }] }, finishReason: "STOP" }], modelVersion: "gemini-3.8-flash",
@@ -98,6 +115,8 @@ async function rodar({ env, corpo, roteiro }) {
   for (const k of LIMPAR) delete process.env[k];
   Object.assign(process.env, env);
   const chamadas = [];
+  relogio += 3600e3;
+  Date.now = () => relogio;
   globalThis.fetch = async (url, init) => {
     const casa = /googleapis/.test(url) ? "gemini" : /openrouter/.test(url) ? "openrouter" : /deepseek/.test(url) ? "deepseek" : "?";
     const body = JSON.parse(init.body);
@@ -111,6 +130,7 @@ async function rodar({ env, corpo, roteiro }) {
     await N.default({ method: "POST", headers: {}, body: { system: "SISTEMA", messages: [{ role: "user", content: "olá" }], formato: "json", ...corpo } }, res);
   } finally {
     globalThis.fetch = fetchVerdadeiro;
+    Date.now = agoraVerdadeiro;
     for (const k of Object.keys(process.env)) if (!(k in guardado)) delete process.env[k];
     Object.assign(process.env, guardado);
   }
@@ -152,6 +172,15 @@ sec("4. A RESERVA: O JOGADOR NUNCA VÊ A TROCA");
   t("503 merece uma retentativa na mesma casa", tosse.saida.provedor === "gemini" && tosse.chamadas.length === 2);
   const todos = await rodar({ env: TODAS, corpo: {}, roteiro: { gemini: [resp(402, {})], deepseek: [resp(402, { error: "Insufficient Balance" }), resp(402, { error: "Insufficient Balance" })] } });
   t("todos caem: 502", todos.status === 502);
+  /* MM11 · 11.ª sessão: um 402 risca a CASA no mesmo pedido — o v4-flash
+     e o Flash-Lite (casas já riscadas) nem são tentados */
+  t("402 é da conta: cada casa é tentada uma vez só", todos.chamadas.filter((c) => c.casa === "deepseek").length === 1 && todos.chamadas.filter((c) => c.casa === "gemini").length === 1);
+  const depois = await (async () => {
+    /* o pedido seguinte, dez minutos dentro do prazo, na mesma instância */
+    relogio -= 3600e3 - 60e3;
+    return rodar({ env: TODAS, corpo: { tarefa: "leve" }, roteiro: { gemini: [okGemini("nao devia")], deepseek: [resp(402, {})] } });
+  })();
+  t("e o pedido seguinte nem vai às casas sem saldo", depois.chamadas.length === 0 && depois.status === 502 && /sem saldo/.test(depois.saida.erro));
   t("na língua que o guardado.js lê", /^Todos os provedores falharam — gemini \(gemini-3\.8-flash: 402/.test(todos.saida.erro) && / · /.test(todos.saida.erro));
   t("com o corpo do 402 dentro (é ali que mora o 'insufficient balance')", /Insufficient Balance/.test(todos.saida.erro));
   const nada = await rodar({ env: {}, corpo: {}, roteiro: {} });
@@ -199,7 +228,8 @@ sec("6. O USO DAS TRÊS CASAS, E O PREÇO DOS DOIS PLANOS");
   t("e com a data no fim", C.precoDe("openai/gpt-5.6-sol-20260709") === C.PRECOS["gpt-5.6-sol"]);
   t("o Gemini com sufixo de revisão também", C.precoDe("gemini-3.8-flash-001") === C.PRECOS["gemini-3.8-flash"]);
   t("o preço de quem responde existe para todos os padrões da rota",
-    [N.PLANOS.base.padrao, N.PLANOS.superior.padrao, N.CRONISTA.padrao, ...N.RESERVAS.narrador.filter((m) => m !== "@base")]
+    /* os apelidos ("@base", "@cronista") apontam para padrões já listados */
+    [N.PLANOS.base.padrao, N.PLANOS.superior.padrao, N.CRONISTA.padrao, ...N.RESERVAS.narrador.filter((m) => !m.startsWith("@"))]
       .every((m) => Object.values(C.PRECOS).includes(C.precoDe(m))));
 }
 

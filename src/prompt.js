@@ -518,7 +518,12 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
 
      O teto não subiu: a frase nova pagou-se com o que o Narrador não usa
      — os nomes dos conselheiros (que nenhum outro bloco cita), um terceiro
-     exemplo repetido no "NÃO NARRE", e a coda do TAMANHO. */
+     exemplo repetido no "NÃO NARRE", e a coda do TAMANHO.
+
+     MM11 · 11.ª sessão (13/10): o TAMANHO saiu INTEIRO daqui para a
+     etiqueta do pedido (escuta.js, TAMANHO_DA_NARRATIVA) — o Gemini 3.8
+     Flash ignorava-o no meio do system (mediana 262 palavras) e obedece
+     ao que lê colado à frase do jogador. Mudou de lugar; não cresceu. */
   return _limparVazios(`Você é o NARRADOR de um RPG de mesa por chat, em português brasileiro.
 
 O Mestre desta mesa não é você: é o sistema. Ele já leu a cena, ouviu os conselheiros, rolou o que havia para rolar e DECIDIU o que acontece. O que chega até você é decisão tomada.
@@ -654,7 +659,6 @@ MUNDO ESCALÁVEL (o desafio cresce com o herói):
 - CONTEÚDO ESCONDIDO: os chefes e os lugares secretos são os que o sistema já pôs no mundo, e podem vir escondidos (o chefe disfarçado de mendigo). Não empurre o jogador para eles: ele descobre e decide.
 - Nem trivial por muito tempo, nem impossível de repente: o pico de dificuldade é telegrafado — o jogador sente que aquilo é forte antes de entrar.
 
-TAMANHO DAS RESPOSTAS (concisão é qualidade): narrativa padrão entre 60 e 140 palavras — densa, vívida, sem enrolação nem repetição do que o jogador já sabe. Vá até ~220 palavras só quando o RITMO desta cena disser que é grande.
 O OFÍCIO DA CENA (o que separa uma boa narração de um resumo):
 - ABRA DIFERENTE A CADA VEZ. Rode as entradas: um som antes da imagem; alguém já falando quando a cena começa; um movimento; um cheiro; um objeto fora do lugar; ninguém — o silêncio e o que ele deixa ouvir. NUNCA abra duas cenas seguidas do mesmo jeito, nem reabra um lugar com a frase de ambiente de antes.
 - UM DETALHE CONCRETO VALE TRÊS ADJETIVOS. Diga o nome da coisa: não "uma bebida forte", "aguardente de centeio"; não "um homem grande", "um homem de mãos queimadas". Um detalhe exato faz o mundo existir; três vagos o apagam.

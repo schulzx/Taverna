@@ -13,7 +13,7 @@
      plano      variável            padrão                 casa (chave)
      base       NARRADOR_BASE       gemini-3.8-flash       Google direto (GEMINI_API_KEY)
      superior   NARRADOR_SUPERIOR   openai/gpt-5.6-sol     OpenRouter (OPENROUTER_API_KEY)
-     cronista   CRONISTA_MODELO     deepseek-v4-flash      DeepSeek (DEEPSEEK_API_KEY)
+     cronista   CRONISTA_MODELO     gemini-3.5-flash-lite  Google direto (GEMINI_API_KEY)
 
    PLANO_PADRAO (padrão "base") é o plano de quem não pede nenhum.
 
@@ -43,7 +43,10 @@
    formato "json" liga saída JSON garantida (response_format / responseMimeType).
    tarefa "leve" (livro/resumo/burocracia) vai para o Cronista; o resto
    ("narrador", o padrão) vai para o modelo do plano. */
+import { createHmac } from "node:crypto";
 import { lerUso } from "../src/custo.js";
+import { CACHE_EXPLICITO, decidirOCache } from "../src/janela.js";
+import { repararJsonTruncado } from "../src/json.js";
 
 import { deixarEntrar } from "./_portao.js";
 
@@ -66,21 +69,30 @@ const casaDoModelo = (modelo) => PROVEDORES.find((p) => p.reconhece(String(model
      contra 1,08). US$ 0,60 por sessão com o cache a 85%.
    · superior — GPT-5.6 Sol: o único que cumpriu tudo (9,4), PT-BR
      impecável; US$ 1,67 por sessão. Medido em só 5 pautas.
-   · cronista — DeepSeek v4 Flash: ~1% da conta, e não pede escrita fina.
+   · cronista — era o DeepSeek v4 Flash (~1% da conta). Na 11.ª sessão
+     (13/10) a conta da DeepSeek estava SEM SALDO: cada uma das 68
+     chamadas leves levou dois 402 (o Flash e o Pro, a mesma conta morta)
+     antes de o Gemini 3.8 responder — +US$ 0,19 e +1–2 idas por chamada.
+     Agora o Cronista é o Flash-Lite do Google (o 3.5, estável, o mais
+     novo da doc em 13/10: 0,30 / 2,50 por milhão, pensamento MINIMAL), e o
+     DeepSeek fica só de reserva. Ver SEM_SALDO, logo abaixo.
    O id do Gemini é o da API do Google ("gemini-3.8-flash", estável, sem
    "-preview", conferido na doc oficial em 13/10). */
 export const PLANOS = {
   base: { variavel: "NARRADOR_BASE", padrao: "gemini-3.8-flash" },
   superior: { variavel: "NARRADOR_SUPERIOR", padrao: "openai/gpt-5.6-sol", trava: "PLANO_SUPERIOR_LIGADO" },
 };
-export const CRONISTA = { variavel: "CRONISTA_MODELO", padrao: "deepseek-v4-flash" };
+export const CRONISTA = { variavel: "CRONISTA_MODELO", padrao: "gemini-3.5-flash-lite" };
 
-/* A fila de reserva por tarefa. "@base" é o modelo do plano base, seja
-   ele qual for na Vercel. Um modelo já tentado não entra duas vezes, e um
-   modelo sem chave configurada não entra nenhuma. */
+/* A fila de reserva por tarefa. "@base" é o modelo do plano base e
+   "@cronista" o do Cronista, sejam eles quais forem na Vercel. Um modelo
+   já tentado não entra duas vezes, e um modelo sem chave configurada não
+   entra nenhuma. O Narrador ganha o Cronista no FIM da fila: se o 3.8
+   Flash bate no limite de taxa (429) e a DeepSeek está sem saldo, o
+   Flash-Lite — outra cota, a mesma casa — ainda salva o turno. */
 export const RESERVAS = {
-  narrador: ["deepseek-v4-pro", "@base", "deepseek-v4-flash"],
-  leve: ["deepseek-v4-pro", "@base"],
+  narrador: ["deepseek-v4-pro", "@base", "deepseek-v4-flash", "@cronista"],
+  leve: ["deepseek-v4-flash", "@base"],
 };
 
 /* A régua da rede. Um 5xx merece UMA retentativa com pausa antes do
@@ -88,7 +100,43 @@ export const RESERVAS = {
    reserva responde mais depressa do que a segunda tentativa falharia. */
 export const REGUA_DA_REDE = { retentaEm: [500, 502, 503, 504], pausaMs: 1200, corpoMax: 250 };
 
+/* SEM SALDO É DA CONTA, NÃO DO MODELO (11.ª sessão). Um 402 diz que a
+   CASA não tem crédito: tentar outro modelo da mesma casa no mesmo pedido
+   é pagar a ida para ouvir o mesmo não — e foi o que as 68 chamadas leves
+   fizeram, duas vezes cada. Um 402 risca a casa da fila por `minutos`
+   (na memória da instância da Vercel, que vive entre pedidos enquanto
+   está quente; uma instância fria tenta de novo, e é o certo: o saldo
+   pode ter voltado). Nunca há segunda tentativa num 402. */
+export const SEM_SALDO = { status: [402], minutos: 10 };
+
+/* O CHÃO DO PENSAMENTO, por modelo. O 3.8 Flash não aceita menos que
+   LOW (doc do Google, 13/10); o Flash-Lite aceita MINIMAL, e é nele que
+   o Cronista roda — burocracia não pede raciocínio, e pensamento é pago
+   como saída. Um modelo fora da lista fica no LOW, que todos aceitam. */
+export const PISO_DO_PENSAMENTO = [
+  { prefixo: "gemini-3.8-flash", nivel: "LOW" },
+  { prefixo: "gemini-3.5-flash-lite", nivel: "MINIMAL" },
+  { prefixo: "gemini-3.1-flash-lite", nivel: "MINIMAL" },
+];
+const pisoDoPensamento = (modelo) => (PISO_DO_PENSAMENTO.find((p) => String(modelo).startsWith(p.prefixo)) || { nivel: "LOW" }).nivel;
+
+/* A REDE DE SAÍDA do Narrador no Gemini (11.ª sessão). O tamanho se pede
+   na mensagem do turno (escuta.js, TAMANHO_DA_NARRATIVA), que é onde o
+   Gemini obedece; o teto aqui é só a rede para o desembestado. No 3.8
+   Flash o pensamento CONTA dentro de `maxOutputTokens` (doc do Google),
+   e a 11.ª mediu 647 tokens no máximo, pensamento incluído — 1200 não
+   corta resposta nenhuma daquelas e corta a que dobrasse. Se cortar, o
+   JSON é reparado na última frase (repararJsonTruncado) ou o turno vai à
+   reserva; nunca chega quebrado à tela. */
+export const REDE_DE_SAIDA = { narrador: 1200 };
+
 const modeloDe = (entrada, env) => String(env[entrada.variavel] || entrada.padrao).trim();
+
+/* A memória da instância: as casas riscadas por falta de saldo, e até
+   quando o cache explícito descansa depois de uma falha. Substituídas,
+   nunca mutadas. */
+let casasSemSaldo = {};
+let explicitoDescansaAte = 0;
 
 /* O plano que vale para este pedido — nunca o superior sem a trava. */
 export function planoDoPedido(pedido, env = process.env) {
@@ -102,23 +150,46 @@ export function planoDoPedido(pedido, env = process.env) {
 }
 
 /* A ROTA: a lista ordenada de { provedor, modelo } que este pedido vai
-   tentar. É função pura do pedido e do ambiente — a suíte a prova sem
-   rede nenhuma. */
-export function rotaDoPedido(pedido, env = process.env) {
+   tentar. É função pura do pedido, do ambiente e das casas sem saldo
+   (`semSaldo`: casa → até quando, em ms; `agora` entra por argumento) — a
+   suíte a prova sem rede nenhuma. */
+export function rotaDoPedido(pedido, env = process.env, opcoes = {}) {
   const e = env || {};
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const riscadas = o.semSaldo && typeof o.semSaldo === "object" ? o.semSaldo : {};
+  const agora = Number(o.agora) || 0;
   const leve = !!(pedido && typeof pedido === "object" && pedido.tarefa === "leve");
   const plano = planoDoPedido(pedido, e);
-  const base = modeloDe(PLANOS.base, e);
-  const primeiro = leve ? modeloDe(CRONISTA, e) : modeloDe(PLANOS[plano], e);
-  const candidatos = [primeiro, ...RESERVAS[leve ? "leve" : "narrador"].map((m) => (m === "@base" ? base : m))];
+  const apelidos = { "@base": modeloDe(PLANOS.base, e), "@cronista": modeloDe(CRONISTA, e) };
+  const primeiro = leve ? apelidos["@cronista"] : modeloDe(PLANOS[plano], e);
+  const candidatos = [primeiro, ...RESERVAS[leve ? "leve" : "narrador"].map((m) => apelidos[m] || m)];
   const passos = [], vistos = new Set();
   for (const modelo of candidatos) {
     const casa = casaDoModelo(modelo);
     if (!modelo || vistos.has(modelo) || !casa || !e[casa.chave]) continue;
+    if (Number(riscadas[casa.id]) > agora) continue;
     vistos.add(modelo);
     passos.push({ provedor: casa.id, modelo });
   }
   return { plano, passos };
+}
+
+/* ---------------- A FICHA DO CACHE EXPLÍCITO ----------------
+   O jogo guarda o nome do cache e devolve-o no turno seguinte (a conta e
+   o porquê moram em janela.js, CACHE_EXPLICITO). O selo é um HMAC com a
+   chave do Google, que só o servidor conhece: uma ficha que o navegador
+   inventasse — apontando para um cache que não é desta conversa — não
+   passa daqui. */
+const CAMPOS_DA_FICHA = ["nome", "modelo", "m", "impressao", "criado", "expira", "tokens"];
+const seloDe = (f, segredo) => createHmac("sha256", String(segredo)).update(JSON.stringify(CAMPOS_DA_FICHA.map((k) => f[k]))).digest("hex");
+function selarFicha(f, segredo) {
+  const limpa = Object.fromEntries(CAMPOS_DA_FICHA.map((k) => [k, f[k]]));
+  return { ...limpa, selo: seloDe(limpa, segredo) };
+}
+function lerFicha(bruta, segredo) {
+  if (!segredo || !bruta || typeof bruta !== "object" || typeof bruta.selo !== "string") return null;
+  if (typeof bruta.nome !== "string" || !/^cachedContents\/[A-Za-z0-9_-]+$/.test(bruta.nome)) return null;
+  return seloDe(bruta, segredo) === bruta.selo ? bruta : null;
 }
 
 export default async function handler(req, res) {
@@ -136,6 +207,14 @@ export default async function handler(req, res) {
     const teto = Math.min(Math.max(Number(maxTokens) || 1500, 800), 8192);
     const emJson = formato === "json";
     const env = process.env;
+    const agora = Date.now();
+    const leve = tarefa === "leve";
+    /* o cache explícito é OPT-IN: só o turno do Narrador (chamarMestre)
+       manda o campo `cache` — um objeto, vazio no primeiro turno. Outra
+       chamada do Narrador, com outro system, trocaria o cache da conversa
+       por um seu a cada vez. */
+    const querCache = !leve && corpo.cache && typeof corpo.cache === "object" && String(env.GM_CACHE_EXPLICITO || "1") !== "0";
+    const fichaRecebida = querCache ? lerFicha(corpo.cache, env.GEMINI_API_KEY) : null;
 
     const pausa = (ms) => new Promise((ok) => setTimeout(ok, ms));
     /* Um pedido, com a retentativa da régua. Devolve a resposta boa, ou o
@@ -150,7 +229,7 @@ export default async function handler(req, res) {
         break;
       }
       const txt = await r.text().catch(() => "");
-      return { erro: `${modelo}: ${r.status}`, corpo: String(txt || "").slice(0, REGUA_DA_REDE.corpoMax) };
+      return { erro: `${modelo}: ${r.status}`, status: r.status, corpo: String(txt || "").slice(0, REGUA_DA_REDE.corpoMax) };
     };
     const msgsOpenAI = () => [{ role: "system", content: String(system) },
       ...messages.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: String(m.content || "") }))];
@@ -237,7 +316,7 @@ export default async function handler(req, res) {
          Google —, e por isso trocar de provedor trocava o tom do narrador
          sem que nada no jogo tivesse mudado. */
       const generationConfig = {
-        maxOutputTokens: teto,
+        maxOutputTokens: Math.min(teto, (!leve && REDE_DE_SAIDA.narrador) || teto),
         /* O PENSAMENTO NO CHÃO (v9.466). Os tokens de pensamento do Gemini
            são cobrados como SAÍDA (US$ 3,75/M no 3.8 Flash), e o teste cego
            correu sem eles. Pela doc do Google (13/10), o 3.8 Flash aceita só
@@ -245,7 +324,7 @@ export default async function handler(req, res) {
            desligar de todo não existe na família 3. LOW é o chão. Se um dia
            o NARRADOR_BASE for um modelo que aceite menos, GM_PENSAMENTO
            desce sem redeploy. */
-        thinkingConfig: { thinkingLevel: String(env.GM_PENSAMENTO || "LOW") },
+        thinkingConfig: { thinkingLevel: String((leve ? env.CRONISTA_PENSAMENTO : env.GM_PENSAMENTO) || pisoDoPensamento(modelo)) },
         /* ---------------- O MESMO NÚMERO NÃO É A MESMA COISA (v9.115) ----------------
            A v9.75 pôs os dois provedores sob a mesma régua, e a razão escrita
            era boa: "duas configurações para a mesma decisão é a mesma coisa
@@ -281,25 +360,66 @@ export default async function handler(req, res) {
         "HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH",
         "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT",
       ].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" }));
-      /* O CACHE DO GEMINI É IMPLÍCITO: o Google relê sozinho o PREFIXO que
-         já viu, e o devolve em `usageMetadata.cachedContentTokenCount`
-         (que `lerUso` lê). O prefixo aqui é o `systemInstruction` e depois
-         o histórico — a mesma ordem que a v9.465 arrumou para o DeepSeek. */
-      const p = await pedir(modelo, () => fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-          body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig, safetySettings }),
+      /* O CACHE DO GEMINI. O implícito (o Google relê sozinho o prefixo
+         que já viu) creditou na 11.ª sessão só o `system` — 25,4%. Quando o
+         turno pede (`querCache`), entra o EXPLÍCITO: a decisão é de
+         janela.js (decidirOCache), e aqui só se fala com o Google. Tudo o
+         que falhar no cache cai no pedido inteiro de sempre — o cache
+         nunca pode custar o turno. */
+      const API = "https://generativelanguage.googleapis.com/v1beta";
+      const cab = { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY };
+      const inteiro = { systemInstruction: { parts: [{ text: system }] }, contents, generationConfig, safetySettings };
+      let usado = null, devolver, escrita = 0, guardado = 0, apagar = null, novo = null;
+      if (querCache && env.GEMINI_API_KEY && agora >= explicitoDescansaAte && modelo === rota.passos[0].modelo) {
+        const dec = decidirOCache({ ficha: fichaRecebida, system, mensagens: messages, agora, modelo });
+        devolver = fichaRecebida;
+        if (dec.acao === "usar") usado = { nome: fichaRecebida.nome, m: dec.m };
+        else if (dec.acao === "criar") {
+          const r = await fetch(`${API}/cachedContents`, {
+            method: "POST", headers: cab,
+            body: JSON.stringify({ model: `models/${modelo}`, systemInstruction: inteiro.systemInstruction, contents: contents.slice(0, dec.m), ttl: `${CACHE_EXPLICITO.ttlSegundos}s` }),
+          }).catch(() => null);
+          const d = r && r.ok ? await r.json().catch(() => null) : null;
+          if (d && typeof d.name === "string") {
+            escrita = Number(d.usageMetadata && d.usageMetadata.totalTokenCount) || 0;
+            novo = d.name;
+            usado = { nome: d.name, m: dec.m };
+            devolver = selarFicha({ nome: d.name, modelo, m: dec.m, impressao: dec.impressao, criado: agora, expira: agora + CACHE_EXPLICITO.ttlSegundos * 1000, tokens: escrita }, env.GEMINI_API_KEY);
+            apagar = dec.apagar;
+          } else {
+            /* o Google recusou o cache: o turno segue inteiro, e o explícito
+               descansa — senão cada turno pagaria a ida que falha */
+            explicitoDescansaAte = agora + SEM_SALDO.minutos * 60000;
+          }
+        } else { apagar = dec.apagar; devolver = null; }
+        /* o cache trocado é apagado na hora: o Google cobra a GUARDA por
+           hora, e um cache que ninguém mais lê não pode ficar a cobrar */
+        if (apagar && fichaRecebida && apagar === fichaRecebida.nome) {
+          guardado = (Number(fichaRecebida.tokens) || 0) * Math.max(0, agora - Number(fichaRecebida.criado)) / 3.6e6;
         }
-      ));
+      }
+      const gerar = (corpoDoPedido) => pedir(modelo, () => fetch(`${API}/models/${modelo}:generateContent`, { method: "POST", headers: cab, body: JSON.stringify(corpoDoPedido) }));
+      const apagando = apagar ? fetch(`${API}/${apagar}`, { method: "DELETE", headers: cab }).catch(() => null) : null;
+      let p = await gerar(usado ? { cachedContent: usado.nome, contents: contents.slice(usado.m), generationConfig, safetySettings } : inteiro);
+      if (usado && !p.r && [400, 403, 404].includes(p.status)) {
+        /* o cache sumiu (expirou, foi apagado) ou o Google o recusou: o
+           mesmo turno, inteiro, e a ficha morre com ele */
+        explicitoDescansaAte = novo ? agora + SEM_SALDO.minutos * 60000 : explicitoDescansaAte;
+        if (novo) fetch(`${API}/${novo}`, { method: "DELETE", headers: cab }).catch(() => null);
+        devolver = null;
+        p = await gerar(inteiro);
+      }
+      if (apagando) await apagando;
       if (!p.r) return p;
       const data = await p.r.json();
       const cand = data.candidates && data.candidates[0];
-      const texto = ((cand && cand.content && cand.content.parts) || []).filter((x) => !x.thought).map((x) => x.text || "").filter(Boolean).join("\n");
+      let texto = ((cand && cand.content && cand.content.parts) || []).filter((x) => !x.thought).map((x) => x.text || "").filter(Boolean).join("\n");
+      /* a rede de saída cortou: repara na última frase, ou vai à reserva */
+      if (texto && emJson && cand && cand.finishReason === "MAX_TOKENS") texto = repararJsonTruncado(texto);
       if (!texto) return { erro: `sem texto (${(cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || "vazio"})`, corpo: "" };
       const uso = lerUso(data);
-      return { texto, uso: uso ? { ...uso, modelo: data.modelVersion || modelo } : null };
+      const extra = { ...(escrita ? { escrita } : {}), ...(guardado ? { guardado } : {}) };
+      return { texto, cache: devolver, uso: uso ? { ...uso, ...extra, modelo: data.modelVersion || modelo } : null };
     };
 
     /* ---------- OpenRouter (o plano superior) ----------
@@ -343,12 +463,19 @@ export default async function handler(req, res) {
     };
 
     const CHAMAR = { deepseek: chamarDeepSeek, gemini: chamarGemini, openrouter: chamarOpenRouter };
-    const rota = rotaDoPedido(corpo, env);
-    if (!rota.passos.length) { res.status(500).json({ erro: "Nenhuma chave configurada (GEMINI_API_KEY / DEEPSEEK_API_KEY / OPENROUTER_API_KEY)" }); return; }
+    const rota = rotaDoPedido(corpo, env, { semSaldo: casasSemSaldo, agora });
+    if (!rota.passos.length) {
+      const riscadas = Object.keys(casasSemSaldo).filter((k) => casasSemSaldo[k] > agora);
+      res.status(riscadas.length ? 502 : 500).json({ erro: riscadas.length ? `Todos os provedores falharam — sem saldo: ${riscadas.join(", ")} (402)` : "Nenhuma chave configurada (GEMINI_API_KEY / DEEPSEEK_API_KEY / OPENROUTER_API_KEY)" });
+      return;
+    }
 
     const tentativas = [];
     for (const passo of rota.passos) {
+      /* a casa que disse 402 NESTE pedido não é tentada outra vez nele */
+      if (Number(casasSemSaldo[passo.provedor]) > agora) continue;
       const out = await CHAMAR[passo.provedor](passo.modelo);
+      if (!out.texto && SEM_SALDO.status.includes(out.status)) casasSemSaldo = { ...casasSemSaldo, [passo.provedor]: agora + SEM_SALDO.minutos * 60000 };
       /* QUEM ESTAVA NA FILA, e não só quem respondeu (v9.116).
 
          Custou uma investigação inteira: o cliente no ar já tinha o código
@@ -368,7 +495,10 @@ export default async function handler(req, res) {
          v9.466: a fila diz também o MODELO de cada passo, e a resposta diz
          o plano — com dois modelos na mesma casa (o Cronista e a reserva
          são os dois DeepSeek), o nome da casa sozinho já não responde. */
-      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: passo.provedor, plano: rota.plano, fila: rota.passos.map((x) => `${x.provedor}:${x.modelo}`), falharam: tentativas, uso: out.uso ? { ...out.uso, tarefa: tarefa || "narrador" } : null }); return; }
+      /* a ficha do cache volta sempre a quem a pediu: a nova, a mesma, ou
+         nula (morreu); se quem respondeu foi a reserva, a que veio */
+      const ficha = querCache ? { cache: out.cache !== undefined ? out.cache : fichaRecebida } : {};
+      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: passo.provedor, plano: rota.plano, fila: rota.passos.map((x) => `${x.provedor}:${x.modelo}`), falharam: tentativas, ...ficha, uso: out.uso ? { ...out.uso, tarefa: tarefa || "narrador" } : null }); return; }
       tentativas.push(`${passo.provedor} (${out.erro}${out.corpo ? `: ${out.corpo}` : ""})`);
     }
     res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400) });
