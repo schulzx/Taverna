@@ -202,6 +202,13 @@ export function masmorraAberta(masmorra) {
   return String(masmorra.nome || "").trim();
 }
 
+/* O motivo de quem o registo não sabe onde está. É PRESENTE por omissão
+   (a regra de sempre, logo acima) — e por isso quem lê o `aqui` precisa de
+   saber distinguir "vive aqui" de "ninguém escreveu onde vive": a história
+   (o núcleo, a espinha) pode saber o que o registo não sabe, e o seu
+   `longeDaHistoria` (nucleo.js) só cede ao registo que SABE (13/10). */
+export const QUEM_ESTA_AQUI = { semParadeiro: "paradeiro não registrado" };
+
 /* Quem plausivelmente está na cena, e quem está longe (com a conta feita). */
 export function elencoDaCena(npcs, cidadeAtual, mapa, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
@@ -224,7 +231,7 @@ export function elencoDaCena(npcs, cidadeAtual, mapa, opcoes = {}) {
       continue;
     }
     const onde = cidadeDe(n, mapa);
-    if (!onde) { aqui.push({ ...n, motivo: "paradeiro não registrado" }); continue; }
+    if (!onde) { aqui.push({ ...n, motivo: QUEM_ESTA_AQUI.semParadeiro }); continue; }
     if (norm(onde) === norm(cidadeAtual)) { aqui.push({ ...n, motivo: `vive em ${onde}` }); continue; }
     longe.push({ ...n, onde, dias: diasEntre(mapa, onde, cidadeAtual) });
   }

@@ -63,6 +63,8 @@ import { LIGACOES_AO_PASSADO } from "./companheiro-inicial.js";
 import { sexoDoNome } from "./nomes.js";
 /* 9.ª sessão (12/10): a gente da cidade, para a voz de quem divide o nome */
 import { oQueExisteAqui } from "./mundo-base.js";
+/* 13/10 (a prova viva da v9.458): quem o registo não sabe onde está */
+import { QUEM_ESTA_AQUI } from "./cena.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -1062,11 +1064,77 @@ export function linhaQuemE(pessoa, { tamanho = "inicio", fio = null, cenas = 0 }
   return linha;
 }
 
+/* ---------------- QUEM A HISTÓRIA SABE LONGE (13/10, a prova viva da v9.458) ----------------
+   Em Nova do Norte a prosa disse «Neirin está em O Pregão das Três Luas, em
+   Ponto da Fonte» — e o Neirin, que a espinha põe em Ponto da Fonte e o
+   registo ainda não tinha, entrou no EM CENA, ganhou ficha, e a pauta trouxe
+   `QUEM CARREGA Neirin (é fato: entra nesta resposta, dito por ele)` com ele
+   a oito horas de marcha. A lista de longe só lia o registo
+   (`elencoDaCena(...).longe`), e quem a HISTÓRIA sabe noutra cidade — o
+   núcleo, a espinha — ficava "aqui" por omissão, à mercê da prosa que o cita.
+
+   `longeDaHistoria(ctx)` junta as três vozes, cada uma com a sua autoridade:
+     · o registo, quando sabe (o `longe` dele vai inteiro; quem ele põe AQUI
+       com paradeiro conhecido está aqui, diga a história o que disser — é a
+       memória mais nova do mundo);
+     · o núcleo (`pessoas[].cidade`) e a espinha (`marcos[].quem` com a
+       `cidade` do marco) — quem só eles conhecem está onde eles dizem;
+     · quem anda com o herói nunca está longe (o grupo; o companheiro do
+       núcleo nasce dele). Se alguma voz da história o põe AQUI, fica aqui:
+       na dúvida, a regra de antes.
+   Sem `cidade` (na estrada, na masmorra aberta) só o registo fala.
+   `ctx`: { longe, presentes, nucleo, espinha, cidade, grupo } — tudo opcional;
+   devolve [{ nome, onde, deOnde }]. */
+export const LONGE_DA_HISTORIA = {
+  semParadeiro: QUEM_ESTA_AQUI.semParadeiro,
+  fontesQueAndam: ["grupo"],
+  porque: "quem a história põe noutra cidade está lá até o registo o ver chegar: a prosa que o nomeia não o traz",
+};
+export function longeDaHistoria(ctx) {
+  const c = obj(ctx);
+  const cidade = norm(c.cidade);
+  const nomeDe = (x) => String((x && typeof x === "object" ? x.nome : x) || "").trim();
+  const anda = arr(c.grupo).map(nomeDe).filter(Boolean);
+  const comigo = (nome) => anda.some((g) => mesmoNome(g, nome));
+  const out = [];
+  const ja = (nome) => out.some((x) => mesmoNome(x.nome, nome));
+  for (const r of arr(c.longe)) {
+    const nome = nomeDe(r);
+    if (!nome || comigo(nome) || ja(nome)) continue;
+    out.push({ nome, onde: String(obj(r).onde || ""), deOnde: "registo" });
+  }
+  if (!cidade) return out;
+  /* o registo que SABE que a pessoa está aqui manda; o "paradeiro não
+     registrado" não sabe nada */
+  const sabidoAqui = (nome) => arr(c.presentes).some((p) => mesmoNome(nomeDe(p), nome) && obj(p).motivo !== LONGE_DA_HISTORIA.semParadeiro);
+  /* o que a história diz de cada um: { nome, onde, deOnde }, por ordem */
+  const vozes = [];
+  for (const p of arr(obj(c.nucleo).pessoas)) {
+    const o = obj(p);
+    if (o.morto || LONGE_DA_HISTORIA.fontesQueAndam.includes(o.fonte)) continue;
+    vozes.push({ nome: String(o.nome || ""), onde: String(o.cidade || ""), deOnde: "nucleo" });
+  }
+  for (const a of arr(obj(c.espinha).atos)) {
+    for (const m of arr(obj(a).marcos)) vozes.push({ nome: String(obj(m).quem || ""), onde: String(obj(m).cidade || ""), deOnde: "espinha" });
+  }
+  const aquiPelaHistoria = (nome) => vozes.some((v) => v.onde && norm(v.onde) === cidade && mesmoNome(v.nome, nome));
+  for (const v of vozes) {
+    if (!v.nome.trim() || !v.onde || norm(v.onde) === cidade) continue;
+    if (comigo(v.nome) || ja(v.nome) || sabidoAqui(v.nome) || aquiPelaHistoria(v.nome)) continue;
+    out.push(v);
+  }
+  return out;
+}
+const estaLonge = (lista, nome) => arr(lista).some((x) => mesmoNome(x.nome, nome));
+
 export function quemEParaPauta(nucleo, cena) {
   const out = { quemE: [], quem: "" };
   const n = obj(nucleo);
   const c = obj(cena);
-  const emCena = arr(c.emCena).map(String).filter(Boolean);
+  /* 13/10: a ficha por dentro é de quem está à frente — quem a história sabe
+     noutra cidade não a leva, por mais que a prosa o cite */
+  const longe = longeDaHistoria({ longe: c.longe, presentes: c.presentes, nucleo: n, espinha: c.espinha, cidade: c.cidade, grupo: c.grupo });
+  const emCena = arr(c.emCena).map(String).filter(Boolean).filter((x) => !estaLonge(longe, x));
   if (!emCena.length) return out;
   const turno = Math.floor(Number(c.turno)) || 0;
   const ato = Math.max(0, Math.floor(Number(c.ato)) || 0);

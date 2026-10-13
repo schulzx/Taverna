@@ -534,7 +534,8 @@ export const SALA_LIMPA = {
 export function voltarASalaLimpa(sala, opcoes) {
   const pos = opcoes && typeof opcoes === "object" ? opcoes.pos : "";
   if (!sala || typeof sala !== "object" || sala.resolvida !== true || sala.tipo === "entrada") return null;
-  const t = SALA_LIMPA[sala.tipo] || SALA_LIMPA.combate;
+  /* 13/10: a armadilha diz como acabou (desarmada, contornada, disparada) */
+  const t = sala.tipo === "armadilha" ? ficouDaArmadilha(sala) : (SALA_LIMPA[sala.tipo] || SALA_LIMPA.combate);
   const caidos = [...new Set((Array.isArray(sala.inimigos) ? sala.inimigos : [])
     .map((i) => String((i && i.nome) || "").trim()).filter(Boolean))];
   const onde = String(pos || "").trim();
@@ -779,8 +780,9 @@ export function masmorraParaPauta(mm, opcoes) {
   const nomes = nomesContados(sala.inimigos);
   let resta = "";
   if (sala.tipo === "entrada") resta = "a boca: por aqui se sai da masmorra";
-  else if (sala.resolvida === true) resta = `${(SALA_LIMPA[sala.tipo] || SALA_LIMPA.combate).oQueFicou}${nomes ? ` — caídos aqui: ${nomes}` : ""}`;
+  else if (sala.resolvida === true) resta = `${(sala.tipo === "armadilha" ? ficouDaArmadilha(sala) : (SALA_LIMPA[sala.tipo] || SALA_LIMPA.combate)).oQueFicou}${nomes ? ` — caídos aqui: ${nomes}` : ""}`;
   else if (nomes) resta = `de pé aqui: ${nomes}`;
+  else if (armadilhaViva(sala) && sala.armada) resta = encherArm(ARMADILHA_DA_SALA.aVista, { nome: sala.nomeArmadilha || "uma armadilha" });
   else if (sala.tipo === "enigma") resta = `a tranca (${trancaPorId(sala.tranca).rotulo}) ainda por abrir`;
   if (resta) linhas.push(resta);
 
@@ -950,6 +952,135 @@ export function resultadoBusca(sala, rolagemTotal) {
 /* Armadilha NÃO percebida dispara ao entrar; percebida pode ser evitada. */
 export function armadilhaDispara(sala) {
   return !!(sala && sala.segredo && sala.segredo.perigo && !sala.segredo.revelado);
+}
+
+/* ---------------- A ARMADILHA QUE SE VÊ ANTES DE MORDER (13/10, a prova viva da v9.458) ----------------
+   A sala de armadilha disparava (e ficava resolvida) no instante em que se
+   entrava: `irParaSala` marcava-a e rolava o dano no mesmo passo. O teste de
+   desarmar (desafios.js, que só existe diante de uma armadilha em cena e por
+   disparar) nunca rolava, porque nunca havia esse instante — e o Ladino com
+   Percepção alta pisava no fio como o Bárbaro distraído.
+
+   A regra de mesa, a do Matt e a do livro: ao ENTRAR, o herói tem a chance de
+   a notar. A Percepção passiva (10 + Percepção + o ritmo) contra a dificuldade
+   dela — a da armadilha oculta da sala, se a sala tem uma; senão a da tabela,
+   que sobe com a camada. Quem anda com cautela está a PROCURAR: rola também
+   (d20 + Percepção) e fica com o melhor dos dois.
+     · NOTADA, fica armada e à vista (`armada: true`), e o herói decide, com o
+       preço de cada lado antes do clique (`opcoesDaArmadilha`): desarmá-la (o
+       teste, que lê `objetoEmCena("armadilha")`; falhar é a armadilha na mão,
+       e desafios.js já a cobra), contorná-la (tempo e luz, nada de pele), ou
+       passar assim mesmo (ela dispara como hoje, mas quem a viu salta com
+       vantagem);
+     · NÃO NOTADA, dispara como hoje.
+   Seguir em frente com ela armada é passar assim mesmo
+   (`armadilhaNoCaminho`): a passagem para a frente está do outro lado dela.
+   Voltar para trás não a toca. */
+export const ARMADILHA_DA_SALA = {
+  notar: { base: 12, porCamada: 1, max: 18 },
+  ativaNoRitmo: ["cauteloso"],
+  dado: 20,
+  contornar: { minutos: 20, tochas: 1 },
+  correr: { vantagem: true },
+  /* o que a sala é depois, para o Narrador e para a volta (SALA_LIMPA) */
+  ficou: {
+    disparou: SALA_LIMPA.armadilha,
+    desarmada: { oQueFicou: "a armadilha foi desarmada e já não morde", linha: "A armadilha daqui está desarmada." },
+    contornada: { oQueFicou: "a armadilha continua armada, e o caminho rente a ela já é conhecido", linha: "Você conhece o caminho rente à armadilha." },
+  },
+  aVista: "à vista e armada: {nome} — ainda não disparou",
+  opcoes: {
+    desarmar: { rotulo: "Desarmar", frase: "desarmo a armadilha", preco: "um teste de Prestidigitação; falhar é a armadilha na mão" },
+    contornar: { rotulo: "Contornar", preco: "{minutos} min e {tochas} tocha, sem tocar nela" },
+    correr: { rotulo: "Passar assim mesmo", preco: "ela dispara: até {dano} de dano, e você salta com vantagem" },
+  },
+  porque: "a armadilha que o herói nota antes de pisar é uma escolha, não um imposto",
+};
+const encherArm = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (m, k) => (v[k] == null ? m : String(v[k])));
+const salaAtualDe = (mm) => (mm && Array.isArray(mm.salas) ? mm.salas.find((s) => s && s.id === mm.atual) || null : null);
+/* uma sala de armadilha que ainda pode morder (nem resolvida nem disparada) */
+const armadilhaViva = (sala) => !!(sala && typeof sala === "object" && sala.tipo === "armadilha" && sala.resolvida !== true && !sala.disparou);
+
+/* A dificuldade de notar a armadilha desta sala. */
+export function cdDaArmadilha(sala) {
+  const s = sala && typeof sala === "object" ? sala : {};
+  const seg = s.segredo && typeof s.segredo === "object" ? s.segredo : null;
+  if (seg && seg.tipo === "armadilha_oculta" && Number.isFinite(Number(seg.cd))) return Number(seg.cd);
+  const T = ARMADILHA_DA_SALA.notar;
+  return Math.min(T.max, T.base + T.porCamada * Math.max(0, Math.floor(Number(s.camada) || 0)));
+}
+
+/* AO ENTRAR (`mm.atual` já é a sala): a armadilha foi notada? Devolve
+   { mm, notou, cd, valor, rolou, linha } — com `notou`, a sala fica
+   `armada: true` no `mm` novo; sem ela, `mm` é o mesmo e o App segue o
+   caminho de hoje (o disparo). `null` quando a sala não é de armadilha viva
+   ou a armadilha já estava à vista. `opcoes`: { passiva, mod, ritmo,
+   sorte = Math.random } (podem vir null). Nunca muta o `mm`. */
+export function notarArmadilha(mm, opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const sala = salaAtualDe(mm);
+  if (!armadilhaViva(sala) || sala.armada) return null;
+  const sorte = typeof o.sorte === "function" ? o.sorte : Math.random;
+  const cd = cdDaArmadilha(sala);
+  const passiva = Number.isFinite(Number(o.passiva)) ? Number(o.passiva) : percepcaoPassiva(Number(o.mod) || 0, o.ritmo);
+  const seg = sala.segredo && typeof sala.segredo === "object" ? sala.segredo : null;
+  const jaVista = !!(seg && seg.tipo === "armadilha_oculta" && seg.revelado);
+  let rolou = null;
+  if (!jaVista && ARMADILHA_DA_SALA.ativaNoRitmo.includes(o.ritmo)) {
+    const d20 = 1 + Math.floor(sorte() * ARMADILHA_DA_SALA.dado);
+    rolou = { d20, total: d20 + (Number(o.mod) || 0) };
+  }
+  const valor = Math.max(passiva, rolou ? rolou.total : -Infinity);
+  const notou = jaVista || valor >= cd;
+  if (!notou) return { mm, notou: false, cd, valor, rolou, linha: "" };
+  const salas = mm.salas.map((s) => (s && s.id === sala.id ? { ...s, armada: true } : s));
+  const como = jaVista ? "você já a tinha visto" : rolou && rolou.total > passiva ? `Percepção ${rolou.d20}${Number(o.mod) ? ` + ${Number(o.mod)}` : ""} = ${rolou.total} vs ${cd}` : `Percepção passiva ${passiva} vs ${cd}`;
+  return { mm: { ...mm, salas }, notou: true, cd, valor, rolou, linha: `👁 ${como} — ${sala.nomeArmadilha || "uma armadilha"}, armada à sua frente.` };
+}
+
+/* As três saídas de uma armadilha à vista, cada uma com o preço antes do
+   clique: [{ id, rotulo, preco, frase? }]. Vazio quando não há armadilha à
+   vista na sala atual. `opcoes`: { tochas } (o que resta na mão). */
+export function opcoesDaArmadilha(mm, opcoes) {
+  const sala = salaAtualDe(mm);
+  if (!armadilhaViva(sala) || !sala.armada) return [];
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const C = ARMADILHA_DA_SALA.contornar, O = ARMADILHA_DA_SALA.opcoes;
+  const tochas = Number.isFinite(Number(o.tochas)) ? Number(o.tochas) : Number(mm.tochas) || 0;
+  const out = [{ id: "desarmar", rotulo: O.desarmar.rotulo, preco: O.desarmar.preco, frase: O.desarmar.frase }];
+  if (tochas >= C.tochas) out.push({ id: "contornar", rotulo: O.contornar.rotulo, preco: encherArm(O.contornar.preco, C) });
+  out.push({ id: "correr", rotulo: O.correr.rotulo, preco: encherArm(O.correr.preco, { dano: Number(sala.dano) || 0 }) });
+  return out;
+}
+
+/* O fim da armadilha da sala atual: `como` é "desarmada" (o teste passou),
+   "disparou" (o teste falhou — desafios.js já cobrou a mão —, ou o herói
+   passou assim mesmo e o App rolou o disparo), ou "contornada" (gasta o
+   tempo e a luz da tabela). Devolve { mm, minutos, linha } ou null (sem
+   armadilha viva, ou `como` desconhecido). Nunca muta o `mm`. */
+export function fecharArmadilha(mm, como) {
+  const sala = salaAtualDe(mm);
+  if (!armadilhaViva(sala) || !Object.prototype.hasOwnProperty.call(ARMADILHA_DA_SALA.ficou, como)) return null;
+  const C = ARMADILHA_DA_SALA.contornar;
+  const contorna = como === "contornada";
+  const salas = mm.salas.map((s) => (s && s.id === sala.id ? { ...s, armada: false, resolvida: true, [como]: true } : s));
+  const tochas = contorna ? Math.max(0, (Number(mm.tochas) || 0) - C.tochas) : mm.tochas;
+  return { mm: { ...mm, salas, tochas }, minutos: contorna ? C.minutos : 0, linha: ARMADILHA_DA_SALA.ficou[como].linha };
+}
+
+/* Seguir para `destino` passa por cima da armadilha à vista? (a passagem
+   para a frente está do outro lado dela; voltar não a toca) */
+export function armadilhaNoCaminho(mm, destino) {
+  const sala = salaAtualDe(mm);
+  if (!armadilhaViva(sala) || !sala.armada) return false;
+  return saidasDe(mm).some((x) => x && x.id === destino);
+}
+
+/* O que a sala de armadilha resolvida é, pelo modo como acabou (a de
+   sempre, "já disparou", para os saves de antes) */
+function ficouDaArmadilha(sala) {
+  const F = ARMADILHA_DA_SALA.ficou;
+  return (sala && sala.desarmada && F.desarmada) || (sala && sala.contornada && F.contornada) || F.disparou;
 }
 
 /* ============================================================

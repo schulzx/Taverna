@@ -44,6 +44,8 @@ import { PERGUNTA_DE_PRECO, APONTA_OU_COMPRA } from "./mercado.js";
 import { garantirPauta, textoDaPauta } from "./pauta.js";
 /* 13/10: a régua do portão para "está aqui" contra "foi só nomeado" */
 import { contextoDoNome, AGINDO_NA_CENA } from "./cena.js";
+/* 13/10 (a prova viva da v9.458): quem a história sabe longe, não só o registo */
+import { longeDaHistoria } from "./nucleo.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const palavras = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
@@ -114,6 +116,29 @@ export const EM_CENA_DO_LUGAR = {
      palavra (o verbo) logo depois, sem vírgula */
   sujeito: { antes: /^\s*(?:(?:e|mas|entao|depois|o|a)\s+)*$/, depois: /^\s+[a-z]/ },
   porque: "a lista do que está em cena é a do lugar: quem o sistema sabe longe não está à frente, por mais que a prosa o nomeie",
+};
+
+/* ---------------- O BICHO FICA ONDE FOI VISTO (13/10, a prova viva da v9.458) ----------------
+   Uma ficha «Serpente · sozinha» acompanhou a heroína de Nova do Norte a
+   Ponto da Fonte. Dois furos, um em cima do outro:
+     · a Serpente era a SERPENTE ROUCA, a estalagem do Cedric — o nome de um
+       sítio lido como bicho. Antes de procurar bichos na prosa, os nomes dos
+       sítios que o sistema conhece (o lugar, as saídas, o que fica perto, o
+       `local` de quem está no registo, e `ctx.lugares`) saem do texto; e a
+       cabeça de bicho com maiúscula seguida de outra maiúscula logo depois de
+       um locativo ("na Serpente Rouca", "no Javali Cambaleante") é nome de
+       casa, não animal;
+     · e as falas do Mestre que o herói leu NOUTRA cidade (as duas da janela
+       que `falasDoMestre` guarda continuam lá depois da viagem) faziam
+       nascer o bicho DE NOVO, já com o sítio novo carimbado — e a memória
+       levava-o seis turnos. A lista guarda a cidade em que foi montada
+       (`naCidade`, propriedade da própria lista); quando a cidade muda, as falas da janela ficam marcadas
+       como de fora (`falasDeFora`, pela impressão do texto) até saírem dela,
+       e delas não nasce bicho. O que a prosa NOVA mostrar, nasce.
+   Só os bichos: a gente da prosa tem a sua régua (a memória com o sítio). */
+export const BICHO_DO_SITIO = {
+  locativos: ["na", "no", "nas", "nos", "num", "numa", "à", "às"],
+  porque: "o bicho que a prosa mostrou fica no sítio onde foi visto, e o nome de uma casa não é um bicho",
 };
 
 /* O TRATO. O jogo trata o jogador por "você" (a tela e o Narrador desde a
@@ -281,6 +306,52 @@ export function apresentadosNaProsa(mostrado, conhecidos) {
   return [...out.values()];
 }
 
+/* a impressão de uma fala (o mesmo texto, a mesma marca) */
+function marcaDaFala(t) {
+  let h = 0x811c9dc5;
+  const s = String(t || "");
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36);
+}
+/* os nomes de sítio que o sistema conhece, para a prosa não os ler como bicho */
+function sitiosConhecidos(c) {
+  const nomes = [nomeDe(c.lugar), ...arr(c.saidas).map((s) => (s && typeof s === "object" ? s.nome : s)), ...arr(c.perto).map(nomeDe), ...arr(c.lugares).map(nomeDe),
+    ...[...arr(c.presentes), ...arr(c.longe)].map((p) => obj(p).local)];
+  return [...new Set(nomes.map((n) => semArtigo(String(n || "").trim())).filter((n) => palavras(n).length))];
+}
+/* BICHO_DO_SITIO: as falas de onde os bichos podem nascer (sem as lidas
+   noutra cidade, e sem os nomes de sítio), e as marcas das de fora */
+function falasDosBichos(c, cidade, mostrado) {
+  /* o carimbo vem na própria lista de antes (propriedades do array, que o
+     App guarda inteiro de um turno ao outro): uma lista sem ninguém também
+     se lembra de onde foi montada */
+  const ca = Array.isArray(c.antes) ? c.antes : null;
+  const antes = ca && typeof ca.naCidade === "string" ? ca.naCidade : null;
+  const deForaAntes = new Set(arr(ca && ca.falasDeFora).map(String));
+  const mudou = antes != null && antes !== cidade;
+  const marcas = mostrado.map(marcaDaFala);
+  const deFora = [...new Set(marcas.filter((m) => mudou || deForaAntes.has(m)))];
+  const sitios = sitiosConhecidos(c);
+  const CAB = new Set(CRIATURA_NA_PROSA.cabecas);
+  const loc = new RegExp("(^|[^\\p{L}])(?:" + BICHO_DO_SITIO.locativos.join("|") + ")\\s+(\\p{Lu}\\p{L}*)(\\s+\\p{Lu}\\p{L}*)", "gu");
+  const branco = (x) => x.replace(/\S/g, " ");
+  const textos = mostrado.filter((_, i) => !deFora.includes(marcas[i])).map((t) => {
+    let x = t;
+    const base = norm(x);
+    if (base.length === x.length) {
+      for (const n of sitios) {
+        const rx = new RegExp(`(^|[^a-z0-9])(${palavras(n).join("[^a-z0-9]+")})(?![a-z0-9])`, "g");
+        for (const m of base.matchAll(rx)) {
+          const i = m.index + m[1].length;
+          x = x.slice(0, i) + branco(x.slice(i, i + m[2].length)) + x.slice(i + m[2].length);
+        }
+      }
+    }
+    return x.replace(loc, (todo, a, cab, resto) => (CAB.has(norm(cab)) ? a + todo.slice(a.length, todo.length - cab.length - resto.length) + branco(cab) + branco(resto) : todo));
+  });
+  return { textos, deFora };
+}
+
 export function montarEmCena(ctx) {
   const c = obj(ctx);
   const semente = String(c.semente || "");
@@ -293,7 +364,8 @@ export function montarEmCena(ctx) {
   /* O LUGAR MANDA (EM_CENA_DO_LUGAR): quem o sistema sabe longe, e de quem é
      cada primeiro nome que dois conhecidos partilham */
   const curto = (nome) => norm(String(nome || "").split(",")[0]).trim();
-  const longeN = new Set(arr(c.longe).map((x) => curto(nomeDe(x))).filter(Boolean));
+  const longeN = new Set(longeDaHistoria({ longe: c.longe, presentes: c.presentes, nucleo: c.nucleo, espinha: c.espinha, cidade: c.cidade, grupo: [...grupo, ...comigo] })
+    .map((x) => curto(nomeDe(x))).filter(Boolean));
   const ehLonge = (nome) => !comigoN.has(norm(nome)) && longeN.has(curto(nome));
   const O = EM_CENA_DO_LUGAR.ordemDoNome;
   const donos = new Map();
@@ -319,6 +391,8 @@ export function montarEmCena(ctx) {
     return noTopo.length === 1 && noTopo[0] === ps.join(" ");
   };
   const naProsa = ` ${palavras(mostrado.join(" ")).join(" ")} `;
+  /* BICHO_DO_SITIO: as falas lidas noutra cidade, e os nomes de sítio */
+  const bichosDaProsa = falasDosBichos(c, cidade, mostrado);
   const citado = (nome) => {
     const ps = palavras(curto(nome));
     if (!ps.length) return false;
@@ -458,7 +532,7 @@ export function montarEmCena(ctx) {
   const enc = obj(c.encontro);
   const nomeEnc = String(enc.criatura || enc.nome || "").trim();
   if (nomeEnc) bicho(nomeEnc, Math.max(1, Number(enc.quantos) || 1), "estrada", enc.ameaca, true);
-  for (const v of vistos.filter((x) => x.tipo === "criatura")) {
+  for (const v of vistosNaProsa(bichosDaProsa.textos, conhecidos).filter((x) => x.tipo === "criatura")) {
     const ja = bichos.get(v.raiz);
     if (ja) continue;
     bichos.set(v.raiz, { tipo: "criatura", nome: v.nome, raiz: v.raiz, quantos: v.quantos, deOnde: "prosa", ameaca: "", hostil: null, aqui: true });
@@ -536,7 +610,9 @@ export function montarEmCena(ctx) {
       out.push(x);
     }
   }
-  return out;
+  /* BICHO_DO_SITIO: a cidade em que a lista foi montada, e as falas da
+     janela lidas noutra — fora dos itens, para não mudar a forma de nenhum */
+  return Object.assign(out, { naCidade: cidade, falasDeFora: bichosDaProsa.deFora });
 }
 
 /* a coisa que a frase nomeia e o complemento DESMENTE: "um frasco de cura"

@@ -58,7 +58,7 @@ import { alvoPrometido } from "./agressao.js";
 import { FIO } from "./saga.js";
 import { relogioDoFio, RELOGIO_DO_FIO } from "./batidas.js";
 import { contrair } from "./lugar.js";
-import { mesmoNome, revelacaoPermitida, fichaNaVoz, generoDaPessoa, noGenero, garantirCoracaoDoSave, vozPresa, comGenero } from "./nucleo.js";
+import { mesmoNome, revelacaoPermitida, fichaNaVoz, generoDaPessoa, noGenero, garantirCoracaoDoSave, vozPresa, comGenero, longeDaHistoria } from "./nucleo.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -767,7 +767,9 @@ const arcoVazio = () => ({ pedido: null, resposta: "", crise: null, escolha: "",
      mortos: [nomes], maoDoVilao (o bilhete ou os servos do fio estão na
      cena — o App sabe-o pelo momento do fio), reveladas: [{ nome, ato }]
      (as revelações de fora, como a máscara do aliado), subtramas (o cache
-     de `subtramasDoNucleo`, opcional) }.
+     de `subtramasDoNucleo`, opcional), e (13/10) o que diz quem está
+     longe: cidade, longe (o `elencoDaCena(...).longe`), presentes (o
+     `aqui`), grupo — opcionais }.
 
    Devolve { coracao, batida, linha, quem, efeitos, longe }:
      · `batida`: { nome, tipo, tom, lados? } — no máximo UMA por turno;
@@ -792,7 +794,14 @@ export function avancarCoracao(coracao, nucleo, ctx) {
   const ato = Math.max(0, Math.floor(Number(o.ato)) || 0);
   const ult = ultimoAto(o.espinha);
   const turno = Math.floor(Number(o.turno)) || 0;
-  const emCena = arr(o.emCena).map(String).filter(Boolean);
+  /* 13/10 (a prova viva da v9.458): a batida é de quem está à frente. Quem a
+     história sabe noutra cidade (longeDaHistoria, nucleo.js: o registo, o
+     núcleo, a espinha) não "entra nesta resposta" porque a prosa o citou — a
+     10.ª sessão trouxe QUEM CARREGA Neirin com ele a oito horas. A porta do
+     elo (PORTA_DO_ELO) continua aberta: ela só abre na cidade dele, e a
+     linha dela diz que ele VEM ter com o herói. */
+  const longe = longeDaHistoria({ longe: o.longe, presentes: o.presentes, nucleo: n, espinha: o.espinha, cidade: o.cidade, grupo: o.grupo });
+  const emCena = arr(o.emCena).map(String).filter(Boolean).filter((x) => !longe.some((l) => mesmoNome(l.nome, x)));
   const mortos = arr(o.mortos).map(String);
   const esta = (nome) => emCena.some((x) => mesmoNome(x, nome));
   const morto = (nome) => mortos.some((x) => mesmoNome(x, nome));
