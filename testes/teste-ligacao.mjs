@@ -156,9 +156,13 @@ sec("1. NENHUM MÓDULO MUDO");
      X" do cartão do lugar, que a tela do mapa (oficial) liga no App.jsx ou
      num painel. `teste-veredito-da-partida.mjs` é o primeiro leitor. A
      entrada sai quando a tela o importar, junto da do mapa vivo. */
+  /* e pagas as duas no MESMO dia (12/10, v9.443, oficial): o App.jsx importa
+     `mapa-vivo.js` (`dadosDoMapaVivo`, memorizado e em `calou`) e o painel
+     `painel-mapa-vivo.jsx` (a faixa do rumo no topo do papel e a tela
+     grande); `partida.js` é lido pelo painel (`vereditoDaPartida`, o preço
+     no cartão) e o verbo parte pelas portas de viagem que já existem. As
+     duas entradas saíram. */
   const AGUARDANDO = {
-    "mapa-vivo.js": "a tela do mapa em tempo real, do desenho/oficial (MM17 D, 06/10)",
-    "partida.js": "a tela do mapa (oficial), o botão Partir do cartão do lugar (P2, 10/10)",
     /* 11/10 (Fase MM-C, C2): `subtramas.js` nasce no backend — os arcos de
        três batidas, as pistas e a revelação do elo, a linha QUEM CARREGA, o
        campo `coracao` escrito, e as peças do motor da fogueira — e espera a

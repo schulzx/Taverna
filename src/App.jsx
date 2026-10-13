@@ -409,6 +409,8 @@ import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, eh
 import { aplicarPoder } from "./poder-de-classe.js";
 import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
 import { Relato } from "./painel-relato.jsx";
+import { dadosDoMapaVivo } from "./mapa-vivo.js";
+import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -5345,6 +5347,17 @@ class LimiteDasFichas extends React.Component {
   render() { return this.state.erro ? null : this.props.children; }
 }
 
+/* MM17 · O MAPA NUNCA PODE CUSTAR O TURNO: se a faixa ou a tela grande
+   estouram no render, calam-se (null) e quem as abriu é avisado — a cena
+   fica com o cabeçalho e sem mapa, como antes. O LimiteErro de
+   baixo tapa a tela inteira, e um mapa não vale isso. */
+class LimiteDoMapa extends React.Component {
+  constructor(props) { super(props); this.state = { erro: null }; }
+  static getDerivedStateFromError(erro) { return { erro }; }
+  componentDidCatch(erro) { try { console.error("Taverna · o mapa calou:", erro); if (this.props.aoEstourar) this.props.aoEstourar(erro); } catch (e) { /* nada mais a fazer */ } }
+  render() { return this.state.erro ? null : this.props.children; }
+}
+
 /* F2c · A RÉGUA DO CARTÃO É A ALTURA (formas.md § Fichas 1): abaixo de
    FICHAS.baixaAltura o cartão toma a página. Medida viva, a cada resize. */
 function useAlturaDaJanela() {
@@ -5503,7 +5516,19 @@ export default function Taverna() {
      convidar e escrever. Este estado é o que os separa. A composição
      inteira sai dele e de `entrada` — nenhuma media query em JS. */
   const [campoFocado, setCampoFocado] = useState(false);
-  const [aba, setAba] = useState(null);
+  const [aba, setAbaCrua] = useState(null);
+  /* MM17 · A ABA MAPA ABRE O MAPA VIVO. Com região (`dadosDoMapaVivo` não
+     null), pedir a aba Mapa — pelo trilho, pela fita do alforje, pela porta
+     que a linha do sistema anuncia — abre a tela grande; sem região (o
+     continente, todo save de antes da MM17) fica o `PainelMapa` de sempre.
+     Interceptar aqui, e não em cada porta, é o que impede uma das portas de
+     continuar a abrir o pergaminho. A função que abre mora no render (é lá
+     que os dados existem) e chega aqui por ref. */
+  const abrirMapaVivoRef = useRef(null);
+  const setAba = (v) => {
+    try { if (v === "mapa" && abrirMapaVivoRef.current && abrirMapaVivoRef.current(null)) return; } catch (e) { calou("a aba Mapa abre o mapa vivo", e); }
+    setAbaCrua(v);
+  };
   /* R21 · A MARCA DA PORTA — as abas com novidade que o jogador ainda não
      abriu, a mais recente no fim (`abaDaPorta` abre nela). É notícia e não
      arquivo: NÃO entra no save nem no load — o formato do save é da
@@ -26885,6 +26910,105 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      `CINTA.mesa`), o mesmo `md:` que esconde o trilho. */
   const trilhoAVista = useMesa();
   const estadoDaPorta = aba ? "aberta" : (marcasDaPorta.length && !trilhoAVista) ? "novo" : "porta";
+
+  /* ---------------- O MAPA VIVO (MM17 · a faixa do rumo e a tela grande) ----------------
+     A forma: `mente/formas.md` § Mapa; a conta: `dadosDoMapaVivo`
+     (mapa-vivo.js) e `vereditoDaPartida` (partida.js, chamado pelo painel);
+     o desenho: `painel-mapa-vivo.jsx`. Aqui só a fiação.
+
+     MEMORIZADO pelos estados que mexem no que o mapa mostra (o mapa, onde o
+     herói está, o relógio, a base): a saída pesa ~11 KB e o render corre a
+     cada letra do campo. O corpo lê os REFS — são eles a verdade do turno;
+     os estados só dizem quando recalcular. Dentro de `calou`: um mapa que
+     estoura dá null, e null é o continente — a faixa some, a aba Mapa volta
+     ao pergaminho, o turno segue. */
+  const dadosMapaVivo = useMemo(() => {
+    try {
+      return dadosDoMapaVivo(mapaRef.current || mapa, {
+        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current,
+        masmorra: masmorraRef.current, jornada: jornadaRef.current,
+        base: baseMundoRef.current, espinha: espinhaRef.current,
+        etapa: (historiaRef.current || {}).etapa,
+        dia: diaRef.current, minuto: minutoRef.current, semente: sementeMundo(),
+      });
+    } catch (e) { calou("os dados do mapa vivo", e); return null; }
+  }, [mapa, lugar, masmorra, jornada, dia, minuto, baseMundo, cidadeAtualRef.current, (historiaRef.current || {}).etapa, nomeCampanha]); // eslint-disable-line
+  /* o estado do veredito: o mesmo retrato que fez `dadosMapaVivo`, mais o
+     que o preço da partida lê (o ritmo de marcha, o relógio do sono, e os
+     prazos que vencem pelo caminho: a ficha, o correio, os governos, a
+     ameaça). Separado do de cima para a faixa não se refazer a cada turno
+     em que só a ficha mudou. */
+  const estadoDaPartidaVivo = useMemo(() => {
+    if (!dadosMapaVivo) return null;
+    try {
+      return {
+        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current,
+        masmorra: masmorraRef.current, jornada: jornadaRef.current,
+        base: baseMundoRef.current, espinha: espinhaRef.current,
+        etapa: (historiaRef.current || {}).etapa,
+        dia: diaRef.current, minuto: minutoRef.current, semente: sementeMundo(),
+        mapa: mapaRef.current || mapa, ritmo: (fichaViva() || {}).ritmoViagem,
+        acordouAbs: acordouAbsRef.current, ficha: fichaViva(),
+        correio: correioRef.current, governos: governosRef.current, nemesis: nemesisRef.current,
+      };
+    } catch (e) { calou("o estado da partida do mapa vivo", e); return null; }
+  }, [dadosMapaVivo, personagem, correio, governos, nemesis]); // eslint-disable-line
+  /* a tela grande: null fechada; aberta, o lugar cujo cartão abre e um selo
+     que remonta a tela (o lugar escolhido nasce do `inicial` uma vez) */
+  const [telaDoMapa, setTelaDoMapa] = useState(null);
+  const abrirMapaVivo = (inicial) => {
+    try {
+      if (!dadosMapaVivo || fase !== "jogo" || combateRef.current) return false;
+      setAbaCrua(null);
+      setTelaDoMapa({ inicial: inicial || null, selo: Date.now() });
+      return true;
+    } catch (e) { calou("abrir o mapa vivo", e); return false; }
+  };
+  abrirMapaVivoRef.current = abrirMapaVivo;
+  const telaDoMapaRef = useRef(null);
+  telaDoMapaRef.current = telaDoMapa;
+  /* sem região (um load que trocou de campanha), a tela não fica aberta sobre nada */
+  useEffect(() => {
+    try { if (telaDoMapa && !dadosMapaVivo) setTelaDoMapa(null); } catch (e) { calou("o mapa vivo fecha sem região", e); }
+  }, [telaDoMapa, dadosMapaVivo]);
+  /* PARTIR PELO MAPA: o verbo do cartão chama as MESMAS portas que já
+     existem — nenhum atalho paralelo, pela regra de `irAoLugarPeloMapa`. Um
+     povoado (ou a base) é estrada: `viajarPeloMapa`, o mesmo do pergaminho.
+     Um lugar da região é a boca de uma masmorra a horas daqui, e quem abre
+     essa ida é `idaAMasmorra` lendo a frase do jogador — a mesma frase que
+     a suíte do veredito prova par a par contra o preço do cartão
+     (`teste-veredito-da-partida.mjs`: "Vou a X."). Por isso o verbo
+     ESCREVE a frase, e o turno parte como se o jogador a tivesse digitado:
+     o Mestre responde uma vez, e o preço que se viu é o que se paga. */
+  const partirPeloMapaVivo = (id, veredito) => {
+    try {
+      const no = ((dadosMapaVivo && dadosMapaVivo.nos) || []).find((n) => n && n.id === id);
+      setTelaDoMapa(null);
+      if (!no || !no.nome) return;
+      if (no.tipo === "lugar") partirOTurno("Vou a " + no.nome + ".");
+      else viajarPeloMapa(no.nome);
+    } catch (e) { calou("partir pelo mapa vivo", e); }
+  };
+  /* `M` abre a tela grande (fecha-a a própria tela, que come a tecla).
+     Nunca com o foco num campo de texto — `m` é letra —, nem com
+     modificador, nem na luta. `defaultPrevented`: a tecla que a tela usou
+     para fechar não a reabre na mesma batida. */
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const porM = (e) => {
+      try {
+        if (e.defaultPrevented || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (e.key !== "m" && e.key !== "M") return;
+        const alvo = e.target;
+        const tag = alvo && alvo.tagName ? String(alvo.tagName).toLowerCase() : "";
+        if (tag === "input" || tag === "textarea" || tag === "select" || (alvo && alvo.isContentEditable)) return;
+        if (telaDoMapaRef.current) return;
+        if (abrirMapaVivoRef.current && abrirMapaVivoRef.current(null)) e.preventDefault();
+      } catch (e2) { calou("a tecla M do mapa", e2); }
+    };
+    window.addEventListener("keydown", porM);
+    return () => { try { window.removeEventListener("keydown", porM); } catch (e) { calou("a tecla M do mapa / limpar", e); } };
+  }, []);
   let nomeDaPortaAgora = "A ficha";
   try { nomeDaPortaAgora = nomeDaPorta(marcasDaPorta, ROTULOS_DA_PORTA); } catch (e) { calou("o nome da porta", e); }
 
@@ -27314,6 +27438,17 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 entre cenas é o texto, nunca a altura. */}
             <CabecalhoDaPagina {...etiquetasDaPagina({ lugar: lugarDaCena(), cena: cenaDoPalco(),
               luz: luzDaHora(Math.floor((minuto || 0) / 60)), clima })} {...(fogueiraNaPagina ? { lugar: "A noite · " + ((sitio && sitio.nome) || lugarDaCena()) } : {})} />
+            {/* MM17 · A FAIXA DO RUMO — o horizonte a partir de onde você está,
+                no topo do papel e fora da área que rola, com o orçamento de
+                96 px (48 no telefone) que a xilogravura de R13 pagava. Sem
+                região não aparece (o continente); na luta recolhe a zero.
+                Tocar um ícone abre a tela grande com o cartão daquele lugar. */}
+            {dadosMapaVivo ? (
+              <LimiteDoMapa key={"faixa|" + dia}>
+                <FaixaDoRumo dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} telefone={!trilhoAVista}
+                  recolhida={!!combate} aoTocarLugar={(id) => abrirMapaVivo(id)} />
+              </LimiteDoMapa>
+            ) : null}
             {/* V5 · a região que rola ganha um invólucro: é contra ele que a seta
                 do fim se posiciona, e por isso ela fica sempre ACIMA do pé do
                 cartão (a soleira), nunca por cima de uma oferta. */}
@@ -28223,6 +28358,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           )}
 
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} marcas={marcasDaPorta} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
+          {telaDoMapa && dadosMapaVivo ? (
+            <LimiteDoMapa key={"tela|" + telaDoMapa.selo} aoEstourar={() => setTelaDoMapa(null)}>
+              <TelaDoMapa key={telaDoMapa.selo} dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} telefone={!trilhoAVista}
+                inicial={telaDoMapa.inicial} aoPartir={partirPeloMapaVivo} aoFechar={() => setTelaDoMapa(null)} />
+            </LimiteDoMapa>
+          ) : null}
           <LimiteErro><PainelLateral subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
