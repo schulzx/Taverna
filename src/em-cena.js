@@ -37,7 +37,7 @@
    é para a mão (o toque da F2b, o reconhecimento), nunca para a tela.
    ============================================================ */
 
-import { vistosNaProsa, CRIATURA_NA_PROSA, NUMERO_DO_BICHO, PRONOME_DO_ALVO, ehDeclaracaoDeAtaque, RX_AGRESSAO } from "./agressao.js";
+import { vistosNaProsa, CRIATURA_NA_PROSA, NUMERO_DO_BICHO, PRONOME_DO_ALVO, ehDeclaracaoDeAtaque, RX_AGRESSAO, PESSOA_NA_PROSA } from "./agressao.js";
 import { nomeiaACoisa, cabecaDaCoisa, NOME_DA_COISA } from "./economia.js";
 import { papelProcurado } from "./procura.js";
 import { PERGUNTA_DE_PRECO, APONTA_OU_COMPRA } from "./mercado.js";
@@ -133,6 +133,103 @@ const semArtigo = (s) => String(s || "").replace(/^(o|a|os|as|um|uma)\s+/i, "").
    Cada coisa: { id, tipo, nome, aqui, deOnde, sabe, … } — `aqui` é o que
    está à vista agora; o resto da lista é quem a frase pode procurar.
    ============================================================ */
+/* ---------------- QUEM O MESTRE APRESENTOU SEM ARMA (12/10, a prova das fichas) ----------------
+   Na abertura da prova viva da v9.442 o Mestre pôs à frente do herói um
+   guarda que lhe pede o nome, a mulher das enguias e um mercador de mulas
+   — e a fileira mostrou só a Freya. `vistosNaProsa` só faz nascer gente
+   ARMADA (é a régua da luta: quem o jogador pode atacar sem o inventar),
+   e quem o Mestre apresenta de mãos vazias ficava sem ficha — o jogador
+   não podia apontá-lo nem falar-lhe com um toque.
+   A régua aqui é a da APRESENTAÇÃO, e morde só o necessário (um falso
+   positivo é uma ficha de ninguém na fileira): a cabeça de gente ou de
+   ofício logo depois de "um"/"uma" (ou de um número, no plural) — a forma
+   com que a prosa traz alguém à cena —, com o complemento que a prosa lhe
+   pendura ("das enguias", "de mulas"). Não nasce ninguém quando:
+     · antes do artigo vem comparação ou negação ("como um mercador",
+       "nenhum guarda");
+     · um nome conhecido está a poucas palavras antes (é aposto: "Freya,
+       uma mulher de olhos cinzentos" é a Freya);
+     · a cabeça é das que a prosa usa como adjectivo ("um velho barco",
+       "um estranho silêncio", "um tipo de");
+     · alguém à vista já tem essa cabeça no papel ou na arma (o guarda
+       registado, o "Guarda da lança" armado) — calar na dúvida.
+   Teto por turno, para a fileira não se encher de figurantes. */
+export const APRESENTADO_NA_PROSA = {
+  artigos: ["um", "uma"],
+  numeros: { dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5 },
+  ambiguas: ["tipo", "velho", "estranho", "estranhos", "moco"],
+  oficios: [
+    "mercador", "mercadora", "mercadores", "vendedor", "vendedora", "vendedores", "comerciante", "comerciantes", "taverneiro", "taverneira",
+    "estalajadeiro", "estalajadeira", "ferreiro", "ferreira", "sacerdote", "sacerdotisa", "monge", "freira", "padre", "mendigo", "mendiga",
+    "menino", "menina", "garoto", "garota", "velha", "moca", "viajante", "viajantes", "peregrino", "peregrina", "cocheiro", "carroceiro",
+    "barqueiro", "barqueira", "pescadora", "peixeira", "lavadeira", "feirante", "feirantes", "mascate", "escriba", "curandeiro", "curandeira",
+    "pastor", "pastora", "lenhador", "campones", "camponesa", "criada", "criado", "servo", "serva", "nobre", "cavaleiro", "dama",
+  ],
+  femininas: [
+    "mulher", "velha", "moca", "menina", "garota", "vendedora", "mercadora", "taverneira", "estalajadeira", "sacerdotisa", "freira",
+    "mendiga", "peixeira", "lavadeira", "curandeira", "pescadora", "barqueira", "peregrina", "ferreira", "pastora", "camponesa", "criada", "serva", "dama",
+  ],
+  naoE: ["como", "nenhum", "nenhuma", "nem", "qualquer", "feito", "parece"],
+  aposto: 3,
+  /* uma palavra de complemento: a segunda é quase sempre o verbo ("a mulher das enguias GRITA") */
+  comp: 1,
+  teto: 3,
+  porque: "quem o Mestre trouxe à cena com um artigo e um ofício existe, mesmo de mãos vazias: o jogador pode apontá-lo",
+};
+const CABECAS_APRESENTADAS = new Set([
+  ...PESSOA_NA_PROSA.cabecas.filter((w) => !APRESENTADO_NA_PROSA.ambiguas.includes(w)),
+  ...APRESENTADO_NA_PROSA.oficios,
+]);
+const singularDe = (w) => (w.endsWith("es") && CABECAS_APRESENTADAS.has(w.slice(0, -2)) ? w.slice(0, -2) : w.endsWith("s") && CABECAS_APRESENTADAS.has(w.slice(0, -1)) ? w.slice(0, -1) : w);
+/* o trecho como a prosa o escreveu (com acento), pela posição no texto
+   normalizado; a primeira letra sobe */
+function comoNaProsa(ps, ts) {
+  const rx = new RegExp("(^|[^a-z0-9])(" + ps.join("[^a-z0-9]+") + ")(?![a-z0-9])");
+  for (const t of ts) {
+    const n = norm(t);
+    if (n.length !== t.length) continue;
+    const m = n.match(rx);
+    if (m) { const cru = t.slice(m.index + m[1].length, m.index + m[1].length + m[2].length); return cru[0].toUpperCase() + cru.slice(1); }
+  }
+  const s = ps.join(" ");
+  return s[0].toUpperCase() + s.slice(1);
+}
+/* A gente que a prosa apresentou de mãos vazias:
+   [{ nome, cabeca, quantos, genero, palavras }], na ordem da prosa.
+   `conhecidos`: os nomes que a lista já tem (o aposto não faz nascer ninguém). */
+export function apresentadosNaProsa(mostrado, conhecidos) {
+  const ts = textos(mostrado);
+  if (!ts.length) return [];
+  const A = APRESENTADO_NA_PROSA;
+  const nomes = new Set(arr(conhecidos).map((n) => palavras(nomeDe(n))[0]).filter((p) => p && p.length >= 3));
+  const out = new Map();
+  for (const t of ts) {
+    const ps = palavras(t);
+    ps.forEach((p, i) => {
+      if (out.size >= A.teto || !CABECAS_APRESENTADAS.has(p)) return;
+      const art = ps[i - 1];
+      const quantos = A.artigos.includes(art) ? 1 : A.numeros[art] || 0;
+      if (!quantos) return;
+      const sing = singularDe(p);
+      /* "um guarda" e "dois guardas" — e não "um guardas" nem "dois guarda" */
+      if ((quantos === 1) !== (sing === p)) return;
+      if (A.naoE.includes(ps[i - 2])) return;
+      for (let k = i - 2; k >= Math.max(0, i - 1 - A.aposto); k--) if (nomes.has(ps[k])) return;
+      const comp = [];
+      if (PESSOA_NA_PROSA.conectores.includes(ps[i + 1])) {
+        for (let k = i + 2; k < ps.length && comp.length < A.comp; k++) {
+          const w = ps[k];
+          if (w.length < 3 || PESSOA_NA_PROSA.fim.includes(w) || CABECAS_APRESENTADAS.has(w)) break;
+          comp.push(w);
+        }
+      }
+      const nome = comoNaProsa(comp.length ? [p, ps[i + 1], ...comp] : [p], ts);
+      if (!out.has(norm(nome))) out.set(norm(nome), { nome, cabeca: sing, quantos, genero: A.femininas.includes(sing) ? "ela" : "", palavras: comp });
+    });
+  }
+  return [...out.values()];
+}
+
 export function montarEmCena(ctx) {
   const c = obj(ctx);
   const semente = String(c.semente || "");
@@ -214,6 +311,13 @@ export function montarEmCena(ctx) {
   for (const v of vistos.filter((x) => x.tipo === "pessoa")) {
     if (pessoas.has(norm(v.nome))) continue;
     pessoas.set(norm(v.nome), { tipo: "pessoa", nome: v.nome, papel: "", genero: "", quantos: 1, aqui: true, deOnde: "prosa", armado: true, arma: v.arma, cabeca: v.cabeca, palavras: v.palavras, sabe: [`leva ${v.arma}`] });
+  }
+  /* 4b. …e a gente que ele apresentou de mãos vazias (o guarda que pede o
+     nome, a mulher das enguias): calada se alguém à vista já tem essa cabeça */
+  const cabecasAVista = [...pessoas.values()].filter((p) => p.aqui).flatMap((p) => [...palavras(p.papel), ...palavras(p.cabeca)]);
+  for (const v of apresentadosNaProsa(mostrado, [...pessoas.values()].map((p) => p.nome))) {
+    if (pessoas.has(norm(v.nome)) || cabecasAVista.includes(v.cabeca)) continue;
+    pessoas.set(norm(v.nome), { tipo: "pessoa", nome: v.nome, papel: "", genero: v.genero, quantos: v.quantos, aqui: true, deOnde: "prosa", cabeca: v.cabeca, palavras: v.palavras, sabe: [] });
   }
 
   /* 5. as criaturas: a luta, a sala, a estrada — e o bicho que a prosa mostrou */

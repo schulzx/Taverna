@@ -414,12 +414,52 @@ export function mesclarNPC(ficha, dados0 = {}) {
    ============================================================ */
 const GENERO_DO_REGISTO = { f: "mulher", m: "homem" };
 
-export function fichaDoCronista(pessoa, existente = null) {
+/* ---------------- O PARADEIRO QUE NÃO É CIDADE (12/10, a 9.ª sessão) ----------------
+   O Cronista registou a Kira com `local: "cidade"` — a palavra, não o nome
+   —, e Tomas, Ilar e Dara com sítios que nenhum mapa conhece. `cidadeDe`
+   (cena.js) não acha cidade nenhuma nesse texto, e quem não tem cidade é
+   "paradeiro não registrado": PRESENTE EM QUALQUER CIDADE. Foi assim que os
+   três apareceram "em Rio do Rio" sem nunca lá terem estado.
+   O Cronista só regista quem está na cena, logo a cidade onde o herói está
+   é verdade sobre a pessoa: quando o `local` (o novo, ou o que a ficha já
+   tem) não nomeia cidade do mapa, ele passa a nomeá-la — a palavra genérica
+   troca-se pelo nome ("cidade" → "Rio do Rio"), o sítio ganha-o ao lado
+   ("a taverna do Pato" → "a taverna do Pato, Rio do Rio"). Na estrada ou
+   numa masmorra, quem chama passa `cidade: ""`, e nada muda. */
+export const LOCAL_SEM_CIDADE = {
+  genericos: ["cidade", "a cidade", "na cidade", "vila", "a vila", "na vila", "aldeia", "a aldeia", "na aldeia", "aqui", "local", "centro", "o centro", "povoado", "o povoado"],
+  junta: ", ",
+};
+const lisoLocal = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+function nomeiaCidade(local, mapa) {
+  const l = lisoLocal(local);
+  return !!l && ((mapa && Array.isArray(mapa.cidades)) ? mapa.cidades : []).some((c) => c && c.nome && l.includes(lisoLocal(c.nome)));
+}
+export function localComCidade(local, cidade, mapa) {
+  const l = String(local == null ? "" : local).trim();
+  const c = String(cidade == null ? "" : cidade).trim();
+  if (!c || nomeiaCidade(l, mapa)) return l;
+  if (!l || LOCAL_SEM_CIDADE.genericos.includes(lisoLocal(l))) return c;
+  return l + LOCAL_SEM_CIDADE.junta + c;
+}
+
+/* `ctx`: { cidade, mapa } — a cidade onde o herói está agora ("" fora
+   dela) e o mapa, para o paradeiro (acima). Sem `ctx`, como antes. */
+export function fichaDoCronista(pessoa, existente = null, ctx = null) {
   const p = pessoa && typeof pessoa === "object" ? pessoa : {};
   const { genero, ...resto } = p;
   const lido = GENERO_DO_REGISTO[sexoDe(typeof genero === "string" ? genero : "")] || "";
   const ja = existente && typeof existente === "object" ? sexoDe(typeof existente.genero === "string" ? existente.genero : "") : "";
-  return lido && !ja ? { ...resto, genero: lido } : resto;
+  const out = lido && !ja ? { ...resto, genero: lido } : resto;
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  if (!c.cidade) return out;
+  const novo = typeof out.local === "string" && out.local.trim() ? out.local : "";
+  const antes = existente && typeof existente === "object" && typeof existente.local === "string" ? existente.local : "";
+  const base = novo || antes;
+  /* quem a ficha põe LONGE ("foi para as montanhas") não está aqui: não se carimba */
+  if (estaFora(out.status, base, out.notas)) return out;
+  const certo = localComCidade(base, c.cidade, c.mapa);
+  return certo && certo !== base ? { ...out, local: certo } : out;
 }
 
 /* Quem já ocupa este papel no registro — é o que transforma "Yorick virou

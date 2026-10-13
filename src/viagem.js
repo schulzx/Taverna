@@ -261,10 +261,30 @@ export function resumoViagemPrompt(jornada) {
   /* MM17 nº 3 (v9.364): o caminho com escalas passa por elas, e o Mestre
      sabe-o — só quando a jornada as tem (a de sempre não muda um byte) */
   const escalas = Array.isArray(jornada.percurso) ? jornada.percurso.slice(1, -1).map((q) => q && q.nome).filter(Boolean) : [];
-  return `EM VIAGEM (do sistema — números exatos, obedeça): de ${jornada.de} para ${jornada.para}${escalas.length ? `, passando por ${escalas.join(" e ")}` : ""}${jornada.meio ? `, de ${jornada.meio}` : ""}${jornada.terreno ? `, por ${jornada.terreno}` : ""}. Percorrido: ${p.pct}% do trecho (${p.horasFeitas} de ${p.horasTotais} horas de marcha${p.kmTotais ? `, ${p.kmFeitos} de ${p.kmTotais} km` : ""}). FALTAM ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"} de estrada (${p.diasRestantes} ${p.diasRestantes === 1 ? "dia" : "dias"} de marcha).${ondeAgora}
+  return `EM VIAGEM (do sistema — números exatos, obedeça): ${rotuloDaRota(jornada, "prompt")}${escalas.length ? `, passando por ${escalas.join(" e ")}` : ""}${jornada.meio ? `, de ${jornada.meio}` : ""}${jornada.terreno ? `, por ${jornada.terreno}` : ""}. Percorrido: ${p.pct}% do trecho (${p.horasFeitas} de ${p.horasTotais} horas de marcha${p.kmTotais ? `, ${p.kmFeitos} de ${p.kmTotais} km` : ""}). FALTAM ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"} de estrada (${p.diasRestantes} ${p.diasRestantes === 1 ? "dia" : "dias"} de marcha).${ondeAgora}
 - ${perto}
 - NÃO me faça chegar antes: quem registra a chegada é o sistema, e ele avisa. Enquanto faltar avanço, a cena acontece NO CAMINHO.
 - E nunca diga "turno", "avanço de estrada", porcentagem ou quilômetro na narração: esses números são meus, não da ficção. Traduza em imagem — a luz do dia, o cansaço, o que já dá para ver ao longe.`;
+}
+
+/* ---------------- DE ONDE PARA ONDE (12/10, a prova do mapa vivo) ----------------
+   Na volta de uma boca, a jornada nasce com `de` = a povoação do registo
+   (o herói à boca de um lugar continua "em" Vila Clara), e a linha dizia
+   «Vila clara → Vila clara». A origem verdadeira é a primeira escala do
+   percurso quando a jornada o tem (MM17); sem ela, a volta diz-se como
+   volta. `ROTULO_DA_ROTA`: as duas formas, por tabela. */
+export const ROTULO_DA_ROTA = { linha: "{de} → {para}", volta: "de volta a {para}", prompt: "de {de} para {para}" };
+const igualNome = (a, b) => String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
+export function origemDaViagem(jornada) {
+  if (!jornada || typeof jornada !== "object") return "";
+  const de = String(jornada.de || "");
+  if (!igualNome(de, jornada.para)) return de;
+  const primeiro = Array.isArray(jornada.percurso) && jornada.percurso[0] && typeof jornada.percurso[0] === "object" ? String(jornada.percurso[0].nome || "") : "";
+  return primeiro && !igualNome(primeiro, jornada.para) ? primeiro : "";
+}
+function rotuloDaRota(jornada, forma) {
+  const de = origemDaViagem(jornada), para = String(jornada.para || "");
+  return (de ? ROTULO_DA_ROTA[forma] : ROTULO_DA_ROTA.volta).replace("{de}", de).replace("{para}", para);
 }
 
 /* A linha da tela: curta, com barra. O jogador quer saber quanto falta
@@ -272,10 +292,11 @@ export function resumoViagemPrompt(jornada) {
 export function linhaDaViagem(jornada) {
   const p = progressoDaViagem(jornada);
   if (!p) return "";
-  if (p.estado === ESTADOS.pausada) return `🧭 ${jornada.de} → ${jornada.para} · PAUSADA (${p.pct}%) — ${jornada.motivoPausa}`;
-  if (p.chegou) return `🧭 ${jornada.de} → ${jornada.para} · chegando`;
+  const rota = rotuloDaRota(jornada, "linha");
+  if (p.estado === ESTADOS.pausada) return `🧭 ${rota} · PAUSADA (${p.pct}%) — ${jornada.motivoPausa}`;
+  if (p.chegou) return `🧭 ${rota} · chegando`;
   const cheias = Math.max(0, Math.min(8, Math.round(p.fracao * 8)));
-  return `🧭 ${jornada.de} → ${jornada.para} · ${"▰".repeat(cheias)}${"▱".repeat(8 - cheias)} ${p.pct}% · faltam ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"}`;
+  return `🧭 ${rota} · ${"▰".repeat(cheias)}${"▱".repeat(8 - cheias)} ${p.pct}% · faltam ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"}`;
 }
 
 export const VIAGEM_PROMPT = `VIAGEM (v9.56 — o sistema mede, você narra):

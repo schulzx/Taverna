@@ -86,20 +86,25 @@ const dadosDe = (w, e) => MV.dadosDoMapaVivo(w.mapa, e);
    por cada dia de marcha completo que fica para trás antes do último. A
    conta de outra maneira passa a ser essa forma fechada — as horas de
    marcha da jornada, as noites, e o turno de cada avanço —, e não o laço.
-   A pé até à boca, os minutos da caminhada e o turno, como antes. */
+   A pé até à boca, os minutos da caminhada e o turno, como antes.
+   12/10 (MOVIDO, com o motivo): "o turno" aqui era MINUTOS_POR_TURNO, e o
+   App nunca o cobrou num turno de viagem — a porta de movimento sai de
+   agirInterno antes do relógio do turno (a prova viva da v9.443: o cartão
+   disse 12:05, o relógio 12:00). O turno de viagem passou a ser
+   T.minutosDoTurno (zero), e a secção 1 prova a ordem no App. */
 const MARCHA_DO_DIA = VI.HORAS_MARCHA_POR_DIA * 60;
 const relogioCobrado = (jornada, minutosAPe) => {
-  if (!jornada) return minutosAPe + MINUTOS_POR_TURNO;
+  if (!jornada) return minutosAPe + PA.VEREDITO_DA_PARTIDA.minutosDoTurno;
   const T = Math.round(Number(jornada.totalMin));
   const noites = Math.floor((T - 1) / MARCHA_DO_DIA);
   const n = VI.progressoDaViagem(jornada).turnosTotais;
-  return T + noites * (1440 - MARCHA_DO_DIA) + n * MINUTOS_POR_TURNO;
+  return T + noites * (1440 - MARCHA_DO_DIA) + n * PA.VEREDITO_DA_PARTIDA.minutosDoTurno;
 };
 /* com o fator do ritmo, que o App aplica avanço a avanço (arredondando cada
    um): o laço de `viajar`, sem os dados */
 const relogioComRitmo = (jornada, fator) => {
   let j = jornada, s = 0, n = 0;
-  while (j && j.estado !== VI.ESTADOS.concluida && n < 60) { s += Math.round(VI.relogioDoAvanco(j) * fator) + MINUTOS_POR_TURNO; j = VI.andar(j, VI.minutosPorAvanco(j)); n++; }
+  while (j && j.estado !== VI.ESTADOS.concluida && n < 60) { s += Math.round(VI.relogioDoAvanco(j) * fator) + T.minutosDoTurno; j = VI.andar(j, VI.minutosPorAvanco(j)); n++; }
   return s;
 };
 
@@ -111,7 +116,14 @@ sec("1. as tabelas — lidas de volta, e o ritmo contra o App");
   t("o App multiplica o relógio da estrada pelo ritmo (a linha existe)", !!m);
   t("e o veredito usa os MESMOS fatores", !!m && T.relogioDoRitmo.rapido === Number(m[1]) && T.relogioDoRitmo.lento === Number(m[2]) && T.relogioDoRitmo.normal === Number(m[3]));
   t("um fator por ritmo de marcha, nenhum a mais", J(Object.keys(T.relogioDoRitmo).sort()) === J(RITMOS_VIAGEM.map((r) => r.id).sort()));
-  t("o turno paga os minutos do turno (calendario.js)", T.minutosDoTurno === MINUTOS_POR_TURNO && /extraTempo = avancarMinutos\(MINUTOS_POR_TURNO\)/.test(app));
+  /* 12/10 (MOVIDO, com o motivo): dizia "o turno paga os minutos do turno"
+     e lia só que a linha existia no App — existia, mas a viagem não passa
+     por ela. Agora prova a ORDEM: a porta de movimento sai antes do relógio
+     do turno, logo o turno de viagem não paga MINUTOS_POR_TURNO, e o
+     veredito não os soma. */
+  const iMov = app.indexOf('if (faz === "movimento") return interceptarMovimento(acao);');
+  const iTurno = app.indexOf("extraTempo = avancarMinutos(MINUTOS_POR_TURNO)");
+  t("o turno de viagem sai antes do relógio do turno, e o veredito não soma os minutos do turno", T.minutosDoTurno === 0 && iMov > 0 && iTurno > iMov && MINUTOS_POR_TURNO > 0);
   t("a caminhada até à boca cobra os minutos dela (irAteABoca)", /if \(ida\.rota\.modo === "a_pe"\) \{\s*const tempo = avancarMinutos\(Number\(ida\.rota\.minutos\) \|\| 0\)/.test(app));
   t("e cada avanço o relógio do avanço (viajar)", /minutosDoRelogio = relogioDoAvanco\(jornadaRef\.current\);\s*jornadaRef\.current = andar\(jornadaRef\.current, minutosPorAvanco\(jornadaRef\.current\)/.test(app));
   const mv = tenta(() => readFileSync(join(AQUI, "..", "src", "mapa-vivo.js"), "utf8"), "");
@@ -331,7 +343,7 @@ sec("6. o veredito antes de partir — o pedido do mapa, em número");
   const meio = w.nos.find((n) => n.nome === "Muralha Quebrada de Prata Podre");
   const eC = estadoEm(w, w.nos[0], { minuto: 480 }), dC = dadosDe(w, eC);
   const vMeio = PA.vereditoDaPartida(dC, meio.id, eC);
-  t(`meio dia de marcha (${vMeio.horas} h): parte às 08:00, chega às ${vMeio.chegada.hora} (${vMeio.chegada.fase}), sem noite`, vMeio.horas === 4 && vMeio.noites === 0 && vMeio.chegada.minuto === 480 + 240 + MINUTOS_POR_TURNO);
+  t(`meio dia de marcha (${vMeio.horas} h): parte às 08:00, chega às ${vMeio.chegada.hora} (${vMeio.chegada.fase}), sem noite`, vMeio.horas === 4 && vMeio.noites === 0 && vMeio.chegada.minuto === 480 + 240 + T.minutosDoTurno);
   /* o achado (v9.364) que ficou no relato: uma vila a minutos de uma boca,
      aberta como jornada, cobrava um avanço inteiro de relógio (12 h por 97
      minutos). MOVIDO em 11/10 (4.ª sessão, nº 8): agora cobra os minutos que
@@ -345,7 +357,7 @@ sec("6. o veredito antes de partir — o pedido do mapa, em número");
     if (curta) break;
   }
   if (curta) console.log(`      a jornada curta: ${curta.de} → ${curta.para}, ${Math.round(curta.v.horas * 60)} min de caminhada, e o relógio cobra ${curta.v.minutosDeRelogio} min (era 725)`);
-  t("a jornada curta a uma povoação: o veredito diz os minutos da caminhada que viajar cobra, e não 12 h", !!curta && curta.v.avancos === 1 && curta.v.minutosDeRelogio === Math.round(curta.v.horas * 60) + MINUTOS_POR_TURNO && curta.v.minutosDeRelogio < VI.MINUTOS_RELOGIO_POR_TURNO);
+  t("a jornada curta a uma povoação: o veredito diz os minutos da caminhada que viajar cobra, e não 12 h", !!curta && curta.v.avancos === 1 && curta.v.minutosDeRelogio === Math.round(curta.v.horas * 60) + T.minutosDoTurno && curta.v.minutosDeRelogio < VI.MINUTOS_RELOGIO_POR_TURNO);
 }
 
 /* ============================================================ */

@@ -42,6 +42,7 @@ import { veredictoDoCrime } from "./crime.js";
 import { garantirLaco, tipoDeLacoPorId } from "./npcs.js";
 import { cabecaDaCoisa } from "./economia.js";
 import { nomeProcurado } from "./procura.js";
+import { DIAS_ANO } from "./calendario.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const palavras = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
@@ -172,6 +173,12 @@ export const PISTA_DO_SEGREDO = { ele: "Há alguma coisa que ele não conta.", e
 
 export const LEMBRA_NA_TELA = {
   conheceram: "Conheceram-se no dia {dia}",
+  /* o dia 0 é "antes do registo de dias" (a companheira do início, com o
+     laço de anos) — e o dia 0 não existe para o jogador. A 9.ª sessão viu
+     «Conheceram-se no dia 0»; o que é verdade é há quanto tempo. */
+  conheceramHa: "Conhecem-se há {anos} anos",
+  conheceramHaUm: "Conhecem-se há um ano",
+  conheceramAntes: "Conhecem-se de antes da estrada",
   ultimaVez: "Viram-se pela última vez no dia {dia}",
   vistoEm: "{Visto|Vista} pela última vez em {onde}, no dia {dia}",
   pedidoAceito: "{Ele|Ela} lhe pediu uma coisa, e você aceitou",
@@ -376,6 +383,17 @@ function pistaDe(x, ctx) {
    elenco), o dia em que se conheceram (o registo), o laço, o pedido do
    arco (aceite, recusado, por responder), e as compras feitas pela ficha
    (a memória da F2d). O dia de hoje não é lembrança — é agora. */
+/* quem se conheceu antes do dia 1: há quantos anos, pelo `desde` do laço
+   (negativo: anos antes do dia 1), ou só "de antes da estrada". Lê o laço
+   CRU: `garantirLaco` põe `desde: 0` em quem não o tem, e o 0 daria um
+   "há um ano" que ninguém viveu. Menos de meio ano não se conta em anos. */
+function desdeAntes(laco, hoje) {
+  const desde = laco && typeof laco === "object" ? numOuNulo(laco.desde) : null;
+  const anos = desde == null ? 0 : Math.round(((hoje != null ? hoje : 1) - desde) / DIAS_ANO);
+  if (anos < 1) return LEMBRA_NA_TELA.conheceramAntes;
+  return anos === 1 ? LEMBRA_NA_TELA.conheceramHaUm : vars(LEMBRA_NA_TELA.conheceramHa, { anos });
+}
+
 function lembraDe(x, ctx, pagina) {
   const ela = ehEla(x);
   const hoje = diaOuNulo(ctx.dia);
@@ -387,9 +405,10 @@ function lembraDe(x, ctx, pagina) {
     const dias = (kv ? arr(vistos[kv]) : []).map(diaOuNulo).filter((d) => d != null && (hoje == null || d < hoje));
     const ultimo = dias.length ? Math.max(...dias) : null;
     const conheceu = r ? diaOuNulo(r.conhecidoEm) : null;
-    if (conheceu != null && (hoje == null || conheceu < hoje) && conheceu !== ultimo) out.push(vars(LEMBRA_NA_TELA.conheceram, { dia: conheceu }));
-    if (ultimo != null) out.push(vars(LEMBRA_NA_TELA.ultimaVez, { dia: ultimo }));
     const laco = r ? garantirLaco(r.laco) : null;
+    if (conheceu === 0) out.push(desdeAntes(r.laco, hoje));
+    else if (conheceu != null && (hoje == null || conheceu < hoje) && conheceu !== ultimo) out.push(vars(LEMBRA_NA_TELA.conheceram, { dia: conheceu }));
+    if (ultimo != null) out.push(vars(LEMBRA_NA_TELA.ultimaVez, { dia: ultimo }));
     if (laco) {
       if (laco.rompido) out.push(vars(LEMBRA_NA_TELA.lacoRompido, { laco: (tipoDeLacoPorId(laco.tipo) || {}).rotulo || "alguma coisa" }));
       else if (LEMBRA_NA_TELA.laco[laco.tipo]) out.push(LEMBRA_NA_TELA.laco[laco.tipo]);

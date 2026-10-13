@@ -378,8 +378,14 @@ sec("8. a região v1 e o continente, byte a byte (hashes de HEAD v9.363)");
          mapa vivo — campo novo, só somado, provado em teste-mapa-vivo §12.
          O hash continua a guardar o que guardava (o resto da saída, byte a
          byte, igual ao de HEAD v9.363): tira-se o campo novo antes de
-         contar, em vez de regravar o hash e perder o "antes". */
-      if (k === "v1") { const d = MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, semente, conhecidos: mms.map((m) => m.nome) }); h("v1:mapaVivo", d && { ...d, nos: d.nos.map(({ quem, ...r }) => r) }); }
+         contar, em vez de regravar o hash e perder o "antes".
+         12/10 (MOVIDO, com o motivo, pela mesma regra): o pedido do mapa vivo
+         somou `nos[].bioma` (P1) e `arestas[].perigoMotivo` (o porquê da
+         cor) — campos novos, só somados, provados em
+         teste-pendentes-da-prova-viva §f. Tiram-se antes de contar; a cor
+         (`perigo`) continua no hash, e é ela que prova que a régua refeita
+         numa função só dá o mesmo número. */
+      if (k === "v1") { const d = MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, semente, conhecidos: mms.map((m) => m.nome) }); h("v1:mapaVivo", d && { ...d, nos: d.nos.map(({ quem, bioma, ...r }) => r), arestas: d.arestas.map(({ perigoMotivo, ...r }) => r) }); }
     }
   }
   for (const k of Object.keys(HEAD)) {

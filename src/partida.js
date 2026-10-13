@@ -28,9 +28,15 @@
        noite pelo caminho (viagem.js, `relogioDoAvanco`). A vila a minutos da
        boca, aberta como jornada, cobra os minutos dela — e não mais as 12 h
        do piso de um avanço; o veredito diz o que se cobra;
-     · e cada partida e cada avanço é um TURNO, e o turno paga os seus
-       minutos (`MINUTOS_POR_TURNO`, calendario.js — o `enviar` do App os
-       soma a todo turno fora da luta, do acampamento e da masmorra).
+     · e o turno de viagem NÃO paga os minutos do turno. Até 12/10 esta
+       linha dizia o contrário (cada partida e cada avanço pagaria os
+       `MINUTOS_POR_TURNO` de calendario.js), e o cartão do mapa prometeu
+       «chega às 12:05» a quem o relógio pôs às 12:00 (a prova viva da
+       v9.443). Medido no App: as seis portas de viagem entram por
+       `interceptarMovimento` e saem de `agirInterno` ANTES de
+       `extraTempo = avancarMinutos(MINUTOS_POR_TURNO)` — o turno que viaja
+       paga a estrada (`irAteABoca`, `viajar`) e mais nada. Uma conta só:
+       a do que se cobra. `teste-veredito-da-partida` prova a ordem no App.
 
    ---------------- O QUE ANDA ENQUANTO SE ANDA (os prazos) ----------------
 
@@ -71,15 +77,14 @@
    determinístico (sem sorteio nenhum), sem tocar no que recebe.
    ============================================================ */
 
-import { TERRENO_VIAGEM } from "./geografia.js";
 import { HORAS_MARCHA_POR_DIA, TETO_DE_AVANCOS, ESTADOS, andar, minutosPorAvanco, relogioDoAvanco } from "./viagem.js";
 import { rotaAteAMasmorra, jornadaAteAMasmorra, masmorraDaBoca, IDA_NA_REGIAO } from "./boca.js";
 import { pontoDoHeroi } from "./rastro.js";
 import { masmorrasDoMundo } from "./mundo-base.js";
 import { caminhoNaRegiao, origemDoHeroi, rotaDoCaminho, partidaNaRegiao } from "./marcha.js";
 import { PERIGO_POR_NIVEL } from "./regiao.js";
-import { FASES_DO_DIA, PERIGO_NA_ESTRADA } from "./mapa-vivo.js";
-import { ehNoite, horaTxt, MINUTOS_POR_TURNO, HORAS_EXAUSTO } from "./calendario.js";
+import { FASES_DO_DIA, PERIGO_NA_ESTRADA, perigoDaEstradaComMotivo } from "./mapa-vivo.js";
+import { ehNoite, horaTxt, HORAS_EXAUSTO } from "./calendario.js";
 import { podeAvancar } from "./vilao.js";
 import { revoltaAgora } from "./dominios.js";
 import { expirarPorMinuto } from "./invocacoes.js";
@@ -96,7 +101,9 @@ const duas = (n) => Math.round(n * 100) / 100;
      avanço pelo ritmo de marcha (`personagem.ritmoViagem`, ermos.js): quem
      corre cobre o mesmo trecho gastando menos dia. A estrada não muda; só o
      calendário. Ritmo desconhecido é o normal (`ritmoViagem`, ermos.js).
-   `minutosDoTurno` — o que cada turno paga ao relógio, além da estrada.
+   `minutosDoTurno` — o que o turno de VIAGEM paga ao relógio, além da
+     estrada: zero, porque a porta de movimento sai antes do relógio do
+     turno (ver o cabeçalho, 12/10).
    `ondeNaoSeParte` — onde o herói está (`dados.heroi.onde`) quando o mapa
      não oferece partida: na estrada (anda-se na que se tem), lá dentro
      (sai-se primeiro) ou em lugar nenhum que se saiba.
@@ -104,7 +111,7 @@ const duas = (n) => Math.round(n * 100) / 100;
      de terra de gente: a ponta da estrada pesa como uma povoação. */
 export const VEREDITO_DA_PARTIDA = {
   relogioDoRitmo: { lento: 1.25, normal: 1, rapido: 0.8 },
-  minutosDoTurno: MINUTOS_POR_TURNO,
+  minutosDoTurno: 0,
   ondeNaoSeParte: ["viagem", "masmorra", "nenhum"],
   pontaSemNo: "povoado",
 };
@@ -182,6 +189,33 @@ function relogioDaJornada(jornada, fator, turno) {
   return { minutos, avancos };
 }
 
+/* ---------------- A CHEGADA DA VIAGEM EM CURSO (12/10, pedido do mapa vivo) ----------------
+   A faixa do rumo e a tela grande, com o herói na estrada, queriam dizer
+   «chega às 13:12» — e a tela não pode refazer o relógio de `viajar`. É o
+   mesmo laço do veredito (`relogioDaJornada`, a partir de onde a jornada
+   VAI, não do começo), com o mesmo fator de ritmo e o mesmo turno de
+   viagem (zero). `dados`: a saída de `dadosDoMapaVivo` (o relógio);
+   `estado`: { jornada, ritmo } — a jornada viva e o ritmo de marcha.
+   `null` sem relógio, sem jornada, ou com a jornada parada (pausada ou
+   concluída): parada, não há hora de chegada que seja verdade. */
+export function chegadaDaViagem(dados, estado) {
+  const d = obj(dados), e = obj(estado);
+  if (!d || !e) return null;
+  const relogio = obj(d.relogio);
+  const j = obj(e.jornada);
+  if (!relogio || !finito(relogio.minuto) || !finito(relogio.dia) || !j) return null;
+  if (j.estado === ESTADOS.pausada || j.estado === ESTADOS.concluida || !finito(j.totalMin)) return null;
+  const T = VEREDITO_DA_PARTIDA;
+  const fator = T.relogioDoRitmo[String(e.ritmo || "")] || T.relogioDoRitmo.normal;
+  let rel = null;
+  try { rel = relogioDaJornada(j, fator, T.minutosDoTurno); } catch { rel = null; }
+  if (!rel || !rel.avancos) return null;
+  const fim = Number(relogio.minuto) + rel.minutos;
+  const minuto = ((fim % 1440) + 1440) % 1440;
+  const noites = Math.floor(fim / 1440);
+  return { dia: Number(relogio.dia) + noites, minuto, hora: horaTxt(minuto), fase: faseDe(minuto), noite: ehNoite(minuto), noites, minutosDeRelogio: rel.minutos, avancos: rel.avancos };
+}
+
 /* ---------------- A IDA ----------------
    `onde`: { cidadeAtual, lugar } — onde o registo diz que o herói está (a
    cidade, e o lugar quando está à boca de um ou num arredor). `alvo`: o ponto
@@ -241,6 +275,7 @@ const horasDaIda = (ida) => duas((ida.jornada ? Number(ida.jornada.totalMin) : N
        perigoDoLugar,  — o da ficha, só se a neblina o mostra (senão null);
        perigoDaEstrada,— o pior das pernas, pela régua das arestas do mapa
                          vivo (null se alguma ponta o cala);
+       motivoDoPerigo, — { ponta, chao, subiu } da pior perna (null com ele);
        horasDeVolta,   — a ida de lá até aqui, pela mesma conta;
        rota: [ids],    — por onde se passa, da origem (quando é nó) ao destino;
        pernas: [{ de, para, horas, modo, terreno }],
@@ -337,22 +372,23 @@ export function vereditoDaPartida(dados, destinoId, estado) {
     return PERIGOS.includes(n.perigo) ? n.perigo : null;
   };
   const arestas = lista(d.arestas).filter(obj);
-  let perigoDaEstrada = null, calado = false, pior = -1;
+  /* o motivo da pior perna (12/10, o mapa vivo): o da aresta que a tela
+     desenha, ou o da mesma régua — a tela diz «o gelo sobe um degrau» sem
+     a refazer */
+  let perigoDaEstrada = null, motivoDoPerigo = null, calado = false, pior = -1;
   for (const p of pernas) {
     const ar = p.de && p.para ? arestas.find((x) => (x.de === p.de && x.para === p.para) || (x.de === p.para && x.para === p.de)) : null;
     if (ar) {
       if (!PERIGOS.includes(ar.perigo)) { calado = true; break; }
-      pior = Math.max(pior, PERIGOS.indexOf(ar.perigo));
+      if (PERIGOS.indexOf(ar.perigo) > pior) { pior = PERIGOS.indexOf(ar.perigo); motivoDoPerigo = obj(ar.perigoMotivo) ? { ...ar.perigoMotivo } : null; }
       continue;
     }
-    const pa = perigoDaPonta(p.de), pb = perigoDaPonta(p.para);
-    if (!pa || !pb) { calado = true; break; }
-    let i = Math.max(PERIGOS.indexOf(pa), PERIGOS.indexOf(pb));
-    const t = TERRENO_VIAGEM[p.terreno];
-    if (t && t.kmDia > 0 && t.kmDia < PERIGO_NA_ESTRADA.kmDiaDoChaoDuro) i += PERIGO_NA_ESTRADA.chaoDuroSobe;
-    pior = Math.max(pior, Math.max(0, Math.min(PERIGOS.length - 1, i)));
+    const pm = perigoDaEstradaComMotivo(perigoDaPonta(p.de), perigoDaPonta(p.para), p.terreno);
+    if (!pm) { calado = true; break; }
+    if (PERIGOS.indexOf(pm.perigo) > pior) { pior = PERIGOS.indexOf(pm.perigo); motivoDoPerigo = { ponta: pm.ponta, chao: pm.chao, subiu: pm.subiu }; }
   }
   if (!calado && pior >= 0) perigoDaEstrada = PERIGOS[pior];
+  if (calado || pior < 0) motivoDoPerigo = null;
 
   /* ---------------- A VOLTA ----------------
      De lá até aqui, pela mesma porta: chegado a uma povoação, o registo é
@@ -381,6 +417,7 @@ export function vereditoDaPartida(dados, destinoId, estado) {
     modo: ida.rota.modo === "a_pe" ? "a_pe" : "estrada",
     perigoDoLugar,
     perigoDaEstrada,
+    motivoDoPerigo,
     horasDeVolta,
     rota,
     pernas,

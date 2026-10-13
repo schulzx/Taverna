@@ -171,6 +171,22 @@ export const PERIGO_NA_ESTRADA = {
   kmDiaDoChaoDuro: ROTA_DO_CLIMAX.kmDiaMinimo,
 };
 
+/* A RÉGUA, COM O PORQUÊ (12/10, pedido do mapa vivo). A tela queria dizer
+   «o gelo sobe um degrau» e, para o dizer, teria de refazer esta régua — a
+   tela a decidir regra. A régua passa a ser UMA função, que a aresta do
+   mapa e o veredito da partida chamam, e que devolve o perigo E o motivo:
+   `ponta` (o perigo da pior das duas pontas), `chao` (o chão da ida) e
+   `subiu` (se o chão duro o subiu um degrau). `null` quando uma ponta o
+   cala — a cor não pode dizer o que a ficha cala, e o motivo também não. */
+export function perigoDaEstradaComMotivo(pa, pb, chao) {
+  if (!PERIGOS.includes(pa) || !PERIGOS.includes(pb)) return null;
+  const ponta = PERIGOS[Math.max(PERIGOS.indexOf(pa), PERIGOS.indexOf(pb))];
+  const t = TERRENO_VIAGEM[chao];
+  const subiu = !!(t && t.kmDia > 0 && t.kmDia < PERIGO_NA_ESTRADA.kmDiaDoChaoDuro);
+  const i = PERIGOS.indexOf(ponta) + (subiu ? PERIGO_NA_ESTRADA.chaoDuroSobe : 0);
+  return { perigo: PERIGOS[Math.max(0, Math.min(PERIGOS.length - 1, i))], ponta, chao: String(chao || ""), subiu };
+}
+
 /* O DIA, para a tela pintar a luz. As fases dividem as 24 horas (`ate` em
    minutos, exclusivo); a madrugada e a noite são as horas de `ehNoite`
    (calendario.js), e a suíte prova que as duas réguas não discordam. `luz`
@@ -422,6 +438,10 @@ export function dadosDoMapaVivo(mapa, estado) {
       icone: n.tipo === "lugar" ? String(s.icone || "") : "",
       x: nx(s.x), y: ny(s.y),
       estado: estadoDe.get(n.id),
+      /* P1 (12/10): o chão do nó, o que o motor sabe — o cartão diz «no
+         gelo» e o fundo pinta o chão sem o adivinhar pelo vizinho. O clímax
+         escondido nem chega aqui (a neblina), logo o seu chão também não. */
+      bioma: s.bioma ? String(s.bioma) : null,
       perigo, perigoRotulo,
       horasDaBase,
       vizinhos,
@@ -455,14 +475,7 @@ export function dadosDoMapaVivo(mapa, estado) {
     if (x.tipo !== "lugar") return PERIGO_NA_ESTRADA.povoado;
     return x.perigo;   // null quando a neblina o cala
   };
-  const perigoDaAresta = (a, b, chaoDaIda) => {
-    const pa = perigoDaPonta(a), pb = perigoDaPonta(b);
-    if (!pa || !pb) return null;
-    let i = Math.max(PERIGOS.indexOf(pa), PERIGOS.indexOf(pb));
-    const t = TERRENO_VIAGEM[chaoDaIda];
-    if (t && t.kmDia > 0 && t.kmDia < PERIGO_NA_ESTRADA.kmDiaDoChaoDuro) i += PERIGO_NA_ESTRADA.chaoDuroSobe;
-    return PERIGOS[Math.max(0, Math.min(PERIGOS.length - 1, i))];
-  };
+  const perigoDaAresta = (a, b, chaoDaIda) => perigoDaEstradaComMotivo(perigoDaPonta(a), perigoDaPonta(b), chaoDaIda);
   const arestas = [];
   const chaveDe = (a, b) => [a, b].sort().join("~");
   const jaTem = new Map();
@@ -472,7 +485,9 @@ export function dadosDoMapaVivo(mapa, estado) {
     const ja = jaTem.get(k);
     if (ja) { if (ja.para === de && ja.horasDeVolta == null) ja.horasDeVolta = horas; return; }
     const a = { id: k, de, para, horas, horasDeVolta: null, ...extra };
-    a.perigo = perigoDaAresta(de, para, a.tipoDeChao);
+    const pm = perigoDaAresta(de, para, a.tipoDeChao);
+    a.perigo = pm ? pm.perigo : null;
+    a.perigoMotivo = pm ? { ponta: pm.ponta, chao: pm.chao, subiu: pm.subiu } : null;
     jaTem.set(k, a);
     arestas.push(a);
   };
