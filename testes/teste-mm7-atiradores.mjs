@@ -291,24 +291,43 @@ sec("9. determinismo e imutabilidade");
 }
 
 /* ============================================================ */
-sec("10. a catraca: a luta fica diferente, não mais dura nem mais mole (140 lutas)");
+sec("10. a catraca: a luta fica diferente, não mais dura nem mais mole (140 lutas, a abertura de agora)");
 {
+  /* A CATRACA MEDE A ABERTURA NOVA (13/10/2026 · v9.460 · S10b). Esta seção
+     media a luta aberta fila contra fila e exigia o dano no herói a menos de
+     20% do antes (±2% do retrato). O App passou a abrir a luta pela situação
+     — "cena" 2–4 casas (3–5 na masmorra), "declarada" 1–2 —, e o
+     coordenador aceitou os números novos (ordem de 28/09): perto, o
+     atirador perde a distância e o herói apanha menos do conjurador (−19,2%
+     / −25,1% do antes) e do bando (−20,1% / −38,8%), enquanto o grupo leva o
+     dobro ou o triplo. Os limites de antes não cabiam (o bando declarado
+     está a −38,8%), e foram trocados por faixas em volta do retrato de cada
+     abertura (`RETRATO_DOS_ATIRADORES.cena` e `.declarada`): a medida bate a
+     ±2%, e a variação contra o `antes` fica a menos de 40%
+     (`LIMITE_DOS_ATIRADORES.variacao`, era 20%: a mesma folga sobre o pior
+     caso). A vitória pode cair 4 pontos (era 2: a dupla perde 2,2 perto, por
+     decisão) e o total do bando sobe menos de 35%. A abertura de antes ficou
+     em `RETRATO_DOS_ATIRADORES.registo.antiga`, sem asserção. */
   const M = await carregar();
-  const m = sondarAtiradores(M, { n: RETRATO_DOS_ATIRADORES.n });
-  const A = RETRATO_DOS_ATIRADORES.antes, D = RETRATO_DOS_ATIRADORES.depois;
-  for (const c of Object.keys(D)) {
-    const x = m[c];
-    console.log(`      ${c.padEnd(11)} dano no herói ${x.dano.toFixed(2)} (retrato ${D[c].dano}, antes ${A[c].dano}) · grupo ${x.danoGrupo.toFixed(2)} · vitória ${(x.vitoria * 100).toFixed(1)}% · rodadas ${x.rodadas.toFixed(2)} · disparos ${x.disparos.toFixed(2)} · recuos ${x.recuos.toFixed(2)}`);
-    t(`${c}: a medida bate com o retrato (±2%)`, Math.abs(x.dano / D[c].dano - 1) <= 0.02, x.dano.toFixed(2));
-    const varia = x.dano / A[c].dano - 1;
-    t(`${c}: o dano no herói fica a menos de ${LIMITE_DOS_ATIRADORES.variacao * 100}% do antes (${(varia * 100).toFixed(1)}%)`, Math.abs(varia) < LIMITE_DOS_ATIRADORES.variacao);
-    t(`${c}: a vitória não cai mais de 2 pontos`, x.vitoria >= A[c].vitoria - 0.02, x.vitoria);
-    t(`${c}: os atiradores disparam de verdade`, x.disparos > 1);
+  const A = RETRATO_DOS_ATIRADORES.antes;
+  for (const sit of ["cena", "declarada"]) {
+    const D = RETRATO_DOS_ATIRADORES[sit];
+    const m = sondarAtiradores(M, { n: RETRATO_DOS_ATIRADORES.n, situacao: sit });
+    for (const c of Object.keys(D)) {
+      const x = m[c];
+      console.log(`      ${sit.padEnd(9)} ${c.padEnd(11)} dano no herói ${x.dano.toFixed(2)} (retrato ${D[c].dano}, antes ${A[c].dano}) · grupo ${x.danoGrupo.toFixed(2)} · vitória ${(x.vitoria * 100).toFixed(1)}% · rodadas ${x.rodadas.toFixed(2)} · disparos ${x.disparos.toFixed(2)} · recuos ${x.recuos.toFixed(2)}`);
+      t(`${sit} ${c}: a medida bate com o retrato (±2%)`, Math.abs(x.dano / D[c].dano - 1) <= 0.02, x.dano.toFixed(2));
+      const varia = x.dano / A[c].dano - 1;
+      t(`${sit} ${c}: o dano no herói fica a menos de ${LIMITE_DOS_ATIRADORES.variacao * 100}% do antes (${(varia * 100).toFixed(1)}%)`, Math.abs(varia) < LIMITE_DOS_ATIRADORES.variacao);
+      t(`${sit} ${c}: a vitória não cai mais de ${LIMITE_DOS_ATIRADORES.vitoriaCai * 100} pontos`, x.vitoria >= A[c].vitoria - LIMITE_DOS_ATIRADORES.vitoriaCai, x.vitoria);
+      t(`${sit} ${c}: os atiradores disparam de verdade`, x.disparos > 1);
+    }
+    t(`${sit} bando: o dano no grupo bate com o retrato (±2%) — o dano muda de mão`, Math.abs(m.bando.danoGrupo / D.bando.danoGrupo - 1) <= 0.02, m.bando.danoGrupo.toFixed(2));
+    t(`${sit} bando: o grupo leva mais que antes, e o total (herói + grupo) sobe menos de ${LIMITE_DOS_ATIRADORES.totalDoBando * 100}%`,
+      m.bando.danoGrupo > A.bando.danoGrupo
+      && (m.bando.dano + m.bando.danoGrupo) / (A.bando.dano + A.bando.danoGrupo) - 1 < LIMITE_DOS_ATIRADORES.totalDoBando);
+    t(`${sit}: o recuo acontece e é cobrado (a fiação da §13)`, m.dupla.recuos > 0.5 && m.dupla.oportunidades > 0.5);
   }
-  t("bando: o dano no grupo também fica perto do antes", Math.abs(m.bando.danoGrupo / A.bando.danoGrupo - 1) < LIMITE_DOS_ATIRADORES.variacao);
-  t("o recuo acontece e é cobrado (a fiação da §13)", m.dupla.recuos > 0.5 && m.dupla.oportunidades > 0.5);
-  t("sem o golpe de oportunidade no recuo, o conjurador passaria do limite",
-    RETRATO_DOS_ATIRADORES.semOportunidade.conjurador.dano / A.conjurador.dano - 1 > LIMITE_DOS_ATIRADORES.variacao);
   t("a amostra do retrato é a da sonda", RETRATO_DOS_ATIRADORES.n === AMOSTRA_DOS_ATIRADORES.n);
 }
 
@@ -346,36 +365,49 @@ sec("11. quem mantém distância dispara; quem está colado paga a desvantagem")
    ============================================================ */
 sec("12. a medida — 140 lutas, e o golpe de oportunidade que fecha a conta");
 {
-  t("o retrato é de 140 lutas, nos três cenários", RETRATO_DOS_ATIRADORES.n === 140
-    && Object.keys(LUTAS_DOS_ATIRADORES).every((c) => RETRATO_DOS_ATIRADORES.antes[c] && RETRATO_DOS_ATIRADORES.depois[c]));
+  /* Movida em 13/10/2026 (v9.460 · S10b) para a abertura de agora, pelo
+     mesmo motivo da seção 10: o retrato que vale é o da "cena" e o da
+     "declarada"; o `depois` de antes (fila contra fila) é registo. */
+  const aberturas = ["cena", "declarada"];
+  t("o retrato é de 140 lutas, nos três cenários, no antes e nas duas aberturas", RETRATO_DOS_ATIRADORES.n === 140
+    && Object.keys(LUTAS_DOS_ATIRADORES).every((c) => RETRATO_DOS_ATIRADORES.antes[c] && aberturas.every((s) => RETRATO_DOS_ATIRADORES[s][c])));
 
-  for (const c of Object.keys(LUTAS_DOS_ATIRADORES)) {
-    const antes = RETRATO_DOS_ATIRADORES.antes[c].dano, depois = RETRATO_DOS_ATIRADORES.depois[c].dano;
-    const variacao = Math.abs(depois - antes) / antes;
-    t(`${c}: o dano no herói varia ${(variacao * 100).toFixed(1)}% — dentro do limite de ${(LIMITE_DOS_ATIRADORES.variacao * 100).toFixed(0)}%`,
+  for (const sit of aberturas) for (const c of Object.keys(LUTAS_DOS_ATIRADORES)) {
+    const antes = RETRATO_DOS_ATIRADORES.antes[c].dano, agora = RETRATO_DOS_ATIRADORES[sit][c].dano;
+    const variacao = Math.abs(agora - antes) / antes;
+    t(`${sit} ${c}: o dano no herói varia ${(variacao * 100).toFixed(1)}% — dentro do limite de ${(LIMITE_DOS_ATIRADORES.variacao * 100).toFixed(0)}%`,
       variacao < LIMITE_DOS_ATIRADORES.variacao);
   }
 
   /* O GOLPE DE OPORTUNIDADE NÃO É ENFEITE. Sem ele, o conjurador recua para
-     lançar de novo sem pagar nada por dar as costas — e o dano no herói
-     estoura o limite que os outros dois cenários cumprem com folga. */
-  const antesConj = RETRATO_DOS_ATIRADORES.antes.conjurador.dano;
-  const variacaoSemOp = (RETRATO_DOS_ATIRADORES.semOportunidade.conjurador.dano - antesConj) / antesConj;
-  t(`sem o golpe de oportunidade, o conjurador passa do limite (+${(variacaoSemOp * 100).toFixed(0)}%) — a fiação da seção 3 não é opcional`,
-    variacaoSemOp > LIMITE_DOS_ATIRADORES.variacao);
-  const variacaoDuplaSemOp = Math.abs(RETRATO_DOS_ATIRADORES.semOportunidade.dupla.dano - RETRATO_DOS_ATIRADORES.antes.dupla.dano) / RETRATO_DOS_ATIRADORES.antes.dupla.dano;
-  t("nos outros dois cenários o golpe de oportunidade pesa menos (o atirador comum tem menos motivo para recuar)",
-    variacaoDuplaSemOp < variacaoSemOp);
+     lançar de novo sem pagar nada por dar as costas, e fere o herói muito
+     mais. Na abertura de antes isso estourava o limite de 20% (+30%); na
+     abertura perto, o dano do conjurador no herói já é baixo (8,59 / 7,97) e
+     a prova passou a ser a diferença entre ter e não ter o golpe: pelo menos
+     15% a mais sem ele (cena +19%, declarada +26%). */
+  for (const sit of aberturas) {
+    const com = RETRATO_DOS_ATIRADORES[sit].conjurador.dano, sem = RETRATO_DOS_ATIRADORES.semOportunidade[sit].conjurador.dano;
+    const sobe = sem / com - 1;
+    t(`${sit}: sem o golpe de oportunidade, o conjurador fere o herói ${(sobe * 100).toFixed(0)}% a mais — a fiação da seção 3 não é opcional`,
+      sobe > LIMITE_DOS_ATIRADORES.oportunidadePesa);
+    const duplaSobe = RETRATO_DOS_ATIRADORES.semOportunidade[sit].dupla.dano / RETRATO_DOS_ATIRADORES[sit].dupla.dano - 1;
+    t(`${sit}: no outro cenário o golpe de oportunidade pesa menos (o atirador comum tem menos motivo para recuar): +${(duplaSobe * 100).toFixed(0)}%`,
+      duplaSobe < sobe);
+  }
 
   /* determinismo: a mesma semente dá a mesma luta, em qualquer máquina */
   const M = await carregar();
   const a = JSON.stringify(lutaDosAtiradores(M, "dupla", "mm7prova|3"));
   const b = JSON.stringify(lutaDosAtiradores(M, "dupla", "mm7prova|3"));
   t("determinismo: a mesma semente dá a mesma luta", a === b);
+  const aS = JSON.stringify(lutaDosAtiradores(M, "dupla", "mm7prova|3", { situacao: "declarada" }));
+  t("determinismo na abertura nova: a mesma semente e a mesma situação dão a mesma luta",
+    aS === JSON.stringify(lutaDosAtiradores(M, "dupla", "mm7prova|3", { situacao: "declarada" })));
+  t("…e a abertura muda a luta (não é o mesmo jogo da abertura de antes)", aS !== a);
 
   /* uma amostra ao vivo, menor que o retrato (70 contra 140) para caber no
-     `npm test` — com folga extra no limite, porque amostra pequena tem
-     mais ruído do que 140 lutas.
+     `npm test` — com folga extra, porque amostra pequena tem mais ruído do
+     que 140 lutas.
 
      A AMOSTRA PASSOU DE 40 PARA 70 NA ETAPA DAS PAREDES (29/09), e o
      limite e a folga ficaram onde estavam. O motivo: as plantas vêm em
@@ -386,21 +418,31 @@ sec("12. a medida — 140 lutas, e o golpe de oportunidade que fecha a conta");
      davam +35,3%, um terço de ponto além da folga, só por serem as 40
      que eram (42 dava 38%, 70 dá 27%, 140 dá 20%). Dez voltas inteiras
      do rodízio medem o mesmo jogo com metade do ruído; o preço são uns
-     três segundos. */
+     três segundos.
+
+     A FOLGA SEGUE O RETRATO DA ABERTURA (13/10/2026). Antes, a amostra ao
+     vivo comparava-se com o `antes` (< 20% + 0,15) — e a abertura de antes
+     passava nela com folga, porque o conjurador antigo (+27% do antes)
+     cabia. Agora compara-se com o retrato da abertura de agora, a
+     `LIMITE_DOS_ATIRADORES.aoVivo` (0,35, o mesmo número de antes): o
+     conjurador mede +19% (cena) e +28% (declarada) do retrato nestas
+     sementes, e a abertura de antes mediria +58% / +70%. */
   const N_AO_VIVO = 70;
-  console.log(`      (medindo ${Object.keys(LUTAS_DOS_ATIRADORES).length * N_AO_VIVO * 2} lutas ao vivo — pode levar alguns segundos)`);
-  const folga = LIMITE_DOS_ATIRADORES.variacao + 0.15;
-  const vivoComOp = sondarAtiradores(M, { n: N_AO_VIVO, prefixo: "mm7ao-vivo-com" });
-  const vivoSemOp = sondarAtiradores(M, { n: N_AO_VIVO, prefixo: "mm7ao-vivo-sem", comOportunidade: false });
-  for (const c of Object.keys(LUTAS_DOS_ATIRADORES)) {
-    const variacaoViva = Math.abs(vivoComOp[c].dano - RETRATO_DOS_ATIRADORES.antes[c].dano) / RETRATO_DOS_ATIRADORES.antes[c].dano;
-    t(`${c} ao vivo, com o golpe de oportunidade: ainda perto do retrato (${(variacaoViva * 100).toFixed(1)}%, folga ${(folga * 100).toFixed(0)}%)`,
-      variacaoViva < folga);
+  console.log(`      (medindo ${Object.keys(LUTAS_DOS_ATIRADORES).length * N_AO_VIVO * 2 * aberturas.length} lutas ao vivo — pode levar alguns segundos)`);
+  const folga = LIMITE_DOS_ATIRADORES.aoVivo;
+  for (const sit of aberturas) {
+    const vivoComOp = sondarAtiradores(M, { n: N_AO_VIVO, prefixo: "mm7ao-vivo-com", situacao: sit });
+    const vivoSemOp = sondarAtiradores(M, { n: N_AO_VIVO, prefixo: "mm7ao-vivo-sem", comOportunidade: false, situacao: sit });
+    for (const c of Object.keys(LUTAS_DOS_ATIRADORES)) {
+      const variacaoViva = Math.abs(vivoComOp[c].dano - RETRATO_DOS_ATIRADORES[sit][c].dano) / RETRATO_DOS_ATIRADORES[sit][c].dano;
+      t(`${sit} ${c} ao vivo, com o golpe de oportunidade: ainda perto do retrato (${(variacaoViva * 100).toFixed(1)}%, folga ${(folga * 100).toFixed(0)}%)`,
+        variacaoViva < folga);
+    }
+    t(`${sit}: ao vivo, tirar o golpe de oportunidade do conjurador não melhora o dano no herói`,
+      vivoSemOp.conjurador.dano >= vivoComOp.conjurador.dano - 1.5);
+    t(`${sit}: ao vivo, os recuos e os disparos acontecem de fato (o cenário exercitou a regra)`,
+      vivoComOp.conjurador.recuos > 0 && vivoComOp.conjurador.disparos > 0 && vivoComOp.dupla.disparos > 0);
   }
-  t("ao vivo, tirar o golpe de oportunidade do conjurador não melhora o dano no herói",
-    vivoSemOp.conjurador.dano >= vivoComOp.conjurador.dano - 1.5);
-  t("ao vivo, os recuos e os disparos acontecem de fato (o cenário exercitou a regra)",
-    vivoComOp.conjurador.recuos > 0 && vivoComOp.conjurador.disparos > 0 && vivoComOp.dupla.disparos > 0);
 }
 
 /* ============================================================

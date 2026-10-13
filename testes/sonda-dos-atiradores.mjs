@@ -123,6 +123,41 @@ export const AMOSTRA_DOS_ATIRADORES = { n: 140, prefixo: "mm7", tetoDeRodadas: 2
      brilhante                   4,71 · 16,19 · 20,91  (a magia e o remendo primeiro)
    O herói é quem mais fere os arqueiros (o golpe de oportunidade no
    recuo): com `feridoPor`, é nele que o bruto passa a disparar. */
+/* A ABERTURA MUDOU, E A CATRACA ACOMPANHOU (13/10/2026, v9.460 · S10b).
+   Até aqui o retrato e a catraca mediam a luta aberta fila contra fila (o
+   inimigo a 7–15 casas). Desde v9.460 o App abre a luta pela situação
+   (`ABERTURA_DA_LUTA`, grid.js): "cena" = 2–4 casas fora da masmorra e 3–5
+   nela; "declarada" = 1–2. O `oficial` remediu (diário, bloco v9.460) e o
+   coordenador decidiu, pela ordem de 28/09, ACEITAR os números novos: a
+   luta declarada a 1–2 casas é como numa mesa, e o herói apanhar menos do
+   conjurador e do bando é o efeito esperado de lutar perto — o atirador
+   perde a distância, o grupo divide o dano. As chaves `cena` e `declarada`
+   são agora o retrato que a suíte confere; o `depois` de antes (a abertura
+   fila contra fila) ficou em `registo.antiga`, SEM ASSERÇÃO. O `antes`
+   (o jogo de ANTES de MM7, congelado) segue de referência da variação.
+   Dano no herói por luta, depois (de antes) → cena · declarada, e o que
+   isso é contra o `antes`:
+                  antes    depois(antiga)    cena              declarada
+     dupla        13,03    12,06  −7,4%      11,91  −8,6%      11,10 −14,8%
+     conjurador   10,64    12,69 +19,3%       8,59 −19,2%       7,97 −25,1%
+     bando        15,30    15,21  −0,6%      12,23 −20,1%       9,36 −38,8%
+     bando grupo   5,35     5,49              11,25 (+110%)     16,79 (+214%)
+   O total do bando (herói + grupo) sobe +13,7% na cena e +26,6% na
+   declarada: o dano muda de mão, o grupo leva o dobro ou o triplo. A vitória
+   da dupla cai de 99,3% para 97,1% (3 lutas em 140) nas duas aberturas.
+   Sem o golpe de oportunidade (dupla · conjurador · bando): cena 13,18 ·
+   10,21 · 15,02; declarada 12,94 · 10,08 · 9,66 — o conjurador fere o herói
+   +19% (cena) e +26% (declarada) a mais do que com ele.
+
+   AS FAIXAS, centradas nestes números e com a mesma largura relativa de
+   antes (o limite de 20% do antes cobria o pior caso de 19,3%; o de agora,
+   `LIMITE_DOS_ATIRADORES.variacao`, cobre o pior de 38,8%, a −40%): a
+   medida bate com o retrato a ±2%, o dano no herói fica a menos de 40% do
+   `antes`, a vitória não cai mais de 4 pontos (eram 2: a dupla perde 2,2 de
+   graça na abertura perto, por decisão), o total do bando sobe menos de 35%
+   e sem o golpe de oportunidade o conjurador fere o herói pelo menos 15% a
+   mais. Uma volta à abertura de antes sai de todas elas: o conjurador
+   mediria 12,69 contra os 8,59 / 7,97 do retrato (+48% / +59%). */
 export const RETRATO_DOS_ATIRADORES = {
   n: 140,
   antes: {
@@ -130,52 +165,71 @@ export const RETRATO_DOS_ATIRADORES = {
     conjurador: { dano: 10.64, danoGrupo: 0,    vitoria: 1,     rodadas: 5.01 },
     bando:      { dano: 15.30, danoGrupo: 5.35, vitoria: 1,     rodadas: 4.31 },
   },
-  depois: {
-    dupla:      { dano: 12.06, danoGrupo: 0,    vitoria: 0.986, rodadas: 4.67 },
-    conjurador: { dano: 12.69, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.72 },
-    bando:      { dano: 15.21, danoGrupo: 5.49, vitoria: 1,     rodadas: 4.06 },
+  /* a abertura "cena" — o encontro (2–4 casas) e a porta da sala (3–5) */
+  cena: {
+    dupla:      { dano: 11.91, danoGrupo: 0,     vitoria: 0.971, rodadas: 3.91 },
+    conjurador: { dano: 8.59,  danoGrupo: 0,     vitoria: 0.993, rodadas: 3.73 },
+    bando:      { dano: 12.23, danoGrupo: 11.25, vitoria: 1,     rodadas: 3.88 },
   },
-  /* o mesmo depois SEM o golpe de oportunidade no recuo — o jogo enquanto a
-     fiação do App não chega. O conjurador passa do limite (+30%): é por
-     isso que a fiação não é enfeite. */
+  /* a abertura "declarada" — o golpe do jogador, a 1–2 casas */
+  declarada: {
+    dupla:      { dano: 11.10, danoGrupo: 0,     vitoria: 0.971, rodadas: 3.93 },
+    conjurador: { dano: 7.97,  danoGrupo: 0,     vitoria: 0.993, rodadas: 3.73 },
+    bando:      { dano: 9.36,  danoGrupo: 16.79, vitoria: 1,     rodadas: 3.84 },
+  },
+  /* o mesmo SEM o golpe de oportunidade no recuo — o jogo se a fiação do App
+     faltasse. É a prova de que a fiação não é enfeite: o conjurador fere o
+     herói ~19% (cena) e ~26% (declarada) a mais sem ela. */
   semOportunidade: {
-    dupla:      { dano: 14.04 },
-    conjurador: { dano: 13.83 },
-    bando:      { dano: 17.94 },
+    cena:      { dupla: { dano: 13.18 }, conjurador: { dano: 10.21 }, bando: { dano: 15.02, danoGrupo: 12.73 } },
+    declarada: { dupla: { dano: 12.94 }, conjurador: { dano: 10.08 }, bando: { dano: 9.66,  danoGrupo: 19.15 } },
   },
-  /* o que a decisão pendente tem à frente — registo, sem asserção */
+  /* REGISTO HISTÓRICO e o que a decisão pendente tem à frente — SEM
+     ASSERÇÃO. Tudo o que está aqui foi medido na abertura de antes (fila
+     contra fila), salvo `abertura`, que já não existe: o que ela tinha
+     virou `cena` e `declarada`, acima. */
   registo: {
+    /* A abertura de antes (29/09): o `depois` do retrato e a catraca de ±20%.
+       Os dois com a fila contra fila e o golpe de oportunidade. */
+    antiga: {
+      depois: {
+        dupla:      { dano: 12.06, danoGrupo: 0,    vitoria: 0.986, rodadas: 4.67 },
+        conjurador: { dano: 12.69, danoGrupo: 0,    vitoria: 0.993, rodadas: 4.72 },
+        bando:      { dano: 15.21, danoGrupo: 5.49, vitoria: 1,     rodadas: 4.06 },
+      },
+      /* sem o golpe de oportunidade, na abertura de antes: o conjurador
+         passava do limite de então (+30%), e foi por isso que a fiação não
+         foi enfeite */
+      semOportunidade: {
+        dupla:      { dano: 14.04 },
+        conjurador: { dano: 13.83 },
+        bando:      { dano: 17.94 },
+      },
+    },
+    /* o que a decisão pendente tem à frente, na abertura de antes
+       (bando: herói · grupo) */
     comFerida: { bando: { dano: 16.26, danoGrupo: 3.70, vitoria: 1, rodadas: 4.04 } },
     astuto:    { bando: { dano: 5.90,  danoGrupo: 19.78, vitoria: 1, rodadas: 4.06 } },
     brilhante: { bando: { dano: 4.71,  danoGrupo: 16.19, vitoria: 1, rodadas: 3.99 } },
-    /* A ABERTURA PERTO (S10b, 13/10). O `depois` e a catraca medem a
-       abertura de antes (fila contra fila). Desde v9.460 o App abre a luta
-       pela situação (`ABERTURA_DA_LUTA`, grid.js); remedido a 140 lutas,
-       mesmas sementes (`situacao` da sonda; o herói da régua já tinha a
-       Espada Longa, que é a arma do kit do Guerreiro), dano no herói contra
-       o `antes`:
-                   depois (de antes)   cena              declarada
-         dupla       12,06  −7,4%      11,91  −8,6%      11,10 −14,8%
-         conjurador  12,69 +19,3%       8,59 −19,2%       7,97 −25,1%
-         bando       15,21  −0,6%      12,23 −20,1%       9,36 −38,8%
-         bando grupo  5,49              11,25             16,79
-       Perto, o arqueiro e o mago dão menos tiros de graça antes do corpo a
-       corpo, e o herói apanha MENOS; no bando o dano muda de mão (o grupo
-       leva o dobro ou o triplo; o total sobe +13% na cena, +26% na
-       declarada). A CENA PASSA O LIMITE DE 20% no bando (−20,1%) e a
-       declarada no conjurador e no bando. Sem o golpe de oportunidade, na
-       cena: 13,18 · 10,21 · 15,02. A faixa NÃO se afrouxou: a catraca segue
-       a medir a abertura de antes, e a decisão é da pessoa. */
-    abertura: {
-      cena:      { dupla: { dano: 11.91 }, conjurador: { dano: 8.59 }, bando: { dano: 12.23, danoGrupo: 11.25 } },
-      declarada: { dupla: { dano: 11.10 }, conjurador: { dano: 7.97 }, bando: { dano: 9.36, danoGrupo: 16.79 } },
-    },
   },
 };
-/* O LIMITE — a luta tem de ficar DIFERENTE, não mais dura nem mais mole:
-   o dano no herói de cada cenário fica a menos de 20% do antes, para os
-   dois lados. */
-export const LIMITE_DOS_ATIRADORES = { variacao: 0.2 };
+/* OS LIMITES — a luta tem de ficar DIFERENTE, não mais dura nem mais mole.
+   Até 13/10/2026 o limite era `variacao: 0.2` (o dano no herói a menos de
+   20% do antes, para os dois lados), centrado na abertura fila contra fila.
+   Na abertura perto o pior caso é o bando declarado, a −38,8%; o limite
+   passa a 40%, a mesma largura relativa (1,2 ponto de margem sobre o pior
+   caso, como os 0,7 de antes). Os outros limites nasceram da mesma conta.
+     · `variacao`: o dano no herói, de cada cenário, a menos de 40% do antes;
+     · `vitoriaCai`: pontos de vitória que a luta pode perder contra o antes
+       (era 0,02; a dupla perde 0,022 de graça perto, decisão de 13/10);
+     · `totalDoBando`: o quanto o total do bando (herói + grupo) pode subir
+       contra o antes — o dano muda de mão, não explode (+13,7% · +26,6%);
+     · `oportunidadePesa`: o quanto o conjurador fere o herói a mais sem o
+       golpe de oportunidade — a fiação do recuo não é enfeite (+19% · +26%);
+     · `aoVivo`: a folga da amostra menor (70 lutas, outras sementes) em
+       volta do retrato da abertura — era a variação mais 0,15, e continua
+       nos 0,35. */
+export const LIMITE_DOS_ATIRADORES = { variacao: 0.4, vitoriaCai: 0.04, totalDoBando: 0.35, oportunidadePesa: 0.15, aoVivo: 0.35 };
 
 /* ---------------- OS MÓDULOS ----------------
    A raiz é argumento para o retrato do antes poder correr sobre a árvore

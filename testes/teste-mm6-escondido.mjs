@@ -20,7 +20,7 @@ import { montarGrade, resumoGridPrompt, temCobertura, linhaDeVisao, ROTULOS_DO_T
 import { tickCondicoes, mecanicaDe, limparPorDescanso, resumoCondicoesPrompt, criarCondicao, condicaoPorId } from "../src/condicoes.js";
 import { romperPorGatilho } from "../src/gatilhos.js";
 import { porNaPauta, textoDaPauta, TETO_DA_PAUTA } from "../src/pauta.js";
-import { sondarFurtivo, lutaDoLadino, RETRATO_DO_FURTIVO, MODOS_DA_SONDA } from "./sonda-do-furtivo.mjs";
+import { sondarFurtivo, lutaDoLadino, RETRATO_DO_FURTIVO, TOLERANCIA_DO_FURTIVO, MODOS_DA_SONDA } from "./sonda-do-furtivo.mjs";
 import { readFileSync } from "node:fs";
 
 let ok = 0, mal = 0;
@@ -300,34 +300,82 @@ sec("10. o preço de esconder-se na luta");
 }
 
 /* ============================================================ */
-sec("11. o Ladino antes e depois — a catraca da medida");
+sec("11. o Ladino antes e depois — a catraca da medida (a abertura de agora: cena e declarada)");
 {
-  /* A amostra da suíte é menor que a do retrato (40 contra 140) para caber
-     no `npm test`; os limiares abaixo são os que o retrato cumpre com folga
-     e que a amostra menor também cumpre. Mudar um deles é mudar o que a
-     fase prometeu — "joga diferente, não pior" — e o motivo vai escrito. */
+  /* A CATRACA MEDE A ABERTURA NOVA (13/10/2026 · v9.460 · S10b). Até aqui
+     esta seção medeu a luta aberta fila contra fila (o inimigo a 7–15
+     casas), com limiares soltos (furtivo > 85%, queda < 8% com grupo). O
+     App passou a abrir a luta pela situação — "cena" 2–4 casas (3–5 na
+     masmorra), "declarada" 1–2 —, e o coordenador aceitou os números novos
+     (ordem de 28/09): o Ladino em grupo perde o furtivo na cena (brando,
+     regra: 88,1% → 71,3%; queda 5,3% → 10,1%) e o ganha na declarada
+     (90,3%; queda 1,4%). Os limiares de antes não cabiam na cena, e foram
+     trocados por faixas em volta do retrato de cada abertura
+     (`RETRATO_DO_FURTIVO.cena` e `.declarada`, largura em
+     `TOLERANCIA_DO_FURTIVO`). A abertura de antes ficou como registo
+     histórico (`RETRATO_DO_FURTIVO.antiga`), sem asserção.
+
+     As promessas da fase ("joga diferente, não pior") NÃO se moveram:
+     sozinho sem se esconder a regra morde inteira, a Ação Ardilosa devolve
+     o furtivo, e nenhuma luta joga pior que 12% abaixo do antes nem melhor
+     que 20% acima. Elas valem nas duas aberturas.
+
+     A amostra da suíte é menor que a do retrato (70 contra 140) para caber
+     no `npm test` — era 40: dez voltas inteiras do rodízio de sete plantas
+     medem com metade do ruído (a 40, a queda da ardilosa do justo na cena
+     deu −19,5% contra os −7,4% do retrato, a meio ponto do limite). Mudar
+     um limiar é mudar o que a fase prometeu, e o motivo vai escrito. */
   const a = JSON.stringify(lutaDoLadino("sozinho", "mm6|7", "ardilosa"));
   const b = JSON.stringify(lutaDoLadino("sozinho", "mm6|7", "ardilosa"));
   t("determinismo: a mesma semente dá a mesma luta", a === b);
-  const m = sondarFurtivo({ n: 40 });
+  const aS = JSON.stringify(lutaDoLadino("brando", "mm6|7", "regra", { situacao: "cena" }));
+  const bS = JSON.stringify(lutaDoLadino("brando", "mm6|7", "regra", { situacao: "cena" }));
+  t("determinismo na abertura nova: a mesma semente e a mesma situação dão a mesma luta", aS === bS);
+  t("…e a abertura muda a luta (não é o mesmo jogo da abertura de antes)",
+    aS !== JSON.stringify(lutaDoLadino("brando", "mm6|7", "regra")));
   const pct = (x) => `${(x * 100).toFixed(1)}%`;
-  for (const [c, porModo] of Object.entries(m)) {
-    console.log(`      ${c.padEnd(7)} ` + MODOS_DA_SONDA.map((k) => `${k}: dano ${porModo[k].danoPorLuta.toFixed(1)} · furtivo ${pct(porModo[k].comFurtivo)} · queda ${pct(porModo[k].queda)} · vitória ${pct(porModo[k].vitoria)}`).join(" | "));
+  const tol = TOLERANCIA_DO_FURTIVO;
+  const dentro = (vivo, retrato, largura) => Math.abs(vivo - retrato) <= largura;
+  for (const sit of ["cena", "declarada"]) {
+    const R = RETRATO_DO_FURTIVO[sit];
+    const m = sondarFurtivo({ n: 70, situacao: sit });
+    console.log(`      [${sit}]`);
+    for (const [c, porModo] of Object.entries(m)) {
+      console.log(`      ${c.padEnd(7)} ` + MODOS_DA_SONDA.map((k) => `${k}: dano ${porModo[k].danoPorLuta.toFixed(1)} · furtivo ${pct(porModo[k].comFurtivo)} · queda ${pct(porModo[k].queda)} · vitória ${pct(porModo[k].vitoria)}`).join(" | "));
+    }
+    t(`${sit}: ANTES: o furtivo somava em 100% dos golpes, em toda luta`, MODOS_DA_SONDA.length === 3 && Object.values(m).every((x) => x.antes.comFurtivo === 1));
+    /* a faixa centrada no retrato — é ela que falha se a abertura voltar à de antes */
+    for (const c of ["justo", "brando"]) {
+      t(`${sit}: COM GRUPO (${c}), a regra mede o retrato — furtivo ${pct(m[c].regra.comFurtivo)} (retrato ${pct(R[c].regra.furtivo)} ±${tol.furtivo * 100}) · queda ${pct(m[c].regra.queda)} (retrato ${pct(R[c].regra.queda)} ±${tol.quedaDaRegra * 100})`,
+        dentro(m[c].regra.comFurtivo, R[c].regra.furtivo, tol.furtivo) && dentro(m[c].regra.queda, R[c].regra.queda, tol.quedaDaRegra));
+    }
+    t(`${sit}: SOZINHO, sem se esconder, ela morde inteira: 0% de furtivo e mais de 15% de dano perdido`,
+      m.sozinho.regra.comFurtivo === 0 && m.sozinho.regra.queda > 0.15 && m.sozinho.antes.vitoria - m.sozinho.regra.vitoria > 0.15);
+    t(`${sit}: …e a queda sozinho mede o retrato (${pct(m.sozinho.regra.queda)} contra ${pct(R.sozinho.regra.queda)})`,
+      dentro(m.sozinho.regra.queda, R.sozinho.regra.queda, tol.quedaDaRegra));
+    t(`${sit}: COM A AÇÃO ARDILOSA, o Ladino sozinho esconde-se mais de uma vez por luta e o furtivo volta a somar em mais de 25% dos golpes`,
+      m.sozinho.ardilosa.escondeuPorLuta > 1 && m.sozinho.ardilosa.comFurtivo > 0.25);
+    t(`${sit}: …e o furtivo da ardilosa, em cada luta, mede o retrato (±${tol.furtivo * 100} pontos)`,
+      Object.keys(R).every((c) => dentro(m[c].ardilosa.comFurtivo, R[c].ardilosa.furtivo, tol.furtivo)));
+    t(`${sit}: …e em nenhuma luta joga pior do que 12% abaixo do antes (a fase aceitava 20%)`,
+      Object.values(m).every((x) => x.ardilosa.queda < 0.12));
+    t(`${sit}: …nem melhor do que 20% acima — compensar não é dar de presente`,
+      Object.values(m).every((x) => x.ardilosa.queda > -0.20));
   }
-  t("ANTES: o furtivo somava em 100% dos golpes, em toda luta", MODOS_DA_SONDA.length === 3 && Object.values(m).every((x) => x.antes.comFurtivo === 1));
-  t("COM GRUPO, a regra quase não morde: o furtivo segue acima de 85% e o dano cai menos de 8%",
-    ["justo", "brando"].every((c) => m[c].regra.comFurtivo > 0.85 && m[c].regra.queda < 0.08));
-  t("SOZINHO, sem se esconder, ela morde inteira: 0% de furtivo e mais de 15% de dano perdido",
-    m.sozinho.regra.comFurtivo === 0 && m.sozinho.regra.queda > 0.15 && m.sozinho.antes.vitoria - m.sozinho.regra.vitoria > 0.15);
-  t("COM A AÇÃO ARDILOSA, o Ladino sozinho esconde-se mais de uma vez por luta e o furtivo volta a somar em mais de 25% dos golpes",
-    m.sozinho.ardilosa.escondeuPorLuta > 1 && m.sozinho.ardilosa.comFurtivo > 0.25);
-  t("…e em nenhuma luta joga pior do que 12% abaixo do antes (a fase aceitava 20%)",
-    Object.values(m).every((x) => x.ardilosa.queda < 0.12));
-  t("…nem melhor do que 20% acima — compensar não é dar de presente",
-    Object.values(m).every((x) => x.ardilosa.queda > -0.20));
-  t("o retrato de 140 lutas conta a mesma história",
-    RETRATO_DO_FURTIVO.n === 140 && RETRATO_DO_FURTIVO.sozinho.regra.queda > 0.2 && RETRATO_DO_FURTIVO.sozinho.ardilosa.queda < 0.12
-    && RETRATO_DO_FURTIVO.justo.regra.furtivo > 0.85 && RETRATO_DO_FURTIVO.brando.regra.furtivo > 0.85);
+  /* o retrato de 140 lutas conta a mesma história nas duas aberturas
+     (a de antes, `antiga`, é registo e não entra aqui) */
+  const aberturas = [RETRATO_DO_FURTIVO.cena, RETRATO_DO_FURTIVO.declarada];
+  t("o retrato de 140 lutas conta a mesma história, nas duas aberturas",
+    RETRATO_DO_FURTIVO.n === 140 && aberturas.every((R) => R.sozinho.regra.queda > 0.2 && R.sozinho.ardilosa.queda < 0.12
+      && R.justo.regra.furtivo > 0.65 && R.brando.regra.furtivo > 0.65 && R.justo.regra.queda < 0.12 && R.brando.regra.queda < 0.12));
+  t("o retrato tem os nove pares cenário × modo, nas duas aberturas",
+    aberturas.every((R) => ["justo", "brando", "sozinho"].every((c) => MODOS_DA_SONDA.every((k) => R[c] && R[c][k] && typeof R[c][k].furtivo === "number"))));
+  /* A CATRACA TEM DENTE: a abertura de antes (o registo `antiga`) sai da
+     faixa da cena. Sem esta asserção a faixa podia ser alargada, um dia,
+     até aceitar as duas aberturas — e então a volta à abertura antiga
+     passaria calada. */
+  t("a faixa da cena distingue a abertura nova da antiga: o brando da regra difere em mais que a tolerância",
+    Math.abs(RETRATO_DO_FURTIVO.antiga.brando.regra.furtivo - RETRATO_DO_FURTIVO.cena.brando.regra.furtivo) > tol.furtivo);
 }
 
 /* ============================================================

@@ -91,41 +91,72 @@ export const SOZINHO_DA_SONDA = {
 };
 export const LUTAS_DA_SONDA = { cenarios: ["justo", "brando", "sozinho"], n: 140, prefixo: "mm6", tetoDeRodadas: 20 };
 /* O RETRATO — o que a sonda mediu a 140 lutas por cenário e modo
-   (sementes `mm6|0..139`), no dia em que a regra entrou (29/09/2026).
-   `furtivo` é a fração dos golpes do Ladino em que o furtivo somou;
-   `queda` é a perda do dano por luta contra o `antes`; `vitoria` é a
-   fração das lutas ganhas. A suíte de MM6 refaz a medida numa amostra
-   menor (para caber no `npm test`) e confere que ela continua perto
-   daqui — é a catraca do "joga diferente, não pior". */
+   (sementes `mm6|0..139`). `furtivo` é a fração dos golpes do Ladino em que
+   o furtivo somou; `queda` é a perda do dano por luta contra o modo `antes`
+   DA MESMA ABERTURA; `vitoria` é a fração das lutas ganhas. A suíte de MM6
+   refaz a medida numa amostra menor (para caber no `npm test`) e confere
+   que ela continua perto daqui — é a catraca do "joga diferente, não pior".
+
+   A ABERTURA MUDOU, E A CATRACA ACOMPANHOU (13/10/2026, v9.460 · S10b).
+   Desde v9.460 o App abre a luta pela situação (`ABERTURA_DA_LUTA`,
+   grid.js): "cena" = 2–4 casas fora da masmorra e 3–5 nela; "declarada" =
+   1–2. Antes, a luta abria fila contra fila (o inimigo a 7–15 casas), e a
+   catraca media essa abertura. O `oficial` remediu (diário, bloco v9.460)
+   e o coordenador decidiu, pela ordem de 28/09, ACEITAR os números novos: a
+   luta declarada a 1–2 casas é como numa mesa; o furtivo do Ladino cai na
+   cena (perto, ele chega ao alvo antes do grupo, e sem aliado colado o
+   furtivo não soma) e sobe na declarada. As chaves `cena` e `declarada`
+   abaixo são o retrato que a suíte confere; a abertura de antes ficou em
+   `antiga`, REGISTO SEM ASSERÇÃO. O que mudou, antes → depois (cena ·
+   declarada), com grupo, `regra`:
+       brando: furtivo 88,1% → 71,3% · 90,3%; queda 5,3% → 10,1% · 1,4%.
+       justo:  furtivo → 88,1% · 93,7%; queda → 4,2% · 4,6%.
+       sozinho, `regra`: queda 21,1% → 21,0% · 21,0%; `ardilosa`: furtivo
+         40,3% → 34,9% · 37,9%, queda 5,0% → 9,2% · 5,9%.
+   (A medida de 29/09 guardada em `antiga` é a do dia em que a regra entrou;
+   o motor de hoje, com a abertura de antes, dá no brando da regra 88,1% e
+   5,3%, e no justo 97,6% e 2,6% — o que a suíte aceitou sem esforço, com
+   as faixas de então.) O modo `antes` também muda com a abertura: a vitória
+   do `justo` vai a 67,1% na cena, e a do `sozinho` a 92,9%.
+   Com a arma do kit (Espada Curta em vez da Adaga do pronto) o dano sobe
+   ~2–3% e as frações não mexem (cena, brando: 71,3% · 9,5%).
+
+   AS FAIXAS, centradas nestes números e com a largura de antes: a suíte
+   confere a luta de agora a `TOLERANCIA_DO_FURTIVO` do retrato (furtivo ±6
+   pontos, queda da regra ±5), numa amostra de 70 lutas (dez voltas do
+   rodízio de sete plantas). Na cena, o brando da regra mede 71,3% de
+   furtivo contra os 88,1% da abertura antiga: uma volta à abertura de antes
+   sai da faixa por 17 pontos, e a suíte o diz. */
 export const RETRATO_DO_FURTIVO = {
   n: 140,
-  justo:   { antes: { furtivo: 1, vitoria: 0.579 }, regra: { furtivo: 0.945, queda: 0.018 }, ardilosa: { furtivo: 0.962, queda: -0.046 } },
-  brando:  { antes: { furtivo: 1, vitoria: 1 },     regra: { furtivo: 0.997, queda: 0.003 }, ardilosa: { furtivo: 1, queda: -0.090 } },
-  sozinho: { antes: { furtivo: 1, vitoria: 0.914 }, regra: { furtivo: 0, queda: 0.211, vitoria: 0.614 }, ardilosa: { furtivo: 0.403, queda: 0.050, vitoria: 0.836 } },
-  /* A ABERTURA PERTO (S10b, 13/10) — REGISTO, SEM ASSERÇÃO QUE O EXIJA.
-     O retrato acima e a catraca da suíte medem a abertura de antes (fila
-     contra fila, o inimigo a 7–15 casas). Desde v9.460 o App abre a luta
-     pela situação (`ABERTURA_DA_LUTA`, grid.js): "cena" = 2–4 casas fora da
-     masmorra e 3–5 nela; "declarada" = 1–2. Remedido a 140 lutas, mesmas
-     sementes, a sorte da casa semeada pela luta (`situacao` da sonda):
-       com grupo, `regra`, brando: furtivo 88,1% → 71,3% (cena) · 90,3%
-         (declarada); queda 5,3% → 10,1% (cena) · 1,4% (declarada).
-         A CENA SAI DA FAIXA da catraca (furtivo > 85% e queda < 8%): perto,
-         o Ladino chega ao alvo antes do grupo, e sem aliado colado o
-         furtivo não soma. O justo fica dentro (88,1% · 4,2%).
-       sozinho, `regra`: queda 21,1% → 21,0%; `ardilosa`: furtivo 40,3% →
-         34,9%, queda 5,0% → 9,2% (cena), 5,9% (declarada) — dentro.
-       com a arma do kit (Espada Curta em vez da Adaga do pronto): o dano
-         sobe ~2–3%, as frações não mexem (cena, brando: 71,3% · 9,5%).
-     A faixa NÃO se afrouxou: a catraca segue a medir a abertura de antes,
-     e a decisão (aceitar que o Ladino em grupo perca o furtivo na abertura
-     curta, ou dar-lhe a mão) é da pessoa. */
-  abertura: {
-    n: 140,
-    cena:      { justo: { regra: { furtivo: 0.881, queda: 0.042 } }, brando: { regra: { furtivo: 0.713, queda: 0.101 } }, sozinho: { ardilosa: { furtivo: 0.349, queda: 0.092 } } },
-    declarada: { justo: { regra: { furtivo: 0.937, queda: 0.046 } }, brando: { regra: { furtivo: 0.903, queda: 0.014 } }, sozinho: { ardilosa: { furtivo: 0.379, queda: 0.059 } } },
+  cena: {
+    justo:   { antes: { furtivo: 1, vitoria: 0.671 }, regra: { furtivo: 0.881, queda: 0.042, vitoria: 0.643 }, ardilosa: { furtivo: 0.915, queda: -0.074, vitoria: 0.671 } },
+    brando:  { antes: { furtivo: 1, vitoria: 1 },     regra: { furtivo: 0.713, queda: 0.101, vitoria: 1 },     ardilosa: { furtivo: 0.796, queda: -0.041, vitoria: 1 } },
+    sozinho: { antes: { furtivo: 1, vitoria: 0.929 }, regra: { furtivo: 0,     queda: 0.210, vitoria: 0.643 }, ardilosa: { furtivo: 0.349, queda: 0.092,  vitoria: 0.786 } },
+  },
+  declarada: {
+    justo:   { antes: { furtivo: 1, vitoria: 0.679 }, regra: { furtivo: 0.937, queda: 0.046, vitoria: 0.671 }, ardilosa: { furtivo: 0.947, queda: -0.037, vitoria: 0.693 } },
+    brando:  { antes: { furtivo: 1, vitoria: 1 },     regra: { furtivo: 0.903, queda: 0.014, vitoria: 1 },     ardilosa: { furtivo: 0.926, queda: -0.118, vitoria: 1 } },
+    sozinho: { antes: { furtivo: 1, vitoria: 0.929 }, regra: { furtivo: 0,     queda: 0.210, vitoria: 0.636 }, ardilosa: { furtivo: 0.379, queda: 0.059,  vitoria: 0.814 } },
+  },
+  /* REGISTO HISTÓRICO, SEM ASSERÇÃO: o retrato de 29/09/2026, na abertura de
+     antes de v9.460 (fila contra fila, o inimigo a 7–15 casas) — a que a
+     sonda mede quando `situacao` é omitida. */
+  antiga: {
+    justo:   { antes: { furtivo: 1, vitoria: 0.579 }, regra: { furtivo: 0.945, queda: 0.018 }, ardilosa: { furtivo: 0.962, queda: -0.046 } },
+    brando:  { antes: { furtivo: 1, vitoria: 1 },     regra: { furtivo: 0.997, queda: 0.003 }, ardilosa: { furtivo: 1, queda: -0.090 } },
+    sozinho: { antes: { furtivo: 1, vitoria: 0.914 }, regra: { furtivo: 0, queda: 0.211, vitoria: 0.614 }, ardilosa: { furtivo: 0.403, queda: 0.050, vitoria: 0.836 } },
   },
 };
+
+/* A LARGURA DAS FAIXAS (13/10/2026), em frações, em volta do retrato da
+   abertura de agora. `furtivo` vale para todo modo; `quedaDaRegra` só para
+   a `regra` (a queda da `ardilosa` é mais ruidosa — o dano de uma luta de
+   furtivo anda seis pontos só por a amostra passar de 140 para 70 lutas —,
+   e dela a suíte cobra as promessas da fase: menos de 12% de queda, menos
+   de 20% de ganho). Medido: a 70 lutas, o furtivo anda no máximo 1,7 ponto
+   do retrato e a queda da regra no máximo 3 pontos. */
+export const TOLERANCIA_DO_FURTIVO = { furtivo: 0.06, quedaDaRegra: 0.05 };
 
 const cenarioDaSonda = (id) => (id === SOZINHO_DA_SONDA.id ? SOZINHO_DA_SONDA : CENARIOS_DA_REGUA[id]);
 
