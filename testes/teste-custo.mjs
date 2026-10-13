@@ -89,7 +89,10 @@ sec("4. O AVISO QUE JUSTIFICA O MÓDULO");
 sec("5. O NÚMERO CHEGA, ATRAVESSA A RECARGA, E TEM UMA PORTA");
 {
   t("a API devolve o uso ao jogo", /uso: out\.uso \? \{ \.\.\.out\.uso, tarefa/.test(API));
-  t("os dois provedores o colhem", (API.match(/const uso = lerUso\(data\)/g) || []).length === 2);
+  /* v9.466: eram dois provedores (DeepSeek e Gemini); o plano superior
+     trouxe o terceiro, o OpenRouter. A intenção é a mesma — TODA casa que
+     responde colhe o uso —, e a contagem acompanha o número de casas. */
+  t("os três provedores o colhem", (API.match(/const uso = lerUso\(data\)/g) || []).length === 3);
   t("o App acumula a cada resposta", /custoRef\.atual = somarChamada\(custoRef\.atual/.test(APP));
   t("guarda no save", /custo: custoRef\.atual,/.test(APP));
   /* sem isto o contador mediria a ABA aberta, e não a campanha — que é

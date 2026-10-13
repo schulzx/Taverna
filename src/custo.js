@@ -46,13 +46,34 @@ export const PRECOS = {
   "gemini-3.1-pro-preview": { entrada: 1.25, cache: 0.31, saida: 10.0 },
   "gemini-3.5-flash":  { entrada: 0.30, cache: 0.075, saida: 2.50 },
   "gemini-3.6-flash":  { entrada: 0.30, cache: 0.075, saida: 2.50 },
+  /* v9.466 — os dois planos do Narrador (api/narrador.js, PLANOS). Os
+     preços são os que o OpenRouter publicou e cobrou no teste cego de
+     13/10 (mente/ab-provedores.md). O Sol entra pelo preço de ESCRITA do
+     cache (2,5, e não os 2,0 de lista): foi o que a conta cobrou de
+     verdade pela entrada nova, e a tabela erra para o lado caro. */
+  "gemini-3.8-flash":  { entrada: 0.75, cache: 0.075, saida: 3.75 },
+  "gpt-5.6-sol":       { entrada: 2.50, cache: 0.20, saida: 10.0 },
 };
 
 /* Um modelo fora da tabela não pode custar zero: zero é uma afirmação, e
    a afirmação seria falsa. Ele custa o mais caro que conhecemos, para
-   que a estimativa erre para o lado que não engana ninguém. */
-const MAIS_CARO = { entrada: 1.25, cache: 0.31, saida: 10.0 };
-export const precoDe = (modelo) => PRECOS[String(modelo || "")] || MAIS_CARO;
+   que a estimativa erre para o lado que não engana ninguém.
+
+   v9.466: o "mais caro" passa a SAIR da tabela, campo a campo. Era um
+   número escrito à mão (1,25 / 10), e o Sol, com entrada a 2,5, já o
+   tinha passado no dia em que entrou — a constante solta envelhece calada.
+
+   E O NOME QUE VOLTA NÃO É SEMPRE O DA TABELA: o OpenRouter devolve
+   "openai/gpt-5.6-sol" (a casa na frente) e às vezes o id datado
+   ("…-20260709"); o Google pode devolver um sufixo de revisão ("…-001").
+   O preço é o mesmo modelo, então o nome se apara antes de procurar. */
+const MAIS_CARO = ["entrada", "cache", "saida"].reduce(
+  (acc, k) => ({ ...acc, [k]: Math.max(...Object.values(PRECOS).map((p) => p[k])) }), {});
+export const precoDe = (modelo) => {
+  const m = String(modelo || "");
+  const aparado = m.replace(/-(\d{8}|\d{3})$/, "");
+  return PRECOS[m] || PRECOS[aparado] || PRECOS[aparado.split("/").pop()] || MAIS_CARO;
+};
 
 /* ---------------- A CONTA ----------------
    `entrada` do provedor JÁ inclui os tokens que vieram do cache — os dois
@@ -123,21 +144,31 @@ const a1 = (x) => x && typeof x === "object" && typeof x.chamadas === "number";
    campo é como este projeto fabrica bug. */
 export function lerUso(dados) {
   if (!dados || typeof dados !== "object") return null;
-  /* OpenAI-compatível (DeepSeek) */
+  /* OpenAI-compatível. O DeepSeek diz o cache em
+     `prompt_cache_hit_tokens`; o OpenRouter (e a OpenAI) em
+     `prompt_tokens_details.cached_tokens` (v9.466) — sem este segundo, o
+     plano superior apareceria com cache 0 e o aviso de "nenhum token veio
+     do cache" gritaria contra um cache que está a funcionar. Nos dois, o
+     raciocínio já vem DENTRO de `completion_tokens`. */
   const u = dados.usage;
   if (u && (u.prompt_tokens != null || u.completion_tokens != null)) {
+    const det = u.prompt_tokens_details && typeof u.prompt_tokens_details === "object" ? u.prompt_tokens_details : {};
     return {
       entrada: Number(u.prompt_tokens) || 0,
       saida: Number(u.completion_tokens) || 0,
-      cache: Number(u.prompt_cache_hit_tokens) || Number(u.cached_tokens) || 0,
+      cache: Number(u.prompt_cache_hit_tokens) || Number(det.cached_tokens) || Number(u.cached_tokens) || 0,
     };
   }
-  /* Gemini */
+  /* Gemini. O pensamento vem FORA da saída, em `thoughtsTokenCount`, e é
+     cobrado como saída (v9.466): o 3.8 Flash não desliga o pensamento, só o
+     baixa ao LOW — e sem somar aqui a conta do plano base sairia barata
+     demais, que é o erro que engana. O `promptTokenCount` já inclui o
+     cache, como no DeepSeek. */
   const g = dados.usageMetadata;
   if (g && (g.promptTokenCount != null || g.candidatesTokenCount != null)) {
     return {
       entrada: Number(g.promptTokenCount) || 0,
-      saida: Number(g.candidatesTokenCount) || 0,
+      saida: (Number(g.candidatesTokenCount) || 0) + (Number(g.thoughtsTokenCount) || 0),
       cache: Number(g.cachedContentTokenCount) || 0,
     };
   }
