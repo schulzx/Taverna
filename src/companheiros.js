@@ -13,7 +13,8 @@
    sistema — o Mestre recebe o que aconteceu e narra.
    ============================================================ */
 
-import { CLASSES, classePorNome, habilidadesDisponiveis } from "./classes.js";
+import { CLASSES, RACAS, classePorNome, habilidadesDisponiveis } from "./classes.js";
+import { hashSemente, sementeDe } from "./semente.js";
 import { comoConsumivel, melhorCuraPara, usarConsumivel } from "./pocoes.js";
 import { aflicaoDe } from "./aflicoes.js";
 import { guardaDe, guardasAtivas } from "./habilidades.js";
@@ -48,6 +49,79 @@ export function classeDeCompanheiro(comp) {
   return CLASSES[h % CLASSES.length].nome;
 }
 
+/* ---------------- DE QUE POVO É ESSE COMPANHEIRO? (13/10) ----------------
+   O companheiro nascia `{ nome, classe }` e mais nada: tinha ofício de
+   luta e nenhum povo. E `retratoDe` (retratos.js) pinta gente pela célula
+   raça × sexo × classe — sem raça não há célula, e Brannoc, o caçador que
+   anda com o herói desde antes do dia 1, ficava com o rosto desenhado ao
+   lado de um herói pintado. A raça é o que falta para ele ser gente como
+   o herói é.
+
+   Quem decide, nesta ordem:
+     1. o que a ficha JÁ diz (um save, a ficha do outro jogador da sala, a
+        pessoa do elenco que o companheiro inicial trouxe) — o registo
+        ganha. Se o registo diz um povo do catálogo, na forma do catálogo
+        ("anã" → "Anão"); se diz um povo que o catálogo não tem (o
+        "sintético" de um mundo de ficção), fica a palavra do registo — e a
+        pintura simplesmente não acha célula, que é a resposta honesta;
+     2. a semente da pessoa (`sementeDe`: a mesma que desenha o rosto e
+        escolhe a variante da pintura), sobre `RACAS_DO_COMPANHEIRO` — a
+        MESMA demografia com que o mundo povoa as cidades
+        (`RACAS_POR_GENERO` de nomes.js: humano, elfo e anão nas duas
+        formas, os outros numa só). Um companheiro sorteado é tão provável
+        de ser anão quanto o ferreiro da praça.
+
+   Mesma semente, mesmo povo — num save novo e num save antigo, que deriva
+   a raça na leitura (`garantirFichaCompanheiro`, chamado por
+   `migrarPersonagem`) e a grava como campo NOVO: a versão antiga ignora-o,
+   e nenhum campo que já existia é reescrito.
+
+   O sexo não sai daqui: sai de `feicoes` (semente.js), que o rosto
+   desenhado e o pintado já leem juntos — e do `genero` da ficha, quando o
+   registo o diz. */
+export const RACAS_DO_COMPANHEIRO = Object.freeze([
+  { raca: "Humano", peso: 2 },
+  { raca: "Elfo", peso: 2 },
+  { raca: "Anão", peso: 2 },
+  { raca: "Halfling", peso: 1 },
+  { raca: "Meio-orc", peso: 1 },
+  { raca: "Tiefling", peso: 1 },
+  { raca: "Gnomo", peso: 1 },
+  { raca: "Draconato", peso: 1 },
+]);
+
+/* As palavras com que o registo do mundo diz o povo de alguém (as formas
+   de `RACAS_POR_GENERO`, nomes.js, nos dois géneros) → o nome do catálogo
+   (`RACAS`, classes.js). O nome do catálogo em si casa sem estar aqui. */
+export const RACA_DO_REGISTO = Object.freeze({
+  humana: "Humano", elfa: "Elfo", ana: "Anão", gnoma: "Gnomo",
+  draconata: "Draconato", "meio-elfa": "Meio-elfo",
+});
+
+const fioDaRaca = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+const RACA_DO_CATALOGO = Object.fromEntries(RACAS.map((r) => [fioDaRaca(r.nome), r.nome]));
+
+export function racaDeCompanheiro(comp) {
+  const c = comp && typeof comp === "object" ? comp : {};
+  const dita = typeof c.raca === "string" ? c.raca.trim() : "";
+  if (dita) {
+    const f = fioDaRaca(dita);
+    return RACA_DO_CATALOGO[f] || RACA_DO_REGISTO[f] || dita;
+  }
+  const total = RACAS_DO_COMPANHEIRO.reduce((s, r) => s + r.peso, 0);
+  let n = hashSemente("raca|" + sementeDe(c)) % total;
+  for (const r of RACAS_DO_COMPANHEIRO) {
+    if (n < r.peso) return r.raca;
+    n -= r.peso;
+  }
+  return RACAS_DO_COMPANHEIRO[0].raca;
+}
+
+/* Quem não ganha povo: a invocação (o lobo do domador e a torreta do
+   engenheiro têm classe de molde, e um povo faria deles um humano pintado)
+   e quem declara espécie. */
+const SEM_POVO = (comp) => comp.invocada === true || !!comp.especie;
+
 /* Completa a ficha do companheiro: classe, PM e habilidades do nível dele.
    Chamado quando ele entra no grupo e sempre que sobe de nível. */
 export function garantirFichaCompanheiro(comp) {
@@ -77,8 +151,11 @@ export function garantirFichaCompanheiro(comp) {
     ...jaTem.map((h) => (typeof h === "string" ? { nome: h, custo: 2, tipo: "ataque", descricao: "" } : h)),
     ...escolhidas.filter((h) => !nomes.has(h.nome)).map((h) => ({ nome: h.nome, custo: h.custo, tipo: h.tipo, descricao: h.descricao, nivel: h.nivel })),
   ].slice(0, 8);
+  /* o povo entra só onde falta: nunca reescreve o que a ficha já diz */
+  const povo = comp.raca || SEM_POVO(comp) ? {} : { raca: racaDeCompanheiro(comp) };
   return {
     ...comp,
+    ...povo,
     classe,
     subclasse: comp.subclasse || "",
     manaMax,

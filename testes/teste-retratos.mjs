@@ -14,7 +14,13 @@
         imagem cobre SEMPRE o disco (nenhum buraco), nas 182 entradas e nos
         tamanhos de hoje do jogo;
      4. R7: o Lobo Atroz luta com a ficha DELE (comum, 3), e nenhuma base do
-        bestiário perde para um nome mais curto que ela contém.
+        bestiário perde para um nome mais curto que ela contém;
+     5. (13/10) o companheiro ganha POVO: { nome: "Brannoc", classe:
+        "Caçador" } era gente sem raça, logo sem pintura; pela ficha do
+        grupo (garantirFichaCompanheiro) passa a ter raça da semente, a
+        mesma num save novo e num antigo (que a deriva no load), e o que a
+        ficha já diz nunca é reescrito. Falha na árvore de antes (v9.452):
+        racaDeCompanheiro não existe e o Brannoc fica sem retrato.
 
    Falha na árvore de antes (v9.444): o módulo não existe, e
    `completarInimigo({nome:"Lobo Atroz"}, 3)` devolve fraco, nível 1. */
@@ -135,6 +141,48 @@ sec("4. R7 — A BASE DO BESTIÁRIO PELO NOME MAIS LONGO");
   t("o varrimento tem o que varrer: há nomes que contêm outros (Lobo Atroz ⊃ Lobo), e a regra os resolve", contidos.includes("Lobo Atroz⊃Lobo"), J(contidos));
   t("nome desconhecido continua sem base (nível do jogador, ameaça comum)", completarInimigo({ nome: "Coisa Sem Nome" }, 4).nivel === 4 && completarInimigo({ nome: "Coisa Sem Nome" }, 4).ameaca === "comum");
   t("o retrato e a luta concordam: a base de cada fera é a espécie do retrato", CRIATURAS_FANTASIA.every((c) => { const r = retratoDe({ nome: c.nome }); return r && r.chave === "especie:" + c.nome; }));
+}
+
+/* ============================================================ */
+sec("5. o companheiro ganha povo (13/10)");
+{
+  let C = {}, RJ = {};
+  try { C = await import("../src/companheiros.js"); RJ = await import("../src/regras-jogo.js"); } catch (e) { console.log("  (companheiros não carrega: " + e.message + ")"); }
+  const { garantirFichaCompanheiro = (x) => x, racaDeCompanheiro, RACAS_DO_COMPANHEIRO = [], RACA_DO_REGISTO = {} } = C;
+  const nomesDeRaca = new Set(RACAS.map((r) => r.nome));
+  t("a tabela do povo existe e só tem raças do catálogo, com peso inteiro positivo", typeof racaDeCompanheiro === "function" && RACAS_DO_COMPANHEIRO.length > 0 && RACAS_DO_COMPANHEIRO.every((r) => nomesDeRaca.has(r.raca) && Number.isInteger(r.peso) && r.peso > 0));
+  t("as palavras do registo dão raças do catálogo", Object.values(RACA_DO_REGISTO).every((r) => nomesDeRaca.has(r)));
+
+  const cru = { nome: "Brannoc", classe: "Caçador" };
+  t("o companheiro cru, sem raça, não tem pintura (o defeito, documentado)", retratoDe(cru) === null);
+  const brannoc = garantirFichaCompanheiro(Object.freeze({ ...cru }));
+  t("Brannoc, pela ficha do grupo, ganha raça do catálogo", nomesDeRaca.has(brannoc.raca), String(brannoc.raca));
+  t("e com ela o retrato pintado deixa de ser null", () => !!retratoDe(brannoc) && retratoDe(brannoc).chave.includes("|Caçador|"), J(retratoDe(brannoc)));
+  t("a pintura é de quem tem a raça da ficha", () => retratoDe(brannoc).chave.startsWith("gente:" + brannoc.raca + "|"));
+
+  const nomes = Array.from({ length: 300 }, (_, i) => "Comp" + i);
+  const a = nomes.map((n) => garantirFichaCompanheiro({ nome: n, classe: "Guerreiro" }).raca);
+  const b = nomes.map((n) => garantirFichaCompanheiro({ nome: n, classe: "Guerreiro" }).raca);
+  t("mesma semente, mesma raça (300 nomes, duas vezes)", J(a) === J(b));
+  t("a semente manda, não o nome: a mesma semente dá o mesmo povo com nomes diferentes", () => racaDeCompanheiro({ nome: "X", semente: "npc|Brannoc|ferreiro" }) === racaDeCompanheiro({ nome: "Y", semente: "npc|Brannoc|ferreiro" }));
+  const variedade = new Set(a);
+  t("e a demografia espalha-se (todas as raças da tabela aparecem em 300)", RACAS_DO_COMPANHEIRO.length > 0 && RACAS_DO_COMPANHEIRO.every((r) => variedade.has(r.raca)), J([...variedade]));
+
+  const antigo = { nome: "Brannoc", classe: "Caçador", semente: "npc|Brannoc|ferreiro", nivel: 2 };
+  const lido = (RJ.migrarPersonagem || ((p) => p))({ nome: "Herói", grupo: [antigo] }).grupo[0];
+  const novo = garantirFichaCompanheiro({ ...antigo });
+  t("um save antigo sem raça deriva-a no load, e é a MESMA do companheiro novo da mesma semente", lido.raca === novo.raca && nomesDeRaca.has(lido.raca), lido.raca + " / " + novo.raca);
+  t("e o save de antes não foi mexido", !("raca" in antigo));
+
+  const comRaca = garantirFichaCompanheiro({ nome: "Ilsa", classe: "Clérigo", raca: "Tiefling" });
+  t("o que a ficha já diz nunca é reescrito", comRaca.raca === "Tiefling");
+  t("a palavra do registo vai à forma do catálogo («anã» → Anão, «humana» → Humano)", () => racaDeCompanheiro({ raca: "anã" }) === "Anão" && racaDeCompanheiro({ raca: "humana" }) === "Humano" && racaDeCompanheiro({ raca: "meio-orc" }) === "Meio-orc");
+  t("um povo que o catálogo não tem fica a palavra do registo (e a pintura recusa)", () => racaDeCompanheiro({ raca: "sintético" }) === "sintético" && retratoDe({ nome: "Z", classe: "Mago", raca: "sintético" }) === null);
+  t("lixo não estoura e dá uma raça do catálogo", () => [null, undefined, {}, 7, "x"].every((x) => nomesDeRaca.has(racaDeCompanheiro(x))));
+
+  const lobo = garantirFichaCompanheiro({ nome: "Companheiro Animal", classe: "Caçador", invocada: true });
+  t("a invocação não ganha povo (o lobo do domador não vira humano pintado)", !("raca" in lobo) && retratoDe(lobo) === null);
+  t("quem declara espécie não ganha povo", !("raca" in garantirFichaCompanheiro({ nome: "Rex", classe: "Caçador", especie: "Lobo" })));
 }
 
 console.log(`\nretratos: ${ok} passaram, ${mal} falharam`);

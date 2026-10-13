@@ -355,8 +355,29 @@ sec("5. sem campo novo no save, e a imutabilidade");
      um load (a ficha do App + migrarPersonagem) — nenhuma a mais */
   const convidado = { nome: "Ana", conceito: "", nivel: 1, vida: 10, vidaMax: 10, descricao: "", habilidades: [], semente: "npc|Ana|", vinculo: VINCULO_INICIAL, marcos: [] };
   const chavesConvidado = new Set(Object.keys(migrarPersonagem({ nome: "X", grupo: [convidado] }).grupo[0]));
-  const sobra = Object.keys(j.personagem.grupo[0]).filter((k) => !chavesConvidado.has(k));
-  t("o membro do grupo não tem chave que o convidado não tenha", sobra.length === 0, sobra.join(", "));
+  /* 13/10 (os retratos): a asserção afrouxou numa chave só, `genero`, e
+     por um motivo escrito. O companheiro inicial é a pessoa do elenco, e o
+     registo já lhe diz o género (a abertura chama-a de «ele» ou «ela»); sem
+     ele na ficha do grupo, o sexo do rosto — pintado E desenhado — saía do
+     sorteio de `feicoes` e podia desmentir o registo. É campo NOVO, que a
+     versão antiga ignora (o rosto lê `ente.genero` desde a v9.158). A
+     `raca` não precisa de exceção: o convidado também a ganha no load
+     (`garantirFichaCompanheiro`). Qualquer OUTRA chave a mais continua
+     vermelha. */
+  const DO_REGISTO = new Set(["genero"]);
+  const sobra = Object.keys(j.personagem.grupo[0]).filter((k) => !chavesConvidado.has(k) && !DO_REGISTO.has(k));
+  t("o membro do grupo não tem chave que o convidado não tenha (salvo o género do registo)", sobra.length === 0, sobra.join(", "));
+  t("e o género que leva é o do registo", j.personagem.grupo[0].genero === j.npcs[Object.keys(j.npcs)[0]].genero, String(j.personagem.grupo[0].genero));
+  {
+    /* 13/10: o povo da ficha do grupo é o do registo (a pessoa do elenco),
+       e a pintura, quando a há, tem o sexo que o registo diz */
+    const { RACAS } = await import("../src/classes.js");
+    const { retratoDe } = await import("../src/retratos.js");
+    const m = j.personagem.grupo[0];
+    t("o companheiro inicial leva uma raça do catálogo", RACAS.some((r) => r.nome === m.raca), String(m.raca));
+    const p = retratoDe(m, { semente: m.semente });
+    t("e a pintura, se a há, é do sexo do registo", !p || p.chave.includes(m.genero === "mulher" ? "|f|" : "|m|"), p ? p.chave : "sem pintura");
+  }
   const migrado = migrarPersonagem(JSON.parse(JSON.stringify(j.personagem))).grupo[0];
   t("e um load (migrarPersonagem) devolve-o como estava", JSON.stringify(migrado) === JSON.stringify(j.personagem.grupo[0]));
   t("a ficha passa por garantirFichaCompanheiro sem mudar", JSON.stringify(garantirFichaCompanheiro(j.personagem.grupo[0])) === JSON.stringify(j.personagem.grupo[0]));

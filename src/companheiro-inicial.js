@@ -61,7 +61,7 @@
 import { rngDe } from "./geografia.js";
 import { elencoDoMundo, AGENDA, registrarVisto, garantirElencoDoSave } from "./elenco.js";
 import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC, primeiroNome } from "./npcs.js";
-import { garantirFichaCompanheiro } from "./companheiros.js";
+import { garantirFichaCompanheiro, racaDeCompanheiro } from "./companheiros.js";
 import { classePorNome } from "./classes.js";
 import { VINCULO_INICIAL, ganharVinculo } from "./vinculos.js";
 import { indoleDe } from "./indole.js";
@@ -341,7 +341,14 @@ export function companheiroInicial(ctx) {
      retrato (o mesmo rosto da v9.347), mas já não é o papel do registo */
   const oficio = txt(pessoa.papel, 60);
   const semente0 = `npc|${pessoa.nome}|${oficio}`;
+  /* O POVO E O GÉNERO DO REGISTO (13/10): a pessoa do elenco já tem os
+     dois — o mundo diz-lhe a raça na lista da cidade e a abertura chama-a
+     de «ele» ou «ela». A ficha do grupo leva os mesmos, para o rosto
+     pintado (raça × sexo × classe) e o desenhado dizerem quem o registo
+     diz. Sem raça no registo, a da semente (`racaDeCompanheiro`). */
+  const raca = racaDeCompanheiro({ raca: pessoa.raca, semente: semente0, nome: pessoa.nome });
   let comp = garantirFichaCompanheiro({
+    raca, genero: gen,
     nome: pessoa.nome, conceito: ligacao.curto[gen], nivel, xp: 0,
     vida: vidaMax, vidaMax, descricao: passado, classe,
     habilidades: [], inventario: [], equipamento: [], equipados: {},
