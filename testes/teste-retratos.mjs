@@ -185,10 +185,13 @@ sec("5. o companheiro ganha povo (13/10)");
   t("quem declara espécie não ganha povo", !("raca" in garantirFichaCompanheiro({ nome: "Rex", classe: "Caçador", especie: "Lobo" })));
   /* 13/10, v9.454: o companheiro recrutado nascia sem passar pela ficha, e
      só ganhava raça (e retrato pintado) no load seguinte. O App passa-o por
-     garantirFichaCompanheiro no próprio turno, com o gênero do registo. */
+     garantirFichaCompanheiro no próprio turno, com o gênero do registo.
+     13/10 (v9.463): a regex aceita o kit à volta da ficha (o recrutado nasce
+     armado, equiparKitInicial); o que se prova continua a ser a ficha no
+     mesmo turno, com o gênero do registo. */
   const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   t("o companheiro recrutado passa pela ficha no mesmo turno, com o gênero do registo",
-    /const fichaDeCompanheiro = [\s\S]{0,900}?try \{ return garantirFichaCompanheiro\(\{ \.\.\.f, genero: \(fichaElenco && fichaElenco\.genero\) \|\| "" \}\); \} catch \(e\) \{ calou\(/.test(APP));
+    /const fichaDeCompanheiro = [\s\S]{0,900}?try \{ return (?:equiparKitInicial\()?garantirFichaCompanheiro\(\{ \.\.\.f, genero: \(fichaElenco && fichaElenco\.genero\) \|\| "" \}\)\)?; \} catch \(e\) \{ calou\(/.test(APP));
 }
 
 console.log(`\nretratos: ${ok} passaram, ${mal} falharam`);

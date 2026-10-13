@@ -71,10 +71,15 @@ sec("3. a conta do App, refeita: a mesma semente e o mesmo turno, a mesma casa")
   t("a cena na masmorra abre à porta da sala (3–5)", m >= S.masmorra.min && m <= S.masmorra.max, m);
 }
 
-sec("4. o kit inicial: só na criação");
+sec("4. o kit inicial: na criação e no companheiro que nasce");
 {
   t("a tela de criação equipa a ficha nova: concluir(equiparKitInicial(comDom({...})))", APP.includes("onClick={() => concluir(equiparKitInicial(comDom({"));
-  t("…e em mais lado nenhum (uma chamada só, além do import)", conta("equiparKitInicial(") === 1);
+  /* 13/10 (v9.463): a asserção era «uma chamada só». Moveu-se para duas
+     porque o companheiro recrutado também nasce armado (fichaDeCompanheiro,
+     a pendência 3 da prova viva v9.462); a intenção fica: o LOAD nunca arma
+     (garantirFichaCompanheiro e migrarPersonagem seguem sem kit). */
+  t("o companheiro recrutado nasce armado: equiparKitInicial(garantirFichaCompanheiro(...))", APP.includes("try { return equiparKitInicial(garantirFichaCompanheiro({ ...f, genero:"));
+  t("…e em mais lado nenhum (duas chamadas, além do import)", conta("equiparKitInicial(") === 2);
   const g = equiparKitInicial({ classe: "Guerreiro", equipados: {} });
   t("o Guerreiro nasce com a Espada Longa na mão", g.equipados && g.equipados.arma && g.equipados.arma.nome === "Espada Longa");
 }

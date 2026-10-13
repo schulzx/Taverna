@@ -23,7 +23,7 @@ import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoe
 import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -6327,8 +6327,14 @@ export default function Taverna() {
      encontro). A casa exata sai de um gerador semeado pelo mundo e pelo
      turno: a mesma semente no mesmo turno abre à mesma distância. */
   const montarGrid = (pers, inimigos, situacao = "cena") => {
+    /* 13/10 (v9.463): a planta lê o sítio (lugarRef) e a cidade antes do
+       texto do local — a luta na cidade sai da rua, não da estrada; a
+       estrada só com a jornada aberta (grid.js#PLANTA_DO_LUGAR). */
+    let ondeG = {};
+    try { ondeG = { emViagem: !!jornadaRef.current, cidade: cidadeAtualRef.current || "", lugar: lugarRef.current || null }; } catch (e) { calou("o lugar da planta", e); ondeG = {}; }
     const grade = montarGrade({
       emMasmorra: !!masmorraRef.current,
+      ...ondeG,
       local: localAtualTxt(),
       bioma: ((mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || {}).bioma || "",
     });
@@ -20287,13 +20293,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* F2a · EM CENA: a frase lê-se contra a lista do que existe (refeita
        agora, com a última fala do Mestre — a do turno passado ainda não a
        tinha). O bicho que a oração do golpe aponta dá o nome e a ameaça. */
+    /* 13/10 (v9.463): a GENTE que a frase aponta também vai à leitura
+       (`apontado`, agressao.js) — o vendedor que a prosa apresentou sem
+       nome é alvo, e o veredito do crime vem antes da luta. */
+    let apontado = null;
     try {
       /* F2b: a ficha tocada ganha enquanto a frase a nomeia (alvoDoEnvio) */
       const { alvo, lista } = alvoDoEnvio(acao, montarEmCena(contextoDoEmCena(acao, elenco.aqui || [])));
       const bicho = (alvo && alvo.tipo === "criatura" && alvo.faz === "golpe") ? lista.find((x) => x.id === alvo.id) : null;
       if (bicho) conhecidas = [{ nome: bicho.nome, ameaca: bicho.ameaca || "" }, ...conhecidas.filter((c) => c.nome !== bicho.nome)];
-    } catch (e) { calou("a frase contra a lista (agressão)", e); }
-    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo, conhecidas });
+      if (alvo && alvo.tipo === "pessoa") { const it = lista.find((x) => x.id === alvo.id); if (it) apontado = { ...it, faz: alvo.faz }; }
+    } catch (e) { calou("a frase contra a lista (agressão)", e); apontado = null; }
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo, conhecidas, apontado });
     if (!a) return false;
     if (a.tipo === "companheiro") {
       pushMsgs([
@@ -22122,8 +22133,26 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          `setPersonagem`), e o numero que a linha e o envelope dizem passa a
          ser o que chegou ao corpo — o dardo continua sendo o dardo, mas quem
          tinha protecao de pe pagou menos, e o Narrador nao pode ler outro. */
-      const abrT = passarPeloAbrigo(alvo, sala.dano, alvo.nome);
-      const sofridoAli = abrT.linha ? abrT.dano : sala.dano;
+      /* 13/10 (v9.463): o grupo avisado (o herói notou e passa assim mesmo)
+         faz a mesma salvaguarda do herói, com vantagem e a mesma metade
+         (masmorras.js#grupoNaArmadilha); de surpresa, leva cheio como antes.
+         O dano que sai dela é o que o abrigo recebe. */
+      let gA = { salvaguarda: false, vantagem: false };
+      try { gA = grupoNaArmadilha({ avisou: !!vantagem }); } catch (e) { calou("o grupo na armadilha", e); gA = { salvaguarda: false, vantagem: false }; }
+      let svC = null, cheioC = sala.dano;
+      if (gA && gA.salvaguarda) {
+        try {
+          const fonteC = fonteDaSalvaguarda(`${sala.nomeArmadilha} armadilha`) || { salva: "destreza", meia: true, diz: "a armadilha" };
+          svC = rolarSalvaguarda({
+            pers: alvo, salva: fonteC.salva, vantagem: !!gA.vantagem,
+            dc: dcDaFonte({ nivel: eu.nivel || 1, base: (sala.segredo && sala.segredo.cd) || 13 }),
+            modDe: (a) => atributoEfetivo(alvo, a),
+          });
+          cheioC = svC.passou && fonteC.meia ? Math.floor(sala.dano / 2) : svC.passou ? 0 : sala.dano;
+        } catch (e) { calou("a salvaguarda do companheiro na armadilha", e); svC = null; cheioC = sala.dano; }
+      }
+      const abrT = passarPeloAbrigo(alvo, cheioC, alvo.nome);
+      const sofridoAli = abrT.linha ? abrT.dano : cheioC;
       /* v9.236 (C2b): o dardo tambem derruba o que ele segurava. Fora do
          combate a magia de duracao do companheiro e a mesma coisa — a
          concentracao nao pergunta se a cena tem iniciativa. A conta sai antes
@@ -22134,12 +22163,21 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          deste `if` e um dos seis sitios onde ele apanha sem teste, e esse item
          e outro da pauta — liga-lo aqui ampliaria o raio que C2 mediu. */
       const qbT = (alvo.vida || 0) - sofridoAli > 0 ? segurarOuPerder(abrT.pers, sofridoAli, alvo.nome) : { linha: "" };
-      setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, ...(qbT.linha ? { efeitos: qbT.pers.efeitos } : abrT.linha ? { efeitos: abrT.pers.efeitos } : null), vida: Math.max(0, g.vida - sofridoAli) } : g) }));
-      pushMsgs([...(abrT.linha
-        ? [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` }, { autor: "sistema", texto: abrT.linha }]
-        : [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]),
+      /* 13/10 (v9.463): a ficha com o dano vai à ref ANTES do envio, e é ela
+         que o envio leva. Antes ia por um atualizador e o envio levava `eu`
+         (a ficha de antes): a foto do envio e o `aplicarResposta` partiam da
+         ficha sem o dano, e a vida do companheiro voltava inteira — medido
+         vivo: «Greta sofre 8 de dano» e Greta 12/12. */
+      const euC = { ...eu, grupo: (eu.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, ...(qbT.linha ? { efeitos: qbT.pers.efeitos } : abrT.linha ? { efeitos: abrT.pers.efeitos } : null), vida: Math.max(0, (g.vida || 0) - sofridoAli) } : g) };
+      personagemRef.current = euC; setPersonagem(euC);
+      let linhaSvC = "";
+      try { linhaSvC = svC ? `${alvo.nome}: ${linhaDaSalvaguarda(svC)}` : ""; } catch (e) { calou("a linha da salvaguarda do companheiro", e); linhaSvC = ""; }
+      const soCabT = !abrT.linha && !linhaSvC;
+      pushMsgs([{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}${soCabT ? ` — ${alvo.nome} sofre ${cheioC} de dano` : ""}` },
+        ...(linhaSvC ? [{ autor: "sistema", texto: linhaSvC }] : []),
+        ...(abrT.linha ? [{ autor: "sistema", texto: abrT.linha }] : linhaSvC ? [{ autor: "sistema", texto: `${alvo.nome} sofre ${cheioC} de dano` }] : []),
         ...(qbT.linha ? [{ autor: "sistema", texto: qbT.linha }] : [])]);
-      enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sofridoAli} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${depois}`, eu);
+      enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${svC ? `${alvo.nome} fez a salvaguarda (${svC.passou ? "passou" : "falhou"}). ` : ""}${alvo.nome} já sofreu ${sofridoAli} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${depois}`, euC);
     } else {
       /* ---------------- A ARMADILHA PEDE SALVAGUARDA (v9.60) ----------------
          A primeira fonte de verdade da segunda rolagem do jogo. Até aqui o
@@ -24470,7 +24508,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       vida: vidaMaxC, vidaMax: vidaMaxC, descricao: (fichaElenco && fichaElenco.notas) || "",
       habilidades: [], semente: `npc|${nome}|${(fichaElenco && fichaElenco.papel) || ""}`,
       vinculo: VINCULO_INICIAL, marcos: [],
-    }; try { return garantirFichaCompanheiro({ ...f, genero: (fichaElenco && fichaElenco.genero) || "" }); } catch (e) { calou("a ficha do companheiro recrutado", e); return f; }
+    }; try { return equiparKitInicial(garantirFichaCompanheiro({ ...f, genero: (fichaElenco && fichaElenco.genero) || "" })); } catch (e) { calou("a ficha do companheiro recrutado", e); return f; }
   };
 
   const notaDoRecrutamento = (comp) =>
@@ -27857,7 +27895,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const saidas = saidasDe(masmorra);
               /* 13/10 (v9.461): com a armadilha a vista, seguir adiante e passar
                  por ela — o preco vai escrito na propria passagem */
-              const precoDoCaminho = (() => { try { return (opcoesDaArmadilha(masmorra).find((o) => o.id === "correr") || {}).preco || ""; } catch (e) { return ""; } })();
+              const precoDoCaminho = (() => { try { return (opcoesDaArmadilha(masmorra, { comGrupo: ((personagem && personagem.grupo) || []).length > 0 }).find((o) => o.id === "correr") || {}).preco || ""; } catch (e) { return ""; } })();
               const recuos = saidasDeRecuo(masmorra);
               const escuro = noEscuro(masmorra);
               return (
@@ -27926,7 +27964,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     botões de ação desta sala (Procurar, Tentar de novo). */}
                 {(() => {
                   let ops = [];
-                  try { ops = opcoesDaArmadilha(masmorra); } catch (e) { ops = []; }
+                  try { ops = opcoesDaArmadilha(masmorra, { comGrupo: ((personagem && personagem.grupo) || []).length > 0 }); } catch (e) { ops = []; }
                   if (!ops.length) return null;
                   const travado = bloqueado || !!combate || carregando || !!rolagem;
                   return (

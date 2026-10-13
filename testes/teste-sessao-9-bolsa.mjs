@@ -178,7 +178,9 @@ sec("4. o preço da banca chega à pauta, na moeda do mundo (M42–M43)");
   t("fiação · as bancas da cena: nenhuma na masmorra aberta, só a carroça na estrada",
     cena.includes("masmorraRef.current && !masmorraRef.current.encerrada") && cena.includes('m.tipo === "ambulante"'));
   t("fiação · a criatura à vista vai a lerAgressao em `conhecidas`, só no mesmo trecho",
-    /lerAgressao\(acao, \{[^}]*\bconhecidas \}\)/.test(app) && app.includes("criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv)"));
+    /* 13/10 (v9.463): depois de `conhecidas` pode vir `apontado` (a gente que
+       a frase aponta); a criatura à vista continua a ir em `conhecidas`. */
+    /lerAgressao\(acao, \{[^}]*\bconhecidas(?:, apontado)? \}\)/.test(app) && app.includes("criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv)"));
   t("fiação · a moeda do mundo vai ao balcão e ao preço comum",
     app.includes("temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });") && app.includes("precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() })"));
   t("fiação · o veto viaja na pauta (naoPode) e a pauta vai aos envelopes que a cobrança lê",
