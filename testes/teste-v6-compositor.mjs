@@ -96,7 +96,11 @@ sec("4. a fiação");
   t("o toque: Repouso foca, Rolar abre o véu, Pronto manda, À espera nada", /if \(estadoDado === "repouso"\) \{ if \(campoRef\.current\) campoRef\.current\.focus\(\); return; \}/.test(ORG)
     && /if \(estadoDado === "rolar"\) \{ if \(!dadoRolando\) setDadoRolando\(true\); return; \}/.test(ORG) && /if \(estadoDado === "pronto"\) lancarODado\(\);/.test(ORG));
   t("um dado só na tela principal: o Rolar d20 e o Agir → aposentados", !/Agir →<\/Botao>/.test(APP) && (APP.match(/>Rolar d20\{/g) || []).length === 1 && /const dadoDaBatalha = emBatalha/.test(APP));
-  t("o teste pendente é a linha do veredito por cima do campo", /<LinhaDoVeredito texto=\{linhaDoCampo\} armado=\{!!\(rolagem && !carregando\)\} \/>/.test(COMP) && /<>\{linhaDoTeste\(rolagem\)\}\{modPend !== 0/.test(APP));
+  /* (a 10.ª sessão ligada, o oficial, 13/10): entre o teste e o modificador entra
+     o RISCO do teste ("falhar fere: até 12 PV", `escolha.risco` de desafios.js) —
+     o veredito antes do clique. A linha continua a ser a do veredito, por cima do
+     campo; só ganhou um segmento, e a ordem teste → risco → modificador fica presa. */
+  t("o teste pendente é a linha do veredito por cima do campo", /<LinhaDoVeredito texto=\{linhaDoCampo\} armado=\{!!\(rolagem && !carregando\)\} \/>/.test(COMP) && /<>\{linhaDoTeste\(rolagem\)\}\{escolhaDoTesteAgora && escolhaDoTesteAgora\.risco \? /.test(APP) && /\$\{escolhaDoTesteAgora\.risco\}` : ""\}\{modPend !== 0/.test(APP));
   t("a gaveta ✦ mora na pílula, e no telefone só com o campo aberto", /<div className="tv-turno-verbos tv-gaveta-no-canto flex shrink-0 items-end md:self-center"/.test(COMP) && /\.tv-turno-repouso \.tv-turno-verbos \{ display: none; \}/.test(EST) && COMP.indexOf("tv-turno-verbos") < COMP.indexOf("<textarea"));
   t("a borda da pílula continua semântica (violeta armada, âmbar milagre)", /solid \$\{milagreSel \? T\.amber : habsSel\.length \? T\.violet : T\.line\}/.test(COMP) && /borderRadius: COMPOSITOR\.raio/.test(COMP));
   t("Shift+Enter continua quebrando a linha (gestoDoCampo intocado)", /if \(e\.shiftKey \|\| e\.ctrlKey \|\| e\.altKey \|\| e\.metaKey\) return "quebrar";/.test(APP));

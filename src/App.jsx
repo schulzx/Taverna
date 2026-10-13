@@ -79,7 +79,7 @@ import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, efeitoNoGolpe,
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
 import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
-import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT } from "./descanso.js";
+import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT, descansoDaFrase } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
 import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
@@ -195,7 +195,7 @@ import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetos
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
-import { ehProcura, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
+import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
@@ -7330,6 +7330,10 @@ export default function Taverna() {
       encontro: vale("EM CENA · a criatura da estrada", () => { const v = criaturaAVistaRef.current, j = jornadaRef.current; return (v && j && v.trecho === (j.de || "") + ">" + (j.para || "")) ? v : null; }, null),
       combate: combateRef.current,
       sala: vale("EM CENA · a sala", () => (mm && !mm.encerrada && Array.isArray(mm.salas)) ? (mm.salas.find((x) => x.id === mm.atual) || null) : null, null),
+      /* 10.ª sessão (v9.455, EM_CENA_DO_LUGAR): quem o sistema sabe longe não
+         entra na lista do que está à frente, por mais que a prosa o nomeie —
+         a MESMA conta da linha LONGE da pauta */
+      longe: vale("EM CENA · quem está longe", () => elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: mm }).longe || [], []),
       bancas: vale("EM CENA · as bancas", () => bancasDaCena(), []),
       moeda: moedaDoMundo(),
       frase: String(frase || ""),
@@ -16016,6 +16020,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return ehDeclaracaoDeAtaque(acao, { nomes });
       }),
       ehDesafio: ler(() => !!veredictoDaAcao(acao)),
+      /* 10.ª sessão (v9.455): "Procuro Nyla Punho-de-Pedra" nunca chegava a
+         `procurarAlguem` — a porta do desafio só abria quando o CATÁLOGO via
+         um desafio. Este sinal abre-a (turno.js) para a procura de gente que o
+         jogo conhece, e `adjudicarAcao` corre a procura antes do catálogo. */
+      ehProcuraDeGente: ler(() => procuraDeGente(acao, { nucleo: nucleoAgora(), nomes: nomesConhecidos(), perto: pessoasDaCena() })),
       ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao, { fichas: () => fichasDoOraculo(acao) })),
       temMilagreArmado: !!milagreSel,
       /* v9.79: OU o texto nomeou uma habilidade que eu TENHO. É a metade
@@ -16219,6 +16228,24 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       return false;
     };
     setEntrada(""); apagarORascunho(); /* V6a: o turno partiu */
+    /* ---------------- O SONO ESCRITO DORME (10.ª sessão, v9.456) ----------------
+       "…e durmo até o amanhecer" ia ao Mestre como prosa: ele narrava a
+       noite e o relógio, a cura e o "um longo por dia" ficavam onde estavam.
+       A frase que declara dormir (`descansoDaFrase`, descanso.js) passa pelo
+       MESMO caminho do botão — acampar e sair pelo descanso que ela diz —,
+       antes das portas de movimento. A frase sobe ao Mestre na nota do turno. */
+    try {
+      const dsc = (!acao.startsWith("/") && !escolhaPendenteRef.current) ? descansoDaFrase(acao, { emCombate: !!combateRef.current }) : null;
+      if (dsc && (dsc.tipo === "longo" || dsc.tipo === "curto")) {
+        pushMsgs([{ autor: "jogador", texto: acao }]);
+        if (!acampadoRef.current) acampar({ calado: true });
+        if (acampadoRef.current) {
+          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[O QUE EU ESCREVI] "${acao}" — o descanso já foi resolvido pelo sistema; a frase acontece dentro dele.`;
+          if (dsc.tipo === "longo") descansoLongo(); else sairDoAcampamento("curto");
+          return;
+        }
+      }
+    } catch (e) { calou("o sono escrito", e); }
     for (let i = 0; i < cascata.atalhos.length;) {
       let feito = false;
       try { feito = !!executar(cascata.atalhos[i].faz); } catch { feito = false; }
@@ -19608,6 +19635,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* MM15 (4): o que a espinha ainda guarda — só o desafio `fazer_falar`
        (desafios.js) o lê, e só quando a frase nomeia um segredo. */
     segredos: () => { try { return segredosGuardados(espinhaRef.current, mundoDaBase()); } catch (e) { calou("segredosGuardados", e); return []; } },
+    /* 10.ª sessão (v9.456, OBJETO_DO_TESTE): o desarmar só concorre diante de
+       uma armadilha que o sistema pôs em cena — a sala atual da masmorra é de
+       armadilha e ainda não disparou. Fora disso, false: o lado seguro. */
+    objetoEmCena: (tipo) => {
+      try {
+        if (tipo !== "armadilha") return false;
+        const mm = masmorraRef.current;
+        if (!mm || mm.encerrada || !Array.isArray(mm.salas)) return false;
+        const sala = mm.salas.find((x) => x && x.id === mm.atual);
+        return !!(sala && sala.tipo === "armadilha" && sala.resolvida !== true && !sala.disparou);
+      } catch (e) { calou("o objeto do teste em cena", e); return false; }
+    },
   });
 
   /* Devolve true quando ela própria resolveu o turno. É a porta única: o
@@ -23576,7 +23615,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* ACAMPAMENTO: pausa o "turno do mundo" — você conversa à vontade, nada avança.
      Ao sair, escolhe descanso curto/longo; o app reseta PV/PM (jogador+grupo) e o
      Mestre narra o que passou, proporcional ao tempo (nunca exagerado). */
-  const acampar = () => {
+  /* `calado` (10.ª sessão, o descanso escrito): o sítio vai na nota do turno e
+     quem chama ao Mestre é o descanso que vem logo a seguir — uma chamada só,
+     e não duas a correr juntas */
+  const acampar = (opcoes) => {
     if (acampadoRef.current || bloqueado) return;
     if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     definirAcampado(true);
@@ -23622,6 +23664,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       });
       if (la) envSitio = envSitio + "\n" + la;
     } catch (e) { calou("a noite do acampamento", e); }
+    if (opcoes && opcoes.calado) { notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envSitio}`; return; }
     enviar(envSitio, personagem);
   };
 
@@ -24518,7 +24561,19 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const comprados = (mercado && mercado.comprados) || {};
     const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });
     const lista = [];
-    if (mercado && mercado.ambulante) lista.push(semEstoqueGasto(mercado.ambulante));
+    /* 10.ª sessão (v9.455, M16): a carroça do ambulante só está à mão enquanto
+       a viagem em que ela apareceu está aberta — chegado à cidade, ela seguiu
+       viagem, e nem o painel nem a pauta a vendem (a "banca da chave" que o
+       Mestre pôs na praça saía daqui). Um save antigo, sem trecho, vale só na
+       estrada. */
+    const carrocaAVista = (() => {
+      try {
+        const amb = mercado && mercado.ambulante, j = jornadaRef.current;
+        if (!amb || !j) return false;
+        return !amb.trecho || amb.trecho === (j.de || "") + ">" + (j.para || "");
+      } catch (e) { calou("a carroça à vista", e); return false; }
+    })();
+    if (carrocaAVista) lista.push(semEstoqueGasto(mercado.ambulante));
     if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico, {
       pressoes: (mercado && mercado.pressoes) || {},
       /* v9.139: a casa de ofício de um domínio seu barateia aqui o que esta
@@ -25218,7 +25273,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     {
       const amb = talvezAmbulante(diaRef.current, personagem.nivel || 1, { lex: (mundoAtual() || {}).lexico, semente: (() => { try { const j = jornadaRef.current; return j ? `${sementeMundo()}|${j.de}>${j.para}|${j.andadoMin || 0}` : ""; } catch (e) { calou("semente do ambulante", e); return ""; } })() }); /* v9.385: a carroça sai da semente — o mundo, o trecho e o já andado (mercado.js); sem jornada, a sorte de sempre */
       if (amb) {
-        mercadoRef.current = { ...mercadoRef.current, ambulante: amb }; setMercado(mercadoRef.current);
+        /* 10.ª sessão (v9.455): a carroça guarda o trecho em que cruzou o caminho
+           (campo NOVO do save, que a versão antiga ignora) — fora dele, ela seguiu */
+        let trechoDaCarroca = "";
+        try { const jc = jornadaRef.current; trechoDaCarroca = jc ? (jc.de || "") + ">" + (jc.para || "") : ""; } catch (e) { calou("o trecho da carroça", e); }
+        mercadoRef.current = { ...mercadoRef.current, ambulante: { ...amb, trecho: trechoDaCarroca } }; setMercado(mercadoRef.current);
         pushMsgs([
           { autor: "sistema", texto: "🐴 Uma carroça de mercador cruza seu caminho." },
           { autor: "sistema", texto: "▸ Mercado — veja o que ele traz" },
@@ -26597,8 +26656,23 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   };
   /* a linha por cima do campo: o teste pendente; e, na espera, que o que se
      escreveu fica */
+  /* 10.ª sessão (v9.456, ESCOLHA_DO_TESTE): o teste diz o que custa falhar
+     antes do dado ("falhar fere: até 12 PV"), e o jogador pode dizer "Não era
+     isso" — o teste fecha sem rolar, nenhuma tentativa nem desfecho ficam
+     escritos, e a frase vai ao Mestre como cena. O veredito antes do clique. */
+  const escolhaDoTesteAgora = (() => { try { const e = rolagem && rolagem.desafio && rolagem.desafio.escolha; return e && typeof e === "object" ? e : null; } catch (err) { calou("a escolha do teste", err); return null; } })();
+  const podeDesistirDoTeste = !!(escolhaDoTesteAgora && escolhaDoTesteAgora.podeDesistir && rolagem && rolagem.frase && !carregando && !dadoRolando && !combate);
+  const desistirDoTeste = () => {
+    try {
+      const r = rolagem;
+      if (!r || !r.frase || carregando || dadoRolando || rolagemConsumidaRef.current === r) return;
+      rolagemConsumidaRef.current = r;
+      setRolagem(null);
+      enviar(String(r.frase), fichaViva() || personagem);
+    } catch (e) { calou("não era isso", e); }
+  };
   const linhaDoCampo = rolagem && !carregando ? (
-    <>{linhaDoTeste(rolagem)}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
+    <>{linhaDoTeste(rolagem)}{escolhaDoTesteAgora && escolhaDoTesteAgora.risco ? ` · ${escolhaDoTesteAgora.risco}` : ""}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
   ) : estadoDado === "espera" && entrada.trim() ? "Fica guardado — você manda depois de ler." : null;
 
   /* ---------------- F2b · OS GESTOS DA FICHA ----------------
@@ -28347,7 +28421,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   semântica: violeta com habilidade armada, âmbar com milagre. */}
               <div className="pt-2">
               {linhaDoCampo || !vereditoDaFicha
-                ? <LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} />
+                ? (podeDesistirDoTeste
+                  ? <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex-1 min-w-0"><LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} /></div>
+                      <VerboComPreco verbo={escolhaDoTesteAgora.desistir || "Não era isso"} papel="recuo" aoTocar={desistirDoTeste} className="shrink-0" />
+                    </div>
+                  : <LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} />)
                 : <LimiteDasFichas key={"v:" + (toque && toque.texto)}><VereditoDaFicha veredito={vereditoDaFicha} /></LimiteDasFichas>}
               <div className="flex items-end md:items-center min-w-0 gap-3 md:gap-4">
                 <div className={`tv-pilula-do-campo relative flex-1 min-w-0 flex items-end${campoAberto ? "" : " tv-turno-repouso"}`}
