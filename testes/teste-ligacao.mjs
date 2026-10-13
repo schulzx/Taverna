@@ -207,8 +207,10 @@ sec("1. NENHUM MÓDULO MUDO");
        pintura (retratoDe) e a conta do disco (recorteDoRetrato) — e espera
        `rosto.jsx`, que o `aprendiz` troca na MESMA leva (a PinturaDoRetrato
        no topo de `Rosto`, com os arquivos de public/retratos). A entrada
-       sai quando o rosto o importar. `teste-retratos.mjs` é o primeiro leitor. */
-    "retratos.js": "rosto.jsx (aprendiz, Retratos §12, 12/10)",
+       sai quando o rosto o importar. `teste-retratos.mjs` é o primeiro leitor.
+       — 12/10: o aprendiz ligou-o na MESMA leva (`0bd4866`: a pintura no
+       topo de `Rosto`, com `retratoDe`, `recorteDoRetrato` e `RETRATO`),
+       e a entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {
