@@ -77,6 +77,13 @@ export function garantirSinais(s) {
        abrir, e o catálogo de desafios não tem nada que descreva isso. */
     ehAgressao: b("ehAgressao"),
     ehDesafio: b("ehDesafio"),
+    /* 13/10 (a 10.ª sessão de prova): a frase procura GENTE que o jogo
+       conhece — pelo nome, ou pelo papel do passado do herói
+       (procura.js#procuraDeGente). "Procuro Nyla Punho-de-Pedra" (tocado no
+       Códice) e "pergunto … onde posso encontrá-la" não são desafio nenhum
+       para o catálogo, e a procura (que mora na porta do desafio, ANTES do
+       catálogo) nunca corria: 0 de 3 procuras fora de cena chegaram. */
+    ehProcuraDeGente: b("ehProcuraDeGente"),
     ehPerguntaAoMundo: b("ehPerguntaAoMundo"),
     temMilagreArmado: b("temMilagreArmado"),
     temHabilidadesSelecionadas: b("temHabilidadesSelecionadas"),
@@ -247,8 +254,8 @@ export const PORTAS_DO_TURNO = [
        AQUI — "tem alguém me vigiando?" fala do lugar onde estou. */
     id: "desafio", rotulo: "Ação declarada", intercepta: true,
     fase: "atalho", faz: "desafio", seRecusar: "oraculo",
-    quando: (s) => s.ehDesafio || s.temAlvoLocal,
-    porque: "a ação que o jogador declarou sobre o que está ao alcance dos pés e das mãos ganha do que está a dias de viagem",
+    quando: (s) => s.ehDesafio || s.temAlvoLocal || s.ehProcuraDeGente,
+    porque: "a ação que o jogador declarou sobre o que está ao alcance dos pés e das mãos ganha do que está a dias de viagem — e procurar alguém que o jogo conhece é perguntar ao mundo onde ele está, que é o primeiro passo desta porta",
   },
   {
     id: "destino", rotulo: "Destino por descrição", intercepta: true,

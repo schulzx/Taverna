@@ -838,6 +838,33 @@ export const SAIDA_DO_HOMONIMO = {
    `maiuscula` é a régua do nome próprio; `curto` o tamanho abaixo do qual
    a palavra com maiúscula não chega a nome ("O" no começo da frase). */
 export const QUEM_NAO_E_GENTE = { maiuscula: /[A-ZÀ-Ý]/, curto: 3 };
+/* ---------------- O POSTO E O OFÍCIO NÃO SÃO NOME (13/10, a 10.ª sessão de prova) ----------------
+   Dois registos errados da mesma noite, e os dois eram palavras de cargo
+   coladas a um nome:
+     · o herói era "Hilda Barbaforte", e quem a conhecia da guerra chamava-a
+       pelo posto antigo ("Sargenta"): o Cronista registou "Sargenta
+       Barbaforte — capanga do Rei Emprestado", INIMIGO, e a linha LONGE
+       passou a dizer que a heroína estava em Monte Rasa. O nome com um
+       posto à frente (titulos) é o nome sem ele: se o que sobra é só nome
+       do herói, é o herói;
+     · o taverneiro da Fivela foi registado duas vezes, "Perrin" e
+       "Taverneiro da Fivela & o Trigo" (o ofício e a casa, sem nome): duas
+       fichas, uma pessoa, e o jogador tocou a errada (M44, "Perrin não
+       está"). Um nome que abre por um ofício (OFICIOS) e segue com
+       partícula ("da Fivela") é uma DESCRIÇÃO — a régua de ehDescritor:
+       é de quem tem esse ofício na cena, quando é um só; senão, fica sem
+       ficha até ter nome. */
+export const POSTO_E_OFICIO = {
+  titulos: ["sargento", "sargenta", "capitao", "capita", "cabo", "tenente", "comandante", "general", "soldado", "soldada", "sir", "dama", "lorde", "lady", "mestre", "mestra", "senhor", "senhora", "dom", "dona"],
+  /* palavras no mínimo: o ofício, a partícula e a casa */
+  minimoDaCasa: 3,
+};
+/* "Taverneiro da Fivela & o Trigo": o ofício e a casa, sem nome próprio */
+export function ehOficioDaCasa(nome) {
+  if (typeof nome !== "string") return false;
+  const partes = semArtigos(nome);
+  return partes.length >= POSTO_E_OFICIO.minimoDaCasa && HOMONIMO.particulas.includes(partes[1]) && familiasDoOficio(partes[0]).length > 0;
+}
 export function ehDescritor(nome) {
   if (typeof nome !== "string") return false;
   const cru = nome.trim();
@@ -1108,9 +1135,19 @@ export function nomeComDono(nome, npcs, contexto = {}) {
   if (heroi && (alvo === semAcento(c.heroi) || (semArtigos(nome).length === 1 && palavrasDoHeroi.includes(primeiroNome(nome))))) {
     return out("recusada", { dono: nomeLimpo, motivo: "heroi" });
   }
+  /* 10.ª sessão (13/10): nem com o POSTO à frente ("Sargenta Barbaforte") —
+     tirado o posto (POSTO_E_OFICIO.titulos), o que sobra é só nome dele */
+  if (heroi) {
+    const semPosto = semArtigos(nome);
+    while (semPosto.length > 1 && POSTO_E_OFICIO.titulos.includes(semPosto[0])) semPosto.shift();
+    const resto = semPosto.filter((w) => !HOMONIMO.particulas.includes(w));
+    if (semPosto.length < semArtigos(nome).length && resto.length && resto.every((w) => palavrasDoHeroi.includes(w))) {
+      return out("recusada", { dono: nomeLimpo, motivo: "heroi" });
+    }
+  }
   /* e a DESCRIÇÃO não é nome: "o carroceiro" é de quem tem esse ofício na
      cena, quando é um só; senão, fica sem ficha até ter nome */
-  if (ehDescritor(nome) && !Object.keys(reg).some((k) => semAcento(k) === alvo)) {
+  if ((ehDescritor(nome) || ehOficioDaCasa(nome)) && !Object.keys(reg).some((k) => semAcento(k) === alvo)) {
     const reg0 = Object.entries(reg).filter(([, n]) => n && typeof n === "object");
     const aquiNomes = (Array.isArray(c.aqui) ? c.aqui : []).filter((x) => typeof x === "string" && x.trim());
     const doOficio = reg0.filter(([k, n]) => papelEstrito(n.papel, nome) && (!aquiNomes.length || !n.local || aquiNomes.some((a) => lugarCasa(a, n.local))));

@@ -73,6 +73,10 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
    o nome mais comprido do registo — não o mais comprido DITO. E a frase
    dizia DUAS pessoas ("com a Iracema ao lado ... Procuro a Lourdes"). O
    placar, por esta ordem (`PLACAR_DA_PROCURA`):
+     · `naoOuve` (13/10, a 10.ª sessão, M22): quem OUVE a pergunta
+       ("pergunto a Torvald se…", "pergunto ao Godfrey onde encontro a Nyla")
+       perde para qualquer outro nome dito — sozinho, continua a ser ele
+       ("Pergunto à Rosalina: …", J7 da MM14);
      · `aposVerbo`/`junto`: quem vem logo depois do verbo da procura
        ("procuro a Lourdes") — a companhia dita antes não é o procurado.
        Frase sem verbo (o "Lina," de `pessoaNaFrente`): não pesa;
@@ -82,7 +86,7 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
        só diz o primeiro nome nunca escolhe a homónima de quem está ao lado;
      · `exato`: quem se chama exatamente assim;
      · `longo`: o nome mais longo, como antes. */
-export const PLACAR_DA_PROCURA = ["aposVerbo", "junto", "dito", "perto", "exato", "longo"];
+export const PLACAR_DA_PROCURA = ["naoOuve", "aposVerbo", "junto", "dito", "perto", "exato", "longo"];
 export const ALCUNHA_DE_LUGAR = { particulas: ["de", "do", "da", "dos", "das", "del"], pedacoMinimo: 4, nomeMinimo: 3 };
 export function nomeProcurado(texto, nomes = [], opcoes = {}) {
   let t = norm(texto);
@@ -115,9 +119,12 @@ export function nomeProcurado(texto, nomes = [], opcoes = {}) {
       /* 8.ª sessão (M8): "Deixo Ursa" não procura Ursa (PROCURA_NAO_E_AQUI) */
       const posicoes = [...t.matchAll(rx)].map((m) => m.index + m[1].length).filter((x) => !PROCURA_NAO_E_AQUI.deixa.test(t.slice(Math.max(0, x - 32), x)));
       if (!posicoes.length) continue;
+      /* quem ouve a pergunta perde para outro nome dito (PROCURA_NAO_E_AQUI.destinatario) */
+      const ouvinte = posicoes.every((x) => PROCURA_NAO_E_AQUI.destinatario.test(t.slice(Math.max(0, x - 32), x)));
       const depois = posicoes.filter((x) => x >= verbo);
       const apos = verbo >= 0 && depois.length ? 1 : 0;
       const placar = {
+        naoOuve: ouvinte ? 0 : 1,
         aposVerbo: apos,
         junto: apos ? -(Math.min(...depois) - verbo) : 0,
         dito: p.length, perto: perto.has(nn) ? 1 : 0, exato: p === nn ? 1 : 0, longo: n.length,
@@ -148,6 +155,11 @@ const VERBOS = /\b(procur|busc|pergunt|onde (esta|está|anda|para|foi)|sinais? d
 export const PROCURA_NAO_E_AQUI = {
   ida: /\b(vou|vamos|volto|voltamos|sigo|seguimos|entro|entramos|subo|subimos|desco|descemos|parto|partimos|regresso|regressamos|retorno|retornamos|caminho|caminhamos|atravesso|atravessamos|corro|corremos|me dirijo|nos dirigimos)\s+(?:[a-z]+\s+){0,2}?(a|ao|aos|as|ate|para|pra|em|no|na|nos|nas)\s/g,
   deixa: /\b(deixo|deixamos|largo|largamos|abandono|abandonamos|me despeco de|despeco-me de|saio de perto de)\s+(?:(?:o|a|os|as)\s+)?$/,
+  /* 13/10 (a 10.ª sessão, M22): "Pergunto a Torvald se alguém assim vive por
+     aqui" — quem ouve a pergunta só é o procurado se não houver outro nome
+     (o placar dava-lhe o aposVerbo: o primeiro verbo da procura era o
+     "pergunto"); é a chave naoOuve de PLACAR_DA_PROCURA */
+  destinatario: /\b(pergunto|perguntamos|indago)\s+(?:a|ao|aos|as|para|pra)\s+(?:(?:o|a|os|as)\s+)?$/,
 };
 /* a frase vai a outro sítio antes do primeiro verbo de procura? */
 function vaiAntesDeProcurar(t) {
@@ -179,16 +191,61 @@ export function ehProcura(texto) {
    e o App passa-o a `procurarPessoa` em `ctx.porPapel`. O papel ganha ao
    nome dito: "pergunto à Dara quem leva os recados da guilda" procura o
    mestre de recados, não a Dara. Morto ou sem elo: null. */
+/* A FRASE DA PROCURA, NÃO A FALA INTEIRA (13/10, a 10.ª sessão de prova,
+   M38). "Digo ao arquivista que servi na guerra e que tenho direito aos
+   papéis da minha companhia. Enquanto ele hesita, examino as estantes…
+   procurando com cuidado qualquer papel escondido" achou a HELGA ("Procurei
+   Helga, e ESTÁ AQUI"): "companhia" e "guerra" estavam na primeira frase, e
+   o verbo da procura na segunda, a falar de um papel. As raízes do papel
+   contam só na frase (`PROCURA_PELO_PAPEL_NA_FRASE.corte`) que tem o verbo
+   da procura; o que vem logo depois do verbo e é COISA (`coisa`) não é
+   gente; e a frase que nomeia quem anda com o herói fala dele, não do elo
+   ("procuro com a Saoirse, a minha antiga companheira…"). */
+export const PROCURA_PELO_PAPEL_NA_FRASE = {
+  corte: /[.!?;\n]+/,
+  coisa: /\b(procur\w*|busc\w*)\s+(?:com cuidado\s+|entao\s+|tambem\s+)?(o que|algo|alguma coisa|qualquer|um papel|uns papeis|papel|papeis|registros?|documentos?|livros?|cartas?|a carta|o mapa|a chave|pistas?)\b/,
+};
 export function papelProcurado(texto, nucleo) {
-  const t = ` ${norm(texto).replace(/[^a-z0-9]+/g, " ")} `;
-  if (!t.trim()) return null;
   const n = nucleo && typeof nucleo === "object" ? nucleo : {};
   const elo = (Array.isArray(n.pessoas) ? n.pessoas : []).find((p) => p && p.papel === "elo" && p.nome && !p.morto);
   if (!elo) return null;
   const alts = PROCURA_DO_ELO[n.antecedente] || PROCURA_DO_ELO.sem;
-  const tem = (raiz) => t.includes(` ${norm(raiz)}`);
-  if (!alts.some((a) => Array.isArray(a) && a.length && a.every(tem))) return null;
+  const comp = (Array.isArray(n.pessoas) ? n.pessoas : []).filter((p) => p && p.papel === "companheiro" && p.nome).map((p) => norm(String(p.nome)).split(/\s+/)[0]).filter((w) => w.length >= 3);
+  const frases = String(texto == null ? "" : texto).split(PROCURA_PELO_PAPEL_NA_FRASE.corte).map((f) => norm(f)).filter((f) => f && VERBOS.test(f));
+  const casa = frases.some((f) => {
+    if (PROCURA_PELO_PAPEL_NA_FRASE.coisa.test(f)) return false;
+    const t = ` ${f.replace(/[^a-z0-9]+/g, " ")} `;
+    if (comp.some((w) => t.includes(` ${w} `))) return false;
+    const tem = (raiz) => t.includes(` ${norm(raiz)}`);
+    return alts.some((a) => Array.isArray(a) && a.length && a.every(tem));
+  });
+  if (!casa) return null;
   return { nome: String(elo.nome), papel: String(elo.eraDoHeroi || ""), cidade: String(elo.cidade || "") };
+}
+
+/* ---------------- A PORTA DA PROCURA (13/10, a 10.ª sessão de prova) ----------------
+   A procura de gente mora na porta do desafio, antes do catálogo — e a
+   porta só abria quando o catálogo achava um desafio na frase. "Procuro
+   Nyla Punho-de-Pedra" (o verbo do Códice), "procuro meu antigo companheiro
+   de armas" e "onde posso encontrá-la" não são desafio nenhum: o turno ia
+   ao Mestre sem a resposta do mundo, e o Mestre inventou (uma briga, um
+   avistamento). `procuraDeGente` é o sinal da porta (turno.js,
+   `ehProcuraDeGente`): a frase procura (`ehProcura`), com um verbo que
+   BUSCA (`PROCURA_DE_GENTE.busca` — "pergunto ao Godfrey quem é a Nyla" é
+   conversa, e continua a ser) e nomeia alguém que o jogo conhece, pelo nome
+   (`nomes`, a mesma lista que o App dá a `nomeProcurado`) ou pelo papel do
+   passado do herói (`nucleo`). */
+export const PROCURA_DE_GENTE = {
+  busca: /\b(procur|busc|onde (esta|anda|para|foi|posso encontr|encontro|acho)|paradeiro|encontr|localiz|rastro de|pista de|sinais? de|noticias? de)/,
+};
+export function procuraDeGente(texto, ctx) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const t = norm(texto);
+  if (!t || !ehProcura(texto) || !PROCURA_DE_GENTE.busca.test(t)) return false;
+  try { if (papelProcurado(texto, c.nucleo)) return true; } catch { /* nunca custa o turno */ }
+  let nome = "";
+  try { nome = nomeProcurado(texto, Array.isArray(c.nomes) ? c.nomes : [], { perto: Array.isArray(c.perto) ? c.perto : [] }); } catch { nome = ""; }
+  return !!nome;
 }
 
 /* ---------------- ONDE ELA ESTÁ ----------------

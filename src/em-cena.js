@@ -42,6 +42,8 @@ import { nomeiaACoisa, cabecaDaCoisa, NOME_DA_COISA } from "./economia.js";
 import { papelProcurado } from "./procura.js";
 import { PERGUNTA_DE_PRECO, APONTA_OU_COMPRA } from "./mercado.js";
 import { garantirPauta, textoDaPauta } from "./pauta.js";
+/* 13/10: a régua do portão para "está aqui" contra "foi só nomeado" */
+import { contextoDoNome, AGINDO_NA_CENA } from "./cena.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const palavras = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
@@ -73,6 +75,46 @@ export const EM_CENA_NA_PAUTA = { pessoa: 3, criatura: 2, coisa: 3, papel: 3 };
    estar à vista (sai da linha da pauta e do pronome) e continua a poder
    ser apontado pelo nome, pela arma, pela raiz. */
 export const EM_CENA_MEMORIA = { turnos: 6, aVista: 1 };
+
+/* ---------------- O LUGAR MANDA NA LISTA (13/10, a 10.ª sessão de prova) ----------------
+   "Falo com Nyla Punho-de-Pedra" — tocado na ficha dela — e o Mestre pôs um
+   "estalajadeiro" no lugar (M18), porque a mesma pauta dizia em QUEM ESTÁ EM
+   CENA que a Nyla estava em Monte Rasa, a um dia: a ficha nascera da PROSA
+   ("Nyla Punho-de-Pedra não está aqui. Saiu há dois dias…" cita-a), e o
+   núcleo a punha em Nova Profundo. Em 9 de 78 pautas a linha EM CENA trazia
+   alguém que a própria pauta punha em LONGE; em 14, uma segunda Nyla (a
+   Pé-Leve, outra pessoa do núcleo) só porque o Mestre disse "Nyla".
+   Quatro regras, todas do que o sistema já sabe:
+     · `longe` (o `elencoDaCena(...).longe` do App, a mesma conta da linha
+       LONGE): quem lá está NÃO entra na lista — nem à vista, nem para a
+       frase apontar, nem como ficha. O grupo nunca está longe;
+     · o primeiro nome que dois conhecidos partilham é de quem o sistema sabe
+       mais (`ordemDoNome`: quem anda comigo, depois o registo — o daqui e o
+       de longe —, depois o núcleo); empatados no topo, ninguém o leva. O
+       nome inteiro dito leva sempre;
+     · `menciona`: quem a prosa só NOMEIA não está à frente. O registo e o
+       núcleo ficam à vista pela régua do portão (cena.js): uma frase em que o
+       nome não é complemento ("uma canção sobre ela") e tem verbo de cena
+       ("Godfrey ergue a caneca") — o verbo depois do nome, ou antes dele sem
+       preposição colada ("guardado por Nyla" é dela que se fala) — e fora da
+       fala de outra pessoa ("— Mas o Godfrey serve mais rápido", diz o
+       guarda do portão). "A única pista com cara e nome: Godfrey da Foz,
+       taverneiro da Cabra Trêmula" (a abertura) não o põe ao balcão;
+     · e a memória (`antes`) só traz o que a prosa mostrou NO MESMO SÍTIO:
+       o guarda do portão não entra com o herói na taverna, e a mulher da
+       banca do Rossio não volta com ele a Monte Rasa. */
+export const EM_CENA_DO_LUGAR = {
+  ordemDoNome: { comigo: 0, registo: 1, nucleo: 2 },
+  primeiroMinimo: 3,
+  /* o travessão abre a fala; o nome entre o 1.º e o 2.º é dito por alguém */
+  fala: /[—–]/g,
+  /* a preposição colada antes do nome: ele é complemento do verbo de antes */
+  complemento: /(^|\s)(por|de|do|da|dos|das|sobre|pela|pelo)\s*$/,
+  /* o nome como sujeito da frase: só artigo ou conjunção antes, e uma
+     palavra (o verbo) logo depois, sem vírgula */
+  sujeito: { antes: /^\s*(?:(?:e|mas|entao|depois|o|a)\s+)*$/, depois: /^\s+[a-z]/ },
+  porque: "a lista do que está em cena é a do lugar: quem o sistema sabe longe não está à frente, por mais que a prosa o nomeie",
+};
 
 /* O TRATO. O jogo trata o jogador por "você" (a tela e o Narrador desde a
    v9.346; catraca em teste-subtramas §7b). A F2a nasceu a dizer "Sari
@@ -164,10 +206,19 @@ export const APRESENTADO_NA_PROSA = {
     "menino", "menina", "garoto", "garota", "velha", "moca", "viajante", "viajantes", "peregrino", "peregrina", "cocheiro", "carroceiro",
     "barqueiro", "barqueira", "pescadora", "peixeira", "lavadeira", "feirante", "feirantes", "mascate", "escriba", "curandeiro", "curandeira",
     "pastor", "pastora", "lenhador", "campones", "camponesa", "criada", "criado", "servo", "serva", "nobre", "cavaleiro", "dama",
+    /* 13/10 (a 10.ª sessão): "Um arquivista de óculos tortos" (M37) e "Um
+       tiefling de avental riscado" (M66) ficaram sem ficha — o jogador falou
+       com os dois e não os podia tocar. Os ofícios da casa dos papéis e da
+       rua, e os povos que a prosa usa como cabeça de gente. */
+    "arquivista", "bibliotecario", "bibliotecaria", "escrivao", "copista", "cambista", "cambistas", "aduaneiro", "atendente", "porteiro",
+    "porteira", "padeiro", "padeira", "alfaiate", "sapateiro", "boticario", "boticaria", "erveiro", "erveira", "carpinteiro", "armeiro",
+    "oleiro", "tecelao", "tecela", "bardo", "menestrel", "cantora",
+    "tiefling", "tieflings", "draconato", "draconata", "elfo", "elfa", "elfos", "gnomo", "gnoma", "halfling", "anao",
   ],
   femininas: [
     "mulher", "velha", "moca", "menina", "garota", "vendedora", "mercadora", "taverneira", "estalajadeira", "sacerdotisa", "freira",
     "mendiga", "peixeira", "lavadeira", "curandeira", "pescadora", "barqueira", "peregrina", "ferreira", "pastora", "camponesa", "criada", "serva", "dama",
+    "bibliotecaria", "porteira", "padeira", "boticaria", "erveira", "tecela", "cantora", "draconata", "elfa", "gnoma",
   ],
   naoE: ["como", "nenhum", "nenhuma", "nem", "qualquer", "feito", "parece"],
   aposto: 3,
@@ -235,17 +286,84 @@ export function montarEmCena(ctx) {
   const semente = String(c.semente || "");
   const cidade = norm(c.cidade);
   const mostrado = textos(c.mostrado);
-  const naProsa = ` ${palavras(mostrado.join(" ")).join(" ")} `;
-  const citado = (nome) => {
-    const ps = palavras(nome);
-    if (!ps.length) return false;
-    if (naProsa.includes(` ${ps.join(" ")} `)) return true;
-    return ps[0].length >= 3 && naProsa.includes(` ${ps[0]} `);
-  };
   const grupo = arr(c.grupo).map(nomeDe).filter(Boolean);
   const comigo = arr(c.comigo).map(nomeDe).filter(Boolean);
   const comigoN = new Set([...grupo, ...comigo].map(norm));
-  const emCenaN = new Set(arr(c.emCena).map((x) => norm(nomeDe(x))).filter(Boolean));
+  const emCenaN0 = new Set(arr(c.emCena).map((x) => norm(nomeDe(x))).filter(Boolean));
+  /* O LUGAR MANDA (EM_CENA_DO_LUGAR): quem o sistema sabe longe, e de quem é
+     cada primeiro nome que dois conhecidos partilham */
+  const curto = (nome) => norm(String(nome || "").split(",")[0]).trim();
+  const longeN = new Set(arr(c.longe).map((x) => curto(nomeDe(x))).filter(Boolean));
+  const ehLonge = (nome) => !comigoN.has(norm(nome)) && longeN.has(curto(nome));
+  const O = EM_CENA_DO_LUGAR.ordemDoNome;
+  const donos = new Map();
+  const dono = (nome, nivel) => {
+    const ps = palavras(curto(nome));
+    if (!ps.length || ps[0].length < EM_CENA_DO_LUGAR.primeiroMinimo) return;
+    const ja = donos.get(ps[0]) || new Map();
+    const k = ps.join(" ");
+    ja.set(k, Math.min(ja.has(k) ? ja.get(k) : 9, nivel));
+    donos.set(ps[0], ja);
+  };
+  [...grupo, ...comigo].forEach((n) => dono(n, O.comigo));
+  arr(c.presentes).forEach((r) => dono(nomeDe(r), O.registo));
+  arr(c.longe).forEach((r) => dono(nomeDe(r), O.registo));
+  arr(obj(c.nucleo).pessoas).forEach((q) => dono(nomeDe(q), O.nucleo));
+  /* o primeiro nome solto é deste nome? (o único no topo da ordem) */
+  const levaOPrimeiro = (nome) => {
+    const ps = palavras(curto(nome));
+    const ja = ps.length ? donos.get(ps[0]) : null;
+    if (!ja || ja.size <= 1) return true;
+    const topo = Math.min(...ja.values());
+    const noTopo = [...ja].filter(([, v]) => v === topo).map(([k]) => k);
+    return noTopo.length === 1 && noTopo[0] === ps.join(" ");
+  };
+  const naProsa = ` ${palavras(mostrado.join(" ")).join(" ")} `;
+  const citado = (nome) => {
+    const ps = palavras(curto(nome));
+    if (!ps.length) return false;
+    if (naProsa.includes(` ${ps.join(" ")} `)) return true;
+    return ps[0].length >= EM_CENA_DO_LUGAR.primeiroMinimo && naProsa.includes(` ${ps[0]} `) && levaOPrimeiro(nome);
+  };
+  /* à vista pela prosa: o nome fora da fala de outra pessoa e não como
+     complemento de outra coisa (cena.js#contextoDoNome, mais "por"/"de"); o
+     registo pede ainda o verbo de cena na mesma frase (AGINDO_NA_CENA, a
+     régua do portão) — é a gente toda da cidade, e o nome dela anda na boca
+     de todos. O que a cena já traz (`emCena`, o núcleo citado) só passa pelos
+     dois primeiros filtros. Sem prosa, nada fica à vista por ela. */
+  const semAc = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const presenteNaProsa = (nome, exigeVerbo) => {
+    const ps = palavras(curto(nome));
+    if (!ps.length) return false;
+    const formas = [ps.join(" "), ...(ps.length > 1 && ps[0].length >= EM_CENA_DO_LUGAR.primeiroMinimo && levaOPrimeiro(nome) ? [ps[0]] : [])];
+    for (const t of mostrado) {
+      const base = semAc(t);
+      if (base.length !== t.length) continue;
+      for (const f of formas) {
+        const rx = new RegExp(`(^|[^a-z0-9])(${f.split(" ").join("[^a-z0-9]+")})(?![a-z0-9])`, "g");
+        for (const m of base.matchAll(rx)) {
+          const pos = m.index + m[1].length;
+          /* o primeiro nome que abre o nome inteiro já foi lido como ele */
+          if (f !== formas[0] && new RegExp(`^${formas[0].split(" ").join("[^a-z0-9]+")}(?![a-z0-9])`).test(base.slice(pos))) continue;
+          const linha = base.slice(base.lastIndexOf("\n", pos) + 1, pos);
+          if (/^\s*[—–]/.test(linha) && (linha.match(EM_CENA_DO_LUGAR.fala) || []).length % 2 === 1) continue;
+          let cx = null;
+          try { cx = contextoDoNome(t, pos, m[2]); } catch { cx = null; }
+          if (!cx || cx.mencao) continue;
+          if (EM_CENA_DO_LUGAR.complemento.test(cx.antes)) continue;
+          if (!exigeVerbo || AGINDO_NA_CENA.test(cx.frase)) return true;
+          /* o nome que abre a frase e segue sem vírgula é o sujeito dela
+             ("Tomé Cardo cruza os braços"); com vírgula é aposto ("Godfrey
+             da Foz, taverneiro da Cabra Trêmula") */
+          if (EM_CENA_DO_LUGAR.sujeito.antes.test(cx.antes) && EM_CENA_DO_LUGAR.sujeito.depois.test(cx.depois)) return true;
+        }
+      }
+    }
+    return false;
+  };
+  const aVistaPelaProsa = (nome) => (mostrado.length ? citado(nome) && presenteNaProsa(nome, true) : false);
+  /* a cena (o núcleo citado, no App) só vale com a mesma régua quando há prosa */
+  const emCenaN = new Set([...emCenaN0].filter((k) => !mostrado.length || comigoN.has(k) || (citado(k) && presenteNaProsa(k, false))));
   const revelados = new Set(arr(c.revelados).map((x) => norm(nomeDe(x))));
   const extra = obj(c.sabe);
   const sabeExtra = (nome) => arr(extra[nome]).map((x) => String(x || "").trim()).filter(Boolean);
@@ -268,7 +386,7 @@ export function montarEmCena(ctx) {
   for (const r of arr(c.presentes)) {
     const n = obj(r);
     const nome = nomeDe(n);
-    if (!nome || /morto/i.test(String(n.status || ""))) continue;
+    if (!nome || /morto/i.test(String(n.status || "")) || ehLonge(nome)) continue;
     const laco = typeof n.laco === "string" ? n.laco : String(obj(n.laco).tipo || "");
     const relacao = norm(n.relacao);
     porPessoa(nome, (p) => ({
@@ -276,7 +394,7 @@ export function montarEmCena(ctx) {
       papel: p.papel || String(n.papel || ""),
       genero: p.genero || generoCurto(n.genero),
       hostil: /^(inimig|hostil)/.test(relacao),
-      aqui: !!(p.aqui || emCenaN.has(norm(nome)) || citado(nome)),
+      aqui: !!(p.aqui || emCenaN.has(norm(nome)) || aVistaPelaProsa(nome)),
       deOnde: p.deOnde || "registo",
       /* o que o herói sabe: o papel, a relação, o laço — nunca o segredo */
       sabe: [...p.sabe, ...[n.papel, relacao && relacao !== "desconhecido" ? relacao : "", laco ? `laço: ${laco}` : ""].map((x) => String(x || "").trim()).filter(Boolean)],
@@ -287,7 +405,7 @@ export function montarEmCena(ctx) {
   for (const q of arr(nu.pessoas)) {
     const n = obj(q);
     const nome = nomeDe(n);
-    if (!nome || n.morto) continue;
+    if (!nome || n.morto || ehLonge(nome)) continue;
     const emCena = emCenaN.has(norm(nome)) || comigoN.has(norm(nome));
     const daqui = !!cidade && norm(n.cidade) === cidade;
     /* o vilão só entra com o rosto conhecido (o nome só depois do rosto) */
@@ -299,7 +417,7 @@ export function montarEmCena(ctx) {
       ...p,
       papel: era || p.papel,
       genero: p.genero || generoCurto(n.genero),
-      aqui: !!(p.aqui || emCena || citado(nome)),
+      aqui: !!(p.aqui || emCena || aVistaPelaProsa(nome)),
       deOnde: p.deOnde || "nucleo",
       ...(n.papel === "elo" && era ? { antecedente: String(nu.antecedente || "") } : {}),
       sabe: [...p.sabe, ...(era ? [`${era}, ${EM_CENA_TRATO.doPassado}`] : []), ...(revelados.has(norm(nome)) && esc && !esc.includes("{") ? [esc] : [])],
@@ -309,14 +427,14 @@ export function montarEmCena(ctx) {
   const conhecidos = [...pessoas.values()].map((p) => p.nome);
   const vistos = vistosNaProsa(mostrado, conhecidos);
   for (const v of vistos.filter((x) => x.tipo === "pessoa")) {
-    if (pessoas.has(norm(v.nome))) continue;
+    if (pessoas.has(norm(v.nome)) || ehLonge(v.nome)) continue;
     pessoas.set(norm(v.nome), { tipo: "pessoa", nome: v.nome, papel: "", genero: "", quantos: 1, aqui: true, deOnde: "prosa", armado: true, arma: v.arma, cabeca: v.cabeca, palavras: v.palavras, sabe: [`leva ${v.arma}`] });
   }
   /* 4b. …e a gente que ele apresentou de mãos vazias (o guarda que pede o
      nome, a mulher das enguias): calada se alguém à vista já tem essa cabeça */
   const cabecasAVista = [...pessoas.values()].filter((p) => p.aqui).flatMap((p) => [...palavras(p.papel), ...palavras(p.cabeca)]);
   for (const v of apresentadosNaProsa(mostrado, [...pessoas.values()].map((p) => p.nome))) {
-    if (pessoas.has(norm(v.nome)) || cabecasAVista.includes(v.cabeca)) continue;
+    if (pessoas.has(norm(v.nome)) || cabecasAVista.includes(v.cabeca) || ehLonge(v.nome)) continue;
     pessoas.set(norm(v.nome), { tipo: "pessoa", nome: v.nome, papel: "", genero: v.genero, quantos: v.quantos, aqui: true, deOnde: "prosa", cabeca: v.cabeca, palavras: v.palavras, sabe: [] });
   }
 
@@ -347,9 +465,13 @@ export function montarEmCena(ctx) {
   }
   /* a memória: o que a prosa mostrou há pouco e já não mostra */
   const turno = Number.isFinite(Number(c.turno)) ? Number(c.turno) : 0;
+  /* o sítio da memória (EM_CENA_DO_LUGAR): o que a prosa mostrou noutro sítio
+     ficou lá — a cidade e o lugar de quando foi visto */
+  const ondeAgora = `${cidade}|${norm(nomeDe(c.lugar))}`;
   for (const a0 of arr(c.antes)) {
     const a = obj(a0);
     if (a.deOnde !== "prosa" || !a.nome) continue;
+    if ((typeof a.onde === "string" && a.onde !== ondeAgora) || ehLonge(a.nome)) continue;
     const idade = turno - (Number(a.vistoEm) || 0);
     if (idade < 0 || idade > EM_CENA_MEMORIA.turnos) continue;
     const aqui = idade <= EM_CENA_MEMORIA.aVista;
@@ -396,7 +518,7 @@ export function montarEmCena(ctx) {
 
   /* os ids, o que o herói sabe a mais, e o teto por tipo (à vista primeiro) */
   const comId = (x, chave) => ({ ...x, id: idDe(semente, x.tipo, chave), sabe: [...new Set([...(x.sabe || []), ...sabeExtra(x.nome)])],
-    ...(x.deOnde === "prosa" ? { vistoEm: x.vistoEm != null && Number.isFinite(Number(x.vistoEm)) ? Number(x.vistoEm) : turno } : {}) });
+    ...(x.deOnde === "prosa" ? { vistoEm: x.vistoEm != null && Number.isFinite(Number(x.vistoEm)) ? Number(x.vistoEm) : turno, onde: typeof x.onde === "string" ? x.onde : ondeAgora } : {}) });
   const porTipo = {
     pessoa: [...pessoas.values()].map((p) => comId(p, norm(p.nome))),
     criatura: [...bichos.values()].map((b) => comId(b, `${b.raiz}`)),

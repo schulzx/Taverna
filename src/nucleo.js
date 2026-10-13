@@ -381,7 +381,11 @@ export const PISTAS_DO_ELO = {
    "leva" ou "entrega" ao lado. Quem lê é `papelProcurado` (procura.js). */
 export const PROCURA_DO_ELO = {
   orfao: [["nome da minha familia"], ["meu parente"], ["minha parente"], ["do meu sangue"]],
-  soldado: [["camarada"], ["companhia", "guerra"], ["regimento"]],
+  /* 13/10 (a 10.ª sessão, M22): "procuro meu antigo companheiro de armas, um
+     soldado que serviu comigo na guerra" — as palavras do próprio antecedente
+     ("um antigo companheiro de armas andava metido nisto") não chegavam ao
+     elo. "Antigo" é o que separa o elo da companheira que anda com o herói */
+  soldado: [["camarada"], ["companhia", "guerra"], ["regimento"], ["antig", "companheir"], ["serv", "comigo"]],
   nobre_caido: [["divida da casa"], ["divida da familia"], ["comprou a divida"], ["credor da familia"]],
   erudito: [["copista"], ["texto proibido"]],
   ladrao: [["mestre de recados"], ["mestra de recados"], ["recados", "guilda"], ["leva", "recados"], ["entrega", "recados"]],
