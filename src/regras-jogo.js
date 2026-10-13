@@ -14,6 +14,7 @@ import { elencoDiverso, nomeCidade, nomeTaverna } from "./nomes.js";
 import { garantirSuprimentos } from "./ermos.js";
 import { limparPorDescanso } from "./condicoes.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
+import { equiparKitInicial } from "./kit-inicial.js";
 import { pontosTotais, custoJaGasto } from "./classes.js";
 import { migrarAtributos } from "./atributos.js";
 import { valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
@@ -189,8 +190,10 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
     if (!g?.nome || grupo.some((x) => x.nome.toLowerCase() === g.nome.toLowerCase())) return;
     if (grupo.filter((x) => !x.invocada).length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${g.nome} não pôde se juntar.`); return; }
     /* v9.2: o companheiro entra COM CLASSE e habilidades do catálogo — é o
-       que permite o sistema jogar por ele (curar, dar buff, usar magia). */
-    grupo.push(garantirFichaCompanheiro({ nome: g.nome, conceito: g.conceito || "", nivel: g.nivel ?? 1, vida: g.vida ?? 10, vidaMax: g.vidaMax ?? g.vida ?? 10, descricao: g.descricao || "", habilidades: g.habilidades || [], classe: g.classe || "", semente: `npc|${g.nome}|${g.conceito || ""}`, vinculo: VINCULO_INICIAL, marcos: [], inventario: [] }));
+       que permite o sistema jogar por ele (curar, dar buff, usar magia).
+       13/10: e com a arma da classe na mão (kit-inicial.js) — só a ficha
+       que nasce aqui; o load nunca passa por esta linha. */
+    grupo.push(equiparKitInicial(garantirFichaCompanheiro({ nome: g.nome, conceito: g.conceito || "", nivel: g.nivel ?? 1, vida: g.vida ?? 10, vidaMax: g.vidaMax ?? g.vida ?? 10, descricao: g.descricao || "", habilidades: g.habilidades || [], classe: g.classe || "", semente: `npc|${g.nome}|${g.conceito || ""}`, vinculo: VINCULO_INICIAL, marcos: [], inventario: [] })));
     msgs.push(`⚑ ${g.nome} juntou-se ao grupo!`);
   });
   (m.grupo_remover || []).forEach((nome) => { if (grupo.some((g) => g.nome.toLowerCase() === nome.toLowerCase())) { grupo = grupo.filter((g) => g.nome.toLowerCase() !== nome.toLowerCase()); msgs.push(`⚑ ${nome} deixou o grupo.`); } });

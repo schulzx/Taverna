@@ -122,6 +122,15 @@ export const QUEM_APANHA = {
     "fantasmas?", "espectros?", "vampir[oa]s?", "lobisome(m|ns)", "demonios?", "diabos?", "diabretes?", "dragao",
     "dragoes", "harpias?", "gargulas?", "golens?", "golem", "elementais?", "elf[oa]s?", "ana[o]?", "anoes", "gnomos?",
     "halflings?", "gigantes?", "ciclopes?", "minotauros?", "centauros?", "homens?-lagarto",
+    /* 13/10 (a prova viva da v9.460): "dou um soco no vendedor" não era
+       golpe — o vendedor não estava aqui. Os ofícios com que a prosa traz
+       gente à cena (em-cena.js#APRESENTADO_NA_PROSA) e que faltavam */
+    "vendedor(es|a|as)?", "feirantes?", "peixeir[oa]s?", "mascates?", "cocheir[oa]s?", "carroceir[oa]s?", "barqueir[oa]s?",
+    "pescador(es|a|as)?", "lavadeiras?", "padeir[oa]s?", "alfaiates?", "sapateir[oa]s?", "boticari[oa]s?", "erveir[oa]s?",
+    "carpinteir[oa]s?", "armeir[oa]s?", "oleir[oa]s?", "porteir[oa]s?", "escribas?", "arquivistas?", "copistas?", "monges?",
+    "freiras?", "padres?", "peregrin[oa]s?", "viajantes?", "pastor(es|a|as)?", "lenhador(es|a)?", "criad[oa]s?", "damas?",
+    "cambistas?", "aduaneir[oa]s?", "atendentes?", "curandeir[oa]s?", "bard[oa]s?", "menestre(l|is)", "cantor(es|a|as)?",
+    "estivador(es)?", "contrabandistas?", "encapuzad[oa]s?", "tieflings?", "draconat[oa]s?",
   ],
   corpo: [
     "cara", "rosto", "face", "queixo", "nariz", "boca", "olhos?", "cabeca", "testa", "tempora", "pescoco", "garganta",
@@ -311,12 +320,12 @@ export const PESO_DO_PAPEL = [
   },
   {
     id: "braco", ameaca: "comum",
-    rx: /\b(ferreir|a[cç]ougueir|lenhador|minerador|estivador|pedreir|forjador|curtidor|carrocei|barqueir)/,
+    rx: /\b(ferreir|a[cç]ougueir|lenhador|minerador|estivador|pedreir|forjador|curtidor|carrocei|barqueir|pescador|carpinteir|cocheir)/,
     porque: "não é treinado, mas passa o dia levantando o que você não levanta",
   },
   {
     id: "gente", ameaca: "fraco",
-    rx: /\b(taverneir|estalajadeir|mercador|comerciante|escriba|erudito|bibliotec|curandeir|herborist|alquimist|camponê|campones|servo|serva|crian[cç]a|mendig|bardo|cozinheir|joalheir|cartograf)/,
+    rx: /\b(taverneir|estalajadeir|mercador|comerciante|escriba|erudito|bibliotec|curandeir|herborist|alquimist|camponê|campones|servo|serva|crian[cç]a|mendig|bardo|cozinheir|joalheir|cartograf|vendedor|feirante|peixeir|mascate|lavadeir|padeir|alfaiat|sapateir|boticari|erveir|oleir|copista|arquivist|atendent|criad|pastor|peregrin|cambista)/,
     porque: "gente que não se defende de ofício, e o sistema não vai fingir que se defende",
   },
 ];
@@ -866,6 +875,38 @@ export function alvoPrometido(contra, opcoes) {
   return { nome: capital(semArt || "Quem o desafiou"), ameaca: cabeca ? ameacaDoPapel(cabeca).ameaca : LUTA_PROMETIDA.ameaca, deOnde: "cartao" };
 }
 
+/* ---------------- QUEM A CENA SABE À FRENTE (13/10, a prova viva da v9.460) ----------------
+   "Ataco o vendedor com a espada" — e o Mestre respondeu que não havia
+   ninguém para atacar. O vendedor estava na lista do que está em cena
+   (em-cena.js: a gente que a prosa apresentou de mãos vazias, "um vendedor
+   de enguias"), e a ficha dele estava na fileira; mas esta leitura só
+   conhecia o NOME do registo, o bicho e a gente ARMADA da prosa. Quem a
+   cena sabe à frente pelo papel — "o vendedor", "a mulher das enguias", o
+   guarda do registo de quem o jogador não sabe o nome — é tão real como
+   quem tem nome, e o sistema já o achou na frase (em-cena.js#quemNaFrase).
+   O App passa esse achado (`apontado`: a coisa da lista, com o `faz` de
+   `quemNaFrase`); aqui ele vira o alvo, sem nada inventado:
+     · quem anda com o herói, apontado pelo papel, é recusado como o grupo
+       (pelo nome, abre com o cartão — é a regra de antes);
+     · o armado da prosa é luta, não crime (`armadoNaProsa`, como sempre);
+     · o resto é gente da cidade: a luta abre, e o veredito do crime vem
+       antes do clique (crime.js#veredictoDoCrime lê qualquer nome que não
+       seja inimigo, bicho nem armado).
+   A ameaça é a do papel, ou a da cabeça com que a prosa o trouxe. */
+export const ALVO_PELA_CENA = {
+  faz: ["golpe", "golpeDito"],
+  porque: "quem a cena já sabe à frente pelo papel existe: o golpe contra ele abre, com o preço antes quando é crime",
+};
+function apontadoDaCena(ap, vivos) {
+  const a = ap && typeof ap === "object" && !Array.isArray(ap) ? ap : null;
+  if (!a || a.tipo !== "pessoa") return null;
+  const nome = String(a.nome || "").trim();
+  if (nome.length < 2) return null;
+  if (a.faz != null && a.faz !== "" && !ALVO_PELA_CENA.faz.includes(a.faz)) return null;
+  const reg = vivos.find((n) => norm(n.nome) === norm(nome));
+  return { nome, reg, papel: String(a.papel || ""), cabeca: String(a.cabeca || ""), armado: !!a.armado, comigo: !!a.comigo };
+}
+
 /* as orações que DECLARAM o golpe (o resto da frase pode citar quem não apanha) */
 function oracoesDoGolpe(texto) {
   const os = String(texto || "").split(/[.!?;\n]+|\s+(?:e|mas|porem|porém|depois|enquanto)\s+/i).filter((s) => s.trim());
@@ -919,6 +960,14 @@ export function alvoDaAgressao(texto, opcoes) {
     const descrito = armadoDescrito(texto, o.mostrado);
     if (descrito) return { ...descrito, doGrupo: false, deOnde: "prosa" };
   }
+  /* 13/10: quem a cena sabe à frente, como a frase o apontou (ALVO_PELA_CENA) */
+  const daCena = apontadoDaCena(o.apontado, vivos);
+  if (daCena) {
+    if (daCena.comigo) return forma({ nome: daCena.nome }, { porPronome: true, deOnde: "cena" });
+    if (daCena.reg) return forma(daCena.reg, { deOnde: "cena" });
+    if (daCena.armado) return { nome: daCena.nome, ameaca: ameacaDoPapel(daCena.cabeca).ameaca, pessoa: true, armadoNaProsa: true, doGrupo: false, deOnde: "cena" };
+    return { ...forma({ nome: daCena.nome, papel: daCena.papel }, { deOnde: "cena" }), ...(daCena.cabeca ? { cabeca: daCena.cabeca } : {}) };
+  }
   if (citados.length) return forma(citados[0], {});
   if (comigoDito) return forma({ nome: comigoDito }, {});
   /* sem nome: só o pronome abre a segunda pergunta */
@@ -946,7 +995,7 @@ export function lerAgressao(texto, opcoes) {
   const grupo = Array.isArray(o.grupo) ? o.grupo : [];
   const nomes = presentes.map((n) => n && n.nome).filter(Boolean);
   if (!ehDeclaracaoDeAtaque(texto, { nomes })) return null;
-  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado: o.mostrado, conhecidas: o.conhecidas, comigo: o.comigo });
+  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado: o.mostrado, conhecidas: o.conhecidas, comigo: o.comigo, apontado: o.apontado });
   if (!alvo) {
     let porPronome = false;
     try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }
@@ -977,7 +1026,8 @@ export function lerAgressao(texto, opcoes) {
       porque: "eu declarei o golpe contra quem o Mestre pôs armado à minha frente",
     };
   }
-  const peso = ameacaDoPapel(alvo.papel);
+  /* sem papel no registo, a cabeça com que a prosa o trouxe ("vendedor") */
+  const peso = ameacaDoPapel(alvo.papel || alvo.cabeca || "");
   return {
     tipo: "agressao",
     nome: alvo.nome, papel: alvo.papel || "",

@@ -992,10 +992,31 @@ export const ARMADILHA_DA_SALA = {
   opcoes: {
     desarmar: { rotulo: "Desarmar", frase: "desarmo a armadilha", preco: "um teste de Prestidigitação; falhar é a armadilha na mão" },
     contornar: { rotulo: "Contornar", preco: "{minutos} min e {tochas} tocha, sem tocar nela" },
-    correr: { rotulo: "Passar assim mesmo", preco: "ela dispara: até {dano} de dano, e você salta com vantagem" },
+    correr: { rotulo: "Passar assim mesmo", preco: "ela dispara: até {dano} de dano, e você salta com vantagem", precoComGrupo: "ela dispara: até {dano} de dano, e você e o grupo, avisado, saltam com vantagem" },
+  },
+  /* QUEM ANDA COM O HERÓI (13/10, a prova viva da v9.462): no "Passar assim
+     mesmo" o herói saltava com vantagem e o companheiro em quem a
+     armadilha caía (30% das vezes, o ramo de sempre do App) levava o dano
+     inteiro, sem reflexo nenhum — como se não tivesse visto o que o herói
+     viu. Quem NOTOU a armadilha e passa por ela de olhos abertos avisou o
+     grupo: o companheiro também faz a salvaguarda (a mesma do herói, com a
+     mesma metade quando passa), e com vantagem. A armadilha que ninguém
+     notou continua a surpresa de sempre: sem salvaguarda para quem não a
+     viu vir. */
+  grupo: {
+    avisado: { salvaguarda: true, vantagem: true },
+    surpresa: { salvaguarda: false, vantagem: false },
   },
   porque: "a armadilha que o herói nota antes de pisar é uma escolha, não um imposto",
 };
+/* O companheiro que a armadilha apanha: { salvaguarda, vantagem }.
+   `opcoes`: { avisou } — true quando o herói a notou e escolheu passar
+   assim mesmo (é o `vantagem` com que o App dispara). Lixo é surpresa. */
+export function grupoNaArmadilha(opcoes) {
+  const o = opcoes && typeof opcoes === "object" && !Array.isArray(opcoes) ? opcoes : {};
+  const G = ARMADILHA_DA_SALA.grupo;
+  return { ...(o.avisou === true ? G.avisado : G.surpresa) };
+}
 const encherArm = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (m, k) => (v[k] == null ? m : String(v[k])));
 const salaAtualDe = (mm) => (mm && Array.isArray(mm.salas) ? mm.salas.find((s) => s && s.id === mm.atual) || null : null);
 /* uma sala de armadilha que ainda pode morder (nem resolvida nem disparada) */
@@ -1040,7 +1061,9 @@ export function notarArmadilha(mm, opcoes) {
 
 /* As três saídas de uma armadilha à vista, cada uma com o preço antes do
    clique: [{ id, rotulo, preco, frase? }]. Vazio quando não há armadilha à
-   vista na sala atual. `opcoes`: { tochas } (o que resta na mão). */
+   vista na sala atual. `opcoes`: { tochas } (o que resta na mão) e
+   `comGrupo` (há quem ande com o herói: o preço diz que o grupo, avisado,
+   também salta com vantagem — `grupoNaArmadilha`). */
 export function opcoesDaArmadilha(mm, opcoes) {
   const sala = salaAtualDe(mm);
   if (!armadilhaViva(sala) || !sala.armada) return [];
@@ -1049,7 +1072,7 @@ export function opcoesDaArmadilha(mm, opcoes) {
   const tochas = Number.isFinite(Number(o.tochas)) ? Number(o.tochas) : Number(mm.tochas) || 0;
   const out = [{ id: "desarmar", rotulo: O.desarmar.rotulo, preco: O.desarmar.preco, frase: O.desarmar.frase }];
   if (tochas >= C.tochas) out.push({ id: "contornar", rotulo: O.contornar.rotulo, preco: encherArm(O.contornar.preco, C) });
-  out.push({ id: "correr", rotulo: O.correr.rotulo, preco: encherArm(O.correr.preco, { dano: Number(sala.dano) || 0 }) });
+  out.push({ id: "correr", rotulo: O.correr.rotulo, preco: encherArm(o.comGrupo === true ? O.correr.precoComGrupo : O.correr.preco, { dano: Number(sala.dano) || 0 }) });
   return out;
 }
 

@@ -298,15 +298,62 @@ export const PLANTA_DA_ESTRADA = {
   padrao: "estrada",
 };
 
+/* A LUTA NA CIDADE (13/10, a prova viva da v9.460). "Ataco o guarda de
+   elmo" em Monte Escura abriu o tabuleiro da ESTRADA. A causa não era uma
+   jornada velha: na cidade, sem sítio, o lugar que chega aqui é a linha
+   "em Monte Escura" — o NOME da cidade, que não traz nenhuma das palavras
+   de baixo —, e o bioma dela (colina, montanha) também não; caía no
+   "estrada" do fim. E a linha do sítio (lugar.js#linhaDeLugar) mente para
+   esta leitura pelo mesmo caminho da E4: a do interior diz "não estou no
+   SALÃO principal nem na RUA" (toda sala interna virava taverna) e a de
+   fora diz "FORA DA CIDADE" (toda clareira dos arredores virava praça); e
+   uma cidade chamada Porto Velho punha a luta no convés.
+   Quando o App diz onde o herói pisa às claras — `lugar` (o sítio, o
+   objeto de lugar.js) e `cidade` (o nome da cidade em que está) —, a
+   planta sai daí e não da prosa:
+     · a jornada aberta (`emViagem`) continua a mandar: a estrada é dela, e
+       só dela — `emViagem: false` dito às claras cala a marca da linha;
+     · o sítio pelo NOME dele (e da casa em que fica), nunca pelo da
+       cidade: a primeira palavra da tabela que casa dá a planta;
+     · o sítio sem palavra: dentro de uma casa é um interior (`dentro`);
+       fora dela, o chão dos arredores (o bioma da cidade, a tabela da
+       estrada);
+     · na cidade, sem sítio: a rua (`naCidade`).
+   Sem `lugar` nem `cidade`, a leitura de sempre, pela linha. */
+export const PLANTA_DO_LUGAR = {
+  porSitio: [
+    { planta: "taverna", rx: /\b(taverna|estalagem|salao|tasca|bar|hospedaria|pousada|cervejaria|adega)\b/ },
+    { planta: "navio", rx: /\b(navio|barco|conves|galera|cais|doca|docas|porto)\b/ },
+    { planta: "caverna", rx: /\b(caverna|gruta|toca|mina|esgoto|esgotos)\b/ },
+    { planta: "ruina", rx: /\b(ruina|ruinas|cripta|catacumba|catacumbas|mausoleu)\b/ },
+    { planta: "floresta", rx: /\b(floresta|bosque|mata|selva|clareira|arvoredo)\b/ },
+    { planta: "cidade", rx: /\b(praca|mercado|rua|beco|feira|largo|ponte|portao|muralha|viela|cidade|vila)\b/ },
+  ],
+  dentro: "taverna",
+  naCidade: "cidade",
+  porque: "a luta abre no chão onde o herói pisa: a estrada só com a jornada aberta, e na cidade o sítio dela, nunca o nome da cidade",
+};
+
 export function cenarioDe(ctx) {
   const c = ctx && typeof ctx === "object" ? ctx : {};
   const local = c.local || "", bioma = c.bioma || "";
   if (c.emMasmorra) return "masmorra";
-  if (c.emViagem === true || PLANTA_DA_ESTRADA.marca.test(N(local))) {
-    const T = PLANTA_DA_ESTRADA;
-    const de = (tab, k) => (Object.prototype.hasOwnProperty.call(tab, k) ? tab[k] : "");
+  const T = PLANTA_DA_ESTRADA;
+  const de = (tab, k) => (Object.prototype.hasOwnProperty.call(tab, k) ? tab[k] : "");
+  if (c.emViagem === true || (c.emViagem !== false && T.marca.test(N(local)))) {
     return de(T.porChao, N(c.chao)) || de(T.porBioma, N(bioma)) || T.padrao;
   }
+  /* PLANTA_DO_LUGAR: o sítio e a cidade, ditos às claras */
+  const L = PLANTA_DO_LUGAR;
+  const lg = c.lugar && typeof c.lugar === "object" && !Array.isArray(c.lugar) ? c.lugar : null;
+  const nomeDoSitio = lg ? N(`${lg.nome || ""} ${lg.dentroDe || ""}`).trim() : "";
+  if (nomeDoSitio) {
+    const casa = L.porSitio.find((x) => x.rx.test(nomeDoSitio));
+    if (casa) return casa.planta;
+    if (N(lg.distancia) === "dentro") return L.dentro;
+    return de(T.porBioma, N(bioma)) || T.padrao;
+  }
+  if (typeof c.cidade === "string" && c.cidade.trim()) return L.naCidade;
   const t = N(`${local} ${bioma}`);
   if (/taverna|estalagem|salao|tasca|bar\b/.test(t)) return "taverna";
   if (/navio|barco|conves|porto|galera/.test(t)) return "navio";

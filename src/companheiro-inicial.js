@@ -36,7 +36,10 @@
       o laço é no registo e o que a abertura conta.
    4. A FICHA, pelas tabelas que o grupo já usa — a mesma conta de
       `fichaDeCompanheiro` (App.jsx), o mesmo `garantirFichaCompanheiro`,
-      o mesmo `ganharVinculo`. Nenhum número novo de combate.
+      o mesmo `ganharVinculo`. Nenhum número novo de combate. E a arma
+      da classe na mão (`equiparKitInicial`, kit-inicial.js, 13/10): a
+      prova viva da v9.460 viu o companheiro inicial entrar na luta a
+      socos, como a heroína antes do kit. Só a ficha que nasce aqui.
    5. O LAÇO JÁ FEITO, nos campos que o registo já tem: `laco` com força e
       `desde` ANTES do dia 1 (um dia negativo, que `garantirLaco` já
       aceita), `conhecidoEm: 0` ("antes do registro de dias", a leitura que
@@ -62,6 +65,7 @@ import { rngDe } from "./geografia.js";
 import { elencoDoMundo, AGENDA, registrarVisto, garantirElencoDoSave } from "./elenco.js";
 import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC, primeiroNome } from "./npcs.js";
 import { garantirFichaCompanheiro, racaDeCompanheiro } from "./companheiros.js";
+import { equiparKitInicial } from "./kit-inicial.js";
 import { classePorNome } from "./classes.js";
 import { VINCULO_INICIAL, ganharVinculo } from "./vinculos.js";
 import { indoleDe } from "./indole.js";
@@ -356,6 +360,8 @@ export function companheiroInicial(ctx) {
     vinculo: VINCULO_INICIAL, marcos: [],
   });
   comp = ganharVinculo(comp, Math.max(0, ligacao.vinculo - VINCULO_INICIAL)).membro;
+  /* nasce armado pela classe dele, como o herói (kit-inicial.js) */
+  comp = equiparKitInicial(comp);
 
   /* A FICHA DO REGISTO — o laço já feito, de antes do dia 1, e o papel que
      o grupo diz (PAPEL_NO_REGISTO) */
