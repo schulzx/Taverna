@@ -124,6 +124,24 @@ const PALAVRA_DO_PRAZO = {
 const SEM_FICHA = "Ninguém sabe. É o preço de não ter ido ver.";
 const rotuloDoPerigo = (id) => (PERIGO_POR_NIVEL.find((p) => p.id === id) || {}).rotulo || "";
 const nomeDaEstacao = (id) => ((ESTACOES.find((e) => e.id === id) || {}).nome || "").toLowerCase();
+/* O ARTIGO DO NOME (decidido pelo `aprendiz`, 12/10 — era a dúvida 5 da
+   v9.441). O nome de lugar entra SEM artigo, como o Brasil escreve as cidades
+   que são substantivo comum: «de Ponte Nova», «em Campo Grande», «de Casa
+   Branca» — logo «4 h ao sul de Casa do Martelo» está certo. Só o nome que JÁ
+   começa por artigo («O que sobrou de Gelo Fundo») contrai, porque «de O»
+   não se escreve: «à porta do que sobrou de Gelo Fundo», «partir para o que
+   sobrou…». Nenhum nome muda; muda a preposição à frente dele. */
+const CONTRACAO = {
+  de: { o: "do", a: "da", os: "dos", as: "das" },
+  em: { o: "no", a: "na", os: "nos", as: "nas" },
+  para: { o: "para o", a: "para a", os: "para os", as: "para as" },
+};
+function prep(p, nome) {
+  const n = String(nome || "");
+  const m = n.match(/^(O|A|Os|As) (.+)$/);
+  const c = m && CONTRACAO[p] && CONTRACAO[p][m[1].toLowerCase()];
+  return c ? `${c} ${m[2]}` : `${p} ${n}`;
+}
 const capitular = (s) => { const t = String(s || "").trim(); return t ? t.charAt(0).toUpperCase() + t.slice(1) + (/[.!?…]$/.test(t) ? "" : ".") : ""; };
 
 function relogioEmTexto(rel) {
@@ -141,15 +159,15 @@ function ondeEmTexto(dados) {
     const para = (noPorId(dados, j.paraId) || {}).nome || j.para;
     const feito = j.horasFeitas != null ? ` — ${textoDeHoras(j.horasFeitas).replace(" h", " h feitas")}` : "";
     const falta = j.horasQueFaltam != null ? `, faltam ${textoDeHoras(j.horasQueFaltam)}` : "";
-    return `Na estrada para ${para}${feito}${falta}.`;
+    return `Na estrada ${prep("para", para)}${feito}${falta}.`;
   }
   if (h.onde === "masmorra" && h.masmorra) {
     const p = h.masmorra.progresso || {};
-    return `Você está dentro de ${h.masmorra.nome}${p.total ? ` — ${p.visitadas} de ${p.total} salas` : ""}.`;
+    return `Você está dentro ${prep("de", h.masmorra.nome)}${p.total ? ` — ${p.visitadas} de ${p.total} salas` : ""}.`;
   }
-  if (h.onde === "boca" && no) return `Você está à porta de ${no.nome}.`;
-  if (h.onde === "arredor") return `Você está em ${h.lugar}${h.cidade ? `, fora de ${h.cidade}` : ""}.`;
-  if ((h.onde === "base" || h.onde === "povoado") && no) return `Você está em ${no.nome}.`;
+  if (h.onde === "boca" && no) return `Você está à porta ${prep("de", no.nome)}.`;
+  if (h.onde === "arredor") return `Você está ${prep("em", h.lugar)}${h.cidade ? `, fora ${prep("de", h.cidade)}` : ""}.`;
+  if ((h.onde === "base" || h.onde === "povoado") && no) return `Você está ${prep("em", no.nome)}.`;
   return "Você está longe de qualquer lugar que o mapa conheça.";
 }
 
@@ -158,7 +176,7 @@ function subtituloDoLugar(dados, no) {
   const base = (dados.nos || []).find((n) => n.tipo === "base");
   const tipo = no.tipo === "lugar" ? no.subtipo : (PORTES[no.subtipo] || {}).rotulo || no.subtipo;
   const chao = CHAO_EM_PALAVRAS[no.bioma] || "";
-  const longe = base && base.id !== no.id && no.horasDaBase != null ? `${textoDeHoras(no.horasDaBase)} ${rumoPorExtenso(base, no)} de ${base.nome}`.trim() : "";
+  const longe = base && base.id !== no.id && no.horasDaBase != null ? `${textoDeHoras(no.horasDaBase)} ${rumoPorExtenso(base, no)} ${prep("de", base.nome)}`.trim() : "";
   return [tipo, chao, longe].filter(Boolean).join(" · ");
 }
 
@@ -170,6 +188,9 @@ function precoDoVeredito(dados, v) {
   const rel = dados.relogio;
   if (v.chegada) {
     const outroDia = rel && v.chegada.dia > rel.dia ? ` do dia ${v.chegada.dia}` : "";
+    /* «às 12:05», e não «ao meio-dia» (dúvida 4 da v9.441, decidida pelo
+       `aprendiz` em 12/10): é a hora do relógio do cabeçalho, no mesmo
+       formato; arredondar faria o preço e o relógio discordarem por minutos */
     partes.push(`você chega às ${v.chegada.hora}${outroDia}${v.chegada.noite ? ", de noite" : ""}`);
   }
   if (v.noites != null) partes.push(v.noites === 0 ? "sem noite ao relento" : `${v.noites} ${v.noites === 1 ? "noite" : "noites"} ao relento`);
@@ -377,6 +398,11 @@ function Descida({ dados, largura, telefone }) {
   );
 }
 
+const xDoHorizonte = (x, largura) => {
+  const meia = (Number(x.largura) || 0) / 2, b = MV.faixa.horizonte.borda;
+  if (meia * 2 + 2 * b >= largura) return largura / 2;
+  return Math.min(largura - b - meia, Math.max(b + meia, x.x));
+};
 function Panorama({ dados, estadoDaPartida, largura, telefone, aoTocarLugar }) {
   const it = React.useMemo(() => { try { return itensDaFaixa(dados, { largura, telefone }); } catch { return null; } }, [dados, largura, telefone]);
   const cristas = React.useMemo(() => { try { return it ? cristasDaFaixa(dados, it) : null; } catch { return null; } }, [dados, it]);
@@ -410,8 +436,11 @@ function Panorama({ dados, estadoDaPartida, largura, telefone, aoTocarLugar }) {
         {it.rumos.map((r) => (
           <text key={r.id} x={r.x} y={F.rumos.cima + 12} textAnchor="middle" className="tv-mono" fontWeight="500" fontSize={telefone ? F.rumos.letraTelefone : F.rumos.letra} fill={r.norte ? MV.tinta : MV.tintaDim}>{r.curto}</text>
         ))}
+        {/* o nome do rumo nunca sai da faixa: a conta põe-no no seu rumo, e o
+            que passaria da borda encosta a `horizonte.borda` dela (era
+            «EIRAS QUEBRADAS», o panorama a cortar o nome a meio) */}
         {it.horizonte.filter((x) => !x.oculto).map((x) => (
-          <text key={x.nome} x={x.x} y={x.y + 12} textAnchor="middle" className="tv-mono" fontSize={F.rumos.letra} letterSpacing={`${F.horizonte.rastreio}em`} fill={MV.tintaDim} opacity={F.horizonte.opacidade}>{x.texto}</text>
+          <text key={x.nome} x={xDoHorizonte(x, it.largura)} y={x.y + 12} textAnchor="middle" className="tv-mono" fontSize={F.rumos.letra} letterSpacing={`${F.horizonte.rastreio}em`} fill={MV.tintaDim} opacity={F.horizonte.opacidade}>{x.texto}</text>
         ))}
         {it.lugares.filter((l) => !l.alvo).map((l) => (
           <Marcador key={l.id} no={noPorId(dados, l.id) || l} cx={l.x} cy={l.cy} escala={l.lado / MV.marcador.caixa} opacidade={l.opacidade} nevoa={nevoa} />
@@ -646,7 +675,10 @@ function Carta({ dados, telefone, selecionado, aoSelecionar, alvoId }) {
               </g>
             );
           })() : null}
-          {/* a régua diz km e horas, porque é em horas que o jogo cobra */}
+          {/* a régua diz km e horas, porque é em horas que o jogo cobra — e é
+              À ESCALA (15 km = 302 px a zoom 1,5). DECIDIDO (`aprendiz`, 12/10;
+              dúvida 2 da v9.441): a do Figma tem 54 px fixos, e uma régua que
+              não mede mente sobre a única coisa que diz */}
           {reg ? (
             <g aria-hidden="true">
               {Array.from({ length: C.regua.segmentos }, (_, k) => (
@@ -724,9 +756,9 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, telefone, aoPartir }) {
     } else if (h.onde === "masmorra") {
       verbo = { verbo: "Você está lá dentro", preco: "saia primeiro para partir", impedido: true };
     } else if (v) {
-      verbo = { verbo: `Partir para ${no.nome}`, preco: precoDoVeredito(dados, v), papel: no.id === alvoId ? "armado" : "gesto" };
+      verbo = { verbo: `Partir ${prep("para", no.nome)}`, preco: precoDoVeredito(dados, v), papel: no.id === alvoId ? "armado" : "gesto" };
     } else if (no.horasDaBase != null) {
-      verbo = { verbo: `Partir para ${no.nome}`, preco: `${textoDeHoras(no.horasDaBase)} de estrada`, papel: no.id === alvoId ? "armado" : "gesto" };
+      verbo = { verbo: `Partir ${prep("para", no.nome)}`, preco: `${textoDeHoras(no.horasDaBase)} de estrada`, papel: no.id === alvoId ? "armado" : "gesto" };
     }
   }
   return (
@@ -774,6 +806,10 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, telefone, aoPartir }) {
       ) : null}
       {verbo ? (
         <div style={telefone ? { position: "sticky", bottom: 0, paddingTop: 8, paddingBottom: 8, background: MV.painel } : undefined}>
+          {/* SEM o glifo de estrada do `Partir` do Figma — DECIDIDO (`aprendiz`,
+              12/10; dúvida 3 da v9.441): partir é `O verbo com preço`, a peça
+              de toda escolha com preço da casa, e uma ação tem uma forma. O
+              glifo só no mapa faria do mesmo gesto duas caras */}
           <VerboComPreco verbo={verbo.verbo} preco={verbo.preco} papel={verbo.papel || "gesto"} impedido={verbo.impedido || null}
             atalho="↵" aoTocar={() => aoPartir && aoPartir(no.id, v || null)} className="w-full" />
         </div>
@@ -843,7 +879,18 @@ export function TelaDoMapa({ dados, estadoDaPartida = null, telefone = false, in
   const no = noPorId(dados, selecionado);
   const veredito = React.useMemo(() => vereditoSeguro(dados, selecionado, estadoDaPartida), [dados, selecionado, estadoDaPartida]);
   const raiz = React.useRef(null);
-  React.useEffect(() => { try { raiz.current && raiz.current.focus(); } catch { /* sem foco, sem drama */ } }, []);
+  /* o foco entra na tela e, ao fechar, VOLTA a quem o tinha (o ícone da
+     faixa, o campo do turno, a aba) — WAI-ARIA APG, «Dialog (Modal)»: ao
+     fechar, o foco regressa ao elemento que abriu o diálogo. Se esse já não
+     existe (partir trocou a cena), fica onde o navegador o puser. */
+  React.useEffect(() => {
+    let antes = null;
+    try { antes = typeof document !== "undefined" ? document.activeElement : null; } catch { antes = null; }
+    try { raiz.current && raiz.current.focus(); } catch { /* sem foco, sem drama */ }
+    return () => {
+      try { if (antes && antes.isConnected && typeof antes.focus === "function" && antes !== document.body) antes.focus({ preventScroll: true }); } catch { /* idem */ }
+    };
+  }, []);
 
   const aoTeclar = (e) => {
     const k = e.key;

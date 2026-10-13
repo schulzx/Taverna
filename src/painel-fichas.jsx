@@ -61,6 +61,17 @@
      baixa    = altura < FICHAS.baixaAltura   · o cartão toma a página em
                               duas colunas. Sem ela: a Mesa (≥ 768 de largo,
                               `useMesa`) é o popover de 376; o telefone a folha.
+     ofertas  = [<Oferta …/>] | null   · § Fichas 1: «Baixa com oferta: fichas
+                              e soleira numa LINHA SÓ, a oferta primeiro, rola
+                              de lado com O esbatimento». Com ofertas, a fileira
+                              desenha-as à frente das fichas, na mesma fila que
+                              rola, numa região «O que o mundo oferece agora»
+                              (a mesma etiqueta da `Soleira`). Sem teto nem
+                              `A dobra`: o teto da soleira poupa ALTURA, e
+                              numa linha que rola de lado a altura não cresce.
+                              Quem liga: na Baixa, com fichas E ofertas, o App
+                              passa aqui as `<Oferta>` (as mesmas, com as
+                              mesmas props) e NÃO desenha a `<Soleira>`.
    />
 
    <VereditoDaFicha veredito="as ataduras · ◉ 29 · a bolsa fica com ◉ 64" />
@@ -100,11 +111,14 @@ import { T, ALVOS } from "./constantes.js";
 import { TIPOS, FICHAS } from "./estilo.js";
 import { Retrato, VerboComPreco, LinhaDoVeredito, TextoComMoeda, useMesa } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
+import { retratoDe } from "./retratos.js";
 
 /* AS PALAVRAS DA TELA — o que é da tela e não vem do motor (§8: nunca
    id, lista, «em cena», «hostil» como campo, «segredo», «desconhecido»). */
 const PALAVRAS = {
   aVista: "À vista",
+  /* a etiqueta da `Soleira` (ui.jsx), para a linha só da Baixa dizer o mesmo */
+  oferta: "O que o mundo oferece agora",
   sabe: "O que você sabe",
   lembra: "Você lembra",
   fechar: "Fechar",
@@ -164,6 +178,18 @@ function rostoDe(f) {
   }
   return doNome;
 }
+/* Retratos §12, item 6 · a fera que tem pintura: o motor manda a marca (a
+   pata) a toda criatura, porque não sabe de arquivos; a tela pergunta à
+   tabela dos retratos pelo nome. Com pintura, o `Retrato` no recorte de
+   cartão (cabeça e pescoço — a 32 o recorte do olhar cortava o focinho);
+   sem ela, a pata, que é o recurso de quem não tem. */
+function feraPintada(f) {
+  if (!f || f.tipo !== "criatura") return null;
+  try {
+    const ente = { nome: String(f.nome || "") };
+    return retratoDe(ente, null) ? ente : null;
+  } catch (e) { return null; }
+}
 /* quem vem para cima de você: o bicho hostil, ou quem o motor diz inimigo
    (a pessoa armada) — o anel `danger` e a presa */
 const inimigoDe = (f) => hostilDe(f) || !!(f && f.retrato && typeof f.retrato === "object" && f.retrato.inimigo);
@@ -211,6 +237,15 @@ export function MarcaDaFicha({ ficha, lado = FICHAS.marca }) {
   const hostil = inimigoDe(ficha);
   const rosto = rostoDe(ficha);
   const caixa = { position: "relative", width: lado, height: lado, flexShrink: 0 };
+  const fera = feraPintada(ficha);
+  if (fera) {
+    return (
+      <span aria-hidden="true" style={caixa}>
+        <Retrato semente={fera.nome} ente={fera} semCarta tamanho={lado} recorte="cartao" anel={hostil ? FICHAS.hostil : T.inkDim} />
+        {hostil ? <Presa lado={grande} /> : null}
+      </span>
+    );
+  }
   if (rosto && (ficha.tipo === "pessoa" || ficha.tipo === "criatura")) {
     return (
       <span aria-hidden="true" style={caixa}>
@@ -550,7 +585,7 @@ function usePosicao(raiz, ficha, formato, aberta) {
 /* ============================================================
    A FILEIRA — `role="group"` «À vista», roving tabindex, os toques
    ============================================================ */
-export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToque, onAbrir, onFechar, onVerbo, baixa = false }) {
+export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToque, onAbrir, onFechar, onVerbo, baixa = false, ofertas = null }) {
   /* `= []` não cobre null (a lei da casa) */
   const lista = (Array.isArray(itens) ? itens : []).filter((f) => f && f.id != null && f.nome).slice(0, FICHAS.max);
   const chave = lista.map((f) => String(f.id)).join("|");
@@ -651,18 +686,30 @@ export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToq
   /* o anel de foco (4 px por fora) não pode ser cortado pela fila que rola:
      a fila ganha 4 de enchimento e devolve-os em margem */
   const folgaDoAnel = 4;
+  const fichas = mostra.map((f, i) => (
+    <Ficha key={f.id} ref={(el) => { refs.current[f.id] = el; }} ficha={f} ordem={i}
+      estado={velha ? "repouso" : estadoDe(f)} idDoCartao={idDoCartao}
+      tabIndex={!velha && f.id === idParado ? 0 : -1}
+      onToque={velha ? undefined : () => tocar(f)} aoTeclar={velha ? undefined : teclar(i)} />
+  ));
+  /* a linha só da Baixa com oferta (§1): a fila que rola leva as duas
+     regiões, a oferta primeiro; sem ofertas, a fila É o grupo, como antes */
+  const daOferta = (Array.isArray(ofertas) ? ofertas : []).filter(Boolean);
+  const linhaSo = daOferta.length > 0;
   return (
     <div ref={setRaiz} className="relative w-full">
-      <div ref={setFila} role="group" aria-label={PALAVRAS.aVista}
+      <div ref={setFila} role={linhaSo ? undefined : "group"} aria-label={linhaSo ? undefined : PALAVRAS.aVista}
         key={velha ? "sai:" + velha.chave : chave}
         className={`flex overflow-x-auto ${velha ? "tv-ficha-sai" : ""} ${haMais ? "tv-esbate-fim" : ""}`}
         style={{ gap: FICHAS.vao, padding: folgaDoAnel, margin: -folgaDoAnel, scrollbarWidth: "none" }}>
-        {mostra.map((f, i) => (
-          <Ficha key={f.id} ref={(el) => { refs.current[f.id] = el; }} ficha={f} ordem={i}
-            estado={velha ? "repouso" : estadoDe(f)} idDoCartao={idDoCartao}
-            tabIndex={!velha && f.id === idParado ? 0 : -1}
-            onToque={velha ? undefined : () => tocar(f)} aoTeclar={velha ? undefined : teclar(i)} />
-        ))}
+        {linhaSo ? (
+          <>
+            <div role="region" aria-label={PALAVRAS.oferta} className="flex shrink-0 items-stretch" style={{ gap: FICHAS.vao }}>
+              {daOferta.map((o, i) => <div key={(o && o.key) || "oferta-" + i} className="shrink-0 flex items-center">{o}</div>)}
+            </div>
+            <div role="group" aria-label={PALAVRAS.aVista} className="flex shrink-0" style={{ gap: FICHAS.vao }}>{fichas}</div>
+          </>
+        ) : fichas}
       </div>
       {fichaAberta && pos && !velha ? (() => {
         const cartao = (
@@ -674,6 +721,54 @@ export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToq
       })() : null}
     </div>
   );
+}
+
+/* ============================================================
+   O NOME NO CURSOR — a menção que se encadeia (§2, «insere só o nome»)
+
+   O defeito (vivo, v9.442): tocar fichas seguidas com texto do jogador no
+   campo colava os nomes por espaço — «Procuro Freya Ondine Isen o
+   Silencioso», três pessoas lidas como um nome só, pelo jogador e pelo
+   Narrador. DECIDIDO (`aprendiz`, 12/10), o mais simples que lê como
+   português: o nome que entra LOGO A SEGUIR a outro nome tocado nesta mesma
+   vez junta-se por « e », e o « e » de antes vira «, » —
+   «Procuro Freya e Ondine» → «Procuro Freya, Ondine e Isen o Silencioso».
+   Nome que entra noutro sítio (depois de um verbo, no meio da frase) entra
+   como sempre, por espaço. Não se recusa o segundo nome: o toque nunca
+   falha, e a lista é o que o jogador quis apontar.
+
+   Pura e sem nada de fora (a suíte tira-a deste arquivo e corre-a em Node):
+     atual   — o texto do campo · pos — o cursor (null = o fim)
+     nome    — o nome a pôr, já na forma do meio da frase (com artigo)
+     postos  — os nomes JÁ postos por toque nesta vez (a frase do 1.º toque
+               conta: o nome da ficha dela), na mesma forma
+   Devolve { texto, cursor } — o cursor logo depois do nome posto.
+   QUEM LIGA (`oficial`, App.jsx `tocarFicha`): troca a linha que monta
+   `texto` por esta função, e guarda `nomes` no registo do toque (como já
+   guarda `ids`).
+   ============================================================ */
+export function juntarNomeNoCampo(atual, pos, nome, postos) {
+  const txt = String(atual == null ? "" : atual);
+  const n = String(nome == null ? "" : nome).trim();
+  const p = typeof pos === "number" && pos >= 0 ? Math.min(pos, txt.length) : txt.length;
+  if (!n) return { texto: txt, cursor: p };
+  const antes = txt.slice(0, p), depois = txt.slice(p);
+  const ja = (Array.isArray(postos) ? postos : []).map((x) => String(x == null ? "" : x).trim()).filter(Boolean);
+  const seco = antes.replace(/\s+$/, "");
+  const acabaEm = (fim) => seco === fim || seco.endsWith(" " + fim);
+  const anterior = ja.filter(acabaEm).sort((a, b) => b.length - a.length)[0];
+  let cabeca;
+  if (anterior) {
+    const resto = seco.slice(0, seco.length - anterior.length);
+    /* «… Freya e » + «Ondine»: o « e » que ligava dois nomes postos vira «, » */
+    const doE = ja.filter((x) => resto.endsWith(" " + x + " e ") || resto === x + " e ").sort((a, b) => b.length - a.length)[0];
+    const base = doE ? resto.slice(0, resto.length - 3) + ", " : resto;
+    cabeca = base + anterior + " e " + n;
+  } else {
+    cabeca = antes + (antes && !/\s$/.test(antes) ? " " : "") + n;
+  }
+  const texto = cabeca + (depois && !/^\s/.test(depois) ? " " : "") + depois;
+  return { texto, cursor: cabeca.length };
 }
 
 /* ============================================================

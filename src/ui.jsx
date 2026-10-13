@@ -1108,8 +1108,11 @@ export function BarraMini({ rotulo, atual, max, cor, corBaixa }) {
    esquece de passar.
 
    Aqui basta entregar a PESSOA. Sem `ente`, o retrato continua o que sempre
-   foi: uma bolinha que não faz nada quando você toca. */
-export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, estado = "normal", ente = null, inimigo = false, legenda = "", lex = null, semCarta = false }) {
+   foi: uma bolinha que não faz nada quando você toca.
+
+   `recorte` (Retratos §12): passa ao `Rosto` o recorte da pintura quando o
+   lugar o pede diferente do tamanho (a ficha das Fichas: cartão a 32). */
+export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, estado = "normal", ente = null, inimigo = false, legenda = "", lex = null, semCarta = false, recorte = null }) {
   const [aberta, setAberta] = React.useState(false);
   const t = tracos(semente);
   /* `semCarta` existe para o retrato que já mora dentro de outro botão
@@ -1124,7 +1127,7 @@ export function Retrato({ semente, tamanho = 44, anel = T.line, corSubstituta, e
         onKeyDown={abre ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setAberta(true); } } : undefined}
         style={{ borderRadius: "50%", border: anel ? `2px solid ${anel}` : "none", background: corSubstituta || t.fundo, display: "block", cursor: abre ? "pointer" : "default" }}>
         {abre ? <title>Ver a carta de {ente.nome || "quem é este"}</title> : null}
-        <Rosto semente={semente} estado={estado} ente={ente} lado={tamanho} lex={lex} />
+        <Rosto semente={semente} estado={estado} ente={ente} lado={tamanho} lex={lex} recorte={recorte} />
       </svg>
       {aberta && <CartaDeTaro ente={ente} inimigo={inimigo} legenda={legenda} lex={lex} aoFechar={() => setAberta(false)} />}
     </>

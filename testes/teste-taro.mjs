@@ -75,7 +75,9 @@ sec("4. O ROSTO É UM SÓ — a bolinha e a carta desenham a mesma pessoa");
      de sempre: os dois desenham com a MESMA chamada, byte a byte. */
   /* MOVIDA (10/10, A1 · `formas.md` §A1 4): a bolinha passa ao rosto `lado` e `lex`
      (o sinal de quem não é gente precisa dos dois); a peça continua a ser A MESMA. */
-  t("a bolinha a usa", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} lado=\{tamanho\} lex=\{lex\} \/>/.test(UI));
+  /* MOVIDA (12/10, Retratos §12 · `aprendiz`): a bolinha passa também `recorte` (a ficha
+     das Fichas pede a pintura no recorte de cartão num disco de 32); a peça continua A MESMA. */
+  t("a bolinha a usa", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} lado=\{tamanho\} lex=\{lex\} recorte=\{recorte\} \/>/.test(UI));
   t("a carta usa a mesma", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} \/>/.test(CARTA));
   t("e ninguém mais redesenha traço de rosto", !/formatoRosto|penteado/.test(CARTA) && !/formatoRosto|penteado/.test(UI));
   /* a conta saiu do .jsx para poder ser provada — foi o que permitiu esta

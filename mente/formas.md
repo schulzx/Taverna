@@ -10972,6 +10972,27 @@ como forma da casa no cartão: médio (aposenta a forma violeta da mesma acção
 **Decidir a viagem no mapa em vez de a escrever** muda o fluxo: é a proposta
 ambiciosa, para a pessoa decidir.
 
+### 11 · As dúvidas da construção, decididas (`aprendiz`, 12/10)
+
+O mais simples e coerente com a casa, cada uma escrita onde mora no código:
+
+1. **O amanhecer pinta com o Entardecer** (`MAPA_VIVO.modoDaFase`): a mesma luz baixa e
+   quente; um quarto modo seria uma paleta para uma hora. O astro já diz o lado.
+2. **A régua da carta é à escala** (15 km = 302 px a zoom 1,5), não os 54 px fixos do
+   Figma: uma régua que não mede mente sobre a única coisa que diz.
+3. **`Partir` sem o glifo de estrada**: é `O verbo com preço`, e uma ação tem uma forma.
+   O Figma é que se acerta.
+4. **«você chega às 12:05»**, não «ao meio-dia»: é a hora do relógio do cabeçalho, no
+   mesmo formato; arredondar faria o preço e o relógio discordarem.
+5. **O artigo do nome:** o nome de lugar entra sem artigo, como o Brasil escreve as
+   cidades que são substantivo comum («de Ponte Nova», «em Campo Grande») — «4 h ao sul
+   de Casa do Martelo» fica. Só o nome que já começa por artigo contrai: «à porta do que
+   sobrou de Gelo Fundo», «Partir para o que sobrou…» (`prep`, painel-mapa-vivo).
+
+E os dois defeitos da prova viva: **o nome do rumo não sai da faixa** (encosta a
+`horizonte.borda` = 16, o lado da descida; era «EIRAS QUEBRADAS»), e **a tela grande
+devolve o foco** a quem o tinha ao fechar (WAI-ARIA APG, *Dialog (Modal)*).
+
 ## A1 · a informação que chega ao jogador
 
 ### A1 · a fabricação — as seis peças que o `jogo` pediu (`desenho`, 10/10)
@@ -11914,6 +11935,48 @@ traje — o que §4 pede.
 
 **Para terminar na renovação:** 76 chamadas, os sujeitos já escritos (`mente/figma/retratos-f2-plano.mjs`, a partir de `tiefling-f-monge`; o gerador já faz sozinho as trocas que nesta sessão se fizeram à mão — o «jovem … velho», o cabelo do Draconato e do Goliath careca); a ordem continua a da volta 2. **Peso:** médio de design, como §9 — e custa créditos, que é da pessoa.
 
+### 14 · A troca feita (`aprendiz`, 12/10)
+
+**No jogo: 182 pinturas** (18 feras + 164 heróis), `public/retratos/especie/*.webp` e
+`public/retratos/gente/*-1.webp`, WebP 320 × 320 q 0,75 cortados pelo contrato de §12 —
+**1 641 KB no todo, 9,0 KB de média (5,0–13,4)**; §6 previa 8,4. Sob demanda: o jogo só
+pede os rostos que desenha.
+
+**A ferramenta de corte** é `mente/figma/corte/` (fora de `src/`, sem dependência no
+`package.json`): `lista.mjs` lê os manifestos de §11 e §13 e acha as matrizes 1024 no
+disco; `servir.cjs` serve a página e grava os arquivos; `cortar.html` mede, desenha a
+folha de conferência e corta (`canvas.toBlob`). **Corta com o `cx` da tabela do jogo**
+(`RETRATOS`, servida em `/corte.json`), e grava o `cx` de cada corte em
+`cortados.json` — `teste-rosto-pintado` fica vermelho se a tabela mudar um `cx` sem novo
+corte (o canto do arquivo sai do `cx`; o chip sairia torto calado).
+
+**A medida, que §11/§13 pediam:** `mente/figma/retratos-medidos.json`. **144 matrizes
+medidas** pelo Face Landmarker do MediaPipe, carregado da CDN só na página de corte
+(`olhos` = a média da altura das duas íris, pontos 468/473 da malha; `cx` = o meio da caixa
+da malha). **38 lidas à régua** (folha ampliada, traço a cada 0,02) onde a malha não acha
+rosto: 13 feras, os 24 Draconatos, o Anão Invocador. O manifesto estimado à mão errava
+**0,012 de média nos olhos e 0,016 no `cx`** (máx. 0,043) — bom, e não nulo: o
+Draconato Clérigo tinha os olhos a 0,28 e estão a 0,26; o Anão Invocador 0,30 → 0,32.
+**Os arquivos de hoje estão cortados com o manifesto** (que é o que a tabela tem); quando
+o `backend` puser os medidos em `RETRATOS`, corta-se de novo (um botão) e a catraca
+confirma.
+
+**Onde aparece:** todo `Rosto` com entrada em `retratoDe` — a bolinha (`Retrato`: grupo,
+cabeçalho, ficha do herói, fogueira, batalha), a casa da grade e a carta de tarô (no
+nicho, um disco). Quem não tem matriz (as 76 células por pintar, a gente sem classe, o
+bicho que a tabela não conhece) fica com o rosto de antes; a imagem que falha também.
+Nas **Fichas**, a fera com pintura mostra o recorte de **cartão** mesmo a 32 (o recorte
+do olhar cortava o focinho), e a pata fica para quem não tem.
+
+**O que decidi e não estava escrito:** (1) a imagem é `<image>` de SVG, não `<img>` — o
+rosto vive dentro do SVG de quem o chama, e um `<img>` ali só por `foreignObject`; o
+preço é não haver `loading="lazy"` (o rosto só se desenha onde está à vista, e o
+arquivo pesa 9 KB). (2) A vinheta do Ferido (§5) tem força **0,4 no ferido e no
+furioso** (o ferido do inimigo) **e 0,65 no grave** — §5 dá a cor e o raio, não a força;
+é `RETRATO_PINTADO` em `estilo.js`, e é pergunta ao `desenho`. (3) O pré-carregamento
+da batalha (item 4) não foi feito: o arquivo é pequeno e a luta abre com os rostos já
+vistos na estrada; fica se o `jogo` vir piscar.
+
 ---
 
 ## Fogueira · a noite em que se escolhe com quem se senta (`desenho`, 11/10)
@@ -12276,3 +12339,20 @@ chega a ele fora de cena). Em `pauta-desenho.md`, *Para a pessoa decidir*.
   `235:233`).
 - **A frase do toque e os verbos são proposta**: o `jogo` assina `FRASE_DO_TOQUE` e o momento
   (quanto duram as fichas, se a espera as mantém) antes do `oficial` ligar.
+
+### 12 · Os acertos de 12/10 (`aprendiz`)
+
+- **A Baixa com oferta numa linha só (§1):** `FileiraAVista` ganhou `ofertas` — com elas,
+  a fila que rola leva primeiro a região «O que o mundo oferece agora» (a etiqueta da
+  `Soleira`) e depois o grupo «À vista», com o esbatimento à direita. Sem teto nem `A
+  dobra`: o teto poupa altura, e uma linha que rola de lado não cresce. **Quem liga** é o
+  `oficial`: na Baixa, com fichas e ofertas, passa as mesmas `<Oferta>` em `ofertas` e não
+  desenha a `<Soleira>`. Dúvida para o `desenho`: a oferta vai à largura natural, sem teto.
+- **O nome que se encadeia (§2):** tocar fichas seguidas colava «Procuro Freya Ondine Isen o
+  Silencioso». Agora o nome que entra logo a seguir a outro nome tocado junta-se por « e », e
+  o « e » de antes vira vírgula — «Procuro Freya, Ondine e Isen o Silencioso»; noutro sítio
+  da frase entra como sempre. Não se recusa o segundo nome: o toque nunca falha.
+  `juntarNomeNoCampo` (painel-fichas, pura, provada); o `oficial` troca por ela a linha que
+  monta o texto em `tocarFicha` e guarda `nomes` no registo do toque.
+- **A fera pintada** mostra a pintura no recorte de cartão; a pata fica para quem não tem
+  (§ Retratos 14).

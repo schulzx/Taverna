@@ -1588,6 +1588,24 @@ export const FICHAS = {
 };
 
 /* ============================================================
+   O RETRATO PINTADO — o que a pintura recebe por código (`formas.md`
+   § Retratos 5 e 12, item 5). O recorte, os limiares e a pasta são do motor
+   (`RETRATO` em `src/retratos.js`); aqui fica só o que é tinta por cima.
+
+   O estado nunca troca a pintura: é filtro e anel. O Ferido de §5 é uma
+   vinheta interior em `danger` com o miolo limpo até lado/3 — no disco de
+   raio lado/2, o claro vai até 2/3 do raio. A força da vinheta não está
+   escrita em §5: 0,4 no ferido e 0,65 no grave são do `aprendiz` (12/10), e
+   estão em `mente/diario-desenho.md` como pergunta ao `desenho`. O
+   `furioso` do inimigo (≤ 55 % da vida, `estadoDe`) é o ferido dele.
+   ============================================================ */
+export const RETRATO_PINTADO = {
+  vinheta: { cor: T.danger, claro: 2 / 3, ferido: 0.4, grave: 0.65 },
+  /* o estado de `estadoDe` → a força da vinheta (0 = nenhuma) */
+  estado: { normal: 0, ferido: "ferido", furioso: "ferido", grave: "grave" },
+};
+
+/* ============================================================
    O MAPA VIVO (MM17 · a faixa do rumo e a tela grande) — `formas.md`
    § Mapa (§3 a tabela, §2 as peças), Figma `ffWFqD7TueSb88Mkeg9bhW`,
    página `07 · Mapa` (`160:48`), colecção `Mapa vivo (MAPA_VIVO)`.
@@ -1656,9 +1674,10 @@ export const MAPA_VIVO = {
     },
   },
   /* que modo cada fase do relógio pinta (`FASES_DO_DIA`, mapa-vivo.js). O
-     amanhecer usa o entardecer — a mesma luz baixa e quente; é a leitura
-     do `aprendiz` de "a tela escolhe o modo por relogio.fase", e está
-     escrita como pergunta ao `desenho` no diário */
+     amanhecer usa o entardecer — DECIDIDO (`aprendiz`, 12/10; era a dúvida 1
+     da v9.441): é a mesma luz baixa e quente, o sol rente ao horizonte, e um
+     quarto modo seria uma paleta inteira para uma hora do dia. O astro já diz
+     de que lado está (nasce a leste, `itensDaFaixa`) */
   modoDaFase: { madrugada: "noite", amanhecer: "entardecer", manha: "dia", tarde: "dia", entardecer: "entardecer", noite: "noite" },
 
   /* §3 — medidas */
@@ -1706,7 +1725,9 @@ export const MAPA_VIVO = {
   /* A FAIXA DO RUMO (mesa 1142×96 · telefone 343×48), `172:1467` */
   faixa: {
     rumos: { cima: 6, altura: 16, letra: 12, letraTelefone: 13 },
-    horizonte: { filas: [24, 39], rastreio: 0.14, opacidade: 0.9, cedeAoFeixe: 30, vao: 32 },
+    /* `borda`: o nome do rumo encosta a 16 da borda em vez de sair dela — o
+       mesmo 16 do lado da descida (`descida.ladoDireito`) */
+    horizonte: { filas: [24, 39], rastreio: 0.14, opacidade: 0.9, cedeAoFeixe: 30, vao: 32, borda: 16 },
     /* o medalhão (o marcador inteiro, escalado) e o centro dele por
        profundidade — recta tirada dos sete nós da semente 0 (`172:1490`
        a `172:1534`: 8,0 km → 26,2; 16,5 km → 23,2) */

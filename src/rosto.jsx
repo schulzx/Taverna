@@ -32,11 +32,14 @@
    ============================================================ */
 import React from "react";
 import { tracos, feicoes, acentoDe } from "./semente.js";
-import { T } from "./estilo.js";
+import { T, RETRATO_PINTADO } from "./estilo.js";
 /* A1 · o rosto de quem não é gente: a regra (`rostoDoEnte`) e o desenho do
    sinal (`GLIFOS`) são tabela; a mente é a MESMA conta que decide a luta. */
 import { GLIFOS, rostoDoEnte, tracoNaGrelha } from "./glifos.js";
 import { menteDaCriatura } from "./adversario.js";
+/* Retratos §12 · a pintura: QUEM recebe qual matriz e ONDE ela cai no disco é
+   conta do motor (`retratos.js`, provada em Node); aqui só se pinta. */
+import { retratoDe, recorteDoRetrato, RETRATO } from "./retratos.js";
 
 /* A tinta é UMA: o mesmo quase-preto violeta da casa em todo traço.
    Xilogravura com três tons de linha vira desenho digital na hora. */
@@ -251,13 +254,75 @@ function SinalDoRosto({ forma, lado }) {
   );
 }
 
+/* ---------------- A PINTURA (Retratos §12, item 4) ----------------
+   Quem tem matriz (`retratoDe`) mostra a pintura; quem não tem, ou cuja
+   imagem falha, fica com o rosto de sempre — nunca um buraco.
+
+   O quadro do `Rosto` é 64 × 64 (o disco: centro 32, raio 32), e a conta do
+   motor devolve px para um disco de `lado` px: tudo se multiplica por
+   64/lado. A imagem é um `<image>` de SVG e não um `<img>`: o rosto mora
+   DENTRO do SVG de quem o chama (o `Retrato`, a casa da grade, a carta), e um
+   `<img>` ali só entraria por `foreignObject`, que recorta e transforma mal
+   no WebKit. O preço: o SVG não tem `loading="lazy"` — cada arquivo pesa
+   ~9 KB e o rosto só se desenha onde está à vista.
+
+   O que fica por código, por cima da pintura (§5): a vinheta do ferido. O
+   anel, a forma do papel, o aro da vez, o arco da vida e o `aria-label` são
+   de quem chama, e não mudam. */
+const FALHARAM = new Set();
+/* `recorte` força um dos três recortes (a ficha das Fichas pede o de cartão
+   num disco de 32): a conta é linear em `lado`, então pede-se ao motor no
+   limiar do recorte e escala-se */
+const LADO_DO_RECORTE = {
+  chip: RETRATO.limiar.chip,
+  cartao: RETRATO.limiar.cartao,
+  ficha: RETRATO.limiar.cartao + 1,
+};
+function PinturaDoRetrato({ entrada, lado, estado, recorte, aoFalhar }) {
+  const id = "tv-pintura-" + React.useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const ladoDaConta = LADO_DO_RECORTE[recorte] || lado;
+  const r = recorteDoRetrato(entrada, ladoDaConta);
+  if (!r) return null;
+  const k = 64 / ladoDaConta;
+  const V = RETRATO_PINTADO.vinheta;
+  const forca = V[RETRATO_PINTADO.estado[estado]] || 0;
+  return (
+    <g>
+      <defs>
+        <clipPath id={id + "-disco"}><circle cx={32} cy={32} r={32} /></clipPath>
+        {forca > 0 && (
+          <radialGradient id={id + "-vinheta"} cx="50%" cy="50%" r="50%">
+            <stop offset={V.claro} stopColor={V.cor} stopOpacity={0} />
+            <stop offset={1} stopColor={V.cor} stopOpacity={forca} />
+          </radialGradient>
+        )}
+      </defs>
+      <g clipPath={`url(#${id}-disco)`}>
+        <image href={entrada.arquivo} x={r.esquerda * k} y={r.topo * k} width={r.largura * k} height={r.largura * k}
+          preserveAspectRatio="none" decoding="async" onError={aoFalhar} />
+        {forca > 0 && <circle cx={32} cy={32} r={32} fill={`url(#${id}-vinheta)`} />}
+      </g>
+    </g>
+  );
+}
+
 /* ---------------- o rosto inteiro ----------------
    A1: `lado` são os píxeis em que o rosto é DESENHADO (omissão 44, a do
    `Retrato`; o tabuleiro passa 0,8 × o lado da casa) — só o sinal de quem
    não é gente o lê, para o traço ter a espessura certa. `lex` é o léxico do
    mundo, que `menteDaCriatura` consulta antes das regras gerais. */
-export function Rosto({ semente, estado = "normal", ente = null, fixo = false, lado = 44, lex = null }) {
+export function Rosto({ semente, estado = "normal", ente = null, fixo = false, lado = 44, lex = null, recorte = null }) {
   const { apresentacao } = React.useContext(AjusteDoRetrato);
+  /* a pintura vem antes de tudo — do sinal do bicho e da xilogravura. A conta
+     que estoura dá `null`, e `null` é o rosto de hoje: nunca custa o retrato */
+  const [, repinta] = React.useState(0);
+  let pintura = null;
+  try { pintura = retratoDe(ente, { semente, apresentacao, fixo }); } catch (erro) { pintura = null; }
+  if (pintura && !FALHARAM.has(pintura.arquivo)) {
+    const arquivo = pintura.arquivo;
+    return <PinturaDoRetrato entrada={pintura} lado={lado} estado={estado} recorte={recorte}
+      aoFalhar={() => { FALHARAM.add(arquivo); repinta((n) => n + 1); }} />;
+  }
   const grave = estado === "grave", ferido = estado === "ferido", furioso = estado === "furioso";
   const t = tracos(semente);
   const e = ente && typeof ente === "object" ? ente : {};

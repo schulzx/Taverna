@@ -149,7 +149,10 @@ sec("8. QUEM DESENHA ENTREGA A PESSOA");
      que é desenhado) e `lex` (o léxico que `menteDaCriatura` consulta) — é deles que
      sai o sinal de quem não é gente (fera, morto) com o traço do tamanho certo. O que
      a asserção guarda não mudou: quem desenha ENTREGA A PESSOA (`ente`) ao rosto. */
-  t("a bolinha entrega", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} lado=\{tamanho\} lex=\{lex\} \/>/.test(UI));
+  /* 12/10 (Retratos §12, `aprendiz`): a bolinha passa também `recorte` — a ficha das
+     Fichas pede a pintura no recorte de cartão num disco de 32. A asserção continua a
+     guardar o mesmo: quem desenha ENTREGA A PESSOA (`ente`) e o tamanho ao rosto. */
+  t("a bolinha entrega", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} lado=\{tamanho\} lex=\{lex\} recorte=\{recorte\} \/>/.test(UI));
   t("a carta entrega", /<Rosto semente=\{semente\} estado=\{estado\} ente=\{ente\} \/>/.test(readFileSync(S + "carta-taro.jsx", "utf8")));
   /* o do cabeçalho veste o traje SEM virar segundo botão */
   t("o cabeçalho veste sem carta", /ente=\{personagem\} semCarta/.test(APP));

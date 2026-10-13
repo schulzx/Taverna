@@ -98,7 +98,10 @@ sec("4. O sistema não fala de si (§8) e a cor não nasce solta");
      literais. (Os nomes de classe — `tv-ficha-entra` — não são tela.) */
   const bloco = (CODIGO.match(/const PALAVRAS = \{([\s\S]*?)\};/) || [])[1] || "";
   const tela = [...bloco.matchAll(/"([^"\n]*)"/g)].map((m) => m[1]);
-  t("PALAVRAS tem as quatro da tela", tela.length === 4, tela.join(" | "));
+  /* 12/10 (`aprendiz`): de quatro para cinco — a linha só da Baixa com oferta (§1)
+     leva a região das ofertas com a MESMA etiqueta da `Soleira` (ui.jsx). O que se
+     guarda não mudou: a lista é curta, fechada, e passa pela peneira das proibidas. */
+  t("PALAVRAS tem as cinco da tela", tela.length === 5, tela.join(" | "));
   const PROIBIDAS = ["ficha", "fichas", "id", "em cena", "lista", "hostil", "segredo", "desconhecido", "papel", "mecanismo"];
   const achadas = tela.filter((l) => PROIBIDAS.some((p) => new RegExp("(^|[^\\p{L}])" + p + "($|[^\\p{L}])", "iu").test(l)));
   t("nenhuma palavra de mecanismo no que a tela diz", achadas.length === 0, achadas.join(" | "));
@@ -222,6 +225,45 @@ sec("10. O verbo com preço ganha Impedido e Sem volta (F2c, ui.jsx)");
   t("a altura continua ALVOS.piso", /minHeight: ALVOS\.piso/.test(V));
   t("o cartão usa o VerboComPreco de ui.jsx (uma ação, uma forma)", /import \{[^}]*\bVerboComPreco\b[^}]*\} from "\.\/ui\.jsx"/.test(PAINEL) && /<VerboComPreco /.test(CODIGO));
   t("o veredito é a LinhaDoVeredito da casa, armada", /<LinhaDoVeredito armado texto=\{<TextoComMoeda texto=\{texto\} \/>\} \/>/.test(CODIGO));
+}
+
+sec("11. Os acertos de 12/10 (aprendiz): a fera pintada, a linha só da Baixa, o nome que se encadeia");
+{
+  /* a fera com pintura mostra o recorte de cartão; a pata fica para quem não tem */
+  const { retratoDe } = await import(RAIZ + "retratos.js");
+  t("a tabela acha o lobo pelo nome da ficha (com artigo, minúscula)", !!retratoDe({ nome: "O lobo" }, null) && !!retratoDe({ nome: "Lobo atroz" }, null));
+  t("e não acha o que não tem pintura (a pata fica)", retratoDe({ nome: "Três lobos" }, null) === null && retratoDe({ nome: "Corvo" }, null) === null);
+  const marca = (CODIGO.match(/export function MarcaDaFicha\([\s\S]*?\n\}/) || [""])[0];
+  t("a marca pergunta pela pintura ANTES da pata", marca.indexOf("feraPintada(ficha)") > -1 && marca.indexOf("feraPintada(ficha)") < marca.indexOf("DESENHO.pata"));
+  t("a fera pintada vai no Retrato, recorte de cartão, com o anel do papel", /<Retrato semente=\{fera\.nome\} ente=\{fera\} semCarta tamanho=\{lado\} recorte="cartao" anel=\{hostil \? FICHAS\.hostil : T\.inkDim\} \/>/.test(marca));
+  t("a hostil pintada leva a presa, como a de pata", /if \(fera\) \{[\s\S]*?hostil \? <Presa lado=\{grande\} \/> : null/.test(marca));
+  t("a pergunta à tabela não custa a ficha (try)", /function feraPintada\(f\) \{[\s\S]*?try \{[\s\S]*?retratoDe\(ente, null\)[\s\S]*?catch/.test(CODIGO));
+
+  /* a Baixa com oferta: numa linha só, a oferta primeiro (§1) */
+  const fileira = (CODIGO.match(/export function FileiraAVista\([\s\S]*?\n\}/) || [""])[0];
+  t("a fileira recebe `ofertas`", /ofertas = null \}\) \{/.test(fileira));
+  t("com ofertas, a região delas vem ANTES do grupo das fichas, na mesma fila", /role="region" aria-label=\{PALAVRAS\.oferta\}[\s\S]*?role="group" aria-label=\{PALAVRAS\.aVista\}/.test(fileira));
+  t("a fila que rola é uma só, com o esbatimento", (fileira.match(/overflow-x-auto/g) || []).length === 1 && /tv-esbate-fim/.test(fileira));
+  t("sem ofertas, a fila É o grupo «À vista», como antes", /role=\{linhaSo \? undefined : "group"\} aria-label=\{linhaSo \? undefined : PALAVRAS\.aVista\}/.test(fileira));
+  t("a etiqueta é a mesma da Soleira", /aria-label="O que o mundo oferece agora"/.test(UI) && /oferta: "O que o mundo oferece agora"/.test(PAINEL));
+  t("o contrato diz ao App como ligar (e não desenhar a Soleira)", /ofertas  = \[<Oferta …\/>\] \| null/.test(CONTRATO) && /NÃO desenha a `<Soleira>`/.test(CONTRATO));
+
+  /* o nome no cursor: o segundo nome tocado a seguir a outro junta-se por
+     « e », e o terceiro faz do « e » uma vírgula. A função é pura: sai do
+     painel e corre aqui. */
+  const fonteJ = (PAINEL.match(/export function juntarNomeNoCampo[\s\S]*?\n\}\n/) || [""])[0];
+  const juntarNomeNoCampo = new Function(fonteJ.replace("export ", "") + "\nreturn juntarNomeNoCampo;")();
+  let r = juntarNomeNoCampo("Procuro", null, "Freya", []);
+  t("o primeiro nome entra por espaço", r.texto === "Procuro Freya" && r.cursor === 13);
+  r = juntarNomeNoCampo(r.texto, null, "Ondine", ["Freya"]);
+  t("o segundo, a seguir ao primeiro, por « e »", r.texto === "Procuro Freya e Ondine");
+  r = juntarNomeNoCampo(r.texto, null, "Isen o Silencioso", ["Freya", "Ondine"]);
+  t("o terceiro: «Procuro Freya, Ondine e Isen o Silencioso» (era «Freya Ondine Isen»)", r.texto === "Procuro Freya, Ondine e Isen o Silencioso");
+  t("o nome depois de um verbo entra seco: «ataco o rato e grito para Oren»", juntarNomeNoCampo("ataco o rato e grito para ", null, "Oren", ["o rato"]).texto === "ataco o rato e grito para Oren");
+  t("no meio da frase, o resto não perde o espaço", juntarNomeNoCampo("Falo com Freya agora", 14, "Ondine", ["Freya"]).texto === "Falo com Freya e Ondine agora");
+  t("o cursor fica logo depois do nome posto", juntarNomeNoCampo("Falo com Freya agora", 14, "Ondine", ["Freya"]).cursor === 23);
+  t("lixo não estoura: null, cursor fora, nome vazio", juntarNomeNoCampo(null, 99, "Ana", null).texto === "Ana" && juntarNomeNoCampo("x", null, "", []).texto === "x");
+  t("a função não lê nada de fora (a suíte corre-a sozinha)", !!fonteJ && !/\b(T|FICHAS|React|PALAVRAS)\b/.test(fonteJ.replace(/\/\*[\s\S]*?\*\//g, "")));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

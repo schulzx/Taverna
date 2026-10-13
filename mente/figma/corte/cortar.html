@@ -1,0 +1,165 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Corte dos retratos</title>
+<!--
+  A FERRAMENTA DE CORTE DOS RETRATOS (formas.md § Retratos 12, item 1)
+
+  Servida por `servir.cjs` (leia o cabeçalho dele). Três botões:
+
+  1. MEDIR — acha em cada matriz 1024 o centro do rosto (`cx`) e a altura dos
+     olhos (`olhos`), em fração do lado. Quem mede é o Face Landmarker do
+     MediaPipe (carregado da CDN só nesta página: não entra no `package.json`
+     nem no jogo): `olhos` = a média da altura das duas íris (pontos 468 e
+     473 da malha); `cx` = o meio da caixa da malha inteira do rosto. Matriz
+     onde a malha não acha rosto (bicho, focinho, escama) fica com o valor do
+     manifesto e diz «manifesto». Grava `medidos-bruto.json`.
+  2. FOLHA — desenha as matrizes com as duas cruzes, a do manifesto (âmbar) e
+     a medida (verde), para conferir com os olhos antes de adoptar.
+  3. CORTAR — corta o recorte da ficha (§12: lado 0,88, canto
+     ((cx+0,5)/2 − 0,44, 0,03), clamp a [0, 0,12]) e codifica WebP 320×320 a
+     q 0,75 (`canvas.toBlob`, o método de `medir.html`, §6). Usa o `cx` da TABELA do
+     jogo (`RETRATOS`, servida em /corte.json); sem entrada lá, o manifesto. Grava
+     em `public/retratos/<tipo>/<arquivo>.webp`.
+
+  O canto do recorte depende de `cx`: a tabela do jogo (`src/retratos.js`)
+  tem de ter o MESMO `cx` com que o arquivo foi cortado, ou o chip sai torto.
+-->
+<style>
+  body { background: #120E1A; color: #E8E0F0; font: 14px system-ui, sans-serif; margin: 16px; }
+  button { font: inherit; padding: 8px 14px; margin-right: 8px; background: #2A2240; color: inherit; border: 1px solid #5A4E78; border-radius: 6px; cursor: pointer; }
+  #estado { margin: 12px 0; white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 12px; }
+  #folha { display: flex; flex-wrap: wrap; gap: 6px; }
+  #folha figure { margin: 0; width: 240px; }
+  #folha figcaption { font: 11px ui-monospace, monospace; }
+</style>
+<button id="medir">Medir</button>
+<button id="folha-btn">Folha</button>
+<button id="cortar">Cortar</button>
+<div id="estado">pronto</div>
+<div id="folha"></div>
+<script type="module">
+const LADO_FICHA = 0.88, TOPO_FICHA = 0.03, FOLGA = 0.12, SAIDA = 320, QUALIDADE = 0.75;
+const estado = document.getElementById("estado");
+const diz = (s) => { estado.textContent = s; };
+const lista = await (await fetch("/lista.json")).json();
+const chave = (it) => it.tipo + "/" + it.arquivo;
+
+const carrega = (n) => new Promise((ok, falha) => {
+  const im = new Image();
+  im.onload = () => ok(im);
+  im.onerror = () => falha(new Error("matriz " + n));
+  im.src = "/fonte/" + n;
+});
+const prende = (v) => Math.max(0, Math.min(FOLGA, v));
+
+/* ---------------- medir ---------------- */
+let medidor = null;
+async function prepara() {
+  if (medidor) return medidor;
+  const V = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+  const { FaceLandmarker, FilesetResolver } = await import(V + "/vision_bundle.mjs");
+  const arquivos = await FilesetResolver.forVisionTasks(V + "/wasm");
+  medidor = await FaceLandmarker.createFromOptions(arquivos, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+      delegate: "CPU",
+    },
+    runningMode: "IMAGE",
+    numFaces: 1,
+    minFaceDetectionConfidence: 0.3,
+    minFacePresenceConfidence: 0.3,
+  });
+  return medidor;
+}
+function mede(im) {
+  const r = medidor.detect(im);
+  const p = r.faceLandmarks && r.faceLandmarks[0];
+  if (!p || p.length < 474) return null;
+  let x0 = 1, x1 = 0;
+  for (const q of p) { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); }
+  return { cx: (x0 + x1) / 2, olhos: (p[468].y + p[473].y) / 2, largura: x1 - x0 };
+}
+document.getElementById("medir").onclick = async () => {
+  diz("a carregar o medidor…");
+  await prepara();
+  const saida = {};
+  let achou = 0;
+  for (let n = 0; n < lista.length; n++) {
+    const it = lista[n];
+    const im = await carrega(n);
+    const m = mede(im);
+    if (m) achou++;
+    saida[chave(it)] = m
+      ? { cx: +m.cx.toFixed(3), olhos: +m.olhos.toFixed(3), largura: +m.largura.toFixed(3), manifesto: { cx: it.cx, olhos: it.olhos }, origem: "medido" }
+      : { cx: it.cx, olhos: it.olhos, manifesto: { cx: it.cx, olhos: it.olhos }, origem: "manifesto" };
+    diz(`medindo ${n + 1}/${lista.length} · com rosto achado: ${achou}`);
+  }
+  await fetch("/medidos", { method: "POST", body: JSON.stringify(saida, null, 1) });
+  diz(`medidas gravadas: ${achou} medidas, ${lista.length - achou} ficaram com o manifesto`);
+};
+
+/* ---------------- folha ---------------- */
+document.getElementById("folha-btn").onclick = async () => {
+  const valores = await (await fetch("/valores.json")).json();
+  const alvo = document.getElementById("folha");
+  alvo.textContent = "";
+  const so = new URLSearchParams(location.search).get("so");
+  for (let n = 0; n < lista.length; n++) {
+    const it = lista[n];
+    if (so && !it.arquivo.includes(so)) continue;
+    const v = valores[chave(it)] || it;
+    const im = await carrega(n);
+    const c = document.createElement("canvas");
+    c.width = c.height = 240;
+    const g = c.getContext("2d");
+    g.drawImage(im, 0, 0, 240, 240);
+    /* a régua: um traço a cada 0,05 do lado, mais forte a cada 0,10 */
+    for (let k = 1; k < 20; k++) {
+      g.strokeStyle = k % 2 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.3)";
+      g.lineWidth = 1;
+      g.beginPath(); g.moveTo(0, k * 12); g.lineTo(240, k * 12); g.moveTo(k * 12, 0); g.lineTo(k * 12, 240); g.stroke();
+    }
+    const cruz = (cx, oy, cor) => {
+      g.strokeStyle = cor; g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(0, oy * 240); g.lineTo(240, oy * 240); g.moveTo(cx * 240, 0); g.lineTo(cx * 240, 240); g.stroke();
+    };
+    cruz(it.cx, it.olhos, "#FFB03A");
+    cruz(v.cx, v.olhos, "#8FE0A2");
+    const f = document.createElement("figure");
+    const cap = document.createElement("figcaption");
+    cap.textContent = `${it.arquivo} m ${it.cx}·${it.olhos} → ${v.cx}·${v.olhos} ${v.origem || ""}`;
+    f.append(c, cap);
+    alvo.append(f);
+  }
+  diz("folha pronta");
+};
+
+/* ---------------- cortar ---------------- */
+document.getElementById("cortar").onclick = async () => {
+  const valores = await (await fetch("/corte.json")).json();
+  let total = 0, maior = 0, menor = Infinity;
+  const usados = {};
+  for (let n = 0; n < lista.length; n++) {
+    const it = lista[n];
+    const v = valores[chave(it)] || it;
+    usados[chave(it)] = v.cx;
+    const im = await carrega(n);
+    const L = im.naturalWidth;
+    const x = prende((v.cx + 0.5) / 2 - LADO_FICHA / 2);
+    const y = prende(TOPO_FICHA);
+    const c = document.createElement("canvas");
+    c.width = c.height = SAIDA;
+    const g = c.getContext("2d");
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = "high";
+    g.drawImage(im, x * L, y * L, LADO_FICHA * L, LADO_FICHA * L, 0, 0, SAIDA, SAIDA);
+    const blob = await new Promise((ok) => c.toBlob(ok, "image/webp", QUALIDADE));
+    const r = await fetch(`/webp/${it.tipo}/${it.arquivo}`, { method: "POST", body: blob });
+    if (!r.ok) throw new Error(it.arquivo + ": " + (await r.text()));
+    total += blob.size; maior = Math.max(maior, blob.size); menor = Math.min(menor, blob.size);
+    diz(`cortando ${n + 1}/${lista.length} · ${(total / 1024).toFixed(0)} KB`);
+  }
+  await fetch("/cortados", { method: "POST", body: JSON.stringify(usados) });
+  diz(`cortadas ${lista.length} · total ${(total / 1024).toFixed(0)} KB · média ${(total / lista.length / 1024).toFixed(1)} KB · ${(menor / 1024).toFixed(1)}–${(maior / 1024).toFixed(1)} KB`);
+};
+</script>

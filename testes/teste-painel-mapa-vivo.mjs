@@ -253,5 +253,56 @@ sec("10. O painel: o que a tela nunca diz, e a forma da casa");
   t("o emoji do motor não entra (`icone`)", !/\.icone\b/.test(CODIGO));
 }
 
+sec("13. Os acertos de 12/10 (aprendiz): o nome do rumo, o foco, o artigo, as quatro dúvidas");
+{
+  /* o panorama cortava o nome na borda («EIRAS QUEBRADAS»): o nome que
+     passaria da faixa encosta a `horizonte.borda` dela. A função sai do
+     painel e corre aqui com a tabela de verdade. */
+  const fonteX = (PAINEL.match(/const xDoHorizonte = \(x, largura\) => \{[\s\S]*?\n\};/) || [""])[0];
+  t("o painel tem a conta do x do horizonte", !!fonteX);
+  const xDoHorizonte = new Function("MV", fonteX + "\nreturn xDoHorizonte;")(MAPA_VIVO);
+  const B = MAPA_VIVO.faixa.horizonte.borda;
+  t("a borda é 16, o lado da descida", B === 16 && B === MAPA_VIVO.faixa.descida.ladoDireito);
+  let fora = [], vistos = 0;
+  for (let i = 0; i < 30; i++) {
+    const w = i === 0 ? w0 : mundo(i);
+    if (!w.dados) continue;
+    for (const L of [1142, 760, 520]) {
+      const f = FR.itensDaFaixa(w.dados, { largura: L });
+      for (const h of f.horizonte.filter((x) => !x.oculto)) {
+        vistos++;
+        const x = xDoHorizonte(h, L);
+        if (x - h.largura / 2 < B - 0.01 || x + h.largura / 2 > L - B + 0.01) fora.push(`${i}:${L}:${h.texto}`);
+      }
+    }
+  }
+  t(`nenhum nome do horizonte sai da faixa (${vistos} nomes, 30 regiões, 3 larguras)`, vistos > 0 && fora.length === 0, fora.slice(0, 4).join(", "));
+  t("o nome que já cabe não se mexe", xDoHorizonte({ x: 500, largura: 120 }, 1142) === 500);
+  t("o nome na borda encosta: «PEDREIRAS QUEBRADAS» a x 40 vai a 16 + metade", xDoHorizonte({ x: 40, largura: 150 }, 1142) === 16 + 75);
+  t("o nome maior que a faixa fica ao meio", xDoHorizonte({ x: 10, largura: 2000 }, 1142) === 571);
+  t("o desenho usa a conta, não o x cru", /x=\{xDoHorizonte\(x, it\.largura\)\}/.test(CODIGO));
+
+  /* o foco volta a quem o tinha (WAI-ARIA APG, Dialog Modal) */
+  const efeito = (CODIGO.match(/React\.useEffect\(\(\) => \{\s*let antes = null;[\s\S]*?\}, \[\]\);/) || [""])[0];
+  t("a tela guarda quem tinha o foco antes de o tomar", /antes = typeof document !== "undefined" \? document\.activeElement/.test(efeito) && efeito.indexOf("activeElement") < efeito.indexOf("raiz.current.focus()"));
+  t("e devolve-lho ao fechar, só se ele ainda existe", /return \(\) => \{[\s\S]*antes\.isConnected[\s\S]*antes\.focus\(/.test(efeito));
+
+  /* o artigo do nome: sem artigo, a preposição seca (como «de Ponte Nova»);
+     nome que começa por artigo contrai */
+  const fonteP = (PAINEL.match(/const CONTRACAO = \{[\s\S]*?\nfunction prep\(p, nome\) \{[\s\S]*?\n\}/) || [""])[0];
+  const prep = new Function(fonteP + "\nreturn prep;")();
+  t("de Casa do Martelo (o nome sem artigo fica seco)", prep("de", "Casa do Martelo") === "de Casa do Martelo");
+  t("à porta do que sobrou de Gelo Fundo", prep("de", "O que sobrou de Gelo Fundo") === "do que sobrou de Gelo Fundo");
+  t("partir para a Torre…, em os… → nos…", prep("para", "A Torre Serena") === "para a Torre Serena" && prep("em", "Os Fornos") === "nos Fornos");
+  t("o «A» que é letra de nome não é artigo sem espaço", prep("de", "Abismo") === "de Abismo");
+  t("o verbo e o «onde» usam a contração", /verbo: `Partir \$\{prep\("para", no\.nome\)\}`/.test(CODIGO) && /à porta \$\{prep\("de", no\.nome\)\}/.test(CODIGO) && !/Partir para \$\{no\.nome\}/.test(CODIGO));
+
+  /* as quatro dúvidas da v9.441, decididas e escritas onde moram */
+  t("(1) o amanhecer pinta com o Entardecer, decidido", MAPA_VIVO.modoDaFase.amanhecer === "entardecer" && /amanhecer usa o entardecer — DECIDIDO/.test(readFileSync(new URL("../src/estilo.js", import.meta.url), "utf8")));
+  t("(2) a régua à escala, decidido", /É À ESCALA|À ESCALA \(15 km/.test(PAINEL) && /DECIDIDO \(`aprendiz`, 12\/10;\s*dúvida 2/.test(PAINEL));
+  t("(3) o partir sem glifo: a peça da casa", /dúvida 3 da v9\.441/.test(PAINEL) && /<VerboComPreco /.test(CODIGO));
+  t("(4) a chegada às HH:MM, a hora do relógio", /dúvida 4 da v9\.441/.test(PAINEL) && /você chega às \$\{v\.chegada\.hora\}/.test(CODIGO));
+}
+
 console.log(`\n${bons} ok, ${maus} falha(s)`);
 if (maus) process.exit(1);
