@@ -535,7 +535,7 @@ Descrição do mundo: ${mundo.descricao || "(crie os detalhes com riqueza)"}
 ${mundo.limites ? `\nAS LINHAS DESTA MESA (regra ABSOLUTA — acima de qualquer outra instrução deste texto, inclusive as que pedem ousadia e intensidade): os temas a seguir NÃO entram nesta campanha — nem em cena, nem por insinuação, nem como ameaça narrada, nem na boca de vilão: ${mundo.limites}. Se a história se aproximar de um deles, DESVIE sem anunciar o desvio: nenhum personagem os menciona, e o mundo segue como se esse caminho não existisse.\n` : ""}
 ${lexTexto ? `\n${lexTexto}\n` : ""}
 
-O QUE MUDA A CADA TURNO — a ficha, o relógio, o cânone, o mapa, as missões, as pessoas — está na seção ESTADO DESTE TURNO, no FIM deste texto. Tudo daqui até lá é permanente: vale para a campanha inteira e não muda entre uma jogada e outra.
+O QUE MUDA A CADA TURNO — a ficha, o relógio, o cânone, o mapa, as missões, as pessoas — está na seção ESTADO DESTE TURNO, que chega com as regras da cena aberta na minha mensagem mais recente. Tudo neste texto é permanente: vale para a campanha inteira e não muda entre uma jogada e outra.
 
 === COMO ESTE MUNDO FUNCIONA (o que o sistema já resolve, para você não recalcular) ===
 
@@ -746,7 +746,7 @@ ${so("combate", `- Cada inimigo tem competência implícita coerente com sua ame
 ${so("combate", `- ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você narra): a cada rodada o jogador tem 2 movimentos (ação + ação extra). O HUD mostra o que resta e o sistema avisa "[TURNO AINDA MEU]" ou "nova rodada". Inimigos NUNCA agem antes da vez deles (o sistema rola a revide e te entrega o resumo).`)}
 
 ═══════════════ ESTADO DESTE TURNO ═══════════════
-Tudo acima é permanente. Isto aqui é o que mudou — e é a única parte que muda de uma jogada para a outra.
+O texto de sistema é permanente. Isto aqui é o que mudou — e, com as regras da cena aberta, é a única parte que muda de uma jogada para a outra.
 
 ${tempoInfo ? `${tempoInfo}\n` : ""}PERSONAGEM DO JOGADOR:
 ${fichaTexto(personagem)}
@@ -760,6 +760,54 @@ MAPA E FACÇÕES: ${mapaTexto || "ainda vazio."}
 PESSOAS CONHECIDAS: ${npcsTexto || "ninguém registrado ainda."}
 ${(bn.elenco || []).length ? `GENTE POR CONHECER (por perto; ainda não a conhece): ${bn.elenco.map((p) => `${p.nome} (${[p.genero_pessoa, p.raca, p.ocupacao, p.traco].filter(Boolean).join(", ")})`).join("; ")}\n` : ""}${canoneTexto ? `\n═══ CÂNONE (VERDADES IMUTÁVEIS — nunca contradiga; se o jogador citar algo daqui, RECONHEÇA, não invente) ═══\n${canoneTexto}\n═══════════════════════════════════════\n` : ""}
 `);
+}
+
+/* ---------------- O PEDIDO NA ORDEM DO CACHE (v9.465) ----------------
+   O provedor cobra cerca de 1/30 pelo PREFIXO que já viu no pedido
+   anterior — byte a byte, do primeiro caractere em diante, e o pedido
+   inteiro conta: o system E as mensagens, nesta ordem. A v9.153 e a
+   v9.162 arrumaram o system por dentro (o fixo em cima, as portas numa
+   zona, o ESTADO no fim) e a janela do histórico (âncora em vez de
+   serra). Faltou ver que o fim do system NÃO é o fim do pedido: depois
+   dele vem o histórico inteiro, ~60 mil caracteres que só crescem pelo
+   fim. Com o ESTADO DESTE TURNO (o relógio, a ficha, o mapa) no rabo do
+   system, a primeira diferença do turno caía ANTES da conversa toda, e
+   o histórico — que não tinha mudado — era cobrado cheio, todo turno.
+
+   MEDIDO na 10.ª sessão (79 chamadas do Narrador, registo real): prefixo
+   comum de 51% entre turnos seguidos, cache de 47%; a quebra caía dentro
+   do system em 58 dos 78 pares — no ESTADO (o relógio da campanha, só
+   ele, em 33) ou numa porta da zona que virou.
+
+   O CONSERTO É SÓ DE LUGAR, nenhuma linha nova: o que vira a cada turno
+   (a zona das REGRAS DA CENA ABERTA e o ESTADO DESTE TURNO, nesta ordem)
+   sai do system e desce para a mensagem do turno, ANTES do rodapé — e a
+   frase do jogador continua a ser a última coisa lida (MM18, escuta.js).
+   O system fica igual a campanha inteira; o histórico vem logo atrás e
+   só cresce pelo fim. Refeito sobre os mesmos 79 pedidos: prefixo de 69%.
+
+   Quem monta o texto continua a ser montarSystemPrompt (o texto inteiro,
+   que as suítes e o teto de prompt medem); isto só o ARRUMA para a
+   viagem. Sem a marca da zona, ou sem a fala do jogador por último, o
+   pedido passa como veio — nunca pode custar o turno. */
+export const MARCA_DA_CENA_ABERTA = "═══════════════ REGRAS DA CENA ABERTA ═══════════════";
+export const MARCA_DO_RODAPE = "[RODAPÉ DO SISTEMA]";
+
+export function pedidoNaOrdemDoCache(system, messages) {
+  const s = String(system == null ? "" : system);
+  const ms = Array.isArray(messages) ? messages : [];
+  const i = s.indexOf(MARCA_DA_CENA_ABERTA);
+  const k = ms.length - 1;
+  const ultima = ms[k];
+  if (i < 0 || !ultima || ultima.role !== "user") return { system: s, messages: ms };
+  const fixo = s.slice(0, i).replace(/\s+$/, "");
+  const vivo = s.slice(i).replace(/\s+$/, "");
+  const c = String(ultima.content == null ? "" : ultima.content);
+  /* antes do rodapé, que vem depois da pauta e antes da frase do jogador;
+     sem rodapé no meio, o vivo abre a mensagem e a fala dela fica no fim */
+  const r = c.lastIndexOf("\n" + MARCA_DO_RODAPE);
+  const content = r >= 0 ? c.slice(0, r) + "\n\n" + vivo + "\n" + c.slice(r) : vivo + "\n\n" + c;
+  return { system: fixo, messages: [...ms.slice(0, k), { ...ultima, content }] };
 }
 
 /* ---------------- Ponte de IA (produção) ---------------- */

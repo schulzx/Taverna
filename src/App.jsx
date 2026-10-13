@@ -225,7 +225,7 @@ import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca, 
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
-import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA } from "./prompt.js";
+import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache } from "./prompt.js";
 import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
@@ -502,14 +502,22 @@ async function chamarMestre(system, historico) {
      DeepSeek escreve prosa MAIS longa que o Gemini — com 2600 a resposta
      truncava no meio do JSON e a tela mostrava "…". O teto não custa —
      só se paga pelo que é gerado. */
-  let texto = await chamarModelo(system, janelaAncorada(historico), 3600, "json");
+  /* O PEDIDO NA ORDEM DO CACHE (v9.465): o system sai daqui igual a campanha
+     inteira, e o que vira a cada turno (as regras da cena aberta e o ESTADO)
+     desce para a mensagem do turno, antes do rodapé. A conta e o porquê
+     moram em prompt.js. Se a arrumação estourar, o pedido vai como vinha. */
+  let pedido = { system, messages: janelaAncorada(historico) };
+  try { pedido = pedidoNaOrdemDoCache(system, pedido.messages); } catch (e) { calou("o pedido na ordem do cache", e); }
+  let texto = await chamarModelo(pedido.system, pedido.messages, 3600, "json");
   let resp = extrairJSON(texto);
   /* REDE DE SEGURANÇA (v7.0.2): se veio JSON válido mas SEM narrativa (o "…"
      na tela), tenta UMA segunda vez com um empurrão explícito antes de
      desistir. */
   if (!resp.narrativa || resp.narrativa === "…" || resp.narrativa.startsWith("O Mestre hesita")) {
-    const reforco = [...janelaAncorada(historico), { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
-    texto = await chamarModelo(system, reforco, 3600, "json");
+    /* o reforço vai DEPOIS do pedido já arrumado: o prefixo é o da primeira
+       tentativa inteira, e sai do cache quase todo */
+    const reforco = [...pedido.messages, { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
+    texto = await chamarModelo(pedido.system, reforco, 3600, "json");
     const resp2 = extrairJSON(texto);
     if (resp2.narrativa && resp2.narrativa !== "…" && !resp2.narrativa.startsWith("O Mestre hesita")) {
       /* mantém as mudanças da primeira resposta se a segunda não trouxer */

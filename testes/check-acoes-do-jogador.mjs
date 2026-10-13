@@ -447,10 +447,10 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   /* (os pendentes ligados, o oficial, 13/10: o import de chegadaDaViagem, +1, e a reserva do LimiteDasFichas, +3, ACIMA; o contexto do paradeiro no Cronista, +6, também acima destes) 9214 -> 9218, +4; só o endereço andou. */
   /* (a 10.ª sessão ligada, o oficial, 13/10: o sinal da procura de gente, +6, o longe do EM CENA, +4, e o objeto do teste em ctxDesafio, ACIMA ou entre estes; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cc0770a): 9218 -> 9222, +4. */
   /* (S10b · a abertura por situação e o kit inicial, o oficial, 13/10: o import de kit-inicial.js, +2, a criação, +3, e equiparCombate/montarGrid, +10, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 341e2cd): 9222 -> 9237, +15. */
-  } else if (iPush + 1 !== 9262) { /* (v9.463, o oficial, 13/10: o apontado da agressão e a planta pelo lugar, +6, tudo ACIMA) */ /* (v9.461 ligada, o oficial, 13/10: elencoDoCoracao e cidadeDoCoracao, +13, o QUEM É, e a espinha e os sítios do EM CENA, +5, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 69ad49f): 9237 -> 9256, +19. */
-    falha(`pushMsgs saiu de src/App.jsx:9262 e agora está em :${iPush + 1}`,
+  } else if (iPush + 1 !== 9270) { /* (v9.465, o frontend, 13/10: o pedido na ordem do cache em chamarMestre, +8, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 842adc7): 9262 -> 9270, +8. */ /* (v9.463, o oficial, 13/10: o apontado da agressão e a planta pelo lugar, +6, tudo ACIMA) */ /* (v9.461 ligada, o oficial, 13/10: elencoDoCoracao e cidadeDoCoracao, +13, o QUEM É, e a espinha e os sítios do EM CENA, +5, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 69ad49f): 9237 -> 9256, +19. */
+    falha(`pushMsgs saiu de src/App.jsx:9270 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:9262, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:9270, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

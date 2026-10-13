@@ -112,10 +112,65 @@ sec("4. A JANELA ANCORADA — o histórico para de serrar");
   t("toda janela abre na fala do jogador", abremCerto);
   t("conversa curta entra inteira", janelaAncorada(conversa(10)).length === 10);
   t("lixo não quebra", janelaAncorada(null).length === 0 && janelaAncorada([{ solta: true }]).length === 0);
-  /* e é ELA que o App usa — nas duas chamadas, inclusive o reforço */
-  t("o App a usa na chamada", /chamarModelo\(system, janelaAncorada\(historico\), 3600/.test(APP));
-  t("e no reforço", /\[\.\.\.janelaAncorada\(historico\),/.test(APP));
+  /* e é ELA que o App usa — nas duas chamadas, inclusive o reforço.
+     v9.465: as asserções MUDARAM DE FORMA, não de intenção. A janela agora
+     passa por pedidoNaOrdemDoCache antes de viajar, e o reforço reaproveita
+     o pedido já arrumado (pedido.messages) — que É a janela ancorada, com a
+     mensagem do turno acrescida do que vira. Procurar a chamada antiga
+     literal faria esta suíte reprovar a própria melhoria. */
+  t("o App a usa na chamada", /pedido = \{ system, messages: janelaAncorada\(historico\) \}/.test(APP) && /chamarModelo\(pedido\.system, pedido\.messages, 3600/.test(APP));
+  t("e no reforço", /\[\.\.\.pedido\.messages,/.test(APP) && /chamarModelo\(pedido\.system, reforco, 3600/.test(APP));
   t("o slice deslizante morreu", !/historico\.slice\(-JANELA_DE_HISTORICO\)/.test(APP));
+}
+
+sec("5. O PEDIDO NA ORDEM DO CACHE (v9.465) — o histórico deixa de pagar cheio");
+{
+  /* O fim do system não é o fim do pedido: depois dele vem o histórico.
+     Com o ESTADO no rabo do system, a primeira diferença do turno caía
+     ANTES da conversa inteira, e ela — igual — era cobrada cheia. Medido
+     na 10.ª sessão (79 chamadas): prefixo de 51%, cache de 47%. Refeito
+     sobre os mesmos pedidos com esta arrumação: 69%. */
+  const { pedidoNaOrdemDoCache, MARCA_DA_CENA_ABERTA, MARCA_DO_RODAPE } = await import(S + "prompt.js");
+  const { ETIQUETA_DO_PEDIDO } = await import(S + "escuta.js");
+  const montarT = (cena, tempo) => montarSystemPrompt("T", { genero: "Fantasia medieval" }, pers, null, {}, "", "", "", "", tempo, "", "", cena);
+  const hist = [{ role: "user", content: "[PAUTA DO TURNO 1] entro na taverna" }, { role: "assistant", content: "{\"narrativa\":\"A porta range.\"}" }];
+  const turno = (n, frase) => ({ role: "user", content: `[PAUTA DO TURNO ${n}] o que o sistema decidiu\n${MARCA_DO_RODAPE} Agora: dia ${n}.\n${ETIQUETA_DO_PEDIDO}\n${frase}` });
+  const s1 = montarT({ emCidade: true }, "TEMPO DA CAMPANHA: dia 1, 09:00");
+  const s2 = montarT({ emCidade: true, emCombate: true }, "TEMPO DA CAMPANHA: dia 1, 09:10");
+  t("a marca da zona é a do texto montado", s1.includes(MARCA_DA_CENA_ABERTA));
+  t("e o App abre o rodapé por ela (sem isto o corte cai no fallback calado)", APP.includes("const rodape = `" + MARCA_DO_RODAPE));
+  const p1 = pedidoNaOrdemDoCache(s1, [...hist, turno(1, "peço uma cerveja")]);
+  const p2 = pedidoNaOrdemDoCache(s2, [...hist, { role: "user", content: "x" }, { role: "assistant", content: "y" }, turno(2, "saco a espada")]);
+  t("o system viaja sem a zona nem o ESTADO", !p1.system.includes(MARCA_DA_CENA_ABERTA) && !p1.system.includes("ESTADO DESTE TURNO ═"));
+  t("e é IGUAL com outra cena e outra hora — é isso que o torna cacheável", p1.system === p2.system);
+  const u = p1.messages[p1.messages.length - 1].content;
+  t("a zona e o ESTADO descem para a mensagem do turno", u.includes(MARCA_DA_CENA_ABERTA) && u.includes("TEMPO DA CAMPANHA: dia 1, 09:00"));
+  t("nesta ordem: pauta, zona, ESTADO, rodapé", u.indexOf("[PAUTA DO TURNO 1]") < u.indexOf(MARCA_DA_CENA_ABERTA) && u.indexOf(MARCA_DA_CENA_ABERTA) < u.indexOf("ESTADO DESTE TURNO ═") && u.indexOf("ESTADO DESTE TURNO ═") < u.indexOf(MARCA_DO_RODAPE));
+  /* MM18: a frase do jogador é a última coisa que o Narrador lê */
+  t("a frase do jogador continua a ser a última linha", u.endsWith(`${ETIQUETA_DO_PEDIDO}\npeço uma cerveja`));
+  const soma = (p) => p.system.length + p.messages.reduce((a, m) => a + m.content.length, 0);
+  const antes = s1.length + [...hist, turno(1, "peço uma cerveja")].reduce((a, m) => a + m.content.length, 0);
+  t(`nada se perdeu nem se somou (${soma(p1) - antes} caracteres de diferença, só costura)`, Math.abs(soma(p1) - antes) <= 4);
+  t("o histórico passa intocado", p1.messages[0] === hist[0] && p1.messages[1] === hist[1]);
+  /* o prefixo de dois turnos seguidos cobre o system E a conversa */
+  const ser = (p) => p.system + "\u0000" + p.messages.map((m) => m.role + ":" + m.content).join("\u0000");
+  const a = pedidoNaOrdemDoCache(s1, [...hist, turno(1, "peço uma cerveja")]);
+  const histDepois = [...hist, { role: "user", content: "[PAUTA DO TURNO 1] o que o sistema decidiu" }, { role: "assistant", content: "{\"narrativa\":\"Ela chega.\"}" }];
+  const b = pedidoNaOrdemDoCache(s2, [...histDepois, turno(2, "saco a espada")]);
+  const pre = (() => { const x = ser(a), y = ser(b); let i = 0; while (i < x.length && x[i] === y[i]) i++; return i; })();
+  t("virar a cena e a hora não corta o prefixo antes da conversa", pre > a.system.length + hist.reduce((s, m) => s + m.content.length, 0));
+  /* sem rodapé no meio (o pedido que é só rodapé + frase), o vivo abre a
+     mensagem e a frase segue no fim */
+  const soFrase = pedidoNaOrdemDoCache(s1, [{ role: "user", content: `${MARCA_DO_RODAPE} Agora.\n${ETIQUETA_DO_PEDIDO}\nolho em volta` }]);
+  const uf = soFrase.messages[0].content;
+  t("rodapé à cabeça: o vivo abre, a frase fecha", uf.startsWith(MARCA_DA_CENA_ABERTA) && uf.endsWith("olho em volta"));
+  /* nunca pode custar o turno: o que não reconhece, devolve como veio */
+  const semMarca = pedidoNaOrdemDoCache("só regras", [{ role: "user", content: "oi" }]);
+  t("system sem a zona passa como veio", semMarca.system === "só regras" && semMarca.messages[0].content === "oi");
+  const fimAssist = pedidoNaOrdemDoCache(s1, [{ role: "assistant", content: "z" }]);
+  t("e quem não termina no jogador também", fimAssist.system === s1);
+  let estourou = false; try { pedidoNaOrdemDoCache(null, null); pedidoNaOrdemDoCache(s1, [null]); } catch { estourou = true; }
+  t("lixo não estoura", !estourou);
 }
 
 console.log(`\ncache v9.162: ${bons} passaram, ${maus} falharam`);

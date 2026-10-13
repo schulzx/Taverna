@@ -69,9 +69,14 @@ console.log("\n3. O ESTADO ESTÁ NO FIM, E SÓ LÁ");
 const i = P.indexOf("ESTADO DESTE TURNO ═");
 t("a seção existe", i > 0);
 t("e está no último quinto do texto", i > P.length * 0.8);
-/* a promessa que o topo faz tem de ser verdade */
-t("o topo avisa onde ela está", /está na seção ESTADO DESTE TURNO, no FIM deste texto/.test(P));
-t("e diz que o resto é permanente", /Tudo daqui até lá é permanente/.test(P));
+/* a promessa que o topo faz tem de ser verdade.
+   v9.465: a promessa MUDOU DE LUGAR, por isso a asserção mudou de texto.
+   O texto montado continua com o ESTADO no fim (é o que esta suíte e o teto
+   medem), mas na viagem a zona e o ESTADO descem para a mensagem do turno
+   (prompt.js#pedidoNaOrdemDoCache, provado em teste-cache) — e o topo tem de
+   dizer onde o Narrador de facto os encontra, não onde estavam. */
+t("o topo avisa onde ela está", /está na seção ESTADO DESTE TURNO, que chega com as regras da cena aberta na minha mensagem mais recente/.test(P));
+t("e diz que o resto é permanente", /Tudo neste texto é permanente/.test(P));
 /* NENHUM DADO VOLÁTIL PODE TER FICADO PARA TRÁS: um só já corta o
    prefixo, e o ganho inteiro vai junto */
 const antes = P.slice(0, i);
