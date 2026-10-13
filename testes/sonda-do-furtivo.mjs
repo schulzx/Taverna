@@ -52,6 +52,7 @@ import { DEFESA_DA_ARMADURA } from "../src/prontos.js";
 import { bonusDePericia } from "../src/pericias.js";
 import { nascerEscondido, oculto, revisarEscondido, estadoEscondido, custoDeEsconder } from "../src/escondido.js";
 import { CENARIOS_DA_REGUA, comSorteTravada } from "./regua-combate.mjs";
+import { rng, hashSemente } from "../src/semente.js";
 
 /* ---------------- AS TABELAS DA SONDA ---------------- */
 
@@ -101,14 +102,37 @@ export const RETRATO_DO_FURTIVO = {
   justo:   { antes: { furtivo: 1, vitoria: 0.579 }, regra: { furtivo: 0.945, queda: 0.018 }, ardilosa: { furtivo: 0.962, queda: -0.046 } },
   brando:  { antes: { furtivo: 1, vitoria: 1 },     regra: { furtivo: 0.997, queda: 0.003 }, ardilosa: { furtivo: 1, queda: -0.090 } },
   sozinho: { antes: { furtivo: 1, vitoria: 0.914 }, regra: { furtivo: 0, queda: 0.211, vitoria: 0.614 }, ardilosa: { furtivo: 0.403, queda: 0.050, vitoria: 0.836 } },
+  /* A ABERTURA PERTO (S10b, 13/10) — REGISTO, SEM ASSERÇÃO QUE O EXIJA.
+     O retrato acima e a catraca da suíte medem a abertura de antes (fila
+     contra fila, o inimigo a 7–15 casas). Desde v9.460 o App abre a luta
+     pela situação (`ABERTURA_DA_LUTA`, grid.js): "cena" = 2–4 casas fora da
+     masmorra e 3–5 nela; "declarada" = 1–2. Remedido a 140 lutas, mesmas
+     sementes, a sorte da casa semeada pela luta (`situacao` da sonda):
+       com grupo, `regra`, brando: furtivo 88,1% → 71,3% (cena) · 90,3%
+         (declarada); queda 5,3% → 10,1% (cena) · 1,4% (declarada).
+         A CENA SAI DA FAIXA da catraca (furtivo > 85% e queda < 8%): perto,
+         o Ladino chega ao alvo antes do grupo, e sem aliado colado o
+         furtivo não soma. O justo fica dentro (88,1% · 4,2%).
+       sozinho, `regra`: queda 21,1% → 21,0%; `ardilosa`: furtivo 40,3% →
+         34,9%, queda 5,0% → 9,2% (cena), 5,9% (declarada) — dentro.
+       com a arma do kit (Espada Curta em vez da Adaga do pronto): o dano
+         sobe ~2–3%, as frações não mexem (cena, brando: 71,3% · 9,5%).
+     A faixa NÃO se afrouxou: a catraca segue a medir a abertura de antes,
+     e a decisão (aceitar que o Ladino em grupo perca o furtivo na abertura
+     curta, ou dar-lhe a mão) é da pessoa. */
+  abertura: {
+    n: 140,
+    cena:      { justo: { regra: { furtivo: 0.881, queda: 0.042 } }, brando: { regra: { furtivo: 0.713, queda: 0.101 } }, sozinho: { ardilosa: { furtivo: 0.349, queda: 0.092 } } },
+    declarada: { justo: { regra: { furtivo: 0.937, queda: 0.046 } }, brando: { regra: { furtivo: 0.903, queda: 0.014 } }, sozinho: { ardilosa: { furtivo: 0.379, queda: 0.059 } } },
+  },
 };
 
 const cenarioDaSonda = (id) => (id === SOZINHO_DA_SONDA.id ? SOZINHO_DA_SONDA : CENARIOS_DA_REGUA[id]);
 
 /* ---------------- A MESA ---------------- */
 
-function fichaDoLadino() {
-  const h = LADINO_DA_SONDA;
+function fichaDoLadino(armaPedida = null) {
+  const h = armaPedida ? { ...LADINO_DA_SONDA, arma: armaPedida } : LADINO_DA_SONDA;
   const vidaMax = pvEsperadoJogador(h.nivel, h.vigor);
   return {
     nome: h.nome, classe: h.classe, nivel: h.nivel, atributos: { ...h.atributos },
@@ -174,17 +198,22 @@ function passoDoLadino(grade, lad, alvo, todos) {
 
 /* ---------------- UMA LUTA ---------------- */
 
-export function lutaDoLadino(cenarioId, semente, modo) {
+/* A ABERTURA (S10b, 13/10): `situacao` é a de `ABERTURA_DA_LUTA` (grid.js),
+   com a sorte semeada pela luta, como o App a passa desde a fiação; omitida,
+   a abertura de antes, byte a byte (a do retrato). `arma` troca a Adaga do
+   pronto por outra (a do kit inicial do Ladino é a Espada Curta). */
+export function lutaDoLadino(cenarioId, semente, modo, { situacao, arma = null } = {}) {
   const cen = cenarioDaSonda(cenarioId);
   const planta = PLANTAS_DA_SONDA[Math.abs(Number(String(semente).split("|").pop()) || 0) % PLANTAS_DA_SONDA.length];
   return comSorteTravada(`${semente}|${cenarioId}`, () => {
     const grade = montarGrade(planta);
-    let heroi = fichaDoLadino();
+    let heroi = fichaDoLadino(arma);
     let grupo = fichasDoGrupo(cen);
     const pos = posicionar(grade, {
       heroi: { nome: heroi.nome, tamanho: "medio" },
       grupo: grupo.map((c) => ({ nome: c.nome, vida: c.vida, tamanho: "medio" })),
       inimigos: fichasDosInimigos(cen),
+      ...(situacao ? { situacao, sorte: rng(hashSemente(`${semente}|${cenarioId}|abertura`)) } : {}),
     });
     let lugar = pos.heroi;
     let aliados = pos.grupo;
@@ -280,14 +309,14 @@ export function lutaDoLadino(cenarioId, semente, modo) {
 /* ---------------- A MEDIDA ----------------
    Por cenário e por modo: dano do Ladino por luta, a fração dos golpes
    com furtivo, e a queda do dano contra o `antes`. */
-export function sondarFurtivo({ n = LUTAS_DA_SONDA.n, prefixo = LUTAS_DA_SONDA.prefixo, cenarios = LUTAS_DA_SONDA.cenarios } = {}) {
+export function sondarFurtivo({ n = LUTAS_DA_SONDA.n, prefixo = LUTAS_DA_SONDA.prefixo, cenarios = LUTAS_DA_SONDA.cenarios, situacao, arma = null } = {}) {
   const out = {};
   for (const c of cenarios) {
     out[c] = {};
     for (const modo of MODOS_DA_SONDA) {
       let dano = 0, golpes = 0, com = 0, esc = 0, vit = 0;
       for (let i = 0; i < n; i++) {
-        const r = lutaDoLadino(c, `${prefixo}|${i}`, modo);
+        const r = lutaDoLadino(c, `${prefixo}|${i}`, modo, { situacao, arma });
         dano += r.danoDoLadino; golpes += r.golpes; com += r.comFurtivo; esc += r.escondeu; vit += r.vitoria;
       }
       out[c][modo] = { danoPorLuta: dano / n, golpesPorLuta: golpes / n, comFurtivo: golpes ? com / golpes : 0, escondeuPorLuta: esc / n, vitoria: vit / n };

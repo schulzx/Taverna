@@ -217,8 +217,9 @@ sec("1. NENHUM MÓDULO MUDO");
        pela mão do `oficial`/`frontend` na MESMA leva: `concluir(
        equiparKitInicial(comDom({...})))`, SÓ na criação, nunca no load.
        `teste-kit-inicial.mjs` é o primeiro leitor. A entrada sai quando o
-       App o importar. */
-    "kit-inicial.js": "o oficial/frontend, na tela de criação (S10b, 13/10)",
+       App o importar. — 13/10: o oficial ligou-o na MESMA leva (a tela de
+       criação: `concluir(equiparKitInicial(comDom({...})))`, e só ali), e a
+       entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

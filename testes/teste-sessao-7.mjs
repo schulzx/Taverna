@@ -282,7 +282,12 @@ sec("5. a fiação no App (frontend, 12/10) — o motor só vale se o jogo o cha
   t("a fogueira com revela: manhã de revelação e o Livro pago", app.includes('const tipo = r.revela ? "revelacao"') && /if \(r\.revela\) pagarSementesDoElo\(\);/.test(app));
   t("os dois cliques de lado levam presentes e mostrado ao motor", (app.match(/\.\.\.contextoDaLutaPrometida\(\)/g) || []).length === 2);
   t("o lado que promete luta abre-a (no cartão e à fogueira)", /const naLuta = r\.luta \? abrirLutaPrometida\(r\.luta, pago\) : pago;/.test(app) && /if \(r\.luta\) abrirLutaPrometida\(r\.luta, personagemRef\.current \|\| pers\);/.test(app));
-  t("a luta prometida abre pela porta do combate, e nunca por cima de outra", /if \(!luta \|\| !luta\.nome \|\| combateRef\.current\) return pers;\s*\n\s*const ab = abrirCombate\(\[\{ nome: luta\.nome, ameaca: luta\.ameaca \}\], \{ pers \}\);/.test(app));
+  /* A asserção moveu-se (S10b, o oficial, 13/10): a porta do combate passou
+     a receber COMO a luta abriu (`situacao`, ABERTURA_DA_LUTA em grid.js), e
+     a luta prometida entra como a agressão declarada — "declarada", o alvo
+     colado ou a um passo. A intenção é a mesma: a porta única, e nunca por
+     cima de outra luta. */
+  t("a luta prometida abre pela porta do combate, e nunca por cima de outra", /if \(!luta \|\| !luta\.nome \|\| combateRef\.current\) return pers;\s*\n\s*const ab = abrirCombate\(\[\{ nome: luta\.nome, ameaca: luta\.ameaca \}\], \{ pers, situacao: "declarada" \}\);/.test(app));
   t("o mural não prega o favor que o núcleo já pediu", /semPedido = !favorJaPedido\(cartaz\.dador, coracaoRef\.current, nucleoAgora\(\)\);[^\n]*calou/.test(app) && app.includes("if (semHomonimo && semPedido && pregarNoMural(cartaz)) {"));
 }
 

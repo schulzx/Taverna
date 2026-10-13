@@ -38,6 +38,7 @@
    ============================================================ */
 
 import { comSorteTravada, CENARIOS_DA_REGUA } from "./regua-combate.mjs";
+import { rng, hashSemente } from "../src/semente.js";
 
 /* ---------------- AS TABELAS DA SONDA ---------------- */
 
@@ -147,6 +148,28 @@ export const RETRATO_DOS_ATIRADORES = {
     comFerida: { bando: { dano: 16.26, danoGrupo: 3.70, vitoria: 1, rodadas: 4.04 } },
     astuto:    { bando: { dano: 5.90,  danoGrupo: 19.78, vitoria: 1, rodadas: 4.06 } },
     brilhante: { bando: { dano: 4.71,  danoGrupo: 16.19, vitoria: 1, rodadas: 3.99 } },
+    /* A ABERTURA PERTO (S10b, 13/10). O `depois` e a catraca medem a
+       abertura de antes (fila contra fila). Desde v9.460 o App abre a luta
+       pela situação (`ABERTURA_DA_LUTA`, grid.js); remedido a 140 lutas,
+       mesmas sementes (`situacao` da sonda; o herói da régua já tinha a
+       Espada Longa, que é a arma do kit do Guerreiro), dano no herói contra
+       o `antes`:
+                   depois (de antes)   cena              declarada
+         dupla       12,06  −7,4%      11,91  −8,6%      11,10 −14,8%
+         conjurador  12,69 +19,3%       8,59 −19,2%       7,97 −25,1%
+         bando       15,21  −0,6%      12,23 −20,1%       9,36 −38,8%
+         bando grupo  5,49              11,25             16,79
+       Perto, o arqueiro e o mago dão menos tiros de graça antes do corpo a
+       corpo, e o herói apanha MENOS; no bando o dano muda de mão (o grupo
+       leva o dobro ou o triplo; o total sobe +13% na cena, +26% na
+       declarada). A CENA PASSA O LIMITE DE 20% no bando (−20,1%) e a
+       declarada no conjurador e no bando. Sem o golpe de oportunidade, na
+       cena: 13,18 · 10,21 · 15,02. A faixa NÃO se afrouxou: a catraca segue
+       a medir a abertura de antes, e a decisão é da pessoa. */
+    abertura: {
+      cena:      { dupla: { dano: 11.91 }, conjurador: { dano: 8.59 }, bando: { dano: 12.23, danoGrupo: 11.25 } },
+      declarada: { dupla: { dano: 11.10 }, conjurador: { dano: 7.97 }, bando: { dano: 9.36, danoGrupo: 16.79 } },
+    },
   },
 };
 /* O LIMITE — a luta tem de ficar DIFERENTE, não mais dura nem mais mole:
@@ -265,8 +288,11 @@ function passoDoHeroi(G, grade, lugar, alvo, outros, passo) {
    do bruto lê — a fiação que a mira pede ao App, simulada como se já
    estivesse ligada, como MM7 fez com o golpe de oportunidade. Desligada,
    mede o jogo ENQUANTO ela não chega. `degrauDeQuemAtira` declara o
-   degrau de quem dispara, para medir a mira de cada degrau. */
-export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = true, planta: plantaFixa = null, luta = null, passo = "caminho", comFerida = false, degrauDeQuemAtira = null } = {}) {
+   degrau de quem dispara, para medir a mira de cada degrau.
+   A ABERTURA (S10b, 13/10): `situacao` é a de `ABERTURA_DA_LUTA` (grid.js),
+   com a sorte semeada pela luta, como o App a passa desde a fiação;
+   omitida, a abertura de antes, byte a byte (a do retrato). */
+export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = true, planta: plantaFixa = null, luta = null, passo = "caminho", comFerida = false, degrauDeQuemAtira = null, situacao } = {}) {
   const cen = luta || LUTAS_DOS_ATIRADORES[cenarioId];
   const { combate: C, grid: G } = M;
   const planta = plantaFixa || PLANTAS_DOS_ATIRADORES[Math.abs(Number(String(semente).split("|").pop()) || 0) % PLANTAS_DOS_ATIRADORES.length];
@@ -278,6 +304,7 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
       heroi: { nome: heroi.nome, tamanho: "medio" },
       grupo: grupo.map((c) => ({ nome: c.nome, vida: c.vida, tamanho: "medio" })),
       inimigos: fichasDosInimigos(M, cen.inimigos, degrauDeQuemAtira),
+      ...(situacao ? { situacao, sorte: rng(hashSemente(`${semente}|${cenarioId}|abertura`)) } : {}),
     });
     let lugar = passo === "abrigo" ? abrigoDoHeroi(G, grade, pos.heroi, [...pos.grupo, ...pos.inimigos], pos.inimigos) : pos.heroi;
     let aliados = pos.grupo;
@@ -408,12 +435,12 @@ export function lutaDosAtiradores(M, cenarioId, semente, { comOportunidade = tru
 }
 
 /* ---------------- A MEDIDA ---------------- */
-export function sondarAtiradores(M, { n = AMOSTRA_DOS_ATIRADORES.n, prefixo = AMOSTRA_DOS_ATIRADORES.prefixo, cenarios = Object.keys(LUTAS_DOS_ATIRADORES), comOportunidade = true, comFerida = false, degrauDeQuemAtira = null } = {}) {
+export function sondarAtiradores(M, { n = AMOSTRA_DOS_ATIRADORES.n, prefixo = AMOSTRA_DOS_ATIRADORES.prefixo, cenarios = Object.keys(LUTAS_DOS_ATIRADORES), comOportunidade = true, comFerida = false, degrauDeQuemAtira = null, situacao } = {}) {
   const out = {};
   for (const c of cenarios) {
     const soma = { dano: 0, danoGrupo: 0, vitoria: 0, rodadas: 0, recuos: 0, oportunidades: 0, disparos: 0, disparosColados: 0 };
     for (let i = 0; i < n; i++) {
-      const r = lutaDosAtiradores(M, c, `${prefixo}|${i}`, { comOportunidade, comFerida, degrauDeQuemAtira });
+      const r = lutaDosAtiradores(M, c, `${prefixo}|${i}`, { comOportunidade, comFerida, degrauDeQuemAtira, situacao });
       soma.dano += r.danoNoHeroi; soma.danoGrupo += r.danoNoGrupo; soma.vitoria += r.vitoria; soma.rodadas += r.rodadas;
       soma.recuos += r.recuos; soma.oportunidades += r.oportunidades; soma.disparos += r.disparos; soma.disparosColados += r.disparosColados;
     }

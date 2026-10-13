@@ -412,6 +412,8 @@ import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
 import { chegadaDaViagem } from "./partida.js";
+/* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
+import { equiparKitInicial } from "./kit-inicial.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -4549,7 +4551,10 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
         {/* ---- o começo ---- */}
         <div className="flex flex-col items-center gap-3 w-full pb-4">
           <Botao primario desativado={!nome.trim() || !conceito.trim() || !sexo || restantes !== 0}
-            onClick={() => concluir(comDom({
+            /* S10b (13/10): a ficha nasce com a arma da classe na mão
+               (`equiparKitInicial`, kit-inicial.js). SÓ AQUI: o load nunca a
+               chama — quem vendeu a espada não a vê voltar. */
+            onClick={() => concluir(equiparKitInicial(comDom({
               /* o retrato lê estes dois: o sexo dá a geometria, e `feicoesFixas`
                  diz que esta cara foi ESCOLHIDA — nem no mundo plural o sorteio
                  da apresentação passa por cima de quem decidiu a própria */
@@ -4572,7 +4577,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
               /* v9.15: nasce treinado no que a classe e o passado justificam.
                  Redistribui livremente na ficha depois — a criação não é armadilha. */
               pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
-            }))}>ENTRAR NA TAVERNA →</Botao>
+            })))}>ENTRAR NA TAVERNA →</Botao>
           {/* v9.195: e aqui também. Esta tela é ainda mais longa que a do
               mundo, e o campo que faltava na campanha de teste — o sexo do
               herói — fica no meio dela, entre o conceito e os atributos. */}
@@ -6172,7 +6177,7 @@ export default function Taverna() {
      ascensão não fazia diferença. Não fazia mesmo: metade do combate nem
      tinha sido montada. Esta função é o equipamento que faltava, e é a MESMA
      coisa que o caminho normal (a resposta do Mestre) já fazia. */
-  const equiparCombate = (comb, pers) => {
+  const equiparCombate = (comb, pers, { situacao = "cena" } = {}) => {
     const msgs = [];
     if (!comb || !(comb.inimigos || []).length) return { combate: comb, msgs };
     const panteao = (divindadeRef.current && divindadeRef.current.panteao) || [];
@@ -6180,7 +6185,8 @@ export default function Taverna() {
     /* A1 · B8 (#47): o número do GD mora na ficha do inimigo, na batalha; na
        linha fica o que ele muda — e quem o diz é o mundo */
     inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ ${e.nome} é de outra grandeza: o aço comum não o fere.`));
-    const g = montarGrid(pers, inimigos);
+    let g;
+    try { g = montarGrid(pers, inimigos, situacao); } catch (e) { calou("a abertura da luta pela situação", e); g = montarGrid(pers, inimigos); }
     const ordem = rolarIniciativa([
       { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
       ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
@@ -6235,7 +6241,7 @@ export default function Taverna() {
      traços de abertura (a sorte do Halfling, a Pele de Pedra do Goliath)
      são da ficha e não do combate.
      ============================================================ */
-  const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false } = {}) => {
+  const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false, situacao = "cena" } = {}) => {
     /* TODA luta nova zera a marca do território (abaixo): só volta a valer
        quando ESTA luta é mesmo a que reabriu por causa do território de
        uma fuga — `talvezVoltarAoTerritorio` a repõe logo depois de chamar
@@ -6254,7 +6260,7 @@ export default function Taverna() {
     /* v9.44: luta nova devolve os traços de uma vez por combate. Aqui, e não
        no fim da luta anterior, porque nem toda luta tem fim registrado. */
     pers = devolverSegura(abrirCombateTracos(pers));
-    const eq = equiparCombate({ ...(jaNoRef ? combateRef.current : {}), inimigos: crus }, pers);
+    const eq = equiparCombate({ ...(jaNoRef ? combateRef.current : {}), inimigos: crus }, pers, { situacao });
     combateRef.current = eq.combate;
     combateOciosoRef.current = 0;
     reacaoUsadaRef.current = false;
@@ -6299,7 +6305,14 @@ export default function Taverna() {
      estado. Com o grid isso virou mentira útil demais para manter — era ela
      que impedia a área de dizer se o fogo amigo ia pegar alguém. Quem os move
      continua sendo o sistema; o jogador nunca faz essa conta. */
-  const montarGrid = (pers, inimigos) => {
+  /* S10b (13/10): A DISTÂNCIA DE ABERTURA POR SITUAÇÃO (`ABERTURA_DA_LUTA`,
+     grid.js). Quem abre a luta diz como ela abriu: "declarada" (o golpe do
+     jogador num alvo — o alvo é o primeiro inimigo), "emboscada" (a
+     emboscada, a investida da estrada, o bando que volta) e "cena" no resto
+     (a planta decide: a masmorra abre à porta da sala, o resto como
+     encontro). A casa exata sai de um gerador semeado pelo mundo e pelo
+     turno: a mesma semente no mesmo turno abre à mesma distância. */
+  const montarGrid = (pers, inimigos, situacao = "cena") => {
     const grade = montarGrade({
       emMasmorra: !!masmorraRef.current,
       local: localAtualTxt(),
@@ -6309,6 +6322,8 @@ export default function Taverna() {
       heroi: { nome: pers.nome, tamanho: pers.tamanho || "medio" },
       grupo: (pers.grupo || []).map((c) => ({ nome: c.nome, vida: c.vida, vidaMax: c.vidaMax, tamanho: c.tamanho || "medio" })),
       inimigos: inimigos || [],
+      situacao: typeof situacao === "string" && situacao ? situacao : "cena",
+      sorte: rng(hashSemente(`${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`)),
     });
     return { grade, heroi: p.heroi, aliados: p.grupo, inimigos: p.inimigos };
   };
@@ -11442,7 +11457,7 @@ export default function Taverna() {
           /* nada: o folego da fuga protege — quem a IA descreveu e quem
              acabou de ficar para tras */
         } else if (emb && emb.tipo === "emboscada") {
-          const ab = abrirCombate(emb.inimigos, { pers });
+          const ab = abrirCombate(emb.inimigos, { pers, situacao: "emboscada" });
           pers = ab.pers;
           msgs.push(falaDaEmboscada(emb), ...ab.msgs);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}\n${envelopeDaEmboscada(emb)}`;
@@ -18694,7 +18709,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!r) return "";
     const bando = bandoAoVoltar(r);
     if (!bando.length) return "";
-    const ab = abrirCombate(inimigosDoBandoDaFuga(bando), { pers: personagemRef.current });
+    const ab = abrirCombate(inimigosDoBandoDaFuga(bando), { pers: personagemRef.current, situacao: "emboscada" });
     if (ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
     if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
     territorioEmLutaRef.current = r.id;
@@ -18732,7 +18747,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           nome: nomeDoVilao ? `Homem de ${nomeDoVilao} ${i + 1}` : `Emboscador ${i + 1}`,
           ameaca: devida.ameaca || "competente",
         }));
-        const ab = abrirCombate(inimigos, { pers: personagemRef.current });
+        const ab = abrirCombate(inimigos, { pers: personagemRef.current, situacao: "emboscada" });
         if (ab.msgs.length) pushMsgs(ab.msgs.map((t) => ({ autor: "sistema", texto: t })));
         if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
         pushMsgs([{ autor: "sistema", texto: `⚔ ${devida.onde || "No caminho"}: fecham a passagem — são ${quantos}.` }]);
@@ -19027,7 +19042,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             marcarNoArco("relogio", `o tempo de "${cheio.nome}" se esgotou`);
             continue;
           }
-          const ab = abrirCombate(inimigosDoBandoDaFuga(bandoDeVolta), { pers: personagemRef.current });
+          const ab = abrirCombate(inimigosDoBandoDaFuga(bandoDeVolta), { pers: personagemRef.current, situacao: "emboscada" });
           if (ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
           if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
           pushMsgs([{ autor: "sistema", texto: `${tipoDe(cheio.tipo).icone} ${cheio.consequencia || `${cheio.nome} — chegaram.`}` }]);
@@ -20297,7 +20312,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         }
       } catch (e) { calou("veredictoDoCrime", e); }
     }
-    const ab = abrirCombate([{ nome: a.nome, ameaca: a.ameaca }], { pers: p });
+    const ab = abrirCombate([{ nome: a.nome, ameaca: a.ameaca }], { pers: p, situacao: "declarada" });
     if (ab.pers !== p) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
     pushMsgs([
       ...(jaConfirmado ? [] : [{ autor: "jogador", texto: acao }]),
@@ -23446,7 +23461,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const abrirLutaPrometida = (luta, pers) => {
     try {
       if (!luta || !luta.nome || combateRef.current) return pers;
-      const ab = abrirCombate([{ nome: luta.nome, ameaca: luta.ameaca }], { pers });
+      const ab = abrirCombate([{ nome: luta.nome, ameaca: luta.ameaca }], { pers, situacao: "declarada" });
       if (ab.pers !== pers) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
       if (ab.msgs && ab.msgs.length) pushMsgs(ab.msgs.map((x) => ({ autor: "sistema", texto: x })));
       texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
@@ -25226,7 +25241,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv) ? { nome: inv.criatura, ameaca: inv.ameaca, quantos: inv.quantos, trecho: (jv.de || "") + ">" + (jv.para || "") } : null;
       } catch (e) { calou("a criatura à vista", e); criaturaAVistaRef.current = null; }
       if (inv && inv.investe && !fugiuDela && !combateRef.current) {
-        const ab = abrirCombate(inv.inimigos, { pers: persV });
+        const ab = abrirCombate(inv.inimigos, { pers: persV, situacao: "emboscada" });
         if (ab.pers !== persV) { persV = ab.pers; personagemRef.current = ab.pers; setPersonagem(ab.pers); }
         if (ab.msgs.length) pushMsgs(ab.msgs.map((tx) => ({ autor: "sistema", texto: tx })));
         if (ab.nota) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + ab.nota;
