@@ -103,7 +103,7 @@ import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriat
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL, podarONarrador } from "./agressao.js";
 import { montarEmCena, pautaComEmCena, quemNaFrase } from "./em-cena.js";
 import { fichasDaCena, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
-import { FileiraAVista, VereditoDaFicha } from "./painel-fichas.jsx";
+import { FileiraAVista, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
@@ -411,6 +411,7 @@ import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, e
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
+import { chegadaDaViagem } from "./partida.js";
 
 /* ============================================================
    TAVERNA — versão jogável (Artifact) · Mestre por IA
@@ -5344,7 +5345,10 @@ class LimiteDasFichas extends React.Component {
   constructor(props) { super(props); this.state = { erro: null }; }
   static getDerivedStateFromError(erro) { return { erro }; }
   componentDidCatch(erro) { try { console.error("Taverna · as fichas calaram:", erro); } catch (e) { /* nada mais a fazer */ } }
-  render() { return this.state.erro ? null : this.props.children; }
+  /* `reserva`: o que fica no lugar quando a fileira estoura. Na janela baixa
+     as ofertas moram DENTRO da fileira (numa linha só); se ela cala, a
+     soleira de sempre volta — as fichas podem sumir, o que o mundo oferece não. */
+  render() { return this.state.erro ? (this.props.reserva || null) : this.props.children; }
 }
 
 /* MM17 · O MAPA NUNCA PODE CUSTAR O TURNO: se a faixa ou a tela grande
@@ -11743,9 +11747,15 @@ export default function Taverna() {
             /* E3 do "o Narrador só narra" (a fiação): sem o canal npcs do
                Narrador, o gênero vem do Cronista ("ele"/"ela"), entra no
                registo como "homem"/"mulher" e não se reescreve em quem já
-               o tem (fichaDoCronista, npcs.js) */
+               o tem (fichaDoCronista, npcs.js).
+               (e) da v9.447: o paradeiro «cidade» ganha a cidade onde o herói
+               está — e só quando está numa; na estrada ou numa masmorra aberta
+               a cidade vai vazia e o paradeiro fica como o Cronista o deu. */
             let nF = n;
-            try { nF = fichaDoCronista(n, chave ? reg[chave] : null); } catch (e) { calou("o gênero do Cronista", e); nF = n; }
+            try {
+              const naoNaCidade = !!(jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada));
+              nF = fichaDoCronista(n, chave ? reg[chave] : null, { cidade: naoNaCidade ? "" : (cidadeAtualRef.current || ""), mapa: mapaRef.current });
+            } catch (e) { calou("o gênero do Cronista", e); nF = n; }
             if (chave) reg[chave] = mesclarNPC(reg[chave], nF);
             else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
           });
@@ -26604,21 +26614,34 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (!ficha || !ficha.id) return;
       const atual = String(entrada || "");
       const tq = toqueRef.current;
-      const intacta = !!(tq && atual.trim() && atual.trim() === String(tq.texto || "").trim());
+      const igual = !!(tq && atual.trim() && atual.trim() === String(tq.texto || "").trim());
+      /* a frase de uma ficha, intacta, troca-se pela da outra; a frase do
+         JOGADOR com nomes tocados (`mencao`) continua dele — o toque seguinte
+         junta mais um nome, nunca a apaga (§2: com texto do jogador no campo,
+         entra só o nome) */
+      const intacta = igual && !tq.mencao;
       if (!atual.trim() || intacta) {
         const texto = String(ficha.frase || "");
         setEntrada(texto);
-        armarToque({ id: ficha.id, ids: [ficha.id], texto, ficha, verbo: null });
+        armarToque({ id: ficha.id, ids: [ficha.id], nomes: [nomeNoMeioDaFrase(ficha.nome)], texto, ficha, verbo: null });
         return;
       }
       const el = campoRef.current;
-      const pos = el && typeof el.selectionStart === "number" ? Math.min(el.selectionStart, atual.length) : atual.length;
-      const antes = atual.slice(0, pos), depois = atual.slice(pos);
+      /* o cursor: logo depois do último nome posto, se o campo é ainda o que o
+         toque deixou (o input controlado leva o cursor ao fim quando o valor
+         muda, e o nome seguinte sairia do sítio); senão onde o jogador o pôs */
+      const pos = igual && typeof tq.cursor === "number" ? Math.min(tq.cursor, atual.length)
+        : el && typeof el.selectionStart === "number" ? Math.min(el.selectionStart, atual.length) : atual.length;
       const nome = nomeNoMeioDaFrase(ficha.nome);
-      const texto = antes + (antes && !/\s$/.test(antes) ? " " : "") + nome + (depois && !/^\s/.test(depois) ? " " : "") + depois;
+      /* «Procuro Freya» + Ondine → «Procuro Freya e Ondine» (+ Isen → «Freya,
+         Ondine e Isen»): a conta é do painel (`juntarNomeNoCampo`, provada em Node) */
+      const postos = tq && Array.isArray(tq.nomes) ? tq.nomes : [];
+      const junto = juntarNomeNoCampo(atual, pos, nome, postos);
+      const texto = junto.texto;
       const ids = [...new Set([...(tq && Array.isArray(tq.ids) ? tq.ids : []), ficha.id])];
+      const nomes = [...new Set([...postos, nome])];
       setEntrada(texto);
-      armarToque({ id: (tq && tq.id) || ficha.id, ids, texto, ficha, verbo: null });
+      armarToque({ id: (tq && tq.id) || ficha.id, ids, nomes, texto, ficha, verbo: null, mencao: true, cursor: junto.cursor });
     } catch (e) { calou("o toque na ficha", e); }
   };
   const abrirFicha = (ficha) => {
@@ -26634,7 +26657,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (!ficha || !verbo || verbo.impedido) return;
       const texto = String(verbo.frase || "");
       setEntrada(texto);
-      armarToque({ id: ficha.id, ids: [ficha.id], texto, ficha, verbo });
+      armarToque({ id: ficha.id, ids: [ficha.id], nomes: [nomeNoMeioDaFrase(ficha.nome)], texto, ficha, verbo });
       setFichaAberta(null);
     } catch (e) { calou("o verbo do cartão", e); }
   };
@@ -26644,7 +26667,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (!ficha || !verbo) return;
       const texto = String(verbo.frase || "");
       setEntrada(texto);
-      armarToque({ id: ficha.id, ids: [ficha.id], texto, ficha, verbo });
+      armarToque({ id: ficha.id, ids: [ficha.id], nomes: [nomeNoMeioDaFrase(ficha.nome)], texto, ficha, verbo });
       setAba(null);
     } catch (e) { calou("o verbo da página", e); }
   };
@@ -26953,6 +26976,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       };
     } catch (e) { calou("o estado da partida do mapa vivo", e); return null; }
   }, [dadosMapaVivo, personagem, correio, governos, nemesis]); // eslint-disable-line
+  /* (f) da v9.447: na estrada, a hora a que se chega — o laço de `viajar`
+     (`chegadaDaViagem`, partida.js), nunca uma conta da tela. null = parada,
+     ou sem relógio: o mapa não diz hora nenhuma. */
+  const chegadaDaViagemViva = useMemo(() => {
+    if (!dadosMapaVivo || !jornadaRef.current) return null;
+    try {
+      return chegadaDaViagem(dadosMapaVivo, { jornada: jornadaRef.current, ritmo: (fichaViva() || {}).ritmoViagem });
+    } catch (e) { calou("a hora de chegada da viagem", e); return null; }
+  }, [dadosMapaVivo, personagem]); // eslint-disable-line
   /* a tela grande: null fechada; aberta, o lugar cujo cartão abre e um selo
      que remonta a tela (o lugar escolhido nasce do `inicial` uma vez) */
   const [telaDoMapa, setTelaDoMapa] = useState(null);
@@ -27445,7 +27477,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 Tocar um ícone abre a tela grande com o cartão daquele lugar. */}
             {dadosMapaVivo ? (
               <LimiteDoMapa key={"faixa|" + dia}>
-                <FaixaDoRumo dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} telefone={!trilhoAVista}
+                <FaixaDoRumo dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} chegada={chegadaDaViagemViva} telefone={!trilhoAVista}
                   recolhida={!!combate || alturaDaJanela < FICHAS.baixaAltura} aoTocarLugar={(id) => abrirMapaVivo(id)} />
               </LimiteDoMapa>
             ) : null}
@@ -27972,19 +28004,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const comFichas = fichas.length > 0;
               if (!vivas.length && !doCoracao && !comFichas) return null;
               const jaTinha = soleiraAntesRef.current;
-              return (
-                <PeDaPagina>
-                  {comFichas ? (
-                    <LimiteDasFichas key={fichas.map((f) => f.id).join("|")}>
-                      <div style={{ marginBottom: vivas.length || doCoracao ? FICHAS.vao : 0 }}>
-                        <FileiraAVista itens={fichas} escrita={toque && entrada.trim() === String(toque.texto || "").trim() ? toque.id : null} aberta={fichaAberta}
-                          onToque={tocarFicha} onAbrir={abrirFicha} onFechar={fecharFicha} onVerbo={verboDaFicha}
-                          baixa={alturaDaJanela < FICHAS.baixaAltura} />
-                      </div>
-                    </LimiteDasFichas>
-                  ) : null}
-                  {doCoracao}
-                  {vivas.length ? <Soleira ofertas={vivas.map((o) => (
+              /* § Fichas 1 (decidido pelo `aprendiz`, v9.446): na janela baixa,
+                 com fichas E ofertas, as duas vão numa LINHA SÓ, a oferta
+                 primeiro — a fileira recebe as mesmas `<Oferta>` e a `<Soleira>`
+                 não se desenha (contrato no topo de painel-fichas.jsx). */
+              const baixaDoPe = alturaDaJanela < FICHAS.baixaAltura;
+              const numaLinha = comFichas && vivas.length > 0 && baixaDoPe;
+              const ofertasDoPe = vivas.map((o) => (
                     <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
                       quem={o.quem} onde={o.onde} tom={o.tom} janela={o.janela}
                       estado={o.precisaDoNarrador && bloqueado ? "impedida" : "repouso"}
@@ -27996,7 +28022,20 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                          `formas.md` §R15) */
                       chegada={o.fila === "B" || (jaTinha && jaTinha.has(o.id)) ? "assentada" : "agora"}
                       aoClicar={o.aoClicar} moldura="aberta" />
-                  ))} /> : null}
+                  ));
+              return (
+                <PeDaPagina>
+                  {comFichas ? (
+                    <LimiteDasFichas key={fichas.map((f) => f.id).join("|")} reserva={numaLinha ? <Soleira ofertas={ofertasDoPe} /> : null}>
+                      <div style={{ marginBottom: (vivas.length && !numaLinha) || doCoracao ? FICHAS.vao : 0 }}>
+                        <FileiraAVista itens={fichas} escrita={toque && entrada.trim() === String(toque.texto || "").trim() ? toque.id : null} aberta={fichaAberta}
+                          onToque={tocarFicha} onAbrir={abrirFicha} onFechar={fecharFicha} onVerbo={verboDaFicha}
+                          baixa={baixaDoPe} ofertas={numaLinha ? ofertasDoPe : null} />
+                      </div>
+                    </LimiteDasFichas>
+                  ) : null}
+                  {doCoracao}
+                  {vivas.length && !numaLinha ? <Soleira ofertas={ofertasDoPe} /> : null}
                 </PeDaPagina>
               );
             })()}
@@ -28360,7 +28399,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} marcas={marcasDaPorta} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
           {telaDoMapa && dadosMapaVivo ? (
             <LimiteDoMapa key={"tela|" + telaDoMapa.selo} aoEstourar={() => setTelaDoMapa(null)}>
-              <TelaDoMapa key={telaDoMapa.selo} dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} telefone={!trilhoAVista}
+              <TelaDoMapa key={telaDoMapa.selo} dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} chegada={chegadaDaViagemViva} telefone={!trilhoAVista}
                 inicial={telaDoMapa.inicial} aoPartir={partirPeloMapaVivo} aoFechar={() => setTelaDoMapa(null)} />
             </LimiteDoMapa>
           ) : null}

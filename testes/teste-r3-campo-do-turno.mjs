@@ -263,7 +263,11 @@ t("`A voz` continua sendo a peça nos dois lugares onde ela ainda fala",
   ((APP + RELATO).match(/<Voz quem=/g) || []).length >= 2 && /<Voz quem="mestre" voz="preparando" \/>/.test(APP) && /<Voz quem="voce"/.test(RELATO),
   "são dois usos: a espera do Mestre (onde a resposta nasce) e a fala do jogador");
 t("e o botão de ouvir deixou de medir 22", !/width: 22, height: 22, fontSize: 12/.test(APP));
-t("`A soleira` está montada com `A oferta` dentro", /<Soleira ofertas=\{vivas\.map\(\(o\) => \(/.test(APP) && /<Oferta key=\{o\.id\}/.test(APP));
+/* MOVIDA na v9.449 (oficial): as <Oferta> montam-se uma vez em `ofertasDoPe`
+   — na janela baixa vão à fileira das fichas (numa linha só, § Fichas 1), no
+   resto à soleira. A intenção é a mesma: a soleira recebe `A oferta`, nunca
+   uma oferta feita à mão. */
+t("`A soleira` está montada com `A oferta` dentro", /const ofertasDoPe = vivas\.map\(\(o\) => \(\s*<Oferta key=\{o\.id\}/.test(APP) && /<Soleira ofertas=\{ofertasDoPe\} \/>/.test(APP));
 t("a montagem da lista tem nome e está em `try/catch`",
   /const ofertasDaSoleira = \(\) => \{\s*\n\s*try \{/.test(APP) && /calou\("montar a soleira", e\); return \[\];/.test(APP),
   "a soleira lê sete estados diferentes; um deles em forma inesperada não pode derrubar a cena");

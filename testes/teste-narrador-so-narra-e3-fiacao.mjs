@@ -68,7 +68,11 @@ sec("1. o gênero das pessoas: o Cronista diz, o registo guarda, o Narrador lê"
   /* a fiação, lida no fonte do App */
   t("o esquema do Cronista pede o genero (ele|ela) das pessoas", /\\"pessoas\\":\[\{[^\]]*\\"genero\\":\\"ele\|ela\\"/.test(app));
   t("a SEÇÃO pessoas diz como ler e proíbe o chute", /SEÇÃO pessoas:[^\n]*\\"genero\\": \\"ele\\" ou \\"ela\\"[^\n]*nunca chute/.test(app));
-  t("o App passa a ficha do Cronista por fichaDoCronista antes de registar", /fichaDoCronista\(n, chave \? reg\[chave\] : null\)/.test(app) && /mesclarNPC\(reg\[chave\], nF\)/.test(app) && /criarNPC\(String\(nomeCerto\)\.slice\(0, 40\), \{ \.\.\.nF,/.test(app));
+  /* MOVIDA na v9.449 (oficial): a chamada ganhou o terceiro argumento — o
+     contexto { cidade, mapa } do paradeiro (e) da v9.447 —, e a régua passou a
+     aceitá-lo; a intenção (a ficha passa por fichaDoCronista ANTES de mesclar
+     ou criar) é a mesma. O contexto é provado em teste-pendentes-ligados.mjs. */
+  t("o App passa a ficha do Cronista por fichaDoCronista antes de registar", /fichaDoCronista\(n, chave \? reg\[chave\] : null(?:, \{[^}]*\})?\)/.test(app) && /mesclarNPC\(reg\[chave\], nF\)/.test(app) && /criarNPC\(String\(nomeCerto\)\.slice\(0, 40\), \{ \.\.\.nF,/.test(app));
   t("e o líder do bando já não recebe o gênero do MUNDO como se fosse o dele", !/genero: mundo && mundo\.genero, notas:/.test(app));
 }
 

@@ -444,10 +444,11 @@ console.log("\n9. o funil do combate — as funções que chamam pushMsgs");
   /* (F2a · EM CENA, a fiação, o frontend, 12/10: o import de em-cena.js e o contexto da lista antes de pautaDoTurno, tudo ACIMA): 9016 -> 9064, +48. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (e6edf61). */
   /* (F2b · F2c · F2d, a fiação, o oficial, 12/10: os imports de fichas.js e painel-fichas.jsx, o LimiteDasFichas e a altura da janela, o estado das fichas ao lado de entrada, o ref da memória, e as fichas da cena antes de pautaDoTurno, tudo ACIMA): 9064 -> 9189, +125. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (7a890f3). */
   /* (MM17 · o mapa vivo ligado, o oficial, 12/10: os imports de mapa-vivo.js e painel-mapa-vivo.jsx, o LimiteDoMapa e a aba Mapa que abre o mapa vivo, tudo ACIMA) 9189 -> 9214, +25; só o endereço andou. */
-  } else if (iPush + 1 !== 9214) {
-    falha(`pushMsgs saiu de src/App.jsx:9214 e agora está em :${iPush + 1}`,
+  /* (os pendentes ligados, o oficial, 13/10: o import de chegadaDaViagem, +1, e a reserva do LimiteDasFichas, +3, ACIMA; o contexto do paradeiro no Cronista, +6, também acima destes) 9214 -> 9218, +4; só o endereço andou. */
+  } else if (iPush + 1 !== 9218) {
+    falha(`pushMsgs saiu de src/App.jsx:9218 e agora está em :${iPush + 1}`,
       `atualize o cabeçalho do bloco 6 em testes/acoes-do-jogador.mjs (e a linha que a sonda imprime) para :${iPush + 1}. O endereço é citado como mapa; mapa errado custa a próxima medição`);
-  } else ok("pushMsgs segue em src/App.jsx:9214, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
+  } else ok("pushMsgs segue em src/App.jsx:9218, como o mapa de X3b diz");   /* A GENTE QUE PESA, MEDIDA E CACHEADA (frontend, MM8c-2, 30/09): 8174 ->
      8184, +10. O cache por identidade (`elencoCacheRef`, logo após
      `nomesDoElenco`) somou 8 linhas onde havia 1, ACIMA de `pushMsgs` no
      arquivo, e tudo abaixo andou junto. Re-medido por esta própria catraca;

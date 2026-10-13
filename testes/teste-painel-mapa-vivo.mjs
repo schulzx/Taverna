@@ -223,7 +223,10 @@ sec("9. Trinta regiões: a conta nunca cai nem sai da faixa");
 sec("10. O painel: o que a tela nunca diz, e a forma da casa");
 {
   const contrato = PAINEL.slice(0, PAINEL.indexOf("import React"));
-  t("o contrato de props está no topo (as duas peças)", /<FaixaDoRumo dados estadoDaPartida telefone recolhida aoTocarLugar \/>/.test(contrato) && /<TelaDoMapa dados estadoDaPartida telefone inicial aoPartir aoFechar \/>/.test(contrato));
+  /* MOVIDA na v9.449 (oficial): as duas peças ganharam `chegada` (a hora a que
+     a viagem em curso chega, `chegadaDaViagem`), e o contrato escrito no topo
+     cresceu com ela — a asserção prende o contrato novo, prop a prop. */
+  t("o contrato de props está no topo (as duas peças)", /<FaixaDoRumo dados estadoDaPartida chegada telefone recolhida aoTocarLugar \/>/.test(contrato) && /<TelaDoMapa dados estadoDaPartida chegada telefone inicial aoPartir aoFechar \/>/.test(contrato));
   t("exporta FaixaDoRumo e TelaDoMapa", /export function FaixaDoRumo\(/.test(PAINEL) && /export function TelaDoMapa\(/.test(PAINEL));
   t("nenhuma cor solta (hex ou rgb) no painel", !/#[0-9a-fA-F]{3,8}\b/.test(CODIGO.replace(/url\(#mv-[\w-]+\)/g, "").replace(/`url\(#mv-[^`]*`/g, "")) && !/\brgba?\(/.test(CODIGO));
   t("nem na conta", !/#[0-9a-fA-F]{6}\b/.test(semComentarios(CONTA)) && !/\brgba?\(/.test(semComentarios(CONTA)));

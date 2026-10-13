@@ -126,7 +126,16 @@ sec("4. a fiação");
   t("e nunca custa o turno", /calou\("marcar a abertura de cerimonia", e\)/.test(ABRE));
   t("e não vai ao save (é um momento, não um fato)", !/aberturaRef\.current[^\n]*(?:localStorage|salvar)/.test(APP) && !/\babertura: abertura\b/.test(APP));
   const pe = APP.indexOf("<PeDaPagina>"), fim = APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>");
-  t("a soleira mora no pé do cartão, e há UMA soleira só", pe > fim && (APP.match(/<Soleira /g) || []).length === 1 && /<PeDaPagina>\s*(?:\{comFichas \? \([\s\S]{0,900}?<FileiraAVista [\s\S]{0,600}?\) : null\}\s*)?(?:\{doCoracao\}\s*\{vivas\.length \? )?<Soleira ofertas=\{vivas\.map/.test(APP));
+  /* MOVIDA na v9.449 (oficial): o texto tem agora DUAS etiquetas <Soleira — a
+     de sempre, que só se desenha fora da linha só (`!numaLinha`), e a
+     `reserva` do LimiteDasFichas, que só existe quando a fileira estoura NA
+     linha só. São exclusivas: nunca duas soleiras na tela, que era a intenção
+     de "UMA soleira só". Prende-se a exclusão e a ordem do pé (fichas, coração,
+     soleira). */
+  const soleiras = APP.match(/<Soleira [^>]*\/>/g) || [];
+  t("a soleira mora no pé do cartão, e há UMA soleira só", pe > fim && soleiras.length === 2 && soleiras.every((x) => x === "<Soleira ofertas={ofertasDoPe} />")
+    && /reserva=\{numaLinha \? <Soleira ofertas=\{ofertasDoPe\} \/> : null\}/.test(APP)
+    && /<PeDaPagina>\s*\{comFichas \? \([\s\S]{0,1200}?<FileiraAVista [\s\S]{0,700}?\) : null\}\s*\{doCoracao\}\s*\{vivas\.length && !numaLinha \? <Soleira ofertas=\{ofertasDoPe\} \/> : null\}/.test(APP));
   /* MOVIDA na F2b (12/10, oficial): as fichas (FileiraAVista) entram no
      MESMO pé, por cima do coração e da soleira (formas.md § Fichas 1: a
      prosa → as fichas → a soleira → o campo). Continua a haver UMA soleira

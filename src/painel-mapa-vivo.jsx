@@ -14,12 +14,16 @@
 
    ---------------- O CONTRATO ----------------
 
-   <FaixaDoRumo dados estadoDaPartida telefone recolhida aoTocarLugar />
+   <FaixaDoRumo dados estadoDaPartida chegada telefone recolhida aoTocarLugar />
      dados           — a saída de `dadosDoMapaVivo(mapa, estado)`, ou null
                        (o continente: a faixa não aparece);
      estadoDaPartida — o `estado` de `vereditoDaPartida` (o mesmo snapshot
                        que fez `dados`, com `mapa` e `ritmo`); opcional — sem
                        ele o alvo diz as horas da aresta, sem a rota;
+     chegada         — na estrada, a saída de `chegadaDaViagem` (partida.js):
+                       a hora a que a viagem em curso chega, o mesmo laço de
+                       `viajar`; null = não se diz hora (parada, ou sem ela).
+                       O alvo diz «faltam 2 h · chega às 13:12»;
      telefone        — 343×48, 140° à frente, só ícones;
      recolhida       — em combate recolhe a zero (a mesa de batalha precisa
                        da janela) e volta sem animar;
@@ -28,7 +32,9 @@
    Altura fixa (96 · 48), fora da área que rola; mede a própria largura.
    Lá dentro de uma masmorra (`heroi.onde === "masmorra"`) vira a descida.
 
-   <TelaDoMapa dados estadoDaPartida telefone inicial aoPartir aoFechar />
+   <TelaDoMapa dados estadoDaPartida chegada telefone inicial aoPartir aoFechar />
+     chegada         — a mesma da faixa: «onde você está» e o verbo impedido
+                       da estrada dizem a hora a que se chega;
      inicial         — o id do lugar cujo cartão abre (o da faixa); sem ele,
                        o alvo do feixe, e sem esse o sítio do herói;
      aoPartir(id, veredito) — o verbo do cartão (`O verbo com preço`). O
@@ -107,6 +113,25 @@ const PALAVRA_DO_ESTADO = { boato: "só se ouviu falar", conhecido: "caminho con
 const PARA_ONDE_CHAMA = "para onde a história chama";
 const PALAVRA_DA_FASE = { madrugada: "madrugada", amanhecer: "amanhecer", manha: "manhã", tarde: "tarde", entardecer: "entardecer", noite: "noite" };
 const CHAO_EM_PALAVRAS = { floresta: "na mata", gelo: "no gelo", planicie: "no campo", colina: "nas colinas", costa: "na costa", pantano: "no pântano", deserto: "no deserto", montanha: "na montanha" };
+/* O PORQUÊ DO PERIGO DA ESTRADA («o gelo sobe um degrau»). O motivo vem do
+   motor — `arestas[].perigoMotivo` e `veredito.motivoDoPerigo`, a mesma régua
+   que fez a cor (`perigoDaEstradaComMotivo`, mapa-vivo.js) —, e a tela só o
+   põe em palavras: nunca refaz a conta. Sem `subiu`, ou num chão sem nome
+   aqui, cala-se (a estrada perigosa pela ponta já se explica pelo lugar). */
+const CHAO_COM_ARTIGO = { floresta: "a mata", gelo: "o gelo", planicie: "o campo", colina: "as colinas", costa: "a costa", pantano: "o pântano", deserto: "o deserto", montanha: "a montanha" };
+function motivoEmTexto(m) {
+  if (!m || !m.subiu) return "";
+  const c = CHAO_COM_ARTIGO[m.chao];
+  return c ? `${c} ${c.startsWith("as ") || c.startsWith("os ") ? "sobem" : "sobe"} um degrau` : "";
+}
+/* A HORA DE CHEGAR da viagem em curso (`chegadaDaViagem`, partida.js — o laço
+   de `viajar`, não uma conta da tela). Mesmo formato do preço do `Partir`:
+   «chega às 13:12», «do dia 8» quando vira o dia, «de noite» quando é. */
+function chegadaEmTexto(c, rel) {
+  if (!c || !c.hora) return "";
+  const outroDia = rel && Number(c.dia) > Number(rel.dia) ? ` do dia ${c.dia}` : "";
+  return `chega às ${c.hora}${outroDia}${c.noite ? ", de noite" : ""}`;
+}
 /* a seta para fora, por rumo: a seta reta e o quanto ela roda (o `rotate`
    do tspan) — as diagonais desenhadas assim, e não com o caractere
    diagonal, que é emoji do sistema e não herda a tinta */
@@ -151,7 +176,7 @@ function relogioEmTexto(rel) {
 }
 function noPorId(dados, id) { return (dados && Array.isArray(dados.nos) && dados.nos.find((n) => n.id === id)) || null; }
 
-function ondeEmTexto(dados) {
+function ondeEmTexto(dados, chegada = null) {
   const h = (dados && dados.heroi) || {};
   const no = noPorId(dados, h.noId);
   if (h.onde === "viagem" && h.jornada) {
@@ -159,7 +184,8 @@ function ondeEmTexto(dados) {
     const para = (noPorId(dados, j.paraId) || {}).nome || j.para;
     const feito = j.horasFeitas != null ? ` — ${textoDeHoras(j.horasFeitas).replace(" h", " h feitas")}` : "";
     const falta = j.horasQueFaltam != null ? `, faltam ${textoDeHoras(j.horasQueFaltam)}` : "";
-    return `Na estrada ${prep("para", para)}${feito}${falta}.`;
+    const quando = chegadaEmTexto(chegada, dados.relogio);
+    return `Na estrada ${prep("para", para)}${feito}${falta}${quando ? `; você ${quando}` : ""}.`;
   }
   if (h.onde === "masmorra" && h.masmorra) {
     const p = h.masmorra.progresso || {};
@@ -198,9 +224,9 @@ function precoDoVeredito(dados, v) {
   return partes.join(" · ");
 }
 /* as horas do alvo na faixa: o veredito (com a rota), ou a aresta */
-function horasDoAlvo(dados, alvo, v) {
+function horasDoAlvo(dados, alvo, v, chegada = null) {
   const h = dados.heroi || {};
-  if (h.onde === "viagem" && h.jornada && h.jornada.horasQueFaltam != null) return `faltam ${textoDeHoras(h.jornada.horasQueFaltam)}`;
+  if (h.onde === "viagem" && h.jornada && h.jornada.horasQueFaltam != null) return [`faltam ${textoDeHoras(h.jornada.horasQueFaltam)}`, chegadaEmTexto(chegada, dados.relogio)].filter(Boolean).join(" · ");
   if (v) {
     const via = (v.rota || []).slice(1, -1).map((id) => (noPorId(dados, id) || {}).nome).filter(Boolean);
     return `${textoDeHoras(v.horas)} ${via.length ? `por ${via[0]}` : v.modo === "a_pe" ? "a pé" : "de estrada"}`;
@@ -403,7 +429,7 @@ const xDoHorizonte = (x, largura) => {
   if (meia * 2 + 2 * b >= largura) return largura / 2;
   return Math.min(largura - b - meia, Math.max(b + meia, x.x));
 };
-function Panorama({ dados, estadoDaPartida, largura, telefone, aoTocarLugar }) {
+function Panorama({ dados, estadoDaPartida, chegada = null, largura, telefone, aoTocarLugar }) {
   const it = React.useMemo(() => { try { return itensDaFaixa(dados, { largura, telefone }); } catch { return null; } }, [dados, largura, telefone]);
   const cristas = React.useMemo(() => { try { return it ? cristasDaFaixa(dados, it) : null; } catch { return null; } }, [dados, it]);
   const alvo = it && it.alvoId ? noPorId(dados, it.alvoId) : null;
@@ -415,7 +441,7 @@ function Panorama({ dados, estadoDaPartida, largura, telefone, aoTocarLugar }) {
   const h = dados.heroi || {};
   const viagem = h.onde === "viagem" && h.jornada;
   const lugarAlvo = it.lugares.find((l) => l.alvo);
-  const horas = alvo && !telefone ? horasDoAlvo(dados, alvo, v) : "";
+  const horas = alvo && !telefone ? horasDoAlvo(dados, alvo, v, chegada) : "";
   const nevoa = modo.nevoa;
   return (
     <div className="relative" style={{ width: "100%", height: it.altura }}>
@@ -477,7 +503,7 @@ function Panorama({ dados, estadoDaPartida, largura, telefone, aoTocarLugar }) {
   );
 }
 
-export function FaixaDoRumo({ dados, estadoDaPartida = null, telefone = false, recolhida = false, aoTocarLugar = null }) {
+export function FaixaDoRumo({ dados, estadoDaPartida = null, chegada = null, telefone = false, recolhida = false, aoTocarLugar = null }) {
   const ref = React.useRef(null);
   const largura = useLargura(ref, telefone ? 343 : 1142, !!dados && !recolhida);
   if (!dados || recolhida) return null;
@@ -487,7 +513,7 @@ export function FaixaDoRumo({ dados, estadoDaPartida = null, telefone = false, r
     <div ref={ref} role="group" aria-label="O horizonte a partir de onde você está" className="shrink-0 overflow-hidden" style={{ width: "100%", height: altura }}>
       {dentro
         ? <Descida dados={dados} largura={largura} telefone={telefone} />
-        : <Panorama dados={dados} estadoDaPartida={estadoDaPartida} largura={largura} telefone={telefone} aoTocarLugar={aoTocarLugar} />}
+        : <Panorama dados={dados} estadoDaPartida={estadoDaPartida} chegada={chegada} largura={largura} telefone={telefone} aoTocarLugar={aoTocarLugar} />}
     </div>
   );
 }
@@ -698,14 +724,14 @@ function Carta({ dados, telefone, selecionado, aoSelecionar, alvoId }) {
 /* ============================================================
    A TELA GRANDE — a coluna
    ============================================================ */
-function OndeVoceEsta({ dados }) {
+function OndeVoceEsta({ dados, chegada = null }) {
   const O = MV.coluna.onde;
   const j = dados.heroi && dados.heroi.onde === "viagem" ? dados.heroi.jornada : null;
   return (
     <div className="flex items-center" style={{ minHeight: O.altura, padding: `${O.lado - 4}px ${O.lado}px`, gap: O.entre, borderRadius: O.raio, background: MV.painel, border: `1px solid ${MV.linha}` }}>
       <svg width={MV.heroiForma.faixa.caixa} height={MV.heroiForma.faixa.caixa} className="shrink-0" aria-hidden="true"><Losango cx={16} cy={16} escala="faixa" /></svg>
       <div className="flex flex-col flex-1 min-w-0" style={{ gap: 8 }}>
-        <span className="tv-body" style={{ fontSize: TIPOS.corpo, color: MV.tinta }}>{ondeEmTexto(dados)}</span>
+        <span className="tv-body" style={{ fontSize: TIPOS.corpo, color: MV.tinta }}>{ondeEmTexto(dados, chegada)}</span>
         {j ? (
           <span aria-hidden="true" style={{ display: "block", height: 4, borderRadius: 2, background: MV.linha, overflow: "hidden" }}>
             <span style={{ display: "block", height: "100%", width: `${Math.round((Number(j.fracao) || 0) * 100)}%`, background: MV.heroi }} />
@@ -732,7 +758,7 @@ function Selo({ children, quente = false }) {
 
 /* `Mapa/Cartão de lugar` (`164:179`): a ordem é a da decisão — o que é →
    quem anda lá → o preço → o que fica perto → o que se diz → o verbo */
-function CartaoDoLugar({ dados, no, alvoId, veredito, telefone, aoPartir }) {
+function CartaoDoLugar({ dados, no, alvoId, veredito, chegada = null, telefone, aoPartir }) {
   const K = MV.coluna.cartao;
   const h = dados.heroi || {};
   const boato = no.estado === "boato";
@@ -745,6 +771,9 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, telefone, aoPartir }) {
   }).filter(Boolean);
   const v = veredito;
   const aresta1 = v && v.pernas && v.pernas.length === 1 ? (dados.arestas || []).find((x) => (x.de === v.pernas[0].de && x.para === v.pernas[0].para) || (x.para === v.pernas[0].de && x.de === v.pernas[0].para)) : null;
+  /* o porquê do perigo da estrada: o do veredito (a pior perna), senão o da
+     aresta única até aqui */
+  const porQue = motivoEmTexto((v && v.motivoDoPerigo) || (aresta1 && aresta1.perigoMotivo) || null);
   const idaEVolta = v ? [`ida ${textoDeHoras(v.horas)}`, v.horasDeVolta != null ? `volta ${textoDeHoras(v.horasDeVolta)}` : "", aresta1 && aresta1.km != null ? `${Math.round(aresta1.km)} km ${v.modo === "a_pe" ? "a pé" : "pela estrada"}` : ""].filter(Boolean).join(" · ") : "";
 
   /* o verbo: na estrada ou lá dentro, impedido; com o veredito, o preço
@@ -752,7 +781,8 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, telefone, aoPartir }) {
   let verbo = null;
   if (!aqui) {
     if (h.onde === "viagem") {
-      verbo = { verbo: "Você já está na estrada", preco: h.jornada && h.jornada.horasQueFaltam != null ? `faltam ${textoDeHoras(h.jornada.horasQueFaltam)}` : "", impedido: true };
+      const quando = chegadaEmTexto(chegada, dados.relogio);
+      verbo = { verbo: "Você já está na estrada", preco: [h.jornada && h.jornada.horasQueFaltam != null ? `faltam ${textoDeHoras(h.jornada.horasQueFaltam)}` : "", quando ? `você ${quando}` : ""].filter(Boolean).join(" · "), impedido: true };
     } else if (h.onde === "masmorra") {
       verbo = { verbo: "Você está lá dentro", preco: "saia primeiro para partir", impedido: true };
     } else if (v) {
@@ -788,7 +818,7 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, telefone, aoPartir }) {
           {(no.perigo || (v && v.perigoDaEstrada)) ? (
             <span className="flex items-center flex-wrap" style={{ gap: 10 }}>
               {no.perigo ? <SeloDePerigo nivel={no.perigo} comPalavra /> : null}
-              {v && v.perigoDaEstrada ? <span className="tv-body" style={{ fontSize: K.preco, color: MV.tintaMeio }}>{`a estrada: ${rotuloDoPerigo(v.perigoDaEstrada)}`}</span> : null}
+              {v && v.perigoDaEstrada ? <span className="tv-body" style={{ fontSize: K.preco, color: MV.tintaMeio }}>{`a estrada: ${rotuloDoPerigo(v.perigoDaEstrada)}${porQue ? ` · ${porQue}` : ""}`}</span> : null}
             </span>
           ) : null}
           {idaEVolta ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, lineHeight: 1.4, color: MV.tintaMeio }}>{idaEVolta}</span> : null}
@@ -870,7 +900,7 @@ function IconeFechar() {
   );
 }
 
-export function TelaDoMapa({ dados, estadoDaPartida = null, telefone = false, inicial = null, aoPartir = null, aoFechar = null }) {
+export function TelaDoMapa({ dados, estadoDaPartida = null, chegada = null, telefone = false, inicial = null, aoPartir = null, aoFechar = null }) {
   const alvo = React.useMemo(() => { try { return alvoDoFeixe(dados); } catch { return null; } }, [dados]);
   const alvoId = alvo ? alvo.id : null;
   const primeiro = (inicial && noPorId(dados, inicial) ? inicial : null) || alvoId || (dados && dados.heroi && dados.heroi.noId) || ((dados && dados.nos && dados.nos[0]) || {}).id || null;
@@ -909,7 +939,7 @@ export function TelaDoMapa({ dados, estadoDaPartida = null, telefone = false, in
       <IconeFechar />
     </button>
   );
-  const cartao = no ? <CartaoDoLugar dados={dados} no={no} alvoId={alvoId} veredito={veredito} telefone={telefone} aoPartir={aoPartir} /> : null;
+  const cartao = no ? <CartaoDoLugar dados={dados} no={no} alvoId={alvoId} veredito={veredito} chegada={chegada} telefone={telefone} aoPartir={aoPartir} /> : null;
 
   if (telefone) {
     return (
@@ -926,7 +956,7 @@ export function TelaDoMapa({ dados, estadoDaPartida = null, telefone = false, in
             <span style={{ width: 36, height: 4, borderRadius: 2, background: MV.medalhaoBorda }} />
           </div>
           <div className="flex flex-col" style={{ gap: 12, padding: "0 12px 12px" }}>
-            <OndeVoceEsta dados={dados} />
+            <OndeVoceEsta dados={dados} chegada={chegada} />
             {cartao}
             <Legenda aberta={legenda} aoAlternar={() => setLegenda((x) => !x)} />
           </div>
@@ -950,7 +980,7 @@ export function TelaDoMapa({ dados, estadoDaPartida = null, telefone = false, in
             </div>
             {fechar}
           </div>
-          <OndeVoceEsta dados={dados} />
+          <OndeVoceEsta dados={dados} chegada={chegada} />
           {cartao}
           <Legenda aberta={legenda} aoAlternar={() => setLegenda((x) => !x)} />
         </div>
