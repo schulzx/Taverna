@@ -194,8 +194,10 @@ sec("1. NENHUM MÓDULO MUDO");
        com rosto (o campo de save `memoria`, a página do Códice, a procura
        fora de cena) — e espera a fiação do App.jsx pelo `oficial` na MESMA
        fase, depois do painel do `aprendiz`. `teste-fichas.mjs` é o primeiro
-       leitor. A entrada sai quando o App o importar. */
-    "fichas.js": "o pé da página com as fichas, o cartão e a memória no save (oficial, F2b–F2d, 12/10)",
+       leitor. A entrada sai quando o App o importar. — 12/10: o oficial
+       ligou-o (as fichas no pé da página, por cima da soleira; o id da ficha
+       tocada no golpe, na compra à banca e na procura; o campo `memoria` no
+       save e no load; as páginas no Códice), e a entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

@@ -203,7 +203,9 @@ sec("7. a costura no App");
      herói perante uma cidade, e o convidado não herda a ficha criminal do
      anfitrião. O protocolo da sala continua o mesmo: só cresce o que NÃO
      atravessa. */
-  t("o mundo atravessa a cada save", /const \{ elenco: _elencoLocal, lei: _leiLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
+  /* F2d (12/10, oficial): a desestruturação tira também `memoria` (as
+     páginas do Códice são do herói, e o protocolo da sala não cresce). */
+  t("o mundo atravessa a cada save", /const \{ elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
   t("o convidado veste o save pela porta que já existia", /continuar\(false, \{ silencioso: true \}\)/.test(APP));
   /* e os avisos que são da FICHA não caem na tela de quem não é dono dela */
   t("o despertar do outro não estoura na tela do convidado", /if \(!silencioso\) setTimeout\(\(\) => checarDespertar/.test(APP));

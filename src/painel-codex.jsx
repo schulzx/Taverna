@@ -9,6 +9,8 @@ import { criaturasDoGenero } from "./bestiario.js";
 import { Retrato, Botao, Glifo, DegrausDaAmeaca } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
 import { gerarCronica } from "./cronica.js";
+import { Ficha, CartaoDaFicha } from "./painel-fichas.jsx";
+import { FICHAS } from "./estilo.js";
 
 /* V3 · o degrau de cada ameaça do Bestiário (fraco 1 … lendário 5). É
    tabela porque é número; e a cor mora ao lado, para os degraus e a
@@ -26,8 +28,41 @@ const CATEGORIAS_CONQUISTA = [
   { id: "lenda", rotulo: "Lenda", ids: ["nv5", "nv10", "nv15", "nv20", "nome_conhecido", "lenda_viva", "nemesis_surgida", "nemesis_vencida", "primeiro_cronica"] },
 ];
 
-export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem, nomeCampanha, guilda, reino, dia, nemesis, faccaoJogador, onExportarCronica, onExportarSave }) {
+/* F2d · A MEMÓRIA TEM ROSTO (formas.md § Fichas 9, aprovada pela pessoa em
+   12/10): cada cartão que o herói abriu é uma página — a forma da ficha e do
+   cartão, sem peça nova. O verbo da página («Procuro X», «Vou até X») escreve
+   a frase no campo pelo App (`aoApontar`), com o id: quem não está em cena
+   continua a poder ser apontado. Nada aqui age nem guarda. */
+function PaginasDaMemoria({ paginas, aoApontar }) {
+  const [aberta, setAberta] = React.useState(null);
+  const idDoCartao = "tv-pagina-" + React.useId().replace(/:/g, "");
+  const lista = (Array.isArray(paginas) ? paginas : []).filter((p) => p && p.id != null && p.nome);
+  const pagina = lista.find((p) => p.id === aberta) || null;
+  return (
+    <>
+      <div className="tv-body text-xs" style={{ color: T.inkDim }}>
+        Quem e o que você viu de perto, e o que lembra de cada um.
+      </div>
+      <div className="flex flex-wrap" style={{ gap: FICHAS.vao }}>
+        {lista.map((p, i) => (
+          <Ficha key={p.id} ficha={p} ordem={i} tabIndex={0} idDoCartao={idDoCartao}
+            estado={p.id === aberta ? "aberta" : "repouso"}
+            onToque={() => setAberta((a) => (a === p.id ? null : p.id))} />
+        ))}
+      </div>
+      {pagina ? (
+        <CartaoDaFicha id={idDoCartao} ficha={pagina} formato="mesa"
+          style={{ position: "relative", width: "100%", zIndex: "auto", boxShadow: "none" }}
+          onFechar={() => setAberta(null)}
+          onVerbo={(f, v) => { try { if (aoApontar) aoApontar(f, v); } catch (e) { /* nunca pode custar o turno */ } }} />
+      ) : null}
+    </>
+  );
+}
+
+export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, mundo, npcs, mapa, personagem, nomeCampanha, guilda, reino, dia, nemesis, faccaoJogador, onExportarCronica, onExportarSave, paginas = [], aoApontar = null }) {
   const [subCodex, setSubCodex] = React.useState("conquistas");
+  const nPaginas = Array.isArray(paginas) ? paginas.length : 0;
   const desb = (conquistas && conquistas.desbloqueadas) || {};
   const nDesb = CONQUISTAS.filter((c) => desb[c.id]).length;
   const criaturas = criaturasDoGenero((mundo || {}).genero || "Fantasia medieval");
@@ -41,7 +76,7 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
     ["Fio da morte", cont.quaseMorte || 0], ["Viagens", cont.viagens || 0], ["Perigos na estrada", cont.perigosEstrada || 0],
     ["Descansos", cont.descansos || 0], ["Presentes", cont.presentes || 0], ["Recrutados", cont.recrutados || 0],
   ];
-  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }, { id: "cronica", rotulo: "Crônica" }];
+  const SUBS = [{ id: "conquistas", rotulo: `Títulos ${nDesb}/${CONQUISTAS.length}` }, ...(nPaginas ? [{ id: "lembrancas", rotulo: `Lembranças ${nPaginas}` }] : []), { id: "bestiario", rotulo: `Bestiário ${achadas.length}/${criaturas.length}` }, { id: "registros", rotulo: "Registros" }, { id: "cronica", rotulo: "Crônica" }];
   return (
     <>
       <div className="flex flex-wrap gap-1.5 -mt-2">
@@ -95,6 +130,8 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
           ))}
         </>
       )}
+
+      {subCodex === "lembrancas" && nPaginas > 0 && <PaginasDaMemoria paginas={paginas} aoApontar={aoApontar} />}
 
       {subCodex === "bestiario" && (
         <>

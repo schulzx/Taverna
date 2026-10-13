@@ -212,7 +212,7 @@ sec("8. lixo");
   t("o crime do turno e a marca do confirmado, em ref", app.includes("const crimeDoTurnoRef = useRef(null);") && app.includes("const crimeConfirmadoRef = useRef(false);"));
   t("o cartão pendente é estado (pinta a tela)", app.includes("const [crimeVereditoPendente, setCrimeVereditoPendente] = useState(null);"));
   t("o save leva a lei", app.includes("elenco: elencoSaveRef.current, lei: leiRef.current,"));
-  t("a sala publica SEM a lei (o procurado é do herói, não do convidado)", app.includes('const { elenco: _elencoLocal, lei: _leiLocal, ...paraSala } = dados; publicarEstado(paraSala);'));
+  t("a sala publica SEM a lei (o procurado é do herói, não do convidado)", /* F2d (12/10, oficial): a memória com rosto sai da sala pela mesma porta — é do herói, como a lei */ app.includes('const { elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados; publicarEstado(paraSala);'));
   t("o load lê a lei do save antigo (sem o campo, dá vazia)", app.includes("leiRef.current = garantirLei(sv.lei);"));
   t("campanha nova começa sem procurado", app.includes("elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }"));
 

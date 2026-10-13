@@ -331,5 +331,16 @@ sec("6. DETERMINISMO, IMUTABILIDADE, LIXO");
   t("memória congelada: lembrarFicha e lembrarCompra devolvem estado novo", (() => { const m = congela(lembrarFicha(null, fichaParaTela(ATADURAS, {}), { dia: 1 })); const m2 = lembrarCompra(lembrarFicha(m, fichaParaTela(ATADURAS, {}), { dia: 2 }), ATADURAS.id, { dia: 2, preco: 29 }); return m2 !== m && m2.paginas[ATADURAS.id].vezes === 2 && m.paginas[ATADURAS.id].vezes === 1; })());
 }
 
+/* ============================================================ */
+sec("7. O TETO É UM SÓ (o motor e a folha de estilo)");
+{
+  /* o backend deixou pendente (v9.439): o motor corta a fileira em
+     FICHAS_NA_FILEIRA.max e a tela desenha até FICHAS.max (estilo.js). São
+     o mesmo quatro dito duas vezes — se um mudar sozinho, a fileira ou perde
+     a ficha que o motor mandou, ou guarda lugar para uma que nunca vem. */
+  const { FICHAS } = await import(S + "estilo.js");
+  t("FICHAS.max (a tela) === FICHAS_NA_FILEIRA.max (o motor)", FICHAS && FICHAS.max === FI.FICHAS_NA_FILEIRA.max, String(FICHAS && FICHAS.max) + " × " + FI.FICHAS_NA_FILEIRA.max);
+}
+
 console.log(`\nfichas (F2b · F2c · F2d): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

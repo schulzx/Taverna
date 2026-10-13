@@ -160,7 +160,12 @@ sec("4. o preço da banca chega à pauta, na moeda do mundo (M42–M43)");
   const bolsa = corpoDe("const registarABolsaDaFrase = (acao) => {", "const comprarSuprimento = ");
   t("fiação · o App importa compraNaBanca", /import \{[^}]*\bcompraNaBanca\b[^}]*\} from "\.\/bolsa-da-frase\.js"/.test(app));
   t("fiação · a frase compra à banca pelas bancas da cena, num calou próprio",
-    bolsa.includes("const c = compraNaBanca(txt, { bancas, bolsa: p.moedas || 0 });") && bolsa.includes("const bancas = bancasDaCena();")
+    /* MOVIDA na F2b (12/10, oficial): as bancas da cena passam por
+       bancasDoToque antes da compra — com uma coisa tocada, só a entrada do
+       estoque que a ficha mostrou fecha; sem toque, voltam como vieram. A
+       intenção fica: a frase compra pelas bancas da cena, num calou próprio. */
+    bolsa.includes("const c = compraNaBanca(txt, { bancas: bancasDaCompra, bolsa: p.moedas || 0 });") && bolsa.includes("const bancas = bancasDaCena();")
+    && bolsa.includes("bancasDaCompra = bancasDoToque(alvoDaCompra, ae.lista, bancas);")
     && bolsa.includes('calou("a compra à banca da frase"'));
   t("fiação · fecha → moedas, mochila/corpo, comprados, pressões e o envelope; não fecha → o veto; e o recibo nos dois",
     bolsa.includes("moedas: (p.moedas || 0) - c.total") && bolsa.includes("VAI_AO_CORPO.includes(it.tipo)")

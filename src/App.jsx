@@ -71,7 +71,7 @@ import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } 
 import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -102,6 +102,8 @@ import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, conferirLista, falaDaListaAparada, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL, podarONarrador } from "./agressao.js";
 import { montarEmCena, pautaComEmCena, quemNaFrase } from "./em-cena.js";
+import { fichasDaCena, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
+import { FileiraAVista, VereditoDaFicha } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada, podeFormaDeCena, contarTurnoDeCena, zerarCadenciaDaCena, envelopeDaCena } from "./biblioteca.js";
 import { garantirCompasso, avancarCompasso, envelopeDoCompasso, resumoCompasso, barraDoCompasso } from "./compasso.js";
@@ -2698,7 +2700,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -3067,7 +3069,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
         )}
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} npcs={npcs} grupo={personagem.grupo || []} heroi={personagem.nome} />}
-        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} onExportarSave={onExportarSave} />}
+        {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} onExportarSave={onExportarSave} paginas={paginasDoCodice} aoApontar={aoApontarPagina} />}
         {aba === "gestao" && subGestao === "mural" && <PainelMural mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} vereditoDeCartaz={vereditoDeCartaz} recusaDeCartaz={recusaDeCartaz} aoVerNoDiario={aoVerNoDiario} />}
         {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
@@ -5332,6 +5334,34 @@ class LimiteDaFogueira extends React.Component {
   render() { return this.state.erro ? null : this.props.children; }
 }
 
+/* F2b · AS FICHAS NUNCA PODEM CUSTAR O TURNO: se a fileira estoura no
+   render, ela cala-se (null) e o pé fica com a soleira, como antes. O
+   LimiteErro de baixo tapa a tela inteira, e uma fileira não vale isso. A
+   chave muda a cada resposta, e a fileira tenta outra vez. */
+class LimiteDasFichas extends React.Component {
+  constructor(props) { super(props); this.state = { erro: null }; }
+  static getDerivedStateFromError(erro) { return { erro }; }
+  componentDidCatch(erro) { try { console.error("Taverna · as fichas calaram:", erro); } catch (e) { /* nada mais a fazer */ } }
+  render() { return this.state.erro ? null : this.props.children; }
+}
+
+/* F2c · A RÉGUA DO CARTÃO É A ALTURA (formas.md § Fichas 1): abaixo de
+   FICHAS.baixaAltura o cartão toma a página. Medida viva, a cada resize. */
+function useAlturaDaJanela() {
+  const [altura, setAltura] = useState(() => (typeof window !== "undefined" ? window.innerHeight : 900));
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const medir = () => { try { setAltura(window.innerHeight); } catch (e) { /* fica a de antes */ } };
+    /* mede também ao montar: medido vivo, uma janela que mudou de tamanho
+       durante o carregamento não dispara resize depois, e o cartão abria
+       como Mesa a 451 de alto */
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, []);
+  return altura;
+}
+
 class LimiteErro extends React.Component {
   constructor(props) { super(props); this.state = { erro: null }; }
   static getDerivedStateFromError(erro) { return { erro }; }
@@ -5457,6 +5487,18 @@ export default function Taverna() {
   /* v9.5: marca as respostas que NÃO fecham a rodada (meu turno continua) —
      nelas o relógio dos buffs e das condições fica parado. */
   const [entrada, setEntrada] = useState("");
+  /* F2b · F2c: as fichas do pé da página (trocam a cada resposta do Mestre,
+     ficam durante a espera), a ficha cuja frase está no campo — `{ id, ids,
+     texto, ficha, verbo }`, NUNCA no save — e a do cartão aberto. O ref
+     espelha o toque para o envio; `toqueDoEnvioRef` é o que partiu com o
+     turno (o despachante lê-o depois de o campo esvaziar). */
+  const [fichas, setFichas] = useState([]);
+  const [toque, setToque] = useState(null);
+  const [fichaAberta, setFichaAberta] = useState(null);
+  const toqueRef = useRef(null);
+  const toqueDoEnvioRef = useRef(null);
+  const listaDasFichasRef = useRef([]);
+  const alturaDaJanela = useAlturaDaJanela();
   /* R17 · O CAMPO SERVE DOIS MOMENTOS E SÃO DE TAMANHOS DIFERENTES:
      convidar e escrever. Este estado é o que os separa. A composição
      inteira sai dele e de `entrada` — nenhuma media query em JS. */
@@ -5717,6 +5759,7 @@ export default function Taverna() {
   const canoneRef = useRef({});
   const npcsRef = useRef({});                 // registro persistente de pessoas
   const elencoSaveRef = useRef(garantirElencoDoSave(null)); // MM8e: promovidos, saídos e dias vistos (campo `elenco` do save)
+  const memoriaRef = useRef(garantirMemoriaDoSave(null));   // F2d: a memória com rosto — cada cartão aberto vira página (campo `memoria` do save)
   /* MM10: a lei que o herói carrega perante cada cidade — quem ele atacou
      que não era inimigo, e o preço disso (campo novo do save, `lei`). */
   const leiRef = useRef(garantirLei(null));
@@ -7264,6 +7307,88 @@ export default function Taverna() {
       lugar: lugarRef.current,
       antes: emCenaRef.current,
     };
+  };
+  /* ---------------- F2b · AS FICHAS DA CENA ----------------
+     O contexto de `fichaParaTela` (fichas.js): a bolsa, o grupo, o registo,
+     os dias vistos, o núcleo e o coração, o dia, a memória, e o crime com os
+     MESMOS dois contextos de `declararAgressao` (o veredito do cartão é o
+     texto do cartão de confirmação). Cada fonte num calou: uma que estoura
+     deixa a ficha mais pobre, nunca a cena sem ela. */
+  const contextoDasFichas = () => {
+    const p = fichaViva() || personagemRef.current || personagem || {};
+    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    const presentes = vale("FICHAS · quem está aqui", () => elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], masmorra: masmorraRef.current }).aqui || [], []);
+    const crime = vale("FICHAS · o contexto do crime", () => ({
+      ctx: { npcs: npcsRef.current, presentes, grupo: p.grupo || [], hostis: [], elenco: nomesDoElenco() },
+      mundo: { semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeDoMapa(cidadeAtualRef.current), genero: generoMundo(), lex: (mundoAtual() || {}).lexico, molde: moldeMundo(), noite: ehNoite(minutoRef.current), elencoCtx: contextoDoElenco() },
+    }), null);
+    return {
+      presentes,
+      ctx: {
+        mostrado: vale("FICHAS · o que o Mestre mostrou", () => falasDoMestre(mensagensRef.current), []),
+        bolsa: p.moedas || 0,
+        grupo: p.grupo || [],
+        npcs: npcsRef.current,
+        vistos: (elencoSaveRef.current || {}).vistos,
+        nucleo: vale("FICHAS · o núcleo", () => nucleoAgora(), null),
+        coracao: coracaoRef.current,
+        dia: diaRef.current,
+        memoria: memoriaRef.current,
+        ...(crime ? { crime } : {}),
+      },
+    };
+  };
+  /* A lista refeita com a última fala do Mestre — a de `pautaDoTurno` é lida
+     ANTES da resposta, e as fichas apontariam a cena de antes (a ordem da
+     prosa seria a da fala velha, e o bicho que a resposta trouxe faltaria). */
+  const montarAsFichas = () => {
+    const { presentes, ctx } = contextoDasFichas();
+    let frase = "";
+    try { const ms = mensagensRef.current || []; for (let i = ms.length - 1; i >= 0; i--) if (ms[i] && ms[i].autor === "jogador") { frase = String(ms[i].texto || ""); break; } } catch (e) { calou("FICHAS · a última frase", e); }
+    const lista = montarEmCena(contextoDoEmCena(frase, presentes));
+    return { lista, fichas: fichasDaCena(lista, ctx) };
+  };
+  /* O ID NO ENVIO: a ficha tocada (`toqueDoEnvioRef`, o que partiu com o
+     turno) vem à frente enquanto a frase ainda a nomeia (fichas.js,
+     quemNoEnvio); sem toque, ou com o nome apagado, é a leitura livre de
+     `quemNaFrase` — a de antes. A ficha tocada entra na lista se a lista
+     refeita não a tem (a que o jogador viu é a das fichas). */
+  const alvoDoEnvio = (acao, lista0) => {
+    const base = Array.isArray(lista0) ? lista0 : [];
+    try {
+      const tq = toqueDoEnvioRef.current;
+      const ids = tq ? [...new Set([...(Array.isArray(tq.ids) ? tq.ids : []), tq.id].filter(Boolean))] : [];
+      const faltam = ids.length ? (listaDasFichasRef.current || []).filter((x) => x && ids.includes(x.id) && !base.some((y) => y && y.id === x.id)) : [];
+      const lista = faltam.length ? [...base, ...faltam] : base;
+      return { alvo: quemNoEnvio({ id: tq && tq.id, ids, texto: acao }, lista, memoriaRef.current)[0] || null, lista };
+    } catch (e) {
+      calou("o alvo do envio", e);
+      let alvo = null;
+      try { alvo = quemNaFrase(acao, base)[0] || null; } catch (e2) { calou("o alvo do envio (leitura livre)", e2); }
+      return { alvo, lista: base };
+    }
+  };
+  /* TROCAM A CADA RESPOSTA, FICAM DURANTE A ESPERA (§ Fichas 1): a chave é a
+     última fala do Mestre, e só ela. A bolsa NÃO é chave — medido vivo: a
+     compra tocada fecha antes do Narrador, e com a bolsa na chave a fileira
+     trocava no meio da espera; o impedido da compra acerta na resposta. */
+  const ultimaDoMestre = (() => {
+    try { for (let i = mensagens.length - 1; i >= 0; i--) { const m = mensagens[i]; if (m && m.autor === "mestre") return i + ":" + String(m.texto || "").length; } } catch (e) { calou("FICHAS · a chave da fala", e); }
+    return "";
+  })();
+  useEffect(() => {
+    if (fase !== "jogo" || !ultimaDoMestre) { setFichas((f) => (f.length ? [] : f)); return; }
+    try {
+      const r = montarAsFichas();
+      listaDasFichasRef.current = r.lista;
+      setFichas(Array.isArray(r.fichas) ? r.fichas : []);
+      setFichaAberta(null);
+    } catch (e) { calou("as fichas da cena", e); setFichas((f) => (f.length ? [] : f)); }
+  }, [fase, ultimaDoMestre]); // eslint-disable-line
+  /* F2d · AS PÁGINAS DO CÓDICE: a forma da ficha, fora de cena, com o verbo
+     que aponta de longe (procurar a pessoa, ir ao lugar). */
+  const paginasDoCodiceAgora = () => {
+    try { return paginasDoCodice(memoriaRef.current, contextoDasFichas().ctx) || []; } catch (e) { calou("as páginas do Códice", e); return []; }
   };
   const pautaDoTurno = (acaoDoTurno = "") => {
     let p = garantirPauta(null);
@@ -9113,7 +9238,7 @@ export default function Taverna() {
     const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     return {
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -9280,7 +9405,7 @@ export default function Taverna() {
          porque TODO caminho que muda o jogo passa por `salvar` — o turno, o
          combate, o mercado, o descanso. Pendurar a publicação num só deles
          deixaria o convidado com uma tela velha nos outros. */
-      try { const { elenco: _elencoLocal, lei: _leiLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
+      try { const { elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
       if (podou && !avisoPodaRef.current) {
         avisoPodaRef.current = true;
         pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
@@ -13527,6 +13652,7 @@ export default function Taverna() {
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
+    if (!cap) memoriaRef.current = garantirMemoriaDoSave(null); /* F2d: a memória com rosto é da campanha; um capítulo novo guarda-a, como o registo */
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
     try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração da campanha nova", e); }
     /* MM8c-1: um capítulo novo mantém o registo — a recência precisa
@@ -13790,7 +13916,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -15896,6 +16022,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        de rede aqui cai para o desfeito mais estreito (até ao envio), que
        nunca inventa uma frase que o jogador não escreveu. */
     try { fotoInicioRef.current = fotografarOTurno({ frase: acao, retrato: { ...retratoDoJogo(), personagem: fichaViva() || personagem }, soltos: soltosDoTurno() }); } catch (e) { calou("foto do inicio do turno", e); }
+    /* F2b: a ficha tocada parte com a frase — o despachante lê-a depois de o
+       campo esvaziar (o golpe, a compra, a procura), e o campo fica livre */
+    try {
+      toqueDoEnvioRef.current = toqueRef.current;
+      if (toqueRef.current) { toqueRef.current = null; setToque(null); setFichaAberta(null); }
+    } catch (e) { calou("o toque parte com o turno", e); }
     /* ---------------- O TURNO DE QUEM CAIU (24/09) ----------------
        O botão de `Atacar` já recusa a 0 PV (`impedimentosDaFileira`), mas
        o campo de texto é OUTRA porta para o mesmo golpe: "Ataco o javali"
@@ -19499,10 +19631,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        (procura.js, papelProcurado), e o papel ganha ao nome dito */
     let pp = null;
     try { pp = papelProcurado(acao, nucleoAgora()); } catch (e) { calou("quem se procura pelo papel", e); pp = null; }
-    const nome = (pp && pp.nome) || nomeProcurado(acao, nomesConhecidos(), { perto: [...((personagemRef.current || personagem || {}).grupo || []), ...(pessoasDaCena() || [])] });
+    const perto = [...((personagemRef.current || personagem || {}).grupo || []), ...(pessoasDaCena() || [])];
+    /* F2d: quem tem página (pelo nome, ou pela página tocada no Códice) e o
+       mundo não acha está onde o herói o viu (fichas.js, procuraNaMemoria) */
+    let dm = null;
+    if (!pp) {
+      try { const ae = alvoDoEnvio(acao, []); dm = procuraNaMemoria(acao, memoriaRef.current, { id: ae.alvo && ae.alvo.pelo === "toque" ? ae.alvo.id : undefined, perto }); } catch (e) { calou("quem se procura na memória", e); dm = null; }
+    }
+    const nome = (pp && pp.nome) || nomeProcurado(acao, nomesConhecidos(), { perto: perto }) || (dm && dm.nome);
     if (!nome) return false;
     const r = procurarPessoa(nome, {
       porPapel: pp,
+      daMemoria: dm,
       npcs: npcsRef.current,
       grupo: (personagemRef.current || personagem || {}).grupo || [],
       genteDaqui: genteDaqui(),
@@ -20039,8 +20179,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        agora, com a última fala do Mestre — a do turno passado ainda não a
        tinha). O bicho que a oração do golpe aponta dá o nome e a ameaça. */
     try {
-      const lista = montarEmCena(contextoDoEmCena(acao, elenco.aqui || []));
-      const alvo = quemNaFrase(acao, lista)[0];
+      /* F2b: a ficha tocada ganha enquanto a frase a nomeia (alvoDoEnvio) */
+      const { alvo, lista } = alvoDoEnvio(acao, montarEmCena(contextoDoEmCena(acao, elenco.aqui || [])));
       const bicho = (alvo && alvo.tipo === "criatura" && alvo.faz === "golpe") ? lista.find((x) => x.id === alvo.id) : null;
       if (bicho) conhecidas = [{ nome: bicho.nome, ameaca: bicho.ameaca || "" }, ...conhecidas.filter((c) => c.nome !== bicho.nome)];
     } catch (e) { calou("a frase contra a lista (agressão)", e); }
@@ -24452,7 +24592,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const bancas = bancasDaCena();
       if (bancas.length) {
         const p = personagemRef.current || personagem;
-        const c = compraNaBanca(txt, { bancas, bolsa: p.moedas || 0 });
+        /* F2b: a coisa tocada fecha pela entrada do estoque que a ficha
+           mostrou, e por nenhuma outra com o mesmo nome (bancasDoToque) */
+        let alvoDaCompra = null, bancasDaCompra = bancas;
+        try { const ae = alvoDoEnvio(txt, emCenaRef.current); alvoDaCompra = ae.alvo; bancasDaCompra = bancasDoToque(alvoDaCompra, ae.lista, bancas); } catch (e) { calou("a banca da ficha tocada", e); alvoDaCompra = null; bancasDaCompra = bancas; }
+        const c = compraNaBanca(txt, { bancas: bancasDaCompra, bolsa: p.moedas || 0 });
         if (c) {
           if (c.fecha) {
             let np = { ...p, moedas: (p.moedas || 0) - c.total };
@@ -24479,6 +24623,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             salvar({ personagem: np, mercado: merc, ...(mapaNovo ? { mapa: mapaNovo } : {}) });
             nota(envelopeDaCompra(c));
             try { checarConquistas(np); } catch (e) { calou("as conquistas da compra à banca", e); }
+            /* F2d: a compra que a ficha fechou fica na página da coisa */
+            if (alvoDaCompra && alvoDaCompra.pelo === "toque") { try { memoriaRef.current = lembrarCompra(memoriaRef.current, alvoDaCompra.id, { dia: diaRef.current, preco: c.total }); } catch (e) { calou("a compra na memória", e); } }
           } else vetar(vetoDaCompra(c));
           pushMsgs([{ autor: "sistema", texto: falaDaCompra(c) }]);
         }
@@ -26420,6 +26566,75 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     <>{linhaDoTeste(rolagem)}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
   ) : estadoDado === "espera" && entrada.trim() ? "Fica guardado — você manda depois de ler." : null;
 
+  /* ---------------- F2b · OS GESTOS DA FICHA ----------------
+     O 1.º toque escreve a frase (editável, nunca mandada; com texto do
+     jogador no campo, só o nome no cursor — a menção); o 2.º abre o cartão
+     e a página da memória cresce; o verbo troca a frase e fecha. Nada aqui
+     foca o campo: no telefone o teclado não sobe, na mesa o foco fica na
+     ficha. Tudo em calou: um gesto que estoura deixa o campo como estava. */
+  const armarToque = (tq) => { toqueRef.current = tq; setToque(tq); };
+  const nomeNoMeioDaFrase = (nome) => String(nome || "").replace(/^(O|A|Os|As|Um|Uma|Uns|Umas)(?=\s)/, (a) => a.toLowerCase());
+  const tocarFicha = (ficha) => {
+    try {
+      if (!ficha || !ficha.id) return;
+      const atual = String(entrada || "");
+      const tq = toqueRef.current;
+      const intacta = !!(tq && atual.trim() && atual.trim() === String(tq.texto || "").trim());
+      if (!atual.trim() || intacta) {
+        const texto = String(ficha.frase || "");
+        setEntrada(texto);
+        armarToque({ id: ficha.id, ids: [ficha.id], texto, ficha, verbo: null });
+        return;
+      }
+      const el = campoRef.current;
+      const pos = el && typeof el.selectionStart === "number" ? Math.min(el.selectionStart, atual.length) : atual.length;
+      const antes = atual.slice(0, pos), depois = atual.slice(pos);
+      const nome = nomeNoMeioDaFrase(ficha.nome);
+      const texto = antes + (antes && !/\s$/.test(antes) ? " " : "") + nome + (depois && !/^\s/.test(depois) ? " " : "") + depois;
+      const ids = [...new Set([...(tq && Array.isArray(tq.ids) ? tq.ids : []), ficha.id])];
+      setEntrada(texto);
+      armarToque({ id: (tq && tq.id) || ficha.id, ids, texto, ficha, verbo: null });
+    } catch (e) { calou("o toque na ficha", e); }
+  };
+  const abrirFicha = (ficha) => {
+    try {
+      if (!ficha || !ficha.id) return;
+      setFichaAberta(ficha.id);
+      try { memoriaRef.current = lembrarFicha(memoriaRef.current, ficha, { dia: diaRef.current, cidade: cidadeAtualRef.current }); } catch (e) { calou("a página da memória", e); }
+    } catch (e) { calou("abrir o cartão", e); }
+  };
+  const fecharFicha = () => { try { setFichaAberta(null); } catch (e) { calou("fechar o cartão", e); } };
+  const verboDaFicha = (ficha, verbo) => {
+    try {
+      if (!ficha || !verbo || verbo.impedido) return;
+      const texto = String(verbo.frase || "");
+      setEntrada(texto);
+      armarToque({ id: ficha.id, ids: [ficha.id], texto, ficha, verbo });
+      setFichaAberta(null);
+    } catch (e) { calou("o verbo do cartão", e); }
+  };
+  /* a página do Códice aponta de longe: a frase vai ao campo, o painel fecha */
+  const apontarDaPagina = (ficha, verbo) => {
+    try {
+      if (!ficha || !verbo) return;
+      const texto = String(verbo.frase || "");
+      setEntrada(texto);
+      armarToque({ id: ficha.id, ids: [ficha.id], texto, ficha, verbo });
+      setAba(null);
+    } catch (e) { calou("o verbo da página", e); }
+  };
+  /* A LINHA DO VEREDITO da ficha ligada (V6): QUEM a frase aponta e o preço,
+     enquanto o campo diz a frase que a ficha escreveu. Editada, a linha cala
+     (0 px) — a frase volta a ser lida livre. */
+  const vereditoDaFicha = (() => {
+    try {
+      if (!toque || !toque.ficha || !entrada.trim() || entrada.trim() !== String(toque.texto || "").trim()) return null;
+      const f = toque.ficha;
+      const v = toque.verbo || (Array.isArray(f.verbos) ? f.verbos : []).find((x) => x && String(x.frase || "").trim() === entrada.trim()) || null;
+      return { quem: nomeNoMeioDaFrase(f.nome), preco: v ? [v.preco, v.impedido].filter(Boolean).join(" · ") : "" };
+    } catch (e) { calou("o veredito da ficha", e); return null; }
+  })();
+
   /* ---------------- A SETA ABRE O QUE ANUNCIA (R3) ----------------
      Em `try/catch` porque nunca pode custar o turno: uma linha do sistema
      com um rótulo que já não existe devolve `null` bem antes daqui, e o
@@ -27074,7 +27289,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 cartão tem dentro nascia 1 px mais para dentro do que no nó —
                 e o cabeçalho, que a pessoa pediu ao pixel, ficava a 25 px da
                 borda em vez de 24. Mesma cor, mesma espessura, mesmo raio. */}
-            <div className="flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
+            <div data-tv-pagina="" className="flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
               style={{ background: T.pagina, outline: `1px solid ${T.line}`, outlineOffset: -1 }}>
             {/* ---------------- V5a · O CABEÇALHO DA PÁGINA ----------------
                 O topo do papel é o nó `129:4` da pessoa, ao pixel: 69 px que
@@ -27617,10 +27832,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               /* MM-C C2: o que alguém do núcleo pede ou deixa ao herói decidir — por
                  cima da soleira, que continua (não disputam a mesma decisão). */
               const doCoracao = cartaoDoCoracao();
-              if (!vivas.length && !doCoracao) return null;
+              /* F2b: AS FICHAS — o que está aqui, entre a prosa e o que o
+                 mundo abriu (formas.md § Fichas 1). 0 px sem elas. */
+              const comFichas = fichas.length > 0;
+              if (!vivas.length && !doCoracao && !comFichas) return null;
               const jaTinha = soleiraAntesRef.current;
               return (
                 <PeDaPagina>
+                  {comFichas ? (
+                    <LimiteDasFichas key={fichas.map((f) => f.id).join("|")}>
+                      <div style={{ marginBottom: vivas.length || doCoracao ? FICHAS.vao : 0 }}>
+                        <FileiraAVista itens={fichas} escrita={toque && entrada.trim() === String(toque.texto || "").trim() ? toque.id : null} aberta={fichaAberta}
+                          onToque={tocarFicha} onAbrir={abrirFicha} onFechar={fecharFicha} onVerbo={verboDaFicha}
+                          baixa={alturaDaJanela < FICHAS.baixaAltura} />
+                      </div>
+                    </LimiteDasFichas>
+                  ) : null}
                   {doCoracao}
                   {vivas.length ? <Soleira ofertas={vivas.map((o) => (
                     <Oferta key={o.id} verbo={o.verbo} preco={o.preco} retorno={o.retorno}
@@ -27945,7 +28172,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   do campo ao tocar nela (e no dado). A borda da pílula continua
                   semântica: violeta com habilidade armada, âmbar com milagre. */}
               <div className="pt-2">
-              <LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} />
+              {linhaDoCampo || !vereditoDaFicha
+                ? <LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} />
+                : <LimiteDasFichas key={"v:" + (toque && toque.texto)}><VereditoDaFicha veredito={vereditoDaFicha} /></LimiteDasFichas>}
               <div className="flex items-end md:items-center min-w-0 gap-3 md:gap-4">
                 <div className={`tv-pilula-do-campo relative flex-1 min-w-0 flex items-end${campoAberto ? "" : " tv-turno-repouso"}`}
                   style={{ background: T.bg, borderRadius: COMPOSITOR.raio, border: `${COMPOSITOR.borda}px solid ${milagreSel ? T.amber : habsSel.length ? T.violet : T.line}` }}>
@@ -27994,7 +28223,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           )}
 
           {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} marcas={marcasDaPorta} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
-          <LimiteErro><PainelLateral subPedida={subPedida} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} /></LimiteErro>
+          <LimiteErro><PainelLateral subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

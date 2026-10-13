@@ -226,7 +226,9 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   /* MM10: a mesma desestruturação passou a tirar também `lei` (a ficha
      criminal do herói perante uma cidade) — a âncora cresce junto, e o que
      esta prova sempre quis (a chave `elenco` não atravessa) continua de pé. */
-  const sala = linhaDe("try { const { elenco: _elencoLocal, lei: _leiLocal, ...paraSala } = dados;");
+  /* F2d (12/10, oficial): e também `memoria` (as páginas do Códice são do
+     herói) — a âncora cresce junto; a chave `elenco` continua a não atravessar. */
+  const sala = linhaDe("try { const { elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados;");
   t("a sala recebe o save SEM a chave `elenco` — o protocolo da sala não muda nesta fase", sala.includes("publicarEstado(paraSala)") && !sala.includes("publicarEstado(dados)"));
 
   const load = linhaDe("elencoMemRef.current = garantirElenco(sv.elencoMem);");

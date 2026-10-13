@@ -207,7 +207,10 @@ t("e a soleira continua a ser ZERO px quando não tem o que oferecer",
      que alguém do núcleo pede ou deixa decidir (cartaoDoCoracao), por cima
      da soleira. A lei é a mesma — sem soleira E sem coração, zero px —, e a
      âncora aceita a segunda condição em vez de a proibir. */
-  /if \(!vivas\.length( && !doCoracao)?\) return null;/.test(APP),
+  /* MOVIDA de novo na F2b (12/10, oficial): as fichas do que está à vista
+     moram no mesmo pé, por cima — sem soleira, sem coração E sem fichas,
+     zero px. A âncora aceita a terceira condição. */
+  /if \(!vivas\.length( && !doCoracao)?( && !comFichas)?\) return null;/.test(APP),
   "região que reserva espaço para nada é mobília a mentir");
 
 console.log(`\n${maus === 0 ? "TUDO VERDE" : "VERMELHO"} — ${bons} passaram, ${maus} falharam`);

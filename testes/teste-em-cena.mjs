@@ -364,7 +364,11 @@ sec("4. o Narrador limitado à lista");
   t("fiação · pautaDoTurno monta a lista DEPOIS do cederNaCena, guarda-a e põe a linha, num calou próprio", pdt.indexOf('calou("cederNaCena"') > 0 && pdt.indexOf("montarEmCena(") > pdt.indexOf('calou("cederNaCena"') && /emCenaRef\.current = lista;/.test(pdt) && /p = pautaComEmCena\(p, lista, \{ luta: !!combateRef\.current/.test(pdt) && pdt.includes('calou("EM CENA"'));
   t("fiação · a lista de antes vai de um turno ao outro (antes: emCenaRef.current)", /antes: emCenaRef\.current/.test(app));
   t("fiação · a criatura à vista guarda quantos", /criaturaAVistaRef\.current = \(inv[^;]*quantos: inv\.quantos/.test(app));
-  t("fiação · declararAgressao lê a frase contra a lista, e o bicho do golpe vai em conhecidas", /quemNaFrase\(acao, /.test(decl) && /faz === "golpe"/.test(decl) && /conhecidas = \[/.test(decl));
+  t("fiação · declararAgressao lê a frase contra a lista, e o bicho do golpe vai em conhecidas", /* MOVIDA na F2b (12/10, oficial): a frase já não se lê só livre — a
+     ficha tocada vem à frente enquanto a frase a nomeia (alvoDoEnvio →
+     fichas.js#quemNoEnvio, que sem toque É quemNaFrase). A intenção fica:
+     a frase lê-se contra a lista, e o bicho do golpe vai em conhecidas. */
+  /(quemNaFrase|alvoDoEnvio)\(acao, /.test(decl) && /faz === "golpe"/.test(decl) && /conhecidas = \[/.test(decl));
   t("fiação · a lista não vai ao save (refaz-se das fontes que já se salvam)", !/emCena(Ref)?:\s*emCenaRef/.test(app));
 }
 
