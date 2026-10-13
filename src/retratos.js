@@ -69,93 +69,99 @@ export const SINAIS_DE_GENTE = ["papel", "relacao", "oficio", "raca"];
 /* ---------------- o manifesto ----------------
    Feras: [espécie, arquivo, cx, olhos], na ordem de CRIATURAS_FANTASIA.
    Heróis: por raça, [arquivo, cx, olhos]; o arquivo diz raça-sexo-classe
-   e a variante é a 1 (`public/retratos/gente/<arquivo>-1.webp`). Valores
-   estimados à mão na miniatura de 256 px (§11, §13); a ferramenta de corte
-   mede e corrige — e corrigir é mudar um número aqui. */
+   e a variante é a 1 (`public/retratos/gente/<arquivo>-1.webp`). Os valores
+   são os MEDIDOS (`mente/figma/retratos-medidos.json`, 12/10): 144 matrizes
+   pela malha do rosto do MediaPipe (olhos = as duas íris; cx = o meio da
+   malha), 38 à régua onde a malha não acha rosto (13 feras, os Draconatos, o
+   Anão Invocador). A estimativa à mão de §11/§13 errava 0,012 nos olhos e
+   0,016 no cx (máx. 0,043) — no chip de 32 px, até 3,4 px de rosto torto.
+   Mudar um número aqui pede corte novo (`mente/figma/corte`): o arquivo
+   foi recortado com este cx, e `teste-rosto-pintado` fica vermelho se os
+   dois discordarem. */
 const FERAS = [
   ["Slime", "slime", 0.41, 0.36],
   ["Rato Gigante", "rato-gigante", 0.47, 0.37],
-  ["Lobo", "lobo", 0.43, 0.39],
-  ["Goblin", "goblin", 0.49, 0.39],
-  ["Bandido", "bandido", 0.45, 0.39],
-  ["Esqueleto", "esqueleto", 0.47, 0.41],
-  ["Zumbi", "zumbi", 0.47, 0.37],
+  ["Lobo", "lobo", 0.43, 0.41],
+  ["Goblin", "goblin", 0.45, 0.40],
+  ["Bandido", "bandido", 0.44, 0.39],
+  ["Esqueleto", "esqueleto", 0.45, 0.42],
+  ["Zumbi", "zumbi", 0.46, 0.38],
   ["Lobo Atroz", "lobo-atroz", 0.45, 0.37],
-  ["Cultista", "cultista", 0.44, 0.39],
-  ["Ogro", "ogro", 0.47, 0.30],
-  ["Troll", "troll", 0.45, 0.39],
+  ["Cultista", "cultista", 0.46, 0.37],
+  ["Ogro", "ogro", 0.46, 0.32],
+  ["Troll", "troll", 0.45, 0.38],
   ["Elemental Menor", "elemental-menor", 0.44, 0.45],
   ["Golem de Pedra", "golem-de-pedra", 0.43, 0.39],
-  ["Quimera", "quimera", 0.41, 0.47],
-  ["Gigante", "gigante", 0.45, 0.33],
+  ["Quimera", "quimera", 0.41, 0.46],
+  ["Gigante", "gigante", 0.45, 0.32],
   ["Dragão Jovem", "dragao-jovem", 0.45, 0.37],
-  ["Lich", "lich", 0.46, 0.36],
-  ["Dragão Ancião", "dragao-anciao", 0.42, 0.46],
+  ["Lich", "lich", 0.44, 0.37],
+  ["Dragão Ancião", "dragao-anciao", 0.42, 0.47],
 ];
 
 const HEROIS = {
   "Humano": [
-    ["humano-m-guerreiro", 0.47, 0.39], ["humano-f-guerreiro", 0.51, 0.39], ["humano-m-mago", 0.41, 0.37], ["humano-f-mago", 0.41, 0.34],
-    ["humano-m-ladino", 0.39, 0.39], ["humano-f-ladino", 0.42, 0.35], ["humano-m-clerigo", 0.47, 0.33], ["humano-f-clerigo", 0.45, 0.31],
-    ["humano-m-cacador", 0.47, 0.33], ["humano-f-cacador", 0.41, 0.34], ["humano-m-bardo", 0.44, 0.39], ["humano-f-bardo", 0.43, 0.37],
-    ["humano-m-monge", 0.45, 0.33], ["humano-f-monge", 0.45, 0.33], ["humano-m-druida", 0.45, 0.35], ["humano-f-druida", 0.42, 0.37],
-    ["humano-m-feiticeiro", 0.46, 0.33], ["humano-f-feiticeiro", 0.46, 0.34], ["humano-m-bruxo", 0.47, 0.33], ["humano-f-bruxo", 0.45, 0.33],
-    ["humano-m-engenheiro", 0.47, 0.35], ["humano-f-engenheiro", 0.44, 0.34], ["humano-m-invocador", 0.46, 0.37], ["humano-f-invocador", 0.45, 0.34],
+    ["humano-m-guerreiro", 0.47, 0.37], ["humano-f-guerreiro", 0.47, 0.37], ["humano-m-mago", 0.45, 0.37], ["humano-f-mago", 0.44, 0.34],
+    ["humano-m-ladino", 0.42, 0.39], ["humano-f-ladino", 0.46, 0.36], ["humano-m-clerigo", 0.47, 0.33], ["humano-f-clerigo", 0.46, 0.30],
+    ["humano-m-cacador", 0.48, 0.33], ["humano-f-cacador", 0.43, 0.34], ["humano-m-bardo", 0.47, 0.36], ["humano-f-bardo", 0.44, 0.37],
+    ["humano-m-monge", 0.47, 0.33], ["humano-f-monge", 0.46, 0.34], ["humano-m-druida", 0.47, 0.36], ["humano-f-druida", 0.45, 0.35],
+    ["humano-m-feiticeiro", 0.46, 0.31], ["humano-f-feiticeiro", 0.45, 0.35], ["humano-m-bruxo", 0.46, 0.32], ["humano-f-bruxo", 0.45, 0.34],
+    ["humano-m-engenheiro", 0.49, 0.31], ["humano-f-engenheiro", 0.45, 0.34], ["humano-m-invocador", 0.47, 0.35], ["humano-f-invocador", 0.47, 0.32],
   ],
   "Elfo": [
-    ["elfo-m-guerreiro", 0.52, 0.35], ["elfo-f-guerreiro", 0.45, 0.33], ["elfo-m-mago", 0.44, 0.37], ["elfo-f-mago", 0.42, 0.33],
-    ["elfo-m-ladino", 0.43, 0.37], ["elfo-f-ladino", 0.44, 0.36], ["elfo-m-clerigo", 0.43, 0.33], ["elfo-f-clerigo", 0.43, 0.33],
-    ["elfo-m-cacador", 0.45, 0.34], ["elfo-f-cacador", 0.43, 0.36], ["elfo-m-bardo", 0.47, 0.38], ["elfo-f-bardo", 0.43, 0.36],
-    ["elfo-m-monge", 0.45, 0.34], ["elfo-f-monge", 0.45, 0.35], ["elfo-m-druida", 0.45, 0.37], ["elfo-f-druida", 0.45, 0.36],
-    ["elfo-m-feiticeiro", 0.43, 0.35], ["elfo-f-feiticeiro", 0.44, 0.36], ["elfo-m-bruxo", 0.45, 0.34], ["elfo-f-bruxo", 0.43, 0.31],
-    ["elfo-m-engenheiro", 0.45, 0.35], ["elfo-f-engenheiro", 0.45, 0.34], ["elfo-m-invocador", 0.45, 0.36], ["elfo-f-invocador", 0.45, 0.32],
+    ["elfo-m-guerreiro", 0.55, 0.35], ["elfo-f-guerreiro", 0.46, 0.34], ["elfo-m-mago", 0.45, 0.36], ["elfo-f-mago", 0.45, 0.37],
+    ["elfo-m-ladino", 0.44, 0.36], ["elfo-f-ladino", 0.45, 0.37], ["elfo-m-clerigo", 0.45, 0.34], ["elfo-f-clerigo", 0.45, 0.31],
+    ["elfo-m-cacador", 0.44, 0.34], ["elfo-f-cacador", 0.44, 0.37], ["elfo-m-bardo", 0.48, 0.38], ["elfo-f-bardo", 0.43, 0.37],
+    ["elfo-m-monge", 0.46, 0.34], ["elfo-f-monge", 0.46, 0.35], ["elfo-m-druida", 0.47, 0.37], ["elfo-f-druida", 0.47, 0.34],
+    ["elfo-m-feiticeiro", 0.46, 0.35], ["elfo-f-feiticeiro", 0.45, 0.35], ["elfo-m-bruxo", 0.46, 0.34], ["elfo-f-bruxo", 0.45, 0.31],
+    ["elfo-m-engenheiro", 0.46, 0.34], ["elfo-f-engenheiro", 0.46, 0.33], ["elfo-m-invocador", 0.46, 0.36], ["elfo-f-invocador", 0.46, 0.32],
   ],
   "Anão": [
-    ["anao-m-guerreiro", 0.47, 0.29], ["anao-f-guerreiro", 0.44, 0.34], ["anao-m-mago", 0.43, 0.35], ["anao-f-mago", 0.43, 0.36],
-    ["anao-m-ladino", 0.43, 0.34], ["anao-f-ladino", 0.45, 0.38], ["anao-m-clerigo", 0.45, 0.30], ["anao-f-clerigo", 0.45, 0.37],
-    ["anao-m-cacador", 0.43, 0.35], ["anao-f-cacador", 0.41, 0.35], ["anao-m-bardo", 0.45, 0.35], ["anao-f-bardo", 0.43, 0.35],
-    ["anao-m-monge", 0.47, 0.27], ["anao-f-monge", 0.43, 0.37], ["anao-m-druida", 0.45, 0.30], ["anao-f-druida", 0.43, 0.35],
-    ["anao-m-feiticeiro", 0.45, 0.34], ["anao-f-feiticeiro", 0.43, 0.35], ["anao-m-bruxo", 0.47, 0.29], ["anao-f-bruxo", 0.45, 0.35],
-    ["anao-m-engenheiro", 0.45, 0.30], ["anao-f-engenheiro", 0.43, 0.33], ["anao-m-invocador", 0.47, 0.30], ["anao-f-invocador", 0.43, 0.35],
+    ["anao-m-guerreiro", 0.47, 0.33], ["anao-f-guerreiro", 0.46, 0.34], ["anao-m-mago", 0.47, 0.32], ["anao-f-mago", 0.43, 0.36],
+    ["anao-m-ladino", 0.46, 0.33], ["anao-f-ladino", 0.44, 0.38], ["anao-m-clerigo", 0.47, 0.30], ["anao-f-clerigo", 0.47, 0.34],
+    ["anao-m-cacador", 0.44, 0.32], ["anao-f-cacador", 0.42, 0.34], ["anao-m-bardo", 0.46, 0.34], ["anao-f-bardo", 0.45, 0.35],
+    ["anao-m-monge", 0.48, 0.28], ["anao-f-monge", 0.44, 0.34], ["anao-m-druida", 0.47, 0.32], ["anao-f-druida", 0.47, 0.35],
+    ["anao-m-feiticeiro", 0.48, 0.33], ["anao-f-feiticeiro", 0.45, 0.35], ["anao-m-bruxo", 0.48, 0.28], ["anao-f-bruxo", 0.47, 0.35],
+    ["anao-m-engenheiro", 0.47, 0.31], ["anao-f-engenheiro", 0.45, 0.33], ["anao-m-invocador", 0.46, 0.32], ["anao-f-invocador", 0.45, 0.35],
   ],
   "Halfling": [
-    ["halfling-m-guerreiro", 0.45, 0.39], ["halfling-f-guerreiro", 0.43, 0.39], ["halfling-m-mago", 0.45, 0.40], ["halfling-f-mago", 0.45, 0.41],
-    ["halfling-m-ladino", 0.42, 0.41], ["halfling-f-ladino", 0.44, 0.41], ["halfling-m-clerigo", 0.43, 0.40], ["halfling-f-clerigo", 0.43, 0.36],
-    ["halfling-m-cacador", 0.45, 0.40], ["halfling-f-cacador", 0.43, 0.40], ["halfling-m-bardo", 0.45, 0.41], ["halfling-f-bardo", 0.43, 0.40],
-    ["halfling-m-monge", 0.45, 0.38], ["halfling-f-monge", 0.43, 0.37], ["halfling-m-druida", 0.47, 0.37], ["halfling-f-druida", 0.45, 0.39],
-    ["halfling-m-feiticeiro", 0.45, 0.39], ["halfling-f-feiticeiro", 0.43, 0.37], ["halfling-m-bruxo", 0.45, 0.38], ["halfling-f-bruxo", 0.43, 0.40],
-    ["halfling-m-engenheiro", 0.45, 0.37], ["halfling-f-engenheiro", 0.43, 0.40], ["halfling-m-invocador", 0.45, 0.38], ["halfling-f-invocador", 0.47, 0.39],
+    ["halfling-m-guerreiro", 0.46, 0.39], ["halfling-f-guerreiro", 0.43, 0.41], ["halfling-m-mago", 0.46, 0.40], ["halfling-f-mago", 0.45, 0.42],
+    ["halfling-m-ladino", 0.46, 0.42], ["halfling-f-ladino", 0.46, 0.41], ["halfling-m-clerigo", 0.46, 0.39], ["halfling-f-clerigo", 0.47, 0.35],
+    ["halfling-m-cacador", 0.46, 0.40], ["halfling-f-cacador", 0.44, 0.40], ["halfling-m-bardo", 0.45, 0.41], ["halfling-f-bardo", 0.44, 0.41],
+    ["halfling-m-monge", 0.45, 0.37], ["halfling-f-monge", 0.46, 0.37], ["halfling-m-druida", 0.48, 0.37], ["halfling-f-druida", 0.46, 0.39],
+    ["halfling-m-feiticeiro", 0.45, 0.38], ["halfling-f-feiticeiro", 0.47, 0.36], ["halfling-m-bruxo", 0.45, 0.38], ["halfling-f-bruxo", 0.46, 0.38],
+    ["halfling-m-engenheiro", 0.47, 0.36], ["halfling-f-engenheiro", 0.47, 0.37], ["halfling-m-invocador", 0.46, 0.36], ["halfling-f-invocador", 0.47, 0.37],
   ],
   "Meio-orc": [
-    ["meio-orc-m-guerreiro", 0.41, 0.33], ["meio-orc-f-guerreiro", 0.43, 0.35], ["meio-orc-m-mago", 0.45, 0.38], ["meio-orc-f-mago", 0.45, 0.37],
-    ["meio-orc-m-ladino", 0.43, 0.38], ["meio-orc-f-ladino", 0.43, 0.39], ["meio-orc-m-clerigo", 0.45, 0.33], ["meio-orc-f-clerigo", 0.43, 0.35],
-    ["meio-orc-m-cacador", 0.43, 0.34], ["meio-orc-f-cacador", 0.43, 0.36], ["meio-orc-m-bardo", 0.45, 0.38], ["meio-orc-f-bardo", 0.45, 0.39],
-    ["meio-orc-m-monge", 0.45, 0.36], ["meio-orc-f-monge", 0.43, 0.35], ["meio-orc-m-druida", 0.45, 0.35], ["meio-orc-f-druida", 0.43, 0.37],
-    ["meio-orc-m-feiticeiro", 0.45, 0.35], ["meio-orc-f-feiticeiro", 0.43, 0.35], ["meio-orc-m-bruxo", 0.45, 0.35], ["meio-orc-f-bruxo", 0.43, 0.36],
-    ["meio-orc-m-engenheiro", 0.45, 0.35], ["meio-orc-f-engenheiro", 0.43, 0.36], ["meio-orc-m-invocador", 0.45, 0.35], ["meio-orc-f-invocador", 0.45, 0.35],
+    ["meio-orc-m-guerreiro", 0.41, 0.36], ["meio-orc-f-guerreiro", 0.47, 0.36], ["meio-orc-m-mago", 0.45, 0.39], ["meio-orc-f-mago", 0.44, 0.37],
+    ["meio-orc-m-ladino", 0.45, 0.37], ["meio-orc-f-ladino", 0.44, 0.39], ["meio-orc-m-clerigo", 0.47, 0.34], ["meio-orc-f-clerigo", 0.45, 0.32],
+    ["meio-orc-m-cacador", 0.44, 0.36], ["meio-orc-f-cacador", 0.43, 0.35], ["meio-orc-m-bardo", 0.47, 0.37], ["meio-orc-f-bardo", 0.45, 0.39],
+    ["meio-orc-m-monge", 0.47, 0.35], ["meio-orc-f-monge", 0.46, 0.32], ["meio-orc-m-druida", 0.48, 0.38], ["meio-orc-f-druida", 0.46, 0.36],
+    ["meio-orc-m-feiticeiro", 0.46, 0.32], ["meio-orc-f-feiticeiro", 0.46, 0.32], ["meio-orc-m-bruxo", 0.46, 0.33], ["meio-orc-f-bruxo", 0.46, 0.35],
+    ["meio-orc-m-engenheiro", 0.48, 0.33], ["meio-orc-f-engenheiro", 0.45, 0.34], ["meio-orc-m-invocador", 0.45, 0.34], ["meio-orc-f-invocador", 0.45, 0.33],
   ],
   "Draconato": [
-    ["draconato-m-guerreiro", 0.40, 0.29], ["draconato-f-guerreiro", 0.40, 0.33], ["draconato-m-mago", 0.43, 0.35], ["draconato-f-mago", 0.42, 0.31],
-    ["draconato-m-ladino", 0.42, 0.33], ["draconato-f-ladino", 0.42, 0.33], ["draconato-m-clerigo", 0.42, 0.28], ["draconato-f-clerigo", 0.42, 0.32],
-    ["draconato-m-cacador", 0.45, 0.35], ["draconato-f-cacador", 0.42, 0.31], ["draconato-m-bardo", 0.42, 0.34], ["draconato-f-bardo", 0.45, 0.35],
-    ["draconato-m-monge", 0.43, 0.32], ["draconato-f-monge", 0.43, 0.30], ["draconato-m-druida", 0.42, 0.33], ["draconato-f-druida", 0.42, 0.31],
-    ["draconato-m-feiticeiro", 0.42, 0.27], ["draconato-f-feiticeiro", 0.43, 0.32], ["draconato-m-bruxo", 0.42, 0.31], ["draconato-f-bruxo", 0.42, 0.29],
-    ["draconato-m-engenheiro", 0.42, 0.30], ["draconato-f-engenheiro", 0.42, 0.27], ["draconato-m-invocador", 0.45, 0.28], ["draconato-f-invocador", 0.42, 0.31],
+    ["draconato-m-guerreiro", 0.40, 0.31], ["draconato-f-guerreiro", 0.40, 0.33], ["draconato-m-mago", 0.43, 0.37], ["draconato-f-mago", 0.42, 0.33],
+    ["draconato-m-ladino", 0.42, 0.33], ["draconato-f-ladino", 0.42, 0.35], ["draconato-m-clerigo", 0.42, 0.26], ["draconato-f-clerigo", 0.42, 0.33],
+    ["draconato-m-cacador", 0.45, 0.34], ["draconato-f-cacador", 0.42, 0.33], ["draconato-m-bardo", 0.42, 0.34], ["draconato-f-bardo", 0.45, 0.36],
+    ["draconato-m-monge", 0.43, 0.32], ["draconato-f-monge", 0.43, 0.30], ["draconato-m-druida", 0.42, 0.33], ["draconato-f-druida", 0.42, 0.32],
+    ["draconato-m-feiticeiro", 0.42, 0.25], ["draconato-f-feiticeiro", 0.43, 0.32], ["draconato-m-bruxo", 0.42, 0.31], ["draconato-f-bruxo", 0.42, 0.27],
+    ["draconato-m-engenheiro", 0.42, 0.31], ["draconato-f-engenheiro", 0.42, 0.27], ["draconato-m-invocador", 0.45, 0.27], ["draconato-f-invocador", 0.42, 0.32],
   ],
   "Tiefling": [
-    ["tiefling-m-guerreiro", 0.45, 0.35], ["tiefling-f-guerreiro", 0.45, 0.35], ["tiefling-m-mago", 0.43, 0.39], ["tiefling-f-mago", 0.43, 0.39],
-    ["tiefling-m-ladino", 0.45, 0.39], ["tiefling-f-ladino", 0.43, 0.38], ["tiefling-m-clerigo", 0.45, 0.34], ["tiefling-f-clerigo", 0.45, 0.34],
-    ["tiefling-m-cacador", 0.43, 0.35], ["tiefling-f-cacador", 0.45, 0.35], ["tiefling-m-bardo", 0.43, 0.36], ["tiefling-f-bardo", 0.43, 0.36],
-    ["tiefling-m-monge", 0.43, 0.38], ["tiefling-f-bruxo", 0.41, 0.39],
+    ["tiefling-m-guerreiro", 0.46, 0.36], ["tiefling-f-guerreiro", 0.47, 0.39], ["tiefling-m-mago", 0.45, 0.40], ["tiefling-f-mago", 0.44, 0.41],
+    ["tiefling-m-ladino", 0.47, 0.41], ["tiefling-f-ladino", 0.44, 0.39], ["tiefling-m-clerigo", 0.46, 0.34], ["tiefling-f-clerigo", 0.45, 0.34],
+    ["tiefling-m-cacador", 0.42, 0.36], ["tiefling-f-cacador", 0.48, 0.35], ["tiefling-m-bardo", 0.46, 0.38], ["tiefling-f-bardo", 0.45, 0.39],
+    ["tiefling-m-monge", 0.44, 0.41], ["tiefling-f-bruxo", 0.45, 0.39],
   ],
   "Gnomo": [
-    ["gnomo-m-mago", 0.44, 0.41], ["gnomo-f-mago", 0.44, 0.42],
+    ["gnomo-m-mago", 0.46, 0.42], ["gnomo-f-mago", 0.46, 0.44],
   ],
   "Meio-elfo": [
-    ["meio-elfo-m-clerigo", 0.46, 0.35], ["meio-elfo-f-clerigo", 0.45, 0.36],
+    ["meio-elfo-m-clerigo", 0.46, 0.33], ["meio-elfo-f-clerigo", 0.46, 0.34],
   ],
   "Goliath": [
-    ["goliath-m-guerreiro", 0.45, 0.36], ["goliath-f-guerreiro", 0.43, 0.33],
+    ["goliath-m-guerreiro", 0.46, 0.32], ["goliath-f-guerreiro", 0.45, 0.34],
   ],
 };
 

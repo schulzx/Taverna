@@ -29,6 +29,7 @@ const { RETRATOS = [], RETRATO = {}, SINAIS_DE_GENTE = [], retratoDe = () => und
 const { RACAS, CLASSES } = await import("../src/classes.js");
 const { CRIATURAS_FANTASIA, ARQUETIPOS, completarInimigo } = await import("../src/bestiario.js");
 const { feicoes } = await import("../src/semente.js");
+const { readFileSync } = await import("node:fs");
 
 sec("1. O MANIFESTO");
 {
@@ -49,7 +50,18 @@ sec("1. O MANIFESTO");
   const semRosto = [];
   for (const r of RACAS) for (const s of ["m", "f"]) if (!gente.some((g) => g.chave.startsWith(`gente:${r.nome}|${s}|`))) semRosto.push(r.nome + s);
   t("todas as 20 raça × sexo têm ao menos um rosto (a volta 1)", semRosto.length === 0, J(semRosto));
-  t("os três de olhos fora dos 35–43 % estão como §11 os mediu (Ogro 0,30 · Quimera 0,47 · Dragão Ancião 0,46)", ["Ogro:0.3", "Quimera:0.47", "Dragão Ancião:0.46"].every((p) => { const [n, o] = p.split(":"); const r = RETRATOS.find((x) => x.chave === "especie:" + n); return r && r.olhos === Number(o); }));
+  /* MOVIDA (v9.449): os três valores eram os de §11, estimados à mão (Ogro
+     0,30 · Quimera 0,47 · Dragão Ancião 0,46). A tabela passou aos MEDIDOS
+     (`mente/figma/retratos-medidos.json`: o Ogro pela malha do rosto, os
+     outros dois à régua), e a intenção — os três que fogem da faixa comum
+     estão na tabela como a medida os achou, e não puxados ao meio — fica,
+     com os números da medida. */
+  t("os três de olhos fora dos 35–43 % estão como a medida os achou (Ogro 0,32 · Quimera 0,46 · Dragão Ancião 0,47)", ["Ogro:0.32", "Quimera:0.46", "Dragão Ancião:0.47"].every((p) => { const [n, o] = p.split(":"); const r = RETRATOS.find((x) => x.chave === "especie:" + n); return r && r.olhos === Number(o); }));
+  /* a tabela é a medida: cada cx/olhos é o de retratos-medidos.json, e
+     nenhum valor estimado sobrou (12/10: 161 das 182 entradas mudaram) */
+  const medidos = JSON.parse(readFileSync(new URL("../mente/figma/retratos-medidos.json", import.meta.url), "utf8"));
+  const foraDaMedida = RETRATOS.filter((r) => { const a = r.arquivo.match(/\/retratos\/(especie|gente)\/([a-z0-9-]+)\.webp$/); const v = a && medidos[a[1] + "/" + a[2]]; return !v || v.cx !== r.cx || v.olhos !== r.olhos; });
+  t("as 182 entradas têm o cx e os olhos MEDIDOS (mente/figma/retratos-medidos.json)", RETRATOS.length === 182 && foraDaMedida.length === 0, J(foraDaMedida.slice(0, 3).map((r) => r.chave)));
   t("o manifesto é congelado (ninguém muda a tabela em tempo de jogo)", Object.isFrozen(RETRATOS) && Object.isFrozen(RETRATOS[0]));
 }
 
@@ -96,8 +108,10 @@ sec("3. recorteDoRetrato — A CONTA DO DISCO");
   const c = recorteDoRetrato(lobo, 32);
   /* chip do Lobo à mão: kf 0,88 · s = 32/0,40 = 80 → largura 70,4; canto da
      ficha x = (0,43+0,5)/2 − 0,44 = 0,025, y = 0,03; do chip x = 0,23,
-     y = 0,39+0,06−0,20 = 0,25 → left = −0,205·80 = −16,4; top = −0,22·80 = −17,6 */
-  t("o chip do Lobo bate com a conta à mão (70,4 · −16,4 · −17,6)", c && c.largura === 70.4 && c.esquerda === -16.4 && c.topo === -17.6, J(c));
+     y = 0,41+0,06−0,20 = 0,27 → left = −0,205·80 = −16,4; top = −0,24·80 = −19,2.
+     MOVIDA (v9.449): o topo era −17,6 com os olhos estimados a 0,39; a régua
+     mediu-os a 0,41, e a conta à mão refez-se com o número medido. */
+  t("o chip do Lobo bate com a conta à mão (70,4 · −16,4 · −19,2)", c && c.largura === 70.4 && c.esquerda === -16.4 && c.topo === -19.2, J(c));
   const buracos = [];
   for (const r of RETRATOS) for (const lado of [24, 32, 36, 40, 44, 46, 56, 64, 80, 100, 120, 160, 220]) {
     const q = recorteDoRetrato(r, lado);
@@ -105,7 +119,7 @@ sec("3. recorteDoRetrato — A CONTA DO DISCO");
   }
   t("a imagem cobre o disco inteiro nas 182 entradas × 13 tamanhos (nenhum buraco)", buracos.length === 0, J(buracos.slice(0, 4)));
   t("lixo → null: entrada null, sem cx, lado 0/negativo/NaN/null", [recorteDoRetrato(null, 32), recorteDoRetrato({}, 32), recorteDoRetrato(lobo, 0), recorteDoRetrato(lobo, -4), recorteDoRetrato(lobo, NaN), recorteDoRetrato(lobo, null)].every((x) => x === null));
-  t("o chip mostra o olhar: o centro do disco cai a menos de 0,1 do rosto (cx, olhos+0,06)", (() => { const q = recorteDoRetrato(lobo, 32), s = 32 / 0.40, xf = (0.43 + 0.5) / 2 - 0.44, yf = 0.03; const cx = xf + (16 - q.esquerda) / s, cy = yf + (16 - q.topo) / s; return Math.abs(cx - 0.43) < 0.1 && Math.abs(cy - 0.45) < 0.1; })());
+  t("o chip mostra o olhar: o centro do disco cai a menos de 0,1 do rosto (cx, olhos+0,06)", (() => { const q = recorteDoRetrato(lobo, 32), s = 32 / 0.40, xf = (lobo.cx + 0.5) / 2 - 0.44, yf = 0.03; const cx = xf + (16 - q.esquerda) / s, cy = yf + (16 - q.topo) / s; return Math.abs(cx - lobo.cx) < 0.1 && Math.abs(cy - (lobo.olhos + 0.06)) < 0.1; })());
 }
 
 sec("4. R7 — A BASE DO BESTIÁRIO PELO NOME MAIS LONGO");

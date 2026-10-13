@@ -1,8 +1,8 @@
 /* O SERVIDOR DA FERRAMENTA DE CORTE — só na máquina de quem corta
 
    `node mente/figma/corte/servir.cjs` e abrir http://127.0.0.1:5798/ .
-   Antes, `node mente/figma/corte/lista.mjs <pastas das matrizes>` escreve a
-   `lista.json` que este serve.
+   Antes, `node mente/figma/corte/lista.mjs` escreve a `lista.json` que este
+   serve (as matrizes vêm de `mente/figma/matrizes/`, fora do repositório).
 
    Faz quatro coisas, e nenhuma fora destas pastas:
    - GET  /                 a página (`cortar.html`)

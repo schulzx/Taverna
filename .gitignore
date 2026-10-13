@@ -10,3 +10,7 @@ images/
 # o painel e gerado a cada ciclo; o JSON grande nao precisa de historia
 mente/painel.json
 mente/painel/
+
+# as matrizes 1024 dos retratos (~243 MB): a fonte do corte, e o Figma guarda
+# o original; ficam no disco para cortar de novo sem baixar (lista.mjs)
+mente/figma/matrizes/

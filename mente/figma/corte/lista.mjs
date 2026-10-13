@@ -5,9 +5,12 @@
    uma linha por pintura, `{ tipo, arquivo, cx, olhos, fonte }`.
 
    `fonte` é o PNG 1024 da matriz no disco. As matrizes moram no Figma
-   (`ffWFqD7TueSb88Mkeg9bhW`, página 08, grelhas `189:413` e `228:725`); as
-   cópias de 1024 que as sessões de 11 e 12/10 baixaram estão no scratchpad.
-   Passe as pastas onde procurar: `node lista.mjs <pasta> [<pasta> ...]`.
+   (`ffWFqD7TueSb88Mkeg9bhW`, página 08, grelhas `189:413` e `228:725`), e a
+   cópia de 1024 de cada uma mora em `mente/figma/matrizes/<arquivo>.png`
+   (182 arquivos, ~243 MB, FORA do repositório pelo `.gitignore`: até 12/10
+   viviam no scratchpad de uma sessão, e um corte novo dependia de ela não
+   ter sido limpa). Sem argumento, procura-se lá; para outras pastas,
+   `node lista.mjs <pasta> [<pasta> ...]`.
    A matriz acha-se pelo nome — o arquivo final (`lobo.png`,
    `humano-m-mago-1.png`), o nome da amostra (`f1-lobo.png`, `h2-elfo-mago.png`)
    ou o da F1 (`f09-slime.png`). Pintura do manifesto sem matriz no disco é
@@ -50,7 +53,8 @@ const AMOSTRA = {
   "h3-ana-cleriga": "anao-f-clerigo-1", "h4-meioorc-ladino": "meio-orc-m-ladino-1",
   "h5-tiefling-bruxa": "tiefling-f-bruxo-1", "h6-draconato-cacador": "draconato-m-cacador-1",
 };
-const pastas = process.argv.slice(2);
+const MATRIZES = join(AQUI, "..", "matrizes");
+const pastas = process.argv.length > 2 ? process.argv.slice(2) : [MATRIZES];
 const achado = new Map();
 for (const p of pastas) {
   if (!existsSync(p)) continue;
