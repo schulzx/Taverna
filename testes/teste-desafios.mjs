@@ -401,8 +401,9 @@ sec("15. TESTE NÃO SE PEDE (v9.64)");
   /* o exemplo que o sistema ensina tem de ser lido pelo próprio sistema —
      seria cruel mandar escrever uma frase que o leitor não reconhece */
   {
+    /* 10.ª sessão (13/10, M65): desarmar só concorre com uma armadilha conhecida em cena (desafios.js, OBJETO_DO_TESTE / precisaDe) — "estou desarmada" numa ferraria custou 11 PV. Estas asserções medem a frase DIANTE da armadilha, que é o que sempre quiseram medir; a ferraria sem armadilha está em teste-sessao-10-mao.mjs. */
     const mudos = DESAFIOS.filter((d) => {
-      const v = lerAcao(comoSeDiz(d.id), { ...ctx, personagem: ladino });
+      const v = lerAcao(comoSeDiz(d.id), { ...ctx, personagem: ladino, objetoEmCena: (o) => o === d.precisaDe });
       return !v || v.tipo === "livre";
     }).map((d) => d.id);
     console.log("      exemplos que o leitor não reconhece: " + (mudos.join(", ") || "nenhum"));
@@ -489,7 +490,8 @@ sec("19. COBERTURA — toda perícia da ficha tem como aparecer no jogo");
 
 sec("20. A LEVA NOVA — cada uma reconhece o seu, e recusa o vizinho");
 {
-  const ctx = { personagem: ladino, semente: SEM, lugar: "o corredor", tentativas: {}, dia: 1 };
+  /* 10.ª sessão (13/10, M65): desarmar só concorre com uma armadilha conhecida em cena (desafios.js, OBJETO_DO_TESTE / precisaDe) — "estou desarmada" numa ferraria custou 11 PV. Estas asserções medem a frase DIANTE da armadilha, que é o que sempre quiseram medir; a ferraria sem armadilha está em teste-sessao-10-mao.mjs. */
+  const ctx = { personagem: ladino, semente: SEM, lugar: "o corredor", tentativas: {}, dia: 1, objetoEmCena: (o) => o === "armadilha" };
   const casos = [
     ["desarmo a armadilha antes de pisar nela", "desarmar", "prestidigitacao"],
     ["atravesso a nado até a outra margem", "nadar", "atletismo"],

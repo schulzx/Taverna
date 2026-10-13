@@ -37,8 +37,10 @@ sec("1a. uma pergunta de rumo não abre viagem (J19)");
   t("pergunto o caminho e SIGO para Rio do Sul: parte (o verbo e a cidade na mesma oração)", (R.detectarPartida("pergunto o caminho e sigo para Rio do Sul", ctx) || {}).destino === "Rio do Sul");
   t("o plural parte: \"Saímos para Fogão Queimada agora\"", (R.detectarPartida("Saímos para Fogão Queimada agora.", ctx) || {}).destino === "Fogão Queimada");
   t("\"Parto. Quero chegar a Rio do Sul\" continua a dar o destino", (R.detectarPartida("Parto. Quero chegar a Rio do Sul antes do anoitecer.", ctx) || {}).destino === "Rio do Sul");
+  /* 10.ª sessão (13/10, M17): a direção sozinha deixou de abrir estrada (rastro.js, PARTIDA_SEM_DESTINO) — a jornada sem destino gastou 4 h e deixou um "Partir 0 h" morto no mapa. A intenção desta asserção era que a cidade da pergunta não vire destino da outra oração; o
+     "saio pela estrada" sozinho já não parte, e a intenção continua de pé */
   t("a cidade só dentro da oração que pergunta o rumo não é destino de outra",
-    (R.detectarPartida("Pergunto ao guarda como se chega a Rio do Sul e saio pela estrada.", ctx) || {}).destino === "");
+    !(R.detectarPartida("Pergunto ao guarda como se chega a Rio do Sul e saio pela estrada.", ctx) || {}).destino);
   t("os verbos de partida são tabela, com o plural", R.VERBOS_DE_PARTIDA.includes("saimos") && R.VERBOS_DE_PARTIDA.includes("seguimos") && !R.VERBOS_DE_PARTIDA.includes("vamos"));
   t("a regra da pergunta é tabela, com o porquê", R.PERGUNTA_NAO_PARTE.fim.test("leva?") && !!R.PERGUNTA_NAO_PARTE.porque);
   t("lixo não estoura", R.detectarPartida(null, ctx) === null && R.detectarPartida("", {}) === null);

@@ -341,6 +341,10 @@ sec("8. a região v1 e o continente, byte a byte (hashes de HEAD v9.363)");
      campanha na v9.356, medida pela régua antiga) leva o vizinho mais perto,
      que é o mesmo nas duas árvores — a ficha da v2 nova perdeu os vizinhos
      além de um dia, e a v1 não pode depender disso. */
+  /* 13/10 (10.ª sessão, foto 06): a base do mapa vivo passou a dizer
+     horasDaBase = null em vez de 0 (mapa-vivo.js — "Partir · 0 h" era um
+     botão morto). O hash do v1:mapaVivo devolve o 0 SÓ à base antes de
+     medir: bater com o hash antigo prova que foi a única coisa que mudou. */
   const HEAD = { "continente:distancia": "1e78848ba4474f5d", "continente:geografo": "10e16b7a17879364", "continente:ida": "d4eb37bf81daa5c4", "continente:jornada": "7ed28687417bc69d", "continente:ponto": "3172a1f05991c7bb", "continente:prompt": "c1768e7c488d7327", "v1:distancia": "89bf5b855152c3bb", "v1:geografo": "bd9091a08744468f", "v1:ida": "e1d2511916fcf8a4", "v1:jornada": "25910508c71c4417", "v1:mapaVivo": "710a350a1dab4c22", "v1:ponto": "33d9165f148fc9d8", "v1:prompt": "ac2028f2b4e8fccc" };
   const hs = {};
   const h = (k, v) => { (hs[k] ||= createHash("sha256")).update(J(v) ?? "u"); };
@@ -385,7 +389,7 @@ sec("8. a região v1 e o continente, byte a byte (hashes de HEAD v9.363)");
          teste-pendentes-da-prova-viva §f. Tiram-se antes de contar; a cor
          (`perigo`) continua no hash, e é ela que prova que a régua refeita
          numa função só dá o mesmo número. */
-      if (k === "v1") { const d = MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, semente, conhecidos: mms.map((m) => m.nome) }); h("v1:mapaVivo", d && { ...d, nos: d.nos.map(({ quem, bioma, ...r }) => r), arestas: d.arestas.map(({ perigoMotivo, ...r }) => r) }); }
+      if (k === "v1") { const d = MV.dadosDoMapaVivo(tudo, { cidadeAtual: base.nome, semente, conhecidos: mms.map((m) => m.nome) }); h("v1:mapaVivo", d && { ...d, nos: d.nos.map(({ quem, bioma, ...r }) => (r.tipo === "base" && r.horasDaBase === null ? { ...r, horasDaBase: 0 } : r)), arestas: d.arestas.map(({ perigoMotivo, ...r }) => r) }); }
     }
   }
   for (const k of Object.keys(HEAD)) {

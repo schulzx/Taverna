@@ -32,7 +32,8 @@
       como se chega", "digo que vou" — nada disso é partir.
    2) DESTINO DENTRO DA CIDADE NÃO É VIAGEM. "vou até a taverna",
       "subo para o quarto", "atravesso a praça" é andar, não viajar.
-   3) SÓ ABRE COM DESTINO OU DIREÇÃO EXPLÍCITA. Sair "por aí" não
+   3) SÓ ABRE COM DESTINO (desde a 10.ª sessão, a direção sozinha
+      também não: ver PARTIDA_SEM_DESTINO). Sair "por aí" não
       abre estrada: sem para onde, o módulo não teria o que fazer.
    4) O NOME NÃO BASTA PARA A MASMORRA. "ouço falar da cripta" não
       é descer nela; é preciso um verbo de entrada apontando para o
@@ -150,6 +151,27 @@ const DIRECAO = /(\bestrada afora\b|\b(pela|para a|na) estrada\b|\bpara fora d[a
 /* REGRA 2: destino que é um lugar DENTRO do assentamento. Andar até a
    forja não é uma viagem, e tratar como tal seria roubar o dia do jogador. */
 const LUGAR_INTERNO = /\b(taverna|estalagem|hospedaria|quarto|mercado|feira|forja|ferreiro|armeiro|templo|igreja|capela|guilda|cofre|banco|praca|praça|rua|beco|porto|doca|muralha|portao|portão|torre de guarda|guarda|prefeitura|palacio|palácio|castelo|masmorra da cidade|cadeia|estabulo|estábulo|biblioteca|academia|bordel|casa de|loja|armazem|armazém|alquimista|curandeiro|boticario|boticário|cemiterio|cemitério|bairro|distrito)\b/i;
+
+/* ---------------- A DIREÇÃO SOZINHA NÃO PARTE (13/10, MM11 · 10.ª sessão, M17) ----------------
+   "Respondo que viemos falar com Nyla Punho-de-Pedra, a guardiã do Rossio
+   Torto. Sigo com Saoirse para o sul, até o Rossio Torto, e procuro por
+   ela." — o Rossio Torto é uma feira DENTRO de Nova Profundo, e a heroína
+   já estava nele. "Para o sul" casou a DIREÇÃO, e a REGRA 3 deixava a
+   direção abrir estrada sem destino: jornada Nova Profundo → "", 4 h de
+   relógio sem preço antes, e um mapa que depois oferecia "Partir para Monte
+   Rasa · 0 h de estrada" num botão que não partia (a estrada sem `para`
+   não aparece no mapa, e a partida de dentro dela é recusada).
+   É a terceira vez que a estrada sem destino custa uma sessão (a 8.ª, M35:
+   720 minutos em curso; a 3.ª, treze horas). A regra passa a ser a do
+   cartão do mapa: OU a partida tem destino, OU não há partida. A direção
+   sozinha não abre estrada; quem quer ir "para o sul" sem nome cai no
+   destino por descrição (resolver.js, com os cardeais) ou no aviso de
+   destino não reconhecido — que não move ninguém. `abre: true` devolve o
+   comportamento de antes, numa linha. */
+export const PARTIDA_SEM_DESTINO = {
+  abre: false,
+  porque: "uma estrada sem destino não tem o que rolar nem onde acabar, e o preço não pode ser dito antes do clique",
+};
 
 /* ---------------- A PARTIDA ----------------
    `ctx.cidades` é a lista de nomes conhecidos do mapa: se o jogador
@@ -286,10 +308,11 @@ export function detectarPartida(acao, ctx = {}) {
     /* sem cidade nomeada, só a direção explícita serve. E ela ganha do lugar
        interno: "sigo para fora dos portões" é sair, mesmo com "portão" na
        lista de lugares da cidade. */
-    if (DIRECAO.test(o)) return { destino: "", motivo: "direção explícita para fora" };
+    if (PARTIDA_SEM_DESTINO.abre && DIRECAO.test(o)) return { destino: "", motivo: "direção explícita para fora" };
   }
   /* houve verbo de partida, mas sem para onde: a REGRA 3 manda não abrir —
-     estrada sem destino não teria o que rolar. */
+     estrada sem destino não teria o que rolar (10.ª sessão: nem a direção
+     sozinha, PARTIDA_SEM_DESTINO). */
   return null;
 }
 

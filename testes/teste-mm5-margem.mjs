@@ -213,7 +213,8 @@ sec("7. quem não tem meio");
 
 sec("8. o envelope do teste nos três desfechos");
 {
-  const arm = ler("desarmo a armadilha");
+  /* 10.ª sessão (13/10, M65): desarmar só concorre com uma armadilha conhecida em cena (desafios.js, OBJETO_DO_TESTE / precisaDe) — "estou desarmada" numa ferraria custou 11 PV. Estas asserções medem a frase DIANTE da armadilha, que é o que sempre quiseram medir; a ferraria sem armadilha está em teste-sessao-10-mao.mjs. */
+  const arm = ler("desarmo a armadilha", { objetoEmCena: (o) => o === "armadilha" });
   t("(fixture) desarmar tem meio", arm && arm.alvoDoCusto === "armadilha");
   const dc = arm.dc;
   const env = (total, valor, meio, extra = {}) => envelopeDoTeste({

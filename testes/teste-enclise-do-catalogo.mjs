@@ -236,7 +236,9 @@ sec("7. a letra acentuada solta, que nunca casava");
   t("nenhuma regra do catálogo tem letra acentuada solta, salvo as de gêmea", soltas.every((id) => GEMEAS.includes(id)), soltas.join(","));
   t("nem as famílias do improviso", FAMILIAS_DO_IMPROVISO.every((f) => f.verbos.every((v) => !fora(v.rx) && !fora(v.nucleo))));
   t("\"convenço o guarda a abrir\" é Persuasão", idDe(ler("convenço o guarda a abrir o portão")) === "convencer");
-  t("\"calço a placa com a adaga\" desarma", idDe(ler("calço a placa com a adaga")) === "desarmar");
+  /* 10.ª sessão (13/10, M65): desarmar só concorre com uma armadilha conhecida em cena (desafios.js, OBJETO_DO_TESTE / precisaDe) — "estou desarmada" numa ferraria custou 11 PV. Estas asserções medem a frase DIANTE da armadilha, que é o que sempre quiseram medir; a ferraria sem armadilha está em teste-sessao-10-mao.mjs. */
+  t("\"calço a placa com a adaga\" desarma (diante da armadilha)", idDe(lerAcao("calço a placa com a adaga", { objetoEmCena: (o) => o === "armadilha" })) === "desarmar");
+  t("e sem armadilha em cena não há o que desarmar", idDe(ler("calço a placa com a adaga")) !== "desarmar");
   t("\"conduzo o trenó pela encosta\" é Montaria", idDe(ler("conduzo o trenó pela encosta")) === "cavalgar");
   t("\"vou no encalço dele\" é seguir alguém", idDe(ler("vou no encalço dele pela viela")) === "seguir_alguem");
 }

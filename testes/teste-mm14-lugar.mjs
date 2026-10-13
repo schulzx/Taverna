@@ -131,7 +131,9 @@ sec("2. os casos da sessão");
   /* regressão: a viagem, a masmorra e o passo de verdade */
   t("a viagem de verdade continua: \"Parto para Alto do Sal\"", (R.detectarPartida("Parto para Alto do Sal.", RASTRO) || {}).destino === "Alto do Sal");
   t("\"Saio pelo portão rumo a Alto do Sal\" é estrada, não passo", L.lugarPedido("Saio pelo portão rumo a Alto do Sal.", NA_CIDADE) === null && (R.detectarPartida("Saio pelo portão rumo a Alto do Sal.", RASTRO) || {}).destino === "Alto do Sal");
-  t("\"sigo para fora dos portões\" continua a abrir a estrada", !!R.detectarPartida("Sigo para fora dos portões.", RASTRO) && L.lugarPedido("Sigo para fora dos portões.", NA_CIDADE) === null);
+  /* 10.ª sessão (13/10, M17): a direção sozinha deixou de abrir estrada (rastro.js, PARTIDA_SEM_DESTINO) — a jornada sem destino gastou 4 h e deixou um "Partir 0 h" morto no mapa. A intenção desta asserção era que a frase de estrada não fosse lida como um passo a pé; o
+     passo continua a não a ler, e a estrada sem destino deixou de abrir */
+  t("\"sigo para fora dos portões\" não é passo, e sem destino também não é estrada", R.detectarPartida("Sigo para fora dos portões.", RASTRO) === null && L.lugarPedido("Sigo para fora dos portões.", NA_CIDADE) === null);
   const poco = { nome: "O Poço de Sal", tipo: "mina" };
   const noPoco = L.definirLugar("o Poço de Sal", { cidade: FOZ, distancia: "arredores" });
   const mmPoco = R.detectarEntradaEmMasmorra("Entro no Poço de Sal com a tocha acesa.", { ...RASTRO, lugar: noPoco, masmorras: [poco] });

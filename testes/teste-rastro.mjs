@@ -29,9 +29,13 @@ ok(detectarPartida("voo até Rio do Sul", base).destino === "Rio do Sul", "voand
 ok(detectarPartida("embarco no navio para Rio do Sul", base).destino === "Rio do Sul", "e de navio");
 ok(detectarPartida("saio da taverna e sigo para Rio do Sul", base).destino === "Rio do Sul",
    "sair de um lugar interno E nomear a cidade continua sendo viagem");
+/* 10.ª sessão (13/10, M17): a direção sozinha deixou de abrir estrada (rastro.js, PARTIDA_SEM_DESTINO) — a jornada sem destino gastou 4 h e deixou um "Partir 0 h" morto no mapa. A intenção desta asserção era "a direção é lida"; agora ela é lida e NÃO parte: ou a partida
+   tem destino, ou não há partida (o destino por descrição, no App, é quem
+   tenta "o sul" pelos cardeais). */
 const p2 = detectarPartida("tomo a estrada rumo ao sul", base);
-ok(p2 && p2.destino === "", "direção explícita abre estrada sem destino nomeado");
-ok(detectarPartida("deixo a cidade e sigo para fora dos portões", base), "sair pelos portões é partir");
+ok(p2 === null, "direção explícita sem destino nomeado não abre estrada (10.ª sessão)");
+ok(detectarPartida("deixo a cidade e sigo para fora dos portões", base) === null, "sair pelos portões sem destino não é partida de estrada (10.ª sessão)");
+ok(detectarPartida("deixo a cidade e sigo para Rio do Sul pela estrada", base).destino === "Rio do Sul", "com a cidade nomeada, a direção não atrapalha");
 
 console.log("\n[3. O FALSO POSITIVO — o caro]");
 ok(!detectarPartida("pergunto o caminho para Rio do Sul", base), "perguntar o caminho NÃO é partir");

@@ -33,6 +33,9 @@
    nenhum jogador usa, e aí o atrito não ensina nada — só irrita.
    ============================================================ */
 
+/* 13/10 (10.ª sessão): a peneira da casa, para o sono escrito (descansoDaFrase) */
+import { soODeclarado } from "./peneira.js";
+
 /* ---------------- O DADO DE VIDA ----------------
    Vem da classe, e a escala é a mesma do PV base que ela já
    tinha: quem aguenta mais na tabela cura mais no acampamento.
@@ -189,3 +192,65 @@ export const DESCANSO_PROMPT = `DESCANSO (v9.17 — economia, não botão):
 - O descanso CURTO não cura sozinho: o herói gasta DADOS DE VIDA, que são finitos e só voltam pela metade numa noite inteira. Se ele acabou de acampar e continua machucado, é porque escolheu poupar dados — não narre isso como fraqueza nem como erro.
 - O descanso LONGO acontece UMA vez por dia. Um segundo acampamento no mesmo dia rende só o benefício curto.
 - Você NUNCA concede cura, descanso, "uma noite bem dormida" ou recuperação de recurso por narração. Quem restaura é o sistema, sempre por envelope. Narre o cansaço e o alívio; nunca os números.`;
+
+/* ============================================================
+   O SONO ESCRITO (13/10, MM11 · 10.ª sessão, M49)
+
+   "Aceito os catres junto ao fogo. Deito, de bota e com a faca à mão, e
+   durmo até o amanhecer." — o Mestre narrou o galo e o sol, e o relógio
+   ficou nas 23 h: o descanso só existia pelo botão do acampamento, e a
+   frase que o pede não chegava a ele. O jogador, para dormir de verdade,
+   ainda tocou "Esperar 8h" — que passa o tempo SEM dormir e devolveu
+   Exausto e desvantagem. Duas portas para a mesma noite, e a escrita era
+   a que mentia.
+
+   Esta função lê a frase e diz que descanso ela pede, pela mesma régua do
+   botão: LONGO (a noite: dormir, pernoitar, "descanso até o amanhecer") ou
+   CURTO (o cochilo, a pausa, o fôlego; e "durmo um pouco"). Quem o aplica é
+   o App, pelo mesmo caminho do botão — o acampamento e a saída dele —, e é
+   por isso que "um longo por dia" e o abrigo valem igual para os dois.
+
+   As travas são as da casa (peneira.js): a pergunta, a hipótese, a
+   negação, a fala e o passado não dormem; fingir dormir, deixar outro
+   dormir e "antes de dormir" também não. Na luta ninguém dorme.
+   ============================================================ */
+export const DESCANSO_DA_FRASE = {
+  longo: ["durmo", "dormimos", "vou dormir", "vamos dormir", "adormeco", "adormecemos", "pego no sono", "pegamos no sono", "caio no sono",
+    "pernoito", "pernoitamos", "passo a noite", "passamos a noite", "me deito para dormir", "deito-me para dormir", "deito para dormir", "nos deitamos para dormir"],
+  curto: ["cochilo", "cochilamos", "tiro um cochilo", "tiramos um cochilo", "descanso", "descansamos", "paro para descansar", "paramos para descansar",
+    "recupero o folego", "recuperamos o folego", "faco uma pausa", "fazemos uma pausa", "tomo folego", "tomamos folego"],
+  /* o que faz do "descanso" uma noite inteira */
+  daNoite: ["ate o amanhecer", "ate amanhecer", "ate de manha", "ate a manha", "ate o sol nascer", "ate o dia nascer", "ate o galo cantar",
+    "a noite toda", "a noite inteira", "pela noite", "esta noite", "ate o dia seguinte"],
+  /* o que faz do "durmo" um cochilo */
+  breve: ["um pouco", "uma hora", "meia hora", "alguns minutos", "um instante", "um bocado", "por pouco tempo", "rapidamente", "umas horas"],
+  /* o verbo está lá e o sono não é do herói, ou não é agora */
+  naoE: /\b(finj\w*|fingindo|antes de|depois de|sem) (que )?(durm\w*|dorm\w*|descans\w*)|\bdeix\w* (ele|ela|eles|elas|\w+) (dormir|descansar)\b|\b(nao|nunca|nem) (durmo|dormimos|descanso|descansamos|vou dormir|consigo dormir)\b|\bpasso a noite (em claro|acordad|de vigia|vigiando)|\bdescanso (a mao|o braco|os olhos|o peso|a cabeca|a lamina|a arma|a espada)\b/,
+  porque: "a frase que dorme chega ao mesmo descanso do botão — senão o Mestre narra a manhã e o relógio fica na noite",
+};
+const semAcentoD = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const listaRx = (l) => new RegExp(`\\b(?:${l.map((x) => x.replace(/ /g, "\\s+")).join("|")})\\b`);
+const RX_LONGO = listaRx(DESCANSO_DA_FRASE.longo);
+const RX_CURTO = listaRx(DESCANSO_DA_FRASE.curto);
+const RX_DA_NOITE = listaRx(DESCANSO_DA_FRASE.daNoite);
+const RX_BREVE = listaRx(DESCANSO_DA_FRASE.breve);
+export function descansoDaFrase(texto, ctx = {}) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  if (c.emCombate) return null;
+  const cru = String(texto == null ? "" : texto);
+  if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
+  let t = "";
+  try { t = soODeclarado(cru); } catch { t = semAcentoD(cru); }
+  if (!t.trim()) return null;
+  const orac = t.split(/[.!?;\n]+/).filter((o) => o.trim());
+  for (const o of orac) {
+    if (DESCANSO_DA_FRASE.naoE.test(o)) continue;
+    const longo = RX_LONGO.test(o), curto = RX_CURTO.test(o);
+    if (!longo && !curto) continue;
+    const daNoite = RX_DA_NOITE.test(o), breve = RX_BREVE.test(o);
+    const tipo = breve ? "curto" : (longo || daNoite) ? "longo" : "curto";
+    const m = o.match(RX_DA_NOITE);
+    return { tipo, ate: tipo === "longo" && m ? m[0].replace(/\s+/g, " ").trim() : "", porque: DESCANSO_DA_FRASE.porque };
+  }
+  return null;
+}

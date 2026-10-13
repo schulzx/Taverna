@@ -443,7 +443,13 @@ export function dadosDoMapaVivo(mapa, estado) {
          escondido nem chega aqui (a neblina), logo o seu chão também não. */
       bioma: s.bioma ? String(s.bioma) : null,
       perigo, perigoRotulo,
-      horasDaBase,
+      /* 13/10 (MM11 · 10.ª sessão, foto 06): a base tem 0 h até si mesma, e
+         o cartão, sem veredito, caía nesse número — "Partir para Monte Rasa
+         · 0 h de estrada", num botão que não partia (o herói estava numa
+         estrada sem destino, que o mapa não desenha). Uma partida de zero
+         horas não existe: o nó que não fica a horas da base diz null, e o
+         cartão não oferece verbo nenhum por ele. */
+      horasDaBase: finito(horasDaBase) && Number(horasDaBase) > 0 ? horasDaBase : null,
       vizinhos,
       atoDaHistoria: atoPublico(n),
       momento: momentoDe(n),

@@ -624,10 +624,22 @@ export const DESAFIOS = [
   {
     /* A armadilha existia na masmorra e não havia como declarar que se
        tenta desarmá-la: o jogador passava por cima e torcia. */
+    /* 13/10 (MM11 · 10.ª sessão, M65): "…procuro a ferraria e compro uma
+       arma boa, pois estou desarmada." rolou "desarmar a armadilha", dif.
+       18, numa ferraria — o rx era a RAIZ "desarm", e "desarmada" tem a
+       raiz. O composer sumiu (só "Rolar o dado"), o d20 deu 13 e a lâmina
+       de um gatilho que não existia levou 11 de 22 PV. Duas portas fecham:
+       o verbo na primeira pessoa (ou o infinitivo de quem tenta) COM o
+       objeto ("desarmo a armadilha", "tento desativar o mecanismo") — nunca
+       a raiz, nunca o particípio de estado (ESTADO_NAO_E_ACAO, abaixo) —, e
+       `precisaDe`: só há o que desarmar quando há uma armadilha conhecida
+       em cena (OBJETO_DO_TESTE). Sem ela, o catálogo segue para a próxima
+       entrada, e a frase vai ao Mestre como sempre. */
     id: "desarmar",
-    rx: /\b(desarm|desativ|neutraliz\w* (a|o) (armadilha|mecanismo|gatilho)|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|cal[cç]o a placa)/,
+    rx: /\b((desarmo|desarmar|desarmando|desativo|desativar|desativando|neutralizo|neutralizar|neutralizando)\s+(?:(?:a|o|as|os|essa|esse|esta|este|aquela|aquele|uma|um)\s+)?(armadilhas?|mecanismos?|gatilhos?|travas?|bombas?|dispositivos?|placas?|fios?|molas?|alcapao|disparador|engenhos?|runas?|selos?)\b|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|cal[cç]o a placa)/,
     pericia: "prestidigitacao", alvo: "armadilha", minutos: 5, barulho: false,
     rotulo: "desarmar a armadilha", dcPadrao: DC("dificil"),
+    precisaDe: "armadilha",
   },
   {
     id: "nadar",
@@ -1344,6 +1356,75 @@ export function bonusDoQueMudou(mudou) {
    feita — o porquê está em lerAcao, junto de onde elas entram. */
 const TRAVAS_DO_CATALOGO = NAO_E_DECLARACAO.filter((n) => n && n.id !== "fraseFeita");
 
+/* ---------------- ESTADO NÃO É AÇÃO (13/10, MM11 · 10.ª sessão, M65) ----------------
+   "pois estou desarmada", "estou cansado", "sou cuidadosa", "continuo
+   escondida": o herói diz COMO está, não o que faz. Nenhum teste nasce
+   daí. O verbo de estado e a palavra que o completa (até três advérbios no
+   meio: "estou muito cansado") saem da frase antes do catálogo, com o mesmo
+   tamanho. O gerúndio fica — "estou forçando a porta" é a ação, dita no
+   progressivo. */
+export const ESTADO_NAO_E_ACAO = {
+  verbos: ["estou", "estava", "estamos", "estavamos", "sou", "somos", "era", "eramos", "continuo", "continuamos", "permaneco", "me sinto", "me sentia", "nos sentimos"],
+  modificadores: ["muito", "meio", "bem", "ainda", "ja", "tao", "completamente", "totalmente", "todo", "toda", "um pouco", "quase", "nada", "mais"],
+  naoMascara: /ndo$/,
+  porque: "dizer como se está não é tentar coisa nenhuma — não há dado para um estado",
+};
+const RX_ESTADO = new RegExp(`\\b(?:${ESTADO_NAO_E_ACAO.verbos.join("|")})\\s+(?:(?:${ESTADO_NAO_E_ACAO.modificadores.join("|")})\\s+){0,3}([a-z]+)\\b`, "g");
+function semEstado(t) {
+  return String(t || "").replace(RX_ESTADO, (m, w) => (ESTADO_NAO_E_ACAO.naoMascara.test(w) ? m : " ".repeat(m.length)));
+}
+
+/* ---------------- O OBJETO DO TESTE (13/10, MM11 · 10.ª sessão, M65) ----------------
+   Há testes que só existem diante de uma coisa do mundo: desarmar pede uma
+   armadilha. Quem diz se ela está em cena é o App (a sala armadilhada da
+   masmorra, a que o sistema pôs à vista), por `ctx.objetoEmCena(tipo)`;
+   sem ela, o desafio não concorre — a frase vai ao Mestre, que é o lado
+   seguro de errar (o falso negativo devolve o turno; o positivo custou 11
+   PV). */
+export const OBJETO_DO_TESTE = {
+  armadilha: "uma armadilha conhecida em cena (a sala armadilhada da masmorra, ou a que o sistema pôs à vista)",
+};
+function temOObjeto(tipo, ctx) {
+  if (!tipo) return true;
+  if (!OBJETO_DO_TESTE[tipo]) return false;
+  try { return !!(ctx && typeof ctx.objetoEmCena === "function" && ctx.objetoEmCena(tipo) === true); } catch { return false; }
+}
+
+/* ---------------- O VEREDITO ANTES DO DADO (13/10, MM11 · 10.ª sessão, M65) ----------------
+   O teste que o sistema leu da frase pode ser um teste que o jogador não
+   pediu — e a M65 mostrou o preço: o campo de escrever sumiu, só restou
+   "Rolar o dado", e a falha cobrou metade da vida. A lei da casa é o
+   veredito antes do clique: o teste chega com o que o App precisa para
+   mostrar a ESCOLHA — rolar, ou dizer que não era isso (cancela sem rolar
+   e devolve o turno à frase) — e o risco em pele dito antes, pela mesma
+   tabela que o cobra depois (CUSTO_DE_FALHAR, MORDIDA_POR_DEGRAU, a queda:
+   1d6 por cada 3 m). */
+export const ESCOLHA_DO_TESTE = {
+  rolar: "Rolar o dado",
+  desistir: "Não era isso",
+  fere: "falhar fere: até {n} PV",
+  cai: "falhar é cair {m} m: até {n} PV",
+  condicao: "falhar deixa o corpo {c}",
+  facesDaQueda: 6,
+};
+export function escolhaDoTeste(v) {
+  if (!v || typeof v !== "object" || v.tipo !== "teste") return null;
+  const E = ESCOLHA_DO_TESTE;
+  const c = custoPorAlvo(v.alvoDoCusto);
+  let danoMax = 0, condicao = "";
+  for (const p of [c && c.peleSeca, c && c.pelePorPouco]) {
+    if (!p) continue;
+    if (p.mordida) danoMax = Math.max(danoMax, p.mordida * mordidaDoDegrau(v.dc).faces);
+    if (p.condicao && !condicao) condicao = String(p.condicao);
+  }
+  const cai = !!(c && [c.peleSeca, c.pelePorPouco].some((p) => p && p.queda) && v.queda);
+  const danoDaQueda = cai ? Math.max(1, Number(v.queda.dados) || 1) * E.facesDaQueda : 0;
+  const risco = cai ? E.cai.replace("{m}", String(v.queda.metros)).replace("{n}", String(danoDaQueda))
+    : danoMax ? E.fere.replace("{n}", String(danoMax))
+    : condicao ? E.condicao.replace("{c}", condicao) : "";
+  return { rolar: E.rolar, desistir: E.desistir, podeDesistir: true, risco, danoMax: Math.max(danoMax, danoDaQueda), cai, condicao };
+}
+
 export function lerAcao(texto, ctx = {}) {
   const cru = String(texto || "");
   if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
@@ -1405,14 +1486,15 @@ export function lerAcao(texto, ctx = {}) {
      improviso é que o disse: "quebro o gelo com uma piada" é figura para o
      teste de Força e é o GATILHO de "impressionar" aqui. O catálogo guarda
      as figuras dele nos próprios naoSe. */
-  const inteira = emProclise(daAcao);
+  /* 10.ª sessão: o estado ("estou desarmada") sai antes de tudo */
+  const inteira = semEstado(emProclise(daAcao));
   let declarada = inteira;
-  if (!pedido) { try { declarada = emProclise(soODeclarado(daAcao, TRAVAS_DO_CATALOGO)); } catch { declarada = inteira; } }
+  if (!pedido) { try { declarada = semEstado(emProclise(soODeclarado(daAcao, TRAVAS_DO_CATALOGO))); } catch { declarada = inteira; } }
   /* MM15 (4): `leFala` — o rx lê a frase COM a fala (o pedido mora no que a
      heroína diz em voz alta), e a peneira fica com o `naoSeCom` do desafio,
      que devolve a fala e tira o resto. Não é `lePergunta`: ali a pergunta é
      o gesto; aqui ela é de graça. */
-  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta || x.leFala ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)));
+  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta || x.leFala ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)) && temOObjeto(x.precisaDe, ctx));
   /* MM4: o que o catálogo não conhece, a família do verbo conhece. Vem
      DEPOIS do pedido de teste (pedir continua não sendo declarar) e ANTES do
      "sem dado" — "pego a cadeira e arremesso" tem um verbo de usar o que se
@@ -1608,7 +1690,7 @@ export function lerAcao(texto, ctx = {}) {
   if (alivio) { dc -= alivio; deOnde += `, ${mudou.map((m) => m.diz).join(" e ")} (−${alivio})`; }
   if (emCombate && !d.valeEmCombate) { dc += 3; deOnde += ", no meio da luta (+3)"; }
 
-  return {
+  const teste = {
     tipo: "teste",
     id: d.id, pericia: periciaDaVez, atributo: atributoDoDesafio,
     rotulo: d.rotulo, dc, deOnde, chave,
@@ -1665,6 +1747,8 @@ export function lerAcao(texto, ctx = {}) {
     fechaDepois: (d.alvo === "busca" || d.alvo === "investigacao") && !achado,
     mudou: mudou.map((m) => m.diz),
   };
+  /* 10.ª sessão: rolar ou "não era isso", e o risco dito antes */
+  return { ...teste, escolha: escolhaDoTeste(teste) };
 }
 
 /* ============================================================

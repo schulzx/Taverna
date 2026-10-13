@@ -126,11 +126,14 @@ sec("3 · a volta tem destino, e a jornada sem destino tem saída (M35–M69)");
   t("\"Volto para a cidade.\" à boca também (a volta sem nome)", (R.detectarPartida("Volto para a cidade.", ctx35) || {}).destino === "Ponte Brumoso");
   t("\"Volto para a mina.\" não vai à cidade", R.detectarPartida("Volto para a mina.", ctx35) === null);
   t("virar-se não parte: \"Me volto para Ursa\"", R.detectarPartida("Me volto para Ursa e aponto a corda.", ctx35) === null);
-  t("dentro dos muros nada muda (voltar dali é um passo, não estrada)", (R.detectarPartida(M35, { cidadeAtual: "Ponte Brumoso", cidades: CIDADES, lugar: { nome: "A Serpente & o Elmo", distancia: "dentro" } }) || {}).destino === "");
+  /* 10.ª sessão (13/10, M17): a direção sozinha deixou de abrir estrada (rastro.js, PARTIDA_SEM_DESTINO) — a jornada sem destino gastou 4 h e deixou um "Partir 0 h" morto no mapa. A intenção desta asserção era que dentro dos muros a volta não ganhasse destino (o "" era a
+     estrada sem destino que o "pela estrada" abria); agora não abre nada */
+  t("dentro dos muros nada muda (voltar dali é um passo, não estrada)", R.detectarPartida(M35, { cidadeAtual: "Ponte Brumoso", cidades: CIDADES, lugar: { nome: "A Serpente & o Elmo", distancia: "dentro" } }) === null);
   const env35 = R.envelopeDePartida(p35 && p35.destino, "Ponte Brumoso");
   t("o envelope da volta não diz \"saí de Ponte Brumoso rumo a Ponte Brumoso… não me devolva para lá\"", env35.includes("de volta a Ponte Brumoso") && !env35.includes("não me devolva") && env35.includes("ainda NÃO estou em Ponte Brumoso"), env35.slice(0, 160));
   t("o envelope de uma partida de verdade fica como era", R.envelopeDePartida("Pedra Rasa", "Ponte Brumoso").includes("eu saí de Ponte Brumoso") && R.envelopeDePartida("Pedra Rasa", "Ponte Brumoso").includes("não me devolva"));
-  t("nos arredores também (a régua de lugar.js decide a volta)", (R.detectarPartida(M35, { cidadeAtual: "Ponte Brumoso", cidades: CIDADES, lugar: { nome: "o lado de fora dos portões", distancia: "arredores" } }) || {}).destino === "");
+  /* idem (10.ª sessão): nos arredores a volta continua sem destino, e já não abre estrada */
+  t("nos arredores também (a régua de lugar.js decide a volta)", R.detectarPartida(M35, { cidadeAtual: "Ponte Brumoso", cidades: CIDADES, lugar: { nome: "o lado de fora dos portões", distancia: "arredores" } }) === null);
   /* a jornada que a 8.ª abriu: Ponte Brumoso → "" */
   const j0 = V.abrirViagem({ de: "Ponte Brumoso", para: "", dia: 2 });
   const emV = { cidadeAtual: "Ponte Brumoso", cidades: CIDADES, emViagem: true, jornada: j0 };
@@ -155,7 +158,13 @@ sec("3 · a volta tem destino, e a jornada sem destino tem saída (M35–M69)");
   for (let i = 0; i < 20; i++) s = V.andar(s);
   const fim = jornadaSemDestino(s);
   t("a jornada sem destino, andada até ao fim, fecha na cidade de onde partiu (era: em curso para sempre)", fim && fim.para === "Ponte Brumoso" && fim.semDestino === true && !!(V.progressoDaViagem(fim) || {}).chegou, J(fim && { para: fim.para, andadoMin: fim.andadoMin, totalMin: fim.totalMin }));
-  t("a meio, fica como está", jornadaSemDestino(V.andar(j0)).para === "");
+  /* 10.ª sessão (13/10, M17–M23): a intenção era não fechar a jornada antes
+     da hora; mas a jornada sem destino a meio deixava o herói vinte horas
+     numa estrada para lugar nenhum, e o mapa com um "Partir 0 h" morto.
+     Agora fecha JÁ na cidade de onde saiu (JORNADA_SEM_DESTINO.espera =
+     false), com o andado como o trecho inteiro — e chega. */
+  { const meio = jornadaSemDestino(V.andar(j0));
+    t("a meio, fecha já na cidade de onde saiu, com o andado como trecho", meio.para === "Ponte Brumoso" && meio.semDestino === true && meio.totalMin === meio.andadoMin && !!(V.progressoDaViagem(meio) || {}).chegou, J(meio && { para: meio.para, andadoMin: meio.andadoMin, totalMin: meio.totalMin })); }
   t("com destino, fica como está", jornadaSemDestino({ ...s, para: "Pedra Rasa" }).para === "Pedra Rasa");
   t("imutável: a jornada recebida não muda", s.para === "" && !("semDestino" in s));
   t("lixo não estoura", jornadaSemDestino(null) === null && J(jornadaSemDestino({})) === "{}" && R.detectarSeguirViagem(null, emV) === null && R.detectarPartida(null, ctx35) === null);

@@ -215,17 +215,74 @@ export const RELATIVA_DO_PRECO = {
 const RX_RELATIVA_DO_PRECO = new RegExp(`\\bque\\s+(?:(?!(?:nao|nunca|nem)\\b)[a-z]+\\s+){0,${RELATIVA_DO_PRECO.palavrasAntes}}?(?:${RELATIVA_DO_PRECO.verbos.join("|")})\\b`, "g");
 const semARelativa = (f) => String(f || "").replace(RX_RELATIVA_DO_PRECO, (s) => " ".repeat(s.length));
 
+/* "PAGO A DÍVIDA DE PERRIN: VINTE E TRÊS MOEDAS" (13/10, MM11 · 10.ª sessão).
+   A quantia veio depois dos dois-pontos, a quatro palavras do verbo, e a
+   régua do trecho (até três palavras, sem pontuação no meio) não a via: 0.
+   Na primeira pessoa, o que o herói paga e a quantia separados por ":" ou
+   travessão são o mesmo gesto. Só na primeira pessoa: na prosa ("você deixa
+   a taverna: dez moedas a menos") o sinal é do Narrador, não do herói. */
+export const PAGAR_COM_DOIS_PONTOS = {
+  verbos: ["pago", "paguei", "entrego", "entreguei", "deixo", "deixei"],
+  palavrasAntes: 4,
+  sinais: ":—–",
+};
+const comDoisPontos = (q) => new RegExp(`\\b(${PAGAR_COM_DOIS_PONTOS.verbos.join("|")})\\s+${ENTRE}{0,${PAGAR_COM_DOIS_PONTOS.palavrasAntes - 1}}[a-z]+\\s*[${PAGAR_COM_DOIS_PONTOS.sinais}]\\s*${q}`, "g");
+const RX_DOIS_PONTOS = comDoisPontos(QUANTIA_E_MOEDA);
+
+/* A ORAÇÃO DO PAGAMENTO (13/10, MM11 · 10.ª sessão, M45). "Conto vinte e
+   três moedas na mão dele e pago a dívida de Perrin, e peço que me diga onde
+   posso encontrá-lo." — 23 moedas que a prosa contou uma a uma e a bolsa não
+   viu: o "posso" de outra oração, a do pedido de informação, caía na trava
+   da hipótese, que lia a FRASE inteira. As travas (pergunta, condição,
+   oferta, negação) existem para não debitar o que o jogador só perguntou ou
+   supôs — e por isso só valem DENTRO da oração em que o verbo de pagar está.
+   A oração vai da fronteira de antes à de depois: a pontuação, as
+   conjunções que abrem outra ideia, e o "e" seguido de outro verbo do herói
+   na primeira pessoa ("e peço", "e pergunto") — nunca o "e" da quantia
+   ("vinte e três") nem o do próprio gesto ("conto … e pago"). A condição
+   que é oração própria vale para a frase inteira, antes ou depois do
+   pagamento: "Se ele aceitar, pago dois cobres", "Pago dois cobres, se ele
+   quiser". O "se" de dentro de outra oração ("e pergunto se ele viu Nyla")
+   é pergunta indireta, não condição do pagamento. */
+export const ORACAO_DO_PAGAMENTO = {
+  pontuacao: ",;:",
+  conjuncoes: ["mas", "porem", "depois", "entao", "pois", "porque"],
+  condicao: ["se", "caso"],
+};
+const NAO_CORTA_A_ORACAO = new Set([...VERBOS_DE_PAGAR, ...PREPARAR_E_PAGAR.pagar, ...PREPARAR_E_PAGAR.preparar, ...Object.keys(NUMERO_POR_EXTENSO)]);
+const RX_FRONTEIRA = new RegExp(`[${ORACAO_DO_PAGAMENTO.pontuacao}]|\\b(?:${ORACAO_DO_PAGAMENTO.conjuncoes.join("|")})\\b|\\be\\s+(?=([a-z]+o)\\b)`, "g");
+const RX_CONDICAO = new RegExp(`^\\s*(?:e\\s+)?(?:${ORACAO_DO_PAGAMENTO.condicao.join("|")})\\b`);
+/* As orações da frase, como [início, fim). O trecho do pagamento nunca é
+   cortado por dentro (a fronteira que cai nele não conta). */
+function oracoesDoPagamento(f, ini, fim) {
+  const cortes = [];
+  RX_FRONTEIRA.lastIndex = 0;
+  let m;
+  while ((m = RX_FRONTEIRA.exec(f))) {
+    if (m[1] && NAO_CORTA_A_ORACAO.has(m[1])) continue;
+    const ate = m.index + (m[0].length || 1);
+    if (ate > ini && m.index < fim) continue;
+    cortes.push([m.index, ate]);
+  }
+  const out = [];
+  let a = 0;
+  for (const [i, j] of cortes) { out.push([a, i]); a = j; }
+  out.push([a, f.length]);
+  return out;
+}
+
 /* as mesmas três, com a moeda do mundo — fabricadas uma vez por palavra */
 const REGRAS_POR_MOEDA = new Map();
 function regrasDoGasto(moeda) {
   const raiz = raizDaMoeda(moeda);
-  if (!raiz) return { trecho: RX_TRECHO_DE_PAGAR, custou: RX_TE_CUSTOU, preparo: RX_PREPARO_E_PAGO };
+  if (!raiz) return { trecho: RX_TRECHO_DE_PAGAR, custou: RX_TE_CUSTOU, preparo: RX_PREPARO_E_PAGO, doisPontos: RX_DOIS_PONTOS };
   if (!REGRAS_POR_MOEDA.has(raiz)) {
     const q = quantiaEMoeda(raiz);
     REGRAS_POR_MOEDA.set(raiz, {
       trecho: new RegExp(`\\b(${PAGAR})\\s+${ENTRE}{0,3}?${q}`, "g"),
       custou: new RegExp(`(?:\\b(?:te|lhe)\\s+cust(?:a|ou)|\\bcust(?:a|ou)-(?:te|lhe))\\s+${ENTRE}{0,2}?${q}`, "g"),
       preparo: preparoEPago(q),
+      doisPontos: comDoisPontos(q),
     });
   }
   return REGRAS_POR_MOEDA.get(raiz);
@@ -235,6 +292,18 @@ function regrasDoGasto(moeda) {
    "paga dez e recebe quatro de volta" é uma conta que o leitor de prosa
    erraria para um lado ou para o outro, e o lado seguro é não mexer. A
    oferta e o pedido ainda não são pagamento; a moeda ao ar não sai da mão. */
+/* as travas do pedido do jogador (ver "A FRASE DO JOGADOR TAMBÉM PAGA", abaixo) */
+const RX_PEDIDO_NAO_PAGA = /\?|\b(se|caso|quanto|ofereco|proponho|posso|quero|queria|talvez)\b/;
+/* o pagamento da frase do jogador vale? as travas, só na oração dele */
+function aOracaoPaga(f, ini, fim) {
+  const ors = oracoesDoPagamento(f, ini, fim);
+  const [a, b] = ors.find(([i, j]) => i <= ini && fim <= j) || [0, f.length];
+  const oracao = f.slice(a, b);
+  if (RX_NAO_PAGOU.test(oracao) || RX_PEDIDO_NAO_PAGA.test(oracao)) return false;
+  /* a condição que é oração própria, em qualquer ponto da frase */
+  if (ors.some(([i, j]) => RX_CONDICAO.test(f.slice(i, j)))) return false;
+  return true;
+}
 const RX_NAO_PAGOU = /\b(nao|nunca|nem|nada|nenhum|nenhuma|recusa|recusou|devolve|devolveu|troco|de volta|se\s+(voce|eu)|caso|quando\s+(voce|eu)|oferece|ofereceu|propoe|pede|pediu|cara ou coroa|para o alto)\b/;
 
 const valorDe = (txt) => {
@@ -254,17 +323,21 @@ function heroiPaga(f, idx, verbo) {
 
 export function lerGastos(narrativa, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
-  const { trecho, custou, preparo } = regrasDoGasto(o.moeda);
+  const { trecho, custou, preparo, doisPontos } = regrasDoGasto(o.moeda);
+  /* 10.ª sessão: na frase do jogador (`oracao`), as travas leem só a oração
+     do pagamento; na prosa do Narrador, a frase inteira, como sempre */
+  const porOracao = o.oracao === true;
   const out = { moedas: 0, frases: [] };
   for (const frase of frasesDe(narrativa)) {
     /* 9.ª sessão: a relativa que diz de onde veio o número sai antes das travas */
     const f = semARelativa(norm(frase));
-    if (RX_NAO_PAGOU.test(f)) continue;
+    if (!porOracao && RX_NAO_PAGOU.test(f)) continue;
+    const vale = (m) => !porOracao || aOracaoPaga(f, m.index, m.index + m[0].length);
     let contou = false;
     trecho.lastIndex = 0;
     let m;
     while ((m = trecho.exec(f))) {
-      if (!heroiPaga(f, m.index, m[1])) continue;
+      if (!heroiPaga(f, m.index, m[1]) || !vale(m)) continue;
       const n = valorDe(m[2] || m[3]);
       if (n > 0) { out.moedas += n; contou = true; }
     }
@@ -274,12 +347,23 @@ export function lerGastos(narrativa, opcoes = {}) {
       preparo.lastIndex = 0;
       while ((m = preparo.exec(f))) {
         if (!PREPARO_NA_PRIMEIRA.has(m[1]) && !heroiPaga(f, m.index, m[1])) continue;
+        if (!vale(m)) continue;
+        const n = valorDe(m[2] || m[3]);
+        if (n > 0) { out.moedas += n; contou = true; }
+      }
+    }
+    /* 10.ª sessão: "pago a dívida de Perrin: vinte e três moedas" */
+    if (!contou) {
+      doisPontos.lastIndex = 0;
+      while ((m = doisPontos.exec(f))) {
+        if (!vale(m)) continue;
         const n = valorDe(m[2] || m[3]);
         if (n > 0) { out.moedas += n; contou = true; }
       }
     }
     custou.lastIndex = 0;
     while ((m = custou.exec(f))) {
+      if (!vale(m)) continue;
       const n = valorDe(m[1] || m[2]);
       if (n > 0) { out.moedas += n; contou = true; }
     }
@@ -458,19 +542,56 @@ export const COMPRA_RECUSADA_PELO_SISTEMA = [/a compra não fechou/];
    etiqueta nos envelopes fica só como recurso de quem não passa o nome.
    ============================================================ */
 const RX_O_PEDIDO = /\[O QUE EU FAÇO AGORA[^\]\n]*\]\s*\n([\s\S]*?)(?=\n\[|$)/;
-const RX_PEDIDO_NAO_PAGA = /\?|\b(se|caso|quanto|ofereco|proponho|posso|quero|queria|talvez)\b/;
-const RX_CENA_RECUSA = /\b(recusa|recusou|devolve|devolveu|de volta|nao aceita|nao quer|por conta da casa|fica por conta|sem cobrar|de graca)\b/;
+/* A CENA QUE RECUSA O DINHEIRO (13/10, MM11 · 10.ª sessão, M6). "Sento no
+   balcão, peço uma caneca e pago os dois cobres" — e a prosa trazia, quatro
+   frases depois, "Ele devolve a carta". A trava da recusa procurava
+   "devolve" na narrativa INTEIRA, e a carta devolvida anulou a caneca: 15 →
+   15. Recusar o pagamento é um gesto sobre o DINHEIRO: o gesto (recusa,
+   devolve, de volta) só conta na oração da prosa em que o dinheiro está — a
+   palavra dele, ou um pronome ("empurra-as de volta") numa frase que o
+   nomeia. As expressões que já são sobre a conta ("por conta da casa", "de
+   graça") valem sozinhas. */
+export const RECUSA_DA_CENA = {
+  sempre: ["por conta da casa", "fica por conta", "sem cobrar", "de graca"],
+  gestos: ["recusa", "recusou", "devolve", "devolveu", "de volta", "nao aceita", "nao quer"],
+  dinheiro: ["moeda", "moedas", "cobre", "cobres", "prata", "pratas", "ouro", "ouros", "dinheiro", "pagamento", "bolsa"],
+  pronomes: ["as", "os", "las", "los"],
+};
+const RX_RECUSA_SEMPRE = new RegExp(`\\b(?:${RECUSA_DA_CENA.sempre.join("|")})\\b`);
+const RX_RECUSA_GESTO = new RegExp(`\\b(?:${RECUSA_DA_CENA.gestos.join("|")})\\b`);
+const RX_RECUSA_PRONOME = new RegExp(`(?:\\b|-)(?:${RECUSA_DA_CENA.pronomes.join("|")})\\b`);
+function aCenaRecusa(narrativa, moeda) {
+  const raiz = raizDaMoeda(moeda);
+  const rxDinheiro = new RegExp(`◉|\\b(?:${RECUSA_DA_CENA.dinheiro.join("|")}${raiz ? "|" + raiz : ""})\\b`);
+  /* o pronome aponta para o dinheiro desta frase ou da de antes ("Você
+     estende os cobres. Ele os devolve sem contar.") */
+  let dinheiroAntes = false;
+  for (const frase of frasesDe(narrativa)) {
+    const f = norm(frase);
+    if (RX_RECUSA_SEMPRE.test(f)) return true;
+    const aqui = rxDinheiro.test(f);
+    const temDinheiro = dinheiroAntes || aqui;
+    dinheiroAntes = aqui;
+    if (!RX_RECUSA_GESTO.test(f)) continue;
+    for (const o of f.split(/[,;:]|\s+(?:e|mas)\s+/)) {
+      if (!RX_RECUSA_GESTO.test(o)) continue;
+      if (rxDinheiro.test(o) || (temDinheiro && RX_RECUSA_PRONOME.test(o))) return true;
+    }
+  }
+  return false;
+}
 
 function gastoDoPedido(envelopes, narrativa, pedido, moeda) {
   const dito = typeof pedido === "string" ? pedido.trim() : "";
   const m = dito ? null : String(envelopes || "").match(RX_O_PEDIDO);
   const texto = dito || (m ? m[1] : "");
-  if (!texto || RX_CENA_RECUSA.test(norm(narrativa))) return { moedas: 0, frases: [] };
+  if (!texto || aCenaRecusa(narrativa, moeda)) return { moedas: 0, frases: [] };
   const out = { moedas: 0, frases: [] };
   for (const frase of frasesDe(texto)) {
-    /* 9.ª sessão: "que ele pediu"/"que ele queria" não é o jogador a pedir */
-    if (RX_PEDIDO_NAO_PAGA.test(semARelativa(norm(frase)))) continue;
-    const g = lerGastos(frase, { moeda });
+    /* 9.ª sessão: "que ele pediu"/"que ele queria" não é o jogador a pedir
+       (a relativa sai dentro de lerGastos). 10.ª: as travas, só na oração
+       do pagamento (ORACAO_DO_PAGAMENTO) */
+    const g = lerGastos(frase, { moeda, oracao: true });
     if (g.moedas > 0) { out.moedas += g.moedas; out.frases.push(...g.frases); }
   }
   return out;

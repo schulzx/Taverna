@@ -164,15 +164,32 @@ export function retomarViagem(jornada) {
    dela — a cidade de onde partiu, que é a referência que o herói nunca
    deixou de ter (\`jornadaValida\` exige \`de\` = a cidade de agora). Devolve
    a jornada com \`para\` = \`de\` e a marca \`semDestino\`, para quem a fecha
-   seguir a régua de sempre; com destino, ou ainda a meio, devolve-a igual. */
-export const JORNADA_SEM_DESTINO = { fecha: "de", marca: "semDestino" };
+   seguir a régua de sempre; com destino, devolve-a igual.
+
+   NÃO ESPERA O FIM DO TRECHO (13/10, MM11 · 10.ª sessão, M17–M23). A 10.ª
+   abriu outra destas ("sigo para o sul, até o Rossio Torto" — uma feira da
+   própria cidade): 240 de 1.440 minutos andados, e a saída acima só viria
+   depois de mais vinte horas de estrada para lugar nenhum. Entretanto o mapa
+   não a desenha (sem \`para\` não há para onde apontar) e ofereceu "Partir
+   para Monte Rasa · 0 h" num botão que não partia; só uma frase escrita
+   desfez o nó, seis turnos depois. A jornada sem destino FECHA JÁ, onde
+   está a única referência que o sistema tem dela: a cidade de onde saiu, com
+   o que foi andado como o trecho inteiro (\`espera: false\`). O tempo gasto
+   fica gasto — o relógio já andou —, e ninguém anda o resto de uma estrada
+   que não ia a lado nenhum. */
+export const JORNADA_SEM_DESTINO = { fecha: "de", marca: "semDestino", espera: false };
 export function jornadaSemDestino(jornada) {
   if (!jornada || typeof jornada !== "object" || jornada.para) return jornada || null;
   const de = typeof jornada.de === "string" ? jornada.de.trim() : "";
   if (!de || de === "a última parada") return jornada;
   const total = Math.max(1, num(jornada.totalMin, minutosDaRota(jornada.dias)));
-  if (num(jornada.andadoMin) < total && jornada.estado !== ESTADOS.concluida) return jornada;
-  return { ...jornada, para: jornada[JORNADA_SEM_DESTINO.fecha], [JORNADA_SEM_DESTINO.marca]: true };
+  const andou = num(jornada.andadoMin);
+  const fim = { para: jornada[JORNADA_SEM_DESTINO.fecha], [JORNADA_SEM_DESTINO.marca]: true };
+  if (andou >= total || jornada.estado === ESTADOS.concluida) return { ...jornada, ...fim };
+  if (JORNADA_SEM_DESTINO.espera) return jornada;
+  /* o trecho passa a ser o que foi andado: a chegada é agora, à hora certa */
+  const trecho = Math.max(1, Math.round(andou));
+  return { ...jornada, ...fim, totalMin: trecho, andadoMin: trecho };
 }
 
 /* ---------------- O PROGRESSO ----------------

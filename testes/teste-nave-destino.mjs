@@ -159,8 +159,10 @@ sec("2. os casos da sessão");
     "Vou a São do Meio.",                                // cidade
   ]) t(`sem destino falso: "${f}"`, tenta(() => ida(f, CTX)) === null, JSON.stringify(tenta(() => ida(f, CTX))));
   t("a cidade continua a ser da partida (regressão zero)", (R.detectarPartida("Vou a São do Meio.", CTX) || {}).destino === "São do Meio");
-  t("a direção sem nome continua a abrir estrada, como hoje", (R.detectarPartida("Sigo pela estrada do poente.", CTX) || {}).destino === "");
-  t("a masmorra desconhecida + direção continua como hoje", (R.detectarPartida("Vou à Cripta dos Corvos, pela estrada.", CTX) || {}).destino === "");
+  /* 10.ª sessão (13/10, M17): a direção sozinha deixou de abrir estrada (rastro.js, PARTIDA_SEM_DESTINO) — a jornada sem destino gastou 4 h e deixou um "Partir 0 h" morto no mapa. A intenção desta asserção era "regressão zero" na porta da partida; a porta mudou de
+     propósito, e o que se guarda é que a ida a masmorra não inventa destino */
+  t("a direção sem nome não abre estrada (10.ª sessão)", R.detectarPartida("Sigo pela estrada do poente.", CTX) === null);
+  t("a masmorra desconhecida + direção também não", R.detectarPartida("Vou à Cripta dos Corvos, pela estrada.", CTX) === null);
 
   /* a boca perto: caminhada, minutos */
   const rp = tenta(() => ida("Vou ao Poço Fundo.", { ...CTX, lugar: null }));
