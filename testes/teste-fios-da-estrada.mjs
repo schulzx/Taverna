@@ -70,7 +70,12 @@ sec("3. o encontro e a noite");
   const v = F.encontroComFio({ tipo: "viajante", detalhe: "x" }, { fio: FIO });
   t("o viajante traz notícia do fio", /traz notícia de Inocência Bordão/.test(v.detalhe));
   const q = F.encontroComFio({ tipo: "tranquilo", detalhe: "x" }, { fio: FIO, prometido: caderno({ tipo: "volta", texto: "a mulher de capa verde quer o óleo de mirra", quem: "Belmira" }) });
-  t("o trecho calmo volta a uma promessa, com quem a fez", /a conversa do caminho volta a "a mulher de capa verde quer o óleo de mirra" \(Belmira\)/.test(q.detalhe));
+  /* 13/10 (11.ª sessão, O_ECO): a promessa continua a voltar na conversa,
+     mas marcada como PALAVRA de quem a disse — antes ia só "(Belmira)", e o
+     Mestre lia-a como fato do mundo. A asserção mudou de "(Belmira)" para o
+     "dito por Belmira"; a intenção (o trecho calmo volta à promessa, com quem
+     a fez) é a mesma. */
+  t("o trecho calmo volta a uma promessa, com quem a fez (dita, não fato)", /a conversa do caminho volta a "a mulher de capa verde quer o óleo de mirra" \(dito por Belmira: palavra, não fato\)/.test(q.detalhe));
   const p = F.encontroComFio({ tipo: "perigo", detalhe: "Criatura do bestiário: Lobo Atroz" }, { fio: FIO });
   t("o perigo passa como veio", p.detalhe === "Criatura do bestiário: Lobo Atroz" && !p.tema);
   t("sem fio, o encontro da tabela fica", F.encontroComFio(enc, {}).detalhe === enc.detalhe);
@@ -136,7 +141,12 @@ sec("6. a sessão 4, na estrada");
   const com = TRECHOS.map(([m, tipo]) => { const e = F.encontroComFio({ tipo, detalhe: "(da tabela)" }, { fio: FIO, prometido: pr, ultimoTema: ult }); if (e.tema) ult = e.tema.texto; return [m, e]; });
   const temados = com.filter(([, e]) => e.tema);
   console.log(`      encontros com tema da história: ${temados.map(([m, e]) => `${m} (${e.tema.de})`).join(", ")}`);
-  t("os dois encontros de cena tiram o tema da história", temados.length === 2 && temados.every(([, e]) => e.tema.de.startsWith("promessa")));
+  /* 13/10 (11.ª sessão, O_ECO): o sinal na estrada (M15, "cena") AFIRMA uma
+     coisa no mundo, e por isso já não toma a promessa (palavra do Mestre) —
+     toma a pessoa do fio, que o sistema decidiu. O trecho calmo (M22) é
+     conversa e continua a poder voltar à promessa. A intenção — os dois
+     encontros de cena falam da história — fica. */
+  t("os dois encontros de cena tiram o tema da história (o sinal, do sistema)", temados.length === 2 && temados[0][1].tema.de === "pessoa_do_fio" && temados[1][1].tema.de.startsWith("promessa"));
   t("e não repetem o tema", temados[0][1].tema.texto !== temados[1][1].tema.texto);
   t("o achado e os dois perigos ficam com a tabela", com.filter(([, e]) => !e.tema).length === 3);
   const noite = F.linhaDoAcampamento({ fio: FIO, prometido: pr, grupo: ["Euzébio"], ultimoTema: ult });

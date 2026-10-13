@@ -405,6 +405,13 @@ export function genteDaHistoria(estado) {
      tira o guardião quando a cena não o nomeou: o primeiro da gente da casa,
      o mesmo que batidas.js põe "à guarda" (`casaDaHistoria`, abaixo). Só
      ele — a casa inteira calada esvaziava 10 de 111 murais (eram 2). */
+  /* 13/10 (a 11.ª sessão de prova, M3): e QUEM ANDA COMIGO. O companheiro
+     chamava-se Gualtério, e o mural de Bela do Rio pregou "A Guarnição da
+     Rainha — assina Gualtério do Vale Fundo": dois Gualtérios na mesma
+     mesa, e o Mestre a trocar um pelo outro. O companheiro entra na gente
+     da história (`grupo`, os nomes ou { nome }), e `ehDaHistoria` já tira
+     do mural quem partilha o primeiro nome com ela (`mesmaPessoa`). */
+  for (const g of Array.isArray(e.grupo) ? e.grupo : []) por(g && typeof g === "object" ? g.nome : g);
   const atos = e.espinha && Array.isArray(e.espinha.atos) ? e.espinha.atos : [];
   for (const at of atos) for (const mc of (at && Array.isArray(at.marcos) ? at.marcos : [])) {
     if (!mc || mc.feito) continue;

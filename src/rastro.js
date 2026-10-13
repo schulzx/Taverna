@@ -144,6 +144,49 @@ function semPerguntas(txt) {
   }).filter((p) => p.trim()).join(" ");
 }
 
+/* ---------------- A CIDADE TEM DE SER O PARA-ONDE (13/10, MM11 · 11.ª sessão, M10 e M24) ----------------
+   Duas frases, duas jornadas de 4 h que ninguém pediu, e oito turnos de
+   história mudados: "Ainda nem saímos de Bela do Rio quando eu a deixei
+   com a sentinela" (o herói no Escudo Rachado, a lembrar a véspera) e "Vou
+   até o batedor de Bela do Rio e pergunto o que ele viu" (o batedor estava
+   ali, à frente dele). Nas duas a régua via um verbo de partida ("saímos",
+   "vou") e um nome de cidade NA MESMA ORAÇÃO, e dava a cidade por destino.
+   Mas "de Bela do Rio" é de onde se saiu, ou de onde o batedor é; não é
+   para onde se vai. A 10.ª já pedira isto (o defeito 3) e fechou só a
+   direção sozinha.
+   A regra, numa tabela: o nome só é destino quando vem logo depois de uma
+   preposição de rumo ("para", "até", "a/à", "rumo a", "de volta a"…),
+   admitido o artigo e um nome de lugar que o leva ("às portas de", "a
+   cidade de"). A oração negada ("nem saímos", "não vou") não parte. E a
+   fala entre aspas é fala, não ação: o herói que diz "vamos para Bela do
+   Rio" a alguém ainda está a falar. */
+export const CIDADE_COMO_DESTINO = {
+  rumo: /(?:^|[^a-z0-9])(?:para|pra|pro|a|ao|aos|as|ate|rumo a|rumo ao|em direcao a|em direcao ao|na direcao de|de volta a|de volta ao|de volta para|chegar a|chegar em|chego a|chego em|em)\s+(?:(?:o|a|os|as)\s+)?(?:(?:cidade|vila|aldeia|povoado|burgo|portas|portoes|muralhas|terras|estrada|caminho|regiao)\s+(?:de|da|do|das|dos)\s+(?:(?:o|a|os|as)\s+)?)?$/,
+  negacao: /\b(nao|nem|nunca|jamais)\s+(?:(?:me|nos|se|ainda|mais|ja|sequer|vou|vamos)\s+){0,2}$/,
+  fala: /"[^"]*"|“[^”]*”|«[^»]*»/g,
+  porque: "o nome de uma cidade só é destino quando é o para-onde da oração; de onde se saiu, de onde alguém é, ou o que se disse em voz alta não move ninguém",
+};
+/* a oração (normalizada) leva a esta cidade? — `nomeNorm` também normalizado */
+export function cidadeEhDestino(oracao, nomeNorm) {
+  const o = String(oracao || "");
+  if (!nomeNorm) return false;
+  let i = o.indexOf(nomeNorm);
+  while (i >= 0) {
+    const antes = o.slice(0, i);
+    const depois = o.charAt(i + nomeNorm.length);
+    const inteiro = !/[a-z0-9]/.test(o.charAt(i - 1) || "") && !/[a-z0-9]/.test(depois || "");
+    if (inteiro && CIDADE_COMO_DESTINO.rumo.test(antes)) return true;
+    i = o.indexOf(nomeNorm, i + 1);
+  }
+  return false;
+}
+/* a oração nega o verbo de partida? ("ainda nem saímos", "não vou para") */
+function partidaNegada(o) {
+  const m = o.match(PARTIDA);
+  return !!m && CIDADE_COMO_DESTINO.negacao.test(o.slice(0, m.index));
+}
+const semFala = (txt) => String(txt || "").replace(CIDADE_COMO_DESTINO.fala, " ");
+
 /* Direção sem destino nomeado ainda abre estrada: "sigo para o sul",
    "estrada afora", "para fora dos portões". */
 const DIRECAO = /(\bestrada afora\b|\b(pela|para a|na) estrada\b|\bpara fora d[aeo]s?\s+(cidade|vila|muralhas?|port[õo]es?|port[ãa]o|povoado|muros?|aldeia)|\bport[õo]es? afora\b|\bcruzo (os |as |o |a )?(port[õo]es?|muralhas?)|\brumo a[oso]{0,2}\s+(norte|sul|leste|oeste|nascente|poente)|\bpara o (norte|sul|leste|oeste)\b|\bao (norte|sul|leste|oeste)\b|\bmar afora\b|\brio (abaixo|acima)\b|\bmontanha acima\b)/i;
@@ -233,7 +276,7 @@ export function cidadeDeOrigem(ctx) {
 function voltaAOrigem(o, origem) {
   const n = norm(origem);
   if (!n) return false;
-  if (o.includes(n)) return true;
+  if (cidadeEhDestino(o, n)) return true;
   if (!VOLTA_TEM_DESTINO.rx.test(o) || NAO_E_PARTIDA.rx.test(o)) return false;
   const m = o.match(VOLTA_TEM_DESTINO.outroSitio);
   return !m || VOLTA_TEM_DESTINO.aCidade.includes(m[2]);
@@ -251,14 +294,14 @@ export function detectarSeguirViagem(acao, ctx = {}) {
   const semPara = !!(ctx.jornada && typeof ctx.jornada === "object" && !ctx.jornada.para);
   const destinoDaFrase = (n) => {
     if (!semPara) return "";
-    for (const nome of ctx.cidades || []) { const c = norm(nome); if (c && c.length >= 3 && n.includes(c)) return nome; }
+    for (const nome of ctx.cidades || []) { const c = norm(nome); if (c && c.length >= 3 && cidadeEhDestino(n, c)) return nome; }
     const origem = cidadeDeOrigem(ctx);
     return origem && voltaAOrigem(n, origem) ? origem : "";
   };
-  const declarado = semPerguntas(txt);
+  const declarado = semPerguntas(semFala(txt));
   for (const o of oracoes(declarado)) {
     const n = norm(o);
-    if (SO_INTENCAO.test(n) || NAO_E_PARTIDA.rx.test(n)) continue;
+    if (SO_INTENCAO.test(n) || NAO_E_PARTIDA.rx.test(n) || partidaNegada(n)) continue;
     const seguir = SEGUIR.test(n) && !SEGUIR_OUTRA_COISA.test(n) && (COISA_DE_ESTRADA.test(n) || /^\s*(sigo|continuo|seguimos|prossigo|avanco|marcho)\s*[.!]?\s*$/.test(n));
     const destino = (seguir || PARTIDA.test(n) || VOLTA_TEM_DESTINO.rx.test(n)) ? destinoDaFrase(n) : "";
     if (seguir || destino) return destino ? { motivo: "o jogador escreveu que segue caminho", destino } : { motivo: "o jogador escreveu que segue caminho" };
@@ -278,11 +321,12 @@ export function detectarPartida(acao, ctx = {}) {
      herói conhece, quem responde é `idaAMasmorra`, e esta porta cala. */
   if (idaAMasmorra(txt, ctx)) return null;
   const aqui = norm(ctx.cidadeAtual);
+  /* 11.ª sessão: o nome conta só onde é o para-onde (CIDADE_COMO_DESTINO) */
   const nomeDeCidade = (t) => {
     for (const nome of ctx.cidades || []) {
       const n = norm(nome);
       if (!n || n.length < 3 || n === aqui) continue;
-      if (t.includes(n)) return nome;
+      if (cidadeEhDestino(t, n)) return nome;
     }
     return "";
   };
@@ -292,14 +336,14 @@ export function detectarPartida(acao, ctx = {}) {
   /* MM-C · C0: só o que a frase DECLARA — a pergunta não parte nem dá
      destino; e o destino de fora da oração do verbo só vem de oração que
      também não seja intenção ("pergunto como se chega a X" não é X) */
-  const declarado = semPerguntas(txt);
+  const declarado = semPerguntas(semFala(txt));
   const origem = cidadeDeOrigem({ lugar: ctx.lugar, cidadeAtual: ctx.cidadeAtual });
   const ondeSeVai = oracoes(declarado).map(norm).filter((o) => !PERGUNTA_NAO_PARTE.rumo.test(o)).join(" . ");
   for (const o0 of oracoes(declarado)) {
     /* MM14: sem acento, pela mesma fronteira de ASCII que abria a masmorra
        da lâmina (ver `detectarEntradaEmMasmorra`) */
     const o = norm(o0);
-    if (!(PARTIDA.test(o) || (origem && VOLTA_TEM_DESTINO.rx.test(o))) || SO_INTENCAO.test(o) || NAO_E_PARTIDA.rx.test(o)) continue;
+    if (!(PARTIDA.test(o) || (origem && VOLTA_TEM_DESTINO.rx.test(o))) || SO_INTENCAO.test(o) || NAO_E_PARTIDA.rx.test(o) || partidaNegada(o)) continue;
     const destino = nomeDeCidade(o) || nomeDeCidade(ondeSeVai);
     if (destino) return { destino, motivo: "destino nomeado no mapa" };
     /* 8.ª sessão (M35): longe dela, a cidade de onde se veio é destino —

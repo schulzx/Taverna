@@ -174,6 +174,77 @@ export function aplicarLongo(pers, dia, abrigo = null) {
   };
 }
 
+/* ---------------- O VEREDITO E O RECIBO SAEM DA MESMA CONTA (13/10, MM11 · 11.ª sessão, M40–M42, M60–M63) ----------------
+   Três vozes para o mesmo acampamento, e nenhuma batia com as outras: a
+   oferta dizia "Montar acampamento · uma noite · PV e PM cheios"; o menu
+   do acampamento dizia "devolve o mesmo que um curto (já dormiu hoje)"; e
+   a pauta, depois, "PV e PM já foram restaurados pelo sistema
+   (parcialmente)". O herói ficou a 1/12 PV o resto do dia — o curto não dá
+   PV nenhum (só os dados de vida, gastos à mão) — e o Mestre leu a cura
+   que a pauta afirmou. O veredito antes do clique mentiu, e o recibo
+   depois também.
+   Uma conta só, duas funções que a leem:
+   · `ofertaDoAcampamento` — o que o botão promete. Com a noite livre, a
+     noite inteira; com a noite já gasta, "só um curto", ao preço de uma
+     hora; e quando nem o curto dá nada (sem dados de vida, sem PM a
+     recuperar, sem condição a curar) não há oferta — o botão não promete
+     o que não existe;
+   · `reciboDoDescanso` — o que a pauta diz que aconteceu, lido da ficha
+     ANTES e DEPOIS, nunca do nome do descanso. Se o PV não subiu, a pauta
+     di-lo, com o número, e proíbe a cura narrada. */
+export const VEREDITO_DO_DESCANSO = {
+  longo: { preco: "uma noite", retorno: "PV e PM cheios", comCura: (c) => `PV, PM e o ${c}` },
+  curto: { preco: "uma hora", retorno: "já dormiu hoje: só um curto" },
+  recibo: {
+    longo: "Descanso LONGO: o sistema restaurou PV e PM por inteiro",
+    curto: "Foi só um descanso CURTO",
+    nenhum: "NÃO houve descanso",
+    jaDormiu: " (já tinha dormido a noite inteira hoje)",
+    pvSubiu: (de, d) => `o PV subiu de ${de} para ${d}`,
+    pvCheio: (d) => `o PV já estava cheio (${d})`,
+    pvNao: (d) => `o PV NÃO subiu — continuo com ${d}; NÃO narre cura, ferida fechada nem fôlego recuperado`,
+    pmSubiu: (de, d) => `o PM subiu de ${de} para ${d}`,
+    pmNao: (d) => `o PM ficou como estava (${d})`,
+  },
+  porque: "o botão, o menu e a pauta leem a mesma conta: o que se promete antes é o que se diz depois",
+};
+
+const fichaOk = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : 0);
+
+/* `cura`: o nome da condição que o longo limparia (o App já o sabe).
+   Devolve { tipo, preco, retorno } ou null quando não há o que oferecer. */
+export function ofertaDoAcampamento(pers, dia, { cura = "" } = {}) {
+  const p = fichaOk(pers);
+  const V = VEREDITO_DO_DESCANSO;
+  if (podeDescansoLongo(p, dia).pode) return { tipo: "longo", preco: V.longo.preco, retorno: cura ? V.longo.comCura(cura) : V.longo.retorno };
+  const temDados = dadosDisponiveis(p) > 0 && num(p.vida) < num(p.vidaMax);
+  const temPM = num(p.manaMax) > num(p.mana);
+  if (!temDados && !temPM) return null;
+  return { tipo: "curto", preco: V.curto.preco, retorno: V.curto.retorno };
+}
+
+/* `antes`/`depois`: a ficha ao montar o acampamento (ou antes de aplicar o
+   descanso) e a ficha depois dele. `tipo`: o descanso que de facto correu
+   ("longo", "curto", ou "nenhum" — levantar sem descansar); `pedido`: o que
+   o jogador pediu ("longo" que virou "curto" diz porquê). Devolve a frase
+   da pauta, sem o cabeçalho. Lixo não estoura. */
+export function reciboDoDescanso({ antes = null, depois = null, tipo = "", pedido = "" } = {}) {
+  const a = fichaOk(antes), d = fichaOk(depois);
+  const R = VEREDITO_DO_DESCANSO.recibo;
+  const t = ["longo", "curto"].includes(tipo) ? tipo : "nenhum";
+  const pv = (x) => `${Math.max(0, num(x.vida))}/${num(x.vidaMax)} PV`;
+  const partes = [`${R[t]}${t === "curto" && pedido === "longo" ? R.jaDormiu : ""}`];
+  if (num(d.vida) > num(a.vida)) partes.push(R.pvSubiu(Math.max(0, num(a.vida)), pv(d)));
+  else if (num(d.vidaMax) > 0 && num(d.vida) >= num(d.vidaMax)) partes.push(R.pvCheio(pv(d)));
+  else partes.push(R.pvNao(pv(d)));
+  if (num(d.manaMax) > 0) {
+    const pm = `${num(d.mana)}/${num(d.manaMax)} PM`;
+    partes.push(num(d.mana) > num(a.mana) ? R.pmSubiu(num(a.mana), pm) : R.pmNao(pm));
+  }
+  return partes.join("; ") + ".";
+}
+
 /* ---------------- O QUE O MESTRE RECEBE ----------------
    Só o que muda a narração: quanto fôlego ainda existe. É o que
    permite a ele descrever um grupo esgotado como esgotado, em vez

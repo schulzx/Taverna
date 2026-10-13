@@ -58,10 +58,32 @@ const lista = (x) => (Array.isArray(x) ? x : []);
 export const ORDEM_DO_TEMA = ["promessa_no_fio", "promessa", "pessoa_do_fio", "lugar_do_fio"];
 const pesoDa = (s) => (TIPOS_DE_SEMENTE.find((x) => x.id === s.tipo) || { peso: 0 }).peso;
 
-export function temaDaEstrada(ctx) {
+/* ---------------- O ECO (13/10, MM11 · 11.ª sessão, M8–M44) ----------------
+   O padrão que explicou 4 dos 7 fios inventados da sessão: o Mestre põe uma
+   fala na boca de alguém (M8, Branca Pau Seco: "Devolve na saída ou perde as
+   orelhas no pelourinho"), o Cronista guarda-a como promessa
+   (`prometido.js`), e a estrada devolve-a como ENCONTRO DO TRECHO — "alguém
+   traz notícia de '…'", "um sinal que toca '…'". O Mestre lê o envelope do
+   sistema a confirmar a frase dele, e amplia-a: a Ronda "das orelhas", a
+   forca à beira do valo. O sistema servia ao Mestre as palavras dele com
+   carimbo de verdade.
+   A regra, numa tabela: a promessa é PALAVRA de alguém, nunca fato do
+   mundo. O encontro que PÕE alguma coisa no mundo (o viajante com a
+   notícia, o sinal na estrada) só toma tema do que o sistema decidiu — a
+   pessoa e o lugar do fio (`escuta.js#fioDaHistoria`: a abertura e as
+   missões). A conversa (o trecho calmo, a noite do acampamento) pode voltar
+   à promessa, mas ela vai marcada como dita — alguém lembra, duvida ou teme
+   o que se disse, e isso não a confirma. */
+export const O_ECO = {
+  afirma: { viajante: true, cena: true, tranquilo: false, noite: false },
+  dito: (quem) => `(dito por ${quem || "alguém em cena"}: palavra, não fato)`,
+  porque: "o que só uma personagem disse não volta ao Mestre como verdade; o mundo só confirma o que o sistema decidiu",
+};
+
+export function temaDaEstrada(ctx, { soDoSistema = false } = {}) {
   const c = obj(ctx);
   const fio = lista(c.fio).filter((f) => f && f.nome);
-  const abertas = garantirPrometido(c.prometido).sementes
+  const abertas = (soDoSistema ? [] : garantirPrometido(c.prometido).sementes)
     .filter((s) => s.estado === "aberta")
     .sort((a, b) => (pesoDa(b) - pesoDa(a)) || (a.id - b.id));
   const cands = [];
@@ -88,7 +110,7 @@ export const COMO_O_FIO_ENTRA = {
 };
 export const NOITE_DO_ACAMPAMENTO = "A conversa da noite volta a {tema}: {quem} tem uma lembrança, uma dúvida ou um medo sobre isso, e di-lo.";
 
-const encher = (tpl, tema) => tpl.replace("{tema}", tema.de.startsWith("promessa") ? `"${tema.texto}"${tema.quem ? ` (${tema.quem})` : ""}` : tema.texto);
+const encher = (tpl, tema) => tpl.replace("{tema}", tema.de.startsWith("promessa") ? `"${tema.texto}" ${O_ECO.dito(tema.quem)}` : tema.texto);
 
 /* Devolve um encontro NOVO com o detalhe tirado do fio, e `tema` (o que
    se usou, para o App guardar como `ultimoTema`); sem tema ou num tipo que
@@ -97,7 +119,7 @@ export function encontroComFio(enc, ctx) {
   const e = obj(enc);
   const tpl = COMO_O_FIO_ENTRA[e.tipo];
   if (!tpl) return { ...e };
-  const tema = temaDaEstrada(ctx);
+  const tema = temaDaEstrada(ctx, { soDoSistema: !!O_ECO.afirma[e.tipo] });
   if (!tema) return { ...e };
   return { ...e, detalhe: encher(tpl, tema), tema };
 }
@@ -110,7 +132,7 @@ export function linhaDoAcampamento(ctx) {
   const c = obj(ctx);
   const quem = lista(c.grupo).map((x) => String((x && x.nome) || x || "").trim()).filter(Boolean)[0];
   if (!quem) return "";
-  const tema = temaDaEstrada(c);
+  const tema = temaDaEstrada(c, { soDoSistema: !!O_ECO.afirma.noite });
   if (!tema) return "";
   return encher(NOITE_DO_ACAMPAMENTO, tema).replace("{quem}", quem);
 }
@@ -143,24 +165,29 @@ const dizInteiro = (t, nome) => {
 };
 
 export function amarraDoFio(texto, ctx) {
+  const a = amarraComOrigem(texto, ctx);
+  return a ? a.texto : null;
+}
+/* a amarra e de onde ela veio: "promessa" é palavra de alguém (O_ECO) */
+function amarraComOrigem(texto, ctx) {
   const c = obj(ctx);
   const t = String(texto == null ? "" : texto);
   if (!norm(t)) return null;
   const fio = lista(c.fio).filter((f) => f && f.nome && (f.tipo === "pessoa" ? O_QUE_AMARRA.pessoa : O_QUE_AMARRA.lugar));
   const f = fio.find((x) => tocaOFio(t, [x]));
-  if (f) return f.nome;
+  if (f) return { texto: f.nome, de: "fio" };
   if (O_QUE_AMARRA.promessa) {
     const P = palavras(t);
     for (const s of garantirPrometido(c.prometido).sementes.filter((x) => x.estado === "aberta")) {
-      if (s.quem && dizInteiro(t, s.quem)) return s.texto;
+      if (s.quem && dizInteiro(t, s.quem)) return { texto: s.texto, de: "promessa", quem: s.quem };
       let comum = 0;
       for (const w of palavras(s.texto)) if (P.has(w)) comum++;
-      if (comum >= O_QUE_AMARRA.palavrasDaPromessa) return s.texto;
+      if (comum >= O_QUE_AMARRA.palavrasDaPromessa) return { texto: s.texto, de: "promessa", quem: s.quem };
     }
   }
   if (O_QUE_AMARRA.nome) {
     const n = lista(c.nomes).map((x) => String(x || "").trim()).filter(Boolean).find((x) => tocaOFio(t, [{ nome: x, tipo: "pessoa" }]));
-    if (n) return n;
+    if (n) return { texto: n, de: "nome" };
   }
   return null;
 }
@@ -178,10 +205,13 @@ export function fiosNovosNaEstrada(envelopes, ctx) {
   for (const e of env) {
     const novo = FIOS_NOVOS.find((f) => f.rx.test(e.trimStart()));
     if (!novo) { ficam.push(e); continue; }
-    const a = amarraDoFio(e, c);
+    const a = amarraComOrigem(e, c);
     if (!a) { seguram.push(e); continue; }
-    amarrados.push({ id: novo.id, amarra: a });
-    ficam.push(`${e}\nIsto amarra-se a ${a}: traga-o por aí, e não como assunto à parte.`);
+    amarrados.push({ id: novo.id, amarra: a.texto });
+    /* O_ECO: a amarra a uma promessa é a uma PALAVRA — o envelope não a confirma */
+    const dita = a.de === "promessa";
+    const aQue = dita ? `"${a.texto}" ${O_ECO.dito(a.quem)}` : a.texto;
+    ficam.push(`${e}\nIsto amarra-se a ${aQue}: traga-o por aí, e não como assunto à parte${dita ? ", sem dar o dito por verdade" : ""}.`);
   }
   return { ficam, seguram, amarrados };
 }

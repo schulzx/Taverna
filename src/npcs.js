@@ -865,13 +865,29 @@ export function ehOficioDaCasa(nome) {
   const partes = semArtigos(nome);
   return partes.length >= POSTO_E_OFICIO.minimoDaCasa && HOMONIMO.particulas.includes(partes[1]) && familiasDoOficio(partes[0]).length > 0;
 }
+/* ---------------- O SUBSTANTIVO COMUM À CABEÇA (13/10, a 11.ª sessão de prova, M3–M7) ----------------
+   O Mestre chamou Venceslau, o vendedor, de "um sujeito de braço magro", e
+   na estrada o mesmo homem foi "o sujeito da faca", "o vulto da faca" e "o
+   homem da lâmina": o Cronista escreveu-os com a maiúscula do começo da
+   frase ("Sujeito de braço magro", "Vulto da faca", "Homem de lâmina"), e a
+   maiúscula passava pela régua do nome próprio — três fichas para um homem,
+   e Venceslau em duas pessoas. A primeira palavra que é só GENTE sem nome
+   (um sujeito, um vulto, uma mulher) não é nome por vir com maiúscula: é o
+   começo de uma descrição, e a descrição segue a regra de cima. */
+export const GENTE_SEM_NOME = ["sujeito", "sujeita", "homem", "homens", "mulher", "mulheres", "vulto", "vultos", "figura", "rapaz", "rapariga",
+  "moca", "moco", "menino", "menina", "garoto", "garota", "crianca", "estranho", "estranha", "desconhecido", "desconhecida", "tipo",
+  "sombra", "encapuzado", "encapuzada", "individuo", "fulano", "fulana", "gente", "pessoa", "camarada", "velhote", "velhota", "anciao", "ancia"];
 export function ehDescritor(nome) {
   if (typeof nome !== "string") return false;
   const cru = nome.trim();
   if (!cru) return false;
   const palavras = cru.split(/[\s,]+/).filter(Boolean);
+  /* a cabeça: o artigo e, logo depois dele (ou no começo), o substantivo comum */
+  let cabeca = 0;
+  while (cabeca < palavras.length && HOMONIMO.artigos.includes(semAcento(palavras[cabeca]))) cabeca++;
+  if (cabeca < palavras.length && palavras.length > cabeca + 1 && GENTE_SEM_NOME.includes(semAcento(palavras[cabeca]))) cabeca++;
   const proprias = palavras.filter((p, i) => QUEM_NAO_E_GENTE.maiuscula.test(p[0]) && p.length >= QUEM_NAO_E_GENTE.curto
-    && !(i === 0 && HOMONIMO.artigos.includes(semAcento(p))));
+    && !(i < cabeca));
   return proprias.length === 0;
 }
 /* o ofício casa de verdade: os dois dizem um ofício, e partilham palavra */

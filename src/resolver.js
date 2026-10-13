@@ -29,7 +29,7 @@
    mais barato do que preferir adivinhar.
    ============================================================ */
 
-import { NAO_E_PARTIDA } from "./rastro.js";
+import { NAO_E_PARTIDA, cidadeEhDestino } from "./rastro.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -57,6 +57,14 @@ export const DESTINO_NA_ORACAO = {
   verbo: /\b(vou para|vamos para|vou pra|vamos pra|vou a|vamos a|vou ate|vamos ate|parto para|partimos para|sigo para|seguimos para|viajo para|viajamos para|rumo a|rumo ao|quero ir|queremos ir|preciso ir|vamos voltar para|volto para|voltamos para|me leve para|partir para|viajar para|ir para|ir ate|parto|partimos|viajo|viajamos|rumo)\b/,
   separa: /[.!?;:\n]+|\s+(?:e|mas|porem|entao|depois|antes|enquanto|ou)\s+/,
   genericos: ["lugar", "local", "pessoa", "gente", "objeto", "item", "coisa", "faccao", "criatura", "cidade", "npc", "outro", "outra", "alguem"],
+  /* 11.ª sessão (M24): "Vou até o batedor de Bela do Rio" tem verbo de ir e
+     o nome de uma cidade, e o resolver dava a cidade — mas o para-onde da
+     oração era o batedor, que estava ali. Com o verbo, o nome só vale onde
+     é destino (CIDADE_COMO_DESTINO, rastro.js), e o que o cânone sabe de uma
+     pessoa ou de um sítio só aponta cidade quando a oração fala do LUGAR
+     dela ("a cidade onde mora o ferreiro"), nunca quando a pessoa é o
+     próprio alvo ("vou até o ferreiro") — esse está a pé, ou não está. */
+  lugarDe: /\b(onde|cidade|vila|aldeia|povoado|burgo|terra|terras)\b/,
   porque: "o destino é o que a oração de partir diz, não o que o resto da frase menciona",
 };
 /* o texto onde o destino pode estar: { texto, naoParte } */
@@ -64,9 +72,9 @@ function ondeMoraODestino(texto) {
   const t = norm(texto);
   const oracoes = t.split(DESTINO_NA_ORACAO.separa).map((x) => x.trim()).filter(Boolean);
   const comVerbo = oracoes.filter((o) => DESTINO_NA_ORACAO.verbo.test(o));
-  if (!comVerbo.length) return { texto: t, naoParte: false };
+  if (!comVerbo.length) return { texto: t, naoParte: false, comVerbo: false };
   const valem = comVerbo.filter((o) => !NAO_E_PARTIDA.rx.test(o));
-  return valem.length ? { texto: valem.join(" . "), naoParte: false } : { texto: "", naoParte: true };
+  return valem.length ? { texto: valem.join(" . "), naoParte: false, comVerbo: true } : { texto: "", naoParte: true, comVerbo: true };
 }
 const palavraInteira = (t, termo) => new RegExp(`(^|[^a-z0-9])${termo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`).test(t);
 
@@ -116,13 +124,15 @@ function conhecidas(mapa) {
 const VAZIAS = new Set(["a", "o", "as", "os", "da", "do", "das", "dos", "de", "e", "em", "na", "no", "um", "uma", "que", "para", "pra"]);
 const pedacos = (s) => norm(s).split(/[^a-z0-9]+/).filter((p) => p.length > 2 && !VAZIAS.has(p));
 
-function casaPeloNome(texto, nome) {
+function casaPeloNome(texto, nome, comVerbo = false) {
   const t = norm(texto);
   if (!nome) return 0;
-  if (t.includes(norm(nome))) return 3;                 // nome inteiro: certeza
+  /* com verbo de ir, o nome só conta onde é o para-onde (DESTINO_NA_ORACAO.lugarDe) */
+  const esta = (n) => (comVerbo ? cidadeEhDestino(t, n) : t.includes(n));
+  if (esta(norm(nome))) return 3;                 // nome inteiro: certeza
   const ps = pedacos(nome);
   if (!ps.length) return 0;
-  const achou = ps.filter((p) => new RegExp(`\\b${p}`).test(t)).length;
+  const achou = ps.filter((p) => (comVerbo ? cidadeEhDestino(t, p) : new RegExp(`\\b${p}`).test(t))).length;
   if (!achou) return 0;
   /* um pedaço de um nome de duas palavras vale; "Forte" sozinho, com
      quatro "Forte alguma coisa" no mapa, vira ambiguidade — que é o
@@ -150,20 +160,22 @@ export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
   };
 
   for (const c of alvo) {
-    const p = casaPeloNome(t, c.nome);
+    const p = casaPeloNome(t, c.nome, onde.comVerbo);
     if (p) soma(c, p, "pelo nome");
   }
   /* a região e o continente também são nomes que o jogador diz */
   for (const c of alvo) {
-    if (c.regiao && norm(t).includes(norm(c.regiao))) soma(c, 2, `fica em ${c.regiao}`);
-    if (c.continente && norm(t).includes(norm(c.continente))) soma(c, 1, `fica em ${c.continente}`);
+    const temNome = (n) => (onde.comVerbo ? cidadeEhDestino(t, norm(n)) : norm(t).includes(norm(n)));
+    if (c.regiao && temNome(c.regiao)) soma(c, 2, `fica em ${c.regiao}`);
+    if (c.continente && temNome(c.continente)) soma(c, 1, `fica em ${c.continente}`);
   }
   for (const pista of [...PISTAS, ...CARDEAIS]) {
     if (!pista.rx.test(t)) continue;
     for (const c of alvo) if (pista.casa(c, alvo)) soma(c, 2, pista.id);
   }
   /* o que só quem chama sabe: cânone, códex, gente conhecida */
-  for (const e of extra || []) {
+  const extraVale = !onde.comVerbo || DESTINO_NA_ORACAO.lugarDe.test(t);
+  for (const e of (extraVale ? extra : null) || []) {
     if (!e || !e.cidade || !Array.isArray(e.termos)) continue;
     for (const termo of e.termos) {
       const n = norm(termo);

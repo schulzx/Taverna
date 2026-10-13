@@ -312,7 +312,8 @@ export function linhaDoRumo(opcoes) {
     let cena = "";
     try { cena = cenaDoDegrau(d, { ...obj(mundo), semente }); } catch { cena = ""; }
     if (cena) {
-      const s = DEGRAU_EM_CENA.rumo[d.id].replace("{cena}", cena) + DEGRAU_EM_CENA.rumo.fato;
+      const R = DEGRAU_EM_CENA.rumo;
+      const s = R[d.id].replace("{cena}", cena) + (R.semNome.includes(d.id) ? R.fatoSemNome : R.fato);
       return abre ? `${abre}; ${s}` : s;
     }
   }
@@ -384,6 +385,15 @@ export const DEGRAU_EM_CENA = {
     vem_buscar: "e alguém vem até mim, aqui e agora: {cena}",
     cobra: "e esperar já custa, aqui e agora: {cena}",
     fato: " — é fato: entra nesta resposta, com o nome dito",
+    /* 13/10 (a 11.ª sessão de prova, M50–M56): o "cobra" não traz nome —
+       "os dele", "a marca dele": o antagonista diz-se por camadas (saga.js,
+       FIO.curta: no ato 0 é "quem está por trás de tudo"), e o nome só no
+       último ato. A linha mandava-o "com o nome dito" na mesma, e o Mestre,
+       obrigado a um nome que o sistema calava, deu-lhe um: "Godofredo da Cruz
+       Caída, o Olho Severo", durante cinco respostas, por cima do Tristão do
+       save. Sem nome na linha, a ordem é a da marca, e o veto é dito. */
+    fatoSemNome: " — é fato: entra nesta resposta, sem nome (não lhe dê um)",
+    semNome: ["cobra"],
   },
 };
 
@@ -523,8 +533,22 @@ export function separarEnvelopes(texto) {
    A frase do jogador fecha o pedido, depois do rodapé e da base do mundo
    — é a última coisa que o Narrador lê antes de escrever. Na 4.ª sessão
    ela ia a 7–14 mil caracteres do fim. A etiqueta é curta e é bastidor
-   (entre colchetes, como todo envelope). */
-export const ETIQUETA_DO_PEDIDO = "[O QUE EU FAÇO AGORA — a narração abre por aqui]";
+   (entre colchetes, como todo envelope).
+
+   O TAMANHO E A VOZ DO HERÓI MORAM AQUI (MM11 · 11.ª sessão, 13/10). A
+   regra das 60–140 palavras vivia no meio do system (prompt.js, o
+   "TAMANHO DAS RESPOSTAS"), a ~30 mil caracteres do fim, e o Gemini 3.8
+   Flash a ignorou: mediana de 262 palavras, só 2 de 62 respostas dentro.
+   E escreveu a fala do herói ("— … — você diz", com palavrão) em 16 de
+   62, contra o "NÃO NARRE O QUE EU SINTO NEM O QUE EU DECIDO" do mesmo
+   system. O modelo obedece ao que lê por último, colado ao pedido — por
+   isso as duas lembranças vêm na etiqueta, uma linha antes da frase do
+   jogador. O que entrou aqui SAIU do system (o TAMANHO inteiro): o
+   pedido não cresce, muda de lugar. O número sai da tabela.
+
+   (Nada de "]" dentro: cobranca.js lê a etiqueta até ao primeiro.) */
+export const TAMANHO_DA_NARRATIVA = { min: 80, max: 140 };
+export const ETIQUETA_DO_PEDIDO = `[O QUE EU FAÇO AGORA — a narração abre por aqui. Responda em ${TAMANHO_DA_NARRATIVA.min} a ${TAMANHO_DA_NARRATIVA.max} palavras e termine antes do limite. Não ponha na minha boca fala que eu não escrevi, nem decida por mim.]`;
 
 export function fechoDoPedido(pedido) {
   const p = obj(pedido);

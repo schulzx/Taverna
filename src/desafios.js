@@ -1399,30 +1399,61 @@ function temOObjeto(tipo, ctx) {
    e devolve o turno à frase) — e o risco em pele dito antes, pela mesma
    tabela que o cobra depois (CUSTO_DE_FALHAR, MORDIDA_POR_DEGRAU, a queda:
    1d6 por cada 3 m). */
+/* 13/10 (MM11 · 11.ª sessão, M52): o cartão dizia "falhar fere: até 6
+   PV", o dado deu 15 contra 15 — o sucesso exato, a faixa "mas" — e o
+   herói pagou 3 PV. A faixa do meio (FAIXAS_DA_MARGEM: passar por 0 ou +1,
+   falhar por 1 ou 2) cobra a pele `pelePorPouco`, e o risco só falava da
+   falha: o veredito antes do clique escondia o preço do raspão. Agora,
+   quando a linha aceita o meio e o meio custa pele, o risco diz "falhar ou
+   passar por um fio" (`quando.fio`); e quando o raspão custa uma coisa de
+   outra espécie que a falha (cair contra ficar enfraquecido), di-lo ao lado
+   (`noFio`). Se o meio não custa nada, a frase fica como era. */
 export const ESCOLHA_DO_TESTE = {
   rolar: "Rolar o dado",
   desistir: "Não era isso",
-  fere: "falhar fere: até {n} PV",
-  cai: "falhar é cair {m} m: até {n} PV",
-  condicao: "falhar deixa o corpo {c}",
+  fere: "{quando} fere: até {n} PV",
+  cai: "{quando} é cair {m} m: até {n} PV",
+  condicao: "{quando} deixa o corpo {c}",
+  /* quem paga: só a falha seca, só o raspão (a faixa do meio inteira —
+     passar por 0 ou +1 e o "quase" que vira sim), ou os dois */
+  quando: { falha: "falhar", fio: "passar por um fio", ambos: "falhar ou passar por um fio" },
+  noFio: { fere: "passar por um fio fere: até {n} PV", condicao: "passar por um fio deixa o corpo {c}" },
   facesDaQueda: 6,
 };
 export function escolhaDoTeste(v) {
   if (!v || typeof v !== "object" || v.tipo !== "teste") return null;
   const E = ESCOLHA_DO_TESTE;
   const c = custoPorAlvo(v.alvoDoCusto);
+  /* o raspão cobra? só quando a linha aceita o meio (desfechoDaMargem);
+     sem o meio aceite, o "quase" cai na falha seca — e cobra a pele seca */
+  const fio = c && c.porPouco && !v.fechaDepois && c.pelePorPouco ? c.pelePorPouco : null;
+  const seca = c && c.peleSeca ? c.peleSeca : null;
   let danoMax = 0, condicao = "";
-  for (const p of [c && c.peleSeca, c && c.pelePorPouco]) {
+  for (const p of [seca, fio]) {
     if (!p) continue;
     if (p.mordida) danoMax = Math.max(danoMax, p.mordida * mordidaDoDegrau(v.dc).faces);
     if (p.condicao && !condicao) condicao = String(p.condicao);
   }
-  const cai = !!(c && [c.peleSeca, c.pelePorPouco].some((p) => p && p.queda) && v.queda);
+  const cai = !!([seca, fio].some((p) => p && p.queda) && v.queda);
   const danoDaQueda = cai ? Math.max(1, Number(v.queda.dados) || 1) * E.facesDaQueda : 0;
-  const risco = cai ? E.cai.replace("{m}", String(v.queda.metros)).replace("{n}", String(danoDaQueda))
-    : danoMax ? E.fere.replace("{n}", String(danoMax))
-    : condicao ? E.condicao.replace("{c}", condicao) : "";
-  return { rolar: E.rolar, desistir: E.desistir, podeDesistir: true, risco, danoMax: Math.max(danoMax, danoDaQueda), cai, condicao };
+  const q = (k) => {
+    const naFalha = !!(seca && seca[k]), noRaspao = !!(fio && fio[k]);
+    return naFalha && noRaspao ? E.quando.ambos : noRaspao ? E.quando.fio : E.quando.falha;
+  };
+  const principal = cai ? "queda" : danoMax ? "mordida" : condicao ? "condicao" : "";
+  let risco = principal === "queda" ? E.cai.replace("{quando}", q("queda")).replace("{m}", String(v.queda.metros)).replace("{n}", String(danoDaQueda))
+    : principal === "mordida" ? E.fere.replace("{quando}", q("mordida")).replace("{n}", String(danoMax))
+    : principal === "condicao" ? E.condicao.replace("{quando}", q("condicao")).replace("{c}", condicao) : "";
+  /* o raspão de outra espécie que a falha: dito ao lado */
+  if (fio && principal === "queda" && !fio.queda) {
+    if (fio.mordida) risco += ` · ${E.noFio.fere.replace("{n}", String(fio.mordida * mordidaDoDegrau(v.dc).faces))}`;
+    else if (fio.condicao) risco += ` · ${E.noFio.condicao.replace("{c}", String(fio.condicao))}`;
+  } else if (fio && principal === "mordida" && !fio.mordida && fio.condicao) {
+    risco += ` · ${E.noFio.condicao.replace("{c}", String(fio.condicao))}`;
+  } else if (principal === "mordida" && seca && !seca.mordida && seca.condicao) {
+    risco += ` · ${E.condicao.replace("{quando}", E.quando.falha).replace("{c}", String(seca.condicao))}`;
+  }
+  return { rolar: E.rolar, desistir: E.desistir, podeDesistir: true, risco, danoMax: Math.max(danoMax, danoDaQueda), cai, condicao, custaNoFio: !!fio };
 }
 
 export function lerAcao(texto, ctx = {}) {
