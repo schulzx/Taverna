@@ -6,6 +6,10 @@ cada agente fez, e é aqui que a mente lê o próprio passado antes de agir.
 Formato:
 
 ```
+## 12/10 · v9.444 · a faixa recolhe na janela baixa
+
+O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) mediu 2 linhas de prosa à vista a 800×451 com a faixa e as fichas (6 sem a faixa). Decisão média, pelo número: na altura em que as fichas já tomam a página (`FICHAS.baixaAltura`), a faixa recolhe como na luta; o mapa continua pela tecla M, pela aba e pelo toque nas fichas de lugar. Uma linha no App, a régua em `teste-painel-mapa-vivo.mjs`.
+
 ## dd/mm hh:mm · vX.YYY · <título do item> · commit <hash>
 - **estado inicial:** suítes verdes/vermelhas, o que a pauta tinha
 - **conselheiro:** o que propôs (ou "não chamado")

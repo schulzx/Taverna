@@ -244,6 +244,11 @@ sec("10. O painel: o que a tela nunca diz, e a forma da casa");
   t("o fecho é alvo de 44 e diz Esc", MAPA_VIVO.coluna.fechar.lado === 44 && /aria-label="Voltar à cena \(Esc\)"/.test(CODIGO));
   t("Esc e M fecham; as setas andam; Enter é o verbo", /k === "Escape" \|\| k === "m" \|\| k === "M"/.test(CODIGO) && /vizinhoNaSeta\(/.test(CODIGO) && /k === "Enter"/.test(CODIGO));
   t("em combate a faixa recolhe a zero", /if \(!dados \|\| recolhida\) return null;/.test(CODIGO));
+  /* 12/10, v9.444: na janela baixa (800×451) a faixa deixava à prosa 2 linhas
+     à vista (6 sem ela). Na altura em que as fichas já tomam a página, a faixa
+     recolhe como na luta — o mapa continua pela tecla M e pela aba. */
+  t("na janela baixa a faixa recolhe (a prosa não fica com 2 linhas)",
+    /recolhida=\{!!combate \|\| alturaDaJanela < FICHAS\.baixaAltura\}/.test(readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8")));
   t("nada anima ao montar (§6): o painel não tem classe de movimento", !/tv-fade|tv-slide|tv-pulse|animation/.test(CODIGO));
   t("o emoji do motor não entra (`icone`)", !/\.icone\b/.test(CODIGO));
 }

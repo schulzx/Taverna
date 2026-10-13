@@ -27441,12 +27441,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {/* MM17 · A FAIXA DO RUMO — o horizonte a partir de onde você está,
                 no topo do papel e fora da área que rola, com o orçamento de
                 96 px (48 no telefone) que a xilogravura de R13 pagava. Sem
-                região não aparece (o continente); na luta recolhe a zero.
+                região não aparece (o continente); na luta e na janela baixa recolhe a zero.
                 Tocar um ícone abre a tela grande com o cartão daquele lugar. */}
             {dadosMapaVivo ? (
               <LimiteDoMapa key={"faixa|" + dia}>
                 <FaixaDoRumo dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} telefone={!trilhoAVista}
-                  recolhida={!!combate} aoTocarLugar={(id) => abrirMapaVivo(id)} />
+                  recolhida={!!combate || alturaDaJanela < FICHAS.baixaAltura} aoTocarLugar={(id) => abrirMapaVivo(id)} />
               </LimiteDoMapa>
             ) : null}
             {/* V5 · a região que rola ganha um invólucro: é contra ele que a seta
