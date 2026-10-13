@@ -14,8 +14,10 @@ import { readFileSync } from "node:fs";
 
 const RAIZ = "../src/";
 const { T, ALVOS, FICHAS, FOGUEIRA, PE_DA_PAGINA, VERBO_COM_PRECO, MOVIMENTO_CSS, SUPERFICIES_CSS, CINTA } = await import(RAIZ + "estilo.js");
-const PAINEL = readFileSync(new URL(RAIZ + "painel-fichas.jsx", import.meta.url), "utf8");
-const UI = readFileSync(new URL(RAIZ + "ui.jsx", import.meta.url), "utf8");
+/* As quebras de linha normalizam-se: um checkout com CRLF (o git archive no
+   Windows) não pode ficar vermelho por uma régua que mede o fim de linha. */
+const PAINEL = readFileSync(new URL(RAIZ + "painel-fichas.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+const UI = readFileSync(new URL(RAIZ + "ui.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
