@@ -96,7 +96,12 @@ sec("4. O RUMO na pauta, fora da luta");
 
 sec("5. o mural recusa a gente da história, e o papel vence");
 {
-  t("a lista da história sai de abertura, missões e espinha", /genteDaHistoria\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current, espinha: espinhaRef\.current \}\)/.test(APP));
+  /* v9.469 — ASSERÇÃO MOVIDA, e o motivo: a 11.ª sessão (M3) pôs dois
+     Gualtérios na mesa — o companheiro e o que o mural fez assinar um cartaz.
+     O v9.467 ensinou genteDaHistoria a ler o grupo (ofertas.js), e o App
+     passa-o agora. A lista continua a sair de abertura, missões e espinha;
+     soma-se quem anda comigo. */
+  t("a lista da história sai de abertura, missões, espinha e o grupo", /genteDaHistoria\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current, espinha: espinhaRef\.current, grupo: \(personagemRef\.current \|\| personagem \|\| \{\}\)\.grupo \|\| \[\] \}\)/.test(APP));
   t("os dois sorteios do mural passam a lista (oferecer e garantir)", quantas("historia: historiaDoMural(),\n    });") === 2);
   t("a proposta do Mestre também", APP.includes("{ cidade: cidadeAtualRef.current, nivel: p.nivel || 1, historia: historiaDoMural() });"));
   t("o papel pregado nasce com data", /pregadoEm: cartaz\.pregadoEm != null \? cartaz\.pregadoEm : diaRef\.current/.test(APP));

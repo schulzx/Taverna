@@ -438,10 +438,20 @@ t("o que já foi aceite sai da soleira, pelo MESMO ensaio seco que o aceite apli
      a manchete na oferta, a conta inteira no botão que a cobra — e as duas
      saindo das mesmas funções que a vão aplicar, porque duas contas para o
      mesmo preço seriam duas verdades. */
+  /* v9.469 — ASSERÇÃO MOVIDA, e o motivo: na 11.ª sessão o herói a 1/12
+     que já tinha dormido viu "uma noite · PV e PM cheios" e ganhou só um
+     curto — a manchete era escrita à mão aqui e a conta corria noutro sítio.
+     Agora o preço e o retorno saem de ofertaDoAcampamento (descanso.js), a
+     mesma conta que o descanso aplica: "uma noite" com a noite livre, "uma
+     hora · já dormiu hoje: só um curto" com ela gasta, e nenhuma oferta
+     quando nem o curto dá nada. A cura que o longo limparia continua a
+     sair de limparPorDescanso. */
   t("a oferta escreve a manchete, pela função que a vai cobrar",
     /limparPorDescanso\(personagem\.condicoes \|\| \[\], "longo"\)/.test(rSoleira)
-    && /preco: "uma noite"/.test(rSoleira)
-    && /retorno: oQueCura \?/.test(rSoleira),
+    && /ofertaDoAcampamento\(personagem, dia, \{ cura: oQueCura \}\)/.test(rSoleira)
+    && /if \(of\) filaB\.push/.test(rSoleira)
+    && /preco: of\.preco/.test(rSoleira)
+    && /retorno: of\.retorno/.test(rSoleira),
     "o veredito antes do clique, com os dois lados — e o que ela promete é o TEMPO, que é o que o relógio ao lado garante");
   {
     const iSaidas = APP.indexOf("R13 · §4.2 — O ACAMPAMENTO ESCREVE O QUE COBRA");

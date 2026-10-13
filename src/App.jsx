@@ -79,7 +79,7 @@ import { detectarCombo, bonusDeDano, bonusDeArma, buffsIgnorados, efeitoNoGolpe,
 import { TIPOS_TESTE, tipoTestePorId, nomeDoAtributo, dificuldadeDoPedido, envelopeDoTeste } from "./testes.js";
 import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePericia, passivoDe, resolucaoAutomatica, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente, resumoPericiasPrompt, PERICIAS_PROMPT } from "./pericias.js";
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
-import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT, descansoDaFrase } from "./descanso.js";
+import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT, descansoDaFrase, ofertaDoAcampamento, reciboDoDescanso, VEREDITO_DO_DESCANSO } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
 import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
@@ -5640,7 +5640,7 @@ export default function Taverna() {
   const acampadoRef = useRef(false);
   /* mantém a ref em dia: o salvamento lê a ref, nunca o estado (que fica
      defasado dentro de callbacks e gravava "acampado" errado no save) */
-  const definirAcampado = useCallback((v) => { acampadoRef.current = v; setAcampado(v); }, []);
+  const definirAcampado = useCallback((v) => { acampadoRef.current = v; setAcampado(v); }, []); const fichaAoAcamparRef = useRef(null); // a ficha ao acampar: ver acampar()
   const [mostrarRolagens, setMostrarRolagens] = useState(() => {
     try { const v = localStorage.getItem("taverna_cfg_rolagens"); return v === null ? true : v === "1"; } catch { return true; }
   });
@@ -13746,7 +13746,7 @@ export default function Taverna() {
        retomar dele, nunca voltar a zero (é a mesma régua do load) */
     if (cap) npcsRef.current = normalizarRecencia(npcsRef.current);
     npcTurnoRef.current = cap ? retomarContador(npcsRef.current) : 0; npcTurnoNoLoadRef.current = npcTurnoRef.current;
-    definirAcampado(false);
+    definirAcampado(false); fichaAoAcamparRef.current = null;
     /* GEOGRAFIA GERADA PELO SISTEMA (v7.5): o continente nasce PRONTO —
        regiões com bioma, cidades com porte e população, rotas com dias de
        viagem. O Mestre narra em cima de fatos fixos, não inventa caminhos. */
@@ -14010,7 +14010,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
          do maior turno anotado — antes disto o contador voltava a zero e
          quem se via logo depois do load caía para o fim da lista */
       npcsRef.current = normalizarRecencia(sv.npcs && typeof sv.npcs === "object" ? sv.npcs : {}); setNpcs(npcsRef.current); npcTurnoRef.current = retomarContador(npcsRef.current); npcTurnoNoLoadRef.current = npcTurnoRef.current;
-      definirAcampado(!!sv.acampado);
+      definirAcampado(!!sv.acampado); fichaAoAcamparRef.current = null;
       /* v9.100: o sítio volta com o acampamento. Sem esta linha, recarregar
          a página dentro do acampamento apagaria onde se estava dormindo — e
          a noite renderia o padrão, não o que o painel prometeu. */
@@ -18943,7 +18943,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      recusam e os marcos por fazer nomeiam) fica fora do mural e da
      proposta do Mestre. E o papel pregado vence (`CARTAZ_ESPERA`). */
   const historiaDoMural = () => {
-    try { return genteDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, espinha: espinhaRef.current }); }
+    try { return genteDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [] }); }
     catch (e) { calou("a gente da história", e); return []; }
   };
   const cartazJaVenceu = (c) => {
@@ -23796,10 +23796,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   /* `calado` (10.ª sessão, o descanso escrito): o sítio vai na nota do turno e
      quem chama ao Mestre é o descanso que vem logo a seguir — uma chamada só,
      e não duas a correr juntas */
+  /* v9.469 (a 11.ª sessão, o acampamento): «fichaAoAcamparRef» guarda a
+     ficha AO MONTAR o acampamento — { vida, vidaMax, mana, manaMax } —, para
+     o envelope de saída dizer o que de facto mudou (reciboDoDescanso,
+     descanso.js) e não o nome do descanso. Transitório e FORA do save: depois
+     de um load fica nulo, e o recibo lê a ficha de antes do descanso. Limpo
+     em toda saída do acampamento, no começo de campanha e no load. */
   const acampar = (opcoes) => {
     if (acampadoRef.current || bloqueado) return;
     if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     definirAcampado(true);
+    try {
+      const p0 = personagemRef.current || personagem || {};
+      fichaAoAcamparRef.current = { vida: p0.vida, vidaMax: p0.vidaMax, mana: p0.mana, manaMax: p0.manaMax };
+    } catch (e) { calou("a ficha ao acampar", e); fichaAoAcamparRef.current = null; }
     /* v9.99: ONDE se acampa passa a ser decisão do CÓDIGO. Antes o sistema
        só sabia responder dentro de uma cidade; fora dos muros dizia
        "acampamento em campo aberto", que não é um lugar — é a ausência de
@@ -23861,11 +23871,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const levantarSemDescansar = () => {
     if (!acampadoRef.current || bloqueado) return;
     try { definirFogueira(null); } catch (e) { calou("fechar a fogueira", e); }
+    const fichaAoAcampar = fichaAoAcamparRef.current; fichaAoAcamparRef.current = null;
     definirAcampado(false);
     const reinoMsg = avancarMinutos(MINUTOS_ARRUMANDO);
+    /* v9.469: o que de facto aconteceu, lido da ficha (um dado de vida
+       queimado no acampamento sobe o PV, e a pauta não pode dizer que não) */
+    let reciboNenhum = "NÃO houve cura — PV e PM continuam exatamente como estavam.";
+    try { reciboNenhum = reciboDoDescanso({ antes: fichaAoAcampar || personagemRef.current || personagem, depois: personagemRef.current || personagem, tipo: "nenhum" }); } catch (e) { calou("o recibo de levantar sem descansar", e); }
     setSitio(null);
     pushMsgs([{ autor: "sistema", texto: `⛺ Você levanta acampamento sem descansar — ${MINUTOS_ARRUMANDO} minutos arrumando as coisas. Nada de PV, nada de PM: você só arrumou o que leva.` }]);
-    enviar(`[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${MINUTOS_ARRUMANDO} minutos). NÃO houve sono, NÃO houve cura, NÃO houve noite — PV e PM continuam exatamente como estavam, e não me pergunte como foi a noite porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reinoMsg}`, personagem);
+    enviar(`[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${MINUTOS_ARRUMANDO} minutos). NÃO houve sono nem noite. ${reciboNenhum} Não me pergunte como foi a noite, porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reinoMsg}`, personagem);
   };
 
   /* ---------------- DADOS DE VIDA (v9.17) ----------------
@@ -23888,6 +23903,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        sempre a jogada certa e o relógio do mundo deixa de significar nada.
        O segundo do dia não é recusado — ele rende o benefício CURTO, que é
        o comportamento honesto: você descansou, só não dormiu de novo. */
+    const pedido = tipo;
+    const fichaAoAcampar = fichaAoAcamparRef.current; fichaAoAcamparRef.current = null;
     let tipoReal = tipo;
     const chk = podeDescansoLongo(personagemRef.current || personagem, diaRef.current);
     if (tipo === "longo" && !chk.pode) {
@@ -23901,7 +23918,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        jogo em que dormir mal custa alguma coisa — os dados de vida são o
        único recurso que só volta dormindo. Quem DIZ o que aconteceu é o
        descanso, onde os números estão: daqui só sai o degrau. */
-    let pers = aplicarDescanso(personagemRef.current || personagem, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current), (mundoAtual() || {}).lexico);
+    const antesDoDescanso = personagemRef.current || personagem;
+    let pers = aplicarDescanso(antesDoDescanso, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current), (mundoAtual() || {}).lexico);
     tipo = tipoReal;
     /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
        nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica
@@ -24094,12 +24112,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
     const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
+    /* v9.469 (a 11.ª sessão): a pauta dizia "PV e PM já foram restaurados"
+       pelo nome do descanso, e o herói a 1/12 que já tinha dormido ouvia
+       cura narrada. O recibo lê a ficha antes e depois. */
+    let reciboMsg = "PV e PM já foram restaurados pelo sistema (" + (tipo === "longo" ? "totalmente" : "parcialmente") + ") para mim e para o grupo.";
+    try { reciboMsg = reciboDoDescanso({ antes: fichaAoAcampar || antesDoDescanso, depois: pers, tipo, pedido }); } catch (e) { calou("o recibo do descanso", e); }
     /* MM17 C2: quem dorme na masmorra acorda nela, mesmo com a jornada à porta */
     const acordoCala = (() => { try { return calaNaMasmorra("acordo", masmorraRef.current); } catch (e) { calou("acordo na masmorra", e); return false; } })();
     const localMsg = (jornadaRef.current && !acordoCala)
       ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
       : "";
-    enviar(((extra && extra.antes) ? extra.antes + "\n" : "") + `[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. PV e PM já foram restaurados pelo sistema (${tipo === "longo" ? "totalmente" : "parcialmente"}) para mim e para o grupo. Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);
+    enviar(((extra && extra.antes) ? extra.antes + "\n" : "") + `[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. ${reciboMsg} Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);
   };
 
   /* ---------------- A FOGUEIRA (MM-C · C6, F2 — aprovada pela pessoa, 11/10) ----------------
@@ -24131,7 +24154,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       nPrazos ? "+1 noite em " + nPrazos + (nPrazos === 1 ? " prazo" : " prazos") : "",
     ].filter(Boolean).join(" · ");
     const devolveSo = [
-      dobra ? "PV e PM cheios" : "o mesmo que um curto (já dormiu hoje)",
+      dobra ? VEREDITO_DO_DESCANSO.longo.retorno : VEREDITO_DO_DESCANSO.curto.retorno,
       dobra ? "metade dos dados de vida" : "",
       curadas.length ? "cura " + curadas.join(", ") : "",
     ].filter(Boolean).join(" · ");
@@ -26232,12 +26255,17 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
              prazo tem uma segunda voz a 48 px daqui: o selo da cinta, que diz
              `3 noites` sem ninguém lhe tocar. */
           const oQueCura = curadas.length ? curadas[0] : (exausto ? "cansaço" : "");
-          filaB.push({
+          /* v9.469 (a 11.ª sessão): a oferta lê a mesma conta do descanso.
+             Já dormiu hoje: "só um curto", a uma hora; nem o curto dá nada:
+             não há oferta — o botão não promete o que não existe. */
+          let of = null;
+          try { of = ofertaDoAcampamento(personagem, dia, { cura: oQueCura }); } catch (e) { calou("a oferta do acampamento", e); }
+          if (of) filaB.push({
             id: "tempo|acampar",
             fila: "B",
             verbo: "Montar acampamento",
-            preco: "uma noite",
-            retorno: oQueCura ? "PV, PM e o " + oQueCura : "PV e PM cheios",
+            preco: of.preco,
+            retorno: of.retorno,
             tom: "preco",
             precisaDoNarrador: true,
             aoClicar: () => acampar(),
