@@ -300,6 +300,15 @@ const TETO_DE_COR_DE_T = {
 const ZONAS_DE_TABELA = [
   { arquivo: "src/estilo.js", tabela: "T", d5a: "isenta", d5b: "isenta" },
   { arquivo: "src/estilo.js", tabela: "MATERIAIS", d5a: "isenta", d5b: "VARRE" },
+  /* 12/10 · o mapa vivo (MM17, a tela) — `MAPA_VIVO` é a terceira tabela de
+     cor da casa, escrita em `formas.md` § Mapa §3 "ao lado de T e
+     MATERIAIS": as cores do chão, do céu e da hora em três modos, que T não
+     tem nem deve ter (a mata de noite não é significado, é material). D5a
+     isenta-a como às outras duas — é onde essas cores têm direito de nascer
+     —, e D5b VARRE-a como varre MATERIAIS: o que ali for igual a T tem de
+     ser escrito T (os dezanove apelidos de §3 são `T.x`, e a luz da janela
+     é `alfa(T.amberSoft, …)`), senão a tabela vira lavandaria. */
+  { arquivo: "src/estilo.js", tabela: "MAPA_VIVO", d5a: "isenta", d5b: "VARRE" },
   /* 25/09 · V5a — a zona `LUZ_DA_CENA` (as quatro luzes de `O rosto da cena`,
      R13) SAIU com a tabela: a gravura deixou a tela e a tabela ficou sem
      leitor. Sem esta linha a zona continuaria a pedir "pelo menos 10 cores"

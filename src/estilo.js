@@ -1588,6 +1588,172 @@ export const FICHAS = {
 };
 
 /* ============================================================
+   O MAPA VIVO (MM17 · a faixa do rumo e a tela grande) — `formas.md`
+   § Mapa (§3 a tabela, §2 as peças), Figma `ffWFqD7TueSb88Mkeg9bhW`,
+   página `07 · Mapa` (`160:48`), colecção `Mapa vivo (MAPA_VIVO)`.
+
+   O que é igual a `T` É `T` (referência, não cópia). As cores que nascem
+   aqui são as do chão, do céu e da hora, em três modos (Dia · Entardecer
+   · Noite) — a tela escolhe o modo pela fase do relógio (`modoDaFase`).
+   As medidas que não estão escritas em §3 foram tiradas dos nós, e cada
+   bloco diz de qual: a faixa de `172:1467` (começo), `172:1539` (viagem),
+   `172:1695` (lá dentro) e `172:1714` (telefone); a tela de `167:299`.
+   Quem lê: `painel-mapa-vivo.jsx` e `faixa-do-rumo.js` (a conta).
+   ============================================================ */
+export const MAPA_VIVO = {
+  heroi: T.amber,
+  heroiTinta: T.onAccent,
+  gancho: T.amberSoft,
+  perigo: T.danger,
+  concluido: T.ok,
+  tinta: T.ink,
+  tintaMeio: T.inkMeio,
+  tintaDim: T.inkDim,
+  trilha: T.inkDim,
+  estrada: T.inkMeio,
+  halo: T.pagina,
+  estradaBorda: T.pagina,
+  medalhao: T.panel,
+  painel: T.panel,
+  painelAlto: T.panelSoft,
+  medalhaoBorda: T.lineStrong,
+  linha: T.line,
+  moldura: T.bg,
+  aguaLuz: T.mundoSoft,
+
+  /* §3 — os três modos. `veu` e `janela` levam o alfa da tabela de §3 */
+  modos: {
+    dia: {
+      chao: { floresta: "#17241F", gelo: "#232A38", planicie: "#25222F", colina: "#2A2530", costa: "#1F2433", pantano: "#1D2422", deserto: "#2E2822", montanha: "#26232E" },
+      mata: "#1E3229", arvore: "#3E6B55", arvoreLuz: "#6FA386",
+      pico: "#B9C6DA", picoSombra: "#4A5570",
+      agua: "#3A8FBF", nevoa: "#0B0914",
+      ceuAlto: "#2B2545", ceuBaixo: "#4A3F6B",
+      cristaLonge: "#3A3458", cristaPerto: "#1E1A33",
+      astro: "#F2ECE0",
+      veu: "transparent", janela: alfa(T.amberSoft, 0), estrelas: 0,
+    },
+    entardecer: {
+      chao: { floresta: "#1A2120", gelo: "#2A2633", planicie: "#2B2230", colina: "#30242C", costa: "#262233", pantano: "#221F21", deserto: "#342620", montanha: "#2C222B" },
+      mata: "#22302A", arvore: "#3F5F4C", arvoreLuz: "#8A9670",
+      pico: "#D9B7A6", picoSombra: "#4F4560",
+      agua: "#4C7FA0", nevoa: "#0B0914",
+      ceuAlto: "#3A2440", ceuBaixo: "#8A4A4A",
+      cristaLonge: "#4A2E46", cristaPerto: "#221829",
+      astro: "#F5C9A0",
+      veu: alfa("#50202A", 0.22), janela: alfa(T.amberSoft, 0.6), estrelas: 0.3,
+    },
+    noite: {
+      chao: { floresta: "#0F1520", gelo: "#161B28", planicie: "#17161F", colina: "#1A1820", costa: "#141824", pantano: "#121716", deserto: "#1D1A17", montanha: "#18161E" },
+      mata: "#121D1B", arvore: "#26443A", arvoreLuz: "#3E6656",
+      pico: "#7D8AA6", picoSombra: "#2C3348",
+      agua: "#2A5F86", nevoa: "#06050C",
+      ceuAlto: "#0E0F22", ceuBaixo: "#1A1A3A",
+      cristaLonge: "#1C1A33", cristaPerto: "#100E1C",
+      /* a lua nunca é âmbar: o âmbar é o herói */
+      astro: "#C9D2E6",
+      veu: alfa("#05071C", 0.5), janela: alfa(T.amberSoft, 1), estrelas: 0.9,
+    },
+  },
+  /* que modo cada fase do relógio pinta (`FASES_DO_DIA`, mapa-vivo.js). O
+     amanhecer usa o entardecer — a mesma luz baixa e quente; é a leitura
+     do `aprendiz` de "a tela escolhe o modo por relogio.fase", e está
+     escrita como pergunta ao `desenho` no diário */
+  modoDaFase: { madrugada: "noite", amanhecer: "entardecer", manha: "dia", tarde: "dia", entardecer: "entardecer", noite: "noite" },
+
+  /* §3 — medidas */
+  medidas: {
+    medalhao: 32, medalhaoTelefone: 28, alvo: 44,
+    faixa: 96, faixaTelefone: 48,
+    nevoa: { visitado: 0.15, concluido: 0.15, conhecido: 0.09, boato: 0.04, heroiNaEstrada: 0.08 },
+    zoom: 1.5, zoomTelefone: 1.8,
+    janela: 360, janelaTelefone: 140,
+    /* o "longe" da faixa = ladoKm × isto (a régua FIXA, nunca o nó mais longe) */
+    longe: 0.5,
+    telefoneAte: 768,
+  },
+
+  /* `Mapa/Marcador de lugar` (`161:39`), numa caixa de 44: o boato é o
+     disco menor e tracejado; o próximo leva o anel tracejado de fora */
+  marcador: {
+    caixa: 44,
+    boato: { raio: 13.375, fio: 1.25, traco: "3 3", glifo: 16 },
+    raio: 15.25, fio: 1.5, glifo: 18,
+    anel: { raio: 20.25, fio: 1.5, traco: "4 3" },
+    selo: { dx: 13, dy: 13, raio: 6.25, fio: 1.5, glifo: 10 },
+  },
+  /* `Mapa/Herói` (`161:94`): o losango numa caixa — Mesa 48 · Telefone 40 ·
+     Faixa 32; `meio` é meia diagonal, `miolo` a do losango de dentro */
+  heroiForma: {
+    mesa: { caixa: 48, halo: 22, meio: 9.625, fio: 1.833, miolo: 3.667 },
+    telefone: { caixa: 40, halo: 18, meio: 7.875, fio: 1.5, miolo: 3 },
+    faixa: { caixa: 32, halo: 14, meio: 6.125, fio: 1.167, miolo: 2.333 },
+    haloAlfa: 0.18,
+    /* encostado ao canto do marcador (não o tapa): `167:299`, o losango a
+       −18 do centro da Casa do Martelo */
+    encosto: 18,
+  },
+  /* `Mapa/Perigo` (`161:78`): a contagem é o canal (baixo 1 apagada,
+     médio 1, alto 2, mortal 3); a cor só de alto para cima */
+  perigoForma: {
+    caveiras: { baixo: 1, medio: 1, alto: 2, mortal: 3 },
+    apagada: 0.6, aCor: ["alto", "mortal"],
+    selo: { altura: 20, linha: 24, raio: 8, lado: 5, entre: 2, glifo: 12 },
+    /* no mapa, selo na aresta só a partir de médio */
+    noMapaDesde: "medio",
+  },
+
+  /* A FAIXA DO RUMO (mesa 1142×96 · telefone 343×48), `172:1467` */
+  faixa: {
+    rumos: { cima: 6, altura: 16, letra: 12, letraTelefone: 13 },
+    horizonte: { filas: [24, 39], rastreio: 0.14, opacidade: 0.9, cedeAoFeixe: 30, vao: 32 },
+    /* o medalhão (o marcador inteiro, escalado) e o centro dele por
+       profundidade — recta tirada dos sete nós da semente 0 (`172:1490`
+       a `172:1534`: 8,0 km → 26,2; 16,5 km → 23,2) */
+    lugar: { perto: 29, longe: 17.6, centroPerto: 78.6, centroLonge: 55.8, opacidadePerto: 0.82, opacidadeLonge: 0.5 },
+    frente: { largura: 12, altura: 7 },
+    feixe: { cima: -18, altura: 91, largura: 7, fio: 1, alfa: 0.6 },
+    chaoAceso: { lado: 16, alfa: 0.35 },
+    alvo: { dx: 16, nomeY: 56, horasY: 74, nome: 15, horas: 12 },
+    ceu: { baixoY: 40, baixoAltura: 48, baixoAlfa: 0.75 },
+    astro: { lado: 10, base: 45, arco: 28 },
+    /* as duas cristas: o chão de cada rumo a ~24 km e a ~10 km */
+    cristas: { longeKm: 24, pertoKm: 10, longe: { chao: 78, topo: 33 }, perto: { chao: 90, topo: 64 }, passo: 6 },
+    /* o relevo de cada chão na crista (0–1) e o dente das copas */
+    relevo: { gelo: 1, montanha: 0.9, colina: 0.45, floresta: 0.35, deserto: 0.25, planicie: 0.15, costa: 0.1, pantano: 0.1 },
+    copas: ["floresta"], picos: ["gelo", "montanha"],
+    estrada: { andada: 2, fio: 1 },
+    estrelas: 40,
+    /* lá dentro (`172:1695`): a descida */
+    descida: { laFora: 18, estrato: 25, vao: 1, rotuloX: 16, linhaX: 200, linhaFim: 180, andada: 2, halo: 28, losango: 12, ladoDireito: 16, nomeY: 22, salasY: 42, alfaDoAtual: 0.88, alfaDoFundo: 0.76, astro: 7, maxEstratos: 4, linhaXTelefone: 120, linhaFimTelefone: 72 },
+  },
+
+  /* A TELA GRANDE (mesa 1600×1000), `167:299` */
+  carta: {
+    lado: 920, rebordo: 30, margem: 40,
+    rosa: { lado: 40, dentro: 16 },
+    regua: { x: 20, y: 20, barra: 5, segmentos: 4 },
+    feixe: { altura: 90, largura: 6, fio: 1.5 },
+    estrada: { casca: 5, rota: 2, trilha: 1.5, traco: "7 5", aPe: 1.5, pontos: "0.1 5", boato: 0.45, curva: 0.08 },
+    rotulo: { base: 19, povoado: 16, lugar: 16, boato: 15, horizonte: 12, halo: 3, vao: 4, horasY: 14 },
+    /* a largura média de um caractere, em em — para colocar sem medir */
+    letraMedia: { display: 0.46, mono: 0.6 },
+    nevoaAlfa: 0.8,
+    fundo: { celulas: 36, arvores: 3, picos: 2, ruido: 0.06 },
+  },
+  coluna: {
+    largura: 560, vao: 40, titulo: 38, relogio: 15,
+    onde: { altura: 58, raio: 12, lado: 14, entre: 12 },
+    cartao: { raio: 16, enchimento: 28, entre: 18, medalhao: 56, glifo: 28, fio: 1.5, titulo: 30, tituloAltura: 1.05, sub: 14, selo: 26, seloRaio: 12, seloLado: 10, rotulo: 12, rastreio: 0.12, quem: 16, preco: 14, perto: 15, dizem: 19, entreLinhas: 6 },
+    /* a legenda (`165:58`): linhas de 32 com 6 entre elas; em cima 6, porque
+       o LEGENDA é o botão que a recolhe e o alvo dele (44) come o enchimento */
+    legenda: { raio: 12, enchimento: 20, cima: 6, entre: 10, celula: 44, linha: 32, entreLinhas: 6, colunas: 2, vao: 12, texto: 13, abertaDesde: 900 },
+    fechar: { lado: 44, glifo: 18 },
+  },
+  telefone: { barra: 56, pega: 40 },
+};
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
