@@ -23,7 +23,7 @@ import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoe
 import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta } from "./masmorras.js";
+import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -6117,6 +6117,19 @@ export default function Taverna() {
   /* o contexto do coração neste instante — o mesmo para o turno, para a tela
      e para o clique. A máscara do aliado que já caiu (reviravoltas.js) vai
      em `reveladas`, com o ato em que caiu, para a do elo nunca cair no mesmo. */
+  /* 13/10 (v9.461, LONGE_DA_HISTORIA): quem esta longe e quem o registo SABE
+     aqui — a mesma conta do EM CENA. O coracao (QUEM CARREGA) e o QUEM E
+     leem-na para nao trazer a resposta quem a historia sabe noutra cidade. */
+  const elencoDoCoracao = () => {
+    const grupo = ((personagemRef.current || personagem || {}).grupo) || [];
+    try {
+      const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: grupo, masmorra: masmorraRef.current }) || {};
+      return { longe: el.longe || [], presentes: el.aqui || [], grupo };
+    } catch (e) { calou("quem está longe, para o coração", e); return { longe: [], presentes: [], grupo }; }
+  };
+  /* a cidade onde o heroi ESTA, para o coracao e para o QUEM E: vazia em
+     viagem e na masmorra aberta */
+  const cidadeDoCoracao = () => (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? "" : (cidadeAtualRef.current || "");
   const contextoDoCoracao = (nucleo, extra) => {
     const esp = espinhaRef.current || {};
     const lista = subtramasAgora(nucleo);
@@ -6135,7 +6148,8 @@ export default function Taverna() {
       /* 9.ª sessão (v9.434): a cidade onde o herói ESTÁ — a porta do elo
          (subtramas.js, PORTA_DO_ELO) só o traz quando é a dele. Em viagem e
          na masmorra aberta vai vazia: o elo não aparece na estrada. */
-      cidade: (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? "" : (cidadeAtualRef.current || ""),
+      cidade: cidadeDoCoracao(),
+      ...elencoDoCoracao(),
       ...(extra || {}) };
   };
   const elencoCacheRef = useRef(null);
@@ -7354,6 +7368,11 @@ export default function Taverna() {
       frase: String(frase || ""),
       lugar: lugarRef.current,
       antes: emCenaRef.current,
+      /* 13/10 (v9.461): a espinha diz quem a historia pos noutra cidade
+         (longeDaHistoria), e os sitios daqui saem do texto antes de se
+         procurar bicho nele (BICHO_DO_SITIO: a Serpente Rouca e uma casa) */
+      espinha: espinhaRef.current,
+      lugares: vale("EM CENA · os sítios", () => lugaresDaqui().map((l) => l.nome), []),
     };
   };
   /* ---------------- F2b · AS FICHAS DA CENA ----------------
@@ -7717,7 +7736,7 @@ export default function Taverna() {
       const esp = espinhaRef.current || {};
       const turnoQ = turnoDeRegistroRef.current + 1;
       const q = { ultimas: {}, cenas: {}, ...(quemERef.current || {}), pendente: null };
-      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega });
+      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega, ...elencoDoCoracao(), espinha: esp, cidade: cidadeDoCoracao() }); /* 13/10 (v9.461): quem a historia sabe longe nao leva a ficha */
       p = porNaPauta(p, "quemE", ...(r.quemE || []));
       quemERef.current = { ...q, pendente: r.quem && r.quemE && r.quemE[0] ? { quem: r.quem, turno: turnoQ, linha: r.quemE[0] } : null };
     } catch (e) { calou("quemEParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }
@@ -19306,6 +19325,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      if (des) fecharArmadilhaDoTeste(des, passou); /* 13/10 (v9.461): o desarmar diz como a armadilha acabou */
       /* ---------------- MM9: A PALAVRA DOBRA O BANDO ----------------
          O teste já rolou (dado de verdade, CD de `vereditoDaPalavra`); aqui
          só se aplica o que ele decidiu — vergar, render, ou nada muda. */
@@ -20470,6 +20490,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         ? `✓ Isto está abaixo do seu patamar — sucesso sem rolar.`
         : `✗ Nem um 20 alcança — falha sem rolar.` }]);
       fecharTentativa(v, auto === "sucesso");
+      fecharArmadilhaDoTeste(v, auto === "sucesso");
       cobrarTempoDoDesafio(v);
       enviar(envelopeDoTeste({
         tipo: v.atributo, pericia: v.pericia, motivo: v.rotulo, mod: modT, dc: v.dc,
@@ -22081,10 +22102,142 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RAID — ENCERRADA PELO SISTEMA] ${venceu ? `${r0.chefe} caiu, e caiu pela mão do herói.` : `O chamado acabou sem a coisa cair.`} ${fim.mortos.length ? `Não voltaram: ${fim.mortos.join(", ")} — e não voltam mesmo.` : "Ninguém ficou para trás."} Quem sobreviveu se despede e volta para onde veio: eles NÃO seguem comigo depois desta cena. Narre a dispersão, sem discurso e sem promessa de reencontro.`;
   };
 
+  /* ---------------- A ARMADILHA QUE SE VE ANTES DE MORDER (13/10, v9.461) ----------------
+     O motor e masmorras.js (ARMADILHA_DA_SALA): ao entrar, a passiva (e o
+     dado do cauteloso) contra a dificuldade; notada, a sala fica armada e
+     por resolver, e o painel mostra as tres saidas com o preco antes do
+     clique. Aqui so a fiacao, e toda em calou: nunca pode custar o turno.
+
+     `dispararArmadilha` e o ramo de dano que morava dentro de irParaSala,
+     igual, com `vantagem` na salvaguarda (quem a viu e passou assim mesmo
+     salta com vantagem) e o fim do envelope em `depois`. */
+  const dispararArmadilha = (sala, { pos = "", depois = "", vantagem = false } = {}) => {
+    const eu = personagemRef.current || personagem;
+    /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
+    const emComp = (eu.grupo || []).length > 0 && Math.random() < 0.3;
+    if (emComp) {
+      const alvo = eu.grupo[Math.floor(Math.random() * eu.grupo.length)];
+      /* v9.233: o abrigo do companheiro vale na masmorra tambem. A conta sai
+         antes do atualizador (quem fala na tela nao mora dentro de um
+         `setPersonagem`), e o numero que a linha e o envelope dizem passa a
+         ser o que chegou ao corpo — o dardo continua sendo o dardo, mas quem
+         tinha protecao de pe pagou menos, e o Narrador nao pode ler outro. */
+      const abrT = passarPeloAbrigo(alvo, sala.dano, alvo.nome);
+      const sofridoAli = abrT.linha ? abrT.dano : sala.dano;
+      /* v9.236 (C2b): o dardo tambem derruba o que ele segurava. Fora do
+         combate a magia de duracao do companheiro e a mesma coisa — a
+         concentracao nao pergunta se a cena tem iniciativa. A conta sai antes
+         do atualizador (quem fala na tela nao mora dentro de um
+         `setPersonagem`), sobre a ficha POS-ABRIGO e com o dano que de fato
+         chegou, e so em quem fica de pe.
+         O HEROI DESTA MESMA PORTA FICOU DE FORA DE PROPOSITO: o outro ramo
+         deste `if` e um dos seis sitios onde ele apanha sem teste, e esse item
+         e outro da pauta — liga-lo aqui ampliaria o raio que C2 mediu. */
+      const qbT = (alvo.vida || 0) - sofridoAli > 0 ? segurarOuPerder(abrT.pers, sofridoAli, alvo.nome) : { linha: "" };
+      setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, ...(qbT.linha ? { efeitos: qbT.pers.efeitos } : abrT.linha ? { efeitos: abrT.pers.efeitos } : null), vida: Math.max(0, g.vida - sofridoAli) } : g) }));
+      pushMsgs([...(abrT.linha
+        ? [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` }, { autor: "sistema", texto: abrT.linha }]
+        : [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]),
+        ...(qbT.linha ? [{ autor: "sistema", texto: qbT.linha }] : [])]);
+      enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sofridoAli} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${depois}`, eu);
+    } else {
+      /* ---------------- A ARMADILHA PEDE SALVAGUARDA (v9.60) ----------------
+         A primeira fonte de verdade da segunda rolagem do jogo. Até aqui o
+         dardo simplesmente acertava: o dano da sala saía inteiro da ficha e
+         não havia nada entre o gatilho e o ferimento — nenhum reflexo,
+         nenhuma diferença entre o Ladino e o Mago no corredor errado.
+
+         Passar não anula: a armadilha já disparou e o herói já está no meio
+         dela. Corta pela metade, que é a diferença entre desviar e aguentar
+         — e é o que faz Destreza valer alguma coisa numa masmorra. */
+      const fonte = fonteDaSalvaguarda(`${sala.nomeArmadilha} armadilha`) || { salva: "destreza", meia: true, diz: "a armadilha" };
+      const sv = rolarSalvaguarda({
+        pers: eu, salva: fonte.salva, vantagem: !!vantagem,
+        dc: dcDaFonte({ nivel: eu.nivel || 1, base: (sala.segredo && sala.segredo.cd) || 13 }),
+        modDe: (a) => atributoEfetivo(eu, a),
+      });
+      const cheio = sala.dano;
+      const sofrido = sv.passou && fonte.meia ? Math.floor(cheio / 2) : sv.passou ? 0 : cheio;
+      pushMsgs([
+        { autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` },
+        { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
+      ]);
+      /* v9.66: a armadilha passa pela porta única. Ela é o segundo
+         chamador, e é o que faz a porta ser porta e não embrulho de uma
+         chamada só. Ganha de graça o que fazia falta aqui: quem levava a
+         barra a zero num corredor de masmorra continuava andando com 0 PV
+         até o Mestre responder, porque a queda só era resolvida depois. */
+      const rArm = sofrerNaPele({
+        dano: sofrido,
+        motivo: `${sala.nomeArmadilha}${sofrido < cheio ? ` (de ${cheio} — ${sv.passou ? "reflexo" : "sorte"})` : ""}`,
+        porque: "a armadilha",
+      });
+      const p2 = rArm.pers;
+      enviar(`${envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: rArm.dano })}
+[MASMORRA — ${pos}] Narre o susto e o estado em que fico.${depois}`, p2);
+    }
+  };
+  const posDaMasmorra = (mm, sala) => {
+    const prog = progressoMasmorra(mm);
+    return mm.nome + " · camada " + ((sala && sala.camada) || 0) + " · " + prog.visitadas + "/" + prog.total + " salas" + (noEscuro(mm) ? " NO ESCURO" : "");
+  };
+  /* passar assim mesmo: fecha primeiro (a pauta do envio ja a le disparada),
+     e dispara com vantagem. O heroi fica do outro lado dela, na mesma sala. */
+  const passarPelaArmadilha = (mm, sala, aviso = "") => {
+    const r = fecharArmadilha(mm, "disparou");
+    if (!r) return false;
+    masmorraRef.current = r.mm; setMasmorra(r.mm);
+    if (aviso) pushMsgs([{ autor: "sistema", texto: aviso }]);
+    dispararArmadilha(sala, { pos: posDaMasmorra(r.mm, sala), vantagem: true, depois: " O herói VIU a armadilha e escolheu passar por ela assim mesmo: narre o salto, não a surpresa." });
+    return true;
+  };
+  const escolherNaArmadilha = (op) => {
+    try {
+      const mm = masmorraRef.current;
+      if (!mm || !op || bloqueado || carregando || rolagem || combateRef.current || acampadoRef.current) return;
+      const sala = (mm.salas || []).find((x) => x && x.id === mm.atual);
+      if (!sala || !sala.armada) return;
+      /* desarmar e o teste: a frase vai pelo despachante, e o fecho do
+         teste (fecharArmadilhaDoTeste) diz como acabou */
+      if (op.id === "desarmar") { agir(op.frase || ARMADILHA_DA_SALA.opcoes.desarmar.frase); return; }
+      if (op.id === "contornar") {
+        const r = fecharArmadilha(mm, "contornada");
+        if (!r) return;
+        masmorraRef.current = r.mm; setMasmorra(r.mm);
+        const tempo = avancarMinutos(r.minutos);
+        const apagou = noEscuro(r.mm) && !noEscuro(mm);
+        pushMsgs([{ autor: "sistema", texto: r.linha }, ...(apagou ? [{ autor: "sistema", texto: "A última tocha se gasta no desvio — daqui em diante é no escuro." }] : [])]);
+        enviar("[MASMORRA — " + posDaMasmorra(r.mm, sala) + " · ARMADILHA CONTORNADA PELO SISTEMA] A armadilha (" + (sala.nomeArmadilha || "uma armadilha") + ") continua armada: o herói achou o caminho rente a ela sem a tocar, e isso custou " + r.minutos + " min e uma tocha (já descontados pelo app). Nada disparou e ninguém se feriu. Narre a passagem lenta." + tempo, personagemRef.current || personagem);
+        return;
+      }
+      if (op.id === "correr") passarPelaArmadilha(mm, sala);
+    } catch (e) { calou("a escolha diante da armadilha", e); }
+  };
+  /* o fecho do teste de desarmar: passou (inteiro ou por pouco) e ela esta
+     desarmada; falhou e ela disparou na mao (desafios.js ja cobrou a pele) */
+  const fecharArmadilhaDoTeste = (des, passou) => {
+    try {
+      if (!des || (des.alvoDoCusto || des.alvo) !== "armadilha") return;
+      const r = fecharArmadilha(masmorraRef.current, passou ? "desarmada" : "disparou");
+      if (!r) return;
+      masmorraRef.current = r.mm; setMasmorra(r.mm);
+      pushMsgs([{ autor: "sistema", texto: r.linha }]);
+    } catch (e) { calou("o fecho da armadilha pelo teste", e); }
+  };
   const irParaSala = (id) => {
     const mm = masmorraRef.current;
     if (!mm || bloqueado || acampadoRef.current) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Termine o combate antes de seguir." }]); return; }
+    /* 13/10 (v9.461): a passagem adiante esta do outro lado da armadilha a
+       vista — seguir e passar por ela assim mesmo (o preco esta no botao da
+       passagem). Ela dispara, e o heroi fica do outro lado; o passo seguinte
+       e outro clique, para nao mandar dois envelopes no mesmo folego. */
+    try {
+      if (armadilhaNoCaminho(mm, id)) {
+        const salaA = (mm.salas || []).find((x) => x && x.id === mm.atual);
+        if (passarPelaArmadilha(mm, salaA, "A passagem adiante fica do outro lado da armadilha: seguir é passar por ela.")) return;
+      }
+    } catch (e) { calou("a armadilha no caminho", e); }
     const r = entrarNaSala(mm, id);
     if (r.bloqueado) { pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t }))); return; }
     const mm2 = r.mm, sala = r.sala;
@@ -22094,7 +22247,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        sozinho, sem rolar. O apressado enxerga menos; o cauteloso, mais. */
     const modPerc = atributoEfetivo(personagem, "percepcao");
     const passiva = percepcaoPassiva(modPerc, mm2.ritmo);
-    let avisoSegredo = "";
+    let avisoSegredo = "", armadilhaNaoVista = false;
     const cp = checarPassiva(sala, passiva);
     if (cp.revelou) {
       const salas2 = mm2.salas.map((x) => x.id === id ? { ...x, segredo: cp.segredo } : x);
@@ -22102,6 +22255,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pushMsgs([{ autor: "sistema", texto: cp.texto }]);
       avisoSegredo = ` PERCEPÇÃO PASSIVA (${passiva}) revelou sem rolagem: ${cp.segredo.txt} (${cp.segredo.tipo.replace("_", " ")}). Narre a descoberta como mérito da atenção dele.`;
     } else if (armadilhaDispara(sala)) {
+      armadilhaNaoVista = true;
       avisoSegredo = ` ARMADILHA NÃO PERCEBIDA (passiva ${passiva} < ${sala.segredo.cd}): ${sala.segredo.txt} — dispara AGORA. Narre o susto; o sistema aplica o dano.`;
     } else if (cp.quaseTexto) {
       pushMsgs([{ autor: "sistema", texto: `👁 ${cp.quaseTexto}` }]);
@@ -22110,6 +22264,30 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const prog = progressoMasmorra(mm2);
     const escuro = noEscuro(mm2) ? " NO ESCURO (a última tocha se apagou — descreva a cegueira e o perigo)." : "";
     const pos = `${mm.nome} · camada ${sala.camada} · ${prog.visitadas}/${prog.total} salas${escuro}`;
+    /* 13/10 (v9.461, ARMADILHA_DA_SALA): notada (ou ja a vista de uma visita
+       de antes), a armadilha nao dispara: a sala fica armada e por
+       resolver, o painel mostra as tres saidas com o preco, e o envelope
+       pede ao Narrador que pare antes do disparo. Nao notada, o de sempre. */
+    if (sala.tipo === "armadilha") {
+      let vista = null;
+      try {
+        const mmA = masmorraRef.current;
+        const salaA = ((mmA && mmA.salas) || []).find((x) => x && x.id === id) || null;
+        if (salaA && salaA.armada && salaA.resolvida !== true && !salaA.disparou) {
+          vista = { mm: mmA, linha: "A armadilha está " + ARMADILHA_DA_SALA.aVista.replace("{nome}", salaA.nomeArmadilha || "uma armadilha") + "." };
+        } else {
+          const n = notarArmadilha(mmA, { passiva, mod: modPerc, ritmo: mm2.ritmo });
+          if (n && n.notou && n.mm) vista = n;
+        }
+      } catch (e) { calou("notar a armadilha", e); vista = null; }
+      if (vista) {
+        masmorraRef.current = vista.mm; setMasmorra(vista.mm);
+        const tempoA = avancarMinutos(ritmoPorId(mm2.ritmo).minutos);
+        if (vista.linha) pushMsgs([{ autor: "sistema", texto: vista.linha }]);
+        enviar("[MASMORRA — " + pos + " · ARMADILHA À VISTA, AINDA ARMADA] O herói notou a armadilha (" + (sala.nomeArmadilha || "uma armadilha") + ") ANTES de pisar nela: ela NÃO disparou e ninguém se feriu. Narre o que ele vê — o gatilho, o fio, a placa — e pare aí: desarmar, contornar ou passar assim mesmo é escolha dele, e o sistema resolve." + (armadilhaNaoVista ? "" : avisoSegredo) + tempoA, personagem);
+        return;
+      }
+    }
     /* se a sala não abre combate, ela se resolve agora */
     if (sala.tipo !== "combate" && sala.tipo !== "chefe" && sala.tipo !== "chave" && sala.tipo !== "enigma") {
       masmorraRef.current = marcarResolvida(mm2, id); setMasmorra(masmorraRef.current);
@@ -22151,69 +22329,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pushMsgs([{ autor: "sistema", texto: linhaDaLutaDaSala(sala, inimigos.map((i) => i.nome)) }]);
       enviar(envelopeDaLuta(sala, { pos, lista, depois: `${notaDesgaste}${avisoSegredo}${extraTempo}` }), personagem);
     } else if (sala.tipo === "armadilha") {
-      /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
-      const emComp = (personagem.grupo || []).length > 0 && Math.random() < 0.3;
-      if (emComp) {
-        const alvo = personagem.grupo[Math.floor(Math.random() * personagem.grupo.length)];
-        /* v9.233: o abrigo do companheiro vale na masmorra tambem. A conta sai
-           antes do atualizador (quem fala na tela nao mora dentro de um
-           `setPersonagem`), e o numero que a linha e o envelope dizem passa a
-           ser o que chegou ao corpo — o dardo continua sendo o dardo, mas quem
-           tinha protecao de pe pagou menos, e o Narrador nao pode ler outro. */
-        const abrT = passarPeloAbrigo(alvo, sala.dano, alvo.nome);
-        const sofridoAli = abrT.linha ? abrT.dano : sala.dano;
-        /* v9.236 (C2b): o dardo tambem derruba o que ele segurava. Fora do
-           combate a magia de duracao do companheiro e a mesma coisa — a
-           concentracao nao pergunta se a cena tem iniciativa. A conta sai antes
-           do atualizador (quem fala na tela nao mora dentro de um
-           `setPersonagem`), sobre a ficha POS-ABRIGO e com o dano que de fato
-           chegou, e so em quem fica de pe.
-           O HEROI DESTA MESMA PORTA FICOU DE FORA DE PROPOSITO: o outro ramo
-           deste `if` e um dos seis sitios onde ele apanha sem teste, e esse item
-           e outro da pauta — liga-lo aqui ampliaria o raio que C2 mediu. */
-        const qbT = (alvo.vida || 0) - sofridoAli > 0 ? segurarOuPerder(abrT.pers, sofridoAli, alvo.nome) : { linha: "" };
-        setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).map((g) => g.nome === alvo.nome ? { ...g, ...(qbT.linha ? { efeitos: qbT.pers.efeitos } : abrT.linha ? { efeitos: abrT.pers.efeitos } : null), vida: Math.max(0, g.vida - sofridoAli) } : g) }));
-        pushMsgs([...(abrT.linha
-          ? [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` }, { autor: "sistema", texto: abrT.linha }]
-          : [{ autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha} — ${alvo.nome} sofre ${sala.dano} de dano` }]),
-          ...(qbT.linha ? [{ autor: "sistema", texto: qbT.linha }] : [])]);
-        enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${alvo.nome} já sofreu ${sofridoAli} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${avisoSegredo}${extraTempo}`, personagem);
-      } else {
-        /* ---------------- A ARMADILHA PEDE SALVAGUARDA (v9.60) ----------------
-           A primeira fonte de verdade da segunda rolagem do jogo. Até aqui o
-           dardo simplesmente acertava: o dano da sala saía inteiro da ficha e
-           não havia nada entre o gatilho e o ferimento — nenhum reflexo,
-           nenhuma diferença entre o Ladino e o Mago no corredor errado.
-
-           Passar não anula: a armadilha já disparou e o herói já está no meio
-           dela. Corta pela metade, que é a diferença entre desviar e aguentar
-           — e é o que faz Destreza valer alguma coisa numa masmorra. */
-        const fonte = fonteDaSalvaguarda(`${sala.nomeArmadilha} armadilha`) || { salva: "destreza", meia: true, diz: "a armadilha" };
-        const sv = rolarSalvaguarda({
-          pers: personagem, salva: fonte.salva,
-          dc: dcDaFonte({ nivel: personagem.nivel || 1, base: (sala.segredo && sala.segredo.cd) || 13 }),
-          modDe: (a) => atributoEfetivo(personagem, a),
-        });
-        const cheio = sala.dano;
-        const sofrido = sv.passou && fonte.meia ? Math.floor(cheio / 2) : sv.passou ? 0 : cheio;
-        pushMsgs([
-          { autor: "sistema", texto: `🪤 Armadilha: ${sala.nomeArmadilha}` },
-          { autor: "sistema", texto: linhaDaSalvaguarda(sv) },
-        ]);
-        /* v9.66: a armadilha passa pela porta única. Ela é o segundo
-           chamador, e é o que faz a porta ser porta e não embrulho de uma
-           chamada só. Ganha de graça o que fazia falta aqui: quem levava a
-           barra a zero num corredor de masmorra continuava andando com 0 PV
-           até o Mestre responder, porque a queda só era resolvida depois. */
-        const rArm = sofrerNaPele({
-          dano: sofrido,
-          motivo: `${sala.nomeArmadilha}${sofrido < cheio ? ` (de ${cheio} — ${sv.passou ? "reflexo" : "sorte"})` : ""}`,
-          porque: "a armadilha",
-        });
-        const p2 = rArm.pers;
-        enviar(`${envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: rArm.dano })}
-[MASMORRA — ${pos}] Narre o susto e o estado em que fico.${avisoSegredo}${extraTempo}`, p2);
-      }
+      /* nao notada (o caminho de sempre): dispara agora */
+      dispararArmadilha(sala, { pos, depois: avisoSegredo + extraTempo });
     } else if (sala.tipo === "tesouro") {
       let item = null;
       let p2 = { ...personagem, moedas: (personagem.moedas || 0) + sala.moedas };
@@ -27738,6 +27855,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               const prog = progressoMasmorra(masmorra);
               const salaAtual = masmorra.salas.find((x) => x.id === masmorra.atual);
               const saidas = saidasDe(masmorra);
+              /* 13/10 (v9.461): com a armadilha a vista, seguir adiante e passar
+                 por ela — o preco vai escrito na propria passagem */
+              const precoDoCaminho = (() => { try { return (opcoesDaArmadilha(masmorra).find((o) => o.id === "correr") || {}).preco || ""; } catch (e) { return ""; } })();
               const recuos = saidasDeRecuo(masmorra);
               const escuro = noEscuro(masmorra);
               return (
@@ -27801,6 +27921,26 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </button>
                   );
                 })()}
+                {/* 13/10 (v9.461): A ARMADILHA À VISTA — as três saídas, cada uma
+                    com o preço antes do clique (opcoesDaArmadilha), na forma dos
+                    botões de ação desta sala (Procurar, Tentar de novo). */}
+                {(() => {
+                  let ops = [];
+                  try { ops = opcoesDaArmadilha(masmorra); } catch (e) { ops = []; }
+                  if (!ops.length) return null;
+                  const travado = bloqueado || !!combate || carregando || !!rolagem;
+                  return (
+                    <div className="mb-2 space-y-1.5" role="group" aria-label="A armadilha à vista">
+                      {ops.map((op) => (
+                        <button key={op.id} onClick={() => escolherNaArmadilha(op)} disabled={travado}
+                          className="w-full text-left tv-mono text-[11px] px-3 py-2 rounded-lg"
+                          style={{ minHeight: ALVOS.piso, background: T.panelSoft, color: op.id === "correr" ? T.danger : T.amberSoft, border: "1px solid " + (op.id === "correr" ? T.danger : T.amber), opacity: travado ? 0.45 : 1 }}>
+                          {op.rotulo} <span style={{ color: T.inkDim }}>({op.preco})</span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
                 <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Passagens</div>
                 <div className="space-y-1.5">
                   {saidas.length === 0 && <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Sem saídas adiante — só resta voltar ou sair.</div>}
@@ -27815,6 +27955,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                         </span>
                         <span className="tv-body text-[11px] block" style={{ color: T.inkDim }}>
                           {sd.trancada ? "portão lacrado — falta a chave" : sd.pista}
+                          {!sd.trancada && precoDoCaminho ? <span style={{ color: T.danger }}>{" · pela armadilha: " + precoDoCaminho}</span> : null}
                         </span>
                       </span>
                     </button>

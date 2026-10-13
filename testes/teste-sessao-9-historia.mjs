@@ -194,8 +194,14 @@ sec("3. o registo de gente");
 {
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   t("fiação · o App importa papelProcurado da procura", /import \{[^}]*\bpapelProcurado\b[^}]*\} from "\.\/procura\.js"/.test(app));
+  /* 13/10 (v9.461, o oficial): a conta da cidade saiu do literal dentro de
+     contextoDoCoracao para `cidadeDoCoracao()`, porque a chamada de
+     quemEParaPauta passou a precisar da MESMA cidade (longeDaHistoria) e duas
+     cópias da expressão divergem. A intenção é a mesma: o coração leva a
+     cidade, vazia em viagem e na masmorra aberta — e agora o QUEM É também. */
   t("fiação · contextoDoCoracao leva a cidade, vazia em viagem e na masmorra aberta",
-    app.includes('cidade: (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? "" : (cidadeAtualRef.current || ""),'));
+    app.includes('const cidadeDoCoracao = () => (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? "" : (cidadeAtualRef.current || "");')
+    && app.includes("      cidade: cidadeDoCoracao(),"));
   const i = app.indexOf("const procurarAlguem = (acao) => {");
   const corpo = app.slice(i, app.indexOf("enviar(acao, fichaViva() || personagem);", i));
   t("fiação · procurarAlguem pergunta pelo papel ANTES do nome, num calou, e passa porPapel",
