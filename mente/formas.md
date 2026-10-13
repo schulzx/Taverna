@@ -11848,6 +11848,72 @@ direto (`carta-taro` 143, `grade-de-batalha` 313). **A troca não precisa do
 8. **Peso:** médio de design (a forma muda, o retrato fica onde está, ninguém
    reaprende). Os arquivos somam ~150 KB para as 18 (§6), sob demanda.
 
+### 13 · A F2 — os heróis (`desenho`, 12/10)
+
+**Onde:** quadro **`Heróis · F2 · os 240 — raça × classe × sexo`** `228:721`, à
+direita do da F1; a grelha `228:725` (linhas = `RACAS`, colunas = `CLASSES`, na
+ordem do código). Cada célula leva **m à esquerda, f à direita**: a matriz 1024
+(mostrada a 112, nome do nó = nome do arquivo) e por baixo o **chip a 32** em
+`Retrato/Chip` *Herói · Repouso*, recortado pelo contrato de §4 com o `cx`/`olhos`
+da matriz. Contorno âmbar = a classe típica da raça (a volta 1). Célula escura
+com «por pintar» = ainda sem matriz. A linha `Estado` (`236:6137`) diz o
+contador.
+
+**O feito: 164 de 240** — 158 novas + 6 da amostra de 11/10 reaproveitadas (h1
+`humano-f-guerreiro`, h2 `elfo-m-mago`, h3 `anao-f-clerigo`, h4
+`meio-orc-m-ladino`, h5 `tiefling-f-bruxo`, h6 `draconato-m-cacador`, com o
+`cx`/`olhos` do *ledger* de 11/10). **Faltam 76**, e são exactamente as 4 raças
+do fim da volta 2: Tiefling 10, Gnomo 22, Meio-elfo 22, Goliath 22.
+
+**A ordem foi a de a mesa ficar usável se o crédito acabasse:** volta 1 = a
+classe típica de cada raça × sexo (20; não há dado de escolha no jogo, então
+decide a tabela — a classe cujo `atributoChave` a raça mais sobe em `bonus`,
+empate → a primeira de `CLASSES`: Humano/Anão/Meio-orc/Draconato/Goliath →
+Guerreiro, Elfo/Halfling → Ladino, Tiefling/Meio-elfo → Clérigo, Gnomo → Mago);
+volta 2 = as outras classes, raça a raça na ordem de `RACAS`, alternando os
+sexos. **Todas as 20 raça × sexo têm rosto**; as 4 raças do fim têm só a classe
+típica (Gnomo e Meio-elfo, os dois sexos; Goliath, os dois sexos; Tiefling, 14
+das 24).
+
+**O sujeito, sempre o bloco de §4 sem uma palavra mudada** — muda só o sujeito:
+raça em palavras de pintura (o Draconato com escamas de cor rodada por célula,
+para não sair igual) + **um gesto de classe** (o gorjal e o punho da espada, o
+capuz de runas, o capuz de couro e a adaga, o disco solar, o capuz verde e o
+arco, o gorro de pena e o alaúde, as contas de oração, a coroa de galhos, as
+veias que brilham, o selo do pacto e o tomo acorrentado, os óculos de latão, o
+familiar espectral) + **um traço de pessoa** rodado por célula (20 traços:
+cicatriz, sarda, mecha grisalha, nariz partido, tatuagem…). A tabela de sujeitos
+é `mente/figma/retratos-f2-plano.mjs` (lê `RACAS`/`CLASSES` do código; `node` nele
+escreve os 240 prompts em `retratos-f2-plano.json` ao lado). Saiu-se do plano só onde ele se contradizia — *"young … old, with white
+hair"* virou *"long silver-white hair"* / *"prematurely white hair"*; no
+Draconato, *cabelo* virou *escama/franja* — e tirou-se *"half the face in
+shadow"* do Ladino antes de gerar: a 32 px o olhar é tudo o que se lê.
+
+**O enquadramento: 158 de 158 dentro à primeira** (nenhuma refeita). Os olhos
+caem mais alto que o 0,40 pedido — **mediana 0,35**, 61 das 158 fora dos 35–43 % que a amostra deu — e o Draconato é o extremo
+(0,27–0,35: o focinho comprido sobe a cabeça). É a razão de §4 outra vez:
+`olhos` é por matriz. O `cx`/`olhos` abaixo é **estimado à mão na miniatura de
+256 px** (o método da amostra e da F1); a ferramenta de corte de §12 mede e
+corrige. A 32 px, nos três que se olharam a 2× (Draconato m/f Guerreiro, m/f
+Ladino; Halfling m/f Ladino), o chip mostra o olhar e o lado do rosto, nunca o
+traje — o que §4 pede.
+
+**O manifesto** (`<arquivo>` → `public/retratos/gente/<arquivo>-1.webp`, §12;
+`cx`·`olhos` em fração da matriz):
+
+- **Humano** (24/24): `humano-m-guerreiro` 0,47·0,39 · `humano-f-guerreiro` 0,51·0,39 (h1) · `humano-m-mago` 0,41·0,37 · `humano-f-mago` 0,41·0,34 · `humano-m-ladino` 0,39·0,39 · `humano-f-ladino` 0,42·0,35 · `humano-m-clerigo` 0,47·0,33 · `humano-f-clerigo` 0,45·0,31 · `humano-m-cacador` 0,47·0,33 · `humano-f-cacador` 0,41·0,34 · `humano-m-bardo` 0,44·0,39 · `humano-f-bardo` 0,43·0,37 · `humano-m-monge` 0,45·0,33 · `humano-f-monge` 0,45·0,33 · `humano-m-druida` 0,45·0,35 · `humano-f-druida` 0,42·0,37 · `humano-m-feiticeiro` 0,46·0,33 · `humano-f-feiticeiro` 0,46·0,34 · `humano-m-bruxo` 0,47·0,33 · `humano-f-bruxo` 0,45·0,33 · `humano-m-engenheiro` 0,47·0,35 · `humano-f-engenheiro` 0,44·0,34 · `humano-m-invocador` 0,46·0,37 · `humano-f-invocador` 0,45·0,34
+- **Elfo** (24/24): `elfo-m-guerreiro` 0,52·0,35 · `elfo-f-guerreiro` 0,45·0,33 · `elfo-m-mago` 0,44·0,37 (h2) · `elfo-f-mago` 0,42·0,33 · `elfo-m-ladino` 0,43·0,37 · `elfo-f-ladino` 0,44·0,36 · `elfo-m-clerigo` 0,43·0,33 · `elfo-f-clerigo` 0,43·0,33 · `elfo-m-cacador` 0,45·0,34 · `elfo-f-cacador` 0,43·0,36 · `elfo-m-bardo` 0,47·0,38 · `elfo-f-bardo` 0,43·0,36 · `elfo-m-monge` 0,45·0,34 · `elfo-f-monge` 0,45·0,35 · `elfo-m-druida` 0,45·0,37 · `elfo-f-druida` 0,45·0,36 · `elfo-m-feiticeiro` 0,43·0,35 · `elfo-f-feiticeiro` 0,44·0,36 · `elfo-m-bruxo` 0,45·0,34 · `elfo-f-bruxo` 0,43·0,31 · `elfo-m-engenheiro` 0,45·0,35 · `elfo-f-engenheiro` 0,45·0,34 · `elfo-m-invocador` 0,45·0,36 · `elfo-f-invocador` 0,45·0,32
+- **Anão** (24/24): `anao-m-guerreiro` 0,47·0,29 · `anao-f-guerreiro` 0,44·0,34 · `anao-m-mago` 0,43·0,35 · `anao-f-mago` 0,43·0,36 · `anao-m-ladino` 0,43·0,34 · `anao-f-ladino` 0,45·0,38 · `anao-m-clerigo` 0,45·0,30 · `anao-f-clerigo` 0,45·0,37 (h3) · `anao-m-cacador` 0,43·0,35 · `anao-f-cacador` 0,41·0,35 · `anao-m-bardo` 0,45·0,35 · `anao-f-bardo` 0,43·0,35 · `anao-m-monge` 0,47·0,27 · `anao-f-monge` 0,43·0,37 · `anao-m-druida` 0,45·0,30 · `anao-f-druida` 0,43·0,35 · `anao-m-feiticeiro` 0,45·0,34 · `anao-f-feiticeiro` 0,43·0,35 · `anao-m-bruxo` 0,47·0,29 · `anao-f-bruxo` 0,45·0,35 · `anao-m-engenheiro` 0,45·0,30 · `anao-f-engenheiro` 0,43·0,33 · `anao-m-invocador` 0,47·0,30 · `anao-f-invocador` 0,43·0,35
+- **Halfling** (24/24): `halfling-m-guerreiro` 0,45·0,39 · `halfling-f-guerreiro` 0,43·0,39 · `halfling-m-mago` 0,45·0,40 · `halfling-f-mago` 0,45·0,41 · `halfling-m-ladino` 0,42·0,41 · `halfling-f-ladino` 0,44·0,41 · `halfling-m-clerigo` 0,43·0,40 · `halfling-f-clerigo` 0,43·0,36 · `halfling-m-cacador` 0,45·0,40 · `halfling-f-cacador` 0,43·0,40 · `halfling-m-bardo` 0,45·0,41 · `halfling-f-bardo` 0,43·0,40 · `halfling-m-monge` 0,45·0,38 · `halfling-f-monge` 0,43·0,37 · `halfling-m-druida` 0,47·0,37 · `halfling-f-druida` 0,45·0,39 · `halfling-m-feiticeiro` 0,45·0,39 · `halfling-f-feiticeiro` 0,43·0,37 · `halfling-m-bruxo` 0,45·0,38 · `halfling-f-bruxo` 0,43·0,40 · `halfling-m-engenheiro` 0,45·0,37 · `halfling-f-engenheiro` 0,43·0,40 · `halfling-m-invocador` 0,45·0,38 · `halfling-f-invocador` 0,47·0,39
+- **Meio-orc** (24/24): `meio-orc-m-guerreiro` 0,41·0,33 · `meio-orc-f-guerreiro` 0,43·0,35 · `meio-orc-m-mago` 0,45·0,38 · `meio-orc-f-mago` 0,45·0,37 · `meio-orc-m-ladino` 0,43·0,38 (h4) · `meio-orc-f-ladino` 0,43·0,39 · `meio-orc-m-clerigo` 0,45·0,33 · `meio-orc-f-clerigo` 0,43·0,35 · `meio-orc-m-cacador` 0,43·0,34 · `meio-orc-f-cacador` 0,43·0,36 · `meio-orc-m-bardo` 0,45·0,38 · `meio-orc-f-bardo` 0,45·0,39 · `meio-orc-m-monge` 0,45·0,36 · `meio-orc-f-monge` 0,43·0,35 · `meio-orc-m-druida` 0,45·0,35 · `meio-orc-f-druida` 0,43·0,37 · `meio-orc-m-feiticeiro` 0,45·0,35 · `meio-orc-f-feiticeiro` 0,43·0,35 · `meio-orc-m-bruxo` 0,45·0,35 · `meio-orc-f-bruxo` 0,43·0,36 · `meio-orc-m-engenheiro` 0,45·0,35 · `meio-orc-f-engenheiro` 0,43·0,36 · `meio-orc-m-invocador` 0,45·0,35 · `meio-orc-f-invocador` 0,45·0,35
+- **Draconato** (24/24): `draconato-m-guerreiro` 0,40·0,29 · `draconato-f-guerreiro` 0,40·0,33 · `draconato-m-mago` 0,43·0,35 · `draconato-f-mago` 0,42·0,31 · `draconato-m-ladino` 0,42·0,33 · `draconato-f-ladino` 0,42·0,33 · `draconato-m-clerigo` 0,42·0,28 · `draconato-f-clerigo` 0,42·0,32 · `draconato-m-cacador` 0,45·0,35 (h6) · `draconato-f-cacador` 0,42·0,31 · `draconato-m-bardo` 0,42·0,34 · `draconato-f-bardo` 0,45·0,35 · `draconato-m-monge` 0,43·0,32 · `draconato-f-monge` 0,43·0,30 · `draconato-m-druida` 0,42·0,33 · `draconato-f-druida` 0,42·0,31 · `draconato-m-feiticeiro` 0,42·0,27 · `draconato-f-feiticeiro` 0,43·0,32 · `draconato-m-bruxo` 0,42·0,31 · `draconato-f-bruxo` 0,42·0,29 · `draconato-m-engenheiro` 0,42·0,30 · `draconato-f-engenheiro` 0,42·0,27 · `draconato-m-invocador` 0,45·0,28 · `draconato-f-invocador` 0,42·0,31
+- **Tiefling** (14/24): `tiefling-m-guerreiro` 0,45·0,35 · `tiefling-f-guerreiro` 0,45·0,35 · `tiefling-m-mago` 0,43·0,39 · `tiefling-f-mago` 0,43·0,39 · `tiefling-m-ladino` 0,45·0,39 · `tiefling-f-ladino` 0,43·0,38 · `tiefling-m-clerigo` 0,45·0,34 · `tiefling-f-clerigo` 0,45·0,34 · `tiefling-m-cacador` 0,43·0,35 · `tiefling-f-cacador` 0,45·0,35 · `tiefling-m-bardo` 0,43·0,36 · `tiefling-f-bardo` 0,43·0,36 · `tiefling-m-monge` 0,43·0,38 · `tiefling-f-bruxo` 0,41·0,39 (h5) — **falta:** f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
+- **Gnomo** (2/24): `gnomo-m-mago` 0,44·0,41 · `gnomo-f-mago` 0,44·0,42 — **falta:** m Guerreiro, f Guerreiro, m Ladino, f Ladino, m Clérigo, f Clérigo, m Caçador, f Caçador, m Bardo, f Bardo, m Monge, f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, f Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
+- **Meio-elfo** (2/24): `meio-elfo-m-clerigo` 0,46·0,35 · `meio-elfo-f-clerigo` 0,45·0,36 — **falta:** m Guerreiro, f Guerreiro, m Mago, f Mago, m Ladino, f Ladino, m Caçador, f Caçador, m Bardo, f Bardo, m Monge, f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, f Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
+- **Goliath** (2/24): `goliath-m-guerreiro` 0,45·0,36 · `goliath-f-guerreiro` 0,43·0,33 — **falta:** m Mago, f Mago, m Ladino, f Ladino, m Clérigo, f Clérigo, m Caçador, f Caçador, m Bardo, f Bardo, m Monge, f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, f Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
+
+**Para terminar na renovação:** 76 chamadas, os sujeitos já escritos (`mente/figma/retratos-f2-plano.mjs`, a partir de `tiefling-f-monge`; o gerador já faz sozinho as trocas que nesta sessão se fizeram à mão — o «jovem … velho», o cabelo do Draconato e do Goliath careca); a ordem continua a da volta 2. **Peso:** médio de design, como §9 — e custa créditos, que é da pessoa.
+
 ---
 
 ## Fogueira · a noite em que se escolhe com quem se senta (`desenho`, 11/10)
