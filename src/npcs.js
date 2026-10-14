@@ -1,3 +1,4 @@
+import { pessoaEmJogo, citaveis } from "./relevancia.js";
 /* ============================================================
    REGISTRO DE PESSOAS — Taverna
    Todo NPC relevante vira uma FICHA persistente (como as cidades
@@ -666,15 +667,28 @@ export const TETO_DAS_PESSOAS = { pessoas: 22, chars: 3200 };
 
 /* Resumo compacto do elenco para o prompt — UMA linha por pessoa, as mais
    recentes/relevantes primeiro. Teto rígido para nunca inflar o prompt. */
+/* ONDA 3 DO CUSTO (14/10): AS PESSOAS PELO LUGAR E PELA MISSÃO. Com
+   `contexto.relevancia` (relevancia.js, montada uma vez por turno no App),
+   a lista leva quem está EM JOGO — o grupo, quem está aqui, quem a missão,
+   o núcleo ou o fio põem na história, e quem o turno cita pelo nome — e,
+   dos outros, só o punhado que o herói conhece e pode citar
+   (`RELEVANCIA.citaveis`, pela mesma ordem da importância). Quem sai não
+   some: o LONGE do QUEM ESTÁ EM CENA diz onde ela está, o registo guarda a
+   ficha, e no turno em que a cena a citar ela volta inteira. Sem
+   relevância (o prompt montado fora de um turno), a lista de sempre. */
 export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, contexto = null) {
   /* MM8c-2: por importância, a recência desempata. MM8d: e quem é de
      passagem não ocupa lugar nenhum */
   const reg = normalizarRecencia(npcs && typeof npcs === "object" ? npcs : {}) || {};
   const agora = retomarContador(reg);
-  const ord = ordemDaImportancia(reg, contexto).filter((n) => !ehDePassagem(n, contexto, agora)).slice(0, limite);
-  if (!ord.length) return "";
-  const linhas = ord.map((n) => {
-    const partes = [n.papel, n.relacao && n.relacao !== "desconhecido" ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
+  const rel = contexto && typeof contexto === "object" ? contexto.relevancia : null;
+  const ord0 = ordemDaImportancia(reg, contexto).filter((n) => !ehDePassagem(n, contexto, agora));
+  const ord = (rel ? ord0.filter((n) => pessoaEmJogo(n.nome, rel)) : ord0).slice(0, limite);
+  if (!ord.length && !rel) return "";
+  const linhaDe = (n) => {
+    /* onda 3: "neutro" é o "desconhecido" de quem já se viu — o registo
+       cala-o como cala o outro (FIGURANTE.relacoesSemPeso) */
+    const partes = [n.papel, n.relacao && !FIGURANTE.relacoesSemPeso.includes(String(n.relacao).toLowerCase()) ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
     /* ---------------- O LAÇO SOBE (v9.98) ----------------
        O Mestre sabia que Marta era um amor rompido e a IA não — ela só
        recebia o nome dentro do envelope da onda, e só no turno em que a
@@ -697,7 +711,15 @@ export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, co
     const laE = Object.entries(garantirEntre(n.entre)).map(([o, t]) => `${(tipoDeLacoPorId(t) || {}).rotulo} com ${o}`).join(", ");
     const extra = [laco, laE, n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas].filter(Boolean).join(" · ");
     return `• ${n.nome}${partes.length ? ` (${partes.join(", ")})` : ""}${extra ? ` — ${extra}` : ""}`;
-  });
+  };
+  /* onda 3: os citáveis entram DEPOIS de quem está em jogo, cada grupo na
+     ordem da importância — no teto de caracteres, quem está em jogo passa
+     à frente */
+  const fora = rel ? ord0.filter((n) => !ord.includes(n)) : [];
+  const cit = rel ? citaveis(fora, linhaDe) : new Set();
+  const lista = rel ? [...ord, ...fora.filter((n) => cit.has(n))].slice(0, limite) : ord;
+  if (!lista.length) return "";
+  const linhas = lista.map(linhaDe);
   /* o teto de caracteres: pela ordem da recência, entra quem cabe */
   const dentro = [];
   let gasto = 0;

@@ -297,7 +297,8 @@ sec("9. a fiação no App.jsx (prova por texto)");
      último objeto ganhou `elenco: nomesDoElenco()` ao lado de `npcs` — o
      cânone agora pesa pelo elenco também, não só pela recência. */
   tem("a chamada por turno de montarSystemPrompt manda o registo para a recência do cânone",
-    "tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),\n      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */\n      { npcs: npcsRef.current, elenco: nomesDoElenco() },\n    );");
+    /* MOVIDA NA ONDA 3 DO CUSTO (14/10), com o motivo: o mesmo objeto ganhou `relevancia: relevanciaRef.current` — o cânone do turno sobe pela relevância (relevancia.js); a recência e o elenco continuam lá */
+    "tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),\n      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */\n      { npcs: npcsRef.current, elenco: nomesDoElenco(), relevancia: relevanciaRef.current },");
 }
 
 console.log(`\nMM8c-1 · os tetos das pessoas: ${ok} passaram, ${mal} falharam`);

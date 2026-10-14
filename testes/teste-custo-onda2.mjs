@@ -113,7 +113,8 @@ sec("4. OS SINAIS DO TURNO — a tabela que decide o que está em jogo");
      local (a do adjudicador) — a primeira fiação importou com esse nome,
      a local sombreou a importada, o build passou e o turno vivo calou com
      "acao.startsWith is not a function" (todas as portas abertas). */
-  t("o App importa a leitura com um nome que nenhuma função local sombreia", /emJogoNoTurno, SINAIS_ABERTOS \} from "\.\/prompt\.js"/.test(APP) && !/const emJogoNoTurno\b/.test(APP));
+  /* MOVIDA NA ONDA 3 (14/10), com o motivo: o mesmo import passou a trazer também `linhasJaDitas` (o O QUE EXISTE não repete o que as PESSOAS CONHECIDAS já dizem); a prova do nome que nada sombreia é a mesma */
+  t("o App importa a leitura com um nome que nenhuma função local sombreia", /emJogoNoTurno, SINAIS_ABERTOS(, linhasJaDitas)? \} from "\.\/prompt\.js"/.test(APP) && !/const emJogoNoTurno\b/.test(APP));
   t("a tabela tem as cinco perguntas", ["comercio", "governo", "fimDoAcampamento", "chefe", "masmorra"].every((k) => P.SINAIS_DO_TURNO[k] instanceof RegExp));
   t("sem leitura, tudo abre (o de antes)", Object.values(P.SINAIS_ABERTOS).every((v) => v === true) && Object.isFrozen(P.SINAIS_ABERTOS));
   t("a entrada nula não estoura e não abre nada", (() => { const r = s(null); return r && !r.comercio && !r.governo && !r.chefeEmJogo && !r.masmorraEmJogo; })());
@@ -184,12 +185,13 @@ sec("6. OS CHEFES E AS MASMORRAS SÓ INTEIROS QUANDO EM JOGO");
 sec("7. A FIAÇÃO NO APP");
 {
   t("o ref dos sinais nasce aberto", /const sinaisDoTurnoRef = useRef\(SINAIS_ABERTOS\);/.test(APP));
-  t("enviar lê os sinais antes do rodapé, em try/calou, e cai em tudo aberto", /sinaisDoTurnoRef\.current = emJogoNoTurno\(\{ frase: conteudo, nota: `\$\{nota\}\\n\$\{missoesTxt\}`, recentes, chefes: chefesNomes, masmorras: masmorrasNomes \}\);\s*\} catch \(e\) \{ calou\("os sinais do turno", e\); sinaisDoTurnoRef\.current = SINAIS_ABERTOS; \}/.test(APP)
+  t("enviar lê os sinais antes do rodapé, em try/calou, e cai em tudo aberto", /sinaisDoTurnoRef\.current = emJogoNoTurno\(\{ frase: conteudo, nota: `\$\{nota\}\\n\$\{missoesTxt\}`, recentes, chefes: chefesNomes, masmorras: masmorrasNomes \}\);[^\n]*\n\s*\} catch \(e\) \{ calou\("os sinais do turno", e\); sinaisDoTurnoRef\.current = SINAIS_ABERTOS;/.test(APP) /* MOVIDA NA ONDA 3 (14/10), com o motivo: a relevância do turno e a linha A GENTE são lidas na MESMA linha dos sinais, cada uma no seu try (o App não podia ganhar linhas: o check-acoes-do-jogador lê-o por número de linha), e o catch dos sinais também as zera; a prova de que os sinais caem em tudo aberto é a mesma */
     && APP.indexOf("sinaisDoTurnoRef.current = emJogoNoTurno(") < APP.indexOf("const rodape = `[RODAPÉ DO SISTEMA]"));
   t("a tabela de preços abre com a cidade E o comércio", /temMercado: !!cidadeAtualRef\.current && !!sinais\.comercio,/.test(APP));
   t("o governo e o fim do acampamento vão à cena", /temGoverno: temOQueGovernar\(\) \|\| !!sinais\.governo,/.test(APP) && /fimDoAcampamento: !!sinais\.fimDoAcampamento,/.test(APP));
   t("os chefes inteiros só com chefe em jogo", /const chefes = chefesDoFio\(!\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.chefeEmJogo\);/.test(APP));
-  t("as masmorras só com masmorra em jogo", /\{ semMasmorras: !\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.masmorraEmJogo \}/.test(APP));
+  /* MOVIDA NA ONDA 3 (14/10), com o motivo: o mesmo objeto de opções passou a levar a relevância, o onde e as linhas já ditas depois do semMasmorras */
+  t("as masmorras só com masmorra em jogo", /\{ semMasmorras: !\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.masmorraEmJogo[, ]/.test(APP));
   t("o QUEM não repete quem a pauta veta", /naPauta: \(\(\) => \{ try \{ return Object\.keys\(npcsRef\.current \|\| \{\}\)\.filter\(\(n\) => n && pauta\.includes\(`\$\{n\} está em `\)\);/.test(APP));
   t("o rodapé leva só os passivos; o treino, a profissão e a forma subiram", /resumoPericiasPrompt\(p, \(id\) => atributoEfetivo\(p, id\), "passivos"\)/.test(APP) && !/const prf = resumoProfissaoPrompt\(p\);/.test(APP) && /const forma = "";/.test(APP));
   t("os ATRIBUTOS não se repetem no rodapé", !/const atr = resumoAtributosPrompt\(p\);/.test(APP) && !/\$\{atr \?/.test(APP));

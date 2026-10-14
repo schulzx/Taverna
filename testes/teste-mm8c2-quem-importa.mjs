@@ -211,8 +211,9 @@ sec("6. as duas contradições antigas, pelo que o código faz");
      masmorra aberta (`calaNaMasmorra("povoar", …)`, masmorra-sem-cidade.js)
      — a chamada ganhou essa guarda antes do `return`. Fora da masmorra, a
      mesma chamada de sempre: prova-se que ela continua lá, depois da guarda. */
-  t("o prompt do turno leva a gente por conhecer (calada só dentro da masmorra)", app.includes("elenco: (() => { try { if (calaNaMasmorra(\"povoar\", masmorraRef.current)) return []; /* MM17 C2: a gente por conhecer é a da cidade */ return elencoParaPovoar("));
-  t("o cânone recebe o elenco", app.includes("{ npcs: npcsRef.current, elenco: nomesDoElenco() }"));
+  t("o prompt do turno leva a gente por conhecer (calada só dentro da masmorra)", app.includes("elenco: (() => { try { if (calaNaMasmorra(\"povoar\", masmorraRef.current)) return []; /* MM17 C2: a gente por conhecer é a da cidade */ const povo = elencoParaPovoar(") && app.includes("return genteParaPovoarAqui(povo, relevanciaRef.current, cidadeAtualRef.current, genteDaquiRef.current)"));
+  /* MOVIDA NA ONDA 3 DO CUSTO (14/10), com o motivo: o objeto do cânone ganhou a relevância do turno ao lado do elenco, e a gente por conhecer passa por `genteParaPovoarAqui` (só a daqui, sem repetir a gente da cidade) — a chamada ao elencoParaPovoar e a masmorra que a cala são as mesmas */
+  t("o cânone recebe o elenco", app.includes("{ npcs: npcsRef.current, elenco: nomesDoElenco(), relevancia: relevanciaRef.current }"));
 }
 
 console.log(`\nMM8c-2 · quem importa: ${ok} passaram, ${mal} falharam`);

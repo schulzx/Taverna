@@ -7,6 +7,7 @@
 import { vozPrompt, VOZ_PADRAO } from "./vozes.js";
 /* MM8c-1: a recência das pessoas é a do registo */
 import { ordemDaImportancia } from "./npcs.js";
+import { canoneEmJogo } from "./relevancia.js";
 import { resumoPatamar } from "./combate.js";
 import { PROIBICOES_DO_ARCO } from "./historia.js";
 import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
@@ -160,6 +161,14 @@ export function formatarCanone(canone, opcoes = null) {
   let fora = new Set();
   /* MM8d: quem as PESSOAS CONHECIDAS já disseram por inteiro não se repete — nem gasta o teto */
   for (const [nome, f] of Object.entries(canone)) if (f && ehPessoaDoCanone(f) && jaFoiDita(nome, f, o.jaDitos)) fora.add(nome);
+  /* ONDA 3 DO CUSTO (14/10): O CÂNONE PELA RELEVÂNCIA. Com `o.relevancia`
+     (a do turno, relevancia.js) sobe só a verdade de que o Narrador pode
+     precisar AGORA — a que o turno cita, a do lugar, a da pessoa em jogo, a
+     do que o herói carrega (`canoneEmJogo`). O registo guarda o resto,
+     intacto, e ele volta no turno em que uma das portas abrir. Sem
+     relevância (o Cronista, o Arquivista, o prompt fora de um turno), o
+     cânone de sempre. */
+  if (o.relevancia) for (const [nome, f] of Object.entries(canone)) if (f && !canoneEmJogo(nome, f, o.relevancia)) fora.add(nome);
   if (teto) {
     const semAc = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
     const ordem = new Map(ordemDaImportancia(o.npcs, { grupo: o.grupo, elenco: o.elenco }).map((n, i) => [semAc(n.nome), i]));
@@ -300,7 +309,15 @@ export const PORTAS_DA_CENA = [
      quando há alguém na cena — e cena sem ninguém é comum: a estrada, o
      ermo, a masmorra vazia. Daqui para a frente todo AGENTE novo nasce
      atrás de uma porta, senão o teto do prompt vira enfeite. */
-  { id: "gente", quando: (c) => !!c.temGente, porque: "o que a gente em cena faz só importa quando há gente em cena" },
+  /* ONDA 3 DO CUSTO (14/10): e o bloco ensina a cumprir a linha A GENTE da
+     Pauta — "a linha diz o que cada pessoa FAZ", "quem não está na lista
+     está na cena mesmo assim". Com o grupo, há gente em cena em quase todo
+     turno (98% dos 201 pedidos das 8.ª–10.ª), e a linha só entrou em 53
+     deles: nos outros eram ~500 caracteres a explicar uma linha que não
+     estava lá. `genteNaPauta` é a pauta deste turno, montada antes do
+     prompt (a mesma régua da porta do Cobrador); sem o campo (quem monta a
+     cena fora de um turno), a porta de antes. */
+  { id: "gente", quando: (c) => !!c.temGente && c.genteNaPauta !== false, porque: "o que a gente em cena faz só importa quando há gente em cena e a pauta diz o que ela faz" },
   /* v9.107: a ameaça só pensa depois de existir. Antes do primeiro
      vilão da campanha, o bloco seria uma regra sobre coisa nenhuma. */
   { id: "vilao", quando: (c) => !!c.temVilao, porque: "como a ameaça pensa só importa depois de haver uma ameaça" },
@@ -568,7 +585,7 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
   /* MM8c-1: o cânone do Narrador tem teto nas pessoas; `recencia.npcs` é o
      registo, que diz quem foi visto por último (sem ele, conta a ordem de
      entrada no cânone) */
-  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, elenco: recencia && recencia.elenco, grupo: personagem.grupo, jaDitos: linhasJaDitas(npcsInfo) });
+  const canoneTexto = formatarCanone(canone, { teto: TETO_DO_CANONE, npcs: recencia && recencia.npcs, elenco: recencia && recencia.elenco, grupo: personagem.grupo, jaDitos: linhasJaDitas(npcsInfo), relevancia: (recencia && recencia.relevancia) || null });
   const bn = bancoNomes || {};
   const mapaTexto = mapaInfo || "";
   const npcsTexto = npcsInfo || "";

@@ -33,6 +33,7 @@ import { moldePorId } from "./moldes.js";
    — se ela for de voltar — um propósito com condição de amadurecer. */
 import { indoleDe } from "./indole.js";
 import { primeiroNome } from "./npcs.js";
+import { comoDizerAGente, partesNaoDitas, masmorrasEmJogo } from "./relevancia.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 const entre = (rnd, a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -669,15 +670,30 @@ export function lugarConcluido(base, nome) {
 const semArtigoDoLocal = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
   .trim().replace(/^(o|a|os|as)\s+/, "").trim();
 
-export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null, lex = null, onde = null) {
-  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
-  if (!q) return null;
+/* ONDA 3 DO CUSTO (14/10): a régua de ONDE SE ACHA saiu de dentro do
+   `achavelAqui` para ser lida também pelo rodapé (`resumoDaqui` com
+   `opcoes.onde`): o Narrador passa a saber do esconderijo que o herói PODE
+   achar onde está — o do prédio em que está, ou o baú do ermo fora dos
+   muros —, e não do de outro prédio. Na 9.ª sessão (s9 8) o herói, na
+   Ferraria do Leste, perguntou "o que está escondido aqui?" e o taverneiro
+   contou o livro-caixa d'O Malho da Ponte Torta: um segredo de outro prédio
+   revelado sem teste, e o fio dos quinze turnos seguintes nasceu dele. Uma
+   regra só para os dois caminhos — o que se pode achar e o que o Narrador
+   sabe que há para achar. */
+function procuravelAqui(q, onde) {
   const o = onde && typeof onde === "object" ? onde : null;
   const aqui = o ? [o.lugar, o.dentroDe].map(semArtigoDoLocal).filter(Boolean) : [];
   const segredos = !o ? (q.segredos || [])
     : o.foraDosMuros ? []
       : (q.segredos || []).filter((s) => aqui.includes(semArtigoDoLocal(s.local)));
   const tesouros = !o || o.foraDosMuros ? (q.tesouros || []) : [];
+  return { segredos, tesouros };
+}
+
+export function achavelAqui(semente, mapa, nomeCidade, base, genero, atributo = "percepcao", molde = null, lex = null, onde = null) {
+  const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
+  if (!q) return null;
+  const { segredos, tesouros } = procuravelAqui(q, onde);
   const cands = [
     ...segredos.map((s) => ({ ...s, especie: "segredo", onde: `em ${s.local}` })),
     ...tesouros.map((t) => ({ ...t, especie: "tesouro", o: t.conteudo })),
@@ -881,12 +897,36 @@ export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = nul
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
   if (!q) return "";
   const marca = (id) => (foiRevelado(base, id) ? " ✓" : "");
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  /* ONDA 3 DO CUSTO (14/10): com `op.relevancia` (relevancia.js) a gente,
+     os esconderijos e as masmorras vão pela relevância do turno; sem ela,
+     o bloco de sempre, letra por letra. */
+  const rel = op.relevancia && typeof op.relevancia === "object" ? op.relevancia : null;
+  const jaDitos = rel && op.jaDitos instanceof Map ? op.jaDitos : null;
+  /* a chave da linha do registo — a mesma de `linhasJaDitas` (prompt.js) */
+  const chaveDita = (nome) => String(nome || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
   const locais = q.locais.map((l) => `${l.icone} ${l.nome} (${l.tipo})${marca(idDoLocal(q.cidade.nome, l))}`).join(" · ");
   /* 9.ª sessão (12/10): o ofício no género de quem o tem (`oficioNoGenero`)
      — "Kira do Vale, taverneiro(a)" deixou o Narrador pôr "um homem magro"
      ao balcão do Cão Prateado; "taverneira" é mais curto e não deixa */
-  const gente = q.gente.map((p) => `${p.nome}${marca(idDaGente(q.cidade.nome, p))} — ${p.raca}, ${oficioNoGenero(p.papel, p.genero_pessoa)}, ${p.traco}, ${p.modo}; ${p.vontade}`).join(" | ");
-  const seg = q.segredos.map((s) => `${s.icone} em ${s.local}: ${s.o} (só com teste de ${s.acha}, dif. ${s.dc})`).join(" · ");
+  /* onda 3: quem as PESSOAS CONHECIDAS deste turno já dizem vai só com o
+     que a linha do registo ainda não diz (cada fato uma vez no pedido); quem
+     não está em jogo vai curto — nome, povo, ofício e traço —, e continua a
+     ser gente da cidade que o Narrador pode chamar à cena; quem está em
+     jogo (citado, no prédio onde estou, o ofício ou o prédio dito na frase)
+     vai inteiro (`comoDizerAGente`). */
+  const gente = q.gente.map((p) => {
+    const nome = `${p.nome}${marca(idDaGente(q.cidade.nome, p))}`;
+    const oficio = oficioNoGenero(p.papel, p.genero_pessoa);
+    if (jaDitos && jaDitos.has(chaveDita(p.nome))) {
+      const falta = partesNaoDitas([p.raca, oficio, p.traco, p.modo, p.vontade], jaDitos.get(chaveDita(p.nome)));
+      return falta.length ? `${nome} — ${falta.join(", ")}` : nome;
+    }
+    if (rel && comoDizerAGente(p, rel) === "curta") return `${nome} (${[p.raca, oficio, p.traco].filter(Boolean).join(", ")})`;
+    return `${nome} — ${p.raca}, ${oficio}, ${p.traco}, ${p.modo}; ${p.vontade}`;
+  }).join(" | ");
+  const achaveis = rel && op.onde ? procuravelAqui(q, op.onde) : { segredos: q.segredos || [], tesouros: q.tesouros || [] };
+  const seg = achaveis.segredos.map((s) => `${s.icone} em ${s.local}: ${s.o} (só com teste de ${s.acha}, dif. ${s.dc})`).join(" · ");
   const bichos = q.criaturas.map((c) => `${c.nome} (nv ${c.nivel}, ${c.comportamento})`).join(" · ");
   /* MM17 C1: o lugar da região leva o que a ficha sabe de fora — a ida da
      base (as horas que a viagem cobra, e o rumo) e o perigo. É por aqui que
@@ -895,8 +935,11 @@ export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = nul
   const fichas = {};
   for (const l of ((mapa && mapa.regiao && Array.isArray(mapa.regiao.lugares)) ? mapa.regiao.lugares : [])) if (l && l.id && l.ficha) fichas[l.id] = l.ficha;
   const ida = (f) => (f && Number.isFinite(f.horas) ? ` · ${String(f.horas).replace(".", ",")} h${f.rumo ? ` ${f.rumo}` : ""} · ${f.perigoRotulo || `perigo ${f.perigo || "?"}`}` : "");
-  const mms = (opcoes && opcoes.semMasmorras) ? "" : (q.masmorras || []).map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas${ida(fichas[m.id])} — ${m.rumor})`).join(" · ");
-  const cofres = (q.tesouros || []).map((t) => `${t.icone} perto de ${t.perto}: ${t.onde} — ${t.conteudo} (percepção, dif. ${t.dc})`).join(" · ");
+  /* onda 3: quando a porta abre, as que o turno cita e as mais perto da
+     base (`masmorrasEmJogo`), com o "+N" de quem ficou */
+  const mmsEmJogo = masmorrasEmJogo(q.masmorras || [], rel, (m) => (fichas[m.id] || {}).horas);
+  const mms = op.semMasmorras ? "" : `${mmsEmJogo.ficam.map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas${ida(fichas[m.id])} — ${m.rumor})`).join(" · ")}${mmsEmJogo.ficam.length && mmsEmJogo.fora ? ` · +${mmsEmJogo.fora} mais longe` : ""}`;
+  const cofres = achaveis.tesouros.map((t) => `${t.icone} perto de ${t.perto}: ${t.onde} — ${t.conteudo} (percepção, dif. ${t.dc})`).join(" · ");
   return `O QUE EXISTE EM ${q.cidade.nome.toUpperCase()} (base do mundo — use ISTO, não invente):
 - Locais: ${locais || "—"}.
 - Gente (nomes, ofícios e o que cada um quer — são estas as pessoas da cidade; só crie alguém novo se a cena EXIGIR): ${gente || "—"}.

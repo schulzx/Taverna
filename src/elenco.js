@@ -370,7 +370,8 @@ export function elencoParaPovoar(semente, mapa, contexto, quantos = PARA_POVOAR)
     .map((p, i) => ({ p, i, d: perto(p) }))
     .sort((a, b) => a.d - b.d || a.i - b.i)
     .slice(0, n)
-    .map(({ p }) => ({ nome: p.nome, genero_pessoa: p.genero_pessoa || "", raca: p.raca || "", ocupacao: p.papel || "", traco: p.traco || "" }));
+    /* onda 3 do custo (14/10): e a cidade, para o App mandar só quem é DAQUI (`genteParaPovoarAqui`, relevancia.js) */
+    .map(({ p }) => ({ nome: p.nome, genero_pessoa: p.genero_pessoa || "", raca: p.raca || "", ocupacao: p.papel || "", traco: p.traco || "", cidade: p.cidade || "" }));
 }
 
 /* ============================================================
