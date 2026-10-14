@@ -191,7 +191,8 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   t("canone · o Cronista tem a SEÇÃO canone (fatos duráveis, sem reescrever o que existe)", /SEÇÃO canone: fatos DURÁVEIS/.test(app) && /NÃO reescreva nem contradiga o CÂNONE ATUAL/.test(app));
   t("npcs · e a SEÇÃO pessoas (com nome e papel durável)", /SEÇÃO pessoas: pessoas COM NOME e papel durável/.test(app));
   t("canone/npcs · o Cronista recebe o CÂNONE ATUAL e o ELENCO", /CÂNONE ATUAL:\\n\$\{formatarCanone\(canoneRef\.current\)/.test(app) && /ELENCO \(pessoas já registradas\)/.test(app));
-  t("canone/npcs · e corre DEPOIS de aplicada a resposta do Narrador", app.indexOf("let pers = aplicarResposta(resp, persAtual") > 0 && app.indexOf("let pers = aplicarResposta(resp, persAtual") < app.indexOf("cronistaDoTurno(pers, narrativaFinal)"));
+  /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a chamada */
+  t("canone/npcs · e corre DEPOIS de aplicada a resposta do Narrador", app.indexOf("let pers = aplicarResposta(resp, persAtual") > 0 && app.indexOf("let pers = aplicarResposta(resp, persAtual") < app.indexOf("cronistaDoTurno(pers, narrativaFinal, doTurnoCr)"));
   t("canone/npcs · os nomes que o Narrador inventava vêm dos NOMES À MÃO, registados pelo código", /nomesAMaoNaProsa\(/.test(app));
   t("canone · o Cronista não reescreve identidade (só preenche o vazio)", /identidade NUNCA é reescrita/.test(app));
 }

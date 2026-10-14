@@ -61,7 +61,8 @@ sec("2. o prometido: um campo novo do save, ignorado pela versão antiga");
 
 sec("3. o Cronista guarda e paga");
 {
-  const C = corpo("const cronistaDoTurno = async (pers, narrativa) => {");
+  /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
+  const C = corpo("const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
   t("a secção entra no sistema do Cronista, antes da REGRA GERAL", C.indexOf("SECAO_DO_CRONISTA,") > 0 && C.indexOf("SECAO_DO_CRONISTA,") < C.indexOf("REGRA GERAL"));
   const molde = (C.match(/"(\{\\"lugar\\".*?)",\n/) || [])[1] || "";
   let mo = null; try { mo = JSON.parse(molde.replace(/\\"/g, "\"")); } catch { mo = null; }
@@ -111,7 +112,9 @@ sec("5. depois da resposta, o fecho lido");
 {
   const iNar = pos("const narrativaFinal = (portaoRef.current || []).length");
   const iLido = pos("fechoDaNarrativa(narrativaFinal)");
-  const iHist = pos("const histFinal = [...base, { role: \"user\", content: corpo }");
+  /* onda 1 do custo (13/10): o histórico guarda a memória do turno (a frase),
+     não o corpo com a pauta — a âncora segue a linha que o grava */
+  const iHist = pos("const histFinal = [...base, { role: \"user\", content: memoriaDoJogador }");
   t("lido depois de a narrativa existir e antes do histórico", iNar > 0 && iLido > iNar && iLido < iHist);
   t("só pergunta e corte trocam o anterior", /if \(lido === "pergunta" \|\| lido === "corte"\) fechoRef\.current = lido;/.test(APP));
   t("fechoDaNarrativa lê uma pergunta", FE.fechoDaNarrativa("Ela olha-te. — E tu, o que trazes?") === "pergunta");

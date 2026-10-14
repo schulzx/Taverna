@@ -24,6 +24,16 @@ export function marcoDe(vinculo) {
   return m;
 }
 
+/* A linha que o Mestre lê em VÍNCULOS DO GRUPO: "Saoirse: 50/100 (Amizade)".
+   Morava no App.jsx e lia `marco.rotulo`, campo que os marcos nunca tiveram —
+   e o prompt dizia "Saoirse: 50/100 (undefined)" (a auditoria do custo do
+   turno, 13/10). Abaixo do primeiro marco, são conhecidos. */
+export function linhaDoVinculo(nome, vinculo) {
+  const v = Number.isFinite(Number(vinculo)) ? Number(vinculo) : VINCULO_INICIAL;
+  const m = marcoDe(v);
+  return `${nome}: ${v}/${VINCULO_MAX} (${m ? m.nome : "conhecidos"})`;
+}
+
 export function proximoMarco(vinculo) {
   return MARCOS_VINCULO.find((x) => (vinculo || 0) < x.valor) || null;
 }

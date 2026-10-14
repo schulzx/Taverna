@@ -96,7 +96,8 @@ sec("4. a fiação no App");
     }
     return "";
   };
-  const cronista = corpoApos("const cronistaDoTurno = async (pers, narrativa) => {");
+  /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
+  const cronista = corpoApos("const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
   t("o Cronista pede falou_com, e diz que citar não é falar", /SEÇÃO falou_com/.test(cronista) && /citado, lembrado, procurado/.test(cronista));
   t("a resposta é lida numa seção isolada, com calou", /r\.falou_com/.test(cronista) && /calou\("falou_com do Cronista"/.test(cronista));
   t("a conferência corre ali, e a lista esvazia no finally", /falouComRef\.current = falou;\s*try \{ p = conferirAsMissoes\(p\) \|\| p; \} finally \{ falouComRef\.current = \[\]; \}/.test(cronista));

@@ -75,7 +75,12 @@ sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
   t("a escada anda DEPOIS da pauta (o degrau do turno é o de antes)", ord("escutarOTurno({", "andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco("));
   t("a luta pausa a escada", ENVIAR.includes("pausa: !!combateRef.current });"));
   t("a frase do jogador fecha o pedido, depois do rodapé", ord("fechoDoPedido(pedidoEsc)", "pedidoFinal = `${nota ? nota + \"\\n\" : \"\"}${rodape}\\n${fecho}`", "content: pedidoFinal"));
-  t("o histórico continua a guardar o corpo (sem rodapé nem etiqueta)", /\{ role: "user", content: corpo \}, \{ role: "assistant"/.test(APP));
+  /* onda 1 do custo (13/10): a asserção mudou. O histórico guardava o corpo
+     (a pauta + a frase) e passou a guardar só a memória do turno (a frase e a
+     marca do que o sistema decidiu): a pauta velha era 73% do que se relia.
+     O que a MM18 protegia continua: nem rodapé nem etiqueta no histórico, e
+     a frase por último no turno de agora (as asserções acima). */
+  t("o histórico guarda a memória do turno (sem pauta, rodapé nem etiqueta)", /\{ role: "user", content: memoriaDoJogador \}, \{ role: "assistant"/.test(APP) && APP.includes("memoriaDoJogador = memoriaDoTurno(conteudo, nota) || corpo"));
   t("se a escuta estoura, a nota é a de antes, inteira", ENVIAR.includes("let doTurno = [oficina, daNota, doCompasso, formaDaCena, daFrente, daVirada, daTrama], adiadosEsc = null;"));
   const calados = ["a escuta lê o pedido", "a escuta do turno", "a escuta anda", "a frase do jogador por último", "o rumo na pauta", "a gente da história", "o cartaz vencido"];
   t("toda peça nova cala o próprio erro (nunca custa o turno)", calados.every((c) => APP.includes(`calou("${c}"`)), calados.filter((c) => !APP.includes(`calou("${c}"`)).join(", "));

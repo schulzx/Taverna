@@ -166,3 +166,105 @@ export function decidirOCache(pedido) {
   }
   return valida ? { acao: "usar", m: f.m } : { acao: "nenhum", apagar: velho };
 }
+
+/* ============================================================
+   A MEMÓRIA DO TURNO (onda 1 do custo do turno, 13/10/2026)
+
+   O histórico que vai ao Narrador guardava, para cada fala antiga do
+   jogador, o `corpo` inteiro daquele turno: a PAUTA, os envelopes do
+   sistema e, no fim, a frase. Na 10.ª sessão eram ~2.200 caracteres por
+   fala, dos quais ~150 de frase — 73% de tudo o que o histórico relia
+   eram ordens de um turno que já passou ("O FECHO termine em fala a
+   meio", "NÃO PODE…", "REGRA DESTE ENVELOPE"). Custava US$ 0,30 por
+   sessão e fazia o Narrador reler fecho velho como se fosse de agora
+   (mente/custo-do-turno.md, desperdício 1).
+
+   O que fica: a frase do jogador, inteira (é o que ele fez, e a
+   continuidade é dele), e — quando o sistema decidiu um número que a
+   narração pode não ter dito — uma marca curta do que ficou decidido
+   (o teste e o resultado, a compra e o preço). O que sai: a pauta e os
+   envelopes de instrução. Os vetos que ainda valem voltam na pauta nova,
+   todo turno; o que aconteceu está na narrativa que segue a fala.
+
+   O turno ATUAL não muda: leva a pauta inteira, e a frase por último
+   (MM18). Só o que vai para o histórico é que encolhe — e encolhe uma
+   vez, ao ser guardado: depois disso a mensagem nunca muda, e o prefixo
+   do cache explícito continua idêntico byte a byte de um turno ao outro.
+   ============================================================ */
+export const MEMORIA_DO_JOGADOR = {
+  /* a frase do jogador vai inteira até aqui (as da 10.ª tinham ~150) */
+  letrasDaFrase: 800,
+  /* o turno do sistema (o clique, sem frase): o título e a primeira frase */
+  letrasDoEnvelope: 140,
+  /* cada marca do que o sistema decidiu, e quantas por turno */
+  letrasDaMarca: 60,
+  marcasMax: 2,
+};
+
+const cortar = (s, n) => {
+  const t = String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+  return t.length <= n ? t : `${t.slice(0, Math.max(0, n - 1)).trimEnd()}…`;
+};
+/* o corpo de um envelope: o que vem depois do primeiro "]" */
+const corpoDe = (linha) => { const i = linha.indexOf("]"); return i < 0 ? "" : linha.slice(i + 1).trim(); };
+
+/* As decisões do sistema que valem uma marca: as que trazem um número
+   ou um resultado que a narração pode ter deixado de fora, e que o
+   jogador pode perguntar três turnos depois ("quanto paguei?"). Cada uma
+   lê a sua linha e devolve a marca, ou null. */
+const M = (id, rx, ler) => ({ id, rx, ler });
+export const MARCAS_DA_MEMORIA = [
+  M("teste", /^\[TESTE /, (l) => {
+    const a = l.match(/teste de ([^(.,]+?)\s*(?:\(|para\b|\.|,)/i);
+    const r = l.match(/Resultado:\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ ]+?)\s*(?:\.|$)/);
+    return a && r ? `teste de ${a[1].trim()}: ${r[1].trim()}` : null;
+  }),
+  M("compra", /^\[COMPRA/, (l) => (corpoDe(l).match(/^(Comprei .+? por [^,.]+)/) || [])[1] || null),
+  M("venda", /^\[VENDA/, (l) => (corpoDe(l).match(/^(Vendi .+? por [^,.]+)/) || [])[1] || null),
+  M("debito", /^\[DÉBITO/, (l) => (corpoDe(l).match(/(paguei [^,.]+)/i) || [])[1] || null),
+  M("social", /^\[SOCIAL — RESOLVIDO/, (l) => (l.match(/(Tentei [^.]+)/) || [])[1] || null),
+  M("vitoria", /^\[VITÓRIA/, (l) => { const m = l.match(/aplicou ([^\]]+)\]/); return m ? `vitória: ${m[1].trim()}` : "vitória"; }),
+  M("missao", /^\[MISSÃO CONCLUÍDA/, (l) => { const m = l.match(/"([^"]+)"/); return m ? `missão "${m[1]}" concluída` : null; }),
+];
+
+function marcaDe(linha) {
+  const l = String(linha || "").trimStart();
+  if (!l.startsWith("[")) return null;
+  const m = MARCAS_DA_MEMORIA.find((x) => x.rx.test(l));
+  if (!m) return null;
+  let s = null;
+  try { s = m.ler(l); } catch { s = null; }
+  return s ? cortar(s, MEMORIA_DO_JOGADOR.letrasDaMarca) : null;
+}
+
+/* O turno do sistema em uma linha: "[RESPOSTA A Petra] Pergunto a Petra
+   porquê." — o título sem o "— DECIDIDO PELO SISTEMA" e a primeira frase. */
+function envelopeCurto(c) {
+  const linha = c.split("\n").find((l) => l.trim()) || "";
+  const t = linha.match(/^\[([^\]]*)\]\s*(.*)$/);
+  if (!t) return cortar(linha, MEMORIA_DO_JOGADOR.letrasDoEnvelope);
+  const titulo = t[1].split(" — ")[0].trim();
+  const frase = (t[2].match(/^.*?[.!?](?=\s|$)/) || [t[2]])[0];
+  return cortar(`[${titulo}]${frase ? " " + frase : ""}`, MEMORIA_DO_JOGADOR.letrasDoEnvelope);
+}
+
+/* A mensagem do jogador como fica no histórico. `conteudo` é o que o
+   turno recebeu (a frase, ou o envelope do clique); `nota` é a pauta com
+   os envelopes do turno. Nunca vazia: um provedor recusa mensagem sem
+   texto. A frase vem por último, como no turno em que foi dita. */
+export function memoriaDoTurno(conteudo, nota) {
+  const T = MEMORIA_DO_JOGADOR;
+  const c = String(conteudo == null ? "" : conteudo).trim();
+  const doSistema = c.startsWith("[");
+  const linhas = [...String(nota == null ? "" : nota).split("\n"), ...(doSistema ? c.split("\n") : [])];
+  const marcas = [];
+  for (const l of linhas) {
+    const m = marcaDe(l);
+    if (m && !marcas.includes(m)) marcas.push(m);
+    if (marcas.length >= T.marcasMax) break;
+  }
+  /* o clique que já virou marca (a compra, o débito) não se repete abaixo dela */
+  const frase = !doSistema ? cortar(c, T.letrasDaFrase) : marcaDe(c.split("\n")[0]) && marcas.length ? "" : envelopeCurto(c);
+  const marca = marcas.length ? `[o sistema registou: ${marcas.join(" · ")}]` : "";
+  return [marca, frase].filter(Boolean).join("\n") || "…";
+}

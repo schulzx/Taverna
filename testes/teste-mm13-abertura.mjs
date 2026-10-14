@@ -553,7 +553,8 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      já cobrou) — a âncora segue o texto, não o número da linha. */
   const aplicar = corpoApos(app, "const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {");
   t("o corpo de aplicarResposta não está vazio", aplicar.length > 20000);
-  const cronista = corpoApos(app, "const cronistaDoTurno = async (pers, narrativa) => {");
+  /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
+  const cronista = corpoApos(app, "const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
   t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural",
     cronista.length > 200 && cronista.includes('if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) {'));
   const soleira = corpoApos(app, "const ofertasDaSoleira = () => {");

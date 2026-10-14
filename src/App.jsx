@@ -21,7 +21,7 @@ import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
 import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha, favorJaPedido } from "./subtramas.js";
 import { PainelFogueira } from "./painel-fogueira.jsx";
-import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo } from "./vinculos.js";
+import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
 import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
@@ -216,7 +216,7 @@ import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
 import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
-import { janelaAncorada } from "./janela.js"; import { semFalaInventada } from "./fala-do-heroi.js";
+import { janelaAncorada, memoriaDoTurno } from "./janela.js"; import { garantirLeitura, decidirOCronista, pularALeitura, lerALeitura, blocoDaFila } from "./gatilho-do-cronista.js"; import { semFalaInventada } from "./fala-do-heroi.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
@@ -5954,6 +5954,11 @@ export default function Taverna() {
      turno, para o próximo não o repetir (não vai ao save). `ultimoTemaRef`: o
      tema de história que a estrada usou por último, para não o repetir. */
   const prometidoRef = useRef(garantirPrometido(null));
+  /* ONDA 1 DO CUSTO (13/10): a leitura do Cronista — quantos turnos ele
+     ficou sem ler, as narrações que esperam a próxima leitura e os nomes
+     já vistos (gatilho-do-cronista.js). Campo novo do save, que a versão
+     antiga ignora; sem ele, começa vazio. */
+  const leituraDoCronistaRef = useRef(garantirLeitura(null));
   const fechoRef = useRef("");
   const ultimoTemaRef = useRef("");
   /* a postura ativa do mundo, com sua permanencia; e o ultimo peso visto,
@@ -9327,6 +9332,7 @@ export default function Taverna() {
       historia: historiaRef.current, espinha: espinhaRef.current, abertura: aberturaMundoRef.current, guildas: guildasRef.current, tarefasCasa: tarefasCasaRef.current, quests: questsRef.current, missoes: missoesRef.current, devocao: devocaoRef.current, mercado: mercadoRef.current, baseMundo: baseMundoRef.current, tentativas: tentativasRef.current, fatos: fatosRef.current, turnosDeMundo: turnosDeMundoRef.current, desdeMundo: desdeMundoRef.current, mesa: mesaRef.current, estante: estanteRef.current, compasso: compassoRef.current, promessas: promessasRef.current, reviravolta: reviravoltaRef.current, reviravoltaMaior: reviravoltaMaiorRef.current, escada: escadaRef.current, escuta: escutaRef.current, prometido: prometidoRef.current, postura: posturaRef.current, episodio: episodioRef.current, gestos: gestosRef.current, noite: noiteRef.current, torneio: torneioRef.current, confidencias: confidenciasRef.current, nevoaVersao: nevoaVersaoRef.current, chao: chaoRef.current, forma: formaRef.current,
       /* v9.115: quem respondeu. Duas linhas no save que valem por uma
          investigação inteira quando a prosa sair torta de novo. */
+      leituraDoCronista: leituraDoCronistaRef.current,
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
       custo: custoRef.atual,
       abasAbertas: abasAbertasRef.current,
@@ -11640,8 +11646,28 @@ export default function Taverna() {
      lugar É na base e quem lá trabalha — o mesmo formato de mundoDasTarefas. */
   const mundoDaBase = () => ({ semente: sementeMundo(), mapa: mapaRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, base: baseMundoRef.current });
 
-  const cronistaDoTurno = async (pers, narrativa) => {
+  const cronistaDoTurno = async (pers, narrativa, doTurno) => {
     if (!narrativa || narrativa.length < 60) return;
+    /* ONDA 1 DO CUSTO (13/10): o gatilho decide se o Cronista lê AGORA.
+       O que não lê fica na fila e vai junto na próxima leitura (no máximo
+       três turnos depois) — o gatilho escolhe a hora, nunca se a narração
+       é lida. Se o gatilho estourar, lê: é o comportamento de antes. */
+    let gatilho = { corre: true, motivos: [] };
+    try {
+      const dt = doTurno && typeof doTurno === "object" ? doTurno : {};
+      const pc = pers || personagemRef.current || personagem || {};
+      const deEmLuta = ((combateRef.current && combateRef.current.inimigos) || []).filter((e) => e && !e.derrotado && e.vida > 0);
+      const conhecidos = [
+        ...Object.keys(npcsRef.current || {}), ...Object.keys(canoneRef.current || {}),
+        pc.nome, ...((pc.grupo || []).map((g) => g && g.nome)), ...deEmLuta.map((e) => e.nome),
+        ...(((mapaRef.current || {}).cidades || []).map((c) => c && c.nome)),
+        cidadeAtualRef.current, (lugarRef.current || {}).nome,
+      ].filter((x) => typeof x === "string" && x);
+      gatilho = decidirOCronista({ narrativa, frase: dt.frase, envelopes: dt.envelopes, conhecidos, emLuta: deEmLuta.length > 0, fe: !!(divindadeRef.current && divindadeRef.current.despertar) }, leituraDoCronistaRef.current);
+    } catch (e) { calou("o gatilho do Cronista", e); gatilho = { corre: true, motivos: [] }; }
+    let filaDoCronista = "";
+    if (gatilho.corre) { try { filaDoCronista = blocoDaFila(leituraDoCronistaRef.current); } catch (e) { calou("a fila do Cronista", e); filaDoCronista = ""; } }
+    else { try { leituraDoCronistaRef.current = pularALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("o pulo do Cronista", e); } }
     /* MM-C · C0: o teste deste turno, lido ANTES da espera — o jogador pode
        agir de novo enquanto o Cronista pensa, e o turno seguinte limpa-o */
     const testeDoTurno = testeDoTurnoRef.current;
@@ -11674,10 +11700,17 @@ export default function Taverna() {
       const jaNoDiario = garantirMissoes(missoesRef.current)
         .filter((q) => ["ativa", "oferecida"].includes(q.status))
         .map((q) => `- "${q.titulo}"${q.dador ? ` (de ${q.dador})` : ""} — ${q.descricao || "—"}`).join("\n");
-      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\n${(() => { try { const ab = abertasParaOCronista(prometidoRef.current); return ab ? ab + "\n\n" : ""; } catch (e) { calou("as abertas ao Cronista", e); return ""; } })()}ELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\nNARRATIVA DO TURNO:\n${narrativa}`;
-      const txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve");
-      const r = parseObjetoTolerante(txt);
-      if (!r || typeof r !== "object") return;
+      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\n${(() => { try { const ab = abertasParaOCronista(prometidoRef.current); return ab ? ab + "\n\n" : ""; } catch (e) { calou("as abertas ao Cronista", e); return ""; } })()}ELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\n${filaDoCronista}NARRATIVA DO TURNO:\n${narrativa}`;
+      /* sem leitura, a resposta é a vazia que o próprio pedido diz ser válida:
+         as secções que são só código (o segredo revelado) correm igual */
+      let txt = "{}";
+      if (gatilho.corre) {
+        try { txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve"); }
+        catch (e) { try { leituraDoCronistaRef.current = pularALeitura(leituraDoCronistaRef.current, narrativa); } catch (e2) { calou("a fila do Cronista que falhou", e2); } throw e; }
+      }
+      const r = gatilho.corre ? parseObjetoTolerante(txt) : {};
+      if (!r || typeof r !== "object") { try { leituraDoCronistaRef.current = pularALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("a fila do Cronista sem resposta", e); } return; }
+      if (gatilho.corre) { try { leituraDoCronistaRef.current = lerALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("a leitura do Cronista", e); } }
       /* ---- SEÇÃO promessas (a campanha que prende) ----
          Primeiro paga o que a narração pagou, depois guarda o que plantou:
          o filtro do lembrete de cena e o caderno de seis são do motor. */
@@ -12012,8 +12045,7 @@ export default function Taverna() {
     if (!g.length) return "";
     const linhas = g.map((c) => {
       const v = typeof c.vinculo === "number" ? c.vinculo : VINCULO_INICIAL;
-      const m = marcoDe(v);
-      return `${c.nome}: ${v}/100 (${m ? m.rotulo : "conhecidos"})`;
+      return linhaDoVinculo(c.nome, v);
     });
     return `VÍNCULOS DO GRUPO (trate cada um com a intimidade certa — quem tem vínculo baixo NÃO faz confidências nem se sacrifica; quem tem vínculo alto puxa assunto pessoal, discorda com liberdade e arrisca a pele por mim): ${linhas.join("; ")}.`;
   };
@@ -12493,7 +12525,7 @@ export default function Taverna() {
     escadaRef.current = garantirEscada(null);
     escutaRef.current = garantirEscuta(null);
     adiadosEscutaRef.current = [];
-    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = "";
+    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null);
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
     episodioRef.current = null;
@@ -13269,7 +13301,8 @@ export default function Taverna() {
     const base = histBase ?? historico;
     /* MM18: a frase do jogador é a ÚLTIMA coisa que o Narrador lê — depois
        do rodapé, com a etiqueta de `escuta.js`. Na 4.ª sessão ela ia a 7–14
-       mil caracteres do fim. O histórico continua a guardar `corpo`. */
+       mil caracteres do fim. O histórico guarda só a frase (onda 1 do
+       custo, `memoriaDoTurno`). */
     let pedidoFinal = `${corpo}\n${rodape}`;
     try {
       const fecho = fechoDoPedido(pedidoEsc);
@@ -13347,7 +13380,15 @@ export default function Taverna() {
         : (resp.narrativa || "");
       /* o "anterior" do fecho é o que se leu, quando o Narrador fechou de outro jeito */
       try { const lido = fechoDaNarrativa(narrativaFinal); if (lido === "pergunta" || lido === "corte") fechoRef.current = lido; } catch (e) { calou("o fecho lido", e); }
-      const histFinal = [...base, { role: "user", content: corpo }, { role: "assistant", content: JSON.stringify({ narrativa: narrativaFinal }) }];
+      /* ONDA 1 DO CUSTO (13/10): no histórico vai a FRASE do jogador (e a
+         marca curta do que o sistema decidiu com número), não a pauta
+         daquele turno — que era 73% do que o Narrador relia, e ordem velha
+         relida como nova. O turno de agora continua com a pauta inteira
+         (`pedidoFinal`). A mensagem guardada não muda mais: o prefixo do
+         cache explícito segue idêntico de um turno ao outro (janela.js). */
+      let memoriaDoJogador = corpo;
+      try { memoriaDoJogador = memoriaDoTurno(conteudo, nota) || corpo; } catch (e) { calou("a memória do turno", e); memoriaDoJogador = corpo; }
+      const histFinal = [...base, { role: "user", content: memoriaDoJogador }, { role: "assistant", content: JSON.stringify({ narrativa: narrativaFinal }) }];
       setHistorico(histFinal);
       /* v9.31: a ALTERNÂNCIA morreu. Fora de combate não existe mais "vez do
          mundo": o mundo vive pelos sistemas — relógios andam, missões conferem,
@@ -13449,7 +13490,9 @@ export default function Taverna() {
         fimDoCronista = (pc) => { try { fecharORecibo(idR, (pc && typeof pc === "object") ? pc : pers); } catch (e) { calou("o recibo do turno", e); } };
       } catch (e) { calou("o recibo do turno (a espera)", e); }
       try {
-        const doCronista = cronistaDoTurno(pers, narrativaFinal);
+        let doTurnoCr = null;
+        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")] }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
+        const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
       } catch { if (fimDoCronista) fimDoCronista(null); }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
@@ -13818,7 +13861,7 @@ export default function Taverna() {
         antecedente: (pers && pers.antecedente) || "",
         dia: diaRef.current,
       });
-      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = "";
+      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null);
       /* MM17 C1: A HISTÓRIA MORA NOS LUGARES. Só num mapa de região (campanha
          nova de Uma Vida): cada ato do meio e o do fim descem ao SEU lugar, e
          o confronto final é no clímax (espinhaNaRegiao, regiao.js). Sem
@@ -14140,6 +14183,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       escadaRef.current = garantirEscada(sv.escada);
       try { escutaRef.current = garantirEscuta(sv.escuta); adiadosEscutaRef.current = []; } catch (e) { calou("a escuta no load", e); }
       try { prometidoRef.current = garantirPrometido(sv.prometido); fechoRef.current = ""; ultimoTemaRef.current = ""; } catch (e) { calou("o prometido no load", e); prometidoRef.current = garantirPrometido(null); }
+      try { leituraDoCronistaRef.current = garantirLeitura(sv.leituraDoCronista); } catch (e) { calou("a leitura do Cronista no load", e); leituraDoCronistaRef.current = garantirLeitura(null); }
       posturaRef.current = garantirPosturaAtiva(sv.postura);
       episodioRef.current = garantirEpisodio(sv.episodio);
       modoRef.current = modoDoSave(sv);
