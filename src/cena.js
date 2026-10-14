@@ -351,7 +351,13 @@ function comTeto(itens, teto, texto, protegido = () => false) {
 }
 
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null, masmorra = null } = {}) {
+/* ONDA 2 DO CUSTO (13/10): `naPauta` — quem a pauta deste turno já veta no
+   NÃO PODE ("X está em Y, a 4 h daqui — não entra nesta cena", geografo.js)
+   não se repete no LONGE. Era a mesma pessoa dita três vezes no mesmo pedido
+   (as PESSOAS CONHECIDAS com o lugar, o LONGE e o veto), e às vezes com dois
+   tempos diferentes ("a 1 dia" aqui, "a 4 h" na pauta). O veto fica, que
+   vetos nunca saem; o LONGE fica com quem a pauta não disse. */
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null, masmorra = null, naPauta = [] } = {}) {
   /* MM14 · 9: numa masmorra aberta, PRESENTES é a masmorra, e a gente da
      cidade vai para o LONGE, com o mesmo teto dele (o pior caso não sobe) */
   const mm = masmorraAberta(masmorra);
@@ -372,7 +378,8 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
   const agora = retomarContador(normalizarRecencia(npcs && typeof npcs === "object" ? npcs : {}) || {});
   /* MM8e: e quem o herói viu em dias diferentes (`vistos`) voltou a ele */
   const contexto = { grupo: comGrupo, elenco, emCena, missao, vistos };
-  const longe = longe0.filter((n) => !ehDePassagem(n, contexto, agora)).sort((a, b) => rank(a) - rank(b));
+  const vetados = new Set((Array.isArray(naPauta) ? naPauta : []).map((x) => norm(x)).filter(Boolean));
+  const longe = longe0.filter((n) => !ehDePassagem(n, contexto, agora) && !vetados.has(norm(n.nome))).sort((a, b) => rank(a) - rank(b));
   const ta = comTeto(aqui, TETO_DO_QUEM.aqui, (n) => `${n.nome} (${n.motivo})`, protegido);
   const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => (n.laFora ? `${n.nome} ficou fora de ${n.laFora}` : `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`));
   const linhaAqui = ta.linhas.length ? `${ta.linhas.join(" · ")}${ta.fora ? ` · +${ta.fora}` : ""}` : "ninguém do registro";

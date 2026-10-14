@@ -12,7 +12,7 @@
 import {
   ESTRUTURAS, estruturaPorId, garantirHistoria, resumoHistoria, podeVirar, virarEtapa,
   tetoSemVilao, etapaDoVilao, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo,
-  linhaDoCapitulo, envelopeDoCapitulo, temAntagonista,
+  linhaDoCapitulo, envelopeDoCapitulo, temAntagonista, PROIBICOES_DO_ARCO,
 } from "../src/historia.js";
 import { FASES, gerarVilao, avancarPlano, DIAS_POR_PASSO, TOTAL_DE_PASSOS, faseDe } from "../src/vilao.js";
 import fs from "node:fs";
@@ -69,8 +69,12 @@ sec("3. NADA VISÍVEL — nem na tela, nem no prompt, nem no console");
   t("o nome da etapa não vai ao Mestre", !/O Abismo/.test(txt));
   t("mas a direção vai inteira", /momento mais escuro/.test(txt));
   t("e o tipo de história vai, que é o que ele precisa", /Jornada do Herói/.test(txt));
-  t("continua proibido contar ao jogador", /NUNCA diga ao jogador em que momento/.test(txt));
-  t("e continua proibido avançar o arco", /você NÃO avança o arco/.test(txt));
+  /* ONDA 2 DO CUSTO (13/10): as duas proibições saíram de `resumoHistoria`
+     para o texto fixo (`PROIBICOES_DO_ARCO`, historia.js → prompt.js), que
+     vai em cache em vez de ir cheio todo turno. O silêncio que esta seção
+     guarda é o mesmo; a regra só mudou de lugar no pedido. */
+  t("continua proibido contar ao jogador", /NUNCA diga ao jogador em que momento/.test(PROIBICOES_DO_ARCO));
+  t("e continua proibido avançar o arco", /você NÃO avança o arco/.test(PROIBICOES_DO_ARCO));
 
   /* A TELA DE CRIAÇÃO listava o arco inteiro — "O CHAMADO → A TRAVESSIA →
      PROVAÇÕES → O ABISMO → …" — antes de o jogador escrever o nome do

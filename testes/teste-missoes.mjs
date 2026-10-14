@@ -3,7 +3,7 @@ import {
   recompensaDe, garantirMissoes, criarMissao, ativas, ofertas, etapaAtual, progresso,
   conferir, aceitarProposta, responderOferta, semearMissoes, relogioDaMissao,
   falharPorRelogio, linhaDoAvanco, envelopeDeAvanco, envelopeDeConclusao,
-  envelopeDeRecusa, resumoMissoesPrompt, encerrarLegado,
+  envelopeDeRecusa, resumoMissoesPrompt, encerrarLegado, MISSOES_PROMPT,
 } from "../src/missoes.js";
 import { porSituacao as SIT } from "../src/mundo-base.js";
 
@@ -140,7 +140,11 @@ ok(/Barão Aldric/.test(conc), "e fecha com quem encomendou, não com um estranh
 const resumo = resumoMissoesPrompt([{ ...m1, status: "ativa" }, bom.missao]);
 console.log("  " + resumo.split("\n").slice(0, 3).join("\n  "));
 ok(/NUNCA você/.test(resumo), "o Mestre é proibido de abrir, avançar e encerrar");
-ok(/nunca liste as etapas futuras/i.test(resumo), "e de entregar o spoiler das próximas etapas");
+/* ONDA 2 DO CUSTO (13/10): a proibição do spoiler saiu da lista (era a
+   terceira vez que o pedido a dizia) e fica na regra das missões, que entra
+   pela mesma porta (`missao`) e agora vai no texto fixo, em cache. A
+   intenção é a mesma: o Narrador nunca conta as etapas seguintes. */
+ok(/NUNCA diga ao jogador quais são as etapas seguintes/.test(MISSOES_PROMPT) && !/etapas futuras/i.test(resumo), "e de entregar o spoiler das próximas etapas (a regra mora em MISSOES_PROMPT, uma vez só)");
 ok(/agora:/.test(resumo), "mas a etapa ATUAL vai — é o que ele precisa para encenar o caminho");
 ok(resumo.length < 900, `enxuto: ${resumo.length} caracteres`);
 

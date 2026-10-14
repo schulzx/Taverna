@@ -225,7 +225,7 @@ import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca, 
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
-import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache } from "./prompt.js";
+import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, emJogoNoTurno, SINAIS_ABERTOS } from "./prompt.js";
 import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
@@ -8312,8 +8312,26 @@ export default function Taverna() {
     });
   };
 
+  /* ONDA 2 DO CUSTO (13/10): o que está EM JOGO neste turno (comércio,
+     governo, o fim do acampamento, um chefe, uma masmorra) — lido em
+     `enviar` antes do rodapé e do system, e lido aqui pelas portas. Fora de
+     um turno, ou se a leitura estourar, tudo abre (SINAIS_ABERTOS). */
+  const sinaisDoTurnoRef = useRef(SINAIS_ABERTOS);
+  /* o herói tem o que governar: facção, cidade sua, governo, cidade a ser
+     tomada, ou uma casa de que é membro (a guilda do painel de Gestão) */
+  const temOQueGovernar = () => {
+    try {
+      return !!faccaoJogadorRef.current
+        || ((mapaRef.current || {}).cidades || []).some((c) => c && c.relacao === "jogador")
+        || Object.keys(governosRef.current || {}).length > 0
+        || !!tomandoRef.current
+        || (guildasRef.current || []).some((g) => g && g.membro);
+    } catch (e) { calou("o herói tem o que governar", e); return true; }
+  };
+
   const cenaDoPrompt = () => {
     const p = fichaViva() || personagem || {};
+    const sinais = sinaisDoTurnoRef.current || SINAIS_ABERTOS;
     const mm = masmorraRef.current;
     const cena = {
       emCombate: !!combateRef.current,
@@ -8337,7 +8355,12 @@ export default function Taverna() {
       dentroDeUmLocal: !!(lugarRef.current && lugarRef.current.distancia === "dentro" && cidadeAtualRef.current),
       /* cidade tem mercador; ermo não tem. É a mesma pergunta, e é honesta:
          a regra de compra e venda importa onde há de quem comprar. */
-      temMercado: !!cidadeAtualRef.current,
+      /* ONDA 2 DO CUSTO: e a tabela de preços só abre quando o turno fala de
+         comércio — na cidade ela abria em 96% dos turnos e é de onde vinham
+         os preços inventados; o preço de verdade chega por PERGUNTOU e O PREÇO */
+      temMercado: !!cidadeAtualRef.current && !!sinais.comercio,
+      temGoverno: temOQueGovernar() || !!sinais.governo,
+      fimDoAcampamento: !!sinais.fimDoAcampamento,
       temBancada: ((p.inventario || []).some((it) => !!comoComponente(it))),
       temMissao: !!resumoMissoesPrompt(missoesRef.current),
       conjura: perfilCombate(p.classe).tipo === "conjurador" || temCaderno(p)
@@ -11632,8 +11655,9 @@ export default function Taverna() {
   /* 11/10 (MM, o laço da história 4/6, v9.401 do backend): um vilão só — a
      lista de chefes obedece ao antagonista do fio. Se a leitura com a espinha
      estourar, a lista de antes volta: o prompt nunca fica sem chefes. */
-  const chefesDoFio = () => {
-    try { return resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico, { espinha: espinhaRef.current }); }
+  /* ONDA 2 DO CUSTO: sem chefe em jogo no turno, só o antagonista e o +N */
+  const chefesDoFio = (soOAntagonista = false) => {
+    try { return resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico, { espinha: espinhaRef.current, soOAntagonista }); }
     catch (e) { calou("os chefes do fio", e); return resumoChefesPrompt(sementeMundo(), mapaRef.current, baseMundoRef.current, generoMundo(), (mundoAtual() || {}).lexico); }
   };
 
@@ -12055,8 +12079,30 @@ export default function Taverna() {
     const nv = p.nivel || 1;
     const prof = bonusProficiencia(nv);
     const chave = ATRIBUTOS.find((a) => ehProficiente(p.classe, a.id));
-    const ep = resumoEpico(p);
-    return `REGRAS DE PROGRESSÃO (o sistema calcula — não recalibre): proficiência +${prof} (nível ${nv}), somada automaticamente ao atributo que a classe domina${chave ? ` (${chave.nome})` : ""}. Um herói experiente rola alto no que é a especialidade dele — isso é esperado, não infle dificuldades para compensar. ESCALAS DE TEMPO (5e): uma rodada de combate dura 6 segundos; um turno de exploração de masmorra, 10 minutos; viagens contam em horas. Nunca descreva o tempo de forma incompatível com isso.${ep ? ` ESTADO ÉPICO: ${ep} — no ápice mortal o herói não sobe mais de nível; acumula XP e recebe dádivas épicas concedidas pelo sistema.` : ""}`;
+    /* ONDA 2 DO CUSTO: o ESTADO ÉPICO conta o XP de cada turno no nível 20 —
+       saiu daqui (que vai ao texto fixo, em cache) para `infoEpico`, que vai
+       ao ESTADO com o título */
+    return `REGRAS DE PROGRESSÃO (o sistema calcula — não recalibre): proficiência +${prof} (nível ${nv}), somada automaticamente ao atributo que a classe domina${chave ? ` (${chave.nome})` : ""}. Um herói experiente rola alto no que é a especialidade dele — isso é esperado, não infle dificuldades para compensar. ESCALAS DE TEMPO (5e): uma rodada de combate dura 6 segundos; um turno de exploração de masmorra, 10 minutos; viagens contam em horas. Nunca descreva o tempo de forma incompatível com isso.`;
+  };
+  const infoEpico = () => {
+    const ep = resumoEpico(personagem || personagemRef.current || {});
+    return ep ? ` ESTADO ÉPICO: ${ep} — no ápice mortal o herói não sobe mais de nível; acumula XP e recebe dádivas épicas concedidas pelo sistema.` : "";
+  };
+
+  /* ONDA 2 DO CUSTO (13/10): o que o rodapé mandava a cada turno e só muda
+     por campanha ou por nível — a forma do mundo, o treino das perícias, o
+     que a profissão abre — sobe para o texto fixo, junto da ficha (o `fixo`
+     de infoTitulo). Medido em 201 pedidos das 8.ª a 10.ª sessões: ~1,2 mil
+     caracteres que não mudaram uma vez de um turno para o seguinte. Os
+     PASSIVOS (somam bênção e equipamento), o traço (diz o que já foi gasto)
+     e o deslocamento ficam no rodapé: mudam com o turno. */
+  const fixoDaFicha = () => {
+    const p = personagemRef.current || personagem || {};
+    const partes = [];
+    try { partes.push(resumoMoldePrompt(moldeMundo())); } catch (e) { calou("a forma do mundo no fixo", e); }
+    try { partes.push(resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id), "treino")); } catch (e) { calou("as perícias no fixo", e); }
+    try { partes.push(resumoProfissaoPrompt(p)); } catch (e) { calou("a profissão no fixo", e); }
+    return partes.filter(Boolean).join("\n");
   };
 
   const infoTitulo = () => {
@@ -12071,7 +12117,15 @@ export default function Taverna() {
     const bocas = 1 + (p.grupo || []).length;
     const ermos = resumoErmos(p.suprimentos, p.exaustao, p.ritmoViagem, bocas);
     const bonus = acoesBonusDe(p.classe, p.nivel || 1);
-    return `${base}. ${ermos} ${ECONOMIA_ACAO_PROMPT}${bonus.length ? ` AÇÕES BÔNUS DESTA CLASSE: ${bonus.map((b) => `${b.nome} (${b.desc})`).join("; ")}.` : " Esta classe não tem ação bônus própria — usa só a ação principal."} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(p.classe).nota}). ${infoRegras()}${vinc ? ` ${vinc}` : ""}`;
+    /* ONDA 2 DO CUSTO: o título, os suprimentos e os vínculos mudam com o
+       jogo e vão ao ESTADO (`vivo`); a economia de ação, a ação de turno e a
+       progressão só mudam com o nível e vão ao texto fixo (`fixo`), em cache */
+    const regras = `${ECONOMIA_ACAO_PROMPT}${bonus.length ? ` AÇÕES BÔNUS DESTA CLASSE: ${bonus.map((b) => `${b.nome} (${b.desc})`).join("; ")}.` : " Esta classe não tem ação bônus própria — usa só a ação principal."} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(p.classe).nota}). ${infoRegras()}`;
+    let fixo = regras;
+    try { const f = fixoDaFicha(); if (f) fixo = `${regras}\n${f}`; } catch (e) { calou("o fixo da ficha", e); }
+    let epico = "";
+    try { epico = infoEpico(); } catch (e) { calou("o estado épico", e); }
+    return { vivo: `${base}. ${ermos}${epico}${vinc ? ` ${vinc}` : ""}`, fixo };
   };
 
   /* FÉ COM ENDEREÇO (v8.9): ganhar fiéis é ganhar DEVOÇÃO em algum lugar.
@@ -13127,6 +13181,20 @@ export default function Taverna() {
       if (pedidoEsc) escutaRef.current = andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco({ missoes: missoesRef.current, espinha: espinhaRef.current }), pausa: !!combateRef.current });
     } catch (e) { calou("a escuta anda", e); }
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
+    /* ONDA 2 DO CUSTO (13/10): OS SINAIS DO TURNO. Lidos na frase, na pauta
+       e nos envelopes (com a lista das missões), e nas duas últimas
+       narrações, contra o nome de quem existe (os chefes do mundo, as
+       masmorras daqui). Abrem e fecham as portas que a cena sozinha deixava
+       sempre abertas (`emJogoNoTurno`, prompt.js). Se estourar, tudo abre. */
+    try {
+      const recentes = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join("\n");
+      let chefesNomes = [], masmorrasNomes = [], missoesTxt = "";
+      try { chefesNomes = chefesDoMundo(sementeMundo(), mapaRef.current, generoMundo(), (mundoAtual() || {}).lexico).map((c) => c && c.nome).filter(Boolean); } catch (e) { calou("os chefes do sinal", e); }
+      try { const fio = ((espinhaRef.current || {}).fio || {}).antagonista; if (fio) chefesNomes.push(String(fio)); } catch (e) { calou("o antagonista do sinal", e); }
+      try { const q = (cidadeAtualRef.current && !masmorraRef.current) ? oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) : null; masmorrasNomes = ((q && q.masmorras) || []).map((m) => m && m.nome).filter(Boolean); } catch (e) { calou("as masmorras do sinal", e); }
+      try { missoesTxt = resumoMissoesPrompt(missoesRef.current) || ""; } catch (e) { calou("as missões do sinal", e); }
+      sinaisDoTurnoRef.current = emJogoNoTurno({ frase: conteudo, nota: `${nota}\n${missoesTxt}`, recentes, chefes: chefesNomes, masmorras: masmorrasNomes });
+    } catch (e) { calou("os sinais do turno", e); sinaisDoTurnoRef.current = SINAIS_ABERTOS; }
     /* RODAPÉ DO SISTEMA (v7.0.2): lembrete curto colado SÓ na mensagem atual
        (não fica no histórico — custo ~zero) reforçando as regras que o
        DeepSeek mais esquecia: relógio do sistema, proibição de inventar
@@ -13166,7 +13234,9 @@ export default function Taverna() {
       const mov = resumoDeslocamentoPrompt(p, { dobrar: dobraMovimento(p) });
       /* v9.6: a ficha de atributos, os combos que a build permite e o rito de
          ascensão em curso — os três lugares onde o Mestre inventava por não saber */
-      const atr = resumoAtributosPrompt(p);
+      /* ONDA 2 DO CUSTO: os ATRIBUTOS saíram daqui — a ficha do herói, no
+         texto fixo, já os diz (fichaTexto), e a progressão diz qual a
+         classe domina. Eram a mesma linha duas vezes no mesmo pedido. */
       const cmb = combateRef.current ? resumoCombosPrompt(p) : "";
       const rit = resumoRitoPrompt(divindadeRef.current, p.nivel || 1);
       /* BASE DO MUNDO (v9.8): o lugar onde o herói está já tem locais, gente e
@@ -13181,7 +13251,9 @@ export default function Taverna() {
       /* v9.40: a forma do mundo vem ANTES do que existe aqui — é ela que
          diz se "aqui" é uma cidade, um andar ou uma órbita, e sem essa
          ordem o Mestre lê a lista de locais já pensando em cidade. */
-      const forma = resumoMoldePrompt(moldeMundo());
+      /* ONDA 2 DO CUSTO: a FORMA DESTE MUNDO não muda numa campanha — subiu
+         para o texto fixo (fixoDaFicha), e o "aqui" segue sem ela */
+      const forma = "";
       /* v9.43: para onde dá para ir num gesto. Em mundo de estrada esta linha
          nem existe (toda rota leva dias); na Torre é o portal do andar, e sem
          ela o Mestre inventa o nome do destino e esquece de registrar a
@@ -13248,12 +13320,12 @@ export default function Taverna() {
          rumores, os arredores, o ermo, as saídas e a forma do mundo) cala por
          tabela (`DENTRO_DA_MASMORRA`, masmorra-sem-cidade.js); fora dela o
          "aqui" sai byte a byte o de antes. */
-      const daquiTxt = calaNaMasmorra("daqui", masmorraRef.current) ? "" : resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      const daquiTxt = calaNaMasmorra("daqui", masmorraRef.current) ? "" : resumoDaqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico, { semMasmorras: !(sinaisDoTurnoRef.current || SINAIS_ABERTOS).masmorraEmJogo });
       let aqui = "";
       try {
         aqui = aquiDoTurno({ forma, ondeEstou, comodos: comodosAqui, daqui: daquiTxt, formaDaCidade: shape, viagem: viag, ermo: ermoAqui, arredores: fora, saidas }, masmorraRef.current);
       } catch (e) { calou("aquiDoTurno", e); aqui = [forma, ondeEstou, comodosAqui, daquiTxt, shape, viag, ermoAqui, fora, saidas].filter(Boolean).join("\n\n"); }
-      const chefes = chefesDoFio();
+      const chefes = chefesDoFio(!(sinaisDoTurnoRef.current || SINAIS_ABERTOS).chefeEmJogo);
       /* QUEM ESTÁ EM CENA (v9.9): presentes, ausentes com a distância em dias,
          e o que foi dito em particular — as duas regras que impedem o aliado
          de teletransportar e o estranho de saber o que não ouviu. */
@@ -13265,13 +13337,13 @@ export default function Taverna() {
         const citadosAgora = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ");
         emCenaAgora = Object.keys(npcsRef.current || {}).filter((nome) => citadosAgora.includes(nome));
       } catch { emCenaAgora = []; }
-      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, masmorra: masmorraRef.current, elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })() });
+      const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, masmorra: masmorraRef.current, elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao do rodape", e); return []; } })(), naPauta: (() => { try { return Object.keys(npcsRef.current || {}).filter((n) => n && pauta.includes(`${n} está em `)); } catch (e) { calou("quem a pauta já veta", e); return []; } })() });
       /* PROFICIÊNCIA (v9.11): o que o herói sabe usar, e o que está pesando */
       const eqp = resumoProficienciaPrompt(p, ranksDoPersonagem(p));
       /* PERÍCIAS (v9.15): em que ele é treinado, em que é leigo, e os passivos —
          que decidem o que ele nota SEM rolar. Sem isto o Mestre inventa a
          competência do herói cena a cena, e sempre a favor da cena. */
-      const per = resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id));
+      const per = resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id), "passivos"); /* onda 2: o treino subiu para o fixo */
       const her = resumoHeroismoPrompt(p);
       const dsc = resumoDescansoPrompt(p, diaRef.current);
       const rel = resumoRelogiosPrompt(relogiosRef.current);
@@ -13288,7 +13360,7 @@ export default function Taverna() {
          linhas o Mestre trata Anão e Elfo como a mesma pessoa e a profissão
          do herói como enfeite de ficha — que foi exatamente o que acontecia. */
       const trc = resumoTracosPrompt(p);
-      const prf = resumoProfissaoPrompt(p);
+      /* onda 2: a PROFISSÃO subiu para o texto fixo (fixoDaFicha) */
       /* v9.46: quem está no campo por conjuração. Sem esta linha o Mestre
          narra um herói sozinho ao lado de uma fera invocada de 40 PV. */
       const ivc = resumoInvocacoesPrompt(p);
@@ -13296,7 +13368,7 @@ export default function Taverna() {
          Mestre descreve um chão limpo em cima de um chão cheio, ou pior,
          "entrega" o que o jogador ainda não recolheu. */
       const chn = envelopeDoQueFicou(pertoDaqui(chaoRef.current, combateRef.current ? combateRef.current.heroi : null, RAIO_EXAME));
-      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${prf ? `\n${prf}` : ""}${ivc ? `\n${ivc}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${atr ? `\n${atr}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
+      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${ivc ? `\n${ivc}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
     })()}`;
     const base = histBase ?? historico;
     /* MM18: a frase do jogador é a ÚLTIMA coisa que o Narrador lê — depois

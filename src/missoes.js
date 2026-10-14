@@ -1198,9 +1198,15 @@ export function resumoMissoesPrompt(lista) {
     return `- ${tipoDef(m.tipo).icone} "${m.titulo}" (${p.feitas}/${p.total})${e ? ` — agora: ${textoDaEtapa(e)}` : ""}${m.dador ? ` · de ${m.dador}` : ""}${temPrazo(m) ? ` · com prazo (${m.prazo} noites — o relógio é do sistema)` : ""}`;
   };
   return `MISSÕES (do sistema — quem abre, avança e encerra é o código, NUNCA você):
-${at.map(linha).join("\n") || "- (nenhuma ativa)"}${of.length ? `\nOFERECIDAS, à espera da minha resposta: ${of.map((m) => `"${m.titulo}"`).join(", ")}` : ""}
-Trate as etapas como o que elas são: o que EU preciso fazer. Você pode encenar o caminho, mas não marca etapa, não conclui missão e não paga recompensa. E nunca liste as etapas futuras para mim — deixe a próxima aparecer quando chegar a vez dela.`;
+${at.map(linha).join("\n") || "- (nenhuma ativa)"}${of.length ? `\nOFERECIDAS, à espera da minha resposta: ${of.map((m) => `"${m.titulo}"`).join(", ")}` : ""}`;
 }
+/* ONDA 2 DO CUSTO (13/10): SAIU DAQUI a cauda "Trate as etapas como o que
+   elas são… nunca liste as etapas futuras". Era a terceira vez que o pedido
+   dizia a mesma regra: MISSOES_PROMPT (abaixo) já diz que o Narrador não
+   abre, não avança, não encerra e não paga, e que nunca conta as etapas
+   seguintes — e os dois entram pela MESMA porta (`missao`, que abre
+   justamente quando esta lista não é vazia). 259 caracteres em 74% dos
+   turnos das 8.ª a 10.ª sessões, cobrados cheios no rodapé. */
 
 /* A regra "ninguém oferece missão numa conversa" mora em OFERTAS_PROMPT e
    só lá: os dois blocos entram pela MESMA porta (`missao`), então dizê-la

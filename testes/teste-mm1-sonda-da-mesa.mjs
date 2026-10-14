@@ -129,7 +129,8 @@ const ANCORAS_HELPERS = [
      chamar `chefesDoFio`, que lhe passa a espinha (um vilão só) e cai na
      chamada de antes se ela estourar. Os chefes continuam a chegar ao
      prompt, por dentro desta vizinha. */
-  "const chefesDoFio = () => {",
+  /* onda 2 do custo (13/10): a mesma vizinha, com o `soOAntagonista` */
+  "const chefesDoFio = (soOAntagonista = false) => {",
 ];
 const ANCORAS_GOLPE = [
   "const resolverAtaqueJogador = (acao, pers) => {",

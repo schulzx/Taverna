@@ -43,6 +43,7 @@ const E = await import(S + "encontros.js");
 const TS = await import(S + "testes.js");
 const { montarSystemPrompt } = await import(S + "prompt.js");
 const { CONDICOES_PROMPT } = await import(S + "condicoes.js");
+const { PROIBICOES_DO_ARCO } = await import(S + "historia.js");
 const app = ler("App.jsx");
 
 /* ============================================================ */
@@ -229,8 +230,15 @@ sec("7. o tamanho");
   const altas = (s) => (String(s).match(ALTAS) || []).length;
   console.log(`      (típica ${pT.length} · pior real ${pP.length} · inteiro ${pTodo.length} · caixa alta ${altas(pT)})`);
   t("a típica desceu (< 49.200; a E3 deixou 51.880)", pT.length < 49200, String(pT.length));
-  t("a PIOR CENA REAL desceu (< 61.300; a E3 deixou 64.824)", pP.length < 61300, String(pP.length));
-  t("o prompt inteiro desceu (< 74.500; a E3 deixou 78.019)", pTodo.length < 74500, String(pTodo.length));
+  /* ONDA 2 DO CUSTO (13/10): as DUAS PROIBIÇÕES do arco passaram de
+     `resumoHistoria` (o `historiaInfo`, vazio nestas três cenas) para o
+     texto fixo. No pedido real o total não cresce — saem do momento do arco
+     e entram aqui —, mas esta medida, que monta com o arco vazio, passa a
+     contá-las. Os limites descontam exatamente esse texto (e o "  · " da
+     linha), e nada mais. */
+  const PROIB = PROIBICOES_DO_ARCO.length + 5;
+  t("a PIOR CENA REAL desceu (< 61.300 + as proibições do arco; a E3 deixou 64.824)", pP.length < 61300 + PROIB, String(pP.length));
+  t("o prompt inteiro desceu (< 74.500 + as proibições do arco; a E3 deixou 78.019)", pTodo.length < 74500 + PROIB, String(pTodo.length));
   t("a caixa alta da típica desceu (a E3 deixou 61)", altas(pT) < 61, String(altas(pT)));
 }
 

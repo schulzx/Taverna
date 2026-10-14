@@ -8,6 +8,7 @@ import { vozPrompt, VOZ_PADRAO } from "./vozes.js";
 /* MM8c-1: a recência das pessoas é a do registo */
 import { ordemDaImportancia } from "./npcs.js";
 import { resumoPatamar } from "./combate.js";
+import { PROIBICOES_DO_ARCO } from "./historia.js";
 import { ATRIBUTOS, MAX_COMPANHEIROS, MOEDAS_INICIAIS } from "./constantes.js";
 import { ECONOMIA_PROMPT } from "./economia.js";
 import { CONDICOES_PROMPT } from "./condicoes.js";
@@ -328,6 +329,18 @@ export const PORTAS_DA_CENA = [
      descanso (v9.110), do lado do governo. */
   { id: "foraDaLuta", quando: (c) => !c.emCombate, porque: "governar, negociar entre potências e o mundo a agir sozinho não acontecem dentro de uma luta aberta; lá quem move o mundo é o sistema" },
   { id: "trama", quando: (c) => !!c.temTrama, porque: "a missão do sistema só tem regra enquanto existe uma aberta; o mural é outra coisa" },
+  /* ONDA 2 DO CUSTO (13/10): três portas que estavam largas demais, com a
+     medida dos 201 pedidos das 8.ª a 10.ª sessões (mente/custo-do-turno.md).
+     · COMPANHEIROS EM COMBATE abria com o grupo, em 99% dos turnos, e é
+       regra de luta (o fora dela já está em QUEM ANDA COMIGO).
+     · O governo (agenda do rei, gestão, diplomacia) abria em 92%, e
+       nenhuma das 180 narrativas falou de reino, vassalo ou tratado: abre
+       quando o herói tem o que governar ou o turno traz o assunto.
+     · O FIM DO ACAMPAMENTO abria com o descanso (92%) e só serve no turno
+       em que o envelope dele chega. */
+  { id: "grupoEmLuta", quando: (c) => !!c.temGrupo && !!c.emCombate, porque: "quem joga pelos companheiros numa luta é o sistema, e fora dela eles são pessoas, não fichas" },
+  { id: "governo", quando: (c) => !c.emCombate && !!c.temGoverno, porque: "a agenda do rei, a gestão e a diplomacia só importam a quem tem o que governar, ou no turno em que o assunto chega" },
+  { id: "fimDoAcampamento", quando: (c) => !c.emCombate && (!!c.acampado || !!c.fimDoAcampamento), porque: "o que o fim do acampamento já restaurou só se diz no turno em que ele acaba" },
 ];
 
 /* Devolve um mapa {id: boolean}. O `cena` vazio abre TODAS as portas, e
@@ -338,6 +351,74 @@ export function portasAbertas(cena) {
   const out = {};
   for (const p of PORTAS_DA_CENA) out[p.id] = c ? !!p.quando(c) : true;
   return out;
+}
+
+/* ---------------- AS PORTAS DO TURNO (onda 2 do custo, 13/10/2026) ----------------
+   As portas acima perguntam pela CENA (há luta? há cidade?). Alguns blocos
+   pediam outra pergunta — se a coisa está EM JOGO neste turno — porque a
+   cena os tinha sempre e a narração quase nunca os usava. Medido nas 8.ª,
+   9.ª e 10.ª sessões (201 pedidos reais, mente/custo-do-turno.md §3):
+   · a tabela de preços abria em 96% dos turnos (toda a cidade) e é de onde
+     vinham os preços inventados; o preço real chega por PERGUNTOU/O PREÇO;
+   · os CHEFES iam em 99% e o nome de um chefe saiu em 11 narrativas de
+     197 — em dez com o chefe em jogo no turno; a outra foi o antagonista,
+     que por isso nunca sai (`soOAntagonista`, mundo-base.js);
+   · as masmorras da região iam em todo turno de cidade e saíram em 5%;
+   · gestão, diplomacia e "brincar de rei" em 92%, e nenhuma narrativa de
+     180 turnos falou de reino, vassalo ou tratado.
+   A pergunta é uma tabela de sinais lidos no texto do turno (a frase do
+   jogador, a pauta e os envelopes, e as duas últimas narrações) e no nome
+   de quem existe (os chefes, as masmorras daqui). Determinista: o mesmo
+   texto abre sempre as mesmas portas. Na dúvida a porta ABRE — uma regra
+   ausente custa um turno ruim. */
+export const SINAIS_DO_TURNO = {
+  /* comprar, vender, perguntar preço, pagar, negociar — e os envelopes que
+     já trazem o número (a compra, a venda, o débito, o preço perguntado) */
+  comercio: /\b(compr\w*|vend\w*|pre[cç]os?|custa\w*|cust[oa]s?|pag(o|a|ar|uei|ou|amos|aria|ue)|moedas?|cobres?|pratas?|ouro|tost[aã]o|tost[oõ]es|troc[oa]r?|negoci\w*|barganh\w*|regate\w*|pechinch\w*|alug\w*|merca\w*|lojas?|bancas?|balc[aã]o|estoque|quanto (é|e|sai|vale|cobra|quer|pede|fica)|encomend\w*|recompensa\w*|frete|di[aá]ria|taxa\w*|ped[aá]gio|camas?|quartos?|hosped\w*|pernoit\w*|estadia|refei[cç]\w*|canecas?|cervejas?|vinho|hidromel|comida|bebida|ra[cç][aã]o|ra[cç][oõ]es|suprimentos?|contrat\w*)\b/i,
+  envelopesDeComercio: /\[(COMPRA|VENDA|DÉBITO|COBRANÇA|PAGAMENTO|MERCADO)|^(PERGUNTOU|O PREÇO)\s/m,
+  /* o reino, a guilda, a potência — na frase ou num envelope de governo */
+  governo: /\b(reinos?|reinar|impost\w*|vassal\w*|tratad\w*|embaixad\w*|diplomac\w*|dom[ií]nios?|guildas?|cofre|rendas?|decret\w*|govern\w*|tributo|alian[cç]a)\b/i,
+  envelopesDeGoverno: /\[(DIPLOMACIA|CORREIO|DECRETO|GOVERNO|GESTÃO|REIVINDICA|TOMADA|GUILDA|DOMÍNIO)/,
+  /* o fim do acampamento chega por envelope; a regra só serve nele */
+  fimDoAcampamento: /\[(FIM DO ACAMPAMENTO|DESCANSO|ACAMPAMENTO)/,
+  /* perguntar pelo perigo grande, mesmo sem saber o nome */
+  chefe: /\b(chef(e|es|ona)|covil|covis|drag(ão|ões|ao|oes)|vil(ão|ões|a|ao|oes)|monstr\w*|lend[aá]ri\w*|quem (manda|comanda|lidera))\b/i,
+  /* perguntar pelo lugar perigoso, pelo rumor ou pelo caminho */
+  masmorra: /\b(masmorras?|ru[ií]nas?|cavernas?|grutas?|criptas?|catacumbas?|t[uú]mul\w*|tumbas?|covil|covis|rumor\w*|boatos?|perig\w*|aventur\w*|tesour\w*|caminho|estrada|quanto tempo|daqui (até|ate|a)|onde fica|longe daqui|arredores)\b/i,
+};
+
+/* sem leitura (o sinal estourou, ou o prompt é montado fora de um turno):
+   todas abertas — o comportamento de antes desta onda */
+export const SINAIS_ABERTOS = Object.freeze({ comercio: true, governo: true, fimDoAcampamento: true, chefeEmJogo: true, masmorraEmJogo: true });
+
+const _semAcento = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* As chaves de um nome: o nome inteiro e as partes que o mundo usa sozinhas
+   ("Runa Sem-Medo, a Praga Mansa" → "Runa Sem-Medo", "Praga Mansa";
+   "Dragão Ancião o Rei Emprestado" → "Dragão Ancião", "Rei Emprestado").
+   Uma palavra só ("Godfrey") não conta: é nome de taverneiro também. */
+function _chavesDoNome(nome) {
+  const n = String(nome || "").trim();
+  if (!n) return [];
+  const partes = n.split(/, | (?:o|a|os|as|do|da) (?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/).map((x) => x.replace(/^(o|a|os|as) /i, "").trim());
+  return [...new Set([n, ...partes])].filter((k) => k.length >= 6 && (k.includes(" ") || k.includes("-") || k === n)).map(_semAcento);
+}
+
+export function emJogoNoTurno(entrada) {
+  /* `= {}` não cobre null: a entrada nula é tratada à mão */
+  const e = entrada && typeof entrada === "object" ? entrada : {};
+  const frase = String(e.frase || "");
+  const nota = String(e.nota || "");
+  const recentes = String(e.recentes || "");
+  const S = SINAIS_DO_TURNO;
+  const tudo = _semAcento(`${frase}\n${nota}\n${recentes}`);
+  const citado = (nomes) => (Array.isArray(nomes) ? nomes : []).some((nm) => _chavesDoNome(nm).some((k) => tudo.includes(k)));
+  return {
+    comercio: S.comercio.test(frase) || S.envelopesDeComercio.test(nota),
+    governo: S.governo.test(frase) || S.envelopesDeGoverno.test(nota),
+    fimDoAcampamento: S.fimDoAcampamento.test(nota),
+    chefeEmJogo: S.chefe.test(frase) || citado(e.chefes),
+    masmorraEmJogo: S.masmorra.test(frase) || citado(e.masmorras),
+  };
 }
 
 /* Sem esta linha, cada bloco recusado deixaria a própria linha em branco
@@ -358,6 +439,20 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
   const so = (id, txt) => (porta[id] ? txt : "");
   mundo = mundo || { genero: "Fantasia medieval" };
   personagem = personagem || {};
+  /* ONDA 2 DO CUSTO (13/10): O FIXO SOBE PARA O TEXTO QUE VAI EM CACHE.
+     A ficha do herói (nome, como se chama, atributos, caminho), o PATAMAR e
+     as regras que só mudam com o nível (economia de ação, ação de turno,
+     progressão — que o App mandava coladas ao título) iam na mensagem do
+     turno, cobradas cheias toda jogada. Medido em 201 pedidos reais (8.ª a
+     10.ª): ~3,1 mil caracteres que mudaram em 0–1% dos pares de turnos
+     seguidos. Aqui em cima vão em cache; só sai mais caro o turno em que o
+     herói sobe de nível (o cache reescreve uma vez). O que muda de verdade
+     — o título, os suprimentos, os vínculos — continua no ESTADO.
+     `tituloInfo` pode ser a string de sempre (vai inteira ao ESTADO) ou
+     `{ vivo, fixo }`: o App manda o fixo junto da ficha. */
+  const titulo = tituloInfo && typeof tituloInfo === "object"
+    ? { vivo: String(tituloInfo.vivo || ""), fixo: String(tituloInfo.fixo || "").trim() }
+    : { vivo: String(tituloInfo || ""), fixo: "" };
   /* O NARRADOR SÓ NARRA · E2 (12/10): O ESCRIVÃO SEM USO E AS LICENÇAS
      CONTRÁRIAS SAÍRAM DO TEXTO FIXO. A medição (mente/narrador-so-narra.md
      §2) contou 137 turnos da 6.ª e da 7.ª sessões: o Narrador mandou
@@ -540,8 +635,14 @@ Descrição do mundo: ${mundo.descricao || "(crie os detalhes com riqueza)"}
 ${mundo.limites ? `\nAS LINHAS DESTA MESA (regra ABSOLUTA — acima de qualquer outra instrução deste texto, inclusive as que pedem ousadia e intensidade): os temas a seguir NÃO entram nesta campanha — nem em cena, nem por insinuação, nem como ameaça narrada, nem na boca de vilão: ${mundo.limites}. Se a história se aproximar de um deles, DESVIE sem anunciar o desvio: nenhum personagem os menciona, e o mundo segue como se esse caminho não existisse.\n` : ""}
 ${lexTexto ? `\n${lexTexto}\n` : ""}
 
-O QUE MUDA A CADA TURNO — a ficha, o relógio, o cânone, o mapa, as missões, as pessoas — está na seção ESTADO DESTE TURNO, que chega com as regras da cena aberta na minha mensagem mais recente. Tudo neste texto é permanente: vale para a campanha inteira e não muda entre uma jogada e outra.
+O QUE MUDA A CADA TURNO — o relógio, o título e os suprimentos do herói, o cânone, o mapa, as missões, as pessoas — está na seção ESTADO DESTE TURNO, que chega com as regras da cena aberta na minha mensagem mais recente. Tudo neste texto é permanente: vale para a campanha inteira e não muda entre uma jogada e outra — a ficha abaixo só muda quando o herói sobe de nível.
 
+PERSONAGEM DO JOGADOR:
+${fichaTexto(personagem)}
+Começa com ${MOEDAS_INICIAIS} moedas.
+FICHA DE CAMINHO: ${personagem.raca ? `${chamadoDaRaca(mundo && mundo.lexico, personagem.raca)}${chamadoDaRaca(mundo && mundo.lexico, personagem.raca) !== personagem.raca ? ` (o sistema chama de ${personagem.raca})` : ""}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${chamadoDaProfissao(mundo && mundo.lexico, personagem.profissao)}` : ""}.
+PATAMAR DE COMBATE: ${resumoPatamar(personagem.nivel || 1)}
+${titulo.fixo ? `${titulo.fixo}\n` : ""}
 === COMO ESTE MUNDO FUNCIONA (o que o sistema já resolve, para você não recalcular) ===
 
 ROLAGENS (v9.68 — você NÃO pede nenhuma, nunca):
@@ -549,13 +650,16 @@ ROLAGENS (v9.68 — você NÃO pede nenhuma, nunca):
 - O 20 e o 1 naturais são do sistema: ele já aplica o que cada um custa ou rende, e te conta no envelope. Não invente complicação nem prêmio por conta própria.
 - VANTAGEM E DESVANTAGEM também são dele: saem dos traços, das dádivas e da situação que o código conhece. Você não as concede.
 - ESTRUTURA DA HISTÓRIA (o norte dramático — siga-a; quem move o arco é o SISTEMA, contando o que o mundo já resolveu). O momento do arco está em ESTADO DESTE TURNO.
+  · ${PROIBICOES_DO_ARCO}
 - DIÁRIO DE MISSÕES (o norte prático — amarre os eventos a ele): as missões em curso chegam a cada turno aqui, com a etapa atual de cada uma. As regras de missão estão na seção MISSÕES, mais abaixo.
   · Os eventos do mundo devem, na maior parte do tempo, TOCAR as missões ativas ou o momento do arco — nada de rumos aleatórios desconexos. A missão dá a direção; o como fica livre.
+${so("missao", MISSOES_PROMPT)}
+${so("missao", OFERTAS_PROMPT)}
 - MAPA E FACÇÕES (mundo persistente — leia e RESPEITE; nunca recrie o que já existe). O mapa de agora está em ESTADO DESTE TURNO.
   · RELAÇÕES importam na cena: em cidade ALIADA ele é bem tratado; NEUTRA, indiferente; INIMIGA, hostil (guardas, preços altos, perigo); se a relacao for "jogador", ele é a autoridade dali.
 - ELENCO DIVERSO PRONTO (use para POVOAR o mundo, antes de inventar alguém): a gente deste mundo que o herói ainda não conheceu e que está por perto vem em ESTADO DESTE TURNO. Cidades prontas: ${(bn.cidades || []).join(", ")}. Tavernas: ${(bn.tavernas || []).join(", ")}.
 - DIVERSIDADE VIVA: povoe com homens E mulheres em igual medida e raças variadas conforme o cenário — NUNCA só homens nem só humanos; depois de alguns homens, incline para mulher, e vice-versa. Varie gênero, idade, raça e temperamento, e dê a cada um vida própria (amizades, rivalidades, romances, famílias). EXCEÇÕES COM PROPÓSITO (o pelotão de uma cultura marcial, o convento, a cidade que despreza uma raça por guerra antiga) valem quando são escolha daquele lugar, não o padrão do mundo.
-- FICHA DE CAMINHO (raça, classe, subclasse e profissão, em ESTADO DESTE TURNO): respeite-a na narrativa — um Mago não abre fechaduras como um Ladino, um Ferreiro repara equipamento, a origem colore como o mundo o trata.
+- FICHA DE CAMINHO (raça, classe, subclasse e profissão, na ficha do herói, acima): respeite-a na narrativa — um Mago não abre fechaduras como um Ladino, um Ferreiro repara equipamento, a origem colore como o mundo o trata.
 - HABILIDADES SÃO ESCOLHIDAS PELO JOGADOR (não invente): ele as aprende de uma árvore fixa da classe ao subir de nível. Descreva só o uso das que ele tem; se a ficção pedir um poder novo, sugira que o escolherá ao evoluir.
 - RECARGA DE HABILIDADES (cobrada pelo SISTEMA): habilidade forte entra em recarga (1-2 turnos) e o sistema bloqueia e avisa; na ficção é fôlego ou canalização — descreva o corpo ainda se recuperando.
 - CÂNONE (a memória permanente — a verdade absoluta e imutável do mundo, que o sistema escreve a partir das suas cenas). O que está lá NUNCA é contradito: quem foi registrado como mago é mago para sempre; o disco de ossos chamado "Berço" É isso para sempre. Revelação nova pode AMPLIAR o que já existe (o disco esconde um segredo), jamais SUBSTITUIR sua natureza. Em dúvida sobre um fato antigo, consulte o cânone e siga-o; sem cânone, prefira ser vago a inventar algo que possa colidir depois. Contradizer o cânone é o pior erro que você pode cometer aqui.
@@ -650,7 +754,7 @@ FICHA DE INIMIGOS NO COMBATE (importante para a tática):
   · O app converte em SUCESSO SEM ROLAGEM o que é trivial para o patamar do herói — então nem toda ação difícil na sua cabeça vira dado.
 - COMO O MUNDO O CHAMA: o título dele está em ESTADO DESTE TURNO. Use ESSE nome, e nenhum outro, ao falar do que ele é.
   · Três medidas que não se confundem: o TÍTULO diz o que ele é; o PATAMAR, só o que aguenta em combate; a FAMA, quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) são EXCLUSIVAS da fé: nível alto não torna ninguém divino — nunca chame de deus quem o sistema não declarou deus.
-- PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate ou feito). O patamar de agora está em ESTADO DESTE TURNO.
+- PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate ou feito). O patamar de agora está na ficha do herói, acima.
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
 
 MUNDO ESCALÁVEL (o desafio cresce com o herói):
@@ -673,6 +777,7 @@ DESFECHOS TÊM PESO: vitória decisiva ACABA. Uma facção destruída fica destr
 COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): são pessoas completas — agem sozinhos, opinam e discordam.
 - BOLSAS PRÓPRIAS: cada companheiro tem a própria bolsa; o jogador transfere itens pela interface, e o app avisa quando isso acontece. Respeite quem carrega o quê.
 - EVOLUEM SOZINHOS: o sistema dá aos companheiros uma fração do XP do herói e cuida de nível e PV.
+${so("grupo", ALIADO_PROMPT)}
 
 ECONOMIA: moeda com nome do mundo. A bolsa é do sistema, que tira dela o que eu pago e o que a cena conta que eu paguei: por isso só narre um pagamento que eu fiz ou aceitei.
 
@@ -706,17 +811,14 @@ ${so("invocacao", INVOCACOES_PROMPT)}
 ${so("sala", SALA_PROMPT)}
 ${so("vilao", ANTAGONISTA_PROMPT)}
 ${so("trama", TRAMAS_PROMPT)}
-${so("missao", MISSOES_PROMPT)}
-${so("missao", OFERTAS_PROMPT)}
 ${so("raid", RAID_PROMPT)}
-${so("grupo", ALIADO_PROMPT)}
-${so("grupo", COMPANHEIROS_PROMPT)}
+${so("grupoEmLuta", COMPANHEIROS_PROMPT)}
 ${so("viagem", VIAGEM_PROMPT)}
 ${so("viagem", `- ONDE EU ESTOU É FATO (âncora de local — regra dura): o LOCAL ATUAL informado é onde eu estou de verdade. Se estou EM VIAGEM, NÃO estou em cidade nenhuma: o descanso acontece na estrada, no acampamento ou no meio de transporte em que viajo (a cabine do navio, o vagão da caravana) — JAMAIS me "acorde" em aposentos, estalagens ou palácios sem que eu tenha chegado lá. Descansar no meio do mar NÃO me devolve ao porto. Só me coloque numa cidade quando o sistema registrar a chegada.`)}
 ${so("ermo", CELULAS_PROMPT)}
 ${so("comodos", COMODOS_PROMPT)}
 ${so("acampamento", ACAMPAMENTO_PROMPT)}
-- ${so("mercado", ECONOMIA_PROMPT)}
+${so("mercado", `- ${ECONOMIA_PROMPT}`)}
 ${so("mercado", MERCADO_PROMPT)}
 ${so("bancada", CRAFT_PROMPT)}
 ${so("bancada", OFICINA_PROMPT)}
@@ -726,11 +828,11 @@ ${so("cobranca", COBRADOR_PROMPT)}
 ${lexCena}
 ${so("descanso", DESCANSO_PROMPT)}
 ${so("foraDaLuta", `TURNO DO MUNDO (o mundo AGE, não só reage):
-- FORA do acampamento o mundo tem vontade própria: a facção joga, alguém aparece com um pedido ou uma ameaça, o clima vira. QUANDO isso acontece é do sistema, e chega por envelope — não injete por conta própria. Consequências correm em segundo plano: a ameaça ignorada cresce, o ferido abandonado piora. Escolhas antigas voltam; as pessoas lembram.
-- RESPEITE A AGENDA DO JOGADOR: se ele quer governar seu reino, melhorar cidades, administrar seu império — esse É o jogo naquele momento. Gestão, construção, diplomacia, economia e política interna são conteúdo nobre: gere desafios DESSE tipo (colheita, impostos, disputas entre vassalos, obras, festivais, embaixadas) em vez de puxá-lo de volta para combate com emergências. Deixe-o brincar de rei em paz por quantas cenas quiser; o mundo pode viver sem ameaçá-lo o tempo todo.
+- FORA do acampamento o mundo tem vontade própria: a facção joga, alguém aparece com um pedido ou uma ameaça, o clima vira. QUANDO isso acontece é do sistema, e chega por envelope — não injete por conta própria. Consequências correm em segundo plano: a ameaça ignorada cresce, o ferido abandonado piora. Escolhas antigas voltam; as pessoas lembram.`)}
+${so("governo", `- RESPEITE A AGENDA DO JOGADOR: se ele quer governar seu reino, melhorar cidades, administrar seu império — esse É o jogo naquele momento. Gestão, construção, diplomacia, economia e política interna são conteúdo nobre: gere desafios DESSE tipo (colheita, impostos, disputas entre vassalos, obras, festivais, embaixadas) em vez de puxá-lo de volta para combate com emergências. Deixe-o brincar de rei em paz por quantas cenas quiser; o mundo pode viver sem ameaçá-lo o tempo todo.
 - GESTÃO POR CÓDIGO (guilda, cofre, rendas, domínios): tudo isso é administrado pelo APP — NÃO calcule, NÃO envie e NÃO contradiga valores de gestão. Seu papel é narrar a vida política e econômica (colheitas, impostos, obras, embaixadas). Os números o jogador vê no painel de Gestão.
 - DIPLOMACIA: as potências conhecidas estão em MAPA E FACÇÕES (ESTADO DESTE TURNO), com relação e tratados (comercio | alianca | vassalagem | guerra). A resposta de uma potência e o tratado são do sistema ([DIPLOMACIA — RESOLVIDA PELO SISTEMA]): você encena a conversa e o líder a reagir ao que o envelope decidiu, e nunca cita os efeitos econômicos.`)}
-${so("descanso", `- FIM DO ACAMPAMENTO ([FIM DO ACAMPAMENTO — DESCANSO CURTO/LONGO]): o app JÁ restaurou PV/PM do herói e do grupo — não envie vida nem mana de cura (seria em dobro). Narre o que mudou na PROPORÇÃO do tempo (curto ~1h, longo ~1 noite; nunca meses nem quedas de impérios) e, no longo, faça o mundo reagir ao tempo perdido: descanso nunca é neutro. Acampados, os companheiros puxam papo e contam histórias — é o momento de vínculo do grupo.`)}
+${so("fimDoAcampamento", `- FIM DO ACAMPAMENTO ([FIM DO ACAMPAMENTO — DESCANSO CURTO/LONGO]): o app JÁ restaurou PV/PM do herói e do grupo — não envie vida nem mana de cura (seria em dobro). Narre o que mudou na PROPORÇÃO do tempo (curto ~1h, longo ~1 noite; nunca meses nem quedas de impérios) e, no longo, faça o mundo reagir ao tempo perdido: descanso nunca é neutro. Acampados, os companheiros puxam papo e contam histórias — é o momento de vínculo do grupo.`)}
 ${so("aflicao", SALVAGUARDAS_PROMPT)}
 ${so("aflicao", AFLICOES_PROMPT)}
 ${so("chao", CHAO_PROMPT)}
@@ -752,12 +854,7 @@ ${so("combate", `- ECONOMIA DE TURNO DO JOGADOR (o sistema controla — você na
 ═══════════════ ESTADO DESTE TURNO ═══════════════
 O texto de sistema é permanente. Isto aqui é o que mudou — e, com as regras da cena aberta, é a única parte que muda de uma jogada para a outra.
 
-${tempoInfo ? `${tempoInfo}\n` : ""}PERSONAGEM DO JOGADOR:
-${fichaTexto(personagem)}
-Começa com ${MOEDAS_INICIAIS} moedas.
-FICHA DE CAMINHO: ${personagem.raca ? `${chamadoDaRaca(mundo && mundo.lexico, personagem.raca)}${chamadoDaRaca(mundo && mundo.lexico, personagem.raca) !== personagem.raca ? ` (o sistema chama de ${personagem.raca})` : ""}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${chamadoDaProfissao(mundo && mundo.lexico, personagem.profissao)}` : ""}.
-COMO O MUNDO O CHAMA: ${tituloInfo || "Mortal"}
-PATAMAR DE COMBATE: ${resumoPatamar(personagem.nivel || 1)}
+${tempoInfo ? `${tempoInfo}\n` : ""}COMO O MUNDO O CHAMA: ${titulo.vivo || "Mortal"}
 ${divindadeInfo ? `${divindadeInfo}\n` : ""}ESTRUTURA DA HISTÓRIA: ${historiaInfo || "arco livre."}
 ${questsInfo || ""}
 MAPA E FACÇÕES: ${mapaTexto || "ainda vazio."}

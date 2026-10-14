@@ -58,7 +58,12 @@ sec("1. o prompt encolhe conforme a cena");
      lá dentro (`cenaNaMasmorra`). A asserção de baixo desconta o bloco
      dele pelo seu próprio texto (`CELULAS_PROMPT`), como faz com o de
      fora-da-luta: o limite de 1500 não cresce. */
-  const SE_EXCLUEM = ["descanso", "porte", "foraDaLuta", "ermo"];
+  /* ONDA 2 DO CUSTO (13/10): o GOVERNO e o FIM DO ACAMPAMENTO saíram de
+     dentro do fora-da-luta e do descanso para portas próprias, e herdam a
+     mesma régua — dentro de uma luta não abrem. Entram no par pelo mesmo
+     motivo das mães; o texto deles continua a ser descontado pelo bloco
+     fora-da-luta (que ainda vai de "TURNO DO MUNDO" a "- DIPLOMACIA:"). */
+  const SE_EXCLUEM = ["descanso", "porte", "foraDaLuta", "ermo", "governo", "fimDoAcampamento"];
   const abertas = portasAbertas(Object.fromEntries(["emCombate", "emMasmorra", "temChao", "emCidade", "temMercado", "temBancada", "temMissao", "conjura", "temGrupo", "temLegado", "temSintonia", "temEspecializacao", "despertou", "invoca", "temGatilho", "temDadiva", "temRegraPropria", "emViagem", "dentroDeUmLocal", "acampado", "emMasmorra", "temGente", "temVilao", "temCobranca", "emRaid", "temTrama", "emSala"].map((k) => [k, true])));
   const fechadas = Object.entries(abertas).filter(([, v]) => !v).map(([k]) => k);
   t("o contexto do teste abre todas as portas que não se excluem (senão a lista acima envelheceu)",

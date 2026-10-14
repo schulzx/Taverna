@@ -1,7 +1,9 @@
 import {
   ESTRUTURAS, estruturaPorId, garantirHistoria, custoDaEtapa, PESO_MARCO, pesoDe,
   registrarMarco, podeVirar, virarEtapa, temAntagonista, resumoHistoria, envelopeDeVirada, resumoQuests,
+  PROIBICOES_DO_ARCO,
 } from "../src/historia.js";
+import { montarSystemPrompt, MARCA_DA_CENA_ABERTA } from "../src/prompt.js";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -76,9 +78,22 @@ ok(!/Provações/.test(txt), "o nome da etapa NÃO vai ao Mestre");
 ok(/Desafios crescentes testam o herói/.test(txt), "mas a direção do momento vai inteira");
 ok(/Sombra da Ponte/.test(txt) && /Peste Cinzenta/.test(txt) && /O cerco/.test(txt),
    "e as provações se fazem com as peças que JÁ existem — é aqui que arco e motor viram a mesma frase");
-ok(/NÃO avança o arco/.test(txt), "proibição 1: ele não move o momento");
-ok(/NUNCA diga ao jogador em que momento do arco ele está/.test(txt), "proibição 2: nem pelo nome");
-ok(/sinônimo/.test(txt), "nem por sinônimo — 'é a hora mais escura' entrega igual");
+/* ONDA 2 DO CUSTO (13/10): AS ASSERÇÕES MUDARAM DE ALVO, NÃO DE TEXTO. As
+   duas proibições eram a cauda de `resumoHistoria` e iam, iguais, na
+   mensagem de todo turno; subiram para o texto fixo, em cache
+   (`PROIBICOES_DO_ARCO`, posta pelo montarSystemPrompt acima da zona). A
+   intenção fica: o Narrador continua proibido de mover o momento e de o
+   dizer — e agora prova-se também que a regra chega ao prompt e não volta
+   a ser paga a cada turno. */
+ok(/NÃO avança o arco/.test(PROIBICOES_DO_ARCO), "proibição 1: ele não move o momento");
+ok(/NUNCA diga ao jogador em que momento do arco ele está/.test(PROIBICOES_DO_ARCO), "proibição 2: nem pelo nome");
+ok(/sinônimo/.test(PROIBICOES_DO_ARCO), "nem por sinônimo — 'é a hora mais escura' entrega igual");
+{
+  const sp = montarSystemPrompt("C", { genero: "Fantasia medieval" }, { nome: "X", conceito: "y", nivel: 1, atributos: {}, vidaMax: 10, manaMax: 0 }, {}, { elenco: [], cidades: [], tavernas: [] }, "", txt, "", "", "", "", "", { emCidade: true });
+  const i = sp.indexOf(MARCA_DA_CENA_ABERTA);
+  ok(i > 0 && sp.slice(0, i).includes(PROIBICOES_DO_ARCO), "as duas proibições moram no texto fixo, em cache");
+  ok(!txt.includes("DUAS PROIBIÇÕES") && sp.split("DUAS PROIBIÇÕES").length === 2, "e o momento do arco não as repete: uma vez só no pedido");
+}
 
 console.log("\n[7. O ENVELOPE DA VIRADA]");
 ok(envelopeDeVirada({ virou: false }) === "", "sem virada, silêncio");

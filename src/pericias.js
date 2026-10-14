@@ -212,7 +212,12 @@ export function resolucaoAutomatica(bonus, dc, { permitir = true } = {}) {
 /* ---------------- O QUE O MESTRE RECEBE ----------------
    Só o que ele não consegue deduzir: no que o herói é treinado, no que
    é especialista, e os passivos que decidem o que ele nota sozinho. */
-export function resumoPericiasPrompt(pers, modDe) {
+/* ONDA 2 DO CUSTO (13/10): `parte` parte o bloco em dois. O treino (em que
+   ele é treinado, especialista e leigo) só muda quando o herói sobe de
+   nível, e sobe para o texto fixo, em cache; os PASSIVOS somam o bônus de
+   efeito e de equipamento (`atributoEfetivo`), mudam com uma bênção, e
+   ficam no rodapé de cada turno. Sem `parte`, o bloco inteiro de sempre. */
+export function resumoPericiasPrompt(pers, modDe, parte = "") {
   const { treinadas, especialistas } = garantirPericias(pers);
   if (!treinadas.length) return "";
   const nome = (id) => (periciaPorId(id) || {}).nome || id;
@@ -222,6 +227,10 @@ export function resumoPericiasPrompt(pers, modDe) {
     .map((id) => `${nome(id)} ${passivoDe(pers, id, modDe(periciaPorId(id).atributo))}`)
     .join(" · ");
   const cruas = PERICIAS.filter((p) => !treinadas.includes(p.id)).map((p) => p.nome);
+  if (parte === "passivos") return `PASSIVOS (do sistema — o que ele nota SEM rolar): ${passivos}. Use isto para decidir o que ele percebe de graça ao entrar numa cena; abaixo do passivo, ele nota sem teste; acima, exige rolagem.`;
+  if (parte === "treino") return `PERÍCIAS (do sistema — não invente treino que ele não tem):
+- TREINADO em: ${linhaT || "—"}.${linhaE ? `\n- ESPECIALISTA (o melhor da região nisto) em: ${linhaE}.` : ""}
+- SEM TREINO em: ${cruas.join(", ")}. Nestas ele é um leigo: pode tentar, mas descreva a falta de prática — nunca o trate como perito no que não treinou.`;
   return `PERÍCIAS (do sistema — não invente treino que ele não tem):
 - TREINADO em: ${linhaT || "—"}.${linhaE ? `\n- ESPECIALISTA (o melhor da região nisto) em: ${linhaE}.` : ""}
 - SEM TREINO em: ${cruas.join(", ")}. Nestas ele é um leigo: pode tentar, mas descreva a falta de prática — nunca o trate como perito no que não treinou.

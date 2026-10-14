@@ -179,12 +179,16 @@ sec("9. o laço da história chega ao App (v9.396 e v9.401 do backend, ligados n
   t("mundoDasMissoes leva a espinha", /espinha: espinhaRef\.current,/.test(M));
   /* um vilão só: as duas leituras dos chefes (o prompt e o /chefes) passam a
      espinha, e caem na lista de antes se a leitura nova estourar */
-  const C = corpo("const chefesDoFio = () => {");
+  /* ONDA 2 DO CUSTO (13/10): chefesDoFio ganhou o `soOAntagonista` (sem
+     chefe em jogo no turno, só o antagonista e o +N) e o passa no mesmo
+     sexto argumento, junto da espinha. O /chefes chama sem ele: a lista
+     inteira, como antes. */
+  const C = corpo("const chefesDoFio = (soOAntagonista = false) => {");
   t("chefesDoFio passa { espinha } como sexto argumento, em try/calou",
-    /^const chefesDoFio = \(\) => \{\s*try \{ return resumoChefesPrompt\(/.test(C)
-      && C.includes("(mundoAtual() || {}).lexico, { espinha: espinhaRef.current }); }")
+    /^const chefesDoFio = \(soOAntagonista = false\) => \{\s*try \{ return resumoChefesPrompt\(/.test(C)
+      && C.includes("(mundoAtual() || {}).lexico, { espinha: espinhaRef.current, soOAntagonista }); }")
       && C.includes('catch (e) { calou("os chefes do fio", e); return resumoChefesPrompt('));
-  t("o prompt e o /chefes leem por ela", /const chefes = chefesDoFio\(\);/.test(APP) && /const t = chefesDoFio\(\);\s*godLinha\(t \|\| "⚡ Nenhum chefe vivo neste mundo\."\)/.test(APP));
+  t("o prompt e o /chefes leem por ela", /const chefes = chefesDoFio\(!\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.chefeEmJogo\);/.test(APP) && /const t = chefesDoFio\(\);\s*godLinha\(t \|\| "⚡ Nenhum chefe vivo neste mundo\."\)/.test(APP));
   t("e nenhuma chamada a resumoChefesPrompt fica sem a espinha fora do recuo", (APP.match(/resumoChefesPrompt\(/g) || []).length === 2);
 }
 

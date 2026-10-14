@@ -871,7 +871,13 @@ export function chaveDoLugar(semente, mapa, nome, { genero = "Fantasia medieval"
 }
 
 /* O bloco que entra no prompt. Curto de propósito: é ficha, não literatura. */
-export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = null, lex = null) {
+/* ONDA 2 DO CUSTO (13/10): `opcoes.semMasmorras` cala a linha das masmorras
+   da região (~1.100 caracteres na 10.ª) nos turnos em que nenhuma está em
+   jogo — o nome delas saiu em 5% das narrativas de cidade das 8.ª a 10.ª
+   sessões, e em quase todas o nome já estava noutro lugar do pedido (a
+   pauta, o cânone). Quem decide é `emJogoNoTurno` (prompt.js): a pergunta
+   pelo caminho, pelo rumor ou pelo lugar perigoso, ou o nome dito. */
+export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = null, lex = null, opcoes = null) {
   const q = oQueExisteAqui(semente, mapa, nomeCidade, base, genero, molde, lex);
   if (!q) return "";
   const marca = (id) => (foiRevelado(base, id) ? " ✓" : "");
@@ -889,7 +895,7 @@ export function resumoDaqui(semente, mapa, nomeCidade, base, genero, molde = nul
   const fichas = {};
   for (const l of ((mapa && mapa.regiao && Array.isArray(mapa.regiao.lugares)) ? mapa.regiao.lugares : [])) if (l && l.id && l.ficha) fichas[l.id] = l.ficha;
   const ida = (f) => (f && Number.isFinite(f.horas) ? ` · ${String(f.horas).replace(".", ",")} h${f.rumo ? ` ${f.rumo}` : ""} · ${f.perigoRotulo || `perigo ${f.perigo || "?"}`}` : "");
-  const mms = (q.masmorras || []).map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas${ida(fichas[m.id])} — ${m.rumor})`).join(" · ");
+  const mms = (opcoes && opcoes.semMasmorras) ? "" : (q.masmorras || []).map((m) => `${m.icone} ${m.nome} (${m.tipo}, nível ${m.nivel}, ${m.salas} salas${ida(fichas[m.id])} — ${m.rumor})`).join(" · ");
   const cofres = (q.tesouros || []).map((t) => `${t.icone} perto de ${t.perto}: ${t.onde} — ${t.conteudo} (percepção, dif. ${t.dc})`).join(" · ");
   return `O QUE EXISTE EM ${q.cidade.nome.toUpperCase()} (base do mundo — use ISTO, não invente):
 - Locais: ${locais || "—"}.
@@ -942,14 +948,29 @@ export function resumoChefesPrompt(semente, mapa, base, genero, lex = null, opco
   if (!cs.length) return "";
   const lugar = (c) => `nível ${c.nivel}${c.gd ? `, GD ${c.gd}` : ""}, ${c.regiao ? `nos arredores de ${c.regiao}` : "paradeiro incerto"}${c.covil ? ` (covil perto de ${c.covil})` : ""}`;
   const cabeca = "CHEFES QUE JÁ EXISTEM NESTE MUNDO (do sistema — apresente-os quando a história pedir, na ordem que você achar melhor; NÃO invente outros): ";
+  /* ONDA 2 DO CUSTO (13/10): `opcoes.soOAntagonista` — quando nenhum chefe
+     está em jogo no turno (`emJogoNoTurno`, prompt.js), vai só quem a
+     história tem por antagonista, e `+N` diz que a lista é parcial (a mesma
+     convenção do QUEM, cena.js). Nas 8.ª a 10.ª sessões o bloco ia inteiro
+     em 99% dos turnos (~1 mil caracteres) e um nome de chefe saiu em 11
+     narrativas de 197: em dez o chefe estava em jogo no turno (o bloco
+     abre inteiro); a outra foi o antagonista evocado de passagem ("o
+     Sem-Rosto enterrou lá") — e é por ela que ele nunca sai. */
+  const so = !!(opcoes && opcoes.soOAntagonista);
   const fio = doFio(opcoes && opcoes.espinha, base);
   if (fio) {
     const principal = cs.find((c) => c.linha === "principal") || null;
     const topo = `${fio.antagonista} — ${UM_VILAO_SO.principal}, ${principal ? lugar(principal) : "paradeiro incerto"}${principal ? `; ${principal.personalidade}` : ""}${fio.motivo ? `; ${fio.motivo}` : ""}`;
     const outros = cs.filter((c) => c !== principal).map((c) => `${nomeNaEspinha(c, fio.alvos)} — ${lugar(c)}; ${c.personalidade}`);
+    if (so && outros.length) return `${cabeca}${topo} || +${outros.length}.`;
     return `${cabeca}${topo}${outros.length ? ` || ${UM_VILAO_SO.servos}: ${outros.join(" || ")}` : ""}.`;
   }
   const linha = (c) => `${c.nome} — ${c.linha === "principal" ? "LINHA PRINCIPAL" : "secundário"}, ${lugar(c)}; ${c.personalidade}; ${c.motivo}`;
+  if (so) {
+    const topo = cs.filter((c) => c.linha === "principal");
+    const resto = cs.length - topo.length;
+    if (topo.length && resto) return `${cabeca}${topo.map(linha).join(" || ")} || +${resto}.`;
+  }
   return `${cabeca}${cs.map(linha).join(" || ")}.`;
 }
 

@@ -495,9 +495,16 @@ export function resumoHistoria(h, motor = {}) {
 DIREÇÃO DESTE MOMENTO: ${et.instrucao}
 ${pecas.length
     ? `AS PEÇAS QUE JÁ ESTÃO NA MESA — é COM ELAS que este momento se cumpre, não com material novo: ${pecas.join("; ")}. Puxe daqui antes de inventar.`
-    : "NÃO HÁ PEÇA GRANDE NA MESA AINDA: use este momento para plantar uma (ofereça trabalho, apresente gente, deixe uma ameaça se insinuar). Não anuncie clímax nem catástrofe que não tenha contra quem acontecer."}
-DUAS PROIBIÇÕES: (1) você NÃO avança o arco e não pede para avançá-lo — quem move o momento é o SISTEMA, quando as missões, relógios e ameaças acima se resolverem de fato; (2) NUNCA diga ao jogador em que momento do arco ele está, nem pelo nome ("as provações começaram"), nem por sinônimo ("é a hora mais escura", "o último ato"). Isso é bastidor: para ele existe só a história acontecendo.`;
+    : "NÃO HÁ PEÇA GRANDE NA MESA AINDA: use este momento para plantar uma (ofereça trabalho, apresente gente, deixe uma ameaça se insinuar). Não anuncie clímax nem catástrofe que não tenha contra quem acontecer."}`;
 }
+
+/* ONDA 2 DO CUSTO (13/10): AS DUAS PROIBIÇÕES SUBIRAM PARA O TEXTO FIXO.
+   Eram a cauda de `resumoHistoria` e iam, iguais palavra por palavra, na
+   mensagem de TODO turno (385 caracteres em 99% dos 201 pedidos das 8.ª a
+   10.ª sessões, sem mudar uma vez) — o canal que se paga cheio. No texto
+   fixo (prompt.js, junto da ESTRUTURA DA HISTÓRIA) vão em cache. O texto é
+   o mesmo; só o "acima" virou o lugar onde o momento do arco agora mora. */
+export const PROIBICOES_DO_ARCO = `DUAS PROIBIÇÕES: (1) você NÃO avança o arco e não pede para avançá-lo — quem move o momento é o SISTEMA, quando as missões, relógios e ameaças do ESTADO DESTE TURNO se resolverem de fato; (2) NUNCA diga ao jogador em que momento do arco ele está, nem pelo nome ("as provações começaram"), nem por sinônimo ("é a hora mais escura", "o último ato"). Isso é bastidor: para ele existe só a história acontecendo.`;
 
 export function envelopeDeVirada(r) {
   if (!r || !r.virou) return "";

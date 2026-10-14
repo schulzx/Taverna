@@ -81,7 +81,14 @@ t("e diz que o resto é permanente", /Tudo neste texto é permanente/.test(P));
    prefixo, e o ganho inteiro vai junto */
 const antes = P.slice(0, i);
 t("o tempo não ficou em cima", !/dia 12, 09:00/.test(antes));
-t("nem a ficha", !/Brann/.test(antes));
+/* ONDA 2 DO CUSTO (13/10): A FICHA SUBIU DE PROPÓSITO. Nome, conceito,
+   atributos, caminho e patamar só mudam quando o herói sobe de nível — em
+   201 pedidos reais das 8.ª a 10.ª sessões não mudaram uma vez de um turno
+   para o seguinte — e iam cheios na mensagem de todo turno. Moram agora no
+   texto fixo, em cache. O que esta asserção guarda continua guardado: o que
+   MUDA com o jogo (o título vivo, o tempo, o mapa, as pessoas) não está em
+   cima. */
+t("nem a ficha que muda (o título vivo fica no ESTADO)", !/o Marcado/.test(antes) && /Nome: Brann/.test(antes));
 t("nem o mapa", !/Ponte das Velas/.test(antes));
 t("nem as pessoas", !/Nicolau, capitão/.test(antes));
 /* "ferreira" colide com um EXEMPLO de JSON dentro do próprio prompt: um
