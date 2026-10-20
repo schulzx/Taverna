@@ -421,6 +421,10 @@ pessoa leva o retrato.
 - **A prova:** 0 de 10 mal lidos e 0 de 10 mal cobrados (9.ª: 0 de 1, 0 de 1, 0 de 1).
 - Começa depois dos consertos da 9.ª no ar.
 
+### A foto do estado fica para perto de janeiro (decisão da pessoa, 20/10)
+
+Depois das ondas 1–3 (−64%, ~R$ 3,88/sessão), o que sobra é a mensagem do turno. O caminho B — congelar os blocos lentos numa "foto" antes do histórico e mandar só o que mudou — daria ~−20% (~R$ 3,00) mas arrisca o Narrador ler estado velho. Proposta: fazer só o caminho A (afinar quando o cache se refaz, sem risco), priorizar a qualidade, e decidir o B perto de 01/01/2027 (quando o Gemini 3.8 Flash dobra de preço), revendo também os preços dos modelos. A pessoa: **"Concordo."**
+
 ### O Léxico vira camada de cor (decisão da pessoa, 20/10)
 
 *"Como um fã ou jogador de RPG de mesa experiente, não seria legal ver os nomes diferentes das classes e raças que ele já está acostumado, mas ao mesmo tempo precisamos de algo original… o léxico da forma que está só está causando confusão."* À proposta (*o nome do sistema é universal, o nome do mundo é único*): **"Sim."**
