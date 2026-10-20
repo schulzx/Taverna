@@ -117,7 +117,24 @@ export const CACHE_EXPLICITO = {
   /* o cache só nasce com ao menos uma troca inteira atrás do turno:
      um cache só de `system` é o que o implícito já dá de graça */
   minMensagens: 2,
+  /* A ESCRITA QUE DURA UM TURNO (12.ª sessão, 19/10). No turno 24 a
+     janela tinha 47 mensagens, o rabo passou da régua e o cache foi
+     reescrito (20.669 tokens); no turno 25 a âncora saltou (47 → 25), o
+     começo mudou, e o cache foi reescrito OUTRA VEZ (17.128). A primeira
+     escrita serviu um turno só: ~US$ 0,016 jogados fora por ciclo, uns
+     14% do Narrador se o ciclo se repete. A janela cresce
+     `mensagensPorTurno` por turno; quando a do turno seguinte já passa do
+     teto da âncora (JANELA_MIN + SALTO_DA_ANCORA − 1), o corte vem aí e
+     não se escreve cache nenhum: o rabo paga cheio UM turno, e o cache
+     nasce do lado de lá do corte. */
+  mensagensPorTurno: 2,
 };
+
+/* A janela do turno seguinte vai saltar? (`n` = as mensagens desta) */
+export function corteVemAi(n) {
+  const k = Math.max(0, Math.floor(Number(n) || 0));
+  return k > 0 && k + CACHE_EXPLICITO.mensagensPorTurno > JANELA_MIN + SALTO_DA_ANCORA - 1;
+}
 
 const textoDe = (m) => String(m && m.content != null ? m.content : "");
 
@@ -161,6 +178,9 @@ export function decidirOCache(pedido) {
     if (tokensDe(rabo) < T.raboMaxTokens) return { acao: "usar", m: f.m };
   }
   const chars = String(system == null ? "" : system).length + ms.slice(0, mMax).reduce((a, x) => a + textoDe(x).length, 0);
+  /* o corte vem no turno seguinte: escrever agora seria escrever para um
+     turno só (CACHE_EXPLICITO.mensagensPorTurno) */
+  if (corteVemAi(ms.length)) return valida ? { acao: "usar", m: f.m } : { acao: "nenhum", apagar: velho };
   if (mMax >= T.minMensagens && tokensDe(chars) >= T.minTokens) {
     return { acao: "criar", m: mMax, impressao: impressaoDoPrefixo(system, ms, mMax), apagar: velho };
   }

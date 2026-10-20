@@ -220,7 +220,7 @@ import { janelaAncorada, memoriaDoTurno } from "./janela.js"; import { garantirL
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
 import { resolverLugar, perguntaDeAmbiguidade, perguntaDeVaguidade, perguntaDeVazio, respostaDaEscolha, RESOLVER_PROMPT } from "./resolver.js";
-import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra, idaAMasmorra, quemResponde, NAO_E_PARTIDA } from "./rastro.js";
+import { detectarPartida, detectarSeguirViagem, detectarEntradaEmMasmorra, ondeEstou, pontoDoHeroi, jornadaValida, envelopeDePartida, envelopeDeMasmorra, portaDaMasmorra, idaAMasmorra, quemResponde, NAO_E_PARTIDA, vetoDaViagemQueNaoHouve } from "./rastro.js";
 import { jornadaAteAMasmorra, chegadaABoca, vereditoDaMasmorra, masmorraDaBoca, lugarAoEntrarNaMasmorra } from "./boca.js";
 import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef, alvosDaArea, resolverPortal, envelopeDoPortal, resolvidaPeloSistema, PERGUNTAS_AOS_MORTOS, abrirInterrogatorio, perguntarAoMorto, envelopeDoMorto, textoDeIdentificacao, localizarNoMapa, fichaDaMagiaTexto, resumoGrimorioPrompt, GRIMORIO_PROMPT } from "./grimorio.js";
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, resumoProficienciaPrompt, ITENS_PROMPT } from "./itens.js";
@@ -456,6 +456,10 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
     body: JSON.stringify({ system, messages, maxTokens, formato, tarefa, ...(comCache ? { cache: fichaDoCacheRef.atual || {} } : {}) }),
   });
   const data = await response.json().catch(() => ({}));
+  /* 12.ª sessão: o Gemini que falhou antes da reserva também cobrou (o
+     pensamento é saída) — o servidor manda o uso dele em `perdidos`, e a
+     conta do save passa a vê-lo, com resposta ou sem ela */
+  try { for (const u of Array.isArray(data.perdidos) ? data.perdidos : []) custoRef.atual = somarChamada(custoRef.atual, { ...u, tarefa }); } catch (e) { calou("o custo das tentativas falhadas", e); }
   if (comCache && response.ok) fichaDoCacheRef.atual = data.cache && typeof data.cache === "object" ? data.cache : null;
   if (!response.ok) {
     /* v9.256 (Fase X - X3): `motivo` e `origem` chegam do portao
@@ -6037,7 +6041,7 @@ export default function Taverna() {
          15.371 caracteres e o modelo era cortado no meio de `nomes`.
          Resultado, achado jogando: o Mestre respondia um léxico certo,
          o JSON não fechava, e o mundo nascia medieval em silêncio. */
-      const texto = await chamarModelo(pedidoDoLexico(m), [{ role: "user", content: "Leia o mundo acima e devolva só o JSON." }], 8192, "json");
+      const texto = await chamarModelo(pedidoDoLexico(m), [{ role: "user", content: "Leia o mundo acima e devolva só o JSON." }], 8192, "json", "lexico");
       /* o leitor É o do léxico, e não o do Mestre: aquele devolve só os
          campos da narração e descartaria isto inteiro, em silêncio. */
       const lex = lerLexico(lexicoDoTexto(texto));
@@ -7588,7 +7592,7 @@ export default function Taverna() {
     /* E1 (o Narrador só narra): O PREÇO da rua — a cena mostra preços sem
        ninguém perguntar, e é melhor que os mostre certos. Só com rua. */
     try {
-      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso()));
+      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso(), { moeda: moedaDoMundo() }));
     } catch (e) { calou("precosDaRua", e); }
     /* E1: NOMES À MÃO — dois nomes livres da cultura, para o figurante que a
        cena pede. Ninguém do registo, do elenco nem do grupo. Ficam pendentes:
@@ -7830,7 +7834,9 @@ export default function Taverna() {
              para virar cena com nome e lugar — onde estou, o fio aberto, a
              espinha e o ato, o dia, e quem anda contra mim */
           mundo: { aqui: (g.onde || [])[0] || "", abertura: aberturaMundoRef.current, missoes: missoesRef.current,
-                   espinha: espinhaRef.current, ato: historiaRef.current.etapa, dia: diaRef.current, vilao: nemesisRef.current },
+                   espinha: espinhaRef.current, ato: historiaRef.current.etapa, dia: diaRef.current, vilao: nemesisRef.current,
+                   /* 12.ª sessão: quem o Mestre já nomeou está em cena, e não se apresenta de novo */
+                   mostrado: falasDoMestre(mensagensRef.current) },
         });
         if (rumo) p = porNaPauta(p, "rumo", rumo);
       }
@@ -14068,7 +14074,7 @@ export default function Taverna() {
           }
         }
       } catch (e) { calou("o companheiro de antes", e); }
-      enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb }), persAb, []);
+      enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb, moeda: moedaDoMundo() }), persAb, []);
     } else {
       aberturaMundoRef.current = garantirAbertura(null);
       { const env = talvezDarUmaTrama({ forcar: true }); if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; }
@@ -16329,6 +16335,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const vl = vetoDaLutaSemPainel(acao, { emCombate: !!combateRef.current, mostrado: falasDoMestre(mensagensRef.current) });
       if (vl && vl.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vl];
     } catch (e) { calou("o veto da luta sem painel", e); }
+    /* 12.ª sessão: a frase pede outra cidade com a porta fechada (masmorra,
+       luta, acampamento) — o sistema não viaja, e o Mestre não narra a
+       viagem que não houve (rastro.js, VIAGEM_QUE_NAO_HOUVE) */
+    try {
+      const vv = vetoDaViagemQueNaoHouve(acao, { ...ctxDoRastro(), masmorra: (masmorraRef.current && masmorraRef.current.nome) || "" });
+      if (vv && vv.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vv];
+    } catch (e) { calou("o veto da viagem que não houve", e); }
     ultimoDesfechoRef.current = null;
     testeDoTurnoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do

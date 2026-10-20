@@ -180,9 +180,12 @@ export function cidadeEhDestino(oracao, nomeNorm) {
   }
   return false;
 }
-/* a oração nega o verbo de partida? ("ainda nem saímos", "não vou para") */
+/* a oração nega o verbo de partida? ("ainda nem saímos", "não vou para")
+   12.ª sessão: e o da volta — "não volto a Ponte Rasa" abria a volta à
+   boca da masmorra, porque "volto" não é verbo de PARTIDA e a negação só
+   se procurava antes dele */
 function partidaNegada(o) {
-  const m = o.match(PARTIDA);
+  const m = o.match(PARTIDA) || o.match(VOLTA_TEM_DESTINO.rx);
   return !!m && CIDADE_COMO_DESTINO.negacao.test(o.slice(0, m.index));
 }
 const semFala = (txt) => String(txt || "").replace(CIDADE_COMO_DESTINO.fala, " ");
@@ -358,6 +361,64 @@ export function detectarPartida(acao, ctx = {}) {
      estrada sem destino não teria o que rolar (10.ª sessão: nem a direção
      sozinha, PARTIDA_SEM_DESTINO). */
   return null;
+}
+
+/* ---------------- A VIAGEM QUE NÃO HOUVE (12.ª sessão de prova, 19/10) ----------------
+   "volto com Aelith a Ponte Rasa, direto à Ferradura": o Mestre escreveu a
+   marcha, a chegada, o balcão e Wystan de olhos arregalados; no turno
+   seguinte a cena era "a lama da entrada da Cova… Não há balcão aqui". O
+   sistema não viajou — e não devia: a resposta seguinte abre na sala de
+   ENTRADA da masmorra, logo a heroína estava lá dentro, e de dentro de uma
+   masmorra nada parte por frase (`podeAbrirModulo`): sai-se pela boca, com
+   o veredito à vista no botão. À boca, a mesma frase parte (a suíte prova-o
+   com a frase da sessão), e "voltamos para a cidade" também.
+   O buraco era o outro lado: o sistema calava, e o Mestre, sem ninguém a
+   dizer-lhe que a estrada não abriu, deu a viagem por feita. O espelho do
+   defeito da 11.ª (lá o sistema viajava sem o jogador querer; aqui o Mestre
+   viaja sem o sistema).
+   A regra: com a porta fechada (masmorra, luta, acampamento), a frase que
+   pede outro lugar — uma cidade do mapa que não é esta, ou a volta à cidade
+   dita com todas as letras — leva um veto ao NÃO PODE. Lá dentro, "volto
+   pelo corredor" e "volto à sala da entrada" são passos da planta, e não
+   vetam nada: a volta só conta quando diz a cidade (`aCidade`). Com a
+   porta aberta quem responde são as portas de sempre, e o veto cala. */
+export const VIAGEM_QUE_NAO_HOUVE = {
+  veto: "narrar a marcha, a estrada ou a chegada a {destino}: o sistema não abriu viagem nenhuma — {razao}; a cena continua {onde}, e a frase vira o passo que se dá daqui",
+  razoes: {
+    emCombate: "a luta está aberta, e sair dela é coisa do combate",
+    acampado: "estou acampado, e levantar o acampamento vem antes",
+    emMasmorra: "de dentro da masmorra só se sai pela boca, e sair é escolha minha, à porta",
+  },
+  onde: { emMasmorra: "dentro da masmorra", outro: "aqui" },
+  /* a volta que diz a cidade: "volto a Ponte Rasa" (o nome, pela régua de
+     CIDADE_COMO_DESTINO) ou "voltamos para a cidade" */
+  aCidade: /(?:^|[^a-z0-9])(?:para|pra|a|ao|ate|de volta a|de volta para)\s+(?:a\s+|o\s+)?(?:cidade|vila|aldeia|povoado|casa)(?![a-z0-9])/,
+};
+export function vetoDaViagemQueNaoHouve(acao, ctx) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const gate = podeAbrirModulo(c);
+  if (gate.pode) return [];
+  const txt = String(acao == null ? "" : acao);
+  if (!txt.trim() || txt.trimStart().startsWith("[")) return [];
+  const V = VIAGEM_QUE_NAO_HOUVE;
+  const razao = c.emCombate ? "emCombate" : c.acampado ? "acampado" : "emMasmorra";
+  /* a cidade nomeada que não é esta, pelas portas de sempre com a porta
+     aberta — e SEM o lugar: lá dentro, a boca não é "longe" de nada */
+  let destino = "";
+  try { destino = (detectarPartida(txt, { ...c, emCombate: false, acampado: false, emMasmorra: false, emViagem: false, lugar: null }) || {}).destino || ""; } catch { destino = ""; }
+  if (!destino && c.cidadeAtual) {
+    const aqui = norm(c.cidadeAtual);
+    for (const o0 of oracoes(semPerguntas(semFala(txt)))) {
+      const o = norm(o0);
+      if (!VOLTA_TEM_DESTINO.rx.test(o) || SO_INTENCAO.test(o) || NAO_E_PARTIDA.rx.test(o) || partidaNegada(o)) continue;
+      if (cidadeEhDestino(o, aqui) || V.aCidade.test(o)) { destino = String(c.cidadeAtual); break; }
+    }
+  }
+  if (!destino) return [];
+  const onde = razao === "emMasmorra"
+    ? (typeof c.masmorra === "string" && c.masmorra.trim() ? `em ${c.masmorra.trim()}` : V.onde.emMasmorra)
+    : (c.lugar && typeof c.lugar === "object" && c.lugar.nome ? `em ${c.lugar.nome}` : V.onde.outro);
+  return [V.veto.replace("{destino}", destino).replace("{razao}", V.razoes[razao]).replace("{onde}", onde)];
 }
 
 /* ---------------- A MASMORRA ----------------

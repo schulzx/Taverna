@@ -75,9 +75,21 @@ const inteiro = (x) => (Number.isFinite(Number(x)) && Number(x) > 0 ? Math.floor
    até PERGUNTAS_LIDAS. Lixo devolve tudo falso — nunca erro. */
 export const PERGUNTAS_LIDAS = 3;
 
+/* LER É PERGUNTAR AO PAPEL (12.ª sessão, 19/10). "Leio o pergaminho" — o
+   que a heroína tirou do fogo de Wystan — duas vezes, e as duas sem
+   resposta: "ninguém decifra letra aqui", e depois nada. A frase não acaba
+   em "?", e a escuta tratava-a como ato ("reaja ao que eu fiz"): o Mestre
+   reagiu, e o papel ficou por ler. Quem lê ou examina uma coisa escrita
+   está a perguntar o que lá está — e quem pergunta e não recebe aprende a
+   não perguntar. A frase que lê é pergunta, com o seu primeiro tempo
+   (RUMOS.ler): o que lá está, por palavras. */
+export const LER_E_PERGUNTAR = {
+  rx: /\b(leio|releio|decifro|desenrolo|desdobro|abro|examino|estudo|olho)\s+(?:de novo\s+)?(?:(?:o|a|os|as|esse|essa|este|esta|aquele|aquela|aquilo|meu|minha|seu|sua)\s+)?(?:\w+\s+)?(pergaminho|carta|bilhete|papel|rolo|livro|diario|mapa|nota|recado|inscric|gravac|gravura|lacre|letreiro|pagina|escrito|runas?)\w*/,
+};
+
 export function lerOPedido(texto) {
   const t = String(texto == null ? "" : texto).trim();
-  const vazio = { doJogador: false, pergunta: false, soPergunta: false, perguntas: [], texto: "" };
+  const vazio = { doJogador: false, pergunta: false, soPergunta: false, perguntas: [], texto: "", le: false };
   if (!t || t.startsWith("[")) return vazio;
   let sp = { pergunta: false, soPergunta: false };
   try { sp = soPergunta(t); } catch { sp = { pergunta: /\?/.test(t), soPergunta: false }; }
@@ -85,7 +97,8 @@ export function lerOPedido(texto) {
     .map((x) => x.replace(/^[\s,;:—-]+/, "").trim())
     .filter((x) => x.length > 1)
     .slice(0, PERGUNTAS_LIDAS);
-  return { doJogador: true, pergunta: !!sp.pergunta, soPergunta: !!sp.soPergunta, perguntas, texto: t };
+  const le = LER_E_PERGUNTAR.rx.test(norm(t));
+  return { doJogador: true, pergunta: !!sp.pergunta || le, soPergunta: !!sp.soPergunta, perguntas, texto: t, le };
 }
 
 /* ---------------- OS EMPURRÕES ----------------
@@ -280,6 +293,7 @@ export function seguraOMundo(pedido, degrau) {
 export const RUMOS = {
   pergunta: "responda primeiro ao que perguntei, com o que está nesta pauta; o que ninguém aqui sabe, quem responde diz que não sabe",
   ato: "reaja primeiro ao que eu fiz, na cara de quem está",
+  ler: "diga primeiro o que lá está, por palavras — o escrito, a marca, o que se entende dele; curto, e apontando para o fio",
   ponte: "depois, e por dentro da resposta, uma coisa só aponta para: {passo}",
   sinal: "e o mundo dá um sinal na direção de {passo}: {forma}",
   vem_buscar: "e alguém vem até mim, com motivo próprio, por causa de {passo}: {forma}",
@@ -305,15 +319,15 @@ export function linhaDoRumo(opcoes) {
     try { const daqui = proximoPasso({ abertura: mu.abertura, missoes: mu.missoes, aqui: mu.aqui }); if (daqui) ps = daqui; } catch { /* fica o passo que veio */ }
   }
   if (!p.doJogador && !(d.n > 0)) return "";
-  const abre = p.doJogador ? (p.pergunta ? RUMOS.pergunta : RUMOS.ato) : "";
+  const abre = p.doJogador ? (p.le ? RUMOS.ler : p.pergunta ? RUMOS.pergunta : RUMOS.ato) : "";
   /* o degrau que vira cena não depende do passo: a cena traz o seu nome e
      o seu lugar, e o passo da missão pode ser o de um sítio já deixado */
   if (d.n > 0 && mundo && DEGRAU_EM_CENA.rumo[d.id]) {
-    let cena = "";
-    try { cena = cenaDoDegrau(d, { ...obj(mundo), semente }); } catch { cena = ""; }
+    let cena = "", emCena = false;
+    try { ({ cena, emCena } = cenaEQuem(d, { ...obj(mundo), semente })); } catch { cena = ""; }
     if (cena) {
       const R = DEGRAU_EM_CENA.rumo;
-      const s = R[d.id].replace("{cena}", cena) + (R.semNome.includes(d.id) ? R.fatoSemNome : R.fato);
+      const s = R[d.id].replace("{cena}", cena) + (R.semNome.includes(d.id) ? R.fatoSemNome : emCena ? R.fatoEmCena : R.fato);
       return abre ? `${abre}; ${s}` : s;
     }
   }
@@ -361,6 +375,10 @@ export const DEGRAU_EM_CENA = {
       "{aqui}, quem passa diz em voz alta o nome de {quem}: está {emOnde}, e mais alguém pergunta por ele",
       "{aqui}, um viajante conta que viu {quem} {emOnde}, e que não era o único a procurá-lo",
     ],
+    /* quem já está em cena não é apontado ao herói como quem ainda não o viu */
+    pessoaEmCena: [
+      "{aqui}, {quem}, que já está ali, deixa escapar sem querer uma coisa que aponta para o que a história procura",
+    ],
     lugarAqui: [
       "{aqui}, uma coisa fora do sítio chama o olho do herói: é aqui mesmo que se esconde o que a história procura",
     ],
@@ -369,6 +387,7 @@ export const DEGRAU_EM_CENA = {
     ],
   },
   vem_buscar: "{quem} vem ter com o herói {aqui}{vindo}: {motivo}",
+  vem_buscarEmCena: "{quem}, ali mesmo, puxa o assunto por conta própria: {motivo}",
   motivos: [
     "traz o que sabe, e quer uma coisa em troca",
     "ouviu que o herói perguntava, e tem pressa — mais alguém o procura",
@@ -385,6 +404,14 @@ export const DEGRAU_EM_CENA = {
     vem_buscar: "e alguém vem até mim, aqui e agora: {cena}",
     cobra: "e esperar já custa, aqui e agora: {cena}",
     fato: " — é fato: entra nesta resposta, com o nome dito",
+    /* 12.ª sessão: "Sou Wystan" / "Wystan. É assim que me chamo" — 5 vezes
+       em 27, na boca de quem já se apresentara e a quem a heroína já
+       chamara pelo nome. Wystan é a pista da abertura (o primeiro nome do
+       fio), o degrau trazia-o a cada turno sem avanço, e a linha mandava-o
+       "com o nome dito": o Mestre obedecia à letra. O nome diz-se na
+       ESTREIA; quem as últimas respostas do Mestre já nomearam (`mostrado`)
+       está em cena, e não se apresenta de novo. */
+    fatoEmCena: " — é fato: entra nesta resposta; já está em cena e já se apresentou, não diz o nome outra vez",
     /* 13/10 (a 11.ª sessão de prova, M50–M56): o "cobra" não traz nome —
        "os dele", "a marca dele": o antagonista diz-se por camadas (saga.js,
        FIO.curta: no ato 0 é "quem está por trás de tudo"), e o nome só no
@@ -438,29 +465,38 @@ function gentesDoFio(ctx) {
    de onde a tirar. `ctx`: { aqui, abertura, missoes, espinha, ato, dia,
    vilao, semente }. Determinística pela semente; nunca muta o recebido. */
 export function cenaDoDegrau(degrau, ctx) {
+  return cenaEQuem(degrau, ctx).cena;
+}
+/* `ctx.mostrado`: as últimas respostas do Mestre (strings). Devolve a cena
+   e se quem nela vem já estava em cena (nomeado ali). */
+const jaMostrado = (ctx, nome) => (Array.isArray(ctx.mostrado) ? ctx.mostrado : []).some((x) => tocaOFio(x, [{ nome, tipo: "pessoa" }]));
+function cenaEQuem(degrau, ctx) {
+  const em = (cena, emCena = false) => ({ cena, emCena: !!(cena && emCena) });
   const d = obj(degrau);
   const c = obj(ctx);
-  if (!(d.n > 0) || !d.id) return "";
+  if (!(d.n > 0) || !d.id) return em("");
   const aquiTxt = String(c.aqui == null ? "" : c.aqui).replace(/\s+/g, " ").trim();
   const aqui = aquiTxt || DEGRAU_EM_CENA.semAqui;
   const aquiNorm = norm(aquiTxt);
   const { gentes, espinha, marco } = gentesDoFio(c);
   if (d.id === "sinal") {
     const alvo = gentes[0];
-    if (!alvo) return "";
+    if (!alvo) return em("");
     const perto = estaAqui(aquiNorm, alvo.onde);
-    const lista = DEGRAU_EM_CENA.sinal[(alvo.tipo === "lugar" ? "lugar" : "pessoa") + (perto ? "Aqui" : "Longe")];
-    return contrair(encherCena(escolher(lista, c.semente), {
+    const emCena = alvo.tipo !== "lugar" && jaMostrado(c, alvo.nome);
+    const lista = emCena ? DEGRAU_EM_CENA.sinal.pessoaEmCena : DEGRAU_EM_CENA.sinal[(alvo.tipo === "lugar" ? "lugar" : "pessoa") + (perto ? "Aqui" : "Longe")];
+    return em(contrair(encherCena(escolher(lista, c.semente), {
       aqui, quem: alvo.nome,
       emOnde: alvo.onde ? comEm(alvo.onde) : "longe daqui",
       deOnde: alvo.onde ? comDe(alvo.onde) : "de longe",
-    }));
+    })), emCena);
   }
   if (d.id === "vem_buscar") {
     const quem = gentes.find((x) => x.tipo === "pessoa");
-    if (!quem) return "";
+    if (!quem) return em("");
+    const emCena = jaMostrado(c, quem.nome);
     const vindo = quem.onde && !estaAqui(aquiNorm, quem.onde) ? `, vindo ${comDe(quem.onde)}` : "";
-    return contrair(encherCena(DEGRAU_EM_CENA.vem_buscar, { aqui, quem: quem.nome, vindo, motivo: escolher(DEGRAU_EM_CENA.motivos, c.semente) }));
+    return em(contrair(encherCena(emCena ? DEGRAU_EM_CENA.vem_buscarEmCena : DEGRAU_EM_CENA.vem_buscar, { aqui, quem: quem.nome, vindo, motivo: escolher(DEGRAU_EM_CENA.motivos, c.semente) })), emCena);
   }
   if (d.id === "cobra") {
     const vilao = obj(c.vilao);
@@ -473,13 +509,13 @@ export function cenaDoDegrau(degrau, ctx) {
     if (et) {
       const assinatura = (espinha.fio && espinha.fio.assinatura) || "";
       const fato = fatoDaEtapa(et, assinatura);
-      if (fato) return contrair(encherCena(DEGRAU_EM_CENA.cobra, { aqui, assinatura: assinatura || "a marca dele", fato }));
+      if (fato) return em(contrair(encherCena(DEGRAU_EM_CENA.cobra, { aqui, assinatura: assinatura || "a marca dele", fato })));
     }
     const iv = intervencaoDoDegrau(d.encalhe, c.semente);
-    if (!iv || (!marco && !gentes.length)) return "";
-    return contrair(encherCena(DEGRAU_EM_CENA.cobraSemRelogio, { aqui, forma: iv.diz }));
+    if (!iv || (!marco && !gentes.length)) return em("");
+    return em(contrair(encherCena(DEGRAU_EM_CENA.cobraSemRelogio, { aqui, forma: iv.diz })));
   }
-  return "";
+  return em("");
 }
 
 /* ---------------- ESCUTAR O TURNO ----------------

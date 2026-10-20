@@ -506,11 +506,18 @@ export function precoComumParaPauta(frase, opcoes) {
 /* A rua de uma cidade: o que se bebe e come, ao preço daqui — a cena mostra
    preços sem ninguém perguntar ("tem peixe seco na tenda por três", a 7.ª,
    M43), e é melhor que os mostre certos. Uma linha, para a secção O PREÇO
-   da pauta (prio baixa: cede a tudo o que move a cena). */
-export function precosDaRua(fator = 1) {
+   da pauta (prio baixa: cede a tudo o que move a cena).
+
+   A MOEDA TEM NOME (12.ª sessão, 19/10): a abertura disse "cobres", a rua e
+   o balcão disseram "lascas" — a linha levava só o ◉, e o Mestre, sem o
+   nome à vista, deu-lhe o que lhe veio à cabeça. Com `opcoes.moeda` (o
+   COISAS.moeda do Léxico, o mesmo que `precoComumParaPauta` já recebe), a
+   rua diz em que se paga. Sem ela, a linha de sempre. */
+export function precosDaRua(fator = 1, opcoes) {
   const ps = PRECOS_DA_RUA.map((id) => PRECOS_COMUNS.find((p) => p.id === id)).filter(Boolean);
   if (!ps.length) return "";
-  return `na rua: ${ps.map((p) => `${p.curto || p.nome} ◉ ${precoComum(p.id, fator)}`).join(" · ")}`;
+  const moeda = opcoes && typeof opcoes === "object" && typeof opcoes.moeda === "string" ? opcoes.moeda.trim() : "";
+  return `na rua${moeda ? `, em ${moeda}` : ""}: ${ps.map((p) => `${p.curto || p.nome} ◉ ${precoComum(p.id, fator)}`).join(" · ")}`;
 }
 
 export const MERCADO_PROMPT = `MERCADO E COMÉRCIO (v9.2 — o sistema tem o estoque, você tem a cena):

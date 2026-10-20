@@ -510,7 +510,11 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      chegou. */
   t("a abertura vai para o ref, e o pedido substitui abrirACampanha",
     iniciar.includes("aberturaMundoRef.current = ab.abertura;")
-    && iniciar.includes("enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb }), persAb, []);"));
+    /* 19/10 (a 12.ª sessão): o pedido leva também a moeda do Léxico — a
+       abertura chamou "cobres" a um mundo que paga em lascas. Continua a ser
+       o MESMO pedido substituindo abrirACampanha (teste-sessao-12.mjs prova
+       a linha da moeda). */
+    && iniciar.includes("enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb, moeda: moedaDoMundo() }), persAb, []);"));
   {
     /* sem pista (abrirAbertura devolveu null): o caminho antigo — trama
        forçada + abrirACampanha — continua de pé, dentro do `else`. */

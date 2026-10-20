@@ -114,7 +114,12 @@ export function somarChamada(acc, uso) {
   const d = custoDaChamada({ modelo: uso.modelo, entrada, saida, cache, escrita, guardado: Number(uso.guardado) || 0 });
   const tarefa = String(uso.tarefa || "narrador");
   const modelo = String(uso.modelo || "?");
+  /* 12.ª sessão: quantas respostas a rede de saída aparou (api/narrador.js,
+     REDE_DE_SAIDA). Campo novo e só quando houve uma: a versão antiga
+     ignora-o, e o acumulado sem aparo fica com a forma de sempre */
+  const aparadas = (Number(a.aparadas) || 0) + (uso.aparado ? 1 : 0);
   return {
+    ...(aparadas ? { aparadas } : {}),
     chamadas: a.chamadas + 1,
     entrada: a.entrada + entrada,
     cache: a.cache + cache,
@@ -144,6 +149,7 @@ export function linhasDoCusto(acc, { dia = 0 } = {}) {
     `entrada ${a.entrada.toLocaleString("pt-BR")} tokens (${fatia(a.entrada)}%), destes ${a.cache ? `${Math.round((100 * a.cache) / a.entrada)}% relidos do cache` : "NENHUM do cache"}`,
     `saída ${a.saida.toLocaleString("pt-BR")} tokens (${fatia(a.saida)}%)`,
   ];
+  if (Number(a.aparadas) > 0) out.push(`${a.aparadas} resposta(s) aparada(s) pela rede de saída`);
   if (Number(a.escrita) > 0) out.push(`cache escrito ${Number(a.escrita).toLocaleString("pt-BR")} tokens (pago como entrada)`);
   const modelos = Object.entries(a.porModelo).sort((x, y) => y[1] - x[1]);
   if (modelos.length) out.push("por modelo: " + modelos.map(([m, d]) => `${m} ${cents(d)}`).join(" · "));

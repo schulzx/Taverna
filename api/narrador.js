@@ -127,8 +127,29 @@ const pisoDoPensamento = (modelo) => (PISO_DO_PENSAMENTO.find((p) => String(mode
    e a 11.ª mediu 647 tokens no máximo, pensamento incluído — 1200 não
    corta resposta nenhuma daquelas e corta a que dobrasse. Se cortar, o
    JSON é reparado na última frase (repararJsonTruncado) ou o turno vai à
-   reserva; nunca chega quebrado à tela. */
+   reserva; nunca chega quebrado à tela.
+
+   UMA REDE POR TAREFA (12.ª sessão, 19/10). A linha antiga aplicava os
+   1200 a TODA tarefa que não fosse `leve` — e o Léxico (a leitura do
+   mundo, uma vez por campanha) pensa uns 5 mil tokens antes de escrever.
+   No 3.8 Flash o pensamento conta dentro do teto: o Gemini morreu por
+   MAX_TOKENS em toda campanha, a reserva (DeepSeek v4 pro) escreveu o
+   mundo, e a criação esperou 57 s. A rede é do Narrador de turno; quem
+   não está na tabela vai ao teto que pediu (`maxTokens`, já limitado a
+   8192 acima). O Léxico manda a sua tarefa ("lexico"), e não tem rede.
+
+   E A RESPOSTA CORTADA PELA REDE NÃO É A DO "…" (a mesma sessão). Das 27
+   respostas, a maior saída medida foi 778 tokens (a abertura, pensamento
+   incluído) e a maior de turno 453 — nenhuma chegou perto dos 1200. Os
+   seis finais em "…" são o fecho `silencio` (fecho.js: "deixa uma fala a
+   meio, e a resposta acaba nela"), pedido pelo sistema. Para a próxima
+   sessão poder separar as duas coisas, a resposta que a rede aparar
+   chega marcada (`uso.aparado`), e custo.js conta-as. */
 export const REDE_DE_SAIDA = { narrador: 1200 };
+export const redeDaTarefa = (tarefa, teto) => {
+  const rede = Number(REDE_DE_SAIDA[String(tarefa || "narrador")]) || 0;
+  return rede ? Math.min(teto, rede) : teto;
+};
 
 const modeloDe = (entrada, env) => String(env[entrada.variavel] || entrada.padrao).trim();
 
@@ -316,7 +337,7 @@ export default async function handler(req, res) {
          Google —, e por isso trocar de provedor trocava o tom do narrador
          sem que nada no jogo tivesse mudado. */
       const generationConfig = {
-        maxOutputTokens: Math.min(teto, (!leve && REDE_DE_SAIDA.narrador) || teto),
+        maxOutputTokens: redeDaTarefa(tarefa, teto),
         /* O PENSAMENTO NO CHÃO (v9.466). Os tokens de pensamento do Gemini
            são cobrados como SAÍDA (US$ 3,75/M no 3.8 Flash), e o teste cego
            correu sem eles. Pela doc do Google (13/10), o 3.8 Flash aceita só
@@ -415,10 +436,13 @@ export default async function handler(req, res) {
       const cand = data.candidates && data.candidates[0];
       let texto = ((cand && cand.content && cand.content.parts) || []).filter((x) => !x.thought).map((x) => x.text || "").filter(Boolean).join("\n");
       /* a rede de saída cortou: repara na última frase, ou vai à reserva */
-      if (texto && emJson && cand && cand.finishReason === "MAX_TOKENS") texto = repararJsonTruncado(texto);
-      if (!texto) return { erro: `sem texto (${(cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || "vazio"})`, corpo: "" };
+      const aparado = !!(texto && emJson && cand && cand.finishReason === "MAX_TOKENS");
+      if (aparado) texto = repararJsonTruncado(texto);
       const uso = lerUso(data);
-      const extra = { ...(escrita ? { escrita } : {}), ...(guardado ? { guardado } : {}) };
+      /* 12.ª sessão: a tentativa que falhou também pagou (o pensamento é
+         cobrado como saída) — o uso vai junto do erro, e o jogo soma-o */
+      if (!texto) return { erro: `sem texto (${(cand && cand.finishReason) || (data.promptFeedback && data.promptFeedback.blockReason) || "vazio"})`, corpo: "", uso: uso ? { ...uso, ...(escrita ? { escrita } : {}), modelo: data.modelVersion || modelo } : null };
+      const extra = { ...(escrita ? { escrita } : {}), ...(guardado ? { guardado } : {}), ...(aparado ? { aparado: true } : {}) };
       return { texto, cache: devolver, uso: uso ? { ...uso, ...extra, modelo: data.modelVersion || modelo } : null };
     };
 
@@ -471,6 +495,9 @@ export default async function handler(req, res) {
     }
 
     const tentativas = [];
+    /* 12.ª sessão: o que as tentativas que falharam gastaram — a conta do
+       save (custo.js) via só a que respondeu */
+    const perdidos = [];
     for (const passo of rota.passos) {
       /* a casa que disse 402 NESTE pedido não é tentada outra vez nele */
       if (Number(casasSemSaldo[passo.provedor]) > agora) continue;
@@ -498,10 +525,12 @@ export default async function handler(req, res) {
       /* a ficha do cache volta sempre a quem a pediu: a nova, a mesma, ou
          nula (morreu); se quem respondeu foi a reserva, a que veio */
       const ficha = querCache ? { cache: out.cache !== undefined ? out.cache : fichaRecebida } : {};
-      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: passo.provedor, plano: rota.plano, fila: rota.passos.map((x) => `${x.provedor}:${x.modelo}`), falharam: tentativas, ...ficha, uso: out.uso ? { ...out.uso, tarefa: tarefa || "narrador" } : null }); return; }
+      const gastos = perdidos.length ? { perdidos } : {};
+      if (out.texto) { res.status(200).json({ texto: out.texto, provedor: passo.provedor, plano: rota.plano, fila: rota.passos.map((x) => `${x.provedor}:${x.modelo}`), falharam: tentativas, ...ficha, ...gastos, uso: out.uso ? { ...out.uso, tarefa: tarefa || "narrador" } : null }); return; }
+      if (out.uso) perdidos.push({ ...out.uso, tarefa: tarefa || "narrador" });
       tentativas.push(`${passo.provedor} (${out.erro}${out.corpo ? `: ${out.corpo}` : ""})`);
     }
-    res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400) });
+    res.status(502).json({ erro: `Todos os provedores falharam — ${tentativas.join(" · ")}`.slice(0, 400), ...(perdidos.length ? { perdidos } : {}) });
   } catch (e) {
     res.status(500).json({ erro: String((e && e.message) || e).slice(0, 200) });
   }

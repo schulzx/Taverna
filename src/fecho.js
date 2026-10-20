@@ -64,11 +64,11 @@ const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
    das 17 respostas do `silencio` ainda acabaram em presságio com o veto
    inteiro, e ele não sai. O id `silencio` fica: é o que o App guarda. */
 export const FECHOS = [
-  { id: "pergunta", gente: true, diz: "alguém em cena faz-me uma pergunta direta, e ela é a última frase" },
+  { id: "pergunta", gente: true, diz: "alguém em cena faz-me uma pergunta direta, e acaba nela" },
   { id: "escolha", gente: false, diz: "a ficção põe-me nas mãos duas coisas que não cabem juntas, e as duas custam (sem lista de opções)" },
   { id: "corte", gente: false, diz: "um corte seco: um facto ou uma ação, numa frase curta" },
   { id: "consequencia", gente: false, diz: "a consequência do que eu fiz, visível agora" },
-  { id: "silencio", gente: true, diz: "alguém em cena deixa uma fala a meio, e a resposta acaba nela" },
+  { id: "silencio", gente: true, diz: "alguém em cena deixa uma fala a meio, e acaba nela" },
 ];
 const fechoPorId = (id) => FECHOS.find((f) => f.id === id) || null;
 
@@ -96,8 +96,22 @@ export const FECHO_POR_MOMENTO = {
 /* o veto que acompanha todo fecho: o ambiente a pressagiar não fecha */
 export const VETO_DO_FECHO = "nunca o cheiro, o som ou o ar a pressagiar";
 /* e o dos fechos de gente: o corpo parado a esperar não fecha (os
-   TIQUES_PROIBIDOS do núcleo que são gesto, ditos de uma vez) */
-export const VETO_DO_GESTO = "sem braços cruzados, olhar fixo, ninguém à espera nem o ar a pressagiar";
+   TIQUES_PROIBIDOS do núcleo que são gesto, ditos de uma vez).
+
+   OS GESTOS GASTOS, MEDIDOS (12.ª sessão, 19/10). Depois de a v9.426 tirar
+   os braços cruzados e o "à espera" do fim das respostas, a muleta mudou de
+   espécie: na 11.ª, "cospe/cuspindo" em 34 de 62 respostas (55%), "olhos
+   fixos/cravar/encarar" em 19; na 12.ª, "cospe" em 13 de 27 (48%) — todo
+   NPC cospe, na taverna e na mina. O cuspe entra no veto. O veto ficou 9
+   caracteres maior, e os dois fechos de gente 10 e 11 menores ("e acaba
+   nela"): a linha do FECHO não cresce. */
+export const GESTOS_GASTOS = [
+  { id: "cuspe", diz: "cuspe", medido: "11.ª: 34 de 62 (55%) · 12.ª: 13 de 27 (48%)" },
+  { id: "bracos", diz: "braços cruzados", medido: "a 4.ª: o tique do núcleo (TIQUES_PROIBIDOS)" },
+  { id: "olhar", diz: "olhar fixo", medido: "11.ª: 19 de 62 (olhos fixos, cravar, encarar)" },
+  { id: "espera", diz: "ninguém à espera", medido: "a 4.ª: o tique do núcleo; 11.ª: 4 de 62" },
+];
+export const VETO_DO_GESTO = `sem ${GESTOS_GASTOS.map((g) => g.diz).join(", ")} nem o ar a pressagiar`;
 
 /* ---------------- O MOMENTO ----------------
    `ctx`: { pedido (escuta.js#lerOPedido), luta, fimDeAto }. Lixo = sistema. */

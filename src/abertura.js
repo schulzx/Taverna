@@ -644,21 +644,35 @@ export const LEI_DA_PORTA = {
    companheiro-inicial.js): quando há, a parte 2 diz que o herói não chegou
    só, e com quem — uma frase, só neste pedido, nunca no prompt fixo. Sem
    ele, o pedido é o de sempre, letra por letra. */
+/* O TAMANHO DA ABERTURA (12.ª sessão, 19/10). A regra das 80–140 palavras
+   mora na etiqueta colada à frase do jogador (escuta.js,
+   TAMANHO_DA_NARRATIVA) — e a abertura não tem frase do jogador: 519
+   palavras, 3,7× o teto, 9,3 s e US$ 0,016, a maior resposta da sessão. As
+   quatro partes cabem num parágrafo curto cada; o teto vai no próprio
+   pedido, que é a última coisa que o Narrador lê no primeiro turno — e o
+   pedido não cresce: a linha nova paga-se com o que já se dizia — o
+   "nesta ordem" de uma lista numerada, o "Isto já está decidido" e o "dele
+   já foram" das habilidades (teste-mm13-abertura: até 1.500).
+   E A MOEDA: "Concreto: um preço" sem o nome da moeda deu "cobres" a um
+   mundo que paga em lascas. `opcoes.moeda` é o COISAS.moeda do Léxico. */
+export const TAMANHO_DA_ABERTURA = { max: 220 };
+
 export function pedidoDaAbertura(abertura, opcoes) {
-  const { habilidades = [], companheiro = null } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const { habilidades = [], companheiro = null, moeda = "" } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const emMoeda = typeof moeda === "string" && moeda.trim() ? ` (em ${moeda.trim()})` : "";
   const a = garantirAbertura(abertura);
   if (a.legado || !a.pista.nome) return "";
   const habs = (Array.isArray(habilidades) ? habilidades : []).filter(Boolean).join(", ") || "nenhuma";
   const aoLado = linhaDoCompanheiro(companheiro);
-  return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, nesta ordem, em prosa corrida e sem títulos, na 2ª pessoa — o herói é "você" ("você chegou", nunca "cheguei"):
+  return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, em prosa corrida e sem títulos, na 2ª pessoa — o herói é "você" ("você chegou", nunca "cheguei"). Até ${TAMANHO_DA_ABERTURA.max} palavras, parágrafos curtos:
 
-1) O MUNDO. Que lugar é este, por dentro: o que o move, quem manda, do que vive. Concreto: um cheiro, um som, um preço.
+1) O MUNDO. Que lugar é este, por dentro: o que o move, quem manda, do que vive. Concreto: um cheiro, um som, um preço${emMoeda}.
 2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}${aoLado}. O que se vê e se ouve dali.${a.porta ? ` ${LEI_DA_PORTA.diz.replace("{porta}", a.porta)}.` : ""}
 3) A PEQUENA HISTÓRIA DO LUGAR. ${a.historia}.
 4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: ${a.razao}. O que sabe: ${a.sabe}.
 
-Isto já está decidido: nesta cena ninguém lhe pede nada, e ninguém oferece trabalho ao herói. Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
-(As habilidades iniciais dele já foram concedidas: ${habs} — NÃO envie "adicionar_habilidades".)`;
+Já decidido: nesta cena ninguém lhe pede nada, e ninguém oferece trabalho ao herói. Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
+(Habilidades iniciais já concedidas: ${habs} — NÃO envie "adicionar_habilidades".)`;
 }
 
 /* ============================================================

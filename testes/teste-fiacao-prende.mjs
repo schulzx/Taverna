@@ -166,8 +166,12 @@ sec("8. o rumo leva o mundo (MM19, v9.394): o degrau do encalhe vira cena com no
   const bloco = iR > 0 ? APP.slice(iR, APP.indexOf("});", iR)) : "";
   t("linhaDoRumo recebe `mundo: { aqui:` — o lugar de agora, da primeira linha do ONDE",
     /mundo: \{ aqui: \(g\.onde \|\| \[\]\)\[0\] \|\| "", abertura: aberturaMundoRef\.current, missoes: missoesRef\.current,/.test(bloco));
+  /* 19/10 (a 12.ª sessão): o mundo do rumo ganhou, DEPOIS da nêmesis, o
+     \`mostrado\` (quem o Mestre já nomeou não se apresenta de novo) — a
+     âncora deixa de exigir o fecho da chaveta logo a seguir; os quatro
+     campos continuam presos na mesma ordem. */
   t("e a espinha, o ato, o dia e a nêmesis",
-    /espinha: espinhaRef\.current, ato: historiaRef\.current\.etapa, dia: diaRef\.current, vilao: nemesisRef\.current \}/.test(bloco));
+    /espinha: espinhaRef\.current, ato: historiaRef\.current\.etapa, dia: diaRef\.current, vilao: nemesisRef\.current[,\s}]/.test(bloco));
   t("dentro do try/calou do rumo", iR > 0 && APP.indexOf('calou("o rumo na pauta", e)', iR) > iR && APP.indexOf('calou("o rumo na pauta", e)', iR) - iR < 1200);
 }
 

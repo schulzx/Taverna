@@ -418,8 +418,11 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
     && pauta.includes("juntarRespostas([fc, gp, mc, hz, pc])"));
   t("o oráculo cala também pelo preço comum (pela ficha do mercado)",
     app.includes("fichas: () => fichasDoOraculo(acao)") && /const fichasDoOraculo[^]*?mercado: \{ pergunta: \[\.\.\.\(mc\.pergunta \|\| \[\]\), \.\.\.pc\.pergunta\]/.test(app));
+  /* 19/10 (a 12.ª sessão): a âncora ganhou a moeda do Léxico — a rua dizia
+     só o ◉, e a abertura chamou "cobres" a um mundo que paga em lascas
+     (teste-sessao-12.mjs prova a linha). A condição da rua é a mesma. */
   t("a rua entra na secção O PREÇO só com rua (cidade, sem jornada, masmorra nem luta)",
-    pauta.includes('if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso()));'));
+    pauta.includes('if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso(), { moeda: moedaDoMundo() }));'));
   t("os nomes à mão vão à secção NOMES À MÃO, com o registo, o elenco e o grupo como usados",
     pauta.includes("...Object.values(npcsRef.current || {}), ...nomesDoElenco(), ...(p0.grupo || [])")
     && pauta.includes('p = porNaPauta(p, "nomes", linha); nomesPendentesRef.current = { nomes, linha };'));

@@ -475,7 +475,12 @@ export const PERGUNTAS_DA_CIDADE = [
   { id: "magia", rx: /\b(magia|arcan|mago|maga|feiti|academia|conjur)/ },
   { id: "cura", rx: /\b(curandeir|quem cura|curar|medico|templo|sacerdot)/ },
   { id: "lei", rx: /\b(guarda|milicia|xerife|autoridade|lei\b|prender|preso)/ },
-  { id: "vigia", rx: /\b(vigi|ronda|patrulh|sentinela|sem ser vist|despercebid|recolher)/ },
+  /* 12.ª sessão (T5): "O que ronda a adega?" levou à pauta a ronda da guarda
+     da cidade, e o Mestre respondeu com o Corpo de Paz — a pergunta direta
+     ficou sem resposta. "Ronda" ali é o verbo (o que anda à volta de),
+     não a patrulha. A patrulha é o NOME: vem com artigo, preposição ou
+     quantidade ("a ronda", "há ronda", "sem ronda", "quantas rondas"). */
+  { id: "vigia", rx: /\b(vigi|patrulh|sentinela|sem ser vist|despercebid|recolher)|(?:^|[^a-z0-9])(?:a|as|da|das|na|nas|de|sem|ha|tem|qual|quando|quantas?|fazem?)\s+rondas?(?![a-z0-9])/ },
   /* MM18: "não sei se me chamam para me perdoar" (J8 da 4.ª sessão, uma
      confissão) levou a gíria da cidade à pauta. Quem me chama não pergunta
      como se chama a coisa. */
