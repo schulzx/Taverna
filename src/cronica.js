@@ -9,7 +9,7 @@ import { marcoDe } from "./vinculos.js";
 import { relacaoNPC } from "./npcs.js";
 import { conquistaPorId } from "./conquistas.js";
 import { RARIDADE_ROTULO } from "./loot.js";
-import { chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
+import { racaNaFicha, profissaoNaFicha, generoProprio } from "./lexico.js";
 
 const linha = (s = "") => `${s}\n`;
 
@@ -33,8 +33,10 @@ export function gerarCronica({ nomeCampanha, mundo, personagem: p, conquistasIds
   md += linha();
   md += linha(`**${p.nome}**${tituloAtivo ? `, ❝ ${tituloAtivo} ❞` : ""} — ${p.conceito || "aventureiro"}.`);
   md += linha();
-  const caminho = [chamadoDaRaca((mundo || {}).lexico, p.raca), p.classe, p.subclasse].filter(Boolean).join(" · ");
-  md += linha(`- **Nível** ${p.nivel || 1}${p.antecedente ? ` · **Antecedente:** ${p.antecedente}` : ""}${caminho ? ` · **Caminho:** ${caminho}` : ""}${p.profissao ? ` · ${chamadoDaProfissao((mundo || {}).lexico, p.profissao)}` : ""}`);
+  /* 20/10: o nome do sistema (o do mundo entre parênteses só num mundo de gênero próprio) */
+  const lexC = (mundo || {}).lexico, deGenero = generoProprio(mundo);
+  const caminho = [p.raca ? racaNaFicha(lexC, p.raca, deGenero) : "", p.classe, p.subclasse].filter(Boolean).join(" · ");
+  md += linha(`- **Nível** ${p.nivel || 1}${p.antecedente ? ` · **Antecedente:** ${p.antecedente}` : ""}${caminho ? ` · **Caminho:** ${caminho}` : ""}${p.profissao ? ` · ${profissaoNaFicha(lexC, p.profissao, deGenero)}` : ""}`);
   md += linha(`- **Fama:** ${fama}/100 — ${pf.rotulo} (${pf.nota})`);
   if ((p.cicatrizes || []).length) {
     md += linha(`- **Cicatrizes:**`);

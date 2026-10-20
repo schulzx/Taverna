@@ -45,7 +45,7 @@ import { TRAMAS_PROMPT } from "./tramas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
 import { COMODOS_PROMPT } from "./comodos.js";
 import { ACAMPAMENTO_PROMPT } from "./acampamento.js";
-import { lexicoPrompt, lexicoDaCena, chamadoDaRaca, chamadoDaProfissao } from "./lexico.js";
+import { lexicoPrompt, lexicoDaCena, chamadoDaRaca, generoProprio, racaNaFicha, profissaoNaFicha, nomeDaMoeda } from "./lexico.js";
 import { ADVERSARIO_PROMPT } from "./adversario.js";
 import { COBRADOR_PROMPT } from "./cobrador.js";
 import { GEOGRAFO_PROMPT } from "./geografo.js";
@@ -597,6 +597,12 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
      `lexicoDaCena`, na zona de regras da cena, onde mudar de lugar não
      reescreve o começo do prompt. */
   const lexTexto = lexicoPrompt(mundo && mundo.lexico);
+  /* 20/10, o Léxico vira camada de cor: o nome do sistema na ficha (o do
+     mundo entre parênteses só num mundo de gênero próprio), o apelido da
+     rua como cor para a prosa, e a moeda com UM nome, dito aqui. */
+  const lexDaFicha = mundo && mundo.lexico, deGenero = generoProprio(mundo);
+  const apelidoDaRaca = personagem.raca && !deGenero && chamadoDaRaca(lexDaFicha, personagem.raca) !== personagem.raca ? chamadoDaRaca(lexDaFicha, personagem.raca) : "";
+  const moedaDaqui = nomeDaMoeda(lexDaFicha);
   const lexCena = lexicoDaCena(mundo && mundo.lexico, porta);
   /* ---------------- O CONTRATO (v9.131) ----------------
      Este prompt abria com "Você é o Mestre... e arbitre as regras com
@@ -656,8 +662,8 @@ O QUE MUDA A CADA TURNO — o relógio, o título e os suprimentos do herói, o 
 
 PERSONAGEM DO JOGADOR:
 ${fichaTexto(personagem)}
-Começa com ${MOEDAS_INICIAIS} moedas.
-FICHA DE CAMINHO: ${personagem.raca ? `${chamadoDaRaca(mundo && mundo.lexico, personagem.raca)}${chamadoDaRaca(mundo && mundo.lexico, personagem.raca) !== personagem.raca ? ` (o sistema chama de ${personagem.raca})` : ""}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${chamadoDaProfissao(mundo && mundo.lexico, personagem.profissao)}` : ""}.
+Começa com ${MOEDAS_INICIAIS} ${moedaDaqui}.
+FICHA DE CAMINHO: ${personagem.raca ? `${racaNaFicha(lexDaFicha, personagem.raca, deGenero)}${apelidoDaRaca ? ` (a rua diz "${apelidoDaRaca}")` : ""}` : "origem indefinida"}${personagem.classe ? `, ${personagem.classe}` : ""}${personagem.subclasse ? ` (${personagem.subclasse})` : ""}${personagem.profissao ? `, de profissão ${profissaoNaFicha(lexDaFicha, personagem.profissao, deGenero)}` : ""}.
 PATAMAR DE COMBATE: ${resumoPatamar(personagem.nivel || 1)}
 ${titulo.fixo ? `${titulo.fixo}\n` : ""}
 === COMO ESTE MUNDO FUNCIONA (o que o sistema já resolve, para você não recalcular) ===
@@ -796,7 +802,7 @@ COMPANHEIROS VIVOS (até ${MAX_COMPANHEIROS}): são pessoas completas — agem s
 - EVOLUEM SOZINHOS: o sistema dá aos companheiros uma fração do XP do herói e cuida de nível e PV.
 ${so("grupo", ALIADO_PROMPT)}
 
-ECONOMIA: moeda com nome do mundo. A bolsa é do sistema, que tira dela o que eu pago e o que a cena conta que eu paguei: por isso só narre um pagamento que eu fiz ou aceitei.
+ECONOMIA: a moeda é «${moedaDaqui}», nenhuma outra. A bolsa é do sistema, que tira dela o que eu pago e o que a cena conta que paguei: só narre um pagamento que eu fiz ou aceitei.
 
 ESTILO: NPCs falam em 1ª pessoa ("—").
 

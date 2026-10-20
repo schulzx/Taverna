@@ -84,7 +84,10 @@ sec("a fiação no App");
 const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 t("o App passa a frase do jogador por nome à bolsa", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo \+ "\\n" \+ nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa \}\)/.test(app));
 t("a frase é a que a escuta lê como do jogador (nunca um envelope)", /lerOPedido\(conteudo\); pedidoDaBolsa = pb && pb\.doJogador \? pb\.texto : ""/.test(app));
-t("a moeda é a palavra do léxico", /comoChamam\(\(mundoAtual\(\) \|\| \{\}\)\.lexico, "moeda"\)/.test(app));
+/* MOVIDA (20/10, o Léxico vira camada de cor): a palavra continua a ser a do
+   léxico, mas passa por `nomeDaMoeda` — o nome único da campanha, o mesmo da
+   linha ECONOMIA do pedido (teste-lexico-cor.mjs §2). */
+t("a moeda é a palavra do léxico", /nomeDaMoeda\(\(mundoAtual\(\) \|\| \{\}\)\.lexico\)/.test(app));
 t("e o aplicarResposta entrega as duas a oQueFaltaDebitar", /pedido: typeof op\.pedido === "string" \? op\.pedido : "", moeda: typeof op\.moeda === "string" \? op\.moeda : ""/.test(app));
 
 console.log(`\nfrase que paga: ${ok} passaram, ${mal} falharam`);

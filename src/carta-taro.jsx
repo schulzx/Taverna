@@ -29,7 +29,6 @@ import { T, ATRIBUTOS } from "./constantes.js";
 import { tracos, sementeDe, estadoDe, hashSemente, rng, escolher } from "./semente.js";
 import { Rosto } from "./rosto.jsx";
 import { romano, naipeDe } from "./taro.js";
-import { chamadoDaRaca } from "./lexico.js";
 
 /* O EMBLEMA DE CADA NAIPE. Quem escolhe o naipe é o `taro.js`; aqui só há
    traço. Cada desenho cabe num quadro de 24×24 com o centro em (12,12),
@@ -47,7 +46,7 @@ const VESTES = ["#6B1F2E", "#23385E", "#2C4A38", "#5A3B14", "#3A3350", "#4A2340"
 const FORROS = ["#C9A227", "#B0A5EC", "#7BC98F", "#E8A33D", "#D86A5B", "#EAE4D6"];
 
 /* ---------------- A CARTA ---------------- */
-export function CartaDeTaro({ ente, legenda = "", lex = null, inimigo = false, aoFechar = null }) {
+export function CartaDeTaro({ ente, legenda = "", inimigo = false, aoFechar = null }) {
   if (!ente) return null;
   const semente = sementeDe(ente);
   const t = tracos(semente);
@@ -67,7 +66,9 @@ export function CartaDeTaro({ ente, legenda = "", lex = null, inimigo = false, a
   const estado = estadoDe(pv, pvMax, inimigo);
   const regua = inimigo ? T.danger : estado === "grave" ? T.danger : T.amber;
   const nome = [ente.nome, ente.sobrenome].filter(Boolean).join(" ") || "sem nome";
-  const abaixo = [chamadoDaRaca(lex, ente.raca), ente.classe, ente.subclasse].filter(Boolean).join(" · ");
+  /* 20/10: a carta diz o nome do sistema. O apelido do mundo é cor da
+     prosa, e a carta não sabe o gênero do mundo para pô-lo entre parênteses. */
+  const abaixo = [ente.raca, ente.classe, ente.subclasse].filter(Boolean).join(" · ");
 
   /* o losango do número acompanha o número: XVIII não cabe onde V sobra */
   const num = romano(nivel);

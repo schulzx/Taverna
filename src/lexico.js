@@ -670,6 +670,63 @@ export function chamadoDaRaca(l, nome) {
 }
 export function racasRenomeadas(l) { return garantirLexico(l).racas; }
 
+/* ---------------- O NOME DO SISTEMA É UNIVERSAL (20/10) ----------------
+   A decisão da pessoa, depois de ver na ficha um humano chamado "Filho da
+   Palha": *"como um fã ou jogador de RPG de mesa experiente, não seria legal
+   ver os nomes diferentes das classes e raças que ele já está acostumado…
+   o léxico da forma que está só está causando confusão."* E à proposta —
+   o nome do sistema é universal, o nome do mundo é único — *"Sim."*
+
+   Então a TELA (a ficha, a criação, o grupo, a crônica) diz sempre o nome
+   do catálogo: Humano, Médico de Campo. O nome local continua a existir,
+   mas como COR — o apelido que o Narrador põe na boca da rua, nunca o
+   rótulo da ficha. `chamadoDaRaca`/`chamadoDaProfissao` ficam como estão:
+   são o apelido, e é a prosa que os lê.
+
+   A exceção é o MUNDO DE GÊNERO PRÓPRIO — ficção científica, cyberpunk, um
+   mundo que a descrição tira de uma obra ou de um tempo moderno. Ali o
+   jogador escolheu sair da fantasia clássica, e "Caçador Desperto" é o que
+   ele veio buscar; mas o nome do sistema vem junto, entre parênteses, para
+   que quem conhece a mesa saiba o que tem na mão: "Caçador Desperto
+   (Humano)".
+
+   Nada disto reescreve o save: o léxico guardado continua com os apelidos,
+   e é a LEITURA que muda — um save antigo passa a mostrar "Humano" sem
+   migração nenhuma. */
+/* as marcas, na descrição, de um mundo que não é a fantasia clássica: a obra
+   citada e o tempo moderno ou futuro. Comparadas sem acento e sem caixa. */
+const MARCAS_DE_GENERO_PROPRIO = [
+  /\bsolo leveling\b/, /\banimes?\b/, /\bmangas?\b/, /\bmanhwas?\b/, /\bisekai\b/,
+  /\bcyberpunk\b/, /\bficcao cientifica\b/, /\bsci-?fi\b/, /\bfutur\w*/, /\bnaves?\b/,
+  /\bespacia\w*/, /\bgalax\w*/, /\bplanetas?\b/, /\bmodern[oa]s?\b/, /\bcontemporane\w*/,
+  /\bmetro\b/, /\barranha-ceus?\b/, /\bcelulares?\b/, /\binternet\b/, /\bpos-apocal\w*/,
+  /\bzumbis?\b/, /\binspirad[oa] em\b/, /\bbasead[oa] em\b/, /\buniverso de\b/, /\bno estilo de\b/,
+];
+const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+export function generoProprio(mundo) {
+  const m = mundo && typeof mundo === "object" ? mundo : {};
+  if (GENEROS_FUTURISTAS.includes(String(m.genero || ""))) return true;
+  const d = semAcento(m.descricao);
+  return !!d && MARCAS_DE_GENERO_PROPRIO.some((r) => r.test(d));
+}
+/* O rótulo da tela. `proprio` é `generoProprio(mundo)`: sem ele, o nome do
+   sistema e só ele; com ele, o do mundo e o do sistema entre parênteses. */
+const naFicha = (nome, chamado, proprio) => {
+  const n = String(nome || "");
+  return proprio && chamado && chamado !== n ? `${chamado} (${n})` : n;
+};
+export function racaNaFicha(l, nome, proprio) { return naFicha(nome, chamadoDaRaca(l, nome), proprio); }
+export function profissaoNaFicha(l, nome, proprio) { return naFicha(nome, chamadoDaProfissao(l, nome), proprio); }
+
+/* ---------------- A MOEDA TEM UM NOME SÓ (20/10) ----------------
+   A 12.ª sessão contou "cobres" na abertura e "lascas" depois, numa mesma
+   campanha; a 9.ª, "moedas" e "marcos". Duas causas: o pedido dizia ao
+   Narrador "moeda com nome do mundo" sem dizer o nome — e ele inventava um
+   —, e o léxico que chega depois de o mundo nascer trocava a palavra que a
+   abertura já tinha dito. O nome é este, e é um só: o do léxico, ou
+   "moedas" num mundo que não tem outro. Na tela é sempre ◉ e o número. */
+export function nomeDaMoeda(l) { return comoChamam(l, "moeda") || "moedas"; }
+
 export function nomesDeLugar(l, tipo) {
   const x = garantirLexico(l).lugares.find((p) => p.tipo === tipo);
   return x && x.nomes.length >= 2 ? x.nomes : null;
@@ -900,8 +957,13 @@ export function lerLexico(obj) {
    gerador do mundo devolve os mesmos nomes que sem léxico nenhum. */
 export function soOVocabulario(l) {
   const x = garantirLexico(l);
+  /* 20/10: e a MOEDA também fica a de nascença. A abertura já a disse, e a
+     pauta já cobrou nela: trocá-la agora é a campanha com dois dinheiros
+     (a 12.ª sessão: "cobres" na abertura, "lascas" depois). */
+  const chamado = Object.fromEntries(Object.entries(x.chamado).filter(([k]) => k !== "moeda"));
   return {
     ...x,
+    chamado,
     povos: [], oficios: [], criaturas: [], cidades: [], tavernas: [], titulos: [],
     lugares: x.lugares.map((p) => ({ ...p, nomes: [] })).filter((p) => p.chamado),
     nomes: { masc: [], fem: [], sobrenome: [], cidadeA: [], cidadeB: [], continente: "" },
@@ -925,7 +987,10 @@ export function lexicoPrompt(l) {
      sempre de propósito: se o herói está dentro de um portal agora, como
      o portal funciona vale mais que como a reputação circula. */
   const fila = [];
-  const ap = Object.entries(x.chamado).map(([k, v]) => {
+  /* 20/10: a moeda sai daqui — quem a diz é a linha ECONOMIA do pedido
+     (prompt.js), com o nome e a ordem de não usar outro. Dita nos dois
+     lugares, gastava duas vezes para dizer a mesma palavra. */
+  const ap = Object.entries(x.chamado).filter(([k]) => k !== "moeda").map(([k, v]) => {
     const c = coisaPorId(k);
     return c ? `${c.padrao} = ${v}` : "";
   }).filter(Boolean);

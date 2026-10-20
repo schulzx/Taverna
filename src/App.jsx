@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao, nomesAMaoNaProsa } from "./nomes.js";
 import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
-import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, chamadoDaRaca, chamadoDaProfissao, soOVocabulario, comoChamam } from "./lexico.js";
+import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
@@ -2156,7 +2156,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
           <div>
             <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>{ehFuturista ? "Origem" : "Raça"}</div>
             <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
+              {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{racaNaFicha(mundo.lexico, r.nome, generoProprio(mundo))}</option>)}
             </select>
           </div>
           <div>
@@ -2174,7 +2174,7 @@ function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar })
           <div>
             <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Profissão</div>
             <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{chamadoDaProfissao(mundo.lexico, pr.nome)}</option>)}
+              {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{profissaoNaFicha(mundo.lexico, pr.nome, generoProprio(mundo))}</option>)}
             </select>
           </div>
           <button onClick={() => { trocarCaminho(alvo, { raca, classe, subclasse, profissao }); fechar(); }}
@@ -4432,7 +4432,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
             <div className="flex-1 min-w-0 flex flex-col gap-6">
               <CampoRotulado rotulo={ehFuturista ? "Origem" : "Raça"}>
                 <select value={raca} onChange={(e) => setRaca(e.target.value)} className={escolha} style={caixa}>
-                  {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{chamadoDaRaca(mundo.lexico, r.nome)}</option>)}
+                  {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{racaNaFicha(mundo.lexico, r.nome, generoProprio(mundo))}</option>)}
                 </select>
                 {/* v9.176: A ESCOLHA VOLTA A DIZER O QUE FAZ. O redesenho da
                     v9.174 trocou os cartões por selects e levou junto a
@@ -4442,10 +4442,10 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
                     não é uma escolha, é um sorteio com passos extras. */}
                 {rObj && (
                   <div className="flex flex-col gap-1 pt-0.5">
-                    <DescricaoCurta>
-                      {chamadoDaRaca(mundo.lexico, rObj.nome) !== rObj.nome && <span style={{ color: T.inkDim }}>({rObj.nome}) </span>}
-                      {rObj.desc}
-                    </DescricaoCurta>
+                    {/* 20/10: o "(Humano)" que vinha aqui mudou-se para a opção — o nome do
+                        sistema é o rótulo, e o do mundo só entre parênteses num mundo de
+                        gênero próprio (racaNaFicha) */}
+                    <DescricaoCurta>{rObj.desc}</DescricaoCurta>
                     <div className="tv-mono text-[10px] tracking-[0.5px]" style={{ color: T.amberSoft }}>
                       {Object.entries(rObj.bonus || {}).map(([k, v]) => `+${v} ${(ATRIBUTOS.find((a) => a.id === k) || {}).nome || k}`).join(" · ")}
                     </div>
@@ -4470,7 +4470,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
             <div className="flex-1 min-w-0 flex flex-col gap-6">
               <CampoRotulado rotulo="Profissão">
                 <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className={escolha} style={caixa}>
-                  {PROFISSOES.map((p) => <option key={p.nome} value={p.nome}>{chamadoDaProfissao(mundo.lexico, p.nome)}</option>)}
+                  {PROFISSOES.map((p) => <option key={p.nome} value={p.nome}>{profissaoNaFicha(mundo.lexico, p.nome, generoProprio(mundo))}</option>)}
                 </select>
                 {(() => {
                   const pObj = PROFISSOES.find((p) => p.nome === profissao);
@@ -5999,10 +5999,10 @@ export default function Taverna() {
      remontado com campanha sem nome e mundo vazio toda vez que o cânone ou o
      registro de pessoas mudava, e o Mestre perdia contexto sem ninguém ver. */
   const mundoAtual = () => mundoRef.current || mundo || null;
-  /* 9.ª sessão (v9.433): a palavra do mundo para a moeda, para o preço que
-     vai à pauta dizer a unidade — o Mestre vendia em "marcos" num mundo de
-     moedas. Vazio quando o léxico não a tem (o "◉" sozinho, como era). */
-  const moedaDoMundo = () => { try { return comoChamam((mundoAtual() || {}).lexico, "moeda") || ""; } catch (e) { calou("a moeda do mundo", e); return ""; } };
+  /* 9.ª sessão (v9.433): a palavra do mundo para a moeda, para o preço que vai à pauta dizer a unidade
+     — o Mestre vendia em "marcos" num mundo de moedas. 20/10: UM nome só por campanha (`nomeDaMoeda`),
+     o mesmo da linha ECONOMIA do pedido; o léxico que chega tarde não o troca, e sem léxico é "moedas". */
+  const moedaDoMundo = () => { try { return nomeDaMoeda((mundoAtual() || {}).lexico); } catch (e) { calou("a moeda do mundo", e); return ""; } };
   /* ---------------- A LEITURA DO MUNDO (v9.101) ----------------
      A única chamada de IA desta casa que NÃO narra nada. Ela roda uma vez
      por campanha, entre a tela do mundo e a do personagem, e o que ela
@@ -13435,7 +13435,7 @@ export default function Taverna() {
          mundo para moeda ("as dez escamas"). Ver cobranca.js. */
       let pedidoDaBolsa = "", moedaDaBolsa = "";
       try { const pb = lerOPedido(conteudo); pedidoDaBolsa = pb && pb.doJogador ? pb.texto : ""; } catch (e) { calou("a frase do jogador para a bolsa", e); }
-      try { moedaDaBolsa = comoChamam((mundoAtual() || {}).lexico, "moeda") || ""; } catch (e) { calou("a moeda do mundo para a bolsa", e); }
+      try { moedaDaBolsa = nomeDaMoeda((mundoAtual() || {}).lexico); } catch (e) { calou("a moeda do mundo para a bolsa", e); }
       let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
@@ -24048,7 +24048,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        único recurso que só volta dormindo. Quem DIZ o que aconteceu é o
        descanso, onde os números estão: daqui só sai o degrau. */
     const antesDoDescanso = personagemRef.current || personagem;
-    let pers = aplicarDescanso(antesDoDescanso, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current), (mundoAtual() || {}).lexico);
+    let pers = aplicarDescanso(antesDoDescanso, tipoReal, msgs, diaRef.current, abrigoDoSitio(sitioRef.current), (mundoAtual() || {}).lexico, (() => { try { return generoProprio(mundoAtual()); } catch (e) { calou("o gênero do mundo no descanso", e); return false; } })());
     tipo = tipoReal;
     /* v9.16: o descanso longo garante PISO de 1 ponto de heroismo. Piso e
        nao soma: quem chega com 3 nao vira 4, senao acampar viraria fabrica

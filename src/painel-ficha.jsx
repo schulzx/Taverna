@@ -25,7 +25,7 @@ import { sementeDe, estadoDe } from "./semente.js";
 import { bonusProficiencia, ehProficiente } from "./regras.js";
 import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas, limiteEspecialistas, lequeDaClasse, periciasDoAntecedente } from "./pericias.js";
 import { garantirDadosVida } from "./descanso.js";
-import { chamadoDaRaca } from "./lexico.js";
+import { racaNaFicha, generoProprio } from "./lexico.js";
 import { fichaDoItem } from "./itens.js";
 /* v9.159: os leitores dos escudos do corpo e do passo. Nenhum deles decide
    nada aqui — tracos.js, dadivas.js, danos.js e movimento.js já calculavam
@@ -229,7 +229,8 @@ export function FichaVisual({
           <div className="tv-display text-2xl leading-tight truncate" style={{ color: T.ink }}>{p.nome}</div>
           <div className="tv-mono text-[10px] uppercase tracking-widest truncate" style={{ color: T.amberSoft }}>
             {/* o nível saiu desta linha: ele mora no escudo sob o retrato */}
-            {[chamadoDaRaca((mundo || {}).lexico, p.raca), p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"}
+            {/* 20/10: o nome do sistema ganha — o do mundo só entre parênteses, num mundo de gênero próprio */}
+            {[p.raca ? racaNaFicha((mundo || {}).lexico, p.raca, generoProprio(mundo)) : "", p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"}
           </div>
           {tituloInfo && (
             <div className="tv-mono text-[10px] truncate" style={{ color: tituloInfo.divino ? T.violetSoft : T.inkDim }}>
@@ -302,7 +303,7 @@ export function FichaVisual({
           <div className="flex gap-2">
             {p.raca && (
               <div className="flex-1 min-w-0">
-                <CartaoDeDado rotulo="Raça" valor={chamadoDaRaca((mundo || {}).lexico, p.raca)} />
+                <CartaoDeDado rotulo="Raça" valor={racaNaFicha((mundo || {}).lexico, p.raca, generoProprio(mundo))} />
               </div>
             )}
             {p.antecedente && (

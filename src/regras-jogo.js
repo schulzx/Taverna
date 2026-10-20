@@ -8,7 +8,7 @@
 import { xpDoFeito, grauValido, falaDoFeito, envelopeDoPV, aferirPresente, envelopeDoPresente, envelopeDaHabilidadeRecusada } from "./juiz.js";
 import { ATRIBUTOS, XP_POR_NIVEL, MAX_COMPANHEIROS } from "./constantes.js";
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, XP_POR_DADIVA } from "./regras.js";
-import { chamadoDaProfissao } from "./lexico.js";
+import { profissaoNaFicha } from "./lexico.js";
 import { completarInimigo } from "./bestiario.js";
 import { elencoDiverso, nomeCidade, nomeTaverna } from "./nomes.js";
 import { garantirSuprimentos } from "./ermos.js";
@@ -72,7 +72,9 @@ export function evoluirCompanheiro(g) {
    ECONOMIA (dados de vida finitos, um longo por dia, PM preso à noite).
    Aqui ficou só o que sempre foi daqui: as condições, que somem por regra
    de catálogo e não por fração de PV. */
-export function aplicarDescanso(pers, tipo, msgs, dia = 0, abrigo = null, lex = null) {
+/* 20/10: `deGenero` é `generoProprio(mundo)` — a linha do descanso diz o
+   nome do sistema da profissão, e o do mundo entre parênteses só ali. */
+export function aplicarDescanso(pers, tipo, msgs, dia = 0, abrigo = null, lex = null, deGenero = false) {
   const longo = tipo === "longo";
   /* v9.100: `abrigo` é o degrau do sítio do acampamento (ao relento, sob
      teto, cama de verdade). Só a noite inteira o lê: uma hora de cochilo
@@ -101,12 +103,12 @@ export function aplicarDescanso(pers, tipo, msgs, dia = 0, abrigo = null, lex = 
   if (extraEu > 0 && (p.vida || 0) < (p.vidaMax || 0)) {
     const antes = p.vida || 0;
     p = { ...p, vida: Math.min(p.vidaMax || 0, antes + extraEu) };
-    if (p.vida > antes) msgs.push(`⚕ ${chamadoDaProfissao(lex, p.profissao)}: +${p.vida - antes} PV a mais no descanso.`);
+    if (p.vida > antes) msgs.push(`⚕ ${profissaoNaFicha(lex, p.profissao, deGenero)}: +${p.vida - antes} PV a mais no descanso.`);
   }
   const extraGrupo = longo ? curaExtraDoGrupo(p) : 0;
   if (extraGrupo > 0 && (p.grupo || []).length) {
     p = { ...p, grupo: (p.grupo || []).map((gm) => ({ ...gm, vida: Math.min(gm.vidaMax || 0, (gm.vida || 0) + extraGrupo) })) };
-    msgs.push(`⚕ ${chamadoDaProfissao(lex, p.profissao)}: o grupo recupera +${extraGrupo} PV cada.`);
+    msgs.push(`⚕ ${profissaoNaFicha(lex, p.profissao, deGenero)}: o grupo recupera +${extraGrupo} PV cada.`);
   }
   return p;
 }
