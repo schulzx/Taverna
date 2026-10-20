@@ -421,6 +421,15 @@ pessoa leva o retrato.
 - **A prova:** 0 de 10 mal lidos e 0 de 10 mal cobrados (9.ª: 0 de 1, 0 de 1, 0 de 1).
 - Começa depois dos consertos da 9.ª no ar.
 
+### O Léxico vira camada de cor (decisão da pessoa, 20/10)
+
+*"Como um fã ou jogador de RPG de mesa experiente, não seria legal ver os nomes diferentes das classes e raças que ele já está acostumado, mas ao mesmo tempo precisamos de algo original… o léxico da forma que está só está causando confusão."* À proposta (*o nome do sistema é universal, o nome do mundo é único*): **"Sim."**
+- Raça, classe, perícias, atributos e a moeda NA TELA (◉ + número) ficam sempre com o nome do sistema.
+- O Léxico dá o original ao MUNDO: cidades, facções, deuses, instituições, lendas, gíria, e a regra do mundo.
+- O nome local entra como cor (apelido na prosa, a moeda com um nome local fixo por mundo dito pelo Mestre), nunca no lugar do nome do sistema.
+- Nos mundos de gênero próprio (sci-fi, cyberpunk, uma obra) pode renomear mais; a ficha mostra o nome do sistema entre parênteses.
+- Custo do Léxico: desprezível (1 chamada por campanha, ~700 chars por turno) — a razão é a clareza, não o dinheiro.
+
 ### Fase H — a porta das habilidades de classe
 Decisão da pessoa (15/09): *"vamos fazer como recomendado, apenas uma porta,
 mas precisamos de uma solução para as 12 restantes."*
