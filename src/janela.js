@@ -128,12 +128,61 @@ export const CACHE_EXPLICITO = {
      não se escreve cache nenhum: o rabo paga cheio UM turno, e o cache
      nasce do lado de lá do corte. */
   mensagensPorTurno: 2,
+  /* O CACHE QUE MORRE ANTES DO CORTE (o caminho A, 20/10). A régua do rabo
+     (acima) e a do corte já estão no ótimo: simulada a sessão de 63 turnos
+     com a janela e os preços reais contra a conta que SABE O FUTURO (a
+     programação dinâmica sobre todas as escritas possíveis), a decisão de
+     hoje fica a 0–1,4% dela até 2,5 min por turno, e nenhuma régua do rabo
+     a bate na média (3.000, 4.500, 9.000, "nunca", e a do ponto de
+     equilíbrio, que escreve quando o rabo × os turnos que faltam paga o
+     prefixo: −0,5% a +1,7% conforme a cena). O que sobrava era o RELÓGIO:
+     a 3,5 min por turno os 12 turnos de um ciclo levam 42 min, o cache de
+     30 morre no meio, e reescreve-se o prefixo inteiro (~17 mil tokens a
+     preço cheio) uma vez por ciclo, só porque o tempo passou — 4–6% do
+     Narrador de quem joga devagar. A guarda paga-se por hora e o cache
+     trocado é apagado na hora, então viver mais só custa no último da
+     sessão. Por isso o cache nasce com o tempo que o ciclo dele vai durar:
+     os turnos até ao corte × o ritmo medido pela ficha que veio × a folga,
+     nunca abaixo de `ttlSegundos` (quem joga depressa, ou sem ficha, fica
+     com o de sempre) nem acima de `ttlMaxSegundos` (quem saiu da mesa não
+     guarda cache uma tarde inteira). Medido (5 sementes, 63 turnos):
+     a 3,5 min, US$ 0,516 → 0,493 (−4,5%); a 5 min, 0,533 → 0,511 (−4,3%);
+     a 0,7 e a 1,7 min, idêntico ao de hoje; a 2,5 min, +0,3% (a guarda do
+     último). */
+  ttlMaxSegundos: 3600,
+  folgaDoRitmo: 1.25,
 };
 
 /* A janela do turno seguinte vai saltar? (`n` = as mensagens desta) */
 export function corteVemAi(n) {
   const k = Math.max(0, Math.floor(Number(n) || 0));
   return k > 0 && k + CACHE_EXPLICITO.mensagensPorTurno > JANELA_MIN + SALTO_DA_ANCORA - 1;
+}
+
+/* Quantos turnos um cache escrito AGORA vai servir, este incluído, até ao
+   corte da janela (`n` = as mensagens deste pedido). */
+const turnosAteAoCorte = (n) => Math.max(1, Math.floor((JANELA_MIN + SALTO_DA_ANCORA - 1 - n) / CACHE_EXPLICITO.mensagensPorTurno) + 1);
+
+/* O RITMO DE QUEM JOGA, em segundos por turno, lido da ficha que veio: o
+   tempo desde que ela nasceu sobre os turnos que passaram. Os turnos saem
+   das mensagens: a ficha guardava `m`, a janela de agora tem `n`; se o
+   prefixo já não confere, a âncora saltou uma vez (SALTO_DA_ANCORA). Um
+   `system` que mudou também desfaz o prefixo e conta-se como salto: os
+   turnos sobem, o ritmo desce, e o tempo cai no piso — o de sempre. */
+function ritmoDaFicha(f, n, agora, confere) {
+  if (!f || !Number.isFinite(Number(f.criado)) || !Number.isInteger(f.m)) return null;
+  const turnos = (n - 1 - f.m + (confere ? 0 : SALTO_DA_ANCORA)) / CACHE_EXPLICITO.mensagensPorTurno;
+  const passou = (Number(agora) - Number(f.criado)) / 1000;
+  return turnos >= 1 && passou > 0 ? passou / turnos : null;
+}
+
+/* O tempo de vida do cache que nasce agora (em segundos) */
+function ttlDoCache(f, n, agora, confere) {
+  const T = CACHE_EXPLICITO;
+  const ritmo = ritmoDaFicha(f, n, agora, confere);
+  if (ritmo == null) return T.ttlSegundos;
+  const precisa = Math.ceil(turnosAteAoCorte(n) * ritmo * T.folgaDoRitmo + T.folgaSegundos);
+  return Math.max(T.ttlSegundos, Math.min(T.ttlMaxSegundos, precisa));
 }
 
 const textoDe = (m) => String(m && m.content != null ? m.content : "");
@@ -157,8 +206,9 @@ const tokensDe = (chars) => chars / CACHE_EXPLICITO.charsPorToken;
 
 /* A DECISÃO DO TURNO. Devolve uma de três:
      { acao: "usar",  m }                     — o cache da ficha serve;
-     { acao: "criar", m, impressao, apagar }  — escrever um novo com as
-       `m` primeiras mensagens (todas menos a do turno) e apagar o velho;
+     { acao: "criar", m, impressao, apagar, ttl } — escrever um novo com as
+       `m` primeiras mensagens (todas menos a do turno), que vive `ttl`
+       segundos, e apagar o velho;
      { acao: "nenhum", apagar }               — pedido inteiro, sem cache.
    `ficha` é a que o jogo trouxe (já com a assinatura conferida pelo
    servidor), ou nada. */
@@ -170,9 +220,9 @@ export function decidirOCache(pedido) {
   const f = ficha && typeof ficha === "object" ? ficha : null;
   const mMax = Math.max(0, ms.length - 1);
   const velho = f && typeof f.nome === "string" && f.nome ? f.nome : null;
-  const valida = !!f && velho && f.modelo === modelo && Number.isInteger(f.m) && f.m >= 1 && f.m <= mMax
-    && Number(agora) < Number(f.expira) - T.folgaSegundos * 1000
-    && impressaoDoPrefixo(system, ms, f.m) === f.impressao;
+  const confere = !!f && Number.isInteger(f.m) && f.m >= 1 && f.m <= mMax && impressaoDoPrefixo(system, ms, f.m) === f.impressao;
+  const valida = !!f && velho && f.modelo === modelo && confere
+    && Number(agora) < Number(f.expira) - T.folgaSegundos * 1000;
   if (valida) {
     const rabo = ms.slice(f.m, mMax).reduce((a, x) => a + textoDe(x).length, 0);
     if (tokensDe(rabo) < T.raboMaxTokens) return { acao: "usar", m: f.m };
@@ -182,7 +232,7 @@ export function decidirOCache(pedido) {
      turno só (CACHE_EXPLICITO.mensagensPorTurno) */
   if (corteVemAi(ms.length)) return valida ? { acao: "usar", m: f.m } : { acao: "nenhum", apagar: velho };
   if (mMax >= T.minMensagens && tokensDe(chars) >= T.minTokens) {
-    return { acao: "criar", m: mMax, impressao: impressaoDoPrefixo(system, ms, mMax), apagar: velho };
+    return { acao: "criar", m: mMax, impressao: impressaoDoPrefixo(system, ms, mMax), apagar: velho, ttl: ttlDoCache(f, ms.length, agora, confere) };
   }
   return valida ? { acao: "usar", m: f.m } : { acao: "nenhum", apagar: velho };
 }

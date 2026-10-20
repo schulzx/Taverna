@@ -124,20 +124,29 @@ sec("5. o teto do QUEM (o rodapé)");
   const txt = resumoCenaPrompt(reg, "Aqui", mapa, { comGrupo: [{ nome: "Companheira" }], emCena: ["A2"] });
   const aqui = (txt.split("\n").find((l) => /PRESENTES/.test(l)) || "");
   const longe = (txt.split("\n").find((l) => /LONGE/.test(l)) || "");
+  /* 12.ª sessão (20/10, LUGAR_NAO_E_CENA em cena.js): quem vive aqui e não
+     está na cena saiu de PRESENTES para NA CIDADE — o Mestre lia "PRESENTES"
+     como "sentados à mesa" e punha a cidade inteira na taverna. O teto é o
+     mesmo e é partilhado: as duas linhas cabem no do aqui. As asserções do
+     "mais recente" e do "+N" passam a ler a linha da cidade, que é onde os
+     sessenta vivem agora. */
+  const cidade = (txt.split("\n").find((l) => /NA CIDADE/.test(l)) || "");
   const quantos = (l) => (l.match(/(?:^|· )[AL]\d+ /g) || []).length;
   console.log(`      aqui ${aqui.length} caracteres, ${quantos(aqui)} nomes · longe ${longe.length}, ${quantos(longe)} nomes`);
   t("quem viaja comigo nunca sai do aqui, mesmo sendo o mais antigo", /Companheira \(viaja com você\)/.test(aqui));
   t("quem a cena diz que está aqui nunca sai, mesmo sendo antigo", /A2 \(vive em Aqui\)/.test(aqui));
-  t("o aqui tem teto de pessoas (fora os protegidos)", quantos(aqui) - 1 <= TETO_DO_QUEM.aqui.pessoas);
+  t("o aqui tem teto de pessoas (fora os protegidos), somado à cidade", quantos(aqui) - 1 + quantos(cidade) <= TETO_DO_QUEM.aqui.pessoas);
   t("o longe tem teto de pessoas", quantos(longe) <= TETO_DO_QUEM.longe.pessoas);
-  t("e de caracteres", longe.length <= TETO_DO_QUEM.longe.chars + 120 && aqui.length <= TETO_DO_QUEM.aqui.chars + 120);
-  t("quem fica é o mais recente (aqui e longe)", /A60 /.test(aqui) && !/· A1 /.test(aqui) && /L60 /.test(longe) && !/L1 está/.test(longe));
-  t("a lista parcial diz que é parcial (+N)", /· \+\d+/.test(aqui) && /· \+\d+/.test(longe));
+  t("e de caracteres", longe.length <= TETO_DO_QUEM.longe.chars + 120 && aqui.length + cidade.length <= TETO_DO_QUEM.aqui.chars + 120);
+  t("quem fica é o mais recente (cidade e longe)", /A60 /.test(cidade) && !/· A1 /.test(cidade) && /L60 /.test(longe) && !/L1 está/.test(longe));
+  t("a lista parcial diz que é parcial (+N)", /· \+\d+/.test(cidade) && /· \+\d+/.test(longe));
+  t("e a da cena, inteira, fecha", /e mais ninguém do registro\.$/.test(aqui) && !/A60/.test(aqui));
   const inteiro = elencoDaCena(reg, "Aqui", mapa);
   t("só o texto tem teto: o elenco da cena continua inteiro (o cão de guarda vê todos)", inteiro.aqui.length === 60 && inteiro.longe.length === 61);
   const pequeno = { a: pessoa("Ana", 2, { local: "Aqui" }), b: pessoa("Bia", 1, { local: "Longe" }) };
   const tp = resumoCenaPrompt(pequeno, "Aqui", mapa);
-  t("uma cena pequena sai como sempre saiu, sem +N", /PRESENTES em Aqui: Ana \(vive em Aqui\)\./.test(tp) && /LONGE .*: Bia está em Longe/.test(tp) && !/\+\d/.test(tp));
+  /* 12.ª sessão: Ana vive aqui, mas ninguém a pôs na cena — vai para NA CIDADE (o motivo acima) */
+  t("uma cena pequena sai sem +N: ninguém à mesa, Ana na cidade, Bia longe", /PRESENTES em Aqui: ninguém do registro\./.test(tp) && /NA CIDADE .*: Ana\./.test(tp) && /LONGE .*: Bia está em Longe/.test(tp) && !/\+\d/.test(tp));
 }
 
 /* ============================================================ */

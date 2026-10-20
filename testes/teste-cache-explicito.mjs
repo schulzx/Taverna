@@ -180,6 +180,15 @@ sec("3. O SERVIDOR ESCREVE O CACHE, USA-O E TROCA-O");
   t("sem a rede de saída do Narrador", so(r6, "gemini")[0].body.generationConfig.maxOutputTokens === 3600);
   const r7 = await rodar({ env: { ...TODAS, GM_CACHE_EXPLICITO: "0" }, corpo: { cache: {} }, roteiro: { gemini: [okGemini('{"narrativa":"Sete."}')] } });
   t("GM_CACHE_EXPLICITO=0 desliga sem redeploy", so(r7, "criar").length === 0 && so(r7, "gemini")[0].body.systemInstruction);
+
+  /* O CAMINHO A (20/10, a regra em teste-cache-ritmo.mjs): o cache nasce com
+     a vida do ciclo dele, e o que morreu de velho cobra a guarda só pela
+     vida que teve — antes a conta cobrava até ao turno seguinte, três
+     horas de guarda por um cache que o Google já apagara aos 30 min */
+  const r8 = await rodar({ corpo: { cache: {} }, roteiro: { criar: [criado("cachedContents/oito")], gemini: [okGemini('{"narrativa":"Oito."}')] } });
+  const r9 = await rodar({ passo: 3 * 3600e3, corpo: { cache: r8.saida.cache, messages: [...conversa(9), msg(9), msg(10)] }, roteiro: { criar: [criado("cachedContents/nove")], gemini: [okGemini('{"narrativa":"Nove."}')] } });
+  t("o cache que expirou cobra a guarda só até expirar", Math.abs(r9.saida.uso.guardado - 30000 * T.ttlSegundos / 3600) < 1, String(r9.saida.uso.guardado));
+  t("e o novo nasce com o tempo do ritmo (um turno em três horas: o teto)", so(r9, "criar")[0].body.ttl === `${T.ttlMaxSegundos}s` && r9.saida.cache.expira === relogio + T.ttlMaxSegundos * 1000);
 }
 
 sec("4. O CACHE NUNCA CUSTA O TURNO");

@@ -665,6 +665,27 @@ export function ehDePassagem(n, contexto, agora = 0) {
    recência — a mais antiga primeiro. */
 export const TETO_DAS_PESSOAS = { pessoas: 22, chars: 3200 };
 
+/* O PARENTESCO DE QUEM ANDA COMIGO (12.ª sessão, 19/10: "a sua irmã"
+   para Aelith, duas vezes, e a ficha do grupo dizia-a sem parentesco). O
+   pedido não foi gravado, mas a casa varrida tem uma só fonte de "irmã"
+   para quem anda com o herói — a ligação "sangue" do companheiro de antes
+   (companheiro-inicial.js) —, e a de uma companheira de armas grava
+   "antiga companheira de armas do herói; conhecem-se há N anos". O Mestre
+   leu duas mulheres que atravessaram uma guerra juntas como sangue: é
+   invenção pela lacuna — a ficha diz o que ela é e cala o que ela não é,
+   e o que se cala de quem anda ao lado do herói há anos é preenchido. Quem anda no grupo leva então a frase fechada — "não é
+   parente do herói" —, salvo quando o laço ou a relação JÁ dizem sangue
+   ou casa (a ligação "sangue" do companheiro de antes grava "irmã do
+   herói" e o laço de família; o cônjuge é casa). Custa ~25 caracteres por
+   companheiro, dentro do teto de caracteres desta lista. */
+export const PARENTESCO_NO_GRUPO = {
+  lacosDeSangue: ["familia"],
+  relacoesDeSangue: ["familia", "conjuge"],
+  frase: "não é parente do herói",
+};
+const ehDeSangue = (n, l) => (l && PARENTESCO_NO_GRUPO.lacosDeSangue.includes(l.tipo))
+  || PARENTESCO_NO_GRUPO.relacoesDeSangue.includes(semAcento(n.relacao));
+
 /* Resumo compacto do elenco para o prompt — UMA linha por pessoa, as mais
    recentes/relevantes primeiro. Teto rígido para nunca inflar o prompt. */
 /* ONDA 3 DO CUSTO (14/10): AS PESSOAS PELO LUGAR E PELA MISSÃO. Com
@@ -685,6 +706,8 @@ export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, co
   const ord0 = ordemDaImportancia(reg, contexto).filter((n) => !ehDePassagem(n, contexto, agora));
   const ord = (rel ? ord0.filter((n) => pessoaEmJogo(n.nome, rel)) : ord0).slice(0, limite);
   if (!ord.length && !rel) return "";
+  const grupo = new Set((contexto && Array.isArray(contexto.grupo) ? contexto.grupo : []).map((x) => semAcento(x && typeof x === "object" ? x.nome : x)).filter(Boolean));
+  const noGrupo = (n) => grupo.has(semAcento(n.nome));
   const linhaDe = (n) => {
     /* onda 3: "neutro" é o "desconhecido" de quem já se viu — o registo
        cala-o como cala o outro (FIGURANTE.relacoesSemPeso) */
@@ -709,7 +732,9 @@ export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, co
       : "";
     /* e o que ela é dos OUTROS, que é o que faz o elenco parecer um mundo */
     const laE = Object.entries(garantirEntre(n.entre)).map(([o, t]) => `${(tipoDeLacoPorId(t) || {}).rotulo} com ${o}`).join(", ");
-    const extra = [laco, laE, n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas].filter(Boolean).join(" · ");
+    /* 12.ª sessão: quem anda comigo diz o que NÃO é (PARENTESCO_NO_GRUPO) */
+    const sangue = noGrupo(n) && !ehDeSangue(n, l) ? PARENTESCO_NO_GRUPO.frase : "";
+    const extra = [laco, laE, n.segredo ? `SEGREDO: ${n.segredo}` : "", n.notas, sangue].filter(Boolean).join(" · ");
     return `• ${n.nome}${partes.length ? ` (${partes.join(", ")})` : ""}${extra ? ` — ${extra}` : ""}`;
   };
   /* onda 3: os citáveis entram DEPOIS de quem está em jogo, cada grupo na

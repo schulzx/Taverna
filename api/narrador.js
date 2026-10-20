@@ -396,16 +396,18 @@ export default async function handler(req, res) {
         devolver = fichaRecebida;
         if (dec.acao === "usar") usado = { nome: fichaRecebida.nome, m: dec.m };
         else if (dec.acao === "criar") {
+          /* o caminho A (20/10): o cache vive o ciclo dele, ao ritmo de quem joga (janela.js, ttlMaxSegundos) */
+          const vida = Number.isFinite(dec.ttl) && dec.ttl > 0 ? Math.round(dec.ttl) : CACHE_EXPLICITO.ttlSegundos;
           const r = await fetch(`${API}/cachedContents`, {
             method: "POST", headers: cab,
-            body: JSON.stringify({ model: `models/${modelo}`, systemInstruction: inteiro.systemInstruction, contents: contents.slice(0, dec.m), ttl: `${CACHE_EXPLICITO.ttlSegundos}s` }),
+            body: JSON.stringify({ model: `models/${modelo}`, systemInstruction: inteiro.systemInstruction, contents: contents.slice(0, dec.m), ttl: `${vida}s` }),
           }).catch(() => null);
           const d = r && r.ok ? await r.json().catch(() => null) : null;
           if (d && typeof d.name === "string") {
             escrita = Number(d.usageMetadata && d.usageMetadata.totalTokenCount) || 0;
             novo = d.name;
             usado = { nome: d.name, m: dec.m };
-            devolver = selarFicha({ nome: d.name, modelo, m: dec.m, impressao: dec.impressao, criado: agora, expira: agora + CACHE_EXPLICITO.ttlSegundos * 1000, tokens: escrita }, env.GEMINI_API_KEY);
+            devolver = selarFicha({ nome: d.name, modelo, m: dec.m, impressao: dec.impressao, criado: agora, expira: agora + vida * 1000, tokens: escrita }, env.GEMINI_API_KEY);
             apagar = dec.apagar;
           } else {
             /* o Google recusou o cache: o turno segue inteiro, e o explícito
@@ -416,7 +418,10 @@ export default async function handler(req, res) {
         /* o cache trocado é apagado na hora: o Google cobra a GUARDA por
            hora, e um cache que ninguém mais lê não pode ficar a cobrar */
         if (apagar && fichaRecebida && apagar === fichaRecebida.nome) {
-          guardado = (Number(fichaRecebida.tokens) || 0) * Math.max(0, agora - Number(fichaRecebida.criado)) / 3.6e6;
+          /* o Google guarda até expirar, não até agora: o cache que morreu de velho
+             cobra-se só pela vida que teve */
+          const ate = Number.isFinite(Number(fichaRecebida.expira)) ? Math.min(agora, Number(fichaRecebida.expira)) : agora;
+          guardado = (Number(fichaRecebida.tokens) || 0) * Math.max(0, ate - Number(fichaRecebida.criado)) / 3.6e6;
         }
       }
       const gerar = (corpoDoPedido) => pedir(modelo, () => fetch(`${API}/models/${modelo}:generateContent`, { method: "POST", headers: cab, body: JSON.stringify(corpoDoPedido) }));

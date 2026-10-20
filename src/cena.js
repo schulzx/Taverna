@@ -350,6 +350,32 @@ function comTeto(itens, teto, texto, protegido = () => false) {
   return { linhas: out, fora };
 }
 
+/* ---------------- O LUGAR NÃO É A CENA (12.ª sessão, 19/10) ----------------
+   "Ivarr Sombravinda, Greta, Yorick, Sigrun, Jarl, Rowena Rompe-Escudos,
+   Rhogar, Ylva Mão-Torta, Ondine" — nove nomes do registo, sem verbo, a
+   dançar e a cochichar na taverna de T4 a T14, e "Magnus o Exilado cospe
+   sangue na pedra" dentro da mina. A causa estava nesta linha: na cidade,
+   PRESENTES era toda a gente que o registo diz viver em Ponte Rasa (e quem
+   não tem paradeiro escrito), doze nomes "(vive em Ponte Rasa)" sob "QUEM
+   ESTÁ EM CENA (do sistema — obedeça)". O Mestre obedeceu: pôs a cidade
+   inteira à mesa. O lugar não é a cena. PRESENTES passa a ser quem está
+   NESTA cena — o grupo, quem a narração das duas últimas respostas já pôs
+   aqui (`emCena`), quem a ficha diz estar neste prédio (`lugar`) — e a
+   lista FECHA ("e mais ninguém do registro"), na cidade e na masmorra:
+   foi a lista aberta que deixou Magnus descer à mina, onde o LONGE não o
+   punha (de passagem, ou fora do teto). Quem vive cá e não está na cena
+   vai para NA CIDADE, só com o nome — pode ser chamado, não está sentado.
+   O pior caso não sobe: as duas linhas e o fecho cabem no teto do `aqui`
+   (TETO_DO_QUEM), e o nome sem "(vive em X)" é mais curto do que era. */
+export const LUGAR_NAO_E_CENA = {
+  fecho: " — e mais ninguém do registro",
+  naCidade: "- NA CIDADE (vivem em {cidade}; NÃO estão nesta cena — só entram se o jogador os procurar ou a cena os chamar): ",
+  /* o prédio com menos letras do que isto casaria com pedaço de qualquer
+     `local`; e o prédio que é a própria cidade não é prédio */
+  lugarMinimo: 4,
+};
+const encherCidade = (s, cidade) => s.replace("{cidade}", String(cidade || "").trim() || "esta cidade");
+
 /* ---------------- O QUE O MESTRE RECEBE ---------------- */
 /* ONDA 2 DO CUSTO (13/10): `naPauta` — quem a pauta deste turno já veta no
    NÃO PODE ("X está em Y, a 4 h daqui — não entra nesta cena", geografo.js)
@@ -357,7 +383,7 @@ function comTeto(itens, teto, texto, protegido = () => false) {
    (as PESSOAS CONHECIDAS com o lugar, o LONGE e o veto), e às vezes com dois
    tempos diferentes ("a 1 dia" aqui, "a 4 h" na pauta). O veto fica, que
    vetos nunca saem; o LONGE fica com quem a pauta não disse. */
-export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null, masmorra = null, naPauta = [] } = {}) {
+export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confidencias = [], emCena = [], elenco = [], missao = [], vistos = null, masmorra = null, naPauta = [], lugar = null } = {}) {
   /* MM14 · 9: numa masmorra aberta, PRESENTES é a masmorra, e a gente da
      cidade vai para o LONGE, com o mesmo teto dele (o pior caso não sobe) */
   const mm = masmorraAberta(masmorra);
@@ -380,9 +406,24 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
   const contexto = { grupo: comGrupo, elenco, emCena, missao, vistos };
   const vetados = new Set((Array.isArray(naPauta) ? naPauta : []).map((x) => norm(x)).filter(Boolean));
   const longe = longe0.filter((n) => !ehDePassagem(n, contexto, agora) && !vetados.has(norm(n.nome))).sort((a, b) => rank(a) - rank(b));
-  const ta = comTeto(aqui, TETO_DO_QUEM.aqui, (n) => `${n.nome} (${n.motivo})`, protegido);
+  /* 12.ª sessão: na cidade, PRESENTES é só quem está na cena (o grupo, quem
+     a narração já pôs aqui, quem a ficha diz estar neste prédio); o resto
+     de quem vive cá vai para NA CIDADE, só com o nome (LUGAR_NAO_E_CENA) */
+  const P = LUGAR_NAO_E_CENA;
+  const lugares = (Array.isArray(lugar) ? lugar : [lugar]).map((x) => norm(String(x || "")).replace(/^(o|a|os|as) /, "").trim()).filter((x) => x.length >= P.lugarMinimo && x !== norm(String(cidadeAtual || "")).trim());
+  const noPredio = (n) => { const l = norm(n.local || ""); return lugares.some((x) => l.includes(x)); };
+  const naMesa = (n) => !!mm || protegido(n) || noPredio(n);
+  const ta = comTeto(aqui.filter(naMesa), { ...TETO_DO_QUEM.aqui, chars: TETO_DO_QUEM.aqui.chars - P.fecho.length }, (n) => `${n.nome} (${n.motivo})`, protegido);
+  const daCidade = aqui.filter((n) => !naMesa(n));
+  const gastoAqui = ta.linhas.reduce((a, l) => a + l.length + 3, 0);
+  const cabeca = encherCidade(P.naCidade, cidadeAtual);
+  const tc = daCidade.length
+    ? comTeto(daCidade, { pessoas: Math.max(0, TETO_DO_QUEM.aqui.pessoas - ta.linhas.length), chars: TETO_DO_QUEM.aqui.chars - P.fecho.length - gastoAqui - cabeca.length }, (n) => n.nome)
+    : { linhas: [], fora: 0 };
   const tl = comTeto(longe, TETO_DO_QUEM.longe, (n) => (n.laFora ? `${n.nome} ficou fora de ${n.laFora}` : `${n.nome} está em ${n.onde}, a ${n.dias} dia${n.dias > 1 ? "s" : ""} daqui`));
-  const linhaAqui = ta.linhas.length ? `${ta.linhas.join(" · ")}${ta.fora ? ` · +${ta.fora}` : ""}` : "ninguém do registro";
+  /* a lista fechada: sem +N, quem não está nela não está na cena */
+  const linhaAqui = ta.linhas.length ? `${ta.linhas.join(" · ")}${ta.fora ? ` · +${ta.fora}` : P.fecho}` : "ninguém do registro";
+  const linhaCidade = tc.linhas.length ? `${cabeca}${tc.linhas.join(" · ")}${daCidade.length > tc.linhas.length ? ` · +${daCidade.length - tc.linhas.length}` : ""}.\n` : "";
   const linhaLonge = tl.linhas.length ? `${tl.linhas.join(" · ")}${tl.fora ? ` · +${tl.fora}` : ""}` : "";
   const segredos = garantirConfidencias(confidencias).filter((c) => c.exclusivo && (c.ouvintes || []).length);
   const linhaSegredo = segredos.length
@@ -390,7 +431,7 @@ export function resumoCenaPrompt(npcs, cidadeAtual, mapa, { comGrupo = [], confi
     : "";
   return `QUEM ESTÁ EM CENA (do sistema — obedeça):
 - PRESENTES em ${mm || cidadeAtual || "onde estou"}: ${linhaAqui}.
-${linhaLonge ? `- LONGE (NÃO podem aparecer nesta cena; no máximo mandam carta ou recado, e mesmo assim só se fizer sentido): ${linhaLonge}.\n` : ""}${linhaSegredo ? `- O QUE FOI DITO EM PARTICULAR (só estas pessoas sabem — ninguém mais pode mencionar, nem de leve): ${linhaSegredo}.\n` : ""}`;
+${linhaCidade}${linhaLonge ? `- LONGE (NÃO podem aparecer nesta cena; no máximo mandam carta ou recado, e mesmo assim só se fizer sentido): ${linhaLonge}.\n` : ""}${linhaSegredo ? `- O QUE FOI DITO EM PARTICULAR (só estas pessoas sabem — ninguém mais pode mencionar, nem de leve): ${linhaSegredo}.\n` : ""}`;
 }
 
 export const CENA_PROMPT = `PRESENÇA E CONHECIMENTO (v9.9 — duas regras duras):

@@ -64,7 +64,10 @@ sec("2. quem sai e quem fica");
   t("no LONGE, o figurante distante sai e a amiga fica", /LONGE .*Amiga está em Longe/.test(r) && !/Figurante/.test(r));
   t("e não conta no +N", !/\+\d/.test(r));
   t("o figurante do elenco ou da missão fica no LONGE", /Figurante está em Longe/.test(resumoCenaPrompt(longe, "Aqui", mapa, { elenco: ["Figurante"] })) && /Figurante está em Longe/.test(resumoCenaPrompt(longe, "Aqui", mapa, { missao: ["Figurante"] })));
-  t("os PRESENTES não mudam (quem vive aqui continua)", /PRESENTES em Aqui: Hoje/.test(r));
+  /* 12.ª sessão (20/10): quem vive aqui sem estar na cena passou de PRESENTES
+     para NA CIDADE (LUGAR_NAO_E_CENA, cena.js). O que esta asserção guarda é
+     que o figurante sai do LONGE e não daqui: Hoje continua dito como de cá */
+  t("quem vive aqui não sai (vai na linha da cidade)", /NA CIDADE .*: Hoje/.test(r));
 }
 
 /* ============================================================ */
