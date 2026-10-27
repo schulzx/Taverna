@@ -5,9 +5,10 @@
    3) EVENTOS GLOBAIS: arcos maiores que escalam por etapas (raros, máx. 1).
    Os atores já vêm com nome, raça e ofício sorteados — a diversidade do
    mundo deixa de depender da memória da IA. */
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { elencoDiverso } from "./nomes.js";
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const pick = (arr) => arr[Math.floor(sorteDaCasa() * arr.length)];
 
 /* ---------------- DADOS DO MESTRE (v8.2) ----------------
    Antes os eventos surgiam por sorteio invisível. Agora o Mestre ROLA,
@@ -26,9 +27,9 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
    A sorte entra por argumento (`sorte`), como em todo o motor desta casa:
    sem ela nenhuma suíte consegue provar o que o descanso faz. */
-export const d20 = (sorte = Math.random) => 1 + Math.floor(sorte() * 20);
+export const d20 = (sorte = sorteDaCasa) => 1 + Math.floor(sorte() * 20);
 
-export function rolarGatilho(rotulo, alvo, { vantagem = false, garantido = false, sorte = Math.random } = {}) {
+export function rolarGatilho(rotulo, alvo, { vantagem = false, garantido = false, sorte = sorteDaCasa } = {}) {
   if (garantido) return { rotulo, alvo, d: 20, passou: true, garantido: true, texto: `${rotulo}: garantido pelo tempo decorrido` };
   const a = d20(sorte), b = vantagem ? d20(sorte) : null;
   const d = b != null ? Math.max(a, b) : a;
@@ -117,9 +118,10 @@ const LOCAIS = [
   (c) => ({ icone: "👻", texto: `Em ${c.lugar}, juram que ${pick(["a torre abandonada voltou a ter luzes", "um antigo herói enterrado foi visto caminhando", "os sinos tocam sozinhos à meia-noite", "retratos sangram numa mansão fechada"])}. Céticos riem — de dia.`, gancho: "Desmascarar o mistério ou encontrar o que é real?" }),
 ];
 
-export function gerarEventoLocal(ctx, dia) {
+export function gerarEventoLocal(ctx, dia, sorte = null) { return comSorte(sorte, () => {
   const t = pick(LOCAIS)(ctx);
-  return { id: `ev_${dia}_${Math.floor(Math.random() * 9999)}`, ...t, criadoEm: dia, expiraEm: dia + 2 + Math.floor(Math.random() * 3) };
+  return { id: `ev_${dia}_${Math.floor(sorteDaCasa() * 9999)}`, ...t, criadoEm: dia, expiraEm: dia + 2 + Math.floor(sorteDaCasa() * 3) };
+  });
 }
 
 /* ---------------- 3) EVENTOS GLOBAIS (arcos maiores — raros, máx. 1, escalam) ---------------- */
@@ -150,9 +152,10 @@ const GLOBAIS = [
     "A noite longa: o que a profecia prometia acontece — para bem ou mal, nada volta a ser igual."] },
 ];
 
-export function gerarEventoGlobal(ctx, dia) {
+export function gerarEventoGlobal(ctx, dia, sorte = null) { return comSorte(sorte, () => {
   const g = pick(GLOBAIS);
-  return { id: `gl_${dia}_${Math.floor(Math.random() * 9999)}`, nome: g.nome, semente: g.semente(ctx), etapas: g.etapas, etapa: 0, desde: dia };
+  return { id: `gl_${dia}_${Math.floor(sorteDaCasa() * 9999)}`, nome: g.nome, semente: g.semente(ctx), etapas: g.etapas, etapa: 0, desde: dia };
+  });
 }
 
 /* ---------------- cadência e processamento diário ----------------
@@ -179,7 +182,7 @@ export const ALVOS_DO_DESCANSO = {
   diasAteGarantia: 10,   // dez dias sem arco regional e ele vem sem dado
 };
 
-export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2, sorte = Math.random } = {}) {
+export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2, sorte = sorteDaCasa } = {}) {
   const A = ALVOS_DO_DESCANSO;
   const e = garantirEventos(ev);
   const out = { eventos: e, localNovo: null, questNova: null, globalNovo: null, globalAvancou: false, expirados: [] };

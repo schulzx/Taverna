@@ -47,6 +47,7 @@
    continua sendo a IA.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { ASSUNTOS, FAMILIAS, assuntoPorId, familiaPorId } from "./assuntos.js";
 export { ASSUNTOS, FAMILIAS, assuntoPorId, familiaPorId };
 
@@ -170,7 +171,7 @@ function sortearDuracao(mov, sorte, folego) {
    holofote pede o pilar que está passando fome, e a família de cada
    assunto sabe a que pilar serve.
    ============================================================ */
-export function escolherAssunto(sit = {}, { sorte = Math.random, compasso = null, preferir = null, preferirTom = null, elenco = null } = {}) {
+export function escolherAssunto(sit = {}, { sorte = sorteDaCasa, compasso = null, preferir = null, preferirTom = null, elenco = null } = {}) {
   const c = garantirCompasso(compasso);
   const recentes = new Set(c.usados.slice(-NAO_REPETIR_ASSUNTO));
   const famRecentes = new Set(c.familias.slice(-NAO_REPETIR_FAMILIA));
@@ -248,7 +249,7 @@ export function cabeNoLugar(assunto, sit = {}) {
   try { return !!assunto.quando({ ...(sit && typeof sit === "object" ? sit : {}), ...O_QUE_NAO_E_LUGAR }); } catch { return true; }
 }
 
-export function avancarCompasso(compasso, sit = {}, { sorte = Math.random, segurar = false, preferir = null, preferirTom = null, elenco = null, folego = null } = {}) {
+export function avancarCompasso(compasso, sit = {}, { sorte = sorteDaCasa, segurar = false, preferir = null, preferirTom = null, elenco = null, folego = null } = {}) {
   const c = garantirCompasso(compasso);
   if (segurar) return { compasso: c, virou: false, porque: "a onda espera: já há cena grande em curso" };
 

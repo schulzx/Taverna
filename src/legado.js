@@ -28,6 +28,7 @@
    grau divino. Herdar a ficha inteira seria o mesmo personagem com
    outro nome — e aí a morte não teria custado nada de novo.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 /* ---------------- O PREÇO DE VOLTAR ----------------
    Cresce com o nível (o mundo cobra mais caro por gente importante)
@@ -75,7 +76,7 @@ export const CICATRIZES_DA_MORTE = [
   { nome: "Marca do Ceifador", desc: "quem entende dessas coisas reconhece você de longe — e nem todos gostam." },
 ];
 
-export function sortearCicatrizDaMorte(jaTem = [], { sorte = Math.random } = {}) {
+export function sortearCicatrizDaMorte(jaTem = [], { sorte = sorteDaCasa } = {}) {
   const pool = CICATRIZES_DA_MORTE.filter((c) => !jaTem.some((x) => (x.nome || x) === c.nome));
   const lista = pool.length ? pool : CICATRIZES_DA_MORTE;
   return lista[Math.floor(sorte() * lista.length)];

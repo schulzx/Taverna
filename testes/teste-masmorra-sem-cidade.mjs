@@ -48,7 +48,7 @@ import { gerarGeografia } from "../src/geografia.js";
 import { moldePorId } from "../src/moldes.js";
 import { ESTRUTURAS } from "../src/historia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova } from "../src/regiao.js";
-import { hashSemente, rng } from "../src/semente.js";
+import { hashSemente, rng, trocarACasa } from "../src/semente.js";
 import { aplicarEscolha, envelopeDoGolpeFinal, golpeFinalNaPauta } from "../src/golpe-final.js";
 import { resumoMapaParaPrompt, resumoDiplomacia } from "../src/mapa.js";
 import { sementeDe, generoDe, turnoNaMasmorra, medirMasmorraSemCidade, HEROI_DA_MEDIDA, CENAS_FORA, FRASES_SEM_HORIZONTE, FRASES_DO_HORIZONTE, horizonteCusta } from "./medir-regiao.mjs";
@@ -72,8 +72,8 @@ const mapaContinente = (i) => mapaDaCampanhaNova(gerarGeografia(sementeDe(i), SO
 const NR = 200, NC = 60;
 const REG = Array.from({ length: NR }, (_, i) => ({ i, semente: sementeDe(i), genero: generoDe(i), mapa: mapaRegiao(i) }));
 const CON = Array.from({ length: NC }, (_, i) => ({ i, semente: sementeDe(i), genero: generoDe(i), mapa: mapaContinente(i) }));
-const ACASO = Math.random;
-const semeado = (s, f) => { Math.random = rng(hashSemente(s)); try { return f(); } finally { Math.random = ACASO; } };
+const ACASO = trocarACasa();
+const semeado = (s, f) => { trocarACasa(rng(hashSemente(s))); try { return f(); } finally { trocarACasa(ACASO); } };
 /* a masmorra que o App abriria num lugar: a planta do tamanho anunciado,
    com o nome do mapa */
 const abrir = (w, m) => ({ ...semeado(`sem-cidade|${w.semente}|${m.nome}`, () => gerarMasmorra(w.genero, m.nivel, m.nome, { salas: m.salas })), nome: m.nome });

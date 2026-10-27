@@ -52,7 +52,7 @@ import { DEFESA_DA_ARMADURA } from "../src/prontos.js";
 import { bonusDePericia } from "../src/pericias.js";
 import { nascerEscondido, oculto, revisarEscondido, estadoEscondido, custoDeEsconder } from "../src/escondido.js";
 import { CENARIOS_DA_REGUA, comSorteTravada } from "./regua-combate.mjs";
-import { rng, hashSemente } from "../src/semente.js";
+import { rng, hashSemente, sorteDaCasa } from "../src/semente.js";
 
 /* ---------------- AS TABELAS DA SONDA ---------------- */
 
@@ -270,7 +270,7 @@ export function lutaDoLadino(cenarioId, semente, modo, { situacao, arma = null }
           /* a Ação Ardilosa: esconder-se ANTES do golpe, com a ação bônus */
           if (modo === "ardilosa" && custoDeEsconder(heroi) === "bonus" && !estadoEscondido(heroi)) {
             const mod = bonusDePericia(heroi, "furtividade", heroi.atributos.destreza);
-            const total = 1 + Math.floor(Math.random() * 20) + (Number(mod) || 0);
+            const total = 1 + Math.floor(sorteDaCasa() * 20) + (Number(mod) || 0);
             const ns = nascerEscondido(heroi, { total, grade, heroi: lugar, inimigos: vivos() });
             if (ns.ok) { heroi = ns.pers; escondeu++; }
           }

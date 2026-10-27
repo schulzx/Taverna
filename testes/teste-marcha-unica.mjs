@@ -27,6 +27,7 @@
    3.309 pares em que uma conta discordava da jornada (o Geógrafo em 3.109, a
    ficha e o mapa vivo em 1.032) — `node testes/medir-regiao.mjs`, secção j. */
 
+import { trocarACasa } from "../src/semente.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -410,15 +411,15 @@ sec("9. determinismo, lixo, imutabilidade, nenhum Math.random");
 {
   const w = mundos[7];
   const copia = J(w.mapa);
-  const acaso = Math.random;
+  const acaso = trocarACasa();
   let tocou = false;
-  Math.random = () => { tocou = true; return 0.5; };
+  trocarACasa(() => { tocou = true; return 0.5; });
   let a = null, b = null;
   try {
     a = w.nos.map((x) => w.nos.map((y) => (x === y ? null : MA.caminhoNaRegiao(w.mapa, x.id || x.nome, y.id || y.nome))));
     b = w.nos.map((x) => w.nos.map((y) => (x === y ? null : MA.caminhoNaRegiao(w.mapa, x.id || x.nome, y.id || y.nome))));
     MA.partidaNaRegiao(w.mapa, { cidadeAtual: w.base.nome, destino: w.mapa.cidades[1].nome });
-  } finally { Math.random = acaso; }
+  } finally { trocarACasa(acaso); }
   t("mesmo mapa, mesmos caminhos", J(a) === J(b));
   t("a conta única não toca no Math.random", !tocou);
   t("e não muta o mapa que recebe", J(w.mapa) === copia);

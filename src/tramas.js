@@ -64,6 +64,7 @@
    trama que também escrevesse o fim seria um filme com um botão.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { FASES, faseDe } from "./vilao.js";
 import { comDe, comEm, contrair } from "./lugar.js";
 import { mesmaPessoa } from "./missoes.js";
@@ -270,7 +271,7 @@ export function intencaoDaTramaPorId(id) { return INTENCOES.find((i) => i.id ===
    Determinística por semente, e por peso: a fase do vilão pesa mais que
    o resto porque é ela que tem hora marcada. Uma intenção `uma` já feita
    sai da urna — e se sobrar só a rede, é a rede que vale. */
-export function escolherIntencao(situacao, { rnd = Math.random } = {}) {
+export function escolherIntencao(situacao, { rnd = sorteDaCasa } = {}) {
   const s = garantirSituacao(situacao);
   const feitas = new Set(s.intencoesFeitas);
   const abertas = INTENCOES.filter((i) => {
@@ -538,7 +539,7 @@ export function veiculoPorId(id) { return VEICULOS.find((v) => v.id === id) || n
    foi. */
 export function montarTrama({ situacao, material, semente = "trama", rnd = null, amarra = null } = {}) {
   const s = garantirSituacao(situacao);
-  const r = rnd || (() => Math.random());
+  const r = rnd || (() => sorteDaCasa());
   const mat0 = material && typeof material === "object" ? material : {};
   /* MM14: o herói nunca é quem pede — mesmo que quem chama o mande. Sem
      pessoa, os veículos que pedem alguém saem da urna, e fica o ermo. */

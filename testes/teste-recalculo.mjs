@@ -1,3 +1,4 @@
+import { trocarACasa } from "../src/semente.js";
 /* O RECÁLCULO QUE NÃO SE MEXE (Z1) — a prova ANTES da fiação.
 
    POR QUE ESTA SUÍTE EXISTE, e ela vale mais do que a remoção que a
@@ -683,15 +684,15 @@ sec("07c. DETERMINISMO — nenhum dado é rolado no caminho do recálculo");
      rolador global por uma função que ESTOURA, e repõe-se no `finally`
      mesmo que a chamada morra — sem o `finally`, uma exceção deixava o
      projeto inteiro com um `Math.random` partido a partir daqui. */
-  const original = Math.random;
+  const original = trocarACasa();
   let estourou = null, correu = 0;
   try {
-    Math.random = () => { throw new Error("o recálculo rolou um dado"); };
+    trocarACasa(() => { throw new Error("o recálculo rolou um dado"); });
     for (const { ficha } of CORPUS) { recalcularFicha(ficha); diferencasDaFicha(ficha); correu++; }
     corpoDaFicha({ classe: CLASSES[0].nome, antecedente: ANT_PV.id, atributos: ATRIBUTOS_B, nivel: 7 });
-  } catch (e) { estourou = e && e.message; } finally { Math.random = original; }
+  } catch (e) { estourou = e && e.message; } finally { trocarACasa(original); }
   t(`o corpus inteiro (${CORPUS.length} fichas) corre com \`Math.random\` a estourar — nenhum dado é rolado`, !estourou, `${estourou} (parou na ficha ${correu})`);
-  t("e o rolador global foi reposto", Math.random === original && typeof Math.random() === "number");
+  t("e o rolador global foi reposto", trocarACasa() === original && typeof Math.random() === "number");
 
   /* E A PROVA PELO RESULTADO, por cima da estrutural: a mesma ficha dá o
      mesmo JSON em máquinas diferentes porque não há nada de ambiente no

@@ -5,6 +5,7 @@
      tabela, com motivo ligado ao que você REALMENTE fez. O ódio cresce a
      cada dia; nos limiares, ela age (sabotagem, assassinos, difamação…).
    - RUMORES viajam citando feitos verdadeiros dos seus contadores. */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 /* v9.54: DOIS DEGRAUS NOVOS NO TOPO. "Lenda Viva" cobria de 70 até o teto de
    100 — quase um terço da escala inteira num rótulo só, e a fama parava de
@@ -76,7 +77,7 @@ const RUMORES_MUNDO = [
   "falaram que um navio chegou ao porto sem tripulação. A carga estava intacta",
 ];
 
-export function rumorSobreJogador(cont, nome, patamar) {
+export function rumorSobreJogador(cont, nome, patamar, sorte = null) { return comSorte(sorte, () => {
   const feitos = [];
   if ((cont.masmorrasConcluidas || 0) > 0) feitos.push(`dizem que ${nome} desceu em ${cont.masmorrasConcluidas > 1 ? `${cont.masmorrasConcluidas} masmorras` : "uma masmorra"} e voltou para contar — ninguém volta de lá`);
   if ((cont.lendariosDerrotados || 0) > 0) feitos.push(`juram que ${nome} derrubou uma criatura lendária a sangue frio`);
@@ -86,15 +87,17 @@ export function rumorSobreJogador(cont, nome, patamar) {
   if ((cont.quaseMorte || 0) >= 2) feitos.push(`cochicham que ${nome} já morreu ${cont.quaseMorte} vezes — a morte é que não quis ficar com ele`);
   if (patamar.min >= 45) feitos.push(`em duas cidades já chamam ${nome} de ${patamar.rotulo.toLowerCase()} sem ninguém corrigir`);
   if (!feitos.length) return null;
-  return feitos[Math.floor(Math.random() * feitos.length)];
+  return feitos[Math.floor(sorteDaCasa() * feitos.length)];
+  });
 }
 
-export function rumorDoDia(cont, nome, patamar, temNemesis) {
-  const r = Math.random();
+export function rumorDoDia(cont, nome, patamar, temNemesis, sorte = null) { return comSorte(sorte, () => {
+  const r = sorteDaCasa();
   if (temNemesis && r < 0.2) return "dizem que alguém poderoso anda fazendo perguntas sobre você — e pagando bem pelas respostas";
   if (r < 0.45) {
     const s = rumorSobreJogador(cont, nome, patamar);
     if (s) return s;
   }
-  return RUMORES_MUNDO[Math.floor(Math.random() * RUMORES_MUNDO.length)];
+  return RUMORES_MUNDO[Math.floor(sorteDaCasa() * RUMORES_MUNDO.length)];
+  });
 }

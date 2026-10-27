@@ -7,6 +7,7 @@
    sorteada pelo sistema e servida pronta para a narração.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { moldePorId } from "./moldes.js";
 /* v9.102: o LEXICO nomeia as cidades do mapa quando o mundo tem um.
    Devolve null sem lexico, e ai o molde e o banco generico respondem. */
@@ -46,7 +47,7 @@ export const PORTES = {
   base:              { rotulo: "base",            min: 200,   max: 3000,   servicos: "segurança pesada, trânsito controlado" },
   "capital orbital": { rotulo: "capital orbital", min: 90000, max: 400000, servicos: "o braço inteiro passa por aqui" },
 };
-export function populacaoDe(porte, rnd = Math.random) {
+export function populacaoDe(porte, rnd = sorteDaCasa) {
   const p = PORTES[porte] || PORTES.cidade;
   if (!p.max) return 0;
   return Math.round((p.min + rnd() * (p.max - p.min)) / 10) * 10;

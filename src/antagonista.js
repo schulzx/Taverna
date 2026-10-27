@@ -40,6 +40,7 @@
    CORPO, a queda ganha cinco formas — e a estrutura de capítulos passa a
    conseguir escrever finais que ela não conseguia.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 /* ---------------- OS CORPOS ----------------
    `ritmo` multiplica os dias por passo do plano: um conselho precisa
@@ -78,7 +79,7 @@ export const CORPOS = [
   },
 ];
 export function corpoPorId(id) { return CORPOS.find((c) => c.id === id) || CORPOS[0]; }
-export function escolherCorpo(sorte = Math.random) {
+export function escolherCorpo(sorte = sorteDaCasa) {
   const total = CORPOS.reduce((a, c) => a + c.peso, 0);
   let r = sorte() * total;
   for (const c of CORPOS) { r -= c.peso; if (r <= 0) return c.id; }
@@ -208,7 +209,7 @@ export const LEITURAS = [
 ];
 export function leituraPorId(id) { return LEITURAS.find((l) => l.id === id) || null; }
 
-export function lerOHeroi(mente, { sorte = Math.random } = {}) {
+export function lerOHeroi(mente, { sorte = sorteDaCasa } = {}) {
   const v = garantirMente(mente);
   const cand = [];
   for (const l of LEITURAS) {
@@ -267,7 +268,7 @@ export function podeResponder(mente) {
   return v.quanto >= 1;
 }
 
-export function responder(mente, { sorte = Math.random } = {}) {
+export function responder(mente, { sorte = sorteDaCasa } = {}) {
   const v = garantirMente(mente);
   if (!podeResponder(v)) return null;
   const leitura = lerOHeroi(v, { sorte });

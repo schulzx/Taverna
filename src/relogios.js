@@ -35,6 +35,7 @@
       personagem ao encher só ensinaria o jogador a nunca deixar
       encher, e aí ele nunca correria risco nenhum.
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 export const TAMANHOS = [4, 6, 8];
 export const MAX_RELOGIOS = 6;
@@ -110,12 +111,12 @@ function comFuga(f) {
   return { fuga: { efeito, bando, lugar: norm(f.lugar).slice(0, L.lugar), degrau: norm(f.degrau).slice(0, L.degrau) } };
 }
 
-export function garantirRelogios(lista) {
+export function garantirRelogios(lista, sorte = null) { return comSorte(sorte, () => {
   if (!Array.isArray(lista)) return [];
   return lista
     .filter((r) => r && r.nome && Number.isFinite(r.segmentos))
     .map((r) => ({
-      id: r.id || `rel_${Math.random().toString(36).slice(2, 8)}`,
+      id: r.id || `rel_${sorteDaCasa().toString(36).slice(2, 8)}`,
       nome: norm(r.nome).slice(0, 60),
       tipo: TIPOS[r.tipo] ? r.tipo : "ameaca",
       segmentos: TAMANHOS.includes(r.segmentos) ? r.segmentos : 6,
@@ -127,6 +128,7 @@ export function garantirRelogios(lista) {
       ...comFuga(r.fuga),
     }))
     .slice(0, MAX_RELOGIOS);
+  });
 }
 
 export function criarRelogio({ nome, tipo = "ameaca", segmentos = 6, gatilho = "noite", consequencia = "", fonte = "sistema", dia = 0, id, fuga }) {

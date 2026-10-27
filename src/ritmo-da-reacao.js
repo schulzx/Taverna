@@ -32,6 +32,7 @@
    ============================================================ */
 
 import { reacoesDe, escolherReacao } from "./reacoes.js";
+import { sorteDe } from "./semente.js";
 
 /* ---------------- O RELÓGIO ----------------
    `janela` é o orçamento inteiro, e é da pessoa (15 s, decisão de 15/09).
@@ -345,23 +346,19 @@ export function ritmoDaRodada(entrada) {
    das dívidas: parte em silêncio no dia em que uma das cópias muda. */
 
 /* O CINTO DA SUÍTE, e ele não é hipocrisia — é o contrário dela.
-   `escolherReacao` rola o dado da `chance` chamando o rolador global
-   directamente, e este módulo não a pode reescrever: extrair
-   `reacoesQueSeAplicam` é trabalho de K3, e a regra [R4] diz porquê não a
-   antecipar — mover o rolo da oferta para a resolução muda o mundo de quem
-   RESPONDE, e esse mundo não está travado por nada ainda.
+   Até a Fase T0 (27/10) `escolherReacao` rolava o dado da `chance` pelo
+   rolador global, e este módulo trocava o próprio `Math.random` à volta da
+   chamada. Desde a T0 a `escolherReacao` recebe `sorte` — o dia que este
+   comentário esperava —, e o rolador entra pela porta: o mesmo `contado`,
+   passado como argumento. A regra [R4] continua de pé (o rolo não mudou de
+   lugar: continua na oferta, uma aposta por golpe).
 
-   Então o rolador entra pela única porta que existe hoje: o global,
-   substituído à volta da chamada e reposto em `finally` mesmo se ela
-   estourar. Em produção `rolar` é o próprio global e a troca é um no-op
-   exacto — trocar a função por ela mesma. O que ela compra é a única coisa
-   de que a trava precisa e que de outra forma não teria: CONTAR os rolos e
-   SEMEÁ-LOS. Determinismo declarado e determinismo provado são coisas
-   diferentes, e a diferença entre as duas é exactamente este parâmetro.
+   O que o parâmetro compra é a única coisa de que a trava precisa e que de
+   outra forma não teria: CONTAR os rolos e SEMEÁ-LOS. Determinismo declarado
+   e determinismo provado são coisas diferentes, e a diferença entre as duas
+   é exactamente este parâmetro.
 
-   Hipocrisia seria copiar a regra para aqui e prová-la contra a cópia.
-   Estas seis linhas saem inteiras no dia em que `escolherReacao` receber o
-   rolador por parâmetro, e nada mais neste arquivo muda. */
+   Hipocrisia seria copiar a regra para aqui e prová-la contra a cópia. */
 export function reacaoDoSilencio(entrada) {
   /* `= {}` no destructuring NÃO cobre `null`: por isso a entrada é aberta
      à mão. E as quatro chaves são as únicas que existem — NENHUMA de
@@ -372,13 +369,11 @@ export function reacaoDoSilencio(entrada) {
   const golpes = Array.isArray(e.golpes) ? e.golpes : [];
   const heroi = e.heroi || null;
   const desde = Number(e.desde) || 0;
-  const rolar = typeof e.rolar === "function" ? e.rolar : Math.random;
+  const rolar = sorteDe(e.rolar);
 
   let rolos = 0;
   const contado = () => { rolos++; return rolar(); };
-  const global = Math.random;
-  try {
-    Math.random = contado;
+  {
     for (let i = 0; i < golpes.length; i++) {
       const g = golpes[i] || {};
       const ordem = ordemDe(g, i);
@@ -393,14 +388,14 @@ export function reacaoDoSilencio(entrada) {
          é a mesma lista que `ritmoDaRodada` recebe. */
       const gatilho = g.gatilho || (dano > 0 ? "sofre_dano" : "inimigo_erra");
       const escolhida = escolherReacao({
-        pers: heroi, gatilho, dano, temReacao: true, tipoDano: g.tipoDano || "fisico",
+        pers: heroi, gatilho, dano, temReacao: true, tipoDano: g.tipoDano || "fisico", sorte: contado,
       });
       /* `null` não pára o laço: é a `chance` que falhou, e hoje o motor
          repete a aposta no golpe seguinte. É AQUI que vivem os 39,8 %. */
       if (!escolhida) continue;
       return { reacao: escolhida, ordem, rolos };
     }
-  } finally { Math.random = global; }
+  }
   return { reacao: null, ordem: null, rolos };
 }
 

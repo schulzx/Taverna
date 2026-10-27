@@ -14,6 +14,7 @@
    encontra outra. Nada disso ocupa espaço no save.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { gerarLoot, RARIDADE_ROTULO } from "./loot.js";
 import { SUPRIMENTOS, garantirSuprimentos } from "./ermos.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel, descricaoCurta } from "./pocoes.js";
@@ -298,7 +299,7 @@ export function talvezAmbulante(dia, nivel, opcoes) {
   const chance = Number.isFinite(o.chance) ? o.chance : CHANCE_AMBULANTE;
   const lex = o.lex || null;
   const temSemente = o.semente != null && String(o.semente) !== "";
-  const rnd = temSemente ? rngDe(`ambulante|${dia}|${o.semente}`) : typeof o.sorte === "function" ? o.sorte : Math.random;
+  const rnd = temSemente ? rngDe(`ambulante|${dia}|${o.semente}`) : typeof o.sorte === "function" ? o.sorte : sorteDaCasa;
   if (rnd() > chance) return null;
   return gerarMercador({ cidade: null, semente: `ambulante|${dia}|${Math.floor(rnd() * 1e6)}`, nivel, tipo: "ambulante", dia, lex });
 }

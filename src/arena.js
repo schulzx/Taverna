@@ -19,10 +19,12 @@
 
    ---------------- A SORTE TRAVADA ----------------
 
-   `combate.js` rola com Math.random. Em vez de duplicar as fórmulas
-   para injetar dado (a regra copiada que a lei-mãe proíbe), a arena
-   TRAVA a sorte: troca Math.random por um gerador semeado durante a
-   simulação e restaura no finally. Mesma dupla + mesma semente = mesmo
+   `combate.js` rola com a sorte da casa (`sorteDaCasa`, semente.js). Em
+   vez de duplicar as fórmulas para injetar dado (a regra copiada que a
+   lei-mãe proíbe), a arena TRAVA a sorte: `comSorte` troca a reserva da
+   casa por um gerador semeado durante a simulação e restaura no finally.
+   Até a Fase T0 (27/10) a troca era do próprio `Math.random` global; agora
+   aponta só para dentro da casa, e o duelo rola os mesmos dados de antes. Mesma dupla + mesma semente = mesmo
    duelo, golpe a golpe — o determinismo é o árbitro (lei v).
 
    ---------------- O QUE DURA ALGUNS TURNOS (v9.225 · A3) ----------------
@@ -76,6 +78,7 @@
    ============================================================ */
 
 import { turnoDosCompanheiros, defesaDe, testeConcentracao } from "./combate.js";
+import { comSorte, sorteDaCasa } from "./semente.js";
 import { firmarEfeito, efeitoDeBuff, absorverDano, efeitoEmConcentracao, quebrarConcentracao, regeneracaoDaHabilidade } from "./efeitos.js";
 import { guardaDe, erguerGuarda, expirarGuardas } from "./habilidades.js";
 import { tickEfeitos, pousarCura, atributoEfetivo } from "./regras-jogo.js";
@@ -109,9 +112,7 @@ function sorteDaSemente(semente) {
   return () => { k = (Math.imul(k, 1103515245) + 12345) >>> 0; return (k >>> 8) / 16777216; };
 }
 function comSorteTravada(semente, fn) {
-  const original = Math.random;
-  Math.random = sorteDaSemente(semente);
-  try { return fn(); } finally { Math.random = original; }
+  return comSorte(sorteDaSemente(semente), fn);
 }
 
 /* ---------------- A PROJEÇÃO ----------------
@@ -372,8 +373,8 @@ export function simularQueda(fichaA, fichaB, { semente = "queda", terreno = null
     const linhas = [];
     const t = terreno || TERRENOS_DA_ARENA[0];
     linhas.push(`Em ${t.nome}: ${t.diz}.`);
-    const iniA = (A.atributos?.destreza || 0) + Math.floor(Math.random() * 20);
-    const iniB = (B.atributos?.destreza || 0) + Math.floor(Math.random() * 20);
+    const iniA = (A.atributos?.destreza || 0) + Math.floor(sorteDaCasa() * 20);
+    const iniB = (B.atributos?.destreza || 0) + Math.floor(sorteDaCasa() * 20);
     let ordem = iniA >= iniB ? [A, B] : [B, A];
     let rodada = 1;
     while (rodada <= RODADAS_MAX && A.vida > 0 && B.vida > 0) {

@@ -1,6 +1,7 @@
 /* teste-guardas.mjs (v9.232) — a defesa que dura turnos, os tres reerguer
    que faltaram no casamento da v9.47, e a catraca de P2: as nove guardas
    sao VISIVEIS ao piloto que joga companheiro e duelista.                   */
+import { trocarACasa } from "../src/semente.js";
 import { guardaDe, erguerGuarda, expirarGuardas, baixarGuardas, defesaDeGuarda, guardasAtivas, estaIntocavel, esquivaDeGuarda, GUARDAS, reerguerDe, reerguer } from "../src/habilidades.js";
 import { defesaDe, resolverAtaque } from "../src/combate.js";
 import { CLASSES } from "../src/classes.js";
@@ -195,9 +196,9 @@ sec("6. o piloto reconhece as nove guardas (P2)");
 
   /* o molde de arena.js: trava, roda, e devolve `Math.random` no finally */
   const comSorteTravada = (valor, fn) => {
-    const original = Math.random;
-    Math.random = () => valor;
-    try { return fn(); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(() => valor);
+    try { return fn(); } finally { trocarACasa(original); }
   };
 
   /* ---------------- O ACERVO INTEIRO ---------------- */

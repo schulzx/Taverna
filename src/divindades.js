@@ -3,6 +3,7 @@
    escala de Grau de Divindade (GD 0–4) alimentada por fé, com a Regra do
    Degrau (±2 por degrau de diferença) — o Mestre NUNCA calcula nada disso,
    o sistema entrega os parâmetros prontos e ele só narra. */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 export const NIVEL_DESPERTAR = 15; // abaixo disso a ascensão NÃO existe na ficção
 
@@ -97,24 +98,24 @@ const DOMINIOS = [
 const TITULOS_CULTO = ["a Ordem", "o Círculo", "os Filhos", "a Seita", "os Vigias", "o Concílio", "as Mãos"];
 
 function nomeDivino() {
-  return DIV_NOMES_A[Math.floor(Math.random() * DIV_NOMES_A.length)] + DIV_NOMES_B[Math.floor(Math.random() * DIV_NOMES_B.length)];
+  return DIV_NOMES_A[Math.floor(sorteDaCasa() * DIV_NOMES_A.length)] + DIV_NOMES_B[Math.floor(sorteDaCasa() * DIV_NOMES_B.length)];
 }
 
 /* Gera UMA divindade completa: força (GD/fiéis/PF) já sorteada e coerente —
    é o "parâmetro" que o Mestre recebe de graça, sem gastar tokens inventando números. */
-export function gerarDivindade(ctx, dia, { gdFixo = null } = {}) {
-  const dom = DOMINIOS[Math.floor(Math.random() * DOMINIOS.length)];
+export function gerarDivindade(ctx, dia, { gdFixo = null, sorte = null } = {}) { return comSorte(sorte, () => {
+  const dom = DOMINIOS[Math.floor(sorteDaCasa() * DOMINIOS.length)];
   /* distribuição: deuses menores são comuns; maiores, raros */
-  const rolo = Math.random();
+  const rolo = sorteDaCasa();
   const gd = gdFixo != null ? gdFixo : (rolo < 0.40 ? 2 : rolo < 0.75 ? 3 : 4);
   const baseFieis = GRAUS[gd].fieis || 5000;
-  const fieis = gd === 2 ? 5000 + Math.floor(Math.random() * 45000)
-    : gd === 3 ? 100000 + Math.floor(Math.random() * 400000)
-    : 1000000 + Math.floor(Math.random() * 3000000);
-  const temper = dom.temper[Math.floor(Math.random() * dom.temper.length)];
+  const fieis = gd === 2 ? 5000 + Math.floor(sorteDaCasa() * 45000)
+    : gd === 3 ? 100000 + Math.floor(sorteDaCasa() * 400000)
+    : 1000000 + Math.floor(sorteDaCasa() * 3000000);
+  const temper = dom.temper[Math.floor(sorteDaCasa() * dom.temper.length)];
   const nome = nomeDivino();
   return {
-    id: `dv${dia}-${Math.floor(Math.random() * 1e6)}`,
+    id: `dv${dia}-${Math.floor(sorteDaCasa() * 1e6)}`,
     nome,
     dominio: dom.dominio,
     icone: dom.icone,
@@ -122,43 +123,46 @@ export function gerarDivindade(ctx, dia, { gdFixo = null } = {}) {
     fieis,
     pf: Math.floor(fieis / 1000), // reserva de milagres proporcional à fé
     temperamento: temper,
-    culto: `${TITULOS_CULTO[Math.floor(Math.random() * TITULOS_CULTO.length)]} ${nome.endsWith("a") || nome.endsWith("e") ? "de" : "de"} ${nome}`,
+    culto: `${TITULOS_CULTO[Math.floor(sorteDaCasa() * TITULOS_CULTO.length)]} ${nome.endsWith("a") || nome.endsWith("e") ? "de" : "de"} ${nome}`,
     lugar: ctx && ctx.lugar ? ctx.lugar : "",
     criadoEm: dia,
     nota: `${temper[0].toUpperCase()}${temper.slice(1)} — culto ${gd >= 4 ? "antigo e presente em todo o mundo conhecido" : gd === 3 ? "forte em várias cidades" : "local, mas fervoroso"}.`,
   };
+  });
 }
 
 /* Panteão inicial quando o jogador desperta: o mundo GANHA céu de repente —
    3 divindades variadas já existiam (só agora o herói consegue percebê-las). */
-export function gerarPanteaoInicial(ctx, dia) {
+export function gerarPanteaoInicial(ctx, dia, sorte = null) { return comSorte(sorte, () => {
   return [
     gerarDivindade(ctx, dia, { gdFixo: 2 }),
     gerarDivindade(ctx, dia, { gdFixo: 3 }),
     gerarDivindade(ctx, dia, { gdFixo: 4 }),
   ];
+  });
 }
 
 /* ───────── Gerador de eventos divinos (só depois do despertar) ───────── */
 const EVENTOS_DIVINOS = [
-  (c, d) => ({ icone: "⛈", texto: `${d.icone} ${d.nome} ${d.dominio} manifesta-se: um sinal impossível (${d.temperamento === "colérica" ? "tempestade com relâmpagos que escrevem runas" : "fenômeno que ninguém consegue explicar"}) é visto ${c.lugar ? `perto de ${c.lugar}` : "na região"}. O culto ${d.culto} interpreta como ${Math.random() < 0.5 ? "aviso" : "promessa"}.`, gancho: "investigar o sinal pode render favor — ou inimizade — da divindade" }),
+  (c, d) => ({ icone: "⛈", texto: `${d.icone} ${d.nome} ${d.dominio} manifesta-se: um sinal impossível (${d.temperamento === "colérica" ? "tempestade com relâmpagos que escrevem runas" : "fenômeno que ninguém consegue explicar"}) é visto ${c.lugar ? `perto de ${c.lugar}` : "na região"}. O culto ${d.culto} interpreta como ${sorteDaCasa() < 0.5 ? "aviso" : "promessa"}.`, gancho: "investigar o sinal pode render favor — ou inimizade — da divindade" }),
   (c, d) => ({ icone: "🕯", texto: `Paladinos d${d.culto} chegam ${c.lugar ? `a ${c.lugar}` : "à região"} caçando um relicário roubado d${d.nome === "relicário" ? "e" : `e ${d.nome}`}. Oferecem recompensa em bênçãos (PF) a quem ajudar.`, gancho: "relicário pode estar à venda no mercado negro — ou nas mãos de alguém do círculo do herói" }),
   (c, d, d2) => (d2 ? { icone: "⚡", texto: `Guerra de fé: ${d.nome} ${d.icone} e ${d2.nome} ${d2.icone} disputam um mesmo domínio nas orações do povo. Templos rivais se provocam ${c.lugar ? `em ${c.lugar}` : "na região"} — e cada lado busca campeões mortais.`, gancho: "escolher um lado muda sua relação com os dois deuses" } : null),
   (c, d) => ({ icone: "📿", texto: `Um profeta menor d${d.culto} prega que ${d.nome} ${d.dominio} "escolherá um novo receptáculo entre os mortais desta geração". Multidões se agitam; olhares começam a medir os heróis conhecidos — inclusive você.`, gancho: "o culto pode vir testar (ou recrutar) o herói" }),
   (c, d) => ({ icone: "🌑", texto: `As orações a ${d.nome} ficaram sem resposta por três noites seguidas. O culto ${d.culto} entra em pânico discreto: algo enfraquece a divindade — ou a distraiu.`, gancho: "uma divindade vulnerável é oportunidade rara (e perigosa)" }),
-  (c, d) => ({ icone: "🩸", texto: `Um milagre brutal atribuído a ${d.nome}: ${Math.random() < 0.5 ? "um ímpio foi consumido por dentro pela própria sombra em praça pública" : "uma criança condenada acordou curada falando na língua dos deuses"}. A fé da região oscila.`, gancho: "testemunhas do milagre podem ter visto mais do que deviam" }),
+  (c, d) => ({ icone: "🩸", texto: `Um milagre brutal atribuído a ${d.nome}: ${sorteDaCasa() < 0.5 ? "um ímpio foi consumido por dentro pela própria sombra em praça pública" : "uma criança condenada acordou curada falando na língua dos deuses"}. A fé da região oscila.`, gancho: "testemunhas do milagre podem ter visto mais do que deviam" }),
 ];
 
-export function gerarEventoDivino(ctx, dia, panteao) {
+export function gerarEventoDivino(ctx, dia, panteao, sorte = null) { return comSorte(sorte, () => {
   const lista = (panteao || []).filter((d) => d && d.nome);
   if (!lista.length) return null;
-  const d = lista[Math.floor(Math.random() * lista.length)];
-  const d2 = lista.length > 1 ? lista.filter((x) => x.nome !== d.nome)[Math.floor(Math.random() * (lista.length - 1))] : null;
+  const d = lista[Math.floor(sorteDaCasa() * lista.length)];
+  const d2 = lista.length > 1 ? lista.filter((x) => x.nome !== d.nome)[Math.floor(sorteDaCasa() * (lista.length - 1))] : null;
   for (let tent = 0; tent < 6; tent++) {
-    const ev = EVENTOS_DIVINOS[Math.floor(Math.random() * EVENTOS_DIVINOS.length)](ctx, d, d2);
-    if (ev) return { id: `ed${dia}-${Math.floor(Math.random() * 1e6)}`, ...ev, criadoEm: dia };
+    const ev = EVENTOS_DIVINOS[Math.floor(sorteDaCasa() * EVENTOS_DIVINOS.length)](ctx, d, d2);
+    if (ev) return { id: `ed${dia}-${Math.floor(sorteDaCasa() * 1e6)}`, ...ev, criadoEm: dia };
   }
   return null;
+  });
 }
 
 /* Resumo injetado no rodapé do sistema: o estado da ascensão SEMPRE visível

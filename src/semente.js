@@ -114,3 +114,67 @@ export function acentoDe(subclasse) {
   if (!subclasse) return "#8B7BD8";
   return ACENTOS[hashSemente("acento|" + String(subclasse)) % ACENTOS.length];
 }
+
+/* ============================================================
+   A SORTE DA CASA (Fase T0, 27/10/2026) — nenhum dado fora da semente
+
+   A lei é velha ("mesma semente = mesmo resultado, em qualquer máquina")
+   e não se cumpria: a auditoria do motor contou 103 `Math.random()` diretos
+   e 61 como valor padrão em 29 módulos. Um dado que sai do `Math.random`
+   não se reproduz, não se prova e não se reconta — e uma sessão que é
+   para virar arquivo (semente + frases = a campanha) não pode ter um único.
+
+   Três peças, e a ordem de preferência é esta:
+
+   1. `dadoDo(semente, ...partes)` — O PADRÃO DA CASA. Um gerador preso a
+      `semente|parte|parte`: `dadoDo(mundo.semente, turno, "loot")`. Quem
+      tem semente e sabe o evento usa este, e o resultado é o mesmo em
+      qualquer máquina e em qualquer ordem de chamada.
+
+   2. o parâmetro `sorte`/`rnd`/`rolar` de cada função que sorteia. É por
+      ele que o `dadoDo` entra; toda função que rola aceita um.
+
+   3. `sorteDaCasa` — a RESERVA, o que a função usa quando ninguém lhe deu
+      sorte. Não é `Math.random`: é um gerador semeado, um só para o
+      processo, que avança a cada sorteio. É determinista pela ORDEM — o
+      mesmo processo, a mesma sequência de chamadas, os mesmos dados —, o
+      que basta para a suíte e para a sonda, e não basta para o replay
+      (que precisa da peça 1). `semearACasa(semente)` reinicia a reserva
+      numa semente (o App chama ao abrir uma campanha, para que duas
+      campanhas não comecem com a mesma sequência); `comSorte(rand, fn)`
+      troca a reserva por um gerador só durante `fn` e restaura no
+      `finally` — é a "sorte travada" da arena, que até aqui trocava o
+      próprio `Math.random` global, agora apontada só para dentro da casa.
+
+   A reserva existe para a transição, não como destino: cada chamada que
+   ainda cai nela é uma chamada que a Fase T1 vai semear (a lista mora no
+   diário de 27/10). O varredor `check-sem-random.mjs` impede que volte a
+   nascer um `Math.random` num módulo.
+   ============================================================ */
+export const SEMENTE_DA_CASA = "taverna|sorte-da-casa";
+let correnteDaCasa = rng(hashSemente(SEMENTE_DA_CASA));
+export function sorteDaCasa() { return correnteDaCasa(); }
+export function semearACasa(semente) {
+  correnteDaCasa = rng(hashSemente(`${SEMENTE_DA_CASA}|${semente == null ? "" : String(semente)}`));
+}
+export function comSorte(rand, fn) {
+  if (typeof fn !== "function") return undefined;
+  if (typeof rand !== "function") return fn();
+  const antes = trocarACasa(rand);
+  try { return fn(); } finally { trocarACasa(antes); }
+}
+/* a troca sem escopo, para quem precisa abrir e fechar em sítios diferentes
+   (a suíte que espia, o "antes" e o "depois" de uma medição): devolve a
+   corrente que estava, para ser reposta. Só função entra; o resto devolve a
+   corrente e não troca nada. Quem pode, usa comSorte, que repõe sozinho. */
+export function trocarACasa(rand) {
+  const antes = correnteDaCasa;
+  if (typeof rand === "function") correnteDaCasa = rand;
+  return antes;
+}
+export function dadoDo(semente, ...partes) {
+  return rng(hashSemente([semente, ...partes].map((p) => (p == null ? "" : String(p))).join("|")));
+}
+/* a sorte que a função recebeu, ou a da casa. Só função conta: um número
+   ou um índice (`[..].map(f)`) passaria por sorte e rolaria lixo. */
+export function sorteDe(sorte) { return typeof sorte === "function" ? sorte : sorteDaCasa; }

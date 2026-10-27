@@ -3,6 +3,7 @@
    A camada que faltava: proficiência, curva de XP oficial,
    escalas de tempo e dádivas épicas. Tudo tabela; a IA só narra.
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 /* ---------------- PROFICIÊNCIA ----------------
    No 5e o bônus de um herói não vem só do atributo: soma a
@@ -85,11 +86,12 @@ export const DADIVAS_EPICAS = [
 ];
 export const CHANCE_DADIVA_UNICA = 0.15; // 15% de o Mestre criar uma exclusiva
 
-export function sortearDadiva(jaTem = []) {
-  if (Math.random() < CHANCE_DADIVA_UNICA) return { unica: true };
+export function sortearDadiva(jaTem = [], sorte = null) { return comSorte(sorte, () => {
+  if (sorteDaCasa() < CHANCE_DADIVA_UNICA) return { unica: true };
   const pool = DADIVAS_EPICAS.filter((d) => !jaTem.includes(d.id));
   if (!pool.length) return { unica: true };
-  return { unica: false, dadiva: pool[Math.floor(Math.random() * pool.length)] };
+  return { unica: false, dadiva: pool[Math.floor(sorteDaCasa() * pool.length)] };
+  });
 }
 
 /* Texto do estado épico para o prompt e a ficha. */

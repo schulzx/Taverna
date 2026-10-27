@@ -7,17 +7,18 @@
    já ganhou. Decisão, risco e informação: é isso que faz masmorra.
    Tudo rolado por tabela; a IA só narra o que o sistema entrega.
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { criaturasDoGenero, CRIATURAS_FANTASIA, ARQUETIPOS } from "./bestiario.js";
 import { gerarLoot } from "./loot.js";
 
-const d = (n) => Math.floor(Math.random() * n);
+const d = (n) => Math.floor(sorteDaCasa() * n);
 /* v9.53: era `arr[d(arr.length)]`, e `d(n)` devolve 1..n — nunca 0. O
    primeiro item de TODA tabela deste arquivo era inalcançável (a primeira
    pista, a primeira armadilha, o primeiro enigma, o primeiro santuário), e
    uma em cada `n` chamadas devolvia `undefined`. Em 500 masmorras geradas,
    500 tinham ao menos uma passagem com a pista vazia — o jogador escolhia a
    porta no escuro porque o sorteio caía fora da lista. */
-const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
+const sortear = (arr) => (arr && arr.length ? arr[Math.floor(sorteDaCasa() * arr.length)] : undefined);
 
 const LUGARES = ["Cripta", "Catacumba", "Mina", "Caverna", "Ruína", "Tumba", "Esgoto", "Fortaleza", "Templo", "Cisterna", "Torre", "Labirinto", "Covil", "Santuário", "Prisão", "Abismo"];
 const EPITETOS = ["dos Sussurros", "do Rei Caído", "das Correntes", "do Musgo Negro", "das Ossadas", "do Sino Rachado", "das Águas Paradas", "do Olho Cego", "das Sombras", "do Voto Quebrado", "da Serpente", "dos Ratos", "do Silêncio", "das Brasas", "da Névoa", "do Eremita"];
@@ -124,11 +125,11 @@ function rolarGrupo(genero, nivel, { elite = false } = {}) {
   if (!pool.length) return [];
   if (elite) {
     const fortes = criaturasDoGenero(genero).filter((c) => c.ameaca === "elite" || c.ameaca === "lendario");
-    const chefe = fortes.length && Math.random() < 0.7 ? sortear(fortes) : { nome: "Chefe da Masmorra", ameaca: "elite", nivelRef: nivel + 1 };
-    const capangas = Math.random() < 0.5 ? [sortear(pool)] : [];
+    const chefe = fortes.length && sorteDaCasa() < 0.7 ? sortear(fortes) : { nome: "Chefe da Masmorra", ameaca: "elite", nivelRef: nivel + 1 };
+    const capangas = sorteDaCasa() < 0.5 ? [sortear(pool)] : [];
     return [chefe, ...capangas];
   }
-  const qtd = 1 + (Math.random() < 0.5 ? 1 : 0) + (nivel >= 8 ? 1 : 0);
+  const qtd = 1 + (sorteDaCasa() < 0.5 ? 1 : 0) + (nivel >= 8 ? 1 : 0);
   return Array.from({ length: qtd }, () => sortear(pool));
 }
 
@@ -136,7 +137,7 @@ function conteudoSala(tipo, genero, nivel, profunda) {
   const bonus = profunda ? 1.6 : 1; // quanto mais fundo, melhor a recompensa
   if (tipo === "combate") return { inimigos: rolarGrupo(genero, nivel).map((c) => ({ nome: c.nome, ameaca: c.ameaca })) };
   if (tipo === "armadilha") return { nomeArmadilha: sortear(ARMADILHAS), dano: Math.round((2 + nivel * 0.8 + d(4)) * bonus) };
-  if (tipo === "tesouro") return { moedas: Math.round((10 + nivel * 3 + d(20)) * bonus), caiItem: Math.random() < (profunda ? 0.8 : 0.5) };
+  if (tipo === "tesouro") return { moedas: Math.round((10 + nivel * 3 + d(20)) * bonus), caiItem: sorteDaCasa() < (profunda ? 0.8 : 0.5) };
   /* v9.151: a sala de enigma nasce com uma TRANCA — qual atributo a abre
      e o que ela ensina a quem erra. O campo cena continua para o
      Narrador ter a imagem, mas quem julga agora e o sistema. */
@@ -305,7 +306,7 @@ export function plantaDaFicha(mm, quem) {
    (ver PLANTA_DA_MASMORRA, acima). `opcoes` pode vir `null`.
    MM17 (v9.363): `opcoes.quem` — a lista da ficha do lugar; os inimigos
    saem dela (ver FICHA_NA_PLANTA, acima). */
-export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
+export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) { return comSorte(opcoes && opcoes.sorte, () => {
   const nome = nomeSugerido || `${sortear(LUGARES)} ${sortear(EPITETOS)}`;
   const larguras = opcoes && typeof opcoes === "object" && opcoes.salas != null ? larguraDasCamadas(opcoes.salas) : null;
   const nCamadas = larguras ? larguras.length : nivel >= 8 ? 3 : 2;
@@ -314,10 +315,10 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
   let anterior = [0];
 
   for (let c = 1; c <= nCamadas; c++) {
-    const largura = larguras ? larguras[c - 1] : 2 + (Math.random() < 0.45 ? 1 : 0);
+    const largura = larguras ? larguras[c - 1] : 2 + (sorteDaCasa() < 0.45 ? 1 : 0);
     const atual = [];
     for (let i = 0; i < largura; i++) {
-      const r = Math.random();
+      const r = sorteDaCasa();
       const tipo = r < 0.40 ? "combate" : r < 0.56 ? "armadilha" : r < 0.74 ? "tesouro" : r < 0.88 ? "enigma" : "santuario";
       const profunda = c === nCamadas;
       const sala = { id: idSeq++, tipo, camada: c, saidas: [], visitada: false, resolvida: false, pista: pistaDe(tipo), segredo: sortearSegredo(tipo), ...conteudoSala(tipo, genero, nivel, profunda) };
@@ -335,7 +336,7 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
     /* liga cada sala anterior a 2 desta camada (caminhos que se cruzam) */
     for (const pid of anterior) {
       const pai = salas.find((x) => x.id === pid);
-      const destinos = [...atual].sort(() => Math.random() - 0.5).slice(0, Math.min(2, atual.length));
+      const destinos = [...atual].sort(() => sorteDaCasa() - 0.5).slice(0, Math.min(2, atual.length));
       pai.saidas = [...new Set([...pai.saidas, ...destinos])];
     }
     /* ---------------- TODA SALA PRECISA DE UMA ENTRADA (v9.53) ----------------
@@ -386,6 +387,7 @@ export function gerarMasmorra(genero, nivel, nomeSugerido = "", opcoes = null) {
      diferentes sobre o mesmo lugar. */
   const planta = { nome, nivel: Math.max(1, Math.round(Number(nivel) || 1)), salas: completas, atual: 0, tochas: tochasIniciais(completas), chave: false, ritmo: "normal", saques: { moedas: 0, itens: 0 }, encerrada: false };
   return opcoes && typeof opcoes === "object" && opcoes.quem != null ? plantaDaFicha(planta, opcoes.quem) : planta;
+  });
 }
 
 /* ---------------- QUANTAS TOCHAS (v9.54) ----------------
@@ -878,9 +880,10 @@ export function chefeDesgastado(mm, inimigos) {
   };
 }
 
-export function recompensaChefe(nivel, lex = null) {
-  const raridade = Math.random() < 0.7 ? "epico" : "lendario";
+export function recompensaChefe(nivel, lex = null, sorte = null) { return comSorte(sorte, () => {
+  const raridade = sorteDaCasa() < 0.7 ? "epico" : "lendario";
   return { item: gerarLoot(raridade, { nivel, lex }) };
+  });
 }
 
 export const ROTULO_SALA = { entrada: "Entrada", combate: "Combate", armadilha: "Armadilha", tesouro: "Tesouro", enigma: "Enigma", santuario: "Santuário", chave: "Guardião", chefe: "Chefe" };
@@ -916,11 +919,12 @@ const SEGREDOS = [
 ];
 
 /* Sorteia o segredo de uma sala (nem toda sala tem). */
-export function sortearSegredo(tipoSala) {
+export function sortearSegredo(tipoSala, sorte = null) { return comSorte(sorte, () => {
   const chance = tipoSala === "tesouro" ? 0.55 : tipoSala === "armadilha" ? 0.6 : tipoSala === "combate" ? 0.3 : 0.4;
-  if (Math.random() > chance) return null;
-  const s = SEGREDOS[Math.floor(Math.random() * SEGREDOS.length)];
+  if (sorteDaCasa() > chance) return null;
+  const s = SEGREDOS[Math.floor(sorteDaCasa() * SEGREDOS.length)];
   return { ...s, revelado: false, resolvido: false };
+  });
 }
 
 /* Ao ENTRAR: a percepção passiva revela sozinha o que estiver abaixo dela.
@@ -1036,12 +1040,12 @@ export function cdDaArmadilha(sala) {
    `armada: true` no `mm` novo; sem ela, `mm` é o mesmo e o App segue o
    caminho de hoje (o disparo). `null` quando a sala não é de armadilha viva
    ou a armadilha já estava à vista. `opcoes`: { passiva, mod, ritmo,
-   sorte = Math.random } (podem vir null). Nunca muta o `mm`. */
+   sorte = sorteDaCasa } (podem vir null). Nunca muta o `mm`. */
 export function notarArmadilha(mm, opcoes) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const sala = salaAtualDe(mm);
   if (!armadilhaViva(sala) || sala.armada) return null;
-  const sorte = typeof o.sorte === "function" ? o.sorte : Math.random;
+  const sorte = typeof o.sorte === "function" ? o.sorte : sorteDaCasa;
   const cd = cdDaArmadilha(sala);
   const passiva = Number.isFinite(Number(o.passiva)) ? Number(o.passiva) : percepcaoPassiva(Number(o.mod) || 0, o.ritmo);
   const seg = sala.segredo && typeof sala.segredo === "object" ? sala.segredo : null;

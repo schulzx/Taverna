@@ -378,7 +378,12 @@ function medirModo({ heroi, inimigos, passoH, modo, rodada, alvo = null, defesa 
 function defesaDaFuga(a, ficha) {
   if (typeof a.defesaHeroi === "number" && Number.isFinite(a.defesaHeroi)) return a.defesaHeroi;
   if (!ficha) return null;
-  try { const d = defesaDe(ficha); return Number.isFinite(d) ? d : null; } catch { return null; }
+  /* Fase T0 (27/10): o abrigo de `protegido` soma aqui como soma em `ca`
+     (combate.js) — a chance mostrada e o golpe rolado leem a mesma defesa. */
+  try {
+    const d = defesaDe(ficha) + mecanicaDe(Array.isArray(ficha.condicoes) ? ficha.condicoes : []).defesa;
+    return Number.isFinite(d) ? d : null;
+  } catch { return null; }
 }
 
 export function vereditoDaFuga(args) {
@@ -715,8 +720,8 @@ export function folegoDepoisDoTurno(folego, lugares) {
    uma não dependa de quantos dados a outra gastou.
 
    `heroi` aqui é a FICHA (a que `golpesAoSair` já passa ao combate), não
-   a peça da grade. Sem ficha, nada se rola. Sem semente, é o Math.random
-   do combate de sempre.
+   a peça da grade. Sem ficha, nada se rola. Sem semente, é a sorte da
+   casa (semente.js), a do combate de sempre.
 
    Devolve [{ nome, tipo: "golpe" | "disparo", r }], na ordem da linha:
    golpes primeiro, depois disparos. O `r` é o de `resolverAtaque`, e é o

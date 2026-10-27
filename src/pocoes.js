@@ -13,10 +13,11 @@
    usa sozinho na luta.
    ============================================================ */
 
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { criarCondicao } from "./condicoes.js";
 import { empilhar } from "./efeitos.js";
 
-const d = (n) => 1 + Math.floor(Math.random() * n);
+const d = (n) => 1 + Math.floor(sorteDaCasa() * n);
 export function rolarDado(qtd, faces, fixo = 0) {
   let t = 0;
   for (let i = 0; i < qtd; i++) t += d(faces);
@@ -160,15 +161,16 @@ export function usarConsumivel(ent, idOuItem) {
 /* ---------------- SORTEIO (drops e estoque de mercador) ----------------
    Nível do herói filtra o que aparece: ninguém acha poção grande no
    nível 2, e no nível 15 a bolsa não vive de poção pequena. */
-export function sortearConsumivel(nivel = 1, { tipos = null } = {}) {
+export function sortearConsumivel(nivel = 1, { tipos = null, sorte = null } = {}) { return comSorte(sorte, () => {
   const pool = CONSUMIVEIS.filter((c) => c.nivel <= (nivel || 1) + 2 && (!tipos || tipos.includes(c.tipo)));
   if (!pool.length) return null;
   /* peso: o que é caro demais para o nível aparece menos */
   const pesos = pool.map((c) => (c.nivel > (nivel || 1) ? 1 : c.raridade === "comum" ? 5 : c.raridade === "incomum" ? 3 : 1));
   const total = pesos.reduce((s, x) => s + x, 0);
-  let r = Math.random() * total;
+  let r = sorteDaCasa() * total;
   for (let i = 0; i < pool.length; i++) { r -= pesos[i]; if (r <= 0) return pool[i]; }
   return pool[0];
+  });
 }
 
 /* Quem no grupo deveria beber o quê — usado pela IA dos companheiros. */

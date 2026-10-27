@@ -5,6 +5,7 @@
    próprio nome e o da campanha; o sorteio é opcional para ele.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { nomeDeTaverna } from "./toponimia.js";
 /* v9.101: o LEXICO entra antes do genero nos bancos de gente. Devolve
    null quando o mundo nao tem um, e ai a linha e a de sempre. */
@@ -39,8 +40,8 @@ export function oficioNoGenero(papel, generoPessoa) {
 /* utilitário de sorteio determinístico opcional ou aleatório */
 /* `rnd` opcional (v9.8): passando um gerador semeado, o mesmo mundo produz
    sempre os mesmos nomes. Sem ele, continua aleatório como antes. */
-export function sortear(arr, rnd = Math.random) { return arr[Math.floor(rnd() * arr.length)]; }
-export function sortearVarios(arr, n, rnd = Math.random) {
+export function sortear(arr, rnd = sorteDaCasa) { return arr[Math.floor(rnd() * arr.length)]; }
+export function sortearVarios(arr, n, rnd = sorteDaCasa) {
   const copia = [...arr]; const out = [];
   for (let i = 0; i < n && copia.length; i++) out.push(copia.splice(Math.floor(rnd() * copia.length), 1)[0]);
   return out;
@@ -48,7 +49,7 @@ export function sortearVarios(arr, n, rnd = Math.random) {
 
 /* Combinador: gera nomes compostos a partir de partes (variedade enorme
    com poucas listas — dezenas de milhares de combinações possíveis). */
-export function combinar(pre, suf, { junta = "", rnd = Math.random } = {}) {
+export function combinar(pre, suf, { junta = "", rnd = sorteDaCasa } = {}) {
   return `${sortear(pre, rnd)}${junta}${sortear(suf, rnd)}`;
 }
 
@@ -124,7 +125,7 @@ function bancoDe(genero) { return BANCO[genero] || FANTASIA; }
 
 /* API pública: gera nomes por gênero. Metade das cidades usa nome único
    da lista, metade combina prefixo+sufixo (variedade quase infinita). */
-export function nomeCidade(genero, rnd = Math.random) {
+export function nomeCidade(genero, rnd = sorteDaCasa) {
   const b = bancoDe(genero);
   if (rnd() < 0.45 && b.cidadeUnica) return sortear(b.cidadeUnica, rnd);
   return combinar(b.cidadePre, b.cidadeSuf, { rnd });
@@ -133,13 +134,13 @@ export function nomeCidade(genero, rnd = Math.random) {
    arquivo como referência do TOM que o gerador tem de acertar, mas quem
    sorteia é a toponímia — 25 nomes para um mundo de catorze cidades
    repetiam entre criações, e o jogador notou em três. */
-export function nomeTaverna(genero, rnd = Math.random) { return nomeDeTaverna(genero, rnd); }
+export function nomeTaverna(genero, rnd = sorteDaCasa) { return nomeDeTaverna(genero, rnd); }
 /* v9.102: e o LÉXICO manda no nome próprio, quando o mundo tem um. É o
    campo mais seguro de todos — nada no sistema consulta "Aldric" para
    decidir coisa nenhuma —, e era o mais visível dos que faltavam: um
    "Alaric Punho-de-Pedra" desmente, sozinho, a linha ao lado que diz que
    ele é vendedor de equipamento de caçada. */
-export function nomePessoa(genero, sexo, rnd = Math.random, lex = null) {
+export function nomePessoa(genero, sexo, rnd = sorteDaCasa, lex = null) {
   const b = nomesDo(lex) || bancoDe(genero);
   const primeiro = sexo === "fem" ? sortear(b.fem, rnd) : sexo === "masc" ? sortear(b.masc, rnd) : sortear(rnd() < 0.5 ? b.masc : b.fem, rnd);
   const comSobrenome = rnd() < 0.6;
@@ -208,7 +209,7 @@ const OCUPACOES = {
    ferreiro e escriba porque o primeiro termo passou a existir; num mundo
    sem léxico, `oficiosDo` devolve null e a linha é a de antes, caractere
    por caractere. */
-export function pessoaDiversa(genero, rnd = Math.random, lex = null) {
+export function pessoaDiversa(genero, rnd = sorteDaCasa, lex = null) {
   const g = genero || "Fantasia medieval";
   const sexo = rnd() < 0.5 ? "masc" : "fem";
   const racas = povosDo(lex) || RACAS_POR_GENERO[g] || RACAS_POR_GENERO["Fantasia medieval"];
@@ -232,7 +233,7 @@ export function elencoDiverso(genero, n = 6, lex = null) {
   const g = genero || "Fantasia medieval";
   const out = [];
   for (let i = 0; i < n; i++) {
-    const p = pessoaDiversa(g, Math.random, lex);
+    const p = pessoaDiversa(g, sorteDaCasa, lex);
     /* força alternância de gênero para garantir equilíbrio real.
 
        v9.102: e o SEGUNDO sorteio também precisa do léxico. Sem isto, o
@@ -241,8 +242,8 @@ export function elencoDiverso(genero, n = 6, lex = null) {
        Pé-Leve, motorista de resgate", que é a incoerência inteira dentro
        de uma linha só. A regra morava em dois caminhos e um deles não
        sabia dela. */
-    if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem", Math.random, lex); }
-    else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc", Math.random, lex); }
+    if (i % 2 === 0) { p.genero_pessoa = "mulher"; p.nome = nomePessoa(g, "fem", sorteDaCasa, lex); }
+    else { p.genero_pessoa = "homem"; p.nome = nomePessoa(g, "masc", sorteDaCasa, lex); }
     out.push(p);
   }
   return out;

@@ -25,9 +25,10 @@
    narra o cheiro da oficina — que é o trabalho dele.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { CONSUMIVEIS, consumivelPorId, itemConsumivel } from "./pocoes.js";
 
-const d20 = () => 1 + Math.floor(Math.random() * 20);
+const d20 = () => 1 + Math.floor(sorteDaCasa() * 20);
 
 /* ---------------- 1. COMPONENTES ----------------
    `origem` diz de onde cai, e é o que liga o craft ao resto do mundo:
@@ -158,7 +159,7 @@ const COLHEITA_POR_BIOMA = {
   gelo: ["musgo_lunar", "cristal_bruto", "sal_negro"],
 };
 
-export function colherComponentes(bioma, modPercepcao = 0, { sorte = Math.random } = {}) {
+export function colherComponentes(bioma, modPercepcao = 0, { sorte = sorteDaCasa } = {}) {
   const tabela = COLHEITA_POR_BIOMA[bioma] || COLHEITA_POR_BIOMA.planicie;
   /* mão treinada acha mais: 1 achado garantido, e o modificador compra a chance de um segundo */
   const quantos = 1 + (sorte() < Math.min(0.6, 0.12 * Math.max(0, modPercepcao)) ? 1 : 0);
@@ -170,7 +171,7 @@ export function colherComponentes(bioma, modPercepcao = 0, { sorte = Math.random
 /* ABATE — o que dá para tirar de um corpo. Criatura mágica deixa essência;
    bicho deixa couro; o que peçonhento deixa é glândula. A ameaça decide
    quantos, porque esfolar um lobo não é esfolar um dragão. */
-export function despojosDe(inimigos = [], { sorte = Math.random } = {}) {
+export function despojosDe(inimigos = [], { sorte = sorteDaCasa } = {}) {
   const out = [];
   for (const e of inimigos) {
     if (!e || !e.nome) continue;

@@ -59,7 +59,7 @@ import { moldePorId } from "../src/moldes.js";
 import { ESTRUTURAS } from "../src/historia.js";
 import { CRIATURAS_FANTASIA, ARQUETIPOS } from "../src/bestiario.js";
 import { linhaDaFicha } from "../src/masmorra-sem-cidade.js";
-import { hashSemente, rng } from "../src/semente.js";
+import { hashSemente, rng, trocarACasa } from "../src/semente.js";
 import { sementeDe, generoDe, medirFichaEPlanta, resumoFichaEPlanta, LEXICO_DA_MEDIDA } from "./medir-regiao.mjs";
 
 const { gerarMasmorra, plantaDaFicha, bichosDaFicha, FICHA_NA_PLANTA, masmorraParaPauta } = MM;
@@ -72,8 +72,8 @@ const t = (nome, cond, extra = "") => {
 const sec = (s) => console.log("\n" + s);
 const tenta = (f, d = null) => { try { return f(); } catch { return d; } };
 const congelar = (o) => { if (o && typeof o === "object") { Object.freeze(o); for (const v of Object.values(o)) congelar(v); } return o; };
-const ACASO = Math.random;
-const semeado = (s, f) => { Math.random = rng(hashSemente(s)); try { return f(); } finally { Math.random = ACASO; } };
+const ACASO = trocarACasa();
+const semeado = (s, f) => { trocarACasa(rng(hashSemente(s))); try { return f(); } finally { trocarACasa(ACASO); } };
 const DEGRAUS = FICHA_NA_PLANTA.ameacas;
 const SOBRE = moldePorId("sobremundo");
 const N = 200;
@@ -193,9 +193,9 @@ sec("6. o determinismo");
   t("a ficha nasce igual na mesma semente (com a ameaça)", JSON.stringify(mapa.regiao.lugares.map((x) => x.ficha.quem)) === JSON.stringify(mapa2.regiao.lugares.map((x) => x.ficha.quem)));
   /* plantaDaFicha não sorteia: com Math.random a explodir, ela corre */
   const crua = semeado("det", () => gerarMasmorra(generoDe(3), l.nivel, "", { salas: l.salas }));
-  Math.random = () => { throw new Error("sorte dentro de plantaDaFicha"); };
+  trocarACasa(() => { throw new Error("sorte dentro de plantaDaFicha"); });
   let semSorte = false, igual = false;
-  try { const p = plantaDaFicha(crua, quem); semSorte = true; igual = JSON.stringify(p) === JSON.stringify(a); } catch { semSorte = false; } finally { Math.random = ACASO; }
+  try { const p = plantaDaFicha(crua, quem); semSorte = true; igual = JSON.stringify(p) === JSON.stringify(a); } catch { semSorte = false; } finally { trocarACasa(ACASO); }
   t("plantaDaFicha não toca em Math.random", semSorte);
   t("e aplicada à planta crua dá a planta da porta (gerar com quem = gerar e depois a ficha)", igual);
   /* a planta com a ficha gasta os MESMOS sorteios que a de sempre */
@@ -203,10 +203,10 @@ sec("6. o determinismo");
   for (let i = 0; i < 100; i++) {
     const r1 = rng(hashSemente(`conta|${i}`)), r2 = rng(hashSemente(`conta|${i}`));
     let c1 = 0, c2 = 0;
-    Math.random = () => { c1++; return r1(); };
-    try { gerarMasmorra("Fantasia medieval", 1 + (i % 12), "", { salas: 5 + (i % 8) }); } finally { Math.random = ACASO; }
-    Math.random = () => { c2++; return r2(); };
-    try { gerarMasmorra("Fantasia medieval", 1 + (i % 12), "", { salas: 5 + (i % 8), quem: [{ nome: "Lobo", nivel: 1 }, { nome: "Ogro", nivel: 4 }] }); } finally { Math.random = ACASO; }
+    trocarACasa(() => { c1++; return r1(); });
+    try { gerarMasmorra("Fantasia medieval", 1 + (i % 12), "", { salas: 5 + (i % 8) }); } finally { trocarACasa(ACASO); }
+    trocarACasa(() => { c2++; return r2(); });
+    try { gerarMasmorra("Fantasia medieval", 1 + (i % 12), "", { salas: 5 + (i % 8), quem: [{ nome: "Lobo", nivel: 1 }, { nome: "Ogro", nivel: 4 }] }); } finally { trocarACasa(ACASO); }
     total++; if (c1 === c2 && c1 > 0) iguais++;
   }
   t(`a planta com a ficha gasta os mesmos sorteios que a de sempre (${iguais}/${total})`, iguais === total);

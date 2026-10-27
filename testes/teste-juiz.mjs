@@ -96,7 +96,10 @@ sec("4. O CANAL VELHO FECHOU");
 
 sec("5. O ESPÓLIO ESCALA, E TEM TETO");
 {
-  t("o espólio recebe o nível", /export function gerarEspolios\(inimigosDerrotados, nivelHeroi = 1\)/.test(CB));
+  /* Fase T0 (27/10): a assinatura ganhou a `sorte` no fim (o espólio rola
+     pela semente que lhe derem); o que esta asserção guarda — o nível como
+     segundo parâmetro, com padrão 1 — não mudou. */
+  t("o espólio recebe o nível", /export function gerarEspolios\(inimigosDerrotados, nivelHeroi = 1(?:, sorte = null)?\)/.test(CB));
   t("e usa o Juiz", /xp = xpDeCombate\(lista, nivelHeroi\)/.test(CB));
   /* SEM TETO, chamar trinta ratos numa sala vira máquina de nível — é a
      mesma classe de brecha que já mordeu este jogo em outro lugar */

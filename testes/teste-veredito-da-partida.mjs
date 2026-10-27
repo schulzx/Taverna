@@ -27,6 +27,7 @@
    FALHA ANTES: `src/partida.js` não existe, e o import cai na primeira
    linha — o cartão não tinha veredito nenhum. */
 
+import { trocarACasa } from "../src/semente.js";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -382,13 +383,13 @@ sec("7. o mapa antigo, o continente, o lixo — e o determinismo");
   t(`lixo não estoura (${estourou}) e não inventa (${naoNulo})`, estourou === 0 && naoNulo === 0);
   /* determinismo e imutabilidade */
   const copiaM = J(w.mapa), copiaD = J(d), copiaE = J({ ...e, mapa: null });
-  const acaso = Math.random;
+  const acaso = trocarACasa();
   let tocou = false, a = null, b = null;
-  Math.random = () => { tocou = true; return 0.5; };
+  trocarACasa(() => { tocou = true; return 0.5; });
   try {
     a = w.nos.map((n) => PA.vereditoDaPartida(d, n.id, e));
     b = w.nos.map((n) => PA.vereditoDaPartida(d, n.id, e));
-  } finally { Math.random = acaso; }
+  } finally { trocarACasa(acaso); }
   t("mesmos dados, mesmo veredito", J(a) === J(b) && a.filter(Boolean).length === w.nos.length - 1);
   t("o veredito não toca no Math.random", !tocou);
   t("e não muta o mapa, os dados nem o estado", J(w.mapa) === copiaM && J(d) === copiaD && J({ ...e, mapa: null }) === copiaE);

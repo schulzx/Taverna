@@ -667,20 +667,28 @@ sec("6. O TESTE OPOSTO — o empate, e o determinismo por semente");
      única forma de garantir que nenhum caminho lateral chama
      `Math.random` por baixo do parâmetro. Um só `Math.random` escondido
      no meio do módulo apaga o determinismo inteiro sem derrubar
-     asserção nenhuma de comportamento. */
-  const linhas = CODIGO.split("\n").filter((l) => /Math\.random/.test(l));
-  t("`disputa.js` nomeia `Math.random` — o padrão existe e quem não passa `sorte` ainda joga", linhas.length > 0);
+     asserção nenhuma de comportamento.
+
+     Fase T0 (27/10): o PADRÃO deixou de ser o `Math.random` e passou a ser
+     a sorte da casa (`sorteDaCasa`, semente.js) — o varredor
+     `check-sem-random.mjs` proíbe o `Math.random` em todo src/. As
+     asserções abaixo medem o mesmo de antes (o padrão existe, é só padrão
+     de parâmetro, nunca uma chamada no meio da conta), agora sobre o nome
+     novo do padrão. */
+  const linhas = CODIGO.split("\n").filter((l) => /sorteDaCasa/.test(l) && !/^\s*import\b/.test(l));
+  t("`disputa.js` nomeia a sorte da casa — o padrão existe e quem não passa `sorte` ainda joga", linhas.length > 0);
   t("e TODA linha que o nomeia fala de `sorte` — nenhuma é uma conta",
     linhas.every((l) => /\bsorte\b/.test(l)),
     linhas.map((l) => l.trim()).join(" | "));
   t("e cada uma é o PADRÃO do parâmetro, nunca uma rolagem no meio do código",
-    linhas.every((l) => /sorte\s*=\s*Math\.random\b/.test(l) || /typeof\s+sorte[\s\S]*Math\.random/.test(l)),
+    linhas.every((l) => /sorte\s*=\s*sorteDaCasa\b/.test(l) || /typeof\s+sorte[\s\S]*sorteDaCasa/.test(l)),
     linhas.map((l) => l.trim()).join(" | "));
-  /* e nenhuma delas é uma CHAMADA: `Math.random` passado como valor é o
-     padrão; `Math.random()` no meio de uma conta é a sorte roubada */
-  t("e nenhuma o CHAMA — `Math.random()` no meio de uma conta apagaria o determinismo",
-    !/Math\.random\s*\(/.test(CODIGO),
-    (CODIGO.match(/.*Math\.random\s*\(.*/g) || []).slice(0, 2).join(" | "));
+  /* e nenhuma delas é uma CHAMADA: a sorte da casa passada como valor é o
+     padrão; chamada no meio de uma conta é a sorte roubada (e o
+     `Math.random` não pode aparecer de forma nenhuma) */
+  t("e nenhuma o CHAMA — `sorteDaCasa()` ou `Math.random()` no meio de uma conta apagaria o determinismo",
+    !/sorteDaCasa\s*\(|Math\.random/.test(CODIGO),
+    (CODIGO.match(/.*(?:sorteDaCasa\s*\(|Math\.random).*/g) || []).slice(0, 2).join(" | "));
   console.log("      " + linhas.length + " linhas de padrão: " + linhas.map((l) => l.trim().slice(0, 40)).join(" · "));
   t("nem `Date.now`, nem `performance.now`, nem `new Date` entram na conta",
     !/Date\.now|performance\.now|new Date\(/.test(FONTE));

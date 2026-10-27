@@ -25,6 +25,7 @@
    O `Math.random` dos ganchos (geradores.js) é trocado por um gerador
    semeado durante a varredura 5, e devolvido no fim: nenhuma asserção
    depende da sorte. */
+import { trocarACasa } from "../src/semente.js";
 import fs from "node:fs";
 import * as TA from "../src/tarefas-antigas.js";
 import { conferir, garantirMissoes, etapaDef, moradaDe } from "../src/missoes.js";
@@ -244,12 +245,12 @@ sec("4. idempotência e o formato do save");
 /* ============================================================ */
 sec("5. nenhuma tarefa fica sem forma de fechar — os fios do descanso");
 {
-  const aleatorio = Math.random;
+  const aleatorio = trocarACasa();
   let n = 0, presas = 0, porMencao = 0, semAlvo = 0, comQuem = 0;
   const exPresa = [], exMencao = [];
   try {
     MUNDOS.forEach((w, wi) => {
-      Math.random = rngDe(`${w.semente}|fios`);
+      trocarACasa(rngDe(`${w.semente}|fios`));
       const ctx = ctxMundo({ mundo: { genero: w.genero }, mapa: w.mapa, dia: w.dia });
       for (const fase of ["abertura", "meio", "climax"]) {
         for (let k = 0; k < 8; k++) {
@@ -267,13 +268,13 @@ sec("5. nenhuma tarefa fica sem forma de fechar — os fios do descanso");
         }
       }
     });
-  } finally { Math.random = aleatorio; }
+  } finally { trocarACasa(aleatorio); }
   console.log(`       ${n} fios convertidos · ${comQuem} pedem uma pessoa · sem alvo ${semAlvo} · que não fecham jogados ${presas} · que fecham por menção ${porMencao}`);
   t(`todo fio ganha um alvo concreto (${n - semAlvo}/${n})`, semAlvo === 0);
   t(`todo fio fecha quando se faz o que ele pede (${n - presas}/${n})`, presas === 0, exPresa.join(" | "));
   t(`e nenhum fecha por menção (${porMencao})`, porMencao === 0, exMencao.join(" | "));
   t("os fios com pessoa são a maioria dos que a nomeiam", comQuem > 0);
-  t("o fio nasce com quem e onde", (() => { const a = Math.random; Math.random = rngDe("x"); try { const q = gerarQuestDeArco(ctxMundo({ mundo: {}, mapa: W.mapa, dia: 1 }), "abertura"); return "quem" in q && Array.isArray(q.ondes); } finally { Math.random = a; } })());
+  t("o fio nasce com quem e onde", (() => { const a = trocarACasa(); trocarACasa(rngDe("x")); try { const q = gerarQuestDeArco(ctxMundo({ mundo: {}, mapa: W.mapa, dia: 1 }), "abertura"); return "quem" in q && Array.isArray(q.ondes); } finally { trocarACasa(a); } })());
 }
 
 /* ============================================================ */

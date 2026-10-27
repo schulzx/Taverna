@@ -64,6 +64,7 @@
    janelas; quem fecha é ele.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { PESO_AMEACA, multiplicadorDeGrupo } from "./orcamento.js";
 import { nomePessoa } from "./nomes.js";
 import { rngDe } from "./geografia.js";
@@ -181,7 +182,7 @@ function pesado(rnd, lista) {
 }
 
 /* ---------------- QUANTOS ---------------- */
-export function quantosChama(porte, rnd = Math.random) {
+export function quantosChama(porte, rnd = sorteDaCasa) {
   const p = typeof porte === "string" ? portePorId(porte) : (porte || PORTES[0]);
   return entre(rnd, p.chama[0], p.chama[1]);
 }
@@ -358,7 +359,7 @@ export function abrirRaid({ semente = "raid", pers = null, npcs = {}, faccoes = 
    O atrito é dos dois lados e é DESIGUAL de propósito: a horda perde
    mais, a hoste perde menos e perde para sempre. É o que faz a raid ser
    uma conta de tempo — dá para segurar, não dá para segurar sempre. */
-export function rodadaDaFrente(raidCru, { rnd = Math.random } = {}) {
+export function rodadaDaFrente(raidCru, { rnd = sorteDaCasa } = {}) {
   const raid = garantirRaid(raidCru);
   if (raid.fase !== "luta" || raid.venceu) return { raid, ledger: [] };
 

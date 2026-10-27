@@ -48,12 +48,13 @@
    que só alcança a própria máquina precisa dizer que só alcança a própria
    máquina, senão o jogador fica esperando alguém que nunca vai chegar.
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 export const PREFIXO = "taverna_mesa_";
 
 /* Um identificador por ABA, não por pessoa: a mesma pessoa em duas janelas
    são dois participantes, e é assim que se testa a mesa sozinho. */
-export function novoIdDeParticipante(rnd = Math.random) {
+export function novoIdDeParticipante(rnd = sorteDaCasa) {
   return `p${Date.now().toString(36)}${Math.floor(rnd() * 1e6).toString(36)}`;
 }
 
@@ -77,7 +78,7 @@ export const INTERVALO_DA_ESPIA = 2000;
    enche o console de vermelho. */
 export const ESPERA_MAXIMA = 15000;
 
-export function abrirCanal(codigo, { aoReceber, rede = true } = {}) {
+export function abrirCanal(codigo, { aoReceber, rede = true, sorte = null } = {}) { return comSorte(sorte, () => {
   const cod = String(codigo || "sem-sala");
   const avisar = typeof aoReceber === "function" ? aoReceber : nada;
   let vivo = true;
@@ -112,7 +113,7 @@ export function abrirCanal(codigo, { aoReceber, rede = true } = {}) {
     }),
     enviar: (recado) => {
       if (!vivo || !recado) return false;
-      const r = { ...recado, __id: `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}` };
+      const r = { ...recado, __id: `${Date.now().toString(36)}_${sorteDaCasa().toString(36).slice(2, 8)}` };
       /* o próprio lado marca como visto ANTES de mandar: é assim que o eco
          do `localStorage` não volta como recado de outra pessoa */
       marcar(r.__id);
@@ -126,6 +127,7 @@ export function abrirCanal(codigo, { aoReceber, rede = true } = {}) {
       if (naRede) naRede.fechar();
     },
   };
+  });
 }
 
 /* ---------------- O CANAL DA MESMA MÁQUINA ----------------

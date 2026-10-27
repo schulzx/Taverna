@@ -33,6 +33,7 @@
    O que se compra é probabilidade: de "quase certo que repete" para
    "raro o bastante para não denunciar o gerador". A sonda mede.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 /* Um substantivo é "Palavra|g", em que g é m, f, mp ou fp — o p é o
    plural, e ele existe porque "A Termas do Rio Baixo" saiu da primeira
@@ -261,7 +262,7 @@ function porPadrao(rnd, nucleo, banco) {
 
 /* O nome de uma taverna, estalagem, bar — o coração do banco, porque é o
    lugar em que o jogador entra primeiro e o nome que ele lê mais vezes. */
-export function nomeDeTaverna(genero, rnd = Math.random) {
+export function nomeDeTaverna(genero, rnd = sorteDaCasa) {
   const b = bancoDe(genero);
   return porPadrao(rnd, b.subst[Math.floor(rnd() * b.subst.length)], b);
 }
@@ -269,7 +270,7 @@ export function nomeDeTaverna(genero, rnd = Math.random) {
 /* O nome de qualquer outro local da cidade. O tipo escolhe o substantivo;
    os bancos do gênero fazem o resto. Tipo desconhecido devolve "" — quem
    chama decide o que fazer, e inventar aqui seria pior. */
-export function nomeDeLocal(tipo, genero, rnd = Math.random) {
+export function nomeDeLocal(tipo, genero, rnd = sorteDaCasa) {
   if (tipo === "taverna") return nomeDeTaverna(genero, rnd);
   const sins = SINONIMOS[tipo];
   if (!sins) return "";

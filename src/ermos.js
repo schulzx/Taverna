@@ -5,9 +5,10 @@
    navegação (dá para se perder) e exaustão em seis níveis, como
    no 5e. Tudo por tabela; a IA só narra o que o sistema entrega.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 import { BIOMA_ROTULO } from "./geografia.js";
 
-const d = (n) => 1 + Math.floor(Math.random() * n);
+const d = (n) => 1 + Math.floor(sorteDaCasa() * n);
 
 /* ---------------- SUPRIMENTOS ---------------- */
 export const SUPRIMENTOS = {

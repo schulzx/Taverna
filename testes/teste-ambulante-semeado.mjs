@@ -9,6 +9,7 @@
 
    FALHA em HEAD de 11/10 (v9.381): com a semente, `Math.random` ainda é
    chamado (o espião estoura), e a mesma semente dá carroças diferentes. */
+import { trocarACasa } from "../src/semente.js";
 import * as M from "../src/mercado.js";
 
 let ok = 0, mal = 0;
@@ -21,10 +22,10 @@ const tenta = (f, d = "estourou") => { try { return f(); } catch { return d; } }
 const J = JSON.stringify;
 
 /* o espião: com semente, ninguém pode tocar no Math.random */
-const real = Math.random;
+const real = trocarACasa();
 let chamadas = 0;
-const espiar = () => { chamadas = 0; Math.random = () => { chamadas++; return real(); }; };
-const soltar = () => { Math.random = real; };
+const espiar = () => { chamadas = 0; trocarACasa(() => { chamadas++; return real(); }); };
+const soltar = () => { trocarACasa(real); };
 
 sec("1. a tabela");
 t("a chance da carroça é tabela, e pequena", Number.isFinite(M.CHANCE_AMBULANTE) && M.CHANCE_AMBULANTE > 0 && M.CHANCE_AMBULANTE < 0.5);

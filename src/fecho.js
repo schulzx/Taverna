@@ -36,6 +36,7 @@
    há gente em cena, se o ato fecha) e o fecho anterior, e devolve a
    linha da pauta. Quem guarda o anterior e monta a pauta é o App.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
@@ -133,7 +134,7 @@ export function momentoDoFecho(ctx) {
    { id, momento, linha }. */
 export function escolherFecho(ctx) {
   const c = obj(ctx);
-  const sorte = typeof c.sorte === "function" ? c.sorte : Math.random;
+  const sorte = typeof c.sorte === "function" ? c.sorte : sorteDaCasa;
   const ultimo = String(c.ultimo || "");
   const momento = momentoDoFecho(c);
   const validos = (m) => Object.entries(FECHO_POR_MOMENTO[m] || {})

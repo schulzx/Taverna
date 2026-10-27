@@ -38,6 +38,7 @@ import { intencaoDaVez, menteDaCriatura } from "../src/adversario.js";
 import { PESO_AMEACA } from "../src/orcamento.js";
 import { tickCondicoes } from "../src/condicoes.js";
 import { vereditoDaPalavra, ouvirAPalavra, TIPOS_DE_PALAVRA, PALAVRA_NA_LUTA } from "../src/sem-espada.js";
+import { sorteDaCasa } from "../src/semente.js";
 
 /* ---------------- AS TABELAS DA SONDA ---------------- */
 export const LUTAS_SEM_ESPADA = {
@@ -159,7 +160,7 @@ export function lutaSemEspada(cenarioId, semente, modo, { limiar = LIMIAR_DE_FAL
             .sort((a, b) => b.v.chance - a.v.chance);
           if (opcoes.length && PALAVRA_NA_LUTA.custo === "acao") {
             const o = opcoes[0];
-            const d20 = 1 + Math.floor(Math.random() * 20);
+            const d20 = 1 + Math.floor(sorteDaCasa() * 20);
             const total = d20 + o.mod;
             const critico = d20 === 20, passou = critico || (d20 !== 1 && total >= o.v.cd);
             const res = ouvirAPalavra({ inimigos, tipo: o.tipo, passou, margem: total - o.v.cd, critico, intencao, situacao: s0 });

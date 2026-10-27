@@ -1,3 +1,4 @@
+import { trocarACasa } from "../src/semente.js";
 /* O RITMO DA REAÇÃO (v9.258 · K1b) — o relógio de 15 s, e o que ele cobra
 
    O que esta suíte protege:
@@ -378,18 +379,18 @@ sec("9. O DETERMINISMO — o módulo NUNCA rola dado");
   /* Não é deep-equal mil vezes: é a prova de que não há rolo nenhum.
      `chance` diz se a reação FUNCIONA, não se ela é OFERECIDA — uma janela
      deve abrir mesmo quando a esquiva pode falhar. */
-  const original = Math.random;
+  const original = trocarACasa();
   let estourou = null, correu = false;
   try {
-    Math.random = () => { throw new Error("o ritmo rolou um dado"); };
+    trocarACasa(() => { throw new Error("o ritmo rolou um dado"); });
     const ladino = { classe: "Ladino", nivel: 10, vidaMax: 80, mana: 0, habilidades: [] };
     const r1 = ritmoDaRodada({ golpes: rodadaDe(4), heroi: ladino });
     const r2 = ritmoDaRodada({ golpes: rodadaDe(4), heroi: ladino, contagem: true });
     correu = !!r1.abre && !!r2.abre && r2.esperaMs === 16000;
-  } catch (err) { estourou = err.message; } finally { Math.random = original; }
+  } catch (err) { estourou = err.message; } finally { trocarACasa(original); }
   t("`ritmoDaRodada` corre com `Math.random` a estourar", !estourou, estourou);
   t("e a esquiva ágil (que TEM `chance`) é oferecida na mesma", correu);
-  t("Math.random foi restaurado", Math.random === original && typeof Math.random() === "number");
+  t("Math.random foi restaurado", trocarACasa() === original && typeof Math.random() === "number");
   /* mesma entrada, mesma saída, byte a byte */
   const a = ritmoDaRodada({ golpes: rodadaDe(4), heroi: guerreiro });
   const b = ritmoDaRodada({ golpes: rodadaDe(4), heroi: guerreiro });

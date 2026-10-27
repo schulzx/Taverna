@@ -34,6 +34,7 @@
       de hoje (duas janelas na mesma máquina) vira a sala de amanhã sem
       reescrever a regra.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 export const LUGARES = 2;
 
@@ -42,7 +43,7 @@ export const LUGARES = 2;
 export const ALFABETO_DO_CODIGO = "ABCDEFGHJKLMNPQRTUVWXYZ2346789";
 export const CODIGO_TAM = 6;
 
-export function novoCodigo(rnd = Math.random) {
+export function novoCodigo(rnd = sorteDaCasa) {
   let s = "";
   for (let i = 0; i < CODIGO_TAM; i++) s += ALFABETO_DO_CODIGO[Math.floor(rnd() * ALFABETO_DO_CODIGO.length)];
   return s;
@@ -110,7 +111,7 @@ export function garantirTurno(t) {
 
 /* ---------------- SENTAR E LEVANTAR ---------------- */
 
-export function criarSala({ codigo, anfitriao, nome = "", rnd = Math.random }) {
+export function criarSala({ codigo, anfitriao, nome = "", rnd = sorteDaCasa }) {
   const cod = codigoValido(codigo) ? codigo : novoCodigo(rnd);
   const m = garantirSala({ codigo: cod, anfitriao });
   return sentarNaSala(m, { id: anfitriao, nome }).sala;

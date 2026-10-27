@@ -6,13 +6,14 @@
    Também resolve a forja: desmontar → essência → forjar.
    ============================================================ */
 
-const d = (n) => Math.floor(Math.random() * n);
+const d = (n) => Math.floor(sorteDaCasa() * n);
 /* v9.53: mesmo off-by-one de `masmorras.js` — `d(n)` devolve 1..n, então
    `arr[d(arr.length)]` nunca alcançava o índice 0 e caía fora da lista uma
    vez a cada `n`. O primeiro prefixo, o primeiro sufixo e o primeiro poder
    de cada tabela de loot nunca saíram no jogo. */
-const sortear = (arr) => (arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : undefined);
+const sortear = (arr) => (arr && arr.length ? arr[Math.floor(sorteDaCasa() * arr.length)] : undefined);
 
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { formaDoItem } from "./itens.js";
 import { nomesDaForma, afixosDoGrau, sufixosDo } from "./lexico.js";
 import { TIER as TIER_AFIXO, degrauDe, pesoDoPrefixo, tierDaBase, poderesPossiveis, concessaoPara, resumoDoItem, EFEITOS_DE_ATRIBUTO, CONCESSAO_DA_BASE } from "./afixos.js";
@@ -177,10 +178,10 @@ function concordancia(par, baseNome) {
 
 /* Gera UM equipamento. raridade: id · nivel: nível do herói (escala o bônus)
    tipo: força um slot ("arma", "anel"…) ou null para sortear. */
-export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null, lex = null } = {}) {
+export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null, lex = null } = {}) { return comSorte(rnd, () => {
   /* rnd opcional (v9.2): com semente, o mesmo mercador tem sempre o mesmo
      estoque — sem ela, o sorteio é aleatório como sempre foi. */
-  const rand = rnd || Math.random;
+  const rand = rnd || sorteDaCasa;
   const dL = (n) => Math.floor(rand() * n);
   const pickL = (arr) => arr[dL(arr.length)];
   const slot = tipo && BASES[tipo] ? tipo : pickL(Object.keys(BASES));
@@ -340,11 +341,12 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
     poder: resumoDoItem({ poderes, concede }) || poder,
     descricao,
   };
+  });
 }
 
 /* Raridade do espólio conforme a ameaça do maior inimigo derrotado. */
-export function raridadeDeAmeaca(ameaca) {
-  const rolagem = Math.random();
+export function raridadeDeAmeaca(ameaca, sorte = null) { return comSorte(sorte, () => {
+  const rolagem = sorteDaCasa();
   const tabela = {
     fraco: [["comum", 0.7], ["incomum", 1]],
     comum: [["comum", 0.45], ["incomum", 0.9], ["raro", 1]],
@@ -354,15 +356,17 @@ export function raridadeDeAmeaca(ameaca) {
   }[ameaca] || [["comum", 1]];
   for (const [rar, limite] of tabela) if (rolagem < limite) return rar;
   return "comum";
+  });
 }
 
 /* Espólio de vitória: um item gerado pela ameaça do inimigo mais forte. */
-export function gerarEspolioItem(inimigos, nivel = 1, lex = null) {
+export function gerarEspolioItem(inimigos, nivel = 1, lex = null, sorte = null) { return comSorte(sorte, () => {
   const ordem = { fraco: 0, comum: 1, competente: 2, elite: 3, lendario: 4 };
   const maisForte = (inimigos || []).reduce((m, e) => Math.max(m, ordem[e.ameaca] ?? 1), 1);
   const ameacaMax = Object.keys(ordem).find((k) => ordem[k] === maisForte) || "comum";
   const raridade = raridadeDeAmeaca(ameacaMax);
   return gerarLoot(raridade, { nivel, lex });
+  });
 }
 
 /* ---------------- FORJA (desmontar → essência → forjar) ---------------- */

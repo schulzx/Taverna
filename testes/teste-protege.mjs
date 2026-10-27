@@ -205,7 +205,7 @@ t("e ela continua a comprar o abrigo que já comprava — F2 não lhe tirou núm
 /* ============================================================
    5. A MOEDA MORTA — a asserção que ACENDE
    ============================================================ */
-sec("5. o que F2 mediu e NÃO ligou: a moeda vale zero");
+sec("5. a moeda que F2 mediu e não ligou — ligada na Fase T0: o +2 vale 2");
 /* ESTA SEÇÃO É A MAIS CARA DA SUÍTE, e existe para não deixar o achado virar
    lembrança. `protegido` declara `defesa` no catálogo, o jogador lê "+2 de
    defesa" na descrição, e o número não chega a lado nenhum. */
@@ -216,11 +216,16 @@ t("e a descrição que o jogador LÊ promete esse número por extenso",
   new RegExp(`\\+${PROT.defesa}\\s+de\\s+defesa`, "i").test(String(PROT.desc || "")), PROT.desc);
 const mec = mecanicaDe([criarCondicao("protegido")]);
 t("`mecanicaDe` soma o campo — a primeira metade do caminho existe", mec.defesa === PROT.defesa);
-/* E AQUI ELE PARA. Se esta asserção ficar vermelha, alguém ligou o campo: leia
-   o comentário de `modificadoresDeCondicao` (combate.js) antes de a "corrigir",
-   porque o preço está medido e a decisão é da pessoa. */
-t("…e `modificadoresDeCondicao` NÃO o leva adiante — se esta linha acender, alguém ligou a moeda",
-  modificadoresDeCondicao([criarCondicao("protegido")]).defesa === undefined);
+/* FASE T0 (27/10/2026) · AS DUAS ASSERÇÕES INVERTERAM-SE, E O MOTIVO É ESTE.
+   Elas existiam para ACENDER no dia em que alguém ligasse o campo sem a
+   decisão. A decisão veio: a pessoa aprovou o plano do motor (mente/
+   plano-motor.md, "o +2 de defesa sem efeito desde 16/09 — a ficha aplica o
+   bônus na mesa"), e o campo foi ligado. Agora elas guardam o contrário — que
+   a moeda CHEGA —, para que ninguém a desligue sem ler isto. */
+t("…e `modificadoresDeCondicao` leva-o adiante (ligado na Fase T0)",
+  modificadoresDeCondicao([criarCondicao("protegido")]).defesa === PROT.defesa);
+t("e sem condição nenhuma o campo existe e vale zero — não é `undefined` a somar",
+  modificadoresDeCondicao([]).defesa === 0 && modificadoresDeCondicao(undefined).defesa === 0);
 /* O DENTE FINAL, e é o que prova o zero em vez de o afirmar: a defesa que
    `resolverAtaque` usa é a MESMA com e sem a condição. `ca` é aritmética pura
    e não passa pelo d20, então a comparação é determinística. */
@@ -228,8 +233,13 @@ const alvoNu = { nome: "Alvo", classe: "Guerreiro", nivel: 5, atributos: { destr
 const golpe = (cond) => resolverAtaque({ atacante: "Bicho", alvo: alvoNu, ehAtacanteInimigo: true, bonusAtaque: 5, danoBase: 12, condAlvo: cond });
 const caSem = golpe([]).ca, caCom = golpe([criarCondicao("protegido")]).ca;
 console.log(`  ··  a defesa que o golpe enfrenta: ${caSem} sem a condição, ${caCom} com ela — a diferença que a ficha promete é ${PROT.defesa}`);
-t("estar `protegido` NÃO muda a defesa que o golpe enfrenta — a moeda vale zero, e é o achado de F2",
-  caSem === caCom, `${caSem} vs ${caCom}`);
+t("estar `protegido` soma EXACTAMENTE o que a ficha promete à defesa que o golpe enfrenta",
+  caCom - caSem === PROT.defesa, `${caSem} vs ${caCom}`);
+/* e o abrigo fica de pé quando o golpe fura a armadura: é do lugar à volta
+   do corpo, como a cobertura (o argumento de F2, escrito em combate.js) */
+const furaSem = resolverAtaque({ atacante: "Bicho", alvo: alvoNu, ehAtacanteInimigo: true, bonusAtaque: 5, danoBase: 12, condAlvo: [], ignoraArmadura: true }).ca;
+const furaCom = resolverAtaque({ atacante: "Bicho", alvo: alvoNu, ehAtacanteInimigo: true, bonusAtaque: 5, danoBase: 12, condAlvo: [criarCondicao("protegido")], ignoraArmadura: true }).ca;
+t("e o golpe que ignora a armadura NÃO apaga o abrigo", furaCom - furaSem === PROT.defesa, `${furaSem} vs ${furaCom}`);
 /* O PREÇO DE LIGAR, MEDIDO EM F2 E ESCRITO AQUI para quem for decidir. Duas
    linhas: `defesa: m.defesa` em `modificadoresDeCondicao` e `+ modAlvo.defesa`
    em `ca`. Na régua de Uma Vida, molde histórico, família do retrato:

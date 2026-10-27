@@ -1,3 +1,4 @@
+import { trocarACasa } from "../src/semente.js";
 import {
   gerarDadivaUnica, ataquesExtras, danoExtraDeDadiva, defesaDeDadiva, descontoDePM,
   bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil,
@@ -42,12 +43,12 @@ t("não é imune ao que não está na lista", !imuneA(p, "sangramento"));
 sec("3. o crítico em 19 chega ao dado de verdade");
 {
   /* d20 fixado em 19 pela substituição de Math.random */
-  const real = Math.random;
-  Math.random = () => 0.93;          // → 1 + floor(0.93*20) = 19
+  const real = trocarACasa();
+  trocarACasa(() => 0.93);          // → 1 + floor(0.93*20) = 19
   const alvo = { nome: "Ogro", vida: 100, vidaMax: 100, ameaca: "comum" };
   const semDadiva = resolverAtaque({ atacante: "Vera", alvo, ehAtacanteInimigo: false, bonusAtaque: 5, danoBase: 10 });
   const comDadiva = resolverAtaque({ atacante: "Vera", alvo, ehAtacanteInimigo: false, bonusAtaque: 5, danoBase: 10, criticoEm: 19 });
-  Math.random = real;
+  trocarACasa(real);
   t("19 sem dádiva NÃO é crítico", semDadiva.critico === false);
   t("19 com dádiva É crítico", comDadiva.critico === true);
   t("crítico dobra o dano", comDadiva.dano === semDadiva.dano * 2);

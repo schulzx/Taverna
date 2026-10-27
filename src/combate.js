@@ -6,6 +6,7 @@
    Estilo D&D 5e / Baldur's Gate 3: todos rolam d20, com
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { alcanca, bonusDefesaEm, distanciaM, METROS_POR_QUADRADO } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
@@ -52,12 +53,13 @@ function coladoEmQuem(inim, hostis, grade) {
 
 /* A SORTE PODE ENTRAR DE FORA. `rolar` é uma fonte opcional de números em
    [0, 1) — um `rng(hashSemente(...))` de semente.js, por exemplo. Sem ela,
-   é o `Math.random` de sempre, e toda chamada antiga rola exatamente como
+   é a sorte da casa (`sorteDaCasa`, semente.js — até a Fase T0 era o
+   `Math.random`), e toda chamada antiga rola exatamente como
    rolava. Nasceu para a fuga: o que ela CUSTA é rolado com semente, porque
    a mesma semente tem de dar o mesmo desfecho em qualquer máquina (lei da
    casa), e porque só assim a suíte consegue provar um golpe que acerta e
    outro que erra. Aceita-se só função: `[..].map(d)` passaria o índice. */
-const sorteDe = (rolar) => (typeof rolar === "function" ? rolar : Math.random);
+const sorteDe = (rolar) => (typeof rolar === "function" ? rolar : sorteDaCasa);
 export function d(n, rolar) { return 1 + Math.floor(sorteDe(rolar)() * n); }
 
 /* rola d20 com vantagem/desvantagem; devolve {valor, dados} */
@@ -109,7 +111,14 @@ export function defesaDe(ent, ehInimigo = false) {
 /* Condições afetam as rolagens. A mecânica NÃO mora mais aqui: vem do
    catálogo único (condicoes.js), o mesmo que o Mestre, o HUD e o descanso
    leem. Antes, cada lugar adivinhava por substring e discordava do resto. */
-/* v9.278 (F2) · E `defesa` CONTINUA A NÃO ATRAVESSAR, DE PROPÓSITO E COM O
+/* FASE T0 (27/10/2026) · A MOEDA PASSOU A VALER. O que está abaixo é a
+   história de F2, e fica porque o preço que ela mediu é o preço que se
+   pagou: a pessoa aprovou o plano do motor ("o +2 de defesa sem efeito
+   desde 16/09 — a ficha aplica o bônus na mesa"), e as duas linhas que F2
+   escreveu e não ligou estão ligadas — `defesa` sai daqui e soma em `ca`.
+   O jogador lê "+2 de defesa" e recebe 2.
+
+   v9.278 (F2) · E `defesa` CONTINUAVA A NÃO ATRAVESSAR, DE PROPÓSITO E COM O
    PREÇO MEDIDO. `mecanicaDe` soma `m.defesa` desde a v9.0; esta linha é onde
    ele para, e `resolverAtaque` — o único sítio desta casa que decide se um
    golpe acerta — nunca teve como o ver. A única condição do catálogo que
@@ -127,7 +136,7 @@ export function defesaDe(ent, ehInimigo = false) {
    ACENDE no dia em que alguém ligar o campo sem a decisão. */
 export function modificadoresDeCondicao(condicoes = []) {
   const m = mecanicaDe(condicoes);
-  return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, danoRecebidoExtra: m.danoRecebidoExtra, perdeAcao: m.perdeAcao };
+  return { vantagem: m.vantagem, desvantagem: m.desvantagem, danoExtra: m.danoExtra, danoReduzido: m.danoReduzido, danoRecebidoExtra: m.danoRecebidoExtra, perdeAcao: m.perdeAcao, defesa: Number(m.defesa) || 0 };
 }
 
 /* ---------------- OS LADOS DO DADO ----------------
@@ -197,7 +206,11 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
      equipamento e guarda. A COBERTURA continua somando de propósito: furar a
      couraça de alguém não faz o muro na frente dele desaparecer, e quem
      ignora cobertura tem a própria porta, logo acima, em `bonusDefesaAlvo`. */
-  /* v9.278 (F2) · E A CONDIÇÃO NÃO SOMA AQUI — É A OUTRA METADE DO QUE FICOU
+  /* FASE T0 (27/10) · E AGORA SOMA, no lugar que F2 apontou: fora do
+     ternário, ao lado de `bonusDefesaAlvo` — o abrigo continua de pé quando
+     o golpe fura a armadura. O resto deste comentário é a história.
+
+     v9.278 (F2) · E A CONDIÇÃO NÃO SOMAVA AQUI — ERA A OUTRA METADE DO QUE FICOU
      ESCRITO EM `modificadoresDeCondicao`. O lugar dela seria este, FORA do
      ternário e ao lado de `bonusDefesaAlvo`, pelo argumento da cobertura logo
      acima: `protegido` é um abrigo que alguém pôs À VOLTA do corpo, não a
@@ -205,7 +218,7 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
      desaparecer a barreira que o Clérigo ergueu em cima dela. Está medido e
      está por decidir; o preço inteiro está no comentário de
      `modificadoresDeCondicao` e trancado em `teste-protege.mjs` §5. */
-  const ca = (ignoraArmadura ? DEFESA_NUA : defesaDe(alvo, !ehAtacanteInimigo)) + (bonusDefesaAlvo || 0); // se o atacante é inimigo, o alvo é o jogador/aliado
+  const ca = (ignoraArmadura ? DEFESA_NUA : defesaDe(alvo, !ehAtacanteInimigo)) + (bonusDefesaAlvo || 0) + modAlvo.defesa; // se o atacante é inimigo, o alvo é o jogador/aliado
   const critico = rolagem.valor >= Math.max(2, Math.min(20, criticoEm || 20));
   const desastre = rolagem.valor === 1;
 
@@ -441,7 +454,7 @@ export function lugarDaAcao(atacante, alvoOnde, alcance) {
   return out;
 }
 
-export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false, prioridade = "" }) {
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false, prioridade = "", sorte = null }) { return comSorte(sorte, () => {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
   const pos = heroi || jogador;
   const alvosPossiveis = [
@@ -506,11 +519,11 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
         alvo = daMira;
       } else if (daIntencao) {
         alvo = daIntencao;
-      } else if (!virado && !provocado && vivosAlvo.length > 1 && Math.random() < 0.35) {
+      } else if (!virado && !provocado && vivosAlvo.length > 1 && sorteDaCasa() < 0.35) {
         const comps = vivosAlvo.filter((a) => a.ref === "grupo");
-        alvo = comps.length ? comps[Math.floor(Math.random() * comps.length)] : vivosAlvo[0];
+        alvo = comps.length ? comps[Math.floor(sorteDaCasa() * comps.length)] : vivosAlvo[0];
       } else if (virado && vivosAlvo.length > 1) {
-        alvo = vivosAlvo[Math.floor(Math.random() * vivosAlvo.length)];
+        alvo = vivosAlvo[Math.floor(sorteDaCasa() * vivosAlvo.length)];
       } else {
         alvo = vivosAlvo[0];
       }
@@ -576,6 +589,7 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
     }
   }
   return acoes;
+  });
 }
 
 /* ---------------- TESTES DE MORTE (D&D 5e) ----------------
@@ -585,7 +599,7 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
    Qualquer cura reergue na hora e zera os contadores.
 
    `rolar` (MM, a luta tem saída): opcional, o gerador preso à semente.
-   Sem ele é o Math.random de sempre — quem já chamava sem argumento não
+   Sem ele é a sorte da casa (semente.js) — quem já chamava sem argumento não
    vê diferença. Com ele, o resto dos testes de quem ficou caído depois de
    a luta acabar sai igual em qualquer máquina (`saida-da-luta.js`). */
 export function testeDeMorte(rolar) {
@@ -741,7 +755,7 @@ const XP_AMEACA = { fraco: 15, comum: 30, competente: 50, elite: 90, lendario: 1
 const MOEDAS_AMEACA = { fraco: [1, 6], comum: [4, 12], competente: [8, 20], elite: [15, 40], lendario: [40, 100] };
 const CHANCE_ITEM = { fraco: 0.05, comum: 0.12, competente: 0.25, elite: 0.45, lendario: 0.8 };
 
-export function gerarEspolios(inimigosDerrotados, nivelHeroi = 1) {
+export function gerarEspolios(inimigosDerrotados, nivelHeroi = 1, sorte = null) { return comSorte(sorte, () => {
   /* ---------------- O ESPÓLIO ESCALA (v9.154) ----------------
      `XP_AMEACA` dava 90 por um elite, viesse ele no nível 2 ou no 18 — e
      a curva do 5e é exponencial. No 2 aquilo era metade de um nível; no
@@ -752,7 +766,7 @@ export function gerarEspolios(inimigosDerrotados, nivelHeroi = 1) {
   const xp = xpDeCombate(lista, nivelHeroi);
   for (const e of lista) {
     const [a, b] = MOEDAS_AMEACA[e.ameaca] || [4, 12];
-    moedas += a + Math.floor(Math.random() * (b - a + 1));
+    moedas += a + Math.floor(sorteDaCasa() * (b - a + 1));
     chance = Math.max(chance, CHANCE_ITEM[e.ameaca] || 0.12);
   }
   /* CONSUMÍVEIS (v9.2): equipamento é raro de propósito, mas voltar de toda
@@ -761,9 +775,10 @@ export function gerarEspolios(inimigosDerrotados, nivelHeroi = 1) {
      mais chance de sair mais de uma. */
   const chanceCons = Math.min(0.85, 0.32 + lista.length * 0.12 + (lista.some((e) => e.ameaca === "elite" || e.ameaca === "lendario") ? 0.2 : 0));
   let consumiveis = 0;
-  if (Math.random() < chanceCons) consumiveis = 1;
-  if (consumiveis && lista.length >= 3 && Math.random() < 0.35) consumiveis = 2;
-  return { xp, moedas, caiItem: Math.random() < chance, consumiveis };
+  if (sorteDaCasa() < chanceCons) consumiveis = 1;
+  if (consumiveis && lista.length >= 3 && sorteDaCasa() < 0.35) consumiveis = 2;
+  return { xp, moedas, caiItem: sorteDaCasa() < chance, consumiveis };
+  });
 }
 
 /* ---------------- PATAMARES DE PODER ----------------
@@ -1059,12 +1074,13 @@ export function ataquesDoInimigo(ameaca, nivelInimigo) {
    cada por rodada) e CONCENTRAÇÃO, que quebra quando você apanha. */
 
 /* INICIATIVA: d20 + Destreza. Empate desempata pelo modificador. */
-export function rolarIniciativa(combatentes) {
+export function rolarIniciativa(combatentes, sorte = null) { return comSorte(sorte, () => {
   return (combatentes || []).map((c) => {
     const mod = c.modDestreza || 0;
     const rolo = d(20);
     return { ...c, iniciativa: rolo + mod, rolo, mod };
-  }).sort((a, b) => (b.iniciativa - a.iniciativa) || (b.mod - a.mod) || (Math.random() - 0.5));
+  }).sort((a, b) => (b.iniciativa - a.iniciativa) || (b.mod - a.mod) || (sorteDaCasa() - 0.5));
+  });
 }
 
 export function resumoIniciativa(ordem) {
@@ -1166,7 +1182,7 @@ export function bonusContraOJogador(inim, gdJogador = 0) {
 
 /* Cada inimigo de pé leva UM golpe livre em quem está saindo. É reação:
    um por inimigo, independente de quantos ataques ele tenha na rodada.
-   `opcoes.rolar`: a sorte semeada (ver `d`). Sem ela, Math.random. */
+   `opcoes.rolar`: a sorte semeada (ver `d`). Sem ela, a sorte da casa. */
 export function oportunidadesContraOJogador(inimigos, jogador, gdJogador = 0, opcoes) {
   const rolar = opcoes && typeof opcoes.rolar === "function" ? opcoes.rolar : undefined;
   return (inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0).map((inim) => {
@@ -1181,7 +1197,7 @@ export function oportunidadesContraOJogador(inimigos, jogador, gdJogador = 0, op
 /* O outro lado: quem está muito ferido tenta sair da luta. Chefe não foge —
    um lendário que dá as costas estragaria a cena que ele mesmo é. */
 export const LIMIAR_FUGA = 0.2;
-export function querFugir(inimigo, { sorte = Math.random } = {}) {
+export function querFugir(inimigo, { sorte = sorteDaCasa } = {}) {
   if (!inimigo || inimigo.derrotado || (inimigo.vida || 0) <= 0) return false;
   if (inimigo.ameaca === "lendario" || inimigo.chefe) return false;
   const frac = (inimigo.vida || 0) / (inimigo.vidaMax || 1);

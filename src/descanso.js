@@ -34,6 +34,7 @@
    ============================================================ */
 
 /* 13/10 (10.ª sessão): a peneira da casa, para o sono escrito (descansoDaFrase) */
+import { sorteDaCasa } from "./semente.js";
 import { soODeclarado } from "./peneira.js";
 
 /* ---------------- O DADO DE VIDA ----------------
@@ -64,7 +65,7 @@ export function dadosDisponiveis(pers) {
 /* Um dado por vez, e o resultado aparece. Gastar três de uma vez
    seria mais rápido e diria menos: a graça é ver o d8 dar 2 e ter
    que decidir se queima outro. */
-export function gastarDadoDeVida(pers, { lados = 8, modVigor = 0, sorte = Math.random } = {}) {
+export function gastarDadoDeVida(pers, { lados = 8, modVigor = 0, sorte = sorteDaCasa } = {}) {
   if (dadosDisponiveis(pers) <= 0) return { ok: false, motivo: "não há mais dados de vida — só o descanso longo devolve" };
   if ((pers.vida || 0) >= (pers.vidaMax || 0)) return { ok: false, motivo: "você já está com o PV cheio" };
   const rolado = 1 + Math.floor(sorte() * lados);

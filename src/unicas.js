@@ -6,6 +6,7 @@
    uma marca de poder que vira técnica própria. A IA só narra a
    epifania; quem cria, precifica e limita é o sistema.
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 const NUCLEOS = ["Eclipse", "Coroa", "Sopro", "Selo", "Lamento", "Grito", "Raiz", "Véu", "Pacto", "Fenda", "Trono", "Olho"];
 const MATIZ = ["de Cinzas", "do Abismo", "de Ossos", "da Tempestade", "do Sangue", "de Gelo Negro", "do Vazio", "de Jade", "do Julgamento", "das Profundezas", "de Prata", "do Ultimo Suspiro"];
@@ -20,18 +21,18 @@ const MOLDES = [
   { id: "sentenca", desc: (c, d) => `Marca o alvo com um presságio: ${d} de dano agora; se ele ainda estiver de pé, fica Enfraquecido por 2 turnos.`, custo: [5, 8], recarga: [2, 4], dano: (n) => 11 + n, condicao: "Enfraquecido" },
 ];
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const entre = ([a, b]) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = (arr) => arr[Math.floor(sorteDaCasa() * arr.length)];
+const entre = ([a, b]) => a + Math.floor(sorteDaCasa() * (b - a + 1));
 
 /* Gera uma habilidade única calibrada ao nível do herói.
    existentes: nomes já conhecidos, para nunca repetir. */
-export function gerarHabilidadeUnica(nivel = 1, existentes = []) {
+export function gerarHabilidadeUnica(nivel = 1, existentes = [], sorte = null) { return comSorte(sorte, () => {
   const molde = pick(MOLDES);
   const custo = entre(molde.custo);
   const recarga = entre(molde.recarga);
   const danoBase = molde.dano ? molde.dano(Math.floor((nivel || 1) / 2)) : 0;
   let nome = `${pick(NUCLEOS)} ${pick(MATIZ)}`;
-  if (Math.random() < 0.5) nome += ` ${pick(ASSINATURAS)}`;
+  if (sorteDaCasa() < 0.5) nome += ` ${pick(ASSINATURAS)}`;
   const usados = new Set((existentes || []).map((x) => (x || "").toLowerCase()));
   if (usados.has(nome.toLowerCase())) nome = `${pick(NUCLEOS)} ${pick(MATIZ)} ${pick(ASSINATURAS)}`;
   return {
@@ -45,6 +46,7 @@ export function gerarHabilidadeUnica(nivel = 1, existentes = []) {
     danoBase,
     descricao: molde.desc(custo, danoBase),
   };
+  });
 }
 
 /* Chance de despertar uma única pela ameaça máxima derrotada —

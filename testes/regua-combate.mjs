@@ -150,11 +150,12 @@
 
    ---------------- DETERMINISMO ----------------
 
-   `combate.js` rola com `Math.random` direto (`d`, `d20`). A régua NÃO
-   muda isso: usa o mesmo recurso que `arena.js` usa desde que existe —
-   troca `Math.random` por um gerador semeado durante a simulação e o
-   restaura no `finally`. Zero linha de produção alterada nesta etapa,
-   que é a exigência de B1.
+   `combate.js` rola com a sorte da casa (`d`, `d20` — `sorteDaCasa`,
+   semente.js; até a Fase T0 de 27/10 era o `Math.random` direto). A régua
+   usa o mesmo recurso que `arena.js` usa desde que existe — troca o
+   rolador por um gerador semeado durante a simulação e o restaura no
+   `finally`. Desde a T0 a troca é a da casa (`trocarACasa`), não a do
+   `Math.random` global, e rola os mesmos dados.
 
    ---------------- ESTÁVEL, NÃO SORTUDA ----------------
 
@@ -176,8 +177,8 @@
        régua: combate que bate no teto de rodadas não terminou.
      · `quedas === 0` no `brando`. Zero em 4000 combates, nas quatro
        famílias — se um dia alguém cair ali, algo quebrou em silêncio.
-     · determinismo: mesma semente, mesmo combate, e `Math.random`
-       restaurado depois (a troca da sorte não pode vazar para a suíte
+     · determinismo: mesma semente, mesmo combate, e a sorte da casa
+       restaurada depois (a troca da sorte não pode vazar para a suíte
        que roda em seguida).
      · a leitura da tabela: todo cenário com os três blocos, toda métrica
        de `METRICAS_DA_REGUA` presente no que `medir` devolve.
@@ -208,6 +209,7 @@
        a escada não tem resolução nenhuma, porque o `justo` já está no piso.
    ============================================================ */
 
+import { trocarACasa } from "../src/semente.js";
 import { turnoDosInimigos, turnoDosCompanheiros, resolverAtaque, danoDe, danoDaClasse, ataquesPorTurno, pvEsperadoJogador, testeDeMorte, aplicarTesteMorte } from "../src/combate.js";
 import { garantirFichaCompanheiro } from "../src/companheiros.js";
 import { completarInimigo } from "../src/bestiario.js";
@@ -645,14 +647,14 @@ export function sorteDaSemente(semente) {
   return () => { k = (Math.imul(k, 1103515245) + 12345) >>> 0; return (k >>> 8) / 16777216; };
 }
 
-/* Troca `Math.random` durante a simulação e o restaura no `finally`. É o
-   recurso de `arena.js`: os motores rolam com `Math.random` cravado, e
+/* Troca a sorte da casa durante a simulação e a restaura no `finally`. É o
+   recurso de `arena.js`: os motores rolam pela sorte da casa, e
    duplicar as fórmulas para semeá-las seria criar um segundo combate que
    diverge do primeiro na primeira versão que alguém esquecer de copiar. */
 export function comSorteTravada(semente, fn) {
-  const original = Math.random;
-  Math.random = sorteDaSemente(semente);
-  try { return fn(); } finally { Math.random = original; }
+  const original = trocarACasa();
+  trocarACasa(sorteDaSemente(semente));
+  try { return fn(); } finally { trocarACasa(original); }
 }
 
 /* ============================================================

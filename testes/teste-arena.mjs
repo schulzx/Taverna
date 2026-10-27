@@ -1,3 +1,4 @@
+import { trocarACasa } from "../src/semente.js";
 /* A ARENA (v9.215) — o duelo provável, uma peça para três mesas
 
    As leis desta suíte: determinismo é o árbitro (mesma dupla + mesma
@@ -1243,9 +1244,9 @@ sec("10. a concentração cai na arena (C2b)");
      dependendo de sorte para provar prosa. Com `Math.random` em 0 o d20 dá 1,
      o rolo fica −4 contra CD 15, e a quebra é certa em toda máquina. */
   const doModulo = (() => {
-    const original = Math.random;
-    Math.random = () => 0;
-    try { return CM.testeConcentracao(30, -5, "Bênção"); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(() => 0);
+    try { return CM.testeConcentracao(30, -5, "Bênção"); } finally { trocarACasa(original); }
   })();
   t("a frase da arena é a de C2, saída de testeConcentracao e não copiada",
     !doModulo.manteve && SO_A_FRASE.test(secar(doModulo.linha)),

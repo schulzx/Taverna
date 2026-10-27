@@ -15,6 +15,7 @@
 
    A masmorra e gerada com Math.random; a suite o troca por um gerador semeado
    para que "varias sementes" seja reproduzivel em qualquer maquina.        */
+import { trocarACasa } from "../src/semente.js";
 import * as M from "../src/masmorras.js";
 import { readFileSync } from "node:fs";
 
@@ -31,10 +32,10 @@ const sec = (s, fn) => {
 
 /* LCG semeado: mesma semente, mesma masmorra */
 const comSemente = (semente, fn) => {
-  const real = Math.random;
+  const real = trocarACasa();
   let x = (semente * 2654435761) >>> 0 || 1;
-  Math.random = () => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; };
-  try { return fn(); } finally { Math.random = real; }
+  trocarACasa(() => { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; });
+  try { return fn(); } finally { trocarACasa(real); }
 };
 
 /* a masmorra minima, montada a mao: entrada -> guardiao e combate -> chefe */

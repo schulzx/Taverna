@@ -63,6 +63,7 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
    o QUANTO O JOGADOR SABE. É essa escada que o medidor de ódio não
    tinha, e é ela que faz a revelação existir.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 import { corpoPorId, escolherCorpo, comoCai } from "./antagonista.js";
 
 export const FASES = [
@@ -326,7 +327,7 @@ export const FASE_DO_PASSO = [0, 0, 1, 1, 2, 3, 4, 4, 5];
 /* ============================================================
    O NASCIMENTO
    ============================================================ */
-export function escolherArquetipo(cont = {}, stats = {}, sorte = Math.random) {
+export function escolherArquetipo(cont = {}, stats = {}, sorte = sorteDaCasa) {
   const abertos = ARQUETIPOS.filter((a) => { try { return !!a.nasceDe(cont, stats); } catch { return false; } });
   const pool = abertos.length ? abertos : [arquetipoPorId("arquiteto")];
   const total = pool.reduce((n, a) => n + a.peso, 0);
@@ -334,7 +335,7 @@ export function escolherArquetipo(cont = {}, stats = {}, sorte = Math.random) {
   return pool.find((a) => (corte -= a.peso) <= 0) || pool[0];
 }
 
-export function gerarVilao({ nome = "", cont = {}, stats = {}, dia = 0, sorte = Math.random } = {}) {
+export function gerarVilao({ nome = "", cont = {}, stats = {}, dia = 0, sorte = sorteDaCasa } = {}) {
   /* v9.107: a ameaça nasce com um CORPO — pessoa, conselho, bando, coisa
      antiga ou instituição —, e ele muda o ritmo do plano e o que
      significa derrubá-la. */
@@ -530,7 +531,7 @@ export const HERANCAS = [
 ];
 export function herancaPorId(id) { return HERANCAS.find((h) => h.id === id) || null; }
 
-export function escolherHeranca(sorte = Math.random) {
+export function escolherHeranca(sorte = sorteDaCasa) {
   const total = HERANCAS.reduce((n, h) => n + h.peso, 0);
   let corte = sorte() * total;
   return HERANCAS.find((h) => (corte -= h.peso) <= 0) || HERANCAS[0];
@@ -545,7 +546,7 @@ export function escolherHeranca(sorte = Math.random) {
    saem as ASSINATURAS, e a assinatura é o que o jogador junta sozinho na
    fase da marca. Um herdeiro sem assinatura própria seria reconhecido
    cedo demais — ou não seria reconhecido nunca. */
-export function gerarHerdeiro(anterior, { nome = "", cont = {}, stats = {}, dia = 0, sorte = Math.random } = {}) {
+export function gerarHerdeiro(anterior, { nome = "", cont = {}, stats = {}, dia = 0, sorte = sorteDaCasa } = {}) {
   const base = gerarVilao({ nome, cont, stats, dia, sorte });
   if (!anterior || !anterior.nome) return base;
   const h = escolherHeranca(sorte);
@@ -658,7 +659,7 @@ export function tipoDoAlvo(custa) { return TIPOS_DE_ALVO.find((t) => t.custa ===
    pior que repetir, porque some sem deixar rastro. Quem já foi tirado sai
    do sorteio; se todos já saíram, a lista volta inteira, porque um alvo
    repetido ainda é melhor que passo nenhum. */
-export function escolherAlvo(custa, ctx = {}, sorte = Math.random, jaMarcados = []) {
+export function escolherAlvo(custa, ctx = {}, sorte = sorteDaCasa, jaMarcados = []) {
   const t = tipoDoAlvo(custa);
   const ordem = t ? t.ordem : ORDEM_PADRAO;
   const usados = new Set((jaMarcados || []).map((m) => m && m.nome).filter(Boolean));

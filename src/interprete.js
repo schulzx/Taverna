@@ -44,6 +44,7 @@
    O movimento por baixo do movimento. Servem para o mesmo que os gestos
    do Bibliotecário: impedir que dois movimentos diferentes produzam a
    mesma cena, e dar ao veto uma unidade maior que a entrada. */
+import { sorteDaCasa } from "./semente.js";
 import { vetosDaIndole } from "./indole.js";
 
 export const GESTOS = [
@@ -408,7 +409,7 @@ export function marcarMovimento(elenco, nome, id, gesto) {
 /* ---------------- A CONSULTA ----------------
    Um movimento quebrado NÃO passa: a mesma decisão do Bibliotecário na
    v9.85, e pela mesma razão — uma lacuna nunca vira permissão. */
-export function consultarInterprete(pessoa, { sorte = Math.random, elenco = null, ignorarMemoria = false, fora = [] } = {}) {
+export function consultarInterprete(pessoa, { sorte = sorteDaCasa, elenco = null, ignorarMemoria = false, fora = [] } = {}) {
   const p = garantirPessoa(pessoa);
   const proibidos = new Set(gestosProibidos(p));
   const mem = garantirElenco(elenco)[p.nome] || { feitos: [], gestos: [] };
@@ -464,7 +465,7 @@ export const QUANDO_ME_PERGUNTAM = {
   ],
 };
 
-export function paraPauta(pessoas = [], { sorte = Math.random, elenco = null, quantas = QUANTAS_PESSOAS } = {}) {
+export function paraPauta(pessoas = [], { sorte = sorteDaCasa, elenco = null, quantas = QUANTAS_PESSOAS } = {}) {
   const linhas = [], marcas = [];
   const perguntaram = (pessoas || []).some((p) => p && p.ato === "pedi");
   if (perguntaram) quantas = Math.min(quantas, QUANDO_ME_PERGUNTAM.quantas);

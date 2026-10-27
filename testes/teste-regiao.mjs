@@ -30,6 +30,7 @@
    espaço de nomes e com rede, e a suíte cai asserção a asserção, não num
    import. */
 
+import { trocarACasa } from "../src/semente.js";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -287,10 +288,10 @@ sec("7. determinismo, lixo e o Math.random");
   let iguais = 0;
   for (const w of vivos) if (JSON.stringify(gerarRegiao({ semente: w.semente, molde: "sobremundo", genero: w.genero, estrutura: w.estrutura })) === JSON.stringify(w.mapa)) iguais++;
   t(`mesma semente, mesmo mapa (${iguais}/${N})`, iguais === N);
-  const acaso = Math.random;
+  const acaso = trocarACasa();
   let estourou = false;
-  Math.random = () => { estourou = true; return 0.5; };
-  try { gerarRegiao({ semente: "sem-acaso", molde: "sobremundo", genero: "Cyberpunk" }); } finally { Math.random = acaso; }
+  trocarACasa(() => { estourou = true; return 0.5; });
+  try { gerarRegiao({ semente: "sem-acaso", molde: "sobremundo", genero: "Cyberpunk" }); } finally { trocarACasa(acaso); }
   t("gerar uma região não toca no Math.random", !estourou && !!R.gerarRegiao);
   const fonte = tenta(() => readFileSync(join(AQUI, "..", "src", "regiao.js"), "utf8"), "");
   t("e o módulo não o escreve", fonte.length > 0 && !/Math\.random/.test(fonte));

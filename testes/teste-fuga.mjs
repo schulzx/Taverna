@@ -1,3 +1,4 @@
+import { trocarACasa } from "../src/semente.js";
 /* A FUGA (fuga.js) — a prova de que "eu corro" corre de verdade
 
    O QUE ESTA SUÍTE PROTEGE, e por que cada bloco está escrito assim:
@@ -653,6 +654,17 @@ sec("12. QUEM ATACA DE LONGE — não segura quem foge: cobra");
     v.disparos.length === 1 && v.disparos[0].nome === "Atirador" && v.disparos[0].distanciaM === 19.5 && v.disparos[0].desvantagem === true, v.disparos);
   t("sem golpe nenhum — ele não estava colado", v.golpes.length === 0);
   t("e continua entre quem ficou para trás, vivo no mundo", v.deixados.includes("Atirador"));
+  /* FASE T0 (27/10): o "+2 de defesa" de `protegido` chega à mesa, e o
+     veredito antes do clique tem de o mostrar — a chance que a fuga anuncia e
+     o golpe que se rola leem a mesma defesa (`ca` em combate.js). */
+  {
+    const { criarCondicao } = await import("../src/condicoes.js");
+    const nua = vereditoDaFuga({ heroi: h, inimigos: [a], passoHeroiM: 9, rodada: 1, ficha: ficha() });
+    const abrigada = vereditoDaFuga({ heroi: h, inimigos: [a], passoHeroiM: 9, rodada: 1, ficha: ficha({ condicoes: [criarCondicao("protegido")] }) });
+    const cn = nua.disparos[0] && nua.disparos[0].chance, ca = abrigada.disparos[0] && abrigada.disparos[0].chance;
+    t("protegida, a chance do disparo que a fuga anuncia CAI — o abrigo entra no veredito",
+      typeof cn === "number" && typeof ca === "number" && ca < cn, `${cn} → ${ca}`);
+  }
 
   const a18 = atirador(12, 7);
   t("a 18 m exatos (a metade), sem desvantagem — a faixa longa começa DEPOIS da metade",
@@ -815,10 +827,10 @@ sec("15. O CUSTO ROLADO — com semente; a mesma semente, o mesmo golpe");
   t("rolarOCustoDaFuga nunca estoura com lixo" + (estourou ? " — " + estourou : ""), estourou === "");
 
   /* SEM SEMENTE, O COMBATE DE SEMPRE: sem `rolar`, cada dado é um Math.random */
-  const velho = Math.random;
+  const velho = trocarACasa();
   try {
     let chamadas = 0;
-    Math.random = () => { chamadas++; return 0.5; };
+    trocarACasa(() => { chamadas++; return 0.5; });
     const um = d(20), dois = d20(false, true), r = resolverAtaque({ atacante: "X", alvo: ficha(), ehAtacanteInimigo: true, bonusAtaque: 3, danoBase: 4 });
     t("sem sorte de fora, d/d20/resolverAtaque rolam Math.random, como sempre rolaram",
       um === 11 && dois.valor === 11 && dois.dados.length === 2 && r.d20 === 11 && chamadas === 4, { um, dois, d20: r.d20, chamadas });
@@ -830,7 +842,7 @@ sec("15. O CUSTO ROLADO — com semente; a mesma semente, o mesmo golpe");
     chamadas = 0;
     danoDe({ ameaca: "comum" }, true); oportunidadesContraOJogador([bandido(1, 0)], ficha(), 0);
     t("danoDe e oportunidadesContraOJogador sem opções: Math.random também", chamadas === 3, chamadas);
-  } finally { Math.random = velho; }
+  } finally { trocarACasa(velho); }
   const semeado = (s) => oportunidadesContraOJogador([bandido(1, 0)], ficha(), 0, { rolar: rng(s) });
   t("oportunidadesContraOJogador com a mesma sorte dá o mesmo golpe", JSON.stringify(semeado(7)) === JSON.stringify(semeado(7)));
 }

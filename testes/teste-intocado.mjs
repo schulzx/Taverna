@@ -18,6 +18,7 @@
    de `arena.js`, o mesmo que `teste-guardas.mjs` usa. Duas rodadas dão a
    mesma saída, em qualquer máquina. */
 
+import { trocarACasa } from "../src/semente.js";
 import { GUARDAS, ESCADA_DA_GUARDA, guardaDe, erguerGuarda, expirarGuardas, estaIntocavel, esquivaDeGuarda, guardasAtivas } from "../src/habilidades.js";
 import { APLICACAO_DO_BUFF, aplicacaoDoBuff } from "../src/combos.js";
 import { efeitoDeBuff } from "../src/efeitos.js";
@@ -274,9 +275,9 @@ sec("4. a régua da escada — o prazo sai do custo, e a suíte o lê de volta")
 sec("5. onde morde — 600 golpes contra o mesmo alvo");
 {
   const comSorteTravada = (valor, fn) => {
-    const original = Math.random;
-    Math.random = () => valor;
-    try { return fn(); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(() => valor);
+    try { return fn(); } finally { trocarACasa(original); }
   };
   /* A SORTE TRAVADA NÃO SERVE AQUI, e é por isso que este bloco usa um
      gerador PRÓPRIO e semeado: com `Math.random` preso num valor, todo d20
@@ -285,9 +286,9 @@ sec("5. onde morde — 600 golpes contra o mesmo alvo");
      (regua-combate.mjs): determinístico, e devolvido no `finally`. */
   const semeado = (s) => { let x = s >>> 0 || 1; return () => { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; };
   const comSemente = (fn) => {
-    const original = Math.random;
-    Math.random = semeado(20260916);
-    try { return fn(); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(semeado(20260916));
+    try { return fn(); } finally { trocarACasa(original); }
   };
   const ALVO = { nome: "Alvo", classe: "Ladino", nivel: 5, atributos: { destreza: 2 }, vida: 999, vidaMax: 999 };
   const bater = (quem) => comSemente(() => {

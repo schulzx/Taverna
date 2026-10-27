@@ -3,6 +3,7 @@
      resistências (½ dano), fraquezas (×1,5) e imunidades (0).
    - Armas raras+ podem ser elementais; defesas raras+ podem dar resistência.
    - Quase-morte pode deixar CICATRIZ permanente — canon registrado. */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 export const TIPOS_DANO = {
   fisico: { icone: "🗡", rotulo: "físico" },
@@ -114,11 +115,12 @@ export const CICATRIZES = [
   { nome: "Chaga sombria", local: "peito", vidaMax: -3, descricao: "Onde a escuridão tocou, a pele ficou cinzenta e fria." },
 ];
 
-export function sortearCicatriz(jaTem = []) {
+export function sortearCicatriz(jaTem = [], sorte = null) { return comSorte(sorte, () => {
   const nomes = new Set(jaTem.map((c) => c.nome));
   const livres = CICATRIZES.filter((c) => !nomes.has(c.nome));
   if (!livres.length) return null;
-  return livres[Math.floor(Math.random() * livres.length)];
+  return livres[Math.floor(sorteDaCasa() * livres.length)];
+  });
 }
 
 export const CICATRIZ_MAX = 8;

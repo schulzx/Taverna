@@ -2,6 +2,7 @@
    O tempo corre sozinho: cada turno do jogador são ~45 min, viagens horas,
    masmorras meia hora por sala; combate e acampamento têm tempo próprio.
    Dias viram sozinhos → reino, festivais, estações e sono acompanham. */
+import { sorteDe } from "./semente.js";
 
 export const MESES = [
   "Brumal", "Florinal", "Alveral", "Soltício", "Ardentia", "Colheral",
@@ -62,7 +63,8 @@ export const SONHOS = [
   { texto: "No sonho, todos os seus companheiros usavam coroas. Você não sabe se era promessa ou aviso.", efeito: null },
   { texto: "Você sonhou com um inimigo que ainda não tem — um rosto que nunca viu, mas que conhecia você.", efeito: "perturbado" },
 ];
-export const rolarSonho = () => SONHOS[Math.floor(Math.random() * SONHOS.length)];
+/* `sorte` (Fase T0): o gerador semeado; sem ele, a sorte da casa. */
+export const rolarSonho = (sorte = null) => SONHOS[Math.floor(sorteDe(sorte)() * SONHOS.length)];
 
 /* Sono: limites de vigília (em horas) antes dos avisos e da penalidade. */
 export const HORAS_AVISO_SONO = 16, HORAS_EXAUSTO = 20;

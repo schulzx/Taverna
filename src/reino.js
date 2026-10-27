@@ -3,17 +3,18 @@
    deriva aos poucos para o equilíbrio, sofre com eventos e modula a renda.
    Eventos de reino saem por tabela a cada dia passado — a IA só narra o
    envelope com o resultado já rolado. */
+import { sorteDaCasa, comSorte } from "./semente.js";
 
 const POP_BASE = { vila: 300, cidade: 1200, capital: 4000, fortaleza: 500, porto: 900, aldeia: 150 };
 
-export function garantirReino(reino, mapa) {
+export function garantirReino(reino, mapa, sorte = null) { return comSorte(sorte, () => {
   const dominios = ((mapa && mapa.cidades) || []).filter((c) => c.relacao === "jogador");
   let r = reino && typeof reino === "object" ? { ...reino } : {};
   let tocou = false;
   for (const c of dominios) {
     if (!r[c.nome]) {
       const base = POP_BASE[(c.tipo || "cidade").toLowerCase()] || 800;
-      r[c.nome] = { populacao: Math.round(base * (0.8 + Math.random() * 0.5)), felicidade: 55 + Math.floor(Math.random() * 15) };
+      r[c.nome] = { populacao: Math.round(base * (0.8 + sorteDaCasa() * 0.5)), felicidade: 55 + Math.floor(sorteDaCasa() * 15) };
       tocou = true;
     }
   }
@@ -22,6 +23,7 @@ export function garantirReino(reino, mapa) {
     if (!dominios.some((c) => c.nome === nome)) { delete r[nome]; tocou = true; }
   }
   return tocou ? r : reino || {};
+  });
 }
 
 /* Multiplicador de renda pela felicidade: povo feliz produz mais. */
@@ -62,18 +64,19 @@ export const EVENTOS_REINO = [
 ];
 
 /* Rola UM evento de reino (ou nenhum). Retorna { cidade, evento, pop, fel, cofreDelta } ou null. */
-export function rolarEventoReino(reino, mapa) {
+export function rolarEventoReino(reino, mapa, sorte = null) { return comSorte(sorte, () => {
   const dominios = ((mapa && mapa.cidades) || []).filter((c) => c.relacao === "jogador");
-  if (!dominios.length || Math.random() > 0.45) return null;
-  const cidade = dominios[Math.floor(Math.random() * dominios.length)];
+  if (!dominios.length || sorteDaCasa() > 0.45) return null;
+  const cidade = dominios[Math.floor(sorteDaCasa() * dominios.length)];
   const felAtual = (reino[cidade.nome] && reino[cidade.nome].felicidade) || 60;
   const pool = EVENTOS_REINO.filter((e) => (e.soSeInfeliz ? felAtual < 40 : true));
   const total = pool.reduce((s, e) => s + (e.peso > 90 && e.soSeInfeliz ? 0 : e.peso), 0);
-  let r = Math.random() * total;
+  let r = sorteDaCasa() * total;
   let ev = pool[0];
   for (const e of pool) { r -= e.peso; if (r <= 0) { ev = e; break; } }
   const pop = (reino[cidade.nome] && reino[cidade.nome].populacao) || 800;
   return { cidade: cidade.nome, evento: ev, cofreDelta: ev.cofre ? ev.cofre(pop) : 0, popDelta: ev.pop ? ev.pop(pop) : 0, felDelta: ev.fel || 0 };
+  });
 }
 
 /* Avança um dia no reino: deriva da felicidade + evento por tabela.

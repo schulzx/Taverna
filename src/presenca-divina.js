@@ -21,6 +21,7 @@
    mortais, e o herói que ascendeu também faz joelho dobrar.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { criarCondicao } from "./condicoes.js";
 
 /* Condições que a presença de um deus impõe a um mortal. Cegar está aqui
@@ -63,7 +64,7 @@ const temItemConsagrado = (ent) => [...(ent && ent.equipados ? Object.values(ent
 
 /* Devolve o desfecho SEM tocar em ninguém — quem aplica é o App. Assim dá
    para testar a regra inteira sem React e sem combate de verdade. */
-export function resolverPresenca({ fonte, jogador, grupo = [], gdJogador = 0, rolar = () => 1 + Math.floor(Math.random() * 20), sortear = Math.random }) {
+export function resolverPresenca({ fonte, jogador, grupo = [], gdJogador = 0, rolar = () => 1 + Math.floor(sorteDaCasa() * 20), sortear = sorteDaCasa }) {
   const gdF = Math.max(0, Number(fonte && fonte.gd) || 0);
   if (gdF - (gdJogador || 0) < DIFERENCA_MINIMA) return null;
   const dc = dificuldadeDaPresenca(gdF);
@@ -103,7 +104,7 @@ export function resolverPresenca({ fonte, jogador, grupo = [], gdJogador = 0, ro
    O herói que ascendeu também pesa no ar. A promessa estava no prompt do
    Mestre desde o começo e nunca teve código atrás. Fora de combate isto é
    TEMPERO: só dispara contra quem não convive com ele. */
-export function presencaDoHeroi({ gdJogador, alvos = [], nomeHeroi = "você", rolar = () => 1 + Math.floor(Math.random() * 20) }) {
+export function presencaDoHeroi({ gdJogador, alvos = [], nomeHeroi = "você", rolar = () => 1 + Math.floor(sorteDaCasa() * 20) }) {
   if ((gdJogador || 0) < 3) return null;
   const dc = dificuldadeDaPresenca(gdJogador);
   const dobrados = [];
@@ -134,7 +135,7 @@ export function presencaDoHeroi({ gdJogador, alvos = [], nomeHeroi = "você", ro
    efeito é o mesmo que eles impõem: medo, três turnos, uma vez por luta.
    Um bicho que já é divino não se curva, e nem tudo que respira tem
    joelho: quem vem marcado como imune a medo passa direto. */
-export function presencaDoHeroiEmCombate({ gdJogador = 0, inimigos = [], nomeHeroi = "você", rolar = () => 1 + Math.floor(Math.random() * 20) } = {}) {
+export function presencaDoHeroiEmCombate({ gdJogador = 0, inimigos = [], nomeHeroi = "você", rolar = () => 1 + Math.floor(sorteDaCasa() * 20) } = {}) {
   const gdJ = Math.max(0, Number(gdJogador) || 0);
   if (gdJ < DIFERENCA_MINIMA) return null;
   const dc = dificuldadeDaPresenca(gdJ);

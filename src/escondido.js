@@ -64,6 +64,7 @@
    vantagem — que é a metade do furtivo que o escondido compra.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { temCobertura, linhaDeVisao, garantirGrade, ehParede, distanciaM, metrosTxt, nomeDoLugar, quadradosDe } from "./grid.js";
 import { criarCondicao } from "./condicoes.js";
 import { soODeclarado } from "./peneira.js";
@@ -308,13 +309,13 @@ export function oculto(pers, quem, opcoes) {
    estado cai. `procuram` são os nomes que gastam a vez procurando: rolam
    d20 + (passiva − 10) contra o meu total, e a sorte entra por argumento. */
 export function revisarEscondido(pers, opcoes) {
-  const { grade = null, heroi = null, inimigos = null, presentes = null, procuram = [], sorte = Math.random, luz = null } = opcoes || {};
+  const { grade = null, heroi = null, inimigos = null, presentes = null, procuram = [], sorte = sorteDaCasa, luz = null } = opcoes || {};
   const base = pers && typeof pers === "object" ? pers : {};
   const est = estadoEscondido(base);
   if (!est) return { pers: base, achadoAgora: [], caiu: false, linhas: [], nota: "" };
   const naLuta = !!(grade && posto(heroi));
   const obs = lista(naLuta ? inimigos : presentes).filter(vivo);
-  const rolar = typeof sorte === "function" ? sorte : Math.random;
+  const rolar = typeof sorte === "function" ? sorte : sorteDaCasa;
   const buscam = new Set(lista(procuram).map(nomeDe));
   const achadoPor = [...lista(est.achadoPor)];
   const agora = [];

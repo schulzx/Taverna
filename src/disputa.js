@@ -58,6 +58,7 @@
    gerador global.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import {
   ESCADA,
   tamanhoDe,
@@ -254,7 +255,7 @@ export function podeDisputar(quem, alvo) {
    ============================================================ */
 export function rolarDisputa(args) {
   const a = abrir(args);
-  const { quem = null, alvo = null, sorte = Math.random } = { ...a, sorte: daSorte(a.sorte) };
+  const { quem = null, alvo = null, sorte = sorteDaCasa } = { ...a, sorte: daSorte(a.sorte) };
 
   const portao = podeDisputar(quem, alvo);
   if (!portao.ok) {
@@ -349,7 +350,7 @@ export function destinoDoEmpurrao(args) {
    ============================================================ */
 export function empurrar(args) {
   const a = abrir(args);
-  const { grade = null, quem = null, alvo = null, entidades = null, sorte = Math.random } = { ...a, sorte: daSorte(a.sorte) };
+  const { grade = null, quem = null, alvo = null, entidades = null, sorte = sorteDaCasa } = { ...a, sorte: daSorte(a.sorte) };
   const rolagem = rolarDisputa({ quem, alvo, sorte });
   const lugar = alvo && alvo.x != null ? { x: alvo.x, y: alvo.y } : null;
   const nada = (desfecho, motivo, bloqueio) => ({
@@ -394,7 +395,7 @@ export function empurrar(args) {
    ============================================================ */
 export function derrubar(args) {
   const a = abrir(args);
-  const { quem = null, alvo = null, sorte = Math.random } = { ...a, sorte: daSorte(a.sorte) };
+  const { quem = null, alvo = null, sorte = sorteDaCasa } = { ...a, sorte: daSorte(a.sorte) };
 
   const jaTinha = ((alvo && alvo.condicoes) || []).find((c) => c && c.id === TABELA_DA_DISPUTA.condicaoDeDerrubar);
   if (jaTinha) {

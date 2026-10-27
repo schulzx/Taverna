@@ -10,6 +10,7 @@
 
    Tudo por semente ou por sorte injetada: nenhum `Math.random` decide uma
    asserção. */
+import { trocarACasa } from "../src/semente.js";
 import {
   ESCONDIDO, PERCEPCAO_PASSIVA, QUEM_ACHA, ATOS_QUE_REVELAM,
   juntarNomes, estadoEscondido, percepcaoPassiva, ondeSeEsconder, nascerEscondido,
@@ -282,13 +283,13 @@ sec("9. o Ataque Furtivo é a regra do 5e");
   t("sem tabuleiro, só a vantagem conta", !vereditoDoFurtivo({ classe: "Ladino", nivel: 5, alvo: { nome: "Orc" }, aliados: [{ nome: "Bram" }] }).soma);
   t("lixo não estoura", vereditoDoFurtivo().aplica === false && vereditoDoFurtivo({ classe: "Ladino", nivel: 5, aliados: null, condAtacante: null, condAlvo: null }).porque === "sozinho");
   /* o dano: com o dado cravado no 6, 3d6 contra 1d6 */
-  const orig = Math.random;
-  Math.random = () => 0.999;
+  const orig = trocarACasa();
+  trocarACasa(() => 0.999);
   try {
     t("danoDaClasse sem opções soma o furtivo, como sempre somou", danoDaClasse("Ladino", 5, 0) === 18 && danoDaClasse("Ladino", 5, 0, null) === 18);
     t("com { furtivo: false } tira só os dados do furtivo", danoDaClasse("Ladino", 5, 0, { furtivo: false }) === 6 && danoDaClasse("Ladino", 5, 2, { furtivo: false }) === 8);
     t("o Guerreiro não sente a opção", danoDaClasse("Guerreiro", 5, 0, { furtivo: false }) === danoDaClasse("Guerreiro", 5, 0));
-  } finally { Math.random = orig; }
+  } finally { trocarACasa(orig); }
 }
 
 /* ============================================================ */

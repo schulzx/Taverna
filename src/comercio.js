@@ -25,6 +25,7 @@
    número e MOTIVO; quem cobra é o `mercado.js`, quem paga é o App.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { estacaoDe } from "./calendario.js";
 import { PORTES } from "./geografia.js";
 
@@ -309,7 +310,7 @@ export function podePagar(mercador, cidade, dia, gastoHoje = 0) {
 export const PECHINCHA_GANHO = 0.12;
 export const PECHINCHA_PERDA = 0.08;
 
-export function pechinchar({ bonus = 0, dificuldade = 12, sorte = Math.random } = {}) {
+export function pechinchar({ bonus = 0, dificuldade = 12, sorte = sorteDaCasa } = {}) {
   const d20 = 1 + Math.floor(sorte() * 20);
   const total = d20 + bonus;
   /* OS NATURAIS PRIMEIRO, E OS DOIS JUNTOS. A prova pegou: com o 1 natural

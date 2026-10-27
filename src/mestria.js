@@ -30,6 +30,7 @@
    orçamento da cena comum está em 58,7k de 59k, e um bloco fixo aqui
    seria cobrado na campanha inteira para servir num turno a cada dez.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 /* ---------------- DE ONDE VEM CADA PADRÃO ----------------
    Não são citações: é o ofício documentado desses mestres reduzido à
@@ -416,7 +417,7 @@ export const FIOS_DA_MEMORIA = [
   },
 ];
 
-export function fioDaMemoria(ctx = {}, { sorte = Math.random, mesa = null } = {}) {
+export function fioDaMemoria(ctx = {}, { sorte = sorteDaCasa, mesa = null } = {}) {
   const m = garantirMesa(mesa);
   const recentes = new Set(m.fiosUsados.slice(-3));
   let abertos = FIOS_DA_MEMORIA.filter((f) => { try { return !!f.quando(ctx); } catch { return false; } });

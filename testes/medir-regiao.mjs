@@ -56,7 +56,7 @@ import { rotaAteAMasmorra, lugarAoEntrarNaMasmorra } from "../src/boca.js";
 import { HORAS_MARCHA_POR_DIA } from "../src/viagem.js";
 import { gerarMasmorra, masmorraParaPauta } from "../src/masmorras.js";
 import { linhaDoLugar } from "../src/geografo.js";
-import { hashSemente, rng } from "../src/semente.js";
+import { hashSemente, rng, trocarACasa } from "../src/semente.js";
 import { resumoMapaParaPrompt, resumoDiplomacia } from "../src/mapa.js";
 import { moldePorId } from "../src/moldes.js";
 import * as G from "../src/geografia.js";
@@ -122,10 +122,10 @@ function ondeDoMarco(mapa, semente, genero, molde, onde) {
    tamanho anunciado, e os "locais da cidade" que o App manda junto (o
    `resumoDaqui` da cidade de referência e os arredores dela) */
 function pautaLaDentro(mapa, semente, genero, molde, m, i) {
-  const acaso = Math.random;
-  Math.random = rng(hashSemente(`medir-regiao|${semente}|${m.nome}`));
+  const acaso = trocarACasa();
+  trocarACasa(rng(hashSemente(`medir-regiao|${semente}|${m.nome}`)));
   let mm;
-  try { mm = gerarMasmorra(genero, m.nivel, m.nome, { salas: m.salas }); } finally { Math.random = acaso; }
+  try { mm = gerarMasmorra(genero, m.nivel, m.nome, { salas: m.salas }); } finally { trocarACasa(acaso); }
   const lugar = lugarAoEntrarNaMasmorra(m, { cidade: m.cidadeProxima });
   const onde = linhaDoLugar({ masmorra: mm, lugar, cidadeAtual: m.cidadeProxima, mapa });
   const secao = masmorraParaPauta(mm);
@@ -412,10 +412,10 @@ export async function turnoNaMasmorra({ semente, genero, mapa, m, cidade, luta =
   const { montarSystemPrompt } = await import("../src/prompt.js");
   const { elencoParaPovoar } = await import("../src/elenco.js");
   const md = moldePorId(molde);
-  const acaso = Math.random;
-  Math.random = rng(hashSemente(`masmorra-sem-cidade|${semente}|${m.nome}`));
+  const acaso = trocarACasa();
+  trocarACasa(rng(hashSemente(`masmorra-sem-cidade|${semente}|${m.nome}`)));
   let mm0;
-  try { mm0 = gerarMasmorra(genero, m.nivel, m.nome, { salas: m.salas }); } finally { Math.random = acaso; }
+  try { mm0 = gerarMasmorra(genero, m.nivel, m.nome, { salas: m.salas }); } finally { trocarACasa(acaso); }
   /* o App: o nome do mapa e a boca no ponto onde se entrou (`meuPonto`) */
   const mm = { ...mm0, nome: m.nome, coord: { x: m.x, y: m.y, z: 0, mx: 0, my: 0 } };
   const cid = (mapa.cidades || []).find((c) => c.nome === cidade) || null;
@@ -639,8 +639,8 @@ export function medirFichaEPlanta(R, N = 200, { lex = null, comFicha = true, sem
   const M = { mundos: 0, lugares: 0, tipos: {}, inimigos: 0, nomeNaFicha: 0, familiaNaFicha: 0, lugaresNome: 0, lugaresFamilia: 0,
     fichaToda: 0, chefeDaFicha: 0, capangas: 0, ameacaCerta: 0, mesmaForma: 0, caminhoDoApp: 0, salasDeLuta: 0, salaNaFicha: 0,
     linhasIguais: 0, linhaDaFichaIgual: 0, secaoAntes: [], secaoDepois: [] };
-  const acaso = Math.random;
-  const semeado = (sm, f) => { Math.random = rng(hashSemente(sm)); try { return f(); } finally { Math.random = acaso; } };
+  const acaso = trocarACasa();
+  const semeado = (sm, f) => { trocarACasa(rng(hashSemente(sm))); try { return f(); } finally { trocarACasa(acaso); } };
   const nomesDaLinha = (txt) => String(txt || "").split(", ").map((x) => x.replace(/ ×\d+$/, "").trim()).filter(Boolean);
   for (let i = 0; i < N; i++) {
     const semente = sementeDe(i), genero = generoDe(i);

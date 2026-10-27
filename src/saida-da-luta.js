@@ -42,6 +42,7 @@
    e viaja na mensagem do turno, nunca no prompt fixo.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { degrauDaCriatura } from "./degraus.js";
 import { menteDaCriatura } from "./adversario.js";
 import { testeDeMorte, aplicarTesteMorte } from "./combate.js";
@@ -251,7 +252,7 @@ export function rolarAteODesfecho(morte, rolar) {
 
 const horasDe = (rolar) => {
   const { min, max } = SAIDA_DA_LUTA.horasAteAcordar;
-  const r = typeof rolar === "function" ? rolar() : Math.random();
+  const r = typeof rolar === "function" ? rolar() : sorteDaCasa();
   return min + Math.floor(r * (max - min + 1));
 };
 

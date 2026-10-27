@@ -27,7 +27,13 @@ process.chdir(dirname(fileURLToPath(import.meta.url)));
    código atrás. Suíte falha quando o módulo mudou; varredor falha
    quando um erro velho voltou. */
 const suites = readdirSync(".").filter((f) => /^teste-.*\.mjs$/.test(f)).sort();
-const varredores = readdirSync(".").filter((f) => /^check-.*\.mjs$/.test(f)).sort();
+/* Fase T0 (27/10/2026): as seis `varredura-*.mjs` entram no corredor. O
+   CLAUDE.md dizia que o `npm test` as corria, e a auditoria do motor mediu
+   que não: só `check-*` era apanhado. Elas são relatórios (saem 0 com o que
+   acharem impresso), e o que o corredor lhes cobra é que corram sem
+   estourar — uma varredura que quebra por import partido é um varredor
+   cego, e ninguém o via. */
+const varredores = readdirSync(".").filter((f) => /^(check|varredura)-.*\.mjs$/.test(f)).sort();
 
 const rodar = (arqs, rotulo) => {
   let ok = 0; const ruins = [];

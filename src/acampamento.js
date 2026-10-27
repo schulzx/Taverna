@@ -42,6 +42,7 @@
       faltando.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { localDeDescanso } from "./mapa.js";
 import { TERRENO_VIAGEM } from "./geografia.js";
 import { comEm, comDe } from "./lugar.js";
@@ -191,7 +192,7 @@ const EM_COMBOIO = /(caravana|comboio|carroç|carroc|carruagem|tropa|mercadores|
 
 /* ---------------- A ESCOLHA ----------------
    Uma função, uma resposta, e o mais específico ganha. */
-export function escolherSitio(ctx = {}, sorte = Math.random) {
+export function escolherSitio(ctx = {}, sorte = sorteDaCasa) {
   const c = ctx || {};
   const chave = chaveDoSitio(c);
   const bioma = SITIOS_DO_ERMO[c.bioma] ? c.bioma : "planicie";
@@ -272,7 +273,7 @@ export function escolherSitio(ctx = {}, sorte = Math.random) {
 
 /* Reaproveita o sítio anterior quando o lugar não mudou. É a diferença
    entre lembrar onde se está e sortear um mundo novo a cada clique. */
-export function sitioDaVez(anterior, ctx = {}, sorte = Math.random) {
+export function sitioDaVez(anterior, ctx = {}, sorte = sorteDaCasa) {
   const chave = chaveDoSitio(ctx);
   if (anterior && anterior.chave === chave) return anterior;
   return escolherSitio(ctx, sorte);

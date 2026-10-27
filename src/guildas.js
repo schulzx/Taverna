@@ -38,6 +38,7 @@
    passou a ver "entrar" em qualquer prop chamada `aoEntrar`. Quando todo
    mundo precisa apelidar, o nome esta errado na origem.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 import { rngDe } from "./geografia.js";
 import { nomePessoa } from "./nomes.js";
 import { nomeDeLocal } from "./toponimia.js";
@@ -707,7 +708,7 @@ export function delegarNaCasa(g, trabalho, quem, { dia = 0 } = {}) {
   };
 }
 
-export function resolverTarefaDaCasa(t, rnd = Math.random) {
+export function resolverTarefaDaCasa(t, rnd = sorteDaCasa) {
   if (!t) return null;
   const d = Math.floor(rnd() * 100) + 1;
   if (d <= t.chance) return { ...t, desfecho: "feito" };

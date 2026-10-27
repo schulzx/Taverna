@@ -13,6 +13,7 @@
    envenena ninguém por força de adjetivo bonito na narração.
    ============================================================ */
 
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { CONDICOES, criarCondicao } from "./condicoes.js";
 
 /* ---------------- PORTADORES ----------------
@@ -237,12 +238,12 @@ function modDoAlvo(alvo, attr) {
    da classe) e o nome dela, e a linha na tela deixa de dizer "o golpe
    tentou" para dizer o que de fato aconteceu. Sem os dois, o comportamento
    é o de antes — que é o que vale para inimigos, que não têm classe. */
-export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoNome = "", critico = false, sempre = false, bonusResistir = null, rotuloResistir = "", vantagem = false, desvantagem = false }) {
+export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoNome = "", critico = false, sempre = false, bonusResistir = null, rotuloResistir = "", vantagem = false, desvantagem = false, sorte = null }) { return comSorte(sorte, () => {
   const port = typeof fonte === "object" && fonte ? fonte : aflicaoDe(fonte);
   if (!port) return null;
   const cat = CONDICOES[port.cond];
   if (!cat) return null;
-  if (!sempre && !critico && Math.random() > port.chance) return null;
+  if (!sempre && !critico && sorteDaCasa() > port.chance) return null;
   /* já está sob a mesma condição? não empilha */
   if ((alvo && (alvo.condicoes || []).some((c) => c.id === port.cond))) return null;
 
@@ -264,7 +265,7 @@ export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoN
   /* vantagem é DOIS DADOS, não um bônus fixo — o Gnomo e o Sintético
      prometem "vantagem para resistir ao que é mental", e traduzir isso em
      "+3" seria trocar a promessa por outra coisa parecida. */
-  const um = () => 1 + Math.floor(Math.random() * 20);
+  const um = () => 1 + Math.floor(sorteDaCasa() * 20);
   const a1 = um();
   const d20 = vantagem ? Math.max(a1, um()) : desvantagem ? Math.min(a1, um()) : a1;
   const rolo = d20 + mod;
@@ -288,6 +289,7 @@ export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoN
       : `${cond.icone} ${nomeAlvo} está ${cond.nome}${cond.turnos ? ` (${cond.turnos}t)` : ""} — ${nomeFonte || atacante} (${rolo} vs ${dif})`,
     nota: `[${rotuloResistir ? "SALVAGUARDA" : "AFLIÇÃO APLICADA"} — ROLADA PELO SISTEMA] ${nomeFonte || "O golpe"} de ${atacante} deixou ${nomeAlvo} ${cond.nome.toLowerCase()}: falhou (${conta})${rotuloResistir ? ` na ${comoSeChama}` : ""}. Efeito e duração já estão aplicados (${cond.efeito}). Narre isso como fato — e não invente outro efeito nem outra condição: condição é do sistema. Você não rola esta salvaguarda e não a repete, nem para ser generoso.`,
   };
+  });
 }
 
 /* ---------------- GOLPES DE CRIATURA (catálogo) ----------------

@@ -3,7 +3,7 @@ import { turnoDosCompanheiros } from "../src/combate.js";
 import { itemConsumivel } from "../src/pocoes.js";
 import { guardaDe } from "../src/habilidades.js";
 import { efeitoDeBuff } from "../src/efeitos.js";
-import { rng, hashSemente } from "../src/semente.js";
+import { rng, hashSemente, trocarACasa } from "../src/semente.js";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -94,9 +94,9 @@ console.log("\n[o PM do companheiro chega ao painel]");
 console.log("\n[a guarda do companheiro atravessa o turno]");
 {
   const comSorteTravada = (valor, fn) => {
-    const original = Math.random;
-    Math.random = () => valor;
-    try { return fn(); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(() => valor);
+    try { return fn(); } finally { trocarACasa(original); }
   };
   const SORTE_QUE_ABRE_O_APOIO = 0;   /* < 0.7: o portão do passo 3 passa */
   const heroiDePe = { nome: "Vera", vida: 90, vidaMax: 90, condicoes: [] };
@@ -206,9 +206,9 @@ console.log("\n[o bônus do companheiro pesa no golpe (B2)]");
   const NIVEL = 5, N = 20000;
   const SEMENTE = "b2|o peso do companheiro";
   const comSemente = (semente, fn) => {
-    const original = Math.random;
-    Math.random = rng(hashSemente(semente));
-    try { return fn(); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(rng(hashSemente(semente)));
+    try { return fn(); } finally { trocarACasa(original); }
   };
 
   /* Guerreiro sem arma: `danoBase` é 4 + nível + d(4), tudo inteiro, sem
@@ -315,9 +315,9 @@ console.log("\n[o bônus do companheiro pesa no golpe (B2)]");
      `Math.random` em 0 escolhe a ofensiva no passo 4 e torna o turno inteiro
      previsível. */
   const comSorteTravada = (valor, fn) => {
-    const original = Math.random;
-    Math.random = () => valor;
-    try { return fn(); } finally { Math.random = original; }
+    const original = trocarACasa();
+    trocarACasa(() => valor);
+    try { return fn(); } finally { trocarACasa(original); }
   };
   const DARDO = { nome: "Dardo do Fosso", descricao: "uma agulha de luz fria", custo: 4, tipo: "ataque" };
   const mago = (efeitos, mana) => ({

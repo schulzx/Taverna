@@ -48,7 +48,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { hashSemente, rng } from "../src/semente.js";
+import { hashSemente, rng, trocarACasa } from "../src/semente.js";
 import * as L from "../src/lugar.js";
 import * as M from "../src/masmorras.js";
 import * as P from "../src/pauta.js";
@@ -197,8 +197,8 @@ sec("3. a varredura semeada — dentro nunca acusa, fora nada mudou");
    4. a seção nas masmorras de verdade
    ============================================================ */
 sec("4. a seção em masmorras geradas — sala a sala, a verdade da planta");
-const ACASO = Math.random;
-const semeado = (s, f) => { Math.random = rng(hashSemente(s)); try { return f(); } finally { Math.random = ACASO; } };
+const ACASO = trocarACasa();
+const semeado = (s, f) => { trocarACasa(rng(hashSemente(s))); try { return f(); } finally { trocarACasa(ACASO); } };
 const MUNDOS = [];
 for (const g of generosDisponiveis()) for (const Mo of MOLDES) {
   const semente = `MM16-4|${g}|${Mo.id}`;

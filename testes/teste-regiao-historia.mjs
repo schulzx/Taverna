@@ -34,6 +34,7 @@
    IDA_NA_REGIAO, horasPeloChao e a etapa concluir_masmorra não existem; o
    import é por espaço de nomes, e a suíte cai asserção a asserção. */
 
+import { trocarACasa } from "../src/semente.js";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -256,11 +257,11 @@ sec("7. determinismo, lixo e o Math.random");
   const mapa = R.gerarRegiao({ semente, molde: "sobremundo", genero, estrutura });
   const crua = SG.estenderEspinha({ semente, mapa, genero, estrutura, cidadeInicial: mapa.cidades[0].nome });
   const [cm, ce] = [J(mapa), J(crua)];
-  const acaso = Math.random;
+  const acaso = trocarACasa();
   let estourou = false;
-  Math.random = () => { estourou = true; return 0.5; };
+  trocarACasa(() => { estourou = true; return 0.5; });
   let a = null, b = null;
-  try { a = espinhaNaRegiao(mapa, crua, { semente, genero }); b = espinhaNaRegiao(mapa, crua, { semente, genero }); } finally { Math.random = acaso; }
+  try { a = espinhaNaRegiao(mapa, crua, { semente, genero }); b = espinhaNaRegiao(mapa, crua, { semente, genero }); } finally { trocarACasa(acaso); }
   t("mesma semente, mesma espinha amarrada", !!a && J(a) === J(b));
   t("a amarração não toca no Math.random", !estourou && !!R.espinhaNaRegiao);
   t("e não muta o mapa nem a espinha que recebe", J(mapa) === cm && J(crua) === ce);

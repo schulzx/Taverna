@@ -62,6 +62,7 @@
 
 const R = await import("./regua-combate.mjs");
 const { readFileSync, readdirSync } = await import("node:fs");
+const { trocarACasa } = await import("../src/semente.js");
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -279,16 +280,22 @@ sec("3. A SORTE TRAVADA — mesma semente, mesmo mundo; e nada vaza");
   t("semente ausente cai num padrão, e ainda é determinística",
     Array.from({ length: 5 }, sorteDaSemente(null)).join("|") === Array.from({ length: 5 }, sorteDaSemente("")).join("|"));
 
-  const original = Math.random;
-  const dentro = comSorteTravada("travada", () => Math.random);
-  t("comSorteTravada troca Math.random DURANTE a chamada", dentro !== original);
-  t("e o restaura depois — a sorte não vaza", Math.random === original);
+  /* Fase T0 (27/10): a troca deixou de ser do `Math.random` global e passou
+     a ser da sorte da casa (semente.js) — é por ela que os motores rolam
+     desde que os 167 `Math.random` sairam de src/. As asserções medem a
+     mesma coisa de antes (troca durante, repõe depois, repõe ao estourar),
+     só que no rolador que de facto rola. `trocarACasa()` sem argumento lê a
+     corrente sem trocar. */
+  const original = trocarACasa();
+  const dentro = comSorteTravada("travada", () => trocarACasa());
+  t("comSorteTravada troca a sorte da casa DURANTE a chamada", dentro !== original);
+  t("e o restaura depois — a sorte não vaza", trocarACasa() === original);
   t("o valor da função volta ao chamador", comSorteTravada("x", () => 42) === 42);
   /* O `finally` é o ponto inteiro: se a régua estourar no meio de um combate,
      a suíte seguinte não pode herdar um `Math.random` semeado. */
   let estourou = false;
   try { comSorteTravada("boom", () => { throw new Error("boom"); }); } catch { estourou = true; }
-  t("e restaura MESMO quando a função estoura (o finally é o ponto)", estourou && Math.random === original);
+  t("e restaura MESMO quando a função estoura (o finally é o ponto)", estourou && trocarACasa() === original);
 }
 
 /* ============================================================
@@ -523,13 +530,22 @@ sec("5. A CATRACA DE UMA VIDA — o grupo não é fraco demais nem forte demais"
      reproduz o retrato de B1/B1b/B2/T1 — 52,1% de vitória, 25,88 PV e 1,790
      quedas na família do retrato. Esta asserção é a garantia de que consertar
      o instrumento não reescreveu a história: os números do diário continuam
-     alcançáveis, e quem os for conferir os encontra. */
+     alcançáveis, e quem os for conferir os encontra.
+
+     FASE T0 (27/10/2026) · A ASSERÇÃO MOVEU-SE, E O MOTIVO É ESTE. O "+2 de
+     defesa" de `protegido` passou a valer na mesa (combate.js, a moeda que F2
+     mediu e não ligou; a pessoa aprovou o plano do motor que o liga). F2
+     escreveu o preço antes de ele ser pago — 52,1% → 54,7%, 25,88 → 27,57 PV,
+     1,790 → 1,720 quedas, `duro` 8,8% → 10,8% — e a régua, ligada a moeda,
+     mediu EXACTAMENTE esses números. Os de B1/B1b/B2/T1 são do jogo em que o
+     abrigo valia zero; os de hoje são o retrato do mesmo molde com a moeda
+     viva, e é deles que esta asserção passa a ser a garantia. */
   {
     const v = MED_SEM.justo;
-    t("com `comAdversario: false` a régua reproduz a medida antiga (52,1% · 25,88 PV · 1,790 quedas)",
-      Math.abs(v.vitoria.media - 0.521) < 1e-9 && Math.abs(v.pvGrupo.media - 25.88) < 0.005 && Math.abs(v.quedas.media - 1.790) < 5e-4,
+    t("com `comAdversario: false` a régua reproduz o retrato do molde histórico com o abrigo vivo (54,7% · 27,57 PV · 1,720 quedas)",
+      Math.abs(v.vitoria.media - 0.547) < 1e-9 && Math.abs(v.pvGrupo.media - 27.57) < 0.005 && Math.abs(v.quedas.media - 1.720) < 5e-4,
       `${linhaDaMetrica(v.vitoria, 3)} · ${linhaDaMetrica(v.pvGrupo, 2)} · ${linhaDaMetrica(v.quedas, 3)}`);
-    t("e o `duro` antigo também — 8,8% de vitória, quedas 0 no brando", Math.abs(MED_SEM.duro.vitoria.media - 0.088) < 1e-9 && MED_SEM.brando.quedas.media === 0,
+    t("e o `duro` também — 10,8% de vitória (era 8,8% com o abrigo a zero), quedas 0 no brando", Math.abs(MED_SEM.duro.vitoria.media - 0.108) < 1e-9 && MED_SEM.brando.quedas.media === 0,
       `${linhaDaMetrica(MED_SEM.duro.vitoria, 3)} · brando quedas ${MED_SEM.brando.quedas.media}`);
     /* e o dente 1 SAÍA VERDE no molde antigo: é isto que prova que o vermelho
        de hoje veio do instrumento passar a enxergar o jogo, e não de o
@@ -1137,7 +1153,12 @@ sec("10. X4 — O TABULEIRO QUE FALTA, E O PREÇO DA CAMINHADA");
     pendente(`[${CAMINHADA_NA_REGUA.cenario} · o jogo de hoje] k = ${k}`,
       `vitória ${(HOJE[i].vitoria.media * 100).toFixed(1)}% ± ${(HOJE[i].vitoria.margem * 100).toFixed(1)}  ·  PV ${HOJE[i].pvGrupo.media.toFixed(2)}  ·  quedas ${HOJE[i].quedas.media.toFixed(3)}`);
   });
-  const saturados = HOJE.slice(1).filter((r) => r.vitoria.media <= r.vitoria.margem).length;
+  /* FASE T0 (27/10): com o abrigo de `protegido` vivo, k = 1 e k = 2 subiram
+     para a BORDA da própria margem (0,8% ± 0,8, arredondado) em vez de caberem
+     dentro dela. A afirmação não mudou — a escada continua sem resolução, a
+     34 pontos do piso de 35% —, e o dente passa a dizer isso com um chão de
+     1 ponto: abaixo de 1% de vitória, ou dentro da margem, é saturado. */
+  const saturados = HOJE.slice(1).filter((r) => r.vitoria.media <= Math.max(r.vitoria.margem, 0.01)).length;
   t("com o Adversário ligado a escada não tem resolução: de k = 1 em diante a vitória cabe na própria margem",
     saturados === HOJE.length - 1,
     HOJE.slice(1).map((r) => `${(r.vitoria.media * 100).toFixed(1)}±${(r.vitoria.margem * 100).toFixed(1)}`).join(" · "));

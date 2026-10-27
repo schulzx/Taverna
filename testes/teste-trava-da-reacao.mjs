@@ -1,3 +1,4 @@
+import { trocarACasa } from "../src/semente.js";
 /* A TRAVA DA REAÇÃO (v9.266 · K2) — quem não responde tem o jogo de hoje,
    byte a byte, incluindo os dados que ele rola.
 
@@ -66,12 +67,12 @@ function mulberry32(semente) {
    de medir o rolo pela mesma régua, senão a contagem compara réguas. */
 function comRolador(rolar, corpo) {
   let rolos = 0;
-  const global = Math.random;
+  const global = trocarACasa();
   try {
-    Math.random = () => { rolos++; return rolar(); };
+    trocarACasa(() => { rolos++; return rolar(); });
     const r = corpo();
     return { ...r, rolos };
-  } finally { Math.random = global; }
+  } finally { trocarACasa(global); }
 }
 
 const ordemDe = (g, i) => (g && typeof g.ordem === "number" ? g.ordem : i);
@@ -624,7 +625,7 @@ sec("14. [T3] O PORTÃO DE UMA VIA — e o segundo a chegar não rola um dado se
      rolou um dado é pior do que um resultado errado: o erro aparece, e o
      desalinhamento não. */
   for (const [primeiro, segundo] of [["jogador", "expirou"], ["expirou", "jogador"], ["escondida", "jogador"], ["aba_fechou", "expirou"]]) {
-    const original = Math.random;
+    const original = trocarACasa();
     let estourou = null, um = null, dois = null;
     try {
       const janela = { id: "j1", ordem: 0, fechada: false, por: null };
@@ -634,13 +635,13 @@ sec("14. [T3] O PORTÃO DE UMA VIA — e o segundo a chegar não rola um dado se
       const resolveu = um.valeu ? reacaoDoSilencio({ golpes: rodadaDe(4), heroi: ladino, rolar: mulberry32(3) }) : null;
       /* E AGORA O SEGUNDO A CHEGAR: com o rolador global a ESTOURAR. Se
          alguma coisa rolar dentro do ramo perdedor, esta linha explode. */
-      Math.random = () => { throw new Error("o segundo a chegar rolou um dado"); };
+      trocarACasa(() => { throw new Error("o segundo a chegar rolou um dado"); });
       dois = fecharAJanela(um.janela, segundo);
       if (dois.valeu) reacaoDoSilencio({ golpes: rodadaDe(4), heroi: ladino });
       t(`[${primeiro} → ${segundo}] o primeiro passa (valeu: true) e resolve`, um.valeu === true && !!resolveu);
       t(`[${primeiro} → ${segundo}] o segundo recebe \`valeu: false\``, dois.valeu === false);
       t(`[${primeiro} → ${segundo}] e a janela continua a dizer que foi o PRIMEIRO que a fechou`, dois.por === primeiro && dois.janela.por === primeiro);
-    } catch (err) { estourou = err.message; } finally { Math.random = original; }
+    } catch (err) { estourou = err.message; } finally { trocarACasa(original); }
     t(`[${primeiro} → ${segundo}] nenhum dado foi rolado no segundo ramo`, !estourou, estourou);
   }
   t("o rolador global foi restaurado", typeof Math.random() === "number");
@@ -767,9 +768,9 @@ sec("17. O LIXO E A IMUTABILIDADE — `= {}` no destructuring NÃO cobre `null`"
   /* E O CINTO REPÕE O ROLADOR GLOBAL MESMO QUANDO A CHAMADA ESTOURA — é o
      `finally`, e sem ele uma exceção deixaria o projeto inteiro com um
      `Math.random` semeado a partir daqui. */
-  const original = Math.random;
+  const original = trocarACasa();
   try { reacaoDoSilencio({ golpes, heroi: ladino, rolar: () => { throw new Error("o rolador estourou"); } }); } catch (e) { /* esperado */ }
-  t("o rolador global é reposto mesmo quando a resolução estoura", Math.random === original);
+  t("o rolador global é reposto mesmo quando a resolução estoura", trocarACasa() === original);
 }
 
 console.log(`\ntrava da reação (K2): ${bons} passaram, ${maus} falharam · ${((Date.now() - comecou) / 1000).toFixed(1)} s`);

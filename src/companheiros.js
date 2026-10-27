@@ -14,7 +14,7 @@
    ============================================================ */
 
 import { CLASSES, RACAS, classePorNome, habilidadesDisponiveis } from "./classes.js";
-import { hashSemente, sementeDe } from "./semente.js";
+import { hashSemente, sementeDe, sorteDaCasa, comSorte } from "./semente.js";
 import { comoConsumivel, melhorCuraPara, usarConsumivel } from "./pocoes.js";
 import { aflicaoDe } from "./aflicoes.js";
 import { guardaDe, guardasAtivas } from "./habilidades.js";
@@ -255,9 +255,10 @@ export const ehBuff = (h) => {
 export const ehOfensiva = (h) => !ehCuraDeGrupo(h) && (h.tipo === "ataque" || RX_OFENSIVA.test(`${h.nome || ""} ${h.descricao || ""}`));
 
 /* Quanto uma cura de companheiro devolve: escala com nível e custo, com dado. */
-export function valorDaCura(comp, hab) {
+export function valorDaCura(comp, hab, sorte = null) { return comSorte(sorte, () => {
   const base = 4 + (comp.nivel || 1) + (Number(hab.custo) || 2) * 2;
-  return base + 1 + Math.floor(Math.random() * 6);
+  return base + 1 + Math.floor(sorteDaCasa() * 6);
+  });
 }
 
 /* ---------------- A CABEÇA DO COMPANHEIRO ----------------
@@ -268,7 +269,7 @@ export function valorDaCura(comp, hab) {
      4. tem habilidade ofensiva e mana → usa
      5. bate com a arma
    Devolve a INTENÇÃO; quem aplica é o motor de combate. */
-export function decidirAcaoCompanheiro(comp, { aliados = [], inimigos = [], jogador = null, rodada = 1 }) {
+export function decidirAcaoCompanheiro(comp, { aliados = [], inimigos = [], jogador = null, rodada = 1, sorte = null }) { return comSorte(sorte, () => {
   const habs = (comp.habilidades || []).filter((h) => h && h.nome);
   const mana = comp.mana != null ? comp.mana : 0;
   const podePagar = (h) => (Number(h.custo) || 0) <= mana;
@@ -350,12 +351,12 @@ export function decidirAcaoCompanheiro(comp, { aliados = [], inimigos = [], joga
     const guarda = habs.find((h) => ehGuarda(h) && podePagar(h) && !dePe.has(guardaDe(h).id));
     const abrigo = guarda ? null : habs.find((h) => ehAbrigo(h) && podePagar(h) && naoRepete(h));
     const apoio = guarda || abrigo || habs.find((h) => ehBuff(h) && podePagar(h) && naoRepete(h));
-    if (apoio && Math.random() < 0.7) return { tipo: guarda ? "guarda" : "buff", habilidade: apoio };
+    if (apoio && sorteDaCasa() < 0.7) return { tipo: guarda ? "guarda" : "buff", habilidade: apoio };
   }
 
   /* 4. habilidade ofensiva — a mais cara que ele pode pagar */
   const ofensivas = habs.filter((h) => ehOfensiva(h) && podePagar(h)).sort((a, b) => (b.custo || 0) - (a.custo || 0));
-  if (ofensivas.length && Math.random() < 0.6) {
+  if (ofensivas.length && sorteDaCasa() < 0.6) {
     const alvo = [...inimigosVivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
     return { tipo: "habilidade", habilidade: ofensivas[0], alvoNome: alvo.nome };
   }
@@ -363,12 +364,14 @@ export function decidirAcaoCompanheiro(comp, { aliados = [], inimigos = [], joga
   /* 5. arma */
   const alvo = [...inimigosVivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
   return { tipo: "ataque", alvoNome: alvo.nome };
+  });
 }
 
 /* Dano de uma habilidade ofensiva de companheiro (escala com custo e nível) */
-export function danoDaHabilidadeComp(comp, hab) {
+export function danoDaHabilidadeComp(comp, hab, sorte = null) { return comSorte(sorte, () => {
   const base = 3 + (comp.nivel || 1) + (Number(hab.custo) || 2) * 2;
-  return base + 1 + Math.floor(Math.random() * 6);
+  return base + 1 + Math.floor(sorteDaCasa() * 6);
+  });
 }
 
 /* Resumo para a ficha e para o prompt: quem é quem no grupo. */

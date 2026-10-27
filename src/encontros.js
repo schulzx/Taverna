@@ -6,13 +6,14 @@
    o resultado e NARRA — zero tokens decidindo aleatoriedade,
    e a estrada nunca mais é "sempre a mesma".
    ============================================================ */
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { criaturasDoGenero } from "./bestiario.js";
 import { gerarEspolios } from "./combate.js";
 import { BIAS_CLIMA } from "./calendario.js";
 import { completarInimigo } from "./bestiario.js";
 import { quantosPara } from "./orcamento.js";
 
-const d100 = () => 1 + Math.floor(Math.random() * 100);
+const d100 = () => 1 + Math.floor(sorteDaCasa() * 100);
 
 /* ---------------- CLIMA ----------------
    Rola a cada trecho de viagem e pode mudar com o passar do tempo.
@@ -54,7 +55,7 @@ export function pesosDoClima(estacaoId) {
 
 export function rolarClima(atualId, opcoes = {}) {
   /* = {} não cobre null explícito — a lei da casa. */
-  const { estacao = null, sorte = Math.random } = opcoes || {};
+  const { estacao = null, sorte = sorteDaCasa } = opcoes || {};
   const pool = pesosDoClima(estacao).flatMap(({ clima, peso }) => Array(peso).fill(clima));
   if (!pool.length) return null;
   const tira = () => pool[Math.min(pool.length - 1, Math.floor(sorte() * pool.length))];
@@ -107,14 +108,14 @@ export function moedasDoAchadoNoEnvelope(envelopes) {
   return total;
 }
 
-export function rolarEncontro(genero, nivel, nomeViajante) {
+export function rolarEncontro(genero, nivel, nomeViajante, sorte = null) { return comSorte(sorte, () => {
   const r = d100();
   if (r <= 32) {
     const lista = (criaturasDoGenero(genero) || []).filter((c) => c.nivelRef <= nivel + 2 && c.nivelRef >= Math.max(1, nivel - 4));
     const pool = lista.length ? lista : (criaturasDoGenero(genero) || []);
     if (pool.length) {
-      const c = pool[Math.floor(Math.random() * pool.length)];
-      const qtd = c.ameaca === "fraco" ? 2 + Math.floor(Math.random() * 3) : c.ameaca === "comum" ? 1 + Math.floor(Math.random() * 2) : 1;
+      const c = pool[Math.floor(sorteDaCasa() * pool.length)];
+      const qtd = c.ameaca === "fraco" ? 2 + Math.floor(sorteDaCasa() * 3) : c.ameaca === "comum" ? 1 + Math.floor(sorteDaCasa() * 2) : 1;
       /* E4 (12/10): o detalhe já não ensina "combate_iniciar". A criatura
          está à vista e não ataca por conta do Narrador: se investe, quem o
          decide é a tabela (`investidaDaEstrada`), e o golpe do jogador
@@ -129,10 +130,10 @@ export function rolarEncontro(genero, nivel, nomeViajante) {
     }
   }
   if (r <= 50) {
-    return { tipo: "viajante", titulo: nomeViajante || "um desconhecido", detalhe: `${nomeViajante ? `${nomeViajante} aparece como` : "Aparece"} ${VIAJANTES[Math.floor(Math.random() * VIAJANTES.length)]}.` };
+    return { tipo: "viajante", titulo: nomeViajante || "um desconhecido", detalhe: `${nomeViajante ? `${nomeViajante} aparece como` : "Aparece"} ${VIAJANTES[Math.floor(sorteDaCasa() * VIAJANTES.length)]}.` };
   }
   if (r <= 66) {
-    const esp = gerarEspolios([{ ameaca: Math.random() < 0.3 ? "competente" : "comum" }]);
+    const esp = gerarEspolios([{ ameaca: sorteDaCasa() < 0.3 ? "competente" : "comum" }]);
     const partes = [esp.moedas > 0 ? marcaDoAchado(esp.moedas) : "nenhuma moeda"];
     if (esp.caiItem) partes.push("1 item útil");
     /* E3 do "o Narrador só narra" (12/10): o ◉ rolado vai em número e o App
@@ -143,9 +144,10 @@ export function rolarEncontro(genero, nivel, nomeViajante) {
     return { tipo: "achado", titulo: "algo à beira da estrada", moedas: esp.moedas, detalhe: `Achado rolado pelas tabelas: ${partes.join(" + ")}${esp.caiItem ? ` — o item entra, se couber, por "itens"/"equipamento_novo"` : ""}. Crie o contexto (um esconderijo, um corpo na vala, um altar esquecido) e narre o achado, mas o CONTEÚDO é este; não invente mais nada.` };
   }
   if (r <= 85) {
-    return { tipo: "cena", titulo: "sinais no caminho", detalhe: `Na estrada: ${CENAS[Math.floor(Math.random() * CENAS.length)]}. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.` };
+    return { tipo: "cena", titulo: "sinais no caminho", detalhe: `Na estrada: ${CENAS[Math.floor(sorteDaCasa() * CENAS.length)]}. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.` };
   }
   return { tipo: "tranquilo", titulo: "estrada tranquila", detalhe: "O trecho passa sem sobressaltos — use o clima e a paisagem para dar textura ao mundo (e, se houver, avance fofoca, tensão ou pista sutil da trama)." };
+  });
 }
 
 /* ============================================================
@@ -180,7 +182,7 @@ export const INVESTIDA_DA_ESTRADA = {
 export function investidaDaEstrada(enc, opcoes) {
   if (!enc || typeof enc !== "object" || enc.tipo !== "perigo" || !enc.criatura) return null;
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
-  const sorte = typeof o.sorte === "function" ? o.sorte : Math.random;
+  const sorte = typeof o.sorte === "function" ? o.sorte : sorteDaCasa;
   const T = INVESTIDA_DA_ESTRADA;
   const extra = (o.clima && T.porClima[o.clima]) || 0;
   const chance = Math.min(T.teto, T.base + extra);

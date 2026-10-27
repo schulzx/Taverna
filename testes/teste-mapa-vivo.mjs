@@ -47,7 +47,7 @@ import { definirLugar } from "../src/lugar.js";
 import { sementeDe, generoDe, LEXICO_DA_MEDIDA } from "./medir-regiao.mjs";
 import { gerarMasmorra } from "../src/masmorras.js";
 import { masmorrasDoMundo } from "../src/mundo-base.js";
-import { hashSemente, rng } from "../src/semente.js";
+import { hashSemente, rng, trocarACasa } from "../src/semente.js";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 let ok = 0, mal = 0;
@@ -459,10 +459,10 @@ sec("11. determinismo, nenhum Math.random, entrada congelada intocada");
 
   const fonte = readFileSync(join(AQUI, "..", "src", "mapa-vivo.js"), "utf8");
   t("o módulo não chama o Math.random", !/Math\.random/.test(fonte));
-  const acaso = Math.random;
+  const acaso = trocarACasa();
   let tocou = false;
-  Math.random = () => { tocou = true; return 0.5; };
-  try { for (const w of mundos.slice(0, 20)) MV.dadosDoMapaVivo(w.mapa, novo(w, { etapa: 2 })); } finally { Math.random = acaso; }
+  trocarACasa(() => { tocou = true; return 0.5; });
+  try { for (const w of mundos.slice(0, 20)) MV.dadosDoMapaVivo(w.mapa, novo(w, { etapa: 2 })); } finally { trocarACasa(acaso); }
   t("e nada do que ele chama o toca", !tocou);
 
   const congelar = (o) => { if (o && typeof o === "object" && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o)) congelar(v); } return o; };
@@ -489,8 +489,8 @@ sec("12. quem lá anda (P3): o nó, a ficha e a planta dizem os mesmos bichos");
      prova as TRÊS vias — nó = ficha = planta — e que a neblina as cala onde
      cala o perigo. Antes da P3 nenhum nó tinha `quem`: a concordância dava
      0/N e a secção caía. */
-  const ACASO = Math.random;
-  const semeado = (sm, f) => { Math.random = rng(hashSemente(sm)); try { return f(); } finally { Math.random = ACASO; } };
+  const ACASO = trocarACasa();
+  const semeado = (sm, f) => { trocarACasa(rng(hashSemente(sm))); try { return f(); } finally { trocarACasa(ACASO); } };
   const ABERTOS = new Set(["conhecido", "visitado", "concluido"]);
   const NIVEL = /\d|\bn[ií]vel\b|\bnv\b|\blvl\b/i;
   const temQuem = (n) => Object.prototype.hasOwnProperty.call(n, "quem");

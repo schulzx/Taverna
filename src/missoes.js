@@ -47,6 +47,7 @@
    lista inteira aberta transformaria a aventura num checklist.
    ============================================================ */
 
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { criarRelogio } from "./relogios.js";
 /* v9.132: a etapa de resgate le a SITUACAO da pessoa, que e o estado que
    a fase 2 criou. `mundo-base.js` nao importa `missoes.js`, entao nao ha
@@ -494,10 +495,10 @@ export function precoNoTexto(txt) {
 }
 
 /* ---------------- CRIAR ---------------- */
-export function garantirMissoes(lista) {
+export function garantirMissoes(lista, sorte = null) { return comSorte(sorte, () => {
   if (!Array.isArray(lista)) return [];
   return lista.filter((q) => q && q.titulo).map((q) => ({
-    id: q.id || `m_${Math.random().toString(36).slice(2, 8)}`,
+    id: q.id || `m_${sorteDaCasa().toString(36).slice(2, 8)}`,
     titulo: String(q.titulo).slice(0, 70),
     tipo: TIPOS[q.tipo] ? q.tipo : "favor",
     descricao: String(q.descricao || "").slice(0, 240),
@@ -573,6 +574,7 @@ export function garantirMissoes(lista) {
     relogioId: q.relogioId || null,
     criadaEm: Number.isFinite(q.criadaEm) ? q.criadaEm : 0,
   }));
+  });
 }
 
 export function criarMissao({ titulo, tipo = "favor", descricao = "", dador = "", etapas = [], nivel = 1, dia = 0, id, status, moedasPrometidas = null, etapasPrometidas = null, prazo = 0, intencao = "", veiculo = "", virada = null, legado = false, guilda = "", contribui = 0, prova = false }) {

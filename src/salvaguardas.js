@@ -34,6 +34,7 @@
    tem nome, bônus certo e aparece na tela.
    ============================================================ */
 
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { ATRIBUTOS } from "./constantes.js";
 import { bonusProficiencia } from "./regras.js";
 
@@ -154,7 +155,7 @@ export function condicaoDaFonte(id) { return CONDICAO_DA_FONTE[id] || ""; }
 
    Fica de propósito na faixa do "susto que se aguenta": um perigo de
    cena não pode matar sozinho, ou a narração vira arma. */
-export function danoDoPerigo(nivel = 1, { sorte = Math.random } = {}) {
+export function danoDoPerigo(nivel = 1, { sorte = sorteDaCasa } = {}) {
   const n = Math.max(1, Math.min(20, Number(nivel) || 1));
   const dados = Math.max(1, Math.min(6, 1 + Math.floor(n / 4)));
   let total = 0;
@@ -202,10 +203,10 @@ export function dcDaFonte({ nivel = 0, base = 13, ajuste = 0 } = {}) {
    a promessa — o Gnomo e o Sintético diziam "vantagem para resistir
    ao que é mental" e nada, em lugar nenhum, lia essa frase.
    ============================================================ */
-export function rolarSalvaguarda({ pers, salva = "vigor", dc = 13, modDe, vantagem = false, desvantagem = false, d20 = null } = {}) {
+export function rolarSalvaguarda({ pers, salva = "vigor", dc = 13, modDe, vantagem = false, desvantagem = false, d20 = null, sorte = null } = {}) { return comSorte(sorte, () => {
   const s = salvaguardaPorId(salva);
   const { total: mod, proficiente } = bonusDeSalvaguarda(pers, s.id, modDe);
-  const rola = () => (Number.isFinite(d20) ? d20 : 1 + Math.floor(Math.random() * 20));
+  const rola = () => (Number.isFinite(d20) ? d20 : 1 + Math.floor(sorteDaCasa() * 20));
   const a = rola();
   const b = (vantagem || desvantagem) && !Number.isFinite(d20) ? rola() : a;
   const valor = vantagem ? Math.max(a, b) : desvantagem ? Math.min(a, b) : a;
@@ -213,6 +214,7 @@ export function rolarSalvaguarda({ pers, salva = "vigor", dc = 13, modDe, vantag
   const critico = valor === 20, desastre = valor === 1;
   const passou = critico || (!desastre && total >= dc);
   return { salva: s.id, nome: s.nome, icone: s.icone, valor, outro: b === a ? null : b, mod, total, dc, passou, critico, desastre, proficiente, vantagem: !!vantagem, desvantagem: !!desvantagem };
+  });
 }
 
 /* ============================================================

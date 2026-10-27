@@ -51,6 +51,7 @@
    mesa — "só se algo mudar" — com o "algo" enumerado.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { rngDe } from "./geografia.js";
 import { periciaPorId } from "./pericias.js";
 import { detectarPedidoDeTeste, semOPedidoDeTeste, nomeDoAtributo } from "./testes.js";
@@ -2201,7 +2202,7 @@ export function dcDaQueda(metros) {
 /* Rola a queda. A sorte entra por parâmetro para o teste poder fixá-la —
    e para que ninguém, um dia, sorteie isto com `Math.random` escondido no
    meio de outra função. */
-export function rolarQueda(q, { sorte = Math.random } = {}) {
+export function rolarQueda(q, { sorte = sorteDaCasa } = {}) {
   const n = Math.max(1, Number(q && q.dados) || 1);
   let total = 0;
   for (let i = 0; i < n; i++) total += 1 + Math.floor(sorte() * 6);

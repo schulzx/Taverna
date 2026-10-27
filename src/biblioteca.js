@@ -42,6 +42,7 @@
    duas linhas.
    ============================================================ */
 
+import { sorteDaCasa } from "./semente.js";
 import { ESCOLAS, JOGADAS, GESTOS, escolaPorId, jogadaPorId, gestoPorId } from "./estante.js";
 
 /* Reexportados porque o acervo e a consulta são a mesma ferramenta vista
@@ -422,7 +423,7 @@ export function aderenciaDe(jogada, situacao, alvo = null) {
 
    `soSozinhas` é o canal do turno comum, e está explicado adiante.
    ============================================================ */
-export function consultarBiblioteca(situacao, { sorte = Math.random, estante = null, preferir = null, soSozinhas = false } = {}) {
+export function consultarBiblioteca(situacao, { sorte = sorteDaCasa, estante = null, preferir = null, soSozinhas = false } = {}) {
   const s = garantirSituacao(situacao);
   const e = garantirEstante(estante);
   const vetos = VETOS.filter((v) => { try { return !!v.quando(s); } catch { return false; } });

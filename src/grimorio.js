@@ -40,6 +40,8 @@
    escola, elemento) continua saindo da classe, como já saía. O
    grimório não é um sistema paralelo: é mais folha na mesma árvore.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
+
 
 /* ---------------- A RÉGUA ---------------- */
 export const METROS_POR_ZONA = 12;     // a boca de uma zona
@@ -425,7 +427,7 @@ export function alvosDaArea({ hab, totalZonas = 3, zonaHeroi = 0, zonaAlvo = 0, 
    o mundo de graça — e a névoa existe justamente para isso não acontecer. */
 export const CHANCE_PERCALCO = 0.15;
 
-export function resolverPortal({ magia, destino, cidades = [], cidadeAtual = "", faccaoJogador = "", rnd = Math.random } = {}) {
+export function resolverPortal({ magia, destino, cidades = [], cidadeAtual = "", faccaoJogador = "", rnd = sorteDaCasa } = {}) {
   const m = typeof magia === "string" ? magiaPorNome(magia) : magia;
   if (!m || m.funcao !== "portal") return { ok: false, motivo: "essa magia não abre passagem" };
   const alvo = String(destino || "").trim();

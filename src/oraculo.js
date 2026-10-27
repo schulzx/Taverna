@@ -26,6 +26,7 @@
    onde nasce quase toda cena interessante, porque obriga a história
    a andar de lado em vez de parar.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 const d = (n, sorte) => 1 + Math.floor(sorte() * n);
 
@@ -138,7 +139,7 @@ export function calcularChance(pergunta, ctx = {}) {
    Um d100 contra a chance decide o lado; a MARGEM decide o grau. Perto
    do limiar sai "sim, mas" ou "não, mas" — que é onde a ficção fica boa.
    Longe, sai limpo. Nos extremos (5% de cada ponta), o mundo se mexe. */
-export function consultar(pergunta, ctx = {}, { sorte = Math.random, fatos = null } = {}) {
+export function consultar(pergunta, ctx = {}, { sorte = sorteDaCasa, fatos = null } = {}) {
   const { chance, tipo, porque, faixa } = calcularChance(pergunta, ctx);
   /* ---------------- O MUNDO NÃO PISCA (v9.61) ----------------
      Antes de rolar, olha o que já foi respondido. Uma pergunta que já
@@ -550,7 +551,7 @@ export function perguntaDoSistemaPorId(id) { return PERGUNTAS_DO_SISTEMA.find((p
    jogador — mesma chance derivada, mesmo livro de fatos, mesmos seis
    graus —, só que o texto da pergunta é canônico, para que duas regras
    perguntando a mesma coisa no mesmo lugar recebam a MESMA resposta. */
-export function perguntarPeloSistema(id, ctx = {}, { sorte = Math.random, fatos = null } = {}) {
+export function perguntarPeloSistema(id, ctx = {}, { sorte = sorteDaCasa, fatos = null } = {}) {
   const q = perguntaDoSistemaPorId(id);
   if (!q) return null;
   const texto = q.pergunta(ctx);
@@ -696,7 +697,7 @@ export function podeIniciativa(ctx = {}) {
   return true;
 }
 
-export function iniciativaDoMundo(ctx = {}, { sorte = Math.random } = {}) {
+export function iniciativaDoMundo(ctx = {}, { sorte = sorteDaCasa } = {}) {
   if (!podeIniciativa(ctx)) return null;
   if (d(100, sorte) > RITMO_DO_MUNDO.chance) return null;
   const abertos = MOVIMENTOS_DO_MUNDO.filter((m) => { try { return !!m.quando(ctx); } catch { return false; } });

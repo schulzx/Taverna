@@ -6,6 +6,7 @@
    e movimenta as moedas (retém ao pregar; paga no sucesso; devolve tudo no
    fracasso). A IA só narra os envelopes. */
 
+import { sorteDaCasa, comSorte } from "./semente.js";
 import { sortear, nomePessoa } from "./nomes.js";
 
 export const TIPOS_DECRETO = [
@@ -24,12 +25,13 @@ export const recompensaJusta = (tipoId, nivel) => Math.round((tipoDecreto(tipoId
 const BANDOS = ["Companhia", "Irmandade", "Bando", "Liga", "Ordem Menor"];
 const BANDOS_ADJ = ["do Javali", "das Cinzas", "do Corvo", "da Estrada", "do Punho Cerrado", "das Três Luas", "do Sal", "dos Desalmados", "da Aurora", "do Carvalho"];
 
-export function gerarGrupoAventureiros(genero, nivel) {
-  const n = 2 + Math.floor(Math.random() * 3); // 2–4 aventureiros
+export function gerarGrupoAventureiros(genero, nivel, sorte = null) { return comSorte(sorte, () => {
+  const n = 2 + Math.floor(sorteDaCasa() * 3); // 2–4 aventureiros
   const membros = [];
   for (let i = 0; i < n; i++) membros.push({ nome: nomePessoa(genero), vivo: true });
-  const forca = Math.max(1, Math.min(20, (nivel || 1) + Math.floor(Math.random() * 5) - 2)); // ±2 do seu nível
+  const forca = Math.max(1, Math.min(20, (nivel || 1) + Math.floor(sorteDaCasa() * 5) - 2)); // ±2 do seu nível
   return { bando: `${sortear(BANDOS)} ${sortear(BANDOS_ADJ)}`, lider: membros[0].nome, membros, forca };
+  });
 }
 
 /* Chance de alguém topar o serviço: generosidade pesa muito, fama ajuda. */
@@ -41,24 +43,26 @@ export function chanceAceite(decreto, nivel, fama) {
 }
 
 /* Tenta encontrar quem aceite. Retorna o grupo ou null. */
-export function tentarAceite(decreto, { genero, nivel, fama }) {
-  if (Math.random() >= chanceAceite(decreto, nivel, fama)) return null;
+export function tentarAceite(decreto, { genero, nivel, fama, sorte = null }) { return comSorte(sorte, () => {
+  if (sorteDaCasa() >= chanceAceite(decreto, nivel, fama)) return null;
   return gerarGrupoAventureiros(genero, nivel);
+  });
 }
 
 /* Desfecho do serviço, por tabela — força do grupo contra dificuldade do alvo. */
-export function resolverDecreto(decreto) {
+export function resolverDecreto(decreto, sorte = null) { return comSorte(sorte, () => {
   const dif = tipoDecreto(decreto.tipo).dificuldade;
   const alvo = dif * 2 + Math.floor(dif / 2); // dificuldade em "pontos de força"
   const vantagem = (decreto.grupo?.forca || 5) - alvo;
   const pSucesso = Math.max(0.15, Math.min(0.85, 0.5 + vantagem * 0.08));
-  const r = Math.random();
+  const r = sorteDaCasa();
   if (r < pSucesso) {
-    const comBaixas = Math.random() < 0.35;
+    const comBaixas = sorteDaCasa() < 0.35;
     return { desfecho: comBaixas ? "sucesso_baixas" : "sucesso", pago: true };
   }
   if (r < pSucesso + 0.10) return { desfecho: "dizimado", pago: false }; // ninguém voltou
   return { desfecho: "fracasso", pago: false };
+  });
 }
 
 export const ROTULO_DESFECHO = {
@@ -68,14 +72,15 @@ export const ROTULO_DESFECHO = {
   dizimado: "☠ Ninguém voltou",
 };
 
-export function criarDecreto({ tipo, alvo, recompensa, nivel }) {
+export function criarDecreto({ tipo, alvo, recompensa, nivel, sorte = null }) { return comSorte(sorte, () => {
   const t = tipoDecreto(tipo);
   return {
-    id: `dec-${Date.now().toString(36)}-${Math.floor(Math.random() * 999)}`,
+    id: `dec-${Date.now().toString(36)}-${Math.floor(sorteDaCasa() * 999)}`,
     tipo: t.id, alvo: (alvo || "").trim() || "alvo a definir",
     recompensa: Math.max(5, Math.round(recompensa || recompensaJusta(t.id, nivel))),
     descricao: t.modelo((alvo || "").trim() || "alvo a definir"),
     status: "pregado", // pregado → aceito → resolvido
     dias: 0, grupo: null, desfecho: null,
   };
+  });
 }

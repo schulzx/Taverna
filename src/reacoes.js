@@ -13,6 +13,7 @@
    ============================================================ */
 
 import { perfilCombate } from "./combate.js";
+import { sorteDe } from "./semente.js";
 
 /* ---------------- O CATÁLOGO ----------------
    `gatilho`: "sofre_dano" (quando um golpe acerta) | "inimigo_erra" (quando
@@ -81,8 +82,10 @@ export function reacoesDe(pers) {
 
 /* ---------------- A DECISÃO ----------------
    Vale gastar a reação agora? O sistema é econômico de propósito: aparar um
-   arranhão desperdiça o recurso que salvaria a vida no golpe seguinte. */
-export function escolherReacao({ pers, gatilho, dano = 0, temReacao = true, tipoDano = "fisico" }) {
+   arranhão desperdiça o recurso que salvaria a vida no golpe seguinte.
+   `sorte` (Fase T0, 27/10): o dado da `chance` entra de fora — um
+   `dadoDo(...)` de semente.js. Sem ela, a sorte da casa. */
+export function escolherReacao({ pers, gatilho, dano = 0, temReacao = true, tipoDano = "fisico", sorte = null }) {
   if (!temReacao || !pers) return null;
   const candidatas = reacoesDe(pers).filter((r) => r.gatilho === gatilho);
   for (const r of candidatas) {
@@ -93,7 +96,7 @@ export function escolherReacao({ pers, gatilho, dano = 0, temReacao = true, tipo
       const limite = Math.max(r.minDano || 0, Math.round((pers.vidaMax || 20) * 0.08));
       if (dano < limite) continue;      // golpe pequeno não merece a reação
     }
-    if (r.chance != null && Math.random() > r.chance) continue;
+    if (r.chance != null && sorteDe(sorte)() > r.chance) continue;
     return r;
   }
   return null;

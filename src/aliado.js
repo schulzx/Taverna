@@ -41,6 +41,7 @@
    insuportável, e o silêncio dos outros três é o que faz a fala do
    primeiro valer alguma coisa.
    ============================================================ */
+import { sorteDaCasa } from "./semente.js";
 
 /* ---------------- O CÓDIGO ----------------
    Duas ou três por aliado, sorteadas do conceito dele quando ele entra.
@@ -257,7 +258,7 @@ export function podeFalar(cena) {
   return a.calado >= CALADO_ATE_FALAR;
 }
 
-export function oQueOAliadoFaz(cena, { sorte = Math.random } = {}) {
+export function oQueOAliadoFaz(cena, { sorte = sorteDaCasa } = {}) {
   const a = garantirCena(cena);
   if (!podeFalar(a)) return null;
   const cand = [];
@@ -278,7 +279,7 @@ export function oQueOAliadoFaz(cena, { sorte = Math.random } = {}) {
 
 /* A opinião sobre o que o herói acabou de fazer. Separada do movimento
    porque uma coisa é o que ele quer, outra é o que ele achou. */
-export function oQueEleAchou(cena, { sorte = Math.random } = {}) {
+export function oQueEleAchou(cena, { sorte = sorteDaCasa } = {}) {
   const a = garantirCena(cena);
   const cand = [];
   for (const o of OPINIOES) {
@@ -297,7 +298,7 @@ export function oQueEleAchou(cena, { sorte = Math.random } = {}) {
    UMA, e de UM aliado. Quatro companheiros comentando cada jogada é
    insuportável, e o silêncio dos outros três é o que faz a fala do
    primeiro valer alguma coisa. */
-export function paraPauta(cenas = [], { sorte = Math.random } = {}) {
+export function paraPauta(cenas = [], { sorte = sorteDaCasa } = {}) {
   const podem = (cenas || []).map(garantirCena).filter((c) => c.nome && podeFalar(c));
   if (!podem.length) return { linhas: [], quem: "", vaiEmbora: false };
   /* quem está calado há mais tempo tem a vez; empate, quem teve o código
