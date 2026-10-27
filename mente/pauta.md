@@ -421,6 +421,16 @@ pessoa leva o retrato.
 - **A prova:** 0 de 10 mal lidos e 0 de 10 mal cobrados (9.ª: 0 de 1, 0 de 1, 0 de 1).
 - Começa depois dos consertos da 9.ª no ar.
 
+### Fase T — o motor como tecnologia (aprovada pela pessoa, 27/10)
+
+A pessoa quer vender o Taverna **como tecnologia**. O plano está em `mente/plano-motor.md` (nasce da `mente/auditoria-do-motor.md`): cinco fases, duas trilhas em paralelo (A no `App.jsx` e no estado, B em módulos puros e testes). A pessoa: **"Aprovado, pode começar, você também tem a permissão para todos os itens"** — inclui o save versionado (fase 0), o servidor com chave por licenciante (fase 4) e o Juiz passar de medir a corrigir (depois da fase 3). O que continua dela: pôr chaves e variáveis no Vercel, e qualquer gasto novo.
+
+- **T0 · o chão:** estado único com save versionado (A); semente em todo sorteio, varredor contra `Math.random`, as varreduras no `npm test`, o +2 de defesa (B).
+- **T1 · o turno sai do App:** `src/motor/` (`aplicar`, `turno`) provado contra os registos reais (A); o Cronista propõe e o motor decide, a suíte "20 turnos em Node" (B).
+- **T2 · as provas viram comportamento:** envelopes e rodapé fora do App (A); as 187 suítes de texto viram chamadas ao motor (B).
+- **T3 · o Juiz e o replay:** a sessão como arquivo (A); o Juiz de fidelidade (B).
+- **T4 · servidor e cenário:** o prompt no servidor com chave e quota (A); o cenário como arquivo (B).
+
 ### A foto do estado fica para perto de janeiro (decisão da pessoa, 20/10)
 
 Depois das ondas 1–3 (−64%, ~R$ 3,88/sessão), o que sobra é a mensagem do turno. O caminho B — congelar os blocos lentos numa "foto" antes do histórico e mandar só o que mudou — daria ~−20% (~R$ 3,00) mas arrisca o Narrador ler estado velho. Proposta: fazer só o caminho A (afinar quando o cache se refaz, sem risco), priorizar a qualidade, e decidir o B perto de 01/01/2027 (quando o Gemini 3.8 Flash dobra de preço), revendo também os preços dos modelos. A pessoa: **"Concordo."**
