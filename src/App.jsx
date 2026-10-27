@@ -143,6 +143,8 @@ import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } fro
    save por modo. A lei-mae do documento As Duas Mesas: modo e lente sobre
    o motor, nunca segundo jogo. Conta em modos.js. */
 import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior, modoNaPorta } from "./modos.js";
+/* T0 (Fase T, trilha A): o estado do jogo como um objeto só, e o save com esquema e versão. */
+import { ESTADO_VERSAO, estadoDoSave, saveDoEstado } from "./estado.js";
 /* A NOITE JOGAVEL (v9.218 — M6): o roster, o Capitulo e o Torneio entram
    na mesa. Conta em prontos.js, uma-noite.js e torneio.js. */
 import { PRONTOS, montarPronto, prontoPorId } from "./prontos.js";
@@ -5432,6 +5434,15 @@ function gerarBancoNomes(mundo) {
   return { cidades: [...new Set(cidades)], tavernas: [...new Set(tavernas)], elenco };
 }
 
+/* T0: TODA LEITURA DE SAVE PASSA POR AQUI. O save do disco pode ser o v1
+   (o literal cru de antes, sem versão) ou o v2; `estadoDoSave` devolve o
+   estado v2 dos dois, migrando só na leitura — um campo que existe passa
+   intacto, o que falta ganha o padrão que o leitor (`continuar`) já trata
+   como a ausência, e lixo não derruba. A ficha continua a migrar pelo
+   `migrarPersonagem` de sempre. O que não é objeto não é save: `null`,
+   como antes — o menu não oferece "continuar" a um save de lixo. */
+const lerSave = (sv) => { if (!sv || typeof sv !== "object" || Array.isArray(sv)) return null; const e = estadoDoSave(sv); return e.personagem ? { ...e, personagem: migrarPersonagem(e.personagem) } : e; };
+
 export default function Taverna() {
   const [fase, setFase] = useState("menu"); // menu | mundo | personagem | jogo
   const faseRef = useRef(fase);
@@ -9020,8 +9031,7 @@ export default function Taverna() {
       if (anterior) localStorage.setItem(chaveAnterior(), anterior);
       localStorage.setItem(chaveDoSave(), JSON.stringify(bruto));
     } catch { return { ok: false, erro: "O navegador recusou gravar (memória cheia?). Nada foi alterado." }; }
-    const sv = { ...bruto };
-    if (sv.personagem) sv.personagem = migrarPersonagem(sv.personagem);
+    const sv = lerSave(bruto);
     saveRef.current = sv; setTemSave(sv);
     importPendenteRef.current = null;
     return { ok: true, tinhaAnterior: !!localStorage.getItem(chaveAnterior()) };
@@ -9035,8 +9045,7 @@ export default function Taverna() {
       if (!anterior) return false;
       localStorage.setItem(chaveDoSave(), anterior);
       localStorage.removeItem(chaveAnterior());
-      const sv = JSON.parse(anterior);
-      if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem);
+      const sv = lerSave(JSON.parse(anterior));
       saveRef.current = sv; setTemSave(sv);
       return true;
     } catch { return false; }
@@ -9061,7 +9070,7 @@ export default function Taverna() {
   useEffect(() => {
     try {
       const bruto = localStorage.getItem(chaveDoSave());
-      if (bruto) { const sv = JSON.parse(bruto); if (sv && sv.personagem) sv.personagem = migrarPersonagem(sv.personagem); modoRef.current = modoDoSave(sv); saveRef.current = sv; setTemSave(sv); }
+      if (bruto) { const sv = lerSave(JSON.parse(bruto)); modoRef.current = modoDoSave(sv); saveRef.current = sv; setTemSave(sv); }
     } catch { /* save corrompido: ignora */ }
   }, []);
 
@@ -9352,6 +9361,10 @@ export default function Taverna() {
   const retratoDoJogo = () => {
     const nomeVivo = nomeCampanha || ((saveRef.current || {}).nomeCampanha) || "";
     return {
+      /* T0: o retrato É o estado v2 — os campos de `CAMPOS` (estado.js), na
+         ordem de lá, e a versão do esquema à frente. A suíte teste-estado
+         lê este literal e falha se um campo nascer aqui sem nascer lá. */
+      versao: ESTADO_VERSAO,
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
       combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
@@ -9505,7 +9518,12 @@ export default function Taverna() {
         historico: h.length > nMsg * 2 ? h.slice(-nMsg * 2) : h,
       };
     };
-    const gravar = (d) => { try { localStorage.setItem(chaveDoSave(), JSON.stringify(d)); return true; } catch { return false; } };
+    /* T0: o disco recebe o save v2 — `saveDoEstado` põe a versão à frente,
+       os campos na ordem da tabela e o padrão onde algum faltar; não
+       valida nem descarta nada. A chave é a mesma de sempre, e o save v2
+       continua plano: a versão de ontem lê-o igual (o `versao` a mais é
+       um campo que ela ignora), e é isso que mantém um revert inofensivo. */
+    const gravar = (d) => { try { localStorage.setItem(chaveDoSave(), JSON.stringify(saveDoEstado(d))); return true; } catch { return false; } };
     let gravou = gravar(historicoEnxuto(250));
     let podou = false;
     if (!gravou) {
@@ -9521,7 +9539,7 @@ export default function Taverna() {
          porque TODO caminho que muda o jogo passa por `salvar` — o turno, o
          combate, o mercado, o descanso. Pendurar a publicação num só deles
          deixaria o convidado com uma tela velha nos outros. */
-      try { const { elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
+      try { const { versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
       if (podou && !avisoPodaRef.current) {
         avisoPodaRef.current = true;
         pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
@@ -23876,7 +23894,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     try {
       const sv2 = { ...sv, backupEm: backupEmRef.current };
       saveRef.current = sv2;
-      localStorage.setItem(chaveDoSave(), JSON.stringify(sv2));
+      localStorage.setItem(chaveDoSave(), JSON.stringify(saveDoEstado(sv2)));
       if (temSave) setTemSave(sv2);
     } catch (e) { calou("carimboDoBackup", e); }
     /* do MENU não sai mensagem: escrever no diário de uma campanha que

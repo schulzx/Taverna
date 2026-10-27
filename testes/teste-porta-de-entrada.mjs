@@ -46,7 +46,9 @@ sec("2. A COBRANÇA DO BACKUP");
   t("a exportação carimba a data", /backupEmRef\.current = Date\.now\(\);/.test(APP));
   /* a exportação do MENU acontece com o jogo desmontado: o carimbo tem
      de ir direto ao armazenamento, porque ali não há salvar() */
-  t("e grava direto quando o jogo está desmontado", /localStorage\.setItem\(chaveDoSave\(\), JSON\.stringify\(sv2\)\)/.test(APP));
+  /* T0 (27/10, oficial): o carimbo grava o save v2 — `saveDoEstado(sv2)`,
+     a mesma porta do `salvar`. Continua direto ao armazenamento. */
+  t("e grava direto quando o jogo está desmontado", /localStorage\.setItem\(chaveDoSave\(\), JSON\.stringify\(saveDoEstado\(sv2\)\)\)/.test(APP));
   t("em jogo, o carimbo viaja no save", /backupEm: backupEmRef\.current,/.test(APP));
   t("e volta do save no carregamento", /backupEmRef\.current = sv\.backupEm \|\| null;/.test(APP));
   /* só cobra quando está velha: aviso permanente vira papel de parede.

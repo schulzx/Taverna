@@ -129,7 +129,13 @@ sec("6. O INSTANTE PERIGOSO — dois passos, e o segundo é o único que grava")
      funcoes chaveAnterior()/chaveDoSave(), que na historia devolvem
      exatamente as literais de sempre (teste-modos prova isso). */
   t("confirmar copia o anterior primeiro", conf.indexOf("chaveAnterior()") < conf.indexOf("setItem(chaveDoSave()"));
-  t("e o save entra migrado", /migrarPersonagem\(sv\.personagem\)/.test(conf));
+  /* T0 (27/10): a migração da ficha mudou-se para `lerSave` (fora do
+     componente), que é `estadoDoSave` + `migrarPersonagem` — a porta única
+     por onde toda leitura de save passa agora. A intenção é a mesma: o
+     save importado entra migrado; prova-se que confirmar o lê por ela e
+     que ela migra a ficha. */
+  t("e o save entra migrado", /const sv = lerSave\(bruto\);/.test(conf)
+    && /const lerSave = \(sv\) => \{[^\n]*migrarPersonagem\(e\.personagem\)/.test(APP));
   t("há como desfazer", /const desfazerImportacao = \(\) =>/.test(H));
   t("e o desfazer restaura de verdade", /setItem\(chaveDoSave\(\), anterior\)/.test(H));
 }

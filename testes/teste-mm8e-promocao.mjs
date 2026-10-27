@@ -75,9 +75,13 @@ sec("2. a versão antiga ignora o campo, e um save sem ele joga igual");
      dois passos — o `dados` de `salvar` e o `return` de `retratoDoJogo`
      que ele consome — seguem montados do zero a partir dos refs, nunca
      de uma cópia do `sv` carregado. */
+  /* T0 (27/10, oficial): o `return` do retrato abre agora com
+     `versao: ESTADO_VERSAO` (o retrato é o estado v2, estado.js) e um
+     comentário que diz porquê; o resto do literal segue montado dos refs.
+     A âncora aceita a versão à frente — a prova é a mesma. */
   t("o salvar monta os dados de novo a partir dos refs (a chave desconhecida não sobrevive, nem parte nada)",
     /const dados = \{ \.\.\.retratoDoJogo\(\), \.\.\.extra \};/.test(APP) &&
-    /return \{\s*nomeCampanha: nomeVivo, mundo, personagem,/.test(APP));
+    /return \{\s*(?:\/\*[\s\S]*?\*\/\s*)?versao: ESTADO_VERSAO,\s*nomeCampanha: nomeVivo, mundo, personagem,/.test(APP));
   /* um save sem o campo: tudo igual ao de antes */
   const semCampo = elencoDoMundo(SEM, MAPA, CTX);
   const campoVazio = elencoDoMundo(SEM, MAPA, { ...CTX, estado: garantirElencoDoSave(undefined), npcs: {} });
@@ -228,7 +232,8 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
      esta prova sempre quis (a chave `elenco` não atravessa) continua de pé. */
   /* F2d (12/10, oficial): e também `memoria` (as páginas do Códice são do
      herói) — a âncora cresce junto; a chave `elenco` continua a não atravessar. */
-  const sala = linhaDe("try { const { elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados;");
+  /* T0 (27/10, oficial): o retrato passou a ser o estado v2 e abre com `versao`; a desestruturação tira também `versao` — o convidado recebe o mesmo objeto de antes, e o protocolo da sala não cresce. A âncora cresce junto. */
+  const sala = linhaDe("try { const { versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados;");
   t("a sala recebe o save SEM a chave `elenco` — o protocolo da sala não muda nesta fase", sala.includes("publicarEstado(paraSala)") && !sala.includes("publicarEstado(dados)"));
 
   const load = linhaDe("elencoMemRef.current = garantirElenco(sv.elencoMem);");
