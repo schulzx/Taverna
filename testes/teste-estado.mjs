@@ -319,5 +319,23 @@ bloco(() => {
   t("o carimbo do backup (exportar no menu) também grava v2", APP.includes("localStorage.setItem(chaveDoSave(), JSON.stringify(saveDoEstado(sv2)));"));
 });
 
+/* ============================================================ */
+sec("8. OS GRUPOS QUE JÁ LEEM DO ESTADO");
+bloco(() => {
+  t("o estado do jogo é um ref só, nascido vazio",
+    APP.includes("const estadoRef = useRef(null);") && APP.includes("if (estadoRef.current === null) estadoRef.current = estadoVazio();"));
+  const iH = APP.indexOf("function useVistaDoEstado(");
+  const iT = APP.indexOf("export default function Taverna()");
+  t("o gancho da vista mora FORA de `Taverna()` (nada definido dentro do render)", iH > 0 && iT > iH);
+  t("e nasce uma vez só, com o valor inicial do `useRef` de antes",
+    /if \(r\.current === null\) \{ r\.current = vistaDoCampo\(estadoRef, campo\); r\.current\.current = inicial; \}/.test(APP));
+  t("o `estadoRef` nasce antes da primeira vista, no topo de `Taverna()`",
+    APP.indexOf("const estadoRef = useRef(null);") > iT && APP.indexOf("const estadoRef = useRef(null);") < APP.indexOf("= useVistaDoEstado(estadoRef,"));
+  t("a ficha: `personagemRef` é vista sobre o estado", /const personagemRef = useVistaDoEstado\(estadoRef, "personagem", null\);/.test(APP));
+  t("e o espelho da ficha continua a escrever nela (pela vista)", APP.includes("useEffect(() => { if (personagem) personagemRef.current = personagem; }, [personagem]);"));
+  t("a ficha viva continua a ser o ref, e o ref agora é o estado", APP.includes("const fichaViva = () => personagemRef.current || personagem;"));
+  t("nenhuma vista é passada como ref de DOM (a vista não é um nó)", !/ref=\{personagemRef\}/.test(APP));
+});
+
 console.log(`\nestado: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

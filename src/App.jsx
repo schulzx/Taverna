@@ -144,7 +144,7 @@ import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } fro
    o motor, nunca segundo jogo. Conta em modos.js. */
 import { MODO_PADRAO, garantirModo, modoDoSave, espacoDoSave, espacoAnterior, modoNaPorta } from "./modos.js";
 /* T0 (Fase T, trilha A): o estado do jogo como um objeto só, e o save com esquema e versão. */
-import { ESTADO_VERSAO, estadoDoSave, saveDoEstado } from "./estado.js";
+import { ESTADO_VERSAO, estadoVazio, estadoDoSave, saveDoEstado, vistaDoCampo } from "./estado.js";
 /* A NOITE JOGAVEL (v9.218 — M6): o roster, o Capitulo e o Torneio entram
    na mesa. Conta em prontos.js, uma-noite.js e torneio.js. */
 import { PRONTOS, montarPronto, prontoPorId } from "./prontos.js";
@@ -5443,7 +5443,29 @@ function gerarBancoNomes(mundo) {
    como antes — o menu não oferece "continuar" a um save de lixo. */
 const lerSave = (sv) => { if (!sv || typeof sv !== "object" || Array.isArray(sv)) return null; const e = estadoDoSave(sv); return e.personagem ? { ...e, personagem: migrarPersonagem(e.personagem) } : e; };
 
+/* T0: O REF QUE LÊ DO ESTADO. Devolve um objeto com a cara de um
+   `useRef` — `.current` para ler e para escrever — cujo valor mora no
+   campo `campo` de `estadoRef.current`. Os sítios que já escrevem
+   `xRef.current = v` continuam a escrever o mesmo, e o valor passa a
+   viver no estado (substituído, nunca mutado: `vistaDoCampo`). Mora aqui
+   fora, e não em `Taverna()`, porque nada se define dentro do render; e
+   nasce uma vez só (o `useRef` guarda a vista), com o valor inicial que o
+   `useRef` de antes tinha. */
+function useVistaDoEstado(estadoRef, campo, inicial) {
+  const r = useRef(null);
+  if (r.current === null) { r.current = vistaDoCampo(estadoRef, campo); r.current.current = inicial; }
+  return r.current;
+}
+
 export default function Taverna() {
+  /* T0: O ESTADO DO JOGO, UM OBJETO SÓ. Nasce vazio (`estadoVazio`, o
+     estado v2 de estado.js) e é a casa dos grupos que já passaram a ler
+     dele — os refs desses grupos são vistas (`useVistaDoEstado`). Os
+     grupos que ainda não passaram continuam nos seus refs, e por isso a
+     fotografia completa de um instante continua a ser `retratoDoJogo()`;
+     cada grupo que se muda para cá é um commit. */
+  const estadoRef = useRef(null);
+  if (estadoRef.current === null) estadoRef.current = estadoVazio();
   const [fase, setFase] = useState("menu"); // menu | mundo | personagem | jogo
   const faseRef = useRef(fase);
   const avisoPodaRef = useRef(false);
@@ -5455,7 +5477,9 @@ export default function Taverna() {
      carrega o save — antes de o React aplicar setPersonagem. Sem este espelho,
      infoTitulo() lia `personagem` ainda null e "Continuar aventura" falhava
      na primeira tentativa (só abria no segundo clique). */
-  const personagemRef = useRef(null);
+  /* T0: a ficha é o primeiro grupo a ler do estado — `personagemRef` é a
+     vista de `estadoRef.current.personagem`. */
+  const personagemRef = useVistaDoEstado(estadoRef, "personagem", null);
   useEffect(() => { if (personagem) personagemRef.current = personagem; }, [personagem]);
   /* ---------------- A FICHA VIVA (v9.41) ----------------
      O espelho acima só é atualizado por um efeito — ou seja, na renderização

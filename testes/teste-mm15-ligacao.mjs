@@ -364,7 +364,12 @@ bloco(() => {
   t(`os ${G.O_QUE_O_TURNO_ANDA.filter((l) => l.noSave).length} campos que o turno anda estão no save (o retrato cobre-os)`, fora.length === 0, fora.join(","));
   const soltosNoSave = G.O_QUE_O_TURNO_ANDA.filter((l) => !l.noSave && temNoSave(l.campo)).map((l) => l.campo);
   t("e os soltos NÃO estão (por isso se fotografam à parte)", soltosNoSave.length === 0, soltosNoSave.join(","));
-  const semRef = G.O_QUE_O_TURNO_ANDA.filter((l) => !new RegExp("const " + l.ref + " = useRef").test(APP)).map((l) => l.ref);
+  /* T0 (27/10, oficial): os refs dos grupos que já leem do estado (a
+     ficha, o relógio) nascem por `useVistaDoEstado(estadoRef, ...)` — um
+     objeto com a mesma cara de `useRef`, cujo valor mora no estado do
+     jogo. Continuam a ser o ref que o turno anda; a âncora aceita as duas
+     formas de nascer. */
+  const semRef = G.O_QUE_O_TURNO_ANDA.filter((l) => !new RegExp("const " + l.ref + " = (useRef|useVistaDoEstado\\(estadoRef, )").test(APP)).map((l) => l.ref);
   t("cada ref da lista existe no App", semRef.length === 0, semRef.join(","));
   const quem = [...new Set(G.O_QUE_O_TURNO_ANDA.flatMap((l) => l.quem))];
   const semQuem = quem.filter((q) => !new RegExp("const " + q + " = |function " + q + "\\(").test(APP));
