@@ -8555,7 +8555,9 @@ export default function Taverna() {
   const [recusaDoCartaz, setRecusaDoCartaz] = useState(null);
   const decretosRef = useRef([]);
   const [decretos, setDecretos] = useState([]);
-  const diaRef = useRef(1);
+  /* T0: o relógio lê do estado — `diaRef`, `minutoRef`, `acordouAbsRef` e
+     `diaLutaRef` são vistas dos campos do grupo `relogio` (estado.js). */
+  const diaRef = useVistaDoEstado(estadoRef, "dia", 1);
   const [dia, setDia] = useState(1);
   const reinoRef = useRef({});
   const [reino, setReino] = useState({});
@@ -8576,9 +8578,9 @@ export default function Taverna() {
   const [diploState, setDiploState] = useState(diplomaciaRef.current);
   /* TEMPO DA CAMPANHA (v6.5): o app conta os dias — a âncora da memória.
      "Nos conhecemos no dia X" vira fato verificável; antes dele, impossível. */
-  const minutoRef = useRef(AMANHECER + 60); // a aventura começa de manhã
+  const minutoRef = useVistaDoEstado(estadoRef, "minuto", AMANHECER + 60); // a aventura começa de manhã
   const [minuto, setMinuto] = useState(minutoRef.current);
-  const acordouAbsRef = useRef(0); // minuto absoluto em que o herói acordou do último descanso longo
+  const acordouAbsRef = useVistaDoEstado(estadoRef, "acordouAbs", 0); // minuto absoluto em que o herói acordou do último descanso longo
   /* FAMA E NÊMESIS (v6.8): a fama é derivada das façanhas reais; a nêmesis
      nasce por tabela quando o nome cresce — e cresce com cada dia. */
   const nemesisRef = useRef(null);
@@ -8635,7 +8637,7 @@ export default function Taverna() {
   /* ORÇAMENTO DO DIA (v9.19): quanto o grupo já enfrentou desde a última
      noite. Zera no descanso longo — é o que dá sentido a "seguimos ou
      acampamos?", porque agora a pergunta tem resposta calculada. */
-  const diaLutaRef = useRef({ gasto: 0, lutas: 0 });
+  const diaLutaRef = useVistaDoEstado(estadoRef, "diaLuta", { gasto: 0, lutas: 0 });
   /* v9.56: a linha da viagem passou a dizer PARA ONDE e QUANTO FALTA. Ela
      dizia só de onde e desde quando — o Mestre não sabia sequer o destino,
      e por isso escrevia "a estrada segue" turno após turno sem nunca

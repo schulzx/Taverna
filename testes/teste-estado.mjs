@@ -334,7 +334,17 @@ bloco(() => {
   t("a ficha: `personagemRef` é vista sobre o estado", /const personagemRef = useVistaDoEstado\(estadoRef, "personagem", null\);/.test(APP));
   t("e o espelho da ficha continua a escrever nela (pela vista)", APP.includes("useEffect(() => { if (personagem) personagemRef.current = personagem; }, [personagem]);"));
   t("a ficha viva continua a ser o ref, e o ref agora é o estado", APP.includes("const fichaViva = () => personagemRef.current || personagem;"));
-  t("nenhuma vista é passada como ref de DOM (a vista não é um nó)", !/ref=\{personagemRef\}/.test(APP));
+  t("o relógio: `diaRef`, `minutoRef`, `acordouAbsRef` e `diaLutaRef` são vistas, com os iniciais de antes",
+    /const diaRef = useVistaDoEstado\(estadoRef, "dia", 1\);/.test(APP)
+    && /const minutoRef = useVistaDoEstado\(estadoRef, "minuto", AMANHECER \+ 60\);/.test(APP)
+    && /const acordouAbsRef = useVistaDoEstado\(estadoRef, "acordouAbs", 0\);/.test(APP)
+    && /const diaLutaRef = useVistaDoEstado\(estadoRef, "diaLuta", \{ gasto: 0, lutas: 0 \}\);/.test(APP));
+  const vistas = [...APP.matchAll(/const (\w+) = useVistaDoEstado\(estadoRef, "(\w+)"/g)].map((m) => m[2]);
+  const ligados = [...new Set(vistas.map((c) => (E.CAMPOS.find((x) => x.campo === c) || {}).grupo))];
+  t("cada vista aponta um campo da tabela", vistas.every((c) => E.CAMPOS.some((x) => x.campo === c)), vistas.join(","));
+  t("e os grupos ligados são inteiros: ficha e relógio, todo campo deles é vista",
+    J(ligados.sort()) === J(["ficha", "relogio"]) && ligados.every((g) => E.camposDoGrupo(g).every((c) => vistas.includes(c))), ligados.join(","));
+  t("nenhuma vista é passada como ref de DOM (a vista não é um nó)", !/ref=\{(personagemRef|diaRef|minutoRef|acordouAbsRef|diaLutaRef)\}/.test(APP));
 });
 
 console.log(`\nestado: ${ok} passaram, ${mal} falharam`);
