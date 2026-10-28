@@ -102,4 +102,12 @@ function resumir() {
     if (J.pauta) console.log(`  a pauta: ${J.pauta.cumpridos} de ${J.pauta.total} pedidos cumpridos`);
     console.log(`  julgado outra vez sobre a entrada gravada, o veredito sai igual em ${J.iguais} de ${J.rejulgados}.`);
   }
+
+  console.log("\nA CORREÇÃO (o que o motor faria com cada invenção: motor/correcao-do-juiz.js)");
+  const C = R.correcao;
+  const esp = Object.entries(C.porEspecie);
+  console.log(`  ${s(C.vetos, "veto nasce", "vetos nascem")}${esp.length ? " (" + esp.map(([k, v]) => `${k} ${v}`).join(" · ") + ")" : ""}; entrariam na pauta em ${s(C.turnosComVeto, "turno", "turnos")}, ${s(C.naPauta, "linha", "linhas")} ao todo.`);
+  for (const x of C.linhas) for (const l of x.linhas) console.log(`    turno ${String(x.n).padEnd(4)} NÃO PODE ${l}`);
+  if (C.cegos) console.log(`  em ${s(C.cegos, "turno", "turnos")} o Juiz julgou os nomes sem o mundo da cidade na entrada: ali o cânone não se corrige.`);
+  console.log(`  o cânone que a invenção não consagra: ${C.tirados.length ? C.tirados.map((x) => `«${x.nome}» (turno ${x.n})`).join(", ") : "nada"}`);
 }

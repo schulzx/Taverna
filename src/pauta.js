@@ -316,6 +316,16 @@ export const SECOES = [
      (4 pautas reais, registo-s6-s7-pauta.json). O veto não cede à cor: com
      0,05 os nove primeiros cortam até 2,4, à frente do rumo e da planta. */
   { id: "naoPode", rotulo: "NÃO PODE", prio: 2, passo: 0.05, o: "os vetos desta cena" },
+  /* O JUIZ CORRIGE (28/10, Fase T): a invenção da resposta anterior que o
+     sistema contradiz — o preço que a mesa tinha, a distância que o mapa
+     dava — não volta como verdade (motor/correcao-do-juiz.js). Secção
+     própria, com o rótulo do NÃO PODE e logo depois dele: o Narrador lê um
+     bloco de vetos só. A PRIO É A MEDIDA: nas 204 pautas gravadas da 5.ª à
+     7.ª sessão, todas perto do teto, uma linha destas a 2,0 (a da naoPode)
+     cortava o PERGUNTOU 7 vezes, o RUMO 3 e o FECHO 9; a 4,5 não corta
+     nada de prio menor que 5 — cede à resposta, à aposta e a quem está em
+     cena, e passa à frente da agenda da gente (6) e da cor. */
+  { id: "vetoDoJuiz", rotulo: "NÃO PODE", prio: 4.5, o: "a invenção da resposta anterior que o sistema contradiz, e o número certo" },
   /* A campanha que prende (item 1): O QUE VOLTA — a promessa que o próprio
      Narrador plantou e que o sistema traz de volta agora
      (`prometido.js#cobrarNoTurno`), uma por turno no máximo e nunca numa
@@ -416,7 +426,9 @@ export const SECOES_QUE_CEDEM = {
      nem se apresenta; na masmorra e fora dos muros não há rua (os nomes
      ficam: a prisioneira da cripta também precisa de um). */
   /* F2a (12/10): e EM CENA — na luta, a lista é a vista da luta (QUEM). */
-  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena"],
+  /* 28/10 (o Juiz corrige): e o VETO DO JUIZ — o preço e a distância não
+     mudam o golpe que vem a seguir. */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena", "vetoDoJuiz"],
   masmorra: ["economia", "cidade", "preco"],
   arredores: ["economia", "cidade", "preco"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:

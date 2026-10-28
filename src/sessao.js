@@ -179,6 +179,7 @@ import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 import { oAntesDoMestre } from "./motor/antes-do-mestre.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { julgarOTurno, JUIZ_NO_TURNO, CLASSES_DO_JUIZ, somarAFidelidade } from "./motor/juiz-do-turno.js";
+import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao, juizCego } from "./motor/correcao-do-juiz.js";
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
 
 /* ---------------- O FORMATO (se é número, é tabela) ---------------- */
@@ -556,13 +557,49 @@ export const PASSOS_DO_REPLAY = Object.freeze([
 ]);
 
 /* o Juiz: julga outra vez sobre a entrada gravada (ele mede, não muda o estado) */
-const julgarDeNovo = (L, narracoes) => {
+/* o Juiz da linha, julgado outra vez sobre a entrada gravada: o veredito
+   inteiro (a correção lê-o) e o resumo (o replay compara-o com o gravado) */
+const julgarALinha = (L, narracoes) => {
   const j = L.juiz;
   if (!ehObj(j) || !ehObj(j.entrada)) return null;
   const r = obj(j.resumo);
   const entrada = Number.isInteger(j.antesDoArquivo) ? { ...j.entrada, antes: narracoes.slice(narracoes.length - j.antesDoArquivo) } : j.entrada;
-  return dado(julgarOTurno(obj(L.narrador).narrativa || "", entrada, { turno: r.turno, dia: r.dia }).resumo);
+  return julgarOTurno(obj(L.narrador).narrativa || "", entrada, { turno: r.turno, dia: r.dia });
 };
+const julgarDeNovo = (L, narracoes) => { const x = julgarALinha(L, narracoes); return x ? dado(x.resumo) : null; };
+
+/* A CORREÇÃO DO JUIZ, CORRIDA SOBRE A SESSÃO (motor/correcao-do-juiz.js):
+   o que o motor faria com cada invenção apanhada se a fiação já estivesse
+   no App — os vetos que nascem, as linhas que entrariam na pauta do turno
+   seguinte (a porta da pauta: o turno logo a seguir, ou a frase a tocar a
+   coisa) e o cânone do Cronista que a invenção não chega a consagrar. É a
+   medida do efeito, turno a turno, na sessão que se lê. */
+function corrigirASessao(A) {
+  const out = { vetos: 0, porEspecie: {}, naPauta: 0, turnosComVeto: 0, linhas: [], tirados: [], cegos: 0 };
+  const ts = arr(A.turnos);
+  let g = obj(dado(A.inicio)), livro = [];
+  ts.forEach((L0, i) => {
+    const L = obj(L0), n = Number.isInteger(L.n) ? L.n : i + 1;
+    const cidade = typeof g.cidadeAtual === "string" ? g.cidadeAtual : "";
+    const frase = typeof obj(L.entrada).frase === "string" ? L.entrada.frase : "";
+    const linhas = vetosParaAPauta(livro, { turno: n, cidade, frase });
+    if (linhas.length) { out.turnosComVeto++; out.naPauta += linhas.length; out.linhas.push({ n, linhas }); }
+    let j = null;
+    try { j = julgarALinha(L, narracoesDoArquivo(ts, i)); } catch { j = null; }
+    const entrada = obj(obj(L.juiz).entrada);
+    if (j && juizCego(entrada)) out.cegos++;
+    if (j) {
+      const novos = vetosDoVeredito(j.veredito, { turno: n, cidade });
+      out.vetos += novos.length;
+      for (const x of novos) out.porEspecie[x.especie] = (out.porEspecie[x.especie] || 0) + 1;
+      livro = andarOsVetos(livro, novos, { turno: n, cidade });
+      const ac = obj(obj(obj(L.cronista).juizo).aceito);
+      for (const x of canoneSemInvencao(ac, j.veredito, { entrada, estado: g }).tirados) out.tirados.push({ n, ...x });
+    }
+    g = aplicarDiferenca(g, L.estado, [], "");
+  });
+  return out;
+}
 
 /* PORQUÊ: o campo que diverge diz quem o escreve no turno. "App" é a parte
    que ainda não é motor — o replay não a corre, e é ela a culpada quando
@@ -775,5 +812,6 @@ export function resumoDaSessao(arquivo, relatorio) {
       doTurno: arr(obj(r.divida).doTurno).flatMap((d) => d.app.map((a) => ({ n: d.n, orgao: a.orgao, campos: a.campos, divergiu: d.divergiu }))),
     },
     juiz: { julgados, limpos: Number(fid.limpos) || 0, achados: Number(fid.achados) || 0, por, pauta: obj(fid.pauta).total ? fid.pauta : null, iguais, rejulgados },
+    correcao: r.valido ? corrigirASessao(A) : { vetos: 0, porEspecie: {}, naPauta: 0, turnosComVeto: 0, linhas: [], tirados: [], cegos: 0 },
   };
 }
