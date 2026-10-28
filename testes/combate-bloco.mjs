@@ -145,7 +145,7 @@ const ORGAOS_COMUNS = [
 ];
 /* o App de antes: o bloco inteiro, os órgãos e a porta de abrir com o
    equipamento e o tabuleiro, e o retrato do topo */
-export function recorteDeAntes(app) {
+export function recorteDeAntes(app, { trocas = [] } = {}) {
   const corte = corteDe(app);
   const orgaos = [
     corte("function retratoComOsFinais(antes, finais) {", "\n}\n") + "\n}",
@@ -156,9 +156,22 @@ export function recorteDeAntes(app) {
     corte("  const montarGrid = (pers, inimigos, situacao = \"cena\") => {", "  /* Um passo dentro da MESMA região"),
     ...ORGAOS_COMUNS.map(([de, ate]) => corte(de, ate)),
   ];
-  const bloco = corte("    if (resp.mudancas) {\n      const combateAntes = combateRef.current;", "    /* v9.49: aqui morava o cão de guarda");
+  let bloco = corte("    if (resp.mudancas) {\n      const combateAntes = combateRef.current;", "    /* v9.49: aqui morava o cão de guarda");
+  /* as trocas DECLARADAS (um defeito consertado depois do commit de antes): cada uma tem de bater uma vez só */
+  for (const [de, para] of trocas) {
+    if (bloco.split(de).length !== 2) throw new Error("a troca declarada não bate uma vez só: " + de);
+    bloco = bloco.replace(de, para);
+  }
   return { orgaos: orgaos.join("\n"), bloco };
 }
+/* AS TROCAS DECLARADAS sobre o bloco de antes, com o porquê (quem regera o
+   dourado aplica-as; o dourado é o App de antes COM elas):
+   1. o painel que se dissolve leva as conjurações da ficha DO TURNO, e não a
+      do ref (que dentro do aplicarResposta é a de antes do turno) — 6.ª
+      fatia, teste-motor-luta §2b. */
+export const TROCAS_DECLARADAS = [
+  ["limparConjuracoesDaLuta(null);", "pers = limparConjuracoesDaLuta(pers);"],
+];
 /* o App de hoje: a fiação que ficou — as portas, a chamada, os invólucros */
 export function recorteDeHoje(app) {
   const corte = corteDe(app);

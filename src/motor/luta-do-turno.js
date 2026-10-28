@@ -221,7 +221,11 @@ export function aLutaDaResposta(estado, ctx) {
     if (ocioso >= 2) {
       fazer({ tipo: "ocioso", ocioso: 0 });
       fazer({ tipo: "combate", combate: null }); fazer({ tipo: "intencao", intencao: "" }); fazer({ tipo: "impressionou", impressionou: 0 });
-      porta("limparConjuracoesDaLuta", null);
+      /* (6.ª fatia, o defeito do painel que se dissolve) a luta leva as
+         conjurações da ficha DO TURNO — a forma, a guarda, a pressa, as
+         invocações. Com a do ref (que aqui dentro é a de antes do turno), a
+         tela dizia que a forma se desfez e o turno seguia urso no save. */
+      pers = porta("limparConjuracoesDaLuta", pers);
       msgs.push("⚔ O confronto se dissolve — o painel de combate se fecha.");
     }
   } else fazer({ tipo: "ocioso", ocioso: 0 });

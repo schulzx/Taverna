@@ -16,7 +16,7 @@
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
-import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoBloco, casosDoBloco } from "./combate-bloco.mjs";
+import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoBloco, casosDoBloco, TROCAS_DECLARADAS } from "./combate-bloco.mjs";
 import { sorteDoCaso } from "./combate-casos.mjs";
 import { aLutaDaResposta, retratoComOsFinais } from "../src/motor/luta-do-turno.js";
 
@@ -33,6 +33,8 @@ const hoje = blocoComoFuncao(recorte);
 
 sec("1 · o bloco inteiro, byte a byte contra o de antes");
 t(`o dourado do bloco é do commit de antes (7338870), ${N_CASOS} casos`, D.commit === "7338870" && Array.isArray(fotos) && fotos.length === N_CASOS);
+/* o dourado é o App de antes COM as trocas declaradas em combate-bloco.mjs (hoje uma: o painel que se dissolve, §2b) */
+t(`com ${TROCAS_DECLARADAS.length} troca declarada, e cada uma com o porquê escrito`, TROCAS_DECLARADAS.length === 1 && TROCAS_DECLARADAS.every(([de, para]) => de && para && de !== para));
 const novas = casos.map((k) => fotoDoBloco(correrOBloco(hoje, k, { novo: true })));
 const batem = novas.filter((f, i) => igual(f, fotos[i])).length;
 const primeira = novas.findIndex((f, i) => !igual(f, fotos[i]));
@@ -63,6 +65,22 @@ sec("2 · a prova morde");
   const lerVelho = (p) => { const r0 = p.ler(); return { ...p, ler: () => r0 }; };
   const stale = casos.filter((k, i) => !igual(fotoDoBloco(correrOBloco(velho, k, { novo: true, extras: { lerVelho } })), fotos[i])).length;
   t(`com as leituras presas ao começo, ${stale} fotos divergem`, stale > 60);
+}
+
+sec("2b · o painel que se dissolve leva as conjurações da ficha DO TURNO (defeito achado na 6.ª fatia)");
+{
+  /* O painel que fecha sozinho (dois turnos sem golpe) desfazia a forma, a
+     guarda, a pressa e as invocações da ficha do REF — que dentro do
+     aplicarResposta é a de antes do turno — e o turno seguia com a sua, que
+     o save grava: a tela dizia "a forma se desfaz" e a ficha ficava urso.
+     A ficha que volta do turno não pode guardar nada do que a luta leva. */
+  const dissolvem = casos.filter((k, i) => fotos[i].msgs.some((m) => m.includes("se dissolve")));
+  const comForma = dissolvem.filter((k) => k.persB.forma);
+  const fichas = comForma.map((k) => correrOBloco(hoje, k, { novo: true }).ret.pers);
+  console.log(`      o painel dissolve em ${dissolvem.length}, com a forma na ficha do turno em ${comForma.length}`);
+  t("a ficha do turno que sai do painel dissolvido já não tem a forma", comForma.length > 0 && fichas.every((p) => p && !p.forma), JSON.stringify(fichas.map((p) => p && p.forma && p.forma.nome)));
+  const comInvocada = dissolvem.filter((k) => (k.persB.grupo || []).some((g) => g.invocada));
+  t("nem as invocações", comInvocada.every((k) => !(correrOBloco(hoje, k, { novo: true }).ret.pers.grupo || []).some((g) => g && g.invocada)));
 }
 
 sec("3 · as peças do bloco");

@@ -49,7 +49,7 @@ import { dispensarTodas } from "../src/invocacoes.js";
 import { podeAbrirRito, iniciarRito, provaAtual } from "../src/ascensao.js";
 import { grauDe, tituloDe } from "../src/divindades.js";
 import { AGORA_DA_PROVA, N_CASOS } from "./combate-casos.mjs";
-import { recorteDeAntes, blocoComoFuncao, correrOBloco, fotoDoBloco, casosDoBloco } from "./combate-bloco.mjs";
+import { recorteDeAntes, blocoComoFuncao, correrOBloco, fotoDoBloco, casosDoBloco, TROCAS_DECLARADAS } from "./combate-bloco.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const COMMIT = process.argv[2] || "7338870";
@@ -278,7 +278,7 @@ if (isMain) {
   }
   /* o bloco do combate inteiro (6.ª fatia): o bloco e os quinze órgãos de antes, à letra (combate-bloco.mjs) */
   {
-    const antes = blocoComoFuncao(recorteDeAntes(app));
+    const antes = blocoComoFuncao(recorteDeAntes(app, { trocas: TROCAS_DECLARADAS }));
     out.orgaos.blocoDoCombate = casosDoBloco(N_CASOS).map((k) => fotoDoBloco(correrOBloco(antes, k, { novo: false })));
   }
   fs.writeFileSync(path.join(AQUI, "combate-dourado.json"), JSON.stringify(out));
