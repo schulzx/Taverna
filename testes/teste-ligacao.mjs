@@ -26,6 +26,7 @@ const arqs = fs.readdirSync(DIR).filter((f) => /\.(js|jsx)$/.test(f));
 const fonte = Object.fromEntries(arqs.map((f) => [f, fs.readFileSync(path.join(DIR, f), "utf8")]));
 const provas = fs.readdirSync(SP).filter((f) => /^teste-.+[.]mjs$/.test(f) && f !== "teste-ligacao.mjs");
 const txtProvas = provas.map((f) => fs.readFileSync(path.join(SP, f), "utf8")).join("\n");
+const MOTOR_FONTES = fs.existsSync(path.join(DIR, "motor")) ? fs.readdirSync(path.join(DIR, "motor")).filter((f) => /\.js$/.test(f)).map((f) => fs.readFileSync(path.join(DIR, "motor", f), "utf8")) : [];
 
 /* ============================================================
    O QUE JÁ SE SABE MORTO, e por quê.
@@ -227,8 +228,11 @@ sec("1. NENHUM MÓDULO MUDO");
        no custo"). Espera a fiação da trilha A (o `oficial`, que tem o App e
        src/motor/): ler o veredito depois de `aplicar` e escrevê-lo no custo
        do turno. A entrada sai quando o App ou o motor o importar, e a lista
-       volta a ficar VAZIA. `teste-juiz-de-fidelidade.mjs` é o primeiro leitor. */
-    "juiz-de-fidelidade.js": "a trilha A (oficial): a linha do Juiz no custo do turno, depois de aplicar",
+       volta a ficar VAZIA. `teste-juiz-de-fidelidade.mjs` é o primeiro leitor.
+       — 28/10 (T1-A, 5.ª fatia): o oficial ligou-o — `src/motor/juiz-do-turno.js`
+       importa `julgarAProsa` e monta a entrada com a foto de antes de
+       aplicar; o App grava o veredito no save (`fidelidade`, ao lado do
+       custo) e na consola. A entrada saiu, e a lista voltou a ficar VAZIA. */
   };
   const mudos = [];
   for (const f of arqs) {
@@ -236,7 +240,11 @@ sec("1. NENHUM MÓDULO MUDO");
     if (AGUARDANDO[f]) continue;
     const base = f.replace(/\.jsx?$/, "");
     const quem = arqs.filter((g) => g !== f && (fonte[g].includes(`from "./${f}"`) || fonte[g].includes(`from "./${base}"`)));
-    if (!quem.length) mudos.push(f);
+    /* T1-A, 5.ª fatia (28/10): o motor (src/motor/) também é leitor — o
+       Juiz de fidelidade é o primeiro módulo da raiz que só o motor importa
+       (juiz-do-turno.js), e a catraca, que só lia a raiz, acusava-o de mudo */
+    const doMotor = MOTOR_FONTES.some((g) => g.includes("from \"../" + f + "\"") || g.includes("from \"../" + base + "\""));
+    if (!quem.length && !doMotor) mudos.push(f);
   }
   t(`todo módulo de src/ está ligado a alguém${mudos.length ? " — mudos: " + mudos.join(", ") : ""}`, mudos.length === 0);
 }

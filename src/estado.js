@@ -182,6 +182,8 @@ export const CAMPOS = Object.freeze([
   C("provedor", "bastidor", "qualquer"),
   C("provedores", "bastidor", "qualquer"),
   C("custo", "bastidor", "objeto"),
+  /* T1-A, 5.ª fatia: o que o Juiz de fidelidade mediu (motor/juiz-do-turno.js); ausente = nada medido ainda: null. */
+  C("fidelidade", "bastidor", "objeto"),
   /* `abasAbertas` ausente abre todas as portas a quem já jogava: null. */
   C("abasAbertas", "bastidor", "lista"),
   C("preferenciaDaReacao", "bastidor", "texto"),

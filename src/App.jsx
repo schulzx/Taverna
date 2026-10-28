@@ -239,6 +239,7 @@ import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar
 import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
+import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -5900,6 +5901,10 @@ export default function Taverna() {
      facto chegaram ao Narrador. Vivem no turno: o save não muda. */
   const nomesPendentesRef = useRef(null);
   const nomesOferecidosRef = useRef([]);
+  /* T1-A, 5.ª fatia: o que o Juiz de fidelidade mediu na campanha — a conta
+     e os últimos vereditos (src/motor/juiz-do-turno.js). Bastidor: vive no
+     save, ao lado do custo, e nunca na tela. */
+  const fidelidadeRef = useRef(null);
   const coracaoFalaRef = useRef(null);
   /* R3 (v9.229): a virada MAIOR, irma da menor e com o mesmo ciclo (eleger,
      semear, regar, revelar). Mora num REF PROPRIO, e nao num campo dentro do
@@ -9311,6 +9316,7 @@ export default function Taverna() {
       leituraDoCronista: leituraDoCronistaRef.current,
       provedor: ultimoProvedorRef.atual, provedores: ultimoProvedorRef.historico,
       custo: custoRef.atual,
+      fidelidade: fidelidadeRef.current,
       abasAbertas: abasAbertasRef.current,
       /* K3: a preferencia de reacao e da PESSOA, nao da luta — e por isso
          viaja no save. Sem ela a janela nao tem desligador (WCAG 2.2.1). */
@@ -11789,7 +11795,7 @@ export default function Taverna() {
     escadaRef.current = garantirEscada(null);
     escutaRef.current = garantirEscuta(null);
     adiadosEscutaRef.current = [];
-    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null);
+    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null;
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
     episodioRef.current = null;
@@ -12643,7 +12649,31 @@ export default function Taverna() {
       let pedidoDaBolsa = "", moedaDaBolsa = "";
       try { const pb = lerOPedido(conteudo); pedidoDaBolsa = pb && pb.doJogador ? pb.texto : ""; } catch (e) { calou("a frase do jogador para a bolsa", e); }
       try { moedaDaBolsa = nomeDaMoeda((mundoAtual() || {}).lexico); } catch (e) { calou("a moeda do mundo para a bolsa", e); }
+      /* ---------------- O JUIZ MEDE (T1-A, 5.ª fatia, 28/10) ----------------
+         A foto é de ANTES de aplicar: o registo de depois já tem a gente que
+         a narração inventou (o códex regista-a), e o Juiz absolvê-la-ia. O
+         veredito vai ao save (`fidelidade`, ao lado do custo) e à consola
+         (ao lado da linha do custo); a tela não vê nada. Só mede: nem
+         corrige, nem repede, nem chama IA. A peça é src/motor/juiz-do-turno.js. */
+      let fotoDoJuiz = null;
+      try {
+        fotoDoJuiz = {
+          personagem: persAtual || personagemRef.current || personagem, npcs: npcsRef.current, mapa: mapaRef.current, base: baseMundoRef.current,
+          cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, oferecidos: nomesOferecidosRef.current, missoes: missoesRef.current,
+          bancas: bancasDaCena(), balcao: (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current) ? balcaoAqui() : [],
+          narracoes: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").map((m) => m.texto),
+          elenco: nomesDoElenco(), guildas: guildasRef.current, espinha: espinhaRef.current,
+          mundo: { semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lexico: (mundoAtual() || {}).lexico },
+        };
+      } catch (e) { calou("a foto do juiz", e); fotoDoJuiz = null; }
       let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
+      try {
+        if (fotoDoJuiz) {
+          const doJuiz = julgarOTurno(resp.narrativa || "", entradaDoJuiz(fotoDoJuiz, { frase: pedidoDaBolsa, pauta, moeda: moedaDaBolsa }), { turno: turnoDeRegistroRef.current, dia: diaRef.current });
+          fidelidadeRef.current = somarAFidelidade(fidelidadeRef.current, doJuiz.resumo);
+          if (typeof console !== "undefined" && console.debug) console.debug(linhaDoJuiz(doJuiz.resumo));
+        }
+      } catch (e) { calou("o juiz do turno", e); }
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
          na bolsa). Custa zero: é comparação com o que já está na mão.
@@ -13147,7 +13177,7 @@ export default function Taverna() {
         antecedente: (pers && pers.antecedente) || "",
         dia: diaRef.current,
       });
-      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null);
+      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null;
       /* MM17 C1: A HISTÓRIA MORA NOS LUGARES. Só num mapa de região (campanha
          nova de Uma Vida): cada ato do meio e o do fim descem ao SEU lugar, e
          o confronto final é no clímax (espinhaNaRegiao, regiao.js). Sem
@@ -13511,6 +13541,8 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       /* o acumulado de custo atravessa a recarga da página: sem isto ele
          mediria a aba aberta, e não a campanha. */
       custoRef.atual = sv.custo && typeof sv.custo === "object" && typeof sv.custo.chamadas === "number" ? sv.custo : CUSTO_ZERO();
+      /* e o que o Juiz mediu, pela mesma razão (T1-A, 5.ª fatia) */
+      fidelidadeRef.current = sv.fidelidade && typeof sv.fidelidade === "object" && !Array.isArray(sv.fidelidade) ? sv.fidelidade : null;
       /* SAVE ANTIGO ABRE TUDO. Quem já jogava tinha as dez sub-abas na tela;
          escondê-las agora seria tirar do jogador o que ele já usava — e
          "sumiu a minha guilda" é o relato que isso geraria. A porta é para
