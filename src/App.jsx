@@ -214,6 +214,7 @@ import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorI
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
+import { custoRef, ultimoProvedorRef } from "./bastidor.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
 import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
@@ -367,26 +368,7 @@ import { equiparKitInicial } from "./kit-inicial.js";
 
 /* prompt do Mestre extraído para ./prompt.js (v8.6) */
 
-/* QUEM RESPONDEU O ÚLTIMO TURNO (v9.115). O `/api/narrador` tem dois
-   provedores e cai do primeiro para o segundo em silêncio — um 429 basta.
-   Se os dois escrevem diferente, o jogador vê o narrador mudar de estilo
-   sem que nada no jogo tenha mudado, e quem for investigar não tem por
-   onde começar: não fica registro em lugar nenhum de qual dos dois falou.
-
-   Isto não vai para a tela, e é de propósito: o sistema não fala de si
-   mesmo, só aparece ao jogador o que é gameplay. Fica no console em
-   desenvolvimento e no save, que é onde quem investiga vai olhar. */
-export const ultimoProvedorRef = { atual: "", historico: [] };
-
-/* O QUE O TURNO CUSTOU (v9.146). Mesma casa e mesmo motivo do ref acima:
-   o provedor devolve a contagem de tokens em TODA resposta, e o jogo
-   vinha jogando fora. Sem isto, "custo de token é produto" é uma frase
-   sem número atrás — e cortar prompt vira chute.
-
-   Não vai para a tela, pela mesma lei que mantém o provedor fora dela: o
-   preço da API não é gameplay. Vive no save, no console e no /custo do
-   modo criativo, que é o canal que já existe para este tipo de pergunta. */
-export const custoRef = { atual: CUSTO_ZERO() };
+/* quem respondeu o último turno e o que ele custou: em ./bastidor.js (T1-A, 6.ª fatia) — export que não é componente tira o App do Fast Refresh */
 
 /* A FICHA DO CACHE EXPLÍCITO (MM11 · 11.ª sessão): o servidor não lembra nada entre pedidos — o nome do cache do Gemini vive aqui, FORA do save (um jogo recarregado escreve outro, e o velho morre no prazo dele), e volta no turno seguinte. A conta mora em janela.js. */
 const fichaDoCacheRef = { atual: null };
