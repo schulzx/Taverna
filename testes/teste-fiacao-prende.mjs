@@ -157,7 +157,16 @@ sec("7. a espinha enxuta, o relógio do antagonista e a trama amarrada");
   const bloco = iE > 0 ? APP.slice(iE, APP.indexOf("});", iE)) : "";
   t("a espinha nasce com o antecedente do herói", /antecedente: \(pers && pers\.antecedente\) \|\| "",/.test(bloco));
   t("e com o dia de hoje (o relógio conta daqui)", /dia: diaRef\.current,/.test(bloco));
-  t("a nêmesis que a fama faz nascer herda o relógio", /vilaoDoFio\(n0, espinhaRef\.current, \{ derrotados: mundoDasMissoes\(\)\.derrotados, dia: diaRef\.current \}\)/.test(APP));
+  /* MOVIDA (T1-A, 5.ª fatia, 28/10): o vilaoDoFio é chamado em
+     src/motor/combate-do-turno.js (surgirANemesis), e o App entrega-lhe a
+     espinha, quem caiu e o dia. A intenção é a mesma — a nêmesis que a fama
+     faz nascer herda o relógio do fio —, lida no que o App entrega (o motor
+     prova-se jogando: teste-nemesis-do-fio, teste-motor-combate). */
+  {
+    const iS = pos("const tentarSurgirNemesis = () => {");
+    const surgir = iS > 0 ? APP.slice(iS, APP.indexOf("\n  };", iS)) : "";
+    t("a nêmesis que a fama faz nascer herda o relógio", /surgirANemesis\(\{/.test(surgir) && /dia: diaRef\.current, espinha: espinhaRef\.current,/.test(surgir) && /derrotados: \(\) => mundoDasMissoes\(\)\.derrotados/.test(surgir));
+  }
   const T = corpo("const talvezDarUmaTrama = ({ forcar = false } = {}) => {");
   t("a trama passa a amarra a montarTrama", /montarTrama\(\{ situacao: situacaoDaTrama\(\), material: materialDaTrama\(\), amarra \}\)/.test(T));
   t("a abertura forçada passa sem porta", /let amarra = null;\n\s*if \(!forcar\) \{/.test(T));

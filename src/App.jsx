@@ -32,7 +32,7 @@ import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGove
 import { perfilDeCriatura, perfilDe, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_POS_COMBATE, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
-import { gerarVilao, gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
+import { gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
 import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
@@ -240,7 +240,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo } from "./motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -22250,42 +22250,22 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   /* NÊMESIS (v6.8): quando o nome cresce demais, alguém jura seu fim. */
+  /* T1-A, 5.ª fatia: a regra (quem pode surgir, o dado, o vilão, o nome, o
+     retrato, a identidade do fio) mora em `surgirANemesis`
+     (src/motor/combate-do-turno.js), pura e à letra, com os porquês — entre
+     eles o de não pôr o vilão no registo nem na tela. Daqui sai a fiação: o
+     calou do fio, a nêmesis, a nota e as conquistas. Provado byte a byte
+     contra o órgão de antes (teste-motor-combate). */
   const tentarSurgirNemesis = () => {
-    if (nemesisRef.current && nemesisRef.current.status !== "derrotada") return;
-    if (famaAtual() < 20) return;
-    if (sorteDoTurno("nemesis")() > 0.35) return;
-    const n0 = gerarVilao({ sorte: sorteDoTurno("vilao"),
-      nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval", undefined, sorteDoTurno("nome"), (mundoAtual() || {}).lexico),
-      cont: contRef.current,
-      /* v9.167: o retrato ficou mais rico — os arquétipos novos leem
-         diplomacia, guerra e bolsa, e sem estes campos eles nunca
-         nasceriam (nasceDe falso para sempre é arquétipo morto) */
-      stats: {
-        dominios: dominiosDe(mapaRef.current).length,
-        tratados: ((mapaRef.current || {}).faccoes || []).filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length,
-        guerras: ((mapaRef.current || {}).faccoes || []).filter((f) => f.tratado === "guerra").length,
-        moedas: (personagemRef.current || {}).moedas || 0,
-        fama: Math.round(famaAtual()),
-      },
-      dia: diaRef.current,
-    });
-    /* nexo (11/10): QUEM JURA O MEU FIM É QUEM ESPERA NO FIM DO FIO. Toda
-       campanha corria com dois antagonistas — o da espinha e este, de nome
-       novo. Agora a identidade vem do fio (`vilaoDoFio`, saga.js); o plano,
-       o corpo e as fases continuam a ser os do vilão. Save sem fio, ou com o
-       antagonista já caído: o de sempre. */
-    let n = n0;
-    try { n = vilaoDoFio(n0, espinhaRef.current, { derrotados: mundoDasMissoes().derrotados, dia: diaRef.current }) || n0; } catch (e) { calou("vilaoDoFio", e); n = n0; }
-    nemesisRef.current = n; setNemesis(n);
-    /* O REGISTRO DE PESSOAS NÃO O RECEBE AINDA. Antes ele entrava no elenco
-       no dia em que nascia, com "NÊMESIS do herói" escrito na ficha — e o
-       registro sobe ao prompt em TODO turno, então a IA sabia o nome e o
-       papel dele desde o primeiro dia. Era a segunda porta por onde a
-       revelação vazava, e ninguém via porque a primeira (a linha na ficha)
-       já tinha entregado tudo. Ele entra no elenco na REVELAÇÃO.
-
-       E nada na tela: o jogador não é avisado de que ganhou um inimigo. */
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${resumoVilaoPrompt(n)}`;
+    const r = surgirANemesis({
+      nemesis: nemesisRef.current, fama: famaAtual(), contadores: contRef.current, mapa: mapaRef.current,
+      moedas: (personagemRef.current || {}).moedas || 0, dia: diaRef.current, espinha: espinhaRef.current,
+      derrotados: () => mundoDasMissoes().derrotados, genero: (mundo && mundo.genero) || "Fantasia medieval", lexico: (mundoAtual() || {}).lexico,
+    }, { sorteDoTurno });
+    for (const ef of r.efeitos) if (ef.tipo === "calou") calou(ef.onde, ef.erro);
+    if (!r.nemesis) return;
+    nemesisRef.current = r.nemesis; setNemesis(r.nemesis);
+    notaRef.current = notaComOTurno(notaRef.current, r.paraOCronista);
     checarConquistas();
   };
 

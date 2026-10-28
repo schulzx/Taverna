@@ -78,6 +78,13 @@ export function casoDoCombate(i) {
     aproximadoM: i % 5 === 0 || i % 8 === 3,
     cidadeM: i % 6 === 5 ? "Porto Fundo" : "Vila do Sul",
     mapaM: { cidades: [{ nome: "Vila do Sul", porte: "vila", tipo: "cidade", bioma: "colina", regiao: "Chãs" }] },
+    /* a nêmesis que surge (tentarSurgirNemesis): lê nemesisM e fama de cima;
+       os contadores, o mapa com domínios e tratados, a bolsa, o fio da
+       espinha e quem já caiu (que às vezes estoura, para a rede calar) */
+    contN: { combatesVencidos: i % 9, elitesDerrotados: i % 3, lendariosDerrotados: i % 2, masmorrasConcluidas: i % 4, decretosCumpridos: i % 5 },
+    mapaN: { cidades: [{ nome: "Vila do Sul", relacao: i % 3 ? "neutra" : "jogador" }, { nome: "Porto Fundo", relacao: i % 4 ? "jogador" : "hostil" }], faccoes: [{ nome: "Liga", tratado: ["comercio", "alianca", "guerra", null][i % 4] }, { nome: "Coroa", tratado: i % 5 ? "guerra" : "comercio" }] },
+    espinhaN: i % 3 === 0 ? null : { fio: { antagonista: i % 2 ? "Morvane, a Viúva do Sal" : "a Fome do Poço" }, atos: [] },
+    derrotadosN: i % 13 === 12 ? "estoura" : i % 5 === 0 ? ["Morvane"] : [],
   };
 }
 

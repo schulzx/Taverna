@@ -17,7 +17,7 @@
    ============================================================ */
 import fs from "node:fs";
 import { casosDoCombate, sorteDoCaso, N_CASOS } from "./combate-casos.mjs";
-import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo } from "../src/motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis } from "../src/motor/combate-do-turno.js";
 import { mundoDaLei } from "./combate-casos.mjs";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 
@@ -136,6 +136,34 @@ sec("4 · a morte de um alvo (registrarMorteDeAlvo → aMorteDoAlvo)");
   t(`morde: com outro alvo, ${outroAlvo} fotos divergem (as que matavam alguém ou agravavam)`, outroAlvo >= morreu);
   t("o nome vazio não mata nem agrava", aMorteDoAlvo({ npcs: { Corvo: {} } }, "   ", "").efeitos.length === 0 && aMorteDoAlvo(null, null).morreu === false);
   t("no App, o órgão é o invólucro da peça", /const registrarMorteDeAlvo = \(nome, causa, \{ aproximado = false \} = \{\}\) => \{\s*const r = aMorteDoAlvo\(\{/.test(C) && /if \(r\.ehNemesis\) encerrarNemesis\(causa\);\s*return r\.morreu;/.test(C));
+}
+
+sec("5 · a nêmesis que surge (tentarSurgirNemesis → surgirANemesis)");
+{
+  const fotos = D.orgaos.tentarSurgirNemesis;
+  /* o invólucro do App, à letra: o calou do fio, a nêmesis, a nota, as conquistas */
+  const foto = (k, sorte, nemesis = k.nemesisM) => {
+    const calados = [];
+    let conquistas = 0, nem = copia(nemesis), nota = k.notaAntes;
+    const r = surgirANemesis({
+      nemesis: nem, fama: k.fama, contadores: copia(k.contN), mapa: copia(k.mapaN), moedas: k.pers.moedas || 0, dia: 1 + (k.i % 9), espinha: copia(k.espinhaN),
+      derrotados: () => { if (k.derrotadosN === "estoura") throw new Error("mundoDasMissoes estourou"); return k.derrotadosN; },
+      genero: k.semente.split("|")[1], lexico: null,
+    }, { sorteDoTurno: sorte || sorteDoCaso(k) });
+    for (const ef of r.efeitos) if (ef.tipo === "calou") calados.push(ef.onde);
+    if (r.nemesis) { nem = r.nemesis; nota = notaComOTurno(nota, r.paraOCronista); conquistas++; }
+    return { ret: null, nemesis: nem, nota, calados, conquistas };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const surgiu = fotos.filter((f) => f.conquistas).length, doFio = fotos.filter((f) => f.conquistas && /Morvane|Fome/.test((f.nemesis || {}).nome || "")).length, calou = fotos.filter((f) => f.calados.length).length;
+  console.log(`      surgiu ${surgiu} · com o nome do fio ${doFio} · o fio calou ${calou}`);
+  t("percorre os ramos (surgiu e não; do fio e não; a rede do fio)", surgiu > 20 && doFio > 5 && doFio < surgiu && calou > 0);
+  const outra = casos.filter((k, i) => !igual(foto(k, sorteDoCaso(casos[(i + 1) % N_CASOS])), fotos[i])).length;
+  t(`morde: com a sorte de outro caso, ${outra} fotos divergem`, outra > 20);
+  const viva = casos.filter((k, i) => !igual(foto(k, null, { nome: "Alguém", status: "ativa" }).conquistas, fotos[i].conquistas)).length;
+  t(`morde: com uma nêmesis viva, ninguém surge (${viva} fotos divergem, as que surgiam)`, viva === surgiu);
+  t("no App, o órgão é o invólucro da peça", /const tentarSurgirNemesis = \(\) => \{\s*const r = surgirANemesis\(\{/.test(C) && /if \(!r\.nemesis\) return;\s*nemesisRef\.current = r\.nemesis; setNemesis\(r\.nemesis\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*checarConquistas\(\);/.test(C));
 }
 
 console.log(`\nmotor · os órgãos do combate: ${ok} passaram, ${mal} falharam`);

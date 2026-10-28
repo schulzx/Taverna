@@ -72,7 +72,18 @@ sec("3. DOZE RETRATOS DE VILÃO, CADA UM NASCIDO DE COMO SE JOGOU");
   t("sem retrato nenhum, o Arquiteto segura a rede", V.escolherArquetipo({}, {}, sorte1).id === "arquiteto");
   /* e o App passa o retrato rico — sem estes campos, três arquétipos
      nunca nasceriam (nasceDe falso para sempre é arquétipo morto) */
-  t("o App entrega tratados, guerras e moedas ao nascimento", /tratados: \(\(mapaRef\.current \|\| \{\}\)\.faccoes/.test(APP) && /moedas: \(personagemRef\.current \|\| \{\}\)\.moedas/.test(APP));
+  /* MOVIDA (T1-A, 5.ª fatia, 28/10): o retrato do nascimento é montado em
+     src/motor/combate-do-turno.js (surgirANemesis), e o App entrega-lhe o mapa
+     e a bolsa. A intenção é a mesma — os tratados, as guerras e as moedas
+     chegam ao vilão e fazem nascer os seus arquétipos —, provada JOGANDO a
+     peça (o motor não se lê como texto) e lendo no App só o que ele entrega. */
+  {
+    const { surgirANemesis } = await import(S + "motor/combate-do-turno.js");
+    const nasce = (e) => surgirANemesis({ fama: 40, contadores: {}, mapa: {}, dia: 3, genero: "Fantasia medieval", derrotados: () => [], ...e }, { sorteDoTurno: () => () => 0.1 }).nemesis.arquetipo;
+    t("o App entrega tratados, guerras e moedas ao nascimento",
+      nasce({ mapa: { faccoes: [{ tratado: "guerra" }] } }) === "fomentador" && nasce({ mapa: { faccoes: [{ tratado: "comercio" }, { tratado: "alianca" }] } }) === "cortesao" && nasce({ moedas: 5000 }) === "credor" && nasce({}) === "arquiteto"
+      && /mapa: mapaRef\.current,\s*moedas: \(personagemRef\.current \|\| \{\}\)\.moedas \|\| 0,/.test(APP));
+  }
 }
 
 sec("4. DOZE HERANÇAS — DOZE JEITOS DE O MAL VOLTAR");

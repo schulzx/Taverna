@@ -24,6 +24,7 @@
 
 import { readFileSync } from "node:fs";
 import * as SG from "../src/saga.js";
+import { surgirANemesis } from "../src/motor/combate-do-turno.js";
 import * as V from "../src/vilao.js";
 import * as R from "../src/regiao.js";
 import * as G from "../src/geografia.js";
@@ -172,8 +173,17 @@ sec("5. a fiação no App");
     return "";
   };
   const surgir = corpoApos("const tentarSurgirNemesis = () => {");
-  t("a nêmesis nasce do fio, em try com calou", /vilaoDoFio\(n0, espinhaRef\.current/.test(surgir) && /calou\("vilaoDoFio"/.test(surgir));
-  t("e, se o fio estourar, fica a sorteada", /n = n0;/.test(surgir));
+  /* MOVIDAS (T1-A, 5.ª fatia, 28/10): a regra de tentarSurgirNemesis foi para
+     src/motor/combate-do-turno.js (surgirANemesis), e o App é invólucro dela.
+     A intenção é a mesma — o vilão nasce com o nome do fio, e se o fio
+     estourar fica o sorteado, calado em calou —, provada JOGANDO a peça (o
+     motor não se lê como texto) e lendo no App só o que ele entrega e aplica. */
+  const fio = { fio: { antagonista: "Morvane, a Viúva do Sal" }, atos: [] };
+  const baseN = { fama: 40, contadores: {}, mapa: {}, dia: 3, genero: "Fantasia medieval" };
+  const doFio = surgirANemesis({ ...baseN, espinha: fio, derrotados: () => [] }, { sorteDoTurno: () => () => 0.1 });
+  const estoura = surgirANemesis({ ...baseN, espinha: fio, derrotados: () => { throw new Error("x"); } }, { sorteDoTurno: () => () => 0.1 });
+  t("a nêmesis nasce do fio, em try com calou", doFio.nemesis.nome === "Morvane" && /espinha: espinhaRef\.current/.test(surgir) && /if \(ef\.tipo === "calou"\) calou\(ef\.onde, ef\.erro\)/.test(surgir));
+  t("e, se o fio estourar, fica a sorteada", estoura.nemesis.nome !== "Morvane" && estoura.efeitos.some((e) => e.tipo === "calou" && e.onde === "vilaoDoFio"));
   const diaria = corpoApos("const processarNemesisDiaria = () => {");
   t("o rosto espera o último ato (oRostoEspera, com calou)", /oRostoEspera\(espinhaRef\.current/.test(diaria) && /calou\("oRostoEspera"/.test(diaria));
   const queda = corpoApos("const encerrarNemesis = (causa) => {");

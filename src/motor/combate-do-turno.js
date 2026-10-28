@@ -28,6 +28,10 @@ import { essenciaDoChefe, RARIDADE_ROTULO } from "../loot.js";
 import { garantirSuprimentos } from "../ermos.js";
 import { concluirLugar } from "../mundo-base.js";
 import { agravarParaMorte } from "../crime.js";
+import { gerarVilao, resumoVilaoPrompt } from "../vilao.js";
+import { nomePessoa } from "../nomes.js";
+import { dominiosDe } from "../gestao.js";
+import { vilaoDoFio } from "../saga.js";
 
 /* ---------------- O PODER ÚNICO (v7.4.4) ----------------
    Mesma lógica do loot: a árvore da classe é tabela fixa, mas derrubar
@@ -158,4 +162,55 @@ export function aMorteDoAlvo(estado, nome, causa, opcoes) {
     new RegExp(`(^|\\W)${nomeNem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\W|$)`, "i").test(alvo)
   );
   return { morreu: !!chave || ehNemesis, ehNemesis, efeitos };
+}
+
+/* ---------------- A NÊMESIS QUE SURGE (v6.8) ----------------
+   Quando o nome cresce demais, alguém jura o fim do herói.
+
+     surgirANemesis({ nemesis, fama, contadores, mapa, moedas, dia, espinha,
+                      derrotados, genero, lexico }, { sorteDoTurno }) →
+       { nemesis, paraOCronista, efeitos }
+
+   `nemesis` volta `undefined` quando ninguém surgiu (a viva continua, a fama
+   não chega a 20, ou o dado não quis). A sorte é pedida na ordem do App:
+   "nemesis" (o dado), "vilao" (o vilão) e "nome" (o nome dele).
+
+   v9.167: o retrato ficou mais rico — os arquétipos novos leem diplomacia,
+   guerra e bolsa, e sem estes campos eles nunca nasceriam.
+
+   nexo (11/10): QUEM JURA O MEU FIM É QUEM ESPERA NO FIM DO FIO — a
+   identidade vem do fio (`vilaoDoFio`, saga.js); o plano, o corpo e as fases
+   continuam a ser os do vilão. Save sem fio, ou com o antagonista já caído:
+   o de sempre. `derrotados` é uma função (o App lê-a de mundoDasMissoes) e é
+   chamada DENTRO da rede, como era: se estourar, cala e fica o vilão novo.
+
+   O REGISTRO DE PESSOAS NÃO O RECEBE AINDA (ele entra no elenco na
+   REVELAÇÃO), e nada na tela: o jogador não é avisado de que ganhou um
+   inimigo. Só a nota ao Narrador, com o resumo do vilão. */
+export function surgirANemesis(estado, ctx) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const paraOCronista = [], efeitos = [];
+  const nada = { nemesis: undefined, paraOCronista, efeitos };
+  if (typeof c.sorteDoTurno !== "function") return nada;
+  const sorteDoTurno = c.sorteDoTurno;
+  if (e0.nemesis && e0.nemesis.status !== "derrotada") return nada;
+  if (e0.fama < 20) return nada;
+  if (sorteDoTurno("nemesis")() > 0.35) return nada;
+  const n0 = gerarVilao({ sorte: sorteDoTurno("vilao"),
+    nome: nomePessoa(e0.genero || "Fantasia medieval", undefined, sorteDoTurno("nome"), e0.lexico),
+    cont: e0.contadores,
+    stats: {
+      dominios: dominiosDe(e0.mapa).length,
+      tratados: ((e0.mapa || {}).faccoes || []).filter((f) => f.tratado === "comercio" || f.tratado === "alianca").length,
+      guerras: ((e0.mapa || {}).faccoes || []).filter((f) => f.tratado === "guerra").length,
+      moedas: e0.moedas || 0,
+      fama: Math.round(e0.fama),
+    },
+    dia: e0.dia,
+  });
+  let n = n0;
+  try { n = vilaoDoFio(n0, e0.espinha, { derrotados: typeof e0.derrotados === "function" ? e0.derrotados() : e0.derrotados, dia: e0.dia }) || n0; } catch (e) { efeitos.push({ tipo: "calou", onde: "vilaoDoFio", erro: e }); n = n0; }
+  paraOCronista.push(resumoVilaoPrompt(n));
+  return { nemesis: n, paraOCronista, efeitos };
 }

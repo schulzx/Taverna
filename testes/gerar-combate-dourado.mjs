@@ -19,6 +19,10 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { casosDoCombate, sorteDoCaso, mundoDaLei } from "./combate-casos.mjs";
 import { agravarParaMorte } from "../src/crime.js";
+import { gerarVilao, resumoVilaoPrompt } from "../src/vilao.js";
+import { nomePessoa } from "../src/nomes.js";
+import { dominiosDe } from "../src/gestao.js";
+import { vilaoDoFio } from "../src/saga.js";
 import { gerarHabilidadeUnica, chanceUnica } from "../src/unicas.js";
 import { patamarFama } from "../src/fama.js";
 import { recompensaChefe } from "../src/masmorras.js";
@@ -99,6 +103,27 @@ const ORGAOS = {
       return { ret, lei: S.leiRef.current, npcs: S.npcsRef.current, encerradas, calados };
     },
     nome: "registrarMorteDeAlvo",
+  },
+  /* tentarSurgirNemesis: lê a nêmesis, a fama, a sorte, os contadores, o mapa,
+     a bolsa, o fio e quem caiu; escreve a nêmesis, a nota, e chama as
+     conquistas (o dublê conta) */
+  tentarSurgirNemesis: {
+    texto: () => corte("  const tentarSurgirNemesis = () => {", "  /* Alguém morreu por decisão do sistema"),
+    correr: (fn, k) => {
+      const calados = [];
+      let conquistas = 0;
+      const S = {
+        gerarVilao, nomePessoa, dominiosDe, vilaoDoFio, resumoVilaoPrompt,
+        nemesisRef: ref(copia(k.nemesisM)), famaAtual: () => k.fama, sorteDoTurno: sorteDoCaso(k),
+        mundo: { genero: k.semente.split("|")[1] }, mundoAtual: () => ({ lexico: null }), contRef: ref(copia(k.contN)),
+        mapaRef: ref(copia(k.mapaN)), personagemRef: ref({ moedas: k.pers.moedas }), diaRef: ref(1 + (k.i % 9)), espinhaRef: ref(copia(k.espinhaN)),
+        mundoDasMissoes: () => { if (k.derrotadosN === "estoura") throw new Error("mundoDasMissoes estourou"); return { derrotados: k.derrotadosN }; },
+        calou: (onde) => calados.push(onde), setNemesis: () => {}, notaRef: ref(k.notaAntes), checarConquistas: () => { conquistas++; },
+      };
+      const ret = fn(S)();
+      return { ret: ret === undefined ? null : ret, nemesis: S.nemesisRef.current, nota: S.notaRef.current, calados, conquistas };
+    },
+    nome: "tentarSurgirNemesis",
   },
 };
 
