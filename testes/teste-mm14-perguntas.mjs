@@ -421,10 +421,16 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   /* ---- 2. o relógio: quem só pergunta não avança o tempo, nem o sino ---- */
   const agir = corpoApos(app, "const agirInterno = (texto) => {");
   t("a âncora de agirInterno existe, e o corpo não está vazio", agir.length > 3000);
+  /* (movido, T1-A 8.ª fatia: a pergunta "o mundo anda neste turno?" é oMundoAndaNoTurno, em
+     src/motor/antes-do-mestre.js — a luta, o acampamento, a masmorra e o soPergunta; o App chama-a e
+     só anda o relógio quando ela diz que sim. A regra prova-se jogando a peça) */
+  const { oMundoAndaNoTurno } = await import("../src/motor/antes-do-mestre.js");
   t("o relógio (avancarMinutos + marcarTurnoDoMundo) fica de fora quando soPergunta(acao).soPergunta",
-    /if\s*\(!combateRef\.current\s*&&\s*!acampadoRef\.current\s*&&\s*!masmorraRef\.current\s*&&\s*!\(\(\)\s*=>\s*\{[^]*?soPergunta\(acao\)\.soPergunta[^]*?\}\)\(\)\)\s*\{[^]*?avancarMinutos\(MINUTOS_POR_TURNO\)[^]*?marcarTurnoDoMundo\(\);/.test(agir));
+    /const doMundo = oMundoAndaNoTurno\(\{ combate: combateRef\.current, acampado: acampadoRef\.current, masmorra: masmorraRef\.current \}, acao\);[^]*?if \(doMundo\.anda\) \{\s*extraTempo = avancarMinutos\(MINUTOS_POR_TURNO\);\s*marcarTurnoDoMundo\(\);/.test(agir)
+    && oMundoAndaNoTurno({}, "Quem é Doran o Manco?").anda === false && oMundoAndaNoTurno({}, "vou até o poço").anda === true && oMundoAndaNoTurno({ combate: {} }, "vou até o poço").anda === false);
   t("a checagem está guardada por calou (soPergunta que estoura não trava o turno)",
-    /calou\("soPergunta no tempo", e\); return false;/.test(agir));
+    /if \(doMundo\.erro\) calou\("soPergunta no tempo", doMundo\.erro\);/.test(agir)
+    && (() => { const r = oMundoAndaNoTurno({}, { toString() { throw new Error("frase torta"); } }); return r.anda === true && !!r.erro; })());
 
   /* ---- 3. a vez na luta: perguntar não é o turno ---- */
   t("na luta, só pergunta não chega ao despachante — enviar leva o aviso, e o turno para aqui (return)",
@@ -499,8 +505,12 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   /* ---- 5. o sino leva o quando ---- */
   const marcarMundo = corpoApos(app, "const marcarTurnoDoMundo = () => {");
   t("o corpo de marcarTurnoDoMundo não está vazio", marcarMundo.length > 200);
+  /* (movido, T1-A 8.ª fatia: o sino corre em oSinoDoTurno, no motor; o App passa-lhe o dia e o
+     minuto, e a peça leva-os ao andarOSino — prova-se jogando-a: o toque guarda o quando) */
+  const { oSinoDoTurno } = await import("../src/motor/antes-do-mestre.js");
   t("andarOSino recebe o dia e o minuto do turno, para sinosForaDeHora saber quando",
-    marcarMundo.includes("cidade: cidadeAtualRef.current,\n        ") && /cidade: cidadeAtualRef\.current,[^]*?dia: diaRef\.current, minuto: minutoRef\.current,\s*\}\);/.test(marcarMundo));
+    /dia: diaRef\.current, minuto: minutoRef\.current,\s*\}\);/.test(marcarMundo) && marcarMundo.includes("const s = oSinoDoTurno({")
+    && (() => { const a = { v: 1, principalId: "m", cidade: "Vau", titulo: "t", pista: { nome: "P" }, alvo: { feitio: "descobrir", onde: "a torre", objeto: "o x", origem: "Vau" }, sinal: "o sino", turnos: 30, semAvanco: 0, feitas: 0, conhecidos: 0, visitados: [], cheios: 8, prenunciado: true, tocou: false }; const s = oSinoDoTurno({ abertura: a, missoes: [], cidadeAtual: "Vau", npcs: {}, dia: 9, minuto: 600 }); return !!s.toque && JSON.stringify(s.abertura.tocouEm).includes("9"); })());
 
   /* ---- 6. o teste social leva a frase do jogador ---- */
   /* o setRolagem do pedido (com `desafio: v`) mora em rolarDesafio, não em

@@ -47,8 +47,12 @@ const ord = (...frags) => {
 sec("1. o App importa a escuta e as duas peças novas do mural");
 {
   const imp = APP.match(/import \{([^}]*)\} from "\.\/escuta\.js";/);
-  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta", "andarAEscuta", "contarOAvanco", "degrauDaEscuta", "seguraOMundo", "linhaDoRumo", "escutarOTurno", "separarEnvelopes", "fechoDoPedido"];
-  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])), imp ? "" : "sem import");
+  /* (movido, T1-A 8.ª fatia: o pedido e o passo da escuta foram para src/motor/antes-do-mestre.js;
+     `andarAEscuta`, `contarOAvanco` e `seguraOMundo` já não são do App — quem os chama é o motor,
+     e o App chama `oPedidoDaEscuta` e `aEscutaAnda`. As onze peças chegam, as três pelo motor) */
+  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta", "degrauDaEscuta", "linhaDoRumo", "escutarOTurno", "separarEnvelopes", "fechoDoPedido"];
+  const im2 = APP.match(/import \{([^}]*)\} from "\.\/motor\/antes-do-mestre\.js";/);
+  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])) && !!im2 && /\boPedidoDaEscuta\b/.test(im2[1]) && /\baEscutaAnda\b/.test(im2[1]), imp ? "" : "sem import");
   const of = APP.match(/import \{([^}]*)\} from "\.\/ofertas\.js";/);
   t("ofertas.js entrega genteDaHistoria e cartazVencido", !!of && /\bgenteDaHistoria\b/.test(of[1]) && /\bcartazVencido\b/.test(of[1]));
 }
@@ -65,15 +69,22 @@ sec("2. o estado: um campo novo do save, ignorado pela versão antiga");
 sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
 {
   t("o corpo de enviar foi achado", ENVIAR.length > 1000);
-  t("o pedido é lido ANTES de o compasso decidir", ord("pedidoEsc = lerOPedido(conteudo)", "seguraOMundo(pedidoEsc", "talvezAndarOCompasso(conteudo, { segurar: segurarEsc })"));
+  /* (movido, T1-A 8.ª fatia: o pedido lê-se em oPedidoDaEscuta, no motor; a ordem continua a do App) */
+  t("o pedido é lido ANTES de o compasso decidir", ord("const doPedido = oPedidoDaEscuta(", "segurarEsc = doPedido.segurar;", "talvezAndarOCompasso(conteudo, { segurar: segurarEsc })"));
   t("numa pergunta segura, a forma da cena também não sai", ENVIAR.includes("doCompasso || segurarEsc ? \"\" : talvezDarFormaACena(conteudo)"));
   t("o compasso aceita o segurar de quem chama, pela porta de sempre", /segurar: segurarExtra \|\| !!combateRef\.current/.test(APP));
   t("a nota passa pela escuta, envelope a envelope, com os adiados de antes",
     ord("textoDaPauta(pautaDoTurno(conteudo)", "const daNota = umSoLugar(notaRef.current);", "escutarOTurno({", "separarEnvelopes(daNota)", "adiadosAntes: adiadosEscutaRef.current"));
   t("a pauta vem primeiro, e o que fica depois", ord("doTurno = rEsc.ficam;", "const nota = [pauta, ...doTurno]"));
   t("o que espera volta à nota do turno seguinte", ord("notaRef.current = \"\";", "notaRef.current = adiadosEsc.join(\"\\n\")"));
-  t("a escada anda DEPOIS da pauta (o degrau do turno é o de antes)", ord("escutarOTurno({", "andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco("));
-  t("a luta pausa a escada", ENVIAR.includes("pausa: !!combateRef.current });"));
+  /* (movido, T1-A 8.ª fatia: a escuta anda em aEscutaAnda, no motor; a ordem é a do App, e a
+     pausa da luta prova-se jogando a peça, não lendo o texto dela) */
+  t("a escada anda DEPOIS da pauta (o degrau do turno é o de antes)", ord("escutarOTurno({", "const anda = aEscutaAnda({ escuta: escutaRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });"));
+  {
+    const { aEscutaAnda, oPedidoDaEscuta } = await import("../src/motor/antes-do-mestre.js");
+    const pe = oPedidoDaEscuta({ modo: "historia", escuta: { semAvanco: 2 } }, "ando pela praça");
+    t("a luta pausa a escada", aEscutaAnda({ escuta: { semAvanco: 2 }, combate: { rodada: 1 } }, pe).escuta.semAvanco === 2 && aEscutaAnda({ escuta: { semAvanco: 2 }, combate: null }, pe).escuta.semAvanco === 3 && ENVIAR.includes("combate: combateRef.current }, { pedido: pedidoEsc"));
+  }
   t("a frase do jogador fecha o pedido, depois do rodapé", ord("fechoDoPedido(pedidoEsc)", "pedidoFinal = `${nota ? nota + \"\\n\" : \"\"}${rodape}\\n${fecho}`", "content: pedidoFinal"));
   /* onda 1 do custo (13/10): a asserção mudou. O histórico guardava o corpo
      (a pauta + a frase) e passou a guardar só a memória do turno (a frase e a

@@ -58,6 +58,7 @@ import * as reciboDaLuta from "../src/recibo-da-luta.js";
 import * as invocacoes from "../src/invocacoes.js";
 import * as motorCombate from "../src/motor/combate-do-turno.js";
 import * as motorLuta from "../src/motor/luta-do-turno.js";
+import * as motorAntes from "../src/motor/antes-do-mestre.js";
 import * as motorAplicar from "../src/motor/aplicar.js";
 
 /* Os nomes que o código recortado lê dos módulos, um a um (nunca um
@@ -113,6 +114,9 @@ function osModulos({ novo }) {
       o[n] = MODULOS[mod][n];
     }
   }
+  /* (T1-A 8.ª fatia: a assinatura da cena do chão mora em motor/antes-do-mestre.js, e o
+     cenaDoChao do App de hoje — que este recorte leva — chama-a por este nome) */
+  if (novo) o.cenaDoChaoDe = motorAntes.cenaDoChao;
   return o;
 }
 

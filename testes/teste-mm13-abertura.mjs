@@ -487,8 +487,12 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      do App — o único leitor dele lá era o códex do fim do turno, que se mudou
      para src/motor/fim-do-turno.js e o importa (a secção 6 prova-o jogando).
      As outras nove seguem no MESMO import do App. */
+  /* MOVIDA (28/10, T1-A 8.ª fatia, o oficial): `andarOSino` saiu do import do App — o sino
+     corre em oSinoDoTurno, src/motor/antes-do-mestre.js, que o importa (a secção 7 prova a
+     fiação). As outras nove seguem no MESMO import do App, e o App importa a peça do motor. */
   t("App.jsx importa as dez funções de abertura.js",
-    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora'));
+    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, sinosForaDeHora')
+    && /import \{[^}]*\boSinoDoTurno\b[^}]*\} from "\.\/motor\/antes-do-mestre\.js";/.test(app));
   t("App.jsx importa chaveDoLugar de mundo-base.js",
     /* MM17 C1: a linha ganhou concluirLugar (a masmorra publica o fim); a
        asserção continua a guardar chaveDoLugar no import de mundo-base.js.
@@ -625,14 +629,17 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   /* ---- 7. o sino ---- */
   const marcarMundo = corpoApos(app, "const marcarTurnoDoMundo = () => {");
   t("o corpo de marcarTurnoDoMundo não está vazio", marcarMundo.length > 200);
+  /* (movido, T1-A 8.ª fatia: o sino corre em oSinoDoTurno, src/motor/antes-do-mestre.js — que é o
+     andarOSino com as leituras do App; a fiação, o try e o calou continuam aqui) */
   t("o sino anda a cada turno de mundo, dentro de um try guardado por calou",
-    marcarMundo.includes("const s = andarOSino(aberturaMundoRef.current, {") && marcarMundo.includes('calou("o sino da abertura", e);')
-    && marcarMundo.indexOf("try {") < marcarMundo.indexOf("andarOSino(") && marcarMundo.indexOf("andarOSino(") < marcarMundo.indexOf('calou("o sino da abertura"'));
+    marcarMundo.includes("const s = oSinoDoTurno({") && marcarMundo.includes("abertura: aberturaMundoRef.current,") && marcarMundo.includes('calou("o sino da abertura", e);')
+    && marcarMundo.indexOf("try {") < marcarMundo.indexOf("oSinoDoTurno(") && marcarMundo.indexOf("oSinoDoTurno(") < marcarMundo.indexOf('calou("o sino da abertura"'));
   t("a abertura devolvida pelo sino substitui a de antes", marcarMundo.includes("aberturaMundoRef.current = s.abertura;"));
   t("o prenúncio vira aviso de um turno", marcarMundo.includes("if (s.prenuncio) sinoDoTurnoRef.current = s.prenuncio;"));
   t("o toque entra na cena (pushMsgs) e no envelope do turno (notaRef) — sem CHAMAR marcarNoArco",
     marcarMundo.includes('pushMsgs([{ autor: "sistema", texto: s.toque.linha }]);')
-    && marcarMundo.includes('notaRef.current = `${notaRef.current ? notaRef.current + "\\n" : ""}${s.toque.envelope}`;')
+    /* (movido, T1-A 8.ª fatia: a nota cresce por notaComOTurno, a mesma conta do motor) */
+    && marcarMundo.includes("notaRef.current = notaComOTurno(notaRef.current, [s.toque.envelope]);")
     && !marcarMundo.includes("marcarNoArco("));
   t("o prenúncio do turno entra na pauta (MOMENTO) e se apaga depois de dito",
     pauta.includes('if (sinoDoTurnoRef.current) { p = porNaPauta(p, "momento", sinoDoTurnoRef.current); sinoDoTurnoRef.current = ""; }'));

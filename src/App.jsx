@@ -192,7 +192,7 @@ import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guar
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
-import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
+import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
@@ -200,7 +200,7 @@ import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPesso
 import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
-import { lerOPedido, fioDaHistoria, garantirEscuta, andarAEscuta, contarOAvanco, degrauDaEscuta, seguraOMundo, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
+import { lerOPedido, fioDaHistoria, garantirEscuta, degrauDaEscuta, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
 import { garantirPrometido, guardarSementes, pagarSementes, cobrarNoTurno, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
 import { escolherFecho, fechoDaNarrativa } from "./fecho.js";
@@ -212,7 +212,7 @@ import { indoleDe, linhaDaIndole, dispararProposito, pesarConvite, envelopeDoCon
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
 import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
 import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
-import { criarChao, garantirChao, porNoChao, tirarDoChao, varrerSeMudou, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
+import { criarChao, garantirChao, porNoChao, tirarDoChao, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { custoRef, ultimoProvedorRef } from "./bastidor.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
@@ -244,6 +244,7 @@ import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./mo
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
+import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -8418,9 +8419,12 @@ export default function Taverna() {
   /* A assinatura da cena. Trocou de lugar ou virou o dia? O que ficou no
      chão fica no chão — senão a pilha vira um segundo inventário que
      acompanha o herói pelo mundo inteiro. */
-  const cenaDoChao = () => `${cidadeAtualRef.current || ""}|${(lugarRef.current && lugarRef.current.nome) || ""}|${diaRef.current || 1}`;
+  /* (T1-A, 8.ª fatia, 28/10) a assinatura e a varredura moram em
+     src/motor/antes-do-mestre.js (`cenaDoChao`, `oChaoDaCena`): daqui
+     sai a fiação — o ref e a tela só quando o chão mudou. */
+  const cenaDoChao = () => cenaDoChaoDe({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current });
   const varrerChao = () => {
-    const c = varrerSeMudou(chaoRef.current, cenaDoChao());
+    const c = oChaoDaCena({ chao: chaoRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current }).chao;
     if (c !== chaoRef.current) { chaoRef.current = c; setChao(c); }
     return c;
   };
@@ -11863,13 +11867,13 @@ export default function Taverna() {
        envelope depois seria o sistema andar uma história que ninguém
        contou. `pedidoEsc` nulo = a escuta não está (a Noite, ou um erro):
        o turno segue como era. */
+    /* (T1-A, 8.ª fatia) a escuta lê o pedido e anda no motor
+       (`oPedidoDaEscuta`, `aEscutaAnda`, src/motor/antes-do-mestre.js) */
     let pedidoEsc = null, fioEsc = [], segurarEsc = false;
     try {
-      if (modoRef.current !== "rapida") {
-        pedidoEsc = lerOPedido(conteudo);
-        fioEsc = fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current });
-        segurarEsc = seguraOMundo(pedidoEsc, degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco));
-      }
+      const doPedido = oPedidoDaEscuta({ modo: modoRef.current, abertura: aberturaMundoRef.current, missoes: missoesRef.current, escuta: escutaRef.current }, conteudo);
+      if (doPedido.erro) calou("a escuta lê o pedido", doPedido.erro);
+      pedidoEsc = doPedido.pedido; fioEsc = doPedido.fio; segurarEsc = doPedido.segurar;
     } catch (e) { calou("a escuta lê o pedido", e); pedidoEsc = null; fioEsc = []; segurarEsc = false; }
     const doCompasso = talvezAndarOCompasso(conteudo, { segurar: segurarEsc });
     const formaDaCena = doCompasso || segurarEsc ? "" : talvezDarFormaACena(conteudo);
@@ -11954,7 +11958,9 @@ export default function Taverna() {
     if (seguraEstrada.length) notaRef.current = [notaRef.current, ...seguraEstrada].filter(Boolean).join("\n");
     /* a escada anda depois da pauta: o degrau deste turno é o de antes dele */
     try {
-      if (pedidoEsc) escutaRef.current = andarAEscuta(escutaRef.current, { pedido: pedidoEsc, fio: fioEsc, ...contarOAvanco({ missoes: missoesRef.current, espinha: espinhaRef.current }), pausa: !!combateRef.current });
+      const anda = aEscutaAnda({ escuta: escutaRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });
+      escutaRef.current = anda.escuta;
+      if (anda.erro) calou("a escuta anda", anda.erro);
     } catch (e) { calou("a escuta anda", e); }
     const corpo = nota ? `${nota}\n${conteudo}` : conteudo;
     /* ONDA 2 DO CUSTO (13/10): OS SINAIS DO TURNO. Lidos na frase, na pauta
@@ -15270,11 +15276,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     let extraTempo = "";
     /* MM14: quem SÓ pergunta não faz o relógio andar — nem os minutos, nem
        o sino. Perguntar ao Mestre é de graça (`perguntas.js`, soPergunta). */
-    if (!combateRef.current && !acampadoRef.current && !masmorraRef.current && !(() => {
-      try { return soPergunta(acao).soPergunta; } catch (e) { calou("soPergunta no tempo", e); return false; }
-    })()) {
-      extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
-      marcarTurnoDoMundo();
+    /* (T1-A, 8.ª fatia) a pergunta "o mundo anda neste turno?" é do motor
+       (`oMundoAndaNoTurno`, src/motor/antes-do-mestre.js): o replay faz a
+       mesma conta. */
+    {
+      const doMundo = oMundoAndaNoTurno({ combate: combateRef.current, acampado: acampadoRef.current, masmorra: masmorraRef.current }, acao);
+      if (doMundo.erro) calou("soPergunta no tempo", doMundo.erro);
+      if (doMundo.anda) {
+        extraTempo = avancarMinutos(MINUTOS_POR_TURNO);
+        marcarTurnoDoMundo();
+      }
     }
     setEntrada(""); apagarORascunho(); setHabAbertas(false); /* V6a: o turno partiu */
     /* ---------------- A SEGUNDA FASE (v9.63) ----------------
@@ -20073,42 +20084,33 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      dez para voltar ao meio da cidade), e somar o turno de exploração por
      cima faria a caminhada custar uma hora.
      ============================================================ */
+  /* ---------------- O TURNO DO MUNDO, NO MOTOR (T1-A, 8.ª fatia, 28/10) ----------------
+     A conta do turno do mundo (v9.31: os relógios a cada DOIS turnos, para
+     manter a cadência dos saves) e o sino da abertura (MM13: enche com o
+     tempo, a exploração e o afastamento; nunca antes do piso) moram em
+     src/motor/antes-do-mestre.js (`oRelogioDoMundo`, `oSinoDoTurno`),
+     com os porquês. Ficam aqui as portas que são do App: os relógios que
+     tiquetaqueiam, o mundo que se mexe por conta própria (v9.61: junto do
+     relógio, porque é o mesmo instante — e antes do sino, que lê o que ele
+     deixar), e o toque que vai à tela e à nota.
+     Provado byte a byte contra o de antes (teste-motor-antes-do-mestre). */
   const marcarTurnoDoMundo = () => {
-    if (combateRef.current) return;
-    /* v9.31: o gatilho "turno_mundo" dos relógios morava na vez do mundo, e
-       ela deixou de existir. Ele passa para o turno normal — que agora É o
-       turno — mas a cada DOIS, para manter a cadência de antes: os relógios
-       andavam uma vez por par ação+mundo, e dobrar isso encurtaria pela
-       metade todo prazo já em curso nos saves. */
-    turnosDeMundoRef.current += 1;
-    if (turnosDeMundoRef.current % 2 === 0) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
-    /* v9.61: e o mundo pode se mexer POR CONTA PRÓPRIA — puxando um fio que
-       JÁ está aberto, nunca inventando um novo. Aqui, junto do relógio,
-       porque é o mesmo instante: o tempo passou para todos, não só para o
-       herói. Fora de masmorra e estrada, que é onde interromper seria
-       roubar a cena dele. */
-    if (!acampadoRef.current && !masmorraRef.current) talvezOMundoSeMexer();
-    /* MM13: O SINO. Enche com o tempo, a exploração e o afastamento da
-       história; nunca antes do piso. `prenuncio` vira uma linha de aviso
-       (a pauta do turno a consome e apaga); `toque` é o acontecimento —
-       a linha entra na cena e o envelope obriga o Narrador a encená-lo.
-       Não passa por `marcarNoArco`: o arco já lê a espinha e a missão
-       principal, e marcar aqui duplicaria a mesma batida. */
+    const rel = oRelogioDoMundo({ combate: combateRef.current, turnosDeMundo: turnosDeMundoRef.current, acampado: acampadoRef.current, masmorra: masmorraRef.current });
+    if (rel.parado) return;
+    turnosDeMundoRef.current = rel.turnosDeMundo;
+    if (rel.tiquear) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
+    if (rel.mundoSeMexe) talvezOMundoSeMexer();
     try {
-      const s = andarOSino(aberturaMundoRef.current, {
-        missoes: missoesRef.current, lugar: lugarRef.current,
-        conhecidos: Object.keys(npcsRef.current || {}).length,
-        pausa: !!(acampadoRef.current || masmorraRef.current || raidRef.current),
-        cidade: cidadeAtualRef.current,
-        /* MM14: o dia e o minuto em que o sino tocou — é o que
-           `sinosForaDeHora` usa para dizer QUANDO, se alguém perguntar */
+      const s = oSinoDoTurno({
+        abertura: aberturaMundoRef.current, missoes: missoesRef.current, lugar: lugarRef.current, npcs: npcsRef.current,
+        acampado: acampadoRef.current, masmorra: masmorraRef.current, raid: raidRef.current, cidadeAtual: cidadeAtualRef.current,
         dia: diaRef.current, minuto: minutoRef.current,
       });
       aberturaMundoRef.current = s.abertura;
       if (s.prenuncio) sinoDoTurnoRef.current = s.prenuncio;
       if (s.toque) {
         pushMsgs([{ autor: "sistema", texto: s.toque.linha }]);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${s.toque.envelope}`;
+        notaRef.current = notaComOTurno(notaRef.current, [s.toque.envelope]);
       }
     } catch (e) { calou("o sino da abertura", e); }
   };
