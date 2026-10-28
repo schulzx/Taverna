@@ -65,6 +65,10 @@ consertar("meio-do-turno", "        ef({ tipo: \"loot\", item: it });",
 consertar("meio-do-turno", "  return { estado: { ...e0, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };",
   "  return { estado: { ...e0, personagem: pers, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };");
 consertar("App", "      msgs.push(...dosSinais.msgs);\n      aplicarOsEfeitos(dosSinais);", "      msgs.push(...dosSinais.msgs);\n      aplicarOsEfeitos(dosSinais);\n      pers = dosSinais.estado.personagem;");
+/* 2. as cidades do Mestre entram no mapa ANTES do pé (logo antes de
+   `cidade_atual`), e não por cima dele no fim; a devoção fica no fim */
+consertar("meio-do-turno", "    if (md.cidade_atual) {", "    if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapa = mp; ef({ tipo: \"mapa\", mapa }); }\n    if (md.cidade_atual) {");
+consertar("meio-do-turno", "    if (mudouMapa) {\n      mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapa = mp; ef({ tipo: \"mapa\", mapa });\n", "    if (mudouMapa) {\n");
 
 /* o motor do mesmo commit, ao lado do de hoje, com nome de rascunho */
 const rascunho = {};

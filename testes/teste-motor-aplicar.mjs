@@ -500,6 +500,32 @@ sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)")
     t("…calculada sobre a ficha do turno (6 + 15), não sobre a do ref (2 + 15)", p.vida === 21);
     t("…e o achado do mesmo turno vem por cima dela", (p.equipamento || []).length === 1 && p.vida === 21);
   }
+  /* defeito 3 de 28/10: com `mapa_cidades` e `cidade_atual` no mesmo turno,
+     as cidades do Mestre caíam numa cópia do mapa feita no começo, e essa
+     cópia virava o mapa no fim — por cima da descoberta, da pisada e da
+     névoa da cidade onde o herói acabava de chegar. A cerimónia abria de
+     novo na chegada seguinte. */
+  {
+    const mapa0 = { cidades: [
+      { nome: "Monte Rasa", x: 40, y: 40, tipo: "cidade", regiao: "Vale", pisada: true, descoberta: true },
+      { nome: "Baixo do Vigia", x: 44, y: 43, tipo: "vila", regiao: "Vale", descoberta: false },
+      { nome: "Vila Funda", x: 46, y: 44, tipo: "vila", regiao: "Vale", descoberta: false },
+    ], faccoes: [], regioes: [{ nome: "Vale", bioma: "planicie", cx: 42, cy: 42 }] };
+    const est = { personagem: heroi(), mapa: mapa0, cidadeAtual: "Monte Rasa", lugar: null, jornada: { de: "Monte Rasa", para: "Baixo do Vigia", desde: 1 }, devocao: { cidades: {}, andarilhos: 0 }, dia: 3 };
+    const ida = aplicarOMapa(est, { narrativa: "x", mudancas: { cidade_atual: "Baixo do Vigia", mapa_cidades: [{ nome: "Torre Branca", tipo: "fortaleza", regiao: "Vale" }] } }, {});
+    const aqui = ida.estado.mapa.cidades.find((c) => c.nome === "Baixo do Vigia");
+    t("a cidade onde se chega fica descoberta e pisada, com as cidades do Mestre no mesmo turno", aqui.descoberta === true && aqui.pisada === true && ida.estado.mapa.cidades.some((c) => c.nome === "Torre Branca"));
+    t("…e a névoa da vizinhança que ela abriu fica aberta", ida.msgs.some((m) => /fica sabendo de/.test(m)) && ida.estado.mapa.cidades.find((c) => c.nome === "Vila Funda").descoberta !== false);
+    t("…e a primeira pisada abre a cerimónia uma vez", ida.efeitos.some((e) => e.tipo === "lugarNovo"));
+    const sai = aplicarOMapa({ ...est, ...ida.estado, jornada: null }, { narrativa: "x", mudancas: { cidade_atual: "Monte Rasa" } }, {});
+    const volta = aplicarOMapa({ ...est, ...sai.estado, jornada: null }, { narrativa: "x", mudancas: { cidade_atual: "Baixo do Vigia", mapa_cidades: [{ nome: "Torre Branca", notas: "a torre" }] } }, {});
+    t("…e na volta é a faixa da chegada, não a cerimónia de novo", volta.efeitos.some((e) => e.tipo === "chegada") && !volta.efeitos.some((e) => e.tipo === "lugarNovo"));
+    /* a cidade nova do Mestre, dita e pisada no mesmo turno: entra no mapa e é pisada */
+    const nova = aplicarOMapa(est, { narrativa: "x", mudancas: { cidade_atual: "Torre Branca", mapa_cidades: [{ nome: "Torre Branca", tipo: "fortaleza", regiao: "Vale" }] } }, {});
+    const tb = nova.estado.mapa.cidades.find((c) => c.nome === "Torre Branca");
+    const cer = (nova.efeitos.find((e) => e.tipo === "lugarNovo") || {}).cidade || {};
+    t("a cidade que o Mestre registra e o herói pisa no mesmo turno fica pisada, e a cerimónia tem a ficha dela", tb && tb.pisada === true && cer.tipo === "fortaleza");
+  }
 }
 
 console.log(`\nmotor · aplicar: ${bons} passaram, ${maus} falharam`);

@@ -96,6 +96,12 @@ consertar("sinais", "invocarMilagre(arg.toLowerCase(), \"mestre\").forEach((m2) 
   "{ const __ref = personagemRef.current; const __base = pers || __ref; personagemRef.current = __base; invocarMilagre(arg.toLowerCase(), \"mestre\").forEach((m2) => msgs.push(m2.texto)); if (personagemRef.current !== __base) { if (pers) pers = personagemRef.current; } else personagemRef.current = __ref; }");
 consertar("sinais", "setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));",
   "if (pers) pers = { ...pers, equipamento: [...(pers.equipamento || []), it] }; else if (personagemRef.current) { const __n = { ...personagemRef.current, equipamento: [...(personagemRef.current.equipamento || []), it] }; personagemRef.current = __n; setPersonagem(__n); salvar({ personagem: __n }); }");
+/* 2. as cidades do Mestre entram no mapa ANTES do pé (logo antes de
+   `cidade_atual`): a cópia do começo já não vira o mapa no fim, por cima da
+   descoberta, da pisada e da névoa da cidade onde se chega; a devoção fica
+   no fim, como estava */
+consertar("mapa", "      if (md.cidade_atual) {", "      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapaRef.current = mp; setMapa(mp); }\n      if (md.cidade_atual) {");
+consertar("mapa", "      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapaRef.current = mp; setMapa(mp); casarDevocaoComMapa(); }", "      if (mudouMapa) { casarDevocaoComMapa(); }");
 const fechos = [
   corte("  const cidadeDoMapa = (nome) =>", "\n\n"),
   corte("  const cidadeSobOsPes = () => {", "  /* Todo lugar a que se pode ir daqui a pé"),

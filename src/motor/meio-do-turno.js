@@ -152,11 +152,15 @@ export function nevoaDaVizinhanca(mapa, nomeCidade) {
    `faccaoJogador`, `devocao`, e a cerimónia — `lugarNovo` (a primeira
    pisada) ou `chegada` (a faixa; a chave dela, `Date.now()`, põe-na o App).
 
-   UMA COISA QUE O CÓDIGO DE LÁ FAZ E QUE SE MANTÉM, por ser prova byte a
-   byte e não conserto: as cidades e facções do Mestre caem numa CÓPIA do
-   mapa (`mp`) feita no começo, e no fim, se ela mudou, é ela que vira o
-   mapa — por cima do que a cidade pisada, a névoa e a descoberta tinham
-   escrito no mesmo turno. Está no diário de 28/10, como achado.
+   AS CIDADES DO MESTRE ENTRAM NO MAPA ANTES DO PÉ (4.ª fatia, o defeito 3
+   de 28/10). Elas caíam numa CÓPIA do mapa (`mp`) feita no começo, e no
+   fim essa cópia virava o mapa — por cima da descoberta, da pisada e da
+   névoa que a cidade onde o herói chegava tinha acabado de escrever: a
+   cidade voltava à névoa, sem pé, e a cerimónia abria de novo na chegada
+   seguinte. Agora a cópia vira o mapa logo antes de `cidade_atual` (depois
+   do lugar dito, que a lê como sempre leu), e o pé pisa no mapa que já tem
+   as cidades do Mestre — inclusive a que ele registra e o herói pisa no
+   mesmo turno, que antes nem era encontrada. A devoção fica no fim.
    ============================================================ */
 export function aplicarOMapa(estado, resposta, ctx = {}) {
   const e0 = objeto(estado);
@@ -213,6 +217,7 @@ export function aplicarOMapa(estado, resposta, ctx = {}) {
       if (r.mudou) { lugar = r.lugar; ef({ tipo: "lugar", lugar }); }
       if (r.aviso) msgs.push(r.aviso);
     }
+    if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : "taverna"); mapa = mp; ef({ tipo: "mapa", mapa }); }
     if (md.cidade_atual) {
       /* v9.48: repetir a cidade em que já estou não é chegar a lugar
          nenhum — só MUDAR de cidade encerra o que estava fora dela. */
@@ -252,7 +257,6 @@ export function aplicarOMapa(estado, resposta, ctx = {}) {
     }
     if (md.faccao_jogador) { faccaoJogador = md.faccao_jogador; ef({ tipo: "faccaoJogador", faccao: faccaoJogador }); }
     if (mudouMapa) {
-      mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : "taverna"); mapa = mp; ef({ tipo: "mapa", mapa });
       /* as cidades novas entram no registro de devoção sozinhas (zeradas) */
       devocao = garantirDevocao(devocao, mapa, e0.divindade); ef({ tipo: "devocao", devocao });
     }
