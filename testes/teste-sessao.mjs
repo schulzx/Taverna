@@ -121,8 +121,11 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
      todos entrou o mundo, o chão e a escuta (motor/antes-do-mestre.js), que
      o App corre no agirInterno e no começo do enviar, antes do sítio pela
      frase. A porta do App deixou de ser o 2.º passo; procura-se pelo nome,
-     para a asserção não depender da posição. */
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+     para a asserção não depender da posição.
+     MOVIDA A TERCEIRA VEZ (28/10, o tempo do turno no motor, trilha A
+     v9.532): entre o mundo e o sítio entrou o tempo da ação — no App, o
+     MINUTOS_POR_TURNO do agirInterno vem antes do enviar. A intenção fica. */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
   t("e a porta do App diz que é do App, e é a única", /^App /.test(PASSOS_DO_REPLAY.find((p) => p.passo === "o passo antes do Mestre").de) && PASSOS_DO_REPLAY.filter((p) => /^App /.test(p.de)).length === 1);
   t("e o passo do motor antes do Mestre não leva o nome da porta (o `calou` e o oráculo dizem-na por ele)", PASSOS_DO_REPLAY.filter((p) => /antes do Mestre/.test(p.passo)).length === 1);
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);
@@ -337,8 +340,12 @@ const RN = reproduzirASessao(SN);
      tira-se o campo da tabela E desta lista.
      PAGOS (28/10, a 8.ª fatia ligada ao replay): abertura, chao, escuta e
      turnosDeMundo — o mundo, o chão e a escuta (motor/antes-do-mestre.js)
-     entraram em PASSOS_DO_REPLAY. Ficam dez. */
-  const DIVIDA_DE_28_10 = ["compasso", "desdeMundo", "elencoMem", "escada", "estante", "lugar.coord", "mesa", "minuto", "prometido", "registro"];
+     entraram em PASSOS_DO_REPLAY. Ficam dez.
+     PAGOS (28/10, o tempo do turno no motor, trilha A v9.532): minuto e
+     lugar.coord — o tempo da ação e o passo na cidade
+     (motor/tempo-do-turno.js) entraram em PASSOS_DO_REPLAY, e o passo leva a
+     coordenada que o sítio gravado traz. Ficam oito. */
+  const DIVIDA_DE_28_10 = ["compasso", "desdeMundo", "elencoMem", "escada", "estante", "mesa", "prometido", "registro"];
   const campos = AINDA_DO_APP.map((d) => d.campo);
   console.log(`  ..  a dívida do App: ${campos.length} campos — ${campos.join(", ")}`);
   const novos = campos.filter((c) => !DIVIDA_DE_28_10.includes(c));
@@ -353,7 +360,11 @@ const RN = reproduzirASessao(SN);
   /* e, com a dívida à parte, o motor reproduz o jogo: zero defeitos */
   t(`a sessão do jogo: ${RN.reproduzidos} de ${RN.turnos.length} reproduzem em tudo, e o motor não tem defeito em nenhum (a dívida à parte)`, RN.valido && RN.turnos.length === 3 && RN.defeitos.length === 0 && RN.turnos.every((x) => !x.diferencas.length && x.divida.length), J(RN.turnos.map((x) => x.diferencas.slice(0, 2))));
   t("e cada dívida diz o órgão, no porquê do turno", RN.turnos.every((x) => x.divida.every((d) => d.de === "a tabela" && x.porque.some((p) => p.startsWith(d.campo + ": ainda do App — ")))));
-  t("a dívida tem a parte, não o campo inteiro: «lugar.coord» deixa o resto do lugar na régua do motor", () => {
+  /* MOVIDA (28/10, o tempo do turno no motor): o título dizia «a dívida tem
+     a parte, não o campo inteiro: lugar.coord deixa o resto do lugar na
+     régua» — a lugar.coord foi paga, e o lugar inteiro está agora na régua
+     do motor. A intenção fica: o nome errado do lugar é defeito. */
+  t("o lugar está na régua do motor: o nome errado é defeito, não dívida", () => {
     const x = copia(SN); const L = x.turnos[1];
     L.estado.troca = { ...L.estado.troca, lugar: { ...L.estado.troca.lugar, nome: "a casa errada" } };
     const r = reproduzirASessao(x);
@@ -388,7 +399,7 @@ sec("9. O RESUMO — para uma pessoa ler (replay.mjs --resumo)");
   const { CLASSES_DO_JUIZ } = await import("../src/motor/juiz-do-turno.js");
   const rn = resumoDaSessao(SN, RN);
   t("as contas são as do relatório: reproduzidos, sozinho, e nenhum defeito", rn.valido && rn.turnos === 3 && rn.reproduzidos === RN.reproduzidos && rn.soOMotor === RN.soOMotor && rn.defeitos.length === 0);
-  t("a dívida da sessão do jogo: os campos da tabela (dez, desde a 8.ª fatia), cada um com os turnos e o órgão", rn.divida.campos.length === AINDA_DO_APP.length && rn.divida.campos.every((d) => d.turnos.length && d.orgao) && rn.divida.doTurno.length === 0);
+  t("a dívida da sessão do jogo: os campos da tabela (oito, desde o tempo do turno), cada um com os turnos e o órgão", rn.divida.campos.length === AINDA_DO_APP.length && rn.divida.campos.every((d) => d.turnos.length && d.orgao) && rn.divida.doTurno.length === 0);
   t("sem o relatório, corre o replay e dá o mesmo", J(resumoDaSessao(SN)) === J(rn));
   /* o Juiz somado: a conta do jogo (somarAFidelidade), por classe */
   const r8 = resumoDaSessao(S8, R8);
@@ -407,7 +418,7 @@ sec("9. O RESUMO — para uma pessoa ler (replay.mjs --resumo)");
   /* o executável: as quatro partes, para uma pessoa */
   const cli = spawnSync(process.execPath, [fileURLToPath(new URL("./replay.mjs", import.meta.url)), fileURLToPath(new URL("./sessao-navegador.json", import.meta.url)), "--resumo"], { encoding: "utf8" });
   const saida = String(cli.stdout || "");
-  t("replay.mjs --resumo imprime as quatro partes e sai 0 (o motor sem defeito)", cli.status === 0 && ["O QUE REPRODUZ", "O MOTOR", "A DÍVIDA DO APP", "O JUIZ"].every((p) => saida.includes(p)) && /0 de 3 saem iguais/.test(saida) && /nenhum defeito/.test(saida) && /lugar\.coord/.test(saida), saida.slice(0, 200) + String(cli.stderr || "").slice(0, 200));
+  t("replay.mjs --resumo imprime as quatro partes e sai 0 (o motor sem defeito)", cli.status === 0 && ["O QUE REPRODUZ", "O MOTOR", "A DÍVIDA DO APP", "O JUIZ"].every((p) => saida.includes(p)) && /0 de 3 saem iguais/.test(saida) && /nenhum defeito/.test(saida) && /prometido/.test(saida), saida.slice(0, 200) + String(cli.stderr || "").slice(0, 200));
 }
 
 sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as portas declaradas");
@@ -503,6 +514,34 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   t("MORDE: sem o veredito da linha, a invenção entra como verdade imutável", "Fiandeira" in semJuiz.estado.canone && !semJuiz.tirados.length);
   const cego = correrOTurno(Ej, { ...Lj, juiz: { ...Lj.juiz, entrada: { ...Lj.juiz.entrada, papeis: [] } } }, { semente: "teste|juiz" });
   t("e o Juiz cego (a entrada sem os papéis do mundo — as sessões de prova) não tira nada", "Fiandeira" in cego.estado.canone && !cego.tirados.length);
+}
+
+sec("11. O TEMPO DO TURNO NO REPLAY — e o estado sem relógio continua sem ele");
+{
+  /* O tempo da ação e o passo na cidade (motor/tempo-do-turno.js, trilha A
+     v9.532) correm no replay. A SEMÂNTICA, decidida aqui (28/10, trilha B):
+     um estado SEM `minuto` continua sem ele depois dos dois passos. As
+     sessões de prova foram gravadas de registos que não guardavam o
+     relógio; criar a hora no replay inventaria o que ninguém marcou, e a
+     régua do replay é o que se jogou. O lugar anda na mesma: o passo na
+     cidade não depende do relógio. Com relógio, os minutos andam pela
+     tabela (MINUTOS_POR_TURNO, TEMPO_DA_CAMINHADA). */
+  const { MINUTOS_POR_TURNO } = await import("../src/calendario.js");
+  const { TEMPO_DA_CAMINHADA } = await import("../src/motor/tempo-do-turno.js");
+  const passo = (nome) => PASSOS_DO_REPLAY.find((p) => p.passo === nome);
+  const tempo = passo("o tempo da ação"), sitio = passo("o sítio pela frase");
+  const L = { entrada: { frase: "Vou até a forja do Tomas.", lugaresDaqui: [{ nome: "a forja do Tomas", onde: "dentro" }] } };
+  const semRelogio = { cidadeAtual: "Buraco Norte", dia: 2, mapa: { cidades: [{ nome: "Buraco Norte" }] }, lugar: { nome: "a praça" }, personagem: { nome: "Marga" } };
+  const a1 = tempo.faz(semRelogio, L), a2 = sitio.faz(a1, L);
+  t("o estado sem relógio continua sem relógio depois do tempo da ação e do passo na cidade", !("minuto" in a1) && !("minuto" in a2), J({ a1: a1.minuto, a2: a2.minuto }));
+  t("e o dia não se mexe sem relógio", a2.dia === 2);
+  t("mas o lugar anda: o passo na cidade não depende do relógio", !!a2.lugar && a2.lugar.nome === "a forja do Tomas", J(a2.lugar));
+  t("e os passos não mutam o recebido", !("minuto" in semRelogio) && semRelogio.lugar.nome === "a praça");
+  const comRelogio = { ...semRelogio, minuto: 600 };
+  const b1 = tempo.faz(comRelogio, L), b2 = sitio.faz(b1, L);
+  t(`com relógio, a ação custa os minutos da tabela (${MINUTOS_POR_TURNO})`, b1.minuto === 600 + MINUTOS_POR_TURNO, String(b1.minuto));
+  t(`e a caminhada dentro da cidade, os dela (${TEMPO_DA_CAMINHADA.dentro})`, b2.minuto === 600 + MINUTOS_POR_TURNO + TEMPO_DA_CAMINHADA.dentro && b2.lugar.nome === "a forja do Tomas", String(b2.minuto));
+  t("a frase que é toque (a que abre com «[») não custa tempo", tempo.faz(comRelogio, { entrada: { frase: "[olhar]" } }).minuto === 600);
 }
 
 console.log(`\nsessão como arquivo: ${ok} passaram, ${mal} falharam`);

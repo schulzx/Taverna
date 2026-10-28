@@ -173,7 +173,8 @@
    ============================================================ */
 
 import { estadoDoSave, saveDoEstado, camposDoGrupo } from "./estado.js";
-import { lugarPedido, definirLugar } from "./lugar.js";
+import { lugarPedido } from "./lugar.js";
+import { oTempoDoTurno, oPassoDoReplay } from "./motor/tempo-do-turno.js";
 import { semearACasa } from "./semente.js";
 import { aplicarOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
@@ -565,7 +566,17 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     faz: (E, L) => oAntesDoMestre(E, L.entrada, { modo: "historia" }),
   },
   {
-    passo: "o sítio pela frase", de: "lugar.js#lugarPedido + definirLugar (o alvoLocalPedido do App, sem o tempo da caminhada)",
+    /* o tempo da ação (trilha A, v9.532): o MINUTOS_POR_TURNO do
+       agirInterno, que no App vem antes do enviar. Pagou a dívida do
+       `minuto`, com o passo na cidade logo abaixo. UM ESTADO SEM RELÓGIO
+       CONTINUA SEM ELE: as sessões de prova foram gravadas de registos que
+       não guardavam o minuto, e um passo que criasse a hora inventaria o que
+       ninguém marcou — a régua do replay é o que se jogou (teste-sessao §11). */
+    passo: "o tempo da ação", de: "motor/tempo-do-turno.js#oTempoDoTurno",
+    faz: (E, L) => oTempoDoTurno(E, L.entrada),
+  },
+  {
+    passo: "o sítio pela frase", de: "lugar.js#lugarPedido + motor/tempo-do-turno.js#oPassoDoReplay (o alvoLocalPedido e o moverParaLocal do App: o lugar e os minutos da caminhada)",
     faz: (E, L) => {
       const en = obj(L.entrada), cru = typeof en.frase === "string" ? en.frase : "";
       if (!Array.isArray(en.lugaresDaqui)) return E;
@@ -573,8 +584,7 @@ export const PASSOS_DO_REPLAY = Object.freeze([
       const alvo = lugarPedido(cru, en.lugaresDaqui);
       if (!alvo || !alvo.nome) return E;
       if (E.lugar && sem(E.lugar.nome) === sem(alvo.nome)) return E;
-      const novo = definirLugar(alvo.nome, { cidade: E.cidadeAtual, dia: E.dia || 0, distancia: alvo.onde === "arredores" ? "arredores" : "dentro" });
-      return novo ? { ...E, lugar: novo } : E;
+      return oPassoDoReplay(E, alvo);
     },
   },
   {
@@ -697,7 +707,7 @@ export const DONO_DO_CAMPO = Object.freeze({
   mapa: "o mapa do turno e a chegada (motor), a viagem (App)",
   baseMundo: "o códex (motor)",
   dia: "o relógio do mundo (avancarOsMinutos) e a viagem: App",
-  minuto: "o relógio do mundo (avancarOsMinutos) e a viagem: App",
+  minuto: "o relógio do mundo: o tempo da ação e o da caminhada (motor/tempo-do-turno.js); a viagem: App",
   missoes: "as missões do turno (motor) e a fiação do Cronista (App)",
   "*": "sem dono: nenhum passo do replay o escreve e AINDA_DO_APP não o lista — é defeito até alguém o reclamar",
 });
@@ -715,7 +725,8 @@ export const FORA_DA_REGUA = Object.freeze({
    arquivo gravado pelo jogo, divergem SEMPRE, e não por defeito do motor.
    A divergência num campo desta tabela é dívida, contada à parte; fora
    dela, é defeito. `campo` é um caminho (o campo inteiro, ou só uma parte
-   dele: "lugar.coord" deixa o resto do lugar na régua do motor).
+   dele — até 28/10, "lugar.coord" deixava o resto do lugar na régua do
+   motor; o passo na cidade pagou-a).
 
    A TABELA SÓ ENCOLHE (teste-sessao.mjs, secção 8): campo novo aqui quebra
    a suíte, e campo que o replay já reproduz — porque o órgão foi para o
@@ -727,9 +738,7 @@ export const AINDA_DO_APP = Object.freeze([
   { campo: "elencoMem", orgao: "as marcas do intérprete no envio (marcarMovimento: os feitos e os gestos da gente)", desde: "28/10/2026" },
   { campo: "escada", orgao: "mexerNoEncalhe no envio (a escada do encalhe)", desde: "28/10/2026" },
   { campo: "estante", orgao: "talvezDarFormaACena e formaDoMestre (a cadência da cena e as jogadas)", desde: "28/10/2026" },
-  { campo: "lugar.coord", orgao: "moverParaLocal (a coordenada do sítio sai de locaisDaCidade; o lugaresDaqui gravado não a leva)", desde: "28/10/2026" },
   { campo: "mesa", orgao: "aMesaDoTurno já é motor (fecho-da-resposta.js), mas a textura que ele lê — o pilar da frase, as rolagens, o perigo — o App escreve-a ao longo do turno, e a linha não a grava", desde: "28/10/2026" },
-  { campo: "minuto", orgao: "avancarOsMinutos (o tempo da ação, no agirInterno, e o da caminhada, no moverParaLocal)", desde: "28/10/2026" },
   { campo: "prometido", orgao: "pautaDoTurno → cobrarNoTurno (o Livro cobra na pauta; o que o Cronista paga e guarda já corre no replay, pela peça do jogo)", desde: "28/10/2026" },
   { campo: "registro", orgao: "anotarOTurno no envio (a memória das cenas: quando, onde, quem, o assunto)", desde: "28/10/2026" },
 ]);

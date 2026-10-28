@@ -97,7 +97,9 @@ sec("2. AS CONTAS — quantos reproduzem, quantos o motor joga sozinho");
   /* toda divergência é de um turno cuja linha declara o órgão que a fez.
      MOVIDA (28/10): o M69 diverge também em «lugar.coord», que a TABELA da
      dívida dá a moverParaLocal — o mesmo órgão que a linha declara; a
-     intenção fica: nenhuma divergência sem um órgão do App que a assine. */
+     intenção fica: nenhuma divergência sem um órgão do App que a assine.
+     (28/10, o tempo do turno no replay: a «lugar.coord» saiu da tabela,
+     paga pelo passo na cidade; o M69 diverge só no lugar que a linha declara.) */
   const semDono = Object.entries(REP).flatMap(([ses, r]) => r.turnos.filter((x) => !x.igual && !(x.app && x.divida.length && x.divida.some((d) => d.de === "a linha") && x.divida.every((d) => d.de === "a linha" || d.de === "a tabela"))).map((x) => `${ses}#${x.n}`));
   t("todo turno que não reproduz tem a linha a dizer qual órgão do App o fez (a viagem, o sítio, o nome à mão, o nome que o Cronista de então registou)", semDono.length === 0, semDono.join(","));
   /* MOVIDA (28/10): o quarto órgão é o Cronista do jogo de então (o nome
