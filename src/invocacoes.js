@@ -158,8 +158,14 @@ export function criarInvocacoes(hab, pers, rodada = 1, { minutoAbs = null } = {}
    Vence por rodada dentro da luta. Fora da luta, `dispensarTodas` limpa —
    invocação que sobrevive ao fim do combate viraria companheiro
    permanente pela porta dos fundos. */
+/* O GRUPO, para as três funções de prazo. Um grupo que não é lista (um
+   objeto, um texto, de um save mexido à mão) vale como grupo vazio: elas
+   devolvem o que um grupo vazio receberia, e a ficha volta a mesma. Até a
+   Fase T (28/10) estouravam em `grupo.filter`, e o fim da luta caía. */
+const grupoDe = (pers) => (pers && Array.isArray(pers.grupo) ? pers.grupo : []);
+
 export function expirarInvocacoes(pers, rodada) {
-  const grupo = (pers && pers.grupo) || [];
+  const grupo = grupoDe(pers);
   const vencidas = grupo.filter((g) => g && g.invocada && Number(g.expiraEm) <= Number(rodada));
   if (!vencidas.length) return { pers, sumiram: [], linhas: [] };
   return {
@@ -173,7 +179,7 @@ export function expirarInvocacoes(pers, rodada) {
    manda é a rodada, e deixar os dois correrem juntos desfaria a fera no meio
    do combate por causa dos seis segundos que a rodada custa no calendário. */
 export function expirarPorMinuto(pers, minutoAbs) {
-  const grupo = (pers && pers.grupo) || [];
+  const grupo = grupoDe(pers);
   const vencidas = grupo.filter((g) => g && g.invocada && g.expiraMin != null && Number(g.expiraMin) <= Number(minutoAbs));
   if (!vencidas.length) return { pers, sumiram: [], linhas: [] };
   return {
@@ -189,7 +195,7 @@ export function expirarPorMinuto(pers, minutoAbs) {
    Fase T o segundo filtro lia `null.invocada` e o fim da luta caía com a
    fera ainda no grupo — achado da trilha A ao mover o combate (28/10). */
 export function dispensarTodas(pers) {
-  const grupo = (pers && pers.grupo) || [];
+  const grupo = grupoDe(pers);
   const ehInvocada = (g) => !!(g && g.invocada);
   const inv = grupo.filter(ehInvocada);
   if (!inv.length) return { pers, sumiram: [] };

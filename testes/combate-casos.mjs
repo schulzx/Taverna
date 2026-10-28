@@ -156,7 +156,7 @@ export function casoDoCombate(i) {
     mensagensF: i % 17, seguraF: i % 3 ? null : [{}, {}],
     /* as conjurações que a luta leva (limparConjuracoesDaLuta): a forma, a
        guarda do herói e a do grupo, a pressa, as invocações; a ficha que
-       vem e a do ref; e o grupo torto, que estoura */
+       vem e a do ref; e o grupo torto, que estourava até 28/10 e vale como grupo vazio */
     persL: i % 23 === 7 ? { nome: "Vera", grupo: { torto: true } } : {
       nome: "Vera", vida: 30 - (i % 9), vidaMax: 30,
       ...(i % 4 === 0 ? { forma: { id: "urso", nome: "Forma de Urso", ganho: 6, dano: 3 } } : {}),

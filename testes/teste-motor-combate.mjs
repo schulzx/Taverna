@@ -358,25 +358,26 @@ sec("10 · o que a luta leva quando acaba (limparConjuracoesDaLuta → limparAsC
     } catch (e) { erro = String(e && e.message); }
     return { ret: ret === undefined ? null : ret, erro, tela, nota, ficha, publicados, calados };
   };
-  /* UMA DIFERENÇA DECLARADA, e é a única: quando o grupo não é uma lista
-     (o grupo torto), `dispensarTodas` estoura no fim. O App de antes já
-     tinha posto na tela a forma e a guarda que desfez, e depois o erro
-     subia; a peça é tudo ou nada — o erro sobe igual, e nada ficou escrito
-     pela metade. Nos outros casos, byte a byte.
-     Até 28/10 estouravam 21: os 12 do grupo torto e 9 com um membro NULO
-     no grupo e uma invocação. Esses 9 eram defeito do `dispensarTodas`
-     (o segundo filtro lia `null.invocada`), consertado na trilha B da
-     Fase T; o dourado foi refeito com o conserto, e os 9 passaram a ser
-     fotos que dispensam a invocação e guardam o nulo onde estava. */
+  /* SEM DIFERENÇA DECLARADA: as 275 byte a byte, e nenhuma estoura.
+     Até 28/10 havia uma, e foi encolhendo. Estouravam 21 em `dispensarTodas`
+     (o App de antes deixava na tela a forma e a guarda que já tinha desfeito,
+     e a peça era tudo ou nada): 9 com um membro NULO no grupo e uma
+     invocação (o segundo filtro lia `null.invocada`), e 12 do grupo TORTO,
+     o grupo que não é lista (`grupo.filter`). A trilha B da Fase T
+     consertou os dois no módulo, um commit cada, e o dourado foi refeito com
+     cada conserto: os 9 passaram a dispensar a invocação e guardar o nulo,
+     e os 12 a valer como grupo vazio. A diferença ficou vazia e saiu; o que
+     ela provava (o grupo torto atravessa o fim da luta) passa a ser cobrado
+     pelos ramos, logo abaixo. */
   const comErro = casos.filter((k, i) => fotos[i].erro);
-  const batem = casos.filter((k, i) => !fotos[i].erro && igual(foto(k), fotos[i])).length;
-  t(`${batem}/${N_CASOS - comErro.length} iguais ao App de antes (os que não estouram)`, batem === N_CASOS - comErro.length);
-  const tudoOuNada = comErro.filter((k) => { const f = foto(k), i = k.i; return f.erro === fotos[i].erro && !f.tela.length && f.nota === k.notaAntes && !f.publicados.length; }).length;
-  t(`e os ${comErro.length} que estouram estouram com o mesmo erro, sem nada escrito pela metade (${fotos.filter((f) => f.erro && f.tela.length).length} deles o App de antes deixava na tela)`, tudoOuNada === comErro.length && comErro.length > 0);
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  t(`e nenhum estoura, nem antes nem hoje (${comErro.length})`, comErro.length === 0 && casos.every((k) => !foto(k).erro));
   const forma = fotos.filter((f) => f.tela.some((l) => /se desfaz — você volta/.test(l[0].texto))).length, inv = fotos.filter((f) => /INVOCAÇÕES ENCERRADAS/.test(f.nota || "")).length;
-  const grupo = fotos.filter((f) => f.tela.some((l) => l.some((x) => /^🛡 Brás ·/.test(x.texto)))).length, nada = fotos.filter((f) => !f.erro && !f.publicados.length).length, erro = fotos.filter((f) => f.erro).length;
-  console.log(`      a forma ${forma} · as invocações ${inv} · a guarda do grupo ${grupo} · nada a levar ${nada} · o grupo torto estoura ${erro}`);
-  t("percorre os ramos (a forma, a guarda, a do grupo, a pressa, as invocações, nada, o erro)", forma > 20 && inv > 20 && grupo > 20 && nada > 10 && erro > 0);
+  const grupo = fotos.filter((f) => f.tela.some((l) => l.some((x) => /^🛡 Brás ·/.test(x.texto)))).length, nada = fotos.filter((f) => !f.erro && !f.publicados.length).length;
+  const torto = casos.filter((k, i) => k.persL && k.persL.grupo && !Array.isArray(k.persL.grupo) && !fotos[i].erro).length;
+  console.log(`      a forma ${forma} · as invocações ${inv} · a guarda do grupo ${grupo} · nada a levar ${nada} · o grupo torto atravessa ${torto}`);
+  t("percorre os ramos (a forma, a guarda, a do grupo, a pressa, as invocações, nada, o grupo torto)", forma > 20 && inv > 20 && grupo > 20 && nada > 10 && torto > 0);
   const semNada = casos.filter((k, i) => !igual(foto(k, { nome: "Vera", grupo: [] }), fotos[i])).length;
   t(`morde: com uma ficha sem nada a levar, ${semNada} fotos divergem`, semNada > 150);
   t("não muta a ficha que entra", (() => { const k = casos.find((x, i) => fotos[i].publicados.length && !x.persLNoRef); const p = copia(k.persL); limparAsConjuracoes(p, {}); return igual(p, k.persL); })());

@@ -5,7 +5,7 @@
    número — e é isso que este arquivo cobra.                            */
 import {
   INVOCACOES, invocacaoDe, ehInvocacao, criarInvocacoes, limiteDeInvocacoes,
-  invocacoesDe, conjuracoesAtivas, expirarInvocacoes, dispensarTodas,
+  invocacoesDe, conjuracoesAtivas, expirarInvocacoes, expirarPorMinuto, dispensarTodas,
   sacrificarInvocacao, repartirDano, temEloVital, temFusao, temVozDeComando,
   resumoInvocacoesPrompt,
 } from "../src/invocacoes.js";
@@ -140,6 +140,21 @@ sec("6. o prazo vence e ela some");
   t("e o resto volta inteiro, na mesma ordem (o nulo onde estava)", !!dn && dn.pers.grupo.length === 3 && dn.pers.grupo[0] === null && dn.pers.grupo[1] === furado.grupo[1] && dn.pers.grupo[2] === null);
   t("e o grupo de entrada não muda", furado.grupo.length === 4 && furado.grupo[2].invocada === true);
   t("e sem ficha, nada a dispensar", dispensarTodas(null).sumiram.length === 0);
+
+  /* O GRUPO TORTO (Fase T, trilha B, 28/10). Um grupo que não é lista (um
+     objeto, um texto, de um save mexido à mão) estourava as três funções
+     de prazo em `grupo.filter`. Vale como grupo vazio: devolve o que um
+     grupo vazio receberia, e a ficha volta a mesma. */
+  for (const torto of [{ torto: true }, "Brás", 7, true]) {
+    const p = heroi({ grupo: torto });
+    const r = (fn) => { try { return fn(); } catch (e) { return { erro: e.message }; } };
+    const d = r(() => dispensarTodas(p)), e = r(() => expirarInvocacoes(p, 99)), m = r(() => expirarPorMinuto(p, 99999));
+    const vazio = heroi();
+    const igualAoVazio = (a, b) => !a.erro && a.pers === p && JSON.stringify({ ...a, pers: null }) === JSON.stringify({ ...b, pers: null });
+    t(`grupo ${JSON.stringify(torto)}: dispensar vale como grupo vazio${d.erro ? " — " + d.erro : ""}`, igualAoVazio(d, dispensarTodas(vazio)));
+    t(`grupo ${JSON.stringify(torto)}: o prazo da rodada também${e.erro ? " — " + e.erro : ""}`, igualAoVazio(e, expirarInvocacoes(vazio, 99)));
+    t(`grupo ${JSON.stringify(torto)}: e o do minuto${m.erro ? " — " + m.erro : ""}`, igualAoVazio(m, expirarPorMinuto(vazio, 99999)));
+  }
 }
 
 /* ============ 5. AS OUTRAS DEZ DO INVOCADOR ============ */
