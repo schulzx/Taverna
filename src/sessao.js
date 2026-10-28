@@ -148,10 +148,11 @@
    arquivo e o replay andam pelo mesmo caminho).
 
    O QUE ELE NÃO FAZ. Não chama IA, não toca o React, não grava nada.
-   O aceito do Cronista é aplicado em MINIATURA (as pessoas, o cânone e o
-   lugar): a fiação inteira do aceito
-   (nomeComDono, fichaDoCronista, a peneira do cânone, o mural, a fé)
-   ainda mora no App, e um turno que dependeu dela diverge com esse porquê.
+   O aceito do Cronista é a peça do jogo (oAceitoDoCronista, desde 28/10):
+   as portas do App que ela chama e que ainda não são motor (o mural, a fé,
+   o arco, a conferência das missões, a ficha do recrutado) entram como
+   DUBLÊS DECLARADOS (PORTAS_DO_CRONISTA_NO_REPLAY): não escrevem, gravam a
+   chamada, e o que o App escreveu por elas no turno é dívida da porta.
    A única coisa fora do puro é a casa (`semearACasa`), que é global no
    jogo também: semeia-se como o envio a semeou, e só quando o arquivo diz.
 
@@ -174,10 +175,13 @@
 import { estadoDoSave, saveDoEstado, camposDoGrupo } from "./estado.js";
 import { lugarPedido, definirLugar } from "./lugar.js";
 import { semearACasa } from "./semente.js";
-import { aplicarOTurno } from "./motor/aplicar.js";
+import { aplicarOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 import { oAntesDoMestre } from "./motor/antes-do-mestre.js";
 import { julgarOCronista } from "./motor/cronista.js";
+import { oAceitoDoCronista } from "./motor/cronista-do-turno.js";
+import { registrarOLugar } from "./motor/meio-do-turno.js";
+import { genteDaHistoria } from "./ofertas.js";
 import { julgarOTurno, JUIZ_NO_TURNO, CLASSES_DO_JUIZ, somarAFidelidade } from "./motor/juiz-do-turno.js";
 import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao, juizCego } from "./motor/correcao-do-juiz.js";
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
@@ -462,23 +466,86 @@ export function validarASessao(arquivo) {
 
 /* ---------------- O REPLAY ---------------- */
 
-/* o aceito do Cronista, em miniatura: as pessoas, o cânone e o lugar (ver o
-   cabeçalho — a fiação inteira ainda mora no App) */
-function aplicarOAceito(E, aceito) {
-  const a = obj(aceito);
-  let e = E;
-  if (Array.isArray(a.pessoas)) {
-    const npcs = { ...obj(e.npcs) };
-    for (const p of a.pessoas) if (p && p.nome && !Object.keys(npcs).some((k) => sem(k) === sem(p.nome))) npcs[p.nome] = { ...p };
-    e = { ...e, npcs };
-  }
-  if (ehObj(a.canone)) {
-    const canone = { ...obj(e.canone) };
-    for (const [n, f] of Object.entries(a.canone)) if (!Object.keys(canone).some((k) => sem(k) === sem(n))) canone[n] = { ...obj(f) };
-    e = { ...e, canone };
-  }
-  if (typeof a.lugar === "string" && a.lugar.trim()) e = { ...e, lugar: /^cidade$/i.test(a.lugar) ? null : { nome: a.lugar, distancia: "dentro", cidade: e.cidadeAtual } };
-  return e;
+/* ---------------- O ACEITO DO CRONISTA, A PEÇA DO JOGO (28/10, trilha B) ----------------
+   Até aqui o replay aplicava o aceito numa MINIATURA (a gente, o cânone e
+   o lugar, cada um à sua maneira): um segundo Cronista, que não sabia do
+   homónimo, do gênero do registo, da peneira do segredo, do dia em que o
+   nome entrou, das promessas, do relógio, do teste da concessão grande.
+   Desde a 9.ª fatia da T1-A o App aplica o aceito por
+   `oAceitoDoCronista` (motor/cronista-do-turno.js), e o replay passa a
+   chamar a MESMA peça: o estado que ela lê é o do replay (`ler`), os
+   efeitos que ela descreve escrevem nele (EFEITO_DO_CRONISTA_NO_REPLAY), e
+   as portas — os órgãos do App que ela chama — são as desta tabela. As que
+   têm versão de motor correm-na; as que não têm são DUBLÊS DECLARADOS: não
+   escrevem o estado, devolvem o neutro, e gravam a chamada. Um turno do
+   jogo em que o App, por uma delas, escreveu um campo diverge nesse campo
+   como DÍVIDA da porta (os `campos` daqui), nunca como defeito do motor —
+   e quando a porta vier para o motor, troca-se a linha desta tabela. */
+export const PORTAS_DO_CRONISTA_NO_REPLAY = Object.freeze({
+  registrarLugar: { de: "motor", campos: [], porque: "motor/meio-do-turno.js#registrarOLugar, a régua do lugar do App à letra (o pedido é a frase do turno)" },
+  contextoDoNome: { de: "motor", campos: [], porque: "motor/aplicar.js#contextoDoNomeCom sobre a mesma base do nome que o passo do Mestre usa no replay (o herói; as missões, o mural e as falas recentes o App junta-as)" },
+  historiaDoMural: { de: "motor", campos: [], porque: "ofertas.js#genteDaHistoria sobre o estado de agora" },
+  mundoDaBase: { de: "motor", campos: [], porque: "o mundo gravado, com o mapa e a base do estado de agora (o `mundoDaBase` do App)" },
+  nucleoAgora: { de: "dublê", campos: [], porque: "nucleoDaCampanha lê o contexto do elenco e o cache do App: sem núcleo, o favor já pedido pela linha do coração não se apura" },
+  pregarNoMural: { de: "dublê", campos: ["mural"], porque: "pregarNoMural do App (um trabalho por pessoa, o que já está no diário): o dublê não prega" },
+  marcarNoArco: { de: "dublê", campos: ["historia"], porque: "marcarNoArco do App (arcoComOMarco com o motorDoArco dele): o dublê não marca" },
+  ganharFe: { de: "dublê", campos: ["divindade"], porque: "ganharFe do App (os fiéis, a PF, o grau): o dublê não conta" },
+  sincronizarNemesis: { de: "dublê", campos: ["nemesis"], porque: "sincronizarNemesis do App (a nêmesis morta no registo): o dublê não encerra" },
+  conferirCom: { de: "dublê", campos: ["missoes", "espinha", "personagem", "mural"], porque: "conferirAsMissoes do App, com a conversa ou o segredo do turno: o dublê não confere" },
+  fichaDeCompanheiro: { de: "dublê", campos: ["personagem"], porque: "fichaDeCompanheiro do App (o kit, o vínculo, a ficha do elenco): o dublê dá só o nome" },
+  notaDoRecrutamento: { de: "dublê", campos: [], porque: "a nota ao Narrador é bastidor" },
+});
+/* o neutro que cada dublê devolve (a porta que «não fez nada» no App) */
+const NEUTRO_DO_DUBLE = Object.freeze({
+  nucleoAgora: () => null, pregarNoMural: () => false, marcarNoArco: () => undefined, ganharFe: () => [],
+  sincronizarNemesis: () => undefined, conferirCom: (p) => p, fichaDeCompanheiro: (nome) => ({ nome }), notaDoRecrutamento: () => "",
+});
+/* o efeito da peça → o campo do estado em que ele escreve (e a chave do
+   efeito que leva o valor). `nota`, `calou` e `quests` não são estado: a
+   nota é do Narrador (bastidor), o calou vai para o relatório, a lista
+   redesenhada é da tela. */
+export const EFEITO_DO_CRONISTA_NO_REPLAY = Object.freeze({
+  prometido: { campo: "prometido", chave: "prometido" },
+  relogios: { campo: "relogios", chave: "relogios" },
+  eventos: { campo: "eventos", chave: "eventos" },
+  ficha: { campo: "personagem", chave: "personagem" },
+  npcs: { campo: "npcs", chave: "npcs" },
+  canone: { campo: "canone", chave: "canone" },
+  rolagem: { campo: "rolagem", chave: "rolagem" },
+});
+
+/* o aceito aplicado pela peça do jogo sobre o estado do replay →
+   { estado, portas: [{ porta, campos }], calou: [{ onde, erro }] } */
+function oAceitoNoReplay(E0, juizo, proposta, ctx) {
+  let E = E0;
+  const portas = [], calou = [];
+  const aplicar = (efeitos) => {
+    for (const ef of arr(efeitos)) {
+      if (!ehObj(ef)) continue;
+      if (ef.tipo === "calou") { calou.push({ onde: String(ef.onde || ""), erro: String((ef.erro && ef.erro.message) || ef.erro || "") }); continue; }
+      const x = EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo];
+      if (x) E = { ...E, [x.campo]: ef[x.chave] };
+    }
+  };
+  const duble = (nome) => (...args) => { portas.push({ porta: nome, campos: PORTAS_DO_CRONISTA_NO_REPLAY[nome].campos }); return NEUTRO_DO_DUBLE[nome](...args); };
+  const doMotor = {
+    registrarLugar: (nome, fonte) => {
+      const r = registrarOLugar({ cidadeAtual: E.cidadeAtual, lugar: E.lugar, espinha: E.espinha, ultimoPedido: ctx.frase, combate: E.combate, masmorra: E.masmorra, mapa: E.mapa, dia: E.dia }, nome, fonte, { mundo: doMotor.mundoDaBase });
+      aplicar(r.efeitos);
+      if (r.mudou) E = { ...E, lugar: r.lugar };
+      return r.aviso;
+    },
+    contextoDoNome: (n) => contextoDoNomeCom(ctx.doMestre.baseDoNome, n),
+    historiaDoMural: () => genteDaHistoria({ abertura: E.abertura, missoes: E.missoes, espinha: E.espinha, grupo: obj(E.personagem).grupo || [] }),
+    mundoDaBase: () => (ctx.mundo ? { ...ctx.mundo, mapa: E.mapa, base: E.baseMundo } : null),
+  };
+  const dubles = Object.fromEntries(Object.keys(NEUTRO_DO_DUBLE).map((k) => [k, duble(k)]));
+  const fim = oAceitoDoCronista(juizo.aceito, juizo.recusado, proposta, {
+    ...doMotor, ...dubles, ler: () => E, aplicar,
+    pers: obj(E.personagem), narrativa: ctx.resposta.narrativa, testeDoTurno: null, rolagem: E.rolagem || null,
+  });
+  if (fim && ehObj(fim.p) && fim.p !== E.personagem && canonico(fim.p) !== canonico(E.personagem)) E = { ...E, personagem: fim.p };
+  return { estado: E, portas, calou };
 }
 
 /* O TURNO DO REPLAY É ESTA TABELA: os passos que já são puros, na ordem do
@@ -546,12 +613,27 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     },
   },
   {
-    passo: "o Cronista", de: "motor/cronista.js#julgarOCronista, e o aceito em miniatura",
+    passo: "o Cronista", de: "motor/cronista.js#julgarOCronista e motor/cronista-do-turno.js#oAceitoDoCronista (as portas do App: PORTAS_DO_CRONISTA_NO_REPLAY)",
     faz: (E, L, ctx, nota) => {
       if (!ehObj(L.cronista)) return E;
       const juizo = julgarOCronista(E, L.cronista.proposta, { narrativa: ctx.resposta.narrativa, pedido: ctx.frase, envelopes: ctx.envelopes });
       nota.juizo = dado({ aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor });
-      return aplicarOAceito(E, juizo.aceito);
+      /* O JUIZ CORRIGE (v9.531, o App desde 088ba92): o nome que o Juiz deu
+         por inventado NESTE turno não entra no cânone. A linha grava o juízo
+         CRU (é ele que se compara); a correção refaz-se aqui do veredito que
+         o replay julga outra vez, sobre a narração e a entrada gravadas — a
+         mesma conta, determinista, e o mesmo estado que o App lhe dá (o de
+         depois do Mestre, antes do aceito). */
+      let aceito = juizo.aceito;
+      if (ctx.juizDaLinha && ehObj(aceito) && aceito.canone) {
+        const cj = canoneSemInvencao(aceito, ctx.juizDaLinha.veredito, { entrada: ctx.juizDaLinha.entrada, estado: E });
+        aceito = cj.aceito;
+        if (cj.tirados.length) nota.tirados = cj.tirados;
+      }
+      const r = oAceitoNoReplay(E, { ...juizo, aceito }, L.cronista.proposta, ctx);
+      nota.portas = r.portas;
+      nota.calouDoCronista = r.calou;
+      return r.estado;
     },
   },
 ]);
@@ -564,9 +646,8 @@ const julgarALinha = (L, narracoes) => {
   if (!ehObj(j) || !ehObj(j.entrada)) return null;
   const r = obj(j.resumo);
   const entrada = Number.isInteger(j.antesDoArquivo) ? { ...j.entrada, antes: narracoes.slice(narracoes.length - j.antesDoArquivo) } : j.entrada;
-  return julgarOTurno(obj(L.narrador).narrativa || "", entrada, { turno: r.turno, dia: r.dia });
+  return { ...julgarOTurno(obj(L.narrador).narrativa || "", entrada, { turno: r.turno, dia: r.dia }), entrada };
 };
-const julgarDeNovo = (L, narracoes) => { const x = julgarALinha(L, narracoes); return x ? dado(x.resumo) : null; };
 
 /* A CORREÇÃO DO JUIZ, CORRIDA SOBRE A SESSÃO (motor/correcao-do-juiz.js):
    o que o motor faria com cada invenção apanhada se a fiação já estivesse
@@ -608,9 +689,9 @@ export const DONO_DO_CAMPO = Object.freeze({
   cidadeAtual: "o passo antes do Mestre (viajar, moverParaLocal: App) ou a chegada (motor)",
   lugar: "o passo antes do Mestre (moverParaLocal: App; o sítio pela frase: motor), o aplicar ou o lugar do Cronista",
   jornada: "a estrada, que o App abre e fecha",
-  npcs: "a gente do turno: o registo e o códex (motor); a luta, os nomes que a pauta não ofereceu e a fiação do aceito do Cronista (App)",
+  npcs: "a gente do turno: o registo, o códex e o aceito do Cronista (motor); a luta e os nomes que a pauta não ofereceu (App)",
   npcTurno: "o contador da gente (motor/aplicar.js#aplicarORegisto)",
-  canone: "o cânone: o registo (motor) e o aceito do Cronista (miniatura no replay; App no jogo)",
+  canone: "o cânone: o registo e o aceito do Cronista (motor, a mesma peça no replay e no jogo)",
   personagem: "a ficha: o aplicar (as mudanças, a salvaguarda, a cobrança: motor) e a luta (App)",
   combate: "a luta, que o Narrador não abre (E4) e o App conduz",
   mapa: "o mapa do turno e a chegada (motor), a viagem (App)",
@@ -649,7 +730,7 @@ export const AINDA_DO_APP = Object.freeze([
   { campo: "lugar.coord", orgao: "moverParaLocal (a coordenada do sítio sai de locaisDaCidade; o lugaresDaqui gravado não a leva)", desde: "28/10/2026" },
   { campo: "mesa", orgao: "aMesaDoTurno já é motor (fecho-da-resposta.js), mas a textura que ele lê — o pilar da frase, as rolagens, o perigo — o App escreve-a ao longo do turno, e a linha não a grava", desde: "28/10/2026" },
   { campo: "minuto", orgao: "avancarOsMinutos (o tempo da ação, no agirInterno, e o da caminhada, no moverParaLocal)", desde: "28/10/2026" },
-  { campo: "prometido", orgao: "pautaDoTurno → cobrarNoTurno (o Livro cobra na pauta) e o aceito do Cronista (guardarSementes, pagarSementes)", desde: "28/10/2026" },
+  { campo: "prometido", orgao: "pautaDoTurno → cobrarNoTurno (o Livro cobra na pauta; o que o Cronista paga e guarda já corre no replay, pela peça do jogo)", desde: "28/10/2026" },
   { campo: "registro", orgao: "anotarOTurno no envio (a memória das cenas: quando, onde, quem, o assunto)", desde: "28/10/2026" },
 ]);
 
@@ -672,7 +753,7 @@ function diferencas(a, b, caminho, out, prof) {
    das sessões de prova usa para escrever a linha: um caminho só).
 
      correrOTurno(antes, linha, { semente, mundo?, narracoes?, doApp? })
-       → { estado, juizo, juiz, calou }
+       → { estado, juizo, juiz, calou, portas, calouDoCronista, tirados }
 
    `antes` é o estado do fim do turno anterior (o save v2), `linha` a linha
    do arquivo (o `estado` dela não é lido), `narracoes` as narrações de
@@ -680,8 +761,11 @@ function diferencas(a, b, caminho, out, prof) {
    um órgão do App fez: `doApp.antesDoMestre(estado)` corre no lugar do
    passo antes do Mestre (a viagem, o sítio), e devolve o estado. O replay
    nunca a passa. Devolve o estado do fim (o save v2, em dado puro), o
-   juízo do Cronista, o veredito do Juiz (se a linha tem a entrada dele) e
-   os passos que estouraram. Nunca lança; lixo é o turno vazio. */
+   juízo do Cronista, o veredito do Juiz (se a linha tem a entrada dele),
+   os passos que estouraram, as portas-dublê que o aceito do Cronista
+   chamou ({ porta, campos }), o que as secções dele calaram (o `calou` do
+   App, no jogo) e os nomes que a correção do Juiz tirou do cânone. Nunca
+   lança; lixo é o turno vazio. */
 export function correrOTurno(antes, linha, contexto) {
   const c = obj(contexto);
   const E0 = obj(antes), L = obj(linha);
@@ -700,12 +784,17 @@ export function correrOTurno(antes, linha, contexto) {
   };
   let E = estadoDoSave(obj(dado(E0)));
   const nota = {}, calou = [];
+  /* o Juiz julga a prosa uma vez, antes dos passos: o resumo vai para o
+     relatório, e o veredito para a correção do cânone no passo do Cronista */
+  let julgado = null, erroDoJuiz = null;
+  try { julgado = julgarALinha(L, narracoes); } catch (e) { erroDoJuiz = e; }
+  ctx.juizDaLinha = julgado ? { veredito: julgado.veredito, entrada: julgado.entrada } : null;
   for (const p of PASSOS_DO_REPLAY) {
     try { E = p.faz(E, L, { ...ctx, resposta: dado(resposta) }, nota); } catch (e) { calou.push({ passo: p.passo, erro: String((e && e.message) || e) }); }
   }
-  let juiz = null;
-  try { juiz = julgarDeNovo(L, narracoes); } catch (e) { calou.push({ passo: "o Juiz", erro: String((e && e.message) || e) }); }
-  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, calou };
+  if (erroDoJuiz) calou.push({ passo: "o Juiz", erro: String((erroDoJuiz && erroDoJuiz.message) || erroDoJuiz) });
+  const juiz = julgado ? dado(julgado.resumo) : null;
+  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), tirados: arr(nota.tirados) };
 }
 
 const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) => !tem(FORA_DA_REGUA, k)));
@@ -716,7 +805,8 @@ const debaixoDe = (p, c) => p === c || p.startsWith(c + ".") || p.startsWith(c +
 /* o relatório: { valido, erros, turnos, reproduzidos, divergentes, primeira,
    defeitos, primeiroDefeito, soOMotor, divida }. Por turno: { n, igual,
    defeito, diferencas (as do motor), divida (as do App), porque, cronista,
-   juiz, calou, app }. Ver o cabeçalho, "A DÍVIDA DO APP". */
+   juiz, calou, app, portas }. Ver o cabeçalho, "A DÍVIDA DO APP", e
+   PORTAS_DO_CRONISTA_NO_REPLAY (a dívida «a porta»). */
 export function reproduzirASessao(arquivo, opcoes) {
   const op = obj(opcoes);
   const v = validarASessao(arquivo);
@@ -733,6 +823,10 @@ export function reproduzirASessao(arquivo, opcoes) {
     gravado = aplicarDiferenca(gravado, L.estado, [], "");
     corrido = r.estado;
     const app = oQueOAppFez(L.app);
+    /* as portas do App que o Cronista chamou e que no replay são dublês: o
+       que o App escreveu por elas é dívida da porta, no turno em que ela foi
+       chamada, e só nos campos que ela escreve */
+    const portas = r.portas.filter((p) => p.campos.length).map((p) => ({ orgao: `${p.porta}, a porta que o Cronista chama (dublê no replay: ${PORTAS_DO_CRONISTA_NO_REPLAY[p.porta].porque})`, campos: p.campos, de: "a porta" }));
     const todas = [];
     diferencas(naRegua(gravado), naRegua(r.estado), "", todas, 0);
     /* cada diferença: é dívida se a tabela a lista, ou se a linha diz que
@@ -740,15 +834,18 @@ export function reproduzirASessao(arquivo, opcoes) {
     const doMotor = [], divida = new Map();
     for (const d of todas) {
       const tab = AINDA_DO_APP.find((x) => debaixoDe(d.caminho, x.campo));
-      const fez = tab ? null : app.find((a) => a.campos.some((c) => debaixoDe(d.caminho, c)));
+      const fez = tab ? null : [...app, ...portas].find((a) => a.campos.some((c) => debaixoDe(d.caminho, c)));
       if (!tab && !fez) { doMotor.push(d); continue; }
       const chave = tab ? tab.campo : `${fez.orgao}`;
-      if (!divida.has(chave)) divida.set(chave, { campo: tab ? tab.campo : fez.campos.filter((c) => debaixoDe(d.caminho, c))[0], orgao: tab ? tab.orgao : fez.orgao, de: tab ? "a tabela" : "a linha", caminhos: [] });
+      if (!divida.has(chave)) divida.set(chave, { campo: tab ? tab.campo : fez.campos.filter((c) => debaixoDe(d.caminho, c))[0], orgao: tab ? tab.orgao : fez.orgao, de: tab ? "a tabela" : fez.de || "a linha", caminhos: [] });
       divida.get(chave).caminhos.push(d.caminho);
     }
     const porque = [];
     if (ehObj(obj(L.entrada).toque)) porque.push("o toque do jogador é da tela: o replay não o corre");
     for (const c of r.calou) porque.push(`${c.passo} estourou: ${c.erro}`);
+    /* o que uma secção do Cronista engoliu: no jogo vai ao `calou` do App, e
+       aqui ao porquê — não é defeito, é o mesmo silêncio */
+    for (const c of r.calouDoCronista) porque.push(`o Cronista calou «${c.onde}» (o calou do App, no jogo): ${c.erro}`);
     for (const campo of [...new Set(doMotor.map((d) => d.caminho.split(/[.[]/)[0]))]) porque.push(`${campo}: ${DONO_DO_CAMPO[campo] || DONO_DO_CAMPO["*"]}`);
     for (const d of divida.values()) porque.push(`${d.campo}: ainda do App — ${d.orgao}`);
     const cronista = ehObj(L.cronista) && ehObj(L.cronista.juizo)
@@ -762,7 +859,7 @@ export function reproduzirASessao(arquivo, opcoes) {
     const dividas = [...divida.values()].map((d) => ({ ...d, caminhos: d.caminhos.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno) }));
     for (const d of dividas) if (d.de === "a tabela") porCampo.get(d.campo).push(L.n);
     if (app.length) doTurno.push({ n: L.n, app, divergiu: dividas.some((d) => d.de === "a linha") });
-    turnos.push({ n: L.n, igual, defeito, diferencas: doMotor.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno), divida: dividas, porque, cronista, juiz, calou: r.calou, app: app.length ? app : null });
+    turnos.push({ n: L.n, igual, defeito, diferencas: doMotor.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno), divida: dividas, porque, cronista, juiz, calou: r.calou, app: app.length ? app : null, portas: r.portas.length ? r.portas : null });
   });
   const divergentes = turnos.filter((t) => !t.igual).map((t) => t.n);
   const defeitos = turnos.filter((t) => t.defeito).map((t) => t.n);

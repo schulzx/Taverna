@@ -46,9 +46,11 @@ const t = (nome, cond, extra = "") => {
 const sec = (s) => console.log("\n" + s);
 const J = JSON.stringify;
 const copia = (x) => JSON.parse(J(x));
+const ehLista = Array.isArray;
 
 const {
   FORMATO_DA_SESSAO, CAMPOS_DA_SESSAO, PASSOS_DO_REPLAY, DONO_DO_CAMPO, FORA_DA_REGUA, AINDA_DO_APP,
+  PORTAS_DO_CRONISTA_NO_REPLAY, EFEITO_DO_CRONISTA_NO_REPLAY,
   abrirASessao, linhaDaSessao, gravarOTurno, estadoNoTurno, validarASessao, reproduzirASessao, correrOTurno, resumoDaSessao,
 } = await import("../src/sessao.js");
 const { estadoDoSave, saveDoEstado, camposDoGrupo } = await import("../src/estado.js");
@@ -204,28 +206,46 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
      10.ª e os nomes que a pauta não ofereceu na 8.ª e na 9.ª — as duas
      coisas que o jogar-em-node também só faz pelo oráculo. Catraca: não
      desce; sobe quando o motor do oficial trouxer o `turno`. */
-  t(`a 10.ª: ${R10.reproduzidos} de 77 turnos reproduzem (a medida de 28/10: 69)`, R10.turnos.length === 77 && R10.reproduzidos >= 69);
+  /* MOVIDA (28/10, trilha B: o passo «o Cronista» do replay chama a peça
+     do jogo, oAceitoDoCronista, no lugar da miniatura), com o motivo: a
+     miniatura registava todo nome que o juízo aceitava, e a peça passa-o
+     por nomeComDono — que hoje recusa quatro nomes que o Cronista daquele
+     jogo registou: dois descritores (s9#41, s10#43) e dois com o apelido
+     do herói (s9#47, s10#57). O gravador põe-nos no estado pelo oráculo e a
+     linha declara-o; s9#41, s9#47 e s10#43 deixam de reproduzir. E o M69 da
+     10.ª também: a régua do jogo (registrarOLugar) mantém o lugar que já
+     está quando o Cronista diz o mesmo sítio, e a miniatura refazia-o pelo
+     nome. A medida nova é 67 + 66 + 43 = 176; a catraca fica, dela. */
+  t(`a 10.ª: ${R10.reproduzidos} de 77 turnos reproduzem (a medida de 28/10, com a peça do Cronista: 67)`, R10.turnos.length === 77 && R10.reproduzidos >= 67);
   t(`a 8.ª: ${R8.reproduzidos} de 70 (a medida de 28/10: 66)`, R8.turnos.length === 70 && R8.reproduzidos >= 66);
-  t(`a 9.ª: ${R9.reproduzidos} de 47 (a medida de 28/10: 45)`, R9.turnos.length === 47 && R9.reproduzidos >= 45);
+  t(`a 9.ª: ${R9.reproduzidos} de 47 (a medida de 28/10, com a peça do Cronista: 43)`, R9.turnos.length === 47 && R9.reproduzidos >= 43);
   /* MOVIDA (28/10, T3-B): a divergência destas três é a do oráculo, que o
      gravador das sessões de prova põe no estado no lugar de um órgão do App — e a linha
      agora o diz (`app`). Deixou de estar em `diferencas` (que são só as do
      motor) e passou à dívida; a intenção fica: na 10.ª só onde o herói
      está, na 8.ª e na 9.ª só a gente do registo, e o motor sem defeito. */
   const raiz = (r) => [...new Set(r.turnos.filter((x) => !x.igual).flatMap((x) => x.divida.flatMap((d) => d.caminhos.map((c) => c.split(/[.[]/)[0]))))].sort();
-  t("na 10.ª, o que diverge é só onde o herói está (a cidade, o sítio, a estrada)", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada"].includes(c)), J(raiz(R10)));
+  /* MOVIDA (28/10, a peça do Cronista): na 10.ª também a gente — os dois
+     nomes que o Cronista de então registou e o de hoje recusa (s10#43, #57) */
+  t("na 10.ª, o que diverge é onde o herói está (a cidade, o sítio, a estrada) e o nome que o Cronista de então registou", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada", "npcs"].includes(c)) && R10.turnos.filter((x) => x.divida.some((d) => d.campo.startsWith("npcs"))).every((x) => x.app.some((a) => /Cronista do jogo de então/.test(a.orgao))), J(raiz(R10)));
   t("na 8.ª e na 9.ª, só a gente do registo", J(raiz(R8)) === J(["npcs"]) && J(raiz(R9)) === J(["npcs"]), J([raiz(R8), raiz(R9)]));
-  t("e o motor não tem defeito em nenhuma das três: toda divergência é dívida que a linha declara", [R10, R8, R9].every((r) => r.defeitos.length === 0 && r.turnos.filter((x) => !x.igual).every((x) => !x.diferencas.length && x.divida.length && x.divida.every((d) => d.de === "a linha"))), J([R10, R8, R9].map((r) => r.defeitos)));
+  /* MOVIDA (28/10): o M69 diverge também em «lugar.coord», que a tabela dá
+     a moverParaLocal — o órgão que a linha do M69 já declara */
+  t("e o motor não tem defeito em nenhuma das três: toda divergência é dívida que a linha declara (e, no M69, a coordenada do mesmo moverParaLocal, pela tabela)", [R10, R8, R9].every((r) => r.defeitos.length === 0 && r.turnos.filter((x) => !x.igual).every((x) => !x.diferencas.length && x.divida.length && x.divida.some((d) => d.de === "a linha") && x.divida.every((d) => d.de === "a linha" || (d.de === "a tabela" && d.campo === "lugar.coord")))), J([R10, R8, R9].map((r) => r.defeitos)));
   /* O QUE O MOTOR JOGA SOZINHO (soOMotor): reproduz, e nenhum órgão do App
      mexeu. MEDIDA (28/10, T3-B, o replay num caminho só): 68 + 62 + 45 =
      175, o número que o jogar-em-node media pelo seu leitor. A diferença
      para os 180 são os cinco que reproduzem com a ajuda declarada do App:
      os quatro da luta da 8.ª (os combatentes fora do estado) e o M69 da
      10.ª (o sítio que o App mudou e o Cronista repôs). Catraca: não desce. */
-  t(`o motor sozinho: ${R10.soOMotor} + ${R8.soOMotor} + ${R9.soOMotor} = ${R10.soOMotor + R8.soOMotor + R9.soOMotor} (a medida de 28/10: 68 + 62 + 45 = 175)`, R10.soOMotor >= 68 && R8.soOMotor >= 62 && R9.soOMotor >= 45);
+  /* MOVIDA (28/10, a peça do Cronista): 175 → 172 — os três turnos do nome
+     recusado (s9#41, s9#47, s10#43) eram do motor sozinho e agora a linha
+     declara o oráculo; e o M69, que reproduzia com a ajuda do App, diverge.
+     Ficam os quatro da luta da 8.ª. */
+  t(`o motor sozinho: ${R10.soOMotor} + ${R8.soOMotor} + ${R9.soOMotor} = ${R10.soOMotor + R8.soOMotor + R9.soOMotor} (a medida de 28/10, com a peça do Cronista: 67 + 62 + 43 = 172)`, R10.soOMotor >= 67 && R8.soOMotor >= 62 && R9.soOMotor >= 43);
   const ajudados = (ses, r) => r.turnos.filter((x) => x.igual && x.app).map((x) => `${ses}#${x.n}`);
-  const cinco = [...ajudados("s8", R8), ...ajudados("s9", R9), ...ajudados("s10", R10)];
-  t("e a diferença para os reproduzidos são os cinco com a ajuda declarada do App: a luta da 8.ª e o M69 da 10.ª", J(cinco) === J(["s8#24", "s8#38", "s8#40", "s8#63", "s10#69"]) && R8.turnos.filter((x) => x.igual && x.app).every((x) => /a luta/.test(x.app[0].orgao)) && /moverParaLocal/.test(R10.turnos[68].app[0].orgao), J(cinco));
+  const quatro = [...ajudados("s8", R8), ...ajudados("s9", R9), ...ajudados("s10", R10)];
+  t("e a diferença para os reproduzidos são os quatro com a ajuda declarada do App: a luta da 8.ª", J(quatro) === J(["s8#24", "s8#38", "s8#40", "s8#63"]) && R8.turnos.filter((x) => x.igual && x.app).every((x) => /a luta/.test(x.app[0].orgao)), J(quatro));
   const todos = [...R10.turnos, ...R8.turnos, ...R9.turnos];
   t("todo turno que diverge diz porquê, e o porquê aponta a parte do turno que é do App", todos.filter((x) => !x.igual).every((x) => x.porque.length && x.porque.every((p) => /\bApp\b/.test(p))));
   t("o juízo do Cronista sai igual em todos os 194 turnos", todos.every((x) => x.cronista && x.cronista.igual));
@@ -388,6 +408,101 @@ sec("9. O RESUMO — para uma pessoa ler (replay.mjs --resumo)");
   const cli = spawnSync(process.execPath, [fileURLToPath(new URL("./replay.mjs", import.meta.url)), fileURLToPath(new URL("./sessao-navegador.json", import.meta.url)), "--resumo"], { encoding: "utf8" });
   const saida = String(cli.stdout || "");
   t("replay.mjs --resumo imprime as quatro partes e sai 0 (o motor sem defeito)", cli.status === 0 && ["O QUE REPRODUZ", "O MOTOR", "A DÍVIDA DO APP", "O JUIZ"].every((p) => saida.includes(p)) && /0 de 3 saem iguais/.test(saida) && /nenhum defeito/.test(saida) && /lugar\.coord/.test(saida), saida.slice(0, 200) + String(cli.stderr || "").slice(0, 200));
+}
+
+sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as portas declaradas");
+{
+  /* 28/10 (trilha B): o passo «o Cronista» aplicava o aceito numa
+     miniatura (a gente, o cânone e o lugar, cada um à sua maneira). Passa a
+     chamar a peça que o App chama (motor/cronista-do-turno.js), com o
+     estado do replay, e as portas do App que ainda não são motor entram
+     como dublês declarados: não escrevem, gravam a chamada, e o que o App
+     escreveu por elas é dívida da porta, não defeito. */
+  const passo = PASSOS_DO_REPLAY.find((p) => p.passo === "o Cronista");
+  t("o passo «o Cronista» diz que corre a peça do jogo", !!passo && /oAceitoDoCronista/.test(passo.de) && /julgarOCronista/.test(passo.de));
+  const fonte = fs.readFileSync(new URL("../src/sessao.js", import.meta.url), "utf8");
+  t("e a miniatura saiu do replay (nenhum segundo Cronista)", !/function aplicarOAceito/.test(fonte) && /oAceitoDoCronista\(/.test(fonte));
+  /* toda porta que a peça chama tem linha na tabela: a porta sem dublê
+     estouraria dentro da secção dela, e a secção cala — o replay perdia-a
+     em silêncio. Provado JOGANDO (a catraca de teste-assercoes-de-texto:
+     nenhuma suíte lê o texto de src/motor/): os 275 casos do dourado do
+     Cronista (cronista-bloco.mjs, que percorrem todas as secções), cada um
+     julgado e aplicado com um contexto que acusa o nome que a tabela não
+     tem. */
+  const { casosDoCronista } = await import("./cronista-bloco.mjs");
+  const { julgarOCronista } = await import("../src/motor/cronista.js");
+  const { oAceitoDoCronista } = await import("../src/motor/cronista-do-turno.js");
+  const VALORES = new Set(["ler", "aplicar", "pers", "narrativa", "testeDoTurno", "rolagem"]);
+  const pedidas = new Set(), semLinha = new Set();
+  for (const k of casosDoCronista(275)) {
+    let E = { ...k };
+    const base = { ler: () => E, aplicar: (efs) => { for (const ef of efs) if (EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo]) E = { ...E, [EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo].campo]: ef[EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo].chave] }; }, pers: k.personagem, narrativa: k.narrativa, testeDoTurno: k.testeDoTurno, rolagem: k.rolagem };
+    const ctx = new Proxy(base, { get: (o, nome) => {
+      if (typeof nome !== "string" || VALORES.has(nome)) return o[nome];
+      pedidas.add(nome);
+      if (!PORTAS_DO_CRONISTA_NO_REPLAY[nome]) semLinha.add(nome);
+      return (x) => (nome === "conferirCom" ? x : nome === "ganharFe" ? [] : nome === "fichaDeCompanheiro" ? { nome: x, nivel: 1, vida: 10, vidaMax: 10 } : null);
+    } });
+    try { const j = julgarOCronista(E, k.proposta, { narrativa: k.narrativa, pedido: k.doTurno.frase, envelopes: k.doTurno.envelopes }); oAceitoDoCronista(j.aceito, j.recusado, k.proposta, ctx); } catch { /* a peça nunca lança; se lançar, a suíte dela acusa */ }
+  }
+  t(`toda porta que a peça pede nos 275 casos (${pedidas.size}) tem linha em PORTAS_DO_CRONISTA_NO_REPLAY${semLinha.size ? " — sem linha: " + [...semLinha].join(", ") : ""}`, pedidas.size >= 10 && semLinha.size === 0, [...pedidas].join(","));
+  t("cada linha diz se é motor ou dublê, os campos que o App escreve por ela e o porquê", Object.values(PORTAS_DO_CRONISTA_NO_REPLAY).every((x) => ["motor", "dublê"].includes(x.de) && Array.isArray(x.campos) && typeof x.porque === "string" && x.porque.length > 10) && Object.values(PORTAS_DO_CRONISTA_NO_REPLAY).filter((x) => x.de === "motor").every((x) => !x.campos.length));
+  t("e todo efeito da peça que é estado tem campo (o resto — a nota, o calou, a lista — não é estado)", Object.values(EFEITO_DO_CRONISTA_NO_REPLAY).every((x) => typeof x.campo === "string" && typeof x.chave === "string") && !EFEITO_DO_CRONISTA_NO_REPLAY.nota && !EFEITO_DO_CRONISTA_NO_REPLAY.quests);
+
+  /* um turno, corrido: o que a peça faz e a miniatura não fazia */
+  const Ec = estadoDoSave({ personagem: { nome: "Íris Vantel", grupo: [] }, cidadeAtual: "Monte Rasa", mapa: { cidades: [{ nome: "Monte Rasa", populacao: 800 }] }, npcs: {}, canone: {}, dia: 4, divindade: { despertar: true } });
+  const narr = "O taberneiro baixa a voz: \"Dizem que o Berço de Ossos ainda pulsa sob a colina.\" Ao balcão, Varek Duro limpa a lâmina e o Homem da carroça espera o troco. A praça de Monte Rasa murmura o nome de Íris como prece.";
+  const Lc = { n: 1, entrada: { frase: "Pergunto pelo Berço." }, sorte: { ponto: "4|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: narr, mudancas: {} },
+    cronista: { proposta: {
+      canone: { "Berço de Ossos": { tipo: "artefato", descricao: "o disco que pulsa" } },
+      pessoas: [{ nome: "Varek Duro", papel: "mercenário", genero: "ele" }, { nome: "Homem da carroça", papel: "carroceiro", genero: "ele" }],
+      fe: { fieis: 10, pf: 1, motivo: "a praça reza" },
+      promessas: [{ tipo: "frase", texto: "o Berço ainda pulsa sob a colina", quem: "o taberneiro" }],
+    } } };
+  const rc = correrOTurno(Ec, Lc, { semente: "teste|cronista" });
+  const Ef = rc.estado;
+  t("o cânone guarda a marca do que só foi dito, e o dia em que entrou (registradoDia: a peça)", !!(Ef.canone["Berço de Ossos"] && Ef.canone["Berço de Ossos"].dito) && Ef.canone["Berço de Ossos"].registradoDia === 4, J(Ef.canone));
+  t("a gente entra pela ficha do jogo: o gênero do registo («ele» → «homem») e o turno em que se viu", !!Ef.npcs["Varek Duro"] && Ef.npcs["Varek Duro"].genero === "homem" && Number.isInteger(Ef.npcs["Varek Duro"].ultimaVez), J(Ef.npcs["Varek Duro"]));
+  t("e o descritor não vira nome (nomeComDono, como no jogo; a miniatura registava-o)", !Ef.npcs["Homem da carroça"], J(Object.keys(Ef.npcs)));
+  t("a promessa dita entra no Livro (guardarSementes: a miniatura não tinha o Livro)", ehLista(Ef.prometido && Ef.prometido.sementes) && Ef.prometido.sementes.some((x) => /Berço/.test(x.texto)), J(Ef.prometido));
+  t("a fé chamou o dublê, e o dublê não contou (a divindade fica como estava)", J(rc.portas.filter((x) => x.porta === "ganharFe")) === J([{ porta: "ganharFe", campos: ["divindade"] }]) && J(Ef.divindade) === J(Ec.divindade), J(rc.portas));
+  t("nenhuma secção calou, nenhum passo estourou", !rc.calou.length && !rc.calouDoCronista.length, J([rc.calou, rc.calouDoCronista]));
+  t("e corre duas vezes igual (determinismo)", J(correrOTurno(Ec, Lc, { semente: "teste|cronista" })) === J(rc));
+
+  /* a dívida da porta: o que o App escreveu pela fé, no turno em que a fé foi chamada */
+  const juizo = rc.juizo;
+  const arqDe = (proposta, estado) => {
+    let a = abrirASessao({ semente: "teste|cronista", estado: Ec, origem: "a suíte" });
+    return gravarOTurno(a, { ...Lc, cronista: { proposta, juizo: proposta === Lc.cronista.proposta ? juizo : correrOTurno(Ec, { ...Lc, cronista: { proposta } }, { semente: "teste|cronista" }).juizo }, juiz: null, estado });
+  };
+  const comFe = { ...Ef, divindade: { ...Ef.divindade, fieis: 21, pf: 1 } };
+  const rp = reproduzirASessao(arqDe(Lc.cronista.proposta, comFe));
+  const d1 = rp.turnos[0];
+  t("o que o App escreveu pela porta da fé é dívida «a porta», não defeito", rp.valido && !rp.defeitos.length && d1.divida.some((d) => d.de === "a porta" && d.campo === "divindade") && d1.porque.some((x) => /ganharFe/.test(x) && /\bApp\b/.test(x)), J(d1 && [d1.diferencas, d1.divida, d1.porque]));
+  t("e o turno guarda as portas que o Cronista chamou", !!d1.portas && d1.portas.some((x) => x.porta === "ganharFe"));
+  const semFe = { ...Lc.cronista.proposta }; delete semFe.fe;
+  const rq = reproduzirASessao(arqDe(semFe, { ...correrOTurno(Ec, { ...Lc, cronista: { proposta: semFe } }, { semente: "teste|cronista" }).estado, divindade: comFe.divindade }));
+  t("sem a porta chamada, a mesma divergência é defeito do motor", J(rq.defeitos) === J([1]) && rq.turnos[0].diferencas.some((d) => d.caminho.startsWith("divindade")), J(rq.turnos[0] && rq.turnos[0].diferencas));
+
+  /* O JUIZ CORRIGE NO REPLAY (v9.531): o App passa o aceito por
+     canoneSemInvencao antes da peça; a linha grava o juízo CRU, e o replay
+     refaz a correção do veredito que julga outra vez (a narração e a
+     entrada gravadas). Sem isto, a sessão nova divergia no cânone nos ~3%
+     de turnos com invenção. */
+  const { entradaDoJuiz } = await import("../src/motor/juiz-do-turno.js");
+  const FOTO = { personagem: { nome: "Vera", grupo: [] }, npcs: {}, mapa: { cidades: [{ nome: "Buraco Norte" }] }, cidadeAtual: "Buraco Norte", lugar: { nome: "a praça" }, narracoes: [], mundo: { semente: "prova|Fantasia medieval", genero: "Fantasia medieval" } };
+  const PROSA = "O boticário ergue o frasco. Atrás dele, uma velha a quem chamam Fiandeira tece junto à Ponte das Cinzas, e não levanta os olhos.";
+  const Ej = estadoDoSave({ personagem: FOTO.personagem, npcs: {}, canone: {}, mapa: FOTO.mapa, cidadeAtual: FOTO.cidadeAtual, lugar: null, dia: 2 });
+  const Lj = { n: 1, entrada: { frase: "Olho em volta." }, sorte: { ponto: "2|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: PROSA, mudancas: {} },
+    cronista: { proposta: { canone: { Fiandeira: { tipo: "pessoa", descricao: "a velha que tece" }, "Coroa de Sal": { tipo: "artefato", descricao: "a coroa do rei" } } } },
+    juiz: { entrada: entradaDoJuiz(FOTO, { frase: "Olho em volta.", pauta: "" }), resumo: { turno: 1, dia: 2 } } };
+  const rj = correrOTurno(Ej, Lj, { semente: "teste|juiz" });
+  t("o nome que o Juiz deu por inventado neste turno não entra no cânone do replay (como no App)", !("Fiandeira" in rj.estado.canone) && rj.tirados.some((x) => x.nome === "Fiandeira"), J([Object.keys(rj.estado.canone), rj.tirados]));
+  t("e o juízo que a linha guarda continua o cru (é ele que se compara com o gravado)", !!(rj.juizo && rj.juizo.aceito.canone && "Fiandeira" in rj.juizo.aceito.canone));
+  const semJuiz = correrOTurno(Ej, { ...Lj, juiz: null }, { semente: "teste|juiz" });
+  t("MORDE: sem o veredito da linha, a invenção entra como verdade imutável", "Fiandeira" in semJuiz.estado.canone && !semJuiz.tirados.length);
+  const cego = correrOTurno(Ej, { ...Lj, juiz: { ...Lj.juiz, entrada: { ...Lj.juiz.entrada, papeis: [] } } }, { semente: "teste|juiz" });
+  t("e o Juiz cego (a entrada sem os papéis do mundo — as sessões de prova) não tira nada", "Fiandeira" in cego.estado.canone && !cego.tirados.length);
 }
 
 console.log(`\nsessão como arquivo: ${ok} passaram, ${mal} falharam`);

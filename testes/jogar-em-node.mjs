@@ -69,17 +69,43 @@ sec("2. AS CONTAS — quantos reproduzem, quantos o motor joga sozinho");
   /* MEDIDA (28/10, T3-B, o replay num caminho só): 180 reproduzem e 175 o
      motor joga sozinho — os números que o replay e o jogar-em-node davam
      quando eram dois caminhos. Catraca: não descem; sobem quando o motor
-     do oficial trouxer o passo antes do Mestre (src/motor/turno.js). */
-  t(`reproduzem ${REP.s10.reproduzidos} + ${REP.s8.reproduzidos} + ${REP.s9.reproduzidos} = ${soma("reproduzidos")} de 194 (a medida de 28/10: 69 + 66 + 45 = 180)`, REP.s10.reproduzidos >= 69 && REP.s8.reproduzidos >= 66 && REP.s9.reproduzidos >= 45);
-  t(`o motor joga sozinho ${REP.s10.soOMotor} + ${REP.s8.soOMotor} + ${REP.s9.soOMotor} = ${soma("soOMotor")} (a medida de 28/10: 68 + 62 + 45 = 175)`, REP.s10.soOMotor >= 68 && REP.s8.soOMotor >= 62 && REP.s9.soOMotor >= 45);
+     do oficial trouxer o passo antes do Mestre (src/motor/turno.js).
+     MOVIDA (28/10, trilha B: o aceito do Cronista no replay é a peça do
+     jogo, oAceitoDoCronista, e não mais uma miniatura), com o motivo: a
+     miniatura registava todo nome que o juízo aceitava; a peça do jogo
+     passa-o por nomeComDono, e o de hoje recusa quatro nomes que o Cronista
+     daquele jogo registou — dois descritores (s9#41 «Homem da carroça»,
+     s10#43 «Taverneiro da Fivela & o Trigo») e dois com o apelido do herói
+     (s9#47 «Tamanqueiro», s10#57 «Sargenta Barbaforte», que já divergia
+     pela viagem). O registo é verdade sobre a sessão jogada: o oráculo do
+     gravador põe-nos no estado e a linha declara-o, e esses três turnos
+     saem das duas contas. E o M69 da 10.ª deixa de reproduzir: a miniatura
+     refazia o sítio pelo nome nos dois caminhos; a régua do jogo
+     (registrarOLugar) mantém o lugar que já está quando o Cronista diz o
+     mesmo sítio, logo o sítio que o App mudou e o Cronista repôs nasce de
+     novo no gravado e fica o de antes no replay — dívida de moverParaLocal.
+     A medida nova: 67 + 66 + 43 = 176 e 67 + 62 + 43 = 172. A catraca fica,
+     a partir dela. */
+  t(`reproduzem ${REP.s10.reproduzidos} + ${REP.s8.reproduzidos} + ${REP.s9.reproduzidos} = ${soma("reproduzidos")} de 194 (a medida de 28/10, com a peça do Cronista: 67 + 66 + 43 = 176)`, REP.s10.reproduzidos >= 67 && REP.s8.reproduzidos >= 66 && REP.s9.reproduzidos >= 43);
+  t(`o motor joga sozinho ${REP.s10.soOMotor} + ${REP.s8.soOMotor} + ${REP.s9.soOMotor} = ${soma("soOMotor")} (a medida de 28/10, com a peça do Cronista: 67 + 62 + 43 = 172)`, REP.s10.soOMotor >= 67 && REP.s8.soOMotor >= 62 && REP.s9.soOMotor >= 43);
   const ajudados = Object.entries(REP).flatMap(([ses, r]) => r.turnos.filter((x) => x.igual && x.app).map((x) => ({ id: `${ses}#${x.n}`, orgao: x.app.map((a) => a.orgao).join("; ") })));
   console.log(`  ..  a diferença, ${ajudados.length} turnos que reproduzem com a ajuda declarada do App: ${ajudados.map((x) => `${x.id} (${x.orgao.split(" (")[0]})`).join(", ")}`);
   t("e a diferença entre as duas contas são esses turnos, e só eles", soma("reproduzidos") - soma("soOMotor") === ajudados.length);
-  t("hoje, os cinco: a luta da 8.ª (24, 38, 40, 63) e o sítio do M69 da 10.ª, que o Cronista repôs", J(ajudados.map((x) => x.id).sort()) === J(["s10#69", "s8#24", "s8#38", "s8#40", "s8#63"]) && ajudados.every((x) => /a luta|moverParaLocal/.test(x.orgao)));
-  /* toda divergência é de um turno cuja linha declara o órgão que a fez */
-  const semDono = Object.entries(REP).flatMap(([ses, r]) => r.turnos.filter((x) => !x.igual && !(x.app && x.divida.length && x.divida.every((d) => d.de === "a linha"))).map((x) => `${ses}#${x.n}`));
-  t("todo turno que não reproduz tem a linha a dizer qual órgão do App o fez (a viagem, o sítio, o nome à mão)", semDono.length === 0, semDono.join(","));
-  t("na 10.ª é sempre o passo antes do Mestre, e na 8.ª e na 9.ª sempre um nome à mão", REP.s10.turnos.filter((x) => !x.igual).every((x) => x.app.every((a) => /passo antes do Mestre/.test(a.orgao))) && [REP.s8, REP.s9].every((r) => r.turnos.filter((x) => !x.igual).every((x) => x.app.every((a) => /nomes à mão/.test(a.orgao)))));
+  /* MOVIDA (28/10, a peça do Cronista no replay): eram cinco, com o M69 da
+     10.ª, que agora diverge (ver acima). Ficam as quatro lutas da 8.ª. */
+  t("hoje, os quatro: a luta da 8.ª (24, 38, 40, 63)", J(ajudados.map((x) => x.id).sort()) === J(["s8#24", "s8#38", "s8#40", "s8#63"]) && ajudados.every((x) => /a luta/.test(x.orgao)), J(ajudados.map((x) => x.id)));
+  /* toda divergência é de um turno cuja linha declara o órgão que a fez.
+     MOVIDA (28/10): o M69 diverge também em «lugar.coord», que a TABELA da
+     dívida dá a moverParaLocal — o mesmo órgão que a linha declara; a
+     intenção fica: nenhuma divergência sem um órgão do App que a assine. */
+  const semDono = Object.entries(REP).flatMap(([ses, r]) => r.turnos.filter((x) => !x.igual && !(x.app && x.divida.length && x.divida.some((d) => d.de === "a linha") && x.divida.every((d) => d.de === "a linha" || d.de === "a tabela"))).map((x) => `${ses}#${x.n}`));
+  t("todo turno que não reproduz tem a linha a dizer qual órgão do App o fez (a viagem, o sítio, o nome à mão, o nome que o Cronista de então registou)", semDono.length === 0, semDono.join(","));
+  /* MOVIDA (28/10): o quarto órgão é o Cronista do jogo de então (o nome
+     que o nomeComDono de hoje recusa), nas três sessões */
+  const DE_ENTAO = /Cronista do jogo de então/;
+  t("na 10.ª é sempre o passo antes do Mestre, e na 8.ª e na 9.ª sempre um nome à mão — ou o nome que o Cronista de então registou", REP.s10.turnos.filter((x) => !x.igual).every((x) => x.app.every((a) => /passo antes do Mestre/.test(a.orgao) || DE_ENTAO.test(a.orgao))) && [REP.s8, REP.s9].every((r) => r.turnos.filter((x) => !x.igual).every((x) => x.app.every((a) => /nomes à mão/.test(a.orgao) || DE_ENTAO.test(a.orgao)))));
+  const deEntao = Object.entries(REP).flatMap(([ses, r]) => r.turnos.filter((x) => x.app && x.app.some((a) => DE_ENTAO.test(a.orgao))).map((x) => `${ses}#${x.n}`));
+  t("e o nome do Cronista de então são quatro, em quatro turnos: s9#41, s9#47, s10#43, s10#57", J(deEntao.sort()) === J(["s10#43", "s10#57", "s9#41", "s9#47"]), J(deEntao));
 }
 
 sec("3. A 10.ª, OS 20 PRIMEIROS TURNOS — o que o motor faz sozinho");

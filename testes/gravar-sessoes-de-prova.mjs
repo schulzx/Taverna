@@ -20,7 +20,14 @@
        motor trouxe: o nome à mão da pauta, que este registo não gravou (o
        oráculo põe-no no registo de gente), ou o combatente da luta, que a
        luta guarda fora do estado (o oráculo não toca o estado; a linha só o
-       diz).
+       diz);
+     · nas três, o nome que o Cronista DAQUELE jogo registou e o de hoje
+       recusa (28/10, o aceito do Cronista no replay é a peça do jogo,
+       oAceitoDoCronista, e não mais uma miniatura): o `nomeComDono` de
+       hoje recusa o descritor — «Homem da carroça», «Taverneiro da Fivela
+       & o Trigo» — que o de então guardou como nome. O registo é verdade
+       sobre a sessão que se jogou: o oráculo põe o nome no registo de
+       gente, e a linha diz porquê (o motor de hoje, a regra e o motivo).
 
    E A RÉGUA DO REGISTO fica aqui, porque é sobre o registo: a gente que a
    pauta nomeia o estado conhece; o EM CENA não leva gente de LONGE; o sítio
@@ -47,6 +54,8 @@ const { estadoDoSave } = await import("../src/estado.js");
 const { pontoDaSorte } = await import("../src/motor/sorte-do-turno.js");
 const { abrirASessao, gravarOTurno, correrOTurno, validarASessao } = await import("../src/sessao.js");
 const { entradaDoJuiz, julgarOTurno } = await import("../src/motor/juiz-do-turno.js");
+const { nomeComDono } = await import("../src/npcs.js");
+const { contextoDoNomeCom } = await import("../src/motor/aplicar.js");
 const ESCREVER = process.argv.includes("--escrever");
 
 const R = JSON.parse(fs.readFileSync(new URL("./registo-s10-cena.json", import.meta.url), "utf8"));
@@ -64,6 +73,22 @@ const pautaDoRegisto = (P) => [`ONDE: ${P.onde}`, `EM CENA: ${P.emCena}`, ...(P.
 const textoDaSessao = (arq) => {
   const { turnos, ...cab } = arq;
   return JSON.stringify(cab).slice(0, -1) + ",\"turnos\":[\n" + turnos.map((x) => JSON.stringify(x)).join(",\n") + "\n]}\n";
+};
+
+/* O NOME QUE O CRONISTA DE ENTÃO REGISTOU E O DE HOJE RECUSA: as pessoas do
+   aceito que o estado do fim não tem. Devolve o estado com elas (a ficha da
+   proposta, como o registo a guardou) e a declaração da linha, com o motivo
+   que o motor de hoje dá (nomeComDono, sobre o registo de antes do turno). */
+const oNomeRecusado = (antes, juizo, depois) => {
+  const aceitos = ((juizo && juizo.aceito && juizo.aceito.pessoas) || []).filter((x) => x && x.nome);
+  const conhece = new Set(Object.keys(depois.npcs || {}).map(sem));
+  const fora = aceitos.filter((x) => !conhece.has(sem(x.nome)));
+  if (!fora.length) return { estado: depois, app: [] };
+  const porque = (x) => { try { const id = nomeComDono(x.nome, antes.npcs || {}, contextoDoNomeCom({ heroi: (antes.personagem || {}).nome }, x)); return id && id.motivo ? id.motivo : "recusado"; } catch { return "recusado"; } };
+  return {
+    estado: { ...depois, npcs: { ...depois.npcs, ...Object.fromEntries(fora.map((x) => [x.nome, { ...x }])) } },
+    app: [{ orgao: "o Cronista do jogo de então (o registo guardou o nome; o nomeComDono de hoje, no App e no motor, recusa-o)", campos: fora.map((x) => "npcs." + x.nome), o: fora.map((x) => `${x.nome} (${porque(x)})`).join(", ") }],
+  };
 };
 
 /* os nomes à mão: a linha da pauta → os oferecidos */
@@ -175,8 +200,10 @@ const gravarA10 = () => {
     const naLinha = lista.filter((x) => x.tipo === "pessoa" && x.aqui).slice(0, EM_CENA_NA_PAUTA.pessoa).map((x) => x.nome);
     if (naLinha.some((g) => L.has(sem(g)))) regua.push(`M${i + 1}: EM CENA com gente de LONGE: ${naLinha.join(",")}`);
     const juiz = vereditoDoJuiz(Em, resposta, { narracoes: R.respostas.slice(0, i), oferecidos, frase: P.frase, pauta: pautaDoRegisto(P), turno: i + 1 });
-    sessao = gravarOTurno(sessao, { ...linha, cronista: { proposta: prop, juizo: r.juizo }, juiz, estado: r.estado, app });
-    E = r.estado;
+    const rec = oNomeRecusado(Em, r.juizo, r.estado);
+    app.push(...rec.app);
+    sessao = gravarOTurno(sessao, { ...linha, cronista: { proposta: prop, juizo: r.juizo }, juiz, estado: rec.estado, app });
+    E = rec.estado;
   }
   return { sessao, regua };
 };
@@ -216,13 +243,14 @@ const gravarDoCronista = (ses) => {
     }
     const r = correrOTurno(E, { ...linha, cronista: { proposta: prop, juizo: null } }, { semente: ses });
     if (r.calou.length) regua.push(`#${a.k}: ${r.calou.map((c) => c.passo + " estourou: " + c.erro).join(" · ")}`);
-    let Ef = r.estado;
+    const rec = oNomeRecusado(meio.estado, r.juizo, r.estado);
+    let Ef = rec.estado;
     const esperado = new Set(b.conhecidos.map(sem));
     daLuta = new Set([...daLuta].filter((x) => esperado.has(x)));
     const depois = new Set([...conhecidos(Ef), ...daLuta]);
     const faltam = [...new Set(b.conhecidos)].filter((x) => !depois.has(sem(x)));
     const sobram = [...depois].filter((x) => !esperado.has(x));
-    const app = [];
+    const app = [...rec.app];
     if (faltam.length) {
       const luta = a.emLuta || b.emLuta;
       if (doCronista) regua.push(`#${a.k}: o motor recusou ${faltam.join(",")}`);
