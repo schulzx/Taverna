@@ -240,8 +240,12 @@ sec("1. NENHUM MÓDULO MUDO");
        sessao.js diz o que ela tem de entregar por turno). Até lá os leitores
        são as suítes (`teste-sessao.mjs`, `jogar-em-node.mjs`) e o executável
        `replay.mjs`. A entrada sai quando o App o importar, e a lista volta a
-       ficar VAZIA. */
-    "sessao.js": "a fiação do App (trilha A, o oficial): gravarOTurno no fim de cada turno",
+       ficar VAZIA.
+       — 28/10 (T1-A, 7.ª fatia): o oficial ligou-o — o App importa
+       `abrirASessao` e `gravarOTurno`, abre a sessão no primeiro envio de
+       cada sentada e grava uma linha no fim de cada turno, depois do
+       Cronista; onde ela mora (a chave, o teto) diz `sessao-guardada.js`.
+       A entrada saiu, e a lista voltou a ficar VAZIA. */
   };
   const mudos = [];
   for (const f of arqs) {

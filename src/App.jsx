@@ -243,6 +243,8 @@ import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-t
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte } from "./motor/fecho-da-resposta.js";
+import { abrirASessao, gravarOTurno } from "./sessao.js";
+import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
@@ -6011,6 +6013,17 @@ export default function Taverna() {
      `src/motor/sorte-do-turno.js`, e lá está o porquê. Aqui só a fiação: o
      ponto lido dos refs, e a contagem substituída a cada pedido. */
   const contagemDaSorteRef = useRef(CONTAGEM_VAZIA);
+  /* ---------------- A SESSÃO COMO ARQUIVO (T1-A, 7.ª fatia, 28/10) ----------------
+     O arquivo de `sessao.js` (a semente, o estado ao abrir e, por turno, o
+     que entrou de fora: a frase, a sorte, o pedido, a resposta crua do
+     Narrador e do Cronista, o Juiz e o estado do fim) — o que um replay em
+     Node precisa para refazer o turno sem IA. Abre-se no primeiro envio
+     de cada sentada (e quando a campanha muda), grava-se uma linha no fim
+     de cada turno, depois do Cronista, numa fila (os turnos entram na
+     ordem em que partiram), e guarda-se na chave que `sessao-guardada.js`
+     diz, com o teto dele. Tudo em `calou`: nunca pode custar o turno. */
+  const arquivoDaSessaoRef = useRef(null);
+  const filaDaSessaoRef = useRef(Promise.resolve());
   const pontoDaSorte = () => pontoDaSorteDe({ dia: diaRef.current, minuto: minutoRef.current, falas: (mensagensRef.current || []).length });
   const sorteDoTurno = (evento) => {
     try {
@@ -10713,6 +10726,7 @@ export default function Taverna() {
         const aceitariam = ((r.grupo && Array.isArray(r.grupo.entraram)) ? r.grupo.entraram : []).filter((n) => { try { return vereditoDoConvite(String(n || "")).resposta === "aceita"; } catch { return false; } });
         juizo = julgarOCronista({ ...retratoDoJogo(), personagem: pers || personagemRef.current || personagem, combate: combateRef.current, masmorra: masmorraRef.current, lugar: lugarRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, npcs: npcsRef.current, divindade: divindadeRef.current, eventos: eventosRef.current, espinha: espinhaRef.current }, r, { narrativa, pedido: ultimoPedidoRef.current, envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam });
       } catch (e) { calou("o juízo do Cronista", e); juizo = null; }
+      try { if (doTurno && doTurno.paraASessao) doTurno.paraASessao.cronista = { proposta: r, juizo: juizo ? { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } : null }; } catch (e) { calou("a sessão (o Cronista)", e); }
       const ac = (juizo && juizo.aceito) || {};
       const recusadoDoCronista = (juizo && Array.isArray(juizo.recusado)) ? juizo.recusado : [];
       /* ---- SEÇÃO promessas (a campanha que prende) ----
@@ -11834,6 +11848,27 @@ export default function Taverna() {
     } catch { return []; }
   };
 
+  /* o estado como a sessão o leva: o retrato do jogo com a ficha viva (o
+     `personagem` da closure pode ser de outro render) e o contador da gente */
+  const retratoDaSessao = () => estadoParaASessao({ ...retratoDoJogo(), personagem: fichaViva() || personagem, npcTurno: npcTurnoRef.current });
+  const abrirASessaoSePreciso = () => {
+    if (!gravaNesteModo(garantirModo(modoRef.current))) { arquivoDaSessaoRef.current = null; return null; }
+    const semente = sementeMundo();
+    if (!arquivoDaSessaoRef.current || arquivoDaSessaoRef.current.semente !== semente) {
+      const md = mundoDaBase();
+      arquivoDaSessaoRef.current = abrirASessao({ semente, estado: retratoDaSessao(), mundo: { semente: md.semente, genero: md.genero, molde: md.molde, lex: md.lex }, origem: `${SESSAO_GUARDADA.origem} (${VERSAO})` });
+    }
+    return arquivoDaSessaoRef.current;
+  };
+  const gravarOTurnoDaSessao = (juntado) => {
+    const atual = arquivoDaSessaoRef.current;
+    if (!atual || !juntado) return;
+    const g = guardarASessao(gravarOTurno(atual, { ...turnoParaASessao(juntado), estado: retratoDaSessao() }));
+    arquivoDaSessaoRef.current = g.arquivo;
+    const chave = chaveDaSessao(chaveDoSave());
+    try { if (g.texto) localStorage.setItem(chave, g.texto); else localStorage.removeItem(chave); }
+    catch (e) { try { localStorage.removeItem(chave); } catch { /* idem */ } calou("guardar a sessão", e); }
+  };
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null);
     /* MM15 (3): A FOTO DO ENVIO — antes de qualquer coisa que este turno
@@ -11850,9 +11885,12 @@ export default function Taverna() {
       fotoInicio = fotoInicioRef.current;
       fotoInicioRef.current = null;
     } catch (e) { calou("foto do envio", e); }
+    /* a sessão como arquivo: o que este turno vai gravar, juntado aqui */
+    let turnoDaSessao = null;
+    try { if (abrirASessaoSePreciso()) turnoDaSessao = { lugaresDaqui: lugaresDaqui(), conteudo }; } catch (e) { calou("a sessão (o envio)", e); turnoDaSessao = null; }
     /* T1-A: o que ainda cai na reserva da casa rola a partir do instante
        (depois da foto: ela é a primeira coisa do envio) */
-    try { semearACasa(`${sementeMundo()}|${pontoDaSorte()}`); } catch (e) { calou("semear a casa (envio)", e); }
+    try { const casa = `${sementeMundo()}|${pontoDaSorte()}`; if (turnoDaSessao) turnoDaSessao.casa = casa; semearACasa(casa); } catch (e) { calou("semear a casa (envio)", e); }
     /* A1 · B2: A FOTO DA FICHA NO ENVIO, para o recibo do turno. Um turno
        anterior cujo Cronista ainda não respondeu fecha o recibo dele AGORA,
        com a ficha de agora: o que o Cronista ainda cobrar cai no recibo
@@ -12255,11 +12293,20 @@ export default function Taverna() {
           mundo: { semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lexico: (mundoAtual() || {}).lexico },
         };
       } catch (e) { calou("a foto do juiz", e); fotoDoJuiz = null; }
+      try {
+        if (turnoDaSessao) Object.assign(turnoDaSessao, {
+          ponto: pontoDaSorte(), contagem: contagemDaSorteRef.current, frase: pedidoDaBolsa, moeda: moedaDaBolsa,
+          pauta, envelopes: conteudo + "\n" + nota, nomesAMao: nomesOferecidosRef.current,
+          narrador: JSON.parse(JSON.stringify({ narrativa: resp.narrativa || "", mudancas: resp.mudancas || {} })),
+        });
+      } catch (e) { calou("a sessão (o pedido)", e); turnoDaSessao = null; }
       let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
       try {
         if (fotoDoJuiz) {
-          const doJuiz = julgarOTurno(resp.narrativa || "", entradaDoJuiz(fotoDoJuiz, { frase: pedidoDaBolsa, pauta, moeda: moedaDaBolsa }), { turno: turnoDeRegistroRef.current + 1, dia: diaRef.current }); /* o turno é o da pauta (textoDaPauta conta igual): o registo só anda depois, em anotarOTurno */
+          const entradaJ = entradaDoJuiz(fotoDoJuiz, { frase: pedidoDaBolsa, pauta, moeda: moedaDaBolsa });
+          const doJuiz = julgarOTurno(resp.narrativa || "", entradaJ, { turno: turnoDeRegistroRef.current + 1, dia: diaRef.current }); /* o turno é o da pauta (textoDaPauta conta igual): o registo só anda depois, em anotarOTurno */
           fidelidadeRef.current = somarAFidelidade(fidelidadeRef.current, doJuiz.resumo);
+          try { if (turnoDaSessao) turnoDaSessao.juiz = { resumo: doJuiz.resumo, entrada: entradaJ }; } catch (e) { calou("a sessão (o juiz)", e); }
           if (typeof console !== "undefined" && console.debug) console.debug(linhaDoJuiz(doJuiz.resumo));
         }
       } catch (e) { calou("o juiz do turno", e); }
@@ -12395,9 +12442,18 @@ export default function Taverna() {
       } catch (e) { calou("o recibo do turno (a espera)", e); }
       try {
         let doTurnoCr = null;
-        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")] }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
+        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
         const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
+        /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila */
+        try {
+          if (turnoDaSessao) {
+            const juntado = turnoDaSessao;
+            filaDaSessaoRef.current = filaDaSessaoRef.current
+              .then(() => Promise.resolve(doCronista).catch(() => null))
+              .then(() => { try { gravarOTurnoDaSessao(juntado); } catch (e) { calou("a sessão (o turno)", e); } });
+          }
+        } catch (e) { calou("a sessão (a fila)", e); }
       } catch { if (fimDoCronista) fimDoCronista(null); }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
@@ -12654,6 +12710,7 @@ export default function Taverna() {
 
   const iniciar = (pers) => {
     recomecarAPorta();
+    arquivoDaSessaoRef.current = null; /* a sessão como arquivo: uma campanha nova abre no primeiro envio */
     try { semearACasa(sementeMundo()); } catch (e) { calou("semear a casa (iniciar)", e); }
     try { partidaDaPortaRef.current = fotoDoAcervo({ missoes: missoesRef.current }).missoes; } catch (e) { calou("a partida da marca da porta", e); }
     /* ---------------- A SEGUNDA CADEIRA ENTRA NO GRUPO (v9.120) ----------------
@@ -12930,6 +12987,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     /* R21: carregar um save e sessao nova para a marca da porta - menos o
        recado do anfitriao da sala, que chega por aqui a cada turno. */
     if (!silencioso) recomecarAPorta();
+    arquivoDaSessaoRef.current = null; /* a sessão como arquivo: uma sentada nova abre no primeiro envio */
     try { semearACasa(`${nomeDaCampanha(sv) || "aventura"}|${(sv.mundo && sv.mundo.genero) || ""}`); } catch (e) { calou("semear a casa (continuar)", e); }
     try {
       /* MM15 (3): a mesma reposição que uma falha de ligação usa para
