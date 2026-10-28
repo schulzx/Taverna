@@ -108,6 +108,32 @@ const { lugarPedido, definirLugar } = await import("../src/lugar.js");
 const { sorteNoPonto, pontoDaSorte, CONTAGEM_VAZIA } = await import("../src/motor/sorte-do-turno.js");
 const { nomesAMaoNaProsa } = await import("../src/nomes.js");
 const { criarNPC } = await import("../src/npcs.js");
+const { abrirASessao, gravarOTurno, validarASessao, reproduzirASessao } = await import("../src/sessao.js");
+const { entradaDoJuiz, julgarOTurno } = await import("../src/motor/juiz-do-turno.js");
+const GRAVAR = process.argv.includes("--gravar");
+
+/* ---------------- A SESSÃO COMO ARQUIVO (28/10, T3-B) ----------------
+   Cada turno jogado aqui vira uma linha do arquivo de sessão
+   (src/sessao.js): a frase, o ponto da sorte, o pedido (a pauta que o
+   registo guarda e os envelopes), a resposta gravada, a proposta e o juízo
+   do Cronista, o veredito do Juiz e o estado do FIM do turno — já com o
+   que o oráculo pôs. A secção 6 corre o replay sobre esses arquivos e
+   confere que ele diverge exatamente onde o oráculo teve de mexer no
+   estado. `node jogar-em-node.mjs --gravar` escreve-os em
+   testes/sessao-s8.json, sessao-s9.json e sessao-s10.json, que a
+   teste-sessao.mjs lê. */
+const fotoDoJuiz = (E, narracoes, oferecidos) => ({ personagem: E.personagem, npcs: E.npcs, mapa: E.mapa, cidadeAtual: E.cidadeAtual, lugar: E.lugar, oferecidos, narracoes });
+const vereditoDoJuiz = (E, narrativa, { narracoes, oferecidos, frase, pauta, turno }) => {
+  const entrada = entradaDoJuiz(fotoDoJuiz(E, narracoes, oferecidos), { frase, pauta });
+  return { resumo: julgarOTurno(narrativa, entrada, { turno, dia: E.dia || 0 }).resumo, entrada };
+};
+const pautaDoRegisto = (P) => [`ONDE: ${P.onde}`, `EM CENA: ${P.emCena}`, ...(P.longe.length ? [`LONGE: ${P.longe.join(" · ")}`] : [])].join("\n");
+const escreverASessao = (nome, arq) => {
+  const { turnos, ...cab } = arq;
+  const txt = JSON.stringify(cab).slice(0, -1) + ",\"turnos\":[\n" + turnos.map((x) => JSON.stringify(x)).join(",\n") + "\n]}\n";
+  fs.writeFileSync(new URL("./" + nome, import.meta.url), txt);
+  console.log(`  ..  gravado testes/${nome} (${turnos.length} turnos, ${Math.round(txt.length / 1024)} KB)`);
+};
 
 /* ---------------- O QUE JÁ É MOTOR, PASSO A PASSO (28/10) ----------------
    Cada um devolve estado novo; nenhum muta o que recebe. */
@@ -246,9 +272,11 @@ const jogar = async (turnos = TURNOS) => {
   let E = inicio();
   let antes = null;
   const log = [];
+  let sessao = abrirASessao({ semente: "s10", estado: E, origem: "registo-s10-cena.json (a 10.ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
   for (let i = 0; i < turnos; i++) {
     const P = R.pautas[i];
     const passo = { i: i + 1, pendente: [], difere: [] };
+    const lugaresDaqui = PLANTA[E.cidadeAtual] || [];
     /* 1 · o turno: o que anda antes do Mestre */
     let moveu = null;
     if (TURNO) {
@@ -267,10 +295,12 @@ const jogar = async (turnos = TURNOS) => {
     if (moveu && (!bateCidade || !bateSitio)) {
       /* a régua pura moveu, e para outro sítio: é erro do motor, não falta dele */
       passo.difere.push(`o sítio pela frase levou a ${moveu}; o registo diz ${alvo.estrada ? "a estrada" : alvo.lugar || alvo.cidade || "—"}`);
+      passo.oraculo = true;
       E = { ...E, cidadeAtual: alvo.cidade || E.cidadeAtual, lugar: alvo.lugar ? { nome: alvo.lugar, distancia: "dentro", cidade: alvo.cidade } : null, jornada: alvo.estrada ? { destino: E.cidadeAtual } : null };
     } else if (!bateCidade || !bateSitio) {
       passo.pendente.push(!bateCidade ? `viagem ${E.cidadeAtual} → ${alvo.cidade} (turno: viajar)` : `sítio ${sitio || "—"} → ${alvo.estrada ? "a estrada" : alvo.lugar || "—"} (turno: moverParaLocal)`);
       /* o oráculo: o registo diz onde o turno a deixou */
+      passo.oraculo = true;
       E = { ...E, cidadeAtual: alvo.cidade || E.cidadeAtual, lugar: alvo.lugar ? { nome: alvo.lugar, distancia: "dentro", cidade: alvo.cidade } : null, jornada: alvo.estrada ? { destino: E.cidadeAtual } : null };
     }
     /* a gente que a pauta deste turno nomeia, o sistema tem de a conhecer */
@@ -294,6 +324,9 @@ const jogar = async (turnos = TURNOS) => {
     passo.emCena = linha;
     /* 4 · o aplicar: a resposta do Narrador (a gravada) */
     const resposta = R.respostas[i];
+    const ponto = pontoDaSorte({ dia: E.dia || 0, minuto: E.minuto || 0, falas: i });
+    const oferecidos = oferecidosDaLinha(P.emCena);
+    const juiz = vereditoDoJuiz(E, resposta, { narracoes: R.respostas.slice(0, i), oferecidos, frase: P.frase, pauta: pautaDoRegisto(P), turno: i + 1 });
     if (APLICAR) {
       try { const r = APLICAR(E, { narrativa: resposta, mudancas: {} }, { pedido: P.frase, envelopes: "", sorte: sorteDoTurno(E, "s10", i) }); if (r && r.estado) E = r.estado; else passo.avisoDoAplicar = "aplicar não devolveu { estado }"; } catch (e) { passo.avisoDoAplicar = "aplicar estourou: " + e.message; }
     } else passo.aplicar = "pendente (src/motor/aplicar.js ainda não existe)";
@@ -307,8 +340,15 @@ const jogar = async (turnos = TURNOS) => {
     E = aplicarOCronista(E, juizo.aceito);
     passo.jogou = !passo.pendente.length && !passo.difere.length;
     log.push(passo);
+    sessao = gravarOTurno(sessao, {
+      entrada: { frase: P.frase, lugaresDaqui }, sorte: { ponto },
+      pedido: { pauta: pautaDoRegisto(P), envelopes: "", nomesAMao: oferecidos },
+      narrador: { narrativa: resposta, mudancas: {} },
+      cronista: { proposta: prop, juizo: { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } },
+      juiz, estado: E,
+    });
   }
-  return { log, fim: E };
+  return { log, fim: E, sessao };
 };
 
 /* ============================================================ */
@@ -414,10 +454,13 @@ const jogarDoCronista = (ses) => {
      Zumbi enquanto a luta dura e esquece-o quando ela acaba. O oráculo põe-nos
      aqui, à parte do estado, e eles saem quando o registo os larga. */
   let daLuta = new Set();
+  let sessao = abrirASessao({ semente: ses, estado: E, origem: "registo-s8-s10-cronista.json (a " + ses.slice(1) + ".ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
   for (let i = 0; i < L.length - 1; i++) {
     const a = L[i], b = L[i + 1];
     const passo = { k: a.k, pendente: [], difere: [] };
     const env = (a.envelopes || []).join("\n");
+    const ponto = pontoDaSorte({ dia: E.dia || 0, minuto: E.minuto || 0, falas: i });
+    const juiz = vereditoDoJuiz(E, a.narrativa, { narracoes: L.slice(0, i).map((x) => x.narrativa), oferecidos: [], frase: a.frase, pauta: "", turno: i + 1 });
     const r = APLICAR(E, { narrativa: a.narrativa, mudancas: {} }, { pedido: a.frase, envelopes: env, sorte: sorteDoTurno(E, ses, i) });
     if (!r || !r.estado) { passo.difere.push("aplicar não devolveu { estado }"); log.push(passo); continue; }
     E = passarPeloRegisto(r.estado, a.narrativa, passo);
@@ -444,13 +487,20 @@ const jogarDoCronista = (ses) => {
       else passo.difere.push("o motor recusou: " + faltam.join(","));
       /* o oráculo: o registo diz que o jogo os conhecia */
       if (luta && !doCronista) daLuta = new Set([...daLuta, ...faltam.map(sem)]);
-      else E = { ...E, npcs: { ...E.npcs, ...Object.fromEntries(faltam.map((n) => [n, { nome: n }])) } };
+      else { passo.oraculo = true; E = { ...E, npcs: { ...E.npcs, ...Object.fromEntries(faltam.map((n) => [n, { nome: n }])) } }; }
     }
     if (sobram.length) passo.difere.push("o estado conhece o que o registo não conhecia: " + sobram.join(","));
     passo.jogou = !passo.pendente.length && !passo.difere.length;
     log.push(passo);
+    sessao = gravarOTurno(sessao, {
+      entrada: { frase: a.frase }, sorte: { ponto },
+      pedido: { pauta: "", envelopes: a.envelopes || [] },
+      narrador: { narrativa: a.narrativa, mudancas: {} },
+      cronista: { proposta: prop, juizo: { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } },
+      juiz, estado: E,
+    });
   }
-  return { log, fim: E };
+  return { log, fim: E, sessao };
 };
 const SESSOES_DO_CRONISTA = { s8: null, s9: null };
 for (const ses of Object.keys(SESSOES_DO_CRONISTA)) {
@@ -480,6 +530,49 @@ for (const ses of Object.keys(SESSOES_DO_CRONISTA)) {
      também), a corrida é de 11: o que a parte é o `turno` (secção 4). */
   if (APLICAR) t(`a meta da fase: 20 turnos seguidos iguais ao registo (a 8.ª: ${SESSOES_DO_CRONISTA.s8.maior}, a 9.ª: ${SESSOES_DO_CRONISTA.s9.maior})`, SESSOES_DO_CRONISTA.s8.maior >= 20 && SESSOES_DO_CRONISTA.s9.maior >= 20);
   if (APLICAR) t("e jogar duas vezes dá o mesmo jogo", ["s8", "s9"].every((x) => { const de = jogarDoCronista(x), ja = SESSOES_DO_CRONISTA[x]; return J({ log: de.log, fim: de.fim }) === J({ log: ja.log, fim: ja.fim }); }));
+}
+
+sec("6. A SESSÃO COMO ARQUIVO — o replay diverge onde o oráculo mexeu no estado, e só ali");
+/* O arquivo de cada sessão foi gravado turno a turno acima (src/sessao.js).
+   O replay corre os passos puros sobre o estado GRAVADO do turno anterior,
+   com as respostas gravadas, e compara com o gravado do fim do turno. Um
+   turno que este jogo jogou sem oráculo tem de reproduzir; um em que o
+   oráculo pôs no estado o que o motor não pôs (o sítio, a viagem, o nome à
+   mão que a pauta não ofereceu) pode divergir — e, quando diverge, é num
+   desses. Dois casos reproduzem sem que este jogo os jogue, e a suíte
+   nomeia-os em vez de os esconder:
+     · a LUTA é o único pendente que o oráculo deixa FORA do estado
+       (`daLuta`): o arquivo não tem ali o que divergir;
+     · o oráculo que mexe ANTES do Mestre e cujo toque não chega ao fim do
+       turno: em M69 da 10.ª ele põe o herói na estalagem, e o lugar do
+       Cronista põe-no lá outra vez — o fim do turno sai igual, e é o fim
+       do turno que o arquivo guarda. */
+{
+  const { estadoNoTurno } = await import("../src/sessao.js");
+  const { saveDoEstado } = await import("../src/estado.js");
+  const SESSOES = { s10: toda, s8: SESSOES_DO_CRONISTA.s8, s9: SESSOES_DO_CRONISTA.s9 };
+  let reproduzidos = 0, jogados = 0, total = 0;
+  const foraDoEstado = [], igualNoFim = [];
+  for (const [ses, r] of Object.entries(SESSOES)) {
+    if (!r || !r.sessao) { t(`${ses}: sem arquivo — o passo espera src/motor/aplicar.js`, true); continue; }
+    const v = validarASessao(r.sessao);
+    t(`${ses}: o arquivo gravado é válido (${r.sessao.turnos.length} turnos)`, v.ok, J(v.erros.slice(0, 3)));
+    t(`${ses}: e refaz o estado do fim do jogo, byte a byte`, J(estadoNoTurno(r.sessao, r.sessao.turnos.length)) === J(JSON.parse(J(saveDoEstado(r.fim)))));
+    const rep = reproduzirASessao(r.sessao);
+    const comOraculo = r.log.map((p, i) => (p.oraculo ? i + 1 : null)).filter(Boolean);
+    t(`${ses}: o replay só diverge em turnos em que o oráculo mexeu no estado (${rep.divergentes.length} de ${comOraculo.length})`, rep.divergentes.every((n) => comOraculo.includes(n)), `replay: ${rep.divergentes.join(",")} · oráculo: ${comOraculo.join(",")}`);
+    const semOraculo = r.log.map((p, i) => (!p.jogou && !p.oraculo ? `${ses}#${i + 1}` : null)).filter(Boolean);
+    foraDoEstado.push(...semOraculo);
+    igualNoFim.push(...comOraculo.filter((n) => !rep.divergentes.includes(n)).map((n) => `${ses}#${n}`));
+    t(`${ses}: todo turno que diverge diz porquê, e o porquê é do App (o passo antes do Mestre, a gente do turno)`, rep.turnos.filter((x) => !x.igual).every((x) => x.porque.length && x.porque.every((p) => /\bApp\b/.test(p))), J(rep.turnos.filter((x) => !x.igual).map((x) => [x.n, x.porque])).slice(0, 300));
+    console.log(`  ..  ${ses}: o replay reproduz ${rep.reproduzidos} de ${rep.turnos.length}; diverge em ${rep.divergentes.join(",") || "nenhum"}`);
+    reproduzidos += rep.reproduzidos; jogados += r.log.filter((p) => p.jogou).length; total += r.log.length;
+    if (GRAVAR) escreverASessao(`sessao-${ses}.json`, r.sessao);
+  }
+  console.log(`  ..  o replay reproduz ${reproduzidos} de ${total}; este jogo joga ${jogados} de ${total} sem oráculo; a diferença: a luta, fora do estado (${foraDoEstado.join(", ") || "nenhum"}), e o oráculo que não chega ao fim do turno (${igualNoFim.join(", ") || "nenhum"})`);
+  /* MEDIDA (28/10, T3-B): 180 reproduzidos, 175 jogados — os 4 da luta da
+     8.ª e o M69 da 10.ª. */
+  t(`e a diferença entre os dois são esses ${foraDoEstado.length + igualNoFim.length}, e só eles`, reproduzidos - jogados === foraDoEstado.length + igualNoFim.length);
 }
 
 console.log(`\njogar-em-node: ${ok} passaram, ${mal} falharam`);

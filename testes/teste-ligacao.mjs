@@ -233,6 +233,15 @@ sec("1. NENHUM MÓDULO MUDO");
        importa `julgarAProsa` e monta a entrada com a foto de antes de
        aplicar; o App grava o veredito no save (`fidelidade`, ao lado do
        custo) e na consola. A entrada saiu, e a lista voltou a ficar VAZIA. */
+    /* 28/10 (Fase T, T3-B · a sessão como arquivo): `sessao.js` nasce no
+       backend — o formato do arquivo de uma sessão, o gravador puro da linha
+       de cada turno (gravarOTurno), o validador e o replay. Quem GRAVA não é
+       ele: é a fiação no App, da trilha A, numa fatia futura (o cabeçalho de
+       sessao.js diz o que ela tem de entregar por turno). Até lá os leitores
+       são as suítes (`teste-sessao.mjs`, `jogar-em-node.mjs`) e o executável
+       `replay.mjs`. A entrada sai quando o App o importar, e a lista volta a
+       ficar VAZIA. */
+    "sessao.js": "a fiação do App (trilha A, o oficial): gravarOTurno no fim de cada turno",
   };
   const mudos = [];
   for (const f of arqs) {
