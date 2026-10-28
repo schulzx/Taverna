@@ -81,8 +81,14 @@ sec("2. O ESPÓLIO REVELADO — raro para cima, e só");
      fechar o modal sem ler não pode custar o item */
   /* (MOVIDA, 28/10, T1-A 3.ª fatia: a ordem é a dos efeitos do motor — o
      `loot` antes do `espolio` —, e o App aplica-os na ordem) */
-  const efs = achado("lendario").map((e) => e.tipo);
-  t("o item entra na mochila antes da revelação", efs.indexOf("loot") >= 0 && efs.indexOf("loot") < efs.indexOf("espolio") && /else if \(ef\.tipo === "loot"\) setPersonagem\(\(p\) => \(\{ \.\.\.p, equipamento: \[\.\.\.\(p\.equipamento \|\| \[\]\), ef\.item\] \}\)\);/.test(APP));
+  /* (MOVIDA de novo, 28/10, T1-A 4.ª fatia: o `loot` era uma função
+     atualizadora da ficha, e o `setPersonagem(pers)` do fim do turno apagava
+     o item — a revelação dizia "Já está na sua mochila" e a mochila estava
+     vazia. Agora o item entra na ficha do TURNO, a que o App grava; a prova é
+     que o item da revelação está nela, e que já não há função atualizadora) */
+  const sl = aplicarOsSinais({ personagem: { nivel: 5 }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["loot:lendario"] } }, {});
+  const revelado = (sl.efeitos.find((e) => e.tipo === "espolio") || {}).item;
+  t("o item entra na mochila antes da revelação", !!revelado && (sl.estado.personagem.equipamento || []).includes(revelado) && !/ef.tipo === "loot"/.test(APP));
   t("o brilho pulsa pelo CSS da casa", /\.tv-reliquia \{ animation: tvReliquia/.test(CSS));
 }
 

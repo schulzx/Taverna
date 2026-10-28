@@ -61,7 +61,7 @@ function oAppAplica(A, efeitos) {
     else if (ef.tipo === "sinalViagem") A.sinalViagem = ef.destino;
     else if (ef.tipo === "sinalMasmorra") A.sinalMasmorra = ef.nome;
     else if (ef.tipo === "sinalRaid") A.sinalRaid = ef.nome;
-    else if (ef.tipo === "loot") A.fichaDoReact = { ...A.fichaDoReact, equipamento: [...(A.fichaDoReact.equipamento || []), ef.item] };
+    /* o `loot` saiu (4.ª fatia): o achado vem dentro da ficha do turno */
     else if (ef.tipo === "espolio") A.espolio = ef.item;
     /* o aplicar e o registo (a fusão, secção 9) */
     else if (ef.tipo === "textura") A.textura = { ...A.textura, ganho: true };
@@ -343,6 +343,8 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
       const s = peca(est(), c.resp, ctx);
       msgs.push(...s.msgs); nota = notaComOTurno(nota, s.paraOCronista);
       oAppAplica(A, s.efeitos);
+      /* a ficha do turno anda com as peças (4.ª fatia): o milagre e o achado do sinal caem nela */
+      if (s.estado && "personagem" in s.estado) A.pers = s.estado.personagem;
       fotos[nome] = fotoDoMotor(A, msgs, nota);
     }
     return { fotos, calou: A.calou };
@@ -468,6 +470,36 @@ sec("9. o turno numa ordem só — a fusão, byte a byte (T1-A, 3.ª fatia)");
   t("o App chama o turno fundido e aplica os efeitos num lugar só", /const saida = aplicarOTurno\(\{/.test(corpoAR) && (corpoAR.match(/aplicarOsEfeitos\(/g) || []).length === 1);
   t("as peças já não são chamadas uma a uma no App", !/aplicarOMapa\(\{|aplicarAsMissoes\(\{|aplicarOsSinais\(\{|aplicarORegisto\(\{/.test(APP));
   t("a base do nome do App aceita o estado de agora", /const baseDoNome = \(sobre = \{\}\) => \{/.test(APP));
+}
+
+sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)");
+{
+  /* o herói do turno: a ficha que o App grava no fim (`setPersonagem(pers)`)
+     é a do motor — tudo o que o turno dá ao herói tem de estar NELA */
+  const heroi = () => ({ nome: "Vera", nivel: 12, vida: 6, vidaMax: 30, grupo: [], efeitos: [], condicoes: [], equipamento: [] });
+  const estadoDoTurno = (sobre = {}) => ({ personagem: heroi(), fichaDoRef: { ...heroi(), vida: 2 }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] },
+    canone: {}, npcs: {}, npcTurno: 0, devocao: { cidades: {}, andarilhos: 0 }, eventos: {}, historia: {}, divindade: { despertar: true, fieis: 9000, pf: 50, iconeFe: "🙏" },
+    contadores: {}, dia: 1, ...sobre });
+  const ctxDoTurno = () => ({ baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" }, sorteDoTurno: sorteDoCaso("defeitos|1") });
+  /* defeito 2 de 28/10: o achado entrava por função atualizadora e o
+     `setPersonagem(pers)` logo abaixo apagava-o — a tela dizia "Já está na
+     sua mochila" e o save ficava com o equipamento vazio */
+  {
+    const s = aplicarOTurno(estadoDoTurno(), { narrativa: "x", mudancas: { sinais: ["loot:raro"] } }, ctxDoTurno());
+    const achado = (s.msgs.find((m) => /◆ Achado/.test(m)) || "").replace(/^◆ Achado: /, "").replace(/ \(.*$/, "");
+    t("o achado do sinal está na ficha do turno (a que o App grava)", !!achado && (s.estado.personagem.equipamento || []).some((it) => it.nome === achado));
+    t("…e não depende de uma função atualizadora que a ficha do turno sobrescreve", !s.efeitos.some((e) => e.tipo === "loot"));
+  }
+  /* o mesmo, no milagre do sinal: a cura saía sobre a ficha do ref, e a
+     ficha do turno (sem a cura) era a que ficava */
+  {
+    const s = aplicarOTurno(estadoDoTurno(), { narrativa: "x", mudancas: { sinais: ["milagre:cura", "loot:comum"] } }, ctxDoTurno());
+    const p = s.estado.personagem;
+    const doMilagre = s.efeitos.filter((e) => e.tipo === "ficha").map((e) => e.personagem);
+    t("a cura do milagre do sinal está na ficha do turno", p.vida > heroi().vida && doMilagre.length === 1 && doMilagre[0].vida === p.vida);
+    t("…calculada sobre a ficha do turno (6 + 15), não sobre a do ref (2 + 15)", p.vida === 21);
+    t("…e o achado do mesmo turno vem por cima dela", (p.equipamento || []).length === 1 && p.vida === 21);
+  }
 }
 
 console.log(`\nmotor · aplicar: ${bons} passaram, ${maus} falharam`);

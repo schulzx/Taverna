@@ -549,8 +549,7 @@ export function aplicarAsMissoes(estado, resposta, ctx = {}) {
    lugar, jornada, combate, acampado, masmorra, raid, dia, contadores,
    nivelDaFama }; `ctx`: { mundo, sorteDoTurno }.
    Os efeitos novos: `divindade`, `ficha` (o milagre), `combate`,
-   `sinalViagem`, `sinalMasmorra`, `sinalRaid`, `loot` (o achado entra pela
-   função atualizadora da ficha, como entrava), `espolio` (raro para cima
+   `sinalViagem`, `sinalMasmorra`, `sinalRaid`, `espolio` (raro para cima
    abre a revelação, v9.163), e o prompt remontado quando a fé ascende.
    ============================================================ */
 export function aplicarOsSinais(estado, resposta, ctx = {}) {
@@ -559,7 +558,9 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
   const resp = objeto(resposta);
   const msgs = [], notas = [], efeitosDoTurno = [];
   const ef = (x) => { efeitosDoTurno.push(x); };
-  const pers = e0.personagem;
+  /* a ficha do TURNO anda com os sinais (4.ª fatia): o milagre e o achado
+     mudam-na aqui, porque é ela que o App grava no fim do turno */
+  let pers = e0.personagem;
   const mapa = e0.mapa;
   let fichaDoRef = e0.fichaDoRef, divindade = e0.divindade, devocao = e0.devocao, combate = e0.combate;
   const fama = () => calcularFama(e0.contadores, e0.nivelDaFama, dominiosDe(mapa).length);
@@ -580,8 +581,16 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
         divindade = r.divindade; devocao = r.devocao; efeitosDoTurno.push(...r.efeitos); notas.push(...r.notas);
         msgs.push(...r.msgs);
       } else if (chave === "milagre" && dvAtual && dvAtual.despertar) {
-        const r = milagreInvocado({ ...daFe(), fichaDoRef, combate, fama }, arg.toLowerCase(), "mestre");
-        divindade = r.divindade; devocao = r.devocao; fichaDoRef = r.ficha; combate = r.combate;
+        /* O MILAGRE CAI NA FICHA DO TURNO (4.ª fatia, o defeito 2 de 28/10).
+           Ele era calculado sobre a ficha do ref — a de ANTES do relógio e do
+           débito deste turno —, e o `setPersonagem(pers)` do fim do turno
+           gravava por cima a ficha do turno, sem a cura: o Mestre narrava uma
+           cura que a ficha não tinha. Agora a base é a ficha do turno (o ref
+           só quando não há ficha), e o resultado volta a ser ela. */
+        const base = pers || fichaDoRef;
+        const r = milagreInvocado({ ...daFe(), fichaDoRef: base, combate, fama }, arg.toLowerCase(), "mestre");
+        divindade = r.divindade; devocao = r.devocao; combate = r.combate;
+        if (r.ficha !== base) { fichaDoRef = r.ficha; if (pers) pers = r.ficha; }
         efeitosDoTurno.push(...r.efeitos); notas.push(...r.notas);
         r.msgs.forEach((m2) => msgs.push(m2.texto));
       } else if (chave === "viagem") {
@@ -633,7 +642,14 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
       } else if (chave === "loot") {
         const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
         const it = gerarLoot(rar, { nivel: (pers || fichaDoRef || {}).nivel || 1, lex: mundoDe(op).lex, rnd: typeof op.sorteDoTurno === "function" ? op.sorteDoTurno("loot") : undefined });
-        ef({ tipo: "loot", item: it });
+        /* O ACHADO ENTRA NA FICHA DO TURNO (4.ª fatia, o defeito 2 de 28/10).
+           Entrava por uma função atualizadora da ficha (`setPersonagem(p => …)`),
+           e o `setPersonagem(pers)` do fim do turno, com a ficha sem ele,
+           apagava-o: a tela dizia "Já está na sua mochila" e o save tinha a
+           mochila vazia. Sem ficha do turno (só quem chama a peça sozinha), o
+           achado vai à do ref, como efeito `ficha` (o ref, a tela e o save). */
+        if (pers) pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
+        else if (fichaDoRef) { fichaDoRef = { ...fichaDoRef, equipamento: [...(fichaDoRef.equipamento || []), it] }; ef({ tipo: "ficha", personagem: fichaDoRef }); }
         /* raro para cima abre a REVELAÇÃO (v9.163); o comum fica na linha
            de sistema, que é o tamanho dele */
         if (["raro", "epico", "lendario", "unico"].includes(it.raridade)) ef({ tipo: "espolio", item: it });
@@ -648,7 +664,7 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
       }
     }
   }
-  return { estado: { ...e0, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
+  return { estado: { ...e0, personagem: pers, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
 }
 
 /* ============================================================

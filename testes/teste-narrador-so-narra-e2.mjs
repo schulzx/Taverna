@@ -159,7 +159,7 @@ sec("5. o App continua a ler os campos (tolerante: a instrução saiu, o leitor 
     const s = meio.aplicarOsSinais({ personagem: { nome: "Vera", nivel: 15 }, fichaDoRef: { nome: "Vera", vida: 5, vidaMax: 20, grupo: [] }, divindade: { despertar: true, fieis: 2000, pf: 30 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 2, contadores: {}, nivelDaFama: 1, jornada: { de: "x" } },
       { narrativa: "x", mudancas: { sinais: ["milagre:cura", "fe:feito", "viagem:Porto", "masmorra:o Poço", "loot:comum"] } }, {});
     const tipos = s.efeitos.map((e) => e.tipo);
-    t("os sinais (fé, milagre, viagem, masmorra, loot)", s.msgs.some((m) => /fiéis/.test(m)) && tipos.includes("ficha") && tipos.includes("sinalViagem") && tipos.includes("sinalMasmorra") && tipos.includes("loot") && /aplicarOTurno\(\{/.test(app)); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) */
+    t("os sinais (fé, milagre, viagem, masmorra, loot)", s.msgs.some((m) => /fiéis/.test(m)) && tipos.includes("ficha") && tipos.includes("sinalViagem") && tipos.includes("sinalMasmorra") && (s.estado.personagem.equipamento || []).length === 1 && /aplicarOTurno\(\{/.test(app)); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) (MOVIDA, 28/10, 4.ª fatia: o achado já não é o efeito `loot` — vem dentro da ficha do turno, porque o efeito era apagado pelo `setPersonagem(pers)` do fim do turno) */
   }
 }
 

@@ -10528,7 +10528,10 @@ export default function Taverna() {
         /* as missões e os sinais (T1-A, 3.ª fatia): o deus, a ficha que o
            milagre muda (o ref, a tela e o save juntos, v9.32), os eventos, o
            arco, a lista das missões redesenhada, as portas que os sinais
-           pedem, e o achado (pela função atualizadora, como sempre entrou) */
+           pedem, e a revelação do achado. O achado em si já não é efeito
+           (4.ª fatia): entrava por uma função atualizadora, e o
+           `setPersonagem(pers)` do fim do turno apagava-o; agora vem dentro
+           da ficha do turno, que é a que se grava. */
         else if (ef.tipo === "divindade") { divindadeRef.current = ef.divindade; setDivindade(ef.divindade); }
         else if (ef.tipo === "ficha") { personagemRef.current = ef.personagem; setPersonagem(ef.personagem); salvar({ personagem: ef.personagem }); }
         else if (ef.tipo === "eventos") { eventosRef.current = ef.eventos; setEventos(ef.eventos); }
@@ -10537,7 +10540,6 @@ export default function Taverna() {
         else if (ef.tipo === "sinalViagem") sinalViagemRef.current = ef.destino;
         else if (ef.tipo === "sinalMasmorra") sinalMasmorraRef.current = ef.nome;
         else if (ef.tipo === "sinalRaid") sinalRaidRef.current = ef.nome;
-        else if (ef.tipo === "loot") setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), ef.item] }));
         else if (ef.tipo === "espolio") setEspolioRevelado(ef.item);
         else if (ef.tipo === "remontarPrompt") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }

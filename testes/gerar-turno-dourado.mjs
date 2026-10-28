@@ -43,11 +43,34 @@ const fechos = [
   corte("  const concederDadivas = (pers, msgs) => {", "  /* Botão de milagre (v9.28)"),
 ].join("\n");
 
+/* OS CONSERTOS DA 4.ª FATIA (28/10), declarados um a um: cada um é um
+   defeito que a fila de antes tinha (achado e reproduzido de propósito na
+   3.ª fatia), consertado no motor de hoje; o dourado faz a MESMA troca no
+   código de lá — no App ou no motor do mesmo commit —, e só ela. O commit
+   de cada um diz quantos dos 275 casos mudaram com ela. */
+const texto = { App: null, aplicar: doGit("src/motor/aplicar.js"), "meio-do-turno": doGit("src/motor/meio-do-turno.js") };
+let turnoTrocado = turno;
+const consertar = (onde, de, para) => {
+  const alvo = onde === "App" ? turnoTrocado : texto[onde];
+  if (alvo.split(de).length !== 2) throw new Error(`o conserto declarado não bate uma vez em ${onde}: ` + de.slice(0, 60));
+  if (onde === "App") turnoTrocado = alvo.replace(de, para); else texto[onde] = alvo.replace(de, para);
+};
+/* 1. o milagre e o achado do sinal caem na ficha do TURNO, a que o App
+   grava no fim (`setPersonagem(pers)`), e o App lê-a de volta dos sinais */
+consertar("meio-do-turno", "  const pers = e0.personagem;\n  const mapa = e0.mapa;\n  let fichaDoRef = e0.fichaDoRef, divindade", "  let pers = e0.personagem;\n  const mapa = e0.mapa;\n  let fichaDoRef = e0.fichaDoRef, divindade");
+consertar("meio-do-turno", "        const r = milagreInvocado({ ...daFe(), fichaDoRef, combate, fama }, arg.toLowerCase(), \"mestre\");\n        divindade = r.divindade; devocao = r.devocao; fichaDoRef = r.ficha; combate = r.combate;",
+  "        const base = pers || fichaDoRef;\n        const r = milagreInvocado({ ...daFe(), fichaDoRef: base, combate, fama }, arg.toLowerCase(), \"mestre\");\n        divindade = r.divindade; devocao = r.devocao; combate = r.combate;\n        if (r.ficha !== base) { fichaDoRef = r.ficha; if (pers) pers = r.ficha; }");
+consertar("meio-do-turno", "        ef({ tipo: \"loot\", item: it });",
+  "        if (pers) pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };\n        else if (fichaDoRef) { fichaDoRef = { ...fichaDoRef, equipamento: [...(fichaDoRef.equipamento || []), it] }; ef({ tipo: \"ficha\", personagem: fichaDoRef }); }");
+consertar("meio-do-turno", "  return { estado: { ...e0, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };",
+  "  return { estado: { ...e0, personagem: pers, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };");
+consertar("App", "      msgs.push(...dosSinais.msgs);\n      aplicarOsEfeitos(dosSinais);", "      msgs.push(...dosSinais.msgs);\n      aplicarOsEfeitos(dosSinais);\n      pers = dosSinais.estado.personagem;");
+
 /* o motor do mesmo commit, ao lado do de hoje, com nome de rascunho */
 const rascunho = {};
 for (const nome of ["aplicar", "meio-do-turno"]) {
   const f = path.join(RAIZ, "src", "motor", `__dourado-${nome}.js`);
-  fs.writeFileSync(f, doGit(`src/motor/${nome}.js`));
+  fs.writeFileSync(f, texto[nome]);
   rascunho[nome] = f;
 }
 let MOTOR;
@@ -61,7 +84,7 @@ try {
 
 const velho = new Function("S", "opts", `with (S) {
 ${fechos}
-${turno}
+${turnoTrocado}
 __fim(pers, msgs);
 }`);
 

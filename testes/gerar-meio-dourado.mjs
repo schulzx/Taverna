@@ -28,6 +28,11 @@
    do turno (o defeito está no diário de 28/10); fora disto, é o código de lá
    à letra. O `famaAtual` fica como era (o seu `personagem && …` cai no 1).
 
+   Na 4.ª fatia (28/10), os defeitos que a 3.ª achou e reproduziu de
+   propósito foram consertados no motor, cada um num commit; cada conserto
+   entra aqui como uma troca declarada (`consertar`), com o porquê, e o
+   commit diz quantos dos 275 casos mudaram com ela.
+
    uso: node testes/gerar-meio-dourado.mjs [commit]  */
 import fs from "node:fs";
 import path from "node:path";
@@ -76,6 +81,21 @@ const troca = (de, para) => {
 };
 troca("gdMaximoPorNivel(personagem.nivel || 1)", "gdMaximoPorNivel(__fichaDoTurno().nivel || 1)");
 troca("montarSystemPrompt(nomeCampanha, mundo, personagem,", "montarSystemPrompt(nomeCampanha, mundo, __fichaDoTurno(),");
+
+/* OS CONSERTOS DA 4.ª FATIA (28/10), declarados um a um: cada um é o
+   defeito que a fila de antes tinha, consertado no motor; o dourado faz a
+   mesma troca no código de lá, e só ela — o resto é à letra. */
+const consertar = (bloco, de, para) => {
+  if (seg[bloco].split(de).length !== 2) throw new Error(`o conserto declarado não bate uma vez em ${bloco}: ` + de.slice(0, 60));
+  seg[bloco] = seg[bloco].replace(de, para);
+};
+/* 1. o milagre e o achado do sinal caem na ficha do TURNO (`pers`), a que o
+   App grava no fim — e não na do ref (o milagre) nem numa função
+   atualizadora que o `setPersonagem(pers)` apagava (o achado) */
+consertar("sinais", "invocarMilagre(arg.toLowerCase(), \"mestre\").forEach((m2) => msgs.push(m2.texto));",
+  "{ const __ref = personagemRef.current; const __base = pers || __ref; personagemRef.current = __base; invocarMilagre(arg.toLowerCase(), \"mestre\").forEach((m2) => msgs.push(m2.texto)); if (personagemRef.current !== __base) { if (pers) pers = personagemRef.current; } else personagemRef.current = __ref; }");
+consertar("sinais", "setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));",
+  "if (pers) pers = { ...pers, equipamento: [...(pers.equipamento || []), it] }; else if (personagemRef.current) { const __n = { ...personagemRef.current, equipamento: [...(personagemRef.current.equipamento || []), it] }; personagemRef.current = __n; setPersonagem(__n); salvar({ personagem: __n }); }");
 const fechos = [
   corte("  const cidadeDoMapa = (nome) =>", "\n\n"),
   corte("  const cidadeSobOsPes = () => {", "  /* Todo lugar a que se pode ir daqui a pé"),
