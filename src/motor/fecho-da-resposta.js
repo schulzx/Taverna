@@ -30,6 +30,8 @@
      aQuaseMorte({ persDoEnvio, pers, dia }, ctx)
        → { pers, erro? }
        ctx: { aplicar, sorteDoTurno, bumpCont, aplicarVinculo, checarConquistas }
+     aMesaDoTurno({ textura, mudancas, combate, mesa, folego, lugares })
+       → { mesa, folego, erroFolego? }   (sem portas: só conta)
 
    Os efeitos: `nota` (linhas ao Narrador), `textura` (o que a mesa lê do
    turno, somado à de agora), `tela` (linhas do sistema, já na tela) e
@@ -38,6 +40,8 @@
 import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional } from "../emboscada.js";
 import { folegoSegura } from "../fuga.js";
 import { sortearCicatriz, CICATRIZ_MAX } from "../danos.js";
+import { anotarTurno } from "../mestria.js";
+import { folegoDepoisDoTurno } from "../fuga.js";
 
 /* os efeitos pendentes de uma peça: aplicados antes de cada porta, e no fim */
 function pendentes(ctx) {
@@ -165,4 +169,40 @@ export function aQuaseMorte(estado, ctx) {
   }
   descarregar();
   return { pers };
+}
+
+/* ---------------- O TURNO FECHA NA MESA (v9.71) ----------------
+   Aqui, e num lugar só. Este é o único ponto por onde passa TODO turno que
+   produziu narração — teclado, botão, luta, masmorra —, e a mesa precisa de
+   exatamente um registro por turno: um dado e um perigo no mesmo turno não
+   podem virar dois turnos, ou a temperatura sobe pelo dobro e o mestre
+   começa a segurar dado que não devia.
+
+   `ganho` sai das duas fontes juntas: o que o Mestre declarou e o que as
+   peças do sistema marcaram na textura. Sem as duas, um turno em que o herói
+   achou o tesouro pela cobrança contaria como turno vazio, e a cena
+   esfriaria no papel enquanto esquentava na mesa.
+
+   E O FÔLEGO DA FUGA anda com o turno: quem fugiu e continua no mesmo sítio
+   segue protegido do que deixou para trás, e quem saiu dali perde-o.
+
+   Ler a mesa nunca pode custar o turno: se a conta estoura, a mesa fica
+   como estava (calava, e cala). O fôlego que estoura também fica, e o erro
+   volta em `erroFolego` para o App o entregar ao `calou`, como sempre. */
+export function aMesaDoTurno(estado) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  let mesa = e0.mesa, folego = e0.folego, erroFolego = null;
+  try {
+    const tx = e0.textura || {};
+    const mud = e0.mudancas || {};
+    const ganhou = !!tx.ganho || Number(mud.moedas) > 0 || Number(mud.xp) > 0
+      || (Array.isArray(mud.adicionar_itens) && mud.adicionar_itens.length > 0);
+    mesa = anotarTurno(e0.mesa, {
+      rolou: !!tx.rolou, perigo: !!tx.perigo, ganho: ganhou,
+      luta: !!e0.combate,
+      pilar: e0.combate ? "combate" : (tx.pilar || null),
+    });
+  } catch { mesa = e0.mesa; /* ler a mesa nunca pode custar o turno */ }
+  try { folego = folegoDepoisDoTurno(e0.folego, e0.lugares); } catch (e) { folego = e0.folego; erroFolego = e; }
+  return { mesa, folego, ...(erroFolego ? { erroFolego } : {}) };
 }

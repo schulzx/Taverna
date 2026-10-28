@@ -21,9 +21,9 @@ const app = execSync(`git show ${COMMIT}:src/App.jsx`, { cwd: path.join(AQUI, ".
 const r = recorteDeAntes(app);
 const casos = casosDoFecho(N_CASOS);
 const saida = { commit: COMMIT, casos: N_CASOS, blocos: {} };
-for (const bloco of ["perigo", "quaseMorte"]) {
+for (const bloco of ["perigo", "quaseMorte", "mesa"]) {
   const fn = blocoComoFuncao(r.orgaos, r[bloco]);
-  saida.blocos[bloco] = casos.map((k) => fotoDoFecho(correrOBloco(fn, k, { novo: false })));
+  saida.blocos[bloco] = casos.map((k) => fotoDoFecho(correrOBloco(fn, k, { novo: false, blocoDaMesa: bloco === "mesa" })));
   const erros = saida.blocos[bloco].filter((f) => f.erro).length;
   console.log(`${bloco}: ${N_CASOS} fotos, ${erros} estouram`);
 }

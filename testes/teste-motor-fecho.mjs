@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import { N_CASOS, sorteDoCaso } from "./combate-casos.mjs";
 import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoFecho, casosDoFecho, TROCAS_DECLARADAS } from "./fecho-bloco.mjs";
-import { oPerigoDaResposta, aQuaseMorte } from "../src/motor/fecho-da-resposta.js";
+import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "../src/motor/fecho-da-resposta.js";
 import { osVinculos } from "../src/motor/combate-do-turno.js";
 
 let ok = 0, mal = 0;
@@ -27,16 +27,17 @@ const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const casos = casosDoFecho(N_CASOS);
 const recorte = recorteDeHoje(APP);
-const hoje = { perigo: blocoComoFuncao(recorte.orgaos, recorte.perigo), quaseMorte: blocoComoFuncao(recorte.orgaos, recorte.quaseMorte) };
-const fotosDeHoje = (bloco, op = {}) => casos.map((k, i) => fotoDoFecho(correrOBloco(op.fn || hoje[bloco], k, { novo: true, ...(op.porCaso ? op.porCaso(k, i) : {}) })));
+const hoje = { perigo: blocoComoFuncao(recorte.orgaos, recorte.perigo), quaseMorte: blocoComoFuncao(recorte.orgaos, recorte.quaseMorte), mesa: blocoComoFuncao(recorte.orgaos, recorte.mesa) };
+const fotosDeHoje = (bloco, op = {}) => casos.map((k, i) => fotoDoFecho(correrOBloco(op.fn || hoje[bloco], k, { novo: true, blocoDaMesa: bloco === "mesa", ...(op.porCaso ? op.porCaso(k, i) : {}) })));
 const divergem = (bloco, novas) => novas.filter((f, i) => !igual(f, D.blocos[bloco][i])).length;
 
-sec("1 · os dois blocos, byte a byte contra os de antes");
-t(`o dourado é do commit de antes (3ec3364), ${N_CASOS} casos em cada bloco`, D.commit === "3ec3364" && ["perigo", "quaseMorte"].every((b) => (D.blocos[b] || []).length === N_CASOS));
+/* (movido, T1-A 7.ª fatia: a mesa e o fôlego são o terceiro bloco) */
+sec("1 · os três blocos, byte a byte contra os de antes");
+t(`o dourado é do commit de antes (3ec3364), ${N_CASOS} casos em cada bloco`, D.commit === "3ec3364" && ["perigo", "quaseMorte", "mesa"].every((b) => (D.blocos[b] || []).length === N_CASOS));
 /* o dourado é o App de antes COM as trocas declaradas em fecho-bloco.mjs (hoje uma: a emboscada vai à tela, §2b) */
 /* (movido, T1-A 7.ª fatia, defeito: a segunda troca, o buraco no grupo, na quase-morte) */
 t("com 2 trocas declaradas, uma no perigo e uma na quase-morte, e com o porquê escrito", TROCAS_DECLARADAS.perigo.length === 1 && TROCAS_DECLARADAS.quaseMorte.length === 1 && [...TROCAS_DECLARADAS.perigo, ...TROCAS_DECLARADAS.quaseMorte].every(([de, para]) => de && para && de !== para));
-for (const bloco of ["perigo", "quaseMorte"]) {
+for (const bloco of ["perigo", "quaseMorte", "mesa"]) {
   const fotos = D.blocos[bloco];
   const novas = fotosDeHoje(bloco);
   const batem = novas.filter((f, i) => igual(f, fotos[i])).length;
@@ -64,6 +65,14 @@ for (const bloco of ["perigo", "quaseMorte"]) {
 
 sec("2 · a prova morde");
 {
+  /* a mesa: o retrato da mesa de antes do turno, e a luta esquecida */
+  const trocadoM = (de, para) => blocoComoFuncao(recorte.orgaos, recorte.mesa.replace(de, para));
+  const semLutaM = divergem("mesa", fotosDeHoje("mesa", { fn: trocadoM("combate: combateRef.current", "combate: null") }));
+  t(`a mesa sem a luta aberta: ${semLutaM} fotos divergem`, semLutaM > 30);
+  const semGanho = divergem("mesa", fotosDeHoje("mesa", { fn: trocadoM("mudancas: resp && resp.mudancas", "mudancas: null") }));
+  t(`a mesa sem as mudanças do Mestre: ${semGanho} fotos divergem (o ganho declarado)`, semGanho > 30);
+  const semLugar = divergem("mesa", fotosDeHoje("mesa", { fn: trocadoM("lugares: ondeEstou()", "lugares: []") }));
+  t(`o fôlego sem os sítios de agora: ${semLugar} fotos divergem`, semLugar > 20);
   const outra = (bloco) => divergem(bloco, fotosDeHoje(bloco, { porCaso: (k, i) => ({ sorte: sorteDoCaso(casos[(i + 1) % N_CASOS]) }) }));
   const q = outra("quaseMorte");
   t(`com a sorte de outro caso, ${q} fotos da quase-morte divergem`, q > 15);
@@ -108,6 +117,14 @@ sec("2b · a emboscada chega à tela (defeito achado na 7.ª fatia)");
 
 sec("3 · as peças, jogadas");
 {
+  const m0 = { turnos: [], avisados: [], desdeFio: 2 };
+  const r = aMesaDoTurno({ textura: { rolou: true }, mudancas: { moedas: 5 }, combate: null, mesa: m0, folego: null, lugares: [] });
+  t("a mesa anota um turno: o dado, o ganho que o Mestre declarou, e a mesa de entrada fica", r.mesa.turnos.length === 1 && r.mesa.turnos[0].rolou && r.mesa.turnos[0].ganho && !r.mesa.turnos[0].luta && r.mesa.desdeFio === 3 && m0.turnos.length === 0 && r.folego === null && !r.erroFolego);
+  const l = aMesaDoTurno({ textura: {}, mudancas: null, combate: { inimigos: [] }, mesa: null, folego: { lugares: ["a praça"], deixados: ["Lobo"], naResposta: true }, lugares: ["a praça"] });
+  t("com a luta aberta, o pilar é o combate; e o fôlego que segue no sítio continua, sem a marca da resposta", l.mesa.turnos[0].luta && l.mesa.turnos[0].pilar === "combate" && l.folego && l.folego.naResposta === false && l.folego.deixados[0] === "Lobo");
+  t("lixo não estoura", !!aMesaDoTurno(null) && !!aMesaDoTurno({ textura: null, mudancas: "x" }));
+}
+{
   const efs = [];
   const r = oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: ["a praça"] }, {
     aplicar: (x) => efs.push(...x), abrirCombate: (ins, o) => ({ pers: { ...o.pers, abriu: ins.length }, msgs: ["⚔ ini"], nota: "[INI]" }), dispararPerigo: () => { throw new Error("não devia"); },
@@ -147,6 +164,8 @@ const C = APP.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 t("o aplicarResposta chama as duas peças, a quase-morte em calou", /const doPerigo = oPerigoDaResposta\(\{ pers, perigo: resp\.perigo, combate: combateRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\) \}, portasDoFecho\(\)\);/.test(C)
   && /const daQuaseMorte = aQuaseMorte\(\{ persDoEnvio, pers, dia: diaRef\.current \}, portasDoFecho\(\)\);[\s\S]{0,200}\} catch \(e\) \{ calou\("a quase-morte do turno", e\); \}/.test(C));
 t("e os blocos não moram mais lá", !/montarEmboscada\(resp\.perigo/.test(C) && !APP.includes("[CICATRIZ — CANON PERMANENTE]") && !/sorteDoTurno\("cicatriz"\)/.test(C));
+t("a mesa e o fôlego também: uma chamada a aMesaDoTurno, o erro do fôlego ao calou, e a textura que zera", /const daMesa = aMesaDoTurno\(\{ textura: texturaRef\.current, mudancas: resp && resp\.mudancas, combate: combateRef\.current, mesa: mesaRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\) \}\);/.test(C)
+  && /if \(daMesa\.erroFolego\) calou\("o folego da fuga", daMesa\.erroFolego\);/.test(C) && !/mesaRef\.current = anotarTurno\(/.test(C) && /texturaRef\.current = \{\};\s*return pers;/.test(C));
 
 console.log(`\nmotor · o fecho da resposta: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

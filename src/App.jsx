@@ -7,7 +7,7 @@ import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resum
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, saidasDeUmPassoPrompt } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
-import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
+import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 /* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
@@ -29,7 +29,7 @@ import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
-import { perfilDeCriatura, perfilDe, elementoDaArma, sortearCicatriz, CICATRIZ_MAX, iconeDano, resistenciasEquipadas } from "./danos.js";
+import { perfilDeCriatura, perfilDe, elementoDaArma, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
 import { gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, resumoVilaoPrompt, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
@@ -98,7 +98,7 @@ import { consultar, ehPerguntaAoMundo, tipoDaPergunta, envelopeDoOraculo, linhaD
 import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao } from "./turno.js";
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
-import { montarEmboscada, falaDaEmboscada, envelopeDaEmboscada, envelopeSemCriatura, envelopeDesproporcional, falaDaListaAparada } from "./emboscada.js";
+import { falaDaListaAparada } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL } from "./agressao.js";
 import { montarEmCena, pautaComEmCena, quemNaFrase } from "./em-cena.js";
 import { fichasDaCena, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
@@ -152,7 +152,7 @@ import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, r
 /* O DUELO (v9.219 — D2): jogador contra jogador com o determinismo por
    juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
 import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave, cartaDaFicha, cartaDoSelo, lerCarta, souLadoA, sementeDaSala, versoesBatem } from "./duelo.js";
-import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
+import { garantirMesa, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
@@ -242,7 +242,7 @@ import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, g
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
-import { oPerigoDaResposta, aQuaseMorte } from "./motor/fecho-da-resposta.js";
+import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -10556,30 +10556,19 @@ export default function Taverna() {
       pers = daQuaseMorte.pers;
       if (daQuaseMorte.erro) calou("a quase-morte do turno", daQuaseMorte.erro);
     } catch (e) { calou("a quase-morte do turno", e); }
-    /* ---------------- O TURNO FECHA NA MESA (v9.71) ----------------
-       Aqui, e num lugar só. Este é o único ponto por onde passa TODO turno
-       que produziu narração — teclado, botão, luta, masmorra —, e a mesa
-       precisa de exatamente um registro por turno: um dado e um perigo no
-       mesmo turno não podem virar dois turnos, ou a temperatura sobe pelo
-       dobro e o mestre começa a segurar dado que não devia.
-
-       `ganho` sai das duas fontes juntas: o que o Mestre declarou e o que
-       as peças do sistema marcaram na textura. Sem as duas, um turno em
-       que o herói achou o tesouro pela cobrança contaria como turno vazio,
-       e a cena esfriaria no papel enquanto esquentava na mesa. */
+    /* ---------------- O TURNO FECHA NA MESA, NO MOTOR (T1-A, 7.ª fatia, 28/10) ----------------
+       O registro único da mesa por turno (v9.71: o ganho das duas fontes, a
+       luta, o pilar) e o fôlego da fuga moram em `aMesaDoTurno`
+       (src/motor/fecho-da-resposta.js), com os porquês. Daqui sai a fiação:
+       os refs, a textura que zera, e o erro do fôlego ao `calou` de sempre.
+       Provado byte a byte contra o bloco de antes (teste-motor-fecho). */
     try {
-      const tx = texturaRef.current || {};
-      const mud = (resp && resp.mudancas) || {};
-      const ganhou = !!tx.ganho || Number(mud.moedas) > 0 || Number(mud.xp) > 0
-        || (Array.isArray(mud.adicionar_itens) && mud.adicionar_itens.length > 0);
-      mesaRef.current = anotarTurno(mesaRef.current, {
-        rolou: !!tx.rolou, perigo: !!tx.perigo, ganho: ganhou,
-        luta: !!combateRef.current,
-        pilar: combateRef.current ? "combate" : (tx.pilar || null),
-      });
-    } catch { /* ler a mesa nunca pode custar o turno */ }
+      const daMesa = aMesaDoTurno({ textura: texturaRef.current, mudancas: resp && resp.mudancas, combate: combateRef.current, mesa: mesaRef.current, folego: folegoRef.current, lugares: ondeEstou() });
+      mesaRef.current = daMesa.mesa;
+      folegoRef.current = daMesa.folego;
+      if (daMesa.erroFolego) calou("o folego da fuga", daMesa.erroFolego);
+    } catch (e) { calou("o folego da fuga", e); }
     texturaRef.current = {};
-    try { folegoRef.current = folegoDepoisDoTurno(folegoRef.current, ondeEstou()); } catch (e) { calou("o folego da fuga", e); }
     return pers;
   }, [pushMsgs]);
 

@@ -24,16 +24,18 @@ import * as danos from "../src/danos.js";
 import * as motorCombate from "../src/motor/combate-do-turno.js";
 import * as motorAplicar from "../src/motor/aplicar.js";
 import * as motorFecho from "../src/motor/fecho-da-resposta.js";
+import * as mestria from "../src/mestria.js";
 
 const NOMES = {
   emboscada: ["montarEmboscada", "falaDaEmboscada", "envelopeDaEmboscada", "envelopeSemCriatura", "envelopeDesproporcional"],
-  fuga: ["folegoSegura"],
+  fuga: ["folegoSegura", "folegoDepoisDoTurno"],
+  mestria: ["anotarTurno"],
   danos: ["sortearCicatriz", "CICATRIZ_MAX"],
   motorCombate: ["osVinculos", "somarAoContador"],
   motorAplicar: ["notaComOTurno"],
-  motorFecho: ["oPerigoDaResposta", "aQuaseMorte"],
+  motorFecho: ["oPerigoDaResposta", "aQuaseMorte", "aMesaDoTurno"],
 };
-const MODULOS = { emboscada, fuga, danos, motorCombate, motorAplicar, motorFecho };
+const MODULOS = { emboscada, fuga, danos, motorCombate, motorAplicar, motorFecho, mestria };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
@@ -61,7 +63,8 @@ const ORGAOS_COMUNS = [
   ["  const aplicarVinculo = (grupo, nomeOuTodos, pontos, msgs) => {", "  const checarConquistas = useCallback("],
 ];
 const FIM_DO_PERIGO = "    /* v9.145: aqui morava a leitura do pedido de rolagem";
-const FIM_DA_QUASE_MORTE = "    /* ---------------- O TURNO FECHA NA MESA (v9.71)";
+const FIM_DA_QUASE_MORTE = "    /* ---------------- O TURNO FECHA NA MESA";
+const FIM_DA_MESA = "    return pers;\n  }, [pushMsgs]);";
 /* AS TROCAS DECLARADAS sobre os blocos de antes, com o porquê (quem regera o
    dourado aplica-as; o dourado é o App de antes COM elas; cada uma tem de
    bater uma vez só):
@@ -89,6 +92,7 @@ export function recorteDeAntes(app) {
     orgaos: ORGAOS_COMUNS.map(([de, ate]) => corte(de, ate)).join("\n"),
     perigo: comAsTrocas(corte("    try {\n      if (resp.perigo && !combateRef.current) {", FIM_DO_PERIGO), TROCAS_DECLARADAS.perigo),
     quaseMorte: comAsTrocas(corte("    /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */", FIM_DA_QUASE_MORTE), TROCAS_DECLARADAS.quaseMorte),
+    mesa: corte("    try {\n      const tx = texturaRef.current || {};", FIM_DA_MESA),
   };
 }
 export function recorteDeHoje(app) {
@@ -97,6 +101,7 @@ export function recorteDeHoje(app) {
     orgaos: [...ORGAOS_COMUNS.map(([de, ate]) => corte(de, ate)), corte("  const aplicarEfeitoDoFecho = (ef) => {", "  /* ---------------- AS PORTAS DA LUTA DO TURNO")].join("\n"),
     perigo: corte("    try {\n      if (resp.perigo) {\n        const doPerigo = oPerigoDaResposta(", FIM_DO_PERIGO),
     quaseMorte: corte("    try {\n      const daQuaseMorte = aQuaseMorte(", FIM_DA_QUASE_MORTE),
+    mesa: corte("    try {\n      const daMesa = aMesaDoTurno(", FIM_DA_MESA),
   };
 }
 /* um recorte vira uma função (resp, pers, persDoEnvio, msgs) → { pers }, com os dublês no escopo */
@@ -153,6 +158,11 @@ export function casoDoFecho(i) {
     lugar: i % 2 ? { nome: "a praça" } : { nome: "o porto" },
     abrirEstoura: i % 23 === 7,
     texturaAntes: i % 3 === 0 ? {} : { rolou: true, pilar: "exploracao" },
+    /* a mesa (7.ª fatia, o terceiro bloco): a textura do turno, as mudanças
+       que o Mestre declarou (o ganho), a mesa de antes e a que estoura */
+    texturaMesa: [{}, { rolou: true, pilar: "exploracao" }, { ganho: true }, { perigo: true, pilar: "social" }, null, { pilar: "inexistente" }][i % 6],
+    mudancasMesa: [null, {}, { moedas: 3 }, { xp: 10 }, { adicionar_itens: [{ nome: "Corda" }] }, { moedas: 0, adicionar_itens: [] }, { moedas: "7" }][i % 7],
+    mesaAntes: i % 5 === 0 ? null : { turnos: Array.from({ length: i % 9 }, (_, j) => ({ rolou: j % 2 === 0, perigo: false, ganho: j % 3 === 0, luta: false, pilar: null })), avisados: [], desdeFio: i % 4 },
     msgsAntes: i % 2 ? ["uma linha que o turno já tinha"] : [],
     /* a quase-morte */
     persEnvio: { nome: "Vera Cinza", nivel: 1 + (i % 20), vida: vidaAntes, vidaMax: 20 + (i % 3) * 5, grupo: torto === "envio" ? [null, ...grupoAntes] : grupoAntes },
@@ -173,7 +183,7 @@ export function dublesDoFecho(k, { novo, sorte, extras }) {
   const S = {
     ...osModulos({ novo }),
     combateRef: ref(copia(k.combate)), folegoRef: ref(copia(k.folego)), notaRef: ref(k.notaAntes), texturaRef: ref(copia(k.texturaAntes)),
-    lugarRef: ref(copia(k.lugar)), cidadeAtualRef: ref("Vila do Sul"), diaRef: ref(k.dia), contRef: ref(copia(k.contAntes)),
+    mesaRef: ref(copia(k.mesaAntes)), lugarRef: ref(copia(k.lugar)), cidadeAtualRef: ref("Vila do Sul"), diaRef: ref(k.dia), contRef: ref(copia(k.contAntes)),
     pushMsgs: (xs) => log.tela.push(copia(xs)), setPersonagem: (p) => log.fichas.push(copia(p)), calou: (onde, e) => log.calados.push([onde, String(e && e.message)]),
     sorteDoTurno: sorte || sorteDoCaso(k),
     ondeEstou: () => [(S.lugarRef.current && S.lugarRef.current.nome) || "", S.cidadeAtualRef.current || ""].filter(Boolean),
@@ -206,12 +216,14 @@ export function dublesDoFecho(k, { novo, sorte, extras }) {
 }
 
 /* corre um bloco (de antes ou de hoje) sobre um caso, e fotografa */
-export function correrOBloco(fazer, k, { novo, sorte, extras, envioIgual } = {}) {
+export function correrOBloco(fazer, k, { novo, sorte, extras, envioIgual, blocoDaMesa } = {}) {
   const { S, log } = dublesDoFecho(k, { novo, sorte, extras });
   const msgs = copia(k.msgsAntes);
   const persAgora = copia(k.persAgora);
   let ret = null, erro = null;
-  try { ret = fazer(S)({ narrativa: "…", perigo: k.perigo }, persAgora, envioIgual ? persAgora : copia(k.persEnvio), msgs); } catch (e) { erro = String(e && e.message); }
+  /* o bloco da mesa lê a textura do turno: a dele, que varia mais */
+  if (blocoDaMesa) S.texturaRef.current = copia(k.texturaMesa);
+  try { ret = fazer(S)({ narrativa: "…", perigo: k.perigo, mudancas: copia(k.mudancasMesa) }, persAgora, envioIgual ? persAgora : copia(k.persEnvio), msgs); } catch (e) { erro = String(e && e.message); }
   const refs = {};
   for (const [nome, v] of Object.entries(S)) if (/Ref$/.test(nome) && v && typeof v === "object" && "current" in v) refs[nome] = v.current;
   return { ret, msgs, erro, refs, log };
