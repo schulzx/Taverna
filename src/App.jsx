@@ -12669,7 +12669,7 @@ export default function Taverna() {
       let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
       try {
         if (fotoDoJuiz) {
-          const doJuiz = julgarOTurno(resp.narrativa || "", entradaDoJuiz(fotoDoJuiz, { frase: pedidoDaBolsa, pauta, moeda: moedaDaBolsa }), { turno: turnoDeRegistroRef.current, dia: diaRef.current });
+          const doJuiz = julgarOTurno(resp.narrativa || "", entradaDoJuiz(fotoDoJuiz, { frase: pedidoDaBolsa, pauta, moeda: moedaDaBolsa }), { turno: turnoDeRegistroRef.current + 1, dia: diaRef.current }); /* o turno é o da pauta (textoDaPauta conta igual): o registo só anda depois, em anotarOTurno */
           fidelidadeRef.current = somarAFidelidade(fidelidadeRef.current, doJuiz.resumo);
           if (typeof console !== "undefined" && console.debug) console.debug(linhaDoJuiz(doJuiz.resumo));
         }
