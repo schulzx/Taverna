@@ -238,7 +238,7 @@ import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRo
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
-import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
+import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -10548,6 +10548,9 @@ export default function Taverna() {
         /* o fim do turno (T1-A, 4.ª fatia): a base do mundo com o que a
            narração revelou — o ref e a tela juntos, como no registrarRevelacao */
         else if (ef.tipo === "base") { baseMundoRef.current = ef.base; setBaseMundo(ef.base); }
+        /* o portão: o contexto que o conserto reusa (só quando chegou a ser
+           montado) e as violações do turno */
+        else if (ef.tipo === "portao") { if ("contexto" in ef) portaoCtxRef.current = ef.contexto; portaoRef.current = ef.violacoes; }
         else if (ef.tipo === "remontarPrompt") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }
     }
@@ -10880,35 +10883,22 @@ export default function Taverna() {
       if (daChegada.minutos) { const tx = avancarMinutos(daChegada.minutos); if (tx) msgs.push(tx); }
       notaRef.current = notaComOTurno(notaRef.current, daChegada.paraOCronista);
     } catch (e) { calou("a chegada do turno", e); }
-    /* ---- O PORTÃO (v9.12) ----
-       Aqui moravam três cães de guarda separados — coerência de cena (v9.9),
-       ascensão (v9.6) e morte na prosa (v9.5). Todos os três CONTRADIZEM o
-       Mestre, e é por isso que agora correm juntos e ANTES: o jogador não
-       precisa ler a besteira para o sistema poder consertá-la.
-
-       Note o que NÃO veio para cá: o cão de guarda de condições, logo acima.
-       Aquele RATIFICA — o Mestre narrou o veneno e o sistema aplica. Ali a
-       narrativa está certa; barrá-la seria transformar acerto em erro.
-
-       Esta parte custa ZERO: é função pura lendo texto. A única chamada é o
-       conserto, lá em enviar(), e só quando alguma coisa de fato quebrou. */
+    /* ---------------- O PORTÃO, NO MOTOR (T1-A, 4.ª fatia, 28/10) ----------------
+       O PORTÃO (v9.12): os três cães de guarda que CONTRADIZEM o Mestre
+       (coerência de cena, ascensão, morte na prosa) correm juntos e ANTES de
+       o jogador ler. Moram em `oPortaoDoTurno` (src/motor/fim-do-turno.js),
+       com os porquês; custa ZERO (função pura lendo texto), e a única
+       chamada é o conserto, no envio, só quando algo quebrou. Daqui sai a
+       fiação: o contexto e as violações vão aos refs que o conserto lê.
+       Provado byte a byte contra o bloco de antes (teste-motor-fim-do-turno). */
     try {
-      portaoCtxRef.current = {
-        inimigos: (combateRef.current && combateRef.current.inimigos) || [],
-        grade: (combateRef.current && combateRef.current.grade) || null,
-        heroi: (combateRef.current && combateRef.current.heroi) || null,
-        npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current,
-        comGrupo: pers.grupo || [], confidencias: confidenciasRef.current,
-        presentes: elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pers.grupo || [] }).aqui,
-        divindade: divindadeRef.current, nivel: pers.nivel || 1,
-        mortosBase: (baseMundoRef.current || {}).mortos || [], nemesis: nemesisRef.current,
-        /* v9.39: o lugar e o que EU pedi. O cão de guarda da volta forçada só
-           morde quando o jogador não pediu para voltar — e quem sabe disso é
-           a última mensagem dele, não a narração. */
-        lugar: lugarRef.current, pedidoDoJogador: ultimoPedidoRef.current,
-      };
-      portaoRef.current = violacoesDoTurno(resp.narrativa, portaoCtxRef.current);
-    } catch { portaoRef.current = null; /* o portão nunca derruba o turno */ }
+      const doPortao = oPortaoDoTurno({
+        personagem: pers, combate: combateRef.current, npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current,
+        confidencias: confidenciasRef.current, divindade: divindadeRef.current, base: baseMundoRef.current, nemesis: nemesisRef.current,
+        lugar: lugarRef.current, ultimoPedido: ultimoPedidoRef.current,
+      }, resp);
+      aplicarOsEfeitos(doPortao);
+    } catch (e) { portaoRef.current = null; calou("o portão do turno", e); }
     /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
     /* O TRABALHO QUE O SISTEMA MARCOU PARA ESTA CENA (v9.37). O envelope foi
        mandado no turno passado e a abordagem está NESTA narração — então é

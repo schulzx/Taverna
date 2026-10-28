@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { aplicarOCodex, aplicarAChegada } from "../src/motor/fim-do-turno.js";
+import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "../src/motor/fim-do-turno.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 import { semearACasa } from "../src/semente.js";
 import { casosDoFim, retratoDoFim, digital } from "./aplicar-casos.mjs";
@@ -48,6 +48,7 @@ function oAppAplica(A, saida) {
     else if (ef.tipo === "cidadeAtual") A.cidadeAtual = ef.cidade;
     else if (ef.tipo === "lugar") A.lugar = ef.lugar;
     else if (ef.tipo === "mapa") A.mapa = ef.mapa;
+    else if (ef.tipo === "portao") { if ("contexto" in ef) A.portaoCtx = ef.contexto; A.portao = ef.violacoes; }
   }
   A.msgs.push(...saida.msgs);
   return A;
@@ -176,6 +177,56 @@ sec("2. a chegada que ninguém anotou — byte a byte");
     && corpoAR.indexOf("if (daChegada.minutos)") > corpoAR.indexOf("msgs.push(...daChegada.msgs)") && corpoAR.indexOf("notaRef.current = notaComOTurno(notaRef.current, daChegada.paraOCronista)") > corpoAR.indexOf("if (daChegada.minutos)")
     && /calou\("a chegada do turno", e\)/.test(corpoAR));
   t("a chegada já não mora no App", !/const ch = detectarChegada\(resp\.narrativa/.test(APP));
+}
+
+sec("3. o portão — byte a byte, e as três peças em fila");
+{
+  /* as três peças do motor em fila, como o App as corre depois da luta, e
+     o App em miniatura a aplicar cada uma: as três fotos têm de bater */
+  const oFim = (c, mexer = (x) => x) => {
+    const A = oAppDoFim(c);
+    oAppAplica(A, aplicarOCodex(estadoDoCodex(c, A), c.resp, c.ctx));
+    const fCodex = foto(A);
+    oAppAplicaAChegada(A, aplicarAChegada({ ...estadoDoCodex(c, A), combate: c.estado.combate, jornada: c.estado.jornada }, c.resp));
+    const fChegada = foto(A);
+    const p = oPortaoDoTurno(mexer({ ...estadoDoCodex(c, A), combate: c.estado.combate }), c.resp);
+    oAppAplica(A, p);
+    return { A, p, fotos: { codex: fCodex, chegada: fChegada, portao: foto(A) } };
+  };
+  let iguais = 0, fila = 0; const dif = [];
+  for (let i = 0; i < CF.length; i++) {
+    const c = JSON.parse(JSON.stringify(CF[i]));
+    semearACasa(c.semente);
+    const { A, fotos } = oFim(c);
+    const F = DF.casos[i].fotos;
+    if (igual(fotos.portao, F.portao) && !A.calou.length) iguais++;
+    else dif.push(`${c.id}: ${JSON.stringify(A.portao || []).slice(0, 140)}`);
+    if (["codex", "chegada", "portao"].every((k) => igual(fotos[k], F[k]))) fila++;
+  }
+  t(`${iguais}/${CF.length} portões iguais ao byte (o contexto do conserto e as violações)`, iguais === CF.length, dif.slice(0, 3).join(" | "));
+  t(`${fila}/${CF.length} fins de turno iguais nas três fotos (o códex, a chegada, o portão em fila)`, fila === CF.length);
+  /* a prova só vale se percorre os ramos — contados no dourado */
+  const achou = DF.casos.filter((x) => x.fotos.portao.violacoes > 0).length;
+  const ids = {};
+  for (const c0 of CF) { const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente); for (const v of oFim(c).p.efeitos[0].violacoes || []) ids[v.id] = (ids[v.id] || 0) + 1; }
+  t(`…o portão acha violações em ${achou} casos: ${Object.entries(ids).map(([k, n]) => `${k} ${n}`).join(", ")}`, achou >= 30 && (ids.morte || 0) >= 10 && Object.keys(ids).length >= 2);
+  {
+    let partem = 0, partemB = 0;
+    for (let i = 0; i < CF.length; i++) {
+      const c = JSON.parse(JSON.stringify(CF[i])); semearACasa(c.semente);
+      if (!igual(oFim(c, (e) => ({ ...e, combate: null })).fotos.portao, DF.casos[i].fotos.portao)) partem++;
+      const c2 = JSON.parse(JSON.stringify(CF[i])); semearACasa(c2.semente);
+      if (!igual(oFim(c2, (e) => ({ ...e, ultimoPedido: "volto para a cidade" })).fotos.portao, DF.casos[i].fotos.portao)) partemB++;
+    }
+    t(`…e morde: sem a luta (${partem}), com outro pedido do jogador (${partemB}) — os casos partem`, partem > 0 && partemB > 0);
+  }
+  t("sem ficha, o contexto de antes fica e as violações são nulas (como o App fazia)", (() => { const p = oPortaoDoTurno({ personagem: null }, { narrativa: "o lobo tomba morto e não se levanta mais" }); return p.efeitos.length === 1 && !("contexto" in p.efeitos[0]) && p.efeitos[0].violacoes === null; })());
+  t("lixo não estoura (o portão nunca derruba o turno)", (() => { try { oPortaoDoTurno(null, null); return true; } catch { return false; } })());
+  /* a fiação */
+  t("o App chama o portão do motor e aplica os efeitos (o contexto e as violações nos refs do conserto)", /const doPortao = oPortaoDoTurno\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doPortao\)/.test(corpoAR)
+    && /else if \(ef\.tipo === "portao"\) \{ if \("contexto" in ef\) portaoCtxRef\.current = ef\.contexto; portaoRef\.current = ef\.violacoes; \}/.test(APP) && /calou\("o portão do turno", e\)/.test(corpoAR));
+  t("o portão já não mora no App", !/portaoRef\.current = violacoesDoTurno\(resp\.narrativa, portaoCtxRef\.current\);/.test(APP));
+  t("e corre na ordem de antes: o códex, a chegada, o portão — e a entrega depois", corpoAR.indexOf("const doCodex = ") < corpoAR.indexOf("const daChegada = ") && corpoAR.indexOf("const daChegada = ") < corpoAR.indexOf("const doPortao = ") && corpoAR.indexOf("const doPortao = ") < corpoAR.indexOf("if ((portaoRef.current || []).length)"));
 }
 
 console.log(`\nmotor · fim do turno: ${bons} passaram, ${maus} falharam`);

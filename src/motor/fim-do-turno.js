@@ -26,6 +26,8 @@ import { nomesAMaoNaProsa } from "../nomes.js";
 import { grauDe } from "../divindades.js";
 import { presencaDoHeroi } from "../presenca-divina.js";
 import { detectarChegada, descobrirCidade, notaDaChegada } from "../geografia.js";
+import { violacoesDoTurno } from "../portao.js";
+import { elencoDaCena } from "../cena.js";
 
 const objeto = (x) => (x && typeof x === "object" ? x : {});
 const mundoDe = (op) => objeto(typeof op.mundo === "function" ? op.mundo() : op.mundo);
@@ -171,4 +173,54 @@ export function aplicarAChegada(estado, resposta) {
     }
   } catch { /* a chegada nunca derruba o turno */ }
   return { estado: { ...e0, cidadeAtual, lugar, mapa }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs, minutos };
+}
+
+/* ============================================================
+   O PORTÃO (v9.12)
+
+     oPortaoDoTurno(estado, resposta) → { estado, efeitos, paraOCronista, msgs }
+
+   Aqui moravam três cães de guarda separados — coerência de cena (v9.9),
+   ascensão (v9.6) e morte na prosa (v9.5). Todos os três CONTRADIZEM o
+   Mestre, e é por isso que correm juntos e ANTES de o jogador ler: ele não
+   precisa ler a besteira para o sistema poder consertá-la.
+
+   Note o que NÃO veio para cá: o cão de guarda de condições (v9.49, que
+   saiu). Aquele RATIFICA — o Mestre narrou o veneno e o sistema aplica.
+   Ali a narrativa está certa; barrá-la seria transformar acerto em erro.
+
+   Esta parte custa ZERO: é função pura lendo texto. A única chamada é o
+   conserto, lá no envio, e só quando alguma coisa de fato quebrou.
+
+   `estado`: { personagem (a ficha do turno), combate, npcs, cidadeAtual,
+   mapa, confidencias, divindade, base, nemesis, lugar, ultimoPedido }. O
+   efeito: `portao` — o contexto que o conserto reusa (`contexto`, só quando
+   chegou a ser montado: sem ficha, o de antes fica, como ficava) e as
+   violações (`violacoes`; nulas quando o portão estoura).
+   ============================================================ */
+export function oPortaoDoTurno(estado, resposta) {
+  const e0 = objeto(estado);
+  const resp = objeto(resposta);
+  const pers = e0.personagem;
+  let contexto = null, montado = false, violacoes = null;
+  try {
+    const c = e0.combate;
+    contexto = {
+      inimigos: (c && c.inimigos) || [],
+      grade: (c && c.grade) || null,
+      heroi: (c && c.heroi) || null,
+      npcs: e0.npcs, cidadeAtual: e0.cidadeAtual, mapa: e0.mapa,
+      comGrupo: pers.grupo || [], confidencias: e0.confidencias,
+      presentes: elencoDaCena(e0.npcs, e0.cidadeAtual, e0.mapa, { comGrupo: pers.grupo || [] }).aqui,
+      divindade: e0.divindade, nivel: pers.nivel || 1,
+      mortosBase: (e0.base || {}).mortos || [], nemesis: e0.nemesis,
+      /* v9.39: o lugar e o que EU pedi. O cão de guarda da volta forçada só
+         morde quando o jogador não pediu para voltar — e quem sabe disso é
+         a última mensagem dele, não a narração. */
+      lugar: e0.lugar, pedidoDoJogador: e0.ultimoPedido,
+    };
+    montado = true;
+    violacoes = violacoesDoTurno(resp.narrativa, contexto);
+  } catch { violacoes = null; /* o portão nunca derruba o turno */ }
+  return { estado: e0, efeitos: [montado ? { tipo: "portao", contexto, violacoes } : { tipo: "portao", violacoes }], paraOCronista: [], msgs: [] };
 }
