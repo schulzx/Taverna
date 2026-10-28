@@ -8845,7 +8845,20 @@ export default function Taverna() {
   /* RELÓGIO (v6.7): o tempo corre sozinho. Cada chamada avança N minutos;
      dias viram por aqui (com reino, festivais e sono a reboque). Retorna
      texto de envelope para o chamador anexar ao envio do Mestre. */
-  const avancarMinutos = (n) => {
+  /* ---------------- O RELÓGIO DENTRO DO TURNO (T1-A, 5.ª fatia, 28/10) ----------------
+     O relógio escreve na ficha (a invocação que expira, a Exaustão). Fora
+     do turno, escreve no ref pelo `mudarFicha`, como sempre. DENTRO do
+     `aplicarResposta` o ref é a ficha de ANTES do turno, e o `pers` local
+     — o que o turno devolve e o save grava — gravava-se depois por cima: a
+     fera desfeita voltava no save, a Exaustão sumia, e no intervalo o ref
+     era a ficha velha. Por isso o turno anda o relógio por
+     `avancarOsMinutos(n, ficha)`: as mudanças caem NA ficha do turno, que
+     volta em `ficha` (e vai ao ref, que fica a verdade). Provado em
+     teste-relogio-do-turno. */
+  const avancarMinutos = (n) => avancarOsMinutos(n).texto;
+  const avancarOsMinutos = (n, fichaDoTurno = null) => {
+    let ficha = fichaDoTurno && typeof fichaDoTurno === "object" ? fichaDoTurno : null;
+    const naFicha = (fn) => { if (ficha) ficha = fn(ficha); else mudarFicha(fn); };
     minutoRef.current += n;
     const extras = [];
     while (minutoRef.current >= 1440) {
@@ -8867,9 +8880,9 @@ export default function Taverna() {
        desfaria a fera no meio do combate por causa dos seis segundos que a
        rodada custa no calendário. */
     if (!combateRef.current) {
-      const fim = expirarPorMinuto(fichaViva() || personagem, absMin());
+      const fim = expirarPorMinuto(ficha || fichaViva() || personagem, absMin());
       if (fim.sumiram.length) {
-        mudarFicha(() => fim.pers);
+        naFicha(() => fim.pers);
         pushMsgs(fim.linhas.map((t) => ({ autor: "sistema", texto: t })));
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${fim.sumiram.join(", ")} ${fim.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo acabou. Narre o desmanche em uma frase e siga — ${fim.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} comigo.`;
       }
@@ -8891,16 +8904,19 @@ export default function Taverna() {
        É a mesma armadilha que a v9.13 documentou nos espólios: quem escreve
        em um dos dois lugares escreve em nenhum. `mudarFicha` escreve nos
        dois, e `fichaViva()` é quem sabe a verdade. */
-    const persAgora = fichaViva() || personagem;
+    const persAgora = ficha || fichaViva() || personagem;
     const cansadoJa = (persAgora.condicoes || []).some((c) => c.id === "exausto" || (c.nome || "").toLowerCase().includes("cansado"));
     if (acordadoH >= HORAS_EXAUSTO && !cansadoJa) {
-      mudarFicha((p) => ({ ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== "exausto"), criarCondicao("exausto", { origem: "vigília longa demais" })] }));
+      naFicha((p) => ({ ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== "exausto"), criarCondicao("exausto", { origem: "vigília longa demais" })] }));
       pushMsgs([{ autor: "sistema", texto: `🥱 Exaustão: ${Math.floor(acordadoH)}h acordado. Você está Exausto (desvantagem) até um descanso longo.` }]);
     } else if (acordadoH >= HORAS_AVISO_SONO && (acordadoH - n / 60) < HORAS_AVISO_SONO) {
       pushMsgs([{ autor: "sistema", texto: `🌙 Você está acordado há ${Math.floor(acordadoH)}h. O corpo pede acampamento — além de ${HORAS_EXAUSTO}h vem a exaustão.` }]);
     }
+    /* o ref antes das conquistas, como o mudarFicha fazia: elas leem-no */
+    if (ficha && ficha !== fichaDoTurno) { personagemRef.current = ficha; setPersonagem(ficha); }
     checarConquistas();
-    return extras.filter(Boolean).join("");
+    const texto = extras.filter(Boolean).join("");
+    return { texto, ficha: ficha || fichaDoTurno };
   };
   const mostrarRolagensRef = useRef(true);
 
@@ -10688,7 +10704,7 @@ export default function Taverna() {
            perseguição: ela continuava com ódio crescendo no painel. */
         fins.forEach((e) => { if (e && e.nome) registrarMorteDeAlvo(e.nome, "morto por mim em combate"); });
         bumpCont("combatesVencidos", 1);
-        avancarMinutos(MINUTOS_POS_COMBATE); // a luta em si é rápida; o rescaldo leva meia hora
+        p2 = avancarOsMinutos(MINUTOS_POS_COMBATE, p2).ficha || p2; // a luta em si é rápida; o rescaldo leva meia hora — e o relógio escreve na ficha do turno (5.ª fatia)
         bumpCont("inimigosDerrotados", fins.length);
         bumpCont("elitesDerrotados", fins.filter((e) => e.ameaca === "elite").length);
         bumpCont("lendariosDerrotados", fins.filter((e) => e.ameaca === "lendario").length);
@@ -10792,7 +10808,7 @@ export default function Taverna() {
       }, resp);
       aplicarOsEfeitos({ estado: {}, efeitos: daChegada.efeitos, paraOCronista: [] });
       msgs.push(...daChegada.msgs);
-      if (daChegada.minutos) { const tx = avancarMinutos(daChegada.minutos); if (tx) msgs.push(tx); }
+      if (daChegada.minutos) { const rel = avancarOsMinutos(daChegada.minutos, pers); pers = rel.ficha || pers; if (rel.texto) msgs.push(rel.texto); }
       notaRef.current = notaComOTurno(notaRef.current, daChegada.paraOCronista);
     } catch (e) { calou("a chegada do turno", e); }
     /* ---------------- O PORTÃO, NO MOTOR (T1-A, 4.ª fatia, 28/10) ----------------
