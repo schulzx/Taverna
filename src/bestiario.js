@@ -8,6 +8,7 @@ import { pvEsperadoInimigo, bonusDeAmeaca } from "./combate.js";
 import { pvNaJanela } from "./juiz.js";
 import { degrauDaCriatura } from "./degraus.js";
 import { ehImportante } from "./queda.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 /* ---------------- CRIATURAS (fantasia) ---------------- */
 /* v9.152: `des` é a destreza de verdade, e `agil` passa a ser o que ele
@@ -32,88 +33,35 @@ import { ehImportante } from "./queda.js";
    perigo e não papel (`queda.js` explica por que essa derivação é proibida).
    Guardado só quando é `true`: o campo ausente e o campo `false` querem dizer
    a mesma coisa, e guardar os dois seria convidar o save a discordar de si. */
-const C = (nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "", importante = false) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= 2, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}), ...(importante === true ? { importante: true } : {}) });
-export const CRIATURAS_FANTASIA = [
-  C("Slime", "fraco", 1, -2, "gosma lenta e previsível"),
-  C("Rato Gigante", "fraco", 1, 3, "praga de esgoto"),
-  C("Lobo", "fraco", 1, 2, "caça em bando"),
-  C("Goblin", "fraco", 1, 2, "covarde em grupo pequeno, atrevido em bando"),
-  C("Bandido", "comum", 2, 1, "gente desesperada com aço barato"),
-  C("Esqueleto", "comum", 2, 1, "osso animado sem medo"),
-  C("Zumbi", "comum", 2, -2, "lento, incansável"),
-  C("Lobo Atroz", "comum", 3, 2, "alfa de presas longas"),
-  C("Cultista", "comum", 3, 0, "fanático com magia menor"),
-  /* O DESC DIZ E A MESA NÃO OUVE: "força bruta e pouco cérebro" nunca
-     chega à luta, porque `completarInimigo` não copia o `desc`. Sem a
-     declaração, o Ogro herdaria `astuto` por ser `competente`. */
-  C("Ogro", "competente", 4, -1, "força bruta e pouco cérebro", null, "bruto"),
-  C("Troll", "competente", 5, 0, "regenera se não queimar", { ataque: "fisico", fraqueza: ["fogo"], resist: [] }),
-  /* Nenhum regex reconhece um elemental, então ele cairia no padrão
-     `pensa` e herdaria `astuto`. Fúria de um elemento não faz plano. */
-  C("Elemental Menor", "competente", 5, 1, "fúria de um elemento", { ataque: "fogo", resist: ["fogo"], fraqueza: ["gelo"] }, "bruto"),
-  C("Golem de Pedra", "elite", 7, -2, "imune a medo, lento e esmagador"),
-  /* "Quimera" não casa com o regex de bicho: sem declaração, três cabeças
-     de animal herdariam o degrau de um oficial. */
-  C("Quimera", "elite", 8, 2, "três cabeças, três mortes", { ataque: "fogo", resist: ["fogo"], fraqueza: [] }, "bruto"),
-  C("Gigante", "elite", 9, -1, "cada golpe derruba muralhas", { ataque: "fisico", resist: ["fisico"], fraqueza: [] }, "bruto"),
-  /* IMPORTANTE: um dragão nunca é um bando. Ele chega sozinho, com nome, e a
-     mesa negocia com ele antes de o enfrentar — a morte dele é o fim de um
-     episódio, não o fim de uma rodada. */
-  C("Dragão Jovem", "lendario", 10, 2, "sopro devastador, orgulho maior ainda", null, "", true),
-  /* O TOPO SE DECLARA. O Lich é morto-vivo e o teto do morto é `bruto` —
-     seria o arquimago do jogo com a cabeça de um esqueleto de guarda. */
-  /* IMPORTANTE: o filactério é uma trama inteira. Um Lich que cai a 0 PV sem
-     cena leva a trama com ele — e é exatamente a criatura que tem algo a
-     dizer no chão antes de acabar. */
-  C("Lich", "lendario", 12, 1, "arquimago morto-vivo com filactério", null, "brilhante", true),
-  /* IMPORTANTE: uma calamidade com asas é o fim da campanha ou o começo dela.
-     Nada nesse tamanho pode morrer num número. */
-  C("Dragão Ancião", "lendario", 16, 3, "uma calamidade com asas", null, "brilhante", true),
-];
-
-/* Arquétipos genéricos — servem a qualquer gênero (sci-fi, cyberpunk, etc.) */
-export const ARQUETIPOS = [
-  C("Capanga", "fraco", 1, 0, "músculo descartável"),
-  C("Batedor", "fraco", 2, 4, "rápido, frágil"),
-  /* "treinado e disciplinado" está escrito no desc e não chega à mesa;
-     por `ameaca` ele herdaria `bruto`, o degrau do capanga. */
-  C("Soldado", "comum", 3, 1, "treinado e disciplinado", null, "astuto"),
-  C("Atirador", "comum", 3, 3, "perigoso à distância"),
-  C("Brutamontes", "competente", 5, -1, "aguenta e devolve", null, "bruto"),
-  /* A PROVA DE QUE `ameaca` SOZINHA NÃO BASTA: Comandante ("perigoso e
-     tático") e Sentinela Blindada ("muralha ambulante") são as duas
-     `elite` e herdariam o MESMO degrau. A muralha declara; o oficial
-     herda `treinado`, que é o que ele é. */
-  C("Sentinela Blindada", "elite", 7, -2, "muralha ambulante", { ataque: "fisico", resist: ["fisico"], fraqueza: ["raio"] }, "bruto"),
-  /* IMPORTANTE, E É A ÚNICA QUE NÃO É `lendario` — de propósito, porque o
-     critério não é perigo. O Comandante é o oficial: aparece nomeado, é com
-     ele que se fala, e é ele que se pode render, prender ou interrogar. Ele é
-     a criatura por quem Q4 existe; deixá-lo morrer direto seria fechar a porta
-     antes de ela ser aberta. */
-  C("Comandante", "elite", 8, 2, "perigoso e tático", null, "", true),
-  /* O COLOSSO É DUAS CRIATURAS DIFERENTES, DEPENDENDO DE QUEM O LÊ — e o
-     motivo da declaração é o caminho real, não o acidente de palavra.
-     COM o `desc`, `RX_BICHO` casa "besta" dentro de "máquina/besta de
-     cerco" e ele vira bicho: é o retrato de N1, **18 das 27 em `pensa`**.
-     SEM o `desc` — que é o que a mesa vê, porque `completarInimigo` não o
-     copia e `degrauDaCriatura` roda com nome + ameaça — ele cai no padrão
-     `pensa`, e são **19 das 27**. O Colosso é a ÚNICA diferença entre os
-     dois retratos.
-     Ou seja: sem declaração ele não herdaria `animal`, herdaria
-     `treinado`, por ser `lendario` e "pensar" por omissão. Uma máquina de
-     cerco com o degrau de um oficial é pior que uma com o de um bicho.
-     A declaração fixa o que ele é nos dois caminhos, e não mexe no regex
-     (que é comportamento vivo, e conserto de outra etapa). */
-  C("Colosso", "lendario", 11, -2, "máquina/besta de cerco", { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"] }, "bruto"),
-  /* IMPORTANTE: "o que não deveria existir" é, por definição, um só. O
-     Colosso, que é o outro `lendario` daqui, NÃO declara — uma máquina de
-     cerco quebra, não morre, e não há cena a perder quando ela para. É a
-     prova de que este campo não sai de `ameaca`. */
-  C("Horror", "lendario", 13, 3, "o que não deveria existir", { ataque: "sombrio", resist: ["sombrio", "veneno"], fraqueza: ["sagrado"] }, "", true),
-];
-
+/* T4-B (3.ª fatia): os campos acima são agora os de uma ficha do cenário
+   (`{ nome, ameaca, nivelRef, des, desc, perfil?, degrau?, importante? }`,
+   o vocabulário em cenario.js ESQUEMA_DO_CENARIO.criatura); a ordem das
+   chaves da ficha derivada é a de sempre, e o dourado do cenário prova-o. */
+const AGIL_DESDE_DES = 2;
+const daFicha = ({ nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "", importante = false }) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= AGIL_DESDE_DES, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}), ...(importante === true ? { importante: true } : {}) });
+/* T4-B (28/10, o cenário como arquivo, 3.ª fatia): as fichas moram no
+   cenário (cenario-padrao.js `bestiario.criaturas`, com o motivo de cada
+   declaração escrito em cima dela), e aqui só se derivam — com o mesmo
+   nome, `export let`, refeitas quando o cenário troca. O que é REGRA fica
+   aqui: `agil` sai de `des` (abaixo), e quem lê o bestiário é este
+   módulo, nunca o arquivo do autor. */
+export let CRIATURAS_FANTASIA = [];
+/* Arquétipos genéricos — servem a qualquer gênero (sci-fi, cyberpunk, etc.);
+   moram em `bestiario.arquetipos` do cenário. */
+export let ARQUETIPOS = [];
+/* o corte por gênero: quem tem gênero de `generosDasCriaturas` vê as
+   criaturas do mundo e os `emprestados` primeiros arquétipos; os outros,
+   os arquétipos e as `emprestados` primeiras criaturas */
+let CORTE = { generosDasCriaturas: [], emprestados: 0 };
+aoTrocarDeCenario((c) => {
+  const b = c.bestiario;
+  CRIATURAS_FANTASIA = Object.freeze(b.criaturas.map((x) => Object.freeze(daFicha(x))));
+  ARQUETIPOS = Object.freeze(b.arquetipos.map((x) => Object.freeze(daFicha(x))));
+  CORTE = b;
+});
 export function criaturasDoGenero(genero) {
-  return genero === "Fantasia medieval" ? [...CRIATURAS_FANTASIA, ...ARQUETIPOS.slice(0, 4)] : [...ARQUETIPOS, ...CRIATURAS_FANTASIA.slice(0, 4)];
+  const n = CORTE.emprestados;
+  return CORTE.generosDasCriaturas.includes(genero) ? [...CRIATURAS_FANTASIA, ...ARQUETIPOS.slice(0, n)] : [...ARQUETIPOS, ...CRIATURAS_FANTASIA.slice(0, n)];
 }
 
 /* Preenche PV/defesa/nível de um inimigo pela tabela (o Mestre pode

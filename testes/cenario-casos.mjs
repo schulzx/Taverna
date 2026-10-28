@@ -5,7 +5,10 @@
    PROFISSOES, e profissoes.js/prontos.js que as consomem) e, na 2.ª fatia,
    os gêneros e os ofícios do léxico (lexico.js GENEROS_FUTURISTAS,
    PROFISSOES_DO_SISTEMA, as marcas do gênero próprio e o gênero padrão do
-   pedido; classes.js racasDoGenero e a ficha da cidade, que os leem). Não é suíte: é a
+   pedido; classes.js racasDoGenero e a ficha da cidade, que os leem) e, na
+   3.ª, o bestiário (bestiario.js CRIATURAS_FANTASIA, ARQUETIPOS e o corte
+   por gênero; completarInimigo, a criatura na frase da emboscada, a ficha
+   da masmorra, as masmorras semeadas, os bichos e os chefes do mundo). Não é suíte: é a
    lista de perguntas que o `gerar-cenario-dourado.mjs` faz ao código de ANTES
    (lido do git) e que a `teste-cenario.mjs` refaz ao código de AGORA. As duas
    respostas têm de ser iguais byte a byte.
@@ -54,6 +57,11 @@ export const DESCRICOES = [
   "Inspirada em Tolkien.", "Baseado em Duna.", "No universo de Star Wars.", "No estilo de Ghibli.",
   "Navegantes do mar do norte.", "Uma metrópole de vapor.", "Galés e piratas.", "Planície de lobos.",
 ];
+/* 3.ª fatia: o bestiário. Os nomes compostos e os que não existem, no
+   inimigo que o Narrador abre e na frase do jogador. */
+export const INIMIGOS_SOLTOS = ["Lobo Atroz Velho", "o goblin arqueiro", "Capanga do Barão", "Aberração do Sétimo Selo", "", "TROLL DAS PONTES", "Dragão"];
+export const NIVEIS = [1, 4, 9, 16];
+export const SEMENTES_DE_MASMORRA = 40;
 export const CIDADES_DA_FICHA = [
   { nome: "Vau Fundo", porte: "aldeia", regiao: "Charneca" }, { nome: "Porto Sal", porte: "cidade", regiao: "Costa Rasa" },
   { nome: "Coroa", porte: "capital", regiao: "Planalto" }, { nome: "Forte Cinza", porte: "fortaleza", regiao: "Fronteira" },
@@ -67,6 +75,11 @@ export async function fotografarOsCatalogos(raiz) {
   const R = await imp(raiz, "prontos.js");
   const LX = await imp(raiz, "lexico.js");
   const CD = await imp(raiz, "cidade-por-dentro.js");
+  const B = await imp(raiz, "bestiario.js");
+  const EM = await imp(raiz, "emboscada.js");
+  const MA = await imp(raiz, "masmorras.js");
+  const MB = await imp(raiz, "mundo-base.js");
+  const G = await imp(raiz, "geografia.js");
   const casos = [];
   const caso = (id, saida) => casos.push({ id, saida: rxEmTexto(saida === undefined ? null : saida) });
 
@@ -139,6 +152,29 @@ export async function fotografarOsCatalogos(raiz) {
     for (const cid of CIDADES_DA_FICHA) for (const sem of ["dourado-genero|1", "dourado-genero|2", "dourado-genero|3"]) {
       caso(`cidade.ficha.${g}.${cid.nome}.${sem}`, CD.fichaDaCidade(cid, { semente: sem, genero: g }));
     }
+  }
+
+  /* ---- 3.ª fatia: o bestiário ---- */
+  caso("bestiario.tabelas", { fantasia: B.CRIATURAS_FANTASIA, arquetipos: B.ARQUETIPOS });
+  for (const g of GENEROS_DE_PROVA) caso("bestiario.genero." + String(g), B.criaturasDoGenero(g).map((c) => c.nome));
+  const todas = [...B.CRIATURAS_FANTASIA, ...B.ARQUETIPOS].map((c) => c.nome);
+  for (const n of [...todas, ...INIMIGOS_SOLTOS]) {
+    caso("bestiario.completar." + n, NIVEIS.map((nv) => [B.completarInimigo({ nome: n }, nv), B.completarInimigo({ nome: n, vidaMax: 999, ameaca: "elite" }, nv)]));
+  }
+  caso("emboscada.naFrase", [...todas.map((n) => `vem aí um ${n.toLowerCase()} pela estrada`), ...todas.map((n) => `dois ${n}s e um capanga`), ...INIMIGOS_SOLTOS].map((f) => { const c = EM.criaturaNaFrase(f); return c ? c.nome : null; }));
+  for (let i = 0; i < todas.length; i += 6) {
+    const lote = todas.slice(i, i + 6);
+    caso("masmorra.bichos." + i, [MA.bichosDaFicha(lote.map((nome) => ({ nome }))), MA.bichosDaFicha(lote.map((nome, k) => ({ nome, nivel: k * 3 })))]);
+  }
+  for (let i = 0; i < SEMENTES_DE_MASMORRA; i++) {
+    const g = ["Fantasia medieval", "Cyberpunk", "Horror cósmico", "Steampunk"][i % 4];
+    const mm = MA.gerarMasmorra(g, 1 + (i % 14), "", { sorte: G.rngDe("dourado-bestiario|" + i) });
+    caso("masmorra.gerada." + i, (mm.salas || []).map((sa) => sa.inimigos || []));
+  }
+  const regioes = ["Charneca", "Costa Rasa", "Planalto", "Fronteira", "Mata Velha"].map((nome) => ({ nome }));
+  for (const g of ["Fantasia medieval", "Cyberpunk", "Pós-apocalíptico", "Steampunk"]) {
+    caso("mundo.bichos." + g, regioes.map((r) => MB.criaturasDaRegiao("dourado-bestiario", r, g)));
+    caso("mundo.chefes." + g, MB.chefesDoMundo("dourado-bestiario", { regioes, cidades: [{ nome: "Coroa" }, { nome: "Vau" }] }, g));
   }
   return casos;
 }

@@ -1,4 +1,4 @@
-/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª e 2.ª fatias, 28/10/2026)
+/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 3.ª fatias, 28/10/2026)
 
    "Um cenário novo entra sem editar módulo" (mente/plano-motor.md, Fase 4).
    A 1.ª fatia tirou de dentro do motor os preços (economia.js) e as
@@ -7,17 +7,21 @@
    catálogos. A 2.ª fatia tirou os gêneros do léxico (lexico.js: o corte do
    futuro, as marcas do gênero próprio, o gênero padrão do pedido; e
    classes.js racasDoGenero, que espelhava o corte) e fez os ofícios do
-   léxico (PROFISSOES_DO_SISTEMA) derivarem das ocupações do cenário.
+   léxico (PROFISSOES_DO_SISTEMA) derivarem das ocupações do cenário. A 3.ª
+   tirou o bestiário (bestiario.js: as criaturas, os arquétipos e o corte
+   por gênero), que o motor lê por mundo-base.js sem que este mude.
    Esta suíte prova:
 
-   1. o dourado — o código de ANTES (3e7493a, lido por `git archive` em
+   1. o dourado — o código de ANTES (9068a93, lido por `git archive` em
       `gerar-cenario-dourado.mjs`; os 578 casos da 1.ª fatia vinham do
-      f0a9fae e são iguais byte a byte) e o de agora dão a mesma resposta às
-      721 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
+      f0a9fae, os 143 da 2.ª do 3e7493a, e são iguais byte a byte) e o de
+      agora dão a mesma resposta às 823 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
       comuns por fator, a pauta do preço perguntado, as doze ocupações em
       todas as funções que as leem; os gêneros por racasDoMundo,
       racasDoGenero, generoProprio, o pedido do léxico, os ofícios
-      renomeados e a ficha da cidade);
+      renomeados e a ficha da cidade; o bestiário por completarInimigo,
+      a criatura na frase, a ficha da masmorra, 40 masmorras semeadas, os
+      bichos e os chefes do mundo);
    2. e a prova morde: um número mexido no cenário muda os casos que o leem;
    3. outro mundo, mínimo, muda o resultado sem tocar em módulo;
    4. o cenário inválido é recusado, com o caminho do campo na mensagem;
@@ -41,6 +45,11 @@ const R = await import(S + "prontos.js");
 const L = await import(S + "loot.js");
 const LX = await import(S + "lexico.js");
 const { GENEROS } = await import(S + "constantes.js");
+const B = await import(S + "bestiario.js");
+const EM = await import(S + "emboscada.js");
+const MA = await import(S + "masmorras.js");
+const DG = await import(S + "degraus.js");
+const DN = await import(S + "danos.js");
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -106,6 +115,32 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
   const dif6 = diferentes(await fotografarOsCatalogos(SRC));
   t("o Ferreiro renomeado no cenário muda os ofícios do léxico (sem tocar em lexico.js)", dif6.includes("lexico.tabelas") && dif6.includes("lexico.oficios.completo") && dif6.includes("lexico.pedido.inteiro"), String(dif6.length));
 
+  /* 3.ª fatia: o bestiário */
+  const ficha = (d, n) => [...d.bestiario.criaturas, ...d.bestiario.arquetipos].find((c) => c.nome === n);
+  const d7 = copia(DADOS_DO_CENARIO_PADRAO);
+  ficha(d7, "Troll").perfil.fraqueza = [];
+  CN.usarCenario(d7);
+  const dif7 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Troll sem fraqueza a fogo muda o Troll que o Narrador abre (e o das pontes)", dif7.includes("bestiario.completar.Troll") && dif7.includes("bestiario.completar.TROLL DAS PONTES") && so(dif7, "bestiario."), dif7.join());
+
+  const d8 = copia(DADOS_DO_CENARIO_PADRAO);
+  ficha(d8, "Lobo").nivelRef = 2;
+  CN.usarCenario(d8);
+  const dif8 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Lobo no nível 2 muda o Lobo, e os bichos das regiões que o sorteiam", dif8.includes("bestiario.completar.Lobo") && !dif8.includes("bestiario.completar.Lobo Atroz") && dif8.some((id) => id.startsWith("mundo.bichos.")), dif8.join());
+
+  const d9 = copia(DADOS_DO_CENARIO_PADRAO);
+  d9.bestiario.emprestados = 3;
+  CN.usarCenario(d9);
+  const dif9 = diferentes(await fotografarOsCatalogos(SRC));
+  t("três emprestados em vez de quatro mudam a lista de todo gênero, e as masmorras semeadas", dif9.filter((id) => id.startsWith("bestiario.genero.")).length === 13 && dif9.filter((id) => id.startsWith("masmorra.gerada.")).length > 20 && !dif9.some((id) => id.startsWith("bestiario.completar.")), String(dif9.length));
+
+  const d10 = copia(DADOS_DO_CENARIO_PADRAO);
+  delete ficha(d10, "Comandante").importante;
+  CN.usarCenario(d10);
+  const dif10 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Comandante sem \"importante\" volta a morrer direto — e só ele muda", dif10.length === 2 && dif10.includes("bestiario.completar.Comandante"), dif10.join());
+
   CN.usarCenario(CN.CENARIO_PADRAO);
   t("de volta ao padrão, o dourado fecha outra vez", diferentes(await fotografarOsCatalogos(SRC)).length === 0);
 }
@@ -129,6 +164,19 @@ const ORBITA = {
     { nome: "Mecânico", desc: "Mantém o casco inteiro.", beneficio: "Mãos de oficina: a bancada de utilitários fica 4 mais fácil.", efeito: { bancada: { utilitario: 4 } } },
     { nome: "Piloto", desc: "Leva a nave entre os destroços.", beneficio: "Olho de rota: +6 na navegação.", efeito: { navegar: 6, compra: 0.1 } },
   ],
+  bestiario: {
+    generosDasCriaturas: ["Ópera de estação"],
+    emprestados: 1,
+    criaturas: [
+      { nome: "Rato de Duto", ameaca: "fraco", nivelRef: 1, des: 3, desc: "rói cabos e foge pela grelha" },
+      { nome: "Drone de Segurança", ameaca: "competente", nivelRef: 5, des: 1, desc: "segue o protocolo até ao fim", perfil: { ataque: "raio", resist: ["veneno"], fraqueza: ["raio"], imune: ["sombrio"] }, degrau: "bruto" },
+      { nome: "Rainha da Colmeia", ameaca: "lendario", nivelRef: 12, des: 2, desc: "o casco é o corpo dela", degrau: "brilhante", importante: true },
+    ],
+    arquetipos: [
+      { nome: "Capanga", ameaca: "fraco", nivelRef: 1, des: 0, desc: "músculo descartável" },
+      { nome: "Contrabandista", ameaca: "comum", nivelRef: 3, des: 2, desc: "sabe onde o scanner não vê" },
+    ],
+  },
   generos: {
     padrao: "Ópera de estação",
     futuristas: ["Ópera de estação", "Ficção científica"],
@@ -162,6 +210,16 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("o pedido do léxico assume o gênero dela e pede nome para os ofícios dela", ped.includes("· Gênero: Ópera de estação") && ped.includes("<UM de: Mecânico, Piloto>") && !ped.includes("Ferreiro"));
   const lexO = { profissoes: [{ profissao: "mecânico", chamado: "Chave-Inglesa" }, { profissao: "Piloto", chamado: "Ás do Cinturão" }] };
   t("o léxico gerado para os dois ofícios dela não se perde (o tudo-ou-nada conta os dela)", LX.garantirLexico(lexO).profissoes.length === 2 && LX.profissaoNaFicha(lexO, "Mecânico", true) === "Chave-Inglesa (Mecânico)");
+  /* 3.ª fatia: o bestiário é o dela */
+  t("as criaturas e os arquétipos são os dela", B.CRIATURAS_FANTASIA.map((c) => c.nome).join() === "Rato de Duto,Drone de Segurança,Rainha da Colmeia" && B.ARQUETIPOS.map((c) => c.nome).join() === "Capanga,Contrabandista");
+  t("a ópera de estação vê as criaturas dela e um arquétipo emprestado", B.criaturasDoGenero("Ópera de estação").map((c) => c.nome).join() === "Rato de Duto,Drone de Segurança,Rainha da Colmeia,Capanga");
+  t("o Cyberpunk, os arquétipos e uma criatura emprestada", B.criaturasDoGenero("Cyberpunk").map((c) => c.nome).join() === "Capanga,Contrabandista,Rato de Duto");
+  const drone = B.completarInimigo({ nome: "Drone de Segurança Mk2" }, 5);
+  t("o drone que o Narrador abre sai da ficha dela (ameaça, degrau, perfil com imunidade)", drone.ameaca === "competente" && drone.degrau === "bruto" && drone.perfil.ataque === "raio" && DN.multiplicadorDano("sombrio", drone.perfil).mult === 0, JSON.stringify(drone.perfil));
+  t("a Rainha cai e rola contra a morte; o rato é ágil", B.completarInimigo({ nome: "Rainha da Colmeia" }, 12).importante === true && B.completarInimigo({ nome: "Rato de Duto" }, 1).agil === true);
+  t("o Lobo já não é criatura deste mundo (o desconhecido não é rápido nem lento)", B.completarInimigo({ nome: "Lobo" }, 3).des === 0 && B.completarInimigo({ nome: "Lobo" }, 3).ameaca === "comum");
+  t("a emboscada acha o rato na frase, e o goblin já não", (EM.criaturaNaFrase("há um rato de duto no teto") || {}).nome === "Rato de Duto" && EM.criaturaNaFrase("um goblin na estrada") === null);
+  t("a ficha da masmorra lê a ameaça dela", MA.bichosDaFicha([{ nome: "Rainha da Colmeia" }])[0].ameaca === "lendario");
   t("e o banco dos doze da Taverna não vale aqui", LX.garantirLexico({ profissoes: CN.CENARIO_PADRAO.ocupacoes.map((o) => ({ profissao: o.nome, chamado: "x " + o.nome })) }).profissoes.length === 0);
 
   /* determinismo: a mesma semente e o mesmo mundo, duas vezes */
@@ -172,6 +230,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   const p = banca("orbita|1");
   t("a mesma semente noutro mundo: as mesmas coisas, outros preços", a.estoque.map((x) => x.nome).join() === p.estoque.map((x) => x.nome).join() && a.estoque.map((x) => x.preco).join() !== p.estoque.map((x) => x.preco).join());
   t("e de volta ao padrão, tudo como era", C.PROFISSOES.length === 12 && E.precoComum("caneca") === 1 && E.valorDeItem({ raridade: "raro" }) === 220);
+  t("…o bestiário também", B.CRIATURAS_FANTASIA.length === 18 && B.ARQUETIPOS.length === 9 && B.completarInimigo({ nome: "Troll" }, 5).perfil.fraqueza.join() === "fogo");
   t("…o léxico também (os doze, o corte do futuro, o gênero padrão)", LX.PROFISSOES_DO_SISTEMA.length === 12 && LX.GENEROS_FUTURISTAS.includes("Cyberpunk") && LX.generoProprio({ descricao: "um anime" }) && LX.pedidoDoLexico({}).includes("· Gênero: Fantasia medieval"));
 }
 
@@ -211,6 +270,18 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("uma marca que não compila diz qual", (d) => { d.generos.marcasProprias = ["\\bvacuo\\b", "(estacao"]; }, "generos.marcasProprias[1]: devia ser texto de uma regex válida");
   caso("uma marca como regex literal", (d) => { d.generos.marcasProprias = [/vacuo/]; }, "generos.marcasProprias[0]: não é dado de JSON (regex literal");
   caso("um campo dos gêneros que o motor não lê", (d) => { d.generos.racas = []; }, "generos.racas: campo desconhecido");
+  /* 3.ª fatia: o bestiário */
+  caso("falta o bestiário", (d) => { delete d.bestiario; }, "bestiario: falta (objeto)");
+  caso("mundo sem criatura", (d) => { d.bestiario.criaturas = []; }, "bestiario.criaturas: precisa de ao menos 1 criatura");
+  caso("uma ameaça que o motor não conhece", (d) => { d.bestiario.criaturas[0].ameaca = "medio"; }, "bestiario.criaturas[0].ameaca: devia ser uma ameaça do motor");
+  caso("um degrau que o motor não conhece", (d) => { d.bestiario.criaturas[1].degrau = "genio"; }, "bestiario.criaturas[1].degrau: devia ser um degrau do motor");
+  caso("um tipo de dano que não existe", (d) => { d.bestiario.criaturas[1].perfil.resist = ["acido"]; }, "bestiario.criaturas[1].perfil.resist: devia ser lista de tipos de dano");
+  caso("um campo do perfil que o motor não lê", (d) => { d.bestiario.criaturas[1].perfil.cura = 3; }, "bestiario.criaturas[1].perfil.cura: campo desconhecido");
+  caso("nível zero", (d) => { d.bestiario.arquetipos[0].nivelRef = 0; }, "bestiario.arquetipos[0].nivelRef: devia ser número inteiro ≥ 1");
+  caso("falta a destreza", (d) => { delete d.bestiario.arquetipos[1].des; }, "bestiario.arquetipos[1].des: falta");
+  caso("emprestados negativo", (d) => { d.bestiario.emprestados = -1; }, "bestiario.emprestados: devia ser número inteiro ≥ 0");
+  caso("o mesmo nome nas duas listas (sem olhar a caixa)", (d) => { d.bestiario.arquetipos[1].nome = "RATO DE DUTO"; }, 'bestiario.arquetipos[1].nome: "RATO DE DUTO" repetido');
+  caso("o agil escrito à mão (é regra, sai de des)", (d) => { d.bestiario.criaturas[0].agil = true; }, "bestiario.criaturas[0].agil: campo desconhecido");
   const v = CN.validarCenario({ formato: 1, id: "x" });
   t("a validação devolve todos os erros de uma vez", !v.ok && v.erros.length >= 3 && v.erros.some((e) => e.startsWith("nome")) && v.erros.some((e) => e.startsWith("precos")) && v.erros.some((e) => e.startsWith("ocupacoes")));
   t("o padrão e o mundo de teste passam", CN.validarCenario(DADOS_DO_CENARIO_PADRAO).ok && CN.validarCenario(ORBITA).ok);
@@ -218,7 +289,7 @@ sec("4. o cenário inválido é recusado, e diz onde");
   const antes = CN.cenarioAtivo();
   let caiu = false;
   try { CN.usarCenario({ ...copia(ORBITA), ocupacoes: [] }); } catch { caiu = true; }
-  t("trocar por um mundo inválido não troca nada", caiu && CN.cenarioAtivo() === antes && C.PROFISSOES.length === 12 && LX.PROFISSOES_DO_SISTEMA.length === 12);
+  t("trocar por um mundo inválido não troca nada", caiu && CN.cenarioAtivo() === antes && C.PROFISSOES.length === 12 && LX.PROFISSOES_DO_SISTEMA.length === 12 && B.CRIATURAS_FANTASIA.length === 18);
 }
 
 sec("5. imutabilidade e determinismo");
@@ -229,7 +300,11 @@ sec("5. imutabilidade e determinismo");
   const o = CN.carregarCenario(bruto);
   t("o dado do autor não é tocado nem congelado", !Object.isFrozen(bruto) && JSON.stringify(bruto) === JSON.stringify(ORBITA) && o !== bruto);
   t("carregar o carregado devolve o mesmo", CN.carregarCenario(o) === o && CN.carregarCenario(P0) === P0);
-  t("as tabelas dos catálogos saem congeladas", Object.isFrozen(E.PRECOS_COMUNS) && Object.isFrozen(E.PRECOS_COMUNS[0]) && Object.isFrozen(E.PRECOS_DA_RUA) && Object.isFrozen(C.PROFISSOES));
+  t("as tabelas dos catálogos saem congeladas", Object.isFrozen(E.PRECOS_COMUNS) && Object.isFrozen(E.PRECOS_COMUNS[0]) && Object.isFrozen(E.PRECOS_DA_RUA) && Object.isFrozen(C.PROFISSOES) && Object.isFrozen(B.CRIATURAS_FANTASIA) && Object.isFrozen(B.ARQUETIPOS[0]) && Object.isFrozen(B.CRIATURAS_FANTASIA.find((c) => c.perfil).perfil.resist));
+  const tr = B.completarInimigo({ nome: "Troll" }, 5);
+  let tocou = false;
+  try { tr.perfil.fraqueza.push("gelo"); tocou = true; } catch { /* congelado */ }
+  t("o inimigo completado não muda a ficha do bestiário por baixo", !tocou && B.completarInimigo({ nome: "Troll" }, 5).perfil.fraqueza.join() === "fogo");
   let mutou = false;
   try { C.PROFISSOES.push({ nome: "Intruso" }); mutou = true; } catch { /* congelado */ }
   t("e ninguém lhes acrescenta um ofício por fora", !mutou && C.PROFISSOES.length === 12);
@@ -257,6 +332,16 @@ sec("6. o esquema lê de volta o que o motor consome");
   const fonteLex = fs.readFileSync(path.join(SRC, "lexico.js"), "utf8"), fonteCla = fs.readFileSync(path.join(SRC, "classes.js"), "utf8");
   t("nenhuma lista literal ficou para trás (os doze, o corte do futuro, as marcas)", !fonteLex.includes('"Caçador de Recompensas"') && !fonteLex.includes('"Pós-apocalíptico"') && !fonteCla.includes('"Pós-apocalíptico"') && !fonteLex.includes("solo leveling"));
   t("os ofícios do léxico são os nomes das ocupações, na ordem delas", LX.PROFISSOES_DO_SISTEMA.join() === CN.CENARIO_PADRAO.ocupacoes.map((o) => o.nome).join());
+  /* 3.ª fatia: o vocabulário que uma ficha pode usar é o do motor */
+  t("as ameaças do esquema são as do motor", EQ.ameacas.join() === LX.AMEACAS.join() && Object.keys(DG.DEGRAU_POR_AMEACA).sort().join() === [...EQ.ameacas].sort().join());
+  t("os degraus do esquema são os de degraus.js", EQ.degraus.join() === DG.DEGRAUS.map((d) => d.id).join());
+  t("os tipos de dano do esquema são os de danos.js", EQ.elementos.join() === Object.keys(DN.TIPOS_DANO).join());
+  t("os campos do perfil são os que danos.js perfilDe lê", Object.keys(DN.perfilDe({ perfil: {} })).sort().join() === Object.keys(EQ.perfil).sort().join());
+  const fonteBe = fs.readFileSync(path.join(SRC, "bestiario.js"), "utf8");
+  const campos = (fonteBe.match(/const daFicha = \(\{([^}]*)\}\)/) || [, ""])[1].split(",").map((x) => x.split("=")[0].trim()).filter(Boolean);
+  t("os campos da ficha são os que bestiario.js daFicha copia, nem mais nem menos", campos.sort().join() === Object.keys(EQ.criatura).sort().join(), campos.join());
+  t("nenhuma ficha ficou literal em bestiario.js", !/\bC\("/.test(fonteBe) && !fonteBe.includes('"Dragão Ancião"') && !fonteBe.includes('"Fantasia medieval"'));
+  t("as 27 do padrão, na ordem de sempre (o manifesto dos retratos segue-a)", B.CRIATURAS_FANTASIA.length + B.ARQUETIPOS.length === 27 && B.CRIATURAS_FANTASIA[0].nome === "Slime" && B.ARQUETIPOS[B.ARQUETIPOS.length - 1].nome === "Horror");
   t("as faixas do padrão estão escritas na escala que o Narrador lê", CN.CENARIO_PADRAO.precos.comuns.filter((c) => c.faixa && c.faixa[0] !== c.faixa[1]).every((c) => E.ECONOMIA_PROMPT.includes(`◉ ${c.faixa[0]}–${c.faixa[1]}`)));
 
   /* um catálogo que estoura a meio da troca não deixa meio mundo de cada lado */

@@ -18,8 +18,8 @@
    pede `with { type: "json" }` no Node e não no Vite, e o mesmo arquivo tem
    de abrir igual nos dois.
 
-   As secções até aqui (as outras chegam nas seguintes — nomes, deuses,
-   bestiário —, e o validador recusa hoje o campo que o motor ainda
+   As secções até aqui (as outras chegam nas seguintes — nomes e deuses —,
+   e o validador recusa hoje o campo que o motor ainda
    não lê, para ninguém escrever um mundo que não acontece):
      precos.escala      as linhas da escala de riqueza que o Narrador lê
                         (o meio do ECONOMIA_PROMPT; o começo e o fim são
@@ -44,6 +44,19 @@
                         fantasia clássica (a obra citada, o tempo moderno ou
                         futuro): texto de regex, comparado SEM acento e sem
                         caixa — escreva-as assim
+     bestiario.criaturas  as criaturas do mundo: `nivelRef` é o nível de
+                        referência, `des` a destreza (de 2 para cima é
+                        ágil), `perfil` o elemento do ataque e o que
+                        resiste/teme, `degrau` a mente declarada (sem ele,
+                        herda de ameaça + tipo de mente), `importante` a
+                        que cai e rola contra a morte em vez de morrer direto
+     bestiario.arquetipos os genéricos, que servem a qualquer gênero
+     bestiario.generosDasCriaturas  os gêneros que veem as criaturas do
+                        mundo; os outros veem os arquétipos
+     bestiario.emprestados  quantas do outro lado entram na lista (as
+                        primeiras): o mundo de fantasia vê também os quatro
+                        primeiros arquétipos, e o de outro gênero as quatro
+                        primeiras criaturas
    ============================================================ */
 export const DADOS_DO_CENARIO_PADRAO = {
   formato: 1,
@@ -89,6 +102,86 @@ export const DADOS_DO_CENARIO_PADRAO = {
     { nome: "Mercador", desc: "Compra barato, vende caro, conhece todo mundo.", beneficio: "Conhece todo mundo: 20% de desconto na compra e +15% na venda.", efeito: { compra: 0.2, venda: 0.15 } },
     { nome: "Médico de Campo", desc: "Estanca sangue e remenda ossos sem magia.", beneficio: "Remenda sem magia: +4 PV para você em cada descanso e +2 para cada companheiro.", efeito: { curaDescanso: 4, curaGrupo: 2 } },
   ],
+  bestiario: {
+    generosDasCriaturas: ["Fantasia medieval"],
+    emprestados: 4,
+    criaturas: [
+      { nome: "Slime", ameaca: "fraco", nivelRef: 1, des: -2, desc: "gosma lenta e previsível" },
+      { nome: "Rato Gigante", ameaca: "fraco", nivelRef: 1, des: 3, desc: "praga de esgoto" },
+      { nome: "Lobo", ameaca: "fraco", nivelRef: 1, des: 2, desc: "caça em bando" },
+      { nome: "Goblin", ameaca: "fraco", nivelRef: 1, des: 2, desc: "covarde em grupo pequeno, atrevido em bando" },
+      { nome: "Bandido", ameaca: "comum", nivelRef: 2, des: 1, desc: "gente desesperada com aço barato" },
+      { nome: "Esqueleto", ameaca: "comum", nivelRef: 2, des: 1, desc: "osso animado sem medo" },
+      { nome: "Zumbi", ameaca: "comum", nivelRef: 2, des: -2, desc: "lento, incansável" },
+      { nome: "Lobo Atroz", ameaca: "comum", nivelRef: 3, des: 2, desc: "alfa de presas longas" },
+      { nome: "Cultista", ameaca: "comum", nivelRef: 3, des: 0, desc: "fanático com magia menor" },
+      /* O DESC DIZ E A MESA NÃO OUVE: "força bruta e pouco cérebro" nunca
+         chega à luta, porque `completarInimigo` não copia o `desc`. Sem a
+         declaração, o Ogro herdaria `astuto` por ser `competente`. */
+      { nome: "Ogro", ameaca: "competente", nivelRef: 4, des: -1, desc: "força bruta e pouco cérebro", degrau: "bruto" },
+      { nome: "Troll", ameaca: "competente", nivelRef: 5, des: 0, desc: "regenera se não queimar", perfil: { ataque: "fisico", fraqueza: ["fogo"], resist: [] } },
+      /* Nenhum regex reconhece um elemental, então ele cairia no padrão
+         `pensa` e herdaria `astuto`. Fúria de um elemento não faz plano. */
+      { nome: "Elemental Menor", ameaca: "competente", nivelRef: 5, des: 1, desc: "fúria de um elemento", perfil: { ataque: "fogo", resist: ["fogo"], fraqueza: ["gelo"] }, degrau: "bruto" },
+      { nome: "Golem de Pedra", ameaca: "elite", nivelRef: 7, des: -2, desc: "imune a medo, lento e esmagador" },
+      /* "Quimera" não casa com o regex de bicho: sem declaração, três cabeças
+         de animal herdariam o degrau de um oficial. */
+      { nome: "Quimera", ameaca: "elite", nivelRef: 8, des: 2, desc: "três cabeças, três mortes", perfil: { ataque: "fogo", resist: ["fogo"], fraqueza: [] }, degrau: "bruto" },
+      { nome: "Gigante", ameaca: "elite", nivelRef: 9, des: -1, desc: "cada golpe derruba muralhas", perfil: { ataque: "fisico", resist: ["fisico"], fraqueza: [] }, degrau: "bruto" },
+      /* IMPORTANTE: um dragão nunca é um bando. Ele chega sozinho, com nome, e a
+         mesa negocia com ele antes de o enfrentar — a morte dele é o fim de um
+         episódio, não o fim de uma rodada. */
+      { nome: "Dragão Jovem", ameaca: "lendario", nivelRef: 10, des: 2, desc: "sopro devastador, orgulho maior ainda", importante: true },
+      /* O TOPO SE DECLARA. O Lich é morto-vivo e o teto do morto é `bruto` —
+         seria o arquimago do jogo com a cabeça de um esqueleto de guarda. */
+      /* IMPORTANTE: o filactério é uma trama inteira. Um Lich que cai a 0 PV sem
+         cena leva a trama com ele — e é exatamente a criatura que tem algo a
+         dizer no chão antes de acabar. */
+      { nome: "Lich", ameaca: "lendario", nivelRef: 12, des: 1, desc: "arquimago morto-vivo com filactério", degrau: "brilhante", importante: true },
+      /* IMPORTANTE: uma calamidade com asas é o fim da campanha ou o começo dela.
+         Nada nesse tamanho pode morrer num número. */
+      { nome: "Dragão Ancião", ameaca: "lendario", nivelRef: 16, des: 3, desc: "uma calamidade com asas", degrau: "brilhante", importante: true },
+    ],
+    arquetipos: [
+      { nome: "Capanga", ameaca: "fraco", nivelRef: 1, des: 0, desc: "músculo descartável" },
+      { nome: "Batedor", ameaca: "fraco", nivelRef: 2, des: 4, desc: "rápido, frágil" },
+      /* "treinado e disciplinado" está escrito no desc e não chega à mesa;
+         por `ameaca` ele herdaria `bruto`, o degrau do capanga. */
+      { nome: "Soldado", ameaca: "comum", nivelRef: 3, des: 1, desc: "treinado e disciplinado", degrau: "astuto" },
+      { nome: "Atirador", ameaca: "comum", nivelRef: 3, des: 3, desc: "perigoso à distância" },
+      { nome: "Brutamontes", ameaca: "competente", nivelRef: 5, des: -1, desc: "aguenta e devolve", degrau: "bruto" },
+      /* A PROVA DE QUE `ameaca` SOZINHA NÃO BASTA: Comandante ("perigoso e
+         tático") e Sentinela Blindada ("muralha ambulante") são as duas
+         `elite` e herdariam o MESMO degrau. A muralha declara; o oficial
+         herda `treinado`, que é o que ele é. */
+      { nome: "Sentinela Blindada", ameaca: "elite", nivelRef: 7, des: -2, desc: "muralha ambulante", perfil: { ataque: "fisico", resist: ["fisico"], fraqueza: ["raio"] }, degrau: "bruto" },
+      /* IMPORTANTE, E É A ÚNICA QUE NÃO É `lendario` — de propósito, porque o
+         critério não é perigo. O Comandante é o oficial: aparece nomeado, é com
+         ele que se fala, e é ele que se pode render, prender ou interrogar. Ele é
+         a criatura por quem Q4 existe; deixá-lo morrer direto seria fechar a porta
+         antes de ela ser aberta. */
+      { nome: "Comandante", ameaca: "elite", nivelRef: 8, des: 2, desc: "perigoso e tático", importante: true },
+      /* O COLOSSO É DUAS CRIATURAS DIFERENTES, DEPENDENDO DE QUEM O LÊ — e o
+         motivo da declaração é o caminho real, não o acidente de palavra.
+         COM o `desc`, `RX_BICHO` casa "besta" dentro de "máquina/besta de
+         cerco" e ele vira bicho: é o retrato de N1, **18 das 27 em `pensa`**.
+         SEM o `desc` — que é o que a mesa vê, porque `completarInimigo` não o
+         copia e `degrauDaCriatura` roda com nome + ameaça — ele cai no padrão
+         `pensa`, e são **19 das 27**. O Colosso é a ÚNICA diferença entre os
+         dois retratos.
+         Ou seja: sem declaração ele não herdaria `animal`, herdaria
+         `treinado`, por ser `lendario` e "pensar" por omissão. Uma máquina de
+         cerco com o degrau de um oficial é pior que uma com o de um bicho.
+         A declaração fixa o que ele é nos dois caminhos, e não mexe no regex
+         (que é comportamento vivo, e conserto de outra etapa). */
+      { nome: "Colosso", ameaca: "lendario", nivelRef: 11, des: -2, desc: "máquina/besta de cerco", perfil: { ataque: "fisico", resist: ["fisico", "veneno"], fraqueza: ["raio"] }, degrau: "bruto" },
+      /* IMPORTANTE: "o que não deveria existir" é, por definição, um só. O
+         Colosso, que é o outro `lendario` daqui, NÃO declara — uma máquina de
+         cerco quebra, não morre, e não há cena a perder quando ela para. É a
+         prova de que este campo não sai de `ameaca`. */
+      { nome: "Horror", ameaca: "lendario", nivelRef: 13, des: 3, desc: "o que não deveria existir", perfil: { ataque: "sombrio", resist: ["sombrio", "veneno"], fraqueza: ["sagrado"] }, importante: true },
+    ],
+  },
   generos: {
     padrao: "Fantasia medieval",
     futuristas: ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"],

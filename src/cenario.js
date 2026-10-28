@@ -27,7 +27,11 @@
    AS SECÇÕES: `precos` e `ocupacoes` (1.ª fatia: economia.js, classes.js);
    `generos` (2.ª fatia: lexico.js e classes.js — o gênero que se assume
    quando o mundo não diz o seu, os gêneros cuja gente é a do futuro, e as
-   marcas que, na descrição, fazem o mundo sair da fantasia clássica). Os
+   marcas que, na descrição, fazem o mundo sair da fantasia clássica);
+   `bestiario` (3.ª fatia: bestiario.js — as criaturas do mundo, os
+   arquétipos genéricos e o corte por gênero; o motor chega-lhe por
+   mundo-base.js, que chama `criaturasDoGenero` e por isso já vê o mundo
+   novo sem ser tocado). Os
    ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
    secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
    ofícios não perca o léxico gerado.
@@ -51,7 +55,7 @@ import { DADOS_DO_CENARIO_PADRAO } from "./cenario-padrao.js";
    seu tipo (um nome de `TIPOS`, abaixo); `?` no fim é campo opcional. */
 export const ESQUEMA_DO_CENARIO = Object.freeze({
   formato: 1,
-  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto" }),
+  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto" }),
   precos: Object.freeze({ escala: "textos", raridade: "objeto", semRaridade: "preco", miudeza: "preco", comuns: "lista" }),
   /* as raridades do motor (loot.js RARIDADES): as cinco que se vendem têm
      preço obrigatório; a única não se compra em banca, e o preço é opcional */
@@ -69,8 +73,25 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      e a ficha passa a dizer "Caçador Desperto (Humano)". As duas listas
      podem vir vazias: um mundo sem futuro, ou sem marca nenhuma. */
   generos: Object.freeze({ padrao: "texto", futuristas: "textos", marcasProprias: "regexes" }),
-  /* os mínimos: a criação abre na primeira ocupação, e a rua mostra ao menos uma coisa */
-  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1 }),
+  /* o bestiário (bestiario.js): `generosDasCriaturas` veem as criaturas do
+     mundo e os `emprestados` primeiros arquétipos; os outros gêneros, os
+     arquétipos e as `emprestados` primeiras criaturas. Os nomes são únicos
+     nas duas listas juntas (sem olhar a caixa): é por eles que
+     `completarInimigo` acha a ficha do inimigo que o Narrador abre. */
+  bestiario: Object.freeze({ generosDasCriaturas: "textos", emprestados: "contagem", criaturas: "lista", arquetipos: "lista" }),
+  /* uma ficha: os campos que bestiario.js daFicha copia, nem mais nem menos */
+  criatura: Object.freeze({ nome: "texto", ameaca: "ameaca", nivelRef: "nivel", des: "inteiro", desc: "texto", perfil: "objeto?", degrau: "degrau?", importante: "booleano?" }),
+  /* o perfil de dano: os quatro campos que danos.js perfilDe lê */
+  perfil: Object.freeze({ ataque: "elemento?", resist: "elementos?", fraqueza: "elementos?", imune: "elementos?" }),
+  /* o vocabulário do motor que uma ficha pode usar: as ameaças (combate.js,
+     degraus.js DEGRAU_POR_AMEACA), os degraus da mente (degraus.js DEGRAUS)
+     e os tipos de dano (danos.js TIPOS_DANO). A suíte lê-os de volta. */
+  ameacas: Object.freeze(["fraco", "comum", "competente", "elite", "lendario"]),
+  degraus: Object.freeze(["animal", "bruto", "astuto", "treinado", "brilhante"]),
+  elementos: Object.freeze(["fisico", "fogo", "gelo", "raio", "veneno", "sagrado", "sombrio", "arcano"]),
+  /* os mínimos: a criação abre na primeira ocupação, a rua mostra ao menos
+     uma coisa, e o encontro tem ao menos uma criatura para sortear */
+  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1 }),
 });
 
 const ehObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -92,6 +113,12 @@ const TIPOS = {
   faixa: [(v) => v === null || (Array.isArray(v) && v.length === 2 && v.every(ehNum) && v[0] <= v[1]), "[mínimo, máximo] ou null"],
   regex: [regexOk, "texto de uma regex válida"],
   regexes: [(v) => Array.isArray(v) && v.every(regexOk), "lista de textos de regex válidas"],
+  nivel: [(v) => Number.isInteger(v) && v >= 1, "número inteiro ≥ 1"],
+  contagem: [(v) => Number.isInteger(v) && v >= 0, "número inteiro ≥ 0"],
+  ameaca: [(v) => ESQUEMA_DO_CENARIO.ameacas.includes(v), `uma ameaça do motor (${ESQUEMA_DO_CENARIO.ameacas.join(", ")})`],
+  degrau: [(v) => ESQUEMA_DO_CENARIO.degraus.includes(v), `um degrau do motor (${ESQUEMA_DO_CENARIO.degraus.join(", ")})`],
+  elemento: [(v) => ESQUEMA_DO_CENARIO.elementos.includes(v), `um tipo de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
+  elementos: [(v) => Array.isArray(v) && v.every((x) => ESQUEMA_DO_CENARIO.elementos.includes(x)), `lista de tipos de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
 };
 
 /* só o que o JSON tem — o arquivo de um autor não carrega código */
@@ -153,6 +180,22 @@ export function validarCenario(dados) {
       if (ehObj(o.efeito)) conferir(o.efeito, E.efeito, `${onde}.efeito`, erros);
       if (ehTexto(o.nome)) { const n = o.nome.toLowerCase(); if (nomes.has(n)) erros.push(`${onde}.nome: "${o.nome}" repetido`); nomes.add(n); }
     });
+  }
+  const be = dados.bestiario;
+  if (ehObj(be)) {
+    conferir(be, E.bestiario, "bestiario", erros);
+    if (Array.isArray(be.criaturas) && be.criaturas.length < E.minimo.criaturas) erros.push(`bestiario.criaturas: precisa de ao menos ${E.minimo.criaturas} criatura`);
+    const nomes = new Set();
+    for (const lista of ["criaturas", "arquetipos"]) {
+      if (!Array.isArray(be[lista])) continue;
+      be[lista].forEach((c, i) => {
+        const onde = `bestiario.${lista}[${i}]`;
+        if (!ehObj(c)) { erros.push(`${onde}: devia ser objeto`); return; }
+        conferir(c, E.criatura, onde, erros);
+        if (ehObj(c.perfil)) conferir(c.perfil, E.perfil, `${onde}.perfil`, erros);
+        if (ehTexto(c.nome)) { const n = c.nome.toLowerCase(); if (nomes.has(n)) erros.push(`${onde}.nome: "${c.nome}" repetido`); nomes.add(n); }
+      });
+    }
   }
   const ge = dados.generos;
   if (ehObj(ge)) {

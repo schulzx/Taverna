@@ -245,7 +245,10 @@ export const FICHA_NA_PLANTA = {
   nomeMaximo: 60,
 };
 
-const BESTIARIO_INTEIRO = [...CRIATURAS_FANTASIA, ...ARQUETIPOS];
+/* T4-B (28/10, 3.ª fatia): lido na hora, e não copiado no import — o
+   bestiário vem do cenário, e uma cópia feita no arranque ficava com o
+   mundo de antes da troca */
+const bestiarioInteiro = () => [...CRIATURAS_FANTASIA, ...ARQUETIPOS];
 
 /* A lista da ficha, limpa: `[{ nome, ameaca, nivel }]` (nivel `null` quando
    a ficha não o diz), sem repetidos, na ordem da ficha. Lixo é `[]`. */
@@ -262,7 +265,7 @@ export function bichosDaFicha(quem) {
     vistos.add(nome);
     const nv = Number(q.nivel);
     const nivel = q.nivel != null && Number.isFinite(nv) && nv > 0 ? Math.round(nv) : null;
-    const base = BESTIARIO_INTEIRO.find((c) => c.nome === nome);
+    const base = bestiarioInteiro().find((c) => c.nome === nome);
     const ameaca = T.ameacas.includes(q.ameaca) ? q.ameaca
       : base ? base.ameaca
       : nivel == null ? T.ameacaSemNivel
