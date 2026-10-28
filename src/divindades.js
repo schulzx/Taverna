@@ -2,8 +2,17 @@
    Baseado na ideia do autor (arquivo "Os Três Estágios da Ascensão"):
    escala de Grau de Divindade (GD 0–4) alimentada por fé, com a Regra do
    Degrau (±2 por degrau de diferença) — o Mestre NUNCA calcula nada disso,
-   o sistema entrega os parâmetros prontos e ele só narra. */
+   o sistema entrega os parâmetros prontos e ele só narra.
+
+   T4-B (28/10, o cenário como arquivo, 4.ª fatia): o CÉU de um mundo — as
+   metades do nome de um deus, os domínios (com o ícone e os
+   temperamentos) e os nomes de culto — mora no cenário (cenario-padrao.js
+   `panteao`). A FÍSICA dele fica aqui: a escala de graus, a Regra do Degrau,
+   a fé por feito, o milagre, o despertar, os caminhos da ascensão. O motor
+   (motor/meio-do-turno.js, motor/fim-do-turno.js) só lê a física, e por
+   isso um panteão novo chega sem o tocar. */
 import { sorteDaCasa, comSorte } from "./semente.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 export const NIVEL_DESPERTAR = 15; // abaixo disso a ascensão NÃO existe na ficção
 
@@ -79,32 +88,21 @@ export function garantirDivindade(dv) {
 }
 
 /* ───────── Gerador de divindades (panteão nasce PRONTO — o Mestre só narra) ───────── */
-const DIV_NOMES_A = ["Vhar", "Oss", "Mel", "Thar", "Ilu", "Kael", "Zor", "Ael", "Mor", "Sae", "Dun", "Rha", "Vel", "Nyss", "Oth", "Bren"];
-const DIV_NOMES_B = ["ath", "imir", "andra", "ok", "is", "ael", "un", "eira", "oth", "yra", "ash", "iel", "om", "essa"];
-const DOMINIOS = [
-  { dominio: "da Colheita e da Fome", icone: "🌾", temper: ["generosa", "cobradora", "silenciosa"] },
-  { dominio: "das Tempestades", icone: "⛈", temper: ["colérica", "imprevisível", "orgulhosa"] },
-  { dominio: "dos Mortos e dos Juramentos", icone: "💀", temper: ["solene", "vingativa", "justa"] },
-  { dominio: "da Forja e do Fogo", icone: "🔥", temper: ["teimosa", "honrada", "ciumenta"] },
-  { dominio: "dos Mares e das Perdições", icone: "🌊", temper: ["volúvel", "ciumenta", "antiga"] },
-  { dominio: "da Lua e dos Segredos", icone: "🌙", temper: ["enigmática", "gentil", "mentirosa"] },
-  { dominio: "da Guerra e das Correntes", icone: "⛓", temper: ["brutal", "honrada", "faminta"] },
-  { dominio: "das Bestas e das Fronteiras", icone: "🐺", temper: ["selvagem", "protetora", "desconfiada"] },
-  { dominio: "do Comércio e dos Cifrões", icone: "⚖", temper: ["negociadora", "avara", "elegante"] },
-  { dominio: "dos Sonhos e dos Pesadelos", icone: "🕯", temper: ["tênue", "perturbadora", "maternal"] },
-  { dominio: "da Doença e da Cura", icone: "🩸", temper: ["ambígua", "fria", "compassiva"] },
-  { dominio: "do Conhecimento Proibido", icone: "📖", temper: ["curiosa", "perigosa", "paciente"] },
-];
-const TITULOS_CULTO = ["a Ordem", "o Círculo", "os Filhos", "a Seita", "os Vigias", "o Concílio", "as Mãos"];
+/* o panteão do mundo em uso: `nomes.inicio` + `nomes.fim` (eram DIV_NOMES_A e
+   DIV_NOMES_B), `dominios` (DOMINIOS) e `cultos` (TITULOS_CULTO). A ordem das
+   listas é a de sempre, e a sorte sai igual: o dourado do cenário prova-o. */
+let CEU = { nomes: { inicio: [], fim: [] }, dominios: [], cultos: [] };
+aoTrocarDeCenario((c) => { CEU = c.panteao; });
 
 function nomeDivino() {
-  return DIV_NOMES_A[Math.floor(sorteDaCasa() * DIV_NOMES_A.length)] + DIV_NOMES_B[Math.floor(sorteDaCasa() * DIV_NOMES_B.length)];
+  const { inicio, fim } = CEU.nomes;
+  return inicio[Math.floor(sorteDaCasa() * inicio.length)] + fim[Math.floor(sorteDaCasa() * fim.length)];
 }
 
 /* Gera UMA divindade completa: força (GD/fiéis/PF) já sorteada e coerente —
    é o "parâmetro" que o Mestre recebe de graça, sem gastar tokens inventando números. */
 export function gerarDivindade(ctx, dia, { gdFixo = null, sorte = null } = {}) { return comSorte(sorte, () => {
-  const dom = DOMINIOS[Math.floor(sorteDaCasa() * DOMINIOS.length)];
+  const dom = CEU.dominios[Math.floor(sorteDaCasa() * CEU.dominios.length)];
   /* distribuição: deuses menores são comuns; maiores, raros */
   const rolo = sorteDaCasa();
   const gd = gdFixo != null ? gdFixo : (rolo < 0.40 ? 2 : rolo < 0.75 ? 3 : 4);
@@ -123,7 +121,7 @@ export function gerarDivindade(ctx, dia, { gdFixo = null, sorte = null } = {}) {
     fieis,
     pf: Math.floor(fieis / 1000), // reserva de milagres proporcional à fé
     temperamento: temper,
-    culto: `${TITULOS_CULTO[Math.floor(sorteDaCasa() * TITULOS_CULTO.length)]} ${nome.endsWith("a") || nome.endsWith("e") ? "de" : "de"} ${nome}`,
+    culto: `${CEU.cultos[Math.floor(sorteDaCasa() * CEU.cultos.length)]} ${nome.endsWith("a") || nome.endsWith("e") ? "de" : "de"} ${nome}`,
     lugar: ctx && ctx.lugar ? ctx.lugar : "",
     criadoEm: dia,
     nota: `${temper[0].toUpperCase()}${temper.slice(1)} — culto ${gd >= 4 ? "antigo e presente em todo o mundo conhecido" : gd === 3 ? "forte em várias cidades" : "local, mas fervoroso"}.`,

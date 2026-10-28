@@ -1,4 +1,4 @@
-/* cenario-casos.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª e 2.ª fatias, 28/10/2026)
+/* cenario-casos.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 4.ª fatias, 28/10/2026)
 
    A fotografia dos catálogos que passaram a ler do cenário — os preços
    (economia.js, e o mercado que os consome), as ocupações (classes.js
@@ -8,7 +8,11 @@
    pedido; classes.js racasDoGenero e a ficha da cidade, que os leem) e, na
    3.ª, o bestiário (bestiario.js CRIATURAS_FANTASIA, ARQUETIPOS e o corte
    por gênero; completarInimigo, a criatura na frase da emboscada, a ficha
-   da masmorra, as masmorras semeadas, os bichos e os chefes do mundo). Não é suíte: é a
+   da masmorra, as masmorras semeadas, os bichos e os chefes do mundo) e, na
+   4.ª, a gente e o panteão (nomes.js: os bancos de nome por gênero, os povos,
+   os ofícios e os traços do elenco, o sexo de um nome, os nomes à mão;
+   divindades.js: as sílabas do nome divino, os domínios e os cultos; e a
+   gente dos locais de mundo-base.js, que os lê). Não é suíte: é a
    lista de perguntas que o `gerar-cenario-dourado.mjs` faz ao código de ANTES
    (lido do git) e que a `teste-cenario.mjs` refaz ao código de AGORA. As duas
    respostas têm de ser iguais byte a byte.
@@ -62,6 +66,12 @@ export const DESCRICOES = [
 export const INIMIGOS_SOLTOS = ["Lobo Atroz Velho", "o goblin arqueiro", "Capanga do Barão", "Aberração do Sétimo Selo", "", "TROLL DAS PONTES", "Dragão"];
 export const NIVEIS = [1, 4, 9, 16];
 export const SEMENTES_DE_MASMORRA = 40;
+/* 4.ª fatia: a gente e o panteão. Quantos nomes se tiram por gênero, e quantas
+   divindades, panteões e eventos semeados; o léxico que manda nos nomes (o
+   banco do mundo gerado ganha do banco do gênero, e tem de continuar a ganhar) */
+export const NOMES_POR_GENERO = { cidades: 30, pessoas: 12, diversas: 12, elenco: 8 };
+export const DIVINDADES_SEMEADAS = 60;
+export const LEXICO_DE_NOMES = { nomes: { masc: ["Kau", "Ruan", "Tiê", "Moacir", "Sepé", "Ubiratã"], fem: ["Iracema", "Jaci", "Potira", "Moema", "Iara", "Araci"], sobrenome: ["do Rio", "da Mata", "Pedra-Alta", "Sem-Nome"] }, povos: ["ribeirinho", "serrano"], oficios: ["remeiro", "erveira", "pajé", "caçador de onça"] };
 export const CIDADES_DA_FICHA = [
   { nome: "Vau Fundo", porte: "aldeia", regiao: "Charneca" }, { nome: "Porto Sal", porte: "cidade", regiao: "Costa Rasa" },
   { nome: "Coroa", porte: "capital", regiao: "Planalto" }, { nome: "Forte Cinza", porte: "fortaleza", regiao: "Fronteira" },
@@ -80,6 +90,9 @@ export async function fotografarOsCatalogos(raiz) {
   const MA = await imp(raiz, "masmorras.js");
   const MB = await imp(raiz, "mundo-base.js");
   const G = await imp(raiz, "geografia.js");
+  const NM = await imp(raiz, "nomes.js");
+  const DV = await imp(raiz, "divindades.js");
+  const SM = await imp(raiz, "semente.js");
   const casos = [];
   const caso = (id, saida) => casos.push({ id, saida: rxEmTexto(saida === undefined ? null : saida) });
 
@@ -176,5 +189,46 @@ export async function fotografarOsCatalogos(raiz) {
     caso("mundo.bichos." + g, regioes.map((r) => MB.criaturasDaRegiao("dourado-bestiario", r, g)));
     caso("mundo.chefes." + g, MB.chefesDoMundo("dourado-bestiario", { regioes, cidades: [{ nome: "Coroa" }, { nome: "Vau" }] }, g));
   }
+
+  /* ---- 4.ª fatia: a gente (nomes.js) ---- */
+  caso("nomes.generos", NM.generosDisponiveis());
+  caso("nomes.tracos", NM.TRACOS_PESSOA);
+  const primeiros = new Set();
+  const N = NOMES_POR_GENERO;
+  const vezes = (n, f) => Array.from({ length: n }, (_, i) => f(i));
+  for (const g of GENEROS_DE_PROVA) {
+    const rnd = G.rngDe("dourado-nomes|" + String(g));
+    const pessoas = ["masc", "fem", "", null].map((sx) => vezes(N.pessoas, () => NM.nomePessoa(g, sx, rnd)));
+    pessoas.flat().forEach((n) => primeiros.add(n.split(" ")[0]));
+    caso("nomes.genero." + String(g), {
+      cidades: vezes(N.cidades, () => NM.nomeCidade(g, rnd)),
+      pessoas,
+      diversas: vezes(N.diversas, () => NM.pessoaDiversa(g, rnd)),
+      comLexico: vezes(4, () => [NM.nomePessoa(g, "fem", rnd, LEXICO_DE_NOMES), NM.pessoaDiversa(g, rnd, LEXICO_DE_NOMES)]),
+      elenco: SM.comSorte(G.rngDe("dourado-elenco|" + String(g)), () => NM.elencoDiverso(g, N.elenco)),
+    });
+  }
+  const sexos = [...primeiros].sort();
+  caso("nomes.sexo", [...sexos, "Wren", "Sable", "Golem", "WREN", "aldric punho-de-pedra", "", null, 7].map((n) => [n, NM.sexoDoNome(n)]));
+  for (const g of ["Fantasia medieval", "Horror cósmico", "Steampunk", "Universo próprio", ""]) {
+    for (const dia of [0, 1, 7]) caso(`nomes.aMao.${g}.${dia}`, [NM.nomesAMao({ semente: "dourado-nomes", dia, cidade: "Vau Fundo", genero: g }), NM.nomesAMao({ semente: "dourado-nomes", dia, cidade: "Coroa", genero: g, usados: sexos.slice(0, 40) })]);
+  }
+  caso("nomes.aMao.lexico", NM.nomesAMao({ semente: "dourado-nomes", dia: 3, cidade: "Vau", genero: "Cyberpunk", lex: LEXICO_DE_NOMES }));
+  caso("nomes.aMao.lixo", [null, undefined, {}, "x", 3].map((o) => NM.nomesAMao(o)));
+  /* quem lê os bancos no mundo: a gente de cada local */
+  for (const g of ["Fantasia medieval", "Cyberpunk", "Horror cósmico", "Pós-apocalíptico"]) {
+    for (const cid of CIDADES_DA_FICHA.slice(0, 3)) {
+      const locais = MB.locaisDaCidade("dourado-gente", cid, g);
+      caso(`mundo.gente.${g}.${cid.nome}`, (locais || []).map((l) => MB.genteDoLocal("dourado-gente", l, g)));
+    }
+  }
+
+  /* ---- 4.ª fatia: o panteão (divindades.js) ---- */
+  caso("divindades.geradas", vezes(DIVINDADES_SEMEADAS, (i) => DV.gerarDivindade({ lugar: i % 2 ? "Coroa" : "" }, i, { sorte: G.rngDe("dourado-deuses|" + i), gdFixo: i % 5 === 0 ? 2 : null })));
+  caso("divindades.panteoes", vezes(20, (i) => DV.gerarPanteaoInicial({ lugar: "Vau" }, 10 + i, G.rngDe("dourado-panteao|" + i))));
+  caso("divindades.eventos", vezes(40, (i) => {
+    const pan = DV.gerarPanteaoInicial(null, i, G.rngDe("dourado-evento-pan|" + i));
+    return [DV.gerarEventoDivino({ lugar: i % 3 ? "Coroa" : "" }, i, pan, G.rngDe("dourado-evento|" + i)), DV.gerarEventoDivino({}, i, pan.slice(0, 1), G.rngDe("dourado-evento1|" + i))];
+  }));
   return casos;
 }

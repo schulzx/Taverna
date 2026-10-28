@@ -18,9 +18,8 @@
    pede `with { type: "json" }` no Node e não no Vite, e o mesmo arquivo tem
    de abrir igual nos dois.
 
-   As secções até aqui (as outras chegam nas seguintes — nomes e deuses —,
-   e o validador recusa hoje o campo que o motor ainda
-   não lê, para ninguém escrever um mundo que não acontece):
+   As secções (o validador recusa o campo que o motor não lê, para ninguém
+   escrever um mundo que não acontece):
      precos.escala      as linhas da escala de riqueza que o Narrador lê
                         (o meio do ECONOMIA_PROMPT; o começo e o fim são
                         regra do motor e ficam em economia.js)
@@ -57,6 +56,18 @@
                         primeiras): o mundo de fantasia vê também os quatro
                         primeiros arquétipos, e o de outro gênero as quatro
                         primeiras criaturas
+     gente.bancos       os nomes de cada gênero: as partes do nome de cidade
+                        (`cidadePre` + `cidadeSuf`, e as `cidadeUnica` já
+                        prontas, que saem quase metade das vezes), os primeiros
+                        nomes (`masc`, `fem` — é por eles que se sabe o sexo
+                        de um nome solto), os `sobrenome`s, e os `povos` e os
+                        `oficios` com que o elenco nasce (o ofício no neutro,
+                        "taverneiro(a)": a pessoa concorda-o com o seu gênero)
+     gente.tracos       o temperamento de quem nasce do elenco
+     panteao.nomes      as duas metades do nome de um deus (`inicio` + `fim`)
+     panteao.dominios   o que um deus governa, o ícone dele e os temperamentos
+                        que pode ter
+     panteao.cultos     como se chama a gente dele ("a Ordem de …")
    ============================================================ */
 export const DADOS_DO_CENARIO_PADRAO = {
   formato: 1,
@@ -192,5 +203,94 @@ export const DADOS_DO_CENARIO_PADRAO = {
       "\\bmetro\\b", "\\barranha-ceus?\\b", "\\bcelulares?\\b", "\\binternet\\b", "\\bpos-apocal\\w*",
       "\\bzumbis?\\b", "\\binspirad[oa] em\\b", "\\bbasead[oa] em\\b", "\\buniverso de\\b", "\\bno estilo de\\b",
     ],
+  },
+  /* 4.ª fatia: a gente (nomes.js). Cada gênero tem o seu banco; o gênero que
+     não tem banco usa o de `generos.padrao` (e por isso esse é obrigatório).
+     `cidadeUnica` pode vir vazia: aí toda cidade é prefixo + sufixo. */
+  gente: {
+    tracos: ["desconfiado", "acolhedor", "ambicioso", "melancólico", "brincalhão", "severo", "curioso", "reservado", "leal", "oportunista", "orgulhoso", "gentil", "sarcástico", "corajoso", "covarde", "sábio", "ingênuo", "vingativo", "generoso", "ganancioso", "protetor", "solitário", "carismático", "rabugento", "sonhador", "pragmático"],
+    bancos: {
+      "Fantasia medieval": {
+        cidadePre: ["Pedra", "Corvo", "Fenda", "Vale", "Alto", "Porto", "Foz", "Torre", "Ponte", "Cinza", "Ferro", "Ouro", "Espinho", "Névoa", "Lobo", "Águia", "Trovão", "Sombra", "Luz", "Sal", "Carvalho", "Salgueiro", "Junco", "Brasa", "Gelo", "Muralha", "Serra", "Rio", "Lago", "Duna", "Areia", "Bruma", "Rocha", "Cravo", "Urze", "Fonte"],
+        cidadeSuf: ["vale", "monte", "forte", "burgo", "gard", "held", "mar", "fonte", "porto", "ponte", "guarda", "haven", "reduto", "campo", "ermo", "cova", "passo", "vau", "clareira", "confim", "âncora", "abismo", "cume", "portal", "faina", "recanto", "brenha", "torreão"],
+        cidadeUnica: ["Valdoravem", "Silverwyn", "Grão-Corvo", "Thornhaven", "Mistral", "Ravensholm", "Aldebrand", "Fimbulvargr", "Ísgard", "Torrecinza", "Bruxelgard", "Marfilheira", "Colinégra", "Doiravém", "Frostmere", "Ashkarr", "Vindolâna", "Elderwyn", "Grimhollow", "Solmyr", "Kaervon", "Duncrag", "Wyrmpost", "Belhaven", "Thaloria", "Ysolde", "Karnak-Dûr", "Ravenmoor", "Silvergate", "Blackfen"],
+        masc: ["Aldric", "Brannoc", "Cedric", "Doran", "Edric", "Fendrel", "Gareth", "Halvard", "Ivarr", "Joric", "Kael", "Loras", "Magnus", "Neirin", "Osric", "Perrin", "Quorin", "Rhogar", "Sethric", "Torvald", "Ulric", "Varek", "Wystan", "Yorick", "Alaric", "Bjorn", "Corwin", "Dagon", "Eamon", "Falk", "Godfrey", "Hakon", "Isen", "Jarl", "Kolvar", "Lucan", "Merek", "Nolan", "Orin", "Piotr"],
+        fem: ["Aelith", "Bryna", "Ceridwen", "Dahlia", "Elowen", "Fenna", "Gwynn", "Hilda", "Isolde", "Jora", "Kaelith", "Lysa", "Morgane", "Nyla", "Ondine", "Petra", "Quilla", "Rowena", "Sable", "Thalia", "Ursa", "Vionna", "Wren", "Ylva", "Astrid", "Brigid", "Cora", "Dagny", "Eira", "Freya", "Greta", "Helga", "Ingrid", "Sigrun", "Runa", "Mabel", "Nesa", "Orla", "Perrine", "Saoirse"],
+        sobrenome: ["Coração-de-Ferro", "Punho-de-Pedra", "Olho-de-Corvo", "Mata-Lobos", "Sombravinda", "Ventoforte", "Filho da Névoa", "da Foz", "o Manco", "Barba-Ruiva", "Lâmina-Rápida", "Pé-Leve", "Sem-Medo", "o Andarilho", "da Torre", "Rompe-Escudos", "Voz-Grave", "Mão-Torta", "o Exilado", "Cinza-Antiga", "Guarda-Portão", "Queima-Campos", "o Silencioso", "Passo-de-Gato", "da Urze"],
+        povos: ["humano", "humana", "elfo", "elfa", "anão", "anã", "halfling", "meio-orc", "tiefling", "gnomo", "draconato"],
+        oficios: ["ferreiro", "taverneiro(a)", "guarda", "mercador", "curandeiro(a)", "caçador", "escriba", "sacerdote", "ladrão", "nobre", "bardo", "fazendeiro(a)", "estalajadeiro", "capitão(ã)", "aprendiz de mago"],
+      },
+      "Ficção científica": {
+        cidadePre: ["Nova", "Neo", "Porto", "Estação", "Colônia", "Setor", "Domo", "Orbital", "Cratera", "Alta", "Bio", "Cryo", "Helio", "Ferro", "Titânio", "Vega", "Sirius", "Aurora", "Ápex", "Zênite", "Núcleo", "Perímetro", "Ecos", "Vácuo", "Prisma"],
+        cidadeSuf: ["-9", "Prime", "Central", "-Alfa", "-Beta", "Station", "Point", "Reach", "Spire", "Haven", "Vault", "Nexus", "Terminal", "Bastion", "Cradle", "Gate", "Rift", "Verge", "Hub", "Descent", "Ascent", "-VII", "-Zero", "Anchorage"],
+        cidadeUnica: ["Aethel-9", "Cinzas de Kepler", "Novaróvia", "Terminus Prime", "Solaris Vault", "Cratera Vermelha", "Elysium-4", "Baluarte Órion", "Ízaro Station", "Perdição de Vega", "Novo Bizâncio", "Halcyon Reach", "Umbra Deep", "Cindervale Orbital", "Argos Prime", "Tycho Descent", "Meridian-0", "Vantablack", "Porto Hélio", "Cradle-VII", "Sombra de Titã", "Última Órbita", "Icarus Fell", "Zênite Pálido", "Quietus"],
+        masc: ["Ky", "Zane", "Rael", "Cass", "Orin", "Dax", "Vex", "Kato", "Silas", "Jarek", "Corvin", "Nyx", "Thane", "Ezio", "Ravi", "Soren", "Kael", "Bishop", "Cyrus", "Dane", "Enzo", "Fenn", "Gideon", "Halston", "Ivo", "Joaquim", "Kir", "Lux", "Marlow", "Niko"],
+        fem: ["Nyx", "Zara", "Echo", "Vesper", "Lyra", "Cira", "Juno", "Rhea", "Sol", "Ada", "Kaja", "Nova", "Ondina", "Perla", "Quíntia", "Riven", "Sable", "Tessa", "Ume", "Vala", "Wren", "Xara", "Yuki", "Zephyr", "Astra", "Briar", "Calla", "Dita", "Elara", "Freyja"],
+        sobrenome: ["Vex", "Cross", "Halloway", "Okonkwo", "Petrov", "Nakamura", "Reyes", "Voss", "Kane", "Sol-9", "Ferro", "Kestrel", "Marchetti", "Osei", "Ravenna", "Sato", "Thorne", "Ustinov", "Valdez", "Wraith", "Xu", "Yamada", "Zoric", "Adeyemi", "Blackwood"],
+        povos: ["humano", "humana", "sintético", "colono", "mutante", "ciborgue", "alienígena"],
+        oficios: ["engenheiro(a)", "piloto", "médico(a)", "contrabandista", "cientista", "soldado", "mecânico(a)", "diplomata", "minerador(a)", "hacker"],
+      },
+      "Cyberpunk": {
+        cidadePre: ["Neo", "Setor", "Bloco", "Zona", "Distrito", "Baixa", "Alta", "Sub", "Meta", "Ciber", "Cromo", "Neon", "Vidro", "Aço", "Ácido", "Pixel", "Data", "Fluxo", "Ruído", "Sinal"],
+        cidadeSuf: ["City", "Sprawl", "-Sul", "-Norte", "Zero", "Prime", "Underground", "Heights", "Slums", "Grid", "Node", "Loop", "Wire", "Deck", "Zone", "-13", "Central", "Fringe", "Verge", "Core"],
+        cidadeUnica: ["Neonhaven", "Cromo City", "Setor Cinza", "Baixa Ácida", "Distrito Vidro", "Néon-13", "Vórtex Sprawl", "Aço & Sombra", "Pixelburgo", "Data-Fim", "Ruído Central", "Meta-Sul", "Ferro Fundido", "Zona Morta", "Cabo Solto", "Circuito Aberto", "Vidro Quebrado", "Nêon Pálido", "Subúrbio Zero", "Cinza Elétrica"],
+        masc: ["Rez", "Jax", "Kilo", "Neo", "Vye", "Dash", "Cipher", "Ryu", "Zeke", "Nox", "Blade", "Kane", "Wire", "Ghost", "Ivo", "Sly", "Cade", "Dex", "Enzo", "Fang", "Griff", "Haze", "Idris", "Juke", "Kaz"],
+        fem: ["Rune", "Vex", "Neon", "Kira", "Zev", "Trace", "Cyra", "Nyx", "Echo", "Vina", "Glitch", "Mira", "Onyx", "Pixel", "Quim", "Raze", "Syn", "Tibi", "Umbra", "Vega", "Wisp", "Xen", "Yara", "Zola", "Ada"],
+        sobrenome: ["Wire", "Cross", "Volt", "Zero", "Kade", "Nyx", "Chrome", "Steel", "Vega", "Kill", "Static", "Rook", "Sable", "Tox", "Umbra", "Vice", "Wraith", "Xero", "Yakuza", "Zane", "Byte", "Cinder", "Dusk", "Edge", "Flux"],
+        povos: ["humano", "humana", "ciborgue", "androide", "modificado", "netrunner"],
+        oficios: ["fixer", "netrunner", "guarda-costas", "traficante", "médico(a) de rua", "corporativo", "mercenário(a)", "informante", "técnico", "dançarino(a)"],
+      },
+      "Horror cósmico": {
+        cidadePre: ["Vale", "Névoa", "Corvo", "Cinza", "Salgado", "Velho", "Baixo", "Fundo", "Pântano", "Bruma", "Sombra", "Silêncio", "Musgo", "Pó", "Ossos", "Sino", "Cripta", "Sal", "Maré", "Junco"],
+        cidadeSuf: ["field", "moor", "wick", "hollow", "marsh", "haven", "port", "crest", "vale", "mouth", "barrow", "end", "reach", "fen", "grave", "mire", "shade", "cove", "ness", "gloom"],
+        cidadeUnica: ["Innsvale", "Corvos-Fundos", "Névoa Salgada", "Baixa-do-Sino", "Pântano Cinza", "Ossário", "Marévem", "Silêncio", "Cripta-do-Sal", "Bruma Antiga", "Vale-Sussurro", "Musgo-Fundo", "Pó & Cinzas", "A Enseada", "Fim-do-Junco", "Sombravale", "Maré-Morta", "Sino Rachado", "Barrowick", "Gloomfen"],
+        masc: ["Ezra", "Silas", "Josiah", "Amos", "Cornelius", "Ebenezer", "Thaddeus", "Obed", "Hiram", "Zebediah", "Barnabas", "Increase", "Elias", "Jedediah", "Nathaniel", "Ichabod", "Mordecai", "Phineas", "Reuben", "Zadok", "Caleb", "Enoch", "Gideon", "Levi", "Absalom"],
+        fem: ["Prudence", "Mercy", "Abigail", "Constance", "Temperance", "Verity", "Charity", "Patience", "Hepzibah", "Keziah", "Tabitha", "Dorcas", "Lavinia", "Ophelia", "Cordelia", "Winifred", "Eudora", "Marguerite", "Selah", "Thomasine", "Bathsheba", "Damaris", "Eunice", "Jerusha", "Zipporah"],
+        sobrenome: ["Marsh", "Whateley", "Gilman", "Pickman", "Corvo", "Blackwood", "Ashby", "Deverell", "Ottoline", "Sallow", "Thorne", "Vane", "Crane", "Fenwick", "Grimshaw", "Holloway", "Mordaunt", "Nightingale", "Orlok", "Peabody", "Quintus", "Ravenscroft", "Sowerby", "Trevelyan", "Usher"],
+        povos: ["humano", "humana", "híbrido", "amaldiçoado", "cultista", "forasteiro"],
+        oficios: ["pescador", "bibliotecário(a)", "médico", "pastor", "professor(a)", "antiquário", "coveiro", "viúvo(a)", "detetive", "taverneiro"],
+      },
+      "Pós-apocalíptico": {
+        cidadePre: ["Posto", "Refúgio", "Ruína", "Cinza", "Ferro", "Sucata", "Poço", "Cruz", "Muro", "Cova", "Sal", "Rádio", "Pó", "Ossos", "Última", "Nova", "Baixa", "Alta", "Vale", "Cratera"],
+        cidadeSuf: ["-Zero", "Alta", "Baixa", "-7", "Nova", "Velha", "do Sul", "do Norte", "Central", "Fim", "Reduto", "Abrigo", "Cova", "Passagem", "Fronteira", "Ermo", "Poço", "Muro", "Cruz", "Vau"],
+        cidadeUnica: ["Refúgio-7", "Cova de Ferro", "Sucata Alta", "Cruz do Sul", "Poço Cinza", "Última Cidade", "Muro-Zero", "Ossário", "Nova Esperança", "Radioburgo", "Sal & Pó", "Baixa Enferrujada", "Cratera Verde", "Fim da Estrada", "Reduto", "Passagem Morta", "Vale Seco", "Posto Cinza", "Ferro-Velho", "A Fronteira"],
+        masc: ["Ruck", "Dust", "Cole", "Hatchet", "Rem", "Boone", "Kade", "Slate", "Ash", "Diesel", "Gunnar", "Hawk", "Iron", "Jonah", "Krow", "Levi", "Mace", "Nash", "Ozzy", "Pike", "Quill", "Rook", "Stray", "Tank", "Vulture"],
+        fem: ["Rust", "Sage", "Wren", "Ash", "Piper", "Rune", "Cinder", "Dove", "Ember", "Fawn", "Grit", "Hazel", "Iris", "June", "Kestrel", "Lark", "Mica", "Nova", "Onyx", "Prairie", "Quinn", "Raven", "Scout", "Thistle", "Vera"],
+        sobrenome: ["Ferro", "Cinza", "do Poço", "Sucateiro", "Sem-Terra", "Rádio", "o Marcado", "Mão-Seca", "da Cratera", "Corvo", "Pé-de-Chumbo", "a Nômade", "do Muro", "Queima-Tudo", "Osso", "Ferrugem", "Sal", "o Errante", "da Cova", "Pólvora", "Vidro", "Grão", "Chuva-Ácida", "Fenda", "Últim"],
+        povos: ["humano", "humana", "mutante", "sintético", "nômade", "ghoul"],
+        oficios: ["sucateiro", "curandeiro(a)", "batedor", "líder de posto", "mercador(a)", "caçador", "mecânico(a)", "guarda", "fazendeiro", "contrabandista"],
+      },
+      "Steampunk": {
+        cidadePre: ["Alto", "Ferro", "Vapor", "Cobre", "Bronze", "Engrenagem", "Fumaça", "Torre", "Ponte", "Porto", "Baixo", "Novo", "Grão", "Rio", "Fábrica", "Relógio", "Câmbio", "Mola", "Pistão", "Carvão"],
+        cidadeSuf: ["burgo", "vapor", "forja", "ford", "haven", "gate", "spire", "works", "port", "cross", "field", "borough", "steam", "cog", "brass", "shire", "hollow", "reach", "end", "haven"],
+        cidadeUnica: ["Cobrevale", "Altavapor", "Engrenópolis", "Ferro & Fumaça", "Torre-Relógio", "Bronzeburgo", "Câmbio Alto", "Pistão Central", "Novo Carvão", "Fábrica Velha", "Rio Fuligem", "Molafield", "Grão-Bronze", "Ponte-Vapor", "Baixa Fumaça", "Cogsworth", "Latão-Reach", "Vaporgard", "Fuligem", "Brassholt"],
+        masc: ["Ambrose", "Bartholomew", "Cornelius", "Desmond", "Edmund", "Fitzgerald", "Gideon", "Horace", "Ignatius", "Jasper", "Klaus", "Leopold", "Montgomery", "Nathaniel", "Octavius", "Percival", "Quentin", "Reginald", "Sebastian", "Thaddeus", "Ulysses", "Vincent", "Wallace", "Xavier", "Zephaniah"],
+        fem: ["Arabella", "Beatrix", "Cordelia", "Dorothea", "Evangeline", "Florence", "Genevieve", "Henrietta", "Isadora", "Josephine", "Katharine", "Lavinia", "Millicent", "Nadine", "Ottilie", "Prudence", "Rosalind", "Seraphina", "Theodora", "Ursula", "Vivienne", "Wilhelmina", "Xanthe", "Yolanda", "Zelda"],
+        sobrenome: ["Copperwright", "Ironmonger", "Steamwell", "Brasswick", "Cogsworth", "Fairweather", "Gearhart", "Ashcombe", "Blackwood", "Cranborne", "Featherstone", "Goldwyn", "Hartley", "Ironside", "Kettering", "Leadbetter", "Merriweather", "Pennington", "Quill", "Rothschild", "Sootheby", "Thornbury", "Underwood", "Vandermere", "Whitlock"],
+        povos: ["humano", "humana", "autômato", "engenhoso", "aristocrata", "aeronauta"],
+        oficios: ["inventor", "aeronauta", "relojoeiro(a)", "industrial", "detetive", "aristocrata", "maquinista", "cientista", "jornalista", "capitão(ã)"],
+      },
+    },
+  },
+  panteao: {
+    nomes: {
+      inicio: ["Vhar", "Oss", "Mel", "Thar", "Ilu", "Kael", "Zor", "Ael", "Mor", "Sae", "Dun", "Rha", "Vel", "Nyss", "Oth", "Bren"],
+      fim: ["ath", "imir", "andra", "ok", "is", "ael", "un", "eira", "oth", "yra", "ash", "iel", "om", "essa"],
+    },
+    dominios: [
+      { dominio: "da Colheita e da Fome", icone: "🌾", temper: ["generosa", "cobradora", "silenciosa"] },
+      { dominio: "das Tempestades", icone: "⛈", temper: ["colérica", "imprevisível", "orgulhosa"] },
+      { dominio: "dos Mortos e dos Juramentos", icone: "💀", temper: ["solene", "vingativa", "justa"] },
+      { dominio: "da Forja e do Fogo", icone: "🔥", temper: ["teimosa", "honrada", "ciumenta"] },
+      { dominio: "dos Mares e das Perdições", icone: "🌊", temper: ["volúvel", "ciumenta", "antiga"] },
+      { dominio: "da Lua e dos Segredos", icone: "🌙", temper: ["enigmática", "gentil", "mentirosa"] },
+      { dominio: "da Guerra e das Correntes", icone: "⛓", temper: ["brutal", "honrada", "faminta"] },
+      { dominio: "das Bestas e das Fronteiras", icone: "🐺", temper: ["selvagem", "protetora", "desconfiada"] },
+      { dominio: "do Comércio e dos Cifrões", icone: "⚖", temper: ["negociadora", "avara", "elegante"] },
+      { dominio: "dos Sonhos e dos Pesadelos", icone: "🕯", temper: ["tênue", "perturbadora", "maternal"] },
+      { dominio: "da Doença e da Cura", icone: "🩸", temper: ["ambígua", "fria", "compassiva"] },
+      { dominio: "do Conhecimento Proibido", icone: "📖", temper: ["curiosa", "perigosa", "paciente"] },
+    ],
+    cultos: ["a Ordem", "o Círculo", "os Filhos", "a Seita", "os Vigias", "o Concílio", "as Mãos"],
   },
 };

@@ -31,7 +31,13 @@
    `bestiario` (3.ª fatia: bestiario.js — as criaturas do mundo, os
    arquétipos genéricos e o corte por gênero; o motor chega-lhe por
    mundo-base.js, que chama `criaturasDoGenero` e por isso já vê o mundo
-   novo sem ser tocado). Os
+   novo sem ser tocado); `gente` e `panteao` (4.ª fatia: nomes.js — os
+   bancos de nome de cada gênero, os povos, os ofícios e os traços do
+   elenco; divindades.js — as metades do nome de um deus, os domínios e os
+   cultos. A REGRA dos deuses — a escala de graus, a fé, o milagre, o
+   despertar — fica no código: o cenário dá o céu, não a física dele. O
+   motor lê os dois módulos por funções, nunca pelas tabelas, e por isso
+   vê o mundo novo sem ser tocado). Os
    ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
    secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
    ofícios não perca o léxico gerado.
@@ -55,7 +61,7 @@ import { DADOS_DO_CENARIO_PADRAO } from "./cenario-padrao.js";
    seu tipo (um nome de `TIPOS`, abaixo); `?` no fim é campo opcional. */
 export const ESQUEMA_DO_CENARIO = Object.freeze({
   formato: 1,
-  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto" }),
+  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto", gente: "objeto", panteao: "objeto" }),
   precos: Object.freeze({ escala: "textos", raridade: "objeto", semRaridade: "preco", miudeza: "preco", comuns: "lista" }),
   /* as raridades do motor (loot.js RARIDADES): as cinco que se vendem têm
      preço obrigatório; a única não se compra em banca, e o preço é opcional */
@@ -89,9 +95,23 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   ameacas: Object.freeze(["fraco", "comum", "competente", "elite", "lendario"]),
   degraus: Object.freeze(["animal", "bruto", "astuto", "treinado", "brilhante"]),
   elementos: Object.freeze(["fisico", "fogo", "gelo", "raio", "veneno", "sagrado", "sombrio", "arcano"]),
+  /* a gente (nomes.js): `bancos` por gênero — o gênero sem banco usa o de
+     `generos.padrao`, que por isso é obrigatório — e os traços do elenco */
+  gente: Object.freeze({ tracos: "nomes", bancos: "objeto" }),
+  /* um banco: os campos que nomes.js sorteia. `cidadeUnica` pode vir vazia
+     (toda cidade é então prefixo + sufixo); as outras listas sorteiam
+     sempre, e uma lista vazia daria uma pessoa sem nome */
+  banco: Object.freeze({ cidadePre: "nomes", cidadeSuf: "nomes", cidadeUnica: "textos", masc: "nomes", fem: "nomes", sobrenome: "nomes", povos: "nomes", oficios: "nomes" }),
+  /* o panteão (divindades.js): o nome de um deus é `inicio` + `fim`, o
+     domínio traz o ícone e os temperamentos possíveis, e o culto é
+     "<culto> de <nome>" */
+  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes" }),
+  nomeDivino: Object.freeze({ inicio: "nomes", fim: "nomes" }),
+  dominio: Object.freeze({ dominio: "texto", icone: "texto", temper: "nomes" }),
   /* os mínimos: a criação abre na primeira ocupação, a rua mostra ao menos
-     uma coisa, e o encontro tem ao menos uma criatura para sortear */
-  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1 }),
+     uma coisa, o encontro tem ao menos uma criatura para sortear, a gente
+     ao menos um banco, e o céu ao menos um domínio */
+  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1 }),
 });
 
 const ehObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -102,6 +122,7 @@ const regexOk = (v) => { if (!ehTexto(v)) return false; try { new RegExp(v); ret
 const TIPOS = {
   texto: [ehTexto, "texto"],
   textos: [(v) => Array.isArray(v) && v.every(ehTexto), "lista de textos"],
+  nomes: [(v) => Array.isArray(v) && v.length > 0 && v.every(ehTexto), "lista de textos, com ao menos um"],
   inteiro: [(v) => Number.isInteger(v), "número inteiro"],
   numero: [ehNum, "número"],
   preco: [(v) => ehNum(v) && v >= 0, "número ≥ 0"],
@@ -203,6 +224,36 @@ export function validarCenario(dados) {
     /* a lista torta diz QUAL linha está torta, não só que a lista está */
     if (Array.isArray(ge.marcasProprias)) ge.marcasProprias.forEach((rx, i) => { if (!regexOk(rx)) erros.push(`generos.marcasProprias[${i}]: devia ser texto de uma regex válida`); });
     if (Array.isArray(ge.futuristas)) ge.futuristas.forEach((g, i) => { if (!ehTexto(g)) erros.push(`generos.futuristas[${i}]: devia ser texto`); });
+  }
+  const gn = dados.gente;
+  if (ehObj(gn)) {
+    conferir(gn, E.gente, "gente", erros);
+    if (ehObj(gn.bancos)) {
+      const generos = Object.keys(gn.bancos);
+      if (generos.length < E.minimo.bancos) erros.push(`gente.bancos: precisa de ao menos ${E.minimo.bancos} banco`);
+      for (const g of generos) {
+        /* o gênero entra no caminho entre aspas: "Fantasia medieval" tem espaço */
+        const onde = `gente.bancos[${JSON.stringify(g)}]`;
+        if (!ehTexto(g)) erros.push(`${onde}: o gênero do banco devia ser texto`);
+        if (!ehObj(gn.bancos[g])) { erros.push(`${onde}: devia ser objeto`); continue; }
+        conferir(gn.bancos[g], E.banco, onde, erros);
+      }
+      /* o gênero sem banco cai no do padrão: sem ele, a pessoa nasceria sem nome */
+      if (ehObj(ge) && ehTexto(ge.padrao) && !Object.hasOwn(gn.bancos, ge.padrao)) erros.push(`gente.bancos: falta o banco do gênero padrão (generos.padrao, "${ge.padrao}")`);
+    }
+  }
+  const pa = dados.panteao;
+  if (ehObj(pa)) {
+    conferir(pa, E.panteao, "panteao", erros);
+    if (ehObj(pa.nomes)) conferir(pa.nomes, E.nomeDivino, "panteao.nomes", erros);
+    if (Array.isArray(pa.dominios)) {
+      if (pa.dominios.length < E.minimo.dominios) erros.push(`panteao.dominios: precisa de ao menos ${E.minimo.dominios} domínio`);
+      pa.dominios.forEach((d, i) => {
+        const onde = `panteao.dominios[${i}]`;
+        if (!ehObj(d)) { erros.push(`${onde}: devia ser objeto`); return; }
+        conferir(d, E.dominio, onde, erros);
+      });
+    }
   }
   return { ok: erros.length === 0, erros };
 }
