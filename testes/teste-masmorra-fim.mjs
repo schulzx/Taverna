@@ -18,6 +18,7 @@
 import { trocarACasa } from "../src/semente.js";
 import * as M from "../src/masmorras.js";
 import { readFileSync } from "node:fs";
+import { concluirAMasmorra } from "../src/motor/combate-do-turno.js";
 
 const { gerarMasmorra, entrarNaSala, marcarResolvida, voltarASalaLimpa, saidasDe, saidasDeRecuo } = M;
 
@@ -305,10 +306,20 @@ sec("11. a fiação no App: a porta chama a tabela, e as DUAS portas de vitória
 
   /* o chefe: UM bloco de recompensa, chamado pelas duas portas — duplicar é pagar o tesouro duas vezes (ou só numa das portas) */
   t("existe um helper local que conclui a masmorra pelo chefe", helper.length > 0);
-  t("a recompensa do chefe é chamada num lugar só (o helper)", conta(APP, "recompensaChefe(") === 1 && helper.includes("recompensaChefe("));
-  t("a masmorra concluída conta num lugar só", conta(APP, 'bumpCont("masmorrasConcluidas")') === 1 && helper.includes('bumpCont("masmorrasConcluidas")'));
-  t("o helper larga a masmorra (masmorraRef = null): a 2.ª porta não encontra chefe e não paga de novo", helper.includes("masmorraRef.current = null") && helper.includes("setMasmorra(null)"));
-  t("o helper devolve a ficha nova ({ pers, concluiu }), sem mutar a recebida", helper.includes("return { pers: p2, concluiu: true }") && !/\bp\.(moedas|equipamento|essencia) =/.test(helper));
+  /* MOVIDAS (T1-A, 5.ª fatia, 28/10): a regra do helper foi para
+     src/motor/combate-do-turno.js (concluirAMasmorra), pura e à letra, e o
+     helper do App ficou invólucro dela. A intenção é a mesma — um bloco
+     só, chamado pelas duas portas, que larga a masmorra e não muta a ficha
+     —, e passa a provar-se JOGANDO a peça (o motor não se lê como texto,
+     teste-assercoes-de-texto) e lendo só o invólucro do App (helper). */
+  const mmChefe = { nome: "Cripta do Corvo", salas: [{ id: 1, tipo: "entrada" }, { id: 3, tipo: "chefe", moedas: 90 }], atual: 3, tochas: 2 };
+  const fichaIn = Object.freeze({ nome: "Vera", nivel: 6, moedas: 10, equipamento: Object.freeze([]), essencia: 1 });
+  const r1 = concluirAMasmorra(fichaIn, { masmorra: mmChefe, mapa: { cidades: [] }, base: null }, { lexico: null, sorteDoTurno: () => () => 0.5 });
+  const r2 = concluirAMasmorra(r1.pers, { masmorra: null, mapa: { cidades: [] }, base: null }, { lexico: null, sorteDoTurno: () => () => 0.5 });
+  t("a recompensa do chefe é paga num lugar só (a peça, pelo helper): +90 moedas e um item épico ou lendário", conta(APP, "recompensaChefe(") === 0 && helper.includes("concluirAMasmorra(") && r1.concluiu && r1.pers.moedas === 100 && r1.pers.equipamento.length === 1 && ["epico", "lendario"].includes(r1.pers.equipamento[0].raridade));
+  t("a masmorra concluída conta num lugar só", conta(APP, 'bumpCont("masmorrasConcluidas")') === 0 && r1.efeitos.filter((e) => e.tipo === "contador" && e.nome === "masmorrasConcluidas").length === 1 && helper.includes("bumpCont(ef.nome)"));
+  t("o helper larga a masmorra (masmorraRef = null): a 2.ª porta não encontra chefe e não paga de novo", r1.efeitos.some((e) => e.tipo === "masmorra" && e.masmorra === null) && helper.includes("masmorraRef.current = ef.masmorra; setMasmorra(ef.masmorra);") && !r2.concluiu && r2.pers === r1.pers && !r2.efeitos.length);
+  t("o helper devolve a ficha nova ({ pers, concluiu }), sem mutar a recebida", r1.pers !== fichaIn && fichaIn.moedas === 10 && fichaIn.equipamento.length === 0 && helper.includes("return { pers: r.pers, concluiu: true }"));
   t("a porta do Narrador (a resposta com vitória) chama o MESMO helper (2 chamadas: a do Narrador e a do sistema)", conta(APP, "concluirMasmorraDoChefe(") === 2);
 });
 

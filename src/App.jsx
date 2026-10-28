@@ -22,8 +22,8 @@ import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucle
 import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha, favorJaPedido } from "./subtramas.js";
 import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
-import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, essenciaDoChefe, valorDe } from "./loot.js";
-import { gerarMasmorra, recompensaChefe, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
+import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
+import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
@@ -175,7 +175,7 @@ import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, en
 import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
 import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, concluirLugar, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
@@ -240,7 +240,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { despertarUnica, aFamaDoFeito } from "./motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -16366,32 +16366,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      masmorra "em curso" sem tesouro. Idempotente: larga a masmorra (masmorraRef = null),
      então a segunda porta não encontra sala de chefe e devolve a ficha como veio.
      Recebe a ficha e a lista de linhas de tela; devolve { pers, concluiu } e não muta nada. */
+  /* T1-A, 5.ª fatia: a regra mora em `concluirAMasmorra`
+     (src/motor/combate-do-turno.js), pura e à letra, com os porquês; daqui
+     sai a fiação, na ordem de antes — as linhas, a masmorra largada, o
+     contador, a base (só num mapa de região) — e o que é só do App: a sala
+     em curso que se esvazia e a sessão que pode fechar. Provado byte a byte
+     contra o órgão de antes (teste-motor-combate). */
   const concluirMasmorraDoChefe = (p2, msgs) => {
-    const mm = masmorraRef.current;
-    const sala = mm && Array.isArray(mm.salas) ? mm.salas.find((x) => x.id === mm.atual) : null;
-    if (!mm || !sala || sala.tipo !== "chefe") return { pers: p2, concluiu: false };
-    const rec = recompensaChefe(p2.nivel || 1, (mundoAtual() || {}).lexico, sorteDoTurno("chefe"));
-    /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
-    /* v9.54: o chefe deixa ESSÊNCIA, e é a maior fonte do jogo. É a
-       criatura mais carregada de poder que a masmorra põe na frente do
-       herói, e o momento em que ele mais quer forjar alguma coisa. */
-    const essChefe = essenciaDoChefe(p2.nivel || 1);
-    p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item],
-           essencia: (p2.essencia || 0) + essChefe,
-           suprimentos: { ...garantirSuprimentos(p2.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
-    msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ⚗ +${essChefe} essência · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
-    if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
-    masmorraRef.current = null; setMasmorra(null);
-    bumpCont("masmorrasConcluidas");
-    /* MM17 C1: A MASMORRA PUBLICA O FIM — qual, e não só quantas: é o que o
-       marco "descer" da espinha lê. Só num mapa de região; no continente a
-       base fica com as chaves de sempre. */
-    if (mapaRef.current && mapaRef.current.regiao) {
-      try { baseMundoRef.current = concluirLugar(baseMundoRef.current, mm.nome); setBaseMundo(baseMundoRef.current); } catch (e) { calou("a masmorra concluída na base", e); }
+    const r = concluirAMasmorra(p2, { masmorra: masmorraRef.current, mapa: mapaRef.current, base: baseMundoRef.current }, { lexico: (mundoAtual() || {}).lexico, sorteDoTurno });
+    if (!r.concluiu) return { pers: r.pers, concluiu: false };
+    msgs.push(...r.msgs);
+    for (const ef of r.efeitos) {
+      if (ef.tipo === "masmorra") { masmorraRef.current = ef.masmorra; setMasmorra(ef.masmorra); }
+      else if (ef.tipo === "contador") bumpCont(ef.nome);
+      else if (ef.tipo === "base") { baseMundoRef.current = ef.base; setBaseMundo(ef.base); }
+      else if (ef.tipo === "calou") calou(ef.onde, ef.erro);
     }
     salaEmCursoRef.current = null;
     talvezFecharSessao("chefe");
-    return { pers: p2, concluiu: true };
+    return { pers: r.pers, concluiu: true };
   };
 
   /* ---------------- O CUSTO DE QUEM SAI — AGORA COM DADO E COM DISPARO ----------------

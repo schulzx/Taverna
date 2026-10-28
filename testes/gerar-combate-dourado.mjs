@@ -20,6 +20,10 @@ import { fileURLToPath } from "node:url";
 import { casosDoCombate, sorteDoCaso } from "./combate-casos.mjs";
 import { gerarHabilidadeUnica, chanceUnica } from "../src/unicas.js";
 import { patamarFama } from "../src/fama.js";
+import { recompensaChefe } from "../src/masmorras.js";
+import { essenciaDoChefe, RARIDADE_ROTULO } from "../src/loot.js";
+import { garantirSuprimentos } from "../src/ermos.js";
+import { concluirLugar } from "../src/mundo-base.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const COMMIT = process.argv[2] || "7338870";
@@ -58,6 +62,24 @@ const ORGAOS = {
       return { ret, tela, nota: S.notaRef.current, ultima: S.famaPatamarRef.current };
     },
     nome: "checarFama",
+  },
+  /* concluirMasmorraDoChefe: lê a masmorra, o mapa, a base e a sorte; escreve
+     nos refs (a masmorra, a base, a sala em curso), num contador e na sessão */
+  concluirMasmorraDoChefe: {
+    texto: () => corte("  const concluirMasmorraDoChefe = (p2, msgs) => {", "  /* ---------------- O CUSTO DE QUEM SAI"),
+    correr: (fn, k) => {
+      const contadores = [], sessao = [], calados = [];
+      const S = {
+        recompensaChefe, essenciaDoChefe, RARIDADE_ROTULO, garantirSuprimentos, concluirLugar,
+        masmorraRef: ref(copia(k.masmorra)), mapaRef: ref(copia(k.mapa)), baseMundoRef: ref(copia(k.base)), salaEmCursoRef: ref("sala em curso"),
+        setMasmorra: () => {}, setBaseMundo: () => {}, mundoAtual: () => ({ lexico: k.lexico }), sorteDoTurno: sorteDoCaso(k),
+        bumpCont: (...a) => contadores.push(a), talvezFecharSessao: (x) => sessao.push(x), calou: (onde) => calados.push(onde),
+      };
+      const msgs = [];
+      const ret = fn(S)(copia({ ...k.pers, equipamento: k.equipamento, suprimentos: k.suprimentos, essencia: k.essencia }), msgs);
+      return { ret, msgs, masmorra: S.masmorraRef.current, base: S.baseMundoRef.current, salaEmCurso: S.salaEmCursoRef.current, contadores, sessao, calados };
+    },
+    nome: "concluirMasmorraDoChefe",
   },
 };
 

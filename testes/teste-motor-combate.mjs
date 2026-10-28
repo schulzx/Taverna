@@ -17,7 +17,7 @@
    ============================================================ */
 import fs from "node:fs";
 import { casosDoCombate, sorteDoCaso, N_CASOS } from "./combate-casos.mjs";
-import { despertarUnica, aFamaDoFeito } from "../src/motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra } from "../src/motor/combate-do-turno.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 
 let ok = 0, mal = 0;
@@ -70,6 +70,41 @@ sec("2 · a fama que cresce (checarFama → aFamaDoFeito)");
   const morde = casos.filter((k, i) => !igual(foto(k, k.fama, k.fama), fotos[i])).length;
   t(`morde: com a última checagem igual à de agora, ${morde} fotos divergem (as que subiam)`, morde === subiu && morde > 0);
   t("no App, o órgão é o invólucro da peça", /const checarFama = \(\) => \{\s*const r = aFamaDoFeito\(famaAtual\(\), famaPatamarRef\.current\);\s*if \(r\.msgs\.length\) pushMsgs\(r\.msgs\.map\(\(texto\) => \(\{ autor: "sistema", texto \}\)\)\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*famaPatamarRef\.current = r\.fama;\s*return r\.fama;/.test(C));
+}
+
+sec("3 · o chefe caiu (concluirMasmorraDoChefe → concluirAMasmorra)");
+{
+  const fotos = D.orgaos.concluirMasmorraDoChefe;
+  /* o invólucro do App, à letra: as linhas, os efeitos na ordem, a sala e a sessão */
+  const foto = (k, sorte, masmorra = k.masmorra) => {
+    const st = { masmorra: copia(masmorra), base: copia(k.base), salaEmCurso: "sala em curso", contadores: [], sessao: [], calados: [] };
+    const msgs = [];
+    const r = concluirAMasmorra(copia({ ...k.pers, equipamento: k.equipamento, suprimentos: k.suprimentos, essencia: k.essencia }), { masmorra: st.masmorra, mapa: copia(k.mapa), base: st.base }, { lexico: k.lexico, sorteDoTurno: sorte || sorteDoCaso(k) });
+    if (r.concluiu) {
+      msgs.push(...r.msgs);
+      for (const ef of r.efeitos) {
+        if (ef.tipo === "masmorra") st.masmorra = ef.masmorra;
+        else if (ef.tipo === "contador") st.contadores.push([ef.nome]);
+        else if (ef.tipo === "base") st.base = ef.base;
+        else if (ef.tipo === "calou") st.calados.push(ef.onde);
+      }
+      st.salaEmCurso = null; st.sessao.push("chefe");
+    }
+    return { ret: { pers: r.pers, concluiu: r.concluiu }, msgs, masmorra: st.masmorra, base: st.base, salaEmCurso: st.salaEmCurso, contadores: st.contadores, sessao: st.sessao, calados: st.calados };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const concluiu = fotos.filter((f) => f.ret.concluiu).length, naBase = fotos.filter((f) => f.ret.concluiu && f.base && (f.base.concluidas || []).length).length;
+  const comTochas = fotos.filter((f) => f.msgs.some((m) => /tocha\(s\) voltam/.test(m))).length;
+  console.log(`      concluiu ${concluiu} · a base guardou ${naBase} · tochas de volta ${comTochas}`);
+  t("percorre os ramos (concluiu e não; com e sem região; com e sem tochas)", concluiu > 50 && concluiu < N_CASOS - 50 && naBase > 20 && naBase < concluiu && comTochas > 10 && comTochas < concluiu);
+  /* morde: com a sorte de outro caso, o item do chefe muda */
+  const outra = casos.filter((k, i) => !igual(foto(k, sorteDoCaso(casos[(i + 1) % N_CASOS])), fotos[i])).length;
+  t(`morde: com a sorte de outro caso, ${outra} fotos divergem`, outra > 50);
+  /* (só a ficha e as linhas: a masmorra trocada à entrada já difere por construção) */
+  const sala = casos.filter((k, i) => { if (!k.masmorra || !Array.isArray(k.masmorra.salas)) return false; const f = foto(k, null, { ...k.masmorra, atual: 1 }); return !igual([f.ret, f.msgs], [fotos[i].ret, fotos[i].msgs]); }).length;
+  t(`morde: na sala de entrada em vez da do chefe, ${sala} fotos divergem (as que concluíam)`, sala === concluiu);
+  t("no App, o órgão é o invólucro da peça", /const concluirMasmorraDoChefe = \(p2, msgs\) => \{\s*const r = concluirAMasmorra\(p2, \{ masmorra: masmorraRef\.current, mapa: mapaRef\.current, base: baseMundoRef\.current \}, \{ lexico: \(mundoAtual\(\) \|\| \{\}\)\.lexico, sorteDoTurno \}\);/.test(C) && /salaEmCursoRef\.current = null;\s*talvezFecharSessao\("chefe"\);\s*return \{ pers: r\.pers, concluiu: true \};/.test(C));
 }
 
 console.log(`\nmotor · os órgãos do combate: ${ok} passaram, ${mal} falharam`);

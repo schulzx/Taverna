@@ -23,6 +23,10 @@
 
 import { gerarHabilidadeUnica, chanceUnica } from "../unicas.js";
 import { patamarFama } from "../fama.js";
+import { recompensaChefe } from "../masmorras.js";
+import { essenciaDoChefe, RARIDADE_ROTULO } from "../loot.js";
+import { garantirSuprimentos } from "../ermos.js";
+import { concluirLugar } from "../mundo-base.js";
 
 /* ---------------- O PODER ÚNICO (v7.4.4) ----------------
    Mesma lógica do loot: a árvore da classe é tabela fixa, mas derrubar
@@ -71,4 +75,43 @@ export function aFamaDoFeito(fama, famaAntes) {
     paraOCronista.push(`[FAMA — NOVO PATAMAR, CANON] Minha fama subiu para ${Math.round(f)}: agora sou ${agora.rotulo.toUpperCase()} (${agora.nota}). O mundo passa a me tratar assim — reconhecimento em cidades, olhares, respeito ou medo. NPCs relevantes podem já ter ouvido meu nome.`);
   }
   return { fama: f, msgs, paraOCronista };
+}
+
+/* ---------------- O CHEFE CAIU (MM11) ----------------
+   A masmorra conclui-se por código: as moedas do fundo, um item épico ou
+   lendário garantido, a essência do chefe (a maior fonte do jogo, v9.54),
+   e as tochas que sobraram voltam para a mochila (v9.26). UM bloco, DUAS
+   portas no App: a vitória declarada na resposta do Narrador e a que o
+   SISTEMA fecha no golpe. Idempotente: larga a masmorra, então a segunda
+   porta não encontra sala de chefe e devolve a ficha como veio.
+
+     concluirAMasmorra(pers, { masmorra, mapa, base }, { lexico, sorteDoTurno }) →
+       { pers, concluiu, msgs, efeitos }
+
+   Os efeitos, na ordem em que o App os fazia: `masmorra` (largada),
+   `contador` (masmorrasConcluidas), `base` (MM17 C1: só num mapa de
+   região a base guarda QUAL masmorra acabou — é o que o marco "descer" da
+   espinha lê) ou `calou` (se essa escrita estourar). O resto — a sala em
+   curso que se esvazia e a sessão que pode fechar — é do App, depois. */
+export function concluirAMasmorra(pers, estado, ctx) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const msgs = [], efeitos = [];
+  let p2 = pers;
+  const mm = e0.masmorra;
+  const sala = mm && Array.isArray(mm.salas) ? mm.salas.find((x) => x.id === mm.atual) : null;
+  if (!mm || !sala || sala.tipo !== "chefe") return { pers: p2, concluiu: false, msgs, efeitos };
+  const rec = recompensaChefe(p2.nivel || 1, c.lexico, typeof c.sorteDoTurno === "function" ? c.sorteDoTurno("chefe") : undefined);
+  const essChefe = essenciaDoChefe(p2.nivel || 1);
+  p2 = { ...p2, moedas: (p2.moedas || 0) + (sala.moedas || 0), equipamento: [...(p2.equipamento || []), rec.item],
+         essencia: (p2.essencia || 0) + essChefe,
+         suprimentos: { ...garantirSuprimentos(p2.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
+  msgs.push(`🕳 ${mm.nome} CONCLUÍDA! Tesouro do fundo: +${sala.moedas} moedas · ⚗ +${essChefe} essência · ✦ ${rec.item.nome} (${RARIDADE_ROTULO[rec.item.raridade] || rec.item.raridade})`);
+  if ((mm.tochas || 0) > 0) msgs.push(`🕯 ${mm.tochas} tocha(s) voltam para a mochila.`);
+  efeitos.push({ tipo: "masmorra", masmorra: null });
+  efeitos.push({ tipo: "contador", nome: "masmorrasConcluidas" });
+  if (e0.mapa && e0.mapa.regiao) {
+    try { efeitos.push({ tipo: "base", base: concluirLugar(e0.base, mm.nome) }); } catch (e) { efeitos.push({ tipo: "calou", onde: "a masmorra concluída na base", erro: e }); }
+  }
+  return { pers: p2, concluiu: true, msgs, efeitos };
 }

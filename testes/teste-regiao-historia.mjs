@@ -42,6 +42,7 @@ import { fileURLToPath } from "node:url";
 import * as R from "../src/regiao.js";
 import * as BO from "../src/boca.js";
 import * as MB from "../src/mundo-base.js";
+import { concluirAMasmorra } from "../src/motor/combate-do-turno.js";
 import * as MI from "../src/missoes.js";
 import * as SG from "../src/saga.js";
 import * as G from "../src/geografia.js";
@@ -276,10 +277,20 @@ sec("8. a fiação no App — duas portas, as duas atrás do mapa.regiao e com r
 {
   const APP = tenta(() => readFileSync(join(AQUI, "..", "src", "App.jsx"), "utf8"), "");
   t("o App importa espinhaNaRegiao de regiao.js", /import \{[^}]*\bespinhaNaRegiao\b[^}]*\} from "\.\/regiao\.js";/.test(APP));
-  t("e concluirLugar de mundo-base.js", /import \{[^}]*\bconcluirLugar\b[^}]*\} from "\.\/mundo-base\.js";/.test(APP));
+  /* MOVIDAS (T1-A, 5.ª fatia, 28/10): a masmorra que publica o fim foi do
+     App para src/motor/combate-do-turno.js (concluirAMasmorra), e o App
+     aplica o efeito `base`. A intenção é a mesma — só num mapa de região, e
+     o estouro calado em calou —, provada JOGANDO a peça (o motor não se lê
+     como texto, teste-assercoes-de-texto) e lendo só a fiação do App. */
+  const mmFim = { nome: "Cripta do Corvo", salas: [{ id: 3, tipo: "chefe", moedas: 5 }], atual: 3, tochas: 0 };
+  const naRegiao = concluirAMasmorra({ nivel: 3 }, { masmorra: mmFim, mapa: { regiao: { nome: "Vale" } }, base: null }, { sorteDoTurno: () => () => 0.5 });
+  const noContinente = concluirAMasmorra({ nivel: 3 }, { masmorra: mmFim, mapa: { cidades: [] }, base: null }, { sorteDoTurno: () => () => 0.5 });
+  const daBase = naRegiao.efeitos.find((e) => e.tipo === "base");
+  t("e concluirLugar de mundo-base.js (pela peça do combate): a base guarda QUAL masmorra acabou", !!daBase && MB.lugarConcluido(daBase.base, "Cripta do Corvo"));
   t("a espinha amarra-se só com mapa.regiao, e com calou", /if \(mapaRef\.current && mapaRef\.current\.regiao\) \{\s*try \{\s*espinhaRef\.current = espinhaNaRegiao\(mapaRef\.current, espinhaRef\.current, \{ semente: sementeMundo\(\)[^\n]*\);\s*\} catch \(e\) \{ calou\(/.test(APP));
   t("depois de estendida (a mesma criação, um ponto só)", APP.indexOf("espinhaRef.current = estenderEspinha(") > 0 && APP.indexOf("espinhaNaRegiao(mapaRef.current") > APP.indexOf("espinhaRef.current = estenderEspinha(") && APP.split("espinhaNaRegiao(").length - 1 === 1);
-  t("a masmorra publica o fim só com mapa.regiao, e com calou", /bumpCont\("masmorrasConcluidas"\);[\s\S]{0,400}if \(mapaRef\.current && mapaRef\.current\.regiao\) \{\s*try \{ baseMundoRef\.current = concluirLugar\(baseMundoRef\.current, mm\.nome\);[^\n]*calou\(/.test(APP));
+  t("a masmorra publica o fim só com mapa.regiao, e com calou", !noContinente.efeitos.some((e) => e.tipo === "base") && naRegiao.efeitos.map((e) => e.tipo).join(",") === "masmorra,contador,base"
+    && /else if \(ef\.tipo === "base"\) \{ baseMundoRef\.current = ef\.base; setBaseMundo\(ef\.base\); \}\s*else if \(ef\.tipo === "calou"\) calou\(ef\.onde, ef\.erro\);/.test(APP));
 }
 
 /* ============================================================ */

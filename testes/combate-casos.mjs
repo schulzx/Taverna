@@ -23,6 +23,18 @@ const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
 const NOMES = ["Ogro do Vau", "Vespa de Cinza", "Cavaleiro Sem Rosto", "Bruxa da Turfa", "Lobo Grande", "Sentinela de Bronze", "Dragão Velho"];
 const HABS = [[], [{ nome: "Golpe Duplo" }], [{ nome: "Fúria" }, { nome: "Golpe Duplo" }], [{ nome: "Lâmina de Vento" }]];
 
+function masmorraDoCaso(i) {
+  const tipo = i % 6;
+  if (tipo === 0) return null;
+  const nome = ["Cripta do Corvo", "Poço das Celas", "Torre Velha"][i % 3];
+  const salas = [{ id: 1, tipo: "entrada" }, { id: 2, tipo: "combate" }, { id: 3, tipo: "chefe", moedas: 40 + (i % 9) * 15 }];
+  if (tipo === 1) return { nome, salas, atual: 2, tochas: 1 };
+  if (tipo === 2) return { nome, salas, atual: 3, tochas: 0 };
+  if (tipo === 3) return { nome, salas, atual: 3, tochas: 1 + (i % 3) };
+  if (tipo === 4) return { nome, salas: "torto", atual: 3, tochas: 2 };
+  return { nome, salas: [{ id: 3, tipo: "chefe" }], atual: 3, tochas: -1 };
+}
+
 export function casoDoCombate(i) {
   const n = 1 + (i % 4);
   const inimigosFinais = Array.from({ length: n }, (_, k) => ({
@@ -43,6 +55,16 @@ export function casoDoCombate(i) {
     /* a fama (checarFama): a da última checagem, rente aos patamares, e a de agora */
     famaAntes: [0, 9, 10, 24, 25, 44, 45, 69, 70, 84, 85, 99, 100][i % 13],
     fama: [0, 9, 10, 24, 25, 44, 45, 69, 70, 84, 85, 99, 100][i % 13] + [0, 0.5, 1, 3, 12.25, 30, -2][i % 7],
+    /* a masmorra (concluirMasmorraDoChefe): sem masmorra, sala que não é a
+       do chefe, a do chefe com e sem tochas, e a de salas tortas; o mapa de
+       região ou de continente; a base que já tinha o que concluir */
+    masmorra: masmorraDoCaso(i),
+    mapa: i % 2 ? { regiao: { nome: "Vale do Corvo" } } : { cidades: [] },
+    base: i % 3 ? null : { concluidas: ["torre-velha"] },
+    lexico: null,
+    equipamento: i % 4 ? [{ nome: "Espada Curta", raridade: "comum" }] : [],
+    suprimentos: i % 3 === 1 ? { racoes: 2, tochas: 1, kit: true } : null,
+    essencia: i % 5,
   };
 }
 
