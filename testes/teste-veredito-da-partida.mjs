@@ -409,7 +409,8 @@ sec("8. o que anda enquanto se anda — os prazos (a pergunta do jogo)");
   const mis = tenta(() => readFileSync(join(AQUI, "..", "src", "missoes.js"), "utf8"), "");
   t("o prazo de missão conta noites (gatilho \"noite\")", /tipo: "ameaca", segmentos: noites, gatilho: "noite"/.test(mis));
   t("e a noite só se conta ao dormir (um só tiquear(\"noite\"), no descanso)", (app.match(/tiquear\("noite"/g) || []).length === 1 && /descanso longo[\s\S]{0,3000}tiquear\("noite"/.test(app));
-  t("a virada do dia corre o reino (avancarDiasReino), não as missões", /while \(minutoRef\.current >= 1440\) \{\s*minutoRef\.current -= 1440;\s*const evs = avancarDiasReino\(1\)/.test(app));
+  /* (movido, Fase T trilha A: a conta do relógio saiu para o motor — osMinutosAndam, src/motor/tempo-do-turno.js — e o App corre a porta do dia uma vez por dia virado, com o minuto daquele dia. A intenção é a mesma: o que roda na virada é o reino, não as missões.) */
+  t("a virada do dia corre o reino (avancarDiasReino), não as missões", /for \(const aoVirar of rel\.aoVirar\) \{\s*minutoRef\.current = aoVirar;[^\n]*\n\s*const evs = avancarDiasReino\(1\)/.test(app));
 
   const w = mundos[3], base = w.nos[0], p = w.nos.find((x) => x.tipo === "povoado");
   /* MOVIDO em 11/10: parte às 20:00, e não às 08:00. Um dia de marcha (8 h)

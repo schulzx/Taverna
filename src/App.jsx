@@ -247,6 +247,7 @@ import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
+import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -6741,11 +6742,8 @@ export default function Taverna() {
      o que já era. E o Mestre recebe o fato pronto, não um pedido. */
   const semNome = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
   /* A cidade sob os pés, resolvida uma vez. Devolve null fora de cidade. */
-  const cidadeSobOsPes = () => {
-    const nomeCidade = cidadeAtualRef.current;
-    if (!nomeCidade) return null;
-    return (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(nomeCidade).toLowerCase()) || null;
-  };
+  /* (Fase T, trilha A) a cidade no mapa é do motor (aCidadeSobOsPes, src/motor/tempo-do-turno.js) */
+  const cidadeSobOsPes = () => aCidadeSobOsPes({ cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current });
   /* Todo lugar a que se pode ir daqui a pé: os locais de dentro dos muros, o
      cinturão de fora, e — quando o herói já está num local — os cômodos DELE.
 
@@ -6791,33 +6789,20 @@ export default function Taverna() {
      em "ir" na planta é a mesma coisa que escrever, e tem que ser o mesmo
      código, ou as duas portas divergem. */
   const moverParaLocal = (alvo) => {
-    const nomeCidade = cidadeAtualRef.current;
-    if (!alvo || !alvo.nome || !nomeCidade) return false;
-    if (lugarRef.current && semNome(lugarRef.current.nome) === semNome(alvo.nome)) return false;
-    const distancia = alvo.onde === "arredores" ? "arredores" : "dentro";
-    /* v9.118: TODO LUGAR NASCE COM PONTO. O arredor já sabe onde fica — ele
-       nasceu com coordenada na v9.51 e ninguém a lia. Um cômodo se ancora no
-       PRÉDIO, não na cidade: o quarto de cima é metros acima do salão, e
-       ancorar na praça o poria a metros da praça, que é outro lugar. */
-    const cidAqui = cidadeSobOsPes();
-    const ancora = alvo.onde === "comodo" && alvo.dentroDe
-      ? { nome: alvo.dentroDe, ...(pontoDoLugar(alvo.dentroDe, cidAqui, "dentro") || {}) }
-      : cidAqui;
-    const novo = definirLugar(alvo.nome, { cidade: nomeCidade, dia: diaRef.current, distancia, dentroDe: alvo.dentroDe || "", ancora, coord: alvo.coord || null });
-    if (!novo) return false;
-    lugarRef.current = novo; setLugar(novo);
-    /* o cinturão é uma caminhada de verdade; o outro lado da praça, não; e a
-       escada da taverna é um minuto */
-    if (alvo.onde === "arredores") {
-      const t = avancarMinutos(Number(alvo.minutos) || 40);
-      if (t) pushMsgs([{ autor: "sistema", texto: t }]);
-    } else {
-      avancarMinutos(alvo.onde === "comodo" ? 1 : 5);
-    }
-    const ondeDiz = alvo.onde === "comodo" ? ` — ${alvo.dentroDe}` : alvo.onde === "arredores" ? ` — ${Math.round(Number(alvo.minutos) || 40)} min de caminhada desde ${nomeCidade}` : "";
-    pushMsgs([{ autor: "sistema", texto: `📍 Você está ${comEm(alvo.nome)}${ondeDiz}.` }]);
-    const lugarDito = alvo.onde === "comodo" ? `${comEm(alvo.nome)}, dentro ${comDe(alvo.dentroDe)}` : comEm(alvo.nome);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu me desloquei${alvo.onde === "dentro" ? ` dentro de ${nomeCidade}` : ""} e AGORA estou ${lugarDito}${alvo.onde === "arredores" ? `, nos arredores de ${nomeCidade}` : ""}. O sistema já registrou o lugar e o tempo. Narre a chegada e a cena AQUI — não me descreva a caminho, não me deixe na praça e não me devolva ao ponto de partida. Só eu decido sair daqui.`;
+    /* (Fase T, trilha A) o passo é do motor (oPassoNaCidade,
+       src/motor/tempo-do-turno.js): o lugar novo (v9.118: todo lugar nasce
+       com ponto, o cômodo ancorado no prédio), os minutos da caminhada
+       (TEMPO_DA_CAMINHADA: o cinturão é uma caminhada de verdade; o outro
+       lado da praça, não; a escada da taverna é um minuto), a linha e a
+       nota. O replay faz a mesma conta. Aqui fica a escrita. */
+    let passo = null;
+    try { passo = oPassoNaCidade({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current, mapa: mapaRef.current }, alvo); } catch (e) { calou("o passo na cidade", e); passo = null; }
+    if (!passo) return false;
+    lugarRef.current = passo.lugar; setLugar(passo.lugar);
+    const t = avancarMinutos(passo.minutos);
+    if (passo.caminhadaNaTela && t) pushMsgs([{ autor: "sistema", texto: t }]);
+    pushMsgs([{ autor: "sistema", texto: passo.linha }]);
+    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${passo.nota}`;
     return true;
   };
   const talvezAndarNaCidade = (texto) => {
@@ -8733,10 +8718,13 @@ export default function Taverna() {
   const avancarOsMinutos = (n, fichaDoTurno = null) => {
     let ficha = fichaDoTurno && typeof fichaDoTurno === "object" ? fichaDoTurno : null;
     const naFicha = (fn) => { if (ficha) ficha = fn(ficha); else mudarFicha(fn); };
-    minutoRef.current += n;
+    /* (Fase T, trilha A) a conta do relógio é do motor (osMinutosAndam,
+       src/motor/tempo-do-turno.js): o replay faz a mesma. A porta do dia
+       (o reino, o festival) fica aqui — lê e escreve o reino. */
+    const rel = osMinutosAndam({ minuto: minutoRef.current }, n);
     const extras = [];
-    while (minutoRef.current >= 1440) {
-      minutoRef.current -= 1440;
+    for (const aoVirar of rel.aoVirar) {
+      minutoRef.current = aoVirar; /* a porta do dia corre com o minuto daquele dia, como antes */
       const evs = avancarDiasReino(1);
       evs.forEach((ev) => pushMsgs([{ autor: "sistema", texto: `👑 ${ev.evento.titulo} em ${ev.cidade}: ${ev.evento.txt(ev.cidade)}` }]));
       extras.push(envelopeEventosReino(evs));
@@ -8748,44 +8736,28 @@ export default function Taverna() {
         extras.push(`[FESTIVAL — ${fest.nome.toUpperCase()}] Hoje (${dataTxt(diaRef.current)}) é ${fest.nome}: ${fest.descricao}. Nos meus domínios o povo celebra (a felicidade já subiu por código). Traga a festa para a ficção se couber na cena.`);
       }
     }
+    minutoRef.current = rel.minuto;
     setMinuto(minutoRef.current);
-    /* v9.54: O PRAZO DA INVOCAÇÃO NO RELÓGIO DO MUNDO. Só fora da luta —
-       dentro dela quem manda é a rodada, e deixar os dois correrem juntos
-       desfaria a fera no meio do combate por causa dos seis segundos que a
-       rodada custa no calendário. */
-    if (!combateRef.current) {
-      const fim = expirarPorMinuto(ficha || fichaViva() || personagem, absMin());
-      if (fim.sumiram.length) {
-        naFicha(() => fim.pers);
-        pushMsgs(fim.linhas.map((t) => ({ autor: "sistema", texto: t })));
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${fim.sumiram.join(", ")} ${fim.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo acabou. Narre o desmanche em uma frase e siga — ${fim.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} comigo.`;
+    /* O QUE O TEMPO FAZ AO CORPO (oCorpoNoRelogio, no motor, com os porquês:
+       a invocação cujo prazo acabou, só fora da luta — v9.54; o aviso das
+       16 h e a Exaustão das 20 h, que não se reanuncia). A escrita é a de
+       sempre: a ficha pelo `naFicha` (no turno, a ficha do turno; fora
+       dele, o `mudarFicha`, que escreve nos dois lugares — a armadilha da
+       v9.54 era escrever num só), a tela e a nota. */
+    try {
+      const corpo = oCorpoNoRelogio({ combate: combateRef.current, ficha: ficha || fichaViva() || personagem, dia: diaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current }, n);
+      if (corpo.fim) {
+        naFicha(() => corpo.fim.pers);
+        pushMsgs(corpo.fim.linhas.map((t) => ({ autor: "sistema", texto: t })));
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${corpo.nota}`;
       }
-    }
-    /* Sono: o corpo cobra. 16h acordado = aviso; 20h = exaustão (condição por código). */
-    const acordadoH = (absMin() - acordouAbsRef.current) / 60;
-    /* ---------------- A EXAUSTÃO QUE SE REANUNCIAVA (v9.54) ----------------
-       "🥱 Exaustão: 44h acordado" aparecia de novo às 48h, às 52h, às 100h — e
-       a causa não era a linha repetindo à toa, era a CONDIÇÃO sumindo da ficha
-       entre um turno e outro.
-
-       O `setPersonagem` de baixo escrevia só no estado do React e deixava
-       `personagemRef.current` para trás. Como quase todo o resto desta casa
-       lê a ficha viva do ref e devolve o objeto inteiro, a primeira escrita
-       que viesse depois apagava a exaustão sem saber que ela existia — e no
-       turno seguinte o herói estava descansado outra vez, o teste `cansadoJa`
-       dava falso e a linha voltava.
-
-       É a mesma armadilha que a v9.13 documentou nos espólios: quem escreve
-       em um dos dois lugares escreve em nenhum. `mudarFicha` escreve nos
-       dois, e `fichaViva()` é quem sabe a verdade. */
-    const persAgora = ficha || fichaViva() || personagem;
-    const cansadoJa = (persAgora.condicoes || []).some((c) => c.id === "exausto" || (c.nome || "").toLowerCase().includes("cansado"));
-    if (acordadoH >= HORAS_EXAUSTO && !cansadoJa) {
-      naFicha((p) => ({ ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== "exausto"), criarCondicao("exausto", { origem: "vigília longa demais" })] }));
-      pushMsgs([{ autor: "sistema", texto: `🥱 Exaustão: ${Math.floor(acordadoH)}h acordado. Você está Exausto (desvantagem) até um descanso longo.` }]);
-    } else if (acordadoH >= HORAS_AVISO_SONO && (acordadoH - n / 60) < HORAS_AVISO_SONO) {
-      pushMsgs([{ autor: "sistema", texto: `🌙 Você está acordado há ${Math.floor(acordadoH)}h. O corpo pede acampamento — além de ${HORAS_EXAUSTO}h vem a exaustão.` }]);
-    }
+      if (corpo.exausto) {
+        naFicha(comAExaustao);
+        pushMsgs([{ autor: "sistema", texto: corpo.linha }]);
+      } else if (corpo.aviso) {
+        pushMsgs([{ autor: "sistema", texto: corpo.linha }]);
+      }
+    } catch (e) { calou("o corpo no relógio", e); }
     /* o ref antes das conquistas, como o mudarFicha fazia: elas leem-no */
     if (ficha && ficha !== fichaDoTurno) { personagemRef.current = ficha; setPersonagem(ficha); }
     checarConquistas();

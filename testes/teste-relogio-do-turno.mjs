@@ -26,6 +26,8 @@ import { expirarPorMinuto } from "../src/invocacoes.js";
 import { criarCondicao } from "../src/condicoes.js";
 import { HORAS_AVISO_SONO, HORAS_EXAUSTO } from "../src/calendario.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
+/* (Fase T, trilha A) a conta do relógio e o que o tempo faz ao corpo saíram para o motor (src/motor/tempo-do-turno.js, provados byte a byte em teste-motor-tempo-do-turno); o recorte do App chama-os, e esta suíte dá-lhos no escopo — a intenção (a ficha do turno, não o ref) é a mesma */
+import { osMinutosAndam, oCorpoNoRelogio, comAExaustao } from "../src/motor/tempo-do-turno.js";
 
 const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
@@ -65,7 +67,7 @@ const montar = ({ acordouAbs = 470, expira = 500 } = {}) => {
   const doTurno = { ...antes, moedas: 30 };
   const ref = (v) => ({ current: v });
   const S = {
-    expirarPorMinuto, criarCondicao, HORAS_AVISO_SONO, HORAS_EXAUSTO, notaComOTurno,
+    expirarPorMinuto, criarCondicao, HORAS_AVISO_SONO, HORAS_EXAUSTO, notaComOTurno, osMinutosAndam, oCorpoNoRelogio, comAExaustao,
     personagem: antes, personagemRef: ref(antes), setPersonagem: () => {},
     minutoRef: ref(480), diaRef: ref(1), reinoRef: ref({}), combateRef: ref(null), notaRef: ref(""), acordouAbsRef: ref(acordouAbs),
     cidadeAtualRef: ref("Porto"), lugarRef: ref(null), mapaRef: ref({}), jornadaRef: ref(null),
