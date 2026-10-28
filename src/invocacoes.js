@@ -183,11 +183,17 @@ export function expirarPorMinuto(pers, minutoAbs) {
   };
 }
 
+/* O fim da luta leva TODAS as invocações. Um buraco no grupo (um membro
+   nulo, de um save torto ou de uma fiação que perdeu alguém) é ignorado:
+   não sai, não estoura, e o resto volta inteiro, na mesma ordem. Até a
+   Fase T o segundo filtro lia `null.invocada` e o fim da luta caía com a
+   fera ainda no grupo — achado da trilha A ao mover o combate (28/10). */
 export function dispensarTodas(pers) {
   const grupo = (pers && pers.grupo) || [];
-  const inv = grupo.filter((g) => g && g.invocada);
+  const ehInvocada = (g) => !!(g && g.invocada);
+  const inv = grupo.filter(ehInvocada);
   if (!inv.length) return { pers, sumiram: [] };
-  return { pers: { ...pers, grupo: grupo.filter((g) => !g.invocada) }, sumiram: inv.map((g) => g.nome) };
+  return { pers: { ...pers, grupo: grupo.filter((g) => !ehInvocada(g)) }, sumiram: inv.map((g) => g.nome) };
 }
 
 /* SACRIFÍCIO ARCANO: "desfaz uma invocação para recuperar PM". Devolve

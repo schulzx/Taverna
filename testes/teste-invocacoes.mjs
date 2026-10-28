@@ -126,6 +126,20 @@ sec("6. o prazo vence e ela some");
   t("o fim da luta dispensa a invocação", d.sumiram.length === 1);
   t("e não dispensa a companheira", d.pers.grupo.length === 1 && d.pers.grupo[0].nome === "Ilse");
   t("sem invocação, dispensar não faz nada", dispensarTodas(heroi()).sumiram.length === 0);
+
+  /* UM BURACO NO GRUPO (Fase T, trilha B, 28/10). O primeiro filtro guardava
+     o membro nulo e o segundo não: com uma invocação em campo, o fim da luta
+     estourava em `null.invocada`, e a fera chamada ficava no grupo para
+     sempre. O nulo é ignorado (nem sai, nem estoura), e o resto volta
+     inteiro, na mesma ordem. Achado pela trilha A ao mover o combate. */
+  const furado = heroi({ grupo: [null, { nome: "Ilse", vida: 10, vidaMax: 10 }, ...criarInvocacoes(hab("Invocar Fera Menor", "fera"), heroi(), 1), null] });
+  let dn = null, erroN = null;
+  try { dn = dispensarTodas(furado); } catch (e) { erroN = e; }
+  t(`um membro nulo no grupo não derruba o dispensar${erroN ? " — " + erroN.message : ""}`, !erroN);
+  t("a invocação sai do grupo furado", !!dn && dn.sumiram.length === 1 && !dn.pers.grupo.some((g) => g && g.invocada));
+  t("e o resto volta inteiro, na mesma ordem (o nulo onde estava)", !!dn && dn.pers.grupo.length === 3 && dn.pers.grupo[0] === null && dn.pers.grupo[1] === furado.grupo[1] && dn.pers.grupo[2] === null);
+  t("e o grupo de entrada não muda", furado.grupo.length === 4 && furado.grupo[2].invocada === true);
+  t("e sem ficha, nada a dispensar", dispensarTodas(null).sumiram.length === 0);
 }
 
 /* ============ 5. AS OUTRAS DEZ DO INVOCADOR ============ */

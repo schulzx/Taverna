@@ -358,11 +358,16 @@ sec("10 · o que a luta leva quando acaba (limparConjuracoesDaLuta → limparAsC
     } catch (e) { erro = String(e && e.message); }
     return { ret: ret === undefined ? null : ret, erro, tela, nota, ficha, publicados, calados };
   };
-  /* UMA DIFERENÇA DECLARADA, e é a única: quando o grupo tem um buraco
-     (um membro nulo) e uma invocação, `dispensarTodas` estoura no fim. O
-     App de antes já tinha posto na tela a forma e a guarda que desfez, e
-     depois o erro subia; a peça é tudo ou nada — o erro sobe igual, e nada
-     ficou escrito pela metade. Nos outros casos, byte a byte. */
+  /* UMA DIFERENÇA DECLARADA, e é a única: quando o grupo não é uma lista
+     (o grupo torto), `dispensarTodas` estoura no fim. O App de antes já
+     tinha posto na tela a forma e a guarda que desfez, e depois o erro
+     subia; a peça é tudo ou nada — o erro sobe igual, e nada ficou escrito
+     pela metade. Nos outros casos, byte a byte.
+     Até 28/10 estouravam 21: os 12 do grupo torto e 9 com um membro NULO
+     no grupo e uma invocação. Esses 9 eram defeito do `dispensarTodas`
+     (o segundo filtro lia `null.invocada`), consertado na trilha B da
+     Fase T; o dourado foi refeito com o conserto, e os 9 passaram a ser
+     fotos que dispensam a invocação e guardam o nulo onde estava. */
   const comErro = casos.filter((k, i) => fotos[i].erro);
   const batem = casos.filter((k, i) => !fotos[i].erro && igual(foto(k), fotos[i])).length;
   t(`${batem}/${N_CASOS - comErro.length} iguais ao App de antes (os que não estouram)`, batem === N_CASOS - comErro.length);
