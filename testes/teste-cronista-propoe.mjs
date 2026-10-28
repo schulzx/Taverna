@@ -339,7 +339,12 @@ sec("6. A FIAÇÃO — o App aplica o `aceito`, e só ele");
   const leR = [...corpo.matchAll(/\br\.(\w+)/g)].map((m) => m[1]);
   const fora = [...new Set(leR)].filter((k) => !["grupo", "lugar"].includes(k));
   t("nenhuma secção aplica a proposta crua (`r.X`) — só `ac.X`", fora.length === 0, fora.join(","));
-  t("falha fechada: sem juízo, `ac` é vazio", /const ac = \(juizo && juizo\.aceito\) \|\| \{\};/.test(corpo));
+  /* 28/10 (trilha A, o Juiz que corrige), MUDADA E O MOTIVO: o `ac` passa a
+     `let`, porque entre o juízo e o aceito o cânone perde o nome que o Juiz
+     deu por inventado no mesmo turno (canoneSemInvencao, provado jogando em
+     teste-motor-correcao-no-turno.mjs). A falha fechada é a mesma: sem juízo,
+     `ac` nasce vazio, e a correção só tira do cânone, nunca põe. */
+  t("falha fechada: sem juízo, `ac` é vazio", /(?:const|let) ac = \(juizo && juizo\.aceito\) \|\| \{\};/.test(corpo));
   t("a paga do cartaz não volta a ler o preço da prosa", !/precoNoTexto/.test(corpo));
   /* 28/10 (T1-A, 9.ª fatia): as secções moram em `oAceitoDoCronista`
      (motor), e o "só `ac.X`" prova-se JOGANDO: uma proposta crua cheia e

@@ -242,6 +242,7 @@ import { oGatilhoDoCronista, oPedidoAoCronista, oAceitoDoCronista } from "./moto
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
+import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao } from "./motor/correcao-do-juiz.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
@@ -5861,6 +5862,12 @@ export default function Taverna() {
      e os últimos vereditos (src/motor/juiz-do-turno.js). Bastidor: vive no
      save, ao lado do custo, e nunca na tela. */
   const fidelidadeRef = useRef(null);
+  /* Fase T (28/10): O JUIZ CORRIGE (src/motor/correcao-do-juiz.js). O veredito
+     do turno, com a entrada que o julgou (o Cronista do MESMO turno lê-o), e o
+     livro de vetos que as contradições deixam para a pauta dos turnos seguintes.
+     Ref, não save: o veto vive três turnos, e perdê-lo num recarregar custa nada. */
+  const juizDoTurnoRef = useRef(null);
+  const vetosDoJuizRef = useRef([]);
   const coracaoFalaRef = useRef(null);
   /* R3 (v9.229): a virada MAIOR, irma da menor e com o mesmo ciclo (eleger,
      semear, regar, revelar). Mora num REF PROPRIO, e nao num campo dentro do
@@ -7463,6 +7470,10 @@ export default function Taverna() {
     try {
       p = porNaPauta(p, "naoPode", vetoDoSegredo(acaoDoTurno, segredosGuardados(espinhaRef.current, mundoDaBase()), { lugar: (lugarRef.current && lugarRef.current.nome) || "" }));
     } catch (e) { calou("vetoDoSegredo", e); }
+    /* O JUIZ CORRIGE: a invenção da resposta anterior que o sistema contradiz,
+       com o número certo — só no turno logo a seguir, ou quando a frase toca a
+       coisa (vetosParaAPauta). O turno é o do textoDaPauta. */
+    try { p = porNaPauta(p, "vetoDoJuiz", ...vetosParaAPauta(vetosDoJuizRef.current, { turno: turnoDeRegistroRef.current + 1, cidade: cidadeAtualRef.current || "", frase: acaoDoTurno })); } catch (e) { calou("o veto do juiz na pauta", e); }
     /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
        maré do porto. Só parado em cidade: no meio da estrada a linha do
        andar de trás seria mentira sobre o lugar onde a cena está. */
@@ -10669,7 +10680,18 @@ export default function Taverna() {
         juizo = julgarOCronista({ ...retratoDoJogo(), personagem: pers || personagemRef.current || personagem, combate: combateRef.current, masmorra: masmorraRef.current, lugar: lugarRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, npcs: npcsRef.current, divindade: divindadeRef.current, eventos: eventosRef.current, espinha: espinhaRef.current }, r, { narrativa, pedido: ultimoPedidoRef.current, envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam });
       } catch (e) { calou("o juízo do Cronista", e); juizo = null; }
       try { if (doTurno && doTurno.paraASessao) doTurno.paraASessao.cronista = { proposta: r, juizo: juizo ? { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } : null }; } catch (e) { calou("a sessão (o Cronista)", e); }
-      const ac = (juizo && juizo.aceito) || {};
+      let ac = (juizo && juizo.aceito) || {};
+      /* O JUIZ CORRIGE: o nome que o Juiz deu por inventado NESTE turno não
+         entra no cânone, as "verdades imutáveis" (canoneSemInvencao). A gente
+         que a cena pôs a agir fica no registo; os tirados vão só à consola. */
+      try {
+        const jz = doTurno && doTurno.juiz;
+        if (jz && jz.veredito && ac.canone) {
+          const cj = canoneSemInvencao(ac, jz.veredito, { entrada: jz.entrada, estado: { ...estadoDoCronista(), personagem: pers || personagemRef.current || personagem } });
+          ac = cj.aceito;
+          if (cj.tirados.length && typeof console !== "undefined" && console.debug) console.debug("[juiz] fora do cânone: " + cj.tirados.map((x) => x.nome).join(", "));
+        }
+      } catch (e) { calou("o cânone sem a invenção", e); }
       const recusadoDoCronista = (juizo && Array.isArray(juizo.recusado)) ? juizo.recusado : [];
       /* ---- O ACEITO, APLICADO (T1-A, 9.ª fatia) ----
          As secções (as promessas, o lugar, o cartaz, o relógio, o evento
@@ -11064,7 +11086,7 @@ export default function Taverna() {
     escadaRef.current = garantirEscada(null);
     escutaRef.current = garantirEscuta(null);
     adiadosEscutaRef.current = [];
-    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null;
+    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null; juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
     episodioRef.current = null;
@@ -11969,11 +11991,20 @@ export default function Taverna() {
         });
       } catch (e) { calou("a sessão (o pedido)", e); turnoDaSessao = null; }
       let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
+      juizDoTurnoRef.current = null; /* um turno sem juízo não empresta o veredito da véspera ao Cronista */
       try {
         if (fotoDoJuiz) {
           const entradaJ = entradaDoJuiz(fotoDoJuiz, { frase: pedidoDaBolsa, pauta, moeda: moedaDaBolsa });
           const doJuiz = julgarOTurno(resp.narrativa || "", entradaJ, { turno: turnoDeRegistroRef.current + 1, dia: diaRef.current }); /* o turno é o da pauta (textoDaPauta conta igual): o registo só anda depois, em anotarOTurno */
           fidelidadeRef.current = somarAFidelidade(fidelidadeRef.current, doJuiz.resumo);
+          /* O JUIZ CORRIGE: a contradição (o preço da banca, a distância do mapa)
+             vira veto na pauta dos turnos seguintes, com o número certo. A cidade
+             é a da foto: foi a mesa dela que o Juiz leu. */
+          try {
+            const turnoJ = turnoDeRegistroRef.current + 1, cidadeJ = fotoDoJuiz.cidadeAtual || "";
+            juizDoTurnoRef.current = { turno: turnoJ, veredito: doJuiz.veredito, entrada: entradaJ };
+            vetosDoJuizRef.current = andarOsVetos(vetosDoJuizRef.current, vetosDoVeredito(doJuiz.veredito, { turno: turnoJ, cidade: cidadeJ }), { turno: turnoJ, cidade: cidadeJ });
+          } catch (e) { calou("a correção do juiz", e); }
           try { if (turnoDaSessao) turnoDaSessao.juiz = { resumo: doJuiz.resumo, entrada: entradaJ }; } catch (e) { calou("a sessão (o juiz)", e); }
           if (typeof console !== "undefined" && console.debug) console.debug(linhaDoJuiz(doJuiz.resumo));
         }
@@ -12110,7 +12141,7 @@ export default function Taverna() {
       } catch (e) { calou("o recibo do turno (a espera)", e); }
       try {
         let doTurnoCr = null;
-        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
+        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
         const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
         /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila */
@@ -12491,7 +12522,7 @@ export default function Taverna() {
         antecedente: (pers && pers.antecedente) || "",
         dia: diaRef.current,
       });
-      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null;
+      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null; juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
       /* MM17 C1: A HISTÓRIA MORA NOS LUGARES. Só num mapa de região (campanha
          nova de Uma Vida): cada ato do meio e o do fim descem ao SEU lugar, e
          o confronto final é no clímax (espinhaNaRegiao, regiao.js). Sem
@@ -12858,6 +12889,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       custoRef.atual = sv.custo && typeof sv.custo === "object" && typeof sv.custo.chamadas === "number" ? sv.custo : CUSTO_ZERO();
       /* e o que o Juiz mediu, pela mesma razão (T1-A, 5.ª fatia) */
       fidelidadeRef.current = sv.fidelidade && typeof sv.fidelidade === "object" && !Array.isArray(sv.fidelidade) ? sv.fidelidade : null;
+      juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
       /* SAVE ANTIGO ABRE TUDO. Quem já jogava tinha as dez sub-abas na tela;
          escondê-las agora seria tirar do jogador o que ele já usava — e
          "sumiu a minha guilda" é o relato que isso geraria. A porta é para
