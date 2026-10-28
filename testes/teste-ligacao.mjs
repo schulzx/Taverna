@@ -220,6 +220,15 @@ sec("1. NENHUM MÓDULO MUDO");
        App o importar. — 13/10: o oficial ligou-o na MESMA leva (a tela de
        criação: `concluir(equiparKitInicial(comDom({...})))`, e só ali), e a
        entrada saiu. */
+    /* 28/10 (Fase T, T3-B · o Juiz de fidelidade, 1.ª fatia): `juiz-de-
+       fidelidade.js` nasce no backend — a prosa do Narrador contra o que o
+       sistema sabia naquele turno (julgarAProsa, oQueAPautaSabe) — e o plano
+       manda que primeiro SÓ MEÇA (mente/plano-motor.md, Fase 3: "uma linha
+       no custo"). Espera a fiação da trilha A (o `oficial`, que tem o App e
+       src/motor/): ler o veredito depois de `aplicar` e escrevê-lo no custo
+       do turno. A entrada sai quando o App ou o motor o importar, e a lista
+       volta a ficar VAZIA. `teste-juiz-de-fidelidade.mjs` é o primeiro leitor. */
+    "juiz-de-fidelidade.js": "a trilha A (oficial): a linha do Juiz no custo do turno, depois de aplicar",
   };
   const mudos = [];
   for (const f of arqs) {
