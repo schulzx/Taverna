@@ -453,7 +453,7 @@ export function casosDoFim() {
     if (i % 5 === 0) frases.push("Teodora Vaz enche as canecas e ri alto.");
     if (i % 5 === 3) frases.push("Bruno Sal está morto no chão da estalagem.");
     const vizinha = { "Monte Rasa": "Vila Funda", "Vila Funda": "Monte Rasa", "Porto Cinza": "Nova Profundo", "Nova Profundo": "Porto Cinza" }[e.cidadeAtual];
-    if (vizinha && (i % 4 === 2 || i % 6 === 3)) frases.push(`Ao cair da tarde você entra em ${vizinha} pela estrada curta.`);
+    if (vizinha && (i % 4 === 2 || i % 6 === 3) && i % 8 !== 6) frases.push(`Ao cair da tarde você entra em ${vizinha} pela estrada curta.`);
     if (vizinha && i % 8 === 6) frases.push(`Você quase entra em ${vizinha}, mas volta.`);
     const vivo = e.combate && (e.combate.inimigos || []).find((x) => x && !x.derrotado && x.vida > 0);
     if (vivo && i % 3 === 1) frases.push(`${vivo.nome} tomba morto aos seus pés.`);

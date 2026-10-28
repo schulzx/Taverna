@@ -25,6 +25,7 @@ import { criarNPC } from "../npcs.js";
 import { nomesAMaoNaProsa } from "../nomes.js";
 import { grauDe } from "../divindades.js";
 import { presencaDoHeroi } from "../presenca-divina.js";
+import { detectarChegada, descobrirCidade, notaDaChegada } from "../geografia.js";
 
 const objeto = (x) => (x && typeof x === "object" ? x : {});
 const mundoDe = (op) => objeto(typeof op.mundo === "function" ? op.mundo() : op.mundo);
@@ -126,4 +127,48 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
     }
   } catch { /* o códex nunca derruba o turno */ }
   return { estado: { ...e0, base, npcs }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
+}
+
+/* ============================================================
+   A CHEGADA — CHEGUEI E NINGUÉM ANOTOU (v9.43)
+
+     aplicarAChegada(estado, resposta) → { estado, efeitos, paraOCronista, msgs, minutos }
+
+   O Mestre narrou a travessia do portal com todas as letras e esqueceu
+   de mandar `cidade_atual`: a ficção subiu para o Andar 2, o mapa ficou
+   no Andar 1. Este cão de guarda RATIFICA — a narração está certa, o
+   que falta é o registro, e registro é trabalho do sistema.
+
+   Só morde quando o destino fica a UM PASSO daqui (rota de meio dia ou
+   menos). Onde viajar custa dias, "chegar" numa frase é quase sempre
+   plano ou lembrança, e mover o herói por isso seria pior que o bug.
+
+   `estado`: { cidadeAtual, lugar, mapa, combate, jornada }. Os efeitos:
+   `cidadeAtual`, `lugar`, `mapa`. `minutos`: quanto o relógio do mundo anda
+   pela travessia (o App o faz andar, ANTES de a nota da chegada entrar —
+   como fazia); 0 quando não houve chegada.
+   ============================================================ */
+export function aplicarAChegada(estado, resposta) {
+  const e0 = objeto(estado);
+  const resp = objeto(resposta);
+  const msgs = [], notas = [], efeitosDoTurno = [];
+  const ef = (x) => { efeitosDoTurno.push(x); };
+  let cidadeAtual = e0.cidadeAtual, lugar = e0.lugar, mapa = e0.mapa, minutos = 0;
+  try {
+    const jaVeio = !!(resp.mudancas && resp.mudancas.cidade_atual);
+    if (!jaVeio && !e0.combate && !e0.jornada) {
+      const ch = detectarChegada(resp.narrativa, { mapa, cidade: cidadeAtual });
+      if (ch) {
+        const de = cidadeAtual;
+        cidadeAtual = ch.nome; ef({ tipo: "cidadeAtual", cidade: cidadeAtual });
+        if (lugar) { lugar = null; ef({ tipo: "lugar", lugar: null }); }
+        const dsc = descobrirCidade(mapa, ch.nome);
+        if (dsc.nova) { mapa = dsc.mapa; ef({ tipo: "mapa", mapa }); }
+        msgs.push(`🧭 Você está em ${ch.nome}${dsc.nova ? " — e o lugar entrou no seu mapa" : ""}.`);
+        minutos = Math.max(15, Math.round((ch.dias || 0) * 1440));
+        notas.push(notaDaChegada(ch, de));
+      }
+    }
+  } catch { /* a chegada nunca derruba o turno */ }
+  return { estado: { ...e0, cidadeAtual, lugar, mapa }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs, minutos };
 }

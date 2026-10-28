@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { aplicarOCodex } from "../src/motor/fim-do-turno.js";
+import { aplicarOCodex, aplicarAChegada } from "../src/motor/fim-do-turno.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 import { semearACasa } from "../src/semente.js";
 import { casosDoFim, retratoDoFim, digital } from "./aplicar-casos.mjs";
@@ -45,8 +45,20 @@ function oAppAplica(A, saida) {
     if (ef.tipo === "base") A.base = ef.base;
     else if (ef.tipo === "npcs") A.npcs = ef.npcs;
     else if (ef.tipo === "calou") A.calou.push(ef.onde);
+    else if (ef.tipo === "cidadeAtual") A.cidadeAtual = ef.cidade;
+    else if (ef.tipo === "lugar") A.lugar = ef.lugar;
+    else if (ef.tipo === "mapa") A.mapa = ef.mapa;
   }
   A.msgs.push(...saida.msgs);
+  return A;
+}
+/* a chegada, como o App a aplica: os efeitos, as linhas, o relógio (o
+   dublê do gerador: guarda os minutos, e dá uma linha só passadas dez
+   horas) e SÓ ENTÃO a nota — o relógio pode escrever nela antes */
+function oAppAplicaAChegada(A, ch) {
+  oAppAplica(A, { ...ch, paraOCronista: [] });
+  if (ch.minutos) { A.minutos.push(ch.minutos); if (ch.minutos >= 600) A.msgs.push(`⏳ a travessia levou ${ch.minutos} minutos`); }
+  A.nota = notaComOTurno(A.nota, ch.paraOCronista);
   return A;
 }
 const estadoDoCodex = (c, A) => ({ ...c.estado, base: A.base, npcs: A.npcs, cidadeAtual: A.cidadeAtual, lugar: A.lugar, mapa: A.mapa });
@@ -113,6 +125,57 @@ sec("1. o códex — da base para o cânone, os nomes à mão, o peso do deus �
   t("o App chama o códex do motor e aplica os efeitos", /const doCodex = aplicarOCodex\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doCodex\)/.test(corpoAR) && /calou\("o códex do turno", e\)/.test(corpoAR));
   t("o códex já não mora no App", !/const genteRevelavel = m\.gente\.filter/.test(APP) && !/const usados = nomesAMaoNaProsa\(resp\.narrativa/.test(APP));
   t("a base revelada é um efeito do App (o ref e a tela juntos)", /else if \(ef\.tipo === "base"\) \{ baseMundoRef\.current = ef\.base; setBaseMundo\(ef\.base\); \}/.test(APP));
+}
+
+sec("2. a chegada que ninguém anotou — byte a byte");
+{
+  const aChegada = (c, mexer = (x) => x) => {
+    const A = oAppDoFim(c);
+    oAppAplica(A, aplicarOCodex(estadoDoCodex(c, A), c.resp, c.ctx));
+    const ch = aplicarAChegada(mexer({ ...estadoDoCodex(c, A), combate: c.estado.combate, jornada: c.estado.jornada }), c.resp);
+    oAppAplicaAChegada(A, ch);
+    return { A, ch };
+  };
+  let iguais = 0; const dif = [];
+  for (let i = 0; i < CF.length; i++) {
+    const c = JSON.parse(JSON.stringify(CF[i]));
+    semearACasa(c.semente);
+    const { A } = aChegada(c);
+    const F = DF.casos[i].fotos.chegada;
+    if (igual(foto(A), F) && !A.calou.length) iguais++;
+    else dif.push(`${c.id}: ${JSON.stringify(A.msgs.slice(-2)).slice(0, 140)} / ${JSON.stringify(F.msgs.slice(-2)).slice(0, 140)}`);
+  }
+  t(`${iguais}/${CF.length} chegadas iguais ao byte (a cidade, o lugar, o mapa, o relógio, a tela, a nota)`, iguais === CF.length, dif.slice(0, 3).join(" | "));
+  /* a prova só vale se percorre os ramos — contados no dourado */
+  const chegou = DF.casos.filter((x) => x.fotos.chegada.digital !== x.fotos.codex.digital).length;
+  const nota = DF.casos.filter((x) => /CHEGADA — REGISTRADA/.test(x.fotos.chegada.nota)).length;
+  let novo = 0, saiuDoLugar = 0, negada = 0, jaVeio = 0;
+  for (const c0 of CF) {
+    const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente);
+    const { ch } = aChegada(c);
+    if (ch.efeitos.some((e) => e.tipo === "mapa")) novo++;
+    if (ch.efeitos.some((e) => e.tipo === "lugar")) saiuDoLugar++;
+    if (/quase entra/.test(c.resp.narrativa) && !/pela estrada curta/.test(c.resp.narrativa)) negada++;
+    if (/pela estrada curta/.test(c.resp.narrativa) && c.resp.mudancas && c.resp.mudancas.cidade_atual) jaVeio++;
+  }
+  t(`…a chegada move o herói em ${chegou} casos (com a nota em ${nota}), abre o mapa em ${novo}, tira-o do lugar em ${saiuDoLugar}; a negada (${negada}) e a já anotada (${jaVeio}) não movem`, chegou >= 10 && nota === chegou && novo >= 3 && saiuDoLugar >= 2 && negada >= 5 && jaVeio >= 3);
+  {
+    let partem = 0, partemB = 0;
+    for (let i = 0; i < CF.length; i++) {
+      const c = JSON.parse(JSON.stringify(CF[i])); semearACasa(c.semente);
+      if (!igual(foto(aChegada(c, (e) => ({ ...e, mapa: { ...e.mapa, rotas: (e.mapa.rotas || []).filter((r) => r.dias > 1) } })).A), DF.casos[i].fotos.chegada)) partem++;
+      const c2 = JSON.parse(JSON.stringify(CF[i])); semearACasa(c2.semente);
+      if (!igual(foto(aChegada(c2, (e) => ({ ...e, jornada: null, combate: null })).A), DF.casos[i].fotos.chegada)) partemB++;
+    }
+    t(`…e morde: sem as rotas de um passo (${partem}), e sem a luta e a jornada que a calam (${partemB}) — os casos partem`, partem > 0 && partemB > 0);
+  }
+  t("lixo não estoura (a chegada nunca derruba o turno)", (() => { try { aplicarAChegada(null, null); aplicarAChegada({ cidadeAtual: "Vau", mapa: null }, { narrativa: "Você entra em Vau." }); return true; } catch { return false; } })());
+  t("sem chegada, o relógio não anda", aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [], rotas: [] } }, { narrativa: "Você fica." }).minutos === 0);
+  /* a fiação */
+  t("o App chama a chegada do motor, faz o relógio andar e só então põe a nota", /const daChegada = aplicarAChegada\(\{/.test(corpoAR)
+    && corpoAR.indexOf("if (daChegada.minutos)") > corpoAR.indexOf("msgs.push(...daChegada.msgs)") && corpoAR.indexOf("notaRef.current = notaComOTurno(notaRef.current, daChegada.paraOCronista)") > corpoAR.indexOf("if (daChegada.minutos)")
+    && /calou\("a chegada do turno", e\)/.test(corpoAR));
+  t("a chegada já não mora no App", !/const ch = detectarChegada\(resp\.narrativa/.test(APP));
 }
 
 console.log(`\nmotor · fim do turno: ${bons} passaram, ${maus} falharam`);

@@ -4,7 +4,7 @@ import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativ
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, saidasDeUmPassoPrompt } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
@@ -238,7 +238,7 @@ import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRo
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
-import { aplicarOCodex } from "./motor/fim-do-turno.js";
+import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -10862,32 +10862,24 @@ export default function Taverna() {
       msgs.push(...doCodex.msgs);
       aplicarOsEfeitos(doCodex);
     } catch (e) { calou("o códex do turno", e); }
-    /* ---- CHEGUEI E NINGUÉM ANOTOU (v9.43) ----
-       O Mestre narrou a travessia do portal com todas as letras e esqueceu
-       de mandar `cidade_atual`: a ficção subiu para o Andar 2, o mapa ficou
-       no Andar 1. Este cão de guarda RATIFICA — a narração está certa, o
-       que falta é o registro, e registro é trabalho do sistema.
-
-       Só morde quando o destino fica a UM PASSO daqui (rota de meio dia ou
-       menos). Onde viajar custa dias, "chegar" numa frase é quase sempre
-       plano ou lembrança, e mover o herói por isso seria pior que o bug. */
+    /* ---------------- A CHEGADA, NO MOTOR (T1-A, 4.ª fatia, 28/10) ----------------
+       CHEGUEI E NINGUÉM ANOTOU (v9.43): o Mestre narrou a travessia e
+       esqueceu `cidade_atual`; o cão de guarda RATIFICA, e só quando o
+       destino fica a um passo daqui. Mora em `aplicarAChegada`
+       (src/motor/fim-do-turno.js), com os porquês. Daqui sai a fiação, e o
+       relógio do mundo, que é órgão do App (os dias do reino, os
+       festivais, a invocação que expira): anda DEPOIS de o herói mudar de
+       cidade e ANTES de a nota da chegada entrar, como andava. Provado byte
+       a byte contra o bloco de antes (teste-motor-fim-do-turno). */
     try {
-      const jaVeio = !!(resp.mudancas && resp.mudancas.cidade_atual);
-      if (!jaVeio && !combateRef.current && !jornadaRef.current) {
-        const ch = detectarChegada(resp.narrativa, { mapa: mapaRef.current, cidade: cidadeAtualRef.current });
-        if (ch) {
-          const de = cidadeAtualRef.current;
-          cidadeAtualRef.current = ch.nome;
-          if (lugarRef.current) { lugarRef.current = null; setLugar(null); }
-          const dsc = descobrirCidade(mapaRef.current, ch.nome);
-          if (dsc.nova) { mapaRef.current = dsc.mapa; setMapa(mapaRef.current); }
-          msgs.push(`🧭 Você está em ${ch.nome}${dsc.nova ? " — e o lugar entrou no seu mapa" : ""}.`);
-          const tx = avancarMinutos(Math.max(15, Math.round((ch.dias || 0) * 1440)));
-          if (tx) msgs.push(tx);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDaChegada(ch, de)}`;
-        }
-      }
-    } catch { /* a chegada nunca derruba o turno */ }
+      const daChegada = aplicarAChegada({
+        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, mapa: mapaRef.current, combate: combateRef.current, jornada: jornadaRef.current,
+      }, resp);
+      aplicarOsEfeitos({ estado: {}, efeitos: daChegada.efeitos, paraOCronista: [] });
+      msgs.push(...daChegada.msgs);
+      if (daChegada.minutos) { const tx = avancarMinutos(daChegada.minutos); if (tx) msgs.push(tx); }
+      notaRef.current = notaComOTurno(notaRef.current, daChegada.paraOCronista);
+    } catch (e) { calou("a chegada do turno", e); }
     /* ---- O PORTÃO (v9.12) ----
        Aqui moravam três cães de guarda separados — coerência de cena (v9.9),
        ascensão (v9.6) e morte na prosa (v9.5). Todos os três CONTRADIZEM o

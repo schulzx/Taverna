@@ -172,7 +172,16 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   /* cidade_atual — a jornada chega sozinha; a partida diz que a chegada é do sistema */
   t("cidade_atual · a jornada com destino chega sozinha (App: talvezChegarSozinho põe a cidade)", /const talvezChegarSozinho = \(\) => \{[\s\S]{0,2500}?cidadeAtualRef\.current = j\.para;/.test(app));
   t("cidade_atual · e a partida avisa o Narrador de que a chegada é do sistema", /a chegada é do sistema/.test(envelopeDePartida("Sul Molhado", "Quebrado do Leste")));
-  t("cidade_atual · a travessia de um passo narrada é ratificada (App: detectarChegada)", /detectarChegada\(resp\.narrativa/.test(app));
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. A
+     chegada que ninguém anotou mudou-se para
+     src/motor/fim-do-turno.js#aplicarAChegada (o motor não se lê pelo
+     texto); prova-se jogando-a numa rota de um passo. */
+  {
+    const { aplicarAChegada } = await import("../src/motor/fim-do-turno.js");
+    const ch = aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [{ nome: "Vau" }, { nome: "Ponte Lenta", descoberta: false }], rotas: [{ de: "Vau", para: "Ponte Lenta", dias: 0.2 }] } },
+      { narrativa: "Ao fim da tarde você entra na Ponte Lenta pelo portão baixo." });
+    t("cidade_atual · a travessia de um passo narrada é ratificada (App: detectarChegada)", ch.estado.cidadeAtual === "Ponte Lenta" && ch.minutos > 0 && /const daChegada = aplicarAChegada\(\{/.test(app));
+  }
 
   /* lugar_atual — o Cronista diz o lugar; a régua do lugar dito é do motor */
   t("lugar_atual · o Cronista tem a SEÇÃO lugar e o App regista-a", /SEÇÃO lugar \(v9\.39\)/.test(app) && /registrarLugar\(r\.lugar, "cronista"\)/.test(app));

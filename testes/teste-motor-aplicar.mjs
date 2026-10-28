@@ -475,7 +475,7 @@ sec("9. o turno numa ordem só — a fusão, byte a byte (T1-A, 3.ª fatia)");
      portão) também saiu para o motor e tem as suas chamadas a
      `aplicarOsEfeitos`, depois da luta (teste-motor-fim-do-turno); o que esta
      asserção guarda é que o TURNO FUNDIDO se aplica uma vez só */
-  t("o App chama o turno fundido e aplica os efeitos num lugar só", /const saida = aplicarOTurno\(\{/.test(corpoAR) && (corpoAR.match(/aplicarOsEfeitos\(saida\)/g) || []).length === 1 && (corpoAR.match(/aplicarOsEfeitos\((?!saida\)|doCodex\)|daChegada|doPortao\))/g) || []).length === 0);
+  t("o App chama o turno fundido e aplica os efeitos num lugar só", /const saida = aplicarOTurno\(\{/.test(corpoAR) && (corpoAR.match(/aplicarOsEfeitos\(saida\)/g) || []).length === 1 && (corpoAR.match(/aplicarOsEfeitos\((?!saida\)|doCodex\)|\{ estado: \{\}, efeitos: daChegada\.efeitos|doPortao\))/g) || []).length === 0);
   t("as peças já não são chamadas uma a uma no App", !/aplicarOMapa\(\{|aplicarAsMissoes\(\{|aplicarOsSinais\(\{|aplicarORegisto\(\{/.test(APP));
   t("a base do nome do App aceita o estado de agora", /const baseDoNome = \(sobre = \{\}\) => \{/.test(APP));
 }
