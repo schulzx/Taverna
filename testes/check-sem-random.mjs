@@ -41,16 +41,15 @@ const sec = (s) => console.log("\n" + s);
 /* ============================================================
    A TABELA DAS EXCEÇÕES
    ============================================================ */
-const EXCECOES_DO_ACASO = {
-  "App.jsx": {
-    desde: "2026-10-27",
-    ate: "Fase T1 (trilha A: o turno sai do App)",
-    /* o teto é a contagem do dia em que a exceção entrou, sem comentários.
-       Pode descer (cada conversão do oficial o desce); não pode subir. */
-    teto: 37,
-    porque: "o dado da tela, o id de objetos e os sorteios do turno que ainda moram no App — o plano do motor os lista para a trilha A converter",
-  },
-};
+/* T1-A (27/10/2026): o App.jsx saiu desta tabela. Entrou com teto 37 no
+   dia da T0-B e chegou a zero: o dado do teste (OverlayDado) sai de
+   `dadoDo(semente da rolagem, "d20")`, todo sorteio do turno de
+   `sorteDoTurno(evento)` (dadoDo sobre a semente do mundo e o instante do
+   save), e as origens de semente (duelo, noite, id de canal) de
+   `entropia()` — que não é dado: é de onde nasce uma semente que ainda não
+   existe. A tabela fica, vazia, para a próxima exceção ter onde entrar com
+   data e dono. */
+const EXCECOES_DO_ACASO = {};
 
 /* o alcance: se a leitura quebrar e devolver poucos arquivos, o varredor
    passaria verde sem ter medido nada. Hoje são ~200 módulos. */

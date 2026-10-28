@@ -492,12 +492,14 @@ sec("12. a fiação no App.jsx");
 
   /* 10. COERÊNCIA — o golpe de oportunidade e o contra-ataque da reação
      também passam pelo veredito do furtivo, não só o golpe comum. */
+  /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o
+     texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
   t("10. o contra-ataque da reação passa pelo veredito do furtivo (com posição)",
     /vfRev = vereditoDoFurtivo\(\{/.test(APP) && /calou\("vereditoDoFurtivo-revide"/.test(APP)
-    && /danoDaClasse\(pers\.classe, nv, Math\.round\(danoDe\(pers, false\) \/ 2\), vfRev \? \{ furtivo: vfRev\.soma \} : null\) \* 0\.6/.test(APP));
+    && /danoDaClasse\(pers\.classe, nv, Math\.round\(danoDe\(pers, false(?:, sorteDoTurno\("dano"\))?\) \/ 2\), vfRev \? \{ furtivo: vfRev\.soma \} : null\) \* 0\.6/.test(APP));
   t("10. o golpe de oportunidade também passa pelo veredito do furtivo",
     /vfOp = vereditoDoFurtivo\(\{/.test(APP) && /calou\("vereditoDoFurtivo-oportunidade"/.test(APP)
-    && /danoDaClasse\(persBase\.classe, persBase\.nivel \|\| 1, Math\.round\(danoDe\(persBase, false\) \/ 2\), vfOp \? \{ furtivo: vfOp\.soma \} : null\)/.test(APP));
+    && /danoDaClasse\(persBase\.classe, persBase\.nivel \|\| 1, Math\.round\(danoDe\(persBase, false(?:, sorteDoTurno\("dano"\))?\) \/ 2\), vfOp \? \{ furtivo: vfOp\.soma \} : null\)/.test(APP));
 
   /* 9. SAVE/LOAD — de graça: `pers.condicoes` viaja com o personagem
      inteiro, e é isso que se confirma aqui (nenhuma chave nova de save). */

@@ -315,7 +315,7 @@ sec("10. a fiação no App.jsx");
   t("entrarMasmorra existe", ent.length > 500);
   t("a lista da ficha sai do lugar que o mapa achou (doMapa.id), em try/catch pelo calou",
     /const quemDaFicha = \(\(\) => \{\s*if \(!doMapa\) return null;\s*try \{ return quemDoLugar\(mapaRef\.current, doMapa\.id\); \} catch \(e\) \{ calou\("quemDoLugar", e\); return null; \}\s*\}\)\(\);/.test(ent));
-  t("e vai para a planta, ao lado das salas", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null, quem: quemDaFicha \}\);/.test(ent));
+  t("e vai para a planta, ao lado das salas", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null, quem: quemDaFicha(?:, sorte: sorteDoTurno\("masmorra"\))? \}\);/.test(ent)); /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
   t("depois de o mapa achar o lugar, antes de a planta nascer", ent.indexOf("const doMapa =") < ent.indexOf("const quemDaFicha =") && ent.indexOf("const quemDaFicha =") < ent.indexOf("const mmBase = gerarMasmorra("));
   t("gerarMasmorra é chamada num ponto só do App", APP.split("gerarMasmorra(").length - 1 === 1);
 }

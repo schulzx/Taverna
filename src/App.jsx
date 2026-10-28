@@ -234,7 +234,8 @@ import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
-import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos } from "./semente.js";
+import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semearACasa, sorteDaCasa } from "./semente.js";
+import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -703,7 +704,21 @@ function OverlayMorte({ estado, nomeMorto, aoVoltar, aoHerdar, local = null, per
   );
 }
 
-function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer, emCombate = false }) {
+/* A ORIGEM DE UMA SEMENTE (T1-A, 27/10). Não é um dado: é de onde nasce a
+   semente de uma coisa que ainda não tem nenhuma (um duelo, uma noite, o id
+   de um canal) — e, uma vez nascida, ela é gravada e tudo o que se sorteia
+   a partir dela é determinista. Um id que se repetisse entre duas abas
+   seria um defeito, por isso a fonte é o acaso do navegador, e só aqui. */
+function entropia(teto) {
+  try { return parseInt(globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12), 16) % teto; } catch (e) { return Date.now() % teto; }
+}
+
+/* O DADO DA TELA (T1-A): o d20 do teste é o dado do jogo, não enfeite — a
+   face final sai de `dadoDo(semente, "d20")`, a semente que o Taverna
+   monta da rolagem e do instante do turno; o rodopio da animação usa outro
+   fio ("anima"), para que o número de quadros (que depende do relógio da
+   máquina) nunca mude a face. Sem semente, a sorte da casa. */
+function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer, emCombate = false, semente = "" }) {
   if (rolagem.auto) {
     return (
       <div className="fixed inset-0 z-40 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.85)", backdropFilter: "blur(3px)" }}>
@@ -721,6 +736,8 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
   const [par, setPar] = useState(null); // [a,b] quando há vantagem/desvantagem
   const finalRef = useRef(null);
   const setFinalRef = (v) => { finalRef.current = v; };
+  const dadosRef = useRef(null);
+  if (!dadosRef.current) dadosRef.current = semente ? { face: dadoDo(semente, "d20"), anima: dadoDo(semente, "anima") } : { face: sorteDaCasa, anima: sorteDaCasa };
   /* REFAZER (v9.16): o ponto de heroísmo comprado DEPOIS de ver o dado.
      Um só por rolagem, e o segundo resultado vale mesmo se for pior —
      sem risco isto seria um botão de desfazer, e o dado deixaria de
@@ -733,17 +750,19 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
   useEffect(() => {
     const inicio = Date.now();
     const iv = setInterval(() => {
-      setValor(1 + Math.floor(Math.random() * lados));
-      if (modo) setPar([1 + Math.floor(Math.random() * lados), 1 + Math.floor(Math.random() * lados)]);
+      const an = dadosRef.current.anima;
+      setValor(1 + Math.floor(an() * lados));
+      if (modo) setPar([1 + Math.floor(an() * lados), 1 + Math.floor(an() * lados)]);
       if (Date.now() - inicio > 1200) {
         clearInterval(iv);
         let final;
         if (modo) {
-          const a = 1 + Math.floor(Math.random() * lados), b = 1 + Math.floor(Math.random() * lados);
+          const fc = dadosRef.current.face;
+          const a = 1 + Math.floor(fc() * lados), b = 1 + Math.floor(fc() * lados);
           setPar([a, b]);
           final = modo === "vantagem" ? Math.max(a, b) : Math.min(a, b);
         } else {
-          final = 1 + Math.floor(Math.random() * lados);
+          final = 1 + Math.floor(dadosRef.current.face() * lados);
         }
         setValor(final);
         setFinalRef(final);
@@ -845,7 +864,7 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
                 <button
                   onClick={() => {
                     if (!aoRefazer || !aoRefazer()) return;
-                    const novo = 1 + Math.floor(Math.random() * lados);
+                    const novo = 1 + Math.floor(dadosRef.current.face() * lados);
                     setRefeito(valor); setValor(novo); setFinalRef(novo);
                   }}
                   title={destino > 0
@@ -4395,7 +4414,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
             {/* o dado respeita o sexo escolhido: sortear "Aldric" para quem
                 acabou de marcar mulher seria o botão desmentindo o formulário */}
             <button type="button" title="Sortear um nome deste mundo"
-              onClick={() => { const p = String(nomePessoa(mundo.genero, sexo === "mulher" ? "fem" : sexo === "homem" ? "masc" : undefined, Math.random, mundo.lexico) || "").split(" "); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
+              onClick={() => { const p = String(nomePessoa(mundo.genero, sexo === "mulher" ? "fem" : sexo === "homem" ? "masc" : undefined, sorteDaCasa, mundo.lexico) || "").split(" "); setNome(p[0] || ""); setSobrenome(p.slice(1).join(" ")); }}
               className="shrink-0 w-20 h-20 rounded-full flex items-center justify-center"
               style={{ background: T.panel, border: `1.5px solid ${T.amber}`, boxShadow: "0 0 6px rgba(232,163,61,0.15)" }}>
               <IconeDado tamanho={28} />
@@ -4581,7 +4600,7 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
               conceito: conceito.trim(), historia: historia.trim(),
               raca, classe, subclasse, profissao,
               antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
-              semente: `${nomeInteiro}|${conceito.trim()}|${Math.floor(Math.random() * 100000)}`,
+              semente: `${nomeInteiro}|${conceito.trim()}|${Math.floor(sorteDaCasa() * 100000)}`,
               atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
               /* a criação é o piso da ficha: nem o respec desce abaixo dela (v9.6) */
               baseAtributos: { ...attrFinais }, pontosAtr: 0, atributosVersao: 1,
@@ -4965,7 +4984,7 @@ function TelaDuelo({ voltar }) {
   const [codigo, setCodigo] = useState("");
   const [erro, setErro] = useState("");
   const [resultado, setResultado] = useState(null);
-  const [semente, setSemente] = useState(() => `duelo|${Math.floor(Math.random() * 1e9)}`);
+  const [semente, setSemente] = useState(() => `duelo|${entropia(1e9)}`);
   /* D3: a porta da campanha — LEITURA do territorio da historia. O heroi
      entra em copia; o save nunca sabe que a briga existiu (lei vi). */
   const heroiCampanha = useMemo(() => {
@@ -4978,7 +4997,7 @@ function TelaDuelo({ voltar }) {
   const [fichaDoOutro, setFichaDoOutro] = useState(null);
   const [seloDoOutro, setSeloDoOutro] = useState(null);
   const canalDueloRef = useRef(null);
-  const meuIdCanalRef = useRef(`d${Math.random().toString(36).slice(2, 10)}`);
+  const meuIdCanalRef = useRef(`d${entropia(2 ** 31).toString(36)}${entropia(2 ** 31).toString(36)}`.slice(0, 9));
   const idDoOutroRef = useRef(null);
   useEffect(() => () => { try { canalDueloRef.current && canalDueloRef.current.fechar(); } catch {} }, []);
   const conectarSala = () => {
@@ -5119,7 +5138,7 @@ function TelaDuelo({ voltar }) {
             </div>
           ))}
           <div className="flex gap-3">
-            <button onClick={() => { setResultado(null); setSemente(`duelo|${Math.floor(Math.random() * 1e9)}`); }} className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: T.amber, color: T.onAccent }}>REVANCHE</button>
+            <button onClick={() => { setResultado(null); setSemente(`duelo|${entropia(1e9)}`); }} className="flex-1 tv-display text-lg py-3 rounded-lg" style={{ background: T.amber, color: T.onAccent }}>REVANCHE</button>
             <button onClick={voltar} className="tv-mono text-xs px-4 py-3 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>MENU</button>
           </div>
         </div>
@@ -6116,6 +6135,20 @@ export default function Taverna() {
   };
 
   const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || "aventura"}|${(mundoAtual() && mundoAtual().genero) || ""}`;
+  /* A SORTE DO TURNO (T1-A, 27/10): todo sorteio do App sai daqui, de
+     `dadoDo(semente do mundo, ponto, evento, n)` — a regra mora em
+     `src/motor/sorte-do-turno.js`, e lá está o porquê. Aqui só a fiação: o
+     ponto lido dos refs, e a contagem substituída a cada pedido. */
+  const contagemDaSorteRef = useRef(CONTAGEM_VAZIA);
+  const pontoDaSorte = () => pontoDaSorteDe({ dia: diaRef.current, minuto: minutoRef.current, falas: (mensagensRef.current || []).length });
+  const sorteDoTurno = (evento) => {
+    try {
+      const r = sorteNoPonto(contagemDaSorteRef.current, sementeMundo(), pontoDaSorte(), evento);
+      contagemDaSorteRef.current = r.contagem;
+      return r.sorte;
+    } catch (e) { calou("sorteDoTurno", e); return sorteDaCasa; }
+  };
+  const chaveDaRolagem = (r) => { try { return chaveDaRolagemDe(sementeMundo(), pontoDaSorte(), r); } catch (e) { calou("chaveDaRolagem", e); return ""; } };
   /* MM8c-2: o contexto e os nomes do elenco desta campanha — a gente que
      PESA na narração (resumoCenaPrompt, resumoNPCsParaPrompt, o cânone),
      não a lista para povoar (essa é `elencoParaPovoar`, mais abaixo). */
@@ -6262,7 +6295,7 @@ export default function Taverna() {
          o mesmo +2 do Goblin. O bestiario sempre soube a diferenca; era o
          booleano que nao cabia. */
       ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: Number(e.des) || 0 })),
-    ]);
+    ], sorteDoTurno("iniciativa"));
     reacaoUsadaRef.current = false;
     /* A ECONOMIA NASCE AQUI, E A CHAVE QUE FALTAVA APAGAVA DUAS REGRAS
        (E4). A luta montava-se com `rodada: 1` e `recursos`, e a economia
@@ -6669,7 +6702,7 @@ export default function Taverna() {
         }
         case "deus": {
           const n = lerNumero(arg(0), null);
-          const nova = gerarDivindade(ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current }), diaRef.current, n.ok ? { gdFixo: Math.max(0, Math.min(4, n.valor)) } : {});
+          const nova = gerarDivindade(ctxMundo({ mundo, mapa: mapaRef.current, dia: diaRef.current }), diaRef.current, { ...(n.ok ? { gdFixo: Math.max(0, Math.min(4, n.valor)) } : {}), sorte: sorteDoTurno("divindade") });
           const dv = { ...garantirDivindade(divindadeRef.current), despertar: true, panteao: [...((divindadeRef.current && divindadeRef.current.panteao) || []), nova] };
           divindadeRef.current = dv; setDivindade(dv); salvar({ divindade: dv });
           godLinha(`⚡ ${nova.icone} ${nova.nome} ${nova.dominio} — GD ${nova.gd}, ${nova.fieis} fiéis. Entrou no panteão. (Use /combate ${nova.nome} para enfrentá-la.)`);
@@ -6791,7 +6824,7 @@ export default function Taverna() {
           const nomeR = resto.trim();
           const rel = nomeR
             ? RELIQUIAS.find((x) => x.nome.toLowerCase().includes(nomeR.toLowerCase()) || x.id === nomeR.toLowerCase())
-            : RELIQUIAS[Math.floor(Math.random() * RELIQUIAS.length)];
+            : RELIQUIAS[Math.floor(sorteDoTurno("reliquia")() * RELIQUIAS.length)];
           if (!rel) { godLinha(`⚡ Relíquias: ${RELIQUIAS.map((x) => x.nome).join(" · ")}`); return true; }
           const itR = itemDaReliquia(rel);
           const pR = { ...personagem, equipamento: [...(personagem.equipamento || []), itR] };
@@ -9757,7 +9790,7 @@ export default function Taverna() {
        de uma via. Rolar de novo aqui seriam duas verdades sobre o mesmo
        instante, e um dado a mais desalinha a semente para sempre. Sem ele,
        este caminho e byte a byte o de hoje. */
-    const esc = jaEscolhida || escolherReacao({ pers, gatilho, dano: a.r.dano || 0, temReacao: true, tipoDano: a.r.tipoDano || "fisico" });
+    const esc = jaEscolhida || escolherReacao({ sorte: sorteDoTurno("reacao"), pers, gatilho, dano: a.r.dano || 0, temReacao: true, tipoDano: a.r.tipoDano || "fisico" });
     if (!esc) return null;
     const res = resolverReacao(esc, { pers, dano: a.r.dano || 0, atacante: a.inimigo });
     if (!res) return null;
@@ -9792,10 +9825,10 @@ export default function Taverna() {
             tipoDano: elementoDaArma(pers),
           });
         } catch (e) { calou("vereditoDoFurtivo-revide", e); }
-        const rr = resolverAtaque({
+        const rr = resolverAtaque({ rolar: sorteDoTurno("ataque"),
           atacante: pers.nome, alvo, ehAtacanteInimigo: false,
           bonusAtaque: Math.max(pers.atributos?.forca || 0, pers.atributos?.destreza || 0) + 2 + Math.floor((nv - 1) / 4),
-          danoBase: Math.round(danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2), vfRev ? { furtivo: vfRev.soma } : null) * 0.6),
+          danoBase: Math.round(danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false, sorteDoTurno("dano")) / 2), vfRev ? { furtivo: vfRev.soma } : null) * 0.6),
           condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
           tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         });
@@ -9827,7 +9860,7 @@ export default function Taverna() {
          desde sempre e que nada, em lugar nenhum, lia. */
       const qual = salvaDoGolpe(a.golpeNome || a.inimigo);
       const b = bonusDeSalvaguarda(p, qual, (x) => atributoEfetivo(p, x));
-      const res = rolarAflicao({
+      const res = rolarAflicao({ sorte: sorteDoTurno("aflicao"),
         /* só o NOME DO GOLPE decide a aflição — o nome da criatura entraria
            por engano ("Rato Gigante" viraria "fortalecido" por causa de
            "gigante"). O elemento dela já escolheu o golpe lá atrás. */
@@ -9851,7 +9884,7 @@ export default function Taverna() {
   const aplicarAflicaoEmInimigo = (lista, alvoNome, { fonte, nomeFonte, atacante, critico }) => {
     const alvo = (lista || []).find((e) => e.nome === alvoNome);
     if (!alvo || alvo.derrotado || alvo.vida <= 0) return { lista, res: null };
-    const res = rolarAflicao({ fonte, nomeFonte, atacante, alvo, alvoNome, critico });
+    const res = rolarAflicao({ sorte: sorteDoTurno("aflicao"), fonte, nomeFonte, atacante, alvo, alvoNome, critico });
     if (!res) return { lista, res: null };
     if (!res.aplicou) return { lista, res };
     return {
@@ -10092,7 +10125,7 @@ export default function Taverna() {
   const aplicarBuffDeHabilidade = (h, pers) => {
     const port = aflicaoDe(`${h.nome || ""} ${h.descricao || ""}`);
     if (!port || port.alvo === "alvo") return { pers, texto: "", nota: "" };
-    const res = rolarAflicao({ fonte: port, nomeFonte: h.nome, atacante: pers.nome, sempre: true });
+    const res = rolarAflicao({ sorte: sorteDoTurno("aflicao"), fonte: port, nomeFonte: h.nome, atacante: pers.nome, sempre: true });
     if (!res || !res.aplicou) return { pers, texto: "", nota: "" };
     let p = { ...pers, condicoes: [...(pers.condicoes || []).filter((c) => c.id !== res.cond.id), res.cond] };
     if (port.alvo === "aliados") {
@@ -10191,7 +10224,7 @@ export default function Taverna() {
     if (!port || port.alvo === "alvo") {
       return { pers, texto: `✦ ${ac.companheiro} usa ${ac.habilidade.nome}`, paraMestre: `${ac.companheiro} usou ${ac.habilidade.nome} (efeito de apoio, sem números novos)` };
     }
-    const res = rolarAflicao({ fonte: port, nomeFonte: ac.habilidade.nome, atacante: ac.companheiro, sempre: true });
+    const res = rolarAflicao({ sorte: sorteDoTurno("aflicao"), fonte: port, nomeFonte: ac.habilidade.nome, atacante: ac.companheiro, sempre: true });
     if (!res || !res.aplicou) return { pers, texto: "", paraMestre: `${ac.companheiro} usou ${ac.habilidade.nome}` };
     const semRepetir = (lista) => (lista || []).filter((x) => x.id !== res.cond.id);
     let p = pers;
@@ -10351,7 +10384,7 @@ export default function Taverna() {
       return gastarFirme({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
     }
     const caiuAgora = !pers.morrendo;
-    const res = testeDeMorte();
+    const res = testeDeMorte(sorteDoTurno("morte"));
     const ap = aplicarTesteMorte(pers.morte || { sucessos: 0, falhas: 0 }, res);
     /* ---- OS DADOS FICAM GUARDADOS (v9.42) ----
        O jogador tombou com dois sucessos e uma falha e não entendeu por quê:
@@ -11036,7 +11069,7 @@ export default function Taverna() {
           }
         } else if (chave === "loot") {
           const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
-          const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1, lex: (mundoAtual() || {}).lexico });
+          const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
           setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
           /* raro para cima abre a REVELAÇÃO (v9.163); o comum fica na linha
              de sistema, que é o tamanho dele — revelar tudo ensinaria a
@@ -11279,7 +11312,7 @@ export default function Taverna() {
           ...derrotadosDaSessaoRef.current,
           ...(resp.mudancas.__inimigosFinais || []).map((e) => e && e.nome).filter(Boolean),
         ].slice(-120);
-        const espBruto = gerarEspolios(resp.mudancas.__inimigosFinais || [], (pers || personagem).nivel || 1);
+        const espBruto = gerarEspolios(resp.mudancas.__inimigosFinais || [], (pers || personagem).nivel || 1, sorteDoTurno("espolio"));
         /* v9.44: o Caçador de Recompensas cobra pelo trabalho. O acréscimo é
            sobre as MOEDAS, não sobre o XP — quem vive de contrato ganha mais
            dinheiro pela mesma caçada, não experiência mais rápido. */
@@ -11328,9 +11361,9 @@ export default function Taverna() {
             const e = fins[Math.min(i, Math.max(0, fins.length - 1))] || {};
             return { de: e.nome || "", x: e.x != null ? e.x : null, y: e.y != null ? e.y : null };
           };
-          if (esp.caiItem) caiuAqui.push(achadoDeEquipamento(gerarEspolioItem(fins, p2.nivel || 1, (mundoAtual() || {}).lexico), ondeCaiu(0)));
+          if (esp.caiItem) caiuAqui.push(achadoDeEquipamento(gerarEspolioItem(fins, p2.nivel || 1, (mundoAtual() || {}).lexico, sorteDoTurno("espolio-item")), ondeCaiu(0)));
           for (let i = 0; i < (esp.consumiveis || 0); i++) {
-            const c = sortearConsumivel(p2.nivel || 1);
+            const c = sortearConsumivel(p2.nivel || 1, { sorte: sorteDoTurno("consumivel") });
             if (!c) continue;
             caiuAqui.push(achadoDeConsumivel(c, itemConsumivel(c.id), ondeCaiu(i)));
           }
@@ -11338,8 +11371,8 @@ export default function Taverna() {
              deixa essência, peçonhenta deixa glândula, bicho deixa couro. */
           /* v9.44: o Curtidor aproveita a carcaça — um componente a mais por
              corpo. Sorteia de novo na mesma mesa: é o mesmo bicho. */
-          const desp = despojosDe(fins);
-          for (let k = 0; k < despojosExtras(p2) * fins.length; k++) { const x = despojosDe(fins)[0]; if (x) desp.push(x); }
+          const desp = despojosDe(fins, { sorte: sorteDoTurno("despojo") });
+          for (let k = 0; k < despojosExtras(p2) * fins.length; k++) { const x = despojosDe(fins, { sorte: sorteDoTurno("despojo") })[0]; if (x) desp.push(x); }
           desp.forEach((c, i) => caiuAqui.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
         }
         const noChao = caiuAqui.filter(Boolean);
@@ -11607,8 +11640,8 @@ export default function Taverna() {
         bumpCont("quaseMorte", 1);
         pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 4, null) };
         /* CICATRIZ (v6.6): sobreviver por um fio pode deixar marca permanente */
-        if (Math.random() < 0.45 && (pers.cicatrizes || []).length < CICATRIZ_MAX) {
-          const c = sortearCicatriz(pers.cicatrizes || []);
+        if (sorteDoTurno("cicatriz")() < 0.45 && (pers.cicatrizes || []).length < CICATRIZ_MAX) {
+          const c = sortearCicatriz(pers.cicatrizes || [], sorteDoTurno("qual-cicatriz"));
           if (c) {
             const vidaMax = Math.max(5, (pers.vidaMax || 10) + (c.vidaMax || 0));
             pers = { ...pers, cicatrizes: [...(pers.cicatrizes || []), { ...c, dia: diaRef.current }], vidaMax, vida: Math.min(pers.vida, vidaMax) };
@@ -12618,7 +12651,7 @@ export default function Taverna() {
      veredito. No Torneio, o mesmo motor detecta o fim da luta real,
      registra na chave, corre as outras chaves e traz os rumores. */
   const iniciarNoite = ({ prato = "capitulo", prontoId = "muralha", episodioId = null } = {}) => {
-    const semente = `noite|${prontoId}|${episodioId || prato}|${Math.floor(Math.random() * 1e9)}`;
+    const semente = `noite|${prontoId}|${episodioId || prato}|${entropia(1e9)}`;
     modoRef.current = "rapida";
     convertidoRef.current = null;
     vereditoRef.current = null;
@@ -13095,6 +13128,9 @@ export default function Taverna() {
       fotoInicio = fotoInicioRef.current;
       fotoInicioRef.current = null;
     } catch (e) { calou("foto do envio", e); }
+    /* T1-A: o que ainda cai na reserva da casa rola a partir do instante
+       (depois da foto: ela é a primeira coisa do envio) */
+    try { semearACasa(`${sementeMundo()}|${pontoDaSorte()}`); } catch (e) { calou("semear a casa (envio)", e); }
     /* A1 · B2: A FOTO DA FICHA NO ENVIO, para o recibo do turno. Um turno
        anterior cujo Cronista ainda não respondeu fecha o recibo dele AGORA,
        com a ficha de agora: o que o Cronista ainda cobrar cai no recibo
@@ -13859,7 +13895,7 @@ export default function Taverna() {
        vilão — o capítulo novo tem de recomeçar pelo clima, senão a
        revelação do segundo já nasce gasta. */
     const herdeiro = gerarHerdeiro(nemesisRef.current, {
-      nome: nomePessoa(generoMundo(), undefined, Math.random, (mundoAtual() || {}).lexico), cont: contRef.current,
+      nome: nomePessoa(generoMundo(), undefined, sorteDoTurno("nome"), (mundoAtual() || {}).lexico), cont: contRef.current,
       stats: { dominios: dominiosDe(mapaRef.current).length }, dia: diaRef.current,
     });
     nemesisRef.current = herdeiro; setNemesis(herdeiro);
@@ -13872,6 +13908,7 @@ export default function Taverna() {
 
   const iniciar = (pers) => {
     recomecarAPorta();
+    try { semearACasa(sementeMundo()); } catch (e) { calou("semear a casa (iniciar)", e); }
     try { partidaDaPortaRef.current = fotoDoAcervo({ missoes: missoesRef.current }).missoes; } catch (e) { calou("a partida da marca da porta", e); }
     /* ---------------- A SEGUNDA CADEIRA ENTRA NO GRUPO (v9.120) ----------------
        O personagem do outro jogador não é um NPC nem um convidado da cena:
@@ -14021,7 +14058,7 @@ export default function Taverna() {
        justamente ele que o jogador vai cruzar antes de saber o fim. */
     nemesisRef.current = !cap ? null
       : cap.forma === "durante" ? garantirVilao(nemesisRef.current)
-        : gerarHerdeiro(nemesisRef.current, { nome: nomePessoa(generoMundo(), undefined, Math.random, (mundoAtual() || {}).lexico), cont: contRef.current, stats: {}, dia: diaRef.current });
+        : gerarHerdeiro(nemesisRef.current, { nome: nomePessoa(generoMundo(), undefined, sorteDoTurno("nome"), (mundoAtual() || {}).lexico), cont: contRef.current, stats: {}, dia: diaRef.current });
     setNemesis(nemesisRef.current);
     famaPatamarRef.current = 0;
     if (!cap) reinoRef.current = {};
@@ -14147,6 +14184,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
     /* R21: carregar um save e sessao nova para a marca da porta - menos o
        recado do anfitriao da sala, que chega por aqui a cada turno. */
     if (!silencioso) recomecarAPorta();
+    try { semearACasa(`${nomeDaCampanha(sv) || "aventura"}|${(sv.mundo && sv.mundo.genero) || ""}`); } catch (e) { calou("semear a casa (continuar)", e); }
     try {
       /* MM15 (3): a mesma reposição que uma falha de ligação usa para
          devolver o turno ao que era — aqui, redundante de propósito: cada
@@ -14659,12 +14697,12 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
           tipoDano: elementoDaArma(pers),
         });
       } catch (e) { calou("vereditoDoFurtivo", e); }
-      const r = resolverAtaque({
+      const r = resolverAtaque({ rolar: sorteDoTurno("ataque"),
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
         bonusAtaque: bonusAtkBase - penal + degrau,
         /* v9.47: o golpe da FORMA soma aqui — garra de bicho e punho de
            avatar são o corpo batendo, não um buff mágico. */
-        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false) / 2), vf ? { furtivo: vf.soma } : null) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
+        danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false, sorteDoTurno("dano")) / 2), vf ? { furtivo: vf.soma } : null) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
         condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
         tipoDano: elementoDaArma(pers), perfilAlvo: perfilDe(alvo),
         bonusDefesaAlvo: bonusDefesaEm(gradeDaLuta, alvo),
@@ -15128,7 +15166,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
        ficha de um mago rola dados de guerreiro, com a força do mago */
     const classeHab = classeDaHabilidade(h.nome) || pers.classe;
     let danoBase = h.danoBase != null
-      ? h.danoBase + d(4) - 1
+      ? h.danoBase + d(4, sorteDoTurno("dano")) - 1
       : danoDaClasse(classeHab, nvHab, atr) + Math.max(0, Number(h.custo) || 0) * 3;
     /* LIMIAR QUE DOBRA (v9.48): o molde EXECUÇÃO das únicas era o único desta
        família com código; agora entra pela mesma porta que Golpe Decisivo e
@@ -15147,7 +15185,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
        mais contra um mortal, e a de um mortal não fura a casca de um deus */
     const gdJH = grauDe(divindadeRef.current);
     const gdAlvoH = Math.max(0, Number(alvo.gd) || 0);
-    const r = resolverAtaque({
+    const r = resolverAtaque({ rolar: sorteDoTurno("ataque"),
       atacante: pers.nome, alvo, ehAtacanteInimigo: false,
       bonusAtaque: bonusAtk + bonusDivino(gdJH, gdAlvoH), danoBase: danoBase + danoExtraDeDadiva(pers),
       condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
@@ -15348,9 +15386,9 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
      sua, gerada por código. A IA narra a epifania; o sistema cria e limita. */
   const talvezDespertarUnica = (p2, inimigosFinais, msgs) => {
     const ch = chanceUnica(inimigosFinais);
-    if (!ch || Math.random() >= ch) return p2;
+    if (!ch || sorteDoTurno("habilidade-unica")() >= ch) return p2;
     const existentes = (p2.habilidades || []).map((x) => x.nome);
-    const hu = gerarHabilidadeUnica(p2.nivel || 1, existentes);
+    const hu = gerarHabilidadeUnica(p2.nivel || 1, existentes, sorteDoTurno("habilidade-unica"));
     msgs.push(`🌟 PODER ÚNICO DESPERTOU: ${hu.nome} (${hu.custo} PM · recarga ${hu.recarga}t) — ${hu.descricao}`);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[PODER ÚNICO — REGISTRADO PELO SISTEMA] A vitória sobre ${((inimigosFinais || [])[0] || {}).nome || "o inimigo"} despertou em mim uma técnica só minha: "${hu.nome}" (${hu.descricao}). Já está na minha lista de habilidades — NÃO a crie de novo. Narre a epifania como um momento raro e marcante: o poder do derrotado deixou uma marca em mim.`;
     return { ...p2, habilidades: [...(p2.habilidades || []), hu] };
@@ -17033,7 +17071,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* v9.44: mesmo acréscimo do outro caminho de vitória — o Caçador de
        Recompensas ganha o mesmo, quer a luta feche pelo golpe dele, quer
        feche pela narrativa do Mestre. */
-    const espCru = gerarEspolios(derrotados, (personagemRef.current || personagem).nivel || 1);
+    const espCru = gerarEspolios(derrotados, (personagemRef.current || personagem).nivel || 1, sorteDoTurno("espolio"));
     const esp = { ...espCru, moedas: moedasDeEspolio(persBase || personagemRef.current || personagem, espCru.moedas) };
     const msgsU = [];
     /* CALCULA FORA DO UPDATER (v9.13). Isto morava dentro de
@@ -17077,17 +17115,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         return { de: e.nome || "", x: e.x != null ? e.x : null, y: e.y != null ? e.y : null };
       };
       if (esp.caiItem) {
-        const it = gerarEspolioItem(derrotados, p2.nivel || 1, (mundoAtual() || {}).lexico);
+        const it = gerarEspolioItem(derrotados, p2.nivel || 1, (mundoAtual() || {}).lexico, sorteDoTurno("espolio-item"));
         chaoNovos.push(achadoDeEquipamento(it, ondeCaiu(0)));
       }
       for (let i = 0; i < (esp.consumiveis || 0); i++) {
-        const cc = sortearConsumivel(p2.nivel || 1);
+        const cc = sortearConsumivel(p2.nivel || 1, { sorte: sorteDoTurno("consumivel") });
         if (!cc) continue;
         chaoNovos.push(achadoDeConsumivel(cc, itemConsumivel(cc.id), ondeCaiu(i)));
       }
       /* DESPOJOS (v9.13): o corpo também é matéria-prima para a bancada */
-      const despU = despojosDe(derrotados);
-      for (let k = 0; k < despojosExtras(p2) * derrotados.length; k++) { const x = despojosDe(derrotados)[0]; if (x) despU.push(x); }
+      const despU = despojosDe(derrotados, { sorte: sorteDoTurno("despojo") });
+      for (let k = 0; k < despojosExtras(p2) * derrotados.length; k++) { const x = despojosDe(derrotados, { sorte: sorteDoTurno("despojo") })[0]; if (x) despU.push(x); }
       despU.forEach((c, i) => chaoNovos.push(achadoDeComponente(c, itemComponente(c.id), ondeCaiu(i))));
       const caiuNoChao = chaoNovos.filter(Boolean);
       if (caiuNoChao.length) {
@@ -17172,7 +17210,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const mm = masmorraRef.current;
     const sala = mm && Array.isArray(mm.salas) ? mm.salas.find((x) => x.id === mm.atual) : null;
     if (!mm || !sala || sala.tipo !== "chefe") return { pers: p2, concluiu: false };
-    const rec = recompensaChefe(p2.nivel || 1, (mundoAtual() || {}).lexico);
+    const rec = recompensaChefe(p2.nivel || 1, (mundoAtual() || {}).lexico, sorteDoTurno("chefe"));
     /* v9.26: a luz que sobrou volta com o herói, junto do tesouro */
     /* v9.54: o chefe deixa ESSÊNCIA, e é a maior fonte do jogo. É a
        criatura mais carregada de poder que a masmorra põe na frente do
@@ -17400,8 +17438,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         tipoDano: elementoDaArma(persBase),
       });
     } catch (err) { calou("vereditoDoFurtivo-oportunidade", err); }
-    const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false) / 2), vfOp ? { furtivo: vfOp.soma } : null) + bonusDeArma(persBase).bonus;
-    const r = ataqueDeOportunidade(persBase, alvo, bonusOp, dOp, { tipoDano: elementoDaArma(persBase) });
+    const dOp = danoDaClasse(persBase.classe, persBase.nivel || 1, Math.round(danoDe(persBase, false, sorteDoTurno("dano")) / 2), vfOp ? { furtivo: vfOp.soma } : null) + bonusDeArma(persBase).bonus;
+    const r = ataqueDeOportunidade(persBase, alvo, bonusOp, dOp, { tipoDano: elementoDaArma(persBase), rolar: sorteDoTurno("oportunidade") });
     const pv = Math.max(0, (alvo.vida || 0) - (r.dano || 0));
     return { r, pv, morreu: pv <= 0 };
   };
@@ -17435,7 +17473,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* MM6 (coerencia): os aliados do golpe de oportunidade, pela mesma leitura
        do golpe comum — aqui ha posicao (grade/heroi de combPos). */
     const aliadosOp = (combPos.aliados || []).map((al, i) => ({ ...al, vida: ((persBase.grupo || [])[i] || {}).vida, condicoes: ((persBase.grupo || [])[i] || {}).condicoes, i }));
-    for (const e of vivos.filter((x) => querFugir(x))) {
+    for (const e of vivos.filter((x) => querFugir(x, { sorte: sorteDoTurno("fuga-do-inimigo") }))) {
       const { r, pv, morreu } = golpeDeOportunidadeDoHeroi(persBase, e, aliadosOp, combPos.grade, combPos.heroi);
       /* sai do combate nos dois casos; `fugiu` distingue quem escapou VIVO —
          é o que impede o sistema de dar XP por ele e, pior, de riscar o nome
@@ -17554,7 +17592,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     } catch (e) { calou("revisarEscondido", e); }
     const rodadaAgora = (combateRef.current && combateRef.current.rodada) || 1;
     const provocandoAgora = estaProvocando(combateRef.current, rodadaAgora);
-    const acoes = turnoDosInimigos({
+    const acoes = turnoDosInimigos({ sorte: sorteDoTurno("inimigos"),
       inimigos: combPos.inimigos, jogador: persBase, grupo: persBase.grupo || [],
       gdJogador: grauDe(divindadeRef.current), grade: gradeAtual, heroi: lugarHeroi, aliados: aliadosAgora,
       rodada: rodadaAgora, provocado: provocandoAgora,
@@ -18228,7 +18266,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             /* Um leque de 2+ e 0 de 12 classes hoje. Se um dia existir, a
                segunda escolha resolve-se no golpe do cartao e a `chance` rola
                UMA vez — nunca duas. */
-            const passou = reacaoDoJogador.chance == null || Math.random() <= reacaoDoJogador.chance;
+            const passou = reacaoDoJogador.chance == null || sorteDoTurno("reacao-do-jogador")() <= reacaoDoJogador.chance;
             escolha = passou ? { reacao: reacaoDoJogador, ordem: abre.ordem } : { reacao: null, ordem: null };
           }
         } else {
@@ -18728,7 +18766,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* quem PEDE é de preferência alguém que o herói já conhece: um pedido
          de estranho é um cartaz, e cartaz é o mural */
       const heroi = ((fichaViva() || personagem || {}).nome) || ""; const pessoa = quemPede({ conhecidos, gente, heroi }); /* MM14: quem pede nunca é o herói */
-        const sumidoSexo = Math.random() < 0.5 ? "masc" : "fem";
+        const sumidoSexo = sorteDoTurno("sumido")() < 0.5 ? "masc" : "fem";
       return {
         cidade: vizinhas.length ? vizinhas[0] : null,
         pessoa,
@@ -18737,8 +18775,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         /* O ERMO, e não um local da cidade. Foi aqui que nasceu "Praga em A
            Loja do Norte": o material entregava o LUGAR DE TRABALHO de quem
            pedia, e um ninho de bicho não se faz numa loja. */
-        ermo: fora.length ? fora[Math.floor(Math.random() * fora.length)] : null,
-        sumido: nomePessoa(generoMundo(), sumidoSexo, Math.random, (mundoAtual() || {}).lexico), sumidoSexo, heroi,
+        ermo: fora.length ? fora[Math.floor(sorteDoTurno("ermo")() * fora.length)] : null,
+        sumido: nomePessoa(generoMundo(), sumidoSexo, sorteDoTurno("nome"), (mundoAtual() || {}).lexico), sumidoSexo, heroi,
         objeto: "pacote lacrado",
       };
     } catch { return {}; }
@@ -19036,7 +19074,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         if (pf.heroismo) { const rh = ganharHeroismo(pers, pf.heroismo); pers = rh.pers; if (rh.msg) linhas.push(rh.msg); }
       } catch (e) { calou("a paga da tarefa antiga", e); }
       if (rec.item) {
-        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico });
+        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
         pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
         linhas.push(`✦ Recompensa: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})`);
       }
@@ -19742,14 +19780,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           if (c) { persT = { ...persT, inventario: [...(persT.inventario || []), itemComponente(c.id)] }; extras.push(`${c.icone} ${c.nome}`); }
         }
         for (let i = 0; i < rec.consumiveis; i++) {
-          const cc = sortearConsumivel(persT.nivel || 1);
+          const cc = sortearConsumivel(persT.nivel || 1, { sorte: sorteDoTurno("consumivel") });
           if (cc) { persT = { ...persT, inventario: [...(persT.inventario || []), itemConsumivel(cc.id)] }; extras.push(`${cc.icone} ${cc.nome}`); }
         }
         /* v9.128: quando o esconderijo diz ARMA, sai arma. O texto do achado
            é inventário, não metáfora — quem lê "uma arma que alguém escondeu
            com pressa" e recebe prata foi enganado pelo próprio sistema. */
         if (rec.arma) {
-          const a = gerarLoot("comum", { tipo: "arma", nivel: persT.nivel || 1, lex: (mundoRef.current || {}).lexico || null });
+          const a = gerarLoot("comum", { tipo: "arma", nivel: persT.nivel || 1, lex: (mundoRef.current || {}).lexico || null, rnd: sorteDoTurno("loot") });
           if (a) { persT = { ...persT, inventario: [...(persT.inventario || []), a] }; extras.push(`${a.icone || "🗡"} ${a.nome}`); }
         }
         setPersonagem(persT);
@@ -20998,7 +21036,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       dadivas: [], dadivasPendentes: 0, cicatrizes: [], voltas: 0,
       morto: false, morrendo: false, morte: { sucessos: 0, falhas: 0 },
       condicoes: [], efeitos: [], exaustao: 0, habRecarga: {},
-      semente: `${nomeNovo}|herdeiro|${Math.floor(Math.random() * 100000)}`,
+      semente: `${nomeNovo}|herdeiro|${Math.floor(sorteDoTurno("herdeiro")() * 100000)}`,
       grupo: (p.grupo || []),
     };
     /* recalcula PV/PM pelo nível novo e devolve os pontos daquele patamar */
@@ -22078,7 +22116,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (!custo) return;
     if ((personagem.essencia || 0) < custo.essencia) { pushMsgs([{ autor: "sistema", texto: `⚒ Essência insuficiente: forjar ${RARIDADE_ROTULO[raridade]} pede ⚗ ${custo.essencia} (você tem ${personagem.essencia || 0}). Desmonte equipamentos.` }]); return; }
     if ((personagem.moedas || 0) < custo.moedas) { pushMsgs([{ autor: "sistema", texto: `⚒ Moedas insuficientes: forjar ${RARIDADE_ROTULO[raridade]} pede ◉ ${custo.moedas}.` }]); return; }
-    const item = gerarLoot(raridade, { tipo: slot, nivel: personagem.nivel || 1, lex: (mundoAtual() || {}).lexico });
+    const item = gerarLoot(raridade, { tipo: slot, nivel: personagem.nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
     setPersonagem((p) => ({ ...p, essencia: (p.essencia || 0) - custo.essencia, moedas: (p.moedas || 0) - custo.moedas, equipamento: [...(p.equipamento || []), item] }));
     pushMsgs([{ autor: "sistema", texto: `⚒ Forjado: ${item.nome} (${RARIDADE_ROTULO[item.raridade] || item.raridade}) — na mochila de equipamentos` }]);
     bumpCont("forjados"); checarConquistas();
@@ -22124,7 +22162,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (!doMapa) return null;
       try { return quemDoLugar(mapaRef.current, doMapa.id); } catch (e) { calou("quemDoLugar", e); return null; }
     })();
-    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null, quem: quemDaFicha });
+    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null, quem: quemDaFicha, sorte: sorteDoTurno("masmorra") });
     /* LUZ DE VERDADE (v9.26): a masmorra inventava as próprias tochas, e as
        que o jogador comprava no mercado não serviam para nada. Agora a luz
        da expedição É a da mochila: as tochas saem dos suprimentos ao entrar
@@ -22238,7 +22276,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const rodarAFrente = () => {
     const r0 = raidRef.current;
     if (!r0 || r0.fase !== "luta" || r0.rompeu) return "";
-    const out = rodadaDaFrente(r0, { rnd: Math.random });
+    const out = rodadaDaFrente(r0, { rnd: sorteDoTurno("frente") });
     raidRef.current = out.raid; setRaid(out.raid);
     /* a hoste do painel acompanha a frente: quem caiu aparece caído na
        ficha do grupo, e não continua de pé em dois lugares diferentes */
@@ -22306,9 +22344,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const dispararArmadilha = (sala, { pos = "", depois = "", vantagem = false } = {}) => {
     const eu = personagemRef.current || personagem;
     /* dano por código: o herói (ou um companheiro, 30%) sofre a armadilha */
-    const emComp = (eu.grupo || []).length > 0 && Math.random() < 0.3;
+    const emComp = (eu.grupo || []).length > 0 && sorteDoTurno("armadilha")() < 0.3;
     if (emComp) {
-      const alvo = eu.grupo[Math.floor(Math.random() * eu.grupo.length)];
+      const alvo = eu.grupo[Math.floor(sorteDoTurno("armadilha-alvo")() * eu.grupo.length)];
       /* v9.233: o abrigo do companheiro vale na masmorra tambem. A conta sai
          antes do atualizador (quem fala na tela nao mora dentro de um
          `setPersonagem`), e o numero que a linha e o envelope dizem passa a
@@ -22554,8 +22592,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       let item = null;
       let p2 = { ...personagem, moedas: (personagem.moedas || 0) + sala.moedas };
       if (sala.caiItem) {
-        const rar = Math.random() < 0.5 ? "incomum" : Math.random() < 0.85 ? "raro" : "epico";
-        item = gerarLoot(rar, { nivel: personagem.nivel || 1, lex: (mundoAtual() || {}).lexico });
+        const sRar = sorteDoTurno("raridade"); const rar = sRar() < 0.5 ? "incomum" : sRar() < 0.85 ? "raro" : "epico";
+        item = gerarLoot(rar, { nivel: personagem.nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
         p2 = { ...p2, equipamento: [...(p2.equipamento || []), item] };
       }
       setPersonagem(p2);
@@ -22716,7 +22754,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const sala = mm.salas.find((x) => x.id === mm.atual);
     if (!sala) return;
     const mod = atributoEfetivo(personagem, "percepcao");
-    const rolo = d(20);
+    const rolo = d(20, sorteDoTurno("d20"));
     const total = rolo + mod;
     const r = resultadoBusca(sala, total);
     avancarMinutos(custoBusca());
@@ -23025,7 +23063,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: FRACASSO] A ${grupo.bando} não conseguiu cumprir meu decreto sobre "${d.alvo}" e voltou viva, envergonhada (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre o retorno deles; o alvo provavelmente sabe que foi visado.`;
         } else {
           const baixas = r.desfecho === "sucesso_baixas";
-          const mortos = baixas ? grupo.membros.filter(() => Math.random() < 0.4).map((m) => m.nome) : [];
+          const sBx = sorteDoTurno("baixas"); const mortos = baixas ? grupo.membros.filter(() => sBx() < 0.4).map((m) => m.nome) : [];
           msgs.push(`${baixas ? "⚑" : "✅"} A ${grupo.bando} cumpriu seu decreto sobre "${d.alvo}"${mortos.length ? ` — mas ${mortos.join(", ")} não voltaram` : ""}! ◉ ${d.recompensa} pagas.`);
           bumpCont("decretosCumpridos");
           /* v9.0: "cumprido" tem consequência no mundo. Um decreto pela CABEÇA
@@ -23063,9 +23101,9 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const tentarSurgirNemesis = () => {
     if (nemesisRef.current && nemesisRef.current.status !== "derrotada") return;
     if (famaAtual() < 20) return;
-    if (Math.random() > 0.35) return;
-    const n0 = gerarVilao({
-      nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval", undefined, Math.random, (mundoAtual() || {}).lexico),
+    if (sorteDoTurno("nemesis")() > 0.35) return;
+    const n0 = gerarVilao({ sorte: sorteDoTurno("vilao"),
+      nome: nomePessoa((mundo && mundo.genero) || "Fantasia medieval", undefined, sorteDoTurno("nome"), (mundoAtual() || {}).lexico),
       cont: contRef.current,
       /* v9.167: o retrato ficou mais rico — os arquétipos novos leem
          diplomacia, guerra e bolsa, e sem estes campos eles nunca
@@ -23281,7 +23319,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          isto ele continuaria SORTEANDO quem já levou e o passo não
          registraria nada — um passo no vazio, que é pior que repetir,
          porque some sem deixar rastro */
-    }, Math.random, nemesisRef.current.marcas || []);
+    }, sorteDoTurno("alvo-do-vilao"), nemesisRef.current.marcas || []);
     const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });
     if (!r) return;
     /* nexo (11/10): a nêmesis do fio só mostra o rosto no último ato — é lá
@@ -23528,7 +23566,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          correio era uma segunda diplomacia por sorteio: recusado na mesa,
          bastava insistir por carta até sair. */
       const potsCorreio = potenciasAqui().filter((x) => !x.doJogador);
-      const pc = processarDiaCorreio(correioRef.current, {
+      const pc = processarDiaCorreio(correioRef.current, { sorte: sorteDoTurno("correio"),
         dia: diaRef.current,
         fama: famaAtual(),
         ehLider: cidadesDominadas(mapaRef.current).length > 0 || !!(mapaRef.current.faccoes || []).some((f) => f.doJogador),
@@ -23594,7 +23632,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       tentarSurgirNemesis();
       processarNemesisDiaria();
       try { const r = promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], dia: diaRef.current - (n - 1 - i) }); elencoSaveRef.current = r.estado; } catch (e) { calou("promoverNoDia", e); } /* MM8f: o elenco age fora de cena, e o que é de longe corre como boato */ try { const diaDaVolta = diaRef.current - (n - 1 - i); const r2 = agirForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [] }); elencoSaveRef.current = r2.estado; const boatoDoMundo = boatoDoForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); if (boatoDoMundo) { pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boatoDoMundo}…` }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RUMOR] Um boato chegou aos meus ouvidos: "${boatoDoMundo}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado).`; } } catch (e) { calou("agirForaDeCena", e); }
-      if (Math.random() < 0.25) {
+      if (sorteDoTurno("rumor")() < 0.25) {
         const boato = rumorDoDia({ ...contRef.current, cicatrizes: (personagem.cicatrizes || []).length, quaseMorte: contRef.current.quaseMorte || 0 }, personagem.nome, patamarFama(famaAtual()), !!(nemesisRef.current && nemesisRef.current.status !== "derrotada"));
         pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boato}…` }]);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RUMOR] Um boato chegou aos meus ouvidos: "${boato}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado) — e decida se ele é só fumaça ou o rastro de algo real.`;
@@ -24176,17 +24214,17 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* EVENTOS DIVINOS (v7.4): só DEPOIS do despertar — o mundo vai
          introduzindo os deuses aos poucos. 35% por descanso longo, e às
          vezes uma divindade NOVA se revela (o panteão cresce com moderação). */
-      if (divindadeRef.current && divindadeRef.current.despertar && Math.random() < 0.35) {
+      if (divindadeRef.current && divindadeRef.current.despertar && sorteDoTurno("divino")() < 0.35) {
         const dv = { ...divindadeRef.current };
         /* 25% das vezes é uma divindade nova se revelando (panteão cap: 6) */
-        if (dv.panteao.length < 6 && Math.random() < 0.25) {
-          const nova = gerarDivindade(ctx, diaRef.current);
+        if (dv.panteao.length < 6 && sorteDoTurno("deus-novo")() < 0.25) {
+          const nova = gerarDivindade(ctx, diaRef.current, { sorte: sorteDoTurno("divindade") });
           dv.panteao = [...dv.panteao, nova];
           divindadeRef.current = dv; setDivindade(dv);
           partes.push(`[DIVINDADE SE REVELA — FATOS FIXOS DO SISTEMA] Uma entidade antes imperceptível agora se mostra ao herói desperto: ${nova.icone} ${nova.nome} ${nova.dominio} — GD ${nova.gd} (${tituloDe(nova.gd)}), ${nova.temperamento}, culto: ${nova.culto}${nova.lugar ? `, forte em ${nova.lugar}` : ""}. Ela SEMPRE existiu — só agora ele a percebe. Introduza-a na ficção com sutileza (um símbolo num templo, uma prece ouvida, um sinal). NÃO mude os fatos acima.`);
           pushMsgs([{ autor: "sistema", texto: `${nova.icone} Uma divindade se revela: ${nova.nome} ${nova.dominio} (GD ${nova.gd}) — veja Ascensão.` }]);
         } else {
-          const evd = gerarEventoDivino(ctx, diaRef.current, dv.panteao);
+          const evd = gerarEventoDivino(ctx, diaRef.current, dv.panteao, sorteDoTurno("evento-divino"));
           if (evd) {
             partes.push(`[EVENTO DIVINO — FATOS FIXOS DO SISTEMA] ${evd.icone} ${evd.texto} Gancho: ${evd.gancho}. Apresente naturalmente; o jogador pode ignorar. NÃO force resolução hoje.`);
             pushMsgs([{ autor: "sistema", texto: `${evd.icone} O céu se mexe — um evento divino em curso.` }]);
@@ -24274,8 +24312,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* SONHOS (v6.7): 25% das noites longas trazem um — presságio, memória ou
        pesadelo. Alguns deixam condição no dia seguinte. O Mestre só tece. */
     let sonhoMsg = "";
-    if (tipo === "longo" && Math.random() < 0.25) {
-      const sn = rolarSonho();
+    if (tipo === "longo" && sorteDoTurno("sonho")() < 0.25) {
+      const sn = rolarSonho(sorteDoTurno("sonho-qual"));
       if (sn.efeito === "inspirado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Inspirado", tipo: "bom", nota: "acordou com o espírito leve — um bom sonho" }] };
       if (sn.efeito === "perturbado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Perturbado", tipo: "ruim", nota: "noite mal dormida, sonhos ruins" }] };
       setPersonagem(pers);
@@ -25395,7 +25433,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const rolarClimaEstacao = (atualId) => rolarClima(atualId, { estacao: estacaoDe(diaRef.current).id });
 
   const talvezMudarClima = (chance = 0.4) => {
-    if (Math.random() >= chance) return null;
+    if (sorteDoTurno("encontro")() >= chance) return null;
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
     return c;
@@ -25446,7 +25484,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
-    const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null);
+    const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null, sorteDoTurno("encontro-qual"));
     /* a campanha que prende (item 3): o encontro de CENA ganha o tema da
        história; o perigo e o achado ficam com a tabela. `enc.tipo` conta. */
     let encV = enc;
@@ -27838,7 +27876,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         aoCriarMundo={() => setFase("mundo")} aoMontarFicha={() => setFase("personagem")}
         lendoMundo={lendoMundo} mundo={mundo} nomeCampanha={nomeCampanha}
         aoSair={() => { largarASala(); setFase("menu"); }} /></div>}
-      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); nomeCampanhaRef.current = nome; if (convertidoRef.current) { const c = convertidoRef.current; convertidoRef.current = null; noiteRef.current = null; torneioRef.current = null; lerOMundo(m); iniciar(c); return; } setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
+      {fase === "mundo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaMundo concluir={(m, nome) => { setMundo(m); mundoRef.current = m; setNomeCampanha(nome); nomeCampanhaRef.current = nome; try { semearACasa(`${nome || "aventura"}|${(m && m.genero) || ""}`); } catch (e) { calou("semear a casa (o mundo nasce)", e); } if (convertidoRef.current) { const c = convertidoRef.current; convertidoRef.current = null; noiteRef.current = null; torneioRef.current = null; lerOMundo(m); iniciar(c); return; } setFase(salaRef.current ? "sala" : "personagem"); lerOMundo(m); if (salaRef.current) setTimeout(() => publicarSala(), 60); }} /></div>}
       {fase === "personagem" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll"><TelaPersonagem mundo={mundo} concluir={(pers) => { if (!salaRef.current) return iniciar(pers); const nova = sentarMinhaFicha(pers); if (souAnfitriaoRef.current) { if (todosProntos(nova)) iniciar(pers); else { setFase("sala"); } } }} lendoMundo={lendoMundo} mundoLido={!!(mundo && mundo.lexico && mundo.lexico.gerado)} /></div>}
 
       {fase === "jogo" && personagem && (
@@ -28974,7 +29012,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
 
-      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} modificador={modPend} aoConcluir={concluirRolagem} emCombate={!!combate} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
+      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} semente={chaveDaRolagem(rolagem)} modificador={modPend} aoConcluir={concluirRolagem} emCombate={!!combate} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} personagem={personagem} local={cenaDoPalco()} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}

@@ -476,7 +476,9 @@ sec("13. a fiação no App.jsx");
     t("o recuo chama com a posição já movida (`gradeAtual`/`lugarHeroi`)",
       /golpeDeOportunidadeDoHeroi\(persBase, alvo, aliadosOp, gradeAtual, lugarHeroi\)/.test(APP));
     /* a fórmula em si só existe UMA vez no arquivo — dentro do auxiliar */
-    const formula = (APP.match(/Math\.round\(danoDe\(persBase, false\) \/ 2\), vfOp \? \{ furtivo: vfOp\.soma \} : null\)/g) || []).length;
+    /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o
+     texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
+    const formula = (APP.match(/Math\.round\(danoDe\(persBase, false(?:, sorteDoTurno\("dano"\))?\) \/ 2\), vfOp \? \{ furtivo: vfOp\.soma \} : null\)/g) || []).length;
     t("a fórmula do dano de oportunidade não foi duplicada", formula === 1);
   }
 
@@ -521,7 +523,9 @@ sec("13. a fiação no App.jsx");
        `aplicarGolpeDoJogador` — nem a fuga nem o recuo os chamam. Golpe de
        oportunidade não é o golpe do jogador; poupar é uma escolha da AÇÃO
        dele, e nem `querFugir` nem o recuo do atirador são isso. */
-    const posQuerFugir = APP.indexOf("for (const e of vivos.filter((x) => querFugir(x))) {");
+    /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o
+     texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
+    const posQuerFugir = APP.indexOf("for (const e of vivos.filter((x) => querFugir(x, { sorte: sorteDoTurno(\"fuga-do-inimigo\") }))) {");
     const posFimRecuo = APP.indexOf("notaRecuo = recuos.length");
     const fugaAoRecuo = APP.slice(posQuerFugir, posFimRecuo > -1 ? posFimRecuo : posQuerFugir + 4000);
     t("nem a fuga nem o recuo perguntam `setGolpeFinalPendente`", posQuerFugir > -1 && !/setGolpeFinalPendente/.test(fugaAoRecuo));

@@ -551,7 +551,7 @@ sec("9. a fiação no App.jsx");
      os bichos da ficha do lugar da região (teste-ficha-e-planta.mjs prova o
      resto). A asserção ficou MAIS estrita, não mais frouxa: as salas que o
      mundo anuncia continuam exigidas letra a letra, e a ficha junto. */
-  t("entrarMasmorra gera a planta com as salas que o mundo anuncia (e quem a ficha diz)", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null, quem: quemDaFicha \}\);/.test(ent));
+  t("entrarMasmorra gera a planta com as salas que o mundo anuncia (e quem a ficha diz)", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null, quem: quemDaFicha(?:, sorte: sorteDoTurno\("masmorra"\))? \}\);/.test(ent)); /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
   const pt = corpoDe("const pautaDoTurno = (acaoDoTurno = \"\") => {");
   t("pautaDoTurno põe a planta na seção masmorra",
     /porNaPauta\(p, "masmorra", masmorraParaPauta\(masmorraRef\.current, \{ luta: !!combateRef\.current \}\)\)/.test(pt));
