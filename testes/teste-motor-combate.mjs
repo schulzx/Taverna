@@ -17,7 +17,8 @@
    ============================================================ */
 import fs from "node:fs";
 import { casosDoCombate, sorteDoCaso, N_CASOS } from "./combate-casos.mjs";
-import { despertarUnica, aFamaDoFeito, concluirAMasmorra } from "../src/motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo } from "../src/motor/combate-do-turno.js";
+import { mundoDaLei } from "./combate-casos.mjs";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 
 let ok = 0, mal = 0;
@@ -105,6 +106,36 @@ sec("3 · o chefe caiu (concluirMasmorraDoChefe → concluirAMasmorra)");
   const sala = casos.filter((k, i) => { if (!k.masmorra || !Array.isArray(k.masmorra.salas)) return false; const f = foto(k, null, { ...k.masmorra, atual: 1 }); return !igual([f.ret, f.msgs], [fotos[i].ret, fotos[i].msgs]); }).length;
   t(`morde: na sala de entrada em vez da do chefe, ${sala} fotos divergem (as que concluíam)`, sala === concluiu);
   t("no App, o órgão é o invólucro da peça", /const concluirMasmorraDoChefe = \(p2, msgs\) => \{\s*const r = concluirAMasmorra\(p2, \{ masmorra: masmorraRef\.current, mapa: mapaRef\.current, base: baseMundoRef\.current \}, \{ lexico: \(mundoAtual\(\) \|\| \{\}\)\.lexico, sorteDoTurno \}\);/.test(C) && /salaEmCursoRef\.current = null;\s*talvezFecharSessao\("chefe"\);\s*return \{ pers: r\.pers, concluiu: true \};/.test(C));
+}
+
+sec("4 · a morte de um alvo (registrarMorteDeAlvo → aMorteDoAlvo)");
+{
+  const fotos = D.orgaos.registrarMorteDeAlvo;
+  /* o invólucro do App, à letra: a lei, o registo, e a nêmesis pela porta dela */
+  const foto = (k, alvo = k.alvoM, aproximado = k.aproximadoM) => {
+    const st = { lei: copia(k.leiM), npcs: copia(k.npcsM), encerradas: [], calados: [] };
+    const r = aMorteDoAlvo({ npcs: st.npcs, nemesis: copia(k.nemesisM), lei: st.lei, dia: mundoDaLei(k).dia, ctxDaLei: () => mundoDaLei(k) }, alvo, k.causaM, { aproximado });
+    for (const ef of r.efeitos) {
+      if (ef.tipo === "lei") st.lei = ef.lei;
+      else if (ef.tipo === "calou") st.calados.push(ef.onde);
+      else if (ef.tipo === "npcs") st.npcs = ef.npcs;
+    }
+    if (r.ehNemesis) st.encerradas.push(k.causaM);
+    return { ret: r.morreu, lei: st.lei, npcs: st.npcs, encerradas: st.encerradas, calados: st.calados };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const morreu = fotos.filter((f) => f.ret).length, nemesis = fotos.filter((f) => f.encerradas.length).length;
+  const agravou = fotos.filter((f, i) => JSON.stringify(f.lei).includes('"matar"') && !JSON.stringify(casos[i].leiM).includes('"matar"')).length;
+  console.log(`      morreu ${morreu} · a nêmesis encerrada ${nemesis} · o crime agravado para matar ${agravou}`);
+  t("percorre os ramos (morreu e não; a nêmesis; o crime que vira matar)", morreu > 50 && morreu < N_CASOS - 50 && nemesis > 10 && agravou > 5);
+  /* morde: o nome parecido só vale quando o texto veio do jogador */
+  const semAprox = casos.filter((k, i) => k.aproximadoM && !igual(foto(k, k.alvoM, false), fotos[i])).length;
+  t(`morde: sem o nome parecido, ${semAprox} fotos divergem`, semAprox > 5);
+  const outroAlvo = casos.filter((k, i) => !igual(foto(k, "Ninguém Daqui"), fotos[i])).length;
+  t(`morde: com outro alvo, ${outroAlvo} fotos divergem (as que matavam alguém ou agravavam)`, outroAlvo >= morreu);
+  t("o nome vazio não mata nem agrava", aMorteDoAlvo({ npcs: { Corvo: {} } }, "   ", "").efeitos.length === 0 && aMorteDoAlvo(null, null).morreu === false);
+  t("no App, o órgão é o invólucro da peça", /const registrarMorteDeAlvo = \(nome, causa, \{ aproximado = false \} = \{\}\) => \{\s*const r = aMorteDoAlvo\(\{/.test(C) && /if \(r\.ehNemesis\) encerrarNemesis\(causa\);\s*return r\.morreu;/.test(C));
 }
 
 console.log(`\nmotor · os órgãos do combate: ${ok} passaram, ${mal} falharam`);

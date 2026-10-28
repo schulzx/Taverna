@@ -240,7 +240,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { despertarUnica, aFamaDoFeito, concluirAMasmorra } from "./motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -22291,30 +22291,25 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   /* Alguém morreu por decisão do sistema (decreto cumprido, milagre, ficção
      confirmada): registra no elenco e propaga para quem depende disso. */
+  /* T1-A, 5.ª fatia: a regra (a lei que agrava, o nome exato ou parecido, a
+     nêmesis reconhecida) mora em `aMorteDoAlvo` (src/motor/combate-do-turno.js),
+     pura e à letra, com os porquês; daqui sai a fiação, na ordem de antes — a
+     lei (ou o calou), o registo —, e a porta única da morte da nêmesis, que é
+     órgão do App. O mundo da lei vai como função, e monta-se dentro da rede,
+     como se montava. Provado byte a byte contra o órgão de antes
+     (teste-motor-combate). */
   const registrarMorteDeAlvo = (nome, causa, { aproximado = false } = {}) => {
-    const alvo = String(nome || "").trim();
-    if (!alvo) return false;
-    /* MM10: se a vítima de um crime conhecido cai aqui, o crime vira matar
-       — mais caro, mais longo, e a rua já sabia mesmo sem ver o corpo. */
-    try { leiRef.current = agravarParaMorte(leiRef.current, alvo, { semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo(), cidade: cidadeDoMapa(cidadeAtualRef.current), dia: diaRef.current }); } catch (e) { calou("agravarParaMorte", e); }
-    /* Nome exato sempre; parecido SÓ quando o texto veio do jogador (o alvo de
-       um decreto é digitado à mão: "a cabeça de Sarna, a Víbora"). Em combate
-       exigimos exato — senão "Bandido do Corvo" mataria a NPC "Corvo". */
-    const chave = Object.keys(npcsRef.current || {}).find((k) => k.toLowerCase() === alvo.toLowerCase())
-      || (aproximado ? Object.keys(npcsRef.current || {}).find((k) => k.length >= 5 && new RegExp(`(^|\\W)${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\W|$)`, "i").test(alvo)) : null);
-    if (chave) {
-      npcsRef.current = { ...npcsRef.current, [chave]: { ...npcsRef.current[chave], status: "morto", notas: `${npcsRef.current[chave].notas || ""} Morreu no dia ${diaRef.current}${causa ? ` — ${causa}` : ""}.`.trim() } };
-      setNpcs(npcsRef.current);
+    const r = aMorteDoAlvo({
+      npcs: npcsRef.current, nemesis: nemesisRef.current, lei: leiRef.current, dia: diaRef.current,
+      ctxDaLei: () => ({ semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo(), cidade: cidadeDoMapa(cidadeAtualRef.current), dia: diaRef.current }),
+    }, nome, causa, { aproximado });
+    for (const ef of r.efeitos) {
+      if (ef.tipo === "lei") leiRef.current = ef.lei;
+      else if (ef.tipo === "calou") calou(ef.onde, ef.erro);
+      else if (ef.tipo === "npcs") { npcsRef.current = ef.npcs; setNpcs(ef.npcs); }
     }
-    const n = nemesisRef.current;
-    const nomeNem = (n && n.nome ? n.nome : "").toLowerCase();
-    const ehNemesis = !!nomeNem && n.status !== "derrotada" && (
-      nomeNem === alvo.toLowerCase() ||
-      (chave && nomeNem === chave.toLowerCase()) ||
-      new RegExp(`(^|\\W)${nomeNem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\W|$)`, "i").test(alvo)
-    );
-    if (ehNemesis) encerrarNemesis(causa);
-    return !!chave || ehNemesis;
+    if (r.ehNemesis) encerrarNemesis(causa);
+    return r.morreu;
   };
 
   /* ---------------- A MORTE DA NÊMESIS TEM UMA PORTA SÓ (v9.0) ----------------

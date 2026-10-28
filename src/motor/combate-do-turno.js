@@ -27,6 +27,7 @@ import { recompensaChefe } from "../masmorras.js";
 import { essenciaDoChefe, RARIDADE_ROTULO } from "../loot.js";
 import { garantirSuprimentos } from "../ermos.js";
 import { concluirLugar } from "../mundo-base.js";
+import { agravarParaMorte } from "../crime.js";
 
 /* ---------------- O PODER ÚNICO (v7.4.4) ----------------
    Mesma lógica do loot: a árvore da classe é tabela fixa, mas derrubar
@@ -114,4 +115,47 @@ export function concluirAMasmorra(pers, estado, ctx) {
     try { efeitos.push({ tipo: "base", base: concluirLugar(e0.base, mm.nome) }); } catch (e) { efeitos.push({ tipo: "calou", onde: "a masmorra concluída na base", erro: e }); }
   }
   return { pers: p2, concluiu: true, msgs, efeitos };
+}
+
+/* ---------------- A MORTE DE UM ALVO (v9.0) ----------------
+   Alguém morreu por decisão do sistema (o combate, um decreto cumprido):
+   registra-se no elenco e propaga-se a quem depende disso.
+
+     aMorteDoAlvo({ npcs, nemesis, lei, dia, ctxDaLei }, nome, causa, { aproximado })
+       → { morreu, ehNemesis, efeitos }
+
+   MM10: se a vítima de um crime conhecido cai aqui, o crime vira matar —
+   mais caro, mais longo, e a rua já sabia mesmo sem ver o corpo.
+   `ctxDaLei` é uma função (o mundo de agora: a semente, o mapa, a cidade…)
+   e é chamada DENTRO da rede, como era: se montar o mundo estoura, cala a
+   lei e segue a morte.
+
+   Nome exato sempre; parecido SÓ quando o texto veio do jogador (o alvo de
+   um decreto é digitado à mão: "a cabeça de Sarna, a Víbora"). Em combate
+   exige-se exato — senão "Bandido do Corvo" mataria a NPC "Corvo".
+
+   Os efeitos, na ordem: `lei` (ou `calou`), `npcs` (quem morreu, com a
+   nota do dia). Se era a nêmesis, `ehNemesis` — e encerrá-la é o órgão do
+   App (encerrarNemesis), a porta única da morte dela. */
+export function aMorteDoAlvo(estado, nome, causa, opcoes) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  const { aproximado = false } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const efeitos = [];
+  const alvo = String(nome || "").trim();
+  if (!alvo) return { morreu: false, ehNemesis: false, efeitos };
+  try { efeitos.push({ tipo: "lei", lei: agravarParaMorte(e0.lei, alvo, typeof e0.ctxDaLei === "function" ? e0.ctxDaLei() : e0.ctxDaLei) }); } catch (e) { efeitos.push({ tipo: "calou", onde: "agravarParaMorte", erro: e }); }
+  const npcs = e0.npcs;
+  const chave = Object.keys(npcs || {}).find((k) => k.toLowerCase() === alvo.toLowerCase())
+    || (aproximado ? Object.keys(npcs || {}).find((k) => k.length >= 5 && new RegExp(`(^|\\W)${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\W|$)`, "i").test(alvo)) : null);
+  if (chave) {
+    efeitos.push({ tipo: "npcs", npcs: { ...npcs, [chave]: { ...npcs[chave], status: "morto", notas: `${npcs[chave].notas || ""} Morreu no dia ${e0.dia}${causa ? ` — ${causa}` : ""}.`.trim() } } });
+  }
+  const n = e0.nemesis;
+  const nomeNem = (n && n.nome ? n.nome : "").toLowerCase();
+  const ehNemesis = !!nomeNem && n.status !== "derrotada" && (
+    nomeNem === alvo.toLowerCase() ||
+    (chave && nomeNem === chave.toLowerCase()) ||
+    new RegExp(`(^|\\W)${nomeNem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\W|$)`, "i").test(alvo)
+  );
+  return { morreu: !!chave || ehNemesis, ehNemesis, efeitos };
 }

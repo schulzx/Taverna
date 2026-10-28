@@ -252,7 +252,7 @@ export const ACOES_DO_JOGADOR = [
   /* ---------------- FORA DO PAINEL ----------------
      Os cliques que chegam ao motor sem passar pela caixa de texto. */
   { id: "grid_mover", rotulo: "Mover no grid", fonte: "grid", combate: true,
-    onde: "src/App.jsx:23719 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:16263)",
+    onde: "src/App.jsx:23714 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:16263)",
     texto: null,
     cliqueChega: "motor", textoFora: null, textoLuta: null,
     alcanca: "muda x,y do herói (src/App.jsx:16696) e gasta o movimento da economia" },
@@ -1822,6 +1822,7 @@ export const FUNIL_DO_COMBATE = [
 /* (T1-A 5.ª fatia, 3a, o oficial, 28/10) o poder único sai para motor/combate-do-turno.js: o import (+1, ~243; o de unicas.js virou comentário, 0) e o invólucro talvezDespertarUnica (+3 de comentário e -3 de corpo, ~14547). Re-medido pelo diff de App.jsx contra o HEAD (7338870), 120 números, 120 andaram, 0 em linha mudada. Conferido pelo varredor. */
 /* (T1-A 5.ª fatia, 3b, o oficial, 28/10) a fama que cresce sai para motor/combate-do-turno.js: o invólucro checarFama (+4 de comentário e -1 de corpo, ~22249). Re-medido pelo diff de App.jsx contra o HEAD (4a99f3a), 120 números, 1 andaram, 0 em linha mudada. Conferido pelo varredor. */
 /* (T1-A 5.ª fatia, 3c, o oficial, 28/10) o chefe caiu sai para motor/combate-do-turno.js: três nomes a menos nos imports do topo (0 linhas) e o invólucro concluirMasmorraDoChefe (+6 de comentário e -6 de corpo, ~16368). Re-medido pelo diff de App.jsx contra o HEAD (11e9851), 120 números, 48 andaram, 0 em linha mudada. Conferido pelo varredor. */
+/* (T1-A 5.ª fatia, 3d, o oficial, 28/10) a morte de um alvo sai para motor/combate-do-turno.js: o invólucro registrarMorteDeAlvo (+7 de comentário e de corpo, ~22300). Re-medido pelo diff de App.jsx contra o HEAD (16f7759), 120 números, 1 andaram, 0 em linha mudada. Conferido pelo varredor. */
 export const RECUSAS_DO_COMBATE = [
   /* ---- alcance: a família que a Fase X inteira mede ---- */
   { familia: "alcance", onde: "src/App.jsx:13923", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,

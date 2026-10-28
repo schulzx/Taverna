@@ -10,6 +10,7 @@ import {
   procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco,
 } from "../src/crime.js";
 import { lerAgressao } from "../src/agressao.js";
+import { aMorteDoAlvo } from "../src/motor/combate-do-turno.js";
 import { criarNPC, firmarLaco } from "../src/npcs.js";
 import { elencoDoMundo, garantirElencoDoSave, foraDeCenaParaPauta } from "../src/elenco.js";
 import { fichaDaCidade, ESCALA_DO_PORTE } from "../src/cidade-por-dentro.js";
@@ -239,7 +240,19 @@ sec("8. lixo");
   t("(c) o crime do turno vai à pauta uma vez, e some", pauta.includes("crimeDoTurnoRef.current.acabou || []") && pauta.includes("crimeDoTurnoRef.current = null;"));
   t("(c) o veto do procurado vai à pauta todo turno em que durar", pauta.includes('procuradoParaPauta(leiRef.current, { cidade: cidadeAtualRef.current, dia: diaRef.current }).naoPode'));
 
-  t("(d) o golpe declarado ao Mestre agrava para morte", corpo("const registrarMorteDeAlvo = (nome, causa,", 800).includes("agravarParaMorte(leiRef.current, alvo,"));
+  /* MOVIDA (T1-A, 5.ª fatia, 28/10): a regra de registrarMorteDeAlvo foi para
+     src/motor/combate-do-turno.js (aMorteDoAlvo), e o App aplica o efeito
+     `lei`. A intenção é a mesma — a vítima de um crime conhecido que cai vira
+     matar —, provada JOGANDO a peça (o motor não se lê como texto) e lendo só
+     o invólucro no App. */
+  {
+    const leiFerir = { versao: 1, porCidade: { "Vila do Sul": { vitima: "Corvo", gravidade: "ferir", desde: 1, ate: 99, recompensa: 20, testemunhas: [] } } };
+    const vila = { nome: "Vila do Sul", porte: "vila", tipo: "cidade", bioma: "colina" };
+    const r = aMorteDoAlvo({ npcs: { Corvo: {} }, lei: leiFerir, dia: 3, ctxDaLei: () => ({ semente: "s", mapa: { cidades: [vila] }, cidade: vila, dia: 3 }) }, "Corvo", "morto por mim em combate");
+    const lei = (r.efeitos.find((e) => e.tipo === "lei") || {}).lei;
+    t("(d) o golpe declarado ao Mestre agrava para morte", !!lei && lei.porCidade["Vila do Sul"].gravidade === "matar"
+      && /if \(ef\.tipo === "lei"\) leiRef\.current = ef\.lei;/.test(corpo("const registrarMorteDeAlvo = (nome, causa,", 1400)));
+  }
   t("(d) o golpe mecânico do fecho da luta TAMBÉM agrava (não passa por registrarMorteDeAlvo)", app.includes("agravarParaMorte no fecho da luta"));
 
   t("(e) o preço do mercado sobe para quem é procurado", app.includes("precoDeCompraPara(personagem, it.preco) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current)"));

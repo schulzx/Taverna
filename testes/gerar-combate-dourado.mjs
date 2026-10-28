@@ -17,7 +17,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { casosDoCombate, sorteDoCaso } from "./combate-casos.mjs";
+import { casosDoCombate, sorteDoCaso, mundoDaLei } from "./combate-casos.mjs";
+import { agravarParaMorte } from "../src/crime.js";
 import { gerarHabilidadeUnica, chanceUnica } from "../src/unicas.js";
 import { patamarFama } from "../src/fama.js";
 import { recompensaChefe } from "../src/masmorras.js";
@@ -80,6 +81,24 @@ const ORGAOS = {
       return { ret, msgs, masmorra: S.masmorraRef.current, base: S.baseMundoRef.current, salaEmCurso: S.salaEmCursoRef.current, contadores, sessao, calados };
     },
     nome: "concluirMasmorraDoChefe",
+  },
+  /* registrarMorteDeAlvo: lê a lei, o registo, a nêmesis e o mundo; escreve
+     na lei, no registo, e encerra a nêmesis pelo órgão dela (o dublê conta) */
+  registrarMorteDeAlvo: {
+    texto: () => corte("  const registrarMorteDeAlvo = (nome, causa, { aproximado = false } = {}) => {", "  /* ---------------- A MORTE DA NÊMESIS TEM UMA PORTA SÓ"),
+    correr: (fn, k) => {
+      const encerradas = [], calados = [];
+      const w = mundoDaLei(k);
+      const S = {
+        agravarParaMorte, leiRef: ref(copia(k.leiM)), npcsRef: ref(copia(k.npcsM)), nemesisRef: ref(copia(k.nemesisM)), diaRef: ref(w.dia),
+        mapaRef: ref(copia(k.mapaM)), cidadeAtualRef: ref(k.cidadeM), sementeMundo: () => w.semente, mundoAtual: () => ({ lexico: null }),
+        generoMundo: () => w.genero, moldeMundo: () => w.molde, cidadeDoMapa: (nome) => (k.mapaM.cidades || []).find((c) => c.nome === nome) || null,
+        setNpcs: () => {}, encerrarNemesis: (c) => encerradas.push(c), calou: (onde) => calados.push(onde),
+      };
+      const ret = fn(S)(k.alvoM, k.causaM, { aproximado: k.aproximadoM });
+      return { ret, lei: S.leiRef.current, npcs: S.npcsRef.current, encerradas, calados };
+    },
+    nome: "registrarMorteDeAlvo",
   },
 };
 

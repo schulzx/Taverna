@@ -23,6 +23,8 @@ const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
 const NOMES = ["Ogro do Vau", "Vespa de Cinza", "Cavaleiro Sem Rosto", "Bruxa da Turfa", "Lobo Grande", "Sentinela de Bronze", "Dragão Velho"];
 const HABS = [[], [{ nome: "Golpe Duplo" }], [{ nome: "Fúria" }, { nome: "Golpe Duplo" }], [{ nome: "Lâmina de Vento" }]];
 
+const ALVOS = (fins) => [(fins[0] || {}).nome, "Corvo", "Bandido do Corvo", "a cabeça de Sarna, a Víbora", "  ", "corvo", "Bruna Ferro", "Cavaleiro Sem Rosto"];
+
 function masmorraDoCaso(i) {
   const tipo = i % 6;
   if (tipo === 0) return null;
@@ -65,6 +67,26 @@ export function casoDoCombate(i) {
     equipamento: i % 4 ? [{ nome: "Espada Curta", raridade: "comum" }] : [],
     suprimentos: i % 3 === 1 ? { racoes: 2, tochas: 1, kit: true } : null,
     essencia: i % 5,
+    /* a morte de um alvo (registrarMorteDeAlvo): o registo de gente, a
+       nêmesis viva, derrotada ou ausente, a lei com um crime na cidade (a
+       vítima que pode cair), quem morre, por quê, e se o nome vale parecido */
+    npcsM: i % 4 === 3 ? {} : { Corvo: { notas: "ferreiro da praça" }, Sarna: { status: "vivo" }, "Bruna Ferro": {}, ...(i % 2 ? { "Ogro do Vau": { notas: "" } } : {}) },
+    nemesisM: [null, { nome: "Sarna", status: "ativa" }, { nome: "Sarna", status: "derrotada" }, { nome: "Cavaleiro Sem Rosto", status: "ativa" }][i % 4],
+    leiM: i % 2 === 0 ? { versao: 1, porCidade: { "Vila do Sul": { vitima: i % 4 === 0 ? String(ALVOS(inimigosFinais)[i % 8] || "").trim() : "Corvo", gravidade: i % 12 === 0 ? "matar" : "ferir", desde: 1, ate: 99, recompensa: 20, testemunhas: [] } } } : null,
+    alvoM: ALVOS(inimigosFinais)[i % 8],
+    causaM: i % 2 ? "morto por mim em combate" : "",
+    aproximadoM: i % 5 === 0 || i % 8 === 3,
+    cidadeM: i % 6 === 5 ? "Porto Fundo" : "Vila do Sul",
+    mapaM: { cidades: [{ nome: "Vila do Sul", porte: "vila", tipo: "cidade", bioma: "colina", regiao: "Chãs" }] },
+  };
+}
+
+/* o mundo que a lei lê quando a vítima cai (o App monta-o com sementeMundo,
+   mapaRef, o léxico, o gênero, o molde, cidadeDoMapa e o dia) */
+export function mundoDaLei(caso) {
+  return {
+    semente: caso.semente, mapa: caso.mapaM, lex: null, genero: "Fantasia medieval", molde: null,
+    cidade: (caso.mapaM.cidades || []).find((c) => c.nome === caso.cidadeM) || null, dia: 1 + (caso.i % 9),
   };
 }
 
