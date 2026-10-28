@@ -15,7 +15,7 @@
      3. o validador recusa o arquivo torto com o caminho do campo, e deixa
         passar o campo que não conhece (o arquivo de amanhã abre hoje);
      4. as três sessões de prova em disco (testes/sessao-s8.json, -s9,
-        -s10, escritas por `jogar-em-node.mjs --gravar`) reproduzem turno a
+        -s10, escritas por `gravar-sessoes-de-prova.mjs`) reproduzem turno a
         turno, e cada divergência é da parte do turno que ainda mora no App;
      5. determinismo: o mesmo arquivo dá o mesmo replay;
      6. a divergência plantada é apanhada no turno certo — na resposta do
@@ -29,7 +29,8 @@
 
    Os arquivos em disco são o dourado do replay: se o motor mudar o que faz
    com estas respostas, a secção 4 fica vermelha — e a troca, se for
-   querida, regera-se com `node jogar-em-node.mjs --gravar`, declarada. */
+   querida, regera-se com `node gravar-sessoes-de-prova.mjs --escrever`,
+   declarada. */
 import fs from "node:fs";
 
 let ok = 0, mal = 0;
@@ -44,7 +45,7 @@ const copia = (x) => JSON.parse(J(x));
 
 const {
   FORMATO_DA_SESSAO, CAMPOS_DA_SESSAO, PASSOS_DO_REPLAY, DONO_DO_CAMPO, FORA_DA_REGUA, AINDA_DO_APP,
-  abrirASessao, linhaDaSessao, gravarOTurno, estadoNoTurno, validarASessao, reproduzirASessao,
+  abrirASessao, linhaDaSessao, gravarOTurno, estadoNoTurno, validarASessao, reproduzirASessao, correrOTurno,
 } = await import("../src/sessao.js");
 const { estadoDoSave, saveDoEstado, camposDoGrupo } = await import("../src/estado.js");
 
@@ -106,7 +107,12 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
     }
   }
   t("cada campo obrigatório da tabela, tirado, é recusado com o caminho dele", faltas.length === 0, faltas.join(", "));
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o sítio pela frase", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+  /* MOVIDA (28/10, T3-B, o replay num caminho só): entrou, entre o sítio e
+     o Mestre, a porta do passo que ainda é do App (viajar, moverParaLocal)
+     — o replay não o corre; o gravador das sessões de prova passa por ela o
+     oráculo. A intenção fica: os passos do App, na ordem dele. */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+  t("e a porta do App diz que é do App", /^App /.test(PASSOS_DO_REPLAY[1].de));
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);
   /* MOVIDA (28/10, T3-B): o campo sem dono deixou de ser «é do App» — o que
      é do App está agora em AINDA_DO_APP, com o órgão; o que não está em
@@ -192,7 +198,7 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
   t(`a 8.ª: ${R8.reproduzidos} de 70 (a medida de 28/10: 66)`, R8.turnos.length === 70 && R8.reproduzidos >= 66);
   t(`a 9.ª: ${R9.reproduzidos} de 47 (a medida de 28/10: 45)`, R9.turnos.length === 47 && R9.reproduzidos >= 45);
   /* MOVIDA (28/10, T3-B): a divergência destas três é a do oráculo, que o
-     jogar-em-node põe no estado no lugar de um órgão do App — e a linha
+     gravador das sessões de prova põe no estado no lugar de um órgão do App — e a linha
      agora o diz (`app`). Deixou de estar em `diferencas` (que são só as do
      motor) e passou à dívida; a intenção fica: na 10.ª só onde o herói
      está, na 8.ª e na 9.ª só a gente do registo, e o motor sem defeito. */
@@ -218,6 +224,27 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
   /* encadeado: a corrida inteira a partir do save inicial */
   const E10 = reproduzirASessao(S10, { encadeado: true });
   t(`encadeada, a 10.ª corre até a primeira divergência do turno a turno (M${E10.primeira}) igual`, E10.primeira === R10.primeira && E10.turnos.slice(0, E10.primeira - 1).every((x) => x.igual));
+}
+
+sec("4b. UM TURNO, CORRIDO — o passo que o replay e o gravador dividem");
+{
+  /* correrOTurno é cada linha do replay, e é com ele que o gravador das
+     sessões de prova escreve os arquivos: um caminho só */
+  const L = S10.turnos[3], antes = estadoNoTurno(S10, 3);
+  const um = correrOTurno(antes, L, { semente: S10.semente, narracoes: [] });
+  t("a linha 4 da 10.ª, corrida sozinha, dá o estado gravado dela (o sítio pela frase: a Cabra Trêmula)", J(um.estado.lugar) === J(estadoNoTurno(S10, 4).lugar) && um.estado.lugar.nome === "Cabra Trêmula" && !um.calou.length);
+  t("e o juízo do Cronista é o que a linha guarda", J(um.juizo) === J(L.cronista.juizo));
+  /* a porta do App: o replay nunca a passa; quem a passa muda o turno */
+  let viu = null;
+  const comPorta = correrOTurno(antes, L, { semente: S10.semente, doApp: { antesDoMestre: (E) => { viu = E.lugar && E.lugar.nome; return { ...E, cidadeAtual: "Nova Profundo" }; } } });
+  t("a porta do passo antes do Mestre recebe o estado depois do sítio pela frase, e o que ela devolve segue o turno", viu === "Cabra Trêmula" && comPorta.estado.cidadeAtual === "Nova Profundo");
+  const porta = correrOTurno(antes, L, { semente: S10.semente, doApp: { antesDoMestre: () => { throw new Error("a porta caiu"); } } });
+  t("e a porta que estoura não leva o turno: fica em calou, com o nome do passo", porta.calou.some((c) => c.passo === "o passo antes do Mestre" && /a porta caiu/.test(c.erro)) && J(porta.estado.lugar) === J(um.estado.lugar));
+  let estourou = false;
+  try { for (const x of [null, undefined, 3, {}]) { correrOTurno(x, x, x); correrOTurno({}, { sorte: null, narrador: 7 }, { doApp: null }); } } catch { estourou = true; }
+  t("lixo no turno corrido não estoura", !estourou);
+  const congela = (x) => { if (x && typeof x === "object") { Object.values(x).forEach(congela); Object.freeze(x); } return x; };
+  t("e não mexe no estado nem na linha recebidos (correm congelados)", () => { correrOTurno(congela(copia(antes)), congela(copia(L)), { semente: S10.semente }); return true; });
 }
 
 sec("5. DETERMINISMO — o mesmo arquivo dá o mesmo replay");

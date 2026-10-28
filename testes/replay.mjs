@@ -21,7 +21,8 @@
    arquivo não é válido (ou não abre).
 
    Os arquivos das sessões de prova (testes/sessao-s8.json, -s9, -s10) são
-   escritos por `node testes/jogar-em-node.mjs --gravar`. */
+   escritos por `node testes/gravar-sessoes-de-prova.mjs --escrever`, a
+   partir dos registos; `testes/sessao-navegador.json` foi gravado pelo jogo. */
 import fs from "node:fs";
 import { reproduzirASessao } from "../src/sessao.js";
 

@@ -69,7 +69,8 @@
      app?        [{ orgao, campos, o? }] — o que um órgão do App fez neste
                  turno e o replay não corre, quando quem grava o SABE: os
                  caminhos do estado que ele escreveu (`campos`, podem ser
-                 nenhum) e o quê. Quem o escreve hoje é o jogar-em-node,
+                 nenhum) e o quê. Quem o escreve hoje é o gravador das
+                 sessões de prova (testes/gravar-sessoes-de-prova.mjs),
                  onde o oráculo faz as vezes do App (a viagem, o sítio, o
                  nome à mão que o registo não gravou, a luta); a fiação do
                  App não precisa de o escrever — o que ela deixa por fazer
@@ -142,9 +143,13 @@
    os combatentes fora do estado, ou o sítio que o App mudou e o Cronista
    repôs. É aqui, e só aqui, que essa diferença se explica.
 
+   Cada turno é `correrOTurno` (exportado: o gravador das sessões de prova,
+   testes/gravar-sessoes-de-prova.mjs, escreve a linha com ele, e por isso o
+   arquivo e o replay andam pelo mesmo caminho).
+
    O QUE ELE NÃO FAZ. Não chama IA, não toca o React, não grava nada.
    O aceito do Cronista é aplicado em MINIATURA (as pessoas, o cânone e o
-   lugar, como o `jogar-em-node` o aplica): a fiação inteira do aceito
+   lugar): a fiação inteira do aceito
    (nomeComDono, fichaDoCronista, a peneira do cânone, o mural, a fé)
    ainda mora no App, e um turno que dependeu dela diverge com esse porquê.
    A única coisa fora do puro é a casa (`semearACasa`), que é global no
@@ -481,6 +486,15 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     },
   },
   {
+    /* A PORTA DO APP. O passo antes do Mestre (viajar, moverParaLocal) ainda
+       mora no App: o replay não o corre, e um turno que dependeu dele diverge
+       como dívida. Quem grava as sessões de prova sabe o que ele fez (o
+       oráculo do registo) e entra por aqui; quando o motor o trouxer
+       (src/motor/turno.js), este passo passa a chamá-lo. */
+    passo: "o passo antes do Mestre", de: "App (viajar, moverParaLocal): o replay não o corre; quem grava e sabe o que ele fez passa-o em doApp.antesDoMestre",
+    faz: (E, L, ctx) => (typeof ctx.doApp.antesDoMestre === "function" ? ctx.doApp.antesDoMestre(E) || E : E),
+  },
+  {
     passo: "o turno do Mestre", de: "motor/aplicar.js#aplicarOTurno",
     faz: (E, L, ctx) => {
       const r = aplicarOTurno({ ...E, npcTurno: Number.isFinite(E.npcTurno) ? E.npcTurno : 0 }, ctx.resposta, ctx.doMestre);
@@ -597,7 +611,24 @@ function diferencas(a, b, caminho, out, prof) {
   out.push({ caminho, gravado: cita(a), reproduzido: cita(b) });
 }
 
-function reproduzirOTurno(E0, L, semente, mundo, narracoes) {
+/* UM TURNO, CORRIDO (o que o replay faz a cada linha, e o que o gravador
+   das sessões de prova usa para escrever a linha: um caminho só).
+
+     correrOTurno(antes, linha, { semente, mundo?, narracoes?, doApp? })
+       → { estado, juizo, juiz, calou }
+
+   `antes` é o estado do fim do turno anterior (o save v2), `linha` a linha
+   do arquivo (o `estado` dela não é lido), `narracoes` as narrações de
+   antes para o eco do Juiz. `doApp` é a porta para quem grava e SABE o que
+   um órgão do App fez: `doApp.antesDoMestre(estado)` corre no lugar do
+   passo antes do Mestre (a viagem, o sítio), e devolve o estado. O replay
+   nunca a passa. Devolve o estado do fim (o save v2, em dado puro), o
+   juízo do Cronista, o veredito do Juiz (se a linha tem a entrada dele) e
+   os passos que estouraram. Nunca lança; lixo é o turno vazio. */
+export function correrOTurno(antes, linha, contexto) {
+  const c = obj(contexto);
+  const E0 = obj(antes), L = obj(linha);
+  const semente = String(c.semente == null ? "" : c.semente), mundo = ehObj(c.mundo) ? c.mundo : null, narracoes = arr(c.narracoes);
   const so = obj(L.sorte), pe = obj(L.pedido), na = obj(L.narrador);
   if (typeof so.casa === "string") semearACasa(so.casa);
   const s0 = sorteNoPonto(ehObj(so.contagem) ? so.contagem : CONTAGEM_VAZIA, semente, so.ponto, "salvaguarda");
@@ -607,10 +638,10 @@ function reproduzirOTurno(E0, L, semente, mundo, narracoes) {
   const envelopes = pe.envelopes == null ? "" : pe.envelopes;
   const resposta = { narrativa: String(na.narrativa || ""), mudancas: dado(obj(na.mudancas)) };
   const ctx = {
-    resposta, frase, envelopes, mundo: mundo || null,
+    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp),
     doMestre: { envelopes: Array.isArray(envelopes) ? envelopes.join("\n") : envelopes, pedido: frase, ...(pe.moeda ? { moeda: pe.moeda } : {}), sorte: s0.sorte, sorteDoTurno, mundo: mundo || null, baseDoNome: { heroi: obj(E0.personagem).nome } },
   };
-  let E = estadoDoSave(dado(E0));
+  let E = estadoDoSave(obj(dado(E0)));
   const nota = {}, calou = [];
   for (const p of PASSOS_DO_REPLAY) {
     try { E = p.faz(E, L, { ...ctx, resposta: dado(resposta) }, nota); } catch (e) { calou.push({ passo: p.passo, erro: String((e && e.message) || e) }); }
@@ -641,7 +672,7 @@ export function reproduzirASessao(arquivo, opcoes) {
   const doTurno = [];
   A.turnos.forEach((L, i) => {
     const antes = op.encadeado ? corrido : gravado;
-    const r = reproduzirOTurno(antes, L, A.semente, mundo, narracoesDoArquivo(A.turnos, i));
+    const r = correrOTurno(antes, L, { semente: A.semente, mundo, narracoes: narracoesDoArquivo(A.turnos, i) });
     gravado = aplicarDiferenca(gravado, L.estado, [], "");
     corrido = r.estado;
     const app = oQueOAppFez(L.app);
