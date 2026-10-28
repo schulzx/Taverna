@@ -1,26 +1,39 @@
 /* Taverna v7.1 — ECONOMIA: âncoras de preço para o Mestre não se perder.
    Bloco de texto injetado no prompt do sistema (zero tokens de raciocínio —
    é só referência). Valores em moedas de ouro (◉), calibrados ao que o app
-   realmente entrega (mural, decretos, espólios, renda). */
-export const ECONOMIA_PROMPT = `ECONOMIA DO MUNDO (a escala das coisas — o preço dito na cena é o que o sistema mandou; sem número dele, quem fala diz sem número):
-ESCALA DE RIQUEZA: ◉ 10 sustenta um pobre por uma semana · ◉ 50 é um mês de vida simples · ◉ 200 compra equipamento de aventureiro respeitável · ◉ 1.000 é uma pequena fortuna (casa modesta, navio velho) · ◉ 10.000 é riqueza de nobre. Um camponês ganha ◉ 2–5 por dia de trabalho; um artesão, ◉ 5–10; um guarda, ◉ 8–15; um cavaleiro a serviço, ◉ 20–40.
-PREÇOS COMUNS: refeição simples ◉ 1–2 · refeição boa com bebida ◉ 3–5 · noite em estalagem simples ◉ 3–6 (quarto bom ◉ 8–15, luxo ◉ 25+) · caneca de cerveja ◉ 1 · garrafa de vinho bom ◉ 5–12 · ferradura/reparo simples ◉ 2–5 · poção de cura comum ◉ 25–50.
-EQUIPAMENTO: arma simples ◉ 10–25 · arma de qualidade ◉ 40–100 · armadura leve ◉ 15–40 · armadura pesada ◉ 60–150 · escudo ◉ 10–20 · item mágico menor ◉ 150–400 (raros e poderosos NÃO se vendem em loja comum).
-TRANSPORTE: cavalo de sela ◉ 75–150 · cavalo de guerra ◉ 300–600 · carroça ◉ 40–80 · passagem de navio por pessoa ◉ 5–20 por trecho (cabine boa ◉ 30–60) · fretar navio pequeno ◉ 150–400 por viagem.
-SERVIÇOS E PESSOAS: mercenário por dia ◉ 5–15 · guia por dia ◉ 3–8 · mensageiro ◉ 5–15 · suborno comum ◉ 10–50 · resgate de refém comum ◉ 100–500.
-CIDADES: em vilas tudo é mais barato (−30% a −50%); em capitais e portos ricos, mais caro (+30% a +100%). Escassez de guerra/cerco pode dobrar preços de comida.
-RECOMPENSAS: as recompensas de contratos e decretos são definidas PELO SISTEMA (mural/decretos) — na ficção, trate esses valores como justos e proporcionais ao perigo; não invente recompensas maiores por conta própria.
-COMPRA E VENDA: o preço final é AFERIDO PELO SISTEMA (venda = metade do valor; compra dentro da faixa justa). Você negocia e narra à vontade — descontos e ágios de roleplay são bem-vindos na ficção — mas o número que entra/sai do bolso é o do sistema.`;
+   realmente entrega (mural, decretos, espólios, renda).
+
+   T4-B (28/10, o cenário como arquivo): os NÚMEROS do mundo saíram daqui
+   para o cenário (`cenario-padrao.js`, carregado por `cenario.js`) — a escala
+   de riqueza, o valor por raridade, os preços comuns. Fica aqui o que é
+   regra do motor: o cabeçalho e o fim do bloco (o sistema afere, o Narrador
+   narra), a fração da revenda, a faixa justa da compra, o teto do porte e a
+   língua (o acento que separa, a grafia, a cabeça do nome). As tabelas que
+   saíam daqui continuam a sair com o mesmo nome; são `let` porque se
+   refazem quando o cenário troca (`aoTrocarDeCenario`, no fim da secção). */
+import { aoTrocarDeCenario } from "./cenario.js";
+
+/* o que o bloco do Narrador diz em todo mundo: a abertura e as duas regras
+   do fim; o meio (`precos.escala`) é do cenário */
+const ECONOMIA_DO_MOTOR = Object.freeze({
+  cabeca: "ECONOMIA DO MUNDO (a escala das coisas — o preço dito na cena é o que o sistema mandou; sem número dele, quem fala diz sem número):",
+  fim: Object.freeze([
+    "RECOMPENSAS: as recompensas de contratos e decretos são definidas PELO SISTEMA (mural/decretos) — na ficção, trate esses valores como justos e proporcionais ao perigo; não invente recompensas maiores por conta própria.",
+    "COMPRA E VENDA: o preço final é AFERIDO PELO SISTEMA (venda = metade do valor; compra dentro da faixa justa). Você negocia e narra à vontade — descontos e ágios de roleplay são bem-vindos na ficção — mas o número que entra/sai do bolso é o do sistema.",
+  ]),
+});
+export let ECONOMIA_PROMPT = "";
 
 /* VALOR DE MERCADO POR CÓDIGO (v7.4.3): o sistema precifica o que troca de
    mãos — o Mestre não inventa mais número de compra/venda. Equipamentos
-   valem pela raridade; miudezas de inventário valem uma taxa simbólica. */
-const VALOR_RARIDADE = { comum: 15, incomum: 60, raro: 220, epico: 900, lendario: 3500 };
+   valem pela raridade; miudezas de inventário valem uma taxa simbólica.
+   Os três números (raridade, sem raridade, miudeza) são do cenário. */
+let VALOR = { raridade: {}, semRaridade: 0, miudeza: 0 };
 export function valorDeItem(item) {
-  if (!item) return 5;
-  if (typeof item === "string") return 5;
-  if (item.raridade && VALOR_RARIDADE[item.raridade]) return VALOR_RARIDADE[item.raridade];
-  return 10;
+  if (!item) return VALOR.miudeza;
+  if (typeof item === "string") return VALOR.miudeza;
+  if (item.raridade && VALOR.raridade[item.raridade]) return VALOR.raridade[item.raridade];
+  return VALOR.semRaridade;
 }
 export const PRECO_VENDA = 0.5;        // revender rende METADE do valor
 export const FAIXA_COMPRA = [0.5, 2];  // compra justa: entre metade e o dobro da estimativa
@@ -54,28 +67,29 @@ export const FAIXA_COMPRA = [0.5, 2];  // compra justa: entre metade e o dobro d
    mostra sem ninguém perguntar (`PRECOS_DA_RUA`); `porPalavra`, a linha
    perguntada diz a palavra do jogador ("fruta ◉ 1", não a lista inteira);
    `curto`, o nome na linha da rua, que cabe em ~70 caracteres.
+
+   T4-B (28/10): a tabela mora no cenário (`precos.comuns`), com a regex
+   escrita como texto; aqui ela é compilada, e cada linha sai congelada.
    ============================================================ */
-export const PRECOS_COMUNS = [
-  { id: "caneca", nome: "caneca de cerveja", curto: "caneca", base: 1, faixa: [1, 1], rua: true, rx: /\b(canecas?|cervejas?|hidromel|aguardentes?|tragos?|copos? de (cerveja|aguardente|hidromel))\b/ },
-  { id: "refeicao", nome: "refeição quente", curto: "prato quente", base: 2, faixa: [1, 2], rua: true, rx: /\b(refeic(ao|oes)|pratos? (quente|do dia|de comida)|caldos?|sopas?|ensopados?|comida quente|jantar|almoco|ceia|algo de comer|de comer)\b/ },
-  { id: "refeicaoBoa", nome: "refeição boa com bebida", base: 4, faixa: [3, 5], rx: /\b(refeic(ao|oes) boas?|banquete|mesa farta|assados?)\b/ },
-  { id: "vinho", nome: "garrafa de vinho bom", base: 8, faixa: [5, 12], rx: /\b(garrafas? de vinho|jarras? de vinho|vinho bom|vinhos?)\b/ },
-  { id: "rua", nome: "comida de rua (pão, fruta, peixe seco)", curto: "pão, fruta ou peixe seco", base: 1, faixa: null, rua: true, porPalavra: true, rx: /\b(paes|pao|fruta|frutas|peixes? secos?|peixes?|queijos?|bolos?|espetinhos?|castanhas?|figos?|uvas?|peras?|laranjas?)\b/ },
-  { id: "reparo", nome: "reparo simples", base: 3, faixa: [2, 5], rx: /\b(conserto|consertar|reparo|reparar|remendo|remendar|ferraduras?)\b/ },
-  { id: "guia", nome: "guia, por dia", base: 5, faixa: [3, 8], rx: /\b(guias?|quem me leve|quem nos leve)\b/ },
-  { id: "mensageiro", nome: "mensageiro", base: 10, faixa: [5, 15], rx: /\b(mensageiros?|levar (uma|a|esta) (carta|mensagem|recado))\b/ },
-  { id: "passagem", nome: "passagem de barco, por pessoa", base: 10, faixa: [5, 20], rx: /\b(passage(m|ns) (de|num|no|em) (barco|navio)|barqueiros?|travessia)\b/ },
-  { id: "informacao", nome: "uma informação, de quem a vende", base: 3, faixa: null, rx: /\b(quanto (voce |tu |o senhor |a senhora )?(quer|queres|cobra|cobras|pede|pedes|leva|levas) (por|pra|para) (saber|dizer|contar|falar|mostrar|guiar|abrir a boca|isso)|(preco|quanto) (da|de uma|pela|por uma) informac(ao|oes))/ },
-  { id: "pedagio", nome: "pedágio da porta, por cabeça", base: 1, faixa: null, rx: /\b(pedagios?|portagem|taxa de entrada|imposto da porta)\b/ },
-];
+export let PRECOS_COMUNS = [];
 /* A GRAFIA (E2, 12/10). `rx` lê a frase sem acento, e a linha perguntada
    (`porPalavra`) dizia a palavra assim: "2× paes ◉ 2" — e o Mestre copiou,
    "Dois paes? Quatro coroas." (a prova viva da E1, T9). A palavra que a
    linha diz sai daqui, com o acento que a língua lhe dá, escreva o jogador
    com ou sem til. Só as que levam acento; as outras seguem tal qual. */
 export const GRAFIA_DA_RUA = Object.freeze({ pao: "pão", paes: "pães" });
-/* a ordem da linha de rua: o que se bebe, o que se come à mesa, o que se come de pé */
-export const PRECOS_DA_RUA = PRECOS_COMUNS.filter((p) => p.rua).map((p) => p.id);
+/* a ordem da linha de rua: o que se bebe, o que se come à mesa, o que se come
+   de pé (a do cenário: as linhas com `rua`, na ordem em que estão escritas) */
+export let PRECOS_DA_RUA = [];
+
+/* o cenário entra: cada tabela acima se refaz a partir dele */
+aoTrocarDeCenario((c) => {
+  const p = c.precos;
+  ECONOMIA_PROMPT = [ECONOMIA_DO_MOTOR.cabeca, ...p.escala, ...ECONOMIA_DO_MOTOR.fim].join("\n");
+  VALOR = { raridade: p.raridade, semRaridade: p.semRaridade, miudeza: p.miudeza };
+  PRECOS_COMUNS = Object.freeze(p.comuns.map((x) => Object.freeze({ ...x, rx: new RegExp(x.rx) })));
+  PRECOS_DA_RUA = Object.freeze(PRECOS_COMUNS.filter((x) => x.rua).map((x) => x.id));
+});
 /* o fator do porte nunca leva o preço para fora de metade ou do dobro (a
    mesma régua de `PRECOS_DO_POUSO`), e nada custa menos de ◉ 1 */
 export const FATOR_DO_PRECO = { piso: 0.5, teto: 2, minimo: 1 };

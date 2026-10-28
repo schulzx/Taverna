@@ -49,6 +49,7 @@ export { habilidadesDaEspecializacao, especializacaoDaHabilidade, RANK_PARA_ESPE
    não importa nada daqui — a seta aponta num sentido só, e é isso que impede
    o ciclo entre os dois catálogos. */
 import { magiaPorNome, magiasDisponiveis, classesDaMagia } from "./grimorio.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 const HAB = (nome, nivel, custo, tipo, descricao) => ({ nome, nivel, custo, tipo, descricao });
 
@@ -380,20 +381,12 @@ export const CLASSES = [
      venda p / compra p   fração melhor no balcão (0,25 = 25%)
      espolio p            fração a mais de moedas nos espólios
      despojos n           componentes a mais por corpo esfolado            */
-export const PROFISSOES = [
-  { nome: "Ferreiro", desc: "Forja e repara armas e armaduras.", beneficio: "Trabalho de metal: a bancada de utilitários fica 3 mais fácil, e o que você vende vale +20%.", efeito: { bancada: { utilitario: 3 }, venda: 0.2 } },
-  { nome: "Alquimista", desc: "Destila poções, venenos e reagentes.", beneficio: "Fervura e paciência: a bancada de alquimia fica 3 mais fácil.", efeito: { bancada: { alquimia: 3 } } },
-  { nome: "Herborista", desc: "Conhece ervas, raízes e cogumelos.", beneficio: "Conhece o mato: cada forrageamento traz 2 componentes a mais.", efeito: { colher: 2 } },
-  { nome: "Cartógrafo", desc: "Desenha e lê mapas de terras desconhecidas.", beneficio: "Lê a terra: +5 no teste de navegação — você quase não se perde.", efeito: { navegar: 5 } },
-  { nome: "Escriba", desc: "Copia, traduz e decifra documentos antigos.", beneficio: "Lê o que ninguém lê: +2 em todo teste de Intelecto.", efeito: { teste: { intelecto: 2 } } },
-  { nome: "Cozinheiro", desc: "Transforma ração em refeição de verdade.", beneficio: "Comida de verdade: cada companheiro recupera 3 PV a mais no descanso longo.", efeito: { curaGrupo: 3 } },
-  { nome: "Joalheiro", desc: "Lapida gemas e engasta encantamentos.", beneficio: "Sabe o que vale: +25% em tudo que você vende.", efeito: { venda: 0.25 } },
-  { nome: "Curtidor", desc: "Trabalha couro e peles de criaturas.", beneficio: "Aproveita a carcaça: cada corpo rende 1 componente a mais.", efeito: { despojos: 1 } },
-  { nome: "Minerador", desc: "Sabe onde e como extrair metal e pedra.", beneficio: "Enxerga a veia na pedra: +1 componente ao forragear e +2 em testes de Percepção.", efeito: { colher: 1, teste: { percepcao: 2 } } },
-  { nome: "Caçador de Recompensas", desc: "Vive de contratos e alvos marcados.", beneficio: "Cobra pelo trabalho: +30% de moedas nos espólios de combate.", efeito: { espolio: 0.3 } },
-  { nome: "Mercador", desc: "Compra barato, vende caro, conhece todo mundo.", beneficio: "Conhece todo mundo: 20% de desconto na compra e +15% na venda.", efeito: { compra: 0.2, venda: 0.15 } },
-  { nome: "Médico de Campo", desc: "Estanca sangue e remenda ossos sem magia.", beneficio: "Remenda sem magia: +4 PV para você em cada descanso e +2 para cada companheiro.", efeito: { curaDescanso: 4, curaGrupo: 2 } },
-];
+export let PROFISSOES = [];
+/* T4-B (28/10, o cenário como arquivo): as doze moram no cenário
+   (`ocupacoes`, cenario-padrao.js); o vocabulário acima é o que o validador
+   de cenario.js aceita em `efeito` (ESQUEMA_DO_CENARIO.efeito). A tabela
+   sai congelada, com o mesmo nome, e refaz-se quando o cenário troca. */
+aoTrocarDeCenario((c) => { PROFISSOES = c.ocupacoes; });
 
 /* ---------------- API ---------------- */
 export function classePorNome(n) { return CLASSES.find((c) => c.nome === n) || null; }

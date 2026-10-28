@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 28/10 · v9.497 · T4-B, o cenário, 1.ª fatia: preços e ocupações saem do motor (`backend`)
+- **o pedido:** o começo do modo autor (`mente/plano-motor.md`, Fase 4-B): um mundo novo entra sem editar módulo. Formato, carregador com validação, o cenário padrão, dois ou três catálogos lendo dele, dourado de antes.
+- **o formato (decisão média):** objeto de dados puro e JSON-compatível. O padrão mora em `src/cenario-padrao.js` (um `.js` de dados, porque importar `.json` pede `with { type: "json" }` no Node e não no Vite); o arquivo de um autor pode ser `.json` de verdade (`carregarCenario(JSON.parse(texto))`), e a suíte faz essa volta. A regex é o texto dela. O cenário é completo (o que falta é recusado com o caminho, nunca herdado do padrão) e o campo que o motor não lê também é recusado.
+- **como os catálogos leem:** `aoTrocarDeCenario(fn)`; as tabelas continuam com o mesmo nome, agora `export let` (a ligação viva do ESM), e o App não muda. `usarCenario` valida antes de avisar e volta tudo se um catálogo estourar. Trocar é ato de arranque: quem copiou a tabela no import fica com a antiga.
+- **passaram:** os preços (`economia.js`: a escala do `ECONOMIA_PROMPT`, o valor por raridade, a miudeza, os 11 preços comuns; leitores: App, mercado, regras-jogo, prompt, juiz-de-fidelidade, bolsa-da-frase, em-cena, fichas) e as ocupações (`classes.js PROFISSOES`; leitores: App, profissoes, prontos). Ficou no código o que é regra (a revenda a metade, a faixa da compra, o teto do porte, a língua).
+- **não passaram, e porquê:** `nomes.js` e `divindades.js` são lidos por `src/motor/` (fim-do-turno, meio-do-turno), e o motor é da trilha A; `bestiario.js` entra no motor por `mundo-base.js`; `PROFISSOES_DO_SISTEMA` (lexico.js) repete os doze nomes e fica para a próxima fatia (num mundo de outras ocupações o léxico gerado as perde).
+- **a prova:** `testes/cenario-dourado.json`, 578 casos tirados do f0a9fae por `git archive` (`gerar-cenario-dourado.mjs`): 500 bancas semeadas, os preços comuns por 14 fatores, a pauta do preço perguntado, as doze ocupações em todas as funções. Depois da mudança: 0 diferentes. A prova morde: caneca a 2 → 7 casos; raro a 221 → 106; comum a 16 → 301; Mercador com 25% → 3. `teste-cenario.mjs` (58): um mundo de teste (a Estação Órbita Sete) muda os preços e os ofícios sem tocar em módulo, 19 cenários inválidos recusados com o caminho, congelado a fundo, a mesma semente dá a mesma banca, e o esquema lê de volta as raridades do loot e o vocabulário que `profissoes.js` consome.
+- **verde:** build limpo; `npm test` 367/367 e 23/23; `so-o-meu.sh` com HEAD mais os 8 arquivos: 366/366. A trilha A subiu a v9.496 no meio; nenhum arquivo dela tocado.
+- **o que ficou:** a próxima fatia (nomes, deuses e bestiário, quando o motor da trilha A os libertar), o `PROFISSOES_DO_SISTEMA` e quem chama `usarCenario` no arranque (o frontend, com o arquivo do autor).
+
+---
+
 ## 28/10 · v9.495 · Fase T3, trilha B (1.ª fatia): o Juiz de fidelidade mede (`backend`) · e46914e
 - **o pedido:** o Juiz de `mente/plano-motor.md` (Fase 3), adiantado: a prosa contra EM CENA, mapa, mercado e pauta → veredito com trecho e motivo; só mede. Corpus rotulado das sessões 6–12, meta ≥ 90% apanhados e ≤ 5% de falsos positivos.
 - **o nome:** `src/juiz.js` já existe (o XP, v9.154) e `testes/teste-juiz.mjs` é a suíte dele: nasceu `src/juiz-de-fidelidade.js` + `testes/teste-juiz-de-fidelidade.mjs`; o corpus em `testes/juiz-rotulado.json`, como pedido.
