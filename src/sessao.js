@@ -176,6 +176,7 @@ import { lugarPedido, definirLugar } from "./lugar.js";
 import { semearACasa } from "./semente.js";
 import { aplicarOTurno } from "./motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
+import { oAntesDoMestre } from "./motor/antes-do-mestre.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { julgarOTurno, JUIZ_NO_TURNO, CLASSES_DO_JUIZ, somarAFidelidade } from "./motor/juiz-do-turno.js";
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
@@ -486,6 +487,16 @@ function aplicarOAceito(E, aceito) {
    turno: fica em `calou`, e o estado segue como estava antes dele. */
 export const PASSOS_DO_REPLAY = Object.freeze([
   {
+    /* o que o App corria antes do Mestre e já é motor (8.ª fatia, v9.529):
+       o turno do mundo e o sino, o chão da cena, a escuta. Pagou a dívida
+       de abertura, chao, escuta e turnosDeMundo. O NOME não diz «antes do
+       Mestre» de propósito: esse é o da porta do App, logo abaixo (viajar,
+       moverParaLocal), e as linhas das sessões de prova declaram-na por
+       ele — dois passos com o mesmo nome confundem o `calou` e o oráculo. */
+    passo: "o mundo, o chão e a escuta", de: "motor/antes-do-mestre.js#oAntesDoMestre (o relógio do mundo, o sino, o chão, a escuta)",
+    faz: (E, L) => oAntesDoMestre(E, L.entrada, { modo: "historia" }),
+  },
+  {
     passo: "o sítio pela frase", de: "lugar.js#lugarPedido + definirLugar (o alvoLocalPedido do App, sem o tempo da caminhada)",
     faz: (E, L) => {
       const en = obj(L.entrada), cru = typeof en.frase === "string" ? en.frase : "";
@@ -593,20 +604,16 @@ export const FORA_DA_REGUA = Object.freeze({
    motor e entrou em PASSOS_DO_REPLAY — também, para ela não guardar dívida
    paga. A medida é o arquivo que o jogo gravou (testes/sessao-navegador.json). */
 export const AINDA_DO_APP = Object.freeze([
-  { campo: "abertura", orgao: "marcarTurnoDoMundo → andarOSino (o sino da abertura: os turnos, os cheios, os conhecidos, os sítios visitados)", desde: "28/10/2026" },
-  { campo: "chao", orgao: "varrerChao e porNoChaoAqui no envio (a cena do chão: cenaDoChao)", desde: "28/10/2026" },
   { campo: "compasso", orgao: "talvezAndarOCompasso no envio", desde: "28/10/2026" },
   { campo: "desdeMundo", orgao: "marcarTurnoDoMundo → talvezOMundoSeMexer (há quantos turnos o mundo não se mexe)", desde: "28/10/2026" },
   { campo: "elencoMem", orgao: "as marcas do intérprete no envio (marcarMovimento: os feitos e os gestos da gente)", desde: "28/10/2026" },
   { campo: "escada", orgao: "mexerNoEncalhe no envio (a escada do encalhe)", desde: "28/10/2026" },
-  { campo: "escuta", orgao: "andarAEscuta no envio (o pedido e o avanço)", desde: "28/10/2026" },
   { campo: "estante", orgao: "talvezDarFormaACena e formaDoMestre (a cadência da cena e as jogadas)", desde: "28/10/2026" },
   { campo: "lugar.coord", orgao: "moverParaLocal (a coordenada do sítio sai de locaisDaCidade; o lugaresDaqui gravado não a leva)", desde: "28/10/2026" },
   { campo: "mesa", orgao: "aMesaDoTurno já é motor (fecho-da-resposta.js), mas a textura que ele lê — o pilar da frase, as rolagens, o perigo — o App escreve-a ao longo do turno, e a linha não a grava", desde: "28/10/2026" },
   { campo: "minuto", orgao: "avancarOsMinutos (o tempo da ação, no agirInterno, e o da caminhada, no moverParaLocal)", desde: "28/10/2026" },
   { campo: "prometido", orgao: "pautaDoTurno → cobrarNoTurno (o Livro cobra na pauta) e o aceito do Cronista (guardarSementes, pagarSementes)", desde: "28/10/2026" },
   { campo: "registro", orgao: "anotarOTurno no envio (a memória das cenas: quando, onde, quem, o assunto)", desde: "28/10/2026" },
-  { campo: "turnosDeMundo", orgao: "marcarTurnoDoMundo (o turno do mundo, que os relógios leem a cada dois)", desde: "28/10/2026" },
 ]);
 
 /* as diferenças entre dois estados, com o caminho até cada uma */

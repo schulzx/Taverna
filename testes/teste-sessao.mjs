@@ -114,9 +114,15 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
   /* MOVIDA (28/10, T3-B, o replay num caminho só): entrou, entre o sítio e
      o Mestre, a porta do passo que ainda é do App (viajar, moverParaLocal)
      — o replay não o corre; o gravador das sessões de prova passa por ela o
-     oráculo. A intenção fica: os passos do App, na ordem dele. */
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
-  t("e a porta do App diz que é do App", /^App /.test(PASSOS_DO_REPLAY[1].de));
+     oráculo. A intenção fica: os passos do App, na ordem dele.
+     MOVIDA OUTRA VEZ (28/10, a 8.ª fatia ligada ao replay): à frente de
+     todos entrou o mundo, o chão e a escuta (motor/antes-do-mestre.js), que
+     o App corre no agirInterno e no começo do enviar, antes do sítio pela
+     frase. A porta do App deixou de ser o 2.º passo; procura-se pelo nome,
+     para a asserção não depender da posição. */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+  t("e a porta do App diz que é do App, e é a única", /^App /.test(PASSOS_DO_REPLAY.find((p) => p.passo === "o passo antes do Mestre").de) && PASSOS_DO_REPLAY.filter((p) => /^App /.test(p.de)).length === 1);
+  t("e o passo do motor antes do Mestre não leva o nome da porta (o `calou` e o oráculo dizem-na por ele)", PASSOS_DO_REPLAY.filter((p) => /antes do Mestre/.test(p.passo)).length === 1);
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);
   /* MOVIDA (28/10, T3-B): o campo sem dono deixou de ser «é do App» — o que
      é do App está agora em AINDA_DO_APP, com o órgão; o que não está em
@@ -308,8 +314,11 @@ const RN = reproduzirASessao(SN);
      — dívida nova é órgão novo no App, e órgão novo vai para o motor. Quando
      a trilha A trouxer um destes para o motor (e ele entrar em
      PASSOS_DO_REPLAY), o campo reproduz, a catraca da dívida paga quebra, e
-     tira-se o campo da tabela E desta lista. */
-  const DIVIDA_DE_28_10 = ["abertura", "chao", "compasso", "desdeMundo", "elencoMem", "escada", "escuta", "estante", "lugar.coord", "mesa", "minuto", "prometido", "registro", "turnosDeMundo"];
+     tira-se o campo da tabela E desta lista.
+     PAGOS (28/10, a 8.ª fatia ligada ao replay): abertura, chao, escuta e
+     turnosDeMundo — o mundo, o chão e a escuta (motor/antes-do-mestre.js)
+     entraram em PASSOS_DO_REPLAY. Ficam dez. */
+  const DIVIDA_DE_28_10 = ["compasso", "desdeMundo", "elencoMem", "escada", "estante", "lugar.coord", "mesa", "minuto", "prometido", "registro"];
   const campos = AINDA_DO_APP.map((d) => d.campo);
   console.log(`  ..  a dívida do App: ${campos.length} campos — ${campos.join(", ")}`);
   const novos = campos.filter((c) => !DIVIDA_DE_28_10.includes(c));
@@ -328,7 +337,13 @@ const RN = reproduzirASessao(SN);
     const x = copia(SN); const L = x.turnos[1];
     L.estado.troca = { ...L.estado.troca, lugar: { ...L.estado.troca.lugar, nome: "a casa errada" } };
     const r = reproduzirASessao(x);
-    return J(r.defeitos) === J([2]) && r.turnos[1].diferencas.some((d) => d.caminho === "lugar.nome");
+    /* MOVIDA (28/10, o mundo, o chão e a escuta no replay): era «defeito no
+       2, e só nele». O 3 parte do estado gravado do 2 — o plantado —, e o
+       passo novo LÊ o lugar: o chão assina a cena com ele e o sino marca-o
+       como visitado. Logo o 3 diverge também, e só nessas duas coisas. A
+       intenção fica: a dívida «lugar.coord» não esconde o nome do lugar. */
+    return J(r.defeitos) === J([2, 3]) && r.turnos[1].diferencas.some((d) => d.caminho === "lugar.nome")
+      && r.turnos[2].diferencas.every((d) => /^(chao\.cena|abertura\.visitados)/.test(d.caminho));
   });
   /* a divergência plantada num campo do motor, no arquivo do jogo, é defeito */
   const x = copia(SN); x.turnos[1].estado.chaves = { ...x.turnos[1].estado.chaves, personagem: { poe: { moedas: 999 } } };
@@ -353,7 +368,7 @@ sec("9. O RESUMO — para uma pessoa ler (replay.mjs --resumo)");
   const { CLASSES_DO_JUIZ } = await import("../src/motor/juiz-do-turno.js");
   const rn = resumoDaSessao(SN, RN);
   t("as contas são as do relatório: reproduzidos, sozinho, e nenhum defeito", rn.valido && rn.turnos === 3 && rn.reproduzidos === RN.reproduzidos && rn.soOMotor === RN.soOMotor && rn.defeitos.length === 0);
-  t("a dívida da sessão do jogo: os catorze campos da tabela, cada um com os turnos e o órgão", rn.divida.campos.length === AINDA_DO_APP.length && rn.divida.campos.every((d) => d.turnos.length && d.orgao) && rn.divida.doTurno.length === 0);
+  t("a dívida da sessão do jogo: os campos da tabela (dez, desde a 8.ª fatia), cada um com os turnos e o órgão", rn.divida.campos.length === AINDA_DO_APP.length && rn.divida.campos.every((d) => d.turnos.length && d.orgao) && rn.divida.doTurno.length === 0);
   t("sem o relatório, corre o replay e dá o mesmo", J(resumoDaSessao(SN)) === J(rn));
   /* o Juiz somado: a conta do jogo (somarAFidelidade), por classe */
   const r8 = resumoDaSessao(S8, R8);
