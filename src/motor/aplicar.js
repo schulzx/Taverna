@@ -26,6 +26,11 @@
    os sinais, o cânone, a gente, o combate, o códex…) ainda é closure no
    App e corre depois disto, com a ficha e a resposta que daqui saem. Cada
    bloco que sair do App entra aqui, na ordem em que está lá.
+   A 2.ª fatia (27/10) trouxe o par seguinte — o cânone e a gente —, como
+   uma segunda peça (`aplicarORegisto`, mais abaixo) e não como a
+   continuação desta: entre os dois, no App, ainda correm as dádivas, o
+   mapa, as missões e os sinais, que mexem no mapa, no lugar e na ficha que
+   o registo lê. Quando esses saírem, as duas peças fundem-se numa ordem só.
 
    O DADO: a salvaguarda do fim do turno rola pela sorte da casa, como
    rolava no App (que a semeia a cada envio). `ctx.sorte` não muda isto
@@ -40,6 +45,11 @@ import { tickEfeitos, atributoEfetivo, aplicarMudancas } from "../regras-jogo.js
 import { tickCondicoes, tentarSaidaNoFimDoTurno } from "../condicoes.js";
 import { oQueFaltaCreditar, oQueFaltaDebitar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada, falaDoDebito, envelopeDoDebito } from "../cobranca.js";
 import { itemConsumivel } from "../pocoes.js";
+import { peneirarCanone } from "../segredo-guardado.js";
+import { criarCidade } from "../mapa.js";
+import { garantirGeografia } from "../geografia.js";
+import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo } from "../npcs.js";
+import { aindaSoUmNome } from "../abertura.js";
 
 /* a nota do turno cresce como sempre cresceu no App: uma linha por vez,
    separadas por quebra, sem quebra na frente da primeira */
@@ -390,4 +400,151 @@ export function aplicar(estado, resposta, ctx = {}) {
       estado: { ...e0, personagem: pers, combate, danoJaAplicado: travas.danoJaAplicado, habUsada: travas.habUsada },
       efeitos: efeitosDoTurno, paraOCronista: notas, podado: resp, msgs,
     };
+}
+
+/* ============================================================
+   O CONTEXTO DE UM NOME (MM14 · 10), a metade que depende do nome
+
+   `nomeComDono` (npcs.js) decide se um nome novo é homónimo de quem
+   importa, e precisa de um contexto. O App monta a parte que é do JOGO
+   (a pista e o alvo, os marcos, o grupo, o elenco do mundo, as missões
+   ativas, o mural, as falas recentes, onde o herói está) — `base`; aqui se
+   junta a parte que é do NOME (o paradeiro, o gênero, o papel, as notas).
+   A forma e a ordem são as do `contextoDoNome` do App, que passou a
+   chamar esta: os dois lados dizem a mesma coisa porque são a mesma linha.
+   ============================================================ */
+export function contextoDoNomeCom(base, n) {
+  const b = base && typeof base === "object" ? base : {};
+  return { importantes: b.importantes || [], conhecidos: b.conhecidos || [], recentes: b.recentes || [], grupo: b.grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: b.aqui || [], heroi: b.heroi || "" };
+}
+
+/* ============================================================
+   O REGISTO — o cânone e a gente que o Narrador declarou (T1-A, 2.ª fatia)
+
+     aplicarORegisto(estado, resposta, ctx) → { estado, efeitos, paraOCronista, msgs }
+
+   O par seguinte do `aplicarResposta`, na MESMA posição de lá (depois do
+   mapa, das missões e dos sinais, antes do combate), e o corpo é o do App
+   linha por linha (4617715), com estas trocas e nenhuma outra:
+   - `canoneRef`, `mapaRef`, `npcsRef`, `npcTurnoRef` → o estado (e cada
+     escrita, um efeito: `canone`, `mapa`, `npcTurno`, `npcs` — o App os
+     põe nos refs e na tela);
+   - `espinhaRef`, `aberturaMundoRef`, `lugarRef`, `missoesRef`, `diaRef`
+     → lidos do estado;
+   - `mundoDaBase()` → `ctx.mundo` (valor, ou função chamada só quando a
+     peneira precisa, dentro do mesmo try de lá);
+   - `contextoDoNome(n)` → `contextoDoNomeCom(ctx.baseDoNome, n)` (a base
+     é pedida uma vez, na primeira vez que um nome precisa dela);
+   - a nota do homónimo → `paraOCronista`; `calou` → efeito;
+   - e as DUAS remontagens do prompt (a do cânone e a da gente) viram UM
+     efeito `remontarPrompt` no fim. É o mesmo prompt: a segunda lia tudo
+     o que a primeira lia, já atualizado, e entre as duas nada que o prompt
+     lê mudava (o contador de turnos da gente não entra no prompt).
+   Provado byte a byte por `teste-motor-aplicar.mjs` (secção 5) contra o
+   bloco de antes, lido do git por `gerar-registo-dourado.mjs`.
+   ============================================================ */
+export function aplicarORegisto(estado, resposta, ctx = {}) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  const op = ctx && typeof ctx === "object" ? ctx : {};
+  const resp = resposta && typeof resposta === "object" ? resposta : {};
+  const pers = e0.personagem;
+  const msgs = [], notas = [], efeitosDoTurno = [];
+  const calou = (onde, erro) => { efeitosDoTurno.push({ tipo: "calou", onde, erro }); };
+  let canone = e0.canone, mapa = e0.mapa, npcs = e0.npcs, npcTurno = e0.npcTurno;
+  let remontar = false;
+  let baseDoNome = null, pediuABase = false;
+  const contextoDoNome = (n) => {
+    if (!pediuABase) { pediuABase = true; baseDoNome = typeof op.baseDoNome === "function" ? op.baseDoNome() : op.baseDoNome; }
+    return contextoDoNomeCom(baseDoNome, n);
+  };
+    /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
+    if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
+      const c = { ...canone };
+      /* MM15 (4): nenhum segredo que a espinha ainda guarda vira cânone
+         pela boca do Narrador — a peneira recusa em silêncio; se ela
+         estourar, segue o comportamento de hoje (nunca pior para o segredo). */
+      let canoneDoNarrador = resp.mudancas.canone;
+      try { canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: e0.espinha, mundo: typeof op.mundo === "function" ? op.mundo() : op.mundo }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }
+      for (const [nome, ficha] of Object.entries(canoneDoNarrador)) {
+        if (!nome || !ficha || typeof ficha !== "object") continue;
+        /* v9.36: registra em silêncio. O jogador acabou de LER a coisa na
+           narração; avisá-lo de que ela foi arquivada é o sistema falando de
+           si mesmo, e o códex está a um toque para quem quiser conferir. */
+        c[nome] = { ...(c[nome] || {}), ...ficha };
+      }
+      canone = c; efeitosDoTurno.push({ tipo: "canone", canone: c });
+      /* rede de segurança do MAPA: se o cânone registra um lugar (tipo local/
+         cidade/vila/capital), garante que ele exista no mapa mesmo que o Mestre
+         não tenha enviado "mapa_cidades". Assim o mapa nunca fica vazio. */
+      let mp2 = mapa, tocouMapa = false;
+      for (const [nome, ficha] of Object.entries(c)) {
+        const tipo = (ficha.tipo || "").toLowerCase();
+        const ehLugar = ["local", "cidade", "vila", "capital", "fortaleza", "vilarejo", "povoado", "reduto", "ruína"].some((t) => tipo.includes(t));
+        if (!ehLugar) continue;
+        if (!(mp2.cidades || []).some((cc) => cc.nome.toLowerCase() === nome.toLowerCase())) {
+          if (!tocouMapa) { mp2 = { ...mp2, cidades: [...(mp2.cidades || [])], faccoes: [...(mp2.faccoes || [])] }; tocouMapa = true; }
+          mp2.cidades.push(criarCidade(nome, { tipo: tipo.includes("capital") ? "capital" : tipo.includes("vila") || tipo.includes("povoado") ? "vila" : "cidade", regiao: ficha.local || "", faccao: ficha.faccao || null, notas: ficha.notas || "" }));
+          msgs.push(`🗺 ${nome} surgiu no mapa`);
+        }
+      }
+      if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapa = mp2; efeitosDoTurno.push({ tipo: "mapa", mapa: mp2 }); }
+      remontar = true;
+    }
+    /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
+       memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
+    if (resp.mudancas) {
+      npcTurno += 1; efeitosDoTurno.push({ tipo: "npcTurno", npcTurno });
+      let reg = npcs;
+      let tocou = false;
+      /* MM14 · 10a: um nome novo que colide com quem já importa (mesmo
+         primeiro nome) é a mesma pessoa, ou é recusado — as três portas do
+         registo (aqui, o cânone logo abaixo, e o Cronista mais adiante)
+         passam por `nomeComDono` antes de criar ou mesclar ficha. */
+      const homonimos = [];
+      [].concat(resp.mudancas.npcs || []).forEach((n) => {
+        if (!n || !n.nome) return;
+        let id = null;
+        try { id = nomeComDono(n.nome, reg, contextoDoNome(n)); } catch (e) { calou("nomeComDono", e); }
+        if (id && id.decisao === "recusada") { homonimos.push(id); return; }
+        const nomeCerto = (id && id.nome) || n.nome;
+        /* MM13: a menção não é presença — o nome da pista (ou do alvo) da
+           abertura não entra no registo antes de o herói de fato chegar. */
+        if (aindaSoUmNome(e0.abertura, nomeCerto, { lugar: e0.lugar, missoes: e0.missoes })) return;
+        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
+        const ficha = chave
+          ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurno, conhecidoEm: reg[chave].conhecidoEm != null ? reg[chave].conhecidoEm : e0.dia })
+          : criarNPC(nomeCerto, { ...n, ultimaVez: npcTurno, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : e0.dia });
+        if (!tocou) { reg = { ...reg }; tocou = true; }
+        reg[chave || nomeCerto] = ficha;
+      });
+      for (const [nome, f] of Object.entries(canone || {})) {
+        if (!f || !String(f.tipo || "").toLowerCase().includes("pessoa")) continue;
+        if (Object.keys(reg).some((k) => k.toLowerCase() === nome.toLowerCase())) continue;
+        let id = null;
+        try { id = nomeComDono(nome, reg, contextoDoNome(f)); } catch (e) { calou("nomeComDono", e); }
+        if (id && id.decisao === "recusada") { homonimos.push(id); continue; }
+        const nomeCerto = (id && id.nome) || nome;
+        /* MM13: idem — a menção não é presença. */
+        if (aindaSoUmNome(e0.abertura, nomeCerto, { lugar: e0.lugar, missoes: e0.missoes })) continue;
+        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === nomeCerto.toLowerCase());
+        /* chave achada por homónimo (id.chave): já existe ficha dela — mescla,
+           nunca `criarNPC` por cima (apagaria laço e consultas já firmados;
+           sem isto, este mesmo cânone recriaria "Delfina" do zero a cada
+           turno, porque a chave literal "Delfina da Névoa" nunca entra no
+           registo e o `continue` de cima não a barra de novo). */
+        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurno, conhecidoEm: e0.dia };
+        if (!tocou) { reg = { ...reg }; tocou = true; }
+        reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);
+      }
+      if (homonimos.length) notas.push(notaDoHomonimo(homonimos));
+      if (tocou) {
+        npcs = reg; efeitosDoTurno.push({ tipo: "npcs", npcs: reg });
+        remontar = true;
+      }
+    }
+  if (remontar) efeitosDoTurno.push({ tipo: "remontarPrompt", personagem: pers });
+  return {
+    estado: { ...e0, canone, mapa, npcs, npcTurno },
+    efeitos: efeitosDoTurno, paraOCronista: notas, msgs,
+  };
 }

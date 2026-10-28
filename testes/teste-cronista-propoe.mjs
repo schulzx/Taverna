@@ -325,8 +325,10 @@ sec("6. A FIAÇÃO — o App aplica o `aceito`, e só ele");
      porque o Cronista ainda mora no App; quando sair (Fase 2), esta secção
      passa a jogar o turno pelo motor. As únicas leituras de `r` que ficam
      são as que o juízo precisa como ENTRADA: o grupo proposto (para a
-     porta do convite) e o lugar recusado (para a nota de correção). */
-  const APP = fs.readFileSync("../src/App.jsx", "utf8");
+     porta do convite) e o lugar recusado (para a nota de correção).
+     O fim de linha normaliza-se: a cópia de `git archive` (so-o-meu.sh)
+     sai em CRLF, e sem isto o recorte do corpo ia até ao fim do arquivo. */
+  const APP = fs.readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
   const i0 = APP.indexOf("const cronistaDoTurno = async");
   const corpo = i0 >= 0 ? APP.slice(i0, APP.indexOf("\n  };\n", i0)) : "";
   t("o App importa o juízo do motor", /import \{[^}]*\bjulgarOCronista\b[^}]*\} from "\.\/motor\/cronista\.js"/.test(APP));

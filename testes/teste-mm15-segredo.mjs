@@ -432,10 +432,21 @@ sec("6. a fiação — App.jsx");
     pauta.indexOf("vetosDaAbertura(") < pauta.indexOf("vetoDoSegredo("));
 
   /* ---- 5. as duas portas do cânone, peneiradas, com fallback seguro ---- */
-  t("a porta do Narrador peneira resp.mudancas.canone antes do for, com fallback para a lista original se a peneira estourar",
-    app.includes('let canoneDoNarrador = resp.mudancas.canone;')
-    && app.includes('try { canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }')
-    && app.includes('for (const [nome, ficha] of Object.entries(canoneDoNarrador)) {'));
+  /* MOVIDA (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     A porta do Narrador mudou-se para `src/motor/aplicar.js#aplicarORegisto`
+     (pura); a intenção — o segredo de pé não entra, o resto entra, e se a
+     peneira estourar segue a lista original — prova-se jogando o registo. */
+  {
+    const { aplicarORegisto } = await import("../src/motor/aplicar.js");
+    const esp = { atos: [{ marcos: [{ id: "m1", feitio: "descobrir", onde: "Gruta das Vozes", titulo: "o que a gruta guarda", feito: false }] }] };
+    const jogar = (mundo) => aplicarORegisto({ personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, espinha: esp, dia: 1 },
+      { narrativa: "x", mudancas: { canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } } }, { mundo });
+    const r = jogar(null);
+    const estoura = jogar(() => { throw new Error("o mundo estourou"); });
+    t("a porta do Narrador peneira resp.mudancas.canone antes do for, com fallback para a lista original se a peneira estourar",
+      !r.estado.canone["Gruta das Vozes"] && !!r.estado.canone["a lâmina partida"]
+      && !!estoura.estado.canone["Gruta das Vozes"] && estoura.efeitos.some((e) => e.tipo === "calou" && e.onde === "peneirarCanone (Narrador)"));
+  }
   /* T1-A, 2.ª fatia (27/10): o cânone do Cronista passa antes pelo juízo do
      motor (motor/cronista.js, que marca o que só se ouviu numa fala); a
      peneira do segredo corre sobre o `aceito` (`ac.canone`), não sobre a

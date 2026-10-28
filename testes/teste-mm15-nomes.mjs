@@ -300,8 +300,11 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
 {
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
+  /* movida (27/10, T1-A 2.ª fatia, o oficial): a metade do JOGO do
+     contexto chama-se `baseDoNome` (a do nome é `contextoDoNomeCom`, no
+     motor, e `contextoDoNome` é a soma das duas) — a intenção é a mesma */
   t("contextoDoNome ganha `conhecidos` ao lado de `importantes`",
-    app.includes("  const contextoDoNome = (n) => {\n    const importantes = [];\n    const conhecidos = [];\n    try {"));
+    app.includes("  const baseDoNome = () => {\n    const importantes = [];\n    const conhecidos = [];\n    try {"));
   t("o elenco leva papel, sexo e `de: \"mundo\"` para quem não é da espinha/chefe",
     app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });'));
   t("o mural vira `conhecidos`: quem um cartaz (`falar_com`) nomeia, com a descrição",
@@ -315,8 +318,16 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
   /* E movida outra vez na MM-C · C0 (11/10): o mesmo retorno, com `heroi` no
      fim — `nomeComDono` recusa o nome do herói ("E aí, Tamsin?") como gente
      da cena (npcs.js, contexto.heroi). */
+  /* E movida na T1-A 2.ª fatia (27/10, o oficial): o retorno partiu-se — a
+     base do JOGO (com o grupo, o aqui e o herói) no App, e a metade do NOME
+     (local, gênero, papel, notas) em `contextoDoNomeCom` (motor/aplicar.js),
+     provada pelo que devolve. O que chega a `nomeComDono` é o mesmo objeto. */
+  const { contextoDoNomeCom } = await import("../src/motor/aplicar.js");
+  const somado = contextoDoNomeCom({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], aqui: ["a"], heroi: "h" }, { local: "L", genero: "ela", papel: "p", notas: "n", status: "vivo", descricao: "d" });
   t("o retorno leva conhecidos, recentes, grupo, papel e notas ao motor novo",
-    app.includes('return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };'));
+    app.includes('return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };')
+    && app.includes("const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);")
+    && JSON.stringify(somado) === JSON.stringify({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], local: "L", genero: "ela", papel: "p", notas: "n · vivo · d", aqui: ["a"], heroi: "h" }));
 
   /* o "Lina," — o mesmo defeito de nomes, na mesma sessão: T10 não achou
      a Lina do Sal e foi contra "essa pessoa" porque `pessoaNaFrente` só

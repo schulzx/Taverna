@@ -578,10 +578,22 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      decidir `nomeCerto` (por `nomeComDono`, antes de checar a menção) e
      conferem a menção com ele — nunca com o nome cru do Mestre/cânone,
      que pode ser um apelido do mesmo homônimo que já vale como "a pista". */
-  t("os NPCs que o Mestre envia não registam a pista/alvo antes da hora",
-    aplicar.includes("if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) return;"));
-  t("nem as pessoas do cânone sem ficha",
-    aplicar.includes("if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) continue;"));
+  /* MOVIDAS (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     As duas portas mudaram-se para `src/motor/aplicar.js#aplicarORegisto`
+     (puro). A intenção é a mesma — a pista não entra no registo antes de o
+     herói chegar ao lugar dela, nem pela ficha do Narrador nem pelo cânone —
+     e prova-se jogando o registo com a abertura, antes e depois de chegar. */
+  {
+    const { aplicarORegisto } = await import("../src/motor/aplicar.js");
+    const ab = { principalId: "m_p", cidade: "Monte Rasa", pista: { nome: "Wystan", local: "o Moinho Velho" }, alvo: { quem: "Edric Vau", onde: "Ponte Lenta" } };
+    const ms = [{ id: "m_p", titulo: "O fio", tipo: "principal", status: "ativa", etapas: [{ tipo: "falar_com", alvo: "Wystan", feito: false }] }];
+    const reg = (md, lugar) => aplicarORegisto({ personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, abertura: ab, lugar, missoes: ms, dia: 1 },
+      { narrativa: "x", mudancas: md }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Ana" } }).estado.npcs;
+    t("os NPCs que o Mestre envia não registam a pista/alvo antes da hora",
+      !reg({ npcs: [{ nome: "Wystan", papel: "moleiro" }] }, null).Wystan && !!reg({ npcs: [{ nome: "Wystan", papel: "moleiro" }] }, { nome: "o Moinho Velho" }).Wystan);
+    t("nem as pessoas do cânone sem ficha",
+      !reg({ canone: { Wystan: { tipo: "pessoa", papel: "moleiro" } } }, null).Wystan && !!reg({ canone: { Wystan: { tipo: "pessoa", papel: "moleiro" } } }, { nome: "o Moinho Velho" }).Wystan);
+  }
   t("nem quem é só mencionado na narrativa — e sai também dos ids de revelação",
     aplicar.includes("const genteRevelavel = m.gente.filter((p) => !aindaSoUmNome(aberturaMundoRef.current, p.nome, { lugar: lugarRef.current, missoes: missoesRef.current }));")
     && aplicar.includes("...genteRevelavel.map((p) => idDaGente(cidadeAtualRef.current, p)),")

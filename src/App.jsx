@@ -235,7 +235,7 @@ import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semearACasa, sorteDaCasa } from "./semente.js";
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
-import { aplicar, notaComOTurno } from "./motor/aplicar.js";
+import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
@@ -10513,7 +10513,11 @@ export default function Taverna() {
      marcos da espinha, o grupo, o elenco do mundo (com a cidade dele, para
      que um homónimo de alguém ainda não encontrado não seja recusado sem
      razão) e quem uma missão ativa pede. */
-  const contextoDoNome = (n) => {
+  /* T1-A, 2.ª fatia: a metade do JOGO (a que não depende do nome) é
+     `baseDoNome`; a do nome junta-se em `contextoDoNomeCom` (motor/aplicar.js),
+     que o registo do turno também usa — os dois dizem a mesma coisa porque
+     são a mesma linha. */
+  const baseDoNome = () => {
     const importantes = [];
     const conhecidos = [];
     try {
@@ -10529,8 +10533,9 @@ export default function Taverna() {
     let recentes = [];
     try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }
     const mm = masmorraRef.current;
-    return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], local: (n && n.local) || "", genero: (n && n.genero) || "", papel: (n && n.papel) || "", notas: [n && n.notas, n && n.status, n && n.descricao].filter((x) => typeof x === "string" && x).join(" · "), aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };
+    return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };
   };
+  const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);
 
   /* OS EFEITOS DO MOTOR, NUM LUGAR SÓ (T1-A, 27/10). O motor (`aplicar`)
      não escreve em ref nem chama setX: devolve o estado novo e descreve o
@@ -10549,6 +10554,13 @@ export default function Taverna() {
         if (ef.tipo === "combate") { combateRef.current = ef.combate; setCombate(ef.combate); }
         else if (ef.tipo === "textura") texturaRef.current = { ...texturaRef.current, ganho: true };
         else if (ef.tipo === "calou") calou(ef.onde, ef.erro);
+        /* o registo (T1-A, 2.ª fatia): o cânone, o mapa, a gente, e o prompt
+           remontado com tudo isso já no lugar — o próximo turno enxerga */
+        else if (ef.tipo === "canone") canoneRef.current = ef.canone;
+        else if (ef.tipo === "mapa") { mapaRef.current = ef.mapa; setMapa(ef.mapa); }
+        else if (ef.tipo === "npcTurno") npcTurnoRef.current = ef.npcTurno;
+        else if (ef.tipo === "npcs") { npcsRef.current = ef.npcs; setNpcs(ef.npcs); }
+        else if (ef.tipo === "remontarPrompt") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }
     }
   };
@@ -10836,91 +10848,23 @@ export default function Taverna() {
        proximo a ler este arquivo tem de decidir se ele importa. Sai.
 
        (Ele lia RESPOSTA, e nao save: nenhuma campanha salva depende disto.) */
-    /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
-    if (resp.mudancas && resp.mudancas.canone && typeof resp.mudancas.canone === "object") {
-      const c = { ...canoneRef.current };
-      /* MM15 (4): nenhum segredo que a espinha ainda guarda vira cânone
-         pela boca do Narrador — a peneira recusa em silêncio; se ela
-         estourar, segue o comportamento de hoje (nunca pior para o segredo). */
-      let canoneDoNarrador = resp.mudancas.canone;
-      try { canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }
-      for (const [nome, ficha] of Object.entries(canoneDoNarrador)) {
-        if (!nome || !ficha || typeof ficha !== "object") continue;
-        /* v9.36: registra em silêncio. O jogador acabou de LER a coisa na
-           narração; avisá-lo de que ela foi arquivada é o sistema falando de
-           si mesmo, e o códex está a um toque para quem quiser conferir. */
-        c[nome] = { ...(c[nome] || {}), ...ficha };
-      }
-      canoneRef.current = c;
-      /* rede de segurança do MAPA: se o cânone registra um lugar (tipo local/
-         cidade/vila/capital), garante que ele exista no mapa mesmo que o Mestre
-         não tenha enviado "mapa_cidades". Assim o mapa nunca fica vazio. */
-      let mp2 = mapaRef.current, tocouMapa = false;
-      for (const [nome, ficha] of Object.entries(c)) {
-        const tipo = (ficha.tipo || "").toLowerCase();
-        const ehLugar = ["local", "cidade", "vila", "capital", "fortaleza", "vilarejo", "povoado", "reduto", "ruína"].some((t) => tipo.includes(t));
-        if (!ehLugar) continue;
-        if (!(mp2.cidades || []).some((cc) => cc.nome.toLowerCase() === nome.toLowerCase())) {
-          if (!tocouMapa) { mp2 = { ...mp2, cidades: [...(mp2.cidades || [])], faccoes: [...(mp2.faccoes || [])] }; tocouMapa = true; }
-          mp2.cidades.push(criarCidade(nome, { tipo: tipo.includes("capital") ? "capital" : tipo.includes("vila") || tipo.includes("povoado") ? "vila" : "cidade", regiao: ficha.local || "", faccao: ficha.faccao || null, notas: ficha.notas || "" }));
-          msgs.push(`🗺 ${nome} surgiu no mapa`);
-        }
-      }
-      if (tocouMapa) { mp2 = garantirGeografia(mp2, "taverna|canone"); mapaRef.current = mp2; setMapa(mp2); }
-      systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, c, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-    }
-    /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
-       memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
-    if (resp.mudancas) {
-      npcTurnoRef.current += 1;
-      let reg = npcsRef.current;
-      let tocou = false;
-      /* MM14 · 10a: um nome novo que colide com quem já importa (mesmo
-         primeiro nome) é a mesma pessoa, ou é recusado — as três portas do
-         registo (aqui, o cânone logo abaixo, e o Cronista mais adiante)
-         passam por `nomeComDono` antes de criar ou mesclar ficha. */
-      const homonimos = [];
-      [].concat(resp.mudancas.npcs || []).forEach((n) => {
-        if (!n || !n.nome) return;
-        let id = null;
-        try { id = nomeComDono(n.nome, reg, contextoDoNome(n)); } catch (e) { calou("nomeComDono", e); }
-        if (id && id.decisao === "recusada") { homonimos.push(id); return; }
-        const nomeCerto = (id && id.nome) || n.nome;
-        /* MM13: a menção não é presença — o nome da pista (ou do alvo) da
-           abertura não entra no registo antes de o herói de fato chegar. */
-        if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) return;
-        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
-        const ficha = chave
-          ? mesclarNPC(reg[chave], { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: reg[chave].conhecidoEm != null ? reg[chave].conhecidoEm : diaRef.current })
-          : criarNPC(nomeCerto, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });
-        if (!tocou) { reg = { ...reg }; tocou = true; }
-        reg[chave || nomeCerto] = ficha;
-      });
-      for (const [nome, f] of Object.entries(canoneRef.current || {})) {
-        if (!f || !String(f.tipo || "").toLowerCase().includes("pessoa")) continue;
-        if (Object.keys(reg).some((k) => k.toLowerCase() === nome.toLowerCase())) continue;
-        let id = null;
-        try { id = nomeComDono(nome, reg, contextoDoNome(f)); } catch (e) { calou("nomeComDono", e); }
-        if (id && id.decisao === "recusada") { homonimos.push(id); continue; }
-        const nomeCerto = (id && id.nome) || nome;
-        /* MM13: idem — a menção não é presença. */
-        if (aindaSoUmNome(aberturaMundoRef.current, nomeCerto, { lugar: lugarRef.current, missoes: missoesRef.current })) continue;
-        const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === nomeCerto.toLowerCase());
-        /* chave achada por homónimo (id.chave): já existe ficha dela — mescla,
-           nunca `criarNPC` por cima (apagaria laço e consultas já firmados;
-           sem isto, este mesmo cânone recriaria "Delfina" do zero a cada
-           turno, porque a chave literal "Delfina da Névoa" nunca entra no
-           registo e o `continue` de cima não a barra de novo). */
-        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current };
-        if (!tocou) { reg = { ...reg }; tocou = true; }
-        reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);
-      }
-      if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoHomonimo(homonimos)}`;
-      if (tocou) {
-        npcsRef.current = reg; setNpcs(reg);
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-      }
-    }
+    /* ---------------- O REGISTO, NO MOTOR (T1-A, 2.ª fatia, 27/10) ----------------
+       O cânone que o Narrador declarou (com a peneira do segredo, MM15 (4),
+       e a rede de segurança do mapa) e a gente (as fichas que ele mandou e
+       as PESSOAS do cânone sem ficha, com a porta do homónimo, MM14 · 10a, e
+       a menção que não é presença, MM13) moram em `aplicarORegisto`
+       (src/motor/aplicar.js), na mesma ordem e com os porquês de cada linha.
+       Daqui só sai a fiação: o estado que ele lê, e os efeitos — o cânone,
+       o mapa, a gente e o prompt remontado — aplicados num lugar só
+       (`aplicarOsEfeitos`). Provado byte a byte contra o bloco de antes. */
+    try {
+      const registo = aplicarORegisto({
+        personagem: pers, canone: canoneRef.current, mapa: mapaRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current,
+        espinha: espinhaRef.current, abertura: aberturaMundoRef.current, lugar: lugarRef.current, missoes: missoesRef.current, dia: diaRef.current,
+      }, resp, { mundo: mundoDaBase, baseDoNome: baseDoNome });
+      msgs.push(...registo.msgs);
+      aplicarOsEfeitos(registo);
+    } catch (e) { calou("o registo do turno", e); }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
     if (resp.mudancas) {

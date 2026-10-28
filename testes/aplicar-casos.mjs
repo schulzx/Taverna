@@ -105,6 +105,97 @@ export function casosDoAplicar() {
   });
 }
 
+/* ============================================================
+   OS CASOS DO REGISTO (T1-A, 2.ª fatia) — o cânone e a gente
+
+   As mesmas 275 narrações reais; o que os registos não guardam (o cânone
+   e as fichas que o Narrador declarou, o cânone e a gente de antes, a
+   espinha com um segredo de pé, a abertura com a pista ainda por achar)
+   varia pelo índice, com os NOMES dos registos (os `conhecidos` de cada
+   turno do Cronista), para que cada ramo dos dois blocos corra muitas
+   vezes: a peneira que recusa, o lugar que surge no mapa, a mescla, a
+   pessoa do cânone que vira ficha, a menção que não é presença, o nome
+   repetido, o lixo. A sorte da casa é semeada por caso (a geografia a usa).
+   ============================================================ */
+const NOMES_DE_FORA = ["Freya", "Ursa o Andarilho", "Nyla", "Marga Pedrafria", "Ordem dos Esquecidos"];
+const CIDADES = [
+  { nome: "Monte Rasa", x: 40, y: 40, tipo: "cidade", regiao: "Vale", populacao: 2400 },
+  { nome: "Nova Profundo", x: 90, y: 60, tipo: "cidade", regiao: "Costa", populacao: 9000 },
+];
+const PISTA = { nome: "Wystan", local: "Monte Rasa" };
+const ALVO = { quem: "Edric Vau", onde: "Ponte Lenta" };
+const SEGREDO = "Gruta das Vozes";
+
+export function casosDoRegisto() {
+  const cron = ler("registo-s8-s10-cronista.json").turnos;
+  const cena = ler("registo-s10-cena.json");
+  const fontes = [
+    ...cron.map((x) => ({ narrativa: x.narrativa || "", conhecidos: (x.conhecidos || []).filter((n) => typeof n === "string" && n.trim()), ses: x.ses + "#" + x.k })),
+    ...cena.respostas.map((r, k) => ({ narrativa: String(r || ""), conhecidos: [], ses: "s10-cena#" + k })),
+  ];
+  return fontes.map((f, i) => {
+    const nomes = [...new Set([...f.conhecidos, ...NOMES_DE_FORA])];
+    const N = (k) => nomes[(i + k) % nomes.length];
+    const novo = `Brann ${["Ferro", "Vau", "Cinza", "Lume", "Sal"][i % 5]}`;
+    const canoneAntes = {
+      "Monte Rasa": { tipo: "cidade", descricao: "a cidade da ladeira" },
+      [N(0)]: { tipo: i % 2 ? "pessoa" : "organizacao", descricao: "conhecido de antes", papel: "contato" },
+      ...(i % 3 === 0 ? { "a lâmina partida": { tipo: "artefato", descricao: "o que sobrou da espada", detalhes: "" } } : {}),
+    };
+    const npcsAntes = i % 4 === 3 ? {} : {
+      [N(1)]: { nome: N(1), papel: "guarda", relacao: "neutro", genero: "homem", local: "Monte Rasa", ultimaVez: 2, conhecidoEm: 1, notas: "" },
+    };
+    const canone = [
+      undefined,
+      { [N(2)]: { tipo: "pessoa", descricao: "quem a cena trouxe", papel: "taberneira", genero: "mulher", local: "Monte Rasa" } },
+      { [`Vila ${["Funda", "Seca", "Alta"][i % 3]}`]: { tipo: i % 2 ? "vila" : "povoado", descricao: "uma aldeia na estrada", local: "Vale" }, "Torre Velha": { tipo: "ruína", descricao: "pedra caída" } },
+      { "a lâmina partida": { detalhes: "a guarda tem um corvo", dono: "Ana Cinza" }, [N(0)]: { notas: "voltou à cidade" } },
+      { [SEGREDO]: { tipo: "local", descricao: "uma gruta que fala" }, [novo]: { tipo: "pessoa", descricao: "um estranho", genero: "homem" } },
+      {},
+      { "Capital do Norte": { tipo: "capital", descricao: "a sede do reino", faccao: "Coroa" }, [PISTA.nome]: { tipo: "pessoa", descricao: "a pista", local: "Monte Rasa" } },
+    ][i % 7];
+    const npcs = [
+      undefined,
+      [{ nome: novo, papel: "ferreiro", genero: "homem", local: "Monte Rasa", relacao: "neutro" }],
+      [{ nome: N(1), notas: "fala baixo", local: "Nova Profundo" }],
+      [{ nome: PISTA.nome, papel: "informante" }],
+      [{ nome: N(3), papel: "viajante" }, { nome: String(N(3)).toUpperCase(), papel: "o mesmo" }],
+      [null, { nome: "" }, { nome: novo, papel: "guarda", conhecidoEm: 1 }],
+      { nome: N(4), papel: "um só, sem lista", genero: "mulher" },
+      [{ nome: `${String(N(0)).split(" ")[0]} da Névoa`, papel: "recrutadora", local: "Nova Profundo" }],
+    ][i % 8];
+    const md = i % 11 === 10 ? undefined : { ...(canone === undefined ? {} : { canone }), ...(npcs === undefined ? {} : { npcs }) };
+    const comAbertura = i % 5 === 0;
+    return {
+      id: f.ses,
+      semente: `registo-dourado|${i}`,
+      resp: md === undefined ? { narrativa: f.narrativa } : { narrativa: f.narrativa, mudancas: md },
+      estado: {
+        personagem: { nome: "Ana Cinza", nivel: 3 + (i % 4), grupo: i % 2 ? [{ nome: "Freya" }] : [] },
+        canone: canoneAntes,
+        mapa: { cidades: CIDADES.map((c) => ({ ...c })), faccoes: [] },
+        npcs: npcsAntes,
+        npcTurno: i % 9,
+        espinha: i % 4 === 0 ? { atos: [{ marcos: [{ id: "m1", feitio: "descobrir", onde: SEGREDO, titulo: "o que a gruta guarda", feito: false }] }] } : null,
+        abertura: comAbertura ? { principalId: "m_principal", cidade: "Monte Rasa", pista: { ...PISTA }, alvo: { ...ALVO } } : null,
+        lugar: i % 3 === 1 ? { nome: "a fazenda de Jessa" } : null,
+        missoes: comAbertura ? [{ id: "m_principal", titulo: "O fio da pista", tipo: "principal", status: "ativa", etapas: [{ tipo: "falar_com", alvo: PISTA.nome, feito: false }] }] : [],
+        dia: 3 + (i % 10),
+      },
+      ctx: {
+        mundo: { semente: `mundo|${i % 3}`, mapa: { cidades: CIDADES.map((c) => ({ ...c })), faccoes: [] }, genero: "", molde: null, lex: null, base: null },
+        baseDoNome: { importantes: nomes.slice(0, 4).map((nome) => ({ nome })), conhecidos: [], recentes: [f.narrativa.slice(0, 160)], grupo: i % 2 ? [{ nome: "Freya" }] : [], aqui: ["Monte Rasa"], heroi: "Ana Cinza" },
+      },
+      notaAntes: i % 4 === 1 ? "[NOTA DE ANTES]" : "",
+    };
+  });
+}
+
+/* o retrato do registo: o que o App guarda e mostra depois dos dois blocos */
+export function retratoDoRegisto({ canone, mapa, npcs, npcTurno, nota, msgs, remontou }) {
+  return JSON.stringify({ canone, mapa, npcs, npcTurno, nota, msgs, remontou });
+}
+
 /* a forma comum do resultado, a que o dourado grava e a que o teste compara */
 export function retrato({ pers, msgs, nota, combate, danoJaAplicado, habUsada, textura, resp }) {
   return JSON.stringify({ pers, msgs, nota, combate, danoJaAplicado, habUsada, textura, resp });

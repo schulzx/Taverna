@@ -759,7 +759,10 @@ sec("10. as duas fichas e a homónima (3.ª sessão de prova, defeito 3)");
      (`prova2`, contadas e ditas); agora mordem — se alguém desligar uma das três
      linhas, a companheira volta a ter duas fichas e a suíte cai. */
   const prova2 = (nome, cond) => t(nome, cond);
-  prova2("contextoDoNome passa o grupo a nomeComDono", /const contextoDoNome = \(n\) => \{[\s\S]{0,4000}?return \{ importantes, conhecidos, recentes, grupo:/.test(APP));
+  /* movida (27/10, T1-A 2.ª fatia, o oficial): a metade do JOGO do contexto
+     chama-se `baseDoNome`, e `contextoDoNome` é ela somada à do nome
+     (`contextoDoNomeCom`, motor/aplicar.js) — o grupo vai na base */
+  prova2("contextoDoNome passa o grupo a nomeComDono", /const baseDoNome = \(\) => \{[\s\S]{0,4000}?return \{ importantes, conhecidos, recentes, grupo:/.test(APP) && /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
   prova2("mencionadosNaCena recebe o grupo", /mencionadosNaCena\([^;]*\{ grupo: /.test(APP));
   prova2("a procura passa quem está perto (o grupo e a cena)", /nomeProcurado\(acao, nomesConhecidos\(\), \{ perto: /.test(APP));
 }

@@ -321,8 +321,12 @@ sec("6. a fiação — App.jsx");
     app.includes('viuAntes: (() => { try { return jaMeViuAntes(n, { hoje: diaRef.current, vistos: (elencoSaveRef.current || {}).vistos }); } catch (e) { calou("viuAntes", e); return false; } })(),'));
 
   /* ---- 10a: o helper, e as três portas + o mural ---- */
+  /* movida (27/10, T1-A 2.ª fatia, o oficial): o helper partiu-se em dois —
+     a metade do JOGO (`baseDoNome`, no App) e a do NOME
+     (`contextoDoNomeCom`, motor/aplicar.js), que o registo do turno também
+     usa; `contextoDoNome` é a soma das duas, e continua antes de aplicarResposta */
   t("contextoDoNome existe, antes de aplicarResposta",
-    app.includes("const contextoDoNome = (n) => {") && app.indexOf("const contextoDoNome = (n) => {") < app.indexOf("const aplicarResposta = useCallback("));
+    app.includes("const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);") && app.indexOf("const baseDoNome = () => {") < app.indexOf("const contextoDoNome = (n) =>") && app.indexOf("const contextoDoNome = (n) =>") < app.indexOf("const aplicarResposta = useCallback("));
   t("lê a pista e o alvo da abertura",
     app.includes('if (a.pista && a.pista.nome) importantes.push({ nome: a.pista.nome, onde: a.pista.local || "" });')
     && app.includes('if (a.alvo && a.alvo.quem) importantes.push({ nome: a.alvo.quem, onde: a.alvo.onde || "" });'));
@@ -338,22 +342,43 @@ sec("6. a fiação — App.jsx");
   t("lê quem uma missão ativa pede",
     app.includes('for (const q of (missoesRef.current || [])) if (q && q.status === "ativa") for (const x of [q.dador, ...(q.etapas || []).map((e) => e && e.alvo)]) if (x) importantes.push({ nome: x });'));
 
+  /* MOVIDAS (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     As duas portas do Narrador (as fichas que ele manda e as PESSOAS do
+     cânone sem ficha) mudaram-se do `aplicarResposta` para
+     `src/motor/aplicar.js#aplicarORegisto`, puro: o turno se JOGA em Node,
+     e a intenção destas asserções (a porta do homónimo nas duas, o nome
+     certo na chave, a mescla nunca por cima, a nota quando recusa) prova-se
+     pelo estado que sai. No App fica a terceira porta (a do Cronista). */
+  const { aplicarORegisto } = await import("../src/motor/aplicar.js");
+  const IMP = [{ nome: "Teodoro das Tábuas", onde: "Foz do Meio" }, { nome: "Delfina", onde: "A Porta Aberta, Alto do Sal" }];
+  const registo = (npcs, canone, regAntes, aqui) => aplicarORegisto(
+    { personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: regAntes || {}, npcTurno: 0, espinha: null, abertura: null, lugar: null, missoes: [], dia: 5 },
+    { narrativa: "x", mudancas: { ...(npcs ? { npcs } : {}), ...(canone ? { canone } : {}) } },
+    { mundo: null, baseDoNome: { importantes: IMP, conhecidos: [], recentes: [], grupo: [], aqui: aqui || ["Foz do Meio", "o Cais do Sal"], heroi: "Ana" } });
   const chamadas = app.split('id = nomeComDono(').length - 1;
-  t(`nomeComDono é chamado nas três portas (${chamadas} chamadas, cada uma em try)`, chamadas === 3);
+  const rN = registo([{ nome: "Delfina da Névoa", genero: "homem" }]);
+  const rC = registo(null, { "Delfina da Névoa": { tipo: "pessoa", genero: "homem" } });
+  t(`nomeComDono é chamado nas três portas (no App, a do Cronista: ${chamadas}; as duas do Narrador recusam no motor)`, chamadas === 1 && !rN.estado.npcs["Delfina da Névoa"] && !rC.estado.npcs["Delfina da Névoa"]);
   t("a porta mudancas.npcs recusa e acumula em homonimos, sem entrar no registo",
     app.includes('if (id && id.decisao === "recusada") { homonimos.push(id); return; }') && app.includes("const nomeCerto = (id && id.nome) || n.nome;"));
+  /* (movidas com as de cima, o mesmo motivo) — em Alto do Sal, "Delfina da
+     Névoa" é ELA: entra com o nome dela, e quem já tem ficha é mesclado */
+  const rAlto = registo([{ nome: "Delfina da Névoa", papel: "contrabandista", genero: "mulher" }], null, null, ["Alto do Sal", "A Porta Aberta"]);
   t("e usa nomeCerto na chave e no criarNPC/mesclarNPC",
-    app.includes('const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());')
-    && app.includes(": criarNPC(nomeCerto, { ...n, ultimaVez: npcTurnoRef.current, conhecidoEm: n.conhecidoEm != null ? n.conhecidoEm : diaRef.current });"));
+    !!rAlto.estado.npcs.Delfina && !rAlto.estado.npcs["Delfina da Névoa"] && rAlto.estado.npcs.Delfina.ultimaVez === 1 && rAlto.estado.npcs.Delfina.conhecidoEm === 5);
+  const regComDelfina = { Delfina: criarNPC("Delfina", { papel: "contrabandista", relacao: "aliado", genero: "mulher", local: "A Porta Aberta, Alto do Sal", conhecidoEm: 4 }) };
+  const rMescla = registo(null, { "Delfina da Névoa": { tipo: "pessoa", genero: "mulher", notas: "a da porta" } }, regComDelfina, ["Alto do Sal"]);
   t("a porta do cânone (com `continue`) mescla quando a chave já existe — nunca criarNPC por cima (apagaria laço e consultas)",
-    app.includes('reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);'));
+    !!rMescla.estado.npcs.Delfina && rMescla.estado.npcs.Delfina.relacao === "aliado" && rMescla.estado.npcs.Delfina.conhecidoEm === 4 && !rMescla.estado.npcs["Delfina da Névoa"]);
   /* asserção movida na fiação da E3 (12/10, v9.424): a ficha do Cronista
      passa antes por fichaDoCronista (o gênero, npcs.js) e chega como `nF`
      em vez de `n`. A intenção — nomeCerto na chave e no criarNPC — é a mesma. */
   t("a porta do Cronista (`pessoas`, com slice(0, 40)) idem, com nomeCerto",
     app.includes('else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });'));
+  /* (movida com as de cima, o mesmo motivo) — a nota sai em `paraOCronista`,
+     que o App soma à nota do turno (aplicarOsEfeitos, notaComOTurno) */
   t("as duas portas do registo somam a nota do Narrador quando há recusa",
-    app.split('if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\\n" : ""}${notaDoHomonimo(homonimos)}`;').length - 1 === 2);
+    rN.paraOCronista.length === 1 && /NOMES/.test(rN.paraOCronista[0]) && rC.paraOCronista.length === 1 && /NOMES/.test(rC.paraOCronista[0]));
   t("o mural só prega se o dador não for recusado por homônimo",
     app.includes('semHomonimo = nomeComDono(cartaz.dador, npcsRef.current, contextoDoNome({})).decisao !== "recusada";')
     /* 7.ª sessão (M26–M27), asserção movida: a porta do mural ganhou um
