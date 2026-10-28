@@ -70,5 +70,21 @@ sec("3. O QUE SEMPRE FEZ, CONTINUA");
   t("o piso é zero", desce.membro.vinculo === 0);
 }
 
+sec("4. O NULO DEVOLVE NULO (Fase T, trilha B, 28/10)");
+{
+  /* um buraco no grupo (um membro nulo) chegava aqui pelo vínculo de
+     "todos" e estourava em membro.vinculo: a vitória caía no meio. O
+     nulo devolve nulo, sem marco, e quem chama guarda o buraco onde ele
+     estava. */
+  for (const nada of [null, undefined]) {
+    const { r, erro } = tenta(() => ganharVinculo(nada, 2));
+    t("ganharVinculo(" + nada + ") não estoura" + (erro ? " — " + erro.message : ""), !erro);
+    t("e devolve o membro nulo, sem marco", !!r && r.membro === null && r.marcoNovo === null);
+  }
+  const grupo = [{ nome: "Brás", vida: 9, vidaMax: 15, vinculo: 24, marcos: [] }, null];
+  const { r: depois, erro } = tenta(() => grupo.map((g) => ganharVinculo(g, 2).membro));
+  t("um grupo com um buraco passa pelo vínculo de todos, e o buraco fica onde estava", !erro && depois.length === 2 && depois[0].vinculo === 26 && depois[1] === null);
+}
+
 console.log(`\nvínculos: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

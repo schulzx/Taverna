@@ -44,8 +44,12 @@ export function proximoMarco(vinculo) {
    A lista de marcos devolvida é NOVA: até a Fase T (28/10) o marco era
    empurrado na lista do membro de entrada, e a ficha de antes do turno (a
    do ref, a que o dourado e o desfazer leem) ganhava o marco sem os PV —
-   uma segunda chamada sobre ela já não dava nem um, nem os outros. */
+   uma segunda chamada sobre ela já não dava nem um, nem os outros.
+   O nulo devolve nulo, sem marco: um buraco no grupo chegava aqui pelo
+   vínculo de "todos" e estourava em `membro.vinculo`, e a vitória caía no
+   meio (Fase T, trilha B, 28/10). Quem chama guarda o buraco onde estava. */
 export function ganharVinculo(membro, pontos) {
+  if (membro == null) return { membro: null, marcoNovo: null };
   const antes = membro.vinculo ?? VINCULO_INICIAL;
   const depois = Math.max(0, Math.min(VINCULO_MAX, antes + pontos));
   const marcos = Array.isArray(membro.marcos) ? [...membro.marcos] : [];
