@@ -30,6 +30,7 @@ import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SELOS_DO_RESOLVIDO, ehTurnoResolvido } from "../src/guardado.js";
+import { ENVELOPES_DA_MASMORRA } from "../src/motor/envelopes-do-turno.js";
 
 /* mesmo `chdir` de `rodar-tudo.mjs`: os `readFileSync` daqui resolvem
    pelo diretório de trabalho, e este varredor precisa dizer a mesma
@@ -158,12 +159,44 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
     }
     if (realOk) ok(`o envelope real de cada sala de luta (${Object.keys(SALAS_DE_LUTA).join(", ")}) é turno resolvido para a trava`);
   }
-  const candidatos = [...doApp, ...daMasmorra];
+
+  /* OS TRÊS QUE MUDARAM DE CASA (T2-A, 28/10/2026, o oficial). A armadilha
+     resolvida, o tesouro e o santuário da masmorra eram literais em
+     `enviar(` do App; a T2-A levou-os para a tabela ENVELOPES_DA_MASMORRA
+     (src/motor/envelopes-do-turno.js), e o App passou a mandar
+     `enviar(oEnvelopeDaMasmorra("…", …))` — opaco para o leitor de
+     literais. A conta do App caiu de 8 para 5 sem que nenhum envelope
+     sumisse. Como em v9.348, a catraca segue-os até à casa nova, com as
+     mesmas três garantias, e por COMPORTAMENTO (o envelope é montado pela
+     tabela, não lido no texto do motor):
+       1. o cabeçalho de cada envelope REAL da tabela que anuncia turno
+          resolvido entra na conta de candidatos (o total segue 9);
+       2. o App continua a mandar cada um por `enviar(oEnvelopeDaMasmorra("<forma>"`;
+       3. o envelope real é lido por `ehTurnoResolvido` (vai na conta de
+          `escapam` abaixo, como os outros). */
+  const doMotor = [];
+  {
+    const AMOSTRA = { pos: "Cripta dos Sussurros · camada 1 · 2/9 salas", nomeArmadilha: "Fosso de Estacas", salva: { passou: false }, alvo: "Iris", sofrido: 3, depois: "", minutos: 10, tempo: "", aviso: "", moedas: 30, item: null, cena: "um nicho de água limpa", masmorra: "Cripta dos Sussurros", total: 12, segredo: null, achou: false, achado: null };
+    for (const [forma, montar] of Object.entries(ENVELOPES_DA_MASMORRA)) {
+      const real = montar(AMOSTRA);
+      const cab = /^\s*\[([^\]]*)\]/.exec(real);
+      const selo = cab ? cab[1] : "";
+      if (!(ANUNCIA.some((r) => r.test(selo)) && !EXCLUI.some((r) => r.test(selo)))) continue;
+      doMotor.push({ linha: forma, arquivo: "src/motor/envelopes-do-turno.js#ENVELOPES_DA_MASMORRA", selo });
+      if (!APP.includes('enviar(oEnvelopeDaMasmorra("' + forma + '"')) {
+        falha(`o App deixou de mandar o envelope resolvido ` + forma + ` por enviar(oEnvelopeDaMasmorra("` + forma + `"`,
+          "a catraca conta este envelope como um dos 9 resolvidos. Se o App passou a mandá-lo por outro caminho, o caminho novo tem de entrar na conta — e este elo sai com o motivo escrito");
+      }
+    }
+    ok(`os envelopes resolvidos da tabela da masmorra (` + doMotor.map((e) => e.linha).join(", ") + `) seguem na conta, montados pela tabela`);
+  }
+  const candidatos = [...doApp, ...daMasmorra, ...doMotor];
 
   /* ---------------- A CATRACA ----------------
      O NÚMERO MEDIDO HOJE: 9 envelopes resolvidos saem por `enviar(` com
-     o selo escrito no literal (8 no App e 1 em `envelopeDaLuta`, de
-     src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima) — e o número conta os CANDIDATOS, não os
+     o selo escrito no literal (5 no App, 1 em `envelopeDaLuta`, de
+     src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima —, e 3 na
+     tabela da masmorra do motor — "OS TRÊS QUE MUDARAM DE CASA") — e o número conta os CANDIDATOS, não os
      aprovados. É de propósito: se ele contasse só quem casa um `padrao`,
      consertar a tabela de selos mexeria na catraca, e uma catraca que se
      move quando se conserta o que ela acusa não acusa nada.

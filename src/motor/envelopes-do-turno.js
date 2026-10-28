@@ -71,3 +71,39 @@ export function aFormaDaqui(cidade) {
   const f = formaDaCidade(cidade);
   return `${F.abre}${cidade.nome} é ${f.nota}. ${f.muro.id === "nenhum" ? F.semMuro : `A defesa é ${f.muro.rotulo}: ${f.muro.nota}.`}${f.agua ? F.agua : ""}${f.aperto < 1 ? F.aperto : ""}`;
 }
+
+/* ============================================================
+   2.º GRUPO — A MASMORRA: o que o sistema já resolveu numa sala (a
+   armadilha que disparou, a contornada, a vista e ainda armada; o tesouro;
+   o santuário; a busca ativa) e a fuga que o jogador escolheu. Cada
+   envelope diz ao Narrador o que JÁ foi aplicado, para ele não o aplicar
+   de novo, e o que ainda é escolha do jogador.
+
+   E o ESCOPO DESTE TURNO (`SO_ISSO`, que estava no topo do App): a linha
+   que fecha os envelopes que respondem a um gesto da tela, para "ponho
+   Fulano no grupo" não virar uma viagem inteira.
+   ============================================================ */
+export const SO_ISSO = ` ESCOPO DESTE TURNO (obrigatório): responda SOMENTE ao que este envelope pede, na cena e no lugar onde já estou. NÃO inicie viagem, combate, missão ou cena nova; NÃO mude de local; NÃO faça o tempo passar; NÃO invente personagem, item ou recompensa. Termine devolvendo a palavra para mim.`;
+
+/* os envelopes da sala, pelo que aconteceu; cada um recebe só o que lê */
+export const ENVELOPES_DA_MASMORRA = {
+  armadilhaResolvida: ({ pos, nomeArmadilha, salva, alvo, sofrido, depois }) =>
+    `[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${nomeArmadilha}). ${salva ? `${alvo} fez a salvaguarda (${salva.passou ? "passou" : "falhou"}). ` : ""}${alvo} já sofreu ${sofrido} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${depois}`,
+  armadilhaContornada: ({ pos, nomeArmadilha, minutos, tempo }) =>
+    "[MASMORRA — " + pos + " · ARMADILHA CONTORNADA PELO SISTEMA] A armadilha (" + (nomeArmadilha || "uma armadilha") + ") continua armada: o herói achou o caminho rente a ela sem a tocar, e isso custou " + minutos + " min e uma tocha (já descontados pelo app). Nada disparou e ninguém se feriu. Narre a passagem lenta." + tempo,
+  armadilhaAVista: ({ pos, nomeArmadilha, aviso, tempo }) =>
+    "[MASMORRA — " + pos + " · ARMADILHA À VISTA, AINDA ARMADA] O herói notou a armadilha (" + (nomeArmadilha || "uma armadilha") + ") ANTES de pisar nela: ela NÃO disparou e ninguém se feriu. Narre o que ele vê — o gatilho, o fio, a placa — e pare aí: desarmar, contornar ou passar assim mesmo é escolha dele, e o sistema resolve." + aviso + tempo,
+  tesouro: ({ pos, moedas, item, aviso, tempo }) =>
+    `[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.${aviso}${tempo}`,
+  santuario: ({ pos, cena, aviso, tempo }) =>
+    `[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${aviso}${tempo}`,
+  buscaAtiva: ({ masmorra, total, segredo, achou, achado }) =>
+    `[MASMORRA — BUSCA ATIVA · ${masmorra}] Vasculho a sala por dez minutos (Percepção ${total}${segredo ? ` vs ${segredo.cd}` : ""}). ${achou ? `ENCONTREI: ${achado.txt} (${achado.tipo.replace("_", " ")}). Narre a descoberta e o que ela abre.` : "Nada encontrado — narre a busca frustrada em 1-2 frases, sem inventar achados."} NÃO revele o que não foi achado.${SO_ISSO}`,
+  fuga: ({ masmorra }) =>
+    `[MASMORRA — FUGA] Eu ESCOLHI fugir de ${masmorra} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`,
+};
+export function oEnvelopeDaMasmorra(qual, dados) {
+  const f = ENVELOPES_DA_MASMORRA[qual];
+  if (!f) throw new Error("envelope da masmorra sem forma: " + qual);
+  return f(dados || {});
+}

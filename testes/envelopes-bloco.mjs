@@ -32,7 +32,7 @@ const NOMES = {
   semCidade: ["aquiDoTurno", "calaNaMasmorra"],
   prompt: ["SINAIS_ABERTOS"],
   chao: ["RAIO_EXAME"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, motorEnvelopes };
 function osModulos({ novo }) {
@@ -56,15 +56,32 @@ const corteDe = (app) => (de, ate) => {
   if (i1 < 0) throw new Error("o fim não está onde estava: " + ate.slice(0, 70));
   return app.slice(i0, i1);
 };
-export const BLOCOS = ["rodape"];
+/* Cada grupo diz onde o sítio começa e acaba no App de ANTES e no de HOJE.
+   No rodapé as âncoras são as mesmas (os nomes que ficaram); num envelope
+   de uma linha, o sítio é a própria linha do `enviar`, que muda de texto
+   para chamada: as duas pontas cortam-na até ao fim da linha. `antesDe`
+   são as linhas de fora do sítio que o App de antes lia (o SO_ISSO no topo). */
+export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga"];
+const FIM = "\n";
 const ANCORAS = {
-  rodape: ["    const rodape = ", "    const base = histBase ?? historico;"],
+  rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
+  masmorraArmadilha: { antes: ["      enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA]", FIM], hoje: ['      enviar(oEnvelopeDaMasmorra("armadilhaResolvida", ', FIM] },
+  masmorraContornada: { antes: ['        enviar("[MASMORRA — " + posDaMasmorra(r.mm, sala) + " · ARMADILHA CONTORNADA PELO SISTEMA]', FIM], hoje: ['        enviar(oEnvelopeDaMasmorra("armadilhaContornada", ', FIM] },
+  masmorraAVista: { antes: ['        enviar("[MASMORRA — " + pos + " · ARMADILHA À VISTA, AINDA ARMADA]', FIM], hoje: ['        enviar(oEnvelopeDaMasmorra("armadilhaAVista", ', FIM] },
+  masmorraTesouro: { antes: ["      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA]", FIM], hoje: ['      enviar(oEnvelopeDaMasmorra("tesouro", ', FIM] },
+  masmorraSantuario: { antes: ["      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA]", FIM], hoje: ['      enviar(oEnvelopeDaMasmorra("santuario", ', FIM] },
+  masmorraBusca: { antes: ["    enviar(`[MASMORRA — BUSCA ATIVA · ${mm.nome}]", FIM], hoje: ['    enviar(oEnvelopeDaMasmorra("buscaAtiva", ', FIM], antesDe: ["const SO_ISSO = ", FIM] },
+  masmorraFuga: { antes: ["    enviar(`[MASMORRA — FUGA]", FIM], hoje: ['    enviar(oEnvelopeDaMasmorra("fuga", ', FIM] },
 };
 const DEVOLVE = { rodape: "rodape" };
-export function recorteDosEnvelopes(app) {
+export function recorteDosEnvelopes(app, { novo } = {}) {
   const corte = corteDe(app);
   const r = {};
-  for (const b of BLOCOS) r[b] = { orgaos: corte(...ANCORAS[b]), devolve: DEVOLVE[b] };
+  for (const b of BLOCOS) {
+    const A = ANCORAS[b];
+    const fora = !novo && A.antesDe ? corte(...A.antesDe) + "\n" : "";
+    r[b] = { orgaos: fora + corte(...(novo ? A.hoje : A.antes)), devolve: DEVOLVE[b] || "enviados" };
+  }
   return r;
 }
 export function blocoComoFuncao({ orgaos, devolve }) {
@@ -112,6 +129,27 @@ export function casoDosEnvelopes(i) {
   };
 }
 
+/* A MASMORRA: a sala com e sem nome de armadilha, com e sem segredo; a
+   salvaguarda passada, falhada e nenhuma; o tesouro com item (com e sem
+   poder) e sem; a busca que achou e a que não; a armadilha vista e a que
+   ninguém viu. Tirados do índice, à parte do caso do rodapé (que não muda). */
+export function masmorraDoCaso(i) {
+  const segredo = i % 3 === 0 ? null : { cd: 12 + (i % 6), txt: "uma alavanca atrás do quadro", tipo: i % 2 ? "passagem_secreta" : "tesouro_escondido" };
+  return {
+    pos: ["Cripta do Corvo, sala 2 de 5", "Poço das Celas, sala 4 de 4", "Torre Velha, a câmara do chefe"][i % 3],
+    sala: { nomeArmadilha: ["Fosso de Estacas", "", "Agulha Envenenada", undefined][i % 4], moedas: 20 + (i % 9) * 15, cena: "um nicho de água limpa sob uma lâmpada de óleo", segredo },
+    svC: [null, { passou: true }, { passou: false }][i % 3],
+    alvo: { nome: ["Iris", "Bruna Ferro", "Greta"][i % 3] },
+    sofridoAli: 1 + (i % 11), depois: i % 2 ? " [DEPOIS]" : "", euC: { nome: "Vera", i },
+    r: { mm: { nome: "Cripta" }, minutos: 10 + (i % 4) * 5, achou: i % 4 !== 1 && i % 9 !== 4, segredo: i % 4 === 1 ? null : { txt: "uma escada que desce", tipo: i % 2 ? "passagem_secreta" : "sala" } },
+    posDaMasmorra: (mm, sala) => "a " + mm.nome + " (" + (sala.nomeArmadilha || "?") + ")",
+    tempo: i % 3 ? " [TEMPO +10]" : "", tempoA: i % 5 ? " [TEMPO +5]" : "",
+    armadilhaNaoVista: i % 2 === 0, avisoSegredo: i % 7 < 3 ? " [AVISO: há um segredo]" : "", extraTempo: i % 4 ? " [+1 tocha]" : "",
+    item: [null, { nome: "Lâmina de Osso", raridade: "raro" }, { nome: "Anel da Brasa", raridade: "epico", poder: "+1 de fogo" }][i % 3],
+    p2: { nome: "Vera", moedas: i }, mm: { nome: ["Cripta do Corvo", "Poço das Celas"][i % 2] }, total: 5 + (i % 17),
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -128,8 +166,9 @@ const PECAS = [
   "resumoLegadoPrompt", "resumoMissoesPrompt", "resumoGrimorioPrompt", "resumoDadivasPrompt", "resumoTracosPrompt",
   "resumoInvocacoesPrompt", "envelopeDoQueFicou", "resumoAscensao",
 ];
-export function dublesDosEnvelopes(k, { novo }) {
+export function dublesDosEnvelopes(k, { novo, bloco }) {
   const log = { chamadas: [], calados: [], faltas: [] };
+  const enviados = [];
   const peca = (nome, n) => (...args) => {
     log.chamadas.push(nome);
     if (nome === "resumoAscensao" && k.ascensaoVazia) return "";
@@ -174,6 +213,11 @@ export function dublesDosEnvelopes(k, { novo }) {
     nomesDoElenco: () => ["Iris"],
   };
   PECAS.forEach((n, j) => { S[n] = peca(n, j); });
+  if (bloco && bloco !== "rodape") {
+    Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
+    S.enviados = enviados;
+    S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
+  }
   const escopo = new Proxy(S, {
     has: (t, nome) => {
       if (typeof nome !== "string") return false;
@@ -193,8 +237,8 @@ export function dublesDosEnvelopes(k, { novo }) {
 }
 
 /* `troca` põe uma peça no lugar de outra (a mordida que estraga o motor) */
-export function correrOBloco(fazer, k, { novo, troca } = {}) {
-  const { S, escopo, log } = dublesDosEnvelopes(k, { novo });
+export function correrOBloco(fazer, k, { novo, troca, bloco } = {}) {
+  const { S, escopo, log } = dublesDosEnvelopes(k, { novo, bloco });
   if (troca) Object.assign(S, troca);
   let texto = null, erro = null;
   try { texto = fazer(escopo)(); } catch (e) { erro = String(e && e.message); }

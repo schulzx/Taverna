@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -1333,8 +1333,8 @@ const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario"
    Um comando do painel é um comando, não um convite a inventar. "Convido
    Fulano para o meu grupo" virava uma viagem inteira porque o envelope não
    dizia onde ele terminava. Esta linha vai no fim de todo envelope
-   administrativo: o Mestre responde AQUILO e nada mais. */
-const SO_ISSO = ` ESCOPO DESTE TURNO (obrigatório): responda SOMENTE ao que este envelope pede, na cena e no lugar onde já estou. NÃO inicie viagem, combate, missão ou cena nova; NÃO mude de local; NÃO faça o tempo passar; NÃO invente personagem, item ou recompensa. Termine devolvendo a palavra para mim.`;
+   administrativo: o Mestre responde AQUILO e nada mais. O texto (`SO_ISSO`)
+   mora em src/motor/envelopes-do-turno.js desde a T2-A. */
 
 /* v9.148: o catálogo das sub-abas mora em `abas.js` agora, com a condição
    de abertura de cada uma colada nela. Escrito aqui, numa linha só no meio
@@ -20853,7 +20853,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         ...(linhaSvC ? [{ autor: "sistema", texto: linhaSvC }] : []),
         ...(abrT.linha ? [{ autor: "sistema", texto: abrT.linha }] : linhaSvC ? [{ autor: "sistema", texto: `${alvo.nome} sofre ${cheioC} de dano` }] : []),
         ...(qbT.linha ? [{ autor: "sistema", texto: qbT.linha }] : [])]);
-      enviar(`[MASMORRA — ${pos} · ARMADILHA RESOLVIDA PELO SISTEMA] A sala tinha uma armadilha (${sala.nomeArmadilha}). ${svC ? `${alvo.nome} fez a salvaguarda (${svC.passou ? "passou" : "falhou"}). ` : ""}${alvo.nome} já sofreu ${sofridoAli} de dano (aplicado pelo app — NÃO envie vida). Narre o susto e como o grupo reage.${depois}`, euC);
+      enviar(oEnvelopeDaMasmorra("armadilhaResolvida", { pos, nomeArmadilha: sala.nomeArmadilha, salva: svC, alvo: alvo.nome, sofrido: sofridoAli, depois }), euC);
     } else {
       /* ---------------- A ARMADILHA PEDE SALVAGUARDA (v9.60) ----------------
          A primeira fonte de verdade da segunda rolagem do jogo. Até aqui o
@@ -20921,7 +20921,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         const tempo = avancarMinutos(r.minutos);
         const apagou = noEscuro(r.mm) && !noEscuro(mm);
         pushMsgs([{ autor: "sistema", texto: r.linha }, ...(apagou ? [{ autor: "sistema", texto: "A última tocha se gasta no desvio — daqui em diante é no escuro." }] : [])]);
-        enviar("[MASMORRA — " + posDaMasmorra(r.mm, sala) + " · ARMADILHA CONTORNADA PELO SISTEMA] A armadilha (" + (sala.nomeArmadilha || "uma armadilha") + ") continua armada: o herói achou o caminho rente a ela sem a tocar, e isso custou " + r.minutos + " min e uma tocha (já descontados pelo app). Nada disparou e ninguém se feriu. Narre a passagem lenta." + tempo, personagemRef.current || personagem);
+        enviar(oEnvelopeDaMasmorra("armadilhaContornada", { pos: posDaMasmorra(r.mm, sala), nomeArmadilha: sala.nomeArmadilha, minutos: r.minutos, tempo }), personagemRef.current || personagem);
         return;
       }
       if (op.id === "correr") passarPelaArmadilha(mm, sala);
@@ -20998,7 +20998,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         masmorraRef.current = vista.mm; setMasmorra(vista.mm);
         const tempoA = avancarMinutos(ritmoPorId(mm2.ritmo).minutos);
         if (vista.linha) pushMsgs([{ autor: "sistema", texto: vista.linha }]);
-        enviar("[MASMORRA — " + pos + " · ARMADILHA À VISTA, AINDA ARMADA] O herói notou a armadilha (" + (sala.nomeArmadilha || "uma armadilha") + ") ANTES de pisar nela: ela NÃO disparou e ninguém se feriu. Narre o que ele vê — o gatilho, o fio, a placa — e pare aí: desarmar, contornar ou passar assim mesmo é escolha dele, e o sistema resolve." + (armadilhaNaoVista ? "" : avisoSegredo) + tempoA, personagem);
+        enviar(oEnvelopeDaMasmorra("armadilhaAVista", { pos, nomeArmadilha: sala.nomeArmadilha, aviso: armadilhaNaoVista ? "" : avisoSegredo, tempo: tempoA }), personagem);
         return;
       }
     }
@@ -21056,13 +21056,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       setPersonagem(p2);
       pushMsgs([{ autor: "sistema", texto: `💰 Sala do tesouro: +${sala.moedas} moedas${item ? ` · ✦ ${item.nome} (${RARIDADE_ROTULO[item.raridade]})` : ""}` }]);
       checarConquistas(p2);
-      enviar(`[MASMORRA — ${pos} · TESOURO RESOLVIDO PELO SISTEMA] A sala guardava um tesouro: ◉ ${sala.moedas}${item ? ` e o item "${item.nome}" (${item.raridade}${item.poder ? `, ${item.poder}` : ""})` : ""} — JÁ na minha posse (NÃO envie moedas nem "adicionar_equipamento"). Descreva o achado com emoção.${avisoSegredo}${extraTempo}`, p2);
+      enviar(oEnvelopeDaMasmorra("tesouro", { pos, moedas: sala.moedas, item, aviso: avisoSegredo, tempo: extraTempo }), p2);
     } else if (sala.tipo === "santuario") {
       const cura = (mx, v) => Math.min(mx, v + Math.max(1, Math.round(mx * (sala.curaPct || 0.25))));
       const p2 = { ...personagem, vida: cura(personagem.vidaMax, personagem.vida), mana: cura(personagem.manaMax, personagem.mana), grupo: (personagem.grupo || []).map((g) => ({ ...g, vida: cura(g.vidaMax || g.vida, g.vida) })) };
       setPersonagem(p2);
       pushMsgs([{ autor: "sistema", texto: `⛲ Santuário: ${sala.cena} — todos recuperam ~25% de PV e PM` }]);
-      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA] A sala é um refúgio: ${sala.cena}. O grupo inteiro já recuperou parte de PV e PM (aplicado pelo app — NÃO envie cura). Narre o respiro — é um bom momento para uma conversa curta do grupo.${avisoSegredo}${extraTempo}`, p2);
+      enviar(oEnvelopeDaMasmorra("santuario", { pos, cena: sala.cena, aviso: avisoSegredo, tempo: extraTempo }), p2);
     } else if (sala.tipo === "enigma") {
       /* ---------------- O ENIGMA VIRA ROLAGEM (v9.151) ----------------
          O envelope antigo pedia ao Narrador que inventasse o enigma,
@@ -21221,7 +21221,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const salas2 = mm.salas.map((x) => x.id === sala.id ? { ...x, segredo: r.segredo } : x);
       masmorraRef.current = { ...mm, salas: salas2 }; setMasmorra(masmorraRef.current);
     }
-    enviar(`[MASMORRA — BUSCA ATIVA · ${mm.nome}] Vasculho a sala por dez minutos (Percepção ${total}${sala.segredo ? ` vs ${sala.segredo.cd}` : ""}). ${r.achou ? `ENCONTREI: ${r.segredo.txt} (${r.segredo.tipo.replace("_", " ")}). Narre a descoberta e o que ela abre.` : "Nada encontrado — narre a busca frustrada em 1-2 frases, sem inventar achados."} NÃO revele o que não foi achado.${SO_ISSO}`, personagem);
+    enviar(oEnvelopeDaMasmorra("buscaAtiva", { masmorra: mm.nome, total, segredo: sala.segredo, achou: r.achou, achado: r.segredo }), personagem);
   };
 
   /* Ao vencer o combate de uma sala, ela se resolve — e se guardava a chave,
@@ -21251,7 +21251,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setPersonagem(persOut); personagemRef.current = persOut;
     pushMsgs([{ autor: "jogador", texto: `Fujo de ${mm.nome}, deixando o resto para trás.` }]);
     if ((mm.tochas || 0) > 0) pushMsgs([{ autor: "sistema", texto: `🕯 ${mm.tochas} tocha(s) voltam para a mochila.` }]);
-    enviar(`[MASMORRA — FUGA] Eu ESCOLHI fugir de ${mm.nome} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`, personagem);
+    enviar(oEnvelopeDaMasmorra("fuga", { masmorra: mm.nome }), personagem);
   };
 
   /* ---------------- MURAL DE CONTRATOS (v9.37 · o mundo é que oferece) ----------------

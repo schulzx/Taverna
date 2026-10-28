@@ -18,17 +18,17 @@ import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
-export const ANTES = { rodape: "2137ae7" };
+export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorraContornada: "d3d6f60", masmorraAVista: "d3d6f60", masmorraTesouro: "d3d6f60", masmorraSantuario: "d3d6f60", masmorraBusca: "d3d6f60", masmorraFuga: "d3d6f60" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);
 const saida = { antes: ANTES, casos: N_CASOS, blocos: {} };
 for (const bloco of BLOCOS) {
-  const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]))[bloco]);
-  saida.blocos[bloco] = casos.map((k) => fotoDoEnvelope(correrOBloco(fn, k, { novo: false })));
+  const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false })[bloco]);
+  saida.blocos[bloco] = casos.map((k) => fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })));
   const erros = saida.blocos[bloco].filter((f) => f.erro).length;
   const faltas = [...new Set(saida.blocos[bloco].flatMap((f) => f.faltas))];
-  const maior = Math.max(...saida.blocos[bloco].map((f) => (f.texto || "").length));
+  const maior = Math.max(...saida.blocos[bloco].map((f) => JSON.stringify(f.texto || "").length));
   console.log(`${bloco} (de ${ANTES[bloco]}): ${N_CASOS} fotos, ${erros} estouram, o maior ${maior} chars, faltas: ${faltas.join(", ") || "nenhuma"}`);
 }
 fs.writeFileSync(path.join(AQUI, "envelopes-dourado.json"), JSON.stringify(saida));
