@@ -191,7 +191,20 @@ export function formatarCanone(canone, opcoes = null) {
   return linhas.join("\n");
 }
 
-/* uma linha do cânone — a mesma de sempre, caractere por caractere */
+/* ---------------- O QUE SÓ FOI DITO (28/10/2026, Fase T, trilha B) ----------------
+   O juízo do Cronista (motor/cronista.js#julgarCanone) põe `dito` na ficha
+   do cânone que só existe na fala de alguém em cena — o Berço de que o
+   taberneiro ouviu falar não é o Berço que o herói viu. A linha do cânone
+   não o escrevia, e o bloco chama tudo «verdade imutável»: o Mestre lia o
+   boato como fato e confirmava-o na cena seguinte. A marca vai NA PRÓPRIA
+   LINHA, curta, e só nas fichas que a têm — nenhum bloco estático novo (o
+   teto do prompt é sagrado); a ficha sem `dito` sai como sempre saiu. O
+   texto longo do Cronista ("dito por alguém em cena, não fato") cede ao
+   curto: a linha paga cada caractere em todo turno em que o nome sobe. */
+export const MARCA_DO_DITO = "só dito em cena, não fato";
+
+/* uma linha do cânone — a mesma de sempre, caractere por caractere, salvo
+   a marca do que só foi dito */
 function linhaDoCanone(nome, f) {
   const partes = [];
   if (f.tipo) partes.push(f.tipo);
@@ -199,6 +212,7 @@ function linhaDoCanone(nome, f) {
   if (f.genero) partes.push(f.genero);
   if (f.local) partes.push(`em ${f.local}`);
   if (f.status) partes.push(f.status);
+  if (f.dito) partes.push(MARCA_DO_DITO);
   const desc = partes.length ? ` — ${partes.join(", ")}` : "";
   const notas = f.notas ? `. ${f.notas}` : "";
   return `• ${nome}${desc}${notas}`;
