@@ -212,7 +212,14 @@ t("quem fecha a luta e sabe como diz: a vitória do golpe e a vitória declarada
      a `retratoComOsFinais(combateAntes, finais)`: a tela do fim desenha esse
      retrato, e com o de antes o último lobo ficava de pé. A intenção da
      asserção (quem fecha e sabe como, diz) não muda. */
-  && /if \(resp\.mudancas\.__vitoriaAuto\) \{[\s\S]{0,300}?notarFechoDaLuta\(\{ combate: retratoComOsFinais\(combateAntes, resp\.mudancas\.__inimigosFinais\), desfecho: "vitoria"/.test(APP));
+  /* (movido, T1-A 6.ª fatia: a vitória declarada que diz o fecho (`notarFechoDaLuta({ combate: retratoComOsFinais(...), desfecho: "vitoria" })`) saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
+  && (await (async () => {
+    const { lutaDeBolso } = await import("./combate-bloco.mjs");
+    const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_inimigo_vida: [{ nome: "Lobo", vida: -99 }] }, combate: { inimigos: [{ nome: "Lobo", ameaca: "comum", vida: 5, vidaMax: 10 }], rodada: 2 } });
+    const f = b.chamou("notarFechoDaLuta")[0];
+    return !!f && f.args[0].desfecho === "vitoria" && f.args[0].combate.inimigos[0].derrotado === true && f.args[0].combate.inimigos[0].vida === 0 && f.args[0].caidos.includes("Lobo");
+  })())
+  && /notarFechoDaLuta,/.test(APP) && /aLutaDaResposta\(/.test(APP));
 /* (A1 · as pontas) o import ganhou `reciboQueCabe`, `itensMostrados` e
    `horaNaCinta` depois de `reciboDoTurno` — a mesma origem; a âncora deixa
    de exigir que ele feche a lista. */

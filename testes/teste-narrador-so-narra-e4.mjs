@@ -214,7 +214,12 @@ const pTodo = montarSystemPrompt("C", M, ficha(20), {}, banco, "", "", "", "", "
 /* ============================================================ */
 sec("6. o App continua a saber ler (tolerante: a instrução saiu, o leitor fica)");
 {
-  t("combate_iniciar", /resp\.mudancas\.combate_iniciar/.test(app));
+  /* (movido, T1-A 6.ª fatia: o leitor de `resp.mudancas.combate_iniciar` saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) No App fica a entrega da resposta ao motor. */
+  {
+    const { lutaDeBolso } = await import("./combate-bloco.mjs");
+    const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_iniciar: [{ nome: "Lobo", ameaca: "fraco" }] } });
+    t("combate_iniciar", /aLutaDaResposta\(\{ pers, mudancas: resp\.mudancas \}/.test(app) && !!b.st.combate && b.st.combate.inimigos[0].nome === "Lobo" && b.chamou("abrirCombate").length === 1);
+  }
   t("perigo (a emboscada e a salvaguarda)", /montarEmboscada\(resp\.perigo/.test(app) && /dispararPerigo\(resp\.perigo\)/.test(app));
   t("dano_ambiental, combate_inimigo_vida, combate_atualizar, combate_encerrar (regras-jogo.js)", /m\.dano_ambiental/.test(ler("regras-jogo.js")) && /m\.combate_inimigo_vida/.test(ler("regras-jogo.js")) && /m\.combate_atualizar/.test(ler("regras-jogo.js")) && /m\.combate_encerrar/.test(ler("regras-jogo.js")));
   t("e as portas do sistema abrem pela porta única (abrirCombate)", /const abrirCombate = \(inimigosCrus/.test(app));

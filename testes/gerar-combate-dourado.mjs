@@ -48,7 +48,8 @@ import { caidosDaLuta } from "../src/recibo-da-luta.js";
 import { dispensarTodas } from "../src/invocacoes.js";
 import { podeAbrirRito, iniciarRito, provaAtual } from "../src/ascensao.js";
 import { grauDe, tituloDe } from "../src/divindades.js";
-import { AGORA_DA_PROVA } from "./combate-casos.mjs";
+import { AGORA_DA_PROVA, N_CASOS } from "./combate-casos.mjs";
+import { recorteDeAntes, blocoComoFuncao, correrOBloco, fotoDoBloco, casosDoBloco } from "./combate-bloco.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const COMMIT = process.argv[2] || "7338870";
@@ -274,6 +275,11 @@ if (isMain) {
     const fonte = o.texto();
     const fn = (S) => new Function("S", `with (S) {\n${fonte}\nreturn ${o.nome};\n}`)(S);
     out.orgaos[nome] = casos.map((k) => o.correr(fn, k));
+  }
+  /* o bloco do combate inteiro (6.ª fatia): o bloco e os quinze órgãos de antes, à letra (combate-bloco.mjs) */
+  {
+    const antes = blocoComoFuncao(recorteDeAntes(app));
+    out.orgaos.blocoDoCombate = casosDoBloco(N_CASOS).map((k) => fotoDoBloco(correrOBloco(antes, k, { novo: false })));
   }
   fs.writeFileSync(path.join(AQUI, "combate-dourado.json"), JSON.stringify(out));
   for (const [nome, fotos] of Object.entries(out.orgaos)) console.log(`${nome}: ${fotos.length} fotos`);

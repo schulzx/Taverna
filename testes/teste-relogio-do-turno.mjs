@@ -123,7 +123,12 @@ sec("4 · dentro do aplicarResposta, nenhum relógio anda sem a ficha do turno")
   const soltos = corpo.match(/avancarMinutos\(/g) || [];
   t("nenhuma chamada a `avancarMinutos` no corpo do turno", soltos.length === 0, soltos.length + " soltas");
   const comFicha = corpo.match(/avancarOsMinutos\([^)]*,\s*(pers|p2)\)/g) || [];
-  t("o rescaldo da luta e a chegada andam o relógio com a ficha do turno", comFicha.length >= 2, String(comFicha.length));
+  /* (movido, T1-A 6.ª fatia: o rescaldo da luta (`avancarOsMinutos(MINUTOS_POS_COMBATE, p2).ficha`) saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) No App fica a chegada (1); o rescaldo joga-se: o relógio recebe a ficha do turno, e a que ele devolve é a que segue. */
+  const { lutaDeBolso } = await import("./combate-bloco.mjs");
+  const bolso = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, moedas: 0, grupo: [] }, mudancas: { combate_encerrar: true }, combate: { inimigos: [{ nome: "Lobo", ameaca: "comum", vida: 0, vidaMax: 10, derrotado: true }] } },
+    { avancarOsMinutos: (n, ficha) => ({ texto: "", ficha: { ...ficha, marcaDoRelogio: n } }) });
+  const rel = bolso.chamou("avancarOsMinutos")[0];
+  t("o rescaldo da luta e a chegada andam o relógio com a ficha do turno", comFicha.length >= 1 && !!rel && rel.args[1].moedas > 0 && bolso.saida.pers.marcaDoRelogio === rel.args[0], String(comFicha.length));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

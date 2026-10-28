@@ -210,9 +210,14 @@ sec("8. A LIGAÇÃO — QUATRO BOCAS, UMA CHAVE, UM SAVE");
   t("e volta do save", /formaRef\.current = garantirForma\(sv\.forma\);/.test(APP));
   /* o guardião entra na reconciliação de combate ANTES da criatura
      genérica — senão "Ogro, o Sino" lutaria com o nível do ogro comum */
-  const iChefe = APP.indexOf("|| guardiaoPorNome(");
-  const iCriatura = APP.indexOf("|| criaturaPorNome(");
-  t("o guardião reconcilia antes da criatura genérica", iChefe > 0 && iCriatura > 0 && iChefe < iCriatura);
+  /* (movido, T1-A 6.ª fatia: a ordem `chefePorNome || guardiaoPorNome || criaturaPorNome` saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) O guardião do primeiro andar entra na luta com o nível DELE. */
+  {
+    const { lutaDeBolso } = await import("./combate-bloco.mjs");
+    const g = LEI.guardiaoDoAndar(SEMENTE, mapaTorre, "Fantasia medieval", pisos[0].nome);
+    const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_iniciar: [{ nome: g.nome, ameaca: "comum" }] }, semente: SEMENTE, mapa: mapaTorre, genero: "Fantasia medieval", molde: torre });
+    const linha = b.saida.msgs.find((m) => m.startsWith("🔎")) || "";
+    t("o guardião reconcilia antes da criatura genérica", linha.includes(`nível ${g.nivel}`), linha);
+  }
   t("a Pauta recebe a lei da cena", /leiParaPauta\(\{/.test(APP));
   t("o prompt fixo apresenta a lei", /LEI_DA_FORMA_PROMPT/.test(PROMPT));
   /* e o léxico pergunta pela carne da passagem na criação */

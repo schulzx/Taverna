@@ -19,6 +19,8 @@ import { trocarACasa } from "../src/semente.js";
 import * as M from "../src/masmorras.js";
 import { readFileSync } from "node:fs";
 import { concluirAMasmorra } from "../src/motor/combate-do-turno.js";
+/* T1-A 6.ª fatia: a vitória declarada joga-se na luta de bolso */
+import { lutaDeBolso } from "./combate-bloco.mjs";
 
 const { gerarMasmorra, entrarNaSala, marcarResolvida, voltarASalaLimpa, saidasDe, saidasDeRecuo } = M;
 
@@ -320,7 +322,12 @@ sec("11. a fiação no App: a porta chama a tabela, e as DUAS portas de vitória
   t("a masmorra concluída conta num lugar só", conta(APP, 'bumpCont("masmorrasConcluidas")') === 0 && r1.efeitos.filter((e) => e.tipo === "contador" && e.nome === "masmorrasConcluidas").length === 1 && helper.includes("bumpCont(ef.nome)"));
   t("o helper larga a masmorra (masmorraRef = null): a 2.ª porta não encontra chefe e não paga de novo", r1.efeitos.some((e) => e.tipo === "masmorra" && e.masmorra === null) && helper.includes("masmorraRef.current = ef.masmorra; setMasmorra(ef.masmorra);") && !r2.concluiu && r2.pers === r1.pers && !r2.efeitos.length);
   t("o helper devolve a ficha nova ({ pers, concluiu }), sem mutar a recebida", r1.pers !== fichaIn && fichaIn.moedas === 10 && fichaIn.equipamento.length === 0 && helper.includes("return { pers: r.pers, concluiu: true }"));
-  t("a porta do Narrador (a resposta com vitória) chama o MESMO helper (2 chamadas: a do Narrador e a do sistema)", conta(APP, "concluirMasmorraDoChefe(") === 2);
+  /* (movido, T1-A 6.ª fatia: a segunda chamada a `concluirMasmorraDoChefe(` (a da vitória declarada) saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) No App fica a do sistema e a porta; a do Narrador joga-se. */
+  {
+    const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 3, grupo: [] }, mudancas: { combate_encerrar: true }, combate: { inimigos: [{ nome: "Lobo", ameaca: "comum", vida: 0, vidaMax: 10, derrotado: true }] }, masmorra: { nome: "Cripta", salas: [{ id: 3, tipo: "chefe", moedas: 50 }], atual: 3 } });
+    t("a porta do Narrador (a resposta com vitória) chama o MESMO helper (a do sistema no App, e a do Narrador pela porta da luta)",
+      conta(APP, "concluirMasmorraDoChefe(") === 1 && /concluirMasmorraDoChefe,/.test(APP) && b.chamou("concluirMasmorraDoChefe").length === 1 && /A MASMORRA FOI CONCLUÍDA/.test(b.st.nota));
+  }
 });
 
 console.log(`\nmasmorra-fim: ${ok} passaram, ${mal} falharam`);

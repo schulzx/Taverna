@@ -563,7 +563,10 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      envelopes do turno, para o débito de cobranca.js saber o que o sistema
      já cobrou) — a âncora segue o texto, não o número da linha. */
   const aplicar = corpoApos(app, "const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {");
-  t("o corpo de aplicarResposta não está vazio", aplicar.length > 20000);
+  /* (T1-A 6.ª fatia: o piso desceu de 20000 para 10000 — o bloco do combate,
+     ~16 mil caracteres, saiu do corpo para src/motor/luta-do-turno.js; a
+     régua continua a ser "a âncora achou o corpo inteiro, e não um pedaço") */
+  t("o corpo de aplicarResposta não está vazio", aplicar.length > 10000);
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
   const cronista = corpoApos(app, "const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
   t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural",

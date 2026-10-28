@@ -215,7 +215,10 @@ sec("2. todo campo pedido tem quem o leia");
      nenhum volte sem leitor. O único que um envelope ainda pede
      (combate_iniciar, no golpe sem alvo) tem o leitor provado abaixo. */
   t("o texto fixo já não pede campo com sublinhado (E4: o escrivão saiu)", pedidos.size === 0);
-  t("e o que o envelope do golpe sem alvo pede tem quem o leia", /combate_iniciar/.test(fs.readFileSync(SRC + "agressao.js", "utf8")) && /resp\.mudancas\.combate_iniciar/.test(codigo));
+  /* (movido, T1-A 6.ª fatia: o leitor de `resp.mudancas.combate_iniciar` saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
+  const { lutaDeBolso } = await import("./combate-bloco.mjs");
+  const bolso = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_iniciar: [{ nome: "Lobo", ameaca: "fraco" }] } });
+  t("e o que o envelope do golpe sem alvo pede tem quem o leia", /combate_iniciar/.test(fs.readFileSync(SRC + "agressao.js", "utf8")) && /aLutaDaResposta\(\{ pers, mudancas: resp\.mudancas \}/.test(codigo) && !!bolso.st.combate);
 }
 
 sec("3. o que o codigo tirou do Mestre nao pode voltar pelo prompt");

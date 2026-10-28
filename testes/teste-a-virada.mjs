@@ -84,8 +84,16 @@ sec("4. UMA ESCADA SÓ — o espólio de combate usa a MESMA");
   t("não sobrou laço de nível à mão no App", !/while \(p2\.xp >= XP_POR_NIVEL\(p2\.nivel\)\)/.test(APP));
   t("nem em variante nenhuma", !/\.nivel \+= 1;/.test(APP));
   /* e os dois caminhos de espólio chamam a escada da casa */
-  t("o espólio conta a subida pela diferença de nível", /const subiu = p2\.nivel - nivelAntes;/.test(APP));
-  t("os dois caminhos passam por aplicarNivel", (APP.match(/p2 = aplicarNivel\(p2\)/g) || []).length === 2);
+  /* (movido, T1-A 6.ª fatia: o caminho de espólio da vitória declarada (`const subiu = p2.nivel - nivelAntes`, `p2 = aplicarNivel(p2)`) saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
+  {
+    const { lutaDeBolso } = await import("./combate-bloco.mjs");
+    const antes = heroi({ xp: C.XP_POR_NIVEL(1) + C.XP_POR_NIVEL(2), grupo: [] });
+    const b = lutaDeBolso({ pers: antes, mudancas: { combate_encerrar: true }, combate: { inimigos: [{ nome: "Lobo", ameaca: "comum", vida: 0, vidaMax: 10, derrotado: true }] } });
+    const p = b.saida.pers;
+    t("o espólio conta a subida pela diferença de nível", p.nivel === 3 && b.saida.msgs.some((m) => / · ✦ NÍVEL 3!$/.test(m)));
+    t("os dois caminhos passam por aplicarNivel (o do golpe no App; o da vitória declarada, jogado: PV e PM da escada da casa)",
+      (APP.match(/p2 = aplicarNivel\(p2\)/g) || []).length === 1 && p.vidaMax > antes.vidaMax && p.manaMax > antes.manaMax);
+  }
 }
 
 sec("5. A TELA DO NÍVEL LÊ A TABELA");

@@ -189,10 +189,14 @@ sec("9. O CANAL DE ENVELOPES EXISTE DE VERDADE");
   const { aplicar } = await import(S + "motor/aplicar.js");
   const turno = aplicar({ personagem: { nome: "Vera", vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [] } }, { narrativa: "Você sente o poder.", mudancas: { adicionar_habilidades: [{ nome: "Bola de Fogo" }] } }, {});
   t("o motor lê as notas das mudanças, e a ficha não ganha o poder", turno.estado.personagem.habilidades.length === 0);
-  t("e as do combate", /const notasDoCombate = \[\]/.test(APP));
+  /* (movido, T1-A 6.ª fatia: as notas do `processarCombate` (`const notasDoCombate = []`) saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
+  const { lutaDeBolso } = await import("./combate-bloco.mjs");
+  const bolso = lutaDeBolso({ pers: { nome: "Vera", nivel: 1, grupo: [] }, mudancas: { combate_iniciar: [{ nome: "Lobo", ameaca: "fraco", vida: 999 }] } });
+  t("e as do combate", /PV/.test(bolso.st.nota) && bolso.saida.msgs.some((m) => /PV aferido/.test(m)));
   /* MOVIDA (28/10, T1-B fatia 3): PARTIDA EM DUAS. A metade que prova a regra do módulo deixa de depender do App e sobrevive à T2; a metade do App (fiação/tela) segue texto, na lista de T2 (testes/assercoes-de-texto.json). */
   t("o motor manda a nota da habilidade recusada ao Narrador, uma vez", turno.paraOCronista.filter((x) => x === J.envelopeDaHabilidadeRecusada(["Bola de Fogo"])).length === 1);
-  t("e o App junta as duas listas num laço só", (APP.match(/for \(const nt of notas/g) || []).length === 1);
+  /* (movido, T1-A 6.ª fatia: o laço que juntava as notas do combate à nota saiu com o bloco para o motor; no App não sobra nenhum, e as duas listas chegam ao Narrador — a do aplicar pelo paraOCronista, a do combate pela luta, jogada acima) */
+  t("e o App já não junta lista nenhuma à mão (as duas chegam pelo motor)", (APP.match(/for \(const nt of notas/g) || []).length === 0 && /PV/.test(bolso.st.nota));
 }
 
 console.log(`\njuiz v9.154: ${bons} passaram, ${maus} falharam`);

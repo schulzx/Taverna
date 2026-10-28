@@ -62,8 +62,14 @@ sec("3. DOZE RETRATOS DE VILÃO, CADA UM NASCIDO DE COMO SE JOGOU");
     V.ARQUETIPOS.every((a) => a.crenca && a.metodo && a.quer && Array.isArray(a.assinaturas) && a.assinaturas.length === 3));
   t("e nenhuma crença se repete", new Set(V.ARQUETIPOS.map((a) => a.crenca)).size === V.ARQUETIPOS.length);
   /* os nasceDe novos leem contadores que EXISTEM (bumpCont no App) */
-  for (const campo of ["quaseMorte", "forjados", "presentes", "perigosEstrada", "combatesVencidos"]) {
+  for (const campo of ["quaseMorte", "forjados", "presentes", "perigosEstrada"]) {
     t(`o contador ${campo} existe no App`, APP.includes(`bumpCont("${campo}"`));
+  }
+  /* (movido, T1-A 6.ª fatia: o `bumpCont("combatesVencidos", 1)` da vitória saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
+  {
+    const { lutaDeBolso } = await import("./combate-bloco.mjs");
+    const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_encerrar: true }, combate: { inimigos: [{ nome: "Lobo", ameaca: "comum", vida: 0, vidaMax: 10, derrotado: true }] } });
+    t("o contador combatesVencidos existe (a vitória conta-o)", b.st.contadores.combatesVencidos === 1 && /bumpCont,/.test(APP));
   }
   const sorte1 = () => 0.01;
   t("o Credor nasce da bolsa cheia", V.escolherArquetipo({}, { moedas: 500 }, sorte1).id === "credor");
