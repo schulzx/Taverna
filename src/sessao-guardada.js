@@ -54,6 +54,23 @@ export function chaveDaSessao(espacoDoSave, cfg = SESSAO_GUARDADA) {
   return `${String(espacoDoSave || "")}${obj(cfg).sufixo || SESSAO_GUARDADA.sufixo}`;
 }
 
+/* A SESSÃO CEDE AO SAVE (28/10, o orquestrador). O arquivo da sessão
+   pode chegar ao teto (600 mil caracteres, ~1,2 MB num localStorage que
+   conta em UTF-16), e o save é quem não pode perder espaço (a regra 3).
+   Quando a gravação do save falha, a primeira coisa que se larga é a
+   sessão — antes de podar o histórico do jogador. Apaga só a chave da
+   sessão deste espaço; devolve true se havia o que largar. Nunca lança. */
+export function cederAoSave(armazem, espacoDoSave, cfg = SESSAO_GUARDADA) {
+  try {
+    if (!armazem || typeof armazem.getItem !== "function" || typeof armazem.removeItem !== "function") return false;
+    const chave = chaveDaSessao(espacoDoSave, cfg);
+    if (chave === String(espacoDoSave || "")) return false;
+    if (armazem.getItem(chave) == null) return false;
+    armazem.removeItem(chave);
+    return true;
+  } catch { return false; }
+}
+
 /* este modo grava? */
 export function gravaNesteModo(modo, cfg = SESSAO_GUARDADA) {
   const modos = Array.isArray(obj(cfg).modos) ? cfg.modos : SESSAO_GUARDADA.modos;

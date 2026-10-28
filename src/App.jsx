@@ -244,7 +244,7 @@ import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./mo
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
-import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao } from "./sessao-guardada.js";
+import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
@@ -9311,6 +9311,9 @@ export default function Taverna() {
     const gravar = (d) => { try { localStorage.setItem(chaveDoSave(), JSON.stringify(saveDoEstado(d))); return true; } catch { return false; } };
     let gravou = gravar(historicoEnxuto(250));
     let podou = false;
+    /* a sessão gravada cede ao save antes de se podar o histórico: o
+       arquivo do replay é bastidor, o save é do jogador. */
+    if (!gravou) { try { if (cederAoSave(localStorage, chaveDoSave())) gravou = gravar(historicoEnxuto(250)); } catch (e) { calou("a sessão cede ao save", e); } }
     if (!gravou) {
       for (const n of [120, 60, 30]) {
         if (gravar(historicoEnxuto(n))) { gravou = true; podou = true; break; }

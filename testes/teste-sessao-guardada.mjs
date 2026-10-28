@@ -10,7 +10,7 @@
    tudo o que é do motor reproduz; o que diverge é só do App, e diz-se.
    ============================================================ */
 import fs from "node:fs";
-import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao } from "../src/sessao-guardada.js";
+import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "../src/sessao-guardada.js";
 import { abrirASessao, gravarOTurno, validarASessao, reproduzirASessao, estadoNoTurno } from "../src/sessao.js";
 import { espacoDoSave, MODOS } from "../src/modos.js";
 
@@ -95,6 +95,37 @@ sec("6 · a fiação no App");
   t("o App importa o gravador e onde guardar", /import \{ abrirASessao, gravarOTurno \} from "\.\/sessao\.js";/.test(C) && /from "\.\/sessao-guardada\.js";/.test(C));
   t("a linha grava-se depois do Cronista, numa fila, em calou", /\.then\(\(\) => Promise\.resolve\(doCronista\)\.catch\(\(\) => null\)\)\s*\.then\(\(\) => \{ try \{ gravarOTurnoDaSessao\(juntado\); \} catch \(e\) \{ calou\("a sessão \(o turno\)", e\); \} \}\);/.test(C));
   t("a escrita que falha apaga a chave da sessão, e só ela", /catch \(e\) \{ try \{ localStorage\.removeItem\(chave\); \} catch \{ *\} calou\("guardar a sessão", e\); \}/.test(C) && /const chave = chaveDaSessao\(chaveDoSave\(\)\);/.test(C));
+}
+
+sec("a sessão cede ao save (28/10): o arquivo do replay é bastidor, o save é do jogador");
+{
+  /* um armazém que enche como um navegador: conta caracteres e lança ao passar da cota */
+  const armazem = (cota) => {
+    const m = new Map();
+    const usado = () => [...m].reduce((a, [k, v]) => a + k.length + v.length, 0);
+    return {
+      getItem: (k) => (m.has(k) ? m.get(k) : null),
+      setItem: (k, v) => { const antes = m.get(k); m.set(k, String(v)); if (usado() > cota) { if (antes == null) m.delete(k); else m.set(k, antes); throw new Error("QuotaExceededError"); } },
+      removeItem: (k) => { m.delete(k); },
+    };
+  };
+  const esp = espacoHistoria;
+  const A = armazem(1000);
+  A.setItem(chaveDaSessao(esp), "s".repeat(700));
+  let falhou = false; try { A.setItem(esp, "v".repeat(400)); } catch { falhou = true; }
+  t("com a sessão cheia, o save não cabe (é o caso que se conserta)", falhou && A.getItem(esp) == null);
+  t("cederAoSave larga a sessão e diz que largou", cederAoSave(A, esp) === true && A.getItem(chaveDaSessao(esp)) == null);
+  let gravou = true; try { A.setItem(esp, "v".repeat(400)); } catch { gravou = false; }
+  t("e o save, depois, cabe inteiro", gravou && A.getItem(esp).length === 400);
+  t("sem sessão a largar, devolve false e não toca no save", cederAoSave(A, esp) === false && A.getItem(esp).length === 400);
+  t("nunca apaga a chave do próprio save, nem com sufixo vazio", cederAoSave(A, esp, { ...SESSAO_GUARDADA, sufixo: "" }) === false && A.getItem(esp).length === 400);
+  t("não lança com armazém nulo, torto, ou que estoura", cederAoSave(null, esp) === false && cederAoSave({}, esp) === false
+    && cederAoSave({ getItem: () => { throw new Error("x"); }, removeItem: () => {} }, esp) === false);
+  /* a fiação: o App cede a sessão antes de podar o histórico (lido no texto
+     porque `salvar` mora no componente; sai quando o save for do motor) */
+  const C = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n").replace(/\/\*[\s\S]*?\*\//g, "");
+  const iCede = C.indexOf("cederAoSave(localStorage, chaveDoSave())"), iPoda = C.indexOf("for (const n of [120, 60, 30])");
+  t("o App cede a sessão antes de podar o histórico, em calou", iCede > 0 && iPoda > iCede && /if \(!gravou\) \{ try \{ if \(cederAoSave\(localStorage, chaveDoSave\(\)\)\) gravou = gravar\(historicoEnxuto\(250\)\); \} catch \(e\) \{ calou\(/.test(C));
 }
 
 console.log(`\na sessão guardada: ${ok} passaram, ${mal} falharam`);
