@@ -220,7 +220,15 @@ sec("6. o App continua a saber ler (tolerante: a instrução saiu, o leitor fica
     const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_iniciar: [{ nome: "Lobo", ameaca: "fraco" }] } });
     t("combate_iniciar", /aLutaDaResposta\(\{ pers, mudancas: resp\.mudancas \}/.test(app) && !!b.st.combate && b.st.combate.inimigos[0].nome === "Lobo" && b.chamou("abrirCombate").length === 1);
   }
-  t("perigo (a emboscada e a salvaguarda)", /montarEmboscada\(resp\.perigo/.test(app) && /dispararPerigo\(resp\.perigo\)/.test(app));
+  /* (movido, T1-A 7.ª fatia: a leitura do `perigo` saiu do App para `oPerigoDaResposta` (src/motor/fecho-da-resposta.js). A intenção é a mesma — o App continua a saber ler o campo —, agora JOGADA: a investida vai à emboscada, a armadilha à salvaguarda, e o App entrega-lhe o `resp.perigo`.) */
+  {
+    const { oPerigoDaResposta } = await import("../src/motor/fecho-da-resposta.js");
+    const portas = [];
+    const ctx = { aplicar: () => {}, abrirCombate: (ins, o) => { portas.push("abrir"); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: (x) => portas.push("salvaguarda:" + x) };
+    oPerigoDaResposta({ pers: { nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, ctx);
+    oPerigoDaResposta({ pers: { nivel: 10 }, perigo: "Uma armadilha de lâminas dispara do chão.", combate: null, folego: null, lugares: [] }, ctx);
+    t("perigo (a emboscada e a salvaguarda)", portas[0] === "abrir" && portas[1] === "salvaguarda:Uma armadilha de lâminas dispara do chão." && /oPerigoDaResposta\(\{ pers, perigo: resp\.perigo/.test(app));
+  }
   t("dano_ambiental, combate_inimigo_vida, combate_atualizar, combate_encerrar (regras-jogo.js)", /m\.dano_ambiental/.test(ler("regras-jogo.js")) && /m\.combate_inimigo_vida/.test(ler("regras-jogo.js")) && /m\.combate_atualizar/.test(ler("regras-jogo.js")) && /m\.combate_encerrar/.test(ler("regras-jogo.js")));
   t("e as portas do sistema abrem pela porta única (abrirCombate)", /const abrirCombate = \(inimigosCrus/.test(app));
 }

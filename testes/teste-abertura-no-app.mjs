@@ -42,8 +42,14 @@ sec("2. quem abre a luta diz como ela abriu");
   t("a luta que o lado do coração prometeu entra pela mesma porta (`declarada`)",
     APP.includes('abrirCombate([{ nome: luta.nome, ameaca: luta.ameaca }], { pers, situacao: "declarada" })'));
   t("a investida da estrada abre como `emboscada`", APP.includes('abrirCombate(inv.inimigos, { pers: persV, situacao: "emboscada" })'));
-  t("a emboscada do perigo abre como `emboscada`", APP.includes('abrirCombate(emb.inimigos, { pers, situacao: "emboscada" })'));
-  t("a emboscada devida da virada e os dois bandos da fuga também (5 no total)", conta('situacao: "emboscada" })') === 5);
+  /* (movido, T1-A 7.ª fatia: a emboscada do perigo saiu do App para `oPerigoDaResposta` (src/motor/fecho-da-resposta.js), que se prova JOGANDO e não lendo. A intenção é a mesma: a investida que o Narrador descreve abre pela porta única como `emboscada`. No texto do App ficam as outras quatro.) */
+  {
+    const { oPerigoDaResposta } = await import("../src/motor/fecho-da-resposta.js");
+    const abriu = [];
+    oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, { aplicar: () => {}, abrirCombate: (ins, o) => { abriu.push(o.situacao); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: () => {} });
+    t("a emboscada do perigo abre como `emboscada`", abriu.length === 1 && abriu[0] === "emboscada" && /oPerigoDaResposta\(\{[^}]*\}, portasDoFecho\(\)\)/.test(APP) && /sorteDoTurno, abrirCombate, dispararPerigo,/.test(APP));
+  }
+  t("a emboscada devida da virada e os dois bandos da fuga também (4 no App, mais a do perigo no motor)", conta('situacao: "emboscada" })') === 4);
   t("a sala da masmorra não força nada: a planta decide (`cena` → masmorra)",
     APP.includes("const ab = abrirCombate(inimigos, { pers: personagemRef.current || personagem });"));
 }

@@ -242,6 +242,7 @@ import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, g
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
+import { oPerigoDaResposta, aQuaseMorte } from "./motor/fecho-da-resposta.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
@@ -10283,6 +10284,21 @@ export default function Taverna() {
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }
     }
   };
+  /* ---------------- AS PORTAS DO FECHO DA RESPOSTA (T1-A, 7.ª fatia, 28/10) ----------------
+     O perigo e a quase-morte moram em `src/motor/fecho-da-resposta.js`. Os
+     efeitos que eles descrevem chegam aqui na ordem em que nasceram, antes
+     de cada porta (as portas escrevem na tela e na nota, e a ordem das
+     linhas é o contrato); os órgãos que eles chamam são os de sempre. */
+  const aplicarEfeitoDoFecho = (ef) => {
+    if (ef.tipo === "nota") notaRef.current = notaComOTurno(notaRef.current, ef.linhas);
+    else if (ef.tipo === "textura") texturaRef.current = { ...texturaRef.current, ...ef.textura };
+    else if (ef.tipo === "tela") pushMsgs(ef.linhas.map((texto) => ({ autor: "sistema", texto })));
+    else if (ef.tipo === "ficha") setPersonagem(ef.ficha);
+  };
+  const portasDoFecho = () => ({
+    aplicar: (efeitos) => { for (const ef of efeitos) aplicarEfeitoDoFecho(ef); },
+    sorteDoTurno, abrirCombate, dispararPerigo, bumpCont, aplicarVinculo, checarConquistas,
+  });
   /* ---------------- AS PORTAS DA LUTA DO TURNO (T1-A, 6.ª fatia, 28/10) ----------------
      O bloco do combate mora em `aLutaDaResposta` (src/motor/luta-do-turno.js).
      Ele lê o App por `ler` e escreve por efeitos, aplicados aqui na ordem
@@ -10482,50 +10498,20 @@ export default function Taverna() {
       if ((portaoRef.current || []).length) { seguraRef.current = []; entregaRef.current = linhas; }
       else { entregaRef.current = null; pushMsgs(linhas); }
     }
-    /* ---------------- O CANAL FECHADO (v9.68) ----------------
-       `resp.rolagem` era o campo pelo qual o Mestre de IA pedia um teste, e
-       o código abaixo o atendia com uma régua inteira só dele — perfil,
-       recalibragem, janela rolável. Ele deixou de ser lido: o contrato não
-       o pede mais, e uma resposta antiga que ainda o traga é ignorada em
-       silêncio, porque avisar o jogador de um campo obsoleto seria o
-       sistema falando de si mesmo.
-
-       No lugar dele entra `resp.perigo`: a IA diz o que o MUNDO fez, e o
-       sistema escolhe a salvaguarda, a dificuldade, o dano e a condição. */
-    /* ---------------- A OUTRA METADE DA BRIGA (v9.74) ----------------
-       O canal `perigo` servia só às armadilhas e aos elementos. Aqui entra
-       o outro tipo de perigo — o que tem vontade própria e vem em cima.
-
-       A divisão é a da casa: ELA diz que há hostilidade e de que tipo,
-       porque isso é cena; o SISTEMA decide o encontro, porque quantos são
-       e se aquilo cabe no herói da frente é conta, não ficção. Antes disto
-       ela mandava a lista inteira montada por conta própria e o sistema só
-       carimbava um selo depois do fato consumado — o selo descrevia, não
-       decidia, e seis ogros contra um herói de nível 2 eram anunciados
-       educadamente como "Encontro mortal". */
+    /* ---------------- O PERIGO DA RESPOSTA, NO MOTOR (T1-A, 7.ª fatia, 28/10) ----------------
+       O canal fechado (v9.68: `resp.rolagem` já não é lido) e a outra metade
+       da briga (v9.74: a IA diz que há hostilidade, o SISTEMA monta o
+       encontro, e o fôlego da fuga protege quem ficou para trás) moram em
+       `oPerigoDaResposta` (src/motor/fecho-da-resposta.js), na mesma ordem
+       e com os porquês. Daqui sai a fiação: as portas (`portasDoFecho`) e as
+       linhas do turno. O erro cala como sempre calou: perigo mal descrito
+       nunca custa o turno. Provado byte a byte contra o bloco de antes
+       (teste-motor-fecho). */
     try {
-      if (resp.perigo && !combateRef.current) {
-        const emb = montarEmboscada(resp.perigo, { pers });
-        const embSeguro = emb && emb.tipo === "emboscada"
-          && folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "emboscada", criatura: emb.criatura });
-        if (embSeguro) {
-          /* nada: o folego da fuga protege — quem a IA descreveu e quem
-             acabou de ficar para tras */
-        } else if (emb && emb.tipo === "emboscada") {
-          const ab = abrirCombate(emb.inimigos, { pers, situacao: "emboscada" });
-          pers = ab.pers;
-          msgs.push(falaDaEmboscada(emb), ...ab.msgs);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ab.nota}\n${envelopeDaEmboscada(emb)}`;
-          texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
-        } else if (emb && emb.tipo === "desproporcional") {
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDesproporcional(emb)}`;
-        } else if (emb && emb.tipo === "semCriatura") {
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeSemCriatura()}`;
-        } else if (!emb) {
-          dispararPerigo(resp.perigo);
-        }
-      } else if (resp.perigo) {
-        dispararPerigo(resp.perigo);
+      if (resp.perigo) {
+        const doPerigo = oPerigoDaResposta({ pers, perigo: resp.perigo, combate: combateRef.current, folego: folegoRef.current, lugares: ondeEstou() }, portasDoFecho());
+        pers = doPerigo.pers;
+        msgs.push(...doPerigo.msgs);
       }
     } catch { /* perigo mal descrito nunca custa o turno */ }
     /* v9.145: aqui morava a leitura do pedido de rolagem do Narrador —
@@ -10539,38 +10525,19 @@ export default function Taverna() {
        O que fica é o gesto que sempre foi verdadeiro: chegou resposta do
        Narrador, a rolagem anterior sai da tela. */
     setRolagem(null);
-    /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */
-    {
-      const antes = (persDoEnvio.grupo || []).length, agora = (pers.grupo || []).length;
-      if (agora > antes) bumpCont("recrutados", agora - antes);
-      let tocouVinculo = false;
-      /* VÍNCULO: chegar a 0 PV e sobreviver une o grupo (+4); deixar um
-         companheiro cair pesa (−6 só para quem caiu) */
-      if ((persDoEnvio.vida || 0) > 0 && (pers.vida || 0) <= 0) {
-        bumpCont("quaseMorte", 1);
-        pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 4, null) };
-        /* CICATRIZ (v6.6): sobreviver por um fio pode deixar marca permanente */
-        if (sorteDoTurno("cicatriz")() < 0.45 && (pers.cicatrizes || []).length < CICATRIZ_MAX) {
-          const c = sortearCicatriz(pers.cicatrizes || [], sorteDoTurno("qual-cicatriz"));
-          if (c) {
-            const vidaMax = Math.max(5, (pers.vidaMax || 10) + (c.vidaMax || 0));
-            pers = { ...pers, cicatrizes: [...(pers.cicatrizes || []), { ...c, dia: diaRef.current }], vidaMax, vida: Math.min(pers.vida, vidaMax) };
-            pushMsgs([{ autor: "sistema", texto: `🩸 Cicatriz permanente: ${c.nome} — ${c.descricao}${c.vidaMax ? ` (−${-c.vidaMax} PV máx.)` : ""}` }]);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CICATRIZ — CANON PERMANENTE] Quase morri e fiquei com uma marca para sempre: "${c.nome}" (${c.local}), no dia ${diaRef.current} da campanha. ${c.descricao} Isso agora faz parte do meu corpo e da minha história — pode ser lembrado, comentado e ter consequências na ficção, mas NUNCA some sozinho.`;
-          }
-        }
-        tocouVinculo = true;
-      }
-      (pers.grupo || []).forEach((g) => {
-        const antesG = (persDoEnvio.grupo || []).find((a) => a.nome === g.nome);
-        if (antesG && (antesG.vida || 0) > 0 && (g.vida || 0) <= 0) {
-          pers = { ...pers, grupo: aplicarVinculo(pers.grupo, g.nome, -6, null) };
-          tocouVinculo = true;
-        }
-      });
-      if (tocouVinculo) setPersonagem(pers);
-      checarConquistas(pers);
-    }
+    /* ---------------- A QUASE-MORTE, NO MOTOR (T1-A, 7.ª fatia, 28/10) ----------------
+       Os novos companheiros, a quase-morte (o vínculo que a queda a zero
+       aperta e o companheiro que caiu desfaz, a cicatriz v6.6) e as
+       conquistas do turno moram em `aQuaseMorte` (src/motor/fecho-da-resposta.js),
+       na mesma ordem e com os porquês, comparando a ficha do ENVIO com a de
+       agora. Daqui sai a fiação. Antes não tinha guarda: um membro torto no
+       grupo derrubava o resto do turno; agora cala, e o turno segue.
+       Provado byte a byte contra o bloco de antes (teste-motor-fecho). */
+    try {
+      const daQuaseMorte = aQuaseMorte({ persDoEnvio, pers, dia: diaRef.current }, portasDoFecho());
+      pers = daQuaseMorte.pers;
+      if (daQuaseMorte.erro) calou("a quase-morte do turno", daQuaseMorte.erro);
+    } catch (e) { calou("a quase-morte do turno", e); }
     /* ---------------- O TURNO FECHA NA MESA (v9.71) ----------------
        Aqui, e num lugar só. Este é o único ponto por onde passa TODO turno
        que produziu narração — teclado, botão, luta, masmorra —, e a mesa

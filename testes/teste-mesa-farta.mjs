@@ -62,8 +62,15 @@ sec("3. DOZE RETRATOS DE VILÃO, CADA UM NASCIDO DE COMO SE JOGOU");
     V.ARQUETIPOS.every((a) => a.crenca && a.metodo && a.quer && Array.isArray(a.assinaturas) && a.assinaturas.length === 3));
   t("e nenhuma crença se repete", new Set(V.ARQUETIPOS.map((a) => a.crenca)).size === V.ARQUETIPOS.length);
   /* os nasceDe novos leem contadores que EXISTEM (bumpCont no App) */
-  for (const campo of ["quaseMorte", "forjados", "presentes", "perigosEstrada"]) {
+  for (const campo of ["forjados", "presentes", "perigosEstrada"]) {
     t(`o contador ${campo} existe no App`, APP.includes(`bumpCont("${campo}"`));
+  }
+  /* (movido, T1-A 7.ª fatia: o `bumpCont("quaseMorte", 1)` saiu do App com a quase-morte, para `aQuaseMorte` (src/motor/fecho-da-resposta.js), que esta suíte não lê como texto. A intenção é a mesma — o Penitente lê um contador que EXISTE —, agora JOGADA: a queda a zero conta-o pela porta de sempre.) */
+  {
+    const { aQuaseMorte } = await import("../src/motor/fecho-da-resposta.js");
+    const contou = [];
+    aQuaseMorte({ persDoEnvio: { vida: 4, grupo: [] }, pers: { vida: 0, grupo: [] }, dia: 1 }, { aplicar: () => {}, sorteDoTurno: () => () => 0.9, bumpCont: (c, n) => contou.push([c, n]), aplicarVinculo: (g) => g, checarConquistas: () => {} });
+    t("o contador quaseMorte existe (a queda a zero conta-o)", contou.some(([c, n]) => c === "quaseMorte" && n === 1) && /bumpCont, aplicarVinculo, checarConquistas/.test(APP));
   }
   /* (movido, T1-A 6.ª fatia: o `bumpCont("combatesVencidos", 1)` da vitória saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
   {
