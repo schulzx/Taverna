@@ -156,7 +156,7 @@ import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTest
 import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
-import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
+import { identificarDivindadeAbatida, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, jornadaSemDestino, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
@@ -241,7 +241,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus } from "./motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -343,7 +343,7 @@ import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT
 import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
-import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
+import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
 /* v9.265 (H1): SO `aplicarPoder`. `poder-de-classe.js` tambem exporta um
    `poderDe`, e o nome ja esta ocupado aqui desde a v9.x pelo de `poder.js`,
    que e outra coisa (o INDICE de poder de uma ficha). Importar os dois
@@ -9018,24 +9018,13 @@ export default function Taverna() {
      Uma luta que abriu e fechou na mesma resposta nunca foi vista aberta:
      nasce aqui, com a ficha de agora como abertura. */
   const notarFechoDaLuta = ({ combate: c = null, desfecho = null, caidos = null, linha = null } = {}) => {
+    /* T1-A, 6.ª fatia: a regra mora em `notarOFecho` (src/motor/combate-do-turno.js) */
     try {
-      if (!lutaDoReciboRef.current && !fechoDaLutaRef.current) {
-        lutaDoReciboRef.current = { fichaNaAbertura: fichaViva(), idsNoChao: idsDoChao(chaoRef.current), inicio: mensagensRef.current.length + ((seguraRef.current || []).length), ultima: c, desfecho: null, caidos: null };
-      }
-      const ref = lutaDoReciboRef.current ? lutaDoReciboRef : fechoDaLutaRef;
-      const r = ref.current;
-      const comb = c || r.ultima;
-      if (c) retratoDoFimRef.current = c;
-      ref.current = {
-        ...r,
-        ultima: comb,
-        desfecho: desfecho || r.desfecho,
-        /* MM (a luta tem saída): o que o inimigo fez com quem caiu — a frase
-           que a tela do fim mostra debaixo do título */
-        ...(linha ? { linha } : {}),
-        caidos: Array.from(new Set([...(r.caidos || []), ...(comb ? caidosDaLuta(comb) : []), ...((caidos || []).filter(Boolean))])),
-        ...(comb && comb.rodada ? { rodadas: comb.rodada } : {}),
-      };
+      const r = notarOFecho({
+        lutaDoRecibo: lutaDoReciboRef.current, fechoDaLuta: fechoDaLutaRef.current, retratoDoFim: retratoDoFimRef.current,
+        fichaViva: fichaViva(), idsNoChao: idsDoChao(chaoRef.current), inicio: mensagensRef.current.length + ((seguraRef.current || []).length),
+      }, { combate: c, desfecho, caidos, linha });
+      lutaDoReciboRef.current = r.lutaDoRecibo; fechoDaLutaRef.current = r.fechoDaLuta; retratoDoFimRef.current = r.retratoDoFim;
     } catch (e) { calou("notar o fecho da luta", e); }
   };
   /* Corre a cada `pushMsgs`, ANTES do carimbo: é o funil por onde todo
@@ -9704,50 +9693,17 @@ export default function Taverna() {
      São cinco lugares que zeram `combateRef`. Em vez de lembrar de cada um
      (que é exatamente como o bug nasceu), uma função só, chamada em todos. */
   const limparConjuracoesDaLuta = (persBase) => {
-    let p = persBase || personagemRef.current || personagem;
-    if (!p) return p;
-    let mudou = false;
-    if (estaEmForma(p)) {
-      const volta = desfazerForma(p, "luta");
-      p = volta.pers; mudou = true;
-      pushMsgs([{ autor: "sistema", texto: volta.linha }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${volta.nota}`;
-    }
-    /* v9.53: guarda de combate não atravessa a porta — mesma razão da forma
-       e da invocação, e pelo mesmo caminho, para não virar o quarto lugar
-       que alguém esquece de ligar. */
-    const bg = baixarGuardas(p);
-    if (bg.linha) { p = bg.pers; mudou = true; pushMsgs([{ autor: "sistema", texto: bg.linha }]); }
-    /* v9.232: e a do GRUPO junto, no mesmo sítio e pelo mesmo motivo — desde
-       que o companheiro ergue guarda de verdade, deixá-la de pé depois da
-       porta daria defesa de combate na cidade, e o prazo em rodadas não corre
-       fora da luta para desfazê-la. Mora aqui para não virar o quinto lugar
-       que alguém esquece de ligar. */
-    try {
-      const linhasBaixa = [];
-      const grupoSemGuarda = (p.grupo || []).map((g) => {
-        if (!g || !((g.guardas || []).length)) return g;
-        const bgc = baixarGuardas(g);
-        if (!bgc.linha) return g;
-        linhasBaixa.push(`🛡 ${g.nome} · ${bgc.linha.replace(/^🛡\s*/, "")}`);
-        return bgc.pers;
-      });
-      if (linhasBaixa.length) {
-        p = { ...p, grupo: grupoSemGuarda }; mudou = true;
-        pushMsgs(linhasBaixa.map((texto) => ({ autor: "sistema", texto })));
-      }
-    } catch (e) { calou("guarda-do-grupo-fim-da-luta", e); }
-    /* v9.54: a pressa também não atravessa a porta — duas ações por rodada
-       fora da luta seriam duas ações num turno que não tem rodada nenhuma. */
-    const bp = baixarPressa(p);
-    if (bp.linha) { p = bp.pers; mudou = true; pushMsgs([{ autor: "sistema", texto: bp.linha }]); }
-    const disp = dispensarTodas(p);
-    if (disp.sumiram.length) {
-      p = disp.pers; mudou = true;
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`;
-    }
-    if (mudou) { personagemRef.current = p; setPersonagem(p); }
-    return p;
+    /* T1-A, 6.ª fatia: a regra (a forma, a guarda do herói e a do grupo, a
+       pressa, as invocações) mora em `limparAsConjuracoes`
+       (src/motor/combate-do-turno.js), com os porquês; daqui sai a tela,
+       a nota e a ficha */
+    const p0 = persBase || personagemRef.current || personagem;
+    if (!p0) return p0;
+    const r = limparAsConjuracoes(p0, { calou });
+    for (const linhas of r.telas) pushMsgs(linhas.map((texto) => ({ autor: "sistema", texto })));
+    notaRef.current = notaComOTurno(notaRef.current, r.paraOCronista);
+    if (r.mudou) { personagemRef.current = r.pers; setPersonagem(r.pers); }
+    return r.pers;
   };
 
   const porForma = (h, pers) => {
@@ -19897,21 +19853,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      Matar um deus não faz de ninguém um deus. O rito faz — e o rito é
      rolado aqui, não narrado lá. */
   const abrirRitoAscensao = (alvo, nivelHeroi) => {
+    /* T1-A, 6.ª fatia: a regra mora em `oRitoDoDeicidio` (src/motor/combate-do-turno.js) */
     const nv = nivelHeroi || (personagemRef.current || personagem || {}).nivel || 1;
-    const chk = podeAbrirRito(divindadeRef.current, alvo, nv);
-    if (!chk.pode) {
-      pushMsgs([{ autor: "sistema", texto: `⚱ ${alvo.nome} tombou, mas o rito não abre: ${chk.motivo}.` }]);
-      return;
-    }
-    const dv = iniciarRito(divindadeRef.current, alvo, "deicidio");
-    divindadeRef.current = dv; setDivindade(dv);
-    const p = provaAtual(dv);
-    pushMsgs([
-      { autor: "sistema", texto: `⚱ RITO DO DEICÍDIO aberto — o domínio de ${alvo.nome} (GD ${alvo.gd}) está solto e ao alcance.` },
-      { autor: "sistema", texto: `Prova 1 de ${p.total}: ${p.nome} — ${p.nota}. Abra o painel de Ascensão para encará-la.` },
-    ]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RITO DE ASCENSÃO — ABERTO PELO SISTEMA] ${alvo.nome} caiu e o domínio ficou SOLTO. Eu ainda NÃO absorvi nada e continuo ${tituloDe(grauDe(dv, nv))}. Narre o corpo do deus e o poder pairando sem dono, e pare aí — as provas virão uma a uma, roladas pelo sistema.`;
-    salvar({ divindade: dv });
+    const r = oRitoDoDeicidio(divindadeRef.current, alvo, nv);
+    if (r.aberto) { divindadeRef.current = r.divindade; setDivindade(r.divindade); }
+    for (const linhas of r.telas) pushMsgs(linhas.map((texto) => ({ autor: "sistema", texto })));
+    if (!r.aberto) return;
+    notaRef.current = notaComOTurno(notaRef.current, r.paraOCronista);
+    salvar({ divindade: r.divindade });
   };
 
   const encararProva = () => {
@@ -24342,24 +24291,20 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     .map((p) => ({ ...p, detalhe: `${p.nome} — ${p.detalhe}` }));
 
   /* ---------------- CONQUISTAS E VÍNCULOS (100% por código, zero tokens) ---------------- */
-  const bumpCont = (campo, n = 1) => { contRef.current = { ...contRef.current, [campo]: (contRef.current[campo] || 0) + n }; };
+  /* T1-A, 6.ª fatia: a conta mora em `somarAoContador` (src/motor/combate-do-turno.js) */
+  const bumpCont = (campo, n = 1) => { contRef.current = somarAoContador(contRef.current, campo, n); };
 
   /* VÍNCULO: aplica pontos a um companheiro (ou a todos). Se cruzar um MARCO,
      o app concede +2 PV máx e deixa um bilhete para o Mestre criar o momento. */
   const aplicarVinculo = (grupo, nomeOuTodos, pontos, msgs) => {
-    const batidos = [];
-    const novo = (grupo || []).map((g) => {
-      if (nomeOuTodos !== "todos" && g.nome !== nomeOuTodos) return g;
-      const r = ganharVinculo(g, pontos);
-      if (r.marcoNovo) batidos.push({ nome: g.nome, marco: r.marcoNovo });
-      return r.membro;
-    });
-    batidos.forEach(({ nome, marco }) => {
-      const linha = `${marco.icone} ${marco.nome}: seu vínculo com ${nome} se aprofundou — ${nome} ganha +2 PV máx`;
-      if (msgs) msgs.push(linha); else pushMsgs([{ autor: "sistema", texto: linha }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VÍNCULO — MARCO ${marco.nome.toUpperCase()}] ${nome} alcançou o vínculo "${marco.nome}" com o herói. No momento certo (na fogueira, na estrada, após a cena atual), crie um MOMENTO ÍNTIMO: ${nome} compartilha algo pessoal — uma história, um medo, um segredo, um pedido ou um presente simbólico. Se já estivermos conversando com ele(a), pode ser agora.`;
-    });
-    return novo;
+    /* T1-A, 6.ª fatia: a regra mora em `osVinculos` (src/motor/combate-do-turno.js);
+       daqui sai a linha de cada marco (no turno ou na tela) e a nota dele */
+    const r = osVinculos(grupo, nomeOuTodos, pontos);
+    for (const m of r.marcos) {
+      if (msgs) msgs.push(m.linha); else pushMsgs([{ autor: "sistema", texto: m.linha }]);
+      notaRef.current = notaComOTurno(notaRef.current, [m.nota]);
+    }
+    return r.grupo;
   };
 
   const checarConquistas = useCallback((pers) => {

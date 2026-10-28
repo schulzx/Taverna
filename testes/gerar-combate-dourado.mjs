@@ -41,7 +41,14 @@ import { atributoEfetivo } from "../src/regras-jogo.js";
 import { iniciativaDeItem } from "../src/dadivas.js";
 import { mapaEmTexto, ladoDe, tamanhoDe, alcanceNatural, montarGrade, posicionar } from "../src/grid.js";
 import { rng, hashSemente } from "../src/semente.js";
-import { acoesPorRodada } from "../src/habilidades.js";
+import { acoesPorRodada, estaEmForma, desfazerForma, baixarGuardas, baixarPressa } from "../src/habilidades.js";
+/* os órgãos do fim da luta (6.ª fatia) */
+import { ganharVinculo } from "../src/vinculos.js";
+import { caidosDaLuta } from "../src/recibo-da-luta.js";
+import { dispensarTodas } from "../src/invocacoes.js";
+import { podeAbrirRito, iniciarRito, provaAtual } from "../src/ascensao.js";
+import { grauDe, tituloDe } from "../src/divindades.js";
+import { AGORA_DA_PROVA } from "./combate-casos.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const COMMIT = process.argv[2] || "7338870";
@@ -182,10 +189,85 @@ const ORGAOS = {
     },
     nome: "abrirCombate",
   },
+  /* bumpCont (6.ª fatia): lê e escreve o ref dos contadores */
+  bumpCont: {
+    texto: () => corte("  const bumpCont = (campo, n = 1) =>", "\n"),
+    correr: (fn, k) => {
+      const S = { contRef: ref(copia(k.contN)) };
+      fn(S)(k.campoB, ...(k.nB === undefined ? [] : [k.nB]));
+      return { cont: S.contRef.current };
+    },
+    nome: "bumpCont",
+  },
+  /* aplicarVinculo: devolve o grupo; escreve a linha (no turno ou na tela) e a nota de cada marco */
+  aplicarVinculo: {
+    texto: () => corte("  const aplicarVinculo = (grupo, nomeOuTodos, pontos, msgs) => {", "  const checarConquistas = useCallback("),
+    correr: (fn, k) => {
+      const tela = [];
+      const S = { ganharVinculo, pushMsgs: (xs) => tela.push(xs), notaRef: ref(k.notaAntes) };
+      const msgs = k.noTurnoV ? [] : null;
+      const ret = fn(S)(copia(k.grupoV), k.quemV, k.pontosV, msgs);
+      return { ret, msgs, tela, nota: S.notaRef.current };
+    },
+    nome: "aplicarVinculo",
+  },
+  /* notarFechoDaLuta: lê os dois refs do fecho, a ficha viva, o chão e o
+     tamanho do relato; escreve num dos dois e no retrato do fim */
+  notarFechoDaLuta: {
+    texto: () => [
+      corte("  const idsDoChao = (c) =>", "\n"),
+      corte("  const notarFechoDaLuta = ({ combate: c = null, desfecho = null, caidos = null, linha = null } = {}) => {", "  /* Corre a cada `pushMsgs`, ANTES do carimbo:"),
+    ].join("\n"),
+    correr: (fn, k) => {
+      const calados = [];
+      const S = {
+        caidosDaLuta, lutaDoReciboRef: ref(copia(k.lutaDoReciboF)), fechoDaLutaRef: ref(copia(k.fechoDaLutaF)), retratoDoFimRef: ref("retrato de antes"),
+        fichaViva: () => copia(k.fichaVivaF), chaoRef: ref(copia(k.chaoF)), mensagensRef: ref(Array.from({ length: k.mensagensF }, () => ({}))),
+        seguraRef: ref(copia(k.seguraF)), calou: (onde) => calados.push(onde),
+      };
+      fn(S)(...(k.argsF === undefined ? [] : [copia(k.argsF)]));
+      return { luta: S.lutaDoReciboRef.current, fecho: S.fechoDaLutaRef.current, retrato: S.retratoDoFimRef.current, calados };
+    },
+    nome: "notarFechoDaLuta",
+  },
+  /* limparConjuracoesDaLuta: lê a ficha dada ou a do ref; escreve na tela,
+     na nota e na ficha (ref e estado) */
+  limparConjuracoesDaLuta: {
+    texto: () => corte("  const limparConjuracoesDaLuta = (persBase) => {", "  const porForma = (h, pers) => {"),
+    correr: (fn, k) => {
+      const tela = [], publicados = [], calados = [];
+      const S = {
+        estaEmForma, desfazerForma, baixarGuardas, baixarPressa, dispensarTodas,
+        personagemRef: ref(k.persLNoRef ? copia(k.persL) : { nome: "a ficha do ref", grupo: [] }), personagem: null,
+        pushMsgs: (xs) => tela.push(xs), notaRef: ref(k.notaAntes), setPersonagem: (p) => publicados.push(p), calou: (onde) => calados.push(onde),
+      };
+      let ret = null, erro = null;
+      try { ret = fn(S)(k.persLNoRef ? null : copia(k.persL)); } catch (e) { erro = String(e && e.message); }
+      return { ret: ret === undefined ? null : ret, erro, tela, nota: S.notaRef.current, ficha: S.personagemRef.current, publicados, calados };
+    },
+    nome: "limparConjuracoesDaLuta",
+  },
+  /* abrirRitoAscensao: lê a divindade e o nível (dado, ou o da ficha);
+     escreve a divindade, a tela, a nota, e salva (o dublê guarda o quê) */
+  abrirRitoAscensao: {
+    texto: () => corte("  const abrirRitoAscensao = (alvo, nivelHeroi) => {", "  const encararProva = () => {"),
+    correr: (fn, k) => {
+      const tela = [], publicadas = [], salvos = [];
+      const S = {
+        podeAbrirRito, iniciarRito, provaAtual, tituloDe, grauDe,
+        personagemRef: ref({ nome: "Vera", nivel: k.nivelFichaR }), personagem: null, divindadeRef: ref(copia(k.divindadeR)),
+        setDivindade: (d) => publicadas.push(d), pushMsgs: (xs) => tela.push(xs), notaRef: ref(k.notaAntes), salvar: (x) => salvos.push(x),
+      };
+      const ret = fn(S)(copia(k.alvoR), k.nivelR);
+      return { ret: ret === undefined ? null : ret, divindade: S.divindadeRef.current, publicadas, tela, nota: S.notaRef.current, salvos };
+    },
+    nome: "abrirRitoAscensao",
+  },
 };
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
+  Date.now = () => AGORA_DA_PROVA;
   const casos = casosDoCombate();
   const out = { commit: COMMIT, casos: casos.length, orgaos: {} };
   for (const [nome, o] of Object.entries(ORGAOS)) {

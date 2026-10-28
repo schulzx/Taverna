@@ -151,8 +151,17 @@ console.log("\n[a guarda do grupo está ligada no App]");
   /* o prazo: sem ele Casca de Carvalho seria +4 de defesa PERMANENTE no
      companheiro, porque `defesaDe` já soma `defesaDeGuarda` na ficha dele */
   ok(/expirarGuardas\(g, proxima\)/.test(APP), "e o prazo das guardas do grupo corre no mesmo relógio do herói");
-  /* e a porta: guarda de combate não atravessa o fim da luta */
-  ok(/baixarGuardas\(g\)/.test(APP), "e no fim da luta a guarda do grupo baixa junto com a do herói");
+  /* e a porta: guarda de combate não atravessa o fim da luta.
+     (movido, T1-A 6.ª fatia: o `baixarGuardas(g)` do fim da luta saiu do App
+     para `limparAsConjuracoes`, no motor, que esta suíte não lê como texto.
+     A intenção é a mesma, agora jogada: no fim da luta a guarda de cada
+     companheiro baixa junto com a do herói.) */
+  {
+    const { limparAsConjuracoes } = await import("../src/motor/combate-do-turno.js");
+    const r = limparAsConjuracoes({ nome: "Vera", guardas: [{ nome: "Casca" }], grupo: [{ nome: "Brás", guardas: [{ nome: "Casca de Carvalho" }] }, { nome: "Lua" }] }, {});
+    ok(!r.pers.guardas && !r.pers.grupo[0].guardas && r.pers.grupo[1].nome === "Lua" && r.telas.some((l) => l.some((x) => /^🛡 Brás ·/.test(x))),
+      "e no fim da luta a guarda do grupo baixa junto com a do herói");
+  }
 }
 
 /* ============================================================

@@ -19,7 +19,8 @@ import fs from "node:fs";
 import { casosDoCombate, sorteDoCaso, N_CASOS } from "./combate-casos.mjs";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis } from "../src/motor/combate-do-turno.js";
 import { mundoDaLei, localDoCaso, fotoCompacta } from "./combate-casos.mjs";
-import { abrirOCombate, economiaNova } from "../src/motor/combate-do-turno.js";
+import { abrirOCombate, economiaNova, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "../src/motor/combate-do-turno.js";
+import { AGORA_DA_PROVA } from "./combate-casos.mjs";
 import { montarGrade, posicionar } from "../src/grid.js";
 import { rng, hashSemente } from "../src/semente.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
@@ -272,6 +273,136 @@ sec("6 · a porta única de abrir combate (abrirCombate → abrirOCombate)");
     && /setTimeout\(\(\) => presencaNaLuta\(combateRef\.current, personagemRef\.current, \{ contraMim: false \}\), 0\);\s*return r\.saida;/.test(C));
   t("e a semente da abertura é a do mundo e do turno, com a planta do App", /sementeDaAbertura: `\$\{sementeMundo\(\)\}\|abertura\|\$\{turnoDeRegistroRef\.current\}`/.test(C) && /planta: plantaDaLuta,/.test(C) && /const plantaDaLuta = \(\) => \{/.test(C));
   t("o equipamento, o tabuleiro e a economia não moram mais no App", !/const (equiparCombate|montarGrid|economiaNova|temAcaoBonus) =/.test(C));
+}
+
+sec("7 · o contador das façanhas (bumpCont → somarAoContador)");
+{
+  const fotos = D.orgaos.bumpCont;
+  const foto = (k, campo = k.campoB, n = k.nB) => ({ cont: n === undefined ? somarAoContador(copia(k.contN), campo) : somarAoContador(copia(k.contN), campo, n) });
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const outro = casos.filter((k, i) => !igual(foto(k, "outroCampo"), fotos[i])).length;
+  t(`morde: noutro campo, ${outro} fotos divergem`, outro === N_CASOS);
+  const nada = casos.filter((k, i) => k.nB !== 0 && !igual(foto(k, k.campoB, 0), fotos[i])).length;
+  t(`morde: somando zero, ${nada} fotos divergem (as que somavam)`, nada === casos.filter((k) => k.nB !== 0).length);
+  t("não muta os contadores", (() => { const c = { a: 1 }; const n = somarAoContador(c, "a", 2); return c.a === 1 && n.a === 3 && n !== c; })());
+  t("no App, o órgão é o invólucro da peça", /const bumpCont = \(campo, n = 1\) => \{ contRef\.current = somarAoContador\(contRef\.current, campo, n\); \};/.test(C));
+}
+
+sec("8 · o vínculo (aplicarVinculo → osVinculos)");
+{
+  const fotos = D.orgaos.aplicarVinculo;
+  /* o invólucro do App, à letra: a linha no turno ou na tela, e a nota de cada marco */
+  const foto = (k, pontos = k.pontosV, quem = k.quemV) => {
+    const tela = [];
+    const msgs = k.noTurnoV ? [] : null;
+    let nota = k.notaAntes;
+    const r = osVinculos(copia(k.grupoV), quem, pontos);
+    for (const m of r.marcos) {
+      if (msgs) msgs.push(m.linha); else tela.push([{ autor: "sistema", texto: m.linha }]);
+      nota = notaComOTurno(nota, [m.nota]);
+    }
+    return { ret: r.grupo, msgs, tela, nota };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const marcos = fotos.filter((f) => (f.msgs && f.msgs.length) || f.tela.length).length;
+  console.log(`      um marco cruzado em ${marcos}`);
+  t("percorre os ramos (marco e não; no turno e na tela)", marcos > 30 && marcos < N_CASOS - 30 && fotos.some((f) => f.tela.length) && fotos.some((f) => f.msgs && f.msgs.length));
+  const outro = casos.filter((k, i) => !igual(foto(k, k.pontosV + 7), fotos[i])).length;
+  t(`morde: com outros pontos, ${outro} fotos divergem`, outro > 50);
+  t("no App, o órgão é o invólucro da peça", /const aplicarVinculo = \(grupo, nomeOuTodos, pontos, msgs\) => \{\s*const r = osVinculos\(grupo, nomeOuTodos, pontos\);\s*for \(const m of r\.marcos\) \{\s*if \(msgs\) msgs\.push\(m\.linha\); else pushMsgs\(\[\{ autor: "sistema", texto: m\.linha \}\]\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, \[m\.nota\]\);\s*\}\s*return r\.grupo;/.test(C));
+}
+
+sec("9 · o fecho notado (notarFechoDaLuta → notarOFecho)");
+{
+  const fotos = D.orgaos.notarFechoDaLuta;
+  const idsDoChao = (c) => (((c && c.itens) || []).map((it) => it && it.id).filter(Boolean));
+  /* o invólucro do App, à letra */
+  const foto = (k, args = k.argsF) => {
+    const calados = [];
+    const st = { luta: copia(k.lutaDoReciboF), fecho: copia(k.fechoDaLutaF), retrato: "retrato de antes" };
+    try {
+      const r = notarOFecho({ lutaDoRecibo: st.luta, fechoDaLuta: st.fecho, retratoDoFim: st.retrato, fichaViva: copia(k.fichaVivaF), idsNoChao: idsDoChao(copia(k.chaoF)), inicio: k.mensagensF + ((k.seguraF || []).length) }, args === undefined ? undefined : copia(args));
+      st.luta = r.lutaDoRecibo; st.fecho = r.fechoDaLuta; st.retrato = r.retratoDoFim;
+    } catch (e) { calados.push("notar o fecho da luta"); }
+    return { luta: st.luta, fecho: st.fecho, retrato: st.retrato, calados };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const criou = fotos.filter((f, i) => !casos[i].lutaDoReciboF && !casos[i].fechoDaLutaF).length, noFecho = fotos.filter((f, i) => !casos[i].lutaDoReciboF && casos[i].fechoDaLutaF).length;
+  console.log(`      a luta nasceu no fecho ${criou} · o fecho por fechar ${noFecho}`);
+  t("percorre os ramos (a luta aberta, o fecho, a luta que nasce)", criou > 20 && noFecho > 20);
+  const outro = casos.filter((k, i) => !igual(foto(k, { desfecho: "derrota", caidos: ["Outro"] }), fotos[i])).length;
+  t(`morde: com outro desfecho e outros caídos, ${outro} fotos divergem`, outro > 200);
+  t("no App, o órgão é o invólucro da peça", /const notarFechoDaLuta = \(\{ combate: c = null, desfecho = null, caidos = null, linha = null \} = \{\}\) => \{\s*try \{\s*const r = notarOFecho\(\{/.test(C) && /lutaDoReciboRef\.current = r\.lutaDoRecibo; fechoDaLutaRef\.current = r\.fechoDaLuta; retratoDoFimRef\.current = r\.retratoDoFim;\s*\} catch \(e\) \{ calou\("notar o fecho da luta", e\); \}/.test(C));
+}
+
+sec("10 · o que a luta leva quando acaba (limparConjuracoesDaLuta → limparAsConjuracoes)");
+{
+  const fotos = D.orgaos.limparConjuracoesDaLuta;
+  /* o invólucro do App, à letra: a ficha dada ou a do ref, a tela, a nota, a ficha */
+  const foto = (k, pers = k.persL) => {
+    const tela = [], publicados = [], calados = [];
+    let ficha = k.persLNoRef ? copia(pers) : { nome: "a ficha do ref", grupo: [] }, nota = k.notaAntes, ret = null, erro = null;
+    try {
+      const p0 = (k.persLNoRef ? null : copia(pers)) || ficha;
+      if (!p0) ret = p0;
+      else {
+        const r = limparAsConjuracoes(p0, { calou: (onde) => calados.push(onde) });
+        for (const linhas of r.telas) tela.push(linhas.map((texto) => ({ autor: "sistema", texto })));
+        nota = notaComOTurno(nota, r.paraOCronista);
+        if (r.mudou) { ficha = r.pers; publicados.push(r.pers); }
+        ret = r.pers;
+      }
+    } catch (e) { erro = String(e && e.message); }
+    return { ret: ret === undefined ? null : ret, erro, tela, nota, ficha, publicados, calados };
+  };
+  /* UMA DIFERENÇA DECLARADA, e é a única: quando o grupo tem um buraco
+     (um membro nulo) e uma invocação, `dispensarTodas` estoura no fim. O
+     App de antes já tinha posto na tela a forma e a guarda que desfez, e
+     depois o erro subia; a peça é tudo ou nada — o erro sobe igual, e nada
+     ficou escrito pela metade. Nos outros casos, byte a byte. */
+  const comErro = casos.filter((k, i) => fotos[i].erro);
+  const batem = casos.filter((k, i) => !fotos[i].erro && igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS - comErro.length} iguais ao App de antes (os que não estouram)`, batem === N_CASOS - comErro.length);
+  const tudoOuNada = comErro.filter((k) => { const f = foto(k), i = k.i; return f.erro === fotos[i].erro && !f.tela.length && f.nota === k.notaAntes && !f.publicados.length; }).length;
+  t(`e os ${comErro.length} que estouram estouram com o mesmo erro, sem nada escrito pela metade (${fotos.filter((f) => f.erro && f.tela.length).length} deles o App de antes deixava na tela)`, tudoOuNada === comErro.length && comErro.length > 0);
+  const forma = fotos.filter((f) => f.tela.some((l) => /se desfaz — você volta/.test(l[0].texto))).length, inv = fotos.filter((f) => /INVOCAÇÕES ENCERRADAS/.test(f.nota || "")).length;
+  const grupo = fotos.filter((f) => f.tela.some((l) => l.some((x) => /^🛡 Brás ·/.test(x.texto)))).length, nada = fotos.filter((f) => !f.erro && !f.publicados.length).length, erro = fotos.filter((f) => f.erro).length;
+  console.log(`      a forma ${forma} · as invocações ${inv} · a guarda do grupo ${grupo} · nada a levar ${nada} · o grupo torto estoura ${erro}`);
+  t("percorre os ramos (a forma, a guarda, a do grupo, a pressa, as invocações, nada, o erro)", forma > 20 && inv > 20 && grupo > 20 && nada > 10 && erro > 0);
+  const semNada = casos.filter((k, i) => !igual(foto(k, { nome: "Vera", grupo: [] }), fotos[i])).length;
+  t(`morde: com uma ficha sem nada a levar, ${semNada} fotos divergem`, semNada > 150);
+  t("não muta a ficha que entra", (() => { const k = casos.find((x, i) => fotos[i].publicados.length && !x.persLNoRef); const p = copia(k.persL); limparAsConjuracoes(p, {}); return igual(p, k.persL); })());
+  t("no App, o órgão é o invólucro da peça", /const limparConjuracoesDaLuta = \(persBase\) => \{\s*const p0 = persBase \|\| personagemRef\.current \|\| personagem;\s*if \(!p0\) return p0;\s*const r = limparAsConjuracoes\(p0, \{ calou \}\);\s*for \(const linhas of r\.telas\) pushMsgs\(linhas\.map\(\(texto\) => \(\{ autor: "sistema", texto \}\)\)\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*if \(r\.mudou\) \{ personagemRef\.current = r\.pers; setPersonagem\(r\.pers\); \}\s*return r\.pers;/.test(C));
+}
+
+sec("11 · o rito do deicídio (abrirRitoAscensao → oRitoDoDeicidio)");
+{
+  const fotos = D.orgaos.abrirRitoAscensao;
+  const agora = Date.now;
+  Date.now = () => AGORA_DA_PROVA;
+  /* o invólucro do App, à letra */
+  const foto = (k, alvo = k.alvoR) => {
+    const tela = [], publicadas = [], salvos = [];
+    let dv = copia(k.divindadeR), nota = k.notaAntes;
+    const nv = k.nivelR || (({ nome: "Vera", nivel: k.nivelFichaR }) || {}).nivel || 1;
+    const r = oRitoDoDeicidio(dv, copia(alvo), nv);
+    if (r.aberto) { dv = r.divindade; publicadas.push(r.divindade); }
+    for (const linhas of r.telas) tela.push(linhas.map((texto) => ({ autor: "sistema", texto })));
+    if (r.aberto) { nota = notaComOTurno(nota, r.paraOCronista); salvos.push({ divindade: r.divindade }); }
+    return { ret: null, divindade: dv, publicadas, tela, nota, salvos };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const aberto = fotos.filter((f) => f.salvos.length).length;
+  console.log(`      o rito abriu em ${aberto} · fechou (com o porquê) em ${N_CASOS - aberto}`);
+  t("percorre os ramos (abre e não)", aberto > 20 && aberto < N_CASOS - 20);
+  const fraco = casos.filter((k, i) => !igual(foto(k, { ...k.alvoR, gd: 0 }), fotos[i])).length;
+  t(`morde: com um deus de grau zero, ${fraco} fotos divergem (as que abriam, e o porquê das outras)`, fraco >= aberto && fraco > 20);
+  Date.now = agora;
+  t("no App, o órgão é o invólucro da peça", /const abrirRitoAscensao = \(alvo, nivelHeroi\) => \{\s*const nv = nivelHeroi \|\| \(personagemRef\.current \|\| personagem \|\| \{\}\)\.nivel \|\| 1;\s*const r = oRitoDoDeicidio\(divindadeRef\.current, alvo, nv\);\s*if \(r\.aberto\) \{ divindadeRef\.current = r\.divindade; setDivindade\(r\.divindade\); \}\s*for \(const linhas of r\.telas\) pushMsgs\(linhas\.map\(\(texto\) => \(\{ autor: "sistema", texto \}\)\)\);\s*if \(!r\.aberto\) return;\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*salvar\(\{ divindade: r\.divindade \}\);/.test(C));
 }
 
 console.log(`\nmotor · os órgãos do combate: ${ok} passaram, ${mal} falharam`);

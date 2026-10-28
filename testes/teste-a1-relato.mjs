@@ -24,6 +24,8 @@ import { readFileSync } from "node:fs";
 import { reciboDoTurno, reciboQueCabe, itensMostrados } from "../src/glifos.js";
 import { fotoDoAcervo, marcasQueAcendem } from "../src/marca-da-porta.js";
 import { etapaAtual, textoDaEtapa } from "../src/missoes.js";
+/* T1-A 6.ª fatia: o fecho notado saiu do App para o motor */
+import { notarOFecho } from "../src/motor/combate-do-turno.js";
 
 const ler = (x) => readFileSync(new URL(x, import.meta.url), "utf8").split(String.fromCharCode(13)).join("");
 const APP = ler("../src/App.jsx");
@@ -309,8 +311,19 @@ t("o cabeçalho da batalha recebe o lugar da cena",
 t("o botão d'O TEMPO diz a hora cheia por extenso",
   /aria-label=\{\["O tempo", horaCheiaFalada\(horaTxt\(minuto\)\)\]\.filter\(Boolean\)\.join\(", "\)\}/.test(APP)
   && /return h === 1 \? "1 hora" : h \+ " horas";/.test(APP));
+/* (movido, T1-A 6.ª fatia: o `if (c) retratoDoFimRef.current = c;` de
+   `notarFechoDaLuta` saiu do App para `notarOFecho`, no motor, que esta
+   suíte não lê como texto. A intenção é a mesma, agora jogada: quem fecha a
+   luta e diz o retrato de depois do golpe final é esse o retrato do fim; sem
+   retrato, fica o que estava. No App, o invólucro devolve-o ao ref.) */
 t("o fim da luta desenha o retrato de DEPOIS do golpe final",
-  /if \(c\) retratoDoFimRef\.current = c;/.test(APP)
+  (() => {
+    const depois = { inimigos: [{ nome: "Lobo", derrotado: true }], rodada: 3 };
+    const com = notarOFecho({ lutaDoRecibo: { ultima: null, caidos: [] }, retratoDoFim: "o de antes" }, { combate: depois, desfecho: "vitoria" });
+    const sem = notarOFecho({ lutaDoRecibo: { ultima: null, caidos: [] }, retratoDoFim: "o de antes" }, { desfecho: "vitoria" });
+    return com.retratoDoFim === depois && sem.retratoDoFim === "o de antes";
+  })()
+  && /retratoDoFimRef\.current = r\.retratoDoFim;/.test(APP)
   && /setFimDaLuta\(retratoDoFimRef\.current \|\| ultimoCombateRef\.current\);/.test(APP)
   && /if \(!ultimoCombateRef\.current\) retratoDoFimRef\.current = null;/.test(APP));
 

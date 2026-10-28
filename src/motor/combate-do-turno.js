@@ -43,7 +43,13 @@ import { atributoEfetivo } from "../regras-jogo.js";
 import { iniciativaDeItem } from "../dadivas.js";
 import { mapaEmTexto, ladoDe, tamanhoDe, alcanceNatural, montarGrade, posicionar } from "../grid.js";
 import { rng, hashSemente } from "../semente.js";
-import { acoesPorRodada } from "../habilidades.js";
+import { acoesPorRodada, estaEmForma, desfazerForma, baixarGuardas, baixarPressa } from "../habilidades.js";
+/* os órgãos do fim da luta (6.ª fatia) */
+import { ganharVinculo } from "../vinculos.js";
+import { caidosDaLuta } from "../recibo-da-luta.js";
+import { dispensarTodas } from "../invocacoes.js";
+import { podeAbrirRito, iniciarRito, provaAtual } from "../ascensao.js";
+import { grauDe, tituloDe } from "../divindades.js";
 
 /* ---------------- O PODER ÚNICO (v7.4.4) ----------------
    Mesma lógica do loot: a árvore da classe é tabela fixa, mas derrubar
@@ -362,4 +368,155 @@ export function abrirOCombate(estado, ctx) {
   }
   const nota = `${aval ? resumoOrcamentoPrompt(aval, diaLuta) + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(equipado.ordem)}. Respeite essa ordem ao narrar quem age quando.`;
   return { abriu: true, saida: { pers, msgs, nota, combate: equipado }, combateNoRef, diaLuta, descobertas };
+}
+
+/* ---------------- O CONTADOR DAS FAÇANHAS (100% por código) ----------------
+   Conquistas, fama e nêmesis leem estes contadores; quem os sobe é o
+   sistema, nunca o Narrador.
+
+     somarAoContador(contadores, campo, n = 1) → contadores novos
+
+   (o App de antes estourava com os contadores nulos; a peça parte de vazio) */
+export function somarAoContador(contadores, campo, n = 1) {
+  const c = contadores && typeof contadores === "object" ? contadores : {};
+  return { ...c, [campo]: (c[campo] || 0) + n };
+}
+
+/* ---------------- O VÍNCULO (por código, zero tokens) ----------------
+   Aplica pontos a um companheiro (ou a todos, "todos"). Se cruzar um
+   MARCO, o membro ganha +2 PV máx (ganharVinculo) e o Narrador recebe o
+   bilhete para criar o momento íntimo.
+
+     osVinculos(grupo, nomeOuTodos, pontos) → { grupo, marcos: [{ linha, nota }] }
+
+   Um marco por membro, na ordem do grupo; o App põe cada linha (no turno ou
+   na tela) e a nota dela, uma de cada vez, como fazia. */
+export function osVinculos(grupo, nomeOuTodos, pontos) {
+  const batidos = [];
+  const novo = (grupo || []).map((g) => {
+    if (nomeOuTodos !== "todos" && g.nome !== nomeOuTodos) return g;
+    const r = ganharVinculo(g, pontos);
+    if (r.marcoNovo) batidos.push({ nome: g.nome, marco: r.marcoNovo });
+    return r.membro;
+  });
+  const marcos = batidos.map(({ nome, marco }) => ({
+    linha: `${marco.icone} ${marco.nome}: seu vínculo com ${nome} se aprofundou — ${nome} ganha +2 PV máx`,
+    nota: `[VÍNCULO — MARCO ${marco.nome.toUpperCase()}] ${nome} alcançou o vínculo "${marco.nome}" com o herói. No momento certo (na fogueira, na estrada, após a cena atual), crie um MOMENTO ÍNTIMO: ${nome} compartilha algo pessoal — uma história, um medo, um segredo, um pedido ou um presente simbólico. Se já estivermos conversando com ele(a), pode ser agora.`,
+  }));
+  return { grupo: novo, marcos };
+}
+
+/* ---------------- QUEM FECHA A LUTA E SABE COMO ----------------
+   A vitória que o golpe fecha, a que a resposta do Mestre declara: sem
+   esta palavra o fecho cai em `encerrada` e conta os caídos pelo último
+   retrato visto. Uma luta que abriu e fechou na mesma resposta nunca foi
+   vista aberta: nasce aqui, com a ficha de agora como abertura.
+
+     notarOFecho({ lutaDoRecibo, fechoDaLuta, retratoDoFim, fichaViva,
+                   idsNoChao, inicio }, { combate, desfecho, caidos, linha })
+       → { lutaDoRecibo, fechoDaLuta, retratoDoFim }
+
+   Escreve num dos dois (a luta aberta, ou o fecho que ainda não fechou),
+   como o App. MM (a luta tem saída): a `linha` é o que o inimigo fez com
+   quem caiu — a frase que a tela do fim mostra debaixo do título. */
+export function notarOFecho(estado, args) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  const { combate: c = null, desfecho = null, caidos = null, linha = null } = args && typeof args === "object" ? args : {};
+  let lutaDoRecibo = e0.lutaDoRecibo, fechoDaLuta = e0.fechoDaLuta, retratoDoFim = e0.retratoDoFim;
+  if (!lutaDoRecibo && !fechoDaLuta) {
+    lutaDoRecibo = { fichaNaAbertura: e0.fichaViva, idsNoChao: e0.idsNoChao, inicio: e0.inicio, ultima: c, desfecho: null, caidos: null };
+  }
+  const naLuta = !!lutaDoRecibo;
+  const r = naLuta ? lutaDoRecibo : fechoDaLuta;
+  const comb = c || r.ultima;
+  if (c) retratoDoFim = c;
+  const novo = {
+    ...r,
+    ultima: comb,
+    desfecho: desfecho || r.desfecho,
+    ...(linha ? { linha } : {}),
+    caidos: Array.from(new Set([...(r.caidos || []), ...(comb ? caidosDaLuta(comb) : []), ...((caidos || []).filter(Boolean))])),
+    ...(comb && comb.rodada ? { rodadas: comb.rodada } : {}),
+  };
+  if (naLuta) lutaDoRecibo = novo; else fechoDaLuta = novo;
+  return { lutaDoRecibo, fechoDaLuta, retratoDoFim };
+}
+
+/* ---------------- O QUE A LUTA LEVA QUANDO ACABA (v9.53, v9.54, v9.232) ----------------
+   A forma animal, a guarda de combate (a do herói e a de cada companheiro),
+   a pressa e as invocações não atravessam a porta. Eram cinco lugares que
+   zeravam o combate, e o herói ficava urso para sempre e a fera no grupo
+   para sempre: uma peça só, chamada em todos.
+
+     limparAsConjuracoes(pers, { calou }) →
+       { pers, mudou, telas: [[linha…]…], paraOCronista }
+
+   `telas` são as linhas na ordem e no agrupamento em que o App as punha na
+   tela (cada uma, uma chamada); as notas ao Narrador vão à parte (a forma
+   desfeita, as invocações encerradas). A guarda do grupo corre na rede do
+   App (`calou`): se estourar, cala e fica a do herói. */
+export function limparAsConjuracoes(pers, ctx) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const calar = typeof c.calou === "function" ? c.calou : () => {};
+  let p = pers;
+  const telas = [], paraOCronista = [];
+  if (!p) return { pers: p, mudou: false, telas, paraOCronista };
+  let mudou = false;
+  if (estaEmForma(p)) {
+    const volta = desfazerForma(p, "luta");
+    p = volta.pers; mudou = true;
+    telas.push([volta.linha]);
+    paraOCronista.push(volta.nota);
+  }
+  const bg = baixarGuardas(p);
+  if (bg.linha) { p = bg.pers; mudou = true; telas.push([bg.linha]); }
+  try {
+    const linhasBaixa = [];
+    const grupoSemGuarda = (p.grupo || []).map((g) => {
+      if (!g || !((g.guardas || []).length)) return g;
+      const bgc = baixarGuardas(g);
+      if (!bgc.linha) return g;
+      linhasBaixa.push(`🛡 ${g.nome} · ${bgc.linha.replace(/^🛡\s*/, "")}`);
+      return bgc.pers;
+    });
+    if (linhasBaixa.length) {
+      p = { ...p, grupo: grupoSemGuarda }; mudou = true;
+      telas.push(linhasBaixa);
+    }
+  } catch (e) { calar("guarda-do-grupo-fim-da-luta", e); }
+  const bp = baixarPressa(p);
+  if (bp.linha) { p = bp.pers; mudou = true; telas.push([bp.linha]); }
+  const disp = dispensarTodas(p);
+  if (disp.sumiram.length) {
+    p = disp.pers; mudou = true;
+    paraOCronista.push(`[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`);
+  }
+  return { pers: p, mudou, telas, paraOCronista };
+}
+
+/* ---------------- RITO DE ASCENSÃO (v9.6) ----------------
+   Matar um deus não faz de ninguém um deus. O rito faz — e o rito é
+   rolado pelo sistema, não narrado pelo Mestre.
+
+     oRitoDoDeicidio(divindade, alvo, nivel) →
+       { aberto, divindade, telas, paraOCronista }
+
+   Fechado: uma linha diz porquê, e nada muda. Aberto: a divindade nova
+   (com o rito), as duas linhas da prova 1 numa só chamada, e a nota que
+   segura o Narrador (o domínio está solto, eu ainda não absorvi nada). O
+   App guarda a divindade e salva. */
+export function oRitoDoDeicidio(divindade, alvo, nivel) {
+  const nv = nivel;
+  const chk = podeAbrirRito(divindade, alvo, nv);
+  if (!chk.pode) return { aberto: false, divindade, telas: [[`⚱ ${alvo.nome} tombou, mas o rito não abre: ${chk.motivo}.`]], paraOCronista: [] };
+  const dv = iniciarRito(divindade, alvo, "deicidio");
+  const p = provaAtual(dv);
+  return {
+    aberto: true, divindade: dv,
+    telas: [[
+      `⚱ RITO DO DEICÍDIO aberto — o domínio de ${alvo.nome} (GD ${alvo.gd}) está solto e ao alcance.`,
+      `Prova 1 de ${p.total}: ${p.nome} — ${p.nota}. Abra o painel de Ascensão para encará-la.`,
+    ]],
+    paraOCronista: [`[RITO DE ASCENSÃO — ABERTO PELO SISTEMA] ${alvo.nome} caiu e o domínio ficou SOLTO. Eu ainda NÃO absorvi nada e continuo ${tituloDe(grauDe(dv, nv))}. Narre o corpo do deus e o poder pairando sem dono, e pare aí — as provas virão uma a uma, roladas pelo sistema.`],
+  };
 }

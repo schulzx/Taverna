@@ -20,6 +20,11 @@ import { sorteNoPonto, CONTAGEM_VAZIA, pontoDaSorte } from "../src/motor/sorte-d
 
 export const N_CASOS = 275;
 
+/* o instante parado da prova: iniciarRito carimba o rito com Date.now(), e
+   o dourado tem de ser o mesmo em qualquer corrida (os dois lados param o
+   relógio neste número antes de correr) */
+export const AGORA_DA_PROVA = 1790000000000;
+
 const AMEACAS = ["fraco", "comum", "competente", "elite", "lendario"];
 const NOMES = ["Ogro do Vau", "Vespa de Cinza", "Cavaleiro Sem Rosto", "Bruxa da Turfa", "Lobo Grande", "Sentinela de Bronze", "Dragão Velho"];
 const HABS = [[], [{ nome: "Golpe Duplo" }], [{ nome: "Fúria" }, { nome: "Golpe Duplo" }], [{ nome: "Lâmina de Vento" }]];
@@ -123,6 +128,53 @@ export function casoDoCombate(i) {
     diaLutaA: i % 4 === 0 ? null : { gasto: (i % 5) * 0.75, lutas: i % 3 },
     descobertasA: i % 3 === 0 ? [] : ["ogro do vau", "Lobo Grande"],
     turnoA: i % 7,
+    /* o contador (bumpCont, 6.ª fatia): o campo, quanto (às vezes nada) */
+    campoB: ["combatesVencidos", "inimigosDerrotados", "masmorrasConcluidas", "nemesisVencidas"][i % 4],
+    nB: [1, undefined, 3, 0, 2][i % 5],
+    /* o vínculo (aplicarVinculo): o grupo rente aos marcos, quem ganha, quanto, e se a linha vai ao turno ou à tela */
+    grupoV: [
+      { nome: "Brás", vinculo: [10, 24, 49, 74, 99, 100, undefined][i % 7], marcos: i % 3 ? [] : [25], vida: 10, vidaMax: 12 },
+      ...(i % 2 ? [{ nome: "Lua", vinculo: 48, vida: 5 }] : []),
+      ...(i % 5 === 0 ? [{ nome: "Fera", invocada: true, vinculo: 0, vida: 3, vidaMax: 3 }] : []),
+    ],
+    quemV: ["todos", "Brás", "Lua", "Ninguém"][i % 4],
+    pontosV: [2, 1, 26, -5, 60][i % 5],
+    noTurnoV: i % 3 !== 2,
+    /* o fecho notado (notarFechoDaLuta): a luta aberta ou o fecho por fechar
+       (ou nenhum), o que se diz (o retrato, o desfecho, os caídos, a linha) e
+       o que a abertura de agora guardaria */
+    lutaDoReciboF: i % 3 === 0 ? null : { fichaNaAbertura: { nome: "Vera", vida: 20 }, idsNoChao: ["x"], inicio: 4, ultima: { inimigos: [{ nome: "Lobo", derrotado: i % 2 === 0 }], rodada: 2 }, desfecho: i % 4 === 1 ? "fuga" : null, caidos: i % 5 ? null : ["Corvo"] },
+    fechoDaLutaF: i % 6 === 0 ? { id: 3, desfecho: "encerrada", caidos: ["Lobo"], ultima: null, rodadas: 3 } : null,
+    argsF: i % 11 === 10 ? undefined : {
+      ...(i % 2 ? { combate: { inimigos: [{ nome: "Ogro do Vau", derrotado: true }, { nome: "Vespa de Cinza", vida: 0 }, { nome: "Fugido", vida: 0, fugiu: true }, { nome: "De Pé", vida: 4 }], rodada: i % 7 } } : {}),
+      ...(i % 3 === 1 ? { desfecho: "vitoria" } : {}),
+      ...(i % 4 === 2 ? { caidos: ["Ogro do Vau", null, "Bruxa da Turfa"] } : {}),
+      ...(i % 9 === 4 ? { linha: "O ogro arrasta Brás para o mato." } : {}),
+    },
+    fichaVivaF: { nome: "Vera Cinza", vida: 10 + (i % 9) },
+    chaoF: i % 4 === 0 ? null : { itens: [{ id: "a" + i }, { id: null }, null, { id: "b" }] },
+    mensagensF: i % 17, seguraF: i % 3 ? null : [{}, {}],
+    /* as conjurações que a luta leva (limparConjuracoesDaLuta): a forma, a
+       guarda do herói e a do grupo, a pressa, as invocações; a ficha que
+       vem e a do ref; e o grupo torto, que estoura */
+    persL: i % 23 === 7 ? { nome: "Vera", grupo: { torto: true } } : {
+      nome: "Vera", vida: 30 - (i % 9), vidaMax: 30,
+      ...(i % 4 === 0 ? { forma: { id: "urso", nome: "Forma de Urso", ganho: 6, dano: 3 } } : {}),
+      ...(i % 5 === 1 ? { guardas: [{ nome: "Guarda Firme", ate: 3 }] } : {}),
+      ...(i % 6 === 2 ? { pressa: { nome: "Instante Roubado", ate: 2 } } : {}),
+      grupo: [
+        { nome: "Brás", vida: 9, ...(i % 3 === 0 ? { guardas: [{ nome: "Escudo" }] } : {}) },
+        ...(i % 7 === 3 ? [{ nome: "Fera Chamada", invocada: true }, { nome: "Lobo Espírito", invocada: true }] : i % 7 === 5 ? [{ nome: "Fera Chamada", invocada: true }] : []),
+        ...(i % 8 === 6 ? [null] : []),
+      ],
+    },
+    persLNoRef: i % 13 === 4,
+    /* o rito (abrirRitoAscensao): quem despertou ou não, com rito em curso
+       ou não, com graus ganhos; o deus abatido; o nível dado ou o da ficha */
+    divindadeR: i % 9 === 8 ? null : { ehJogador: true, despertar: i % 5 !== 3, fieis: [0, 1500, 20000, 2000000][i % 4], grausGanhos: i % 6 === 5 ? 2 : 0, ...(i % 10 === 7 ? { rito: { caminho: "deicidio", etapa: 0 } } : {}) },
+    alvoR: { nome: ["Morr", "Avatar de Ilsa", "Semideus do Vau"][i % 3], gd: [1, 2, 3, 4][i % 4] },
+    nivelR: i % 4 === 3 ? null : [5, 12, 16, 18, 19, 20][i % 6],
+    nivelFichaR: 1 + (i % 20),
   };
 }
 
