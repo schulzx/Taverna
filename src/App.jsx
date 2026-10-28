@@ -6,7 +6,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, saidasDeUmPassoPrompt } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 /* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
@@ -83,8 +83,8 @@ import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastar
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
 import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
-import { avaliarEncontro, PESO_AMEACA, quantosPara, selo, garantirDia, gastarDoDia, zerarDia, folgaDoDia, resumoOrcamentoPrompt, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { montarGrade, garantirGrade, posicionar, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, mapaEmTexto, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, tamanhoDe, ladoDe, alcanceNatural, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar } from "./grid.js";
+import { avaliarEncontro, PESO_AMEACA, quantosPara, garantirDia, zerarDia, folgaDoDia, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
+import { garantirGrade, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar } from "./grid.js";
 /* v9.255 (Fase X, X2): a conta do alcance do golpe saiu daqui de dentro e
    virou tabela provável em Node. O App não decide mais quem dá para
    acertar — ele PERGUNTA, e pergunta duas vezes: uma quando o golpe sai,
@@ -241,7 +241,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis } from "./motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -336,11 +336,11 @@ function retratoComOsFinais(antes, finais) {
 }
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, leituraDaPeticao, processarDiaCorreio } from "./correio.js";
-import { todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, iniciativaDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
-import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
+import { todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
+import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
-import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, devolverSegura, GATILHOS_PROMPT } from "./gatilhos.js";
+import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
 import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, baixarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, baixarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
@@ -5434,20 +5434,7 @@ export default function Taverna() {
       });
     } catch (e) { calou("a luz da luta", e); return null; }
   };
-  /* ---------------- A AÇÃO BÔNUS TEM DONO (v9.43) ----------------
-     No 5e ninguém tem ação bônus por existir: ela vem de um traço de classe
-     (Surto de Ação, Ação Ardilosa, Rajada de Golpes, Fúria…) e quase sempre
-     a partir do segundo nível. Aqui ela nascia 1 para todo mundo, e um Mago
-     de nível 1 abria a luta com dois movimentos — lançava duas magias no
-     mesmo turno, que foi exatamente o que apareceu em jogo. `acoesBonusDe`
-     é o catálogo que já sabia disso e que ninguém consultava. */
-  const temAcaoBonus = (p) => acoesBonusDe((p || {}).classe, (p || {}).nivel || 1).length > 0;
-  /* v9.54: `acoesPorRodada` é onde a PRESSA entra no motor, e é o único lugar.
-     "Você age duas vezes por rodada" não é "bate duas vezes" — quem conjura
-     não bate —, é literalmente uma segunda ação, e a economia da rodada já é
-     o que o golpe e a conjuração gastam. Dobrar aqui faz as duas coisas de
-     uma vez sem que nenhuma das duas precise saber que a pressa existe. */
-  const economiaNova = (p) => ({ acao: acoesPorRodada(p), extra: temAcaoBonus(p) ? 1 : 0 });
+  /* a ação bônus que tem dono (v9.43) e a pressa na economia da rodada (v9.54): `temAcaoBonus` e `economiaNova` moram em src/motor/combate-do-turno.js (T1-A, 6.ª fatia) */
   /* ---------------- O PREÇO DE VESTIR O QUE NÃO SE SABE USAR (v9.44) ----------
      `avaliarEquipar` produzia estas penalidades desde a v9.11 e nada as lia:
      `penalidadesAtivas` alimentava só o painel e o prompt, e
@@ -6171,169 +6158,57 @@ export default function Taverna() {
      precisar jogar uma campanha inteira até lá. */
   const godLinha = (t) => pushMsgs([{ autor: "sistema", texto: t }]);
 
-  /* ---- A LUTA DO MODO CRIATIVO ENTRA PELA MESMA PORTA (v9.32) ----
-     `/combate` e `/encontro` montavam a lista de inimigos e paravam ali:
-     nada de terreno, nada de iniciativa, nada de reconciliar o grau divino,
-     nada de presença. O jogador invocou minotauros sendo GD 4 e não viu nem
-     a Regra do Degrau nem ninguém se curvando — e concluiu, com razão, que a
-     ascensão não fazia diferença. Não fazia mesmo: metade do combate nem
-     tinha sido montada. Esta função é o equipamento que faltava, e é a MESMA
-     coisa que o caminho normal (a resposta do Mestre) já fazia. */
-  const equiparCombate = (comb, pers, { situacao = "cena" } = {}) => {
-    const msgs = [];
-    if (!comb || !(comb.inimigos || []).length) return { combate: comb, msgs };
-    const panteao = (divindadeRef.current && divindadeRef.current.panteao) || [];
-    let inimigos = reconciliarGraus(comb.inimigos, panteao);
-    /* A1 · B8 (#47): o número do GD mora na ficha do inimigo, na batalha; na
-       linha fica o que ele muda — e quem o diz é o mundo */
-    inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgs.push(`✦ ${e.nome} é de outra grandeza: o aço comum não o fere.`));
-    let g;
-    try { g = montarGrid(pers, inimigos, situacao); } catch (e) { calou("a abertura da luta pela situação", e); g = montarGrid(pers, inimigos); }
-    const ordem = rolarIniciativa([
-      { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
-      ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
-      /* v9.152: a DESTREZA da criatura, e nao mais o booleano. Com `agil ? 2 : 0`
-         o Slime e o Golem de Pedra entravam na ordem do turno empatados com o
-         Ogro, e o Batedor — cuja descricao inteira e "rapido, fragil" — ganhava
-         o mesmo +2 do Goblin. O bestiario sempre soube a diferenca; era o
-         booleano que nao cabia. */
-      ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: Number(e.des) || 0 })),
-    ], sorteDoTurno("iniciativa"));
-    reacaoUsadaRef.current = false;
-    /* A ECONOMIA NASCE AQUI, E A CHAVE QUE FALTAVA APAGAVA DUAS REGRAS
-       (E4). A luta montava-se com `rodada: 1` e `recursos`, e a economia
-       só nascia na VIRADA de rodada — logo a rodada 1 corria com
-       `economia` indefinida. O desconto do passo fazia
-       `eco ? {...} : eco` e evaporava: são os 21 m medidos numa só
-       rodada com a marca parada em "9 de 9". E a guarda da ação está
-       atrás do mesmo `if (eco)`, logo o aviso de "já usou sua ação"
-       nunca disparava na rodada 1 — as zero chamadas que W2 contou sem
-       saber porquê.
-
-       E ELA NASCE AQUI TAMBÉM PARA MATAR A ECONOMIA RANÇOSA: o caminho
-       de retomar uma luta arrastava a economia da anterior, e quem
-       abrisse a segunda briga já a abria com a ação gasta na primeira. */
-    const novo = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos(), economia: economiaNova(pers) };
-    msgs.push(`🗺 Terreno: ${mapaEmTexto(g.grade, { heroi: g.heroi, grupo: g.aliados, inimigos: g.inimigos })}`);
-    const grandes = g.inimigos.filter((e) => ladoDe(e) > 1);
-    if (grandes.length) msgs.push(`📏 ${grandes.map((e) => `${e.nome} é ${tamanhoDe(e).nome.toLowerCase()} (${ladoDe(e)}×${ladoDe(e)} quadrados, alcança ${alcanceNatural(e)} m)`).join(" · ")}`);
-    msgs.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
-    return { combate: novo, msgs };
-  };
-
   /* ============================================================
-     A PORTA ÚNICA DE ABRIR COMBATE (v9.73)
+     A PORTA ÚNICA DE ABRIR COMBATE (v9.73; o equipamento v9.32; o tabuleiro v9.34)
 
-     `equiparCombate` acima nasceu na v9.32 para tirar o modo criativo da
-     miséria — ele montava a lista de inimigos e parava ali. Só que a
-     varredura desta versão mostrou que a miséria tinha mais um morador, e
-     pior: a MASMORRA. Ela abre a luta sozinha desde a v7.0, com
-     `combateRef.current = { inimigos }` e nada mais — e o bloco que monta
-     terreno, iniciativa, orçamento e presença mora dentro do
-     `aplicarResposta`, atrás de `if (houveIniciar)`, isto é, atrás de a IA
-     ter mandado `combate_iniciar`.
-
-     Resultado: toda luta de masmorra desde então rodou sem ordem de
-     iniciativa, sem tabuleiro e sem o selo do orçamento. É o bug de sempre
-     desta casa — toda regra que mora num só de dois caminhos vira bug —,
-     agora com três caminhos e três níveis de equipamento diferentes.
-
-     Esta função é o encontro dos três. Ela faz TUDO o que uma luta precisa
-     ter no instante em que nasce, e devolve a ficha mexida junto, porque os
-     traços de abertura (a sorte do Halfling, a Pele de Pedra do Goliath)
-     são da ficha e não do combate.
+     T1-A, 6.ª fatia: a regra — completar quem entra, os traços de abertura,
+     o grau divino, o tabuleiro pela situação, a iniciativa, a economia da
+     rodada 1, o orçamento e o códex — mora em `abrirOCombate`
+     (src/motor/combate-do-turno.js), pura e à letra, com os porquês. Daqui
+     sai a fiação: o que a planta lê do lugar, os refs que a luta nova zera
+     e publica, e a presença um tique depois.
      ============================================================ */
+  /* o que a planta lê do lugar (13/10, v9.463): o sítio (lugarRef) e a
+     cidade antes do texto do local — a luta na cidade sai da rua, não da
+     estrada; a estrada só com a jornada aberta (grid.js#PLANTA_DO_LUGAR).
+     A peça chama isto DENTRO de cada montagem do tabuleiro, como era. */
+  const plantaDaLuta = () => {
+    let ondeG = {};
+    try { ondeG = { emViagem: !!jornadaRef.current, cidade: cidadeAtualRef.current || "", lugar: lugarRef.current || null }; } catch (e) { calou("o lugar da planta", e); ondeG = {}; }
+    return {
+      emMasmorra: !!masmorraRef.current,
+      ...ondeG,
+      local: localAtualTxt(),
+      bioma: ((mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || {}).bioma || "",
+    };
+  };
   const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false, situacao = "cena" } = {}) => {
-    /* TODA luta nova zera a marca do território (abaixo): só volta a valer
-       quando ESTA luta é mesmo a que reabriu por causa do território de
-       uma fuga — `talvezVoltarAoTerritorio` a repõe logo depois de chamar
-       esta função. Sem isto, vencer qualquer OUTRA luta no mesmo lugar
-       apagaria um relógio de território que nunca chegou a se resolver. */
+    /* TODA luta nova zera a marca do território: só volta a valer quando
+       ESTA luta é mesmo a que reabriu por causa do território de uma fuga —
+       `talvezVoltarAoTerritorio` a repõe logo depois de chamar esta função.
+       Sem isto, vencer qualquer OUTRA luta no mesmo lugar apagaria um
+       relógio de território que nunca chegou a se resolver. */
     territorioEmLutaRef.current = null;
-    let pers = persEntra || fichaViva() || personagem;
-    const msgs = [];
-    const crus = jaNoRef
-      ? ((combateRef.current && combateRef.current.inimigos) || [])
-      : (inimigosCrus || []).map((i) => {
-        const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca, nivel: i.nivel }, pers.nivel || 1);
-        return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
-      });
-    if (!crus.length) return { pers, msgs, nota: "" };
-    /* v9.44: luta nova devolve os traços de uma vez por combate. Aqui, e não
-       no fim da luta anterior, porque nem toda luta tem fim registrado. */
-    pers = devolverSegura(abrirCombateTracos(pers));
-    const eq = equiparCombate({ ...(jaNoRef ? combateRef.current : {}), inimigos: crus }, pers, { situacao });
-    combateRef.current = eq.combate;
+    const r = abrirOCombate({
+      inimigosCrus, jaNoRef, combateNoRef: combateRef.current, pers: persEntra || fichaViva() || personagem, situacao,
+      panteao: (divindadeRef.current && divindadeRef.current.panteao) || [], planta: plantaDaLuta,
+      sementeDaAbertura: `${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`, diaLuta: diaLutaRef.current, descobertas: descobRef.current,
+    }, { sorteDoTurno, calou });
+    if (!r.abriu) return r.saida;
+    combateRef.current = r.combateNoRef;
     combateOciosoRef.current = 0;
     reacaoUsadaRef.current = false;
     /* K3: a escada do silencio e POR LUTA, e zera no mesmo sitio em que a
        reacao da rodada zera. Sem isto, quem calou uma luta ficava calado
        para sempre — e a escada promete o resto DESTA luta, nao mais. */
     expiracoesSeguidasRef.current = 0;
-    msgs.push(...eq.msgs);
-    /* ORÇAMENTO: a luta é pesada AGORA, com a mesa cheia — depois que os
-       primeiros caem, a conta já não descreve o que o jogador enfrentou. */
-    const aval = avaliarEncontro(eq.combate.inimigos, pers);
-    if (aval) {
-      combateRef.current = { ...combateRef.current, aval };
-      diaLutaRef.current = gastarDoDia(diaLutaRef.current, aval.custoDoDia);
-      msgs.push(selo(aval));
-    }
+    diaLutaRef.current = r.diaLuta;
     setCombate(combateRef.current);
-    /* CÓDEX: toda criatura que entra em combate vira registro no bestiário */
-    let mexeuCodex = false;
-    for (const e of eq.combate.inimigos) {
-      if (e.nome && !descobRef.current.some((d) => d.toLowerCase() === e.nome.toLowerCase())) {
-        descobRef.current = [...descobRef.current, e.nome];
-        mexeuCodex = true;
-      }
-    }
-    if (mexeuCodex) setDescobertas(descobRef.current);
+    if (r.descobertas !== descobRef.current) { descobRef.current = r.descobertas; setDescobertas(descobRef.current); }
     /* v9.32: o meu peso divino sobre eles. Adiado um tique porque ele lê o
        combate já no ref, e aqui o React ainda não reagiu. */
     setTimeout(() => presencaNaLuta(combateRef.current, personagemRef.current, { contraMim: false }), 0);
-    const nota = `${aval ? resumoOrcamentoPrompt(aval, diaLutaRef.current) + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(eq.combate.ordem)}. Respeite essa ordem ao narrar quem age quando.`;
-    return { pers, msgs, nota, combate: eq.combate };
-  };
-
-  /* O TABULEIRO NASCE DO LUGAR (v9.34). O tamanho não é fixo: uma briga de
-     taverna não usa trinta metros de comprimento, e um tabuleiro único para
-     tudo seria, na maioria das lutas, um campo de quadrados vazios — além de
-     virar quadrados pequenos demais para o dedo num celular. `montarGrade` lê
-     o cenário que o sistema já sabia derivar e devolve a planta com paredes.
-
-     Os companheiros ganham posição AQUI, e é uma mudança de fundo: até a
-     v9.33 eles contavam como estando "na zona do herói" para não dobrar o
-     estado. Com o grid isso virou mentira útil demais para manter — era ela
-     que impedia a área de dizer se o fogo amigo ia pegar alguém. Quem os move
-     continua sendo o sistema; o jogador nunca faz essa conta. */
-  /* S10b (13/10): A DISTÂNCIA DE ABERTURA POR SITUAÇÃO (`ABERTURA_DA_LUTA`,
-     grid.js). Quem abre a luta diz como ela abriu: "declarada" (o golpe do
-     jogador num alvo — o alvo é o primeiro inimigo), "emboscada" (a
-     emboscada, a investida da estrada, o bando que volta) e "cena" no resto
-     (a planta decide: a masmorra abre à porta da sala, o resto como
-     encontro). A casa exata sai de um gerador semeado pelo mundo e pelo
-     turno: a mesma semente no mesmo turno abre à mesma distância. */
-  const montarGrid = (pers, inimigos, situacao = "cena") => {
-    /* 13/10 (v9.463): a planta lê o sítio (lugarRef) e a cidade antes do
-       texto do local — a luta na cidade sai da rua, não da estrada; a
-       estrada só com a jornada aberta (grid.js#PLANTA_DO_LUGAR). */
-    let ondeG = {};
-    try { ondeG = { emViagem: !!jornadaRef.current, cidade: cidadeAtualRef.current || "", lugar: lugarRef.current || null }; } catch (e) { calou("o lugar da planta", e); ondeG = {}; }
-    const grade = montarGrade({
-      emMasmorra: !!masmorraRef.current,
-      ...ondeG,
-      local: localAtualTxt(),
-      bioma: ((mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || {}).bioma || "",
-    });
-    const p = posicionar(grade, {
-      heroi: { nome: pers.nome, tamanho: pers.tamanho || "medio" },
-      grupo: (pers.grupo || []).map((c) => ({ nome: c.nome, vida: c.vida, vidaMax: c.vidaMax, tamanho: c.tamanho || "medio" })),
-      inimigos: inimigos || [],
-      situacao: typeof situacao === "string" && situacao ? situacao : "cena",
-      sorte: rng(hashSemente(`${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`)),
-    });
-    return { grade, heroi: p.heroi, aliados: p.grupo, inimigos: p.inimigos };
+    return r.saida;
   };
 
   /* Um passo dentro da MESMA região não pode ser narrado como "de X para X".

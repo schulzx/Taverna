@@ -36,6 +36,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PASSO_NA_RODADA } from "../src/grid.js";
+import { abrirOCombate, economiaNova } from "../src/motor/combate-do-turno.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -53,10 +54,16 @@ t("e a tabela do passo existe no motor", PASSO_NA_RODADA && PASSO_NA_RODADA.camp
 sec("1. a luta NASCE com economia — a chave que faltava no literal");
 {
   /* a porta única de abrir combate monta o objeto da luta: se a economia
-     não nascer aqui, ela só existe a partir da rodada 2 */
-  const lit = (APP.match(/const novo = \{ \.\.\.comb,[^;]*\};/) || [])[0] || "";
-  t("o literal de `equiparCombate` foi encontrado", lit.length > 0);
-  t("e ele monta a economia da rodada 1", /economia: economiaNova\(pers\)/.test(lit),
+     não nascer aqui, ela só existe a partir da rodada 2.
+     (movido, T1-A 6.ª fatia: o literal `const novo = { ...comb, ... }` de
+     `equiparCombate` saiu do App para `abrirOCombate`, no motor, e a
+     catraca de teste-assercoes-de-texto não deixa ler o motor como texto.
+     A intenção é a mesma, agora jogada: a luta aberta, nova ou retomada com
+     a economia rançosa da anterior, nasce com a economia da rodada 1.) */
+  const abre = (comb, jaNoRef) => abrirOCombate({ inimigosCrus: [{ nome: "Lobo", ameaca: "comum" }], jaNoRef, combateNoRef: comb, pers: { nome: "Vera", nivel: 3, classe: "Ladino", atributos: { destreza: 2 } }, planta: { local: "estrada" }, sementeDaAbertura: "prova|abertura|1" }, {});
+  const nova = abre(null, false), retomada = abre({ inimigos: [{ nome: "Lobo", vida: 9, vidaMax: 11 }], rodada: 4, economia: { acao: 0, extra: 0 } }, true);
+  t("a porta única abre a luta (nova e retomada)", nova.abriu && retomada.abriu);
+  t("e ela monta a economia da rodada 1", [nova, retomada].every((r) => r.abriu && r.combateNoRef.rodada === 1 && JSON.stringify(r.combateNoRef.economia) === JSON.stringify(economiaNova(r.saida.pers)) && r.combateNoRef.economia.acao > 0),
     "sem esta chave a rodada 1 é de graça — 21 m medidos com a marca parada em `9 de 9`, e o aviso da ação nunca dispara.");
 }
 

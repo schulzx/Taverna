@@ -22,6 +22,8 @@ const S = "../src/";
 const { readFileSync } = await import("node:fs");
 const B = await import(S + "bestiario.js");
 const D = await import(S + "danos.js");
+/* T1-A 6.ª fatia: a iniciativa da abertura saiu do App para o motor */
+const ABRIR = await import(S + "motor/combate-do-turno.js");
 const APP = readFileSync("../src/App.jsx", "utf8");
 
 let bons = 0, maus = 0;
@@ -57,8 +59,18 @@ sec("1. TODA CRIATURA TEM DESTREZA PRÓPRIA");
 
 sec("2. A INICIATIVA USA O NÚMERO");
 {
-  t("o App passa a destreza", /modDestreza: Number\(e\.des\) \|\| 0/.test(APP));
-  t("e não o booleano", !/modDestreza: e\.agil \? 2 : 0/.test(APP));
+  /* (movidos, T1-A 6.ª fatia: o literal da iniciativa saiu do App com a
+     abertura da luta, para `abrirOCombate` no motor, que esta suíte não lê
+     como texto. A intenção é a mesma, agora jogada: o modificador de cada
+     criatura na ordem é a DESTREZA dela, e não o booleano `agil`.) */
+  const ordemDe = (inimigos) => {
+    const r = ABRIR.abrirOCombate({ jaNoRef: true, combateNoRef: { inimigos }, pers: { nome: "Vera", nivel: 3, atributos: {} }, planta: { local: "estrada" }, sementeDaAbertura: "prova|abertura|0" }, {});
+    return Object.fromEntries(r.saida.combate.ordem.filter((x) => x.lado === "inimigo").map((x) => [x.nome, x.mod]));
+  };
+  const mods = ordemDe([{ nome: "Batedor", des: 3, vida: 5, vidaMax: 5 }, { nome: "Golem", des: -1, vida: 30, vidaMax: 30 }, { nome: "Sem Número", vida: 5, vidaMax: 5 }]);
+  t("a abertura passa a destreza", mods.Batedor === 3 && mods.Golem === -1 && mods["Sem Número"] === 0);
+  const agil = ordemDe([{ nome: "Ágil Sem Destreza", agil: true, des: 0, vida: 5, vidaMax: 5 }]);
+  t("e não o booleano", agil["Ágil Sem Destreza"] === 0);
   /* a ficha que chega na luta é a que sai de `completarInimigo`: a tabela
      pode estar certa e o jogo não ver nada */
   t("a destreza atravessa completarInimigo", B.completarInimigo({ nome: "Batedor" }, 5).des === 4);

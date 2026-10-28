@@ -18,7 +18,10 @@
 import fs from "node:fs";
 import { casosDoCombate, sorteDoCaso, N_CASOS } from "./combate-casos.mjs";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis } from "../src/motor/combate-do-turno.js";
-import { mundoDaLei } from "./combate-casos.mjs";
+import { mundoDaLei, localDoCaso, fotoCompacta } from "./combate-casos.mjs";
+import { abrirOCombate, economiaNova } from "../src/motor/combate-do-turno.js";
+import { montarGrade, posicionar } from "../src/grid.js";
+import { rng, hashSemente } from "../src/semente.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 
 let ok = 0, mal = 0;
@@ -164,6 +167,111 @@ sec("5 · a nêmesis que surge (tentarSurgirNemesis → surgirANemesis)");
   const viva = casos.filter((k, i) => !igual(foto(k, null, { nome: "Alguém", status: "ativa" }).conquistas, fotos[i].conquistas)).length;
   t(`morde: com uma nêmesis viva, ninguém surge (${viva} fotos divergem, as que surgiam)`, viva === surgiu);
   t("no App, o órgão é o invólucro da peça", /const tentarSurgirNemesis = \(\) => \{\s*const r = surgirANemesis\(\{/.test(C) && /if \(!r\.nemesis\) return;\s*nemesisRef\.current = r\.nemesis; setNemesis\(r\.nemesis\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*checarConquistas\(\);/.test(C));
+}
+
+sec("6 · a porta única de abrir combate (abrirCombate → abrirOCombate)");
+{
+  const fotos = D.orgaos.abrirCombate;
+  /* o invólucro do App, à letra: a marca do território, a planta (com a
+     rede do lugar dentro), os quatro refs que a luta nova zera, o dia de
+     lutas, o combate e o códex publicados, e a presença um tique depois */
+  const foto = (k, { sorte, turno = k.turnoA, panteao = k.panteaoA } = {}) => {
+    const publicados = [], codex = [], agendas = [], presencas = [], calados = [];
+    const pA = k.plantaA, local = localDoCaso(k), cidades = [{ nome: "Vila do Sul", bioma: pA.bioma }];
+    const calou = (onde) => calados.push(onde);
+    const st = { territorio: "território de antes", combate: copia(k.combateNoRefA), ocioso: 3, reacao: true, expiracoes: 2, diaLuta: copia(k.diaLutaA), descobertas: copia(k.descobertasA) };
+    const planta = () => {
+      let ondeG = {};
+      try { ondeG = { emViagem: !!pA.emViagem, cidade: pA.cidade || "", lugar: copia(pA.lugar) || null }; } catch (e) { calou("o lugar da planta", e); ondeG = {}; }
+      return { emMasmorra: !!pA.emMasmorra, ...ondeG, local: local(), bioma: (cidades.find((c) => c.nome === pA.cidade) || {}).bioma || "" };
+    };
+    let ret = null, erro = null;
+    try {
+      st.territorio = null;
+      const r = abrirOCombate({
+        inimigosCrus: copia(k.inimigosA), jaNoRef: k.jaNoRefA, combateNoRef: st.combate, pers: copia(k.persA), situacao: k.situacaoA === undefined ? "cena" : k.situacaoA,
+        panteao: copia(panteao), planta, sementeDaAbertura: `${k.semente}|abertura|${turno}`, diaLuta: st.diaLuta, descobertas: st.descobertas,
+      }, { sorteDoTurno: sorte || sorteDoCaso(k), calou });
+      if (r.abriu) {
+        st.combate = r.combateNoRef; st.ocioso = 0; st.reacao = false; st.expiracoes = 0; st.diaLuta = r.diaLuta;
+        publicados.push(st.combate);
+        if (r.descobertas !== st.descobertas) { st.descobertas = r.descobertas; codex.push(st.descobertas); }
+        agendas.push(0);
+        presencas.push({ c: st.combate, p: { nome: "a ficha viva" }, o: { contraMim: false } });
+      }
+      ret = r.saida;
+    } catch (e) { erro = String(e && e.message); }
+    return fotoCompacta({ ret, erro, territorio: st.territorio, combate: st.combate, ocioso: st.ocioso, reacao: st.reacao, expiracoes: st.expiracoes,
+      diaLuta: st.diaLuta, descobertas: st.descobertas, publicados, codex, agendas, presencas, calados });
+  };
+  const batem = casos.filter((k, i) => igual(foto(k), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const abriu = fotos.filter((f) => f.nota && f.nota.includes("[INICIATIVA ROLADA")).length, vazias = fotos.filter((f) => f.nota === "").length;
+  const gd = fotos.filter((f) => (f.msgs || []).some((m) => m.startsWith("✦"))).length, grandes = fotos.filter((f) => (f.msgs || []).some((m) => m.startsWith("📏"))).length;
+  const calou = fotos.filter((f) => f.calados.length).length, estourou = fotos.filter((f) => f.erro).length;
+  console.log(`      abriu ${abriu} · ninguém para lutar ${vazias} · o grau divino ${gd} · os grandes ${grandes} · a rede da planta calou ${calou} · estourou ${estourou}`);
+  t("percorre os ramos (abriu e não; o deus; os grandes; a rede; o erro que sobe)", abriu > 150 && vazias > 20 && gd > 5 && grandes > 20 && calou > 5 && estourou > 0);
+  /* morde: com a sorte de outro caso, a ordem da iniciativa muda */
+  const outra = casos.filter((k, i) => !igual(foto(k, { sorte: sorteDoCaso(casos[(i + 1) % N_CASOS]) }), fotos[i])).length;
+  t(`morde: com a sorte de outro caso, ${outra} fotos divergem`, outra > 100);
+  /* morde: noutro turno, a semente da abertura põe as casas noutro sítio */
+  const turno = casos.filter((k, i) => !igual(foto(k, { turno: k.turnoA + 100 }), fotos[i])).length;
+  t(`morde: noutro turno, ${turno} fotos divergem`, turno > 100);
+  /* morde: sem o panteão, o deus que estava nele deixa de ser de outra grandeza */
+  const semPanteao = casos.filter((k, i) => k.panteaoA.length && !igual(foto(k, { panteao: [] }), fotos[i])).length;
+  t(`morde: sem o panteão, ${semPanteao} fotos divergem`, semPanteao > 5);
+  /* (movido de check-passo-na-rodada §1, 6.ª fatia: o literal `const novo =
+     { ...comb, ... economia: economiaNova(pers) }` saiu do App com o
+     equipamento; a intenção — a luta NASCE com economia, e não a herda da
+     luta anterior — passa a ser jogada na peça) */
+  {
+    let nasceu = 0, rancosa = 0, todas = true;
+    for (const k of casos) {
+      if (k.plantaA.estoura === "sempre") continue;
+      const r = abrirOCombate({ inimigosCrus: k.inimigosA, jaNoRef: k.jaNoRefA, combateNoRef: k.combateNoRefA, pers: k.persA, situacao: k.situacaoA, panteao: [], planta: { local: "a praça" }, sementeDaAbertura: k.semente, diaLuta: null, descobertas: [] }, { sorteDoTurno: sorteDoCaso(k) });
+      if (!r.abriu) continue;
+      nasceu++;
+      if (k.jaNoRefA) rancosa++;
+      if (!(igual(r.combateNoRef.economia, economiaNova(r.saida.pers)) && r.combateNoRef.rodada === 1)) todas = false;
+    }
+    t(`a luta nasce com a economia da rodada 1 (${nasceu} aberturas, ${rancosa} retomadas com a economia rançosa)`, todas && nasceu > 150 && rancosa > 10);
+  }
+  /* (movido de teste-abertura-no-app §1, 6.ª fatia: a assinatura de
+     `montarGrid` e o literal de `posicionar` saíram do App; a intenção — a
+     situação chega a `posicionar`, e a casa sai da semente do mundo e do
+     turno — passa a ser jogada: a peça abre onde a conta à mão abre) */
+  {
+    let iguais = 0, n = 0;
+    for (const sit of ["declarada", "emboscada", "cena", "torta", null]) {
+      for (let turno = 0; turno < 12; turno++) {
+        const pers = { nome: "Vera", nivel: 3, atributos: { destreza: 1 } };
+        const sem = `Vera|Fantasia|abertura|${turno}`;
+        const r = abrirOCombate({ inimigosCrus: [{ nome: "Lobo" }, { nome: "Lobo" }], pers, situacao: sit, planta: { local: "estrada" }, sementeDaAbertura: sem }, { sorteDoTurno: sorteDoCaso(casos[turno]) });
+        const g = montarGrade({ local: "estrada" });
+        const p = posicionar(g, { heroi: { nome: "Vera", tamanho: "medio" }, grupo: [], inimigos: r.saida.combate.inimigos.map((e) => ({ ...e, x: undefined, y: undefined })), situacao: typeof sit === "string" && sit ? sit : "cena", sorte: rng(hashSemente(sem)) });
+        n++;
+        if (igual(r.saida.combate.heroi, p.heroi)) iguais++;
+      }
+    }
+    t(`a situação e a semente da abertura chegam a posicionar (${iguais}/${n} heróis na casa da conta à mão)`, iguais === n);
+  }
+  t("não muta o que entra (a ficha, a luta no ref, o códex, o dia)", (() => {
+    const k = casos.find((x) => x.jaNoRefA && x.combateNoRefA && x.combateNoRefA.inimigos.length && x.descobertasA.length && x.diaLutaA && !x.plantaA.estoura);
+    const ent = { pers: copia(k.persA), combateNoRef: copia(k.combateNoRefA), descobertas: copia(k.descobertasA), diaLuta: copia(k.diaLutaA) };
+    const antes = copia(ent);
+    const r = abrirOCombate({ ...ent, jaNoRef: true, planta: { local: "a praça" }, sementeDaAbertura: k.semente }, { sorteDoTurno: sorteDoCaso(k) });
+    return r.abriu && igual(ent, antes);
+  })());
+  t("sem ninguém para lutar, devolve a ficha como veio e nada se escreve", (() => {
+    const p = { nome: "Vera" };
+    const r = abrirOCombate({ inimigosCrus: [], pers: p }, {});
+    return !r.abriu && r.saida.pers === p && r.saida.nota === "" && r.saida.msgs.length === 0 && !("combate" in r.saida) && abrirOCombate(null, null).abriu === false;
+  })());
+  t("no App, o órgão é o invólucro da peça", /const abrirCombate = \(inimigosCrus, \{ pers: persEntra = null, jaNoRef = false, situacao = "cena" \} = \{\}\) => \{\s*territorioEmLutaRef\.current = null;\s*const r = abrirOCombate\(\{/.test(C)
+    && /\}, \{ sorteDoTurno, calou \}\);\s*if \(!r\.abriu\) return r\.saida;\s*combateRef\.current = r\.combateNoRef;\s*combateOciosoRef\.current = 0;\s*reacaoUsadaRef\.current = false;\s*expiracoesSeguidasRef\.current = 0;\s*diaLutaRef\.current = r\.diaLuta;\s*setCombate\(combateRef\.current\);/.test(C)
+    && /setTimeout\(\(\) => presencaNaLuta\(combateRef\.current, personagemRef\.current, \{ contraMim: false \}\), 0\);\s*return r\.saida;/.test(C));
+  t("e a semente da abertura é a do mundo e do turno, com a planta do App", /sementeDaAbertura: `\$\{sementeMundo\(\)\}\|abertura\|\$\{turnoDeRegistroRef\.current\}`/.test(C) && /planta: plantaDaLuta,/.test(C) && /const plantaDaLuta = \(\) => \{/.test(C));
+  t("o equipamento, o tabuleiro e a economia não moram mais no App", !/const (equiparCombate|montarGrid|economiaNova|temAcaoBonus) =/.test(C));
 }
 
 console.log(`\nmotor · os órgãos do combate: ${ok} passaram, ${mal} falharam`);

@@ -32,6 +32,18 @@ import { gerarVilao, resumoVilaoPrompt } from "../vilao.js";
 import { nomePessoa } from "../nomes.js";
 import { dominiosDe } from "../gestao.js";
 import { vilaoDoFio } from "../saga.js";
+/* a abertura da luta (6.ª fatia) */
+import { completarInimigo } from "../bestiario.js";
+import { devolverSegura } from "../gatilhos.js";
+import { abrirCombateTracos, iniciativaDeTraco } from "../tracos.js";
+import { avaliarEncontro, gastarDoDia, selo, resumoOrcamentoPrompt } from "../orcamento.js";
+import { reconciliarGraus } from "../presenca-divina.js";
+import { rolarIniciativa, resumoIniciativa, novosRecursos, acoesBonusDe } from "../combate.js";
+import { atributoEfetivo } from "../regras-jogo.js";
+import { iniciativaDeItem } from "../dadivas.js";
+import { mapaEmTexto, ladoDe, tamanhoDe, alcanceNatural, montarGrade, posicionar } from "../grid.js";
+import { rng, hashSemente } from "../semente.js";
+import { acoesPorRodada } from "../habilidades.js";
 
 /* ---------------- O PODER ÚNICO (v7.4.4) ----------------
    Mesma lógica do loot: a árvore da classe é tabela fixa, mas derrubar
@@ -213,4 +225,141 @@ export function surgirANemesis(estado, ctx) {
   try { n = vilaoDoFio(n0, e0.espinha, { derrotados: typeof e0.derrotados === "function" ? e0.derrotados() : e0.derrotados, dia: e0.dia }) || n0; } catch (e) { efeitos.push({ tipo: "calou", onde: "vilaoDoFio", erro: e }); n = n0; }
   paraOCronista.push(resumoVilaoPrompt(n));
   return { nemesis: n, paraOCronista, efeitos };
+}
+
+/* ---------------- A ECONOMIA DA RODADA (v9.43, v9.54) ----------------
+   A AÇÃO BÔNUS TEM DONO (v9.43). No 5e ninguém tem ação bônus por existir:
+   ela vem de um traço de classe (Surto de Ação, Ação Ardilosa, Rajada de
+   Golpes, Fúria…) e quase sempre a partir do segundo nível. Aqui ela nascia
+   1 para todo mundo, e um Mago de nível 1 abria a luta com dois movimentos
+   — lançava duas magias no mesmo turno, que foi exatamente o que apareceu
+   em jogo. `acoesBonusDe` é o catálogo que já sabia disso e que ninguém
+   consultava.
+
+   v9.54: `acoesPorRodada` é onde a PRESSA entra no motor, e é o único
+   lugar. "Você age duas vezes por rodada" não é "bate duas vezes" — quem
+   conjura não bate —, é literalmente uma segunda ação, e a economia da
+   rodada já é o que o golpe e a conjuração gastam. Dobrar aqui faz as duas
+   coisas de uma vez sem que nenhuma das duas precise saber que a pressa
+   existe.
+
+   Moravam no App (T1-A, 6.ª fatia): a abertura da luta é a primeira peça
+   pura a precisar delas, e o App passou a importá-las daqui. */
+export const temAcaoBonus = (p) => acoesBonusDe((p || {}).classe, (p || {}).nivel || 1).length > 0;
+export const economiaNova = (p) => ({ acao: acoesPorRodada(p), extra: temAcaoBonus(p) ? 1 : 0 });
+
+/* ---------------- O TABULEIRO NASCE DO LUGAR (v9.34) ----------------
+   O tamanho não é fixo: uma briga de taverna não usa trinta metros de
+   comprimento, e um tabuleiro único para tudo seria, na maioria das lutas,
+   um campo de quadrados vazios. `montarGrade` lê o cenário e devolve a
+   planta com paredes; os companheiros ganham posição aqui (quem os move
+   continua sendo o sistema).
+
+   S10b (13/10): A DISTÂNCIA DE ABERTURA POR SITUAÇÃO (`ABERTURA_DA_LUTA`,
+   grid.js) — "declarada", "emboscada" ou "cena". A casa exata sai de um
+   gerador semeado pelo mundo e pelo turno (`sementeDaAbertura`): a mesma
+   semente no mesmo turno abre à mesma distância.
+
+   `planta` é uma função do App — o que a planta lê do lugar (a masmorra,
+   a jornada, a cidade, o sítio, o texto do local, o bioma), com a rede do
+   App dentro — e é chamada DENTRO de cada montagem, como era. */
+function montarAGrade(pers, inimigos, situacao, planta, sementeDaAbertura) {
+  const grade = montarGrade(typeof planta === "function" ? planta() : (planta || {}));
+  const p = posicionar(grade, {
+    heroi: { nome: pers.nome, tamanho: pers.tamanho || "medio" },
+    grupo: (pers.grupo || []).map((c) => ({ nome: c.nome, vida: c.vida, vidaMax: c.vidaMax, tamanho: c.tamanho || "medio" })),
+    inimigos: inimigos || [],
+    situacao: typeof situacao === "string" && situacao ? situacao : "cena",
+    sorte: rng(hashSemente(sementeDaAbertura)),
+  });
+  return { grade, heroi: p.heroi, aliados: p.grupo, inimigos: p.inimigos };
+}
+
+/* ---------------- A PORTA ÚNICA DE ABRIR COMBATE (v9.73) ----------------
+   A masmorra abria a luta sozinha desde a v7.0, com `{ inimigos }` e nada
+   mais, e o bloco que monta terreno, iniciativa, orçamento e presença
+   morava dentro do `aplicarResposta`. Toda luta de masmorra rodou sem
+   ordem, sem tabuleiro e sem o selo do orçamento. Esta peça é o encontro
+   dos caminhos: faz TUDO o que uma luta precisa ter no instante em que
+   nasce, e devolve a ficha mexida junto (os traços de abertura — a sorte
+   do Halfling, a Pele de Pedra do Goliath — são da ficha).
+
+   O EQUIPAMENTO (v9.32): o grau divino reconciliado com o panteão (A1 · B8:
+   o número do GD mora na ficha do inimigo; na linha fica o que ele muda),
+   o tabuleiro pela situação (se a situação estoura, a rede cala e a planta
+   abre como encontro), a iniciativa pela DESTREZA da criatura (v9.152), e
+   a ECONOMIA, que nasce aqui (E4): com `rodada: 1` e sem economia, o
+   desconto do passo evaporava e a guarda da ação nunca disparava na
+   rodada 1; e nascer aqui mata a economia rançosa de uma luta retomada.
+
+   O ORÇAMENTO: a luta é pesada AGORA, com a mesa cheia — depois que os
+   primeiros caem, a conta já não descreve o que o jogador enfrentou.
+   O CÓDEX: toda criatura que entra em combate vira registro no bestiário.
+
+     abrirOCombate({ inimigosCrus, jaNoRef, combateNoRef, pers, situacao,
+                     panteao, planta, sementeDaAbertura, diaLuta,
+                     descobertas }, { sorteDoTurno, calou }) →
+       { abriu, saida, combateNoRef, diaLuta, descobertas }
+
+   `saida` é o que o órgão do App devolvia aos chamadores, à letra:
+   `{ pers, msgs, nota }` quando não há quem lutar, `{ pers, msgs, nota,
+   combate }` quando abre — e `combate` é o equipado, SEM o `aval`, que só
+   o ref recebe (`combateNoRef`). A sorte é pedida uma vez, "iniciativa".
+   O resto — zerar a marca do território, o ócio, a reação e a escada do
+   silêncio, publicar o combate e o códex, e a presença um tique depois —
+   é do App, que lê o ref já posto.
+
+   A REDE É A DO APP, e chama-se no instante em que o App a chamava: se o
+   lugar da planta estoura nas duas montagens, o erro sobe ao chamador (como
+   subia) e a primeira queda já ficou dita. Um efeito devolvido no fim
+   morreria com o erro. O códex parte de uma lista vazia quando não há
+   lista (o App de antes estourava ali). */
+export function abrirOCombate(estado, ctx) {
+  const e0 = estado && typeof estado === "object" ? estado : {};
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const calar = typeof c.calou === "function" ? c.calou : () => {};
+  const situacao = e0.situacao === undefined ? "cena" : e0.situacao;
+  let pers = e0.pers;
+  const msgs = [];
+  const crus = e0.jaNoRef
+    ? ((e0.combateNoRef && e0.combateNoRef.inimigos) || [])
+    : (e0.inimigosCrus || []).map((i) => {
+      const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca, nivel: i.nivel }, pers.nivel || 1);
+      return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
+    });
+  if (!crus.length) return { abriu: false, saida: { pers, msgs, nota: "" } };
+  pers = devolverSegura(abrirCombateTracos(pers));
+  /* o equipamento */
+  const comb = { ...(e0.jaNoRef ? e0.combateNoRef : {}), inimigos: crus };
+  const msgsEq = [];
+  let inimigos = reconciliarGraus(comb.inimigos, e0.panteao || []);
+  inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgsEq.push(`✦ ${e.nome} é de outra grandeza: o aço comum não o fere.`));
+  let g;
+  try { g = montarAGrade(pers, inimigos, situacao, e0.planta, e0.sementeDaAbertura); } catch (e) { calar("a abertura da luta pela situação", e); g = montarAGrade(pers, inimigos, "cena", e0.planta, e0.sementeDaAbertura); }
+  const ordem = rolarIniciativa([
+    { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
+    ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
+    ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: Number(e.des) || 0 })),
+  ], typeof c.sorteDoTurno === "function" ? c.sorteDoTurno("iniciativa") : undefined);
+  const equipado = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos(), economia: economiaNova(pers) };
+  msgsEq.push(`🗺 Terreno: ${mapaEmTexto(g.grade, { heroi: g.heroi, grupo: g.aliados, inimigos: g.inimigos })}`);
+  const grandes = g.inimigos.filter((e) => ladoDe(e) > 1);
+  if (grandes.length) msgsEq.push(`📏 ${grandes.map((e) => `${e.nome} é ${tamanhoDe(e).nome.toLowerCase()} (${ladoDe(e)}×${ladoDe(e)} quadrados, alcança ${alcanceNatural(e)} m)`).join(" · ")}`);
+  msgsEq.push(`🎲 Iniciativa — ${resumoIniciativa(ordem)}`);
+  /* a luta posta */
+  let combateNoRef = equipado;
+  msgs.push(...msgsEq);
+  const aval = avaliarEncontro(equipado.inimigos, pers);
+  let diaLuta = e0.diaLuta;
+  if (aval) {
+    combateNoRef = { ...combateNoRef, aval };
+    diaLuta = gastarDoDia(diaLuta, aval.custoDoDia);
+    msgs.push(selo(aval));
+  }
+  let descobertas = e0.descobertas || [];
+  for (const e of equipado.inimigos) {
+    if (e.nome && !descobertas.some((d) => d.toLowerCase() === e.nome.toLowerCase())) descobertas = [...descobertas, e.nome];
+  }
+  const nota = `${aval ? resumoOrcamentoPrompt(aval, diaLuta) + "\n" : ""}[INICIATIVA ROLADA PELO SISTEMA] Ordem do combate: ${resumoIniciativa(equipado.ordem)}. Respeite essa ordem ao narrar quem age quando.`;
+  return { abriu: true, saida: { pers, msgs, nota, combate: equipado }, combateNoRef, diaLuta, descobertas };
 }

@@ -29,6 +29,19 @@ import { recompensaChefe } from "../src/masmorras.js";
 import { essenciaDoChefe, RARIDADE_ROTULO } from "../src/loot.js";
 import { garantirSuprimentos } from "../src/ermos.js";
 import { concluirLugar } from "../src/mundo-base.js";
+/* a abertura da luta (6.ª fatia) */
+import { localDoCaso, fotoCompacta } from "./combate-casos.mjs";
+import { completarInimigo } from "../src/bestiario.js";
+import { devolverSegura } from "../src/gatilhos.js";
+import { abrirCombateTracos, iniciativaDeTraco } from "../src/tracos.js";
+import { avaliarEncontro, gastarDoDia, selo, resumoOrcamentoPrompt } from "../src/orcamento.js";
+import { reconciliarGraus } from "../src/presenca-divina.js";
+import { rolarIniciativa, resumoIniciativa, novosRecursos, acoesBonusDe } from "../src/combate.js";
+import { atributoEfetivo } from "../src/regras-jogo.js";
+import { iniciativaDeItem } from "../src/dadivas.js";
+import { mapaEmTexto, ladoDe, tamanhoDe, alcanceNatural, montarGrade, posicionar } from "../src/grid.js";
+import { rng, hashSemente } from "../src/semente.js";
+import { acoesPorRodada } from "../src/habilidades.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const COMMIT = process.argv[2] || "7338870";
@@ -124,6 +137,50 @@ const ORGAOS = {
       return { ret: ret === undefined ? null : ret, nemesis: S.nemesisRef.current, nota: S.notaRef.current, calados, conquistas };
     },
     nome: "tentarSurgirNemesis",
+  },
+  /* abrirCombate (6.ª fatia): a porta única, com o equipamento
+     (equiparCombate), o tabuleiro (montarGrid) e a economia (economiaNova e
+     temAcaoBonus) recortados à letra junto — só ela os chama. Lê a ficha,
+     a luta no ref, o panteão, o lugar da planta, a sorte, o dia de lutas e
+     o códex; escreve em seis refs, publica o combate e o códex, e agenda a
+     presença (o dublê guarda o que ela receberia). O lugar que estoura
+     sempre faz o órgão estourar: a foto guarda o erro. */
+  abrirCombate: {
+    texto: () => [
+      corte("  const temAcaoBonus = (p) =>", "  /* v9.54: `acoesPorRodada`"),
+      corte("  const economiaNova = (p) =>", "  /* ---------------- O PREÇO DE VESTIR"),
+      corte("  const equiparCombate = (comb, pers, { situacao = \"cena\" } = {}) => {", "  /* ============================================================\n     A PORTA ÚNICA DE ABRIR COMBATE"),
+      corte("  const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false, situacao = \"cena\" } = {}) => {", "  /* O TABULEIRO NASCE DO LUGAR (v9.34)"),
+      corte("  const montarGrid = (pers, inimigos, situacao = \"cena\") => {", "  /* Um passo dentro da MESMA região"),
+    ].join("\n"),
+    correr: (fn, k) => {
+      const publicados = [], codex = [], agendas = [], presencas = [], calados = [];
+      const pA = k.plantaA;
+      const S = {
+        completarInimigo, devolverSegura, abrirCombateTracos, avaliarEncontro, gastarDoDia, selo, resumoOrcamentoPrompt,
+        reconciliarGraus, rolarIniciativa, resumoIniciativa, novosRecursos, acoesBonusDe, acoesPorRodada, atributoEfetivo,
+        iniciativaDeTraco, iniciativaDeItem, mapaEmTexto, ladoDe, tamanhoDe, alcanceNatural, montarGrade, posicionar, rng, hashSemente,
+        territorioEmLutaRef: ref("território de antes"), fichaViva: () => null, personagem: null,
+        combateRef: ref(copia(k.combateNoRefA)), combateOciosoRef: ref(3), reacaoUsadaRef: ref(true), expiracoesSeguidasRef: ref(2),
+        diaLutaRef: ref(copia(k.diaLutaA)), descobRef: ref(copia(k.descobertasA)), divindadeRef: ref(k.panteaoA.length ? { panteao: copia(k.panteaoA) } : null),
+        setCombate: (c) => publicados.push(c), setDescobertas: (d) => codex.push(d),
+        setTimeout: (f, ms) => agendas.push([f, ms]), presencaNaLuta: (c, p, o) => presencas.push({ c, p, o }), personagemRef: ref({ nome: "a ficha viva" }),
+        sorteDoTurno: sorteDoCaso(k), calou: (onde) => calados.push(onde),
+        masmorraRef: ref(pA.emMasmorra ? { nome: "Cripta" } : null), jornadaRef: ref(pA.emViagem ? { destino: "Porto Fundo" } : null),
+        cidadeAtualRef: ref(pA.cidade), lugarRef: ref(copia(pA.lugar)), localAtualTxt: localDoCaso(k),
+        mapaRef: ref({ cidades: [{ nome: "Vila do Sul", bioma: pA.bioma }] }),
+        sementeMundo: () => k.semente, turnoDeRegistroRef: ref(k.turnoA),
+      };
+      let ret, erro = null;
+      try { ret = fn(S)(copia(k.inimigosA), { pers: copia(k.persA), jaNoRef: k.jaNoRefA, ...(k.situacaoA === undefined ? {} : { situacao: k.situacaoA }) }); } catch (e) { erro = String(e && e.message); }
+      for (const [f] of agendas) f();
+      return fotoCompacta({
+        ret: ret === undefined ? null : ret, erro, territorio: S.territorioEmLutaRef.current, combate: S.combateRef.current,
+        ocioso: S.combateOciosoRef.current, reacao: S.reacaoUsadaRef.current, expiracoes: S.expiracoesSeguidasRef.current,
+        diaLuta: S.diaLutaRef.current, descobertas: S.descobRef.current, publicados, codex, agendas: agendas.map((a) => a[1]), presencas, calados,
+      });
+    },
+    nome: "abrirCombate",
   },
 };
 

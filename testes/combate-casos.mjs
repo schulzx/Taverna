@@ -15,6 +15,7 @@
 
    Cada órgão novo acrescenta aqui só os campos que lê; os que já estavam
    não mudam, e o dourado dos órgãos de antes continua o mesmo. */
+import { createHash } from "node:crypto";
 import { sorteNoPonto, CONTAGEM_VAZIA, pontoDaSorte } from "../src/motor/sorte-do-turno.js";
 
 export const N_CASOS = 275;
@@ -85,6 +86,69 @@ export function casoDoCombate(i) {
     mapaN: { cidades: [{ nome: "Vila do Sul", relacao: i % 3 ? "neutra" : "jogador" }, { nome: "Porto Fundo", relacao: i % 4 ? "jogador" : "hostil" }], faccoes: [{ nome: "Liga", tratado: ["comercio", "alianca", "guerra", null][i % 4] }, { nome: "Coroa", tratado: i % 5 ? "guerra" : "comercio" }] },
     espinhaN: i % 3 === 0 ? null : { fio: { antagonista: i % 2 ? "Morvane, a Viúva do Sal" : "a Fome do Poço" }, atos: [] },
     derrotadosN: i % 13 === 12 ? "estoura" : i % 5 === 0 ? ["Morvane"] : [],
+    /* a abertura da luta (abrirCombate, 6.ª fatia): quem entra (às vezes
+       ninguém, às vezes com nível, às vezes um deus do panteão), a luta que
+       já estava no ref (com a economia rançosa e a rodada de outra luta), a
+       ficha (classe, raça, destreza, tamanho, grupo, a sorte do traço já
+       gasta), a situação (as três, nenhuma, nula, torta), o lugar da planta,
+       o dia de lutas, o códex e o turno da semente da abertura */
+    inimigosA: i % 10 === 7 ? null : i % 10 === 8 ? [] : inimigosFinais.map((e, k) => ({
+      nome: k === 1 && i % 6 === 1 ? "Avatar de Morr" : e.nome, ameaca: e.ameaca, ...(i % 4 === 2 ? { nivel: 1 + (i % 12) } : {}),
+    })),
+    jaNoRefA: i % 9 === 4 || i % 23 === 11,
+    combateNoRefA: i % 9 === 4
+      ? { inimigos: inimigosFinais.map((e) => ({ ...e, vida: 10 + (i % 7), vidaMax: 20, des: (i % 5) - 1, derrotado: false })), rodada: 5, economia: { acao: 0, extra: 0 }, recursos: { gasto: true }, notas: "luta retomada" }
+      : i % 23 === 11 ? { inimigos: [], rodada: 2 } : null,
+    persA: {
+      nome: "Vera Cinza", nivel: 1 + (i % 20), classe: ["Guerreiro", "Ladino", "Monge", "Mago", "Clérigo"][i % 5],
+      raca: ["Humano", "Halfling", "Goliath", "Elfo", "Anão"][i % 5 === 4 ? 0 : (i * 3) % 5],
+      atributos: { forca: 1, destreza: (i % 7) - 2, vigor: 1, intelecto: 0, sabedoria: 0, presenca: i % 3 },
+      tamanho: i % 13 === 6 ? "grande" : undefined,
+      grupo: (i % 4 === 1 ? [{ nome: "Brás", vida: 12, vidaMax: 15 }] : i % 4 === 3 ? [{ nome: "Brás", vida: 12, vidaMax: 15 }, { nome: "Lua", vida: 8, vidaMax: 8, tamanho: "pequeno" }] : []),
+      tracoGastos: i % 3 === 0 ? { sorte: true, pedra: true, refazer: true } : undefined,
+      seguraGasto: i % 7 === 2 ? true : undefined,
+      vida: 20, vidaMax: 30,
+    },
+    situacaoA: ["cena", "emboscada", "declarada", undefined, null, "torta", "emboscada"][i % 7],
+    panteaoA: i % 6 === 1 ? [{ nome: "Morr", gd: 4 }] : [],
+    plantaA: {
+      emMasmorra: i % 5 === 0, emViagem: i % 4 === 1, cidade: i % 3 ? "Vila do Sul" : "",
+      lugar: i % 8 === 2 ? { tipo: "taverna", nome: "O Cão Manso" } : null,
+      local: ["a praça", "a estrada velha", "uma sala de pedra", ""][i % 4],
+      bioma: ["colina", "floresta", "", "pantano"][i % 4],
+      /* o texto do local que estoura: uma vez (a rede cala e a planta abre
+         como encontro) ou sempre (a luta não abre e o erro sobe) */
+      estoura: i % 29 === 13 ? "uma vez" : i % 61 === 40 ? "sempre" : null,
+    },
+    diaLutaA: i % 4 === 0 ? null : { gasto: (i % 5) * 0.75, lutas: i % 3 },
+    descobertasA: i % 3 === 0 ? [] : ["ogro do vau", "Lobo Grande"],
+    turnoA: i % 7,
+  };
+}
+
+/* A FOTO DA ABERTURA, COMPACTA. A luta aberta aparece quatro vezes na foto
+   (o que o órgão devolve, o ref, o que se publica, o que a presença
+   recebe), e por 275 casos isso eram 1,6 MB de dourado. Guarda-se o texto
+   à vista (as linhas, a nota, o erro, o que calou) e o resto pela
+   impressão digital do JSON inteiro: a comparação continua byte a byte, e
+   uma divergência no texto ainda se lê no próprio dourado. */
+export function fotoCompacta(foto) {
+  const r = foto && foto.ret;
+  return {
+    msgs: r ? r.msgs : null, nota: r ? r.nota : null, erro: foto.erro, calados: foto.calados,
+    tudo: createHash("sha256").update(JSON.stringify(foto)).digest("hex"),
+  };
+}
+
+/* o texto do local que a planta lê, como o App: às vezes estoura (uma vez,
+   ou sempre). Uma função com memória, nova por corrida. */
+export function localDoCaso(caso) {
+  let vezes = 0;
+  return () => {
+    vezes++;
+    const e = caso.plantaA.estoura;
+    if (e === "sempre" || (e === "uma vez" && vezes === 1)) throw new Error("o texto do local estourou");
+    return caso.plantaA.local;
   };
 }
 

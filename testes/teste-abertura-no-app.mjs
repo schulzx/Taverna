@@ -22,13 +22,17 @@ const conta = (s) => APP.split(s).length - 1;
 
 sec("1. a situação chega a `posicionar`");
 {
-  t("montarGrid recebe a situação, e a cena é o padrão", APP.includes('const montarGrid = (pers, inimigos, situacao = "cena") => {'));
-  t("posicionar recebe a situação e uma sorte semeada pelo mundo e pelo turno",
-    APP.includes('situacao: typeof situacao === "string" && situacao ? situacao : "cena",')
-    && APP.includes("sorte: rng(hashSemente(`${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`)),"));
-  t("abrirCombate aceita a situação e passa-a a equiparCombate",
-    APP.includes('jaNoRef = false, situacao = "cena" } = {}) => {') && APP.includes("pers, { situacao });"));
-  t("a abertura pela situação é em calou (nunca custa o turno)", APP.includes('calou("a abertura da luta pela situação", e)'));
+  /* (movidos, T1-A 6.ª fatia: `montarGrid` e `equiparCombate` saíram do App
+     para `abrirOCombate`, no motor, e a catraca de teste-assercoes-de-texto
+     não deixa ler o motor como texto. O que fica no App é a fiação, e é ela
+     que se lê aqui: a situação entra na peça, a semente é a do mundo e do
+     turno, e a rede é a do App. Que a situação chega a `posicionar` e que a
+     queda abre como encontro é jogado em teste-motor-combate §6.) */
+  t("abrirCombate aceita a situação, com a cena por padrão", APP.includes('jaNoRef = false, situacao = "cena" } = {}) => {'));
+  t("e passa-a à peça, com a semente do mundo e do turno",
+    /const r = abrirOCombate\(\{\s*inimigosCrus, jaNoRef, combateNoRef: combateRef\.current, pers: persEntra \|\| fichaViva\(\) \|\| personagem, situacao,/.test(APP)
+    && APP.includes("sementeDaAbertura: `${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`,"));
+  t("a abertura pela situação é em calou (nunca custa o turno): a rede do App vai à peça", APP.includes("}, { sorteDoTurno, calou });"));
 }
 
 sec("2. quem abre a luta diz como ela abriu");
