@@ -118,8 +118,18 @@ sec("3. o achado da estrada: entra na bolsa no rolar, e não paga duas vezes");
      que somava a marca ao declarado E passava os envelopes descontaria o
      achado duas vezes — então a prova agora é: os envelopes vão por nome, e
      a soma à parte no App deixou de existir. */
-  t("a cobrança do App passa os envelopes do turno (a marca é lida no módulo) e não soma o achado à parte",
-    /oQueFaltaCreditar\(resp\.narrativa, resp\.mudancas, \{[^}]*envelopes: op\.envelopes \|\| ""/.test(readFileSync(new URL("../src/motor/aplicar.js", import.meta.url), "utf8")) && !/jaDoAchado/.test(app)); /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20, provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
+  /* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. A metade do motor lia `oQueFaltaCreditar(resp.narrativa, resp.mudancas, { … envelopes: op.envelopes` no texto; agora o achado passa pelo `aplicar` com e sem a marca nos envelopes. A metade do App (nenhuma soma à parte, `jaDoAchado`) continua texto: é fiação que ainda mora lá (lista de T2, testes/assercoes-de-texto.json). O bloco
+     mora em `src/motor/aplicar.js` desde a T1-A, que é puro: o turno se JOGA
+     em Node, e o texto deixou de ser a melhor prova — o próximo bloco que o
+     `oficial` mover para lá mexe nas linhas sem mexer no jogo, e a asserção
+     partiria pelo motivo errado (fragilidade 5 da auditoria do motor). */
+  {
+    const { aplicar } = await import(S + "motor/aplicar.js");
+    const fichaDoTurno = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 34, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
+    const bolsa = (envelopes) => aplicar({ personagem: fichaDoTurno() }, { narrativa: narr, mudancas: {} }, { envelopes }).estado.personagem.moedas;
+    t("a cobrança do motor lê os envelopes do turno: sem a marca credita o achado (34 + 12), com ela não credita de novo", bolsa("") === 46 && bolsa("◉ 12 já na bolsa (creditadas pelo sistema)") === 34);
+    t("e o App não soma o achado à parte", !/jaDoAchado/.test(app));
+  }
   t("e o módulo desconta a marca dos envelopes (o achado não credita de novo)", !oQueFaltaCreditar(narr, null, { envelopes: "◉ 12 já na bolsa (creditadas pelo sistema)" }).temAlgo);
 }
 

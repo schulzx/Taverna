@@ -111,7 +111,20 @@ sec("3. os vetos que a guarda já cobre saíram dos envelopes de luta aberta");
   /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
      `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
      provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: e o App chama o motor (teste-motor-aplicar §4). */
-  t("a guarda segue ligada no App (sem ela, estes vetos não podiam sair)", /podarONarrador\(resp, \{ envelopes: op\.envelopes/.test(ler("motor/aplicar.js")));
+  /* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. Lia `podarONarrador(resp, { envelopes: op.envelopes` no texto do motor; agora o turno recebe um `combate_iniciar` do Narrador, com cada envelope, e a resposta que o motor devolve (o que o resto do turno lê) já não o traz, nem abre luta. O bloco
+     mora em `src/motor/aplicar.js` desde a T1-A, que é puro: o turno se JOGA
+     em Node, e o texto deixou de ser a melhor prova — o próximo bloco que o
+     `oficial` mover para lá mexe nas linhas sem mexer no jogo, e a asserção
+     partiria pelo motivo errado (fragilidade 5 da auditoria do motor). */
+  {
+    const { aplicar } = await import(S + "motor/aplicar.js");
+    const ficha = { nome: "Vera", vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [] };
+    const cortou = Object.values(envs).every((env) => {
+      const r = aplicar({ personagem: ficha }, { narrativa: "x", mudancas: { combate_iniciar: [{ nome: "Outro" }] } }, { envelopes: env });
+      return !(r.podado.mudancas && r.podado.mudancas.combate_iniciar) && !r.efeitos.some((x) => x.tipo === "combate");
+    });
+    t("a guarda segue ligada no turno (sem ela, estes vetos não podiam sair)", cortou);
+  }
 }
 
 console.log(`\nprova viva da E4: ${ok} passaram, ${mal} falharam`);

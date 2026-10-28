@@ -203,9 +203,29 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
   t("cidade_atual", /if \(md\.cidade_atual\)/.test(app));
   t("lugar_atual", /hasOwnProperty\.call\(md, "lugar_atual"\)/.test(app));
   t("jornada_meio", /md\.jornada_meio/.test(app));
-  t("canone", /resp\.mudancas\.canone/.test(app));
-  t("npcs", /resp\.mudancas\.npcs/.test(app));
-  t("moedas (e a bolsa ainda o desconta do que leu, para não cobrar duas vezes)", /oQueFaltaDebitar\(resp\.narrativa, resp\.mudancas/.test(readFileSync(new URL("../src/motor/aplicar.js", import.meta.url), "utf8"))); /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20, provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
+  /* MOVIDAS (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     O leitor de `canone` e de `npcs` mudou-se do `aplicarResposta` para
+     `src/motor/aplicar.js#aplicarORegisto` (puro); a intenção — o App ainda
+     lê os dois campos, tolerante — prova-se jogando o registo com eles. */
+  {
+    const { aplicarORegisto } = await import(S + "motor/aplicar.js");
+    const r = aplicarORegisto({ personagem: { nome: "Vera" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, dia: 1 },
+      { narrativa: "x", mudancas: { canone: { "a lâmina partida": { tipo: "artefato" } }, npcs: [{ nome: "Brann Ferro", papel: "ferreiro" }] } },
+      { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } });
+    t("canone", !!r.estado.canone["a lâmina partida"]);
+    t("npcs", !!r.estado.npcs["Brann Ferro"]);
+  }
+  /* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. Lia `oQueFaltaDebitar(resp.narrativa, resp.mudancas` no texto do motor; agora a narração que conta um pagamento passa pelo `aplicar` com e sem o campo declarado, e a bolsa desce UMA vez nos dois casos. O bloco
+     mora em `src/motor/aplicar.js` desde a T1-A, que é puro: o turno se JOGA
+     em Node, e o texto deixou de ser a melhor prova — o próximo bloco que o
+     `oficial` mover para lá mexe nas linhas sem mexer no jogo, e a asserção
+     partiria pelo motivo errado (fragilidade 5 da auditoria do motor). */
+  {
+    const { aplicar } = await import(S + "motor/aplicar.js");
+    const fichaDoTurno = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 34, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
+    const bolsa = (mudancas) => aplicar({ personagem: fichaDoTurno() }, { narrativa: "Você paga 5 moedas ao taberneiro.", mudancas }, {}).estado.personagem.moedas;
+    t("moedas (e a bolsa ainda o desconta do que leu, para não cobrar duas vezes)", bolsa({}) === 29 && bolsa({ moedas: -5 }) === 29);
+  }
   /* 12/10 (8.ª sessão): esta asserção passava e a bolsa não descia. Ela
      provava que os envelopes chegavam, não que a frase estivesse neles — a
      etiqueta do pedido só vai em `pedidoFinal`, e `conteudo` chega sem ela.

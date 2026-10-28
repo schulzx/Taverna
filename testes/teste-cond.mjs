@@ -1326,68 +1326,73 @@ console.log(resumoCondicoesPrompt(pers, pers.grupo));
    sempre — que foi precisamente o estado do jogo entre a v9.2 e hoje.
    Se o bloco sumir amanhã, é ESTA seção que fica vermelha.
    ============================================================ */
-console.log("\n[T1 · ligado ao jogo] o relógio do grupo no motor do turno (src/motor/aplicar.js):");
+console.log("\n[T1 · ligado ao jogo] o relógio do grupo no motor do turno (src/motor/aplicar.js, jogado):");
 {
-  const { readFileSync } = await import("node:fs");
-  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
-     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
-     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: o nome APP ficou, o arquivo é o do motor. */
-  const APP = readFileSync("../src/motor/aplicar.js", "utf8");
-  const quantas = (rx) => (APP.match(rx) || []).length;
+  /* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. Esta secção
+     lia `src/motor/aplicar.js` como texto — os índices de três
+     `tickCondicoes(`, um recorte entre o `try {` e a etiqueta do `calou`, e
+     regex sobre o recorte. Era a única forma enquanto o relógio morava numa
+     closure do App, que não corre em Node. Desde a T1-A ele mora num módulo
+     puro, e o texto deixou de ser a melhor prova: o próximo `oficial` que
+     mover um bloco para o motor muda as linhas e parte a secção sem mudar o
+     jogo (a fragilidade 5 da auditoria do motor). Agora o turno é JOGADO:
+     `aplicar(estado, resposta)` com condições no herói, no grupo e no
+     inimigo, e as mesmas promessas lidas no estado que sai. Cada asserção
+     abaixo é a de antes, dita pelo efeito; a intenção de cada uma ficou no
+     nome. O dado da salvaguarda (T3) fica travado em 1 (`comSorte`), para
+     que só o relógio mexa nas listas. */
+  const { aplicar } = await import("../src/motor/aplicar.js");
+  const { comSorte } = await import("../src/semente.js");
+  const C = (id, turnos) => criarCondicao(id, { turnos });
+  const ficha = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 0, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
+  const jogar = (estado, d = 0) => comSorte(() => d, () => aplicar(estado, { narrativa: "O vento sopra.", mudancas: {} }, {}));
+  const E = {
+    personagem: ficha({ condicoes: [C("amedrontado", 3), C("caido", 1)], grupo: [{ nome: "Doran", vida: 10, vidaMax: 10, condicoes: [C("inspirado", 3), C("protegido", 1)] }, null, { nome: "Bram", vida: 8, vidaMax: 8 }] }),
+    combate: { inimigos: [{ nome: "Lobo", vida: 10, vidaMax: 10, condicoes: [C("lento", 3), C("marcado", 1)] }] },
+  };
+  const antesDoTurno = JSON.stringify(E);
+  const r = jogar(E);
+  const eu = r.estado.personagem, doran = eu.grupo[0], lobo = r.estado.combate.inimigos[0];
+  const turnosDe = (lista, id) => ((lista || []).find((c) => c && c.id === id) || {}).turnos;
+  ok(turnosDe(eu.condicoes, "amedrontado") === 2 && turnosDe(lobo.condicoes, "lento") === 2, "os dois relógios antigos continuam a correr (herói e inimigos)");
+  ok(turnosDe(doran.condicoes, "inspirado") === 2, "e corre o TERCEIRO: o relógio anda sobre a lista do companheiro");
+  /* "exatamente três chamadores" era a forma de texto de "nenhum relógio
+     anda duas vezes": um turno, um passo em cada lista, nem zero nem dois. */
+  ok(turnosDe(eu.condicoes, "amedrontado") === 2 && turnosDe(doran.condicoes, "inspirado") === 2 && turnosDe(lobo.condicoes, "lento") === 2, "um turno é UM passo em cada portador — nenhum relógio anda duas vezes");
+  /* A POSIÇÃO É A PROMESSA: o relógio do grupo anda no MESMO passo do turno
+     que os outros dois (fora de luta também), e a ordem herói → grupo →
+     inimigos é a das linhas que o jogador lê. */
+  const iEu = r.msgs.indexOf("✓ Caído passou"), iGrupo = r.msgs.indexOf("✓ Doran: Protegido passou"), iLobo = r.msgs.indexOf("✓ Lobo: Marcado passou");
+  ok(iEu >= 0 && iGrupo > iEu && iLobo > iGrupo, `e está ENTRE os dois — herói(${iEu}) → grupo(${iGrupo}) → inimigos(${iLobo})`);
+  {
+    const fora = jogar({ personagem: E.personagem });
+    ok(turnosDe(fora.estado.personagem.grupo[0].condicoes, "inspirado") === 2, "e corre FORA da luta: não migrou para o relógio de rodadas do combate");
+  }
+  /* NUNCA CUSTA O TURNO: uma lista de condições podre no companheiro (tem
+     comprimento e não se percorre) estoura o relógio dele — e o turno segue,
+     com o herói tiquetaqueado e o erro entregue ao `calou`. */
+  {
+    const podre = jogar({ personagem: ficha({ condicoes: [C("amedrontado", 3)], grupo: [{ nome: "Doran", condicoes: { length: 1 } }] }) });
+    ok(podre.efeitos.filter((x) => x.tipo === "calou" && x.onde === "prazo-da-condicao-do-grupo").length === 1, "a fiação cala em vez de custar o turno (`calou`), uma vez só");
+    ok(turnosDe(podre.estado.personagem.condicoes, "amedrontado") === 2, "e o resto do turno seguiu: o meu relógio andou na mesma");
+  }
+  ok(eu.grupo[1] === null && eu.grupo[2] === E.personagem.grupo[2], "companheiro nulo ou sem condição sai intacto (o mesmo objeto)");
+  /* Tique que não escreve de volta é tique que não conta: o prazo novo tem
+     de estar na ficha que SAI, e a que entrou não pode ter mudado. */
+  ok(turnosDe(doran.condicoes, "inspirado") === 2 && JSON.stringify(E) === antesDoTurno, "o prazo é ESCRITO na ficha nova do companheiro — e a ficha que entrou não foi tocada");
+  ok(r.msgs.includes("✓ Doran: Protegido passou"), "e o jogador lê quem perdeu o quê: nome do companheiro e nome da condição");
 
-  const iHeroi = APP.indexOf("const t = tickCondicoes(pers.condicoes)");
-  const iGrupo = APP.indexOf("const t = tickCondicoes(g.condicoes)");
-  const iInimigos = APP.indexOf("const t = tickCondicoes(e.condicoes)");
-  ok(iHeroi > 0 && iInimigos > 0, "os dois relógios antigos continuam onde estavam (herói e inimigos)");
-  ok(iGrupo > 0, "e nasceu o TERCEIRO: o relógio corre sobre a lista do companheiro");
-  ok(quantas(/tickCondicoes\(/g) === 3, `o órgão tem exatamente três chamadores no App (${quantas(/tickCondicoes\(/g)})`);
-  /* A POSIÇÃO É A PROMESSA. O bloco tem de estar no MESMO passo do turno
-     que os outros dois: se migrar para o relógio de rodadas do combate, a
-     condição do companheiro passa a vencer só em luta e, fora dela, o
-     buff fica de pé para sempre outra vez — de volta ao buraco da v9.2,
-     com a suíte verde. */
-  ok(iHeroi < iGrupo && iGrupo < iInimigos, `e está ENTRE os dois — herói(${iHeroi}) → grupo(${iGrupo}) → inimigos(${iInimigos})`);
-
-  const iFim = APP.indexOf('calou("prazo-da-condicao-do-grupo", e)');
-  const iTry = APP.lastIndexOf("try {", iGrupo);
-  ok(quantas(/calou\("prazo-da-condicao-do-grupo",\s*e\)/g) === 1, "a fiação nova cala em vez de custar o turno (`calou`), uma vez só");
-  /* "Perto de um catch" não é "dentro de um try": a prova é que o try mais
-     próximo ABRE antes do tique e não se fecha no meio do caminho. */
-  ok(iTry > 0 && iFim > iGrupo && !/catch/.test(APP.slice(iTry, iGrupo)), "e o tique está DENTRO desse try, não ao lado dele");
-
-  /* RECORTE HONESTO OU NENHUM. Se o bloco sumir, `iFim` vem −1 e um
-     `slice(iTry, -1)` entregaria o ARQUIVO QUASE INTEIRO como se fosse o
-     bloco — e aí as duas provas de ausência lá embaixo acendem por
-     encontrarem `t.dano` em qualquer outro lugar do App, não por este
-     bloco cobrar dano. Vermelho pelo motivo errado hoje é verde pelo
-     motivo errado amanhã. Sem recorte válido, `bloco` é vazio e TODA
-     asserção daqui para baixo — presença e ausência — exige `achou`. */
-  const achou = iGrupo > 0 && iTry > 0 && iFim > iGrupo;
-  const bloco = achou ? APP.slice(iTry, iFim) : "";
-  ok(achou && /\(pers\.grupo \|\| \[\]\)\.map\(/.test(bloco), "o relógio é sobre `pers.grupo` — a lista dos companheiros, não a minha");
-  ok(achou && /if \(!g \|\| !\(\(g\.condicoes \|\| \[\]\)\.length\)\) return g;/.test(bloco), "companheiro nulo ou sem condição sai intacto");
-  /* Tique que não escreve de volta é tique que não conta: a lista nova tem
-     de voltar para a ficha, senão o prazo roda em cópia e o save guarda a
-     condição cheia — o mesmo sintoma de antes, com o relógio ligado. */
-  ok(achou && /return \{ \.\.\.g, condicoes: t\.condicoes \};/.test(bloco), "o prazo é ESCRITO de volta na ficha do companheiro");
-  ok(achou && /pers = \{ \.\.\.pers, grupo: grupoComPrazo \};/.test(bloco), "…e a ficha nova substitui a antiga — o tique não roda em cópia");
-  ok(achou && /\$\{g\.nome\}: \$\{c\.nome\} passou/.test(bloco), "e o jogador lê quem perdeu o quê: nome do companheiro e nome da condição");
-
-  /* ---------------- O QUE O BLOCO NÃO FAZ, DE PROPÓSITO ----------------
-     Duas ausências, e ausência mente quando o bloco some junto — as duas
-     só valem porque as asserções acima já exigiram que ele exista.
-
-     1. NÃO COBRA `dano`. `tickCondicoes` devolve `dano`/`fontes` e os dois
-        irmãos os cobram; o grupo não. Companheiro morrendo de veneno é um
-        jeito NOVO de o jogador perder um companheiro, e isso é decisão da
-        pessoa, não efeito colateral de fiação. A fronteira que guarda o
-        zero — nenhum portador de grupo aponta para condição com
-        `danoTurno` — mora em `teste-afl.mjs`, que é o dono da tabela.
-     2. NÃO FILTRA POR VIDA, e a diferença para o relógio dos inimigos é
-        deliberada: o inimigo derrotado sai de cena, o companheiro caído
-        continua nela e pode ser erguido. O tempo passa para ele também. */
-  ok(achou && !/t\.dano/.test(bloco), "o relógio do grupo NÃO cobra dano por turno — decisão da pessoa, não esquecimento");
-  ok(achou && !/vida/.test(bloco), "e NÃO filtra por vida: o tempo passa para o companheiro caído também");
+  /* ---------------- O QUE O RELÓGIO DO GRUPO NÃO FAZ, DE PROPÓSITO ----------------
+     1. NÃO COBRA `dano`: companheiro envenenado não perde PV pelo relógio
+        (decisão da pessoa; a fronteira mora em teste-afl.mjs).
+     2. NÃO FILTRA POR VIDA: o companheiro caído continua na cena, e o tempo
+        passa para ele também. */
+  {
+    const veneno = jogar({ personagem: ficha({ grupo: [{ nome: "Doran", vida: 10, vidaMax: 10, condicoes: [C("envenenado", 4)] }, { nome: "Bram", vida: 0, vidaMax: 8, condicoes: [C("inspirado", 3)] }] }) });
+    const [d, b] = veneno.estado.personagem.grupo;
+    ok(d.vida === 10 && turnosDe(d.condicoes, "envenenado") === 3, "o relógio do grupo NÃO cobra dano por turno — decisão da pessoa, não esquecimento");
+    ok(b.vida === 0 && turnosDe(b.condicoes, "inspirado") === 2, "e NÃO filtra por vida: o tempo passa para o companheiro caído também");
+  }
 }
 
 /* ============================================================
@@ -1406,97 +1411,110 @@ console.log("\n[T1 · ligado ao jogo] o relógio do grupo no motor do turno (src
    cada sítio é recortado entre o `try {` mais próximo e a própria etiqueta
    do `calou`, e TODA asserção do bloco exige o `achou` correspondente.
    ============================================================ */
-console.log("\n[T3 · ligado ao jogo] os três sítios da salvaguarda no motor do turno (src/motor/aplicar.js):");
+console.log("\n[T3 · ligado ao jogo] os três sítios da salvaguarda no motor do turno (src/motor/aplicar.js, jogado):");
 {
-  const { readFileSync } = await import("node:fs");
-  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
-     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
-     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: o nome APP ficou, o arquivo é o do motor (e o import é "../condicoes.js"). */
-  const APP = readFileSync("../src/motor/aplicar.js", "utf8");
-  const quantas = (rx) => (APP.match(rx) || []).length;
+  /* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO, pelo mesmo
+     motivo da secção de T1 acima. Lia os três sítios como recortes de texto
+     entre o `try {` e a etiqueta do `calou`, com teto de tamanho para o
+     recorte não engordar até "o App inteiro". O turno agora é jogado, e o
+     dado é travado: `comSorte(() => 0.999)` dá d20 = 20 (passa sempre),
+     `comSorte(() => 0)` dá d20 = 1 (falha sempre) — a mesma semente, o
+     mesmo resultado, em qualquer máquina. O que era "o App importa a porta
+     do catálogo e não recopia a regra" passou a ser medido pela FRASE: a
+     linha que o jogador lê é, palavra por palavra, a que
+     `tentarSaidaNoFimDoTurno` devolve para o mesmo portador e o mesmo dado.
 
-  ok(/import \{[^}]*tentarSaidaNoFimDoTurno[^}]*\} from "\.\.?\/condicoes\.js"/.test(APP), "o App importa a porta do catálogo — a regra não foi recopiada para a tela");
-  ok(quantas(/tentarSaidaNoFimDoTurno\(/g) === 3, `e a chama em exatamente três sítios: eu, o grupo e os inimigos (${quantas(/tentarSaidaNoFimDoTurno\(/g)})`);
-
-  /* Um recorte por sítio, apertado: da abertura do `try` até a etiqueta do
-     `calou`. `achou` é a condição de TODA asserção — presença e ausência. */
-  const recortar = (ancora, etiqueta) => {
-    const i = APP.indexOf(ancora);
-    const iTry = i > 0 ? APP.lastIndexOf("try {", i) : -1;
-    const iFim = APP.indexOf(etiqueta);
-    const achou = i > 0 && iTry > 0 && iFim > i;
-    return { i, iTry, iFim, achou, bloco: achou ? APP.slice(iTry, iFim) : "" };
+     RETIRADAS SEM SUBSTITUTO, e por quê: (1) "nenhum recorte virou o App
+     inteiro" guardava o próprio recorte de texto — sem recorte, não há o que
+     guardar; (2) "só mexe na ficha quando alguma coisa saiu — sem re-render
+     de graça" era uma pergunta de React (um objeto novo re-renderiza), e o
+     motor devolve sempre um estado novo: a pergunta passa para quem pinta,
+     não para quem decide. As outras trinta e seis renasceram abaixo. */
+  const { aplicar } = await import("../src/motor/aplicar.js");
+  const { comSorte } = await import("../src/semente.js");
+  const { atributoEfetivo } = await import("../src/regras-jogo.js");
+  const C = (id, turnos) => criarCondicao(id, { turnos });
+  const ficha = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 0, atributos: { vigor: 2 }, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
+  const jogar = (estado, d) => comSorte(() => d, () => aplicar(estado, { narrativa: "O vento sopra.", mudancas: {} }, {}));
+  const PASSA = 0.999, FALHA = 0;
+  const E = {
+    personagem: ficha({ condicoes: [C("envenenado", 4)], grupo: [{ nome: "Doran", classe: "Clérigo", vida: 10, vidaMax: 10, condicoes: [C("envenenado", 4)] }] }),
+    combate: { inimigos: [{ nome: "Lobo", vida: 10, vidaMax: 10, condicoes: [C("envenenado", 4)] }] },
   };
-  const eu = recortar("tentarSaidaNoFimDoTurno(pers, {", 'calou("salvaguarda-do-fim-do-turno", e)');
-  const grupo = recortar("tentarSaidaNoFimDoTurno(g, {", 'calou("salvaguarda-do-fim-do-turno-do-grupo", e)');
-  const inimigo = recortar("tentarSaidaNoFimDoTurno({ ...e, condicoes: t.condicoes }", 'calou("salvaguarda-do-fim-do-turno-do-inimigo", err)');
-  ok(eu.achou && grupo.achou && inimigo.achou, `os três sítios existem e recortam (eu ${eu.i}, grupo ${grupo.i}, inimigos ${inimigo.i})`);
-  /* Recorte que engorda é recorte que mente: um bloco do tamanho do App
-     passaria nas provas de presença e derrubaria as de ausência pelo motivo
-     errado. Nenhum dos três passa de dois mil caracteres. */
-  ok(eu.bloco.length < 2000 && grupo.bloco.length < 2000 && inimigo.bloco.length < 2000,
-    `e nenhum recorte virou "o App inteiro" (${eu.bloco.length}, ${grupo.bloco.length}, ${inimigo.bloco.length} chars)`);
+  const tem = (lista, id) => (lista || []).some((c) => c && c.id === id);
+  const sim = jogar(E, PASSA), nao = jogar(E, FALHA);
+  const [euS, doS, loS] = [sim.estado.personagem, sim.estado.personagem.grupo[0], sim.estado.combate.inimigos[0]];
+  const [euN, doN, loN] = [nao.estado.personagem, nao.estado.personagem.grupo[0], nao.estado.combate.inimigos[0]];
+  ok(!tem(euS.condicoes, "envenenado") && !tem(doS.condicoes, "envenenado") && !tem(loS.condicoes, "envenenado"), "os três sítios existem: eu, o grupo e os inimigos saem do veneno quando o dado passa");
+  ok(tem(euN.condicoes, "envenenado") && tem(doN.condicoes, "envenenado") && tem(loN.condicoes, "envenenado"), "e os três ficam quando o dado falha — a chance é rolada, não dada");
+  ok(nao.msgs.every((l) => !/afrouxa|sai do sangue/.test(l)), "e a falha não fala (a linha nasce só na saída, como manda o módulo)");
 
-  /* A ORDEM É CONTRATO, e é a mesma dos três: SEMPRE DEPOIS do tique. Se
-     algum dia um deles subir para antes do `tickCondicoes` do próprio
-     portador, passar na salvaguarda apagaria o dano de um turno já vivido
-     — a seção [T3 · a ordem é contrato] mede o efeito, esta mede o sítio. */
-  const iTickEu = APP.indexOf("const t = tickCondicoes(pers.condicoes)");
-  const iTickGrupo = APP.indexOf("const t = tickCondicoes(g.condicoes)");
-  const iTickInimigo = APP.indexOf("const t = tickCondicoes(e.condicoes)");
-  ok(iTickEu > 0 && iTickEu < eu.i, `a minha chance vem DEPOIS do meu relógio (tique ${iTickEu} → chance ${eu.i})`);
-  ok(iTickGrupo > 0 && iTickGrupo < grupo.i, `a do companheiro depois do relógio do grupo (tique ${iTickGrupo} → chance ${grupo.i})`);
-  ok(iTickInimigo > 0 && iTickInimigo < inimigo.i, `e a do inimigo depois do relógio dele (tique ${iTickInimigo} → chance ${inimigo.i})`);
-  ok(eu.i < grupo.i && grupo.i < inimigo.i, "e os três seguem a ordem do turno: eu → grupo → inimigos");
+  /* A ORDEM É CONTRATO: SEMPRE DEPOIS do tique. Invertida, passar na
+     salvaguarda apagaria o dano de um turno em que o corpo ESTEVE envenenado. */
+  ok(euS.vida === 18 && loS.vida === 8, `o veneno cobra o turno ANTES da chance: eu ${euS.vida}/20 e o lobo ${loS.vida}/10, mesmo saindo dele`);
+  ok((nao.estado.personagem.condicoes.find((c) => c.id === "envenenado") || {}).turnos === 3, "e a chance vê a lista JÁ tiquetaqueada (o prazo andou antes de rolar)");
+  const iEu = sim.msgs.findIndex((l) => /^🧪 O veneno/.test(l)), iDo = sim.msgs.findIndex((l) => /^🧪 Doran:/.test(l)), iLo = sim.msgs.findIndex((l) => /^🧪 Lobo:/.test(l));
+  ok(sim.msgs.indexOf("Envenenado: −2 PV (18/20)") < iEu, "a minha chance vem DEPOIS do meu relógio");
+  ok(iEu >= 0 && iEu < iDo && iDo < iLo, `e os três seguem a ordem do turno: eu(${iEu}) → grupo(${iDo}) → inimigos(${iLo})`);
+  ok(sim.msgs.indexOf("Envenenado em Lobo: −2 PV (8/10)") < iLo, "e a do inimigo depois do relógio dele");
 
-  /* NUNCA PODE CUSTAR O TURNO. Os três sítios do relógio nunca estiveram em
-     `try/catch`; os três pedaços novos estão. Um estouro aqui tem de deixar
-     a cena seguir com a condição de pé — que é o comportamento de antes. */
-  for (const [nome, s, etiqueta] of [["eu", eu, "salvaguarda-do-fim-do-turno"], ["grupo", grupo, "salvaguarda-do-fim-do-turno-do-grupo"], ["inimigos", inimigo, "salvaguarda-do-fim-do-turno-do-inimigo"]]) {
-    ok(quantas(new RegExp(`calou\\("${etiqueta}",`, "g")) === 1, `o sítio de ${nome} cala em vez de custar o turno, uma vez só`);
-    /* "Perto de um catch" não é "dentro de um try": a prova é que o try mais
-       próximo ABRE antes da chamada e não se fecha no meio do caminho. */
-    ok(s.achou && !/catch/.test(APP.slice(s.iTry, s.i)), `…e a chamada de ${nome} está DENTRO desse try, não ao lado dele`);
+  /* NUNCA PODE CUSTAR O TURNO. Uma `classe` que estoura ao ser lida só é
+     tocada pela salvaguarda (a proficiência da salva); o resto do turno não
+     a lê. Com ela nos três portadores, os três sítios estouram — e o turno
+     segue, com o dano cobrado e a condição de pé, que é o de antes de T3. */
+  {
+    const BOMBA = { toString() { throw new Error("bomba"); } };
+    const r = jogar({ personagem: ficha({ classe: BOMBA, condicoes: [C("envenenado", 4)], grupo: [{ nome: "Doran", classe: BOMBA, condicoes: [C("envenenado", 4)] }] }), combate: { inimigos: [{ nome: "Lobo", classe: BOMBA, vida: 10, vidaMax: 10, condicoes: [C("envenenado", 4)] }] } }, PASSA);
+    for (const [nome, etiqueta] of [["eu", "salvaguarda-do-fim-do-turno"], ["grupo", "salvaguarda-do-fim-do-turno-do-grupo"], ["inimigos", "salvaguarda-do-fim-do-turno-do-inimigo"]]) {
+      ok(r.efeitos.filter((x) => x.tipo === "calou" && x.onde === etiqueta).length === 1, `o sítio de ${nome} cala em vez de custar o turno, uma vez só`);
+    }
+    ok(r.estado.personagem.vida === 18 && r.estado.combate.inimigos[0].vida === 8 && tem(r.estado.personagem.condicoes, "envenenado"), "…e o turno seguiu: o dano cobrado, a condição de pé");
   }
 
   /* --------- O SÍTIO DO HERÓI: o único com ficha de atributo --------- */
-  ok(eu.achou && /modDe: \(a\) => atributoEfetivo\(pers, a\)/.test(eu.bloco), "só eu passo `modDe`, e quem soma é `atributoEfetivo` — a conta não foi recopiada para o App");
-  ok(eu.achou && /pers = \{ \.\.\.pers, condicoes: saida\.condicoes \}/.test(eu.bloco), "a lista sem a condição é ESCRITA de volta na ficha — a porta não roda em cópia");
-  ok(eu.achou && /msgs\.push\(\.\.\.saida\.linhas\)/.test(eu.bloco), "e a frase que nasceu no módulo é empurrada para a tela, palavra por palavra");
-  ok(eu.achou && /if \(saida\.mudou\)/.test(eu.bloco), "só mexe na ficha quando alguma coisa saiu — sem re-render de graça");
-  /* NÃO FILTRA POR VIDA, ao contrário do irmão dos inimigos: quem cai aqui
-     fica em cena (`morrendo`) e o tempo passa para ele também. */
-  ok(eu.achou && !/vida/.test(eu.bloco), "e NÃO filtra por vida: o corpo caído em cena ainda pode expulsar o veneno");
+  {
+    const tique = { ...E.personagem, condicoes: [C("envenenado", 3)] };
+    const esperado = comSorte(() => PASSA, () => tentarSaidaNoFimDoTurno(tique, { modDe: (a) => atributoEfetivo(tique, a) }));
+    ok(esperado.linhas.length === 1 && sim.msgs.includes(esperado.linhas[0]), "a frase que nasceu no módulo é a que vai para a tela, palavra por palavra — a regra não foi recopiada");
+    /* `modDe` é o atributo da ficha: o mesmo d20 com vigor alto e baixo dá
+       totais diferentes, e quem soma é `atributoEfetivo`. */
+    const forte = jogar({ personagem: ficha({ atributos: { vigor: 5 }, condicoes: [C("envenenado", 4)] }) }, FALHA + 0.5);
+    const fraco = jogar({ personagem: ficha({ atributos: { vigor: -5 }, condicoes: [C("envenenado", 4)] }) }, FALHA + 0.5);
+    ok(!tem(forte.estado.personagem.condicoes, "envenenado") && tem(fraco.estado.personagem.condicoes, "envenenado"), "só eu somo atributo: com o mesmo dado, o vigor decide (o forte sai, o fraco fica)");
+  }
+  ok(!tem(euS.condicoes, "envenenado") && E.personagem.condicoes[0].turnos === 4, "a lista sem a condição é ESCRITA na ficha nova — e a que entrou não mudou");
+  {
+    const caido = jogar({ personagem: ficha({ vida: 2, condicoes: [C("envenenado", 4)] }) }, PASSA);
+    ok(caido.estado.personagem.vida === 0 && !tem(caido.estado.personagem.condicoes, "envenenado"), "e NÃO filtra por vida: o corpo caído em cena ainda pode expulsar o veneno");
+  }
 
-  /* --------- O SÍTIO DO GRUPO: passagem à parte, e de propósito --------- */
-  ok(grupo.achou && /\(pers\.grupo \|\| \[\]\)\.map\(/.test(grupo.bloco), "a chance do companheiro corre sobre `pers.grupo`, a lista deles");
-  ok(grupo.achou && /quem: g\.nome/.test(grupo.bloco), "…com o nome dele na frase, que é o que o jogador lê");
-  ok(grupo.achou && /return \{ \.\.\.g, condicoes: saida\.condicoes \}/.test(grupo.bloco), "…e a lista nova volta para a ficha do companheiro");
-  ok(grupo.achou && !/modDe/.test(grupo.bloco), "SEM `modDe`: o companheiro não traz `atributos`, e derivar um número de nível seria regra invisível");
-  /* A PASSAGEM É SEPARADA DO `map` DE T1, E ISSO É ASSERÇÃO, NÃO ESTILO.
-     Embutida lá dentro, ela teria de renomear a linha que escreve o prazo de
-     volta — a linha exata que a seção [T1 · ligado ao jogo] guarda — e um
-     estouro seu levaria junto o tique que já tinha rodado. */
-  ok(grupo.achou && !/tickCondicoes/.test(grupo.bloco), "e a passagem é SEPARADA do `map` do relógio: um estouro aqui não leva junto o prazo que já correu");
-  ok(grupo.achou && grupo.iTry > APP.indexOf('calou("prazo-da-condicao-do-grupo", e)'), "…e vem logo depois dele, não dentro dele");
+  /* --------- O SÍTIO DO GRUPO --------- */
+  ok(iDo >= 0 && /^🧪 Doran:/.test(sim.msgs[iDo]), "a chance do companheiro corre sobre `pers.grupo`, com o nome dele na frase");
+  ok(!tem(doS.condicoes, "envenenado") && doS.vida === 10, "…a lista nova volta para a ficha do companheiro, e sem dano por turno");
+  {
+    /* SEM `modDe`: o companheiro não traz atributos, e derivar um número
+       seria regra invisível. Um "vigor" escrito na ficha dele não conta. */
+    const g = (vigor) => jogar({ personagem: ficha({ grupo: [{ nome: "Doran", classe: "Mago", atributos: { vigor }, condicoes: [C("envenenado", 4)] }] }) }, 0.5).estado.personagem.grupo[0];
+    ok(tem(g(9).condicoes, "envenenado") === tem(g(-9).condicoes, "envenenado"), "SEM `modDe`: um atributo na ficha do companheiro não muda o dado dele");
+    /* A PASSAGEM É SEPARADA DO `map` DE T1: se a salvaguarda dele estoura, o
+       prazo que o relógio já correu fica. */
+    const BOMBA = { toString() { throw new Error("bomba"); } };
+    const r = jogar({ personagem: ficha({ grupo: [{ nome: "Doran", classe: BOMBA, condicoes: [C("envenenado", 4)] }] }) }, PASSA);
+    ok((r.estado.personagem.grupo[0].condicoes.find((c) => c.id === "envenenado") || {}).turnos === 3, "e a passagem é SEPARADA do relógio: um estouro aqui não leva junto o prazo que já correu");
+  }
 
   /* --------- O SÍTIO DOS INIMIGOS: o único que filtra por vida --------- */
-  /* O FILTRO FICA FORA DO `try` — por isso não está no recorte, e a prova é
-     de vizinhança: a guarda tem de ABRIR imediatamente antes do `try`, sem
-     nada entre os dois. Um `if` distante seria outra condição, não esta. */
-  const iVida = APP.lastIndexOf("if (vida > 0) {", inimigo.iTry);
-  ok(inimigo.achou && iVida > 0 && inimigo.iTry - iVida < 40 && !/[;}]/.test(APP.slice(iVida + 15, inimigo.iTry)),
-    "o inimigo só rola SE ESTIVER DE PÉ — corpo que o dano da condição acabou de derrubar não se sacode de veneno");
-  ok(inimigo.achou && /quem: e\.nome/.test(inimigo.bloco), "…com o nome dele na frase");
-  ok(inimigo.achou && /condicoes: t\.condicoes/.test(inimigo.bloco), "…e recebe a lista JÁ tiquetaqueada, não a antiga");
-  ok(inimigo.achou && !/modDe/.test(inimigo.bloco), "e sem `modDe`: o bestiário não traz atributos e o inimigo não declara classe — zero puro");
-
-  /* O QUE NENHUM DOS TRÊS FAZ: escrever regra. Nem CD, nem atributo, nem
-     frase. Se um número de dificuldade aparecer no App, existem duas
-     verdades sobre a mesma regra — a doença que esta casa mais produziu. */
-  for (const [nome, s] of [["eu", eu], ["grupo", grupo], ["inimigos", inimigo]]) {
-    ok(s.achou && !/\bcd\b|dificuldade|salvaguardaDeSaida|linhaDaSaidaDeCondicao|rolarSalvaguarda/i.test(s.bloco),
-      `o sítio de ${nome} não escreve uma sílaba de regra: sem CD, sem atributo, sem montar frase`);
+  {
+    const r = jogar({ personagem: ficha(), combate: { inimigos: [{ nome: "Rato", vida: 2, vidaMax: 6, condicoes: [C("envenenado", 4)] }] } }, PASSA);
+    const rato = r.estado.combate.inimigos[0];
+    ok(rato.vida === 0 && rato.derrotado && tem(rato.condicoes, "envenenado"), "o inimigo só rola SE ESTIVER DE PÉ — corpo que o veneno acabou de derrubar não se sacode dele");
+    ok(!r.msgs.some((l) => /^🧪 Rato:/.test(l)), "…e não há frase de saída para ele");
+  }
+  ok(/^🧪 Lobo:/.test(sim.msgs[iLo]) && !tem(loS.condicoes, "envenenado"), "…com o nome dele na frase, e a lista nova na ficha");
+  {
+    /* sem `modDe`: o bestiário não traz atributos — zero puro contra a CD. */
+    const lobo = (vigor) => jogar({ personagem: ficha(), combate: { inimigos: [{ nome: "Lobo", vida: 10, vidaMax: 10, atributos: { vigor }, condicoes: [C("envenenado", 4)] }] } }, 0.5).estado.combate.inimigos[0];
+    ok(tem(lobo(9).condicoes, "envenenado") === tem(lobo(-9).condicoes, "envenenado"), "e sem `modDe`: um atributo escrito no inimigo não muda o dado dele");
   }
 }
 

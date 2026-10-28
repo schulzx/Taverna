@@ -44,7 +44,19 @@
    é o motor do oficial a chegar, e a linha sobe com ele. Com o `aplicar`
    do oficial na árvore (em voo nesse dia), os 20 turnos já passam por ele
    — desde que a ficha traga as listas que a regra da ficha percorre
-   (`inventario`, `habilidades`): sem elas, `regras-jogo.js` estoura. */
+   (`inventario`, `habilidades`): sem elas, `regras-jogo.js` estoura.
+
+   27/10, T1-B fatia 2 — O JOGO CRESCE:
+   - o estouro está consertado em `regras-jogo.js#aplicarMudancas` (a ficha
+     incompleta não derruba o turno; teste-ficha-incompleta.mjs), e o save de
+     partida daqui deixa de levar as listas — é ele que o prova a jogar;
+   - a 10.ª joga INTEIRA (secção 4: M1–M77, tudo o que o registo de cena
+     tem com a pauta seguinte), com a mesma régua;
+   - a 8.ª e a 9.ª jogam pelo registo do Cronista (secção 5): cada turno passa
+     pelo `aplicar` e pelo `julgarOCronista`, e o estado tem de conhecer, ao
+     fim do turno, a gente e o cânone que o registo conhecia no turno
+     seguinte. O que entrou por outra porta do App (os nomes à mão, a luta)
+     é PENDENTE e diz de quem é, como os sítios da secção 1. */
 import fs from "node:fs";
 
 let ok = 0, mal = 0;
@@ -94,8 +106,10 @@ const cidades = [...new Set(R.pautas.map((p) => p.cidade))];
    sessão pisou. O registo de gente começa vazio (no turno 1 o sistema
    ainda não conhecia ninguém além da Saoirse, que viaja com ela). */
 const inicio = () => estadoDoSave({
-  /* a ficha com as listas que a regra da ficha percorre (regras-jogo.js) */
-  personagem: { nome: R.heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, inventario: [], habilidades: [], condicoes: [], equipado: {}, grupo: [{ nome: "Saoirse", vida: 10, vidaMax: 10, habilidades: [], inventario: [] }] },
+  /* a ficha SEM as listas da bolsa e das habilidades, de propósito (27/10,
+     T1-B fatia 2): até ao conserto de `aplicarMudancas` ela estourava aqui, e
+     o save de partida tinha de as trazer. Um save mínimo tem de jogar. */
+  personagem: { nome: R.heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, condicoes: [], equipado: {}, grupo: [{ nome: "Saoirse", vida: 10, vidaMax: 10 }] },
   cidadeAtual: R.pautas[0].cidade,
   lugar: null,
   jornada: null,
@@ -145,11 +159,11 @@ const aplicarOCronista = (E, aceito) => {
 };
 
 /* ---------------- UM TURNO ---------------- */
-const jogar = async () => {
+const jogar = async (turnos = TURNOS) => {
   let E = inicio();
   let antes = null;
   const log = [];
-  for (let i = 0; i < TURNOS; i++) {
+  for (let i = 0; i < turnos; i++) {
     const P = R.pautas[i];
     const passo = { i: i + 1, pendente: [], difere: [] };
     /* 1 · o turno: o que anda antes do Mestre */
@@ -168,7 +182,9 @@ const jogar = async () => {
     }
     /* a gente que a pauta deste turno nomeia, o sistema tem de a conhecer */
     const grupo = (E.personagem.grupo || []).map((g) => sem(g.nome));
-    const nomesDaPauta = [...P.presentes.map((x) => x.nome), ...P.longe].filter((n) => !grupo.includes(sem(n)));
+    /* "+1." é a marca de transbordo da linha LONGE da pauta ("… e mais um"),
+       não um nome: lida como gente, fazia M63–M77 diferirem por ninguém. */
+    const nomesDaPauta = [...P.presentes.map((x) => x.nome), ...P.longe].filter((n) => !grupo.includes(sem(n)) && !/^\+\d+\.?$/.test(String(n).trim()));
     const conhece = new Set(Object.keys(E.npcs || {}).map(sem));
     const desconhecidos = nomesDaPauta.filter((n) => !conhece.has(sem(n)));
     if (desconhecidos.length) passo.difere.push("gente: " + desconhecidos.join(","));
@@ -236,6 +252,119 @@ sec("3. DETERMINISMO — jogar duas vezes dá o mesmo jogo");
 {
   const dois = await jogar();
   t("o mesmo registo, o mesmo log e o mesmo estado final", J(dois) === J(um));
+}
+
+sec("4. A 10.ª INTEIRA — M1 a M77, a mesma régua");
+const TODA = R.pautas.length - 1; /* o último turno precisa da pauta seguinte */
+const toda = await jogar(TODA);
+{
+  const jog = toda.log.filter((p) => p.jogou).length;
+  const dif = toda.log.filter((p) => p.difere.length);
+  const pen = toda.log.filter((p) => p.pendente.length);
+  const porDono = {};
+  for (const p of pen) for (const x of p.pendente) { const d = (x.match(/\((turno: \w+)\)/) || [, "outro"])[1]; porDono[d] = (porDono[d] || 0) + 1; }
+  console.log(`  ..  ${jog} jogam, ${pen.length} pendentes (${Object.entries(porDono).map(([k, v]) => `${k} ${v}`).join(", ")}), ${dif.length} diferem`);
+  t(`${TODA} turnos jogados do princípio ao fim, sem estourar`, toda.log.length === TODA);
+  t("nenhum turno com a saída DIFERENTE do registo", dif.length === 0, dif.map((p) => `M${p.i}: ${p.difere.join(" · ")}`).join(" | "));
+  /* MEDIDA (27/10, T1-B fatia 2): 62 de 77. Os 15 pendentes são todos do
+     passo antes do Mestre (10 sítios pela frase, 5 viagens) — o `turno`. */
+  t(`${jog} de ${TODA} turnos jogam em Node sem o oráculo (a medida de 27/10: 62)`, jog >= 62, `${jog}`);
+  t("todo pendente da 10.ª inteira é do passo antes do Mestre", pen.every((p) => p.pendente.every((x) => /\(turno: (moverParaLocal|viajar)\)/.test(x))));
+  /* a sequência mais longa sem oráculo: a meta da fase são 20 seguidos */
+  let corrida = 0, maior = 0;
+  for (const p of toda.log) { corrida = p.jogou ? corrida + 1 : 0; maior = Math.max(maior, corrida); }
+  console.log(`  ..  a corrida mais longa sem oráculo: ${maior} turnos seguidos (a meta da fase: 20)`);
+  t("os 20 primeiros da 10.ª inteira são os da secção 1 (o prefixo é o mesmo jogo)", J(toda.log.slice(0, TURNOS)) === J(um.log));
+}
+
+sec("5. A 8.ª E A 9.ª PELO REGISTO DO CRONISTA — o aplicar e o juízo, turno a turno");
+/* O registo do Cronista (registo-s8-s10-cronista.json) guarda, por turno, a
+   narração, a frase, os títulos dos envelopes e o que o registo do jogo
+   conhecia ANTES (a gente, o cânone, o grupo, o herói). Jogar é: aplicar a
+   narração, propor ao Cronista o que o registo ganhou (refeito como na
+   secção 1 e em teste-cronista-propoe), julgar, aplicar o aceito; e, ao
+   fim do turno, o estado tem de conhecer o que o registo conhecia no turno
+   seguinte — nem menos (o motor recusou o que era certo), nem mais (inventou).
+   O nome que chegou sem o Cronista o ter trazido (`util` sem pessoa/cânone)
+   entrou por outra porta do App — os nomes à mão da pauta, a luta — e é
+   PENDENTE, com o oráculo a pô-lo no estado para não sujar os turnos de
+   depois. */
+const jogarDoCronista = (ses) => {
+  const L = RC.turnos.filter((x) => x.ses === ses);
+  const c0 = [...new Set(L[0].conhecidos)];
+  const heroi = c0[c0.length - 1], companheira = c0[0];
+  let E = estadoDoSave({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, npcs: {}, canone: {}, combate: null });
+  const conhecidos = (e) => new Set([e.personagem.nome, ...(e.personagem.grupo || []).map((g) => g.nome), ...Object.keys(e.npcs || {}), ...Object.keys(e.canone || {})].map(sem));
+  const log = [];
+  /* OS COMBATENTES SÃO DA LUTA, NÃO DO REGISTO DE GENTE: o registo conhece o
+     Zumbi enquanto a luta dura e esquece-o quando ela acaba. O oráculo põe-nos
+     aqui, à parte do estado, e eles saem quando o registo os larga. */
+  let daLuta = new Set();
+  for (let i = 0; i < L.length - 1; i++) {
+    const a = L[i], b = L[i + 1];
+    const passo = { k: a.k, pendente: [], difere: [] };
+    const env = (a.envelopes || []).join("\n");
+    const r = APLICAR(E, { narrativa: a.narrativa, mudancas: {} }, { pedido: a.frase, envelopes: env });
+    if (!r || !r.estado) { passo.difere.push("aplicar não devolveu { estado }"); log.push(passo); continue; }
+    E = r.estado;
+    const ja = conhecidos(E);
+    const novos = [...new Set(b.conhecidos)].filter((x) => !ja.has(sem(x)));
+    const doCronista = a.util.includes("pessoa") || a.util.includes("canone");
+    const prop = {};
+    if (doCronista) {
+      const pessoa = a.util.includes("pessoa") && !a.util.includes("canone");
+      if (pessoa) prop.pessoas = novos.map((nome) => ({ nome, genero: "" }));
+      else prop.canone = Object.fromEntries(novos.map((n) => [n, { tipo: "artefato", descricao: "—" }]));
+    }
+    const juizo = julgarOCronista(E, prop, { narrativa: a.narrativa, pedido: a.frase, envelopes: env });
+    E = aplicarOCronista(E, juizo.aceito);
+    const esperado = new Set(b.conhecidos.map(sem));
+    daLuta = new Set([...daLuta].filter((x) => esperado.has(x)));
+    const depois = new Set([...conhecidos(E), ...daLuta]);
+    const faltam = [...new Set(b.conhecidos)].filter((x) => !depois.has(sem(x)));
+    const sobram = [...depois].filter((x) => !esperado.has(x));
+    if (faltam.length) {
+      const luta = a.emLuta || b.emLuta;
+      if (!doCronista) passo.pendente.push(`${faltam.join(",")} (App: ${luta ? "a luta" : "os nomes à mão"})`);
+      else passo.difere.push("o motor recusou: " + faltam.join(","));
+      /* o oráculo: o registo diz que o jogo os conhecia */
+      if (luta && !doCronista) daLuta = new Set([...daLuta, ...faltam.map(sem)]);
+      else E = { ...E, npcs: { ...E.npcs, ...Object.fromEntries(faltam.map((n) => [n, { nome: n }])) } };
+    }
+    if (sobram.length) passo.difere.push("o estado conhece o que o registo não conhecia: " + sobram.join(","));
+    passo.jogou = !passo.pendente.length && !passo.difere.length;
+    log.push(passo);
+  }
+  return { log, fim: E };
+};
+const SESSOES_DO_CRONISTA = { s8: null, s9: null };
+for (const ses of Object.keys(SESSOES_DO_CRONISTA)) {
+  if (!APLICAR) { t(`${ses}: pendente — o passo espera src/motor/aplicar.js`, true); continue; }
+  const r = jogarDoCronista(ses);
+  SESSOES_DO_CRONISTA[ses] = r;
+  const jog = r.log.filter((p) => p.jogou).length;
+  const pen = r.log.filter((p) => p.pendente.length);
+  const dif = r.log.filter((p) => p.difere.length);
+  console.log(`  ..  ${ses}: ${jog} de ${r.log.length} jogam; pendentes ${pen.map((p) => `#${p.k} ${p.pendente.join(" · ")}`).join(" | ") || "nenhum"}`);
+  t(`${ses}: ${r.log.length} turnos pelo aplicar e pelo juízo, sem estourar`, r.log.length === RC.turnos.filter((x) => x.ses === ses).length - 1);
+  t(`${ses}: nenhum turno DIFERE do registo (o motor não recusa o certo nem inventa)`, dif.length === 0, dif.map((p) => `#${p.k}: ${p.difere.join(" · ")}`).join(" | "));
+  let corrida = 0, maior = 0;
+  for (const p of r.log) { corrida = p.jogou ? corrida + 1 : 0; maior = Math.max(maior, corrida); }
+  r.maior = maior;
+  console.log(`  ..  ${ses}: a corrida mais longa sem oráculo: ${maior} turnos seguidos`);
+  t(`${ses}: todo pendente diz de quem é (o App: os nomes à mão, a luta)`, pen.every((p) => p.pendente.every((x) => /\(App: (a luta|os nomes à mão)\)/.test(x))));
+}
+/* MEDIDA (27/10, T1-B fatia 2): s8 62 de 70, s9 45 de 47. */
+{
+  const jog = (ses) => (SESSOES_DO_CRONISTA[ses] ? SESSOES_DO_CRONISTA[ses].log.filter((p) => p.jogou).length : 0);
+  if (APLICAR) t(`a 8.ª e a 9.ª: ${jog("s8")} + ${jog("s9")} turnos jogam em Node sem o oráculo (a medida de 27/10: 62 + 45)`, jog("s8") >= 62 && jog("s9") >= 45);
+  /* A META DA FASE (20 turnos seguidos com a saída igual ao registo) é batida
+     na 8.ª (22 seguidos) e na 9.ª (29, depois do último nome à mão) — com a
+     régua desta secção, que é a gente e o cânone: o registo do Cronista não
+     guarda o lugar de cada turno. Na 10.ª, com a régua inteira (o lugar
+     também), a corrida é de 11: o que a parte é o `turno` (secção 4). */
+  if (APLICAR) t(`a meta da fase: 20 turnos seguidos iguais ao registo (a 8.ª: ${SESSOES_DO_CRONISTA.s8.maior}, a 9.ª: ${SESSOES_DO_CRONISTA.s9.maior})`, SESSOES_DO_CRONISTA.s8.maior >= 20 && SESSOES_DO_CRONISTA.s9.maior >= 20);
+  if (APLICAR) t("e jogar duas vezes dá o mesmo jogo", ["s8", "s9"].every((x) => { const de = jogarDoCronista(x), ja = SESSOES_DO_CRONISTA[x]; return J({ log: de.log, fim: de.fim }) === J({ log: ja.log, fim: ja.fim }); }));
 }
 
 console.log(`\njogar-em-node: ${ok} passaram, ${mal} falharam`);

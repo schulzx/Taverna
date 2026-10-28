@@ -118,7 +118,30 @@ export function aplicarDescanso(pers, tipo, msgs, dia = 0, abrigo = null, lex = 
    1t para 3+ PM, livre abaixo disso). */
 export function recargaPadrao(custo) { return custo >= 6 ? 2 : custo >= 3 ? 1 : 0; }
 
-export function aplicarMudancas(pers, m, msgs, notas = []) {
+/* ---------------- A FICHA INCOMPLETA NÃO DERRUBA O TURNO (27/10 · T1-B) ----------------
+   O App sempre passou aqui uma ficha com as listas todas, e por isso esta
+   função nunca as conferiu. O motor fora do App ("o jogo em Node",
+   testes/jogar-em-node.mjs) achou o buraco no primeiro save mínimo: uma
+   ficha sem `inventario` ou `habilidades` estourava em `[...pers.inventario]`,
+   e `m` nulo em `m.dano_ambiental`. A lei da casa diz a razão de não
+   bastar um `= {}`: o padrão cobre `undefined`, não `null`.
+
+   O que se trata, e como: a lista ausente ou nula é lista vazia; as
+   mudanças nulas são nenhuma mudança; a ficha que não é objeto volta como
+   veio (inventar um herói do nada seria pior do que não mexer); o PV/PM
+   sem número fica como estava (sem número não há conta — antes saía NaN),
+   e o PV/PM sem máximo não tem teto. A ficha completa passa pelos mesmos
+   caminhos de sempre: com as listas e os números no lugar, nada muda (a
+   prova byte a byte de teste-motor-aplicar continua a valer). */
+const listaDe = (x) => (Array.isArray(x) ? x : []);
+const contaDe = (atual, teto, soma) => (Number.isFinite(atual) ? Math.max(0, Math.min(Number.isFinite(teto) ? teto : Infinity, soma(atual))) : atual);
+
+export function aplicarMudancas(persDado, mDada, msgs, notas = []) {
+  if (!persDado || typeof persDado !== "object") return persDado;
+  const pers = { ...persDado, inventario: listaDe(persDado.inventario), habilidades: listaDe(persDado.habilidades), grupo: listaDe(persDado.grupo) };
+  const m = mDada && typeof mDada === "object" ? mDada : {};
+  if (!Array.isArray(msgs)) msgs = [];
+  if (!Array.isArray(notas)) notas = [];
   /* DANO AMBIENTAL PADRONIZADO (v7.4.2): queda, fogo, veneno, armadilha —
      o Mestre envia só a SEVERIDADE e o código calcula pelo PV máximo do
      herói. Acaba o "dragão cospe 8 de dano" no nível 20. */
@@ -128,9 +151,10 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
     const sev = SEV[String(m.dano_ambiental).toLowerCase()];
     if (sev) danoAmb = Math.max(1, Math.round((pers.vidaMax || 10) * sev));
   }
-  let vida = Math.max(0, Math.min(pers.vidaMax, pers.vida + (m.vida || 0) - danoAmb));
-  let mana = Math.max(0, Math.min(pers.manaMax, pers.mana + (m.mana || 0)));
-  let moedas = Math.max(0, pers.moedas + (m.moedas || 0));
+  let vida = contaDe(pers.vida, pers.vidaMax, (v) => v + (m.vida || 0) - danoAmb);
+  let mana = contaDe(pers.mana, pers.manaMax, (v) => v + (m.mana || 0));
+  const moedas0 = Number.isFinite(pers.moedas) ? pers.moedas : 0;
+  let moedas = Math.max(0, moedas0 + (m.moedas || 0));
   const nomeItem = (x) => (typeof x === "string" ? x : (x && x.nome) || "");
   let inv = [...pers.inventario, ...(m.adicionar_itens || [])];
   /* COMÉRCIO AFERIDO PELO SISTEMA (v7.4.3): o Mestre negocia na ficção, mas
@@ -143,7 +167,7 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
       .filter(Boolean);
     if (vendidos.length) {
       const justo = Math.max(1, Math.round(vendidos.reduce((s, i) => s + valorDeItem(i), 0) * PRECO_VENDA));
-      if (m.moedas !== justo) { moedas = Math.max(0, pers.moedas + justo); msgs.push(`⚖ Venda aferida pelo sistema: ◉ ${justo} (metade do valor de tabela — o preço falado era ◉ ${m.moedas})`); moedasAferidas = true; }
+      if (m.moedas !== justo) { moedas = Math.max(0, moedas0 + justo); msgs.push(`⚖ Venda aferida pelo sistema: ◉ ${justo} (metade do valor de tabela — o preço falado era ◉ ${m.moedas})`); moedasAferidas = true; }
     }
   }
   /* ---------------- O PRESENTE TEM TETO (v9.154) ----------------
@@ -154,7 +178,7 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
   if (m.moedas > 0 && !moedasAferidas) {
     const af = aferirPresente(m.moedas, pers.nivel || 1);
     if (af) {
-      moedas = Math.max(0, pers.moedas + af.justo);
+      moedas = Math.max(0, moedas0 + af.justo);
       msgs.push(`⚖ Recompensa aferida pelo sistema: ◉ ${af.justo} (o falado era ◉ ${af.pedido})`);
       notas.push(envelopeDoPresente(af));
       moedasAferidas = true;
@@ -168,7 +192,7 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
       const cobrado = -m.moedas;
       if (cobrado < min || cobrado > max) {
         const justo = Math.min(max, Math.max(min, cobrado));
-        moedas = Math.max(0, pers.moedas - justo);
+        moedas = Math.max(0, moedas0 - justo);
         msgs.push(`⚖ Preço aferido pelo sistema: ◉ ${justo} (faixa justa ◉ ${min}–${max} pela tabela — o cobrado era ◉ ${cobrado})`);
         moedasAferidas = true;
       }
@@ -302,7 +326,7 @@ export function aplicarMudancas(pers, m, msgs, notas = []) {
   const grauDoTurno = grauValido(m.feito) ? String(m.feito) : null;
   const xpGanho = grauDoTurno ? xpDoFeito(grauDoTurno, pers.nivel || 1) : 0;
   if (xpGanho > 0) {
-    novo = aplicarNivel({ ...novo, xp: novo.xp + xpGanho });
+    novo = aplicarNivel({ ...novo, xp: (Number.isFinite(novo.xp) ? novo.xp : 0) + xpGanho });
     /* Companheiros evoluem JUNTOS por código: 60% do XP do herói, sempre.
        (Antes dependia do Mestre enviar "grupo_xp" — e ele quase nunca enviava,
        deixando companheiros congelados no nível 1.) */

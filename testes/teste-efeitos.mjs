@@ -952,10 +952,9 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
 {
   const { readFileSync } = await import("node:fs");
   const APP = readFileSync("../src/App.jsx", "utf8");
-  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
-     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
-     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
-  const MOTOR = readFileSync("../src/motor/aplicar.js", "utf8");
+  /* T1-A (27/10): o relógio mudou-se do `aplicarResposta` para
+     `src/motor/aplicar.js`; a parte 2 desta secção (o irmão no relógio) lia-o
+     como texto e passou a JOGÁ-LO (27/10, T1-B fatia 2 — o motivo está lá). */
   const quantas = (rx) => (APP.match(rx) || []).length;
 
   /* ---------------- A LIÇÃO DE R4: DEFINIÇÃO *E* SÍTIO ----------------
@@ -1022,33 +1021,45 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
     !!ramoAliados && !/efeitos\s*:/.test(ramoAliados[0]));
 
   /* ---------------- 2. O IRMÃO NO RELÓGIO ----------------
-     `tickEfeitos` é export de `regras-jogo.js` e tinha UM chamador no App.
-     As duas âncoras são o par: some o do herói e o órgão morre; some o do
-     grupo e o abrigo do companheiro vira permanente — e é a segunda que
-     nenhuma outra prova pega. */
-  t("o relógio do HERÓI continua onde estava",
-    (MOTOR.match(/const \{ efeitos, msgs: msgsTick \} = tickEfeitos\(pers\)/g) || []).length === 1);
-  t("e nasceu o IRMÃO: o relógio corre sobre o grupo também",
-    (MOTOR.match(/const tg = tickEfeitos\(g\)/g) || []).length === 1);
-  /* tique que não escreve de volta é tique que não conta: a lista nova tem
-     de voltar para a ficha do companheiro, senão o prazo roda em cópia. */
-  t("e o prazo do grupo é ESCRITO de volta na ficha",
-    /return \{ \.\.\.g, efeitos: tg\.efeitos \};/.test(MOTOR)
-    && /pers = \{ \.\.\.pers, grupo: grupoComPrazo \};/.test(MOTOR));
-  t("e o relógio do grupo também cala em vez de custar o turno",
-    (MOTOR.match(/calou\("prazo-do-efeito-do-grupo",\s*e\)/g) || []).length === 1);
-
-  /* MORAM NO MESMO RELÓGIO, e a ordem prova isso: herói, grupo e só então as
-     condições. Se o laço do grupo migrar para o relógio de RODADAS do revide,
-     o efeito do companheiro passa a vencer só em combate — e fora da luta o
-     abrigo fica de pé para sempre. A âncora é a POSIÇÃO, que é o que o
-     comentário do App promete por escrito. */
-  const iHeroi = MOTOR.indexOf("const { efeitos, msgs: msgsTick } = tickEfeitos(pers)");
-  const iGrupo = MOTOR.indexOf("const tg = tickEfeitos(g)");
-  const iCond = MOTOR.indexOf("const t = tickCondicoes(pers.condicoes)");
-  t("os três relógios existem no mesmo passo do turno", iHeroi > 0 && iGrupo > 0 && iCond > 0);
-  t("e a ordem é herói → grupo → condições, no mesmo bloco",
-    iHeroi < iGrupo && iGrupo < iCond, `${iHeroi} / ${iGrupo} / ${iCond}`);
+     MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. As cinco
+     asserções daqui contavam `tickEfeitos(pers)` e `tickEfeitos(g)` no
+     texto de `src/motor/aplicar.js` e mediam a ordem pelos índices. O
+     relógio mora num módulo puro desde a T1-A, e o próximo bloco que o
+     `oficial` mover para lá mexe nas linhas sem mexer no jogo — a prova de
+     texto partiria pelo motivo errado (fragilidade 5 da auditoria do motor).
+     Agora o turno é jogado com `aplicar`, e cada promessa de antes é lida
+     no estado que sai: o par herói/grupo, o prazo escrito de volta, o
+     `calou`, e a ordem herói → grupo → condições pelas linhas da tela. */
+  {
+    const { aplicar } = await import("../src/motor/aplicar.js");
+    const ef = (nome, turnos) => ({ nome, bonus: 1, turnos, aplica: "ataque" });
+    const ficha = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 0, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
+    const jogar = (estado) => aplicar(estado, { narrativa: "O vento sopra.", mudancas: {} }, {});
+    const E = { personagem: ficha({ efeitos: [ef("Bênção", 2), ef("Fúria", 1)], condicoes: [{ id: "inspirado", nome: "Inspirado", tipo: "bom", turnos: 1 }], grupo: [{ nome: "Doran", efeitos: [ef("Abrigo", 1), ef("Escudo", 3)] }, { nome: "Bram" }] }) };
+    const antes = JSON.stringify(E);
+    const r = jogar(E);
+    const eu = r.estado.personagem, doran = eu.grupo[0];
+    const turnosDe = (lista, nome) => ((lista || []).find((x) => x.nome === nome) || {}).turnos;
+    t("o relógio do HERÓI continua a correr", turnosDe(eu.efeitos, "Bênção") === 1 && turnosDe(eu.efeitos, "Fúria") === undefined);
+    t("e corre o IRMÃO: o relógio anda sobre o grupo também", turnosDe(doran.efeitos, "Escudo") === 2 && turnosDe(doran.efeitos, "Abrigo") === undefined);
+    /* tique que não escreve de volta é tique que não conta: a lista nova tem
+       de estar na ficha que sai, e a que entrou não pode ter mudado. */
+    t("e o prazo do grupo é ESCRITO de volta na ficha nova (e a que entrou não foi tocada)",
+      turnosDe(doran.efeitos, "Escudo") === 2 && JSON.stringify(E) === antes && eu.grupo[1] === E.personagem.grupo[1]);
+    {
+      const podre = jogar({ personagem: ficha({ efeitos: [ef("Bênção", 2)], grupo: [{ nome: "Doran", efeitos: { filter: () => [1] } }] }) });
+      t("e o relógio do grupo também cala em vez de custar o turno",
+        podre.efeitos.filter((x) => x.tipo === "calou" && x.onde === "prazo-do-efeito-do-grupo").length === 1 && turnosDe(podre.estado.personagem.efeitos, "Bênção") === 1);
+    }
+    /* MORAM NO MESMO RELÓGIO, e a ordem das linhas prova isso: herói, grupo
+       e só então as condições. E corre FORA da luta (não há `combate` aqui):
+       se o laço do grupo migrasse para o relógio de rodadas do revide, o
+       abrigo do companheiro ficaria de pé para sempre fora dela. */
+    const iHeroi = r.msgs.indexOf("✧ Fúria se dissipou."), iGrupo = r.msgs.indexOf("✧ Doran · Abrigo se dissipou."), iCond = r.msgs.indexOf("✓ Inspirado passou");
+    t("os três relógios correm no mesmo passo do turno, fora da luta", iHeroi >= 0 && iGrupo >= 0 && iCond >= 0);
+    t("e a ordem é herói → grupo → condições, no mesmo bloco",
+      iHeroi < iGrupo && iGrupo < iCond, `${iHeroi} / ${iGrupo} / ${iCond}`);
+  }
 }
 
 /* ============================================================

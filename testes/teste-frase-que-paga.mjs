@@ -91,7 +91,18 @@ t("a moeda é a palavra do léxico", /nomeDaMoeda\(\(mundoAtual\(\) \|\| \{\}\)\
 /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
      `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
      provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
-t("e o aplicarResposta entrega as duas a oQueFaltaDebitar", /pedido: typeof op\.pedido === "string" \? op\.pedido : "", moeda: typeof op\.moeda === "string" \? op\.moeda : ""/.test(fs.readFileSync(new URL("../src/motor/aplicar.js", import.meta.url), "utf8")));
+/* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. Lia `pedido: typeof op.pedido === "string" ? …` no texto do motor; agora a frase do jogador e a moeda entram por nome no `aplicar` e a bolsa desce — ou não, quando falta uma das duas. O bloco
+   mora em `src/motor/aplicar.js` desde a T1-A, que é puro: o turno se JOGA
+   em Node, e o texto deixou de ser a melhor prova — o próximo bloco que o
+   `oficial` mover para lá mexe nas linhas sem mexer no jogo, e a asserção
+   partiria pelo motivo errado (fragilidade 5 da auditoria do motor). */
+{
+  const { aplicar } = await import("../src/motor/aplicar.js");
+  const fichaDoTurno = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 34, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
+  const bolsa = (op) => aplicar({ personagem: fichaDoTurno() }, { narrativa: "x", mudancas: {} }, op).estado.personagem.moedas;
+  t("e o aplicar entrega as duas a oQueFaltaDebitar (34 − 10 = 24)", bolsa({ pedido: "Pago as dez escamas.", moeda: MOEDA }) === 24);
+  t("sem a moeda, a frase não paga; e pedido que não é texto não é pedido", bolsa({ pedido: "Pago as dez escamas." }) === 34 && bolsa({ pedido: 42, moeda: MOEDA }) === 34);
+}
 
 console.log(`\nfrase que paga: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

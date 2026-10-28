@@ -32,5 +32,9 @@ for f in "$@"; do
   fi
 done
 
+# a cópia limpa não tem node_modules: o que uma suíte resolve de lá (o
+# parser de teste-assercoes-de-texto) vem do da árvore, que é o mesmo
+export NODE_PATH="$RAIZ/node_modules"
+
 echo "── só o meu: HEAD + $# arquivo(s) ──"
 cd "$LIMPO" && node testes/rodar-tudo.mjs

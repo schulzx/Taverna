@@ -165,16 +165,32 @@ sec("9. O CANAL DE ENVELOPES EXISTE DE VERDADE");
 {
   /* Sem ele, o Juiz recusa em silêncio e o Narrador segue narrando o que
      o sistema acabou de negar — as duas verdades na mesma tela. */
-  t("aplicarMudancas tem canal de notas", /export function aplicarMudancas\(pers, m, msgs, notas = \[\]\)/.test(RJ));
+  /* MOVIDA (27/10, T1-B fatia 2): esta lia a ASSINATURA de aplicarMudancas no
+     texto de regras-jogo.js, e partiu no dia em que a assinatura mudou de nome
+     (a ficha incompleta deixou de derrubar o turno: `persDado, mDada`) sem que
+     o canal mudasse. O canal é comportamento: o Juiz recusa, a nota cai na
+     lista que quem chama passou. */
+  {
+    const { aplicarMudancas } = await import(S + "regras-jogo.js");
+    const notas = [];
+    aplicarMudancas({ nome: "Vera", vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [], grupo: [] }, { adicionar_habilidades: [{ nome: "Bola de Fogo" }] }, [], notas);
+    t("aplicarMudancas tem canal de notas (a recusa do Juiz cai na lista de quem chama)", notas.length === 1 && notas[0] === J.envelopeDaHabilidadeRecusada(["Bola de Fogo"]));
+  }
   t("processarCombate também", /export function processarCombate\(combateAtual, m, msgs, notas = \[\]\)/.test(RJ));
   const APP = readFileSync("../src/App.jsx", "utf8");
   /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
      `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
      provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: as notas do Juiz no motor, as do combate no App. */
-  const MOTOR = readFileSync("../src/motor/aplicar.js", "utf8");
-  t("o App lê as notas das mudanças", /const notasDoJuiz = \[\]/.test(MOTOR));
+  /* MOVIDA (27/10, T1-B fatia 2): DE TEXTO PARA COMPORTAMENTO. As notas do Juiz eram lidas como `const notasDoJuiz = []` e `for (const nt of notasDoJuiz) notas.push(nt);` no texto do motor; agora o turno recusa uma habilidade e a nota tem de estar no que o motor manda ao Narrador (`paraOCronista`). O bloco
+     mora em `src/motor/aplicar.js` desde a T1-A, que é puro: o turno se JOGA
+     em Node, e o texto deixou de ser a melhor prova — o próximo bloco que o
+     `oficial` mover para lá mexe nas linhas sem mexer no jogo, e a asserção
+     partiria pelo motivo errado (fragilidade 5 da auditoria do motor). */
+  const { aplicar } = await import(S + "motor/aplicar.js");
+  const turno = aplicar({ personagem: { nome: "Vera", vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [] } }, { narrativa: "Você sente o poder.", mudancas: { adicionar_habilidades: [{ nome: "Bola de Fogo" }] } }, {});
+  t("o motor lê as notas das mudanças, e a ficha não ganha o poder", turno.estado.personagem.habilidades.length === 0);
   t("e as do combate", /const notasDoCombate = \[\]/.test(APP));
-  t("e manda as duas ao Narrador", (APP.match(/for \(const nt of notas/g) || []).length === 1 && (MOTOR.match(/for \(const nt of notasDoJuiz\) notas\.push\(nt\);/g) || []).length === 1);
+  t("e manda as duas ao Narrador", (APP.match(/for \(const nt of notas/g) || []).length === 1 && turno.paraOCronista.filter((x) => x === J.envelopeDaHabilidadeRecusada(["Bola de Fogo"])).length === 1);
 }
 
 console.log(`\njuiz v9.154: ${bons} passaram, ${maus} falharam`);
