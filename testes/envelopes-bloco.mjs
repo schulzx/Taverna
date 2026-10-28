@@ -25,6 +25,8 @@ import * as semCidade from "../src/masmorra-sem-cidade.js";
 import * as prompt from "../src/prompt.js";
 import * as chao from "../src/chao.js";
 import * as motorEnvelopes from "../src/motor/envelopes-do-turno.js";
+import * as decretos from "../src/decretos.js";
+import { TIPOS_CARTA } from "../src/correio.js";
 
 const NOMES = {
   calendario: ["dataTxt", "horaTxt", "ehNoite", "estacaoDe"],
@@ -32,14 +34,16 @@ const NOMES = {
   semCidade: ["aquiDoTurno", "calaNaMasmorra"],
   prompt: ["SINAIS_ABERTOS"],
   chao: ["RAIO_EXAME"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra"],
+  decretos: ["tipoDecreto"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio"],
 };
-const MODULOS = { calendario, geografia, semCidade, prompt, chao, motorEnvelopes };
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
-    if (!novo && mod === "motorEnvelopes") continue;
-    for (const n of lista) {
+    /* o App de antes do correio já importava o SO_ISSO do motor (saiu com a masmorra); o
+       da masmorra de antes declara-o no recorte (antesDe), e essa declaração sombreia esta */
+    for (const n of !novo && mod === "motorEnvelopes" ? ["SO_ISSO"] : lista) {
       if (!(n in MODULOS[mod])) throw new Error(`${mod} não exporta ${n}`);
       o[n] = MODULOS[mod][n];
     }
@@ -61,7 +65,9 @@ const corteDe = (app) => (de, ate) => {
    de uma linha, o sítio é a própria linha do `enviar`, que muda de texto
    para chamada: as duas pontas cortam-na até ao fim da linha. `antesDe`
    são as linhas de fora do sítio que o App de antes lia (o SO_ISSO no topo). */
-export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga"];
+export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga", "correioDecreto", "correioCarta", "correioPeticao"];
+/* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -72,12 +78,15 @@ const ANCORAS = {
   masmorraSantuario: { antes: ["      enviar(`[MASMORRA — ${pos} · SANTUÁRIO RESOLVIDO PELO SISTEMA]", FIM], hoje: ['      enviar(oEnvelopeDaMasmorra("santuario", ', FIM] },
   masmorraBusca: { antes: ["    enviar(`[MASMORRA — BUSCA ATIVA · ${mm.nome}]", FIM], hoje: ['    enviar(oEnvelopeDaMasmorra("buscaAtiva", ', FIM], antesDe: ["const SO_ISSO = ", FIM] },
   masmorraFuga: { antes: ["    enviar(`[MASMORRA — FUGA]", FIM], hoje: ['    enviar(oEnvelopeDaMasmorra("fuga", ', FIM] },
+  correioDecreto: { antes: ["    enviar(`[DECRETO PREGADO — ", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("decreto", ', FIM] },
+  correioCarta: { antes: ["    enviar(`[CORREIO — CARTA ENVIADA]", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("carta", ', FIM] },
+  correioPeticao: { antes: ["    enviar(`[CORREIO — PETIÇÃO ${aceite", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("peticao", ', FIM] },
 };
 const DEVOLVE = { rodape: "rodape" };
-export function recorteDosEnvelopes(app, { novo } = {}) {
+export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
-  for (const b of BLOCOS) {
+  for (const b of so ? [so] : BLOCOS) {
     const A = ANCORAS[b];
     const fora = !novo && A.antesDe ? corte(...A.antesDe) + "\n" : "";
     r[b] = { orgaos: fora + corte(...(novo ? A.hoje : A.antes)), devolve: DEVOLVE[b] || "enviados" };
@@ -150,6 +159,25 @@ export function masmorraDoCaso(i) {
   };
 }
 
+/* O CORREIO E O DOMÍNIO: o decreto de cada tipo (e o que não existe, que
+   cai no de reserva), com e sem descrição; a carta de cada tipo, com e sem
+   oferta, com e sem mensagem; a petição aceita e recusada, com e sem nota,
+   com moedas a entrar, a sair e nenhumas; a ficha viva e a que falta. */
+const CARTAS = Object.keys(TIPOS_CARTA);
+export function correioDoCaso(i) {
+  return {
+    d: { tipo: ["cabeca", "masmorra", "caca", "resgate", "escolta", "nenhum"][i % 6], descricao: ["Paga-se pela cabeça de Sarna, o Rubro.", "Limpem a Cripta do Corvo.", ""][i % 3], recompensa: 40 + (i % 7) * 25 },
+    para: ["Casa Ferro", "a Câmara do Dragão", "Bruna Ferro"][i % 3],
+    t: TIPOS_CARTA[CARTAS[i % CARTAS.length]],
+    oferta: [0, 50, null, 120][i % 4],
+    mensagem: ["", "Venho em paz.", undefined, "Pagai o que deveis ou vereis o aço."][(i >> 1) % 4],
+    p: { texto: ["🆘 A Câmara do Dragão pede auxílio contra seus inimigos.", "📜 Noé Laminado pede que julgues a briga do moinho."][i % 2], de: ["a Câmara do Dragão", "Noé Laminado", "Iris"][i % 3] },
+    aceite: i % 2 === 0,
+    ef: [{ nota: "a Câmara te deve um favor", moedas: 30 }, { moedas: -45 }, { nota: "" }, { nota: "o moinho volta a moer", moedas: 0 }, {}][(i >> 1) % 5],
+    fichaViva: () => (i % 5 === 0 ? null : { nome: "Vera viva" }),
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -214,7 +242,10 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
   };
   PECAS.forEach((n, j) => { S[n] = peca(n, j); });
   if (bloco && bloco !== "rodape") {
-    Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
+    const g = GRUPO(bloco);
+    if (g === "masmorra") Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
+    else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
+    else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
   }

@@ -29,7 +29,9 @@ sec("o defeito antigo: a petição do correio responde com a ficha");
   const pet = corpo("responderPeticao");
   t("responderPeticao existe", pet.length > 0);
   t("o enviar da petição leva fichaViva() (sem ficha, aplicarResposta lia persAtual cru e o Mestre calava)",
-    /enviar\([\s\S]*SO_ISSO\}`, fichaViva\(\) \|\| personagem\);/.test(pet));
+    /* o texto do envelope saiu para src/motor/envelopes-do-turno.js (T2-A, o correio): o que esta
+       asserção guarda é a ficha passada ao enviar, e ela segue na chamada do App */
+    /enviar\(oEnvelopeDoCorreio\("peticao", [^\n]*\), fichaViva\(\) \|\| personagem\);/.test(pet));
   const i = APP.indexOf("const aplicarResposta = useCallback");
   const j = APP.indexOf("const mundoDasMissoes", i);
   const ap = APP.slice(i, j);

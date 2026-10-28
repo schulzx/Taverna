@@ -16,12 +16,14 @@
    O 1.º grupo é o RODAPÉ DO SISTEMA (o relógio, o lugar, o inviolável e as
    25 peças do estado vivo). O 2.º, A MASMORRA: as sete linhas que dizem ao Narrador o
    que o sistema já resolveu numa sala (a armadilha disparada, contornada e
-   vista, o tesouro, o santuário, a busca) e a fuga, com o SO_ISSO.
+   vista, o tesouro, o santuário, a busca) e a fuga, com o SO_ISSO. O 3.º,
+   O CORREIO E O DOMÍNIO: o decreto pregado, a carta enviada e a petição
+   respondida.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -128,6 +130,35 @@ sec("5 · a masmorra: os casos percorrem o que o texto decide, e a prova morde")
     ["masmorraSantuario", "o santuário sem o tempo", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, { ...d, tempo: "" }) }],
     ["masmorraFuga", "a fuga com outro nome", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, { masmorra: "a masmorra" }) }],
     ["masmorraAVista", "a vista com o aviso sempre", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, { ...d, aviso: d.aviso || " [AVISO: há um segredo]" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("6 · o correio e o domínio: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const M = (b) => D.blocos[b].map((f) => f.texto[0][0]);
+  const conta = (b, s) => M(b).filter((x) => x.includes(s)).length;
+  const quem = (b) => new Set(D.blocos[b].map((f) => f.texto[0][1])).size;
+  t("os três fecham com o escopo deste turno", ["correioDecreto", "correioCarta", "correioPeticao"].every((b) => M(b).every((x) => x.endsWith(SO_ISSO))));
+  t(`o decreto de cada tipo, em maiúsculas (${new Set(M("correioDecreto").map((x) => x.split("]")[0])).size} cabeçalhos), e o que não existe cai no de reserva`,
+    new Set(M("correioDecreto").map((x) => x.split("]")[0])).size === 5 && conta("correioDecreto", "— CAÇAR UMA CRIATURA]") > conta("correioDecreto", "— ESCOLTAR UMA CARAVANA]"));
+  t(`a carta com oferta (${conta("correioCarta", "com oferta de")}) e sem; com mensagem (${conta("correioCarta", "Diz a carta:")}) e sem`,
+    conta("correioCarta", "com oferta de") >= 60 && conta("correioCarta", "com oferta de") < N_CASOS && conta("correioCarta", "Diz a carta:") >= 60 && conta("correioCarta", "Diz a carta:") < N_CASOS);
+  t(`a petição aceita (${conta("correioPeticao", "ACEITEI")}) e recusada (${conta("correioPeticao", "RECUSEI")}); a nota (${conta("correioPeticao", "Consequência")}); as moedas a entrar (${conta("correioPeticao", "Moedas: +")}) e a sair (${conta("correioPeticao", "Moedas: -")})`,
+    conta("correioPeticao", "ACEITEI") >= 100 && conta("correioPeticao", "RECUSEI") >= 100 && conta("correioPeticao", "Consequência") >= 60 && conta("correioPeticao", "Consequência") < N_CASOS && conta("correioPeticao", "Moedas: +") >= 30 && conta("correioPeticao", "Moedas: -") >= 30);
+  t("a petição vai com a ficha viva, e sem ela com a do render; o decreto, com a do render", quem("correioPeticao") === 2 && quem("correioDecreto") === 1);
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DO_CORREIO).length === 3 && (() => { try { oEnvelopeDoCorreio("nenhuma", {}); return false; } catch { return true; } })());
+  const mordidas = [
+    ["correioDecreto", "o tipo do decreto sem as maiúsculas", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, rotulo: { toUpperCase: () => d.rotulo } }) }],
+    ["correioDecreto", "a recompensa esquecida", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, recompensa: 0 }) }],
+    ["correioCarta", "a carta sem a mensagem", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, mensagem: "" }) }],
+    ["correioCarta", "a carta com a oferta sempre", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, oferta: d.oferta || 10 }) }],
+    ["correioPeticao", "a petição sempre aceita", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, aceite: true }) }],
+    ["correioPeticao", "as moedas sem o sinal", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, moedas: d.moedas && Math.abs(d.moedas) }) }],
+    ["correioPeticao", "a reação de outro", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, de: "alguém" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

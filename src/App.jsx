@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -21469,7 +21469,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setDecretos(decretosRef.current);
     bumpCont("decretosPregados"); checarConquistas();
     pushMsgs([{ autor: "jogador", texto: `Preguei um decreto: ${d.descricao} — recompensa de ${d.recompensa} moedas` }]);
-    enviar(`[DECRETO PREGADO — ${tipoDecreto(d.tipo).rotulo.toUpperCase()}] Pus cartazes pela região: "${d.descricao}" Recompensa de ◉ ${d.recompensa} JÁ RETIDA pelo sistema (não envie moedas). Reaja na ficção: tavernas comentando, interessados medindo o cartaz, o alvo talvez ficando sabendo… QUEM aceita e o RESULTADO quem decide é o sistema — NÃO invente aventureiros cumprindo isso por conta própria; narre apenas a repercussão.${SO_ISSO}`, personagem);
+    enviar(oEnvelopeDoCorreio("decreto", { rotulo: tipoDecreto(d.tipo).rotulo, descricao: d.descricao, recompensa: d.recompensa }), personagem);
   };
 
   const cancelarDecreto = (id) => {
@@ -22122,7 +22122,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     correioRef.current = c; setCorreio(c);
     const t = TIPOS_CARTA[tipo];
     pushMsgs([{ autor: "sistema", texto: `✉️ ${t.icone} ${t.nome} enviada a ${para}${oferta ? ` (oferta de ◉ ${oferta})` : ""}. Resposta esperada até o dia ${carta.chegaEm}.` }]);
-    enviar(`[CORREIO — CARTA ENVIADA] Enviei a ${para}: ${t.icone} ${t.nome}${oferta ? ` com oferta de ◉ ${oferta}` : ""}${mensagem ? `. Diz a carta: "${mensagem}"` : ""}. Narre a partida do mensageiro e a expectativa — a RESPOSTA virá pelo sistema em 1–3 dias; NÃO antecipe nem decida a reação de ${para} agora.${SO_ISSO}`);
+    enviar(oEnvelopeDoCorreio("carta", { para, icone: t.icone, nome: t.nome, oferta, mensagem }));
   };
 
   /* Aceitar/recusar petição recebida — efeitos imediatos, IA só narra. */
@@ -22344,7 +22344,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     correioRef.current = c; setCorreio(c);
     aplicarEfeitosCorreio(ef);
     pushMsgs([{ autor: "sistema", texto: `✉️ Petição de ${p.de}: ${aceite ? "ACEITA" : "RECUSADA"}${ef.nota ? ` — ${ef.nota}` : ""}.` }]);
-    enviar(`[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${p.texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${ef.nota ? ` Consequência (já aplicada pelo sistema): ${ef.nota}.` : ""}${ef.moedas ? ` Moedas: ${ef.moedas > 0 ? "+" : ""}${ef.moedas} (já aplicado).` : ""} Narre a reação de ${p.de} e as ondas que isso faz no mundo.${SO_ISSO}`, fichaViva() || personagem);
+    enviar(oEnvelopeDoCorreio("peticao", { aceite, texto: p.texto, de: p.de, nota: ef.nota, moedas: ef.moedas }), fichaViva() || personagem);
   };
 
   /* ---------------- A CAMPANHA SAI DO NAVEGADOR (v9.147) ----------------

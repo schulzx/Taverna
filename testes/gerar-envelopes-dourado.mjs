@@ -18,13 +18,13 @@ import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
-export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorraContornada: "d3d6f60", masmorraAVista: "d3d6f60", masmorraTesouro: "d3d6f60", masmorraSantuario: "d3d6f60", masmorraBusca: "d3d6f60", masmorraFuga: "d3d6f60" };
+export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorraContornada: "d3d6f60", masmorraAVista: "d3d6f60", masmorraTesouro: "d3d6f60", masmorraSantuario: "d3d6f60", masmorraBusca: "d3d6f60", masmorraFuga: "d3d6f60", correioDecreto: "df6e36b", correioCarta: "df6e36b", correioPeticao: "df6e36b" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);
 const saida = { antes: ANTES, casos: N_CASOS, blocos: {} };
 for (const bloco of BLOCOS) {
-  const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false })[bloco]);
+  const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false, so: bloco })[bloco]);
   saida.blocos[bloco] = casos.map((k) => fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })));
   const erros = saida.blocos[bloco].filter((f) => f.erro).length;
   const faltas = [...new Set(saida.blocos[bloco].flatMap((f) => f.faltas))];

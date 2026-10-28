@@ -107,3 +107,24 @@ export function oEnvelopeDaMasmorra(qual, dados) {
   if (!f) throw new Error("envelope da masmorra sem forma: " + qual);
   return f(dados || {});
 }
+
+/* ============================================================
+   3.º GRUPO — O CORREIO E O DOMÍNIO: o que o jogador fez pela mesa do
+   senhor de terras — o decreto pregado (a recompensa já retida), a carta
+   enviada (a resposta é do sistema, dias depois) e a petição respondida
+   (a consequência já aplicada). Os três fecham com o SO_ISSO: o gesto é da
+   tela, e o Narrador responde só a ele.
+   ============================================================ */
+export const ENVELOPES_DO_CORREIO = {
+  decreto: ({ rotulo, descricao, recompensa }) =>
+    `[DECRETO PREGADO — ${rotulo.toUpperCase()}] Pus cartazes pela região: "${descricao}" Recompensa de ◉ ${recompensa} JÁ RETIDA pelo sistema (não envie moedas). Reaja na ficção: tavernas comentando, interessados medindo o cartaz, o alvo talvez ficando sabendo… QUEM aceita e o RESULTADO quem decide é o sistema — NÃO invente aventureiros cumprindo isso por conta própria; narre apenas a repercussão.${SO_ISSO}`,
+  carta: ({ para, icone, nome, oferta, mensagem }) =>
+    `[CORREIO — CARTA ENVIADA] Enviei a ${para}: ${icone} ${nome}${oferta ? ` com oferta de ◉ ${oferta}` : ""}${mensagem ? `. Diz a carta: "${mensagem}"` : ""}. Narre a partida do mensageiro e a expectativa — a RESPOSTA virá pelo sistema em 1–3 dias; NÃO antecipe nem decida a reação de ${para} agora.${SO_ISSO}`,
+  peticao: ({ aceite, texto, de, nota, moedas }) =>
+    `[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${nota ? ` Consequência (já aplicada pelo sistema): ${nota}.` : ""}${moedas ? ` Moedas: ${moedas > 0 ? "+" : ""}${moedas} (já aplicado).` : ""} Narre a reação de ${de} e as ondas que isso faz no mundo.${SO_ISSO}`,
+};
+export function oEnvelopeDoCorreio(qual, dados) {
+  const f = ENVELOPES_DO_CORREIO[qual];
+  if (!f) throw new Error("envelope do correio sem forma: " + qual);
+  return f(dados || {});
+}
