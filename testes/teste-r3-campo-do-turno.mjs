@@ -48,7 +48,12 @@ const t = (o, cond, extra = "") => {
 const sec = (s) => console.log("\n" + s);
 
 /* ---------------- a extração, que é ela própria uma asserção ---------------- */
-const extrair = (nome, F = APP) => {
+/* 28/10 (T1-B fatia 3), MUDADA E O MOTIVO: o texto de onde se extrai é
+   argumento OBRIGATÓRIO. Com `F = APP` por omissão, a régua das provas de
+   texto (teste-assercoes-de-texto) via em cada extração o App inteiro — e
+   contava como "texto do App" as dez asserções da porta e da seta, que leem
+   `painel-relato.jsx`. A prova é a mesma; a conta passa a dizer a verdade. */
+const extrair = (nome, F) => {
   const i = F.indexOf(`function ${nome}(`);
   if (i < 0) return null;
   /* conta chaves a partir da primeira `{` da declaração: estas funções são
@@ -64,7 +69,7 @@ const extrair = (nome, F = APP) => {
 };
 
 sec("1. O GESTO DO CAMPO — Enter manda, Shift+Enter quebra");
-const fonteDoGesto = extrair("gestoDoCampo");
+const fonteDoGesto = extrair("gestoDoCampo", APP);
 t("`gestoDoCampo` existe no escopo do módulo do App.jsx", !!fonteDoGesto,
   "ela foi renomeada, apagada, ou empurrada para dentro do componente. Sem ela no escopo do módulo o gesto volta a ser inprovável — e foi por ser inprovável que ele nunca teve suíte");
 
@@ -525,9 +530,11 @@ t("o salto até ao tecto respeita `prefers-reduced-motion`",
    em À espera, com o texto lá. O que V6a mudou é o campo: ele já não fecha na espera,
    e abre-se com foco ou texto também enquanto o Mestre responde. */
 { const G = await import("../src/glifos.js");
-  t("`Agir →` nasce na primeira letra — com o campo vazio ele não está lá",
-    G.estadoDoDado({ texto: "" }) === "repouso" && G.estadoDoDado({ texto: "vou" }) === "pronto"
-    && /if \(estadoDado === "repouso"\) \{ if \(campoRef\.current\) campoRef\.current\.focus\(\); return; \}/.test(APP));
+  /* MOVIDA (28/10, T1-B fatia 3): PARTIDA EM DUAS. A metade que prova a regra do módulo deixa de depender do App e sobrevive à T2; a metade do App (fiação/tela) segue texto, na lista de T2 (testes/assercoes-de-texto.json). */
+  t("`Agir →` nasce na primeira letra — com o campo vazio o dado é o Repouso (glifos.js)",
+    G.estadoDoDado({ texto: "" }) === "repouso" && G.estadoDoDado({ texto: "vou" }) === "pronto");
+  t("e o Repouso, no App, foca o campo em vez de mandar",
+    /if \(estadoDado === "repouso"\) \{ if \(campoRef\.current\) campoRef\.current\.focus\(\); return; \}/.test(APP));
   t("e `bloqueado` continua a apagá-lo, porque esperar não é o mesmo que não ter o que mandar",
     G.estadoDoDado({ texto: "vou", carregando: true }) === "espera" && G.envioEspera("espera") && G.envioEspera("rolar"));
 }

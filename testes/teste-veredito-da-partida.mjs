@@ -124,7 +124,9 @@ sec("1. as tabelas — lidas de volta, e o ritmo contra o App");
      veredito não os soma. */
   const iMov = app.indexOf('if (faz === "movimento") return interceptarMovimento(acao);');
   const iTurno = app.indexOf("extraTempo = avancarMinutos(MINUTOS_POR_TURNO)");
-  t("o turno de viagem sai antes do relógio do turno, e o veredito não soma os minutos do turno", T.minutosDoTurno === 0 && iMov > 0 && iTurno > iMov && MINUTOS_POR_TURNO > 0);
+  /* MOVIDA (28/10, T1-B fatia 3): PARTIDA EM DUAS. A metade que prova a regra do módulo deixa de depender do App e sobrevive à T2; a metade do App (fiação/tela) segue texto, na lista de T2 (testes/assercoes-de-texto.json). */
+  t("o veredito do turno de viagem não soma os minutos do turno (que existem)", T.minutosDoTurno === 0 && MINUTOS_POR_TURNO > 0);
+  t("e no App a porta de movimento sai antes do relógio do turno", iMov > 0 && iTurno > iMov);
   t("a caminhada até à boca cobra os minutos dela (irAteABoca)", /if \(ida\.rota\.modo === "a_pe"\) \{\s*const tempo = avancarMinutos\(Number\(ida\.rota\.minutos\) \|\| 0\)/.test(app));
   t("e cada avanço o relógio do avanço (viajar)", /minutosDoRelogio = relogioDoAvanco\(jornadaRef\.current\);\s*jornadaRef\.current = andar\(jornadaRef\.current, minutosPorAvanco\(jornadaRef\.current\)/.test(app));
   const mv = tenta(() => readFileSync(join(AQUI, "..", "src", "mapa-vivo.js"), "utf8"), "");

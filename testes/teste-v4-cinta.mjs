@@ -94,7 +94,9 @@ sec("2. as medidas em tabela, e os pares que decidem");
   t(`o traço do tombado contra o trilho (${cr(T.ink, T.panelSoft).toFixed(2)}) ≥ 3 — lê-se em cinzento`, cr(T.ink, T.panelSoft) >= 3);
   t(`os contadores na cinta: ouro ${cr(T.amber, T.panel).toFixed(2)} · PM ${cr(T.violetSoft, T.panel).toFixed(2)} ≥ 4,5`, cr(T.amber, T.panel) >= 4.5 && cr(T.violetSoft, T.panel) >= 4.5);
   t(`a pílula: mundo sobre o erguido ${cr(T.mundo, T.panelSoft).toFixed(2)} ≥ 4,5`, cr(T.mundo, T.panelSoft) >= 4.5);
-  t("a coroa existe na família e é a do nó (lucide:crown)", !!GLIFOS.coroa && GLIFOS.coroa.de === "lucide:crown" && /<Glifo nome="coroa"/.test(CINTA_TXT));
+  /* MOVIDA (28/10, T1-B fatia 3): PARTIDA EM DUAS. A metade que prova a regra do módulo deixa de depender do App e sobrevive à T2; a metade do App (fiação/tela) segue texto, na lista de T2 (testes/assercoes-de-texto.json). */
+  t("a coroa existe na família e é a do nó (lucide:crown)", !!GLIFOS.coroa && GLIFOS.coroa.de === "lucide:crown");
+  t("e a cinta a desenha", /<Glifo nome="coroa"/.test(CINTA_TXT));
   t("`esta noite` diz-se `hoje` só onde a conta o tem, e só abaixo do corte", palavraDoPrazo(0, false, "noites", true) === "hoje" && palavraDoPrazo(0) === "esta noite" && palavraDoPrazo(0, false, "turnos", true) === "este turno" && CINTA.palavraCurtaAbaixoDe < 375);
 }
 

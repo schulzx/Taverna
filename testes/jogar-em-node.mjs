@@ -56,7 +56,29 @@
      pelo `aplicar` e pelo `julgarOCronista`, e o estado tem de conhecer, ao
      fim do turno, a gente e o cânone que o registo conhecia no turno
      seguinte. O que entrou por outra porta do App (os nomes à mão, a luta)
-     é PENDENTE e diz de quem é, como os sítios da secção 1. */
+     é PENDENTE e diz de quem é, como os sítios da secção 1.
+
+   28/10, T1-B fatia 3 — O TURNO PASSA POR TUDO O QUE JÁ É MOTOR:
+   - o REGISTO (`motor/aplicar.js#aplicarORegisto`, a 2.ª peça do oficial):
+     o cânone e a gente que o Narrador declara, na posição do App — depois do
+     `aplicar`, antes do Cronista. Os registos gravados não guardam o JSON de
+     `mudancas` do Narrador (só a prosa), então a peça corre com `{}`: anda o
+     contador da gente (`npcTurno`, um por turno) e a blindagem que põe no
+     registo a PESSOA do cânone sem ficha; o resto não tem o que ler;
+   - a SORTE DO TURNO (`motor/sorte-do-turno.js`): o `aplicar` rola a
+     salvaguarda pelo fio `sorteNoPonto(…, "salvaguarda")`, como o App;
+   - os NOMES À MÃO (`nomes.js#nomesAMaoNaProsa`): o nome oferecido na pauta
+     ("a quem não tem nome: …", que o registo de cena da 10.ª guarda) e usado
+     pela narração entra no registo, como no App;
+   - o SÍTIO PELA FRASE (`lugar.js#lugarPedido` + `definirLugar`): a metade
+     pura do passo 1 — "vou com Saoirse até a Cabra Trêmula" move ANTES do
+     Mestre, com as guardas do `alvoLocalPedido` do App (frase vazia ou de
+     sistema, luta, estrada). O que não muda: a LISTA de sítios a que se vai
+     a pé. No App ela sai de `locaisDaCidade(semente do mundo, …)`, e o
+     registo da 10.ª não guarda a semente; aqui ela é a PLANTA DO REGISTO (os
+     sítios que a sessão pisou em cada cidade). A escolha entre eles é da
+     régua pura; se ela levar o herói a outro sítio que não o do registo, o
+     turno DIFERE (não fica pendente — o oráculo não esconde o erro). */
 import fs from "node:fs";
 
 let ok = 0, mal = 0;
@@ -81,6 +103,63 @@ const opcional = async (arq, nome) => {
 };
 const TURNO = await opcional("../src/motor/turno.js", "turno");
 const APLICAR = await opcional("../src/motor/aplicar.js", "aplicar");
+const REGISTO = await opcional("../src/motor/aplicar.js", "aplicarORegisto");
+const { lugarPedido, definirLugar } = await import("../src/lugar.js");
+const { sorteNoPonto, pontoDaSorte, CONTAGEM_VAZIA } = await import("../src/motor/sorte-do-turno.js");
+const { nomesAMaoNaProsa } = await import("../src/nomes.js");
+const { criarNPC } = await import("../src/npcs.js");
+
+/* ---------------- O QUE JÁ É MOTOR, PASSO A PASSO (28/10) ----------------
+   Cada um devolve estado novo; nenhum muta o que recebe. */
+
+/* a sorte do turno: o mesmo fio que o App pede (`sorteDoTurno("salvaguarda")`),
+   com o ponto do instante (o dia, o minuto, as falas — aqui, o turno). Cada
+   turno é um ponto novo e pede a salvaguarda uma vez: a contagem parte vazia. */
+const sorteDoTurno = (E, semente, i) => sorteNoPonto(CONTAGEM_VAZIA, semente, pontoDaSorte({ dia: E.dia || 0, minuto: E.minuto || 0, falas: i }), "salvaguarda").sorte;
+
+/* o registo: a 2.ª peça do oficial, com a resposta como o registo a guarda.
+   `npcTurno` não mora no estado v2 (o App guarda-o num ref à parte): a
+   partida dá-lhe 0, e a peça o anda. */
+const passarPeloRegisto = (E, narrativa, passo) => {
+  if (!REGISTO) { passo.registo = "pendente (aplicarORegisto ainda não existe)"; return E; }
+  try {
+    const r = REGISTO({ ...E, npcTurno: Number.isFinite(E.npcTurno) ? E.npcTurno : 0 }, { narrativa, mudancas: {} }, { mundo: null, baseDoNome: { heroi: E.personagem && E.personagem.nome } });
+    if (r && r.estado) return r.estado;
+    passo.avisoDoRegisto = "aplicarORegisto não devolveu { estado }";
+  } catch (e) { passo.avisoDoRegisto = "aplicarORegisto estourou: " + e.message; }
+  return E;
+};
+
+/* os nomes à mão: a linha da pauta → os oferecidos → os que a prosa usou */
+const oferecidosDaLinha = (linha) => {
+  const m = String(linha || "").match(/a quem não tem nome: (.+)$/m);
+  return m ? m[1].split(" · ").map((x) => { const k = x.match(/^(.+?) \((ele|ela)\)$/); return k && { nome: k[1], genero: k[2] }; }).filter(Boolean) : [];
+};
+const passarPelosNomesAMao = (E, narrativa, oferecidos) => {
+  const usados = nomesAMaoNaProsa(narrativa, oferecidos);
+  if (!usados.length) return E;
+  const npcs = { ...(E.npcs || {}) };
+  for (const u of usados) {
+    const chave = Object.keys(npcs).find((k) => sem(k) === sem(u.nome));
+    if (chave) { if (u.morto && String(npcs[chave].status || "vivo").toLowerCase() === "vivo") npcs[chave] = { ...npcs[chave], status: "morto" }; continue; }
+    const nome = String(u.nome).slice(0, 40);
+    npcs[nome] = criarNPC(nome, { genero: u.genero === "ela" ? "mulher" : "homem", local: E.cidadeAtual || "", ultimaVez: E.npcTurno, conhecidoEm: E.dia, ...(u.morto ? { status: "morto" } : {}) });
+  }
+  return { ...E, npcs };
+};
+
+/* o sítio pela frase: as guardas do `alvoLocalPedido` do App, a régua pura,
+   e o `definirLugar` do `moverParaLocal` (o tempo e a nota ao Mestre são da
+   fiação, e o registo não os mede) */
+const passarPeloSitio = (E, frase, planta) => {
+  const cru = String(frase || "");
+  if (!cru.trim() || cru.trimStart().startsWith("[") || E.combate || E.acampado || E.masmorra || E.jornada || !E.cidadeAtual) return { E };
+  const alvo = lugarPedido(cru, planta[E.cidadeAtual] || []);
+  if (!alvo || !alvo.nome) return { E };
+  if (E.lugar && sem(E.lugar.nome) === sem(alvo.nome)) return { E };
+  const novo = definirLugar(alvo.nome, { cidade: E.cidadeAtual, dia: E.dia || 0, distancia: alvo.onde === "arredores" ? "arredores" : "dentro" });
+  return novo ? { E: { ...E, lugar: novo }, moveu: novo.nome } : { E };
+};
 
 const R = JSON.parse(fs.readFileSync(new URL("./registo-s10-cena.json", import.meta.url), "utf8"));
 const RC = JSON.parse(fs.readFileSync(new URL("./registo-s8-s10-cronista.json", import.meta.url), "utf8"));
@@ -99,6 +178,10 @@ const lerOnde = (onde) => {
   return { lugar: null, cidade: null, estrada: /estrada/.test(s) };
 };
 const cidades = [...new Set(R.pautas.map((p) => p.cidade))];
+/* a planta do registo: os sítios que a 10.ª pisou em cada cidade (ver o
+   cabeçalho, 28/10 — o registo não guarda a semente do mundo) */
+const PLANTA = {};
+for (const p of R.pautas) { const d = lerOnde(p.onde); if (d.lugar && d.cidade && !(PLANTA[d.cidade] || []).some((l) => l.nome === d.lugar)) PLANTA[d.cidade] = [...(PLANTA[d.cidade] || []), { nome: d.lugar, onde: "dentro" }]; }
 
 /* ---------------- O SAVE DE PARTIDA ----------------
    O estado v2 de `estado.js`, a partir do que o registo diz do começo: o
@@ -167,15 +250,25 @@ const jogar = async (turnos = TURNOS) => {
     const P = R.pautas[i];
     const passo = { i: i + 1, pendente: [], difere: [] };
     /* 1 · o turno: o que anda antes do Mestre */
+    let moveu = null;
     if (TURNO) {
       try { const r = TURNO(E, { frase: P.frase }); if (r && r.estado) E = r.estado; } catch (e) { passo.pendente.push("turno estourou: " + e.message); }
+    } else {
+      /* a metade pura do passo 1: o sítio pela frase (28/10) */
+      const s = passarPeloSitio(E, P.frase, PLANTA);
+      E = s.E; moveu = s.moveu || null;
     }
     const alvo = lerOnde(P.onde);
     const sitio = E.lugar && E.lugar.nome ? E.lugar.nome : null;
     const naEstrada = !!E.jornada;
     const bateCidade = !alvo.cidade || sem(E.cidadeAtual) === sem(alvo.cidade);
     const bateSitio = alvo.estrada ? naEstrada : sem(sitio) === sem(alvo.lugar);
-    if (!bateCidade || !bateSitio) {
+    if (moveu) passo.moveu = moveu;
+    if (moveu && (!bateCidade || !bateSitio)) {
+      /* a régua pura moveu, e para outro sítio: é erro do motor, não falta dele */
+      passo.difere.push(`o sítio pela frase levou a ${moveu}; o registo diz ${alvo.estrada ? "a estrada" : alvo.lugar || alvo.cidade || "—"}`);
+      E = { ...E, cidadeAtual: alvo.cidade || E.cidadeAtual, lugar: alvo.lugar ? { nome: alvo.lugar, distancia: "dentro", cidade: alvo.cidade } : null, jornada: alvo.estrada ? { destino: E.cidadeAtual } : null };
+    } else if (!bateCidade || !bateSitio) {
       passo.pendente.push(!bateCidade ? `viagem ${E.cidadeAtual} → ${alvo.cidade} (turno: viajar)` : `sítio ${sitio || "—"} → ${alvo.estrada ? "a estrada" : alvo.lugar || "—"} (turno: moverParaLocal)`);
       /* o oráculo: o registo diz onde o turno a deixou */
       E = { ...E, cidadeAtual: alvo.cidade || E.cidadeAtual, lugar: alvo.lugar ? { nome: alvo.lugar, distancia: "dentro", cidade: alvo.cidade } : null, jornada: alvo.estrada ? { destino: E.cidadeAtual } : null };
@@ -202,8 +295,11 @@ const jogar = async (turnos = TURNOS) => {
     /* 4 · o aplicar: a resposta do Narrador (a gravada) */
     const resposta = R.respostas[i];
     if (APLICAR) {
-      try { const r = APLICAR(E, { narrativa: resposta, mudancas: {} }, { pedido: P.frase, envelopes: "" }); if (r && r.estado) E = r.estado; else passo.avisoDoAplicar = "aplicar não devolveu { estado }"; } catch (e) { passo.avisoDoAplicar = "aplicar estourou: " + e.message; }
+      try { const r = APLICAR(E, { narrativa: resposta, mudancas: {} }, { pedido: P.frase, envelopes: "", sorte: sorteDoTurno(E, "s10", i) }); if (r && r.estado) E = r.estado; else passo.avisoDoAplicar = "aplicar não devolveu { estado }"; } catch (e) { passo.avisoDoAplicar = "aplicar estourou: " + e.message; }
     } else passo.aplicar = "pendente (src/motor/aplicar.js ainda não existe)";
+    /* 4b · o registo (o cânone e a gente do Narrador) e os nomes à mão */
+    E = passarPeloRegisto(E, resposta, passo);
+    E = passarPelosNomesAMao(E, resposta, oferecidosDaLinha(P.emCena));
     /* 5 · o Cronista: propõe, o motor decide */
     const prop = propostaDoTurno(i);
     const juizo = julgarOCronista(E, prop, { narrativa: resposta, pedido: P.frase });
@@ -223,9 +319,12 @@ const jogados = um.log.filter((p) => p.jogou).length;
 const difere = um.log.filter((p) => p.difere.length);
 t(`${TURNOS} turnos jogados do princípio ao fim, sem estourar`, um.log.length === TURNOS);
 t("nenhum turno com a saída DIFERENTE do registo (a gente, o EM CENA)", difere.length === 0, difere.map((p) => `M${p.i}: ${p.difere.join(" · ")}`).join(" | "));
-/* MEDIDA (27/10): 15. Os 5 pendentes são do passo 1 — o `turno` do
-   oficial. Quando ele chegar, este número sobe e a linha sobe com ele. */
-t(`${jogados} de ${TURNOS} turnos jogam em Node sem o oráculo (a medida de 27/10: 15)`, jogados >= 15, `${jogados}`);
+/* MEDIDA (27/10): 15. Os 5 pendentes eram do passo 1 — o `turno` do
+   oficial. Quando ele chegar, este número sobe e a linha sobe com ele.
+   MEDIDA (28/10, T1-B fatia 3): 17 — o sítio pela frase (a metade pura do
+   passo 1) leva M4 e M15; ficam a viagem (M13), a estrada (M17) e a saída
+   da Cabra (M9), que o registo mostra e a frase do turno não pede. */
+t(`${jogados} de ${TURNOS} turnos jogam em Node sem o oráculo (a medida de 28/10: 17)`, jogados >= 17, `${jogados}`);
 const pend = um.log.filter((p) => p.pendente.length).map((p) => `M${p.i} ${p.pendente.join(" · ")}`);
 console.log("  ..  pendentes, e de quem: " + (pend.join(" | ") || "nenhum"));
 t("todo pendente diz de quem é", um.log.every((p) => p.pendente.every((x) => /\((turno|aplicar)[:)]|estourou|não devolveu/.test(x))));
@@ -238,6 +337,15 @@ else {
   if (falhas.length) console.log(`  ..  o aplicar existe e ainda não joga (${falhas.length} turnos, que seguem sem ele): ${falhas[0].avisoDoAplicar}`);
   else t("o aplicar do oficial: presente, e os 20 turnos passam por ele", true);
 }
+/* 28/10: o registo (a 2.ª peça do oficial) corre em todo turno, na posição
+   do App, e o contador da gente anda um por turno — é o que prova que a
+   peça foi chamada com a resposta e devolveu estado (sem mudancas gravadas,
+   é o que ela tem para fazer) */
+if (REGISTO) {
+  t("o registo do oficial: presente, e os 20 turnos passam por ele", um.log.every((p) => !p.avisoDoRegisto), (um.log.find((p) => p.avisoDoRegisto) || {}).avisoDoRegisto);
+  t("e o contador da gente anda um por turno (npcTurno 0 → 20)", um.fim.npcTurno === TURNOS, String(um.fim.npcTurno));
+}
+t("o sítio pela frase move antes do Mestre: M4 «Vou com Saoirse até a Cabra Trêmula» e M15", ["4", "15"].every((k) => (um.log[Number(k) - 1] || {}).moveu && um.log[Number(k) - 1].jogou), J(um.log.filter((p) => p.moveu).map((p) => [p.i, p.moveu])));
 
 sec("2. O FIM DO JOGO — o que o estado sabe ao fim de 20 turnos");
 {
@@ -267,13 +375,19 @@ const toda = await jogar(TODA);
   t(`${TODA} turnos jogados do princípio ao fim, sem estourar`, toda.log.length === TODA);
   t("nenhum turno com a saída DIFERENTE do registo", dif.length === 0, dif.map((p) => `M${p.i}: ${p.difere.join(" · ")}`).join(" | "));
   /* MEDIDA (27/10, T1-B fatia 2): 62 de 77. Os 15 pendentes são todos do
-     passo antes do Mestre (10 sítios pela frase, 5 viagens) — o `turno`. */
-  t(`${jog} de ${TODA} turnos jogam em Node sem o oráculo (a medida de 27/10: 62)`, jog >= 62, `${jog}`);
+     passo antes do Mestre (10 sítios pela frase, 5 viagens) — o `turno`.
+     MEDIDA (28/10, T1-B fatia 3): 68 de 77 — o sítio pela frase leva seis
+     (M4, M15, M30, M37, M43, M47) e não leva ninguém ao sítio errado; ficam
+     5 viagens e 4 sítios que a frase do turno não pede (a estrada, a saída,
+     a chegada da viagem, a estalagem do «continuar»). */
+  t(`${jog} de ${TODA} turnos jogam em Node sem o oráculo (a medida de 28/10: 68)`, jog >= 68, `${jog}`);
   t("todo pendente da 10.ª inteira é do passo antes do Mestre", pen.every((p) => p.pendente.every((x) => /\(turno: (moverParaLocal|viajar)\)/.test(x))));
   /* a sequência mais longa sem oráculo: a meta da fase são 20 seguidos */
   let corrida = 0, maior = 0;
   for (const p of toda.log) { corrida = p.jogou ? corrida + 1 : 0; maior = Math.max(maior, corrida); }
   console.log(`  ..  a corrida mais longa sem oráculo: ${maior} turnos seguidos (a meta da fase: 20)`);
+  /* MEDIDA (28/10, T1-B fatia 3): 17 (era 11). Catraca: não desce. */
+  t(`a corrida mais longa da 10.ª, com a régua inteira: ${maior} (a medida de 28/10: 17)`, maior >= 17, String(maior));
   t("os 20 primeiros da 10.ª inteira são os da secção 1 (o prefixo é o mesmo jogo)", J(toda.log.slice(0, TURNOS)) === J(um.log));
 }
 
@@ -293,7 +407,7 @@ const jogarDoCronista = (ses) => {
   const L = RC.turnos.filter((x) => x.ses === ses);
   const c0 = [...new Set(L[0].conhecidos)];
   const heroi = c0[c0.length - 1], companheira = c0[0];
-  let E = estadoDoSave({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, npcs: {}, canone: {}, combate: null });
+  let E = estadoDoSave({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, mapa: { cidades: [] }, npcs: {}, canone: {}, combate: null });
   const conhecidos = (e) => new Set([e.personagem.nome, ...(e.personagem.grupo || []).map((g) => g.nome), ...Object.keys(e.npcs || {}), ...Object.keys(e.canone || {})].map(sem));
   const log = [];
   /* OS COMBATENTES SÃO DA LUTA, NÃO DO REGISTO DE GENTE: o registo conhece o
@@ -304,9 +418,10 @@ const jogarDoCronista = (ses) => {
     const a = L[i], b = L[i + 1];
     const passo = { k: a.k, pendente: [], difere: [] };
     const env = (a.envelopes || []).join("\n");
-    const r = APLICAR(E, { narrativa: a.narrativa, mudancas: {} }, { pedido: a.frase, envelopes: env });
+    const r = APLICAR(E, { narrativa: a.narrativa, mudancas: {} }, { pedido: a.frase, envelopes: env, sorte: sorteDoTurno(E, ses, i) });
     if (!r || !r.estado) { passo.difere.push("aplicar não devolveu { estado }"); log.push(passo); continue; }
-    E = r.estado;
+    E = passarPeloRegisto(r.estado, a.narrativa, passo);
+    if (passo.avisoDoRegisto) { passo.difere.push(passo.avisoDoRegisto); log.push(passo); continue; }
     const ja = conhecidos(E);
     const novos = [...new Set(b.conhecidos)].filter((x) => !ja.has(sem(x)));
     const doCronista = a.util.includes("pessoa") || a.util.includes("canone");

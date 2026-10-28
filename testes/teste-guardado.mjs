@@ -458,7 +458,16 @@ sec("5. A TRAVA MORDE SÓ O NECESSÁRIO — envelopes reais do App.jsx");
   t(`e ainda manda \`${NAO_ROLOU}\``, APP.includes(NAO_ROLOU));
 
   const linhaCombate = APP.slice(APP.indexOf(ROLOU), APP.indexOf(ROLOU) + 240);
-  const gRolou = guardarTurno({ conteudo: linhaCombate, motivo: "HTTP 500", quando: QUANDO });
+  /* MOVIDA (28/10, T1-B fatia 3): DE TEXTO PARA COMPORTAMENTO. O turno que
+     ROLOU era montado com o recorte do App; a trava é de guardado.js, e o selo
+     que ela reconhece mora na tabela dela (SELOS_DO_RESOLVIDO.medidos). A
+     intenção — "o selo que o App manda trava" — fica de pé por duas pontas:
+     o App ainda manda ROLOU (texto, acima: é fiação, lista de T2) e ROLOU
+     está na tabela (aqui, sem ler o App). O envelope é o que a tabela mede,
+     com o corpo que o App lhe põe. */
+  const seloMedido = (SELOS_DO_RESOLVIDO.find((s) => s.id === "resolvido") || { medidos: [] }).medidos.find((m) => m === ROLOU);
+  t("o selo que o App manda é um selo medido da tabela da trava", seloMedido === ROLOU);
+  const gRolou = guardarTurno({ conteudo: `${seloMedido} Você acerta o bandido. O dano já foi aplicado.`, motivo: "HTTP 500", quando: QUANDO });
   const gConversa = guardarTurno({ conteudo: NAO_ROLOU + " Abra o capítulo conforme o envelope acima.", motivo: "HTTP 500", quando: QUANDO });
 
   t("turno que ROLOU trava a declaração", gRolou.rolou === true && travaODeclarar(gRolou) === true);
