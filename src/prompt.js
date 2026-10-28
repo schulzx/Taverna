@@ -6,7 +6,7 @@
    ============================================================ */
 import { vozPrompt, VOZ_PADRAO } from "./vozes.js";
 /* MM8c-1: a recência das pessoas é a do registo */
-import { ordemDaImportancia } from "./npcs.js";
+import { ordemDaImportancia, MARCA_DO_DITO } from "./npcs.js";
 import { canoneEmJogo } from "./relevancia.js";
 import { resumoPatamar } from "./combate.js";
 import { PROIBICOES_DO_ARCO } from "./historia.js";
@@ -151,6 +151,9 @@ function jaFoiDita(nome, f, jaDitos) {
   const linha = jaDitos.get(semAcentoCanone(nome));
   if (!linha) return false;
   /* "vivo" é o que a linha do registo cala por ser o normal: calado, está dito */
+  /* trilha B, 28/10: o que só foi dito também tem de estar dito — a linha
+     das PESSOAS sem a marca não cala a do cânone que a tem */
+  if (f && f.dito && !linha.includes(semAcentoCanone(MARCA_DO_DITO))) return false;
   return ["papel", "genero", "local", "status", "notas"].every((k) => { const v = String((f && f[k]) || "").trim(); return !v || (k === "status" && semAcentoCanone(v) === "vivo") || linha.includes(semAcentoCanone(v)); });
 }
 
@@ -200,8 +203,9 @@ export function formatarCanone(canone, opcoes = null) {
    LINHA, curta, e só nas fichas que a têm — nenhum bloco estático novo (o
    teto do prompt é sagrado); a ficha sem `dito` sai como sempre saiu. O
    texto longo do Cronista ("dito por alguém em cena, não fato") cede ao
-   curto: a linha paga cada caractere em todo turno em que o nome sobe. */
-export const MARCA_DO_DITO = "só dito em cena, não fato";
+   curto: a linha paga cada caractere em todo turno em que o nome sobe.
+   A marca mora em npcs.js desde que a gente também a escreve (as PESSOAS
+   CONHECIDAS): uma tabela só, lida pelos dois andares. */
 
 /* uma linha do cânone — a mesma de sempre, caractere por caractere, salvo
    a marca do que só foi dito */

@@ -10,7 +10,9 @@
    marca sai byte a byte como saía. E mede o custo: a marca é curta, e no
    cânone das pessoas o teto a paga (cabe menos gente, nunca passa dos
    chars do teto). */
-import { MARCA_DO_DITO, formatarCanone, TETO_DO_CANONE, montarSystemPrompt } from "../src/prompt.js";
+/* a marca mora em npcs.js desde que a gente também a escreve (teste-npcs-dito): o import muda de casa, as asserções não */
+import { formatarCanone, TETO_DO_CANONE, montarSystemPrompt } from "../src/prompt.js";
+import { MARCA_DO_DITO } from "../src/npcs.js";
 import { julgarOCronista, O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
 import { oAceitoDoCronista } from "../src/motor/cronista-do-turno.js";
 

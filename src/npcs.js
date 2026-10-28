@@ -257,9 +257,35 @@ function diaDoEncontro(v) {
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
 }
 
+/* ============================================================
+   O QUE SÓ FOI DITO, NA GENTE (28/10/2026, Fase T, trilha B)
+
+   O juízo do Cronista (motor/cronista.js#julgarGente) marca `dito` na
+   pessoa que só aparece dentro da fala de alguém — a Clarissa do Posto
+   Velho de que o taberneiro fala não é gente que o herói viu. Nas três
+   sessões de prova são 4 pessoas. O cânone já escrevia a marca (0816cbf);
+   a gente não: esta função montava a ficha campo a campo e jogava o
+   `dito` fora, e a linha das PESSOAS CONHECIDAS também não o diria. O
+   Mestre lia o boato de uma pessoa como fato.
+
+   A marca é a mesma do cânone, curta, e mora aqui porque o registo é o
+   andar de baixo: `prompt.js` lê-a daqui (o import já ia nessa direção).
+   O campo é NOVO e só existe na ficha que o tem — a ficha sem marca sai
+   byte a byte como saía, e uma versão antiga do jogo que carregue um save
+   com ele ignora-o (nenhum leitor de antes o lê; a suíte prova-o).
+
+   O ciclo da marca (`mesclarNPC`): fica enquanto a pessoa só se ouve;
+   cai quando ela chega sem a marca — quem a escreve sem `dito` (o Cronista
+   que a viu em cena, o cânone, a recalibração) afirma-a como fato; e nunca
+   sobe em quem já está no registo como fato: o boato sobre a Lia que o
+   herói conheceu ontem não a torna boato. */
+export const MARCA_DO_DITO = "só dito em cena, não fato";
+const marcaDoDito = (v) => (typeof v === "string" && v.trim() ? v.trim() : "");
+
 export function criarNPC(nome, dados0 = {}) {
   const dados = dados0 && typeof dados0 === "object" ? dados0 : {};
   const encontro = diaDoEncontro(dados.conhecidoEm);
+  const dito = marcaDoDito(dados.dito);
   return {
     ...(encontro != null ? { conhecidoEm: encontro } : {}),
     nome,
@@ -283,6 +309,9 @@ export function criarNPC(nome, dados0 = {}) {
     consultas: contagem(dados.consultas),
     ultimaVez: dados.ultimaVez || 0,     // turno da última menção (p/ ordenar)
     semente: dados.semente || `npc|${nome}|${dados.papel || ""}`,
+    /* o que só foi dito: a chave só existe na ficha que a tem (no fim, para
+       a ficha sem ela sair como sempre saiu) */
+    ...(dito ? { dito } : {}),
   };
 }
 
@@ -393,6 +422,9 @@ export function mesclarNPC(ficha, dados0 = {}) {
   if (dados.relacao) out.relacao = String(dados.relacao).toLowerCase();
   if (dados.ultimaVez) out.ultimaVez = dados.ultimaVez;
   if (conflito) out._papelConflito = conflito;
+  /* o que só foi dito (trilha B, 28/10): a marca fica enquanto só se ouve,
+     cai quando a pessoa chega sem ela, e nunca sobe em quem já é fato */
+  if ("dito" in out && !marcaDoDito(dados.dito)) delete out.dito;
   return out;
 }
 
@@ -426,7 +458,13 @@ const GENERO_DO_REGISTO = { f: "mulher", m: "homem" };
    tem) não nomeia cidade do mapa, ele passa a nomeá-la — a palavra genérica
    troca-se pelo nome ("cidade" → "Rio do Rio"), o sítio ganha-o ao lado
    ("a taverna do Pato" → "a taverna do Pato, Rio do Rio"). Na estrada ou
-   numa masmorra, quem chama passa `cidade: ""`, e nada muda. */
+   numa masmorra, quem chama passa `cidade: ""`, e nada muda.
+   O QUE SÓ FOI DITO NÃO ESTÁ AQUI (trilha B, 28/10): "só regista quem está
+   na cena" não vale para quem só se ouviu numa fala — o juízo do Cronista
+   (julgarGente) tira-lhe o "aqui" de propósito, e o carimbo devolvia-lho:
+   a Clarissa de que o taberneiro fala ficava "em Brejo Alto", e era o
+   "PROCURA Clarissa, ESTÁ AQUI" de volta pela outra porta. A ficha marcada
+   `dito` não se carimba. */
 export const LOCAL_SEM_CIDADE = {
   genericos: ["cidade", "a cidade", "na cidade", "vila", "a vila", "na vila", "aldeia", "a aldeia", "na aldeia", "aqui", "local", "centro", "o centro", "povoado", "o povoado"],
   junta: ", ",
@@ -453,7 +491,7 @@ export function fichaDoCronista(pessoa, existente = null, ctx = null) {
   const ja = existente && typeof existente === "object" ? sexoDe(typeof existente.genero === "string" ? existente.genero : "") : "";
   const out = lido && !ja ? { ...resto, genero: lido } : resto;
   const c = ctx && typeof ctx === "object" ? ctx : {};
-  if (!c.cidade) return out;
+  if (!c.cidade || marcaDoDito(out.dito)) return out;
   const novo = typeof out.local === "string" && out.local.trim() ? out.local : "";
   const antes = existente && typeof existente === "object" && typeof existente.local === "string" ? existente.local : "";
   const base = novo || antes;
@@ -711,7 +749,7 @@ export function resumoNPCsParaPrompt(npcs, limite = TETO_DAS_PESSOAS.pessoas, co
   const linhaDe = (n) => {
     /* onda 3: "neutro" é o "desconhecido" de quem já se viu — o registo
        cala-o como cala o outro (FIGURANTE.relacoesSemPeso) */
-    const partes = [n.papel, n.relacao && !FIGURANTE.relacoesSemPeso.includes(String(n.relacao).toLowerCase()) ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
+    const partes = [n.papel, n.relacao && !FIGURANTE.relacoesSemPeso.includes(String(n.relacao).toLowerCase()) ? `relação: ${n.relacao}` : "", n.genero, n.local ? `em ${n.local}` : "", n.status && n.status !== "vivo" ? n.status : "", marcaDoDito(n.dito) ? MARCA_DO_DITO : "", n.conhecidoEm != null ? (n.conhecidoEm > 0 ? `entrou na história no DIA ${n.conhecidoEm}` : "entrou antes do registro de dias") : ""].filter(Boolean);
     /* ---------------- O LAÇO SOBE (v9.98) ----------------
        O Mestre sabia que Marta era um amor rompido e a IA não — ela só
        recebia o nome dentro do envelope da onda, e só no turno em que a
