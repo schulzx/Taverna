@@ -119,18 +119,15 @@ sec("4. O RECIBO E O FIM DA LUTA — as contas, corridas em Node");
 /* B1 deixou aqui uma asserção TEMPORÁRIA — "o App ainda NÃO escreve
    `recibo`" — que guardava o sítio até B2. B2 chegou e ela inverte-se: o
    App escreve, pela ficha, e a conta é esta. */
-const blocoPuro = (() => {
-  const i = APP.indexOf("const DESFECHOS_DA_LUTA = [");
-  const j = APP.indexOf("import { bonusProficiencia", i);
-  return i < 0 || j < 0 ? "" : APP.slice(i, j);
-})();
-t("as funções puras do recibo moram no topo do App, fora do componente", blocoPuro.length > 500 && APP.indexOf("const DESFECHOS_DA_LUTA") < APP.indexOf("export default function Taverna()"));
-let P = null;
-try {
-  P = new Function("reciboDoTurno", "etapaAtual", "textoDaEtapa", "calou",
-    blocoPuro + "\nreturn { DESFECHOS_DA_LUTA, mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, fimDaLutaDe, portaDoAceite };")(
-    reciboDoTurno, etapaAtual, textoDaEtapa, () => []);
-} catch (e) { console.log("      (não correu: " + e.message + ")"); }
+/* MOVIDAS (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+   As puras do recibo moravam no topo do App e esta secção as recortava do
+   texto e as corria por `new Function`. Mudaram-se para src/recibo-da-luta.js
+   sem mudar uma linha, e correm-se por import — as mesmas asserções, contra o
+   código que vai para produção, sem extração. As duas primeiras guardam o
+   que guardavam: que moram fora do componente (agora num módulo, lido pelo
+   App) e que correm em Node com as dependências que dizem ter. */
+const P = await import("../src/recibo-da-luta.js").then((m) => ({ ...m })).catch((e) => { console.log("      (não correu: " + e.message + ")"); return null; });
+t("as funções puras do recibo moram no topo do App, fora do componente", !!P && /import \{ mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe \} from "\.\/recibo-da-luta\.js";/.test(APP) && !/function mensagensComRecibo\(/.test(APP));
 t("e correm em Node com as dependências que dizem ter", !!P);
 if (P) {
   const antes = { moedas: 15, vida: 20, vidaMax: 20, xp: 0, nivel: 1, inventario: [] };

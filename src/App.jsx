@@ -239,6 +239,8 @@ import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar
 import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
+import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
+import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -292,71 +294,11 @@ const fraseAnteriorDoJogador = (msgs) => {
 };
 
 /* ---------------- A1 · B2 (10/10): O RECIBO DO TURNO E O FIM DA LUTA ----------------
-   Puros, e por isso FORA do componente: a suíte `teste-a1-relato` os lê
-   deste arquivo e os corre em Node, como já faz com o carimbo `naLuta`.
-
-   Dois campos NOVOS nas mensagens, que a versão antiga ignora (a ordem de
-   28/09 permite campo de save novo e ignorado — um commit revertido não
-   deixa nada para trás que ela não saiba ler):
-
-   · `recibo` — SÓ na resposta do Mestre: o que a FICHA mudou entre o
-     envio do turno e o fim dele (`reciboDoTurno`, glifos.js). Lê a ficha,
-     nunca a frase — por isso não consegue discordar da bolsa.
-   · `fimDaLuta` — na ÚLTIMA mensagem marcada `naLuta` de uma luta que
-     fechou: quem caiu, quantas rodadas, o recibo da luta inteira (da ficha
-     na abertura à ficha no fecho) e o desfecho.
-
-   As duas trocas são cópias: a lista nova só difere da velha na mensagem
-   marcada, e a marcada é um objeto novo. Quem não acha onde escrever
-   devolve a MESMA lista — e é por identidade que o App sabe que não há
-   nada a redesenhar. */
-const DESFECHOS_DA_LUTA = ["vitoria", "fuga", "queda", "encerrada", "derrota"];
-function mensagensComRecibo(lista, { desde = 0, texto = null, recibo = [] } = {}) {
-  if (!Array.isArray(lista) || !Array.isArray(recibo) || !recibo.length) return lista;
-  for (let i = Math.max(0, Number(desde) || 0); i < lista.length; i++) {
-    const m = lista[i];
-    if (!m || m.autor !== "mestre") continue;
-    if (texto != null && m.texto !== texto) continue;
-    if (m.recibo) return lista;
-    return lista.map((x, k) => (k === i ? { ...x, recibo } : x));
-  }
-  return lista;
-}
-function mensagensComFimDaLuta(lista, fim, { desde = 0 } = {}) {
-  if (!Array.isArray(lista) || !fim) return lista;
-  for (let i = lista.length - 1; i >= Math.max(0, Number(desde) || 0); i--) {
-    const m = lista[i];
-    if (!m || m.naLuta !== true) continue;
-    if (m.fimDaLuta) return lista;
-    return lista.map((x, k) => (k === i ? { ...x, fimDaLuta: fim } : x));
-  }
-  return lista;
-}
-function caidosDaLuta(c) {
-  return ((c && c.inimigos) || [])
-    .filter((e) => e && !e.fugiu && (e.derrotado || (Number(e.vida) || 0) <= 0))
-    .map((e) => e.nome).filter(Boolean);
-}
-/* O desfecho que a tela e a dobra dizem. A queda do herói manda sobre
-   tudo menos a vitória (quem vence e fica a 0 venceu); a fuga vem de quem
-   viu o herói sair (`fugiu`). Fora da tabela, `encerrada`. */
-function desfechoDoFecho(fecho, ficha, fugiu = false) {
-  let d = fugiu ? "fuga" : (fecho && fecho.desfecho) || "encerrada";
-  if (!DESFECHOS_DA_LUTA.includes(d)) d = "encerrada";
-  const caiu = !!(ficha && (ficha.morto || (typeof ficha.vida === "number" && ficha.vida <= 0)));
-  if (caiu && d !== "vitoria") d = "queda";
-  return d;
-}
-/* A1 · B3: A PORTA DO ACEITE — "▸ Diário — {título} · próximo: {passo}".
-   O travessão é o separador que `portaDaLinhaDeSistema` (painel-relato)
-   lê para achar o nome da aba; o resto é o que se decide a seguir. Sem
-   preço (a soleira mostrou-o antes do clique) e sem os números da paga. */
-function portaDoAceite(m) {
-  if (!m) return "";
-  let e = null;
-  try { e = etapaAtual(m); } catch (err) { calou("a etapa da porta do aceite", err); }
-  return "\u25B8 Di\u00E1rio \u2014 " + (m.titulo || "") + (e ? " \u00B7 pr\u00F3ximo: " + textoDaEtapa(e) : "");
-}
+   Os puros do recibo e do fim da luta (`mensagensComRecibo`,
+   `mensagensComFimDaLuta`, `caidosDaLuta`, `desfechoDoFecho`,
+   `portaDoAceite`, `fimDaLutaDe`) mudaram-se para src/recibo-da-luta.js
+   (T1-A, 4.ª fatia): a suíte `teste-a1-relato` corre-os por import, e não
+   pelo texto deste arquivo. Ficam aqui os dois que só o App lê. */
 /* A1 · A4: A HORA CHEIA, FALADA (`formas.md` §A1 5). O olho lê `8h` na
    pílula; quem ouve a cinta ouve "8 horas" no botão d'O TEMPO — a mesma
    hora cheia de `horaNaCinta`, nunca o minuto (o minuto mora lá dentro). */
@@ -387,15 +329,6 @@ function retratoComOsFinais(antes, finais) {
       const vida = typeof f.vida === "number" ? f.vida : e.vida;
       return { ...e, vida, derrotado: !!(f.derrotado || (Number(vida) || 0) <= 0) };
     }),
-  };
-}
-function fimDaLutaDe(fecho, depois) {
-  if (!fecho) return null;
-  return {
-    caidos: Array.from(new Set(fecho.caidos || [])),
-    rodadas: Math.max(1, Number(fecho.rodadas) || 1),
-    recibo: reciboDoTurno(fecho.fichaNaAbertura, depois),
-    desfecho: desfechoDoFecho(fecho, depois),
   };
 }
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, resumoEpico } from "./regras.js";
@@ -4023,30 +3956,9 @@ function PainelBancada({ bancada = [], despensa = [], onForjar, bloqueado }) {
   );
 }
 
-/* ---------------- O GESTO DO CAMPO (R3) ----------------
-   `Enter` manda e `Shift+Enter` quebra a linha. É o gesto mais repetido
-   do jogo, e num `<input>` de uma linha ele era de graça: `Enter` era a
-   única coisa que a tecla podia fazer. Passando a `<textarea>`, quebrar
-   a linha passa a ser o comportamento NATIVO — e mandar o turno passa a
-   ter de ser escrito. Trocá-lo em silêncio é o defeito que passa no
-   build, passa na suíte de regra, e só o uso pega.
-
-   ESTÁ AQUI FORA, com nome, em vez de embutido no `onKeyDown`, por uma
-   razão só: uma expressão dentro de um JSX de vinte e um mil linhas não
-   se prova. Assim `testes/teste-r3-campo-do-turno.mjs` lê ESTA função do
-   arquivo e corre os três casos contra ela — não contra uma cópia.
-
-   O TERCEIRO CASO é o que quase se esquece: com o teclado a compor um
-   acento (o `^` de "você", o `~` de "não"), o `Enter` que fecha a
-   composição NÃO é um pedido de turno. `isComposing` (e o 229 dos
-   navegadores que ainda não o dizem) é o que separa os dois, e num jogo
-   escrito em português isso não é um caso de canto. */
-function gestoDoCampo(e) {
-  if (!e || e.key !== "Enter") return "nada";
-  if (e.isComposing || e.keyCode === 229) return "nada";
-  if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return "quebrar";
-  return "mandar";
-}
+/* O GESTO DO CAMPO (R3) mudou-se para src/campo-do-turno.js (T1-A, 4.ª
+   fatia): `Enter` manda, `Shift+Enter` quebra, a composição do acento não
+   manda. A suíte `teste-r3-campo-do-turno` corre-o por import. */
 
 
 /* ---------------- EXAMINAR (v9.41) ----------------

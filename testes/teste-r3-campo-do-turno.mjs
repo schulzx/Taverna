@@ -69,12 +69,21 @@ const extrair = (nome, F) => {
 };
 
 sec("1. O GESTO DO CAMPO — Enter manda, Shift+Enter quebra");
-const fonteDoGesto = extrair("gestoDoCampo", APP);
+/* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. A
+   função mudou-se do topo do App para src/campo-do-turno.js sem mudar uma
+   linha (o cabeçalho desta suíte dizia por que não um módulo: a regra não é
+   de jogo; mas a extração do texto contava como prova de texto, e a casa
+   está a convertê-las — assercoes-de-texto.json, `paraOficial`). A suíte
+   importa-a e corre os mesmos casos contra o código de produção; o que a
+   primeira asserção guardava — que ela existe com nome, fora do componente,
+   e é a que o App usa — guarda-se pelo import do App. */
+const doModulo = await import("../src/campo-do-turno.js").catch(() => ({}));
+const fonteDoGesto = typeof doModulo.gestoDoCampo === "function" && /import \{ gestoDoCampo \} from "\.\/campo-do-turno\.js";/.test(APP) && !/function gestoDoCampo\(/.test(APP);
 t("`gestoDoCampo` existe no escopo do módulo do App.jsx", !!fonteDoGesto,
   "ela foi renomeada, apagada, ou empurrada para dentro do componente. Sem ela no escopo do módulo o gesto volta a ser inprovável — e foi por ser inprovável que ele nunca teve suíte");
 
 if (fonteDoGesto) {
-  const gestoDoCampo = new Function(`${fonteDoGesto}; return gestoDoCampo;`)();
+  const { gestoDoCampo } = doModulo;
 
   t("Enter sozinho MANDA o turno", gestoDoCampo({ key: "Enter" }) === "mandar");
   t("Shift+Enter QUEBRA a linha", gestoDoCampo({ key: "Enter", shiftKey: true }) === "quebrar");

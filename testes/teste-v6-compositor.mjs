@@ -103,7 +103,13 @@ sec("4. a fiação");
   t("o teste pendente é a linha do veredito por cima do campo", /<LinhaDoVeredito texto=\{linhaDoCampo\} armado=\{!!\(rolagem && !carregando\)\} \/>/.test(COMP) && /<>\{linhaDoTeste\(rolagem\)\}\{escolhaDoTesteAgora && escolhaDoTesteAgora\.risco \? /.test(APP) && /\$\{escolhaDoTesteAgora\.risco\}` : ""\}\{modPend !== 0/.test(APP));
   t("a gaveta ✦ mora na pílula, e no telefone só com o campo aberto", /<div className="tv-turno-verbos tv-gaveta-no-canto flex shrink-0 items-end md:self-center"/.test(COMP) && /\.tv-turno-repouso \.tv-turno-verbos \{ display: none; \}/.test(EST) && COMP.indexOf("tv-turno-verbos") < COMP.indexOf("<textarea"));
   t("a borda da pílula continua semântica (violeta armada, âmbar milagre)", /solid \$\{milagreSel \? T\.amber : habsSel\.length \? T\.violet : T\.line\}/.test(COMP) && /borderRadius: COMPOSITOR\.raio/.test(COMP));
-  t("Shift+Enter continua quebrando a linha (gestoDoCampo intocado)", /if \(e\.shiftKey \|\| e\.ctrlKey \|\| e\.altKey \|\| e\.metaKey\) return "quebrar";/.test(APP));
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O
+     gesto mudou-se do topo do App para src/campo-do-turno.js; joga-se a função
+     de produção em vez de ler a linha dela */
+  {
+    const { gestoDoCampo } = await import("../src/campo-do-turno.js");
+    t("Shift+Enter continua quebrando a linha (gestoDoCampo intocado)", gestoDoCampo({ key: "Enter", shiftKey: true }) === "quebrar" && gestoDoCampo({ key: "Enter" }) === "mandar");
+  }
   t("o rascunho guarda-se na pausa e ao esconder, e só dentro do jogo", /setTimeout\(guardarORascunho, DADO\.pausaDoRascunho\)/.test(ORG) && /"visibilitychange"/.test(ORG) && /"pagehide"/.test(ORG) && /if \(!rascunhoDeQuemRef\.current\) return;/.test(ORG));
   t("volta ao entrar no jogo — e só o desta campanha", /setEntrada\(rascunhoDe\(localStorage\.getItem\(chaveDoRascunho\(modoRef\.current\)\), quem\)\);/.test(ORG));
   t("ir ao menu guarda, já não apaga", /setHabsSel\(\[\]\); guardarORascunho\(\); setDadoRolando\(false\);/.test(APP) && !/setHabsSel\(\[\]\); setEntrada\(""\)/.test(APP));
