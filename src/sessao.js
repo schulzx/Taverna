@@ -66,6 +66,14 @@
                  gravador escolhe a forma de cada campo e confere que a
                  diferença refaz o estado byte a byte — se não refaz, troca
                  o campo inteiro.
+     app?        [{ orgao, campos, o? }] — o que um órgão do App fez neste
+                 turno e o replay não corre, quando quem grava o SABE: os
+                 caminhos do estado que ele escreveu (`campos`, podem ser
+                 nenhum) e o quê. Quem o escreve hoje é o jogar-em-node,
+                 onde o oráculo faz as vezes do App (a viagem, o sítio, o
+                 nome à mão que o registo não gravou, a luta); a fiação do
+                 App não precisa de o escrever — o que ela deixa por fazer
+                 está em AINDA_DO_APP.
 
    Campo novo, ignorado pela versão antiga: o arquivo não é o save, e o
    save não muda por causa dele. O validador deixa passar o campo que não
@@ -114,11 +122,25 @@
    ressincroniza: é a corrida inteira, e a primeira divergência é onde o
    jogo deixou de ser reproduzível.
 
-   O porquê de cada divergência sai de DONO_DO_CAMPO: o campo que diverge
-   diz que parte do turno o escreve — e, se essa parte ainda mora no App
-   (a viagem, a luta, o relógio, o relato), é isso que o replay diz. Os
-   campos de bastidor e o relato ficam fora da régua (FORA_DA_REGUA): não
-   são jogo, e o replay não os escreve.
+   A DÍVIDA E O DEFEITO (28/10, T3-B). Cada diferença é de um de dois
+   donos. É DÍVIDA DO APP quando o campo está em AINDA_DO_APP (um órgão do
+   App que ainda escreve aquele campo em todo turno: a mesa, o compasso, o
+   relógio…) ou quando a linha diz, em `app`, que um órgão do App o
+   escreveu naquele turno; a dívida conta-se à parte, por campo e por
+   turno, e não é defeito. Tudo o resto é DEFEITO DO MOTOR — e também o
+   juízo do Cronista e o veredito do Juiz que mudam, e o passo que estoura.
+   O porquê de cada defeito sai de DONO_DO_CAMPO (que parte do motor
+   escreve o campo); o campo que não está em nenhuma das duas tabelas é
+   defeito "sem dono" até alguém o reclamar. Os campos de bastidor e o
+   relato ficam fora da régua (FORA_DA_REGUA): não são jogo.
+
+   Três contas saem do relatório: `reproduzidos` (o turno sai igual em
+   tudo), `defeitos` (os turnos em que o motor diverge) e `soOMotor` (o
+   turno que sai igual e em que nenhum órgão do App mexeu — o que o motor
+   joga sozinho). A diferença entre `reproduzidos` e `soOMotor` são os
+   turnos que reproduzem com a ajuda declarada do App: a luta que guarda
+   os combatentes fora do estado, ou o sítio que o App mudou e o Cronista
+   repôs. É aqui, e só aqui, que essa diferença se explica.
 
    O QUE ELE NÃO FAZ. Não chama IA, não toca o React, não grava nada.
    O aceito do Cronista é aplicado em MINIATURA (as pessoas, o cânone e o
@@ -134,8 +156,6 @@
 import { estadoDoSave, saveDoEstado, camposDoGrupo } from "./estado.js";
 import { lugarPedido, definirLugar } from "./lugar.js";
 import { semearACasa } from "./semente.js";
-import { nomesAMaoNaProsa } from "./nomes.js";
-import { criarNPC } from "./npcs.js";
 import { aplicarOTurno } from "./motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 import { julgarOCronista } from "./motor/cronista.js";
@@ -185,6 +205,7 @@ export const CAMPOS_DA_SESSAO = Object.freeze({
     { campo: "cronista", tipo: "objetoOuNulo", obrigatorio: true },
     { campo: "juiz", tipo: "objetoOuNulo", obrigatorio: true },
     { campo: "estado", tipo: "objeto", obrigatorio: true },
+    { campo: "app", tipo: "lista", obrigatorio: false },
   ],
   entrada: [
     { campo: "frase", tipo: "texto", obrigatorio: false },
@@ -358,8 +379,17 @@ export function linhaDaSessao(turno, ctx) {
     cronista: ehObj(cr) ? { proposta: ehObj(cr.proposta) ? dado(cr.proposta) : null, juizo: ehObj(cr.juizo) ? dado(cr.juizo) : null } : null,
     juiz,
     estado: diferencaDe(comoSave(c.antes), comoSave(t.estado)),
+    ...(oQueOAppFez(t.app).length ? { app: oQueOAppFez(t.app) } : {}),
   };
 }
+
+/* o que um órgão do App fez no turno e o replay não corre: [{ orgao,
+   campos, o? }], só os itens com órgão (o resto é lixo e cai) */
+const oQueOAppFez = (x) => arr(x).filter((a) => ehObj(a) && typeof a.orgao === "string" && a.orgao.trim()).map((a) => ({
+  orgao: a.orgao,
+  campos: arr(a.campos).filter((c) => typeof c === "string" && c),
+  ...(typeof a.o === "string" && a.o ? { o: a.o } : {}),
+}));
 
 /* a linha no fim do arquivo: devolve o arquivo novo, o recebido fica */
 export function gravarOTurno(arquivo, turno) {
@@ -401,6 +431,10 @@ export function validarASessao(arquivo) {
     if (typeof ponto === "string" && !FORMATO_DA_SESSAO.ponto.test(ponto)) erros.push({ caminho: `${c}.sorte.ponto`, motivo: `"${ponto.slice(0, 30)}" não é dia|minuto|falas` });
     const k = obj(t.juiz).antesDoArquivo;
     if (Number.isInteger(k) && (k < 0 || k > narracoesDoArquivo(A.turnos, i).length)) erros.push({ caminho: `${c}.juiz.antesDoArquivo`, motivo: `pede ${k} narrações de antes e o arquivo só tem ${narracoesDoArquivo(A.turnos, i).length}` });
+    arr(t.app).forEach((a, k) => {
+      if (!ehObj(a) || typeof a.orgao !== "string" || !a.orgao.trim()) erros.push({ caminho: `${c}.app[${k}]`, motivo: "o que o App fez leva o órgão (orgao, texto)" });
+      else if (!Array.isArray(a.campos) || !a.campos.every((x) => typeof x === "string")) erros.push({ caminho: `${c}.app[${k}].campos`, motivo: "não é lista de caminhos" });
+    });
     if (ehObj(t.estado)) e = aplicarDiferenca(e, t.estado, erros, `${c}.estado`);
   });
   return { ok: erros.length === 0, erros };
@@ -457,30 +491,12 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     passo: "o códex", de: "motor/fim-do-turno.js#aplicarOCodex (a base do mundo, os nomes à mão)",
     faz: (E, L, ctx) => {
       const oferecidos = arr(obj(L.pedido).nomesAMao);
-      if (ctx.mundo) {
-        const r = aplicarOCodex({ ...E, oferecidos, base: E.baseMundo }, ctx.resposta, { mundo: ctx.mundo });
-        return { ...E, npcs: r.estado.npcs, baseMundo: r.estado.base === undefined ? E.baseMundo : r.estado.base };
-      }
-      /* SEM O MUNDO GRAVADO, SÓ OS NOMES À MÃO. O códex sem mundo não
-         recusa: `oQueExisteAqui` refaz a cidade pela semente vazia
-         (cidadeSintetica) e revela gente que nenhum mundo tem. No App o
-         mundo existe sempre; num arquivo sem ele, o replay corre só a
-         metade do códex que não precisa dele — a mesma régua, linha a
-         linha (fim-do-turno.js, "E1 (o Narrador só narra)"). */
-      const usados = nomesAMaoNaProsa(ctx.resposta.narrativa, oferecidos);
-      if (!usados.length) return E;
-      let reg = obj(E.npcs), tocou = false;
-      for (const u of usados) {
-        const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(u.nome).toLowerCase());
-        if (chave) {
-          if (u.morto && String(reg[chave].status || "vivo").toLowerCase() === "vivo") { if (!tocou) { reg = { ...reg }; tocou = true; } reg[chave] = { ...reg[chave], status: "morto" }; }
-          continue;
-        }
-        if (!tocou) { reg = { ...reg }; tocou = true; }
-        const nome = String(u.nome).slice(0, 40);
-        reg[nome] = criarNPC(nome, { genero: u.genero === "ela" ? "mulher" : "homem", local: E.cidadeAtual || "", ultimaVez: E.npcTurno, conhecidoEm: E.dia, ...(u.morto ? { status: "morto" } : {}) });
-      }
-      return tocou ? { ...E, npcs: reg } : E;
+      /* com o mundo gravado ou sem ele, o códex do App, à letra: sem o mundo
+         a metade da base cala e os nomes à mão seguem (o conserto de
+         66afe15 — antes, sem mundo, refazia a cidade pela semente vazia, e
+         o replay corria aqui uma cópia só dos nomes à mão) */
+      const r = aplicarOCodex({ ...E, oferecidos, base: E.baseMundo }, ctx.resposta, { mundo: ctx.mundo });
+      return { ...E, npcs: r.estado.npcs, baseMundo: r.estado.base === undefined ? E.baseMundo : r.estado.base };
     },
   },
   {
@@ -524,10 +540,10 @@ export const DONO_DO_CAMPO = Object.freeze({
   combate: "a luta, que o Narrador não abre (E4) e o App conduz",
   mapa: "o mapa do turno e a chegada (motor), a viagem (App)",
   baseMundo: "o códex (motor)",
-  dia: "o relógio do mundo, órgão do App",
-  minuto: "o relógio do mundo, órgão do App",
+  dia: "o relógio do mundo (avancarOsMinutos) e a viagem: App",
+  minuto: "o relógio do mundo (avancarOsMinutos) e a viagem: App",
   missoes: "as missões do turno (motor) e a fiação do Cronista (App)",
-  "*": "um campo que nenhum passo do replay escreve: é do App",
+  "*": "sem dono: nenhum passo do replay o escreve e AINDA_DO_APP não o lista — é defeito até alguém o reclamar",
 });
 
 /* fora da régua: o que não é jogo, ou o que só a tela escreve */
@@ -538,9 +554,36 @@ export const FORA_DA_REGUA = Object.freeze({
   versao: "a versão do save, igual em todo estado v2",
 });
 
+/* A DÍVIDA DO APP (28/10/2026, T3-B). Os campos do estado que um órgão do
+   App ainda escreve no turno, e que nenhum passo do replay corre: num
+   arquivo gravado pelo jogo, divergem SEMPRE, e não por defeito do motor.
+   A divergência num campo desta tabela é dívida, contada à parte; fora
+   dela, é defeito. `campo` é um caminho (o campo inteiro, ou só uma parte
+   dele: "lugar.coord" deixa o resto do lugar na régua do motor).
+
+   A TABELA SÓ ENCOLHE (teste-sessao.mjs, secção 8): campo novo aqui quebra
+   a suíte, e campo que o replay já reproduz — porque o órgão foi para o
+   motor e entrou em PASSOS_DO_REPLAY — também, para ela não guardar dívida
+   paga. A medida é o arquivo que o jogo gravou (testes/sessao-navegador.json). */
+export const AINDA_DO_APP = Object.freeze([
+  { campo: "abertura", orgao: "marcarTurnoDoMundo → andarOSino (o sino da abertura: os turnos, os cheios, os conhecidos, os sítios visitados)", desde: "28/10/2026" },
+  { campo: "chao", orgao: "varrerChao e porNoChaoAqui no envio (a cena do chão: cenaDoChao)", desde: "28/10/2026" },
+  { campo: "compasso", orgao: "talvezAndarOCompasso no envio", desde: "28/10/2026" },
+  { campo: "desdeMundo", orgao: "marcarTurnoDoMundo → talvezOMundoSeMexer (há quantos turnos o mundo não se mexe)", desde: "28/10/2026" },
+  { campo: "elencoMem", orgao: "as marcas do intérprete no envio (marcarMovimento: os feitos e os gestos da gente)", desde: "28/10/2026" },
+  { campo: "escada", orgao: "mexerNoEncalhe no envio (a escada do encalhe)", desde: "28/10/2026" },
+  { campo: "escuta", orgao: "andarAEscuta no envio (o pedido e o avanço)", desde: "28/10/2026" },
+  { campo: "estante", orgao: "talvezDarFormaACena e formaDoMestre (a cadência da cena e as jogadas)", desde: "28/10/2026" },
+  { campo: "lugar.coord", orgao: "moverParaLocal (a coordenada do sítio sai de locaisDaCidade; o lugaresDaqui gravado não a leva)", desde: "28/10/2026" },
+  { campo: "mesa", orgao: "aMesaDoTurno já é motor (fecho-da-resposta.js), mas a textura que ele lê — o pilar da frase, as rolagens, o perigo — o App escreve-a ao longo do turno, e a linha não a grava", desde: "28/10/2026" },
+  { campo: "minuto", orgao: "avancarOsMinutos (o tempo da ação, no agirInterno, e o da caminhada, no moverParaLocal)", desde: "28/10/2026" },
+  { campo: "prometido", orgao: "pautaDoTurno → cobrarNoTurno (o Livro cobra na pauta) e o aceito do Cronista (guardarSementes, pagarSementes)", desde: "28/10/2026" },
+  { campo: "registro", orgao: "anotarOTurno no envio (a memória das cenas: quando, onde, quem, o assunto)", desde: "28/10/2026" },
+  { campo: "turnosDeMundo", orgao: "marcarTurnoDoMundo (o turno do mundo, que os relógios leem a cada dois)", desde: "28/10/2026" },
+]);
+
 /* as diferenças entre dois estados, com o caminho até cada uma */
 function diferencas(a, b, caminho, out, prof) {
-  if (out.length >= FORMATO_DA_SESSAO.diferencasPorTurno) return;
   if (canonico(a) === canonico(b)) return;
   const fundo = prof >= FORMATO_DA_SESSAO.profundidade;
   if (!fundo && ehObj(a) && ehObj(b)) {
@@ -579,36 +622,68 @@ function reproduzirOTurno(E0, L, semente, mundo, narracoes) {
 
 const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) => !tem(FORA_DA_REGUA, k)));
 
-/* o relatório: { valido, erros, turnos: [{ n, igual, diferencas, porque,
-   cronista, juiz, calou }], reproduzidos, divergentes, primeira } */
+/* o caminho `p` está debaixo de `c` (ele mesmo, um campo dele, um item dele) */
+const debaixoDe = (p, c) => p === c || p.startsWith(c + ".") || p.startsWith(c + "[");
+
+/* o relatório: { valido, erros, turnos, reproduzidos, divergentes, primeira,
+   defeitos, primeiroDefeito, soOMotor, divida }. Por turno: { n, igual,
+   defeito, diferencas (as do motor), divida (as do App), porque, cronista,
+   juiz, calou, app }. Ver o cabeçalho, "A DÍVIDA DO APP". */
 export function reproduzirASessao(arquivo, opcoes) {
   const op = obj(opcoes);
   const v = validarASessao(arquivo);
-  const vazio = { valido: v.ok, erros: v.erros, turnos: [], reproduzidos: 0, divergentes: [], primeira: null };
+  const vazio = { valido: v.ok, erros: v.erros, turnos: [], reproduzidos: 0, divergentes: [], primeira: null, defeitos: [], primeiroDefeito: null, soOMotor: 0, divida: { campos: [], doTurno: [] } };
   if (!v.ok) return vazio;
   const A = arquivo, mundo = ehObj(A.mundo) ? A.mundo : null;
   let gravado = obj(dado(A.inicio)), corrido = gravado;
   const turnos = [];
+  const porCampo = new Map(AINDA_DO_APP.map((d) => [d.campo, []]));
+  const doTurno = [];
   A.turnos.forEach((L, i) => {
     const antes = op.encadeado ? corrido : gravado;
     const r = reproduzirOTurno(antes, L, A.semente, mundo, narracoesDoArquivo(A.turnos, i));
     gravado = aplicarDiferenca(gravado, L.estado, [], "");
     corrido = r.estado;
-    const difs = [];
-    diferencas(naRegua(gravado), naRegua(r.estado), "", difs, 0);
+    const app = oQueOAppFez(L.app);
+    const todas = [];
+    diferencas(naRegua(gravado), naRegua(r.estado), "", todas, 0);
+    /* cada diferença: é dívida se a tabela a lista, ou se a linha diz que
+       um órgão do App a escreveu neste turno; o resto é do motor */
+    const doMotor = [], divida = new Map();
+    for (const d of todas) {
+      const tab = AINDA_DO_APP.find((x) => debaixoDe(d.caminho, x.campo));
+      const fez = tab ? null : app.find((a) => a.campos.some((c) => debaixoDe(d.caminho, c)));
+      if (!tab && !fez) { doMotor.push(d); continue; }
+      const chave = tab ? tab.campo : `${fez.orgao}`;
+      if (!divida.has(chave)) divida.set(chave, { campo: tab ? tab.campo : fez.campos.filter((c) => debaixoDe(d.caminho, c))[0], orgao: tab ? tab.orgao : fez.orgao, de: tab ? "a tabela" : "a linha", caminhos: [] });
+      divida.get(chave).caminhos.push(d.caminho);
+    }
     const porque = [];
     if (ehObj(obj(L.entrada).toque)) porque.push("o toque do jogador é da tela: o replay não o corre");
     for (const c of r.calou) porque.push(`${c.passo} estourou: ${c.erro}`);
-    for (const campo of [...new Set(difs.map((d) => d.caminho.split(/[.[]/)[0]))]) porque.push(`${campo}: ${DONO_DO_CAMPO[campo] || DONO_DO_CAMPO["*"]}`);
+    for (const campo of [...new Set(doMotor.map((d) => d.caminho.split(/[.[]/)[0]))]) porque.push(`${campo}: ${DONO_DO_CAMPO[campo] || DONO_DO_CAMPO["*"]}`);
+    for (const d of divida.values()) porque.push(`${d.campo}: ainda do App — ${d.orgao}`);
     const cronista = ehObj(L.cronista) && ehObj(L.cronista.juizo)
       ? { igual: canonico(L.cronista.juizo) === canonico(r.juizo), ...(canonico(L.cronista.juizo) === canonico(r.juizo) ? {} : { gravado: cita(L.cronista.juizo), reproduzido: cita(r.juizo) }) }
       : null;
     if (cronista && !cronista.igual) porque.push("o juízo do Cronista mudou: motor/cronista.js julga diferente a mesma proposta");
     const juiz = r.juiz ? { igual: canonico(L.juiz.resumo) === canonico(r.juiz) } : null;
     if (juiz && !juiz.igual) porque.push("o veredito do Juiz mudou: juiz-de-fidelidade.js mede diferente a mesma prosa");
-    const igual = !difs.length && (!cronista || cronista.igual) && (!juiz || juiz.igual);
-    turnos.push({ n: L.n, igual, diferencas: difs, porque, cronista, juiz, calou: r.calou });
+    const defeito = doMotor.length > 0 || r.calou.length > 0 || (!!cronista && !cronista.igual) || (!!juiz && !juiz.igual);
+    const igual = !todas.length && !defeito;
+    const dividas = [...divida.values()].map((d) => ({ ...d, caminhos: d.caminhos.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno) }));
+    for (const d of dividas) if (d.de === "a tabela") porCampo.get(d.campo).push(L.n);
+    if (app.length) doTurno.push({ n: L.n, app, divergiu: dividas.some((d) => d.de === "a linha") });
+    turnos.push({ n: L.n, igual, defeito, diferencas: doMotor.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno), divida: dividas, porque, cronista, juiz, calou: r.calou, app: app.length ? app : null });
   });
   const divergentes = turnos.filter((t) => !t.igual).map((t) => t.n);
-  return { valido: true, erros: [], turnos, reproduzidos: turnos.length - divergentes.length, divergentes, primeira: divergentes.length ? divergentes[0] : null };
+  const defeitos = turnos.filter((t) => t.defeito).map((t) => t.n);
+  return {
+    valido: true, erros: [], turnos,
+    reproduzidos: turnos.length - divergentes.length, divergentes, primeira: divergentes.length ? divergentes[0] : null,
+    defeitos, primeiroDefeito: defeitos.length ? defeitos[0] : null,
+    /* reproduz e nenhum órgão do App mexeu nele: o turno que o motor joga sozinho */
+    soOMotor: turnos.filter((t) => t.igual && !t.app).length,
+    divida: { campos: AINDA_DO_APP.map((d) => ({ ...d, turnos: porCampo.get(d.campo) })), doTurno },
+  };
 }

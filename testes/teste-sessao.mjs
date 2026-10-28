@@ -21,7 +21,11 @@
      6. a divergência plantada é apanhada no turno certo — na resposta do
         Narrador, no estado gravado, no juízo do Cronista e no veredito do
         Juiz;
-     7. lixo não derruba.
+     7. lixo não derruba;
+     8. a dívida do App (AINDA_DO_APP, 28/10): o replay separa a divergência
+        do motor (defeito) da do App (dívida, contada à parte), e a tabela
+        só encolhe — campo novo nela quebra, e campo que já reproduz e
+        continua nela também.
 
    Os arquivos em disco são o dourado do replay: se o motor mudar o que faz
    com estas respostas, a secção 4 fica vermelha — e a troca, se for
@@ -39,13 +43,15 @@ const J = JSON.stringify;
 const copia = (x) => JSON.parse(J(x));
 
 const {
-  FORMATO_DA_SESSAO, CAMPOS_DA_SESSAO, PASSOS_DO_REPLAY, DONO_DO_CAMPO, FORA_DA_REGUA,
+  FORMATO_DA_SESSAO, CAMPOS_DA_SESSAO, PASSOS_DO_REPLAY, DONO_DO_CAMPO, FORA_DA_REGUA, AINDA_DO_APP,
   abrirASessao, linhaDaSessao, gravarOTurno, estadoNoTurno, validarASessao, reproduzirASessao,
 } = await import("../src/sessao.js");
 const { estadoDoSave, saveDoEstado, camposDoGrupo } = await import("../src/estado.js");
 
 const ler = (f) => JSON.parse(fs.readFileSync(new URL("./" + f, import.meta.url), "utf8"));
 const S10 = ler("sessao-s10.json"), S8 = ler("sessao-s8.json"), S9 = ler("sessao-s9.json");
+/* o arquivo que o JOGO gravou (a fiação do App, 5199, Narrador falso, 28/10) */
+const SN = ler("sessao-navegador.json");
 
 /* um arquivo pequeno e válido, feito pelo próprio gravador */
 const E0 = estadoDoSave({ personagem: { nome: "Ilsa", vida: 10, vidaMax: 10, moedas: 12, grupo: [] }, cidadeAtual: "Vau", npcs: {}, canone: {}, mensagens: [] });
@@ -73,7 +79,11 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
 {
   t("o formato tem nome e versão (taverna-sessao, 1)", FORMATO_DA_SESSAO.formato === "taverna-sessao" && FORMATO_DA_SESSAO.versao === 1);
   t("a tabela descreve a cabeça, o turno e as sete partes do turno", ["cabeca", "turno", "entrada", "sorte", "pedido", "narrador", "cronista", "juiz", "estado"].every((p) => Array.isArray(CAMPOS_DA_SESSAO[p]) && CAMPOS_DA_SESSAO[p].length));
-  t("o turno leva o que a ordem pede: a entrada, a sorte, o pedido, o Narrador, o Cronista, o Juiz e o estado", J(CAMPOS_DA_SESSAO.turno.map((c) => c.campo)) === J(["n", "entrada", "sorte", "pedido", "narrador", "cronista", "juiz", "estado"]));
+  /* MOVIDA (28/10, T3-B, o replay num caminho só): o turno ganhou `app`,
+     opcional — o que um órgão do App fez no turno, quando quem grava o
+     sabe. A intenção fica: os oito da ordem, obrigatórios e nesta ordem. */
+  t("o turno leva o que a ordem pede: a entrada, a sorte, o pedido, o Narrador, o Cronista, o Juiz e o estado", J(CAMPOS_DA_SESSAO.turno.filter((c) => c.obrigatorio).map((c) => c.campo)) === J(["n", "entrada", "sorte", "pedido", "narrador", "cronista", "juiz", "estado"]));
+  t("e, opcional, o que o App fez no turno (app, lista)", J(CAMPOS_DA_SESSAO.turno.filter((c) => !c.obrigatorio)) === J([{ campo: "app", tipo: "lista", obrigatorio: false }]));
   const { a } = pequeno();
   t("o arquivo que o gravador fez é válido", validarASessao(a).ok, J(validarASessao(a).erros));
   /* a tabela, lida de volta: tirar cada campo obrigatório dá um erro com o caminho dele */
@@ -98,7 +108,10 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
   t("cada campo obrigatório da tabela, tirado, é recusado com o caminho dele", faltas.length === 0, faltas.join(", "));
   t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o sítio pela frase", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);
-  t("e todo campo tem dono (o que não está na tabela cai no «é do App»)", typeof DONO_DO_CAMPO["*"] === "string" && /App/.test(DONO_DO_CAMPO["*"]) && ["cidadeAtual", "lugar", "jornada", "npcs", "personagem", "combate"].every((c) => DONO_DO_CAMPO[c]));
+  /* MOVIDA (28/10, T3-B): o campo sem dono deixou de ser «é do App» — o que
+     é do App está agora em AINDA_DO_APP, com o órgão; o que não está em
+     nenhuma das duas tabelas é defeito até alguém o reclamar. */
+  t("e todo campo tem dono (o que não está em nenhuma tabela é defeito «sem dono»)", typeof DONO_DO_CAMPO["*"] === "string" && /sem dono/.test(DONO_DO_CAMPO["*"]) && /defeito/.test(DONO_DO_CAMPO["*"]) && ["cidadeAtual", "lugar", "jornada", "npcs", "personagem", "combate"].every((c) => DONO_DO_CAMPO[c]));
 }
 
 sec("2. O GRAVADOR — a diferença refaz o estado, byte a byte");
@@ -156,6 +169,9 @@ sec("3. O VALIDADOR RECUSA O TORTO, COM O CAMINHO DO CAMPO");
   torto("a chave posta num campo que não é objeto", (x) => { x.turnos[1].estado.chaves = { cidadeAtual: { poe: { a: 1 } } }; }, "turnos[1].estado.chaves.cidadeAtual", /não é objeto/);
   torto("a soma num campo que não é lista", (x) => { x.turnos[1].estado.soma = { npcs: [1] }; }, "turnos[1].estado.soma.npcs", /não é lista/);
   torto("o Juiz que pede mais narrações do que o arquivo tem", (x) => { x.turnos[1].juiz.antesDoArquivo = 5; }, "turnos[1].juiz.antesDoArquivo", /só tem 1/);
+  torto("o que o App fez, sem órgão", (x) => { x.turnos[2].app = [{ campos: ["lugar"] }]; }, "turnos[2].app[0]", /órgão/);
+  torto("o que o App fez, com campos que não são caminhos", (x) => { x.turnos[2].app = [{ orgao: "viajar", campos: "lugar" }]; }, "turnos[2].app[0].campos", /caminhos/);
+  torto("o que o App fez, que não é lista", (x) => { x.turnos[2].app = { orgao: "viajar" }; }, "turnos[2].app", /lista/);
   const x = copia(a); x.futuro = { algo: 1 }; x.turnos[2].futuro = true; x.turnos[2].narrador.tom = "seco";
   t("o campo que o validador não conhece passa (o arquivo de amanhã abre hoje)", validarASessao(x).ok && J(reproduzirASessao(x).divergentes) === J(reproduzirASessao(a).divergentes));
   const r = reproduzirASessao({ ...copia(a), formato: "outro" });
@@ -175,9 +191,25 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
   t(`a 10.ª: ${R10.reproduzidos} de 77 turnos reproduzem (a medida de 28/10: 69)`, R10.turnos.length === 77 && R10.reproduzidos >= 69);
   t(`a 8.ª: ${R8.reproduzidos} de 70 (a medida de 28/10: 66)`, R8.turnos.length === 70 && R8.reproduzidos >= 66);
   t(`a 9.ª: ${R9.reproduzidos} de 47 (a medida de 28/10: 45)`, R9.turnos.length === 47 && R9.reproduzidos >= 45);
-  const raiz = (r) => [...new Set(r.turnos.filter((x) => !x.igual).flatMap((x) => x.diferencas.map((d) => d.caminho.split(/[.[]/)[0])))].sort();
-  t("na 10.ª, o que diverge é só onde o herói está (a cidade, o sítio, a estrada)", raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada"].includes(c)), J(raiz(R10)));
+  /* MOVIDA (28/10, T3-B): a divergência destas três é a do oráculo, que o
+     jogar-em-node põe no estado no lugar de um órgão do App — e a linha
+     agora o diz (`app`). Deixou de estar em `diferencas` (que são só as do
+     motor) e passou à dívida; a intenção fica: na 10.ª só onde o herói
+     está, na 8.ª e na 9.ª só a gente do registo, e o motor sem defeito. */
+  const raiz = (r) => [...new Set(r.turnos.filter((x) => !x.igual).flatMap((x) => x.divida.flatMap((d) => d.caminhos.map((c) => c.split(/[.[]/)[0]))))].sort();
+  t("na 10.ª, o que diverge é só onde o herói está (a cidade, o sítio, a estrada)", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada"].includes(c)), J(raiz(R10)));
   t("na 8.ª e na 9.ª, só a gente do registo", J(raiz(R8)) === J(["npcs"]) && J(raiz(R9)) === J(["npcs"]), J([raiz(R8), raiz(R9)]));
+  t("e o motor não tem defeito em nenhuma das três: toda divergência é dívida que a linha declara", [R10, R8, R9].every((r) => r.defeitos.length === 0 && r.turnos.filter((x) => !x.igual).every((x) => !x.diferencas.length && x.divida.length && x.divida.every((d) => d.de === "a linha"))), J([R10, R8, R9].map((r) => r.defeitos)));
+  /* O QUE O MOTOR JOGA SOZINHO (soOMotor): reproduz, e nenhum órgão do App
+     mexeu. MEDIDA (28/10, T3-B, o replay num caminho só): 68 + 62 + 45 =
+     175, o número que o jogar-em-node media pelo seu leitor. A diferença
+     para os 180 são os cinco que reproduzem com a ajuda declarada do App:
+     os quatro da luta da 8.ª (os combatentes fora do estado) e o M69 da
+     10.ª (o sítio que o App mudou e o Cronista repôs). Catraca: não desce. */
+  t(`o motor sozinho: ${R10.soOMotor} + ${R8.soOMotor} + ${R9.soOMotor} = ${R10.soOMotor + R8.soOMotor + R9.soOMotor} (a medida de 28/10: 68 + 62 + 45 = 175)`, R10.soOMotor >= 68 && R8.soOMotor >= 62 && R9.soOMotor >= 45);
+  const ajudados = (ses, r) => r.turnos.filter((x) => x.igual && x.app).map((x) => `${ses}#${x.n}`);
+  const cinco = [...ajudados("s8", R8), ...ajudados("s9", R9), ...ajudados("s10", R10)];
+  t("e a diferença para os reproduzidos são os cinco com a ajuda declarada do App: a luta da 8.ª e o M69 da 10.ª", J(cinco) === J(["s8#24", "s8#38", "s8#40", "s8#63", "s10#69"]) && R8.turnos.filter((x) => x.igual && x.app).every((x) => /a luta/.test(x.app[0].orgao)) && /moverParaLocal/.test(R10.turnos[68].app[0].orgao), J(cinco));
   const todos = [...R10.turnos, ...R8.turnos, ...R9.turnos];
   t("todo turno que diverge diz porquê, e o porquê aponta a parte do turno que é do App", todos.filter((x) => !x.igual).every((x) => x.porque.length && x.porque.every((p) => /\bApp\b/.test(p))));
   t("o juízo do Cronista sai igual em todos os 194 turnos", todos.every((x) => x.cronista && x.cronista.igual));
@@ -234,6 +266,55 @@ sec("7. LIXO NÃO DERRUBA");
   t("arquivos de lixo: o replay, o validador e a reconstrução não estouram", !estourou);
   t("o arquivo que não é objeto é recusado no caminho da raiz", validarASessao(null).erros.some((e) => e.caminho === "" && /objeto/.test(e.motivo)));
   t("o estado de um arquivo de lixo é o vazio", J(estadoNoTurno(null, 3)) === "{}");
+}
+
+sec("8. A DÍVIDA DO APP — o defeito do motor e a dívida do App, contados à parte");
+const RN = reproduzirASessao(SN);
+{
+  /* A TABELA SÓ ENCOLHE. A dívida medida em 28/10 (T3-B) sobre o arquivo que
+     o jogo gravou: catorze campos que um órgão do App escreve em todo turno
+     e nenhum passo do replay corre. Campo novo em AINDA_DO_APP quebra aqui
+     — dívida nova é órgão novo no App, e órgão novo vai para o motor. Quando
+     a trilha A trouxer um destes para o motor (e ele entrar em
+     PASSOS_DO_REPLAY), o campo reproduz, a catraca da dívida paga quebra, e
+     tira-se o campo da tabela E desta lista. */
+  const DIVIDA_DE_28_10 = ["abertura", "chao", "compasso", "desdeMundo", "elencoMem", "escada", "escuta", "estante", "lugar.coord", "mesa", "minuto", "prometido", "registro", "turnosDeMundo"];
+  const campos = AINDA_DO_APP.map((d) => d.campo);
+  console.log(`  ..  a dívida do App: ${campos.length} campos — ${campos.join(", ")}`);
+  const novos = campos.filter((c) => !DIVIDA_DE_28_10.includes(c));
+  t(`a tabela só encolhe: nenhum campo que não estava na dívida de 28/10${novos.length ? " — novos: " + novos.join(", ") : ""}`, novos.length === 0);
+  t("cada campo uma vez, com o órgão do App que o escreve e a data", new Set(campos).size === campos.length && AINDA_DO_APP.every((d) => typeof d.orgao === "string" && d.orgao.length > 10 && /^\d{2}\/\d{2}\/\d{4}$/.test(d.desde)));
+  t("nenhum campo da dívida está fora da régua (o bastidor não é dívida, é bastidor)", campos.every((c) => !FORA_DA_REGUA[c.split(".")[0]]));
+  /* a dívida paga não fica: todo campo da tabela ainda diverge no arquivo
+     que o jogo gravou */
+  const pagos = RN.divida.campos.filter((d) => !d.turnos.length).map((d) => d.campo);
+  t(`e a tabela não guarda dívida paga: todo campo dela ainda diverge na sessão do jogo${pagos.length ? " — já reproduzem: " + pagos.join(", ") : ""}`, pagos.length === 0);
+  for (const d of RN.divida.campos) console.log(`  ..    ${d.campo.padEnd(14)} turnos ${d.turnos.join(",") || "—"} · ${d.orgao.slice(0, 70)}`);
+  /* e, com a dívida à parte, o motor reproduz o jogo: zero defeitos */
+  t(`a sessão do jogo: ${RN.reproduzidos} de ${RN.turnos.length} reproduzem em tudo, e o motor não tem defeito em nenhum (a dívida à parte)`, RN.valido && RN.turnos.length === 3 && RN.defeitos.length === 0 && RN.turnos.every((x) => !x.diferencas.length && x.divida.length), J(RN.turnos.map((x) => x.diferencas.slice(0, 2))));
+  t("e cada dívida diz o órgão, no porquê do turno", RN.turnos.every((x) => x.divida.every((d) => d.de === "a tabela" && x.porque.some((p) => p.startsWith(d.campo + ": ainda do App — ")))));
+  t("a dívida tem a parte, não o campo inteiro: «lugar.coord» deixa o resto do lugar na régua do motor", () => {
+    const x = copia(SN); const L = x.turnos[1];
+    L.estado.troca = { ...L.estado.troca, lugar: { ...L.estado.troca.lugar, nome: "a casa errada" } };
+    const r = reproduzirASessao(x);
+    return J(r.defeitos) === J([2]) && r.turnos[1].diferencas.some((d) => d.caminho === "lugar.nome");
+  });
+  /* a divergência plantada num campo do motor, no arquivo do jogo, é defeito */
+  const x = copia(SN); x.turnos[1].estado.chaves = { ...x.turnos[1].estado.chaves, personagem: { poe: { moedas: 999 } } };
+  const rp = reproduzirASessao(x);
+  t("a ficha adulterada no turno 2 do jogo é DEFEITO no 2, não dívida", J(rp.defeitos) === J([2]) && rp.turnos[1].diferencas.some((d) => d.caminho === "personagem.moedas") && rp.turnos[1].porque.some((p) => /^personagem: /.test(p)));
+  /* o campo que nenhuma tabela reclama é defeito «sem dono» */
+  const y = copia(SN); y.turnos[2].estado.troca = { ...y.turnos[2].estado.troca, campoDeAmanha: 1 };
+  const ry = reproduzirASessao(y);
+  t("o campo que nenhuma tabela reclama é defeito «sem dono», não dívida", J(ry.defeitos) === J([3]) && ry.turnos[2].porque.some((p) => /^campoDeAmanha: sem dono/.test(p)));
+  /* a linha que declara o que o App fez: só os caminhos que ela nomeia */
+  const z = copia(S9); z.turnos[9].app = [{ orgao: "outro órgão", campos: ["npcs.Brina"] }];
+  const rz = reproduzirASessao(z);
+  t("a linha que declara só uma parte deixa a outra no motor (s9#10: «npcs.Brina» declarada, «npcs.Brina Pedra» não)", J(rz.defeitos) === J([10]) && rz.turnos[9].diferencas.some((d) => d.caminho === "npcs.Brina Pedra") && rz.turnos[9].divida.some((d) => d.caminhos.includes("npcs.Brina")));
+  const w = copia(S9); delete w.turnos[9].app;
+  t("e sem a declaração, a mesma divergência é defeito", J(reproduzirASessao(w).defeitos) === J([10]));
+  t("a declaração torta não passa no validador", () => { const k = copia(S9); k.turnos[9].app = [null, 3]; return !validarASessao(k).ok; });
+  t("determinismo: a sessão do jogo, duas vezes, o mesmo relatório", J(reproduzirASessao(SN)) === J(RN));
 }
 
 console.log(`\nsessão como arquivo: ${ok} passaram, ${mal} falharam`);

@@ -292,6 +292,10 @@ const jogar = async (turnos = TURNOS) => {
     const bateCidade = !alvo.cidade || sem(E.cidadeAtual) === sem(alvo.cidade);
     const bateSitio = alvo.estrada ? naEstrada : sem(sitio) === sem(alvo.lugar);
     if (moveu) passo.moveu = moveu;
+    /* o que um órgão do App fez neste turno, e o oráculo pôs no lugar dele:
+       vai à linha do arquivo (`app`), e é por ela que o replay diz que a
+       divergência é dívida do App e não defeito do motor (sessao.js) */
+    const app = [];
     if (moveu && (!bateCidade || !bateSitio)) {
       /* a régua pura moveu, e para outro sítio: é erro do motor, não falta dele */
       passo.difere.push(`o sítio pela frase levou a ${moveu}; o registo diz ${alvo.estrada ? "a estrada" : alvo.lugar || alvo.cidade || "—"}`);
@@ -299,6 +303,7 @@ const jogar = async (turnos = TURNOS) => {
       E = { ...E, cidadeAtual: alvo.cidade || E.cidadeAtual, lugar: alvo.lugar ? { nome: alvo.lugar, distancia: "dentro", cidade: alvo.cidade } : null, jornada: alvo.estrada ? { destino: E.cidadeAtual } : null };
     } else if (!bateCidade || !bateSitio) {
       passo.pendente.push(!bateCidade ? `viagem ${E.cidadeAtual} → ${alvo.cidade} (turno: viajar)` : `sítio ${sitio || "—"} → ${alvo.estrada ? "a estrada" : alvo.lugar || "—"} (turno: moverParaLocal)`);
+      app.push({ orgao: !bateCidade ? "viajar (o passo antes do Mestre)" : "moverParaLocal (o passo antes do Mestre)", campos: ["cidadeAtual", "lugar", "jornada"], o: passo.pendente[passo.pendente.length - 1] });
       /* o oráculo: o registo diz onde o turno a deixou */
       passo.oraculo = true;
       E = { ...E, cidadeAtual: alvo.cidade || E.cidadeAtual, lugar: alvo.lugar ? { nome: alvo.lugar, distancia: "dentro", cidade: alvo.cidade } : null, jornada: alvo.estrada ? { destino: E.cidadeAtual } : null };
@@ -345,7 +350,7 @@ const jogar = async (turnos = TURNOS) => {
       pedido: { pauta: pautaDoRegisto(P), envelopes: "", nomesAMao: oferecidos },
       narrador: { narrativa: resposta, mudancas: {} },
       cronista: { proposta: prop, juizo: { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } },
-      juiz, estado: E,
+      juiz, estado: E, app,
     });
   }
   return { log, fim: E, sessao };
@@ -481,8 +486,13 @@ const jogarDoCronista = (ses) => {
     const depois = new Set([...conhecidos(E), ...daLuta]);
     const faltam = [...new Set(b.conhecidos)].filter((x) => !depois.has(sem(x)));
     const sobram = [...depois].filter((x) => !esperado.has(x));
+    const app = [];
     if (faltam.length) {
       const luta = a.emLuta || b.emLuta;
+      /* a luta guarda os combatentes fora do estado: a linha diz que o App
+         os teve, sem campo nenhum a divergir; o nome à mão que este registo
+         não gravou entra no registo, e a linha diz qual */
+      if (!doCronista) app.push(luta ? { orgao: "a luta (os combatentes, que o registo conhece e a luta guarda fora do estado)", campos: [], o: faltam.join(",") } : { orgao: "os nomes à mão da pauta (que o registo do Cronista não gravou)", campos: faltam.map((n) => "npcs." + n), o: faltam.join(",") });
       if (!doCronista) passo.pendente.push(`${faltam.join(",")} (App: ${luta ? "a luta" : "os nomes à mão"})`);
       else passo.difere.push("o motor recusou: " + faltam.join(","));
       /* o oráculo: o registo diz que o jogo os conhecia */
@@ -497,7 +507,7 @@ const jogarDoCronista = (ses) => {
       pedido: { pauta: "", envelopes: a.envelopes || [] },
       narrador: { narrativa: a.narrativa, mudancas: {} },
       cronista: { proposta: prop, juizo: { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } },
-      juiz, estado: E,
+      juiz, estado: E, app,
     });
   }
   return { log, fim: E, sessao };
