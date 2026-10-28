@@ -1,16 +1,23 @@
-/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª fatia, 28/10/2026)
+/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª e 2.ª fatias, 28/10/2026)
 
    "Um cenário novo entra sem editar módulo" (mente/plano-motor.md, Fase 4).
    A 1.ª fatia tirou de dentro do motor os preços (economia.js) e as
    ocupações (classes.js PROFISSOES) e pô-los num arquivo de dados
    (`cenario-padrao.js`), que `cenario.js` valida, congela e entrega aos
-   catálogos. Esta suíte prova:
+   catálogos. A 2.ª fatia tirou os gêneros do léxico (lexico.js: o corte do
+   futuro, as marcas do gênero próprio, o gênero padrão do pedido; e
+   classes.js racasDoGenero, que espelhava o corte) e fez os ofícios do
+   léxico (PROFISSOES_DO_SISTEMA) derivarem das ocupações do cenário.
+   Esta suíte prova:
 
-   1. o dourado — o código de ANTES (f0a9fae, lido por `git archive` em
-      `gerar-cenario-dourado.mjs`) e o de agora dão a mesma resposta, byte a
-      byte, às 578 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os
-      preços comuns por fator, a pauta do preço perguntado, as doze
-      ocupações em todas as funções que as leem);
+   1. o dourado — o código de ANTES (3e7493a, lido por `git archive` em
+      `gerar-cenario-dourado.mjs`; os 578 casos da 1.ª fatia vinham do
+      f0a9fae e são iguais byte a byte) e o de agora dão a mesma resposta às
+      721 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
+      comuns por fator, a pauta do preço perguntado, as doze ocupações em
+      todas as funções que as leem; os gêneros por racasDoMundo,
+      racasDoGenero, generoProprio, o pedido do léxico, os ofícios
+      renomeados e a ficha da cidade);
    2. e a prova morde: um número mexido no cenário muda os casos que o leem;
    3. outro mundo, mínimo, muda o resultado sem tocar em módulo;
    4. o cenário inválido é recusado, com o caminho do campo na mensagem;
@@ -32,6 +39,8 @@ const P = await import(S + "profissoes.js");
 const M = await import(S + "mercado.js");
 const R = await import(S + "prontos.js");
 const L = await import(S + "loot.js");
+const LX = await import(S + "lexico.js");
+const { GENEROS } = await import(S + "constantes.js");
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -69,6 +78,34 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
   t("o incomum a ◉ 61 muda bancas semeadas", dif2.filter((id) => id.startsWith("mercado.banca.")).length > 50, String(dif2.length));
   t("o Ferreiro a +30% muda o Ferreiro (e só ele entre os ofícios)", dif2.includes("profissoes.de.Ferreiro") && dif2.includes("profissoes.de.ferreiro") && !dif2.includes("profissoes.de.Mercador"));
 
+  /* 2.ª fatia: os gêneros — cada mexida conta os casos que mudam, e só os que a leem */
+  const so = (dif, ...prefixos) => dif.every((id) => prefixos.some((p) => id.startsWith(p)));
+  const d3 = copia(DADOS_DO_CENARIO_PADRAO);
+  d3.generos.futuristas = d3.generos.futuristas.filter((g) => g !== "Cyberpunk");
+  CN.usarCenario(d3);
+  const dif3 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Cyberpunk fora do futuro muda as raças dele, nos dois catálogos", dif3.includes("lexico.genero.Cyberpunk") && dif3.includes("lexico.tabelas"), String(dif3.length));
+  t("…e o gênero próprio de quem o escolheu, e a ficha das cidades dele", dif3.filter((id) => id.startsWith("lexico.proprio.")).length >= 5 && dif3.filter((id) => id.startsWith("cidade.ficha.Cyberpunk.")).length === 12);
+  t("…e nada que não o lê (preços, ofícios, as cidades de outro gênero)", so(dif3, "lexico.", "cidade.ficha.Cyberpunk."), dif3.filter((id) => !so([id], "lexico.", "cidade.ficha.Cyberpunk.")).slice(0, 3).join());
+
+  const d4 = copia(DADOS_DO_CENARIO_PADRAO);
+  d4.generos.marcasProprias = d4.generos.marcasProprias.filter((x) => !x.includes("zumbi"));
+  CN.usarCenario(d4);
+  const dif4 = diferentes(await fotografarOsCatalogos(SRC));
+  t("sem a marca dos zumbis, só a descrição dos zumbis muda", dif4.length === 1 && dif4[0] === "lexico.proprio.Zumbis no interior.", dif4.join());
+
+  const d5 = copia(DADOS_DO_CENARIO_PADRAO);
+  d5.generos.padrao = "Fantasia sombria";
+  CN.usarCenario(d5);
+  const dif5 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o gênero padrão muda só o pedido de quem não disse o seu", dif5.length > 0 && so(dif5, "lexico.pedido.") && !dif5.some((id) => id.startsWith("lexico.pedido.Cyberpunk") || id.startsWith("lexico.pedido.Fantasia medieval")), dif5.join());
+
+  const d6 = copia(DADOS_DO_CENARIO_PADRAO);
+  d6.ocupacoes[0].nome = "Ferreira";
+  CN.usarCenario(d6);
+  const dif6 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Ferreiro renomeado no cenário muda os ofícios do léxico (sem tocar em lexico.js)", dif6.includes("lexico.tabelas") && dif6.includes("lexico.oficios.completo") && dif6.includes("lexico.pedido.inteiro"), String(dif6.length));
+
   CN.usarCenario(CN.CENARIO_PADRAO);
   t("de volta ao padrão, o dourado fecha outra vez", diferentes(await fotografarOsCatalogos(SRC)).length === 0);
 }
@@ -92,6 +129,11 @@ const ORBITA = {
     { nome: "Mecânico", desc: "Mantém o casco inteiro.", beneficio: "Mãos de oficina: a bancada de utilitários fica 4 mais fácil.", efeito: { bancada: { utilitario: 4 } } },
     { nome: "Piloto", desc: "Leva a nave entre os destroços.", beneficio: "Olho de rota: +6 na navegação.", efeito: { navegar: 6, compra: 0.1 } },
   ],
+  generos: {
+    padrao: "Ópera de estação",
+    futuristas: ["Ópera de estação", "Ficção científica"],
+    marcasProprias: ["\\bvacuo\\b", "\\bestac(ao|oes)\\b"],
+  },
 };
 
 sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
@@ -110,6 +152,18 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("o Piloto navega e compra melhor", P.bonusDeNavegacao({ profissao: "Piloto" }) === 6 && P.precoDeCompraPara({ profissao: "Piloto" }, 100) === 90);
   t("o montador de prontos conhece o mundo novo", R.profissaoValida("Piloto") && !R.profissaoValida("Mercador"));
 
+  /* 2.ª fatia: os gêneros e os ofícios do léxico são os dela */
+  t("o corte do futuro é o dela", LX.GENEROS_FUTURISTAS.join() === "Ópera de estação,Ficção científica");
+  t("a ópera de estação mostra as origens do futuro, nos dois catálogos", LX.racasDoMundo("Ópera de estação") === LX.GRUPOS_DE_RACA.futuro && C.racasDoGenero("Ópera de estação").map((r) => r.nome).join() === LX.GRUPOS_DE_RACA.futuro.join());
+  t("e o Cyberpunk, que ela não pôs no futuro, volta às raças de fantasia", LX.racasDoMundo("Cyberpunk") === LX.GRUPOS_DE_RACA.fantasia && C.racasDoGenero("Cyberpunk").map((r) => r.nome).join() === LX.GRUPOS_DE_RACA.fantasia.join());
+  t("as marcas do gênero próprio são as dela (sem acento nem caixa)", LX.generoProprio({ genero: "Fantasia medieval", descricao: "O VÁCUO lá fora." }) && LX.generoProprio({ genero: "", descricao: "Três estações mineiras." }) && !LX.generoProprio({ genero: "Fantasia medieval", descricao: "Um anime de naves." }));
+  t("os ofícios do léxico são os dela", LX.PROFISSOES_DO_SISTEMA.join() === "Mecânico,Piloto" && Object.isFrozen(LX.PROFISSOES_DO_SISTEMA));
+  const ped = LX.pedidoDoLexico({});
+  t("o pedido do léxico assume o gênero dela e pede nome para os ofícios dela", ped.includes("· Gênero: Ópera de estação") && ped.includes("<UM de: Mecânico, Piloto>") && !ped.includes("Ferreiro"));
+  const lexO = { profissoes: [{ profissao: "mecânico", chamado: "Chave-Inglesa" }, { profissao: "Piloto", chamado: "Ás do Cinturão" }] };
+  t("o léxico gerado para os dois ofícios dela não se perde (o tudo-ou-nada conta os dela)", LX.garantirLexico(lexO).profissoes.length === 2 && LX.profissaoNaFicha(lexO, "Mecânico", true) === "Chave-Inglesa (Mecânico)");
+  t("e o banco dos doze da Taverna não vale aqui", LX.garantirLexico({ profissoes: CN.CENARIO_PADRAO.ocupacoes.map((o) => ({ profissao: o.nome, chamado: "x " + o.nome })) }).profissoes.length === 0);
+
   /* determinismo: a mesma semente e o mesmo mundo, duas vezes */
   const banca = (s) => M.gerarMercador({ cidade: { nome: "Doca", porte: "cidade" }, semente: s, nivel: 4 });
   const a = banca("orbita|1"), b = banca("orbita|1");
@@ -118,6 +172,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   const p = banca("orbita|1");
   t("a mesma semente noutro mundo: as mesmas coisas, outros preços", a.estoque.map((x) => x.nome).join() === p.estoque.map((x) => x.nome).join() && a.estoque.map((x) => x.preco).join() !== p.estoque.map((x) => x.preco).join());
   t("e de volta ao padrão, tudo como era", C.PROFISSOES.length === 12 && E.precoComum("caneca") === 1 && E.valorDeItem({ raridade: "raro" }) === 220);
+  t("…o léxico também (os doze, o corte do futuro, o gênero padrão)", LX.PROFISSOES_DO_SISTEMA.length === 12 && LX.GENEROS_FUTURISTAS.includes("Cyberpunk") && LX.generoProprio({ descricao: "um anime" }) && LX.pedidoDoLexico({}).includes("· Gênero: Fantasia medieval"));
 }
 
 sec("4. o cenário inválido é recusado, e diz onde");
@@ -147,6 +202,15 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("fração que não é fração", (d) => { d.ocupacoes[1].efeito.compra = 1.5; }, "ocupacoes[1].efeito.compra: devia ser fração");
   caso("mundo sem ocupação", (d) => { d.ocupacoes = []; }, "ao menos 1 ocupação");
   caso("formato de outro motor", (d) => { d.formato = 2; }, "lê o formato 1");
+  /* 2.ª fatia: os gêneros */
+  caso("faltam os gêneros", (d) => { delete d.generos; }, "generos: falta (objeto)");
+  caso("falta o gênero padrão", (d) => { delete d.generos.padrao; }, "generos.padrao: falta");
+  caso("gênero padrão vazio", (d) => { d.generos.padrao = "  "; }, "generos.padrao: devia ser texto");
+  caso("o futuro que não é lista", (d) => { d.generos.futuristas = "Cyberpunk"; }, "generos.futuristas: devia ser lista de textos");
+  caso("um gênero do futuro que não é texto", (d) => { d.generos.futuristas = ["Ficção científica", 7]; }, "generos.futuristas[1]: devia ser texto");
+  caso("uma marca que não compila diz qual", (d) => { d.generos.marcasProprias = ["\\bvacuo\\b", "(estacao"]; }, "generos.marcasProprias[1]: devia ser texto de uma regex válida");
+  caso("uma marca como regex literal", (d) => { d.generos.marcasProprias = [/vacuo/]; }, "generos.marcasProprias[0]: não é dado de JSON (regex literal");
+  caso("um campo dos gêneros que o motor não lê", (d) => { d.generos.racas = []; }, "generos.racas: campo desconhecido");
   const v = CN.validarCenario({ formato: 1, id: "x" });
   t("a validação devolve todos os erros de uma vez", !v.ok && v.erros.length >= 3 && v.erros.some((e) => e.startsWith("nome")) && v.erros.some((e) => e.startsWith("precos")) && v.erros.some((e) => e.startsWith("ocupacoes")));
   t("o padrão e o mundo de teste passam", CN.validarCenario(DADOS_DO_CENARIO_PADRAO).ok && CN.validarCenario(ORBITA).ok);
@@ -154,7 +218,7 @@ sec("4. o cenário inválido é recusado, e diz onde");
   const antes = CN.cenarioAtivo();
   let caiu = false;
   try { CN.usarCenario({ ...copia(ORBITA), ocupacoes: [] }); } catch { caiu = true; }
-  t("trocar por um mundo inválido não troca nada", caiu && CN.cenarioAtivo() === antes && C.PROFISSOES.length === 12);
+  t("trocar por um mundo inválido não troca nada", caiu && CN.cenarioAtivo() === antes && C.PROFISSOES.length === 12 && LX.PROFISSOES_DO_SISTEMA.length === 12);
 }
 
 sec("5. imutabilidade e determinismo");
@@ -184,6 +248,15 @@ sec("6. o esquema lê de volta o que o motor consome");
   const lidos = new Set([...fonteProf.matchAll(/efeitoDe\(pers\)\.(\w+)/g)].map((m) => m[1]));
   t("o vocabulário do efeito é o que profissoes.js lê, nem mais nem menos", [...lidos].sort().join() === Object.keys(EQ.efeito).sort().join(), [...lidos].sort().join());
   t("toda ocupação do padrão usa só o vocabulário", CN.CENARIO_PADRAO.ocupacoes.every((o) => Object.keys(o.efeito).every((k) => k in EQ.efeito)));
+  /* 2.ª fatia: os gêneros do padrão são os da criação, e a tabela é uma só */
+  const rotulos = GENEROS.map((g) => g.label);
+  t("o gênero padrão e os do futuro são gêneros da criação (constantes.js GENEROS)", rotulos.includes(CN.CENARIO_PADRAO.generos.padrao) && CN.CENARIO_PADRAO.generos.futuristas.every((g) => rotulos.includes(g)));
+  t("o léxico e a criação nunca discordam do corte (todos os gêneros, dois mundos)", [CN.CENARIO_PADRAO, CN.carregarCenario(ORBITA)].every((m) => { CN.usarCenario(m); return [...rotulos, "Ópera de estação", "", "x"].every((g) => LX.racasDoMundo(g).join() === C.racasDoGenero(g).map((r) => r.nome).join()); }));
+  CN.usarCenario(CN.CENARIO_PADRAO);
+  t("as marcas do padrão estão escritas sem acento (a descrição é comparada assim)", CN.CENARIO_PADRAO.generos.marcasProprias.every((rx) => rx === rx.normalize("NFD").replace(/[\u0300-\u036f]/g, "") && rx === rx.toLowerCase()));
+  const fonteLex = fs.readFileSync(path.join(SRC, "lexico.js"), "utf8"), fonteCla = fs.readFileSync(path.join(SRC, "classes.js"), "utf8");
+  t("nenhuma lista literal ficou para trás (os doze, o corte do futuro, as marcas)", !fonteLex.includes('"Caçador de Recompensas"') && !fonteLex.includes('"Pós-apocalíptico"') && !fonteCla.includes('"Pós-apocalíptico"') && !fonteLex.includes("solo leveling"));
+  t("os ofícios do léxico são os nomes das ocupações, na ordem delas", LX.PROFISSOES_DO_SISTEMA.join() === CN.CENARIO_PADRAO.ocupacoes.map((o) => o.nome).join());
   t("as faixas do padrão estão escritas na escala que o Narrador lê", CN.CENARIO_PADRAO.precos.comuns.filter((c) => c.faixa && c.faixa[0] !== c.faixa[1]).every((c) => E.ECONOMIA_PROMPT.includes(`◉ ${c.faixa[0]}–${c.faixa[1]}`)));
 
   /* um catálogo que estoura a meio da troca não deixa meio mundo de cada lado */

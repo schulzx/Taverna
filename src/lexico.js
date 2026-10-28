@@ -227,6 +227,7 @@ export const MENTES = ["besta", "morto", "pensa"];
    importada de propósito — o léxico não deve depender do catálogo de
    equipamento para carregar —, e um teste confere que as duas batem. */
 import { FORMAS as FORMAS_MECANICAS } from "./itens.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 export const FORMAS_DO_EQUIPAMENTO = [
   "arma_leve_uma", "arma_simples_uma", "arma_simples_dist",
@@ -262,10 +263,13 @@ export const DEGRAUS_DE_AFIXO = [
   { n: 4, o: "a coisa mais rara que este mundo produz — uma por geração" },
 ];
 
-export const PROFISSOES_DO_SISTEMA = [
-  "Ferreiro", "Alquimista", "Herborista", "Cartógrafo", "Escriba", "Cozinheiro",
-  "Joalheiro", "Curtidor", "Minerador", "Caçador de Recompensas", "Mercador", "Médico de Campo",
-];
+/* T4-B (28/10, 2.ª fatia): os ofícios que o léxico renomeia SÃO os nomes
+   das ocupações do cenário (cenario-padrao.js `ocupacoes`), e não uma
+   segunda lista dos doze: num mundo com outros ofícios, a lista literal
+   pedia ao Léxico nomes para o Ferreiro que lá não existe, e o tudo-ou-nada
+   de `garantirLexico` deitava fora o banco inteiro. Lê-se do cenário (e
+   não de classes.js), porque o léxico não carrega o catálogo de classes. */
+export let PROFISSOES_DO_SISTEMA = [];
 
 /* v9.166: AS RAÇAS TÊM DOIS GRUPOS, e o tudo-ou-nada passa a ser POR
    GRUPO. O defeito que isto conserta: o pedido exigia renomear AS
@@ -288,8 +292,10 @@ export const GRUPOS_DE_RACA = {
   fantasia: ["Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath"],
   futuro: ["Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante"],
 };
-/* espelha o corte de racasDoGenero em classes.js — literal, testado */
-export const GENEROS_FUTURISTAS = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"];
+/* T4-B (28/10, 2.ª fatia): o corte do futuro mora no cenário
+   (`generos.futuristas`), e racasDoGenero em classes.js lê o mesmo — eram
+   duas listas literais espelhadas por um teste, agora é uma tabela só. */
+export let GENEROS_FUTURISTAS = [];
 export const racasDoMundo = (genero) => (GENEROS_FUTURISTAS.includes(String(genero || "")) ? GRUPOS_DE_RACA.futuro : GRUPOS_DE_RACA.fantasia);
 export const RACAS_DO_SISTEMA = [...GRUPOS_DE_RACA.fantasia, ...GRUPOS_DE_RACA.futuro];
 
@@ -694,14 +700,19 @@ export function racasRenomeadas(l) { return garantirLexico(l).racas; }
    e é a LEITURA que muda — um save antigo passa a mostrar "Humano" sem
    migração nenhuma. */
 /* as marcas, na descrição, de um mundo que não é a fantasia clássica: a obra
-   citada e o tempo moderno ou futuro. Comparadas sem acento e sem caixa. */
-const MARCAS_DE_GENERO_PROPRIO = [
-  /\bsolo leveling\b/, /\banimes?\b/, /\bmangas?\b/, /\bmanhwas?\b/, /\bisekai\b/,
-  /\bcyberpunk\b/, /\bficcao cientifica\b/, /\bsci-?fi\b/, /\bfutur\w*/, /\bnaves?\b/,
-  /\bespacia\w*/, /\bgalax\w*/, /\bplanetas?\b/, /\bmodern[oa]s?\b/, /\bcontemporane\w*/,
-  /\bmetro\b/, /\barranha-ceus?\b/, /\bcelulares?\b/, /\binternet\b/, /\bpos-apocal\w*/,
-  /\bzumbis?\b/, /\binspirad[oa] em\b/, /\bbasead[oa] em\b/, /\buniverso de\b/, /\bno estilo de\b/,
-];
+   citada e o tempo moderno ou futuro. Comparadas sem acento e sem caixa.
+   T4-B (28/10, 2.ª fatia): moram no cenário (`generos.marcasProprias`, o
+   texto de cada regex), com o gênero padrão do pedido; aqui só se compilam.
+   A assinatura fica DEPOIS destas declarações porque `aoTrocarDeCenario`
+   chama já com o mundo em uso, e um `let` ainda não declarado estoura. */
+let MARCAS_DE_GENERO_PROPRIO = [];
+let GENERO_PADRAO = "";
+aoTrocarDeCenario((c) => {
+  PROFISSOES_DO_SISTEMA = Object.freeze(c.ocupacoes.map((o) => o.nome));
+  GENEROS_FUTURISTAS = c.generos.futuristas;
+  MARCAS_DE_GENERO_PROPRIO = Object.freeze(c.generos.marcasProprias.map((rx) => new RegExp(rx)));
+  GENERO_PADRAO = c.generos.padrao;
+});
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 export function generoProprio(mundo) {
   const m = mundo && typeof mundo === "object" ? mundo : {};
@@ -764,7 +775,7 @@ export function comoFunciona(l, id) { return garantirLexico(l).funciona[id] || "
    governar a campanha inteira. Vale o gasto. */
 export function pedidoDoLexico(mundo) {
   const m = mundo || {};
-  const genero = limpar(m.genero, 60) || "Fantasia medieval";
+  const genero = limpar(m.genero, 60) || GENERO_PADRAO;
   const desc = limpar(m.descricao, 1200);
   return `Você é o Léxico: quem decide como um mundo de RPG se chama e como ele funciona, antes de a primeira cena existir.
 

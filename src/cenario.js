@@ -24,6 +24,14 @@
      motor não lê também é recusado — um mundo escrito e que não acontece é
      o export morto do autor.
 
+   AS SECÇÕES: `precos` e `ocupacoes` (1.ª fatia: economia.js, classes.js);
+   `generos` (2.ª fatia: lexico.js e classes.js — o gênero que se assume
+   quando o mundo não diz o seu, os gêneros cuja gente é a do futuro, e as
+   marcas que, na descrição, fazem o mundo sair da fantasia clássica). Os
+   ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
+   secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
+   ofícios não perca o léxico gerado.
+
    COMO OS CATÁLOGOS LEEM: cada catálogo assina `aoTrocarDeCenario(fn)` e
    deriva dali as suas tabelas, que exporta como antes (economia.js
    PRECOS_COMUNS, classes.js PROFISSOES…, agora `export let`: a ligação viva
@@ -43,7 +51,7 @@ import { DADOS_DO_CENARIO_PADRAO } from "./cenario-padrao.js";
    seu tipo (um nome de `TIPOS`, abaixo); `?` no fim é campo opcional. */
 export const ESQUEMA_DO_CENARIO = Object.freeze({
   formato: 1,
-  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista" }),
+  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto" }),
   precos: Object.freeze({ escala: "textos", raridade: "objeto", semRaridade: "preco", miudeza: "preco", comuns: "lista" }),
   /* as raridades do motor (loot.js RARIDADES): as cinco que se vendem têm
      preço obrigatório; a única não se compra em banca, e o preço é opcional */
@@ -53,6 +61,14 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   /* o vocabulário do ofício (classes.js, PROFISSOES): cada campo tem UM
      ponto de consumo em profissoes.js; um nome fora daqui não faria nada */
   efeito: Object.freeze({ bancada: "mapa?", colher: "numero?", navegar: "numero?", teste: "mapa?", curaDescanso: "numero?", curaGrupo: "numero?", venda: "fracao?", compra: "fracao?", espolio: "fracao?", despojos: "numero?" }),
+  /* os gêneros (lexico.js, classes.js racasDoGenero): `padrao` é o que o
+     pedido do léxico assume quando o mundo não diz o seu; `futuristas`, os
+     gêneros cuja gente é a do futuro (as origens, e não as raças de
+     fantasia); `marcasProprias`, os textos das regexes que, na descrição
+     (comparada sem acento e sem caixa), fazem o mundo de gênero próprio —
+     e a ficha passa a dizer "Caçador Desperto (Humano)". As duas listas
+     podem vir vazias: um mundo sem futuro, ou sem marca nenhuma. */
+  generos: Object.freeze({ padrao: "texto", futuristas: "textos", marcasProprias: "regexes" }),
   /* os mínimos: a criação abre na primeira ocupação, e a rua mostra ao menos uma coisa */
   minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1 }),
 });
@@ -75,6 +91,7 @@ const TIPOS = {
   mapa: [(v) => ehObj(v) && Object.values(v).every(ehNum), "objeto de números"],
   faixa: [(v) => v === null || (Array.isArray(v) && v.length === 2 && v.every(ehNum) && v[0] <= v[1]), "[mínimo, máximo] ou null"],
   regex: [regexOk, "texto de uma regex válida"],
+  regexes: [(v) => Array.isArray(v) && v.every(regexOk), "lista de textos de regex válidas"],
 };
 
 /* só o que o JSON tem — o arquivo de um autor não carrega código */
@@ -136,6 +153,13 @@ export function validarCenario(dados) {
       if (ehObj(o.efeito)) conferir(o.efeito, E.efeito, `${onde}.efeito`, erros);
       if (ehTexto(o.nome)) { const n = o.nome.toLowerCase(); if (nomes.has(n)) erros.push(`${onde}.nome: "${o.nome}" repetido`); nomes.add(n); }
     });
+  }
+  const ge = dados.generos;
+  if (ehObj(ge)) {
+    conferir(ge, E.generos, "generos", erros);
+    /* a lista torta diz QUAL linha está torta, não só que a lista está */
+    if (Array.isArray(ge.marcasProprias)) ge.marcasProprias.forEach((rx, i) => { if (!regexOk(rx)) erros.push(`generos.marcasProprias[${i}]: devia ser texto de uma regex válida`); });
+    if (Array.isArray(ge.futuristas)) ge.futuristas.forEach((g, i) => { if (!ehTexto(g)) erros.push(`generos.futuristas[${i}]: devia ser texto`); });
   }
   return { ok: erros.length === 0, erros };
 }

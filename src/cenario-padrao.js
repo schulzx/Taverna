@@ -18,8 +18,8 @@
    pede `with { type: "json" }` no Node e não no Vite, e o mesmo arquivo tem
    de abrir igual nos dois.
 
-   As secções desta fatia (as outras chegam nas seguintes — nomes, deuses,
-   bestiário, gêneros —, e o validador recusa hoje o campo que o motor ainda
+   As secções até aqui (as outras chegam nas seguintes — nomes, deuses,
+   bestiário —, e o validador recusa hoje o campo que o motor ainda
    não lê, para ninguém escrever um mundo que não acontece):
      precos.escala      as linhas da escala de riqueza que o Narrador lê
                         (o meio do ECONOMIA_PROMPT; o começo e o fim são
@@ -33,7 +33,17 @@
                         cena mostra sem ninguém perguntar
      ocupacoes          os ofícios da criação: `beneficio` é a frase da tela,
                         `efeito` o que o código faz (o vocabulário está em
-                        cenario.js, ESQUEMA_DO_CENARIO.efeito)
+                        cenario.js, ESQUEMA_DO_CENARIO.efeito); os nomes
+                        são também os ofícios que o léxico gerado renomeia
+     generos.padrao     o gênero que o pedido do léxico assume quando o
+                        mundo não diz o seu
+     generos.futuristas os gêneros cuja gente é a do futuro (a criação mostra
+                        as origens — Terrano, Sintético… — e não as raças de
+                        fantasia; o léxico pede nome só para essas)
+     generos.marcasProprias  as marcas, na descrição, de um mundo que não é a
+                        fantasia clássica (a obra citada, o tempo moderno ou
+                        futuro): texto de regex, comparado SEM acento e sem
+                        caixa — escreva-as assim
    ============================================================ */
 export const DADOS_DO_CENARIO_PADRAO = {
   formato: 1,
@@ -79,4 +89,15 @@ export const DADOS_DO_CENARIO_PADRAO = {
     { nome: "Mercador", desc: "Compra barato, vende caro, conhece todo mundo.", beneficio: "Conhece todo mundo: 20% de desconto na compra e +15% na venda.", efeito: { compra: 0.2, venda: 0.15 } },
     { nome: "Médico de Campo", desc: "Estanca sangue e remenda ossos sem magia.", beneficio: "Remenda sem magia: +4 PV para você em cada descanso e +2 para cada companheiro.", efeito: { curaDescanso: 4, curaGrupo: 2 } },
   ],
+  generos: {
+    padrao: "Fantasia medieval",
+    futuristas: ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"],
+    marcasProprias: [
+      "\\bsolo leveling\\b", "\\banimes?\\b", "\\bmangas?\\b", "\\bmanhwas?\\b", "\\bisekai\\b",
+      "\\bcyberpunk\\b", "\\bficcao cientifica\\b", "\\bsci-?fi\\b", "\\bfutur\\w*", "\\bnaves?\\b",
+      "\\bespacia\\w*", "\\bgalax\\w*", "\\bplanetas?\\b", "\\bmodern[oa]s?\\b", "\\bcontemporane\\w*",
+      "\\bmetro\\b", "\\barranha-ceus?\\b", "\\bcelulares?\\b", "\\binternet\\b", "\\bpos-apocal\\w*",
+      "\\bzumbis?\\b", "\\binspirad[oa] em\\b", "\\bbasead[oa] em\\b", "\\buniverso de\\b", "\\bno estilo de\\b",
+    ],
+  },
 };

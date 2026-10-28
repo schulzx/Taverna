@@ -386,7 +386,10 @@ export let PROFISSOES = [];
    (`ocupacoes`, cenario-padrao.js); o vocabulário acima é o que o validador
    de cenario.js aceita em `efeito` (ESQUEMA_DO_CENARIO.efeito). A tabela
    sai congelada, com o mesmo nome, e refaz-se quando o cenário troca. */
-aoTrocarDeCenario((c) => { PROFISSOES = c.ocupacoes; });
+/* 2.ª fatia: o corte do futuro (`generos.futuristas`) é o mesmo que o
+   léxico lê — racasDoGenero e lexico.js racasDoMundo nunca discordam */
+let FUTURISTAS = [];
+aoTrocarDeCenario((c) => { PROFISSOES = c.ocupacoes; FUTURISTAS = c.generos.futuristas; });
 
 /* ---------------- API ---------------- */
 export function classePorNome(n) { return CLASSES.find((c) => c.nome === n) || null; }
@@ -394,8 +397,7 @@ export function racaPorNome(n) { return [...RACAS, ...ORIGENS].find((r) => r.nom
 
 /* Raças disponíveis conforme o gênero do mundo */
 export function racasDoGenero(genero) {
-  const futurista = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"];
-  return futurista.includes(genero) ? ORIGENS : RACAS;
+  return FUTURISTAS.includes(genero) ? ORIGENS : RACAS;
 }
 
 /* Habilidades que o personagem PODE escolher agora (nível suficiente e ainda não possui) */
