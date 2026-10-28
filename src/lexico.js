@@ -285,19 +285,19 @@ export let PROFISSOES_DO_SISTEMA = [];
    tudo ou nada, porque é dentro dele que a metade renomeada denuncia
    a outra — os dois grupos nunca aparecem na mesma ficha.
 
-   A lista é literal em vez de importada de classes.js de propósito
-   (o léxico não deve carregar o catálogo de classes), e um teste
-   confere que as duas batem — o mesmo contrato do equipamento. */
-export const GRUPOS_DE_RACA = {
-  fantasia: ["Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato", "Tiefling", "Gnomo", "Meio-elfo", "Goliath"],
-  futuro: ["Terrano", "Colono Orbital", "Sintético", "Mutante", "Cromado", "Vagante"],
-};
+   T4-B (28/10, 5.ª fatia): os dois grupos são os nomes das raças do
+   cenário (`racas.fantasia` e `racas.futuro`, cenario-padrao.js), lidos do
+   cenário e não de classes.js — o léxico não carrega o catálogo de
+   classes. Eram duas listas literais espelhadas por um teste; agora a
+   criação e o léxico leem a mesma tabela, e um mundo com outras raças
+   pede nome para as dele. */
+export let GRUPOS_DE_RACA = { fantasia: [], futuro: [] };
 /* T4-B (28/10, 2.ª fatia): o corte do futuro mora no cenário
    (`generos.futuristas`), e racasDoGenero em classes.js lê o mesmo — eram
    duas listas literais espelhadas por um teste, agora é uma tabela só. */
 export let GENEROS_FUTURISTAS = [];
 export const racasDoMundo = (genero) => (GENEROS_FUTURISTAS.includes(String(genero || "")) ? GRUPOS_DE_RACA.futuro : GRUPOS_DE_RACA.fantasia);
-export const RACAS_DO_SISTEMA = [...GRUPOS_DE_RACA.fantasia, ...GRUPOS_DE_RACA.futuro];
+export let RACAS_DO_SISTEMA = [];
 
 /* ---------------- COMO AS COISAS FUNCIONAM ----------------
    Cada entrada aponta para um SISTEMA que já existe no código e diz
@@ -712,6 +712,8 @@ aoTrocarDeCenario((c) => {
   GENEROS_FUTURISTAS = c.generos.futuristas;
   MARCAS_DE_GENERO_PROPRIO = Object.freeze(c.generos.marcasProprias.map((rx) => new RegExp(rx)));
   GENERO_PADRAO = c.generos.padrao;
+  GRUPOS_DE_RACA = Object.freeze({ fantasia: Object.freeze(c.racas.fantasia.map((r) => r.nome)), futuro: Object.freeze(c.racas.futuro.map((r) => r.nome)) });
+  RACAS_DO_SISTEMA = Object.freeze([...GRUPOS_DE_RACA.fantasia, ...GRUPOS_DE_RACA.futuro]);
 });
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 export function generoProprio(mundo) {

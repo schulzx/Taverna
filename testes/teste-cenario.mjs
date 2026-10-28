@@ -1,4 +1,4 @@
-/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 4.ª fatias, 28/10/2026)
+/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 5.ª fatias, 28/10/2026)
 
    "Um cenário novo entra sem editar módulo" (mente/plano-motor.md, Fase 4).
    A 1.ª fatia tirou de dentro do motor os preços (economia.js) e as
@@ -12,13 +12,18 @@
    por gênero), que o motor lê por mundo-base.js sem que este mude. A 4.ª
    tirou a gente (nomes.js: os bancos de nome, os povos, os ofícios e os
    traços do elenco) e o céu (divindades.js: as metades do nome de um
-   deus, os domínios, os cultos) — e a regra dos deuses ficou no código.
+   deus, os domínios, os cultos) — e a regra dos deuses ficou no código. A
+   5.ª tirou os lugares (toponimia.js: as palavras da taverna e de cada tipo
+   de local, por gênero), as raças da criação (classes.js RACAS e ORIGENS,
+   lexico.js GRUPOS_DE_RACA) e, do céu, os títulos dos graus (que o
+   DIVINDADE_PROMPT repetia à mão) e o sinal de cada temperamento.
    Esta suíte prova:
 
-   1. o dourado — o código de ANTES (1cfc08a, lido por `git archive` em
+   1. o dourado — o código de ANTES (aea9587, lido por `git archive` em
       `gerar-cenario-dourado.mjs`; os 578 casos da 1.ª fatia vinham do
-      f0a9fae, os 143 da 2.ª do 3e7493a, os 102 da 3.ª do 9068a93, e são
-      iguais byte a byte) e o de agora dão a mesma resposta às 871 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
+      f0a9fae, os 143 da 2.ª do 3e7493a, os 102 da 3.ª do 9068a93, os 48 da
+      4.ª do 1cfc08a, e são iguais byte a byte) e o de agora dão a mesma
+      resposta às 940 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
       comuns por fator, a pauta do preço perguntado, as doze ocupações em
       todas as funções que as leem; os gêneros por racasDoMundo,
       racasDoGenero, generoProprio, o pedido do léxico, os ofícios
@@ -26,7 +31,11 @@
       a criatura na frase, a ficha da masmorra, 40 masmorras semeadas, os
       bichos e os chefes do mundo; os nomes por gênero, o sexo de um nome,
       os nomes à mão, a gente dos locais, e 60 deuses, 20 panteões e 40
-      eventos semeados);
+      eventos semeados; os nomes de taverna e de local por 13 gêneros e os
+      locais de 16 cidades; as 16 raças pelo catálogo, pelos traços, pela
+      ficha de criação, pelo companheiro, pelos prontos e pelo léxico; a
+      escala divina, o prompt dela, os títulos e 144 eventos de deuses de
+      temperamento marcado);
    2. e a prova morde: um número mexido no cenário muda os casos que o leem;
    3. outro mundo, mínimo, muda o resultado sem tocar em módulo;
    4. o cenário inválido é recusado, com o caminho do campo na mensagem;
@@ -49,7 +58,7 @@ const M = await import(S + "mercado.js");
 const R = await import(S + "prontos.js");
 const L = await import(S + "loot.js");
 const LX = await import(S + "lexico.js");
-const { GENEROS } = await import(S + "constantes.js");
+const { GENEROS, ATRIBUTOS } = await import(S + "constantes.js");
 const B = await import(S + "bestiario.js");
 const EM = await import(S + "emboscada.js");
 const MA = await import(S + "masmorras.js");
@@ -58,6 +67,12 @@ const DN = await import(S + "danos.js");
 const NM = await import(S + "nomes.js");
 const DV = await import(S + "divindades.js");
 const G = await import(S + "geografia.js");
+const TP = await import(S + "toponimia.js");
+const TR = await import(S + "tracos.js");
+const AT = await import(S + "atributos.js");
+const CP = await import(S + "companheiros.js");
+const MB = await import(S + "mundo-base.js");
+const CD = await import(S + "condicoes.js");
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -118,9 +133,13 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
      banco da fantasia (os mesmos nomes): o que muda é o pedido, como antes,
      e a lista dos gêneros com banco, que ganhou um. */
   d5.gente.bancos["Fantasia sombria"] = d5.gente.bancos["Fantasia medieval"];
+  /* 5.ª fatia: e o mesmo vale para os lugares — o padrão sem banco de lugares
+     é recusado; com as mesmas palavras da fantasia, muda só a lista dos
+     gêneros com banco (`topo.generos`), que ganhou um, como a dos nomes */
+  d5.lugares.bancos["Fantasia sombria"] = d5.lugares.bancos["Fantasia medieval"];
   CN.usarCenario(d5);
   const dif5 = diferentes(await fotografarOsCatalogos(SRC));
-  t("o gênero padrão muda só o pedido de quem não disse o seu", dif5.length > 0 && so(dif5, "lexico.pedido.", "nomes.generos") && dif5.includes("nomes.generos") && !dif5.some((id) => id.startsWith("lexico.pedido.Cyberpunk") || id.startsWith("lexico.pedido.Fantasia medieval")), dif5.join());
+  t("o gênero padrão muda só o pedido de quem não disse o seu", dif5.length > 0 && so(dif5, "lexico.pedido.", "nomes.generos", "topo.generos") && dif5.includes("nomes.generos") && dif5.includes("topo.generos") && !dif5.some((id) => id.startsWith("lexico.pedido.Cyberpunk") || id.startsWith("lexico.pedido.Fantasia medieval")), dif5.join());
 
   const d6 = copia(DADOS_DO_CENARIO_PADRAO);
   d6.ocupacoes[0].nome = "Ferreira";
@@ -188,6 +207,49 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
   const dif16 = diferentes(await fotografarOsCatalogos(SRC));
   t("um culto a menos e uma sílaba trocada mudam o céu, e só o céu", dif16.length === 3 && so(dif16, "divindades."), dif16.join());
 
+  /* 5.ª fatia: os lugares, as raças e as palavras do céu */
+  const d17 = copia(DADOS_DO_CENARIO_PADRAO);
+  { const sb = d17.lugares.bancos["Fantasia medieval"].subst; sb[sb.indexOf("Javali|m")] = "Javalina|f"; }
+  CN.usarCenario(d17);
+  const dif17 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Javali que vira Javalina muda as tavernas da fantasia e de quem cai no banco do padrão — e só os lugares", dif17.includes("topo.genero.null") && dif17.filter((id) => id.startsWith("topo.genero.")).length >= 3 && !dif17.includes("topo.genero.Cyberpunk") && !dif17.includes("topo.genero.Ficção científica") && so(dif17, "topo.genero.", "mundo.locais.", "cidade.ficha."), dif17.join());
+  t("…e a ficha da cidade, que diz o nome da taverna", dif17.some((id) => id.startsWith("cidade.ficha.")));
+  const d18 = copia(DADOS_DO_CENARIO_PADRAO);
+  d18.lugares.tipos.mercado = d18.lugares.tipos.mercado.slice(1);
+  CN.usarCenario(d18);
+  const dif18 = diferentes(await fotografarOsCatalogos(SRC));
+  t("um sinônimo de mercado a menos muda os nomes de local de todo gênero e os mercados das cidades", dif18.filter((id) => id.startsWith("topo.genero.")).length === 13 && dif18.some((id) => id.startsWith("mundo.locais.")) && so(dif18, "topo.", "mundo.locais.", "mundo.gente.", "cidade.ficha."), String(dif18.length));
+  const raca = (d, n) => [...d.racas.fantasia, ...d.racas.futuro].find((r) => r.nome === n);
+  const d19 = copia(DADOS_DO_CENARIO_PADRAO);
+  raca(d19, "Anão").bonus.vigor = 3;
+  CN.usarCenario(d19);
+  const dif19 = diferentes(await fotografarOsCatalogos(SRC));
+  /* "anao" sem acento acha o traço (tracos.js compara sem acento) mas não o
+     bônus (a ficha de criação procura o nome exato): por isso só o Anão muda,
+     e o pronto que nasce anão */
+  t("o Anão com +3 de vigor muda o Anão, o pronto anão, e mais nenhuma raça", dif19.join() === "racas.tabelas,racas.de.Anão,racas.prontos", dif19.join());
+  const d20 = copia(DADOS_DO_CENARIO_PADRAO);
+  delete raca(d20, "Elfo").efeito.veNoEscuro;
+  CN.usarCenario(d20);
+  const dif20 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Elfo sem visão no escuro muda o traço do Elfo, e só", dif20.join() === "racas.tabelas,racas.de.Elfo", dif20.join());
+  const d21 = copia(DADOS_DO_CENARIO_PADRAO);
+  raca(d21, "Goliath").nome = "Golias";
+  CN.usarCenario(d21);
+  const dif21 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o Goliath renomeado no cenário muda as raças do léxico e o pedido (sem tocar em lexico.js nem em classes.js)", dif21.includes("lexico.tabelas") && dif21.includes("lexico.pedido.inteiro") && dif21.includes("lexico.racas.todas") && /* o id do caso sai do nome da raça: renomeada, a pergunta passa a ser pelo Golias */ dif21.includes("racas.de.Golias") &&!dif21.includes("lexico.pedido.Cyberpunk."), String(dif21.length));
+  const d22 = copia(DADOS_DO_CENARIO_PADRAO);
+  d22.panteao.titulos[2].titulo = "Centelha";
+  CN.usarCenario(d22);
+  const dif22 = diferentes(await fotografarOsCatalogos(SRC));
+  t("o GD 2 chamado Centelha muda a escala, o prompt, os títulos e o rodapé — e não os deuses gerados", dif22.includes("divindades.graus") && dif22.includes("divindades.prompt") && dif22.includes("divindades.titulos") && dif22.includes("divindades.patamar") && so(dif22, "divindades.") && !dif22.includes("divindades.geradas"), dif22.join());
+  t("…e o prompt diz Centelha onde dizia Semideus, nas duas linhas", DV.DIVINDADE_PROMPT.includes("Centelha (10k)") && DV.DIVINDADE_PROMPT.includes("Centelha/Receptáculo") && !DV.DIVINDADE_PROMPT.includes("Semideus"));
+  const d23 = copia(DADOS_DO_CENARIO_PADRAO);
+  delete d23.panteao.dominios.find((x) => x.dominio === "das Tempestades").sinais;
+  CN.usarCenario(d23);
+  const dif23 = diferentes(await fotografarOsCatalogos(SRC));
+  t("sem o sinal da tempestade, o deus colérico manda o fenômeno sem nome — e só os sinais mudam", dif23.includes("divindades.sinais") && so(dif23, "divindades."), dif23.join());
+
   CN.usarCenario(CN.CENARIO_PADRAO);
   t("de volta ao padrão, o dourado fecha outra vez", diferentes(await fotografarOsCatalogos(SRC)).length === 0);
 }
@@ -241,8 +303,33 @@ const ORBITA = {
   },
   panteao: {
     nomes: { inicio: ["Ax", "Ve"], fim: ["iom", "ra"] },
-    dominios: [{ dominio: "do Vácuo e do Silêncio", icone: "🌌", temper: ["fria", "paciente"] }],
+    dominios: [{ dominio: "do Vácuo e do Silêncio", icone: "🌌", temper: ["fria", "paciente"], sinais: { fria: "a geada que escreve nomes no vidro da escotilha" } }],
     cultos: ["a Tripulação"],
+    titulos: [
+      { titulo: "Passageiro", desc: "Ninguém na doca sabe o seu nome." },
+      { titulo: "Lenda da Doca", desc: "O turno da noite conta a sua história." },
+      { titulo: "Eco do Casco", desc: "O metal responde quando você passa." },
+      { titulo: "Voz do Vácuo", desc: "Um anel inteiro reza na sua frequência." },
+      { titulo: "A Própria Estação", desc: "Você é o ar que eles respiram." },
+    ],
+  },
+  lugares: {
+    bancos: {
+      "Ópera de estação": { subst: ["Escotilha|f", "Reator|m", "Turbinas|fp"], adj: ["Frio|Fria", "Estelar", "Sem Ar"], compl: ["do Anel 7", "da Doca de Carga"] },
+    },
+    tipos: {
+      mercado: ["Doca de Troca|f", "Bazar|m"], templo: ["Capela|f"], forja: ["Oficina|f"], quartel: ["Posto|m"], cadeia: ["Cela|f"], biblioteca: ["Arquivo|m"],
+      docas: ["Hangar|m"], arena: ["Ringue|m"], "cemitério": ["Câmara Fria|f"], guilda: ["Sindicato|m"], "casa de banhos": ["Duchas|fp"],
+    },
+  },
+  racas: {
+    fantasia: [
+      { nome: "Nascido no Anel", desc: "Criado na gravidade do anel.", bonus: { vigor: 1, percepcao: 1 }, traco: "Olho de corredor: vê no escuro a 9 m.", efeito: { veNoEscuro: 9 } },
+    ],
+    futuro: [
+      { nome: "Tripulante", desc: "Vive de turno em turno.", bonus: { intelecto: 2 }, traco: "Mão de bordo: a bancada fica 3 mais fácil, e sela uma escotilha (2 PM).", efeito: { oficio: 3, dom: { nome: "Selar Escotilha", nivel: 1, custo: 2, tipo: "defesa", descricao: "Fecha a passagem entre você e o perigo." } } },
+      { nome: "Clone de Serviço", desc: "Feito para o trabalho que ninguém quer.", bonus: { forca: 1, vigor: 1 }, traco: "Sem medo de fábrica: imune a medo, resiste a raio e o frio tira 1 a menos.", efeito: { imune: ["amedrontado"], resistencia: ["raio"], reduzDano: { gelo: 1 } } },
+    ],
   },
 };
 
@@ -307,6 +394,39 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   const nomeDe = (sem) => NM.nomePessoa("Ópera de estação", "", G.rngDe(sem));
   t("mesma semente, mesmo mundo: o mesmo nome e o mesmo deus", nomeDe("o7|a") === nomeDe("o7|a") && JSON.stringify(DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") })) === JSON.stringify(DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") })));
   const naOrbita = [nomeDe("o7|a"), DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") }).nome];
+  /* 5.ª fatia: os lugares, as raças e as palavras do céu são os dela */
+  const ol = ORBITA.lugares.bancos["Ópera de estação"];
+  const r2 = G.rngDe("orbita|lugares");
+  t("os gêneros com banco de lugares são os dela, e os tipos de local os do motor", TP.generosDaToponimia().join() === "Ópera de estação" && TP.tiposComNome().join() === ["taverna", ...CN.ESQUEMA_DO_CENARIO.tiposDeLocal].join());
+  const tav = Array.from({ length: 40 }, () => TP.nomeDeTaverna("Ópera de estação", r2));
+  t("as tavernas dela nascem das palavras dela", tav.every((n) => /^(A Escotilha|O Reator|As Turbinas) /.test(n)) && tav.some((n) => n.includes("do Anel 7")), tav.slice(0, 4).join(" · "));
+  t("…e com a gramática do motor: o plural concorda (as Turbinas Frias, Estelares), a locução não", tav.filter((n) => n.startsWith("As Turbinas ") && !n.includes(" & ") && !/ d[ao] /.test(n)).every((n) => /^As Turbinas (Frias|Estelares|Sem Ar)$/.test(n)) && tav.some((n) => /^As Turbinas (Frias|Estelares|Sem Ar)$/.test(n)), tav.filter((n) => n.startsWith("As Turbinas")).join(" · "));
+  t("o Cyberpunk, que não tem banco de lugares nela, cai no do padrão dela", Array.from({ length: 20 }, () => TP.nomeDeTaverna("Cyberpunk", r2)).every((n) => /^(A Escotilha|O Reator|As Turbinas) /.test(n)));
+  const merc = Array.from({ length: 20 }, () => TP.nomeDeLocal("mercado", "Ópera de estação", r2));
+  t("o mercado dela é a Doca de Troca ou o Bazar", merc.every((n) => /^(A Doca de Troca|O Bazar) /.test(n)), merc.slice(0, 3).join(" · "));
+  t("o tamanho do banco é o das palavras dela", TP.tamanhoDoBanco("taverna", "Ópera de estação") === 3 * (3 + 2 + 3) && TP.tamanhoDoBanco("mercado", "") === 2 * 8 && TP.tamanhoDoBanco("hangar", "") === 0);
+  const locs = MB.locaisDaCidade("orbita", { nome: "Anel-7", porte: "cidade" }, "Ópera de estação");
+  const doTipo = ORBITA.lugares.tipos;
+  t("os locais da cidade dela têm os nomes dela (mundo-base.js não foi tocado)", locs.length > 0 && locs.filter((l) => l.tipo !== "taverna").every((l) => doTipo[l.tipo].some((x) => l.nome.includes(x.split("|")[0]))), locs.map((l) => l.nome).join(" · "));
+  t("as raças da criação são as dela, nos dois grupos e nos dois catálogos", C.RACAS.map((r) => r.nome).join() === "Nascido no Anel" && C.ORIGENS.map((r) => r.nome).join() === "Tripulante,Clone de Serviço" && LX.GRUPOS_DE_RACA.fantasia.join() === "Nascido no Anel" && LX.RACAS_DO_SISTEMA.join() === "Nascido no Anel,Tripulante,Clone de Serviço");
+  t("a ópera de estação abre a criação nas origens dela, e o Elfo já não existe", C.racasDoGenero("Ópera de estação").map((r) => r.nome).join() === "Tripulante,Clone de Serviço" && C.racaPorNome("Elfo") === null && C.racaPorNome("Tripulante").bonus.intelecto === 2);
+  const anel = { raca: "Nascido no Anel" }, trip = { raca: "Tripulante", habilidades: [] }, clone = { raca: "clone de servico" };
+  t("o traço dela age pelo motor: o nascido no anel vê no escuro a 9 m", TR.veNoEscuroDeTraco(anel) === 9 && TR.textoDoTraco(anel).includes("9 m") && TR.veNoEscuroDeTraco({ raca: "Elfo" }) === 0);
+  t("o Tripulante ganha o dom dela como habilidade, e a bancada fica 3 mais fácil", TR.oficioDeTraco(trip) === 3 && TR.comDom(trip).habilidades.map((h) => h.nome).join() === "Selar Escotilha" && TR.domDe(trip).custo === 2);
+  t("o clone (sem acento nem caixa) é imune a medo, resiste a raio e o gelo tira 1 a menos", TR.imuneDeTraco(clone, "amedrontado") && TR.resisteDeTraco(clone, "raio") && TR.reducaoDeTraco(clone, "gelo") === 1 && !TR.imuneDeTraco(clone, "cego"));
+  t("a ficha de criação soma o bônus dela", AT.baseDeCriacao({ raca: "Tripulante", atributos: {} }).intelecto === 2 && AT.baseDeCriacao({ raca: "Elfo", atributos: {} }).destreza === 0);
+  t("o companheiro que se diz da estação acha a raça dela no catálogo (lido na hora, não no import)", CP.racaDeCompanheiro({ raca: "nascido no anel" }) === "Nascido no Anel");
+  t("o pedido do léxico pede nome para as origens dela", LX.pedidoDoLexico({}).includes("<UM de: Tripulante, Clone de Serviço>"));
+  const lexR = { racas: [{ raca: "tripulante", chamado: "Turno-Longo" }, { raca: "Clone de Serviço", chamado: "Cópia" }] };
+  t("o léxico gerado para as origens dela não se perde, e a ficha diz o nome do mundo", LX.garantirLexico(lexR).racas.length === 2 && LX.racaNaFicha(lexR, "Tripulante", true) === "Turno-Longo (Tripulante)");
+  t("os títulos do céu são os dela, com a física de sempre", DV.tituloDe(2) === "Eco do Casco" && DV.GRAUS[2].fieis === 10000 && DV.GRAUS[2].desc.startsWith("O metal") && DV.grauDe({ ehJogador: true, despertar: true, fieis: 12000 }) === 2);
+  t("…e o Narrador lê a escala dela, nas duas linhas que a diziam", DV.DIVINDADE_PROMPT.includes("GD 0–4: Passageiro, Lenda da Doca (1k fiéis), Eco do Casco (10k), Voz do Vácuo (100k), A Própria Estação (1M+).") && DV.DIVINDADE_PROMPT.includes("Servo Escolhido → Eco do Casco/Receptáculo") && !DV.DIVINDADE_PROMPT.includes("Semideus"));
+  const fria = { nome: "Vera", dominio: "do Vácuo e do Silêncio", icone: "🌌", temperamento: "fria", culto: "a Tripulação de Vera" };
+  const sinais = Array.from({ length: 40 }, (_, i) => DV.gerarEventoDivino({}, i, [fria], G.rngDe("orbita|sinal|" + i))).filter((e) => e && e.texto.includes("sinal impossível"));
+  t("o deus frio manda o sinal que o domínio dela escreveu", sinais.length > 0 && sinais.every((e) => e.texto.includes("a geada que escreve nomes")), String(sinais.length));
+  const paciente = { ...fria, temperamento: "paciente" };
+  const semSinal = Array.from({ length: 40 }, (_, i) => DV.gerarEventoDivino({}, i, [paciente], G.rngDe("orbita|sinal|" + i))).filter((e) => e && e.texto.includes("sinal impossível"));
+  t("…e o paciente, sem sinal escrito, o fenômeno que ninguém explica", semSinal.length > 0 && semSinal.every((e) => e.texto.includes("fenômeno que ninguém consegue explicar")));
   t("e o banco dos doze da Taverna não vale aqui", LX.garantirLexico({ profissoes: CN.CENARIO_PADRAO.ocupacoes.map((o) => ({ profissao: o.nome, chamado: "x " + o.nome })) }).profissoes.length === 0);
 
   /* determinismo: a mesma semente e o mesmo mundo, duas vezes */
@@ -319,6 +439,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("e de volta ao padrão, tudo como era", C.PROFISSOES.length === 12 && E.precoComum("caneca") === 1 && E.valorDeItem({ raridade: "raro" }) === 220);
   t("…o bestiário também", B.CRIATURAS_FANTASIA.length === 18 && B.ARQUETIPOS.length === 9 && B.completarInimigo({ nome: "Troll" }, 5).perfil.fraqueza.join() === "fogo");
   t("…a gente e o céu também (e a mesma semente dá outro nome noutro mundo)", NM.generosDisponiveis().length === 6 && NM.sexoDoNome("Aldric") === "masc" && NM.TRACOS_PESSOA.length === 26 && [NM.nomePessoa("Ópera de estação", "", G.rngDe("o7|a")), DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") }).nome].every((n, i) => n !== naOrbita[i]));
+  t("…os lugares, as raças e o céu também", TP.generosDaToponimia().length === 6 && C.RACAS.length === 10 && C.ORIGENS.length === 6 && LX.RACAS_DO_SISTEMA.length === 16 && DV.tituloDe(2) === "Semideus" && DV.DIVINDADE_PROMPT.includes("Semideus (10k)") && TR.veNoEscuroDeTraco({ raca: "Elfo" }) === 18 && CP.racaDeCompanheiro({ raca: "elfo" }) === "Elfo");
   t("…o léxico também (os doze, o corte do futuro, o gênero padrão)", LX.PROFISSOES_DO_SISTEMA.length === 12 && LX.GENEROS_FUTURISTAS.includes("Cyberpunk") && LX.generoProprio({ descricao: "um anime" }) && LX.pedidoDoLexico({}).includes("· Gênero: Fantasia medieval"));
 }
 
@@ -390,7 +511,43 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("um domínio sem temperamento", (d) => { d.panteao.dominios[0].temper = []; }, "panteao.dominios[0].temper: devia ser lista de textos, com ao menos um");
   caso("falta a segunda metade do nome divino", (d) => { delete d.panteao.nomes.fim; }, "panteao.nomes.fim: falta");
   caso("os cultos como texto", (d) => { d.panteao.cultos = "a Tripulação"; }, "panteao.cultos: devia ser lista de textos");
+  /* 5.ª fatia: os TÍTULOS da escala passaram ao cenário (`titulos`), e a
+     escala em si continua do motor — por isso `graus` continua recusado */
   caso("a escala de graus no cenário (é regra, fica no motor)", (d) => { d.panteao.graus = [{ gd: 0, titulo: "Tripulante" }]; }, "panteao.graus: campo desconhecido");
+  caso("faltam os títulos dos graus", (d) => { delete d.panteao.titulos; }, "panteao.titulos: falta (lista)");
+  caso("quatro títulos para cinco graus", (d) => { d.panteao.titulos.pop(); }, "panteao.titulos: são 5, um por grau (GD 0 a 4), e vieram 4");
+  caso("um título sem frase", (d) => { delete d.panteao.titulos[2].desc; }, "panteao.titulos[2].desc: falta");
+  caso("os fiéis do grau no título (é física)", (d) => { d.panteao.titulos[1].fieis = 500; }, "panteao.titulos[1].fieis: campo desconhecido");
+  caso("o sinal de um temperamento que o domínio não tem", (d) => { d.panteao.dominios[0].sinais["colérica"] = "raios"; }, 'panteao.dominios[0].sinais["colérica"]: temperamento que este domínio não tem');
+  caso("um sinal que não é texto", (d) => { d.panteao.dominios[0].sinais.fria = 3; }, "panteao.dominios[0].sinais: devia ser objeto de textos");
+  /* 5.ª fatia: os lugares */
+  const L0 = 'lugares.bancos["Ópera de estação"]';
+  caso("faltam os lugares", (d) => { delete d.lugares; }, "lugares: falta (objeto)");
+  caso("o gênero padrão sem banco de lugares", (d) => { d.lugares.bancos = { Cyberpunk: d.lugares.bancos["Ópera de estação"] }; }, 'lugares.bancos: falta o banco do gênero padrão (generos.padrao, "Ópera de estação")');
+  caso("um substantivo com gênero que não existe", (d) => { d.lugares.bancos["Ópera de estação"].subst = ["Escotilha|x"]; }, L0 + ".subst: devia ser lista de substantivos");
+  caso("um adjetivo com três formas", (d) => { d.lugares.bancos["Ópera de estação"].adj = ["Frio|Fria|Frios"]; }, L0 + ".adj: devia ser lista de adjetivos");
+  caso("sem complemento", (d) => { d.lugares.bancos["Ópera de estação"].compl = []; }, L0 + ".compl: devia ser lista de textos, com ao menos um");
+  caso("um tipo de local sem substantivo", (d) => { delete d.lugares.tipos.docas; }, "lugares.tipos.docas: falta");
+  caso("um tipo de local que o motor não pede", (d) => { d.lugares.tipos.hangar = ["Hangar|m"]; }, "lugares.tipos.hangar: campo desconhecido");
+  caso("os nomes prontos de taverna (a toponímia combina, não sorteia lista)", (d) => { d.lugares.bancos["Ópera de estação"].tavernas = ["O Vácuo"]; }, L0 + ".tavernas: campo desconhecido");
+  /* 5.ª fatia: as raças */
+  caso("faltam as raças", (d) => { delete d.racas; }, "racas: falta (objeto)");
+  caso("mundo sem raça de fantasia", (d) => { d.racas.fantasia = []; }, "racas.fantasia: precisa de ao menos 1 raça");
+  caso("gêneros do futuro sem origem", (d) => { d.racas.futuro = []; }, "racas.futuro: precisa de ao menos 1 origem, porque generos.futuristas não está vazio");
+  caso("uma raça sem bônus", (d) => { delete d.racas.fantasia[0].bonus; }, "racas.fantasia[0].bonus: falta");
+  caso("um bônus num atributo que não existe", (d) => { d.racas.fantasia[0].bonus = { sorte: 1 }; }, "racas.fantasia[0].bonus: devia ser objeto de atributos do motor");
+  caso("um bônus quebrado", (d) => { d.racas.fantasia[0].bonus.vigor = 1.5; }, "racas.fantasia[0].bonus: devia ser objeto de atributos do motor");
+  caso("um traço fora do vocabulário", (d) => { d.racas.fantasia[0].efeito.voar = true; }, "racas.fantasia[0].efeito.voar: campo desconhecido");
+  caso("vantagem num atributo que não existe", (d) => { d.racas.futuro[0].efeito.vantagem = ["sorte"]; }, "racas.futuro[0].efeito.vantagem: devia ser lista de atributos do motor");
+  caso("imune a uma condição que não existe", (d) => { d.racas.futuro[1].efeito.imune = ["tedio"]; }, "racas.futuro[1].efeito.imune: devia ser lista de condições ruins do motor");
+  caso("imune a uma condição boa (imunidade ao que ajuda não é traço)", (d) => { d.racas.futuro[1].efeito.imune = ["abencoado"]; }, "racas.futuro[1].efeito.imune: devia ser lista de condições ruins");
+  caso("redução de um dano que não existe", (d) => { d.racas.futuro[1].efeito.reduzDano = { acido: 1 }; }, "racas.futuro[1].efeito.reduzDano: devia ser objeto de tipos de dano do motor");
+  caso("visão no escuro negativa", (d) => { d.racas.fantasia[0].efeito.veNoEscuro = -9; }, "racas.fantasia[0].efeito.veNoEscuro: devia ser número ≥ 0");
+  caso("um dom sem custo", (d) => { delete d.racas.futuro[0].efeito.dom.custo; }, "racas.futuro[0].efeito.dom.custo: falta");
+  caso("um dom de um tipo que não existe", (d) => { d.racas.futuro[0].efeito.dom.tipo = "magia"; }, "racas.futuro[0].efeito.dom.tipo: devia ser um tipo de habilidade do motor");
+  caso("uma origem com o nome de uma raça (sem olhar a caixa)", (d) => { d.racas.futuro[1].nome = "NASCIDO NO ANEL"; }, 'racas.futuro[1].nome: "NASCIDO NO ANEL" repetido');
+  caso("um terceiro grupo de raças", (d) => { d.racas.magia = []; }, "racas.magia: campo desconhecido");
+  t("um mundo sem futuro pode vir sem origens", CN.validarCenario({ ...copia(ORBITA), generos: { ...copia(ORBITA.generos), futuristas: [] }, racas: { fantasia: copia(ORBITA.racas.fantasia), futuro: [] } }).ok);
   const v = CN.validarCenario({ formato: 1, id: "x" });
   t("a validação devolve todos os erros de uma vez", !v.ok && v.erros.length >= 3 && v.erros.some((e) => e.startsWith("nome")) && v.erros.some((e) => e.startsWith("precos")) && v.erros.some((e) => e.startsWith("ocupacoes")));
   t("o padrão e o mundo de teste passam", CN.validarCenario(DADOS_DO_CENARIO_PADRAO).ok && CN.validarCenario(ORBITA).ok);
@@ -398,7 +555,7 @@ sec("4. o cenário inválido é recusado, e diz onde");
   const antes = CN.cenarioAtivo();
   let caiu = false;
   try { CN.usarCenario({ ...copia(ORBITA), ocupacoes: [] }); } catch { caiu = true; }
-  t("trocar por um mundo inválido não troca nada", caiu && CN.cenarioAtivo() === antes && C.PROFISSOES.length === 12 && LX.PROFISSOES_DO_SISTEMA.length === 12 && B.CRIATURAS_FANTASIA.length === 18 && NM.generosDisponiveis().length === 6 && NM.TRACOS_PESSOA.length === 26);
+  t("trocar por um mundo inválido não troca nada", caiu && CN.cenarioAtivo() === antes && C.PROFISSOES.length === 12 && LX.PROFISSOES_DO_SISTEMA.length === 12 && B.CRIATURAS_FANTASIA.length === 18 && NM.generosDisponiveis().length === 6 && NM.TRACOS_PESSOA.length === 26 && TP.generosDaToponimia().length === 6 && C.RACAS.length === 10 && DV.tituloDe(2) === "Semideus");
 }
 
 sec("5. imutabilidade e determinismo");
@@ -420,6 +577,10 @@ sec("5. imutabilidade e determinismo");
   let mutou = false;
   try { C.PROFISSOES.push({ nome: "Intruso" }); mutou = true; } catch { /* congelado */ }
   t("e ninguém lhes acrescenta um ofício por fora", !mutou && C.PROFISSOES.length === 12);
+  t("as raças, os grupos do léxico e a escala divina saem congelados", Object.isFrozen(C.RACAS) && Object.isFrozen(C.RACAS[0].bonus) && Object.isFrozen(C.ORIGENS) && Object.isFrozen(LX.GRUPOS_DE_RACA) && Object.isFrozen(LX.GRUPOS_DE_RACA.fantasia) && Object.isFrozen(LX.RACAS_DO_SISTEMA) && Object.isFrozen(DV.GRAUS) && Object.isFrozen(DV.GRAUS[2]));
+  const domD = TR.domDe({ raca: "Draconato" });
+  domD.custo = 0;
+  t("o dom entregue é do chamador: mexer nele não mexe na raça", TR.domDe({ raca: "Draconato" }).custo === 3);
   const j = CN.carregarCenario(JSON.parse(JSON.stringify(DADOS_DO_CENARIO_PADRAO)));
   CN.usarCenario(j);
   t("o mundo de hoje, como JSON de verdade (texto → parse → carregar), fecha o dourado", diferentes(await fotografarOsCatalogos(SRC)).length === 0);
@@ -467,6 +628,29 @@ sec("6. o esquema lê de volta o que o motor consome");
   t("o céu do padrão: 16 × 14 nomes, 12 domínios, 7 cultos", CN.CENARIO_PADRAO.panteao.nomes.inicio.length === 16 && CN.CENARIO_PADRAO.panteao.nomes.fim.length === 14 && CN.CENARIO_PADRAO.panteao.dominios.length === 12 && CN.CENARIO_PADRAO.panteao.cultos.length === 7);
   t("os campos de um banco são os que nomes.js lê (b.campo), nem mais nem menos", [...new Set([...fonteNm.matchAll(/\b(?:b|bancoDe\(g\))\.(\w+)/g)].map((m) => m[1]))].sort().join() === Object.keys(CN.ESQUEMA_DO_CENARIO.banco).sort().join(), [...new Set([...fonteNm.matchAll(/\b(?:b|bancoDe\(g\))\.(\w+)/g)].map((m) => m[1]))].sort().join());
   t("as faixas do padrão estão escritas na escala que o Narrador lê", CN.CENARIO_PADRAO.precos.comuns.filter((c) => c.faixa && c.faixa[0] !== c.faixa[1]).every((c) => E.ECONOMIA_PROMPT.includes(`◉ ${c.faixa[0]}–${c.faixa[1]}`)));
+
+  /* 5.ª fatia: o vocabulário das raças e dos lugares é o do motor, e nada ficou literal */
+  const fonteTr = fs.readFileSync(path.join(SRC, "tracos.js"), "utf8");
+  const lidosTr = [...new Set([...fonteTr.matchAll(/efeitoDe\(pers\)\.(\w+)/g)].map((m) => m[1]))].sort();
+  t("o vocabulário do traço é o que tracos.js lê, nem mais nem menos", lidosTr.join() === Object.keys(EQ.efeitoDeRaca).sort().join(), lidosTr.join());
+  t("os atributos do esquema são os de constantes.js", EQ.atributos.join() === ATRIBUTOS.map((a) => a.id).join());
+  t("as condições do esquema são as ruins de condicoes.js (das boas, imunidade não é traço)", EQ.condicoes.join() === Object.values(CD.CONDICOES).filter((c) => c.tipo === "ruim").map((c) => c.id).join());
+  const tiposHab = new Set(C.CLASSES.flatMap((c) => (c.habilidades || []).map((h) => h.tipo)));
+  t("os tipos de habilidade do esquema cobrem os da árvore", tiposHab.size > 0 && [...tiposHab].every((x) => EQ.tiposDeHabilidade.includes(x)), [...tiposHab].join());
+  t("toda raça do padrão usa só o vocabulário, e o dom tem a forma da árvore", [...CN.CENARIO_PADRAO.racas.fantasia, ...CN.CENARIO_PADRAO.racas.futuro].every((r) => Object.keys(r.efeito).every((k) => k in EQ.efeitoDeRaca) && (!r.efeito.dom || EQ.tiposDeHabilidade.includes(r.efeito.dom.tipo))));
+  const fonteMb = fs.readFileSync(path.join(SRC, "mundo-base.js"), "utf8");
+  const blocoLocais = fonteMb.slice(fonteMb.indexOf("const LOCAIS = ["), fonteMb.indexOf("];", fonteMb.indexOf("const LOCAIS = [")));
+  const tiposMb = [...new Set([...blocoLocais.matchAll(/tipo: "([^"]+)"/g)].map((m) => m[1]))].filter((x) => x !== "taverna").sort();
+  t("os tipos de local do esquema são os que mundo-base.js pede (a taverna tem banco próprio)", tiposMb.join() === [...EQ.tiposDeLocal].sort().join(), tiposMb.join());
+  t("o padrão: seis bancos de lugares, os mesmos gêneros dos nomes", TP.generosDaToponimia().join() === NM.generosDisponiveis().join());
+  const fonteTp = fs.readFileSync(path.join(SRC, "toponimia.js"), "utf8");
+  t("nenhuma palavra de lugar ficou literal em toponimia.js (bancos, sinônimos, o padrão)", !["\"Javali|m\"", "\"Rachado|Rachada\"","\"das Cinzas\"", "\"Zepelim|m\"", "\"Praça|f\"", "\"Termas|fp\""].some((x) => fonteTp.includes(x)) && !/\|\| FANTASIA/.test(fonteTp));
+  t("nenhuma raça ficou literal em classes.js nem em lexico.js", !["\"Goliath\"", "\"Meio-orc\"", "\"Colono Orbital\"", "\"Vagante\""].some((x) => fonteCla.includes(x) || fonteLex.includes(x)) && !fonteCla.includes("Sopro Ancestral"));
+  t("nem os títulos da escala nem o sinal da tempestade em divindades.js", !["\"Semideus\"", "\"Herói Lendário\"", "Semideus (10k)", "\"colérica\"", "escrevem runas"].some((x) => fonteDv.includes(x)));
+  t("a escala do cenário tem um título por grau da física", CN.CENARIO_PADRAO.panteao.titulos.length === DV.GRAUS.length && EQ.exato.titulos === DV.GRAUS.length && DV.GRAUS.every((g, i) => g.gd === i && g.titulo === CN.CENARIO_PADRAO.panteao.titulos[i].titulo));
+  t("o sinal da tempestade é do domínio das Tempestades, e de um temperamento dele", CN.CENARIO_PADRAO.panteao.dominios.filter((x) => x.sinais).map((x) => x.dominio + ":" + Object.keys(x.sinais).join()).join() === "das Tempestades:colérica");
+  const doTp = importados("toponimia"), doCl = importados("classes"), doLx = importados("lexico"), doTr = importados("tracos");
+  t("o motor não copia lugar nem raça no import (só funções, se as importa)", [[doTp, TP], [doCl, C], [doLx, LX], [doTr, TR]].every(([nomes, mod]) => nomes.every((n) => typeof mod[n] === "function")), [...doTp, ...doCl, ...doLx, ...doTr].join());
 
   /* um catálogo que estoura a meio da troca não deixa meio mundo de cada lado */
   CN.aoTrocarDeCenario((c) => { if (c.id === "explode") throw new Error("catálogo de teste"); });

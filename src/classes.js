@@ -1,7 +1,8 @@
 /* ============================================================
    CATÁLOGO DE PERSONAGEM — Taverna
    Raças, classes, subclasses, especializações, árvores de
-   habilidades e profissões. Tudo definido em CÓDIGO: escolher
+   habilidades e profissões. Tudo definido pelo jogo (as raças e as
+   profissões no cenário, cenario-padrao.js; o resto aqui): escolher
    habilidade ao subir de nível NÃO consome tokens de IA, e o
    balanceamento fica sob controle do jogo, não do improviso.
    ============================================================ */
@@ -13,28 +14,17 @@
    tocava num dado. As duas colunas nascem juntas de propósito — quem
    editar a frase sem editar o efeito volta a mentir para o jogador.
    Quem lê `efeito` é tracos.js, e só ele. */
-export const RACAS = [
-  { nome: "Humano", desc: "Versáteis e ambiciosos. Aprendem rápido e se adaptam a tudo.", bonus: { forca: 1, destreza: 1, vigor: 1, intelecto: 1, presenca: 1, percepcao: 1 }, traco: "Determinação: uma vez por descanso, refaz uma rolagem falha.", efeito: { refazer: 1 } },
-  { nome: "Elfo", desc: "Longevos, graciosos, ligados à magia antiga e às florestas.", bonus: { destreza: 2, intelecto: 1, percepcao: 1 }, traco: "Sentidos élficos: vantagem em testes de Percepção, e vê no escuro a 18 m.", efeito: { vantagem: ["percepcao"], veNoEscuro: 18 } },
-  { nome: "Anão", desc: "Robustos, teimosos, mestres da pedra e do metal.", bonus: { vigor: 2, forca: 1 }, traco: "Resistência anã: reduz em 1 todo dano de veneno e fogo, e vê no escuro a 18 m.", efeito: { reduzDano: { veneno: 1, fogo: 1 }, veNoEscuro: 18 } },
-  { nome: "Halfling", desc: "Pequenos, sortudos, impossíveis de intimidar.", bonus: { destreza: 2, presenca: 1 }, traco: "Sorte pequena: transforma um 1 natural em 2 — uma vez por combate (ou por descanso, fora da luta).", efeito: { sorteDoUm: true } },
-  { nome: "Meio-orc", desc: "Força bruta temperada por uma vontade indomável.", bonus: { forca: 2, vigor: 2 }, traco: "Fúria persistente: ao chegar a 0 PV, fica com 1 PV uma vez por descanso longo. Vê no escuro a 18 m.", efeito: { firme: true, veNoEscuro: 18 } },
-  { nome: "Draconato", desc: "Herdeiros de sangue dracônico, orgulhosos e imponentes.", bonus: { forca: 2, presenca: 1 }, traco: "Sopro ancestral: baforada em linha que pega todos no caminho (3 PM).", efeito: { dom: { nome: "Sopro Ancestral", nivel: 1, custo: 3, tipo: "ataque", descricao: "Baforada de fogo em linha de 9 m: dano em área a todos no caminho." } } },
-  { nome: "Tiefling", desc: "Marcados por um pacto antigo. Temidos, resilientes, astutos.", bonus: { presenca: 2, intelecto: 1 }, traco: "Herança infernal: resistência a fogo, a magia inata Chama Menor (1 PM), e vê no escuro a 18 m.", efeito: { resistencia: ["fogo"], veNoEscuro: 18, dom: { nome: "Chama Menor", nivel: 1, custo: 1, tipo: "ataque", descricao: "Uma língua de fogo salta da mão e queima um alvo à vista." } } },
-  { nome: "Gnomo", desc: "Inventivos e curiosos, mentes que não param nunca.", bonus: { intelecto: 2, destreza: 1 }, traco: "Astúcia gnômica: vantagem para resistir a efeitos mentais, e vê no escuro a 18 m.", efeito: { vantagemMental: true, veNoEscuro: 18 } },
-  { nome: "Meio-elfo", desc: "Entre dois mundos, encantadores e adaptáveis.", bonus: { presenca: 2, destreza: 1, percepcao: 1 }, traco: "Diplomata nato: vantagem em testes de Presença — a sala se inclina para você. Vê no escuro a 18 m.", efeito: { vantagem: ["presenca"], veNoEscuro: 18 } },
-  { nome: "Goliath", desc: "Gigantes das montanhas, forjados pelo frio e pela altitude.", bonus: { forca: 3, vigor: 1 }, traco: "Pele de pedra: 1× por combate, reduz um golpe pela metade.", efeito: { pedra: true } },
-];
+/* T4-B (28/10, o cenário como arquivo, 5.ª fatia): as dez moram no cenário
+   (`racas.fantasia`, cenario-padrao.js), com a frase e o efeito lado a lado
+   como estavam; o vocabulário de `efeito` é o que o validador de cenario.js
+   aceita (ESQUEMA_DO_CENARIO.efeitoDeRaca). A tabela sai congelada, com o
+   mesmo nome, e refaz-se quando o cenário troca. */
+export let RACAS = [];
 
-/* ---------------- ORIGENS (ficção científica, cyberpunk, pós-apoc) ---------------- */
-export const ORIGENS = [
-  { nome: "Terrano", desc: "Nascido no berço da humanidade. Adaptável e teimoso.", bonus: { forca: 1, vigor: 1, presenca: 1, intelecto: 1 }, traco: "Improviso: conserta o que não deveria ter conserto — a bancada de ofício fica 2 mais fácil.", efeito: { oficio: 2 } },
-  { nome: "Colono Orbital", desc: "Criado em gravidade baixa, ágil e preciso.", bonus: { destreza: 2, intelecto: 1 }, traco: "Pé de gato: escala tão rápido quanto anda e atravessa terreno difícil sem perder passo.", efeito: { ignoraDificil: true } },
-  { nome: "Sintético", desc: "Consciência artificial em corpo construído.", bonus: { intelecto: 3 }, traco: "Processamento frio: imune a medo e a encantamento; vantagem para resistir ao que é mental.", efeito: { vantagemMental: true, imune: ["amedrontado", "enfeiticado"] } },
-  { nome: "Mutante", desc: "O ermo reescreveu seu corpo. Não sem preço.", bonus: { vigor: 2, forca: 1 }, traco: "Metabolismo estranho: resistência a veneno — metade do dano.", efeito: { resistencia: ["veneno"] } },
-  { nome: "Cromado", desc: "Mais implante do que carne. Rápido, letal, endividado.", bonus: { destreza: 2, forca: 1 }, traco: "Reflexos de fábrica: +5 na iniciativa — você quase sempre age primeiro.", efeito: { iniciativa: 5 } },
-  { nome: "Vagante", desc: "Sem mundo, sem bandeira. Só a estrada.", bonus: { percepcao: 2, destreza: 1 }, traco: "Faro de perigo: vantagem em testes de Percepção — a emboscada tem de ser muito boa.", efeito: { vantagem: ["percepcao"] } },
-];
+/* ---------------- ORIGENS (os gêneros do futuro) ----------------
+   As seis do padrão (`racas.futuro`), para os gêneros de
+   `generos.futuristas` (ficção científica, cyberpunk, pós-apoc). */
+export let ORIGENS = [];
 
 /* ---------------- ÁRVORE DE HABILIDADES ----------------
    nivel: nível mínimo para escolher. custo: PM.
@@ -389,7 +379,7 @@ export let PROFISSOES = [];
 /* 2.ª fatia: o corte do futuro (`generos.futuristas`) é o mesmo que o
    léxico lê — racasDoGenero e lexico.js racasDoMundo nunca discordam */
 let FUTURISTAS = [];
-aoTrocarDeCenario((c) => { PROFISSOES = c.ocupacoes; FUTURISTAS = c.generos.futuristas; });
+aoTrocarDeCenario((c) => { PROFISSOES = c.ocupacoes; FUTURISTAS = c.generos.futuristas; RACAS = c.racas.fantasia; ORIGENS = c.racas.futuro; });
 
 /* ---------------- API ---------------- */
 export function classePorNome(n) { return CLASSES.find((c) => c.nome === n) || null; }

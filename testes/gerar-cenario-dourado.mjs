@@ -1,4 +1,4 @@
-/* gerar-cenario-dourado.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 4.ª fatias, 28/10/2026)
+/* gerar-cenario-dourado.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 5.ª fatias, 28/10/2026)
    — a fotografia de ANTES
 
    Não é suíte (o `npm test` não o corre): é a ferramenta que fez o
@@ -6,11 +6,11 @@
    pasta `src/` de um commit com `git archive` (o código de antes, sem tocar
    na árvore de ninguém), fotografa os catálogos com as perguntas de
    `cenario-casos.mjs` e grava o resultado. O commit padrão é o último em que
-   os nomes e os deuses ainda moravam em nomes.js e divindades.js
-   (1cfc08a, 4.ª fatia).
+   os lugares, as raças e os títulos do céu ainda moravam em toponimia.js,
+   classes.js, lexico.js e divindades.js (aea9587, 5.ª fatia).
    Cada fatia fotografou o commit de antes dela: os 578 casos da 1.ª saíram
    do f0a9fae, os 143 da 2.ª do 3e7493a, os 102 da 3.ª do 9068a93, os 48 da
-   4.ª do 1cfc08a — e cada
+   4.ª do 1cfc08a, os 69 da 5.ª do aea9587 — e cada
    commit novo, que já lia do cenário o que a fatia anterior tirou, dá aos
    casos antigos a mesma resposta byte a byte (é a prova da fatia anterior),
    e por isso a fotografia nova os carrega sem os refazer.
@@ -25,7 +25,7 @@ import { fotografarOsCatalogos } from "./cenario-casos.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.join(AQUI, "..");
-const COMMIT = process.argv[2] || "1cfc08a";
+const COMMIT = process.argv[2] || "aea9587";
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "cenario-dourado-"));
 const tar = path.join(tmp, "src.tar");

@@ -37,7 +37,13 @@
    cultos. A REGRA dos deuses — a escala de graus, a fé, o milagre, o
    despertar — fica no código: o cenário dá o céu, não a física dele. O
    motor lê os dois módulos por funções, nunca pelas tabelas, e por isso
-   vê o mundo novo sem ser tocado). Os
+   vê o mundo novo sem ser tocado); `lugares` e `racas` (5.ª fatia:
+   toponimia.js — as palavras com que se nomeia a taverna e cada tipo de
+   local, por gênero; classes.js e lexico.js — as raças e as origens da
+   criação, com o bônus, a frase do traço e o efeito que tracos.js lê; e,
+   no `panteao`, os títulos dos cinco graus e o sinal de cada temperamento,
+   que eram um caso escrito no código. A REGRA fica: os padrões do nome, a
+   escala de fiéis, o que cada efeito de raça faz). Os
    ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
    secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
    ofícios não perca o léxico gerado.
@@ -61,7 +67,7 @@ import { DADOS_DO_CENARIO_PADRAO } from "./cenario-padrao.js";
    seu tipo (um nome de `TIPOS`, abaixo); `?` no fim é campo opcional. */
 export const ESQUEMA_DO_CENARIO = Object.freeze({
   formato: 1,
-  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto", gente: "objeto", panteao: "objeto" }),
+  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto", gente: "objeto", panteao: "objeto", lugares: "objeto", racas: "objeto" }),
   precos: Object.freeze({ escala: "textos", raridade: "objeto", semRaridade: "preco", miudeza: "preco", comuns: "lista" }),
   /* as raridades do motor (loot.js RARIDADES): as cinco que se vendem têm
      preço obrigatório; a única não se compra em banca, e o preço é opcional */
@@ -105,18 +111,56 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   /* o panteão (divindades.js): o nome de um deus é `inicio` + `fim`, o
      domínio traz o ícone e os temperamentos possíveis, e o culto é
      "<culto> de <nome>" */
-  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes" }),
+  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes", titulos: "lista" }),
   nomeDivino: Object.freeze({ inicio: "nomes", fim: "nomes" }),
-  dominio: Object.freeze({ dominio: "texto", icone: "texto", temper: "nomes" }),
+  /* `sinais` (5.ª fatia): o sinal impossível que o evento divino descreve,
+     por temperamento — só dos temperamentos do próprio domínio */
+  dominio: Object.freeze({ dominio: "texto", icone: "texto", temper: "nomes", sinais: "textosPorChave?" }),
+  /* um grau da escala divina: só as palavras (os fiéis são física) */
+  titulo: Object.freeze({ titulo: "texto", desc: "texto" }),
+  /* os lugares (toponimia.js): `bancos` por gênero — o gênero sem banco usa
+     o de `generos.padrao`, que por isso é obrigatório — e os substantivos de
+     cada tipo de local que o motor nomeia (todos, nem mais nem menos) */
+  lugares: Object.freeze({ bancos: "objeto", tipos: "objeto" }),
+  bancoDeLugar: Object.freeze({ subst: "substantivos", adj: "adjetivos", compl: "nomes" }),
+  /* os tipos de local que mundo-base.js e guildas.js pedem a nomeDeLocal; um
+     tipo fora daqui nunca seria pedido. A suíte lê-os de volta dos moldes */
+  tiposDeLocal: Object.freeze(["mercado", "templo", "forja", "quartel", "cadeia", "biblioteca", "docas", "arena", "cemitério", "guilda", "casa de banhos"]),
+  /* as raças da criação (classes.js RACAS e ORIGENS): `fantasia` para os
+     mundos que não são do futuro, `futuro` para os de `generos.futuristas`.
+     O nome é o identificador — a ficha guarda-o, o léxico renomeia-o —, e é
+     único nas duas listas juntas (sem olhar a caixa) */
+  racas: Object.freeze({ fantasia: "lista", futuro: "lista" }),
+  raca: Object.freeze({ nome: "texto", desc: "texto", bonus: "bonus", traco: "texto", efeito: "objeto" }),
+  /* o vocabulário do traço: cada campo tem UM leitor em tracos.js (a suíte
+     confere que é o que ele lê, nem mais nem menos) */
+  efeitoDeRaca: Object.freeze({ refazer: "contagem?", vantagem: "atributos?", vantagemMental: "booleano?", imune: "condicoes?", resistencia: "elementos?", reduzDano: "reducao?", veNoEscuro: "medida?", ignoraDificil: "booleano?", oficio: "numero?", iniciativa: "numero?", sorteDoUm: "booleano?", firme: "booleano?", pedra: "booleano?", dom: "objeto?" }),
+  /* o dom: a habilidade que a origem entrega pronta, na forma das da árvore */
+  dom: Object.freeze({ nome: "texto", nivel: "nivel", custo: "contagem", tipo: "tipoDeHabilidade", descricao: "texto" }),
+  /* o vocabulário do motor que uma raça pode usar: os atributos
+     (constantes.js ATRIBUTOS), as condições de que um traço pode imunizar —
+     as RUINS de condicoes.js CONDICOES (imune ao que ajuda não é traço) — e
+     os tipos de habilidade (classes.js). A suíte lê-os de volta. */
+  atributos: Object.freeze(["forca", "destreza", "vigor", "intelecto", "presenca", "percepcao"]),
+  condicoes: Object.freeze(["envenenado", "sangrando", "queimando", "atordoado", "paralisado", "caido", "agarrado", "cego", "amedrontado", "enfeiticado", "enfraquecido", "lento", "exausto", "marcado"]),
+  tiposDeHabilidade: Object.freeze(["ataque", "defesa", "suporte", "utilidade", "passiva"]),
+  /* os cinco graus da escala divina (GD 0–4): o número é o de divindades.js,
+     e o cenário dá um título a cada um, nem mais nem menos */
+  exato: Object.freeze({ titulos: 5 }),
   /* os mínimos: a criação abre na primeira ocupação, a rua mostra ao menos
      uma coisa, o encontro tem ao menos uma criatura para sortear, a gente
-     ao menos um banco, e o céu ao menos um domínio */
-  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1 }),
+     ao menos um banco, o céu ao menos um domínio, e a criação ao menos uma
+     raça de fantasia (e uma do futuro, se o mundo tem gêneros do futuro) */
+  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1 }),
 });
 
 const ehObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 const ehTexto = (v) => typeof v === "string" && v.trim().length > 0;
 const ehNum = (v) => typeof v === "number" && Number.isFinite(v);
+/* a forma que toponimia.js lê: "Palavra|g" (o gênero gramatical, e o p do
+   plural) e "masculino|feminino" — uma barra a mais e o nome sairia torto */
+const ehSubstantivo = (v) => ehTexto(v) && /^[^|]+(\|(m|f|mp|fp))?$/.test(v) && ehTexto(v.split("|")[0]);
+const ehAdjetivo = (v) => ehTexto(v) && v.split("|").length <= 2 && v.split("|").every(ehTexto);
 const regexOk = (v) => { if (!ehTexto(v)) return false; try { new RegExp(v); return true; } catch { return false; } };
 /* cada tipo: o teste e o que a mensagem diz que se esperava */
 const TIPOS = {
@@ -140,6 +184,16 @@ const TIPOS = {
   degrau: [(v) => ESQUEMA_DO_CENARIO.degraus.includes(v), `um degrau do motor (${ESQUEMA_DO_CENARIO.degraus.join(", ")})`],
   elemento: [(v) => ESQUEMA_DO_CENARIO.elementos.includes(v), `um tipo de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
   elementos: [(v) => Array.isArray(v) && v.every((x) => ESQUEMA_DO_CENARIO.elementos.includes(x)), `lista de tipos de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
+  /* 5.ª fatia */
+  medida: [(v) => ehNum(v) && v >= 0, "número ≥ 0"],
+  substantivos: [(v) => Array.isArray(v) && v.length > 0 && v.every(ehSubstantivo), "lista de substantivos (\"Palavra\" ou \"Palavra|g\", g = m, f, mp ou fp), com ao menos um"],
+  adjetivos: [(v) => Array.isArray(v) && v.length > 0 && v.every(ehAdjetivo), "lista de adjetivos (\"masculino|feminino\", ou uma forma só), com ao menos um"],
+  textosPorChave: [(v) => ehObj(v) && Object.values(v).every(ehTexto), "objeto de textos"],
+  bonus: [(v) => ehObj(v) && Object.entries(v).every(([k, x]) => ESQUEMA_DO_CENARIO.atributos.includes(k) && Number.isInteger(x)), `objeto de atributos do motor (${ESQUEMA_DO_CENARIO.atributos.join(", ")}) com números inteiros`],
+  atributos: [(v) => Array.isArray(v) && v.every((x) => ESQUEMA_DO_CENARIO.atributos.includes(x)), `lista de atributos do motor (${ESQUEMA_DO_CENARIO.atributos.join(", ")})`],
+  condicoes: [(v) => Array.isArray(v) && v.every((x) => ESQUEMA_DO_CENARIO.condicoes.includes(x)), "lista de condições ruins do motor (condicoes.js)"],
+  reducao: [(v) => ehObj(v) && Object.entries(v).every(([k, x]) => ESQUEMA_DO_CENARIO.elementos.includes(k) && ehNum(x)), `objeto de tipos de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")}) com números`],
+  tipoDeHabilidade: [(v) => ESQUEMA_DO_CENARIO.tiposDeHabilidade.includes(v), `um tipo de habilidade do motor (${ESQUEMA_DO_CENARIO.tiposDeHabilidade.join(", ")})`],
 };
 
 /* só o que o JSON tem — o arquivo de um autor não carrega código */
@@ -252,6 +306,49 @@ export function validarCenario(dados) {
         const onde = `panteao.dominios[${i}]`;
         if (!ehObj(d)) { erros.push(`${onde}: devia ser objeto`); return; }
         conferir(d, E.dominio, onde, erros);
+        /* o sinal de um temperamento que o deus deste domínio nunca tem não acontece */
+        if (ehObj(d.sinais) && Array.isArray(d.temper)) for (const tp of Object.keys(d.sinais)) if (!d.temper.includes(tp)) erros.push(`${onde}.sinais[${JSON.stringify(tp)}]: temperamento que este domínio não tem (temper)`);
+      });
+    }
+    if (Array.isArray(pa.titulos)) {
+      if (pa.titulos.length !== E.exato.titulos) erros.push(`panteao.titulos: são ${E.exato.titulos}, um por grau (GD 0 a ${E.exato.titulos - 1}), e vieram ${pa.titulos.length}`);
+      pa.titulos.forEach((x, i) => { const onde = `panteao.titulos[${i}]`; if (!ehObj(x)) { erros.push(`${onde}: devia ser objeto`); return; } conferir(x, E.titulo, onde, erros); });
+    }
+  }
+  const lu = dados.lugares;
+  if (ehObj(lu)) {
+    conferir(lu, E.lugares, "lugares", erros);
+    if (ehObj(lu.bancos)) {
+      const generos = Object.keys(lu.bancos);
+      if (generos.length < E.minimo.bancos) erros.push(`lugares.bancos: precisa de ao menos ${E.minimo.bancos} banco`);
+      for (const g of generos) {
+        const onde = `lugares.bancos[${JSON.stringify(g)}]`;
+        if (!ehTexto(g)) erros.push(`${onde}: o gênero do banco devia ser texto`);
+        if (!ehObj(lu.bancos[g])) { erros.push(`${onde}: devia ser objeto`); continue; }
+        conferir(lu.bancos[g], E.bancoDeLugar, onde, erros);
+      }
+      if (ehObj(ge) && ehTexto(ge.padrao) && !Object.hasOwn(lu.bancos, ge.padrao)) erros.push(`lugares.bancos: falta o banco do gênero padrão (generos.padrao, "${ge.padrao}")`);
+    }
+    if (ehObj(lu.tipos)) conferir(lu.tipos, Object.fromEntries(E.tiposDeLocal.map((tp) => [tp, "substantivos"])), "lugares.tipos", erros);
+  }
+  const ra = dados.racas;
+  if (ehObj(ra)) {
+    conferir(ra, E.racas, "racas", erros);
+    if (Array.isArray(ra.fantasia) && ra.fantasia.length < E.minimo.racas) erros.push(`racas.fantasia: precisa de ao menos ${E.minimo.racas} raça`);
+    /* o mundo com gêneros do futuro abre a criação nas origens: sem nenhuma, ninguém nasce */
+    if (Array.isArray(ra.futuro) && ra.futuro.length < E.minimo.racas && ehObj(ge) && Array.isArray(ge.futuristas) && ge.futuristas.length) erros.push(`racas.futuro: precisa de ao menos ${E.minimo.racas} origem, porque generos.futuristas não está vazio`);
+    const nomes = new Set();
+    for (const lista of ["fantasia", "futuro"]) {
+      if (!Array.isArray(ra[lista])) continue;
+      ra[lista].forEach((r, i) => {
+        const onde = `racas.${lista}[${i}]`;
+        if (!ehObj(r)) { erros.push(`${onde}: devia ser objeto`); return; }
+        conferir(r, E.raca, onde, erros);
+        if (ehObj(r.efeito)) {
+          conferir(r.efeito, E.efeitoDeRaca, `${onde}.efeito`, erros);
+          if (ehObj(r.efeito.dom)) conferir(r.efeito.dom, E.dom, `${onde}.efeito.dom`, erros);
+        }
+        if (ehTexto(r.nome)) { const n = r.nome.toLowerCase(); if (nomes.has(n)) erros.push(`${onde}.nome: "${r.nome}" repetido`); nomes.add(n); }
       });
     }
   }

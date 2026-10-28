@@ -1,4 +1,4 @@
-/* cenario-casos.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 4.ª fatias, 28/10/2026)
+/* cenario-casos.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 5.ª fatias, 28/10/2026)
 
    A fotografia dos catálogos que passaram a ler do cenário — os preços
    (economia.js, e o mercado que os consome), as ocupações (classes.js
@@ -12,7 +12,12 @@
    4.ª, a gente e o panteão (nomes.js: os bancos de nome por gênero, os povos,
    os ofícios e os traços do elenco, o sexo de um nome, os nomes à mão;
    divindades.js: as sílabas do nome divino, os domínios e os cultos; e a
-   gente dos locais de mundo-base.js, que os lê). Não é suíte: é a
+   gente dos locais de mundo-base.js, que os lê) e, na 5.ª, os lugares
+   (toponimia.js: as tavernas e os locais por gênero, e os locais das cidades
+   de mundo-base.js), as raças da criação (classes.js RACAS/ORIGENS, lexico.js
+   GRUPOS_DE_RACA, e quem as lê: tracos.js, a ficha de criação, o companheiro,
+   os prontos, o léxico que as renomeia) e as palavras do céu (a escala, o
+   DIVINDADE_PROMPT, os títulos, o sinal do temperamento). Não é suíte: é a
    lista de perguntas que o `gerar-cenario-dourado.mjs` faz ao código de ANTES
    (lido do git) e que a `teste-cenario.mjs` refaz ao código de AGORA. As duas
    respostas têm de ser iguais byte a byte.
@@ -72,6 +77,13 @@ export const SEMENTES_DE_MASMORRA = 40;
 export const NOMES_POR_GENERO = { cidades: 30, pessoas: 12, diversas: 12, elenco: 8 };
 export const DIVINDADES_SEMEADAS = 60;
 export const LEXICO_DE_NOMES = { nomes: { masc: ["Kau", "Ruan", "Tiê", "Moacir", "Sepé", "Ubiratã"], fem: ["Iracema", "Jaci", "Potira", "Moema", "Iara", "Araci"], sobrenome: ["do Rio", "da Mata", "Pedra-Alta", "Sem-Nome"] }, povos: ["ribeirinho", "serrano"], oficios: ["remeiro", "erveira", "pajé", "caçador de onça"] };
+/* 5.ª fatia: os lugares, as raças da criação e os títulos do céu — quantos
+   nomes de lugar por gênero, os atributos com que a ficha de prova nasce, e
+   quantos eventos por deus de temperamento marcado (o sinal da tempestade
+   era um caso escrito no código, e passou a dado do domínio) */
+export const LUGARES_POR_GENERO = { tavernas: 30, locais: 6 };
+export const ATRIBUTOS_DE_PROVA = { forca: 3, destreza: 2, vigor: 1, intelecto: 0, presenca: 2, percepcao: 1 };
+export const SINAIS_POR_DEUS = 24;
 export const CIDADES_DA_FICHA = [
   { nome: "Vau Fundo", porte: "aldeia", regiao: "Charneca" }, { nome: "Porto Sal", porte: "cidade", regiao: "Costa Rasa" },
   { nome: "Coroa", porte: "capital", regiao: "Planalto" }, { nome: "Forte Cinza", porte: "fortaleza", regiao: "Fronteira" },
@@ -93,6 +105,10 @@ export async function fotografarOsCatalogos(raiz) {
   const NM = await imp(raiz, "nomes.js");
   const DV = await imp(raiz, "divindades.js");
   const SM = await imp(raiz, "semente.js");
+  const TP = await imp(raiz, "toponimia.js");
+  const TR = await imp(raiz, "tracos.js");
+  const AT = await imp(raiz, "atributos.js");
+  const CP = await imp(raiz, "companheiros.js");
   const casos = [];
   const caso = (id, saida) => casos.push({ id, saida: rxEmTexto(saida === undefined ? null : saida) });
 
@@ -230,5 +246,63 @@ export async function fotografarOsCatalogos(raiz) {
     const pan = DV.gerarPanteaoInicial(null, i, G.rngDe("dourado-evento-pan|" + i));
     return [DV.gerarEventoDivino({ lugar: i % 3 ? "Coroa" : "" }, i, pan, G.rngDe("dourado-evento|" + i)), DV.gerarEventoDivino({}, i, pan.slice(0, 1), G.rngDe("dourado-evento1|" + i))];
   }));
+
+  /* ---- 5.ª fatia: os lugares (toponimia.js, e os locais de mundo-base.js que a leem) ---- */
+  caso("topo.generos", TP.generosDaToponimia());
+  caso("topo.tipos", TP.tiposComNome());
+  for (const g of GENEROS_DE_PROVA) {
+    const rnd = G.rngDe("dourado-topo|" + String(g));
+    caso("topo.genero." + String(g), {
+      tavernas: vezes(LUGARES_POR_GENERO.tavernas, () => TP.nomeDeTaverna(g, rnd)),
+      locais: [...TP.tiposComNome(), "nada", ""].map((tp) => vezes(LUGARES_POR_GENERO.locais, () => TP.nomeDeLocal(tp, g, rnd))),
+      tamanho: [...TP.tiposComNome(), "nada"].map((tp) => TP.tamanhoDoBanco(tp, g)),
+    });
+  }
+  caso("topo.nomeTaverna", vezes(12, (i) => NM.nomeTaverna(GENEROS_DE_PROVA[i % GENEROS_DE_PROVA.length], G.rngDe("dourado-taverna|" + i))));
+  for (const g of ["Fantasia medieval", "Ficção científica", "Horror cósmico", "Steampunk"]) {
+    for (const cid of CIDADES_DA_FICHA) caso(`mundo.locais.${g}.${cid.nome}`, (MB.locaisDaCidade("dourado-lugares", cid, g) || []).map((l) => [l.tipo, l.nome]));
+  }
+
+  /* ---- 5.ª fatia: as raças da criação (classes.js, lexico.js, e quem as lê) ---- */
+  caso("racas.tabelas", { racas: C.RACAS, origens: C.ORIGENS, grupos: LX.GRUPOS_DE_RACA, sistema: LX.RACAS_DO_SISTEMA });
+  const nomesDeRaca = [...C.RACAS, ...C.ORIGENS].map((r) => r.nome);
+  const attrs6 = Object.keys(ATRIBUTOS_DE_PROVA);
+  for (const n of [...nomesDeRaca, "anao", "MEIO-ORC", "Elfa", "humana", "Goblin", "", null]) {
+    const pers = { raca: n, atributos: ATRIBUTOS_DE_PROVA, habilidades: [] };
+    const o = TR.origemDe(pers);
+    caso("racas.de." + String(n), {
+      porNome: C.racaPorNome(n), origem: o ? o.nome : null, traco: TR.textoDoTraco(pers),
+      vantagem: attrs6.map((a) => TR.vantagemDeTraco(pers, a)), mental: TR.vantagemMentalDeTraco(pers),
+      imune: ["amedrontado", "enfeiticado", "cego"].map((c) => TR.imuneDeTraco(pers, c)),
+      resiste: ["fogo", "veneno", "fisico"].map((e) => TR.resisteDeTraco(pers, e)),
+      reduz: ["fogo", "veneno", "fisico"].map((e) => TR.reducaoDeTraco(pers, e)),
+      iniciativa: TR.iniciativaDeTraco(pers), escuro: TR.veNoEscuroDeTraco(pers), dificil: TR.ignoraDificilPorTraco(pers), oficio: TR.oficioDeTraco(pers),
+      dom: TR.domDe(pers), comDom: TR.comDom(pers).habilidades,
+      gasta: [TR.refazerDeTracoDisponivel(pers), TR.sorteDisponivel(pers), TR.pedraDisponivel(pers), TR.firmeDisponivel(pers, 3)],
+      golpe: [1, 4, 9].map((d) => TR.amortecerDano(pers, d, "fogo")),
+      resumo: TR.resumoTracosPrompt(pers), base: AT.baseDeCriacao(pers), companheiro: CP.racaDeCompanheiro({ raca: n }),
+    });
+  }
+  caso("racas.companheiros", vezes(24, (i) => CP.racaDeCompanheiro({ nome: "Comp " + i, id: "c" + i })));
+  caso("racas.prontos", SM.comSorte(G.rngDe("dourado-prontos"), () => R.PRONTOS.map((p) => R.montarPronto(p.id))));
+  /* o léxico que renomeia as raças: tudo, só a fantasia, uma a menos, uma intrusa, vazio, lixo */
+  const bancoDeRacas = LX.RACAS_DO_SISTEMA.map((r, i) => ({ raca: i % 4 === 1 ? r.toUpperCase() : r, chamado: "Povo " + i }));
+  const lexDeRacas = { todas: bancoDeRacas, soFantasia: bancoDeRacas.slice(0, LX.GRUPOS_DE_RACA.fantasia.length), semUma: bancoDeRacas.slice(1), intrusa: [...bancoDeRacas, { raca: "Goblin", chamado: "x" }], vazio: [], lixo: null };
+  for (const [nome, racas] of Object.entries(lexDeRacas)) {
+    const lex = { racas };
+    caso("lexico.racas." + nome, {
+      garantidas: LX.garantirLexico(lex).racas,
+      chamado: [...nomesDeRaca, "Goblin", ""].map((n) => LX.chamadoDaRaca(lex, n)),
+      ficha: nomesDeRaca.map((n) => [LX.racaNaFicha(lex, n, true), LX.racaNaFicha(lex, n, false)]),
+    });
+  }
+
+  /* ---- 5.ª fatia: os títulos do céu e o sinal do temperamento (divindades.js) ---- */
+  caso("divindades.graus", DV.GRAUS);
+  caso("divindades.prompt", DV.DIVINDADE_PROMPT);
+  caso("divindades.titulos", [-1, 0, 1, 2, 3, 4, 5, null, undefined, "2"].map((g) => DV.tituloDe(g)));
+  caso("divindades.patamar", [0, 999, 1000, 5000, 10000, 99999, 100000, 1e6, 5e6].map((f) => [DV.proximoPatamar({ ehJogador: true, despertar: true, fieis: f }), DV.resumoAscensao({ despertar: true, fieis: f, pf: 3, panteao: [] }, 20), DV.tituloDoHeroi({ despertar: true, fieis: f }, "Conhecido", "Veterano")]));
+  const marcados = ["das Tempestades", "da Guerra e das Correntes", "de lugar nenhum"].flatMap((dominio, k) => ["colérica", "fria"].map((temperamento) => ({ nome: "Teste" + k + temperamento, dominio, icone: "*", temperamento, culto: "a Ordem de X" })));
+  caso("divindades.sinais", marcados.map((d, k) => vezes(SINAIS_POR_DEUS, (i) => DV.gerarEventoDivino({ lugar: i % 2 ? "Coroa" : "" }, i, [d], G.rngDe("dourado-sinal|" + k + "|" + i)))));
   return casos;
 }

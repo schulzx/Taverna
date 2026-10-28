@@ -10,20 +10,25 @@
    `panteao`). A FÍSICA dele fica aqui: a escala de graus, a Regra do Degrau,
    a fé por feito, o milagre, o despertar, os caminhos da ascensão. O motor
    (motor/meio-do-turno.js, motor/fim-do-turno.js) só lê a física, e por
-   isso um panteão novo chega sem o tocar. */
+   isso um panteão novo chega sem o tocar.
+
+   5.ª fatia: as PALAVRAS da escala também — o título e a frase de cada grau
+   (`panteao.titulos`), que o DIVINDADE_PROMPT repetia à mão e agora lê da
+   mesma tabela; e o sinal de cada temperamento (`dominios[].sinais`), que
+   era um caso escrito no meio de um evento (o deus colérico). Os fiéis de cada
+   grau ficam aqui: são física. */
 import { sorteDaCasa, comSorte } from "./semente.js";
 import { aoTrocarDeCenario } from "./cenario.js";
 
 export const NIVEL_DESPERTAR = 15; // abaixo disso a ascensão NÃO existe na ficção
 
-/* A escala: quem é quem no cosmos */
-export const GRAUS = [
-  { gd: 0, titulo: "Mortal", fieis: 0, desc: "Carne, tempo e medo — como quase todos." },
-  { gd: 1, titulo: "Herói Lendário", fieis: 1000, desc: "O povo já reza BAIXINHO o seu nome." },
-  { gd: 2, titulo: "Semideus", fieis: 10000, desc: "Uma centelha vive em você — sua presença pesa no ar." },
-  { gd: 3, titulo: "Divindade Menor", fieis: 100000, desc: "Um domínio responde quando você chama." },
-  { gd: 4, titulo: "Divindade Maior", fieis: 1000000, desc: "Força cósmica — o mundo se curva." },
-];
+/* A escala: quem é quem no cosmos. A física — quantos fiéis abrem cada grau,
+   do GD 0 ao 4 — é esta tabela; o nome e a frase de cada grau vêm do
+   cenário (`panteao.titulos`, cinco, na mesma ordem). `GRAUS` junta os dois
+   na forma de sempre ({ gd, titulo, fieis, desc }) e refaz-se quando o
+   cenário troca. */
+const FIEIS_DO_GRAU = [0, 1000, 10000, 100000, 1000000];
+export let GRAUS = [];
 
 export function grauDe(div, nivel) {
   const f = (div && div.fieis) || 0;
@@ -92,7 +97,8 @@ export function garantirDivindade(dv) {
    DIV_NOMES_B), `dominios` (DOMINIOS) e `cultos` (TITULOS_CULTO). A ordem das
    listas é a de sempre, e a sorte sai igual: o dourado do cenário prova-o. */
 let CEU = { nomes: { inicio: [], fim: [] }, dominios: [], cultos: [] };
-aoTrocarDeCenario((c) => { CEU = c.panteao; });
+/* a assinatura mora depois do DIVINDADE_PROMPT: o mundo chega já na
+   assinatura, e o prompt tem de existir para ser refeito */
 
 function nomeDivino() {
   const { inicio, fim } = CEU.nomes;
@@ -141,8 +147,22 @@ export function gerarPanteaoInicial(ctx, dia, sorte = null) { return comSorte(so
 }
 
 /* ───────── Gerador de eventos divinos (só depois do despertar) ───────── */
+/* O sinal impossível que um deus manda: o do temperamento dele, escrito no
+   domínio dele (`dominios[].sinais`); se o domínio do deus não está no céu
+   em uso (o deus que o Narrador batizou, o save de outro mundo), vale o
+   primeiro domínio que dá sinal àquele temperamento — era assim que o caso
+   escrito no código se comportava, para qualquer deus colérico. Sem sinal,
+   o fenômeno que ninguém explica. */
+const SINAL_SEM_NOME = "fenômeno que ninguém consegue explicar";
+function sinalDe(d) {
+  const tp = d && d.temperamento;
+  if (typeof tp !== "string") return SINAL_SEM_NOME;
+  const dar = (x) => (x && x.sinais && Object.hasOwn(x.sinais, tp) ? x.sinais[tp] : null);
+  return dar(CEU.dominios.find((x) => x.dominio === d.dominio)) || CEU.dominios.map(dar).find(Boolean) || SINAL_SEM_NOME;
+}
+
 const EVENTOS_DIVINOS = [
-  (c, d) => ({ icone: "⛈", texto: `${d.icone} ${d.nome} ${d.dominio} manifesta-se: um sinal impossível (${d.temperamento === "colérica" ? "tempestade com relâmpagos que escrevem runas" : "fenômeno que ninguém consegue explicar"}) é visto ${c.lugar ? `perto de ${c.lugar}` : "na região"}. O culto ${d.culto} interpreta como ${sorteDaCasa() < 0.5 ? "aviso" : "promessa"}.`, gancho: "investigar o sinal pode render favor — ou inimizade — da divindade" }),
+  (c, d) => ({ icone: "⛈", texto: `${d.icone} ${d.nome} ${d.dominio} manifesta-se: um sinal impossível (${sinalDe(d)}) é visto ${c.lugar ? `perto de ${c.lugar}` : "na região"}. O culto ${d.culto} interpreta como ${sorteDaCasa() < 0.5 ? "aviso" : "promessa"}.`, gancho: "investigar o sinal pode render favor — ou inimizade — da divindade" }),
   (c, d) => ({ icone: "🕯", texto: `Paladinos d${d.culto} chegam ${c.lugar ? `a ${c.lugar}` : "à região"} caçando um relicário roubado d${d.nome === "relicário" ? "e" : `e ${d.nome}`}. Oferecem recompensa em bênçãos (PF) a quem ajudar.`, gancho: "relicário pode estar à venda no mercado negro — ou nas mãos de alguém do círculo do herói" }),
   (c, d, d2) => (d2 ? { icone: "⚡", texto: `Guerra de fé: ${d.nome} ${d.icone} e ${d2.nome} ${d2.icone} disputam um mesmo domínio nas orações do povo. Templos rivais se provocam ${c.lugar ? `em ${c.lugar}` : "na região"} — e cada lado busca campeões mortais.`, gancho: "escolher um lado muda sua relação com os dois deuses" } : null),
   (c, d) => ({ icone: "📿", texto: `Um profeta menor d${d.culto} prega que ${d.nome} ${d.dominio} "escolherá um novo receptáculo entre os mortais desta geração". Multidões se agitam; olhares começam a medir os heróis conhecidos — inclusive você.`, gancho: "o culto pode vir testar (ou recrutar) o herói" }),
@@ -174,15 +194,28 @@ export function resumoAscensao(div, nivelJogador) {
 
 /* Âncoras de economia divina — mesma ideia do ECONOMIA_PROMPT: parâmetros
    fixos para o Mestre não se perder em milagres, fiéis e presença. */
-export const DIVINDADE_PROMPT = `ASCENSÃO E DIVINDADES (parâmetros do sistema — siga-os, não improvise números):
-- A escala cósmica é GD 0–4: Mortal, Herói Lendário (1k fiéis), Semideus (10k), Divindade Menor (100k), Divindade Maior (1M+). O sistema rastreia fiéis e PF do jogador e avisa no rodapé; as divindades do mundo vêm prontas pelo sistema (GD, fiéis e culto JÁ DEFINIDOS — use-os como fato).
+/* A escala que o Narrador lê sai de GRAUS — o título do cenário e os fiéis da
+   física —, e não de uma segunda cópia à mão (o título, e os fiéis em k e
+   M: "Herói Lendário (1k fiéis)"). Com o cenário padrão, o texto é o de sempre,
+   byte a byte (o dourado do cenário prova-o). */
+const milhar = (n) => (n >= 1e6 ? `${n / 1e6}M` : n >= 1e3 ? `${n / 1e3}k` : String(n));
+const escalaNoPrompt = () => GRAUS.map((g, i) => (g.gd === 0 ? g.titulo : `${g.titulo} (${milhar(g.fieis)}${i === 1 ? " fiéis" : ""}${i === GRAUS.length - 1 ? "+" : ""})`)).join(", ");
+export let DIVINDADE_PROMPT = "";
+function promptDaDivindade() { return `ASCENSÃO E DIVINDADES (parâmetros do sistema — siga-os, não improvise números):
+- A escala cósmica é GD 0–${GRAUS.length - 1}: ${escalaNoPrompt()}. O sistema rastreia fiéis e PF do jogador e avisa no rodapé; as divindades do mundo vêm prontas pelo sistema (GD, fiéis e culto JÁ DEFINIDOS — use-os como fato).
 - REGRA DO DEGRAU: cada degrau de diferença de GD dá +2 ao mais forte e −2 ao mais fraco em ataques, defesas e resistências — O SISTEMA APLICA nos dados, você só narra a disparidade (o golpe do mortal parece "invisível" ao deus, etc.).
 - Mortais (GD 0) não ferem de verdade divindades de GD 3+ sem artefato lendário ou bênção — se o jogador insistir, a ficção mostra a futilidade com honestidade (isso motiva a ascensão, não a punge).
 - GANHO DE FÉ (por SINAL, nunca por número): quando o herói fizer algo que mereça fé, mande em "sinais" a magnitude — "fe:sussurro" (gesto notado por poucos), "fe:feito" (a cidade comenta), "fe:proeza" (a região conta), "fe:marco" (muda a história do mundo). O SISTEMA converte em fiéis levando a fama dele em conta. NÃO envie quantidade de fiéis nem de PF.
 - PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis — você nunca concede PF. Para gastar, mande "milagre:<id>" (bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar): o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se o jogador pedir um milagre que ele ainda não pode pagar ou cujo grau não alcançou, o sistema recusa e você narra o silêncio do domínio.
 - FÉ MÍNGUA: devoção exige presença. A fé some sozinha, dia a dia, em toda cidade onde não há templo do herói nem ele em pessoa — e mesmo o clero de um templo prega com menos convicção depois de meses sem sinal dele. O sistema faz essa conta por cidade; use o resultado na ficção (templos vazios, profetas desanimados, altar coberto de pó).
 - PRESENÇA DIVINA (com moderação!): perto de uma divindade GD 3+ manifesta, mortais podem tremer — o SISTEMA rola a resistência e aplica o efeito; você narra. NUNCA aplique efeitos de presença por conta própria, e fora de combate use o pavor divino só como tempero, nunca como rotina — o jogador e o grupo íntimo dele estão protegidos pela convivência.
-- ASCENSÃO É NARRATIVA: os três estágios (Servo Escolhido → Semideus/Receptáculo → Nova Divindade) avançam por FEITOS na ficção (acúmulo de fé, ritual do vazio, deicídio), guiados pelos números do sistema. Quando o jogador atingir um marco, celebre à altura — virar deus deve doer, custar e mudar o jogo.`;
+- ASCENSÃO É NARRATIVA: os três estágios (Servo Escolhido → ${GRAUS[2].titulo}/Receptáculo → Nova Divindade) avançam por FEITOS na ficção (acúmulo de fé, ritual do vazio, deicídio), guiados pelos números do sistema. Quando o jogador atingir um marco, celebre à altura — virar deus deve doer, custar e mudar o jogo.`; }
+
+aoTrocarDeCenario((c) => {
+  CEU = c.panteao;
+  GRAUS = Object.freeze(FIEIS_DO_GRAU.map((fieis, gd) => Object.freeze({ gd, titulo: c.panteao.titulos[gd].titulo, fieis, desc: c.panteao.titulos[gd].desc })));
+  DIVINDADE_PROMPT = promptDaDivindade();
+});
 
 /* ═══════════════ v7.6 — TÍTULO ÚNICO, MILAGRES E ECONOMIA DE FÉ ═══════════════ */
 

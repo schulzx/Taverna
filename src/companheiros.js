@@ -99,14 +99,21 @@ export const RACA_DO_REGISTO = Object.freeze({
 });
 
 const fioDaRaca = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-const RACA_DO_CATALOGO = Object.fromEntries(RACAS.map((r) => [fioDaRaca(r.nome), r.nome]));
+/* T4-B (28/10, 5.ª fatia): as raças são do cenário, e o catálogo lê-se na
+   hora — copiado no import, um mundo trocado no arranque ficaria com as de
+   antes. Refaz-se só quando a tabela muda de mão. */
+let catalogo = { de: null, mapa: {} };
+const racaDoCatalogo = (f) => {
+  if (catalogo.de !== RACAS) catalogo = { de: RACAS, mapa: Object.fromEntries(RACAS.map((r) => [fioDaRaca(r.nome), r.nome])) };
+  return Object.hasOwn(catalogo.mapa, f) ? catalogo.mapa[f] : undefined;
+};
 
 export function racaDeCompanheiro(comp) {
   const c = comp && typeof comp === "object" ? comp : {};
   const dita = typeof c.raca === "string" ? c.raca.trim() : "";
   if (dita) {
     const f = fioDaRaca(dita);
-    return RACA_DO_CATALOGO[f] || RACA_DO_REGISTO[f] || dita;
+    return racaDoCatalogo(f) || RACA_DO_REGISTO[f] || dita;
   }
   const total = RACAS_DO_COMPANHEIRO.reduce((s, r) => s + r.peso, 0);
   let n = hashSemente("raca|" + sementeDe(c)) % total;

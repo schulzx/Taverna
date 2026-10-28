@@ -68,6 +68,27 @@
      panteao.dominios   o que um deus governa, o ícone dele e os temperamentos
                         que pode ter
      panteao.cultos     como se chama a gente dele ("a Ordem de …")
+     panteao.titulos    o nome e a frase de cada grau da escala divina, do GD 0
+                        ao GD 4 (cinco, na ordem): a escala em si — os fiéis de
+                        cada grau, a Regra do Degrau — é física e fica em
+                        divindades.js; o mundo dá só as palavras
+     panteao.dominios[].sinais  opcional: o sinal impossível que o deus daquele
+                        temperamento manda (o evento divino); o temperamento sem
+                        sinal manda o fenômeno que ninguém explica
+     lugares.bancos     as palavras com que se nomeia um lugar, por gênero (o
+                        gênero sem banco usa o de `generos.padrao`): `subst` é o
+                        coração do nome de taverna ("Javali|m" — a palavra e o
+                        gênero gramatical: m, f, mp, fp), `adj` o que o qualifica
+                        ("Rachado|Rachada" — masculino e feminino; sem a barra não
+                        flexiona), `compl` o complemento já com a preposição
+     lugares.tipos      os substantivos de cada tipo de local da cidade (o
+                        mercado, o templo…), no mesmo formato de `subst`: é o
+                        substantivo que diz de que prédio se trata
+     racas.fantasia     o que o jogador pode SER num mundo que não é do futuro:
+                        `bonus` são os pontos de atributo, `traco` a frase que a
+                        criação mostra e `efeito` o que o código faz com ela (o
+                        vocabulário está em cenario.js, ESQUEMA_DO_CENARIO.efeitoDeRaca)
+     racas.futuro       as origens dos gêneros de `generos.futuristas`
    ============================================================ */
 export const DADOS_DO_CENARIO_PADRAO = {
   formato: 1,
@@ -279,7 +300,7 @@ export const DADOS_DO_CENARIO_PADRAO = {
     },
     dominios: [
       { dominio: "da Colheita e da Fome", icone: "🌾", temper: ["generosa", "cobradora", "silenciosa"] },
-      { dominio: "das Tempestades", icone: "⛈", temper: ["colérica", "imprevisível", "orgulhosa"] },
+      { dominio: "das Tempestades", icone: "⛈", temper: ["colérica", "imprevisível", "orgulhosa"], sinais: { "colérica": "tempestade com relâmpagos que escrevem runas" } },
       { dominio: "dos Mortos e dos Juramentos", icone: "💀", temper: ["solene", "vingativa", "justa"] },
       { dominio: "da Forja e do Fogo", icone: "🔥", temper: ["teimosa", "honrada", "ciumenta"] },
       { dominio: "dos Mares e das Perdições", icone: "🌊", temper: ["volúvel", "ciumenta", "antiga"] },
@@ -292,5 +313,95 @@ export const DADOS_DO_CENARIO_PADRAO = {
       { dominio: "do Conhecimento Proibido", icone: "📖", temper: ["curiosa", "perigosa", "paciente"] },
     ],
     cultos: ["a Ordem", "o Círculo", "os Filhos", "a Seita", "os Vigias", "o Concílio", "as Mãos"],
+    /* 5.ª fatia: as palavras da escala, do GD 0 ao 4 — os fiéis de cada grau
+       são física (divindades.js) e não se escrevem aqui */
+    titulos: [
+      { titulo: "Mortal", desc: "Carne, tempo e medo — como quase todos." },
+      { titulo: "Herói Lendário", desc: "O povo já reza BAIXINHO o seu nome." },
+      { titulo: "Semideus", desc: "Uma centelha vive em você — sua presença pesa no ar." },
+      { titulo: "Divindade Menor", desc: "Um domínio responde quando você chama." },
+      { titulo: "Divindade Maior", desc: "Força cósmica — o mundo se curva." },
+    ],
+  },
+  /* 5.ª fatia: os lugares (toponimia.js). Três padrões sobre bancos de algumas
+     dezenas de palavras dão milhares de nomes por tipo de lugar; o tamanho
+     dos bancos é o que impede a "Feira Baixa" de aparecer duas vezes no
+     mesmo mundo (o cabeçalho de toponimia.js tem a conta). */
+  lugares: {
+    bancos: {
+      "Fantasia medieval": {
+        subst: ["Javali|m", "Corvo|m", "Dragão|m", "Âncora|f", "Coroa|f", "Taça|f", "Punhal|m", "Sereia|f", "Machado|m", "Lua|f", "Cavalo|m", "Rosa|f", "Grifo|m", "Bota|f", "Escudo|m", "Cabra|f", "Lobo|m", "Espada|f", "Barril|m", "Pena|f", "Ogro|m", "Chama|f", "Trovão|m", "Moeda|f", "Cálice|m", "Ferradura|f", "Foice|f", "Elmo|m", "Sino|m", "Ponte|f", "Bigorna|f", "Lança|f", "Urso|m", "Falcão|m", "Serpente|f", "Raposa|f", "Texugo|m", "Garça|f", "Touro|m", "Cervo|m", "Âmbar|m", "Carvalho|m", "Salgueiro|m", "Espinho|m", "Cardo|m", "Urze|f", "Hera|f", "Trigo|m", "Martelo|m", "Roda|f", "Vela|f", "Lanterna|f", "Candeia|f", "Fivela|f", "Corda|f", "Rede|f", "Peregrino|m", "Andarilho|m", "Viúva|f", "Rainha|f", "Bruxa|f", "Monge|m", "Arqueiro|m", "Ceifeiro|m"],
+        adj: ["Cambaleante", "Rachado|Rachada", "Sonolento|Sonolenta", "Enferrujado|Enferrujada", "Torto|Torta", "Bêbado|Bêbada", "Dourado|Dourada", "Último|Última", "Manco|Manca", "Negro|Negra", "Faminto|Faminta", "Furado|Furada", "Partido|Partida", "Dançante", "Quebrado|Quebrada", "Sem Fundo", "Risonho|Risonha", "Azul", "Distante", "Vazio|Vazia", "Alegre", "Calado|Calada", "Cego|Cega", "Coxo|Coxa", "Errante", "Faiscante", "Devoto|Devota", "Gordo|Gorda", "Honesto|Honesta", "Ingrato|Ingrata", "Lento|Lenta", "Magro|Magra", "Mudo|Muda", "Pálido|Pálida", "Paciente", "Perdido|Perdida", "Rouco|Rouca", "Sábio|Sábia", "Solitário|Solitária", "Teimoso|Teimosa", "Tortuoso|Tortuosa", "Trêmulo|Trêmula", "Velho|Velha", "Vermelho|Vermelha", "Sedento|Sedenta"],
+        compl: ["das Cinzas", "do Norte", "de Ferro", "de Prata", "do Rei", "da Rainha", "do Vale", "da Foz", "de Pedra", "do Sal", "das Três Luas", "do Vento", "da Névoa", "do Ocaso", "da Aurora", "do Peregrino", "do Enforcado", "da Viúva", "do Carvoeiro", "do Barqueiro", "das Estradas", "do Juramento", "da Promessa", "do Silêncio", "das Sete Portas", "do Corvo", "da Bruma", "de Prata Velha", "do Fim do Mundo", "da Última Noite", "dos Andarilhos", "dos Afogados", "dos Esquecidos", "das Moedas Falsas", "do Passo Alto", "da Colina", "do Rio Baixo", "da Muralha", "do Portão", "da Feira", "do Poço", "da Ponte Torta", "das Velas", "do Trigo"],
+      },
+      "Ficção científica": {
+        subst: ["Reator|m", "Órbita|f", "Escotilha|f", "Estrela|f", "Módulo|m", "Antena|f", "Cápsula|f", "Satélite|m", "Sonda|f", "Hélice|f", "Doca|f", "Rota|f", "Bússola|f", "Deriva|f", "Câmara|f", "Vácuo|m", "Terminal|m", "Núcleo|m", "Prisma|m", "Espectro|m", "Pulsar|m", "Quasar|m", "Casco|m", "Turbina|f", "Válvula|f", "Bateria|f", "Chave|f", "Trilho|m", "Elevador|m", "Piloto|m", "Náufrago|m", "Colono|m", "Andarilha|f", "Sentinela|f", "Errante|m", "Carga|f", "Cinza|f", "Poeira|f", "Silêncio|m", "Sinal|m", "Eco|m", "Ruído|m", "Sombra|f", "Aurora|f"],
+        adj: ["Frio|Fria", "Baixo|Baixa", "Morto|Morta", "Perdido|Perdida", "Rápido|Rápida", "Quebrado|Quebrada", "Fraco|Fraca", "Caído|Caída", "Estelar", "Último|Última", "Aberto|Aberta", "Selado|Selada", "Longo|Longa", "Distante", "Mudo|Muda", "Fantasma", "Órfão|Órfã", "Trincado|Trincada", "Denso|Densa", "Oco|Oca", "Girante", "Vazio|Vazia", "Pálido|Pálida", "Preso|Presa", "Solto|Solta", "Enferrujado|Enferrujada", "Sujo|Suja", "Novo|Nova", "Cego|Cega", "Torto|Torta"],
+        compl: ["de Vega", "de Órion", "de Kepler", "do Éter", "do Vácuo", "de Titã", "da Cratera", "do Perímetro", "do Setor 9", "da Borda", "de Trânsito", "sem Retorno", "do Turno da Noite", "dos Fuzileiros", "dos Mineradores", "da Quarentena", "do Cais Longo", "do Anel", "da Última Órbita", "de Emergência", "do Cinturão", "da Estação Alta", "dos Náufragos", "do Silêncio", "de Carga", "da Escuta", "do Salto", "da Deriva", "do Zênite", "do Nadir"],
+      },
+      "Cyberpunk": {
+        subst: ["Chip|m", "Cabo|m", "Fusível|m", "Tomada|f", "Dose|f", "Injeção|f", "Firewall|m", "Glitch|m", "Sinapse|f", "Estática|f", "Latência|f", "Agulha|f", "Máscara|f", "Lente|f", "Placa|f", "Corrente|f", "Faísca|f", "Vitrine|f", "Neon|m", "Cromo|m", "Vidro|m", "Aço|m", "Ácido|m", "Pixel|m", "Ruído|m", "Fluxo|m", "Nó|m", "Beco|m", "Grade|f", "Torre|f", "Antena|f", "Bailarina|f", "Mensageiro|m", "Fantasma|m", "Corvo|m", "Rato|m", "Gata|f", "Vigia|m"],
+        adj: ["Queimado|Queimada", "Vivo|Viva", "Podre", "Sujo|Suja", "Branco|Branca", "Solto|Solta", "Perdido|Perdida", "Frito|Frita", "Curto|Curta", "Aberto|Aberta", "Falso|Falsa", "Barato|Barata", "Fatal", "Elétrico|Elétrica", "Pálido|Pálida", "Rachado|Rachada", "Sangrento|Sangrenta", "Frio|Fria", "Rápido|Rápida", "Mudo|Muda", "Cego|Cega", "Novo|Nova", "Velho|Velha", "Pirata", "Clonado|Clonada", "Alugado|Alugada", "Sem Registro", "Fora do Grid"],
+        compl: ["do Bloco 7", "da Zona Morta", "do Subsolo", "da Baixa", "do Terceiro Turno", "sem Licença", "de Neon", "de Cromo", "do Fio Terra", "da Sarjeta", "dos Sem-Nome", "do Mercado Cinza", "da Torre Sul", "do Beco Longo", "das Antenas", "de Segunda Mão", "do Contrabando", "do Sinal Fraco", "da Chuva Ácida", "dos Insones", "do Fim da Linha", "do Andar 40", "da Grade", "do Firewall", "dos Cabos", "do Corte", "da Overdose", "do Silêncio"],
+      },
+      "Horror cósmico": {
+        subst: ["Vela|f", "Peixe|m", "Âncora|f", "Sino|m", "Ceia|f", "Corvo|m", "Rede|f", "Farol|m", "Maré|f", "Ostra|f", "Sussurro|m", "Gaivota|f", "Anzol|m", "Cripta|f", "Bote|m", "Concha|f", "Doca|f", "Névoa|f", "Sal|m", "Junco|m", "Musgo|m", "Osso|m", "Pó|m", "Lâmpada|f", "Escada|f", "Porta|f", "Janela|f", "Fenda|f", "Poço|m", "Alçapão|m", "Retrato|m", "Espelho|m", "Pastor|m", "Viúva|f", "Órfã|f", "Afogado|m", "Sonâmbulo|m", "Fiel|m", "Peregrina|f"],
+        adj: ["Trêmulo|Trêmula", "Cego|Cega", "Afundado|Afundada", "Rachado|Rachada", "Último|Última", "Mudo|Muda", "Vazio|Vazia", "Apagado|Apagada", "Baixo|Baixa", "Podre", "Morto|Morta", "Parado|Parada", "Salgado|Salgada", "Antigo|Antiga", "Pálido|Pálida", "Torto|Torta", "Úmido|Úmida", "Fechado|Fechada", "Aberto|Aberta", "Esquecido|Esquecida", "Sem Nome", "Que Espera", "Que Range", "Que Não Fecha", "Manso|Mansa", "Fundo|Funda", "Frio|Fria"],
+        compl: ["de Sal", "da Névoa", "do Afogado", "dos Ausentes", "da Maré Morta", "do Sino Rachado", "de Baixo", "do Fundo", "sem Nome", "da Vigília", "dos Que Voltaram", "da Nona Hora", "do Pântano", "dos Ossos", "da Enseada", "do Farol", "da Casa Vazia", "dos Sonhos", "do Sussurro", "da Última Rede", "dos Peixes Cegos", "do Juramento", "da Cripta", "do Silêncio", "da Bruma", "das Águas Paradas", "do Que Dorme", "dos Sinos"],
+      },
+      "Pós-apocalíptico": {
+        subst: ["Barril|m", "Água|f", "Posto|m", "Dose|f", "Gerador|m", "Sucata|f", "Bunker|m", "Ração|f", "Poço|m", "Pó|m", "Contador|m", "Tanque|m", "Antena|f", "Abrigo|m", "Muro|m", "Seca|f", "Lata|f", "Corda|f", "Bomba|f", "Filtro|m", "Máscara|f", "Bota|f", "Roda|f", "Cerca|f", "Cinza|f", "Ferrugem|f", "Faísca|f", "Chuva|f", "Cruz|f", "Fome|f", "Estrada|f", "Trilho|m", "Sobrevivente|m", "Nômade|m", "Carniceiro|m", "Ceifeira|f", "Vigia|m", "Corvo|m", "Rato|m"],
+        adj: ["de Chumbo", "Quente", "Último|Última", "Enferrujado|Enferrujada", "Seco|Seca", "Ácido|Ácida", "Rachado|Rachada", "Vazio|Vazia", "Fundo|Funda", "Torto|Torta", "Quebrado|Quebrada", "Marcado|Marcada", "Cego|Cega", "Faminto|Faminta", "Verde", "Cinzento|Cinzenta", "Longo|Longa", "Solto|Solta", "Barato|Barata", "Roubado|Roubada", "Sem Dono", "Que Sobrou", "Novo|Nova", "Velho|Velha", "Amargo|Amarga", "Salgado|Salgada"],
+        compl: ["do Poço", "da Cratera", "do Muro", "da Estrada", "do Fim", "dos Sem-Terra", "de Chumbo", "do Contador", "da Cerca Viva", "dos Últimos", "do Combustível", "da Ração", "sem Dono", "da Zona Verde", "do Filtro", "dos Nômades", "da Chuva Ácida", "do Rádio", "da Antena", "dos Que Ficaram", "do Sul Seco", "do Norte Frio", "da Ferrugem", "do Silêncio", "das Latas", "do Gerador", "da Última Água", "dos Cães", "do Passo"],
+      },
+      "Steampunk": {
+        subst: ["Engrenagem|f", "Caldeira|f", "Válvula|f", "Manômetro|m", "Pistão|m", "Fuligem|f", "Bússola|f", "Hélice|f", "Zepelim|m", "Trilho|m", "Chaminé|f", "Corrente|f", "Roldana|f", "Bigorna|f", "Latão|m", "Cobre|m", "Vapor|m", "Carvão|m", "Óleo|m", "Fumaça|f", "Faísca|f", "Lente|f", "Relógio|m", "Pêndulo|m", "Autômato|m", "Chave|f", "Mola|f", "Âncora|f", "Sino|m", "Farol|m", "Aeronauta|m", "Maquinista|m", "Duquesa|f", "Inventor|m", "Corvo|m", "Andarilha|f"],
+        adj: ["Torto|Torta", "Emperrado|Emperrada", "Dourado|Dourada", "Rangente", "Fumegante", "Rachado|Rachada", "Preciso|Precisa", "Atrasado|Atrasada", "Adiantado|Adiantada", "Enferrujado|Enferrujada", "Polido|Polida", "Silencioso|Silenciosa", "Girante", "Quebrado|Quebrada", "Último|Última", "Novo|Nova", "Velho|Velha", "Faiscante", "Barulhento|Barulhenta", "Manso|Mansa", "Solto|Solta", "Fechado|Fechada", "Sem Ponteiros"],
+        compl: ["de Latão", "de Cobre", "a Vapor", "do Aeronauta", "da Companhia", "do Relojoeiro", "das Doze Horas", "do Trilho Alto", "da Chaminé Norte", "dos Maquinistas", "da Exposição", "do Zepelim", "sem Ponteiros", "do Carvoeiro", "da Ponte de Ferro", "do Clube", "dos Inventores", "da Válvula Presa", "do Meridiano", "da Estação", "do Porão", "da Fuligem", "do Terceiro Turno", "das Engrenagens", "do Vapor", "do Contrato"],
+      },
+    },
+    tipos: {
+      /* o mercado leva mais sinônimos do que os outros de propósito: TODA
+         cidade tem um, e num mundo de catorze assentamentos ele é o tipo que
+         mais se repete. A sonda mostrou 31 das 43 colisões concentradas aqui. */
+      mercado: ["Praça|f", "Mercado|m", "Feira|f", "Pátio|m", "Largo|m", "Terreiro|m", "Alpendre|m", "Bazar|m", "Rossio|m", "Arcada|f", "Ribeira|f", "Alfândega|f", "Balança|f", "Pregão|m", "Armazém|m", "Entreposto|m"],
+      templo: ["Templo|m", "Santuário|m", "Capela|f", "Altar|m", "Casa|f", "Oratório|m", "Nave|f", "Adro|m", "Ermida|f", "Basílica|f"],
+      forja: ["Forja|f", "Bigorna|f", "Fole|m", "Fornalha|f", "Ferraria|f", "Casa do Martelo|f", "Tenda|f", "Oficina|f", "Malho|m", "Têmpera|f"],
+      quartel: ["Quartel|m", "Guarnição|f", "Posto|m", "Torre|f", "Casa da Guarda|f", "Baluarte|m", "Bastião|m", "Vigia|f", "Praça de Armas|f", "Reduto|m"],
+      cadeia: ["Cárcere|m", "Cadeia|f", "Fossa|f", "Torre|f", "Celas|fp", "Masmorra|f", "Enxovia|f", "Casa de Ferros|f", "Poço|m", "Silo|m"],
+      biblioteca: ["Biblioteca|f", "Arquivo|m", "Casa dos Papéis|f", "Escritório|m", "Sala das Cópias|f", "Gabinete|m", "Cartório|m", "Livraria|f", "Estante|f", "Depósito|m"],
+      docas: ["Cais|m", "Ancoradouro|m", "Docas|fp", "Píer|m", "Embarcadouro|m", "Molhe|m", "Estaleiro|m", "Trapiche|m", "Enseada|f", "Marina|f"],
+      arena: ["Arena|f", "Círculo|m", "Fosso|m", "Coliseu|m", "Ringue|m", "Areia|f", "Rinha|f", "Palanque|m", "Cova|f", "Terreiro|m"],
+      "cemitério": ["Campo|m", "Jazigo|m", "Colina|f", "Terra|f", "Ossário|m", "Necrópole|f", "Adro|m", "Cemitério|m", "Sepultura|f", "Vala|f"],
+      guilda: ["Salão|m", "Casa|f", "Guilda|f", "Mesa|f", "Loja|f", "Sede|f", "Confraria|f", "Câmara|f", "Companhia|f", "Ordem|f"],
+      "casa de banhos": ["Águas|fp", "Casa de Vapor|f", "Fonte|f", "Termas|fp", "Banho|m", "Cisterna|f", "Piscina|f", "Bica|f", "Poça|f", "Vapor|m"],
+    },
+  },
+  /* 5.ª fatia: as raças da criação (classes.js). `traco` é a frase que o
+     jogador lê; `efeito` é o que o código faz com ela — até a v9.43 só
+     existia a primeira, e dez raças prometiam o que nenhum dado cumpria. As
+     duas colunas nascem juntas de propósito: quem editar a frase sem editar o
+     efeito volta a mentir para o jogador. Quem lê `efeito` é tracos.js. */
+  racas: {
+    fantasia: [
+      { nome: "Humano", desc: "Versáteis e ambiciosos. Aprendem rápido e se adaptam a tudo.", bonus: { forca: 1, destreza: 1, vigor: 1, intelecto: 1, presenca: 1, percepcao: 1 }, traco: "Determinação: uma vez por descanso, refaz uma rolagem falha.", efeito: { refazer: 1 } },
+      { nome: "Elfo", desc: "Longevos, graciosos, ligados à magia antiga e às florestas.", bonus: { destreza: 2, intelecto: 1, percepcao: 1 }, traco: "Sentidos élficos: vantagem em testes de Percepção, e vê no escuro a 18 m.", efeito: { vantagem: ["percepcao"], veNoEscuro: 18 } },
+      { nome: "Anão", desc: "Robustos, teimosos, mestres da pedra e do metal.", bonus: { vigor: 2, forca: 1 }, traco: "Resistência anã: reduz em 1 todo dano de veneno e fogo, e vê no escuro a 18 m.", efeito: { reduzDano: { veneno: 1, fogo: 1 }, veNoEscuro: 18 } },
+      { nome: "Halfling", desc: "Pequenos, sortudos, impossíveis de intimidar.", bonus: { destreza: 2, presenca: 1 }, traco: "Sorte pequena: transforma um 1 natural em 2 — uma vez por combate (ou por descanso, fora da luta).", efeito: { sorteDoUm: true } },
+      { nome: "Meio-orc", desc: "Força bruta temperada por uma vontade indomável.", bonus: { forca: 2, vigor: 2 }, traco: "Fúria persistente: ao chegar a 0 PV, fica com 1 PV uma vez por descanso longo. Vê no escuro a 18 m.", efeito: { firme: true, veNoEscuro: 18 } },
+      { nome: "Draconato", desc: "Herdeiros de sangue dracônico, orgulhosos e imponentes.", bonus: { forca: 2, presenca: 1 }, traco: "Sopro ancestral: baforada em linha que pega todos no caminho (3 PM).", efeito: { dom: { nome: "Sopro Ancestral", nivel: 1, custo: 3, tipo: "ataque", descricao: "Baforada de fogo em linha de 9 m: dano em área a todos no caminho." } } },
+      { nome: "Tiefling", desc: "Marcados por um pacto antigo. Temidos, resilientes, astutos.", bonus: { presenca: 2, intelecto: 1 }, traco: "Herança infernal: resistência a fogo, a magia inata Chama Menor (1 PM), e vê no escuro a 18 m.", efeito: { resistencia: ["fogo"], veNoEscuro: 18, dom: { nome: "Chama Menor", nivel: 1, custo: 1, tipo: "ataque", descricao: "Uma língua de fogo salta da mão e queima um alvo à vista." } } },
+      { nome: "Gnomo", desc: "Inventivos e curiosos, mentes que não param nunca.", bonus: { intelecto: 2, destreza: 1 }, traco: "Astúcia gnômica: vantagem para resistir a efeitos mentais, e vê no escuro a 18 m.", efeito: { vantagemMental: true, veNoEscuro: 18 } },
+      { nome: "Meio-elfo", desc: "Entre dois mundos, encantadores e adaptáveis.", bonus: { presenca: 2, destreza: 1, percepcao: 1 }, traco: "Diplomata nato: vantagem em testes de Presença — a sala se inclina para você. Vê no escuro a 18 m.", efeito: { vantagem: ["presenca"], veNoEscuro: 18 } },
+      { nome: "Goliath", desc: "Gigantes das montanhas, forjados pelo frio e pela altitude.", bonus: { forca: 3, vigor: 1 }, traco: "Pele de pedra: 1× por combate, reduz um golpe pela metade.", efeito: { pedra: true } },
+    ],
+    futuro: [
+      { nome: "Terrano", desc: "Nascido no berço da humanidade. Adaptável e teimoso.", bonus: { forca: 1, vigor: 1, presenca: 1, intelecto: 1 }, traco: "Improviso: conserta o que não deveria ter conserto — a bancada de ofício fica 2 mais fácil.", efeito: { oficio: 2 } },
+      { nome: "Colono Orbital", desc: "Criado em gravidade baixa, ágil e preciso.", bonus: { destreza: 2, intelecto: 1 }, traco: "Pé de gato: escala tão rápido quanto anda e atravessa terreno difícil sem perder passo.", efeito: { ignoraDificil: true } },
+      { nome: "Sintético", desc: "Consciência artificial em corpo construído.", bonus: { intelecto: 3 }, traco: "Processamento frio: imune a medo e a encantamento; vantagem para resistir ao que é mental.", efeito: { vantagemMental: true, imune: ["amedrontado", "enfeiticado"] } },
+      { nome: "Mutante", desc: "O ermo reescreveu seu corpo. Não sem preço.", bonus: { vigor: 2, forca: 1 }, traco: "Metabolismo estranho: resistência a veneno — metade do dano.", efeito: { resistencia: ["veneno"] } },
+      { nome: "Cromado", desc: "Mais implante do que carne. Rápido, letal, endividado.", bonus: { destreza: 2, forca: 1 }, traco: "Reflexos de fábrica: +5 na iniciativa — você quase sempre age primeiro.", efeito: { iniciativa: 5 } },
+      { nome: "Vagante", desc: "Sem mundo, sem bandeira. Só a estrada.", bonus: { percepcao: 2, destreza: 1 }, traco: "Faro de perigo: vantagem em testes de Percepção — a emboscada tem de ser muito boa.", efeito: { vantagem: ["percepcao"] } },
+    ],
   },
 };
