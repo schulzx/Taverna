@@ -22,6 +22,7 @@
    chefes e o `semMasmorras` do "aqui" não existem; o ESTADO leva a ficha. */
 import fs from "node:fs";
 const P = await import("../src/prompt.js");
+const ENV = await import("../src/motor/envelopes-do-turno.js");
 const H = await import("../src/historia.js");
 const PER = await import("../src/pericias.js");
 const MIS = await import("../src/missoes.js");
@@ -186,7 +187,8 @@ sec("7. A FIAÇÃO NO APP");
 {
   t("o ref dos sinais nasce aberto", /const sinaisDoTurnoRef = useRef\(SINAIS_ABERTOS\);/.test(APP));
   t("enviar lê os sinais antes do rodapé, em try/calou, e cai em tudo aberto", /sinaisDoTurnoRef\.current = emJogoNoTurno\(\{ frase: conteudo, nota: `\$\{nota\}\\n\$\{missoesTxt\}`, recentes, chefes: chefesNomes, masmorras: masmorrasNomes \}\);[^\n]*\n\s*\} catch \(e\) \{ calou\("os sinais do turno", e\); sinaisDoTurnoRef\.current = SINAIS_ABERTOS;/.test(APP) /* MOVIDA NA ONDA 3 (14/10), com o motivo: a relevância do turno e a linha A GENTE são lidas na MESMA linha dos sinais, cada uma no seu try (o App não podia ganhar linhas: o check-acoes-do-jogador lê-o por número de linha), e o catch dos sinais também as zera; a prova de que os sinais caem em tudo aberto é a mesma */
-    && APP.indexOf("sinaisDoTurnoRef.current = emJogoNoTurno(") < APP.indexOf("const rodape = `[RODAPÉ DO SISTEMA]"));
+    /* MOVIDA NA T2-A (28/10), com o motivo: o texto do rodapé saiu para src/motor/envelopes-do-turno.js; a ordem é a mesma, lida no sítio que o monta */
+    && APP.indexOf("sinaisDoTurnoRef.current = emJogoNoTurno(") < APP.indexOf("const rodape = oRodapeDoTurno("));
   t("a tabela de preços abre com a cidade E o comércio", /temMercado: !!cidadeAtualRef\.current && !!sinais\.comercio,/.test(APP));
   t("o governo e o fim do acampamento vão à cena", /temGoverno: temOQueGovernar\(\) \|\| !!sinais\.governo,/.test(APP) && /fimDoAcampamento: !!sinais\.fimDoAcampamento,/.test(APP));
   t("os chefes inteiros só com chefe em jogo", /const chefes = chefesDoFio\(!\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.chefeEmJogo\);/.test(APP));
@@ -200,7 +202,9 @@ sec("7. A FIAÇÃO NO APP");
      reescreveria o cache a cada vitória */
   t("o estado épico (o XP do nível 20) vai ao vivo, não ao fixo", /const infoEpico = \(\) => \{/.test(APP) && !/const ep = resumoEpico\(p\);/.test(APP));
   t("e o fixo da ficha lê a forma, o treino e a profissão, cada um em try/calou", /const fixoDaFicha = \(\) => \{[\s\S]{0,200}resumoMoldePrompt\(moldeMundo\(\)\)[\s\S]{0,200}"treino"[\s\S]{0,200}resumoProfissaoPrompt\(p\)/.test(APP));
-  t("o Inviolável continua no rodapé, colado à frase (o Gemini lê o que está perto dela — MM11)", /Inviolável: \(1\) o tempo SÓ muda por envelope/.test(APP));
+  /* MOVIDA NA T2-A (28/10), com o motivo: o Inviolável saiu do App com o resto do texto do rodapé (src/motor/envelopes-do-turno.js);
+     a intenção — ele está no rodapé que o App monta, colado à frase — joga-se na peça e no sítio que a chama */
+  t("o Inviolável continua no rodapé, colado à frase (o Gemini lê o que está perto dela — MM11)", /Inviolável: \(1\) o tempo SÓ muda por envelope/.test(ENV.aCabecaDoRodape({ dia: 1, minuto: 600, local: "aqui", ascensao: false })) && APP.includes("const rodape = oRodapeDoTurno("));
 }
 
 console.log(`\n${ok} ok, ${mal} falharam`);

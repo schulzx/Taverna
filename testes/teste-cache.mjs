@@ -132,13 +132,16 @@ sec("5. O PEDIDO NA ORDEM DO CACHE (v9.465) — o histórico deixa de pagar chei
      sobre os mesmos pedidos com esta arrumação: 69%. */
   const { pedidoNaOrdemDoCache, MARCA_DA_CENA_ABERTA, MARCA_DO_RODAPE } = await import(S + "prompt.js");
   const { ETIQUETA_DO_PEDIDO } = await import(S + "escuta.js");
+  const { aCabecaDoRodape } = await import(S + "motor/envelopes-do-turno.js");
   const montarT = (cena, tempo) => montarSystemPrompt("T", { genero: "Fantasia medieval" }, pers, null, {}, "", "", "", "", tempo, "", "", cena);
   const hist = [{ role: "user", content: "[PAUTA DO TURNO 1] entro na taverna" }, { role: "assistant", content: "{\"narrativa\":\"A porta range.\"}" }];
   const turno = (n, frase) => ({ role: "user", content: `[PAUTA DO TURNO ${n}] o que o sistema decidiu\n${MARCA_DO_RODAPE} Agora: dia ${n}.\n${ETIQUETA_DO_PEDIDO}\n${frase}` });
   const s1 = montarT({ emCidade: true }, "TEMPO DA CAMPANHA: dia 1, 09:00");
   const s2 = montarT({ emCidade: true, emCombate: true }, "TEMPO DA CAMPANHA: dia 1, 09:10");
   t("a marca da zona é a do texto montado", s1.includes(MARCA_DA_CENA_ABERTA));
-  t("e o App abre o rodapé por ela (sem isto o corte cai no fallback calado)", APP.includes("const rodape = `" + MARCA_DO_RODAPE));
+  /* MOVIDA NA T2-A (28/10), com o motivo: o texto do rodapé saiu do App para src/motor/envelopes-do-turno.js; a
+     intenção é a mesma — o rodapé que o App monta abre pela marca —, jogada na peça e não lida no texto */
+  t("e o App abre o rodapé por ela (sem isto o corte cai no fallback calado)", APP.includes("const rodape = oRodapeDoTurno(") && aCabecaDoRodape({ dia: 3, minuto: 600, local: "aqui", ascensao: false }).startsWith(MARCA_DO_RODAPE + " Agora: "));
   const p1 = pedidoNaOrdemDoCache(s1, [...hist, turno(1, "peço uma cerveja")]);
   const p2 = pedidoNaOrdemDoCache(s2, [...hist, { role: "user", content: "x" }, { role: "assistant", content: "y" }, turno(2, "saco a espada")]);
   t("o system viaja sem a zona nem o ESTADO", !p1.system.includes(MARCA_DA_CENA_ABERTA) && !p1.system.includes("ESTADO DESTE TURNO ═"));

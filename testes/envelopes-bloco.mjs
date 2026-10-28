@@ -1,0 +1,211 @@
+/* envelopes-bloco.mjs (Fase T2, trilha A, 28/10/2026) — os envelopes do turno, corridos em Node
+
+   Não é suíte: é a ferramenta que as duas pontas da prova usam.
+
+   - `gerar-envelopes-dourado.mjs` recorta do App de ANTES (o último em que
+     o envelope morava inteiro no App) o sítio que monta o texto, à letra,
+     e corre-o sobre os casos.
+   - `teste-motor-envelopes-do-turno.mjs` recorta do App de HOJE o MESMO
+     sítio (as âncoras são as mesmas; muda o que está entre elas) e corre-o,
+     com as peças de src/motor/envelopes-do-turno.js, sobre os mesmos casos.
+
+   O que se compara é o texto que vai ao Narrador, byte a byte, e a ordem em
+   que o sítio chamou as peças do App. As peças que NÃO saíram do App (os
+   resumos de cada órgão) são dublês declarados que devolvem uma etiqueta
+   tirada dos argumentos — vazia em parte dos casos, para que a regra "peça
+   vazia não ocupa linha" seja percorrida — e as que decidem a forma do
+   texto que saiu (o calendário, a forma da cidade, o "aqui" da masmorra)
+   são as de verdade. O escopo é um Proxy: um nome que nenhum dublê dá e que
+   não é do JavaScript fica em `faltas` (a suíte exige-o vazio), em vez de
+   cair calado. */
+import { createHash } from "node:crypto";
+import * as calendario from "../src/calendario.js";
+import * as geografia from "../src/geografia.js";
+import * as semCidade from "../src/masmorra-sem-cidade.js";
+import * as prompt from "../src/prompt.js";
+import * as chao from "../src/chao.js";
+import * as motorEnvelopes from "../src/motor/envelopes-do-turno.js";
+
+const NOMES = {
+  calendario: ["dataTxt", "horaTxt", "ehNoite", "estacaoDe"],
+  geografia: ["formaDaCidade"],
+  semCidade: ["aquiDoTurno", "calaNaMasmorra"],
+  prompt: ["SINAIS_ABERTOS"],
+  chao: ["RAIO_EXAME"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui"],
+};
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, motorEnvelopes };
+function osModulos({ novo }) {
+  const o = {};
+  for (const [mod, lista] of Object.entries(NOMES)) {
+    if (!novo && mod === "motorEnvelopes") continue;
+    for (const n of lista) {
+      if (!(n in MODULOS[mod])) throw new Error(`${mod} não exporta ${n}`);
+      o[n] = MODULOS[mod][n];
+    }
+  }
+  return o;
+}
+
+/* ---------------- O RECORTE ---------------- */
+const corteDe = (app) => (de, ate) => {
+  const i0 = app.indexOf(de);
+  if (i0 < 0) throw new Error("não está onde estava: " + de.slice(0, 70));
+  if (app.indexOf(de, i0 + 1) >= 0) throw new Error("ambíguo: " + de.slice(0, 70));
+  const i1 = app.indexOf(ate, i0 + de.length);
+  if (i1 < 0) throw new Error("o fim não está onde estava: " + ate.slice(0, 70));
+  return app.slice(i0, i1);
+};
+export const BLOCOS = ["rodape"];
+const ANCORAS = {
+  rodape: ["    const rodape = ", "    const base = histBase ?? historico;"],
+};
+const DEVOLVE = { rodape: "rodape" };
+export function recorteDosEnvelopes(app) {
+  const corte = corteDe(app);
+  const r = {};
+  for (const b of BLOCOS) r[b] = { orgaos: corte(...ANCORAS[b]), devolve: DEVOLVE[b] };
+  return r;
+}
+export function blocoComoFuncao({ orgaos, devolve }) {
+  const corpo = `with (S) { return function () {\n${orgaos}\nreturn ${devolve};\n}; }`;
+  return (S) => new Function("S", corpo)(S);
+}
+
+/* ---------------- OS CASOS ----------------
+   O relógio (o dia, a hora, a noite), o lugar, quem despertou para a fé
+   (e o resumo vazio), a luta ou a paz, a masmorra, a jornada, o prédio, a
+   cidade do mapa (sem muro, paliçada, muralha, a militar, a costa, a
+   montanha) e fora dele, a ficha do turno e a do ref, e um padrão de peças
+   vazias que muda com o caso. */
+const CIDADES = [
+  { nome: "Ponte do Martelo", populacao: 190, bioma: "planície" },
+  { nome: "Agulha de Sal", populacao: 900, bioma: "costa", porte: "vila de pesca" },
+  { nome: "Torre Funda", populacao: 3000, bioma: "montanha" },
+  { nome: "Forte Cinza", populacao: 800, porte: "fortaleza" },
+  { nome: "Coroa Alta", populacao: 40000, bioma: "rio" },
+];
+const MINUTOS = [0, 359, 360, 480, 1000, 1259, 1260, 1439, 725];
+const DIAS = [1, 2, 89, 91, 180, 271, 365, 400];
+export function casoDosEnvelopes(i) {
+  const cidade = i % 11 === 5 ? null : i % 13 === 7 ? "Cidade Fora do Mapa" : CIDADES[i % CIDADES.length].nome;
+  return {
+    i,
+    dia: DIAS[i % DIAS.length], minuto: MINUTOS[(i >> 1) % MINUTOS.length],
+    divindade: [null, { despertar: false }, { despertar: true, grau: 2 }, { despertar: true, grau: 0 }][i % 4],
+    ascensaoVazia: i % 8 === 3,
+    combate: i % 5 === 2 ? { grade: { w: 8, h: 8 }, heroi: { x: 1, y: 2 }, inimigos: [{ nome: "Lobo" }], aliados: i % 2 ? [{ nome: "Iris" }] : undefined, ordem: ["heroi", "Lobo"] } : null,
+    masmorra: i % 6 === 4 ? { nome: "Cripta do Corvo", atual: 2 } : null,
+    jornada: i % 7 === 1 ? { destino: "Agulha de Sal", trecho: i % 2 ? { indice: 3, total: 13, feicao: { nome: "as três pedras" } } : null } : null,
+    lugar: [null, null, { nome: "A Forja" }, { nome: "o sótão", dentroDe: "A Espada Faiscante" }, { nome: "o moinho velho" }][(i >> 2) % 5],
+    cidade,
+    persAtual: i % 3 === 0 ? null : { nome: "Vera", nivel: 1 + (i % 9), grupo: i % 4 ? [{ nome: "Iris" }] : [] },
+    refVazio: i % 9 === 2,
+    personagem: { nome: "Vera do render", nivel: 3, grupo: [] },
+    /* que peças voltam vazias: um padrão de bits que gira com o caso */
+    vazios: (i * 2654435761) >>> 0,
+    mensagens: i % 3 === 1 ? [{ autor: "mestre", texto: "Iris olha para Bruna." }, { autor: "jogador", texto: "oi" }] : [],
+    missoes: i % 4 === 2 ? [{ status: "ativa", dador: "Bruna", etapas: [{ alvo: "Sarna" }, null] }, null] : [],
+    pauta: i % 5 === 1 ? "ONDE Iris está em Ponte do Martelo" : "",
+    sinais: i % 10 === 9 ? null : { masmorraEmJogo: i % 2 === 0, chefeEmJogo: i % 3 === 0 },
+    ondeEstoura: i % 17 === 3,
+  };
+}
+
+/* ---------------- OS DUBLÊS ---------------- */
+const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
+const ref = (v) => ({ current: v });
+const h8 = (x) => createHash("sha256").update(String(x)).digest("hex").slice(0, 8);
+const seguro = (args) => { try { return JSON.stringify(args); } catch { return "[circular]"; } };
+/* as peças do App que ficaram: cada uma devolve uma etiqueta dos argumentos,
+   ou "" quando o bit dela está aceso no caso */
+const PECAS = [
+  "resumoCondicoesPrompt", "infoNemesis", "resumoMercadoPrompt", "resumoGrupoPrompt", "resumoReacoesPrompt",
+  "resumoGridPrompt", "resumoDeslocamentoPrompt", "resumoCombosPrompt", "resumoRitoPrompt", "resumoLugarPrompt",
+  "saidasDeUmPassoPrompt", "resumoArredoresPrompt", "resumoCelulaPrompt", "resumoViagemPrompt", "resumoComodosPrompt",
+  "resumoDaqui", "chefesDoFio", "resumoCenaPrompt", "resumoProficienciaPrompt", "resumoPericiasPrompt",
+  "resumoHeroismoPrompt", "resumoDescansoPrompt", "resumoRelogiosPrompt", "resumoMagiasPrompt", "resumoSintoniaPrompt",
+  "resumoLegadoPrompt", "resumoMissoesPrompt", "resumoGrimorioPrompt", "resumoDadivasPrompt", "resumoTracosPrompt",
+  "resumoInvocacoesPrompt", "envelopeDoQueFicou", "resumoAscensao",
+];
+export function dublesDosEnvelopes(k, { novo }) {
+  const log = { chamadas: [], calados: [], faltas: [] };
+  const peca = (nome, n) => (...args) => {
+    log.chamadas.push(nome);
+    if (nome === "resumoAscensao" && k.ascensaoVazia) return "";
+    if (nome !== "resumoAscensao" && (k.vazios >>> (n % 32)) & 1) return "";
+    return `<${nome} ${h8(seguro(args))}>`;
+  };
+  const S = {
+    ...osModulos({ novo }),
+    caso: k,
+    calou: (onde, e) => log.calados.push([onde, String(e && e.message)]),
+    /* os refs */
+    diaRef: ref(k.dia), minutoRef: ref(k.minuto), divindadeRef: ref(copia(k.divindade)),
+    personagemRef: ref(k.refVazio ? null : copia(k.persAtual || k.personagem)), personagem: copia(k.personagem), persAtual: copia(k.persAtual),
+    masmorraRef: ref(copia(k.masmorra)), combateRef: ref(copia(k.combate)), lugarRef: ref(copia(k.lugar)),
+    cidadeAtualRef: ref(k.cidade), mapaRef: ref({ cidades: copia(CIDADES) }), jornadaRef: ref(copia(k.jornada)),
+    baseMundoRef: ref({ base: k.i % 3 }), sinaisDoTurnoRef: ref(copia(k.sinais)), relevanciaRef: ref(k.i % 4 ? { peso: k.i % 4 } : null),
+    mensagensRef: ref(copia(k.mensagens)), npcsRef: ref({ Iris: { nome: "Iris" }, Bruna: { nome: "Bruna" } }),
+    confidenciasRef: ref([]), elencoSaveRef: ref({ vistos: ["Iris"] }), missoesRef: ref(copia(k.missoes)),
+    relogiosRef: ref([{ nome: "a cheia", n: k.i % 4 }]), chaoRef: ref([{ nome: "adaga", x: 1, y: 1 }]),
+    mercadoAqui: { banca: k.i % 3 }, npcsDoTurno: k.i % 2 ? "PESSOAS CONHECIDAS: Iris" : null, pauta: k.pauta,
+    /* o rodapé de antes lia a estação de um const do enviar, uma linha acima do recorte */
+    estR: calendario.estacaoDe(k.dia),
+    /* as portas do App que não são texto */
+    localAtualTxt: () => { log.chamadas.push("localAtualTxt"); return `em ${k.lugar ? k.lugar.nome : "a rua"}, ${k.cidade || "lugar nenhum"}`; },
+    quemMeVe: (p, o) => { log.chamadas.push("quemMeVe"); return k.i % 2 ? { viu: h8(seguro([p, o])) } : null; },
+    luzDaLutaAgora: () => "penumbra",
+    celulaAqui: () => ({ celula: k.i % 4 }),
+    cidadeSobOsPes: () => k.cidade,
+    locaisDaCidade: () => [{ nome: "A Forja" }, { nome: "A Espada Faiscante" }],
+    comodosDoLocal: (sem, dono) => [{ nome: "sótão de " + dono.nome }],
+    semNome: (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim(),
+    pausarViagem: (j, txt) => ({ ...j, pausa: txt }),
+    trechoAtual: (j) => j.trecho || null,
+    pertoDaqui: (c, heroi, raio) => ({ c, heroi, raio }),
+    dobraMovimento: (p) => !!(p.nivel % 2),
+    ranksDoPersonagem: (p) => ({ r: p.nivel || 0 }),
+    atributoEfetivo: () => 1,
+    sementeMundo: () => "sem-" + (k.i % 5), generoMundo: () => "Fantasia medieval", moldeMundo: () => ({ id: "molde" }),
+    mundoAtual: () => (k.i % 3 ? { lexico: { a: 1 } } : null),
+    ondeSeProcura: () => { if (k.ondeEstoura) throw new Error("onde estourou"); return { onde: "praça" }; },
+    linhasJaDitas: (t) => [String(t).length],
+    nomesDoElenco: () => ["Iris"],
+  };
+  PECAS.forEach((n, j) => { S[n] = peca(n, j); });
+  const escopo = new Proxy(S, {
+    has: (t, nome) => {
+      if (typeof nome !== "string") return false;
+      if (nome in t) return true;
+      if (nome in globalThis) return false;
+      log.faltas.push(nome);
+      return true;
+    },
+    get: (t, nome) => {
+      if (nome === Symbol.unscopables) return undefined;
+      if (nome in t) return t[nome];
+      throw new ReferenceError("falta o dublê: " + String(nome));
+    },
+    set: (t, nome, v) => { t[nome] = v; return true; },
+  });
+  return { S, escopo, log };
+}
+
+/* `troca` põe uma peça no lugar de outra (a mordida que estraga o motor) */
+export function correrOBloco(fazer, k, { novo, troca } = {}) {
+  const { S, escopo, log } = dublesDosEnvelopes(k, { novo });
+  if (troca) Object.assign(S, troca);
+  let texto = null, erro = null;
+  try { texto = fazer(escopo)(); } catch (e) { erro = String(e && e.message); }
+  return { texto, erro, log };
+}
+
+/* A FOTO: o texto à letra, as chamadas em ordem, o que calou */
+export function fotoDoEnvelope(f) {
+  return {
+    texto: f.texto, erro: f.erro, calados: f.log.calados, faltas: [...new Set(f.log.faltas)],
+    chamadas: createHash("sha256").update(f.log.chamadas.join("|")).digest("hex").slice(0, 16),
+  };
+}
+export const casosDosEnvelopes = (n) => Array.from({ length: n }, (_, i) => casoDosEnvelopes(i));

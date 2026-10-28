@@ -248,6 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -11707,8 +11708,9 @@ export default function Taverna() {
        (não fica no histórico — custo ~zero) reforçando as regras que o
        DeepSeek mais esquecia: relógio do sistema, proibição de inventar
        memórias, obediência ao cânone e narrativa sempre preenchida. */
-    const estR = estacaoDe(diaRef.current); let npcsDoTurno = null; try { /* onda 3: as PESSOAS CONHECIDAS pela relevância, montadas UMA vez — o system as leva e o O QUE EXISTE lê-as para dizer cada fato uma vez só */ npcsDoTurno = resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((n) => c.includes(n)); } catch (e) { calou("emCena das pessoas", e); return []; } })(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao das pessoas", e); return []; } })(), relevancia: relevanciaRef.current }); } catch (e) { calou("as pessoas do turno", e); npcsDoTurno = null; }
-    const rodape = `[RODAPÉ DO SISTEMA] Agora: ${dataTxt(diaRef.current)} (dia ${diaRef.current}), ${horaTxt(minutoRef.current)}${ehNoite(minutoRef.current) ? " (noite)" : ""}, ${estR.nome.toLowerCase()}. Local: ${localAtualTxt()}. Inviolável: (1) o tempo SÓ muda por envelope do sistema — nunca narre amanhecer, anoitecer ou horas passando por conta própria; (2) NUNCA invente memórias nem passado compartilhado que não esteja no cânone/registro de pessoas; (3) siga o cânone e o registro à risca; (4) o campo "narrativa" vem SEMPRE preenchido; (5) descanso/sono acontecem ONDE EU ESTOU — jamais me teleporte para aposentos ou cidade sem viagem narrada; (6) ONDE EU ESTOU é o que este rodapé diz, e só muda quando EU escrevo que me movo — esperar, vigiar e deixar horas passarem acontece no lugar em que eu já estava.${divindadeRef.current && divindadeRef.current.despertar ? " " + resumoAscensao(divindadeRef.current, (personagem && personagem.nivel) || 1) : ""}${(() => {
+    let npcsDoTurno = null; try { /* onda 3: as PESSOAS CONHECIDAS pela relevância, montadas UMA vez — o system as leva e o O QUE EXISTE lê-as para dizer cada fato uma vez só */ npcsDoTurno = resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: (persAtual || personagemRef.current || personagem || {}).grupo || [], elenco: nomesDoElenco(), vistos: elencoSaveRef.current.vistos, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((n) => c.includes(n)); } catch (e) { calou("emCena das pessoas", e); return []; } })(), missao: (() => { try { return (missoesRef.current || []).filter((m) => m && m.status === "ativa").flatMap((m) => [m.dador, ...(m.etapas || []).map((e) => e && e.alvo)]).filter(Boolean); } catch (e) { calou("missao das pessoas", e); return []; } })(), relevancia: relevanciaRef.current }); } catch (e) { calou("as pessoas do turno", e); npcsDoTurno = null; }
+    /* o texto, a ordem e a regra das peças vivem no motor (envelopes-do-turno.js); aqui ficam as peças */
+    const rodape = oRodapeDoTurno({ dia: diaRef.current, minuto: minutoRef.current, local: localAtualTxt(), ascensao: divindadeRef.current && divindadeRef.current.despertar ? resumoAscensao(divindadeRef.current, (personagem && personagem.nivel) || 1) : false }, (() => {
       /* CONDIÇÕES (v9.0) e NÊMESIS: estado vivo, colado em TODO turno. É o que
          impede o Mestre de narrar um herói inteiro enquanto o sistema o mantém
          atordoado — ou uma nêmesis viva depois de o sistema tê-la enterrado. */
@@ -11777,10 +11779,7 @@ export default function Taverna() {
          guarda e muro numa aldeia que não tem nenhum dos três. É uma linha
          curta porque é um FATO curto — e fato que o desenho já mostra ao
          jogador não pode continuar sendo contradito na prosa. */
-      const shape = cidadeObj && !lugarRef.current ? (() => {
-        const f = formaDaCidade(cidadeObj);
-        return `A FORMA DAQUI (do sistema — obedeça): ${cidadeObj.nome} é ${f.nota}. ${f.muro.id === "nenhum" ? "NÃO há muralha, portão nem guarda de portão — quem chega, entra." : `A defesa é ${f.muro.rotulo}: ${f.muro.nota}.`}${f.agua ? " Um lado é água, com cais." : ""}${f.aperto < 1 ? " O assentamento está espremido entre paredes de pedra." : ""}`;
-      })() : "";
+      const shape = cidadeObj && !lugarRef.current ? aFormaDaqui(cidadeObj) : "";
       /* v9.54: o trecho de ermo em que o herói está. É o estágio 2 do mundo
          chegando ao Mestre: o caminho entre dois lugares deixa de ser um
          vazio narrado de improviso e vira terreno, distância e uma feição
@@ -11876,8 +11875,8 @@ export default function Taverna() {
          Mestre descreve um chão limpo em cima de um chão cheio, ou pior,
          "entrega" o que o jogador ainda não recolheu. */
       const chn = envelopeDoQueFicou(pertoDaqui(chaoRef.current, combateRef.current ? combateRef.current.heroi : null, RAIO_EXAME));
-      return `${aqui ? `\n${aqui}` : ""}${chn ? `\n${chn}` : ""}${chefes ? `\n${chefes}` : ""}${cena ? `\n${cena}` : ""}${eqp ? `\n${eqp}` : ""}${per ? `\n${per}` : ""}${her ? `\n${her}` : ""}${dsc ? `\n${dsc}` : ""}${rel ? `\n${rel}` : ""}${mag ? `\n${mag}` : ""}${sin ? `\n${sin}` : ""}${leg ? `\n${leg}` : ""}${mis ? `\n${mis}` : ""}${dad ? `\n${dad}` : ""}${trc ? `\n${trc}` : ""}${ivc ? `\n${ivc}` : ""}${mov ? `\n${mov}` : ""}${cond ? `\n${cond}` : ""}${nem ? `\n${nem}` : ""}${merc ? `\n${merc}` : ""}${grp ? `\n${grp}` : ""}${rea ? `\n${rea}` : ""}${zon ? `\n${zon}` : ""}${cmb ? `\n${cmb}` : ""}${rit ? `\n${rit}` : ""}`;
-    })()}`;
+      return { aqui, chao: chn, chefes, cena, proficiencia: eqp, pericias: per, heroismo: her, descanso: dsc, relogios: rel, magias: mag, sintonia: sin, legado: leg, missoes: mis, dadivas: dad, tracos: trc, invocacoes: ivc, deslocamento: mov, condicoes: cond, nemesis: nem, mercado: merc, grupo: grp, reacoes: rea, tabuleiro: zon, combos: cmb, rito: rit };
+    })());
     const base = histBase ?? historico;
     /* MM18: a frase do jogador é a ÚLTIMA coisa que o Narrador lê — depois
        do rodapé, com a etiqueta de `escuta.js`. Na 4.ª sessão ela ia a 7–14
