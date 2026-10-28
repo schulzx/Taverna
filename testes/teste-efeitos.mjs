@@ -952,6 +952,10 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
 {
   const { readFileSync } = await import("node:fs");
   const APP = readFileSync("../src/App.jsx", "utf8");
+  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
+     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
+     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
+  const MOTOR = readFileSync("../src/motor/aplicar.js", "utf8");
   const quantas = (rx) => (APP.match(rx) || []).length;
 
   /* ---------------- A LIÇÃO DE R4: DEFINIÇÃO *E* SÍTIO ----------------
@@ -1023,25 +1027,25 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
      grupo e o abrigo do companheiro vira permanente — e é a segunda que
      nenhuma outra prova pega. */
   t("o relógio do HERÓI continua onde estava",
-    quantas(/const \{ efeitos, msgs: msgsTick \} = tickEfeitos\(pers\)/g) === 1);
+    (MOTOR.match(/const \{ efeitos, msgs: msgsTick \} = tickEfeitos\(pers\)/g) || []).length === 1);
   t("e nasceu o IRMÃO: o relógio corre sobre o grupo também",
-    quantas(/const tg = tickEfeitos\(g\)/g) === 1);
+    (MOTOR.match(/const tg = tickEfeitos\(g\)/g) || []).length === 1);
   /* tique que não escreve de volta é tique que não conta: a lista nova tem
      de voltar para a ficha do companheiro, senão o prazo roda em cópia. */
   t("e o prazo do grupo é ESCRITO de volta na ficha",
-    /return \{ \.\.\.g, efeitos: tg\.efeitos \};/.test(APP)
-    && /pers = \{ \.\.\.pers, grupo: grupoComPrazo \};/.test(APP));
+    /return \{ \.\.\.g, efeitos: tg\.efeitos \};/.test(MOTOR)
+    && /pers = \{ \.\.\.pers, grupo: grupoComPrazo \};/.test(MOTOR));
   t("e o relógio do grupo também cala em vez de custar o turno",
-    quantas(/calou\("prazo-do-efeito-do-grupo",\s*e\)/g) === 1);
+    (MOTOR.match(/calou\("prazo-do-efeito-do-grupo",\s*e\)/g) || []).length === 1);
 
   /* MORAM NO MESMO RELÓGIO, e a ordem prova isso: herói, grupo e só então as
      condições. Se o laço do grupo migrar para o relógio de RODADAS do revide,
      o efeito do companheiro passa a vencer só em combate — e fora da luta o
      abrigo fica de pé para sempre. A âncora é a POSIÇÃO, que é o que o
      comentário do App promete por escrito. */
-  const iHeroi = APP.indexOf("const { efeitos, msgs: msgsTick } = tickEfeitos(pers)");
-  const iGrupo = APP.indexOf("const tg = tickEfeitos(g)");
-  const iCond = APP.indexOf("const t = tickCondicoes(pers.condicoes)");
+  const iHeroi = MOTOR.indexOf("const { efeitos, msgs: msgsTick } = tickEfeitos(pers)");
+  const iGrupo = MOTOR.indexOf("const tg = tickEfeitos(g)");
+  const iCond = MOTOR.indexOf("const t = tickCondicoes(pers.condicoes)");
   t("os três relógios existem no mesmo passo do turno", iHeroi > 0 && iGrupo > 0 && iCond > 0);
   t("e a ordem é herói → grupo → condições, no mesmo bloco",
     iHeroi < iGrupo && iGrupo < iCond, `${iHeroi} / ${iGrupo} / ${iCond}`);

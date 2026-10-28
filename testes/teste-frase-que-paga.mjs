@@ -88,7 +88,10 @@ t("a frase é a que a escuta lê como do jogador (nunca um envelope)", /lerOPedi
    léxico, mas passa por `nomeDaMoeda` — o nome único da campanha, o mesmo da
    linha ECONOMIA do pedido (teste-lexico-cor.mjs §2). */
 t("a moeda é a palavra do léxico", /nomeDaMoeda\(\(mundoAtual\(\) \|\| \{\}\)\.lexico\)/.test(app));
-t("e o aplicarResposta entrega as duas a oQueFaltaDebitar", /pedido: typeof op\.pedido === "string" \? op\.pedido : "", moeda: typeof op\.moeda === "string" \? op\.moeda : ""/.test(app));
+/* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
+     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
+     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
+t("e o aplicarResposta entrega as duas a oQueFaltaDebitar", /pedido: typeof op\.pedido === "string" \? op\.pedido : "", moeda: typeof op\.moeda === "string" \? op\.moeda : ""/.test(fs.readFileSync(new URL("../src/motor/aplicar.js", import.meta.url), "utf8")));
 
 console.log(`\nfrase que paga: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

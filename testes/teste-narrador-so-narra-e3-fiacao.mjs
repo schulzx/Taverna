@@ -119,7 +119,7 @@ sec("3. o achado da estrada: entra na bolsa no rolar, e não paga duas vezes");
      achado duas vezes — então a prova agora é: os envelopes vão por nome, e
      a soma à parte no App deixou de existir. */
   t("a cobrança do App passa os envelopes do turno (a marca é lida no módulo) e não soma o achado à parte",
-    /oQueFaltaCreditar\(resp\.narrativa, resp\.mudancas, \{[^}]*envelopes: op\.envelopes \|\| ""/.test(app) && !/jaDoAchado/.test(app));
+    /oQueFaltaCreditar\(resp\.narrativa, resp\.mudancas, \{[^}]*envelopes: op\.envelopes \|\| ""/.test(readFileSync(new URL("../src/motor/aplicar.js", import.meta.url), "utf8")) && !/jaDoAchado/.test(app)); /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20, provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
   t("e o módulo desconta a marca dos envelopes (o achado não credita de novo)", !oQueFaltaCreditar(narr, null, { envelopes: "◉ 12 já na bolsa (creditadas pelo sistema)" }).temAlgo);
 }
 

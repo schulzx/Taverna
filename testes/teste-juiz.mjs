@@ -168,9 +168,13 @@ sec("9. O CANAL DE ENVELOPES EXISTE DE VERDADE");
   t("aplicarMudancas tem canal de notas", /export function aplicarMudancas\(pers, m, msgs, notas = \[\]\)/.test(RJ));
   t("processarCombate também", /export function processarCombate\(combateAtual, m, msgs, notas = \[\]\)/.test(RJ));
   const APP = readFileSync("../src/App.jsx", "utf8");
-  t("o App lê as notas das mudanças", /const notasDoJuiz = \[\]/.test(APP));
+  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
+     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
+     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: as notas do Juiz no motor, as do combate no App. */
+  const MOTOR = readFileSync("../src/motor/aplicar.js", "utf8");
+  t("o App lê as notas das mudanças", /const notasDoJuiz = \[\]/.test(MOTOR));
   t("e as do combate", /const notasDoCombate = \[\]/.test(APP));
-  t("e manda as duas ao Narrador", (APP.match(/for \(const nt of notas/g) || []).length === 2);
+  t("e manda as duas ao Narrador", (APP.match(/for \(const nt of notas/g) || []).length === 1 && (MOTOR.match(/for \(const nt of notasDoJuiz\) notas\.push\(nt\);/g) || []).length === 1);
 }
 
 console.log(`\njuiz v9.154: ${bons} passaram, ${maus} falharam`);

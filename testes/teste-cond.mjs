@@ -1326,10 +1326,13 @@ console.log(resumoCondicoesPrompt(pers, pers.grupo));
    sempre — que foi precisamente o estado do jogo entre a v9.2 e hoje.
    Se o bloco sumir amanhã, é ESTA seção que fica vermelha.
    ============================================================ */
-console.log("\n[T1 · ligado ao jogo] o relógio do grupo no App.jsx:");
+console.log("\n[T1 · ligado ao jogo] o relógio do grupo no motor do turno (src/motor/aplicar.js):");
 {
   const { readFileSync } = await import("node:fs");
-  const APP = readFileSync("../src/App.jsx", "utf8");
+  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
+     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
+     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: o nome APP ficou, o arquivo é o do motor. */
+  const APP = readFileSync("../src/motor/aplicar.js", "utf8");
   const quantas = (rx) => (APP.match(rx) || []).length;
 
   const iHeroi = APP.indexOf("const t = tickCondicoes(pers.condicoes)");
@@ -1403,13 +1406,16 @@ console.log("\n[T1 · ligado ao jogo] o relógio do grupo no App.jsx:");
    cada sítio é recortado entre o `try {` mais próximo e a própria etiqueta
    do `calou`, e TODA asserção do bloco exige o `achou` correspondente.
    ============================================================ */
-console.log("\n[T3 · ligado ao jogo] os três sítios da salvaguarda no App.jsx:");
+console.log("\n[T3 · ligado ao jogo] os três sítios da salvaguarda no motor do turno (src/motor/aplicar.js):");
 {
   const { readFileSync } = await import("node:fs");
-  const APP = readFileSync("../src/App.jsx", "utf8");
+  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
+     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
+     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: o nome APP ficou, o arquivo é o do motor (e o import é "../condicoes.js"). */
+  const APP = readFileSync("../src/motor/aplicar.js", "utf8");
   const quantas = (rx) => (APP.match(rx) || []).length;
 
-  ok(/import \{[^}]*tentarSaidaNoFimDoTurno[^}]*\} from "\.\/condicoes\.js"/.test(APP), "o App importa a porta do catálogo — a regra não foi recopiada para a tela");
+  ok(/import \{[^}]*tentarSaidaNoFimDoTurno[^}]*\} from "\.\.?\/condicoes\.js"/.test(APP), "o App importa a porta do catálogo — a regra não foi recopiada para a tela");
   ok(quantas(/tentarSaidaNoFimDoTurno\(/g) === 3, `e a chama em exatamente três sítios: eu, o grupo e os inimigos (${quantas(/tentarSaidaNoFimDoTurno\(/g)})`);
 
   /* Um recorte por sítio, apertado: da abertura do `try` até a etiqueta do

@@ -205,7 +205,7 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
   t("jornada_meio", /md\.jornada_meio/.test(app));
   t("canone", /resp\.mudancas\.canone/.test(app));
   t("npcs", /resp\.mudancas\.npcs/.test(app));
-  t("moedas (e a bolsa ainda o desconta do que leu, para não cobrar duas vezes)", /oQueFaltaDebitar\(resp\.narrativa, resp\.mudancas/.test(app));
+  t("moedas (e a bolsa ainda o desconta do que leu, para não cobrar duas vezes)", /oQueFaltaDebitar\(resp\.narrativa, resp\.mudancas/.test(readFileSync(new URL("../src/motor/aplicar.js", import.meta.url), "utf8"))); /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20, provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código. */
   /* 12/10 (8.ª sessão): esta asserção passava e a bolsa não descia. Ela
      provava que os envelopes chegavam, não que a frase estivesse neles — a
      etiqueta do pedido só vai em `pedidoFinal`, e `conteudo` chega sem ela.

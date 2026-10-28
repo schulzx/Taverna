@@ -108,7 +108,10 @@ sec("3. os vetos que a guarda já cobre saíram dos envelopes de luta aberta");
     poupados += ANTES[k] - env.length;
   }
   console.log(`      (${poupados} caracteres poupados nos quatro envelopes)`);
-  t("a guarda segue ligada no App (sem ela, estes vetos não podiam sair)", /podarONarrador\(resp, \{ envelopes: op\.envelopes/.test(ler("App.jsx")));
+  /* T1-A (27/10): o relógio, as travas, as mudanças e a cobrança mudaram-se do
+     `aplicarResposta` para `src/motor/aplicar.js`, com o MESMO texto (b9e6e20,
+     provado byte a byte em teste-motor-aplicar.mjs). A asserção segue o código: e o App chama o motor (teste-motor-aplicar §4). */
+  t("a guarda segue ligada no App (sem ela, estes vetos não podiam sair)", /podarONarrador\(resp, \{ envelopes: op\.envelopes/.test(ler("motor/aplicar.js")));
 }
 
 console.log(`\nprova viva da E4: ${ok} passaram, ${mal} falharam`);
