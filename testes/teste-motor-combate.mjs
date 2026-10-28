@@ -17,7 +17,7 @@
    ============================================================ */
 import fs from "node:fs";
 import { casosDoCombate, sorteDoCaso, N_CASOS } from "./combate-casos.mjs";
-import { despertarUnica } from "../src/motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito } from "../src/motor/combate-do-turno.js";
 import { notaComOTurno } from "../src/motor/aplicar.js";
 
 let ok = 0, mal = 0;
@@ -51,6 +51,25 @@ sec("1 · o poder único (talvezDespertarUnica → despertarUnica)");
   t("sem a sorte do turno, não desperta (nenhum dado fora da semente)", casos.every((k) => despertarUnica(k.pers, k.inimigosFinais, {}).pers === k.pers) && despertarUnica(null, [], { sorteDoTurno: sorteDoCaso(casos[0]) }).pers === null);
   t("não muta a ficha que entra", (() => { const k = casos.find((x, i) => fotos[i].msgs.length); const p = copia(k.pers); despertarUnica(p, k.inimigosFinais, { sorteDoTurno: sorteDoCaso(k) }); return igual(p, k.pers); })());
   t("no App, o órgão é o invólucro da peça", /const talvezDespertarUnica = \(p2, inimigosFinais, msgs\) => \{\s*const r = despertarUnica\(p2, inimigosFinais, \{ sorteDoTurno \}\);\s*msgs\.push\(\.\.\.r\.msgs\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*return r\.pers;/.test(C));
+}
+
+sec("2 · a fama que cresce (checarFama → aFamaDoFeito)");
+{
+  const fotos = D.orgaos.checarFama;
+  /* o invólucro do App, à letra: a tela, a nota e a última checagem */
+  const foto = (k, fama, antes) => {
+    const r = aFamaDoFeito(fama, antes);
+    return { ret: r.fama, tela: r.msgs.map((texto) => ({ autor: "sistema", texto })), nota: notaComOTurno(k.notaAntes, r.paraOCronista), ultima: r.fama };
+  };
+  const batem = casos.filter((k, i) => igual(foto(k, k.fama, k.famaAntes), fotos[i])).length;
+  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS);
+  const subiu = fotos.filter((f) => f.tela.length).length;
+  console.log(`      o patamar subiu em ${subiu} · ficou em ${N_CASOS - subiu}`);
+  t("percorre os dois ramos (subiu e não)", subiu > 20 && subiu < N_CASOS - 20);
+  /* morde: a última checagem trocada pela de agora apaga toda subida */
+  const morde = casos.filter((k, i) => !igual(foto(k, k.fama, k.fama), fotos[i])).length;
+  t(`morde: com a última checagem igual à de agora, ${morde} fotos divergem (as que subiam)`, morde === subiu && morde > 0);
+  t("no App, o órgão é o invólucro da peça", /const checarFama = \(\) => \{\s*const r = aFamaDoFeito\(famaAtual\(\), famaPatamarRef\.current\);\s*if \(r\.msgs\.length\) pushMsgs\(r\.msgs\.map\(\(texto\) => \(\{ autor: "sistema", texto \}\)\)\);\s*notaRef\.current = notaComOTurno\(notaRef\.current, r\.paraOCronista\);\s*famaPatamarRef\.current = r\.fama;\s*return r\.fama;/.test(C));
 }
 
 console.log(`\nmotor · os órgãos do combate: ${ok} passaram, ${mal} falharam`);

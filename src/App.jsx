@@ -240,7 +240,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { despertarUnica } from "./motor/combate-do-turno.js";
+import { despertarUnica, aFamaDoFeito } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -22244,15 +22244,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   /* FAMA (v6.8): derivada das façanhas reais — a IA não infla nem esquece.
      Quando o patamar sobe, o mundo muda o tratamento (envelope no próximo envio). */
+  /* T1-A, 5.ª fatia: a comparação dos patamares mora em `aFamaDoFeito`
+     (src/motor/combate-do-turno.js), pura e à letra; daqui sai a fiação —
+     a linha na tela, a nota, a última checagem. Provado byte a byte contra
+     o órgão de antes (teste-motor-combate). */
   const checarFama = () => {
-    const f = famaAtual();
-    const antes = patamarFama(famaPatamarRef.current), agora = patamarFama(f);
-    if (agora.min > antes.min) {
-      pushMsgs([{ autor: "sistema", texto: `📣 Sua fama cresce: agora você é ${agora.rotulo} — ${agora.nota}.` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FAMA — NOVO PATAMAR, CANON] Minha fama subiu para ${Math.round(f)}: agora sou ${agora.rotulo.toUpperCase()} (${agora.nota}). O mundo passa a me tratar assim — reconhecimento em cidades, olhares, respeito ou medo. NPCs relevantes podem já ter ouvido meu nome.`;
-    }
-    famaPatamarRef.current = f;
-    return f;
+    const r = aFamaDoFeito(famaAtual(), famaPatamarRef.current);
+    if (r.msgs.length) pushMsgs(r.msgs.map((texto) => ({ autor: "sistema", texto })));
+    notaRef.current = notaComOTurno(notaRef.current, r.paraOCronista);
+    famaPatamarRef.current = r.fama;
+    return r.fama;
   };
 
   /* NÊMESIS (v6.8): quando o nome cresce demais, alguém jura seu fim. */

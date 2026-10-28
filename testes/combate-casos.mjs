@@ -40,6 +40,9 @@ export function casoDoCombate(i) {
       habilidades: HABS[i % HABS.length], vida: 20, vidaMax: 30,
     },
     inimigosFinais: i % 11 === 10 ? [] : inimigosFinais,
+    /* a fama (checarFama): a da última checagem, rente aos patamares, e a de agora */
+    famaAntes: [0, 9, 10, 24, 25, 44, 45, 69, 70, 84, 85, 99, 100][i % 13],
+    fama: [0, 9, 10, 24, 25, 44, 45, 69, 70, 84, 85, 99, 100][i % 13] + [0, 0.5, 1, 3, 12.25, 30, -2][i % 7],
   };
 }
 

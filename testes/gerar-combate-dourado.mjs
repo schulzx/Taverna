@@ -19,6 +19,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { casosDoCombate, sorteDoCaso } from "./combate-casos.mjs";
 import { gerarHabilidadeUnica, chanceUnica } from "../src/unicas.js";
+import { patamarFama } from "../src/fama.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const COMMIT = process.argv[2] || "7338870";
@@ -46,6 +47,17 @@ const ORGAOS = {
       return { pers, msgs, nota: S.notaRef.current };
     },
     nome: "talvezDespertarUnica",
+  },
+  /* checarFama: lê famaAtual() e a última checagem; escreve na tela (pushMsgs), na nota e no ref */
+  checarFama: {
+    texto: () => corte("  const checarFama = () => {", "  /* NÊMESIS (v6.8)"),
+    correr: (fn, k) => {
+      const tela = [];
+      const S = { patamarFama, famaAtual: () => k.fama, famaPatamarRef: ref(k.famaAntes), pushMsgs: (xs) => tela.push(...xs), notaRef: ref(k.notaAntes) };
+      const ret = fn(S)();
+      return { ret, tela, nota: S.notaRef.current, ultima: S.famaPatamarRef.current };
+    },
+    nome: "checarFama",
   },
 };
 

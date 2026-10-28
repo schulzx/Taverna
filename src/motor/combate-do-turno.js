@@ -22,6 +22,7 @@
    ============================================================ */
 
 import { gerarHabilidadeUnica, chanceUnica } from "../unicas.js";
+import { patamarFama } from "../fama.js";
 
 /* ---------------- O PODER ÚNICO (v7.4.4) ----------------
    Mesma lógica do loot: a árvore da classe é tabela fixa, mas derrubar
@@ -48,4 +49,26 @@ export function despertarUnica(pers, inimigosFinais, ctx) {
   msgs.push(`🌟 PODER ÚNICO DESPERTOU: ${hu.nome} (${hu.custo} PM · recarga ${hu.recarga}t) — ${hu.descricao}`);
   paraOCronista.push(`[PODER ÚNICO — REGISTRADO PELO SISTEMA] A vitória sobre ${((inimigosFinais || [])[0] || {}).nome || "o inimigo"} despertou em mim uma técnica só minha: "${hu.nome}" (${hu.descricao}). Já está na minha lista de habilidades — NÃO a crie de novo. Narre a epifania como um momento raro e marcante: o poder do derrotado deixou uma marca em mim.`);
   return { pers: { ...p2, habilidades: [...(p2.habilidades || []), hu] }, msgs, paraOCronista };
+}
+
+/* ---------------- A FAMA QUE CRESCE (v6.8) ----------------
+   Derivada das façanhas reais — a IA não infla nem esquece. Quando o
+   patamar sobe, o mundo muda o tratamento: a linha na tela e a nota ao
+   Narrador (canon). A fama em si é conta do App (`famaAtual`, que lê os
+   contadores, o nível da ficha viva e os domínios); esta peça compara-a
+   com a da última checagem.
+
+     aFamaDoFeito(fama, famaAntes) → { fama, msgs, paraOCronista }
+
+   `fama` é também o que o App guarda como a "última checagem"
+   (famaPatamarRef), suba ou não o patamar. */
+export function aFamaDoFeito(fama, famaAntes) {
+  const f = fama;
+  const msgs = [], paraOCronista = [];
+  const antes = patamarFama(famaAntes), agora = patamarFama(f);
+  if (agora.min > antes.min) {
+    msgs.push(`📣 Sua fama cresce: agora você é ${agora.rotulo} — ${agora.nota}.`);
+    paraOCronista.push(`[FAMA — NOVO PATAMAR, CANON] Minha fama subiu para ${Math.round(f)}: agora sou ${agora.rotulo.toUpperCase()} (${agora.nota}). O mundo passa a me tratar assim — reconhecimento em cidades, olhares, respeito ou medo. NPCs relevantes podem já ter ouvido meu nome.`);
+  }
+  return { fama: f, msgs, paraOCronista };
 }

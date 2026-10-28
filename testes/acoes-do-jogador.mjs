@@ -252,7 +252,7 @@ export const ACOES_DO_JOGADOR = [
   /* ---------------- FORA DO PAINEL ----------------
      Os cliques que chegam ao motor sem passar pela caixa de texto. */
   { id: "grid_mover", rotulo: "Mover no grid", fonte: "grid", combate: true,
-    onde: "src/App.jsx:23725 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:16263)",
+    onde: "src/App.jsx:23726 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:16263)",
     texto: null,
     cliqueChega: "motor", textoFora: null, textoLuta: null,
     alcanca: "muda x,y do herói (src/App.jsx:16696) e gasta o movimento da economia" },
@@ -1820,6 +1820,7 @@ export const FUNIL_DO_COMBATE = [
 /* (T1-A 5.ª fatia, 1, o oficial, 28/10) o relógio dentro do turno: avancarOsMinutos com a ficha do turno (+16 no saldo, ~8848, ACIMA de pushMsgs) e as duas chamadas do aplicarResposta (0). Re-medido pelo diff de App.jsx contra o HEAD (1cfc08a), 121 números (114 nos campos e 7 na sessão A e nas procuras do teste), 107 andaram, 0 em linha mudada; o de pushMsgs no varredor junto (:9231 -> :9247). Conferido pelo varredor. */
 /* (T1-A 5.ª fatia, 2, o oficial, 28/10) o Juiz mede: o import de juiz-do-turno.js (+1, ~242), o fidelidadeRef (+4, ~5906), o save e o load ao lado do custo, a campanha nova que zera a conta, e a foto e o Juiz no enviar (~12640). Re-medido pelo diff de App.jsx contra o HEAD (44a6df4), 120 números, 120 andaram, 0 em linha mudada. Conferido pelo varredor. */
 /* (T1-A 5.ª fatia, 3a, o oficial, 28/10) o poder único sai para motor/combate-do-turno.js: o import (+1, ~243; o de unicas.js virou comentário, 0) e o invólucro talvezDespertarUnica (+3 de comentário e -3 de corpo, ~14547). Re-medido pelo diff de App.jsx contra o HEAD (7338870), 120 números, 120 andaram, 0 em linha mudada. Conferido pelo varredor. */
+/* (T1-A 5.ª fatia, 3b, o oficial, 28/10) a fama que cresce sai para motor/combate-do-turno.js: o invólucro checarFama (+4 de comentário e -1 de corpo, ~22249). Re-medido pelo diff de App.jsx contra o HEAD (4a99f3a), 120 números, 1 andaram, 0 em linha mudada. Conferido pelo varredor. */
 export const RECUSAS_DO_COMBATE = [
   /* ---- alcance: a família que a Fase X inteira mede ---- */
   { familia: "alcance", onde: "src/App.jsx:13923", fn: "aplicarGolpeDoJogador", anel: "nucleo", formas: 2,
