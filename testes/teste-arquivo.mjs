@@ -180,5 +180,17 @@ sec("8. A CRÔNICA É PARA LER; O SAVE É PARA VOLTAR");
   t("a mensagem só sai dentro da partida", /faseRef\.current === "jogo"\) pushMsgs/.test(APP));
 }
 
+sec("9. A COBRANÇA DO BACKUP DIZ O NOME QUE O JOGO DIZ (T1-A, 7.ª fatia, 28/10)");
+{
+  /* Com um save que perdeu o nome da campanha na gravação, a porta
+     escrevia "“null” nunca teve uma cópia em arquivo" — e lá dentro o
+     jogo já o chamava "A saga de Rufo Tamanqueiro" (nomeDaCampanha). A
+     porta lê o nome pela mesma régua do jogo. */
+  t("o save sem nome tem nome: o do herói", A.nomeDaCampanha({ nomeCampanha: null, personagem: { nome: "Rufo Tamanqueiro" } }) === "A saga de Rufo Tamanqueiro");
+  const cobranca = (APP.match(/\{diasSemCopia == null[\s\S]{0,600}?\}\n/) || [""])[0];
+  t("as duas frases da cobrança leem nomeDaCampanha(temSave), e nunca o campo cru", cobranca.length > 0 && (cobranca.match(/nomeDaCampanha\(temSave\)/g) || []).length === 2 && !/temSave\.nomeCampanha/.test(cobranca));
+  t("e a porta inteira também: o cartão de continuar e o aviso de trazer de arquivo", !/temSave\.nomeCampanha/.test(APP));
+}
+
 console.log(`\narquivo v9.147: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

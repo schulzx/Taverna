@@ -5113,7 +5113,7 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
                 <span className="tv-display text-xl leading-[1.25]" style={{ color: T.ink }}>Continuar aventura</span>
               </div>
               <span className="tv-body text-xs leading-[1.55] truncate" style={{ color: T.violetSoft }}>
-                {temSave.nomeCampanha} · {temSave.personagem?.nome} · Nível {temSave.personagem?.nivel}
+                {nomeDaCampanha(temSave)} · {temSave.personagem?.nome} · Nível {temSave.personagem?.nivel}
               </span>
             </div>
             <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ background: T.rosa }}>
@@ -5192,8 +5192,8 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
               <span className="shrink-0 mt-0.5"><IconeAviso tamanho={16} /></span>
               <p className="tv-body text-xs leading-[1.55]" style={{ color: T.amber }}>
                 {diasSemCopia == null
-                  ? `“${temSave.nomeCampanha}” nunca teve uma cópia em arquivo — se este navegador limpar o cache, ela se perde inteira.`
-                  : `A última cópia de “${temSave.nomeCampanha}” tem ${diasSemCopia} dias — tudo o que aconteceu desde então vive só neste navegador.`}
+                  ? `“${nomeDaCampanha(temSave)}” nunca teve uma cópia em arquivo — se este navegador limpar o cache, ela se perde inteira.`
+                  : `A última cópia de “${nomeDaCampanha(temSave)}” tem ${diasSemCopia} dias — tudo o que aconteceu desde então vive só neste navegador.`}
               </p>
             </div>
           )}
@@ -5213,7 +5213,7 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
             <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
               <div className="tv-body text-sm" style={{ color: T.ink }}>{lido.linha}</div>
               {(lido.avisos || []).map((a, i) => <div key={i} className="tv-body text-[11px] mt-1" style={{ color: T.inkDim }}>· {a}</div>)}
-              {temSave && <div className="tv-body text-[11px] mt-2" style={{ color: T.amberSoft }}>Isto substitui “{temSave.nomeCampanha}” neste dispositivo. Dá para voltar atrás depois.</div>}
+              {temSave && <div className="tv-body text-[11px] mt-2" style={{ color: T.amberSoft }}>Isto substitui “{nomeDaCampanha(temSave)}” neste dispositivo. Dá para voltar atrás depois.</div>}
               <button onClick={() => { const r = aoConfirmarImportacao(); if (r.ok) { setImportado(true); setLido(null); } else setErroArq(r.erro); }}
                 className="w-full mt-3 rounded-xl px-3 py-2.5 tv-mono text-[11px]" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
                 Carregar esta campanha
