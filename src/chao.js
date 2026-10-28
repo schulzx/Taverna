@@ -24,6 +24,7 @@
    Mestre mencionar e não estiver aqui simplesmente não existe — e o
    jogador vê isso na lista, que é a única fonte.
    ============================================================ */
+import { hashSemente } from "./semente.js";
 
 /* Raio do exame, em metros. Nove é o passo de um turno: o que dá para
    catar é o que daria para alcançar andando. Fora de combate não há
@@ -31,8 +32,24 @@
 export const RAIO_EXAME = 9;
 export const LIMITE_CHAO = 40;
 
-let contador = 0;
-const novoId = () => `ch${Date.now().toString(36)}${(contador = (contador + 1) % 100000).toString(36)}`;
+/* O CRACHÁ DO ACHADO (Fase T, trilha B, 28/10/2026). O id era o relógio
+   (`Date.now()`) mais um contador do MÓDULO, que andava de corrida em
+   corrida: a mesma semente dava ids diferentes em cada máquina, em cada
+   hora e em cada ordem de corrida — e a prova do combate tinha de os
+   normalizar. Agora o id sai do próprio achado: a espécie, o nome, de quem
+   caiu, onde e o objeto que entra na ficha, pela impressão digital da casa
+   (`hashSemente`). Como o achado sai da sorte semeada, a mesma semente dá o
+   mesmo id, em qualquer máquina e em qualquer ordem.
+   Dois achados iguais (duas poções do mesmo corpo, fora do tabuleiro) dão a
+   mesma impressão; quem desempata é `porNoChao`, que conhece o chão e põe
+   um sufixo na ordem em que chegam (`.2`, `.3`…). Nenhum campo novo no save:
+   o desempate lê os ids que já estão lá. */
+const impressaoDe = (a) => {
+  let base;
+  try { base = JSON.stringify([a.especie, a.nome, a.de, a.x, a.y, a.pronto]); } catch { base = [a.especie, a.nome, a.de, a.x, a.y].join("|"); }
+  return `ch${hashSemente(String(base)).toString(36)}`;
+};
+const comId = (a) => ({ id: impressaoDe(a), ...a });
 
 export function criarChao() {
   return { cena: "", itens: [] };
@@ -54,39 +71,56 @@ export function achadoDeEquipamento(item, { de = "", x = null, y = null } = {}) 
     at.defesa ? `+${at.defesa} de defesa` : "",
     at.elemento ? `dano de ${at.elemento}` : "",
   ].filter(Boolean).join(" · ");
-  return {
-    id: novoId(), especie: "equipamento", nome: item.nome, icone: "✦",
+  return comId({
+    especie: "equipamento", nome: item.nome, icone: "✦",
     raridade: item.raridade || "comum", detalhe, de, x, y, qtd: 1,
     destino: "equipamento", pronto: item,
-  };
+  });
 }
 
 export function achadoDeConsumivel(cons, pronto, { de = "", x = null, y = null } = {}) {
   if (!cons || !pronto) return null;
-  return {
-    id: novoId(), especie: "consumivel", nome: cons.nome, icone: cons.icone || "🧪",
+  return comId({
+    especie: "consumivel", nome: cons.nome, icone: cons.icone || "🧪",
     raridade: cons.raridade || "comum", detalhe: cons.desc || "", de, x, y, qtd: 1,
     destino: "inventario", pronto,
-  };
+  });
 }
 
 export function achadoDeComponente(comp, pronto, { de = "", x = null, y = null } = {}) {
   if (!comp || !pronto) return null;
-  return {
-    id: novoId(), especie: "componente", nome: comp.nome, icone: comp.icone || "🧺",
+  return comId({
+    especie: "componente", nome: comp.nome, icone: comp.icone || "🧺",
     raridade: "comum", detalhe: comp.desc || "matéria-prima para a bancada", de, x, y, qtd: 1,
     destino: "inventario", pronto,
-  };
+  });
 }
 
-/* ---------------- PÔR E TIRAR ---------------- */
+/* ---------------- PÔR E TIRAR ----------------
+   O desempate do crachá mora aqui, porque só aqui se conhece o chão: um
+   achado cujo id já está no chão (ou já veio antes no mesmo lote) ganha o
+   primeiro sufixo livre, na ordem em que chega. O achado recebido não é
+   reescrito: o que muda de crachá sai como cópia. */
+function semCrachaRepetido(itens, lista) {
+  const usados = new Set(itens.map((i) => i.id).filter(Boolean));
+  return lista.map((a) => {
+    if (!a.id) return a;
+    if (!usados.has(a.id)) { usados.add(a.id); return a; }
+    let n = 2;
+    while (usados.has(`${a.id}.${n}`)) n++;
+    const id = `${a.id}.${n}`;
+    usados.add(id);
+    return { ...a, id };
+  });
+}
+
 export function porNoChao(chao, novos, { cena = null } = {}) {
   const c = garantirChao(chao);
   const lista = (Array.isArray(novos) ? novos : [novos]).filter(Boolean);
   if (!lista.length) return c;
   return {
     cena: cena != null ? String(cena) : c.cena,
-    itens: [...c.itens, ...lista].slice(-LIMITE_CHAO),
+    itens: [...c.itens, ...semCrachaRepetido(c.itens, lista)].slice(-LIMITE_CHAO),
   };
 }
 

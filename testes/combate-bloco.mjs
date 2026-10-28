@@ -346,18 +346,14 @@ export function correrOBloco(fazer, k, { novo, sorte, extras }) {
 }
 
 /* a foto compacta: o texto à vista e o resto pela impressão digital.
-   O id do que cai no chão (chao.js) é o relógio parado mais um contador do
-   MÓDULO, que anda de corrida em corrida dentro do mesmo processo: o id é
-   um crachá, não uma regra, e a foto troca-o pela ordem em que aparece
-   (o mesmo item, o mesmo número), para a prova não depender de quantas
-   corridas vieram antes. */
-const ID_DO_CHAO = new RegExp(`"ch${AGORA_DA_PROVA.toString(36)}[0-9a-z]+"`, "g");
-function semIdsDoChao(texto) {
-  const vistos = new Map();
-  return texto.replace(ID_DO_CHAO, (id) => { if (!vistos.has(id)) vistos.set(id, `"chao#${vistos.size + 1}"`); return vistos.get(id); });
-}
-export function fotoDoBloco(foto0) {
-  const foto = JSON.parse(semIdsDoChao(JSON.stringify(foto0)));
+   O id do que cai no chão vai na foto TAL COMO É. Até 28/10 a foto trocava-o
+   pela ordem em que aparecia, porque o id era o relógio mais um contador do
+   módulo, que andava de corrida em corrida dentro do mesmo processo. A
+   trilha B da Fase T fê-lo sair do próprio achado (chao.js), e a mesma
+   semente passou a dar o mesmo id em qualquer ordem de corrida: a
+   normalização saiu, e o crachá voltou a ser provado — um id que mude é
+   agora uma foto que muda. */
+export function fotoDoBloco(foto) {
   return {
     msgs: foto.msgs, nota: foto.refs.notaRef, erro: foto.erro, calados: foto.log.calados, tela: foto.log.tela.length,
     tudo: createHash("sha256").update(JSON.stringify(foto)).digest("hex"),
