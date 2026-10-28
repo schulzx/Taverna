@@ -272,7 +272,20 @@ sec("4. lixo, null e a imutabilidade");
 {
   const { readFileSync } = await import("node:fs");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  t("fiação: a distância de um lugar novo decide-se por distanciaNaCidade", app.includes("return distanciaNaCidade(cru, {"));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     A régua do lugar dito mora em `src/motor/meio-do-turno.js#registrarOLugar`
+     (pura), e o motor não se lê pelo texto (a catraca da T1-B). A intenção:
+     um local DESTA cidade fica `dentro` (é `distanciaNaCidade` que o sabe),
+     onde o classificador pelo texto daria `arredores`. */
+  {
+    const { registrarOLugar } = await import("../src/motor/meio-do-turno.js");
+    const { locaisDaCidade } = await import("../src/mundo-base.js");
+    const cid = { nome: "Monte Rasa", x: 40, y: 40, tipo: "cidade", regiao: "Vale", bioma: "planicie", populacao: 2000 };
+    const mundo = { semente: "mm14-lugar", genero: "Fantasia medieval", molde: null, lex: null };
+    const local = locaisDaCidade(mundo.semente, cid, mundo.genero, null, null).find((l) => L.distanciaPorTexto(l.nome) !== "dentro");
+    const dito = (cidades) => registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades }, dia: 2, ultimoPedido: "" }, local.nome, "mestre", { mundo }).lugar;
+    t("fiação: a distância de um lugar novo decide-se por distanciaNaCidade", !!local && dito([cid]).distancia === "dentro" && dito([]).distancia === L.distanciaPorTexto(local.nome));
+  }
   t("fiação: a nota do turno passa por umSoLugar", app.includes("umSoLugar(notaRef.current)"));
   t("fiação: os dois contextos do rastro levam o lugar e as masmorras do mundo", app.split("emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras:").length - 1 >= 2);
   t("fiação: o sinal masmorra do Narrador passa por portaDaMasmorra", app.includes("const pm = portaDaMasmorra({ nome: arg }") && !app.includes("sinalMasmorraRef.current = arg || \"\";"));

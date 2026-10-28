@@ -136,7 +136,15 @@ sec("4. O CHAMADO: o único sinal sem outra porta, só para quem o alcança");
 /* ============================================================ */
 sec("5. o App continua a ler os campos (tolerante: a instrução saiu, o leitor fica)");
 {
-  t("mapa_cidades", /mapa_cidades/.test(app));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     O leitor de `mapa_cidades` mudou-se do `aplicarResposta` para
+     `src/motor/meio-do-turno.js#aplicarOMapa` (puro); a intenção — o App
+     ainda lê o campo, tolerante — prova-se jogando o bloco com ele. */
+  {
+    const { aplicarOMapa } = await import(S + "motor/meio-do-turno.js");
+    const r = aplicarOMapa({ personagem: { nome: "Vera" }, mapa: { cidades: [], faccoes: [] }, devocao: {} }, { narrativa: "x", mudancas: { mapa_cidades: [{ nome: "Vila Nova", tipo: "vila" }] } }, {});
+    t("mapa_cidades", r.estado.mapa.cidades.some((c) => c.nome === "Vila Nova") && /aplicarOMapa\(\{/.test(app));
+  }
   t("evento_global_encerrar", /md2\.evento_global_encerrar/.test(app));
   t("relogio_novo", /relogio_novo/.test(app));
   t("missao_oferecida (é por onde a proposta do Cronista vira cartaz)", /missao_oferecida/.test(app));

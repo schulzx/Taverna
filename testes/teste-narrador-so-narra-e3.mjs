@@ -200,9 +200,22 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
 /* ============================================================ */
 sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o leitor fica)");
 {
-  t("cidade_atual", /if \(md\.cidade_atual\)/.test(app));
-  t("lugar_atual", /hasOwnProperty\.call\(md, "lugar_atual"\)/.test(app));
-  t("jornada_meio", /md\.jornada_meio/.test(app));
+  /* MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     O leitor de `cidade_atual`, `lugar_atual` e `jornada_meio` mudou-se do
+     `aplicarResposta` para `src/motor/meio-do-turno.js#aplicarOMapa` (puro);
+     a intenção — o App ainda lê os três, tolerante — prova-se jogando o
+     bloco com eles. */
+  {
+    const { aplicarOMapa } = await import(S + "motor/meio-do-turno.js");
+    const mapa = { cidades: [{ nome: "Vau Alto", tipo: "cidade", populacao: 900, bioma: "planicie" }, { nome: "Porto Lume", tipo: "cidade", populacao: 900, bioma: "costa" }], faccoes: [], rotas: [] };
+    const base = { personagem: { nome: "Vera" }, mapa, cidadeAtual: "Vau Alto", lugar: null, jornada: { de: "Vau Alto", meio: "a pé" }, devocao: {}, dia: 2, ultimoPedido: "" };
+    const ch = aplicarOMapa(base, { narrativa: "x", mudancas: { cidade_atual: "Porto Lume" } }, {});
+    t("cidade_atual", ch.estado.cidadeAtual === "Porto Lume" && ch.estado.jornada === null);
+    const lu = aplicarOMapa({ ...base, jornada: null }, { narrativa: "x", mudancas: { lugar_atual: "a fazenda de Jessa" } }, {});
+    t("lugar_atual", lu.estado.lugar && lu.estado.lugar.nome === "a fazenda de Jessa");
+    const jm = aplicarOMapa(base, { narrativa: "x", mudancas: { jornada_meio: "de carroça" } }, {});
+    t("jornada_meio", jm.estado.jornada.meio === "de carroça" && /aplicarOMapa\(\{/.test(app));
+  }
   /* MOVIDAS (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
      O leitor de `canone` e de `npcs` mudou-se do `aplicarResposta` para
      `src/motor/aplicar.js#aplicarORegisto` (puro); a intenção — o App ainda

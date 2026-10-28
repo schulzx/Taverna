@@ -18,6 +18,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
+import { dadoDo } from "../src/semente.js";
+import { garantirGeografia } from "../src/geografia.js";
+import { garantirHistoria } from "../src/historia.js";
+import { garantirDevocao } from "../src/devocao.js";
+import { locaisDaCidade, masmorrasDoMundo } from "../src/mundo-base.js";
+import { arredoresDaCidade } from "../src/arredores.js";
+import { definirLugar } from "../src/lugar.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const ler = (f) => JSON.parse(fs.readFileSync(path.join(AQUI, f), "utf8"));
@@ -206,4 +213,158 @@ export function retrato({ pers, msgs, nota, combate, danoJaAplicado, habUsada, t
    tela e a nota vão por extenso, para uma divergência ser legível. */
 export function digital(texto) {
   return createHash("sha256").update(texto).digest("hex");
+}
+
+/* ============================================================
+   OS CASOS DO MEIO (T1-A, 3.ª fatia) — as dádivas, o mapa, as missões
+   e os sinais
+
+   O que corre entre o `aplicar` e o registo, no App de antes (d776408):
+   a dádiva pendente, o mapa e as facções (com o lugar dito, a cidade que
+   se pisa, a névoa da vizinhança e a cerimónia da chegada), o evento global
+   que se encerra (o marco no arco) e os sinais do Mestre (a fé, o milagre,
+   a viagem, a masmorra, a raid, a ascensão, o achado, o domínio, o
+   patrono). As mesmas 275 narrações reais dão a frase do jogador (a régua
+   do lugar a lê); o resto varia pelo índice, com um mapa de verdade (a
+   geografia, as rotas, as masmorras da região) para que cada ramo corra.
+   ============================================================ */
+function mapaDoMeio() {
+  return garantirGeografia({
+    cidades: [
+      { nome: "Monte Rasa", x: 40, y: 40, tipo: "cidade", regiao: "Vale", pisada: true, descoberta: true },
+      { nome: "Nova Profundo", x: 46, y: 44, tipo: "cidade", regiao: "Costa", descoberta: false },
+      { nome: "Vila Funda", x: 38, y: 43, tipo: "vila", regiao: "Vale", descoberta: false },
+      { nome: "Porto Cinza", x: 44, y: 34, tipo: "cidade", regiao: "Costa", descoberta: true },
+      { nome: "Forte do Rei", x: 70, y: 70, tipo: "capital", regiao: "Norte", descoberta: true, deOuvir: true },
+      { nome: "Ermo Alto", x: 74, y: 76, tipo: "vila", regiao: "Norte", descoberta: false, relacao: "jogador" },
+    ],
+    faccoes: [{ nome: "Coroa" }],
+    regioes: [{ nome: "Vale", bioma: "planicie", cx: 40, cy: 42 }, { nome: "Costa", bioma: "costa", cx: 45, cy: 38 }, { nome: "Norte", bioma: "montanha", cx: 72, cy: 72 }],
+  }, "meio-dourado");
+}
+
+export function casosDoMeio() {
+  const cron = ler("registo-s8-s10-cronista.json").turnos;
+  const cena = ler("registo-s10-cena.json");
+  const fontes = [
+    ...cron.map((x) => ({ narrativa: x.narrativa || "", frase: x.frase || "", ses: x.ses + "#" + x.k })),
+    ...cena.respostas.map((r, k) => ({ narrativa: String(r || ""), frase: ((cena.pautas || [])[k] || {}).frase || "", ses: "s10-cena#" + k })),
+  ];
+  return fontes.map((f, i) => {
+    const semente = `mundo|${i % 3}`;
+    const mapa = mapaDoMeio();
+    const cidadeAtual = ["Monte Rasa", "Porto Cinza", "", "Monte Rasa", null, "Nova Profundo"][i % 6];
+    const cid = mapa.cidades.find((c) => c.nome === cidadeAtual) || null;
+    const locais = cid ? locaisDaCidade(semente, cid, "Fantasia medieval", null, null) : [];
+    const arred = cid ? arredoresDaCidade(semente, cid) : [];
+    const masm = masmorrasDoMundo(semente, mapa);
+    const daqui = masm.find((m) => m.cidadeProxima === cidadeAtual) || masm[0];
+    const lugar = [
+      null,
+      definirLugar("a fazenda de Jessa", { cidade: cidadeAtual || "", dia: 2, distancia: "arredores" }),
+      null,
+      locais[0] ? definirLugar(locais[0].nome, { cidade: cidadeAtual || "", dia: 2, distancia: "dentro" }) : null,
+      daqui && i % 8 === 4 ? definirLugar(daqui.nome, { cidade: cidadeAtual || "", dia: 2, distancia: "arredores" }) : null,
+    ][i % 5];
+    const nivel = [3, 8, 12, 15, 20, 17][Math.floor(i / 2) % 6];
+    const personagem = {
+      nome: "Ana Cinza", nivel, vida: [24, 3, 0, 30][i % 4], vidaMax: 30, mana: 8, manaMax: 10, morrendo: i % 4 === 2,
+      grupo: i % 2 === 0 ? [{ nome: "Freya", vida: 0, vidaMax: 24, morrendo: true }, { nome: "Rurik", vida: 10, vidaMax: 14 }] : [],
+      efeitos: i % 3 === 0 ? [{ nome: "Abençoado", turnos: 2, bonus: 1 }] : [], equipamento: [],
+      dadivasPendentes: i % 13 === 0 ? 2 : (i % 29 === 7 ? 1 : 0), dadivas: [], dadivasUnicas: [],
+    };
+    const fieis = [0, 6000, 150000, 1200000][Math.floor(i / 5) % 4];
+    const divindade = [
+      { despertar: true, ehJogador: true, nome: "Ana", fieis, pf: [100, 10, 0, 60][Math.floor(i / 7) % 4], iconeFe: "🙏", dominio: i % 2 ? "" : "da Brasa", patrono: "", panteao: [] },
+      null,
+      { despertar: false, ehJogador: true, fieis: 0, pf: 0 },
+    ][[0, 1, 2, 0, 0][i % 5]];
+    const fichaDoRef = i % 6 === 5 ? null : { ...personagem, vida: Math.max(1, personagem.vida - 1) };
+    const md = {};
+    const lugarDito = [undefined, "a fazenda de Jessa", null, (locais[1] && locais[1].nome) || "O Javali Cambaleante", (arred[0] && arred[0].nome) || "o moinho velho", "a Gruta das Vozes", (daqui && daqui.nome) || "a cripta", (lugar && lugar.nome) || "a praça", "  "][i % 9];
+    if (lugarDito !== undefined) md.lugar_atual = lugarDito;
+    const cidadeDita = [undefined, "Nova Profundo", "Monte Rasa", "Porto Cinza", "Forte do Rei", undefined, "Vila Funda"][i % 7];
+    if (cidadeDita) md.cidade_atual = cidadeDita;
+    const cidades = [undefined, [{ nome: "Vila Nova", tipo: "vila", regiao: "Vale" }], [{ nome: "Monte Rasa", notas: "a ladeira", x: 999 }], [null, { nome: "" }, { nome: "Torre Branca", tipo: "fortaleza" }], undefined, [{ nome: "nova profundo", relacao: "jogador" }]][i % 6];
+    if (cidades) md.mapa_cidades = cidades;
+    const faccoes = [undefined, [{ nome: "Guilda do Sal", doJogador: true }], [{ nome: "Coroa", lema: "o rei não dorme" }], [{ nome: "Mãos Cinzentas" }], undefined][i % 5];
+    if (faccoes) md.mapa_faccoes = faccoes;
+    if (i % 4 === 1) md.jornada_meio = "de carroça pela estrada velha que corta o vale ao meio, devagar";
+    if (i % 10 === 3) md.faccao_jogador = "Ordem do Corvo";
+    const sinais = [
+      undefined,
+      [`masmorra:${(daqui && daqui.nome) || "a cripta"}`],
+      ["fe:proeza"],
+      ["milagre:cura", "fe:marco"],
+      ["viagem:Porto Cinza", "viagem"],
+      ["raid:a horda", "loot:raro"],
+      ["ascender:deicidio"],
+      ["loot:comum", "loot:lendario", "dominio:da Forja", "patrono:o Velho"],
+      ["milagre:furia", "milagre:bencao", "milagre:ressurgir"],
+      ["masmorra:a cripta que não existe", "  ", "fe", "x:y", "ascender:fe"],
+      ["milagre:avatar", "milagre:juramento", "ascender:reliquia"],
+      ["fe:sussurro", "fe:feito", "fe:proeza", "fe:marco", "fe:x", "fe:proeza", "fe:marco"],
+    ][i % 12];
+    if (sinais) md.sinais = sinais;
+    if (i % 8 === 4 || i % 8 === 6) md.evento_global_encerrar = true;
+    const semMudancas = i % 23 === 11;
+    return {
+      id: f.ses,
+      semente: `meio-dourado|${i}`,
+      resp: semMudancas ? { narrativa: f.narrativa } : { narrativa: f.narrativa, mudancas: md },
+      estado: {
+        personagem, fichaDoRef, fichaDoReact: fichaDoRef || personagem,
+        mapa, cidadeAtual, lugar,
+        jornada: i % 6 === 2 || i % 6 === 5 ? { de: "Monte Rasa", para: "Nova Profundo", desde: 2, meio: "a pé" } : null,
+        faccaoJogador: i % 7 === 2 ? "Coroa" : "",
+        devocao: i % 2 ? garantirDevocao(null, mapa, divindade) : { cidades: {}, andarilhos: 50 },
+        divindade,
+        combate: i % 7 === 0 ? { inimigos: [{ nome: "Lobo", vida: 10, vidaMax: 12 }, { nome: "Ogro", vida: 0, vidaMax: 30, derrotado: true }, { nome: "Batedor", vida: 3, vidaMax: 6 }] } : null,
+        acampado: i % 11 === 5, masmorra: i % 13 === 6 ? { nome: "Poço de Ferro", encerrada: false } : null, raid: i % 17 === 8 ? { nome: "a horda" } : null,
+        espinha: i % 4 === 0 ? { atos: [{ marcos: [{ onde: "a Gruta das Vozes", feito: false }, { onde: "Monte Rasa", feito: true }] }] } : null,
+        ultimoPedido: f.frase, dia: 3 + (i % 10),
+        eventos: { locais: [], global: i % 4 === 0 ? { nome: "A Praga Cinzenta" } : null, semGlobalDesde: 0, seq: 1 },
+        historia: garantirHistoria({ estrutura: "jornada", etapa: i % 3, marcos: [0, 3, 7][i % 3] }),
+        contadores: { combatesVencidos: i % 20, masmorrasConcluidas: i % 5 },
+        nivelDaFama: 1,
+        canone: {}, npcs: {}, quests: [],
+      },
+      ctx: {
+        mundo: { semente, mapa: mapaDoMeio(), genero: "Fantasia medieval", molde: null, lex: null, base: null },
+        arco: { marcosPendentes: i % 5 === 0 ? 2 : 0, nemesis: i % 2 ? "Vorn" : null },
+      },
+      notaAntes: i % 4 === 1 ? "[NOTA DE ANTES]" : "",
+    };
+  });
+}
+
+/* o motor do arco do caso, como o App o monta: lê o evento global de AGORA
+   (o bloco das missões encerra-o antes de o marco virar o arco) */
+export function motorDoArcoDoCaso(arco, eventos) {
+  const g = (eventos || {}).global;
+  return { marcosPendentes: arco.marcosPendentes, nemesis: arco.nemesis, global: g && g.nome ? g.nome : null, impostas: [], relogios: [] };
+}
+
+/* a sorte do turno do caso: um fio por evento, contado, como `sorteDoTurno` */
+export function sorteDoCaso(semente) {
+  const n = {};
+  return (evento) => { n[evento] = (n[evento] || 0) + 1; return dadoDo(semente, "sorte do turno", evento, n[evento]); };
+}
+
+/* o que o prompt remontado leu, no instante em que foi remontado */
+export function retratoDoPrompt(r) {
+  return digital(JSON.stringify({ personagem: r.personagem, canone: r.canone, mapa: r.mapa, faccao: r.faccao, historia: r.historia, eventos: r.eventos, quests: r.quests, npcs: r.npcs, divindade: r.divindade, lugar: r.lugar, cidade: r.cidade, jornada: r.jornada }));
+}
+
+/* a parte do mapa do retrato (a 1.ª etapa da fatia), e o retrato inteiro */
+export function retratoDoMapa(r) {
+  return JSON.stringify({ mapa: r.mapa, cidadeAtual: r.cidadeAtual, lugar: r.lugar, jornada: r.jornada, faccaoJogador: r.faccaoJogador, devocao: r.devocao, lugarNovo: r.lugarNovo, chegada: r.chegada });
+}
+export function retratoDoMeio(r) {
+  return JSON.stringify({
+    pers: r.pers, fichaDoRef: r.fichaDoRef, fichaDoReact: r.fichaDoReact, mapa: r.mapa, cidadeAtual: r.cidadeAtual, lugar: r.lugar, jornada: r.jornada,
+    faccaoJogador: r.faccaoJogador, devocao: r.devocao, divindade: r.divindade, eventos: r.eventos, historia: r.historia, combate: r.combate,
+    sinalViagem: r.sinalViagem, sinalMasmorra: r.sinalMasmorra, sinalRaid: r.sinalRaid, espolio: r.espolio, lugarNovo: r.lugarNovo, chegada: r.chegada,
+    salvos: r.salvos, remontagens: r.remontagens, questsVistas: r.questsVistas,
+  });
 }

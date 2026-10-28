@@ -53,7 +53,7 @@ import { itemConsumivel } from "../pocoes.js";
 import { peneirarCanone } from "../segredo-guardado.js";
 import { criarCidade } from "../mapa.js";
 import { garantirGeografia } from "../geografia.js";
-import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo } from "../npcs.js";
+import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo, retomarContador } from "../npcs.js";
 import { aindaSoUmNome } from "../abertura.js";
 
 /* a nota do turno cresce como sempre cresceu no App: uma linha por vez,
@@ -459,7 +459,11 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
   const pers = e0.personagem;
   const msgs = [], notas = [], efeitosDoTurno = [];
   const calou = (onde, erro) => { efeitosDoTurno.push({ tipo: "calou", onde, erro }); };
-  let canone = e0.canone, mapa = e0.mapa, npcs = e0.npcs, npcTurno = e0.npcTurno;
+  let canone = e0.canone, mapa = e0.mapa, npcs = e0.npcs;
+  /* o contador da gente não é campo do estado do jogo (o App guarda-o num
+     ref, e no load deriva-o das fichas): ausente, deriva-se como o load
+     deriva — somar 1 a undefined gravava NaN em `ultimaVez` (28/10) */
+  let npcTurno = Number.isFinite(e0.npcTurno) ? e0.npcTurno : retomarContador(e0.npcs);
   let remontar = false;
   let baseDoNome = null, pediuABase = false;
   const contextoDoNome = (n) => {

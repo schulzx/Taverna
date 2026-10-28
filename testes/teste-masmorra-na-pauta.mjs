@@ -538,12 +538,25 @@ sec("9. a fiação no App.jsx");
   const corpoDe = (decl, fim = "\n  };\n") => { const i = APP.indexOf(decl); return i < 0 ? "" : APP.slice(i, APP.indexOf(fim, i)); };
   const reg = corpoDe("const registrarLugar = (nome, fonte = \"mestre\") => {");
   t("registrarLugar existe", reg.length > 0);
-  t("registrarLugar diz a lerLugarDito se a cena é da luta e da masmorra",
-    /* MOVIDA NA MM-C · C0 (11/10), com o motivo: a intenção é a mesma (a luta
-       e a masmorra chegam ao motor), e a chamada ganhou `doMarco` no fim —
-       o sítio de cada marco de pé, que o nome inventado pela IA não troca. */
-    /lerLugarDito\(nome, \{ lugar: lugarRef\.current, cidade, pedido: ultimoPedidoRef\.current, fonte, luta: !!combateRef\.current, masmorra: !!masmorraRef\.current(, doMarco)? \}\)/.test(reg));
-  t("e o sítio dos marcos de pé (MM-C · C0)", /masmorra: !!masmorraRef\.current, doMarco \}\)/.test(reg) && /if \(lido\.acao === "novo" && typeof lido\.nome === "string"/.test(reg));
+  /* MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     A régua de `registrarLugar` mudou-se para
+     `src/motor/meio-do-turno.js#registrarOLugar` (pura; o App passa-lhe os
+     refs), e o motor não se lê pelo texto (a catraca da T1-B). A intenção é
+     a mesma das duas versões de antes (MM16 nº 4, MM-C · C0): a luta e a
+     masmorra chegam à régua, e o sítio do marco de pé também — prova-se
+     jogando a régua com a mesma frase com e sem a cena do sistema, e com o
+     marco de pé e cumprido. */
+  {
+    const { registrarOLugar } = await import("../src/motor/meio-do-turno.js");
+    const base = { cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades: [] }, dia: 2, ultimoPedido: "Vou até a ferraria." };
+    const move = (x) => registrarOLugar({ ...base, ...x }, "a ferraria", "mestre", {}).mudou;
+    t("registrarLugar diz a lerLugarDito se a cena é da luta e da masmorra",
+      move({}) && !move({ combate: { inimigos: [] } }) && !move({ masmorra: { nome: "Poço de Ferro" } }) && /combate: combateRef\.current, masmorra: masmorraRef\.current/.test(reg));
+    const J31 = "Sem mais paradas, Vando e eu seguimos direto até Serra do Bode e chegamos ao Posto da Baixa. Entro e procuro Elmo.";
+    const posto = { nome: "o posto da estrada", distancia: "perto", cidade: "Fogão Queimada" };
+    const noMarco = (feito) => registrarOLugar({ cidadeAtual: "Serra do Bode", lugar: posto, mapa: { cidades: [] }, dia: 2, ultimoPedido: J31, espinha: { atos: [{ marcos: [{ onde: "Posto da Baixa", feito }] }] } }, "o posto da estrada", "cronista", {});
+    t("e o sítio dos marcos de pé (MM-C · C0)", noMarco(false).lugar.nome === "Posto da Baixa" && noMarco(true).lugar.nome !== "Posto da Baixa" && /espinha: espinhaRef\.current/.test(reg));
+  }
   t("e já não acusa o Mestre por uma luta aberta (a recusa de combate saiu)", !/Você mudou o meu lugar no meio de um combate/.test(APP));
   const ent = corpoDe("const entrarMasmorra = (nomeSugerido = \"\", opcoes = null) => {");
   t("entrarMasmorra põe o lugar vigente na boca (lugarAoEntrarNaMasmorra)", /lugarAoEntrarNaMasmorra\(mm, \{/.test(ent) && /from "\.\/boca\.js"/.test(APP));

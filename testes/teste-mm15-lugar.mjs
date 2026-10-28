@@ -260,7 +260,29 @@ sec("6. a fiação no App.jsx");
 {
   const { readFileSync } = await import("node:fs");
   const APP = tenta(() => readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n"), "");
-  t("o App importa lerLugarDito de lugar.js", /\blerLugarDito\b/.test(APP) && /from "\.\/lugar\.js"/.test(APP.slice(APP.indexOf("lerLugarDito") - 400, APP.indexOf("lerLugarDito") + 400)));
+  /* MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     A régua de `registrarLugar` mudou-se para
+     `src/motor/meio-do-turno.js#registrarOLugar` (pura: o App passa-lhe o
+     lugar, a cidade, o pedido e a fonte que antes lia dos refs), e o motor
+     não se lê pelo texto (a catraca da T1-B). A intenção das duas — o App
+     decide o lugar por `lerLugarDito`, com o lugar, a cidade, o pedido e a
+     fonte — prova-se jogando: para cada fala, o que a régua do motor faz é
+     o que `lerLugarDito` decide com os mesmos quatro. */
+  const { registrarOLugar } = await import("../src/motor/meio-do-turno.js");
+  const fazenda = { nome: "a fazenda de Jessa", cidade: "Baixo Brumoso", distancia: "arredores" };
+  const falas = [
+    ["a cidade", "cronista", fazenda, "olho as galinhas"], ["a cidade", "mestre", fazenda, "olho as galinhas"],
+    [null, "mestre", fazenda, "volto para a cidade"], [null, "mestre", fazenda, "fico quieto"], [null, "cronista", null, ""],
+    ["a fazenda de Jessa", "mestre", fazenda, ""], ["o moinho", "cronista", null, "vou ao moinho"], ["Baixo Brumoso", "cronista", fazenda, "volto"],
+  ];
+  const casa = falas.every(([nome, fonte, lugar, pedido]) => {
+    const lido = L.lerLugarDito(nome, { lugar, cidade: "Baixo Brumoso", pedido, fonte, luta: false, masmorra: false, doMarco: [] });
+    const r = registrarOLugar({ cidadeAtual: "Baixo Brumoso", lugar, mapa: { cidades: [] }, dia: 3, ultimoPedido: pedido }, nome, fonte, {});
+    if (lido.acao === "volta") return r.mudou && r.lugar === null;
+    if (lido.acao === "novo") return r.mudou ? !!r.lugar : L.ehOMesmoLugar(L.definirLugar(lido.nome || String(nome || "").trim(), { cidade: "Baixo Brumoso" }), lugar);
+    return !r.mudou && (lido.acao !== "recusa" || r.paraOCronista.length === 1);
+  });
+  t("o App importa lerLugarDito de lugar.js", casa && /from "\.\/motor\/meio-do-turno\.js"/.test(APP));
   t("o Cronista chama registrarLugar com a fonte \"cronista\"", /registrarLugar\(r\.lugar, "cronista"\)/.test(APP));
   /* MOVIDA NA MM16 nº 4 (05/10), com o motivo: a chamada ganha `luta` e
      `masmorra` no fim (a cena do sistema não move nem acusa —
@@ -268,7 +290,7 @@ sec("6. a fiação no App.jsx");
      intenção desta asserção não muda — o App decide o lugar pelo motor, com
      o lugar, a cidade, o pedido e a fonte —, e por isso o que vier depois
      de `fonte` é aceite aqui e exigido lá. */
-  t("registrarLugar chama lerLugarDito com lugar, cidade, pedido e fonte", /lerLugarDito\(nome, \{ lugar: lugarRef\.current, cidade, pedido: ultimoPedidoRef\.current, fonte(, [^}]*)? \}\)/.test(APP));
+  t("registrarLugar chama lerLugarDito com lugar, cidade, pedido e fonte", casa && /cidadeAtual: cidadeAtualRef\.current, lugar: lugarRef\.current, espinha: espinhaRef\.current, ultimoPedido: ultimoPedidoRef\.current,/.test(APP) && /\}, nome, fonte, \{ mundo: mundoDaBase \}\);/.test(APP));
   t("a regex antiga (\"const voltou = /^(cidade|\") já não está no App — a régua mudou-se para QUEM_DIZ_O_LUGAR", !/const voltou = \/\^\(cidade\|/.test(APP));
 }
 

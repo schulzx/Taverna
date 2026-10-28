@@ -24,6 +24,15 @@ const CARTA = readFileSync(S + "carta-taro.jsx", "utf8");
    ONDE elas vao procurar. */
 const CSS = readFileSync(S + "estilo.js", "utf8");
 
+/* o bloco do mapa joga-se no motor (T1-A, 3.ª fatia): três cidades, uma
+   onde se está, uma nunca pisada, uma já pisada */
+const { aplicarOMapa } = await import("../src/motor/meio-do-turno.js");
+const MAPA_DA_CHEGADA = () => ({ cidades: [
+  { nome: "Vau Alto", tipo: "cidade", regiao: "Vale", bioma: "planicie", pisada: true, descoberta: true, populacao: 900 },
+  { nome: "Porto Lume", tipo: "cidade", regiao: "Costa", bioma: "costa", descoberta: true, populacao: 4000 },
+  { nome: "Pedra Rasa", tipo: "vila", regiao: "Vale", bioma: "montanha", pisada: true, descoberta: true, populacao: 300 },
+], faccoes: [], rotas: [] });
+
 let bons = 0, maus = 0;
 const t = (n, c) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n); } };
 const sec = (s) => console.log("\n" + s);
@@ -85,10 +94,21 @@ sec("3. A CHEGADA — faixa que se apaga sozinha");
   /* o tom do bioma vem da tabela do palco — a mesma do cabeçalho de cena */
   t("o tom é o do palco", /const tom = \(TONS\[chegada\.bioma\] \|\| TOM_PADRAO\)/.test(APP));
   t("importado da tabela única", /import \{ cabecalhoDaCena, TONS, TOM_PADRAO \} from "\.\/palco\.js"/.test(APP));
-  /* só TROCAR de cidade chega — reafirmar a cidade em que já estou, não */
-  const bloco = APP.slice(APP.indexOf("A FAIXA DE CHEGADA (v9.163)"), APP.indexOf("A FAIXA DE CHEGADA (v9.163)") + 600);
-  t("só a troca de cidade dispara", /if \(trocouCidade\) \{/.test(bloco));
-  t("com os dados da cidade do mapa", /cidadeDoMapa\(md\.cidade_atual\)/.test(bloco));
+  /* só TROCAR de cidade chega — reafirmar a cidade em que já estou, não.
+     MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     O bloco do mapa mudou-se do `aplicarResposta` para
+     `src/motor/meio-do-turno.js#aplicarOMapa` (puro), e o motor não se lê
+     pelo texto (a catraca da T1-B): a mesma intenção prova-se jogando o
+     bloco — a faixa só nasce da troca, e leva os dados da cidade do mapa. */
+  {
+    const faixa = (cidadeAtual, dita) => aplicarOMapa({ personagem: { nome: "Vera" }, mapa: MAPA_DA_CHEGADA(), cidadeAtual, lugar: null, jornada: null, devocao: {} },
+      { narrativa: "x", mudancas: { cidade_atual: dita } }, {}).efeitos.filter((e) => e.tipo === "chegada" || e.tipo === "lugarNovo");
+    t("só a troca de cidade dispara", faixa("Vau Alto", "Vau Alto").length === 0 && faixa("Vau Alto", "vau alto").length === 0 && faixa("Vau Alto", "Pedra Rasa").length === 1);
+    const [ch] = faixa("Vau Alto", "Pedra Rasa");
+    t("com os dados da cidade do mapa", ch && ch.tipo === "chegada" && ch.chegada.cidade === "Pedra Rasa" && ch.chegada.regiao === "Vale" && ch.chegada.bioma === "montanha" && ch.chegada.tipo === "vila");
+    /* e o App dá à faixa a chave do instante (não é estado do jogo) */
+    t("a faixa ganha a chave no App", /else if \(ef\.tipo === "chegada"\) setChegada\(\{ \.\.\.ef\.chegada, chave: Date\.now\(\) \}\);/.test(APP));
+  }
 }
 
 sec("4. OS MOMENTOS SÓ EXISTEM EM JOGO");
@@ -110,12 +130,21 @@ sec("5. O LUGAR NOVO — a cerimônia da primeira pisada (v9.181)");
   t("a cerimônia existe", /function CerimoniaDoLugarNovo\(\{ lugar, fechar \}\)/.test(APP));
   t("e a faixa continua existindo ao lado dela", /function FaixaDeChegada\(\{ chegada, limpar \}\)/.test(APP));
   /* A PERGUNTA É FEITA ANTES DE PISAR: depois de `pisarNaCidade` ninguém
-     consegue mais saber se era a primeira vez. */
-  t("a primeira pisada é medida antes de pisar",
-    APP.indexOf("const primeiraPisada =") < APP.indexOf("mapaRef.current = pisarNaCidade(mapaRef.current, md.cidade_atual)")
-    && /const primeiraPisada = !\(\(cidadeDoMapa\(md\.cidade_atual\) \|\| \{\}\)\.pisada\);/.test(APP));
-  t("primeira vez abre a cerimônia", /if \(primeiraPisada\) setLugarNovo\(/.test(APP));
-  t("e o retorno continua na faixa", /else setChegada\(\{ cidade: md\.cidade_atual/.test(APP));
+     consegue mais saber se era a primeira vez.
+     MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO —
+     o bloco mora em `aplicarOMapa` (src/motor/meio-do-turno.js), e a ordem
+     "pergunta, depois pisa" prova-se pelo que sai: a cidade nunca pisada
+     abre a cerimônia E sai pisada; a já pisada volta à faixa. Se a pergunta
+     viesse depois de pisar, toda cidade seria "já pisada" e a cerimônia
+     nunca abriria. */
+  {
+    const chegar = (dita) => { const s = aplicarOMapa({ personagem: { nome: "Vera" }, mapa: MAPA_DA_CHEGADA(), cidadeAtual: "Vau Alto", lugar: null, jornada: null, devocao: {} }, { narrativa: "x", mudancas: { cidade_atual: dita } }, {}); return { ...s, ceri: s.efeitos.find((e) => e.tipo === "lugarNovo"), faixa: s.efeitos.find((e) => e.tipo === "chegada") }; };
+    const nova = chegar("Porto Lume");
+    const velha = chegar("Pedra Rasa");
+    t("a primeira pisada é medida antes de pisar", !!nova.ceri && !nova.faixa && nova.estado.mapa.cidades.find((c) => c.nome === "Porto Lume").pisada === true);
+    t("primeira vez abre a cerimônia", nova.ceri && nova.ceri.cidade.nome === "Porto Lume" && nova.ceri.cidade.regiao === "Costa" && /else if \(ef\.tipo === "lugarNovo"\) setLugarNovo\(ef\.cidade\);/.test(APP));
+    t("e o retorno continua na faixa", !velha.ceri && velha.faixa && velha.faixa.chegada.cidade === "Pedra Rasa");
+  }
   /* e as duas só existem em jogo, como todo momento desta casa */
   t("a cerimônia só na fase de jogo", /fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo/.test(APP));
   t("e nasce vazia", /const \[lugarNovo, setLugarNovo\] = useState\(null\);/.test(APP));

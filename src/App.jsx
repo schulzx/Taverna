@@ -4,7 +4,7 @@ import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativ
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, descobrirVizinhanca, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
+import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, detectarChegada, notaDaChegada, saidasDeUmPassoPrompt } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
@@ -158,14 +158,14 @@ import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, 
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
-import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
+import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, jornadaSemDestino, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { partidaNaRegiao } from "./marcha.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
 import { garantirForma, travaDaPartida, chaveDaMorte, guardiaoPorNome, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
-import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehOMesmoLugar, ehAPropriaCidade, textoDoLugar, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, distanciaNaCidade, umSoLugar, lerLugarDito } from "./lugar.js";
+import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, umSoLugar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
@@ -237,6 +237,7 @@ import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semear
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
+import { registrarOLugar, aplicarOMapa, nevoaDaVizinhanca } from "./motor/meio-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -8489,12 +8490,6 @@ export default function Taverna() {
     divindadeRef.current = novo; setDivindade(novo);
     return novo;
   };
-  /* Cidades novas entram no registro de devoção sozinhas (zeradas) */
-  const casarDevocaoComMapa = () => {
-    const d = garantirDevocao(devocaoRef.current, mapaRef.current, divindadeRef.current);
-    devocaoRef.current = d; setDevocao(d);
-    return d;
-  };
   /* CLIMA: rolado por tabela; vai ao Mestre como envelope [CLIMA] */
   const climaRef = useRef(null);
   const [clima, setClima] = useState(null);
@@ -8756,72 +8751,20 @@ export default function Taverna() {
      "lugar_atual" (imediato) e o Cronista lendo a narração (no fim do turno)
      — e os dois passam por aqui, para o anúncio e a limpeza serem um só.
      `null` significa "voltei para dentro da cidade". */
+  /* A RÉGUA MORA NO MOTOR (T1-A, 3.ª fatia, 28/10): `registrarOLugar`
+     (src/motor/meio-do-turno.js), pura, com o corpo e os porquês de cada
+     linha que aqui moravam — o sítio do marco, a cena do sistema (luta e
+     masmorra), quem diz o lugar, a recusa do null que o jogador não pediu,
+     a volta, a distância dentro da cidade e o arredor que o sistema gerou.
+     Aqui só a fiação: o estado que ela lê, e o que ela descreve — o lugar
+     novo, a nota da recusa, o erro engolido — aplicado num lugar só. */
   const registrarLugar = (nome, fonte = "mestre") => {
-    const cidade = cidadeAtualRef.current || "";
-    let cru = String(nome || "").trim();
-    /* MM-C · C0: o sítio de cada marco de pé — o nome que a IA inventa não
-       o troca (lugar.js, LUGAR_DO_MARCO) */
-    let doMarco = [];
-    try { doMarco = ((espinhaRef.current || {}).atos || []).flatMap((at) => ((at && at.marcos) || []).filter((m) => m && !m.feito && typeof m.onde === "string" && m.onde.trim()).map((m) => m.onde)); } catch (e) { calou("o sitio do marco", e); doMarco = []; }
-    /* MM16 nº 4: NA LUTA E NA MASMORRA O LUGAR É DO SISTEMA (era a v9.48:
-       ninguém se move no meio de uma luta). Aqui morava uma recusa de TUDO
-       o que chegasse com a luta aberta, antes de perguntar o que era — e na
-       3.ª sessão de prova ela acusou o Mestre 11 vezes em 14 respostas de
-       luta, por o Cronista repetir "câmara das correntes", o lugar onde o
-       herói já estava. A regra mudou-se para o motor (LUGAR_NA_CENA_DO_SISTEMA,
-       lugar.js): dentro de uma luta ou de uma masmorra, o lugar dito é
-       ignorado em silêncio — não move e não acusa. */
-    /* MM15: quem diz o lugar (o Cronista ou o Mestre) decide o que o
-       "cidade" significa — a régua vive em `lerLugarDito` (lugar.js), por
-       QUEM_DIZ_O_LUGAR. Um órgão que estoura não pode custar o turno: se
-       o motor falhar, não mover é o erro barato. */
-    let lido;
-    try {
-      lido = lerLugarDito(nome, { lugar: lugarRef.current, cidade, pedido: ultimoPedidoRef.current, fonte, luta: !!combateRef.current, masmorra: !!masmorraRef.current, doMarco });
-    } catch (e) { calou("registrarLugar/lerLugarDito", e); return null; }
-    if (lido.acao === "nada" || lido.acao === "ignora") return null;
-    /* o pedido apontou o sítio do marco: é ele que se regista */
-    if (lido.acao === "novo" && typeof lido.nome === "string" && lido.nome.trim()) cru = lido.nome.trim();
-    if (lido.acao === "recusa") {
-      /* v9.48: SAIR DAQUI TAMBÉM É UM MOVIMENTO, e movimento é do jogador.
-         O cão de guarda de `lugar.js` já defendia a NARRATIVA que devolvia o
-         herói à cidade sem ele pedir — mas o Mestre nem precisava narrar:
-         bastava mandar `lugar_atual: null` no campo estruturado e o sistema
-         obedecia, anunciando a volta com o próprio ícone. A porta dos
-         fundos do mesmo bug. Agora o campo passa pela mesma régua: só volta
-         quem escreveu que volta. */
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LUGAR — RECUSADO PELO SISTEMA] Você me tirou de onde eu estava — ${lugarRef.current.nome} — sem que eu tenha dito que saio. O SISTEMA registra que eu continuo LÁ. Retome a cena ${comEm(lugarRef.current.nome)} — eu não caminhei de volta e não cheguei a lugar nenhum. Só eu decido sair daqui, e só quando eu escrever isso.`;
-      return null;
-    }
-    if (lido.acao === "volta") {
-      const antigo = lugarRef.current;
-      lugarRef.current = null; setLugar(null);
-      return `📍 De volta ${cidade ? `a ${cidade}` : "à cidade"} — ${antigo.nome} fica para trás.`;
-    }
-    /* "novo": segue a régua de sempre.
-       v9.55: se o nome é um local DESTA cidade, a distância é `dentro` — e
-       não a de arredores que o classificador por texto daria a uma taverna.
-       Sem isto, o Mestre mandando `lugar_atual: "O Javali Cambaleante"`
-       rebaixava para "horas de caminhada" o que o sistema tinha acabado de
-       registrar como o outro lado da praça. */
-    const dist = (() => {
-      const cid = (mapaRef.current.cidades || []).find((c) => (c.nome || "").toLowerCase() === String(cidade).toLowerCase());
-      if (!cid) return null;
-      try {
-        const locais = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
-        const semA = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-        const aqui = lugarRef.current; const anfitriao = aqui && locais.find((l) => semA(l.nome) === semA(aqui.dentroDe || aqui.nome)); return distanciaNaCidade(cru, { locais, comodos: anfitriao ? comodosDoLocal(sementeMundo(), anfitriao, generoMundo(), moldeMundo()) : [], arredores: arredoresDaCidade(sementeMundo(), cid), masmorras: masmorrasDoMundo(sementeMundo(), mapaRef.current).filter((m) => m.cidadeProxima === cid.nome), foraDosMuros: !!(aqui && aqui.distancia !== "dentro") }); /* MM14: arredores só fora dos muros */
-      } catch { return null; }
-    })();
-    /* v9.118: se o nome é um arredor que o sistema gerou, o ponto é o DELE —
-       o moinho não muda de lado da cidade porque foi o Mestre quem o nomeou
-       desta vez. Sem arredor, a cidade é a âncora e o nome decide o resto. */
-    const cidAncora = cidadeSobOsPes();
-    const arr = cidAncora ? (() => { try { return arredorPorTexto(sementeMundo(), cidAncora, cru); } catch { return null; } })() : null;
-    const novo = definirLugar(cru, { cidade, dia: diaRef.current, distancia: dist, ancora: cidAncora, coord: (arr && arr.coord) || null });
-    if (!novo || ehOMesmoLugar(novo, lugarRef.current)) return null;
-    lugarRef.current = novo; setLugar(novo);
-    return `📍 Você está ${comEm(textoDoLugar(novo))}.`;
+    const r = registrarOLugar({
+      cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, espinha: espinhaRef.current, ultimoPedido: ultimoPedidoRef.current,
+      combate: combateRef.current, masmorra: masmorraRef.current, mapa: mapaRef.current, dia: diaRef.current,
+    }, nome, fonte, { mundo: mundoDaBase });
+    aplicarOsEfeitos({ estado: {}, efeitos: r.mudou ? [...r.efeitos, { tipo: "lugar", lugar: r.lugar }] : r.efeitos, paraOCronista: r.paraOCronista });
+    return r.aviso;
   };
   /* ---------------- A NÉVOA AO REDOR (v9.51) ----------------
      Chegar a uma cidade abre a vizinhança dela: as cidades ligadas por uma
@@ -8832,11 +8775,10 @@ export default function Taverna() {
      Antes disso o mapa mostrava um ponto só, o que o herói tivesse pisado,
      e um mapa de um ponto é um alfinete. */
   const abrirNevoaDaVizinhanca = (nomeCidade, msgs) => {
-    const viz = descobrirVizinhanca(mapaRef.current, nomeCidade);
-    if (!viz.novas.length) return;
+    const viz = nevoaDaVizinhanca(mapaRef.current, nomeCidade);
+    if (!viz.msg) return;
     mapaRef.current = viz.mapa; setMapa(mapaRef.current);
-    const n = viz.novas.length;
-    msgs.push(`🗺 De ${nomeCidade} você fica sabendo de ${n === 1 ? "mais um lugar" : `mais ${n} lugares`}: ${viz.novas.join(", ")} — ouvido no mercado, não visto de perto.`);
+    msgs.push(viz.msg);
   };
   /* ---------------- A VIAGEM TERMINA SOZINHA (v9.51) ----------------
      Achado jogando: parti de Nova do Norte para Forte do Rei, uma rota de 3,5
@@ -10546,8 +10488,12 @@ export default function Taverna() {
      de sempre. */
   const aplicarOsEfeitos = (saida) => {
     if (!saida || !saida.estado) return;
-    try { danoJaAplicadoRef.current = saida.estado.danoJaAplicado; } catch (e) { calou("aplicarOsEfeitos/danoJaAplicado", e); }
-    try { habUsadaRef.current = saida.estado.habUsada; } catch (e) { calou("aplicarOsEfeitos/habUsada", e); }
+    /* as travas voltam aos refs só quando o estado as traz: o registo (e
+       o mapa, e o lugar dito) não as levam, e escrever `undefined` nelas
+       desarmava a trava do dano que o aplicar deixou armada para o turno
+       seguinte (o achado de 28/10, na 3.ª fatia) */
+    try { if ("danoJaAplicado" in saida.estado) danoJaAplicadoRef.current = saida.estado.danoJaAplicado; } catch (e) { calou("aplicarOsEfeitos/danoJaAplicado", e); }
+    try { if ("habUsada" in saida.estado) habUsadaRef.current = saida.estado.habUsada; } catch (e) { calou("aplicarOsEfeitos/habUsada", e); }
     try { notaRef.current = notaComOTurno(notaRef.current, saida.paraOCronista); } catch (e) { calou("aplicarOsEfeitos/nota", e); }
     for (const ef of saida.efeitos || []) {
       try {
@@ -10560,6 +10506,16 @@ export default function Taverna() {
         else if (ef.tipo === "mapa") { mapaRef.current = ef.mapa; setMapa(ef.mapa); }
         else if (ef.tipo === "npcTurno") npcTurnoRef.current = ef.npcTurno;
         else if (ef.tipo === "npcs") { npcsRef.current = ef.npcs; setNpcs(ef.npcs); }
+        /* o mapa e o lugar (T1-A, 3.ª fatia): a cidade em que estou, o lugar
+           dito, a jornada, a facção, a devoção, e a cerimónia da chegada —
+           a faixa ganha aqui a chave do instante, que não é estado do jogo */
+        else if (ef.tipo === "cidadeAtual") cidadeAtualRef.current = ef.cidade;
+        else if (ef.tipo === "lugar") { lugarRef.current = ef.lugar; setLugar(ef.lugar); }
+        else if (ef.tipo === "jornada") { jornadaRef.current = ef.jornada; setJornada(ef.jornada); }
+        else if (ef.tipo === "faccaoJogador") faccaoJogadorRef.current = ef.faccao;
+        else if (ef.tipo === "devocao") { devocaoRef.current = ef.devocao; setDevocao(ef.devocao); }
+        else if (ef.tipo === "lugarNovo") setLugarNovo(ef.cidade);
+        else if (ef.tipo === "chegada") setChegada({ ...ef.chegada, chave: Date.now() });
         else if (ef.tipo === "remontarPrompt") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }
     }
@@ -10624,99 +10580,24 @@ export default function Taverna() {
          do mesmo prompt diziam o contrário dessa. As rolagens que o jogador vê
          hoje saem de `logDadoCombate`, e são as de verdade. */
     }
-    /* MAPA E FACÇÕES: registra cidades e facções vindas do Mestre */
-    if (resp.mudancas) {
-      const md = resp.mudancas;
-      let mp = { ...mapaRef.current, cidades: [...(mapaRef.current.cidades || [])], faccoes: [...(mapaRef.current.faccoes || [])] };
-      let mudouMapa = false;
-      (md.mapa_cidades || []).forEach((cd) => {
-        if (!cd || !cd.nome) return;
-        const i = mp.cidades.findIndex((c) => c.nome.toLowerCase() === cd.nome.toLowerCase());
-        if (i === -1) { mp.cidades.push(criarCidade(cd.nome, cd)); msgs.push(`🗺 ${cd.nome} registrada no mapa`); }
-        else mp.cidades[i] = { ...mp.cidades[i], ...cd, x: mp.cidades[i].x, y: mp.cidades[i].y };
-        mudouMapa = true;
-      });
-      (md.mapa_faccoes || []).forEach((fc) => {
-        if (!fc || !fc.nome) return;
-        const i = mp.faccoes.findIndex((f) => f.nome.toLowerCase() === fc.nome.toLowerCase());
-        if (i === -1) mp.faccoes.push(criarFaccao(fc.nome, fc));
-        else mp.faccoes[i] = { ...mp.faccoes[i], ...fc };
-        if (fc.doJogador) faccaoJogadorRef.current = fc.nome;
-        mudouMapa = true;
-      });
-      /* v9.39: onde estou, quando não é a cidade. Vem antes de `cidade_atual`
-         de propósito: chegar a uma cidade apaga o sublocal, e a ordem inversa
-         deixaria um fantasma de fazenda pendurado na cidade nova. */
-      /* MM16 nº 4: O TURNO QUE ABRE A MASMORRA PELO SINAL. O lugar_atual
-         corre antes dos sinais, e a porta só abre 400 ms depois: um null do
-         Mestre à boca era julgado contra o lugar de antes da porta e virava
-         recusa — a mesma acusação falsa que a entrada já não faz pela frase.
-         Se a porta deste turno vai abrir (a mesma régua que o sinal usa, lida
-         antes), o lugar dito cala: quem põe o herói na boca é a entrada. Se
-         a régua estoura, segue o caminho de sempre. */
-      const abreAMasmorraAgora = (() => {
-        try {
-          if (combateRef.current || acampadoRef.current || masmorraRef.current) return false;
-          const sinais = Array.isArray(md.sinais) ? md.sinais.slice(0, 6) : [];
-          return sinais.some((bruto) => {
-            const txt = String(bruto || "").trim();
-            const ix = txt.indexOf(":");
-            if ((ix < 0 ? txt : txt.slice(0, ix)).trim().toLowerCase() !== "masmorra") return false;
-            const arg = ix < 0 ? "" : txt.slice(ix + 1).trim();
-            const pm = portaDaMasmorra({ nome: arg }, { cidadeAtual: cidadeAtualRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: masmorrasDoMundo(sementeMundo(), mapaRef.current) });
-            return !!(pm && pm.ok);
-          });
-        } catch (e) { calou("lugar_atual/abreAMasmorraAgora", e); return false; }
-      })();
-      if (Object.prototype.hasOwnProperty.call(md, "lugar_atual") && !abreAMasmorraAgora) {
-        const aviso = registrarLugar(md.lugar_atual);
-        if (aviso) msgs.push(aviso);
-      }
-      if (md.cidade_atual) {
-        /* v9.48: repetir a cidade em que já estou não é chegar a lugar
-           nenhum. Esta linha apagava o sublocal em silêncio a cada turno em
-           que o Mestre reafirmasse `cidade_atual` — a segunda porta dos
-           fundos do mesmo teleporte, e sem nem uma mensagem na tela. Só
-           MUDAR de cidade encerra o que estava fora dela. */
-        const trocouCidade = !ehAPropriaCidade(md.cidade_atual, cidadeAtualRef.current || "") && String(md.cidade_atual).trim().toLowerCase() !== String(cidadeAtualRef.current || "").trim().toLowerCase();
-        cidadeAtualRef.current = md.cidade_atual;
-        if (trocouCidade && lugarRef.current) { lugarRef.current = null; setLugar(null); }
-        /* CHEGADA: registrar uma cidade encerra a jornada — a partir daqui eu
-           ESTOU nessa cidade (e o descanso pode ser em estalagem/aposentos). */
-        if (jornadaRef.current) {
-          jornadaRef.current = null; setJornada(null);
-          msgs.push(`🧭 Chegada: agora você está em ${md.cidade_atual}.`);
-        }
-        /* A NÉVOA ABRE ONDE O PÉ PISA (v9.14): chegar revela o lugar. */
-        const dsc = descobrirCidade(mapaRef.current, md.cidade_atual);
-        if (dsc.nova) {
-          mapaRef.current = dsc.mapa; setMapa(mapaRef.current);
-          msgs.push(`🗺 ${dsc.nova} entrou no seu mapa.`);
-        }
-        /* PRIMEIRA PISADA, ANTES DE PISAR (v9.181): `pisarNaCidade` marca o
-           lugar, e depois dela ninguém consegue mais saber se era a primeira
-           vez. A pergunta é feita aqui, um instante antes. */
-        const primeiraPisada = !((cidadeDoMapa(md.cidade_atual) || {}).pisada);
-        mapaRef.current = pisarNaCidade(mapaRef.current, md.cidade_atual); setMapa(mapaRef.current);
-        abrirNevoaDaVizinhanca(md.cidade_atual, msgs);
-        /* A FAIXA DE CHEGADA (v9.163): só quando de fato se TROCOU de
-           cidade — reafirmar a cidade em que já estou não é chegar.
-           E QUEM PISA PELA PRIMEIRA VEZ ganha a cerimônia inteira em vez da
-           faixa: chegar acontece toda viagem, descobrir acontece uma vez por
-           cidade na campanha toda. */
-        if (trocouCidade) {
-          const cid = cidadeDoMapa(md.cidade_atual) || {};
-          if (primeiraPisada) setLugarNovo({ ...cid, nome: cid.nome || md.cidade_atual });
-          else setChegada({ cidade: md.cidade_atual, regiao: cid.regiao || "", bioma: cid.bioma || "", tipo: cid.tipo || "", chave: Date.now() });
-        }
-      }
-      if (md.jornada_meio && jornadaRef.current) {
-        jornadaRef.current = { ...jornadaRef.current, meio: String(md.jornada_meio).slice(0, 40) };
-        setJornada(jornadaRef.current);
-      }
-      if (md.faccao_jogador) faccaoJogadorRef.current = md.faccao_jogador;
-      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : "taverna"); mapaRef.current = mp; setMapa(mp); casarDevocaoComMapa(); }
-    }
+    /* ---------------- O MAPA, NO MOTOR (T1-A, 3.ª fatia, 28/10) ----------------
+       As cidades e as facções que o Mestre registrou, o lugar dito (com a
+       porta da masmorra que abre neste turno, MM16 nº 4), a cidade em que
+       se pisa (a jornada que termina, a névoa que abre, a primeira pisada e
+       a faixa da chegada), o meio da jornada, a facção do jogador, e a
+       geografia e a devoção das cidades novas moram em `aplicarOMapa`
+       (src/motor/meio-do-turno.js), na mesma ordem e com os porquês de
+       cada linha. Daqui só sai a fiação. Provado byte a byte contra o bloco
+       de antes (teste-motor-aplicar, secção 7). */
+    try {
+      const doMapa = aplicarOMapa({
+        personagem: pers, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current,
+        faccaoJogador: faccaoJogadorRef.current, devocao: devocaoRef.current, divindade: divindadeRef.current, combate: combateRef.current,
+        acampado: acampadoRef.current, masmorra: masmorraRef.current, espinha: espinhaRef.current, ultimoPedido: ultimoPedidoRef.current, dia: diaRef.current,
+      }, resp, { mundo: mundoDaBase });
+      msgs.push(...doMapa.msgs);
+      aplicarOsEfeitos(doMapa);
+    } catch (e) { calou("o mapa do turno", e); }
     /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
     if (resp.mudancas) {
       const md2 = resp.mudancas;

@@ -21,9 +21,36 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "../src/motor/aplicar.js";
 import { semearACasa, dadoDo } from "../src/semente.js";
-import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto } from "./aplicar-casos.mjs";
+import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto, casosDoMeio, retratoDoMapa } from "./aplicar-casos.mjs";
+import { registrarOLugar, aplicarOMapa } from "../src/motor/meio-do-turno.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
+
+/* o App do meio do turno, em miniatura: os refs que os blocos do meio leem
+   e escrevem, e o que `aplicarOsEfeitos` faz com cada efeito — na ordem */
+function oAppDoMeio(c) {
+  const e = c.estado;
+  return {
+    pers: e.personagem, fichaDoRef: e.fichaDoRef, fichaDoReact: e.fichaDoReact, mapa: e.mapa, cidadeAtual: e.cidadeAtual, lugar: e.lugar,
+    jornada: e.jornada, faccaoJogador: e.faccaoJogador, devocao: e.devocao, divindade: e.divindade, eventos: e.eventos, historia: e.historia,
+    combate: e.combate, sinalViagem: null, sinalMasmorra: null, sinalRaid: null, espolio: null, lugarNovo: null, chegada: null,
+    salvos: [], remontagens: [], questsVistas: 0, canone: e.canone, npcs: e.npcs, quests: e.quests, calou: [],
+  };
+}
+function oAppAplica(A, efeitos) {
+  for (const ef of efeitos) {
+    if (ef.tipo === "mapa") A.mapa = ef.mapa;
+    else if (ef.tipo === "cidadeAtual") A.cidadeAtual = ef.cidade;
+    else if (ef.tipo === "lugar") A.lugar = ef.lugar;
+    else if (ef.tipo === "jornada") A.jornada = ef.jornada;
+    else if (ef.tipo === "faccaoJogador") A.faccaoJogador = ef.faccao;
+    else if (ef.tipo === "devocao") A.devocao = ef.devocao;
+    else if (ef.tipo === "lugarNovo") A.lugarNovo = ef.cidade;
+    else if (ef.tipo === "chegada") A.chegada = ef.chegada;
+    else if (ef.tipo === "calou") A.calou.push(ef.onde);
+  }
+  return A;
+}
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
 const sec = (s) => console.log("\n" + s);
@@ -161,6 +188,16 @@ sec("5. o registo — o cânone e a gente, byte a byte (T1-A, 2.ª fatia)");
   t("o prompt remonta UMA vez, no fim, mesmo quando os dois blocos mexem", CR.every((k) => { const x = JSON.parse(JSON.stringify(k)); semearACasa(x.semente); const s = aplicarORegisto(x.estado, x.resp, x.ctx); const r = s.efeitos.filter((e) => e.tipo === "remontarPrompt"); return r.length <= 1 && (!r.length || s.efeitos[s.efeitos.length - 1] === r[0]); }));
   t("sem mudanças, nada anda (nem o contador da gente)", (() => { const s = aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x" }, {}); return s.efeitos.length === 0 && s.estado.npcTurno === 4; })());
   t("lixo não estoura", !!aplicarORegisto(null, null, null));
+  /* O ESTADO SEM O CONTADOR (achado da trilha B em 28/10, jogando o estado
+     v2 em Node): `npcTurno` não é campo do estado do jogo — o App guarda-o
+     num ref e, no load, deriva-o das fichas (`retomarContador`). Sem ele, o
+     registo somava 1 a `undefined` e gravava `NaN` em `ultimaVez`. Ausente,
+     deriva-se como o load deriva. */
+  {
+    const s = aplicarORegisto({ personagem: { nome: "Vera" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: { Hilda: { nome: "Hilda", ultimaVez: 7, conhecidoEm: 1 } }, dia: 3 },
+      { narrativa: "x", mudancas: { npcs: [{ nome: "Brann Ferro", papel: "ferreiro" }] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } });
+    t("sem npcTurno no estado, o contador sai das fichas (nunca NaN)", s.estado.npcTurno === 8 && s.estado.npcs["Brann Ferro"] && s.estado.npcs["Brann Ferro"].ultimaVez === 8, JSON.stringify(s.estado.npcs["Brann Ferro"]));
+  }
   t("o contexto do nome é o do App: a base do jogo e a metade do nome", JSON.stringify(contextoDoNomeCom({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], aqui: ["a"], heroi: "h" }, { local: "L", genero: "ela", papel: "p", notas: "n", status: "vivo" })) === JSON.stringify({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], local: "L", genero: "ela", papel: "p", notas: "n · vivo", aqui: ["a"], heroi: "h" }));
   /* a fiação: o App chama o registo no lugar dos dois blocos */
   t("o App chama o registo e aplica os efeitos no mesmo lugar", /aplicarORegisto\(\{/.test(corpoAR) && /aplicarOsEfeitos\(registo\)/.test(corpoAR));
@@ -193,6 +230,69 @@ sec("6. a salvaguarda pela sorte do turno (T1-A, 2.ª fatia)");
   const dependiam = CASOS.filter((c0) => { const a = JSON.parse(JSON.stringify(c0)), b = JSON.parse(JSON.stringify(c0)); semearACasa("casa A"); const x = linhasDaSalva(aplicar(a.estado, a.resp, a.ctx)); semearACasa("casa B"); return x !== linhasDaSalva(aplicar(b.estado, b.resp, b.ctx)); }).length;
   t(`(sem a sorte do turno ela dependia: ${dependiam} casos mudavam com a casa)`, dependiam > 0);
   t("o App pede a sorte do turno pelo evento da salvaguarda", /sorte: sorteDoTurno\("salvaguarda"\)/.test(corpoAR));
+}
+
+sec("7. o mapa e o lugar dito, byte a byte (T1-A, 3.ª fatia)");
+{
+  /* o App de d776408 (`gerar-meio-dourado.mjs`) fotografou o estado depois
+     de cada bloco do meio do turno; o bloco do mapa é o que fica entre a
+     foto `dadivas` e a foto `mapa`. O motor corre só esse bloco e tem de dar
+     a mesma parte do mapa (as cidades, o lugar, a jornada, a facção, a
+     devoção, a cerimónia), as mesmas linhas da tela e a mesma nota. A ficha
+     que o bloco lê (só o nome, para a semente da geografia) não muda com a
+     dádiva que corre antes dele. */
+  const DM = JSON.parse(fs.readFileSync(path.join(AQUI, "meio-dourado.json"), "utf8"));
+  const CM = casosDoMeio();
+  t(`os casos são os do dourado (${CM.length})`, CM.length === DM.casos.length && CM.every((c, i) => c.id === DM.casos[i].id));
+  t("o App de antes não calou em nenhum caso", DM.calou === 0);
+  let iguais = 0; const dif = [];
+  for (let i = 0; i < CM.length; i++) {
+    const c = JSON.parse(JSON.stringify(CM[i]));
+    semearACasa(c.semente);
+    const s = aplicarOMapa(c.estado, c.resp, c.ctx);
+    const A = oAppDoMeio(c);
+    oAppAplica(A, s.efeitos);
+    const F = DM.casos[i].fotos;
+    const ok = digital(retratoDoMapa(A)) === F.mapa.mapa
+      && JSON.stringify(s.msgs) === JSON.stringify(F.mapa.msgs.slice(F.dadivas.msgs.length))
+      && notaComOTurno(F.dadivas.nota, s.paraOCronista) === F.mapa.nota && !A.calou.length;
+    if (ok) iguais++; else dif.push(`${c.id}: ${JSON.stringify(s.msgs).slice(0, 140)} / ${JSON.stringify(F.mapa.msgs.slice(F.dadivas.msgs.length)).slice(0, 140)}`);
+  }
+  t(`${iguais}/${CM.length} blocos do mapa iguais ao byte`, iguais === CM.length, dif.slice(0, 3).join(" | "));
+  /* a prova só vale se percorre os ramos — contados no dourado */
+  const linhas = (rx) => DM.casos.filter((x) => rx.test(x.fotos.mapa.msgs.slice(x.fotos.dadivas.msgs.length).join("\n") + "\n" + x.fotos.mapa.nota.slice(x.fotos.dadivas.nota.length))).length;
+  t("…o lugar dito que move (📍)", linhas(/📍/) >= 50);
+  t("…o lugar recusado (a nota)", linhas(/LUGAR — RECUSADO/) >= 10);
+  t("…a cidade registrada, a que entra no mapa e a vizinhança de ouvir", linhas(/registrada no mapa/) >= 30 && linhas(/entrou no seu mapa/) >= 10 && linhas(/fica sabendo de/) >= 10);
+  t("…a jornada que termina na chegada", linhas(/🧭 Chegada/) >= 20);
+  {
+    /* a cerimónia: a primeira pisada e a faixa, as duas */
+    let novo = 0, faixa = 0;
+    for (const c0 of CM) { const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente); const s = aplicarOMapa(c.estado, c.resp, c.ctx); if (s.efeitos.some((e) => e.tipo === "lugarNovo")) novo++; if (s.efeitos.some((e) => e.tipo === "chegada")) faixa++; }
+    t(`…a cerimónia da chegada: ${novo} primeiras pisadas, ${faixa} faixas`, novo >= 20 && faixa >= 20);
+  }
+  /* pureza e forma */
+  const c = JSON.parse(JSON.stringify(CM[3]));
+  const antes = JSON.stringify(c);
+  semearACasa(c.semente); const a = aplicarOMapa(c.estado, c.resp, c.ctx);
+  t("o que entra sai intacto", JSON.stringify(c) === antes);
+  t("{ estado, efeitos, paraOCronista, msgs }, efeitos por tipo", a.estado && Array.isArray(a.efeitos) && a.efeitos.every((e) => e && typeof e.tipo === "string") && Array.isArray(a.paraOCronista) && Array.isArray(a.msgs));
+  t("a chegada não leva relógio (a chave da faixa é do App)", CM.every((k) => { const x = JSON.parse(JSON.stringify(k)); semearACasa(x.semente); return aplicarOMapa(x.estado, x.resp, x.ctx).efeitos.filter((e) => e.tipo === "chegada").every((e) => !("chave" in e.chegada)); }));
+  t("sem mudanças, nada anda", (() => { const s = aplicarOMapa({ mapa: { cidades: [] } }, { narrativa: "x" }, {}); return s.efeitos.length === 0 && !s.msgs.length; })());
+  t("lixo não estoura (sem mudanças)", !!aplicarOMapa(null, null, null));
+  /* o lugar dito, sozinho: a régua que o Mestre e o Cronista dividem */
+  const lugar = { nome: "a fazenda de Jessa", cidade: "Monte Rasa", distancia: "arredores" };
+  const r1 = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades: [] }, dia: 2 }, "a fazenda de Jessa", "mestre", {});
+  t("o lugar novo move e anuncia", r1.mudou && r1.lugar && r1.lugar.nome === "a fazenda de Jessa" && /^📍 Você está/.test(r1.aviso));
+  const r2 = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar, mapa: { cidades: [] }, dia: 2, ultimoPedido: "olho as galinhas" }, null, "mestre", {});
+  t("o null sem o jogador pedir é recusado, com a nota, e não move", !r2.mudou && r2.lugar === lugar && r2.aviso === null && /RECUSADO PELO SISTEMA/.test(r2.paraOCronista[0] || ""));
+  const r3 = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar, mapa: { cidades: [] }, dia: 2, ultimoPedido: "volto para a cidade" }, null, "mestre", {});
+  t("o null que o jogador pediu é a volta", r3.mudou && r3.lugar === null && /De volta a Monte Rasa/.test(r3.aviso));
+  t("na luta, o lugar dito é ignorado em silêncio", (() => { const r = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades: [] }, combate: { inimigos: [] } }, "a torre", "cronista", {}); return !r.mudou && !r.aviso && !r.paraOCronista.length; })());
+  /* a fiação: o App chama o bloco no lugar dele, e o seu registrarLugar é a régua do motor */
+  t("o App chama o mapa e aplica os efeitos no mesmo lugar", /aplicarOMapa\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doMapa\)/.test(corpoAR));
+  t("o mapa já não mora no App", !/const abreAMasmorraAgora = \(\(\) => \{/.test(APP) && !/mp\.cidades\.push\(criarCidade\(cd\.nome, cd\)\); msgs\.push/.test(APP));
+  t("o registrarLugar do App é a régua do motor", /const r = registrarOLugar\(\{/.test(APP) && !/lido = lerLugarDito\(nome,/.test(APP));
 }
 
 console.log(`\nmotor · aplicar: ${bons} passaram, ${maus} falharam`);
