@@ -512,8 +512,13 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
     }
     /* PESSOAS (registro de NPCs): o Mestre envia "npcs"; e como blindagem de
        memória, qualquer PESSOA do cânone sem ficha entra no registro por código. */
+    /* O CONTADOR DA GENTE ANDA UMA VEZ POR TURNO DO NARRADOR (T1-A, 7.ª fatia;
+       o achado da T3-B). Andava só quando a resposta trazia `mudancas`: com
+       `{}` contava, e quando a porta da luta as podava todas (a poda devolve
+       `null`) não contava — o mesmo turno, duas réguas, e a recência de quem
+       foi visto (`ultimaVez`) escorregava um passo por cada poda. */
+    npcTurno += 1; efeitosDoTurno.push({ tipo: "npcTurno", npcTurno });
     if (resp.mudancas) {
-      npcTurno += 1; efeitosDoTurno.push({ tipo: "npcTurno", npcTurno });
       let reg = npcs;
       let tocou = false;
       /* MM14 · 10a: um nome novo que colide com quem já importa (mesmo

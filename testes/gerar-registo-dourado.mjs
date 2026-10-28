@@ -35,7 +35,19 @@ const app = execSync(`git show ${COMMIT}:src/App.jsx`, { cwd: path.join(AQUI, ".
 const i0 = app.indexOf("    /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */");
 const i1 = app.indexOf("    setPersonagem(pers);\n    /* combate: processa de forma síncrona", i0);
 if (i0 < 0 || i1 < i0) throw new Error("o bloco não está onde estava");
-const corpo = app.slice(i0, i1);
+/* AS TROCAS DECLARADAS sobre o bloco de antes, com o porquê (o dourado é o
+   App de antes COM elas; cada uma tem de bater uma vez só):
+   1. o contador da gente anda uma vez por turno do Narrador, com ou sem
+      `mudancas` (T1-A, 7.ª fatia: com `{}` andava, e com as mudanças podadas
+      a `null` não) — teste-motor-aplicar, secção 5. */
+export const TROCAS_DECLARADAS = [
+  ["    if (resp.mudancas) {\n      npcTurnoRef.current += 1;", "    npcTurnoRef.current += 1;\n    if (resp.mudancas) {"],
+];
+let corpo = app.slice(i0, i1);
+for (const [de, para] of TROCAS_DECLARADAS) {
+  if (corpo.split(de).length !== 2) throw new Error("a troca declarada não bate uma vez só: " + de);
+  corpo = corpo.replace(de, para);
+}
 
 const velho = new Function("R", `
   const { resp, pers, msgs, canoneRef, mapaRef, setMapa, espinhaRef, mundoDaBase, npcTurnoRef, npcsRef, setNpcs,
