@@ -20,7 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "../src/motor/aplicar.js";
-import { semearACasa } from "../src/semente.js";
+import { semearACasa, dadoDo } from "../src/semente.js";
 import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto } from "./aplicar-casos.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
@@ -166,6 +166,33 @@ sec("5. o registo — o cânone e a gente, byte a byte (T1-A, 2.ª fatia)");
   t("o App chama o registo e aplica os efeitos no mesmo lugar", /aplicarORegisto\(\{/.test(corpoAR) && /aplicarOsEfeitos\(registo\)/.test(corpoAR));
   t("o cânone e a gente já não moram no App", !/let canoneDoNarrador = resp\.mudancas\.canone;/.test(APP) && !/npcTurnoRef\.current \+= 1;/.test(APP));
   t("o contextoDoNome do App é a base mais a metade do motor", /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
+}
+
+sec("6. a salvaguarda pela sorte do turno (T1-A, 2.ª fatia)");
+{
+  /* o dourado da sorte (`gerar-aplicar-dourado.mjs --sorte`): o bloco de
+     b9e6e20 com o d20 da salvaguarda vindo de dadoDo(semente do caso,
+     "salvaguarda") e a casa semeada com OUTRA semente. O motor, com
+     `ctx.sorte` igual, tem de dar o mesmo, byte a byte */
+  const DS = JSON.parse(fs.readFileSync(path.join(AQUI, "aplicar-dourado-sorte.json"), "utf8"));
+  t(`os casos são os do dourado da sorte (${CASOS.length})`, DS.casos.length === CASOS.length && CASOS.every((c, i) => c.id === DS.casos[i].id));
+  let iguais = 0; const dif = [];
+  const comSorte = (c, casa) => { semearACasa(casa); return aplicar(c.estado, c.resp, { ...c.ctx, sorte: dadoDo(c.semente, "salvaguarda") }); };
+  for (let i = 0; i < CASOS.length; i++) {
+    const c = JSON.parse(JSON.stringify(CASOS[i]));
+    const s = comSorte(c, `outra casa|${c.semente}`);
+    if (digital(oQueOAppVe(c, s)) === DS.casos[i].digital) iguais++; else dif.push(`${c.id}: ${JSON.stringify(s.msgs).slice(0, 140)}`);
+  }
+  t(`${iguais}/${CASOS.length} estados iguais ao byte com o dado da sorte do turno`, iguais === CASOS.length, dif.slice(0, 3).join(" | "));
+  t("…e a salvaguarda rolou em muitos deles", DS.casos.filter((x) => /deu \d+/.test(x.msgs.join(" "))).length >= 20);
+  /* o que se ganhou: o dado da salvaguarda já não depende do que a casa
+     sorteou antes — as linhas da salvaguarda são as mesmas com qualquer casa */
+  const linhasDaSalva = (s) => s.msgs.filter((m) => /deu \d+/.test(m)).join("\n");
+  const indep = CASOS.filter((c0) => { const c = JSON.parse(JSON.stringify(c0)); return linhasDaSalva(comSorte(c, "casa A")) === linhasDaSalva(comSorte(JSON.parse(JSON.stringify(c0)), "casa B")); }).length;
+  t(`a salvaguarda não depende da casa (${indep}/${CASOS.length} iguais com duas casas diferentes)`, indep === CASOS.length);
+  const dependiam = CASOS.filter((c0) => { const a = JSON.parse(JSON.stringify(c0)), b = JSON.parse(JSON.stringify(c0)); semearACasa("casa A"); const x = linhasDaSalva(aplicar(a.estado, a.resp, a.ctx)); semearACasa("casa B"); return x !== linhasDaSalva(aplicar(b.estado, b.resp, b.ctx)); }).length;
+  t(`(sem a sorte do turno ela dependia: ${dependiam} casos mudavam com a casa)`, dependiam > 0);
+  t("o App pede a sorte do turno pelo evento da salvaguarda", /sorte: sorteDoTurno\("salvaguarda"\)/.test(corpoAR));
 }
 
 console.log(`\nmotor · aplicar: ${bons} passaram, ${maus} falharam`);

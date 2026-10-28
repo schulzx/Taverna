@@ -32,9 +32,14 @@
    mapa, as missões e os sinais, que mexem no mapa, no lugar e na ficha que
    o registo lê. Quando esses saírem, as duas peças fundem-se numa ordem só.
 
-   O DADO: a salvaguarda do fim do turno rola pela sorte da casa, como
-   rolava no App (que a semeia a cada envio). `ctx.sorte` não muda isto
-   ainda — mudar o fio do dado agora quebraria a prova byte a byte.
+   O DADO (2.ª fatia, 27/10): a salvaguarda do fim do turno rola pela SORTE
+   DO TURNO — `ctx.sorte`, a que o App pede a `sorteDoTurno("salvaguarda")`
+   (src/motor/sorte-do-turno.js): a semente do mundo, o instante que o save
+   guarda e o nome do evento. Antes rolava pela reserva da casa, semeada a
+   cada envio: determinista pela ordem dentro do turno, mas qualquer órgão
+   que pedisse sorte antes dela mudava o dado. Um só fio para os três
+   sítios (eu, o grupo, os inimigos), na ordem de sempre. Sem `ctx.sorte`
+   (uma suíte, um chamador antigo) rola como rolava, pela casa.
 
    A PROVA: `testes/teste-motor-aplicar.mjs` — o estado que o App de antes
    (b9e6e20) produzia, capturado em `testes/aplicar-dourado.json` sobre as
@@ -83,6 +88,10 @@ export function aplicar(estado, resposta, ctx = {}) {
   const ultimoDesfecho = e0.ultimoDesfecho;
   const msgs = [], notas = [], efeitosDoTurno = [];
   const calou = (onde, erro) => { efeitosDoTurno.push({ tipo: "calou", onde, erro }); };
+  /* o d20 da salvaguarda, do fio da sorte do turno (ver O DADO, acima); a
+     face é a mesma conta de `rolarSalvaguarda` (salvaguardas.js) */
+  const sorteDoTurno = typeof op.sorte === "function" ? op.sorte : null;
+  const d20DoTurno = sorteDoTurno ? () => 1 + Math.floor(sorteDoTurno() * 20) : null;
     /* E4 do "o Narrador só narra" (a fiação): A PORTA DA LUTA É DO SISTEMA.
        Antes de qualquer coisa ler a resposta, a guarda tira dela o que o
        Narrador já não decide — o perigo, abrir luta (salvo o pedido do golpe
@@ -196,7 +205,7 @@ export function aplicar(estado, resposta, ctx = {}) {
        versão. */
     try {
       if ((pers.condicoes || []).length) {
-        const saida = tentarSaidaNoFimDoTurno(pers, { modDe: (a) => atributoEfetivo(pers, a) });
+        const saida = tentarSaidaNoFimDoTurno(pers, { modDe: (a) => atributoEfetivo(pers, a), d20: d20DoTurno });
         if (saida.mudou) {
           pers = { ...pers, condicoes: saida.condicoes };
           msgs.push(...saida.linhas);
@@ -270,7 +279,7 @@ export function aplicar(estado, resposta, ctx = {}) {
       let mexeu = false;
       const grupoComSaida = (pers.grupo || []).map((g) => {
         if (!g || !((g.condicoes || []).length)) return g;
-        const saida = tentarSaidaNoFimDoTurno(g, { quem: g.nome });
+        const saida = tentarSaidaNoFimDoTurno(g, { quem: g.nome, d20: d20DoTurno });
         if (!saida.mudou) return g;
         mexeu = true;
         linhasDaSaida.push(...saida.linhas);
@@ -310,7 +319,7 @@ export function aplicar(estado, resposta, ctx = {}) {
         let condicoes = t.condicoes;
         if (vida > 0) {
           try {
-            const saida = tentarSaidaNoFimDoTurno({ ...e, condicoes: t.condicoes }, { quem: e.nome });
+            const saida = tentarSaidaNoFimDoTurno({ ...e, condicoes: t.condicoes }, { quem: e.nome, d20: d20DoTurno });
             if (saida.mudou) { condicoes = saida.condicoes; msgs.push(...saida.linhas); }
           } catch (err) { calou("salvaguarda-do-fim-do-turno-do-inimigo", err); }
         }

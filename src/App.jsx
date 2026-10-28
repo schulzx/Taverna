@@ -10576,6 +10576,9 @@ export default function Taverna() {
        linha foram com ela. Daqui só sai fiação: o estado que o motor lê, e os
        efeitos que ele descreve, aplicados num lugar só (`aplicarOsEfeitos`).
        Provado byte a byte contra o App de antes em `teste-motor-aplicar.mjs`.
+       O d20 da segunda chance (T3) vem da sorte do turno, pelo evento
+       "salvaguarda" (2.ª fatia): a mesma semente e o mesmo instante dão a
+       mesma salvaguarda, peça o resto do turno a sorte que pedir antes.
 
        v9.32: FICHA NUNCA NULA — se ela não veio, está no ref; se não está em
        lugar nenhum, não há turno (o motor diz `semFicha`). E a ficha do
@@ -10587,7 +10590,7 @@ export default function Taverna() {
       personagem: pers, combate: combateRef.current,
       danoJaAplicado: danoJaAplicadoRef.current, habUsada: habUsadaRef.current,
       ultimoDesfecho: ultimoDesfechoRef.current,
-    }, resp, { envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda });
+    }, resp, { envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda, sorte: sorteDoTurno("salvaguarda") });
     aplicarOsEfeitos(saida);
     if (saida.semFicha) return null;
     resp = saida.podado;
@@ -11750,8 +11753,12 @@ export default function Taverna() {
          aceitou e o CÓDIGO assina o registro (com os dados do elenco, se houver). */
       try {
         /* T1-B: só quem o juízo deixou passar pela porta do convite; o
-           grupo cheio continua a ser dito ao jogador */
-        recusadoDoCronista.filter((x) => x && x.secao === "grupo" && x.porque === "cheio").forEach((x) => msgs.push(`O grupo está cheio — ${x.o} não pôde se juntar.`));
+           grupo cheio continua a ser dito ao jogador. Com o grupo cheio o
+           convite recusa todos, e o juízo diz `semPorta` (ou `desconhecido`)
+           antes de chegar a `cheio`: a frase sai para esses também, como
+           saía antes do juízo para todo nome que não fosse já do grupo. */
+        const cheioAgora = (p.grupo || []).filter((g) => g && !g.invocada).length >= MAX_COMPANHEIROS;
+        recusadoDoCronista.filter((x) => x && x.secao === "grupo" && (x.porque === "cheio" || (cheioAgora && (x.porque === "semPorta" || x.porque === "desconhecido")))).forEach((x) => msgs.push(`O grupo está cheio — ${x.o} não pôde se juntar.`));
         const entraram = (ac.grupo && Array.isArray(ac.grupo.entraram)) ? ac.grupo.entraram : [];
         if (entraram.length) {
           const grupoAtual = [...(p.grupo || [])];

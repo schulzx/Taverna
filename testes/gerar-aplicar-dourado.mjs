@@ -9,13 +9,22 @@
    objetos simples e as funções dos módulos de verdade. O que ele produz em
    cada caso de `aplicar-casos.mjs` é gravado como o dourado.
 
-   uso: node testes/gerar-aplicar-dourado.mjs [commit]  */
+   uso: node testes/gerar-aplicar-dourado.mjs [commit] [--sorte]
+
+   --sorte (T1-A, 2.ª fatia, 27/10): o DOURADO DA SORTE DO TURNO. A
+   salvaguarda do fim do turno passou a rolar pelo fio da sorte do turno
+   (`ctx.sorte`), e não pela reserva da casa. O código de antes não tinha
+   esse fio, então o dublê é declarado: o MESMO bloco de b9e6e20, com a
+   `tentarSaidaNoFimDoTurno` de verdade recebendo o d20 de
+   `dadoDo(semente do caso, "salvaguarda")` — a conta de face de
+   `rolarSalvaguarda` — e a casa semeada com OUTRA semente, para a prova
+   mostrar que o dado já não sai dela. Grava `aplicar-dourado-sorte.json`. */
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { casosDoAplicar, retrato, digital } from "./aplicar-casos.mjs";
-import { semearACasa } from "../src/semente.js";
+import { semearACasa, dadoDo } from "../src/semente.js";
 import { podarONarrador } from "../src/agressao.js";
 import { tickEfeitos, atributoEfetivo, aplicarMudancas } from "../src/regras-jogo.js";
 import { tickCondicoes, tentarSaidaNoFimDoTurno } from "../src/condicoes.js";
@@ -23,7 +32,8 @@ import { oQueFaltaCreditar, oQueFaltaDebitar, falaDaCobranca, envelopeDaCobranca
 import { itemConsumivel } from "../src/pocoes.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
-const COMMIT = process.argv[2] || "b9e6e20";
+const SORTE = process.argv.includes("--sorte");
+const COMMIT = process.argv.slice(2).find((a) => !a.startsWith("--")) || "b9e6e20";
 const app = execSync(`git show ${COMMIT}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString();
 const i0 = app.indexOf("    const op = opts && typeof opts === \"object\" ? opts : {};");
 const i1 = app.indexOf("    if ((pers.dadivasPendentes || 0) > 0) pers = concederDadivas(pers, msgs);");
@@ -49,11 +59,14 @@ const dourado = casosDoAplicar().map((c) => {
     notaRef: { current: k.notaAntes }, combateRef: { current: k.estado.combate }, setCombate: () => {},
     ultimoDesfechoRef: { current: k.estado.ultimoDesfecho }, texturaRef: { current: {} },
     calou: (onde) => fora.push(onde), resp: k.resp,
-    podarONarrador, tickEfeitos, atributoEfetivo, aplicarMudancas, tickCondicoes, tentarSaidaNoFimDoTurno,
+    podarONarrador, tickEfeitos, atributoEfetivo, aplicarMudancas, tickCondicoes,
+    tentarSaidaNoFimDoTurno: SORTE
+      ? (() => { const sorte = dadoDo(c.semente, "salvaguarda"); return (p, o) => tentarSaidaNoFimDoTurno(p, { ...o, d20: () => 1 + Math.floor(sorte() * 20) }); })()
+      : tentarSaidaNoFimDoTurno,
     oQueFaltaCreditar, oQueFaltaDebitar, falaDaCobranca, envelopeDaCobranca, envelopeDaCobrancaNegada,
     falaDoDebito, envelopeDoDebito, itemConsumivel,
   };
-  semearACasa(c.semente);
+  semearACasa(SORTE ? `outra casa|${c.semente}` : c.semente);
   const r = velho(R);
   const ret = retrato({
     pers: r.pers, msgs: r.msgs, nota: R.notaRef.current, combate: R.combateRef.current,
@@ -61,6 +74,6 @@ const dourado = casosDoAplicar().map((c) => {
   });
   return { id: c.id, digital: digital(ret), bytes: ret.length, msgs: r.msgs, nota: R.notaRef.current };
 });
-const saida = { origem: `o aplicarResposta de ${COMMIT} (bloco 'a ficha': poda, travas, relógio, mudanças, cobrança), sobre aplicar-casos.mjs`, calou: fora.length, casos: dourado };
-fs.writeFileSync(path.join(AQUI, "aplicar-dourado.json"), JSON.stringify(saida));
+const saida = { origem: `o aplicarResposta de ${COMMIT} (bloco 'a ficha': poda, travas, relógio, mudanças, cobrança), sobre aplicar-casos.mjs${SORTE ? ", com o d20 da salvaguarda de dadoDo(semente do caso, \"salvaguarda\") e a casa semeada com outra semente" : ""}`, calou: fora.length, casos: dourado };
+fs.writeFileSync(path.join(AQUI, SORTE ? "aplicar-dourado-sorte.json" : "aplicar-dourado.json"), JSON.stringify(saida));
 console.log(`dourado: ${dourado.length} casos, ${fora.length} calou`);
