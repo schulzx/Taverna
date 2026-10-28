@@ -24,7 +24,7 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
-## 28/10 · v9.497 · T4-B, o cenário, 1.ª fatia: preços e ocupações saem do motor (`backend`)
+## 28/10 · v9.497 · T4-B, o cenário, 1.ª fatia: preços e ocupações saem do motor (`backend`) · af612a9
 - **o pedido:** o começo do modo autor (`mente/plano-motor.md`, Fase 4-B): um mundo novo entra sem editar módulo. Formato, carregador com validação, o cenário padrão, dois ou três catálogos lendo dele, dourado de antes.
 - **o formato (decisão média):** objeto de dados puro e JSON-compatível. O padrão mora em `src/cenario-padrao.js` (um `.js` de dados, porque importar `.json` pede `with { type: "json" }` no Node e não no Vite); o arquivo de um autor pode ser `.json` de verdade (`carregarCenario(JSON.parse(texto))`), e a suíte faz essa volta. A regex é o texto dela. O cenário é completo (o que falta é recusado com o caminho, nunca herdado do padrão) e o campo que o motor não lê também é recusado.
 - **como os catálogos leem:** `aoTrocarDeCenario(fn)`; as tabelas continuam com o mesmo nome, agora `export let` (a ligação viva do ESM), e o App não muda. `usarCenario` valida antes de avisar e volta tudo se um catálogo estourar. Trocar é ato de arranque: quem copiou a tabela no import fica com a antiga.
