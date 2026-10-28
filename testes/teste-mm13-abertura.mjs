@@ -573,8 +573,15 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   t("o corpo de aplicarResposta não está vazio", aplicar.length > 10000);
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
   const cronista = corpoApos(app, "const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
-  t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural",
-    cronista.length > 200 && cronista.includes('if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) {'));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a secção do cartaz saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const { oAceitoDoCronista } = await import("../src/motor/cronista-do-turno.js");
+  const fechada = { abertura: { v: 1, principalId: "m1", turnos: 0, feitas: 0, semAvanco: 0 }, missoes: [{ id: "m1", tipo: "principal", status: "ativa", titulo: "x", etapas: [] }] };
+  const pregou = (est) => { let n = 0; oAceitoDoCronista({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 10, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, [], {}, { pers: { nome: "Vera", nivel: 2, grupo: [] }, narrativa: "x", ler: () => ({ ...est, cidadeAtual: "Vau", npcs: {}, coracao: null }), aplicar: () => {}, historiaDoMural: () => [], contextoDoNome: () => ({}), nucleoAgora: () => null, pregarNoMural: () => { n++; return true; } }); return n; };
+  t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural", cronista.length > 200 && muralLiberado(fechada) === false && pregou(fechada) === 0 && pregou({ abertura: undefined, missoes: [] }) === 1);
   const soleira = corpoApos(app, "const ofertasDaSoleira = () => {");
   /* MM18 (11/10): o filtro ganhou `!cartazJaVenceu(c)` — o papel pregado
      vence ao fim de CARTAZ_ESPERA e sai do rodapé. A régua desta linha (o

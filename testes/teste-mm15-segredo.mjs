@@ -451,10 +451,17 @@ sec("6. a fiação — App.jsx");
      motor (motor/cronista.js, que marca o que só se ouviu numa fala); a
      peneira do segredo corre sobre o `aceito` (`ac.canone`), não sobre a
      proposta crua (`r.canone`) — a mesma porta, um passo depois */
-  t("a porta do Cronista peneira ac.canone antes do for, com o mesmo fallback",
-    app.includes('let canoneDoCronista = ac.canone;')
-    && app.includes('try { canoneDoCronista = peneirarCanone(ac.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }')
-    && app.includes('for (const [nome, ficha] of Object.entries(canoneDoCronista)) {'));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a porta do cânone do Cronista saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const CT = await import("../src/motor/cronista-do-turno.js");
+  const espC = { atos: [{ marcos: [{ id: "m1", feitio: "descobrir", onde: "Gruta das Vozes", titulo: "o que a gruta guarda", feito: false }] }] };
+  const jogarC = (mundoDaBase) => { const efs = []; CT.oAceitoDoCronista({ canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Ana", grupo: [] }, narrativa: "x", ler: () => ({ canone: {}, espinha: espC, dia: 1 }), aplicar: (x) => efs.push(...x), mundoDaBase }); return { efs, canone: (efs.find((e) => e.tipo === "canone") || {}).canone || {} }; };
+  const cBom = jogarC(() => null), cTorto = jogarC(() => { throw new Error("o mundo estourou"); });
+  t("a porta do Cronista peneira ac.canone antes do for, com o mesmo fallback", !cBom.canone["Gruta das Vozes"] && !!cBom.canone["a lâmina partida"]
+    && !!cTorto.canone["Gruta das Vozes"] && cTorto.efs.some((e) => e.tipo === "calou" && e.onde === "peneirarCanone (Cronista)"));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

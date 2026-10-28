@@ -355,12 +355,20 @@ sec("7. a fiação — App.jsx");
   }
   t("o Cronista não tem mais `casar` por título, nem `rm.concluidas`/`rm.falhadas`/`rm.progresso` fechando nada",
     !app.includes("const casar = (t) => {") && !app.includes("rm.concluidas") && !app.includes("rm.falhadas") && !app.includes("rm.progresso"));
-  t("global_encerrado do Cronista continua de pé", app.includes("if (rm.global_encerrado === true && eventosRef.current && eventosRef.current.global) {"));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o fim do evento global pelo Cronista, e o pedido saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const CT = await import("../src/motor/cronista-do-turno.js");
+  const efsG = [], portasG = [];
+  const fimG = CT.oAceitoDoCronista({ missoes: { global_encerrado: true } }, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({ eventos: { global: { nome: "A Praga" } }, dia: 4 }), aplicar: (x) => efsG.push(...x), marcarNoArco: (...x) => portasG.push(x) });
+  const evG = (efsG.find((e) => e.tipo === "eventos") || {}).eventos || {};
+  t("global_encerrado do Cronista continua de pé", evG.global === null && evG.semGlobalDesde === 4 && portasG.length === 1 && portasG[0][0] === "global" && fimG.msgs[0].startsWith("🌍 A Praga"));
   t("o prompt do Cronista não promete mais concluidas/falhadas/progresso — só global_encerrado",
-    app.includes(JSON.stringify('"missoes":{"global_encerrado":false}').slice(1, -1))
-    && !app.includes(JSON.stringify('"missoes":{"concluidas"').slice(1, -1)));
+    CT.PEDIDO_DO_CRONISTA.includes('"missoes":{"global_encerrado":false}') && !CT.PEDIDO_DO_CRONISTA.includes('"missoes":{"concluidas"'));
   t("e não carrega mais a lista de MISSÕES ATIVAS no prompt do Cronista (ninguém casa por título)",
-    !app.includes("MISSÕES ATIVAS:"));
+    !app.includes("MISSÕES ATIVAS:") && !CT.oPedidoAoCronista({ npcs: {}, missoes: [{ id: "a", titulo: "x", status: "ativa", etapas: [] }], canone: {} }, { narrativa: "x", fila: "" }).user.includes("MISSÕES ATIVAS:"));
 }
 
 console.log(`\nmm14-canais: ${ok} passaram, ${mal} falharam`);

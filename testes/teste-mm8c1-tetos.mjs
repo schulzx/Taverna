@@ -277,8 +277,14 @@ sec("9. a fiação no App.jsx (prova por texto)");
   /* asserção movida na fiação da E3 (12/10, v9.424): a ficha do Cronista
      chega como `nF` (passou por fichaDoCronista, o gênero); o turno atual
      continua a ser o que marca a gente nova. */
-  tem("o Cronista marca a gente nova com o turno atual, não com o padrão (zero)",
-    "criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });");
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o registo da gente nova pelo Cronista saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const genteNova = (jogarOAceito({ pessoas: [{ nome: "Wystan Pedra", papel: "ferreiro" }] }, { estado: { npcs: {}, dia: 4, npcTurno: 12 } }).estado.npcs || {})["Wystan Pedra"] || {};
+  t("o Cronista marca a gente nova com o turno atual, não com o padrão (zero)", genteNova.ultimaVez === 12 && genteNova.conhecidoEm === 4);
 
   /* ponto 8 — o QUEM do rodapé recebe emCena (citados nas 2 últimas falas) */
   tem("o rodapé calcula quem foi citado nas duas últimas falas do Mestre",

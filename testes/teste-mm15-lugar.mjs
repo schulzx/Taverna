@@ -283,7 +283,13 @@ sec("6. a fiação no App.jsx");
     return !r.mudou && (lido.acao !== "recusa" || r.paraOCronista.length === 1);
   });
   t("o App importa lerLugarDito de lugar.js", casa && /from "\.\/motor\/meio-do-turno\.js"/.test(APP));
-  t("o Cronista chama registrarLugar com a fonte \"cronista\"", /registrarLugar\(r\.lugar, "cronista"\)/.test(APP));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a secção do lugar saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  t("o Cronista chama registrarLugar com a fonte cronista", jogarOAceito({}, { proposta: { lugar: "a fazenda" }, recusado: [{ secao: "lugar", acao: "recusa" }] }).portas.some((x) => x[0] === "registrarLugar" && x[1] === "a fazenda" && x[2] === "cronista") && jogarOAceito({ lugar: "o moinho" }).portas.some((x) => x[0] === "registrarLugar" && x[2] === "cronista"));
   /* MOVIDA NA MM16 nº 4 (05/10), com o motivo: a chamada ganha `luta` e
      `masmorra` no fim (a cena do sistema não move nem acusa —
      `LUGAR_NA_CENA_DO_SISTEMA`, provado em teste-masmorra-na-pauta). A

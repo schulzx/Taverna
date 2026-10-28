@@ -66,13 +66,23 @@ sec("1. o gênero das pessoas: o Cronista diz, o registo guarda, o Narrador lê"
   t("lixo e objeto congelado não estouram", !estourou);
   t("determinístico", JSON.stringify(fichaDoCronista({ nome: "A", genero: "ela" })) === JSON.stringify(fichaDoCronista({ nome: "A", genero: "ela" })));
   /* a fiação, lida no fonte do App */
-  t("o esquema do Cronista pede o genero (ele|ela) das pessoas", /\\"pessoas\\":\[\{[^\]]*\\"genero\\":\\"ele\|ela\\"/.test(app));
-  t("a SEÇÃO pessoas diz como ler e proíbe o chute", /SEÇÃO pessoas:[^\n]*\\"genero\\": \\"ele\\" ou \\"ela\\"[^\n]*nunca chute/.test(app));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o pedido e a secção da gente saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { PEDIDO_DO_CRONISTA } = await import("../src/motor/cronista-do-turno.js");
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const moldeCr = (() => { try { return JSON.parse(PEDIDO_DO_CRONISTA.split("\n")[1]); } catch { return null; } })();
+  t("o esquema do Cronista pede o genero (ele|ela) das pessoas", !!moldeCr && moldeCr.pessoas[0].genero === "ele|ela");
+  const linhaPessoas = PEDIDO_DO_CRONISTA.split("\n").find((l) => l.startsWith("SEÇÃO pessoas:")) || "";
+  t("a SEÇÃO pessoas diz como ler e proíbe o chute", linhaPessoas.includes('"genero": "ele" ou "ela"') && linhaPessoas.includes("nunca chute"));
   /* MOVIDA na v9.449 (oficial): a chamada ganhou o terceiro argumento — o
      contexto { cidade, mapa } do paradeiro (e) da v9.447 —, e a régua passou a
      aceitá-lo; a intenção (a ficha passa por fichaDoCronista ANTES de mesclar
      ou criar) é a mesma. O contexto é provado em teste-pendentes-ligados.mjs. */
-  t("o App passa a ficha do Cronista por fichaDoCronista antes de registar", /fichaDoCronista\(n, chave \? reg\[chave\] : null(?:, \{[^}]*\})?\)/.test(app) && /mesclarNPC\(reg\[chave\], nF\)/.test(app) && /criarNPC\(String\(nomeCerto\)\.slice\(0, 40\), \{ \.\.\.nF,/.test(app));
+  const regGen = jogarOAceito({ pessoas: [{ nome: "Tânia", genero: "ela" }, { nome: "Doran", genero: "ele" }] }, { estado: { npcs: { Doran: { nome: "Doran", genero: "mulher", papel: "x" } }, dia: 2 } }).estado.npcs || {};
+  t("o App passa a ficha do Cronista por fichaDoCronista antes de registar", (regGen["Tânia"] || {}).genero === fichaDoCronista({ nome: "Tânia", genero: "ela" }).genero && (regGen["Tânia"] || {}).genero !== "ela" && (regGen.Doran || {}).genero === "mulher");
   t("e o líder do bando já não recebe o gênero do MUNDO como se fosse o dele", !/genero: mundo && mundo\.genero, notas:/.test(app));
 }
 

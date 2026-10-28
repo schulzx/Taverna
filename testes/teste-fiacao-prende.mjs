@@ -16,6 +16,7 @@ const PR = await import(RAIZ + "prometido.js");
 const FE = await import(RAIZ + "fecho.js");
 const FI = await import(RAIZ + "fios-da-estrada.js");
 const PA = await import(RAIZ + "pauta.js");
+const CT = await import(RAIZ + "motor/cronista-do-turno.js");
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -63,19 +64,30 @@ sec("3. o Cronista guarda e paga");
 {
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
   const C = corpo("const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
-  t("a secção entra no sistema do Cronista, antes da REGRA GERAL", C.indexOf("SECAO_DO_CRONISTA,") > 0 && C.indexOf("SECAO_DO_CRONISTA,") < C.indexOf("REGRA GERAL"));
-  const molde = (C.match(/"(\{\\"lugar\\".*?)",\n/) || [])[1] || "";
-  let mo = null; try { mo = JSON.parse(molde.replace(/\\"/g, "\"")); } catch { mo = null; }
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o pedido ao Cronista e a secção das promessas saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const PED = String(CT.PEDIDO_DO_CRONISTA || "");
+  t("a secção entra no sistema do Cronista, antes da REGRA GERAL", PED.indexOf(PR.SECAO_DO_CRONISTA) > 0 && PED.indexOf(PR.SECAO_DO_CRONISTA) < PED.indexOf("REGRA GERAL"));
+  const molde = PED.split("\n")[1] || "";
+  let mo = null; try { mo = JSON.parse(molde); } catch { mo = null; }
   t("o molde JSON continua JSON e ganha promessas e promessas_pagas", !!mo && Array.isArray(mo.promessas) && Array.isArray(mo.promessas_pagas), molde.slice(0, 60));
-  t("as abertas vão no pedido, depois do CÂNONE ATUAL", C.indexOf("abertasParaOCronista(prometidoRef.current)") > C.indexOf("CÂNONE ATUAL") && C.indexOf("abertasParaOCronista(prometidoRef.current)") < C.indexOf("ELENCO (pessoas"));
+  const comAberta = PR.guardarSementes(PR.garantirPrometido(null), [{ tipo: "objeto", texto: "as cinco chaves pretas de Noé", quem: "Noé" }]).estado;
+  const blocoAberto = PR.abertasParaOCronista(comAberta);
+  const userComAberta = CT.oPedidoAoCronista({ npcs: {}, missoes: [], canone: {}, prometido: comAberta }, { narrativa: "x", fila: "" }).user;
+  t("as abertas vão no pedido, depois do CÂNONE ATUAL", !!blocoAberto && userComAberta.indexOf(blocoAberto) > userComAberta.indexOf("CÂNONE ATUAL") && userComAberta.indexOf(blocoAberto) < userComAberta.indexOf("ELENCO (pessoas"));
   /* T1-A, 2.ª fatia (27/10): as promessas passam pelo juízo do motor
      (motor/cronista.js) e o App lê o `aceito` (`ac`), não a proposta crua
      (`r`) — a ordem que esta asserção guarda é a mesma, e o juízo vem
      entre o parse e o paga */
-  const iPaga = C.indexOf("pagarSementes(prometidoRef.current, ac.promessas_pagas)");
-  const iGuarda = C.indexOf("guardarSementes(pg, ac.promessas)");
-  t("paga primeiro, guarda depois, depois do parse", iPaga > C.indexOf("parseObjetoTolerante(txt)") && iPaga > C.indexOf("julgarOCronista(") && iGuarda > iPaga);
-  t("e calado: um Cronista torto não custa o turno", /calou\("as promessas do Cronista", e\)/.test(C));
+  /* 28/10 (T1-A, 9.ª fatia): no App fica a ordem parse, juízo, aceito; o paga-antes-de-guardar joga-se no motor (pagar o 2, que só nasce ao guardar, não fecha nada) */
+  const jogarProm = (aceito, ler) => { const efs = []; CT.oAceitoDoCronista(aceito, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: ler || (() => ({ prometido: comAberta })), aplicar: (x) => efs.push(...x) }); return efs; };
+  const depoisDoPago = (jogarProm({ promessas_pagas: [2], promessas: [{ tipo: "frase", texto: "hei de voltar com o barco da Inês", quem: "Inês" }] }).find((e) => e.tipo === "prometido") || {}).prometido;
+  t("paga primeiro, guarda depois, depois do parse", C.indexOf("parseObjetoTolerante(txt)") > 0 && C.indexOf("julgarOCronista(") > C.indexOf("parseObjetoTolerante(txt)") && C.indexOf("oAceitoDoCronista(") > C.indexOf("julgarOCronista(")
+    && !!depoisDoPago && depoisDoPago.sementes.length === 2 && depoisDoPago.sementes.every((x) => x.estado === "aberta"));
+  t("e calado: um Cronista torto não custa o turno", jogarProm({ get promessas_pagas() { throw new Error("torto"); } }).some((e) => e.tipo === "calou" && e.onde === "as promessas do Cronista"));
   /* o caminho que o App faz, com a resposta que um Cronista daria */
   let e = PR.garantirPrometido(null);
   e = PR.guardarSementes(PR.pagarSementes(e, []).estado, [{ tipo: "objeto", texto: "as cinco chaves pretas de Noé", quem: "Noé" }]).estado;

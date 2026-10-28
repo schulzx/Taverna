@@ -30,11 +30,22 @@ const CODIGO_PAINEL = semComentarios(PAINEL);
 
 sec("1 · o paradeiro do Cronista");
 {
-  const chamada = (CODIGO_APP.match(/nF = fichaDoCronista\([^;]*;/) || [""])[0];
-  t("fichaDoCronista recebe o contexto (cidade e mapa)", /fichaDoCronista\(n, chave \? reg\[chave\] : null, \{ cidade: [^}]*mapa: mapaRef\.current \}\)/.test(chamada), chamada.slice(0, 120));
-  t("a cidade vai vazia na estrada e numa masmorra aberta", /const naoNaCidade = !!\(jornadaRef\.current \|\| \(masmorraRef\.current && !masmorraRef\.current\.encerrada\)\)/.test(CODIGO_APP) && /cidade: naoNaCidade \? "" : \(cidadeAtualRef\.current \|\| ""\)/.test(chamada));
-  const bloco = (CODIGO_APP.match(/try \{\s*const naoNaCidade[\s\S]*?\} catch \(e\) \{ calou\("o gênero do Cronista", e\); nF = n; \}/) || [""])[0];
-  t("dentro do calou: o Cronista que estoura deixa a pessoa como veio", !!bloco);
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o paradeiro do Cronista (a secção da gente) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const { fichaDoCronista } = await import("../src/npcs.js");
+  const MAPA_P = { cidades: [{ nome: "Vau" }, { nome: "Porto" }] };
+  const paradeiro = (estado, pessoa) => ((jogarOAceito({ pessoas: [pessoa || { nome: "Wystan", local: "cidade" }] }, { estado: { npcs: {}, mapa: MAPA_P, dia: 1, ...estado } }).estado.npcs || {}).Wystan || {}).local;
+  t("fichaDoCronista recebe o contexto (cidade e mapa)", paradeiro({ cidadeAtual: "Vau" }) === fichaDoCronista({ nome: "Wystan", local: "cidade" }, null, { cidade: "Vau", mapa: MAPA_P }).local && paradeiro({ cidadeAtual: "Vau" }) !== "cidade");
+  t("a cidade vai vazia na estrada e numa masmorra aberta", paradeiro({ cidadeAtual: "Vau", jornada: { destino: "Porto" } }) === "cidade" && paradeiro({ cidadeAtual: "Vau", masmorra: { nome: "a cripta" } }) === "cidade" && paradeiro({ cidadeAtual: "Vau", masmorra: { nome: "a cripta", encerrada: true } }) !== "cidade");
+  /* o gênero estoura na primeira leitura: a ficha entra como veio (o paradeiro sem carimbo), e o erro vai ao calou */
+  let vez = 0;
+  const torta = { nome: "Wystan", local: "cidade", get genero() { if (vez++ === 0) throw new Error("torto"); return ""; } };
+  const rTorto = jogarOAceito({ pessoas: [torta] }, { estado: { npcs: {}, mapa: MAPA_P, cidadeAtual: "Vau", dia: 1 }, portas: { contextoDoNome: () => ({}) } });
+  t("dentro do calou: o Cronista que estoura deixa a pessoa como veio", rTorto.efeitos.some((e) => e.tipo === "calou" && e.onde === "o gênero do Cronista") && ((rTorto.estado.npcs || {}).Wystan || {}).local === "cidade");
 }
 
 sec("2 · a janela baixa: fichas e ofertas numa linha");

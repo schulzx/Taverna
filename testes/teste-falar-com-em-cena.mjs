@@ -98,12 +98,26 @@ sec("4. a fiação no App");
   };
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
   const cronista = corpoApos("const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
-  t("o Cronista pede falou_com, e diz que citar não é falar", /SEÇÃO falou_com/.test(cronista) && /citado, lembrado, procurado/.test(cronista));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a secção falou_com (o pedido e a conferência) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const CT = await import("../src/motor/cronista-do-turno.js");
+  const jogarFalou = (aceito, proposta, conferir, missoesDepois) => {
+    const efs = [], visto = []; let est = { missoes: ["antes"], espinha: null };
+    const fim = CT.oAceitoDoCronista(aceito, [], proposta, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => est, aplicar: (x) => efs.push(...x),
+      conferirCom: (p, o) => { visto.push(o); if (conferir) conferir(); if (missoesDepois) est = { ...est, missoes: missoesDepois }; return p; } });
+    return { fim, efs, visto };
+  };
+  t("o Cronista pede falou_com, e diz que citar não é falar", CT.PEDIDO_DO_CRONISTA.includes("SEÇÃO falou_com") && CT.PEDIDO_DO_CRONISTA.includes("citado, lembrado, procurado"));
   /* T1-A, 2.ª fatia (27/10): a secção lê o `aceito` do juízo do motor
      (`ac.falou_com`), não a proposta crua (`r.falou_com`) */
-  t("a resposta é lida numa seção isolada, com calou", /ac\.falou_com/.test(cronista) && /calou\("falou_com do Cronista"/.test(cronista));
-  t("a conferência corre ali, e a lista esvazia no finally", /falouComRef\.current = falou;\s*try \{ p = conferirAsMissoes\(p\) \|\| p; \} finally \{ falouComRef\.current = \[\]; \}/.test(cronista));
-  t("o que a conferência mudou se grava (marca o turno para salvar)", /missoesRef\.current !== antesM \|\| espinhaRef\.current !== antesE\) tocouElenco = true/.test(cronista));
+  t("a resposta é lida numa seção isolada, com calou", (() => { const j1 = jogarFalou({ falou_com: ["Inocência Bordão"] }, { falou_com: ["Outro"] }); const j2 = jogarFalou({ falou_com: ["Inocência"] }, {}, () => { throw new Error("torta"); });
+    return j1.visto.length === 1 && j1.visto[0].falouCom[0] === "Inocência Bordão" && jogarFalou({}, { falou_com: ["Outro"] }).visto.length === 0 && j2.efs.some((e) => e.tipo === "calou" && e.onde === "falou_com do Cronista"); })());
+  /* a porta do App (portasDoCronista.conferirCom) põe a lista no ref, confere e tira-a no finally */
+  t("a conferência corre ali, e a lista esvazia no finally", app.includes("ref.current = (o && (o.segredos || o.falouCom)) || [];") && app.includes("try { return conferirAsMissoes(pc) || pc; } finally { ref.current = []; }") && app.includes("const ref = o && o.segredos ? segredosReveladosRef : falouComRef;"));
+  t("o que a conferência mudou se grava (marca o turno para salvar)", jogarFalou({ falou_com: ["A"] }, {}, null, ["depois"]).fim.tocouElenco === true && jogarFalou({ falou_com: ["A"] }, {}).fim.tocouElenco === false);
   const mundo = corpoApos("const mundoDasMissoes = (persAtual) => {");
   t("o mundo das missões leva a conversa", /falouCom: falouComRef\.current \|\| \[\]/.test(mundo));
   t("o ref nasce vazio e não vai ao save", /const falouComRef = useRef\(\[\]\);/.test(app) && !/falouCom: falouComRef\.current, /.test(corpoApos("const salvar = useCallback((extra = {}) => {")));

@@ -46,19 +46,22 @@ try { C = await import("../src/motor/cronista.js"); } catch (e) { console.log(" 
 if (!C) { t("src/motor/cronista.js existe e carrega", false); console.log(`\ncronista-propoe: ${ok} passaram, ${mal + 1} falharam`); process.exit(1); }
 const P = await import("../src/prometido.js");
 const OF = await import("../src/ofertas.js");
+const CT = await import("../src/motor/cronista-do-turno.js");
 const { julgarOCronista: julgar, O_QUE_O_CRONISTA_PODE: PODE, TABELA_DA_FE, feDaTabela, soNaFala, ditoNaFala } = C;
 
 /* ============================================================ */
 sec("1. A TABELA COBRE TODA SECÇÃO QUE O APP PEDE AO CRONISTA");
 {
-  /* lido do prompt do Cronista no App (`cronistaDoTurno`) e da secção das
-     promessas (`prometido.js#SECAO_DO_CRONISTA`): uma secção nova sem
-     linha na tabela é um canal da IA para o estado sem regra. Quando o
-     prompt sair do App (Fase 2 do plano), esta leitura muda de sítio. */
-  const APP = fs.readFileSync("../src/App.jsx", "utf8");
-  const i0 = APP.indexOf("const cronistaDoTurno = async");
-  const corpo = i0 >= 0 ? APP.slice(i0, APP.indexOf('].join("\\n");', i0)) : "";
-  t("achei o prompt do Cronista no App", corpo.length > 2000);
+  /* lido do pedido ao Cronista e da secção das promessas
+     (`prometido.js#SECAO_DO_CRONISTA`): uma secção nova sem linha na
+     tabela é um canal da IA para o estado sem regra.
+     28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o pedido saiu do App para o
+     motor (`PEDIDO_DO_CRONISTA`, src/motor/cronista-do-turno.js), como esta
+     nota previa. A leitura passa a ser o VALOR exportado — o mesmo texto que
+     vai à rede —, não as linhas do App nem as do motor (a catraca de
+     teste-assercoes-de-texto recusa ler o texto de src/motor/). */
+  const corpo = String(CT.PEDIDO_DO_CRONISTA || "");
+  t("achei o pedido ao Cronista (o do motor)", corpo.length > 2000 && corpo.startsWith("Você é o CRONISTA"));
   const secoes = new Set([...corpo.matchAll(/SEÇÃO (\w+)/g), ...P.SECAO_DO_CRONISTA.matchAll(/SEÇÃO (\w+)/g)].map((m) => m[1]));
   /* a secção do pedido → a linha da tabela que a rege */
   const LINHA = { lugar: "lugar", missoes: "global", canone: "canone", pessoas: "gente", fe: "fe", grupo: "grupo", teste_sugerido: "teste_sugerido", combate: "morte", missao_oferecida: "missao_oferecida", relogio_novo: "relogio_novo", falou_com: "falou_com", promessas: "promessas", promessas_pagas: "promessas_pagas" };
@@ -338,6 +341,18 @@ sec("6. A FIAÇÃO — o App aplica o `aceito`, e só ele");
   t("nenhuma secção aplica a proposta crua (`r.X`) — só `ac.X`", fora.length === 0, fora.join(","));
   t("falha fechada: sem juízo, `ac` é vazio", /const ac = \(juizo && juizo\.aceito\) \|\| \{\};/.test(corpo));
   t("a paga do cartaz não volta a ler o preço da prosa", !/precoNoTexto/.test(corpo));
+  /* 28/10 (T1-A, 9.ª fatia): as secções moram em `oAceitoDoCronista`
+     (motor), e o "só `ac.X`" prova-se JOGANDO: uma proposta crua cheia e
+     um aceito vazio não escrevem nada — nem efeito, nem porta, nem linha
+     (o lugar recusado, a única leitura de `r` que fica, só com recusa). */
+  {
+    const vistos = [];
+    const cheia = { lugar: "a fazenda", missao_oferecida: { titulo: "x", etapas: [{ tipo: "ir_a", alvo: "y" }] }, relogio_novo: { nome: "R", tipo: "ameaca" }, pessoas: [{ nome: "Zé" }], falou_com: ["Zé"], canone: { A: { tipo: "artefato" } }, grupo: { entraram: ["Zé"] }, teste_sugerido: { atributo: "Força" }, promessas: [{ tipo: "frase", texto: "volto" }] };
+    const portas = new Proxy({}, { get: (_, n) => (n === "ler" ? () => ({ npcs: {}, canone: {}, relogios: [] }) : n === "aplicar" ? (efs) => vistos.push(...efs.map((e) => e.tipo)) : (...a) => { vistos.push("porta:" + String(n)); return null; }) });
+    const ctx = { ler: portas.ler, aplicar: portas.aplicar, registrarLugar: portas.registrarLugar, pregarNoMural: portas.pregarNoMural, conferirCom: portas.conferirCom, pers: { nome: "Vera", grupo: [] }, narrativa: "x" };
+    const fim = CT.oAceitoDoCronista({}, [], cheia, ctx);
+    t("o aceito vazio não escreve nada, por cheia que venha a proposta", fim.msgs.length === 0 && !fim.tocouCanone && !fim.tocouElenco && vistos.every((x) => x === "prometido"), vistos.join(","));
+  }
   t("a tabela da fé saiu do App (mora no motor)", !/\bTABELA_FE\b|\bfePorAcontecimento\b|\bpopulacaoDe\b/.test(APP));
 }
 

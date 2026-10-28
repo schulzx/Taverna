@@ -184,7 +184,17 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   }
 
   /* lugar_atual — o Cronista diz o lugar; a régua do lugar dito é do motor */
-  t("lugar_atual · o Cronista tem a SEÇÃO lugar e o App regista-a", /SEÇÃO lugar \(v9\.39\)/.test(app) && /registrarLugar\(r\.lugar, "cronista"\)/.test(app));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o pedido e as secções do lugar, do cânone e da gente saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const CT = await import("../src/motor/cronista-do-turno.js");
+  const { formatarCanone: fmtCanone } = await import("../src/prompt.js");
+  const PED = CT.PEDIDO_DO_CRONISTA;
+  const lugaresDitos = (aceito, proposta, recusado) => { const v = []; CT.oAceitoDoCronista(aceito, recusado || [], proposta, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({}), aplicar: () => {}, registrarLugar: (n, f) => { v.push(n + "|" + f); return null; } }); return v; };
+  t("lugar_atual · o Cronista tem a SEÇÃO lugar e o App regista-a", PED.includes("SEÇÃO lugar (v9.39)") && lugaresDitos({ lugar: "a fazenda" }, {}).join() === "a fazenda|cronista"
+    && lugaresDitos({}, { lugar: "Outra" }, [{ secao: "lugar", acao: "recusa" }]).join() === "Outra|cronista" && lugaresDitos({}, { lugar: "Outra" }, []).length === 0);
   t("lugar_atual · o galpão pedido e contado pelo Cronista é lugar novo", lerLugarDito("o galpão de Lia Cinzela", { lugar: null, cidade: "Quebrado do Leste", pedido: "Vou ao galpão de Lia Cinzela.", fonte: "cronista" }).acao === "novo");
   t("lugar_atual · a volta à cidade pedida pelo jogador volta (pelo Cronista)", lerLugarDito("cidade", { lugar: { nome: "a fazenda de Jessa", distancia: "perto" }, cidade: "Vau", pedido: "Volto para Vau.", fonte: "cronista" }).acao === "volta");
 
@@ -197,9 +207,11 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   t("jornada_meio · terreno desconhecido não estoura", escolherSitio({ jornada: { de: "A", terreno: "nada" } }, sorte).tipo === "estrada");
 
   /* canone e npcs — o Cronista regista, depois do Narrador, vendo o que já existe */
-  t("canone · o Cronista tem a SEÇÃO canone (fatos duráveis, sem reescrever o que existe)", /SEÇÃO canone: fatos DURÁVEIS/.test(app) && /NÃO reescreva nem contradiga o CÂNONE ATUAL/.test(app));
-  t("npcs · e a SEÇÃO pessoas (com nome e papel durável)", /SEÇÃO pessoas: pessoas COM NOME e papel durável/.test(app));
-  t("canone/npcs · o Cronista recebe o CÂNONE ATUAL e o ELENCO", /CÂNONE ATUAL:\\n\$\{formatarCanone\(canoneRef\.current\)/.test(app) && /ELENCO \(pessoas já registradas\)/.test(app));
+  t("canone · o Cronista tem a SEÇÃO canone (fatos duráveis, sem reescrever o que existe)", PED.includes("SEÇÃO canone: fatos DURÁVEIS") && PED.includes("NÃO reescreva nem contradiga o CÂNONE ATUAL"));
+  t("npcs · e a SEÇÃO pessoas (com nome e papel durável)", PED.includes("SEÇÃO pessoas: pessoas COM NOME e papel durável"));
+  const canoneVisto = { "A Coroa": { tipo: "artefato", descricao: "de ouro" } };
+  const userVisto = CT.oPedidoAoCronista({ npcs: { Doran: {} }, missoes: [], canone: canoneVisto }, { narrativa: "x", fila: "" }).user;
+  t("canone/npcs · o Cronista recebe o CÂNONE ATUAL e o ELENCO", userVisto.includes("CÂNONE ATUAL:\n" + fmtCanone(canoneVisto)) && userVisto.includes("ELENCO (pessoas já registradas):\nDoran"));
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a chamada */
   t("canone/npcs · e corre DEPOIS de aplicada a resposta do Narrador", app.indexOf("let pers = aplicarResposta(resp, persAtual") > 0 && app.indexOf("let pers = aplicarResposta(resp, persAtual") < app.indexOf("cronistaDoTurno(pers, narrativaFinal, doTurnoCr)"));
   /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O
@@ -212,7 +224,8 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
       { narrativa: "Teodora Vaz enche as canecas e ri alto." }, { mundo: { semente: "x", genero: "Fantasia medieval" } }).estado.npcs;
     t("canone/npcs · os nomes que o Narrador inventava vêm dos NOMES À MÃO, registados pelo código", !!npcs["Teodora Vaz"] && /oferecidos: nomesOferecidosRef\.current/.test(app));
   }
-  t("canone · o Cronista não reescreve identidade (só preenche o vazio)", /identidade NUNCA é reescrita/.test(app));
+  t("canone · o Cronista não reescreve identidade (só preenche o vazio)", (() => { const efs = []; CT.oAceitoDoCronista({ canone: { "a coroa": { descricao: "de lata", detalhes: "com três pedras" }, "O Anel": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({ canone: canoneVisto, espinha: null, dia: 2 }), aplicar: (x) => efs.push(...x), mundoDaBase: () => null });
+    const c = (efs.find((e) => e.tipo === "canone") || {}).canone || {}; return c["A Coroa"] && c["A Coroa"].descricao === "de ouro" && c["A Coroa"].detalhes === "com três pedras" && !!c["O Anel"] && !c["a coroa"]; })());
 }
 
 /* ============================================================ */

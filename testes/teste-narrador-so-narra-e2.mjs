@@ -153,8 +153,14 @@ sec("5. o App continua a ler os campos (tolerante: a instrução saiu, o leitor 
   /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O leitor de `evento_global_encerrar` e o dos sinais mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
   const meio = await import(S + "motor/meio-do-turno.js");
   t("evento_global_encerrar", meio.aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: {}, dia: 2 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, {}).estado.eventos.global === null);
-  t("relogio_novo", /relogio_novo/.test(app));
-  t("missao_oferecida (é por onde a proposta do Cronista vira cartaz)", /missao_oferecida/.test(app));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o leitor de relogio_novo e o de missao_oferecida (as secções do Cronista) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  t("relogio_novo", jogarOAceito({ relogio_novo: { nome: "O ritual", tipo: "ameaca", segmentos: 4, gatilho: "noite", consequencia: "x" } }).efeitos.some((e) => e.tipo === "relogios"));
+  t("missao_oferecida (é por onde a proposta do Cronista vira cartaz)", jogarOAceito({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 5, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, { estado: { npcs: {}, cidadeAtual: "Vau", missoes: [] } }).portas.some((x) => x[0] === "pregarNoMural"));
   {
     const s = meio.aplicarOsSinais({ personagem: { nome: "Vera", nivel: 15 }, fichaDoRef: { nome: "Vera", vida: 5, vidaMax: 20, grupo: [] }, divindade: { despertar: true, fieis: 2000, pf: 30 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 2, contadores: {}, nivelDaFama: 1, jornada: { de: "x" } },
       { narrativa: "x", mudancas: { sinais: ["milagre:cura", "fe:feito", "viagem:Porto", "masmorra:o Poço", "loot:comum"] } }, {});

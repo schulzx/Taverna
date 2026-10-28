@@ -288,7 +288,15 @@ sec("5. a fiação no App (frontend, 12/10) — o motor só vale se o jogo o cha
      colado ou a um passo. A intenção é a mesma: a porta única, e nunca por
      cima de outra luta. */
   t("a luta prometida abre pela porta do combate, e nunca por cima de outra", /if \(!luta \|\| !luta\.nome \|\| combateRef\.current\) return pers;\s*\n\s*const ab = abrirCombate\(\[\{ nome: luta\.nome, ameaca: luta\.ameaca \}\], \{ pers, situacao: "declarada" \}\);/.test(app));
-  t("o mural não prega o favor que o núcleo já pediu", /semPedido = !favorJaPedido\(cartaz\.dador, coracaoRef\.current, nucleoAgora\(\)\);[^\n]*calou/.test(app) && app.includes("if (semHomonimo && semPedido && pregarNoMural(cartaz)) {"));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a porta do mural do Cronista (o favor já pedido) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const pregaS7 = (pedido, estoura) => jogarOAceito({ missao_oferecida: { titulo: "O favor da Hilda", tipo: "favor", dador: "Hilda", paga: 0, etapas: [{ tipo: "ir_a", alvo: "Vau" }] } }, { estado: { npcs: {}, cidadeAtual: "Porto", missoes: [], coracao: pedido }, portas: { nucleoAgora: () => { if (estoura) throw new Error("torto"); return { pessoas: [{ nome: "Hilda", papel: "taverneira" }] }; } } });
+  const CORACAO_PEDIU = { v: 1, arcos: { Hilda: { pedido: 2, resposta: "aceitou" } } };
+  t("o mural não prega o favor que o núcleo já pediu", favorJaPedido("Hilda", CORACAO_PEDIU, { pessoas: [{ nome: "Hilda", papel: "taverneira" }] }) === "Hilda" && !pregaS7(CORACAO_PEDIU).portas.some((x) => x[0] === "pregarNoMural") && app.includes("nucleoAgora, pregarNoMural,") && pregaS7(null).portas.some((x) => x[0] === "pregarNoMural") && pregaS7(null, true).efeitos.some((e) => e.tipo === "calou" && e.onde === "o favor já pedido"));
 }
 
 console.log(`\nsessão 7: ${ok} passaram, ${mal} falharam`);

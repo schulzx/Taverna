@@ -119,7 +119,15 @@ sec("5. o mural recusa a gente da história, e o papel vence");
      soma-se quem anda comigo. */
   t("a lista da história sai de abertura, missões, espinha e o grupo", /genteDaHistoria\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current, espinha: espinhaRef\.current, grupo: \(personagemRef\.current \|\| personagem \|\| \{\}\)\.grupo \|\| \[\] \}\)/.test(APP));
   t("os dois sorteios do mural passam a lista (oferecer e garantir)", quantas("historia: historiaDoMural(),\n    });") === 2);
-  t("a proposta do Mestre também", APP.includes("{ cidade: cidadeAtualRef.current, nivel: p.nivel || 1, historia: historiaDoMural() });"));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o cartaz da proposta do Cronista saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const comHistoria = jogarOAceito({ missao_oferecida: { titulo: "Achar o Noé", tipo: "favor", dador: "Ana", paga: 0, etapas: [{ tipo: "achar", alvo: "Noé Laminado" }] } }, { estado: { npcs: {}, cidadeAtual: "Rio Cinzento", missoes: [] }, portas: { historiaDoMural: () => ["Noé Laminado"] } });
+  const semHistoria = jogarOAceito({ missao_oferecida: { titulo: "Achar o Noé", tipo: "favor", dador: "Ana", paga: 0, etapas: [{ tipo: "achar", alvo: "Noé Laminado" }] } }, { estado: { npcs: {}, cidadeAtual: "Rio Cinzento", missoes: [] } });
+  t("a proposta do Mestre também", comHistoria.portas.some((x) => x[0] === "historiaDoMural") && !comHistoria.portas.some((x) => x[0] === "pregarNoMural") && semHistoria.portas.some((x) => x[0] === "pregarNoMural"));
   t("o papel pregado nasce com data", /pregadoEm: cartaz\.pregadoEm != null \? cartaz\.pregadoEm : diaRef\.current/.test(APP));
   t("o mural renovado deixa o vencido para trás", APP.includes("c && c.oferecido && !cartazJaVenceu(c)).slice(-TETO_OFERECIDOS)"));
   t("e o rodapé não oferece \"Aceitar\" de papel vencido", APP.includes("c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c)"));

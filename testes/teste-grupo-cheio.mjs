@@ -19,6 +19,7 @@ import { julgarOCronista } from "../src/motor/cronista.js";
 import { frasesDoGrupoCheio } from "../src/motor/meio-do-turno.js";
 import { MAX_COMPANHEIROS } from "../src/constantes.js";
 import fs from "node:fs";
+import { oAceitoDoCronista } from "../src/motor/cronista-do-turno.js";
 
 let bons = 0, maus = 0;
 const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -72,7 +73,16 @@ sec("5. o invocado não ocupa vaga");
 sec("6. a fiação no App");
 {
   const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-  t("o Cronista do App diz as frases da régua, a partir do recusado do juízo", /msgs\.push\(\.\.\.frasesDoGrupoCheio\(recusadoDoCronista, p\.grupo\)\);/.test(APP));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a secção do grupo saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const grupoCheio = Array.from({ length: MAX_COMPANHEIROS }, (_, i) => ({ nome: "C" + i }));
+  const recusadoCheio = [{ secao: "grupo", o: "Zé", porque: "semPorta" }];
+  const esperadas = frasesDoGrupoCheio(recusadoCheio, grupoCheio);
+  const doCronista = oAceitoDoCronista({}, recusadoCheio, {}, { pers: { nome: "Vera", grupo: grupoCheio }, narrativa: "x", ler: () => ({}), aplicar: () => {} }).msgs;
+  t("o Cronista do App diz as frases da régua, a partir do recusado do juízo", esperadas.length > 0 && JSON.stringify(doCronista) === JSON.stringify(esperadas) && APP.includes("oAceitoDoCronista(ac, recusadoDoCronista, r,"));
   t("e já não guarda uma cópia da régua", !/const cheioAgora = \(p\.grupo/.test(APP));
 }
 

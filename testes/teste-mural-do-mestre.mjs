@@ -104,7 +104,15 @@ sec("4. o que o código de verdade faz com a proposta");
   /* Provas sobre a FONTE, porque a ligação mora no App e nenhuma delas
      sobrevive a alguém religar o caminho antigo por engano. */
   t("o App transforma missao_oferecida em cartaz", /cartazDaProposta\(/.test(APP));
-  t("e prega no mural", /pregarNoMural\(cartaz\)/.test(APP));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o cartaz da proposta do Cronista saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const pregado = jogarOAceito({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 12, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 2 }] } }, { estado: { npcs: {}, cidadeAtual: "Pedravale", missoes: [] } });
+  const cartazPregado = (pregado.portas.find((x) => x[0] === "pregarNoMural") || [])[1] || {};
+  t("e prega no mural", cartazPregado.titulo === "Os lobos" && cartazPregado.cidade === "Pedravale" && pregado.fim.msgs.some((m) => m.includes("Hilda tem um trabalho no mural")) && pregado.efeitos.some((e) => e.tipo === "nota" && e.linhas[0] === O.envelopeDoRecado(cartazPregado)));
   t("nada mais registra a proposta como missão do diário", !/envelopeDeOferta/.test(APP));
   t("o trabalho de quem está na cidade também vai ao mural", /pregarNoMural\(\{ \.\.\.of, oferecido: true \}\)/.test(APP));
   t("e o envelope dele é o recado", /envelopeDoRecado\(of\)/.test(APP));

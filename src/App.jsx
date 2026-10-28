@@ -238,6 +238,7 @@ import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semear
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
+import { oGatilhoDoCronista, oPedidoAoCronista, oAceitoDoCronista } from "./motor/cronista-do-turno.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
@@ -10582,6 +10583,44 @@ export default function Taverna() {
      lugar É na base e quem lá trabalha — o mesmo formato de mundoDasTarefas. */
   const mundoDaBase = () => ({ semente: sementeMundo(), mapa: mapaRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, base: baseMundoRef.current });
 
+  /* (T1-A, 9.ª fatia, 28/10) O CRONISTA, NO MOTOR. O gatilho, o pedido e o
+     aceito aplicado moram em src/motor/cronista-do-turno.js; o juízo já
+     morava em motor/cronista.js. Aqui ficam o estado que as peças leem (o
+     de AGORA, a cada secção: o lugar que a primeira registou é o lugar que
+     a do cartaz vê), os efeitos que elas descrevem — aplicados na ordem em
+     que nasceram, antes de cada porta — e as portas, que são os órgãos de
+     sempre do App. */
+  const estadoDoCronista = () => ({
+    personagem: personagemRef.current || personagem, combate: combateRef.current, npcs: npcsRef.current, canone: canoneRef.current,
+    mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, divindade: divindadeRef.current, eventos: eventosRef.current,
+    missoes: missoesRef.current, prometido: prometidoRef.current, abertura: aberturaMundoRef.current, coracao: coracaoRef.current,
+    relogios: relogiosRef.current, dia: diaRef.current, jornada: jornadaRef.current, masmorra: masmorraRef.current, npcTurno: npcTurnoRef.current, espinha: espinhaRef.current,
+  });
+  const aplicarEfeitoDoCronista = (ef) => {
+    if (ef.tipo === "nota") notaRef.current = notaComOTurno(notaRef.current, ef.linhas);
+    else if (ef.tipo === "calou") calou(ef.onde, ef.erro);
+    else if (ef.tipo === "prometido") prometidoRef.current = ef.prometido;
+    else if (ef.tipo === "relogios") { relogiosRef.current = ef.relogios; setRelogios(ef.relogios); }
+    else if (ef.tipo === "eventos") { eventosRef.current = ef.eventos; setEventos(eventosRef.current); }
+    else if (ef.tipo === "quests") setQuests([...questsRef.current]);
+    else if (ef.tipo === "ficha") setPersonagem(ef.personagem);
+    else if (ef.tipo === "npcs") { npcsRef.current = ef.npcs; setNpcs(ef.npcs); }
+    else if (ef.tipo === "canone") canoneRef.current = ef.canone;
+    else if (ef.tipo === "rolagem") setRolagem(ef.rolagem);
+  };
+  const portasDoCronista = () => ({
+    ler: estadoDoCronista,
+    aplicar: (efeitos) => { for (const ef of efeitos) aplicarEfeitoDoCronista(ef); },
+    registrarLugar, historiaDoMural, contextoDoNome, nucleoAgora, pregarNoMural, marcarNoArco, ganharFe, sincronizarNemesis, mundoDaBase, fichaDeCompanheiro, notaDoRecrutamento,
+    /* a conversa e o segredo do turno ficam nos refs só enquanto as missões
+       se conferem (conferirAsMissoes lê-os dali), e saem mesmo se estourar */
+    conferirCom: (pc, o) => {
+      const ref = o && o.segredos ? segredosReveladosRef : falouComRef;
+      ref.current = (o && (o.segredos || o.falouCom)) || [];
+      try { return conferirAsMissoes(pc) || pc; } finally { ref.current = []; }
+    },
+  });
+
   const cronistaDoTurno = async (pers, narrativa, doTurno) => {
     if (!narrativa || narrativa.length < 60) return;
     /* ONDA 1 DO CUSTO (13/10): o gatilho decide se o Cronista lê AGORA.
@@ -10590,16 +10629,9 @@ export default function Taverna() {
        é lida. Se o gatilho estourar, lê: é o comportamento de antes. */
     let gatilho = { corre: true, motivos: [] };
     try {
-      const dt = doTurno && typeof doTurno === "object" ? doTurno : {};
-      const pc = pers || personagemRef.current || personagem || {};
-      const deEmLuta = ((combateRef.current && combateRef.current.inimigos) || []).filter((e) => e && !e.derrotado && e.vida > 0);
-      const conhecidos = [
-        ...Object.keys(npcsRef.current || {}), ...Object.keys(canoneRef.current || {}),
-        pc.nome, ...((pc.grupo || []).map((g) => g && g.nome)), ...deEmLuta.map((e) => e.nome),
-        ...(((mapaRef.current || {}).cidades || []).map((c) => c && c.nome)),
-        cidadeAtualRef.current, (lugarRef.current || {}).nome,
-      ].filter((x) => typeof x === "string" && x);
-      gatilho = decidirOCronista({ narrativa, frase: dt.frase, envelopes: dt.envelopes, conhecidos, emLuta: deEmLuta.length > 0, fe: !!(divindadeRef.current && divindadeRef.current.despertar) }, leituraDoCronistaRef.current);
+      /* os nomes que o sistema já conhece não acendem o "nome novo"
+         (oGatilhoDoCronista, src/motor/cronista-do-turno.js) */
+      gatilho = oGatilhoDoCronista(estadoDoCronista(), { narrativa, doTurno, pers }, leituraDoCronistaRef.current);
     } catch (e) { calou("o gatilho do Cronista", e); gatilho = { corre: true, motivos: [] }; }
     let filaDoCronista = "";
     if (gatilho.corre) { try { filaDoCronista = blocoDaFila(leituraDoCronistaRef.current); } catch (e) { calou("a fila do Cronista", e); filaDoCronista = ""; } }
@@ -10608,35 +10640,11 @@ export default function Taverna() {
        agir de novo enquanto o Cronista pensa, e o turno seguinte limpa-o */
     const testeDoTurno = testeDoTurnoRef.current;
     try {
-      const sys = [
-        "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-        "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"genero\":\"ele|ela\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]},\"promessas\":[],\"promessas_pagas\":[]}",
-        "SEÇÃO missoes: \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
-        "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
-        "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora. \"genero\": \"ele\" ou \"ela\", pelo que a narrativa diz da pessoa (o pronome, o artigo, senhor/senhora); se a cena não deixa saber, \"\" — nunca chute.",
-        "SEÇÃO falou_com (lista de nomes): as pessoas com quem o herói FALOU frente a frente NESTE turno — estavam na cena com ele e trocaram palavras com ele. Quem só foi citado, lembrado, procurado ou descrito de longe NÃO entra. Na dúvida, lista vazia.",
-        "SEÇÃO fe: SÓ se o turno mostrou o nome do herói ganhando DEVOÇÃO real. Para gestos comuns, fieis 10 a 500, pf 1 a 10; na dúvida, 0. Para GRANDES acontecimentos de fé, NÃO chute números: preencha \"acontecimento\":{\"tipo\":\"alianca_reino|libertacao|milagre_publico|santuario|conversao_lider|vitoria_lendaria|pregacao\",\"local\":\"nome da cidade/reino\"} e deixe fieis/pf em 0 — o SISTEMA calcula pela população do local. Um povo/reino inteiro prometendo sua fé ao herói É \"alianca_reino\" (ou \"libertacao\", se o herói o libertou) — NUNCA deixe isso passar sem registrar.",
-        "O CAMPO \"local\" É O MAIS IMPORTANTE DA SEÇÃO fe: a devoção mora em cidades reais do mapa, não no ar. Use SEMPRE o nome exato da cidade onde o feito foi testemunhado (vale também no campo \"local\" solto, junto de fieis/pf). Sem local reconhecível, a fé vira \"andarilhos\" — conta muito menos e míngua rápido.",
-        "SEÇÃO grupo: \"entraram\" = nomes de pessoas que ACEITARAM de fato acompanhar o herói como companheiros de jornada NESTE turno (o Mestre narrando \"vou com você\" conta). Se o convite foi recusado ou só um encontro casual, [].",
-        "SEÇÃO teste_sugerido: se o Mestre CONCEDEU de graça algo grande que deveria ter exigido convencimento — uma criatura anciã entregando seu poder, um rei cedendo o trono, um inimigo virando aliado do nada — preencha {\"atributo\":\"Presença|Intelecto|Força|Destreza|Vigor\",\"perfil\":\"dificil|formidavel\",\"motivo\":\"o que precisava ser provado\"}. Concessões pequenas e naturais da história NÃO entram. Na maioria dos turnos: null.",
-        "SEÇÃO combate (só se houver COMBATENTES listados): \"mortes_narradas\" = inimigos que a NARRATIVA declarou mortos/destruídos/desfeitos NESTE turno. Liste só nomes da lista de combatentes; se ninguém morreu na narração, [].",
-        "SEÇÃO missao_oferecida (v9.119 — isto vira CARTAZ NO MURAL, não missão no diário): se alguém em cena deixou claro que quer um serviço feito — um nobre desesperado, um capitão precisando de escolta, um aldeão com um problema —, descreva o trabalho em {\"titulo\":\"nome curto do trabalho\",\"tipo\":\"contrato|favor\",\"dador\":\"de quem é o serviço\",\"descricao\":\"uma frase\",\"paga\":15,\"prazo\":0,\"etapas\":[{\"tipo\":\"ir_a|derrotar|achar|falar_com|levar_a\",\"alvo\":\"nome exato de cidade, criatura, pessoa ou objeto\",\"item\":\"só para levar_a\",\"quantos\":1}]}. De 1 a 3 etapas, todas CONCRETAS e verificáveis — \"ganhar a confiança\" não é etapa. O sistema prega o papel no mural e o herói decide lá: não registre aceite nem recusa. Só quando alguém de fato quis um serviço NESTE turno; caso contrário, null.",
-        "CAMPO \"paga\": o número EXATO de moedas que a cena prometeu (o cartaz que diz \"paga-se 15 moedas\" é 15). Se o combinado NÃO é dinheiro — um favor em troca de informação, uma dívida, uma porta que se abre —, \"paga\": 0. Se ninguém falou de pagamento, \"paga\": null e o sistema arbitra. NUNCA invente um valor.",
-        "SEÇÃO lugar (v9.39): onde o herói está AO FIM deste turno. Se ele está num ponto NOMEADO fora da cidade, \"lugar\": \"a fazenda de Jessa\" (nome curto, como se diz em voz alta: uma fazenda, um moinho, uma gruta, o acampamento da tocaia) — e REPITA esse nome em todo turno em que ele continuar lá. Se ele está dentro da cidade, a palavra exata \"cidade\". Se você não souber dizer, null. Isto é o que impede o sistema de achar que ele voltou para a cidade sem ter voltado.",
-        "CAMPO \"prazo\": só quando a CENA impôs pressa em número de noites (\"até a próxima lua\", \"antes que ela morra\", \"tenho três dias\") — use 4, 6 ou 8, o mais próximo do que foi dito. Sem pressa dita, \"prazo\": 0. Não invente urgência: prazo em toda missão não pressiona em nenhuma.",
-        "UM TRABALHO É UMA MISSÃO SÓ: se a proposta desta cena é o mesmo serviço de uma missão que já está na lista (o cartaz no mural e a pessoa que vem falar dele são a mesma coisa), missao_oferecida é null. E a etapa \"falar_com\" nunca aponta para quem está oferecendo — o herói já está diante dele.",
-        "SEÇÃO relogio_novo (v9.18): se ALGO LONGO COMEÇOU DE FATO em cena — um ritual que passou a ser conduzido, uma perseguição que se iniciou, uma obra que o jogador pôs em marcha — proponha {\"nome\":\"frase curta no presente\",\"tipo\":\"ameaca|cacada|oportunidade|obra\",\"segmentos\":4|6|8,\"gatilho\":\"noite|turno_mundo|falha|sucesso|viagem\",\"consequencia\":\"o que acontece quando encher\"}. NO MÁXIMO UM por turno, e só quando de fato começou — intenção, ameaça verbal e possibilidade NÃO contam. Na esmagadora maioria dos turnos: null.",
-        SECAO_DO_CRONISTA,
-        "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
-      ].join("\n");
-      const evG = eventosRef.current && eventosRef.current.global;
-      const combatentes = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-      /* o que já está no diário do sistema — sem isso o Cronista reoferece o
-         mesmo serviço com outro nome, que foi exatamente o bug do gado */
-      const jaNoDiario = garantirMissoes(missoesRef.current)
-        .filter((q) => ["ativa", "oferecida"].includes(q.status))
-        .map((q) => `- "${q.titulo}"${q.dador ? ` (de ${q.dador})` : ""} — ${q.descricao || "—"}`).join("\n");
-      const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(canoneRef.current) || "(vazio)"}\n\n${(() => { try { const ab = abertasParaOCronista(prometidoRef.current); return ab ? ab + "\n\n" : ""; } catch (e) { calou("as abertas ao Cronista", e); return ""; } })()}ELENCO (pessoas já registradas):\n${Object.keys(npcsRef.current).join(", ") || "(ninguém)"}\n\n${filaDoCronista}NARRATIVA DO TURNO:\n${narrativa}`;
+      /* o pedido inteiro (o que o Cronista é e o que ele lê) é do motor:
+         PEDIDO_DO_CRONISTA e oPedidoAoCronista, src/motor/cronista-do-turno.js */
+      const pedido = oPedidoAoCronista(estadoDoCronista(), { narrativa, fila: filaDoCronista });
+      if (pedido.erro) calou(pedido.erro.onde, pedido.erro.erro);
+      const sys = pedido.sys, user = pedido.user;
       /* sem leitura, a resposta é a vazia que o próprio pedido diz ser válida:
          as secções que são só código (o segredo revelado) correm igual */
       let txt = "{}";
@@ -10663,293 +10671,17 @@ export default function Taverna() {
       try { if (doTurno && doTurno.paraASessao) doTurno.paraASessao.cronista = { proposta: r, juizo: juizo ? { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } : null }; } catch (e) { calou("a sessão (o Cronista)", e); }
       const ac = (juizo && juizo.aceito) || {};
       const recusadoDoCronista = (juizo && Array.isArray(juizo.recusado)) ? juizo.recusado : [];
-      /* ---- SEÇÃO promessas (a campanha que prende) ----
-         Primeiro paga o que a narração pagou, depois guarda o que plantou:
-         o filtro do lembrete de cena e o caderno de seis são do motor. */
-      try {
-        const pg = pagarSementes(prometidoRef.current, ac.promessas_pagas).estado;
-        prometidoRef.current = guardarSementes(pg, ac.promessas).estado;
-      } catch (e) { calou("as promessas do Cronista", e); }
-      const msgs = [];
-      let p = pers;
-      let tocouElenco = false;
-      /* ---- SEÇÃO lugar (v9.39) ----
-         O Cronista lê a narração e diz onde o herói ficou. É a rede que
-         apanha o caso em que o Mestre esqueceu de mandar "lugar_atual" —
-         e é justamente esse esquecimento que produzia o teleporte. */
-      try {
-        /* só um TEXTO conta. `null` aqui é "não sei dizer", e tratá-lo como
-           "voltou para a cidade" faria o descuido do Cronista desfazer o
-           lugar a cada turno — o bug de novo, por outra porta. */
-        if (typeof ac.lugar === "string" && ac.lugar.trim()) {
-          const aviso = registrarLugar(ac.lugar, "cronista");
-          if (aviso) msgs.push(aviso);
-        } else if (typeof r.lugar === "string" && recusadoDoCronista.some((x) => x && x.secao === "lugar" && x.acao === "recusa")) {
-          /* a recusa de sempre (o Cronista tirou o herói de onde ele está):
-             a régua escreve a nota de correção e não move ninguém */
-          registrarLugar(r.lugar, "cronista");
-        }
-      } catch { /* nunca derruba o turno */ }
-      /* ---- SEÇÃO missão oferecida (v9.27, redirecionada na v9.119) ----
-         O Mestre traz o nobre desesperado; o sistema decide o que aquilo
-         vira. Proposta sem etapa verificável é recusada em silêncio — é a
-         trava que impede "ganhe a confiança do barão" de virar missão.
-
-         O que mudou é o DESTINO. A proposta não vira mais uma missão
-         esperando sim ou não no diário: vira um CARTAZ no mural, com o
-         mesmo formato dos outros, e o jogador decide lá. Missão que é da
-         história chega por outra porta (a trama) e não se recusa; o resto
-         é papel pregado, e papel pregado espera. */
-      try {
-        const prop = ac.missao_oferecida;
-        if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) {
-          /* a paga já é a da tabela da oferta (o juízo, `pagamento`): o
-             número que a prosa disse não entra mais pela porta dos fundos */
-          const cartaz = cartazDaProposta(
-            prop,
-            { cidade: cidadeAtualRef.current, nivel: p.nivel || 1, historia: historiaDoMural() });
-          if (cartaz) {
-            /* MM14 · 10a: um dador homônimo de quem já importa não prega —
-               "Delfina da Névoa" recrutadora não vira cartaz ao lado da
-               Delfina que a principal já persegue a 146 km. */
-            let semHomonimo = true;
-            try { semHomonimo = nomeComDono(cartaz.dador, npcsRef.current, contextoDoNome({})).decisao !== "recusada"; } catch (e) { calou("nomeComDono do mural", e); }
-            /* MM-C · 7.ª sessão (M26–M27): quem do núcleo já fez o pedido
-               ao herói pela linha do coração não tem cartaz — o favor é o
-               pedido, e dois botões para a mesma coisa desmentem o aceite */
-            let semPedido = true;
-            try { semPedido = !favorJaPedido(cartaz.dador, coracaoRef.current, nucleoAgora()); } catch (e) { calou("o favor já pedido", e); }
-            if (semHomonimo && semPedido && pregarNoMural(cartaz)) {
-              msgs.push(`📋 ${cartaz.dador || "Alguém"} tem um trabalho no mural.`);
-              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(cartaz)}`;
-            }
-          }
-        }
-      } catch { /* proposta malformada nunca derruba o turno */ }
-      /* ---- SEÇÃO relógio proposto (v9.18) ----
-         O Mestre conhece a ficção melhor que qualquer tabela, então PODE
-         pedir um relógio. Propor não é criar: o sistema apara o tamanho,
-         força um gatilho da lista, recusa duplicata e recusa quando já há
-         relógios demais. Mesmo contrato do resto da casa. */
-      try {
-        const prop = ac.relogio_novo;
-        if (prop && typeof prop === "object" && prop.nome) {
-          const ac = aceitarProposta(relogiosRef.current, prop, diaRef.current);
-          if (ac.ok) {
-            relogiosRef.current = ac.relogios; setRelogios(ac.relogios);
-            msgs.push(`${tipoDe(ac.relogio.tipo).icone} Começou a contar: ${ac.relogio.nome} ${barraDe(ac.relogio)} — ${tipoDe(ac.relogio.tipo).desc}.`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeNovo(ac.relogio)}`;
-          }
-        }
-      } catch { /* proposta malformada nunca derruba o turno */ }
-      /* ---- SEÇÃO missões (isolada) ---- */
-      try {
-        const rm = ac.missoes && typeof ac.missoes === "object" ? ac.missoes : {};
-        /* MM14 (30/09, os canais): "concluidas"/"falhadas"/"progresso"
-           saíram — fechavam a lista antiga só pelo TÍTULO que o Cronista
-           casasse, sem conferir nada. A lista antiga agora vira missão do
-           sistema (no load e no descanso longo, `tarefas-antigas.js`) e
-           fecha pela mesma porta que toda missão fecha: `conferirAsMissoes`,
-           pelas etapas — o contrato que carregava paga lá (`pagaDoFecho`). */
-        if (rm.global_encerrado === true && eventosRef.current && eventosRef.current.global) {
-          const g = eventosRef.current.global;
-          eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
-          setEventos(eventosRef.current);
-          marcarNoArco("global", `${g.nome} chegou ao fim`);
-          msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
-          if (divindadeRef.current && divindadeRef.current.despertar) msgs.push(...ganharFe(500, 10, "uma era inteira reza seu nome"));
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EVENTO GLOBAL "${g.nome}" ENCERRADO pelo sistema — NÃO o continue nem o encerre de novo: a região vive a nova era. O gerador semeará um arco novo quando chegar a hora.]`;
-        }
-        if (msgs.length) { setQuests([...questsRef.current]); setPersonagem(p); }
-      } catch { /* seção quebrada não derruba as outras */ }
-      /* ---- SEÇÃO pessoas (isolada) ---- */
-      try {
-        if (Array.isArray(ac.pessoas) && ac.pessoas.length) {
-          let reg = npcsRef.current, tocou = false;
-          /* v9.113: O HERÓI NÃO É NPC. O Cronista devolveu "Íris Vantel —
-             fendida, caçadora de fendas" e o sistema registrou: a partir
-             dali ela entrava no elenco da cena, virava `viu` de todo
-             registro (testemunha de si mesma), virava linha do Intérprete
-             dizendo ao Narrador o que ela faz — quando o que ela faz é a
-             única coisa que o JOGADOR decide — e virava boca pela qual o
-             Vilão podia saber das coisas. */
-          const euMesmo = String((personagemRef.current || personagem || {}).nome || "").toLowerCase().trim();
-          /* MM14 · 10a: a terceira porta — mesma régua do homónimo */
-          const homonimos = [];
-          ac.pessoas.slice(0, 4).forEach((n) => {
-            if (!n || !n.nome) return;
-            if (euMesmo && String(n.nome).toLowerCase().trim() === euMesmo) return;
-            let id = null;
-            try { id = nomeComDono(n.nome, reg, contextoDoNome(n)); } catch (e) { calou("nomeComDono", e); }
-            if (id && id.decisao === "recusada") { homonimos.push(id); return; }
-            const nomeCerto = (id && id.nome) || n.nome;
-            const chave = (id && id.chave) || Object.keys(reg).find((k) => k.toLowerCase() === String(nomeCerto).toLowerCase());
-            if (!tocou) { reg = { ...reg }; tocou = true; }
-            /* E3 do "o Narrador só narra" (a fiação): sem o canal npcs do
-               Narrador, o gênero vem do Cronista ("ele"/"ela"), entra no
-               registo como "homem"/"mulher" e não se reescreve em quem já
-               o tem (fichaDoCronista, npcs.js).
-               (e) da v9.447: o paradeiro «cidade» ganha a cidade onde o herói
-               está — e só quando está numa; na estrada ou numa masmorra aberta
-               a cidade vai vazia e o paradeiro fica como o Cronista o deu. */
-            let nF = n;
-            try {
-              const naoNaCidade = !!(jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada));
-              nF = fichaDoCronista(n, chave ? reg[chave] : null, { cidade: naoNaCidade ? "" : (cidadeAtualRef.current || ""), mapa: mapaRef.current });
-            } catch (e) { calou("o gênero do Cronista", e); nF = n; }
-            if (chave) reg[chave] = mesclarNPC(reg[chave], nF);
-            else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
-          });
-          if (homonimos.length) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoHomonimo(homonimos)}`;
-          if (tocou) { npcsRef.current = reg; setNpcs(reg); sincronizarNemesis(); tocouElenco = true; }
-        }
-      } catch { /* seção quebrada não derruba as outras */ }
-      /* ---- SEÇÃO falou_com (isolada) — 11/10, a 4.ª sessão ----
-         Quatro turnos a falar com a Inocência e a etapa "falar com Inocência
-         Bordão" ficou em falso: a conferência do turno corre ANTES do
-         Cronista, e só sabia do lugar. Agora a conversa que ele viu é
-         conferida aqui, uma vez, e a lista some logo a seguir. */
-      try {
-        const falou = Array.isArray(ac.falou_com)
-          ? ac.falou_com.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim().slice(0, 60)).slice(0, 6) : [];
-        if (falou.length) {
-          const antesM = missoesRef.current, antesE = espinhaRef.current;
-          falouComRef.current = falou;
-          try { p = conferirAsMissoes(p) || p; } finally { falouComRef.current = []; }
-          if (missoesRef.current !== antesM || espinhaRef.current !== antesE) tocouElenco = true;
-        }
-      } catch (e) { calou("falou_com do Cronista", e); }
-      /* ---- SEÇÃO o segredo revelado (isolada) — MM-C · C0 ----
-         O "descobrir" com segredo fecha quando o segredo se revela: o teste
-         que passou, ou a pista dada na prosa, com o herói NO lugar do marco.
-         Conferido aqui, uma vez, e a lista some logo a seguir. */
-      try {
-        let seg = [];
-        try { seg = segredosReveladosNoTurno(espinhaRef.current, { lugar: lugarRef.current && lugarRef.current.nome, teste: testeDoTurno, narrativa }); } catch (e) { calou("segredosReveladosNoTurno", e); seg = []; }
-        if (Array.isArray(seg) && seg.length) {
-          const antesM = missoesRef.current, antesE = espinhaRef.current;
-          segredosReveladosRef.current = seg;
-          try { p = conferirAsMissoes(p) || p; } finally { segredosReveladosRef.current = []; }
-          if (missoesRef.current !== antesM || espinhaRef.current !== antesE) tocouElenco = true;
-        }
-      } catch (e) { calou("o segredo revelado", e); }
-      /* ---- SEÇÃO fé (isolada) ----
-         T1-B: o Cronista só CLASSIFICA o que viu; a conta é a da tabela
-         (motor/cronista.js#TABELA_DA_FE) sobre a população do lugar — o
-         gesto comum também (a linha `gesto`), no lugar dos "10 a 500" que
-         ele chutava. Cada linha do `ac.fe` já vem calculada. */
-      try {
-        if (Array.isArray(ac.fe) && ac.fe.length && divindadeRef.current && divindadeRef.current.despertar) {
-          for (const g of ac.fe) {
-            if (!g || !(g.fieis > 0 || g.pf > 0)) continue;
-            const doAcontecimento = g.de === "acontecimento";
-            const motivo = doAcontecimento ? `${g.rotulo}${g.pop ? ` (pop. ${Number(g.pop).toLocaleString("pt-BR")})` : ""}` : String(g.motivo || g.rotulo || "sua fama vira prece").slice(0, 80);
-            msgs.push(...ganharFe(g.fieis, g.pf, motivo, g.local || ""));
-            if (doAcontecimento) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ — REGISTRO DO SISTEMA] ${g.rotulo}${g.local ? ` em ${g.local}` : ""}: +${g.fieis} fiéis, +${g.pf} PF, calculados pela população do local. Isso já está contabilizado — narre a devoção chegando, não a negue.`;
-          }
-        }
-      } catch (e) { calou("a fé do Cronista", e); }
-      /* ---- SEÇÃO combate: CÃO DE GUARDA DE COESÃO (v7.4.4) ----
-         O Mestre declarou morto quem o SISTEMA mantém de pé? Correção
-         pública + nota firme — o PV não muda, a NARRATIVA é que se alinha. */
-      try {
-        /* T1-B: o juízo já separou quem o sistema mantém de pé (`morte`,
-           porque `vivo`); a correção de coesão é para esses */
-        const vivosAgora = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-        recusadoDoCronista.filter((x) => x && x.secao === "morte" && x.porque === "vivo").forEach((x) => {
-          const alvo = vivosAgora.find((e) => (e.nome || "").toLowerCase() === String(x.o || "").toLowerCase()) || (x.o ? { nome: x.o, vida: x.vida } : null);
-          if (!alvo) return;
-          msgs.push(`⚔ ${alvo.nome} continua de pé — ${alvo.vida} PV. A luta não acabou.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — REGRA ABSOLUTA] Você narrou a morte de ${alvo.nome}, mas o SISTEMA registra ${alvo.vida} PV: ele está VIVO e em combate. RETOME tratando-o como vivo — sem ressuscitar, sem cinzas, sem "última investida póstuma": ele simplesmente NÃO morreu. Dano e morte são decididos SÓ pelo sistema (envelopes [COMBATE — RESOLVIDO] e o PV do painel); palavras de empolgação do jogador ("estraçalho você!") são figura de linguagem, NUNCA resultado.`;
-        });
-      } catch { /* seção quebrada não derruba as outras */ }
-      /* ---- SEÇÃO cânone (isolada) ---- */
-      let tocouCanone = false;
-      try {
-        if (ac.canone && typeof ac.canone === "object") {
-          const c = { ...canoneRef.current };
-          const novos = [];
-          /* MM15 (4): a mesma peneira da porta do Narrador — nenhum segredo
-             que a espinha ainda guarda vira cânone pela boca do Cronista.
-             Se a peneira estourar, segue o comportamento de hoje (nunca
-             pior para o segredo). */
-          let canoneDoCronista = ac.canone;
-          try { canoneDoCronista = peneirarCanone(ac.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }
-          for (const [nome, ficha] of Object.entries(canoneDoCronista)) {
-            if (!nome || !ficha || typeof ficha !== "object") continue;
-            const chaveExistente = Object.keys(c).find((k) => k.toLowerCase() === String(nome).toLowerCase());
-            if (!chaveExistente) {
-              c[String(nome)] = { ...ficha, registradoDia: diaRef.current };
-              novos.push(nome);
-            } else {
-              /* só preenche o que estiver vazio — identidade NUNCA é reescrita */
-              const alvo = { ...c[chaveExistente] };
-              for (const [k, v] of Object.entries(ficha)) {
-                if (v && (alvo[k] === undefined || alvo[k] === "")) alvo[k] = v;
-              }
-              c[chaveExistente] = alvo;
-            }
-          }
-          if (novos.length) { canoneRef.current = c; tocouCanone = true; }
-        }
-      } catch { /* seção quebrada não derruba as outras */ }
-      /* ---- SEÇÃO grupo: RECRUTAMENTO REAL (v7.5) ----
-         O Mestre narrava "vou com você" e o convite se perdia no ar — o
-         companheiro nunca entrava na ficha. Agora o Cronista aponta quem
-         aceitou e o CÓDIGO assina o registro (com os dados do elenco, se houver). */
-      try {
-        /* T1-B: só quem o juízo deixou passar pela porta do convite; o
-           grupo cheio continua a ser dito ao jogador. Com o grupo cheio o
-           convite recusa todos, e o juízo diz `semPorta` (ou `desconhecido`)
-           antes de chegar a `cheio`: a frase sai para esses também, como
-           saía antes do juízo para todo nome que não fosse já do grupo.
-           A régua mora em `frasesDoGrupoCheio` (src/motor/meio-do-turno.js),
-           guardada por teste-grupo-cheio.mjs (3.ª fatia). */
-        msgs.push(...frasesDoGrupoCheio(recusadoDoCronista, p.grupo));
-        const entraram = (ac.grupo && Array.isArray(ac.grupo.entraram)) ? ac.grupo.entraram : [];
-        if (entraram.length) {
-          const grupoAtual = [...(p.grupo || [])];
-          entraram.forEach((nome0) => {
-            const nome = String(nome0 || "").slice(0, 40).trim();
-            if (!nome) return;
-            if (grupoAtual.some((x) => (x.nome || "").toLowerCase() === nome.toLowerCase())) return;
-            if (grupoAtual.filter((g) => !g.invocada).length >= MAX_COMPANHEIROS) { msgs.push(`O grupo está cheio — ${nome} não pôde se juntar.`); return; }
-            /* v9.143: a MESMA montagem do convite. Duas cópias seria a
-               segunda ficando para trás na primeira mudança. */
-            const novoComp = fichaDeCompanheiro(nome, p);
-            grupoAtual.push(novoComp);
-            /* QUANTO ELE SOMA (v9.116). "Fulano juntou-se ao grupo" não diz
-               se veio ajuda ou bagagem — e o pedido é explícito em que o
-               jogador precisa saber "se o personagem é fraco ou forte pra
-               entrar no grupo". O peso responde com número e com uma
-               palavra, que é o que se lê primeiro. */
-            const peso = pesarCompanheiro(novoComp, p);
-            msgs.push(`⚑ ${nome} juntou-se ao grupo — ⚡ ${formatarPoder(peso.poder)} de poder, ${peso.veredito}.`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoRecrutamento(novoComp)}`;
-          });
-          if (grupoAtual.length !== (p.grupo || []).length) { p = { ...p, grupo: grupoAtual }; setPersonagem(p); }
-        }
-      } catch { /* seção quebrada não derruba as outras */ }
-      /* ---- SEÇÃO teste_sugerido: CONCESSÃO GRANDE EXIGE PROVA (v7.5) ----
-         O caso do lobo ancestral: o Mestre entregou de graça algo que deveria
-         ter sido conquistado. O Cronista sinaliza e o CÓDIGO abre um teste
-         real (dificuldade por perfil, calculada do modificador do herói) para
-         selar a concessão — se passar, o feito é canon; se falhar, o Mestre
-         narra a resistência (sem apagar o que já foi dito, o tom muda). */
-      try {
-        const ts = ac.teste_sugerido;
-        if (ts && typeof ts === "object" && ts.atributo && !rolagem && !combateRef.current) {
-          const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === String(ts.atributo).toLowerCase());
-          if (attrT) {
-            const modT = atributoEfetivo(p, attrT.id);
-            const dc = dificuldadePorPerfil(modT, ts.perfil === "formidavel" ? "formidavel" : "dificil");
-            const motivo = String(ts.motivo || "concessão grande demais para ser de graça").slice(0, 120);
-            setRolagem({ atributo: attrT.nome, dificuldade: dc, motivo, origem: "cronista" });
-            msgs.push(`🎲 O Mestre pede um teste de ${attrT.nome}: ${motivo}`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[TESTE EXIGIDO PELO SISTEMA] A concessão que você narrou (${motivo}) é grande demais para ser de graça: o sistema abriu um teste de ${attrT.nome} (dificuldade ${dc}). Se o herói PASSAR, tudo que você narrou é canon e selado; se FALHAR, narre a concessão se complicando (condição, preço, resistência parcial) — sem apagar o que foi dito, mas sem entregar o ouro inteiro de bandeja.`;
-          }
-        }
-      } catch { /* seção quebrada não derruba as outras */ }
+      /* ---- O ACEITO, APLICADO (T1-A, 9.ª fatia) ----
+         As secções (as promessas, o lugar, o cartaz, o relógio, o evento
+         global, a gente, a conversa e o segredo que fecham etapas, a fé, a
+         coesão da luta, o cânone, o grupo, o teste da concessão grande)
+         moram em oAceitoDoCronista, na mesma ordem e cada uma isolada. O
+         que é do App entra pelas portas; o resto volta como efeito. */
+      let fim = null;
+      try { fim = oAceitoDoCronista(ac, recusadoDoCronista, r, { ...portasDoCronista(), pers, narrativa, testeDoTurno, rolagem }); }
+      catch (e) { calou("o aceito do Cronista", e); return; }
+      const msgs = fim.msgs, tocouCanone = fim.tocouCanone, tocouElenco = fim.tocouElenco;
+      const p = fim.p;
       /* v9.36: o registro agora é MUDO (cânone e elenco entram sem avisar), e
          por isso a saída não pode mais depender de haver mensagem: um turno
          que só arquivou gente ainda precisa gravar, ou o elenco se perde no

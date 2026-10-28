@@ -23,6 +23,7 @@
 import fs from "node:fs";
 const J = await import("../src/janela.js");
 const G = await import("../src/gatilho-do-cronista.js");
+const CT = await import("../src/motor/cronista-do-turno.js");
 const V = await import("../src/vinculos.js");
 const REG = JSON.parse(fs.readFileSync(new URL("./registo-s8-s10-cronista.json", import.meta.url), "utf8"));
 const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
@@ -184,9 +185,15 @@ sec("8. A FIAÇÃO NO App.jsx");
   t("o histórico guarda a memória do turno, com o corpo de rede", APP.includes("memoriaDoJogador = memoriaDoTurno(conteudo, nota) || corpo") && APP.includes('{ role: "user", content: memoriaDoJogador }'));
   t("o turno de agora continua com a pauta inteira e a frase por último (MM18)", APP.includes('const novoHist = [...base, { role: "user", content: pedidoFinal }];'));
   t("a leitura do Cronista vai ao save e volta no load", APP.includes("leituraDoCronista: leituraDoCronistaRef.current,") && APP.includes("garantirLeitura(sv.leituraDoCronista)"));
-  const iG = APP.indexOf("gatilho = decidirOCronista("), iC = APP.indexOf('txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve")');
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o gatilho (e o pedido, com a fila) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em
+     PEDIDO_DO_CRONISTA e oPedidoAoCronista, as secções em oAceitoDoCronista).
+     O motor não se lê pelo texto (a catraca de teste-assercoes-de-texto):
+     prova-se pelo valor exportado ou jogando a peça. */
+  const iG = APP.indexOf("gatilho = oGatilhoDoCronista("), iC = APP.indexOf('txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve")');
   t("o gatilho decide antes da chamada, e a chamada só corre com ele", iG > 0 && iC > iG && APP.includes("if (gatilho.corre) {"));
-  t("a fila entra no pedido ao Cronista, antes da narração do turno", APP.includes("${filaDoCronista}NARRATIVA DO TURNO:"));
+  const pedidoComFila = CT.oPedidoAoCronista({ npcs: {}, missoes: [], canone: {} }, { narrativa: "AGORA", fila: G.blocoDaFila({ fila: ["uma narração antiga"] }) }).user;
+  t("a fila entra no pedido ao Cronista, antes da narração do turno", APP.includes("oPedidoAoCronista(estadoDoCronista(), { narrativa, fila: filaDoCronista })") && pedidoComFila.endsWith("(1) uma narração antiga\n\nNARRATIVA DO TURNO:\nAGORA"));
   t("o turno entrega a frase e os envelopes ao gatilho", APP.includes("cronistaDoTurno(pers, narrativaFinal, doTurnoCr)"));
   const calados = ["a memória do turno", "o gatilho do Cronista", "a fila do Cronista", "o pulo do Cronista", "a leitura do Cronista", "a leitura do Cronista no load", "o turno para o gatilho do Cronista"];
   t("toda peça nova cala o próprio erro (nunca custa o turno)", calados.every((c) => APP.includes(`calou("${c}"`)), calados.filter((c) => !APP.includes(`calou("${c}"`)).join(", "));

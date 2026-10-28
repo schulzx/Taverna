@@ -50,7 +50,15 @@ sec("1. O CANAL MORTO SUMIU DE VEZ");
   /* o que SOBREVIVE do módulo: quem pede o perfil hoje é o próprio
      sistema, no canal do Cronista — e esse continua de pé */
   t("dificuldadePorPerfil continua viva", /export function dificuldadePorPerfil/.test(BEST));
-  t("e o App ainda a usa", /dificuldadePorPerfil\(modT,/.test(APP));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o teste que a concessão grande exige saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const { dificuldadePorPerfil } = await import("../src/bestiario.js");
+  const rolou = (jogarOAceito({ teste_sugerido: { atributo: "Presença", perfil: "formidavel", motivo: "o rei cede" } }, { pers: { nome: "Vera", nivel: 1, classe: "guerreiro", atributos: { presenca: 2 }, grupo: [] } }).efeitos.find((e) => e.tipo === "rolagem") || {}).rolagem || {};
+  t("e o App ainda a usa", rolou.atributo === "Presença" && rolou.dificuldade === dificuldadePorPerfil(2, "formidavel") && rolou.origem === "cronista");
 }
 
 sec("2. O PROMPT NÃO ENSINA MAIS O QUE ELE PROÍBE");

@@ -153,9 +153,18 @@ sec("7. A FICHA MORA NUM LUGAR SÓ");
   /* os DOIS caminhos, nomeados: o que a IA abre com `grupo_adicionar` e o
      do convite. Contar ocorrências mediria também a definição — que não tem
      parêntese de chamada — e a conta daria errado por um. */
-  t("o caminho da resposta da IA usa", /const novoComp = fichaDeCompanheiro\(nome, p\)/.test(APP));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o recrutamento pela resposta da IA (a secção do grupo) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const recrutou = jogarOAceito({ grupo: { entraram: ["Ilka"] } }, { pers: { nome: "Vera", nivel: 5, grupo: [] } });
+  const fichaNova = (recrutou.efeitos.find((e) => e.tipo === "ficha") || {}).personagem || {};
+  t("o caminho da resposta da IA usa", recrutou.portas.some((x) => x[0] === "fichaDeCompanheiro" && x[1] === "Ilka") && (fichaNova.grupo || []).some((g) => g.nome === "Ilka" && g.nivel === 3) && APP.includes("fichaDeCompanheiro, notaDoRecrutamento,"));
   t("e o caminho do convite também", /const comp = fichaDeCompanheiro\(nome, p\)/.test(APP));
-  t("e são só esses dois", (APP.match(/fichaDeCompanheiro\(/g) || []).length === 2);
+  /* (movida com a de cima, o mesmo motivo) o caminho da IA chega pela porta do Cronista, sem parêntese de chamada no App: fica uma chamada, a do convite */
+  t("e são só esses dois", (APP.split("fichaDeCompanheiro(").length - 1) === 1 && recrutou.portas.filter((x) => x[0] === "fichaDeCompanheiro").length === 1);
   t("a nota do recrutamento também", /const notaDoRecrutamento = \(comp\) =>/.test(APP));
   t("e ninguém remonta a ficha à mão", !/const novoComp = \{ nome, conceito:/.test(APP));
   /* as duas guardas continuam: já está no grupo, e grupo cheio */

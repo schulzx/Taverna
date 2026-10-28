@@ -359,9 +359,17 @@ sec("6. a fiação — App.jsx");
   const chamadas = app.split('id = nomeComDono(').length - 1;
   const rN = registo([{ nome: "Delfina da Névoa", genero: "homem" }]);
   const rC = registo(null, { "Delfina da Névoa": { tipo: "pessoa", genero: "homem" } });
-  t(`nomeComDono é chamado nas três portas (no App, a do Cronista: ${chamadas}; as duas do Narrador recusam no motor)`, chamadas === 1 && !rN.estado.npcs["Delfina da Névoa"] && !rC.estado.npcs["Delfina da Névoa"]);
-  t("a porta mudancas.npcs recusa e acumula em homonimos, sem entrar no registo",
-    app.includes('if (id && id.decisao === "recusada") { homonimos.push(id); return; }') && app.includes("const nomeCerto = (id && id.nome) || n.nome;"));
+  /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: a terceira porta (a do Cronista) saiu do
+     cronistaDoTurno do App para src/motor/cronista-do-turno.js
+     (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
+     teste-assercoes-de-texto): a mesma intenção prova-se jogando a peça
+     (jogarOAceito, cronista-bloco.mjs). */
+  const { jogarOAceito } = await import("./cronista-bloco.mjs");
+  const BASE_CR = { importantes: IMP, conhecidos: [], recentes: [], grupo: [], aqui: ["Foz do Meio", "o Cais do Sal"], heroi: "Ana" };
+  const rCr = jogarOAceito({ pessoas: [{ nome: "Delfina da Névoa", genero: "homem" }] }, { base: BASE_CR, estado: { npcs: {}, dia: 5, npcTurno: 1 } });
+  const notaCr = rCr.efeitos.filter((e) => e.tipo === "nota").map((e) => e.linhas.join(" ")).join(" ");
+  t("nomeComDono é chamado nas três portas (no App: " + chamadas + "; as três recusam no motor)", chamadas === 0 && !rN.estado.npcs["Delfina da Névoa"] && !rC.estado.npcs["Delfina da Névoa"] && !(rCr.estado.npcs || {})["Delfina da Névoa"]);
+  t("a porta mudancas.npcs recusa e acumula em homonimos, sem entrar no registo", notaCr.includes("NOMES") && !rCr.efeitos.some((e) => e.tipo === "npcs"));
   /* (movidas com as de cima, o mesmo motivo) — em Alto do Sal, "Delfina da
      Névoa" é ELA: entra com o nome dela, e quem já tem ficha é mesclado */
   const rAlto = registo([{ nome: "Delfina da Névoa", papel: "contrabandista", genero: "mulher" }], null, null, ["Alto do Sal", "A Porta Aberta"]);
@@ -374,18 +382,17 @@ sec("6. a fiação — App.jsx");
   /* asserção movida na fiação da E3 (12/10, v9.424): a ficha do Cronista
      passa antes por fichaDoCronista (o gênero, npcs.js) e chega como `nF`
      em vez de `n`. A intenção — nomeCerto na chave e no criarNPC — é a mesma. */
-  t("a porta do Cronista (`pessoas`, com slice(0, 40)) idem, com nomeCerto",
-    app.includes('else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });'));
+  /* (movida outra vez, 28/10, T1-A 9.ª fatia: a porta do Cronista mora no motor) — joga-se: em Alto do Sal, Delfina entra com o nome dela e o turno do Cronista; o nome longo corta em 40 */
+  const rCrAlto = jogarOAceito({ pessoas: [{ nome: "Delfina da Névoa", papel: "contrabandista", genero: "mulher" }, { nome: "Bartolomeu Fernandes de Albuquerque e Castro", papel: "escrivão" }] }, { base: { ...BASE_CR, aqui: ["Alto do Sal", "A Porta Aberta"] }, estado: { npcs: {}, dia: 5, npcTurno: 7 } });
+  const regAlto = rCrAlto.estado.npcs || {};
+  t("a porta do Cronista (pessoas, com slice(0, 40)) idem, com nomeCerto", !!regAlto.Delfina && !regAlto["Delfina da Névoa"] && regAlto.Delfina.ultimaVez === 7 && regAlto.Delfina.conhecidoEm === 5 && !!regAlto["Bartolomeu Fernandes de Albuquerque e Castro".slice(0, 40)]);
   /* (movida com as de cima, o mesmo motivo) — a nota sai em `paraOCronista`,
      que o App soma à nota do turno (aplicarOsEfeitos, notaComOTurno) */
   t("as duas portas do registo somam a nota do Narrador quando há recusa",
     rN.paraOCronista.length === 1 && /NOMES/.test(rN.paraOCronista[0]) && rC.paraOCronista.length === 1 && /NOMES/.test(rC.paraOCronista[0]));
-  t("o mural só prega se o dador não for recusado por homônimo",
-    app.includes('semHomonimo = nomeComDono(cartaz.dador, npcsRef.current, contextoDoNome({})).decisao !== "recusada";')
-    /* 7.ª sessão (M26–M27), asserção movida: a porta do mural ganhou um
-       segundo porteiro (favorJaPedido, quem do núcleo já pediu não tem
-       cartaz); o homônimo continua a barrar, agora ao lado dele. */
-    && app.includes("if (semHomonimo && semPedido && pregarNoMural(cartaz)) {"));
+  /* (movida, 28/10, T1-A 9.ª fatia: a porta do mural do Cronista mora no motor, com os dois porteiros) */
+  const pregaCr = (dador) => jogarOAceito({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador, paga: 10, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, { base: BASE_CR, estado: { npcs: {}, cidadeAtual: "Foz do Meio", abertura: undefined, missoes: [] } }).portas.filter((x) => x[0] === "pregarNoMural").length;
+  t("o mural só prega se o dador não for recusado por homônimo", pregaCr("Delfina da Névoa") === 0 && pregaCr("Hilda") === 1);
 }
 
 console.log(`\nmm14 · a gente: ${ok} passaram, ${mal} falharam`);
