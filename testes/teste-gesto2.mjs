@@ -73,7 +73,7 @@ sec("5. ligado ao jogo");
   t("há um ref e ele entra no save", /gestosRef/.test(APP) && /gestos: gestosRef\.current/.test(APP));
   t("na virada, registra quem ficou", /GESTO_DA_POSTURA/.test(APP) && /registrarGesto\(gestosRef\.current/.test(APP));
   t("na virada, cobra e leva à pauta", /cobrarNaVirada\(gestosRef\.current/.test(APP) && /envelopeDaMemoria\(cob\.pagamentos\)/.test(APP));
-  t("o traidor revelado vira delação", /gesto: "delatou"/.test(APP));
+  /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o traidor revelado vira delação" (`/gesto: "delatou"/`) está contida na de teste-reviravolta.mjs ("o App põe a delação na conta do alvo": `gesto: "delatou"` e `quem: rev.alvo, gesto: "delatou"`), que é a mesma fiação mais estrita. */
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

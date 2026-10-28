@@ -214,7 +214,7 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
   t("vender também", (APP.match(/pressoes: apertarProcura\(/g) || []).length === 3);
   /* a etiqueta e o cofre saem da MESMA função — o que o texto promete, a
      bolsa entrega */
-  t("o botão de vender lê a oferta", /const of = ofertaPor \? ofertaPor\(v\.it\) :/.test(APP));
+  /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o botão de vender lê a oferta" provava `const of = ofertaPor ? ofertaPor(v.it) :` — a mesma linha que teste-mercado.mjs exige ("o valor continua vindo de ofertaPor"). A intenção — a etiqueta e o cofre saem da MESMA função — fica pela metade do cofre aqui, abaixo, e pela do botão lá. */
   t("e o cofre lê a mesma oferta", /const of = ofertaPor\(item\);/.test(APP));
   t("sem comprador, o botão não mente", /\{of\.quem \? `vender ◉ \$\{of\.valor\}` : "ninguém compra"\}/.test(APP));
   t("e a venda recusa em vez de inventar", /if \(!of\.quem\) \{ pushMsgs/.test(APP));
@@ -230,7 +230,7 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
      (`SECOES_QUE_CEDEM`, pauta.js). Como 4.ª linha do ONDE ela tirava do teto
      a frase do golpe final. A intenção desta asserção fica: o comércio do
      lugar CHEGA ao Narrador — só a morada mudou (teste-como-chega.mjs, 6). */
-  t("o Narrador recebe o comércio do lugar", /porNaPauta\(p, "economia", envelopeDoComercio\(/.test(APP));
+  /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o Narrador recebe o comércio do lugar" é a primeira metade de teste-como-chega.mjs ("a economia vai na seção dela"), que exige a mesma chamada `porNaPauta(p, "economia", envelopeDoComercio(` e a nega na seção errada. O comentário acima já apontava para lá; agora a prova mora só lá. */
   t("e o estado novo é salvo", /salvar\(\{ mercado: mercadoRef\.current \}\)/.test(APP));
 }
 

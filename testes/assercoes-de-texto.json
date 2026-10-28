@@ -60,7 +60,7 @@
   "esperaDoMotor": [],
   "paraT2": {
     "medido": "2026-10-28",
-    "total": 2102,
+    "total": 2097,
     "suites": 195,
     "porSuite": {
       "teste-a-virada.mjs": 10,
@@ -80,7 +80,7 @@
       "teste-arte.mjs": 10,
       "teste-banco.mjs": 2,
       "teste-bestiario-des.mjs": 2,
-      "teste-biblioteca.mjs": 20,
+      "teste-biblioteca.mjs": 19,
       "teste-bolsa-da-frase.mjs": 5,
       "teste-bolsa-em-duas-linhas.mjs": 10,
       "teste-cache-explicito.mjs": 5,
@@ -90,11 +90,11 @@
       "teste-celular.mjs": 14,
       "teste-chao.mjs": 1,
       "teste-cobrador.mjs": 16,
-      "teste-comercio.mjs": 14,
+      "teste-comercio.mjs": 12,
       "teste-como-chega.mjs": 9,
       "teste-comp.mjs": 5,
       "teste-companheiro-inicial.mjs": 12,
-      "teste-compasso.mjs": 13,
+      "teste-compasso.mjs": 12,
       "teste-cond.mjs": 15,
       "teste-consequencias.mjs": 2,
       "teste-convite.mjs": 36,
@@ -119,12 +119,12 @@
       "teste-falar-com-em-cena.mjs": 3,
       "teste-falas.mjs": 11,
       "teste-fiacao-prende.mjs": 41,
-      "teste-ficha-e-planta.mjs": 7,
+      "teste-ficha-e-planta.mjs": 6,
       "teste-ficha-visual.mjs": 1,
       "teste-fogueira-ligada.mjs": 26,
       "teste-frase-que-paga.mjs": 3,
       "teste-gesto.mjs": 7,
-      "teste-gesto2.mjs": 5,
+      "teste-gesto2.mjs": 4,
       "teste-golpe-final.mjs": 36,
       "teste-golpe.mjs": 9,
       "teste-grade.mjs": 3,
@@ -187,7 +187,7 @@
       "teste-motor-combate.mjs": 13,
       "teste-motor-cronista-do-turno.mjs": 11,
       "teste-motor-entrega.mjs": 12,
-      "teste-motor-envelopes-do-turno.mjs": 6,
+      "teste-motor-envelopes-do-turno.mjs": 7,
       "teste-motor-fecho.mjs": 15,
       "teste-motor-fim-do-turno.mjs": 8,
       "teste-motor-juiz-do-turno.mjs": 8,
@@ -363,6 +363,39 @@
           "onde": "a luta pausa a escada — o fragmento já é exigido pela asserção de ordem acima dele"
         }
       ]
+    },
+    {
+      "fatia": "T2-B 2",
+      "medido": "2026-10-28",
+      "antes": 2102,
+      "convertidas": 0,
+      "retiradas": 6,
+      "malMedidas": 0,
+      "deOutrasMaos": 1,
+      "depois": 2097,
+      "nota": "o 2.º lote da T2-B: a MESMA fiação dita em duas suítes fica guardada numa (a mais estrita), com o motivo escrito no lugar de cada asserção retirada. Achadas pela busca de fragmentos idênticos entre suítes (a mesma regex, ou o mesmo trecho, lido do App em duas); das 28 repetições, estas seis (em cinco suítes) eram a asserção inteira; as outras eram partes de asserções maiores, texto de tela do desenho, ou suítes que a trilha A re-mede a cada patch (teste-custo-onda2, teste-fiacao-prende). A régua ganha o subtipo \"achou\" (a guarda de que o trecho foi achado: x.length > N, i > 0): não prova regra, protege a leitura das vizinhas.",
+      "retiradasEm": [
+        {
+          "suite": "teste-biblioteca.mjs",
+          "onde": "\"com a Pauta na frente\" (a nota começa pela pauta) — guardada em teste-mm18-fiacao §3 e teste-compasso"
+        },
+        {
+          "suite": "teste-compasso.mjs",
+          "onde": "\"a PAUTA vem antes de tudo\" — prefixo da asserção de cima e da ordem da mm18"
+        },
+        {
+          "suite": "teste-comercio.mjs",
+          "onde": "\"o botão de vender lê a oferta\" (teste-mercado) e \"o Narrador recebe o comércio do lugar\" (teste-como-chega)"
+        },
+        {
+          "suite": "teste-ficha-e-planta.mjs",
+          "onde": "\"e vai para a planta, ao lado das salas\" — a mesma regex de teste-masmorra-na-pauta"
+        },
+        {
+          "suite": "teste-gesto2.mjs",
+          "onde": "\"o traidor revelado vira delação\" — contida na de teste-reviravolta"
+        }
+      ]
     }
   ],
   "classificacao": {
@@ -427,7 +460,7 @@
     },
     "totais": {
       "saida": 143,
-      "fiacao": 1827,
+      "fiacao": 1822,
       "tela": 131,
       "regraNoApp": 1
     },
@@ -500,7 +533,7 @@
         "fiacao": 1
       },
       "teste-biblioteca.mjs": {
-        "fiacao": 20
+        "fiacao": 19
       },
       "teste-bolsa-da-frase.mjs": {
         "fiacao": 5
@@ -537,7 +570,7 @@
       },
       "teste-comercio.mjs": {
         "saida": 1,
-        "fiacao": 13
+        "fiacao": 11
       },
       "teste-como-chega.mjs": {
         "fiacao": 9
@@ -551,7 +584,7 @@
         "saida": 1
       },
       "teste-compasso.mjs": {
-        "fiacao": 13
+        "fiacao": 12
       },
       "teste-cond.mjs": {
         "fiacao": 15
@@ -641,7 +674,7 @@
         "fiacao": 41
       },
       "teste-ficha-e-planta.mjs": {
-        "fiacao": 7
+        "fiacao": 6
       },
       "teste-ficha-visual.mjs": {
         "saida": 1
@@ -658,7 +691,7 @@
         "fiacao": 7
       },
       "teste-gesto2.mjs": {
-        "fiacao": 5
+        "fiacao": 4
       },
       "teste-golpe-final.mjs": {
         "fiacao": 36
@@ -877,7 +910,7 @@
         "fiacao": 12
       },
       "teste-motor-envelopes-do-turno.mjs": {
-        "fiacao": 6
+        "fiacao": 7
       },
       "teste-motor-fecho.mjs": {
         "fiacao": 15
@@ -1127,11 +1160,12 @@
       }
     },
     "fiacaoPorTipo": {
-      "contagem": 153,
-      "chamada": 1388,
+      "contagem": 124,
+      "chamada": 1327,
       "importacao": 71,
       "calou": 98,
-      "ordem": 117
+      "ordem": 98,
+      "achou": 104
     }
   }
 }

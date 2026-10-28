@@ -270,7 +270,7 @@ sec("8. A LIGAÇÃO NO APP");
   /* MM18 (11/10): os envelopes do turno ganharam nome (`doTurno`) para a
      escuta os cortar antes da nota; a nota é `[pauta, ...doTurno]`. */
   t("e entra na nota", /let doTurno = \[[^\]]*doCompasso[^\]]*\]/.test(app) && /const nota = \[pauta, \.\.\.doTurno\]/.test(app));
-  t("e a PAUTA vem antes de tudo — o Narrador precisa saber ONDE antes do que fazer lá", /const nota = \[pauta, /.test(app));
+  /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "a PAUTA vem antes de tudo" (`/const nota = \[pauta, /`) é prefixo do fragmento que a asserção de cima já exige (`const nota = [pauta, ...doTurno]`) e a ordem que teste-mm18-fiacao.mjs §3 guarda ("a pauta vem primeiro, e o que fica depois"). A intenção — o Narrador sabe ONDE antes do que fazer lá — fica guardada nessas duas. */
 
   const g = app.split("const talvezAndarOCompasso")[1].split("\n  };")[0];
   /* SEGURA em combate, masmorra e viagem */

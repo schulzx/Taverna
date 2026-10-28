@@ -151,6 +151,7 @@ const classeDe = (a) => CLASSES_DE_T2.find((c) => c.casa(a)).classe;
    primeira que casa leva a asserção; é régua de SCRIPT (mede o destino, não a
    qualidade), e não muda a contagem de ninguém — reparte a classe "fiacao". */
 const SUBTIPOS_DA_FIACAO = [
+  { tipo: "achou", diz: "a guarda de que o trecho ou o índice foi achado (x.length > N, i > 0, !!x) — não prova regra, protege a leitura das vizinhas; some com elas quando o passo sair do App", casa: (a) => /^(?:!!)?[\w.$]+(?:\.length)?(?:\s*(?:>|>=|!==)\s*-?\d+)?(?:\s*,,.*)?$/.test(a.cond.trim()) },
   { tipo: "importacao", diz: "o App importa X de um módulo — sem o import o nome cai no calou e o órgão cala em silêncio; vira prova do import do turno()", casa: (a) => /import\s*\\?\{|\bfrom\s*\\?"/.test(a.cond) },
   { tipo: "calou", diz: "a chamada está dentro de calou/try — a lei \"nunca pode custar o turno\"; vira prova de que o turno() sobrevive ao órgão que estoura", casa: (a) => /\bcalou\\?\(/.test(a.cond) },
   { tipo: "ordem", diz: "a ordem dos passos (índice antes de índice, ord(...)) — a prova mais frágil, e a que o turno() prova melhor: a ordem passa a ser uma lista", casa: (a) => /\bord\(|\bi[A-Z]\w*\s*[<>]|\b(?:i|j|ini|fim|pos\w*|iniGolpe|fimGolpe)\s*[<>]=?\s*\w|indexOf\([^)]*\)\s*[<>]/.test(a.cond) },
@@ -272,8 +273,8 @@ sec("4. A CLASSIFICAÇÃO DA LISTA DE T2: (a) converte-se, (b) fica, (c) retira-
 
 {
   const um = (src) => medir(src).detalhe.filter((a) => classeDe(a) === "fiacao").map(subtipoDaFiacao);
-  t("a régua de subtipo: import, calou, ordem, contagem e chamada",
-    JSON.stringify(um(`const APP = readFileSync("../src/App.jsx", "utf8"); t("a", /import \\{ x \\} from "\\.\\/y\\.js"/.test(APP)); t("b", /calou\\("x", e\\)/.test(APP)); const i = APP.indexOf("a"), j = APP.indexOf("b"); t("c", i > 0 && j > i); t("d", (APP.match(/fazer\\(/g) || []).length === 1); t("e", /fazer\\(x\\)/.test(APP));`)) === JSON.stringify(["importacao", "calou", "ordem", "contagem", "chamada"]));
+  t("a régua de subtipo: import, calou, ordem, contagem, chamada e a guarda de achado",
+    JSON.stringify(um(`const APP = readFileSync("../src/App.jsx", "utf8"); t("a", /import \\{ x \\} from "\\.\\/y\\.js"/.test(APP)); t("b", /calou\\("x", e\\)/.test(APP)); const i = APP.indexOf("a"), j = APP.indexOf("b"); t("c", i > 0 && j > i); t("d", (APP.match(/fazer\\(/g) || []).length === 1); t("e", /fazer\\(x\\)/.test(APP)); const b = APP.slice(0, 5); t("f", b.length > 3);`)) === JSON.stringify(["importacao", "calou", "ordem", "contagem", "chamada", "achou"]));
 }
 
 console.log(`\nasserções de texto: ${ok} passaram, ${mal} falharam`);
