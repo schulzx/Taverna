@@ -67,10 +67,13 @@ const FIM_DA_QUASE_MORTE = "    /* ---------------- O TURNO FECHA NA MESA (v9.71
    bater uma vez só):
    1. a fala da emboscada e as linhas da porta de abrir vão à TELA, e não à
       lista do turno, que a entrega já tinha posto na tela — 7.ª fatia,
-      teste-motor-fecho §2b. */
+      teste-motor-fecho §2b.
+   2. o laço de quem caiu salta o buraco no grupo (no envio ou agora), em vez
+      de estourar em `null.nome` e levar o resto do turno — 7.ª fatia, o aviso
+      da trilha B, teste-motor-fecho §1 e §3. */
 export const TROCAS_DECLARADAS = {
   perigo: [["msgs.push(falaDaEmboscada(emb), ...ab.msgs);", "pushMsgs([falaDaEmboscada(emb), ...ab.msgs].map((texto) => ({ autor: \"sistema\", texto })));"]],
-  quaseMorte: [],
+  quaseMorte: [["      (pers.grupo || []).forEach((g) => {\n        const antesG = (persDoEnvio.grupo || []).find((a) => a.nome === g.nome);", "      (pers.grupo || []).forEach((g) => {\n        if (!g) return;\n        const antesG = (persDoEnvio.grupo || []).find((a) => a && a.nome === g.nome);"]],
 };
 const comAsTrocas = (bloco, trocas) => {
   let b = bloco;

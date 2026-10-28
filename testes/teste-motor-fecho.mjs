@@ -17,6 +17,7 @@ import fs from "node:fs";
 import { N_CASOS, sorteDoCaso } from "./combate-casos.mjs";
 import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoFecho, casosDoFecho, TROCAS_DECLARADAS } from "./fecho-bloco.mjs";
 import { oPerigoDaResposta, aQuaseMorte } from "../src/motor/fecho-da-resposta.js";
+import { osVinculos } from "../src/motor/combate-do-turno.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -33,7 +34,8 @@ const divergem = (bloco, novas) => novas.filter((f, i) => !igual(f, D.blocos[blo
 sec("1 · os dois blocos, byte a byte contra os de antes");
 t(`o dourado é do commit de antes (3ec3364), ${N_CASOS} casos em cada bloco`, D.commit === "3ec3364" && ["perigo", "quaseMorte"].every((b) => (D.blocos[b] || []).length === N_CASOS));
 /* o dourado é o App de antes COM as trocas declaradas em fecho-bloco.mjs (hoje uma: a emboscada vai à tela, §2b) */
-t("com 1 troca declarada, no perigo, e com o porquê escrito", TROCAS_DECLARADAS.perigo.length === 1 && TROCAS_DECLARADAS.quaseMorte.length === 0 && TROCAS_DECLARADAS.perigo.every(([de, para]) => de && para && de !== para));
+/* (movido, T1-A 7.ª fatia, defeito: a segunda troca, o buraco no grupo, na quase-morte) */
+t("com 2 trocas declaradas, uma no perigo e uma na quase-morte, e com o porquê escrito", TROCAS_DECLARADAS.perigo.length === 1 && TROCAS_DECLARADAS.quaseMorte.length === 1 && [...TROCAS_DECLARADAS.perigo, ...TROCAS_DECLARADAS.quaseMorte].every(([de, para]) => de && para && de !== para));
 for (const bloco of ["perigo", "quaseMorte"]) {
   const fotos = D.blocos[bloco];
   const novas = fotosDeHoje(bloco);
@@ -54,7 +56,9 @@ for (const bloco of ["perigo", "quaseMorte"]) {
   const erros = conta(Q, (x) => x.erro);
   console.log(`      perigo: a porta abre ${emb} · a salvaguarda ${salva} · o desproporcional e o sem criatura ${desp} · a iniciativa na tela ${fala}`);
   console.log(`      quase-morte: a cicatriz ${cic} · o marco de vínculo ${marco} · o grupo torto estoura ${erros}`);
-  t("percorre os ramos dos dois blocos", emb > 20 && salva > 30 && desp > 10 && fala > 20 && cic > 15 && marco > 10 && erros > 5);
+  /* (movido, T1-A 7.ª fatia, defeito: o grupo com buraco já não estoura — o dourado da quase-morte leva a troca declarada, e os casos dele passam a ser os que correm até às conquistas) */
+  t("percorre os ramos dos dois blocos", emb > 20 && salva > 30 && desp > 10 && fala > 20 && cic > 15 && marco > 10);
+  t("e nenhum caso da quase-morte estoura (o buraco no grupo salta-se)", erros === 0, String(erros));
   t("o perigo nunca estoura para fora (calava, e cala)", P.every((x) => !x.erro));
 }
 
@@ -129,8 +133,13 @@ sec("3 · as peças, jogadas");
   const r = aQuaseMorte({ persDoEnvio: antes, pers: agora, dia: 7 }, ctx);
   t("a quase-morte na ordem de sempre: quem chegou, a queda, o vínculo, a cicatriz, quem caiu, a ficha, as conquistas", igual(ordem, ["cont:recrutados:1", "cont:quaseMorte:1", "vinculo:todos:4", "efeito:tela", "efeito:nota", "vinculo:Brás:-6", "efeito:ficha", "conquistas"]), JSON.stringify(ordem));
   t("a cicatriz entra na ficha com o dia, sem tocar na de entrada", r.pers.cicatrizes.length === 1 && r.pers.cicatrizes[0].dia === 7 && JSON.stringify(agora) === congelado);
-  const torto = aQuaseMorte({ persDoEnvio: { vida: 1, grupo: [null] }, pers: { vida: 1, grupo: [{ nome: "Brás", vida: 0 }] }, dia: 1 }, ctx);
-  t("o grupo torto volta em `erro`, sem subir", torto.erro instanceof TypeError);
+  /* (movido, T1-A 7.ª fatia, defeito: "o grupo torto volta em `erro`" provava que o buraco no grupo não subia; o aviso da trilha B mostrou que ele nem devia estourar — um buraco no grupo, no envio ou agora, não é um companheiro, e o laço de quem caiu salta-o. O erro de um estouro de verdade continua a voltar em `erro`: a régua do perigo, acima.) */
+  const ordem2 = [];
+  const ctx2 = { ...ctx, aplicarVinculo: (g, quem, p) => { ordem2.push(`vinculo:${quem}:${p}`); return g; }, checarConquistas: () => ordem2.push("conquistas") };
+  const buraco = aQuaseMorte({ persDoEnvio: { vida: 1, grupo: [null, { nome: "Brás", vida: 4 }] }, pers: { vida: 1, grupo: [{ nome: "Brás", vida: 0 }, null] }, dia: 1 }, ctx2);
+  t("um buraco no grupo não estoura: quem caiu ainda pesa, e as conquistas correm", !buraco.erro && ordem2.includes("vinculo:Brás:-6") && ordem2[ordem2.length - 1] === "conquistas", JSON.stringify([buraco.erro && buraco.erro.message, ordem2]));
+  /* e a porta de verdade: o vínculo de UM companheiro num grupo com buraco (o App chama osVinculos pela porta aplicarVinculo) */
+  t("o vínculo de um só, num grupo com buraco, deixa o buraco e não estoura", (() => { try { const r = osVinculos([null, { nome: "Brás", vinculo: 10, marcos: [] }], "Brás", -6); return r.grupo[0] === null && r.grupo[1].vinculo === 4; } catch { return false; } })());
 }
 
 sec("4 · a fiação no App");

@@ -148,7 +148,10 @@ export function aQuaseMorte(estado, ctx) {
       tocouVinculo = true;
     }
     (pers.grupo || []).forEach((g) => {
-      const antesG = (persDoEnvio.grupo || []).find((a) => a.nome === g.nome);
+      /* um buraco no grupo (no envio ou agora) não é um companheiro: salta-se,
+         e o resto do grupo e as conquistas seguem (o aviso da trilha B) */
+      if (!g) return;
+      const antesG = (persDoEnvio.grupo || []).find((a) => a && a.nome === g.nome);
       if (antesG && (antesG.vida || 0) > 0 && (g.vida || 0) <= 0) {
         pers = { ...pers, grupo: porta("aplicarVinculo", pers.grupo, g.nome, -6, null) };
         tocouVinculo = true;

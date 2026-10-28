@@ -394,7 +394,9 @@ export function somarAoContador(contadores, campo, n = 1) {
 export function osVinculos(grupo, nomeOuTodos, pontos) {
   const batidos = [];
   const novo = (grupo || []).map((g) => {
-    if (nomeOuTodos !== "todos" && g.nome !== nomeOuTodos) return g;
+    /* um buraco no grupo fica buraco: não é companheiro, e não estoura em
+       `null.nome` quando o vínculo é de um só (T1-A, 7.ª fatia) */
+    if (!g || (nomeOuTodos !== "todos" && g.nome !== nomeOuTodos)) return g;
     const r = ganharVinculo(g, pontos);
     if (r.marcoNovo) batidos.push({ nome: g.nome, marco: r.marcoNovo });
     return r.membro;
