@@ -203,6 +203,13 @@ export const LEXICO_DO_JUIZ = {
     "beco", "banca", "tenda", "loja", "forja", "ferraria", "armazem", "celeiro", "fazenda", "quinta", "granja", "biblioteca",
     "alfandega", "quartel", "calabouco", "masmorra", "pedreira", "pedra", "pedras", "fonte", "bairro", "distrito", "terras",
     "reino", "condado", "ducado", "marca", "fronteira", "chas", "fivela", "cao", "machado", "escudo"],
+  /* o que separa o sítio do nome que vem depois: "Na taverna, Rurik…" — o
+     substantivo de sítio e a preposição só batizam o nome colado a eles */
+  separaDoSitio: /[,;:.!?…—–()"“”«»]/,
+  /* o segundo nome com hífen é epíteto ("Rurik Martelo-Torto", "Nyla
+     Punho-de-Pedra"): quem vem antes dele é o nome, nunca um verbo que só
+     tem maiúscula por abrir a frase ("Levar Dolmen") */
+  epiteto: /^\p{Lu}[\p{L}'’]*-\p{L}/u,
   /* antes de um nome, fazem dele destino ou endereço */
   preposicoesDeLugar: ["em", "no", "na", "nos", "nas", "para", "pra", "pro", "ate", "rumo", "ao", "a", "pelo", "pela", "desde", "perto", "longe"],
   /* o sítio sem nome que a prosa fixa (ver julgarEstabelecimentos) */
@@ -673,7 +680,7 @@ function julgarNomes(t, estado) {
     // "Levar Dolmen": a primeira palavra só tem maiúscula por abrir a frase
     let c = c0;
     const [w0, w1] = c.nome.split(/\s+/);
-    if (w1 && /^\p{Lu}/u.test(w1) && noComeco(t, c.ini) && !meioDaFrase.has(semAcento(w0)) && !L.titulos.includes(semAcento(w0))) {
+    if (w1 && /^\p{Lu}/u.test(w1) && !L.epiteto.test(w1) && noComeco(t, c.ini) && !meioDaFrase.has(semAcento(w0)) && !L.titulos.includes(semAcento(w0))) {
       const ini = c.ini + c.nome.indexOf(w1, w0.length);
       c = { nome: c.nome.slice(ini - c.ini), ini, fim: c.fim };
     }
@@ -702,7 +709,11 @@ function julgarNomes(t, estado) {
     const nomeLimpo = c.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp("(?<![\\p{L}])" + nomeLimpo + "(?![\\p{L}])", "u").test(ecoT)) { vistos.add(chave); continue; }
     vistos.add(chave);
-    const antes = palavras(p.slice(Math.max(0, c.ini - 40), c.ini)).map((x) => x.w);
+    // o que vem antes de uma pontuação não é do nome ("Na taverna, Rurik…")
+    const janela = p.slice(Math.max(0, c.ini - 40), c.ini);
+    let corte = janela.length;
+    while (corte > 0 && !L.separaDoSitio.test(janela[corte - 1])) corte--;
+    const antes = palavras(janela.slice(corte)).map((x) => x.w);
     const prev = antes[antes.length - 1] || "", prev2 = antes[antes.length - 2] || "";
     const primeira = toks[0];
     // "As Três Pedras": o número na frente e o substantivo de sítio atrás

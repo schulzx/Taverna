@@ -161,6 +161,21 @@ sec("2. MENÇÃO NÃO É PRESENÇA");
   t("a palavra que só tem maiúscula por abrir a frase não é nome", x.pessoasNovas.length === 0 && x.nomesNovos.length === 0);
   const y = julgarAProsa("Atrás dela, Rurik se aproxima mancando.", { gente: ["Rurik"] });
   t("e quem o registo já tem não é novo", y.pessoasNovas.length === 0);
+  /* o achado da 5.ª fatia da T1-A (diário de 28/10): no navegador, "Rurik
+     Martelo-Torto enxuga uma caneca" saiu como lugar novo. Dois defeitos,
+     cada um com o seu caso: o sítio que vem ANTES DA VÍRGULA ("Na taverna,
+     Rurik…") batizava o nome que vem depois dela; e, ao abrir a frase, o
+     "Rurik" era tirado como se fosse verbo ("Levar Dolmen"), sobrando só o
+     epíteto — o que faz de um Rurik conhecido um "Martelo-Torto" novo */
+  t("a pontuação que separa e o epíteto de hífen são do léxico (a tabela)", LEXICO_DO_JUIZ.separaDoSitio.test(",") && !LEXICO_DO_JUIZ.separaDoSitio.test(" ") && LEXICO_DO_JUIZ.epiteto.test("Martelo-Torto") && !LEXICO_DO_JUIZ.epiteto.test("Dolmen"));
+  const r1 = julgarAProsa("Na taverna, Rurik Martelo-Torto enxuga uma caneca.", {});
+  t("o sítio antes da vírgula não batiza o nome (Rurik Martelo-Torto é pessoa, não lugar)", r1.pessoasNovas.some((a) => a.nome === "Rurik Martelo-Torto") && r1.lugaresNovos.length === 0);
+  const r2 = julgarAProsa("A taverna está cheia. Rurik Martelo-Torto enxuga uma caneca.", {});
+  t("o nome com epíteto de hífen, ao abrir a frase, fica inteiro", r2.pessoasNovas.length === 1 && r2.pessoasNovas[0].nome === "Rurik Martelo-Torto");
+  const r3 = julgarAProsa("A taverna está cheia. Rurik Martelo-Torto enxuga uma caneca.", { gente: ["Rurik"] });
+  t("e o Rurik que o registo tem não vira um Martelo-Torto novo", r3.pessoasNovas.length === 0 && r3.lugaresNovos.length === 0);
+  const r4 = julgarAProsa("Seguem pela estrada até a Taverna Caneca Torta. Na taverna Caneca Torta, o fogo crepita.", {});
+  t("e o sítio colado ao nome ainda o batiza (a taverna Caneca Torta é lugar)", r4.lugaresNovos.some((a) => /Caneca Torta/.test(a.nome)) && r4.pessoasNovas.length === 0);
   const z = julgarAProsa("\"Pago as sete?\" Ela recolhe as sete fichas.", { frase: "Pago as sete fichas.", moeda: "fichas" });
   t("o valor que o jogador disse é eco, não invenção", z.precosInventados.length === 0);
 }
