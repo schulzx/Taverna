@@ -587,7 +587,7 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
    ficha que o App tem no ref (`fichaDoRef`), a luta e as travas, o mapa, a
    cidade, o lugar, a jornada, a facção, a devoção, o deus, o acampamento, a
    masmorra, a raid, a espinha, a última fala, o dia, os eventos, o arco, os
-   contadores e o nível da fama, o cânone, a gente e o contador dela, a
+   contadores (a fama sai do nível da ficha), o cânone, a gente e o contador dela, a
    abertura, as missões. `ctx`: o do `aplicar` (envelopes, pedido da bolsa,
    moeda, sorte da salvaguarda), mais o mundo, a base do nome, o motor do
    arco e a sorte do turno.

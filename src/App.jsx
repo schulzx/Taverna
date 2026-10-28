@@ -8919,7 +8919,10 @@ export default function Taverna() {
     pushMsgs(msgs.map((texto) => ({ autor: "sistema", texto })));
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CHEGADA — REGISTRADA PELO SISTEMA] A estrada acabou: ${dias} dias de marcha cobriram o trecho e eu ESTOU em ${j.para}, dentro dela. Narre a chegada — o que se vê do portão, o que muda no ar, quem repara em mim — e trate este lugar como o meu lugar a partir de agora. Não me ponha de volta na estrada.`;
   };
-  const famaAtual = () => calcularFama(contRef.current, (personagem && personagem.nivel) || 1, dominiosDe(mapaRef.current).length);
+  /* o nível é o da ficha VIVA (o ref, 4.ª fatia): o `personagem` do render
+     é nulo nas closures que nascem no primeiro render (o aplicarResposta é
+     uma delas), e a fama caía no nível 1 — o defeito 4 de 28/10 */
+  const famaAtual = () => calcularFama(contRef.current, ((personagemRef.current || personagem || {}).nivel) || 1, dominiosDe(mapaRef.current).length);
   const famaPatamarRef = useRef(0); // fama da última checagem, para detectar saltos de patamar
   const absMin = () => (diaRef.current - 1) * 1440 + minutoRef.current;
   const tempoInfoPrompt = () => {
@@ -10576,11 +10579,10 @@ export default function Taverna() {
        só e na ordem em que nasceram. Provado byte a byte contra a fila de
        antes (teste-motor-aplicar, secção 9).
 
-       Dois valores que se leem aqui como se liam: a ficha do ref
-       (`personagemRef.current || personagem`, a que o milagre cura) e o
-       nível da fama (`(personagem && personagem.nivel) || 1` — o
-       `personagem` do render, que dentro deste useCallback é o do primeiro
-       render: sempre o 1. Está no diário de 28/10, como achado).
+       A ficha do ref (`personagemRef.current || personagem`) vai junto, para
+       quem calcula sem ficha do turno; o milagre e o achado do sinal caem na
+       ficha DO TURNO, e a fama sai do nível dela (4.ª fatia, os defeitos 2 e
+       4 do diário de 28/10).
 
        Os blocos que já não moram aqui deixaram notas que valem como lei:
        CONDIÇÃO É DO SISTEMA (v9.49) — o Mestre não põe nem tira condições
@@ -10596,7 +10598,7 @@ export default function Taverna() {
       faccaoJogador: faccaoJogadorRef.current, devocao: devocaoRef.current, divindade: divindadeRef.current,
       acampado: acampadoRef.current, masmorra: masmorraRef.current, raid: raidRef.current, espinha: espinhaRef.current,
       ultimoPedido: ultimoPedidoRef.current, dia: diaRef.current, eventos: eventosRef.current, historia: historiaRef.current,
-      contadores: contRef.current, nivelDaFama: (personagem && personagem.nivel) || 1,
+      contadores: contRef.current,
       canone: canoneRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current, abertura: aberturaMundoRef.current, missoes: missoesRef.current,
     }, resp, {
       envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda, sorte: sorteDoTurno("salvaguarda"),

@@ -550,8 +550,8 @@ export function aplicarAsMissoes(estado, resposta, ctx = {}) {
    "milagre:cura", "dominio:da Forja") e o SISTEMA converte pelas tabelas.
    Mais barato em tokens e impossível de inflacionar. Seis por turno.
    `estado`: { personagem, fichaDoRef, divindade, devocao, mapa, cidadeAtual,
-   lugar, jornada, combate, acampado, masmorra, raid, dia, contadores,
-   nivelDaFama }; `ctx`: { mundo, sorteDoTurno }.
+   lugar, jornada, combate, acampado, masmorra, raid, dia, contadores };
+   `ctx`: { mundo, sorteDoTurno }. A fama sai do nível da ficha do turno.
    Os efeitos novos: `divindade`, `ficha` (o milagre), `combate`,
    `sinalViagem`, `sinalMasmorra`, `sinalRaid`, `espolio` (raro para cima
    abre a revelação, v9.163), e o prompt remontado quando a fé ascende.
@@ -567,7 +567,12 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
   let pers = e0.personagem;
   const mapa = e0.mapa;
   let fichaDoRef = e0.fichaDoRef, divindade = e0.divindade, devocao = e0.devocao, combate = e0.combate;
-  const fama = () => calcularFama(e0.contadores, e0.nivelDaFama, dominiosDe(mapa).length);
+  /* A FAMA É A DO NÍVEL DO HERÓI (4.ª fatia, o defeito 4 de 28/10). O nível
+     vinha do App como `nivelDaFama`, lido no `personagem` do render — nulo
+     dentro do useCallback do aplicarResposta, e logo sempre o 1: um herói de
+     nível 20 ganhava fé de um feito como se fosse de nível 1. Agora é o da
+     ficha do turno, a que o sinal vive. */
+  const fama = () => calcularFama(e0.contadores, (pers && pers.nivel) || 1, dominiosDe(mapa).length);
   const daFe = () => ({ divindade, devocao, mapa, cidadeAtual: e0.cidadeAtual, dia: e0.dia, nivel: pers && pers.nivel, personagem: pers });
   if (resp.mudancas && Array.isArray(resp.mudancas.sinais)) {
     for (const bruto of resp.mudancas.sinais.slice(0, 6)) {

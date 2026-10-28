@@ -108,7 +108,9 @@ const fechos = [
   corte("  const registrarLugar = (nome, fonte = \"mestre\") => {", "  /* ---------------- A NÉVOA AO REDOR (v9.51)"),
   corte("  const abrirNevoaDaVizinhanca = (nomeCidade, msgs) => {", "  /* ---------------- A VIAGEM TERMINA SOZINHA"),
   corte("  const casarDevocaoComMapa = () => {", "  /* CLIMA: rolado por tabela"),
-  corte("  const famaAtual = () =>", "\n"),
+  /* 3. (os consertos da 4.ª fatia) a fama sai do nível da ficha do TURNO, e
+     não do `personagem` do render (nulo no useCallback: sempre o nível 1) */
+  (() => { const f = corte("  const famaAtual = () =>", "\n"); const de = "(personagem && personagem.nivel) || 1"; if (f.split(de).length !== 2) throw new Error("o conserto declarado não bate uma vez em famaAtual"); return f.replace(de, "(__fichaDoTurno() && __fichaDoTurno().nivel) || 1"); })(),
   ganharFe,
   corte("  const invocarMilagre = (id, origem = \"jogador\") => {", "  /* DÁDIVA ÉPICA (v8.1)"),
   corte("  const concederDadivas = (pers, msgs) => {", "  /* Botão de milagre (v9.28)"),

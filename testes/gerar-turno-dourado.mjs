@@ -69,6 +69,9 @@ consertar("App", "      msgs.push(...dosSinais.msgs);\n      aplicarOsEfeitos(do
    `cidade_atual`), e não por cima dele no fim; a devoção fica no fim */
 consertar("meio-do-turno", "    if (md.cidade_atual) {", "    if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapa = mp; ef({ tipo: \"mapa\", mapa }); }\n    if (md.cidade_atual) {");
 consertar("meio-do-turno", "    if (mudouMapa) {\n      mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapa = mp; ef({ tipo: \"mapa\", mapa });\n", "    if (mudouMapa) {\n");
+/* 3. a fama dos sinais sai do nível da ficha do turno, e não do
+   `nivelDaFama` que o App lia no `personagem` do render (sempre o 1) */
+consertar("meio-do-turno", "  const fama = () => calcularFama(e0.contadores, e0.nivelDaFama, dominiosDe(mapa).length);", "  const fama = () => calcularFama(e0.contadores, (pers && pers.nivel) || 1, dominiosDe(mapa).length);");
 
 /* o motor do mesmo commit, ao lado do de hoje, com nome de rascunho */
 const rascunho = {};

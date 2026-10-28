@@ -381,7 +381,11 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
     /* a magnitude do sinal sai da tabela (MAGNITUDE_FE · fieisPorFeito), multiplicada pela fama */
     const cont = { combatesVencidos: 10 };
     const s = aplicarOsSinais({ personagem: { nivel: 15 }, divindade: { despertar: true, fieis: 0, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 1, contadores: cont, nivelDaFama: 1 }, { narrativa: "x", mudancas: { sinais: ["fe:proeza"] } }, {});
-    t("o sinal da fé paga o que a tabela diz (fieisPorFeito × fama)", s.msgs[0].includes(`+${fieisPorFeito("proeza", calcularFama(cont, 1, 0))} fiéis`));
+    /* MOVIDA (28/10, T1-A 4.ª fatia, o defeito 4 de 28/10): a fama era a do
+       nível 1 em todo turno — o `nivelDaFama` vinha do `personagem` do render,
+       nulo dentro do useCallback do aplicarResposta. Agora sai do nível da
+       ficha do turno (15 aqui), e o `nivelDaFama` do estado já não é lido */
+    t("o sinal da fé paga o que a tabela diz (fieisPorFeito × fama do nível da ficha)", s.msgs[0].includes(`+${fieisPorFeito("proeza", calcularFama(cont, 15, 0))} fiéis`) && fieisPorFeito("proeza", calcularFama(cont, 15, 0)) !== fieisPorFeito("proeza", calcularFama(cont, 1, 0)));
   }
   t("deus adormecido não ganha fé", ganhoDeFe({ divindade: { despertar: false } }, 300, 0, "x").msgs.length === 0);
   t("sem ficha no estado, o nível não derruba (o defeito do render nulo)", (() => { try { ganhoDeFe({ divindade: dv, devocao: {}, mapa: mapaF, cidadeAtual: "Vau Alto", dia: 2 }, 300, 0, "x"); return true; } catch { return false; } })());
@@ -525,6 +529,22 @@ sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)")
     const tb = nova.estado.mapa.cidades.find((c) => c.nome === "Torre Branca");
     const cer = (nova.efeitos.find((e) => e.tipo === "lugarNovo") || {}).cidade || {};
     t("a cidade que o Mestre registra e o herói pisa no mesmo turno fica pisada, e a cerimónia tem a ficha dela", tb && tb.pisada === true && cer.tipo === "fortaleza");
+  }
+  /* defeito 4 de 28/10: a fama dos sinais era sempre a do nível 1 — o App
+     lia o nível no `personagem` do render, e o aplicarResposta é um
+     useCallback que nasce no primeiro render, com ele nulo. O turno lê o
+     nível da ficha DO TURNO; o App, a do ref (o que está vivo) */
+  {
+    const cont = { combatesVencidos: 4 };
+    const fe = (nivel) => {
+      const s = aplicarOTurno(estadoDoTurno({ personagem: { ...heroi(), nivel }, contadores: cont, nivelDaFama: 1 }), { narrativa: "x", mudancas: { sinais: ["fe:marco"] } }, ctxDoTurno());
+      const m = s.msgs.find((x) => /fiéis/.test(x)) || "";
+      return +(m.match(/\+([\d.]+) fiéis/) || [0, "0"])[1].replace(/\./g, "");
+    };
+    t(`a fé de um feito cresce com o nível do herói (nível 1: ${fe(1)}, nível 20: ${fe(20)})`, fe(20) === fieisPorFeito("marco", calcularFama(cont, 20, 0)) && fe(20) > fe(1));
+    const fama = APP.match(/const famaAtual = \(\) => calcularFama\(contRef\.current, ([^,]+),/);
+    t("o famaAtual do App lê o nível da ficha viva (o ref), não o do render", !!fama && /personagemRef\.current/.test(fama[1]));
+    t("o App já não manda ao turno um nível da fama de render", !/nivelDaFama: \(personagem && personagem\.nivel\)/.test(APP));
   }
 }
 
