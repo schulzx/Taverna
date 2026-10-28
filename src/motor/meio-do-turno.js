@@ -47,6 +47,7 @@ import { gerarLoot, RARIDADE_ROTULO } from "../loot.js";
 import { empilhar, efeitoDeMilagre } from "../efeitos.js";
 import { calcularFama } from "../fama.js";
 import { dominiosDe } from "../gestao.js";
+import { MAX_COMPANHEIROS } from "../constantes.js";
 
 const objeto = (x) => (x && typeof x === "object" ? x : {});
 const mundoDe = (op) => objeto(typeof op.mundo === "function" ? op.mundo() : op.mundo);
@@ -648,4 +649,23 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
     }
   }
   return { estado: { ...e0, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
+}
+
+/* ============================================================
+   A FRASE DO GRUPO CHEIO (o Cronista, 2.ª fatia; guardada na 3.ª)
+
+   O Cronista diz quem entrou no grupo e o juízo (`julgarOCronista`) recusa
+   o que o sistema não assina, com o porquê. Com o grupo CHEIO, a porta do
+   convite (`vereditoDoConvite`) recusa todos — e o juízo diz `semPorta` (ou
+   `desconhecido`) antes de chegar a `cheio`. O jogador continua a ouvir
+   que o grupo está cheio, como ouvia antes do juízo para todo nome que não
+   fosse já do grupo; com vaga, um `semPorta` não é "cheio" e cala.
+   Os invocados não ocupam vaga (MAX_COMPANHEIROS conta os de carne).
+     frasesDoGrupoCheio(recusado, grupo) → [linhas da tela]
+   ============================================================ */
+export function frasesDoGrupoCheio(recusado, grupo) {
+  const cheioAgora = (Array.isArray(grupo) ? grupo : []).filter((g) => g && !g.invocada).length >= MAX_COMPANHEIROS;
+  return (Array.isArray(recusado) ? recusado : [])
+    .filter((x) => x && x.secao === "grupo" && (x.porque === "cheio" || (cheioAgora && (x.porque === "semPorta" || x.porque === "desconhecido"))))
+    .map((x) => `O grupo está cheio — ${x.o} não pôde se juntar.`);
 }

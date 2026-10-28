@@ -237,7 +237,7 @@ import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semear
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
-import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado } from "./motor/meio-do-turno.js";
+import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -11493,9 +11493,10 @@ export default function Taverna() {
            grupo cheio continua a ser dito ao jogador. Com o grupo cheio o
            convite recusa todos, e o juízo diz `semPorta` (ou `desconhecido`)
            antes de chegar a `cheio`: a frase sai para esses também, como
-           saía antes do juízo para todo nome que não fosse já do grupo. */
-        const cheioAgora = (p.grupo || []).filter((g) => g && !g.invocada).length >= MAX_COMPANHEIROS;
-        recusadoDoCronista.filter((x) => x && x.secao === "grupo" && (x.porque === "cheio" || (cheioAgora && (x.porque === "semPorta" || x.porque === "desconhecido")))).forEach((x) => msgs.push(`O grupo está cheio — ${x.o} não pôde se juntar.`));
+           saía antes do juízo para todo nome que não fosse já do grupo.
+           A régua mora em `frasesDoGrupoCheio` (src/motor/meio-do-turno.js),
+           guardada por teste-grupo-cheio.mjs (3.ª fatia). */
+        msgs.push(...frasesDoGrupoCheio(recusadoDoCronista, p.grupo));
         const entraram = (ac.grupo && Array.isArray(ac.grupo.entraram)) ? ac.grupo.entraram : [];
         if (entraram.length) {
           const grupoAtual = [...(p.grupo || [])];
