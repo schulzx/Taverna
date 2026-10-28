@@ -405,7 +405,8 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
   const pauta = corpo("const pautaDoTurno = (acaoDoTurno = \"\") => {");
   t("o App importa as peças do motor (mercado, nomes, cidade-por-dentro)",
     /import \{[^}]*\bprecoComumParaPauta\b[^}]*\bprecosDaRua\b[^}]*\} from "\.\/mercado\.js"/.test(app)
-    && /import \{[^}]*\bnomesAMao\b[^}]*\blinhaDosNomesAMao\b[^}]*\bnomesAMaoNaProsa\b[^}]*\} from "\.\/nomes\.js"/.test(app)
+    /* (MOVIDA, 28/10, T1-A 4.ª fatia: `nomesAMaoNaProsa` saiu do import do App — o leitor dele era o códex do fim do turno, que se mudou para src/motor/fim-do-turno.js e o importa; a prova jogada está mais abaixo) */
+    && /import \{[^}]*\bnomesAMao\b[^}]*\blinhaDosNomesAMao\b[^}]*\} from "\.\/nomes\.js"/.test(app)
     && /import \{[^}]*\bfichaDaCidade\b[^}]*\} from "\.\/cidade-por-dentro\.js"/.test(app));
   t("o porte da terra sai da ficha da cidade (pouso.fator), num calou que devolve 1",
     /const fatorDoPouso = \(\) => \{[^]*?f\.pouso\.fator[^]*?calou\("fatorDoPouso", e\); return 1;/.test(app));
@@ -431,9 +432,18 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
      voltar, e o usado sai da lista seguinte por estar no registo */
   t("os nomes só contam como oferecidos se a linha chegou ao texto (o molde do QUEM É), e ficam até ela voltar",
     app.includes("if (np && np.linha && pauta.includes(np.linha)) nomesOferecidosRef.current = np.nomes;") && !app.includes("nomesOferecidosRef.current = [];"));
-  t("ao fim do turno, o nome usado na prosa entra no registo — e morto, se a oração o pôs morto",
-    app.includes("const usados = nomesAMaoNaProsa(resp.narrativa, nomesOferecidosRef.current || []);")
-    && app.includes("...(u.morto ? { status: \"morto\" } : {})") && app.includes('calou("os nomes à mão na prosa", e)'));
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O
+     bloco mudou-se para src/motor/fim-do-turno.js#aplicarOCodex (o motor não
+     se lê pelo texto): joga-se o códex com o nome vivo e com o nome morto, e
+     o App só tem de lhe passar os oferecidos. */
+  {
+    const { aplicarOCodex } = await import("../src/motor/fim-do-turno.js");
+    const cod = (narrativa) => aplicarOCodex({ personagem: { nome: "Ana", nivel: 3, grupo: [] }, cidadeAtual: "Vau", mapa: { cidades: [] }, npcs: {}, npcTurno: 2, dia: 4, oferecidos: [{ nome: "Bruno Sal", genero: "ele" }] },
+      { narrativa }, { mundo: { semente: "x", genero: "Fantasia medieval" } }).estado.npcs["Bruno Sal"];
+    t("ao fim do turno, o nome usado na prosa entra no registo — e morto, se a oração o pôs morto",
+      !!cod("Bruno Sal limpa o balcão.") && cod("Bruno Sal limpa o balcão.").status !== "morto" && cod("Bruno Sal está morto no chão.").status === "morto"
+      && app.includes("oferecidos: nomesOferecidosRef.current"));
+  }
   t("os refs dos nomes vivem no turno, não no save",
     !/nomesOferecidos\s*:/.test(app) && !/nomesPendentes\s*:/.test(app));
   t("a ficha da cidade mede do ponto do herói (aqui: meuPonto())",

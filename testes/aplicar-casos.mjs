@@ -22,7 +22,7 @@ import { dadoDo } from "../src/semente.js";
 import { garantirGeografia } from "../src/geografia.js";
 import { garantirHistoria } from "../src/historia.js";
 import { garantirDevocao } from "../src/devocao.js";
-import { locaisDaCidade, masmorrasDoMundo } from "../src/mundo-base.js";
+import { locaisDaCidade, masmorrasDoMundo, oQueExisteAqui } from "../src/mundo-base.js";
 import { arredoresDaCidade } from "../src/arredores.js";
 import { definirLugar } from "../src/lugar.js";
 
@@ -420,5 +420,65 @@ export function retratoDoMeio(r) {
     faccaoJogador: r.faccaoJogador, devocao: r.devocao, divindade: r.divindade, eventos: r.eventos, historia: r.historia, combate: r.combate,
     sinalViagem: r.sinalViagem, sinalMasmorra: r.sinalMasmorra, sinalRaid: r.sinalRaid, espolio: r.espolio, lugarNovo: r.lugarNovo, chegada: r.chegada,
     salvos: r.salvos, remontagens: r.remontagens, questsVistas: r.questsVistas,
+  });
+}
+
+/* ============================================================
+   OS CASOS DO FIM DO TURNO (T1-A, 4.ª fatia)
+
+   O códex (da base para o cânone, os nomes à mão, o peso do deus que
+   entra), a chegada que ninguém anotou e o portão correm DEPOIS da luta,
+   no fim do `aplicarResposta`. Os casos são os do turno inteiro (as 275
+   narrações reais), e o que os registos não guardam varia pelo índice:
+   - a prosa ganha, por caso, o nome de um local e de uma pessoa da base da
+     cidade em que se está (de `oQueExisteAqui`, o mesmo mundo do caso), um
+     dos nomes à mão oferecidos (vivo ou morto), a chegada a uma cidade a um
+     passo (e a chegada negada), e a queda de um inimigo que está de pé;
+   - o mapa ganha duas rotas de um passo (Monte Rasa–Vila Funda e Porto
+     Cinza–Nova Profundo), sem o que a chegada nunca morderia;
+   - a base vem nula, ou com o primeiro local da cidade já revelado.
+   ============================================================ */
+const NOMES_OFERECIDOS = [{ nome: "Teodora Vaz", genero: "ela" }, { nome: "Bruno Sal", genero: "ele" }];
+export function casosDoFim() {
+  return casosDoTurno().map((c, i) => {
+    const e = c.estado;
+    const mapa = { ...e.mapa, rotas: [...(e.mapa.rotas || []), { de: "Monte Rasa", para: "Vila Funda", terreno: "estrada", km: 6, dias: 0.25 }, { de: "Nova Profundo", para: "Porto Cinza", terreno: "estrada", km: 9, dias: 0.4 }] };
+    const semente = c.ctx.mundo.semente;
+    const q = e.cidadeAtual ? oQueExisteAqui(semente, mapa, e.cidadeAtual, null, "Fantasia medieval", null, null) : null;
+    const locais = (q && q.locais) || [], gente = (q && q.gente) || [];
+    const frases = [];
+    if (i % 3 === 0 && locais[i % Math.max(1, locais.length)]) frases.push(`Você passa diante de ${locais[i % locais.length].nome} sem parar.`);
+    if (i % 2 === 0 && gente[i % Math.max(1, gente.length)]) frases.push(`${gente[i % gente.length].nome} ergue os olhos e acena para você.`);
+    if (i % 7 === 3 && gente[(i + 1) % Math.max(1, gente.length)]) frases.push(`Mais atrás, ${gente[(i + 1) % gente.length].nome} cochicha com alguém.`);
+    if (i % 5 === 0) frases.push("Teodora Vaz enche as canecas e ri alto.");
+    if (i % 5 === 3) frases.push("Bruno Sal está morto no chão da estalagem.");
+    const vizinha = { "Monte Rasa": "Vila Funda", "Vila Funda": "Monte Rasa", "Porto Cinza": "Nova Profundo", "Nova Profundo": "Porto Cinza" }[e.cidadeAtual];
+    if (vizinha && (i % 4 === 2 || i % 6 === 3)) frases.push(`Ao cair da tarde você entra em ${vizinha} pela estrada curta.`);
+    if (vizinha && i % 8 === 6) frases.push(`Você quase entra em ${vizinha}, mas volta.`);
+    const vivo = e.combate && (e.combate.inimigos || []).find((x) => x && !x.derrotado && x.vida > 0);
+    if (vivo && i % 3 === 1) frases.push(`${vivo.nome} tomba morto aos seus pés.`);
+    const narrativa = [c.resp.narrativa || "", ...frases].join(" ").trim();
+    const base = i % 4 === 1 && locais[0] ? { revelados: [locais[0].id || `${e.cidadeAtual}|local|${locais[0].nome}`], mortos: i % 8 === 5 ? [gente[0] && gente[0].nome].filter(Boolean) : [] } : null;
+    return {
+      id: c.id,
+      semente: `fim-dourado|${i}`,
+      resp: { ...c.resp, narrativa },
+      estado: {
+        personagem: e.personagem, fichaDoRef: e.fichaDoRef, mapa, cidadeAtual: e.cidadeAtual, lugar: e.lugar, jornada: i % 6 === 2 ? null : e.jornada,
+        combate: i % 5 === 4 ? null : e.combate, divindade: e.divindade, npcs: e.npcs || {}, npcTurno: e.npcTurno || 0, dia: e.dia, abertura: e.abertura, missoes: e.missoes || [],
+        base, oferecidos: i % 9 === 8 ? [] : NOMES_OFERECIDOS, ultimoPedido: e.ultimoPedido || "", confidencias: i % 6 === 1 ? [{ quem: gente[0] && gente[0].nome, oQue: "o segredo da ladeira" }] : [],
+        nemesis: i % 10 === 7 ? { nome: "Vorn", vivo: true } : null,
+      },
+      ctx: { mundo: { semente, genero: "Fantasia medieval", molde: null, lex: null } },
+      notaAntes: c.notaAntes,
+    };
+  });
+}
+
+/* o retrato do fim do turno, peça a peça */
+export function retratoDoFim(r) {
+  return JSON.stringify({
+    base: r.base, npcs: r.npcs, cidadeAtual: r.cidadeAtual, lugar: r.lugar, mapa: r.mapa, minutos: r.minutos,
+    portaoCtx: r.portaoCtx, portao: r.portao,
   });
 }

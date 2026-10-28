@@ -764,7 +764,20 @@ sec("10. as duas fichas e a homónima (3.ª sessão de prova, defeito 3)");
      (`contextoDoNomeCom`, motor/aplicar.js) — o grupo vai na base */
   /* MOVIDAS DE TEXTO PARA TEXTO (28/10, T1-A 3.ª fatia, a fusão, o oficial): `baseDoNome` ganhou `sobre` — no turno fundido o registo corre dentro do motor, depois do mapa e dos sinais, e os refs ainda não têm o mapa, a cidade, o lugar e a ficha de agora; o motor passa-os. As linhas leem `mapaAgora`/`fichaAgora`/`cidadeAgora`/`lugarAgora` (os refs, sem `sobre`). A intenção não mudou. */
   prova2("contextoDoNome passa o grupo a nomeComDono", /const baseDoNome = \(sobre = \{\}\) => \{[\s\S]{0,4000}?return \{ importantes, conhecidos, recentes, grupo:/.test(APP) && /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
-  prova2("mencionadosNaCena recebe o grupo", /mencionadosNaCena\([^;]*\{ grupo: /.test(APP));
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
+     O códex do fim do turno (onde o App chamava `mencionadosNaCena` com o
+     grupo) mudou-se para src/motor/fim-do-turno.js#aplicarOCodex, e o motor
+     não se lê pelo texto. A intenção é a mesma — a pessoa da base cujo nome
+     é o primeiro nome de quem anda no grupo não acorda pelo nome da
+     companheira — e prova-se jogando o códex com e sem ela no grupo. */
+  {
+    const { aplicarOCodex } = await import("../src/motor/fim-do-turno.js");
+    const { casosDoFim } = await import("./aplicar-casos.mjs");
+    const c = casosDoFim()[0];
+    const quem = (grupo) => aplicarOCodex({ ...c.estado, base: null, npcs: {}, oferecidos: [], fichaDoRef: { ...c.estado.personagem, grupo }, personagem: { ...c.estado.personagem, grupo } },
+      { narrativa: "Gwynn ergue os olhos e acena para você." }, c.ctx).estado.npcs;
+    prova2("mencionadosNaCena recebe o grupo", !!quem([]).Gwynn && !quem([{ nome: "Gwynn Sousa" }]).Gwynn && /const doCodex = aplicarOCodex\(\{\s*personagem: pers, fichaDoRef: personagemRef\.current,/.test(APP));
+  }
   prova2("a procura passa quem está perto (o grupo e a cena)", /nomeProcurado\(acao, nomesConhecidos\(\), \{ perto: /.test(APP));
 }
 

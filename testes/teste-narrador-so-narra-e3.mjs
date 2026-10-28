@@ -193,7 +193,16 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   t("canone/npcs · o Cronista recebe o CÂNONE ATUAL e o ELENCO", /CÂNONE ATUAL:\\n\$\{formatarCanone\(canoneRef\.current\)/.test(app) && /ELENCO \(pessoas já registradas\)/.test(app));
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a chamada */
   t("canone/npcs · e corre DEPOIS de aplicada a resposta do Narrador", app.indexOf("let pers = aplicarResposta(resp, persAtual") > 0 && app.indexOf("let pers = aplicarResposta(resp, persAtual") < app.indexOf("cronistaDoTurno(pers, narrativaFinal, doTurnoCr)"));
-  t("canone/npcs · os nomes que o Narrador inventava vêm dos NOMES À MÃO, registados pelo código", /nomesAMaoNaProsa\(/.test(app));
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O
+     registo dos nomes à mão que a prosa usou mudou-se do fim do
+     `aplicarResposta` para src/motor/fim-do-turno.js#aplicarOCodex (o motor
+     não se lê pelo texto); prova-se jogando o códex com um nome oferecido. */
+  {
+    const { aplicarOCodex } = await import("../src/motor/fim-do-turno.js");
+    const npcs = aplicarOCodex({ personagem: { nome: "Ana", nivel: 3, grupo: [] }, cidadeAtual: "Vau", mapa: { cidades: [] }, npcs: {}, npcTurno: 2, dia: 4, oferecidos: [{ nome: "Teodora Vaz", genero: "ela" }] },
+      { narrativa: "Teodora Vaz enche as canecas e ri alto." }, { mundo: { semente: "x", genero: "Fantasia medieval" } }).estado.npcs;
+    t("canone/npcs · os nomes que o Narrador inventava vêm dos NOMES À MÃO, registados pelo código", !!npcs["Teodora Vaz"] && /oferecidos: nomesOferecidosRef\.current/.test(app));
+  }
   t("canone · o Cronista não reescreve identidade (só preenche o vazio)", /identidade NUNCA é reescrita/.test(app));
 }
 

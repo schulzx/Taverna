@@ -483,8 +483,12 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   /* MM14 (nº 8): entrou `tramaTemEspaco` no fim do mesmo import. Prova-se o
      que esta asserção sempre quis — as dez funções da abertura chegam ao App —
      sem depender do fecho da lista. */
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): `aindaSoUmNome` saiu do import
+     do App — o único leitor dele lá era o códex do fim do turno, que se mudou
+     para src/motor/fim-do-turno.js e o importa (a secção 6 prova-o jogando).
+     As outras nove seguem no MESMO import do App. */
   t("App.jsx importa as dez funções de abertura.js",
-    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora'));
+    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora'));
   t("App.jsx importa chaveDoLugar de mundo-base.js",
     /* MM17 C1: a linha ganhou concluirLugar (a masmorra publica o fim); a
        asserção continua a guardar chaveDoLugar no import de mundo-base.js */
@@ -594,10 +598,23 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     t("nem as pessoas do cânone sem ficha",
       !reg({ canone: { Wystan: { tipo: "pessoa", papel: "moleiro" } } }, null).Wystan && !!reg({ canone: { Wystan: { tipo: "pessoa", papel: "moleiro" } } }, { nome: "o Moinho Velho" }).Wystan);
   }
-  t("nem quem é só mencionado na narrativa — e sai também dos ids de revelação",
-    aplicar.includes("const genteRevelavel = m.gente.filter((p) => !aindaSoUmNome(aberturaMundoRef.current, p.nome, { lugar: lugarRef.current, missoes: missoesRef.current }));")
-    && aplicar.includes("...genteRevelavel.map((p) => idDaGente(cidadeAtualRef.current, p)),")
-    && aplicar.includes("if (genteRevelavel.length) {"));
+  /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O
+     códex do fim do turno (a pessoa da base que a narração cita vira gente
+     e é revelada) mudou-se para src/motor/fim-do-turno.js#aplicarOCodex, e
+     o motor não se lê pelo texto. A intenção é a mesma — a pista citada não
+     entra no registo nem nos ids de revelação antes de o herói chegar ao
+     lugar dela — e prova-se jogando o códex, antes e depois de chegar. */
+  {
+    const { aplicarOCodex } = await import("../src/motor/fim-do-turno.js");
+    const { casosDoFim } = await import("./aplicar-casos.mjs");
+    const c = casosDoFim()[0];
+    const abG = { principalId: "m_p", cidade: "Monte Rasa", pista: { nome: "Gwynn", local: "o Moinho Velho" }, alvo: { quem: "Edric Vau", onde: "Ponte Lenta" } };
+    const msG = [{ id: "m_p", titulo: "O fio", tipo: "principal", status: "ativa", etapas: [{ tipo: "falar_com", alvo: "Gwynn", feito: false }] }];
+    const cod = (lugar) => aplicarOCodex({ ...c.estado, base: null, npcs: {}, oferecidos: [], abertura: abG, missoes: msG, lugar }, { narrativa: "Gwynn ergue os olhos e acena para você." }, c.ctx).estado;
+    const revelou = (e) => JSON.stringify(e.base || {}).includes("Monte Rasa|gente|Gwynn");
+    t("nem quem é só mencionado na narrativa — e sai também dos ids de revelação",
+      !cod(null).npcs.Gwynn && !revelou(cod(null)) && !!cod({ nome: "o Moinho Velho" }).npcs.Gwynn && revelou(cod({ nome: "o Moinho Velho" })) && aplicar.includes("const doCodex = aplicarOCodex({"));
+  }
 
   /* ---- 7. o sino ---- */
   const marcarMundo = corpoApos(app, "const marcarTurnoDoMundo = () => {");

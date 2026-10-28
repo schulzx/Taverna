@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao, nomesAMaoNaProsa } from "./nomes.js";
+import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao } from "./nomes.js";
 import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
@@ -157,7 +157,7 @@ import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
-import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
+import { reconciliarGraus, resolverPresenca, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade } from "./arredores.js";
 import { abrirViagem, andar, pausarViagem, jornadaSemDestino, progressoDaViagem, comTrechos, trechoAtual, minutosPorAvanco, relogioDoAvanco, resumoViagemPrompt, linhaDaViagem, minutosDaRota, HORAS_MARCHA_POR_DIA, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
 import { partidaNaRegiao } from "./marcha.js";
@@ -175,7 +175,7 @@ import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, en
 import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
 import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
-import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, mencionadosNaCena, idDoLocal, idDaGente, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, concluirLugar, BASE_PROMPT } from "./mundo-base.js";
+import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, resumoDaqui, resumoChefesPrompt, chefePorNome, chefesDoMundo, criaturaPorNome, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, concluirLugar, BASE_PROMPT } from "./mundo-base.js";
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
@@ -192,7 +192,7 @@ import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guar
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
-import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
+import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, andarOSino, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
@@ -238,6 +238,7 @@ import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRo
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
+import { aplicarOCodex } from "./motor/fim-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -10544,6 +10545,9 @@ export default function Taverna() {
         else if (ef.tipo === "sinalMasmorra") sinalMasmorraRef.current = ef.nome;
         else if (ef.tipo === "sinalRaid") sinalRaidRef.current = ef.nome;
         else if (ef.tipo === "espolio") setEspolioRevelado(ef.item);
+        /* o fim do turno (T1-A, 4.ª fatia): a base do mundo com o que a
+           narração revelou — o ref e a tela juntos, como no registrarRevelacao */
+        else if (ef.tipo === "base") { baseMundoRef.current = ef.base; setBaseMundo(ef.base); }
         else if (ef.tipo === "remontarPrompt") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }
     }
@@ -10840,76 +10844,24 @@ export default function Taverna() {
        transformou "o ar preso na garganta" em 🕸 Agarrado (2t). */
     try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
     try { elencoSaveRef.current = vistosDaNarrativa(elencoSaveRef.current, npcsRef.current, resp.narrativa, diaRef.current); } catch (e) { calou("vistosDaNarrativa", e); }
-    /* ---- DA BASE PARA O CÂNONE (v9.14) ----
-       O outro lado do consumo. Quando um local ou uma pessoa da base entra na
-       narrativa, ele deixa de ser estoque e vira história: o sistema marca
-       como revelado (o prompt passa a mostrar ✓, e o Mestre para de
-       reapresentar quem o herói já conhece) e a pessoa entra no registro do
-       códex por código — sem depender de o Mestre lembrar de enviá-la.
-
-       Isto RATIFICA a narração, não a contradiz: por isso continua aqui,
-       depois, e não no portão. */
+    /* ---------------- O CÓDEX, NO MOTOR (T1-A, 4.ª fatia, 28/10) ----------------
+       Da base para o cânone (v9.14: o local e a pessoa da base que a
+       narração pôs em cena viram história, por código), os nomes à mão que
+       ela usou (E1: viram gente, e morta se a oração a matou) e o peso do
+       deus que entrou (v9.14) moram em `aplicarOCodex`
+       (src/motor/fim-do-turno.js), na mesma ordem e com os porquês de cada
+       linha. Isto RATIFICA a narração, não a contradiz: por isso continua
+       aqui, depois da luta, e não no portão. Daqui só sai a fiação. Provado
+       byte a byte contra o bloco de antes (teste-motor-fim-do-turno). */
     try {
-      const m = mencionadosNaCena(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), resp.narrativa, moldeMundo(), (mundoAtual() || {}).lexico, { grupo: (personagemRef.current || pers || {}).grupo || [] });
-      /* MM13: a menção não é presença — a pista (ou o alvo) da abertura não
-         conta como revelada nem entra no registo só por ser citada. */
-      const genteRevelavel = m.gente.filter((p) => !aindaSoUmNome(aberturaMundoRef.current, p.nome, { lugar: lugarRef.current, missoes: missoesRef.current }));
-      const ids = [
-        ...m.locais.map((l) => idDoLocal(cidadeAtualRef.current, l)),
-        ...genteRevelavel.map((p) => idDaGente(cidadeAtualRef.current, p)),
-      ];
-      if (ids.length) {
-        registrarRevelacao(ids);
-        if (genteRevelavel.length) {
-          let reg = npcsRef.current, tocou = false;
-          for (const p of genteRevelavel) {
-            if (Object.keys(reg).some((k) => k.toLowerCase() === p.nome.toLowerCase())) continue;
-            if (!tocou) { reg = { ...reg }; tocou = true; }
-            reg[p.nome] = criarNPC(p.nome, { papel: p.papel, local: cidadeAtualRef.current, notas: `${p.traco}; quer ${p.vontade}`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current });
-          }
-          if (tocou) { npcsRef.current = reg; setNpcs(reg); }
-        }
-      }
-      /* E1 (o Narrador só narra): o NOME À MÃO que a narração usou vira
-         gente do registo — e morto, se a oração o pôs morto. Sai da lista
-         do turno seguinte por estar no registo. */
-      try {
-        /* não se limpa: o usado sai da lista seguinte por estar no registo */
-        const usados = nomesAMaoNaProsa(resp.narrativa, nomesOferecidosRef.current || []);
-        if (usados.length) {
-          let reg = npcsRef.current, tocou = false;
-          for (const u of usados) {
-            const chave = Object.keys(reg).find((k) => k.toLowerCase() === String(u.nome).toLowerCase());
-            if (chave) {
-              if (u.morto && String(reg[chave].status || "vivo").toLowerCase() === "vivo") { if (!tocou) { reg = { ...reg }; tocou = true; } reg[chave] = { ...reg[chave], status: "morto" }; }
-              continue;
-            }
-            if (!tocou) { reg = { ...reg }; tocou = true; }
-            const nome = String(u.nome).slice(0, 40);
-            reg[nome] = criarNPC(nome, { genero: u.genero === "ela" ? "mulher" : "homem", local: cidadeAtualRef.current || "", ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current, ...(u.morto ? { status: "morto" } : {}) });
-          }
-          if (tocou) { npcsRef.current = reg; setNpcs(reg); }
-        }
-      } catch (e) { calou("os nomes à mão na prosa", e); }
-      /* ---- O PESO DO DEUS QUE ENTROU (v9.14) ----
-         `presencaDoHeroi` estava escrita e testada desde a v9.8, e nunca foi
-         importada: o herói virava GD 4 e ninguém na taverna sentia nada. O
-         gatilho certo é este — as pessoas que ACABARAM de entrar na cena são
-         exatamente quem ainda não convive com ele. Quem já tem vínculo não
-         se curva, e o grupo nunca entra na conta. */
-      if (m.gente.length) {
-        const gd = grauDe(divindadeRef.current, pers.nivel || 1);
-        const noGrupo = new Set((pers.grupo || []).map((g) => (g.nome || "").toLowerCase()));
-        const alvos = m.gente
-          .filter((p) => !noGrupo.has(p.nome.toLowerCase()))
-          .map((p) => ({ nome: p.nome, vinculo: 0, atributos: { vigor: 1 } }));
-        const pr = alvos.length ? presencaDoHeroi({ gdJogador: gd, alvos, nomeHeroi: pers.nome }) : null;
-        if (pr) {
-          msgs.push(pr.texto);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${pr.nota}`;
-        }
-      }
-    } catch { /* o códex nunca derruba o turno */ }
+      const doCodex = aplicarOCodex({
+        personagem: pers, fichaDoRef: personagemRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, base: baseMundoRef.current,
+        abertura: aberturaMundoRef.current, lugar: lugarRef.current, missoes: missoesRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current,
+        dia: diaRef.current, oferecidos: nomesOferecidosRef.current, divindade: divindadeRef.current,
+      }, resp, { mundo: mundoDaBase });
+      msgs.push(...doCodex.msgs);
+      aplicarOsEfeitos(doCodex);
+    } catch (e) { calou("o códex do turno", e); }
     /* ---- CHEGUEI E NINGUÉM ANOTOU (v9.43) ----
        O Mestre narrou a travessia do portal com todas as letras e esqueceu
        de mandar `cidade_atual`: a ficção subiu para o Andar 2, o mapa ficou
