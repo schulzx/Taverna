@@ -351,7 +351,8 @@ sec("7. a fiação — App.jsx");
   {
     const { aplicarAsMissoes } = await import("../src/motor/meio-do-turno.js");
     const r = aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: { estrutura: "jornada" }, dia: 4 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, { motorDoArco: () => ({}) });
-    t("evento_global_encerrar do Narrador continua de pé", r.estado.eventos.global === null && r.estado.eventos.semGlobalDesde === 4 && /🌍 A Praga/.test(r.msgs[0]) && app.includes("aplicarOTurno({")); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) */
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: esta asserção terminava num `&& /aplicarOTurno\(\{/.test(app)` — que o App chama o motor. É fato de fiação, e teste-motor-aplicar.mjs já o guarda por inteiro ("o aplicarResposta chama o motor": `aplicarOTurno({ personagem: pers,` dentro de aplicarResposta, uma só vez, com o efeito aplicado). A intenção desta asserção é o COMPORTAMENTO do campo, e fica só ela; a fiação não se afrouxa, só deixa de ser guardada em dois sítios. */
+    t("evento_global_encerrar do Narrador continua de pé", r.estado.eventos.global === null && r.estado.eventos.semGlobalDesde === 4 && /🌍 A Praga/.test(r.msgs[0]));
   }
   t("o Cronista não tem mais `casar` por título, nem `rm.concluidas`/`rm.falhadas`/`rm.progresso` fechando nada",
     !app.includes("const casar = (t) => {") && !app.includes("rm.concluidas") && !app.includes("rm.falhadas") && !app.includes("rm.progresso"));

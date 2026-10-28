@@ -180,7 +180,8 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
     const { aplicarAChegada } = await import("../src/motor/fim-do-turno.js");
     const ch = aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [{ nome: "Vau" }, { nome: "Ponte Lenta", descoberta: false }], rotas: [{ de: "Vau", para: "Ponte Lenta", dias: 0.2 }] } },
       { narrativa: "Ao fim da tarde você entra na Ponte Lenta pelo portão baixo." });
-    t("cidade_atual · a travessia de um passo narrada é ratificada (App: detectarChegada)", ch.estado.cidadeAtual === "Ponte Lenta" && ch.minutos > 0 && /const daChegada = aplicarAChegada\(\{/.test(app));
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava num `&& /const daChegada = aplicarAChegada\(\{/.test(app)` — que o App chama a peça. teste-motor-fim-do-turno.mjs (§ da chegada) já guarda essa chamada, com a ordem (a chegada depois do códex, os minutos somados a seguir). Fica o comportamento: a travessia narrada é ratificada. */
+    t("cidade_atual · a travessia de um passo narrada é ratificada (App: detectarChegada)", ch.estado.cidadeAtual === "Ponte Lenta" && ch.minutos > 0);
   }
 
   /* lugar_atual — o Cronista diz o lugar; a régua do lugar dito é do motor */
@@ -245,7 +246,8 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
     const lu = aplicarOMapa({ ...base, jornada: null }, { narrativa: "x", mudancas: { lugar_atual: "a fazenda de Jessa" } }, {});
     t("lugar_atual", lu.estado.lugar && lu.estado.lugar.nome === "a fazenda de Jessa");
     const jm = aplicarOMapa(base, { narrativa: "x", mudancas: { jornada_meio: "de carroça" } }, {});
-    t("jornada_meio", jm.estado.jornada.meio === "de carroça" && /aplicarOTurno\(\{/.test(app)); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) */
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: esta asserção terminava num `&& /aplicarOTurno\(\{/.test(app)` — que o App chama o motor. É fato de fiação, e teste-motor-aplicar.mjs já o guarda por inteiro ("o aplicarResposta chama o motor": `aplicarOTurno({ personagem: pers,` dentro de aplicarResposta, uma só vez, com o efeito aplicado). A intenção desta asserção é o COMPORTAMENTO do campo, e fica só ela; a fiação não se afrouxa, só deixa de ser guardada em dois sítios. */
+    t("jornada_meio", jm.estado.jornada.meio === "de carroça");
   }
   /* MOVIDAS (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
      O leitor de `canone` e de `npcs` mudou-se do `aplicarResposta` para

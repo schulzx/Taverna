@@ -143,6 +143,22 @@ const CLASSES_DE_T2 = [
 ];
 const classeDe = (a) => CLASSES_DE_T2.find((c) => c.casa(a)).classe;
 
+/* ---------------- OS SUBTIPOS DA FIAÇÃO (28/10, T2-B lote 1) ----------------
+   A fiação é 89% da lista (1834 de 2060 na medida do dia) e a lista a tratava
+   como uma coisa só. Não é: o que cada subtipo vira quando o passo sair do App
+   é diferente, e quem escolhe o próximo passo a mover (a trilha A) precisa de
+   saber quantas provas o movimento leva consigo. A tabela é lida por ordem; a
+   primeira que casa leva a asserção; é régua de SCRIPT (mede o destino, não a
+   qualidade), e não muda a contagem de ninguém — reparte a classe "fiacao". */
+const SUBTIPOS_DA_FIACAO = [
+  { tipo: "importacao", diz: "o App importa X de um módulo — sem o import o nome cai no calou e o órgão cala em silêncio; vira prova do import do turno()", casa: (a) => /import\s*\\?\{|\bfrom\s*\\?"/.test(a.cond) },
+  { tipo: "calou", diz: "a chamada está dentro de calou/try — a lei \"nunca pode custar o turno\"; vira prova de que o turno() sobrevive ao órgão que estoura", casa: (a) => /\bcalou\\?\(/.test(a.cond) },
+  { tipo: "ordem", diz: "a ordem dos passos (índice antes de índice, ord(...)) — a prova mais frágil, e a que o turno() prova melhor: a ordem passa a ser uma lista", casa: (a) => /\bord\(|\bi[A-Z]\w*\s*[<>]|\b(?:i|j|ini|fim|pos\w*|iniGolpe|fimGolpe)\s*[<>]=?\s*\w|indexOf\([^)]*\)\s*[<>]/.test(a.cond) },
+  { tipo: "contagem", diz: "quantas vezes o App chama/declara algo (uma só, dois sítios) — guarda contra a segunda cópia; vira prova de que só o motor chama", casa: (a) => /\.length\s*(?:===|>=|>)\s*\d|\bquantas\w*\(|\bconta\(|\bcontar\(|\.length\s*===\s*[A-Z_]+/.test(a.cond) },
+  { tipo: "chamada", diz: "o App chama X com estes argumentos, lê/grava este ref — o resto da fiação; vira prova do contexto que o turno() monta", casa: () => true },
+];
+const subtipoDaFiacao = (a) => SUBTIPOS_DA_FIACAO.find((c) => c.casa(a)).tipo;
+
 const suites = fs.readdirSync(AQUI).filter((f) => /^(teste-.*|jogar-em-node)\.mjs$/.test(f) && f !== "teste-assercoes-de-texto.mjs").sort();
 const medida = {};
 for (const f of suites) {
@@ -164,6 +180,12 @@ const classesPorSuite = () => {
   }
   return r;
 };
+/* os subtipos da fiação: { tipo: n } sobre as asserções de classe "fiacao" */
+const subtiposDaFiacao = () => {
+  const r = {};
+  for (const m of Object.values(medida)) for (const a of m.detalhe) if (classeDe(a) === "fiacao") { const k = subtipoDaFiacao(a); r[k] = (r[k] || 0) + 1; }
+  return r;
+};
 const totaisDasClasses = (cps) => {
   const r = {};
   for (const c of Object.values(cps)) for (const [k, n] of Object.entries(c)) r[k] = (r[k] || 0) + n;
@@ -173,7 +195,7 @@ const totaisDasClasses = (cps) => {
 if (process.argv.includes("--gravar")) {
   const paraT2 = Object.fromEntries(Object.entries(medida).filter(([, m]) => m.app).map(([f, m]) => [f, m.app]));
   const cps = classesPorSuite();
-  const classificacao = { ...(REGISTO.classificacao || {}), medido: new Date().toLocaleDateString("sv-SE"), classes: Object.fromEntries(CLASSES_DE_T2.map((c) => [c.classe, c.diz])), totais: totaisDasClasses(cps), porSuite: cps };
+  const classificacao = { ...(REGISTO.classificacao || {}), medido: new Date().toLocaleDateString("sv-SE"), classes: Object.fromEntries(CLASSES_DE_T2.map((c) => [c.classe, c.diz])), totais: totaisDasClasses(cps), fiacaoPorTipo: subtiposDaFiacao(), porSuite: cps };
   fs.writeFileSync(ARQ, JSON.stringify({ ...REGISTO, paraT2: { medido: new Date().toLocaleDateString("sv-SE"), total: soma("app"), suites: Object.keys(paraT2).length, porSuite: paraT2 }, classificacao }, null, 2) + "\n");
   console.log(`gravado: ${soma("app")} asserções de App em ${Object.keys(paraT2).length} suítes; classes ${JSON.stringify(classificacao.totais)}`);
   process.exit(0);
@@ -181,6 +203,7 @@ if (process.argv.includes("--gravar")) {
 if (process.argv.includes("--classes")) {
   const cps = classesPorSuite();
   console.log(JSON.stringify(totaisDasClasses(cps)));
+  console.log("fiação por tipo: " + JSON.stringify(subtiposDaFiacao()));
   for (const [f, c] of Object.entries(cps).sort((a, b) => medida[b[0]].app - medida[a[0]].app)) console.log(`  ${f}: ${medida[f].app} — ${Object.entries(c).map(([k, n]) => `${k} ${n}`).join(", ")}`);
   if (process.argv.includes("--uma")) for (const [f, m] of Object.entries(medida)) for (const a of m.detalhe) console.log(`${f}:${a.linha}\t${classeDe(a)}\t${a.cond.replace(/\s+/g, " ").slice(0, 140)}`);
   process.exit(0);
@@ -235,13 +258,22 @@ sec("4. A CLASSIFICAÇÃO DA LISTA DE T2: (a) converte-se, (b) fica, (c) retira-
   t("as classes da lista são as da tabela (CLASSES_DE_T2)", Object.keys(tot).every((k) => CLASSES_DE_T2.some((c) => c.classe === k)));
   t("e somam a lista de T2, suíte a suíte", Object.values(tot).reduce((s, n) => s + n, 0) === REGISTO.paraT2.total
     && Object.entries(REGISTO.paraT2.porSuite).every(([f, n]) => Object.values((cl.porSuite || {})[f] || {}).reduce((s, x) => s + x, 0) === n));
+  const sub = cl.fiacaoPorTipo || {};
+  console.log(`  ..  a fiação por tipo: ${Object.entries(sub).map(([k, n]) => `${k} ${n}`).join(", ")}`);
+  t("os subtipos da fiação são os da tabela (SUBTIPOS_DA_FIACAO) e somam a classe fiacao", Object.keys(sub).every((k) => SUBTIPOS_DA_FIACAO.some((c) => c.tipo === k)) && Object.values(sub).reduce((s, n) => s + n, 0) === (tot.fiacao || 0));
   t("as suítes lidas à mão dizem o que se achou", (cl.lidas || []).length > 0 && cl.lidas.every((x) => x.suite && x.achado && fs.existsSync(new URL(x.suite, AQUI))));
   const ult = (REGISTO.levas || []).slice(-1)[0] || {};
-  t("o que a última leva converteu, partiu ou corrigiu existe e diz onde", [...(ult.convertidasEm || []), ...(ult.partidasEm || []), ...(ult.malMedidasEm || [])].every((x) => x.suite && x.onde && fs.existsSync(new URL(x.suite, AQUI))));
+  t("o que a última leva converteu, partiu, retirou ou corrigiu existe e diz onde", [...(ult.convertidasEm || []), ...(ult.partidasEm || []), ...(ult.malMedidasEm || []), ...(ult.retiradasEm || [])].every((x) => x.suite && x.onde && fs.existsSync(new URL(x.suite, AQUI))));
   /* a régua de classe morde: uma asserção de tela, uma negativa, uma que
      corre código do App e uma de fiação caem cada uma na sua */
   const um = (src) => medir(src).detalhe.map(classeDe);
   t("a régua de classe: tela, saída, regra no App e fiação", JSON.stringify(um(`const APP = readFileSync("../src/App.jsx", "utf8"); t("a", /<Relato mensagens=/.test(APP)); t("b", !/TABELA_FE/.test(APP)); const f = new Function(APP.slice(0, 9) + "; return g;")(); t("c", f(1) === 2); t("d", /calou\\("x"/.test(APP));`)) === JSON.stringify(["tela", "saida", "regraNoApp", "fiacao"]));
+}
+
+{
+  const um = (src) => medir(src).detalhe.filter((a) => classeDe(a) === "fiacao").map(subtipoDaFiacao);
+  t("a régua de subtipo: import, calou, ordem, contagem e chamada",
+    JSON.stringify(um(`const APP = readFileSync("../src/App.jsx", "utf8"); t("a", /import \\{ x \\} from "\\.\\/y\\.js"/.test(APP)); t("b", /calou\\("x", e\\)/.test(APP)); const i = APP.indexOf("a"), j = APP.indexOf("b"); t("c", i > 0 && j > i); t("d", (APP.match(/fazer\\(/g) || []).length === 1); t("e", /fazer\\(x\\)/.test(APP));`)) === JSON.stringify(["importacao", "calou", "ordem", "contagem", "chamada"]));
 }
 
 console.log(`\nasserções de texto: ${ok} passaram, ${mal} falharam`);

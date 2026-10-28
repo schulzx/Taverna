@@ -218,7 +218,8 @@ sec("6. o App continua a saber ler (tolerante: a instrução saiu, o leitor fica
   {
     const { lutaDeBolso } = await import("./combate-bloco.mjs");
     const b = lutaDeBolso({ pers: { nome: "Vera", nivel: 2, grupo: [] }, mudancas: { combate_iniciar: [{ nome: "Lobo", ameaca: "fraco" }] } });
-    t("combate_iniciar", /aLutaDaResposta\(\{ pers, mudancas: resp\.mudancas \}/.test(app) && !!b.st.combate && b.st.combate.inimigos[0].nome === "Lobo" && b.chamou("abrirCombate").length === 1);
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção começava por `/aLutaDaResposta\(\{ pers, mudancas: resp\.mudancas \}/.test(app)` — a entrega da resposta ao motor. teste-motor-luta.mjs §4 ("o aplicarResposta chama o motor, em calou") guarda essa mesma chamada, inteira e dentro do try. Fica o comportamento: a luta abre com o Lobo, uma vez, pela porta única. */
+    t("combate_iniciar", !!b.st.combate && b.st.combate.inimigos[0].nome === "Lobo" && b.chamou("abrirCombate").length === 1);
   }
   /* (movido, T1-A 7.ª fatia: a leitura do `perigo` saiu do App para `oPerigoDaResposta` (src/motor/fecho-da-resposta.js). A intenção é a mesma — o App continua a saber ler o campo —, agora JOGADA: a investida vai à emboscada, a armadilha à salvaguarda, e o App entrega-lhe o `resp.perigo`.) */
   {
@@ -227,7 +228,8 @@ sec("6. o App continua a saber ler (tolerante: a instrução saiu, o leitor fica
     const ctx = { aplicar: () => {}, abrirCombate: (ins, o) => { portas.push("abrir"); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: (x) => portas.push("salvaguarda:" + x) };
     oPerigoDaResposta({ pers: { nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, ctx);
     oPerigoDaResposta({ pers: { nivel: 10 }, perigo: "Uma armadilha de lâminas dispara do chão.", combate: null, folego: null, lugares: [] }, ctx);
-    t("perigo (a emboscada e a salvaguarda)", portas[0] === "abrir" && portas[1] === "salvaguarda:Uma armadilha de lâminas dispara do chão." && /oPerigoDaResposta\(\{ pers, perigo: resp\.perigo/.test(app));
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava em `/oPerigoDaResposta\(\{ pers, perigo: resp\.perigo/.test(app)` — o App entrega o `resp.perigo` à peça. teste-motor-fecho.mjs §4 guarda a chamada inteira (`const doPerigo = oPerigoDaResposta({ pers, perigo: resp.perigo, combate: …`). Fica o comportamento: a investida vai à emboscada, a armadilha à salvaguarda. */
+    t("perigo (a emboscada e a salvaguarda)", portas[0] === "abrir" && portas[1] === "salvaguarda:Uma armadilha de lâminas dispara do chão.");
   }
   t("dano_ambiental, combate_inimigo_vida, combate_atualizar, combate_encerrar (regras-jogo.js)", /m\.dano_ambiental/.test(ler("regras-jogo.js")) && /m\.combate_inimigo_vida/.test(ler("regras-jogo.js")) && /m\.combate_atualizar/.test(ler("regras-jogo.js")) && /m\.combate_encerrar/.test(ler("regras-jogo.js")));
   t("e as portas do sistema abrem pela porta única (abrirCombate)", /const abrirCombate = \(inimigosCrus/.test(app));

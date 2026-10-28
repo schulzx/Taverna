@@ -83,7 +83,8 @@ sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
   {
     const { aEscutaAnda, oPedidoDaEscuta } = await import("../src/motor/antes-do-mestre.js");
     const pe = oPedidoDaEscuta({ modo: "historia", escuta: { semAvanco: 2 } }, "ando pela praça");
-    t("a luta pausa a escada", aEscutaAnda({ escuta: { semAvanco: 2 }, combate: { rodada: 1 } }, pe).escuta.semAvanco === 2 && aEscutaAnda({ escuta: { semAvanco: 2 }, combate: null }, pe).escuta.semAvanco === 3 && ENVIAR.includes("combate: combateRef.current }, { pedido: pedidoEsc"));
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava em `&& ENVIAR.includes("combate: combateRef.current }, { pedido: pedidoEsc")` — o App passa a luta à escada. Esse fragmento é parte do que a asserção da ORDEM, acima ("a escada anda DEPOIS da pauta"), já exige à letra (`const anda = aEscutaAnda({ … combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });`): dita duas vezes, guardada uma. Fica o comportamento: a luta pausa a escada. */
+    t("a luta pausa a escada", aEscutaAnda({ escuta: { semAvanco: 2 }, combate: { rodada: 1 } }, pe).escuta.semAvanco === 2 && aEscutaAnda({ escuta: { semAvanco: 2 }, combate: null }, pe).escuta.semAvanco === 3);
   }
   t("a frase do jogador fecha o pedido, depois do rodapé", ord("fechoDoPedido(pedidoEsc)", "pedidoFinal = `${nota ? nota + \"\\n\" : \"\"}${rodape}\\n${fecho}`", "content: pedidoFinal"));
   /* onda 1 do custo (13/10): a asserção mudou. O histórico guardava o corpo

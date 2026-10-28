@@ -60,25 +60,26 @@
   "esperaDoMotor": [],
   "paraT2": {
     "medido": "2026-10-28",
-    "total": 2060,
-    "suites": 181,
+    "total": 2102,
+    "suites": 195,
     "porSuite": {
-      "teste-a-virada.mjs": 11,
-      "teste-a1-relato.mjs": 69,
+      "teste-a-virada.mjs": 10,
+      "teste-a1-relato.mjs": 49,
       "teste-abas.mjs": 13,
-      "teste-abertura-no-app.mjs": 13,
-      "teste-acoes-do-jogador.mjs": 26,
+      "teste-abertura-no-app.mjs": 12,
+      "teste-acoes-do-jogador.mjs": 25,
       "teste-aderencia.mjs": 3,
       "teste-alcance-e-achado.mjs": 9,
       "teste-aliado.mjs": 9,
       "teste-amortece.mjs": 3,
       "teste-antagonista.mjs": 7,
       "teste-antecedentes.mjs": 7,
+      "teste-app-troca-a-quente.mjs": 4,
       "teste-arco-com-principal.mjs": 4,
-      "teste-arquivo.mjs": 21,
+      "teste-arquivo.mjs": 23,
       "teste-arte.mjs": 10,
       "teste-banco.mjs": 2,
-      "teste-bestiario-des.mjs": 5,
+      "teste-bestiario-des.mjs": 2,
       "teste-biblioteca.mjs": 20,
       "teste-bolsa-da-frase.mjs": 5,
       "teste-bolsa-em-duas-linhas.mjs": 10,
@@ -91,14 +92,14 @@
       "teste-cobrador.mjs": 16,
       "teste-comercio.mjs": 14,
       "teste-como-chega.mjs": 9,
-      "teste-comp.mjs": 6,
+      "teste-comp.mjs": 5,
       "teste-companheiro-inicial.mjs": 12,
       "teste-compasso.mjs": 13,
       "teste-cond.mjs": 15,
       "teste-consequencias.mjs": 2,
       "teste-convite.mjs": 36,
       "teste-correio2.mjs": 11,
-      "teste-cronista-propoe.mjs": 8,
+      "teste-cronista-propoe.mjs": 6,
       "teste-custo-onda1.mjs": 8,
       "teste-custo-onda2.mjs": 14,
       "teste-custo-onda3.mjs": 10,
@@ -115,9 +116,9 @@
       "teste-esconder-na-luta.mjs": 10,
       "teste-espinha.mjs": 9,
       "teste-estado.mjs": 24,
-      "teste-falar-com-em-cena.mjs": 6,
+      "teste-falar-com-em-cena.mjs": 3,
       "teste-falas.mjs": 11,
-      "teste-fiacao-prende.mjs": 45,
+      "teste-fiacao-prende.mjs": 41,
       "teste-ficha-e-planta.mjs": 7,
       "teste-ficha-visual.mjs": 1,
       "teste-fogueira-ligada.mjs": 26,
@@ -127,6 +128,7 @@
       "teste-golpe-final.mjs": 36,
       "teste-golpe.mjs": 9,
       "teste-grade.mjs": 3,
+      "teste-grupo-cheio.mjs": 2,
       "teste-guardado.mjs": 4,
       "teste-guildas.mjs": 11,
       "teste-harmonia.mjs": 4,
@@ -135,10 +137,10 @@
       "teste-indole.mjs": 2,
       "teste-interprete.mjs": 7,
       "teste-itens-uteis.mjs": 3,
-      "teste-juiz.mjs": 2,
+      "teste-juiz.mjs": 1,
       "teste-laco.mjs": 10,
       "teste-legado.mjs": 10,
-      "teste-lei-da-forma.mjs": 11,
+      "teste-lei-da-forma.mjs": 10,
       "teste-leitura-de-pessoa.mjs": 3,
       "teste-lexico-cor.mjs": 2,
       "teste-lugar.mjs": 18,
@@ -150,23 +152,23 @@
       "teste-masmorra-na-pauta.mjs": 11,
       "teste-masmorra-sem-cidade.mjs": 8,
       "teste-mercado.mjs": 6,
-      "teste-mesa-farta.mjs": 3,
+      "teste-mesa-farta.mjs": 5,
       "teste-mesa.mjs": 3,
       "teste-mm10-crime.mjs": 25,
       "teste-mm13-abertura.mjs": 34,
       "teste-mm13b-morada.mjs": 4,
-      "teste-mm14-canais.mjs": 24,
+      "teste-mm14-canais.mjs": 21,
       "teste-mm14-continuidade.mjs": 3,
       "teste-mm14-em-serie.mjs": 5,
-      "teste-mm14-gente.mjs": 15,
-      "teste-mm14-lugar.mjs": 4,
+      "teste-mm14-gente.mjs": 12,
+      "teste-mm14-lugar.mjs": 3,
       "teste-mm14-missoes.mjs": 3,
       "teste-mm14-oraculo.mjs": 4,
       "teste-mm15-ligacao.mjs": 30,
-      "teste-mm15-lugar.mjs": 4,
+      "teste-mm15-lugar.mjs": 3,
       "teste-mm15-nomes.mjs": 8,
-      "teste-mm15-segredo.mjs": 8,
-      "teste-mm18-fiacao.mjs": 30,
+      "teste-mm15-segredo.mjs": 7,
+      "teste-mm18-fiacao.mjs": 28,
       "teste-mm4-improviso.mjs": 1,
       "teste-mm5-margem.mjs": 8,
       "teste-mm6-escondido.mjs": 25,
@@ -179,16 +181,26 @@
       "teste-mm8f-fora-de-cena.mjs": 4,
       "teste-mm9-sem-espada.mjs": 8,
       "teste-modos.mjs": 13,
-      "teste-momentos.mjs": 63,
-      "teste-motor-aplicar.mjs": 9,
-      "teste-mural-do-mestre.mjs": 18,
-      "teste-narrador-so-narra-e2.mjs": 6,
-      "teste-narrador-so-narra-e3-fiacao.mjs": 14,
-      "teste-narrador-so-narra-e3.mjs": 14,
-      "teste-narrador-so-narra-e4.mjs": 3,
+      "teste-momentos.mjs": 60,
+      "teste-motor-antes-do-mestre.mjs": 10,
+      "teste-motor-aplicar.mjs": 20,
+      "teste-motor-combate.mjs": 13,
+      "teste-motor-cronista-do-turno.mjs": 11,
+      "teste-motor-entrega.mjs": 12,
+      "teste-motor-envelopes-do-turno.mjs": 6,
+      "teste-motor-fecho.mjs": 15,
+      "teste-motor-fim-do-turno.mjs": 8,
+      "teste-motor-juiz-do-turno.mjs": 8,
+      "teste-motor-luta.mjs": 11,
+      "teste-motor-tempo-do-turno.mjs": 10,
+      "teste-mural-do-mestre.mjs": 17,
+      "teste-narrador-so-narra-e2.mjs": 2,
+      "teste-narrador-so-narra-e3-fiacao.mjs": 11,
+      "teste-narrador-so-narra-e3.mjs": 5,
+      "teste-narrador-so-narra-e4.mjs": 1,
       "teste-narrador-so-narra.mjs": 12,
       "teste-nave-destino.mjs": 8,
-      "teste-nemesis-do-fio.mjs": 9,
+      "teste-nemesis-do-fio.mjs": 8,
       "teste-nome-da-campanha.mjs": 14,
       "teste-ofertas.mjs": 4,
       "teste-painel-mapa-vivo.mjs": 1,
@@ -197,31 +209,33 @@
       "teste-partida.mjs": 1,
       "teste-passo-antes-do-ato.mjs": 4,
       "teste-peca-escolha.mjs": 3,
-      "teste-pendentes-ligados.mjs": 16,
+      "teste-pendentes-ligados.mjs": 13,
       "teste-peneira-da-agressao.mjs": 9,
       "teste-peso.mjs": 5,
       "teste-poder-de-classe.mjs": 9,
-      "teste-porta-combate.mjs": 4,
+      "teste-porta-combate.mjs": 3,
       "teste-porta-de-entrada.mjs": 17,
       "teste-posturas.mjs": 7,
       "teste-primeiro-dia.mjs": 2,
       "teste-procura.mjs": 6,
       "teste-promessas.mjs": 4,
       "teste-proposito.mjs": 17,
-      "teste-r3-campo-do-turno.mjs": 47,
-      "teste-regiao-historia.mjs": 5,
+      "teste-r3-campo-do-turno.mjs": 38,
+      "teste-regiao-historia.mjs": 4,
       "teste-regiao.mjs": 9,
       "teste-registro.mjs": 8,
+      "teste-relogio-do-turno.mjs": 2,
       "teste-resgate.mjs": 6,
       "teste-retratos.mjs": 1,
       "teste-reviravolta.mjs": 28,
       "teste-rosto.mjs": 11,
-      "teste-saida-da-luta.mjs": 11,
+      "teste-saida-da-luta.mjs": 9,
       "teste-sala.mjs": 51,
       "teste-sessao-12.mjs": 5,
       "teste-sessao-7.mjs": 12,
       "teste-sessao-9-bolsa.mjs": 8,
       "teste-sessao-9-historia.mjs": 3,
+      "teste-sessao-guardada.mjs": 4,
       "teste-sessoes.mjs": 11,
       "teste-sintonia.mjs": 5,
       "teste-social.mjs": 9,
@@ -239,7 +253,7 @@
       "teste-v5-pagina.mjs": 18,
       "teste-v5a-cabecalho.mjs": 5,
       "teste-v5e-chegada.mjs": 18,
-      "teste-v6-compositor.mjs": 17,
+      "teste-v6-compositor.mjs": 16,
       "teste-veredito-da-partida.mjs": 7,
       "teste-vista-da-luta.mjs": 4,
       "teste-voz-segunda-pessoa.mjs": 5,
@@ -316,6 +330,39 @@
         }
       ],
       "retiradasPorque": "nenhuma: a sonda alcançou as 2.069 e nenhuma lê recorte vazio, índice −1 ou nada — nenhuma prova algo que já não existe. As guardas negativas (o que saiu do App não volta) não são (c): o que guardam existe noutro módulo e o App ainda poderia recopiá-lo; caem sozinhas quando o App for só tela (T2)"
+    },
+    {
+      "fatia": "T2-B 1",
+      "medido": "2026-10-28",
+      "antes": 2060,
+      "convertidas": 0,
+      "retiradas": 7,
+      "malMedidas": 0,
+      "deOutrasMaos": 49,
+      "depois": 2102,
+      "nota": "o 1.º lote da T2-B. A premissa do plano (\"as asserções que provam regra que já mora no motor renascem como chamada\") já tinha sido cumprida pelas levas de T1-B e pelas fatias do oficial: o que sobrou lendo o App é fiação, tela e regra que ainda MORA no App (a conta por tipo está em classificacao.fiacaoPorTipo). O que este lote achou de redundante: sete asserções de comportamento que traziam, coladas no fim, um `&& /…/.test(app)` com uma fiação que a suíte do próprio motor já guarda (provado por mutação: tirar a chamada do App deixa a suíte do motor vermelha). Saem os conjuntos de texto; o comportamento fica. A conta de \"deOutrasMaos\" é o que a trilha A (o oficial) subiu no App/suítes desde a leva T1-B 3 — medido no HEAD, não na árvore.",
+      "retiradasEm": [
+        {
+          "suite": "teste-narrador-so-narra-e2.mjs",
+          "onde": "mapa_cidades — o App chama aplicarOTurno (teste-motor-aplicar §4)"
+        },
+        {
+          "suite": "teste-narrador-so-narra-e3.mjs",
+          "onde": "cidade_atual (aplicarAChegada, teste-motor-fim-do-turno) e jornada_meio (aplicarOTurno)"
+        },
+        {
+          "suite": "teste-narrador-so-narra-e4.mjs",
+          "onde": "combate_iniciar (aLutaDaResposta, teste-motor-luta §4) e perigo (oPerigoDaResposta, teste-motor-fecho §4)"
+        },
+        {
+          "suite": "teste-mm14-canais.mjs",
+          "onde": "evento_global_encerrar — o App chama aplicarOTurno"
+        },
+        {
+          "suite": "teste-mm18-fiacao.mjs",
+          "onde": "a luta pausa a escada — o fragmento já é exigido pela asserção de ordem acima dele"
+        }
+      ]
     }
   ],
   "classificacao": {
@@ -379,22 +426,22 @@
       "fiacao": "import, chamada, ref, calou, save, ordem dos passos — vira prova do `turno()` quando o passo sair do App"
     },
     "totais": {
-      "saida": 140,
-      "fiacao": 1767,
-      "tela": 132,
-      "regraNoApp": 21
+      "saida": 143,
+      "fiacao": 1827,
+      "tela": 131,
+      "regraNoApp": 1
     },
     "porSuite": {
       "teste-a-virada.mjs": {
         "saida": 2,
-        "fiacao": 7,
+        "fiacao": 6,
         "tela": 2
       },
       "teste-a1-relato.mjs": {
-        "saida": 6,
-        "tela": 4,
-        "fiacao": 47,
-        "regraNoApp": 12
+        "saida": 4,
+        "tela": 3,
+        "fiacao": 41,
+        "regraNoApp": 1
       },
       "teste-abas.mjs": {
         "fiacao": 11,
@@ -402,12 +449,12 @@
         "tela": 1
       },
       "teste-abertura-no-app.mjs": {
-        "fiacao": 12,
+        "fiacao": 11,
         "tela": 1
       },
       "teste-acoes-do-jogador.mjs": {
         "saida": 4,
-        "fiacao": 22
+        "fiacao": 21
       },
       "teste-aderencia.mjs": {
         "fiacao": 3
@@ -429,12 +476,16 @@
         "fiacao": 6,
         "saida": 1
       },
+      "teste-app-troca-a-quente.mjs": {
+        "fiacao": 3,
+        "saida": 1
+      },
       "teste-arco-com-principal.mjs": {
         "fiacao": 4
       },
       "teste-arquivo.mjs": {
-        "fiacao": 20,
-        "saida": 1
+        "fiacao": 21,
+        "saida": 2
       },
       "teste-arte.mjs": {
         "fiacao": 4,
@@ -445,8 +496,8 @@
         "fiacao": 2
       },
       "teste-bestiario-des.mjs": {
-        "fiacao": 3,
-        "saida": 2
+        "saida": 1,
+        "fiacao": 1
       },
       "teste-biblioteca.mjs": {
         "fiacao": 20
@@ -493,7 +544,7 @@
       },
       "teste-comp.mjs": {
         "tela": 1,
-        "fiacao": 5
+        "fiacao": 4
       },
       "teste-companheiro-inicial.mjs": {
         "fiacao": 11,
@@ -518,7 +569,7 @@
         "tela": 1
       },
       "teste-cronista-propoe.mjs": {
-        "fiacao": 6,
+        "fiacao": 4,
         "saida": 2
       },
       "teste-custo-onda1.mjs": {
@@ -580,14 +631,14 @@
         "saida": 1
       },
       "teste-falar-com-em-cena.mjs": {
-        "fiacao": 5,
+        "fiacao": 2,
         "tela": 1
       },
       "teste-falas.mjs": {
         "fiacao": 11
       },
       "teste-fiacao-prende.mjs": {
-        "fiacao": 45
+        "fiacao": 41
       },
       "teste-ficha-e-planta.mjs": {
         "fiacao": 7
@@ -620,6 +671,10 @@
         "saida": 1,
         "fiacao": 2
       },
+      "teste-grupo-cheio.mjs": {
+        "fiacao": 1,
+        "saida": 1
+      },
       "teste-guardado.mjs": {
         "fiacao": 4
       },
@@ -650,7 +705,7 @@
         "fiacao": 3
       },
       "teste-juiz.mjs": {
-        "fiacao": 2
+        "fiacao": 1
       },
       "teste-laco.mjs": {
         "fiacao": 9,
@@ -661,7 +716,7 @@
         "fiacao": 9
       },
       "teste-lei-da-forma.mjs": {
-        "fiacao": 11
+        "fiacao": 10
       },
       "teste-leitura-de-pessoa.mjs": {
         "fiacao": 3
@@ -702,7 +757,7 @@
         "tela": 2
       },
       "teste-mesa-farta.mjs": {
-        "fiacao": 3
+        "fiacao": 5
       },
       "teste-mesa.mjs": {
         "fiacao": 3
@@ -719,8 +774,8 @@
         "fiacao": 4
       },
       "teste-mm14-canais.mjs": {
-        "fiacao": 21,
-        "saida": 3
+        "fiacao": 19,
+        "saida": 2
       },
       "teste-mm14-continuidade.mjs": {
         "fiacao": 3
@@ -730,11 +785,11 @@
         "saida": 1
       },
       "teste-mm14-gente.mjs": {
-        "fiacao": 14,
+        "fiacao": 11,
         "tela": 1
       },
       "teste-mm14-lugar.mjs": {
-        "fiacao": 4
+        "fiacao": 3
       },
       "teste-mm14-missoes.mjs": {
         "fiacao": 3
@@ -746,17 +801,17 @@
         "fiacao": 30
       },
       "teste-mm15-lugar.mjs": {
-        "fiacao": 3,
+        "fiacao": 2,
         "saida": 1
       },
       "teste-mm15-nomes.mjs": {
         "fiacao": 8
       },
       "teste-mm15-segredo.mjs": {
-        "fiacao": 8
+        "fiacao": 7
       },
       "teste-mm18-fiacao.mjs": {
-        "fiacao": 30
+        "fiacao": 28
       },
       "teste-mm4-improviso.mjs": {
         "fiacao": 1
@@ -801,29 +856,61 @@
       },
       "teste-momentos.mjs": {
         "tela": 21,
-        "fiacao": 39,
+        "fiacao": 36,
         "saida": 3
       },
+      "teste-motor-antes-do-mestre.mjs": {
+        "fiacao": 10
+      },
       "teste-motor-aplicar.mjs": {
-        "fiacao": 7,
+        "fiacao": 16,
+        "saida": 4
+      },
+      "teste-motor-combate.mjs": {
+        "fiacao": 12,
+        "saida": 1
+      },
+      "teste-motor-cronista-do-turno.mjs": {
+        "fiacao": 11
+      },
+      "teste-motor-entrega.mjs": {
+        "fiacao": 12
+      },
+      "teste-motor-envelopes-do-turno.mjs": {
+        "fiacao": 6
+      },
+      "teste-motor-fecho.mjs": {
+        "fiacao": 15
+      },
+      "teste-motor-fim-do-turno.mjs": {
+        "fiacao": 6,
         "saida": 2
       },
+      "teste-motor-juiz-do-turno.mjs": {
+        "fiacao": 8
+      },
+      "teste-motor-luta.mjs": {
+        "fiacao": 11
+      },
+      "teste-motor-tempo-do-turno.mjs": {
+        "fiacao": 10
+      },
       "teste-mural-do-mestre.mjs": {
-        "fiacao": 14,
+        "fiacao": 13,
         "saida": 4
       },
       "teste-narrador-so-narra-e2.mjs": {
-        "fiacao": 6
+        "fiacao": 2
       },
       "teste-narrador-so-narra-e3-fiacao.mjs": {
-        "fiacao": 12,
-        "saida": 2
+        "saida": 2,
+        "fiacao": 9
       },
       "teste-narrador-so-narra-e3.mjs": {
-        "fiacao": 14
+        "fiacao": 5
       },
       "teste-narrador-so-narra-e4.mjs": {
-        "fiacao": 3
+        "fiacao": 1
       },
       "teste-narrador-so-narra.mjs": {
         "fiacao": 12
@@ -833,7 +920,7 @@
         "fiacao": 6
       },
       "teste-nemesis-do-fio.mjs": {
-        "fiacao": 8,
+        "fiacao": 7,
         "saida": 1
       },
       "teste-nome-da-campanha.mjs": {
@@ -867,9 +954,9 @@
         "fiacao": 1
       },
       "teste-pendentes-ligados.mjs": {
-        "fiacao": 9,
-        "saida": 2,
-        "tela": 5
+        "fiacao": 7,
+        "tela": 5,
+        "saida": 1
       },
       "teste-peneira-da-agressao.mjs": {
         "fiacao": 9
@@ -883,7 +970,7 @@
       },
       "teste-porta-combate.mjs": {
         "saida": 2,
-        "fiacao": 2
+        "fiacao": 1
       },
       "teste-porta-de-entrada.mjs": {
         "fiacao": 17
@@ -906,12 +993,11 @@
       },
       "teste-r3-campo-do-turno.mjs": {
         "saida": 3,
-        "regraNoApp": 9,
         "fiacao": 26,
         "tela": 9
       },
       "teste-regiao-historia.mjs": {
-        "fiacao": 5
+        "fiacao": 4
       },
       "teste-regiao.mjs": {
         "fiacao": 9
@@ -919,6 +1005,9 @@
       "teste-registro.mjs": {
         "saida": 3,
         "fiacao": 5
+      },
+      "teste-relogio-do-turno.mjs": {
+        "fiacao": 2
       },
       "teste-resgate.mjs": {
         "fiacao": 6
@@ -935,7 +1024,7 @@
         "tela": 1
       },
       "teste-saida-da-luta.mjs": {
-        "fiacao": 11
+        "fiacao": 9
       },
       "teste-sala.mjs": {
         "fiacao": 47,
@@ -953,6 +1042,9 @@
       },
       "teste-sessao-9-historia.mjs": {
         "fiacao": 3
+      },
+      "teste-sessao-guardada.mjs": {
+        "fiacao": 4
       },
       "teste-sessoes.mjs": {
         "saida": 2,
@@ -1016,7 +1108,7 @@
         "saida": 2
       },
       "teste-v6-compositor.mjs": {
-        "fiacao": 13,
+        "fiacao": 12,
         "tela": 4
       },
       "teste-veredito-da-partida.mjs": {
@@ -1033,6 +1125,13 @@
       "teste-vozes.mjs": {
         "fiacao": 4
       }
+    },
+    "fiacaoPorTipo": {
+      "contagem": 153,
+      "chamada": 1388,
+      "importacao": 71,
+      "calou": 98,
+      "ordem": 117
     }
   }
 }

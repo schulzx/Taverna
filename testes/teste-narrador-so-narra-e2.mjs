@@ -148,7 +148,8 @@ sec("5. o App continua a ler os campos (tolerante: a instrução saiu, o leitor 
   {
     const { aplicarOMapa } = await import(S + "motor/meio-do-turno.js");
     const r = aplicarOMapa({ personagem: { nome: "Vera" }, mapa: { cidades: [], faccoes: [] }, devocao: {} }, { narrativa: "x", mudancas: { mapa_cidades: [{ nome: "Vila Nova", tipo: "vila" }] } }, {});
-    t("mapa_cidades", r.estado.mapa.cidades.some((c) => c.nome === "Vila Nova") && /aplicarOTurno\(\{/.test(app)); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) */
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: esta asserção terminava num `&& /aplicarOTurno\(\{/.test(app)` — que o App chama o motor. É fato de fiação, e teste-motor-aplicar.mjs já o guarda por inteiro ("o aplicarResposta chama o motor": `aplicarOTurno({ personagem: pers,` dentro de aplicarResposta, uma só vez, com o efeito aplicado). A intenção desta asserção é o COMPORTAMENTO do campo, e fica só ela; a fiação não se afrouxa, só deixa de ser guardada em dois sítios. */
+    t("mapa_cidades", r.estado.mapa.cidades.some((c) => c.nome === "Vila Nova"));
   }
   /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O leitor de `evento_global_encerrar` e o dos sinais mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
   const meio = await import(S + "motor/meio-do-turno.js");
