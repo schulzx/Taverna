@@ -12,8 +12,8 @@
       proposta, não ligada). O que ainda se pode impedir é ela VOLTAR como
       verdade: o Narrador lê as próprias respostas de antes e repete-as, e
       o eco faz do número inventado um fato. O veto leva o número do
-      sistema: "pôr em «Elixir de Destreza» outro preço que não ◉ 140, o
-      da mesa". Entra pela pauta dinâmica, na secção `vetoDoJuiz` de
+      sistema: "dar a «Elixir de Destreza» outro preço que não ◉ 140 (o
+      25 não vale)". Entra pela pauta dinâmica, na secção `vetoDoJuiz` de
       pauta.js — rótulo NÃO PODE, vizinha da `naoPode`, e lida no mesmo
       bloco que ela —, dentro do TETO_DA_PAUTA, que corta pela prioridade
       como corta tudo. Nenhum bloco estático: o teto de ~82 mil não se mexe.
@@ -169,10 +169,21 @@ export const CORRECAO_DO_JUIZ = Object.freeze({
 
 /* as linhas, uma por espécie que veta: o que vem depois de "NÃO PODE" na
    pauta, no infinitivo como as outras linhas do bloco. O item vai entre
-   aspas — "o pouso", "a taxa": a coisa como a prosa a disse. */
+   aspas — "o pouso", "a taxa": a coisa como a prosa a disse.
+
+   A LINHA CURTA (28/10, a prova viva da v9.531). Ligado o veto, a prova
+   viva mostrou-o cortado nos dois turnos em que estava vivo: pautas de
+   cidade a 1352 e 1365 chars, a linha a 101 (87 + 14 do corte), o teto a
+   1400. A prio não é a alavanca: abaixo de 4 ela corta o PERGUNTOU (7 vezes
+   a 3,5 nas 204 pautas enviadas da 5.ª à 7.ª), e entre 4 e 4,5 não há o que
+   ganhar (64 → 66). O comprimento é: com «Rações de viagem», a linha de
+   antes entrava em 64 das 204 pautas e esta em 86 (+34%), cortando só a
+   agenda da gente, nunca o PERGUNTOU, o RUMO, o FECHO ou o ONDE;
+   com o item de 60 letras do pior caso, 23 → 39. Sai «o da mesa» e «dito
+   antes» (o ◉ já é a mesa, e o «não vale» diz o resto). */
 export const LINHAS_DA_CORRECAO = Object.freeze({
-  "preco-contra-a-mesa": (a) => `pôr em «${a.item}» outro preço que não ◉ ${numero(a.tabela)}, o da mesa (o ${numero(a.valor)} dito antes não vale)`,
-  "distancia-contra-o-mapa": (a) => `dar outra distância que não a do mapa (${numero(a.sistema)}): «${numero(a.valor)} ${a.unidade}» dito antes não vale`,
+  "preco-contra-a-mesa": (a) => `dar a «${a.item}» outro preço que não ◉ ${numero(a.tabela)} (o ${numero(a.valor)} não vale)`,
+  "distancia-contra-o-mapa": (a) => `dar outra distância que não a do mapa (${numero(a.sistema)}; o «${numero(a.valor)} ${a.unidade}» não vale)`,
 });
 
 const vazio = (v) => v == null || (typeof v === "string" && !v.trim());

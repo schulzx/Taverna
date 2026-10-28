@@ -63,7 +63,10 @@ sec("2. AS ESPÉCIES, E A LINHA DE CADA UMA");
   t("o lixo não tem espécie", esp("precosInventados", null) === undefined && esp("classeQueNaoExiste", { valor: 1 }) === undefined && esp("pessoasNovas", {}) === undefined);
   const v = { precosInventados: [{ trecho: "Vinte e cinco marcos.", valor: 25, item: "Elixir de Destreza", tabela: 140 }], distanciasFora: [{ trecho: "Um dia e meio.", valor: 1.5, unidade: "dia", tipo: "viagem", sistema: "Nova Profundo 4 h" }] };
   const vs = vetosDoVeredito(v, { turno: 7, cidade: "Monte Rasa" });
-  t("o veto do preço leva o número da mesa e diz que o inventado não vale", vs.length === 2 && /◉ 140/.test(vs[0].linha) && /«Elixir de Destreza»/.test(vs[0].linha) && /25 dito antes não vale/.test(vs[0].linha), Js(vs.map((x) => x.linha)));
+  /* MOVIDA (28/10, a linha curta — a prova viva da v9.531 viu o veto
+     cortado pelo teto): «o da mesa» e «dito antes» saíram da linha; a
+     intenção fica — o número da mesa, o item, e o inventado que não vale */
+  t("o veto do preço leva o número da mesa e diz que o inventado não vale", vs.length === 2 && /◉ 140/.test(vs[0].linha) && /«Elixir de Destreza»/.test(vs[0].linha) && /o 25 não vale/.test(vs[0].linha), Js(vs.map((x) => x.linha)));
   t("o da distância leva a do mapa, e o número à portuguesa (1,5)", /Nova Profundo 4 h/.test(vs[1].linha) && /«1,5 dia»/.test(vs[1].linha));
   t("cada veto sabe quando nasceu, até quando vive e de que cidade é", vs.every((x) => x.turno === 7 && x.ate === 7 + CORRECAO_DO_JUIZ.vida && x.cidade === "Monte Rasa" && x.alvo));
   t("e as palavras que o trazem de volta (a coisa, o destino)", Js(vs[0].toques) === Js(["elixir de destreza"]) && Js(vs[1].toques) === Js(["nova profundo"]));
@@ -130,7 +133,8 @@ sec("4. O LIVRO E A PORTA DA PAUTA");
   for (let n = 1; n <= 9; n++) L2 = andarOsVetos(L2, vetosDoVeredito({ precosInventados: [{ valor: n + 1, item: `coisa ${n % 8}`, tabela: 1 }] }, { turno: n, cidade: "A" }), { turno: n, cidade: "A" });
   t(`o livro guarda no máximo ${CORRECAO_DO_JUIZ.guardados}, os mais novos e vivos`, L2.length <= CORRECAO_DO_JUIZ.guardados && L2.every((x) => x.ate >= 9));
   const re = andarOsVetos(andarOsVetos([], vetosDoVeredito({ precosInventados: [{ valor: 5, item: "corda", tabela: 35 }] }, { turno: 1 }), { turno: 1 }), vetosDoVeredito({ precosInventados: [{ valor: 9, item: "corda", tabela: 35 }] }, { turno: 2 }), { turno: 2 });
-  t("o mesmo alvo, dito outra vez, é um veto só, o mais novo", re.length === 1 && /9 dito antes/.test(re[0].linha) && re[0].turno === 2);
+  /* MOVIDA (28/10, a linha curta): «o 9 dito antes» passou a «o 9 não vale» */
+  t("o mesmo alvo, dito outra vez, é um veto só, o mais novo", re.length === 1 && /o 9 não vale/.test(re[0].linha) && re[0].turno === 2);
   const tres = andarOsVetos([], vetosDoVeredito({ precosInventados: [1, 2, 3].map((k) => ({ valor: 9, item: `coisa ${k}`, tabela: k })) }, { turno: 1 }), { turno: 1 });
   t(`na pauta, no máximo ${CORRECAO_DO_JUIZ.naPauta} linhas, as mais novas primeiro`, Js(vetosParaAPauta(tres, { turno: 2 })) === Js([tres[2].linha, tres[1].linha]));
   /* a fiação: as linhas entram pela porNaPauta na secção do Juiz, e saem no
@@ -147,7 +151,10 @@ sec("5. O TETO — o que a linha do veto tira da pauta");
      A PRIO É ESTA MEDIDA: a 2,0 (a da naoPode) a linha cortava o PERGUNTOU
      7 vezes, o RUMO 3 e o FECHO 9; a 4,5 corta só o que corta depois de 5
      (a agenda da gente, a luz, o contra), e nunca passa do teto. */
-  const linhas = [`pôr em «${"x".repeat(60)}» outro preço que não ◉ 140, o da mesa (o 25 dito antes não vale)`, `dar outra distância que não a do mapa (${"y".repeat(60)} 4 h): «1,5 dia» dito antes não vale`].map((l) => l.slice(0, CORRECAO_DO_JUIZ.letras));
+  /* MOVIDA (28/10, a linha curta): as duas linhas do pior caso saem agora
+     da própria tabela (LINHAS_DA_CORRECAO), com o item e o destino de 60
+     letras — antes estavam copiadas à mão, e a cópia ficaria para trás */
+  const linhas = [LINHAS_DA_CORRECAO["preco-contra-a-mesa"]({ item: "x".repeat(60), tabela: 140, valor: 25 }), LINHAS_DA_CORRECAO["distancia-contra-o-mapa"]({ sistema: `${"y".repeat(60)} 4 h`, valor: 1.5, unidade: "dia" })].map((l) => l.slice(0, CORRECAO_DO_JUIZ.letras));
   const prio = secaoPorId("vetoDoJuiz").prio;
   let turnos = 0, entrou = 0, passou = 0;
   const cortou = {}, cortouAntes = [];
@@ -173,6 +180,33 @@ sec("5. O TETO — o que a linha do veto tira da pauta");
   t(`nunca passa do teto (${TETO_DA_PAUTA})`, passou === 0);
   t("e nunca tira uma linha que corta antes dela (a resposta, a aposta, o rumo, o fecho, os vetos do sistema, o lugar)", cortouAntes.length === 0, cortouAntes.slice(0, 5).join(", "));
   t("nem o PERGUNTOU, o RUMO, o FECHO, o DESFECHO ou o NÃO PODE do sistema", ["pergunta", "rumo", "fecho", "desfecho", "naoPode", "vetoDoDesfecho", "onde"].every((s) => !cortou[s]));
+  /* A LINHA DE TAMANHO REAL (28/10). A prova viva da v9.531 viu o veto
+     cortado nos dois turnos em que estava vivo (pautas de cidade a 1352 e
+     1365, a linha a 87 + 14, o teto a 1400). Medida nas mesmas 204 pautas,
+     com o item da prova viva («Rações de viagem», ◉ 7 contra 25): a linha
+     de antes entrava em 64; a curta entra em 86, e corta o mesmo tipo de
+     coisa (a agenda da gente), nunca o que corta antes dela. A prio fica a
+     4,5: abaixo de 4 corta o PERGUNTOU, e entre 4 e 4,5 ganha 2. Catraca:
+     não desce de 86. */
+  const real = LINHAS_DA_CORRECAO["preco-contra-a-mesa"]({ item: "Rações de viagem", tabela: 7, valor: 25 });
+  const antiga = "pôr em «Rações de viagem» outro preço que não ◉ 7, o da mesa (o 25 dito antes não vale)";
+  let entraReal = 0, entraAntiga = 0, cortaProibido = 0;
+  for (const f of ["registo-s5-pauta.json", "registo-s6-s7-pauta.json"]) {
+    const R = ler(f);
+    for (const tt of R.turnos) {
+      const p0 = {};
+      for (const [k, ids] of Object.entries(tt.secoes)) p0[k] = ids.map((i) => R.linhas[i]);
+      const antes = textoDaPauta(p0);
+      const com = (l) => textoDaPauta(cederNaCena(porNaPauta(p0, "vetoDoJuiz", l), { luta: tt.luta, masmorra: tt.masmorra }));
+      const d = com(real);
+      if (d.includes(real)) entraReal++;
+      if (com(antiga).includes(antiga)) entraAntiga++;
+      for (const k of ["pergunta", "rumo", "fecho", "desfecho", "naoPode", "vetoDoDesfecho", "onde"]) for (const x of p0[k] || []) if (antes.includes(x) && !d.includes(x)) cortaProibido++;
+    }
+  }
+  console.log(`     a linha de tamanho real (${real.length} letras): entra em ${entraReal} das 204 (a de antes, ${antiga.length} letras: ${entraAntiga})`);
+  t(`a linha curta entra em ${entraReal} das 204 pautas (a de antes: ${entraAntiga}; a medida de 28/10: 86)`, entraReal >= 86 && entraReal > entraAntiga);
+  t("e não tira o PERGUNTOU, o RUMO, o FECHO, o ONDE nem o NÃO PODE em nenhuma", cortaProibido === 0, String(cortaProibido));
 }
 
 sec("6. O CÂNONE — o que a invenção não consagra, nas sessões 8–10");
@@ -280,6 +314,40 @@ sec("9. LIXO, DETERMINISMO, IMUTABILIDADE");
   try { const vs = vetosDoVeredito(v, congela({ turno: 4 })); andarOsVetos(congela(vs), congela([]), congela({ turno: 4 })); vetosParaAPauta(congela(vs), congela({ turno: 5 })); canoneSemInvencao(ac, v, congela({ estado: { npcs: {} } })); } catch { mexeu = true; }
   t("não mexe no que recebe (corre sobre o congelado)", !mexeu);
   t("a mesma entrada dá a mesma correção", Js(VER.map((x) => vetosDoVeredito(x.v, { turno: 3 }))) === Js(VER.map((x) => vetosDoVeredito(JSON.parse(Js(x.v)), { turno: 3 }))));
+}
+
+sec("10. O QUE ESTÁ À VENDA É DO SISTEMA — o portão não morde o mercado");
+{
+  /* 28/10, a prova viva da v9.531 (a trilha A): o «Elixir de Destreza», à
+     venda na banca da cena, saía como gente nova («age em cena e não está no
+     EM CENA nem no registo»), e a correção tirava-o do cânone se o Cronista o
+     propusesse — o portão mordia a verdade. O nome do mercado (o do turno e
+     o que a pauta disse) conta como conhecido pelo nome inteiro ou pela
+     cabeça dele, nunca palavra a palavra.
+     A MEDIDA: 0 vezes nas 194 linhas das sessões de prova e nos 216 casos do
+     corpus (o mercado delas fala em minúsculas — «caneca de cerveja» — e o
+     Juiz só lê nomes com maiúscula); 1 na prova viva, a banca do jogo de
+     hoje, que dá nome próprio aos frascos. O defeito é do jogo novo, e a
+     suíte é a régua dele. */
+  const { entradaDoJuiz, julgarOTurno } = await import("../src/motor/juiz-do-turno.js");
+  const BANCA = [{ nome: "Elixir de Destreza", preco: 140, id: "elixir" }];
+  const PROSA_M = "O boticário ergue o frasco. O Elixir de Destreza custa o que a mesa diz. Atrás dele, uma velha a quem chamam Fiandeira tece junto à Ponte das Cinzas.";
+  const nomes = (v) => [...v.pessoasNovas, ...v.nomesNovos].map((a) => a.nome);
+  const com = julgarAProsa(PROSA_M, { mercado: BANCA });
+  t("o item à venda não sai como gente nova", !nomes(com).includes("Elixir de Destreza"), Js(nomes(com)));
+  t("e a invenção ao lado dele continua apanhada (o portão morde o que deve)", nomes(com).includes("Fiandeira"), Js(nomes(com)));
+  t("MORDE: sem o mercado, o mesmo frasco é gente nova", nomes(julgarAProsa(PROSA_M, {})).includes("Elixir de Destreza"));
+  t("o mercado que a pauta disse conta também («nome ◉ N»)", !nomes(julgarAProsa(PROSA_M, { pauta: "O PREÇO   Elixir de Destreza ◉ 140" })).includes("Elixir de Destreza"));
+  t("a cabeça do nome conta («o Elixir»)", !nomes(julgarAProsa("O boticário ergue o frasco. O Elixir brilha na mão dele, verde e espesso.", { mercado: BANCA })).includes("Elixir"));
+  /* no meio da frase: no começo, a maiúscula de abrir a frase já a cala, com mercado ou sem ele */
+  const GUARDA = "Ao portão, a guarda Destreza ergue a lança e manda parar.";
+  t("mas uma palavra solta do item não vira nome de ninguém («Destreza» que age é gente nova, com o mercado ou sem ele)", nomes(julgarAProsa(GUARDA, { mercado: BANCA })).includes("Destreza") && nomes(julgarAProsa(GUARDA, {})).includes("Destreza"));
+  /* o turno inteiro, como o App o corre: a entrada do Juiz leva as bancas */
+  const FOTO_M = { personagem: { nome: "Vera", grupo: [] }, npcs: {}, mapa: { cidades: [{ nome: "Buraco Norte" }] }, cidadeAtual: "Buraco Norte", lugar: { nome: "a praça" }, bancas: [{ nome: "Banca do Boticário", estoque: BANCA }], narracoes: [], mundo: { semente: "prova|Fantasia medieval", genero: "Fantasia medieval" } };
+  const entrada = entradaDoJuiz(FOTO_M, { frase: "Quanto custa o elixir?", pauta: "", moeda: "marcos" });
+  const { veredito } = julgarOTurno(PROSA_M, entrada, { turno: 1 });
+  const cj = canoneSemInvencao({ canone: { "Elixir de Destreza": { tipo: "artefato" }, Fiandeira: { tipo: "pessoa" } } }, veredito, { entrada, estado: FOTO_M });
+  t("e a correção do cânone deixa o frasco e tira a Fiandeira", !cj.tirados.some((x) => x.nome === "Elixir de Destreza") && cj.tirados.some((x) => x.nome === "Fiandeira") && "Elixir de Destreza" in cj.aceito.canone, Js(cj.tirados));
 }
 
 console.log(`\ncorreção do juiz: ${ok} passaram, ${mal} falharam`);

@@ -669,6 +669,14 @@ function julgarNomes(t, estado) {
   if (pautaSabe) conhecidos.push(...pautaSabe.gente, ...pautaSabe.lugares);
   if (estado.moeda) conhecidos.push(String(estado.moeda));
   const conhecidas = new Set(conhecidos.flatMap(tokensDoNome));
+  /* O QUE ESTÁ À VENDA É DO SISTEMA (28/10, a prova viva da v9.531): o
+     «Elixir de Destreza» da banca da cena saía como gente nova, e a correção
+     do Juiz tirava-o do cânone — o portão mordia a verdade. O nome do
+     mercado (o do turno e o que a pauta disse) conta como conhecido pelo
+     nome INTEIRO ou pela cabeça dele («o Elixir»), não palavra a palavra:
+     «Destreza» não passa a ser o nome de ninguém por estar num frasco. */
+  const doMercado = [...lista(estado.mercado), ...(pautaSabe ? pautaSabe.mercado : [])].map(nomeDe).filter(Boolean).map((n) => semAcento(tokensDoNome(n).join(" "))).filter(Boolean);
+  const aVenda = (inteiro) => doMercado.some((k) => inteiro === k || inteiro.includes(k) || k.startsWith(inteiro + " "));
   const conhecidosInteiros = conhecidos.map((n) => tokensDoNome(n).join(" "));
   const ecoT = [estado.frase, textoDoAntes(estado.antes)].filter(Boolean).join(" \n ");
   const p = plano(t), fala = mapaDaFala(t), frases = frasesDe(t);
@@ -694,7 +702,7 @@ function julgarNomes(t, estado) {
     // "Nyla" é a Nyla Punho-de-Pedra; "Três Pedras" não é o Alto das Pedras
     const propria = toks.filter((w) => !L.nomesDeLugar.includes(w) && !(w in L.numeros));
     const inteiro = semAcento(toks.join(" "));
-    if (propria.some((w) => conhecidas.has(w)) || conhecidosInteiros.some((k) => k.includes(inteiro))) { vistos.add(chave); continue; }
+    if (propria.some((w) => conhecidas.has(w)) || conhecidosInteiros.some((k) => k.includes(inteiro)) || aVenda(inteiro)) { vistos.add(chave); continue; }
     if (toks.every((w) => w.length < T.nomeMinimo)) continue;
     // a palavra só tem maiúscula por abrir a frase, e o texto a usa em minúscula: não é nome
     const umaSo = toks.length === 1 && c.nome.split(/\s+/).length === 1;
