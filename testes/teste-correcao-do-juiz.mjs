@@ -350,5 +350,50 @@ sec("10. O QUE ESTÁ À VENDA É DO SISTEMA — o portão não morde o mercado")
   t("e a correção do cânone deixa o frasco e tira a Fiandeira", !cj.tirados.some((x) => x.nome === "Elixir de Destreza") && cj.tirados.some((x) => x.nome === "Fiandeira") && "Elixir de Destreza" in cj.aceito.canone, Js(cj.tirados));
 }
 
+sec("11. O QUE O HERÓI CARREGA É DO SISTEMA — o portão não morde o inventário");
+{
+  /* 28/10, trilha B: a entrada do Juiz (motor/juiz-do-turno.js#entradaDoJuiz)
+     levava a bolsa e não os itens. O item do inventário com nome próprio
+     («a Lâmina do Juramento») saía como gente nova, e a correção tirava-o do
+     cânone — o risco do Elixir da banca (§10), um bolso abaixo. A régua é a
+     do mercado: o nome inteiro ou a cabeça, nunca palavra solta.
+     A MEDIDA: 0 vezes. Os 216 casos do corpus não levam inventário (os
+     registos das sessões 6 a 11 não o guardaram) e nenhum dos 21 nomes que
+     o Juiz acusa ali é item; nas 197 linhas das sessões gravadas só a do
+     navegador tem itens (3 turnos: a «Faca herdada», a «Espada Longa», o
+     «Arco Curto» do companheiro), e a prosa não os nomeia. Como o frasco,
+     é defeito do jogo novo — a suíte é a régua dele. */
+  const { entradaDoJuiz, julgarOTurno, JUIZ_NO_TURNO } = await import("../src/motor/juiz-do-turno.js");
+  const nomes = (v) => [...v.pessoasNovas, ...v.nomesNovos].map((a) => a.nome);
+  const PROSA_I = "Vera desembainha a espada. A Lâmina do Juramento corta o ar diante do portão. Atrás dela, uma velha a quem chamam Fiandeira tece junto à Ponte das Cinzas.";
+  const BOLSO = ["Lâmina do Juramento"];
+  const com = julgarAProsa(PROSA_I, { inventario: BOLSO });
+  t("o item do inventário não sai como gente nova", !nomes(com).includes("Lâmina do Juramento"), Js(nomes(com)));
+  t("e a invenção ao lado dele continua apanhada", nomes(com).includes("Fiandeira"), Js(nomes(com)));
+  t("MORDE: sem o inventário, o mesmo item é gente nova", nomes(julgarAProsa(PROSA_I, {})).includes("Lâmina do Juramento"));
+  const CABECA = "Vera ergue a Lâmina contra a luz da tocha, e o aço canta.";
+  t("a cabeça do nome conta («a Lâmina»), e sem o inventário morde", !nomes(julgarAProsa(CABECA, { inventario: BOLSO })).includes("Lâmina") && nomes(julgarAProsa(CABECA, {})).includes("Lâmina"));
+  const GUARDA = "Ao portão, o guarda Juramento ergue a lança e manda parar.";
+  t("mas uma palavra solta do item não vira nome de ninguém («Juramento» que age é gente nova, com o inventário ou sem ele)", nomes(julgarAProsa(GUARDA, { inventario: BOLSO })).includes("Juramento") && nomes(julgarAProsa(GUARDA, {})).includes("Juramento"));
+  /* a entrada: os quatro sítios da ficha, no herói e no grupo, sem o parêntese */
+  const PERS_I = {
+    nome: "Vera", moedas: 3, grupo: [{ nome: "Piotr", equipados: { arma: { nome: "Arco Curto" } } }],
+    inventario: ["Faca herdada (única lembrança da família)", { nome: "Lâmina do Juramento" }, null, "", 7],
+    equipamento: [{ nome: "Elmo de Ferro" }], equipados: { arma: { nome: "Espada Longa" } }, equipado: { mao: "Escudo Torto" },
+  };
+  const FOTO_I = { personagem: PERS_I, npcs: {}, mapa: { cidades: [{ nome: "Buraco Norte" }] }, cidadeAtual: "Buraco Norte", lugar: { nome: "o portão" }, narracoes: [], mundo: { semente: "prova|Fantasia medieval", genero: "Fantasia medieval" } };
+  const entrada = entradaDoJuiz(FOTO_I, { frase: "Saco a lâmina.", pauta: "", moeda: "marcos" });
+  /* FALHA NO HEAD DE ANTES: a entrada não tinha a chave */
+  t("a entrada leva o que o herói e o grupo carregam, sem o parêntese da descrição", Js(entrada.inventario) === Js(["Faca herdada", "Lâmina do Juramento", "Elmo de Ferro", "Espada Longa", "Escudo Torto", "Arco Curto"]), Js(entrada.inventario));
+  t("sem item nenhum, a entrada sai byte a byte como saía (a chave só existe com item)", !("inventario" in entradaDoJuiz({ ...FOTO_I, personagem: { nome: "Vera", moedas: 3, grupo: [] } }, {})) && !("inventario" in entradaDoJuiz(null, null)));
+  const muitos = entradaDoJuiz({ personagem: { nome: "V", inventario: Array.from({ length: 200 }, (_, i) => `Item ${i}`) } }, {});
+  t(`e nunca leva mais que ${JUIZ_NO_TURNO.itens} nomes (a entrada vai ao arquivo da sessão a cada turno)`, muitos.inventario.length === JUIZ_NO_TURNO.itens);
+  /* o turno inteiro: a correção do cânone deixa o item e tira a Fiandeira */
+  const { veredito } = julgarOTurno(PROSA_I, entrada, { turno: 1 });
+  const cj = canoneSemInvencao({ canone: { "Lâmina do Juramento": { tipo: "artefato" }, Fiandeira: { tipo: "pessoa" } } }, veredito, { entrada, estado: FOTO_I });
+  t("e a correção do cânone deixa a lâmina e tira a Fiandeira", !cj.tirados.some((x) => x.nome === "Lâmina do Juramento") && cj.tirados.some((x) => x.nome === "Fiandeira") && "Lâmina do Juramento" in cj.aceito.canone, Js(cj.tirados));
+  t("a entrada não muta a ficha", PERS_I.inventario[0] === "Faca herdada (única lembrança da família)" && PERS_I.inventario.length === 5);
+}
+
 console.log(`\ncorreção do juiz: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

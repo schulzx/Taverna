@@ -24,6 +24,8 @@
 
      entradaDoJuiz(foto, ctx) → o `estado` de julgarAProsa
        foto: { personagem, npcs, mapa, base, cidadeAtual, lugar,
+               (personagem.inventario/equipamento/equipados/equipado,
+                e os mesmos do grupo: o que o herói carrega),
                oferecidos, missoes, bancas, balcao, narracoes, elenco,
                guildas, espinha, mundo: { semente, genero, molde, lexico } }
        ctx:  { frase, pauta, moeda }
@@ -53,7 +55,37 @@ export const JUIZ_NO_TURNO = {
   achadosPorTurno: 4,      // trechos guardados de um turno (a conta leva todos)
   trecho: 120,             // caracteres de cada trecho e de cada motivo
   narracoesAntes: 6,       // as respostas anteriores que o Juiz lê como eco
+  itens: 60,               // os nomes do que o herói e o grupo carregam, na entrada
 };
+
+/* ---------------- O QUE O HERÓI CARREGA (28/10, trilha B) ----------------
+   A entrada levava a bolsa em moedas e não os itens: um item do inventário
+   com nome próprio («a Lâmina do Juramento») saía como gente nova, e a
+   correção do Juiz (correcao-do-juiz.js#canoneSemInvencao) tirava-o do
+   cânone — o mesmo risco do Elixir da banca, consertado em c8bc5b2. Os
+   itens moram em quatro sítios da ficha (o inventário em texto ou objeto,
+   a mochila, o que está empunhado por encaixe — duas formas, a de hoje e
+   a de antes), no herói e em cada companheiro; o parêntese do inventário
+   («Faca herdada (única lembrança da família)») é descrição, não nome. A
+   chave só vai à entrada quando há item: a entrada sem eles sai byte a
+   byte como saía (é ela que as sessões gravadas guardam). */
+const ONDE_SE_CARREGA = ["inventario", "equipamento", "equipados", "equipado"];
+function oQueCarrega(p) {
+  const out = [];
+  const daFicha = (f) => {
+    const x = obj(f);
+    for (const campo of ONDE_SE_CARREGA) {
+      const v = x[campo];
+      for (const it of Array.isArray(v) ? v : Object.values(obj(v))) {
+        const n = nome(it).replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+        if (n && !out.includes(n)) out.push(n);
+      }
+    }
+  };
+  daFicha(p);
+  for (const g of arr(obj(p).grupo)) daFicha(g);
+  return out.slice(0, JUIZ_NO_TURNO.itens);
+}
 
 /* as classes do veredito, na ordem em que a linha as diz */
 export const CLASSES_DO_JUIZ = [
@@ -116,6 +148,7 @@ export function entradaDoJuiz(foto, ctx) {
     if (Number.isFinite(Number(r.moedas))) valores.push(Number(r.moedas));
   }
   const limpa = (xs) => xs.filter((x) => (typeof x === "string" ? x.trim() : x && nome(x).trim()));
+  const carrega = oQueCarrega(p);
   return {
     frase: String(c.frase || ""),
     antes: arr(f.narracoes).map((x) => String(x == null ? "" : x)).filter((x) => x.trim()).slice(-JUIZ_NO_TURNO.narracoesAntes),
@@ -130,6 +163,7 @@ export function entradaDoJuiz(foto, ctx) {
     valores,
     ...(Number.isFinite(Number(p.moedas)) ? { bolsa: Number(p.moedas) } : {}),
     pauta: typeof c.pauta === "string" ? c.pauta : "",
+    ...(carrega.length ? { inventario: carrega } : {}),
   };
 }
 

@@ -675,7 +675,11 @@ function julgarNomes(t, estado) {
      mercado (o do turno e o que a pauta disse) conta como conhecido pelo
      nome INTEIRO ou pela cabeça dele («o Elixir»), não palavra a palavra:
      «Destreza» não passa a ser o nome de ninguém por estar num frasco. */
-  const doMercado = [...lista(estado.mercado), ...(pautaSabe ? pautaSabe.mercado : [])].map(nomeDe).filter(Boolean).map((n) => semAcento(tokensDoNome(n).join(" "))).filter(Boolean);
+  /* E O QUE O HERÓI CARREGA TAMBÉM (28/10, trilha B): o item do inventário
+     com nome próprio («a Lâmina do Juramento») é o mesmo risco do frasco da
+     banca — gente nova para o Juiz, e a correção tirava-o do cânone. Conta
+     pela mesma régua: o nome inteiro ou a cabeça, nunca palavra solta. */
+  const doMercado = [...lista(estado.mercado), ...lista(estado.inventario), ...(pautaSabe ? pautaSabe.mercado : [])].map(nomeDe).filter(Boolean).map((n) => semAcento(tokensDoNome(n).join(" "))).filter(Boolean);
   const aVenda = (inteiro) => doMercado.some((k) => inteiro === k || inteiro.includes(k) || k.startsWith(inteiro + " "));
   const conhecidosInteiros = conhecidos.map((n) => tokensDoNome(n).join(" "));
   const ecoT = [estado.frase, textoDoAntes(estado.antes)].filter(Boolean).join(" \n ");
