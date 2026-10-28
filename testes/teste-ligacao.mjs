@@ -262,6 +262,10 @@ sec("2. A CATRACA — nenhuma regra NOVA sem leitor");
       let c = 0;
       for (const g of arqs) c += (fonte[g].match(rx) || []).length;
       c += (txtProvas.match(rx) || []).length;
+      /* T1-A, 5.ª fatia (28/10): e o motor lê também — o poder único foi do
+         App para motor/combate-do-turno.js, e chanceUnica passou a ter só o
+         motor como leitor fora de unicas.js */
+      for (const g of MOTOR_FONTES) c += (g.match(rx) || []).length;
       if (c <= 1) (achadas[f] = achadas[f] || []).push(nome);
     }
   }

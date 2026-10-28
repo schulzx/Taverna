@@ -9,7 +9,7 @@ import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from 
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, rolarIniciativa, resumoIniciativa, novosRecursos, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, folegoDepoisDoTurno, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
-import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
+/* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
@@ -240,6 +240,7 @@ import { julgarOCronista } from "./motor/cronista.js";
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
+import { despertarUnica } from "./motor/combate-do-turno.js";
 import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFecho, portaDoAceite, fimDaLutaDe } from "./recibo-da-luta.js";
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
@@ -14543,14 +14544,14 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
   /* HABILIDADES ÚNICAS (v7.4.4): mesma lógica do loot — a árvore da classe é
      tabela fixa, mas derrubar elite/lendário pode DESPERTAR uma técnica só
      sua, gerada por código. A IA narra a epifania; o sistema cria e limita. */
+  /* T1-A, 5.ª fatia: a regra mora em `despertarUnica` (src/motor/combate-do-turno.js),
+     pura e à letra; daqui sai a fiação — as linhas, a nota, a ficha nova.
+     Provado byte a byte contra o órgão de antes (teste-motor-combate). */
   const talvezDespertarUnica = (p2, inimigosFinais, msgs) => {
-    const ch = chanceUnica(inimigosFinais);
-    if (!ch || sorteDoTurno("habilidade-unica")() >= ch) return p2;
-    const existentes = (p2.habilidades || []).map((x) => x.nome);
-    const hu = gerarHabilidadeUnica(p2.nivel || 1, existentes, sorteDoTurno("habilidade-unica"));
-    msgs.push(`🌟 PODER ÚNICO DESPERTOU: ${hu.nome} (${hu.custo} PM · recarga ${hu.recarga}t) — ${hu.descricao}`);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[PODER ÚNICO — REGISTRADO PELO SISTEMA] A vitória sobre ${((inimigosFinais || [])[0] || {}).nome || "o inimigo"} despertou em mim uma técnica só minha: "${hu.nome}" (${hu.descricao}). Já está na minha lista de habilidades — NÃO a crie de novo. Narre a epifania como um momento raro e marcante: o poder do derrotado deixou uma marca em mim.`;
-    return { ...p2, habilidades: [...(p2.habilidades || []), hu] };
+    const r = despertarUnica(p2, inimigosFinais, { sorteDoTurno });
+    msgs.push(...r.msgs);
+    notaRef.current = notaComOTurno(notaRef.current, r.paraOCronista);
+    return r.pers;
   };
 
   /* REDE DE SEGURANÇA (v9.5.1): um erro dentro da resolução do turno abortava
