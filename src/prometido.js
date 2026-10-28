@@ -176,6 +176,11 @@ function garantirSemente(s) {
     tipo,
     texto: t,
     quem: texto(o.quem, 60),
+    /* T1 (27/10): quem DISSE a promessa, quando o motor do Cronista
+       (motor/cronista.js) a julgou palavra de alguém e não fato do mundo.
+       Campo novo, só presente quando há: o save de antes não o tem, e a
+       versão de antes o ignora. */
+    ...(texto(o.dito, 60) ? { dito: texto(o.dito, 60) } : {}),
     turno: inteiro(o.turno),
     estado: ESTADOS.includes(o.estado) ? o.estado : "aberta",
     fim: inteiro(o.fim),
@@ -266,9 +271,17 @@ function aparar(sementes) {
 
 /* ---------------- A LINHA DA PAUTA ----------------
    O texto é a frase do próprio Narrador (ele a escreveu, não há o que
-   esconder); o pedido é o `volta` da tabela. */
+   esconder); o pedido é o `volta` da tabela.
+
+   O ECO (11.ª sessão, M8–M44): a ameaça que Branca Pau Seco disse voltava
+   com o pedido "a ameaça dá um passo concreto", e o Mestre fazia o MUNDO
+   cumpri-la — a Ronda "das orelhas", a forca à beira do valo. A promessa
+   que é palavra de alguém (`dito`) volta pela boca de quem a disse, e
+   continua palavra: o mundo não a confirma sozinho. */
+export const VOLTA_DO_DITO = "quem o disse volta a isso — insiste, cobra ou age por conta própria —, e o que disse continua palavra dele: o mundo não o confirma sozinho";
 function linhaDaVolta(s) {
   const t = tipoPorId(s.tipo);
+  if (s.dito) return `"${s.texto}" (dito por ${s.dito}, não fato) volta agora: ${VOLTA_DO_DITO}`;
   return `"${s.texto}"${s.quem ? ` (${s.quem})` : ""} volta agora: ${t.volta}`;
 }
 

@@ -263,6 +263,44 @@ sec("2. A CATRACA — nenhuma regra NOVA sem leitor");
   t(`nenhum perdão sobrando${ressuscitadas.length ? " — já tem leitor: " + ressuscitadas.join(", ") : ""}`, ressuscitadas.length === 0);
 }
 
+sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
+{
+  /* T1 (27/10): o motor do turno nasce em src/motor/ (o `aplicar` do
+     oficial, o Cronista do backend), e as secções 1 e 2 só leem a raiz de
+     src/ — um export morto lá dentro passaria calado. A régua é a mesma:
+     todo módulo do motor tem quem o importe em src/, e todo export tem
+     leitor além da própria definição (teste conta). A LISTA DE ESPERA tem
+     a mesma lei da de cima: credor nomeado, e esvazia quando o App liga. */
+  const DIRM = path.join(DIR, "motor");
+  const motor = fs.existsSync(DIRM) ? fs.readdirSync(DIRM).filter((f) => /\.js$/.test(f)) : [];
+  const fonteM = Object.fromEntries(motor.map((f) => [f, fs.readFileSync(path.join(DIRM, f), "utf8")]));
+  const ESPERA_DO_MOTOR = {
+    /* o Cronista que só propõe: `cronistaDoTurno` (App.jsx) passa a
+       aplicar o `aceito` de `julgarOCronista` — a fiação está escrita no
+       diário de 27/10 (T1-B). `teste-cronista-propoe.mjs` e
+       `jogar-em-node.mjs` são os primeiros leitores. */
+    "cronista.js": "oficial, T1 (27/10): cronistaDoTurno chama julgarOCronista",
+  };
+  const todos = [...Object.values(fonte), ...Object.values(fonteM)];
+  const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
+  t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);
+  const pagos = Object.keys(ESPERA_DO_MOTOR).filter((f) => !motor.includes(f) || todos.some((g) => g.includes(`/motor/${f}"`)));
+  t(`e a espera do motor não guarda quem já foi ligado${pagos.length ? " — já ligados: " + pagos.join(", ") : ""}`, pagos.length === 0);
+  const RX = /^export (?:async )?(?:function|const|class) ([A-Za-z_][A-Za-z0-9_]*)/gm;
+  const mortos = [];
+  let tot = 0;
+  for (const f of motor) {
+    for (const m of fonteM[f].matchAll(RX)) {
+      tot++;
+      const rx = new RegExp("\\b" + m[1] + "\\b", "g");
+      let c = (txtProvas.match(rx) || []).length;
+      for (const g of todos) c += (g.match(rx) || []).length;
+      if (c <= 1) mortos.push(`motor/${f}:${m[1]}`);
+    }
+  }
+  t(`${tot} regras do motor varridas, nenhuma sem leitor${mortos.length ? " — " + mortos.join(", ") : ""}`, mortos.length === 0);
+}
+
 sec("3. AS DUAS QUE ESTA VARREDURA ACHOU");
 {
   /* "Comando: Atacar" custa um ponto no rank 2 e promete "sua invocação

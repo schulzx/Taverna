@@ -1028,6 +1028,14 @@ export const O_QUE_O_TURNO_ANDA = [
   { campo: "cobradas", ref: "cobradasRef", noSave: true, quem: ["pautaDoTurno"] },
   { campo: "ultimaCobranca", ref: "ultimaCobrancaRef", noSave: true, quem: ["pautaDoTurno"] },
   { campo: "formasCobradas", ref: "formasCobradasRef", noSave: true, quem: ["pautaDoTurno"] },
+  /* T1 (27/10), o achado do T0-A: um turno desfeito por ligação caída
+     deixava andar a cadência do mundo (`desdeMundo`, contada por
+     `talvezOMundoSeMexer` dentro de `marcarTurnoDoMundo`) e o Livro de
+     Promessas (`prometido`, que `cobrarNoTurno` anda em `pautaDoTurno`).
+     Os dois vão no save, e por isso no retrato; faltavam aqui — e, sem a
+     linha, nenhuma catraca via que `aplicarRetrato` não os repõe. */
+  { campo: "desdeMundo", ref: "desdeMundoRef", noSave: true, quem: ["talvezOMundoSeMexer", "marcarTurnoDoMundo"] },
+  { campo: "prometido", ref: "prometidoRef", noSave: true, quem: ["pautaDoTurno"] },
   /* os soltos — fora do save, e por isso fotografados à parte */
   { campo: "nota", ref: "notaRef", noSave: false, quem: ["moverParaLocal", "marcarTurnoDoMundo", "mexerNaPostura", "enviar"] },
   { campo: "oficina", ref: "oficinaRef", noSave: false, quem: ["enviar"] },

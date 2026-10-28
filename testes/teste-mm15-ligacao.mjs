@@ -379,6 +379,28 @@ bloco(() => {
   t("e nenhum campo do mundo sobrevive ao desfeito",
     G.O_QUE_O_TURNO_ANDA.every((l) => !G.SOBREVIVEM_AO_DESFEITO.includes(l.campo)));
 
+  /* T1 (27/10, backend), o achado do T0-A: o retrato cobre o campo, mas é
+     `aplicarRetrato` quem o põe de volta — e um campo que a foto leva e
+     ninguém repõe anda num turno que não houve. Mediu-se: `desdeMundo` e
+     `prometido` (as duas linhas novas da tabela) não são repostos. O
+     conserto é no App (duas linhas em `aplicarRetrato`), fora do
+     território do backend: os dois ficam numa LISTA DE ESPERA datada, com o
+     credor nomeado, e a catraca anda nos dois sentidos — quando o oficial
+     os repuser, a lista tem de esvaziar. */
+  const ESPERAM_O_APLICAR_RETRATO = {
+    desdeMundo: "oficial, T1 (27/10): desdeMundoRef.current = Number.isFinite(r.desdeMundo) ? r.desdeMundo : desdeMundoRef.current",
+    prometido: "oficial, T1 (27/10): prometidoRef.current = r.prometido !== undefined ? garantirPrometido(r.prometido) : prometidoRef.current",
+  };
+  const iAR = APP.indexOf("const aplicarRetrato = (retrato) => {");
+  const AR = iAR >= 0 ? APP.slice(iAR, APP.indexOf("\n  };", iAR)) : "";
+  t("achei o corpo de `aplicarRetrato`", AR.length > 500);
+  const repoe = (l) => new RegExp(l.ref + "\\.current = [^;\\n]*\\br\\." + l.campo + "\\b").test(AR);
+  const naoRepostos = G.O_QUE_O_TURNO_ANDA.filter((l) => l.noSave && !repoe(l)).map((l) => l.campo);
+  const semCredor = naoRepostos.filter((c) => !ESPERAM_O_APLICAR_RETRATO[c]);
+  t("todo campo que o turno anda é reposto por `aplicarRetrato` (ou espera, com credor)", semCredor.length === 0, semCredor.join(","));
+  const pagos = Object.keys(ESPERAM_O_APLICAR_RETRATO).filter((c) => !naoRepostos.includes(c));
+  t("e a lista de espera não guarda quem já é reposto", pagos.length === 0, pagos.join(","));
+
   /* ONDE O RELÓGIO ANDA HOJE — medido, é a razão desta etapa: em
      `agirInterno`, antes de `enviar`, e dentro de `enviar` antes da
      chamada ao Mestre. O desfeito existe porque isto é verdade. */

@@ -26,7 +26,11 @@ process.chdir(dirname(fileURLToPath(import.meta.url)));
    antes — import que falta, ref fora de escopo, regra escrita sem
    código atrás. Suíte falha quando o módulo mudou; varredor falha
    quando um erro velho voltou. */
-const suites = readdirSync(".").filter((f) => /^teste-.*\.mjs$/.test(f)).sort();
+/* Fase T1 (27/10/2026): `jogar-em-node.mjs` — o jogo jogado em Node, 20
+   turnos de um registo real sem React nem rede — é a prova da fase do
+   motor e corre com as suítes; o nome é o do plano (mente/plano-motor.md),
+   e não `teste-`, porque ele não mede um módulo: mede o turno inteiro. */
+const suites = readdirSync(".").filter((f) => /^(teste-.*|jogar-em-node)\.mjs$/.test(f)).sort();
 /* Fase T0 (27/10/2026): as seis `varredura-*.mjs` entram no corredor. O
    CLAUDE.md dizia que o `npm test` as corria, e a auditoria do motor mediu
    que não: só `check-*` era apanhado. Elas são relatórios (saem 0 com o que
