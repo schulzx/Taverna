@@ -25,13 +25,17 @@
      8. a dívida do App (AINDA_DO_APP, 28/10): o replay separa a divergência
         do motor (defeito) da do App (dívida, contada à parte), e a tabela
         só encolhe — campo novo nela quebra, e campo que já reproduz e
-        continua nela também.
+        continua nela também;
+     9. o resumo para uma pessoa ler (resumoDaSessao, replay.mjs --resumo):
+        as contas do relatório, os defeitos, a dívida e o Juiz somado.
 
    Os arquivos em disco são o dourado do replay: se o motor mudar o que faz
    com estas respostas, a secção 4 fica vermelha — e a troca, se for
    querida, regera-se com `node gravar-sessoes-de-prova.mjs --escrever`,
    declarada. */
 import fs from "node:fs";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => {
@@ -45,7 +49,7 @@ const copia = (x) => JSON.parse(J(x));
 
 const {
   FORMATO_DA_SESSAO, CAMPOS_DA_SESSAO, PASSOS_DO_REPLAY, DONO_DO_CAMPO, FORA_DA_REGUA, AINDA_DO_APP,
-  abrirASessao, linhaDaSessao, gravarOTurno, estadoNoTurno, validarASessao, reproduzirASessao, correrOTurno,
+  abrirASessao, linhaDaSessao, gravarOTurno, estadoNoTurno, validarASessao, reproduzirASessao, correrOTurno, resumoDaSessao,
 } = await import("../src/sessao.js");
 const { estadoDoSave, saveDoEstado, camposDoGrupo } = await import("../src/estado.js");
 
@@ -342,6 +346,33 @@ const RN = reproduzirASessao(SN);
   t("e sem a declaração, a mesma divergência é defeito", J(reproduzirASessao(w).defeitos) === J([10]));
   t("a declaração torta não passa no validador", () => { const k = copia(S9); k.turnos[9].app = [null, 3]; return !validarASessao(k).ok; });
   t("determinismo: a sessão do jogo, duas vezes, o mesmo relatório", J(reproduzirASessao(SN)) === J(RN));
+}
+
+sec("9. O RESUMO — para uma pessoa ler (replay.mjs --resumo)");
+{
+  const { CLASSES_DO_JUIZ } = await import("../src/motor/juiz-do-turno.js");
+  const rn = resumoDaSessao(SN, RN);
+  t("as contas são as do relatório: reproduzidos, sozinho, e nenhum defeito", rn.valido && rn.turnos === 3 && rn.reproduzidos === RN.reproduzidos && rn.soOMotor === RN.soOMotor && rn.defeitos.length === 0);
+  t("a dívida da sessão do jogo: os catorze campos da tabela, cada um com os turnos e o órgão", rn.divida.campos.length === AINDA_DO_APP.length && rn.divida.campos.every((d) => d.turnos.length && d.orgao) && rn.divida.doTurno.length === 0);
+  t("sem o relatório, corre o replay e dá o mesmo", J(resumoDaSessao(SN)) === J(rn));
+  /* o Juiz somado: a conta do jogo (somarAFidelidade), por classe */
+  const r8 = resumoDaSessao(S8, R8);
+  const somaMao = Object.fromEntries([...CLASSES_DO_JUIZ.map((c) => c.classe), "pauta"].map((k) => [k, S8.turnos.reduce((a, L) => a + (Number(L.juiz.resumo.por[k]) || 0), 0)]));
+  t(`o Juiz da 8.ª somado: ${r8.juiz.achados} achados em ${r8.juiz.julgados} turnos, por classe como a soma à mão`, J(r8.juiz.por) === J(somaMao) && r8.juiz.achados === S8.turnos.reduce((a, L) => a + L.juiz.resumo.achados, 0) && r8.juiz.limpos === S8.turnos.filter((L) => L.juiz.resumo.achados === 0).length && r8.juiz.julgados === 70, J([r8.juiz, somaMao]));
+  t("e o veredito julgado outra vez sai igual em todos", r8.juiz.iguais === 70 && r8.juiz.rejulgados === 70);
+  t("a dívida que as linhas declaram, turno a turno: os quatro nomes à mão divergem, as quatro lutas reproduzem", J(r8.divida.doTurno.map((d) => [d.n, d.divergiu])) === J([[6, true], [7, true], [11, true], [18, true], [24, false], [38, false], [40, false], [63, false]]));
+  /* o defeito plantado aparece turno a turno, com o porquê do motor (e só ele) */
+  const x = copia(SN); x.turnos[1].estado.chaves = { ...x.turnos[1].estado.chaves, personagem: { poe: { moedas: 999 } } };
+  const rx = resumoDaSessao(x);
+  t("o defeito plantado sai no resumo, no turno dele, com o campo e o porquê do motor (sem as linhas da dívida)", rx.defeitos.length === 1 && rx.defeitos[0].n === 2 && rx.defeitos[0].diferencas.some((d) => d.caminho === "personagem.moedas") && rx.defeitos[0].porque.length && rx.defeitos[0].porque.every((p) => !/ainda do App/.test(p)));
+  t("o arquivo inválido dá o resumo vazio com os erros", (() => { const v = resumoDaSessao({ formato: "outro" }); return v.valido === false && v.erros.length > 0 && v.turnos === 0 && v.juiz.julgados === 0; })());
+  let estourou = false;
+  try { for (const k of [null, undefined, 3, "x", {}, []]) { resumoDaSessao(k); resumoDaSessao(k, k); } } catch { estourou = true; }
+  t("lixo no resumo não estoura", !estourou);
+  /* o executável: as quatro partes, para uma pessoa */
+  const cli = spawnSync(process.execPath, [fileURLToPath(new URL("./replay.mjs", import.meta.url)), fileURLToPath(new URL("./sessao-navegador.json", import.meta.url)), "--resumo"], { encoding: "utf8" });
+  const saida = String(cli.stdout || "");
+  t("replay.mjs --resumo imprime as quatro partes e sai 0 (o motor sem defeito)", cli.status === 0 && ["O QUE REPRODUZ", "O MOTOR", "A DÍVIDA DO APP", "O JUIZ"].every((p) => saida.includes(p)) && /0 de 3 saem iguais/.test(saida) && /nenhum defeito/.test(saida) && /lugar\.coord/.test(saida), saida.slice(0, 200) + String(cli.stderr || "").slice(0, 200));
 }
 
 console.log(`\nsessão como arquivo: ${ok} passaram, ${mal} falharam`);

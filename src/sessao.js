@@ -155,6 +155,19 @@
    A única coisa fora do puro é a casa (`semearACasa`), que é global no
    jogo também: semeia-se como o envio a semeou, e só quando o arquivo diz.
 
+   O RESUMO, PARA UMA PESSOA LER (28/10, T3-B):
+
+     resumoDaSessao(arquivo, relatorio?) → { turnos, reproduzidos, soOMotor,
+       defeitos: [{ n, diferencas, porque }], divida: { campos: [{ campo,
+       orgao, desde, turnos }], doTurno: [{ n, orgao, campos, divergiu }] },
+       juiz: { julgados, limpos, achados, por, pauta, iguais, rejulgados } }
+
+   O que o `replay.mjs --resumo` imprime: quantos turnos reproduzem, os
+   defeitos do motor turno a turno, a dívida do App (a da tabela, e a que as
+   linhas declaram) e o veredito do Juiz somado sobre a sessão inteira — as
+   invenções da prosa por classe (CLASSES_DO_JUIZ), com a conta do
+   `somarAFidelidade` do jogo. Sem o relatório, corre o replay.
+
    Provado em `testes/teste-sessao.mjs`; o executável é `testes/replay.mjs`.
    ============================================================ */
 
@@ -164,7 +177,7 @@ import { semearACasa } from "./semente.js";
 import { aplicarOTurno } from "./motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 import { julgarOCronista } from "./motor/cronista.js";
-import { julgarOTurno, JUIZ_NO_TURNO } from "./motor/juiz-do-turno.js";
+import { julgarOTurno, JUIZ_NO_TURNO, CLASSES_DO_JUIZ, somarAFidelidade } from "./motor/juiz-do-turno.js";
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
 
 /* ---------------- O FORMATO (se é número, é tabela) ---------------- */
@@ -716,5 +729,44 @@ export function reproduzirASessao(arquivo, opcoes) {
     /* reproduz e nenhum órgão do App mexeu nele: o turno que o motor joga sozinho */
     soOMotor: turnos.filter((t) => t.igual && !t.app).length,
     divida: { campos: AINDA_DO_APP.map((d) => ({ ...d, turnos: porCampo.get(d.campo) })), doTurno },
+  };
+}
+
+/* ---------------- O RESUMO ---------------- */
+
+/* as classes do Juiz, mais a pauta (o que ela pediu e a prosa não cumpriu) */
+const CLASSES_DO_RESUMO = [...CLASSES_DO_JUIZ.map((c) => c.classe), "pauta"];
+
+/* o relatório do replay, posto para uma pessoa ler (ver o cabeçalho, "O
+   RESUMO"). Puro, e nunca lança: um arquivo inválido dá o resumo vazio com
+   os erros. */
+export function resumoDaSessao(arquivo, relatorio) {
+  const r = ehObj(relatorio) && Array.isArray(relatorio.turnos) ? relatorio : reproduzirASessao(arquivo);
+  const A = obj(arquivo);
+  let fid = {};
+  let julgados = 0, iguais = 0, rejulgados = 0;
+  for (const L of arr(A.turnos)) {
+    const j = obj(obj(L).juiz);
+    if (!ehObj(j.resumo)) continue;
+    fid = somarAFidelidade(fid, j.resumo);
+    julgados++;
+  }
+  for (const x of arr(r.turnos)) if (x && x.juiz) { rejulgados++; if (x.juiz.igual) iguais++; }
+  const por = Object.fromEntries(CLASSES_DO_RESUMO.map((k) => [k, Number(obj(fid.por)[k]) || 0]));
+  return {
+    valido: !!r.valido, erros: arr(r.erros),
+    turnos: arr(r.turnos).length, reproduzidos: Number(r.reproduzidos) || 0, soOMotor: Number(r.soOMotor) || 0,
+    defeitos: arr(r.turnos).filter((x) => x && x.defeito).map((x) => ({
+      n: x.n, diferencas: x.diferencas,
+      porque: x.porque.filter((p) => !/: ainda do App — /.test(p)),
+      ...(x.cronista && !x.cronista.igual ? { cronista: { gravado: x.cronista.gravado, reproduzido: x.cronista.reproduzido } } : {}),
+      ...(x.juiz && !x.juiz.igual ? { juiz: true } : {}),
+      ...(x.calou.length ? { calou: x.calou } : {}),
+    })),
+    divida: {
+      campos: arr(obj(r.divida).campos).filter((d) => d.turnos.length),
+      doTurno: arr(obj(r.divida).doTurno).flatMap((d) => d.app.map((a) => ({ n: d.n, orgao: a.orgao, campos: a.campos, divergiu: d.divergiu }))),
+    },
+    juiz: { julgados, limpos: Number(fid.limpos) || 0, achados: Number(fid.achados) || 0, por, pauta: obj(fid.pauta).total ? fid.pauta : null, iguais, rejulgados },
   };
 }
