@@ -386,11 +386,10 @@ bloco(() => {
      conserto é no App (duas linhas em `aplicarRetrato`), fora do
      território do backend: os dois ficam numa LISTA DE ESPERA datada, com o
      credor nomeado, e a catraca anda nos dois sentidos — quando o oficial
-     os repuser, a lista tem de esvaziar. */
-  const ESPERAM_O_APLICAR_RETRATO = {
-    desdeMundo: "oficial, T1 (27/10): desdeMundoRef.current = Number.isFinite(r.desdeMundo) ? r.desdeMundo : desdeMundoRef.current",
-    prometido: "oficial, T1 (27/10): prometidoRef.current = r.prometido !== undefined ? garantirPrometido(r.prometido) : prometidoRef.current",
-  };
+     os repuser, a lista tem de esvaziar.
+     Paga no mesmo dia (T1-A, 2.ª fatia, oficial): `aplicarRetrato` repõe os
+     dois. A lista volta a ficar VAZIA. */
+  const ESPERAM_O_APLICAR_RETRATO = {};
   const iAR = APP.indexOf("const aplicarRetrato = (retrato) => {");
   const AR = iAR >= 0 ? APP.slice(iAR, APP.indexOf("\n  };", iAR)) : "";
   t("achei o corpo de `aplicarRetrato`", AR.length > 500);

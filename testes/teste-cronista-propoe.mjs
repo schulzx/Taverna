@@ -317,5 +317,27 @@ sec("5. LIXO, DETERMINISMO, IMUTABILIDADE");
   t("a saída não partilha objetos com a proposta (a promessa marcada é cópia)", r1 && r1.aceito.promessas[0] !== prop.promessas[0] && !Object.isFrozen(r1.aceito.promessas[0]));
 }
 
+/* ============================================================ */
+sec("6. A FIAÇÃO — o App aplica o `aceito`, e só ele");
+{
+  /* T1-A, 2.ª fatia (27/10, oficial): `cronistaDoTurno` chama o juízo
+     depois do parse e cada secção lê `ac` (o aceito). A leitura é de texto
+     porque o Cronista ainda mora no App; quando sair (Fase 2), esta secção
+     passa a jogar o turno pelo motor. As únicas leituras de `r` que ficam
+     são as que o juízo precisa como ENTRADA: o grupo proposto (para a
+     porta do convite) e o lugar recusado (para a nota de correção). */
+  const APP = fs.readFileSync("../src/App.jsx", "utf8");
+  const i0 = APP.indexOf("const cronistaDoTurno = async");
+  const corpo = i0 >= 0 ? APP.slice(i0, APP.indexOf("\n  };\n", i0)) : "";
+  t("o App importa o juízo do motor", /import \{[^}]*\bjulgarOCronista\b[^}]*\} from "\.\/motor\/cronista\.js"/.test(APP));
+  t("cronistaDoTurno chama julgarOCronista com o convite como porta", /julgarOCronista\(/.test(corpo) && /vereditoDoConvite\(.{0,40}?\)\.resposta === "aceita"/.test(corpo));
+  const leR = [...corpo.matchAll(/\br\.(\w+)/g)].map((m) => m[1]);
+  const fora = [...new Set(leR)].filter((k) => !["grupo", "lugar"].includes(k));
+  t("nenhuma secção aplica a proposta crua (`r.X`) — só `ac.X`", fora.length === 0, fora.join(","));
+  t("falha fechada: sem juízo, `ac` é vazio", /const ac = \(juizo && juizo\.aceito\) \|\| \{\};/.test(corpo));
+  t("a paga do cartaz não volta a ler o preço da prosa", !/precoNoTexto/.test(corpo));
+  t("a tabela da fé saiu do App (mora no motor)", !/\bTABELA_FE\b|\bfePorAcontecimento\b|\bpopulacaoDe\b/.test(APP));
+}
+
 console.log(`\ncronista-propoe: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

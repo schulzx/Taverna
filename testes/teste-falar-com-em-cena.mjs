@@ -99,7 +99,9 @@ sec("4. a fiação no App");
   /* onda 1 do custo (13/10): o Cronista ganhou o terceiro argumento (a frase e os envelopes do turno, para o gatilho) — a âncora segue a assinatura */
   const cronista = corpoApos("const cronistaDoTurno = async (pers, narrativa, doTurno) => {");
   t("o Cronista pede falou_com, e diz que citar não é falar", /SEÇÃO falou_com/.test(cronista) && /citado, lembrado, procurado/.test(cronista));
-  t("a resposta é lida numa seção isolada, com calou", /r\.falou_com/.test(cronista) && /calou\("falou_com do Cronista"/.test(cronista));
+  /* T1-A, 2.ª fatia (27/10): a secção lê o `aceito` do juízo do motor
+     (`ac.falou_com`), não a proposta crua (`r.falou_com`) */
+  t("a resposta é lida numa seção isolada, com calou", /ac\.falou_com/.test(cronista) && /calou\("falou_com do Cronista"/.test(cronista));
   t("a conferência corre ali, e a lista esvazia no finally", /falouComRef\.current = falou;\s*try \{ p = conferirAsMissoes\(p\) \|\| p; \} finally \{ falouComRef\.current = \[\]; \}/.test(cronista));
   t("o que a conferência mudou se grava (marca o turno para salvar)", /missoesRef\.current !== antesM \|\| espinhaRef\.current !== antesE\) tocouElenco = true/.test(cronista));
   const mundo = corpoApos("const mundoDasMissoes = (persAtual) => {");

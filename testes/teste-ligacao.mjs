@@ -274,13 +274,10 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
   const DIRM = path.join(DIR, "motor");
   const motor = fs.existsSync(DIRM) ? fs.readdirSync(DIRM).filter((f) => /\.js$/.test(f)) : [];
   const fonteM = Object.fromEntries(motor.map((f) => [f, fs.readFileSync(path.join(DIRM, f), "utf8")]));
-  const ESPERA_DO_MOTOR = {
-    /* o Cronista que só propõe: `cronistaDoTurno` (App.jsx) passa a
-       aplicar o `aceito` de `julgarOCronista` — a fiação está escrita no
-       diário de 27/10 (T1-B). `teste-cronista-propoe.mjs` e
-       `jogar-em-node.mjs` são os primeiros leitores. */
-    "cronista.js": "oficial, T1 (27/10): cronistaDoTurno chama julgarOCronista",
-  };
+  /* o Cronista que só propõe (cronista.js) foi pago no mesmo dia: a T1-A
+     (2.ª fatia, oficial) liga `julgarOCronista` em `cronistaDoTurno`. A
+     lista volta a ficar VAZIA. */
+  const ESPERA_DO_MOTOR = {};
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
   t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);

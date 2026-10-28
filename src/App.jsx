@@ -155,7 +155,7 @@ import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, riv
 import { garantirMesa, anotarTurno, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, precoNoTexto, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
 import { identificarDivindadeAbatida, podeAbrirRito, iniciarRito, provaAtual, registrarProva, cancelarRito, resumoRitoPrompt, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { reconciliarGraus, resolverPresenca, presencaDoHeroi, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { resumoArredoresPrompt, arredoresDaCidade, arredorPorTexto } from "./arredores.js";
@@ -236,6 +236,7 @@ import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semearACasa, sorteDaCasa } from "./semente.js";
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 import { aplicar, notaComOTurno } from "./motor/aplicar.js";
+import { julgarOCronista } from "./motor/cronista.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -9516,6 +9517,10 @@ export default function Taverna() {
     cobradasRef.current = Array.isArray(r.cobradas) ? r.cobradas : cobradasRef.current;
     ultimaCobrancaRef.current = Number.isFinite(r.ultimaCobranca) ? r.ultimaCobranca : ultimaCobrancaRef.current;
     formasCobradasRef.current = Array.isArray(r.formasCobradas) ? r.formasCobradas : formasCobradasRef.current;
+    /* T0-A/T1-B: os dois que o turno anda e o retrato não repunha (medido
+       por teste-mm15-ligacao): o mundo que andou e o Livro de Promessas */
+    desdeMundoRef.current = Number.isFinite(r.desdeMundo) ? r.desdeMundo : desdeMundoRef.current;
+    try { prometidoRef.current = r.prometido !== undefined ? garantirPrometido(r.prometido) : prometidoRef.current; } catch (e) { calou("o Livro no retrato", e); }
   };
 
   const salvar = useCallback((extra = {}) => {
@@ -11550,12 +11555,27 @@ export default function Taverna() {
       const r = gatilho.corre ? parseObjetoTolerante(txt) : {};
       if (!r || typeof r !== "object") { try { leituraDoCronistaRef.current = pularALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("a fila do Cronista sem resposta", e); } return; }
       if (gatilho.corre) { try { leituraDoCronistaRef.current = lerALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("a leitura do Cronista", e); } }
+      /* ---- O JUÍZO (Fase T1, trilha B · 27/10): o Cronista PROPÕE, o motor
+         decide. `julgarOCronista` (motor/cronista.js) lê a proposta contra o
+         estado e devolve o que o sistema assina (`aceito`), o que recusa e
+         porquê (`recusado`) e o que entra marcado como palavra de alguém.
+         Toda secção abaixo lê `ac`, nunca `r`. FALHA FECHADA: se o juízo
+         estourar, `ac` é vazio e nenhum estado do Cronista entra neste turno
+         — a IA nunca decide sozinha. A porta do grupo é a do convite: só
+         entra quem o sistema aceitaria agora (`vereditoDoConvite`). */
+      let juizo = null;
+      try {
+        const aceitariam = ((r.grupo && Array.isArray(r.grupo.entraram)) ? r.grupo.entraram : []).filter((n) => { try { return vereditoDoConvite(String(n || "")).resposta === "aceita"; } catch { return false; } });
+        juizo = julgarOCronista({ ...retratoDoJogo(), personagem: pers || personagemRef.current || personagem, combate: combateRef.current, masmorra: masmorraRef.current, lugar: lugarRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, npcs: npcsRef.current, divindade: divindadeRef.current, eventos: eventosRef.current, espinha: espinhaRef.current }, r, { narrativa, pedido: ultimoPedidoRef.current, envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam });
+      } catch (e) { calou("o juízo do Cronista", e); juizo = null; }
+      const ac = (juizo && juizo.aceito) || {};
+      const recusadoDoCronista = (juizo && Array.isArray(juizo.recusado)) ? juizo.recusado : [];
       /* ---- SEÇÃO promessas (a campanha que prende) ----
          Primeiro paga o que a narração pagou, depois guarda o que plantou:
          o filtro do lembrete de cena e o caderno de seis são do motor. */
       try {
-        const pg = pagarSementes(prometidoRef.current, r.promessas_pagas).estado;
-        prometidoRef.current = guardarSementes(pg, r.promessas).estado;
+        const pg = pagarSementes(prometidoRef.current, ac.promessas_pagas).estado;
+        prometidoRef.current = guardarSementes(pg, ac.promessas).estado;
       } catch (e) { calou("as promessas do Cronista", e); }
       const msgs = [];
       let p = pers;
@@ -11568,9 +11588,13 @@ export default function Taverna() {
         /* só um TEXTO conta. `null` aqui é "não sei dizer", e tratá-lo como
            "voltou para a cidade" faria o descuido do Cronista desfazer o
            lugar a cada turno — o bug de novo, por outra porta. */
-        if (typeof r.lugar === "string" && r.lugar.trim()) {
-          const aviso = registrarLugar(r.lugar, "cronista");
+        if (typeof ac.lugar === "string" && ac.lugar.trim()) {
+          const aviso = registrarLugar(ac.lugar, "cronista");
           if (aviso) msgs.push(aviso);
+        } else if (typeof r.lugar === "string" && recusadoDoCronista.some((x) => x && x.secao === "lugar" && x.acao === "recusa")) {
+          /* a recusa de sempre (o Cronista tirou o herói de onde ele está):
+             a régua escreve a nota de correção e não move ninguém */
+          registrarLugar(r.lugar, "cronista");
         }
       } catch { /* nunca derruba o turno */ }
       /* ---- SEÇÃO missão oferecida (v9.27, redirecionada na v9.119) ----
@@ -11584,12 +11608,12 @@ export default function Taverna() {
          história chega por outra porta (a trama) e não se recusa; o resto
          é papel pregado, e papel pregado espera. */
       try {
-        const prop = r.missao_oferecida;
+        const prop = ac.missao_oferecida;
         if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) {
+          /* a paga já é a da tabela da oferta (o juízo, `pagamento`): o
+             número que a prosa disse não entra mais pela porta dos fundos */
           const cartaz = cartazDaProposta(
-            /* se a cena disse um preço e o Cronista não o repetiu, o preço da
-               cena ainda vale — o jogador leu aquele número */
-            { ...prop, paga: Number.isFinite(Number(prop.paga)) ? prop.paga : precoNoTexto(narrativa) },
+            prop,
             { cidade: cidadeAtualRef.current, nivel: p.nivel || 1, historia: historiaDoMural() });
           if (cartaz) {
             /* MM14 · 10a: um dador homônimo de quem já importa não prega —
@@ -11615,7 +11639,7 @@ export default function Taverna() {
          força um gatilho da lista, recusa duplicata e recusa quando já há
          relógios demais. Mesmo contrato do resto da casa. */
       try {
-        const prop = r.relogio_novo;
+        const prop = ac.relogio_novo;
         if (prop && typeof prop === "object" && prop.nome) {
           const ac = aceitarProposta(relogiosRef.current, prop, diaRef.current);
           if (ac.ok) {
@@ -11627,7 +11651,7 @@ export default function Taverna() {
       } catch { /* proposta malformada nunca derruba o turno */ }
       /* ---- SEÇÃO missões (isolada) ---- */
       try {
-        const rm = r.missoes && typeof r.missoes === "object" ? r.missoes : {};
+        const rm = ac.missoes && typeof ac.missoes === "object" ? ac.missoes : {};
         /* MM14 (30/09, os canais): "concluidas"/"falhadas"/"progresso"
            saíram — fechavam a lista antiga só pelo TÍTULO que o Cronista
            casasse, sem conferir nada. A lista antiga agora vira missão do
@@ -11647,7 +11671,7 @@ export default function Taverna() {
       } catch { /* seção quebrada não derruba as outras */ }
       /* ---- SEÇÃO pessoas (isolada) ---- */
       try {
-        if (Array.isArray(r.pessoas) && r.pessoas.length) {
+        if (Array.isArray(ac.pessoas) && ac.pessoas.length) {
           let reg = npcsRef.current, tocou = false;
           /* v9.113: O HERÓI NÃO É NPC. O Cronista devolveu "Íris Vantel —
              fendida, caçadora de fendas" e o sistema registrou: a partir
@@ -11659,7 +11683,7 @@ export default function Taverna() {
           const euMesmo = String((personagemRef.current || personagem || {}).nome || "").toLowerCase().trim();
           /* MM14 · 10a: a terceira porta — mesma régua do homónimo */
           const homonimos = [];
-          r.pessoas.slice(0, 4).forEach((n) => {
+          ac.pessoas.slice(0, 4).forEach((n) => {
             if (!n || !n.nome) return;
             if (euMesmo && String(n.nome).toLowerCase().trim() === euMesmo) return;
             let id = null;
@@ -11693,8 +11717,8 @@ export default function Taverna() {
          Cronista, e só sabia do lugar. Agora a conversa que ele viu é
          conferida aqui, uma vez, e a lista some logo a seguir. */
       try {
-        const falou = Array.isArray(r.falou_com)
-          ? r.falou_com.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim().slice(0, 60)).slice(0, 6) : [];
+        const falou = Array.isArray(ac.falou_com)
+          ? ac.falou_com.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim().slice(0, 60)).slice(0, 6) : [];
         if (falou.length) {
           const antesM = missoesRef.current, antesE = espinhaRef.current;
           falouComRef.current = falou;
@@ -11716,33 +11740,31 @@ export default function Taverna() {
           if (missoesRef.current !== antesM || espinhaRef.current !== antesE) tocouElenco = true;
         }
       } catch (e) { calou("o segredo revelado", e); }
-      /* ---- SEÇÃO fé (isolada) ---- */
+      /* ---- SEÇÃO fé (isolada) ----
+         T1-B: o Cronista só CLASSIFICA o que viu; a conta é a da tabela
+         (motor/cronista.js#TABELA_DA_FE) sobre a população do lugar — o
+         gesto comum também (a linha `gesto`), no lugar dos "10 a 500" que
+         ele chutava. Cada linha do `ac.fe` já vem calculada. */
       try {
-        if (r.fe && typeof r.fe === "object" && divindadeRef.current && divindadeRef.current.despertar) {
-          const f = Math.max(0, Math.min(500, Math.round(r.fe.fieis || 0)));
-          const pf = Math.max(0, Math.min(10, Math.round(r.fe.pf || 0)));
-          if (f || pf) msgs.push(...ganharFe(f, pf, String(r.fe.motivo || "sua fama vira prece").slice(0, 80), r.fe.local || ""));
-          /* GRANDES ACONTECIMENTOS (v7.5): o Cronista classifica, a TABELA
-             DE FÉ calcula sobre a população real do local no mapa — assim
-             "o reino inteiro dos anões lhe devota fé" vira números de fato. */
-          const ac = r.fe.acontecimento;
-          if (ac && typeof ac === "object" && ac.tipo) {
-            const calc = fePorAcontecimento(String(ac.tipo), ac.local || "");
-            if (calc) {
-              msgs.push(...ganharFe(calc.fieis, calc.pf, `${calc.rotulo}${calc.pop ? ` (pop. ${calc.pop.toLocaleString("pt-BR")})` : ""}`, ac.local || ""));
-              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ — REGISTRO DO SISTEMA] ${calc.rotulo}${ac.local ? ` em ${ac.local}` : ""}: +${calc.fieis} fiéis, +${calc.pf} PF, calculados pela população do local. Isso já está contabilizado — narre a devoção chegando, não a negue.`;
-            }
+        if (Array.isArray(ac.fe) && ac.fe.length && divindadeRef.current && divindadeRef.current.despertar) {
+          for (const g of ac.fe) {
+            if (!g || !(g.fieis > 0 || g.pf > 0)) continue;
+            const doAcontecimento = g.de === "acontecimento";
+            const motivo = doAcontecimento ? `${g.rotulo}${g.pop ? ` (pop. ${Number(g.pop).toLocaleString("pt-BR")})` : ""}` : String(g.motivo || g.rotulo || "sua fama vira prece").slice(0, 80);
+            msgs.push(...ganharFe(g.fieis, g.pf, motivo, g.local || ""));
+            if (doAcontecimento) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ — REGISTRO DO SISTEMA] ${g.rotulo}${g.local ? ` em ${g.local}` : ""}: +${g.fieis} fiéis, +${g.pf} PF, calculados pela população do local. Isso já está contabilizado — narre a devoção chegando, não a negue.`;
           }
         }
-      } catch { /* seção quebrada não derruba as outras */ }
+      } catch (e) { calou("a fé do Cronista", e); }
       /* ---- SEÇÃO combate: CÃO DE GUARDA DE COESÃO (v7.4.4) ----
          O Mestre declarou morto quem o SISTEMA mantém de pé? Correção
          pública + nota firme — o PV não muda, a NARRATIVA é que se alinha. */
       try {
-        const mortes = (r.combate && Array.isArray(r.combate.mortes_narradas)) ? r.combate.mortes_narradas : [];
+        /* T1-B: o juízo já separou quem o sistema mantém de pé (`morte`,
+           porque `vivo`); a correção de coesão é para esses */
         const vivosAgora = (combateRef.current && combateRef.current.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-        mortes.forEach((nome) => {
-          const alvo = vivosAgora.find((e) => (e.nome || "").toLowerCase() === String(nome || "").toLowerCase());
+        recusadoDoCronista.filter((x) => x && x.secao === "morte" && x.porque === "vivo").forEach((x) => {
+          const alvo = vivosAgora.find((e) => (e.nome || "").toLowerCase() === String(x.o || "").toLowerCase()) || (x.o ? { nome: x.o, vida: x.vida } : null);
           if (!alvo) return;
           msgs.push(`⚔ ${alvo.nome} continua de pé — ${alvo.vida} PV. A luta não acabou.`);
           notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — REGRA ABSOLUTA] Você narrou a morte de ${alvo.nome}, mas o SISTEMA registra ${alvo.vida} PV: ele está VIVO e em combate. RETOME tratando-o como vivo — sem ressuscitar, sem cinzas, sem "última investida póstuma": ele simplesmente NÃO morreu. Dano e morte são decididos SÓ pelo sistema (envelopes [COMBATE — RESOLVIDO] e o PV do painel); palavras de empolgação do jogador ("estraçalho você!") são figura de linguagem, NUNCA resultado.`;
@@ -11751,15 +11773,15 @@ export default function Taverna() {
       /* ---- SEÇÃO cânone (isolada) ---- */
       let tocouCanone = false;
       try {
-        if (r.canone && typeof r.canone === "object") {
+        if (ac.canone && typeof ac.canone === "object") {
           const c = { ...canoneRef.current };
           const novos = [];
           /* MM15 (4): a mesma peneira da porta do Narrador — nenhum segredo
              que a espinha ainda guarda vira cânone pela boca do Cronista.
              Se a peneira estourar, segue o comportamento de hoje (nunca
              pior para o segredo). */
-          let canoneDoCronista = r.canone;
-          try { canoneDoCronista = peneirarCanone(r.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }
+          let canoneDoCronista = ac.canone;
+          try { canoneDoCronista = peneirarCanone(ac.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }
           for (const [nome, ficha] of Object.entries(canoneDoCronista)) {
             if (!nome || !ficha || typeof ficha !== "object") continue;
             const chaveExistente = Object.keys(c).find((k) => k.toLowerCase() === String(nome).toLowerCase());
@@ -11783,7 +11805,10 @@ export default function Taverna() {
          companheiro nunca entrava na ficha. Agora o Cronista aponta quem
          aceitou e o CÓDIGO assina o registro (com os dados do elenco, se houver). */
       try {
-        const entraram = (r.grupo && Array.isArray(r.grupo.entraram)) ? r.grupo.entraram : [];
+        /* T1-B: só quem o juízo deixou passar pela porta do convite; o
+           grupo cheio continua a ser dito ao jogador */
+        recusadoDoCronista.filter((x) => x && x.secao === "grupo" && x.porque === "cheio").forEach((x) => msgs.push(`O grupo está cheio — ${x.o} não pôde se juntar.`));
+        const entraram = (ac.grupo && Array.isArray(ac.grupo.entraram)) ? ac.grupo.entraram : [];
         if (entraram.length) {
           const grupoAtual = [...(p.grupo || [])];
           entraram.forEach((nome0) => {
@@ -11814,7 +11839,7 @@ export default function Taverna() {
          selar a concessão — se passar, o feito é canon; se falhar, o Mestre
          narra a resistência (sem apagar o que já foi dito, o tom muda). */
       try {
-        const ts = r.teste_sugerido;
+        const ts = ac.teste_sugerido;
         if (ts && typeof ts === "object" && ts.atributo && !rolagem && !combateRef.current) {
           const attrT = ATRIBUTOS.find((x) => x.nome.toLowerCase() === String(ts.atributo).toLowerCase());
           if (attrT) {
@@ -11842,38 +11867,9 @@ export default function Taverna() {
     } catch { /* o cronista NUNCA atrapalha o jogo — falhou, vida segue */ }
   };
 
-  /* GANHO DE FÉ POR CÓDIGO (v7.4): fiéis e PF mudam por aqui — e cada degrau
-     de GD conquistado é anunciado e já entra no prompt do próximo turno. */
-  /* TABELA DE FÉ (v7.5): a fé deixou de ser chute do Mestre. Cada TIPO de
-     acontecimento rende uma FRAÇÃO da população do local como fiéis, mais
-     PF fixos — um milagre numa aldeia de 200 almas não pode render o mesmo
-     que numa metrópole de 200 mil. O Cronista só CLASSIFICA o acontecimento;
-     o CÓDIGO mede a população no mapa e faz a conta. */
-  const TABELA_FE = {
-    alianca_reino:    { frac: 0.04, pf: 10, rotulo: "aliança com um reino inteiro" },
-    libertacao:       { frac: 0.06, pf: 12, rotulo: "libertação de um povo oprimido" },
-    milagre_publico:  { frac: 0.02, pf: 6,  rotulo: "milagre testemunhado em público" },
-    santuario:        { fixo: 300, frac: 0.01, pf: 4, rotulo: "santuário erguido em seu nome" },
-    conversao_lider:  { frac: 0.03, pf: 6,  rotulo: "conversão de um líder local" },
-    vitoria_lendaria: { frac: 0.05, pf: 10, rotulo: "vitória sobre ameaça lendária" },
-    pregacao:         { frac: 0.005, pf: 2, rotulo: "pregação ou feito menor de fé" },
-  };
-  /* acha a cidade citada no mapa (exato ou por aproximação) e devolve a população */
-  const populacaoDe = (local) => {
-    if (!local) return 0;
-    const alvo = String(local).toLowerCase().trim();
-    const cidades = (mapaRef.current && mapaRef.current.cidades) || [];
-    const exata = cidades.find((c) => (c.nome || "").toLowerCase() === alvo);
-    const citada = exata || cidades.find((c) => alvo.includes((c.nome || "").toLowerCase()) || (c.nome || "").toLowerCase().includes(alvo));
-    return citada ? (citada.populacao || 0) : 0;
-  };
-  const fePorAcontecimento = (tipo, local) => {
-    const t = TABELA_FE[tipo];
-    if (!t) return null;
-    const pop = populacaoDe(local);
-    const fieis = Math.max(10, Math.round((t.fixo || 0) + pop * t.frac));
-    return { fieis: Math.min(fieis, 2000000), pf: t.pf, rotulo: t.rotulo, pop };
-  };
+  /* A TABELA DE FÉ (v7.5) mudou-se para o motor (T1-B, 27/10):
+     motor/cronista.js#TABELA_DA_FE, com a população lida do mapa por
+     `feDaTabela`. O juízo do Cronista entrega a conta feita. */
 
   /* TÍTULO ÚNICO (v7.6): resolve o nome que a ficha mostra e que o Mestre usa.
      Fé tem precedência (é o que o herói É); sem fé, vale a fama. */

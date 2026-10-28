@@ -436,9 +436,13 @@ sec("6. a fiação — App.jsx");
     app.includes('let canoneDoNarrador = resp.mudancas.canone;')
     && app.includes('try { canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }')
     && app.includes('for (const [nome, ficha] of Object.entries(canoneDoNarrador)) {'));
-  t("a porta do Cronista peneira r.canone antes do for, com o mesmo fallback",
-    app.includes('let canoneDoCronista = r.canone;')
-    && app.includes('try { canoneDoCronista = peneirarCanone(r.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }')
+  /* T1-A, 2.ª fatia (27/10): o cânone do Cronista passa antes pelo juízo do
+     motor (motor/cronista.js, que marca o que só se ouviu numa fala); a
+     peneira do segredo corre sobre o `aceito` (`ac.canone`), não sobre a
+     proposta crua (`r.canone`) — a mesma porta, um passo depois */
+  t("a porta do Cronista peneira ac.canone antes do for, com o mesmo fallback",
+    app.includes('let canoneDoCronista = ac.canone;')
+    && app.includes('try { canoneDoCronista = peneirarCanone(ac.canone, { espinha: espinhaRef.current, mundo: mundoDaBase() }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }')
     && app.includes('for (const [nome, ficha] of Object.entries(canoneDoCronista)) {'));
 }
 

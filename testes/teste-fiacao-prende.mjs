@@ -68,9 +68,13 @@ sec("3. o Cronista guarda e paga");
   let mo = null; try { mo = JSON.parse(molde.replace(/\\"/g, "\"")); } catch { mo = null; }
   t("o molde JSON continua JSON e ganha promessas e promessas_pagas", !!mo && Array.isArray(mo.promessas) && Array.isArray(mo.promessas_pagas), molde.slice(0, 60));
   t("as abertas vão no pedido, depois do CÂNONE ATUAL", C.indexOf("abertasParaOCronista(prometidoRef.current)") > C.indexOf("CÂNONE ATUAL") && C.indexOf("abertasParaOCronista(prometidoRef.current)") < C.indexOf("ELENCO (pessoas"));
-  const iPaga = C.indexOf("pagarSementes(prometidoRef.current, r.promessas_pagas)");
-  const iGuarda = C.indexOf("guardarSementes(pg, r.promessas)");
-  t("paga primeiro, guarda depois, depois do parse", iPaga > C.indexOf("parseObjetoTolerante(txt)") && iGuarda > iPaga);
+  /* T1-A, 2.ª fatia (27/10): as promessas passam pelo juízo do motor
+     (motor/cronista.js) e o App lê o `aceito` (`ac`), não a proposta crua
+     (`r`) — a ordem que esta asserção guarda é a mesma, e o juízo vem
+     entre o parse e o paga */
+  const iPaga = C.indexOf("pagarSementes(prometidoRef.current, ac.promessas_pagas)");
+  const iGuarda = C.indexOf("guardarSementes(pg, ac.promessas)");
+  t("paga primeiro, guarda depois, depois do parse", iPaga > C.indexOf("parseObjetoTolerante(txt)") && iPaga > C.indexOf("julgarOCronista(") && iGuarda > iPaga);
   t("e calado: um Cronista torto não custa o turno", /calou\("as promessas do Cronista", e\)/.test(C));
   /* o caminho que o App faz, com a resposta que um Cronista daria */
   let e = PR.garantirPrometido(null);
