@@ -325,20 +325,21 @@ sec("6. a fiação — App.jsx");
      a metade do JOGO (`baseDoNome`, no App) e a do NOME
      (`contextoDoNomeCom`, motor/aplicar.js), que o registo do turno também
      usa; `contextoDoNome` é a soma das duas, e continua antes de aplicarResposta */
+  /* MOVIDAS DE TEXTO PARA TEXTO (28/10, T1-A 3.ª fatia, a fusão, o oficial): `baseDoNome` ganhou `sobre` — no turno fundido o registo corre dentro do motor, depois do mapa e dos sinais, e os refs ainda não têm o mapa, a cidade, o lugar e a ficha de agora; o motor passa-os. As linhas leem `mapaAgora`/`fichaAgora`/`cidadeAgora`/`lugarAgora` (os refs, sem `sobre`). A intenção não mudou. */
   t("contextoDoNome existe, antes de aplicarResposta",
-    app.includes("const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);") && app.indexOf("const baseDoNome = () => {") < app.indexOf("const contextoDoNome = (n) =>") && app.indexOf("const contextoDoNome = (n) =>") < app.indexOf("const aplicarResposta = useCallback("));
+    app.includes("const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);") && app.indexOf("const baseDoNome = (sobre = {}) => {") < app.indexOf("const contextoDoNome = (n) =>") && app.indexOf("const contextoDoNome = (n) =>") < app.indexOf("const aplicarResposta = useCallback("));
   t("lê a pista e o alvo da abertura",
     app.includes('if (a.pista && a.pista.nome) importantes.push({ nome: a.pista.nome, onde: a.pista.local || "" });')
     && app.includes('if (a.alvo && a.alvo.quem) importantes.push({ nome: a.alvo.quem, onde: a.alvo.onde || "" });'));
   t("lê os marcos da espinha e o grupo",
     app.includes('for (const at of ((espinhaRef.current || {}).atos || [])) for (const m of (at.marcos || [])) if (m && m.quem) importantes.push({ nome: m.quem, onde: m.onde || "" });')
-    && app.includes('for (const g of ((personagemRef.current || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });'));
+    && app.includes('for (const g of ((fichaAgora || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });'));
   /* MM15 (5): o elenco passou a levar papel, sexo e de onde a pessoa vem
      (o "de: mundo" que separa quem o mundo repete de quem a história
      persegue, em npcs.js/DISTINTO_DE) — o texto antigo media só o nome e
      a cidade; movido com o motivo, não apagado. */
   t("lê o elenco do mundo COM a cidade, o papel, o sexo e a origem — senão um homônimo de quem ainda não foi encontrado seria recusado sem razão, ou um nome do mundo seria tratado como se a história o perseguisse",
-    app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });'));
+    app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaAgora, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });'));
   t("lê quem uma missão ativa pede",
     app.includes('for (const q of (missoesRef.current || [])) if (q && q.status === "ativa") for (const x of [q.dador, ...(q.etapas || []).map((e) => e && e.alvo)]) if (x) importantes.push({ nome: x });'));
 

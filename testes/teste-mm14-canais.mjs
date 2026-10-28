@@ -351,7 +351,7 @@ sec("7. a fiação — App.jsx");
   {
     const { aplicarAsMissoes } = await import("../src/motor/meio-do-turno.js");
     const r = aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: { estrutura: "jornada" }, dia: 4 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, { motorDoArco: () => ({}) });
-    t("evento_global_encerrar do Narrador continua de pé", r.estado.eventos.global === null && r.estado.eventos.semGlobalDesde === 4 && /🌍 A Praga/.test(r.msgs[0]) && app.includes("aplicarAsMissoes({"));
+    t("evento_global_encerrar do Narrador continua de pé", r.estado.eventos.global === null && r.estado.eventos.semGlobalDesde === 4 && /🌍 A Praga/.test(r.msgs[0]) && app.includes("aplicarOTurno({")); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) */
   }
   t("o Cronista não tem mais `casar` por título, nem `rm.concluidas`/`rm.falhadas`/`rm.progresso` fechando nada",
     !app.includes("const casar = (t) => {") && !app.includes("rm.concluidas") && !app.includes("rm.falhadas") && !app.includes("rm.progresso"));

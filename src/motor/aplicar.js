@@ -31,6 +31,9 @@
    continuação desta: entre os dois, no App, ainda correm as dádivas, o
    mapa, as missões e os sinais, que mexem no mapa, no lugar e na ficha que
    o registo lê. Quando esses saírem, as duas peças fundem-se numa ordem só.
+   A 3.ª fatia (28/10) tirou-os (src/motor/meio-do-turno.js) e fundiu: o App
+   chama `aplicarOTurno` (no fim deste arquivo), que corre as seis peças na
+   ordem de lá e devolve os efeitos todos, numa lista só.
 
    O DADO (2.ª fatia, 27/10): a salvaguarda do fim do turno rola pela SORTE
    DO TURNO — `ctx.sorte`, a que o App pede a `sorteDoTurno("salvaguarda")`
@@ -55,6 +58,7 @@ import { criarCidade } from "../mapa.js";
 import { garantirGeografia } from "../geografia.js";
 import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo, retomarContador } from "../npcs.js";
 import { aindaSoUmNome } from "../abertura.js";
+import { dadivasConcedidas, aplicarOMapa, aplicarAsMissoes, aplicarOsSinais } from "./meio-do-turno.js";
 
 /* a nota do turno cresce como sempre cresceu no App: uma linha por vez,
    separadas por quebra, sem quebra na frente da primeira */
@@ -441,9 +445,12 @@ export function contextoDoNomeCom(base, n) {
    - `espinhaRef`, `aberturaMundoRef`, `lugarRef`, `missoesRef`, `diaRef`
      → lidos do estado;
    - `mundoDaBase()` → `ctx.mundo` (valor, ou função chamada só quando a
-     peneira precisa, dentro do mesmo try de lá);
+     peneira precisa, dentro do mesmo try de lá), com o mapa do ESTADO (3.ª
+     fatia: na fusão, o ref do App ainda não tem o mapa que o meio do turno
+     acabou de escrever);
    - `contextoDoNome(n)` → `contextoDoNomeCom(ctx.baseDoNome, n)` (a base
-     é pedida uma vez, na primeira vez que um nome precisa dela);
+     é pedida uma vez, na primeira vez que um nome precisa dela, e recebe o
+     mapa, a cidade, o lugar e a ficha do estado, pela mesma razão);
    - a nota do homónimo → `paraOCronista`; `calou` → efeito;
    - e as DUAS remontagens do prompt (a do cânone e a da gente) viram UM
      efeito `remontarPrompt` no fim. É o mesmo prompt: a segunda lia tudo
@@ -467,7 +474,7 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
   let remontar = false;
   let baseDoNome = null, pediuABase = false;
   const contextoDoNome = (n) => {
-    if (!pediuABase) { pediuABase = true; baseDoNome = typeof op.baseDoNome === "function" ? op.baseDoNome() : op.baseDoNome; }
+    if (!pediuABase) { pediuABase = true; baseDoNome = typeof op.baseDoNome === "function" ? op.baseDoNome({ mapa: e0.mapa, cidadeAtual: e0.cidadeAtual, lugar: e0.lugar, ficha: e0.fichaDoRef }) : op.baseDoNome; }
     return contextoDoNomeCom(baseDoNome, n);
   };
     /* CÂNONE: mescla fatos duráveis; campos novos atualizam, nunca apagam a ficha */
@@ -477,7 +484,7 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
          pela boca do Narrador — a peneira recusa em silêncio; se ela
          estourar, segue o comportamento de hoje (nunca pior para o segredo). */
       let canoneDoNarrador = resp.mudancas.canone;
-      try { canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: e0.espinha, mundo: typeof op.mundo === "function" ? op.mundo() : op.mundo }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }
+      try { const m = typeof op.mundo === "function" ? op.mundo() : op.mundo; canoneDoNarrador = peneirarCanone(resp.mudancas.canone, { espinha: e0.espinha, mundo: m && typeof m === "object" && e0.mapa ? { ...m, mapa: e0.mapa } : m }).canone; } catch (e) { calou("peneirarCanone (Narrador)", e); }
       for (const [nome, ficha] of Object.entries(canoneDoNarrador)) {
         if (!nome || !ficha || typeof ficha !== "object") continue;
         /* v9.36: registra em silêncio. O jogador acabou de LER a coisa na
@@ -560,4 +567,57 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
     estado: { ...e0, canone, mapa, npcs, npcTurno },
     efeitos: efeitosDoTurno, paraOCronista: notas, msgs,
   };
+}
+
+/* ============================================================
+   O TURNO NUMA ORDEM SÓ (T1-A, 3.ª fatia, 28/10)
+
+     aplicarOTurno(estado, resposta, ctx) → { estado, efeitos, paraOCronista, podado, msgs }
+
+   As peças do motor, na ORDEM que o `aplicarResposta` tinha: o `aplicar`
+   (a porta da luta, as travas, o relógio, a segunda chance, as recargas, as
+   mudanças, a cobrança e o débito), a dádiva pendente, o mapa, as missões,
+   os sinais e o registo (o cânone e a gente). Até a 3.ª fatia o App corria
+   cada uma e aplicava os efeitos nos refs antes da seguinte; agora o estado
+   passa de peça em peça AQUI, e os efeitos saem todos, na ordem em que
+   nasceram, para o App aplicar uma vez só — o que um efeito do fim lê (o
+   prompt remontado) encontra os refs como os efeitos de antes o deixaram.
+
+   `estado`: o de cada peça, num objeto só — a ficha (`personagem`), a
+   ficha que o App tem no ref (`fichaDoRef`), a luta e as travas, o mapa, a
+   cidade, o lugar, a jornada, a facção, a devoção, o deus, o acampamento, a
+   masmorra, a raid, a espinha, a última fala, o dia, os eventos, o arco, os
+   contadores e o nível da fama, o cânone, a gente e o contador dela, a
+   abertura, as missões. `ctx`: o do `aplicar` (envelopes, pedido da bolsa,
+   moeda, sorte da salvaguarda), mais o mundo, a base do nome, o motor do
+   arco e a sorte do turno.
+
+   Uma peça do meio que estoure não leva o turno: vira um efeito `calou`, e
+   o estado segue como estava antes dela (o mesmo que o App fazia, cada
+   bloco no seu try). Sem ficha, não há turno (`semFicha`, como antes).
+
+   Provado byte a byte por `teste-motor-aplicar.mjs` (secção 9) contra a
+   fila de antes (48579a9), lida do git por `gerar-turno-dourado.mjs`.
+   ============================================================ */
+export function aplicarOTurno(estado, resposta, ctx = {}) {
+  const a = aplicar(estado, resposta, ctx);
+  if (a.semFicha) return a;
+  const resp = a.podado;
+  let st = a.estado;
+  const efeitos = [...a.efeitos], notas = [...a.paraOCronista], msgs = [...a.msgs];
+  if ((st.personagem.dadivasPendentes || 0) > 0) {
+    try {
+      const d = dadivasConcedidas(st.personagem, st.divindade);
+      st = { ...st, personagem: d.personagem }; msgs.push(...d.msgs); notas.push(...d.notas);
+    } catch (e) { efeitos.push({ tipo: "calou", onde: "as dádivas do turno", erro: e }); }
+  }
+  const pecas = [["o mapa do turno", aplicarOMapa], ["as missões do turno", aplicarAsMissoes], ["os sinais do turno", aplicarOsSinais], ["o registo do turno", aplicarORegisto]];
+  for (const [onde, peca] of pecas) {
+    try {
+      const r = peca(st, resp, ctx);
+      st = { ...st, ...r.estado };
+      efeitos.push(...r.efeitos); notas.push(...r.paraOCronista); msgs.push(...r.msgs);
+    } catch (e) { efeitos.push({ tipo: "calou", onde, erro: e }); }
+  }
+  return { estado: st, efeitos, paraOCronista: notas, podado: resp, msgs };
 }

@@ -303,10 +303,11 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
   /* movida (27/10, T1-A 2.ª fatia, o oficial): a metade do JOGO do
      contexto chama-se `baseDoNome` (a do nome é `contextoDoNomeCom`, no
      motor, e `contextoDoNome` é a soma das duas) — a intenção é a mesma */
+  /* MOVIDAS DE TEXTO PARA TEXTO (28/10, T1-A 3.ª fatia, a fusão, o oficial): `baseDoNome` ganhou `sobre` — no turno fundido o registo corre dentro do motor, depois do mapa e dos sinais, e os refs ainda não têm o mapa, a cidade, o lugar e a ficha de agora; o motor passa-os. As linhas leem `mapaAgora`/`fichaAgora`/`cidadeAgora`/`lugarAgora` (os refs, sem `sobre`). A intenção não mudou. */
   t("contextoDoNome ganha `conhecidos` ao lado de `importantes`",
-    app.includes("  const baseDoNome = () => {\n    const importantes = [];\n    const conhecidos = [];\n    try {"));
+    app.includes("  const baseDoNome = (sobre = {}) => {") && app.includes("    const importantes = [];\n    const conhecidos = [];\n    try {\n      const a = aberturaMundoRef.current || {};"));
   t("o elenco leva papel, sexo e `de: \"mundo\"` para quem não é da espinha/chefe",
-    app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });'));
+    app.includes('for (const p of elencoDoMundo(sementeMundo(), mapaAgora, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });'));
   t("o mural vira `conhecidos`: quem um cartaz (`falar_com`) nomeia, com a descrição",
     app.includes('for (const cz of (muralRef.current || [])) for (const e of ((cz && cz.etapas) || [])) if (e && e.tipo === "falar_com" && e.alvo) conhecidos.push({ nome: e.alvo, notas: cz.descricao || "" });'));
   t("a conversa recente entra por `recentes`, no mesmo padrão de ~6898 (try/calou)",
@@ -325,7 +326,7 @@ sec("9. a fiação — App.jsx (MM15 · 5)");
   const { contextoDoNomeCom } = await import("../src/motor/aplicar.js");
   const somado = contextoDoNomeCom({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], aqui: ["a"], heroi: "h" }, { local: "L", genero: "ela", papel: "p", notas: "n", status: "vivo", descricao: "d" });
   t("o retorno leva conhecidos, recentes, grupo, papel e notas ao motor novo",
-    app.includes('return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };')
+    app.includes('return { importantes, conhecidos, recentes, grupo: (fichaAgora || personagem || {}).grupo || [], aqui: [cidadeAgora, lugarAgora && lugarAgora.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (fichaAgora || personagem || {}).nome || "" };')
     && app.includes("const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);")
     && JSON.stringify(somado) === JSON.stringify({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], local: "L", genero: "ela", papel: "p", notas: "n · vivo · d", aqui: ["a"], heroi: "h" }));
 

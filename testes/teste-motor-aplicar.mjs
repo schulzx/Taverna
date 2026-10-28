@@ -19,11 +19,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "../src/motor/aplicar.js";
+import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom, aplicarOTurno } from "../src/motor/aplicar.js";
 import { semearACasa, dadoDo } from "../src/semente.js";
 import { fieisPorFeito } from "../src/divindades.js";
 import { calcularFama } from "../src/fama.js";
-import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto, casosDoMeio, retratoDoMapa, retratoDoMeio, retratoDoPrompt, motorDoArcoDoCaso, sorteDoCaso } from "./aplicar-casos.mjs";
+import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto, casosDoMeio, retratoDoMapa, retratoDoMeio, retratoDoPrompt, motorDoArcoDoCaso, sorteDoCaso, casosDoTurno, retratoDoTurno, baseDoNomeDoCaso } from "./aplicar-casos.mjs";
 import { registrarOLugar, aplicarOMapa, dadivasConcedidas, aplicarAsMissoes, aplicarOsSinais, arcoComOMarco, ganhoDeFe, milagreInvocado } from "../src/motor/meio-do-turno.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
@@ -63,6 +63,11 @@ function oAppAplica(A, efeitos) {
     else if (ef.tipo === "sinalRaid") A.sinalRaid = ef.nome;
     else if (ef.tipo === "loot") A.fichaDoReact = { ...A.fichaDoReact, equipamento: [...(A.fichaDoReact.equipamento || []), ef.item] };
     else if (ef.tipo === "espolio") A.espolio = ef.item;
+    /* o aplicar e o registo (a fusão, secção 9) */
+    else if (ef.tipo === "textura") A.textura = { ...A.textura, ganho: true };
+    else if (ef.tipo === "canone") A.canone = ef.canone;
+    else if (ef.tipo === "npcTurno") A.npcTurno = ef.npcTurno;
+    else if (ef.tipo === "npcs") A.npcs = ef.npcs;
     else if (ef.tipo === "remontarPrompt") A.remontagens = [...A.remontagens, retratoDoPrompt({ personagem: ef.personagem || A.fichaDoRef, canone: A.canone, mapa: A.mapa, faccao: A.faccaoJogador, historia: A.historia, eventos: A.eventos, quests: A.quests, npcs: A.npcs, divindade: A.divindade, lugar: A.lugar, cidade: A.cidadeAtual, jornada: A.jornada })];
   }
   return A;
@@ -135,7 +140,8 @@ const APP = fs.readFileSync(path.join(AQUI, "..", "src", "App.jsx"), "utf8");
 const iAR = APP.indexOf("const aplicarResposta = useCallback((resp, persAtual, opts = {}) => {");
 const corpoAR = iAR > 0 ? APP.slice(iAR, APP.indexOf("}, [pushMsgs]);", iAR)) : "";
 t("o App importa o aplicar", /from "\.\/motor\/aplicar\.js"/.test(APP));
-t("aplicarResposta chama o motor", /aplicar\(\{\s*personagem: pers,/.test(corpoAR));
+/* (28/10, T1-A 3.ª fatia: o App chama o turno fundido, que começa pelo aplicar) */
+t("aplicarResposta chama o motor", /aplicarOTurno\(\{\s*personagem: pers,/.test(corpoAR));
 t("…e aplica os efeitos num lugar só", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (APP.match(/const aplicarOsEfeitos = /g) || []).length === 1);
 const MOTOR = fs.readFileSync(path.join(AQUI, "..", "src", "motor", "aplicar.js"), "utf8");
 t("o corpo mudou-se com o texto: o relógio, a cobrança e as travas estão no motor", /const \{ efeitos, msgs: msgsTick \} = tickEfeitos\(pers\);/.test(MOTOR) && /oQueFaltaCreditar\(resp\.narrativa/.test(MOTOR) && /travas\.danoJaAplicado = false;/.test(MOTOR));
@@ -216,7 +222,8 @@ sec("5. o registo — o cânone e a gente, byte a byte (T1-A, 2.ª fatia)");
   }
   t("o contexto do nome é o do App: a base do jogo e a metade do nome", JSON.stringify(contextoDoNomeCom({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], aqui: ["a"], heroi: "h" }, { local: "L", genero: "ela", papel: "p", notas: "n", status: "vivo" })) === JSON.stringify({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], local: "L", genero: "ela", papel: "p", notas: "n · vivo", aqui: ["a"], heroi: "h" }));
   /* a fiação: o App chama o registo no lugar dos dois blocos */
-  t("o App chama o registo e aplica os efeitos no mesmo lugar", /aplicarORegisto\(\{/.test(corpoAR) && /aplicarOsEfeitos\(registo\)/.test(corpoAR));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
+  t("o App chama o registo e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { canone: { "a torre": { tipo: "artefato" } }, npcs: [{ nome: "Brann" }] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.efeitos.some((e) => e.tipo === "canone") && !!s.estado.npcs["Brann"]; })());
   t("o cânone e a gente já não moram no App", !/let canoneDoNarrador = resp\.mudancas\.canone;/.test(APP) && !/npcTurnoRef\.current \+= 1;/.test(APP));
   t("o contextoDoNome do App é a base mais a metade do motor", /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
 }
@@ -306,7 +313,8 @@ sec("7. o mapa e o lugar dito, byte a byte (T1-A, 3.ª fatia)");
   t("o null que o jogador pediu é a volta", r3.mudou && r3.lugar === null && /De volta a Monte Rasa/.test(r3.aviso));
   t("na luta, o lugar dito é ignorado em silêncio", (() => { const r = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades: [] }, combate: { inimigos: [] } }, "a torre", "cronista", {}); return !r.mudou && !r.aviso && !r.paraOCronista.length; })());
   /* a fiação: o App chama o bloco no lugar dele, e o seu registrarLugar é a régua do motor */
-  t("o App chama o mapa e aplica os efeitos no mesmo lugar", /aplicarOMapa\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doMapa\)/.test(corpoAR));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
+  t("o App chama o mapa e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { cidade_atual: "Vau" } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.cidadeAtual === "Vau" && s.efeitos.some((e) => e.tipo === "lugarNovo"); })());
   t("o mapa já não mora no App", !/const abreAMasmorraAgora = \(\(\) => \{/.test(APP) && !/mp\.cidades\.push\(criarCidade\(cd\.nome, cd\)\); msgs\.push/.test(APP));
   t("o registrarLugar do App é a régua do motor", /const r = registrarOLugar\(\{/.test(APP) && !/lido = lerLugarDito\(nome,/.test(APP));
 }
@@ -384,9 +392,82 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
   const dd = dadivasConcedidas({ nome: "Vera", vida: 10, vidaMax: 20, mana: 2, manaMax: 8, dadivasPendentes: 2, dadivas: [] }, null);
   t("as dádivas pendentes saem todas, cada uma com linha e envelope", dd.personagem.dadivasPendentes === 0 && dd.msgs.length === 2 && dd.notas.length === 2);
   /* a fiação */
-  t("o App chama as missões e os sinais e aplica os efeitos no mesmo lugar", /aplicarAsMissoes\(\{/.test(corpoAR) && /aplicarOsSinais\(\{/.test(corpoAR));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
+  t("o App chama as missões e os sinais e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { evento_global_encerrar: true, sinais: ["fe:feito"] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.eventos.global === null && s.msgs.some((m) => /fiéis/.test(m)); })());
   t("as quatro regras do App são fiação do motor", /const r = ganhoDeFe\(\{/.test(APP) && /const r = milagreInvocado\(\{/.test(APP) && /const d = dadivasConcedidas\(pers, divindadeRef\.current\);/.test(APP) && /const a = arcoComOMarco\(historiaRef\.current, tipo, rotulo, motorDoArco\);/.test(APP));
   t("o motor do arco do App aceita o evento de agora", /const motorDoArco = \(sobre = \{\}\) => \{/.test(APP));
+}
+
+sec("9. o turno numa ordem só — a fusão, byte a byte (T1-A, 3.ª fatia)");
+{
+  /* o dourado é a FILA de antes (48579a9): o App corria o aplicar, a
+     dádiva, o mapa, as missões, os sinais e o registo um a um, aplicando os
+     efeitos nos refs antes do seguinte (`gerar-turno-dourado.mjs`). O motor
+     corre `aplicarOTurno` uma vez e o App em miniatura aplica tudo no fim. O
+     que a fusão arrisca é a cola — uma peça a ler o que a anterior ainda não
+     escreveu (o mapa, a cidade, o lugar, a ficha do milagre na base do nome
+     e na peneira) —, e é isso que este retrato pega: o estado inteiro, cada
+     prompt remontado com o que leu, as travas, a resposta podada, a tela, a nota. */
+  const DT = JSON.parse(fs.readFileSync(path.join(AQUI, "turno-dourado.json"), "utf8"));
+  const CT = casosDoTurno();
+  t(`os casos são os do dourado (${CT.length})`, CT.length === DT.casos.length && CT.every((c, i) => c.id === DT.casos[i].id));
+  t("a fila de antes não calou em nenhum caso", DT.calou === 0);
+  const ctxDoTurno = (c) => ({ ...c.ctx, sorte: undefined, mundo: c.ctx.mundo, sorteDoTurno: sorteDoCaso(c.semente), motorDoArco: (sobre = {}) => motorDoArcoDoCaso(c.ctx.arco, sobre.eventos),
+    baseDoNome: (sobre) => baseDoNomeDoCaso(sobre) });
+  const turnoNoMotor = (c) => {
+    const ctx = ctxDoTurno(c);
+    ctx.sorte = ctx.sorteDoTurno("salvaguarda");
+    const s = aplicarOTurno(c.estado, c.resp, ctx);
+    const A = oAppDoMeio(c);
+    Object.assign(A, { npcTurno: c.estado.npcTurno, textura: {}, danoJaAplicado: c.estado.danoJaAplicado, habUsada: c.estado.habUsada });
+    oAppAplica(A, s.efeitos);
+    if ("danoJaAplicado" in s.estado) A.danoJaAplicado = s.estado.danoJaAplicado;
+    if ("habUsada" in s.estado) A.habUsada = s.estado.habUsada;
+    A.pers = s.estado.personagem; A.resp = s.podado;
+    return { s, A };
+  };
+  let iguais = 0; const dif = [];
+  for (let i = 0; i < CT.length; i++) {
+    const c = JSON.parse(JSON.stringify(CT[i]));
+    semearACasa(c.semente);
+    const { s, A } = turnoNoMotor(c);
+    const D = DT.casos[i];
+    const ok = digital(retratoDoTurno(A)) === D.digital && JSON.stringify(s.msgs) === JSON.stringify(D.msgs) && notaComOTurno(c.notaAntes, s.paraOCronista) === D.nota && !A.calou.length;
+    if (ok) iguais++; else dif.push(`${c.id}: ${JSON.stringify(s.msgs).slice(0, 140)} / ${JSON.stringify(D.msgs).slice(0, 140)}${A.calou.length ? " calou " + A.calou : ""}`);
+  }
+  t(`${iguais}/${CT.length} turnos iguais ao byte (o estado, os prompts, as travas, a resposta, a tela, a nota)`, iguais === CT.length, dif.slice(0, 3).join(" | "));
+  /* a ordem é a do App: aplicar → dádiva → mapa → missões → sinais → registo */
+  {
+    const c = JSON.parse(JSON.stringify(CT.find((k) => k.resp.mudancas && k.resp.mudancas.sinais && k.resp.mudancas.canone && k.resp.mudancas.cidade_atual) || CT[1]));
+    semearACasa(c.semente);
+    const { s } = turnoNoMotor(c);
+    const ordem = s.efeitos.map((e) => e.tipo);
+    t("os efeitos saem na ordem das peças (o mapa antes dos sinais, os sinais antes do cânone)", ordem.indexOf("cidadeAtual") >= 0 && ordem.indexOf("canone") > ordem.lastIndexOf("cidadeAtual") && ordem.indexOf("quests") < ordem.indexOf("canone"));
+  }
+  /* a fusão morde: sem passar o estado de peça em peça, a cola parte */
+  {
+    let partem = 0;
+    for (let i = 0; i < CT.length; i++) {
+      const c = JSON.parse(JSON.stringify(CT[i]));
+      semearACasa(c.semente);
+      const ctx = ctxDoTurno(c); ctx.sorte = ctx.sorteDoTurno("salvaguarda");
+      ctx.baseDoNome = () => baseDoNomeDoCaso({ mapa: c.estado.mapa, cidadeAtual: c.estado.cidadeAtual, lugar: c.estado.lugar, ficha: c.estado.fichaDoRef });
+      const s = aplicarOTurno(c.estado, c.resp, ctx);
+      const A = oAppDoMeio(c); Object.assign(A, { npcTurno: c.estado.npcTurno, textura: {}, danoJaAplicado: c.estado.danoJaAplicado, habUsada: c.estado.habUsada });
+      oAppAplica(A, s.efeitos);
+      if ("danoJaAplicado" in s.estado) A.danoJaAplicado = s.estado.danoJaAplicado;
+      if ("habUsada" in s.estado) A.habUsada = s.estado.habUsada;
+      A.pers = s.estado.personagem; A.resp = s.podado;
+      if (digital(retratoDoTurno(A)) !== DT.casos[i].digital || notaComOTurno(c.notaAntes, s.paraOCronista) !== DT.casos[i].nota) partem++;
+    }
+    t(`…e morde: com a base do nome lida dos refs de antes do turno, ${partem} turnos partem`, partem > 0);
+  }
+  t("sem ficha, não há turno", aplicarOTurno({ personagem: null }, { narrativa: "x" }, {}).semFicha === true);
+  t("uma peça que estoura vira `calou` e o turno segue", (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: null }, { narrativa: "x", mudancas: { cidade_atual: "Vau" } }, {}); return s.efeitos.some((e) => e.tipo === "calou" && e.onde === "o mapa do turno") && !!s.estado.personagem; })());
+  /* a fiação: o App chama o turno uma vez e aplica os efeitos uma vez */
+  t("o App chama o turno fundido e aplica os efeitos num lugar só", /const saida = aplicarOTurno\(\{/.test(corpoAR) && (corpoAR.match(/aplicarOsEfeitos\(/g) || []).length === 1);
+  t("as peças já não são chamadas uma a uma no App", !/aplicarOMapa\(\{|aplicarAsMissoes\(\{|aplicarOsSinais\(\{|aplicarORegisto\(\{/.test(APP));
+  t("a base do nome do App aceita o estado de agora", /const baseDoNome = \(sobre = \{\}\) => \{/.test(APP));
 }
 
 console.log(`\nmotor · aplicar: ${bons} passaram, ${maus} falharam`);

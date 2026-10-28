@@ -214,7 +214,7 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
     const lu = aplicarOMapa({ ...base, jornada: null }, { narrativa: "x", mudancas: { lugar_atual: "a fazenda de Jessa" } }, {});
     t("lugar_atual", lu.estado.lugar && lu.estado.lugar.nome === "a fazenda de Jessa");
     const jm = aplicarOMapa(base, { narrativa: "x", mudancas: { jornada_meio: "de carroça" } }, {});
-    t("jornada_meio", jm.estado.jornada.meio === "de carroça" && /aplicarOMapa\(\{/.test(app));
+    t("jornada_meio", jm.estado.jornada.meio === "de carroça" && /aplicarOTurno\(\{/.test(app)); /* (28/10, a fusão: o App chama `aplicarOTurno`, que corre a peça) */
   }
   /* MOVIDAS (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
      O leitor de `canone` e de `npcs` mudou-se do `aplicarResposta` para

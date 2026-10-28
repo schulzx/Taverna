@@ -235,9 +235,9 @@ import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semearACasa, sorteDaCasa } from "./semente.js";
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
-import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "./motor/aplicar.js";
+import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
-import { registrarOLugar, aplicarOMapa, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, aplicarAsMissoes, aplicarOsSinais } from "./motor/meio-do-turno.js";
+import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado } from "./motor/meio-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -10459,7 +10459,16 @@ export default function Taverna() {
      `baseDoNome`; a do nome junta-se em `contextoDoNomeCom` (motor/aplicar.js),
      que o registo do turno também usa — os dois dizem a mesma coisa porque
      são a mesma linha. */
-  const baseDoNome = () => {
+  /* `sobre` (T1-A, 3.ª fatia): no turno fundido, o registo corre DENTRO do
+     motor, depois do mapa e dos sinais — e os refs ainda não têm o mapa, a
+     cidade, o lugar e a ficha que eles acabaram de escrever; o motor passa
+     os de agora. Sem `sobre` (quem mais chamar), os refs. */
+  const baseDoNome = (sobre = {}) => {
+    const o = sobre && typeof sobre === "object" ? sobre : {};
+    const mapaAgora = o.mapa !== undefined ? o.mapa : mapaRef.current;
+    const cidadeAgora = o.cidadeAtual !== undefined ? o.cidadeAtual : cidadeAtualRef.current;
+    const lugarAgora = o.lugar !== undefined ? o.lugar : lugarRef.current;
+    const fichaAgora = o.ficha !== undefined ? o.ficha : personagemRef.current;
     const importantes = [];
     const conhecidos = [];
     try {
@@ -10467,15 +10476,15 @@ export default function Taverna() {
       if (a.pista && a.pista.nome) importantes.push({ nome: a.pista.nome, onde: a.pista.local || "" });
       if (a.alvo && a.alvo.quem) importantes.push({ nome: a.alvo.quem, onde: a.alvo.onde || "" });
       for (const at of ((espinhaRef.current || {}).atos || [])) for (const m of (at.marcos || [])) if (m && m.quem) importantes.push({ nome: m.quem, onde: m.onde || "" });
-      for (const g of ((personagemRef.current || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });
-      for (const p of elencoDoMundo(sementeMundo(), mapaRef.current, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });
+      for (const g of ((fichaAgora || personagem || {}).grupo || [])) if (g && g.nome) importantes.push({ nome: g.nome });
+      for (const p of elencoDoMundo(sementeMundo(), mapaAgora, contextoDoElenco()).pessoas) if (p && p.nome) importantes.push({ nome: p.nome, onde: p.cidade || "", papel: p.papel || "", genero: p.genero_pessoa || "", ...(p.fonte === "espinha" || p.fonte === "chefe" ? {} : { de: "mundo" }) });
       for (const q of (missoesRef.current || [])) if (q && q.status === "ativa") for (const x of [q.dador, ...(q.etapas || []).map((e) => e && e.alvo)]) if (x) importantes.push({ nome: x });
       for (const cz of (muralRef.current || [])) for (const e of ((cz && cz.etapas) || [])) if (e && e.tipo === "falar_com" && e.alvo) conhecidos.push({ nome: e.alvo, notas: cz.descricao || "" });
     } catch (e) { calou("contextoDoNome", e); }
     let recentes = [];
     try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === "jogador" || m.autor === "mestre")).slice(-4).map((m) => m.texto); } catch (e) { calou("recentes do contexto do nome", e); }
     const mm = masmorraRef.current;
-    return { importantes, conhecidos, recentes, grupo: (personagemRef.current || personagem || {}).grupo || [], aqui: [cidadeAtualRef.current, lugarRef.current && lugarRef.current.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (personagemRef.current || personagem || {}).nome || "" };
+    return { importantes, conhecidos, recentes, grupo: (fichaAgora || personagem || {}).grupo || [], aqui: [cidadeAgora, lugarAgora && lugarAgora.nome, mm && !mm.encerrada ? mm.nome : ""].filter(Boolean), heroi: (fichaAgora || personagem || {}).nome || "" };
   };
   const contextoDoNome = (n) => contextoDoNomeCom(baseDoNome(), n);
 
@@ -10556,114 +10565,46 @@ export default function Taverna() {
        ela (MM-C · C6). */
     let pers = persAtual || personagemRef.current || personagem;
     const persDoEnvio = pers;
-    const saida = aplicar({
-      personagem: pers, combate: combateRef.current,
-      danoJaAplicado: danoJaAplicadoRef.current, habUsada: habUsadaRef.current,
-      ultimoDesfecho: ultimoDesfechoRef.current,
-    }, resp, { envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda, sorte: sorteDoTurno("salvaguarda") });
+    /* ---------------- O TURNO NUMA ORDEM SÓ (T1-A, 3.ª fatia, 28/10) ----------------
+       Do começo até o registo, o turno corre em `aplicarOTurno`
+       (src/motor/aplicar.js): o aplicar, a dádiva pendente, o mapa, as
+       missões, os sinais e o cânone e a gente, NA ORDEM que aqui tinham, com
+       o estado a passar de peça em peça dentro do motor. Daqui só sai a
+       fiação: o estado que ele lê, e os efeitos, todos, aplicados num lugar
+       só e na ordem em que nasceram. Provado byte a byte contra a fila de
+       antes (teste-motor-aplicar, secção 9).
+
+       Dois valores que se leem aqui como se liam: a ficha do ref
+       (`personagemRef.current || personagem`, a que o milagre cura) e o
+       nível da fama (`(personagem && personagem.nivel) || 1` — o
+       `personagem` do render, que dentro deste useCallback é o do primeiro
+       render: sempre o 1. Está no diário de 28/10, como achado).
+
+       Os blocos que já não moram aqui deixaram notas que valem como lei:
+       CONDIÇÃO É DO SISTEMA (v9.49) — o Mestre não põe nem tira condições
+       por campo, e nenhum cão de guarda as lê na narração; sobram três
+       fontes, todas do código (o combate, o tempo, a falha crítica). As
+       rolagens do combate que o jogador vê saem de `logDadoCombate`, nunca
+       do Mestre (v9.50). E o formato antigo da fé ("fe":{fieis,pf}) saiu na
+       v9.152: a fé viaja por SINAL. */
+    const saida = aplicarOTurno({
+      personagem: pers, fichaDoRef: personagemRef.current || personagem, combate: combateRef.current,
+      danoJaAplicado: danoJaAplicadoRef.current, habUsada: habUsadaRef.current, ultimoDesfecho: ultimoDesfechoRef.current,
+      mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current,
+      faccaoJogador: faccaoJogadorRef.current, devocao: devocaoRef.current, divindade: divindadeRef.current,
+      acampado: acampadoRef.current, masmorra: masmorraRef.current, raid: raidRef.current, espinha: espinhaRef.current,
+      ultimoPedido: ultimoPedidoRef.current, dia: diaRef.current, eventos: eventosRef.current, historia: historiaRef.current,
+      contadores: contRef.current, nivelDaFama: (personagem && personagem.nivel) || 1,
+      canone: canoneRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current, abertura: aberturaMundoRef.current, missoes: missoesRef.current,
+    }, resp, {
+      envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda, sorte: sorteDoTurno("salvaguarda"),
+      mundo: mundoDaBase, baseDoNome, motorDoArco, sorteDoTurno,
+    });
     aplicarOsEfeitos(saida);
     if (saida.semFicha) return null;
     resp = saida.podado;
     pers = saida.estado.personagem;
     const msgs = [...saida.msgs];
-    if ((pers.dadivasPendentes || 0) > 0) pers = concederDadivas(pers, msgs);
-    if (resp.mudancas) {
-      const md = resp.mudancas;
-      /* CONDIÇÃO É DO SISTEMA (v9.49). Aqui moravam "condicoes_adicionar" e
-         "condicoes_remover": o Mestre punha e tirava condições na minha ficha
-         por campo estruturado, e um cão de guarda mais abaixo ainda lia a
-         NARRAÇÃO atrás das que ele tivesse esquecido de registrar. Os dois
-         saíram, e pelo mesmo motivo — o segundo mostrou o problema do
-         primeiro em estado puro: "sente o ar quente ainda PRESO NA garganta"
-         virou 🕸 Agarrado (2t), dois turnos de desvantagem por uma metáfora.
-
-         Prosa não é ficha. O mesmo verbo que prende o herói numa teia prende
-         o ar na garganta dele, e nenhuma régua sabe a diferença — nem a do
-         detector, nem a do Mestre escrevendo o campo.
-
-         Sobram TRÊS fontes, todas do código: o combate (`aflicoes.js` rola e
-         aplica), o tempo (o turno que vence, o descanso que limpa) e a falha
-         crítica num teste (`consequencias.js`). Quando a cena pede uma
-         condição, o caminho do Mestre é o de qualquer mesa: pedir a rolagem.
-         O dado decide e o sistema cobra. */
-      /* v9.50: aqui se exibiam as "rolagens_combate" que o MESTRE mandava. O
-         prompt ensinava, num parágrafo longo, como ele devia rolar o d20 dos
-         inimigos, escolher o modificador pela competência e fixar a
-         dificuldade de acertar — um trabalho que o sistema faz sozinho desde
-         que o combate passou a ser resolvido por código. Cinco outras regras
-         do mesmo prompt diziam o contrário dessa. As rolagens que o jogador vê
-         hoje saem de `logDadoCombate`, e são as de verdade. */
-    }
-    /* ---------------- O MAPA, NO MOTOR (T1-A, 3.ª fatia, 28/10) ----------------
-       As cidades e as facções que o Mestre registrou, o lugar dito (com a
-       porta da masmorra que abre neste turno, MM16 nº 4), a cidade em que
-       se pisa (a jornada que termina, a névoa que abre, a primeira pisada e
-       a faixa da chegada), o meio da jornada, a facção do jogador, e a
-       geografia e a devoção das cidades novas moram em `aplicarOMapa`
-       (src/motor/meio-do-turno.js), na mesma ordem e com os porquês de
-       cada linha. Daqui só sai a fiação. Provado byte a byte contra o bloco
-       de antes (teste-motor-aplicar, secção 7). */
-    try {
-      const doMapa = aplicarOMapa({
-        personagem: pers, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current,
-        faccaoJogador: faccaoJogadorRef.current, devocao: devocaoRef.current, divindade: divindadeRef.current, combate: combateRef.current,
-        acampado: acampadoRef.current, masmorra: masmorraRef.current, espinha: espinhaRef.current, ultimoPedido: ultimoPedidoRef.current, dia: diaRef.current,
-      }, resp, { mundo: mundoDaBase });
-      msgs.push(...doMapa.msgs);
-      aplicarOsEfeitos(doMapa);
-    } catch (e) { calou("o mapa do turno", e); }
-    /* ---------------- AS MISSÕES E OS SINAIS, NO MOTOR (T1-A, 3.ª fatia) ----------------
-       O evento global que o Mestre encerra (o marco no arco) mora em
-       `aplicarAsMissoes`; os sinais (a fé, o milagre, a viagem, a masmorra,
-       a raid, a ascensão, o achado, o domínio, o patrono — o Mestre manda o
-       sinal e o SISTEMA converte pelas tabelas, v7.6) em `aplicarOsSinais`
-       (src/motor/meio-do-turno.js), na mesma ordem e com os porquês de cada
-       linha. Daqui só sai a fiação. Provado byte a byte contra os blocos de
-       antes (teste-motor-aplicar, secção 8). O nível da fama é o que o
-       `famaAtual` lia aqui (o `personagem` do render: no aplicarResposta,
-       sempre o 1 — está no diário de 28/10). */
-    try {
-      const dasMissoes = aplicarAsMissoes({ eventos: eventosRef.current, historia: historiaRef.current, dia: diaRef.current }, resp, { motorDoArco });
-      msgs.push(...dasMissoes.msgs);
-      aplicarOsEfeitos(dasMissoes);
-    } catch (e) { calou("as missões do turno", e); }
-    try {
-      const dosSinais = aplicarOsSinais({
-        personagem: pers, fichaDoRef: personagemRef.current || personagem, divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current,
-        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current, combate: combateRef.current, acampado: acampadoRef.current,
-        masmorra: masmorraRef.current, raid: raidRef.current, dia: diaRef.current, contadores: contRef.current, nivelDaFama: (personagem && personagem.nivel) || 1,
-      }, resp, { mundo: mundoDaBase, sorteDoTurno });
-      msgs.push(...dosSinais.msgs);
-      aplicarOsEfeitos(dosSinais);
-    } catch (e) { calou("os sinais do turno", e); }
-    /* v9.152: aqui morava a compatibilidade com o formato antigo
-       "fe":{fieis,pf}, de respostas das versoes 7.4 e 7.5. Ela sobreviveu
-       cento e quarenta e cinco versoes depois de a fe passar a viajar por
-       SINAL, e o prompt de hoje nao ensina esse objeto em lugar nenhum —
-       conferido antes de tirar: nenhuma ocorrencia em prompt.js.
-
-       Codigo de compatibilidade que nao pode mais ser acionado nao e
-       inofensivo: ele e um segundo caminho para mexer na divindade, e o
-       proximo a ler este arquivo tem de decidir se ele importa. Sai.
-
-       (Ele lia RESPOSTA, e nao save: nenhuma campanha salva depende disto.) */
-    /* ---------------- O REGISTO, NO MOTOR (T1-A, 2.ª fatia, 27/10) ----------------
-       O cânone que o Narrador declarou (com a peneira do segredo, MM15 (4),
-       e a rede de segurança do mapa) e a gente (as fichas que ele mandou e
-       as PESSOAS do cânone sem ficha, com a porta do homónimo, MM14 · 10a, e
-       a menção que não é presença, MM13) moram em `aplicarORegisto`
-       (src/motor/aplicar.js), na mesma ordem e com os porquês de cada linha.
-       Daqui só sai a fiação: o estado que ele lê, e os efeitos — o cânone,
-       o mapa, a gente e o prompt remontado — aplicados num lugar só
-       (`aplicarOsEfeitos`). Provado byte a byte contra o bloco de antes. */
-    try {
-      const registo = aplicarORegisto({
-        personagem: pers, canone: canoneRef.current, mapa: mapaRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current,
-        espinha: espinhaRef.current, abertura: aberturaMundoRef.current, lugar: lugarRef.current, missoes: missoesRef.current, dia: diaRef.current,
-      }, resp, { mundo: mundoDaBase, baseDoNome: baseDoNome });
-      msgs.push(...registo.msgs);
-      aplicarOsEfeitos(registo);
-    } catch (e) { calou("o registo do turno", e); }
     setPersonagem(pers);
     /* combate: processa de forma síncrona (via ref) para as mensagens saírem na ordem certa */
     if (resp.mudancas) {

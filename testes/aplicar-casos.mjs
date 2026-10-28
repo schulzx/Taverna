@@ -356,6 +356,60 @@ export function retratoDoPrompt(r) {
   return digital(JSON.stringify({ personagem: r.personagem, canone: r.canone, mapa: r.mapa, faccao: r.faccao, historia: r.historia, eventos: r.eventos, quests: r.quests, npcs: r.npcs, divindade: r.divindade, lugar: r.lugar, cidade: r.cidade, jornada: r.jornada }));
 }
 
+/* ============================================================
+   OS CASOS DO TURNO INTEIRO (T1-A, 3.ª fatia, a fusão)
+
+   As três famílias juntas, caso a caso: a ficha, a luta e as travas do
+   `aplicar` (casosDoAplicar), o mundo, o deus e os sinais do meio
+   (casosDoMeio), o cânone e a gente do registo (casosDoRegisto) — as
+   mudanças das três somadas numa resposta só. É sobre estes que o turno
+   de antes (o App de 48579a9, o aplicar, o meio e o registo em fila, com
+   os efeitos aplicados entre eles) e o turno fundido (`aplicarOTurno`)
+   têm de dar o mesmo.
+   ============================================================ */
+export function casosDoTurno() {
+  const A = casosDoAplicar(), M = casosDoMeio(), G = casosDoRegisto();
+  return A.map((a, i) => {
+    const m = M[i], g = G[i];
+    const md = { ...(a.resp.mudancas || {}), ...(m.resp.mudancas || {}), ...(g.resp.mudancas || {}) };
+    const nenhuma = !a.resp.mudancas && !m.resp.mudancas && !g.resp.mudancas;
+    const personagem = { ...a.estado.personagem, nivel: m.estado.personagem.nivel, dadivasPendentes: m.estado.personagem.dadivasPendentes, dadivas: [], dadivasUnicas: [] };
+    return {
+      id: a.id,
+      semente: `turno-dourado|${i}`,
+      resp: nenhuma ? { narrativa: a.resp.narrativa } : { narrativa: a.resp.narrativa, mudancas: md },
+      estado: {
+        ...m.estado, ...a.estado, personagem,
+        fichaDoRef: m.estado.fichaDoRef ? { ...personagem, vida: Math.max(1, personagem.vida - 1) } : null,
+        canone: g.estado.canone, npcs: g.estado.npcs, npcTurno: g.estado.npcTurno, abertura: g.estado.abertura, missoes: g.estado.missoes,
+      },
+      ctx: { ...a.ctx, mundo: m.ctx.mundo, arco: m.ctx.arco },
+      notaAntes: a.notaAntes,
+    };
+  }).map((c) => ({ ...c, estado: { ...c.estado, fichaDoReact: c.estado.fichaDoRef || c.estado.personagem } }));
+}
+
+/* a base do nome do caso, como o App a monta: lê o lugar, a cidade, o mapa
+   e a ficha de AGORA (o meio do turno mexe neles antes do registo) */
+export function baseDoNomeDoCaso({ mapa, cidadeAtual, lugar, ficha }) {
+  const f = ficha || {};
+  return {
+    importantes: ((mapa && mapa.cidades) || []).slice(0, 2).map((c) => ({ nome: c.nome, onde: c.regiao || "" })).concat((f.grupo || []).map((x) => ({ nome: x.nome }))),
+    conhecidos: [], recentes: [], grupo: f.grupo || [], aqui: [cidadeAtual, lugar && lugar.nome].filter(Boolean), heroi: f.nome || "",
+  };
+}
+
+/* o retrato do turno inteiro: tudo o que o App guarda e mostra depois do registo */
+export function retratoDoTurno(r) {
+  return JSON.stringify({
+    pers: r.pers, fichaDoRef: r.fichaDoRef, fichaDoReact: r.fichaDoReact, mapa: r.mapa, cidadeAtual: r.cidadeAtual, lugar: r.lugar, jornada: r.jornada,
+    faccaoJogador: r.faccaoJogador, devocao: r.devocao, divindade: r.divindade, eventos: r.eventos, historia: r.historia, combate: r.combate,
+    sinalViagem: r.sinalViagem, sinalMasmorra: r.sinalMasmorra, sinalRaid: r.sinalRaid, espolio: r.espolio, lugarNovo: r.lugarNovo, chegada: r.chegada,
+    salvos: r.salvos, remontagens: r.remontagens, questsVistas: r.questsVistas, canone: r.canone, npcs: r.npcs, npcTurno: r.npcTurno,
+    danoJaAplicado: r.danoJaAplicado, habUsada: r.habUsada, textura: r.textura, resp: r.resp,
+  });
+}
+
 /* a parte do mapa do retrato (a 1.ª etapa da fatia), e o retrato inteiro */
 export function retratoDoMapa(r) {
   return JSON.stringify({ mapa: r.mapa, cidadeAtual: r.cidadeAtual, lugar: r.lugar, jornada: r.jornada, faccaoJogador: r.faccaoJogador, devocao: r.devocao, lugarNovo: r.lugarNovo, chegada: r.chegada });

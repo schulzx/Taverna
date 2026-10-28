@@ -762,7 +762,8 @@ sec("10. as duas fichas e a homónima (3.ª sessão de prova, defeito 3)");
   /* movida (27/10, T1-A 2.ª fatia, o oficial): a metade do JOGO do contexto
      chama-se `baseDoNome`, e `contextoDoNome` é ela somada à do nome
      (`contextoDoNomeCom`, motor/aplicar.js) — o grupo vai na base */
-  prova2("contextoDoNome passa o grupo a nomeComDono", /const baseDoNome = \(\) => \{[\s\S]{0,4000}?return \{ importantes, conhecidos, recentes, grupo:/.test(APP) && /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
+  /* MOVIDAS DE TEXTO PARA TEXTO (28/10, T1-A 3.ª fatia, a fusão, o oficial): `baseDoNome` ganhou `sobre` — no turno fundido o registo corre dentro do motor, depois do mapa e dos sinais, e os refs ainda não têm o mapa, a cidade, o lugar e a ficha de agora; o motor passa-os. As linhas leem `mapaAgora`/`fichaAgora`/`cidadeAgora`/`lugarAgora` (os refs, sem `sobre`). A intenção não mudou. */
+  prova2("contextoDoNome passa o grupo a nomeComDono", /const baseDoNome = \(sobre = \{\}\) => \{[\s\S]{0,4000}?return \{ importantes, conhecidos, recentes, grupo:/.test(APP) && /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
   prova2("mencionadosNaCena recebe o grupo", /mencionadosNaCena\([^;]*\{ grupo: /.test(APP));
   prova2("a procura passa quem está perto (o grupo e a cena)", /nomeProcurado\(acao, nomesConhecidos\(\), \{ perto: /.test(APP));
 }
