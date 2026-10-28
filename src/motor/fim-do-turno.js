@@ -62,7 +62,15 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
   let base = e0.base, npcs = e0.npcs;
   try {
     const mu = mundoDe(op);
-    const m = mencionadosNaCena(mu.semente, e0.mapa, e0.cidadeAtual, base, mu.genero, resp.narrativa, mu.molde, mu.lex, { grupo: (e0.fichaDoRef || pers || {}).grupo || [] });
+    /* SEM MUNDO, A BASE NÃO SE LÊ (T1-A, 7.ª fatia; o achado da T3-B).
+       `mencionadosNaCena` com a semente vazia refaz a cidade pela semente
+       vazia (cidadeSintetica) e revela gente que nenhum mundo tem — o
+       replay de um arquivo sem o mundo gravado punha "Nolan Olho-de-Corvo"
+       no registo. Sem semente não há base a ratificar: esta metade cala, e
+       os nomes à mão e o peso do deus, que não precisam dela, seguem. */
+    let m = { locais: [], gente: [] };
+    if (mu.semente) {
+    m = mencionadosNaCena(mu.semente, e0.mapa, e0.cidadeAtual, base, mu.genero, resp.narrativa, mu.molde, mu.lex, { grupo: (e0.fichaDoRef || pers || {}).grupo || [] });
     /* MM13: a menção não é presença — a pista (ou o alvo) da abertura não
        conta como revelada nem entra no registo só por ser citada. */
     const genteRevelavel = m.gente.filter((p) => !aindaSoUmNome(e0.abertura, p.nome, { lugar: e0.lugar, missoes: e0.missoes }));
@@ -87,6 +95,7 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
         }
         if (tocou) { npcs = reg; ef({ tipo: "npcs", npcs }); }
       }
+    }
     }
     /* E1 (o Narrador só narra): o NOME À MÃO que a narração usou vira
        gente do registo — e morto, se a oração o pôs morto. Sai da lista

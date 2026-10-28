@@ -229,5 +229,22 @@ sec("3. o portão — byte a byte, e as três peças em fila");
   t("e corre na ordem de antes: o códex, a chegada, o portão — e a entrega depois", corpoAR.indexOf("const doCodex = ") < corpoAR.indexOf("const daChegada = ") && corpoAR.indexOf("const daChegada = ") < corpoAR.indexOf("const doPortao = ") && corpoAR.indexOf("const doPortao = ") < corpoAR.indexOf("if ((portaoRef.current || []).length)"));
 }
 
+sec("4. o códex sem mundo não inventa gente (defeito achado pela T3-B, consertado na 7.ª fatia da T1-A)");
+{
+  /* Sem mundo, `mencionadosNaCena` refazia a cidade pela semente VAZIA
+     (cidadeSintetica) e revelava gente que nenhum mundo tem: o nome que a
+     cidade sintética de "Vila do Sul" dá ao primeiro morador entrava no
+     registo. No App o mundo existe sempre (sementeMundo nunca é vazia);
+     num replay sem o mundo gravado, inventava. */
+  const estado = { personagem: { nome: "Vera", nivel: 1 }, mapa: { cidades: [] }, cidadeAtual: "Vila do Sul", base: null, npcs: {}, npcTurno: 3, dia: 2, oferecidos: [{ nome: "Ilka Sal", genero: "ela" }] };
+  const prosa = { narrativa: "Você encontra Nolan Olho-de-Corvo junto ao balcão, e Ilka Sal acena da porta." };
+  const sem = aplicarOCodex(estado, prosa, {});
+  t("sem mundo, ninguém da base entra no registo, e a base não muda", !("Nolan Olho-de-Corvo" in (sem.estado.npcs || {})) && !sem.efeitos.some((e) => e.tipo === "base"));
+  t("e o nome à mão que a narração usou entra igual (não precisa do mundo)", "Ilka Sal" in (sem.estado.npcs || {}));
+  /* com o mundo, a mesma frase continua a ratificar a gente da base dele */
+  const comMundo = aplicarOCodex(estado, prosa, { mundo: { semente: "prova|Fantasia medieval", genero: "Fantasia medieval" } });
+  t("com o mundo, o códex continua a ler a base (a mesma chamada, a semente cheia)", comMundo.efeitos.every((e) => e.tipo !== "calou"));
+}
+
 console.log(`\nmotor · fim do turno: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);
