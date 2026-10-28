@@ -24,6 +24,38 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 28/10 · v9.513–v9.514 · T3-B, o Juiz e a sessão como arquivo (`backend`) · aefaf5d · 3ef3af4
+- **o pedido:** (1) o achado da 5.ª fatia da T1-A: o Juiz punha "Rurik Martelo-Torto" em lugar novo, e não em pessoa nova. Primeiro o teste, depois o conserto, sem piorar os números. (2) A sessão como arquivo, a parte pura da T3: o formato, o validador, o gravador e o replay. A prova é sobre o que já está em disco. Não toquei no App, em `src/motor/` nem nos dourados (a trilha A estava no combate e commitou cc452f0 e c31c50c no meio).
+- **1. o Juiz (aefaf5d, v9.513):** eram dois defeitos.
+  - O sítio antes da vírgula batizava o nome depois dela: em "Na taverna, Rurik…", o "taverna" contava como a palavra antes do nome.
+  - Ao abrir a frase, o "Rurik" saía como se fosse verbo ("Levar Dolmen") e sobrava o "Martelo-Torto". Assim, um Rurik que o registo já tinha virava gente nova.
+  - O conserto foi pôr no léxico `separaDoSitio` (a pontuação corta a janela) e `epiteto` (um segundo nome com hífen nunca se tira). Os quatro casos novos estão na secção 2: três falhavam antes, e o quarto é o lugar colado, que continua lugar.
+  - **Os números não mudaram:** 53/55 apanhados e 2/158 limpas acusadas. A saída inteira do `--ver` é igual à de HEAD. Na foto da 9.ª continuam 11/11 e 2/34.
+- **2. a sessão como arquivo (3ef3af4, v9.514):** `src/sessao.js` (novo).
+  - O formato é uma tabela (`CAMPOS_DA_SESSAO`). A cabeça leva a semente, o save v2 inicial e o mundo. Cada turno leva a frase ou o toque, com os sítios a que a frase podia levar, e a sorte (o ponto, a contagem, a casa). Leva também o pedido (a pauta, os envelopes, os nomes à mão), a resposta crua do Narrador, a proposta crua do Cronista com o juízo, o veredito do Juiz com a entrada e o estado do fim do turno.
+  - O estado vai como diferença do anterior, e o gravador confere que ela refaz o estado byte a byte.
+  - O gravador é `abrirASessao`, `linhaDaSessao` e `gravarOTurno`. O validador recusa com o caminho do campo e deixa passar o que não conhece. O replay é `reproduzirASessao`, e `testes/replay.mjs` é o executável.
+- **o que o replay reproduz:** o `jogar-em-node` passou a gravar as três sessões que joga (com `--gravar` escreve `testes/sessao-s8/s9/s10.json`, 390 KB). O replay reproduz **180 de 194** turnos (s10 69/77, s8 66/70, s9 45/47), e o jogar-em-node joga 175. A diferença são cinco turnos, nomeados na secção 6 dele: os quatro da luta da 8.ª, que o oráculo guarda fora do estado; e o M69 da 10.ª, onde o lugar do Cronista repõe o que o oráculo tinha posto. O juízo do Cronista e o veredito do Juiz saem iguais nos 194.
+- **onde diverge:** só em turnos em que o oráculo mexeu no estado, e sempre pela parte que mora no App.
+  - Na 10.ª: a viagem, a estrada e a saída de um sítio (M9, 13, 17, 23, 41, 42, 57, 72).
+  - Na 8.ª e na 9.ª: o nome que a pauta não ofereceu (s8 6, 7, 11, 18; s9 10, 18).
+- **a prova:** `teste-sessao.mjs` (novo, 63 asserções).
+  - A tabela lida de volta: cada obrigatório tirado é recusado no caminho dele.
+  - O gravador: diferença, ordem, imutabilidade, lixo.
+  - 14 arquivos tortos recusados, e o campo de amanhã que passa.
+  - As sessões em disco com catraca, e o determinismo.
+  - As divergências plantadas, apanhadas no turno certo: a resposta do Narrador (s10#30), o estado gravado (s10#5), o juízo do Cronista (s8#12), o Juiz (s9#20) e, encadeado, s10#4.
+- **o que a fiação do App tem de entregar** está no cabeçalho de `sessao.js`. É um `abrirASessao` ao abrir ou continuar, e um `gravarOTurno` por turno, no fim e em `calou`, com: a frase crua ou o toque; o `lugaresDaqui()` do envio; o `pontoDaSorte()` do aplicar, a contagem antes da salvaguarda e a semente da casa do envio; a pauta, os envelopes, os `nomesOferecidosRef` e a moeda; a resposta crua antes da poda; a proposta e o juízo do Cronista; o resumo e a entrada do Juiz; e o `retratoDoJogo()` do fim do turno, com o `npcTurno`. Onde guardar é da fiação. `sessao.js` está na lista de espera do `teste-ligacao`, com esse credor.
+- **decisões médias, com o motivo:**
+  - O arquivo é o **jogar-em-node a gravar**, e não um conversor à parte: é ele que tem o jogo e o oráculo, e um segundo conversor duplicaria os dois.
+  - **O estado vai em diferença**, porque um save por turno não cabe num localStorage. Pela mesma razão **o eco do Juiz guarda só quantas narrações são**: elas já estão no arquivo, e eram 3/4 do peso.
+  - **O aceito do Cronista é aplicado em miniatura** (pessoas, cânone, lugar), como no jogar-em-node, porque a fiação inteira mora no App.
+  - **Por omissão, cada turno parte do estado gravado do anterior**, para que cada divergência diga a sua própria culpa. O `--encadeado` é a corrida inteira.
+- **achados para a trilha A (não mexi):**
+  - `aplicarOCodex` sem mundo não recusa: `oQueExisteAqui` refaz a cidade pela semente vazia (`cidadeSintetica`) e revela gente que nenhum mundo tem. No App o mundo existe sempre; o replay, sem o mundo gravado, corre só os nomes à mão.
+  - O contador da gente (`npcTurno`) anda com `mudancas: {}` e não anda quando a poda do Narrador esvazia as mudanças (a poda devolve `null`). Vi-o ao plantar `{ vida: -3 }`. É uma inconsistência pequena, mas um replay a apanha.
+- **build/test:** build limpo nos dois commits. `npm test` A=0 com 370/370 e 23/23 no primeiro (no meio, um vermelho de `teste-ligacao` da árvore da trilha A desapareceu sozinho, e HEAD + só os meus deu 370/370) e com 372/372 e 23/23 no segundo, também com HEAD + só os meus.
+
 ## 28/10 · v9.504–v9.512 · Fase T1, trilha A (5.ª fatia): o relógio dentro do turno, o Juiz que mede cada turno, e cinco órgãos do combate puros (`oficial`) · 44a6df4 · d6461be · 7338870 · 4a99f3a · 11e9851 · 16f7759 · c18bb59 · 9fe634c
 - **o pedido:** (1) o defeito anotado na 4.ª fatia, o relógio que escreve na ficha por baixo do turno: provar com teste que falha, consertar; (2) o Juiz de fidelidade a medir em cada turno, sem o jogador ver: a entrada montada por peça pura no motor, o veredito ao lado do custo, a entrada do juiz fora da lista de espera do `teste-ligacao`; (3) o combate preparado: tornar puros os órgãos do App que o bloco do combate chama, um por commit, dos de menos leitores para cima, cada um provado byte a byte contra o código de antes. Em paralelo, o `backend` (T4-B, 4.ª e 5.ª fatias: aea9587, 7f151b6) em nomes, divindades e cenário; não toquei nesses arquivos.
 - **1. o relógio dentro do turno (44a6df4, v9.504):** aconteceu. `avancarMinutos` escrevia pelo `mudarFicha`, que parte do ref, e dentro do `aplicarResposta` o ref é a ficha de ANTES do turno: o `pers` local gravava-se por cima. Visto em Node, com o código do App à letra: uma travessia que faz expirar a fera invocada manda ao Narrador "[INVOCAÇÃO ENCERRADA PELO SISTEMA]" e o save guarda a fera; a Exaustão no rescaldo da luta some; e no intervalo o ref é a ficha velha (40 moedas onde o turno já pagou 10). Conserto: `avancarOsMinutos(n, fichaDoTurno)` → `{ texto, ficha }`; o `avancarMinutos(n)` dos outros ~30 sítios fica igual. `teste-relogio-do-turno.mjs` (novo, 13): 5 falhas antes, 13/13 depois. **Dourados: 0/275 mudaram** (o relógio é órgão do App; o dourado do fim usa um dublê dele).
