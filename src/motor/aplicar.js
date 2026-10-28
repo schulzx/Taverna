@@ -557,7 +557,11 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
            sem isto, este mesmo cânone recriaria "Delfina" do zero a cada
            turno, porque a chave literal "Delfina da Névoa" nunca entra no
            registo e o `continue` de cima não a barra de novo). */
-        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurno, conhecidoEm: e0.dia };
+        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurno, conhecidoEm: e0.dia,
+          /* a marca do que só se ouviu (trilha B, 28/10): a pessoa do cânone que o Cronista
+             marcou entra marcada — sem isto esta porta a criava como fato. A mescla não a
+             copia para quem já é fato (npcs.js#mesclarNPC). */
+          ...(typeof f.dito === "string" && f.dito.trim() ? { dito: f.dito } : {}) };
         if (!tocou) { reg = { ...reg }; tocou = true; }
         reg[chave || nomeCerto] = chave ? mesclarNPC(reg[chave], dadosCanone) : criarNPC(nomeCerto, dadosCanone);
       }

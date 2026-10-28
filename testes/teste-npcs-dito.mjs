@@ -17,6 +17,7 @@ import { MARCA_DO_DITO, criarNPC, mesclarNPC, resumoNPCsParaPrompt, TETO_DAS_PES
 import { formatarCanone, linhasJaDitas } from "../src/prompt.js";
 import { julgarOCronista, O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
 import { oAceitoDoCronista } from "../src/motor/cronista-do-turno.js";
+import { aplicarORegisto } from "../src/motor/aplicar.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => {
@@ -108,7 +109,31 @@ t("o dono do nome não a lê", Js(nomeComDono("Clarissa Rocha", regCom, {})) ===
 const linhaVelha = "• Clarissa (guia, mulher, em Posto Velho, entrou na história no DIA 2)";
 t("a linha de hoje, tirada a marca, é a que a versão antiga escrevia para o mesmo save", resumoNPCsParaPrompt(regCom).split("\n").find((l) => l.includes("Clarissa")).replace(`, ${MARCA_DO_DITO}`, "") === linhaVelha && resumoNPCsParaPrompt(regSem).includes(linhaVelha));
 
-sec("6. o custo, no pior caso");
+sec("6. a pessoa do cânone entra no registo COM a marca (aplicar.js — a porta que não a passava)");
+/* 28/10 (trilha B): aplicarORegisto monta a pessoa vinda do cânone (a que o
+   Cronista escreveu «tipo pessoa» com a marca do dito, ou o cânone do
+   Narrador) sem passar o campo `dito` — a marca nunca subia por esta porta,
+   e a pessoa só ouvida entrava no registo como fato. Medido nas 4 sessões
+   gravadas (s8, s9, s10, navegador: 197 turnos): 0 vezes — o canal das
+   pessoas saiu do Narrador (E3) e o cânone das sessões só leva artefatos —,
+   então o conserto não mexe no dourado; o teste guarda o caso que existe. */
+const estadoCanone = (canone, npcs) => ({ personagem: { nome: "Ana" }, canone, mapa: { cidades: [], faccoes: [] }, npcs: npcs || {}, npcTurno: 0, espinha: null, abertura: null, lugar: null, missoes: [], dia: 5 });
+const CTX = { mundo: null, baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Ana" } };
+const MARCA = "dito por alguém em cena, não fato";
+const SEM_MUDANCAS = { narrativa: "x", mudancas: {} };
+const rDito = aplicarORegisto(estadoCanone({ "Clarissa do Posto Velho": { tipo: "pessoa", papel: "guia", dito: MARCA } }), SEM_MUDANCAS, CTX);
+const fDito = (rDito.estado.npcs || {})["Clarissa do Posto Velho"];
+t("a pessoa do cânone com a marca entra no registo com a marca", fDito && fDito.dito === MARCA, Js(fDito));
+t("e a linha das PESSOAS CONHECIDAS a escreve", resumoNPCsParaPrompt(rDito.estado.npcs).includes(MARCA_DO_DITO));
+const rFato = aplicarORegisto(estadoCanone({ Lia: { tipo: "pessoa", papel: "ferreira" } }), SEM_MUDANCAS, CTX);
+t("a pessoa do cânone sem a marca entra como fato — sem chave dito (a ficha de antes)", rFato.estado.npcs.Lia && !("dito" in rFato.estado.npcs.Lia));
+const jaFato = criarNPC("Clarissa", { papel: "guia", ultimaVez: 1, conhecidoEm: 2 });
+const rSobe = aplicarORegisto(estadoCanone({ "Clarissa do Posto Velho": { tipo: "pessoa", dito: MARCA } }, { Clarissa: jaFato }), SEM_MUDANCAS, { ...CTX, baseDoNome: { ...CTX.baseDoNome, importantes: [{ nome: "Clarissa", onde: "Posto Velho" }] } });
+const fSobe = Object.values(rSobe.estado.npcs).find((n) => /^Clarissa/.test(n.nome));
+t("a marca nunca sobe em quem já é fato no registo (a mescla não a copia)", fSobe && !("dito" in fSobe), Js(fSobe));
+t("lixo na marca (número, objeto, null, branco) não vira marca", [5, {}, null, "  "].every((x) => { const r = aplicarORegisto(estadoCanone({ Zeferino: { tipo: "pessoa", dito: x } }), SEM_MUDANCAS, CTX); return r.estado.npcs.Zeferino && !("dito" in r.estado.npcs.Zeferino); }));
+
+sec("7. o custo, no pior caso");
 const custo = `, ${MARCA_DO_DITO}`.length;
 console.log(`     custo por pessoa marcada: ${custo} chars`);
 const muitos = {};
