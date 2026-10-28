@@ -142,9 +142,16 @@ console.log("\n[6. A FIAÇÃO: A VEZ DO MUNDO PERGUNTA, E O ESTÁVEL FICA QUIETO
   ok(fss.length > 500 && !/fecharSeTodosCairam\(/.test(fss) && !/concluirMasmorraDoChefe|gerarEspolios/.test(fss), "a luta perdida NÃO passa pela porta da vitória: nada de espólio nem de tesouro do chefe");
   ok(/notarFechoDaLuta\(\{ combate: fimDaLuta, desfecho: [^}]*"derrota"[^}]*linha:/.test(fss), "e a tela do fim recebe o desfecho e a frase do que o inimigo fez");
   ok(/combateRef\.current = null;/.test(fss) && /calou\("fechar a luta sem saída", e\)/.test(fss), "fecha a luta de verdade, em try/calou");
-  const rq = APP.slice(APP.indexOf("const resolverQueda = (pers, msgs = []) => {"), APP.indexOf("A PORTA ÚNICA DO DANO"));
-  ok(/if \(pers\.morte && pers\.morte\.estavel\) return pers;/.test(rq), "quem estabilizou não rola de novo (o 'Você estabiliza' seguido de dois testes falhados)");
-  ok(/morte: \{ sucessos: 0, falhas: 0, rolagens: \[\], estavel: true \}/.test(rq), "e o ramo do estável marca a ficha");
+  /* (movido, T1-A 8.ª fatia: a regra da queda saiu do resolverQueda do App
+     para aQueda, src/motor/entrega-do-turno.js — o resolverQueda ficou
+     invólucro dela; e o motor prova-se jogando, não lendo o texto dele) */
+  const { aQueda } = await import("../src/motor/entrega-do-turno.js");
+  let pedidas = 0;
+  const estavel = { vida: 0, morrendo: true, morte: { sucessos: 0, falhas: 0, rolagens: [], estavel: true } };
+  const qe = aQueda(estavel, { dia: 1, sorteDoTurno: () => { pedidas++; return () => 0.05; } });
+  ok(qe.pers === estavel && pedidas === 0 && qe.msgs.length === 0, "quem estabilizou não rola de novo (o 'Você estabiliza' seguido de dois testes falhados)");
+  const qs = aQueda({ vida: 0, morrendo: true, morte: { sucessos: 2, falhas: 1 } }, { dia: 1, sorteDoTurno: () => () => 0.6 });
+  ok(JSON.stringify(qs.pers.morte) === JSON.stringify({ sucessos: 0, falhas: 0, rolagens: [], estavel: true }) && qs.pers.morrendo === true, "e o ramo do estável marca a ficha");
   ok(/fimSemSaida: fimSemSaidaRef\.current/.test(APP) && /fimSemSaidaRef\.current = garantirFimSemSaida\(sv\.fimSemSaida\)/.test(APP), "o fim da luta vai ao save e volta no load, pelo garantir");
 }
 

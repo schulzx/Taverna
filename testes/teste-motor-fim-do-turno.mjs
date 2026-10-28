@@ -226,7 +226,9 @@ sec("3. o portão — byte a byte, e as três peças em fila");
   t("o App chama o portão do motor e aplica os efeitos (o contexto e as violações nos refs do conserto)", /const doPortao = oPortaoDoTurno\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doPortao\)/.test(corpoAR)
     && /else if \(ef\.tipo === "portao"\) \{ if \("contexto" in ef\) portaoCtxRef\.current = ef\.contexto; portaoRef\.current = ef\.violacoes; \}/.test(APP) && /calou\("o portão do turno", e\)/.test(corpoAR));
   t("o portão já não mora no App", !/portaoRef\.current = violacoesDoTurno\(resp\.narrativa, portaoCtxRef\.current\);/.test(APP));
-  t("e corre na ordem de antes: o códex, a chegada, o portão — e a entrega depois", corpoAR.indexOf("const doCodex = ") < corpoAR.indexOf("const daChegada = ") && corpoAR.indexOf("const daChegada = ") < corpoAR.indexOf("const doPortao = ") && corpoAR.indexOf("const doPortao = ") < corpoAR.indexOf("if ((portaoRef.current || []).length)"));
+  /* (movido, T1-A 8.ª fatia: a entrega saiu para aEntrega, src/motor/entrega-do-turno.js; o
+     marco da entrega é a chamada dela, e não o `if` do portão que morava no App) */
+  t("e corre na ordem de antes: o códex, a chegada, o portão — e a entrega depois", corpoAR.indexOf("const doCodex = ") < corpoAR.indexOf("const daChegada = ") && corpoAR.indexOf("const daChegada = ") < corpoAR.indexOf("const doPortao = ") && corpoAR.indexOf("const doPortao = ") < corpoAR.indexOf("const daEntrega = aEntrega(") && corpoAR.indexOf("portao: portaoRef.current") > corpoAR.indexOf("const daEntrega = aEntrega("));
 }
 
 sec("4. o códex sem mundo não inventa gente (defeito achado pela T3-B, consertado na 7.ª fatia da T1-A)");

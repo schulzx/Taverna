@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao } from "./nomes.js";
-import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
+import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, saidasDeUmPassoPrompt } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, testeDeMorte, aplicarTesteMorte, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 /* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
@@ -243,6 +243,7 @@ import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-t
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
+import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -10032,87 +10033,20 @@ export default function Taverna() {
      mesmo giro — o revide rola e marca; a resposta do Mestre lê a marca e
      não rola de novo. */
   const morteRoladaRef = useRef(false);
+  /* A QUEDA NO MOTOR (T1-A, 8.ª fatia, 28/10): a regra inteira — levantar,
+     o estável que não rola, o segundo fôlego, quem segura de pé, a fúria
+     persistente e o teste de morte — mora em `aQueda`
+     (src/motor/entrega-do-turno.js), com os porquês. Este invólucro é a
+     porta de sempre para os três chamadores: a marca do giro, as linhas, a
+     nota e a tela do desfecho, que abre 400 ms depois do último teste.
+     Provado byte a byte contra o de antes (teste-motor-entrega). */
   const resolverQueda = (pers, msgs = []) => {
-    if (!pers) return pers;
-    if ((pers.vida || 0) > 0) {
-      /* levantou (cura, poção, segundo fôlego): os contadores zeram — e o
-         histórico de dados com eles, senão a próxima queda abre mostrando
-         a rolagem da queda passada */
-      const m = pers.morte || {};
-      if (pers.morrendo || (m.falhas || 0) + (m.sucessos || 0) > 0 || (m.rolagens || []).length) {
-        return { ...pers, morrendo: false, morte: { sucessos: 0, falhas: 0, rolagens: [] } };
-      }
-      return pers;
-    }
-    if (pers.morto) return pers;
-    if (morteRoladaRef.current) { morteRoladaRef.current = false; return pers; }
-    /* MM (a luta tem saída): QUEM ESTABILIZOU NÃO ROLA DE NOVO. O ramo
-       `estavel` abaixo zerava os contadores e deixava `morrendo` ligado, e o
-       giro seguinte rolava outra vez como se nada fosse — na quinta sessão,
-       "Você estabiliza" e logo dois testes falhados. No 5e o estável fica
-       quieto até alguém o curar ou ele acordar; é o que `morte.estavel` diz. */
-    if (pers.morte && pers.morte.estavel) return pers;
-    /* SEGUNDO FÔLEGO (v9.32): a Dádiva da Recuperação vale em qualquer
-       queda, não só na que acontece no turno dos inimigos. */
-    if (segundoFolegoDisponivel(pers, diaRef.current)) {
-      const volta = Math.max(1, Math.round((pers.vidaMax || 10) / 2));
-      msgs.push(`🌠 Dádiva da Recuperação — você cai e o corpo se recusa: +${volta} PV (uma vez por dia).`);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e a Dádiva da Recuperação me pôs de pé na hora, com ${volta} PV. Narre o joelho que dobra e o corpo que se recusa a ficar no chão — sem mudar número nenhum.`;
-      return gastarSegundoFolego({ ...pers, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
-    }
-    /* v9.45: a habilidade da CLASSE que promete o mesmo — "Ao cair a 0 PV,
-       continua de pé por 1 turno" (Indomável) e "Não pode cair abaixo de 1 PV"
-       (Corpo Imortal). Vem antes do traço racial porque volta a cada luta,
-       e recurso que se renova mais rápido se gasta primeiro. */
-    {
-      const quem = seguraEmPe(pers);
-      if (quem) {
-        msgs.push(`🛡 ${quem} — você deveria cair, e não cai: fica com 1 PV (uma vez por luta).`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e "${quem}" me segurou de pé com 1 PV. Narre o corpo que se recusa a ir ao chão. Não mude número nenhum, e deixe claro que agora qualquer coisa me derruba.`;
-        return gastarSegura({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } });
-      }
-    }
-    /* FÚRIA PERSISTENTE (v9.44): mesma regra, mesma porta. Vale em qualquer
-       queda — a do turno inimigo, a do sangramento, a do veneno na estrada. */
-    if (firmeDisponivel(pers, diaRef.current)) {
-      msgs.push("🩸 Fúria persistente — você deveria cair, e não cai: fica com 1 PV (uma vez por descanso longo).");
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Meus PV chegaram a zero e o traço da minha origem me deixou de pé com 1 PV. Narre o corpo que se recusa a ir ao chão, e deixe claro que agora qualquer coisa me derruba. Não mude número nenhum.`;
-      return gastarFirme({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
-    }
-    const caiuAgora = !pers.morrendo;
-    const res = testeDeMorte(sorteDoTurno("morte"));
-    const ap = aplicarTesteMorte(pers.morte || { sucessos: 0, falhas: 0 }, res);
-    /* ---- OS DADOS FICAM GUARDADOS (v9.42) ----
-       O jogador tombou com dois sucessos e uma falha e não entendeu por quê:
-       o dado que decidiu foi um 1 natural, que no 5e conta DUAS falhas, e a
-       tela de tombamento não mostrava dado nenhum. Ele teve que recarregar a
-       página para ler o chat e descobrir o que tinha acontecido — e foi
-       assim que descobriu também que recarregar burlava o tombamento.
-       Um desfecho que o jogador não consegue reconstruir parece arbitrário,
-       e arbitrário é o oposto do que uma regra de morte precisa ser. */
-    const historico = [...((pers.morte || {}).rolagens || []), { rolo: res.rolo, tipo: res.tipo, texto: res.texto }].slice(-8);
-    if (caiuAgora) msgs.push("💥 Seus PV chegam a zero — você desaba, inconsciente.");
-    msgs.push(`☠ Teste de morte: ${res.texto}`);
-    if (ap.desfecho === "revive") {
-      msgs.push("✨ Você volta a si com 1 PV!");
-      const rh = ganharHeroismo({ ...pers, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0, rolagens: [] } }, "sobreviveu");
-      if (rh.msg) msgs.push(rh.msg);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Caí a 0 PV e o teste de morte saiu 20 natural: estou de pé de novo, com 1 PV. Narre o retorno brutal à consciência. Não mude números.`;
-      return rh.pers;
-    }
-    if (ap.desfecho === "estavel") {
-      msgs.push("Você estabiliza — inconsciente, mas vivo. Alguém precisa te ajudar.");
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou a 0 PV e ESTABILIZEI: inconsciente, respirando, sem poder agir. Narre a cena de quem está caído — e quem estiver por perto pode me socorrer. NÃO me faça levantar, andar ou falar.`;
-      return { ...pers, morrendo: true, morte: { sucessos: 0, falhas: 0, rolagens: [], estavel: true } };
-    }
-    if (ap.desfecho === "morto") {
-      msgs.push("💀 Você tomba. O que vem depois é escolha sua — e custa.");
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MORTE — DECLARADA PELO SISTEMA] Falhei o terceiro teste de morte. Narre o instante final, curto e sem consolo, e pare aí: o que vem depois o sistema resolve.`;
-      setTimeout(() => abrirDesfechoDaMorte(), 400);
-      return { ...pers, morrendo: false, morto: true, morte: { ...ap, rolagens: historico } };
-    }
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] Estou caído a 0 PV, inconsciente, rolando testes de morte (${ap.sucessos} sucesso${ap.sucessos === 1 ? "" : "s"}, ${ap.falhas} falha${ap.falhas === 1 ? "" : "s"}). Narre isso do lado de fora — eu não vejo, não ouço e não ajo. Uma cura ou uma estabilização me traz de volta.`;
-    return { ...pers, morrendo: true, morte: { ...ap, rolagens: historico } };
+    const q = aQueda(pers, { morteRolada: morteRoladaRef.current, dia: diaRef.current, sorteDoTurno });
+    morteRoladaRef.current = q.morteRolada;
+    msgs.push(...q.msgs);
+    notaRef.current = notaComOTurno(notaRef.current, q.paraOCronista);
+    if (q.morreu) setTimeout(() => abrirDesfechoDaMorte(), 400);
+    return q.pers;
   };
 
   /* ============================================================
@@ -10428,8 +10362,21 @@ export default function Taverna() {
     /* v9.49: aqui morava o cão de guarda que lia a narração atrás de condições
        — ver a nota lá em cima, onde `condicoes_adicionar` saiu. Foi ele que
        transformou "o ar preso na garganta" em 🕸 Agarrado (2t). */
-    try { conferirNemesisNaNarrativa(resp.narrativa); } catch { /* idem */ }
-    try { elencoSaveRef.current = vistosDaNarrativa(elencoSaveRef.current, npcsRef.current, resp.narrativa, diaRef.current); } catch (e) { calou("vistosDaNarrativa", e); }
+    /* A NÊMESIS E OS VISTOS, NO MOTOR (T1-A, 8.ª fatia, 28/10): o cão de
+       guarda da nêmesis (`aNemesisNaNarrativa`) e quem a prosa pôs em cena
+       (`osVistosDaNarrativa`, MM8e) moram em src/motor/entrega-do-turno.js.
+       Daqui sai a fiação: a nota, a porta que a encerra, o estado do elenco.
+       Provado byte a byte contra as duas linhas de antes (teste-motor-entrega). */
+    try {
+      const daNemesis = aNemesisNaNarrativa(nemesisRef.current, resp.narrativa);
+      notaRef.current = notaComOTurno(notaRef.current, daNemesis.paraOCronista);
+      if (daNemesis.encerrar) encerrarNemesis(daNemesis.encerrar);
+    } catch (e) { calou("a nêmesis na narração", e); }
+    {
+      const dosVistos = osVistosDaNarrativa({ elenco: elencoSaveRef.current, npcs: npcsRef.current, dia: diaRef.current }, resp.narrativa);
+      elencoSaveRef.current = dosVistos.elenco;
+      if (dosVistos.erro) calou("vistosDaNarrativa", dosVistos.erro);
+    }
     /* ---------------- O CÓDEX, NO MOTOR (T1-A, 4.ª fatia, 28/10) ----------------
        Da base para o cânone (v9.14: o local e a pessoa da base que a
        narração pôs em cena viram história, por código), os nomes à mão que
@@ -10482,37 +10429,28 @@ export default function Taverna() {
       }, resp);
       aplicarOsEfeitos(doPortao);
     } catch (e) { portaoRef.current = null; calou("o portão do turno", e); }
-    /* detector de repetição: mede se o Mestre voltou a usar interrupção urgente */
-    /* O TRABALHO QUE O SISTEMA MARCOU PARA ESTA CENA (v9.37). O envelope foi
-       mandado no turno passado e a abordagem está NESTA narração — então é
-       aqui, depois dela, que o aviso aparece. Anunciar antes seria o sistema
-       contando o que a ficção ainda não mostrou. */
-    if ((trabalhoPendenteRef.current || []).length) {
-      msgs.push(...trabalhoPendenteRef.current);
-      trabalhoPendenteRef.current = [];
+    /* ---------------- O TRABALHO, A QUEDA E A ENTREGA, NO MOTOR (T1-A, 8.ª fatia, 28/10) ----------------
+       O trabalho que o sistema marcou para esta cena (v9.37: o aviso vem
+       DEPOIS da narração que mostra a abordagem), a queda a zero (v9.41: a
+       última a falar, porque é a única que precisa do número final) e a
+       entrega (a cena na tela, ou presa atrás do portão até o conserto
+       voltar; quem solta é passarPeloPortao) moram em
+       src/motor/entrega-do-turno.js, com os porquês. Daqui sai a fiação.
+       Provado byte a byte contra os blocos de antes (teste-motor-entrega). */
+    {
+      const doTrabalho = oTrabalhoPendente(trabalhoPendenteRef.current);
+      msgs.push(...doTrabalho.msgs);
+      trabalhoPendenteRef.current = doTrabalho.pendente;
     }
-    /* ---- CAIR A ZERO (v9.41) ----
-       Depois de TUDO: o dano do Mestre, o tick do veneno, a cura, a poção.
-       É o último a falar porque é o único que precisa do número final —
-       e é aqui que o sangramento que esvazia a barra fora da luta deixa
-       de ser um número parado e vira uma queda com teste. */
     {
       const antes = pers;
       pers = resolverQueda(pers, msgs);
       if (pers !== antes) { personagemRef.current = pers; setPersonagem(pers); }
     }
-    /* A ENTREGA. Sem violação — o caso comum — sai na tela agora, exatamente
-       como sempre saiu. Com violação, as linhas ficam guardadas e a tela
-       trava até o conserto voltar: quem solta é passarPeloPortao(). */
     {
-      /* A1 · B2: a mensagem do Mestre ganha `recibo` (o que a ficha mudou
-         no turno) — mas NÃO aqui: nasce sem ele, e no fim do turno, depois
-         do Cronista, `fecharORecibo` troca-a por uma cópia com o campo
-         (`reciboDoTurno`, glifos.js, da foto do envio à ficha do fim). Aqui
-         ainda faltaria o que o Cronista cobra. */
-      const linhas = [{ autor: "mestre", texto: resp.narrativa || "…" }, ...msgs.map((t) => ({ autor: "sistema", texto: t }))];
-      if ((portaoRef.current || []).length) { seguraRef.current = []; entregaRef.current = linhas; }
-      else { entregaRef.current = null; pushMsgs(linhas); }
+      const daEntrega = aEntrega({ narrativa: resp.narrativa, msgs, portao: portaoRef.current });
+      if (daEntrega.segurar) { seguraRef.current = []; entregaRef.current = daEntrega.linhas; }
+      else { entregaRef.current = null; pushMsgs(daEntrega.linhas); }
     }
     /* ---------------- O PERIGO DA RESPOSTA, NO MOTOR (T1-A, 7.ª fatia, 28/10) ----------------
        O canal fechado (v9.68: `resp.rolagem` já não é lido) e a outra metade
@@ -22008,31 +21946,10 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     }
   };
 
-  /* Cão de guarda da nêmesis na narração: ela morreu na cena sem ninguém
-     registrar? O sistema encerra. Ela apareceu depois de morta? O sistema
-     corrige o Mestre — como já faz com mortes de inimigos em combate. */
-  const conferirNemesisNaNarrativa = (narrativa) => {
-    const n = nemesisRef.current;
-    if (!n || !n.nome) return;
-    const txt = String(narrativa || "");
-    if (!txt) return;
-    const semAc = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    const t = semAc(txt), alvo = semAc(n.nome);
-    if (!t.includes(alvo)) return;
-    if (n.status === "derrotada") {
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CORREÇÃO DE COESÃO — NÊMESIS MORTA] Você citou ${n.nome} na cena, mas o SISTEMA a registra MORTA desde o dia ${n.mortaEm || "?"}${n.comoMorreu ? ` (${n.comoMorreu})` : ""}. Ela não pode aparecer, agir, ameaçar nem enviar ninguém. Se a menção era memória, legado ou herança do que ela deixou, tudo bem — deixe isso explícito. Se você a colocou em cena, RETOME: ela não está lá.`;
-      return;
-    }
-    /* morte narrada sem registro: a frase precisa citá-la e matá-la */
-    const frases = txt.split(/(?<=[.!?;])\s+|\n+/);
-    const morte = /(morre|morreu|morta|morto|cai sem vida|tomba sem vida|expira|último suspiro|ultimo suspiro|degola|decapit|sem vida|corpo (dela|dele) )/i;
-    const negado = /\b(não|nao|quase|fingiu|parece|como se)\b/i;
-    for (const f of frases) {
-      if (!semAc(f).includes(alvo)) continue;
-      if (negado.test(f)) continue;
-      if (morte.test(f)) { encerrarNemesis("morta na cena narrada pelo Mestre"); return; }
-    }
-  };
+  /* O cão de guarda da nêmesis na narração (morreu na cena sem registo? o
+     sistema encerra; apareceu depois de morta? o sistema corrige o Mestre)
+     mora em `aNemesisNaNarrativa` (src/motor/entrega-do-turno.js) desde a
+     8.ª fatia da T1-A; o `aplicarResposta` chama-o e aplica o que ele diz. */
 
   /* O que o Mestre lê sobre ela em TODO turno — viva ou morta. */
   const infoNemesis = () => {

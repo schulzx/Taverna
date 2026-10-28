@@ -214,7 +214,10 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   const blocoDe = (agulha, ateChars = 400) => { const i = app.indexOf(agulha); return i >= 0 ? app.slice(i, i + ateChars) : ""; };
 
   /* MOVIDO NA MM8f: o import ganhou as funções da MM8f no fim; prova-se o que esta asserção sempre quis (as quatro da MM8e chegam), sem o fecho. */
-  t("o import traz as quatro funções do elenco", app.includes('import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, vistosDaNarrativa, promoverNoDia, saidaParaPauta'));
+  /* (movido, T1-A 8.ª fatia: `vistosDaNarrativa` saiu do import do App — quem a chama agora é
+     o motor, src/motor/entrega-do-turno.js; prova-se que as três que o App ainda usa chegam,
+     e que a quarta chega ao motor) */
+  t("o import traz as quatro funções do elenco", app.includes('import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, promoverNoDia, saidaParaPauta') && (await import("../src/motor/entrega-do-turno.js")).osVistosDaNarrativa({ elenco: null, npcs: { "Brás": { nome: "Brás" } }, dia: 7 }, "Brás acena da porta.").elenco.vistos["Brás"].includes(7));
   t("o ref do save nasce vazio, ao lado do registo de pessoas", /const elencoSaveRef = useRef\(garantirElencoDoSave\(null\)\);/.test(app));
 
   const ctx = linhaDe("const contextoDoElenco = () =>");
@@ -242,8 +245,12 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   const capNovo = blocoDe("if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({});", 140);
   t("campanha nova zera o campo junto com o registo de pessoas", capNovo.includes("elencoSaveRef.current = garantirElencoDoSave(null);"));
 
-  const vistoDoTurno = linhaDe('try { elencoSaveRef.current = vistosDaNarrativa(');
-  t("uma vez por turno, o que a narração citou vira dia visto — calado se estourar", vistoDoTurno.includes("vistosDaNarrativa(elencoSaveRef.current, npcsRef.current, resp.narrativa, diaRef.current)") && vistoDoTurno.includes('calou("vistosDaNarrativa", e)'));
+  /* (movido, T1-A 8.ª fatia: os vistos saíram do aplicarResposta para
+     osVistosDaNarrativa, src/motor/entrega-do-turno.js — o App passa o estado,
+     a gente e o dia, guarda o elenco que volta e entrega o erro ao calou com
+     o nome de sempre; a regra em si é provada byte a byte em teste-motor-entrega) */
+  const vistoDoTurno = blocoDe("const dosVistos = osVistosDaNarrativa(", 300);
+  t("uma vez por turno, o que a narração citou vira dia visto — calado se estourar", vistoDoTurno.includes("osVistosDaNarrativa({ elenco: elencoSaveRef.current, npcs: npcsRef.current, dia: diaRef.current }, resp.narrativa)") && vistoDoTurno.includes("elencoSaveRef.current = dosVistos.elenco;") && vistoDoTurno.includes('calou("vistosDaNarrativa", dosVistos.erro)'));
 
   const viradaDoDia = statementDe("try { const r = promoverNoDia(", 'calou("promoverNoDia", e); }');
   t("ao virar o dia, a promoção roda por dia passado — calada se estourar, nenhuma linha na tela", viradaDoDia.includes("promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current,") && viradaDoDia.includes("elencoSaveRef.current = r.estado;") && viradaDoDia.includes('calou("promoverNoDia", e)') && !/pushMsgs/.test(viradaDoDia));

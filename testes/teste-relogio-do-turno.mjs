@@ -44,7 +44,10 @@ const corte = (de, ate) => {
 const MUDAR = corte("  const mudarFicha = (fn) => {", "  const [mensagens, setMensagens]");
 const RELOGIO = corte("  const avancarMinutos = ", "  const mostrarRolagensRef = useRef(true);");
 const CHEGADA = corte("    /* ---------------- A CHEGADA, NO MOTOR (T1-A, 4.ª fatia, 28/10) ----------------", "    /* ---------------- O PORTÃO, NO MOTOR");
-const QUEDA = corte("    /* ---- CAIR A ZERO (v9.41) ----", "    /* A ENTREGA.");
+/* (movido, T1-A 8.ª fatia: o trabalho, a queda e a entrega moram em src/motor/entrega-do-turno.js;
+   a fiação da queda no aplicarResposta é a mesma — o `resolverQueda` sobre a ficha do turno, que
+   volta ao ref e à tela quando muda —, e é ela que se recorta) */
+const QUEDA = corte("    {\n      const antes = pers;\n      pers = resolverQueda(pers, msgs);", "    {\n      const daEntrega = aEntrega(");
 
 const correr = new Function("S", `with (S) {
 ${MUDAR}
