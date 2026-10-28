@@ -21,8 +21,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "../src/motor/aplicar.js";
 import { semearACasa, dadoDo } from "../src/semente.js";
-import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto, casosDoMeio, retratoDoMapa } from "./aplicar-casos.mjs";
-import { registrarOLugar, aplicarOMapa } from "../src/motor/meio-do-turno.js";
+import { fieisPorFeito } from "../src/divindades.js";
+import { calcularFama } from "../src/fama.js";
+import { casosDoAplicar, retrato, digital, casosDoRegisto, retratoDoRegisto, casosDoMeio, retratoDoMapa, retratoDoMeio, retratoDoPrompt, motorDoArcoDoCaso, sorteDoCaso } from "./aplicar-casos.mjs";
+import { registrarOLugar, aplicarOMapa, dadivasConcedidas, aplicarAsMissoes, aplicarOsSinais, arcoComOMarco, ganhoDeFe, milagreInvocado } from "../src/motor/meio-do-turno.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 
@@ -48,6 +50,20 @@ function oAppAplica(A, efeitos) {
     else if (ef.tipo === "lugarNovo") A.lugarNovo = ef.cidade;
     else if (ef.tipo === "chegada") A.chegada = ef.chegada;
     else if (ef.tipo === "calou") A.calou.push(ef.onde);
+    /* a 2.ª etapa: o deus, a ficha do milagre (ref, tela e save), a luta, o
+       arco, os eventos, os sinais das portas, o achado e a revelação */
+    else if (ef.tipo === "divindade") A.divindade = ef.divindade;
+    else if (ef.tipo === "ficha") { A.fichaDoRef = ef.personagem; A.fichaDoReact = ef.personagem; A.salvos = [...A.salvos, digital(JSON.stringify({ personagem: ef.personagem }))]; }
+    else if (ef.tipo === "combate") A.combate = ef.combate;
+    else if (ef.tipo === "eventos") A.eventos = ef.eventos;
+    else if (ef.tipo === "historia") A.historia = ef.historia;
+    else if (ef.tipo === "quests") A.questsVistas++;
+    else if (ef.tipo === "sinalViagem") A.sinalViagem = ef.destino;
+    else if (ef.tipo === "sinalMasmorra") A.sinalMasmorra = ef.nome;
+    else if (ef.tipo === "sinalRaid") A.sinalRaid = ef.nome;
+    else if (ef.tipo === "loot") A.fichaDoReact = { ...A.fichaDoReact, equipamento: [...(A.fichaDoReact.equipamento || []), ef.item] };
+    else if (ef.tipo === "espolio") A.espolio = ef.item;
+    else if (ef.tipo === "remontarPrompt") A.remontagens = [...A.remontagens, retratoDoPrompt({ personagem: ef.personagem || A.fichaDoRef, canone: A.canone, mapa: A.mapa, faccao: A.faccaoJogador, historia: A.historia, eventos: A.eventos, quests: A.quests, npcs: A.npcs, divindade: A.divindade, lugar: A.lugar, cidade: A.cidadeAtual, jornada: A.jornada })];
   }
   return A;
 }
@@ -293,6 +309,84 @@ sec("7. o mapa e o lugar dito, byte a byte (T1-A, 3.ª fatia)");
   t("o App chama o mapa e aplica os efeitos no mesmo lugar", /aplicarOMapa\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doMapa\)/.test(corpoAR));
   t("o mapa já não mora no App", !/const abreAMasmorraAgora = \(\(\) => \{/.test(APP) && !/mp\.cidades\.push\(criarCidade\(cd\.nome, cd\)\); msgs\.push/.test(APP));
   t("o registrarLugar do App é a régua do motor", /const r = registrarOLugar\(\{/.test(APP) && !/lido = lerLugarDito\(nome,/.test(APP));
+}
+
+sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a byte (T1-A, 3.ª fatia)");
+{
+  /* as quatro peças em fila, como o App as corre, e o App em miniatura a
+     aplicar os efeitos de cada uma; as fotos do dourado depois de CADA bloco
+     têm de bater (o estado inteiro, os prompts remontados com o que leram no
+     instante, as linhas da tela e a nota) */
+  const DM = JSON.parse(fs.readFileSync(path.join(AQUI, "meio-dourado.json"), "utf8"));
+  const CM = casosDoMeio();
+  const ctxDoCaso = (c) => ({ mundo: c.ctx.mundo, sorteDoTurno: sorteDoCaso(c.semente), motorDoArco: (sobre) => motorDoArcoDoCaso(c.ctx.arco, (sobre || {}).eventos) });
+  const fotoDoMotor = (A, msgs, nota) => ({ digital: digital(retratoDoMeio(A)), msgs: [...msgs], nota });
+  const oMeio = (c) => {
+    const ctx = ctxDoCaso(c);
+    const A = oAppDoMeio(c);
+    const fotos = {};
+    let msgs = [], nota = c.notaAntes;
+    if ((A.pers.dadivasPendentes || 0) > 0) { const d = dadivasConcedidas(A.pers, A.divindade); A.pers = d.personagem; msgs.push(...d.msgs); nota = notaComOTurno(nota, d.notas); }
+    fotos.dadivas = fotoDoMotor(A, msgs, nota);
+    const est = () => ({ personagem: A.pers, fichaDoRef: A.fichaDoRef, mapa: A.mapa, cidadeAtual: A.cidadeAtual, lugar: A.lugar, jornada: A.jornada, faccaoJogador: A.faccaoJogador,
+      devocao: A.devocao, divindade: A.divindade, combate: A.combate, acampado: c.estado.acampado, masmorra: c.estado.masmorra, raid: c.estado.raid, espinha: c.estado.espinha,
+      ultimoPedido: c.estado.ultimoPedido, dia: c.estado.dia, eventos: A.eventos, historia: A.historia, contadores: c.estado.contadores, nivelDaFama: c.estado.nivelDaFama });
+    for (const [nome, peca] of [["mapa", aplicarOMapa], ["missoes", aplicarAsMissoes], ["sinais", aplicarOsSinais]]) {
+      const s = peca(est(), c.resp, ctx);
+      msgs.push(...s.msgs); nota = notaComOTurno(nota, s.paraOCronista);
+      oAppAplica(A, s.efeitos);
+      fotos[nome] = fotoDoMotor(A, msgs, nota);
+    }
+    return { fotos, calou: A.calou };
+  };
+  let iguais = 0; const dif = [];
+  for (let i = 0; i < CM.length; i++) {
+    const c = JSON.parse(JSON.stringify(CM[i]));
+    semearACasa(c.semente);
+    const m = oMeio(c);
+    const F = DM.casos[i].fotos;
+    const ruim = ["dadivas", "mapa", "missoes", "sinais"].find((k) => m.fotos[k].digital !== F[k].digital || JSON.stringify(m.fotos[k].msgs) !== JSON.stringify(F[k].msgs) || m.fotos[k].nota !== F[k].nota);
+    if (!ruim && !m.calou.length) iguais++;
+    else dif.push(`${c.id} @${ruim}: ${JSON.stringify(m.fotos[ruim || "sinais"].msgs.slice(-3)).slice(0, 160)} / ${JSON.stringify(F[ruim || "sinais"].msgs.slice(-3)).slice(0, 160)}`);
+  }
+  t(`${iguais}/${CM.length} meios iguais ao byte, nas quatro fotos (o estado, os prompts, a tela, a nota)`, iguais === CM.length, dif.slice(0, 3).join(" | "));
+  /* a prova só vale se percorre os ramos — contados no dourado */
+  const D = DM.casos.map((x) => x.fotos.sinais.msgs.join("\n") + "\n" + x.fotos.sinais.nota);
+  const n = (rx) => D.filter((x) => rx.test(x)).length;
+  t(`…as dádivas (${n(/DÁDIVA ÉPICA/)}), o evento global (${n(/🌍/)}), a fé (${n(/fiéis/)}), o milagre (${n(/MILAGRE —/)}) e a recusa dele (${n(/⛔/)})`, n(/DÁDIVA ÉPICA/) >= 15 && n(/🌍/) >= 20 && n(/fiéis/) >= 30 && n(/MILAGRE —/) >= 10 && n(/⛔/) >= 10);
+  t(`…a viagem (${n(/A caminho|Pé na estrada/)}), a masmorra recusada (${n(/MASMORRA — RECUSADA/)}), a ascensão (${n(/ASCENSÃO/)}), o achado (${n(/Achado/)}), o domínio e o patrono (${n(/Domínio revelado/)})`, n(/A caminho|Pé na estrada/) >= 10 && n(/MASMORRA — RECUSADA/) >= 10 && n(/ASCENSÃO/) >= 10 && n(/Achado/) >= 20 && n(/Domínio revelado/) >= 5);
+  {
+    let virou = 0, ficha = 0, porta = 0, raid = 0;
+    for (const c0 of CM) { const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente); const ctx = ctxDoCaso(c);
+      const mi = aplicarAsMissoes({ eventos: c.estado.eventos, historia: c.estado.historia, dia: c.estado.dia }, c.resp, ctx); if (mi.efeitos.some((e) => e.tipo === "remontarPrompt")) virou++;
+      const si = aplicarOsSinais({ ...c.estado }, c.resp, ctx); if (si.efeitos.some((e) => e.tipo === "ficha")) ficha++; if (si.efeitos.some((e) => e.tipo === "sinalMasmorra")) porta++; if (si.efeitos.some((e) => e.tipo === "sinalRaid")) raid++; }
+    t(`…o arco que vira (${virou}), a ficha que o milagre muda (${ficha}), a porta da masmorra (${porta}), o chamado da raid (${raid})`, virou >= 5 && ficha >= 5 && porta >= 3 && raid >= 3);
+  }
+  /* as regras sozinhas — o que os botões e o Cronista também chamam */
+  const dv = { despertar: true, fieis: 900, pf: 10, iconeFe: "🙏" };
+  const mapaF = { cidades: [{ nome: "Vau Alto", populacao: 2000 }] };
+  const g = ganhoDeFe({ divindade: dv, devocao: { cidades: {}, andarilhos: 0 }, mapa: mapaF, cidadeAtual: "Vau Alto", dia: 2, nivel: 15 }, 300, 2, "um feito");
+  t("a fé cai no mapa e o número é recontado (nunca somado à mão)", g.divindade.fieis > 0 && g.devocao !== undefined && g.efeitos.map((e) => e.tipo).join(",").startsWith("devocao,divindade") && /\+300 fiéis/.test(g.msgs[0]));
+  {
+    /* a magnitude do sinal sai da tabela (MAGNITUDE_FE · fieisPorFeito), multiplicada pela fama */
+    const cont = { combatesVencidos: 10 };
+    const s = aplicarOsSinais({ personagem: { nivel: 15 }, divindade: { despertar: true, fieis: 0, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 1, contadores: cont, nivelDaFama: 1 }, { narrativa: "x", mudancas: { sinais: ["fe:proeza"] } }, {});
+    t("o sinal da fé paga o que a tabela diz (fieisPorFeito × fama)", s.msgs[0].includes(`+${fieisPorFeito("proeza", calcularFama(cont, 1, 0))} fiéis`));
+  }
+  t("deus adormecido não ganha fé", ganhoDeFe({ divindade: { despertar: false } }, 300, 0, "x").msgs.length === 0);
+  t("sem ficha no estado, o nível não derruba (o defeito do render nulo)", (() => { try { ganhoDeFe({ divindade: dv, devocao: {}, mapa: mapaF, cidadeAtual: "Vau Alto", dia: 2 }, 300, 0, "x"); return true; } catch { return false; } })());
+  const mil = milagreInvocado({ divindade: { despertar: true, fieis: 2000, pf: 20 }, devocao: {}, mapa: mapaF, dia: 2, nivel: 15, fichaDoRef: { nome: "Vera", vida: 4, vidaMax: 20, grupo: [] } }, "cura", "jogador");
+  t("o milagre de cura sai na ficha (efeito `ficha`) e cobra o PF", mil.ficha.vida === 14 && mil.divindade.pf === 12 && mil.efeitos.some((e) => e.tipo === "ficha") && /o jogador invocou/.test(mil.notas[0]));
+  t("milagre caro demais é recusado, sem gastar nada", (() => { const r = milagreInvocado({ divindade: { despertar: true, fieis: 2000, pf: 1 } }, "cura"); return r.efeitos.length === 0 && /⛔/.test(r.msgs[0].texto); })());
+  const arco = arcoComOMarco({ estrutura: "jornada", etapa: 0, marcos: 3 }, "global", "a praga acabou", { marcosPendentes: 0 });
+  t("o marco grande vira o arco e manda o envelope ao Mestre", arco.mudou && arco.remontar && arco.historia.etapa === 1 && arco.notas.length === 1);
+  t("marco sem peso não mexe no arco", !arcoComOMarco({ estrutura: "jornada" }, "nada", "x", {}).mudou);
+  const dd = dadivasConcedidas({ nome: "Vera", vida: 10, vidaMax: 20, mana: 2, manaMax: 8, dadivasPendentes: 2, dadivas: [] }, null);
+  t("as dádivas pendentes saem todas, cada uma com linha e envelope", dd.personagem.dadivasPendentes === 0 && dd.msgs.length === 2 && dd.notas.length === 2);
+  /* a fiação */
+  t("o App chama as missões e os sinais e aplica os efeitos no mesmo lugar", /aplicarAsMissoes\(\{/.test(corpoAR) && /aplicarOsSinais\(\{/.test(corpoAR));
+  t("as quatro regras do App são fiação do motor", /const r = ganhoDeFe\(\{/.test(APP) && /const r = milagreInvocado\(\{/.test(APP) && /const d = dadivasConcedidas\(pers, divindadeRef\.current\);/.test(APP) && /const a = arcoComOMarco\(historiaRef\.current, tipo, rotulo, motorDoArco\);/.test(APP));
+  t("o motor do arco do App aceita o evento de agora", /const motorDoArco = \(sobre = \{\}\) => \{/.test(APP));
 }
 
 console.log(`\nmotor · aplicar: ${bons} passaram, ${maus} falharam`);

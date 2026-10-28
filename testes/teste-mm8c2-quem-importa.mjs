@@ -189,7 +189,16 @@ sec("6. as duas contradições antigas, pelo que o código faz");
      sinal do Mestre não o chame de novo. A intenção desta asserção é a mesma:
      o sinal abre a área com o NOME que o Narrador deu; por isso ela continua
      a exigir `nomeMm` como primeiro argumento, e aceita o que vier depois. */
-  t("o código: o sinal masmorra:<nome> gera a área que o Narrador nomeou", /chave === "masmorra"/.test(APP) && /entrarMasmorra\(nomeMm[,)]/.test(APP));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): metade DE TEXTO PARA
+     COMPORTAMENTO — o leitor do sinal mudou-se para
+     src/motor/meio-do-turno.js#aplicarOsSinais (o motor não se lê pelo
+     texto): o nome que o Narrador deu chega à porta (`sinalMasmorra`); a
+     outra metade, a entrada com esse nome, segue no App. */
+  {
+    const { aplicarOsSinais } = await import("../src/motor/meio-do-turno.js");
+    const r = aplicarOsSinais({ personagem: { nivel: 3 }, mapa: { cidades: [] }, cidadeAtual: "", lugar: null, jornada: { de: "x" }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["masmorra:o Poço das Vozes"] } }, {});
+    t("o código: o sinal masmorra:<nome> gera a área que o Narrador nomeou", r.efeitos.some((e) => e.tipo === "sinalMasmorra" && e.nome === "o Poço das Vozes") && /entrarMasmorra\(nomeMm[,)]/.test(APP) && /else if \(ef\.tipo === "sinalMasmorra"\) sinalMasmorraRef\.current = ef\.nome;/.test(APP));
+  }
   t("o prompt já não manda semear chefes", !/semeie chefes ocultos/.test(P));
   /* E2 (12/10), MOVIDA: o "semeia-as você… manda masmorra:<nome>" das áreas
      secretas era licença para inventar o lugar (mente/narrador-so-narra.md

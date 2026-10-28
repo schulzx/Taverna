@@ -11,7 +11,7 @@ import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, fol
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 import { gerarHabilidadeUnica, chanceUnica } from "./unicas.js";
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
-import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, virarEtapa, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
+import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, registrarMarco, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
 import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bestiario.js";
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, firmarEntre, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome, fichaDoCronista } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
@@ -65,8 +65,8 @@ import { criarCondicao, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, po
 import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, pautaDoEscondido, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
 import { luzDaLuta, aplicarGestoDaLuz, luzParaPauta } from "./luz.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
-import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, perderFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
-import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, MAGNITUDE_FE, fieisPorFeito, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
+import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
+import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
@@ -179,7 +179,7 @@ import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoC
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
 import { montarTrama, viradaDevida, envelopeDaTrama, envelopeDoQueVira, intencaoDaTramaPorId, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
-import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, podeAbrirRaid, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
+import { abrirRaid, garantirRaid, rodadaDaFrente, envelopeDaConvocacao, envelopeDaRodada, envelopeDoRompimento, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
@@ -237,7 +237,7 @@ import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semear
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 import { aplicar, notaComOTurno, aplicarORegisto, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
-import { registrarOLugar, aplicarOMapa, nevoaDaVizinhanca } from "./motor/meio-do-turno.js";
+import { registrarOLugar, aplicarOMapa, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, aplicarAsMissoes, aplicarOsSinais } from "./motor/meio-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
@@ -397,9 +397,9 @@ function fimDaLutaDe(fecho, depois) {
     desfecho: desfechoDoFecho(fecho, depois),
   };
 }
-import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, sortearDadiva, resumoEpico } from "./regras.js";
+import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, leituraDaPeticao, processarDiaCorreio } from "./correio.js";
-import { gerarDadivaUnica, envelopeDaUnica, todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, iniciativaDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
+import { todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, iniciativaDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
 import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, iniciativaDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, abrirCombateTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
@@ -412,7 +412,7 @@ import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, eh
    que e outra coisa (o INDICE de poder de uma ficha). Importar os dois
    trocaria um pelo outro calado. */
 import { aplicarPoder } from "./poder-de-classe.js";
-import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMilagre, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
+import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
@@ -10516,6 +10516,20 @@ export default function Taverna() {
         else if (ef.tipo === "devocao") { devocaoRef.current = ef.devocao; setDevocao(ef.devocao); }
         else if (ef.tipo === "lugarNovo") setLugarNovo(ef.cidade);
         else if (ef.tipo === "chegada") setChegada({ ...ef.chegada, chave: Date.now() });
+        /* as missões e os sinais (T1-A, 3.ª fatia): o deus, a ficha que o
+           milagre muda (o ref, a tela e o save juntos, v9.32), os eventos, o
+           arco, a lista das missões redesenhada, as portas que os sinais
+           pedem, e o achado (pela função atualizadora, como sempre entrou) */
+        else if (ef.tipo === "divindade") { divindadeRef.current = ef.divindade; setDivindade(ef.divindade); }
+        else if (ef.tipo === "ficha") { personagemRef.current = ef.personagem; setPersonagem(ef.personagem); salvar({ personagem: ef.personagem }); }
+        else if (ef.tipo === "eventos") { eventosRef.current = ef.eventos; setEventos(ef.eventos); }
+        else if (ef.tipo === "historia") historiaRef.current = ef.historia;
+        else if (ef.tipo === "quests") setQuests([...questsRef.current]);
+        else if (ef.tipo === "sinalViagem") sinalViagemRef.current = ef.destino;
+        else if (ef.tipo === "sinalMasmorra") sinalMasmorraRef.current = ef.nome;
+        else if (ef.tipo === "sinalRaid") sinalRaidRef.current = ef.nome;
+        else if (ef.tipo === "loot") setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), ef.item] }));
+        else if (ef.tipo === "espolio") setEspolioRevelado(ef.item);
         else if (ef.tipo === "remontarPrompt") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       } catch (e) { calou("aplicarOsEfeitos/" + (ef && ef.tipo), e); }
     }
@@ -10598,129 +10612,30 @@ export default function Taverna() {
       msgs.push(...doMapa.msgs);
       aplicarOsEfeitos(doMapa);
     } catch (e) { calou("o mapa do turno", e); }
-    /* MISSÕES E ARCO: registra quests e avanço de ato vindos do Mestre */
-    if (resp.mudancas) {
-      const md2 = resp.mudancas;
-      /* v9.27: "quest_nova" morreu. O Mestre criava missão do nada, sem
-         etapa, sem recompensa e sem ninguém para encerrá-la — era a raiz de
-         metade da bagunça do diário. Se ele ainda mandar o campo (modelo
-         antigo, prompt em cache), o sistema IGNORA em silêncio: o caminho
-         de agora é "missao_oferecida", que passa pela validação e pelo
-         aceite do jogador. */
-      /* EVENTO GLOBAL resolvido na ficção: o mestre encerra o arco maior */
-      if (md2.evento_global_encerrar && eventosRef.current.global) {
-        const g = eventosRef.current.global;
-        eventosRef.current = { ...eventosRef.current, global: null, semGlobalDesde: diaRef.current };
-        setEventos(eventosRef.current);
-        marcarNoArco("global", `${g.nome} chegou ao fim`);
-        msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
-      }
-      /* MM14 (30/09, os canais): "quest_atualizar" saiu com ele — fechava
-         a lista antiga só pelo TÍTULO que o Mestre repetisse, sem conferir
-         nada. Ela agora vira missão do sistema (no load e no descanso
-         longo, `tarefas-antigas.js`) e fecha pela mesma porta que toda
-         missão fecha: `conferirAsMissoes`, pelas etapas — o contrato que
-         carregava paga lá (`pagaDoFecho`). */
-      /* v9.28: "historia_avancar" morreu junto com "quest_nova", e pela mesma
-         razão. O Mestre virava o ato quando ACHAVA que o momento tinha se
-         cumprido, e o motor não tinha voto: dava o abismo da campanha com a
-         primeira missão ainda aberta. Se um modelo antigo mandar o campo, o
-         sistema IGNORA em silêncio — quem move o arco agora é `marcarNoArco`,
-         contando o que o motor resolveu de fato. */
-      setQuests([...questsRef.current]);
-    }
-    /* SINAIS (v7.6): o Mestre não manda mais números — manda um sinal curto
-       ("fe:proeza", "milagre:cura", "dominio:da Forja") e o SISTEMA converte
-       usando as tabelas. Mais barato em tokens e impossível de inflacionar. */
-    if (resp.mudancas && Array.isArray(resp.mudancas.sinais)) {
-      for (const bruto of resp.mudancas.sinais.slice(0, 6)) {
-        const txt = String(bruto || "").trim();
-        if (!txt) continue;
-        const ix = txt.indexOf(":");
-        const chave = (ix < 0 ? txt : txt.slice(0, ix)).trim().toLowerCase();
-        const arg = ix < 0 ? "" : txt.slice(ix + 1).trim();
-        const dvAtual = divindadeRef.current;
-        if (chave === "fe" && dvAtual && dvAtual.despertar) {
-          const mag = MAGNITUDE_FE[arg.toLowerCase()] ? arg.toLowerCase() : "feito";
-          const ganho = fieisPorFeito(mag, famaAtual());
-          const dv2 = { ...divindadeRef.current, ultimoFeitoDia: diaRef.current };
-          divindadeRef.current = dv2; setDivindade(dv2);
-          msgs.push(...ganharFe(ganho, 0, `${MAGNITUDE_FE[mag].rotulo} — ${MAGNITUDE_FE[mag].desc}`));
-        } else if (chave === "milagre" && dvAtual && dvAtual.despertar) {
-          invocarMilagre(arg.toLowerCase(), "mestre").forEach((m2) => msgs.push(m2.texto));
-        } else if (chave === "viagem") {
-          if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
-            sinalViagemRef.current = arg || "";
-            msgs.push(arg ? `🧭 A caminho de ${arg}.` : "🧭 Pé na estrada.");
-          }
-        } else if (chave === "masmorra") {
-          if (!combateRef.current && !acampadoRef.current && !masmorraRef.current) {
-            { const pm = portaDaMasmorra({ nome: arg }, { cidadeAtual: cidadeAtualRef.current, emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras: (() => { try { return masmorrasDoMundo(sementeMundo(), mapaRef.current); } catch (e) { return []; } })() }); if (pm.ok) sinalMasmorraRef.current = pm.nome || arg || ""; else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MASMORRA — RECUSADA PELO SISTEMA] Não há masmorra aqui: ${pm.motivo}. A cena continua onde estou.`; } /* MM14: o sinal abria sem pergunta nenhuma */
-          }
-        } else if (chave === "raid") {
-          /* A TRAVA É AQUI, e não na cena. Se o Mestre anunciar um chamado
-             a um herói que não o alcança, o sistema recusa e DIZ por quê —
-             deixar passar seria juntar trinta veteranos em volta de alguém
-             que é a primeira baixa deles. */
-          const persR = pers || personagemRef.current || {};
-          const chk = podeAbrirRaid(persR);
-          if (!chk.pode) {
-            msgs.push(`⚑ O chamado não é para você ainda: ${chk.motivo}.`);
-          } else if (combateRef.current || acampadoRef.current || masmorraRef.current || raidRef.current) {
-            /* silêncio: um chamado no meio de outra cena grande apagaria a
-               que já está em curso, e a onda do compasso já aprendeu isso */
-          } else {
-            sinalRaidRef.current = arg || "";
-          }
-        } else if (chave === "ascender" && dvAtual && dvAtual.despertar) {
-          const cam = caminhoPorId(arg.toLowerCase());
-          const gdAtual = grauDe(dvAtual);
-          /* v9.22: `personagem` aqui era o estado do PRIMEIRO render — e no
-             primeiro render ele é null. `aplicarResposta` é um useCallback com
-             deps [pushMsgs], então nasce uma vez e congela tudo o que fecha
-             sobre ele. `personagem.nivel || 1` NÃO protege contra isso: o `||`
-             cuida do campo faltando, não do objeto nulo, e o turno inteiro
-             morria com "null is not an object (evaluating 'l.nivel')".
-             É a mesma armadilha que derrubou sementeMundo() na v9.14 — a
-             leitura correta aqui é a ficha do turno, não a do render. */
-          const persTeto = pers || personagemRef.current || {};
-          const teto = gdMaximoPorNivel(persTeto.nivel || 1);
-          if (gdAtual >= teto) {
-            msgs.push(`⛓ ${cam.nome}: o poder existe, mas seu corpo mortal ainda não o comporta (nível ${persTeto.nivel || 1}).`);
-          } else {
-            const alvo = GRAUS[Math.min(4, gdAtual + 1)];
-            const fieisNovos = Math.max(alvo.fieis, Math.round(alvo.fieis * (1 + (cam.ganho?.fieis || 0))));
-            /* v8.9: a fé tomada de um deus morto (ou drenada de uma fonte) não
-               nasce no vácuo — ela cai sobre o mapa, cidade a cidade. */
-            const faltando = Math.max(0, fieisNovos - fieisTotais(mapaRef.current, devocaoRef.current));
-            const devNova = espalharFieis(devocaoRef.current, mapaRef.current, faltando, 70);
-            devocaoRef.current = devNova; setDevocao(devNova);
-            const dv2 = { ...divindadeRef.current, fieis: fieisTotais(mapaRef.current, devNova), ultimoFeitoDia: diaRef.current, caminho: cam.id };
-            divindadeRef.current = dv2; setDivindade(dv2);
-            msgs.push(`🌟 ASCENSÃO POR ${cam.nome.toUpperCase()} — você alcança GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}).`);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — registre isso no cânone e faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — registre no cânone o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`;
-          }
-        } else if (chave === "loot") {
-          const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
-          const it = gerarLoot(rar, { nivel: (pers || personagemRef.current || {}).nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
-          setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));
-          /* raro para cima abre a REVELAÇÃO (v9.163); o comum fica na linha
-             de sistema, que é o tamanho dele — revelar tudo ensinaria a
-             fechar sem ler */
-          if (["raro", "epico", "lendario", "unico"].includes(it.raridade)) setEspolioRevelado(it);
-          msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ITEM GERADO PELO SISTEMA] ${it.nome}, ${it.raridade}${it.poder ? `, poder: ${it.poder}` : ""}. Já está na mochila do herói — descreva o achado usando ESTE nome e estas propriedades, sem inventar outras.`;
-        } else if (chave === "dominio" && dvAtual && dvAtual.despertar && arg && !dvAtual.dominio) {
-          const dv2 = { ...divindadeRef.current, dominio: arg.slice(0, 60) };
-          divindadeRef.current = dv2; setDivindade(dv2);
-          msgs.push(`🌌 Domínio revelado: ${dv2.dominio}`);
-        } else if (chave === "patrono" && dvAtual && dvAtual.despertar && arg && !dvAtual.patrono) {
-          const dv2 = { ...divindadeRef.current, patrono: arg.slice(0, 60) };
-          divindadeRef.current = dv2; setDivindade(dv2);
-          msgs.push(`🌟 Patrono declarado: ${dv2.patrono}`);
-        }
-      }
-    }
+    /* ---------------- AS MISSÕES E OS SINAIS, NO MOTOR (T1-A, 3.ª fatia) ----------------
+       O evento global que o Mestre encerra (o marco no arco) mora em
+       `aplicarAsMissoes`; os sinais (a fé, o milagre, a viagem, a masmorra,
+       a raid, a ascensão, o achado, o domínio, o patrono — o Mestre manda o
+       sinal e o SISTEMA converte pelas tabelas, v7.6) em `aplicarOsSinais`
+       (src/motor/meio-do-turno.js), na mesma ordem e com os porquês de cada
+       linha. Daqui só sai a fiação. Provado byte a byte contra os blocos de
+       antes (teste-motor-aplicar, secção 8). O nível da fama é o que o
+       `famaAtual` lia aqui (o `personagem` do render: no aplicarResposta,
+       sempre o 1 — está no diário de 28/10). */
+    try {
+      const dasMissoes = aplicarAsMissoes({ eventos: eventosRef.current, historia: historiaRef.current, dia: diaRef.current }, resp, { motorDoArco });
+      msgs.push(...dasMissoes.msgs);
+      aplicarOsEfeitos(dasMissoes);
+    } catch (e) { calou("as missões do turno", e); }
+    try {
+      const dosSinais = aplicarOsSinais({
+        personagem: pers, fichaDoRef: personagemRef.current || personagem, divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current,
+        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current, combate: combateRef.current, acampado: acampadoRef.current,
+        masmorra: masmorraRef.current, raid: raidRef.current, dia: diaRef.current, contadores: contRef.current, nivelDaFama: (personagem && personagem.nivel) || 1,
+      }, resp, { mundo: mundoDaBase, sorteDoTurno });
+      msgs.push(...dosSinais.msgs);
+      aplicarOsEfeitos(dosSinais);
+    } catch (e) { calou("os sinais do turno", e); }
     /* v9.152: aqui morava a compatibilidade com o formato antigo
        "fe":{fieis,pf}, de respostas das versoes 7.4 e 7.5. Ela sobreviveu
        cento e quarenta e cinco versoes depois de a fe passar a viajar por
@@ -11775,197 +11690,41 @@ export default function Taverna() {
      O local vem do acontecimento (o Mestre diz onde) ou, na falta dele, de
      onde o herói está. Sem cidade nenhuma, vira andarilho — vale menos e
      míngua mais rápido, que é exatamente o incentivo certo. */
+  /* A FÉ QUE SE GANHA: a regra mora no motor (`ganhoDeFe`,
+     src/motor/meio-do-turno.js, T1-A 3.ª fatia) — a fé cai no mapa, o número
+     é recontado, a virada de patamar e a ascensão vão ao Mestre. Aqui só a
+     fiação. O nível sai da ficha do ref: o `personagem` do render, que
+     esta função lia, é `null` dentro do aplicarResposta (nasce no primeiro
+     render), e todo sinal "fe:" com o deus desperto derrubava o turno. */
   const ganharFe = (fieis, pf, motivo, local) => {
-    const dv = divindadeRef.current;
-    if (!dv || !dv.despertar) return [];
-    const antes = grauDe(dv);
-    let onde = "";
-    let virada = null;
-    let dev = devocaoRef.current;
-    if (fieis > 0) {
-      const dep = depositarFieis(dev, mapaRef.current, local || cidadeAtualRef.current, fieis, diaRef.current);
-      dev = dep.devocao;
-      onde = dep.cidade
-        ? ` em ${dep.cidade.nome} (+${dep.pontos}% de devoção${dep.sobra ? `; ${dep.sobra} transbordam para as estradas` : ""})`
-        : " pelas estradas (andarilhos)";
-      /* virou de patamar? isso é notícia — para o jogador e para o Mestre */
-      if (dep.cidade && dep.estadoAntes && dep.estadoDepois && dep.estadoAntes.chave !== dep.estadoDepois.chave) {
-        virada = { cidade: dep.cidade.nome, de: dep.estadoAntes, para: dep.estadoDepois };
-      }
-    } else if (fieis < 0) {
-      dev = perderFieis(dev, mapaRef.current, -fieis);
-    }
-    if (fieis) { devocaoRef.current = dev; setDevocao(dev); }
-    const totalFieis = fieisTotais(mapaRef.current, dev);
-    const novo = { ...dv, fieis: totalFieis, pf: Math.max(0, dv.pf + (pf || 0)) };
-    divindadeRef.current = novo; setDivindade(novo);
-    const tetoGd = gdMaximoPorNivel(personagem.nivel || 1);
-    const depois = Math.min(grauDe(novo), tetoGd);
-    const msgs = [];
-    if (fieis) msgs.push(`${dv.iconeFe || "🙏"} ${fieis > 0 ? "+" : ""}${fieis} fiéis${onde} (${novo.fieis} no total)${motivo ? ` — ${motivo}` : ""}`);
-    if (virada) {
-      msgs.push(`${virada.para.icone} ${virada.cidade} agora é ${virada.para.rotulo.toLowerCase()} — ${virada.para.recepcao}.`);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA] ${virada.cidade} passou de "${virada.de.rotulo}" para "${virada.para.rotulo}" em relação ao herói. Daqui em diante o povo de lá ${virada.para.recepcao} — trate isso como fato ao narrar qualquer cena naquela cidade.`;
-    }
-    if (fieis > 0 && grauDe(novo) > tetoGd) msgs.push(`⛓ A fé cresce além do que seu corpo suporta — é preciso mais poder (nível) para encarnar o próximo grau.`);
-    if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
-    if (depois > antes) {
-      msgs.push(`🌟 ASCENSÃO! Seu nome ganha peso no cosmos: agora você é ${tituloDe(depois)} (GD ${depois}).`);
-      systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — REGISTRO DO SISTEMA] O jogador subiu para GD ${depois} (${tituloDe(depois)}). Isso é fato: narre os sinais dessa transformação aos poucos, à altura do marco.`;
-    }
-    return msgs;
+    const r = ganhoDeFe({ divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, dia: diaRef.current, nivel: (personagemRef.current || personagem || {}).nivel }, fieis, pf, motivo, local);
+    aplicarOsEfeitos({ estado: {}, efeitos: r.efeitos, paraOCronista: r.notas });
+    return r.msgs;
   };
 
   /* MILAGRE (v7.6): gasta PF e o SISTEMA aplica o efeito. Serve tanto ao
      botão do jogador quanto ao sinal "milagre:<id>" vindo do Mestre. */
   const invocarMilagre = (id, origem = "jogador") => {
-    const dv = divindadeRef.current;
-    const mil = milagrePorId(id);
-    if (!dv || !dv.despertar || !mil) return [];
-    const gd = grauDe(dv);
-    if (mil.gd > gd) return [{ autor: "sistema", texto: `⛔ ${mil.nome} exige GD ${mil.gd} — você é GD ${gd}.` }];
-    if ((dv.pf || 0) < mil.pf) return [{ autor: "sistema", texto: `⛔ ${mil.nome} custa ${mil.pf} PF — você tem ${dv.pf}.` }];
-
-    const novo = { ...dv, pf: Math.max(0, dv.pf - mil.pf), ultimoFeitoDia: diaRef.current };
-    divindadeRef.current = novo; setDivindade(novo);
-    const msgs = [{ autor: "sistema", texto: `${mil.icone} MILAGRE — ${mil.nome} (−${mil.pf} PF · restam ${novo.pf})` }];
-    const ef = mil.efeito || {};
-    let notaMestre = `[MILAGRE INVOCADO — efeito JÁ APLICADO pelo sistema] "${mil.nome}": ${mil.desc} Custou ${mil.pf} PF${origem === "jogador" ? " (o jogador invocou)" : ""}. Narre a manifestação à altura do domínio${novo.dominio ? ` (${novo.dominio})` : ""} — visceral, pública, inesquecível. NÃO recalcule números.`;
-
-    /* v9.32: O MILAGRE VOLTA A ACONTECER. Aqui moravam três `setPersonagem`
-       com função atualizadora, e eles falhavam de duas maneiras ao mesmo
-       tempo. A primeira: `personagemRef` não era sincronizado, e logo em
-       seguida `dispararMilagre` mandava `personagemRef.current` — a ficha SEM
-       a cura — para o Mestre; quando a resposta voltava, `aplicarResposta`
-       partia daquela base velha e regravava por cima. A cura vivia meio
-       segundo e morria. A segunda: os `msgs.push` estavam DENTRO da função
-       atualizadora, que só roda na renderização seguinte — depois de o array
-       já ter sido devolvido e desenhado. A linha "+X PV" nunca chegava à
-       tela. Era exatamente o que o jogador viu: o Mestre narrando uma cura
-       que não aconteceu com ninguém.
-
-       O jeito certo é o mesmo do resto do arquivo: calcular sobre o ref,
-       gravar estado E ref juntos, e empurrar as linhas na hora. */
-    const aplicarNaFicha = (fn) => {
-      const base = personagemRef.current || personagem;
-      if (!base) return null;
-      const novoP = fn(base);
-      personagemRef.current = novoP;
-      setPersonagem(novoP);
-      salvar({ personagem: novoP });
-      return novoP;
-    };
-
-    if (ef.tipo === "cura") {
-      let curou = 0;
-      const nomes = [];
-      aplicarNaFicha((p) => {
-        curou = Math.round((p.vidaMax || 10) * (ef.fracao || 0.5));
-        const grupo = (p.grupo || []).map((g) => {
-          const ganho = Math.round((g.vidaMax || 10) * (ef.fracao || 0.5));
-          const antes = g.vida || 0;
-          const depois = Math.min(g.vidaMax || g.vida || 1, antes + ganho);
-          if (depois > antes) nomes.push(`${g.nome} +${depois - antes}`);
-          /* quem estava caído levanta: um milagre de restauração que deixa o
-             companheiro no chão não é restauração nenhuma */
-          return { ...g, vida: depois, morrendo: depois > 0 ? false : g.morrendo };
-        });
-        return { ...p, vida: Math.min(p.vidaMax, (p.vida || 0) + curou), morrendo: false, morte: { sucessos: 0, falhas: 0 }, grupo };
-      });
-      msgs.push({ autor: "sistema", texto: `🩶 +${curou} PV em ${(personagemRef.current || {}).nome || "você"}${nomes.length ? ` · ${nomes.join(" · ")}` : ""}` });
-      notaMestre += ` A cura JÁ está nas fichas: eu recuperei ${curou} PV${nomes.length ? ` e o grupo também (${nomes.join(", ")})` : ""}. Narre o alívio, não os números.`;
-    } else if (ef.tipo === "efeito") {
-      aplicarNaFicha((p) => {
-        return { ...p, efeitos: empilhar(p.efeitos, efeitoDeMilagre(ef, mil.desc)) };
-      });
-      msgs.push({ autor: "sistema", texto: `✧ ${ef.nome} ativo por ${ef.turnos} turnos` });
-    } else if (ef.tipo === "dano_area" && combateRef.current) {
-      const c = combateRef.current;
-      const alvos = (c.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
-      const novos = (c.inimigos || []).map((e) => {
-        if (e.derrotado || e.vida <= 0) return e;
-        const dano = Math.max(1, Math.round((e.vidaMax || e.vida) * (ef.fracao || 0.35)));
-        const pv = Math.max(0, e.vida - dano);
-        msgs.push({ autor: "sistema", texto: `⚡ ${e.nome}: ${dano} de dano · ${pv}/${e.vidaMax || e.vida}${pv <= 0 ? " ☠" : ""}` });
-        return { ...e, vida: pv, derrotado: pv <= 0 };
-      });
-      const nc = { ...c, inimigos: novos };
-      combateRef.current = nc; setCombate(nc);
-      notaMestre += ` Alvos atingidos: ${alvos.map((a) => a.nome).join(", ")}.`;
-    } else if (ef.tipo === "ressurreicao") {
-      const voltaram = [];
-      aplicarNaFicha((p) => {
-        const grupo = (p.grupo || []).map((g) => {
-          if (!(g.vida <= 0 || g.morrendo)) return g;
-          voltaram.push(g.nome);
-          return { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false, morte: { sucessos: 0, falhas: 0 } };
-        });
-        if (p.vida <= 0 || p.morrendo) voltaram.push(p.nome);
-        return { ...p, grupo, vida: p.vida <= 0 ? Math.max(1, Math.round(p.vidaMax / 2)) : p.vida, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
-      });
-      msgs.push({ autor: "sistema", texto: voltaram.length ? `🩹 Voltam: ${voltaram.join(", ")} — a morte devolve o que é seu.` : "🩹 Ninguém havia tombado — o domínio guarda o gesto." });
-      if (voltaram.length) notaMestre += ` Quem voltou: ${voltaram.join(", ")} — já de pé na ficha.`;
-    } else if (ef.tipo === "vinculo") {
-      notaMestre += " O NPC presente mais relevante jura lealdade de forma irreversível — trate como fato firmado.";
-    }
-    if (ef.fe) {
-      const g = fieisPorFeito(ef.fe, famaAtual());
-      msgs.push(...ganharFe(g, 0, `${mil.nome} — testemunhado por multidões`).map((t) => ({ autor: "sistema", texto: t })));
-    }
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaMestre}`;
-    return msgs;
+    /* a regra (e o v9.32 inteiro: a ficha nova sobre o ref, gravada no ref,
+       na tela e no save juntos, e as linhas na hora) mora em
+       `milagreInvocado` (src/motor/meio-do-turno.js, T1-A 3.ª fatia) */
+    const r = milagreInvocado({
+      divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, dia: diaRef.current,
+      nivel: (personagemRef.current || personagem || {}).nivel, fichaDoRef: personagemRef.current || personagem, combate: combateRef.current, fama: famaAtual,
+    }, id, origem);
+    aplicarOsEfeitos({ estado: {}, efeitos: r.efeitos, paraOCronista: r.notas });
+    return r.msgs;
   };
 
   /* DÁDIVA ÉPICA (v8.1): no ápice mortal, cada 30k XP rende uma dádiva.
      O sistema sorteia da tabela; 15% das vezes o Mestre cria uma única. */
   const concederDadivas = (pers, msgs) => {
-    let p = pers;
-    while ((p.dadivasPendentes || 0) > 0) {
-      const r = sortearDadiva(p.dadivas || []);
-      p = { ...p, dadivasPendentes: p.dadivasPendentes - 1 };
-      /* v9.32: A ÚNICA DEIXOU DE SER UM PEDIDO. Aqui saía um envelope pedindo
-         que o Mestre inventasse a bênção e a registrasse via
-         "adicionar_habilidades". Quando ele narrava e esquecia de registrar —
-         e ele esquece —, o jogador lia o nome de uma dádiva que não existia em
-         canto nenhum da ficha. Era a última decisão mecânica que ainda morava
-         na narração. Agora o sistema gera nome e número, aplica, e o Mestre
-         recebe o nome pronto para narrar. */
-      if (r.unica) {
-        const u = gerarDadivaUnica(p, {
-          dominio: (divindadeRef.current && divindadeRef.current.dominio) || "",
-          titulo: (divindadeRef.current && divindadeRef.current.despertar) ? tituloDe(grauDe(divindadeRef.current)) : "",
-          quantas: (p.dadivasUnicas || []).length,
-        });
-        const ef = u.efeito || {};
-        p = {
-          ...p,
-          dadivasUnicas: [...(p.dadivasUnicas || []), u],
-          vidaMax: (p.vidaMax || 10) + (ef.vidaMax || 0),
-          vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
-          manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
-          mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
-          bonusDefesa: (p.bonusDefesa || 0) + (ef.defesa || 0),
-        };
-        msgs.push(`🌠 DÁDIVA ÉPICA ÚNICA: ${u.nome} — ${u.desc}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaUnica(u, p)}`;
-      } else {
-        const d = r.dadiva;
-        const ef = d.efeito || {};
-        p = {
-          ...p,
-          dadivas: [...(p.dadivas || []), d.id],
-          vidaMax: (p.vidaMax || 10) + (ef.vidaMax || 0),
-          vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
-          manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
-          mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
-          bonusDefesa: (p.bonusDefesa || 0) + (ef.defesa || 0),
-        };
-        msgs.push(`🌠 DÁDIVA ÉPICA: ${d.nome} — ${d.desc}`);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA ÉPICA CONCEDIDA PELO SISTEMA] "${d.nome}": ${d.desc} Já aplicada na ficha — narre o momento em que esse poder desperta nele, com o peso que merece. NÃO invente outro nome, NÃO mude o efeito e NÃO envie "adicionar_habilidades".`;
-      }
-    }
-    return p;
+    /* a regra mora em `dadivasConcedidas` (src/motor/meio-do-turno.js, T1-A
+       3.ª fatia); v9.32: a única é gerada pelo sistema, nunca pedida */
+    const d = dadivasConcedidas(pers, divindadeRef.current);
+    msgs.push(...d.msgs);
+    notaRef.current = notaComOTurno(notaRef.current, d.notas);
+    return d.personagem;
   };
 
   /* Botão de milagre (v9.28): ARMA o milagre e devolve a palavra ao jogador.
@@ -18236,9 +17995,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 
   /* O retrato do motor que o arco enxerga. Só refs — é chamado de dentro de
      callbacks antigos, e ler estado aqui traria o valor do primeiro render. */
-  const motorDoArco = () => {
+  /* `sobre.eventos` (T1-A 3.ª fatia): o bloco das missões, no motor,
+     encerra o evento global ANTES de o marco virar o arco — e o ref ainda
+     não o sabe; o motor passa o de agora */
+  const motorDoArco = (sobre = {}) => {
     const n = nemesisRef.current;
-    const g = (eventosRef.current || {}).global;
+    const g = ((sobre && "eventos" in sobre ? sobre.eventos : eventosRef.current) || {}).global;
     const ms = missoesAtivas(missoesRef.current);
     return { marcosPendentes: (() => { try { const pa = progressoDoAto(espinhaRef.current, (historiaRef.current || {}).etapa || 0); return Math.max(0, pa.total - pa.feitos); } catch (e) { return undefined; } })(),
       /* nexo (11/10): o nome da nêmesis só sobe DEPOIS do rosto. Esta linha
@@ -18273,18 +18035,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
      entrega o que ainda vem, e ele passa a esperar o abismo em vez de vivê-lo.
      Quem recebe a virada é o Mestre, por envelope, e só como mudança de tom. */
   const marcarNoArco = (tipo, rotulo) => {
+    /* a regra mora em `arcoComOMarco` (src/motor/meio-do-turno.js, T1-A 3.ª
+       fatia). Sem salvar aqui de propósito: quem chamou está no meio de um
+       turno e vai gravar no fim dele, e `salvar` já leva historiaRef. */
     try {
-      const r = registrarMarco(historiaRef.current, tipo, rotulo);
-      if (!r.ganhou) return;
-      historiaRef.current = r.historia;
-      const v = virarEtapa(historiaRef.current, motorDoArco());
-      if (v.virou) {
-        historiaRef.current = v.historia;
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeVirada(v)}`;
-        systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), personagemRef.current || personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-      }
-      /* sem salvar aqui de propósito: quem chamou está no meio de um turno e
-         vai gravar no fim dele, e `salvar` já leva historiaRef por padrão */
+      const a = arcoComOMarco(historiaRef.current, tipo, rotulo, motorDoArco);
+      if (!a.mudou) return;
+      aplicarOsEfeitos({ estado: {}, efeitos: [{ tipo: "historia", historia: a.historia }, ...(a.remontar ? [{ tipo: "remontarPrompt" }] : [])], paraOCronista: a.notas });
     } catch { /* o arco nunca pode derrubar o turno */ }
   };
 

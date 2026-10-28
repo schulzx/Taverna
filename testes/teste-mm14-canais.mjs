@@ -347,7 +347,12 @@ sec("7. a fiação — App.jsx");
     !app.includes("md2.quest_atualizar") && !app.includes("[].concat(md2.quest_atualizar"));
   t("e o pagamento de contrato por CÓDIGO do Narrador (recompensaContrato) sumiu",
     !app.includes("recompensaContrato"));
-  t("evento_global_encerrar do Narrador continua de pé", app.includes("if (md2.evento_global_encerrar && eventosRef.current.global) {"));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O bloco das missões mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
+  {
+    const { aplicarAsMissoes } = await import("../src/motor/meio-do-turno.js");
+    const r = aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: { estrutura: "jornada" }, dia: 4 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, { motorDoArco: () => ({}) });
+    t("evento_global_encerrar do Narrador continua de pé", r.estado.eventos.global === null && r.estado.eventos.semGlobalDesde === 4 && /🌍 A Praga/.test(r.msgs[0]) && app.includes("aplicarAsMissoes({"));
+  }
   t("o Cronista não tem mais `casar` por título, nem `rm.concluidas`/`rm.falhadas`/`rm.progresso` fechando nada",
     !app.includes("const casar = (t) => {") && !app.includes("rm.concluidas") && !app.includes("rm.falhadas") && !app.includes("rm.progresso"));
   t("global_encerrado do Cronista continua de pé", app.includes("if (rm.global_encerrado === true && eventosRef.current && eventosRef.current.global) {"));

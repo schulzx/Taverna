@@ -36,8 +36,17 @@ import { comodosDoLocal } from "../comodos.js";
 import { arredoresDaCidade, arredorPorTexto } from "../arredores.js";
 import { criarCidade, criarFaccao } from "../mapa.js";
 import { garantirGeografia, descobrirCidade, pisarNaCidade, descobrirVizinhanca } from "../geografia.js";
-import { garantirDevocao } from "../devocao.js";
+import { garantirDevocao, fieisTotais, espalharFieis, depositarFieis, perderFieis } from "../devocao.js";
 import { portaDaMasmorra } from "../rastro.js";
+import { registrarMarco, virarEtapa, envelopeDeVirada } from "../historia.js";
+import { sortearDadiva } from "../regras.js";
+import { gerarDadivaUnica, envelopeDaUnica } from "../dadivas.js";
+import { MAGNITUDE_FE, fieisPorFeito, caminhoPorId, grauDe, gdMaximoPorNivel, GRAUS, tituloDe, milagrePorId } from "../divindades.js";
+import { podeAbrirRaid } from "../raids.js";
+import { gerarLoot, RARIDADE_ROTULO } from "../loot.js";
+import { empilhar, efeitoDeMilagre } from "../efeitos.js";
+import { calcularFama } from "../fama.js";
+import { dominiosDe } from "../gestao.js";
 
 const objeto = (x) => (x && typeof x === "object" ? x : {});
 const mundoDe = (op) => objeto(typeof op.mundo === "function" ? op.mundo() : op.mundo);
@@ -251,4 +260,392 @@ export function aplicarOMapa(estado, resposta, ctx = {}) {
     estado: { ...e0, mapa, cidadeAtual, lugar, jornada, faccaoJogador, devocao },
     efeitos: efeitosDoTurno, paraOCronista: notas, msgs,
   };
+}
+
+/* ============================================================
+   A 2.ª ETAPA (28/10): AS DÁDIVAS, O ARCO, A FÉ, O MILAGRE, AS MISSÕES E
+   OS SINAIS
+
+   As regras que o App guardava em closures (`concederDadivas`,
+   `marcarNoArco`, `ganharFe`, `invocarMilagre`) moram aqui, puras; o App
+   ficou com quatro fiações finas com os mesmos nomes, porque os botões, o
+   descanso, as missões e o Cronista também as chamam. E os dois blocos do
+   `aplicarResposta` que as usavam — as missões (o evento global que se
+   encerra) e os sinais do Mestre — vieram com elas.
+
+   UMA TROCA DECLARADA, a única desta etapa: `ganharFe` lia o nível do
+   herói em `personagem` — o do render. O `aplicarResposta` é um
+   `useCallback` com `[pushMsgs]`, nasce no primeiro render, e lá
+   `personagem` é `null`: todo sinal "fe:" com o deus desperto estourava
+   `personagem.nivel` e levava o turno inteiro. Aqui o nível vem do estado
+   (`estado.nivel`, a ficha do turno). O dourado (`gerar-meio-dourado.mjs`)
+   faz a mesma troca no código de antes, e só essa.
+   ============================================================ */
+
+/* ---------------- DÁDIVA ÉPICA (v8.1) ----------------
+   No ápice mortal, cada 30k XP rende uma dádiva: o sistema sorteia da
+   tabela; 15% das vezes ela é ÚNICA, e o sistema gera nome e número (v9.32:
+   a única deixou de ser um pedido ao Mestre — quando ele narrava e esquecia
+   de registrar, o jogador lia o nome de uma dádiva que não existia).
+     dadivasConcedidas(ficha, divindade) → { personagem, msgs, notas } */
+export function dadivasConcedidas(personagem, divindade) {
+  let p = personagem;
+  const msgs = [], notas = [];
+  while ((p.dadivasPendentes || 0) > 0) {
+    const r = sortearDadiva(p.dadivas || []);
+    p = { ...p, dadivasPendentes: p.dadivasPendentes - 1 };
+    if (r.unica) {
+      const u = gerarDadivaUnica(p, {
+        dominio: (divindade && divindade.dominio) || "",
+        titulo: (divindade && divindade.despertar) ? tituloDe(grauDe(divindade)) : "",
+        quantas: (p.dadivasUnicas || []).length,
+      });
+      const ef = u.efeito || {};
+      p = {
+        ...p,
+        dadivasUnicas: [...(p.dadivasUnicas || []), u],
+        vidaMax: (p.vidaMax || 10) + (ef.vidaMax || 0),
+        vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
+        manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
+        mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
+        bonusDefesa: (p.bonusDefesa || 0) + (ef.defesa || 0),
+      };
+      msgs.push(`🌠 DÁDIVA ÉPICA ÚNICA: ${u.nome} — ${u.desc}`);
+      notas.push(envelopeDaUnica(u, p));
+    } else {
+      const d = r.dadiva;
+      const ef = d.efeito || {};
+      p = {
+        ...p,
+        dadivas: [...(p.dadivas || []), d.id],
+        vidaMax: (p.vidaMax || 10) + (ef.vidaMax || 0),
+        vida: Math.min((p.vidaMax || 10) + (ef.vidaMax || 0), (p.vida || 0) + (ef.vidaMax || 0)),
+        manaMax: (p.manaMax || 8) + (ef.manaMax || 0),
+        mana: Math.min((p.manaMax || 8) + (ef.manaMax || 0), (p.mana || 0) + (ef.manaMax || 0)),
+        bonusDefesa: (p.bonusDefesa || 0) + (ef.defesa || 0),
+      };
+      msgs.push(`🌠 DÁDIVA ÉPICA: ${d.nome} — ${d.desc}`);
+      notas.push(`[DÁDIVA ÉPICA CONCEDIDA PELO SISTEMA] "${d.nome}": ${d.desc} Já aplicada na ficha — narre o momento em que esse poder desperta nele, com o peso que merece. NÃO invente outro nome, NÃO mude o efeito e NÃO envie "adicionar_habilidades".`);
+    }
+  }
+  return { personagem: p, msgs, notas };
+}
+
+/* ---------------- O MARCO NO ARCO ----------------
+   Um acontecimento do motor empurra o arco; se o empurrão bastar, o
+   momento vira — em SILÊNCIO para o jogador. Quem recebe a virada é o
+   Mestre, por envelope, e só como mudança de tom. `motor` é o motor do arco
+   (valor, ou função chamada no instante da virada, como lá).
+     arcoComOMarco(historia, tipo, rotulo, motor) → { historia, mudou, notas, remontar }
+   O arco nunca pode derrubar o turno: o que estourar fica como estava. */
+export function arcoComOMarco(historia, tipo, rotulo, motor) {
+  const saida = { historia, mudou: false, notas: [], remontar: false };
+  try {
+    const r = registrarMarco(historia, tipo, rotulo);
+    if (!r.ganhou) return saida;
+    saida.historia = r.historia; saida.mudou = true;
+    const v = virarEtapa(saida.historia, typeof motor === "function" ? motor() : motor);
+    if (v.virou) {
+      saida.historia = v.historia;
+      saida.notas.push(envelopeDeVirada(v));
+      saida.remontar = true;
+    }
+  } catch { /* o arco nunca pode derrubar o turno */ }
+  return saida;
+}
+
+/* ---------------- A FÉ QUE SE GANHA ----------------
+   A ÚNICA FONTE DE VERDADE DOS FIÉIS é o mapa: a fé cai numa cidade (ou
+   nas estradas), e o número da ascensão é RECALCULADO, nunca somado à mão.
+   `estado`: { divindade, devocao, mapa, cidadeAtual, dia, nivel, personagem }.
+     ganhoDeFe(estado, fieis, pf, motivo, local) → { divindade, devocao, msgs, notas, efeitos } */
+export function ganhoDeFe(estado, fieis, pf, motivo, local) {
+  const e0 = objeto(estado);
+  const dv = e0.divindade;
+  const saida = { divindade: dv, devocao: e0.devocao, msgs: [], notas: [], efeitos: [] };
+  if (!dv || !dv.despertar) return saida;
+  const antes = grauDe(dv);
+  let onde = "";
+  let virada = null;
+  let dev = e0.devocao;
+  if (fieis > 0) {
+    const dep = depositarFieis(dev, e0.mapa, local || e0.cidadeAtual, fieis, e0.dia);
+    dev = dep.devocao;
+    onde = dep.cidade
+      ? ` em ${dep.cidade.nome} (+${dep.pontos}% de devoção${dep.sobra ? `; ${dep.sobra} transbordam para as estradas` : ""})`
+      : " pelas estradas (andarilhos)";
+    /* virou de patamar? isso é notícia — para o jogador e para o Mestre */
+    if (dep.cidade && dep.estadoAntes && dep.estadoDepois && dep.estadoAntes.chave !== dep.estadoDepois.chave) {
+      virada = { cidade: dep.cidade.nome, de: dep.estadoAntes, para: dep.estadoDepois };
+    }
+  } else if (fieis < 0) {
+    dev = perderFieis(dev, e0.mapa, -fieis);
+  }
+  if (fieis) { saida.devocao = dev; saida.efeitos.push({ tipo: "devocao", devocao: dev }); }
+  const totalFieis = fieisTotais(e0.mapa, dev);
+  const novo = { ...dv, fieis: totalFieis, pf: Math.max(0, dv.pf + (pf || 0)) };
+  saida.divindade = novo; saida.efeitos.push({ tipo: "divindade", divindade: novo });
+  const tetoGd = gdMaximoPorNivel(e0.nivel || 1);
+  const depois = Math.min(grauDe(novo), tetoGd);
+  const msgs = saida.msgs;
+  if (fieis) msgs.push(`${dv.iconeFe || "🙏"} ${fieis > 0 ? "+" : ""}${fieis} fiéis${onde} (${novo.fieis} no total)${motivo ? ` — ${motivo}` : ""}`);
+  if (virada) {
+    msgs.push(`${virada.para.icone} ${virada.cidade} agora é ${virada.para.rotulo.toLowerCase()} — ${virada.para.recepcao}.`);
+    saida.notas.push(`[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA] ${virada.cidade} passou de "${virada.de.rotulo}" para "${virada.para.rotulo}" em relação ao herói. Daqui em diante o povo de lá ${virada.para.recepcao} — trate isso como fato ao narrar qualquer cena naquela cidade.`);
+  }
+  if (fieis > 0 && grauDe(novo) > tetoGd) msgs.push(`⛓ A fé cresce além do que seu corpo suporta — é preciso mais poder (nível) para encarnar o próximo grau.`);
+  if (pf) msgs.push(`✨ ${pf > 0 ? "+" : ""}${pf} Pontos de Fé (${novo.pf} PF)`);
+  if (depois > antes) {
+    msgs.push(`🌟 ASCENSÃO! Seu nome ganha peso no cosmos: agora você é ${tituloDe(depois)} (GD ${depois}).`);
+    saida.efeitos.push({ tipo: "remontarPrompt", personagem: e0.personagem });
+    saida.notas.push(`[ASCENSÃO — REGISTRO DO SISTEMA] O jogador subiu para GD ${depois} (${tituloDe(depois)}). Isso é fato: narre os sinais dessa transformação aos poucos, à altura do marco.`);
+  }
+  return saida;
+}
+
+/* ---------------- MILAGRE (v7.6) ----------------
+   Gasta PF e o SISTEMA aplica o efeito; serve ao botão do jogador e ao
+   sinal "milagre:<id>" do Mestre. v9.32: o milagre volta a acontecer — a
+   ficha nova é calculada sobre a ficha que o App tem (`fichaDoRef`) e sai
+   num efeito `ficha` (o ref, a tela e o save juntos), e as linhas saem na
+   hora, não de dentro de uma função atualizadora que só rodaria no render
+   seguinte. `estado`: o da fé, mais { fichaDoRef, combate, fama }.
+     milagreInvocado(estado, id, origem) → { divindade, devocao, ficha, combate, msgs: [{autor, texto}], notas, efeitos } */
+export function milagreInvocado(estado, id, origem = "jogador") {
+  const e0 = objeto(estado);
+  const dv = e0.divindade;
+  const mil = milagrePorId(id);
+  const saida = { divindade: dv, devocao: e0.devocao, ficha: e0.fichaDoRef, combate: e0.combate, msgs: [], notas: [], efeitos: [] };
+  if (!dv || !dv.despertar || !mil) return saida;
+  const gd = grauDe(dv);
+  if (mil.gd > gd) { saida.msgs.push({ autor: "sistema", texto: `⛔ ${mil.nome} exige GD ${mil.gd} — você é GD ${gd}.` }); return saida; }
+  if ((dv.pf || 0) < mil.pf) { saida.msgs.push({ autor: "sistema", texto: `⛔ ${mil.nome} custa ${mil.pf} PF — você tem ${dv.pf}.` }); return saida; }
+
+  const novo = { ...dv, pf: Math.max(0, dv.pf - mil.pf), ultimoFeitoDia: e0.dia };
+  saida.divindade = novo; saida.efeitos.push({ tipo: "divindade", divindade: novo });
+  const msgs = saida.msgs;
+  msgs.push({ autor: "sistema", texto: `${mil.icone} MILAGRE — ${mil.nome} (−${mil.pf} PF · restam ${novo.pf})` });
+  const ef = mil.efeito || {};
+  let notaMestre = `[MILAGRE INVOCADO — efeito JÁ APLICADO pelo sistema] "${mil.nome}": ${mil.desc} Custou ${mil.pf} PF${origem === "jogador" ? " (o jogador invocou)" : ""}. Narre a manifestação à altura do domínio${novo.dominio ? ` (${novo.dominio})` : ""} — visceral, pública, inesquecível. NÃO recalcule números.`;
+  const aplicarNaFicha = (fn) => {
+    const base = saida.ficha;
+    if (!base) return null;
+    const novoP = fn(base);
+    saida.ficha = novoP; saida.efeitos.push({ tipo: "ficha", personagem: novoP });
+    return novoP;
+  };
+
+  if (ef.tipo === "cura") {
+    let curou = 0;
+    const nomes = [];
+    aplicarNaFicha((p) => {
+      curou = Math.round((p.vidaMax || 10) * (ef.fracao || 0.5));
+      const grupo = (p.grupo || []).map((g) => {
+        const ganho = Math.round((g.vidaMax || 10) * (ef.fracao || 0.5));
+        const antes = g.vida || 0;
+        const depois = Math.min(g.vidaMax || g.vida || 1, antes + ganho);
+        if (depois > antes) nomes.push(`${g.nome} +${depois - antes}`);
+        /* quem estava caído levanta: um milagre de restauração que deixa o
+           companheiro no chão não é restauração nenhuma */
+        return { ...g, vida: depois, morrendo: depois > 0 ? false : g.morrendo };
+      });
+      return { ...p, vida: Math.min(p.vidaMax, (p.vida || 0) + curou), morrendo: false, morte: { sucessos: 0, falhas: 0 }, grupo };
+    });
+    msgs.push({ autor: "sistema", texto: `🩶 +${curou} PV em ${(saida.ficha || {}).nome || "você"}${nomes.length ? ` · ${nomes.join(" · ")}` : ""}` });
+    notaMestre += ` A cura JÁ está nas fichas: eu recuperei ${curou} PV${nomes.length ? ` e o grupo também (${nomes.join(", ")})` : ""}. Narre o alívio, não os números.`;
+  } else if (ef.tipo === "efeito") {
+    aplicarNaFicha((p) => ({ ...p, efeitos: empilhar(p.efeitos, efeitoDeMilagre(ef, mil.desc)) }));
+    msgs.push({ autor: "sistema", texto: `✧ ${ef.nome} ativo por ${ef.turnos} turnos` });
+  } else if (ef.tipo === "dano_area" && saida.combate) {
+    const c = saida.combate;
+    const alvos = (c.inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+    const novos = (c.inimigos || []).map((e) => {
+      if (e.derrotado || e.vida <= 0) return e;
+      const dano = Math.max(1, Math.round((e.vidaMax || e.vida) * (ef.fracao || 0.35)));
+      const pv = Math.max(0, e.vida - dano);
+      msgs.push({ autor: "sistema", texto: `⚡ ${e.nome}: ${dano} de dano · ${pv}/${e.vidaMax || e.vida}${pv <= 0 ? " ☠" : ""}` });
+      return { ...e, vida: pv, derrotado: pv <= 0 };
+    });
+    const nc = { ...c, inimigos: novos };
+    saida.combate = nc; saida.efeitos.push({ tipo: "combate", combate: nc });
+    notaMestre += ` Alvos atingidos: ${alvos.map((a) => a.nome).join(", ")}.`;
+  } else if (ef.tipo === "ressurreicao") {
+    const voltaram = [];
+    aplicarNaFicha((p) => {
+      const grupo = (p.grupo || []).map((g) => {
+        if (!(g.vida <= 0 || g.morrendo)) return g;
+        voltaram.push(g.nome);
+        return { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+      });
+      if (p.vida <= 0 || p.morrendo) voltaram.push(p.nome);
+      return { ...p, grupo, vida: p.vida <= 0 ? Math.max(1, Math.round(p.vidaMax / 2)) : p.vida, morrendo: false, morte: { sucessos: 0, falhas: 0 } };
+    });
+    msgs.push({ autor: "sistema", texto: voltaram.length ? `🩹 Voltam: ${voltaram.join(", ")} — a morte devolve o que é seu.` : "🩹 Ninguém havia tombado — o domínio guarda o gesto." });
+    if (voltaram.length) notaMestre += ` Quem voltou: ${voltaram.join(", ")} — já de pé na ficha.`;
+  } else if (ef.tipo === "vinculo") {
+    notaMestre += " O NPC presente mais relevante jura lealdade de forma irreversível — trate como fato firmado.";
+  }
+  if (ef.fe) {
+    const g = fieisPorFeito(ef.fe, typeof e0.fama === "function" ? e0.fama() : e0.fama);
+    const r = ganhoDeFe({ ...e0, divindade: saida.divindade, devocao: saida.devocao }, g, 0, `${mil.nome} — testemunhado por multidões`);
+    saida.divindade = r.divindade; saida.devocao = r.devocao;
+    saida.efeitos.push(...r.efeitos); saida.notas.push(...r.notas);
+    msgs.push(...r.msgs.map((t) => ({ autor: "sistema", texto: t })));
+  }
+  saida.notas.push(notaMestre);
+  return saida;
+}
+
+/* ============================================================
+   AS MISSÕES E O ARCO — o bloco do `aplicarResposta`, puro
+
+     aplicarAsMissoes(estado, resposta, ctx) → { estado, efeitos, paraOCronista, msgs }
+
+   O evento global que o Mestre encerra na ficção: o arco maior acaba, o
+   marco empurra o arco (o motor do arco lê o evento de AGORA — `ctx.motorDoArco`
+   recebe `{ eventos }`), e a lista das missões redesenha-se (`quests`).
+   "quest_nova", "quest_atualizar" e "historia_avancar" morreram (v9.27,
+   v9.28, MM14): um modelo antigo que os mande é ignorado em silêncio — quem
+   move o arco é o marco, contando o que o motor resolveu de fato.
+   `estado`: { eventos, historia, dia }.
+   ============================================================ */
+export function aplicarAsMissoes(estado, resposta, ctx = {}) {
+  const e0 = objeto(estado);
+  const op = objeto(ctx);
+  const resp = objeto(resposta);
+  const msgs = [], notas = [], efeitosDoTurno = [];
+  const ef = (x) => { efeitosDoTurno.push(x); };
+  let eventos = e0.eventos, historia = e0.historia;
+  if (resp.mudancas) {
+    const md2 = resp.mudancas;
+    /* EVENTO GLOBAL resolvido na ficção: o mestre encerra o arco maior */
+    if (md2.evento_global_encerrar && eventos.global) {
+      const g = eventos.global;
+      eventos = { ...eventos, global: null, semGlobalDesde: e0.dia };
+      ef({ tipo: "eventos", eventos });
+      const a = arcoComOMarco(historia, "global", `${g.nome} chegou ao fim`, () => (typeof op.motorDoArco === "function" ? op.motorDoArco({ eventos }) : op.motorDoArco));
+      if (a.mudou) {
+        historia = a.historia; ef({ tipo: "historia", historia });
+        notas.push(...a.notas);
+        if (a.remontar) ef({ tipo: "remontarPrompt" });
+      }
+      msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
+    }
+    ef({ tipo: "quests" });
+  }
+  return { estado: { ...e0, eventos, historia }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
+}
+
+/* ============================================================
+   OS SINAIS (v7.6) — o bloco do `aplicarResposta`, puro
+
+     aplicarOsSinais(estado, resposta, ctx) → { estado, efeitos, paraOCronista, msgs }
+
+   O Mestre não manda números — manda um sinal curto ("fe:proeza",
+   "milagre:cura", "dominio:da Forja") e o SISTEMA converte pelas tabelas.
+   Mais barato em tokens e impossível de inflacionar. Seis por turno.
+   `estado`: { personagem, fichaDoRef, divindade, devocao, mapa, cidadeAtual,
+   lugar, jornada, combate, acampado, masmorra, raid, dia, contadores,
+   nivelDaFama }; `ctx`: { mundo, sorteDoTurno }.
+   Os efeitos novos: `divindade`, `ficha` (o milagre), `combate`,
+   `sinalViagem`, `sinalMasmorra`, `sinalRaid`, `loot` (o achado entra pela
+   função atualizadora da ficha, como entrava), `espolio` (raro para cima
+   abre a revelação, v9.163), e o prompt remontado quando a fé ascende.
+   ============================================================ */
+export function aplicarOsSinais(estado, resposta, ctx = {}) {
+  const e0 = objeto(estado);
+  const op = objeto(ctx);
+  const resp = objeto(resposta);
+  const msgs = [], notas = [], efeitosDoTurno = [];
+  const ef = (x) => { efeitosDoTurno.push(x); };
+  const pers = e0.personagem;
+  const mapa = e0.mapa;
+  let fichaDoRef = e0.fichaDoRef, divindade = e0.divindade, devocao = e0.devocao, combate = e0.combate;
+  const fama = () => calcularFama(e0.contadores, e0.nivelDaFama, dominiosDe(mapa).length);
+  const daFe = () => ({ divindade, devocao, mapa, cidadeAtual: e0.cidadeAtual, dia: e0.dia, nivel: pers && pers.nivel, personagem: pers });
+  if (resp.mudancas && Array.isArray(resp.mudancas.sinais)) {
+    for (const bruto of resp.mudancas.sinais.slice(0, 6)) {
+      const txt = String(bruto || "").trim();
+      if (!txt) continue;
+      const ix = txt.indexOf(":");
+      const chave = (ix < 0 ? txt : txt.slice(0, ix)).trim().toLowerCase();
+      const arg = ix < 0 ? "" : txt.slice(ix + 1).trim();
+      const dvAtual = divindade;
+      if (chave === "fe" && dvAtual && dvAtual.despertar) {
+        const mag = MAGNITUDE_FE[arg.toLowerCase()] ? arg.toLowerCase() : "feito";
+        const ganho = fieisPorFeito(mag, fama());
+        divindade = { ...divindade, ultimoFeitoDia: e0.dia }; ef({ tipo: "divindade", divindade });
+        const r = ganhoDeFe(daFe(), ganho, 0, `${MAGNITUDE_FE[mag].rotulo} — ${MAGNITUDE_FE[mag].desc}`);
+        divindade = r.divindade; devocao = r.devocao; efeitosDoTurno.push(...r.efeitos); notas.push(...r.notas);
+        msgs.push(...r.msgs);
+      } else if (chave === "milagre" && dvAtual && dvAtual.despertar) {
+        const r = milagreInvocado({ ...daFe(), fichaDoRef, combate, fama }, arg.toLowerCase(), "mestre");
+        divindade = r.divindade; devocao = r.devocao; fichaDoRef = r.ficha; combate = r.combate;
+        efeitosDoTurno.push(...r.efeitos); notas.push(...r.notas);
+        r.msgs.forEach((m2) => msgs.push(m2.texto));
+      } else if (chave === "viagem") {
+        if (!combate && !e0.acampado && !e0.masmorra) {
+          ef({ tipo: "sinalViagem", destino: arg || "" });
+          msgs.push(arg ? `🧭 A caminho de ${arg}.` : "🧭 Pé na estrada.");
+        }
+      } else if (chave === "masmorra") {
+        if (!combate && !e0.acampado && !e0.masmorra) {
+          /* MM14: o sinal abria sem pergunta nenhuma — agora passa pela porta */
+          const pm = portaDaMasmorra({ nome: arg }, { cidadeAtual: e0.cidadeAtual, emViagem: !!e0.jornada, lugar: e0.lugar, masmorras: (() => { try { return masmorrasDoMundo(mundoDe(op).semente, mapa); } catch (e) { return []; } })() });
+          if (pm.ok) ef({ tipo: "sinalMasmorra", nome: pm.nome || arg || "" });
+          else notas.push(`[MASMORRA — RECUSADA PELO SISTEMA] Não há masmorra aqui: ${pm.motivo}. A cena continua onde estou.`);
+        }
+      } else if (chave === "raid") {
+        /* A TRAVA É AQUI, e não na cena: um chamado a um herói que não o
+           alcança é recusado e o sistema DIZ por quê */
+        const persR = pers || fichaDoRef || {};
+        const chk = podeAbrirRaid(persR);
+        if (!chk.pode) {
+          msgs.push(`⚑ O chamado não é para você ainda: ${chk.motivo}.`);
+        } else if (combate || e0.acampado || e0.masmorra || e0.raid) {
+          /* silêncio: um chamado no meio de outra cena grande apagaria a
+             que já está em curso */
+        } else {
+          ef({ tipo: "sinalRaid", nome: arg || "" });
+        }
+      } else if (chave === "ascender" && dvAtual && dvAtual.despertar) {
+        const cam = caminhoPorId(arg.toLowerCase());
+        const gdAtual = grauDe(dvAtual);
+        /* v9.22: o teto é o da ficha do TURNO, nunca a do render */
+        const persTeto = pers || fichaDoRef || {};
+        const teto = gdMaximoPorNivel(persTeto.nivel || 1);
+        if (gdAtual >= teto) {
+          msgs.push(`⛓ ${cam.nome}: o poder existe, mas seu corpo mortal ainda não o comporta (nível ${persTeto.nivel || 1}).`);
+        } else {
+          const alvo = GRAUS[Math.min(4, gdAtual + 1)];
+          const fieisNovos = Math.max(alvo.fieis, Math.round(alvo.fieis * (1 + (cam.ganho?.fieis || 0))));
+          /* v8.9: a fé tomada de um deus morto (ou drenada de uma fonte) não
+             nasce no vácuo — ela cai sobre o mapa, cidade a cidade. */
+          const faltando = Math.max(0, fieisNovos - fieisTotais(mapa, devocao));
+          const devNova = espalharFieis(devocao, mapa, faltando, 70);
+          devocao = devNova; ef({ tipo: "devocao", devocao });
+          const dv2 = { ...divindade, fieis: fieisTotais(mapa, devNova), ultimoFeitoDia: e0.dia, caminho: cam.id };
+          divindade = dv2; ef({ tipo: "divindade", divindade });
+          msgs.push(`🌟 ASCENSÃO POR ${cam.nome.toUpperCase()} — você alcança GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}).`);
+          notas.push(`[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — registre isso no cânone e faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — registre no cânone o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`);
+        }
+      } else if (chave === "loot") {
+        const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";
+        const it = gerarLoot(rar, { nivel: (pers || fichaDoRef || {}).nivel || 1, lex: mundoDe(op).lex, rnd: typeof op.sorteDoTurno === "function" ? op.sorteDoTurno("loot") : undefined });
+        ef({ tipo: "loot", item: it });
+        /* raro para cima abre a REVELAÇÃO (v9.163); o comum fica na linha
+           de sistema, que é o tamanho dele */
+        if (["raro", "epico", "lendario", "unico"].includes(it.raridade)) ef({ tipo: "espolio", item: it });
+        msgs.push(`◆ Achado: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})${it.poder ? ` — ${it.poder}` : ""}`);
+        notas.push(`[ITEM GERADO PELO SISTEMA] ${it.nome}, ${it.raridade}${it.poder ? `, poder: ${it.poder}` : ""}. Já está na mochila do herói — descreva o achado usando ESTE nome e estas propriedades, sem inventar outras.`);
+      } else if (chave === "dominio" && dvAtual && dvAtual.despertar && arg && !dvAtual.dominio) {
+        divindade = { ...divindade, dominio: arg.slice(0, 60) }; ef({ tipo: "divindade", divindade });
+        msgs.push(`🌌 Domínio revelado: ${divindade.dominio}`);
+      } else if (chave === "patrono" && dvAtual && dvAtual.despertar && arg && !dvAtual.patrono) {
+        divindade = { ...divindade, patrono: arg.slice(0, 60) }; ef({ tipo: "divindade", divindade });
+        msgs.push(`🌟 Patrono declarado: ${divindade.patrono}`);
+      }
+    }
+  }
+  return { estado: { ...e0, fichaDoRef, divindade, devocao, combate }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
 }

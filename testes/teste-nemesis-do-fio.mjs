@@ -178,7 +178,7 @@ sec("5. a fiação no App");
   t("o rosto espera o último ato (oRostoEspera, com calou)", /oRostoEspera\(espinhaRef\.current/.test(diaria) && /calou\("oRostoEspera"/.test(diaria));
   const queda = corpoApos("const encerrarNemesis = (causa) => {");
   t("a queda em combate do chefe do fio passa (caiuOFio, com calou)", /caiuOFio\(n, mundoDasMissoes\(\)\.derrotados\)/.test(queda) && /!podeCair\(n\) && !caiuEmCombate/.test(queda));
-  const arco = corpoApos("const motorDoArco = () => {");
+  const arco = corpoApos("const motorDoArco = (sobre = {}) => {"); /* (T1-A 3.ª fatia, o oficial, 28/10: a âncora ganhou o parâmetro `sobre` — o motor do turno passa o evento global de agora; o corpo e a intenção não mudaram) */
   t("o arco não leva o nome antes do rosto", /n\.nome && n\.conhecido \? n\.nome : null/.test(arco));
   t("a mente da ameaça na pauta também não", /vilaoParaPauta\(r, \{ nome: \(\(nemesisRef\.current \|\| \{\}\)\.conhecido && /.test(app));
   t("nem o prisioneiro dos capangas (diz \"a mando de alguém\")", /quemMandou: \(c\.doVilao && nemesisRef\.current && nemesisRef\.current\.conhecido && nemesisRef\.current\.nome\)/.test(app));

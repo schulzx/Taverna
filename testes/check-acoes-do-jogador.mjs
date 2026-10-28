@@ -254,7 +254,15 @@ console.log("\n8. o relógio de 45 min — o endereço que a exclusão carrega")
   } else ok(`o endereço do relógio confere (src/App.jsx:${i + 1})`);
   /* e a condição que o mantém FORA do combate — se ela cair, o relógio
      passa a andar em luta e a sessão A deixa de ser estéril por definição */
-  if (!/if \(!combateRef\.current && !acampadoRef\.current && !masmorraRef\.current\) \{/.test(APP)) {
+  /* (T1-A 3.ª fatia, o oficial, 28/10) A RÉGUA LIA A GUARDA ERRADA. Ela
+     procurava o texto exato da guarda em QUALQUER lugar do App — e a guarda
+     do relógio ganhou, na MM14, um quarto termo (`&& !(() => … soPergunta`),
+     de modo que deixou de casar; quem casava eram as duas portas dos sinais
+     (viagem e masmorra) do aplicarResposta, que usam a mesma condição. Com
+     os sinais no motor, o falso verde caiu. A intenção é a mesma: a condição
+     tem de estar À FRENTE do avanço do relógio — lida nas linhas logo antes
+     dele. */
+  if (i < 0 || !/if \(!combateRef\.current && !acampadoRef\.current && !masmorraRef\.current\b/.test(LINHAS_APP.slice(Math.max(0, i - 4), i + 1).join("\n"))) {
     falha("a guarda que impede o relógio de andar em combate mudou",
       "a sessão A supõe que nenhum número muda no turno de combate. Se o relógio passou a andar em luta, re-rode `node testes/sonda-turno-esteril.mjs` e refaça TURNO_ESTERIL.sessaoA_hoje e SESSAO_A_PELA_FRASE, com o motivo escrito");
   } else ok("e o relógio segue parado dentro da luta");

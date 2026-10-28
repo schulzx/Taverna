@@ -26,7 +26,7 @@ const CSS = readFileSync(S + "estilo.js", "utf8");
 
 /* o bloco do mapa joga-se no motor (T1-A, 3.ª fatia): três cidades, uma
    onde se está, uma nunca pisada, uma já pisada */
-const { aplicarOMapa } = await import("../src/motor/meio-do-turno.js");
+const { aplicarOMapa, aplicarOsSinais } = await import("../src/motor/meio-do-turno.js");
 const MAPA_DA_CHEGADA = () => ({ cidades: [
   { nome: "Vau Alto", tipo: "cidade", regiao: "Vale", bioma: "planicie", pisada: true, descoberta: true, populacao: 900 },
   { nome: "Porto Lume", tipo: "cidade", regiao: "Costa", bioma: "costa", descoberta: true, populacao: 4000 },
@@ -59,7 +59,9 @@ sec("2. O ESPÓLIO REVELADO — raro para cima, e só");
   /* revelar item comum ensinaria a fechar o modal sem ler — e aí o
      lendário passaria batido também */
   t("a revelação existe", /function RevelacaoDoEspolio\(\{ item, fechar \}\)/.test(APP));
-  t("só raro para cima a abre", /if \(\["raro", "epico", "lendario", "unico"\]\.includes\(it\.raridade\)\) setEspolioRevelado\(it\)/.test(APP));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O sinal do achado (`loot`) mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
+  const achado = (rar) => aplicarOsSinais({ personagem: { nivel: 5 }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["loot:" + rar] } }, {}).efeitos;
+  t("só raro para cima a abre", !achado("comum").some((e) => e.tipo === "espolio") && achado("lendario").some((e) => e.tipo === "espolio") && /else if \(ef\.tipo === "espolio"\) setEspolioRevelado\(ef\.item\);/.test(APP));
   t("a cor é a da raridade, da tabela de sempre", /const cor = RARIDADE_COR\[item\.raridade\]/.test(APP));
   /* v9.179 (`momento-loot-epico-v2`): a lista de poderes saiu de dentro do
      JSX para uma variável, porque a grade do desenho precisa CONTAR quantas
@@ -77,9 +79,10 @@ sec("2. O ESPÓLIO REVELADO — raro para cima, e só");
   t("e diz onde o item já está", /Já está na sua mochila/.test(APP));
   /* a revelação NÃO entrega nada: o item entrou na mochila ANTES dela —
      fechar o modal sem ler não pode custar o item */
-  const iGuarda = APP.indexOf("setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamento || []), it] }));");
-  const iRevela = APP.indexOf("setEspolioRevelado(it)");
-  t("o item entra na mochila antes da revelação", iGuarda > 0 && iGuarda < iRevela);
+  /* (MOVIDA, 28/10, T1-A 3.ª fatia: a ordem é a dos efeitos do motor — o
+     `loot` antes do `espolio` —, e o App aplica-os na ordem) */
+  const efs = achado("lendario").map((e) => e.tipo);
+  t("o item entra na mochila antes da revelação", efs.indexOf("loot") >= 0 && efs.indexOf("loot") < efs.indexOf("espolio") && /else if \(ef\.tipo === "loot"\) setPersonagem\(\(p\) => \(\{ \.\.\.p, equipamento: \[\.\.\.\(p\.equipamento \|\| \[\]\), ef\.item\] \}\)\);/.test(APP));
   t("o brilho pulsa pelo CSS da casa", /\.tv-reliquia \{ animation: tvReliquia/.test(CSS));
 }
 

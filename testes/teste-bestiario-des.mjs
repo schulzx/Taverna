@@ -120,7 +120,13 @@ sec("5. A COMPATIBILIDADE DE 145 VERSÕES SAIU");
   /* código de compatibilidade que não pode mais ser acionado não é
      inofensivo: é um segundo caminho para mexer na divindade, e o próximo
      a ler o arquivo tem de decidir se ele importa */
-  t("o canal vivo continua de pé", /chave === "fe"/.test(APP));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O leitor dos sinais mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
+  {
+    const { aplicarOsSinais } = await import("../src/motor/meio-do-turno.js");
+    const r = aplicarOsSinais({ personagem: { nome: "Vera", nivel: 15 }, divindade: { despertar: true, fieis: 100, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 2, contadores: {}, nivelDaFama: 1 },
+      { narrativa: "x", mudancas: { sinais: ["fe:proeza"] } }, {});
+    t("o canal vivo continua de pé", r.msgs.some((m) => /fiéis/.test(m)) && r.estado.divindade.fieis > 100);
+  }
   t("e o registro do porquê ficou", /formato antigo/.test(APP));
 }
 

@@ -124,7 +124,12 @@ sec("4. O CHAMADO: o único sinal sem outra porta, só para quem o alcança");
 {
   /* a raid abre-se SÓ pelo sinal do Narrador (App: sinalRaidRef ← chave
      "raid"), e abaixo de NIVEL_MINIMO o sistema recusava de qualquer modo */
-  t("o App só abre a raid pelo sinal", /chave === "raid"/.test(app) && /sinalRaidRef\.current = arg/.test(app));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O leitor dos sinais mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
+  {
+    const { aplicarOsSinais } = await import(S + "motor/meio-do-turno.js");
+    const raid = (nivel) => aplicarOsSinais({ personagem: { nivel }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["raid:a horda"] } }, {});
+    t("o App só abre a raid pelo sinal", raid(20).efeitos.some((e) => e.tipo === "sinalRaid" && e.nome === "a horda") && !raid(1).efeitos.some((e) => e.tipo === "sinalRaid") && /sinalRaidRef\.current = ef\.nome/.test(app));
+  }
   const abaixo = montarSystemPrompt("C", M, ficha(NIVEL_MINIMO - 1), {}, banco, "", "", "", "", "", "", "Mortal", tipica);
   const acima = montarSystemPrompt("C", M, ficha(NIVEL_MINIMO), {}, banco, "", "", "", "", "", "", "Mortal", tipica);
   t("abaixo do nível do chamado, a linha não vem", !/O CHAMADO: /.test(abaixo));
@@ -145,10 +150,17 @@ sec("5. o App continua a ler os campos (tolerante: a instrução saiu, o leitor 
     const r = aplicarOMapa({ personagem: { nome: "Vera" }, mapa: { cidades: [], faccoes: [] }, devocao: {} }, { narrativa: "x", mudancas: { mapa_cidades: [{ nome: "Vila Nova", tipo: "vila" }] } }, {});
     t("mapa_cidades", r.estado.mapa.cidades.some((c) => c.nome === "Vila Nova") && /aplicarOMapa\(\{/.test(app));
   }
-  t("evento_global_encerrar", /md2\.evento_global_encerrar/.test(app));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O leitor de `evento_global_encerrar` e o dos sinais mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
+  const meio = await import(S + "motor/meio-do-turno.js");
+  t("evento_global_encerrar", meio.aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: {}, dia: 2 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, {}).estado.eventos.global === null);
   t("relogio_novo", /relogio_novo/.test(app));
   t("missao_oferecida (é por onde a proposta do Cronista vira cartaz)", /missao_oferecida/.test(app));
-  t("os sinais (fé, milagre, viagem, masmorra, loot)", /chave === "fe"/.test(app) && /chave === "milagre"/.test(app) && /chave === "loot"/.test(app));
+  {
+    const s = meio.aplicarOsSinais({ personagem: { nome: "Vera", nivel: 15 }, fichaDoRef: { nome: "Vera", vida: 5, vidaMax: 20, grupo: [] }, divindade: { despertar: true, fieis: 2000, pf: 30 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 2, contadores: {}, nivelDaFama: 1, jornada: { de: "x" } },
+      { narrativa: "x", mudancas: { sinais: ["milagre:cura", "fe:feito", "viagem:Porto", "masmorra:o Poço", "loot:comum"] } }, {});
+    const tipos = s.efeitos.map((e) => e.tipo);
+    t("os sinais (fé, milagre, viagem, masmorra, loot)", s.msgs.some((m) => /fiéis/.test(m)) && tipos.includes("ficha") && tipos.includes("sinalViagem") && tipos.includes("sinalMasmorra") && tipos.includes("loot") && /aplicarOsSinais\(\{/.test(app));
+  }
 }
 
 /* ============================================================ */

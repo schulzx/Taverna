@@ -39,7 +39,7 @@ const corpoApos = (ancora) => {
 };
 
 sec("1. o motor do arco diz a principal");
-const arco = corpoApos("const motorDoArco = () => {");
+const arco = corpoApos("const motorDoArco = (sobre = {}) => {"); /* (T1-A 3.ª fatia, o oficial, 28/10: a âncora ganhou o parâmetro `sobre` — o motor do turno passa o evento global de agora; o corpo e a intenção não mudaram) */
 {
   t("o corpo de motorDoArco existe", arco.length > 100);
   t("passa principal: o título da missão do tipo principal", /principal: \(\(\) => \{ try \{ return \(ms\.find\(\(m\) => m\.tipo === "principal"\) \|\| \{\}\)\.titulo;/.test(arco));

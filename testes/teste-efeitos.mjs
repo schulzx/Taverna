@@ -497,7 +497,9 @@ sec("12. ligado ao jogo — os quatro leitores do órgão");
   const src = (f) => readFileSync("../src/" + f, "utf8");
   const app = src("App.jsx");
   t("o App importa o órgão", /from "\.\/efeitos\.js"/.test(app));
-  for (const nome of ["empilhar", "efeitoDeBuff", "efeitoDeMilagre", "efeitoDeMagia", "efeitoEmConcentracao", "quebrarConcentracao", "notaDosBuffs"]) {
+  /* (T1-A 3.ª fatia, o oficial, 28/10: `efeitoDeMilagre` saiu desta lista — o milagre mudou-se do App para
+     src/motor/meio-do-turno.js#milagreInvocado, que o importa; quem o lê lá prova-se abaixo, jogando o milagre) */
+  for (const nome of ["empilhar", "efeitoDeBuff", "efeitoDeMagia", "efeitoEmConcentracao", "quebrarConcentracao", "notaDosBuffs"]) {
     t(`o App importa ${nome}`, new RegExp(`import \\{[^}]*\\b${nome}\\b[^}]*\\} from "\\./efeitos\\.js"`).test(app));
   }
   const rg = src("regras-jogo.js");
@@ -1997,8 +1999,14 @@ sec("19. uma de cada vez — a nova toma o lugar da que ele segurava (C3)");
     vazou.length === 0, vazou.join(", "));
   /* e o milagre do App também: ele não tem tabela que declare concentração,
      e inventá-la no nascimento seria pôr no efeito um número sem régua */
-  t("e o milagre do App também continua em `empilhar`",
-    /empilhar\(p\.efeitos, efeitoDeMilagre\(ef, mil\.desc\)\)/.test(APP19));
+  /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O milagre (`invocarMilagre`) mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
+  {
+    const { milagreInvocado } = await import("../src/motor/meio-do-turno.js");
+    const ja = { nome: "Escudo", turnos: 2, bonus: 1 };
+    const r = milagreInvocado({ divindade: { despertar: true, fieis: 2000, pf: 20 }, dia: 1, nivel: 15, fichaDoRef: { nome: "Vera", vida: 10, vidaMax: 20, efeitos: [ja], grupo: [] } }, "bencao", "jogador");
+    const esperado = E.empilhar([ja], E.efeitoDeMilagre({ tipo: "efeito", nome: "Abençoado", bonus: 2, turnos: 5, aplica: "todos" }, "Vantagem nas próximas rolagens de todo o grupo."));
+    t("e o milagre do App também continua em `empilhar`", r.ficha && JSON.stringify(r.ficha.efeitos) === JSON.stringify(esperado) && /milagreInvocado\(\{/.test(APP19));
+  }
   /* a arena é a quarta porta, e a prova dela mora em `teste-arena.mjs` (11) —
      aqui fica só a ponte, para quem ler esta seção saber que ela existe */
   t("e a quarta porta é a da arena, que importa `firmarEfeito` e não `empilhar`",

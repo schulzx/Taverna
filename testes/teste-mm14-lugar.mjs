@@ -287,8 +287,25 @@ sec("4. lixo, null e a imutabilidade");
     t("fiação: a distância de um lugar novo decide-se por distanciaNaCidade", !!local && dito([cid]).distancia === "dentro" && dito([]).distancia === L.distanciaPorTexto(local.nome));
   }
   t("fiação: a nota do turno passa por umSoLugar", app.includes("umSoLugar(notaRef.current)"));
-  t("fiação: os dois contextos do rastro levam o lugar e as masmorras do mundo", app.split("emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras:").length - 1 >= 2);
-  t("fiação: o sinal masmorra do Narrador passa por portaDaMasmorra", app.includes("const pm = portaDaMasmorra({ nome: arg }") && !app.includes("sinalMasmorraRef.current = arg || \"\";"));
+  /* MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO
+     (uma das duas cópias) e de texto para texto (a outra). O sinal masmorra
+     do Narrador mudou-se para src/motor/meio-do-turno.js#aplicarOsSinais (o
+     motor não se lê pelo texto); a segunda cópia do contexto do rastro (a
+     da frase do jogador) segue no App. A intenção — o lugar e as masmorras
+     do mundo chegam à porta, e o sinal passa por ela — prova-se jogando: a
+     masmorra que o mundo tem abre à boca dela; dentro dos muros, a que ele
+     não tem é recusada com a nota, e a porta não abre. */
+  {
+    const { aplicarOsSinais } = await import("../src/motor/meio-do-turno.js");
+    const { masmorrasDoMundo } = await import("../src/mundo-base.js");
+    const mapa = { cidades: [{ nome: "Vau Alto", x: 40, y: 40, regiao: "Vale" }], regioes: [{ nome: "Vale", bioma: "planicie", cx: 40, cy: 40 }] };
+    const ms = masmorrasDoMundo("mm14", mapa);
+    const sinal = (nome, lugar) => aplicarOsSinais({ personagem: { nivel: 3 }, mapa, cidadeAtual: "Vau Alto", lugar, jornada: null, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["masmorra:" + nome] } }, { mundo: { semente: "mm14" } });
+    const naBoca = sinal(ms[0].nome, { nome: ms[0].nome, cidade: "Vau Alto", distancia: "arredores" });
+    const inventada = sinal("a cripta que ninguém viu", null);
+    t("fiação: os dois contextos do rastro levam o lugar e as masmorras do mundo", ms.length > 0 && naBoca.efeitos.some((e) => e.tipo === "sinalMasmorra" && e.nome === ms[0].nome) && app.split("emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras:").length - 1 >= 1);
+    t("fiação: o sinal masmorra do Narrador passa por portaDaMasmorra", !inventada.efeitos.some((e) => e.tipo === "sinalMasmorra") && /MASMORRA — RECUSADA PELO SISTEMA/.test(inventada.paraOCronista[0] || "") && !app.includes("sinalMasmorraRef.current = arg || \"\";"));
+  }
 }
 
 console.log(`\nmm14-lugar: ${ok} passaram, ${mal} falharam`);
