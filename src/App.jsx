@@ -10511,7 +10511,12 @@ export default function Taverna() {
       if (resp.perigo) {
         const doPerigo = oPerigoDaResposta({ pers, perigo: resp.perigo, combate: combateRef.current, folego: folegoRef.current, lugares: ondeEstou() }, portasDoFecho());
         pers = doPerigo.pers;
-        msgs.push(...doPerigo.msgs);
+        /* as linhas da emboscada (a fala e a iniciativa) vão à TELA: a entrega
+           já pôs a lista do turno lá em cima, e o que se empurrasse nela agora
+           morria com ela — desde a v9.74 o painel da luta abria sem uma
+           palavra do sistema (o defeito da 7.ª fatia). Com o portão a segurar
+           a cena, `pushMsgs` guarda-as para depois da narração. */
+        if (doPerigo.msgs.length) pushMsgs(doPerigo.msgs.map((texto) => ({ autor: "sistema", texto })));
       }
     } catch { /* perigo mal descrito nunca custa o turno */ }
     /* v9.145: aqui morava a leitura do pedido de rolagem do Narrador —

@@ -62,12 +62,30 @@ const ORGAOS_COMUNS = [
 ];
 const FIM_DO_PERIGO = "    /* v9.145: aqui morava a leitura do pedido de rolagem";
 const FIM_DA_QUASE_MORTE = "    /* ---------------- O TURNO FECHA NA MESA (v9.71)";
+/* AS TROCAS DECLARADAS sobre os blocos de antes, com o porquê (quem regera o
+   dourado aplica-as; o dourado é o App de antes COM elas; cada uma tem de
+   bater uma vez só):
+   1. a fala da emboscada e as linhas da porta de abrir vão à TELA, e não à
+      lista do turno, que a entrega já tinha posto na tela — 7.ª fatia,
+      teste-motor-fecho §2b. */
+export const TROCAS_DECLARADAS = {
+  perigo: [["msgs.push(falaDaEmboscada(emb), ...ab.msgs);", "pushMsgs([falaDaEmboscada(emb), ...ab.msgs].map((texto) => ({ autor: \"sistema\", texto })));"]],
+  quaseMorte: [],
+};
+const comAsTrocas = (bloco, trocas) => {
+  let b = bloco;
+  for (const [de, para] of trocas) {
+    if (b.split(de).length !== 2) throw new Error("a troca declarada não bate uma vez só: " + de);
+    b = b.replace(de, para);
+  }
+  return b;
+};
 export function recorteDeAntes(app) {
   const corte = corteDe(app);
   return {
     orgaos: ORGAOS_COMUNS.map(([de, ate]) => corte(de, ate)).join("\n"),
-    perigo: corte("    try {\n      if (resp.perigo && !combateRef.current) {", FIM_DO_PERIGO),
-    quaseMorte: corte("    /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */", FIM_DA_QUASE_MORTE),
+    perigo: comAsTrocas(corte("    try {\n      if (resp.perigo && !combateRef.current) {", FIM_DO_PERIGO), TROCAS_DECLARADAS.perigo),
+    quaseMorte: comAsTrocas(corte("    /* CÓDEX: novos companheiros, quase-morte e checagem de conquistas do turno */", FIM_DA_QUASE_MORTE), TROCAS_DECLARADAS.quaseMorte),
   };
 }
 export function recorteDeHoje(app) {

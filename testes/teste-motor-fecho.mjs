@@ -15,7 +15,7 @@
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS, sorteDoCaso } from "./combate-casos.mjs";
-import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoFecho, casosDoFecho } from "./fecho-bloco.mjs";
+import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoFecho, casosDoFecho, TROCAS_DECLARADAS } from "./fecho-bloco.mjs";
 import { oPerigoDaResposta, aQuaseMorte } from "../src/motor/fecho-da-resposta.js";
 
 let ok = 0, mal = 0;
@@ -32,6 +32,8 @@ const divergem = (bloco, novas) => novas.filter((f, i) => !igual(f, D.blocos[blo
 
 sec("1 · os dois blocos, byte a byte contra os de antes");
 t(`o dourado é do commit de antes (3ec3364), ${N_CASOS} casos em cada bloco`, D.commit === "3ec3364" && ["perigo", "quaseMorte"].every((b) => (D.blocos[b] || []).length === N_CASOS));
+/* o dourado é o App de antes COM as trocas declaradas em fecho-bloco.mjs (hoje uma: a emboscada vai à tela, §2b) */
+t("com 1 troca declarada, no perigo, e com o porquê escrito", TROCAS_DECLARADAS.perigo.length === 1 && TROCAS_DECLARADAS.quaseMorte.length === 0 && TROCAS_DECLARADAS.perigo.every(([de, para]) => de && para && de !== para));
 for (const bloco of ["perigo", "quaseMorte"]) {
   const fotos = D.blocos[bloco];
   const novas = fotosDeHoje(bloco);
@@ -46,11 +48,11 @@ for (const bloco of ["perigo", "quaseMorte"]) {
   const emb = conta(P, (x) => (x.nota || "").includes("[A PORTA ABRIU]"));
   const salva = conta(P, (x) => (x.nota || "").includes("[SALVAGUARDA]"));
   const desp = conta(P, (x) => /\[INVESTIDA (RECUSADA|SEM FICHA)/.test(x.nota || ""));
-  const fala = conta(P, (x) => x.msgs.length > 1 || (x.msgs.length === 1 && !x.msgs[0].startsWith("uma linha")));
+  const fala = conta(P, (x) => x.tela.some((l) => l.some((m) => m.startsWith("⚔ Iniciativa:"))));
   const cic = conta(Q, (x) => (x.nota || "").includes("[CICATRIZ"));
   const marco = conta(Q, (x) => x.tela.some((l) => l.some((m) => /vínculo com/.test(m))));
   const erros = conta(Q, (x) => x.erro);
-  console.log(`      perigo: a porta abre ${emb} · a salvaguarda ${salva} · o desproporcional e o sem criatura ${desp} · linhas do turno ${fala}`);
+  console.log(`      perigo: a porta abre ${emb} · a salvaguarda ${salva} · o desproporcional e o sem criatura ${desp} · a iniciativa na tela ${fala}`);
   console.log(`      quase-morte: a cicatriz ${cic} · o marco de vínculo ${marco} · o grupo torto estoura ${erros}`);
   t("percorre os ramos dos dois blocos", emb > 20 && salva > 30 && desp > 10 && fala > 20 && cic > 15 && marco > 10 && erros > 5);
   t("o perigo nunca estoura para fora (calava, e cala)", P.every((x) => !x.erro));
@@ -80,6 +82,24 @@ sec("2 · a prova morde");
   const qTarde = comNoFim("quaseMorte");
   t(`com os efeitos só no fim, ${qTarde} fotos da quase-morte divergem`, qTarde > 5);
   /* (no perigo, os efeitos nascem todos depois da última porta: lá a ordem não tem como morder) */
+}
+
+sec("2b · a emboscada chega à tela (defeito achado na 7.ª fatia)");
+{
+  /* Desde a v9.74 a fala da emboscada ("três bandidos saltam…") e as linhas
+     da porta de abrir (a iniciativa) eram empurradas para a lista do turno
+     DEPOIS de a entrega já a ter posto na tela: a lista morria com o
+     aplicarResposta, e o jogador via o painel da luta abrir sem uma palavra
+     do sistema. As linhas que o perigo escreve têm de chegar à tela. */
+  const abriram = casos.filter((k, i) => (D.blocos.perigo[i].nota || "").includes("[A PORTA ABRIU]"));
+  const viram = abriram.filter((k) => {
+    const f = correrOBloco(hoje.perigo, k, { novo: true });
+    const tela = f.log.tela.flat().map((m) => m.texto);
+    return tela.some((l) => l.startsWith("⚔ Iniciativa:")) && tela.length >= 2;
+  });
+  console.log(`      a porta abriu em ${abriram.length}; a iniciativa e a fala chegaram à tela em ${viram.length}`);
+  t("em cada emboscada aberta, a fala e a iniciativa estão na tela", abriram.length > 20 && viram.length === abriram.length);
+  t("e a lista do turno, que já foi entregue, não as guarda", abriram.every((k) => igual(correrOBloco(hoje.perigo, k, { novo: true }).msgs, k.msgsAntes)));
 }
 
 sec("3 · as peças, jogadas");
