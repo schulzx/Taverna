@@ -334,6 +334,29 @@ export const SECOES = [
      masmorra (2,45), e à frente da economia da praça (2,5) — na 4.ª sessão
      a cor da praça chegava em todo turno de cidade e o couro de Norberto
      não chegou em nenhum. */
+  /* O BOATO QUE SE CONFIRMA (29/10, trilha B; boatos.js#oBoatoDaChegada): o
+     herói chegou ao sítio de que se falava, e o sistema diz se era verdade,
+     meia-verdade ou mentira, a forma, e quem contou. Uma linha, só no turno
+     em que bate, e o estado só muda se ela chegou ao texto — cortada, o
+     boato espera pelo turno seguinte.
+     A RÉGUA DA PRIO: o boato é um ACONTECIMENTO DE UMA VEZ (a chegada), e
+     cede só ao que também é de uma vez ou é ordem — os vetos, o rumo, o
+     fecho, o lugar de ferro, a planta, o coração (2,46) e o que volta
+     (2,47). O que ele tira é o que se repete em todo turno e volta por si
+     no seguinte: a batida da espinha (o MOMENTO, que é da etapa e não do
+     turno), o que está à vista, os nomes, a ficha, a decoração.
+     A MEDIDA: nas 169 pautas gravadas da 5.ª à 7.ª sessão que não são luta
+     nem pergunta (nelas cede: SECOES_QUE_CEDEM), todas perto do teto, a
+     linha mais longa (155 letras, a mentira com quem a contou) a 2,472
+     entra em 130 e a mais curta (a verdade, 89) em 138; tiram a batida 55
+     e 38 vezes, a cauda do ONDE 37 e 23, a gente 15 e 24, a ficha 7 e 12,
+     a aposta, a economia, a cidade, o daqui e o QUEM (2 e 3 — a lista, a 4,
+     que numa pauta cheia já cede a tudo o que corta antes dela). A 2,486,
+     depois da batida, entrava em 68 e 88: a chegada esperava, numa visita
+     que pode durar um turno, pelo que volta sozinho no turno seguinte.
+     Na leitura, antes do que volta e do rumo: o sítio, depois o que ele
+     responde. */
+  { id: "boato", rotulo: "O BOATO", prio: 2.472, o: "o que se dizia do sítio a que o herói chegou, e o que o sistema decidiu que é: o veredito, a forma, e quem contou" },
   { id: "volta", rotulo: "O QUE VOLTA", prio: 2.47, o: "a promessa plantada antes que volta agora" },
   /* MM18 (o Mestre que escuta): O RUMO — a ordem do turno, dita uma vez:
      primeiro reage ao que eu fiz ou responde ao que perguntei; depois, e por
@@ -428,7 +451,9 @@ export const SECOES_QUE_CEDEM = {
   /* F2a (12/10): e EM CENA — na luta, a lista é a vista da luta (QUEM). */
   /* 28/10 (o Juiz corrige): e o VETO DO JUIZ — o preço e a distância não
      mudam o golpe que vem a seguir. */
-  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena", "vetoDoJuiz"],
+  /* 29/10 (o boato que se confirma): e O BOATO — ninguém para a meio de um
+     golpe para saber se a taberneira mentiu; ele espera o fim da luta. */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena", "vetoDoJuiz", "boato"],
   masmorra: ["economia", "cidade", "preco"],
   arredores: ["economia", "cidade", "preco"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:
@@ -456,7 +481,9 @@ export const SECOES_QUE_CEDEM = {
      é a que o sistema não sabe responder ("quem era o velho?", o nome do
      barqueiro, a 7.ª M7/M12/M24), PERGUNTOU está vazia e os nomes ficam —
      é aí que fazem falta. */
-  pergunta: ["economia", "cidade", "daqui", "momento", "quemE", "coracao", "preco", "nomes"],
+  /* 29/10: e O BOATO — numa pergunta responde-se; a revelação espera pelo
+     turno seguinte (o estado só muda quando a linha chega ao texto). */
+  pergunta: ["economia", "cidade", "daqui", "momento", "quemE", "coracao", "preco", "nomes", "boato"],
 };
 
 /* ---------------- O QUE NÃO CEDE À PERGUNTA (12/10, a 8.ª sessão de prova) ----------------

@@ -76,8 +76,11 @@ for (const f of PECA) for (const s of Object.keys(f.pautaObj || {})) vivos[s] = 
    lista. FORMA fica, e o motivo antigo («pedem um mundo com mais estrada»)
    era palpite: nenhum sítio da pauta escreve a secção — a forma da cena vai
    ao Narrador em envelope ([A FORMA DESTA CENA], no pedido). A asserção de
-   baixo o diz: no dia em que um caso a pisar, ela sai daqui. */
-const FALTAM = ["forma"];
+   baixo o diz: no dia em que um caso a pisar, ela sai daqui.
+   MOVIDA (29/10, o boato que se confirma): e O BOATO — quem a escreve não é
+   esta peça, é a do pedido (motor/pedido-do-turno.js#comOBoato, depois da
+   pauta), e a prova dela é teste-boatos.mjs §9–§10. */
+const FALTAM = ["forma", "boato"];
 const POUCOS = SECOES.map((s) => s.id).filter((s) => !FALTAM.includes(s) && !(vivos[s] >= 5));
 t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que nenhum sítio da pauta escreve)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
   SECOES.map((s) => `${s.id} ${vivos[s.id] || 0}`).join(" · "));

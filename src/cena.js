@@ -209,6 +209,12 @@ export function masmorraAberta(masmorra) {
    `longeDaHistoria` (nucleo.js) só cede ao registo que SABE (13/10). */
 export const QUEM_ESTA_AQUI = { semParadeiro: "paradeiro não registrado" };
 
+/* Quem não entra em cena em lado nenhum: o morto, e (29/10, o boato que se
+   confirma) a pessoa que o boato inventou e que «nunca existiu»
+   (boatos.js#BOATO.nuncaExistiu). Ela fica no registo — é o rasto de quem
+   mentiu —, mas o elenco não a põe em cena. Minúsculas e sem acento. */
+export const FORA_DE_CENA = Object.freeze(["morto", "nunca existiu"]);
+
 /* Quem plausivelmente está na cena, e quem está longe (com a conta feita). */
 export function elencoDaCena(npcs, cidadeAtual, mapa, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
@@ -218,7 +224,7 @@ export function elencoDaCena(npcs, cidadeAtual, mapa, opcoes = {}) {
   const noGrupo = new Set(comGrupo.map((g) => norm(g && g.nome)));
   const aqui = [], longe = [];
   for (const n of lista) {
-    if ((n.status || "").toLowerCase().includes("morto")) continue;
+    if (FORA_DE_CENA.some((s) => (n.status || "").toLowerCase().includes(s))) continue;
     /* quem viaja com você está sempre onde você está */
     if (noGrupo.has(norm(n.nome))) { aqui.push({ ...n, motivo: "viaja com você" }); continue; }
     if (mm) {

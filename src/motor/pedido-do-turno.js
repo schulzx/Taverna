@@ -94,7 +94,8 @@ import { resumoDeslocamentoPrompt } from "../movimento.js";
 import { chefesDoMundo, garantirBase, locaisDaCidade, oQueExisteAqui, resumoChefesPrompt, resumoDaqui } from "../mundo-base.js";
 import { afrouxarLaco, criarNPC, firmarLaco, garantirLaco, resumoNPCsParaPrompt, romperLaco } from "../npcs.js";
 import { garantirCoracaoDoSave, nucleoDaCampanha } from "../nucleo.js";
-import { textoDaPauta } from "../pauta.js";
+import { cederNaCena, porNaPauta, textoDaPauta } from "../pauta.js";
+import { oBoatoDaChegada, oBoatoQueChegou } from "../boatos.js";
 import { resumoPericiasPrompt } from "../pericias.js";
 import { precoDeCompraPara, resumoProfissaoPrompt } from "../profissoes.js";
 import { garantirLivro, pagar, regar, semear } from "../promessas.js";
@@ -126,7 +127,8 @@ export const REFS_DO_PEDIDO = Object.freeze({
   atoDoTurno: Object.freeze({ ref: "atoDoTurnoRef", salvo: false, escreve: false, padrao: () => ("nada") }),
   bancoNomes: Object.freeze({ ref: "bancoNomesRef", salvo: false, escreve: false, padrao: () => (null) }),
   baseMundo: Object.freeze({ ref: "baseMundoRef", salvo: true, escreve: false, padrao: () => (garantirBase(null)) }),
-  canone: Object.freeze({ ref: "canoneRef", salvo: true, escreve: false, padrao: () => ({}) }),
+  /* escreve desde 29/10: o boato que se confirma (boatos.js) troca a entrada do cânone quando a linha dele chega ao texto */
+  canone: Object.freeze({ ref: "canoneRef", salvo: true, escreve: true, padrao: () => ({}) }),
   chao: Object.freeze({ ref: "chaoRef", salvo: true, escreve: false, padrao: () => (criarChao()) }),
   cidadeAtual: Object.freeze({ ref: "cidadeAtualRef", salvo: true, escreve: false, padrao: () => ("") }),
   clima: Object.freeze({ ref: "climaRef", salvo: true, escreve: false, padrao: () => (null) }),
@@ -297,6 +299,29 @@ export function oPedidoDoTurno(estado, entrada, portas) {
      estado mais recente e `mudarFicha` grava nos dois lugares de uma vez, de
      modo que o próximo a ler nunca receba o passado. */
   const fichaViva = () => $ref.personagem || $render.personagem;
+  /* ---------------- O BOATO DA CHEGADA (29/10, trilha B) ----------------
+     O herói chegou ao sítio de que se falava: boatos.js decide, por semente,
+     se era verdade, meia-verdade ou mentira, e a linha vai à secção O BOATO
+     da pauta (que cede na pergunta: numa pergunta, responde-se, e o boato
+     espera). O que ele revelou fica à espera em `boatoDoTurno` (do turno,
+     não do App nem do save): o cânone e
+     o registo só mudam se a linha chegou ao texto que vai ao Narrador
+     (`oBoatoQueChegou`, logo a seguir à pauta) — cortada pelo teto, o
+     boato fica como estava e volta no turno seguinte. Antes da chegada,
+     nada: nem a pauta nem o pedido levam o veredito. */
+  let boatoDoTurno = null;
+  const comOBoato = (p) => {
+    boatoDoTurno = null;
+    try {
+      const r = oBoatoDaChegada({
+        canone: $ref.canone, npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, masmorra: $ref.masmorra, mapa: $ref.mapa,
+        combate: $ref.combate, jornada: $ref.jornada, dia: $ref.dia, mensagens: $ref.mensagens, heroi: (fichaViva() || {}).nome,
+      }, null, sementeMundo());
+      if (!r.linhaDaPauta) return p;
+      boatoDoTurno = r;
+      return cederNaCena(porNaPauta(p, "boato", r.linhaDaPauta), {});
+    } catch (e) { calou("o boato da chegada", e); return p; }
+  };
   /* 06/10 (a luz e a sombra): as tochas que há para acender — as da
      masmorra lá dentro, as da mochila cá fora — e o mapa de luz da luta,
      refeito a cada pergunta dos mesmos refs (nunca vai ao save; o que vai é
@@ -879,7 +904,7 @@ export function oPedidoDoTurno(estado, entrada, portas) {
   const oficina = $in.oficina;
   const pedidoEsc = $in.pedidoEsc;
   const persAtual = $in.persAtual;
-    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: $ref.turnoDeRegistro + 1 }); try { const q = $ref.quemE || {}; const pq = q.pendente; if (pq) $ref.quemE = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = $ref.nomesPendentes; $ref.nomesPendentes = null; if (np && np.linha && pauta.includes(np.linha)) $ref.nomesOferecidos = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
+    const pauta = textoDaPauta(comOBoato(pautaDoTurno(conteudo)), { turno: $ref.turnoDeRegistro + 1 }); try { const b = oBoatoQueChegou(boatoDoTurno, pauta); boatoDoTurno = null; if (b) { $ref.canone = b.canone; if (b.npcs !== $ref.npcs) { $ref.npcs = b.npcs; setNpcs(b.npcs); } } } catch (e) { calou("o boato da chegada", e); } try { const q = $ref.quemE || {}; const pq = q.pendente; if (pq) $ref.quemE = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = $ref.nomesPendentes; $ref.nomesPendentes = null; if (np && np.linha && pauta.includes(np.linha)) $ref.nomesOferecidos = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!$ref.combate;
