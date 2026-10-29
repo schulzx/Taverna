@@ -8,6 +8,7 @@ import {
   garantirAliado, garantirAliados, nascerAliado, andarVontade, cruzouOCodigo,
   garantirCena, podeFalar, oQueOAliadoFaz, oQueEleAchou, paraPauta, ALIADO_PROMPT,
 } from "../src/aliado.js";
+import { oEnvelopeDaGente } from "../src/motor/envelopes-do-turno.js";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -152,7 +153,12 @@ sec("8) LIGADO NO TURNO");
   ok(/andarVontade\(a, \{ ajudou: false, dias: 1 \}\)/.test(app), "a vontade anda — ou apodrece — a cada dia que passa");
   ok(/marcarQueFalou\(r\.quem\)/.test(app), "quem falou cala, e quem não falou fica mais perto da vez");
   ok(/aliadoVaiEmbora\(r\.quem\)/.test(app), "e a partida é executada de verdade: ele sai do grupo");
-  ok(/O COMPANHEIRO FOI EMBORA — CANON/.test(app), "com envelope de canon, para o Narrador não o trazer de volta na cena seguinte");
+  /* movida (29/10, Fase T2, trilha A, 18.º grupo): o envelope saiu do App para
+     ENVELOPES_DA_GENTE (src/motor/envelopes-do-turno.js), e o App manda
+     oEnvelopeDaGente("companheiroFoiEmbora", …). A intenção é a mesma — a partida
+     chega ao Narrador como canon —, e por isso segue o envelope até ao motor,
+     chamado (não lido como texto), e exige que o App chame aquela forma. */
+  ok(/O COMPANHEIRO FOI EMBORA — CANON/.test(oEnvelopeDaGente("companheiroFoiEmbora", { quem: "Corvo" })) && app.includes("oEnvelopeDaGente(\"companheiroFoiEmbora\""), "com envelope de canon, para o Narrador não o trazer de volta na cena seguinte");
   ok(/paresEntre\(npcsRef\.current\)/.test(app), "e o atrito entre aliados reusa o `entre` da v9.98 — que finalmente tem quem o use");
   ok(/O ALIADO/.test(app), "a seção existe na Pauta");
   ok(/só um/.test(ALIADO_PROMPT) && /a fala é sua/.test(ALIADO_PROMPT), "e o bloco do prompt diz o teto e devolve a fala ao Narrador");

@@ -33,7 +33,8 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   tempoClimaAoPassar: "b5e935e", tempoClimaDaNoite: "b5e935e", tempoSonho: "b5e935e", tempoOndeAcordo: "b5e935e",
   feGuilda: "9a79d2e", feGuildaFundada: "9a79d2e", feNaGeografia: "9a79d2e", feTemplo: "9a79d2e", feAscensao: "9a79d2e",
   caminhoMovRegistrado: "63dda7f", caminhoMovResolvido: "63dda7f", caminhoChegada: "63dda7f", caminhoDestino: "63dda7f",
-  entradaDaMasmorra: "63dda7f", armadilhaSofridaNaMasmorra: "63dda7f" };
+  entradaDaMasmorra: "63dda7f", armadilhaSofridaNaMasmorra: "63dda7f",
+  genteCompanheiro: "f496d78", genteMissaoPerdida: "f496d78", genteRelacaoFormal: "f496d78", genteNovoArco: "f496d78", genteRelacaoMudada: "f496d78" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);

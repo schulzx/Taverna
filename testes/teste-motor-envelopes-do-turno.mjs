@@ -48,11 +48,13 @@
    chegada ao fim da estrada e o destino que o mapa não tem.
    E DO 17.º, A MASMORRA QUE FALTAVA: a entrada e a armadilha que se sofreu,
    na tabela da masmorra.
+   O 18.º, A GENTE E A HISTÓRIA: o companheiro que foi embora, a missão
+   perdida, a relação formal e a que o meu jeito mudou, e o arco novo.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -718,6 +720,38 @@ sec("22 · a masmorra, o que faltava: a entrada e a armadilha que se sofreu");
     ["entradaDaMasmorra", "a entrada que esquece o veredito", { oEnvelopeDaMasmorra: (q, d) => P(q, { ...d, dificuldade: "" }) }],
     ["entradaDaMasmorra", "a entrada sem as tochas", { oEnvelopeDaMasmorra: (q, d) => P(q, { ...d, tochas: 0 }) }],
     ["armadilhaSofridaNaMasmorra", "a armadilha sem a salvaguarda", { oEnvelopeDaMasmorra: (q, d) => P(q, { ...d, salvaguarda: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("23 · a gente e a história: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* quatro são notas do turno (o sítio devolve a nota); a relação mudada é a cauda do env */
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const NOTAS = ["genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco"];
+  t("as quatro notas entram abaixo da que já havia", NOTAS.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
+  const C = N("genteCompanheiro");
+  t("quem foi embora, nas duas vezes que a nota o diz", conta(C, "] Greta da Ponte saiu do grupo, por decisão dele.") >= 130 && conta(C, "] Corvo saiu do grupo") >= 130 && C.every((x) => x.endsWith("e lembra por que saiu.")));
+  const M = N("genteMissaoPerdida");
+  t("a missão perdida diz o título entre aspas e o motivo", conta(M, "\"O selo de Vau\" fracassou: o refém morreu.") >= 60 && conta(M, "\"Resgatar a filha do moleiro\" fracassou: o prazo venceu.") >= 60 && M.every((x) => x.includes("nao ofereca uma segunda chance")));
+  const F = N("genteRelacaoFormal");
+  t("a relação formal em maiúscula, e o cônjuge só quando é (" + conta(F, " — CÔNJUGE: somos casados") + ")", conta(F, "minha relação com Bruna Voss é CÔNJUGE — CÔNJUGE: somos casados") >= 40 && conta(F, " é ALIADA. Registre no cânone") >= 80 && conta(F, " é RIVAL. Registre no cânone") >= 80 && conta(F, " — CÔNJUGE: somos casados") <= 100);
+  const R = N("genteRelacaoMudada");
+  t("a relação mudada é a cauda do env, numa linha abaixo, com o rótulo em maiúscula", R.every((x) => /^\[PERÍCIA — RESOLVIDA PELO SISTEMA\] [^\n]+\n\[RELAÇÃO — MUDADA PELO SISTEMA\] /.test(x)) && conta(R, "o taberneiro agora me vê como DESCONFIADO.") >= 30 && new Set(R.map((x) => x.match(/me vê como ([A-Z]+)\./)[1])).size === 3);
+  const A = N("genteNovoArco");
+  t("o arco novo diz o nome e a direção da 1.ª etapa", conta(A, "[NOVO ARCO ESCOLHIDO PELO JOGADOR: Os Cinco Atos] NÃO reinicie o mundo") >= 130 && conta(A, "Direção do momento em que ele recomeça: Abra com a perda. Trabalhe com") >= 130);
+  t("as cinco formas estão na tabela da gente", Object.keys(ENVELOPES_DA_GENTE).length === 5 && ["companheiroFoiEmbora", "missaoPerdida", "relacaoFormal", "relacaoMudada", "novoArco"].every((q) => Object.hasOwn(ENVELOPES_DA_GENTE, q)));
+  const P = oEnvelopeDaGente;
+  const mordidas = [
+    ["genteCompanheiro", "o companheiro sem nome", { oEnvelopeDaGente: (q, d) => P(q, { ...d, quem: "alguém" }) }],
+    ["genteMissaoPerdida", "a missão perdida sem o motivo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, motivo: "" }) }],
+    ["genteRelacaoFormal", "a relação formal que casa todo mundo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, relacao: "conjuge" }) }],
+    ["genteRelacaoMudada", "a relação mudada que esquece o rótulo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, rotulo: "Aliado" }) }],
+    ["genteNovoArco", "o arco novo sem a direção", { oEnvelopeDaGente: (q, d) => P(q, { ...d, instrucao: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

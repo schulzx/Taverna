@@ -502,3 +502,24 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
 export function oEnvelopeDoCaminho(qual, dados) {
   return aFormaDe(ENVELOPES_DO_CAMINHO, qual, "do caminho")(dados || {});
 }
+
+/* ============================================================
+   18.º GRUPO — A GENTE E A HISTÓRIA: o que o sistema já decidiu sobre as
+   pessoas e o rumo da campanha, e o Narrador só põe em cena — o companheiro
+   que saiu do grupo, a missão que fracassou, a relação que eu declarei e a
+   que o meu jeito mudou, e o arco novo que eu escolhi.
+   Quatro são notas do turno (o App junta-as abaixo da que já havia); a
+   relação mudada é a cauda do envelope da perícia (o App junta-a ao env).
+   `rotulo`: o rótulo da relação como a tabela de npcs o diz (a forma o
+   põe em maiúscula); `instrucao`: a direção da 1.ª etapa do arco.
+   ============================================================ */
+export const ENVELOPES_DA_GENTE = {
+  companheiroFoiEmbora: ({ quem }) => `[O COMPANHEIRO FOI EMBORA — CANON] ${quem} saiu do grupo, por decisão dele. Narre a saída na cena, sem discussão longa e sem chance de convencê-lo hoje. Ele não morreu: continua no mundo, e lembra por que saiu.`,
+  missaoPerdida: ({ titulo, motivo }) => `[MISSAO PERDIDA — RESOLVIDO PELO SISTEMA] "${titulo}" fracassou: ${motivo}. Isto e fato consumado e nao se desfaz. Deixe o peso disso aparecer na cena em uma ou duas frases — nao ofereca uma segunda chance, nao sugira que houve engano, e nao reabra o assunto nos proximos turnos.`,
+  relacaoFormal: ({ nome, rotulo, relacao }) => `[RELAÇÃO FORMAL — CANON ABSOLUTO] Eu declarei formalmente: minha relação com ${nome} é ${rotulo.toUpperCase()}${relacao === "conjuge" ? " — CÔNJUGE: somos casados, isso é fato consumado e permanente (trate como parte do nosso presente, sem inventar um passado longo que não esteja registrado)" : ""}. Registre no cânone e trate como verdade absoluta daqui em diante.`,
+  relacaoMudada: ({ pessoa, rotulo }) => `[RELAÇÃO — MUDADA PELO SISTEMA] O jeito que eu usei cobrou seu preço: ${pessoa} agora me vê como ${rotulo.toUpperCase()}. Isto é fato, e vale daqui em diante — trate essa pessoa assim na próxima vez que ela aparecer, sem que eu precise lembrar.`,
+  novoArco: ({ arco, instrucao }) => `[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${arco}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Direção do momento em que ele recomeça: ${instrucao} Trabalhe com as missões, ameaças e relógios que JÁ existem, adaptando o que não fizer mais sentido; e não me diga em que momento do arco eu estou.`,
+};
+export function oEnvelopeDaGente(qual, dados) {
+  return aFormaDe(ENVELOPES_DA_GENTE, qual, "da gente")(dados || {});
+}

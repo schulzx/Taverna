@@ -22,6 +22,7 @@ const S = "../src/";
 const { readFileSync } = await import("node:fs");
 const APP = readFileSync("../src/App.jsx", "utf8").replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 const M = await import(S + "missoes.js");
+const { oEnvelopeDaGente } = await import(S + "motor/envelopes-do-turno.js");
 const B = await import(S + "mundo-base.js");
 
 let bons = 0, maus = 0;
@@ -103,8 +104,16 @@ sec("5. LIGADA AO JOGO");
   t("o cativeiro pedido pela missão é aplicado", /for \(const c2 of \(r\.cativeiros \|\| \[\]\)\)/.test(APP));
   t("com a situação e o lugar", /porSituacao\(baseMundoRef\.current, c2\.nome, c2\.situacao, \{ onde: c2\.onde \}\)/.test(APP));
   t("a falha chega ao jogador", /✖ \$\{f\.missao\.titulo\} — \$\{f\.motivo\}/.test(APP));
-  t("e ao Narrador como fato consumado", /\[MISSAO PERDIDA — RESOLVIDO PELO SISTEMA\]/.test(APP));
-  t("sem segunda chance", /nao ofereca uma segunda chance/.test(APP));
+  /* movidas (29/10, Fase T2, trilha A, 18.º grupo): o envelope da missão perdida saiu
+     do App para ENVELOPES_DA_GENTE (src/motor/envelopes-do-turno.js), e o App manda
+     oEnvelopeDaGente("missaoPerdida", …). A intenção é a mesma — a falha chega ao
+     Narrador como fato consumado e sem segunda chance —, e por isso as duas seguem o
+     envelope até ao motor, chamado (não lido como texto), e exigem que o App chame
+     aquela forma com o título e o motivo da falha. */
+  const perdida = oEnvelopeDaGente("missaoPerdida", { titulo: "O selo", motivo: "o prazo venceu" });
+  const chama = APP.includes("oEnvelopeDaGente(\"missaoPerdida\", { titulo: f.missao.titulo, motivo: f.motivo })");
+  t("e ao Narrador como fato consumado", /\[MISSAO PERDIDA — RESOLVIDO PELO SISTEMA\]/.test(perdida) && chama);
+  t("sem segunda chance", /nao ofereca uma segunda chance/.test(perdida) && chama);
 }
 
 console.log(`\nresgate v9.132: ${bons} passaram, ${maus} falharam`);

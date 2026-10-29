@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -7816,7 +7816,7 @@ export default function Taverna() {
     aliadosRef.current = mem;
     mudarFicha((p) => ({ ...p, grupo: (p.grupo || []).filter((g) => (g.nome || "") !== quem) }));
     pushMsgs([{ autor: "sistema", texto: `${quem} pegou as coisas dele e foi embora.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[O COMPANHEIRO FOI EMBORA — CANON] ${quem} saiu do grupo, por decisão dele. Narre a saída na cena, sem discussão longa e sem chance de convencê-lo hoje. Ele não morreu: continua no mundo, e lembra por que saiu.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaGente("companheiroFoiEmbora", { quem });
   };
 
   /* ---------------- A MENTE DA AMEAÇA (v9.107) ----------------
@@ -17458,7 +17458,7 @@ export default function Taverna() {
       missoesRef.current = r.missoes; setMissoes(r.missoes);
       for (const f of r.falhadas) {
         pushMsgs([{ autor: "sistema", texto: `✖ ${f.missao.titulo} — ${f.motivo}.` }]);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MISSAO PERDIDA — RESOLVIDO PELO SISTEMA] "${f.missao.titulo}" fracassou: ${f.motivo}. Isto e fato consumado e nao se desfaz. Deixe o peso disso aparecer na cena em uma ou duas frases — nao ofereca uma segunda chance, nao sugira que houve engano, e nao reabra o assunto nos proximos turnos.`;
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaGente("missaoPerdida", { titulo: f.missao.titulo, motivo: f.motivo });
       }
       salvar({ missoes: missoesRef.current });
     }
@@ -18138,7 +18138,7 @@ export default function Taverna() {
             npcsRef.current = { ...npcsRef.current, [des.pessoa.nome]: { ...des.pessoa, relacao: depois } };
             setNpcs(npcsRef.current);
             pushMsgs([{ autor: "sistema", texto: `💢 ${des.pessoa.nome} passa a ver você como ${relacaoNPC(depois).rotulo.toLowerCase()}.` }]);
-            env = `${env}\n[RELAÇÃO — MUDADA PELO SISTEMA] O jeito que eu usei cobrou seu preço: ${des.pessoa.nome} agora me vê como ${relacaoNPC(depois).rotulo.toUpperCase()}. Isto é fato, e vale daqui em diante — trate essa pessoa assim na próxima vez que ela aparecer, sem que eu precise lembrar.`;
+            env = env + "\n" + oEnvelopeDaGente("relacaoMudada", { pessoa: des.pessoa.nome, rotulo: relacaoNPC(depois).rotulo });
           }
         }
         /* ---------------- QUEM VIVE DE CONTAR ----------------
@@ -22346,7 +22346,7 @@ export default function Taverna() {
     npcsRef.current = { ...reg, [nome]: { ...n, nome, relacao, ultimaVez: n.ultimaVez || npcTurnoRef.current } };
     setNpcs(npcsRef.current);
     pushMsgs([{ autor: "sistema", texto: `🤝 Relação formal registrada: ${nome} agora é ${rotulo}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RELAÇÃO FORMAL — CANON ABSOLUTO] Eu declarei formalmente: minha relação com ${nome} é ${rotulo.toUpperCase()}${relacao === "conjuge" ? " — CÔNJUGE: somos casados, isso é fato consumado e permanente (trate como parte do nosso presente, sem inventar um passado longo que não esteja registrado)" : ""}. Registre no cânone e trate como verdade absoluta daqui em diante.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaGente("relacaoFormal", { nome, rotulo, relacao });
   };
 
   /* ACAMPAMENTO: pausa o "turno do mundo" — você conversa à vontade, nada avança.
@@ -22919,7 +22919,7 @@ export default function Taverna() {
     /* V3c: a troca não escreve no registro. "Novo arco iniciado" era o sistema falando de si
        mesmo, e a resposta já está onde o jogador clicou: o Diário mostra o arco novo na hora.
        O Narrador sabe pela nota abaixo; o jogador sente pela cena que ele costura a partir dela. */
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ${est.nome}] NÃO reinicie o mundo: tudo que foi vivido permanece canônico. Costure a transição a partir da situação ATUAL — a campanha apenas muda de perspectiva dramática. Direção do momento em que ele recomeça: ${est.etapas[0].instrucao} Trabalhe com as missões, ameaças e relógios que JÁ existem, adaptando o que não fizer mais sentido; e não me diga em que momento do arco eu estou.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaGente("novoArco", { arco: est.nome, instrucao: est.etapas[0].instrucao });
   };
 
   /* ---------------- GESTÃO POR CÓDIGO (zero tokens) ----------------
