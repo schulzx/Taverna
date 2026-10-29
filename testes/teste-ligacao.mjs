@@ -311,7 +311,17 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
   /* o Cronista que só propõe (cronista.js) foi pago no mesmo dia: a T1-A
      (2.ª fatia, oficial) liga `julgarOCronista` em `cronistaDoTurno`. A
      lista volta a ficar VAZIA. */
-  const ESPERA_DO_MOTOR = {};
+  /* 28/10 (Fase T, trilha B): duas peças nascem no backend para a T2-A as
+     ligar no App, na mesma leva — `carimbo-da-luta.js` (o `naLuta` de
+     `pushMsgs`) e `golpe-no-corpo.js` (`passarPeloAbrigo`,
+     `segurarOuPerder`, a quebra do herói e a fila do golpe). Credor: o
+     `oficial` da trilha A, que tem o bastão do App. A troca está descrita
+     no diário (a âncora, a chamada nova, o que sai); as entradas saem
+     quando o App as importar. */
+  const ESPERA_DO_MOTOR = {
+    "carimbo-da-luta.js": "trilha A (oficial): pushMsgs chama carimbarALuta",
+    "golpe-no-corpo.js": "trilha A (oficial): passarPeloAbrigo, segurarOuPerder, a quebra e a fila do herói chamam a peça",
+  };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
   t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);
