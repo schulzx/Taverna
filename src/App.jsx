@@ -11897,7 +11897,7 @@ export default function Taverna() {
             combateRef.current = { ...combateRef.current, inimigos: ap.lista }; setCombate(combateRef.current);
             linhas.push({ autor: "sistema", texto: ap.res.texto });
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ap.res.nota}`;
-            partesMeu.push(ap.res.aplicou ? `${alvo.nome} ficou ${ap.res.cond.nome.toLowerCase()}` : `${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`);
+            partesMeu.push(oEnvelopeDoDesfecho("condicao", { alvo: alvo.nome, aplicou: ap.res.aplicou, condicao: ap.res.cond.nome })); /* a mesma forma da aflição da habilidade (o conserto do artigo, 29/10) */
           }
         }
       }

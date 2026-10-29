@@ -990,13 +990,31 @@ sec("29 · o desfecho das habilidades: os casos percorrem o que o texto decide, 
   t("o golpe: o crítico (" + conta(G, "CRÍTICO, ") + "), o acerto e a resistência parcial, com o d20 contra a CA", conta(G, "CRÍTICO, ") >= 80 && conta(G, " — resistiu parcialmente (d20=") >= 80 && G.every((x, i) => x.includes(" vs " + (10 + (i % 6)) + ")")));
   t("o golpe: o bônus só quando há (" + conta(G, "+3=") + "/" + conta(G, "+5=") + "), e o [CAIU] de quem foi a 0 (" + conta(G, " [CAIU]") + ")", conta(G, "+3=") >= 80 && conta(G, "+5=") >= 80 && G.filter((x) => /\(d20=\d+=\d+ vs/.test(x)).length >= 80 && conta(G, " [CAIU]") >= 80 && G.filter((x) => !x.includes("[CAIU]")).length >= 150);
   t("a geminada e a área dizem o dano e o [CAIU] de quem caiu", conta(ult("desfechoGeminada"), "de dano pela magia GEMINADA [CAIU]") >= 130 && conta(ult("desfechoGeminada"), "pela magia GEMINADA") === 275 && conta(ult("desfechoArea"), "de dano pela área [CAIU]") >= 80 && conta(ult("desfechoArea"), "de dano pela área") === 275);
-  t("o meu grupo na minha área: um e dois, com a metade e a habilidade", conta(ult("desfechoFogoAmigo"), "Corvo, Sarna apanhou ") >= 130 && ult("desfechoFogoAmigo").every((x, i) => x.includes(" apanhou " + (2 + (i % 7)) + " da minha própria ")));
+  t("o meu grupo na minha área: um e dois, com a metade e a habilidade", conta(ult("desfechoFogoAmigo"), "Corvo, Sarna apanhou ") >= 130 && ult("desfechoFogoAmigo").every((x, i) => x.includes(" apanhou " + (2 + (i % 7)) + " de ") && x.endsWith(", o meu próprio ataque"))); /* movida (29/10, o conserto do artigo): pedia " da minha própria ", o defeito à letra */
   const C = ult("desfechoCondicao");
-  t("a condição aplicada e a resistida, em minúsculas", conta(C, " ficou queimado") + conta(C, " ficou alento") + conta(C, " ficou cego") >= 130 && conta(C, " resistiu à ") >= 130 && !C.some((x) => /ficou [A-Z]|resistiu à [A-Z]/.test(x)));
+  t("a condição aplicada e a resistida, em minúsculas", conta(C, " ficou queimado") + conta(C, " ficou alento") + conta(C, " ficou cego") >= 130 && conta(C, " resistiu e não ficou ") >= 130 && !C.some((x) => /ficou [A-Z]|resistiu à /.test(x))); /* movida (29/10, o conserto do artigo): pedia " resistiu à ", o defeito à letra */
   t("a drenagem, o imune de cada degrau e o erro desastroso", ult("desfechoDrenou").every((x, i) => x === "drenei " + (1 + (i % 9)) + " PV") && ult("desfechoImune").every((x, i) => x.includes("IMUNE (GD " + (3 + (i % 4)) + " contra meu GD " + (i % 3) + ":")) && conta(ult("desfechoErrou"), " — erro desastroso (d20=") >= 130 && conta(ult("desfechoErrou"), " — errou (d20=") >= 130);
   const K = L("desfechoColheita");
   t("a colheita de ninguém (" + conta(K, "NÃO derrubou ninguém") + "), de um e de dois, cada um com o seu [CAIU — …]", conta(K, "NÃO derrubou ninguém") >= 80 && conta(K, "Ogro [CAIU — estava abaixo de ") >= 150 && conta(K, "]; Lobo Cinzento [CAIU — estava abaixo de ") >= 80);
   t("a execução diz a habilidade, o limiar e a vida que o alvo tinha", L("desfechoExecucao").every((x, i) => x.includes(" executa quem está abaixo de ") && x.endsWith("ele estava com " + (2 + (i % 7)) + " de " + [30, 18][(i >> 2) % 2] + "]")));
+  /* O CONSERTO DO ARTIGO (29/10, trilha A): nenhuma forma do desfecho põe artigo
+     fixo diante de um nome com gênero — sobre o catálogo INTEIRO: as 23 condições
+     de condicoes.js, aplicadas e resistidas, e as magias de área do grimório no meu
+     grupo na minha área. Antes do conserto: as 23 condições e as 29 magias caíam
+     aqui (a frase com artigo fixo). */
+  {
+    const { CONDICOES: CONDICOES_DO_CATALOGO, criarCondicao } = await import("../src/condicoes.js");
+    const { MAGIAS: MAGIAS_DO_GRIMORIO, ehArea: ehAreaDoGrimorio } = await import("../src/grimorio.js");
+    const condicoes = Object.values(CONDICOES_DO_CATALOGO).map((c) => criarCondicao(c.id).nome);
+    const resistidas = condicoes.map((nome) => oEnvelopeDoDesfecho("condicao", { alvo: "Corvo", aplicou: false, condicao: nome }));
+    const aplicadas = condicoes.map((nome) => oEnvelopeDoDesfecho("condicao", { alvo: "Corvo", aplicou: true, condicao: nome }));
+    t(`as ${condicoes.length} condições do catálogo, resistidas, sem artigo diante do nome (${resistidas.filter((x) => / (à|ao|a|o) [a-zà-ú]+$/.test(x)).length} com)`,
+      condicoes.length === 23 && resistidas.every((x, i) => x === "Corvo resistiu e não ficou " + condicoes[i].toLowerCase()) && aplicadas.every((x, i) => x === "Corvo ficou " + condicoes[i].toLowerCase()));
+    const areas = MAGIAS_DO_GRIMORIO.filter((m) => ehAreaDoGrimorio(m)).map((m) => m.nome);
+    const fogo = areas.map((h) => oEnvelopeDoDesfecho("fogoAmigo", { lista: "Sarna", meio: 3, habilidade: h }));
+    t(`as ${areas.length} magias de área do grimório no fogo amigo, sem artigo nem «própria» diante do nome`,
+      areas.length >= 25 && fogo.every((x, i) => x === "Sarna apanhou 3 de " + areas[i] + ", o meu próprio ataque") && !fogo.some((x) => /\b(da|do|das|dos) minha|própria /.test(x)));
+  }
   const P = oEnvelopeDoDesfecho;
   const mordidas = [
     ["desfechoGolpe", "o crítico dito como acerto", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, resultado: d.resultado === "critico" ? "acerta" : d.resultado }) }],

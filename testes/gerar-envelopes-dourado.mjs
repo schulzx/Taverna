@@ -47,7 +47,12 @@ const apps = {};
    nome com artigo: 806 dos 275 × 6 casos mudam (a carta 92, a petição 92, passar o tempo 163, a
    divindade 92, a guilda 92, o deslocamento 275). Os outros catorze sítios do conserto (ver
    o diário de 29/10) não têm caso com artigo, e a secção 27 da suíte prova-os direto. */
+/* O CONSERTO DECLARADO DO ARTIGO NO DESFECHO (29/10/2026, trilha A): «resistiu à cego» e «da
+   minha própria Raio» — o porquê e a conta do catálogo em ENVELOPES_DO_DESFECHO
+   (src/motor/envelopes-do-turno.js). Os dois sítios trocam a frase no código de 44a4695 e só ela. */
 const CONSERTOS = {
+  desfechoCondicao: [["`${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`", "`${alvo.nome} resistiu e não ficou ${ap.res.cond.nome.toLowerCase()}`"]],
+  desfechoFogoAmigo: [["apanhou ${meio} da minha própria ${h.nome}`", "apanhou ${meio} de ${h.nome}, o meu próprio ataque`"]],
   correioCarta: [["Enviei a ${para}:", "Enviei ${contrair(\"a \" + para)}:"], ["a reação de ${para} agora.", "a reação ${contrair(\"de \" + para)} agora."]],
   correioPeticao: [["Narre a reação de ${p.de} e", "Narre a reação ${contrair(\"de \" + p.de)} e"]],
   viagemPassarOTempo: [["EU CONTINUO EM ${lugarRef.current.nome.toUpperCase()}", "EU CONTINUO ${contrair(\"em \" + lugarRef.current.nome).toUpperCase()}"]],

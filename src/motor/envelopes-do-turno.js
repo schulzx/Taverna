@@ -627,13 +627,27 @@ export function oEnvelopeDoCorpo(qual, dados) {
    a marca partiria uma frase entre o App e o motor; sai a peça inteira).
    `alvo`: o nome; `caiu`: se o golpe o levou a 0; `bonus`, `total`, `ca`:
    a conta do d20 como o sistema a deu (sem bônus, sem o «+»).
+   O CONSERTO DECLARADO DO ARTIGO (29/10, trilha A): duas formas punham um
+   artigo fixo diante de um nome com gênero. A condição resistida dizia
+   «resistiu à ${condicao}» — e o nome da condição (o `rotulo` de
+   condicoes.js) nunca é um substantivo feminino: dos 23 do catálogo, 21 são
+   particípios ou adjetivos no masculino (Envenenado, Cego, Caído…) e 2 são
+   gerúndios (Sangrando, Queimando); o «à» saía errado em 23 de 23. Agora
+   diz o que o ramo de cima diz, sem artigo: «resistiu e não ficou cego». E o
+   meu grupo na minha área dizia «da minha própria ${habilidade}»: das 48
+   habilidades de área do catálogo (grimorio.js e as das classes), 21 não são
+   femininas no singular (15 masculinas, como Relâmpago e Cone de Frio, 5
+   verbos, como Detectar Magia, e 1 plural, Mãos Flamejantes) — e a
+   habilidade única tem nome que nenhuma tabela conhece. Agora o nome vai
+   sem artigo, e o «meu próprio» é do ataque: «apanhou 3 de Bola de Fogo, o
+   meu próprio ataque». Nenhuma das duas depende do gênero do nome.
    ============================================================ */
 export const ENVELOPES_DO_DESFECHO = {
   golpe: ({ alvo, resultado, dano, d20, bonus, total, ca, caiu }) => `${alvo} — ${resultado === "critico" ? `CRÍTICO, ${dano} de dano` : resultado === "acerta" ? `${dano} de dano` : "resistiu parcialmente"} (d20=${d20}${bonus ? `+${bonus}` : ""}=${total} vs ${ca})${caiu ? " [CAIU]" : ""}`,
   geminada: ({ alvo, dano, caiu }) => `${alvo} — ${dano} de dano pela magia GEMINADA${caiu ? " [CAIU]" : ""}`,
   area: ({ alvo, dano, caiu }) => `${alvo} — ${dano} de dano pela área${caiu ? " [CAIU]" : ""}`,
-  fogoAmigo: ({ lista, meio, habilidade }) => `${lista} apanhou ${meio} da minha própria ${habilidade}`,
-  condicao: ({ alvo, aplicou, condicao }) => (aplicou ? `${alvo} ficou ${condicao.toLowerCase()}` : `${alvo} resistiu à ${condicao.toLowerCase()}`),
+  fogoAmigo: ({ lista, meio, habilidade }) => `${lista} apanhou ${meio} de ${habilidade}, o meu próprio ataque`,
+  condicao: ({ alvo, aplicou, condicao }) => (aplicou ? `${alvo} ficou ${condicao.toLowerCase()}` : `${alvo} resistiu e não ficou ${condicao.toLowerCase()}`),
   drenou: ({ cura }) => `drenei ${cura} PV`,
   imune: ({ alvo, gdAlvo, gdMeu }) => `${alvo} — IMUNE (GD ${gdAlvo} contra meu GD ${gdMeu}: poder comum não fere divindade tão acima; preciso de artefato lendário, bênção ou enfraquecê-lo antes)`,
   errou: ({ alvo, desastre, d20, bonus, total, ca }) => `${alvo} — ${desastre ? "erro desastroso" : "errou"} (d20=${d20}${bonus ? `+${bonus}` : ""}=${total} vs ${ca})`,
