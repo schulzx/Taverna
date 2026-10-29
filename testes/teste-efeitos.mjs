@@ -499,7 +499,10 @@ sec("12. ligado ao jogo — os quatro leitores do órgão");
   t("o App importa o órgão", /from "\.\/efeitos\.js"/.test(app));
   /* (T1-A 3.ª fatia, o oficial, 28/10: `efeitoDeMilagre` saiu desta lista — o milagre mudou-se do App para
      src/motor/meio-do-turno.js#milagreInvocado, que o importa; quem o lê lá prova-se abaixo, jogando o milagre) */
-  for (const nome of ["empilhar", "efeitoDeBuff", "efeitoDeMagia", "efeitoEmConcentracao", "quebrarConcentracao", "notaDosBuffs"]) {
+  /* (T2-A, o oficial, 28/10: `efeitoEmConcentracao` saiu desta lista, como o `efeitoDeMilagre` — as duas portas da
+     concentração e a quebra do herói mudaram-se do App para src/motor/golpe-no-corpo.js, que o importa; quem o lê
+     lá prova-se em teste-motor-golpe-no-corpo, correndo a peça contra o recorte de c494a04) */
+  for (const nome of ["empilhar", "efeitoDeBuff", "efeitoDeMagia", "quebrarConcentracao", "notaDosBuffs"]) {
     t(`o App importa ${nome}`, new RegExp(`import \\{[^}]*\\b${nome}\\b[^}]*\\} from "\\./efeitos\\.js"`).test(app));
   }
   const rg = src("regras-jogo.js");
@@ -855,43 +858,32 @@ sec("14. o abrigo está ligado ao jogo — a porta única e os sete sítios (P3)
   const APP = readFileSync("../src/App.jsx", "utf8");
   const ARENA = readFileSync("../src/arena.js", "utf8");
 
-  t("o App importa `absorverDano` do órgão",
-    /import \{[^}]*\babsorverDano\b[^}]*\} from "\.\/efeitos\.js"/.test(APP));
-  t("e existe UMA porta só, com o nome do dono como terceiro argumento",
-    /const passarPeloAbrigo = \(quem, dano, nome = ""\) => \{/.test(APP));
-  t("e quem decide lá dentro é o módulo, não o App",
-    /const ab = absorverDano\(quem, dano\);/.test(APP));
-  /* A LEI DO TURNO: um órgão que estoura não pode derrubar a cena, e o
-     `catch` tem de devolver o que ENTROU, byte a byte — um `catch` que
-     devolvesse `{}` ou zerasse o dano seria pior que o estouro. */
-  t("a porta única cala em vez de custar o turno, e devolve o que entrou",
-    /catch \(e\) \{ calou\("abrigo", e\); return \{ pers: quem, dano, linha: "" \}; \}/.test(APP));
+  /* MOVIDAS (28/10, T2-A, o oficial): o corpo da porta saiu do App para
+     src/motor/golpe-no-corpo.js#oAbrigoDoGolpe, e a fila do herói para
+     #aFilaDoGolpeNoHeroi. Saíram daqui seis que mediam texto que já não
+     mora no App: o import de `absorverDano` (agora quem importa é a peça),
+     o `const ab = absorverDano(quem, dano)` (o módulo decide — lá), o catch
+     que devolve o que entrou, «nenhum sítio chama por fora» e as duas da
+     ordem repartir → abrigo. A intenção de cada uma prova-se CHAMANDO a
+     peça em teste-motor-golpe-no-corpo (§4 o abrigo e o recuo byte a byte,
+     §5 o dono, §8 a fila com a mordida do abrigo à frente), 275/275 contra
+     o recorte à letra de c494a04. */
+  /* REESCRITA (mesmo motivo): a porta continua UMA, com o nome do dono como
+     terceiro argumento — agora uma linha que passa o `calou` da casa. */
+  t("e existe UMA porta só, com o nome do dono como terceiro argumento, e o corpo é a peça do motor",
+    /const passarPeloAbrigo = \(quem, dano, nome = ""\) => oAbrigoDoGolpe\(quem, dano, nome, \{ calou \}\);/.test(APP));
 
-  /* A CONTAGEM. Oito sítios, e o número é a lei: herói na rodada,
-     companheiro na rodada, `sofrerNaPele`, as TRÊS oportunidades (a
-     retirada por frase, o Mover que sai de perto, e agora `golpesAoSair`
-     — o helper que a fuga usa para o mesmo preço), o fogo amigo e a
-     armadilha. Se um sumir, fica vermelho; se nascer um nono sem passar
-     por aqui, também — e é esse o ponto, porque um sítio novo que chame
-     `absorverDano` direto perde o try/catch e o nome do dono.
-
-     A FUGA (frontend) somou o oitavo: `golpesAoSair` (App.jsx) é o
-     tratamento de "sair de perto custa" reaproveitado para quem escapa
-     da luta pela porta nova — mesma conta, mesma porta única. */
-  const SITIOS_DO_ABRIGO = 8;
+  /* A CONTAGEM. Sete sítios, e o número é a lei: companheiro na rodada,
+     `sofrerNaPele`, as TRÊS oportunidades (a retirada por frase, o Mover
+     que sai de perto e `golpesAoSair`, o helper da fuga), o fogo amigo e
+     a armadilha. Se um sumir, fica vermelho; se nascer um oitavo sem passar
+     por aqui, também.
+     REESCRITA (28/10, T2-A, o oficial): eram OITO — o herói na rodada era o
+     oitavo, e foi com a fila para aFilaDoGolpeNoHeroi, que chama a mesma
+     porta (oAbrigoDoGolpe) dentro da peça. O número desce um, a lei é a mesma. */
+  const SITIOS_DO_ABRIGO = 7;
   const quantos = (APP.match(/passarPeloAbrigo\(/g) || []).length;
   t(`a porta única é usada em exatamente ${SITIOS_DO_ABRIGO} sítios`, quantos === SITIOS_DO_ABRIGO, `achou ${quantos}`);
-  t("e nenhum sítio do App chama o módulo por fora da porta",
-    (APP.match(/absorverDano\(/g) || []).length === 1);
-
-  /* A ORDEM NA RODADA: o abrigo é o ÚLTIMO da fila (amortecer → repartir →
-     abrigo), porque ele se gasta contra o que de fato chega ao corpo. Se
-     ele subir na fila, passa a comer dano que a invocação teria repartido,
-     e o jogador paga o escudo duas vezes. */
-  const iRepartir = APP.indexOf("repartirDano({ ...persTracos");
-  const iAbrigo = APP.indexOf("passarPeloAbrigo(persTracos");
-  t("na rodada do herói, repartir e abrigo existem os dois", iRepartir > 0 && iAbrigo > 0);
-  t("e o abrigo vem DEPOIS de repartir — ele apara o que chega ao corpo", iRepartir < iAbrigo);
 
   /* O PREÇO DO ESFORÇO: dano auto-infligido não gasta o abrigo, porque não
      há nada chegando para um escudo encontrar. A queda NÃO entra na
@@ -1253,7 +1245,10 @@ sec("16. a concentração nasce e viaja — o campo que faltava no meio (C1)");
 
   /* PONTE — o teste que cobra o preço mora em combate.js, e o App o chama.
      Sem esse elo, o campo viaja e nunca é perguntado. */
-  t("o App pergunta pelo efeito segurado quando o herói apanha", /efeitoEmConcentracao\(/.test(APP16));
+  /* MOVIDA (28/10, T2-A, o oficial): «o App pergunta pelo efeito segurado» —
+     quem pergunta agora é src/motor/golpe-no-corpo.js#aQuebraDoHeroi, que o
+     App chama; a pergunta e o preço provam-se correndo a peça em
+     teste-motor-golpe-no-corpo §7. */
   t("e existe um teste de concentração para ele chamar", /testeConcentracao/.test(readFileSync("../src/combate.js", "utf8")));
 }
 
@@ -1435,40 +1430,16 @@ sec("17. a quebra na mesa — a frase que o jogador lê quando a magia cai (C2)"
      Node, e uma frase que nasce certa no módulo e é ignorada na tela é
      exatamente o defeito que esta etapa veio consertar. */
   const APP17 = readFileSync("../src/App.jsx", "utf8");
-  const i0 = APP17.indexOf("const concentrando = efeitoEmConcentracao(persBase);");
-  const i1 = APP17.indexOf(`calou("quebraDaConcentracao"`);
-  t("a fiação da quebra existe no App e é um bloco só, achável", i0 > 0 && i1 > i0);
-  /* tudo abaixo é medido DENTRO do bloco, não no arquivo inteiro: um `tc.linha`
-     solto em qualquer outro canto do App não provaria nada sobre este golpe */
-  const FIO = APP17.slice(i0, i1);
-
-  t("o App passa o NOME da magia para o teste",
-    /testeConcentracao\(danoNoJogador, atributoEfetivo\(persBase, "vigor"\), concentrando\.nome\)/.test(FIO));
-  t("e mostra ao jogador a frase que o módulo montou, sem prefixo nenhum",
-    /extra\.push\(\{ autor: "sistema", texto: tc\.linha \}\)/.test(FIO));
-  /* o defeito que esta etapa veio consertar não pode voltar por descuido: a
-     frase montada à mão dizia QUE caiu e escondia POR QUÊ */
+  /* MOVIDAS (28/10, T2-A, o oficial): onze mediam o bloco da quebra dentro do
+     App — achável, o nome da magia no teste, a linha sem prefixo, a 🎲 atrás
+     de quem pediu, a quebra anotada, o try/calou, e a nota ao Narrador (existe,
+     SÓ na queda, empilhada nas vizinhas, com o nome, a mandar narrar). O bloco
+     saiu para src/motor/golpe-no-corpo.js#aQuebraDoHeroi, e a nota com ele
+     (ENVELOPES_DO_GOLPE.quebraDaConcentracao): cada intenção prova-se CHAMANDO
+     a peça em teste-motor-golpe-no-corpo §7, 275/275 contra o recorte de
+     c494a04, a nota empilhada em 17 deles. O que só o App pode provar fica:
+     a frase montada à mão não voltou. */
   t("a frase montada à mão não voltou ao App", !/Concentração quebrada — /.test(APP17));
-  t("e a voz de ficha continua atrás de quem pediu para ver as rolagens",
-    /if \(mostrarRolagensRef\.current\) extra\.push\(\{ autor: "sistema", texto: `🎲 \$\{tc\.texto\}` \}\)/.test(FIO));
-  t("a quebra continua sendo anotada onde sempre foi", /persConcQuebrada = concentrando\.nome;/.test(FIO));
-  t("e o bloco inteiro está sob a lei do turno que não pode cair",
-    APP17.slice(Math.max(0, i0 - 60), i0).includes("try {")
-    && /\} catch \(e\) \{ calou\("quebraDaConcentracao", e\); \}/.test(APP17));
-
-  /* A NOTA AO NARRADOR, e o que importa nela é ONDE mora.
-     `ECONOMIA_ACAO_PROMPT` promete há versões "quando quebrar, narre o efeito
-     se desfazendo na hora" — e não havia sinal nenhum atrás da promessa. A
-     nota tem de ser DINÂMICA e nascer só no turno da queda: bloco estático é
-     proibido pelo teto do prompt, e uma nota que sobe toda rodada é ruído no
-     lugar de aviso. */
-  const soNaQueda = FIO.slice(FIO.indexOf("if (!tc.manteve)"), FIO.indexOf("if (extra.length)"));
-  t("a nota ao Narrador existe", /\[CONCENTRAÇÃO — QUEBRADA PELO SISTEMA\]/.test(FIO));
-  t("e nasce SÓ no turno em que a magia cai", soNaQueda.includes("[CONCENTRAÇÃO — QUEBRADA PELO SISTEMA]"));
-  t("ela viaja pela nota por turno, empilhada nas vizinhas",
-    /notaRef\.current = `\$\{notaRef\.current \? notaRef\.current \+ "\\n" : ""\}\[CONCENTRAÇÃO/.test(soNaQueda));
-  t("ela diz QUAL magia se desfez", /\$\{concentrando\.nome\}/.test(soNaQueda));
-  t("e manda narrar o desfazimento", /Narre o efeito se desmanchando/.test(soNaQueda));
   /* CONTROLE: a promessa continua no prompt estático, e nada novo foi somado
      a ela — o canal desta etapa é a nota, não o bloco */
   t("e a promessa do prompt estático segue intacta, sem uma letra a mais",
@@ -2011,6 +1982,45 @@ sec("19. uma de cada vez — a nova toma o lugar da que ele segurava (C3)");
      aqui fica só a ponte, para quem ler esta seção saber que ela existe */
   t("e a quarta porta é a da arena, que importa `firmarEfeito` e não `empilhar`",
     /import \{ firmarEfeito,/.test(readFileSync(RAIZ + "arena.js", "utf8")));
+}
+
+/* ============================================================
+   20. O BURACO NA LISTA — `bonusEfeito` lê pela peneira (28/10, Fase T, trilha B)
+
+   O DEFEITO, medido antes. `efeitosDe` existe desde a seção 3 para que um
+   buraco `null` (ou lixo) em `efeitos` não derrube ninguém — e todo o órgão
+   lê por ela. `bonusEfeito` (regras-jogo.js) não lia: `(pers.efeitos || [])`
+   com um `null` no meio estourava em `e.aplica`, e `atributoEfetivo`
+   estourava junto. Quem pagava era a concentração: o teste do herói e o do
+   companheiro calavam no try/calou, e a magia NUNCA caía, por mais forte
+   que fosse o golpe. A prova da trilha B (golpe-casos.mjs) achou isto em 14
+   dos 27 calou da quebra. A soma não mudou: o efeito sem `bonus` ainda dá
+   NaN e o `bonus` em texto ainda concatena — outro defeito, medido à parte
+   e deixado de pé porque mexer nele mexe em rolagens que o dourado do
+   (teste-motor-aplicar, três secções) congelou; por isso esta seção não o prova nem o fixa.
+   ============================================================ */
+console.log("\n20. o buraco na lista: bonusEfeito pela peneira");
+{
+  const bencao = { nome: "Bênção", bonus: 2, turnos: 3, aplica: "todos" };
+  const furada = heroi({ atributos: { vigor: 1 }, efeitos: [null, bencao, "lixo", 7, undefined] });
+  let estourou = false;
+  try { R.bonusEfeito(furada, "Vigor"); R.atributoEfetivo(furada, "vigor"); } catch { estourou = true; }
+  t("um buraco `null` (e o lixo: texto, número, undefined) não derruba a rolagem", !estourou);
+  t("e o bônus que está lá continua somando, o buraco não soma nada", !estourou && R.bonusEfeito(furada, "Vigor") === 2);
+  t("a ficha furada rola o mesmo que a limpa", !estourou && R.atributoEfetivo(furada, "vigor") === R.atributoEfetivo(heroi({ atributos: { vigor: 1 }, efeitos: [bencao] }), "vigor"));
+  t("ficha sem `efeitos` (save antigo) e `efeitos` que não é lista somam zero",
+    R.bonusEfeito(heroi({ efeitos: undefined }), "Força") === 0 && R.bonusEfeito(heroi({ efeitos: "lixo" }), "Força") === 0);
+
+  /* a consequência na mesa: a magia segurada CAI de novo quando o golpe vence
+     o teste — herói e companheiro —, e ninguém cala */
+  const { aQuebraDoHeroi, aConcentracaoDoGolpe } = await import("../src/motor/golpe-no-corpo.js");
+  const segurando = heroi({ atributos: { vigor: 0 }, efeitos: [null, { nome: "Voo", bonus: 0, turnos: 3, concentracao: true, aplica: "todos" }] });
+  const cal = [];
+  const q = aQuebraDoHeroi(segurando, 40, { sorte: () => 0, nota: "", calou: (o) => cal.push(o) });
+  t("o herói com um buraco na lista perde a magia no golpe que vence o teste", q.quebrada === "Voo" && cal.length === 0, `quebrada ${q.quebrada} · calou ${cal.join()}`);
+  const calC = [];
+  const c = aConcentracaoDoGolpe(segurando, 40, "Bruna", { sorte: () => 0, calou: (o) => calC.push(o) });
+  t("e o companheiro também", c.magia === "Voo" && calC.length === 0, `magia ${c.magia} · calou ${calC.join()}`);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

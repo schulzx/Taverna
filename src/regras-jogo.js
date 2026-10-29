@@ -26,7 +26,7 @@ import { garantirPreparadas, preparadasIniciais, temCaderno } from "./magias.js"
 import { garantirSintonia, sintoniaInicial, atributosValem } from "./sintonia.js";
 import { comDom, repousarTracos } from "./tracos.js";
 import { curaExtraDoHeroi, curaExtraDoGrupo } from "./profissoes.js";
-import { LIMITES_DO_EFEITO, APLICA_UNIVERSAL, empilhar, retirar } from "./efeitos.js";
+import { LIMITES_DO_EFEITO, APLICA_UNIVERSAL, empilhar, retirar, efeitosDe } from "./efeitos.js";
 
 /* O QUE UM NÍVEL RENDE DE CORPO. Estavam soltos dentro do laço, e a tela
    do nível anunciava "+3 PV máx · +2 PM máx" — metade do que a regra dá de
@@ -373,11 +373,22 @@ export function bonusEquip(pers, attrId) {
 /* v9.224: "testes" e "todos" eram duas strings soltas nesta condição — os
    dois rótulos coringa de `aplica`, que valem em qualquer rolagem. Viraram
    `APLICA_UNIVERSAL`, em efeitos.js, ao lado dos outros números do órgão.
-   A conta é a mesma; só a régua mudou de casa. */
+   A conta é a mesma; só a régua mudou de casa.
+
+   28/10 (Fase T, trilha B) · A PENEIRA. Esta era a única leitura da rolagem
+   que não passava por `efeitosDe`: um buraco `null` na lista estourava em
+   `e.aplica`, `atributoEfetivo` estourava junto, e o teste de concentração
+   calava no try/calou — a magia do herói e a do companheiro nunca caíam.
+   Agora a lista vem pela peneira do órgão, e o que não é objeto (o texto,
+   o número perdido na lista) não conta. A soma em si é a de sempre, de
+   propósito: o efeito sem `bonus` ainda soma NaN e o `bonus` em texto ainda
+   concatena — é outro defeito, medido à parte (diário de 28/10), e mexer
+   nele muda rolagens que o dourado do aplicar congelou. */
 export function bonusEfeito(pers, attrNome) {
   let b = 0;
   const alvo = String(attrNome == null ? "" : attrNome).toLowerCase();
-  (pers.efeitos || []).forEach((e) => {
+  efeitosDe(pers).forEach((e) => {
+    if (typeof e !== "object") return;
     const ap = String(e.aplica == null ? "" : e.aplica).toLowerCase();
     if (!e.aplica || ap === alvo || APLICA_UNIVERSAL.includes(ap)) b += e.bonus;
   });
