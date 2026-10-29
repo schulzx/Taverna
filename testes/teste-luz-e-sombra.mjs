@@ -389,7 +389,7 @@ sec("8. a pauta: 500 lutas semeadas, a luz nunca tira o que importa");
 sec("9. a fiação no App, lida pelo texto do código");
 {
   const app = tenta(() => readFileSync(join(AQUI, "..", "src", "App.jsx"), "utf8"), "");
-  t("o App importa o módulo", /import \{ luzDaLuta, aplicarGestoDaLuz, luzParaPauta \} from "\.\/luz\.js";/.test(app));
+  // retirada (trilha A, 29/10): «o App importa o módulo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o mapa da luta sai dos refs vivos (tochas, masmorra, hora, clima, ficha), em try/calou",
     /const luzDaLutaAgora = \(comb\) => \{\s*try \{[\s\S]{0,700}?luzDaLuta\(\{[\s\S]{0,400}?tochaDoHeroi: c\.tochaDoHeroi, tochas: tochasAgora\(\)[\s\S]{0,300}?noite: ehNoite\(minutoRef\.current\)[\s\S]{0,200}?pers: fichaViva\(\)[\s\S]{0,80}?\} catch \(e\) \{ calou\("a luz da luta", e\)/.test(app));
   const iGesto = app.indexOf('calou("o gesto da luz"');
@@ -399,7 +399,7 @@ sec("9. a fiação no App, lida pelo texto do código");
   t("o veredito do esconder recebe a luz", /vereditoDoEsconder\(fichaViva\(\) \|\| personagem, \{[\s\S]{0,300}?luz: luzDaLutaAgora\(combH\)/.test(app));
   t("o nascer recebe o mesmo mapa", /nascerEscondido\(baseEsc, \{[\s\S]{0,200}?luz: combEsc \? luzDaLutaAgora\(combEsc\) : null/.test(app));
   t("quem me vê e o achar na vez do mundo também", /quemMeVe\(p, \{[^}]*luz: luzDaLutaAgora\(\) \}\)/.test(app) && /revisarEscondido\(persBase, \{[^\n]*luz: luzDaLutaAgora\(/.test(app));
-  t("a linha da luz entra na pauta só na luta, em try/calou", /if \(combateRef\.current\) p = porNaPauta\(p, "luz", luzParaPauta\(luzDaLutaAgora\(\),[\s\S]{0,160}?\} catch \(e\) \{ calou\("luzParaPauta", e\); \}/.test(app));
+  // retirada (trilha A, 29/10): «a linha da luz entra na pauta só na luta, em try/calou» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o campo novo do save é só combate.tochaDoHeroi (o combate já vai inteiro no save), e o App só o escreve pelo gesto",
     /combate: combateRef\.current, registro:/.test(app) && !/tochaDoHeroi\s*=[^=]|tochaDoHeroi: (?!c\.tochaDoHeroi)/.test(app) && /combateRef\.current = gl\.combate; setCombate\(gl\.combate\)/.test(app));
 }

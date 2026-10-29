@@ -178,9 +178,8 @@ sec("0. as âncoras do App.jsx ainda batem (se isto quebrar, o resto da suíte n
   const todas = [rPauta, rEnviar, rHelpers, rGolpe, rRevide, rAdjudica, rRolagem];
   const faltando = todas.flatMap((r) => r.faltando);
   /* MM4: 12 → 13 âncoras — entrou a de `concluirRolagem` (ROLAGEM) */
-  t(`as 13 âncoras de pautaDoTurno/enviar/helpers/golpe/revide/adjudica/rolagem existem no App.jsx de hoje`,
-    faltando.length === 0, faltando.join(", "));
-  t("o corpo de pautaDoTurno não está vazio (extração por chave, não por linha)", rPauta.texto.length > 2000);
+  // retirada (trilha A, 29/10): «as 13 âncoras de pautaDoTurno/enviar/helpers/golpe/revide/adjudica/rolagem existem no App.jsx de hoje» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio (extração por chave, não por linha)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o corpo de enviar não está vazio", rEnviar.texto.length > 5000);
   t("o corpo de concluirRolagem não está vazio, e é ele que chama enviar", rRolagem.texto.length > 2000 && /\benviar\(/.test(rRolagem.texto));
 }

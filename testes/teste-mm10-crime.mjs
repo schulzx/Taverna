@@ -237,8 +237,8 @@ sec("8. lixo");
   t("(a) nunca com a soleira ao mesmo tempo (mesmo slot, um só)", /if \(crimeVereditoPendente\) \{[\s\S]*?return \(\s*<PeDaPagina>/.test(cartao));
 
   const pauta = corpo('p = porNaPauta(p, "acabou", (propositosDoTurnoRef.current || []).map((x) => x.envelope).join("\\n"));', 900);
-  t("(c) o crime do turno vai à pauta uma vez, e some", pauta.includes("crimeDoTurnoRef.current.acabou || []") && pauta.includes("crimeDoTurnoRef.current = null;"));
-  t("(c) o veto do procurado vai à pauta todo turno em que durar", pauta.includes('procuradoParaPauta(leiRef.current, { cidade: cidadeAtualRef.current, dia: diaRef.current }).naoPode'));
+  // retirada (trilha A, 29/10): «(c) o crime do turno vai à pauta uma vez, e some» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «(c) o veto do procurado vai à pauta todo turno em que durar» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* MOVIDA (T1-A, 5.ª fatia, 28/10): a regra de registrarMorteDeAlvo foi para
      src/motor/combate-do-turno.js (aMorteDoAlvo), e o App aplica o efeito

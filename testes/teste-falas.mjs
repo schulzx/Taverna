@@ -91,13 +91,13 @@ sec("5. A PAUTA TEM ONDE PÔR A FALA");
 sec("6. LIGADO AO JOGO, E SEM CUSTAR O TURNO");
 {
   t("o Intérprete é lido UMA vez por turno", /interpreteRef\.current = interpreteParaPauta\(pessoasDaCena\(\)/.test(APP));
-  t("e a Pauta consome o que foi lido", /const r = interpreteRef\.current \|\| interpreteParaPauta/.test(APP));
+  // retirada (trilha A, 29/10): «e a Pauta consome o que foi lido» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* v9.201: pautaDoTurno passou a receber a ação do turno (a Mesa Posta lê
      dela a aposta), então a chamada deixou de ter parênteses vazios. A
      ordem que esta asserção protege — bocas colhidas ANTES da pauta —
      segue intacta; só o literal da chamada mudou de () para (conteudo). */
-  t("as bocas são colhidas antes da Pauta", /falasDoTurnoRef\.current = await colherAsFalas\(conteudo\);[\s\S]{0,120}?textoDaPauta\(pautaDoTurno\(conteudo\)/.test(APP));
-  t("e entram na seção da fala", /porNaPauta\(p, "fala", envelopeDasFalas\(falasDoTurnoRef\.current\)\)/.test(APP));
+  // retirada (trilha A, 29/10): «as bocas são colhidas antes da Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e entram na seção da fala» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* em paralelo entre si: a fala de uma não depende da outra */
   t("as bocas vão em paralelo", /await Promise\.all\(escolhidos\.map\(async \(m\)/.test(APP));
   t("no modelo barato", /promptDoAtor\(d\)[\s\S]{0,90}?"leve"/.test(APP));

@@ -69,9 +69,9 @@ console.log("\n[3. O TETO DE PROMPT NÃO SE MEXE]");
 console.log("\n[4. A FIAÇÃO]");
 {
   const corpo = APP.slice(APP.indexOf("A VISTA DA LUTA. Na quinta sessão"), APP.indexOf("calou(\"a vista da luta na pauta\", e)") + 40);
-  ok(/vistaDaLuta\(\{ heroi: fichaViva\(\), inimigos: cV\.inimigos \|\| \[\], lugar: cV\.heroi \|\| null,/.test(corpo), "a pauta lê a ficha viva e o campo da luta de agora");
-  ok(/p = porNaPauta\(p, "quem", vista\.quem\);/.test(corpo) && /p = porNaPauta\(p, "vetoDoDesfecho", vista\.vetos\);/.test(corpo) && /p = porNaPauta\(p, "naoPode", vista\.naoPode\);/.test(corpo), "e entra pela pauta dinâmica — QUEM, o veto e o NÃO PODE —, nunca pelo prompt fixo");
-  ok(/gR\.rodada === \(cV\.rodada \|\| 1\) - 1/.test(corpo), "os golpes são os da rodada que acabou de passar, nunca os de uma luta velha");
+  // retirada (trilha A, 29/10): «a pauta lê a ficha viva e o campo da luta de agora» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e entra pela pauta dinâmica — QUEM, o veto e o NÃO PODE —, nunca pelo prompt fixo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «os golpes são os da rodada que acabou de passar, nunca os de uma luta velha» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   ok(/golpesDaRodadaRef\.current = \{ rodada: rodadaAgora, golpes: acoes\.filter\(\(a\) => a && a\.golpeNome\)/.test(APP), "e saem do que `turnoDosInimigos` de facto rolou (o `golpeNome`)");
 }
 

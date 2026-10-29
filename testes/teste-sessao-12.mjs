@@ -218,7 +218,7 @@ sec("6. O NOME DITO SÓ NA ESTREIA (\"Sou Wystan\", 5 em 27)");
   t("e o sinal não o aponta como quem ainda não o viu", sin.includes("Wystan") && !sin.includes("ainda não o viu") && sin.endsWith(E.DEGRAU_EM_CENA.rumo.fatoEmCena), sin);
   t("outro nome nas respostas não conta como Wystan", E.linhaDoRumo({ pedido: { doJogador: true }, degrau: vem, passo: "x", semente: 1, mundo: { ...mundo, mostrado: ["Aelith ri."] } }).endsWith(E.DEGRAU_EM_CENA.rumo.fato));
   t("cenaDoDegrau continua a devolver a cena (string), com mostrado lixo", typeof E.cenaDoDegrau(vem, { ...mundo, mostrado: null }) === "string" && E.cenaDoDegrau(vem, { ...mundo, mostrado: null }).includes("Wystan"));
-  t("o App passa o mostrado ao rumo", /mostrado: falasDoMestre\(mensagensRef\.current\) \},/.test(APP));
+  // retirada (trilha A, 29/10): «o App passa o mostrado ao rumo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 sec("7. A ABERTURA TEM TAMANHO, E A MOEDA TEM NOME");
@@ -229,7 +229,7 @@ sec("7. A ABERTURA TEM TAMANHO, E A MOEDA TEM NOME");
   t(`a abertura pede até ${A.TAMANHO_DA_ABERTURA.max} palavras, da tabela (eram 519)`, A.TAMANHO_DA_ABERTURA.max > 0 && A.TAMANHO_DA_ABERTURA.max <= 260 && p.includes(`Até ${A.TAMANHO_DA_ABERTURA.max} palavras`), p.slice(0, 260));
   t("e o preço do mundo na moeda do Léxico (a abertura disse \"cobres\" num mundo de lascas)", p.includes("um preço (em lascas)"));
   t("sem moeda, a linha de sempre", A.pedidoDaAbertura(AB, {}).includes("um preço.") && A.pedidoDaAbertura(AB, null).includes("um preço."));
-  t("o App passa a moeda à abertura e à rua", APP.includes("companheiro: companheiroAb, moeda: moedaDoMundo() })") && APP.includes("precosDaRua(fatorDoPouso(), { moeda: moedaDoMundo() })"));
+  // retirada (trilha A, 29/10): «o App passa a moeda à abertura e à rua» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("a rua diz em que se paga", M.precosDaRua(1, { moeda: "lascas" }).startsWith("na rua, em lascas: caneca ◉ 1"));
   t("e sem moeda (ou com lixo) é a rua de antes", M.precosDaRua(1, null) === M.precosDaRua(1) && M.precosDaRua(1, { moeda: 7 }) === M.precosDaRua(1));
 }

@@ -174,7 +174,7 @@ sec("5) A LINHA DA PAUTA");
 
 sec("6) LIGADO NO TURNO");
 {
-  ok(/vilaoParaPauta\(r, \{ nome:/.test(app), "a ameaça escreve na Pauta");
+  // retirada (trilha A, 29/10): «a ameaça escreve na Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   ok(/saberRef = useRef\(\[\]\)/.test(app), "o que chegou até ela vive num ref");
   ok(/saber: saberRef\.current/.test(app) && /garantirSaber\(sv\.saber\)/.test(app), "é salvo e recarregado");
   ok(/chegarAteAAmeaca\(registroRef\.current/.test(app), "e o que pesou no registro pode chegar até ela");

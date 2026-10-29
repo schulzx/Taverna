@@ -91,7 +91,7 @@ sec("7. ligado ao jogo");
   t("há um ref e ele entra no save", /episodioRef/.test(APP) && /episodio: episodioRef\.current/.test(APP));
   t("abre, semeia e avança no turno", /mexerNoEpisodio\(\)/.test(APP) && /sementesDoEpisodio/.test(APP));
   t("aninha no ato: fechar registra marco no arco", /registrarMarco\(historiaRef\.current, r\.pesoNoArco/.test(APP));
-  t("o marco do episódio vai à pauta pelo canal do arco", /envelopeDoEpisodio\(episodioRef\.current\)/.test(APP));
+  // retirada (trilha A, 29/10): «o marco do episódio vai à pauta pelo canal do arco» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

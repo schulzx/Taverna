@@ -74,8 +74,19 @@ const D = { ...GUARDADO, blocos: Object.fromEntries(Object.entries(GUARDADO.bloc
 const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const casos = casosDosEnvelopes(N_CASOS);
-const recorte = recorteDosEnvelopes(APP, { novo: true });
-const hoje = Object.fromEntries(BLOCOS.map((b) => [b, blocoComoFuncao(recorte[b])]));
+/* (trilha A, 29/10) DOIS SÍTIOS MUDARAM-SE COM A PAUTA. O interlúdio do torneio
+   (fioInterludio) morava no corpo de `pautaDoTurno`, e a nota do companheiro
+   que vai embora (genteCompanheiro) em `aliadoVaiEmbora`, que só a pauta
+   chamava; as duas saíram do App para src/motor/pauta-do-turno.js, à letra.
+   Já não há o que recortar do App de hoje, e o texto do motor não se lê
+   (teste-assercoes-de-texto) — o mesmo código está provado lá, byte a byte
+   contra o recorte do App, em teste-motor-pauta-do-turno.mjs (275 casos; o
+   aliado que vai embora em 5, com a nota nos refs do fim). O dourado dos dois
+   fica (o lado de ANTES continua a gerá-lo); o lado de HOJE corre os outros. */
+const NA_PAUTA_DO_MOTOR = ["fioInterludio", "genteCompanheiro"];
+const BLOCOS_DE_HOJE = BLOCOS.filter((b) => !NA_PAUTA_DO_MOTOR.includes(b));
+const recorte = Object.assign({}, ...BLOCOS_DE_HOJE.map((b) => recorteDosEnvelopes(APP, { novo: true, so: b })));
+const hoje = Object.fromEntries(BLOCOS_DE_HOJE.map((b) => [b, blocoComoFuncao(recorte[b])]));
 const fotosDeHoje = (bloco, troca) => casos.map((k) => fotoDoEnvelope(correrOBloco(hoje[bloco], k, { novo: true, troca, bloco })));
 /* o dourado guarda o hash e o comprimento (o texto só na amostra): as fotos de
    hoje passam pela mesma fotoGuardada antes de comparar */
@@ -85,13 +96,13 @@ const divergem = (bloco, novas) => guardadas(novas).filter((f, i) => !igual(f, D
    o que os casos percorrem leem-nas a ELAS (o dourado já não traz o texto): é o
    mesmo texto, porque a secção 1 prova caso a caso que o hash e o comprimento de
    hoje são os de antes */
-const HOJE = Object.fromEntries(BLOCOS.map((b) => [b, fotosDeHoje(b)]));
+const HOJE = Object.fromEntries(BLOCOS_DE_HOJE.map((b) => [b, fotosDeHoje(b)]));
 
 sec("1 · cada grupo, byte a byte contra o App de antes");
 t(`o dourado tem ${N_CASOS} casos em cada grupo, e o commit de antes de cada um`, BLOCOS.every((b) => (D.blocos[b] || []).length === N_CASOS && D.antes[b]));
 t(`o dourado guarda o hash e o comprimento de cada caso, e o texto só nos ${AMOSTRA} primeiros`, BLOCOS.every((b) => D.blocos[b].every((f, i) => /^[0-9a-f]{32}$/.test(f.h) && Number.isInteger(f.n) && ("texto" in f) === (i < AMOSTRA))));
 t("o dicionário de cada sítio: cada foto distinta uma vez só, todas usadas, e guardar o lido devolve o guardado", BLOCOS.every((b) => { const g = GUARDADO.blocos[b]; const vistos = new Set(g.caso); return new Set(g.fotos.map((f) => JSON.stringify(f))).size === g.fotos.length && vistos.size === g.fotos.length && JSON.stringify(douradoGuardado(D.blocos[b])) === JSON.stringify(g); }));
-for (const bloco of BLOCOS) {
+for (const bloco of BLOCOS_DE_HOJE) {
   const fotos = D.blocos[bloco];
   const cheias = HOJE[bloco];
   const novas = guardadas(cheias);
@@ -341,8 +352,7 @@ sec("11 · o fio da história: os casos percorrem o que o texto decide, e a prov
   const V = N("fioVirada");
   t(`a virada com nenhum (${conta(V, "semeado: .")}), um (${conta(V, "semeado: Iris some.")}) e dois passos (${conta(V, "Iris some; a guarda chega.")}), e o nome da forma`,
     conta(V, "semeado: .") >= 60 && conta(V, "semeado: Iris some.") >= 60 && conta(V, "Iris some; a guarda chega.") >= 60 && conta(V, "[A VIRADA — <revelacaoDe ") >= 100);
-  const I = HOJE.fioInterludio.map((f) => f.texto);
-  t("o interlúdio entra na pauta como momento, depois da chave e do rival", I.every((p) => p.length === 1 && p[0][0] === "momento" && p[0][1].endsWith(" " + oEnvelopeDoFio("interludioDoTorneio"))));
+  /* retirada (trilha A, 29/10): «o interlúdio entra na pauta como momento» — o sítio mudou-se com a pauta para o motor (ver NA_PAUTA_DO_MOTOR, acima) */
   const L = HOJE.fioLutaDaChave.map((f) => f.texto[0]);
   t("a luta da chave com o nome do rival, para a ficha viva e (sem ela) a do render", conta(L.map((x) => x[0]), "] Iolanda da Garra entra na arena") >= 100 && conta(L.map((x) => x[0]), "] Brann entra na arena") >= 100 && new Set(L.map((x) => x[1])).size === 2);
   t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DO_FIO).length === 6 && (() => { try { oEnvelopeDoFio("nenhuma", {}); return false; } catch { return true; } })() && (() => { try { oEnvelopeDoFio("constructor", {}); return false; } catch { return true; } })());
@@ -353,7 +363,7 @@ sec("11 · o fio da história: os casos percorrem o que o texto decide, e a prov
     ["fioMundo", "o degrau da escada perdido", { oEnvelopeDoFio: (q, d) => E(q, { ...d, degrau: 1 }) }],
     ["fioVirada", "a virada sem os passos do dia seguinte", { oEnvelopeDoFio: (q, d) => E(q, { ...d, passos: [] }) }],
     ["fioVirada", "a virada que dá o nome cru da forma", { oEnvelopeDoFio: (q, d) => E(q, { ...d, revelacao: "traidor" }) }],
-    ["fioInterludio", "o interlúdio que deixa inventar lutas", { oEnvelopeDoFio: (q, d) => E(q, d).replace(" Nao invente lutas: a luta acontece quando o jogador entrar nela.", "") }],
+    /* (trilha A, 29/10) sem a mordida do interlúdio: o sítio mudou-se com a pauta para o motor (NA_PAUTA_DO_MOTOR) */
     ["fioLutaDaChave", "a luta da chave sem o nome do rival", { oEnvelopeDoFio: (q, d) => E(q, { ...d, quem: "o rival" }) }],
     ["fioLutaDaChave", "a luta que manda abrir o combate", { oEnvelopeDoFio: (q, d) => E(q, d).replace(" O SISTEMA ja abriu o combate.", "") }],
   ];
@@ -752,10 +762,10 @@ sec("23 · a gente e a história: os casos percorrem o que o texto decide, e a p
   /* quatro são notas do turno (o sítio devolve a nota); a relação mudada é a cauda do env */
   const N = (b) => HOJE[b].map((f) => f.texto);
   const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
-  const NOTAS = ["genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco"];
+  /* (trilha A, 29/10) três notas: a do companheiro mudou-se com a pauta para o motor (NA_PAUTA_DO_MOTOR) */
+  const NOTAS = ["genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco"];
   t("as quatro notas entram abaixo da que já havia", NOTAS.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
-  const C = N("genteCompanheiro");
-  t("quem foi embora, nas duas vezes que a nota o diz", conta(C, "] Greta da Ponte saiu do grupo, por decisão dele.") >= 130 && conta(C, "] Corvo saiu do grupo") >= 130 && C.every((x) => x.endsWith("e lembra por que saiu.")));
+  /* retirada (trilha A, 29/10): «quem foi embora, nas duas vezes que a nota o diz» — o sítio mudou-se com a pauta para o motor (NA_PAUTA_DO_MOTOR) */
   const M = N("genteMissaoPerdida");
   t("a missão perdida diz o título entre aspas e o motivo", conta(M, "\"O selo de Vau\" fracassou: o refém morreu.") >= 60 && conta(M, "\"Resgatar a filha do moleiro\" fracassou: o prazo venceu.") >= 60 && M.every((x) => x.includes("nao ofereca uma segunda chance")));
   const F = N("genteRelacaoFormal");
@@ -767,7 +777,7 @@ sec("23 · a gente e a história: os casos percorrem o que o texto decide, e a p
   t("as cinco formas estão na tabela da gente", Object.keys(ENVELOPES_DA_GENTE).length === 5 && ["companheiroFoiEmbora", "missaoPerdida", "relacaoFormal", "relacaoMudada", "novoArco"].every((q) => Object.hasOwn(ENVELOPES_DA_GENTE, q)));
   const P = oEnvelopeDaGente;
   const mordidas = [
-    ["genteCompanheiro", "o companheiro sem nome", { oEnvelopeDaGente: (q, d) => P(q, { ...d, quem: "alguém" }) }],
+    /* (trilha A, 29/10) sem a mordida do companheiro: o sítio mudou-se com a pauta para o motor (NA_PAUTA_DO_MOTOR) */
     ["genteMissaoPerdida", "a missão perdida sem o motivo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, motivo: "" }) }],
     ["genteRelacaoFormal", "a relação formal que casa todo mundo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, relacao: "conjuge" }) }],
     ["genteRelacaoMudada", "a relação mudada que esquece o rótulo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, rotulo: "Aliado" }) }],

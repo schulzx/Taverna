@@ -89,7 +89,7 @@ sec("6. ligado ao jogo (M6)");
   /* movida na T2-A (o fio da história, 28/10/2026): o texto do teto do interlúdio saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
-  t("a pauta leva a chave e o teto do interlúdio", /envelopeDaChave\(torneioRef\.current\)/.test(APP) && /oEnvelopeDoFio\("interludioDoTorneio"\)/.test(APP));
+  // retirada (trilha A, 29/10): «a pauta leva a chave e o teto do interlúdio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

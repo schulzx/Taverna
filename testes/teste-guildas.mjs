@@ -236,7 +236,7 @@ sec("11. LIGADA AO JOGO");
   t("a lei corre por dia", /conferirLeisDaCasa\(casaAgora, \{ dia: diaRef\.current/.test(APP));
   t("as tarefas voltam por dia", /resolverTarefaDaCasa\(t\)/.test(APP));
   t("o sangue entre casas também", /sangueEntreCasas\(c3, guildasRef\.current/.test(APP));
-  t("e pertencer a uma casa chega à Pauta", /porNaPauta\(p, "onde", envelopeDaGuilda\(casa\)\)/.test(APP));
+  // retirada (trilha A, 29/10): «e pertencer a uma casa chega à Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o painel existe", /<PainelGuilda/.test(APP));
 }
 

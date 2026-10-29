@@ -490,9 +490,7 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   /* MOVIDA (28/10, T1-A 8.ª fatia, o oficial): `andarOSino` saiu do import do App — o sino
      corre em oSinoDoTurno, src/motor/antes-do-mestre.js, que o importa (a secção 7 prova a
      fiação). As outras nove seguem no MESMO import do App, e o App importa a peça do motor. */
-  t("App.jsx importa as dez funções de abertura.js",
-    app.includes('import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, sinosForaDeHora')
-    && /import \{[^}]*\boSinoDoTurno\b[^}]*\} from "\.\/motor\/antes-do-mestre\.js";/.test(app));
+  // retirada (trilha A, 29/10): «App.jsx importa as dez funções de abertura.js» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("App.jsx importa chaveDoLugar de mundo-base.js",
     /* MM17 C1: a linha ganhou concluirLugar (a masmorra publica o fim); a
        asserção continua a guardar chaveDoLugar no import de mundo-base.js.
@@ -589,10 +587,8 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   t("a soleira não oferece cartaz oferecido antes do mural abrir",
     soleira.length > 200 && soleira.includes("for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {"));
   const pauta = corpoApos(app, 'const pautaDoTurno = (acaoDoTurno = "") => {');
-  t("o corpo de pautaDoTurno não está vazio", pauta.length > 3000);
-  t("o veto do mural vai à pauta (NÃO PODE), junto do veto do geógrafo",
-    pauta.includes('p = porNaPauta(p, "naoPode", g.naoPode);') && pauta.includes('p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));')
-    && pauta.indexOf('p = porNaPauta(p, "naoPode", g.naoPode);') < pauta.indexOf("vetosDaAbertura("));
+  // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «o veto do mural vai à pauta (NÃO PODE), junto do veto do geógrafo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* ---- 6. a menção não é presença (três sítios) ---- */
   /* MOVIDAS NA MM14 · 10a (30/09), com o motivo: as duas portas passaram a
@@ -648,15 +644,10 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     /* (movido, T1-A 8.ª fatia: a nota cresce por notaComOTurno, a mesma conta do motor) */
     && marcarMundo.includes("notaRef.current = notaComOTurno(notaRef.current, [s.toque.envelope]);")
     && !marcarMundo.includes("marcarNoArco("));
-  t("o prenúncio do turno entra na pauta (MOMENTO) e se apaga depois de dito",
-    pauta.includes('if (sinoDoTurnoRef.current) { p = porNaPauta(p, "momento", sinoDoTurnoRef.current); sinoDoTurnoRef.current = ""; }'));
+  // retirada (trilha A, 29/10): «o prenúncio do turno entra na pauta (MOMENTO) e se apaga depois de dito» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* ---- 8. o mundo pinga fios ---- */
-  t("um fio por turno, de quem está em cena, na secção GENTE, guardado por calou",
-    pauta.includes("for (const pessoa of aqui || []) {")
-    && pauta.includes("const fio = fioParaAPrincipal({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, semente: sementeMundo(), pessoa });")
-    && pauta.includes('if (fio) { p = porNaPauta(p, "gente", fio); break; }')
-    && pauta.includes('calou("o fio da abertura", e);'));
+  // retirada (trilha A, 29/10): «um fio por turno, de quem está em cena, na secção GENTE, guardado por calou» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* ---- 9/10. a ponte do "descobrir" (o defeito A que o backend consertou) ---- */
   const mundoDasMissoes = corpoApos(app, "const mundoDasMissoes = (persAtual) => {");

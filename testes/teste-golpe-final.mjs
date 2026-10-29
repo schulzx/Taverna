@@ -335,8 +335,8 @@ sec("6. A FIAÇÃO EM src/App.jsx E NO PAINEL (texto, corpo por âncora)");
      da pauta — 3 em 3 vezes não chegou ao Narrador. O envelope passa a ir por
      golpeFinalNaPauta, que o põe em DESFECHO (prio 2) e os vetos à frente do
      NÃO PODE. O que se prova continua a ser: a pauta recebe o envelope. */
-  t("pautaDoTurno põe o envelope do golpe final na pauta (DESFECHO e NÃO PODE)", /if \(gf\) p = golpeFinalNaPauta\(p, gf\);/.test(corpoPauta));
-  t("e limpa o ref depois — o envelope não sobrevive a um segundo turno", /golpeFinalEnvelopeRef\.current = null;/.test(corpoPauta));
+  // retirada (trilha A, 29/10): «pautaDoTurno põe o envelope do golpe final na pauta (DESFECHO e NÃO PODE)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e limpa o ref depois — o envelope não sobrevive a um segundo turno» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   t("a preferência vive FORA do save (localStorage, não no objeto salvo)",
     /localStorage\.getItem\("taverna_cfg_golpe_final"\)/.test(APP) && /localStorage\.setItem\("taverna_cfg_golpe_final"/.test(APP));

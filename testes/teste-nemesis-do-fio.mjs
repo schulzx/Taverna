@@ -190,7 +190,7 @@ sec("5. a fiação no App");
   t("a queda em combate do chefe do fio passa (caiuOFio, com calou)", /caiuOFio\(n, mundoDasMissoes\(\)\.derrotados\)/.test(queda) && /!podeCair\(n\) && !caiuEmCombate/.test(queda));
   const arco = corpoApos("const motorDoArco = (sobre = {}) => {"); /* (T1-A 3.ª fatia, o oficial, 28/10: a âncora ganhou o parâmetro `sobre` — o motor do turno passa o evento global de agora; o corpo e a intenção não mudaram) */
   t("o arco não leva o nome antes do rosto", /n\.nome && n\.conhecido \? n\.nome : null/.test(arco));
-  t("a mente da ameaça na pauta também não", /vilaoParaPauta\(r, \{ nome: \(\(nemesisRef\.current \|\| \{\}\)\.conhecido && /.test(app));
+  // retirada (trilha A, 29/10): «a mente da ameaça na pauta também não» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("nem o prisioneiro dos capangas (diz \"a mando de alguém\")", /quemMandou: \(c\.doVilao && nemesisRef\.current && nemesisRef\.current\.conhecido && nemesisRef\.current\.nome\)/.test(app));
   t("nem o fio do oráculo", /nemesis: \(nemesisRef\.current && nemesisRef\.current\.conhecido && nemesisRef\.current\.nome\) \|\| null/.test(app));
   /* e nenhuma outra porta leva o nome cru da nêmesis a um campo nemesis/quemMandou */

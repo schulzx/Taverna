@@ -340,8 +340,10 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      trilha A. A troca está no diário; a entrada sai quando o App a
      importar (e a da pauta pode sair junto: a peça do pedido já chama a
      da pauta). */
+  /* Paga a da pauta no mesmo dia (29/10, trilha A, o oficial): `enviar`
+     chama `aPautaDoTurno` e o App já não tem a `pautaDoTurno`. A do pedido
+     fica para a mão seguinte. */
   const ESPERA_DO_MOTOR = {
-    "pauta-do-turno.js": "trilha A (oficial): enviar chama aPautaDoTurno no lugar de pautaDoTurno",
     "pedido-do-turno.js": "trilha A (oficial): enviar chama oPedidoDoTurno no lugar do trecho da pauta ao system",
   };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];

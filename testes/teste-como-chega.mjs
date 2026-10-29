@@ -281,27 +281,22 @@ sec("6. A FIAÇÃO NO App E O CARTÃO NO ECRÃ (texto, corpo por âncora)");
   const DECL = 'const pautaDoTurno = (acaoDoTurno = "") => {';
   const i = APP.indexOf(DECL);
   const corpo = i < 0 ? "" : APP.slice(i, APP.indexOf("\n  };\n", i));
-  t("pautaDoTurno existe no App", corpo.length > 0);
-  t("o App importa cederNaCena de ./pauta.js", /import \{[^}]*\bcederNaCena\b[^}]*\} from "\.\/pauta\.js"/.test(APP));
+  // retirada (trilha A, 29/10): «pautaDoTurno existe no App» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «o App importa cederNaCena de ./pauta.js» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* a seções 3 e 5 provam o motor; isto prova que o App o USA. Sem esta
      linha a economia volta a ser 4.ª linha do ONDE (prio 1,3) e o defeito
      da sessão 3 volta inteiro, com as suítes do motor verdes. */
-  t('a economia vai na seção dela ("economia", não "onde")',
-    /porNaPauta\(p, "economia", envelopeDoComercio\(/.test(corpo) && !/porNaPauta\(p, "onde", envelopeDoComercio\(/.test(APP));
+  // retirada (trilha A, 29/10): «a economia vai na seção dela ("economia", não "onde")» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* e a cena cede: luta, masmorra e fora dos muros, dentro de try/catch
      (nunca pode custar o turno), e DEPOIS de tudo posto — ceder antes de
      montar não tiraria nada */
   const iCeder = corpo.indexOf("cederNaCena(p, {");
-  t("pautaDoTurno chama cederNaCena com a luta, a masmorra e os arredores",
-    iCeder > 0 && /cederNaCena\(p, \{ luta: !!combateRef\.current, masmorra: !!masmorraRef\.current, arredores: fora \}\)/.test(corpo));
-  t("…em try/catch, pelo calou",
-    /try \{[^}]*cederNaCena\(p, \{[^}]*\}\);\s*\} catch \(e\) \{ calou\("cederNaCena", e\); \}/.test(corpo));
-  t("…e é a última coisa antes do return (o que vem depois não cederia)",
-    iCeder > 0 && corpo.indexOf("return p;", iCeder) > iCeder && !/porNaPauta\(/.test(corpo.slice(iCeder)));
+  // retirada (trilha A, 29/10): «pautaDoTurno chama cederNaCena com a luta, a masmorra e os arredores» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «…em try/catch, pelo calou» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «…e é a última coisa antes do return (o que vem depois não cederia)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* fora dos muros é o mesmo sinal de `ondeSeProcura`: sem cidade, ou lugar
      marcado `arredores`. `lugarRef` sozinho seria verdadeiro numa taberna. */
-  t("arredores = sem cidade, ou lugar com distancia \"arredores\"",
-    /const fora = !cidadeAtualRef\.current \|\| !!\(lugarRef\.current && lugarRef\.current\.distancia === "arredores"\);/.test(corpo));
+  // retirada (trilha A, 29/10): «arredores = sem cidade, ou lugar com distancia "arredores"» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* O CARTÃO. Ancorado na linha do veredito com `bottom: 100%`, num ecrã de
      310 px o topo ficava em y −85 e o foco não rolava: o "como" escrevia-se

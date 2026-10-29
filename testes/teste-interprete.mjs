@@ -178,7 +178,7 @@ sec("8) A LINHA DA PAUTA");
 sec("9) LIGADO NO TURNO");
 {
   ok(/interpreteParaPauta\(pessoasDaCena\(\)/.test(app), "o Intérprete é consultado no ponto único do turno");
-  ok(/porNaPauta\(p, "gente", r\.linhas\)/.test(app), "e escreve na seção A GENTE da Pauta");
+  // retirada (trilha A, 29/10): «e escreve na seção A GENTE da Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   ok(/elencoMemRef = useRef\(\{\}\)/.test(app), "a memória por pessoa vive num ref");
   ok(/elencoMem: elencoMemRef\.current/.test(app), "é salva");
   ok(/garantirElenco\(sv\.elencoMem\)/.test(app), "e recarregada");

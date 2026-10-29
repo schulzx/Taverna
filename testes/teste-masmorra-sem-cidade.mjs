@@ -361,14 +361,14 @@ sec("8. a fiação no App e no system (por texto)");
 {
   const app = readFileSync(join(AQUI, "..", "src", "App.jsx"), "utf8");
   const pr = readFileSync(join(AQUI, "..", "src", "prompt.js"), "utf8");
-  t("o App importa o módulo", /import \{[^}]*calaNaMasmorra[^}]*aquiDoTurno[^}]*cenaNaMasmorra[^}]*linhaDaFicha[^}]*horizonteDaPergunta[^}]*\} from "\.\/masmorra-sem-cidade\.js"/.test(app));
+  // retirada (trilha A, 29/10): «o App importa o módulo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o \"aqui\" do rodapé sai de aquiDoTurno, com a masmorra do ref, num try", /try \{\s*aqui = aquiDoTurno\(\{ forma, ondeEstou, comodos: comodosAqui, daqui: daquiTxt, formaDaCidade: shape, viagem: viag, ermo: ermoAqui, arredores: fora, saidas \}, masmorraRef\.current\);/.test(app));
   t("o resumoDaqui nem se calcula lá dentro", /calaNaMasmorra\("daqui", masmorraRef\.current\) \? "" : resumoDaqui\(/.test(app));
   t("a gente por conhecer cala lá dentro", /calaNaMasmorra\("povoar", masmorraRef\.current\)\) return \[\];/.test(app));
   t("o [ONDE ACORDO] da estrada cala lá dentro", /calaNaMasmorra\("acordo", masmorraRef\.current\)/.test(app) && /\(jornadaRef\.current && !acordoCala\)/.test(app));
   t("a cena do system passa por cenaNaMasmorra (num try que devolve a cena crua)", /try \{ return cenaNaMasmorra\(cena\); \} catch \(e\) \{ calou\("cenaNaMasmorra", e\); return cena; \}/.test(app));
-  t("a ficha entra na seção MASMORRA da pauta, num try", /p = porNaPauta\(p, "masmorra", linhaDaFicha\(mapaRef\.current, masmorraRef\.current, \{ luta: !!combateRef\.current \}\)\);/.test(app));
-  t("o horizonte é a quarta ficha da mesa (e o sinal do oráculo a lê)", /hz = horizonteDaPergunta\(frase, mapaRef\.current, \{ masmorra: masmorraRef\.current, luta: !!combateRef\.current \}\);/.test(app) && /* E1 (12/10): a mesa ganhou a 5.ª fonte, o preço comum (`pc`) — o horizonte segue a quarta, logo antes dela */ app.includes("return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };") && app.includes("juntarRespostas([fc, gp, mc, hz, pc])"));
+  // retirada (trilha A, 29/10): «a ficha entra na seção MASMORRA da pauta, num try» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «o horizonte é a quarta ficha da mesa (e o sinal do oráculo a lê)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("a porta do ermo, no system, não abre lá dentro", /\{ id: "ermo", quando: \(c\) => !c\.emMasmorra && \(!c\.emCidade \|\| !!c\.emViagem\)/.test(pr));
 }
 

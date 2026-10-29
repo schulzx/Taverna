@@ -62,9 +62,9 @@ sec("3. as proteções: CALA e SEGURA");
 sec("4. ligado ao jogo");
 {
   t("existe a seção O PESO na pauta", /id: "peso"/.test(PAUTA));
-  t("o App importa o Peso", /import \{ pesoDaCena, vetoDoPeso, seguraOCompasso \}/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa o Peso» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("a traição revelada acende a fúria", /traicaoRevelada: true/.test(APP));
-  t("a pauta reconhece o peso e cala pelo veto", /pesoDaCena\(fatosDoPesoRef\.current\)/.test(APP) && /vetoDoPeso\(cena\.peso\)/.test(APP));
+  // retirada (trilha A, 29/10): «a pauta reconhece o peso e cala pelo veto» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o compasso segura numa cena de peso", /seguraOCompasso\(\(pesoDaCena/.test(APP));
   /* o peso é um beat: a pauta consome e limpa os fatos */
   t("os fatos do peso são limpos após consumir", /fatosDoPesoRef\.current = \{\};/.test(APP));

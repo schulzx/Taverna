@@ -217,7 +217,7 @@ sec("9. O ENVELOPE É FATO, NÃO SUGESTÃO");
   t("e o apreço", /Apreço por você: 40\/100/.test(lista));
   t("e a proibição", /quem decide isso é o sistema/.test(lista));
   t("a sua casa não entra na lista", D.envelopeDasPotencias(D.potenciasDoMundo({ guildas: [{ ...casa, membro: true }] }), null) === "");
-  t("o App manda a lista à Pauta", /porNaPauta\(p, "mundo", envelopeDasPotencias\(potenciasAqui\(\), diplomaciaRef\.current\)\)/.test(APP));
+  // retirada (trilha A, 29/10): «o App manda a lista à Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 sec("10. O JOGADOR VÊ ANTES DE APERTAR");

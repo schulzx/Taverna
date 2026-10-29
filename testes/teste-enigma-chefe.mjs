@@ -221,7 +221,7 @@ sec("8. A COSTURA, NOS DOIS GOLPES");
   /* o nome diz de quem é a virada: três módulos já tinham "virada", e a
      colisão quebrou o build na hora */
   t("o nome do chefe é explícito", /falaDaViradaDoChefe/.test(APP));
-  t("e o do vilão continua sendo dele", /envelopeDaVirada\(v\.situacao/.test(APP));
+  // retirada (trilha A, 29/10): «e o do vilão continua sendo dele» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 console.log(`\nenigma e chefe v9.151: ${bons} passaram, ${maus} falharam`);

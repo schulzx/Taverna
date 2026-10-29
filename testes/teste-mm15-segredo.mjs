@@ -408,8 +408,7 @@ sec("6. a fiação — App.jsx");
   };
 
   /* ---- 1. o import, junto do de saga.js ---- */
-  t("App.jsx importa segredosGuardados, vetoDoSegredo e peneirarCanone",
-    app.includes('import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guardado.js";'));
+  // retirada (trilha A, 29/10): «App.jsx importa segredosGuardados, vetoDoSegredo e peneirarCanone» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* ---- 2. o mundo da base, perto de mundoDasMissoes/mundoDasTarefas ---- */
   t("mundoDaBase existe e leva semente, mapa, genero, molde, lex e base",
@@ -424,12 +423,9 @@ sec("6. a fiação — App.jsx");
   /* ---- 4. pautaDoTurno: o veto do segredo, DEPOIS dos dois naoPode da
      abertura (teste-mm13-abertura.mjs exige essa ordem) ---- */
   const pauta = corpoApos(app, 'const pautaDoTurno = (acaoDoTurno = "") => {');
-  t("o corpo de pautaDoTurno não está vazio", pauta.length > 3000);
-  t("o veto do segredo entra em try/calou, chamando vetoDoSegredo com a espinha, a base e o lugar",
-    pauta.includes('p = porNaPauta(p, "naoPode", vetoDoSegredo(acaoDoTurno, segredosGuardados(espinhaRef.current, mundoDaBase()), { lugar: (lugarRef.current && lugarRef.current.nome) || "" }));')
-    && pauta.includes('calou("vetoDoSegredo", e);'));
-  t("e vem DEPOIS de vetosDaAbertura (as duas linhas da abertura continuam na frente)",
-    pauta.indexOf("vetosDaAbertura(") < pauta.indexOf("vetoDoSegredo("));
+  // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «o veto do segredo entra em try/calou, chamando vetoDoSegredo com a espinha, a base e o lugar» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e vem DEPOIS de vetosDaAbertura (as duas linhas da abertura continuam na frente)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* ---- 5. as duas portas do cânone, peneiradas, com fallback seguro ---- */
   /* MOVIDA (27/10, T1-A 2.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.

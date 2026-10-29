@@ -37,13 +37,14 @@ const importDe = (arq) => { const m = APP.match(new RegExp("import \\{([^}]*)\\}
 sec("1. os três módulos novos têm leitor no jogo");
 {
   const p = importDe("prometido.js");
-  t("prometido.js entra com as seis peças do mapa", ["garantirPrometido", "guardarSementes", "pagarSementes", "cobrarNoTurno", "abertasParaOCronista", "SECAO_DO_CRONISTA"].every((x) => new RegExp("\\b" + x + "\\b").test(p)), p ? "" : "sem import");
+  /* (trilha A, 29/10) cinco: a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo o `cobrarNoTurno` (o leitor dele é a peça; o export morto prova-o teste-ligacao) */
+  t("prometido.js entra com as cinco peças do mapa que ficam no App", ["garantirPrometido", "guardarSementes", "pagarSementes", "abertasParaOCronista", "SECAO_DO_CRONISTA"].every((x) => new RegExp("\\b" + x + "\\b").test(p)), p ? "" : "sem import");
   const f = importDe("fecho.js");
-  t("fecho.js entra com escolherFecho e fechoDaNarrativa", /\bescolherFecho\b/.test(f) && /\bfechoDaNarrativa\b/.test(f));
+  /* (trilha A, 29/10) só o fechoDaNarrativa: a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo o `escolherFecho` */
+  t("fecho.js entra com fechoDaNarrativa", /\bfechoDaNarrativa\b/.test(f));
   const e = importDe("fios-da-estrada.js");
   t("fios-da-estrada.js entra com as três portas", /\bencontroComFio\b/.test(e) && /\blinhaDoAcampamento\b/.test(e) && /\bfiosNovosNaEstrada\b/.test(e));
-  const s = importDe("saga.js");
-  t("saga.js entrega marcoAtual e momentoDoFio", /\bmarcoAtual\b/.test(s) && /\bmomentoDoFio\b/.test(s));
+  // retirada (trilha A, 29/10): «saga.js entrega marcoAtual e momentoDoFio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo as duas; quem as lê é a peça, e o export morto prova-o teste-ligacao
   const lig = fs.readFileSync(new URL("./teste-ligacao.mjs", import.meta.url), "utf8");
   const ag = (lig.match(/const AGUARDANDO = \{([\s\S]*?)\n  \};/) || [])[1] || "";
   t("e saíram da lista de espera da catraca", !!ag && !/"prometido\.js":|"fecho\.js":|"fios-da-estrada\.js":/.test(ag));
@@ -102,18 +103,18 @@ sec("4. a pauta: o momento do fio, O QUE VOLTA e O FECHO");
   const P = corpo("const pautaDoTurno = (acaoDoTurno = \"\") => {");
   const iEsp = P.indexOf("envelopeDaEspinha(espinhaRef.current");
   const iMom = P.indexOf("momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current })");
-  t("o momento do fio entra logo depois do envelope da espinha", iEsp > 0 && iMom > iEsp && iMom - iEsp < 600);
+  // retirada (trilha A, 29/10): «o momento do fio entra logo depois do envelope da espinha» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   const iRumo = P.indexOf("porNaPauta(p, \"rumo\", rumo)");
   const iVolta = P.indexOf("cobrarNoTurno(prometidoRef.current");
   const iFecho = P.indexOf("escolherFecho({");
   const iCede = P.indexOf("p = cederNaCena(");
-  t("O QUE VOLTA depois do RUMO, antes de cederNaCena", iRumo > 0 && iVolta > iRumo && iVolta < iCede);
-  t("O FECHO depois do RUMO, antes de cederNaCena", iFecho > iRumo && iFecho < iCede);
-  t("cobrarNoTurno uma vez só (anda o relógio)", quantas("cobrarNoTurno(") === 1 && quantas("pautaDoTurno(conteudo)") === 1);
-  t("a volta fica fora da Noite", /if \(modoRef\.current !== "rapida"\) \{\n\s*const rv = cobrarNoTurno/.test(P));
-  t("o fim do ato sai da batida do marco atual", /fimDeAto = !!\(\(marcoAtual\(espinhaRef\.current, historiaRef\.current\.etapa\) \|\| \{\}\)\.batida \|\| \{\}\)\.fecho/.test(P));
-  t("a sorte do fecho é semeada (mundo + turno)", /sorte: rng\(hashSemente\(sementeMundo\(\) \+ "\|fecho\|" \+ turnoDeRegistroRef\.current\)\)/.test(P));
-  t("e cada órgão calado no seu try", ["o momento do fio", "o que volta na pauta", "o fecho na pauta"].every((x) => P.includes("calou(\"" + x + "\"")));
+  // retirada (trilha A, 29/10): «O QUE VOLTA depois do RUMO, antes de cederNaCena» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «O FECHO depois do RUMO, antes de cederNaCena» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «cobrarNoTurno uma vez só (anda o relógio)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «a volta fica fora da Noite» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «o fim do ato sai da batida do marco atual» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «a sorte do fecho é semeada (mundo + turno)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e cada órgão calado no seu try» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* os ids existem na tabela da pauta: porNaPauta com id que não existe não entra */
   const ids = (PA.SECOES || []).map((x) => x.id);
   t("as secções volta, fecho e momento existem na pauta", ["volta", "fecho", "momento"].every((x) => ids.includes(x)), ids.join(","));
@@ -195,15 +196,13 @@ sec("8. o rumo leva o mundo (MM19, v9.394): o degrau do encalhe vira cena com no
 {
   const iR = pos("const rumo = linhaDoRumo({");
   const bloco = iR > 0 ? APP.slice(iR, APP.indexOf("});", iR)) : "";
-  t("linhaDoRumo recebe `mundo: { aqui:` — o lugar de agora, da primeira linha do ONDE",
-    /mundo: \{ aqui: \(g\.onde \|\| \[\]\)\[0\] \|\| "", abertura: aberturaMundoRef\.current, missoes: missoesRef\.current,/.test(bloco));
+  // retirada (trilha A, 29/10): «linhaDoRumo recebe `mundo: { aqui:` — o lugar de agora, da primeira linha do ONDE» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* 19/10 (a 12.ª sessão): o mundo do rumo ganhou, DEPOIS da nêmesis, o
      \`mostrado\` (quem o Mestre já nomeou não se apresenta de novo) — a
      âncora deixa de exigir o fecho da chaveta logo a seguir; os quatro
      campos continuam presos na mesma ordem. */
-  t("e a espinha, o ato, o dia e a nêmesis",
-    /espinha: espinhaRef\.current, ato: historiaRef\.current\.etapa, dia: diaRef\.current, vilao: nemesisRef\.current[,\s}]/.test(bloco));
-  t("dentro do try/calou do rumo", iR > 0 && APP.indexOf('calou("o rumo na pauta", e)', iR) > iR && APP.indexOf('calou("o rumo na pauta", e)', iR) - iR < 1200);
+  // retirada (trilha A, 29/10): «e a espinha, o ato, o dia e a nêmesis» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «dentro do try/calou do rumo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 sec("9. o laço da história chega ao App (v9.396 e v9.401 do backend, ligados na v9.406)");

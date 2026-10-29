@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
-import { nomeCidade, nomePessoa, nomeTaverna, sortear, nomesAMao, linhaDosNomesAMao } from "./nomes.js";
-import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, promoverNoDia, saidaParaPauta, agirForaDeCena, foraDeCenaParaPauta, boatoDoForaDeCena } from "./elenco.js";
+import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
+import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, promoverNoDia, agirForaDeCena, boatoDoForaDeCena } from "./elenco.js";
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
@@ -18,17 +18,17 @@ import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGu
 import { rolarClima, rolarEncontro, investidaDaEstrada, envelopeDaInvestida } from "./encontros.js";
 import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
-import { nucleoDaCampanha, quemEParaPauta, garantirCoracaoDoSave } from "./nucleo.js";
-import { subtramasDoNucleo, avancarCoracao, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha, favorJaPedido } from "./subtramas.js";
+import { nucleoDaCampanha, garantirCoracaoDoSave } from "./nucleo.js";
+import { subtramasDoNucleo, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha, favorJaPedido } from "./subtramas.js";
 import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
-import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, masmorraParaPauta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
+import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
-import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, envelopeDoDominio, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
+import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
 import { perfilDeCriatura, perfilDe, elementoDaArma, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
@@ -49,21 +49,21 @@ import { PainelReacao } from "./painel-reacao.jsx";
    Letal ou poupar, e "como voce faz isso?" -- a conta inteira mora em
    `golpe-final.js`; o App so liga a fiacao e pinta o cartao (peca propria,
    `painel-golpe-final.jsx`, pelo mesmo molde do cartao da reacao). */
-import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, golpeFinalNaPauta } from "./golpe-final.js";
+import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
-import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta, precosDaRua } from "./mercado.js";
-import { envelopeDoComercio, generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
+import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, resumoMercadoPrompt, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta } from "./mercado.js";
+import { generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { fichaParaPauta, fichaDaCidade } from "./cidade-por-dentro.js";
 import { genteParaPauta } from "./gente-por-dentro.js";
 /* MM14: as perguntas ao Mestre — perguntar é de graça, e as várias fichas
    juntam a resposta pela ordem em que a frase as pediu */
-import { soPergunta, juntarRespostas } from "./perguntas.js";
+import { soPergunta } from "./perguntas.js";
 import { garantirFichaCompanheiro, resumoGrupoPrompt } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { criarCondicao, limparPorDescanso, resumoCondicoesPrompt, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
-import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, pautaDoEscondido, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
-import { luzDaLuta, aplicarGestoDaLuz, luzParaPauta } from "./luz.js";
+import { ESCONDIDO, nascerEscondido, quemMeVe, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
+import { luzDaLuta, aplicarGestoDaLuz } from "./luz.js";
 import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.js";
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
@@ -83,8 +83,7 @@ import { PERICIAS, periciaPorId, garantirPericias, periciasIniciais, bonusDePeri
 import { HEROISMO_MAX, GASTOS, gastoPorId, garantirHeroismo, ganharHeroismo, podeGastar, gastarHeroismo, validarDeclaracao, envelopeDeclaracao, envelopeRefazer, resumoHeroismoPrompt, HEROISMO_PROMPT } from "./heroismo.js";
 import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastarDadoDeVida, podeDescansoLongo, resumoDescansoPrompt, DESCANSO_PROMPT, descansoDaFrase, ofertaDoAcampamento, reciboDoDescanso, VEREDITO_DO_DESCANSO } from "./descanso.js";
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, resumoRelogiosPrompt, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
-import { menteDaCriatura, intencaoDaVez, intencaoPorId, linhaDaLuta, envelopeDaVirada, ADVERSARIO_PROMPT } from "./adversario.js";
-import { consultarCobrador, linhaDoMundo, envelopeDoMundo } from "./cobrador.js";
+import { menteDaCriatura, intencaoPorId, ADVERSARIO_PROMPT } from "./adversario.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, garantirDia, zerarDia, folgaDoDia, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
 import { garantirGrade, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, resumoGridPrompt, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar } from "./grid.js";
 /* v9.255 (Fase X, X2): a conta do alcance do golpe saiu daqui de dentro e
@@ -101,8 +100,8 @@ import { decidirTurno, cascataDoTurno, proximaPorta, linhaDaDecisao } from "./tu
 import { lerPoder, lerConsumo, habilidadeDeclarada, falaDoPoder, envelopeDoPoder } from "./poderes.js";
 import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo, usarAtivo, falaDoAtivoNegado, envelopeDoAtivo, envelopeDaReliquiaAchada } from "./relicas.js";
 import { falaDaListaAparada } from "./emboscada.js";
-import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel, LUTA_SEM_PAINEL } from "./agressao.js";
-import { montarEmCena, pautaComEmCena, quemNaFrase } from "./em-cena.js";
+import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel } from "./agressao.js";
+import { montarEmCena, quemNaFrase } from "./em-cena.js";
 import { fichasDaCena, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
 import { FileiraAVista, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
@@ -116,7 +115,6 @@ import { garantirLivro, semear, regar, pagar } from "./promessas.js";
 import { acaoDaBolsa, sementeDoItem, colheitaDoItem, verboPorId } from "./itens-uteis.js";
 /* A MESA POSTA (v9.201) — o juizo da acao. Catalogo em mesa-posta.js; a
    aposta (as duas versoes da cena) entra na pauta quando a acao casa. */
-import { situacaoQueCasa, apostas } from "./mesa-posta.js";
 /* O TERMOMETRO (v9.202) — le o jogador e muda o folego da onda, nunca a
    ordem. Conta em termometro.js; aqui so se monta o snapshot dos refs. */
 import { lerTermometro, folegoDaLeitura } from "./termometro.js";
@@ -126,7 +124,7 @@ import { lerTermometro, folegoDaLeitura } from "./termometro.js";
 import { garantirReviravolta, elegerReviravoltas, sementesDaReviravolta, quemPodeRevelar, maiorPodeNascer, menorPodeNascer, diasEntreRegasDe, oDiaSeguinte, revelacaoDe, alvoDaForma } from "./reviravoltas.js";
 /* O PESO DA CENA (v9.204) — luto e gloria como movimento. Conta em
    peso.js; o App junta os fatos de evento e a pauta cala o mercado. */
-import { pesoDaCena, vetoDoPeso, seguraOCompasso } from "./peso.js";
+import { pesoDaCena, seguraOCompasso } from "./peso.js";
 /* O ENCALHE (v9.205) — o sabio percebe o aluno perdido, e o mundo vai
    busca-lo. Conta em encalhe.js; o App le o encalhe e sobe a escada. */
 import { garantirEscada, subirEscada } from "./encalhe.js";
@@ -136,7 +134,7 @@ import { garantirEscada, subirEscada } from "./encalhe.js";
 import { garantirPosturaAtiva, derivarPostura, moralDoInimigo, viesDoOraculo, fatorDeMercado } from "./posturas.js";
 /* OS EPISODIOS (v9.207) — as subestruturas que o momento aciona. Conta em
    episodios.js; o App abre, semeia no Livro, avanca e fecha no arco. */
-import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, envelopeDoEpisodio, cenaResolvida, episodioPorId } from "./episodios.js";
+import { garantirEpisodio, episodioQueAbre, sementesDoEpisodio, avancarEpisodio, cenaResolvida, episodioPorId } from "./episodios.js";
 /* A MEMORIA DO GESTO (v9.208) — o mundo lembra como te trataram e cobra
    quando a mare vira. Conta em gesto.js. */
 import { garantirGestos, registrarGesto, cobrarNaVirada, envelopeDaMemoria } from "./gesto.js";
@@ -150,7 +148,7 @@ import { ESTADO_VERSAO, estadoVazio, estadoDoSave, saveDoEstado, vistaDoCampo } 
    na mesa. Conta em prontos.js, uma-noite.js e torneio.js. */
 import { PRONTOS, montarPronto, prontoPorId } from "./prontos.js";
 import { mundoDaNoite, posturaDaNoite, tetoDoMarco, veredito as vereditoDaNoite, converterParaCampanha, sortearNoite } from "./uma-noite.js";
-import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, registrarMinhaLuta, faseCompleta, avancarFase as avancarFaseTorneio, epilogar, envelopeDaChave, provocacaoDoRival } from "./torneio.js";
+import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival, registrarMinhaLuta, faseCompleta, avancarFase as avancarFaseTorneio, epilogar } from "./torneio.js";
 /* O DUELO (v9.219 — D2): jogador contra jogador com o determinismo por
    juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
 import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave, cartaDaFicha, cartaDoSelo, lerCarta, souLadoA, sementeDaSala, versoesBatem } from "./duelo.js";
@@ -166,7 +164,7 @@ import { partidaNaRegiao } from "./marcha.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, resumoCelulaPrompt, linhaDaCelula } from "./celulas.js";
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
-import { garantirForma, travaDaPartida, chaveDaMorte, leiParaPauta, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
+import { garantirForma, travaDaPartida, chaveDaMorte, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, resumoLugarPrompt, umSoLugar } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, resumoComodosPrompt, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
@@ -175,7 +173,7 @@ import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, en
    falar. Tudo por tabela em `sem-espada.js`; o App só lê o veredito, cobra
    a ação e aplica o que ele devolve. */
 import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
-import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, procuradoParaPauta, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
+import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
 import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, cumprirProposito, propositoCumprido, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, resumoDaqui, resumoChefesPrompt, chefesDoMundo, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
@@ -187,33 +185,33 @@ import { resumoCenaPrompt, registrarConfidencia, garantirConfidencias, elencoDaC
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
-import { garantirEspaco, paraPauta, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, envelopeDaEspinha, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, marcoAtual, momentoDoFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
-import { segredosGuardados, vetoDoSegredo, peneirarCanone } from "./segredo-guardado.js";
+import { garantirEspaco, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
+import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
+import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
-import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura, proximoPasso, fioParaAPrincipal, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
+import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
-import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, envelopeDaGuilda, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
+import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
-import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from "./pauta.js";
+import { textoDaPauta } from "./pauta.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
-import { lerOPedido, fioDaHistoria, garantirEscuta, degrauDaEscuta, linhaDoRumo, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
+import { lerOPedido, fioDaHistoria, garantirEscuta, escutarOTurno, separarEnvelopes, fechoDoPedido } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
-import { garantirPrometido, guardarSementes, pagarSementes, cobrarNoTurno, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
-import { escolherFecho, fechoDaNarrativa } from "./fecho.js";
+import { garantirPrometido, guardarSementes, pagarSementes, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
+import { fechoDaNarrativa } from "./fecho.js";
 import { encontroComFio, linhaDoAcampamento, fiosNovosNaEstrada } from "./fios-da-estrada.js";
-import { calaNaMasmorra, aquiDoTurno, cenaNaMasmorra, linhaDaFicha, horizonteDaPergunta } from "./masmorra-sem-cidade.js";
+import { calaNaMasmorra, aquiDoTurno, cenaNaMasmorra, horizonteDaPergunta } from "./masmorra-sem-cidade.js";
 import { atoDoTexto, garantirElenco, marcarMovimento, paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";
-import { dossieDe, promptDoAtor, pedidoDoAtor, envelopeDasFalas, bocasDoTurno, falaDaResposta } from "./falas.js";
+import { dossieDe, promptDoAtor, pedidoDoAtor, bocasDoTurno, falaDaResposta } from "./falas.js";
 import { indoleDe, linhaDaIndole, dispararProposito, pesarConvite, envelopeDoConvite } from "./indole.js";
-import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, oQueEleNaoSabe, certezaDe, responder, paraPauta as vilaoParaPauta, envelopeDoCorpo } from "./antagonista.js";
-import { garantirAliados, nascerAliado, andarVontade, cruzouOCodigo, vontadePorId, codigoPorId, DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta } from "./aliado.js";
-import { garantirRegistro, anotar, podar, paraPauta as arquivistaParaPauta, resumoDoRegistro } from "./registro.js";
+import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, envelopeDoCorpo } from "./antagonista.js";
+import { garantirAliados, andarVontade } from "./aliado.js";
+import { garantirRegistro, anotar, podar, resumoDoRegistro } from "./registro.js";
 import { criarChao, garantirChao, porNoChao, tirarDoChao, pertoDaqui, achadoDeEquipamento, achadoDeConsumivel, achadoDeComponente, resumoDoChao, envelopeDoRecolhimento, envelopeDoQueFicou, distanciaAte, RAIO_EXAME, CHAO_PROMPT } from "./chao.js";
 import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { custoRef, ultimoProvedorRef } from "./bastidor.js";
@@ -244,7 +242,7 @@ import { oGatilhoDoCronista, oPedidoAoCronista, oAceitoDoCronista } from "./moto
 import { registrarOLugar, nevoaDaVizinhanca, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
-import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao } from "./motor/correcao-do-juiz.js";
+import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correcao-do-juiz.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
@@ -258,7 +256,7 @@ import { mensagensComRecibo, mensagensComFimDaLuta, caidosDaLuta, desfechoDoFech
 import { gestoDoCampo } from "./campo-do-turno.js";
 /* MM (11/10, a luta tem saída): a luta em que ninguém pode agir acaba, e quem
    ficou de pé decide o que faz com os caídos — por tabela. */
-import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, vistaDaLuta, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
+import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
 import { FichaVisual } from "./painel-ficha.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
@@ -266,7 +264,7 @@ import { PainelAscensao } from "./painel-ascensao.jsx";
 import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
 import { PainelDiplomacia } from "./painel-diplomacia.jsx";
-import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco, pesarProposta, custoDoPresente, presentear, envelopeDaResposta, envelopeDoPresente, envelopeDasPotencias, golpeDaGuerra, apetitePorId, medoPorId } from "./diplomacia.js";
+import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco, pesarProposta, custoDoPresente, presentear, envelopeDaResposta, envelopeDoPresente, golpeDaGuerra, apetitePorId, medoPorId } from "./diplomacia.js";
 import { PainelMapa } from "./painel-mapa.jsx";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { TelaDeBatalha } from "./painel-batalha.jsx";
@@ -342,6 +340,7 @@ import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, eh
 import { aplicarPoder } from "./poder-de-classe.js";
 import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMagia, quebrarConcentracao, notaDosBuffs } from "./efeitos.js";
 import { carimbarALuta } from "./motor/carimbo-da-luta.js";
+import { aPautaDoTurno, REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
 import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi } from "./motor/golpe-no-corpo.js";
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
@@ -6977,29 +6976,12 @@ export default function Taverna() {
 
   /* ---------------- A PAUTA DO TURNO (v9.104) ----------------
      Um lugar só, ordenado e com teto, para tudo o que o Mestre decidiu.
-     Nasce com o Geógrafo dentro; cada sistema se muda para cá quando
-     chegar a vez dele. */
+     Desde 29/10 monta-se no motor (src/motor/pauta-do-turno.js); o que fica
+     aqui é o que a tela e o oráculo também leem. */
   /* ---------------- O QUE A OPOSIÇÃO QUER (v9.110) ----------------
      Traduz o combate para a situação que o acervo do Adversário sabe
      ler. As palavras do LUGAR vêm do Geógrafo prontas — duas versões do
      mesmo chão seria a garantia de que uma das duas ia mentir. */
-  /* Os alvos como o Adversário os enxerga. Serve só para a LINHA da
-     Pauta poder nomear quem apanha — a escolha de verdade acontece
-     dentro do `turnoDosInimigos`, com as bandeiras que só o motor sabe
-     (alcance contra a grade, quem está no caminho). */
-  const alvosDaLuta = () => {
-    try {
-      const p0 = fichaViva() || personagem || {};
-      const grupo = (p0.grupo || []).filter((g) => (g.vida || 0) > 0);
-      return [
-        { ref: "jogador", nome: p0.nome, vida: p0.vida, vidaMax: p0.vidaMax, nivel: p0.nivel, heroi: true,
-          conjurador: perfilCombate(p0.classe || "").tipo === "conjurador" },
-        ...grupo.map((g, i) => ({ ref: "grupo", nome: g.nome, vida: g.vida, vidaMax: g.vidaMax || g.vida, nivel: g.nivel || 1, i,
-          conjurador: perfilCombate(g.classe || "").tipo === "conjurador",
-          cura: ["Clérigo", "Druida", "Bardo"].includes(g.classe || "") })),
-      ];
-    } catch (e) { return calou("alvosDaLuta", e); }
-  };
 
   const lutaDaMesa = () => {
     try {
@@ -7055,34 +7037,6 @@ export default function Taverna() {
         posturaMoral: moralDoInimigo((posturaRef.current || {}).postura),
       };
     } catch (e) { calou("lutaDaMesa", e); return null; }
-  };
-
-  /* A intenção da luta e o que ela virou. A memória é por COMBATE: sem
-     ela não existe "virou", existe só "agora é outra" — e um inimigo que
-     troca de plano toda rodada não tem plano. */
-  const intencaoDaLuta = () => {
-    const s = lutaDaMesa();
-    if (!s) return null;
-    const v = intencaoDaVez(s, { antes: intencaoRef.current || "" });
-    if (!v || !v.intencao) return null;
-    return { ...v, situacao: s };
-  };
-
-  /* O QUE O MUNDO FAZ SOBRE UMA COISA DE TRÊS DIAS ATRÁS (v9.112).
-     Ele lê o REGISTRO, que já é o livro-razão: o quê, quando, onde,
-     quem viu, o peso e agora o ato. Nada de estrutura nova. */
-  const oQueOMundoCobra = () => {
-    try {
-      return consultarCobrador(registroRef.current, {
-        dia: diaRef.current,
-        cobradas: cobradasRef.current,
-        fama: Math.round(famaAtual()),
-        ultimaCobranca: ultimaCobrancaRef.current,
-        ultimasFormas: formasCobradasRef.current,
-        publico: !!(espacoDaMesa() || {}).publico,
-        temGente: pessoasDaCena().length > 0,
-      });
-    } catch (e) { calou("oQueOMundoCobra", e); return null; }
   };
 
   /* Achar a cidade no mapa era feito em três lugares, cada um com a sua
@@ -7325,537 +7279,47 @@ export default function Taverna() {
   const paginasDoCodiceAgora = () => {
     try { return paginasDoCodice(memoriaRef.current, contextoDasFichas().ctx) || []; } catch (e) { calou("as páginas do Códice", e); return []; }
   };
-  const pautaDoTurno = (acaoDoTurno = "") => {
-    let p = garantirPauta(null);
-    cobrouAgoraRef.current = false;
-    /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
-       dali em vez de refazer a conta, porque duas versões da mesma
-       verdade é como nasce o balanceamento fantasma desta casa */
-    const { longe, aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [], masmorra: masmorraRef.current });
-    const g = paraPauta({
-      ...contextoDoEspaco(),
-      espaco: espacoDaMesa(),
-      lex: (mundoAtual() || {}).lexico,
-      sitio: acampadoRef.current ? sitioRef.current : null,
-      clima: (climaRef.current && climaRef.current.rotulo) || "",
-      longe,
-    });
-    p = porNaPauta(p, "onde", g.onde);
-    /* MM16 nº 4: A PLANTA À VOLTA DA SALA (a sala mesma vai na 1.ª linha do
-       ONDE, que é de ferro). Fora da masmorra a função devolve nada. Na
-       luta, uma linha só: quem está e a quantos metros é do tabuleiro. */
-    try {
-      p = porNaPauta(p, "masmorra", masmorraParaPauta(masmorraRef.current, { luta: !!combateRef.current }));
-    } catch (e) { calou("masmorraParaPauta", e); }
-    /* MM17 C2: e, numa campanha com região, o que se sabe DE FORA do lugar
-       (a ficha: o tipo, o perigo, quem anda por lá, as horas até à base).
-       Na luta não entra: lá a secção é a linha do tabuleiro. */
-    try {
-      p = porNaPauta(p, "masmorra", linhaDaFicha(mapaRef.current, masmorraRef.current, { luta: !!combateRef.current }));
-    } catch (e) { calou("linhaDaFicha", e); }
-    /* 06/10: A LUZ DA LUTA — o escuro, a minha tocha, quem enxerga no
-       escuro. Vazia com tudo claro; prio barata (pauta.js). */
-    try {
-      if (combateRef.current) p = porNaPauta(p, "luz", luzParaPauta(luzDaLutaAgora(), { heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }));
-    } catch (e) { calou("luzParaPauta", e); }
-    /* MM (a luta tem saída): A VISTA DA LUTA. Na quinta sessão a prosa disse
-       "o dragão sumiu" com ele a 1,5 m, pôs Hakon a gritar a 0/12 e trocou a
-       cabeçada pelo sopro — o Narrador lia os golpes do meio da rodada e
-       nunca o estado do fim dela. Três linhas, dentro do teto da pauta: quem
-       está de pé e no chão, os vetos de quem caiu e de quem não sumiu, e os
-       golpes que o sistema nomeou. */
-    try {
-      const cV = combateRef.current;
-      if (cV) {
-        const gR = golpesDaRodadaRef.current;
-        const vista = vistaDaLuta({ heroi: fichaViva(), inimigos: cV.inimigos || [], lugar: cV.heroi || null,
-          golpes: gR && gR.rodada === (cV.rodada || 1) - 1 ? gR.golpes : [] });
-        p = porNaPauta(p, "quem", vista.quem);
-        p = porNaPauta(p, "vetoDoDesfecho", vista.vetos);
-        p = porNaPauta(p, "naoPode", vista.naoPode);
-      }
-    } catch (e) { calou("a vista da luta na pauta", e); }
-    /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque
-       é geografia antes de ser economia — a praça de um porto e a de uma
-       serra não se parecem, e o Narrador nunca teve como saber disso.
-       MM16 nº 5: a seção é "economia" (rótulo ONDE, prio 2,5). Como 4.ª
-       linha do ONDE ela tinha prio 1,3 e, numa masmorra, os 264 caracteres
-       de Vau Fincado tiravam do teto a frase do golpe final (sessão 3, M21
-       e M30). Na cidade lê-se igual; na luta cede (`cederNaCena`, abaixo). */
-    p = porNaPauta(p, "economia", envelopeDoComercio(cidadeDoMapa(cidadeAtualRef.current), diaRef.current));
-    /* v9.139: e, se este chão for seu, o que você decidiu sobre ele. Só
-       quando o herói está lá — governo de longe não é o que se vê na praça. */
-    {
-      const cd = cidadeDoMapa(cidadeAtualRef.current);
-      if (cd && cd.relacao === "jogador" && !masmorraRef.current) { /* MM16 nº 4: o domínio é a praça, não a masmorra */
-        p = porNaPauta(p, "onde", envelopeDoDominio(cd, (governosRef.current || {})[cd.nome], {
-          felicidade: ((reinoRef.current || {})[cd.nome] || {}).felicidade,
-          semente: sementeMundo(),
-        }));
-      }
-    }
-    /* v9.129: A SECAO `momento` estava declarada em `pauta.js` desde a v9.104
-       e nunca era preenchida — uma porta sem leitor. A espinha e o leitor
-       dela: "a batida da historia" e exatamente o marco em que se esta. */
-    /* v9.133: pertencer a uma casa muda como o mundo trata o heroi, e isso e
-       cena. Vai em ONDE porque e do mesmo naipe do lugar: contexto que
-       colore tudo o que acontece dentro dele. */
-    {
-      const casa = minhaCasa();
-      if (casa && !masmorraRef.current) p = porNaPauta(p, "onde", envelopeDaGuilda(casa)); /* MM16 nº 4: lá dentro a casa não é o lugar */
-    }
-    p = porNaPauta(p, "momento", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));
-    /* v9.391: a marca do antagonista no momento, o JÁ SE SABE do segredo que
-       acabou de cair, o que o mundo lembra de quem chegou a tempo */
-    let maoDoVilao = false; /* MM-C C2: a marca ou os servos do fio nesta cena (o vilão do núcleo só pede pela mão) */
-    try { const mf = momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current }); p = porNaPauta(p, "momento", mf); const assin = String(((espinhaRef.current || {}).fio || {}).assinatura || ""); if (assin && (mf || []).some((l) => String(l).includes(assin))) maoDoVilao = true; } catch (e) { calou("o momento do fio", e); }
-    /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
-       dentro da batida — o cerco que a Jornada esta vivendo agora. */
-    if (episodioRef.current && episodioRef.current.aberto) p = porNaPauta(p, "momento", envelopeDoEpisodio(episodioRef.current));
-    /* a Noite-torneio fala pelo mesmo canal: a chave, o rival, o teto do
-       interludio — instrucao de mesa, nunca nome de sistema */
-    if (modoRef.current === "rapida" && noiteRef.current && noiteRef.current.prato === "torneio" && torneioRef.current && !combateRef.current) {
-      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current) + " " + provocacaoDoRival(torneioRef.current) + " " + oEnvelopeDoFio("interludioDoTorneio"));
-    }
-    /* MM13: o prenúncio do sino é um aviso de UM turno — a pauta o consome
-       e apaga, para não repeti-lo enquanto ele espera para encher de vez. */
-    if (sinoDoTurnoRef.current) { p = porNaPauta(p, "momento", sinoDoTurnoRef.current); sinoDoTurnoRef.current = ""; }
-    /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
-       cheia a gente presente ganha dela, e é isso que se quer */
-    p = porNaPauta(p, "daqui", g.daqui);
-    /* MM12: a cidade por dentro — o hoje e a língua sempre, a resposta ao
-       que o jogador perguntou só quando ele pergunta. Nunca em jornada, em
-       masmorra nem em combate: ali não há rua para se perguntar nada dela. */
-    /* MM14: as tres fichas da mesa (cidade, gente, mercado), pela mesma
-       frase e o mesmo elenco desta cena — agora em fichasDaMesa, para que
-       o sinal do oraculo tambem consiga perguntar. */
-    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);
-    if (fc) p = porNaPauta(p, "cidade", fc.cidade);
-    /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a
-       frase pediu cada coisa — não pela ordem em que os módulos correram. */
-    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz, pc]));
-    /* E1 (o Narrador só narra): O PREÇO da rua — a cena mostra preços sem
-       ninguém perguntar, e é melhor que os mostre certos. Só com rua. */
-    try {
-      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso(), { moeda: moedaDoMundo() }));
-    } catch (e) { calou("precosDaRua", e); }
-    /* E1: NOMES À MÃO — dois nomes livres da cultura, para o figurante que a
-       cena pede. Ninguém do registo, do elenco nem do grupo. Ficam pendentes:
-       só contam como oferecidos se a linha chegar ao texto. */
-    nomesPendentesRef.current = null;
-    try {
-      const p0 = personagemRef.current || personagem || {};
-      const usados = [...Object.values(npcsRef.current || {}), ...nomesDoElenco(), ...(p0.grupo || []), p0.nome || ""].filter(Boolean);
-      const nomes = nomesAMao({ semente: sementeMundo(), dia: diaRef.current, cidade: cidadeAtualRef.current || "", genero: generoMundo(), lex: (mundoAtual() || {}).lexico, usados });
-      const linha = linhaDosNomesAMao(nomes);
-      if (linha) { p = porNaPauta(p, "nomes", linha); nomesPendentesRef.current = { nomes, linha }; }
-    } catch (e) { calou("nomesAMao", e); nomesPendentesRef.current = null; }
-    p = porNaPauta(p, "naoPode", g.naoPode);
-    /* 11/10 (MM11 · 5.ª sessão, M10): a compra ou a dádiva que a frase
-       declarou e o sistema não fechou — o Narrador não entrega o que a
-       bolsa não pagou */
-    /* MM-C · C0: se o próprio turno abriu o combate (a agressão declarada), o
-       veto da luta sem painel já não é verdade e não viaja */
-    try { if (combateRef.current && (naoPodeDoTurnoRef.current || []).includes(LUTA_SEM_PAINEL.veto)) naoPodeDoTurnoRef.current = naoPodeDoTurnoRef.current.filter((v) => v !== LUTA_SEM_PAINEL.veto); } catch (e) { calou("o veto da luta com o combate aberto", e); }
-    try { p = porNaPauta(p, "naoPode", naoPodeDoTurnoRef.current || []); } catch (e) { calou("o veto da bolsa da frase", e); }
-    /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
-    p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));
-    /* MM15 (4): o segredo que a espinha guarda não é a boca do Narrador —
-       o veto só nasce quando a frase do turno nomeia um segredo de pé. */
-    try {
-      p = porNaPauta(p, "naoPode", vetoDoSegredo(acaoDoTurno, segredosGuardados(espinhaRef.current, mundoDaBase()), { lugar: (lugarRef.current && lugarRef.current.nome) || "" }));
-    } catch (e) { calou("vetoDoSegredo", e); }
-    /* O JUIZ CORRIGE: a invenção da resposta anterior que o sistema contradiz,
-       com o número certo — só no turno logo a seguir, ou quando a frase toca a
-       coisa (vetosParaAPauta). O turno é o do textoDaPauta. */
-    try { p = porNaPauta(p, "vetoDoJuiz", ...vetosParaAPauta(vetosDoJuizRef.current, { turno: turnoDeRegistroRef.current + 1, cidade: cidadeAtualRef.current || "", frase: acaoDoTurno })); } catch (e) { calou("o veto do juiz na pauta", e); }
-    /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da
-       maré do porto. Só parado em cidade: no meio da estrada a linha do
-       andar de trás seria mentira sobre o lugar onde a cena está. */
-    if (!jornadaRef.current && !masmorraRef.current) { /* MM16 nº 4: a lei do andar é a da cidade, não a da masmorra */
-      const lf = leiParaPauta({
-        molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current,
-        forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(),
-        cidadeAtual: cidadeAtualRef.current, dia: diaRef.current,
-      });
-      p = porNaPauta(p, "onde", lf.onde);
-      p = porNaPauta(p, "naoPode", lf.naoPode);
-    }
-    /* v9.105: O ARQUIVISTA. Ele não resume a campanha — recupera as três
-       linhas que importam a ESTA cena, com esta gente, neste lugar. O
-       custo é fixo para sempre: uma campanha de mil turnos entrega as
-       mesmas três que uma de trinta. */
-    /* v9.106: O INTÉRPRETE. Uma linha por pessoa presente, no máximo
-       três. Ele diz o que cada uma FAZ; o que ela DIZ continua sendo do
-       Narrador, e é onde ele é insubstituível. */
-    {
-      /* v9.135: o Interprete e consultado UMA vez por turno, em `enviar`,
-         porque o ATOR precisa do movimento antes de a Pauta ser montada.
-         Consultar duas vezes sortearia dois movimentos e marcaria memoria
-         duas vezes — a pessoa faria uma coisa e falaria sobre outra. */
-      const r = interpreteRef.current || interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });
-      p = porNaPauta(p, "gente", r.linhas);
-      if (!interpreteRef.current) for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);
-      p = porNaPauta(p, "fala", envelopeDasFalas(falasDoTurnoRef.current));
-      /* v9.137: a seção ACABOU ("o que o sistema resolveu agora") estava
-         declarada na Pauta e não tinha UM produtor sequer. É exatamente o
-         lugar do propósito que amadureceu: o Mestre já resolveu, e o
-         Narrador só narra o momento em que aparece. */
-      p = porNaPauta(p, "acabou", (propositosDoTurnoRef.current || []).map((x) => x.envelope).join("\n"));
-      /* MM10: o crime deste turno (testemunhas, a lei, o preço) — uma vez
-         só, e depois limpo; e o veto de quem é procurado aqui, todo turno
-         em que durar. */
-      try {
-        if (crimeDoTurnoRef.current) {
-          p = porNaPauta(p, "acabou", crimeDoTurnoRef.current.acabou || []);
-          p = porNaPauta(p, "naoPode", crimeDoTurnoRef.current.naoPode || []);
-          crimeDoTurnoRef.current = null;
-        }
-        p = porNaPauta(p, "naoPode", procuradoParaPauta(leiRef.current, { cidade: cidadeAtualRef.current, dia: diaRef.current }).naoPode);
-      } catch (e) { calou("crimeParaPauta", e); }
-    }
-    /* MM13: O MUNDO PINGA FIOS — no máximo uma linha por turno, da primeira
-       pessoa em cena que tiver algo a dizer sobre a principal. */
-    try {
-      for (const pessoa of aqui || []) {
-        const fio = fioParaAPrincipal({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, semente: sementeMundo(), pessoa });
-        if (fio) { p = porNaPauta(p, "gente", fio); break; }
-      }
-    } catch (e) { calou("o fio da abertura", e); }
-    /* v9.108: O ALIADO AGE POR CONTA PRÓPRIA. Um por turno, e só um: o
-       silêncio dos outros é o que faz a vez de cada um valer alguma
-       coisa. */
-    /* v9.110: O ADVERSÁRIO. Uma linha, e ela é a mesma coisa que a
-       mecânica vai fazer: a prioridade de alvo desta intenção é a que
-       entra no `turnoDosInimigos` logo abaixo. Uma intenção que não muda
-       o alvo seria adjetivo. */
-    {
-      const v = intencaoDaLuta();
-      if (v) {
-        const antes = intencaoRef.current || "";
-        intencaoRef.current = v.intencao.id;
-        p = porNaPauta(p, "contra", linhaDaLuta(v.situacao, alvosDaLuta(), { antes }));
-        /* a VIRADA é fato consumado e vai ao canon, não à Pauta: a Pauta
-           diz o que vale agora, o canon diz o que já aconteceu e não se
-           desfaz. Sai uma vez só, na rodada em que virou. */
-        const env = envelopeDaVirada(v.situacao, { antes });
-        if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`;
-      }
-    }
-    {
-      const r = aliadoParaPauta(aliadosDaCena());
-      if (r.linhas.length) {
-        p = porNaPauta(p, "aliado", r.linhas);
-        marcarQueFalou(r.quem);
-        if (r.vaiEmbora) aliadoVaiEmbora(r.quem);
-      }
-    }
-    /* v9.107: A AMEAÇA PENSA. Duas linhas no máximo — o que ela concluiu
-       e o que faz por causa disso. A leitura sobe junto de propósito: sem
-       ela a resposta parece arbitrária, e com ela o Narrador sabe se está
-       encenando um vilão que acertou ou um que se enganou. */
-    {
-      const r = respostaDaAmeaca();
-      if (r) maoDoVilao = true;
-      /* nexo (11/10): o nome só depois do rosto — o mesmo motivo do arco */
-      if (r) p = porNaPauta(p, "vilao", vilaoParaPauta(r, { nome: ((nemesisRef.current || {}).conhecido && (nemesisRef.current || {}).nome) || "a ameaça" }));
-    }
-    /* v9.112: O MUNDO LEMBROU. Raro de propósito — uma vez a cada cinco
-       dias, no máximo. A dívida só é marcada como cobrada DEPOIS de a
-       linha entrar na Pauta: marcar antes perderia a conta para sempre
-       se ela não coubesse, e em silêncio. */
-    {
-      const r = oQueOMundoCobra();
-      const linha = r ? linhaDoMundo(r) : "";
-      if (linha) {
-        p = porNaPauta(p, "mundo", linha);
-        cobrouAgoraRef.current = true;
-        cobradasRef.current = [...cobradasRef.current, r.chave].slice(-200);
-        ultimaCobrancaRef.current = diaRef.current;
-        formasCobradasRef.current = [...formasCobradasRef.current, r.cobranca.id].slice(-6);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoMundo(r)}`;
-      }
-    }
-    /* v9.142: quem são as potências, o que cada uma quer e o que acha de
-       você. Vai em O MUNDO porque é o mundo em volta — e vai SEMPRE, não
-       só quando o mundo cobra uma dívida antiga. */
-    p = porNaPauta(p, "mundo", envelopeDasPotencias(potenciasAqui(), diplomaciaRef.current));
-    try { p = porNaPauta(p, "antes", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou("saidaParaPauta", e); }
-    /* MM-C C2: QUEM CARREGA — uma batida por turno, da subtrama de quem está
-       em cena (subtramas.js). Como a QUEM É, só conta se chegar ao texto:
-       fica pendente, e o envio confirma (confirmarCoracao). O que um clique
-       decidiu (a decisão, o porquê) entra uma vez, no turno que ele envia. */
-    let quemCarrega = "";
-    try {
-      const fala = coracaoFalaRef.current;
-      coracaoFalaRef.current = null;
-      if (fala && fala.linha) p = porNaPauta(p, fala.secao === "pergunta" ? "pergunta" : "coracao", fala.linha);
-      const nucleo = nucleoAgora();
-      const frase = String(acaoDoTurno || "").trimStart().startsWith("[") ? "" : String(acaoDoTurno || "");
-      const ctx = contextoDoCoracao(nucleo, { frase, maoDoVilao });
-      const r = fala && fala.proprio ? { coracao: coracaoRef.current, linha: "", quem: "", efeitos: [], longe: [], batida: null } : avancarCoracao(coracaoRef.current, nucleo, ctx); /* o turno que o próprio coração envia é a batida dele: nenhuma outra no mesmo fôlego */
-      if (r.linha) p = porNaPauta(p, "coracao", r.linha);
-      if ((r.longe || []).length) p = porNaPauta(p, "foraDeCena", r.longe.map((x) => x && x.texto).filter(Boolean));
-      quemCarrega = r.quem || "";
-      coracaoPendenteRef.current = { r, turno: ctx.turno, emCena: ctx.emCena };
-    } catch (e) { calou("avancarCoracao", e); coracaoPendenteRef.current = null; }
-    /* MM-C C1: QUEM É — a ficha por dentro de quem do núcleo está em cena,
-       uma pessoa por turno, e a mesma só de tantos em tantos turnos
-       (nucleo.js), no turno que a pauta leva. O ritmo só conta se a linha
-       CHEGA ao texto (o teto pode cortá-la): fica pendente, e o envio confirma. */
-    try {
-      const nucleo = nucleoAgora();
-      const esp = espinhaRef.current || {};
-      const turnoQ = turnoDeRegistroRef.current + 1;
-      const q = { ultimas: {}, cenas: {}, ...(quemERef.current || {}), pendente: null };
-      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega, ...elencoDoCoracao(), espinha: esp, cidade: cidadeDoCoracao() }); /* 13/10 (v9.461): quem a historia sabe longe nao leva a ficha */
-      p = porNaPauta(p, "quemE", ...(r.quemE || []));
-      quemERef.current = { ...q, pendente: r.quem && r.quemE && r.quemE[0] ? { quem: r.quem, turno: turnoQ, linha: r.quemE[0] } : null };
-    } catch (e) { calou("quemEParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }
-    p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {
-      onde: linhaDoLugarDaMesa(),
-      quem: (elencoDaOnda().aqui || []),
-      assunto: (compassoRef.current || {}).assunto || "",
-      turnoAtual: turnoDeRegistroRef.current,
-      diaAtual: diaRef.current,
-    }));
-    /* ---------------- O PESO DA CENA (v9.204) ----------------
-       Reconhece a gravidade dos fatos do turno, poe o peso na pauta e
-       CALA o mundo pelo canal do veto (mercado, oferta e trabalho somem).
-       Um peso por cena — pesoDaCena ja garante isso. Consome e limpa: o
-       peso e um beat, e "solta" e o jogador seguir quando quiser. */
-    try {
-      const cena = pesoDaCena(fatosDoPesoRef.current);
-      if (cena) ultimoPesoRef.current = { peso: cena.peso, dia: diaRef.current };
-      if (cena) {
-        p = porNaPauta(p, "peso", "Esta cena tem PESO: " + cena.nome + " — " + cena.diz + ". Quem tem laco com isto comparece.");
-        p = porNaPauta(p, "naoPode", vetoDoPeso(cena.peso));
-      }
-      fatosDoPesoRef.current = {};
-    } catch (e) { /* o peso nunca pode custar o turno */ }
-
-    /* ---------------- A MESA POSTA (v9.201) ----------------
-       Quando a acao declarada casa com uma situacao conhecida, as DUAS
-       versoes da cena chegam ao Narrador ANTES do dado — e a de falha
-       nomeia a moeda, a lei que impede o "nada acontece". Casa
-       conservador (chave forte) e fica de fora do combate, que tem
-       resolucao propria. Nunca custa o turno. */
-    try {
-      if (!combateRef.current) {
-        const sit = situacaoQueCasa(acaoDoTurno);
-        if (sit) { const ap = apostas(sit); if (ap) p = porNaPauta(p, "mesa", "Se " + ap.sePassa, "Se " + ap.seFalha, ap.noMeio ? "Se " + ap.noMeio : ""); }
-      }
-    } catch (e) { /* a aposta nunca pode custar o turno */ }
-    /* ---------------- MM3: O GOLPE FINAL, NA PAUTA ----------------
-       O envelope nasce em `continuarGolpeDoJogador` (aplicarEscolha ja
-       resolvido) e mora num ref ate a PROXIMA montagem da pauta -- que e
-       sempre a narracao do proprio golpe (`enviar` monta a pauta uma vez
-       por turno). Consome e limpa: um golpe final e um fato de UM turno,
-       nunca do proximo. */
-    try {
-      const gf = golpeFinalEnvelopeRef.current;
-      if (gf) p = golpeFinalNaPauta(p, gf); /* MM14: o "como" era cortado pelo teto em ACABOU (prio 3,1) e nunca chegava; vai em DESFECHO */
-    } catch (e) { /* o golpe final nunca pode custar o turno */ }
-    golpeFinalEnvelopeRef.current = null;
-    /* ---------------- MM6: O ESCONDIDO FORA DA LUTA ----------------
-       Dentro da luta a linha e a do tabuleiro (resumoGridPrompt, em `enviar`);
-       aqui e o veto — quem nao me viu nao pode reagir a mim por conta propria. */
-    try {
-      if (!combateRef.current) {
-        const peEsc = pautaDoEscondido(personagemRef.current || personagem, { presentes: aqui });
-        if (peEsc) p = porNaPauta(p, "naoPode", peEsc.naoPode);
-      }
-    } catch (e) { /* o veto do escondido nunca pode custar o turno */ }
-    /* MM18: O RUMO — reagir e responder primeiro, depois UMA ponte para o
-       próximo passo da principal; e, se o jogador está fora do fio há
-       turnos, o degrau da escada (o sinal, quem vem buscar, a cobrança).
-       Fora da luta: lá a ordem do turno é a do tabuleiro. Entra ANTES de
-       `cederNaCena` porque nada vem depois dele, e não cede: "rumo" não
-       está em nenhuma lista de `SECOES_QUE_CEDEM`. */
-    try {
-      if (!combateRef.current && modoRef.current !== "rapida") {
-        const rumo = linhaDoRumo({
-          pedido: lerOPedido(acaoDoTurno),
-          degrau: degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco),
-          passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
-          semente: diaRef.current,
-          /* MM19 (v9.394, o backend): o mundo que o degrau do encalhe precisa
-             para virar cena com nome e lugar — onde estou, o fio aberto, a
-             espinha e o ato, o dia, e quem anda contra mim */
-          mundo: { aqui: (g.onde || [])[0] || "", abertura: aberturaMundoRef.current, missoes: missoesRef.current,
-                   espinha: espinhaRef.current, ato: historiaRef.current.etapa, dia: diaRef.current, vilao: nemesisRef.current,
-                   /* 12.ª sessão: quem o Mestre já nomeou está em cena, e não se apresenta de novo */
-                   mostrado: falasDoMestre(mensagensRef.current) },
-        });
-        if (rumo) p = porNaPauta(p, "rumo", rumo);
-      }
-    } catch (e) { calou("o rumo na pauta", e); }
-    /* A CAMPANHA QUE PRENDE (item 1): O QUE VOLTA — a promessa que a narração
-       plantou e o sistema guardou volta quando amadurece. Anda o relógio, por
-       isso UMA vez por turno (pautaDoTurno só é chamada em `enviar`). Fora da
-       Noite: lá não há campanha para prometer. */
-    try {
-      if (modoRef.current !== "rapida") {
-        const rv = cobrarNoTurno(prometidoRef.current, {
-          pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current,
-          fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),
-          mortos: (baseMundoRef.current || {}).mortos || [],
-        });
-        prometidoRef.current = rv.estado;
-        if (rv.linha) p = porNaPauta(p, "volta", rv.linha);
-      }
-    } catch (e) { calou("o que volta na pauta", e); }
-    /* (item 2): O FECHO — como acaba a resposta deste turno, nunca o anterior;
-       no fim do ato, a escolha com preço (a batida que vira o ato). */
-    try {
-      let fimDeAto = false;
-      try { fimDeAto = !!((marcoAtual(espinhaRef.current, historiaRef.current.etapa) || {}).batida || {}).fecho; } catch (e) { calou("o fim do ato", e); }
-      const fx = escolherFecho({
-        pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current, fimDeAto,
-        gente: (pessoasDaCena() || []).length > 0 || ((personagemRef.current || {}).grupo || []).length > 0,
-        ultimo: fechoRef.current,
-        sorte: rng(hashSemente(sementeMundo() + "|fecho|" + turnoDeRegistroRef.current)),
-      });
-      fechoRef.current = fx.id;
-      p = porNaPauta(p, "fecho", fx.linha);
-    } catch (e) { calou("o fecho na pauta", e); }
-    /* MM16 nº 5: O QUE CEDE ONDE. A tabela é do motor (`SECOES_QUE_CEDEM`);
-       aqui só se diz que cena é esta. `arredores` é FORA DOS MUROS — sem
-       cidade (estrada, jornada) ou num lugar marcado `distancia: "arredores"`
-       —, o mesmo sinal de `ondeSeProcura`; `lugarRef` sozinho não serve,
-       porque também guarda o lugar "dentro" (a taberna, a praça). */
-    try {
-      const fora = !cidadeAtualRef.current || !!(lugarRef.current && lugarRef.current.distancia === "arredores");
-      p = cederNaCena(p, { luta: !!combateRef.current, masmorra: !!masmorraRef.current, arredores: fora });
-    } catch (e) { calou("cederNaCena", e); }
-    /* F2a · EM CENA: o sistema entrega ao Mestre a lista do que existe, e a
-       linha engole os NOMES À MÃO (que continuam a ser confirmados pela linha
-       deles, que vai dentro). Depois do cederNaCena: na luta não entra (a
-       vista da luta já é a lista), e a linha encolhe até não tirar nada. */
-    try {
-      const lista = montarEmCena(contextoDoEmCena(acaoDoTurno, aqui));
-      emCenaRef.current = lista;
-      p = pautaComEmCena(p, lista, { luta: !!combateRef.current, turno: turnoDeRegistroRef.current + 1 });
-    } catch (e) { calou("EM CENA", e); }
-    return p;
+  /* A PAUTA DO TURNO MORA NO MOTOR (Fase 4, trilha A, 29/10/2026). A
+     `pautaDoTurno` que estava aqui, e as oito funções que só ela chamava
+     (alvosDaLuta, intencaoDaLuta, oQueOMundoCobra, aliadosDaCena,
+     marcarQueFalou, aliadoVaiEmbora, menteDaAmeaca, respostaDaAmeaca), são
+     `aPautaDoTurno` em src/motor/pauta-do-turno.js, à letra e provadas byte
+     a byte contra o recorte deste arquivo (testes/pauta-dourado.json, 275
+     casos) — é o que deixa o `/api/turno` montar a pauta em Node.
+     O App dá-lhe o estado pelos refs que ela lê (REFS_DA_PAUTA: o campo e
+     o nome do ref aqui) e o render, e recebe pelo `aplicar` o que ela
+     escreveu, pela mesma lista. A lista é uma função, não um literal:
+     alguns destes refs nascem mais abaixo no componente, e um literal
+     avaliado aqui cairia antes de eles existirem. */
+  const refsDaPauta = () => ({
+    aberturaMundoRef, acampadoRef, aliadosRef, atoDoTurnoRef, baseMundoRef, cidadeAtualRef,
+    climaRef, cobradasRef, cobrouAgoraRef, combateRef, compassoRef, confidenciasRef,
+    contRef, coracaoRef, coracaoFalaRef, coracaoPendenteRef, coracaoRitmoRef, criaturaAVistaRef,
+    crimeDoTurnoRef, derrotadosDaSessaoRef, diaRef, diplomaciaRef, elencoSaveRef, elencoCacheRef,
+    elencoMemRef, emCenaRef, episodioRef, escutaRef, espinhaRef, faccaoJogadorRef,
+    falasDoTurnoRef, fatosDoPesoRef, fechoRef, formaRef, formasCobradasRef, golpeFinalEnvelopeRef,
+    golpesDaRodadaRef, governosRef, guildasRef, historiaRef, intencaoRef, interpreteRef,
+    jornadaRef, leiRef, lugarRef, mapaRef, masmorraRef, mensagensRef,
+    mercadoRef, mesaRef, minutoRef, missoesRef, modoRef, mundoRef,
+    naoPodeDoTurnoRef, nemesisRef, noiteRef, nomeCampanhaRef, nomesPendentesRef, notaRef,
+    npcsRef, nucleoCacheRef, personagemRef, posturaRef, prometidoRef, propositosDoTurnoRef,
+    quemERef, registroRef, reinoRef, relogiosRef, reviravoltaRef, saberRef,
+    sinoDoTurnoRef, sitioRef, subtramasCacheRef, torneioRef, turnoDeRegistroRef, ultimaAcaoRef,
+    ultimaCobrancaRef, ultimoPesoRef, vetosDoJuizRef, vilaoAgiuRef,
+  });
+  const estadoDaPauta = () => {
+    const refs = refsDaPauta();
+    const e = {};
+    for (const [c, r] of Object.entries(REFS_DA_PAUTA)) e[c] = refs[r.ref] ? refs[r.ref].current : undefined;
+    e.render = { personagem, mundo, nomeCampanha, mercado, governos, cidadeMercado, mercadoAqui };
+    return e;
+  };
+  const aplicarDaPauta = (x) => {
+    const refs = refsDaPauta();
+    for (const [c, v] of Object.entries(x || {})) { const r = REFS_DA_PAUTA[c]; if (r && refs[r.ref]) refs[r.ref].current = v; }
   };
 
-  /* ---------------- QUEM ANDA COMIGO (v9.108) ----------------
-     Traduz o grupo para a situação que o acervo do aliado sabe ler. A
-     alma de cada um nasce na primeira vez que ele é visto e nunca muda:
-     uma pessoa que troca de código toda semana não tem código. */
-  const aliadosDaCena = () => {
-    try {
-      const p0 = fichaViva() || personagem || {};
-      const grupo = p0.grupo || [];
-      if (!grupo.length) return [];
-      const mem = garantirAliados(aliadosRef.current);
-      const pares = paresEntre(npcsRef.current);
-      const ctxAto = contextoDoAto();
-      return grupo.map((g) => {
-        const nome = g.nome || "";
-        if (!mem[nome]) mem[nome] = nascerAliado(nome);
-        const a = mem[nome];
-        if (a.saiu) return null;
-        const v = vontadePorId(a.vontade);
-        const atrito = pares.find((x) => x.tipo === "rivalidade" && (x.a === nome || x.b === nome)
-          && grupo.some((o) => (o.nome || "") === (x.a === nome ? x.b : x.a)));
-        return {
-          nome,
-          vontade: a.vontade,
-          vontadeTexto: (v && v.o) || "",
-          apodrecerTexto: (v && v.apodrece) || "",
-          etapa: a.etapa,
-          apodrecendo: a.parada >= DIAS_ATE_APODRECER * 0.6,
-          apodreceu: a.apodreceu,
-          codigoTexto: (codigoPorId(a.codigos[0]) || {}).o || "",
-          cruzouAgora: !!cruzouOCodigo(a, contextoDoAto()),
-          cruzou: a.cruzou,
-          vinculo: Number(g.vinculo) || 50,
-          calado: a.calado,
-          atritoCom: atrito ? (atrito.a === nome ? atrito.b : atrito.a) : "",
-          publico: !!cidadeAtualRef.current && !acampadoRef.current,
-          emCidade: !!cidadeAtualRef.current,
-          acampado: !!acampadoRef.current,
-          emCombate: !!combateRef.current,
-          ato: atoDoTurnoRef.current,
-          /* o contexto do ato entra JUNTO da cena: as opiniões leem os
-             dois e separá-los foi o que fez a primeira versão calar */
-          ...ctxAto,
-        };
-      }).filter(Boolean);
-    } catch (e) { return calou("aliadosDaCena", e); }
-  };
-
-  /* O contexto que o CÓDIGO consulta. Grosseiro de propósito: um código
-     cruzado por engano custa uma cena; um nunca cruzado custa o módulo
-     inteiro, porque a peça que faz a relação gastar deixa de existir. */
-  const contextoDoAto = () => {
-    const p0 = fichaViva() || personagem || {};
-    return {
-      ato: atoDoTurnoRef.current,
-      presente: (p0.grupo || []).length > 0,
-      emCombate: !!combateRef.current,
-      rendido: false,
-      suborno: atoDoTurnoRef.current === "paguei" && /suborn|calar|compr[oa]/i.test(String(ultimaAcaoRef.current || "")),
-      alguemPrecisava: atoDoTurnoRef.current === "ignorei" && (contRef.current.pedidosRecusados || 0) > 0,
-      quebreiPromessa: false, roubeiPobre: false, fugi: (contRef.current.fugas || 0) > 0,
-      escolhiEstranho: false, usoProibido: false, saqueiCorpo: false, quebreiLei: false,
-      poupei: (contRef.current.poupados || 0) > 0,
-    };
-  };
   const ultimaAcaoRef = useRef("");
-
-  /* Depois de falar, ele cala por um tempo. E quem NÃO falou fica mais
-     perto da vez dele — é o que faz o grupo se revezar sozinho. */
-  const marcarQueFalou = (quem) => {
-    const mem = garantirAliados(aliadosRef.current);
-    for (const [nome, a] of Object.entries(mem)) {
-      mem[nome] = { ...a, calado: nome === quem ? 0 : a.calado + 1 };
-    }
-    aliadosRef.current = mem;
-  };
-
-  const aliadoVaiEmbora = (quem) => {
-    const mem = garantirAliados(aliadosRef.current);
-    if (!mem[quem]) return;
-    mem[quem] = { ...mem[quem], saiu: true };
-    aliadosRef.current = mem;
-    mudarFicha((p) => ({ ...p, grupo: (p.grupo || []).filter((g) => (g.nome || "") !== quem) }));
-    pushMsgs([{ autor: "sistema", texto: `${quem} pegou as coisas dele e foi embora.` }]);
-    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaGente("companheiroFoiEmbora", { quem });
-  };
-
-  /* ---------------- A MENTE DA AMEAÇA (v9.107) ----------------
-     O retrato que o Sistema Vilão lê. Nenhum campo é inventado: o plano
-     vem de `vilao.js`, o que chegou até ele vem do livro-razão, e o
-     herói pelos olhos dele sai da ficha e dos contadores. */
-  const menteDaAmeaca = () => {
-    const v = nemesisRef.current;
-    if (!v || !v.nome) return null;
-    const p0 = fichaViva() || personagem || {};
-    const saber = garantirSaber(saberRef.current);
-    const naoSabe = oQueEleNaoSabe(saber, (registroRef.current || []).filter((x) => x.peso >= 2));
-    return {
-      nome: v.nome, arquetipo: v.arquetipo, corpo: v.corpo || "pessoa",
-      passo: v.passo || 0, conhecido: !!v.conhecido, marcas: (v.marcas || []).length,
-      quanto: saber.length,
-      certezaMax: saber.reduce((a, x) => Math.max(a, certezaDe(x)), 0),
-      ignora: naoSabe.length,
-      fama: Math.round(famaAtual()),
-      nivel: p0.nivel || 1,
-      heroiFerido: (p0.vida || 0) < (p0.vidaMax || 1) * 0.5,
-      heroiSozinho: !(p0.grupo || []).length,
-      heroiRico: (p0.moedas || 0) >= 300,
-      heroiMatou: (contRef.current.inimigosDerrotados || 0) > 0,
-      heroiPoupou: (contRef.current.poupados || 0) > 0,
-      heroiFugiu: (contRef.current.fugas || 0) > 0,
-      heroiAceitouAlgo: (contRef.current.contratos || 0) > 0,
-      perto: !!(v.marcas || []).some((m) => String(m).includes(cidadeAtualRef.current || "\u0000")),
-      dia: diaRef.current,
-      desdeQueAgiu: diaRef.current - vilaoAgiuRef.current,
-    };
-  };
 
   /* ---------------- O QUE CHEGA ATÉ ELA (v9.107) ----------------
      Nada aqui inventa informação: as três fontes já existiam no jogo e
@@ -7882,16 +7346,6 @@ export default function Taverna() {
         o: linha.oQue, fonte, dia: diaRef.current, sobre: (linha.quem || [])[0] || "",
       });
     } catch { /* o que a ameaça sabe nunca pode custar um turno */ }
-  };
-
-  const respostaDaAmeaca = () => {
-    try {
-      const m = menteDaAmeaca();
-      if (!m) return null;
-      const r = responder(m);
-      if (r) vilaoAgiuRef.current = diaRef.current;
-      return r;
-    } catch { return null; }
   };
 
   /* ---------------- QUEM ESTÁ NA CENA, PARA O INTÉRPRETE (v9.106) ----------------
@@ -11638,7 +11092,7 @@ export default function Taverna() {
     mexerNoEpisodio();
     mexerNaNoite();
     falasDoTurnoRef.current = await colherAsFalas(conteudo);
-    const pauta = textoDaPauta(pautaDoTurno(conteudo), { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = nomesPendentesRef.current; nomesPendentesRef.current = null; if (np && np.linha && pauta.includes(np.linha)) nomesOferecidosRef.current = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
+    const pauta = textoDaPauta(aPautaDoTurno(estadoDaPauta(), { frase: conteudo }, { calou, pushMsgs, setPersonagem, aplicar: aplicarDaPauta }).pauta, { turno: turnoDeRegistroRef.current + 1 }); try { const q = quemERef.current || {}; const pq = q.pendente; if (pq) quemERef.current = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = nomesPendentesRef.current; nomesPendentesRef.current = null; if (np && np.linha && pauta.includes(np.linha)) nomesOferecidosRef.current = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!combateRef.current;

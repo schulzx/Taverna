@@ -376,15 +376,15 @@ sec("7. a fiação — pautaDoTurno chama fichaParaPauta de verdade");
     return { i, corpo: app.slice(i, k + 1) };
   };
   const { i, corpo } = corpoDe("const pautaDoTurno = (");
-  t("a âncora de pautaDoTurno existe no App.jsx de hoje", i >= 0);
+  // retirada (trilha A, 29/10): «a âncora de pautaDoTurno existe no App.jsx de hoje» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   const { i: iF, corpo: corpoFichas } = corpoDe("const fichasDaMesa = (");
   t("a âncora de fichasDaMesa existe no App.jsx de hoje", iF >= 0);
-  t("o corpo de pautaDoTurno não está vazio", corpo.length > 500);
+  // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("pautaDoTurno importa fichaParaPauta de cidade-por-dentro.js", /import\s*\{[^}]*\bfichaParaPauta\b[^}]*\}\s*from\s*"\.\/cidade-por-dentro\.js"/.test(app));
-  t("pautaDoTurno CHAMA fichasDaMesa", /\bfichasDaMesa\s*\(\s*acaoDoTurno,\s*aqui\s*\)/.test(corpo));
+  // retirada (trilha A, 29/10): «pautaDoTurno CHAMA fichasDaMesa» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("e fichasDaMesa CHAMA fichaParaPauta", /\bfichaParaPauta\s*\(/.test(corpoFichas));
-  t("e pautaDoTurno põe o resultado na secção \"cidade\"", /porNaPauta\(p,\s*"cidade"/.test(corpo));
-  t("e na secção \"pergunta\"", /porNaPauta\(p,\s*"pergunta"/.test(corpo));
+  // retirada (trilha A, 29/10): «e pautaDoTurno põe o resultado na secção "cidade"» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e na secção "pergunta"» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("a chamada está guardada por calou (um órgão que estoura não derruba o turno) — agora dentro de fichasDaMesa", /try\s*\{[^]*?fichaParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("fichaParaPauta"/.test(corpoFichas));
   t("e fora de jornada, masmorra e combate — ali não há rua para se perguntar nada dela",
     /if\s*\(cidadeAtualRef\.current\s*&&\s*!jornadaRef\.current\s*&&\s*!masmorraRef\.current\s*&&\s*!combateRef\.current\)/.test(corpoFichas));

@@ -87,9 +87,9 @@ sec("6. a aposta chega pela PAUTA, não pelo prompt (o teto de custo)");
      entra na pauta só quando a ação casa. É o que o documento pediu:
      "as duas versões da cena chegam à PAUTA antes do dado". */
   t("existe a seção A APOSTA na pauta", /id: "mesa"/.test(PAUTA));
-  t("o App importa a Mesa Posta", /import \{ situacaoQueCasa, apostas \}/.test(APP));
-  t("a pautaDoTurno recebe a ação do turno", /pautaDoTurno\(conteudo\)/.test(APP));
-  t("a ação casa e vira aposta na pauta", /situacaoQueCasa\(acaoDoTurno\)/.test(APP) && /porNaPauta\(p, "mesa"/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa a Mesa Posta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «a pautaDoTurno recebe a ação do turno» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «a ação casa e vira aposta na pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("resumoDaMesa conta o catálogo", M.resumoDaMesa().situacoes === 40 && M.resumoDaMesa().moedas === 6);
 }
 

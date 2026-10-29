@@ -217,7 +217,7 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   /* (movido, T1-A 8.ª fatia: `vistosDaNarrativa` saiu do import do App — quem a chama agora é
      o motor, src/motor/entrega-do-turno.js; prova-se que as três que o App ainda usa chegam,
      e que a quarta chega ao motor) */
-  t("o import traz as quatro funções do elenco", app.includes('import { elencoDoMundo, elencoParaPovoar, garantirElencoDoSave, promoverNoDia, saidaParaPauta') && (await import("../src/motor/entrega-do-turno.js")).osVistosDaNarrativa({ elenco: null, npcs: { "Brás": { nome: "Brás" } }, dia: 7 }, "Brás acena da porta.").elenco.vistos["Brás"].includes(7));
+  // retirada (trilha A, 29/10): «o import traz as quatro funções do elenco» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o ref do save nasce vazio, ao lado do registo de pessoas", /const elencoSaveRef = useRef\(garantirElencoDoSave\(null\)\);/.test(app));
 
   const ctx = linhaDe("const contextoDoElenco = () =>");
@@ -256,10 +256,10 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   t("ao virar o dia, a promoção roda por dia passado — calada se estourar, nenhuma linha na tela", viradaDoDia.includes("promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current,") && viradaDoDia.includes("elencoSaveRef.current = r.estado;") && viradaDoDia.includes('calou("promoverNoDia", e)') && !/pushMsgs/.test(viradaDoDia));
 
   const saidaNaPauta = statementDe('try { p = porNaPauta(p, "antes", saidaParaPauta(', 'calou("saidaParaPauta", e); }');
-  t("a saída entra na pauta antes do arquivista — calada se estourar", saidaNaPauta.includes("saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current,") && saidaNaPauta.includes('calou("saidaParaPauta", e)'));
+  // retirada (trilha A, 29/10): «a saída entra na pauta antes do arquivista — calada se estourar» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   const iSaida = app.indexOf('try { p = porNaPauta(p, "antes", saidaParaPauta(');
   const iArquivista = app.indexOf('p = porNaPauta(p, "antes", arquivistaParaPauta(registroRef.current, {');
-  t("nessa ordem: a saída antes do arquivista", iSaida >= 0 && iArquivista > iSaida);
+  // retirada (trilha A, 29/10): «nessa ordem: a saída antes do arquivista» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
   /* MM14 (o resto do nº 6): a chamada de genteParaPauta mudou-se de
      `pautaDoTurno` para `fichasDaMesa` — extraído para que o sinal do

@@ -315,7 +315,7 @@ sec("6. Nº 3 — a sala limpa fica limpa");
 {
   const { readFileSync } = await import("node:fs");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  t("nº 4: a pauta põe o golpe final por golpeFinalNaPauta", app.includes("if (gf) p = golpeFinalNaPauta(p, gf);"));
+  // retirada (trilha A, 29/10): «nº 4: a pauta põe o golpe final por golpeFinalNaPauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("nº 5: o revide aplica-se no campo do turno dos inimigos", app.includes("if (rv) combPos.inimigos = revideNoCampo(combPos.inimigos, rv);"));
   const i = app.indexOf("const irParaSala = (id) => {");
   const corpo = i >= 0 ? app.slice(i, i + 4000) : "";

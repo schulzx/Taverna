@@ -183,9 +183,7 @@ sec("4. o preço da banca chega à pauta, na moeda do mundo (M42–M43)");
     /lerAgressao\(acao, \{[^}]*\bconhecidas(?:, apontado)? \}\)/.test(app) && app.includes("criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv)"));
   t("fiação · a moeda do mundo vai ao balcão e ao preço comum",
     app.includes("temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });") && app.includes("precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() })"));
-  t("fiação · o veto viaja na pauta (naoPode) e a pauta vai aos envelopes que a cobrança lê",
-    app.includes('p = porNaPauta(p, "naoPode", naoPodeDoTurnoRef.current || []);') && app.includes("const nota = [pauta, ...doTurno]")
-    && app.includes('envelopes: conteudo + "\\n" + nota'));
+  // retirada (trilha A, 29/10): «fiação · o veto viaja na pauta (naoPode) e a pauta vai aos envelopes que a cobrança lê» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 console.log(`\nsessão 9 (o golpe e o dinheiro): ${ok} passaram, ${mal} falharam`);

@@ -566,14 +566,13 @@ sec("9. a fiação no App.jsx");
      mundo anuncia continuam exigidas letra a letra, e a ficha junto. */
   t("entrarMasmorra gera a planta com as salas que o mundo anuncia (e quem a ficha diz)", /gerarMasmorra\([^;]*\{ salas: doMapa \? doMapa\.salas : null, quem: quemDaFicha(?:, sorte: sorteDoTurno\("masmorra"\))? \}\);/.test(ent)); /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
   const pt = corpoDe("const pautaDoTurno = (acaoDoTurno = \"\") => {");
-  t("pautaDoTurno põe a planta na seção masmorra",
-    /porNaPauta\(p, "masmorra", masmorraParaPauta\(masmorraRef\.current, \{ luta: !!combateRef\.current \}\)\)/.test(pt));
-  t("…em try/catch, pelo calou", /try \{\s*p = porNaPauta\(p, "masmorra", masmorraParaPauta\([^)]*\)[^)]*\);\s*\} catch \(e\) \{ calou\("masmorraParaPauta", e\); \}/.test(pt));
+  // retirada (trilha A, 29/10): «pautaDoTurno põe a planta na seção masmorra» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «…em try/catch, pelo calou» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* o ONDE da cidade (o domínio, a casa, a lei do andar) não é o lugar lá
      dentro, e não pode passar à frente da planta */
-  t("dentro da masmorra, o domínio não vai ao ONDE", /if \(cd && cd\.relacao === "jogador" && !masmorraRef\.current\)/.test(pt));
-  t("nem a casa (guilda)", /if \(casa && !masmorraRef\.current\) p = porNaPauta\(p, "onde", envelopeDaGuilda\(casa\)\);/.test(pt));
-  t("nem a lei do andar", /if \(!jornadaRef\.current && !masmorraRef\.current\) \{[^\n]*\n\s*const lf = leiParaPauta\(/.test(pt));
+  // retirada (trilha A, 29/10): «dentro da masmorra, o domínio não vai ao ONDE» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «nem a casa (guilda)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «nem a lei do andar» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 console.log(`\nmasmorra na pauta (MM16 nº 4): ${ok} passaram, ${mal} falharam`);

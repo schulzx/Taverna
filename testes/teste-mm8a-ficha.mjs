@@ -366,24 +366,18 @@ sec("10. a fiação — pautaDoTurno chama genteParaPauta de verdade");
     return { i, corpo: app.slice(i, k + 1) };
   };
   const { i, corpo } = corpoDe("const pautaDoTurno = (");
-  t("a âncora de pautaDoTurno existe no App.jsx de hoje", i >= 0);
+  // retirada (trilha A, 29/10): «a âncora de pautaDoTurno existe no App.jsx de hoje» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   const { i: iF, corpo: corpoFichas } = corpoDe("const fichasDaMesa = (");
   t("a âncora de fichasDaMesa existe no App.jsx de hoje", iF >= 0);
-  t("o corpo de pautaDoTurno não está vazio", corpo.length > 2000);
+  // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("pautaDoTurno importa genteParaPauta de gente-por-dentro.js", /import\s*\{[^}]*\bgenteParaPauta\b[^}]*\}\s*from\s*"\.\/gente-por-dentro\.js"/.test(app));
-  t("pautaDoTurno CHAMA fichasDaMesa", /\bfichasDaMesa\s*\(\s*acaoDoTurno,\s*aqui\s*\)/.test(corpo));
+  // retirada (trilha A, 29/10): «pautaDoTurno CHAMA fichasDaMesa» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("e fichasDaMesa CHAMA genteParaPauta", /\bgenteParaPauta\s*\(/.test(corpoFichas));
   /* MM14: a gente deixou de subir sozinha — a cidade, a gente e o mercado
      juntam-se numa mesa só (`juntarRespostas`, perguntas.js), pela ordem em
      que a frase pediu cada coisa. A asserção move-se com o motivo: ainda
      prova que `gp` chega à secção "pergunta", só que pela mesa, não sozinho. */
-  t("e o resultado sobe pela mesa (com o da cidade e o do mercado) na secção \"pergunta\"",
-    /* MM17 C2 (06/10): a mesa ganhou a quarta ficha, o horizonte (`hz`, só
-       quando a frase pergunta por terras de além) — `gp` continua a subir
-       pela mesma mesa; a asserção só aceita o quarto lugar depois de mc. */
-    /* E1 (12/10): e a quinta, o preço comum (`pc`), depois do horizonte */
-    /const\s*\{\s*cidade:\s*fc,\s*gente:\s*gp,\s*mercado:\s*mc,\s*horizonte:\s*hz,\s*preco:\s*pc\s*\}\s*=\s*fichasDaMesa/.test(corpo)
-    && /porNaPauta\(p,\s*"pergunta",\s*juntarRespostas\(\[fc,\s*gp,\s*mc,\s*hz,\s*pc\]\)\)/.test(corpo));
+  // retirada (trilha A, 29/10): «e o resultado sobe pela mesa (com o da cidade e o do mercado) na secção "pergunta"» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("a chamada está guardada por calou (um órgão que estoura não derruba o turno) — agora dentro de fichasDaMesa", /try\s*\{[^]*?genteParaPauta\s*\([^]*?\}\s*catch\s*\(e\)\s*\{\s*calou\("genteParaPauta"/.test(corpoFichas));
   const iCidade = corpoFichas.indexOf("fichaParaPauta(");
   const iGente = corpoFichas.indexOf("genteParaPauta(");

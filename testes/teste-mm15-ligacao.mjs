@@ -372,7 +372,9 @@ bloco(() => {
   const semRef = G.O_QUE_O_TURNO_ANDA.filter((l) => !new RegExp("const " + l.ref + " = (useRef|useVistaDoEstado\\(estadoRef, )").test(APP)).map((l) => l.ref);
   t("cada ref da lista existe no App", semRef.length === 0, semRef.join(","));
   const quem = [...new Set(G.O_QUE_O_TURNO_ANDA.flatMap((l) => l.quem))];
-  const semQuem = quem.filter((q) => !new RegExp("const " + q + " = |function " + q + "\\(").test(APP));
+  /* (trilha A, 29/10) a `pautaDoTurno` está na lista (ela anda refs) e já não mora no App: a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo o corpo dela, que anda os mesmos refs pelo `aplicar` (provado em teste-motor-pauta-do-turno, os refs do fim) */
+  const NO_MOTOR = ["pautaDoTurno"];
+  const semQuem = quem.filter((q) => !NO_MOTOR.includes(q) && !new RegExp("const " + q + " = |function " + q + "\\(").test(APP));
   t(`e cada uma das ${quem.length} funções que as movem ainda existe`, semQuem.length === 0, semQuem.join(","));
   const sobrevivemFora = G.SOBREVIVEM_AO_DESFEITO.filter((c) => !temNoSave(c));
   t("os campos que sobrevivem ao desfeito são campos do save de verdade", sobrevivemFora.length === 0, sobrevivemFora.join(","));

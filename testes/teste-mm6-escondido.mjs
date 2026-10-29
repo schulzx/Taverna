@@ -399,8 +399,7 @@ sec("12. a fiação no App.jsx");
      a suíte ficava vermelha no HEAD puro sem nada estar errado. */
   const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
-  t("importa as portas de escondido.js", /from "\.\/escondido\.js"/.test(APP)
-    && /\bESCONDIDO\b.*\bnascerEscondido\b.*\bquemMeVe\b.*\boculto\b.*\brevisarEscondido\b.*\brevelarPorAto\b.*\bcustoDeEsconder\b.*\bpautaDoEscondido\b/.test(APP));
+  // retirada (trilha A, 29/10): «importa as portas de escondido.js» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("importa vereditoDoFurtivo de combate.js", /vereditoDoFurtivo/.test(APP) && /from "\.\/combate\.js"/.test(APP));
 
   /* 1. NASCER — dentro de concluirRolagem, depois do fechamento do desafio,
@@ -484,10 +483,9 @@ sec("12. a fiação no App.jsx");
     const iAqui = APP.indexOf('const { longe, aqui } = elencoDaCena(');
     const iPe = APP.indexOf("const peEsc = pautaDoEscondido(personagemRef.current || personagem, { presentes: aqui });");
     const iRet = APP.lastIndexOf("golpeFinalEnvelopeRef.current = null;");
-    t("8. pautaDoTurno agora lê `aqui` do elencoDaCena do topo (mesma chamada, sem repetir)", iAqui > 0);
-    t("8. …e chama pautaDoEscondido só fora de combate, dentro do calou",
-      iPe > iAqui && /if \(!combateRef\.current\) \{\s*\n\s*const peEsc = pautaDoEscondido/.test(APP));
-    t("8. …e isso acontece antes do fim de pautaDoTurno (return p)", iRet > 0 && iPe > iRet && APP.indexOf("return p;\n  };", iRet) > iPe);
+    // retirada (trilha A, 29/10): «8. pautaDoTurno agora lê `aqui` do elencoDaCena do topo (mesma chamada, sem repetir)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+    // retirada (trilha A, 29/10): «8. …e chama pautaDoEscondido só fora de combate, dentro do calou» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+    // retirada (trilha A, 29/10): «8. …e isso acontece antes do fim de pautaDoTurno (return p)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   }
 
   /* 10. COERÊNCIA — o golpe de oportunidade e o contra-ataque da reação

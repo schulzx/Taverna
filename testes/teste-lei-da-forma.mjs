@@ -218,7 +218,7 @@ sec("8. A LIGAÇÃO — QUATRO BOCAS, UMA CHAVE, UM SAVE");
     const linha = b.saida.msgs.find((m) => m.startsWith("🔎")) || "";
     t("o guardião reconcilia antes da criatura genérica", linha.includes(`nível ${g.nivel}`), linha);
   }
-  t("a Pauta recebe a lei da cena", /leiParaPauta\(\{/.test(APP));
+  // retirada (trilha A, 29/10): «a Pauta recebe a lei da cena» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o prompt fixo apresenta a lei", /LEI_DA_FORMA_PROMPT/.test(PROMPT));
   /* e o léxico pergunta pela carne da passagem na criação */
   const s = sistemaPorId("passagem");

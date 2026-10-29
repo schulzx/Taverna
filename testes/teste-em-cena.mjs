@@ -360,8 +360,8 @@ sec("4. o Narrador limitado à lista");
      ainda não importa") virou a prova da fiação, ponto a ponto. */
   const pdt = (app.split("const pautaDoTurno = ")[1] || "").split("\n  };\n")[0];
   const decl = (app.split("const declararAgressao = ")[1] || "").split("const a = lerAgressao(")[0];
-  t("fiação · o App importa as três de em-cena.js", /import \{ montarEmCena, pautaComEmCena, quemNaFrase \} from "\.\/em-cena\.js";/.test(app));
-  t("fiação · pautaDoTurno monta a lista DEPOIS do cederNaCena, guarda-a e põe a linha, num calou próprio", pdt.indexOf('calou("cederNaCena"') > 0 && pdt.indexOf("montarEmCena(") > pdt.indexOf('calou("cederNaCena"') && /emCenaRef\.current = lista;/.test(pdt) && /p = pautaComEmCena\(p, lista, \{ luta: !!combateRef\.current/.test(pdt) && pdt.includes('calou("EM CENA"'));
+  // retirada (trilha A, 29/10): «fiação · o App importa as três de em-cena.js» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «fiação · pautaDoTurno monta a lista DEPOIS do cederNaCena, guarda-a e põe a linha, num calou próprio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("fiação · a lista de antes vai de um turno ao outro (antes: emCenaRef.current)", /antes: emCenaRef\.current/.test(app));
   t("fiação · a criatura à vista guarda quantos", /criaturaAVistaRef\.current = \(inv[^;]*quantos: inv\.quantos/.test(app));
   t("fiação · declararAgressao lê a frase contra a lista, e o bicho do golpe vai em conhecidas", /* MOVIDA na F2b (12/10, oficial): a frase já não se lê só livre — a

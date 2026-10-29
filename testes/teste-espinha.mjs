@@ -195,7 +195,7 @@ sec("9. LIGADA AO JOGO");
   t("ela viaja no save", /espinha: espinhaRef\.current/.test(APP));
   /* a seção `momento` existia declarada em pauta.js desde a v9.104 e nunca
      era preenchida — a espinha é o leitor que faltava */
-  t("e enche a seção `momento` da Pauta", /porNaPauta\(p, "momento", envelopeDaEspinha\(/.test(APP));
+  // retirada (trilha A, 29/10): «e enche a seção `momento` da Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* MOVIDA NA MM-C · C0 (11/10), com o motivo: a mesma porta continua a ser
      a intenção (o `ver` das etapas), e a chamada ganhou o 4.º argumento —
      `{ ato }`, a ordem do ato: marco de ato posterior não fecha. A regex

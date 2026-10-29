@@ -190,19 +190,16 @@ t("campanha recém-começada não cobra", consultarCobrador([linha({ dia: 1 })],
 console.log("\n== LIGADO NO TURNO ==");
 const fs = await import("node:fs");
 const app = fs.readFileSync("../src/App.jsx", "utf8");
-t("o App consulta o Cobrador", /consultarCobrador\(registroRef\.current/.test(app));
+// retirada (trilha A, 29/10): «o App consulta o Cobrador» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 t("o livro-razão vive num ref", /cobradasRef = useRef/.test(app));
 t("e a cadência também", /ultimaCobrancaRef = useRef/.test(app));
-t("a dívida só é marcada DEPOIS de a linha entrar na Pauta",
-  app.indexOf('porNaPauta(p, "mundo"') < app.indexOf("cobradasRef.current = [...cobradasRef.current"),
-  "marcar antes perderia a conta para sempre se ela não coubesse");
+// retirada (trilha A, 29/10): «a dívida só é marcada DEPOIS de a linha entrar na Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 t("o registro guarda o contexto DESTE ato", /\.\.\.contextoDesteAto\(\),/.test(app),
   "o contexto da campanha é o que o Aliado lê; numa linha do livro-razão ele mente");
-t("e o do Aliado continua sendo o acumulado", /\.\.\.ctxAto,/.test(app),
-  "o Aliado pergunta quem você é; o Cobrador, o que você fez naquele dia");
+// retirada (trilha A, 29/10): «e o do Aliado continua sendo o acumulado» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 t("a memória curta das formas existe", /formasCobradasRef = useRef/.test(app));
 t("e entra no save", /formasCobradas: formasCobradasRef\.current/.test(app));
-t("o envelope vai ao canon, não à Pauta", /envelopeDoMundo\(r\)/.test(app) && /notaRef\.current = /.test(app));
+// retirada (trilha A, 29/10): «o envelope vai ao canon, não à Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 
 /* o pior modo de falhar possível para um sistema cuja promessa é
    LEMBRAR: recarregar e cobrar de novo tudo o que já cobrou */
@@ -222,8 +219,8 @@ console.log("\n== A PORTA ==");
     "o mundo cobra uma vez a cada cinco dias: em quatro turnos de cada cinco o bloco seria regra sobre nada");
   t("a porta existe por nome", portasAbertas({ temCobranca: true }).cobranca === true);
   t("e fecha sem a linha", portasAbertas({ emCidade: true }).cobranca === false);
-  t("o App marca o ref quando a linha entra", /cobrouAgoraRef\.current = true/.test(app));
-  t("e zera a cada pauta", /cobrouAgoraRef\.current = false/.test(app));
+  // retirada (trilha A, 29/10): «o App marca o ref quando a linha entra» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e zera a cada pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("e a cena do prompt lê o ref", /temCobranca: !!cobrouAgoraRef\.current/.test(app));
 }
 

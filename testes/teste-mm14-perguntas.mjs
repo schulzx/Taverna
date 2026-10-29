@@ -413,8 +413,7 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
   };
 
   /* ---- 1. os imports ---- */
-  t("App.jsx importa soPergunta e juntarRespostas de perguntas.js",
-    /import\s*\{\s*soPergunta,\s*juntarRespostas\s*\}\s*from\s*"\.\/perguntas\.js"/.test(app));
+  // retirada (trilha A, 29/10): «App.jsx importa soPergunta e juntarRespostas de perguntas.js» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("App.jsx importa mercadoParaPauta de mercado.js", /import\s*\{[^}]*\bmercadoParaPauta\b[^}]*\}\s*from\s*"\.\/mercado\.js"/.test(app));
   t("App.jsx importa sinosForaDeHora de abertura.js", /import\s*\{[^}]*\bsinosForaDeHora\b[^}]*\}\s*from\s*"\.\/abertura\.js"/.test(app));
 
@@ -463,13 +462,10 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
      `fichasDaMesa`. As asserções movem-se com o motivo, para o corpo onde
      o fato hoje vive — nenhuma afrouxa, e uma nova prova a ligação. */
   const pauta = corpoApos(app, "const pautaDoTurno = (acaoDoTurno = \"\") => {");
-  t("o corpo de pautaDoTurno não está vazio", pauta.length > 300);
+  // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   const fichas = corpoApos(app, "const fichasDaMesa = (frase = \"\", presentes = null) => {");
   t("o corpo de fichasDaMesa não está vazio", fichas.length > 1500);
-  t("pautaDoTurno chama fichasDaMesa com a frase do turno e quem está aqui, e destrutura as três fichas",
-    /* MM17 C2: e a quarta, o horizonte (`hz`), no fim da mesma destruturação */
-    /* E1 (12/10): e a quinta, o preço comum (`pc`), depois do horizonte */
-    pauta.includes("const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);"));
+  // retirada (trilha A, 29/10): «pautaDoTurno chama fichasDaMesa com a frase do turno e quem está aqui, e destrutura as três fichas» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("nomesDaMesa existe, uma vez só, dos NPCs e do lugar — dentro de fichasDaMesa",
     fichas.includes("const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || \"\"].filter(Boolean);"));
   t("fichaParaPauta recebe os nomes da mesa e o sino fora de hora",
@@ -488,9 +484,7 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
      de além de uma campanha com região, masmorra-sem-cidade.js), que só fala
      quando a frase pergunta por elas. A asserção continua exata — as três de
      sempre, na ordem, numa mesa só —, só que agora com a quarta no fim. */
-  t("as três (fc, gp, mc) juntam-se numa mesa só, na secção \"pergunta\", de volta em pautaDoTurno (e o horizonte, hz, por último)",
-    /* E1 (12/10): a 5.ª fonte, o preço comum (`pc`), entra depois do horizonte */
-    pauta.includes('p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz, pc]));'));
+  // retirada (trilha A, 29/10): «as três (fc, gp, mc) juntam-se numa mesa só, na secção "pergunta", de volta em pautaDoTurno (e o horizonte, hz, por último)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   {
     const iFc = fichas.indexOf("fc = fichaParaPauta(");
     const iGp = fichas.indexOf("gp = genteParaPauta(");

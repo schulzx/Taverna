@@ -382,8 +382,7 @@ sec("10. A Aposta — três versões, e o teto");
 
   const kApostas = app.indexOf("situacaoQueCasa(acaoDoTurno)");
   const trechoAposta = kApostas >= 0 ? app.slice(kApostas, kApostas + 300) : "";
-  t("a Aposta põe a terceira versão (o raspão) na mesa, quando ela existe",
-    trechoAposta.includes('ap.noMeio ? "Se " + ap.noMeio : ""'), trechoAposta);
+  // retirada (trilha A, 29/10): «a Aposta põe a terceira versão (o raspão) na mesa, quando ela existe» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 console.log(`\nmargem MM5: ${ok} passaram, ${mal} falharam`);

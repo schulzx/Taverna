@@ -149,7 +149,7 @@ sec("7. A SEÇÃO 'ACABOU' GANHOU DONO");
 {
   const s = SECOES.find((x) => x.id === "acabou");
   t("a seção existe", !!s);
-  t("e agora tem produtor", /porNaPauta\(p, "acabou", \(propositosDoTurnoRef\.current \|\| \[\]\)/.test(APP));
+  // retirada (trilha A, 29/10): «e agora tem produtor» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* estava declarada e vazia desde sempre — seção sem produtor é orçamento
      reservado para ninguém */
   t("é seção alta, o fato vem antes do enfeite", s.prio <= 3);

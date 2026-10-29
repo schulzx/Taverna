@@ -206,8 +206,8 @@ sec("9. LIGADO AO JOGO");
   t("e sai do cofre", /cofre: guildaRef\.current\.cofre - o\.custo/.test(APP));
   t("o governador se nomeia", /const nomearGovernador = \(nome, quem\) =>/.test(APP));
   t("a renda do jogo passa pelo governo", /rendaDiariaTotal\(mapaRef\.current, guildaRef\.current\.nivel, temGuilda, devocaoRef\.current, \{ governos: governosRef\.current/.test(APP));
-  t("o Narrador recebe o domínio", /porNaPauta\(p, "onde", envelopeDoDominio\(/.test(APP));
-  t("só quando o herói está lá", /cd\.relacao === "jogador"/.test(APP));
+  // retirada (trilha A, 29/10): «o Narrador recebe o domínio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «só quando o herói está lá» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 sec("10. O ENVELOPE É FATO, NÃO SUGESTÃO");

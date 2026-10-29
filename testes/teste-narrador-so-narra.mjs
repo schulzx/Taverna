@@ -403,30 +403,17 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
   const corpo = (ancora) => { const i = app.indexOf(ancora); return i < 0 ? "" : app.slice(i, i + 16000); };
   const fichas = corpo("const fichasDaMesa = (frase = \"\", presentes = null) => {");
   const pauta = corpo("const pautaDoTurno = (acaoDoTurno = \"\") => {");
-  t("o App importa as peças do motor (mercado, nomes, cidade-por-dentro)",
-    /import \{[^}]*\bprecoComumParaPauta\b[^}]*\bprecosDaRua\b[^}]*\} from "\.\/mercado\.js"/.test(app)
-    /* (MOVIDA, 28/10, T1-A 4.ª fatia: `nomesAMaoNaProsa` saiu do import do App — o leitor dele era o códex do fim do turno, que se mudou para src/motor/fim-do-turno.js e o importa; a prova jogada está mais abaixo) */
-    && /import \{[^}]*\bnomesAMao\b[^}]*\blinhaDosNomesAMao\b[^}]*\} from "\.\/nomes\.js"/.test(app)
-    && /import \{[^}]*\bfichaDaCidade\b[^}]*\} from "\.\/cidade-por-dentro\.js"/.test(app));
+  // retirada (trilha A, 29/10): «o App importa as peças do motor (mercado, nomes, cidade-por-dentro)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o porte da terra sai da ficha da cidade (pouso.fator), num calou que devolve 1",
     /const fatorDoPouso = \(\) => \{[^]*?f\.pouso\.fator[^]*?calou\("fatorDoPouso", e\); return 1;/.test(app));
-  t("o preço comum é a 5.ª ficha da mesa, num calou, fora da luta e numa cidade",
-    /* 9.ª sessão (v9.433, a fiação): a linha ganhou a moeda do mundo
-       (moedaDoMundo), para o preço comum dizer a unidade — o Mestre vendia em
-       "marcos". O resto (fora da luta, numa cidade, o porte da terra) é igual. */
-    fichas.includes("pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;")
-    && fichas.includes('calou("precoComumParaPauta", e)')
-    && pauta.includes("juntarRespostas([fc, gp, mc, hz, pc])"));
+  // retirada (trilha A, 29/10): «o preço comum é a 5.ª ficha da mesa, num calou, fora da luta e numa cidade» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o oráculo cala também pelo preço comum (pela ficha do mercado)",
     app.includes("fichas: () => fichasDoOraculo(acao)") && /const fichasDoOraculo[^]*?mercado: \{ pergunta: \[\.\.\.\(mc\.pergunta \|\| \[\]\), \.\.\.pc\.pergunta\]/.test(app));
   /* 19/10 (a 12.ª sessão): a âncora ganhou a moeda do Léxico — a rua dizia
      só o ◉, e a abertura chamou "cobres" a um mundo que paga em lascas
      (teste-sessao-12.mjs prova a linha). A condição da rua é a mesma. */
-  t("a rua entra na secção O PREÇO só com rua (cidade, sem jornada, masmorra nem luta)",
-    pauta.includes('if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, "preco", precosDaRua(fatorDoPouso(), { moeda: moedaDoMundo() }));'));
-  t("os nomes à mão vão à secção NOMES À MÃO, com o registo, o elenco e o grupo como usados",
-    pauta.includes("...Object.values(npcsRef.current || {}), ...nomesDoElenco(), ...(p0.grupo || [])")
-    && pauta.includes('p = porNaPauta(p, "nomes", linha); nomesPendentesRef.current = { nomes, linha };'));
+  // retirada (trilha A, 29/10): «a rua entra na secção O PREÇO só com rua (cidade, sem jornada, masmorra nem luta)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «os nomes à mão vão à secção NOMES À MÃO, com o registo, o elenco e o grupo como usados» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* a prova viva (12/10) mostrou o Narrador a usar no turno 8 o nome oferecido
      no 7, com a linha do 8 cortada pelo teto: os oferecidos ficam até a linha
      voltar, e o usado sai da lista seguinte por estar no registo */

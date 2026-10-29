@@ -106,7 +106,7 @@ const iBolsa = app.indexOf("registarABolsaDaFrase(acao);", ag);
 const iSinais = app.indexOf("const sinais = sinaisDoTurno(acao);", ag);
 ok(ag > 0 && iBolsa > ag && iBolsa < iSinais, "a bolsa da frase corre antes do despachante (antes de o oráculo ganhar o turno)");
 ok(/calou\("a bolsa da frase"/.test(app) && /calou\("a compra da frase"/.test(app) && /calou\("a dádiva da frase"/.test(app), "toda a fiação cala");
-ok(/porNaPauta\(p, "naoPode", naoPodeDoTurnoRef\.current/.test(app), "o veto viaja na secção naoPode da pauta");
+// retirada (trilha A, 29/10): «o veto viaja na secção naoPode da pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 ok(/balcaoParaPauta\(frase/.test(app), "o preço do balcão entra na ficha do mercado");
 ok(/meDeve: !!n\.meDeve/.test(app), "quem recebeu fica a dever (o sinal do Intérprete acende)");
 

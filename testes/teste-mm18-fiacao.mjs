@@ -50,7 +50,8 @@ sec("1. o App importa a escuta e as duas peças novas do mural");
   /* (movido, T1-A 8.ª fatia: o pedido e o passo da escuta foram para src/motor/antes-do-mestre.js;
      `andarAEscuta`, `contarOAvanco` e `seguraOMundo` já não são do App — quem os chama é o motor,
      e o App chama `oPedidoDaEscuta` e `aEscutaAnda`. As onze peças chegam, as três pelo motor) */
-  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta", "degrauDaEscuta", "linhaDoRumo", "escutarOTurno", "separarEnvelopes", "fechoDoPedido"];
+  /* (trilha A, 29/10) seis no App: a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo o `degrauDaEscuta` e a `linhaDoRumo` (a linha do RUMO é dela) */
+  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta", "escutarOTurno", "separarEnvelopes", "fechoDoPedido"];
   const im2 = APP.match(/import \{([^}]*)\} from "\.\/motor\/antes-do-mestre\.js";/);
   t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])) && !!im2 && /\boPedidoDaEscuta\b/.test(im2[1]) && /\baEscutaAnda\b/.test(im2[1]), imp ? "" : "sem import");
   const of = APP.match(/import \{([^}]*)\} from "\.\/ofertas\.js";/);
@@ -73,8 +74,7 @@ sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
   t("o pedido é lido ANTES de o compasso decidir", ord("const doPedido = oPedidoDaEscuta(", "segurarEsc = doPedido.segurar;", "talvezAndarOCompasso(conteudo, { segurar: segurarEsc })"));
   t("numa pergunta segura, a forma da cena também não sai", ENVIAR.includes("doCompasso || segurarEsc ? \"\" : talvezDarFormaACena(conteudo)"));
   t("o compasso aceita o segurar de quem chama, pela porta de sempre", /segurar: segurarExtra \|\| !!combateRef\.current/.test(APP));
-  t("a nota passa pela escuta, envelope a envelope, com os adiados de antes",
-    ord("textoDaPauta(pautaDoTurno(conteudo)", "const daNota = umSoLugar(notaRef.current);", "escutarOTurno({", "separarEnvelopes(daNota)", "adiadosAntes: adiadosEscutaRef.current"));
+  // retirada (trilha A, 29/10): «a nota passa pela escuta, envelope a envelope, com os adiados de antes» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("a pauta vem primeiro, e o que fica depois", ord("doTurno = rEsc.ficam;", "const nota = [pauta, ...doTurno]"));
   t("o que espera volta à nota do turno seguinte", ord("notaRef.current = \"\";", "notaRef.current = adiadosEsc.join(\"\\n\")"));
   /* (movido, T1-A 8.ª fatia: a escuta anda em aEscutaAnda, no motor; a ordem é a do App, e a
@@ -95,20 +95,19 @@ sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
   t("o histórico guarda a memória do turno (sem pauta, rodapé nem etiqueta)", /\{ role: "user", content: memoriaDoJogador \}, \{ role: "assistant"/.test(APP) && APP.includes("memoriaDoJogador = memoriaDoTurno(conteudo, nota) || corpo"));
   t("se a escuta estoura, a nota é a de antes, inteira", ENVIAR.includes("let doTurno = [oficina, daNota, doCompasso, formaDaCena, daFrente, daVirada, daTrama], adiadosEsc = null;"));
   const calados = ["a escuta lê o pedido", "a escuta do turno", "a escuta anda", "a frase do jogador por último", "o rumo na pauta", "a gente da história", "o cartaz vencido"];
-  t("toda peça nova cala o próprio erro (nunca custa o turno)", calados.every((c) => APP.includes(`calou("${c}"`)), calados.filter((c) => !APP.includes(`calou("${c}"`)).join(", "));
+  // retirada (trilha A, 29/10): «toda peça nova cala o próprio erro (nunca custa o turno)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 sec("4. O RUMO na pauta, fora da luta");
 {
   const i = pos("p = porNaPauta(p, \"rumo\", rumo)");
   const j = pos("const pautaDoTurno = (acaoDoTurno");
-  t("a linha do rumo entra na pauta do turno", i > j && j >= 0);
-  t("com o degrau da escada e o próximo passo da principal",
-    /linhaDoRumo\(\{\s*pedido: lerOPedido\(acaoDoTurno\),\s*degrau: degrauDaEscuta\(garantirEscuta\(escutaRef\.current\)\.semAvanco\),\s*passo: proximoPasso\(/.test(APP));
+  // retirada (trilha A, 29/10): «a linha do rumo entra na pauta do turno» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «com o degrau da escada e o próximo passo da principal» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* antes de `cederNaCena`, que é a última coisa da pauta (teste-como-chega);
      o rumo não está em nenhuma lista de SECOES_QUE_CEDEM, logo não cede */
-  t("antes do que cede na cena, que fecha a pauta (o rumo não cede)", i > 0 && i < pos("p = cederNaCena(p, {"));
-  t("e nunca na luta", /if \(!combateRef\.current && modoRef\.current !== "rapida"\) \{\s*const rumo = linhaDoRumo/.test(APP));
+  // retirada (trilha A, 29/10): «antes do que cede na cena, que fecha a pauta (o rumo não cede)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
+  // retirada (trilha A, 29/10): «e nunca na luta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 
 sec("5. o mural recusa a gente da história, e o papel vence");
