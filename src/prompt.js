@@ -65,6 +65,7 @@ import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { PALAVRAS_DIVINAS } from "./divindades.js";
+import { cenarioAtivo } from "./cenario.js";
 /* v9.44: quatro blocos de regra existiam, eram importados pelo App e nunca
    entravam em prompt nenhum — MORTE, MAGIA PREPARADA, PERGUNTAS AO MUNDO e
    OBJETOS DE PODER. O Mestre recebia o ESTADO de cada um (quantas magias
@@ -473,7 +474,7 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
      inteiro ou não entra. Nada de meio bloco — regra pela metade é pior do
      que regra ausente, porque parece completa. */
   const so = (id, txt) => (porta[id] ? txt : "");
-  mundo = mundo || { genero: "Fantasia medieval" };
+  mundo = mundo || { genero: cenarioAtivo().generos.padrao };
   personagem = personagem || {};
   /* ONDA 2 DO CUSTO (13/10): O FIXO SOBE PARA O TEXTO QUE VAI EM CACHE.
      A ficha do herói (nome, como se chama, atributos, caminho), o PATAMAR e

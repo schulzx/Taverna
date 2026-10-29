@@ -51,7 +51,10 @@
    as formas com que o registo do mundo diz uma raça) e, no `panteao`, as
    palavras do céu que o Narrador ainda lia escritas no código: os três
    estágios da ascensão (divindades.js DIVINDADE_PROMPT) e as palavras que só
-   a fé dá (prompt.js, a linha "Palavras divinas"). Os
+   a fé dá (prompt.js, a linha "Palavras divinas"); e, nos `generos`, os
+   que a criação oferece (constantes.js GENEROS: o cartão, o rótulo e a dica
+   de cada um), de que o gênero padrão é o de recuo do códex e do prompt
+   quando o mundo não diz o seu. Os
    ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
    secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
    ofícios não perca o léxico gerado.
@@ -92,7 +95,13 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      (comparada sem acento e sem caixa), fazem o mundo de gênero próprio —
      e a ficha passa a dizer "Caçador Desperto (Humano)". As duas listas
      podem vir vazias: um mundo sem futuro, ou sem marca nenhuma. */
-  generos: Object.freeze({ padrao: "texto", futuristas: "textos", marcasProprias: "regexes" }),
+  generos: Object.freeze({ padrao: "texto", futuristas: "textos", marcasProprias: "regexes", criacao: "lista" }),
+  /* 6.ª fatia (constantes.js GENEROS): os gêneros que a criação oferece, um
+     cartão cada — `label` é o nome do gênero em todo o motor (é por ele que
+     os bancos, o bestiário e o corte do futuro o chamam), `dica` a linha do
+     cartão, `id` a chave da tela (o "livre" é o Universo próprio, que a tela
+     põe à parte). O gênero padrão e os do futuro são gêneros da criação. */
+  generoDaCriacao: Object.freeze({ id: "texto", label: "texto", dica: "texto" }),
   /* o bestiário (bestiario.js): `generosDasCriaturas` veem as criaturas do
      mundo e os `emprestados` primeiros arquétipos; os outros gêneros, os
      arquétipos e as `emprestados` primeiras criaturas. Os nomes são únicos
@@ -174,7 +183,7 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      raça de fantasia (e uma do futuro, se o mundo tem gêneros do futuro); o
      companheiro sorteado, ao menos um povo. E os prontos são OITO, nem mais
      nem menos: as quartas do torneio e o rodízio da arena contam com oito */
-  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1, povo: 1 }),
+  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1, povo: 1, generos: 1 }),
 });
 
 const ehObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -301,6 +310,20 @@ export function validarCenario(dados) {
     /* a lista torta diz QUAL linha está torta, não só que a lista está */
     if (Array.isArray(ge.marcasProprias)) ge.marcasProprias.forEach((rx, i) => { if (!regexOk(rx)) erros.push(`generos.marcasProprias[${i}]: devia ser texto de uma regex válida`); });
     if (Array.isArray(ge.futuristas)) ge.futuristas.forEach((g, i) => { if (!ehTexto(g)) erros.push(`generos.futuristas[${i}]: devia ser texto`); });
+    /* 6.ª fatia: os cartões da criação, e o padrão e o futuro entre eles */
+    if (Array.isArray(ge.criacao)) {
+      if (ge.criacao.length < E.minimo.generos) erros.push(`generos.criacao: precisa de ao menos ${E.minimo.generos} gênero`);
+      const ids = new Set(), rotulos = new Set();
+      ge.criacao.forEach((g, i) => {
+        const onde = `generos.criacao[${i}]`;
+        if (!ehObj(g)) { erros.push(`${onde}: devia ser objeto`); return; }
+        conferir(g, E.generoDaCriacao, onde, erros);
+        if (ehTexto(g.id)) { if (ids.has(g.id)) erros.push(`${onde}.id: "${g.id}" repetido`); ids.add(g.id); }
+        if (ehTexto(g.label)) { if (rotulos.has(g.label)) erros.push(`${onde}.label: "${g.label}" repetido`); rotulos.add(g.label); }
+      });
+      if (ehTexto(ge.padrao) && !rotulos.has(ge.padrao)) erros.push(`generos.padrao: "${ge.padrao}" não é gênero da criação (generos.criacao)`);
+      if (Array.isArray(ge.futuristas)) ge.futuristas.forEach((g, i) => { if (ehTexto(g) && !rotulos.has(g)) erros.push(`generos.futuristas[${i}]: "${g}" não é gênero da criação (generos.criacao)`); });
+    }
   }
   const gn = dados.gente;
   if (ehObj(gn)) {

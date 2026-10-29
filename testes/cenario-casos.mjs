@@ -19,7 +19,11 @@
    os prontos, o léxico que as renomeia) e as palavras do céu (a escala, o
    DIVINDADE_PROMPT, os títulos, o sinal do temperamento) e, na 6.ª, o roster
    dos prontos (prontos.js PRONTOS, o montador) e o povo do companheiro
-   (companheiros.js: a demografia e o registo). Não é suíte: é a
+   (companheiros.js: a demografia e o registo) e os gêneros da criação
+   (constantes.js GENEROS). O prompt do Narrador inteiro não entra aqui: ele
+   muda com toda etapa de outro órgão, e um dourado que quebra por isso
+   deixaria de dizer alguma coisa; a prova dele foi de uma vez, no commit da
+   6.ª fatia (24 pedidos, char a char). Não é suíte: é a
    lista de perguntas que o `gerar-cenario-dourado.mjs` faz ao código de ANTES
    (lido do git) e que a `teste-cenario.mjs` refaz ao código de AGORA. As duas
    respostas têm de ser iguais byte a byte.
@@ -111,6 +115,7 @@ export async function fotografarOsCatalogos(raiz) {
   const TR = await imp(raiz, "tracos.js");
   const AT = await imp(raiz, "atributos.js");
   const CP = await imp(raiz, "companheiros.js");
+  const K = await imp(raiz, "constantes.js");
   const casos = [];
   const caso = (id, saida) => casos.push({ id, saida: rxEmTexto(saida === undefined ? null : saida) });
 
@@ -294,6 +299,8 @@ export async function fotografarOsCatalogos(raiz) {
   caso("prontos.lixo", ["nada", "", null, undefined, 7].map((id) => R.montarPronto(id)));
   caso("companheiro.povo", { tabela: CP.RACAS_DO_COMPANHEIRO, registo: CP.RACA_DO_REGISTO });
   caso("companheiro.sorteio", vezes(120, (i) => CP.racaDeCompanheiro({ nome: "Gente " + i })));
+  /* 6.ª fatia: os cartões da criação (constantes.js GENEROS) */
+  caso("criacao.generos", K.GENEROS);
   caso("companheiro.registo", ["humana", "Elfa", "ANA", "anã", "gnoma", "Draconata", "meio-elfa", "Meio-Elfa", "sintética", "elfo", "x", ""].map((r) => CP.racaDeCompanheiro({ nome: "Registo", raca: r })));
   /* o léxico que renomeia as raças: tudo, só a fantasia, uma a menos, uma intrusa, vazio, lixo */
   const bancoDeRacas = LX.RACAS_DO_SISTEMA.map((r, i) => ({ raca: i % 4 === 1 ? r.toUpperCase() : r, chamado: "Povo " + i }));

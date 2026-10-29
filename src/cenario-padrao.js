@@ -39,6 +39,11 @@
      generos.futuristas os gêneros cuja gente é a do futuro (a criação mostra
                         as origens — Terrano, Sintético… — e não as raças de
                         fantasia; o léxico pede nome só para essas)
+     generos.criacao    os gêneros que a criação oferece, um cartão cada:
+                        `label` é o nome do gênero em todo o motor, `dica` a
+                        linha do cartão, `id` a chave da tela ("livre" é o
+                        Universo próprio, que a tela põe à parte); o padrão e
+                        os do futuro têm de estar aqui
      generos.marcasProprias  as marcas, na descrição, de um mundo que não é a
                         fantasia clássica (a obra citada, o tempo moderno ou
                         futuro): texto de regex, comparado SEM acento e sem
@@ -236,6 +241,16 @@ export const DADOS_DO_CENARIO_PADRAO = {
       "\\bespacia\\w*", "\\bgalax\\w*", "\\bplanetas?\\b", "\\bmodern[oa]s?\\b", "\\bcontemporane\\w*",
       "\\bmetro\\b", "\\barranha-ceus?\\b", "\\bcelulares?\\b", "\\binternet\\b", "\\bpos-apocal\\w*",
       "\\bzumbis?\\b", "\\binspirad[oa] em\\b", "\\bbasead[oa] em\\b", "\\buniverso de\\b", "\\bno estilo de\\b",
+    ],
+    /* 6.ª fatia (constantes.js GENEROS): os cartões da criação, na ordem da tela */
+    criacao: [
+      { id: "fantasia", label: "Fantasia medieval", dica: "Reinos, magia antiga, criaturas lendárias" },
+      { id: "scifi", label: "Ficção científica", dica: "Naves, colônias estelares, IAs e alienígenas" },
+      { id: "cyberpunk", label: "Cyberpunk", dica: "Megacorporações, implantes, ruas de neon" },
+      { id: "horror", label: "Horror cósmico", dica: "Segredos proibidos, sanidade em risco" },
+      { id: "posapoc", label: "Pós-apocalíptico", dica: "Ruínas, facções, sobrevivência" },
+      { id: "steampunk", label: "Steampunk", dica: "Vapor, engrenagens, impérios voadores" },
+      { id: "livre", label: "Universo próprio", dica: "Você descreve tudo do zero" },
     ],
   },
   /* 4.ª fatia: a gente (nomes.js). Cada gênero tem o seu banco; o gênero que

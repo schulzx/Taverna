@@ -1,4 +1,4 @@
-/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 5.ª fatias, 28/10/2026)
+/* teste-cenario.mjs (Fase T, T4-B · o cenário como arquivo, 1.ª a 6.ª fatias, 28/10/2026)
 
    "Um cenário novo entra sem editar módulo" (mente/plano-motor.md, Fase 4).
    A 1.ª fatia tirou de dentro do motor os preços (economia.js) e as
@@ -16,14 +16,18 @@
    5.ª tirou os lugares (toponimia.js: as palavras da taverna e de cada tipo
    de local, por gênero), as raças da criação (classes.js RACAS e ORIGENS,
    lexico.js GRUPOS_DE_RACA) e, do céu, os títulos dos graus (que o
-   DIVINDADE_PROMPT repetia à mão) e o sinal de cada temperamento.
+   DIVINDADE_PROMPT repetia à mão) e o sinal de cada temperamento. A 6.ª
+   tirou o que um autor ainda não trocava sem código: os oito prontos
+   (prontos.js), o povo do companheiro (companheiros.js), os três estágios
+   da ascensão e as palavras divinas (divindades.js, prompt.js) e os gêneros
+   da criação (constantes.js GENEROS, e o recuo do códex e do prompt).
    Esta suíte prova:
 
-   1. o dourado — o código de ANTES (aea9587, lido por `git archive` em
+   1. o dourado — o código de ANTES (605901b, lido por `git archive` em
       `gerar-cenario-dourado.mjs`; os 578 casos da 1.ª fatia vinham do
       f0a9fae, os 143 da 2.ª do 3e7493a, os 102 da 3.ª do 9068a93, os 48 da
-      4.ª do 1cfc08a, e são iguais byte a byte) e o de agora dão a mesma
-      resposta às 940 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
+      4.ª do 1cfc08a, os 69 da 5.ª do aea9587, e são iguais byte a byte) e
+      o de agora dão a mesma resposta às 948 perguntas de `cenario-casos.mjs` (500 bancas semeadas, os preços
       comuns por fator, a pauta do preço perguntado, as doze ocupações em
       todas as funções que as leem; os gêneros por racasDoMundo,
       racasDoGenero, generoProprio, o pedido do léxico, os ofícios
@@ -58,7 +62,10 @@ const M = await import(S + "mercado.js");
 const R = await import(S + "prontos.js");
 const L = await import(S + "loot.js");
 const LX = await import(S + "lexico.js");
-const { GENEROS, ATRIBUTOS } = await import(S + "constantes.js");
+/* 6.ª fatia: GENEROS é do cenário (`export let`) — lê-se pelo módulo (K.GENEROS),
+   porque a cópia do import ficaria com os cartões do mundo de antes */
+const K = await import(S + "constantes.js");
+const { ATRIBUTOS } = K;
 const B = await import(S + "bestiario.js");
 const EM = await import(S + "emboscada.js");
 const MA = await import(S + "masmorras.js");
@@ -138,9 +145,12 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
      é recusado; com as mesmas palavras da fantasia, muda só a lista dos
      gêneros com banco (`topo.generos`), que ganhou um, como a dos nomes */
   d5.lugares.bancos["Fantasia sombria"] = d5.lugares.bancos["Fantasia medieval"];
+  /* 6.ª fatia: e o padrão é um gênero da criação — o mundo de prova põe-lhe o
+     cartão, e a lista dos cartões (`criacao.generos`) é a terceira que ganha um */
+  d5.generos.criacao.push({ id: "sombria", label: "Fantasia sombria", dica: "A mesma terra, sem a luz" });
   CN.usarCenario(d5);
   const dif5 = diferentes(await fotografarOsCatalogos(SRC));
-  t("o gênero padrão muda só o pedido de quem não disse o seu", dif5.length > 0 && so(dif5, "lexico.pedido.", "nomes.generos", "topo.generos") && dif5.includes("nomes.generos") && dif5.includes("topo.generos") && !dif5.some((id) => id.startsWith("lexico.pedido.Cyberpunk") || id.startsWith("lexico.pedido.Fantasia medieval")), dif5.join());
+  t("o gênero padrão muda só o pedido de quem não disse o seu", dif5.length > 0 && so(dif5, "lexico.pedido.", "nomes.generos", "topo.generos", "criacao.generos") && dif5.includes("criacao.generos") && dif5.includes("nomes.generos") && dif5.includes("topo.generos") && !dif5.some((id) => id.startsWith("lexico.pedido.Cyberpunk") || id.startsWith("lexico.pedido.Fantasia medieval")), dif5.join());
 
   const d6 = copia(DADOS_DO_CENARIO_PADRAO);
   d6.ocupacoes[0].nome = "Ferreira";
@@ -306,6 +316,12 @@ const ORBITA = {
     padrao: "Ópera de estação",
     futuristas: ["Ópera de estação", "Ficção científica"],
     marcasProprias: ["\\bvacuo\\b", "\\bestac(ao|oes)\\b"],
+    /* 6.ª fatia: os cartões da criação dela — o padrão e o futuro estão entre eles */
+    criacao: [
+      { id: "opera", label: "Ópera de estação", dica: "Docas, turnos longos e o vácuo do lado de fora" },
+      { id: "scifi", label: "Ficção científica", dica: "A frota, o salto e o que espera entre as estrelas" },
+      { id: "livre", label: "Universo próprio", dica: "Você descreve tudo do zero" },
+    ],
   },
   gente: {
     tracos: ["metódico", "claustrofóbico", "leal ao turno"],
@@ -445,6 +461,12 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("o Tripulante ganha o dom dela como habilidade, e a bancada fica 3 mais fácil", TR.oficioDeTraco(trip) === 3 && TR.comDom(trip).habilidades.map((h) => h.nome).join() === "Selar Escotilha" && TR.domDe(trip).custo === 2);
   t("o clone (sem acento nem caixa) é imune a medo, resiste a raio e o gelo tira 1 a menos", TR.imuneDeTraco(clone, "amedrontado") && TR.resisteDeTraco(clone, "raio") && TR.reducaoDeTraco(clone, "gelo") === 1 && !TR.imuneDeTraco(clone, "cego"));
   t("a ficha de criação soma o bônus dela", AT.baseDeCriacao({ raca: "Tripulante", atributos: {} }).intelecto === 2 && AT.baseDeCriacao({ raca: "Elfo", atributos: {} }).destreza === 0);
+  /* 6.ª fatia: os gêneros da criação são os dela, e o recuo do prompt e do códex também */
+  t("a criação oferece os cartões dela (constantes.js GENEROS, ligação viva)", K.GENEROS.map((g) => g.label).join() === "Ópera de estação,Ficção científica,Universo próprio" && K.GENEROS[0].dica.startsWith("Docas"));
+  const semMundo = PR.montarSystemPrompt("Órbita", null, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null);
+  t("o mundo que não diz o seu gênero é, no prompt, do gênero padrão dela", semMundo.includes("Gênero: Ópera de estação") && !semMundo.includes("Gênero: Fantasia medieval"));
+  const fonteCx = fs.readFileSync(path.join(SRC, "painel-codex.jsx"), "utf8");
+  t("o códex cai no gênero padrão do mundo em uso, e não num literal", fonteCx.includes("|| cenarioAtivo().generos.padrao") && !fonteCx.includes('"Fantasia medieval"') && B.criaturasDoGenero(CN.cenarioAtivo().generos.padrao).map((c) => c.nome).join() === "Rato de Duto,Drone de Segurança,Rainha da Colmeia,Capanga");
   /* 6.ª fatia: os prontos e o povo do companheiro são os dela */
   t("o roster é o dela: oito, com os ids dela", R.PRONTOS.length === 8 && R.PRONTOS.every((p) => p.id.startsWith("o7-")) && R.prontoPorId("muralha") === null);
   const muralha = R.montarPronto("o7-muralha");
@@ -482,6 +504,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   CN.usarCenario(CN.CENARIO_PADRAO);
   const p = banca("orbita|1");
   t("a mesma semente noutro mundo: as mesmas coisas, outros preços", a.estoque.map((x) => x.nome).join() === p.estoque.map((x) => x.nome).join() && a.estoque.map((x) => x.preco).join() !== p.estoque.map((x) => x.preco).join());
+  t("…os cartões da criação também, e o recuo do prompt", K.GENEROS.length === 7 && K.GENEROS[0].label === "Fantasia medieval" && PR.montarSystemPrompt("x", null, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null).includes("Gênero: Fantasia medieval"));
   t("…o céu do prompt também (os estágios e as palavras divinas)", DV.DIVINDADE_PROMPT.includes("(Servo Escolhido → Semideus/Receptáculo → Nova Divindade)") && PR.montarSystemPrompt("x", null, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null).includes("Palavras divinas (Semideus, Divindade) são"));
   t("…o roster e o povo do companheiro também", R.PRONTOS.length === 8 && R.prontoPorId("muralha").raca === "Goliath" && R.montarPronto("o7-muralha") === null && CP.RACAS_DO_COMPANHEIRO.length === 8 && CP.racaDeCompanheiro({ raca: "elfa" }) === "Elfo");
   t("e de volta ao padrão, tudo como era", C.PROFISSOES.length === 12 && E.precoComum("caneca") === 1 && E.valorDeItem({ raridade: "raro" }) === 220);
@@ -594,6 +617,11 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("um dom sem custo", (d) => { delete d.racas.futuro[0].efeito.dom.custo; }, "racas.futuro[0].efeito.dom.custo: falta");
   caso("um dom de um tipo que não existe", (d) => { d.racas.futuro[0].efeito.dom.tipo = "magia"; }, "racas.futuro[0].efeito.dom.tipo: devia ser um tipo de habilidade do motor");
   /* 6.ª fatia: o roster e o povo apontam para a gente deste mundo */
+  caso("a criação sem gêneros", (d) => { d.generos.criacao = []; }, "generos.criacao: precisa de ao menos 1 gênero");
+  caso("um cartão sem dica", (d) => { delete d.generos.criacao[1].dica; }, "generos.criacao[1].dica: falta");
+  caso("dois cartões com o mesmo rótulo", (d) => { d.generos.criacao[2].label = "Ópera de estação"; }, 'generos.criacao[2].label: "Ópera de estação" repetido');
+  caso("o gênero padrão fora da criação", (d) => { d.generos.criacao.shift(); }, 'generos.padrao: "Ópera de estação" não é gênero da criação');
+  caso("um gênero do futuro fora da criação", (d) => { d.generos.futuristas.push("Cyberpunk"); }, 'generos.futuristas[2]: "Cyberpunk" não é gênero da criação');
   caso("dois estágios na ascensão", (d) => { d.panteao.estagios.pop(); }, "panteao.estagios: são 3");
   caso("as palavras divinas vazias", (d) => { d.panteao.palavrasDivinas = []; }, "panteao.palavrasDivinas: devia ser lista de textos, com ao menos um");
   caso("faltam os prontos", (d) => { delete d.prontos; }, "prontos: falta (lista)");
@@ -663,12 +691,14 @@ sec("6. o esquema lê de volta o que o motor consome");
   t("o vocabulário do efeito é o que profissoes.js lê, nem mais nem menos", [...lidos].sort().join() === Object.keys(EQ.efeito).sort().join(), [...lidos].sort().join());
   t("toda ocupação do padrão usa só o vocabulário", CN.CENARIO_PADRAO.ocupacoes.every((o) => Object.keys(o.efeito).every((k) => k in EQ.efeito)));
   /* 2.ª fatia: os gêneros do padrão são os da criação, e a tabela é uma só */
-  const rotulos = GENEROS.map((g) => g.label);
+  const rotulos = K.GENEROS.map((g) => g.label);
   t("o gênero padrão e os do futuro são gêneros da criação (constantes.js GENEROS)", rotulos.includes(CN.CENARIO_PADRAO.generos.padrao) && CN.CENARIO_PADRAO.generos.futuristas.every((g) => rotulos.includes(g)));
   t("o léxico e a criação nunca discordam do corte (todos os gêneros, dois mundos)", [CN.CENARIO_PADRAO, CN.carregarCenario(ORBITA)].every((m) => { CN.usarCenario(m); return [...rotulos, "Ópera de estação", "", "x"].every((g) => LX.racasDoMundo(g).join() === C.racasDoGenero(g).map((r) => r.nome).join()); }));
   CN.usarCenario(CN.CENARIO_PADRAO);
   t("as marcas do padrão estão escritas sem acento (a descrição é comparada assim)", CN.CENARIO_PADRAO.generos.marcasProprias.every((rx) => rx === rx.normalize("NFD").replace(/[\u0300-\u036f]/g, "") && rx === rx.toLowerCase()));
   const fonteLex = fs.readFileSync(path.join(SRC, "lexico.js"), "utf8"), fonteCla = fs.readFileSync(path.join(SRC, "classes.js"), "utf8");
+  const fonteK = fs.readFileSync(path.join(SRC, "constantes.js"), "utf8");
+  t("os cartões da criação já não são literais em constantes.js, nem o recuo do prompt em prompt.js (6.ª fatia)", !fonteK.includes('label: "Fantasia medieval"') && !fonteK.includes("Vapor, engrenagens") && !fs.readFileSync(path.join(SRC, "prompt.js"), "utf8").includes('genero: "Fantasia medieval"'));
   t("nenhuma lista literal ficou para trás (os doze, o corte do futuro, as marcas)", !fonteLex.includes('"Caçador de Recompensas"') && !fonteLex.includes('"Pós-apocalíptico"') && !fonteCla.includes('"Pós-apocalíptico"') && !fonteLex.includes("solo leveling"));
   t("os ofícios do léxico são os nomes das ocupações, na ordem delas", LX.PROFISSOES_DO_SISTEMA.join() === CN.CENARIO_PADRAO.ocupacoes.map((o) => o.nome).join());
   /* 3.ª fatia: o vocabulário que uma ficha pode usar é o do motor */

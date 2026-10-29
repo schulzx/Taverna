@@ -6,6 +6,7 @@ import React from "react";
 import { T } from "./constantes.js";
 import { CONQUISTAS, conquistaPorId } from "./conquistas.js";
 import { criaturasDoGenero } from "./bestiario.js";
+import { cenarioAtivo } from "./cenario.js";
 import { Retrato, Botao, Glifo, DegrausDaAmeaca } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
 import { gerarCronica } from "./cronica.js";
@@ -65,7 +66,7 @@ export function PainelCodex({ conquistas, tituloAtivo, escolherTitulo, descobert
   const nPaginas = Array.isArray(paginas) ? paginas.length : 0;
   const desb = (conquistas && conquistas.desbloqueadas) || {};
   const nDesb = CONQUISTAS.filter((c) => desb[c.id]).length;
-  const criaturas = criaturasDoGenero((mundo || {}).genero || "Fantasia medieval");
+  const criaturas = criaturasDoGenero((mundo || {}).genero || cenarioAtivo().generos.padrao);
   const descNomes = (descobertas || []).map((d) => d.toLowerCase());
   const achadas = criaturas.filter((c) => descNomes.some((d) => d.includes(c.nome.toLowerCase())));
   const descExtra = (descobertas || []).filter((d) => !criaturas.some((c) => d.toLowerCase().includes(c.nome.toLowerCase())));

@@ -9,6 +9,7 @@
    de lá para o porquê.
    ============================================================ */
 import { xpDoProximoNivel, XP_POR_DADIVA } from "./regras.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 export const BRAND = "Taverna";
 export const SLOGAN = "toda lenda começa aqui";
@@ -51,15 +52,12 @@ export const MAX_COMPANHEIROS = 4;
    nao acontecer. Quem quer a folha pede `FOLHA` a `estilo.js`. */
 export { T, ALVOS } from "./estilo.js";
 
-export const GENEROS = [
-  { id: "fantasia", label: "Fantasia medieval", dica: "Reinos, magia antiga, criaturas lendárias" },
-  { id: "scifi", label: "Ficção científica", dica: "Naves, colônias estelares, IAs e alienígenas" },
-  { id: "cyberpunk", label: "Cyberpunk", dica: "Megacorporações, implantes, ruas de neon" },
-  { id: "horror", label: "Horror cósmico", dica: "Segredos proibidos, sanidade em risco" },
-  { id: "posapoc", label: "Pós-apocalíptico", dica: "Ruínas, facções, sobrevivência" },
-  { id: "steampunk", label: "Steampunk", dica: "Vapor, engrenagens, impérios voadores" },
-  { id: "livre", label: "Universo próprio", dica: "Você descreve tudo do zero" },
-];
+/* T4-B (28/10, 6.ª fatia): os gêneros que a criação oferece moram no
+   cenário (`generos.criacao`, cenario-padrao.js) — um mundo novo traz os
+   seus cartões, e o gênero padrão e os do futuro são escolhidos entre eles.
+   `export let`: a ligação viva do ESM faz a tela ver os do mundo em uso. */
+export let GENEROS = [];
+aoTrocarDeCenario((c) => { GENEROS = c.generos.criacao; });
 
 export const ATRIBUTOS = [
   { id: "forca", nome: "Força", desc: "Poder físico, combate corpo a corpo" },
