@@ -23,6 +23,7 @@ import {
 import { processarDescansoLongoEventos, ALVOS_DO_DESCANSO, rolarGatilho, ctxMundo } from "../src/geradores.js";
 import { rngDe, gerarGeografia } from "../src/geografia.js";
 import { achavelAqui, oQueExisteAqui, garantirBase, recompensaDoAchado } from "../src/mundo-base.js";
+import { oEnvelopeDoMercado } from "../src/motor/envelopes-do-turno.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => {
@@ -189,8 +190,17 @@ sec("2. a narração do pagamento desce as moedas");
   t("com o campo a menos, falta a diferença", oQueFaltaDebitar("Você paga 6 moedas ao taverneiro.", { moedas: -2 }).moedas === 4);
   t("um ganho declarado não desconta o gasto narrado", oQueFaltaDebitar("Você paga 6 moedas ao taverneiro.", { moedas: 10 }).moedas === 6);
 
-  /* o que o sistema já cobrou: cada envelope da tabela existe mesmo no App */
-  for (const rx of JA_PAGO_PELO_SISTEMA) t(`o envelope ${rx.source.slice(2, 30)}… existe no App`, rx.test(APP));
+  /* o que o sistema já cobrou: cada envelope da tabela existe mesmo no jogo.
+     MOVIDA (T2-A, 29/10/2026, o 13.º grupo): a compra, o mapa comprado e a
+     venda saíram do App para ENVELOPES_DO_MERCADO (src/motor/envelopes-do-turno.js),
+     e o App manda oEnvelopeDoMercado(…). A intenção é a mesma — a tabela de
+     JA_PAGO_PELO_SISTEMA não reconhece um envelope que ninguém emite —, e por
+     isso a asserção segue o envelope até ao motor — chamado, não lido como
+     texto — E exige que o App chame aquela forma: não desce para «existe em
+     algum lado». */
+  const DO_MERCADO = { compra: { item: "pão", vendedor: "Bram", preco: 2 }, mapaComprado: { regiao: "o Vau", vendedor: "Bram", preco: 3, novas: [] }, venda: { item: "anel", valor: 4 } };
+  for (const rx of JA_PAGO_PELO_SISTEMA) t(`o envelope ${rx.source.slice(2, 30)}… existe no App, ou no motor numa forma que o App chama`,
+    rx.test(APP) || Object.entries(DO_MERCADO).some(([q, d]) => rx.test(oEnvelopeDoMercado(q, d)) && APP.includes("oEnvelopeDoMercado(\"" + q + "\"")));
   const env = "[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei \"Espada\" de Bram por ◉ 12.";
   t("depois de uma compra do painel, a narração dela não debita outra vez", oQueFaltaDebitar("Você paga 12 moedas ao armeiro.", {}, { envelopes: env }).temAlgo === false);
 

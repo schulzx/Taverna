@@ -373,3 +373,25 @@ export const ENVELOPES_DOS_PODERES = {
 export function oEnvelopeDosPoderes(qual, dados) {
   return aFormaDe(ENVELOPES_DOS_PODERES, qual, "dos poderes")(dados || {});
 }
+
+/* ============================================================
+   13.º GRUPO — O MERCADO E A BOLSA: o que o sistema já trocou, cobrou ou
+   aplicou num balcão ou na bolsa, e o Narrador só põe em cena — a compra, o
+   mapa comprado, a pechincha, a venda, o consumível usado e a peça equipada
+   sem treino. São notas do turno (o App junta-as abaixo da que já havia).
+   `vendedor`: quem está ao balcão. `desfecho`: a frase da pechincha, já
+   dita pelo sistema. `novas`: os lugares que o mapa acabou de abrir. `comb`:
+   se o consumível foi usado no meio de uma luta (abrir a bolsa não gasta o
+   turno). `penalidades`: as da ficha do equipamento, cada uma com o `texto`.
+   ============================================================ */
+export const ENVELOPES_DO_MERCADO = {
+  equipouSemTreino: ({ item, rotulo, penalidades }) => `[EQUIPAMENTO — REGISTRO DO SISTEMA] Equipei ${item} (${rotulo}) sem ter treino: ${penalidades.map((p) => p.texto).join("; ")}. É fato mecânico e já está aplicado — narre o desconforto quando couber e NUNCA finja que está tudo bem.`,
+  consumivel: ({ nome, texto, comb }) => `[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Usei ${nome}. ${texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gesto e o efeito em UMA frase, junto do resto do turno, sem recalcular e sem me devolver PV/PM. ${comb ? "Abrir a bolsa NÃO gastou meu turno — a ação que vem a seguir é que é o meu turno; narre as duas coisas como uma sequência só." : ""}`,
+  mapaComprado: ({ regiao, vendedor, preco, novas }) => `[MAPA COMPRADO — JÁ APLICADO PELO SISTEMA] Comprei o mapa de ${regiao} de ${vendedor} por ◉ ${preco}.${novas.length ? ` Agora conheço ${novas.join(", ")} — pode falar desses lugares a partir de agora, e eles estão no envelope de geografia.` : ""} Não envie item nem moeda. Narre o cartógrafo desenrolando o pergaminho e o que ele conta sobre a região.`,
+  compra: ({ item, vendedor, preco }) => `[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei "${item}" de ${vendedor} por ◉ ${preco}. O item já está comigo e as moedas já saíram — não envie item nem moeda. Narre a troca e o vendedor, se a cena estiver acontecendo agora.`,
+  pechincha: ({ vendedor, desfecho }) => `[PECHINCHA — JÁ RESOLVIDA PELO SISTEMA] Regateei com ${vendedor} e ${desfecho}. Narre a troca de olhares e a frase dele; não invente outro resultado nem outro número.`,
+  venda: ({ item, valor }) => `[VENDA — JÁ REGISTRADA PELO SISTEMA] Vendi "${item}" por ◉ ${valor}. O item saiu da minha bolsa e as moedas entraram — não repita os números.`,
+};
+export function oEnvelopeDoMercado(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_MERCADO, qual, "do mercado")(dados || {});
+}

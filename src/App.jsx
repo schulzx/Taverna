@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -20409,7 +20409,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     for (const p of av.penalidades) linhas.push({ autor: "sistema", texto: `⚠ ${p.texto}` });
     pushMsgs(linhas);
     if (av.penalidades.length) {
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[EQUIPAMENTO — REGISTRO DO SISTEMA] Equipei ${item.nome} (${av.ficha.rotulo}) sem ter treino: ${av.penalidades.map((p) => p.texto).join("; ")}. É fato mecânico e já está aplicado — narre o desconforto quando couber e NUNCA finja que está tudo bem.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("equipouSemTreino", { item: item.nome, rotulo: av.ficha.rotulo, penalidades: av.penalidades });
     }
   };
 
@@ -23231,7 +23231,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     personagemRef.current = p;
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: r.texto }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA] Usei ${cons.nome}. ${r.texto.replace(/^[^ ]+ /, "")}. O número já foi rolado e aplicado: narre o gesto e o efeito em UMA frase, junto do resto do turno, sem recalcular e sem me devolver PV/PM. ${comb ? "Abrir a bolsa NÃO gastou meu turno — a ação que vem a seguir é que é o meu turno; narre as duas coisas como uma sequência só." : ""}`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("consumivel", { nome: cons.nome, texto: r.texto, comb });
     salvar({ personagem: p });
   };
 
@@ -23544,7 +23544,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       comprados2[mercadorId] = [...(comprados2[mercadorId] || []), it.nome];
       mercadoRef.current = { ...mercadoRef.current, comprados: comprados2 }; setMercado(mercadoRef.current);
       pushMsgs([{ autor: "sistema", texto: `🗺 ${it.nome} por ◉ ${it.preco} — ${dsc.novas.length ? `abriu ${dsc.novas.join(", ")} no seu mapa` : "a região já era conhecida"}.` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MAPA COMPRADO — JÁ APLICADO PELO SISTEMA] Comprei o mapa de ${it.regiao} de ${m.nome} por ◉ ${it.preco}.${dsc.novas.length ? ` Agora conheço ${dsc.novas.join(", ")} — pode falar desses lugares a partir de agora, e eles estão no envelope de geografia.` : ""} Não envie item nem moeda. Narre o cartógrafo desenrolando o pergaminho e o que ele conta sobre a região.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("mapaComprado", { regiao: it.regiao, vendedor: m.nome, preco: it.preco, novas: dsc.novas });
       salvar({ personagem: pm, mapa: mapaRef.current });
       return;
     }
@@ -23569,7 +23569,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setMercado(mercadoRef.current);
     salvar({ mercado: mercadoRef.current });
     pushMsgs([{ autor: "sistema", texto: `🛒 Comprado: ${it.nome} por ◉ ${it.preco} (restam ◉ ${p.moedas}).` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMPRA — JÁ REGISTRADA PELO SISTEMA] Comprei "${it.nome}" de ${m.nome} por ◉ ${it.preco}. O item já está comigo e as moedas já saíram — não envie item nem moeda. Narre a troca e o vendedor, se a cena estiver acontecendo agora.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("compra", { item: it.nome, vendedor: m.nome, preco: it.preco });
     salvar({ personagem: p });
     checarConquistas(p);
   };
@@ -23635,7 +23635,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
     const quanto = Math.round(Math.abs(1 - r.ajuste) * 100);
     pushMsgs([{ autor: "sistema", texto: `🤝 Pechincha com ${m.nome}: d20 ${r.d20}${b >= 0 ? "+" : ""}${b} = ${r.total} contra ${cd} — ${r.texto}${quanto ? ` (${r.ajuste < 1 ? "−" : "+"}${quanto}%)` : ""}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[PECHINCHA — JÁ RESOLVIDA PELO SISTEMA] Regateei com ${m.nome} e ${r.texto}. Narre a troca de olhares e a frase dele; não invente outro resultado nem outro número.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("pechincha", { vendedor: m.nome, desfecho: r.texto });
   };
 
   const venderNoMercado = (nomeItem, origem) => {
@@ -23670,7 +23670,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     };
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: `🛒 Vendido: ${nomeItem} a ${of.quem.nome} por ◉ ${valor} (bolsa: ◉ ${p.moedas}).${linhaDoPreco(of.porques) ? ` — ${linhaDoPreco(of.porques)}` : ""}` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VENDA — JÁ REGISTRADA PELO SISTEMA] Vendi "${nomeItem}" por ◉ ${valor}. O item saiu da minha bolsa e as moedas entraram — não repita os números.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("venda", { item: nomeItem, valor });
     salvar({ personagem: p });
   };
 

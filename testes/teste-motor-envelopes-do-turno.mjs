@@ -35,11 +35,13 @@
    o efeito aplicado, o milagre e a forma dele, o despertar, as magias de
    função (identificar, localizar), as habilidades do turno e as invocações
    que se desfazem.
+   O 13.º, O MERCADO E A BOLSA: a compra, o mapa comprado, a pechincha, a
+   venda, o consumível usado e a peça equipada sem treino.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -523,6 +525,37 @@ sec("16 · os poderes: os casos percorrem o que o texto decide, e a prova morde"
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));
     t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("17 · o mercado e a bolsa: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* as seis são notas do turno: o sítio devolve a nota */
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const MERCADO = ["mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda"];
+  t("as seis notas entram abaixo da que já havia", MERCADO.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
+  const E = N("mercadoEquipou");
+  t("a peça sem treino com uma penalidade (" + conta(E, ": desvantagem em Furtividade.") + ") e com duas, ditas em fila", conta(E, ": desvantagem em Furtividade. É fato") >= 120 && conta(E, ": -2 no ataque; sem magia. É fato") >= 120);
+  const C = N("mercadoConsumivel");
+  t("o consumível em paz e na luta (" + conta(C, "Abrir a bolsa NÃO gastou meu turno") + "), e o recibo sem o ícone da frente", conta(C, "Abrir a bolsa NÃO gastou meu turno") >= 120 && C.filter((x) => !x.includes("Abrir a bolsa")).length >= 120 && conta(C, ". recuperei 8 PV. O número") >= 60 && C.every((x) => !x.includes("🧪") && !x.includes("✨")));
+  const M = N("mercadoMapa");
+  t("o mapa que não abre nada (" + M.filter((x) => !x.includes("Agora conheço")).length + "), um lugar e dois", M.filter((x) => !x.includes("Agora conheço")).length >= 80 && conta(M, " Agora conheço Vau — pode falar") >= 80 && conta(M, " Agora conheço Vau, Porto Sal — pode falar") >= 80);
+  t("a compra e a venda dizem o preço de cada caso", conta(N("mercadoCompra"), "de Ondine, a cartógrafa por ◉ ") >= 120 && N("mercadoVenda").every((x, i) => x.includes("por ◉ " + (1 + (i % 17)) + ". O item saiu")));
+  t("a pechincha que baixa e a que não", conta(N("mercadoPechincha"), "e ele baixou o preço para ◉ 9. Narre") >= 60 && conta(N("mercadoPechincha"), "e ele não cedeu um cobre. Narre") >= 60);
+  t("as seis formas estão na tabela do mercado", Object.keys(ENVELOPES_DO_MERCADO).length === 6 && ["equipouSemTreino", "consumivel", "mapaComprado", "compra", "pechincha", "venda"].every((q) => Object.hasOwn(ENVELOPES_DO_MERCADO, q)));
+  const P = oEnvelopeDoMercado;
+  const mordidas = [
+    ["mercadoEquipou", "a peça que só diz a primeira penalidade", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, penalidades: d.penalidades.slice(0, 1) }) }],
+    ["mercadoConsumivel", "o consumível que esquece a luta", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, comb: null }) }],
+    ["mercadoMapa", "o mapa que não diz o que abriu", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, novas: [] }) }],
+    ["mercadoCompra", "a compra com o vendedor no lugar do item", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, item: d.vendedor }) }],
+    ["mercadoPechincha", "a pechincha sem o desfecho", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, desfecho: "?" }) }],
+    ["mercadoVenda", "a venda de um cobre a mais", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, valor: d.valor + 1 }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
   }
 }
 

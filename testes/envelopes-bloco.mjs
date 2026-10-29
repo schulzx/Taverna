@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -82,9 +82,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "fichaCombate", "fichaSucesso", "fichaVolta", "fichaRecrutamento",
   "infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu",
   "mundoFestival", "mundoRumor", "mundoRumorDeLonge", "mundoReino", "mundoGlobalNovo", "mundoGlobalAvancou", "mundoLocalNovo", "mundoLocalExpirado", "mundoQuest", "mundoDivindade", "mundoEventoDivino",
-  "poderInvocacao", "poderSacrificio", "poderMetamagia", "poderEfeito", "poderMilagreComo", "poderMilagre", "poderDespertar", "poderIdentificarNota", "poderIdentificar", "poderLocalizarSem", "poderLocalizarNota", "poderLocalizar", "poderHabilidades", "poderHabilidade", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide"];
+  "poderInvocacao", "poderSacrificio", "poderMetamagia", "poderEfeito", "poderMilagreComo", "poderMilagre", "poderDespertar", "poderIdentificarNota", "poderIdentificar", "poderLocalizarSem", "poderLocalizarNota", "poderLocalizar", "poderHabilidades", "poderHabilidade", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide",
+  "mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -189,13 +190,21 @@ const ANCORAS = {
   poderEncerradasAoVencer: { antes: ["\n        notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INVOCAÇÕES ENCERRADAS", FIM], hoje: ["\n        notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"invocacoesEncerradas\"", FIM] },
   poderEncerradasNaFuga: { antes: ["          notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INVOCAÇÕES ENCERRADAS", FIM], hoje: ["          notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"invocacoesEncerradas\"", FIM] },
   poderEncerradaNoRevide: { antes: ["          notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INVOCAÇÃO ENCERRADA", FIM], hoje: ["          notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"invocacaoEncerrada\"", FIM] },
+  /* o mercado e a bolsa: seis notas de uma linha; o sítio devolve a nota */
+  mercadoEquipou: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[EQUIPAMENTO — REGISTRO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"equipouSemTreino\"", FIM] },
+  mercadoConsumivel: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[CONSUMÍVEL — JÁ APLICADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"consumivel\"", FIM] },
+  mercadoMapa: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[MAPA COMPRADO — JÁ APLICADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"mapaComprado\"", FIM] },
+  mercadoCompra: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[COMPRA — JÁ REGISTRADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"compra\"", FIM] },
+  mercadoPechincha: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[PECHINCHA — JÁ RESOLVIDA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"pechincha\"", FIM] },
+  mercadoVenda: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[VENDA — JÁ REGISTRADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"venda\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
   fichaNivel: "notaRef.current", fichaPericias: "notaRef.current", fichaAtributo: "notaRef.current", fichaHabilidade: "notaRef.current", fichaSubclasse: "notaRef.current", fichaEspecializacao: "notaRef.current", fichaRefazer: "notaRef.current", fichaRecrutamento: "notaDoRecrutamento(comp)",
   infoDescarteItem: "notaRef.current", infoDescarteEquip: "notaRef.current", infoEquipou: "notaRef.current", infoForjou: "notaRef.current", infoContrato: "notaRef.current", infoDecreto: "notaRef.current", infoAgoraE: "notaRef.current", infoSaiu: "notaRef.current", infoGuilda: "notaRef.current", infoRecalFicha: "notaRef.current", infoRecalMundo: "notaRef.current", infoTransferiu: "notaRef.current",
   mundoFestival: "extras", mundoRumor: "notaRef.current", mundoRumorDeLonge: "notaRef.current", mundoReino: "envelopeEventosReino(evs)", mundoGlobalNovo: "partes", mundoGlobalAvancou: "partes", mundoLocalNovo: "partes", mundoLocalExpirado: "partes", mundoQuest: "partes", mundoDivindade: "partes", mundoEventoDivino: "partes",
-  poderInvocacao: "o.nota", poderSacrificio: "o.nota", poderMetamagia: "o.nota", poderEfeito: "o.nota", poderMilagreComo: "notaRef.current", poderMilagre: "enviados", poderDespertar: "enviados", poderIdentificarNota: "notaRef.current", poderIdentificar: "enviados", poderLocalizarSem: "enviados", poderLocalizarNota: "notaRef.current", poderLocalizar: "enviados", poderHabilidades: "enviados", poderHabilidade: "enviados", poderEncerradasAoVencer: "notaRef.current", poderEncerradasNaFuga: "notaRef.current", poderEncerradaNoRevide: "notaRef.current" };
+  poderInvocacao: "o.nota", poderSacrificio: "o.nota", poderMetamagia: "o.nota", poderEfeito: "o.nota", poderMilagreComo: "notaRef.current", poderMilagre: "enviados", poderDespertar: "enviados", poderIdentificarNota: "notaRef.current", poderIdentificar: "enviados", poderLocalizarSem: "enviados", poderLocalizarNota: "notaRef.current", poderLocalizar: "enviados", poderHabilidades: "enviados", poderHabilidade: "enviados", poderEncerradasAoVencer: "notaRef.current", poderEncerradasNaFuga: "notaRef.current", poderEncerradaNoRevide: "notaRef.current",
+  mercadoEquipou: "notaRef.current", mercadoConsumivel: "notaRef.current", mercadoMapa: "notaRef.current", mercadoCompra: "notaRef.current", mercadoPechincha: "notaRef.current", mercadoVenda: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -464,6 +473,26 @@ export function poderesDoCaso(i) {
   };
 }
 
+/* O MERCADO E A BOLSA: a nota do turno vazia e já com outra à frente; a
+   peça equipada sem treino com uma penalidade e com duas; o consumível
+   usado em paz e no meio da luta (o primeiro termo do recibo cai: é o
+   ícone); o mapa que não abre nada, que abre um lugar e dois; a compra e a
+   venda de cada preço; a pechincha que baixa e a que não. */
+export function mercadoDoCaso(i) {
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    item: { nome: ["Cota de Malha", "Escudo Torre"][(i >> 1) % 2] },
+    av: { ficha: { rotulo: ["armadura pesada", "escudo"][i % 2] }, penalidades: [[{ texto: "desvantagem em Furtividade" }], [{ texto: "-2 no ataque" }, { texto: "sem magia" }]][(i >> 2) % 2] },
+    cons: { nome: ["Poção de Cura", "Elixir de Mana"][i % 2] },
+    r: { texto: ["🧪 recuperei 8 PV", "✨ recuperei 5 PM", "ele baixou o preço para ◉ 9", "ele não cedeu um cobre"][i % 4] },
+    comb: [null, { rodada: 2 }][(i >> 1) % 2],
+    it: { nome: ["Botas de couro", "Lanterna"][i % 2], regiao: ["Vale do Sal", "Serra Funda"][(i >> 1) % 2], preco: 5 + (i % 30) },
+    m: { nome: ["Bram", "Ondine, a cartógrafa"][(i >> 2) % 2] },
+    dsc: { novas: [[], ["Vau"], ["Vau", "Porto Sal"]][i % 3] },
+    nomeItem: ["Adaga velha", "Anel de cobre"][i % 2], valor: 1 + (i % 17),
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -538,6 +567,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "viagem") Object.assign(S, viagemDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "mundo") Object.assign(S, mundoDoCaso(k.i));
     else if (g === "poderes") Object.assign(S, poderesDoCaso(k.i));
+    else if (g === "mercado") Object.assign(S, mercadoDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
