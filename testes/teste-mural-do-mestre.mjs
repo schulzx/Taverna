@@ -114,10 +114,19 @@ sec("4. o que o código de verdade faz com a proposta");
   const cartazPregado = (pregado.portas.find((x) => x[0] === "pregarNoMural") || [])[1] || {};
   t("e prega no mural", cartazPregado.titulo === "Os lobos" && cartazPregado.cidade === "Pedravale" && pregado.fim.msgs.some((m) => m.includes("Hilda tem um trabalho no mural")) && pregado.efeitos.some((e) => e.tipo === "nota" && e.linhas[0] === O.envelopeDoRecado(cartazPregado)));
   t("nada mais registra a proposta como missão do diário", !/envelopeDeOferta/.test(APP));
-  t("o trabalho de quem está na cidade também vai ao mural", /pregarNoMural\(\{ \.\.\.of, oferecido: true \}\)/.test(APP));
-  t("e o envelope dele é o recado", /envelopeDoRecado\(of\)/.test(APP));
+  /* 29/10 (Fase 4, trilha A), ASSERÇÕES MOVIDAS E O MOTIVO: o
+     oferecerTrabalhoDaqui e o pregarNoMural saíram do App para
+     src/motor/depois-do-turno.js, e o motor não se lê pelo texto (a catraca
+     de teste-assercoes-de-texto). A mesma intenção prova-se jogando a peça
+     (depois-bloco.mjs), numa cidade gravada em que o mural prega. */
+  const { jogarODepois, umaCidadeQuePrega } = await import("./depois-bloco.mjs");
+  const naCidade = umaCidadeQuePrega();
+  const oferta = jogarODepois("oferecerTrabalhoDaqui", { estado: naCidade });
+  const papel = (oferta.escritas.mural || [])[0] || {};
+  t("o trabalho de quem está na cidade também vai ao mural", papel.oferecido === true && oferta.portas.some((p) => p[0] === "setMural"));
+  t("e o envelope dele é o recado", typeof oferta.escritas.nota === "string" && oferta.escritas.nota.endsWith(O.envelopeDoRecado(papel)));
   /* CLEAN: uma linha por trabalho, e é a linha que o jogador pediu */
-  t("o aviso é uma linha só, e manda ao mural", /tem um trabalho no mural\./.test(APP));
+  t("o aviso é uma linha só, e manda ao mural", JSON.stringify(oferta.escritas.trabalhoPendente) === JSON.stringify([`📋 ${papel.dador} tem um trabalho no mural.`]));
   /* as duas linhas do aviso antigo sumiram. A linha "primeiro passo…"
      continua existindo, e deve: ela sai quando o JOGADOR aceita, que é
      quando ele quer saber por onde começar. O que não pode voltar é o
@@ -132,8 +141,14 @@ sec("4. o que o código de verdade faz com a proposta");
   /* achado na tela da mesa de dois: Zulmira apareceu DUAS vezes no mesmo
      turno — uma pelo trabalho que o sistema pregou por ela e outra pelo
      que o Mestre relatou da cena. Títulos diferentes, mesma pessoa. */
-  t("uma pessoa não prega dois cartazes", /UMA PESSOA, UM TRABALHO/.test(APP));
-  t("e a peneira é pelo DADOR, não só pelo título", /c\.oferecido && semNome\(c\.dador \|\| ""\) === semNome\(cartaz\.dador\)/.test(APP));
+  /* 29/10 (Fase 4, trilha A), MOVIDAS E O MOTIVO: as mesmas de cima — a
+     porta do mural é a peça; joga-se: com o papel de Zulmira já pregado,
+     outro dela (título diferente, a caixa trocada) não entra; o de outra
+     pessoa entra. */
+  const comZulmira = { dia: 3, missoes: [], mural: [{ titulo: "O sino rachado", dador: "Zulmira do Sino", oferecido: true, pregadoEm: 2 }] };
+  const prega = (cartaz) => jogarODepois("pregarNoMural", { estado: comZulmira, args: [cartaz] }).ret;
+  t("uma pessoa não prega dois cartazes", prega({ titulo: "O sino rachado", dador: "Zulmira do Sino" }) === false && prega({ titulo: "O sino calado", dador: "Bento" }) === true);
+  t("e a peneira é pelo DADOR, não só pelo título", prega({ titulo: "Outra coisa da cena", dador: "ZULMIRA DO SINO" }) === false);
 }
 
 sec("5. o que NÃO mudou, e não podia mudar");

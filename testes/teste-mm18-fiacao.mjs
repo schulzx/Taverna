@@ -125,7 +125,18 @@ sec("5. o mural recusa a gente da história, e o papel vence");
      passa-o agora. A lista continua a sair de abertura, missões e espinha;
      soma-se quem anda comigo. */
   t("a lista da história sai de abertura, missões, espinha e o grupo", /genteDaHistoria\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current, espinha: espinhaRef\.current, grupo: \(personagemRef\.current \|\| personagem \|\| \{\}\)\.grupo \|\| \[\] \}\)/.test(APP));
-  t("os dois sorteios do mural passam a lista (oferecer e garantir)", quantas("historia: historiaDoMural(),\n    });") === 2);
+  /* 29/10 (Fase 4, trilha A), ASSERÇÃO MOVIDA E O MOTIVO: o sorteio de
+     oferecer (oferecerTrabalhoDaqui) saiu do App para
+     src/motor/depois-do-turno.js, e o motor não se lê pelo texto (a catraca
+     de teste-assercoes-de-texto). O de garantir segue aqui, pelo texto; o de
+     oferecer prova-se jogando a peça (depois-bloco.mjs): quem o mundo
+     ofereceria, se anda comigo (a gente da história), dá lugar a outro. */
+  const { jogarODepois, umaCidadeQuePrega } = await import("./depois-bloco.mjs");
+  const naCidade = umaCidadeQuePrega();
+  const quemPrega = (estado) => ((jogarODepois("oferecerTrabalhoDaqui", { estado }).escritas.mural || [])[0] || {}).dador;
+  const oDeSempre = quemPrega(naCidade);
+  const comEle = quemPrega({ ...naCidade, personagem: { ...(naCidade.personagem || {}), grupo: [{ nome: oDeSempre }] } });
+  t("os dois sorteios do mural passam a lista (oferecer e garantir)", quantas("historia: historiaDoMural(),\n    });") === 1 && !!oDeSempre && !!comEle && comEle !== oDeSempre);
   /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o cartaz da proposta do Cronista saiu do
      cronistaDoTurno do App para src/motor/cronista-do-turno.js
      (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
@@ -135,7 +146,11 @@ sec("5. o mural recusa a gente da história, e o papel vence");
   const comHistoria = jogarOAceito({ missao_oferecida: { titulo: "Achar o Noé", tipo: "favor", dador: "Ana", paga: 0, etapas: [{ tipo: "achar", alvo: "Noé Laminado" }] } }, { estado: { npcs: {}, cidadeAtual: "Rio Cinzento", missoes: [] }, portas: { historiaDoMural: () => ["Noé Laminado"] } });
   const semHistoria = jogarOAceito({ missao_oferecida: { titulo: "Achar o Noé", tipo: "favor", dador: "Ana", paga: 0, etapas: [{ tipo: "achar", alvo: "Noé Laminado" }] } }, { estado: { npcs: {}, cidadeAtual: "Rio Cinzento", missoes: [] } });
   t("a proposta do Mestre também", comHistoria.portas.some((x) => x[0] === "historiaDoMural") && !comHistoria.portas.some((x) => x[0] === "pregarNoMural") && semHistoria.portas.some((x) => x[0] === "pregarNoMural"));
-  t("o papel pregado nasce com data", /pregadoEm: cartaz\.pregadoEm != null \? cartaz\.pregadoEm : diaRef\.current/.test(APP));
+  /* 29/10 (Fase 4, trilha A), ASSERÇÃO MOVIDA E O MOTIVO: o pregarNoMural saiu
+     do App para src/motor/depois-do-turno.js; joga-se a peça: o papel sem
+     data nasce com o dia de hoje, e o que já a traz guarda a sua. */
+  const pregadoEm = (cartaz) => { const j = jogarODepois("pregarNoMural", { estado: { dia: 7, mural: [], missoes: [] }, args: [cartaz] }); return j.ret && j.escritas.mural[j.escritas.mural.length - 1].pregadoEm; };
+  t("o papel pregado nasce com data", pregadoEm({ titulo: "Os lobos", dador: "Hilda" }) === 7 && pregadoEm({ titulo: "Os lobos", dador: "Hilda", pregadoEm: 3 }) === 3);
   t("o mural renovado deixa o vencido para trás", APP.includes("c && c.oferecido && !cartazJaVenceu(c)).slice(-TETO_OFERECIDOS)"));
   t("e o rodapé não oferece \"Aceitar\" de papel vencido", APP.includes("c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c)"));
 }

@@ -553,9 +553,16 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   t("e volta do save, garantida (legado sem ela)", continuar.length > 200 && continuar.includes("aberturaMundoRef.current = garantirAbertura(sv.abertura);"));
 
   /* ---- 5. o mural fecha até o herói estar orientado ---- */
-  const oferecer = corpoApos(app, "const oferecerTrabalhoDaqui = () => {");
-  t("oferecerTrabalhoDaqui espera o mural, na primeira linha do corpo",
-    oferecer.length > 100 && /^\{\s*\/\*[^]*?\*\/\s*if \(!muralLiberado\(\{ abertura: aberturaMundoRef\.current, missoes: missoesRef\.current \}\)\) return;/.test(oferecer.slice(0, 260)));
+  /* 29/10 (Fase 4, trilha A), ASSERÇÃO MOVIDA E O MOTIVO: o oferecerTrabalhoDaqui
+     saiu do App para src/motor/depois-do-turno.js, e o motor não se lê pelo
+     texto (a catraca de teste-assercoes-de-texto). A intenção — nenhuma
+     oferta avulsa antes de o herói estar orientado — prova-se jogando a
+     peça (depois-bloco.mjs): a mesma cidade em que o mural prega, com a
+     principal ativa sem o primeiro passo, não prega; com o passo dado, prega. */
+  const { jogarODepois, umaCidadeQuePrega } = await import("./depois-bloco.mjs");
+  const naCidade = umaCidadeQuePrega();
+  const comPasso = (feito) => !!jogarODepois("oferecerTrabalhoDaqui", { estado: { ...naCidade, abertura: { principalId: "p1", turnos: 0 }, missoes: [{ id: "p1", titulo: "A principal", tipo: "principal", status: "ativa", dador: "Ninguém", etapas: [{ tipo: "ir", alvo: "a ponte", feito }] }] } }).escritas.mural;
+  t("oferecerTrabalhoDaqui espera o mural (o herói orientado)", comPasso(false) === false && comPasso(true) === true);
   const mural = corpoApos(app, "const garantirMural = (forcar = false) => {");
   t("garantirMural espera o mural", mural.includes("if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;"));
   const trama = corpoApos(app, "const talvezDarUmaTrama = ({ forcar = false } = {}) => {");

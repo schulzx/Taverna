@@ -226,9 +226,15 @@ t("o cartaz do mural e a missão cara a cara dão a MESMA porta",
 t("e as linhas de cinco números do aceite sumiram", !/Missão aceita: \$\{m\.titulo\}/.test(APP) && !/primeiro passo: \$\{textoDaEtapa\(e\)\}/.test(APP));
 
 sec("7. B4 · B5 · B6 — o mural, o chão, as marcas");
-const pregar = corpoDe("const pregarNoMural = (cartaz) => {", "\n  };");
+/* 29/10 (Fase 4, trilha A), ASSERÇÃO MOVIDA E O MOTIVO: o pregarNoMural saiu
+   do App para src/motor/depois-do-turno.js (a fábrica dos órgãos do depois),
+   e o motor não se lê pelo texto (a catraca de teste-assercoes-de-texto): a
+   mesma intenção — quem já tem trabalho ATIVO comigo não prega outro, por
+   título que seja — prova-se jogando a peça (depois-bloco.mjs). */
+const { jogarODepois } = await import("./depois-bloco.mjs");
+const comigoB4 = (status) => jogarODepois("pregarNoMural", { estado: { dia: 4, mural: [], missoes: [{ id: "b4", titulo: "O que há no Oratório", tipo: "favor", status, dador: "Hilda", etapas: [] }] }, args: [{ titulo: "Encontrar a guarda do portão", dador: "hilda" }] }).ret;
 t("B4: o mural não prega trabalho de quem já tem trabalho ATIVO comigo",
-  /q\.status === "ativa" && q\.dador && semNome\(q\.dador\) === semNome\(cartaz\.dador\)/.test(pregar) && /if \(comigo\) return false;/.test(pregar));
+  comigoB4("ativa") === false && comigoB4("concluida") === true);
 t("B5: a oferta do chão só existe na cena onde a coisa caiu",
   /if \(noChao && chao && chao\.cena && chao\.cena !== cenaDoChao\(\)\) noChao = 0;/.test(APP));
 const trilho = corpoDe("function TrilhoAbas(", "\n}\n");

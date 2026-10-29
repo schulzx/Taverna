@@ -232,8 +232,17 @@ sec("9. V3b · os consertos da prova jogada");
   const UI3 = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
   const { ASSUNTO_DO_EMOJI, assuntoDaLinha } = await import("../src/glifos.js");
   /* 1 — uma notícia, uma cara: era 🆘/🏹/📋 conforme o molde, e 🏹 lia-se dano */
+  /* 29/10 (Fase 4, trilha A), ASSERÇÃO MOVIDA E O MOTIVO: o
+     oferecerTrabalhoDaqui saiu do App para src/motor/depois-do-turno.js, e o
+     motor não se lê pelo texto (a catraca de teste-assercoes-de-texto): a
+     mesma intenção prova-se jogando a peça (depois-bloco.mjs) — o aviso é o
+     pergaminho, seja qual for o ícone do molde do trabalho; e o App não
+     volta a escrever o ícone do molde. */
+  const { jogarODepois, umaCidadeQuePrega } = await import("./depois-bloco.mjs");
+  const avisoDoMural = jogarODepois("oferecerTrabalhoDaqui", { estado: umaCidadeQuePrega() });
+  const papelDoMural = (avisoDoMural.escritas.mural || [])[0] || {};
   t("a notícia do mural leva sempre o pergaminho, nunca o ícone do molde",
-    /\[`📋 \$\{of\.dador\} tem um trabalho no mural\.`\]/.test(APP) && !/of\.icone \|\| "📋"/.test(APP));
+    !!papelDoMural.icone && papelDoMural.icone !== "📋" && JSON.stringify(avisoDoMural.escritas.trabalhoPendente) === JSON.stringify([`📋 ${papelDoMural.dador} tem um trabalho no mural.`]) && !/of\.icone \|\| "📋"/.test(APP));
   /* 2 — o 📖 é o grimório; as duas falas de 📖 que não eram magia mudaram de prefixo */
   t("📖 é magia (faísca), não lupa", ASSUNTO_DO_EMOJI["📖"] === "faisca" && assuntoDaLinha("📖 Você ainda não sabe essa magia de cor").glifo === "faisca");
   t("a ficha da base do mundo e o arco novo já não abrem com 📖", !/`📖 \$\{e\.nome\} está na base do mundo/.test(APP) && !/`📖 Novo arco iniciado/.test(APP));

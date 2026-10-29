@@ -1,0 +1,217 @@
+{
+ "commit": "fa0a5e0",
+ "raizes": [
+  "oferecerTrabalhoDaqui",
+  "pregarNoMural"
+ ],
+ "recortes": [
+  {
+   "nome": "mundoAtual",
+   "de": "componente",
+   "texto": "  /* v9.22: `mundoAtual()` e `nomeCampanhaRef` existem porque VÁRIOS callbacks\n     desta casa são useCallback de deps estreitas, criados no primeiro render —\n     quando mundo é null e o nome da campanha é \"\". Ler o estado direto lá\n     dentro devolve esses valores de nascimento para sempre. Aqui a\n     consequência era silenciosa e por isso pior: o system prompt era\n     remontado com campanha sem nome e mundo vazio toda vez que o cânone ou o\n     registro de pessoas mudava, e o Mestre perdia contexto sem ninguém ver. */\n  const mundoAtual = () => mundoRef.current || mundo || null;"
+  },
+  {
+   "nome": "sementeMundo",
+   "de": "componente",
+   "texto": "  const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || \"aventura\"}|${(mundoAtual() && mundoAtual().genero) || \"\"}`;"
+  },
+  {
+   "nome": "generoMundo",
+   "de": "componente",
+   "texto": "  const generoMundo = () => (mundoAtual() && mundoAtual().genero) || cenarioAtivo().generos.padrao;"
+  },
+  {
+   "nome": "moldeMundo",
+   "de": "componente",
+   "texto": "  /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar\n     recebe isto ao lado do gênero — um decide o sabor, o outro a forma. */\n  const moldeMundo = () => moldePorId((mundoAtual() && mundoAtual().molde) || MOLDE_PADRAO);"
+  },
+  {
+   "nome": "semNome",
+   "de": "componente",
+   "texto": "  /* ---------------- ANDAR DENTRO DA CIDADE (v9.55) ----------------\n     \"Vou até o Javali Cambaleante.\" O Mestre narrou a travessia da praça e\n     a porta da taverna, e o sistema deixou o herói no centro — o marcador\n     do mapa não saiu do lugar.\n\n     O Mestre estava certo em não registrar nada: o prompt lhe diz que\n     `lugar_atual` é o que fica FORA da cidade. A taverna não é fora da\n     cidade. O modelo tinha dois estados — dentro e fora — e a cidade\n     inteira cabia no primeiro.\n\n     Quem move, então, é o CÓDIGO, e move ANTES de o Mestre responder: o\n     jogador escreveu o nome de um lugar que o sistema conhece, com um\n     verbo de deslocamento. Não há o que interpretar, e é justamente o\n     tipo de coisa que esta casa não delega.\n\n     Vale para os dois lados do muro: um local de dentro vira `dentro` (sair\n     dele leva minutos); um do cinturão vira `arredores` (leva horas), que é\n     o que já era. E o Mestre recebe o fato pronto, não um pedido. */\n  const semNome = (s) => String(s || \"\").toLowerCase().normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").trim();"
+  },
+  {
+   "nome": "historiaDoMural",
+   "de": "componente",
+   "texto": "  /* ---------------- O MUNDO OFERECE TRABALHO (v9.37) ----------------\n     O outro lado do mural, e a inversão que faltava: em vez de esperar o\n     Mestre inventar um nobre desesperado e o Cronista tentar extrair etapas\n     da prosa dele, o SISTEMA monta o serviço inteiro — quem pede, o que\n     pede, quanto paga — e manda o Mestre encenar a abordagem.\n\n     Ele vem da base do mundo, então a pessoa existe, mora em algum lugar\n     desta cidade e tem uma vontade própria desde a criação da campanha. A\n     preferência é por quem o herói JÁ conhece: um rosto conhecido pedindo\n     ajuda vale mais que um estranho, e poupa o Mestre de apresentar gente\n     nova a cada duas cenas.\n\n     Conservador de propósito: fora de combate, fora de masmorra, no máximo\n     um por dia e só quando o diário está com espaço. Trabalho oferecido\n     demais vira ruído, e ruído é o oposto de uma oferta que importa. */\n  /* MM18 (11/10): A HISTÓRIA NÃO SE OFERECE. A preferência por quem o herói\n     já conhece punha no mural, no começo, justamente a gente da história —\n     o alvo da principal pregou \"A caçada de Noé Laminado\" (4.ª sessão).\n     Quem é da história (a pista, o alvo, quem as missões que não se\n     recusam e os marcos por fazer nomeiam) fica fora do mural e da\n     proposta do Mestre. E o papel pregado vence (`CARTAZ_ESPERA`). */\n  const historiaDoMural = () => {\n    try { return genteDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [] }); }\n    catch (e) { calou(\"a gente da história\", e); return []; }\n  };"
+  },
+  {
+   "nome": "oferecerTrabalhoDaqui",
+   "de": "componente",
+   "texto": "  const oferecerTrabalhoDaqui = () => {\n    /* MM13: nenhuma oferta avulsa antes de o herói estar orientado. */\n    if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;\n    if (combateRef.current || masmorraRef.current) return;\n    if (!cidadeAtualRef.current) return;\n    if (ultimoTrabalhoDiaRef.current >= diaRef.current) return;\n    const abertas = garantirMissoes(missoesRef.current).filter((q) => [\"ativa\", \"oferecida\"].includes(q.status));\n    if (abertas.length >= 3) return;\n    const p = personagemRef.current || personagem || {};\n    const candidatas = ofertasDaqui({\n      semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,\n      base: baseMundoRef.current, genero: generoMundo(), nivel: p.nivel || 1, quantas: 6,\n      molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,\n      evitar: abertas.flatMap((q) => [q.titulo, q.dador]),\n      historia: historiaDoMural(),\n    });\n    if (!candidatas.length) return;\n    const conhecidos = new Set(Object.keys(npcsRef.current || {}).map((n) => n.toLowerCase()));\n    const of = candidatas.find((c) => conhecidos.has(String(c.dador).toLowerCase())) || candidatas[0];\n    /* v9.119: O TRABALHO VAI PARA O MURAL, NÃO PARA O DIÁRIO. Antes ele\n       virava missão \"oferecida\" ali mesmo, com duas linhas no log e um\n       aceita/recusa no diário — uma segunda fonte de missões, opcional,\n       disputando as mesmas vagas com a trama da história, que não é\n       opcional. Agora quem quer o herói num serviço prega o papel e\n       menciona; o herói vai ao mural se quiser. */\n    if (!pregarNoMural({ ...of, oferecido: true })) return;\n    ultimoTrabalhoDiaRef.current = diaRef.current;\n    /* o aviso espera a cena: quem o solta é `aplicarResposta`, depois da\n       narração em que o Mestre encena a menção. Uma linha, e só: o log é a\n       cena, e o cartaz já diz o resto quando o jogador abrir o mural. */\n    trabalhoPendenteRef.current = [`📋 ${of.dador} tem um trabalho no mural.`];\n    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoRecado(of)}`;\n  };"
+  },
+  {
+   "nome": "pregarNoMural",
+   "de": "componente",
+   "texto": "  /* Prega um cartaz no mural. Uma porta só, para o trabalho que o sistema\n     sorteia e o que a ficção inventa nunca discordarem sobre a forma nem\n     sobre quando o papel já está lá. */\n  const pregarNoMural = (cartaz) => {\n    if (!cartaz || !cartaz.titulo) return false;\n    const chave = (c) => `${semNome(c.dador || \"\")}|${semNome(c.titulo || \"\")}`;\n    const atual = muralRef.current || [];\n    if (atual.some((c) => chave(c) === chave(cartaz))) return false;\n    /* ---------------- UMA PESSOA, UM TRABALHO (achado na tela) ----------------\n       Zulmira do Sino apareceu DUAS vezes no mural no mesmo turno: uma pelo\n       trabalho que o sistema escolheu pregar por ela (🏹) e outra pelo que o\n       Mestre relatou da própria cena (📋). Títulos diferentes, mesma pessoa,\n       mesmo serviço — e duas linhas iguais no log.\n\n       A regra que resolve isso não é nova: `ofertas.js` a escreve desde a\n       v9.37 na terceira decisão dele, \"cada pessoa tem UM trabalho, para\n       sempre\". Faltava valer também para o que a ficção prega. */\n    if (cartaz.dador && atual.some((c) => c.oferecido && semNome(c.dador || \"\") === semNome(cartaz.dador))) return false;\n    /* o que já está no diário não volta ao mural: seria oferecer de novo o\n       serviço que o herói já pegou */\n    const jaNoDiario = garantirMissoes(missoesRef.current)\n      .filter((q) => [\"ativa\", \"oferecida\", \"concluida\"].includes(q.status))\n      .some((q) => semNome(q.titulo) === semNome(cartaz.titulo));\n    if (jaNoDiario) return false;\n    /* A1 · B4 (10/10): QUEM JÁ TEM TRABALHO COMIGO NÃO PREGA OUTRO. O título\n       muda de um turno para o outro (\"O que há no Oratório\" / \"Encontrar a\n       guarda do portão\") e a régua acima, que compara títulos, deixava\n       passar — no ANTES (T7) o mural anunciou o trabalho que eu tinha\n       aceite no turno anterior. É a lei de `ofertas.js` (\"cada pessoa tem\n       UM trabalho\"), que até aqui valia só para o que estava no mural e não\n       para o que já estava na mão. */\n    try {\n      const comigo = !!cartaz.dador && garantirMissoes(missoesRef.current)\n        .some((q) => q && q.status === \"ativa\" && q.dador && semNome(q.dador) === semNome(cartaz.dador));\n      if (comigo) return false;\n    } catch (e) { calou(\"o mural e quem já trabalha comigo\", e); }\n    const doMundo = atual.filter((c) => !c.oferecido);\n    /* MM18: o papel nasce com data — vence ao fim de CARTAZ_ESPERA */\n    const oferecidos = [...atual.filter((c) => c.oferecido), { ...cartaz, pregadoEm: cartaz.pregadoEm != null ? cartaz.pregadoEm : diaRef.current }].slice(-TETO_OFERECIDOS);\n    muralRef.current = [...doMundo, ...oferecidos];\n    setMural(muralRef.current);\n    return true;\n  };"
+  },
+  {
+   "nome": "TETO_OFERECIDOS",
+   "de": "render",
+   "texto": "  /* ---------------- MURAL DE CONTRATOS (v9.37 · o mundo é que oferece) ----------------\n     O mural deixou de ser uma tabela de sorteio e virou uma JANELA: os\n     cartazes são os trabalhos que a gente desta cidade já queria ver feitos,\n     lidos direto da base do mundo. Cada pessoa tem um serviço, sempre o\n     mesmo, e o cartaz é só o papel onde ele foi parar. */\n  /* Quantos cartazes de gente que falou com o herói o mural guarda. Eles\n     sobrevivem à renovação — foram pregados POR ALGUÉM, não sorteados —,\n     e sem teto a pilha cresceria para sempre. */\n  const TETO_OFERECIDOS = 6;"
+  }
+ ],
+ "refs": {
+  "aberturaMundoRef": {
+   "campo": "abertura",
+   "padrao": "garantirAbertura(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "baseMundoRef": {
+   "campo": "baseMundo",
+   "padrao": "garantirBase(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "cidadeAtualRef": {
+   "campo": "cidadeAtual",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": true
+  },
+  "combateRef": {
+   "campo": "combate",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "diaRef": {
+   "campo": "dia",
+   "padrao": "1",
+   "escreve": false,
+   "salvo": true
+  },
+  "espinhaRef": {
+   "campo": "espinha",
+   "padrao": "garantirEspinha(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "mapaRef": {
+   "campo": "mapa",
+   "padrao": "{ cidades: [], faccoes: [] }",
+   "escreve": false,
+   "salvo": true
+  },
+  "masmorraRef": {
+   "campo": "masmorra",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "missoesRef": {
+   "campo": "missoes",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "mundoRef": {
+   "campo": "mundo",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "muralRef": {
+   "campo": "mural",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": true
+  },
+  "nomeCampanhaRef": {
+   "campo": "nomeCampanha",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": false
+  },
+  "notaRef": {
+   "campo": "nota",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": false
+  },
+  "npcsRef": {
+   "campo": "npcs",
+   "padrao": "{}",
+   "escreve": false,
+   "salvo": true
+  },
+  "personagemRef": {
+   "campo": "personagem",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "trabalhoPendenteRef": {
+   "campo": "trabalhoPendente",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": false
+  },
+  "ultimoTrabalhoDiaRef": {
+   "campo": "ultimoTrabalhoDia",
+   "padrao": "0",
+   "escreve": true,
+   "salvo": false
+  }
+ },
+ "render": [
+  "mundo",
+  "nomeCampanha",
+  "personagem"
+ ],
+ "renderPadrao": {
+  "mundo": "null",
+  "nomeCampanha": "\"\"",
+  "personagem": "null"
+ },
+ "setters": [
+  "setMural"
+ ],
+ "imports": {
+  "MOLDE_PADRAO": {
+   "de": "./moldes.js",
+   "nome": "MOLDE_PADRAO"
+  },
+  "cenarioAtivo": {
+   "de": "./cenario.js",
+   "nome": "cenarioAtivo"
+  },
+  "envelopeDoRecado": {
+   "de": "./ofertas.js",
+   "nome": "envelopeDoRecado"
+  },
+  "garantirAbertura": {
+   "de": "./abertura.js",
+   "nome": "garantirAbertura"
+  },
+  "garantirBase": {
+   "de": "./mundo-base.js",
+   "nome": "garantirBase"
+  },
+  "garantirEspinha": {
+   "de": "./saga.js",
+   "nome": "garantirEspinha"
+  },
+  "garantirMissoes": {
+   "de": "./missoes.js",
+   "nome": "garantirMissoes"
+  },
+  "genteDaHistoria": {
+   "de": "./ofertas.js",
+   "nome": "genteDaHistoria"
+  },
+  "moldePorId": {
+   "de": "./moldes.js",
+   "nome": "moldePorId"
+  },
+  "muralLiberado": {
+   "de": "./abertura.js",
+   "nome": "muralLiberado"
+  },
+  "ofertasDaqui": {
+   "de": "./ofertas.js",
+   "nome": "ofertasDaqui"
+  }
+ }
+}

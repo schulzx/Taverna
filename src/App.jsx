@@ -24,7 +24,7 @@ import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
 import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
-import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
+import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO, ditosDoBando } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
@@ -339,6 +339,7 @@ import { carimbarALuta } from "./motor/carimbo-da-luta.js";
 import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO } from "./motor/pedido-do-turno.js";
 import { oPreludioDoTurno, REFS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
+import { osOrgaosDoDepois, REFS_DO_DEPOIS } from "./motor/depois-do-turno.js";
 import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi } from "./motor/golpe-no-corpo.js";
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
@@ -7353,6 +7354,28 @@ export default function Taverna() {
   const aplicarDoPreludio = (x) => {
     const refs = refsDoPreludio();
     for (const [c, v] of Object.entries(x || {})) { const r = REFS_DO_PRELUDIO[c]; if (r && refs[r.ref]) refs[r.ref].current = v; }
+  };
+  /* OS ÓRGÃOS DO DEPOIS (Fase 4, trilha A, 29/10): o que o turno corre
+     depois do aplicar e que é órgão com nome — o trabalho que o mundo
+     oferece, a porta do mural — é a peça src/motor/depois-do-turno.js, à
+     letra e provada contra o recorte deste arquivo (testes/depois-dourado.json).
+     A fábrica nasce a cada chamada, com os refs do instante (REFS_DO_DEPOIS:
+     o campo e o nome do ref aqui) e o render, e devolve pelo aplicar o que
+     escreveu — antes de cada porta e no fim do órgão. */
+  const refsDoDepois = () => ({
+    aberturaMundoRef, baseMundoRef, cidadeAtualRef, combateRef, diaRef, espinhaRef,
+    mapaRef, masmorraRef, missoesRef, mundoRef, muralRef, nomeCampanhaRef,
+    notaRef, npcsRef, personagemRef, trabalhoPendenteRef, ultimoTrabalhoDiaRef,
+  });
+  const osOrgaosAgora = () => {
+    const refs = refsDoDepois();
+    const e = { render: { mundo, nomeCampanha, personagem } };
+    for (const [c, r] of Object.entries(REFS_DO_DEPOIS)) if (refs[r.ref]) e[c] = refs[r.ref].current;
+    return osOrgaosDoDepois(e, {
+      aplicar: (x) => { for (const [c, v] of Object.entries(x || {})) { const r = REFS_DO_DEPOIS[c]; if (r && refs[r.ref]) refs[r.ref].current = v; } },
+      calou, salvar, setMural,
+      pushMsgs: (novas) => { pushMsgs(novas); return mensagensRef.current; },
+    });
   };
 
   const ultimaAcaoRef = useRef("");
@@ -16024,39 +16047,10 @@ export default function Taverna() {
     try { return cartazVencido(c, diaRef.current); }
     catch (e) { calou("o cartaz vencido", e); return false; }
   };
-  const oferecerTrabalhoDaqui = () => {
-    /* MM13: nenhuma oferta avulsa antes de o herói estar orientado. */
-    if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;
-    if (combateRef.current || masmorraRef.current) return;
-    if (!cidadeAtualRef.current) return;
-    if (ultimoTrabalhoDiaRef.current >= diaRef.current) return;
-    const abertas = garantirMissoes(missoesRef.current).filter((q) => ["ativa", "oferecida"].includes(q.status));
-    if (abertas.length >= 3) return;
-    const p = personagemRef.current || personagem || {};
-    const candidatas = ofertasDaqui({
-      semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
-      base: baseMundoRef.current, genero: generoMundo(), nivel: p.nivel || 1, quantas: 6,
-      molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
-      evitar: abertas.flatMap((q) => [q.titulo, q.dador]),
-      historia: historiaDoMural(),
-    });
-    if (!candidatas.length) return;
-    const conhecidos = new Set(Object.keys(npcsRef.current || {}).map((n) => n.toLowerCase()));
-    const of = candidatas.find((c) => conhecidos.has(String(c.dador).toLowerCase())) || candidatas[0];
-    /* v9.119: O TRABALHO VAI PARA O MURAL, NÃO PARA O DIÁRIO. Antes ele
-       virava missão "oferecida" ali mesmo, com duas linhas no log e um
-       aceita/recusa no diário — uma segunda fonte de missões, opcional,
-       disputando as mesmas vagas com a trama da história, que não é
-       opcional. Agora quem quer o herói num serviço prega o papel e
-       menciona; o herói vai ao mural se quiser. */
-    if (!pregarNoMural({ ...of, oferecido: true })) return;
-    ultimoTrabalhoDiaRef.current = diaRef.current;
-    /* o aviso espera a cena: quem o solta é `aplicarResposta`, depois da
-       narração em que o Mestre encena a menção. Uma linha, e só: o log é a
-       cena, e o cartaz já diz o resto quando o jogador abrir o mural. */
-    trabalhoPendenteRef.current = [`📋 ${of.dador} tem um trabalho no mural.`];
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoRecado(of)}`;
-  };
+  /* a regra (MM13: o herói orientado; fora de luta e de masmorra; um por
+     dia; o diário com espaço; quem o herói conhece primeiro; o papel no
+     mural e o recado ao Mestre) mora em src/motor/depois-do-turno.js */
+  const oferecerTrabalhoDaqui = () => osOrgaosAgora().oferecerTrabalhoDaqui();
 
   /* A resposta do jogador a uma oferta. Recusar é uma resposta legítima, e o
      envelope proíbe o Mestre de insistir ou de punir por isso. */
@@ -19491,47 +19485,10 @@ export default function Taverna() {
 
   /* Prega um cartaz no mural. Uma porta só, para o trabalho que o sistema
      sorteia e o que a ficção inventa nunca discordarem sobre a forma nem
-     sobre quando o papel já está lá. */
-  const pregarNoMural = (cartaz) => {
-    if (!cartaz || !cartaz.titulo) return false;
-    const chave = (c) => `${semNome(c.dador || "")}|${semNome(c.titulo || "")}`;
-    const atual = muralRef.current || [];
-    if (atual.some((c) => chave(c) === chave(cartaz))) return false;
-    /* ---------------- UMA PESSOA, UM TRABALHO (achado na tela) ----------------
-       Zulmira do Sino apareceu DUAS vezes no mural no mesmo turno: uma pelo
-       trabalho que o sistema escolheu pregar por ela (🏹) e outra pelo que o
-       Mestre relatou da própria cena (📋). Títulos diferentes, mesma pessoa,
-       mesmo serviço — e duas linhas iguais no log.
-
-       A regra que resolve isso não é nova: `ofertas.js` a escreve desde a
-       v9.37 na terceira decisão dele, "cada pessoa tem UM trabalho, para
-       sempre". Faltava valer também para o que a ficção prega. */
-    if (cartaz.dador && atual.some((c) => c.oferecido && semNome(c.dador || "") === semNome(cartaz.dador))) return false;
-    /* o que já está no diário não volta ao mural: seria oferecer de novo o
-       serviço que o herói já pegou */
-    const jaNoDiario = garantirMissoes(missoesRef.current)
-      .filter((q) => ["ativa", "oferecida", "concluida"].includes(q.status))
-      .some((q) => semNome(q.titulo) === semNome(cartaz.titulo));
-    if (jaNoDiario) return false;
-    /* A1 · B4 (10/10): QUEM JÁ TEM TRABALHO COMIGO NÃO PREGA OUTRO. O título
-       muda de um turno para o outro ("O que há no Oratório" / "Encontrar a
-       guarda do portão") e a régua acima, que compara títulos, deixava
-       passar — no ANTES (T7) o mural anunciou o trabalho que eu tinha
-       aceite no turno anterior. É a lei de `ofertas.js` ("cada pessoa tem
-       UM trabalho"), que até aqui valia só para o que estava no mural e não
-       para o que já estava na mão. */
-    try {
-      const comigo = !!cartaz.dador && garantirMissoes(missoesRef.current)
-        .some((q) => q && q.status === "ativa" && q.dador && semNome(q.dador) === semNome(cartaz.dador));
-      if (comigo) return false;
-    } catch (e) { calou("o mural e quem já trabalha comigo", e); }
-    const doMundo = atual.filter((c) => !c.oferecido);
-    /* MM18: o papel nasce com data — vence ao fim de CARTAZ_ESPERA */
-    const oferecidos = [...atual.filter((c) => c.oferecido), { ...cartaz, pregadoEm: cartaz.pregadoEm != null ? cartaz.pregadoEm : diaRef.current }].slice(-TETO_OFERECIDOS);
-    muralRef.current = [...doMundo, ...oferecidos];
-    setMural(muralRef.current);
-    return true;
-  };
+     sobre quando o papel já está lá. A regra (uma pessoa, um trabalho; o
+     que está no diário não volta; quem já trabalha comigo não prega outro;
+     o papel nasce com data) mora em src/motor/depois-do-turno.js. */
+  const pregarNoMural = (cartaz) => osOrgaosAgora().pregarNoMural(cartaz);
 
   const aceitarContrato = (c) => {
     if (!c) return;
