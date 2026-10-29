@@ -380,17 +380,34 @@ export function bonusEquip(pers, attrId) {
    `e.aplica`, `atributoEfetivo` estourava junto, e o teste de concentração
    calava no try/calou — a magia do herói e a do companheiro nunca caíam.
    Agora a lista vem pela peneira do órgão, e o que não é objeto (o texto,
-   o número perdido na lista) não conta. A soma em si é a de sempre, de
-   propósito: o efeito sem `bonus` ainda soma NaN e o `bonus` em texto ainda
-   concatena — é outro defeito, medido à parte (diário de 28/10), e mexer
-   nele muda rolagens que o dourado do aplicar congelou. */
+   o número perdido na lista) não conta.
+
+   28/10 (Fase T, trilha B) · O BÔNUS QUE NÃO É NÚMERO. A soma era `b += e.bonus`
+   cru, e dois efeitos de verdade a quebravam. O efeito SEM `bonus` — a
+   Regeneração que só cura por turno, o efeito que o App monta sem o campo —
+   somava `undefined` e a rolagem inteira virava NaN: o d20 + NaN nunca vence
+   CD nenhuma, e a salvaguarda de fim de turno falhava sempre enquanto ele
+   durasse. O `bonus` em TEXTO concatenava: "2" num Vigor +1 dava "102", e o
+   teto da rolagem (`MOD_MAX_ROLAGEM`) fazia dele o maior bônus do jogo.
+   Agora o que não é número conta 0, e o texto numérico conta o número que
+   diz — a DECISÃO, e o motivo: o mesmo campo já é lido assim pelos dois
+   vizinhos (`bonusDeDano` em combos.js faz `Number(ef.bonus)`, e o canal do
+   Mestre em `aplicarMudancas` passa o "3" por `Math.min`, que o torna 3);
+   contar 0 aqui faria o mesmo efeito somar no dano e não somar na rolagem.
+   Só texto e número entram: `true`, objeto e lista contam 0. */
+const bonusNumerico = (x) => {
+  if (typeof x !== "number" && typeof x !== "string") return 0;
+  if (typeof x === "string" && !x.trim()) return 0;
+  const n = Number(x);
+  return Number.isFinite(n) ? n : 0;
+};
 export function bonusEfeito(pers, attrNome) {
   let b = 0;
   const alvo = String(attrNome == null ? "" : attrNome).toLowerCase();
   efeitosDe(pers).forEach((e) => {
     if (typeof e !== "object") return;
     const ap = String(e.aplica == null ? "" : e.aplica).toLowerCase();
-    if (!e.aplica || ap === alvo || APLICA_UNIVERSAL.includes(ap)) b += e.bonus;
+    if (!e.aplica || ap === alvo || APLICA_UNIVERSAL.includes(ap)) b += bonusNumerico(e.bonus);
   });
   return b;
 }

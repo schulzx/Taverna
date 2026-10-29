@@ -2003,10 +2003,11 @@ sec("19. uma de cada vez — a nova toma o lugar da que ele segurava (C3)");
    estourava junto. Quem pagava era a concentração: o teste do herói e o do
    companheiro calavam no try/calou, e a magia NUNCA caía, por mais forte
    que fosse o golpe. A prova da trilha B (golpe-casos.mjs) achou isto em 14
-   dos 27 calou da quebra. A soma não mudou: o efeito sem `bonus` ainda dá
-   NaN e o `bonus` em texto ainda concatena — outro defeito, medido à parte
-   e deixado de pé porque mexer nele mexe em rolagens que o dourado do
-   (teste-motor-aplicar, três secções) congelou; por isso esta seção não o prova nem o fixa.
+   dos 27 calou da quebra. A soma não mudou nesta seção: o efeito sem `bonus`
+   dava NaN e o `bonus` em texto concatenava — outro defeito, consertado
+   depois (28/10, trilha B) e provado em teste-efeitos-na-peneira §6, com os
+   turnos que mudaram nos três dourados do aplicar escritos no diário; por
+   isso esta seção continua a não o provar nem o fixar.
    ============================================================ */
 console.log("\n20. o buraco na lista: bonusEfeito pela peneira");
 {
