@@ -141,7 +141,13 @@ sec("6. os fios das viagens");
   const iEnc = pos("const enc = rolarEncontro(");
   const iV = pos("encontroComFio(enc, {");
   t("o encontro da viagem passa por encontroComFio, logo depois de rolado", iEnc > 0 && iV > iEnc && iV - iEnc < 800);
-  t("o envelope do trecho usa o detalhe com fio, e o tipo continua o da tabela", APP.includes("ENCONTRO DO TRECHO (${enc.tipo}): ${encV.detalhe}"));
+  /* MOVIDA (28/10, T2-A, a viagem): o texto do trecho saiu do App para
+     src/motor/envelopes-do-turno.js. A intenção é a mesma — o tipo vem da
+     tabela (enc) e o detalhe é o que passou pelo fio (encV) —, lida no que o
+     App passa ao motor, e o motor põe os dois na linha do encontro. */
+  const { oEnvelopeDaViagem } = await import(RAIZ + "motor/envelopes-do-turno.js");
+  t("o envelope do trecho usa o detalhe com fio, e o tipo continua o da tabela", APP.includes("encontro: { tipo: enc.tipo, detalhe: encV.detalhe }")
+    && oEnvelopeDaViagem("trecho", { local: "x", clima: { rotulo: "r", nota: "n" }, encontro: { tipo: "perigo", detalhe: "com fio" }, ritmo: { nome: "N", desc: "d" }, destino: "", paraCidade: "" }).includes("ENCONTRO DO TRECHO (perigo): com fio"));
   t("o tema usado fica lembrado para não se repetir", /if \(encV\.tema\) ultimoTemaRef\.current = encV\.tema\.texto;/.test(APP));
   const iLa = pos("linhaDoAcampamento({");
   const iSit = pos("enviar(envSitio, personagem);");

@@ -89,18 +89,24 @@ sec("1. o gênero das pessoas: o Cronista diz, o registo guarda, o Narrador lê"
 /* ============================================================ */
 sec("2. o envelope do trecho de estrada: com destino, a chegada é do sistema");
 {
-  const i = app.indexOf("const textoDaViagem = (");
-  const linha = i > 0 ? app.slice(i, app.indexOf("\n    if (qr.chamadas) enviar(textoDaViagem", i)) : "";
-  const comDestino = (linha.match(/paraCidade \? \((ultimoTrechoCidade \? [\s\S]*?)\) : `Se o meio/) || [])[1] || "";
-  t("o trecho conhece o destino da jornada (paraCidade)", /const paraCidade = !paraBoca && jornadaRef\.current && jornadaRef\.current\.para/.test(app) && !!comDestino);
-  t("com destino, não pede o campo da cidade", !!comDestino && !/cidade_atual/.test(comDestino));
-  t("com destino, não pede o campo do meio", !!comDestino && !/jornada_meio/.test(comDestino));
+  /* MOVIDAS (28/10, T2-A, a viagem): o texto do trecho saiu do App para
+     src/motor/envelopes-do-turno.js (oEnvelopeDaViagem("trecho")). As mesmas
+     sete provas leem agora o envelope que o motor monta em cada caminho — com
+     destino (o último trecho e o do meio), sem destino, e até à boca de uma
+     masmorra —, e o App só tem de calcular o destino e passá-lo. */
+  const { oEnvelopeDaViagem } = await import(S + "motor/envelopes-do-turno.js");
+  const base = { local: "na estrada", clima: { rotulo: "chuva", nota: "fina" }, encontro: { tipo: "nenhum", detalhe: "nada" }, meio: null, paraBoca: false, ultimoTrecho: false, alvo: null, paraCidade: "", ultimoTrechoCidade: false, destino: "", ritmo: { nome: "Normal", desc: "o passo" }, notaMarcha: "", notaErmos: "", notaAmbulante: "", extraTempo: "" };
+  const trecho = (d) => oEnvelopeDaViagem("trecho", { ...base, ...d });
+  const comDestino = trecho({ paraCidade: "Coroa Alta", ultimoTrechoCidade: true }) + " | " + trecho({ paraCidade: "Coroa Alta" });
+  t("o trecho conhece o destino da jornada (paraCidade)", /const paraCidade = !paraBoca && jornadaRef\.current && jornadaRef\.current\.para/.test(app) && /oEnvelopeDaViagem\("trecho", \{[\s\S]{0,400}paraCidade, ultimoTrechoCidade, destino,/.test(app));
+  t("com destino, não pede o campo da cidade", !/cidade_atual/.test(comDestino));
+  t("com destino, não pede o campo do meio", !/jornada_meio/.test(comDestino));
   t("com destino, diz que a chegada é do sistema", /a chegada é do sistema/.test(comDestino) && /a chegada vem no envelope do sistema/.test(comDestino));
-  const semDestino = (linha.match(/\) : (`Se o meio de viagem mudar[\s\S]*?)\} Termine me convidando/) || [])[1] || "";
+  const semDestino = trecho({}) + " | " + trecho({ destino: "Agulha de Sal" });
   t("sem destino, as duas instruções ficam (a única porta de chegada por palavras)", /registre "jornada_meio"/.test(semDestino) && /registre "cidade_atual"/.test(semDestino));
-  t("e a frase do meio já não vale para todos os trechos (só para o sem destino)", (linha.match(/registre "jornada_meio"/g) || []).length === 1);
-  const boca = (linha.match(/\$\{paraBoca \? \(([\s\S]*?)\) : paraCidade/) || [])[1] || "";
-  t("a estrada até à boca de uma masmorra já não cita o campo da cidade", !!boca && !/cidade_atual/.test(boca) && /a chegada à boca é do sistema/.test(boca));
+  t("e a frase do meio já não vale para todos os trechos (só para o sem destino)", (semDestino.match(/registre "jornada_meio"/g) || []).length === 2 && !/jornada_meio/.test(comDestino));
+  const boca = trecho({ paraBoca: true, alvo: "a Cripta", ultimoTrecho: true }) + " | " + trecho({ paraBoca: true, alvo: "a Cripta" });
+  t("a estrada até à boca de uma masmorra já não cita o campo da cidade", !/cidade_atual/.test(boca) && /a chegada à boca é do sistema/.test(boca));
 }
 
 /* ============================================================ */

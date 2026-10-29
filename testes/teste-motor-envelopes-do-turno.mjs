@@ -24,7 +24,7 @@
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -233,6 +233,47 @@ sec("9 · a abertura: os casos percorrem o que o texto decide, e a prova morde")
     ["aberturaCapituloNovo", "o capítulo novo com outro selo", { oEnvelopeDaAbertura: (q, d) => E(q, d).replace("[ABERTURA DE CAPÍTULO]", "[CAPÍTULO]") }],
     ["aberturaRetomada", "a retomada sem o nome", { oEnvelopeDaAbertura: (q, d) => E(q, { ...d, campanha: "a aventura" }) }],
     ["aberturaRetomada", "a retomada que deixa o tempo passar", { oEnvelopeDaAbertura: (q, d) => E(q, d).replace(" não faça o tempo passar e", "") }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("10 · a viagem: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const V = HOJE.viagemTrecho.map((f) => f.texto);
+  const M = (b) => HOJE[b].map((f) => f.texto[0][0]);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  t(`o trecho até à boca, o último (${conta(V, "Este trecho termina diante da entrada da Cripta")}) e não (${conta(V, "Estou a caminho da entrada")}); até à cidade, o último (${conta(V, "Este trecho termina em Coroa Alta")}) e não (${conta(V, "Estou a caminho de Coroa Alta")}); sem destino na jornada, com o dito (${conta(V, "Estou a caminho de Agulha de Sal — aproxime-me")}) e sem (${conta(V, "Se eu estiver a caminho")})`,
+    ["Este trecho termina diante da entrada", "Estou a caminho da entrada", "Este trecho termina em Coroa Alta", "Estou a caminho de Coroa Alta", "Estou a caminho de Agulha de Sal — aproxime-me", "Se eu estiver a caminho"].every((s) => conta(V, s) >= 20)
+    && conta(V, "entrada do Poço das Celas") >= 10 && conta(V, "entrada da Cripta do Corvo") >= 10);
+  t(`com meio (${conta(V, "(seguimos de ")}) e sem; as notas do fim na ordem`, conta(V, "(seguimos de ") >= 100 && conta(V, "(seguimos de ") < N_CASOS
+    && V.every((x) => { const p = ["[MARCHA]", "[ERMOS]", "[AMBULANTE]", "[TEMPO +1h]"].map((s) => x.indexOf(s)).filter((n) => n >= 0); return p.every((n, j) => !j || n > p[j - 1]); }));
+  const P = M("viagemPassarOTempo");
+  t(`passar o tempo dentro de um lugar (${conta(P, "EU CONTINUO EM ")}) e fora, com o clima (${conta(P, "[CLIMA]")}) e o reino (${conta(P, "[REINO]")}) cheios e vazios`,
+    conta(P, "EU CONTINUO EM O MOINHO VELHO") >= 20 && conta(P, "EU CONTINUO EM ") < N_CASOS && ["[CLIMA]", "[REINO]"].every((s) => conta(P, s) >= 60 && conta(P, s) < N_CASOS));
+  const E2 = M("viagemErmos");
+  t(`o forrageamento que achou (${conta(E2, "Consegui ")}) e o que não; nada colhido (${conta(E2, "bolsa:  —")}), uma e duas colheitas (${conta(E2, "; ")}); fecha com o escopo`,
+    conta(E2, "Consegui ") >= 100 && conta(E2, "Não encontrei") >= 60 && conta(E2, "bolsa:  —") >= 60 && conta(E2, "Musgo (pavio); Pedra-ume (tinta)") >= 60 && E2.every((x) => x.endsWith(SO_ISSO)));
+  const F = HOJE.viagemEmboscada.map((f) => f.texto);
+  t(`a emboscada com nota (${conta(F, "\n[EMBOSCADA]")}) e sem, com o bando em minúsculas`, conta(F, "\n[EMBOSCADA]") >= 60 && F.every((x) => !x.includes("Os Lobos")) && conta(F, "os lobos do vau") >= 100);
+  t("as duas partidas: o mapa com a ficha do render, a escolha com a viva (e sem ela)", new Set(HOJE.viagemPartidaMapa.map((f) => f.texto[0][1])).size === 1 && new Set(HOJE.viagemPartidaEscolha.map((f) => f.texto[0][1])).size === 2);
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_VIAGEM).length === 6 && (() => { try { oEnvelopeDaViagem("nenhuma", {}); return false; } catch { return true; } })());
+  const E = oEnvelopeDaViagem;
+  const mordidas = [
+    ["viagemPartidaMapa", "a partida pelo mapa com outro destino", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, destino: "lugar nenhum" }) }],
+    ["viagemPartidaEscolha", "a escolha que diz mapa", { oEnvelopeDaViagem: (q, d) => E("partidaMapa", d) }],
+    ["viagemTrecho", "o último trecho até à boca lido como o do meio", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, ultimoTrecho: false }) }],
+    ["viagemTrecho", "o último trecho até à cidade lido como o do meio", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, ultimoTrechoCidade: false }) }],
+    ["viagemTrecho", "o meio esquecido", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, meio: null }) }],
+    ["viagemTrecho", "a boca sem a preposição", { oEnvelopeDaViagem: (q, d) => E(q, d).replace(/entrada d[aoe]s? /g, "entrada ") }],
+    ["viagemTrecho", "o ritmo sem as minúsculas", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, ritmo: { ...d.ritmo, nome: { toLowerCase: () => d.ritmo.nome } } }) }],
+    ["viagemPassarOTempo", "o tempo que passa na cidade", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, lugar: null }) }],
+    ["viagemPassarOTempo", "o clima e o reino trocados", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, clima: d.reino, reino: d.clima }) }],
+    ["viagemErmos", "o forrageamento sempre achado", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, achou: true }) }],
+    ["viagemErmos", "as colheitas sem a descrição", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, colhidos: d.colhidos.map((c) => ({ ...c, desc: "?" })) }) }],
+    ["viagemEmboscada", "a emboscada sem a nota", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, nota: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

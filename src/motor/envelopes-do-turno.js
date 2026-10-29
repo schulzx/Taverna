@@ -21,6 +21,7 @@
 import { dataTxt, horaTxt, ehNoite, estacaoDe } from "../calendario.js";
 import { formaDaCidade } from "../geografia.js";
 import { MARCA_DO_RODAPE } from "../prompt.js";
+import { comDe } from "../lugar.js";
 
 /* A CHAVE É DA TABELA (28/10/2026): toda escolha por chave neste módulo passa
    por aqui. `tabela[chave]` sozinho lê o protótipo — "constructor" devolvia a
@@ -199,4 +200,37 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
 };
 export function oEnvelopeDaAbertura(qual, dados) {
   return aFormaDe(ENVELOPES_DA_ABERTURA, qual, "da abertura")(dados || {});
+}
+
+/* ============================================================
+   6.º GRUPO — A VIAGEM: a partida pelo mapa e pela escolha entre as opções
+   do sistema, o trecho da estrada (o clima, o encontro e o ritmo de marcha,
+   tudo rolado pelas tabelas do app; o Narrador só narra, e a chegada é do
+   sistema quando há destino), o tempo que o jogador deixa passar (ONDE ele
+   está — v9.39: sem o lugar, "reapresente a cena atual" teletransportava
+   para a cidade quem esperava de tocaia), o forrageamento nos ermos (o que
+   se colheu já está na bolsa) e a emboscada no lugar de onde se fugiu.
+   ============================================================ */
+export const ENVELOPES_DA_VIAGEM = {
+  partidaMapa: ({ destino }) => `[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${destino} no mapa e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`,
+  partidaEscolha: ({ destino }) => `[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${destino} entre as opções que o sistema me deu, e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`,
+  /* `alvo`: o nome da boca da masmorra (só quando `paraBoca`); `paraCidade`: a
+     cidade da jornada, ou vazio; as notas do fim chegam já em texto, na ordem */
+  trecho: ({ local, clima, encontro, meio, paraBoca, ultimoTrecho, alvo, paraCidade, ultimoTrechoCidade, destino, ritmo, notaMarcha, notaErmos, notaAmbulante, extraTempo }) => `[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
+LOCAL ATUAL: ${local}.
+CLIMA AGORA: ${clima.rotulo} — ${clima.nota}.
+ENCONTRO DO TRECHO (${encontro.tipo}): ${encontro.detalhe}
+Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${meio ? ` (seguimos de ${meio})` : ""}, não em cidade. ${paraBoca ? (ultimoTrecho ? `Este trecho termina diante da entrada ${comDe(alvo)}, fora de qualquer cidade: narre-o até ela ficar à vista, sem me pôr lá dentro — a chegada à boca é do sistema.` : `Estou a caminho da entrada ${comDe(alvo)}, fora de qualquer cidade — aproxime-me dela, mas NÃO me faça chegar nem entrar: a chegada à boca é do sistema, e ele avisa quando for.`) : paraCidade ? (ultimoTrechoCidade ? `Este trecho termina em ${paraCidade}: a chegada vem no envelope do sistema, e é como ele diz que se narra.` : `Estou a caminho de ${paraCidade} — aproxime-me desse destino, sem me pôr lá dentro: a chegada é do sistema, e ele avisa quando for.`) : `Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."}`} Termine me convidando a agir. RITMO DE MARCHA: ${ritmo.nome.toLowerCase()} — ${ritmo.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`,
+  /* `lugar`: o lugar fora da cidade onde se espera (o do ref), ou nada */
+  passarOTempo: ({ horas, escala, lugar, clima, reino }) => {
+    const ondeEspero = lugar
+      ? ` EU CONTINUO EM ${lugar.nome.toUpperCase()}, fora da cidade: as ${horas} horas passam AQUI e a cena é reaberta AQUI. NÃO me leve de volta à cidade, não narre estrada nenhuma, não me faça chegar a lugar algum — se eu estava de tocaia, continuo de tocaia. Traga o mundo até mim: o que se ouve, o que se aproxima, o que muda no escuro.`
+      : "";
+    return `[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia).${ondeEspero} Ao final, reapresente a cena atual e me convide a agir.${clima}${reino}`;
+  },
+  forrageamento: ({ achou, racoes, agua, colhidos, extra }) => `[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${achou ? `Consegui ${racoes} rações e ${agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável de comida."} O sistema também colheu matéria-prima e JÁ pôs na minha bolsa: ${colhidos.map((c) => `${c.nome} (${c.desc})`).join("; ")} — NÃO envie itens por isso. Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho, mencionando de passagem onde estava o que colhi.${extra}${SO_ISSO}`,
+  emboscadaDaFuga: ({ bando, nota }) => `[FUGA — TERRITÓRIO DO SISTEMA] A luta ACONTECE agora: ${bando.toLowerCase()}, porque o herói voltou ao lugar de onde fugiu. Narre a emboscada.${nota ? `\n${nota}` : ""}`,
+};
+export function oEnvelopeDaViagem(qual, dados) {
+  return aFormaDe(ENVELOPES_DA_VIAGEM, qual, "da viagem")(dados || {});
 }

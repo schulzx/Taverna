@@ -29,6 +29,7 @@ import * as decretos from "../src/decretos.js";
 import { TIPOS_CARTA } from "../src/correio.js";
 import * as subtramas from "../src/subtramas.js";
 import * as arquivo from "../src/arquivo.js";
+import * as lugar from "../src/lugar.js";
 
 const NOMES = {
   calendario: ["dataTxt", "horaTxt", "ehNoite", "estacaoDe"],
@@ -39,9 +40,10 @@ const NOMES = {
   decretos: ["tipoDecreto"],
   subtramas: ["fraseDaManha"],
   arquivo: ["nomeDaCampanha"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura"],
+  lugar: ["comDe"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem"],
 };
-const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, motorEnvelopes };
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
@@ -71,9 +73,10 @@ const corteDe = (app) => (de, ate) => {
    são as linhas de fora do sítio que o App de antes lia (o SO_ISSO no topo). */
 export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga", "correioDecreto", "correioCarta", "correioPeticao",
   "acampSemDescanso", "acampDescansado", "fogoSentar", "fogoDecisao", "fogoFicar", "coracaoResposta", "coracaoDecisao",
-  "aberturaCampanha", "aberturaCapitulo", "aberturaCapituloNovo", "aberturaRetomada"];
+  "aberturaCampanha", "aberturaCapitulo", "aberturaCapituloNovo", "aberturaRetomada",
+  "viagemPartidaMapa", "viagemPartidaEscolha", "viagemTrecho", "viagemPassarOTempo", "viagemErmos", "viagemEmboscada"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -102,8 +105,16 @@ const ANCORAS = {
   aberturaCapitulo: { antes: ['enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", personagemRef.current', FIM], hoje: ['enviar(oEnvelopeDaAbertura("capitulo"), personagemRef.current', FIM] },
   aberturaCapituloNovo: { antes: ['enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", pers, []);', FIM], hoje: ['enviar(oEnvelopeDaAbertura("capitulo"), pers, []);', FIM] },
   aberturaRetomada: { antes: ["        enviar(recap && recap.vale", "\n      }\n    } catch (e) {"], hoje: ["        enviar(recap && recap.vale", "\n      }\n    } catch (e) {"] },
+  /* a viagem: as partidas, o forrageamento e a emboscada são uma linha; o trecho é a const do texto (o sítio
+     devolve-o: o App envia-o ou guarda-o na nota); passar o tempo leva junto o "onde espero" de antes */
+  viagemPartidaMapa: { antes: ["    enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${nome} no mapa", FIM], hoje: ['    enviar(oEnvelopeDaViagem("partidaMapa", ', FIM] },
+  viagemPartidaEscolha: { antes: ["        enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${escolhida.nome}", FIM], hoje: ['        enviar(oEnvelopeDaViagem("partidaEscolha", ', FIM] },
+  viagemTrecho: { antes: ["    const textoDaViagem = (", "\n    if (qr.chamadas) enviar(textoDaViagem, persV);"], hoje: ["    const textoDaViagem = oEnvelopeDaViagem(", "\n    if (qr.chamadas) enviar(textoDaViagem, persV);"] },
+  viagemPassarOTempo: { antes: ["    const ondeEspero = lugarRef.current", "\n  };"], hoje: ['    enviar(oEnvelopeDaViagem("passarOTempo", ', "\n  };"] },
+  viagemErmos: { antes: ["    enviar(`[ERMOS — FORRAGEAMENTO]", FIM], hoje: ['    enviar(oEnvelopeDaViagem("forrageamento", ', FIM] },
+  viagemEmboscada: { antes: ["    return `[FUGA — TERRITÓRIO DO SISTEMA]", FIM], hoje: ['    return oEnvelopeDaViagem("emboscadaDaFuga", ', FIM] },
 };
-const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)" };
+const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -234,6 +245,32 @@ export function aberturaDoCaso(i) {
   };
 }
 
+/* A VIAGEM: o trecho até à boca de uma masmorra (o último e não), até uma
+   cidade (o último e não) e sem destino na jornada (com destino dito e
+   sem); com e sem meio; as notas do fim cheias e vazias; as horas de cada
+   escala, dentro e fora de um lugar; o forrageamento que achou e o que não,
+   com nada, uma e duas colheitas; a emboscada com e sem nota. */
+export function viagemDoCaso(i) {
+  const m = i % 6;
+  const nota = (n, txt) => ((i >> n) & 1 ? txt : "");
+  return {
+    nome: ["Agulha de Sal", "Coroa Alta", "o Vau das Garças"][i % 3], escolhida: { nome: ["Torre Funda", "a Ponte do Martelo"][i % 2] },
+    fichaViva: () => (i % 5 === 0 ? null : { nome: "Vera viva" }),
+    horas: [1, 3, 4, 8, 9, 16, 17, 24, 48][i % 9], escala: ["algumas horas (mudanças pequenas)", "um dia completo (o mundo se move bastante)"][i % 2],
+    climaMsg: nota(1, "\n[CLIMA] O tempo virou: agora está chuva — fina. Use isso na cena."), reinoMsg: nota(2, "\n[REINO] O imposto venceu."),
+    r: { achou: i % 3 !== 0, racoes: 1 + (i % 4), agua: i % 5, nome: ["Os Lobos do Vau", "a Matilha Cinza"][i % 2] },
+    colhidos: [[], [{ nome: "Erva-de-sangue", desc: "cura leve", icone: "🌿" }], [{ nome: "Musgo", desc: "pavio", icone: "🍂" }, { nome: "Pedra-ume", desc: "tinta", icone: "🪨" }]][i % 3],
+    extra: nota(3, " [TEMPO +4h]"), pColh: { nome: "Vera colhida" },
+    ab: { nota: [null, "", "[EMBOSCADA] Eles cercam a estrada."][i % 3] },
+    c: { rotulo: ["céu limpo", "chuva", "nevoeiro"][i % 3], nota: "a estrada " + (i % 4) }, enc: { tipo: ["nenhum", "viajante", "perigo"][i % 3] }, encV: { detalhe: "um carroceiro " + (i % 7) },
+    jornadaRef: { current: { meio: [null, "carroça", "barco"][(i >> 1) % 3], alvo: { nome: ["a Cripta do Corvo", "o Poço das Celas", "Torre Velha"][i % 3], tipo: "masmorra" } } },
+    paraBoca: m < 2, ultimoTrecho: m === 0, paraCidade: m === 2 || m === 3 ? "Coroa Alta" : "", ultimoTrechoCidade: m === 2,
+    destino: m === 5 ? [null, ""][i % 2] : "Agulha de Sal",
+    rit: { nome: ["Normal", "Forçada", "Cautelosa"][i % 3], desc: "o passo " + (i % 3) },
+    notaMarcha: nota(4, " [MARCHA] cansaço"), notaErmos: nota(5, " [ERMOS] sem trilha"), notaAmbulante: nota(6, " [AMBULANTE] um mascate"), extraTempo: nota(7, " [TEMPO +1h]"),
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -303,6 +340,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "acampamento") Object.assign(S, acampamentoDoCaso(k.i), { personagem: { nome: "Vera do render" }, fecharANoite: (manha, txt) => { enviados.push([txt, seguro(manha)]); } });
     else if (g === "abertura") Object.assign(S, aberturaDoCaso(k.i));
+    else if (g === "viagem") Object.assign(S, viagemDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

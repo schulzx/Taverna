@@ -20,7 +20,8 @@ import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fot
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorraContornada: "d3d6f60", masmorraAVista: "d3d6f60", masmorraTesouro: "d3d6f60", masmorraSantuario: "d3d6f60", masmorraBusca: "d3d6f60", masmorraFuga: "d3d6f60", correioDecreto: "df6e36b", correioCarta: "df6e36b", correioPeticao: "df6e36b",
   acampSemDescanso: "640c39f", acampDescansado: "640c39f", fogoSentar: "640c39f", fogoDecisao: "640c39f", fogoFicar: "640c39f", coracaoResposta: "640c39f", coracaoDecisao: "640c39f",
-  aberturaCampanha: "548a91a", aberturaCapitulo: "548a91a", aberturaCapituloNovo: "548a91a", aberturaRetomada: "548a91a" };
+  aberturaCampanha: "548a91a", aberturaCapitulo: "548a91a", aberturaCapituloNovo: "548a91a", aberturaRetomada: "548a91a",
+  viagemPartidaMapa: "21f2857", viagemPartidaEscolha: "21f2857", viagemTrecho: "21f2857", viagemPassarOTempo: "21f2857", viagemErmos: "21f2857", viagemEmboscada: "21f2857" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);

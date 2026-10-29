@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -6893,7 +6893,7 @@ export default function Taverna() {
     sinalViagemRef.current = nome; destinoViagemRef.current = nome;
     pushMsgs([{ autor: "sistema", texto: `🧭 ${nome} — a caminho.` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(nome, cidadeAtualRef.current)}`;
-    enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${nome} no mapa e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`, personagem);
+    enviar(oEnvelopeDaViagem("partidaMapa", { destino: nome }), personagem);
   };
 
   /* ---------------- O QUE A CENA USA (v9.54) ----------------
@@ -14325,7 +14325,7 @@ export default function Taverna() {
         pushMsgs([{ autor: "jogador", texto: acao }, { autor: "sistema", texto: `🧭 ${escolhida.nome} — a caminho.` }]);
         notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDePartida(escolhida.nome, cidadeAtualRef.current)}`;
         try { viajar(escolhida.nome, { origem: "frase" }); } catch (e) { calou("viajar pela escolha", e); }
-        enviar(`[PARTIDA — REGISTRADA PELO SISTEMA] Escolhi ${escolhida.nome} entre as opções que o sistema me deu, e ponho o pé na estrada agora. Narre a saída — o portão, quem fica, o primeiro trecho — e me passe a vez.`, fichaViva());
+        enviar(oEnvelopeDaViagem("partidaEscolha", { destino: escolhida.nome }), fichaViva());
         return true;
       }
       /* não era resposta: segue como ação normal, sem cobrar nada do jogador */
@@ -16882,10 +16882,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        cena atual" virava um convite para o Mestre reabrir a cena que ele tem
        mais à mão — a cidade —, e o jogador que deixou 12h passarem de tocaia
        na porteira acordava teletransportado. */
-    const ondeEspero = lugarRef.current
-      ? ` EU CONTINUO EM ${lugarRef.current.nome.toUpperCase()}, fora da cidade: as ${horas} horas passam AQUI e a cena é reaberta AQUI. NÃO me leve de volta à cidade, não narre estrada nenhuma, não me faça chegar a lugar algum — se eu estava de tocaia, continuo de tocaia. Traga o mundo até mim: o que se ouve, o que se aproxima, o que muda no escuro.`
-      : "";
-    enviar(`[PASSAR O TEMPO — ${horas} horas] Simule a passagem de ${horas} horas: ${escala}. Faça o mundo VIVER esse intervalo proporcionalmente — o que os NPCs e facções fizeram, o que avançou, o que mudou no ambiente e nas suas missões, notícias que chegaram. Quanto mais horas, mais coisas acontecem (mas sempre plausível, nunca absurdo tipo impérios caindo em 1 dia).${ondeEspero} Ao final, reapresente a cena atual e me convide a agir.${climaMsg}${reinoMsg}`, personagem);
+    enviar(oEnvelopeDaViagem("passarOTempo", { horas, escala, lugar: lugarRef.current, clima: climaMsg, reino: reinoMsg }), personagem);
   };
 
   /* MODIFICADOR DE UM TESTE (v9.15) — atributo + treino da perícia.
@@ -17423,7 +17420,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (ab.pers) { setPersonagem(ab.pers); personagemRef.current = ab.pers; }
     territorioEmLutaRef.current = r.id;
     pushMsgs([{ autor: "sistema", texto: `⚔ ${r.nome} — você voltou, e eles estavam à espera.` }]);
-    return `[FUGA — TERRITÓRIO DO SISTEMA] A luta ACONTECE agora: ${r.nome.toLowerCase()}, porque o herói voltou ao lugar de onde fugiu. Narre a emboscada.${ab.nota ? `\n${ab.nota}` : ""}`;
+    return oEnvelopeDaViagem("emboscadaDaFuga", { bando: r.nome, nota: ab.nota });
   };
 
   const talvezVirar = () => {
@@ -21184,7 +21181,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setPersonagem(pColh);
     const txtColh = colhidos.map((c) => `${c.icone} ${c.nome}`).join(" · ");
     pushMsgs([{ autor: "sistema", texto: `🌿 ${r.texto}` }, { autor: "sistema", texto: `🧺 Também dá para aproveitar: ${txtColh} — na bolsa, para a bancada.` }]);
-    enviar(`[ERMOS — FORRAGEAMENTO] Passo metade do dia caçando e colhendo. ${r.achou ? `Consegui ${r.racoes} rações e ${r.agua} de água (o sistema já somou).` : "Não encontrei nada aproveitável de comida."} O sistema também colheu matéria-prima e JÁ pôs na minha bolsa: ${colhidos.map((c) => `${c.nome} (${c.desc})`).join("; ")} — NÃO envie itens por isso. Narre a busca em 2-3 frases, com o cheiro e o cansaço do trabalho, mencionando de passagem onde estava o que colhi.${extra}${SO_ISSO}`, pColh);
+    enviar(oEnvelopeDaViagem("forrageamento", { achou: r.achou, racoes: r.racoes, agua: r.agua, colhidos, extra }), pColh);
   };
 
   const mudarRitmo = (id) => {
@@ -24114,11 +24111,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        (detectarSeguirViagem não lê o destino da frase). */
     const paraCidade = !paraBoca && jornadaRef.current && jornadaRef.current.para ? String(jornadaRef.current.para) : "";
     const ultimoTrechoCidade = (() => { try { return !!paraCidade && !!(progressoDaViagem(jornadaRef.current) || {}).chegou; } catch (e) { calou("o último trecho até à cidade", e); return false; } })();
-    const textoDaViagem = (`[VIAGEM — tudo rolado pelas tabelas do app; você só NARRA, não invente outro resultado]
-LOCAL ATUAL: ${localAtualTxt()}.
-CLIMA AGORA: ${c.rotulo} — ${c.nota}.
-ENCONTRO DO TRECHO (${enc.tipo}): ${encV.detalhe}
-Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a cena atual. Lembre-se: estou EM VIAGEM — a cena acontece no caminho${jornadaRef.current.meio ? ` (seguimos de ${jornadaRef.current.meio})` : ""}, não em cidade. ${paraBoca ? (ultimoTrecho ? `Este trecho termina diante da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade: narre-o até ela ficar à vista, sem me pôr lá dentro — a chegada à boca é do sistema.` : `Estou a caminho da entrada ${comDe(jornadaRef.current.alvo.nome)}, fora de qualquer cidade — aproxime-me dela, mas NÃO me faça chegar nem entrar: a chegada à boca é do sistema, e ele avisa quando for.`) : paraCidade ? (ultimoTrechoCidade ? `Este trecho termina em ${paraCidade}: a chegada vem no envelope do sistema, e é como ele diz que se narra.` : `Estou a caminho de ${paraCidade} — aproxime-me desse destino, sem me pôr lá dentro: a chegada é do sistema, e ele avisa quando for.`) : `Se o meio de viagem mudar, registre "jornada_meio". Se chegarmos de fato a um destino, registre "cidade_atual". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre "cidade_atual".` : "Se eu estiver a caminho de algum destino, aproxime-me dele."}`} Termine me convidando a agir. RITMO DE MARCHA: ${rit.nome.toLowerCase()} — ${rit.desc}${notaMarcha}${notaErmos}${notaAmbulante}${extraTempo}`);
+    const textoDaViagem = oEnvelopeDaViagem("trecho", {
+      local: localAtualTxt(), clima: c, encontro: { tipo: enc.tipo, detalhe: encV.detalhe }, meio: jornadaRef.current.meio,
+      paraBoca, ultimoTrecho, alvo: paraBoca ? jornadaRef.current.alvo.nome : null, paraCidade, ultimoTrechoCidade, destino,
+      ritmo: rit, notaMarcha, notaErmos, notaAmbulante, extraTempo,
+    });
     if (qr.chamadas) enviar(textoDaViagem, persV);
     else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${textoDaViagem}`;
   };
