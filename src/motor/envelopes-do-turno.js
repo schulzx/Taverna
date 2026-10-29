@@ -610,3 +610,38 @@ export const ENVELOPES_DO_CORPO = {
 export function oEnvelopeDoCorpo(qual, dados) {
   return aFormaDe(ENVELOPES_DO_CORPO, qual, "do corpo")(dados || {});
 }
+
+/* ============================================================
+   22.º GRUPO — O DESFECHO DAS HABILIDADES: a linha de cada alvo que vai
+   dentro de [HABILIDADES — RESOLVIDAS PELO SISTEMA] (ENVELOPES_DOS_PODERES,
+   `desfechos`). O sistema já rolou o acerto, o dano e a queda; o Narrador
+   recebe, por alvo, o que aconteceu: o golpe (o crítico, o dano ou a
+   resistência parcial, o d20 contra a CA, e o [CAIU] de quem foi a 0), a
+   segunda vez da magia geminada, quem a área pegou, o meu grupo que a minha
+   própria área pegou, a condição aplicada ou resistida, a vida drenada, o
+   alvo IMUNE pelo degrau de divindade e o que errou. E as duas habilidades
+   que não rolam: a colheita (todo inimigo abaixo do limiar cai de uma vez,
+   ou ninguém) e a execução de um alvo abaixo do limiar.
+   O App junta as linhas com "; " — é o mesmo texto que morava inteiro lá
+   (29/10, trilha A: os cinco [CAIU…] eram voz do Mestre no App, e tirar só
+   a marca partiria uma frase entre o App e o motor; sai a peça inteira).
+   `alvo`: o nome; `caiu`: se o golpe o levou a 0; `bonus`, `total`, `ca`:
+   a conta do d20 como o sistema a deu (sem bônus, sem o «+»).
+   ============================================================ */
+export const ENVELOPES_DO_DESFECHO = {
+  golpe: ({ alvo, resultado, dano, d20, bonus, total, ca, caiu }) => `${alvo} — ${resultado === "critico" ? `CRÍTICO, ${dano} de dano` : resultado === "acerta" ? `${dano} de dano` : "resistiu parcialmente"} (d20=${d20}${bonus ? `+${bonus}` : ""}=${total} vs ${ca})${caiu ? " [CAIU]" : ""}`,
+  geminada: ({ alvo, dano, caiu }) => `${alvo} — ${dano} de dano pela magia GEMINADA${caiu ? " [CAIU]" : ""}`,
+  area: ({ alvo, dano, caiu }) => `${alvo} — ${dano} de dano pela área${caiu ? " [CAIU]" : ""}`,
+  fogoAmigo: ({ lista, meio, habilidade }) => `${lista} apanhou ${meio} da minha própria ${habilidade}`,
+  condicao: ({ alvo, aplicou, condicao }) => (aplicou ? `${alvo} ficou ${condicao.toLowerCase()}` : `${alvo} resistiu à ${condicao.toLowerCase()}`),
+  drenou: ({ cura }) => `drenei ${cura} PV`,
+  imune: ({ alvo, gdAlvo, gdMeu }) => `${alvo} — IMUNE (GD ${gdAlvo} contra meu GD ${gdMeu}: poder comum não fere divindade tão acima; preciso de artefato lendário, bênção ou enfraquecê-lo antes)`,
+  errou: ({ alvo, desastre, d20, bonus, total, ca }) => `${alvo} — ${desastre ? "erro desastroso" : "errou"} (d20=${d20}${bonus ? `+${bonus}` : ""}=${total} vs ${ca})`,
+  colheita: ({ nomes, fracaoTxt, habilidade }) => (nomes.length
+    ? `${nomes.map((n) => `${n} [CAIU — estava abaixo de ${fracaoTxt} dos PV]`).join("; ")}`
+    : `ninguém estava abaixo de ${fracaoTxt} dos PV: ${habilidade} passou pelo campo e NÃO derrubou ninguém`),
+  execucao: ({ alvo, habilidade, fracaoTxt, vida, vidaMax }) => `${alvo} [CAIU — ${habilidade} executa quem está abaixo de ${fracaoTxt} dos PV; ele estava com ${vida} de ${vidaMax}]`,
+};
+export function oEnvelopeDoDesfecho(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_DESFECHO, qual, "do desfecho")(dados || {});
+}

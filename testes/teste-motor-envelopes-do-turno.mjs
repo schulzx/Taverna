@@ -57,11 +57,15 @@
    O 21.º, O CORPO NA LUTA: o revide, o fogo amigo, o ritual, as duas caudas
    da retirada, a vitória, as três vezes que o corpo não caiu, o golpe
    aguentado, a queda de altura e a raid que acabou.
+   O 22.º, O DESFECHO DAS HABILIDADES: a linha de cada alvo dentro de
+   [HABILIDADES — RESOLVIDAS] — o golpe, a geminada, a área, o meu grupo na
+   minha área, a condição, a drenagem, o imune, o erro, a colheita e a
+   execução, com os [CAIU…] que eram a última voz do Mestre no App.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente, ENVELOPES_DO_JOGADOR, oEnvelopeDoJogador, ENVELOPES_DO_CORPO, oEnvelopeDoCorpo } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente, ENVELOPES_DO_JOGADOR, oEnvelopeDoJogador, ENVELOPES_DO_CORPO, oEnvelopeDoCorpo, ENVELOPES_DO_DESFECHO, oEnvelopeDoDesfecho } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -954,6 +958,54 @@ sec("28 · o que veio contra mim: o sujeito da salvaguarda sai do App");
     const n = divergem(b, fotosDeHoje(b, troca));
     t(nome + ": " + n + " casos mudam", n > 0);
   }
+}
+
+sec("29 · o desfecho das habilidades: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* O 22.º grupo (29/10/2026, trilha A). A linha de cada alvo que vai dentro de
+     [HABILIDADES — RESOLVIDAS] morava no App, com os cinco [CAIU…] — a última voz do
+     Mestre nos envelopes. Sai a peça inteira (as dez formas da resolução de uma
+     habilidade ofensiva), e o App só junta as linhas com "; ". Os 275 casos dos dez
+     sítios batem byte a byte com o App de 44a4695 (secção 1); aqui, o que os casos
+     percorrem, e as mordidas. */
+  const L = (b) => HOJE[b].map((f) => f.texto);
+  const ult = (b) => L(b).map((x) => (Array.isArray(x) ? x[x.length - 1] : x));
+  const conta = (xs, s) => xs.filter((x) => String(x).includes(s)).length;
+  const DESF = ["desfechoColheita", "desfechoExecucao", "desfechoGolpe", "desfechoGeminada", "desfechoArea", "desfechoFogoAmigo", "desfechoCondicao", "desfechoDrenou", "desfechoImune", "desfechoErrou"];
+  t("as dez formas estão na tabela do desfecho", Object.keys(ENVELOPES_DO_DESFECHO).length === 10 && ["golpe", "geminada", "area", "fogoAmigo", "condicao", "drenou", "imune", "errou", "colheita", "execucao"].every((q) => Object.hasOwn(ENVELOPES_DO_DESFECHO, q)));
+  t("as oito linhas entram no fim da lista, depois da que já havia", DESF.slice(2).every((b) => L(b).every((x, i) => Array.isArray(x) && x.length === 1 + (i % 2) && (i % 2 === 0 || x[0] === "Corvo — 3 de dano pela área"))));
+  const G = ult("desfechoGolpe");
+  t("o golpe: o crítico (" + conta(G, "CRÍTICO, ") + "), o acerto e a resistência parcial, com o d20 contra a CA", conta(G, "CRÍTICO, ") >= 80 && conta(G, " — resistiu parcialmente (d20=") >= 80 && G.every((x, i) => x.includes(" vs " + (10 + (i % 6)) + ")")));
+  t("o golpe: o bônus só quando há (" + conta(G, "+3=") + "/" + conta(G, "+5=") + "), e o [CAIU] de quem foi a 0 (" + conta(G, " [CAIU]") + ")", conta(G, "+3=") >= 80 && conta(G, "+5=") >= 80 && G.filter((x) => /\(d20=\d+=\d+ vs/.test(x)).length >= 80 && conta(G, " [CAIU]") >= 80 && G.filter((x) => !x.includes("[CAIU]")).length >= 150);
+  t("a geminada e a área dizem o dano e o [CAIU] de quem caiu", conta(ult("desfechoGeminada"), "de dano pela magia GEMINADA [CAIU]") >= 130 && conta(ult("desfechoGeminada"), "pela magia GEMINADA") === 275 && conta(ult("desfechoArea"), "de dano pela área [CAIU]") >= 80 && conta(ult("desfechoArea"), "de dano pela área") === 275);
+  t("o meu grupo na minha área: um e dois, com a metade e a habilidade", conta(ult("desfechoFogoAmigo"), "Corvo, Sarna apanhou ") >= 130 && ult("desfechoFogoAmigo").every((x, i) => x.includes(" apanhou " + (2 + (i % 7)) + " da minha própria ")));
+  const C = ult("desfechoCondicao");
+  t("a condição aplicada e a resistida, em minúsculas", conta(C, " ficou queimado") + conta(C, " ficou alento") + conta(C, " ficou cego") >= 130 && conta(C, " resistiu à ") >= 130 && !C.some((x) => /ficou [A-Z]|resistiu à [A-Z]/.test(x)));
+  t("a drenagem, o imune de cada degrau e o erro desastroso", ult("desfechoDrenou").every((x, i) => x === "drenei " + (1 + (i % 9)) + " PV") && ult("desfechoImune").every((x, i) => x.includes("IMUNE (GD " + (3 + (i % 4)) + " contra meu GD " + (i % 3) + ":")) && conta(ult("desfechoErrou"), " — erro desastroso (d20=") >= 130 && conta(ult("desfechoErrou"), " — errou (d20=") >= 130);
+  const K = L("desfechoColheita");
+  t("a colheita de ninguém (" + conta(K, "NÃO derrubou ninguém") + "), de um e de dois, cada um com o seu [CAIU — …]", conta(K, "NÃO derrubou ninguém") >= 80 && conta(K, "Ogro [CAIU — estava abaixo de ") >= 150 && conta(K, "]; Lobo Cinzento [CAIU — estava abaixo de ") >= 80);
+  t("a execução diz a habilidade, o limiar e a vida que o alvo tinha", L("desfechoExecucao").every((x, i) => x.includes(" executa quem está abaixo de ") && x.endsWith("ele estava com " + (2 + (i % 7)) + " de " + [30, 18][(i >> 2) % 2] + "]")));
+  const P = oEnvelopeDoDesfecho;
+  const mordidas = [
+    ["desfechoGolpe", "o crítico dito como acerto", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, resultado: d.resultado === "critico" ? "acerta" : d.resultado }) }],
+    ["desfechoGolpe", "o golpe que esquece quem caiu", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, caiu: false }) }],
+    ["desfechoGolpe", "o golpe sem o bônus", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, bonus: 0 }) }],
+    ["desfechoGeminada", "a geminada que esquece quem caiu", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, caiu: false }) }],
+    ["desfechoArea", "a área que derruba todos", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, caiu: true }) }],
+    ["desfechoFogoAmigo", "o fogo amigo de dano inteiro", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, meio: d.meio * 2 }) }],
+    ["desfechoCondicao", "a condição sempre aplicada", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, aplicou: true }) }],
+    ["desfechoDrenou", "a drenagem de um a mais", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, cura: d.cura + 1 }) }],
+    ["desfechoImune", "o imune com os degraus trocados", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, gdAlvo: d.gdMeu, gdMeu: d.gdAlvo }) }],
+    ["desfechoErrou", "o erro que nunca é desastroso", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, desastre: false }) }],
+    ["desfechoColheita", "a colheita que só diz o primeiro", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, nomes: d.nomes.slice(0, 1) }) }],
+    ["desfechoExecucao", "a execução com a vida cheia", { oEnvelopeDoDesfecho: (q, d) => P(q, { ...d, vida: d.vidaMax }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+  /* o lado do App: os [CAIU…] e as linhas de dano já não moram lá — a resolução chama a peça */
+  t("o App não escreve mais nenhum [CAIU", !APP.includes("[CAIU"));
 }
 
 sec("8 · a chave da tabela é da tabela, nunca do protótipo");

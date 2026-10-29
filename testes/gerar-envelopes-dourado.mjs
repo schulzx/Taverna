@@ -37,7 +37,8 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   genteCompanheiro: "f496d78", genteMissaoPerdida: "f496d78", genteRelacaoFormal: "f496d78", genteNovoArco: "f496d78", genteRelacaoMudada: "f496d78",
   vezPergunta: "12cce5e", vezEscrevi: "12cce5e", vezRolagem: "12cce5e",
   funcaoReviver: "9cf8d4d", funcaoCura: "9cf8d4d", funcaoCondicao: "9cf8d4d", funcaoAtiva: "9cf8d4d",
-  corpoRevide: "029385d", corpoFogoAmigo: "029385d", corpoRitual: "029385d", corpoDadiva: "029385d", corpoQuedaSegurada: "029385d", corpoFuria: "029385d", corpoAguentei: "029385d", corpoRaid: "029385d", corpoOportunidade: "029385d", corpoVitoria: "029385d", corpoFuga: "029385d", corpoQuedaAltura: "029385d" };
+  corpoRevide: "029385d", corpoFogoAmigo: "029385d", corpoRitual: "029385d", corpoDadiva: "029385d", corpoQuedaSegurada: "029385d", corpoFuria: "029385d", corpoAguentei: "029385d", corpoRaid: "029385d", corpoOportunidade: "029385d", corpoVitoria: "029385d", corpoFuga: "029385d", corpoQuedaAltura: "029385d",
+  desfechoColheita: "44a4695", desfechoExecucao: "44a4695", desfechoGolpe: "44a4695", desfechoGeminada: "44a4695", desfechoArea: "44a4695", desfechoFogoAmigo: "44a4695", desfechoCondicao: "44a4695", desfechoDrenou: "44a4695", desfechoImune: "44a4695", desfechoErrou: "44a4695" };
 const apps = {};
 /* O CONSERTO DECLARADO DO «nA» (29/10/2026, trilha A): os nomes do mundo nascem com artigo, e
    o molde dava "Fui aceito nA Mão Cinzenta", "forte em o Vau", "dentro de a praça". O motor

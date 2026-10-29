@@ -247,7 +247,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo } from "./motor/envelopes-do-turno.js";
+import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -12719,9 +12719,7 @@ export default function Taverna() {
         pushMsgs([{ autor: "sistema", texto: `✧ ${h.nome} varre o campo e não encontra ninguém abaixo de ${limiar.fracaoTxt} dos PV — ninguém cai.` }]);
       }
       fecharSeTodosCairam();
-      return col.nomes.length
-        ? `${col.nomes.map((n) => `${n} [CAIU — estava abaixo de ${limiar.fracaoTxt} dos PV]`).join("; ")}`
-        : `ninguém estava abaixo de ${limiar.fracaoTxt} dos PV: ${h.nome} passou pelo campo e NÃO derrubou ninguém`;
+      return oEnvelopeDoDesfecho("colheita", { nomes: col.nomes, fracaoTxt: limiar.fracaoTxt, habilidade: h.nome });
     }
     /* ---------------- O QUE O GOLPE IGNORA (v9.54) ----------------
        Também vem ANTES da régua de "habilidade ofensiva", e pela mesma razão
@@ -12817,7 +12815,7 @@ export default function Taverna() {
       setCombate(combateRef.current);
       pushMsgs([{ autor: "sistema", texto: `☠ ${h.nome} → ${alvo.nome}: ${alvo.vida}/${alvo.vidaMax} PV — abaixo de ${limiar.fracaoTxt}, e ${limiar.diz}.` }]);
       fecharSeTodosCairam();
-      return `${alvo.nome} [CAIU — ${h.nome} executa quem está abaixo de ${limiar.fracaoTxt} dos PV; ele estava com ${alvo.vida} de ${alvo.vidaMax}]`;
+      return oEnvelopeDoDesfecho("execucao", { alvo: alvo.nome, habilidade: h.nome, fracaoTxt: limiar.fracaoTxt, vida: alvo.vida, vidaMax: alvo.vidaMax });
     }
     /* ATRIBUTO DA HABILIDADE (v9.6): antes era o MAIOR número da ficha, o que
        tornava a multiclasse gratuita — um mago pegava técnicas de guerreiro e
@@ -12890,7 +12888,7 @@ export default function Taverna() {
         const pv = Math.max(0, e.vida - r.dano);
         return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
       });
-      partes.push(`${alvo.nome} — ${r.resultado === "critico" ? `CRÍTICO, ${r.dano} de dano` : r.resultado === "acerta" ? `${r.dano} de dano` : "resistiu parcialmente"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})${(locais.find((e) => e.nome === alvo.nome) || {}).derrotado ? " [CAIU]" : ""}`);
+      partes.push(oEnvelopeDoDesfecho("golpe", { alvo: alvo.nome, resultado: r.resultado, dano: r.dano, d20: r.d20, bonus: r.bonus, total: r.total, ca: r.ca, caiu: (locais.find((e) => e.nome === alvo.nome) || {}).derrotado }));
       /* METAMAGIA GÊMEA (v9.47): "duplica a próxima magia em dois alvos".
          O segundo alvo é o próximo de pé ao alcance — não uma segunda
          rolagem, mas o MESMO golpe caindo duas vezes, que é o que a
@@ -12906,7 +12904,7 @@ export default function Taverna() {
             return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
           });
           linhasSis.push({ autor: "sistema", texto: `✧ Metamagia Gêmea — ${h.nome} cai também em ${segundo.nome}: ${r.dano} de dano.` });
-          partes.push(`${segundo.nome} — ${r.dano} de dano pela magia GEMINADA${(locais.find((e) => e.nome === segundo.nome) || {}).derrotado ? " [CAIU]" : ""}`);
+          partes.push(oEnvelopeDoDesfecho("geminada", { alvo: segundo.nome, dano: r.dano, caiu: (locais.find((e) => e.nome === segundo.nome) || {}).derrotado }));
         } else {
           linhasSis.push({ autor: "sistema", texto: "✧ Metamagia Gêmea — não havia um segundo alvo ao alcance; o poder se perde." });
         }
@@ -12938,7 +12936,7 @@ export default function Taverna() {
           if (e.nome === alvo.nome || e.derrotado || e.vida <= 0) return e;
           if (!alcanceTodos && !pegos.has(e.nome)) return e;
           const pv = Math.max(0, e.vida - r.dano);
-          partes.push(`${e.nome} — ${r.dano} de dano pela área${pv <= 0 ? " [CAIU]" : ""}`);
+          partes.push(oEnvelopeDoDesfecho("area", { alvo: e.nome, dano: r.dano, caiu: pv <= 0 }));
           return { ...e, vida: pv, derrotado: pv <= 0, ultimoDano: r.dano };
         });
         if (pegosAli.length) {
@@ -12993,7 +12991,7 @@ export default function Taverna() {
              o que pagou: primeiro o golpe, depois o abrigo, so entao o que caiu
              das maos — a ordem em que a cena acontece */
           for (const qbA of quebras.values()) linhasSis.push({ autor: "sistema", texto: qbA.linha });
-          partes.push(`${lista} apanhou ${meio} da minha própria ${h.nome}`);
+          partes.push(oEnvelopeDoDesfecho("fogoAmigo", { lista, meio, habilidade: h.nome }));
           notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("fogoAmigo", { habilidade: h.nome, lista, meio });
         }
         {
@@ -13012,7 +13010,7 @@ export default function Taverna() {
           const ap = aplicarAflicaoEmInimigo(locais, alvo.nome, { fonte: port, nomeFonte: h.nome, atacante: pers.nome, critico: r.critico });
           if (ap.res) {
             locais = ap.lista;
-            partes.push(ap.res.aplicou ? `${alvo.nome} ficou ${ap.res.cond.nome.toLowerCase()}` : `${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`);
+            partes.push(oEnvelopeDoDesfecho("condicao", { alvo: alvo.nome, aplicou: ap.res.aplicou, condicao: ap.res.cond.nome }));
             linhasSis.push({ autor: "sistema", texto: ap.res.texto });
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ap.res.nota}`;
           }
@@ -13029,16 +13027,16 @@ export default function Taverna() {
         const cura = Math.max(1, Math.round(r.dano / 2));
         mudarFicha((old) => ({ ...old, vida: Math.min(old.vidaMax, (old.vida || 0) + cura) }));
         linhasSis.push({ autor: "sistema", texto: `🩸 ${h.nome} drena a essência: +${cura} PV` });
-        partes.push(`drenei ${cura} PV`);
+        partes.push(oEnvelopeDoDesfecho("drenou", { cura }));
       }
     } else if (r.escopoImune) {
       /* a magia acerta e não fere: três degraus de GD abaixo, poder comum não
          atravessa a casca de um deus. O jogador precisa ler POR QUE, senão
          acha que errou a conta. */
-      partes.push(`${alvo.nome} — IMUNE (GD ${gdAlvoH} contra meu GD ${gdJH}: poder comum não fere divindade tão acima; preciso de artefato lendário, bênção ou enfraquecê-lo antes)`);
+      partes.push(oEnvelopeDoDesfecho("imune", { alvo: alvo.nome, gdAlvo: gdAlvoH, gdMeu: gdJH }));
       linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: atravessa sem encontrar carne — ${alvo.nome} é GD ${gdAlvoH} (${tituloDe(gdAlvoH)}), IMUNE ao seu poder comum` });
     } else {
-      partes.push(`${alvo.nome} — ${r.desastre ? "erro desastroso" : "errou"} (d20=${r.d20}${r.bonus ? `+${r.bonus}` : ""}=${r.total} vs ${r.ca})`);
+      partes.push(oEnvelopeDoDesfecho("errou", { alvo: alvo.nome, desastre: r.desastre, d20: r.d20, bonus: r.bonus, total: r.total, ca: r.ca }));
       linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
     }
     combateRef.current = { ...comb, inimigos: virarChefeSePreciso(comb.inimigos, locais), economia: comb.economia, log: combateRef.current.log };

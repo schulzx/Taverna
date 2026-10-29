@@ -44,7 +44,7 @@ const NOMES = {
   /* contrair: o conserto declarado do «nA» (gerar-envelopes-dourado.mjs) chama-o no código de antes */
   lugar: ["comDe", "contrair"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador", "oEnvelopeDoCorpo"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador", "oEnvelopeDoCorpo", "oEnvelopeDoDesfecho"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -93,9 +93,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco", "genteRelacaoMudada",
   "vezPergunta", "vezEscrevi", "vezRolagem",
   "funcaoReviver", "funcaoCura", "funcaoCondicao", "funcaoAtiva",
-  "corpoRevide", "corpoFogoAmigo", "corpoRitual", "corpoDadiva", "corpoQuedaSegurada", "corpoFuria", "corpoAguentei", "corpoRaid", "corpoOportunidade", "corpoVitoria", "corpoFuga", "corpoQuedaAltura"];
+  "corpoRevide", "corpoFogoAmigo", "corpoRitual", "corpoDadiva", "corpoQuedaSegurada", "corpoFuria", "corpoAguentei", "corpoRaid", "corpoOportunidade", "corpoVitoria", "corpoFuga", "corpoQuedaAltura",
+  "desfechoColheita", "desfechoExecucao", "desfechoGolpe", "desfechoGeminada", "desfechoArea", "desfechoFogoAmigo", "desfechoCondicao", "desfechoDrenou", "desfechoImune", "desfechoErrou"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : /^funcao[A-Z]/.test(b) ? "funcao" : /^corpo[A-Z]/.test(b) ? "corpo" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : /^funcao[A-Z]/.test(b) ? "funcao" : /^corpo[A-Z]/.test(b) ? "corpo" : /^desfecho[A-Z]/.test(b) ? "desfecho" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -268,6 +269,19 @@ const ANCORAS = {
   /* a âncora de hoje da queda de altura mudou em 29/10 (o oQue saiu do App para a tabela do corpo): */
   /* o literal «A queda de N metros» virou oEnvelopeDoCorpo("oQueDaQueda"); o recorte é o mesmo campo envelope */
   corpoQuedaAltura: { antes: ["      envelope: `${envelopeDaSalvaguarda(sv, { oQue: `A queda", ",\n    };"], hoje: ["      envelope: envelopeDaSalvaguarda(sv, { oQue: oEnvelopeDoCorpo(\"oQueDaQueda\"", ",\n    };"], envolve: ["const o = {","};"] },
+  /* o desfecho das habilidades (22.º grupo): a linha de cada alvo que vai dentro de [HABILIDADES — RESOLVIDAS].
+     Oito são um partes.push de uma linha; as duas que não rolam (a colheita, a execução) são o return da
+     resolução — a colheita era um ternário de duas linhas até ao fecho do if, hoje uma chamada */
+  desfechoColheita: { antes: ["      return col.nomes.length\n", "\n    }"], hoje: ["      return oEnvelopeDoDesfecho(\"colheita\", ", FIM] },
+  desfechoExecucao: { antes: ["      return `${alvo.nome} [CAIU — ${h.nome} executa", FIM], hoje: ["      return oEnvelopeDoDesfecho(\"execucao\", ", FIM] },
+  desfechoGolpe: { antes: ["      partes.push(`${alvo.nome} — ${r.resultado === \"critico\"", FIM], hoje: ["      partes.push(oEnvelopeDoDesfecho(\"golpe\", ", FIM] },
+  desfechoGeminada: { antes: ["          partes.push(`${segundo.nome} — ${r.dano} de dano pela magia GEMINADA", FIM], hoje: ["          partes.push(oEnvelopeDoDesfecho(\"geminada\", ", FIM] },
+  desfechoArea: { antes: ["          partes.push(`${e.nome} — ${r.dano} de dano pela área", FIM], hoje: ["          partes.push(oEnvelopeDoDesfecho(\"area\", ", FIM] },
+  desfechoFogoAmigo: { antes: ["          partes.push(`${lista} apanhou ${meio}", FIM], hoje: ["          partes.push(oEnvelopeDoDesfecho(\"fogoAmigo\", ", FIM] },
+  desfechoCondicao: { antes: ["            partes.push(ap.res.aplicou ? `${alvo.nome} ficou", FIM], hoje: ["            partes.push(oEnvelopeDoDesfecho(\"condicao\", ", FIM] },
+  desfechoDrenou: { antes: ["        partes.push(`drenei ${cura} PV`);", FIM], hoje: ["        partes.push(oEnvelopeDoDesfecho(\"drenou\", ", FIM] },
+  desfechoImune: { antes: ["      partes.push(`${alvo.nome} — IMUNE (GD", FIM], hoje: ["      partes.push(oEnvelopeDoDesfecho(\"imune\", ", FIM] },
+  desfechoErrou: { antes: ["      partes.push(`${alvo.nome} — ${r.desastre ? \"erro desastroso\"", FIM], hoje: ["      partes.push(oEnvelopeDoDesfecho(\"errou\", ", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -284,7 +298,9 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   genteCompanheiro: "notaRef.current", genteMissaoPerdida: "notaRef.current", genteRelacaoFormal: "notaRef.current", genteNovoArco: "notaRef.current", genteRelacaoMudada: "env",
   vezPergunta: "enviados", vezEscrevi: "notaRef.current", vezRolagem: "enviados",
   funcaoReviver: "notaRef.current", funcaoCura: "enviados", funcaoCondicao: "enviados", funcaoAtiva: "notaRef.current",
-  corpoRevide: "notaRef.current", corpoFogoAmigo: "notaRef.current", corpoRitual: "notaRef.current", corpoDadiva: "notaRef.current", corpoQuedaSegurada: "notaRef.current", corpoFuria: "notaRef.current", corpoAguentei: "notaRef.current", corpoRaid: "notaRef.current", corpoOportunidade: "notaOp", corpoVitoria: "notaRef.current", corpoFuga: "notaGolpes", corpoQuedaAltura: "o.envelope" };
+  corpoRevide: "notaRef.current", corpoFogoAmigo: "notaRef.current", corpoRitual: "notaRef.current", corpoDadiva: "notaRef.current", corpoQuedaSegurada: "notaRef.current", corpoFuria: "notaRef.current", corpoAguentei: "notaRef.current", corpoRaid: "notaRef.current", corpoOportunidade: "notaOp", corpoVitoria: "notaRef.current", corpoFuga: "notaGolpes", corpoQuedaAltura: "o.envelope",
+  /* a colheita e a execução devolvem pelo próprio return do sítio; as outras oito, a lista */
+  desfechoColheita: "partes", desfechoExecucao: "partes", desfechoGolpe: "partes", desfechoGeminada: "partes", desfechoArea: "partes", desfechoFogoAmigo: "partes", desfechoCondicao: "partes", desfechoDrenou: "partes", desfechoImune: "partes", desfechoErrou: "partes" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -738,6 +754,32 @@ export function corpoDoCaso(i) {
   };
 }
 
+/* O DESFECHO DAS HABILIDADES (22.º grupo): a lista vazia e já com uma linha;
+   o crítico, o acerto e a resistência parcial, com bônus e sem; quem cai e
+   quem fica de pé (no golpe, na geminada e na área); um e dois do meu grupo
+   na minha área; a condição aplicada e resistida; a drenagem; o imune de
+   cada degrau; o erro e o erro desastroso; a colheita de ninguém, de um e
+   de dois, em três limiares; a execução de cada vida. */
+export function desfechoDoCaso(i) {
+  const alvo = ["Ogro", "Lobo Cinzento"][(i >> 1) % 2];
+  const bonus = [0, 3, 5][(i >> 2) % 3], d20 = 1 + (i % 20);
+  return {
+    partes: [[], ["Corvo — 3 de dano pela área"]][i % 2],
+    h: { nome: ["Bola de Fogo", "Colheita Final", "Toque Gélido"][i % 3] },
+    col: { nomes: [[], ["Ogro"], ["Ogro", "Lobo Cinzento"]][(i >> 1) % 3] },
+    limiar: { fracaoTxt: ["1/3", "1/4", "metade"][(i >> 2) % 3] },
+    alvo: { nome: alvo, vida: 2 + (i % 7), vidaMax: [30, 18][(i >> 2) % 2] },
+    r: { resultado: ["critico", "acerta", "parcial"][i % 3], dano: 1 + (i % 12), d20, bonus, total: d20 + bonus, ca: 10 + (i % 6), desastre: (i >> 3) % 2 === 0 },
+    locais: [{ nome: alvo, derrotado: (i >> 1) % 3 === 0 }, { nome: "Sarna", derrotado: (i >> 2) % 2 === 0 }],
+    segundo: { nome: "Sarna" },
+    e: { nome: ["Sarna", "Corvo"][i % 2] }, pv: [0, 5, 11][(i >> 3) % 3],
+    lista: ["Corvo", "Corvo, Sarna"][(i >> 1) % 2], meio: 2 + (i % 7),
+    ap: { res: { aplicou: i % 2 === 0, cond: { nome: ["Queimado", "Alento", "Cego"][(i >> 1) % 3] } } },
+    cura: 1 + (i % 9),
+    gdAlvoH: 3 + (i % 4), gdJH: i % 3,
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -822,6 +864,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "vez") Object.assign(S, vezDoCaso(k.i));
     else if (g === "funcao") Object.assign(S, funcaoDoCaso(k.i));
     else if (g === "corpo") Object.assign(S, corpoDoCaso(k.i));
+    else if (g === "desfecho") Object.assign(S, desfechoDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
