@@ -175,7 +175,7 @@
 import { estadoDoSave, saveDoEstado, camposDoGrupo } from "./estado.js";
 import { lugarPedido } from "./lugar.js";
 import { oTempoDoTurno, oPassoDoReplay } from "./motor/tempo-do-turno.js";
-import { semearACasa } from "./semente.js";
+import { semearACasa, comSorte } from "./semente.js";
 import { aplicarOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 import { oAntesDoMestre } from "./motor/antes-do-mestre.js";
@@ -598,8 +598,11 @@ export const PASSOS_DO_REPLAY = Object.freeze([
   },
   {
     passo: "o turno do Mestre", de: "motor/aplicar.js#aplicarOTurno",
-    faz: (E, L, ctx) => {
+    faz: (E, L, ctx, nota) => {
       const r = aplicarOTurno({ ...E, npcTurno: Number.isFinite(E.npcTurno) ? E.npcTurno : 0 }, ctx.resposta, ctx.doMestre);
+      /* o que a tela leva deste passo (o servidor devolve-o; o replay não o
+         compara): a narração podada e as linhas do sistema no relato */
+      if (r && nota) nota.tela = { narrativa: String(obj(r.podado).narrativa || ""), linhas: arr(r.msgs).map((x) => (typeof x === "string" ? x : String(obj(x).texto || ""))) };
       return r && r.estado ? r.estado : E;
     },
   },
@@ -761,8 +764,8 @@ function diferencas(a, b, caminho, out, prof) {
 /* UM TURNO, CORRIDO (o que o replay faz a cada linha, e o que o gravador
    das sessões de prova usa para escrever a linha: um caminho só).
 
-     correrOTurno(antes, linha, { semente, mundo?, narracoes?, doApp? })
-       → { estado, juizo, juiz, calou, portas, calouDoCronista, tirados }
+     correrOTurno(antes, linha, { semente, mundo?, narracoes?, doApp?, so?, casa? })
+       → { estado, juizo, juiz, veredito, tela, calou, portas, calouDoCronista, tirados }
 
    `antes` é o estado do fim do turno anterior (o save v2), `linha` a linha
    do arquivo (o `estado` dela não é lido), `narracoes` as narrações de
@@ -774,13 +777,26 @@ function diferencas(a, b, caminho, out, prof) {
    os passos que estouraram, as portas-dublê que o aceito do Cronista
    chamou ({ porta, campos }), o que as secções dele calaram (o `calou` do
    App, no jogo) e os nomes que a correção do Juiz tirou do cânone. Nunca
-   lança; lixo é o turno vazio. */
+   lança; lixo é o turno vazio.
+
+   O DEPOIS DA RESPOSTA, PARA O SERVIDOR (29/10, Fase 4, trilha B). O
+   /api/turno corre o resto do turno com ESTA função, e não com uma cópia
+   dela: `so: "depois"` corre só os passos do Mestre em diante (o antes —
+   o relógio do mundo, o tempo, o sítio, o chão, a escuta — o servidor já
+   o correu no prelúdio, ou o cliente no agir), e `casa` é o gerador que o
+   turno do servidor já vem usando: em vez de semear a reserva global (que
+   num servidor rolaria os dados de outro pedido), os passos correm dentro
+   de `comSorte`. Sem as duas, o replay de sempre. `veredito` é o do Juiz
+   inteiro (a correção do servidor lê-o para os vetos do eco) e `tela` o
+   que o passo do Mestre deixa à tela (a narração podada, as linhas). */
 export function correrOTurno(antes, linha, contexto) {
   const c = obj(contexto);
   const E0 = obj(antes), L = obj(linha);
   const semente = String(c.semente == null ? "" : c.semente), mundo = ehObj(c.mundo) ? c.mundo : null, narracoes = arr(c.narracoes);
   const so = obj(L.sorte), pe = obj(L.pedido), na = obj(L.narrador);
-  if (typeof so.casa === "string") semearACasa(so.casa);
+  const soDepois = c.so === "depois";
+  const casa = typeof c.casa === "function" ? c.casa : null;
+  if (!casa && typeof so.casa === "string") semearACasa(so.casa);
   const s0 = sorteNoPonto(ehObj(so.contagem) ? so.contagem : CONTAGEM_VAZIA, semente, so.ponto, "salvaguarda");
   let contagem = s0.contagem;
   const sorteDoTurno = (evento) => { const r = sorteNoPonto(contagem, semente, so.ponto, evento); contagem = r.contagem; return r.sorte; };
@@ -798,12 +814,16 @@ export function correrOTurno(antes, linha, contexto) {
   let julgado = null, erroDoJuiz = null;
   try { julgado = julgarALinha(L, narracoes); } catch (e) { erroDoJuiz = e; }
   ctx.juizDaLinha = julgado ? { veredito: julgado.veredito, entrada: julgado.entrada } : null;
-  for (const p of PASSOS_DO_REPLAY) {
-    try { E = p.faz(E, L, { ...ctx, resposta: dado(resposta) }, nota); } catch (e) { calou.push({ passo: p.passo, erro: String((e && e.message) || e) }); }
-  }
+  const passos = soDepois ? PASSOS_DO_REPLAY.slice(PASSOS_DO_REPLAY.findIndex((p) => p.passo === "o turno do Mestre")) : PASSOS_DO_REPLAY;
+  const correr = () => {
+    for (const p of passos) {
+      try { E = p.faz(E, L, { ...ctx, resposta: dado(resposta) }, nota); } catch (e) { calou.push({ passo: p.passo, erro: String((e && e.message) || e) }); }
+    }
+  };
+  if (casa) comSorte(casa, correr); else correr();
   if (erroDoJuiz) calou.push({ passo: "o Juiz", erro: String((erroDoJuiz && erroDoJuiz.message) || erroDoJuiz) });
   const juiz = julgado ? dado(julgado.resumo) : null;
-  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), tirados: arr(nota.tirados) };
+  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), tirados: arr(nota.tirados) };
 }
 
 const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) => !tem(FORA_DA_REGUA, k)));

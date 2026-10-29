@@ -21,7 +21,14 @@
    §7 NENHUMA CHAMADA DE REDE: o `fetch` espiado do começo ao fim, e nenhum
       `window`, `document` ou `localStorage` tocado;
    §8 o tamanho da função (o bundle do esbuild, para a Vercel) e o tempo
-      de montagem — os números vão para o diário.
+      de montagem — os números vão para o diário;
+   §9 O DEPOIS DA RESPOSTA (29/10): sobre a resposta gravada do Narrador e a
+      proposta gravada do Cronista, o servidor corre o resto do turno com a
+      função do replay; o estado do fim só difere do replay inteiro nos
+      campos declarados (os que a montagem escreve e o replay deixa ao App,
+      os do agir do cliente, e o cânone onde a foto do Juiz é outra), e na
+      sessão do jogo é o do replay e o Juiz é o gravado; o eco do turno
+      inteiro, reenviado, dá o pedido seguinte que o caminho do App daria.
 
    Os estados das sessões s8–s10 são de um herói jogado em Node: o save
    guarda `null` onde o load do App põe o valor de partida, e a ficha não
@@ -64,7 +71,7 @@ const t0 = performance.now();
 const { default: turno } = await import("../api/turno.js");
 const importMs = performance.now() - t0;
 const S = await import("../src/turno-no-servidor.js");
-const { TURNO_NO_SERVIDOR, PORTAS_DO_SERVIDOR, aCasaDoTurno, oPedidoNoServidor } = S;
+const { TURNO_NO_SERVIDOR, PORTAS_DO_SERVIDOR, aCasaDoTurno, oPedidoNoServidor, oTurnoNoServidor } = S;
 const { oEstadoDoServidor, aRespostaDoServidor } = await import("../src/motor/eco-do-turno.js");
 const { oPreludioDoTurno } = await import("../src/motor/preludio-do-turno.js");
 const { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } = await import("../src/motor/pedido-do-turno.js");
@@ -72,7 +79,7 @@ const { REFS_DA_PAUTA } = await import("../src/motor/pauta-do-turno.js");
 const { pontoDaSorte } = await import("../src/motor/sorte-do-turno.js");
 const { semearACasa } = await import("../src/semente.js");
 const { BOCAS_POR_TURNO } = await import("../src/falas.js");
-const { estadoNoTurno } = await import("../src/sessao.js");
+const { estadoNoTurno, correrOTurno, FORA_DA_REGUA, AINDA_DO_APP } = await import("../src/sessao.js");
 const L = await import("../src/licenca.js");
 
 const sha = (x) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
@@ -129,10 +136,14 @@ const ROTA = (() => { const m = /fraseMax:\s*(\d+)/.exec(readFileSync(aqui("../a
 
 sec("1. AS PORTAS E A SEMENTE");
 {
-  t("o servidor dá três portas, e são as da tabela", JSON.stringify(Object.keys(PORTAS_DO_SERVIDOR)) === JSON.stringify(["calou", "adiar", "agora"]));
+  /* MOVIDA (29/10, o depois): a 4.ª porta é a TELA — os setters do prelúdio
+     guardam o último valor em vez de desenhar (volta em tela.avulsos); entra
+     na montagem pelo espalhar `...guardarATela`, feito da lista do prelúdio */
+  t("o servidor dá quatro portas, e são as da tabela", JSON.stringify(Object.keys(PORTAS_DO_SERVIDOR)) === JSON.stringify(["calou", "adiar", "agora", "tela"]));
   const fonte = readFileSync(aqui("../src/turno-no-servidor.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
   const dadas = (/const portas = \{([\s\S]*?)\n  \};/.exec(fonte) || [])[1] || "";
   const nomes = [...dadas.matchAll(/^\s*(\w+):/gm)].map((m) => m[1]);
+  if (/^\s*\.\.\.guardarATela,/m.test(dadas)) nomes.push("tela");
   t(`e a montagem passa exatamente essas (${nomes.join(", ")})`, JSON.stringify(nomes) === JSON.stringify(Object.keys(PORTAS_DO_SERVIDOR)));
   t("nenhuma porta de rede, de disco ou de tela no módulo", !/chamarModelo|salvar\s*:|pushMsgs|\bset[A-Z]\w*\s*:/.test(fonte));
   t("as bocas estão caladas (BOCAS_POR_TURNO = 0)", BOCAS_POR_TURNO === 0);
@@ -248,6 +259,94 @@ sec("6. COM CHAVE — o licenciante");
   t("e a conta da licença vem junto", r.corpo.licenca && r.corpo.licenca.licenciante === "casa-de-ensaio" && r.corpo.licenca.usos === 1 && r.corpo.licenca.restam === 4);
   const lixo = await rodar({ estado: estadoNoTurno(SESSOES[0].A, 1), frase: "x" }, { headers: { authorization: `Bearer ${e.chave}` }, vars });
   t("o 422 de um licenciante também leva a conta (o turno contou)", lixo.codigo === 422 && lixo.corpo.licenca && lixo.corpo.licenca.usos === 2);
+}
+
+sec("9. O DEPOIS DA RESPOSTA — o resto do turno no servidor, sobre a resposta gravada");
+const temposDoTurno = [];
+{
+  const can = (x) => JSON.stringify(x, (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((c) => [c, v[c]])) : v));
+  const naRegua = (e) => Object.fromEntries(Object.entries(e).filter(([k]) => !(k in FORA_DA_REGUA)));
+  const difs = (a, b) => [...new Set([...Object.keys(a), ...Object.keys(b)])].filter((k) => can(a[k]) !== can(b[k]));
+  /* OS CAMPOS DECLARADOS, e de quem é cada um: o que a montagem (o
+     prelúdio e o pedido) escreve e o replay deixa ao App — AINDA_DO_APP e
+     o coração, a postura e as conquistas que a pauta e o prelúdio movem —;
+     o que o AGIR do cliente faz antes do envio (o relógio do mundo, o sino,
+     o tempo e o sítio: o cliente manda o estado do instante do semear); e
+     o cânone, que a correção do Juiz tira por um veredito que, nas sessões
+     de Node, sai de outra foto (o gravador delas não é o App) */
+  const DA_MONTAGEM = new Set([...AINDA_DO_APP.map((d) => d.campo), "coracao", "postura", "conquistas"]);
+  const DO_AGIR = new Set(["turnosDeMundo", "abertura", "lugar", "minuto"]);
+  const DO_JUIZ = new Set(["canone"]);
+  let casos = 0, soDeclarados = 0, limpos = 0, porJuiz = 0, ecoIgual = 0, ecoMudouPeloJuiz = 0, comEco = 0, telaBoa = 0, imutavel = 0;
+  let navTurnos = 0, navReplay = 0, navJuiz = 0, navGravado = 0;
+  const fora = new Map();
+  for (const { s, A } of SESSOES) {
+    let eco = null;
+    for (let i = 0; i < A.turnos.length; i++) {
+      const L = A.turnos[i];
+      const ent = L.entrada || {};
+      const frase = typeof ent.frase === "string" && ent.frase.trim() ? ent.frase : ent.toque && typeof ent.toque.conteudo === "string" ? ent.toque.conteudo : "";
+      if (!frase.trim() || frase.length > ROTA.fraseMax) continue;
+      const estado = comoOLoadAbre(estadoNoTurno(A, i));
+      const corpo = { estado, frase, ...(eco ? { eco } : {}), resposta: L.narrador };
+      const antes = JSON.stringify(corpo);
+      const t0 = performance.now();
+      const sv = await oTurnoNoServidor(corpo, { cronista: () => (L.cronista ? L.cronista.proposta : null) });
+      temposDoTurno.push(performance.now() - t0);
+      casos++;
+      if (JSON.stringify(corpo) === antes) imutavel++;
+      /* o eco do turno inteiro, reenviado: o pedido do turno seguinte é o do
+         caminho do App com o mesmo eco (a rota e o motor em Node) */
+      if (eco) {
+        comEco++;
+        const ref = await peloCaminhoDoApp({ estado, frase, eco });
+        const r = await rodar({ estado, frase, eco });
+        if (r.corpo && r.corpo.pedido && r.corpo.pedido.hash === sha(ref.pedido)) ecoIgual++;
+      }
+      const pre = aRespostaDoServidor((await oPedidoNoServidor({ estado, frase, ...(eco ? { eco } : {}) })).estadoDoFim).eco;
+      if (can(pre.vetosDoJuiz) !== can(sv.eco.vetosDoJuiz)) ecoMudouPeloJuiz++;
+      eco = Object.keys(sv.eco).length ? sv.eco : null;
+      /* contra o replay inteiro (o mesmo estado de partida, a linha gravada) */
+      const rc = correrOTurno(estado, L, { semente: A.semente, mundo: A.mundo || null });
+      const d = difs(naRegua(sv.estadoDoFim), naRegua(rc.estado));
+      const resto = d.filter((k) => !DA_MONTAGEM.has(k) && !DO_AGIR.has(k) && !DO_JUIZ.has(k));
+      if (!resto.length) soDeclarados++; else for (const k of resto) fora.set(k, (fora.get(k) || 0) + 1);
+      if (d.some((k) => DO_JUIZ.has(k))) porJuiz++;
+      if (!d.length) limpos++;
+      const tl = sv.tela || {};
+      if (typeof tl.narrativa === "string" && Array.isArray(tl.linhas) && Array.isArray(tl.campos) && tl.campos.every((k) => k in sv.estadoDoFim) && tl.avulsos && typeof tl.avulsos === "object") telaBoa++;
+      /* A SESSÃO DO JOGO (gravada no navegador): o Juiz é o gravado, e o
+         estado do fim é o do replay e o do jogo fora do que a montagem paga */
+      if (s === "navegador") {
+        navTurnos++;
+        if (L.juiz && can(sv.juiz) === can(L.juiz.resumo)) navJuiz++;
+        if (d.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k))) navReplay++;
+        const g = difs(naRegua(sv.estadoDoFim), naRegua(estadoNoTurno(A, i + 1)));
+        if (g.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k) || k === "personagem")) navGravado++;
+      }
+    }
+  }
+  console.log(`      (${casos} turnos; fora do declarado: ${[...fora].map(([k, v]) => k + ":" + v).join(" ") || "nenhum"}; o cânone pelo Juiz em ${porJuiz})`);
+  t(`o estado do fim só difere do replay nos campos declarados em todos (${soDeclarados}/${casos})`, casos >= 140 && soDeclarados === casos);
+  t(`e o cânone que a foto do Juiz muda é exceção (${porJuiz} de ${casos})`, porJuiz <= 3);
+  t(`na sessão do jogo, o Juiz do servidor é o gravado (${navJuiz}/${navTurnos})`, navTurnos === 3 && navJuiz === navTurnos);
+  t(`e o estado do fim é o do replay fora da montagem e do agir (${navReplay}/${navTurnos}), e o do jogo (${navGravado}/${navTurnos}; a ficha leva os atributos que o load lhe põe)`, navReplay === navTurnos && navGravado === navTurnos);
+  t(`o eco do turno inteiro, reenviado, dá o pedido do caminho do App (${ecoIgual}/${comEco})`, comEco > 100 && ecoIgual === comEco);
+  t(`e o Juiz deste turno muda o eco (os vetos) em ${ecoMudouPeloJuiz} de ${casos}`, ecoMudouPeloJuiz > 0);
+  t(`a tela tem a forma mínima em todos (${telaBoa}/${casos}): a narração, as linhas, os campos do save, os avulsos`, telaBoa === casos);
+  t(`o corpo que entra não muda (${imutavel}/${casos})`, imutavel === casos);
+  /* a rota em ensaio, com a resposta: o eco, os soltos, a tela, a impressão do estado */
+  const { A } = SESSOES.find((x) => x.s === "navegador");
+  const L = A.turnos[1];
+  const corpo = { estado: comoOLoadAbre(estadoNoTurno(A, 1)), frase: L.entrada.frase, resposta: L.narrador, cronista: L.cronista && L.cronista.proposta };
+  const r = await rodar(corpo);
+  const sv = await oTurnoNoServidor(corpo, { cronista: () => corpo.cronista });
+  t("a rota com `resposta` devolve o eco, os soltos, a tela e o estado em hash", r.codigo === 200 && r.corpo.ensaio === true && can(r.corpo.eco) === can(sv.eco) && can(r.corpo.soltos) === can(sv.soltos) && can(r.corpo.tela) === can(sv.tela) && r.corpo.estado.hash === createHash("sha256").update(JSON.stringify(sv.estadoDoFim)).digest("hex"));
+  t("e o pedido é o mesmo de sem resposta", r.corpo.pedido.hash === (await rodar({ estado: corpo.estado, frase: corpo.frase })).corpo.pedido.hash);
+  t("resposta sem narrativa: 400; cronista em lista: 400", (await rodar({ ...corpo, resposta: { mudancas: {} } })).codigo === 400 && (await rodar({ ...corpo, cronista: [1] })).codigo === 400);
+  temposDoTurno.sort((a, b) => a - b);
+  console.log(`      o turno inteiro no servidor: mediana ${temposDoTurno[temposDoTurno.length >> 1].toFixed(1)} ms · p95 ${temposDoTurno[Math.floor(temposDoTurno.length * 0.95)].toFixed(1)} ms · máx ${temposDoTurno[temposDoTurno.length - 1].toFixed(1)} ms`);
+  t("o turno inteiro cabe num segundo", temposDoTurno[temposDoTurno.length - 1] < 1000);
 }
 
 sec("7. NENHUMA CHAMADA DE REDE, NENHUM NAVEGADOR");

@@ -23,6 +23,18 @@
    (está no diário de 29/10, trilha B). O cliente não muda: o jogo continua
    a falar com `api/narrador.js`.
 
+   O DEPOIS, SÓ EM ENSAIO (29/10, trilha B). Com `resposta` no corpo — uma
+   resposta do Narrador JÁ DADA (`{ narrativa, mudancas }`, das sessões
+   gravadas) — a rota corre o resto do turno (src/turno-no-servidor.js,
+   `oTurnoNoServidor`: o aplicar, o códex, a chegada, o Juiz e a correção,
+   e o Cronista com a proposta que vier em `cronista`, também gravada) e
+   devolve o ECO (para o cliente reenviar no turno seguinte), os SOLTOS
+   (para o save) e a TELA, mais a impressão digital do estado do fim.
+   ISTO É ENSAIO: `resposta` e `cronista` existem para provar o depois sem
+   gastar um centavo, e deixam de ser aceites no dia em que a rota chamar
+   o provedor ela mesma — a resposta passa a ser a dele, nunca a do cliente
+   (um cliente que mandasse a resposta escolheria o turno).
+
    AS DUAS PORTAS, e por que duas:
 
    - COM CHAVE (`authorization: Bearer tav1.…`): é um licenciante, e quem
@@ -43,7 +55,7 @@
 import { createHash } from "node:crypto";
 import { deixarEntrar } from "./_portao.js";
 import { LICENCA, autorizar, armazemDoUpstash, chaveDoPedido } from "../src/licenca.js";
-import { oPedidoNoServidor } from "../src/turno-no-servidor.js";
+import { oPedidoNoServidor, oTurnoNoServidor } from "../src/turno-no-servidor.js";
 
 /* a forma do pedido: o teto da frase, o do estado (o mesmo da sala,
    `TETO_DO_MUNDO` em sala.js — o save inteiro de uma campanha) e o do eco
@@ -82,13 +94,16 @@ export default async function handler(req, res) {
     }
     licenca = { licenciante: a.licenciante, usos: a.usos, teto: a.teto, restam: a.restam };
   }
-  const { estado, frase, eco, bilhetes } = req.body || {};
+  const { estado, frase, eco, bilhetes, resposta, cronista } = req.body || {};
   if (!estado || typeof estado !== "object" || Array.isArray(estado)) { res.status(400).json({ erro: "pedido inválido: falta `estado` (o save do jogo, um objeto)" }); return; }
   if (typeof frase !== "string" || !frase.trim()) { res.status(400).json({ erro: "pedido inválido: falta `frase` (o que o jogador escreveu)" }); return; }
   if (frase.length > PEDIDO_DO_TURNO.fraseMax) { res.status(413).json({ erro: `a frase passa de ${PEDIDO_DO_TURNO.fraseMax} caracteres` }); return; }
   if (!ehObjetoOuNada(eco) || !ehObjetoOuNada(bilhetes)) { res.status(400).json({ erro: "pedido inválido: `eco` e `bilhetes`, quando vêm, são objetos" }); return; }
+  /* o ensaio do depois: a resposta do Narrador já dada (e a proposta do Cronista) */
+  if (resposta != null && (!ehObjetoOuNada(resposta) || typeof resposta.narrativa !== "string")) { res.status(400).json({ erro: "pedido inválido: `resposta` (só em ensaio) é { narrativa, mudancas }" }); return; }
+  if (!ehObjetoOuNada(cronista)) { res.status(400).json({ erro: "pedido inválido: `cronista` (só em ensaio) é a proposta do Cronista, um objeto" }); return; }
   let peso = 0, pesoExtra = 0;
-  try { peso = JSON.stringify(estado).length; pesoExtra = JSON.stringify([eco || null, bilhetes || null]).length; } catch { res.status(400).json({ erro: "pedido inválido: o `estado`, o `eco` ou os `bilhetes` não se serializam" }); return; }
+  try { peso = JSON.stringify(estado).length; pesoExtra = JSON.stringify([eco || null, bilhetes || null, resposta || null, cronista || null]).length; } catch { res.status(400).json({ erro: "pedido inválido: o `estado`, o `eco` ou os `bilhetes` não se serializam" }); return; }
   if (peso > PEDIDO_DO_TURNO.estadoMax) { res.status(413).json({ erro: `o estado tem ${Math.round(peso / 1024)} KB e o teto é ${Math.round(PEDIDO_DO_TURNO.estadoMax / 1024)} KB` }); return; }
   if (pesoExtra > PEDIDO_DO_TURNO.extrasMax) { res.status(413).json({ erro: `o eco e os bilhetes têm ${Math.round(pesoExtra / 1024)} KB e o teto é ${Math.round(PEDIDO_DO_TURNO.extrasMax / 1024)} KB` }); return; }
   /* A MONTAGEM: as peças do motor, sem tela, sem disco, sem rede. Onde o
@@ -96,7 +111,11 @@ export default async function handler(req, res) {
      do motor, não de quem chama. */
   const t0 = performance.now();
   let m;
-  try { m = await oPedidoNoServidor({ estado, frase, eco, bilhetes }); } catch {
+  try {
+    m = resposta
+      ? await oTurnoNoServidor({ estado, frase, eco, bilhetes, resposta }, { cronista: () => cronista || null })
+      : await oPedidoNoServidor({ estado, frase, eco, bilhetes });
+  } catch {
     res.status(422).json({ erro: "o turno não se montou com este estado", motivo: "montagem-estourou", ...(licenca ? { licenca } : {}) });
     return;
   }
@@ -116,6 +135,12 @@ export default async function handler(req, res) {
     },
     calados: m.calados.length,
     montagemMs,
+    /* o depois (só com `resposta`): o eco, os soltos e a tela; do estado do
+       fim só a impressão digital — o cliente do ensaio confere, não aplica */
+    ...(resposta ? {
+      eco: m.eco, soltos: m.soltos, tela: m.tela,
+      estado: { hash: createHash(ENSAIO_DO_TURNO.hash).update(JSON.stringify(m.estadoDoFim)).digest("hex"), tamanho: JSON.stringify(m.estadoDoFim).length, calou: m.calou.length },
+    } : {}),
     ...(licenca ? { licenca } : {}),
   });
 }
