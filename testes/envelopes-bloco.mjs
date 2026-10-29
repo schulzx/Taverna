@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -83,9 +83,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu",
   "mundoFestival", "mundoRumor", "mundoRumorDeLonge", "mundoReino", "mundoGlobalNovo", "mundoGlobalAvancou", "mundoLocalNovo", "mundoLocalExpirado", "mundoQuest", "mundoDivindade", "mundoEventoDivino",
   "poderInvocacao", "poderSacrificio", "poderMetamagia", "poderEfeito", "poderMilagreComo", "poderMilagre", "poderDespertar", "poderIdentificarNota", "poderIdentificar", "poderLocalizarSem", "poderLocalizarNota", "poderLocalizar", "poderHabilidades", "poderHabilidade", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide",
-  "mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda"];
+  "mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda",
+  "dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -197,6 +198,18 @@ const ANCORAS = {
   mercadoCompra: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[COMPRA — JÁ REGISTRADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"compra\"", FIM] },
   mercadoPechincha: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[PECHINCHA — JÁ RESOLVIDA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"pechincha\"", FIM] },
   mercadoVenda: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[VENDA — JÁ REGISTRADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMercado(\"venda\"", FIM] },
+  /* o domínio: onze notas de uma linha (o decreto e os seus desfechos, o governo das cidades, o tratado); o sítio devolve a nota */
+  dominioDecretoAceito: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[DECRETO ACEITO — ${d.alvo}]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"decretoAceito\"", FIM] },
+  dominioDizimado: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[DECRETO — DESFECHO: DIZIMADO]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"decretoDizimado\"", FIM] },
+  dominioFracasso: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[DECRETO — DESFECHO: FRACASSO]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"decretoFracasso\"", FIM] },
+  dominioCumprido: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[DECRETO — DESFECHO: CUMPRIDO", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"decretoCumprido\"", FIM] },
+  dominioObraPronta: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[OBRA CONCLUÍDA — JÁ APLICADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"obraConcluida\"", FIM] },
+  dominioRevolta: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[REVOLTA — JÁ RESOLVIDA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"revolta\"", FIM] },
+  dominioImposto: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[IMPOSTO — JÁ APLICADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"imposto\"", FIM] },
+  dominioObraIniciada: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[OBRA INICIADA — JÁ PAGA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"obraIniciada\"", FIM] },
+  dominioGovernador: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[GOVERNADOR — JÁ NOMEADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"governador\"", FIM] },
+  dominioReivindicacao: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[REIVINDICAÇÃO — JÁ PAGA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"reivindicacao\"", FIM] },
+  dominioTratado: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[TRATADO — JÁ FIRMADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"tratado\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -204,7 +217,8 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   infoDescarteItem: "notaRef.current", infoDescarteEquip: "notaRef.current", infoEquipou: "notaRef.current", infoForjou: "notaRef.current", infoContrato: "notaRef.current", infoDecreto: "notaRef.current", infoAgoraE: "notaRef.current", infoSaiu: "notaRef.current", infoGuilda: "notaRef.current", infoRecalFicha: "notaRef.current", infoRecalMundo: "notaRef.current", infoTransferiu: "notaRef.current",
   mundoFestival: "extras", mundoRumor: "notaRef.current", mundoRumorDeLonge: "notaRef.current", mundoReino: "envelopeEventosReino(evs)", mundoGlobalNovo: "partes", mundoGlobalAvancou: "partes", mundoLocalNovo: "partes", mundoLocalExpirado: "partes", mundoQuest: "partes", mundoDivindade: "partes", mundoEventoDivino: "partes",
   poderInvocacao: "o.nota", poderSacrificio: "o.nota", poderMetamagia: "o.nota", poderEfeito: "o.nota", poderMilagreComo: "notaRef.current", poderMilagre: "enviados", poderDespertar: "enviados", poderIdentificarNota: "notaRef.current", poderIdentificar: "enviados", poderLocalizarSem: "enviados", poderLocalizarNota: "notaRef.current", poderLocalizar: "enviados", poderHabilidades: "enviados", poderHabilidade: "enviados", poderEncerradasAoVencer: "notaRef.current", poderEncerradasNaFuga: "notaRef.current", poderEncerradaNoRevide: "notaRef.current",
-  mercadoEquipou: "notaRef.current", mercadoConsumivel: "notaRef.current", mercadoMapa: "notaRef.current", mercadoCompra: "notaRef.current", mercadoPechincha: "notaRef.current", mercadoVenda: "notaRef.current" };
+  mercadoEquipou: "notaRef.current", mercadoConsumivel: "notaRef.current", mercadoMapa: "notaRef.current", mercadoCompra: "notaRef.current", mercadoPechincha: "notaRef.current", mercadoVenda: "notaRef.current",
+  dominioDecretoAceito: "notaRef.current", dominioDizimado: "notaRef.current", dominioFracasso: "notaRef.current", dominioCumprido: "notaRef.current", dominioObraPronta: "notaRef.current", dominioRevolta: "notaRef.current", dominioImposto: "notaRef.current", dominioObraIniciada: "notaRef.current", dominioGovernador: "notaRef.current", dominioReivindicacao: "notaRef.current", dominioTratado: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -493,6 +507,24 @@ export function mercadoDoCaso(i) {
   };
 }
 
+/* O DOMÍNIO: a nota do turno vazia e já com outra à frente; o bando de um
+   membro e de três; o decreto cumprido sem baixas, com baixas e mortos, e
+   o de mandar matar (a represália) e o de outro tipo; a cidade de cada
+   nome, a obra de cada prazo, a reivindicação e o tratado de cada pacto. */
+export function dominioDoCaso(i) {
+  const membros = [[{ nome: "Brann" }], [{ nome: "Brann" }, { nome: "Kael" }, { nome: "Sef" }]][(i >> 1) % 2];
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    d: { alvo: ["o Corvo", "a ponte do Vau", "Mestre Ulm"][i % 3], descricao: ["Tragam a cabeça do Corvo.", "Limpem a ponte."][(i >> 2) % 2], recompensa: 20 + (i % 50), tipo: ["cabeca", "limpar", "escoltar"][(i >> 1) % 3] },
+    grupo: { bando: ["Companhia do Sal", "Garra Cinza"][i % 2], membros, forca: 3 + (i % 9) },
+    baixas: (i >> 2) % 3 === 1, mortos: [[], ["Kael"], ["Kael", "Sef"]][(i >> 2) % 3],
+    nome: ["Vau", "Porto Sal", "Corvo"][(i >> 1) % 3], pronta: { nome: ["o celeiro", "a muralha"][i % 2] }, rev: { prazo: 3 + (i % 6) },
+    imp: { nome: ["pesado", "brando"][i % 2] }, o: { nome: ["a forja", "o templo"][i % 2], o: ["+1 de ofício", "+5% de fé"][(i >> 1) % 2], dias: 4 + (i % 11) },
+    quem: ["Iris", "Bruna"][(i >> 1) % 2], casa: { nome: ["Casa do Sal", "Casa Funda"][i % 2] }, chk: { cidade: { nome: ["Agulha", "Torre Funda"][(i >> 1) % 2] }, dias: 2 + (i % 8) },
+    p: { nome: ["o Reino de Sal", "a Liga do Norte"][i % 2] }, rot: ["um pacto de comércio", "uma aliança de guerra"][(i >> 1) % 2],
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -568,6 +600,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "mundo") Object.assign(S, mundoDoCaso(k.i));
     else if (g === "poderes") Object.assign(S, poderesDoCaso(k.i));
     else if (g === "mercado") Object.assign(S, mercadoDoCaso(k.i));
+    else if (g === "dominio") Object.assign(S, dominioDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

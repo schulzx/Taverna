@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -21434,7 +21434,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           const nd = { ...d, status: "aceito", grupo, dias: 0 };
           atualizados.push(nd);
           msgs.push(`📣 Seu decreto sobre "${d.alvo}" foi aceito: a ${grupo.bando} (liderada por ${grupo.lider}, força ${grupo.forca}) partiu para o serviço.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO ACEITO — ${d.alvo}] A ${grupo.bando} (${grupo.membros.map((m) => m.nome).join(", ")}, força ${grupo.forca}) aceitou meu decreto: "${d.descricao}" Recompensa de ◉ ${d.recompensa} já está retida pelo sistema. Eles partiram; o resultado chegará pelo sistema em alguns dias — até lá, eles estão FORA DE CENA, em missão.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoAceito", { alvo: d.alvo, bando: grupo.bando, membros: grupo.membros, forca: grupo.forca, descricao: d.descricao, recompensa: d.recompensa });
           /* o líder vira uma pessoa conhecida */
           if (!npcsRef.current[grupo.lider]) {
             npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: "", notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current } };
@@ -21452,11 +21452,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         if (r.desfecho === "dizimado") {
           p = { ...p, moedas: (p.moedas || 0) + d.recompensa };
           msgs.push(`☠ A ${grupo.bando} não voltou de "${d.alvo}". ◉ ${d.recompensa} devolvidas — ninguém sobrou para cobrá-las.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: DIZIMADO] A ${grupo.bando} inteira morreu tentando cumprir meu decreto sobre "${d.alvo}" (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre a notícia chegando e o peso disso; o alvo pode ter ficado MAIS forte ou alerta.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoDizimado", { bando: grupo.bando, alvo: d.alvo });
         } else if (r.desfecho === "fracasso") {
           p = { ...p, moedas: (p.moedas || 0) + d.recompensa };
           msgs.push(`✖ A ${grupo.bando} fracassou em "${d.alvo}" e voltou de rabo entre as pernas. ◉ ${d.recompensa} devolvidas.`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: FRACASSO] A ${grupo.bando} não conseguiu cumprir meu decreto sobre "${d.alvo}" e voltou viva, envergonhada (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre o retorno deles; o alvo provavelmente sabe que foi visado.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoFracasso", { bando: grupo.bando, alvo: d.alvo });
         } else {
           const baixas = r.desfecho === "sucesso_baixas";
           const sBx = sorteDoTurno("baixas"); const mortos = baixas ? grupo.membros.filter(() => sBx() < 0.4).map((m) => m.nome) : [];
@@ -21467,7 +21467,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
              registro e, se for a nêmesis, na perseguição inteira. Antes o
              serviço era pago e o alvo continuava vivo caçando o herói. */
           if (d.tipo === "cabeca") registrarMorteDeAlvo(d.alvo, `abatido(a) pela ${grupo.bando}, a mando do seu decreto`, { aproximado: true });
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DECRETO — DESFECHO: CUMPRIDO${baixas ? " COM BAIXAS" : ""}] É CANON: meu decreto sobre "${d.alvo}" foi CUMPRIDO pela ${grupo.bando}${mortos.length ? ` (${mortos.join(", ")} morreram no serviço)` : ""}. "${d.descricao}" — feito. O sistema JÁ PAGOU ◉ ${d.recompensa} a eles (não envie moedas). Narre o retorno${mortos.length ? " ensanguentado" : " triunfal"} deles e as consequências reais do feito no mundo${d.tipo === "cabeca" ? " — mandei matar alguém: se o alvo era ligado a alguma facção, a relação despenca e pode haver represálias" : ""}.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoCumprido", { baixas, alvo: d.alvo, bando: grupo.bando, mortos, descricao: d.descricao, recompensa: d.recompensa, tipo: d.tipo });
         }
         atualizados.push({ ...d, status: "resolvido", desfecho: r.desfecho });
       } else {
@@ -21825,7 +21825,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           if (pronta) {
             g = terminarObra(g); mudou = true;
             pushMsgs([{ autor: "sistema", texto: `${pronta.icone} ${nome}: ${pronta.nome} de pé — ${pronta.porque}.` }]);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[OBRA CONCLUÍDA — JÁ APLICADA PELO SISTEMA] Em ${nome} ficou pronta: ${pronta.nome}. Narre o que muda na cidade; não invente outra obra nem desfaça esta.`;
+            notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("obraConcluida", { cidade: nome, obra: pronta.nome });
           }
           const fel = (r[nome] && r[nome].felicidade) != null ? r[nome].felicidade : 55;
           const g2 = pulsoDaFuria(g, fel, diaRef.current);
@@ -21841,7 +21841,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             delete govs[nome]; mudou = true;
             const nr2 = { ...r }; delete nr2[nome]; r = nr2;
             pushMsgs([{ autor: "sistema", texto: `🔥 ${nome} se revoltou e não é mais sua. ${rev.prazo} dias de fúria, e ninguém desceu o imposto.` }]);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[REVOLTA — JÁ RESOLVIDA PELO SISTEMA] ${nome} deixou de ser um domínio seu: o povo tomou a cidade depois de ${rev.prazo} dias de fúria. Narre a queda — quem abriu o portão, o que ficou para trás. Não a devolva e não invente um cerco que a retome.`;
+            notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("revolta", { cidade: nome, dias: rev.prazo });
           } else if (rev && rev.faltam <= 3) {
             pushMsgs([{ autor: "sistema", texto: `⚠ ${nome} está a ${rev.faltam} dia${rev.faltam === 1 ? "" : "s"} da revolta.` }]);
           }
@@ -22959,7 +22959,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const imp = impostoPorId(id);
     if (!mexerNoGoverno(nome, (g) => (g.imposto === imp.id ? g : { ...g, imposto: imp.id }))) return;
     pushMsgs([{ autor: "sistema", texto: `${imp.icone} ${nome}: imposto ${imp.nome} — ${imp.o}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[IMPOSTO — JÁ APLICADO PELO SISTEMA] Mandei cobrar imposto ${imp.nome} em ${nome}. Narre como a ordem chega à praça; não invente o número nem o efeito.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("imposto", { imposto: imp.nome, cidade: nome });
   };
 
   const erguerObra = (nome, obraId) => {
@@ -22971,14 +22971,14 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setGuilda(guildaRef.current);
     mexerNoGoverno(nome, (x) => comecarObra(x, obraId, diaRef.current));
     pushMsgs([{ autor: "sistema", texto: `${o.icone} ${nome}: ${o.nome} começou — ◉ ${o.custo} do cofre, ${o.dias} dias.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[OBRA INICIADA — JÁ PAGA PELO SISTEMA] Mandei erguer ${o.nome} em ${nome}: ${o.o}. Leva ${o.dias} dias. Narre os pedreiros chegando; não a termine antes do tempo.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("obraIniciada", { obra: o.nome, cidade: nome, efeito: o.o, dias: o.dias });
   };
 
   const nomearGovernador = (nome, quem) => {
     if (!mexerNoGoverno(nome, (g) => ({ ...g, governador: String(quem || "").slice(0, 40) }))) return;
     if (!quem) { pushMsgs([{ autor: "sistema", texto: `🏛 ${nome} volta a ser governada por você, de longe.` }]); return; }
     pushMsgs([{ autor: "sistema", texto: `🏛 ${quem} governa ${nome} em seu nome.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[GOVERNADOR — JÁ NOMEADO PELO SISTEMA] Pus ${quem} para governar ${nome}. Narre a nomeação e o que a cidade acha; não invente o que essa pessoa é.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("governador", { quem, cidade: nome });
   };
 
   /* ---------------- TOMAR UMA CIDADE (v9.140) ----------------
@@ -23009,7 +23009,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setTomando(tomandoRef.current);
     salvar({ tomando: tomandoRef.current });
     pushMsgs([{ autor: "sistema", texto: `⚑ A ${casa.nome} reivindicou ${chk.cidade.nome} — ◉ ${chk.custo} do cofre, ${chk.dias} dias.${chk.aRevelia ? " E ninguém aqui sabe quem você é." : ""}` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[REIVINDICAÇÃO — JÁ PAGA PELO SISTEMA] A ${casa.nome} reivindicou ${chk.cidade.nome}; leva ${chk.dias} dias e ainda NÃO está feito. Narre o anúncio e quem se opõe — não conclua a posse e não a desfaça.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("reivindicacao", { casa: casa.nome, cidade: chk.cidade.nome, dias: chk.dias });
   };
 
   const depositarCofre = (valor) => {
@@ -24172,7 +24172,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
        aparecendo na tela do jogador, sem acento e em minúscula de código */
     const rot = ((TRATADOS[ex.acao] || {}).rotulo || ex.acao).toLowerCase();
     pushMsgs([{ autor: "sistema", texto: `📜 Condição cumprida — ${p.nome} firmou ${rot}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[TRATADO — JÁ FIRMADO PELO SISTEMA] ${p.nome} firmou ${rot} comigo depois que cumpri a condição. Narre o selo, não reabra a decisão.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("tratado", { potencia: p.nome, pacto: rot });
   };
 
   /* O PRESENTE. Custava 40 fixos, fosse para um bando de estrada ou para um

@@ -22,6 +22,8 @@ import { dataTxt, horaTxt, ehNoite, estacaoDe } from "../calendario.js";
 import { formaDaCidade } from "../geografia.js";
 import { MARCA_DO_RODAPE } from "../prompt.js";
 import { comDe } from "../lugar.js";
+/* o céu do mundo em uso: o despertar divino diz os estágios dele (28/10, trilha B) */
+import { cenarioAtivo } from "../cenario.js";
 
 /* A CHAVE É DA TABELA (28/10/2026): toda escolha por chave neste módulo passa
    por aqui. `tabela[chave]` sozinho lê o protótipo — "constructor" devolvia a
@@ -357,7 +359,16 @@ export const ENVELOPES_DOS_PODERES = {
   efeitoAplicado: ({ habilidade, alvo, condicao, efeito, extraEscopo, somaNoGolpe }) => `[EFEITO APLICADO PELO SISTEMA] "${habilidade}" deixou ${alvo === "aliados" ? "eu e meu grupo" : "eu"} ${condicao.toLowerCase()} (${efeito})${extraEscopo && somaNoGolpe ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
   milagreComoSeManifesta: ({ nome, comoUso }) => `[COMO O MILAGRE SE MANIFESTA — DECISÃO MINHA, NÃO SUA] Eu invoquei "${nome}" ASSIM: ${comoUso}. Essa é a forma do milagre e ela é canônica: use o gesto, o alvo e o veículo que EU descrevi. Não troque por outra imagem, não mude quem foi tocado e não acrescente uma manifestação diferente por cima da minha.`,
   milagre: ({ nome, pf, desc, comoUso }) => `[MILAGRE — EFEITO JÁ APLICADO PELO SISTEMA] Invoco ${nome} (${pf} PF, já cobrados). ${desc} COMO eu o uso: ${comoUso}. Narre essa manifestação exata à altura do meu domínio — visceral, pública, inesquecível — sem recalcular nada e sem inventar um efeito além do que o sistema aplicou.${SO_ISSO}`,
-  despertarDivino: ({ nivel, fieis, pan }) => `[DESPERTAR DIVINO — MARCO REGISTRADO PELO SISTEMA] Ao alcançar o nível ${nivel}, o nome do herói começou a ser sussurrado em orações: a ASCENSÃO começou. FATOS FIXOS sorteados pelo sistema: o jogador tem ${fieis} fiéis iniciais (gente que já reza baixinho o nome dele) e GD 0→trilha aberta; o PANTEÃO local que ele agora consegue PERCEBER: ${pan}. Narre o despertar como um marco íntimo e arrepiado (um sinal, um olhar que se demora, uma prece espontânea de um estranho) — NÃO um show de poder: ele ainda é mortal (GD 0), mas o caminho dos três estágios (Servo Escolhido → Semideus → Nova Divindade) está aberto. As divindades acima já existiam — só agora ele as sente. Apresente UMA delas de leve neste turno.`,
+  /* 28/10 (Fase T, trilha B) · OS ESTÁGIOS SÃO DO CÉU DO MUNDO. A frase foi
+     movida à letra do App e ainda dizia a trilha da Taverna escrita à mão,
+     depois de e036f1f ter posto os estágios no cenário. Agora lê de lá, e
+     cada palavra sai do MESMO sítio de onde divindades.js monta a linha da
+     ascensão: o primeiro e o último estágio (`panteao.estagios`), e no meio
+     o título do GD 2 (`panteao.titulos[2]`) — o meio desta frase sempre foi
+     o título ("Semideus"), não o estágio ("Receptáculo"), e continua a ser,
+     para o mundo padrão sair ao byte. Lido na hora da chamada, não no
+     import: o cenário troca depois de o módulo carregar. */
+  despertarDivino: ({ nivel, fieis, pan }) => { const ceu = cenarioAtivo().panteao; return `[DESPERTAR DIVINO — MARCO REGISTRADO PELO SISTEMA] Ao alcançar o nível ${nivel}, o nome do herói começou a ser sussurrado em orações: a ASCENSÃO começou. FATOS FIXOS sorteados pelo sistema: o jogador tem ${fieis} fiéis iniciais (gente que já reza baixinho o nome dele) e GD 0→trilha aberta; o PANTEÃO local que ele agora consegue PERCEBER: ${pan}. Narre o despertar como um marco íntimo e arrepiado (um sinal, um olhar que se demora, uma prece espontânea de um estranho) — NÃO um show de poder: ele ainda é mortal (GD 0), mas o caminho dos três estágios (${ceu.estagios[0]} → ${ceu.titulos[2].titulo} → ${ceu.estagios[2]}) está aberto. As divindades acima já existiam — só agora ele as sente. Apresente UMA delas de leve neste turno.`; },
   identificarResolvido: ({ alvo, ficha }) => `[IDENTIFICAR — RESOLVIDO PELO SISTEMA] A magia me revelou a ficha exata de "${alvo}": ${ficha}. Esses números são fato e já estão na minha tela — NÃO os repita como se fossem descoberta sua, não invente poder nenhum além destes. Narre só a cena de leitura: o que a magia mostra, que sensação dá, o que o objeto conta de onde veio.`,
   identificar: ({ magia, alvo, acao }) => `[IDENTIFICAR] Usei "${magia}" sobre ${alvo}. ${acao}`,
   localizarSemResposta: ({ magia, motivo }) => `[LOCALIZAR — SEM RESPOSTA] Usei "${magia}" e a agulha não apontou para lugar nenhum: ${motivo}. Narre o silêncio da magia em uma frase, sem inventar uma pista de consolação.`,
@@ -394,4 +405,32 @@ export const ENVELOPES_DO_MERCADO = {
 };
 export function oEnvelopeDoMercado(qual, dados) {
   return aFormaDe(ENVELOPES_DO_MERCADO, qual, "do mercado")(dados || {});
+}
+
+/* ============================================================
+   14.º GRUPO — O DOMÍNIO: o que o sistema já decidiu sobre o que o herói
+   governa, e o Narrador só põe em cena — o decreto que um bando aceitou e os
+   três desfechos com que ele volta (dizimado, fracasso, cumprido com e sem
+   baixas), o imposto, a obra iniciada e a pronta, o governador, a revolta
+   que tomou a cidade, a reivindicação da casa e o tratado firmado. São notas
+   do turno (o App junta-as abaixo da que já havia).
+   `bando`, `membros` (cada um com o `nome`) e `forca`: o grupo que aceitou.
+   `baixas`: se o feito custou gente; `mortos`: os nomes de quem não voltou.
+   `tipo`: o do decreto ("cabeca" é mandar matar alguém).
+   ============================================================ */
+export const ENVELOPES_DO_DOMINIO = {
+  decretoAceito: ({ alvo, bando, membros, forca, descricao, recompensa }) => `[DECRETO ACEITO — ${alvo}] A ${bando} (${membros.map((m) => m.nome).join(", ")}, força ${forca}) aceitou meu decreto: "${descricao}" Recompensa de ◉ ${recompensa} já está retida pelo sistema. Eles partiram; o resultado chegará pelo sistema em alguns dias — até lá, eles estão FORA DE CENA, em missão.`,
+  decretoDizimado: ({ bando, alvo }) => `[DECRETO — DESFECHO: DIZIMADO] A ${bando} inteira morreu tentando cumprir meu decreto sobre "${alvo}" (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre a notícia chegando e o peso disso; o alvo pode ter ficado MAIS forte ou alerta.`,
+  decretoFracasso: ({ bando, alvo }) => `[DECRETO — DESFECHO: FRACASSO] A ${bando} não conseguiu cumprir meu decreto sobre "${alvo}" e voltou viva, envergonhada (o alvo continua como estava — isso é CANON). A recompensa voltou ao meu bolso. Narre o retorno deles; o alvo provavelmente sabe que foi visado.`,
+  decretoCumprido: ({ baixas, alvo, bando, mortos, descricao, recompensa, tipo }) => `[DECRETO — DESFECHO: CUMPRIDO${baixas ? " COM BAIXAS" : ""}] É CANON: meu decreto sobre "${alvo}" foi CUMPRIDO pela ${bando}${mortos.length ? ` (${mortos.join(", ")} morreram no serviço)` : ""}. "${descricao}" — feito. O sistema JÁ PAGOU ◉ ${recompensa} a eles (não envie moedas). Narre o retorno${mortos.length ? " ensanguentado" : " triunfal"} deles e as consequências reais do feito no mundo${tipo === "cabeca" ? " — mandei matar alguém: se o alvo era ligado a alguma facção, a relação despenca e pode haver represálias" : ""}.`,
+  obraConcluida: ({ cidade, obra }) => `[OBRA CONCLUÍDA — JÁ APLICADA PELO SISTEMA] Em ${cidade} ficou pronta: ${obra}. Narre o que muda na cidade; não invente outra obra nem desfaça esta.`,
+  revolta: ({ cidade, dias }) => `[REVOLTA — JÁ RESOLVIDA PELO SISTEMA] ${cidade} deixou de ser um domínio seu: o povo tomou a cidade depois de ${dias} dias de fúria. Narre a queda — quem abriu o portão, o que ficou para trás. Não a devolva e não invente um cerco que a retome.`,
+  imposto: ({ imposto, cidade }) => `[IMPOSTO — JÁ APLICADO PELO SISTEMA] Mandei cobrar imposto ${imposto} em ${cidade}. Narre como a ordem chega à praça; não invente o número nem o efeito.`,
+  obraIniciada: ({ obra, cidade, efeito, dias }) => `[OBRA INICIADA — JÁ PAGA PELO SISTEMA] Mandei erguer ${obra} em ${cidade}: ${efeito}. Leva ${dias} dias. Narre os pedreiros chegando; não a termine antes do tempo.`,
+  governador: ({ quem, cidade }) => `[GOVERNADOR — JÁ NOMEADO PELO SISTEMA] Pus ${quem} para governar ${cidade}. Narre a nomeação e o que a cidade acha; não invente o que essa pessoa é.`,
+  reivindicacao: ({ casa, cidade, dias }) => `[REIVINDICAÇÃO — JÁ PAGA PELO SISTEMA] A ${casa} reivindicou ${cidade}; leva ${dias} dias e ainda NÃO está feito. Narre o anúncio e quem se opõe — não conclua a posse e não a desfaça.`,
+  tratado: ({ potencia, pacto }) => `[TRATADO — JÁ FIRMADO PELO SISTEMA] ${potencia} firmou ${pacto} comigo depois que cumpri a condição. Narre o selo, não reabra a decisão.`,
+};
+export function oEnvelopeDoDominio(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_DOMINIO, qual, "do domínio")(dados || {});
 }

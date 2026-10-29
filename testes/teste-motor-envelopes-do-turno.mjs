@@ -37,11 +37,14 @@
    que se desfazem.
    O 13.º, O MERCADO E A BOLSA: a compra, o mapa comprado, a pechincha, a
    venda, o consumível usado e a peça equipada sem treino.
+   O 14.º, O DOMÍNIO: o decreto aceito e os três desfechos com que ele volta,
+   o imposto, as duas obras, o governador, a revolta, a reivindicação e o
+   tratado.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -552,6 +555,44 @@ sec("17 · o mercado e a bolsa: os casos percorrem o que o texto decide, e a pro
     ["mercadoCompra", "a compra com o vendedor no lugar do item", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, item: d.vendedor }) }],
     ["mercadoPechincha", "a pechincha sem o desfecho", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, desfecho: "?" }) }],
     ["mercadoVenda", "a venda de um cobre a mais", { oEnvelopeDoMercado: (q, d) => P(q, { ...d, valor: d.valor + 1 }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("18 · o domínio: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* as onze são notas do turno: o sítio devolve a nota */
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const DOMINIO = ["dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado"];
+  t("as onze notas entram abaixo da que já havia", DOMINIO.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
+  const A = N("dominioDecretoAceito");
+  t("o decreto aceito pelo bando de um (" + conta(A, "(Brann, força ") + ") e de três, com a força e a recompensa retida", conta(A, "(Brann, força ") >= 120 && conta(A, "(Brann, Kael, Sef, força ") >= 120 && A.every((x, i) => x.includes("Recompensa de ◉ " + (20 + (i % 50)) + " já está retida")));
+  const C = N("dominioCumprido");
+  t("o cumprido sem baixas e com (" + conta(C, "CUMPRIDO COM BAIXAS]") + "), com os mortos ditos e o retorno ensanguentado", conta(C, "CUMPRIDO COM BAIXAS]") >= 80 && conta(C, "[DECRETO — DESFECHO: CUMPRIDO] ") >= 150 && conta(C, " (Kael, Sef morreram no serviço)") >= 80 && conta(C, "Narre o retorno ensanguentado") >= 150 && conta(C, "Narre o retorno triunfal") >= 80);
+  t("o de mandar matar traz a represália (" + conta(C, "mandei matar alguém") + "), o de outro tipo não", conta(C, "mandei matar alguém") >= 80 && C.filter((x) => !x.includes("mandei matar")).length >= 150);
+  t("os dois desfechos que devolvem a recompensa dizem o bando e o alvo", ["dominioDizimado", "dominioFracasso"].every((b) => conta(N(b), "A Garra Cinza ") >= 130 && conta(N(b), "sobre \"Mestre Ulm\"") >= 80 && conta(N(b), "A recompensa voltou ao meu bolso.") === 275));
+  t("a obra iniciada diz o efeito e o prazo, e a pronta o nome", N("dominioObraIniciada").every((x, i) => x.includes(" Leva " + (4 + (i % 11)) + " dias.")) && conta(N("dominioObraIniciada"), ": +5% de fé. Leva") >= 130 && conta(N("dominioObraPronta"), "ficou pronta: a muralha.") >= 130);
+  t("a revolta, a reivindicação e o tratado dizem os seus números e nomes", N("dominioRevolta").every((x, i) => x.includes("depois de " + (3 + (i % 6)) + " dias de fúria")) && conta(N("dominioReivindicacao"), "A Casa Funda reivindicou ") >= 130 && conta(N("dominioTratado"), "a Liga do Norte firmou ") >= 130);
+  t("as onze formas estão na tabela do domínio", Object.keys(ENVELOPES_DO_DOMINIO).length === 11 && ["decretoAceito", "decretoDizimado", "decretoFracasso", "decretoCumprido", "obraConcluida", "revolta", "imposto", "obraIniciada", "governador", "reivindicacao", "tratado"].every((q) => Object.hasOwn(ENVELOPES_DO_DOMINIO, q)));
+  const P = oEnvelopeDoDominio;
+  const mordidas = [
+    ["dominioDecretoAceito", "o decreto aceito que só diz o primeiro do bando", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, membros: d.membros.slice(0, 1) }) }],
+    ["dominioDizimado", "o dizimado com o alvo no lugar do bando", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, bando: d.alvo }) }],
+    ["dominioFracasso", "o fracasso que diz o desfecho do dizimado", { oEnvelopeDoDominio: (q, d) => P("decretoDizimado", d) }],
+    ["dominioCumprido", "o cumprido que esquece as baixas", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, baixas: false }) }],
+    ["dominioCumprido", "o cumprido que esquece os mortos", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, mortos: [] }) }],
+    ["dominioCumprido", "o cumprido que nunca é de mandar matar", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, tipo: "limpar" }) }],
+    ["dominioObraPronta", "a obra pronta com a cidade no lugar da obra", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, obra: d.cidade }) }],
+    ["dominioRevolta", "a revolta de um dia a menos", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, dias: d.dias - 1 }) }],
+    ["dominioImposto", "o imposto sem o nome", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, imposto: "" }) }],
+    ["dominioObraIniciada", "a obra iniciada sem o efeito", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, efeito: "?" }) }],
+    ["dominioGovernador", "o governador de outra cidade", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, cidade: "Lugar Nenhum" }) }],
+    ["dominioReivindicacao", "a reivindicação de um dia a mais", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, dias: d.dias + 1 }) }],
+    ["dominioTratado", "o tratado sem o pacto", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, pacto: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));
