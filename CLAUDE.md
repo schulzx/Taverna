@@ -45,7 +45,8 @@ Uma etapa por versão, nesta ordem:
 2. **Fiação defensiva** no `App.jsx` — snapshot dos refs em `try/catch`,
    ref no save e no load.
 3. **Suíte dedicada** em `testes/teste-nome.mjs`.
-4. **Bump** de `VERSAO` em `src/constantes.js` — **leia o valor no arquivo,
+4. **Bump** de `VERSAO` em `src/constantes.js` — **só quem sobe** (veja
+   «Subir com duas mentes»); as mãos não tocam nele. **Leia o valor no arquivo,
    nunca daqui.** Esta linha já trouxe um número (`v9.221`) que envelheceu em
    trinta versões, e as mãos o copiaram para onze comentários de código como
    se fosse o de hoje. **Lei não guarda valor que apodrece:** onde a casa
@@ -351,8 +352,11 @@ toca em nada. Stash só com a árvore comprovadamente sua.
 o tomou, para quê e quando o devolveu — inclusive quando devolveu cedo.
 
 **Subir com duas mentes.** Some os caminhos um a um (**nunca `git add -A`**:
-a outra pode ter trabalho não commitado na árvore). Bump de `VERSAO` como a
-**última** edição antes do commit. Push recusado por não estar à frente:
+a outra pode ter trabalho não commitado na árvore). **O bump de `VERSAO` é
+de quem sobe, e só dele** (decisão da pessoa, 29/10/2026): as mãos commitam sem
+tocar no número; quem sobe faz um commit só do bump sobre o lote, prova esse
+hash limpo e sobe-o. Uma versão por subida, um dono do número — as duas mãos
+já não se cruzam nele. Push recusado por não estar à frente:
 `git pull --rebase` e suba de novo; em conflito de `VERSAO`, fica o **número
 maior**.
 
