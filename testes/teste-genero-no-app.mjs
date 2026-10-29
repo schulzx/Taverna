@@ -50,7 +50,9 @@ sec("1 · os recuos do App são o gênero padrão do mundo em uso");
   /* o literal que fica: chave de tabela da tela, não recuo. O fundo do
      ModalCena (um gradiente por gênero) é cor, logo tabela do desenho; o
      glifo do cartão de gênero é o terceiro item desta leva. */
-  const LITERAL_NO_APP = 2;
+  /* 2 → 1 no item seguinte da mesma leva: o GLIFO_DO_GENERO deixou de ser chaveado pelo
+     nome do gênero (secção 3), e só o fundo do ModalCena segue como chave */
+  const LITERAL_NO_APP = 1;
   t("o literal \"Fantasia medieval\" só fica como chave (" + LITERAL_NO_APP + ")", conta(APP, "\"Fantasia medieval\"") === LITERAL_NO_APP, "achei " + conta(APP, "\"Fantasia medieval\""));
   t("e nenhum recuo literal sobrou (|| \"Fantasia medieval\" e { genero: \"Fantasia medieval\" })", !/\|\|\s*"Fantasia medieval"|genero:\s*"Fantasia medieval"|=\s*"Fantasia medieval"/.test(APP));
 }
@@ -64,6 +66,35 @@ sec("2 · o mundo padrão não muda, e outro mundo diz o seu");
   t("noutro mundo, o recuo é o padrão dele", CN.cenarioAtivo() === outro && CN.cenarioAtivo().generos.padrao === "Ficção científica");
   CN.usarCenario(DADOS_DO_CENARIO_PADRAO);
   t("e o mundo padrão volta", CN.cenarioAtivo().generos.padrao === "Fantasia medieval");
+}
+
+sec("3 · o glifo do cartão de gênero é dado do mundo, e a tela desenha o vocabulário");
+{
+  const EQ = CN.ESQUEMA_DO_CENARIO;
+  /* o vocabulário é exatamente o que a tabela da tela desenha, nem mais nem menos */
+  const tab = /\nconst GLIFO_DO_GENERO = \{([\s\S]*?)\n\};/.exec(APP);
+  const desenha = tab ? [...tab[1].matchAll(/^\s+(\w+): Icone\w+,$/gm)].map((m) => m[1]) : [];
+  t("a tela desenha cada nome do vocabulário, e só eles (" + desenha.length + ")", desenha.length > 0 && [...desenha].sort().join() === [...EQ.glifos].sort().join(), desenha.join());
+  t("o cartão pede o glifo pelo nome que o mundo deu, nos dois sítios", conta(APP, "<LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null}") === 2 && !APP.includes("GLIFO_DO_GENERO[g.label]"));
+  /* o mundo padrão sai igual: o ícone de cada cartão é o que a chave pelo nome dava antes */
+  const ANTES = { "Fantasia medieval": "IconeCastelo", "Ficção científica": "IconeFoguete", Cyberpunk: "IconeTerminal", "Horror cósmico": "IconeOlho", "Pós-apocalíptico": "IconeCaveira", Steampunk: "IconeBussola", "Universo próprio": "IconeFaiscas" };
+  const icone = (nome) => { const m = new RegExp("^\\s+" + nome + ": (Icone\\w+),$", "m").exec(tab ? tab[1] : ""); return m ? m[1] : null; };
+  const cartoes = CN.CENARIO_PADRAO.generos.criacao;
+  t("no mundo padrão, cada cartão tem o ícone de antes (" + cartoes.length + ")", cartoes.length === 7 && cartoes.every((g) => icone(g.glifo) === ANTES[g.label]), cartoes.map((g) => g.label + "=" + g.glifo).join());
+  /* o validador */
+  const com = (f) => { const d = structuredClone(DADOS_DO_CENARIO_PADRAO); f(d); return CN.validarCenario(d); };
+  const fora = com((d) => { d.generos.criacao[1].glifo = "dragao"; });
+  t("um glifo fora do vocabulário é recusado, com o caminho", !fora.ok && fora.erros.some((e) => e.startsWith("generos.criacao[1].glifo: devia ser um glifo da tela")), fora.erros.join(" | "));
+  const torto = com((d) => { d.generos.criacao[0].glifo = 3; });
+  t("um glifo que não é texto também", !torto.ok && torto.erros.some((e) => e.startsWith("generos.criacao[0].glifo:")));
+  const sem = com((d) => { for (const g of d.generos.criacao) delete g.glifo; });
+  t("um mundo sem glifo nenhum segue válido (o cartão vai sem ícone)", sem.ok, sem.erros.join(" | "));
+  t("um campo que ninguém lê segue recusado", !com((d) => { d.generos.criacao[0].icone = "castelo"; }).ok);
+  /* um mundo de estação: o cartão dele diz o seu glifo, e a tela o desenha */
+  const d = structuredClone(DADOS_DO_CENARIO_PADRAO);
+  d.generos.criacao.unshift({ id: "opera", label: "Ópera de estação", glifo: "foguete", dica: "Docas, turnos longos e o vácuo do lado de fora" });
+  const v = CN.validarCenario(d);
+  t("um gênero novo nasce com o glifo que o mundo lhe deu", v.ok && icone(CN.carregarCenario(d).generos.criacao[0].glifo) === "IconeFoguete", v.erros.join(" | "));
 }
 
 console.log("\n" + ok + " ok, " + falhas + " falhas");

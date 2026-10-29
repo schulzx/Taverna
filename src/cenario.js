@@ -103,7 +103,13 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      os bancos, o bestiário e o corte do futuro o chamam), `dica` a linha do
      cartão, `id` a chave da tela (o "livre" é o Universo próprio, que a tela
      põe à parte). O gênero padrão e os do futuro são gêneros da criação. */
-  generoDaCriacao: Object.freeze({ id: "texto", label: "texto", dica: "texto" }),
+  generoDaCriacao: Object.freeze({ id: "texto", label: "texto", dica: "texto", glifo: "glifo?" }),
+  /* o glifo do cartão (29/10, trilha A): o JSON de um mundo não leva componente,
+     então o cartão diz o NOME de um ícone deste vocabulário, e a tela (App.jsx,
+     GLIFO_DO_GENERO) desenha cada um. Fechado: um nome fora daqui seria um ícone
+     que nenhuma tela sabe desenhar. Sem glifo, o cartão vai sem ícone — como ia
+     o gênero que a tabela da tela não conhecia. */
+  glifos: Object.freeze(["castelo", "foguete", "terminal", "olho", "caveira", "bussola", "faiscas"]),
   /* o bestiário (bestiario.js): `generosDasCriaturas` veem as criaturas do
      mundo e os `emprestados` primeiros arquétipos; os outros gêneros, os
      arquétipos e as `emprestados` primeiras criaturas. Os nomes são únicos
@@ -224,6 +230,7 @@ const TIPOS = {
   regexes: [(v) => Array.isArray(v) && v.every(regexOk), "lista de textos de regex válidas"],
   nivel: [(v) => Number.isInteger(v) && v >= 1, "número inteiro ≥ 1"],
   contagem: [(v) => Number.isInteger(v) && v >= 0, "número inteiro ≥ 0"],
+  glifo: [(v) => ESQUEMA_DO_CENARIO.glifos.includes(v), `um glifo da tela (${ESQUEMA_DO_CENARIO.glifos.join(", ")})`],
   ameaca: [(v) => ESQUEMA_DO_CENARIO.ameacas.includes(v), `uma ameaça do motor (${ESQUEMA_DO_CENARIO.ameacas.join(", ")})`],
   degrau: [(v) => ESQUEMA_DO_CENARIO.degraus.includes(v), `um degrau do motor (${ESQUEMA_DO_CENARIO.degraus.join(", ")})`],
   elemento: [(v) => ESQUEMA_DO_CENARIO.elementos.includes(v), `um tipo de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],

@@ -321,9 +321,10 @@ const ORBITA = {
     marcasProprias: ["\\bvacuo\\b", "\\bestac(ao|oes)\\b"],
     /* 6.ª fatia: os cartões da criação dela — o padrão e o futuro estão entre eles */
     criacao: [
-      { id: "opera", label: "Ópera de estação", dica: "Docas, turnos longos e o vácuo do lado de fora" },
-      { id: "scifi", label: "Ficção científica", dica: "A frota, o salto e o que espera entre as estrelas" },
-      { id: "livre", label: "Universo próprio", dica: "Você descreve tudo do zero" },
+      /* 29/10 (trilha A): o glifo de cada cartão, do vocabulário que a tela desenha */
+      { id: "opera", label: "Ópera de estação", glifo: "foguete", dica: "Docas, turnos longos e o vácuo do lado de fora" },
+      { id: "scifi", label: "Ficção científica", glifo: "foguete", dica: "A frota, o salto e o que espera entre as estrelas" },
+      { id: "livre", label: "Universo próprio", glifo: "faiscas", dica: "Você descreve tudo do zero" },
     ],
   },
   gente: {
@@ -392,6 +393,8 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
 {
   const o = CN.usarCenario(ORBITA);
   t("o mundo em uso é o novo", CN.cenarioAtivo() === o && o.nome === "Estação Órbita Sete");
+  /* 29/10 (trilha A): o cartão de gênero dela diz o seu glifo, e a criação o recebe */
+  t("os cartões da criação dela trazem o glifo de cada um", o.generos.criacao.map((g) => g.id + ":" + g.glifo).join() === "opera:foguete,scifi:foguete,livre:faiscas" && K.GENEROS === o.generos.criacao);
   t("o Narrador lê a escala da estação, com a abertura e o fim do motor", E.ECONOMIA_PROMPT.includes("ESCALA DA ESTAÇÃO") && !E.ECONOMIA_PROMPT.includes("cavaleiro") && E.ECONOMIA_PROMPT.startsWith("ECONOMIA DO MUNDO") && E.ECONOMIA_PROMPT.endsWith("o número que entra/sai do bolso é o do sistema."));
   t("os preços comuns são os dela", E.PRECOS_COMUNS.map((x) => x.id).join() === "racao,dose" && E.PRECOS_DA_RUA.join() === "racao");
   t("a ração custa ◉ 3, e no porto rico ◉ 5", E.precoComum("racao") === 3 && E.precoComum("racao", 1.5) === 5 && E.precoComum("caneca") === null);

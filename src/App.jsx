@@ -4020,6 +4020,21 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
    ele abre por dentro) foram inteiros para `src/painel-habilidades.jsx`.
    Nada as prendia aqui: são tela pura, não tocam em estado do jogo e
    todas as regras que leem vêm de `magias.js` e `regras-jogo.js`. */
+/* O GLIFO DO CARTÃO DE GÊNERO (29/10, trilha A). Era chaveado pelo nome do gênero, e
+   um gênero de outro mundo nascia sem ícone até alguém mexer aqui. O cartão diz agora
+   o NOME do seu glifo (generos.criacao[].glifo, do vocabulário fechado
+   ESQUEMA_DO_CENARIO.glifos), e esta tabela desenha cada nome. Fora do componente:
+   não muda de render em render. */
+const GLIFO_DO_GENERO = {
+  castelo: IconeCastelo,
+  foguete: IconeFoguete,
+  terminal: IconeTerminal,
+  olho: IconeOlho,
+  caveira: IconeCaveira,
+  bussola: IconeBussola,
+  faiscas: IconeFaiscas,
+};
+
 function TelaMundo({ concluir }) {
   const [nome, setNome] = useState("");
   const [genero, setGenero] = useState(null);
@@ -4035,16 +4050,6 @@ function TelaMundo({ concluir }) {
      da primeira cena, e um jogo que se leva a sério pergunta também.
      O texto vai literal para o prompt como regra absoluta. */
   const [limites, setLimites] = useState("");
-
-  const GLIFO_DO_GENERO = {
-    "Fantasia medieval": IconeCastelo,
-    "Ficção científica": IconeFoguete,
-    Cyberpunk: IconeTerminal,
-    "Horror cósmico": IconeOlho,
-    "Pós-apocalíptico": IconeCaveira,
-    Steampunk: IconeBussola,
-    "Universo próprio": IconeFaiscas,
-  };
 
   const campoLongo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
 
@@ -4084,13 +4089,13 @@ function TelaMundo({ concluir }) {
           diz="Isso dita as tabelas geradoras do Mestre, os arquétipos e as ameaças que habitam a escuridão." />
         {duasColunas(GENEROS.filter((g) => g.id !== "livre"), (g) => (
           <CartaoDeEscolha key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
-            <LinhaDoCartao Glifo={GLIFO_DO_GENERO[g.label]} titulo={g.label} ativo={genero && genero.id === g.id} />
+            <LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null} titulo={g.label} ativo={genero && genero.id === g.id} />
             <DescricaoCurta>{g.dica}</DescricaoCurta>
           </CartaoDeEscolha>
         ))}
         {GENEROS.filter((g) => g.id === "livre").map((g) => (
           <CartaoDeEscolha key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
-            <LinhaDoCartao Glifo={GLIFO_DO_GENERO[g.label]} titulo={g.label} ativo={genero && genero.id === g.id} />
+            <LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null} titulo={g.label} ativo={genero && genero.id === g.id} />
             <DescricaoCurta>{g.dica}</DescricaoCurta>
           </CartaoDeEscolha>
         ))}

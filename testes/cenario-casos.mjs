@@ -300,7 +300,11 @@ export async function fotografarOsCatalogos(raiz) {
   caso("companheiro.povo", { tabela: CP.RACAS_DO_COMPANHEIRO, registo: CP.RACA_DO_REGISTO });
   caso("companheiro.sorteio", vezes(120, (i) => CP.racaDeCompanheiro({ nome: "Gente " + i })));
   /* 6.ª fatia: os cartões da criação (constantes.js GENEROS) */
-  caso("criacao.generos", K.GENEROS);
+  /* 29/10 (trilha A): o cartão ganhou `glifo`, o nome do ícone que a tela desenha. O código
+     de antes não o tem, e o dourado compara o que os dois sabem responder: os cartões sem o
+     glifo. O glifo prova-se em teste-genero-no-app.mjs (secção 3): cada cartão do padrão
+     com o ícone que a chave pelo nome dava antes. */
+  caso("criacao.generos", K.GENEROS.map(({ glifo, ...g }) => g));
   caso("companheiro.registo", ["humana", "Elfa", "ANA", "anã", "gnoma", "Draconata", "meio-elfa", "Meio-Elfa", "sintética", "elfo", "x", ""].map((r) => CP.racaDeCompanheiro({ nome: "Registo", raca: r })));
   /* o léxico que renomeia as raças: tudo, só a fantasia, uma a menos, uma intrusa, vazio, lixo */
   const bancoDeRacas = LX.RACAS_DO_SISTEMA.map((r, i) => ({ raca: i % 4 === 1 ? r.toUpperCase() : r, chamado: "Povo " + i }));
