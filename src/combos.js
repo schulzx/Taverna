@@ -20,6 +20,10 @@
    ============================================================ */
 
 import { classeDaHabilidade, fichaDaHabilidade } from "./classes.js";
+/* A peneira da lista de efeitos. É um ciclo de import (efeitos.js lê as
+   escolas daqui), e é inofensivo: as duas pontas só se chamam dentro de
+   funções, nunca no corpo do módulo. */
+import { efeitosDe } from "./efeitos.js";
 
 /* ---------------- ESCOLAS ---------------- */
 export const ESCOLAS = {
@@ -242,8 +246,12 @@ export function efeitoNoGolpe(ef) {
 /* Quanto os buffs ativos somam ao dano DESTA habilidade. É onde a resposta
    à pergunta do jogador vira número: Fúria de Batalha (+3 físico) não
    aparece aqui quando ele lança uma magia. */
+/* 28/10 (Fase T, trilha B) · A PENEIRA. Esta e as duas seguintes (`bonusDeArma`, `buffsIgnorados`) lia `pers.efeitos` cru, e
+   um buraco `null` na lista (save antigo, ficha crua, projeção da arena)
+   estourava no primeiro campo lido. Agora lê por `efeitosDe`, como o resto
+   do órgão: o buraco não conta, e o que está na lista responde igual. */
 export function bonusDeDano(pers, hab) {
-  const efeitos = (pers && pers.efeitos) || [];
+  const efeitos = efeitosDe(pers);
   let total = 0;
   const usados = [];
   for (const ef of efeitos) {
@@ -260,7 +268,7 @@ export function bonusDeDano(pers, hab) {
 /* Golpe de arma é FÍSICO por definição, venha de quem vier: o cajado do mago
    ainda é um pedaço de pau. Por isso não passa por escolaDaHabilidade. */
 export function bonusDeArma(pers) {
-  const efeitos = (pers && pers.efeitos) || [];
+  const efeitos = efeitosDe(pers);
   let total = 0;
   const fontes = [];
   for (const ef of efeitos) {
@@ -282,7 +290,7 @@ export function bonusDeArma(pers) {
    é um buff de dano que errou a escola, é outra coisa. Dizer "Escudo
    Arcano não somou no golpe" seria o sistema falando do próprio rótulo. */
 export function buffsIgnorados(pers, hab) {
-  return ((pers && pers.efeitos) || [])
+  return efeitosDe(pers)
     .filter((ef) => (Number(ef.bonus) || 0) > 0 && efeitoNoGolpe(ef) && !efeitoVale(ef, hab, pers))
     .map((ef) => ef.nome || "efeito");
 }

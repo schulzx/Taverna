@@ -29,6 +29,8 @@
    para o alto, e anda mais. É a parte que decide alguma coisa.
    ============================================================ */
 
+import { efeitosDe } from "./efeitos.js";
+
 export const DESLOCAMENTO_BASE = 9;      // metros por turno (30 ft)
 export const DESLOCAMENTO_PEQUENO = 7.5; // 25 ft
 export const DESLOCAMENTO_LIGEIRO = 10.5;// 35 ft
@@ -86,7 +88,10 @@ export function deslocamentoDe(pers, { dobrar = false } = {}) {
   let voar = base.voar;
   const fontes = [];
 
-  const efeitos = (pers && pers.efeitos) || [];
+  /* 28/10 (Fase T, trilha B) · A PENEIRA: lida por `efeitosDe`, senão um
+     buraco `null` na lista estourava em `e.nome` e a ficha ficava sem
+     velocidade nenhuma. */
+  const efeitos = efeitosDe(pers);
   for (const e of efeitos) {
     const txt = `${e.nome || ""} ${e.descricao || ""}`;
     if (RX_VOO.test(txt)) { voar = Math.max(voar, 18); fontes.push(`${e.nome} (voo)`); }      // a magia Voo: 60 ft

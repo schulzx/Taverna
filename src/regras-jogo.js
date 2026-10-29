@@ -443,7 +443,11 @@ export function tickEfeitos(pers) {
   /* `pers` nulo chegava aqui e estourava; com um leitor novo fora do App
      (a arena) o relógio passa a correr em mais sítios, e um relógio que
      derruba a cena é o pecado que `calou(...)` existe para tapar. */
-  ((pers && pers.efeitos) || []).forEach((e) => {
+  /* 28/10 (Fase T, trilha B) · A PENEIRA: `efeitosDe` em vez da lista crua.
+     Um buraco `null` estourava em `e.turnos` — o relógio de TODA rodada —, e
+     um `efeitos` que não é lista também; agora o buraco não volta na lista
+     do turno seguinte (ela sai limpa, como sai de `empilhar`). */
+  efeitosDe(pers).forEach((e) => {
     const porTurno = Number(e && e.curaTurno);
     if (Number.isFinite(porTurno) && porTurno > 0) { cura += porTurno; fontes.push((e && e.nome) || ""); }
     const t = e.turnos - 1;

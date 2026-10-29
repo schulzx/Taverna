@@ -31,6 +31,8 @@
    nascem juntas, senão a correção seria só uma perda.
    ============================================================ */
 
+import { efeitosDe } from "./efeitos.js";
+
 const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 export const GATILHOS = {
@@ -84,9 +86,13 @@ const RX_SEGURA = /(0|zero)\s*pv.{0,40}(continua|de\s*p[ée]|nao\s+cai|n[ãa]o\s
 
 /* A habilidade da ficha que promete isso, se houver — e só uma vez por
    luta, marcada em `pers.seguraGasto`, senão o herói seria imortal. */
+/* 28/10 (Fase T, trilha B) · A PENEIRA. Esta e `estaInvisivel` lia `pers.efeitos` cru, e
+   um buraco `null` na lista (save antigo, ficha crua, projeção da arena)
+   estourava no primeiro campo lido. Agora lê por `efeitosDe`, como o resto
+   do órgão: o buraco não conta, e o que está na lista responde igual. */
 export function seguraEmPe(pers) {
   if (!pers || pers.seguraGasto) return null;
-  for (const h of (pers.efeitos || [])) {
+  for (const h of efeitosDe(pers)) {
     if (RX_SEGURA.test(NORM(`${h.nome || ""} ${h.descricao || ""}`))) return h.nome || "efeito";
   }
   for (const h of (pers.habilidades || [])) {
@@ -103,7 +109,7 @@ export function devolverSegura(pers) { const p = { ...pers }; delete p.seguraGas
    Só a invisibilidade, por enquanto, porque é a única cujo efeito
    mecânico não cabe em "+N em alguma coisa". */
 export function estaInvisivel(pers) {
-  const tudo = [...((pers && pers.efeitos) || []), ...((pers && pers.condicoes) || [])];
+  const tudo = [...efeitosDe(pers), ...((pers && pers.condicoes) || [])];
   return tudo.some((e) => RX_INVISIVEL.test(NORM(`${e.nome || ""} ${e.descricao || ""}`)));
 }
 

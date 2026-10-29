@@ -1041,7 +1041,16 @@ sec("15. o abrigo NASCE no companheiro, e o relógio do grupo conta (P3)");
     t("e o prazo do grupo é ESCRITO de volta na ficha nova (e a que entrou não foi tocada)",
       turnosDe(doran.efeitos, "Escudo") === 2 && JSON.stringify(E) === antes && eu.grupo[1] === E.personagem.grupo[1]);
     {
-      const podre = jogar({ personagem: ficha({ efeitos: [ef("Bênção", 2)], grupo: [{ nome: "Doran", efeitos: { filter: () => [1] } }] }) });
+      /* MOVIDA (28/10, Fase T, trilha B): O PODRE MUDOU DE FORMA, A PROVA NÃO.
+         O podre daqui era `efeitos: { filter: () => [1] }` — uma lista que não
+         é lista —, e estourava porque `tickEfeitos` lia `(pers.efeitos || [])`
+         cru. Desde a peneira, o relógio lê por `efeitosDe`, e o não-lista vira
+         lista vazia sem estourar (é o conserto, provado em
+         teste-efeitos-na-peneira §5). O que esta asserção guarda é OUTRA
+         coisa — que o estouro do relógio do grupo cala em vez de custar o
+         turno —, então o podre passa a ser um efeito cujo campo estoura ao
+         ser lido: a peneira não o pega, e o `calou` continua provado. */
+      const podre = jogar({ personagem: ficha({ efeitos: [ef("Bênção", 2)], grupo: [{ nome: "Doran", efeitos: [{ nome: "Podre", get curaTurno() { throw new Error("podre"); } }] }] }) });
       t("e o relógio do grupo também cala em vez de custar o turno",
         podre.efeitos.filter((x) => x.tipo === "calou" && x.onde === "prazo-do-efeito-do-grupo").length === 1 && turnosDe(podre.estado.personagem.efeitos, "Bênção") === 1);
     }
