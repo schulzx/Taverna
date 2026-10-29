@@ -340,7 +340,7 @@ import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, eh
 import { aplicarPoder } from "./poder-de-classe.js";
 import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMagia, quebrarConcentracao, notaDosBuffs } from "./efeitos.js";
 import { carimbarALuta } from "./motor/carimbo-da-luta.js";
-import { aPautaDoTurno, REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
+import { aPautaDoTurno, oEstadoDaPauta, REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
 import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi } from "./motor/golpe-no-corpo.js";
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
@@ -7307,13 +7307,11 @@ export default function Taverna() {
     sinoDoTurnoRef, sitioRef, subtramasCacheRef, torneioRef, turnoDeRegistroRef, ultimaAcaoRef,
     ultimaCobrancaRef, ultimoPesoRef, vetosDoJuizRef, vilaoAgiuRef,
   });
-  const estadoDaPauta = () => {
-    const refs = refsDaPauta();
-    const e = {};
-    for (const [c, r] of Object.entries(REFS_DA_PAUTA)) e[c] = refs[r.ref] ? refs[r.ref].current : undefined;
-    e.render = { personagem, mundo, nomeCampanha, mercado, governos, cidadeMercado, mercadoAqui };
-    return e;
-  };
+  /* O render vai sem a banca da praça (cidadeMercado, mercadoAqui): a do
+     render é a do último desenho da tela, e um turno que muda de cidade
+     antes da pauta vendia a praça de antes. A peça refá-la do estado do
+     instante (oEstadoDaPauta, e o porquê lá). */
+  const estadoDaPauta = () => oEstadoDaPauta(refsDaPauta(), { personagem, mundo, nomeCampanha, mercado, governos });
   const aplicarDaPauta = (x) => {
     const refs = refsDaPauta();
     for (const [c, v] of Object.entries(x || {})) { const r = REFS_DA_PAUTA[c]; if (r && refs[r.ref]) refs[r.ref].current = v; }

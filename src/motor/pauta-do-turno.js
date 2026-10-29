@@ -213,6 +213,27 @@ export const REFS_DA_PAUTA = Object.freeze({
    render calcula, também podem vir ali; sem eles, refazem-se aqui. */
 export const RENDER_DA_PAUTA = Object.freeze(["governos","mercado","mundo","nomeCampanha","personagem"]);
 
+/* O ESTADO QUE O APP DÁ À PAUTA, E O QUE ELA LHE DEVOLVE (trilha A, 29/10).
+   O App guarda o jogo em refs ({ current }), um por campo, com o nome de
+   REFS_DA_PAUTA; `refs` é esse dicionário, pelo nome do ref.
+
+   Do render só passam os cinco de RENDER_DA_PAUTA. A banca da praça
+   (`cidadeMercado`, `mercadoAqui`) NÃO passa, de propósito: o render dela é
+   o do último desenho da tela, e um turno que muda de cidade antes da pauta
+   (a chegada sozinha, a caminhada) vendia a praça de antes — ou nenhuma, se
+   a tela ainda estava na estrada. Sem ela, a peça refá-la do estado do
+   instante do turno (a cidade e o dia dos refs), que é o que o recorte do
+   App provado em pauta-dourado.json sempre fez. */
+export function oEstadoDaPauta(refs, render) {
+  const R = refs && typeof refs === "object" ? refs : {};
+  const V = render && typeof render === "object" ? render : {};
+  const e = {};
+  for (const [c, r] of Object.entries(REFS_DA_PAUTA)) e[c] = R[r.ref] && typeof R[r.ref] === "object" ? R[r.ref].current : undefined;
+  e.render = {};
+  for (const n of RENDER_DA_PAUTA) if (Object.prototype.hasOwnProperty.call(V, n)) e.render[n] = V[n];
+  return e;
+}
+
 /* ---------------- o que é do módulo do App, à letra ---------------- */
 /* MM-C · C0 (11/10, a 6.ª sessão): o que o Mestre MOSTROU na conversa — as
    últimas falas dele, para o alvo do golpe sair da prosa ("ataco o cão sem
