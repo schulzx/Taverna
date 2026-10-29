@@ -454,3 +454,25 @@ export const ENVELOPES_DO_TEMPO = {
 export function oEnvelopeDoTempo(qual, dados) {
   return aFormaDe(ENVELOPES_DO_TEMPO, qual, "do tempo")(dados || {});
 }
+
+/* ============================================================
+   16.º GRUPO — A FÉ E AS CASAS: o que o sistema já decidiu sobre as casas a
+   que o herói pertence e sobre o nome dele nas cidades, e o Narrador só põe
+   em cena — o ingresso numa guilda (com o posto de entrada e o mestre que o
+   recebe) e a casa que ele próprio fundou, a cidade cuja fé virou, o templo
+   erguido do cofre e o estado divino alinhado com a história já jogada. São
+   notas do turno (o App junta-as abaixo da que já havia).
+   `posto`, `oficio`, `titulo`: o App passa-os já ditos (postoDaCasa,
+   oficioDaCasa, tituloDe). `de`/`para`: os degraus da fé (o `rotulo`, e do
+   novo a `recepcao`); `subiu`: se a devoção subiu ou recuou.
+   ============================================================ */
+export const ENVELOPES_DA_FE = {
+  guilda: ({ nome, posto, mestre }) => `[GUILDA — RESOLVIDO PELO SISTEMA] Fui aceito n${nome.startsWith("A ") ? "" : "a "}${nome} como ${posto}. ${mestre} me recebeu. Narre o momento do ingresso em 2-3 frases — o lugar, quem estava lá, o que se exige de um recem-chegado. Nao invente posto, lei nem promessa da casa: isso e do sistema.`,
+  guildaFundada: ({ nome, oficio, sede }) => `[GUILDA FUNDADA — RESOLVIDO PELO SISTEMA] Abri a minha propria casa: ${nome}, de ${oficio}, com sede em ${sede}. Narre a abertura das portas em 2-3 frases.`,
+  feNaGeografia: ({ cidade, de, para, fe, subiu }) => `[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA] ${cidade} passou de "${de.rotulo}" para "${para.rotulo}" (${fe}% de devoção ao herói). Isso é fato: ${subiu ? `daqui em diante o povo de ${cidade} ${para.recepcao} — mostre isso na primeira cena que se passar lá` : `a devoção recuou em ${cidade} — sacerdotes rivais ganharam espaço e o povo esfriou`}.`,
+  templo: ({ templo, cidade, custo, fe }) => `[TEMPLO ERGUIDO — REGISTRO DO SISTEMA] Um ${templo.toLowerCase()} em nome do herói foi construído em ${cidade}, pago do cofre (◉ ${custo}). A devoção da cidade subiu para ${fe}%. Narre a obra e o que ela cria: sacerdócio próprio, ofícios diários, gente que passa a rezar o nome dele — e a reação do culto que já estava ali, que não vai gostar. Os números já foram aplicados; não os recalcule.`,
+  ascensao: ({ depois, titulo, fieis, pf, dominio, patrono }) => `[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA] O estado divino do herói foi alinhado com a história já jogada: GD ${depois} (${titulo}), ${fieis} fiéis, ${pf} PF${dominio ? `, domínio ${dominio}` : ""}${patrono ? `, patrono ${patrono}` : ""}. Trate como verdade estabelecida — a história já o reconhecia assim.`,
+};
+export function oEnvelopeDaFe(qual, dados) {
+  return aFormaDe(ENVELOPES_DA_FE, qual, "da fé e das casas")(dados || {});
+}

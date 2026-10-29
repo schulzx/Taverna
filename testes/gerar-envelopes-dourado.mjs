@@ -15,7 +15,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { N_CASOS } from "./combate-casos.mjs";
-import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
+import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorraContornada: "d3d6f60", masmorraAVista: "d3d6f60", masmorraTesouro: "d3d6f60", masmorraSantuario: "d3d6f60", masmorraBusca: "d3d6f60", masmorraFuga: "d3d6f60", correioDecreto: "df6e36b", correioCarta: "df6e36b", correioPeticao: "df6e36b",
@@ -30,7 +30,8 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   poderInvocacao: "964832c", poderSacrificio: "964832c", poderMetamagia: "964832c", poderEfeito: "964832c", poderMilagreComo: "964832c", poderMilagre: "964832c", poderDespertar: "964832c", poderIdentificarNota: "964832c", poderIdentificar: "964832c", poderLocalizarSem: "964832c", poderLocalizarNota: "964832c", poderLocalizar: "964832c", poderHabilidades: "964832c", poderHabilidade: "964832c", poderEncerradasAoVencer: "964832c", poderEncerradasNaFuga: "964832c", poderEncerradaNoRevide: "964832c",
   mercadoEquipou: "48ce543", mercadoConsumivel: "48ce543", mercadoMapa: "48ce543", mercadoCompra: "48ce543", mercadoPechincha: "48ce543", mercadoVenda: "48ce543",
   dominioDecretoAceito: "f5d5940", dominioDizimado: "f5d5940", dominioFracasso: "f5d5940", dominioCumprido: "f5d5940", dominioObraPronta: "f5d5940", dominioRevolta: "f5d5940", dominioImposto: "f5d5940", dominioObraIniciada: "f5d5940", dominioGovernador: "f5d5940", dominioReivindicacao: "f5d5940", dominioTratado: "f5d5940",
-  tempoClimaAoPassar: "b5e935e", tempoClimaDaNoite: "b5e935e", tempoSonho: "b5e935e", tempoOndeAcordo: "b5e935e" };
+  tempoClimaAoPassar: "b5e935e", tempoClimaDaNoite: "b5e935e", tempoSonho: "b5e935e", tempoOndeAcordo: "b5e935e",
+  feGuilda: "9a79d2e", feGuildaFundada: "9a79d2e", feNaGeografia: "9a79d2e", feTemplo: "9a79d2e", feAscensao: "9a79d2e" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);
@@ -38,11 +39,14 @@ const saida = { antes: ANTES, casos: N_CASOS, blocos: {} };
 for (const bloco of BLOCOS) {
   const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false, so: bloco })[bloco]);
   /* o hash e o comprimento por caso; o texto inteiro só na amostra (ver fotoGuardada) */
-  saida.blocos[bloco] = casos.map((k, i) => fotoGuardada(fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })), i));
-  const erros = saida.blocos[bloco].filter((f) => f.erro).length;
-  const faltas = [...new Set(saida.blocos[bloco].flatMap((f) => f.faltas))];
-  const maior = Math.max(...saida.blocos[bloco].map((f) => f.n));
-  console.log(`${bloco} (de ${ANTES[bloco]}): ${N_CASOS} fotos, ${erros} estouram, o maior ${maior} chars, faltas: ${faltas.join(", ") || "nenhuma"}`);
+  const fotos = casos.map((k, i) => fotoGuardada(fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })), i));
+  /* o dicionário (ver douradoGuardado): a volta tem de ser a ida, byte a byte */
+  saida.blocos[bloco] = douradoGuardado(fotos);
+  if (JSON.stringify(douradoLido(saida.blocos[bloco])) !== JSON.stringify(fotos)) throw new Error(bloco + ": o dicionário não devolve as fotos");
+  const erros = fotos.filter((f) => f.erro).length;
+  const faltas = [...new Set(fotos.flatMap((f) => f.faltas))];
+  const maior = Math.max(...fotos.map((f) => f.n));
+  console.log(`${bloco} (de ${ANTES[bloco]}): ${N_CASOS} fotos (${saida.blocos[bloco].fotos.length} distintas), ${erros} estouram, o maior ${maior} chars, faltas: ${faltas.join(", ") || "nenhuma"}`);
 }
 fs.writeFileSync(path.join(AQUI, "envelopes-dourado.json"), JSON.stringify(saida));
 console.log("envelopes-dourado.json:", fs.statSync(path.join(AQUI, "envelopes-dourado.json")).size, "bytes");

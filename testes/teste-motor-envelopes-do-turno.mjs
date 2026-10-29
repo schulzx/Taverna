@@ -42,17 +42,22 @@
    tratado.
    O 15.º, O TEMPO E A NOITE: o clima que vira ao passar o tempo e durante a
    noite, o sonho e o onde acordo.
+   O 16.º, A FÉ E AS CASAS: o ingresso numa guilda e a guilda fundada, a fé
+   que muda de cidade, o templo erguido e a ascensão recalibrada.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
-import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo } from "../src/motor/envelopes-do-turno.js";
+import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
 const sec = (s) => console.log("\n" + s);
-const D = JSON.parse(fs.readFileSync(new URL("./envelopes-dourado.json", import.meta.url), "utf8"));
+/* o arquivo guarda cada sítio em dicionário (ver douradoGuardado); D é o que
+   ele guardava antes — a foto de cada caso —, e é contra isso que tudo compara */
+const GUARDADO = JSON.parse(fs.readFileSync(new URL("./envelopes-dourado.json", import.meta.url), "utf8"));
+const D = { ...GUARDADO, blocos: Object.fromEntries(Object.entries(GUARDADO.blocos).map(([b, g]) => [b, douradoLido(g)])) };
 const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const casos = casosDosEnvelopes(N_CASOS);
@@ -72,6 +77,7 @@ const HOJE = Object.fromEntries(BLOCOS.map((b) => [b, fotosDeHoje(b)]));
 sec("1 · cada grupo, byte a byte contra o App de antes");
 t(`o dourado tem ${N_CASOS} casos em cada grupo, e o commit de antes de cada um`, BLOCOS.every((b) => (D.blocos[b] || []).length === N_CASOS && D.antes[b]));
 t(`o dourado guarda o hash e o comprimento de cada caso, e o texto só nos ${AMOSTRA} primeiros`, BLOCOS.every((b) => D.blocos[b].every((f, i) => /^[0-9a-f]{32}$/.test(f.h) && Number.isInteger(f.n) && ("texto" in f) === (i < AMOSTRA))));
+t("o dicionário de cada sítio: cada foto distinta uma vez só, todas usadas, e guardar o lido devolve o guardado", BLOCOS.every((b) => { const g = GUARDADO.blocos[b]; const vistos = new Set(g.caso); return new Set(g.fotos.map((f) => JSON.stringify(f))).size === g.fotos.length && vistos.size === g.fotos.length && JSON.stringify(douradoGuardado(D.blocos[b])) === JSON.stringify(g); }));
 for (const bloco of BLOCOS) {
   const fotos = D.blocos[bloco];
   const cheias = HOJE[bloco];
@@ -621,6 +627,38 @@ sec("19 · o tempo e a noite: os casos percorrem o que o texto decide, e a prova
     ["tempoClimaDaNoite", "o clima da noite com a nota no lugar do rótulo", { oEnvelopeDoTempo: (q, d) => P(q, { ...d, rotulo: d.nota }) }],
     ["tempoSonho", "o sonho que esquece a condição", { oEnvelopeDoTempo: (q, d) => P(q, { ...d, efeito: undefined }) }],
     ["tempoOndeAcordo", "o onde acordo sem o lugar", { oEnvelopeDoTempo: (q, d) => P(q, { ...d, local: "?" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("20 · a fé e as casas: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* as cinco são notas do turno: o sítio devolve a nota */
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const FE = ["feGuilda", "feGuildaFundada", "feNaGeografia", "feTemplo", "feAscensao"];
+  t("as cinco notas entram abaixo da que já havia", FE.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
+  const G = N("feGuilda");
+  t("a guilda: o «a » só diante do nome que não abre por «A » (" + conta(G, "Fui aceito nA Mão Cinzenta como") + "), com o posto e o mestre", conta(G, "Fui aceito nA Mão Cinzenta como Aprendiz.") >= 80 && conta(G, "Fui aceito na Casa do Sal como Aprendiz.") >= 80 && conta(G, "Velho Brann me recebeu.") >= 130);
+  const F = N("feGuildaFundada");
+  t("a guilda fundada diz o nome, o ofício e a sede", conta(F, "de escribas, com sede em ") >= 130 && conta(F, "Abri a minha propria casa: Ordem da Ponte, de ") >= 80 && conta(F, ", com sede em Porto Sal.") >= 130);
+  const Geo = N("feNaGeografia");
+  t("a fé que subiu manda mostrar a recepção (" + conta(Geo, "mostre isso na primeira cena") + "), a que recuou fala dos rivais (" + conta(Geo, "sacerdotes rivais") + ")", conta(Geo, "daqui em diante o povo de Agulha ajoelha à passagem — mostre isso na primeira cena que se passar lá.") >= 40 && conta(Geo, "a devoção recuou em Vau — sacerdotes rivais ganharam espaço e o povo esfriou.") >= 40 && Geo.every((x, i) => x.includes("(" + (10 + (i % 80)) + "% de devoção ao herói)")));
+  const Tp = N("feTemplo");
+  t("o templo diz o nome em minúscula, o custo e a fé", conta(Tp, "Um grande templo em nome do herói foi construído em Torre Funda") >= 60 && Tp.every((x, i) => x.includes("pago do cofre (◉ " + (100 + 7 * (i % 30)) + ")") && x.includes("subiu para " + (5 + (i % 90)) + "%")));
+  const As = N("feAscensao");
+  t("a ascensão de cada grau, e o domínio e o patrono só quando há (" + conta(As, ", domínio a tempestade") + ", " + conta(As, ", patrono Ondra") + ")", new Set(As.map((x) => x.match(/GD \d \(([^)]+)\)/)[1])).size === 5 && conta(As, ", domínio a tempestade") >= 80 && As.filter((x) => !x.includes("domínio")).length >= 160 && conta(As, ", patrono Ondra") >= 130 && As.filter((x) => !x.includes("patrono")).length >= 130);
+  t("as cinco formas estão na tabela da fé", Object.keys(ENVELOPES_DA_FE).length === 5 && ["guilda", "guildaFundada", "feNaGeografia", "templo", "ascensao"].every((q) => Object.hasOwn(ENVELOPES_DA_FE, q)));
+  const P = oEnvelopeDaFe;
+  const mordidas = [
+    ["feGuilda", "a guilda com o mestre no lugar do posto", { oEnvelopeDaFe: (q, d) => P(q, { ...d, posto: d.mestre }) }],
+    ["feGuildaFundada", "a guilda fundada sem a sede", { oEnvelopeDaFe: (q, d) => P(q, { ...d, sede: "?" }) }],
+    ["feNaGeografia", "a fé que sempre sobe", { oEnvelopeDaFe: (q, d) => P(q, { ...d, subiu: true }) }],
+    ["feTemplo", "o templo de graça", { oEnvelopeDaFe: (q, d) => P(q, { ...d, custo: 0 }) }],
+    ["feAscensao", "a ascensão que esquece o patrono", { oEnvelopeDaFe: (q, d) => P(q, { ...d, patrono: null }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

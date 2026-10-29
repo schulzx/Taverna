@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -85,9 +85,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "poderInvocacao", "poderSacrificio", "poderMetamagia", "poderEfeito", "poderMilagreComo", "poderMilagre", "poderDespertar", "poderIdentificarNota", "poderIdentificar", "poderLocalizarSem", "poderLocalizarNota", "poderLocalizar", "poderHabilidades", "poderHabilidade", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide",
   "mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda",
   "dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado",
-  "tempoClimaAoPassar", "tempoClimaDaNoite", "tempoSonho", "tempoOndeAcordo"];
+  "tempoClimaAoPassar", "tempoClimaDaNoite", "tempoSonho", "tempoOndeAcordo",
+  "feGuilda", "feGuildaFundada", "feNaGeografia", "feTemplo", "feAscensao"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -216,6 +217,12 @@ const ANCORAS = {
   tempoClimaDaNoite: { antes: ["const climaMsg = climaNovo ? `\\n[CLIMA] O tempo virou durante a noite", FIM], hoje: ["const climaMsg = climaNovo ? oEnvelopeDoTempo(\"climaDaNoite\"", FIM] },
   tempoSonho: { antes: ["sonhoMsg = `\\n[SONHO]", FIM], hoje: ["sonhoMsg = oEnvelopeDoTempo(\"sonho\"", FIM] },
   tempoOndeAcordo: { antes: ["    const localMsg = (jornadaRef.current && !acordoCala)", "\n    enviar(oEnvelopeDoAcampamento(\"levantarDescansado\""], hoje: ["    const localMsg = (jornadaRef.current && !acordoCala)", "\n    enviar(oEnvelopeDoAcampamento(\"levantarDescansado\""] },
+  /* a fé e as casas: cinco notas de uma linha (a guilda e a fundada, a fé na geografia, o templo, a ascensão); o sítio devolve a nota */
+  feGuilda: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[GUILDA — RESOLVIDO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"guilda\"", FIM] },
+  feGuildaFundada: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[GUILDA FUNDADA — RESOLVIDO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"guildaFundada\"", FIM] },
+  feNaGeografia: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"feNaGeografia\"", FIM] },
+  feTemplo: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[TEMPLO ERGUIDO — REGISTRO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"templo\"", FIM] },
+  feAscensao: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"ascensao\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -225,7 +232,8 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   poderInvocacao: "o.nota", poderSacrificio: "o.nota", poderMetamagia: "o.nota", poderEfeito: "o.nota", poderMilagreComo: "notaRef.current", poderMilagre: "enviados", poderDespertar: "enviados", poderIdentificarNota: "notaRef.current", poderIdentificar: "enviados", poderLocalizarSem: "enviados", poderLocalizarNota: "notaRef.current", poderLocalizar: "enviados", poderHabilidades: "enviados", poderHabilidade: "enviados", poderEncerradasAoVencer: "notaRef.current", poderEncerradasNaFuga: "notaRef.current", poderEncerradaNoRevide: "notaRef.current",
   mercadoEquipou: "notaRef.current", mercadoConsumivel: "notaRef.current", mercadoMapa: "notaRef.current", mercadoCompra: "notaRef.current", mercadoPechincha: "notaRef.current", mercadoVenda: "notaRef.current",
   dominioDecretoAceito: "notaRef.current", dominioDizimado: "notaRef.current", dominioFracasso: "notaRef.current", dominioCumprido: "notaRef.current", dominioObraPronta: "notaRef.current", dominioRevolta: "notaRef.current", dominioImposto: "notaRef.current", dominioObraIniciada: "notaRef.current", dominioGovernador: "notaRef.current", dominioReivindicacao: "notaRef.current", dominioTratado: "notaRef.current",
-  tempoClimaAoPassar: "climaMsg", tempoClimaDaNoite: "climaMsg", tempoSonho: "sonhoMsg", tempoOndeAcordo: "localMsg" };
+  tempoClimaAoPassar: "climaMsg", tempoClimaDaNoite: "climaMsg", tempoSonho: "sonhoMsg", tempoOndeAcordo: "localMsg",
+  feGuilda: "notaRef.current", feGuildaFundada: "notaRef.current", feNaGeografia: "notaRef.current", feTemplo: "notaRef.current", feAscensao: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -544,6 +552,22 @@ export function tempoDoCaso(i) {
   };
 }
 
+/* A FÉ E AS CASAS: a nota do turno vazia e já com outra à frente; a casa
+   cujo nome abre por «A » e a que não; o posto, o mestre e o ofício de cada
+   casa; a cidade cuja fé subiu e a que recuou; o templo de cada nome e
+   custo; a ascensão de cada grau, com e sem domínio e patrono. */
+export function feDoCaso(i) {
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    nova: { nome: ["A Mão Cinzenta", "Casa do Sal", "Ordem da Ponte"][i % 3], mestre: ["Mestra Ulma", "Velho Brann"][(i >> 1) % 2], oficio: ["ferro", "letras"][(i >> 2) % 2], sede: ["Vau", "Porto Sal"][(i >> 1) % 2], postos: ["Aprendiz", "Juramentado"] },
+    postoDaCasa: (g, n) => g.postos[n],
+    oficioDaCasa: (id) => ({ o: { ferro: "ferreiros", letras: "escribas" }[id] }),
+    m: { cidade: ["Vau", "Agulha"][i % 2], de: { rotulo: ["indiferente", "devota"][(i >> 1) % 2] }, para: { rotulo: ["devota", "fervorosa"][(i >> 2) % 2], recepcao: ["abre as portas", "ajoelha à passagem"][(i >> 1) % 2] }, fe: 10 + (i % 80), subiu: (i >> 1) % 3 !== 0 },
+    templo: { nome: ["Santuário", "Grande Templo"][i % 2] }, nomeCidade: ["Vau", "Torre Funda"][(i >> 1) % 2], custo: 100 + 7 * (i % 30), fe: 5 + (i % 90),
+    depois: i % 5, tituloDe: divindades.tituloDe, dv: { fieis: 3 * i, pf: i % 17, dominio: [null, "a tempestade", ""][(i >> 1) % 3], patrono: [null, "Ondra"][(i >> 2) % 2] },
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -621,6 +645,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "mercado") Object.assign(S, mercadoDoCaso(k.i));
     else if (g === "dominio") Object.assign(S, dominioDoCaso(k.i));
     else if (g === "tempo") Object.assign(S, tempoDoCaso(k.i));
+    else if (g === "fe") Object.assign(S, feDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
@@ -675,4 +700,23 @@ export function fotoGuardada(f, i) {
   const { texto, ...resto } = f;
   return { h: hashDoTexto(texto), n: tamDoTexto(texto), ...resto, ...(i < AMOSTRA ? { texto } : {}) };
 }
+/* O DOURADO EM DICIONÁRIO (29/10/2026): com 106 sítios o arquivo chegou a
+   3,5 MB, e 9 décimos dele eram repetição — os nomes dos campos em cada um
+   dos 29 mil casos, e a mesma foto em muitos casos (eram 3.621 fotos
+   distintas, 146 sequências de chamadas). O dourado guarda agora, por sítio,
+   as fotos distintas (sem o texto), o índice de cada caso nelas, e o texto da
+   amostra à parte. Nada se perde: `douradoLido` devolve, caso a caso, a MESMA
+   foto que `fotoGuardada` dava (os mesmos campos, na mesma ordem, o hash
+   inteiro), e o gerador recusa escrever se a volta não for a ida. */
+export function douradoGuardado(fotos) {
+  const fotosDistintas = [], indice = new Map();
+  const caso = fotos.map((f) => {
+    const { texto, ...semTexto } = f;
+    const chave = JSON.stringify(semTexto);
+    if (!indice.has(chave)) { indice.set(chave, fotosDistintas.length); fotosDistintas.push(semTexto); }
+    return indice.get(chave);
+  });
+  return { fotos: fotosDistintas, caso, amostra: fotos.slice(0, AMOSTRA).map((f) => f.texto) };
+}
+export const douradoLido = (g) => g.caso.map((j, i) => ({ ...g.fotos[j], ...(i < AMOSTRA ? { texto: g.amostra[i] } : {}) }));
 export const casosDosEnvelopes = (n) => Array.from({ length: n }, (_, i) => casoDosEnvelopes(i));

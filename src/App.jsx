@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -18531,7 +18531,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       { autor: "jogador", texto: `Bato à porta d${nova.nome.startsWith("A ") ? "" : "e "}${nova.nome}.` },
       { autor: "sistema", texto: `${oficioDaCasa(nova.oficio).icone} Você entrou como ${postoDaCasa(nova, 0)}${r.taxa ? ` — ◉ ${r.taxa} de taxa` : ""}.` },
     ]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[GUILDA — RESOLVIDO PELO SISTEMA] Fui aceito n${nova.nome.startsWith("A ") ? "" : "a "}${nova.nome} como ${postoDaCasa(nova, 0)}. ${nova.mestre} me recebeu. Narre o momento do ingresso em 2-3 frases — o lugar, quem estava lá, o que se exige de um recem-chegado. Nao invente posto, lei nem promessa da casa: isso e do sistema.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFe("guilda", { nome: nova.nome, posto: postoDaCasa(nova, 0), mestre: nova.mestre });
     enviar(`Entrei para ${nova.nome}.`, personagemRef.current || personagem);
   };
 
@@ -18550,7 +18550,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const nova = fundarCasa({ nome, oficio, cidade: cidadeAtualRef.current, mestre: pers.nome, dia: diaRef.current, grupo: pers.grupo || [] });
     guardarCasas([...(guildasRef.current || []), nova]);
     pushMsgs([{ autor: "sistema", texto: `⚑ ${nova.nome} abriu as portas em ${nova.sede} — ◉ ${r.custo}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[GUILDA FUNDADA — RESOLVIDO PELO SISTEMA] Abri a minha propria casa: ${nova.nome}, de ${oficioDaCasa(nova.oficio).o}, com sede em ${nova.sede}. Narre a abertura das portas em 2-3 frases.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFe("guildaFundada", { nome: nova.nome, oficio: oficioDaCasa(nova.oficio).o, sede: nova.sede });
     enviar(`Fundei ${nova.nome}.`, p2);
   };
 
@@ -21967,7 +21967,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         /* marcos de fé viram notícia para o jogador E envelope para o Mestre */
         marcos.slice(0, 3).forEach((m) => {
           pushMsgs([{ autor: "sistema", texto: m.texto }]);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA] ${m.cidade} passou de "${m.de.rotulo}" para "${m.para.rotulo}" (${m.fe}% de devoção ao herói). Isso é fato: ${m.subiu ? `daqui em diante o povo de ${m.cidade} ${m.para.recepcao} — mostre isso na primeira cena que se passar lá` : `a devoção recuou em ${m.cidade} — sacerdotes rivais ganharam espaço e o povo esfriou`}.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFe("feNaGeografia", { cidade: m.cidade, de: m.de, para: m.para, fe: m.fe, subiu: m.subiu });
         });
       }
     }
@@ -23058,7 +23058,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     sincronizarFieis(d);
     const fe = Math.round(feDaCidade(d, nomeCidade));
     pushMsgs([{ autor: "sistema", texto: `${templo.icone} ${templo.nome} erguido em ${nomeCidade} (−◉ ${custo}). A inauguração já converte +${salto}% da cidade — devoção agora em ${fe}%, +${templo.pf} PF por dia.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[TEMPLO ERGUIDO — REGISTRO DO SISTEMA] Um ${templo.nome.toLowerCase()} em nome do herói foi construído em ${nomeCidade}, pago do cofre (◉ ${custo}). A devoção da cidade subiu para ${fe}%. Narre a obra e o que ela cria: sacerdócio próprio, ofícios diários, gente que passa a rezar o nome dele — e a reação do culto que já estava ali, que não vai gostar. Os números já foram aplicados; não os recalcule.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFe("templo", { templo: templo.nome, cidade: nomeCidade, custo, fe });
     salvar();
     checarConquistas();
   };
@@ -24441,7 +24441,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (pan.length) msgs.push(`🏛 Panteão: ${pan.map((d) => `${d.nome} (GD ${d.gd})`).join(", ")}`);
     /* O Mestre precisa TRATAR isso como fato já no próximo turno */
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA] O estado divino do herói foi alinhado com a história já jogada: GD ${depois} (${tituloDe(depois)}), ${dv.fieis} fiéis, ${dv.pf} PF${dv.dominio ? `, domínio ${dv.dominio}` : ""}${dv.patrono ? `, patrono ${dv.patrono}` : ""}. Trate como verdade estabelecida — a história já o reconhecia assim.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFe("ascensao", { depois, titulo: tituloDe(depois), fieis: dv.fieis, pf: dv.pf, dominio: dv.dominio, patrono: dv.patrono });
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     setRecalAsc(null);
     salvar({ personagem });
