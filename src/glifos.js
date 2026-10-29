@@ -99,6 +99,8 @@ export const GLIFOS = {
   cadeado: { de: "lucide:lock", d: "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-7a2 2 0 0 1 2 -2zM7 11V7a5 5 0 0 1 10 0v4" },
   /* o que ainda não viste · aposenta ❔ */
   desconhecido: { de: "lucide:circle-help", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" },
+  /* um mundo, sem dizer qual: o cartão de gênero cujo mundo não diz o seu (T3, 29/10) */
+  globo: { de: "lucide:globe", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M12 2a14.5 14.5 0 0 0 0 20a14.5 14.5 0 0 0 0-20M2 12h20" },
   /* a magia · aposenta ✦ ✧ ✨, e o 📖 do caderno */
   faisca: { de: "lucide:sparkles", d: "M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594zM20 2v4M22 4h-4M2 20a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" },
   /* o golpe, o dano · aposenta ⚔ ⚡ 💢 */

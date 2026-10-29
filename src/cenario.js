@@ -105,11 +105,12 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      põe à parte). O gênero padrão e os do futuro são gêneros da criação. */
   generoDaCriacao: Object.freeze({ id: "texto", label: "texto", dica: "texto", glifo: "glifo?", tom: "tom?" }),
   /* o glifo do cartão (29/10, trilha A): o JSON de um mundo não leva componente,
-     então o cartão diz o NOME de um ícone deste vocabulário, e a tela (App.jsx,
-     GLIFO_DO_GENERO) desenha cada um. Fechado: um nome fora daqui seria um ícone
-     que nenhuma tela sabe desenhar. Sem glifo, o cartão vai sem ícone — como ia
-     o gênero que a tabela da tela não conhecia. */
-  glifos: Object.freeze(["castelo", "foguete", "terminal", "olho", "caveira", "bussola", "faiscas"]),
+     então o cartão diz o NOME de um ícone deste vocabulário, e a tela (ui.jsx,
+     GLIFO_DO_GENERO e glifoDoGenero) desenha cada um. Fechado: um nome fora daqui
+     seria um ícone que nenhuma tela sabe desenhar. Sem glifo, o cartão leva o
+     `globo` (T3, 29/10: um mundo, sem dizer qual), que também é um nome deste
+     vocabulário — um autor pode escolhê-lo de propósito; o recuo é da tela. */
+  glifos: Object.freeze(["castelo", "foguete", "terminal", "olho", "caveira", "bussola", "faiscas", "globo"]),
   /* o tom da cena (T3, 29/10): o fundo do ModalCena do gênero. Como o glifo, o
      JSON de um mundo não leva cor — o cartão diz o NOME de um tom deste
      vocabulário, e a tela (estilo.js, TOM_DA_CENA) tem a cor de cada um. Os nomes

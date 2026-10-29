@@ -44,7 +44,8 @@
                         linha do cartão, `id` a chave da tela ("livre" é o
                         Universo próprio, que a tela põe à parte); o padrão e
                         os do futuro têm de estar aqui. `glifo` (opcional) é o
-                        nome do ícone do cartão, de ESQUEMA_DO_CENARIO.glifos;
+                        nome do ícone do cartão, de ESQUEMA_DO_CENARIO.glifos
+                        (sem ele, a tela desenha o `globo`);
                         `tom` (opcional) é o nome do fundo da cena do gênero,
                         de ESQUEMA_DO_CENARIO.tons (sem ele, `noite`)
      generos.marcasProprias  as marcas, na descrição, de um mundo que não é a

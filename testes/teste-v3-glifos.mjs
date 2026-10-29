@@ -126,7 +126,7 @@ t("sem enchimento: a única cor é a do traço", /fill="none"/.test(G));
 t("os quatro da cinta (R13) são pedidos pelo nome, não redesenhados",
   /const DO_QUADRO_12 = \{ moeda: IconeBolsa, mana: IconeMana, vida: IconeVida, ampulheta: IconeAmpulheta \}/.test(UI));
 /* uma ação, uma forma: os `Icone*` de mesma ação já não desenham — pedem */
-const DELEGAM = { IconeD20: "dado", IconeDado: "dado", IconeLivro: "diario", IconeMochila: "bolsa", IconeMapa: "mapa", IconeBussola: "mapa", IconeLosango: "ascensao", IconeAviso: "aviso", IconeAlfinete: "alfinete", IconeDois: "grupo", IconeEspada: "espada", IconeFaiscas: "faisca" };
+const DELEGAM = { IconeD20: "dado", IconeDado: "dado", IconeLivro: "diario", IconeMochila: "bolsa", IconeMapa: "mapa", IconeBussola: "mapa", IconeLosango: "ascensao", IconeAviso: "aviso", IconeAlfinete: "alfinete", IconeDois: "grupo", IconeEspada: "espada", IconeFaiscas: "faisca", /* T3 (29/10): o globo do cartão de gênero nasce já a pedir */ IconeGlobo: "globo" };
 const naoDelegam = Object.entries(DELEGAM).filter(([ic, g]) => { const c = corpo(ic); return !c.includes(`<Glifo nome="${g}"`) || /<path/.test(c); });
 t(`os ${Object.keys(DELEGAM).length} Icone* de mesma ação pedem a forma ao Glifo e não têm path próprio`, naoDelegam.length === 0, naoDelegam.map(([a]) => a).join(", "));
 t("o d6 morreu: IconeDado desenha o d20", corpo("IconeDado").includes('<Glifo nome="dado"'));

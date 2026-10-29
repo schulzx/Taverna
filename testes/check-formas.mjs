@@ -309,6 +309,14 @@ const ZONAS_DE_TABELA = [
      ser escrito T (os dezanove apelidos de §3 são `T.x`, e a luz da janela
      é `alfa(T.amberSoft, …)`), senão a tabela vira lavandaria. */
   { arquivo: "src/estilo.js", tabela: "MAPA_VIVO", d5a: "isenta", d5b: "VARRE" },
+  /* 29/10 · T3 — `TOM_DA_CENA` é a quarta tabela de cor: os sete fundos da cena
+     (formas.md § T3 §2), que eram catorze hex soltos no ModalCena do App. São
+     material, não significado (o crepúsculo de um mundo não é um estado do jogo):
+     D5a isenta-a como às irmãs — é onde essas cores têm direito de nascer — e D5b
+     VARRE-a, para que um tom igual a uma cor de T seja escrito T. A porta de
+     contraste dela (ink, amberSoft e danger ≥ 4,5:1 nas duas paradas) mora em
+     teste-genero-no-app.mjs. */
+  { arquivo: "src/estilo.js", tabela: "TOM_DA_CENA", d5a: "isenta", d5b: "VARRE" },
   /* 25/09 · V5a — a zona `LUZ_DA_CENA` (as quatro luzes de `O rosto da cena`,
      R13) SAIU com a tabela: a gravura deixou a tela e a tabela ficou sem
      leitor. Sem esta linha a zona continuaria a pedir "pelo menos 10 cores"

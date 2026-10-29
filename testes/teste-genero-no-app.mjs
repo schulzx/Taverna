@@ -17,11 +17,16 @@
    3. o glifo do cartão é dado do mundo, e a tela desenha o vocabulário;
    4. o tom da cena (T3, 29/10) é dado do mundo pelo mesmo molde: o cartão diz
       o NOME de um tom de um vocabulário fechado, e tomDoGenero o devolve pelo
-      rótulo do gênero — sem estourar com o que não veio. */
+      rótulo do gênero — sem estourar com o que não veio;
+   5. as duas tabelas da tela (T3, 29/10): o fundo da cena (estilo.js,
+      TOM_DA_CENA e fundoDaCena) igual ao byte ao de antes, o globo de ui.jsx
+      quando o glifo falta, e a porta do contraste de cada tom. */
 import { readFileSync } from "node:fs";
 const CN = await import("../src/cenario.js");
 const { DADOS_DO_CENARIO_PADRAO } = await import("../src/cenario-padrao.js");
 const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
+const UI = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
+const E = await import("../src/estilo.js");
 
 let ok = 0, falhas = 0;
 const sec = (s) => console.log("\n" + s);
@@ -80,7 +85,10 @@ sec("3 · o glifo do cartão de gênero é dado do mundo, e a tela desenha o voc
 {
   const EQ = CN.ESQUEMA_DO_CENARIO;
   /* o vocabulário é exatamente o que a tabela da tela desenha, nem mais nem menos */
-  const tab = /\nconst GLIFO_DO_GENERO = \{([\s\S]*?)\n\};/.exec(APP);
+  /* MOVIDA (29/10, T3): a tabela saiu do App.jsx para ui.jsx, ao lado dos ícones que
+     desenha, e ganhou o globo (a oitava entrada, e o oitavo nome do vocabulário). A
+     asserção é a mesma — os dois sentidos — lida na casa nova. */
+  const tab = /\nconst GLIFO_DO_GENERO = \{([\s\S]*?)\n\};/.exec(UI);
   const desenha = tab ? [...tab[1].matchAll(/^\s+(\w+): Icone\w+,$/gm)].map((m) => m[1]) : [];
   t("a tela desenha cada nome do vocabulário, e só eles (" + desenha.length + ")", desenha.length > 0 && [...desenha].sort().join() === [...EQ.glifos].sort().join(), desenha.join());
   t("o cartão pede o glifo pelo nome que o mundo deu, nos dois sítios", conta(APP, "<LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null}") === 2 && !APP.includes("GLIFO_DO_GENERO[g.label]"));
@@ -139,6 +147,76 @@ sec("4 · o tom da cena é dado do mundo, pelo molde do glifo (T3, 29/10)");
   t("um gênero novo diz o seu tom, e o mundo em uso responde", CN.tomDoGenero("Mares de ferro") === "aco" && CN.tomDoGenero("Cyberpunk") === "magenta");
   CN.usarCenario(DADOS_DO_CENARIO_PADRAO);
   t("e o mundo padrão volta sem ele", CN.tomDoGenero("Mares de ferro") === undefined);
+}
+
+sec("5 · as tabelas da tela: o tom da cena ao byte, o globo de recuo, a porta do contraste (T3, 29/10)");
+{
+  const EQ = CN.ESQUEMA_DO_CENARIO;
+  /* 1. os dois vocabulários batem com as duas tabelas, nos dois sentidos */
+  const tons = Object.keys(E.TOM_DA_CENA);
+  const semCor = EQ.tons.filter((n) => !tons.includes(n)), semNome = tons.filter((n) => !EQ.tons.includes(n));
+  t("cada tom do vocabulário tem cor, e cada cor tem nome (" + tons.length + ")", tons.length === 7 && semCor.length === 0 && semNome.length === 0, "sem cor: " + semCor.join() + " · sem nome: " + semNome.join());
+  t("cada tom tem as duas paradas, em hex de seis dígitos", tons.every((n) => /^#[0-9a-fA-F]{6}$/.test(E.TOM_DA_CENA[n].topo) && /^#[0-9a-fA-F]{6}$/.test(E.TOM_DA_CENA[n].pe) && Object.keys(E.TOM_DA_CENA[n]).join() === "topo,pe"));
+  /* 2. ao byte: o fundo de cada um dos sete é a string de antes (escrita à mão aqui, tirada de
+     git show 44a5f39:src/App.jsx, o ModalCena), e um gênero que não é cartão cai no recuo de antes */
+  const ANTES = {
+    "Fantasia medieval": "linear-gradient(160deg,#2A2036,#1a1420)",
+    "Ficção científica": "linear-gradient(160deg,#16232e,#0e1620)",
+    "Cyberpunk": "linear-gradient(160deg,#2a1030,#10121e)",
+    "Horror cósmico": "linear-gradient(160deg,#1a1420,#0a0a10)",
+    "Pós-apocalíptico": "linear-gradient(160deg,#2b2418,#161208)",
+    "Steampunk": "linear-gradient(160deg,#2a2018,#15100a)",
+  };
+  const RECUO = "linear-gradient(160deg,#241C33,#12101a)";
+  const difere = Object.entries(ANTES).filter(([rot, fundo]) => E.fundoDaCena(CN.tomDoGenero(rot)) !== fundo);
+  t("os seis gêneros de antes têm o fundo de antes, ao byte", difere.length === 0, difere.map(([r]) => r + "=" + E.fundoDaCena(CN.tomDoGenero(r))).join(" · "));
+  /* o Universo próprio não tinha linha no objeto de antes: caía no recuo — e o tom dele é a noite */
+  t("o Universo próprio, que caía no recuo, continua no recuo ao byte", E.fundoDaCena(CN.tomDoGenero("Universo próprio")) === RECUO);
+  t("um gênero que não é cartão (Ópera espacial) é o recuo de antes, ao byte", E.fundoDaCena(CN.tomDoGenero("Ópera espacial")) === RECUO);
+  /* o ModalCena chama a conta com (mundo || {}).genero: null, undefined e {} não estouram e dão o recuo */
+  let estourou = null;
+  const r = [null, undefined, {}].map((mundo) => { try { return E.fundoDaCena(CN.tomDoGenero((mundo || {}).genero)); } catch (e) { estourou = e; return "ESTOUROU"; } });
+  t("o mundo null, undefined ou {} dá o recuo, sem estourar (por isso a fiação dispensa o calou)", !estourou && r.every((x) => x === RECUO), estourou ? String(estourou) : r.join(" | "));
+  t("um tom fora da tabela, ou um nome de Object, é o recuo", ["roxo", "", "constructor", "toString", 3].every((x) => E.fundoDaCena(x) === RECUO));
+  /* 3. o globo: glifoDoGenero, executado a partir do texto de ui.jsx (o .jsx não abre em Node),
+     com cada Icone* trocado pelo seu nome */
+  const fonteTab = /\nconst GLIFO_DO_GENERO = (\{[\s\S]*?\n\});/.exec(UI);
+  const fonteFn = /\nexport function glifoDoGenero\(nome\) \{([\s\S]*?)\n\}/.exec(UI);
+  let glifoDoGenero = null;
+  if (fonteTab && fonteFn) {
+    const icones = [...new Set([...fonteTab[1].matchAll(/\b(Icone\w+)\b/g)].map((m) => m[1]))];
+    glifoDoGenero = new Function(...icones, "const GLIFO_DO_GENERO = " + fonteTab[1] + ";\nreturn function (nome) {" + fonteFn[1] + "\n};")(...icones);
+  }
+  t("ui.jsx exporta glifoDoGenero, e ela lê a tabela", !!glifoDoGenero);
+  if (glifoDoGenero) {
+    t("sem glifo, ou com um nome de fora, o cartão leva o globo", [undefined, null, "", "nao-existe", "nuvem", "constructor", 7].every((x) => glifoDoGenero(x) === "IconeGlobo"));
+    t("com um nome do vocabulário, o ícone dele", glifoDoGenero("castelo") === "IconeCastelo" && glifoDoGenero("faiscas") === "IconeFaiscas" && glifoDoGenero("globo") === "IconeGlobo");
+  }
+  t("o IconeGlobo pede a forma ao Glifo, com as tintas dos irmãos", /export function IconeGlobo\(\{ tamanho = 20, cor = T\.amberSoft \}\) \{\n  return <Glifo nome="globo" tamanho=\{tamanho\} cor=\{cor\} \/>;\n\}/.test(UI));
+  t("o mundo padrão continua com glifo explícito nos sete (o globo não aparece nele)", CN.CENARIO_PADRAO.generos.criacao.every((g) => g.glifo && g.glifo !== "globo"));
+  /* 4. o validador recusa o glifo de fora com o caminho (o tom de fora está na secção 4) */
+  const d = structuredClone(DADOS_DO_CENARIO_PADRAO);
+  d.generos.criacao[3].glifo = "nuvem";
+  const v = CN.validarCenario(d);
+  t("glifo: \"nuvem\" é recusado, com o caminho e a lista (que já traz o globo)", !v.ok && v.erros.some((e) => e.startsWith("generos.criacao[3].glifo: devia ser um glifo da tela (") && e.includes("globo")), v.erros.join(" | "));
+  const d2 = structuredClone(DADOS_DO_CENARIO_PADRAO);
+  d2.generos.criacao.push({ id: "opera", label: "Ópera espacial", glifo: "globo", dica: "Um autor que escolhe o globo de propósito" });
+  t("e um autor pode escolher o globo de propósito", CN.validarCenario(d2).ok);
+  /* 5. a porta do contraste — WCAG 2.2, 1.4.3: as três tintas de texto do modal contra as duas
+     paradas de cada tom, ≥ 4,5:1. A fórmula é a de toda catraca de cor da casa (teste-v1-folha,
+     check-formas D1): luminância relativa sRGB. */
+  const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  const L = (h) => { const a = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.2126 * lin(a[0]) + 0.7152 * lin(a[1]) + 0.0722 * lin(a[2]); };
+  const razao = (a, b) => { const x = L(a), y = L(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const PORTA = 4.5;
+  const abaixo = [];
+  let pior = { r: Infinity };
+  for (const n of tons) for (const parada of ["topo", "pe"]) for (const tinta of ["ink", "amberSoft", "danger"]) {
+    const rr = razao(E.T[tinta], E.TOM_DA_CENA[n][parada]);
+    if (rr < pior.r) pior = { r: rr, onde: tinta + " sobre " + n + "." + parada };
+    if (rr < PORTA) abaixo.push(tinta + " sobre " + n + "." + parada + " = " + rr.toFixed(2));
+  }
+  t("nenhum tom com texto abaixo de 4,5:1 (o pior: " + pior.onde + ", " + pior.r.toFixed(2) + ":1)", abaixo.length === 0, abaixo.join(" · "));
 }
 
 console.log("\n" + ok + " ok, " + falhas + " falhas");

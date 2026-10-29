@@ -963,6 +963,38 @@ export const AMBIENTE = {
   pisos: { prosa: 7, corpoContraMesa: 2.3 },
 };
 
+/* O TOM DA CENA (T3, 29/10) — o fundo do ModalCena, por NOME.
+   Era um objeto de sete gradientes literais no App, chaveado pelo rótulo do
+   gênero, e um mundo novo caía sempre no recuo. Agora o cartão do gênero diz o
+   nome de um tom (cenario.js, ESQUEMA_DO_CENARIO.tons — o vocabulário fechado,
+   que a suíte confere contra as chaves daqui nos dois sentidos) e esta tabela
+   tem a cor. Os nomes são de tom, não de gênero, para outra mesa os reusar sem
+   mentir. Os hex são os de antes, com a mesma caixa: o fundo do mundo padrão
+   sai igual ao byte (formas.md, T3 §2).
+
+   A PORTA DA TABELA: um tom só entra aqui se ink, amberSoft e danger passarem
+   de 4,5:1 contra as DUAS paradas (WCAG 2.2, 1.4.3, texto pequeno). O pior de
+   hoje é danger sobre o topo de poeira, 5,53:1. A suíte guarda a porta. */
+export const TOM_DA_CENA = {
+  crepusculo: { topo: "#2A2036", pe: "#1a1420" },
+  aco: { topo: "#16232e", pe: "#0e1620" },
+  magenta: { topo: "#2a1030", pe: "#10121e" },
+  breu: { topo: "#1a1420", pe: "#0a0a10" },
+  poeira: { topo: "#2b2418", pe: "#161208" },
+  cobre: { topo: "#2a2018", pe: "#15100a" },
+  noite: { topo: "#241C33", pe: "#12101a" },
+};
+/* o ângulo do degradê e o tom do recuo — constantes, não literais na função */
+const ANGULO_DA_CENA = "160deg";
+const TOM_DE_RECUO = "noite";
+/* o fundo da cena de um tom: sem tom, ou com um nome fora da tabela, é o recuo
+   (noite, o de antes). Pura, e não estoura com nada. Sem espaço depois da
+   vírgula, como era: a string sai igual ao byte. */
+export function fundoDaCena(tom) {
+  const c = (typeof tom === "string" && Object.prototype.hasOwnProperty.call(TOM_DA_CENA, tom) && TOM_DA_CENA[tom]) || TOM_DA_CENA[TOM_DE_RECUO];
+  return "linear-gradient(" + ANGULO_DA_CENA + "," + c.topo + "," + c.pe + ")";
+}
+
 /* O HELPER QUE `MATERIAIS` PROMETIA DESDE D5: uma cor do tema a alfa,
    pronta para um gradiente ou uma sombra. PÚBLICO desde V1b (25/09): o
    brilho do "Continuar aventura" é a rosa a 0,15, e a alternativa era

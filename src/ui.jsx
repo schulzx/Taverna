@@ -497,6 +497,36 @@ export function IconeBussola({ tamanho = 20, cor = T.amberSoft }) {
   return <Glifo nome="mapa" tamanho={tamanho} cor={cor} />;
 }
 
+/* o globo (T3, 29/10): um mundo, sem dizer qual — o cartão de gênero cujo mundo
+   não diz o seu glifo. Veste as tintas dos irmãos (repouso inkDim, escolhido
+   amberSoft sobre panel: 6,00 e 12,27:1, formas.md T3 §1). */
+export function IconeGlobo({ tamanho = 20, cor = T.amberSoft }) {
+  return <Glifo nome="globo" tamanho={tamanho} cor={cor} />;
+}
+
+/* O GLIFO DO CARTÃO DE GÊNERO (29/10, trilha A; mudou de casa em T3). Era chaveado
+   pelo nome do gênero, e um gênero de outro mundo nascia sem ícone. O cartão diz o
+   NOME do seu glifo (generos.criacao[].glifo, do vocabulário fechado
+   ESQUEMA_DO_CENARIO.glifos — a suíte confere os dois nos dois sentidos), e esta
+   tabela desenha cada nome. Saiu do App.jsx para aqui (T3): é tela pura, e mover
+   vale mais que remendar. Fora de componente: não muda de render em render. */
+const GLIFO_DO_GENERO = {
+  castelo: IconeCastelo,
+  foguete: IconeFoguete,
+  terminal: IconeTerminal,
+  olho: IconeOlho,
+  caveira: IconeCaveira,
+  bussola: IconeBussola,
+  faiscas: IconeFaiscas,
+  globo: IconeGlobo,
+};
+/* o componente do glifo de um cartão: o do nome, e o globo quando o nome falta ou
+   não está na tabela (defesa — o validador do cenário já recusa o nome de fora).
+   O recuo é da tela, não do mundo. */
+export function glifoDoGenero(nome) {
+  return (typeof nome === "string" && Object.prototype.hasOwnProperty.call(GLIFO_DO_GENERO, nome) && GLIFO_DO_GENERO[nome]) || IconeGlobo;
+}
+
 /* ---------------- A RUNA (v9.173 → V5a) ----------------
    Traço curto, três pontos, traço longo — a runa da v3, e a MESMA nas
    quatro moradas que a pessoa lhe deu no Figma: o cabeçalho da página
