@@ -844,14 +844,17 @@ sec("6. o esquema lê de volta o que o motor consome");
      e o generoPadrao dos três moldes de fantasia (moldes.js), que só o
      App lê — é da trilha A, e fica dito no diário. */
   {
-    const RECUO_POR_ARQUIVO = { "abertura.js": 1, "batidas.js": 1, "cidade-por-dentro.js": 1, "comodos.js": 1, "companheiro-inicial.js": 1, "elenco.js": 1, "gente-por-dentro.js": 6, "geradores.js": 1, "guildas.js": 1, "mundo-base.js": 7, "nucleo.js": 1, "ofertas.js": 2, "raids.js": 2, "regiao.js": 6, "saga.js": 1, "subtramas.js": 1, "tarefas-antigas.js": 1, "motor/combate-do-turno.js": 1 };
+    /* 29/10 (Fase 4, trilha B): + motor/pauta-do-turno.js, 1 — o `generoMundo`
+       que veio do App à letra trazia o literal (o App é da trilha A e não
+       entrou na T4-B); na peça é o padrão do cenário, e passam a ser 37. */
+    const RECUO_POR_ARQUIVO = { "abertura.js": 1, "batidas.js": 1, "cidade-por-dentro.js": 1, "comodos.js": 1, "companheiro-inicial.js": 1, "elenco.js": 1, "gente-por-dentro.js": 6, "geradores.js": 1, "guildas.js": 1, "mundo-base.js": 7, "nucleo.js": 1, "ofertas.js": 2, "raids.js": 2, "regiao.js": 6, "saga.js": 1, "subtramas.js": 1, "tarefas-antigas.js": 1, "motor/combate-do-turno.js": 1, "motor/pauta-do-turno.js": 1 };
     const LITERAL_PERMITIDO = { "cenario-padrao.js": 5, "nomes.js": 2, "lexico.js": 1, "cenario.js": 1, "moldes.js": 3 };
     const conta = (txt, x) => txt.split(x).length - 1;
     const arquivos = [...fs.readdirSync(SRC).filter((n) => n.endsWith(".js")), ...fs.readdirSync(path.join(SRC, "motor")).filter((n) => n.endsWith(".js")).map((n) => "motor/" + n)];
     const fora = arquivos.filter((n) => conta(fs.readFileSync(path.join(SRC, n), "utf8"), '"Fantasia medieval"') !== (LITERAL_PERMITIDO[n] || 0));
     t("nenhum recuo \"Fantasia medieval\" literal em src/*.js (só dado e memória)", fora.length === 0, fora.join());
     const torto = Object.entries(RECUO_POR_ARQUIVO).filter(([n, k]) => conta(fs.readFileSync(path.join(SRC, n), "utf8"), "cenarioAtivo().generos.padrao") !== k);
-    t("…e os 36 recuos são o gênero padrão do mundo em uso, arquivo a arquivo", torto.length === 0 && Object.values(RECUO_POR_ARQUIVO).reduce((a, b) => a + b, 0) === 36, torto.map(([n]) => n).join());
+    t("…e os 37 recuos são o gênero padrão do mundo em uso, arquivo a arquivo", torto.length === 0 && Object.values(RECUO_POR_ARQUIVO).reduce((a, b) => a + b, 0) === 37, torto.map(([n]) => n).join());
     t("nem a prosa dos eventos divinos em divindades.js (7.ª fatia)", !["Paladinos", "relicário roubado", "Templos rivais", "profeta menor", "três noites seguidas", "praça pública"].some((x) => fonteDv.includes(x)) && CN.CENARIO_PADRAO.panteao.eventos.length === 6);
   }
 

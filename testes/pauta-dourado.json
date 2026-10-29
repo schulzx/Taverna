@@ -1,0 +1,4131 @@
+{
+ "commit": "55f7889",
+ "recortes": [
+  {
+   "nome": "LEITURA_DA_CONVERSA",
+   "de": "modulo",
+   "texto": "/* MM-C · C0 (11/10, a 6.ª sessão): o que o Mestre MOSTROU na conversa — as\n   últimas falas dele, para o alvo do golpe sair da prosa (\"ataco o cão sem\n   pelo\") e para o veto da luta que só a prosa começou. E a frase anterior\n   do jogador, para o \"pago as sete fichas\" herdar o item do \"quanto é\".\n   Leem `mensagensRef`, que já guarda tudo isto: não é estado novo, nem save. */\nconst LEITURA_DA_CONVERSA = { falasDoMestre: 2 };"
+  },
+  {
+   "nome": "falasDoMestre",
+   "de": "modulo",
+   "texto": "const falasDoMestre = (msgs, n = LEITURA_DA_CONVERSA.falasDoMestre) =>\n  (Array.isArray(msgs) ? msgs : []).filter((m) => m && m.autor === \"mestre\" && typeof m.texto === \"string\" && m.texto.trim()).slice(-n).map((m) => m.texto);"
+  },
+  {
+   "nome": "fichaViva",
+   "de": "componente",
+   "texto": "  /* ---------------- A FICHA VIVA (v9.41) ----------------\n     O espelho acima só é atualizado por um efeito — ou seja, na renderização\n     SEGUINTE. Só que um turno de combate inteiro roda dentro de UM clique:\n     eu ataco, o sistema fecha a luta, credita os espólios, e a linha de baixo\n     manda ao Mestre a cópia da ficha que quem chamou tinha em mão antes de\n     tudo isso. A cópia velha chega ao `aplicarResposta` e volta por cima.\n\n     Foi exatamente assim que \"+21 moedas e +90 XP\" apareceu na tela e não\n     apareceu na bolsa: o crédito existiu por três linhas. `fichaViva` lê o\n     estado mais recente e `mudarFicha` grava nos dois lugares de uma vez, de\n     modo que o próximo a ler nunca receba o passado. */\n  const fichaViva = () => personagemRef.current || personagem;"
+  },
+  {
+   "nome": "tochasAgora",
+   "de": "componente",
+   "texto": "  /* 06/10 (a luz e a sombra): as tochas que há para acender — as da\n     masmorra lá dentro, as da mochila cá fora — e o mapa de luz da luta,\n     refeito a cada pergunta dos mesmos refs (nunca vai ao save; o que vai é\n     `combate.tochaDoHeroi`, campo novo e opcional). Null fora da luta, e\n     null se estourar: o veredito volta à regra de antes. */\n  const tochasAgora = () => {\n    const mm = masmorraRef.current;\n    if (mm && !mm.encerrada) return Math.max(0, Number(mm.tochas) || 0);\n    return Math.max(0, Number(((fichaViva() || {}).suprimentos || {}).tochas) || 0);\n  };"
+  },
+  {
+   "nome": "luzDaLutaAgora",
+   "de": "componente",
+   "texto": "  const luzDaLutaAgora = (comb) => {\n    try {\n      const c = comb || combateRef.current;\n      if (!c) return null;\n      const mm = masmorraRef.current;\n      return luzDaLuta({\n        grade: c.grade, heroi: c.heroi, aliados: c.aliados || [], inimigos: c.inimigos || [],\n        tochaDoHeroi: c.tochaDoHeroi, tochas: tochasAgora(), emMasmorra: !!(mm && !mm.encerrada),\n        noite: ehNoite(minutoRef.current), clima: (climaRef.current && climaRef.current.rotulo) || \"\",\n        pers: fichaViva(),\n      });\n    } catch (e) { calou(\"a luz da luta\", e); return null; }\n  };"
+  },
+  {
+   "nome": "mudarFicha",
+   "de": "componente",
+   "texto": "  const mudarFicha = (fn) => {\n    const base = personagemRef.current || personagem;\n    if (!base) return base;\n    const novo = typeof fn === \"function\" ? fn(base) : fn;\n    if (!novo) return base;\n    personagemRef.current = novo;\n    setPersonagem(novo);\n    return novo;\n  };"
+  },
+  {
+   "nome": "mundoAtual",
+   "de": "componente",
+   "texto": "  /* v9.22: `mundoAtual()` e `nomeCampanhaRef` existem porque VÁRIOS callbacks\n     desta casa são useCallback de deps estreitas, criados no primeiro render —\n     quando mundo é null e o nome da campanha é \"\". Ler o estado direto lá\n     dentro devolve esses valores de nascimento para sempre. Aqui a\n     consequência era silenciosa e por isso pior: o system prompt era\n     remontado com campanha sem nome e mundo vazio toda vez que o cânone ou o\n     registro de pessoas mudava, e o Mestre perdia contexto sem ninguém ver. */\n  const mundoAtual = () => mundoRef.current || mundo || null;"
+  },
+  {
+   "nome": "moedaDoMundo",
+   "de": "componente",
+   "texto": "  /* 9.ª sessão (v9.433): a palavra do mundo para a moeda, para o preço que vai à pauta dizer a unidade\n     — o Mestre vendia em \"marcos\" num mundo de moedas. 20/10: UM nome só por campanha (`nomeDaMoeda`),\n     o mesmo da linha ECONOMIA do pedido; o léxico que chega tarde não o troca, e sem léxico é \"moedas\". */\n  const moedaDoMundo = () => { try { return nomeDaMoeda((mundoAtual() || {}).lexico); } catch (e) { calou(\"a moeda do mundo\", e); return \"\"; } };"
+  },
+  {
+   "nome": "sementeMundo",
+   "de": "componente",
+   "texto": "  const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || \"aventura\"}|${(mundoAtual() && mundoAtual().genero) || \"\"}`;"
+  },
+  {
+   "nome": "contextoDoElenco",
+   "de": "componente",
+   "texto": "  /* MM8c-2: o contexto e os nomes do elenco desta campanha — a gente que\n     PESA na narração (resumoCenaPrompt, resumoNPCsParaPrompt, o cânone),\n     não a lista para povoar (essa é `elencoParaPovoar`, mais abaixo). */\n  const contextoDoElenco = () => ({ genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, espinha: espinhaRef.current, guildas: guildasRef.current, base: baseMundoRef.current, estado: elencoSaveRef.current, npcs: npcsRef.current });"
+  },
+  {
+   "nome": "nucleoAgora",
+   "de": "componente",
+   "texto": "  /* MM-C C1: o núcleo desta campanha, memorizado pelo que o muda — o mesmo\n     critério do cache do elenco (identidade dos refs) mais o companheiro,\n     o antecedente e a reviravolta eleita. Recalcular a cada turno daria o\n     mesmo núcleo pelo dobro do preço. */\n  const nucleoAgora = () => {\n    const pers = personagemRef.current || personagem || {};\n    const semente = sementeMundo(), mapa = mapaRef.current, ctx = contextoDoElenco();\n    const comp = (pers.grupo || []).find((g) => g && g.nome && !g.invocada) || {};\n    const rv = reviravoltaRef.current || null;\n    const chave = [comp.nome || \"\", comp.conceito || \"\", comp.ligacao || \"\", pers.antecedente || \"\", (rv && rv.forma) || \"\", (rv && rv.alvo) || \"\"].join(\"|\");\n    const c = nucleoCacheRef.current;\n    if (c && c.semente === semente && c.mapa === mapa && c.espinha === ctx.espinha && c.guildas === ctx.guildas && c.base === ctx.base && c.estado === ctx.estado && c.chave === chave) return c.nucleo;\n    const nucleo = nucleoDaCampanha(semente, mapa, { ...ctx, grupo: pers.grupo || [], antecedente: pers.antecedente || \"\", reviravolta: rv && rv.forma ? { forma: rv.forma, alvo: rv.alvo } : null });\n    nucleoCacheRef.current = { semente, mapa, espinha: ctx.espinha, guildas: ctx.guildas, base: ctx.base, estado: ctx.estado, chave, nucleo };\n    return nucleo;\n  };"
+  },
+  {
+   "nome": "nucleoEmCena",
+   "de": "componente",
+   "texto": "  /* quem do núcleo está em cena: citado nas duas últimas falas do Mestre\n     (pelo nome inteiro ou pelo primeiro, como o Mestre o chama) ou a andar\n     no grupo. O registo de NPCs não basta: o elo e o vilão podem ainda não\n     estar lá quando o Mestre já os pôs a falar. */\n  const nucleoEmCena = (nucleo) => {\n    const sem = (x) => String(x == null ? \"\" : x).toLowerCase().normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\");\n    const fala = \" \" + sem((mensagensRef.current || []).filter((m) => m && m.autor === \"mestre\").slice(-2).map((m) => m.texto).join(\" \")).replace(/[^a-z0-9]+/g, \" \") + \" \";\n    const grupo = ((personagemRef.current || personagem || {}).grupo || []).filter((g) => g && g.nome && !g.invocada).map((g) => sem(g.nome));\n    const out = [];\n    for (const p of ((nucleo && nucleo.pessoas) || [])) {\n      if (!p || !p.nome) continue;\n      const inteiro = sem(String(p.nome).split(\",\")[0]).replace(/[^a-z0-9]+/g, \" \").trim();\n      const prim = inteiro.split(\" \")[0] || \"\";\n      const citado = (inteiro && fala.includes(\" \" + inteiro + \" \")) || (prim.length >= 3 && fala.includes(\" \" + prim + \" \"));\n      if (citado || grupo.includes(sem(p.nome))) out.push(p.nome);\n    }\n    return out;\n  };"
+  },
+  {
+   "nome": "subtramasAgora",
+   "de": "componente",
+   "texto": "  /* MM-C C2: as subtramas do núcleo, memorizadas pelo próprio núcleo (que\n     nucleoAgora já memoriza pelo que o muda). O elenco do mundo dá as casas. */\n  const subtramasAgora = (nucleo) => {\n    const c = subtramasCacheRef.current;\n    if (c && c.nucleo === nucleo) return c.lista;\n    const semente = sementeMundo();\n    let elenco = null;\n    try { elenco = elencoDoMundo(semente, mapaRef.current, contextoDoElenco()); } catch (e) { calou(\"o elenco das subtramas\", e); }\n    const lista = subtramasDoNucleo(nucleo, { semente, espinha: espinhaRef.current, elenco });\n    subtramasCacheRef.current = { nucleo, elenco, lista };\n    return lista;\n  };"
+  },
+  {
+   "nome": "elencoDoCoracao",
+   "de": "componente",
+   "texto": "  /* o contexto do coração neste instante — o mesmo para o turno, para a tela\n     e para o clique. A máscara do aliado que já caiu (reviravoltas.js) vai\n     em `reveladas`, com o ato em que caiu, para a do elo nunca cair no mesmo. */\n  /* 13/10 (v9.461, LONGE_DA_HISTORIA): quem esta longe e quem o registo SABE\n     aqui — a mesma conta do EM CENA. O coracao (QUEM CARREGA) e o QUEM E\n     leem-na para nao trazer a resposta quem a historia sabe noutra cidade. */\n  const elencoDoCoracao = () => {\n    const grupo = ((personagemRef.current || personagem || {}).grupo) || [];\n    try {\n      const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: grupo, masmorra: masmorraRef.current }) || {};\n      return { longe: el.longe || [], presentes: el.aqui || [], grupo };\n    } catch (e) { calou(\"quem está longe, para o coração\", e); return { longe: [], presentes: [], grupo }; }\n  };"
+  },
+  {
+   "nome": "cidadeDoCoracao",
+   "de": "componente",
+   "texto": "  /* a cidade onde o heroi ESTA, para o coracao e para o QUEM E: vazia em\n     viagem e na masmorra aberta */\n  const cidadeDoCoracao = () => (jornadaRef.current || (masmorraRef.current && !masmorraRef.current.encerrada)) ? \"\" : (cidadeAtualRef.current || \"\");"
+  },
+  {
+   "nome": "contextoDoCoracao",
+   "de": "componente",
+   "texto": "  const contextoDoCoracao = (nucleo, extra) => {\n    const esp = espinhaRef.current || {};\n    const lista = subtramasAgora(nucleo);\n    const ato = (historiaRef.current || {}).etapa || 0;\n    const mortos = Object.values(npcsRef.current || {}).filter((n) => n && n.nome && String(n.status || \"\").toLowerCase() === \"morto\").map((n) => n.nome);\n    let reveladas = [];\n    try {\n      const rv = reviravoltaRef.current;\n      const mascara = ((nucleo && nucleo.pessoas) || []).find((x) => x && x.papel !== \"elo\" && x.revelaNoAto != null);\n      if (rv && rv.revelada && mascara) {\n        const k = (esp.atos || []).findIndex((a) => { const ms = ((a && a.marcos) || []).filter(Boolean); const f = ms.find((m) => m.batida && m.batida.fecho) || ms[ms.length - 1]; return !!(f && f.feito && Number(f.dia) >= (rv.reveladaEm || 0)); });\n        reveladas = [{ nome: mascara.nome, ato: k >= 0 ? k : ato }];\n      }\n    } catch (e) { calou(\"a máscara que já caiu\", e); }\n    return { semente: sementeMundo(), espinha: esp, elenco: (subtramasCacheRef.current || {}).elenco || null, dia: diaRef.current, ato, turno: turnoDeRegistroRef.current + 1, emCena: nucleoEmCena(nucleo), ultimas: (coracaoRitmoRef.current || {}).ultimas || {}, luta: !!combateRef.current, mortos, reveladas, subtramas: lista, frase: \"\", maoDoVilao: false,\n      /* 9.ª sessão (v9.434): a cidade onde o herói ESTÁ — a porta do elo\n         (subtramas.js, PORTA_DO_ELO) só o traz quando é a dele. Em viagem e\n         na masmorra aberta vai vazia: o elo não aparece na estrada. */\n      cidade: cidadeDoCoracao(),\n      ...elencoDoCoracao(),\n      ...(extra || {}) };\n  };"
+  },
+  {
+   "nome": "nomesDoElenco",
+   "de": "componente",
+   "texto": "  const nomesDoElenco = () => {\n    try {\n      const semente = sementeMundo(), mapa = mapaRef.current, ctx = contextoDoElenco();\n      const c = elencoCacheRef.current;\n      if (c && c.semente === semente && c.mapa === mapa && c.espinha === ctx.espinha && c.guildas === ctx.guildas && c.base === ctx.base && c.estado === ctx.estado) return c.nomes;\n      const nomes = elencoDoMundo(semente, mapa, ctx).pessoas.map((p) => p.nome);\n      elencoCacheRef.current = { semente, mapa, espinha: ctx.espinha, guildas: ctx.guildas, base: ctx.base, estado: ctx.estado, nomes };\n      return nomes;\n    } catch (e) { calou(\"nomesDoElenco\", e); return []; }\n  };"
+  },
+  {
+   "nome": "generoMundo",
+   "de": "componente",
+   "texto": "  const generoMundo = () => (mundoAtual() && mundoAtual().genero) || \"Fantasia medieval\";"
+  },
+  {
+   "nome": "moldeMundo",
+   "de": "componente",
+   "texto": "  /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar\n     recebe isto ao lado do gênero — um decide o sabor, o outro a forma. */\n  const moldeMundo = () => moldePorId((mundoAtual() && mundoAtual().molde) || MOLDE_PADRAO);"
+  },
+  {
+   "nome": "semNome",
+   "de": "componente",
+   "texto": "  /* ---------------- ANDAR DENTRO DA CIDADE (v9.55) ----------------\n     \"Vou até o Javali Cambaleante.\" O Mestre narrou a travessia da praça e\n     a porta da taverna, e o sistema deixou o herói no centro — o marcador\n     do mapa não saiu do lugar.\n\n     O Mestre estava certo em não registrar nada: o prompt lhe diz que\n     `lugar_atual` é o que fica FORA da cidade. A taverna não é fora da\n     cidade. O modelo tinha dois estados — dentro e fora — e a cidade\n     inteira cabia no primeiro.\n\n     Quem move, então, é o CÓDIGO, e move ANTES de o Mestre responder: o\n     jogador escreveu o nome de um lugar que o sistema conhece, com um\n     verbo de deslocamento. Não há o que interpretar, e é justamente o\n     tipo de coisa que esta casa não delega.\n\n     Vale para os dois lados do muro: um local de dentro vira `dentro` (sair\n     dele leva minutos); um do cinturão vira `arredores` (leva horas), que é\n     o que já era. E o Mestre recebe o fato pronto, não um pedido. */\n  const semNome = (s) => String(s || \"\").toLowerCase().normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").trim();"
+  },
+  {
+   "nome": "cidadeSobOsPes",
+   "de": "componente",
+   "texto": "  /* A cidade sob os pés, resolvida uma vez. Devolve null fora de cidade. */\n  /* (Fase T, trilha A) a cidade no mapa é do motor (aCidadeSobOsPes, src/motor/tempo-do-turno.js) */\n  const cidadeSobOsPes = () => aCidadeSobOsPes({ cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current });"
+  },
+  {
+   "nome": "lugaresDaqui",
+   "de": "componente",
+   "texto": "  /* Todo lugar a que se pode ir daqui a pé: os locais de dentro dos muros, o\n     cinturão de fora, e — quando o herói já está num local — os cômodos DELE.\n\n     Os cômodos só entram quando se está no prédio de propósito: \"subo para o\n     quarto\" na praça não quer dizer nada, e a mesma frase dentro da taverna\n     quer dizer tudo. Um quarto é um lugar do prédio, não da cidade. */\n  const lugaresDaqui = () => {\n    const cid = cidadeSobOsPes();\n    if (!cid) return [];\n    const dentro = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico).map((l) => ({ ...l, onde: \"dentro\" }));\n    const fora = arredoresDaCidade(sementeMundo(), cid).map((a) => ({ ...a, onde: \"arredores\" }));\n    const aqui = lugarRef.current;\n    const anfitriao = aqui && dentro.find((l) => semNome(l.nome) === semNome(aqui.nome));\n    const comodos = anfitriao\n      ? comodosDoLocal(sementeMundo(), anfitriao, generoMundo(), moldeMundo()).map((q) => ({ ...q, onde: \"comodo\", dentroDe: anfitriao.nome }))\n      : [];\n    /* quem já está num cômodo pode voltar para o salão: o próprio anfitrião\n       continua na lista, e é o que faz \"desço para o salão\" funcionar */\n    const paiDoComodo = aqui && aqui.dentroDe ? dentro.find((l) => semNome(l.nome) === semNome(aqui.dentroDe)) : null;\n    const irmaos = paiDoComodo\n      ? comodosDoLocal(sementeMundo(), paiDoComodo, generoMundo(), moldeMundo()).map((q) => ({ ...q, onde: \"comodo\", dentroDe: paiDoComodo.nome }))\n      : [];\n    return [...comodos, ...irmaos, ...dentro, ...fora];\n  };"
+  },
+  {
+   "nome": "espacoDaMesa",
+   "de": "componente",
+   "texto": "  /* ---------------- O QUE A CENA USA (v9.54) ----------------\n     As perguntas que decidem quais blocos de regra sobem no prompt deste\n     turno. Todas são baratas e todas saem dos refs vivos — nenhuma\n     adivinha nada, que é a régua da porta: se o sistema não sabe dizer se\n     a situação está acontecendo, o bloco fica.\n\n     Onde existe um `resumo*Prompt`, a pergunta é ele mesmo devolver vazio.\n     Não é preguiça: essas funções JÁ carregam o teste de \"não há nada a\n     dizer sobre isto\", e escrever o teste uma segunda vez aqui seria criar\n     duas verdades que podem discordar. */\n  /* ---------------- O ESPAÇO DA MESA (v9.104) ----------------\n     O retrato que o Geógrafo lê. Nenhum campo aqui é inventado: todos\n     saem de refs que já existiam e que ninguém tinha juntado. É a mesma\n     função que `situacaoDaMesa` faz para o Bibliotecário. */\n  const espacoDaMesa = () => {\n    const mm = masmorraRef.current;\n    const naMasmorra = !!(mm && !mm.encerrada);\n    const lug = lugarRef.current;\n    const cid = (mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || null;\n    const dentro = !!(lug && lug.distancia === \"dentro\") || naMasmorra;\n    /* de que TIPO é o prédio em que estou, quando estou num. O lugar\n       guarda o nome; os locais da cidade guardam o tipo — e é o tipo que\n       o acervo lê, porque é ele que diz o que o espaço comporta. */\n    let tipoDoLocal = \"\";\n    if (lug && lug.nome && cid) {\n      const achado = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico)\n        .find((l) => semNome(l.nome) === semNome(lug.nome));\n      if (achado) tipoDoLocal = achado.tipo;\n    }\n    /* v9.104: e quando o lugar foi INVENTADO pela ficção — o caso comum,\n       porque o Mestre nomeia lugares livremente —, o nome às vezes se\n       entrega: \"A Taverna do Corvo\", \"o Templo Pálido\". `tiposPedidos` já\n       sabe ler isso e existia para outra coisa.\n\n       Quando o nome não denuncia nada (\"O Escudo das Velas\"), o tipo fica\n       vazio e as afordâncias de lugar não disparam. É o lado seguro: um\n       tipo chutado daria ao Narrador uma regra sobre um lugar que talvez\n       não seja aquele. */\n    if (!tipoDoLocal && lug && lug.nome) tipoDoLocal = tiposPedidos(lug.nome)[0] || \"\";\n    const sit = situacaoDaMesa();\n    const cl = climaRef.current;\n    return garantirEspaco({\n      tipo: naMasmorra ? \"masmorra\" : jornadaRef.current ? \"estrada\" : lug ? \"lugar\" : cidadeAtualRef.current ? \"cidade\" : \"nenhum\",\n      rotulo: naMasmorra ? mm.nome : (lug && lug.nome) || cidadeAtualRef.current || \"\",\n      tipoDoLocal,\n      bioma: biomaDaqui(),\n      porte: (cid && (cid.porte || cid.tipo)) || \"\",\n      dentro,\n      aberto: !dentro && !naMasmorra,\n      apertado: naMasmorra,\n      /* a sala do chefe e a cripta são fundo de saco: uma saída só */\n      fundo: naMasmorra && saidasDe(mm).length <= 1,\n      alto: naMasmorra,\n      agua: /pantano|costa/.test(biomaDaqui()) && !dentro,\n      saidas: naMasmorra ? Math.max(1, saidasDe(mm).length) : dentro ? 2 : 4,\n      /* lá embaixo a luz é a tocha; aqui em cima é a hora */\n      luz: naMasmorra ? (mm.tochas > 0 ? \"penumbra\" : \"escuro\") : (ehNoite(minutoRef.current) && !dentro ? \"penumbra\" : \"clara\"),\n      publico: !!cidadeAtualRef.current && !acampadoRef.current && !naMasmorra,\n      gentePorPerto: sit.gentePorPerto,\n      cabem: naMasmorra ? 4 : dentro ? 10 : 20,\n      emCombate: !!combateRef.current,\n      emMasmorra: naMasmorra,\n      emViagem: !!jornadaRef.current,\n      acampado: !!acampadoRef.current,\n      noite: ehNoite(minutoRef.current),\n      clima: (cl && cl.rotulo) || \"\",\n      montado: false,\n    });\n  };"
+  },
+  {
+   "nome": "alvosDaLuta",
+   "de": "componente",
+   "texto": "  /* ---------------- A PAUTA DO TURNO (v9.104) ----------------\n     Um lugar só, ordenado e com teto, para tudo o que o Mestre decidiu.\n     Nasce com o Geógrafo dentro; cada sistema se muda para cá quando\n     chegar a vez dele. */\n  /* ---------------- O QUE A OPOSIÇÃO QUER (v9.110) ----------------\n     Traduz o combate para a situação que o acervo do Adversário sabe\n     ler. As palavras do LUGAR vêm do Geógrafo prontas — duas versões do\n     mesmo chão seria a garantia de que uma das duas ia mentir. */\n  /* Os alvos como o Adversário os enxerga. Serve só para a LINHA da\n     Pauta poder nomear quem apanha — a escolha de verdade acontece\n     dentro do `turnoDosInimigos`, com as bandeiras que só o motor sabe\n     (alcance contra a grade, quem está no caminho). */\n  const alvosDaLuta = () => {\n    try {\n      const p0 = fichaViva() || personagem || {};\n      const grupo = (p0.grupo || []).filter((g) => (g.vida || 0) > 0);\n      return [\n        { ref: \"jogador\", nome: p0.nome, vida: p0.vida, vidaMax: p0.vidaMax, nivel: p0.nivel, heroi: true,\n          conjurador: perfilCombate(p0.classe || \"\").tipo === \"conjurador\" },\n        ...grupo.map((g, i) => ({ ref: \"grupo\", nome: g.nome, vida: g.vida, vidaMax: g.vidaMax || g.vida, nivel: g.nivel || 1, i,\n          conjurador: perfilCombate(g.classe || \"\").tipo === \"conjurador\",\n          cura: [\"Clérigo\", \"Druida\", \"Bardo\"].includes(g.classe || \"\") })),\n      ];\n    } catch (e) { return calou(\"alvosDaLuta\", e); }\n  };"
+  },
+  {
+   "nome": "lutaDaMesa",
+   "de": "componente",
+   "texto": "  const lutaDaMesa = () => {\n    try {\n      const c = combateRef.current;\n      if (!c || !(c.inimigos || []).length) return null;\n      const p0 = fichaViva() || personagem || {};\n      const vivos = (c.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);\n      if (!vivos.length) return null;\n      const e = espacoDaMesa();\n      const grupo = (p0.grupo || []).filter((g) => (g.vida || 0) > 0);\n      const somaVida = vivos.reduce((s, x) => s + (x.vida || 0), 0);\n      const somaMax = vivos.reduce((s, x) => s + (x.vidaMax || x.vida || 1), 0) || 1;\n      /* quem fala pela oposição é o mais forte de pé: um bando tem uma\n         intenção só, e é a de quem manda nele. */\n      const voz = vivos.reduce((a, b) => ((b.nivel || 0) + PESO_AMEACA[b.ameaca] * 10 > (a.nivel || 0) + PESO_AMEACA[a.ameaca] * 10 ? b : a), vivos[0]);\n      const mente = menteDaCriatura(voz.nome, voz.desc, (mundoAtual() || {}).lexico);\n      const av = avaliarEncontro(vivos, p0);\n      const mm = masmorraRef.current;\n      return {\n        nome: voz.nome, ameaca: voz.ameaca || \"comum\",\n        ehBicho: mente === \"besta\", ehMorto: mente === \"morto\",\n        ehTropa: vivos.length >= 4 && new Set(vivos.map((x) => x.nome)).size <= 2,\n        ehChefe: !!voz.chefe || voz.ameaca === \"lendario\",\n        pensa: mente !== \"besta\" && mente !== \"morto\",\n        rodada: c.rodada || 1,\n        quantos: vivos.length, quantosEram: (c.inimigos || []).length,\n        minhaVida: (voz.vida || 0) / (voz.vidaMax || voz.vida || 1),\n        vidaDosMeus: somaVida / somaMax,\n        faixa: (av && av.faixa && av.faixa.id) || \"\",\n        heroiVida: (p0.vida || 0) / (p0.vidaMax || 1),\n        heroiCaido: (p0.vida || 0) <= 0,\n        heroiSozinho: grupo.length === 0,\n        quantosDoOutroLado: 1 + grupo.length,\n        temConjurador: [p0, ...grupo].some((x) => perfilCombate(x.classe || \"\").tipo === \"conjurador\"),\n        temCurandeiro: grupo.some((x) => [\"Clérigo\", \"Druida\", \"Bardo\"].includes(x.classe || \"\")),\n        alguemFerido: [p0, ...grupo].some((x) => (x.vida || 0) > 0 && (x.vida || 0) < (x.vidaMax || 1) * 0.5),\n        heroiFamoso: famaAtual() >= 45,\n        heroiCarrega: (mm && !mm.encerrada && mm.temChave) ? \"a chave da masmorra\" : \"\",\n        apertado: e.apertado, aberto: e.aberto, fundo: e.fundo, alto: e.alto,\n        agua: e.agua, escuro: e.luz === \"escuro\", saidas: e.saidas,\n        publico: e.publico, emMasmorra: e.emMasmorra,\n        ondeCai: e.alto ? (e.emMasmorra ? \"o poço da sala\" : \"a beira\") : \"\",\n        euEmbosquei: !!c.emboscada && !c.surpresaDoJogador,\n        fuiEmboscado: !!c.emboscada && !!c.surpresaDoJogador,\n        temRefem: !!c.refem, temCivil: e.gentePorPerto > 0 && !e.emMasmorra,\n        protejoAlgo: (mm && !mm.encerrada && voz.chefe) ? \"o que está atrás dele\" : \"\",\n        protegidoQuebrou: false,\n        querSaber: \"\",\n        temLider: vivos.length > 1, liderCaiu: (c.inimigos || []).some((x) => x.chefe && (x.derrotado || (x.vida || 0) <= 0)),\n        doVilao: !!(nemesisRef.current && nemesisRef.current.nome) && !!c.doVilao,\n        ordemDoVilao: (c.doVilao && (nemesisRef.current || {}).arquetipo) ? \"o que a ameaça mandou\" : \"\",\n        /* o vies da postura: o adversario fica receoso no apice, aproveitador na crise */\n        posturaMoral: moralDoInimigo((posturaRef.current || {}).postura),\n      };\n    } catch (e) { calou(\"lutaDaMesa\", e); return null; }\n  };"
+  },
+  {
+   "nome": "intencaoDaLuta",
+   "de": "componente",
+   "texto": "  /* A intenção da luta e o que ela virou. A memória é por COMBATE: sem\n     ela não existe \"virou\", existe só \"agora é outra\" — e um inimigo que\n     troca de plano toda rodada não tem plano. */\n  const intencaoDaLuta = () => {\n    const s = lutaDaMesa();\n    if (!s) return null;\n    const v = intencaoDaVez(s, { antes: intencaoRef.current || \"\" });\n    if (!v || !v.intencao) return null;\n    return { ...v, situacao: s };\n  };"
+  },
+  {
+   "nome": "oQueOMundoCobra",
+   "de": "componente",
+   "texto": "  /* O QUE O MUNDO FAZ SOBRE UMA COISA DE TRÊS DIAS ATRÁS (v9.112).\n     Ele lê o REGISTRO, que já é o livro-razão: o quê, quando, onde,\n     quem viu, o peso e agora o ato. Nada de estrutura nova. */\n  const oQueOMundoCobra = () => {\n    try {\n      return consultarCobrador(registroRef.current, {\n        dia: diaRef.current,\n        cobradas: cobradasRef.current,\n        fama: Math.round(famaAtual()),\n        ultimaCobranca: ultimaCobrancaRef.current,\n        ultimasFormas: formasCobradasRef.current,\n        publico: !!(espacoDaMesa() || {}).publico,\n        temGente: pessoasDaCena().length > 0,\n      });\n    } catch (e) { calou(\"oQueOMundoCobra\", e); return null; }\n  };"
+  },
+  {
+   "nome": "cidadeDoMapa",
+   "de": "componente",
+   "texto": "  /* Achar a cidade no mapa era feito em três lugares, cada um com a sua\n     própria comparação de caixa e de acento. Um lugar só. */\n  const cidadeDoMapa = (nome) => ((mapaRef.current && mapaRef.current.cidades) || [])\n    .find((c) => String(c.nome || \"\").toLowerCase() === String(nome || \"\").toLowerCase()) || null;"
+  },
+  {
+   "nome": "fatorDoPouso",
+   "de": "componente",
+   "texto": "  /* MM14: as tres fichas da mesa (cidade, gente, mercado) para uma frase —\n     extraido de `pautaDoTurno` para que o sinal do oraculo\n     (`ehPerguntaAoMundo`) tambem possa perguntar as fichas antes de rolar\n     o d100. Quando `presentes` nao vem pronto (o sinal so tem a frase),\n     calcula-se aqui pelo mesmo elenco da cena que `pautaDoTurno` usa. */\n  /* E1: o porte da terra em número (o `pouso.fator` da ficha da cidade) —\n     a caneca e o quarto falam da mesma terra. 1 quando não há cidade. */\n  const fatorDoPouso = () => {\n    try {\n      const cd = cidadeDoMapa(cidadeAtualRef.current);\n      if (!cd) return 1;\n      const f = fichaDaCidade(cd, { semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo() });\n      const n = Number(f && f.pouso && f.pouso.fator);\n      return Number.isFinite(n) && n > 0 ? n : 1;\n    } catch (e) { calou(\"fatorDoPouso\", e); return 1; }\n  };"
+  },
+  {
+   "nome": "fichasDaMesa",
+   "de": "componente",
+   "texto": "  const fichasDaMesa = (frase = \"\", presentes = null) => {\n    if (!Array.isArray(presentes)) {\n      try {\n        presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [], masmorra: masmorraRef.current }).aqui;\n      } catch (e) { calou(\"elencoDaCena em fichasDaMesa\", e); presentes = []; }\n    }\n    /* MM14: os nomes que a mesa ja conhece — a gente em cena e o lugar onde\n       se esta —, para as fichas apagarem o nome proprio antes de procurar o\n       assunto (\"o Sino Calado\" nao pergunta pelo sino). Uma vez so, e as\n       tres fichas (a cidade, a gente, o mercado) a usam. */\n    const nomesDaMesa = [...Object.keys(npcsRef.current || {}), (lugarRef.current && lugarRef.current.nome) || \"\"].filter(Boolean);\n    let fc = null;\n    try {\n      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {\n        let foraDeHora = [];\n        try { foraDeHora = sinosForaDeHora(aberturaMundoRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }); } catch (e) { calou(\"sinosForaDeHora\", e); }\n        fc = fichaParaPauta(cidadeDoMapa(cidadeAtualRef.current), {\n          semente: sementeMundo(), mapa: mapaRef.current, lex: (mundoAtual() || {}).lexico,\n          genero: generoMundo(), molde: moldeMundo(), dia: diaRef.current, minuto: minutoRef.current, frase,\n          nomes: nomesDaMesa, foraDeHora,\n          /* E1: \"dentro dos muros\" com número — do ponto do herói, não do centro */\n          aqui: meuPonto(),\n        });\n      }\n    } catch (e) { calou(\"fichaParaPauta\", e); }\n    /* MM8a: a gente por dentro — so quando a frase pergunta por alguem */\n    let gp = null;\n    try {\n      if (!combateRef.current) {\n        let recentes = [];\n        try { recentes = (mensagensRef.current || []).filter((m) => m && (m.autor === \"jogador\" || m.autor === \"mestre\")).slice(-4).map((m) => m.texto); } catch (e) { calou(\"recentes da gente por dentro\", e); }\n        gp = genteParaPauta({\n          semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,\n          genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,\n          base: baseMundoRef.current, npcs: npcsRef.current, presentes, espinha: espinhaRef.current, guildas: guildasRef.current, estado: elencoSaveRef.current,\n          grupo: (personagemRef.current || personagem || {}).grupo || [],\n          heroi: (personagemRef.current || personagem || {}).nome || \"\",\n          recentes, lugar: lugarRef.current, dia: diaRef.current, minuto: minutoRef.current, frase,\n          nomes: nomesDaMesa,\n        });\n      }\n    } catch (e) { calou(\"genteParaPauta\", e); }\n    /* MM14: o preco perguntado — a mesma frase, a banca de hoje. Nunca em\n       luta (ali nao ha banca) nem fora de cidade (nao ha onde comprar). */\n    let mc = null;\n    try {\n      /* 9.ª sessão (v9.433): também na estrada, quando há carroça — e com a\n         moeda do mundo, para o preço dizer a unidade */\n      const bancas = bancasDaCena();\n      mc = (!combateRef.current && bancas.length) ? mercadoParaPauta(bancas, frase, { onde: jornadaRef.current ? \"\" : (cidadeAtualRef.current || \"\"), moeda: moedaDoMundo() }) : null;\n    } catch (e) { calou(\"mercadoParaPauta\", e); }\n    /* 11/10 (MM11 · 5.ª sessão, J9): o preço do BALCÃO de mantimentos — as\n       rações, as tochas, a corda do kit. A banca não os vende, e a pauta\n       ia vazia: o Mestre inventou \"dez cunhas, mais uma pela corda boa\".\n       Entra na mesma ficha do mercado (é ela que cala o oráculo). */\n    try {\n      if (!combateRef.current && cidadeAtualRef.current) {\n        const p0 = personagemRef.current || personagem || {};\n        const bc = balcaoParaPauta(frase, { balcao: balcaoAqui(cidadeDoMapa(cidadeAtualRef.current)), temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });\n        if (bc.pergunta.length) mc = { pergunta: [...((mc && mc.pergunta) || []), ...bc.pergunta], em: [...((mc && mc.em) || []), ...bc.em] };\n      }\n    } catch (e) { calou(\"balcaoParaPauta\", e); }\n    /* MM17 C2: as terras de além da região — só quando a frase pergunta por\n       elas, nunca na masmorra nem na luta. É ficha do mundo: o oráculo não\n       rola o que o mapa sabe (`A_FICHA_DECIDE`). */\n    let hz = null;\n    try {\n      hz = horizonteDaPergunta(frase, mapaRef.current, { masmorra: masmorraRef.current, luta: !!combateRef.current });\n    } catch (e) { calou(\"horizonteDaPergunta\", e); }\n    /* E1 (o Narrador só narra): o preço COMUM perguntado (a caneca, o prato\n       quente, o pão) — a tabela pelo porte da terra. A banca não os vende e\n       a pauta ia vazia: o Mestre inventava o número. */\n    let pc = null;\n    try {\n      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;\n    } catch (e) { calou(\"precoComumParaPauta\", e); }\n    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };\n  };"
+  },
+  {
+   "nome": "quemAndaComigo",
+   "de": "componente",
+   "texto": "  /* ---------------- F2a · EM CENA: o que existe à volta do herói ----------------\n     O contexto de `montarEmCena` (em-cena.js), um só para a pauta e para a\n     leitura do golpe: o grupo e quem anda comigo, o registo daqui, o núcleo\n     em cena, o que o Mestre mostrou, a criatura da estrada (só no mesmo\n     trecho), a luta, a sala, a banca à vista (o critério de bancasDaCena),\n     a moeda do mundo, a frase e o lugar. Cada fonte num calou: uma que\n     estoura deixa a lista mais curta, nunca o turno sem ela. */\n  const quemAndaComigo = (grupo) => {\n    const doGrupo = new Set((grupo || []).map((g) => String((g && g.nome) || \"\").toLowerCase()));\n    return Object.values(npcsRef.current || {})\n      .filter((n) => n && n.nome && String(n.relacao || \"\").toLowerCase() === \"companheiro\" && String(n.status || \"vivo\").toLowerCase() === \"vivo\" && !doGrupo.has(String(n.nome).toLowerCase()))\n      .map((n) => n.nome);\n  };"
+  },
+  {
+   "nome": "contextoDoEmCena",
+   "de": "componente",
+   "texto": "  const contextoDoEmCena = (frase, aqui) => {\n    const p0 = personagemRef.current || personagem || {};\n    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };\n    const nucleo = vale(\"EM CENA · o núcleo\", () => nucleoAgora(), null);\n    const mm = masmorraRef.current;\n    return {\n      semente: sementeMundo(),\n      turno: turnoDeRegistroRef.current + 1,\n      cidade: cidadeAtualRef.current || \"\",\n      presentes: aqui || [],\n      grupo: p0.grupo || [],\n      comigo: vale(\"EM CENA · quem anda comigo\", () => quemAndaComigo(p0.grupo), []),\n      emCena: nucleo ? vale(\"EM CENA · o núcleo em cena\", () => nucleoEmCena(nucleo), []) : [],\n      nucleo,\n      mostrado: vale(\"EM CENA · o que o Mestre mostrou\", () => falasDoMestre(mensagensRef.current), []),\n      encontro: vale(\"EM CENA · a criatura da estrada\", () => { const v = criaturaAVistaRef.current, j = jornadaRef.current; return (v && j && v.trecho === (j.de || \"\") + \">\" + (j.para || \"\")) ? v : null; }, null),\n      combate: combateRef.current,\n      sala: vale(\"EM CENA · a sala\", () => (mm && !mm.encerrada && Array.isArray(mm.salas)) ? (mm.salas.find((x) => x.id === mm.atual) || null) : null, null),\n      /* 10.ª sessão (v9.455, EM_CENA_DO_LUGAR): quem o sistema sabe longe não\n         entra na lista do que está à frente, por mais que a prosa o nomeie —\n         a MESMA conta da linha LONGE da pauta */\n      longe: vale(\"EM CENA · quem está longe\", () => elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: mm }).longe || [], []),\n      bancas: vale(\"EM CENA · as bancas\", () => bancasDaCena(), []),\n      moeda: moedaDoMundo(),\n      frase: String(frase || \"\"),\n      lugar: lugarRef.current,\n      antes: emCenaRef.current,\n      /* 13/10 (v9.461): a espinha diz quem a historia pos noutra cidade\n         (longeDaHistoria), e os sitios daqui saem do texto antes de se\n         procurar bicho nele (BICHO_DO_SITIO: a Serpente Rouca e uma casa) */\n      espinha: espinhaRef.current,\n      lugares: vale(\"EM CENA · os sítios\", () => lugaresDaqui().map((l) => l.nome), []),\n    };\n  };"
+  },
+  {
+   "nome": "pautaDoTurno",
+   "de": "componente",
+   "texto": "  const pautaDoTurno = (acaoDoTurno = \"\") => {\n    let p = garantirPauta(null);\n    cobrouAgoraRef.current = false;\n    /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê\n       dali em vez de refazer a conta, porque duas versões da mesma\n       verdade é como nasce o balanceamento fantasma desta casa */\n    const { longe, aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (personagemRef.current || personagem || {}).grupo || [], masmorra: masmorraRef.current });\n    const g = paraPauta({\n      ...contextoDoEspaco(),\n      espaco: espacoDaMesa(),\n      lex: (mundoAtual() || {}).lexico,\n      sitio: acampadoRef.current ? sitioRef.current : null,\n      clima: (climaRef.current && climaRef.current.rotulo) || \"\",\n      longe,\n    });\n    p = porNaPauta(p, \"onde\", g.onde);\n    /* MM16 nº 4: A PLANTA À VOLTA DA SALA (a sala mesma vai na 1.ª linha do\n       ONDE, que é de ferro). Fora da masmorra a função devolve nada. Na\n       luta, uma linha só: quem está e a quantos metros é do tabuleiro. */\n    try {\n      p = porNaPauta(p, \"masmorra\", masmorraParaPauta(masmorraRef.current, { luta: !!combateRef.current }));\n    } catch (e) { calou(\"masmorraParaPauta\", e); }\n    /* MM17 C2: e, numa campanha com região, o que se sabe DE FORA do lugar\n       (a ficha: o tipo, o perigo, quem anda por lá, as horas até à base).\n       Na luta não entra: lá a secção é a linha do tabuleiro. */\n    try {\n      p = porNaPauta(p, \"masmorra\", linhaDaFicha(mapaRef.current, masmorraRef.current, { luta: !!combateRef.current }));\n    } catch (e) { calou(\"linhaDaFicha\", e); }\n    /* 06/10: A LUZ DA LUTA — o escuro, a minha tocha, quem enxerga no\n       escuro. Vazia com tudo claro; prio barata (pauta.js). */\n    try {\n      if (combateRef.current) p = porNaPauta(p, \"luz\", luzParaPauta(luzDaLutaAgora(), { heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [] }));\n    } catch (e) { calou(\"luzParaPauta\", e); }\n    /* MM (a luta tem saída): A VISTA DA LUTA. Na quinta sessão a prosa disse\n       \"o dragão sumiu\" com ele a 1,5 m, pôs Hakon a gritar a 0/12 e trocou a\n       cabeçada pelo sopro — o Narrador lia os golpes do meio da rodada e\n       nunca o estado do fim dela. Três linhas, dentro do teto da pauta: quem\n       está de pé e no chão, os vetos de quem caiu e de quem não sumiu, e os\n       golpes que o sistema nomeou. */\n    try {\n      const cV = combateRef.current;\n      if (cV) {\n        const gR = golpesDaRodadaRef.current;\n        const vista = vistaDaLuta({ heroi: fichaViva(), inimigos: cV.inimigos || [], lugar: cV.heroi || null,\n          golpes: gR && gR.rodada === (cV.rodada || 1) - 1 ? gR.golpes : [] });\n        p = porNaPauta(p, \"quem\", vista.quem);\n        p = porNaPauta(p, \"vetoDoDesfecho\", vista.vetos);\n        p = porNaPauta(p, \"naoPode\", vista.naoPode);\n      }\n    } catch (e) { calou(\"a vista da luta na pauta\", e); }\n    /* v9.138: o que este lugar produz e o que lhe falta. Vai em ONDE porque\n       é geografia antes de ser economia — a praça de um porto e a de uma\n       serra não se parecem, e o Narrador nunca teve como saber disso.\n       MM16 nº 5: a seção é \"economia\" (rótulo ONDE, prio 2,5). Como 4.ª\n       linha do ONDE ela tinha prio 1,3 e, numa masmorra, os 264 caracteres\n       de Vau Fincado tiravam do teto a frase do golpe final (sessão 3, M21\n       e M30). Na cidade lê-se igual; na luta cede (`cederNaCena`, abaixo). */\n    p = porNaPauta(p, \"economia\", envelopeDoComercio(cidadeDoMapa(cidadeAtualRef.current), diaRef.current));\n    /* v9.139: e, se este chão for seu, o que você decidiu sobre ele. Só\n       quando o herói está lá — governo de longe não é o que se vê na praça. */\n    {\n      const cd = cidadeDoMapa(cidadeAtualRef.current);\n      if (cd && cd.relacao === \"jogador\" && !masmorraRef.current) { /* MM16 nº 4: o domínio é a praça, não a masmorra */\n        p = porNaPauta(p, \"onde\", envelopeDoDominio(cd, (governosRef.current || {})[cd.nome], {\n          felicidade: ((reinoRef.current || {})[cd.nome] || {}).felicidade,\n          semente: sementeMundo(),\n        }));\n      }\n    }\n    /* v9.129: A SECAO `momento` estava declarada em `pauta.js` desde a v9.104\n       e nunca era preenchida — uma porta sem leitor. A espinha e o leitor\n       dela: \"a batida da historia\" e exatamente o marco em que se esta. */\n    /* v9.133: pertencer a uma casa muda como o mundo trata o heroi, e isso e\n       cena. Vai em ONDE porque e do mesmo naipe do lugar: contexto que\n       colore tudo o que acontece dentro dele. */\n    {\n      const casa = minhaCasa();\n      if (casa && !masmorraRef.current) p = porNaPauta(p, \"onde\", envelopeDaGuilda(casa)); /* MM16 nº 4: lá dentro a casa não é o lugar */\n    }\n    p = porNaPauta(p, \"momento\", envelopeDaEspinha(espinhaRef.current, historiaRef.current.etapa, estruturaPorId(historiaRef.current.estrutura)));\n    /* v9.391: a marca do antagonista no momento, o JÁ SE SABE do segredo que\n       acabou de cair, o que o mundo lembra de quem chegou a tempo */\n    let maoDoVilao = false; /* MM-C C2: a marca ou os servos do fio nesta cena (o vilão do núcleo só pede pela mão) */\n    try { const mf = momentoDoFio(espinhaRef.current, historiaRef.current.etapa, { dia: diaRef.current, vilao: nemesisRef.current }); p = porNaPauta(p, \"momento\", mf); const assin = String(((espinhaRef.current || {}).fio || {}).assinatura || \"\"); if (assin && (mf || []).some((l) => String(l).includes(assin))) maoDoVilao = true; } catch (e) { calou(\"o momento do fio\", e); }\n    /* o episodio em curso fala pelo mesmo canal do arco: e a batida de\n       dentro da batida — o cerco que a Jornada esta vivendo agora. */\n    if (episodioRef.current && episodioRef.current.aberto) p = porNaPauta(p, \"momento\", envelopeDoEpisodio(episodioRef.current));\n    /* a Noite-torneio fala pelo mesmo canal: a chave, o rival, o teto do\n       interludio — instrucao de mesa, nunca nome de sistema */\n    if (modoRef.current === \"rapida\" && noiteRef.current && noiteRef.current.prato === \"torneio\" && torneioRef.current && !combateRef.current) {\n      p = porNaPauta(p, \"momento\", envelopeDaChave(torneioRef.current) + \" \" + provocacaoDoRival(torneioRef.current) + \" \" + oEnvelopeDoFio(\"interludioDoTorneio\"));\n    }\n    /* MM13: o prenúncio do sino é um aviso de UM turno — a pauta o consome\n       e apaga, para não repeti-lo enquanto ele espera para encher de vez. */\n    if (sinoDoTurnoRef.current) { p = porNaPauta(p, \"momento\", sinoDoTurnoRef.current); sinoDoTurnoRef.current = \"\"; }\n    /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena\n       cheia a gente presente ganha dela, e é isso que se quer */\n    p = porNaPauta(p, \"daqui\", g.daqui);\n    /* MM12: a cidade por dentro — o hoje e a língua sempre, a resposta ao\n       que o jogador perguntou só quando ele pergunta. Nunca em jornada, em\n       masmorra nem em combate: ali não há rua para se perguntar nada dela. */\n    /* MM14: as tres fichas da mesa (cidade, gente, mercado), pela mesma\n       frase e o mesmo elenco desta cena — agora em fichasDaMesa, para que\n       o sinal do oraculo tambem consiga perguntar. */\n    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);\n    if (fc) p = porNaPauta(p, \"cidade\", fc.cidade);\n    /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a\n       frase pediu cada coisa — não pela ordem em que os módulos correram. */\n    p = porNaPauta(p, \"pergunta\", juntarRespostas([fc, gp, mc, hz, pc]));\n    /* E1 (o Narrador só narra): O PREÇO da rua — a cena mostra preços sem\n       ninguém perguntar, e é melhor que os mostre certos. Só com rua. */\n    try {\n      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) p = porNaPauta(p, \"preco\", precosDaRua(fatorDoPouso(), { moeda: moedaDoMundo() }));\n    } catch (e) { calou(\"precosDaRua\", e); }\n    /* E1: NOMES À MÃO — dois nomes livres da cultura, para o figurante que a\n       cena pede. Ninguém do registo, do elenco nem do grupo. Ficam pendentes:\n       só contam como oferecidos se a linha chegar ao texto. */\n    nomesPendentesRef.current = null;\n    try {\n      const p0 = personagemRef.current || personagem || {};\n      const usados = [...Object.values(npcsRef.current || {}), ...nomesDoElenco(), ...(p0.grupo || []), p0.nome || \"\"].filter(Boolean);\n      const nomes = nomesAMao({ semente: sementeMundo(), dia: diaRef.current, cidade: cidadeAtualRef.current || \"\", genero: generoMundo(), lex: (mundoAtual() || {}).lexico, usados });\n      const linha = linhaDosNomesAMao(nomes);\n      if (linha) { p = porNaPauta(p, \"nomes\", linha); nomesPendentesRef.current = { nomes, linha }; }\n    } catch (e) { calou(\"nomesAMao\", e); nomesPendentesRef.current = null; }\n    p = porNaPauta(p, \"naoPode\", g.naoPode);\n    /* 11/10 (MM11 · 5.ª sessão, M10): a compra ou a dádiva que a frase\n       declarou e o sistema não fechou — o Narrador não entrega o que a\n       bolsa não pagou */\n    /* MM-C · C0: se o próprio turno abriu o combate (a agressão declarada), o\n       veto da luta sem painel já não é verdade e não viaja */\n    try { if (combateRef.current && (naoPodeDoTurnoRef.current || []).includes(LUTA_SEM_PAINEL.veto)) naoPodeDoTurnoRef.current = naoPodeDoTurnoRef.current.filter((v) => v !== LUTA_SEM_PAINEL.veto); } catch (e) { calou(\"o veto da luta com o combate aberto\", e); }\n    try { p = porNaPauta(p, \"naoPode\", naoPodeDoTurnoRef.current || []); } catch (e) { calou(\"o veto da bolsa da frase\", e); }\n    /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */\n    p = porNaPauta(p, \"naoPode\", vetosDaAbertura({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }));\n    /* MM15 (4): o segredo que a espinha guarda não é a boca do Narrador —\n       o veto só nasce quando a frase do turno nomeia um segredo de pé. */\n    try {\n      p = porNaPauta(p, \"naoPode\", vetoDoSegredo(acaoDoTurno, segredosGuardados(espinhaRef.current, mundoDaBase()), { lugar: (lugarRef.current && lugarRef.current.nome) || \"\" }));\n    } catch (e) { calou(\"vetoDoSegredo\", e); }\n    /* O JUIZ CORRIGE: a invenção da resposta anterior que o sistema contradiz,\n       com o número certo — só no turno logo a seguir, ou quando a frase toca a\n       coisa (vetosParaAPauta). O turno é o do textoDaPauta. */\n    try { p = porNaPauta(p, \"vetoDoJuiz\", ...vetosParaAPauta(vetosDoJuizRef.current, { turno: turnoDeRegistroRef.current + 1, cidade: cidadeAtualRef.current || \"\", frase: acaoDoTurno })); } catch (e) { calou(\"o veto do juiz na pauta\", e); }\n    /* v9.165: A LEI DA FORMA na cena — quem guarda este andar, o estado da\n       maré do porto. Só parado em cidade: no meio da estrada a linha do\n       andar de trás seria mentira sobre o lugar onde a cena está. */\n    if (!jornadaRef.current && !masmorraRef.current) { /* MM16 nº 4: a lei do andar é a da cidade, não a da masmorra */\n      const lf = leiParaPauta({\n        molde: moldeMundo(), semente: sementeMundo(), mapa: mapaRef.current,\n        forma: formaRef.current, lex: (mundoAtual() || {}).lexico, genero: generoMundo(),\n        cidadeAtual: cidadeAtualRef.current, dia: diaRef.current,\n      });\n      p = porNaPauta(p, \"onde\", lf.onde);\n      p = porNaPauta(p, \"naoPode\", lf.naoPode);\n    }\n    /* v9.105: O ARQUIVISTA. Ele não resume a campanha — recupera as três\n       linhas que importam a ESTA cena, com esta gente, neste lugar. O\n       custo é fixo para sempre: uma campanha de mil turnos entrega as\n       mesmas três que uma de trinta. */\n    /* v9.106: O INTÉRPRETE. Uma linha por pessoa presente, no máximo\n       três. Ele diz o que cada uma FAZ; o que ela DIZ continua sendo do\n       Narrador, e é onde ele é insubstituível. */\n    {\n      /* v9.135: o Interprete e consultado UMA vez por turno, em `enviar`,\n         porque o ATOR precisa do movimento antes de a Pauta ser montada.\n         Consultar duas vezes sortearia dois movimentos e marcaria memoria\n         duas vezes — a pessoa faria uma coisa e falaria sobre outra. */\n      const r = interpreteRef.current || interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });\n      p = porNaPauta(p, \"gente\", r.linhas);\n      if (!interpreteRef.current) for (const m of r.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);\n      p = porNaPauta(p, \"fala\", envelopeDasFalas(falasDoTurnoRef.current));\n      /* v9.137: a seção ACABOU (\"o que o sistema resolveu agora\") estava\n         declarada na Pauta e não tinha UM produtor sequer. É exatamente o\n         lugar do propósito que amadureceu: o Mestre já resolveu, e o\n         Narrador só narra o momento em que aparece. */\n      p = porNaPauta(p, \"acabou\", (propositosDoTurnoRef.current || []).map((x) => x.envelope).join(\"\\n\"));\n      /* MM10: o crime deste turno (testemunhas, a lei, o preço) — uma vez\n         só, e depois limpo; e o veto de quem é procurado aqui, todo turno\n         em que durar. */\n      try {\n        if (crimeDoTurnoRef.current) {\n          p = porNaPauta(p, \"acabou\", crimeDoTurnoRef.current.acabou || []);\n          p = porNaPauta(p, \"naoPode\", crimeDoTurnoRef.current.naoPode || []);\n          crimeDoTurnoRef.current = null;\n        }\n        p = porNaPauta(p, \"naoPode\", procuradoParaPauta(leiRef.current, { cidade: cidadeAtualRef.current, dia: diaRef.current }).naoPode);\n      } catch (e) { calou(\"crimeParaPauta\", e); }\n    }\n    /* MM13: O MUNDO PINGA FIOS — no máximo uma linha por turno, da primeira\n       pessoa em cena que tiver algo a dizer sobre a principal. */\n    try {\n      for (const pessoa of aqui || []) {\n        const fio = fioParaAPrincipal({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, semente: sementeMundo(), pessoa });\n        if (fio) { p = porNaPauta(p, \"gente\", fio); break; }\n      }\n    } catch (e) { calou(\"o fio da abertura\", e); }\n    /* v9.108: O ALIADO AGE POR CONTA PRÓPRIA. Um por turno, e só um: o\n       silêncio dos outros é o que faz a vez de cada um valer alguma\n       coisa. */\n    /* v9.110: O ADVERSÁRIO. Uma linha, e ela é a mesma coisa que a\n       mecânica vai fazer: a prioridade de alvo desta intenção é a que\n       entra no `turnoDosInimigos` logo abaixo. Uma intenção que não muda\n       o alvo seria adjetivo. */\n    {\n      const v = intencaoDaLuta();\n      if (v) {\n        const antes = intencaoRef.current || \"\";\n        intencaoRef.current = v.intencao.id;\n        p = porNaPauta(p, \"contra\", linhaDaLuta(v.situacao, alvosDaLuta(), { antes }));\n        /* a VIRADA é fato consumado e vai ao canon, não à Pauta: a Pauta\n           diz o que vale agora, o canon diz o que já aconteceu e não se\n           desfaz. Sai uma vez só, na rodada em que virou. */\n        const env = envelopeDaVirada(v.situacao, { antes });\n        if (env) notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${env}`;\n      }\n    }\n    {\n      const r = aliadoParaPauta(aliadosDaCena());\n      if (r.linhas.length) {\n        p = porNaPauta(p, \"aliado\", r.linhas);\n        marcarQueFalou(r.quem);\n        if (r.vaiEmbora) aliadoVaiEmbora(r.quem);\n      }\n    }\n    /* v9.107: A AMEAÇA PENSA. Duas linhas no máximo — o que ela concluiu\n       e o que faz por causa disso. A leitura sobe junto de propósito: sem\n       ela a resposta parece arbitrária, e com ela o Narrador sabe se está\n       encenando um vilão que acertou ou um que se enganou. */\n    {\n      const r = respostaDaAmeaca();\n      if (r) maoDoVilao = true;\n      /* nexo (11/10): o nome só depois do rosto — o mesmo motivo do arco */\n      if (r) p = porNaPauta(p, \"vilao\", vilaoParaPauta(r, { nome: ((nemesisRef.current || {}).conhecido && (nemesisRef.current || {}).nome) || \"a ameaça\" }));\n    }\n    /* v9.112: O MUNDO LEMBROU. Raro de propósito — uma vez a cada cinco\n       dias, no máximo. A dívida só é marcada como cobrada DEPOIS de a\n       linha entrar na Pauta: marcar antes perderia a conta para sempre\n       se ela não coubesse, e em silêncio. */\n    {\n      const r = oQueOMundoCobra();\n      const linha = r ? linhaDoMundo(r) : \"\";\n      if (linha) {\n        p = porNaPauta(p, \"mundo\", linha);\n        cobrouAgoraRef.current = true;\n        cobradasRef.current = [...cobradasRef.current, r.chave].slice(-200);\n        ultimaCobrancaRef.current = diaRef.current;\n        formasCobradasRef.current = [...formasCobradasRef.current, r.cobranca.id].slice(-6);\n        notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoMundo(r)}`;\n      }\n    }\n    /* v9.142: quem são as potências, o que cada uma quer e o que acha de\n       você. Vai em O MUNDO porque é o mundo em volta — e vai SEMPRE, não\n       só quando o mundo cobra uma dívida antiga. */\n    p = porNaPauta(p, \"mundo\", envelopeDasPotencias(potenciasAqui(), diplomaciaRef.current));\n    try { p = porNaPauta(p, \"antes\", saidaParaPauta(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current }).antes); } catch (e) { calou(\"saidaParaPauta\", e); }\n    /* MM-C C2: QUEM CARREGA — uma batida por turno, da subtrama de quem está\n       em cena (subtramas.js). Como a QUEM É, só conta se chegar ao texto:\n       fica pendente, e o envio confirma (confirmarCoracao). O que um clique\n       decidiu (a decisão, o porquê) entra uma vez, no turno que ele envia. */\n    let quemCarrega = \"\";\n    try {\n      const fala = coracaoFalaRef.current;\n      coracaoFalaRef.current = null;\n      if (fala && fala.linha) p = porNaPauta(p, fala.secao === \"pergunta\" ? \"pergunta\" : \"coracao\", fala.linha);\n      const nucleo = nucleoAgora();\n      const frase = String(acaoDoTurno || \"\").trimStart().startsWith(\"[\") ? \"\" : String(acaoDoTurno || \"\");\n      const ctx = contextoDoCoracao(nucleo, { frase, maoDoVilao });\n      const r = fala && fala.proprio ? { coracao: coracaoRef.current, linha: \"\", quem: \"\", efeitos: [], longe: [], batida: null } : avancarCoracao(coracaoRef.current, nucleo, ctx); /* o turno que o próprio coração envia é a batida dele: nenhuma outra no mesmo fôlego */\n      if (r.linha) p = porNaPauta(p, \"coracao\", r.linha);\n      if ((r.longe || []).length) p = porNaPauta(p, \"foraDeCena\", r.longe.map((x) => x && x.texto).filter(Boolean));\n      quemCarrega = r.quem || \"\";\n      coracaoPendenteRef.current = { r, turno: ctx.turno, emCena: ctx.emCena };\n    } catch (e) { calou(\"avancarCoracao\", e); coracaoPendenteRef.current = null; }\n    /* MM-C C1: QUEM É — a ficha por dentro de quem do núcleo está em cena,\n       uma pessoa por turno, e a mesma só de tantos em tantos turnos\n       (nucleo.js), no turno que a pauta leva. O ritmo só conta se a linha\n       CHEGA ao texto (o teto pode cortá-la): fica pendente, e o envio confirma. */\n    try {\n      const nucleo = nucleoAgora();\n      const esp = espinhaRef.current || {};\n      const turnoQ = turnoDeRegistroRef.current + 1;\n      const q = { ultimas: {}, cenas: {}, ...(quemERef.current || {}), pendente: null };\n      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: (historiaRef.current || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega, ...elencoDoCoracao(), espinha: esp, cidade: cidadeDoCoracao() }); /* 13/10 (v9.461): quem a historia sabe longe nao leva a ficha */\n      p = porNaPauta(p, \"quemE\", ...(r.quemE || []));\n      quemERef.current = { ...q, pendente: r.quem && r.quemE && r.quemE[0] ? { quem: r.quem, turno: turnoQ, linha: r.quemE[0] } : null };\n    } catch (e) { calou(\"quemEParaPauta\", e); } try { p = porNaPauta(p, \"foraDeCena\", foraDeCenaParaPauta(elencoSaveRef.current, { dia: diaRef.current, cidade: cidadeAtualRef.current, npcs: npcsRef.current, emCena: (() => { try { const c = (mensagensRef.current || []).filter((m) => m && m.autor === \"mestre\").slice(-2).map((m) => m.texto).join(\" \"); return Object.keys(npcsRef.current || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou(\"foraDeCenaParaPauta\", e); }\n    p = porNaPauta(p, \"antes\", arquivistaParaPauta(registroRef.current, {\n      onde: linhaDoLugarDaMesa(),\n      quem: (elencoDaOnda().aqui || []),\n      assunto: (compassoRef.current || {}).assunto || \"\",\n      turnoAtual: turnoDeRegistroRef.current,\n      diaAtual: diaRef.current,\n    }));\n    /* ---------------- O PESO DA CENA (v9.204) ----------------\n       Reconhece a gravidade dos fatos do turno, poe o peso na pauta e\n       CALA o mundo pelo canal do veto (mercado, oferta e trabalho somem).\n       Um peso por cena — pesoDaCena ja garante isso. Consome e limpa: o\n       peso e um beat, e \"solta\" e o jogador seguir quando quiser. */\n    try {\n      const cena = pesoDaCena(fatosDoPesoRef.current);\n      if (cena) ultimoPesoRef.current = { peso: cena.peso, dia: diaRef.current };\n      if (cena) {\n        p = porNaPauta(p, \"peso\", \"Esta cena tem PESO: \" + cena.nome + \" — \" + cena.diz + \". Quem tem laco com isto comparece.\");\n        p = porNaPauta(p, \"naoPode\", vetoDoPeso(cena.peso));\n      }\n      fatosDoPesoRef.current = {};\n    } catch (e) { /* o peso nunca pode custar o turno */ }\n\n    /* ---------------- A MESA POSTA (v9.201) ----------------\n       Quando a acao declarada casa com uma situacao conhecida, as DUAS\n       versoes da cena chegam ao Narrador ANTES do dado — e a de falha\n       nomeia a moeda, a lei que impede o \"nada acontece\". Casa\n       conservador (chave forte) e fica de fora do combate, que tem\n       resolucao propria. Nunca custa o turno. */\n    try {\n      if (!combateRef.current) {\n        const sit = situacaoQueCasa(acaoDoTurno);\n        if (sit) { const ap = apostas(sit); if (ap) p = porNaPauta(p, \"mesa\", \"Se \" + ap.sePassa, \"Se \" + ap.seFalha, ap.noMeio ? \"Se \" + ap.noMeio : \"\"); }\n      }\n    } catch (e) { /* a aposta nunca pode custar o turno */ }\n    /* ---------------- MM3: O GOLPE FINAL, NA PAUTA ----------------\n       O envelope nasce em `continuarGolpeDoJogador` (aplicarEscolha ja\n       resolvido) e mora num ref ate a PROXIMA montagem da pauta -- que e\n       sempre a narracao do proprio golpe (`enviar` monta a pauta uma vez\n       por turno). Consome e limpa: um golpe final e um fato de UM turno,\n       nunca do proximo. */\n    try {\n      const gf = golpeFinalEnvelopeRef.current;\n      if (gf) p = golpeFinalNaPauta(p, gf); /* MM14: o \"como\" era cortado pelo teto em ACABOU (prio 3,1) e nunca chegava; vai em DESFECHO */\n    } catch (e) { /* o golpe final nunca pode custar o turno */ }\n    golpeFinalEnvelopeRef.current = null;\n    /* ---------------- MM6: O ESCONDIDO FORA DA LUTA ----------------\n       Dentro da luta a linha e a do tabuleiro (resumoGridPrompt, em `enviar`);\n       aqui e o veto — quem nao me viu nao pode reagir a mim por conta propria. */\n    try {\n      if (!combateRef.current) {\n        const peEsc = pautaDoEscondido(personagemRef.current || personagem, { presentes: aqui });\n        if (peEsc) p = porNaPauta(p, \"naoPode\", peEsc.naoPode);\n      }\n    } catch (e) { /* o veto do escondido nunca pode custar o turno */ }\n    /* MM18: O RUMO — reagir e responder primeiro, depois UMA ponte para o\n       próximo passo da principal; e, se o jogador está fora do fio há\n       turnos, o degrau da escada (o sinal, quem vem buscar, a cobrança).\n       Fora da luta: lá a ordem do turno é a do tabuleiro. Entra ANTES de\n       `cederNaCena` porque nada vem depois dele, e não cede: \"rumo\" não\n       está em nenhuma lista de `SECOES_QUE_CEDEM`. */\n    try {\n      if (!combateRef.current && modoRef.current !== \"rapida\") {\n        const rumo = linhaDoRumo({\n          pedido: lerOPedido(acaoDoTurno),\n          degrau: degrauDaEscuta(garantirEscuta(escutaRef.current).semAvanco),\n          passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),\n          semente: diaRef.current,\n          /* MM19 (v9.394, o backend): o mundo que o degrau do encalhe precisa\n             para virar cena com nome e lugar — onde estou, o fio aberto, a\n             espinha e o ato, o dia, e quem anda contra mim */\n          mundo: { aqui: (g.onde || [])[0] || \"\", abertura: aberturaMundoRef.current, missoes: missoesRef.current,\n                   espinha: espinhaRef.current, ato: historiaRef.current.etapa, dia: diaRef.current, vilao: nemesisRef.current,\n                   /* 12.ª sessão: quem o Mestre já nomeou está em cena, e não se apresenta de novo */\n                   mostrado: falasDoMestre(mensagensRef.current) },\n        });\n        if (rumo) p = porNaPauta(p, \"rumo\", rumo);\n      }\n    } catch (e) { calou(\"o rumo na pauta\", e); }\n    /* A CAMPANHA QUE PRENDE (item 1): O QUE VOLTA — a promessa que a narração\n       plantou e o sistema guardou volta quando amadurece. Anda o relógio, por\n       isso UMA vez por turno (pautaDoTurno só é chamada em `enviar`). Fora da\n       Noite: lá não há campanha para prometer. */\n    try {\n      if (modoRef.current !== \"rapida\") {\n        const rv = cobrarNoTurno(prometidoRef.current, {\n          pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current,\n          fio: fioDaHistoria({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),\n          mortos: (baseMundoRef.current || {}).mortos || [],\n        });\n        prometidoRef.current = rv.estado;\n        if (rv.linha) p = porNaPauta(p, \"volta\", rv.linha);\n      }\n    } catch (e) { calou(\"o que volta na pauta\", e); }\n    /* (item 2): O FECHO — como acaba a resposta deste turno, nunca o anterior;\n       no fim do ato, a escolha com preço (a batida que vira o ato). */\n    try {\n      let fimDeAto = false;\n      try { fimDeAto = !!((marcoAtual(espinhaRef.current, historiaRef.current.etapa) || {}).batida || {}).fecho; } catch (e) { calou(\"o fim do ato\", e); }\n      const fx = escolherFecho({\n        pedido: lerOPedido(acaoDoTurno), luta: !!combateRef.current, fimDeAto,\n        gente: (pessoasDaCena() || []).length > 0 || ((personagemRef.current || {}).grupo || []).length > 0,\n        ultimo: fechoRef.current,\n        sorte: rng(hashSemente(sementeMundo() + \"|fecho|\" + turnoDeRegistroRef.current)),\n      });\n      fechoRef.current = fx.id;\n      p = porNaPauta(p, \"fecho\", fx.linha);\n    } catch (e) { calou(\"o fecho na pauta\", e); }\n    /* MM16 nº 5: O QUE CEDE ONDE. A tabela é do motor (`SECOES_QUE_CEDEM`);\n       aqui só se diz que cena é esta. `arredores` é FORA DOS MUROS — sem\n       cidade (estrada, jornada) ou num lugar marcado `distancia: \"arredores\"`\n       —, o mesmo sinal de `ondeSeProcura`; `lugarRef` sozinho não serve,\n       porque também guarda o lugar \"dentro\" (a taberna, a praça). */\n    try {\n      const fora = !cidadeAtualRef.current || !!(lugarRef.current && lugarRef.current.distancia === \"arredores\");\n      p = cederNaCena(p, { luta: !!combateRef.current, masmorra: !!masmorraRef.current, arredores: fora });\n    } catch (e) { calou(\"cederNaCena\", e); }\n    /* F2a · EM CENA: o sistema entrega ao Mestre a lista do que existe, e a\n       linha engole os NOMES À MÃO (que continuam a ser confirmados pela linha\n       deles, que vai dentro). Depois do cederNaCena: na luta não entra (a\n       vista da luta já é a lista), e a linha encolhe até não tirar nada. */\n    try {\n      const lista = montarEmCena(contextoDoEmCena(acaoDoTurno, aqui));\n      emCenaRef.current = lista;\n      p = pautaComEmCena(p, lista, { luta: !!combateRef.current, turno: turnoDeRegistroRef.current + 1 });\n    } catch (e) { calou(\"EM CENA\", e); }\n    return p;\n  };"
+  },
+  {
+   "nome": "aliadosDaCena",
+   "de": "componente",
+   "texto": "  /* ---------------- QUEM ANDA COMIGO (v9.108) ----------------\n     Traduz o grupo para a situação que o acervo do aliado sabe ler. A\n     alma de cada um nasce na primeira vez que ele é visto e nunca muda:\n     uma pessoa que troca de código toda semana não tem código. */\n  const aliadosDaCena = () => {\n    try {\n      const p0 = fichaViva() || personagem || {};\n      const grupo = p0.grupo || [];\n      if (!grupo.length) return [];\n      const mem = garantirAliados(aliadosRef.current);\n      const pares = paresEntre(npcsRef.current);\n      const ctxAto = contextoDoAto();\n      return grupo.map((g) => {\n        const nome = g.nome || \"\";\n        if (!mem[nome]) mem[nome] = nascerAliado(nome);\n        const a = mem[nome];\n        if (a.saiu) return null;\n        const v = vontadePorId(a.vontade);\n        const atrito = pares.find((x) => x.tipo === \"rivalidade\" && (x.a === nome || x.b === nome)\n          && grupo.some((o) => (o.nome || \"\") === (x.a === nome ? x.b : x.a)));\n        return {\n          nome,\n          vontade: a.vontade,\n          vontadeTexto: (v && v.o) || \"\",\n          apodrecerTexto: (v && v.apodrece) || \"\",\n          etapa: a.etapa,\n          apodrecendo: a.parada >= DIAS_ATE_APODRECER * 0.6,\n          apodreceu: a.apodreceu,\n          codigoTexto: (codigoPorId(a.codigos[0]) || {}).o || \"\",\n          cruzouAgora: !!cruzouOCodigo(a, contextoDoAto()),\n          cruzou: a.cruzou,\n          vinculo: Number(g.vinculo) || 50,\n          calado: a.calado,\n          atritoCom: atrito ? (atrito.a === nome ? atrito.b : atrito.a) : \"\",\n          publico: !!cidadeAtualRef.current && !acampadoRef.current,\n          emCidade: !!cidadeAtualRef.current,\n          acampado: !!acampadoRef.current,\n          emCombate: !!combateRef.current,\n          ato: atoDoTurnoRef.current,\n          /* o contexto do ato entra JUNTO da cena: as opiniões leem os\n             dois e separá-los foi o que fez a primeira versão calar */\n          ...ctxAto,\n        };\n      }).filter(Boolean);\n    } catch (e) { return calou(\"aliadosDaCena\", e); }\n  };"
+  },
+  {
+   "nome": "contextoDoAto",
+   "de": "componente",
+   "texto": "  /* O contexto que o CÓDIGO consulta. Grosseiro de propósito: um código\n     cruzado por engano custa uma cena; um nunca cruzado custa o módulo\n     inteiro, porque a peça que faz a relação gastar deixa de existir. */\n  const contextoDoAto = () => {\n    const p0 = fichaViva() || personagem || {};\n    return {\n      ato: atoDoTurnoRef.current,\n      presente: (p0.grupo || []).length > 0,\n      emCombate: !!combateRef.current,\n      rendido: false,\n      suborno: atoDoTurnoRef.current === \"paguei\" && /suborn|calar|compr[oa]/i.test(String(ultimaAcaoRef.current || \"\")),\n      alguemPrecisava: atoDoTurnoRef.current === \"ignorei\" && (contRef.current.pedidosRecusados || 0) > 0,\n      quebreiPromessa: false, roubeiPobre: false, fugi: (contRef.current.fugas || 0) > 0,\n      escolhiEstranho: false, usoProibido: false, saqueiCorpo: false, quebreiLei: false,\n      poupei: (contRef.current.poupados || 0) > 0,\n    };\n  };"
+  },
+  {
+   "nome": "marcarQueFalou",
+   "de": "componente",
+   "texto": "  /* Depois de falar, ele cala por um tempo. E quem NÃO falou fica mais\n     perto da vez dele — é o que faz o grupo se revezar sozinho. */\n  const marcarQueFalou = (quem) => {\n    const mem = garantirAliados(aliadosRef.current);\n    for (const [nome, a] of Object.entries(mem)) {\n      mem[nome] = { ...a, calado: nome === quem ? 0 : a.calado + 1 };\n    }\n    aliadosRef.current = mem;\n  };"
+  },
+  {
+   "nome": "aliadoVaiEmbora",
+   "de": "componente",
+   "texto": "  const aliadoVaiEmbora = (quem) => {\n    const mem = garantirAliados(aliadosRef.current);\n    if (!mem[quem]) return;\n    mem[quem] = { ...mem[quem], saiu: true };\n    aliadosRef.current = mem;\n    mudarFicha((p) => ({ ...p, grupo: (p.grupo || []).filter((g) => (g.nome || \"\") !== quem) }));\n    pushMsgs([{ autor: \"sistema\", texto: `${quem} pegou as coisas dele e foi embora.` }]);\n    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaGente(\"companheiroFoiEmbora\", { quem });\n  };"
+  },
+  {
+   "nome": "menteDaAmeaca",
+   "de": "componente",
+   "texto": "  /* ---------------- A MENTE DA AMEAÇA (v9.107) ----------------\n     O retrato que o Sistema Vilão lê. Nenhum campo é inventado: o plano\n     vem de `vilao.js`, o que chegou até ele vem do livro-razão, e o\n     herói pelos olhos dele sai da ficha e dos contadores. */\n  const menteDaAmeaca = () => {\n    const v = nemesisRef.current;\n    if (!v || !v.nome) return null;\n    const p0 = fichaViva() || personagem || {};\n    const saber = garantirSaber(saberRef.current);\n    const naoSabe = oQueEleNaoSabe(saber, (registroRef.current || []).filter((x) => x.peso >= 2));\n    return {\n      nome: v.nome, arquetipo: v.arquetipo, corpo: v.corpo || \"pessoa\",\n      passo: v.passo || 0, conhecido: !!v.conhecido, marcas: (v.marcas || []).length,\n      quanto: saber.length,\n      certezaMax: saber.reduce((a, x) => Math.max(a, certezaDe(x)), 0),\n      ignora: naoSabe.length,\n      fama: Math.round(famaAtual()),\n      nivel: p0.nivel || 1,\n      heroiFerido: (p0.vida || 0) < (p0.vidaMax || 1) * 0.5,\n      heroiSozinho: !(p0.grupo || []).length,\n      heroiRico: (p0.moedas || 0) >= 300,\n      heroiMatou: (contRef.current.inimigosDerrotados || 0) > 0,\n      heroiPoupou: (contRef.current.poupados || 0) > 0,\n      heroiFugiu: (contRef.current.fugas || 0) > 0,\n      heroiAceitouAlgo: (contRef.current.contratos || 0) > 0,\n      perto: !!(v.marcas || []).some((m) => String(m).includes(cidadeAtualRef.current || \"\\u0000\")),\n      dia: diaRef.current,\n      desdeQueAgiu: diaRef.current - vilaoAgiuRef.current,\n    };\n  };"
+  },
+  {
+   "nome": "respostaDaAmeaca",
+   "de": "componente",
+   "texto": "  const respostaDaAmeaca = () => {\n    try {\n      const m = menteDaAmeaca();\n      if (!m) return null;\n      const r = responder(m);\n      if (r) vilaoAgiuRef.current = diaRef.current;\n      return r;\n    } catch { return null; }\n  };"
+  },
+  {
+   "nome": "pessoasDaCena",
+   "de": "componente",
+   "texto": "  const pessoasDaCena = () => {\n    try {\n      const p0 = fichaViva() || personagem || {};\n      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current });\n      const quantos = aqui.length;\n      const daBase = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);\n      const confid = confidenciasRef.current || [];\n      return aqui.map((x) => {\n        const nome = typeof x === \"string\" ? x : x.nome;\n        const n = npcsRef.current[nome] || {};\n        const l = garantirLaco(n.laco);\n        const daBaseEla = ((daBase && daBase.gente) || []).find((g) => g.nome === nome) || {};\n        const noGrupo = (p0.grupo || []).some((g) => (g.nome || \"\") === nome);\n        return {\n          nome,\n          papel: n.papel || daBaseEla.papel || \"\",\n          temperamento: n.traco || daBaseEla.traco || \"\",\n          quer: daBaseEla.vontade || n.notas || \"\",\n          teme: n.segredo || \"\",\n          relacao: n.relacao || \"desconhecido\",\n          laco: (l && l.tipo) || \"\",\n          forcaDoLaco: (l && !l.rompido && l.forca) || 0,\n          rompido: !!(l && l.rompido),\n          euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || \"\")) || (l && l.tipo === \"divida\"),\n          /* 11/10 (MM11 · 5.ª sessão, M35): quem recebeu de mim sem que eu\n             pedisse nada fica a dever (`registarABolsaDaFrase`) — o sinal\n             que o Intérprete e a índole já liam e ninguém acendia */\n          meDeve: !!n.meDeve,\n          sabeDeMim: confid.some((c) => (c.ouvintes || []).includes(nome)),\n          euSeiDela: !!n.segredo,\n          primeiraVez: n.conhecidoEm == null && !noGrupo, /* v9.315: dia 0 é conhecido, não \"nunca vi\" (!n.conhecidoEm tratava os dois igual) */\n          viuAntes: (() => { try { return jaMeViuAntes(n, { hoje: diaRef.current, vistos: (elencoSaveRef.current || {}).vistos }); } catch (e) { calou(\"viuAntes\", e); return false; } })(),\n          ato: atoDoTurnoRef.current,\n          quantosEscutam: Math.max(0, quantos - 1),\n          aSos: quantos <= 1,\n          emPerigo: !!combateRef.current || (personagemRef.current || personagem || {}).vida < ((personagemRef.current || personagem || {}).vidaMax || 1) * 0.35,\n          emCombate: !!combateRef.current,\n          noLugarDela: !!(lugarRef.current && daBaseEla.local && lugarRef.current.nome === daBaseEla.local),\n          tocaramNoSegredo: !!n.segredo && /segredo|verdade|passado|de onde|quem [ée]/i.test(atoDoTurnoRef.current === \"pedi\" ? \"pergunta\" : \"\"),\n          ehCompanheiro: noGrupo,\n          fama: Math.round(famaAtual()),\n          noite: ehNoite(minutoRef.current),\n        };\n      });\n    } catch (e) { return calou(\"pessoasDaCena\", e); }\n  };"
+  },
+  {
+   "nome": "linhaDoLugarDaMesa",
+   "de": "componente",
+   "texto": "  /* O rótulo curto do lugar, que o registro guarda e o Arquivista casa.\n     Curto de propósito: \"no Escudo das Velas\" casa com \"no Escudo das\n     Velas, dentro de Forte do Vigia\" na comparação por prefixo. */\n  const linhaDoLugarDaMesa = () => {\n    const mm = masmorraRef.current;\n    if (mm && !mm.encerrada) return mm.nome;\n    if (lugarRef.current && lugarRef.current.nome) return lugarRef.current.nome;\n    if (jornadaRef.current) return `estrada para ${jornadaRef.current.para || \"adiante\"}`;\n    return cidadeAtualRef.current || \"\";\n  };"
+  },
+  {
+   "nome": "contextoDoEspaco",
+   "de": "componente",
+   "texto": "  /* ---------------- O ESPAÇO, NUMA CHAMADA (v9.118) ----------------\n     Cinco lugares deste arquivo montavam à mão o mesmo objeto para\n     perguntar onde o herói está — cidade, jornada, masmorra, mapa, lugar —\n     e bastava um deles esquecer um campo para o Geógrafo responder sobre\n     um herói que não era este. Agora é uma função só, e quem quiser\n     acrescentar um campo acrescenta para todos de uma vez. */\n  const contextoDoEspaco = () => ({\n    cidadeAtual: cidadeAtualRef.current,\n    jornada: jornadaRef.current,\n    masmorra: masmorraRef.current,\n    mapa: mapaRef.current,\n    lugar: lugarRef.current,\n    semente: sementeMundo(),\n  });"
+  },
+  {
+   "nome": "meuPonto",
+   "de": "componente",
+   "texto": "  /* Onde eu estou, em coordenada. É esta a posição que a tela desenha, que\n     o Mestre recebe e que a boca de uma masmorra guarda ao ser aberta. */\n  const meuPonto = () => { try { return (posicaoDoHeroi(contextoDoEspaco()) || {}).coord || null; } catch (e) { calou(\"meuPonto\", e); return null; } };"
+  },
+  {
+   "nome": "biomaDaqui",
+   "de": "componente",
+   "texto": "  /* v9.56: a linha da viagem passou a dizer PARA ONDE e QUANTO FALTA. Ela\n     dizia só de onde e desde quando — o Mestre não sabia sequer o destino,\n     e por isso escrevia \"a estrada segue\" turno após turno sem nunca\n     apertar o ritmo. */\n  /* ---------------- O BIOMA DE ONDE EU ESTOU (v9.99) ----------------\n     Esta busca estava copiada em quatro lugares, e as quatro cópias\n     tinham o mesmo furo: fora de cidade devolviam \"planicie\". Quem\n     forrageia no meio de um pântano colhia flor de planície, e o\n     acampamento da estrada nascia sempre no mesmo descampado.\n\n     Em viagem o bioma é o da cidade DE ONDE parti — a estrada atravessa\n     a paisagem das duas pontas, e a de partida é a única que o sistema\n     tem certeza de já ter visto. */\n  const biomaDaqui = () => {\n    const cs = (mapaRef.current && mapaRef.current.cidades) || [];\n    const acha = (nome) => (cs.find((c) => c.nome === nome) || {}).bioma || \"\";\n    const j = jornadaRef.current;\n    return acha(cidadeAtualRef.current) || (j ? acha(j.de) || acha(j.para) : \"\") || \"planicie\";\n  };"
+  },
+  {
+   "nome": "famaAtual",
+   "de": "componente",
+   "texto": "  /* o nível é o da ficha VIVA (o ref, 4.ª fatia): o `personagem` do render\n     é nulo nas closures que nascem no primeiro render (o aplicarResposta é\n     uma delas), e a fama caía no nível 1 — o defeito 4 de 28/10 */\n  const famaAtual = () => calcularFama(contRef.current, ((personagemRef.current || personagem || {}).nivel) || 1, dominiosDe(mapaRef.current).length);"
+  },
+  {
+   "nome": "mundoDaBase",
+   "de": "componente",
+   "texto": "  /* MM15 (4): o mundo que o segredo guardado precisa para saber o que um\n     lugar É na base e quem lá trabalha — o mesmo formato de mundoDasTarefas. */\n  const mundoDaBase = () => ({ semente: sementeMundo(), mapa: mapaRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, base: baseMundoRef.current });"
+  },
+  {
+   "nome": "minhaCasa",
+   "de": "componente",
+   "texto": "  /* ---------------- AS MAOS DA CASA (v9.133) ----------------\n     Nenhuma regra mora aqui: tudo o que decide esta em `guildas.js`, e este\n     bloco so aciona, guarda e conta ao jogador. */\n  const minhaCasa = () => (guildasRef.current || []).find((g) => g.membro) || null;"
+  },
+  {
+   "nome": "lugarDaMesa",
+   "de": "componente",
+   "texto": "  /* ---------------- A CONSULTA AO BIBLIOTECARIO (v9.85) ----------------\n     O mestre ja escolhia bem QUAL fio puxar. O que ele nunca teve foi a\n     segunda metade da decisao, que e a FORMA: um relogio quase cheio pode\n     entrar numa cena de vinte maneiras, e o envelope pedia sempre a mesma\n     — \"traga isto a cena em duas ou tres frases\". Pedido igual todo turno\n     recebe resposta igual todo turno, e era dai que vinha a repeticao do\n     narrador, nao da temperatura.\n\n     Aqui o mestre monta a situacao com o que ele JA SABE — a mesa, o arco,\n     a fase do vilao, quem esta na cena — e a estante devolve uma forma. O\n     nome dela nao viaja: sobe a forma, nunca a etiqueta. */\n  /* ---------------- O QUE O MESTRE SABE DO LUGAR (v9.93) ----------------\n     Tudo já existia: o mapa guarda porte, bioma e rotas com dias; o\n     registro de gente sabe quem está aqui e quem está longe. O que não\n     existia era alguém PERGUNTANDO antes de decidir — e por isso um cerco\n     podia germinar numa aldeia sem portão, e um reencontro podia ser\n     escolhido com a única pessoa conhecida sentada na minha frente. */\n  const lugarDaMesa = () => {\n    try {\n      const mapa = mapaRef.current || {};\n      const cidades = mapa.cidades || [];\n      const aqui = cidades.find((c) => c.nome === cidadeAtualRef.current) || null;\n      const p0 = fichaViva() || {};\n      const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });\n      /* a vizinha conhecida mais perto, em dias de estrada. Só conta o que\n         o jogador JÁ descobriu: um caminho que ele não conhece não é uma\n         saída, é névoa. */\n      const conhecidas = new Set(cidades.filter((c) => c.descoberta).map((c) => c.nome));\n      const dias = (mapa.rotas || [])\n        .filter((r) => (r.de === cidadeAtualRef.current && conhecidas.has(r.para)) || (r.para === cidadeAtualRef.current && conhecidas.has(r.de)))\n        .map((r) => Number(r.dias) || 0).filter((d) => d > 0);\n      return {\n        porte: (aqui && aqui.porte) || \"\",\n        bioma: (aqui && aqui.bioma) || \"\",\n        gentePorPerto: (el.aqui || []).length,\n        genteLonge: (el.longe || []).length,\n        diasAteVizinha: dias.length ? Math.min(...dias) : 0,\n      };\n    } catch { return {}; }\n  };"
+  },
+  {
+   "nome": "elencoDaOnda",
+   "de": "componente",
+   "texto": "  /* ---------------- O ELENCO QUE A ONDA CONSULTA (v9.97) ----------------\n     \"Os fins não sabem de quem falam: o sistema escolhe 'um amor que\n     termina' sem saber se há um casal registrado nesta campanha.\"\n\n     Agora sabe. `aqui` é quem está na cena e pode ser nomeado numa\n     semente; `lacos` é quem já é alguma coisa de mim, por tipo. Um \"amor\n     que termina\" só abre se houver um amor — e o nome dela sai daqui, não\n     da imaginação de quem narra. */\n  const elencoDaOnda = () => {\n    try {\n      const p0 = fichaViva() || {};\n      const el = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] });\n      const lacos = { rompidos: comLaco(npcsRef.current, { rompido: true }) };\n      for (const t of TIPOS_DE_LACO) lacos[t.id] = comLaco(npcsRef.current, { tipo: t.id, rompido: false });\n      /* e os PARES que já existem entre gente do registro: é o que permite\n         \"os dois querem que eu escolha\" saber quais dois, e é o que faz o\n         mundo ter história sem mim no meio */\n      return { aqui: (el.aqui || []).map((x) => x.nome).filter(Boolean), lacos, entre: paresEntre(npcsRef.current) };\n    } catch { return { aqui: [], lacos: {} }; }\n  };"
+  },
+  {
+   "nome": "situacaoDaMesa",
+   "de": "componente",
+   "texto": "  const situacaoDaMesa = ({ fio = \"\" } = {}) => {\n    const p0 = fichaViva() || {};\n    const h = historiaRef.current || {};\n    const est = estruturaPorId(h.estrutura);\n    const nEt = Math.max(1, (est.etapas || []).length - 1);\n    const v = nemesisRef.current;\n    const vivo = v && v.status !== \"derrotada\";\n    const daqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [] }).aqui || [];\n    /* ---------------- O HISTORICO E DO SISTEMA (v9.86) ----------------\n       Tres formas dependem de haver passado nesta campanha, e ate aqui quem\n       decidia se havia era a IA: o `evite` mandava escolher outra forma se\n       nao houvesse. Delegar essa pergunta e exatamente o que esta casa nao\n       faz — o registro de pessoas e os feitos do arco estao do lado de ca.\n       Uma IA que recebe \"traga alguem que voce ja conhece\" numa campanha de\n       dois dias faz a unica coisa que pode: inventa a pessoa. */\n    const feitos = (h.feitos || []).length;\n    return {\n      ordemDaFase: vivo ? (faseDe(v.fase).ordem) : -1,\n      vilaoConhecido: !!(vivo && v.conhecido),\n      momento: (Number(h.etapa) || 0) / nEt,\n      temperatura: temperaturaDaMesa(mesaRef.current).id,\n      pilarFaminto: (pilarFaminto(mesaRef.current) || {}).id || null,\n      /* v9.88: e o oposto dele — o que o JOGADOR vem repetindo, para a\n         estante parar de somar mais do mesmo em cima do que ele já traz */\n      pilarRecente: (pilarRepetido(mesaRef.current) || {}).id || null,\n      fio,\n      pessoaNaCena: daqui.length > 0,\n      emCidade: !!cidadeAtualRef.current,\n      emMasmorra: !!masmorraRef.current,\n      emCombate: !!combateRef.current,\n      emViagem: !!jornadaRef.current,\n      noite: ehNoite(minutoRef.current),\n      temGrupo: (p0.grupo || []).length > 0,\n      temPromessa: (missoesAtivas(missoesRef.current) || []).length > 0,\n      temCicatriz: ((p0.cicatrizes || []).length > 0),\n      temDerrotado: derrotadosDaSessaoRef.current.length > 0,\n      temLugarAbandonado: (((mapaRef.current || {}).cidades) || []).some((c) => c.descoberta && c.nome !== cidadeAtualRef.current),\n      temRelogio: (relogiosRef.current || []).some((x) => x.cheios > 0),\n      temGenteConhecida: Object.keys(npcsRef.current || {}).length > 0,\n      temPassado: feitos >= 2 || derrotadosDaSessaoRef.current.length > 0 || (p0.cicatrizes || []).length > 0,\n      /* v9.87: tres memorias diferentes, e nao uma so. Um heroi com tres\n         cicatrizes e nenhum quilometro rodado tem passado de sobra e nenhum\n         lugar de que se lembrar; um que conversou duas vezes nao tem frase\n         para ecoar. Os limiares sao baixos de proposito — a trava existe\n         para a campanha RECEM-NASCIDA, nao para racionar a forma. */\n      /* v9.88: contar NARRACOES era proxy grosso — doze paragrafos de\n         travessia e descricao nao deixam uma frase para ecoar. Conta-se\n         agora a narracao que tem FALA dentro (aspas ou travessao), que e o\n         que o eco precisa que exista. Continua sendo proxy: se ha uma\n         frase memoravel so a IA sabe, e este e o unico caso em que\n         devolver a pergunta a ela seria defensavel. */\n      temFalaAnterior: (mensagensRef.current || []).filter((m) => m && m.autor === \"mestre\" && /[“\"”]|—s/.test(String(m.texto || \"\"))).length >= 8,\n      temObjetos: (p0.inventario || []).length >= 3,\n      temLugarVisitado: cidadesPisadas(mapaRef.current).length >= 2,\n      ...lugarDaMesa(),\n      pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),\n      nivel: p0.nivel || 1,\n      fama: famaAtual(),\n    };\n  };"
+  },
+  {
+   "nome": "bancasDaCena",
+   "de": "componente",
+   "texto": "  /* 9.ª sessão (v9.433): as bancas que estão NA CENA — na cidade, as de\n     sempre; na estrada, só a carroça do ambulante (a cidade de partida ficou\n     para trás); na masmorra aberta, nenhuma. É daqui que a pauta tira o\n     preço e a frase compra. */\n  const bancasDaCena = () => {\n    if (masmorraRef.current && !masmorraRef.current.encerrada) return [];\n    const todas = Array.isArray(mercadoAqui) ? mercadoAqui : [];\n    if (jornadaRef.current) return todas.filter((m) => m && m.tipo === \"ambulante\");\n    return cidadeAtualRef.current ? todas : [];\n  };"
+  },
+  {
+   "nome": "balcaoAqui",
+   "de": "componente",
+   "texto": "  /* ---------------- COMPRAR MANTIMENTO (v9.150) ----------------\n     O preço é recalculado AQUI, e não lido do que a tela mostrou: a\n     tela pode estar velha (o dia virou, a estação mudou, a pressão da\n     praça andou) e cobrar o número antigo seria deixar o jogador\n     comprar no preço de ontem. Quem decide o preço é sempre o mesmo\n     lugar, no instante do gesto. */\n  const balcaoAqui = (cid = cidadeMercado) => balcaoDeMantimentos(cid, {\n    dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {},\n    extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }),\n    temKit: garantirSuprimentos((personagemRef.current || personagem).suprimentos).kit,\n  });"
+  },
+  {
+   "nome": "potenciasAqui",
+   "de": "componente",
+   "texto": "  /* DIPLOMACIA: propostas a potências vão para a ficção; o Mestre decide a\n     resposta do líder e só registra o tratado firmado — os efeitos (renda,\n     tributo) são calculados pelo app. */\n  /* ---------------- A DIPLOMACIA (v9.142) ----------------\n     Esta era a última sala em que a IA decidia o que existe. O texto que ia\n     ao Narrador dizia \"A DECISÃO É DELE(A)\" e mandava a IA escrever o\n     tratado de volta no mundo. Todo o resto do projeto foi feito para tirar\n     exatamente isso dela.\n\n     Agora quem pesa é o código — apreço, apetite, medo, orgulho, poder\n     relativo, fama, e o que você fez desde a última vez — e o Narrador\n     recebe o veredito como fato consumado, para encenar a mesa. */\n  const potenciasAqui = () => potenciasDoMundo({\n    guildas: guildasRef.current || [],\n    faccoes: (mapaRef.current || {}).faccoes || [],\n    faccaoJogador: faccaoJogadorRef.current || \"\",\n  });"
+  },
+  {
+   "nome": "cidadeMercado",
+   "de": "render",
+   "texto": "  const cidadeMercado = cidadeDoMapa(cidadeAtualRef.current);"
+  },
+  {
+   "nome": "mercadoAqui",
+   "de": "render",
+   "texto": "  const mercadoAqui = (() => {\n    const comprados = (mercado && mercado.comprados) || {};\n    const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });\n    const lista = [];\n    /* 10.ª sessão (v9.455, M16): a carroça do ambulante só está à mão enquanto\n       a viagem em que ela apareceu está aberta — chegado à cidade, ela seguiu\n       viagem, e nem o painel nem a pauta a vendem (a \"banca da chave\" que o\n       Mestre pôs na praça saía daqui). Um save antigo, sem trecho, vale só na\n       estrada. */\n    const carrocaAVista = (() => {\n      try {\n        const amb = mercado && mercado.ambulante, j = jornadaRef.current;\n        if (!amb || !j) return false;\n        return !amb.trecho || amb.trecho === (j.de || \"\") + \">\" + (j.para || \"\");\n      } catch (e) { calou(\"a carroça à vista\", e); return false; }\n    })();\n    if (carrocaAVista) lista.push(semEstoqueGasto(mercado.ambulante));\n    if (cidadeMercado) lista.push(...mercadoresDaCidade(cidadeMercado, diaRef.current, (personagem && personagem.nivel) || 1, (mundoAtual() || {}).lexico, {\n      pressoes: (mercado && mercado.pressoes) || {},\n      /* v9.139: a casa de ofício de um domínio seu barateia aqui o que esta\n         cidade produz. É a primeira vez que uma decisão de governo aparece\n         na etiqueta de um preço. */\n      oficina: (g) => { const f = fatorDaOficina((governos || {})[cidadeMercado.nome], g, cidadeMercado); return f === 1 ? null : { fator: f, porque: \"a casa de ofício daqui fabrica isto\" }; },\n    }).map(semEstoqueGasto));\n    /* CARTÓGRAFO (v9.14): quem vende papel põe os mapas das regiões que o\n       herói ainda não conhece na banca. Some sozinho quando não há mais o que\n       revelar — não fica um item morto na prateleira. */\n    const ocultas = regioesDoMapa(mapaRef.current, { conhecidas: false });\n    if (ocultas.length) {\n      const porRegiao = {};\n      for (const c of (mapaRef.current.cidades || [])) if (c.regiao) porRegiao[c.regiao] = (porRegiao[c.regiao] || 0) + 1;\n      const mapas = mapasAVenda(ocultas, porRegiao);\n      for (const l of lista) {\n        if (l.tipo !== \"geral\" && l.tipo !== \"relicario\") continue;\n        const gastos = (mercado && mercado.comprados && mercado.comprados[l.id]) || [];\n        l.estoque = [...l.estoque, ...mapas.filter((mp) => !gastos.includes(mp.nome))];\n      }\n    }\n    /* v9.44: o desconto do Mercador é aplicado no ESTOQUE, não no caixa. A\n       etiqueta que o jogador lê e a moeda que sai do bolso saem daqui — se o\n       desconto morasse só em `comprarNoMercado`, a banca anunciaria um preço\n       e cobraria outro, que é a pior forma de dar um benefício. */\n    /* v9.138: A PECHINCHA MORA AQUI, com o desconto da profissão, pelo\n       mesmo motivo que ele mora aqui desde a v9.44: a etiqueta que o jogador\n       lê e a moeda que sai do bolso saem da MESMA linha. Barganha aplicada\n       só no caixa é uma banca que anuncia um preço e cobra outro. */\n    const barg = (mercado && mercado.pechinchas) || {};\n    return lista.map((l) => {\n      const b = barg[l.id];\n      const aj = (b && b.dia === diaRef.current && b.ajuste) || 1;\n      return {\n        ...l,\n        caixa: podePagar(l, cidadeMercado, diaRef.current, ((mercado && mercado.gastos && mercado.gastos[l.id] && mercado.gastos[l.id].dia === diaRef.current) ? mercado.gastos[l.id].moedas : 0)),\n        barganha: (b && b.dia === diaRef.current) ? b : null,\n        estoque: (l.estoque || []).map((it) => ({ ...it, preco: Math.max(1, Math.round(precoDeCompraPara(personagem, it.preco) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current))) })),\n      };\n    });\n  })();"
+  }
+ ],
+ "refs": {
+  "aberturaMundoRef": {
+   "campo": "abertura",
+   "padrao": "garantirAbertura(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "acampadoRef": {
+   "campo": "acampado",
+   "padrao": "false",
+   "escreve": false,
+   "salvo": true
+  },
+  "aliadosRef": {
+   "campo": "aliados",
+   "padrao": "{}",
+   "escreve": true,
+   "salvo": true
+  },
+  "atoDoTurnoRef": {
+   "campo": "atoDoTurno",
+   "padrao": "\"nada\"",
+   "escreve": false,
+   "salvo": false
+  },
+  "baseMundoRef": {
+   "campo": "baseMundo",
+   "padrao": "garantirBase(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "cidadeAtualRef": {
+   "campo": "cidadeAtual",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": true
+  },
+  "climaRef": {
+   "campo": "clima",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "cobradasRef": {
+   "campo": "cobradas",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": true
+  },
+  "cobrouAgoraRef": {
+   "campo": "cobrouAgora",
+   "padrao": "false",
+   "escreve": true,
+   "salvo": false
+  },
+  "combateRef": {
+   "campo": "combate",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "compassoRef": {
+   "campo": "compasso",
+   "padrao": "garantirCompasso(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "confidenciasRef": {
+   "campo": "confidencias",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "contRef": {
+   "campo": "contadores",
+   "padrao": "{ ...CONTADORES_INICIAIS }",
+   "escreve": false,
+   "salvo": true
+  },
+  "coracaoFalaRef": {
+   "campo": "coracaoFala",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "coracaoPendenteRef": {
+   "campo": "coracaoPendente",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "coracaoRef": {
+   "campo": "coracao",
+   "padrao": "garantirCoracaoDoSave(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "coracaoRitmoRef": {
+   "campo": "coracaoRitmo",
+   "padrao": "{ ultimas: {} }",
+   "escreve": false,
+   "salvo": false
+  },
+  "criaturaAVistaRef": {
+   "campo": "criaturaAVista",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "crimeDoTurnoRef": {
+   "campo": "crimeDoTurno",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "derrotadosDaSessaoRef": {
+   "campo": "derrotadosDaSessao",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": false
+  },
+  "diaRef": {
+   "campo": "dia",
+   "padrao": "1",
+   "escreve": false,
+   "salvo": true
+  },
+  "diplomaciaRef": {
+   "campo": "diplomacia",
+   "padrao": "garantirDiplomacia(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "elencoCacheRef": {
+   "campo": "elencoCache",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "elencoMemRef": {
+   "campo": "elencoMem",
+   "padrao": "{}",
+   "escreve": true,
+   "salvo": true
+  },
+  "elencoSaveRef": {
+   "campo": "elenco",
+   "padrao": "garantirElencoDoSave(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "emCenaRef": {
+   "campo": "emCena",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "episodioRef": {
+   "campo": "episodio",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "escutaRef": {
+   "campo": "escuta",
+   "padrao": "garantirEscuta(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "espinhaRef": {
+   "campo": "espinha",
+   "padrao": "garantirEspinha(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "faccaoJogadorRef": {
+   "campo": "faccaoJogador",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": true
+  },
+  "falasDoTurnoRef": {
+   "campo": "falasDoTurno",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": false
+  },
+  "fatosDoPesoRef": {
+   "campo": "fatosDoPeso",
+   "padrao": "{}",
+   "escreve": true,
+   "salvo": false
+  },
+  "fechoRef": {
+   "campo": "fecho",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": false
+  },
+  "formaRef": {
+   "campo": "forma",
+   "padrao": "garantirForma(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "formasCobradasRef": {
+   "campo": "formasCobradas",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": true
+  },
+  "golpeFinalEnvelopeRef": {
+   "campo": "golpeFinalEnvelope",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "golpesDaRodadaRef": {
+   "campo": "golpesDaRodada",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "governosRef": {
+   "campo": "governos",
+   "padrao": "{}",
+   "escreve": false,
+   "salvo": true
+  },
+  "guildasRef": {
+   "campo": "guildas",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "historiaRef": {
+   "campo": "historia",
+   "padrao": "garantirHistoria({ estrutura: \"jornada\", etapa: 0 })",
+   "escreve": false,
+   "salvo": true
+  },
+  "intencaoRef": {
+   "campo": "intencao",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": false
+  },
+  "interpreteRef": {
+   "campo": "interprete",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "jornadaRef": {
+   "campo": "jornada",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "leiRef": {
+   "campo": "lei",
+   "padrao": "garantirLei(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "lugarRef": {
+   "campo": "lugar",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "mapaRef": {
+   "campo": "mapa",
+   "padrao": "{ cidades: [], faccoes: [] }",
+   "escreve": false,
+   "salvo": true
+  },
+  "masmorraRef": {
+   "campo": "masmorra",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "mensagensRef": {
+   "campo": "mensagens",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "mercadoRef": {
+   "campo": "mercado",
+   "padrao": "{ comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} }",
+   "escreve": false,
+   "salvo": true
+  },
+  "mesaRef": {
+   "campo": "mesa",
+   "padrao": "garantirMesa(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "minutoRef": {
+   "campo": "minuto",
+   "padrao": "AMANHECER + 60",
+   "escreve": false,
+   "salvo": true
+  },
+  "missoesRef": {
+   "campo": "missoes",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "modoRef": {
+   "campo": "modo",
+   "padrao": "MODO_PADRAO",
+   "escreve": false,
+   "salvo": true
+  },
+  "mundoRef": {
+   "campo": "mundo",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "naoPodeDoTurnoRef": {
+   "campo": "naoPodeDoTurno",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": false
+  },
+  "nemesisRef": {
+   "campo": "nemesis",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "noiteRef": {
+   "campo": "noite",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "nomeCampanhaRef": {
+   "campo": "nomeCampanha",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": false
+  },
+  "nomesPendentesRef": {
+   "campo": "nomesPendentes",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "notaRef": {
+   "campo": "nota",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": false
+  },
+  "npcsRef": {
+   "campo": "npcs",
+   "padrao": "{}",
+   "escreve": false,
+   "salvo": true
+  },
+  "nucleoCacheRef": {
+   "campo": "nucleoCache",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "personagemRef": {
+   "campo": "personagem",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "posturaRef": {
+   "campo": "postura",
+   "padrao": "garantirPosturaAtiva(null)",
+   "escreve": false,
+   "salvo": true
+  },
+  "prometidoRef": {
+   "campo": "prometido",
+   "padrao": "garantirPrometido(null)",
+   "escreve": true,
+   "salvo": true
+  },
+  "propositosDoTurnoRef": {
+   "campo": "propositosDoTurno",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": false
+  },
+  "quemERef": {
+   "campo": "quemE",
+   "padrao": "{ ultimas: {}, cenas: {} }",
+   "escreve": true,
+   "salvo": false
+  },
+  "registroRef": {
+   "campo": "registro",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "reinoRef": {
+   "campo": "reino",
+   "padrao": "{}",
+   "escreve": false,
+   "salvo": true
+  },
+  "relogiosRef": {
+   "campo": "relogios",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "reviravoltaRef": {
+   "campo": "reviravolta",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "saberRef": {
+   "campo": "saber",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "sinoDoTurnoRef": {
+   "campo": "sinoDoTurno",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": false
+  },
+  "sitioRef": {
+   "campo": "sitio",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "subtramasCacheRef": {
+   "campo": "subtramasCache",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "torneioRef": {
+   "campo": "torneio",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "turnoDeRegistroRef": {
+   "campo": "turnoDeRegistro",
+   "padrao": "0",
+   "escreve": false,
+   "salvo": false
+  },
+  "ultimaAcaoRef": {
+   "campo": "ultimaAcao",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": false
+  },
+  "ultimaCobrancaRef": {
+   "campo": "ultimaCobranca",
+   "padrao": "-99",
+   "escreve": true,
+   "salvo": true
+  },
+  "ultimoPesoRef": {
+   "campo": "ultimoPeso",
+   "padrao": "{ peso: null, dia: 0 }",
+   "escreve": true,
+   "salvo": false
+  },
+  "vetosDoJuizRef": {
+   "campo": "vetosDoJuiz",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": false
+  },
+  "vilaoAgiuRef": {
+   "campo": "vilaoAgiu",
+   "padrao": "-99",
+   "escreve": true,
+   "salvo": true
+  }
+ },
+ "render": [
+  "governos",
+  "mercado",
+  "mundo",
+  "nomeCampanha",
+  "personagem",
+  "setPersonagem"
+ ],
+ "imports": {
+  "AMANHECER": {
+   "de": "./calendario.js",
+   "nome": "AMANHECER"
+  },
+  "CONTADORES_INICIAIS": {
+   "de": "./conquistas.js",
+   "nome": "CONTADORES_INICIAIS"
+  },
+  "DIAS_ATE_APODRECER": {
+   "de": "./aliado.js",
+   "nome": "DIAS_ATE_APODRECER"
+  },
+  "LUTA_SEM_PAINEL": {
+   "de": "./agressao.js",
+   "nome": "LUTA_SEM_PAINEL"
+  },
+  "MODO_PADRAO": {
+   "de": "./modos.js",
+   "nome": "MODO_PADRAO"
+  },
+  "MOLDE_PADRAO": {
+   "de": "./moldes.js",
+   "nome": "MOLDE_PADRAO"
+  },
+  "PESO_AMEACA": {
+   "de": "./orcamento.js",
+   "nome": "PESO_AMEACA"
+  },
+  "TIPOS_DE_LACO": {
+   "de": "./npcs.js",
+   "nome": "TIPOS_DE_LACO"
+  },
+  "aCidadeSobOsPes": {
+   "de": "./motor/tempo-do-turno.js",
+   "nome": "aCidadeSobOsPes"
+  },
+  "aliadoParaPauta": {
+   "de": "./aliado.js",
+   "nome": "paraPauta"
+  },
+  "apostas": {
+   "de": "./mesa-posta.js",
+   "nome": "apostas"
+  },
+  "arquivistaParaPauta": {
+   "de": "./registro.js",
+   "nome": "paraPauta"
+  },
+  "arredoresDaCidade": {
+   "de": "./arredores.js",
+   "nome": "arredoresDaCidade"
+  },
+  "avaliarEncontro": {
+   "de": "./orcamento.js",
+   "nome": "avaliarEncontro"
+  },
+  "avancarCoracao": {
+   "de": "./subtramas.js",
+   "nome": "avancarCoracao"
+  },
+  "balcaoDeMantimentos": {
+   "de": "./mercado.js",
+   "nome": "balcaoDeMantimentos"
+  },
+  "balcaoParaPauta": {
+   "de": "./bolsa-da-frase.js",
+   "nome": "balcaoParaPauta"
+  },
+  "calcularFama": {
+   "de": "./fama.js",
+   "nome": "calcularFama"
+  },
+  "cederNaCena": {
+   "de": "./pauta.js",
+   "nome": "cederNaCena"
+  },
+  "certezaDe": {
+   "de": "./antagonista.js",
+   "nome": "certezaDe"
+  },
+  "cidadesPisadas": {
+   "de": "./geografia.js",
+   "nome": "cidadesPisadas"
+  },
+  "cobrarNoTurno": {
+   "de": "./prometido.js",
+   "nome": "cobrarNoTurno"
+  },
+  "codigoPorId": {
+   "de": "./aliado.js",
+   "nome": "codigoPorId"
+  },
+  "comLaco": {
+   "de": "./npcs.js",
+   "nome": "comLaco"
+  },
+  "comodosDoLocal": {
+   "de": "./comodos.js",
+   "nome": "comodosDoLocal"
+  },
+  "consultarCobrador": {
+   "de": "./cobrador.js",
+   "nome": "consultarCobrador"
+  },
+  "cruzouOCodigo": {
+   "de": "./aliado.js",
+   "nome": "cruzouOCodigo"
+  },
+  "degrauDaEscuta": {
+   "de": "./escuta.js",
+   "nome": "degrauDaEscuta"
+  },
+  "dominiosDe": {
+   "de": "./gestao.js",
+   "nome": "dominiosDe"
+  },
+  "ehNoite": {
+   "de": "./calendario.js",
+   "nome": "ehNoite"
+  },
+  "elencoDaCena": {
+   "de": "./cena.js",
+   "nome": "elencoDaCena"
+  },
+  "elencoDoMundo": {
+   "de": "./elenco.js",
+   "nome": "elencoDoMundo"
+  },
+  "envelopeDaChave": {
+   "de": "./torneio.js",
+   "nome": "envelopeDaChave"
+  },
+  "envelopeDaEspinha": {
+   "de": "./saga.js",
+   "nome": "envelopeDaEspinha"
+  },
+  "envelopeDaGuilda": {
+   "de": "./guildas.js",
+   "nome": "envelopeDaGuilda"
+  },
+  "envelopeDaVirada": {
+   "de": "./adversario.js",
+   "nome": "envelopeDaVirada"
+  },
+  "envelopeDasFalas": {
+   "de": "./falas.js",
+   "nome": "envelopeDasFalas"
+  },
+  "envelopeDasPotencias": {
+   "de": "./diplomacia.js",
+   "nome": "envelopeDasPotencias"
+  },
+  "envelopeDoComercio": {
+   "de": "./comercio.js",
+   "nome": "envelopeDoComercio"
+  },
+  "envelopeDoDominio": {
+   "de": "./dominios.js",
+   "nome": "envelopeDoDominio"
+  },
+  "envelopeDoEpisodio": {
+   "de": "./episodios.js",
+   "nome": "envelopeDoEpisodio"
+  },
+  "envelopeDoMundo": {
+   "de": "./cobrador.js",
+   "nome": "envelopeDoMundo"
+  },
+  "escolherFecho": {
+   "de": "./fecho.js",
+   "nome": "escolherFecho"
+  },
+  "estruturaPorId": {
+   "de": "./historia.js",
+   "nome": "estruturaPorId"
+  },
+  "faseDe": {
+   "de": "./vilao.js",
+   "nome": "faseDe"
+  },
+  "fatorDaOficina": {
+   "de": "./dominios.js",
+   "nome": "fatorDaOficina"
+  },
+  "fatorDeMercado": {
+   "de": "./posturas.js",
+   "nome": "fatorDeMercado"
+  },
+  "fatorDePreco": {
+   "de": "./crime.js",
+   "nome": "fatorDePreco"
+  },
+  "fichaDaCidade": {
+   "de": "./cidade-por-dentro.js",
+   "nome": "fichaDaCidade"
+  },
+  "fichaParaPauta": {
+   "de": "./cidade-por-dentro.js",
+   "nome": "fichaParaPauta"
+  },
+  "fioDaHistoria": {
+   "de": "./escuta.js",
+   "nome": "fioDaHistoria"
+  },
+  "fioParaAPrincipal": {
+   "de": "./abertura.js",
+   "nome": "fioParaAPrincipal"
+  },
+  "foraDeCenaParaPauta": {
+   "de": "./elenco.js",
+   "nome": "foraDeCenaParaPauta"
+  },
+  "garantirAbertura": {
+   "de": "./abertura.js",
+   "nome": "garantirAbertura"
+  },
+  "garantirAliados": {
+   "de": "./aliado.js",
+   "nome": "garantirAliados"
+  },
+  "garantirBase": {
+   "de": "./mundo-base.js",
+   "nome": "garantirBase"
+  },
+  "garantirCompasso": {
+   "de": "./compasso.js",
+   "nome": "garantirCompasso"
+  },
+  "garantirCoracaoDoSave": {
+   "de": "./nucleo.js",
+   "nome": "garantirCoracaoDoSave"
+  },
+  "garantirDiplomacia": {
+   "de": "./diplomacia.js",
+   "nome": "garantirDiplomacia"
+  },
+  "garantirElencoDoSave": {
+   "de": "./elenco.js",
+   "nome": "garantirElencoDoSave"
+  },
+  "garantirEscuta": {
+   "de": "./escuta.js",
+   "nome": "garantirEscuta"
+  },
+  "garantirEspaco": {
+   "de": "./geografo.js",
+   "nome": "garantirEspaco"
+  },
+  "garantirEspinha": {
+   "de": "./saga.js",
+   "nome": "garantirEspinha"
+  },
+  "garantirForma": {
+   "de": "./lei-da-forma.js",
+   "nome": "garantirForma"
+  },
+  "garantirHistoria": {
+   "de": "./historia.js",
+   "nome": "garantirHistoria"
+  },
+  "garantirLaco": {
+   "de": "./npcs.js",
+   "nome": "garantirLaco"
+  },
+  "garantirLei": {
+   "de": "./crime.js",
+   "nome": "garantirLei"
+  },
+  "garantirMesa": {
+   "de": "./mestria.js",
+   "nome": "garantirMesa"
+  },
+  "garantirPauta": {
+   "de": "./pauta.js",
+   "nome": "garantirPauta"
+  },
+  "garantirPosturaAtiva": {
+   "de": "./posturas.js",
+   "nome": "garantirPosturaAtiva"
+  },
+  "garantirPrometido": {
+   "de": "./prometido.js",
+   "nome": "garantirPrometido"
+  },
+  "garantirSaber": {
+   "de": "./antagonista.js",
+   "nome": "garantirSaber"
+  },
+  "garantirSuprimentos": {
+   "de": "./ermos.js",
+   "nome": "garantirSuprimentos"
+  },
+  "genteParaPauta": {
+   "de": "./gente-por-dentro.js",
+   "nome": "genteParaPauta"
+  },
+  "golpeFinalNaPauta": {
+   "de": "./golpe-final.js",
+   "nome": "golpeFinalNaPauta"
+  },
+  "hashSemente": {
+   "de": "./semente.js",
+   "nome": "hashSemente"
+  },
+  "horizonteDaPergunta": {
+   "de": "./masmorra-sem-cidade.js",
+   "nome": "horizonteDaPergunta"
+  },
+  "intencaoDaVez": {
+   "de": "./adversario.js",
+   "nome": "intencaoDaVez"
+  },
+  "interpreteParaPauta": {
+   "de": "./interprete.js",
+   "nome": "paraPauta"
+  },
+  "jaMeViuAntes": {
+   "de": "./interprete.js",
+   "nome": "jaMeViuAntes"
+  },
+  "juntarRespostas": {
+   "de": "./perguntas.js",
+   "nome": "juntarRespostas"
+  },
+  "leiParaPauta": {
+   "de": "./lei-da-forma.js",
+   "nome": "leiParaPauta"
+  },
+  "lerOPedido": {
+   "de": "./escuta.js",
+   "nome": "lerOPedido"
+  },
+  "linhaDaFicha": {
+   "de": "./masmorra-sem-cidade.js",
+   "nome": "linhaDaFicha"
+  },
+  "linhaDaLuta": {
+   "de": "./adversario.js",
+   "nome": "linhaDaLuta"
+  },
+  "linhaDoMundo": {
+   "de": "./cobrador.js",
+   "nome": "linhaDoMundo"
+  },
+  "linhaDoRumo": {
+   "de": "./escuta.js",
+   "nome": "linhaDoRumo"
+  },
+  "linhaDosNomesAMao": {
+   "de": "./nomes.js",
+   "nome": "linhaDosNomesAMao"
+  },
+  "locaisDaCidade": {
+   "de": "./mundo-base.js",
+   "nome": "locaisDaCidade"
+  },
+  "luzDaLuta": {
+   "de": "./luz.js",
+   "nome": "luzDaLuta"
+  },
+  "luzParaPauta": {
+   "de": "./luz.js",
+   "nome": "luzParaPauta"
+  },
+  "mapasAVenda": {
+   "de": "./mercado.js",
+   "nome": "mapasAVenda"
+  },
+  "marcarMovimento": {
+   "de": "./interprete.js",
+   "nome": "marcarMovimento"
+  },
+  "marcoAtual": {
+   "de": "./saga.js",
+   "nome": "marcoAtual"
+  },
+  "masmorraParaPauta": {
+   "de": "./masmorras.js",
+   "nome": "masmorraParaPauta"
+  },
+  "menteDaCriatura": {
+   "de": "./adversario.js",
+   "nome": "menteDaCriatura"
+  },
+  "mercadoParaPauta": {
+   "de": "./mercado.js",
+   "nome": "mercadoParaPauta"
+  },
+  "mercadoresDaCidade": {
+   "de": "./mercado.js",
+   "nome": "mercadoresDaCidade"
+  },
+  "missoesAtivas": {
+   "de": "./missoes.js",
+   "nome": "ativas"
+  },
+  "moldePorId": {
+   "de": "./moldes.js",
+   "nome": "moldePorId"
+  },
+  "momentoDoFio": {
+   "de": "./saga.js",
+   "nome": "momentoDoFio"
+  },
+  "montarEmCena": {
+   "de": "./em-cena.js",
+   "nome": "montarEmCena"
+  },
+  "moralDoInimigo": {
+   "de": "./posturas.js",
+   "nome": "moralDoInimigo"
+  },
+  "nascerAliado": {
+   "de": "./aliado.js",
+   "nome": "nascerAliado"
+  },
+  "nomeDaMoeda": {
+   "de": "./lexico.js",
+   "nome": "nomeDaMoeda"
+  },
+  "nomesAMao": {
+   "de": "./nomes.js",
+   "nome": "nomesAMao"
+  },
+  "nucleoDaCampanha": {
+   "de": "./nucleo.js",
+   "nome": "nucleoDaCampanha"
+  },
+  "oEnvelopeDaGente": {
+   "de": "./motor/envelopes-do-turno.js",
+   "nome": "oEnvelopeDaGente"
+  },
+  "oEnvelopeDoFio": {
+   "de": "./motor/envelopes-do-turno.js",
+   "nome": "oEnvelopeDoFio"
+  },
+  "oQueEleNaoSabe": {
+   "de": "./antagonista.js",
+   "nome": "oQueEleNaoSabe"
+  },
+  "oQueExisteAqui": {
+   "de": "./mundo-base.js",
+   "nome": "oQueExisteAqui"
+  },
+  "paraPauta": {
+   "de": "./geografo.js",
+   "nome": "paraPauta"
+  },
+  "paresEntre": {
+   "de": "./npcs.js",
+   "nome": "paresEntre"
+  },
+  "pautaComEmCena": {
+   "de": "./em-cena.js",
+   "nome": "pautaComEmCena"
+  },
+  "pautaDoEscondido": {
+   "de": "./escondido.js",
+   "nome": "pautaDoEscondido"
+  },
+  "perfilCombate": {
+   "de": "./combate.js",
+   "nome": "perfilCombate"
+  },
+  "pesoDaCena": {
+   "de": "./peso.js",
+   "nome": "pesoDaCena"
+  },
+  "pilarFaminto": {
+   "de": "./mestria.js",
+   "nome": "pilarFaminto"
+  },
+  "pilarRepetido": {
+   "de": "./mestria.js",
+   "nome": "pilarRepetido"
+  },
+  "podePagar": {
+   "de": "./comercio.js",
+   "nome": "podePagar"
+  },
+  "porNaPauta": {
+   "de": "./pauta.js",
+   "nome": "porNaPauta"
+  },
+  "posicaoDoHeroi": {
+   "de": "./geografo.js",
+   "nome": "posicaoDoHeroi"
+  },
+  "potenciasDoMundo": {
+   "de": "./diplomacia.js",
+   "nome": "potenciasDoMundo"
+  },
+  "precoComumParaPauta": {
+   "de": "./mercado.js",
+   "nome": "precoComumParaPauta"
+  },
+  "precoDeCompraPara": {
+   "de": "./profissoes.js",
+   "nome": "precoDeCompraPara"
+  },
+  "precosDaRua": {
+   "de": "./mercado.js",
+   "nome": "precosDaRua"
+  },
+  "procuradoParaPauta": {
+   "de": "./crime.js",
+   "nome": "procuradoParaPauta"
+  },
+  "provocacaoDoRival": {
+   "de": "./torneio.js",
+   "nome": "provocacaoDoRival"
+  },
+  "proximoPasso": {
+   "de": "./abertura.js",
+   "nome": "proximoPasso"
+  },
+  "quemEParaPauta": {
+   "de": "./nucleo.js",
+   "nome": "quemEParaPauta"
+  },
+  "regioesDoMapa": {
+   "de": "./geografia.js",
+   "nome": "regioesDoMapa"
+  },
+  "responder": {
+   "de": "./antagonista.js",
+   "nome": "responder"
+  },
+  "rng": {
+   "de": "./semente.js",
+   "nome": "rng"
+  },
+  "saidaParaPauta": {
+   "de": "./elenco.js",
+   "nome": "saidaParaPauta"
+  },
+  "saidasDe": {
+   "de": "./masmorras.js",
+   "nome": "saidasDe"
+  },
+  "segredosGuardados": {
+   "de": "./segredo-guardado.js",
+   "nome": "segredosGuardados"
+  },
+  "sinosForaDeHora": {
+   "de": "./abertura.js",
+   "nome": "sinosForaDeHora"
+  },
+  "situacaoQueCasa": {
+   "de": "./mesa-posta.js",
+   "nome": "situacaoQueCasa"
+  },
+  "subtramasDoNucleo": {
+   "de": "./subtramas.js",
+   "nome": "subtramasDoNucleo"
+  },
+  "temperaturaDaMesa": {
+   "de": "./mestria.js",
+   "nome": "temperaturaDaMesa"
+  },
+  "tiposPedidos": {
+   "de": "./lugar.js",
+   "nome": "tiposPedidos"
+  },
+  "vetoDoPeso": {
+   "de": "./peso.js",
+   "nome": "vetoDoPeso"
+  },
+  "vetoDoSegredo": {
+   "de": "./segredo-guardado.js",
+   "nome": "vetoDoSegredo"
+  },
+  "vetosDaAbertura": {
+   "de": "./abertura.js",
+   "nome": "vetosDaAbertura"
+  },
+  "vetosParaAPauta": {
+   "de": "./motor/correcao-do-juiz.js",
+   "nome": "vetosParaAPauta"
+  },
+  "vilaoParaPauta": {
+   "de": "./antagonista.js",
+   "nome": "paraPauta"
+  },
+  "vistaDaLuta": {
+   "de": "./saida-da-luta.js",
+   "nome": "vistaDaLuta"
+  },
+  "vontadePorId": {
+   "de": "./aliado.js",
+   "nome": "vontadePorId"
+  }
+ },
+ "fotos": [
+  {
+   "texto": "3199ea93b56a7353",
+   "tam": 977,
+   "inteiro": "[PAUTA DO TURNO 1 — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. É ETIQUETA DE SISTEMA: nenhuma palavra daqui entra na narrativa nem na boca de ninguém.]\nONDE      fora de qualquer lugar registrado\n          comporta: correr, cercar, atirar de longe, ver quem se aproxima; montar, carregar em linha reta, fugir depressa; dizer o que não se diz na frente dos outros, e fazer o que ninguém vai contar\nEM CENA   a quem não tem nome: Wystan (ele) · Thalia (ela)\nQUEM É    Freya (voz só da Freya: trata toda a gente por \"criança\", até velhos): quer ver-se livre de um juramento que fez novo demais.\nNÃO PODE  o lugar não comporta: esconder-se sem alguma coisa entre você e o olho do outro; contar com socorro, e depois provar o que aconteceu; ter certeza de que alguém continua aqui dentro\nO FECHO   termine em um corte seco: um facto ou uma ação, numa frase curta; nunca o cheiro, o som ou o ar a pressagiar",
+   "pauta": "12acd81a61488dfb",
+   "refs": "50426b6fa5665438",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3d4bf14e3e759150",
+   "tam": 1313,
+   "inteiro": "[PAUTA DO TURNO 2 — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. É ETIQUETA DE SISTEMA: nenhuma palavra daqui entra na narrativa nem na boca de ninguém.]\nONDE      na taverna do Corvo\n          ⌖ K11 50,0 · 50,0\nEM CENA   Freya (com você)\nA FALA    Doran o Manco disse: \"— O forte não é o que parece.\" Estas falas JÁ ACONTECERAM, com estas palavras. Costure-as na cena com gesto, lugar e silêncio — não as reescreva, não resuma, não invente outra fala para quem já falou e não faça falar quem não está nesta lista.\nPERGUNTOU o preço daqui: caneca de cerveja ◉ 2 moedas\nNÃO PODE  o lugar não comporta: sacar aço sem que a casa inteira se meta; chegar a quem manda sem intermediário\n          narrar a luta a começar ou golpe trocado sem combate aberto pelo sistema: quem abre a luta é o sistema; mostre quem está à frente e pare antes do primeiro golpe\n          Não entregue a espada que a bolsa não pagou.\nO RUMO    responda primeiro ao que perguntei, com o que está nesta pauta; o que ninguém aqui sabe, quem responde diz que não sabe; depois, e por dentro da resposta, uma coisa só aponta para: Procurar Doran o Manco\nO FECHO   termine em um corte seco: um facto ou uma ação, numa frase curta; nunca o cheiro, o som ou o ar a pressagiar",
+   "pauta": "89c55d980434ab57",
+   "refs": "85f81e093dd3b343",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f4c61b211a6135d9",
+   "tam": 1090,
+   "inteiro": "[PAUTA DO TURNO 1 — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. É ETIQUETA DE SISTEMA: nenhuma palavra daqui entra na narrativa nem na boca de ninguém.]\nONDE      fora de qualquer lugar registrado\n          comporta: correr, cercar, atirar de longe, ver quem se aproxima; montar, carregar em linha reta, fugir depressa; dizer o que não se diz na frente dos outros, e fazer o que ninguém vai contar\nEM CENA   a quem não tem nome: Wystan (ele) · Thalia (ela)\nQUEM É    Freya (voz só da Freya: trata toda a gente por \"criança\", até velhos): quer ver-se livre de um juramento que fez novo demais.\nA GENTE   Doran o Manco baixa a voz e olha a porta.\nNÃO PODE  o lugar não comporta: esconder-se sem alguma coisa entre você e o olho do outro; contar com socorro, e depois provar o que aconteceu; ter certeza de que alguém continua aqui dentro\nO RUMO    reaja primeiro ao que eu fiz, na cara de quem está\nO FECHO   termine em um corte seco: um facto ou uma ação, numa frase curta; nunca o cheiro, o som ou o ar a pressagiar",
+   "pauta": "a1f00cae788f31b1",
+   "refs": "3c507848ac3220b8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3af62bc76e9b9369",
+   "tam": 1343,
+   "pauta": "fbc2f9112b3162bf",
+   "refs": "c61620c3b4d5d136",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "93971eb399e23885",
+   "tam": 1172,
+   "pauta": "e53c972ef131ec1f",
+   "refs": "277413daa32d59d7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b0e45af3e74b93e0",
+   "tam": 1343,
+   "pauta": "a96aa31e0f723cab",
+   "refs": "8ba688b58e739d39",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "799a27e197f80a73",
+   "tam": 1356,
+   "pauta": "00d6958b78fda3e1",
+   "refs": "6b68aca79358bc65",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "db371c1e3ab29144",
+   "tam": 1373,
+   "pauta": "dacbd2068a785b19",
+   "refs": "2d0f250d5bfd4f1d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "83f27fe39635971b",
+   "tam": 1352,
+   "pauta": "d0ad8bf7f481191d",
+   "refs": "c48984562b796ca5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a368880a3e378468",
+   "tam": 1097,
+   "pauta": "b05ec1f321d7b728",
+   "refs": "3688789f84909ede",
+   "portas": "a1d5a98f0cec8cbc",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e561477f4b84c2a0",
+   "tam": 1235,
+   "pauta": "5fda7038351481dc",
+   "refs": "4121a40f9c0374c3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "74234e98afe7498f",
+   "tam": -1,
+   "pauta": "74234e98afe7498f",
+   "refs": "9ca7a23e65c99b0d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": "Cannot read properties of undefined (reading 'find')",
+   "faltas": []
+  },
+  {
+   "texto": "ea4f801135f6a579",
+   "tam": 1366,
+   "pauta": "23a8edee3deea0d1",
+   "refs": "9eaeb8d0d255859b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "51a9b5350ac942b9",
+   "tam": 1333,
+   "pauta": "9e4a715062cecd55",
+   "refs": "59c0f22bff434b81",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "dca77d64e39ee32b",
+   "tam": 1164,
+   "pauta": "f2901f71dd99884e",
+   "refs": "9b9e13ab313292bb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e7b689335ddb0d93",
+   "tam": 1340,
+   "pauta": "6f8286b066a90c34",
+   "refs": "c5f87acdcdc61532",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2a8dcc161279d763",
+   "tam": 1302,
+   "pauta": "b1f85c0055a5d7cc",
+   "refs": "c33cb7faf55683ba",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "364b1e0ee67f9796",
+   "tam": 1324,
+   "pauta": "c6f6c1990f386036",
+   "refs": "5bcd369562d57442",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "095226fdbacb7584",
+   "tam": 1323,
+   "pauta": "f97821573bbd8154",
+   "refs": "a02414f70c1acfea",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "960a35e7d4aff509",
+   "tam": 1353,
+   "pauta": "66579ff5d8bb060c",
+   "refs": "804ee8d9e764be54",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d2fc03edc309d402",
+   "tam": 1359,
+   "pauta": "029a6321463b7d9f",
+   "refs": "7fa6170f00e38475",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "593d100506082103",
+   "tam": 1359,
+   "pauta": "c6559247591340f4",
+   "refs": "967abdc86f66502b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "aeb303b40a501714",
+   "tam": 1339,
+   "pauta": "3420e41e0f3f2254",
+   "refs": "f0f59bde7191f719",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "fb6caa7d8c79f0f5",
+   "tam": 1385,
+   "pauta": "301000e6f8041978",
+   "refs": "f0d9b0bbfec38ffb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "cfbc04fe9e3e3f1e",
+   "tam": 1269,
+   "pauta": "d451e6f9fd46188c",
+   "refs": "633e64d607f2c8c4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "07a90c5762e2a296",
+   "tam": 1293,
+   "pauta": "5ad3868d44686987",
+   "refs": "a3eee34c1414052e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "5fa4de98714bdf36",
+   "tam": 1370,
+   "pauta": "52843e6be458406b",
+   "refs": "1977f9d6c1cdd580",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e88a2c432934f59a",
+   "tam": 1315,
+   "pauta": "5ed1ab8ad48dfab4",
+   "refs": "5b34fba95b914913",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "50104a87c71b8a50",
+   "tam": 1256,
+   "pauta": "46af8391bfff75ff",
+   "refs": "0b97ce9760fea496",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d34fc0bdd5e2db1f",
+   "tam": 1354,
+   "pauta": "82fb8f58cf6de22c",
+   "refs": "a30ad3a87db2c902",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a7985917cc1056d0",
+   "tam": 1213,
+   "pauta": "b380d0cdef04dd4e",
+   "refs": "989826dd550eddc4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b9aba0e29f6071a8",
+   "tam": 1353,
+   "pauta": "f7ecf147dc27ee97",
+   "refs": "6d0cd2e7211c8667",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "c1d168f2297572c6",
+   "tam": 1315,
+   "pauta": "feddb51100ce7ed3",
+   "refs": "7f0bb7a3d82b6e0d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "c754d73d765e0d4d",
+   "tam": 1374,
+   "pauta": "13fe35f51b69629c",
+   "refs": "21bf7734919b7d35",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "af9829cc8342b58b",
+   "tam": 1370,
+   "pauta": "a92d1cd8f8e65140",
+   "refs": "8f220101b28ce870",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f2e200a33202e621",
+   "tam": 1347,
+   "pauta": "8dcd85927e99d650",
+   "refs": "ad70b09c618c470e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3c862b7844a38c2c",
+   "tam": 1360,
+   "pauta": "141cb82182d9246c",
+   "refs": "0e3d9b101902ed4e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "30bdafe9f8fc985f",
+   "tam": 1310,
+   "pauta": "80669d7e0c1713de",
+   "refs": "bc4384161b0f3828",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "5442b2c9b4221c0e",
+   "tam": 1017,
+   "pauta": "02cadd47bba64ba1",
+   "refs": "0f6c065d25b15244",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "23c0edf8930741f2",
+   "tam": 1348,
+   "pauta": "9c7f15e0c6af2a09",
+   "refs": "dd849c7436725e0e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b1b7cb5d48deb186",
+   "tam": 1187,
+   "pauta": "86d759373b9bf738",
+   "refs": "9f1080c16451cf5c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a3cea852f7542ede",
+   "tam": 1371,
+   "pauta": "6444299b1c6145d6",
+   "refs": "b89c83b7b61895a7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2afbd01ae2c41553",
+   "tam": 1364,
+   "pauta": "d9f74e0ba254394a",
+   "refs": "9a7757cc53736d15",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "8b328b90187125fc",
+   "tam": 1308,
+   "pauta": "fdcd32f1ab6a055d",
+   "refs": "fe15ac78ff996cba",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d7ac0d31987d1be7",
+   "tam": 1312,
+   "pauta": "5bd1bbea49b5db5f",
+   "refs": "5a49a3f80e5808d2",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e79acbde2990869b",
+   "tam": 1345,
+   "pauta": "b00102b6d0fed996",
+   "refs": "7ad647ef1b0057ea",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "5c34e6363f88016f",
+   "tam": 1353,
+   "pauta": "eb73541ce1e503f2",
+   "refs": "da692a1612b41bd4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "4166a3307515fc6e",
+   "tam": 1375,
+   "pauta": "103ae2d9dc299268",
+   "refs": "59a78e14cfd4cb0c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e9608b90089aae2b",
+   "tam": 1189,
+   "pauta": "2ba14e80b2802006",
+   "refs": "61192e375e3bd5ca",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "66c71074e7152ac2",
+   "tam": 1331,
+   "pauta": "852b3ce3874cc8e7",
+   "refs": "36e61afb91a08ee5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ea9bfe98dc753a0e",
+   "tam": 1110,
+   "pauta": "f3d26659f39b41c9",
+   "refs": "2cfe153720a77112",
+   "portas": "a1d5a98f0cec8cbc",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "712e48f44b88e5f8",
+   "tam": 1368,
+   "pauta": "fbdf74520d4f608a",
+   "refs": "4856ee63ca9f7d74",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "790c7c54437f314b",
+   "tam": 1307,
+   "pauta": "2c1ae020ad3c445b",
+   "refs": "0988e1366184e63b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a50c87c1422773e0",
+   "tam": 1367,
+   "pauta": "d6687d360fd1aefc",
+   "refs": "e859adad0f1231a0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3e75dabe1f99a43e",
+   "tam": 1330,
+   "pauta": "6f9994bb2917aade",
+   "refs": "9b863e45d3a04504",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0a97091e5b17d269",
+   "tam": 1359,
+   "pauta": "a9f227542fffb2b8",
+   "refs": "fb3a807ad58804d5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a450ee83d3bc2b79",
+   "tam": 1354,
+   "pauta": "9e46d52ec9bf4aa1",
+   "refs": "eade87fcceab7bb0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b805d1133bc81f65",
+   "tam": 1321,
+   "pauta": "8f3f0264886d043a",
+   "refs": "66162615c08c8d23",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "83ed485394f74b04",
+   "tam": 1322,
+   "pauta": "be8879967aa5b7fd",
+   "refs": "bbf362326d3b78c6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "aa1c25acadda1112",
+   "tam": 1374,
+   "pauta": "5d340f39d149e0a3",
+   "refs": "ae9266f7135474c6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1061f56b1da6d5b7",
+   "tam": 1368,
+   "pauta": "8e448e3dbc076643",
+   "refs": "55be691249d917cb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "6360719f608f4ad9",
+   "tam": 1350,
+   "pauta": "4daf83cb5b69b9a1",
+   "refs": "5151289b0d402834",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "722e04dfdabace70",
+   "tam": 1269,
+   "pauta": "67aa498bb01b6380",
+   "refs": "b8e10b5780106a03",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "80fab998debee754",
+   "tam": 1343,
+   "pauta": "fa70b5c731bdcdaa",
+   "refs": "52d0aae5b559713e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "09d654d37a561552",
+   "tam": 1328,
+   "pauta": "2e006ae53ea3634e",
+   "refs": "304c69026383fde3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d369a2acfca19895",
+   "tam": 1327,
+   "pauta": "0ca9a1deb1dfdb87",
+   "refs": "0c1a18a2ee238e6e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d8a055518f852b78",
+   "tam": 1366,
+   "pauta": "bfc269244d69b4e3",
+   "refs": "be6334f64a1d553b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3643992c98c754e0",
+   "tam": 1322,
+   "pauta": "f60e8d4752005266",
+   "refs": "beb562a6d4d83201",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "5c7b430978d675e4",
+   "tam": 1211,
+   "pauta": "7d97bd136047e80c",
+   "refs": "06e36b7b418c52d2",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9861cff2ffca43b8",
+   "tam": 1372,
+   "pauta": "29d63550f050ac4f",
+   "refs": "463b333c9a02c5e0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3aefc17f9d611be7",
+   "tam": 981,
+   "pauta": "ff3df3b69b266245",
+   "refs": "1c264920f789397d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "388f1a1def0a8b2d",
+   "tam": 1351,
+   "pauta": "d6706f63e4489b8f",
+   "refs": "ca3b2987dd54b2a6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "24c818075c3406f6",
+   "tam": 1362,
+   "pauta": "525b2cc6f0cb7a1f",
+   "refs": "e459897aefc146b1",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "954497993a5a6725",
+   "tam": 1361,
+   "pauta": "1a44cd3483847c82",
+   "refs": "c01da67e9283c30c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "bc9e1895f2e16bf8",
+   "tam": 1082,
+   "pauta": "744e1c2eebaa6858",
+   "refs": "8ed01fb24c8e23ac",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d8e8af1028b5e97b",
+   "tam": 1376,
+   "pauta": "29ace4023dfcec79",
+   "refs": "b051ce6862f1b42b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "32195509f56fc308",
+   "tam": 1365,
+   "pauta": "55f80208b1b81265",
+   "refs": "5546f9e4ecdc7684",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "30f45145b18697a3",
+   "tam": 1320,
+   "pauta": "a50f0adc97b7d007",
+   "refs": "c8975681de82c134",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "dba6855881e57272",
+   "tam": 1342,
+   "pauta": "b3adaf9a87cb49f4",
+   "refs": "0211f4364149a3fd",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "040c4e65f33b12fb",
+   "tam": 1340,
+   "pauta": "17a168360ebab574",
+   "refs": "be1a831ef7394148",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2265666f6ab3f15b",
+   "tam": 1327,
+   "pauta": "fb61dd793cffcaff",
+   "refs": "e2ba3943fa464b25",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a4d6c357e945f3d1",
+   "tam": 1345,
+   "pauta": "b92a770e4d068400",
+   "refs": "82c2f00ffc08ab6a",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "72d73bdc6a175ad3",
+   "tam": 1233,
+   "pauta": "d985b7a13c521307",
+   "refs": "16457c938354f1aa",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ade1fbab2e5be6b6",
+   "tam": 1373,
+   "pauta": "432c8732199a5534",
+   "refs": "49e1c2c8dfe017db",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f50584017b17cc9d",
+   "tam": 1188,
+   "pauta": "734079261a17b522",
+   "refs": "a109f5fdb468b1e0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "74234e98afe7498f",
+   "tam": -1,
+   "pauta": "74234e98afe7498f",
+   "refs": "17a580d8e640efc6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": "Cannot read properties of undefined (reading 'find')",
+   "faltas": []
+  },
+  {
+   "texto": "4800f9950f2babca",
+   "tam": 1351,
+   "pauta": "48c616df175cf636",
+   "refs": "159b6ebe928e4c98",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "17b8e487d099407d",
+   "tam": 1298,
+   "pauta": "271758ee1f6703f2",
+   "refs": "e30bf3aa0359dad4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "395a8603b6b44fec",
+   "tam": 1317,
+   "pauta": "c964f518853261fb",
+   "refs": "5edaa737a7abe187",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "40d363211f659138",
+   "tam": 1350,
+   "pauta": "4165ca30d7e73187",
+   "refs": "e0efb4a7db33e03e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "50b9c8d8a508ea2a",
+   "tam": 1315,
+   "pauta": "ddef2b6ed8aa875f",
+   "refs": "4b7cc65a88bd99fc",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "122d7bd30977a7df",
+   "tam": 1331,
+   "pauta": "bb040acc2ea53303",
+   "refs": "e44138bf4261f0a9",
+   "portas": "a1d5a98f0cec8cbc",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "42d0b38e3dc883d9",
+   "tam": 1362,
+   "pauta": "abb401e54397c995",
+   "refs": "d3904086eb1b6ac8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "aa1ae9ee049467f7",
+   "tam": 1373,
+   "pauta": "2cbd2ad0c293ad4f",
+   "refs": "785862a316eb3a94",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3ba0ae1e2ad483cf",
+   "tam": 1296,
+   "pauta": "d99bf73032a21928",
+   "refs": "47412dea49cc525a",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "dd916eb03f5d39ec",
+   "tam": 1347,
+   "pauta": "aab4fd6bd27bdc6f",
+   "refs": "e54b8de22a36d7ba",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a404e36429a1dfc5",
+   "tam": 1371,
+   "pauta": "1cc39901103c7d99",
+   "refs": "4f86b50c2b78f952",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "338e3c78aaa1d785",
+   "tam": 1347,
+   "pauta": "7815828c2eccd32e",
+   "refs": "2802a8baf53ba387",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d94bccebf925cee9",
+   "tam": 1306,
+   "pauta": "1ed6f21b584a988c",
+   "refs": "18d83b1daae2bc28",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f716030d73d3cf19",
+   "tam": 1369,
+   "pauta": "ca0acbd08eed224d",
+   "refs": "794ab17f10ce0a6d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d517206d9d9efb0c",
+   "tam": 1258,
+   "pauta": "9beed985e16fdc5d",
+   "refs": "992156687cc09175",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "274cfa7960144973",
+   "tam": 1338,
+   "pauta": "ed9fefb7064104fa",
+   "refs": "b3fa95f0a1948a38",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0947b11e74e719f9",
+   "tam": 1178,
+   "pauta": "160646cc7c433fd4",
+   "refs": "a25cc0eb7aced1c9",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a77a9cc254ffc0ad",
+   "tam": 1360,
+   "pauta": "50f9a8c2a6fbc399",
+   "refs": "cf4a361d5ded7edf",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1365c15d782bd5f5",
+   "tam": 1312,
+   "pauta": "4200a597dbe7ab5a",
+   "refs": "a333ba6f6dfa864e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "7320ff7385244dba",
+   "tam": 1323,
+   "pauta": "363e414c2e4a68ba",
+   "refs": "3ce37159f5004f91",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "188ebd2e28430929",
+   "tam": 1359,
+   "pauta": "3354ea85b5380743",
+   "refs": "29920bac1c774aa9",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d212f95564bbc38d",
+   "tam": 1320,
+   "pauta": "0c3878be80f0c6a1",
+   "refs": "c7479c7ff195e701",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "cd36de52bc76ff79",
+   "tam": 1264,
+   "pauta": "d268c28b35d5c80c",
+   "refs": "c3029e6bd5d014f8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "582a2120223cc1a6",
+   "tam": 1314,
+   "pauta": "64b131168c3e9910",
+   "refs": "059b67c185e5e30d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "bc9e1895f2e16bf8",
+   "tam": 1082,
+   "pauta": "744e1c2eebaa6858",
+   "refs": "ab0509e1f8dc16d3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d2f8e3f889aa3e39",
+   "tam": 1335,
+   "pauta": "70a81343c544fbe5",
+   "refs": "c336ec7ee658a51e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "48810663f3c97555",
+   "tam": 1361,
+   "pauta": "1466d74f74bb2459",
+   "refs": "eb17f94ea5b08e04",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9ad447c4306b5064",
+   "tam": 1356,
+   "pauta": "fa360ca2cc2e37b1",
+   "refs": "b136dd756dee4dd6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f70bd90c7ea98b69",
+   "tam": 1311,
+   "pauta": "9ce5e1b6513da946",
+   "refs": "0fc37a48d5a1e8e6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "94c7ddfcdc70fc8c",
+   "tam": 1345,
+   "pauta": "29be3b68bc481a19",
+   "refs": "16e2063f88e5fee6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "32195509f56fc308",
+   "tam": 1365,
+   "pauta": "8775457d1995024d",
+   "refs": "762df1b03e744579",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "31b7a21e40a75c1c",
+   "tam": 1363,
+   "pauta": "4ba174040c8b8eb6",
+   "refs": "adde599ee29ef137",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0a24eae00c511a69",
+   "tam": 987,
+   "pauta": "b2023c494e4a8c16",
+   "refs": "a5cdf95fac04809d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d9ed3eeb1b33ffab",
+   "tam": 1335,
+   "pauta": "c44568d19ca1c6da",
+   "refs": "e08bd83cbad20569",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1c522f41fc52fb6e",
+   "tam": 1365,
+   "pauta": "b99cd8e040f88a60",
+   "refs": "6a1d6e457850cb52",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "04cd4da30ae347eb",
+   "tam": 1331,
+   "pauta": "4a96422ad0ae22a3",
+   "refs": "70aa8192eadc5b11",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b270acdb776fe510",
+   "tam": 782,
+   "pauta": "81a8f6ab2d22c497",
+   "refs": "2894cbb6a428b660",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "cce927bc0d19740a",
+   "tam": 1369,
+   "pauta": "ac37cba67c477ef4",
+   "refs": "a26f79be73deb923",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "957dcb2a2a8d2b4d",
+   "tam": 1172,
+   "pauta": "80dce2bceaa67f3b",
+   "refs": "46d0c6be79357f7b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "754f8c3a79d5327e",
+   "tam": 1369,
+   "pauta": "ba17265193fddd4c",
+   "refs": "bff1947b42010034",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "09c7e4567098be6f",
+   "tam": 1257,
+   "pauta": "2a18da7d0c1e2fcc",
+   "refs": "5f1e76acb9ac3065",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3c707fbcc4762144",
+   "tam": 1311,
+   "pauta": "5e36ba196077a15b",
+   "refs": "5f8ad1b0e018b59f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b89251de81b946dd",
+   "tam": 1327,
+   "pauta": "dfb92a7e5c4175c5",
+   "refs": "1eb0ead1a7812721",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "5e12a3f2524e55f6",
+   "tam": 1299,
+   "pauta": "b02a6ab253859e72",
+   "refs": "d04ab3708f412409",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "28fe7e77ced8c858",
+   "tam": 1316,
+   "pauta": "28120e26170dffec",
+   "refs": "0eeef9751b16ffc7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "051b1e5837faac2c",
+   "tam": 1361,
+   "pauta": "1bb8d8eb74145a14",
+   "refs": "e3e43987e1e86751",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "8357c3a623b99964",
+   "tam": 1357,
+   "pauta": "6b04dd5dd45ff144",
+   "refs": "bf453d9912b70295",
+   "portas": "ff5b77bcbac29125",
+   "nPortas": 5,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e6f1e41f544e0ec8",
+   "tam": 1330,
+   "pauta": "a494bc5e4eb0c9cc",
+   "refs": "0dfad51c3eabde82",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e5aa4c1b3b5798f6",
+   "tam": 1266,
+   "pauta": "43521ac08f9f45ae",
+   "refs": "2e61b708e41ec108",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "63b1cb96d040d58d",
+   "tam": 1365,
+   "pauta": "4b6a64275a5188a4",
+   "refs": "d5233e488256f949",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2c65e8961707dddd",
+   "tam": 1316,
+   "pauta": "0aa9b3239cc641fb",
+   "refs": "0562c65cb5955e75",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f660fff9d9dd801b",
+   "tam": 1322,
+   "pauta": "fbc4c5d1c903c005",
+   "refs": "9c9878cf32997413",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2ad86c04b63ba7f7",
+   "tam": 1368,
+   "pauta": "007b2c3ffde5c8b3",
+   "refs": "c6d35825869183aa",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3d12fbe6615b5a6d",
+   "tam": 1364,
+   "pauta": "4fdf6e3192e6eddc",
+   "refs": "cc5bcc8dfc4646c8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9f2301003cca15fb",
+   "tam": 1352,
+   "pauta": "a0d1719f19325db4",
+   "refs": "0e631e86781cab01",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d20ecdd0e5a99880",
+   "tam": 1348,
+   "pauta": "e18296345c44c2f6",
+   "refs": "3f623581682fa07d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "30210b4a288c21e7",
+   "tam": 1363,
+   "pauta": "7d035d5102827d56",
+   "refs": "4df6061f557b3ce4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ce4a0f2e72b9b624",
+   "tam": 1335,
+   "pauta": "1e92b0d5466dcc44",
+   "refs": "3ddbdefbc25d94db",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "381ee8ca9c30c250",
+   "tam": 1365,
+   "pauta": "ef5fe11809e3fbc0",
+   "refs": "efc1039034e76732",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0188e0441a070172",
+   "tam": 1323,
+   "pauta": "9cc6185c5d0d299d",
+   "refs": "40d2fa53981ec4ff",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0545a604d4ba3abc",
+   "tam": 1353,
+   "pauta": "8b9a31f0b0073aa3",
+   "refs": "5d8bd5c8016b5ebb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "bc6ed2cf57107f86",
+   "tam": 1355,
+   "pauta": "b4be88e34ade483e",
+   "refs": "8526b505e7f915a8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9058b213a5dbccfb",
+   "tam": 1356,
+   "pauta": "38367dc673d231f8",
+   "refs": "862eaf76c05244c9",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "4ba33c047df6f0d0",
+   "tam": 1337,
+   "pauta": "28ca95d0cad7484e",
+   "refs": "0f4701d6ccc93d5d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d138ab06a3a368c3",
+   "tam": 1353,
+   "pauta": "5ee67a473dcc7eb6",
+   "refs": "814e24abc3848c98",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "33a15179198042f8",
+   "tam": 1364,
+   "pauta": "035711300cd47476",
+   "refs": "a0c1cba5c5a172d0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0068a3b34b9971dd",
+   "tam": 1340,
+   "pauta": "ccb85f5767871a8b",
+   "refs": "a12edeeea54b5b2c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "cdbc0ff9a808a3ac",
+   "tam": 1366,
+   "pauta": "5780b9bc5869f4f1",
+   "refs": "811837ee752e5562",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1451e2efa79194e6",
+   "tam": 1331,
+   "pauta": "7d7c0b0032ed0fe2",
+   "refs": "51f4fb6701394e39",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3bcbb637986392e7",
+   "tam": 1359,
+   "pauta": "597ead84d9d457f6",
+   "refs": "8ac0dd83089299dc",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "96bf9937ebcdc84e",
+   "tam": 1346,
+   "pauta": "e968e17b230d063b",
+   "refs": "704737c4c6d6b375",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "c0385bdf3509b9c1",
+   "tam": 1360,
+   "pauta": "8de91e992edb40ea",
+   "refs": "2bf1a31df34a2de5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "20d0da56679be1d1",
+   "tam": 1340,
+   "pauta": "1928ec7e98fa43dc",
+   "refs": "6714da0a35265d73",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "74234e98afe7498f",
+   "tam": -1,
+   "pauta": "74234e98afe7498f",
+   "refs": "3eca6f18122bc6ff",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": "Cannot read properties of undefined (reading 'find')",
+   "faltas": []
+  },
+  {
+   "texto": "f1adde4e8179b484",
+   "tam": 1331,
+   "pauta": "273726e20a2a63d0",
+   "refs": "94699e47b09efa49",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2cd30c2fa4f0ed89",
+   "tam": 1302,
+   "pauta": "f38b5f3a8d54baa5",
+   "refs": "a1d92b05350b066a",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "8bec5c3685ccdc96",
+   "tam": 1351,
+   "pauta": "6a300ed739b9f755",
+   "refs": "87394def364bf4ab",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "538cc5bf7b0eabd7",
+   "tam": 1373,
+   "pauta": "fdbaf0dddf2d5933",
+   "refs": "40f8e366b861b2d6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "329d71f939a08314",
+   "tam": 1332,
+   "pauta": "97fe68b71f32545c",
+   "refs": "88ce5771d2cb33c6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "532ecc61b3267927",
+   "tam": 1365,
+   "pauta": "9423c71a26dcef84",
+   "refs": "3f5efbb3c84c549c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "48410d53ec871f54",
+   "tam": 1336,
+   "pauta": "3b96cf54a6969bbd",
+   "refs": "77709fca2c27b14f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "aa64736e299f2d09",
+   "tam": 1323,
+   "pauta": "7ca1d181f04b4b78",
+   "refs": "66fffe01f5805598",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "25e3f519eca968b3",
+   "tam": 1327,
+   "pauta": "42a1e37a4fd07c15",
+   "refs": "17d5f63786a153e8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2b709b509c6cb786",
+   "tam": 1370,
+   "pauta": "a5969c815bc64bc9",
+   "refs": "7981f8d02aa70043",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "47089f9442e78482",
+   "tam": 1355,
+   "pauta": "c10a3e07c98f707e",
+   "refs": "dd6f974a29cbd850",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1f3778fcf3238054",
+   "tam": 1348,
+   "pauta": "d57c2d4183b49356",
+   "refs": "c7ef6876e2a9cc1d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0ac089da60972fae",
+   "tam": 1354,
+   "pauta": "503d1a49c5aa3723",
+   "refs": "001060382885c301",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "73385142e51e7166",
+   "tam": 1370,
+   "pauta": "03782664a97087f2",
+   "refs": "611dd2207e7cdc15",
+   "portas": "a3b6b64b1c218701",
+   "nPortas": 7,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "aa291472a27c8ff8",
+   "tam": 1262,
+   "pauta": "fef2c98e411aefa0",
+   "refs": "6d4d9b03a718ecb7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "6d507bf4a9eaf13e",
+   "tam": 1367,
+   "pauta": "617176b9cce4a27a",
+   "refs": "699e7c1411350dbf",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "01d7bfc94d45df96",
+   "tam": 1372,
+   "pauta": "cb60b8d7c5a72bd7",
+   "refs": "950a49d9f40d9ec7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "afb6c27f9e3ca740",
+   "tam": 1362,
+   "pauta": "121090cc2777177a",
+   "refs": "27828f850981420f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d5f1c419ac08b012",
+   "tam": 1323,
+   "pauta": "a5109743c73f6358",
+   "refs": "0462623da6c128b4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "7245f4bfa6cad8ff",
+   "tam": 1376,
+   "pauta": "0b01c3c93248f570",
+   "refs": "8e232511e4aa7497",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "6d162830d6658203",
+   "tam": 1354,
+   "pauta": "985fd6b1d0a1ff01",
+   "refs": "fb78aaec02937244",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "6455dbbdaa2d128d",
+   "tam": 1344,
+   "pauta": "4fcc93884be731b4",
+   "refs": "e245bb63171f31f0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "cc347e159db59adc",
+   "tam": 1192,
+   "pauta": "1db55c0c7247656a",
+   "refs": "fdf6d1aba91e1486",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1eb5e6ef5d4c8dc9",
+   "tam": 1353,
+   "pauta": "61b82f213447938d",
+   "refs": "66bd32effec83ecb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e72a75c3ec3123e3",
+   "tam": 1346,
+   "pauta": "109a145cac289975",
+   "refs": "9d8f1b363b3c41d7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2e7e740cbe9d6f46",
+   "tam": 1343,
+   "pauta": "35b881cc89a9ddfe",
+   "refs": "95032c4220979734",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "6e7981ec39088fcb",
+   "tam": 1357,
+   "pauta": "88c10093a0bd18df",
+   "refs": "3dcff9a344780bf5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e99689790c66b31c",
+   "tam": 1325,
+   "pauta": "f319969475236cfd",
+   "refs": "a1b43c8b731ef7bf",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a697b30c108e414b",
+   "tam": 1360,
+   "pauta": "1fa00c755d1245ae",
+   "refs": "66a2071c6a556e02",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f9ef26fe4b1e97c3",
+   "tam": 1313,
+   "pauta": "2916e417027d87a3",
+   "refs": "280ceb5310ed68f2",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1700c37fbef6ba21",
+   "tam": 1359,
+   "pauta": "129eef4563857f63",
+   "refs": "fe13c49543ad2381",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b8a4b9534e745fae",
+   "tam": 1325,
+   "pauta": "b11b2f99118af779",
+   "refs": "2380b9c0c5c0ee12",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "4e9a9a5ecd9666c4",
+   "tam": 1360,
+   "pauta": "2d4d9f1f4e6b803a",
+   "refs": "4f04a2a260c1c5b4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "7344af842f6d7328",
+   "tam": 1322,
+   "pauta": "6aea09f70228cac3",
+   "refs": "ac1920f2cddbd737",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "59ac29a6e8ac620d",
+   "tam": 1347,
+   "pauta": "9ec41e4a4444b9c3",
+   "refs": "e2691b00764278a6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b661d48d9eb9953b",
+   "tam": 1356,
+   "pauta": "5523dfb119319dea",
+   "refs": "34a393a4a7e15030",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "74234e98afe7498f",
+   "tam": -1,
+   "pauta": "74234e98afe7498f",
+   "refs": "4e1bacabe9bec5c0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": "Cannot read properties of undefined (reading 'find')",
+   "faltas": []
+  },
+  {
+   "texto": "76f7f75be90fd3bb",
+   "tam": 1351,
+   "pauta": "13cf537008e60e37",
+   "refs": "5c7e2fbfda2ebec3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "eedd06c5459f425d",
+   "tam": 1334,
+   "pauta": "0eda2ff4e16c8212",
+   "refs": "4995f45a12e47fe1",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "c56ba316eb4d59e9",
+   "tam": 1367,
+   "pauta": "e616d3b33be287e8",
+   "refs": "d4c7acbed5f189b8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "98edec6986e456b1",
+   "tam": 1352,
+   "pauta": "f439cce5f75b7107",
+   "refs": "93d237deb690c438",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e4709439697f2c71",
+   "tam": 1374,
+   "pauta": "3aae6b9a5cd4a8e1",
+   "refs": "028fa70480a9819c",
+   "portas": "9ef2d9b02f132b7a",
+   "nPortas": 2,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "92c0272ffeb9a08a",
+   "tam": 1360,
+   "pauta": "061d3cd39f3f7cf5",
+   "refs": "2b22a6612d821169",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0e76be55e3d732e7",
+   "tam": 1350,
+   "pauta": "f72a6897a6ea7390",
+   "refs": "7feaf4dd1b6ec8e5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ea8154d15881633f",
+   "tam": 1288,
+   "pauta": "95280aef1b4e554f",
+   "refs": "b6a278dafde81532",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2cae638eff45e9dc",
+   "tam": 1341,
+   "pauta": "328e7aa72587b227",
+   "refs": "39e10dd8147d8144",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f3fd6db42ccaea3c",
+   "tam": 1376,
+   "pauta": "7f21c78cedd5cc27",
+   "refs": "8146f5effc574bb4",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "18ba3b4194671204",
+   "tam": 1370,
+   "pauta": "0ada26e96f5648c8",
+   "refs": "0ff5ae958316a777",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d21a39d65ee29525",
+   "tam": 1274,
+   "pauta": "b82f3f7b9b466809",
+   "refs": "c3e22cb36524a13a",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9da69fd801e0b137",
+   "tam": 1329,
+   "pauta": "309d809803161880",
+   "refs": "810d2eb0b3f98d89",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "63e30cb39b76b2ed",
+   "tam": 1374,
+   "pauta": "ffa0fc7ea4ac8f69",
+   "refs": "ee1dc7225b5d3524",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "63e09673335e3dda",
+   "tam": 1369,
+   "pauta": "a2ef43eca7bd3b3c",
+   "refs": "343a2b3e67ab6362",
+   "portas": "505ad8174b16eb04",
+   "nPortas": 2,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "8eee2269fd9ff318",
+   "tam": 1365,
+   "pauta": "6d391b29866333de",
+   "refs": "23d31ce4e72afc81",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "6b99625de329941d",
+   "tam": 1361,
+   "pauta": "422c28ada9d04fca",
+   "refs": "729c9ac4fdea71bb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "076d37af1ed9e7aa",
+   "tam": 1331,
+   "pauta": "febf43c42f1390a3",
+   "refs": "905726e32af2fa71",
+   "portas": "a1d5a98f0cec8cbc",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "872b68b406be75fd",
+   "tam": 1370,
+   "pauta": "58669052dfb64021",
+   "refs": "e47536d60c1293c5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ca83631109dcc92c",
+   "tam": 1358,
+   "pauta": "07773b683209d1fb",
+   "refs": "7b1558177287db9c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "eb51bafa8ec6c02f",
+   "tam": 1189,
+   "pauta": "c1329070ef42af51",
+   "refs": "4fa8d01ae69d6c2c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "28423fce70110b43",
+   "tam": 1366,
+   "pauta": "abd69f050bf7cadf",
+   "refs": "471fa1475c57bc81",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0266e58afeb37547",
+   "tam": 1337,
+   "pauta": "23d74ea19db2ca13",
+   "refs": "086089fc0786e6c9",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2b60abc0d8c6b0dd",
+   "tam": 1330,
+   "pauta": "4d808f412cabf827",
+   "refs": "0d0df9afd0d632ae",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "fce57d67bd6ea437",
+   "tam": 1368,
+   "pauta": "fb064b6de0075204",
+   "refs": "83b35891c3e29122",
+   "portas": "281f516efa68a616",
+   "nPortas": 2,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e971e96bb74b7710",
+   "tam": 1373,
+   "pauta": "4b51e67e1d811309",
+   "refs": "2ebf35e235c0d6c5",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "53cf0a74f9c7079b",
+   "tam": 1353,
+   "pauta": "0497c617fefd99b7",
+   "refs": "9feec2dd590da5b6",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "07e29b984d579abc",
+   "tam": 1323,
+   "pauta": "11a5ea8d5028f7ac",
+   "refs": "d8a0c2bf945171f2",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9c24669f11fda741",
+   "tam": 1370,
+   "pauta": "ad33c3367307bfbd",
+   "refs": "0259bb7671b0a1d0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "988bed4707fce290",
+   "tam": 1357,
+   "pauta": "f85d39663b6c196e",
+   "refs": "2dac109ac2949d13",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "92231bb3ff4a0bcb",
+   "tam": 1370,
+   "pauta": "8ab40337e7939db4",
+   "refs": "a75c6b983fb7ddcd",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "8b7076a6a04f5965",
+   "tam": 1327,
+   "pauta": "d8343e39163f0d24",
+   "refs": "4a6088ca1166241b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "58f53ee401d1a614",
+   "tam": 1357,
+   "pauta": "ef60ab1cab840f5c",
+   "refs": "155366a36a863315",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "58e0623e11a679b8",
+   "tam": 1356,
+   "pauta": "55de53fa9bfe5a5b",
+   "refs": "b9c81287e60fda70",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "05fea08d63db9b24",
+   "tam": 1351,
+   "pauta": "b221dc313009d85d",
+   "refs": "20c68a56cb232dc1",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "af1f66ab6f5ab5df",
+   "tam": 1345,
+   "pauta": "8e71fd7f4944a6e0",
+   "refs": "f7e0f9e23d86088e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "74234e98afe7498f",
+   "tam": -1,
+   "pauta": "74234e98afe7498f",
+   "refs": "83406785961bb6f3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": "Cannot read properties of undefined (reading 'find')",
+   "faltas": []
+  },
+  {
+   "texto": "a9dcfb4262a6ea63",
+   "tam": 1367,
+   "pauta": "e4a483f9f2f77ae5",
+   "refs": "33959b732418ae1f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e694d269a1cec708",
+   "tam": 1346,
+   "pauta": "d7af35e973fa7193",
+   "refs": "0e01d06373607856",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "aa95bdf668829058",
+   "tam": 1361,
+   "pauta": "7ac825a7d85b1700",
+   "refs": "d32db7eca99bb98b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0d0c93f4735bbe48",
+   "tam": 1333,
+   "pauta": "ba8f934cf01b435e",
+   "refs": "d8649c3186ec7b2f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "08324a6ac13e1813",
+   "tam": 1364,
+   "pauta": "bae90e7ef4e5d93f",
+   "refs": "77d3f16c2df1d012",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "11980616c67132c1",
+   "tam": 1370,
+   "pauta": "7031db0c964f4128",
+   "refs": "597950ec0a43fe2b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "012ef4c545fb8211",
+   "tam": 1334,
+   "pauta": "62c14a6f54fb44d5",
+   "refs": "fbcdfb7526251d27",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a177772530445f3f",
+   "tam": 1355,
+   "pauta": "65498970610d6920",
+   "refs": "515fd2ba4442602d",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3d6b679274698a08",
+   "tam": 1352,
+   "pauta": "0b8caa3bd95f395d",
+   "refs": "2af5f51ebfabc5e9",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3202bc7b1dec1f1f",
+   "tam": 1366,
+   "pauta": "26f5aa40c7f6dd85",
+   "refs": "9ea05bf38bc66c01",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d73d37de66252c8c",
+   "tam": 1366,
+   "pauta": "6aee5952a2ee9e50",
+   "refs": "6a1522ad6ca87589",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ac2b872ab006870c",
+   "tam": 1300,
+   "pauta": "38494676243774a7",
+   "refs": "beb11320ea00095c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "4774bd22e49428e6",
+   "tam": 1372,
+   "pauta": "27b6f5297903fdd0",
+   "refs": "852ace1116aafb8e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "723d58ded6958dbd",
+   "tam": 1339,
+   "pauta": "580641e9656da284",
+   "refs": "2906201fe4b779cf",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "2e1dfe37087e803e",
+   "tam": 1363,
+   "pauta": "7ee7dc862542ecab",
+   "refs": "323209851bf767b3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "f90d6eff8602e027",
+   "tam": 1359,
+   "pauta": "1dc74c21cab6f2c5",
+   "refs": "bc84a56a15af65ec",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "c8473386bff2cc8a",
+   "tam": 1353,
+   "pauta": "516e4d9b14f2fd45",
+   "refs": "48fb39e301e26932",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "45aaf56043704f0c",
+   "tam": 1367,
+   "pauta": "a250704570532073",
+   "refs": "ca566a21de19964b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "4368516d6bc1848d",
+   "tam": 1316,
+   "pauta": "885d6d955071c920",
+   "refs": "8635009018f71de2",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "c3d93621d0c254ad",
+   "tam": 1288,
+   "pauta": "696e1338becf7d9c",
+   "refs": "ff6952a810138569",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e078075fe0e86d12",
+   "tam": 1379,
+   "pauta": "a58a900adb64fc8c",
+   "refs": "72930f8f85c6421e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d0aea7f7af2c0312",
+   "tam": 1307,
+   "pauta": "52b8306f80b049a2",
+   "refs": "0b4546ab249d666d",
+   "portas": "ff5b77bcbac29125",
+   "nPortas": 5,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "ed38d672287c83a9",
+   "tam": 1307,
+   "pauta": "655be74f42c8b094",
+   "refs": "bad0c0cf56f931a2",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3192c47008a3b6e0",
+   "tam": 1365,
+   "pauta": "e3722bb77a252404",
+   "refs": "411a1ae9bab3ee7f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "a9ee6c626f4796f3",
+   "tam": 1346,
+   "pauta": "99cd3302f9377214",
+   "refs": "da58f0f28ec35bcb",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "77e32aba50a41fb3",
+   "tam": 1351,
+   "pauta": "34bc7feddd41f02b",
+   "refs": "44c22bc1d33c97bc",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "55e7519d18e41c10",
+   "tam": 1372,
+   "pauta": "7f0baa5dd9426f91",
+   "refs": "48c428bc3d88c8d0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3417d0a9844913bb",
+   "tam": 1363,
+   "pauta": "d3ce869195d10b63",
+   "refs": "e8ea38e32686a0a8",
+   "portas": "0c97cb1d014e1f56",
+   "nPortas": 2,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "3ae83740793a2eda",
+   "tam": 1355,
+   "pauta": "c7f46ca51eb2ddb2",
+   "refs": "036ccff158e506ff",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "180d64ed851a675c",
+   "tam": 1374,
+   "pauta": "3d21616529661a45",
+   "refs": "5bce47e4ac1c52ec",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b41b584a64ca25cf",
+   "tam": 1375,
+   "pauta": "2a47cc0a4faf8be4",
+   "refs": "aee3f32ea16162cd",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "30efdffacef514d0",
+   "tam": 1348,
+   "pauta": "1e873539a70110c5",
+   "refs": "fc1f5d0b5a999741",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "e09c09db811a4b02",
+   "tam": 1352,
+   "pauta": "45b4f26567c3a439",
+   "refs": "086997113bafaad9",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "9c8e06815602dd21",
+   "tam": 1367,
+   "pauta": "c62b276d1e32b985",
+   "refs": "e49f38739baef16f",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "1b220e09661c7204",
+   "tam": 1353,
+   "pauta": "b6af17fbec4d02d3",
+   "refs": "7b07a50bdc937e90",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "75c819910ecf05fc",
+   "tam": 1321,
+   "pauta": "623fb4370c3e2d3a",
+   "refs": "dfdf7f9ce1ae9a18",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "74234e98afe7498f",
+   "tam": -1,
+   "pauta": "74234e98afe7498f",
+   "refs": "efcf023e39159972",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": "Cannot read properties of undefined (reading 'find')",
+   "faltas": []
+  },
+  {
+   "texto": "d0d0bc1f22e4c194",
+   "tam": 1374,
+   "pauta": "a2e74d2822de98e5",
+   "refs": "12454769884c446d",
+   "portas": "ec368ea554c5c412",
+   "nPortas": 2,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "4c0a48c90d8af0a0",
+   "tam": 1362,
+   "pauta": "a7d82ded62d2e66a",
+   "refs": "1809f279a7406a3e",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b76a2224c10f611b",
+   "tam": 841,
+   "pauta": "880bd306a3b2db5e",
+   "refs": "f934ea42f07fd2b1",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "b76a2224c10f611b",
+   "tam": 841,
+   "pauta": "880bd306a3b2db5e",
+   "refs": "f0ef5df2cb133cde",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  }
+ ]
+}

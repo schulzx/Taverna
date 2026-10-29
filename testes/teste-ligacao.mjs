@@ -327,7 +327,15 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      quando o App as importar. */
   /* Pagas no mesmo dia (28/10, T2-A, o oficial): o App importa as duas e
      chama-as nos quatro sítios. A lista volta a ficar VAZIA. */
-  const ESPERA_DO_MOTOR = {};
+  /* 29/10 (Fase 4, trilha B): `pauta-do-turno.js` nasce no backend — a
+     `pautaDoTurno` e as 50 funções que ela chama, à letra, como
+     `aPautaDoTurno(estado, entrada, portas)` — para a trilha A a ligar em
+     `enviar`. Credor: o `oficial` da trilha A, que tem o bastão do App. A
+     troca está no diário (a âncora, a chamada, as portas); a entrada sai
+     quando o App a importar. */
+  const ESPERA_DO_MOTOR = {
+    "pauta-do-turno.js": "trilha A (oficial): enviar chama aPautaDoTurno no lugar de pautaDoTurno",
+  };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
   t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);
