@@ -77,9 +77,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "viagemPartidaMapa", "viagemPartidaEscolha", "viagemTrecho", "viagemPassarOTempo", "viagemErmos", "viagemEmboscada",
   "fioMarco", "fioRumores", "fioMundo", "fioVirada", "fioInterludio", "fioLutaDaChave",
   "fichaNivel", "fichaPericias", "fichaAtributo", "fichaHabilidade", "fichaSubclasse", "fichaEspecializacao", "fichaRefazer",
-  "fichaCombate", "fichaSucesso", "fichaVolta", "fichaRecrutamento"];
+  "fichaCombate", "fichaSucesso", "fichaVolta", "fichaRecrutamento",
+  "infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^ficha/.test(b) ? "ficha" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -138,10 +139,24 @@ const ANCORAS = {
   fichaSucesso: { antes: ["      enviar(`[TESTE — SUCESSO AUTOMÁTICO]", FIM], hoje: ["      enviar(oEnvelopeDaFicha(\"sucessoAutomatico\", ", FIM] },
   fichaVolta: { antes: ["    enviar(`[VOLTA DOS MORTOS — RESOLVIDA PELO SISTEMA]", FIM], hoje: ["    enviar(oEnvelopeDaFicha(\"voltaDosMortos\", ", FIM] },
   fichaRecrutamento: { antes: ["  const notaDoRecrutamento = (comp) =>", "\n\n  const porNoGrupo"], hoje: ["  const notaDoRecrutamento = (comp) =>", "\n\n  const porNoGrupo"] },
+  /* a ficha (as notas [INFO] do inventário, do grupo e do save): doze notas de uma linha; o sítio devolve a nota */
+  infoDescarteItem: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Descartei o item:", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"descarteItem\"", FIM] },
+  infoDescarteEquip: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Descartei o equipamento:", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"descarteEquipamento\"", FIM] },
+  infoEquipou: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] ${nomeComp} agora usa", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"equipouCompanheiro\"", FIM] },
+  infoForjou: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Forjei um item na forja:", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"forjou\"", FIM] },
+  infoContrato: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Abandonei o contrato", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"abandonouContrato\"", FIM] },
+  infoDecreto: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Retirei o decreto sobre", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"retirouDecreto\"", FIM] },
+  infoAgoraE: { antes: ["    notaRef.current = `[INFO] ${quem} agora é ", FIM], hoje: ["    notaRef.current = oEnvelopeDaFicha(\"agoraE\"", FIM] },
+  infoSaiu: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] ${nome} saiu do meu grupo", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"saiuDoGrupo\"", FIM] },
+  infoGuilda: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Minha guilda (", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"guildaCresceu\"", FIM] },
+  infoRecalFicha: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Recalibração de save: meus números", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"recalibrouAFicha\"", FIM] },
+  infoRecalMundo: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Recalibração de save: o estado do mundo", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"recalibrouOMundo\"", FIM] },
+  infoTransferiu: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Transferi \"", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"transferiu\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
-  fichaNivel: "notaRef.current", fichaPericias: "notaRef.current", fichaAtributo: "notaRef.current", fichaHabilidade: "notaRef.current", fichaSubclasse: "notaRef.current", fichaEspecializacao: "notaRef.current", fichaRefazer: "notaRef.current", fichaRecrutamento: "notaDoRecrutamento(comp)" };
+  fichaNivel: "notaRef.current", fichaPericias: "notaRef.current", fichaAtributo: "notaRef.current", fichaHabilidade: "notaRef.current", fichaSubclasse: "notaRef.current", fichaEspecializacao: "notaRef.current", fichaRefazer: "notaRef.current", fichaRecrutamento: "notaDoRecrutamento(comp)",
+  infoDescarteItem: "notaRef.current", infoDescarteEquip: "notaRef.current", infoEquipou: "notaRef.current", infoForjou: "notaRef.current", infoContrato: "notaRef.current", infoDecreto: "notaRef.current", infoAgoraE: "notaRef.current", infoSaiu: "notaRef.current", infoGuilda: "notaRef.current", infoRecalFicha: "notaRef.current", infoRecalMundo: "notaRef.current", infoTransferiu: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -319,7 +334,10 @@ export function fioDoCaso(i) {
    também); a especialização de subclasse e a de obsessão de cada classe.
    E o que o sistema resolveu: o combate com e sem o resumo dos inimigos; o
    sucesso automático com o motivo, sem ele e vazio; a volta pela fé e pelo
-   ouro, da 1.ª à 4.ª vez; o companheiro recrutado de cada nível e PV. */
+   ouro, da 1.ª à 4.ª vez; o companheiro recrutado de cada nível e PV.
+   E as notas [INFO]: o item forjado com e sem poder; a raça, a classe e a
+   subclasse com uma vazia, e a profissão dita e não; a recalibração com e
+   sem dádivas; quem sai, quem equipa, o que se transfere de onde para onde. */
 export function fichaDoCaso(i) {
   return {
     notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
@@ -331,6 +349,13 @@ export function fichaDoCaso(i) {
     desfecho: ["três golpes", "dois acertos e um erro", "um golpe só"][i % 3], resumoInimigos: ["", " Lobo caiu; o Corvo está a 3 PV."][(i >> 1) % 2], acao: ["ataco o lobo", "giro a lança e avanço"][i % 2],
     via: ["fe", "ouro", "outra"][i % 3], np: { nome: "Vera de volta", voltas: 1 + (i % 4) }, cic: { nome: ["Mão Fria", "Olhar Vazio"][i % 2], descricao: ["a mão esquerda não aquece", "os olhos não refletem a luz"][(i >> 1) % 2] },
     comp: { nome: ["Iris", "Bruna Ferro", "Noé"][i % 3], nivel: 1 + (i % 6), vidaMax: 8 + (i % 5) * 3 },
+    nome: ["Adaga Torta", "Escudo de Pinho", "Greta"][i % 3], nomeComp: ["Iris", "Noé"][i % 2],
+    item: { nome: ["Lâmina de Osso", "Anel da Brasa"][i % 2], raridade: ["raro", "epico", "comum"][i % 3], poder: [null, "+1 de fogo", ""][(i >> 1) % 3] },
+    titulo: ["A cabeça de Sarna", "Escolta ao Vau"][i % 2], d: { alvo: ["Sarna, o Rubro", "a Cripta do Corvo"][(i >> 1) % 2] },
+    quem: ["Vera", "Iris"][i % 2], raca: ["Elfo", "", "Anão"][i % 3], classe: ["Mago", "Guerreiro"][(i >> 1) % 2], subclasse: ["", "Campeão", undefined][(i >> 2) % 3], profissao: ["", "ferreira", null][i % 3],
+    faccaoJogadorRef: { current: ["A Garra de Sal", "Os Lobos do Vau"][i % 2] }, g: { nivel: 2 + (i % 4) },
+    p: { nivel: 1 + (i % 12), vidaMax: 10 + i % 30, manaMax: i % 9, prof: 2 + (i % 3), dadivas: [0, 2, null, 1][i % 4] },
+    nomeFinal: ["Poção de Cura", "Corda de Seda"][i % 2], deTxt: ["a mochila", "Iris"][i % 2], paraTxt: ["o baú da estalagem", "Noé"][(i >> 1) % 2],
   };
 }
 

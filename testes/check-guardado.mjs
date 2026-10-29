@@ -183,11 +183,16 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
      A amostra da ficha dá a cada forma os nomes que ela lê. */
   const doMotor = [];
   {
-    const AMOSTRA_FICHA = { desfecho: "três golpes", resumoInimigos: "", acao: "ataco o lobo", motivo: "pular o muro", dificuldade: 10, via: "fe", voltas: 1, cicatriz: "Mão Fria", descricao: "a mão não aquece", nome: "Iris", nivel: 2, vidaMax: 11, custo: 2, eraNova: false, classeNome: "Mago", classe: "Bardo", atributo: "Força", valor: 1, sub: "Campeão", esp: "Erudito" };
+    const AMOSTRA_FICHA = { desfecho: "três golpes", resumoInimigos: "", acao: "ataco o lobo", motivo: "pular o muro", dificuldade: 10, via: "fe", voltas: 1, cicatriz: "Mão Fria", descricao: "a mão não aquece", nome: "Iris", nivel: 2, vidaMax: 11, custo: 2, eraNova: false, classeNome: "Mago", classe: "Bardo", atributo: "Força", valor: 1, sub: "Campeão", esp: "Erudito",
+      /* as notas [INFO] (o 10.º grupo) */
+      quem: "Iris", item: "Lâmina de Osso", raridade: "raro", poder: "", titulo: "Escolta ao Vau", alvo: "Sarna", partes: ["Elfo", "Mago"], profissao: "", guilda: "A Garra", manaMax: 4, prof: 2, dadivas: 0, de: "a mochila", para: "o baú" };
     const AMOSTRA = { pos: "Cripta dos Sussurros · camada 1 · 2/9 salas", nomeArmadilha: "Fosso de Estacas", salva: { passou: false }, alvo: "Iris", sofrido: 3, depois: "", minutos: 10, tempo: "", aviso: "", moedas: 30, item: null, cena: "um nicho de água limpa", masmorra: "Cripta dos Sussurros", total: 12, segredo: null, achou: false, achado: null };
     const TABELAS = [["ENVELOPES_DA_MASMORRA", ENVELOPES_DA_MASMORRA, "oEnvelopeDaMasmorra", AMOSTRA], ["ENVELOPES_DA_FICHA", ENVELOPES_DA_FICHA, "oEnvelopeDaFicha", AMOSTRA_FICHA]];
     for (const [tabela, formas, porta, amostra] of TABELAS) for (const [forma, montar] of Object.entries(formas)) {
-      const real = montar(amostra);
+      /* uma forma nova que lê um nome que a amostra não tem estourava o varredor inteiro
+         (visto no 10.º grupo): falha com o nome da forma, e as outras seguem medidas */
+      let real = "";
+      try { real = montar(amostra); } catch (e) { falha(`a amostra de ${tabela} não serve à forma \`${forma}\`: ${e.message}`, "acrescente à amostra (AMOSTRA ou AMOSTRA_FICHA, acima) os nomes que a forma lê"); continue; }
       const cab = /^\s*\[([^\]]*)\]/.exec(real);
       const selo = cab ? cab[1] : "";
       if (!(ANUNCIA.some((r) => r.test(selo)) && !EXCLUI.some((r) => r.test(selo)))) continue;

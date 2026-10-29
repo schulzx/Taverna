@@ -265,6 +265,7 @@ export function oEnvelopeDoFio(qual, dados) {
    o caminho refeito. É anotação, não cena: o efeito mecânico já está aplicado
    e o Narrador não abre treino, mestre nem viagem por causa disso.
    O 9.º grupo junta-lhe o que o sistema resolveu e o Narrador só conta.
+   O 10.º, as notas [INFO] do inventário, do grupo e do save.
    Na habilidade, `eraNova` diz se ela abriu o caminho de outra classe
    (`classeNome`); `classe`, a de antes, só se lê quando abriu.
    ============================================================ */
@@ -285,6 +286,23 @@ export const ENVELOPES_DA_FICHA = {
   sucessoAutomatico: ({ motivo, dificuldade }) => `[TESTE — SUCESSO AUTOMÁTICO] "${motivo || "ação"}": trivial para meu patamar (dificuldade ${dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.${SO_ISSO}`,
   voltaDosMortos: ({ via, voltas, cicatriz, descricao }) => `[VOLTA DOS MORTOS — RESOLVIDA PELO SISTEMA] Eu morri e voltei${via === "fe" ? " pela minha própria fé — meus fiéis rezaram e desta vez alguém escutou" : " pagando o preço em ouro"}. Foi a ${voltas}ª vez. O que ficou em mim: ${cicatriz} — ${descricao}. Narre a volta como ela é: nem milagre alegre, nem horror gratuito. Alguém que voltou do outro lado volta diferente, e o corpo demora a acreditar. Não invente outro custo além deste, e não desfaça a cicatriz.`,
   recrutamento: ({ nome, nivel, vidaMax }) => `[RECRUTAMENTO — REGISTRO DO SISTEMA] ${nome} agora FAZ PARTE do grupo do herói (nível ${nivel}, ${vidaMax} PV — ficha criada pelo sistema, você não precisa mandar "grupo_adicionar"). Trate-o como companheiro presente nas cenas: opina, ajuda em combate, viaja junto.`,
+  /* o inventário, o grupo e o save (10.º grupo): o que o jogador fez pela tela
+     — descartar, equipar um companheiro, forjar, abandonar um contrato, retirar
+     um decreto, mudar de raça ou classe, tirar alguém do grupo, transferir —,
+     a guilda que cresceu e as duas recalibrações do save. `partes`: a raça, a
+     classe e a subclasse, na ordem; a vazia não entra. */
+  descarteItem: ({ nome }) => `[INFO] Descartei o item: ${nome}.`,
+  descarteEquipamento: ({ nome }) => `[INFO] Descartei o equipamento: ${nome}.`,
+  equipouCompanheiro: ({ quem, item }) => `[INFO] ${quem} agora usa ${item} (equipado pelo jogador). Reflita isso na ficção.`,
+  forjou: ({ nome, raridade, poder }) => `[INFO] Forjei um item na forja: ${nome} (${raridade}${poder ? `, ${poder}` : ""}).`,
+  abandonouContrato: ({ titulo }) => `[INFO] Abandonei o contrato "${titulo}" — ele não existe mais para mim.`,
+  retirouDecreto: ({ alvo }) => `[INFO] Retirei o decreto sobre "${alvo}" (ninguém havia aceitado). A recompensa foi devolvida.`,
+  agoraE: ({ quem, partes, profissao }) => `[INFO] ${quem} agora é ${partes.filter(Boolean).join(", ")}${profissao ? `, profissão ${profissao}` : ""}. Reflita isso na narrativa daqui em diante.`,
+  saiuDoGrupo: ({ nome }) => `[INFO] ${nome} saiu do meu grupo (removido pelo jogador). Reflita isso na narrativa: ${nome} não viaja mais comigo.`,
+  guildaCresceu: ({ guilda, nivel }) => `[INFO] Minha guilda (${guilda}) melhorou para o nível ${nivel} — maior, mais rica e mais respeitada. Reflita esse crescimento na ficção.`,
+  recalibrouAFicha: ({ nivel, vidaMax, manaMax, prof, dadivas }) => `[INFO] Recalibração de save: meus números oficiais agora são nível ${nivel}, PV ${vidaMax}, PM ${manaMax}, proficiência +${prof}${dadivas ? `, ${dadivas} dádivas épicas` : ""} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`,
+  recalibrouOMundo: () => `[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`,
+  transferiu: ({ nome, de, para }) => `[INFO] Transferi "${nome}" de ${de} para ${para}.`,
 };
 export function oEnvelopeDaFicha(qual, dados) {
   return aFormaDe(ENVELOPES_DA_FICHA, qual, "da ficha")(dados || {});

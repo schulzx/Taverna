@@ -20482,13 +20482,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const inv = [...p.inventario]; inv.splice(idx, 1);
       return { ...p, inventario: inv };
     });
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Descartei o item: ${nome}.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("descarteItem", { nome });
     pushMsgs([{ autor: "sistema", texto: `Item descartado: ${nome}` }]);
   };
 
   const descartarEquip = (nome) => {
     setPersonagem((p) => ({ ...p, equipamento: (p.equipamento || []).filter((e) => e.nome !== nome) }));
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Descartei o equipamento: ${nome}.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("descarteEquipamento", { nome });
     pushMsgs([{ autor: "sistema", texto: `Equipamento descartado: ${nome}` }]);
   };
 
@@ -20515,7 +20515,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       }),
     }));
     pushMsgs([{ autor: "sistema", texto: `⚔ ${nomeComp} equipou: ${item.nome}` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] ${nomeComp} agora usa ${item.nome} (equipado pelo jogador). Reflita isso na ficção.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("equipouCompanheiro", { quem: nomeComp, item: item.nome });
   };
 
   const desequiparComp = (nomeComp, slot) => {
@@ -20566,7 +20566,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setPersonagem((p) => ({ ...p, essencia: (p.essencia || 0) - custo.essencia, moedas: (p.moedas || 0) - custo.moedas, equipamento: [...(p.equipamento || []), item] }));
     pushMsgs([{ autor: "sistema", texto: `⚒ Forjado: ${item.nome} (${RARIDADE_ROTULO[item.raridade] || item.raridade}) — na mochila de equipamentos` }]);
     bumpCont("forjados"); checarConquistas();
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Forjei um item na forja: ${item.nome} (${item.raridade}${item.poder ? `, ${item.poder}` : ""}).`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("forjou", { nome: item.nome, raridade: item.raridade, poder: item.poder });
   };
 
   /* ---------------- MASMORRAS (v6.3 · tabela + código, a IA só narra) ----------------
@@ -21433,7 +21433,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     questsRef.current = questsRef.current.filter((q) => q.titulo !== titulo);
     setQuests([...questsRef.current]);
     pushMsgs([{ autor: "sistema", texto: `📋 Contrato abandonado: ${titulo}` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Abandonei o contrato "${titulo}" — ele não existe mais para mim.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("abandonouContrato", { titulo });
   };
 
   /* DECRETOS E RECOMPENSAS (v6.4): o reverso do mural — VOCÊ prega cartazes
@@ -21468,7 +21468,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setDecretos(decretosRef.current);
     setPersonagem((p) => ({ ...p, moedas: (p.moedas || 0) + d.recompensa }));
     pushMsgs([{ autor: "sistema", texto: `📣 Decreto retirado: "${d.alvo}" — ◉ ${d.recompensa} devolvidas ao seu bolso.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Retirei o decreto sobre "${d.alvo}" (ninguém havia aceitado). A recompensa foi devolvida.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("retirouDecreto", { alvo: d.alvo });
   };
 
   /* O mundo responde aos decretos a cada dia passado (descanso longo):
@@ -22955,13 +22955,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     });
     const quem = ehJogador ? "Você" : alvo;
     pushMsgs([{ autor: "sistema", texto: `✦ ${quem} ${jaTinha ? "trilhou um novo caminho" : "definiu seu caminho"}: ${[raca, classe, subclasse].filter(Boolean).join(" · ")} (−${custo} moedas)` }]);
-    notaRef.current = `[INFO] ${quem} agora é ${[raca, classe, subclasse].filter(Boolean).join(", ")}${profissao ? `, profissão ${profissao}` : ""}. Reflita isso na narrativa daqui em diante.`;
+    notaRef.current = oEnvelopeDaFicha("agoraE", { quem, partes: [raca, classe, subclasse], profissao });
   };
 
   const removerDoGrupo = (nome) => {
     setPersonagem((p) => ({ ...p, grupo: (p.grupo || []).filter((g) => g.nome !== nome) }));
     pushMsgs([{ autor: "sistema", texto: `${nome} deixou o grupo.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] ${nome} saiu do meu grupo (removido pelo jogador). Reflita isso na narrativa: ${nome} não viaja mais comigo.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("saiuDoGrupo", { nome });
   };
 
   /* Troca o arco da campanha em andamento — sem reiniciar o mundo. */
@@ -23089,7 +23089,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     guildaRef.current = g; setGuilda(g);
     pushMsgs([{ autor: "sistema", texto: `⚒ ${faccaoJogadorRef.current || "Sua guilda"} cresceu para o nível ${g.nivel}! Contratos maiores e domínios mais produtivos.` }]);
     checarConquistas();
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Minha guilda (${faccaoJogadorRef.current}) melhorou para o nível ${g.nivel} — maior, mais rica e mais respeitada. Reflita esse crescimento na ficção.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("guildaCresceu", { guilda: faccaoJogadorRef.current, nivel: g.nivel });
   };
 
   /* ERGUER TEMPLO (v8.9): a fé vira obra. Sai do cofre da guilda, só em
@@ -24309,7 +24309,7 @@ REFERÊNCIAS DE ESCALA (novas regras): o nível 20 é o ápice mortal e custa 35
       { autor: "sistema", texto: `⚖ Lenda recalibrada: nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}, proficiência +${p.prof}. Seus números agora honram seus feitos.` },
       ...msgsRec.map((t) => ({ autor: "sistema", texto: t })),
     ]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: meus números oficiais agora são nível ${p.nivel}, PV ${p.vidaMax}, PM ${p.manaMax}, proficiência +${p.prof}${p.dadivas ? `, ${p.dadivas} dádivas épicas` : ""} — coerentes com tudo que já vivi. Trate-os como verdade daqui em diante.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("recalibrouAFicha", { nivel: p.nivel, vidaMax: p.vidaMax, manaMax: p.manaMax, prof: p.prof, dadivas: p.dadivas });
     setRecal(null);
     setTimeout(() => checarConquistas(), 0);
     seguirParaOMundo();
@@ -24399,7 +24399,7 @@ SEJA BREVE para não cortar o JSON: notas com no máximo 8 palavras, sem descri�
     }
     /* 5) O prompt precisa enxergar o mundo novo já no próximo turno */
     systemRef.current = montarSystemPrompt(nomeCampanha, mundo, personagem, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Recalibração de save: o estado do mundo (guilda, domínios, potências, pessoas, companheiros) foi atualizado para refletir tudo que já aconteceu. Trate os registros atuais como verdade.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("recalibrouOMundo");
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })).concat([{ autor: "sistema", texto: "⚖ Mundo recalibrado: o grupo, as pessoas, a guilda, os domínios e a diplomacia agora contam a sua história." }]));
     setRecalM(null);
     setTimeout(() => checarConquistas(), 0);
@@ -24540,7 +24540,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     const nomeFinal = typeof item === "string" ? item : (item && item.nome) || "item";
     const deTxt = de === "eu" ? "você" : de, paraTxt = para === "eu" ? "você" : para;
     pushMsgs([{ autor: "sistema", texto: `◆ ${nomeFinal}: ${deTxt} → ${paraTxt}` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Transferi "${nomeFinal}" de ${deTxt} para ${paraTxt}.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("transferiu", { nome: nomeFinal, de: deTxt, para: paraTxt });
   };
 
   const gerarCronica = async () => {

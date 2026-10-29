@@ -27,7 +27,8 @@
    sete notas do que o jogador mudou na própria ficha (o nível, as perícias,
    o atributo, a habilidade, as duas especializações, o caminho refeito). O
    9.º junta-lhe o que o sistema resolveu: o combate, o sucesso automático, a
-   volta dos mortos e a nota do recrutamento.
+   volta dos mortos e a nota do recrutamento. O 10.º, as doze notas [INFO] do
+   inventário, do grupo e do save.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
@@ -374,7 +375,9 @@ sec("13 · a ficha (o que o sistema resolveu): os casos percorrem o que o texto 
     conta(V, "pela minha própria fé") >= 80 && conta(V, "pagando o preço em ouro") >= 160 && [1, 2, 3, 4].every((n) => conta(V, "Foi a " + n + "ª vez.") >= 60) && conta(V, "Mão Fria — a mão esquerda não aquece") >= 50);
   const P = HOJE.fichaRecrutamento.map((f) => f.texto);
   t("o recrutamento de cada companheiro, com o nível e os PV", ["Iris", "Bruna Ferro", "Noé"].every((n) => conta(P, "] " + n + " agora FAZ PARTE") >= 80) && conta(P, "(nível 6, ") >= 40 && conta(P, ", 20 PV — ") >= 40);
-  t("as quatro formas novas estão na tabela da ficha, que agora tem onze", Object.keys(ENVELOPES_DA_FICHA).length === 11 && ["combateResolvido", "sucessoAutomatico", "voltaDosMortos", "recrutamento"].every((q) => Object.hasOwn(ENVELOPES_DA_FICHA, q)));
+  /* MOVIDA (28/10, o 10.º grupo): a tabela da ficha cresceu com as notas [INFO] (§14 conta as
+     vinte e três); aqui ficam as quatro do que o sistema resolveu, pelo nome */
+  t("as quatro formas novas estão na tabela da ficha", ["combateResolvido", "sucessoAutomatico", "voltaDosMortos", "recrutamento"].every((q) => Object.hasOwn(ENVELOPES_DA_FICHA, q)));
   const E = oEnvelopeDaFicha;
   const mordidas = [
     ["fichaCombate", "o combate sem o resumo dos inimigos", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, resumoInimigos: "" }) }],
@@ -385,6 +388,42 @@ sec("13 · a ficha (o que o sistema resolveu): os casos percorrem o que o texto 
     ["fichaVolta", "a cicatriz sem o que ela é", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, descricao: "" }) }],
     ["fichaRecrutamento", "o recrutamento sem os PV", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, vidaMax: 0 }) }],
     ["fichaRecrutamento", "o recrutamento que manda pedir o grupo_adicionar", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(", você não precisa mandar \"grupo_adicionar\"", "") }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("14 · a ficha (as notas [INFO]): os casos percorrem o que o texto decide, e a prova morde");
+{
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const B = ["infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu"];
+  /* quem muda de raça ou classe troca a nota inteira; as outras onze entram abaixo da que já havia */
+  t("a mudança de raça ou classe troca a nota; as outras onze entram abaixo da que já havia", N("infoAgoraE").every((x) => x.startsWith("[INFO] ")) && B.filter((b) => b !== "infoAgoraE").every((b) => { const X = N(b); return conta(X, "[NOTA] já havia\n[INFO] ") >= 100 && X.filter((x) => x.startsWith("[INFO] ")).length >= 100; }));
+  const F = N("infoForjou");
+  t(`o item forjado com poder (${conta(F, ", +1 de fogo).")}) e sem (${F.filter((x) => /\((raro|epico|comum)\)\.$/.test(x)).length})`, conta(F, ", +1 de fogo).") >= 60 && F.filter((x) => /\((raro|epico|comum)\)\.$/.test(x)).length >= 150);
+  const G = N("infoAgoraE");
+  t(`quem agora é: a parte vazia não entra (${conta(G, "agora é Mago")}), com e sem profissão (${conta(G, ", profissão ferreira.")})`, conta(G, "agora é Elfo, Mago") >= 20 && conta(G, "agora é Mago") >= 20 && conta(G, "Guerreiro, Campeão") >= 15 && G.every((x) => !x.includes(", ,") && !x.includes("é ,")) && conta(G, ", profissão ferreira.") >= 80 && G.filter((x) => !x.includes("profissão")).length >= 150);
+  const P = N("infoRecalFicha");
+  t(`a recalibração com dádivas (${conta(P, " dádivas épicas")}) e sem`, conta(P, ", 2 dádivas épicas") >= 60 && conta(P, ", 1 dádivas épicas") >= 60 && P.filter((x) => !x.includes("dádivas")).length >= 130);
+  t("o que se transfere de onde para onde, e quem sai do grupo, duas vezes pelo nome", conta(N("infoTransferiu"), "\"Poção de Cura\" de a mochila para ") >= 60 && conta(N("infoTransferiu"), " para Noé.") >= 60 && conta(N("infoSaiu"), "Greta saiu do meu grupo (removido pelo jogador). Reflita isso na narrativa: Greta não viaja") >= 80);
+  t("as doze formas novas estão na tabela da ficha, que agora tem vinte e três", Object.keys(ENVELOPES_DA_FICHA).length === 23 && ["descarteItem", "descarteEquipamento", "equipouCompanheiro", "forjou", "abandonouContrato", "retirouDecreto", "agoraE", "saiuDoGrupo", "guildaCresceu", "recalibrouAFicha", "recalibrouOMundo", "transferiu"].every((q) => Object.hasOwn(ENVELOPES_DA_FICHA, q)));
+  const E = oEnvelopeDaFicha;
+  const mordidas = [
+    ["infoDescarteItem", "o item descartado dito equipamento", { oEnvelopeDaFicha: (q, d) => E("descarteEquipamento", d) }],
+    ["infoDescarteEquip", "o equipamento descartado sem o nome", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, nome: "algo" }) }],
+    ["infoEquipou", "o companheiro trocado pelo item", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, quem: d.item, item: d.quem }) }],
+    ["infoForjou", "o item forjado sem o poder", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, poder: null }) }],
+    ["infoContrato", "o contrato abandonado que ainda existe", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(" — ele não existe mais para mim", "") }],
+    ["infoDecreto", "o decreto retirado sem a recompensa devolvida", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(" A recompensa foi devolvida.", "") }],
+    ["infoAgoraE", "a parte vazia que ocupa lugar", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, partes: d.partes.map((x) => x || "?") }) }],
+    ["infoSaiu", "quem sai e ainda viaja", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(/ Reflita isso na narrativa: .*$/, "") }],
+    ["infoGuilda", "a guilda um nível acima", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, nivel: d.nivel + 1 }) }],
+    ["infoRecalFicha", "a recalibração sem as dádivas", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, dadivas: 0 }) }],
+    ["infoRecalMundo", "a recalibração do mundo que não é verdade", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(" Trate os registros atuais como verdade.", "") }],
+    ["infoTransferiu", "a transferência ao contrário", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, de: d.para, para: d.de }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));
