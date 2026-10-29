@@ -258,7 +258,10 @@ sec("8. lixo");
   t("(e) o preço do mercado sobe para quem é procurado", app.includes("precoDeCompraPara(personagem, it.preco) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current)"));
   t("(f) o pouso recusa a estalagem a quem é procurado, com a mesma forma do abrigo hostil", /servicoRecusado\(leiRef\.current, cidadeAtualRef\.current, diaRef\.current, "pouso"\)/.test(app) && /sitio = \{ \.\.\.sitio, tipo: "hostil"/.test(app));
   t("(g) a guarda pode vir ao virar o dia, só com o herói de fato na cidade", /if \(!jornadaRef\.current && cidadeAtualRef\.current\) \{\s*const vinda = guardaQueVem\(leiRef\.current,/.test(app));
-  t("(g) a luta da guarda abre pela porta única, e o envelope entra no turno do descanso", app.includes("envelopeDaGuarda(vinda, cidadeAtualRef.current)") && app.includes("${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}"));
+  /* MOVIDA (28/10, T2-A, o acampamento): o texto do fim do descanso saiu para src/motor/envelopes-do-turno.js;
+     o que esta asserção guarda é que a nota da guarda entra no turno do descanso, e ela segue na lista
+     de notas que o App passa ao envelope, na mesma ordem */
+  t("(g) a luta da guarda abre pela porta única, e o envelope entra no turno do descanso", app.includes("envelopeDaGuarda(vinda, cidadeAtualRef.current)") && app.includes("cauda: [localMsg, climaMsg, reinoMsg, guardaMsg, sonhoMsg, eventosMsg]"));
 }
 
 console.log(`\nMM10 · o crime: ${ok} passaram, ${mal} falharam`);

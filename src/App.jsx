@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -22227,8 +22227,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (JSON.stringify(r.coracao) === antes) return;
       coracaoRef.current = r.coracao;
       coracaoFalaRef.current = { secao: "pergunta", linha: r.linha || "", proprio: true };
-      const frase = { aceitou: "Eu aceito o que " + nome + " me pede.", recusou: "Eu recuso o que " + nome + " me pede.", porque: "Pergunto a " + nome + " porquê." }[resposta] || "";
-      enviar("[RESPOSTA A " + nome + " — DADA POR MIM] " + frase + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO, fichaViva() || personagem);
+      enviar(oEnvelopeDoAcampamento("respostaAoCoracao", { nome, resposta }), fichaViva() || personagem);
     } catch (e) { calou("responder ao coração", e); }
   };
   /* O herói decide pela pessoa. Irreversível: os dois lados estavam na tela
@@ -22272,7 +22271,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
       const pago = custo ? { ...pers, moedas: Math.max(0, (pers.moedas || 0) - custo) } : pers;
       const naLuta = r.luta ? abrirLutaPrometida(r.luta, pago) : pago;
-      enviar("[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.", naLuta);
+      enviar(oEnvelopeDoAcampamento("decisaoDoCoracao", { nome, verbo: lado.verbo, preco: lado.preco }), naLuta);
     } catch (e) { calou("decidir no coração", e); }
   };
   /* O que o cartão mostra: a decisão posta, com os lados que a bolsa paga —
@@ -22503,7 +22502,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     try { reciboNenhum = reciboDoDescanso({ antes: fichaAoAcampar || personagemRef.current || personagem, depois: personagemRef.current || personagem, tipo: "nenhum" }); } catch (e) { calou("o recibo de levantar sem descansar", e); }
     setSitio(null);
     pushMsgs([{ autor: "sistema", texto: `⛺ Você levanta acampamento sem descansar — ${MINUTOS_ARRUMANDO} minutos arrumando as coisas. Nada de PV, nada de PM: você só arrumou o que leva.` }]);
-    enviar(`[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${MINUTOS_ARRUMANDO} minutos). NÃO houve sono nem noite. ${reciboNenhum} Não me pergunte como foi a noite, porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reinoMsg}`, personagem);
+    enviar(oEnvelopeDoAcampamento("levantarSemDescanso", { minutos: MINUTOS_ARRUMANDO, recibo: reciboNenhum, reino: reinoMsg }), personagem);
   };
 
   /* ---------------- DADOS DE VIDA (v9.17) ----------------
@@ -22745,7 +22744,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const localMsg = (jornadaRef.current && !acordoCala)
       ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
       : "";
-    enviar(((extra && extra.antes) ? extra.antes + "\n" : "") + `[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. ${reciboMsg} Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${localMsg}${climaMsg}${reinoMsg}${guardaMsg}${sonhoMsg}${eventosMsg}`, pers);
+    enviar(oEnvelopeDoAcampamento("levantarDescansado", { antes: extra && extra.antes, tipo, dur, recibo: reciboMsg, cauda: [localMsg, climaMsg, reinoMsg, guardaMsg, sonhoMsg, eventosMsg] }), pers);
   };
 
   /* ---------------- A FOGUEIRA (MM-C · C6, F2 — aprovada pela pessoa, 11/10) ----------------
@@ -22857,7 +22856,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       try { porta = p.papel === "porta" && portaDoCoracaoAberta(r.coracao, nucleo); } catch (e) { calou("a porta da fogueira", e); }
       definirFogueira({ ...f, fase: "fala", quem: nome, genero: p.genero || "", inicio: mensagensRef.current.length, sentado: r, aguenta, porta });
       coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
-      enviar("[À FOGUEIRA — SENTO-ME AO LADO DE " + nome + "] É noite no acampamento e escolhi sentar-me junto de " + nome + ". Narre só o que " + nome + " diz e faz à volta do fogo, em fala direta (—), aqui mesmo; a noite ainda não acabou: nada de sono, nada de manhã." + SO_ISSO, fichaViva() || personagem);
+      enviar(oEnvelopeDoAcampamento("sentarAoFogo", { nome }), fichaViva() || personagem);
     } catch (e) { calou("sentar-se à fogueira", e); }
   };
   /* MM-C · 7.ª sessão (v9.418 do backend): a fogueira é a segunda porta da
@@ -22912,7 +22911,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (r.luta) abrirLutaPrometida(r.luta, personagemRef.current || pers);
       coracaoFalaRef.current = { secao: "coracao", linha: r.linha || "", proprio: true };
       fecharANoite({ frase: fraseDaManha({ tipo: "lado", nome: f.quem, genero: f.genero, preco: lado.preco }), recibo: f.recibo },
-        "[À FOGUEIRA — A DECISÃO SOBRE " + f.quem + ", TOMADA POR MIM] " + lado.verbo + " — " + lado.preco + ". Narre primeiro a reação de " + f.quem + ", ainda à volta do fogo; só depois a noite passa.");
+        oEnvelopeDoAcampamento("decisaoAoFogo", { quem: f.quem, verbo: lado.verbo, preco: lado.preco }));
     } catch (e) { calou("decidir à fogueira", e); }
   };
   const ficarAoFogo = () => {
@@ -22922,7 +22921,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       coracaoRef.current = garantirCoracaoDoSave(f.sentado.coracao);
       if (f.sentado.revela) pagarSementesDoElo();
       fecharANoite({ frase: fraseDaManha({ tipo: "porta", nome: f.quem, genero: f.genero }), recibo: f.recibo },
-        "[À FOGUEIRA — FICO MAIS UM POUCO COM " + f.quem + ", SÓ NÓS DOIS] Os outros já dormem. Narre primeiro esse momento breve, os dois junto às brasas, sem decidir nada por mim; só depois a noite passa.");
+        oEnvelopeDoAcampamento("ficarAoFogo", { quem: f.quem }));
     } catch (e) { calou("ficar à fogueira", e); }
   };
   /* o que o painel recebe neste render — chamado como função, nunca um

@@ -18,12 +18,13 @@
    que o sistema já resolveu numa sala (a armadilha disparada, contornada e
    vista, o tesouro, o santuário, a busca) e a fuga, com o SO_ISSO. O 3.º,
    O CORREIO E O DOMÍNIO: o decreto pregado, a carta enviada e a petição
-   respondida.
+   respondida. O 4.º, O ACAMPAMENTO E A FOGUEIRA: o fim do acampamento com e
+   sem descanso, as três da noite à volta do fogo e as duas portas do coração.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -159,6 +160,42 @@ sec("6 · o correio e o domínio: os casos percorrem o que o texto decide, e a p
     ["correioPeticao", "a petição sempre aceita", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, aceite: true }) }],
     ["correioPeticao", "as moedas sem o sinal", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, moedas: d.moedas && Math.abs(d.moedas) }) }],
     ["correioPeticao", "a reação de outro", { oEnvelopeDoCorreio: (q, d) => oEnvelopeDoCorreio(q, { ...d, de: "alguém" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("7 · o acampamento e a fogueira: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const M = (b) => D.blocos[b].map((f) => f.texto[0][0]);
+  const conta = (b, s) => M(b).filter((x) => x.includes(s)).length;
+  const quem = (b) => new Set(D.blocos[b].map((f) => f.texto[0][1])).size;
+  t(`o descanso curto (${conta("acampDescansado", "DESCANSO CURTO]")}) e o longo (${conta("acampDescansado", "DESCANSO LONGO]")}); a frase da manhã à frente (${M("acampDescansado").filter((x) => !x.startsWith("[")).length}) e sem ela`,
+    conta("acampDescansado", "DESCANSO CURTO]") >= 100 && conta("acampDescansado", "DESCANSO LONGO]") >= 100 && M("acampDescansado").filter((x) => !x.startsWith("[")).length >= 50 && M("acampDescansado").filter((x) => x.startsWith("[")).length >= 150);
+  const cauda = ["[ONDE ACORDO]", "[CLIMA]", "[REINO]", "[GUARDA]", "[SONHO]", "[EVENTOS]"];
+  t("as notas do fim do descanso, cada uma cheia e vazia, e na ordem em que chegam",
+    cauda.every((c) => conta("acampDescansado", c) >= 60 && conta("acampDescansado", c) < N_CASOS)
+    && M("acampDescansado").every((x) => { const p = cauda.map((c) => x.indexOf(c)).filter((n) => n >= 0); return p.every((n, j) => !j || n > p[j - 1]); }));
+  t(`levantar sem descanso: o reino (${conta("acampSemDescanso", "[REINO]")}) e sem ele; os vinte minutos`, conta("acampSemDescanso", "[REINO]") >= 60 && conta("acampSemDescanso", "[REINO]") < N_CASOS && conta("acampSemDescanso", "(20 minutos)") === N_CASOS);
+  t(`a resposta ao coração: aceito (${conta("coracaoResposta", "Eu aceito")}), recuso (${conta("coracaoResposta", "Eu recuso")}), o porquê (${conta("coracaoResposta", "porquê.")}) e a que não está na tabela (${conta("coracaoResposta", "]  Narre")})`,
+    ["Eu aceito", "Eu recuso", "porquê.", "]  Narre"].every((x) => conta("coracaoResposta", x) >= 50));
+  t("com SO_ISSO o que responde a um gesto e fica na cena; sem ele o que fecha a noite e o dilema", ["fogoSentar", "coracaoResposta"].every((b) => M(b).every((x) => x.endsWith(SO_ISSO))) && ["fogoDecisao", "fogoFicar", "coracaoDecisao", "acampSemDescanso", "acampDescansado"].every((b) => M(b).every((x) => !x.includes(SO_ISSO))));
+  t("a ficha viva e a do render (a resposta, o sentar); a da luta e a paga (a decisão)", quem("coracaoResposta") === 2 && quem("fogoSentar") === 2 && quem("coracaoDecisao") === 2);
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DO_ACAMPAMENTO).length === 7 && (() => { try { oEnvelopeDoAcampamento("nenhuma", {}); return false; } catch { return true; } })());
+  const E = oEnvelopeDoAcampamento;
+  const mordidas = [
+    ["acampDescansado", "a frase da manhã perdida", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, antes: "" }) }],
+    ["acampDescansado", "as notas do fim fora de ordem", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, cauda: [...d.cauda].reverse() }) }],
+    ["acampDescansado", "o tipo do descanso sem as maiúsculas", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, tipo: { toUpperCase: () => d.tipo } }) }],
+    ["acampSemDescanso", "o reino esquecido", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, reino: "" }) }],
+    ["acampSemDescanso", "o recibo de outro", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, recibo: "NÃO houve cura — PV e PM continuam exatamente como estavam." }) }],
+    ["fogoSentar", "o sentar sem o escopo", { oEnvelopeDoAcampamento: (q, d) => E(q, d).replace(SO_ISSO, "") }],
+    ["fogoDecisao", "o preço trocado pelo verbo", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, preco: d.verbo }) }],
+    ["fogoFicar", "ficar com outro", { oEnvelopeDoAcampamento: (q, d) => E(q, { quem: "alguém" }) }],
+    ["coracaoResposta", "a resposta sempre aceita", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, resposta: "aceitou" }) }],
+    ["coracaoDecisao", "a decisão sem o preço", { oEnvelopeDoAcampamento: (q, d) => E(q, { ...d, preco: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

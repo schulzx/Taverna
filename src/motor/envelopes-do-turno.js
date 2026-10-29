@@ -128,3 +128,44 @@ export function oEnvelopeDoCorreio(qual, dados) {
   if (!f) throw new Error("envelope do correio sem forma: " + qual);
   return f(dados || {});
 }
+
+/* ============================================================
+   4.º GRUPO — O ACAMPAMENTO E A FOGUEIRA: o fim do acampamento (com e sem
+   descanso: o recibo do que de facto aconteceu é do app, e o tempo que
+   passou também), a noite à volta do fogo (sentar ao lado de alguém,
+   decidir o que essa pessoa pede, ficar mais um pouco) e as duas portas do
+   coração fora da fogueira (a resposta ao pedido, a decisão do dilema).
+   Em todos, o gesto é do jogador e já está feito: o Narrador conta a
+   reação, aqui mesmo, e não decide nada por ele.
+   ============================================================ */
+const RESPOSTA_AO_CORACAO = {
+  aceitou: (nome) => "Eu aceito o que " + nome + " me pede.",
+  recusou: (nome) => "Eu recuso o que " + nome + " me pede.",
+  porque: (nome) => "Pergunto a " + nome + " porquê.",
+};
+export const ENVELOPES_DO_ACAMPAMENTO = {
+  levantarSemDescanso: ({ minutos, recibo, reino }) =>
+    `[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${minutos} minutos). NÃO houve sono nem noite. ${recibo} Não me pergunte como foi a noite, porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reino}`,
+  /* `antes` é a frase da manhã que a fogueira põe à frente; `cauda` são as
+     notas do app que fecham o turno (onde acordo, o clima, o reino, a
+     guarda, o sonho, os eventos), na ordem em que chegam */
+  levantarDescansado: ({ antes, tipo, dur, recibo, cauda }) =>
+    (antes ? antes + "\n" : "") + `[FIM DO ACAMPAMENTO — DESCANSO ${tipo.toUpperCase()}] Levantamos acampamento após ${dur} de descanso. ${recibo} Agora o mundo VOLTA a correr: narre de forma PROPORCIONAL o que se passou nesse tempo curto — pequenas mudanças plausíveis (o clima, um ruído ao longe, um viajante que passou, o avanço natural de algo já em curso). NUNCA exagere o tempo: foi só ${dur}, então nada de meses, quedas de impérios ou grandes saltos. Retome a cena e me convide a agir.${(cauda || []).map((x) => `${x}`).join("")}`,
+  sentarAoFogo: ({ nome }) =>
+    "[À FOGUEIRA — SENTO-ME AO LADO DE " + nome + "] É noite no acampamento e escolhi sentar-me junto de " + nome + ". Narre só o que " + nome + " diz e faz à volta do fogo, em fala direta (—), aqui mesmo; a noite ainda não acabou: nada de sono, nada de manhã." + SO_ISSO,
+  decisaoAoFogo: ({ quem, verbo, preco }) =>
+    "[À FOGUEIRA — A DECISÃO SOBRE " + quem + ", TOMADA POR MIM] " + verbo + " — " + preco + ". Narre primeiro a reação de " + quem + ", ainda à volta do fogo; só depois a noite passa.",
+  ficarAoFogo: ({ quem }) =>
+    "[À FOGUEIRA — FICO MAIS UM POUCO COM " + quem + ", SÓ NÓS DOIS] Os outros já dormem. Narre primeiro esse momento breve, os dois junto às brasas, sem decidir nada por mim; só depois a noite passa.",
+  /* a resposta que o jogador deu ao pedido do coração; a que não está na
+     tabela vai sem frase, como no App */
+  respostaAoCoracao: ({ nome, resposta }) =>
+    "[RESPOSTA A " + nome + " — DADA POR MIM] " + (RESPOSTA_AO_CORACAO[resposta] ? RESPOSTA_AO_CORACAO[resposta](nome) : "") + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
+  decisaoDoCoracao: ({ nome, verbo, preco }) =>
+    "[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + verbo + " — " + preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.",
+};
+export function oEnvelopeDoAcampamento(qual, dados) {
+  const f = ENVELOPES_DO_ACAMPAMENTO[qual];
+  if (!f) throw new Error("envelope do acampamento sem forma: " + qual);
+  return f(dados || {});
+}

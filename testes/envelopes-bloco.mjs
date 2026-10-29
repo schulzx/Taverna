@@ -27,6 +27,7 @@ import * as chao from "../src/chao.js";
 import * as motorEnvelopes from "../src/motor/envelopes-do-turno.js";
 import * as decretos from "../src/decretos.js";
 import { TIPOS_CARTA } from "../src/correio.js";
+import * as subtramas from "../src/subtramas.js";
 
 const NOMES = {
   calendario: ["dataTxt", "horaTxt", "ehNoite", "estacaoDe"],
@@ -35,9 +36,10 @@ const NOMES = {
   prompt: ["SINAIS_ABERTOS"],
   chao: ["RAIO_EXAME"],
   decretos: ["tipoDecreto"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio"],
+  subtramas: ["fraseDaManha"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento"],
 };
-const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, motorEnvelopes };
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
@@ -65,9 +67,10 @@ const corteDe = (app) => (de, ate) => {
    de uma linha, o sítio é a própria linha do `enviar`, que muda de texto
    para chamada: as duas pontas cortam-na até ao fim da linha. `antesDe`
    são as linhas de fora do sítio que o App de antes lia (o SO_ISSO no topo). */
-export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga", "correioDecreto", "correioCarta", "correioPeticao"];
+export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga", "correioDecreto", "correioCarta", "correioPeticao",
+  "acampSemDescanso", "acampDescansado", "fogoSentar", "fogoDecisao", "fogoFicar", "coracaoResposta", "coracaoDecisao"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -80,6 +83,15 @@ const ANCORAS = {
   masmorraFuga: { antes: ["    enviar(`[MASMORRA — FUGA]", FIM], hoje: ['    enviar(oEnvelopeDaMasmorra("fuga", ', FIM] },
   correioDecreto: { antes: ["    enviar(`[DECRETO PREGADO — ", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("decreto", ', FIM] },
   correioCarta: { antes: ["    enviar(`[CORREIO — CARTA ENVIADA]", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("carta", ', FIM] },
+  acampSemDescanso: { antes: ["    enviar(`[FIM DO ACAMPAMENTO — SEM DESCANSO]", FIM], hoje: ['    enviar(oEnvelopeDoAcampamento("levantarSemDescanso", ', FIM] },
+  acampDescansado: { antes: ['    enviar(((extra && extra.antes) ? extra.antes + "\\n" : "") + `[FIM DO ACAMPAMENTO — DESCANSO ', FIM], hoje: ['    enviar(oEnvelopeDoAcampamento("levantarDescansado", ', FIM] },
+  fogoSentar: { antes: ['      enviar("[À FOGUEIRA — SENTO-ME AO LADO DE "', FIM], hoje: ['      enviar(oEnvelopeDoAcampamento("sentarAoFogo", ', FIM] },
+  /* as duas da fogueira que fecham a noite: o sítio é a chamada inteira de fecharANoite (o envelope é o 2.º argumento, na linha de baixo) */
+  fogoDecisao: { antes: ['      fecharANoite({ frase: fraseDaManha({ tipo: "lado"', '\n    } catch (e) { calou("decidir à fogueira"'], hoje: ['      fecharANoite({ frase: fraseDaManha({ tipo: "lado"', '\n    } catch (e) { calou("decidir à fogueira"'] },
+  fogoFicar: { antes: ['      fecharANoite({ frase: fraseDaManha({ tipo: "porta"', '\n    } catch (e) { calou("ficar à fogueira"'], hoje: ['      fecharANoite({ frase: fraseDaManha({ tipo: "porta"', '\n    } catch (e) { calou("ficar à fogueira"'] },
+  /* a resposta ao coração: no App de antes a frase vinha de uma tabela na linha de cima, que saiu junto */
+  coracaoResposta: { antes: ['      const frase = { aceitou: ', '\n    } catch (e) { calou("responder ao coração"'], hoje: ['      enviar(oEnvelopeDoAcampamento("respostaAoCoracao", ', FIM] },
+  coracaoDecisao: { antes: ['      enviar("[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] "', FIM], hoje: ['      enviar(oEnvelopeDoAcampamento("decisaoDoCoracao", ', FIM] },
   correioPeticao: { antes: ["    enviar(`[CORREIO — PETIÇÃO ${aceite", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("peticao", ', FIM] },
 };
 const DEVOLVE = { rodape: "rodape" };
@@ -178,6 +190,29 @@ export function correioDoCaso(i) {
   };
 }
 
+/* O ACAMPAMENTO E A FOGUEIRA: o descanso curto e o longo, com e sem a frase
+   da manhã à frente; as notas do fim (onde acordo, o clima, o reino, a
+   guarda, o sonho, os eventos) cheias e vazias; quem se senta ao fogo, de
+   cada género; o lado escolhido; a resposta aceite, recusada, o porquê e a
+   que não está na tabela; a ficha viva e a que falta. */
+export function acampamentoDoCaso(i) {
+  const nota = (n, txt) => ((i >> n) & 1 ? txt : "");
+  return {
+    MINUTOS_ARRUMANDO: 20, reciboNenhum: ["NÃO houve cura — PV e PM continuam exatamente como estavam.", "Queimei um dado de vida: +4 PV (já aplicado)."][i % 2],
+    reinoMsg: nota(1, "\n[REINO] O imposto da estação venceu."),
+    extra: [null, {}, { antes: "Amanhece; Iris ainda olha as brasas." }, { antes: "" }][i % 4], tipo: ["curto", "longo"][(i >> 1) % 2], dur: ["1 hora", "8 horas"][(i >> 1) % 2],
+    reciboMsg: ["PV 12→18, PM 3→5 (já aplicado).", "O grupo inteiro descansou: PV e PM cheios."][i % 2],
+    localMsg: nota(2, "\n[ONDE ACORDO] Eu ainda estou EM VIAGEM."), climaMsg: nota(3, "\n[CLIMA] chuva fina"), guardaMsg: nota(4, "\n[GUARDA] Bruna vigiou."),
+    sonhoMsg: nota(5, "\n[SONHO] uma porta de sal"), eventosMsg: nota(6, "\n[EVENTOS] a ponte caiu"),
+    pers: { nome: "Vera descansada" }, nome: ["Iris", "Bruna Ferro", "Petra Guarda-Portão"][i % 3],
+    lado: { verbo: ["Fico do lado de Iris", "Entrego o anel"][i % 2], preco: ["Bruna não me perdoa", "◉ 30 e a confiança de Noé"][(i >> 1) % 2] },
+    naLuta: i % 3 ? { nome: "Vera paga" } : { nome: "Vera na luta" },
+    f: { quem: ["Iris", "Noé Laminado", "Greta"][i % 3], genero: ["f", "m", ""][i % 3], recibo: "recibo " + (i % 4) },
+    resposta: ["aceitou", "recusou", "porque", "outra"][i % 4],
+    fichaViva: () => (i % 5 === 0 ? null : { nome: "Vera viva" }),
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -245,6 +280,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     const g = GRUPO(bloco);
     if (g === "masmorra") Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
     else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
+    else if (g === "acampamento") Object.assign(S, acampamentoDoCaso(k.i), { personagem: { nome: "Vera do render" }, fecharANoite: (manha, txt) => { enviados.push([txt, seguro(manha)]); } });
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
