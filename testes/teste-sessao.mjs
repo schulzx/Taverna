@@ -132,8 +132,14 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
      MOVIDA A QUINTA VEZ (29/10, Fase 4, trilha B: o 2.º órgão do depois):
      entre a chegada e o trabalho daqui entrou o conferente das missões —
      no App, `pers = conferirAsMissoes(pers)` corre depois do Juiz e ANTES
-     de `oferecerTrabalhoDaqui`. Corre no replay também (secção 4d). */
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "as missões", "o trabalho daqui", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+     de `oferecerTrabalhoDaqui`. Corre no replay também (secção 4d).
+     MOVIDA A SEXTA VEZ (29/10, Fase 4, trilha B: o boato no replay): entre o
+     passo antes do Mestre e o turno do Mestre entrou o boato — no App, a
+     peça do pedido (`comOBoato`, motor/pedido-do-turno.js) corre no envio,
+     antes de o Narrador responder, e escreve o cânone e o registo se a linha
+     chegou à pauta. O replay faz a mesma conta sobre a pauta gravada; a
+     prova é de teste-quem-disse.mjs (secção 6). */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o boato", "o turno do Mestre", "o códex", "a chegada", "as missões", "o trabalho daqui", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
   t("e a porta do App diz que é do App, e é a única", /^App /.test(PASSOS_DO_REPLAY.find((p) => p.passo === "o passo antes do Mestre").de) && PASSOS_DO_REPLAY.filter((p) => /^App /.test(p.de)).length === 1);
   t("e o passo do motor antes do Mestre não leva o nome da porta (o `calou` e o oráculo dizem-na por ele)", PASSOS_DO_REPLAY.filter((p) => /antes do Mestre/.test(p.passo)).length === 1);
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);

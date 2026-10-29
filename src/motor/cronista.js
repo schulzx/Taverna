@@ -118,6 +118,47 @@ export const O_QUE_O_CRONISTA_PODE = Object.freeze({
        forca da M44, que ninguém assinou) */
     naFala: { fracao: 0.6, letras: 4 },
     semQuem: "alguém em cena",
+    /* QUEM DISSE (29/10, trilha B): a PRIMEIRA fala que diz o nome (quem
+       repete ou pergunta não contou), e quem o sistema conhece (o registo, o
+       grupo, a gente nova deste turno que a prosa pôs em cena) como dono
+       dela, no mesmo parágrafo: o da etiqueta logo depois («— Vive no Posto
+       — diz Brom»: `verbo` a até `etiqueta` letras), ou então o sujeito da
+       última frase antes dela que abre com um nome («Tomas assente devagar.
+       'Escondido…'»), a até `letras` letras. Quem vem nomeado DEPOIS da fala
+       sem etiqueta é a batida seguinte, não o dono («…' Sari inclina a
+       cabeça»). O nome inteiro, ou o primeiro com `primeiro` letras ou mais,
+       e só escrito com maiúscula na prosa (o «homem da carroça» do registo
+       não é o «um homem» da narração). Se o dono é o herói, ninguém: o herói
+       não é fonte de boato; e o herói que fala logo antes da fala («você
+       fala: '…'», `heroiFala`) tapa quem estava mais atrás. */
+    quemDisse: {
+      letras: 240, primeiro: 4, etiqueta: 24,
+      verbo: /^[\s,.;:!?—–-]*(?:diz|disse|dizia|responde|respondeu|murmura|murmurou|sussurra|sussurrou|pergunta|grita|gritou|conta|contou|continua|acrescenta|explica|completa|resmunga|retruca|rosna|avisa|insiste|garante|admite|confessa|repete)\s+(?:(?:o|a)\s+)?$/,
+      abre: /(?:^|[.!?…]["”»']?\s+|\n\s*)$/,
+      /* o herói que fala antes da fala («Sem cerimônia, você fala: 'Vou ao
+         Santuário…'») tapa quem estava mais atrás: a fala é dele */
+      heroiFala: /^\s+(?:\S+\s+){0,2}?(?:fala|diz|pergunta|responde|grita|murmura|sussurra|conta|explica|insiste|retruca|repete|chama|pede|anuncia)(?:[^a-z]|$)/,
+    },
+    /* O PARADEIRO (29/10, trilha B): o sítio que o sistema conhece (as cidades do
+       mapa, os lugares do cânone, os marcos da espinha, o lugar e a masmorra
+       em que o herói está) nomeado na MESMA frase da fala que diz o nome,
+       logo depois de uma `preposicao` («foi pra Vau de Pedra», «mora no
+       Posto Velho»). Sem sítio nomeado, o «aqui» da fala dá o sítio em que
+       a fala se ouviu — o lugar ou a masmorra, nunca a cidade (a cidade do
+       herói dita numa fala era o PROCURA/ESTÁ AQUI da 11.ª). A pergunta
+       (`pergunta`) e a negação (`nega`) não afirmam onde ninguém está; a pergunta que só ecoa o nome
+       («A Clarissa? Vive em Vau Seco») é respondida nas `resposta` frases
+       seguintes da mesma fala. */
+    paradeiro: {
+      preposicao: /(?:^|[^a-z])(?:em|no|na|nos|nas|num|numa|para|pra|pro|pras|pros|ate|rumo a|rumo ao)\s+(?:(?:o|a|os|as)\s+)?$/,
+      antes: 16,
+      aqui: /(?:^|[^a-z])(?:aqui|ca)(?:[^a-z]|$)/,
+      nega: /(?:^|[^a-z])(?:nao|nunca|nem|jamais)(?:[^a-z]|$)/,
+      pergunta: /\?\s*["”»']?\s*$/,
+      /* o eco: a pergunta que é só o nome (e até `eco` letras à volta) */
+      eco: 6,
+      resposta: 2,
+    },
   },
   global: {
     quem: "sistema",
@@ -245,6 +286,195 @@ function seApresenta(nome, narrativa) {
   return false;
 }
 
+/* ---------------- QUEM DISSE, E ONDE (29/10, Fase 4, trilha B) ----------------
+   O boato que se confirma (boatos.js) só julga o que tem sítio, e só cobra
+   quem contou se sabe quem foi. O Cronista escrevia quase sempre «alguém em
+   cena» e quase nunca o `local` — e não precisa de escrever: o que a fala
+   diz, o sistema lê. Quem falou é a gente que o sistema conhece, nomeada
+   junto da fala; onde, o sítio que o sistema conhece, nomeado na mesma
+   frase (ver `fatos.quemDisse` e `fatos.paradeiro`). Nada se inventa: sem nome
+   conhecido ao lado, ninguém; sem sítio conhecido na frase, nenhum. */
+
+/* o texto plano (minúsculo, sem acento) e, de cada letra, o índice no original */
+function plano(s) {
+  const mapa = [];
+  let p = "";
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i].toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    for (const ch of c) { p += ch; mapa.push(i); }
+  }
+  return { p, mapa };
+}
+const borda = (ch) => ch === undefined || !/[a-z0-9]/.test(ch);
+/* as ocorrências de `nome` com borda de palavra, em índices do original [ini, fim) */
+function ocorrencias(P, nome) {
+  const n = norm(nome);
+  const out = [];
+  if (n.length < 3) return out;
+  let i = P.p.indexOf(n);
+  while (i >= 0) {
+    if (borda(P.p[i - 1]) && borda(P.p[i + n.length])) out.push([P.mapa[i], P.mapa[i + n.length - 1] + 1]);
+    i = P.p.indexOf(n, i + 1);
+  }
+  return out;
+}
+/* As falas, finas: as aspas, como em `trechosDeFala`, e a linha de
+   travessão partida em fala e narração a cada travessão («— Vive no Posto —
+   diz Brom. — E não volta»: a 1.ª e a 3.ª são fala; «diz Brom» não). A
+   régua grossa (`trechosDeFala`) continua a ser a do «só na fala». */
+function falasFinas(s) {
+  const out = [];
+  for (const rx of [/"[^"\n]*"/g, /“[^”]*”/g, /«[^»]*»/g, /(^|[\s(—:])'[^'\n]{2,}?'(?=[\s.,;:!?)—]|$)/g]) for (const m of s.matchAll(rx)) out.push([m.index, m.index + m[0].length]);
+  for (const m of s.matchAll(/(^|\n)([ \t]*[—–-])([^\n]*)/g)) {
+    let i = m.index + m[1].length + m[2].length;
+    const fim = i + m[3].length;
+    let fala = true;
+    for (const corte of m[3].matchAll(/\s[—–]\s*/g)) {
+      const j = m.index + m[1].length + m[2].length + corte.index;
+      if (fala) out.push([i, j]);
+      fala = !fala;
+      i = j + corte[0].length;
+    }
+    if (fala) out.push([i, fim]);
+  }
+  return out;
+}
+const naFala = (falas, i) => falas.find(([a, b]) => i >= a && i < b) || null;
+/* a frase da fala em que `i` cai: do último ponto antes ao primeiro depois */
+function fraseDe(s, i, [a, b]) {
+  let ini = a, fim = b;
+  for (let k = i - 1; k >= a; k--) if (/[.!?…]/.test(s[k])) { ini = k + 1; break; }
+  for (let k = i; k < b; k++) if (/[.!?…]/.test(s[k])) { fim = k + 1; break; }
+  return [ini, fim];
+}
+
+/* A gente que o sistema conhece nesta cena: o registo, o grupo, a gente nova do turno que a prosa pôs em cena, quem o
+   Cronista diz que falou com o herói — e o herói, que tapa (ver quemDisse). */
+function genteDaCena(E, P, c) {
+  const heroi = texto(obj(E.personagem).nome, 60);
+  const fora = (n) => soNaFala(n, c.narrativa) && !seApresenta(n, c.narrativa);
+  const nomes = [
+    /* quem só foi dito também: se a prosa o nomeia fora das falas, ali está */
+    ...Object.values(obj(E.npcs)).filter((p) => p && typeof p === "object").map((p) => p.nome),
+    ...lista(obj(E.personagem).grupo).map((g) => g && g.nome),
+    ...lista(P.pessoas).map((p) => obj(p).nome).filter((n) => typeof n === "string" && !fora(n)),
+    ...lista(c.falouCom),
+  ].map((n) => texto(n, 60)).filter(Boolean);
+  const vistos = new Set();
+  const out = [];
+  for (const nome of [heroi, ...nomes]) {
+    const k = norm(nome);
+    if (!k || vistos.has(k)) continue;
+    vistos.add(k);
+    out.push({ nome, heroi: nome === heroi && !!heroi });
+  }
+  return out;
+}
+
+/* Quem disse o nome: ver `fatos.quemDisse`. "" quando não se sabe. */
+export function quemDisse(nome, narrativa, cena) {
+  const s = String(narrativa || "");
+  const T = O_QUE_O_CRONISTA_PODE.fatos.quemDisse;
+  if (!s || norm(nome).length < 3) return "";
+  const P = plano(s);
+  const falas = falasFinas(s);
+  const outros = lista(cena).filter((g) => g && typeof g.nome === "string" && norm(g.nome) && norm(g.nome) !== norm(nome));
+  /* a primeira fala que diz o nome (quem o repete depois não o contou) */
+  const ini = ocorrencias(P, nome).map(([i]) => i).find((i) => naFala(falas, i));
+  if (ini === undefined) return "";
+  const f = naFala(falas, ini);
+  const pa = s.lastIndexOf("\n", ini) + 1;
+  const pb = s.indexOf("\n", ini) < 0 ? s.length : s.indexOf("\n", ini);
+  let etiqueta = null, antes = null;
+  for (const g of outros) {
+    const primeiro = norm(g.nome).split(" ")[0];
+    const formas = [g.nome, ...(primeiro.length >= T.primeiro && primeiro !== norm(g.nome) ? [primeiro] : [])];
+    for (const forma of formas) {
+      for (const [ci, cf] of ocorrencias(P, forma)) {
+        if (ci < pa || cf > pb || naFala(falas, ci) || !/\p{Lu}/u.test(s[ci])) continue;
+        if (ci >= f[1]) {
+          /* depois da fala: só a etiqueta («— diz Brom») é do dono */
+          const d = ci - f[1];
+          if (d <= T.etiqueta && T.verbo.test(norm(s.slice(f[1], ci)) + " ") && (!etiqueta || d < etiqueta.d)) etiqueta = { d, g };
+        } else if (cf <= f[0]) {
+          /* antes da fala: o sujeito de uma frase, o mais perto */
+          const d = f[0] - cf;
+          /* …ou a etiqueta da fala de antes («— diz Brom. — E o Livro…»):
+             quem falou antes e não foi interrompido continua a falar */
+          const fim = Math.max(pa, ...falas.map(([, b]) => b).filter((b) => b <= ci));
+          const daEtiqueta = fim > pa && ci - fim <= T.etiqueta && T.verbo.test(norm(s.slice(fim, ci)) + " ");
+          if (d <= T.letras && (T.abre.test(s.slice(pa, ci)) || daEtiqueta) && (!antes || d < antes.d)) antes = { d, g };
+        }
+      }
+    }
+  }
+  /* «você fala:» entre o sujeito e a fala: quem fala é o herói */
+  if (!etiqueta && antes) {
+    for (const [ci, cf] of ocorrencias(P, "voce")) {
+      if (ci < pa || cf > f[0] || naFala(falas, ci) || f[0] - cf >= antes.d) continue;
+      if (T.heroiFala.test(" " + norm(s.slice(cf, Math.min(f[0], cf + 40))))) return "";
+    }
+  }
+  const dono = etiqueta || antes;
+  return dono && !dono.g.heroi ? dono.g.nome : "";
+}
+
+/* Onde fica o que se disse: ver `fatos.paradeiro`. "" quando a fala não o diz. */
+export function ondeDaFala(nome, narrativa, estado) {
+  const s = String(narrativa || "");
+  const E = obj(estado);
+  const T = O_QUE_O_CRONISTA_PODE.fatos.paradeiro;
+  if (!s || norm(nome).length < 3) return "";
+  const aqui = norm(E.cidadeAtual);
+  const mm = obj(E.masmorra);
+  const sitioAqui = (!mm.encerrada && texto(mm.nome, 80)) || texto(obj(E.lugar).nome, 80);
+  const doMarco = lista(obj(E.espinha).atos).flatMap((at) => lista(obj(at).marcos)).map((m) => obj(m).onde);
+  const doCanone = Object.entries(obj(E.canone)).filter(([, f]) => f && typeof f === "object" && norm(f.tipo) === "lugar" && !(typeof f.dito === "string" && f.dito.trim())).map(([k]) => k);
+  const sitios = [...new Set([...lista(obj(E.mapa).cidades).map((x) => obj(x).nome), ...doCanone, ...doMarco, sitioAqui]
+    .map((x) => texto(x, 80)).filter((x) => x && norm(x) !== aqui && norm(x) !== norm(nome)))];
+  const P = plano(s);
+  const falas = falasFinas(s);
+  /* a frase que o diz; e, se ela é o eco de uma pergunta («A Clarissa?»,
+     «O Escudo Rachado?»), as `resposta` frases seguintes da mesma fala */
+  const janela = (ini, f) => {
+    const [fa, fb] = fraseDe(s, ini, f);
+    const crua = s.slice(fa, fb);
+    if (!T.pergunta.test(crua)) return [[fa, fb]];
+    const resto = norm(crua).replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim().replace(norm(nome).replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim(), "").replace(/\s+/g, "");
+    if (resto.length > T.eco) return [];
+    const out = [];
+    let i = fb;
+    while (out.length < T.resposta && i < f[1]) {
+      const [a, b] = fraseDe(s, Math.min(i + 1, f[1] - 1), f);
+      if (b <= i) break;
+      out.push([Math.max(a, i), b]);
+      i = b;
+    }
+    return out;
+  };
+  for (const [ini] of ocorrencias(P, nome)) {
+    const f = naFala(falas, ini);
+    if (!f) continue;
+    for (const [fa, fb] of janela(ini, f)) {
+      const frase = norm(s.slice(fa, fb));
+      /* a pergunta e a negação não dizem onde ninguém está */
+      if (T.pergunta.test(s.slice(fa, fb)) || T.nega.test(frase)) continue;
+      let melhor = null;
+      for (const sit of sitios) {
+        for (const [ci, cf] of ocorrencias(P, norm(sit).replace(/^(o|a|os|as)\s+/, ""))) {
+          if (ci < fa || cf > fb) continue;
+          if (!T.preposicao.test(norm(s.slice(Math.max(fa, ci - T.antes), ci)) + " ")) continue;
+          const d = Math.abs(ci - ini);
+          if (!melhor || d < melhor.d) melhor = { d, sit };
+        }
+      }
+      if (melhor) return melhor.sit;
+      if (sitioAqui && norm(sitioAqui) !== aqui && T.aqui.test(frase)) return sitioAqui;
+    }
+  }
+  return "";
+}
+
 /* ---------------- AS PEÇAS ---------------- */
 
 function julgarLugar(dito, E, c, R) {
@@ -354,7 +584,7 @@ function julgarGrupo(entraram, E, c, R) {
   return ok;
 }
 
-function julgarGente(pessoas, E, c, R, D) {
+function julgarGente(pessoas, E, c, R, D, cena, ondeE) {
   const T = O_QUE_O_CRONISTA_PODE.gente;
   const heroi = norm(obj(E.personagem).nome);
   const falou = new Set(lista(c.falouCom).map(norm));
@@ -374,9 +604,13 @@ function julgarGente(pessoas, E, c, R, D) {
          que não fica é "está AQUI": a cidade do herói, dita só numa fala,
          virava o "PROCURA Clarissa, ESTÁ AQUI" */
       const aqui = norm(E.cidadeAtual);
-      const local = aqui && norm(ficha.local) === aqui ? "" : (ficha.local || "");
-      ficha = { ...ficha, local, dito: O_QUE_O_CRONISTA_PODE.fatos.marca("") };
-      D.push({ secao: "gente", o: nome, quem: "", marca: ficha.dito });
+      const doCronista = aqui && norm(ficha.local) === aqui ? "" : (ficha.local || "");
+      /* (29/10) o que o Cronista não disse, a fala diz: onde a procurar e
+         quem o contou (ver «QUEM DISSE, E ONDE») */
+      const local = doCronista || ondeDaFala(nome, c.narrativa, ondeE);
+      const quem = quemDisse(nome, c.narrativa, cena);
+      ficha = { ...ficha, local, dito: O_QUE_O_CRONISTA_PODE.fatos.marca(quem) };
+      D.push({ secao: "gente", o: nome, quem, marca: ficha.dito });
     }
     ok.push(ficha);
   }
@@ -399,14 +633,18 @@ function julgarPromessas(promessas, E, c, D) {
   });
 }
 
-function julgarCanone(canone, c, D) {
+function julgarCanone(canone, E, c, D, cena, ondeE) {
   const out = {};
   for (const [nome, ficha] of Object.entries(obj(canone))) {
     if (!nome || !ficha || typeof ficha !== "object") continue;
     if (soNaFala(nome, c.narrativa)) {
-      const marca = O_QUE_O_CRONISTA_PODE.fatos.marca("");
-      out[nome] = { ...ficha, dito: marca };
-      D.push({ secao: "canone", o: nome, quem: "", marca });
+      /* (29/10) o sítio e quem contou, se a fala os diz; o `local` que o
+         Cronista deu fica, e o que não se acha não ganha a chave */
+      const quem = quemDisse(nome, c.narrativa, cena);
+      const local = typeof ficha.local === "string" && ficha.local.trim() ? "" : ondeDaFala(nome, c.narrativa, ondeE);
+      const marca = O_QUE_O_CRONISTA_PODE.fatos.marca(quem);
+      out[nome] = { ...ficha, ...(local ? { local } : {}), dito: marca };
+      D.push({ secao: "canone", o: nome, quem, marca });
     } else out[nome] = ficha;
   }
   return out;
@@ -448,15 +686,24 @@ export function julgarOCronista(estado, proposta, ctx) {
   const c = { ...c0, falouCom: c0.falouCom || falouCom };
   const recusado = [], ditoPor = [];
   const aceito = {};
+  /* quem o sistema conhece nesta cena: é daqui que sai quem contou */
+  const cena = genteDaCena(E, P, c);
+  /* o «aqui» de uma fala é o sítio em que o herói está — mas só se o
+     Cronista não o tirou de lá neste turno (outro sítio, ou «cidade»): o
+     herói que saiu do Rossio Torto e ouve «alguém passou por aqui» na
+     estrada não está no Rossio */
+  const semArtigo = (x) => norm(x).replace(/^(o|a|os|as)\s+/, "");
+  const saiu = typeof P.lugar === "string" && !!P.lugar.trim() && semArtigo(P.lugar) !== semArtigo(obj(E.lugar).nome);
+  const ondeE = saiu ? { ...E, lugar: null } : E;
 
   const lugar = julgarLugar(P.lugar, E, c, recusado);
   if (lugar) aceito.lugar = lugar.dito;
 
   if (P.missoes && typeof P.missoes === "object") aceito.missoes = { global_encerrado: julgarGlobal(P.missoes, E, recusado) };
 
-  if (P.canone && typeof P.canone === "object") aceito.canone = julgarCanone(P.canone, c, ditoPor);
+  if (P.canone && typeof P.canone === "object") aceito.canone = julgarCanone(P.canone, E, c, ditoPor, cena, ondeE);
 
-  const pessoas = julgarGente(P.pessoas, E, c, recusado, ditoPor);
+  const pessoas = julgarGente(P.pessoas, E, c, recusado, ditoPor, cena, ondeE);
   if (pessoas.length) aceito.pessoas = pessoas;
 
   if (falouCom.length) aceito.falou_com = falouCom;

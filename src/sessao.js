@@ -191,6 +191,7 @@ import { genteDaHistoria } from "./ofertas.js";
 import { julgarOTurno, JUIZ_NO_TURNO, CLASSES_DO_JUIZ, somarAFidelidade } from "./motor/juiz-do-turno.js";
 import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao, juizCego } from "./motor/correcao-do-juiz.js";
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
+import { oBoatoDaChegada, oBoatoQueChegou } from "./boatos.js";
 
 /* ---------------- O FORMATO (se é número, é tabela) ---------------- */
 export const FORMATO_DA_SESSAO = Object.freeze({
@@ -664,6 +665,28 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     faz: (E, L, ctx) => (typeof ctx.doApp.antesDoMestre === "function" ? ctx.doApp.antesDoMestre(E) || E : E),
   },
   {
+    /* O BOATO DA CHEGADA (29/10, Fase 4, trilha B). No App é a peça do
+       pedido (motor/pedido-do-turno.js#comOBoato), no envio — depois do
+       passo antes do Mestre, antes de o Narrador responder: o herói chegou
+       ao sítio de que se falava, o veredito sai da semente, e o cânone e o
+       registo só mudam se a linha chegou à pauta que foi ao Narrador. O
+       replay faz a MESMA conta sobre a pauta GRAVADA (a do App, com o teto
+       que a cortou ou não): sem isto, uma revelação numa sessão gravada
+       apareceria como diferença «do App» no cânone e no registo. O servidor
+       (`so: "depois"`) não o corre: o boato dele já foi no pedido. */
+    passo: "o boato", de: "boatos.js#oBoatoDaChegada + #oBoatoQueChegou sobre a pauta gravada (a peça do pedido no App: motor/pedido-do-turno.js#comOBoato)",
+    faz: (E, L, ctx) => {
+      const pauta = obj(L.pedido).pauta;
+      if (typeof pauta !== "string" || !pauta) return E;
+      const r = oBoatoDaChegada({
+        canone: E.canone, npcs: E.npcs, cidadeAtual: E.cidadeAtual, lugar: E.lugar, masmorra: E.masmorra, mapa: E.mapa,
+        combate: E.combate, jornada: E.jornada, dia: E.dia, mensagens: E.mensagens, heroi: obj(E.personagem).nome,
+      }, null, ctx.semente);
+      const b = r.linhaDaPauta ? oBoatoQueChegou(r, pauta) : null;
+      return b ? { ...E, canone: b.canone, npcs: b.npcs } : E;
+    },
+  },
+  {
     passo: "o turno do Mestre", de: "motor/aplicar.js#aplicarOTurno",
     faz: (E, L, ctx, nota) => {
       const r = aplicarOTurno({ ...E, npcTurno: Number.isFinite(E.npcTurno) ? E.npcTurno : 0 }, ctx.resposta, ctx.doMestre);
@@ -944,7 +967,7 @@ export function correrOTurno(antes, linha, contexto) {
   const envelopes = pe.envelopes == null ? "" : pe.envelopes;
   const resposta = { narrativa: String(na.narrativa || ""), mudancas: dado(obj(na.mudancas)) };
   const ctx = {
-    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp), servidor,
+    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp), servidor, semente,
     doMestre: { envelopes: Array.isArray(envelopes) ? envelopes.join("\n") : envelopes, pedido: frase, ...(pe.moeda ? { moeda: pe.moeda } : {}), sorte: s0.sorte, sorteDoTurno, mundo: mundo || null, baseDoNome: { heroi: obj(E0.personagem).nome } },
   };
   let E = estadoDoSave(obj(dado(E0)));
