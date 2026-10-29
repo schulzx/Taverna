@@ -268,11 +268,22 @@ export function aplicarMudancas(persDado, mDada, msgs, notas = []) {
      não tinha onde lê-los de volta. A pilha é a mesma de sempre (o novo
      substitui o de mesmo nome), com o casamento SOLTO que este canal sempre
      usou — o nome vem digitado pela IA, e caixa não pode criar duplicata. */
+  /* 29/10 (Fase T, trilha B) · O NÚMERO QUE NÃO É NÚMERO CAI NO PADRÃO.
+     `Math.min(2, "abc")` é NaN e `Math.max(1, NaN)` também: o efeito
+     guardava `bonus: NaN` na ficha (e a ficha vai ao save), a linha dizia
+     "+NaN", e um `turnos` NaN nunca chegava a 0 no relógio — o efeito
+     NUNCA se dissipava. O que não dá número finito vale o que vale o campo
+     ausente: o padrão da tabela. O resto não muda, de propósito: o texto
+     numérico ("1") conta o número que diz, como em `bonusEfeito`. */
+  const noTeto = (x, min, max, padrao) => {
+    const n = Math.max(min, Math.min(max, x ?? padrao));
+    return Number.isFinite(n) ? n : padrao;
+  };
   let efeitos = [...(pers.efeitos || [])];
   (m.efeitos_adicionar || []).forEach((ef) => {
     if (!ef?.nome) return;
-    const bonus = Math.max(LIMITES_DO_EFEITO.bonusMin, Math.min(LIMITES_DO_EFEITO.bonusMax, ef.bonus ?? LIMITES_DO_EFEITO.bonusPadrao));
-    const turnos = Math.max(LIMITES_DO_EFEITO.turnosMin, Math.min(LIMITES_DO_EFEITO.turnosMax, ef.turnos ?? LIMITES_DO_EFEITO.turnosPadrao));
+    const bonus = noTeto(ef.bonus, LIMITES_DO_EFEITO.bonusMin, LIMITES_DO_EFEITO.bonusMax, LIMITES_DO_EFEITO.bonusPadrao);
+    const turnos = noTeto(ef.turnos, LIMITES_DO_EFEITO.turnosMin, LIMITES_DO_EFEITO.turnosMax, LIMITES_DO_EFEITO.turnosPadrao);
     efeitos = empilhar(efeitos, { nome: ef.nome, bonus, turnos, aplica: ef.aplica || "", descricao: ef.descricao || "" }, { casamento: "solto" });
     msgs.push(`✧ ${ef.nome} ativo (+${bonus} em ${ef.aplica || "testes"}, ${turnos} turno${turnos !== 1 ? "s" : ""})`);
   });

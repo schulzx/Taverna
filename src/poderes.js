@@ -56,7 +56,7 @@ import { CONSUMIVEIS, comoConsumivel } from "./pocoes.js";
 import { CLASSES } from "./classes.js";
 import { estaInvisivel } from "./gatilhos.js";
 import { estaSintonizado } from "./sintonia.js";
-import { efeitosDe } from "./efeitos.js";
+import { efeitosDe, condicoesDe } from "./efeitos.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -203,7 +203,7 @@ export const ESTADOS_RECLAMADOS = [
    tem": o herói com a Forma Etérea ATIVA ouvia que não atravessava a
    parede. Agora a lista vem por `efeitosDe`. */
 function temEfeitoQueDiz(pers, rx) {
-  const tudo = [...efeitosDe(pers), ...((pers && pers.condicoes) || [])];
+  const tudo = [...efeitosDe(pers), ...condicoesDe(pers)];
   return tudo.some((e) => rx.test(norm(`${e.nome || ""} ${e.descricao || ""}`)));
 }
 

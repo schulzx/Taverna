@@ -22,12 +22,13 @@
 
    O que esta suíte NÃO prova: os dois leitores que já não estouravam
    (`romperPorGatilho`, que passa o buraco adiante sem lê-lo, e a pilha do
-   Mestre, que vai a `empilhar`), nem um buraco em `condicoes` — outra
-   lista, que `estaInvisivel` e `temEfeitoQueDiz` também juntam, e que
-   fica medida no diário como o passo seguinte.
+   Mestre, que vai a `empilhar`).
 
    E a §6 é o defeito irmão, que mora na mesma soma: o `bonus` que não é
-   número (ausente, NaN, texto) em `bonusEfeito`. */
+   número (ausente, NaN, texto) em `bonusEfeito`. E as três últimas (29/10)
+   fecham o que o 9a79d2e deixou aberto: §7 o buraco na OUTRA lista
+   (`condicoes`), §8 o que não é objeto dentro da lista, §9 o NaN que o
+   canal do Mestre guardava na ficha. */
 
 const C = await import("../src/combos.js");
 const G = await import("../src/gatilhos.js");
@@ -137,6 +138,68 @@ sec("6. regras-jogo.js — bonusEfeito: o bônus que não é número");
   const limpo = { ...preso, efeitos: [BENCAO] };
   const lance = (p) => resp(() => tentarSaidaNoFimDoTurno(p, { modDe: (a) => R.atributoEfetivo(p, a), d20: () => 10 }));
   t("a salvaguarda do fim do turno com a Regeneração rola o mesmo que sem ela", lance(preso) === lance(limpo), `com ${lance(preso).slice(0, 200)} · sem ${lance(limpo).slice(0, 200)}`);
+}
+
+/* ============================================================ */
+sec("7. a outra lista: um buraco em `condicoes`");
+/* `estaInvisivel` e `temEfeitoQueDiz` juntam as duas listas, e a peneira de
+   4dfd590 só cobria `efeitos`. Um buraco em `condicoes` estourava no
+   primeiro `e.nome`, e em `estadoReclamado` o try engolia o estouro como
+   "não tem": o herói invisível ou etéreo POR CONDIÇÃO ouvia a recusa. Agora
+   as condições vêm por `condicoesDe` (efeitos.js), a mesma peneira. */
+{
+  const INVIS_C = { id: "invisivel", nome: "Invisível", turnos: 2 };
+  const ETEREA_C = { id: "etereo", nome: "Etéreo", descricao: "o corpo fica incorpóreo", turnos: 1 };
+  const comC = (condicoes) => ({ ...ficha([]), condicoes });
+  const limpaC = comC([INVIS_C, ETEREA_C]);
+  const furadaC = comC([null, INVIS_C, undefined, ETEREA_C, null]);
+  t("estaInvisivel: a condição furada não estoura", !resp(() => G.estaInvisivel(furadaC)).startsWith("ESTOUROU"), resp(() => G.estaInvisivel(furadaC)));
+  t("estaInvisivel: e responde o mesmo que a limpa (true)", G.estaInvisivel(limpaC) === true && resp(() => G.estaInvisivel(furadaC)) === "true");
+  t("estadoReclamado (invisível por condição, lista furada): nada a recusar", P.estadoReclamado("estou invisível", furadaC) === null);
+  t("estadoReclamado (atravessar por condição, por temEfeitoQueDiz, lista furada): nada a recusar", P.estadoReclamado("atravesso a parede", furadaC) === null);
+  t("e sem a condição a recusa continua de pé", P.estadoReclamado("atravesso a parede", comC([null, INVIS_C])) !== null);
+  t("`condicoes` que não é lista: não estoura e é como vazia",
+    resp(() => G.estaInvisivel(comC("lixo"))) === "false" && P.estadoReclamado("estou invisível", comC({ nome: "Invisível" })) !== null);
+}
+
+/* ============================================================ */
+sec("8. o que não é objeto dentro da lista");
+/* ANTES `efeitosDe` só tirava o vazio (`filter(Boolean)`): um texto ou um
+   número solto dentro de `efeitos` passava, e `tickEfeitos` o devolvia como
+   objeto torto — `{ ..."abc" }` vira `{0:"a",1:"b",2:"c"}`, e o
+   `turnos` NaN nunca chega a 0, então ele nunca se dissipava e voltava em
+   toda rodada. AGORA a peneira tira tudo o que não é objeto (lista também). */
+{
+  const E = await import("../src/efeitos.js");
+  const suja = ficha([FURIA, "Fúria", 7, true, [FURIA], PRESSA]);
+  t("efeitosDe tira texto, número, booleano e lista", JSON.stringify(E.efeitosDe(suja)) === JSON.stringify([FURIA, PRESSA]), JSON.stringify(E.efeitosDe(suja)));
+  t("condicoesDe tira o mesmo", JSON.stringify(E.condicoesDe({ condicoes: [null, "x", 3, { nome: "Caído" }] })) === JSON.stringify([{ nome: "Caído" }]));
+  const r = R.tickEfeitos(suja);
+  t("tickEfeitos não devolve objeto torto", r.efeitos.length === 2 && r.efeitos.every((e) => typeof e.nome === "string" && Number.isFinite(e.turnos)), JSON.stringify(r.efeitos));
+  t("e a ficha recebida continua como veio (estado novo, não mutado)", suja.efeitos.length === 6 && suja.efeitos[1] === "Fúria");
+}
+
+/* ============================================================ */
+sec("9. aplicarMudancas: o número do Mestre que não é número não entra na ficha");
+/* ANTES: `Math.min(2, "abc")` é NaN, `Math.max(1, NaN)` é NaN, e o efeito
+   guardava `bonus: NaN` na ficha — e a ficha vai ao save, onde o JSON faz
+   do NaN um `null`. O mesmo no `turnos`, e pior: `turnos: NaN` nunca chega a
+   0 no relógio, logo o efeito NUNCA se dissipava. AGORA o que não dá número
+   cai no padrão da tabela (`LIMITES_DO_EFEITO`), como o campo ausente; o
+   texto numérico continua a contar o número que diz, dentro do teto. */
+{
+  const E = await import("../src/efeitos.js");
+  const L = E.LIMITES_DO_EFEITO;
+  const pede = (ef) => { const msgs = []; const p = R.aplicarMudancas({ ...ficha([]), vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [] }, { efeitos_adicionar: [{ nome: "Ímpeto", aplica: "Força", ...ef }] }, msgs); return { p, msgs }; };
+  const ef = (r) => r.p.efeitos.find((e) => e.nome === "Ímpeto");
+  const lixo = pede({ bonus: "abc", turnos: "muitos" });
+  t("bonus em texto que não é número: o padrão, não NaN", ef(lixo).bonus === L.bonusPadrao, String(ef(lixo).bonus));
+  t("turnos em texto que não é número: o padrão, não NaN", ef(lixo).turnos === L.turnosPadrao, String(ef(lixo).turnos));
+  t("e a linha do jogador não diz NaN", !JSON.stringify(lixo.msgs).includes("NaN"));
+  t("NaN e objeto: o padrão", ef(pede({ bonus: NaN, turnos: {} })).bonus === L.bonusPadrao && ef(pede({ bonus: NaN, turnos: {} })).turnos === L.turnosPadrao);
+  t("o texto numérico continua a contar, dentro do teto", ef(pede({ bonus: "1", turnos: "4" })).bonus === 1 && ef(pede({ bonus: "9" })).bonus === L.bonusMax && ef(pede({ turnos: "4" })).turnos === 4);
+  t("e o número continua número (teto e piso)", ef(pede({ bonus: 5, turnos: 99 })).bonus === L.bonusMax && ef(pede({ bonus: 0, turnos: 0 })).turnos === L.turnosMin && ef(pede({})).bonus === L.bonusPadrao);
+  t("o efeito sai do relógio no prazo (o NaN nunca saía)", (() => { let p = lixo.p; for (let i = 0; i < L.turnosMax + 1; i++) p = { ...p, efeitos: R.tickEfeitos(p).efeitos }; return !p.efeitos.some((e) => e.nome === "Ímpeto"); })());
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

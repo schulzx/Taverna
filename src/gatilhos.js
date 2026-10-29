@@ -31,7 +31,7 @@
    nascem juntas, senão a correção seria só uma perda.
    ============================================================ */
 
-import { efeitosDe } from "./efeitos.js";
+import { efeitosDe, condicoesDe } from "./efeitos.js";
 
 const NORM = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -109,7 +109,7 @@ export function devolverSegura(pers) { const p = { ...pers }; delete p.seguraGas
    Só a invisibilidade, por enquanto, porque é a única cujo efeito
    mecânico não cabe em "+N em alguma coisa". */
 export function estaInvisivel(pers) {
-  const tudo = [...efeitosDe(pers), ...((pers && pers.condicoes) || [])];
+  const tudo = [...efeitosDe(pers), ...condicoesDe(pers)];
   return tudo.some((e) => RX_INVISIVEL.test(NORM(`${e.nome || ""} ${e.descricao || ""}`)));
 }
 

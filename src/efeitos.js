@@ -323,8 +323,21 @@ export const APLICA_NA_NOTA = ["testes"];
 /* ---------------- LER A LISTA SEM TROPEÇAR ----------------
    Save antigo, ficha recém-criada e projeção de arena chegam aqui com
    `efeitos` ausente, nulo ou com buraco no meio. Nenhum desses casos
-   pode custar o turno. */
-export const efeitosDe = (pers) => (pers && Array.isArray(pers.efeitos) ? pers.efeitos.filter(Boolean) : []);
+   pode custar o turno.
+
+   29/10 (Fase T, trilha B) · A PENEIRA TIRA TUDO O QUE NÃO É OBJETO, não só
+   o vazio. Antes era `filter(Boolean)`: um texto ou um número solto dentro
+   da lista passava, e `tickEfeitos` o devolvia como objeto torto (o espalhar
+   de "abc" dá {0:"a",1:"b",2:"c"}), com `turnos` NaN — que nunca chega a 0,
+   logo o lixo nunca se dissipava e voltava em toda rodada. Uma lista dentro
+   da lista também sai: nenhum leitor sabe o que fazer com ela.
+
+   E a OUTRA lista: `condicoes` tem os mesmos buracos (o mesmo save antigo, a
+   mesma projeção), e `estaInvisivel` e `temEfeitoQueDiz` juntam as duas.
+   `condicoesDe` é a mesma peneira, para a mesma ficha. */
+const soObjetos = (lista) => (Array.isArray(lista) ? lista.filter((e) => e && typeof e === "object" && !Array.isArray(e)) : []);
+export const efeitosDe = (pers) => soObjetos(pers && pers.efeitos);
+export const condicoesDe = (pers) => soObjetos(pers && pers.condicoes);
 
 const comoTexto = (x) => String(x == null ? "" : x);
 const mesmoNome = (a, b, casamento) =>
