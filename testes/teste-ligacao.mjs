@@ -354,10 +354,9 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
   /* Paga a do pedido (29/10, trilha A, o oficial): `enviar` chama
      `oPedidoDoTurno` no lugar do trecho da pauta ao system, e o App
      importa a peça. */
-  const ESPERA_DO_MOTOR = {
-    "preludio-do-turno.js": "trilha A (oficial): enviar chama oPreludioDoTurno no lugar do trecho da frase às bocas",
-    "eco-do-turno.js": "trilha A e o servidor: o App manda o eco e os bilhetes e guarda os soltos; api/turno.js monta o estado e a resposta",
-  };
+  /* Pagas pelo servidor (29/10, trilha B): `src/turno-no-servidor.js` importa o
+     prelúdio e o eco (e o pedido) para o `/api/turno` montar o pedido em ensaio. */
+  const ESPERA_DO_MOTOR = {};
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
   t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);

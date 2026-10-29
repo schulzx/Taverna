@@ -15,8 +15,10 @@
    §6 a conta da janela é pura;
    §7 o armazém do Upstash fala o mesmo REST que o portão e a sala;
    §8 a rota: 405, as duas portas, os 503 que dizem o nome da variável que
-      falta, a forma do pedido, o 429 com retry-after, e o 501 — sem NUNCA
-      chamar um provedor (o `fetch` é espiado do começo ao fim).
+      falta, a forma do pedido, o 429 com retry-after, e a porta que abre
+      para a montagem — sem NUNCA chamar um provedor (o `fetch` é espiado do
+      começo ao fim). O pedido montado, byte a byte, é provado em
+      teste-turno-no-servidor.mjs.
 
    Nada aqui toca Redis real: o armazém é de memória, e o da rota é um
    `fetch` falso que responde como o Upstash. */
@@ -229,7 +231,13 @@ sec("8. A ROTA — api/turno.js");
   const semOrigem = await rodar({ VERCEL_URL: "taverna.vercel.app" }, { body: corpoBom });
   t("sem chave e sem origem, com domínio: o portão barra (403)", semOrigem.codigo === 403 && semOrigem.corpo.motivo === "sem origem");
   const jogo = await rodar({}, { headers: { origin: "http://localhost:5173" }, body: corpoBom });
-  t("sem chave, o jogo passa pelo portão e ouve 501", jogo.codigo === 501 && jogo.corpo.motivo === "turno-por-montar" && !jogo.corpo.licenca);
+  /* 29/10, trilha B: a rota deixou de responder 501 ("turno-por-montar") —
+     ela agora MONTA o pedido em ensaio (teste-turno-no-servidor.mjs prova o
+     pedido byte a byte). O corpo daqui é um save sem herói, e a montagem
+     estoura nele como estouraria no App: 422. O que esta suíte guarda é a
+     PORTA — o portão deixou passar e a rota chegou ao motor —, e isso o 422
+     prova tão bem quanto o 501 provava. */
+  t("sem chave, o jogo passa pelo portão e chega à montagem (422 neste save sem herói)", jogo.codigo === 422 && jogo.corpo.motivo === "montagem-estourou" && !jogo.corpo.licenca);
   const semVar = await rodar(REDIS, { headers: comChave, body: corpoBom });
   t("com chave e sem LICENCA_SEGREDO: 503 com o nome", semVar.codigo === 503 && /LICENCA_SEGREDO/.test(semVar.corpo.erro));
   const semKV = await rodar({ LICENCA_SEGREDO: SEGREDO }, { headers: comChave, body: corpoBom });
@@ -237,7 +245,8 @@ sec("8. A ROTA — api/turno.js");
   const ruim = await rodar({ ...REDIS, LICENCA_SEGREDO: SEGREDO }, { headers: { authorization: "Bearer tav1.casa.errada" }, body: corpoBom });
   t("chave malformada: 401", ruim.codigo === 401);
   const com = await rodar({ ...REDIS, LICENCA_SEGREDO: SEGREDO }, { headers: comChave, body: corpoBom });
-  t("chave boa: 501, e a conta da licença vem junto", com.codigo === 501 && com.corpo.licenca && com.corpo.licenca.usos === 1 && com.corpo.licenca.teto === 2);
+  /* o mesmo motivo da asserção do jogo acima: era 501, é a montagem (422 neste save) */
+  t("chave boa: chega à montagem, e a conta da licença vem junto", com.codigo === 422 && com.corpo.licenca && com.corpo.licenca.usos === 1 && com.corpo.licenca.teto === 2);
   t("a recusa não leva ok nem status no corpo", !("ok" in ruim.corpo) && !("status" in ruim.corpo));
   const semEstado = await rodar({ ...REDIS, LICENCA_SEGREDO: SEGREDO }, { headers: comChave, body: { frase: "x" } });
   t("sem estado: 400", semEstado.codigo === 400);
