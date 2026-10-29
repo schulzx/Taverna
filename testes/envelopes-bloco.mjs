@@ -265,7 +265,9 @@ const ANCORAS = {
   corpoOportunidade: { antes: ["        notaOp = ` [ATAQUES DE OPORTUNIDADE", FIM], hoje: ["        notaOp = oEnvelopeDoCorpo(\"ataquesDeOportunidade\"", FIM] },
   corpoVitoria: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[VITÓRIA — sistema já aplicou", "\n    }"], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"vitoria\"", "\n    }"] },
   corpoFuga: { antes: ["      const notaGolpes = resultado && resultado.linhas.length", "\n      /* OS GOLPES PODEM"], hoje: ["      const notaGolpes = resultado && resultado.linhas.length", "\n      /* OS GOLPES PODEM"] },
-  corpoQuedaAltura: { antes: ["      envelope: `${envelopeDaSalvaguarda(sv, { oQue: `A queda", ",\n    };"], hoje: ["      envelope: envelopeDaSalvaguarda(sv, { oQue: `A queda", ",\n    };"], envolve: ["const o = {","};"] },
+  /* a âncora de hoje da queda de altura mudou em 29/10 (o oQue saiu do App para a tabela do corpo): */
+  /* o literal «A queda de N metros» virou oEnvelopeDoCorpo("oQueDaQueda"); o recorte é o mesmo campo envelope */
+  corpoQuedaAltura: { antes: ["      envelope: `${envelopeDaSalvaguarda(sv, { oQue: `A queda", ",\n    };"], hoje: ["      envelope: envelopeDaSalvaguarda(sv, { oQue: oEnvelopeDoCorpo(\"oQueDaQueda\"", ",\n    };"], envolve: ["const o = {","};"] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",

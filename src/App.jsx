@@ -19677,7 +19677,7 @@ export default function Taverna() {
     const r = sofrerNaPele({ dano: sofrido, motivo: `${q.metros} m de queda`, condicao: sofrido > 0 ? "caido" : "", porque: "a queda" });
     return {
       ...r, sv, cheio, sofrido, q,
-      envelope: envelopeDaSalvaguarda(sv, { oQue: `A queda de ${q.metros} metros`, meia: fonte.meia, danoCheio: cheio, danoFinal: r.dano }) + "\n" + oEnvelopeDoCorpo("quedaDeAltura", { metros: q.metros, motivo, dano: r.dano }),
+      envelope: envelopeDaSalvaguarda(sv, { oQue: oEnvelopeDoCorpo("oQueDaQueda", { metros: q.metros }), meia: fonte.meia, danoCheio: cheio, danoFinal: r.dano }) + "\n" + oEnvelopeDoCorpo("quedaDeAltura", { metros: q.metros, motivo, dano: r.dano }),
     };
   };
 
@@ -20821,7 +20821,7 @@ export default function Taverna() {
         porque: "a armadilha",
       });
       const p2 = rArm.pers;
-      enviar(oEnvelopeDaMasmorra("armadilhaSofrida", { salvaguarda: envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: rArm.dano }), pos, depois }), p2);
+      enviar(oEnvelopeDaMasmorra("armadilhaSofrida", { salvaguarda: envelopeDaSalvaguarda(sv, { oQue: oEnvelopeDaMasmorra("oQueDaArmadilha", { nomeArmadilha: sala.nomeArmadilha }), meia: fonte.meia, danoCheio: cheio, danoFinal: rArm.dano }), pos, depois }), p2);
     }
   };
   const posDaMasmorra = (mm, sala) => {

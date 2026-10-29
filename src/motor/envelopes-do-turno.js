@@ -134,6 +134,10 @@ export const ENVELOPES_DA_MASMORRA = {
   entrada: ({ vestido, dificuldade, masmorra, camaras, niveis, tochas, perto, extraTempo }) => `${vestido ? vestido + " " : ""}${dificuldade ? dificuldade + " " : ""}[MASMORRA — ENTRADA · ${masmorra}] Descobri a entrada de "${masmorra}". O SISTEMA gerou a planta: ${camaras} câmaras em ${niveis} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${perto ? ` (perto ${comPrep("de", perto)})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`,
   armadilhaSofrida: ({ salvaguarda, pos, depois }) => `${salvaguarda}
 [MASMORRA — ${pos}] Narre o susto e o estado em que fico.${depois}`,
+  /* o que veio contra mim (29/10, trilha A): o sujeito da frase da salvaguarda — «X veio */
+  /* contra mim e o sistema rolou…» — é voz do Mestre, e morava no App como argumento. */
+  /* O App passa o nome da armadilha da sala; a forma diz quem veio. */
+  oQueDaArmadilha: ({ nomeArmadilha }) => `A armadilha (${nomeArmadilha})`,
 };
 export function oEnvelopeDaMasmorra(qual, dados) {
   return aFormaDe(ENVELOPES_DA_MASMORRA, qual, "da masmorra")(dados || {});
@@ -593,6 +597,9 @@ export const ENVELOPES_DO_CORPO = {
   furiaPersistente: () => `[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA] O golpe me levaria a 0 e eu fiquei de pé com 1 PV: é o traço da minha origem, e ele só faz isso uma vez por descanso longo. NÃO me trate como caído. Narre o corpo que se recusa — o joelho que trava, o ar que volta pelos dentes —, e deixe claro que agora qualquer coisa me derruba.`,
   aguenteiOGolpe: ({ oponente, dano, devolve }) => `[AGUENTEI O GOLPE — RESOLVIDO PELO SISTEMA] O golpe de ${oponente || "meu oponente"} me pegou de raspão: em vez de ${dano}, custou ${dano - devolve}. Narre a diferença como corpo e vontade — o giro do ombro, a armadura que aparou, os dentes cerrados. Não mencione sistema, ponto nem número.`,
   quedaDeAltura: ({ metros, motivo, dano }) => `[QUEDA — RESOLVIDA PELO SISTEMA] Eu caí ${metros} metros ${motivo ? `ao tentar ${motivo}` : ""} e o sistema já cobrou: ${dano} de dano, e estou no chão. Narre o tombo e o corpo — NÃO mude o número, NÃO me deixe de pé e NÃO invente que me segurei em alguma coisa no último instante.`,
+  /* o que veio contra mim na queda (29/10, trilha A): o sujeito da salvaguarda que vai à */
+  /* frente da queda — voz do Mestre que morava no App como argumento `oQue`. */
+  oQueDaQueda: ({ metros }) => `A queda de ${metros} metros`,
   raidEncerrada: ({ venceu, chefe, mortos }) => `[RAID — ENCERRADA PELO SISTEMA] ${venceu ? `${chefe} caiu, e caiu pela mão do herói.` : `O chamado acabou sem a coisa cair.`} ${mortos.length ? `Não voltaram: ${mortos.join(", ")} — e não voltam mesmo.` : "Ninguém ficou para trás."} Quem sobreviveu se despede e volta para onde veio: eles NÃO seguem comigo depois desta cena. Narre a dispersão, sem discurso e sem promessa de reencontro.`,
 };
 export function oEnvelopeDoCorpo(qual, dados) {

@@ -174,7 +174,7 @@ sec("5 · a masmorra: os casos percorrem o que o texto decide, e a prova morde")
   t(`a vista leva o aviso só quando ninguém a viu antes (${conta("masmorraAVista", "[AVISO")})`, conta("masmorraAVista", "[AVISO") >= 20 && conta("masmorraAVista", "[AVISO") < conta("masmorraTesouro", "[AVISO"));
   /* 7 → 9 (29/10, 17.º grupo): a entrada e a armadilha que se sofreu eram da masmorra e
      nenhum inventário as viu; entraram nesta tabela, e a secção 22 prova-as */
-  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_MASMORRA).length === 9 && (() => { try { oEnvelopeDaMasmorra("nenhuma", {}); return false; } catch { return true; } })());
+  t("a forma de cada envelope está na tabela, e a que não está estoura", /* 9 → 10 em 29/10: a tabela ganhou oQueDaArmadilha, o sujeito da salvaguarda que saiu do App (secção 28) */ Object.keys(ENVELOPES_DA_MASMORRA).length === 10 && (() => { try { oEnvelopeDaMasmorra("nenhuma", {}); return false; } catch { return true; } })());
   const mordidas = [
     ["masmorraBusca", "a busca sem o escopo", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, d).replace(SO_ISSO, "") }],
     ["masmorraBusca", "a busca que lê o achado em vez do achou", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, { ...d, achou: !!d.achado }) }],
@@ -875,7 +875,8 @@ sec("26 · o corpo na luta: os casos percorrem o que o texto decide, e a prova m
   t("a queda de altura: a salvaguarda à frente, os metros, o motivo quando há (e o espaço quando não), o dano cobrado", Qa.every((x) => /^\[SALVAGUARDA (passou|falhou|nenhuma)\] A queda de (3|9|18) metros · (true|false) · \d+ → \d+\n\[QUEDA — RESOLVIDA PELO SISTEMA\] Eu caí (3|9|18) metros /.test(x)) && conta(Qa, "Eu caí 9 metros ao tentar escalar a muralha e o sistema já cobrou: ") >= 41 && conta(Qa, "Eu caí 3 metros  e o sistema já cobrou: ") >= 41);
   const Rd = tx("corpoRaid");
   t("a raid: o chefe que caiu ou o chamado que acabou, quem não voltou, e a dispersão", conta(Rd, "] o Wyrm de Cinza caiu, e caiu pela mão do herói. ") >= 62 && conta(Rd, "] O chamado acabou sem a coisa cair. Ninguém ficou para trás.") >= 41 && conta(Rd, "Não voltaram: Bran, Ísis — e não voltam mesmo.") >= 81);
-  t("as doze formas estão na tabela do corpo", Object.keys(ENVELOPES_DO_CORPO).length === 12 && ["revide", "fogoAmigo", "ritual", "ataquesDeOportunidade", "vitoria", "custoDaFuga", "dadivaDaRecuperacao", "quedaSegurada", "furiaPersistente", "aguenteiOGolpe", "quedaDeAltura", "raidEncerrada"].every((q) => Object.hasOwn(ENVELOPES_DO_CORPO, q)));
+  /* 12 → 13 em 29/10: a tabela ganhou oQueDaQueda, o sujeito da salvaguarda da queda que saiu do App (secção 28) */
+  t("as doze formas estão na tabela do corpo, e a do que veio contra mim", Object.keys(ENVELOPES_DO_CORPO).length === 13 && ["revide", "fogoAmigo", "ritual", "ataquesDeOportunidade", "vitoria", "custoDaFuga", "dadivaDaRecuperacao", "quedaSegurada", "furiaPersistente", "aguenteiOGolpe", "quedaDeAltura", "raidEncerrada"].every((q) => Object.hasOwn(ENVELOPES_DO_CORPO, q)));
   const P = oEnvelopeDoCorpo;
   const m = (f) => ({ oEnvelopeDoCorpo: (q, d) => P(q, f(d)) });
   const mordidas = [
@@ -924,6 +925,27 @@ sec("27 · o «nA»: a preposição diante do nome que abre por artigo");
   const fundada = oEnvelopeDaFe("guildaFundada", { nome: "Ordem da Ponte", oficio: "o que se faz sem testemunha", sede: "A Fronteira" });
   t("o ofício e a sede: do que se faz sem testemunha, com sede na Fronteira", fundada.includes("Ordem da Ponte, do que se faz sem testemunha, com sede na Fronteira."), fundada.slice(0, 120));
   t("e o texto que já estava certo não muda: o nome sem artigo passa igual, o indefinido não contrai", obra("Thornhaven").includes("] Em Thornhaven ficou pronta:") && oEnvelopeDoCaminho("chegada", { dias: 2, destino: "uma estalagem em Vau" }).includes("eu ESTOU em uma estalagem em Vau, dentro dela.") && mov("Ponte", "Vau").includes("Eu me desloquei de Ponte para Vau") && oEnvelopeDoMercado("compra", { item: "Corda", vendedor: "Ondina", preco: 3 }).includes("\"Corda\" de Ondina por"));
+}
+
+sec("28 · o que veio contra mim: o sujeito da salvaguarda sai do App");
+{
+  /* Os dois últimos pedaços de voz do Mestre nos envelopes resolvidos do App (29/10/2026):
+     o argumento oQue de envelopeDaSalvaguarda na queda de altura e na armadilha sofrida. É o
+     sujeito da frase que o motor monta («X veio contra mim»), logo voz. Os textos são os de
+     antes à letra (os 275 casos dos blocos corpoQuedaAltura e armadilhaSofridaNaMasmorra
+     batem com o dourado); aqui prova-se que o App passa pela forma: mexer nela muda o texto. */
+  t("as duas formas estão nas tabelas", Object.hasOwn(ENVELOPES_DO_CORPO, "oQueDaQueda") && Object.hasOwn(ENVELOPES_DA_MASMORRA, "oQueDaArmadilha"));
+  const C = oEnvelopeDoCorpo, M = oEnvelopeDaMasmorra;
+  const mordidas = [
+    ["corpoQuedaAltura", "a queda que diz outra altura", { oEnvelopeDoCorpo: (q, d) => C(q, q === "oQueDaQueda" ? { ...d, metros: d.metros + 1 } : d) }],
+    ["corpoQuedaAltura", "a queda sem quem veio contra mim", { oEnvelopeDoCorpo: (q, d) => (q === "oQueDaQueda" ? "" : C(q, d)) }],
+    ["armadilhaSofridaNaMasmorra", "a armadilha sem o nome", { oEnvelopeDaMasmorra: (q, d) => M(q, q === "oQueDaArmadilha" ? { ...d, nomeArmadilha: "" } : d) }],
+    ["armadilhaSofridaNaMasmorra", "a armadilha sem quem veio contra mim", { oEnvelopeDaMasmorra: (q, d) => (q === "oQueDaArmadilha" ? "" : M(q, d)) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
 }
 
 sec("8 · a chave da tabela é da tabela, nunca do protótipo");
