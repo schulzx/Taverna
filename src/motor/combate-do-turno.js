@@ -48,6 +48,8 @@ import { acoesPorRodada, estaEmForma, desfazerForma, baixarGuardas, baixarPressa
 import { ganharVinculo } from "../vinculos.js";
 import { caidosDaLuta } from "../recibo-da-luta.js";
 import { dispensarTodas } from "../invocacoes.js";
+/* a frase das invocações desfeitas mora nos envelopes do turno (28/10, trilha B) */
+import { oEnvelopeDosPoderes } from "./envelopes-do-turno.js";
 import { podeAbrirRito, iniciarRito, provaAtual } from "../ascensao.js";
 import { grauDe, tituloDe } from "../divindades.js";
 
@@ -491,7 +493,9 @@ export function limparAsConjuracoes(pers, ctx) {
   const disp = dispensarTodas(p);
   if (disp.sumiram.length) {
     p = disp.pers; mudou = true;
-    paraOCronista.push(`[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`);
+    /* 28/10 (Fase T, trilha B): era a mesma frase de `invocacoesEncerradas`
+       escrita aqui à letra — duas cópias que envelhecem em separado. */
+    paraOCronista.push(oEnvelopeDosPoderes("invocacoesEncerradas", { sumiram: disp.sumiram }));
   }
   return { pers: p, mudou, telas, paraOCronista };
 }

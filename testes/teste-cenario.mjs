@@ -81,6 +81,9 @@ const CP = await import(S + "companheiros.js");
 const MB = await import(S + "mundo-base.js");
 const CD = await import(S + "condicoes.js");
 const PR = await import(S + "prompt.js");
+/* 28/10 (trilha B): o despertar divino do motor diz os estágios do céu do mundo */
+const EV = await import(S + "motor/envelopes-do-turno.js");
+const DESPERTAR = { nivel: 15, fieis: 120, pan: "Vela (do Vácuo e do Silêncio)" };
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -487,6 +490,14 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
      dela e os estágios eram do código; agora a linha inteira é dela */ DV.DIVINDADE_PROMPT.includes("Escolhido do Turno → Eco do Casco/Casco Vivo → A Estação Desperta") && !DV.DIVINDADE_PROMPT.includes("Semideus"));
   /* 6.ª fatia: as palavras do céu que o Narrador lia escritas no código */
   t("…e os três estágios já não são os da Taverna", !DV.DIVINDADE_PROMPT.includes("Servo Escolhido") && !DV.DIVINDADE_PROMPT.includes("Receptáculo") && !DV.DIVINDADE_PROMPT.includes("Nova Divindade"));
+  /* 28/10 (trilha B): o envelope do despertar foi movido à letra do App e
+     ainda dizia a trilha da Taverna; o meio da frase é o título do GD 2,
+     como sempre foi (lá, "Semideus") */
+  {
+    const d = EV.oEnvelopeDosPoderes("despertarDivino", DESPERTAR);
+    t("o despertar divino diz a trilha dela", d.includes("(Escolhido do Turno → Eco do Casco → A Estação Desperta)"), d.slice(0, 120));
+    t("…e nada da trilha da Taverna", !/Servo Escolhido|Semideus|Nova Divindade/.test(d));
+  }
   const sysO = PR.montarSystemPrompt("Órbita", { genero: "Ópera de estação" }, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null);
   t("o prompt do Narrador diz as palavras divinas dela, na regra das três medidas", DV.PALAVRAS_DIVINAS.join() === "Eco do Casco,Voz do Vácuo" && sysO.includes("Palavras divinas (Eco do Casco, Voz do Vácuo) são EXCLUSIVAS da fé") && !sysO.includes("(Semideus, Divindade)"));
   const fria = { nome: "Vera", dominio: "do Vácuo e do Silêncio", icone: "🌌", temperamento: "fria", culto: "a Tripulação de Vera" };
@@ -502,6 +513,10 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   const a = banca("orbita|1"), b = banca("orbita|1");
   t("mesma semente, mesmo mundo: a mesma banca", JSON.stringify(a) === JSON.stringify(b));
   CN.usarCenario(CN.CENARIO_PADRAO);
+  /* e de volta à Taverna, o despertar sai ao byte como o App o escrevia
+     (a frase inteira, à letra, de antes de e036f1f) */
+  t("de volta ao mundo padrão, o despertar divino sai ao byte como era",
+    EV.oEnvelopeDosPoderes("despertarDivino", DESPERTAR) === `[DESPERTAR DIVINO — MARCO REGISTRADO PELO SISTEMA] Ao alcançar o nível 15, o nome do herói começou a ser sussurrado em orações: a ASCENSÃO começou. FATOS FIXOS sorteados pelo sistema: o jogador tem 120 fiéis iniciais (gente que já reza baixinho o nome dele) e GD 0→trilha aberta; o PANTEÃO local que ele agora consegue PERCEBER: Vela (do Vácuo e do Silêncio). Narre o despertar como um marco íntimo e arrepiado (um sinal, um olhar que se demora, uma prece espontânea de um estranho) — NÃO um show de poder: ele ainda é mortal (GD 0), mas o caminho dos três estágios (Servo Escolhido → Semideus → Nova Divindade) está aberto. As divindades acima já existiam — só agora ele as sente. Apresente UMA delas de leve neste turno.`);
   const p = banca("orbita|1");
   t("a mesma semente noutro mundo: as mesmas coisas, outros preços", a.estoque.map((x) => x.nome).join() === p.estoque.map((x) => x.nome).join() && a.estoque.map((x) => x.preco).join() !== p.estoque.map((x) => x.preco).join());
   t("…os cartões da criação também, e o recuo do prompt", K.GENEROS.length === 7 && K.GENEROS[0].label === "Fantasia medieval" && PR.montarSystemPrompt("x", null, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null).includes("Gênero: Fantasia medieval"));
