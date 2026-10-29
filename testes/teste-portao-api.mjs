@@ -113,7 +113,14 @@ sec("5. AS TRÊS ROTAS ESTÃO ATRÁS DO PORTÃO");
      primeira passada eu fechei o narrador e a sala, e deixei a voz — que
      gasta chave de terceiro do mesmo jeito. */
   const rotas = readdirSync("../api").filter((f) => f.endsWith(".js") && !f.startsWith("_"));
-  t(`há ${rotas.length} rotas: ${rotas.join(", ")}`, rotas.length === 3);
+  /* 29/10 (Fase 4 do plano do motor, trilha B): eram três, e passam a
+     QUATRO — nasce `turno.js`, o esqueleto do turno pelo servidor. A
+     contagem existe para que uma rota nova não nasça sem ser olhada aqui, e
+     esta foi: sem chave ela passa pelo mesmo portão (e as asserções abaixo
+     valem para ela); com chave de licenciante a trava é a licença
+     (src/licenca.js, provada em teste-licenca.mjs §8), porque o servidor
+     de um licenciante não manda `Origin`. */
+  t(`há ${rotas.length} rotas: ${rotas.join(", ")}`, rotas.length === 4);
   for (const r of rotas) {
     const src = readFileSync(`../api/${r}`, "utf8");
     t(`${r} importa o portão`, /import \{ deixarEntrar \} from "\.\/_portao\.js"/.test(src));
@@ -155,7 +162,7 @@ sec("6. A RECUSA EXPLICA, E NÃO ENTREGA NADA");
   const corpoInteiro = JSON.stringify(bloqueado);
   t("mas o corpo NÃO entrega as permitidas", !/vercel\.app/.test(corpoInteiro) && bloqueado.permitidas === undefined);
   /* e as rotas repassam o diagnóstico — sem isso ele morre no servidor */
-  for (const r of ["narrador", "sala", "voz"]) {
+  for (const r of ["narrador", "sala", "voz", "turno"]) {
     const src = readFileSync(new URL(`../api/${r}.js`, import.meta.url), "utf8");
     t(`${r} repassa motivo e origem`, /motivo: p\.motivo, origem: p\.origem/.test(src));
     t(`${r} não repassa as permitidas`, !/permitidas: p\.permitidas/.test(src));

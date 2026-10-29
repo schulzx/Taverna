@@ -26,6 +26,7 @@ const arqs = fs.readdirSync(DIR).filter((f) => /\.(js|jsx)$/.test(f));
 const fonte = Object.fromEntries(arqs.map((f) => [f, fs.readFileSync(path.join(DIR, f), "utf8")]));
 const provas = fs.readdirSync(SP).filter((f) => /^teste-.+[.]mjs$/.test(f) && f !== "teste-ligacao.mjs");
 const txtProvas = provas.map((f) => fs.readFileSync(path.join(SP, f), "utf8")).join("\n");
+const API_FONTES = fs.existsSync("../api") ? fs.readdirSync("../api").filter((f) => /\.js$/.test(f)).map((f) => fs.readFileSync(path.join("../api", f), "utf8")) : [];
 const MOTOR_FONTES = fs.existsSync(path.join(DIR, "motor")) ? fs.readdirSync(path.join(DIR, "motor")).filter((f) => /\.js$/.test(f)).map((f) => fs.readFileSync(path.join(DIR, "motor", f), "utf8")) : [];
 
 /* ============================================================
@@ -257,7 +258,13 @@ sec("1. NENHUM MÓDULO MUDO");
        Juiz de fidelidade é o primeiro módulo da raiz que só o motor importa
        (juiz-do-turno.js), e a catraca, que só lia a raiz, acusava-o de mudo */
     const doMotor = MOTOR_FONTES.some((g) => g.includes("from \"../" + f + "\"") || g.includes("from \"../" + base + "\""));
-    if (!quem.length && !doMotor) mudos.push(f);
+    /* 29/10 (Fase 4 do plano do motor, trilha B): e as rotas do servidor
+       (api/*.js) também são leitoras — `licenca.js` é o primeiro módulo de
+       src/ que só o servidor importa (api/turno.js): a regra da licença tem
+       de ser pura e provada em Node, e ninguém no navegador a deve ler. A
+       catraca, que só lia src/, acusava-o de mudo. */
+    const daApi = API_FONTES.some((g) => g.includes("from \"../src/" + f + "\"") || g.includes("from \"../src/" + base + "\""));
+    if (!quem.length && !doMotor && !daApi) mudos.push(f);
   }
   t(`todo módulo de src/ está ligado a alguém${mudos.length ? " — mudos: " + mudos.join(", ") : ""}`, mudos.length === 0);
 }
