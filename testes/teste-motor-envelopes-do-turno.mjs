@@ -44,11 +44,15 @@
    noite, o sonho e o onde acordo.
    O 16.º, A FÉ E AS CASAS: o ingresso numa guilda e a guilda fundada, a fé
    que muda de cidade, o templo erguido e a ascensão recalibrada.
+   O 17.º, O CAMINHO: o regresso às ruas, o deslocamento no tabuleiro, a
+   chegada ao fim da estrada e o destino que o mapa não tem.
+   E DO 17.º, A MASMORRA QUE FALTAVA: a entrada e a armadilha que se sofreu,
+   na tabela da masmorra.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -159,7 +163,9 @@ sec("5 · a masmorra: os casos percorrem o que o texto decide, e a prova morde")
   t(`o tesouro com item (${conta("masmorraTesouro", "o item")}), com poder (${conta("masmorraTesouro", ", +1")}) e sem item`, conta("masmorraTesouro", "o item") >= 40 && conta("masmorraTesouro", ", +1") >= 20 && conta("masmorraTesouro", "o item") < N_CASOS);
   t(`a armadilha sem nome vira "uma armadilha" (${conta("masmorraContornada", "(uma armadilha)")})`, conta("masmorraContornada", "(uma armadilha)") >= 40 && conta("masmorraAVista", "(uma armadilha)") >= 40);
   t(`a vista leva o aviso só quando ninguém a viu antes (${conta("masmorraAVista", "[AVISO")})`, conta("masmorraAVista", "[AVISO") >= 20 && conta("masmorraAVista", "[AVISO") < conta("masmorraTesouro", "[AVISO"));
-  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_MASMORRA).length === 7 && (() => { try { oEnvelopeDaMasmorra("nenhuma", {}); return false; } catch { return true; } })());
+  /* 7 → 9 (29/10, 17.º grupo): a entrada e a armadilha que se sofreu eram da masmorra e
+     nenhum inventário as viu; entraram nesta tabela, e a secção 22 prova-as */
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_MASMORRA).length === 9 && (() => { try { oEnvelopeDaMasmorra("nenhuma", {}); return false; } catch { return true; } })());
   const mordidas = [
     ["masmorraBusca", "a busca sem o escopo", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, d).replace(SO_ISSO, "") }],
     ["masmorraBusca", "a busca que lê o achado em vez do achou", { oEnvelopeDaMasmorra: (q, d) => oEnvelopeDaMasmorra(q, { ...d, achou: !!d.achado }) }],
@@ -659,6 +665,59 @@ sec("20 · a fé e as casas: os casos percorrem o que o texto decide, e a prova 
     ["feNaGeografia", "a fé que sempre sobe", { oEnvelopeDaFe: (q, d) => P(q, { ...d, subiu: true }) }],
     ["feTemplo", "o templo de graça", { oEnvelopeDaFe: (q, d) => P(q, { ...d, custo: 0 }) }],
     ["feAscensao", "a ascensão que esquece o patrono", { oEnvelopeDaFe: (q, d) => P(q, { ...d, patrono: null }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("21 · o caminho: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* as quatro são notas do turno: o sítio devolve a nota */
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const CAMINHO = ["caminhoMovRegistrado", "caminhoMovResolvido", "caminhoChegada", "caminhoDestino"];
+  t("as quatro notas entram abaixo da que já havia", CAMINHO.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
+  const R = N("caminhoMovRegistrado");
+  t("o regresso diz de onde saí, com a preposição, e a cidade", conta(R, "Eu saí do moinho velho e AGORA estou de volta às ruas de ") >= 50 && conta(R, "às ruas de Agulha de Sal.") >= 130 && new Set(R.map((x) => x.match(/Eu saí (.*) e AGORA/)[1])).size >= 3);
+  const M = N("caminhoMovResolvido");
+  t("o deslocamento dentro do mesmo lugar (" + conta(M, "Eu me desloquei dentro de a praça") + ") e de um para outro, e quem tentou me acertar (" + conta(M, "tentou me acertar na saída") + ")", conta(M, "Eu me desloquei dentro de a praça") >= 50 && conta(M, "Eu me desloquei de o beco para a ponte") >= 50 && conta(M, ", e o Corvo, Greta tentou me acertar na saída.") >= 80 && M.filter((x) => !x.includes("tentou me acertar")).length >= 80);
+  const C = N("caminhoChegada");
+  t("a chegada diz os dias e o destino", C.every((x, i) => x.includes("A estrada acabou: " + [0.5, 1, 3.5, 12][(i >> 1) % 4] + " dias de marcha") && x.includes("eu ESTOU em " + ["Vau", "Torre Funda"][i % 2] + ", dentro dela.")));
+  const Dn = N("caminhoDestino");
+  t("o destino que o mapa não tem: a mesma nota em todos os casos, com a regra na linha de baixo", new Set(Dn.map((x) => x.replace("[NOTA] já havia\n", ""))).size === 1 && Dn.every((x) => x.includes(" continuo exatamente onde estava.\nREGRA DESTE ENVELOPE (obrigatória): ")));
+  t("as quatro formas estão na tabela do caminho", Object.keys(ENVELOPES_DO_CAMINHO).length === 4 && ["movimentoRegistrado", "movimentoResolvido", "chegada", "destinoNaoReconhecido"].every((q) => Object.hasOwn(ENVELOPES_DO_CAMINHO, q)));
+  const P = oEnvelopeDoCaminho;
+  const mordidas = [
+    ["caminhoMovRegistrado", "o regresso sem o de onde", { oEnvelopeDoCaminho: (q, d) => P(q, { ...d, de: "?" }) }],
+    ["caminhoMovResolvido", "o deslocamento que esquece quem tentou acertar", { oEnvelopeDoCaminho: (q, d) => P(q, { ...d, colados: [] }) }],
+    ["caminhoChegada", "a chegada de um dia só", { oEnvelopeDoCaminho: (q, d) => P(q, { ...d, dias: 1 }) }],
+    ["caminhoDestino", "o destino com a nota do regresso", { oEnvelopeDoCaminho: () => P("movimentoRegistrado", { de: "do nada", cidade: "Vau" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("22 · a masmorra, o que faltava: a entrada e a armadilha que se sofreu");
+{
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  /* a entrada devolve o envelope; a armadilha sofrida, o que enviou */
+  const E = HOJE.entradaDaMasmorra.map((f) => f.texto);
+  const A = HOJE.armadilhaSofridaNaMasmorra.map((f) => f.texto[0][0]);
+  const nua = E.filter((x) => x.startsWith("[MASMORRA — ENTRADA")).length;
+  t("a entrada com o vestido e o veredito à frente, com um só, e sem nenhum (" + nua + ")", nua >= 50 && conta(E, "[VESTIDO] Visto a cota de malha. [DIFICULDADE] a masmorra \"") >= 50 && E.filter((x) => x.startsWith("[DIFICULDADE] a masmorra \"")).length >= 50 && E.filter((x) => x.startsWith("[VESTIDO] Visto a cota de malha. [MASMORRA")).length >= 50);
+  t("a planta: as câmaras, os níveis e as tochas de cada caso", E.every((x, i) => x.includes("O SISTEMA gerou a planta: " + (3 + (i % 6)) + " câmaras em ") && x.includes("Levo " + (i % 7) + " tochas")) && new Set(E.map((x) => x.match(/câmaras em (\d+) níveis/)[1])).size >= 3);
+  t("perto de uma cidade só quando há (" + conta(E, " (perto de ") + "), e o tempo extra no fim", conta(E, "costurando com a cena atual (perto de Vau).") >= 80 && conta(E, "costurando com a cena atual. Mencione") >= 80 && conta(E, "escolher a passagem. [+1 tocha]") >= 180);
+  t("a armadilha sofrida: a salvaguarda por cima e a sala por baixo, com e sem o depois", A.every((x) => /^\[SALVAGUARDA (passou|falhou|nenhuma)\] A armadilha \(/.test(x) && x.includes("\n[MASMORRA — ")) && conta(A, "Narre o susto e o estado em que fico. [DEPOIS]") >= 130 && conta(A, "NO ESCURO] Narre o susto") >= 130);
+  t("as duas formas novas estão na tabela da masmorra", ["entrada", "armadilhaSofrida"].every((q) => Object.hasOwn(ENVELOPES_DA_MASMORRA, q)));
+  const P = oEnvelopeDaMasmorra;
+  const mordidas = [
+    ["entradaDaMasmorra", "a entrada que esquece o veredito", { oEnvelopeDaMasmorra: (q, d) => P(q, { ...d, dificuldade: "" }) }],
+    ["entradaDaMasmorra", "a entrada sem as tochas", { oEnvelopeDaMasmorra: (q, d) => P(q, { ...d, tochas: 0 }) }],
+    ["armadilhaSofridaNaMasmorra", "a armadilha sem a salvaguarda", { oEnvelopeDaMasmorra: (q, d) => P(q, { ...d, salvaguarda: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

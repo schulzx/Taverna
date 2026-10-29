@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -86,9 +86,11 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda",
   "dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado",
   "tempoClimaAoPassar", "tempoClimaDaNoite", "tempoSonho", "tempoOndeAcordo",
-  "feGuilda", "feGuildaFundada", "feNaGeografia", "feTemplo", "feAscensao"];
+  "feGuilda", "feGuildaFundada", "feNaGeografia", "feTemplo", "feAscensao",
+  "caminhoMovRegistrado", "caminhoMovResolvido", "caminhoChegada", "caminhoDestino",
+  "entradaDaMasmorra", "armadilhaSofridaNaMasmorra"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -223,6 +225,14 @@ const ANCORAS = {
   feNaGeografia: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FÉ NA GEOGRAFIA — REGISTRO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"feNaGeografia\"", FIM] },
   feTemplo: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[TEMPLO ERGUIDO — REGISTRO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"templo\"", FIM] },
   feAscensao: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[ASCENSÃO — RECALIBRAÇÃO DO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFe(\"ascensao\"", FIM] },
+  /* o caminho: quatro notas (o movimento registrado e o resolvido, a chegada; o destino não reconhecido tem duas linhas, até ao return); o sítio devolve a nota */
+  caminhoMovRegistrado: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[MOVIMENTO — REGISTRADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCaminho(\"movimentoRegistrado\"", FIM] },
+  caminhoMovResolvido: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[MOVIMENTO — RESOLVIDO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCaminho(\"movimentoResolvido\"", FIM] },
+  caminhoChegada: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[CHEGADA — REGISTRADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCaminho(\"chegada\"", FIM] },
+  caminhoDestino: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[DESTINO NÃO RECONHECIDO — AVISO DO SISTEMA]", "\n              return false;"], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCaminho(\"destinoNaoReconhecido\"", "\n              return false;"] },
+  /* a masmorra, o que faltava (17.º grupo): a entrada (uma linha, o sítio devolve o envelope) e a armadilha que se sofreu (duas linhas, até ao fim da função; o sítio devolve o que enviou) */
+  entradaDaMasmorra: { antes: ["    const envelopeDaEntrada = (`${vestido", FIM], hoje: ["    const envelopeDaEntrada = (oEnvelopeDaMasmorra(\"entrada\"", FIM] },
+  armadilhaSofridaNaMasmorra: { antes: ["      enviar(`${envelopeDaSalvaguarda(sv, { oQue: `A armadilha", "\n    }\n  };\n  const posDaMasmorra"], hoje: ["      enviar(oEnvelopeDaMasmorra(\"armadilhaSofrida\"", "\n    }\n  };\n  const posDaMasmorra"] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -233,7 +243,9 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   mercadoEquipou: "notaRef.current", mercadoConsumivel: "notaRef.current", mercadoMapa: "notaRef.current", mercadoCompra: "notaRef.current", mercadoPechincha: "notaRef.current", mercadoVenda: "notaRef.current",
   dominioDecretoAceito: "notaRef.current", dominioDizimado: "notaRef.current", dominioFracasso: "notaRef.current", dominioCumprido: "notaRef.current", dominioObraPronta: "notaRef.current", dominioRevolta: "notaRef.current", dominioImposto: "notaRef.current", dominioObraIniciada: "notaRef.current", dominioGovernador: "notaRef.current", dominioReivindicacao: "notaRef.current", dominioTratado: "notaRef.current",
   tempoClimaAoPassar: "climaMsg", tempoClimaDaNoite: "climaMsg", tempoSonho: "sonhoMsg", tempoOndeAcordo: "localMsg",
-  feGuilda: "notaRef.current", feGuildaFundada: "notaRef.current", feNaGeografia: "notaRef.current", feTemplo: "notaRef.current", feAscensao: "notaRef.current" };
+  feGuilda: "notaRef.current", feGuildaFundada: "notaRef.current", feNaGeografia: "notaRef.current", feTemplo: "notaRef.current", feAscensao: "notaRef.current",
+  caminhoMovRegistrado: "notaRef.current", caminhoMovResolvido: "notaRef.current", caminhoChegada: "notaRef.current", caminhoDestino: "notaRef.current",
+  entradaDaMasmorra: "envelopeDaEntrada", armadilhaSofridaNaMasmorra: "enviados" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -568,6 +580,39 @@ export function feDoCaso(i) {
   };
 }
 
+/* O CAMINHO: a nota do turno vazia e já com outra à frente; a saída de
+   cada lugar (com artigo, sem e nenhum) e a cidade de cada nome; o
+   deslocamento dentro do mesmo lugar e de um para outro, sem ninguém ao
+   lado, com um e com dois; a chegada de cada prazo e destino. */
+export function caminhoDoCaso(i) {
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    comDe: lugar.comDe, de: ["a Forja", "o moinho velho", "Casa do Sal", ""][(i >> 1) % 4], alvo: { nome: ["Vau", "Agulha de Sal"][(i >> 2) % 2] },
+    nomeDe: ["a praça", "o beco"][(i >> 1) % 2], nomePara: ["a praça", "a ponte"][(i >> 2) % 2],
+    colados: [[], [{ nome: "o Corvo" }], [{ nome: "o Corvo" }, { nome: "Greta" }]][i % 3],
+    dias: [0.5, 1, 3.5, 12][(i >> 1) % 4], j: { para: ["Vau", "Torre Funda"][i % 2] },
+  };
+}
+
+/* A MASMORRA, o que faltava: a entrada com e sem o vestido e o veredito à
+   frente, de cada tamanho de planta e de tochas, perto de uma cidade e de
+   nenhuma, com e sem o tempo extra; a armadilha que se sofreu, com a
+   salvaguarda que passou, que falhou e nenhuma, com e sem o depois. */
+export function masmorraNovaDoCaso(i) {
+  const salas = Array.from({ length: 3 + (i % 6) }, (_, n) => ({ camada: n % (1 + ((i >> 1) % 4)) }));
+  return {
+    vestido: ["", "[VESTIDO] Visto a cota de malha."][(i >> 1) % 2],
+    dif: [null, { patamar: { aoMestre: "a oposição parece maior que o grupo" } }][(i >> 2) % 2],
+    envelopeDaDificuldade: (d, oQue) => (d ? "[DIFICULDADE] " + oQue + ": " + d.patamar.aoMestre : ""),
+    mm: { nome: ["Cripta do Corvo", "Poço das Celas"][i % 2], salas, tochas: i % 7 },
+    cidadeAtualRef: { current: [null, "Vau", "Agulha"][i % 3] }, extraTempo: i % 4 ? " [+1 tocha]" : "",
+    envelopeDaSalvaguarda: (sv, o) => "[SALVAGUARDA " + (sv ? (sv.passou ? "passou" : "falhou") : "nenhuma") + "] " + o.oQue + " · " + o.meia + " · " + o.danoCheio + "/" + o.danoFinal,
+    sv: [null, { passou: true }, { passou: false }][i % 3], sala: { nomeArmadilha: ["Fosso de Estacas", "Agulha Envenenada"][(i >> 1) % 2] },
+    fonte: { meia: (i >> 2) % 2 === 1 }, cheio: 4 + (i % 9), rArm: { dano: 1 + (i % 5) },
+    pos: ["Cripta do Corvo · camada 1 · 2/5 salas", "Poço das Celas · camada 0 · 1/4 salas NO ESCURO"][(i >> 1) % 2], depois: i % 2 ? " [DEPOIS]" : "", p2: { nome: "Vera" },
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -646,6 +691,8 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "dominio") Object.assign(S, dominioDoCaso(k.i));
     else if (g === "tempo") Object.assign(S, tempoDoCaso(k.i));
     else if (g === "fe") Object.assign(S, feDoCaso(k.i));
+    else if (g === "caminho") Object.assign(S, caminhoDoCaso(k.i));
+    else if (g === "masmorraNova") Object.assign(S, masmorraNovaDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

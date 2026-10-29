@@ -114,6 +114,12 @@ export const ENVELOPES_DA_MASMORRA = {
     `[MASMORRA — BUSCA ATIVA · ${masmorra}] Vasculho a sala por dez minutos (Percepção ${total}${segredo ? ` vs ${segredo.cd}` : ""}). ${achou ? `ENCONTREI: ${achado.txt} (${achado.tipo.replace("_", " ")}). Narre a descoberta e o que ela abre.` : "Nada encontrado — narre a busca frustrada em 1-2 frases, sem inventar achados."} NÃO revele o que não foi achado.${SO_ISSO}`,
   fuga: ({ masmorra }) =>
     `[MASMORRA — FUGA] Eu ESCOLHI fugir de ${masmorra} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`,
+  /* 17.º grupo (29/10): a entrada (com o veredito da dificuldade e o */
+  /* vestido à frente, já ditos pelo App) e a armadilha que se sofreu (a */
+  /* salvaguarda já dita por cima) — da masmorra, logo desta tabela. */
+  entrada: ({ vestido, dificuldade, masmorra, camaras, niveis, tochas, perto, extraTempo }) => `${vestido ? vestido + " " : ""}${dificuldade ? dificuldade + " " : ""}[MASMORRA — ENTRADA · ${masmorra}] Descobri a entrada de "${masmorra}". O SISTEMA gerou a planta: ${camaras} câmaras em ${niveis} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${perto ? ` (perto de ${perto})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`,
+  armadilhaSofrida: ({ salvaguarda, pos, depois }) => `${salvaguarda}
+[MASMORRA — ${pos}] Narre o susto e o estado em que fico.${depois}`,
 };
 export function oEnvelopeDaMasmorra(qual, dados) {
   return aFormaDe(ENVELOPES_DA_MASMORRA, qual, "da masmorra")(dados || {});
@@ -475,4 +481,24 @@ export const ENVELOPES_DA_FE = {
 };
 export function oEnvelopeDaFe(qual, dados) {
   return aFormaDe(ENVELOPES_DA_FE, qual, "da fé e das casas")(dados || {});
+}
+
+/* ============================================================
+   17.º GRUPO — O CAMINHO: o que o sistema já decidiu sobre onde o herói
+   está, e o Narrador só põe em cena — o regresso às ruas da cidade, o
+   deslocamento no tabuleiro (com quem tentou acertá-lo na saída), a chegada
+   ao fim da estrada e o destino que o mapa não tem (o sistema NÃO o moveu).
+   São notas do turno (o App junta-as abaixo da que já havia).
+   `de`: o lugar de onde saiu, já com a preposição (comDe); `colados`: os
+   que estavam ao lado na saída (cada um com o `nome`).
+   ============================================================ */
+export const ENVELOPES_DO_CAMINHO = {
+  movimentoRegistrado: ({ de, cidade }) => `[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu saí ${de} e AGORA estou de volta às ruas de ${cidade}. O sistema já registrou. Narre a cena AQUI.`,
+  movimentoResolvido: ({ nomeDe, nomePara, colados }) => `[MOVIMENTO — RESOLVIDO PELO SISTEMA] Eu me desloquei ${nomeDe === nomePara ? `dentro de ${nomePara}` : `de ${nomeDe} para ${nomePara}`}${colados.length ? `, e ${colados.map((c) => c.nome).join(", ")} tentou me acertar na saída` : ""}. Narre o deslocamento usando os nomes dos lugares e nada mais: não cite metros nem quadrados, não mova ninguém junto comigo, não faça inimigo nenhum me alcançar de outro lugar.`,
+  chegada: ({ dias, destino }) => `[CHEGADA — REGISTRADA PELO SISTEMA] A estrada acabou: ${dias} dias de marcha cobriram o trecho e eu ESTOU em ${destino}, dentro dela. Narre a chegada — o que se vê do portão, o que muda no ar, quem repara em mim — e trate este lugar como o meu lugar a partir de agora. Não me ponha de volta na estrada.`,
+  destinoNaoReconhecido: () => `[DESTINO NÃO RECONHECIDO — AVISO DO SISTEMA] Eu falei em ir a algum lugar e o sistema não reconheceu, no mapa que conhecemos, nenhuma cidade com esse nome. Ele NÃO me moveu, e continuo exatamente onde estava.
+REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente — provavelmente ela não era sobre viajar. NÃO me ponha na estrada, NÃO invente uma cidade para o nome que eu disse e NÃO me faça chegar a lugar nenhum. Se de fato havia um destino ali e ele não existe no mundo, diga isso pela ficção, em uma frase, e siga.`,
+};
+export function oEnvelopeDoCaminho(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_CAMINHO, qual, "do caminho")(dados || {});
 }

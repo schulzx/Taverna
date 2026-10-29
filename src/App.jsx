@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -6841,7 +6841,7 @@ export default function Taverna() {
       lugarRef.current = null; setLugar(null);
       avancarMinutos(10);
       pushMsgs([{ autor: "sistema", texto: `📍 Você voltou ao meio de ${alvo.nome}.` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — REGISTRADO PELO SISTEMA] Eu saí ${comDe(de)} e AGORA estou de volta às ruas de ${alvo.nome}. O sistema já registrou. Narre a cena AQUI.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCaminho("movimentoRegistrado", { de: comDe(de), cidade: alvo.nome });
       marcarTurnoDoMundo();
       enviar(`Volto para o meio de ${alvo.nome}.`, personagem);
       return;
@@ -8676,7 +8676,7 @@ export default function Taverna() {
     mapaRef.current = pisarNaCidade(mapaRef.current, j.para); setMapa(mapaRef.current);
     abrirNevoaDaVizinhanca(j.para, msgs);
     pushMsgs(msgs.map((texto) => ({ autor: "sistema", texto })));
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CHEGADA — REGISTRADA PELO SISTEMA] A estrada acabou: ${dias} dias de marcha cobriram o trecho e eu ESTOU em ${j.para}, dentro dela. Narre a chegada — o que se vê do portão, o que muda no ar, quem repara em mim — e trate este lugar como o meu lugar a partir de agora. Não me ponha de volta na estrada.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCaminho("chegada", { dias, destino: j.para });
   };
   /* o nível é o da ficha VIVA (o ref, 4.ª fatia): o `personagem` do render
      é nulo nas closures que nascem no primeiro render (o aplicarResposta é
@@ -14486,8 +14486,7 @@ export default function Taverna() {
                  continua honrada por outro caminho — o Mestre não pode
                  inventar o destino —, e é o envelope que garante isso, não o
                  silêncio. */
-              notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DESTINO NÃO RECONHECIDO — AVISO DO SISTEMA] Eu falei em ir a algum lugar e o sistema não reconheceu, no mapa que conhecemos, nenhuma cidade com esse nome. Ele NÃO me moveu, e continuo exatamente onde estava.
-REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente — provavelmente ela não era sobre viajar. NÃO me ponha na estrada, NÃO invente uma cidade para o nome que eu disse e NÃO me faça chegar a lugar nenhum. Se de fato havia um destino ali e ele não existe no mundo, diga isso pela ficção, em uma frase, e siga.`;
+              notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCaminho("destinoNaoReconhecido", {});
               return false;
             }
           }
@@ -17074,7 +17073,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setCombate(combateRef.current);
     pushMsgs(linhas);
     salvar({ personagem: pers });
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MOVIMENTO — RESOLVIDO PELO SISTEMA] Eu me desloquei ${nomeDe === nomePara ? `dentro de ${nomePara}` : `de ${nomeDe} para ${nomePara}`}${colados.length ? `, e ${colados.map((c) => c.nome).join(", ")} tentou me acertar na saída` : ""}. Narre o deslocamento usando os nomes dos lugares e nada mais: não cite metros nem quadrados, não mova ninguém junto comigo, não faça inimigo nenhum me alcançar de outro lugar.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCaminho("movimentoResolvido", { nomeDe, nomePara, colados });
   };
 
   /* ---------------- O ARCO CASADO COM O MOTOR (v9.28) ----------------
@@ -20618,7 +20617,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const jaLido = !!doMapa && !!masmorraDaBoca(lugarRef.current, [doMapa]);
       if (v && !jaLido) pushMsgs([{ autor: "sistema", texto: v.linha }]);
     } catch (e) { calou("veredito da masmorra", e); }
-    const envelopeDaEntrada = (`${vestido ? vestido + " " : ""}${dif ? envelopeDaDificuldade(dif, `a masmorra "${mm.nome}"`) + " " : ""}[MASMORRA — ENTRADA · ${mm.nome}] Descobri a entrada de "${mm.nome}". O SISTEMA gerou a planta: ${mm.salas.length} câmaras em ${Math.max(...mm.salas.map((x) => x.camada))} níveis de profundidade, com passagens que se ramificam, um portão lacrado no fundo e a chave escondida com um guardião. Levo ${mm.tochas} tochas — cada passagem consome uma. Descreva a fachada e a atmosfera do primeiro salão em 2-4 frases, costurando com a cena atual${cidadeAtualRef.current ? ` (perto de ${cidadeAtualRef.current})` : ""}. Mencione que há mais de um caminho adiante. NÃO invente o que há nas salas — o sistema revela cada uma quando eu escolher a passagem.${extraTempo}`);
+    const envelopeDaEntrada = (oEnvelopeDaMasmorra("entrada", { vestido, dificuldade: dif ? envelopeDaDificuldade(dif, `a masmorra "${mm.nome}"`) : "", masmorra: mm.nome, camaras: mm.salas.length, niveis: Math.max(...mm.salas.map((x) => x.camada)), tochas: mm.tochas, perto: cidadeAtualRef.current, extraTempo }));
     if (qr.chamadas) enviar(envelopeDaEntrada, persIn);
     else notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDaEntrada}`;
   };
@@ -20826,8 +20825,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         porque: "a armadilha",
       });
       const p2 = rArm.pers;
-      enviar(`${envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: rArm.dano })}
-[MASMORRA — ${pos}] Narre o susto e o estado em que fico.${depois}`, p2);
+      enviar(oEnvelopeDaMasmorra("armadilhaSofrida", { salvaguarda: envelopeDaSalvaguarda(sv, { oQue: `A armadilha (${sala.nomeArmadilha})`, meia: fonte.meia, danoCheio: cheio, danoFinal: rArm.dano }), pos, depois }), p2);
     }
   };
   const posDaMasmorra = (mm, sala) => {

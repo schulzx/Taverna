@@ -31,7 +31,9 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   mercadoEquipou: "48ce543", mercadoConsumivel: "48ce543", mercadoMapa: "48ce543", mercadoCompra: "48ce543", mercadoPechincha: "48ce543", mercadoVenda: "48ce543",
   dominioDecretoAceito: "f5d5940", dominioDizimado: "f5d5940", dominioFracasso: "f5d5940", dominioCumprido: "f5d5940", dominioObraPronta: "f5d5940", dominioRevolta: "f5d5940", dominioImposto: "f5d5940", dominioObraIniciada: "f5d5940", dominioGovernador: "f5d5940", dominioReivindicacao: "f5d5940", dominioTratado: "f5d5940",
   tempoClimaAoPassar: "b5e935e", tempoClimaDaNoite: "b5e935e", tempoSonho: "b5e935e", tempoOndeAcordo: "b5e935e",
-  feGuilda: "9a79d2e", feGuildaFundada: "9a79d2e", feNaGeografia: "9a79d2e", feTemplo: "9a79d2e", feAscensao: "9a79d2e" };
+  feGuilda: "9a79d2e", feGuildaFundada: "9a79d2e", feNaGeografia: "9a79d2e", feTemplo: "9a79d2e", feAscensao: "9a79d2e",
+  caminhoMovRegistrado: "63dda7f", caminhoMovResolvido: "63dda7f", caminhoChegada: "63dda7f", caminhoDestino: "63dda7f",
+  entradaDaMasmorra: "63dda7f", armadilhaSofridaNaMasmorra: "63dda7f" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);
