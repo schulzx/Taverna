@@ -98,6 +98,21 @@ export const aSementeDoSave = (sv) => {
   return `${nomeDaCampanha(s) || ABRIR_O_SAVE.semNome}|${(ehObj(s.mundo) && s.mundo.genero) || ""}`;
 };
 
+/* O HERÓI NOVO NASCE COMO O LOAD O ABRE (Fase 4, trilha A, 29/10/2026).
+   Duas regras do load que a criação de uma campanha não corria, e que por
+   isso faziam a primeira sentada ser outra que a de depois de recarregar:
+   - a FICHA: o herói recém-criado nunca passava por `migrarPersonagem` —
+     sem `suprimentos`, a mochila lia 0 rações, 0 água, 0 tochas e nenhum
+     kit (o balcão vendia-lhe o kit), e ao recarregar ganhava 10/10/5 e o
+     kit de graça (regras-jogo.js, `suprimentos` da migração);
+   - a CIDADE PISADA: a casa do herói abria descoberta, mas só ganhava a
+     marca `pisada` (v9.54) no primeiro load.
+   As duas são as mesmas que `abrirOSave` corre — uma regra, dois sítios
+   (o `continuar` e o `iniciar` do App). Puras; o que não é ficha volta
+   como veio, e sem cidade o mapa fica. */
+export const aFichaAberta = (p) => (ehObj(p) ? migrarPersonagem(p) : p);
+export const comACidadePisada = (mapa, cidade) => (cidade ? pisarNaCidade(mapa, cidade) : mapa);
+
 /* o mapa: a geografia do save, ou o mundo inteiro gerado (save antigo sem
    cidades); a névoa (v9.14: save sem a marca tem TUDO revelado); a cidade
    onde o save parou, pisada (v9.54) */
@@ -112,8 +127,7 @@ function oMapa(sv) {
     mapa = { cidades: geo.cidades, faccoes: (sv.mapa && sv.mapa.faccoes) || [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas };
   }
   if (!sv.nevoaVersao) mapa = { ...mapa, cidades: (mapa.cidades || []).map((c) => ({ ...c, descoberta: true })) };
-  const cidade = sv.cidadeAtual || "";
-  return cidade ? pisarNaCidade(mapa, cidade) : mapa;
+  return comACidadePisada(mapa, sv.cidadeAtual || "");
 }
 
 /* as missões: a lista do save, ou as quests antigas ativas como missão de
@@ -180,7 +194,7 @@ export function abrirOSave(save, opcoes) {
   const sorte = typeof op.sorte === "function" ? op.sorte : rng(hashSemente(`${SEMENTE_DA_CASA}|${aSementeDoSave(sv)}`));
   return comSorte(sorte, () => {
     const e = { ...sv };
-    if (ehObj(sv.personagem)) e.personagem = migrarPersonagem(sv.personagem);
+    if (ehObj(sv.personagem)) e.personagem = aFichaAberta(sv.personagem);
     e.nomeCampanha = nomeDaCampanha(sv);
     const mundo = ehObj(sv.mundo) ? sv.mundo : {};
     e.mapa = oMapa(sv);

@@ -164,8 +164,14 @@ sec("6. A LIGAÇÃO NO APP");
   /* v9.356 (MM17 B): o literal do mapaRef saiu do App para
      mapaDaCampanhaNova (regiao.js), que a suíte da região prova byte a byte
      contra o literal antigo. A intenção é a mesma: o mapa só é refeito
-     dentro do "if (!cap)" — um capítulo herda o mundo. */
-  t("o mapa fica", /if \(!cap\) \{\s*(?:\/\*[\s\S]*?\*\/\s*)?mapaRef\.current = mapaDaCampanhaNova\(geo\);/.test(ini) && (ini.match(/mapaRef\.current = /g) || []).length === 1);
+     dentro do "if (!cap)" — um capítulo herda o mundo.
+     MOVIDA (trilha A, 29/10, o herói novo como o load): o iniciar ganhou uma
+     2.ª escrita no mapaRef, `comACidadePisada(mapaRef.current, ...)`, que
+     não refaz o mundo — só marca `pisada` na cidade de partida (a casa da
+     campanha nova, ou a cidade onde o capítulo recomeça), como o load faria.
+     A régua passa a contar as escritas que REFAZEM o mapa, e essa é uma. */
+  t("o mapa fica", /if \(!cap\) \{\s*(?:\/\*[\s\S]*?\*\/\s*)?mapaRef\.current = mapaDaCampanhaNova\(geo\);/.test(ini) && (ini.match(/mapaRef\.current = (?!comACidadePisada\(mapaRef\.current, )/g) || []).length === 1
+    && (ini.match(/mapaRef\.current = comACidadePisada\(mapaRef\.current, cidadeAtualRef\.current\)/g) || []).length === 1);
   t("as descobertas ficam", /if \(!cap\) \{ descobRef\.current = \[\]/.test(ini));
   t("a base do mundo fica", /if \(!cap\) \{ baseMundoRef\.current = garantirBase\(null\)/.test(ini));
   t("o banco de nomes fica", /if \(!cap\) bancoNomesRef\.current = gerarBancoNomes/.test(ini));

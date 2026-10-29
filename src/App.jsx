@@ -277,6 +277,7 @@ import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assento
 import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilencio, SEM_GUARDADO, narrativaFaltou, MOTIVO_SEM_NARRATIVA, fotografarOTurno, destinoDaFalha, turnoNaoAconteceu } from "./guardado.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, bonusEquip, bonusEfeito, atributoEfetivo, processarCombate, migrarPersonagem } from "./regras-jogo.js";
+import { aFichaAberta, comACidadePisada } from "./abrir-o-save.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 
 /* ---------------- O SILÊNCIO QUE NÃO CUSTA O TURNO ----------------
@@ -11012,6 +11013,11 @@ export default function Taverna() {
        duas serem a mesma coisa com nomes diferentes. */
     const cap = capituloNovoRef.current;
     capituloNovoRef.current = null;
+    /* Fase 4, trilha A (29/10): o herói novo nasce como o load o abre — a
+       ficha passa pela mesma migração do `continuar` (abrir-o-save.js).
+       Sem isto a primeira sentada tinha 0 rações, 0 água, 0 tochas e nenhum
+       kit (o balcão vendia-o), e recarregar dava 10/10/5 e o kit de graça. */
+    try { pers = aFichaAberta(pers); } catch (e) { calou("a ficha do herói novo", e); }
     personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
@@ -11070,6 +11076,8 @@ export default function Taverna() {
       faccaoJogadorRef.current = "";
     }
     cidadeAtualRef.current = (inicial && inicial.nome) || "";
+    /* e a casa do herói fica PISADA (v9.54) já na criação, não só no 1.º load */
+    try { mapaRef.current = comACidadePisada(mapaRef.current, cidadeAtualRef.current); setMapa(mapaRef.current); } catch (e) { calou("a cidade de partida pisada", e); }
     /* ---------------- A ESPINHA E ESTENDIDA AQUI (v9.129) ----------------
        Depois do mapa e da cidade de partida, e antes do primeiro turno. E o
        unico momento em que ela e escrita: dali em diante o mundo so a

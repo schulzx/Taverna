@@ -116,7 +116,63 @@ sec("4. IDEMPOTENTE, DETERMINISTA, IMUTÁVEL, E O LIXO");
   t("opções lixo valem as de omissão", J(abrirOSave({ dia: 2 }, null)) === J(abrirOSave({ dia: 2 })));
 }
 
-/* 5. O SERVIDOR E AS SESSÕES DE PROVA: a ligação (a montagem do servidor abre
+sec("5. O HERÓI NOVO NASCE COMO O LOAD O ABRE (trilha A, 29/10)");
+{
+  /* O defeito: a criação de uma campanha punha em jogo a ficha da tela de
+     criação crua — sem `suprimentos` (0 rações, 0 água, 0 tochas, nenhum
+     kit: o balcão vendia-o) — e a casa do herói sem a marca `pisada`. O
+     1.º load corria as duas regras e a sentada seguinte era outra. Agora o
+     `iniciar` corre as mesmas duas regras desta peça. */
+  const { aFichaAberta, comACidadePisada } = await import("../src/abrir-o-save.js");
+  const { equiparKitInicial } = await import("../src/kit-inicial.js");
+  const { periciasIniciais } = await import("../src/pericias.js");
+  const { garantirSuprimentos } = await import("../src/ermos.js");
+  const { mapaDaCriacao, mapaDaCampanhaNova } = await import("../src/regiao.js");
+  const { moldePorId, MOLDE_PADRAO } = await import("../src/moldes.js");
+  /* a ficha como a tela de criação a entrega (os campos do `concluir`) */
+  const atr = { forca: 2, destreza: 1, vigor: 2, intelecto: 0, presenca: 0, percepcao: 1 };
+  const criada = equiparKitInicial({
+    genero: "f", feicoesFixas: true, nome: "Halda Vau", primeiroNome: "Halda", sobrenome: "Vau",
+    conceito: "guarda de caravana", historia: "", raca: "Humano", classe: "Guerreiro", subclasse: "", profissao: "",
+    antecedente: "", antecedenteGancho: "", semente: "Halda Vau|guarda de caravana|1234",
+    atributos: { ...atr }, vida: 12, vidaMax: 12, mana: 4, manaMax: 4,
+    baseAtributos: { ...atr }, pontosAtr: 0, atributosVersao: 1,
+    nivel: 1, xp: 0, moedas: 30, nivelPendentes: 0,
+    inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [], equipamento: [], equipados: {},
+    pericias: periciasIniciais({ classe: "Guerreiro", antecedente: "" }), periciasVersao: 1,
+  });
+  const sup = (p) => { const x = garantirSuprimentos(p && p.suprimentos); return [x.racoes, x.agua, x.tochas, !!x.kit]; };
+  t("a ficha da criação vem sem mochila (era ela que entrava em jogo)", !criada.suprimentos && J(sup(criada)) !== J([10, 10, 5, true]), J(sup(criada)));
+  const aberta = aFichaAberta(criada);
+  t("o herói novo aberto tem 10 rações, 10 de água, 5 tochas e o kit", J(sup(aberta)) === J([10, 10, 5, true]), J(sup(aberta)));
+  t("é a ficha que o load lhe daria", J(aberta) === J(migrarPersonagem(criada)));
+  t("recarregar já não muda a ficha (a 1.ª sentada é a de depois)", J(abrirOSave({ personagem: aberta }).personagem) === J(aberta)
+    && J(abrirOSave({ personagem: criada }).personagem) !== J(criada));
+  t("abrir a aberta dá a mesma; o que não é ficha volta como veio", J(aFichaAberta(aberta)) === J(aberta) && aFichaAberta(null) === null && aFichaAberta("x") === "x");
+  /* o mapa como a criação o faz (região, a base em cidades[0]) */
+  const mapa = mapaDaCampanhaNova(mapaDaCriacao({ semente: "A saga de Halda Vau|Fantasia medieval", molde: moldePorId(MOLDE_PADRAO), genero: "Fantasia medieval", lex: null, estrutura: "jornada", modo: "historia" }));
+  const base = mapa.cidades[0];
+  t(`a base da campanha nova abre descoberta e sem a marca de pisada (${base && base.nome})`, !!(base && base.descoberta && !base.pisada));
+  const pisado = comACidadePisada(mapa, base.nome);
+  t("com a regra, a base nasce pisada (e só ela muda)", pisado.cidades[0].pisada === true
+    && pisado.cidades.slice(1).every((c, i) => c === mapa.cidades[i + 1]));
+  const marcas = (m) => J(m.cidades.map((c) => [c.nome, !!c.descoberta, !!c.pisada]));
+  t("é o mapa que o load lhe daria (descoberta e pisada, cidade a cidade)",
+    marcas(abrirOSave({ personagem: aberta, mapa: pisado, cidadeAtual: base.nome, nevoaVersao: 1 }).mapa) === marcas(pisado)
+    && marcas(abrirOSave({ personagem: aberta, mapa, cidadeAtual: base.nome, nevoaVersao: 1 }).mapa) !== marcas(mapa));
+  t("sem cidade o mapa fica", comACidadePisada(mapa, "") === mapa);
+  /* e o `iniciar` do App corre as duas: a ficha antes de entrar no ref,
+     a cidade depois de escolhida */
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const i0 = app.indexOf("const iniciar = (pers) =>");
+  const ini = i0 >= 0 ? app.slice(i0, app.indexOf("\n  const continuar = (comResumo", i0)) : "";
+  const fichaEm = ini.indexOf("pers = aFichaAberta(pers)"), refEm = ini.indexOf("personagemRef.current = pers;");
+  t("o iniciar do App abre a ficha antes de a pôr no ref", fichaEm > 0 && refEm > fichaEm);
+  const cidEm = ini.indexOf("cidadeAtualRef.current = (inicial && inicial.nome)"), pisEm = ini.indexOf("comACidadePisada(mapaRef.current, cidadeAtualRef.current)");
+  t("e pisa a cidade de partida logo que a escolhe", cidEm > 0 && pisEm > cidEm);
+}
+
+/* 6. O SERVIDOR E AS SESSÕES DE PROVA: a ligação (a montagem do servidor abre
    o save por esta peça; as sessões de Node regravam-se abertas) espera a
    trilha A — regrava os casos de que os dourados da pauta, do pedido e do
    prelúdio são fotos. Está no diário de 29/10. */
