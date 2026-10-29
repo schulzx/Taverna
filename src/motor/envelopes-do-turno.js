@@ -386,6 +386,15 @@ export const ENVELOPES_DOS_PODERES = {
   habilidadeDeclarada: ({ nome, custo, mana, descricao, acao, depois, extraTempo }) => `[HABILIDADE] Uso "${nome}" (custo ${custo} PM, já descontado; tenho ${mana} PM). ${descricao || ""} Ação: ${acao}.${depois} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`,
   invocacoesEncerradas: ({ sumiram }) => `[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${sumiram.join(", ")} ${sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`,
   invocacaoEncerrada: ({ sumiram }) => `[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${sumiram.join(", ")} ${sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo venceu. Narre o desmanche em uma frase e siga — ${sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} no campo, e não ${sumiram.length > 1 ? "voltam" : "volta"}.`,
+  /* 20.º grupo (29/10): as magias de função que ficaram no App — reviver */
+  /* (nota), a cura e a condição desfeita (o enviar, à frente da minha frase) */
+  /* e a magia que fica ativa por turnos (nota). `magia`: o nome da magia, à */
+  /* letra (a forma o põe em maiúscula onde o cabeçalho o grita); `linha`: o */
+  /* que o sistema desfez, já dito; `descricao`: a da magia, à letra. */
+  reviverAplicado: ({ magia, alvo }) => `[${magia.toUpperCase()} — APLICADO PELO SISTEMA] ${alvo} voltou dos mortos pela minha magia e já está de pé com metade dos PV. Isso é fato: não desfaça, não cobre outro preço e não deixe ambíguo. Narre a volta e o que ela custa a quem voltou.`,
+  curaAplicada: ({ magia, cura, acao }) => `[${magia} — CURA APLICADA PELO SISTEMA] Recuperei ${cura} PV e o grupo também. Não recalcule; narre o alívio. ${acao}`,
+  condicaoDesfeita: ({ magia, linha, acao }) => `[${magia} — JÁ APLICADA PELO SISTEMA] ${linha} Isso é fato e já está na minha tela: não devolva o que saiu, não recalcule e não cobre outro preço. Narre o gesto e o alívio em UMA frase. ${acao}`,
+  magiaAtiva: ({ magia, turnos, descricao }) => `[${magia.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA] A magia está em vigor por ${turnos} turnos: ${descricao} Trate como fato em toda cena até o sistema avisar que acabou — o mundo reage a isso (quem não me vê, não me acha; quem está no chão, não me alcança). Não a encerre por conta própria.`,
 };
 export function oEnvelopeDosPoderes(qual, dados) {
   return aFormaDe(ENVELOPES_DOS_PODERES, qual, "dos poderes")(dados || {});

@@ -90,9 +90,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "caminhoMovRegistrado", "caminhoMovResolvido", "caminhoChegada", "caminhoDestino",
   "entradaDaMasmorra", "armadilhaSofridaNaMasmorra",
   "genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco", "genteRelacaoMudada",
-  "vezPergunta", "vezEscrevi", "vezRolagem"];
+  "vezPergunta", "vezEscrevi", "vezRolagem",
+  "funcaoReviver", "funcaoCura", "funcaoCondicao", "funcaoAtiva"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : /^funcao[A-Z]/.test(b) ? "funcao" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -245,6 +246,11 @@ const ANCORAS = {
   vezPergunta: { antes: ["enviar(`${acao} [PERGUNTA AO MESTRE", FIM], hoje: ["enviar(oEnvelopeDoJogador(\"perguntaAoMestre\"", FIM] },
   vezEscrevi: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[O QUE EU ESCREVI]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoJogador(\"oQueEuEscrevi\"", FIM] },
   vezRolagem: { antes: ["    enviar(`${preRefazer}[ROLAGEM]", FIM], hoje: ["    enviar(preRefazer + oEnvelopeDoJogador(\"rolagem\"", FIM], antesDe: ["    const notaVant = r.vantagem", FIM] },
+  /* as magias de função (20.º grupo, na tabela dos poderes): reviver e a magia ativa são notas de uma linha; a cura e a condição desfeita são o enviar (o sítio devolve o que enviou) */
+  funcaoReviver: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[${m.nome.toUpperCase()} — APLICADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"reviverAplicado\"", FIM] },
+  funcaoCura: { antes: ["      enviar(`[${m.nome} — CURA APLICADA PELO SISTEMA]", FIM], hoje: ["      enviar(oEnvelopeDosPoderes(\"curaAplicada\"", FIM] },
+  funcaoCondicao: { antes: ["        enviar(`[${m.nome} — JÁ APLICADA PELO SISTEMA]", FIM], hoje: ["        enviar(oEnvelopeDosPoderes(\"condicaoDesfeita\"", FIM] },
+  funcaoAtiva: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[${m.nome.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"magiaAtiva\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -259,7 +265,8 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   caminhoMovRegistrado: "notaRef.current", caminhoMovResolvido: "notaRef.current", caminhoChegada: "notaRef.current", caminhoDestino: "notaRef.current",
   entradaDaMasmorra: "envelopeDaEntrada", armadilhaSofridaNaMasmorra: "enviados",
   genteCompanheiro: "notaRef.current", genteMissaoPerdida: "notaRef.current", genteRelacaoFormal: "notaRef.current", genteNovoArco: "notaRef.current", genteRelacaoMudada: "env",
-  vezPergunta: "enviados", vezEscrevi: "notaRef.current", vezRolagem: "enviados" };
+  vezPergunta: "enviados", vezEscrevi: "notaRef.current", vezRolagem: "enviados",
+  funcaoReviver: "notaRef.current", funcaoCura: "enviados", funcaoCondicao: "enviados", funcaoAtiva: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -663,6 +670,24 @@ export function vezDoCaso(i) {
   };
 }
 
+/* AS MAGIAS DE FUNÇÃO: a nota do turno vazia e já com outra; o nome da
+   magia de cada feitio (com acento, que a maiúscula tem de levar); o
+   companheiro que volta; a cura de cada tamanho; a linha que a condição
+   desfeita deixou; a frase do jogador (com aspas dentro); a magia ativa
+   por cada número de turnos, com descrição e sem. */
+export function funcaoDoCaso(i) {
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    m: { nome: ["Reviver", "Restauração Menor", "Luz"][i % 3], descricao: ["O corpo flutua acima do chão.", "Uma luz fria acompanha a mão.", ""][(i >> 1) % 3] },
+    alvo: { nome: ["Corvo", "Sarna"][(i >> 1) % 2] },
+    cura: 3 + (i % 9),
+    r: { linha: ["O veneno saiu do meu corpo.", "Sarna já não está cega."][(i >> 2) % 2] },
+    acao: ["toco a ferida", "conjuro sobre o \"chefe\""][(i >> 1) % 2],
+    turnos: 2 + (i % 5),
+    pers: { nome: ["Vera do pers", "Vera paga"][(i >> 2) % 2] },
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -745,6 +770,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "masmorraNova") Object.assign(S, masmorraNovaDoCaso(k.i));
     else if (g === "gente") Object.assign(S, genteDoCaso(k.i));
     else if (g === "vez") Object.assign(S, vezDoCaso(k.i));
+    else if (g === "funcao") Object.assign(S, funcaoDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

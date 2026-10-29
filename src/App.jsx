@@ -14591,7 +14591,7 @@ export default function Taverna() {
       const alvo = caidos[0];
       const pers = cobrar({ ...p0, grupo: (p0.grupo || []).map((g) => (g.nome === alvo.nome ? { ...g, vida: Math.max(1, Math.round((g.vidaMax || 10) / 2)), morrendo: false } : g)) });
       pushMsgs([linhaJogador, { autor: "sistema", texto: `🩹 ${alvo.nome} volta — ${Math.max(1, Math.round((alvo.vidaMax || 10) / 2))} PV · −${m.custo} PM` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — APLICADO PELO SISTEMA] ${alvo.nome} voltou dos mortos pela minha magia e já está de pé com metade dos PV. Isso é fato: não desfaça, não cobre outro preço e não deixe ambíguo. Narre a volta e o que ela custa a quem voltou.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("reviverAplicado", { magia: m.nome, alvo: alvo.nome });
       enviar(`[${m.nome}] ${acao}`, pers);
       return true;
     }
@@ -14604,7 +14604,7 @@ export default function Taverna() {
         grupo: (p0.grupo || []).map((g) => ({ ...g, vida: Math.min(g.vidaMax || g.vida, (g.vida || 0) + Math.round((g.vidaMax || 10) * frac)) })),
       });
       pushMsgs([linhaJogador, { autor: "sistema", texto: `🩶 ${m.nome}: +${cura} PV a você e ao grupo · −${m.custo} PM` }]);
-      enviar(`[${m.nome} — CURA APLICADA PELO SISTEMA] Recuperei ${cura} PV e o grupo também. Não recalcule; narre o alívio. ${acao}`, pers);
+      enviar(oEnvelopeDosPoderes("curaAplicada", { magia: m.nome, cura, acao }), pers);
       return true;
     }
 
@@ -14665,7 +14665,7 @@ export default function Taverna() {
         /* o preço primeiro, depois o que o corpo fez — a ordem de `firmarOuCeder`
            logo abaixo, e a linha do módulo entra INTEIRA, sem sufixo nenhum */
         pushMsgs([linhaJogador, { autor: "sistema", texto: `🌿 ${m.nome} · −${m.custo} PM` }, { autor: "sistema", texto: r.linha }]);
-        enviar(`[${m.nome} — JÁ APLICADA PELO SISTEMA] ${r.linha} Isso é fato e já está na minha tela: não devolva o que saiu, não recalcule e não cobre outro preço. Narre o gesto e o alívio em UMA frase. ${acao}`, pers);
+        enviar(oEnvelopeDosPoderes("condicaoDesfeita", { magia: m.nome, linha: r.linha, acao }), pers);
         return true;
       } catch (e) { calou("porta-de-saida-da-magia", e); return false; }
     }
@@ -14686,7 +14686,7 @@ export default function Taverna() {
       const fe = firmarOuCeder(p0, dur.efeito);
       const pers = cobrar(fe.pers);
       pushMsgs([linhaJogador, { autor: "sistema", texto: `✧ ${m.nome} ativo por ${turnos} turnos · −${m.custo} PM` }, ...(fe.linha ? [{ autor: "sistema", texto: fe.linha }] : [])]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[${m.nome.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA] A magia está em vigor por ${turnos} turnos: ${m.descricao} Trate como fato em toda cena até o sistema avisar que acabou — o mundo reage a isso (quem não me vê, não me acha; quem está no chão, não me alcança). Não a encerre por conta própria.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("magiaAtiva", { magia: m.nome, turnos, descricao: m.descricao });
       enviar(`[${m.nome}] ${acao}`, pers);
       return true;
     }

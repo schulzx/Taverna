@@ -192,16 +192,28 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
      notas do turno; as habilidades resolvidas vão por um `enviar(` com um
      ternário — e nunca entraram na conta; contá-las agora subiria a catraca
      sem envelope novo nenhum. Os selos de todas estão em `medidos`
-     (src/guardado.js) e teste-guardado prova que casam. */
+     (src/guardado.js) e teste-guardado prova que casam.
+
+     AS DUAS MAGIAS DE FUNÇÃO (T2-A, 29/10/2026, o 20.º grupo). A cura e a
+     condição desfeita — `[<magia> — CURA APLICADA PELO SISTEMA]` e `[<magia>
+     — JÁ APLICADA PELO SISTEMA]` — eram os 2 envelopes resolvidos que ainda
+     iam por `enviar(` com o selo no literal do App. Saíram para
+     ENVELOPES_DOS_PODERES, e o App manda `enviar(oEnvelopeDosPoderes("curaAplicada", …))`
+     e `enviar(oEnvelopeDosPoderes("condicaoDesfeita", …))`: a conta do App cai
+     de 2 para 0 e a dos poderes sobe de 1 para 3 (o total segue 9). Por isso
+     `so` passa a contar as duas com o milagre — e só elas: reviver e a magia
+     ativa, que entraram na mesma leva, são notas do turno, e nunca contaram. */
   const doMotor = [];
   {
     const AMOSTRA_FICHA = { desfecho: "três golpes", resumoInimigos: "", acao: "ataco o lobo", motivo: "pular o muro", dificuldade: 10, via: "fe", voltas: 1, cicatriz: "Mão Fria", descricao: "a mão não aquece", nome: "Iris", nivel: 2, vidaMax: 11, custo: 2, eraNova: false, classeNome: "Mago", classe: "Bardo", atributo: "Força", valor: 1, sub: "Campeão", esp: "Erudito",
       /* as notas [INFO] (o 10.º grupo) */
       quem: "Iris", item: "Lâmina de Osso", raridade: "raro", poder: "", titulo: "Escolta ao Vau", alvo: "Sarna", partes: ["Elfo", "Mago"], profissao: "", guilda: "A Garra", manaMax: 4, prof: 2, dadivas: 0, de: "a mochila", para: "o baú" };
     const AMOSTRA = { pos: "Cripta dos Sussurros · camada 1 · 2/9 salas", nomeArmadilha: "Fosso de Estacas", salva: { passou: false }, alvo: "Iris", sofrido: 3, depois: "", minutos: 10, tempo: "", aviso: "", moedas: 30, item: null, cena: "um nicho de água limpa", masmorra: "Cripta dos Sussurros", total: 12, segredo: null, achou: false, achado: null };
-    const AMOSTRA_PODERES = { nome: "Chuva de Luz", pf: 3, desc: "Cura todos os aliados.", comoUso: "ergo a lâmina ao céu" };
+    const AMOSTRA_PODERES = { nome: "Chuva de Luz", pf: 3, desc: "Cura todos os aliados.", comoUso: "ergo a lâmina ao céu",
+      /* as duas magias de função (o 20.º grupo) */
+      magia: "Restauração Menor", cura: 5, linha: "O veneno saiu do meu corpo.", acao: "toco a ferida" };
     const TABELAS = [["ENVELOPES_DA_MASMORRA", ENVELOPES_DA_MASMORRA, "oEnvelopeDaMasmorra", AMOSTRA], ["ENVELOPES_DA_FICHA", ENVELOPES_DA_FICHA, "oEnvelopeDaFicha", AMOSTRA_FICHA],
-      ["ENVELOPES_DOS_PODERES", ENVELOPES_DOS_PODERES, "oEnvelopeDosPoderes", AMOSTRA_PODERES, ["milagre"]]];
+      ["ENVELOPES_DOS_PODERES", ENVELOPES_DOS_PODERES, "oEnvelopeDosPoderes", AMOSTRA_PODERES, ["milagre", "curaAplicada", "condicaoDesfeita"]]];
     for (const [tabela, formas, porta, amostra, so] of TABELAS) for (const [forma, montar] of Object.entries(formas)) {
       if (so && !so.includes(forma)) continue;
       /* uma forma nova que lê um nome que a amostra não tem estourava o varredor inteiro
@@ -223,10 +235,11 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
 
   /* ---------------- A CATRACA ----------------
      O NÚMERO MEDIDO HOJE: 9 envelopes resolvidos saem por `enviar(` com
-     o selo escrito no literal (2 no App, 1 em `envelopeDaLuta`, de
+     o selo escrito no literal (0 no App, 1 em `envelopeDaLuta`, de
      src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima —, 3 na
      tabela da masmorra do motor — "OS TRÊS QUE MUDARAM DE CASA" — e 2 na da
-     ficha — "OS DOIS DA FICHA" — e 1 na dos poderes — "O MILAGRE") — e o
+     ficha — "OS DOIS DA FICHA" — e 3 na dos poderes — "O MILAGRE" e "AS DUAS
+     MAGIAS DE FUNÇÃO") — e o
      número conta os CANDIDATOS, não os
      aprovados. É de propósito: se ele contasse só quem casa um `padrao`,
      consertar a tabela de selos mexeria na catraca, e uma catraca que se

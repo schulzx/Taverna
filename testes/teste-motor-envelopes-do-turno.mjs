@@ -52,6 +52,8 @@
    perdida, a relação formal e a que o meu jeito mudou, e o arco novo.
    O 19.º, O TURNO DO JOGADOR: a pergunta ao Mestre no meio da luta, a frase
    que o descanso já resolveu e o teste que eu rolei.
+   O 20.º, AS MAGIAS DE FUNÇÃO: reviver, a cura, a condição desfeita e a
+   magia que fica ativa por turnos, na tabela dos poderes.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
@@ -520,7 +522,10 @@ sec("16 · os poderes: os casos percorrem o que o texto decide, e a prova morde"
   t(`as habilidades resolvidas (${conta(H, "[HABILIDADES — RESOLVIDAS")}) e declaradas (${conta(H, "[HABILIDADES] ")}), com o que veio depois e a cauda de tempo`, conta(H, "[HABILIDADES — RESOLVIDAS PELO SISTEMA]") >= 170 && conta(H, "[HABILIDADES] ") >= 80 && conta(H, " O lobo ataca e erra.") >= 100 && conta(H, "passaram 6 segundos.") >= 30);
   t(`a habilidade resolvida (${conta(H1, "[HABILIDADE — RESOLVIDA")}) e declarada, com e sem descrição`, conta(H1, "[HABILIDADE — RESOLVIDA PELO SISTEMA]") >= 120 && conta(H1, "[HABILIDADE] ") >= 120 && conta(H1, "PM). cura 1d8 Ação:") >= 20 && conta(H1, "PM).  Ação:") >= 40);
   t("as invocações que se desfazem, uma e várias", ["poderEncerradasAoVencer", "poderEncerradasNaFuga"].every((b) => conta(N(b), "se desfizeram. Não as mencione") >= 120 && conta(N(b), "se desfez. Não a mencione") >= 120) && conta(N("poderEncerradaNoRevide"), "elas não estão mais no campo, e não voltam.") >= 120);
-  t("as dezoito formas estão na tabela dos poderes", Object.keys(ENVELOPES_DOS_PODERES).length === 18);
+  /* 18 → 22 (29/10, 20.º grupo): as quatro magias de função que ficaram no App (reviver, a
+     cura, a condição desfeita, a magia ativa) entraram nesta tabela, onde já moravam o
+     identificar e o localizar; a secção 25 prova-as */
+  t("as vinte e duas formas estão na tabela dos poderes", Object.keys(ENVELOPES_DOS_PODERES).length === 22);
   const P = oEnvelopeDosPoderes;
   const mordidas = [
     ["poderInvocacao", "a invocação que conta as criaturas ao contrário", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, um: !d.um }) }],
@@ -788,6 +793,34 @@ sec("24 · o turno do jogador: os casos percorrem o que o texto decide, e a prov
     ["vezRolagem", "a rolagem que esquece a desvantagem", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, desvantagem: false }) }],
     ["vezRolagem", "a rolagem sem a dificuldade", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, dc: null }) }],
     ["vezRolagem", "a rolagem que esquece os buffs", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, notaBuff: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("25 · as magias de função: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const R = HOJE.funcaoReviver.map((f) => f.texto);
+  t("reviver: abaixo da nota que já havia, o nome da magia em maiúscula (com o acento) e quem voltou", conta(R, "[NOTA] já havia\n[") >= 130 && R.filter((x) => x.startsWith("[")).length >= 130 && conta(R, "[REVIVER — APLICADO PELO SISTEMA] Corvo voltou dos mortos") >= 40 && conta(R, "[RESTAURAÇÃO MENOR — APLICADO PELO SISTEMA] Sarna voltou dos mortos") >= 40);
+  const C = HOJE.funcaoCura.map((f) => f.texto[0]);
+  t("a cura: o nome à letra, os PV recuperados, a minha frase no fim, e vai para quem pagou", C.every((x) => /^\[(Reviver|Restauração Menor|Luz) — CURA APLICADA PELO SISTEMA\] Recuperei \d+ PV e o grupo também\. Não recalcule; narre o alívio\. (toco a ferida|conjuro sobre o "chefe")$/.test(x[0])) && conta(C.map((x) => x[0]), "Recuperei 11 PV") >= 25 && C.filter((x) => x[1] === "Vera paga").length >= 130 && C.filter((x) => x[1] === "Vera do pers").length >= 130);
+  const D = HOJE.funcaoCondicao.map((f) => f.texto[0]);
+  t("a condição desfeita: a linha do módulo inteira, o veto, a minha frase no fim", D.every((x) => /^\[(Reviver|Restauração Menor|Luz) — JÁ APLICADA PELO SISTEMA\] (O veneno saiu do meu corpo\.|Sarna já não está cega\.) Isso é fato e já está na minha tela: .* Narre o gesto e o alívio em UMA frase\. (toco a ferida|conjuro sobre o "chefe")$/.test(x[0])) && conta(D.map((x) => x[0]), "Sarna já não está cega. Isso é fato") >= 130);
+  const A = HOJE.funcaoAtiva.map((f) => f.texto);
+  t("a magia ativa: o nome em maiúscula, os turnos contados, a descrição à letra (e vazia quando não há)", conta(A, "[LUZ — ATIVO, CONTADO PELO SISTEMA] A magia está em vigor por ") >= 80 && conta(A, " por 6 turnos: O corpo flutua acima do chão. Trate como fato") >= 10 && conta(A, " turnos:  Trate como fato") >= 80 && conta(A, "[NOTA] já havia\n[") >= 130);
+  t("as vinte e duas formas estão na tabela dos poderes, e as quatro novas entre elas", Object.keys(ENVELOPES_DOS_PODERES).length === 22 && ["reviverAplicado", "curaAplicada", "condicaoDesfeita", "magiaAtiva"].every((q) => Object.hasOwn(ENVELOPES_DOS_PODERES, q)));
+  const P = oEnvelopeDosPoderes;
+  const mordidas = [
+    ["funcaoReviver", "reviver que traz outro de volta", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, alvo: "Ninguém" }) }],
+    ["funcaoReviver", "reviver que esquece a maiúscula do acento", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, magia: d.magia.normalize("NFD").replace(/[̀-ͯ]/g, "") }) }],
+    ["funcaoCura", "a cura que não diz quanto", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, cura: 0 }) }],
+    ["funcaoCura", "a cura que perde a minha frase", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, acao: "" }) }],
+    ["funcaoCondicao", "a condição sem a linha do módulo", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, linha: "" }) }],
+    ["funcaoAtiva", "a magia ativa com um turno a mais", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, turnos: d.turnos + 1 }) }],
+    ["funcaoAtiva", "a magia ativa sem a descrição", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, descricao: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));
