@@ -24,6 +24,16 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 29/10 · T3, passo 3: o App deixa as duas tabelas da tela nas casas delas (`oficial`, mesa de design, sem bump) · beba2c1
+- **o pedido:** aplicar o passo 3 que ficou pronto (bloco abaixo), conferido contra o HEAD de agora (a8e68f7), e correr a suíte INTEIRA.
+- **o bastão:** tomado às 17:00, devolvido às 17:35, logo depois do commit do App (beba2c1); nada mais no App.
+- **o que se aplicou:** `t3-app.cjs` (as âncoras bateram todas contra HEAD; o App saído é **igual ao byte** à versão de `t3-p3/`), `remedir.cjs` (7 blocos, 143 endereços, 0 sem destino), `t3-nus.cjs`, `t3-teste3.cjs`. As três tabelas de ações saíram diferentes da versão de `t3-p3/` numa linha cada: o motivo do `t3-nus.cjs` dizia «sete linhas, −7 … −9», e a versão de `t3-p3/` já o corrigira para «oito linhas virou uma conta comentada, −4 … −12 (−16)», que é o que o diff mede — **fiquei com a de `t3-p3/`** (só o comentário difere).
+- **cada asserção retirada, relida:** o import de `cenario.js` (MOVIDA, ganha `tomDoGenero`), `LITERAL_NO_APP` 1 → 0, o cartão por `glifoDoGenero` (MOVIDA), mais `e o App importa glifoDoGenero` e a §6 nova (os 13 hex distintos fora do App; o `climaFundo` pela conta). Nenhuma lê `src/motor/`.
+- **prova:** build limpo; **`npm test` 406/406 suítes, 23/23 varredores** (A=0, a árvore inteira, com a trilha B por commitar dentro); `so-o-meu.sh` com os meus seis arquivos (HEAD + só eles): 406/406 e 23/23. Os 27 leitores de `formas.md` verdes depois da §5.
+- **visto vivo (Vite 5199 sem IA, aba nova; localStorage da origem igual antes e depois — só `taverna_cfg_*`, nenhum save):** os sete cartões com SVG; `glifoDoGenero(nome) === Icone<Nome>` por identidade nos sete, e o globo de recuo; `fundoDaCena(tomDoGenero(label))` dos sete e de «Inexistente»/`undefined` igual, ao byte, às strings do objeto que saiu. Sem erro na consola. Servidor parado.
+- **depois, a pergunta (sem decidir):** `mente/formas.md` § T3 §5 — o `ModalCena` não abre; a porta era um 🎭 «Ver cena» no cabeçalho que saiu em **72ba827 (25/07)**, sem a janela. A pergunta ao `desenho`: a porta volta ou a janela se aposenta, com o que o jogador ganha e perde em cada caso.
+- **o diário e a pergunta** entram num commit à parte (o bloco da trilha B já tinha entrado em 5db133a, e o diff do diário era só este bloco).
+
 ## 29/10 · T3, o mundo que outra mesa escreve: o tom da cena e o globo (`oficial`, mesa de design, sem bump) · 4aa83e7, a8e68f7
 - **o pedido:** formas.md § T3 §3 (decidido em 44a5f39; a pessoa: «pode fazer»). Passos 1 e 2 fechados e commitados; o **passo 3 (o App) não entrou** — o coordenador parou-me pela lei dos ~200 mil tokens.
 - **passo 1 (4aa83e7):** cenario.js — `ESQUEMA_DO_CENARIO.tons` (7, fechado), `tom?` no cartão, `TIPOS.tom` no molde do glifo, `tomDoGenero(rotulo, cenario)` pura; cenario-padrao.js — o tom dos sete. O caso `criacao.generos` do dourado move-se com o motivo (sem glifo e sem tom).

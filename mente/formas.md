@@ -12564,3 +12564,30 @@ com a luz da sala. A porta da prova é a mesma desta secção: a prosa (`ink` so
 `pagina`) não pode perder um centésimo de contraste — a luz é por baixo do poço, nunca
 dentro dele — e o `jogo` joga o antes e o depois. Vai para a fila do desenho; não está
 neste pedido.
+
+### 5 · A pergunta ao `desenho`: a janela que ninguém abre (o `oficial`, 29/10 — não decidida)
+
+**O achado, medido:** o `ModalCena` (App ~805) **não abre em sítio nenhum**. `verCena`
+nasce `false` (App ~5563) e o único leitor é a montagem (App ~25368); nenhum
+`setVerCena(true)` existe na árvore. A porta era um botão 🎭 «Ver cena» no cabeçalho do
+jogo (`fase === "jogo"`), e saiu em **72ba827 (25/07)** — `git log -S"setVerCena(true)"`
+— sem que a janela saísse com ela. Há três meses o fundo de §2 pinta um quadro que nenhum
+jogador vê; o passo 3 deste pedido trocou a cor dele ao byte e só se pôde provar pelo
+módulo servido, não pelo olho.
+
+**O que a janela mostra:** o nome da campanha, os retratos do grupo (o herói maior, anel
+âmbar; os companheiros, anel violeta) com o estado da vida, e — em combate — os
+inimigos de pé com os seus retratos, sob «⚔ contra»; no rodapé o gênero e «Fechar».
+
+**A pergunta, e o que cada resposta custa ao jogador:**
+
+| | o que ele ganha | o que ele perde |
+|---|---|---|
+| **a porta volta** (um controle de abrir painel, §«abrir e fechar um painel», com glifo e rótulo — não o emoji de 25/07) | um retrato de grupo do momento, o mundo pintado no tom do seu gênero; o único sítio onde aliados e inimigos aparecem lado a lado como um quadro, e não como fichas; é a porta natural da proposta de §4 | mais um controle no cabeçalho, que já é denso; e se o tabuleiro e as barras já mostram os mesmos rostos e a mesma vida, é a mesma informação com duas caras (defeito, pela lei da casa) |
+| **a janela aposenta-se** (sai o `ModalCena`, o `verCena`, e `fundoDaCena`/`TOM_DA_CENA` ficam só se §4 os pegar) | nada visível — não a vê hoje; menos código morto no App, e a catraca de literais não guarda cor de uma tela fantasma | a única tela que hoje usa o tom do mundo; se §4 não entrar, o `tom` do cartão fica sem leitor de tela e T3 §2 prova uma cor que ninguém vê |
+
+**O que eu não sei, e o `desenho` sabe ver:** se o tabuleiro de hoje já cumpre o papel
+de «quadro da cena» (aí a aposentadoria não tira nada), e se a 🎭 saiu de propósito em
+25/07 ou caiu numa reescrita do cabeçalho (o commit é um *upload*, sem motivo escrito).
+**Não decidi nem construí nada** — a forma é do `desenho`, o momento é do `jogo`; o
+`oficial` executa o que vier escrito aqui.
