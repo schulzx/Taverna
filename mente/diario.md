@@ -24,6 +24,26 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 29/10 · T3 §4c: a janela da cena aposenta-se e o tom do mundo vira a luz da página (`oficial`, mesa de design, sem bump) · este commit
+
+- **bastão do App.jsx:** tomado às 17:51, renovado duas vezes (a última às 18:04), devolvido às 18:19 (apagado ao terminar o arquivo, antes do commit).
+- **o que muda para quem joga:** a página da história tem a luz do mundo — Horror cósmico cinza-violeta (`lineStrong`), Cyberpunk rosa, Steampunk âmbar, Ficção científica ciano claro, Pós-apocalíptico areia; **Fantasia e Universo próprio iguais a hoje ao byte**. Na criação, o clique no cartão do gênero troca a luz da sala antes de se escrever uma linha. A janela da cena (sem porta desde 25/07) saiu.
+- **a) estilo.js:** `TOM_DA_CENA` passa a `{ tom: { luz: <nome de T> } }` (saem os 14 hex, `fundoDaCena` e `ANGULO_DA_CENA`); nasce `luzAmbiente(tom)`; `LUZ_AMBIENTE = luzAmbiente()`. A FOLHA inteira saiu igual ao byte (comparada contra a de antes).
+- **b) App.jsx:** saem `ModalCena` (−47 linhas), `verCena` e a montagem; `luzDoMundo` por `useMemo` junto do `mundo`; `style={{ backgroundImage }}` no poço (`tv-esbate-topo`, a máscara fica na classe) e na raiz da criação. Sem `calou`: as duas funções são puras e a suíte prova que `null`/`undefined`/`{}`/nomes de `Object` não estouram.
+- **c) a prova:** a conta da luz saiu de `teste-v1-folha` para `testes/conta-da-luz.mjs` (régua partilhada, não suíte) — v1-folha dá a mesma saída, byte a byte. `teste-genero-no-app` §5 refeita: os números batem com a tabela do `jogo` (prosa pior 13,05 aço; inkDim pior 5,64 aço; ΔE pior 2,75 breu; criação pior 5,40 aço/inkDim). Cada asserção da janela relida e movida com o motivo escrito.
+- **decisões médias, com o motivo:**
+  - **a zona `TOM_DA_CENA` de `check-formas` SAIU** em vez de mudar de nota (o pedido dizia «muda de nota»): uma tabela de nomes mede 0 cores, e o piso da zona (≥ 10) ficaria vermelho para sempre. Sem a zona, um hex que volte à tabela conta contra o teto de `estilo.js` (11, folga zero) — que é a guarda que §4b pede. É o precedente de `LUZ_DA_CENA` em V5a.
+  - **«o teto desce 14» não se cumpriu à letra, e não havia como:** os 14 hex moravam na zona isenta, não sob teto nenhum; o teto que desceu foi o do **App, 60 → 59** — o véu `rgba(8,6,14,0.92)` da janela saiu com ela. O texto todo desceu 403 → 388.
+  - **`teste-taro`**: os retratos que entregam a pessoa 9 → 7, e o inimigo que abre carta 2 → 1 — os dois que faltam eram da janela. Motivo escrito nas duas.
+  - os endereços de `acoes-do-jogador` re-medidos (143 trocas, 0 sem destino) e os quatro números soltos à mão (`13484`, `11707`/`11855`, `8494`), com o motivo.
+  - dois comentários de `cenario.js` que apontavam para a janela/`fundoDaCena` corrigidos (só comentário).
+- **o prompt:** `prova-prompt.mjs` HEAD × HEAD + estilo/cenario/App — 24/24 iguais ao caractere.
+- **visto vivo (Vite 5199, TAVERNA_API=http://127.0.0.1:9, sem IA; localStorage da origem salvo antes e restaurado depois — só `taverna_cfg_*`):** os sete cartões trocam a luz no clique, cada um com o seu token; uma campanha de Horror abre a página cinza-violeta (e o «Continuar aventura» dela também); uma de Fantasia igual à de hoje; nenhuma janela «· cena» em sítio nenhum. Consola: só os 500 esperados da IA desligada. Servidor parado.
+- **a suíte:** build limpo. `npm test` na árvore: 403/407 + os 23 varredores; o `teste-taro` era meu e está corrigido; os três `teste-motor-*` (estado-do-pedido, pedido-do-turno, prelúdio-do-turno) ficam verdes com HEAD + só os meus arquivos (`so-o-meu.sh` com os onze: **406/406 suítes + 23/23 varredores**) — **o vermelho é da trilha B em voo** (cronista.js/sessao.js), não tocado.
+- **o que ficou:** (d) a coleção `260:67` do Figma marcada «APOSENTADA em T3 §5b» é do `desenho`, não feita. A luta e o fim dela sem janela não foram jogados (a IA desligada não abre cena de luta); confere-se só que nada lê `ModalCena` — e nada lê.
+
+---
+
 ## 29/10 · T3, passo 3: o App deixa as duas tabelas da tela nas casas delas (`oficial`, mesa de design, sem bump) · beba2c1
 - **o pedido:** aplicar o passo 3 que ficou pronto (bloco abaixo), conferido contra o HEAD de agora (a8e68f7), e correr a suíte INTEIRA.
 - **o bastão:** tomado às 17:00, devolvido às 17:35, logo depois do commit do App (beba2c1); nada mais no App.

@@ -176,7 +176,7 @@ const TETO_DE_LITERAIS = {
      o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
      outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
      e é assim que ela fica: arquivo novo nasce com teto zero. */
-  "src/App.jsx": 60, /* 29/10 · T3: os catorze hex do fundo do ModalCena (sete gradientes, duas paradas cada) saíram do App para `TOM_DA_CENA` (estilo.js), a quarta zona de tabela — o fundo é `fundoDaCena(tomDoGenero(...))`. 74 → 60. (Desceu-a o `oficial` que tirou os literais, porque a catraca tem folga zero.) · 28/09 · V5e: a sombra `rgba(0,0,0,.45)` da seta do fim saiu do App com a própria seta — `SetaDaLeitura` (ui.jsx) a tira de `SETA_DA_LEITURA`, o `onSecond` da casa a 0,45. 75 → 74. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 25/09 · V1b: o brilho `rgba(216,106,91,0.15)` do "Continuar aventura" (o danger de R2) morreu — sai de `alfa(T.rosa, 0.15)`. 76 → 75. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 24/09 · R21: o fundo `rgba(0,0,0,.45)` do `PainelLateral` morreu com a moldura velha — o véu do alforje é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isto. 77 → 76. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero.) · 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R17: `VinhetaDaCena` foi aposentada pela lei do §20 (duas peças para o mesmo facto: ela e a gravura de R13-B), e com ela saíram os dois `rgba(23,19,34,…)` do degradê. 79 → 77. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
+  "src/App.jsx": 59, /* 29/10 · T3 §4c: a janela da cena (ModalCena) aposentou-se (formas.md T3 §5b) e levou o véu dela, o `rgba(8,6,14,0.92)` do fundo da janela — a última cor solta que só ela usava. 60 → 59. (Desceu-a o `oficial` que tirou a janela, porque a catraca tem folga zero.) · 29/10 · T3: os catorze hex do fundo do ModalCena (sete gradientes, duas paradas cada) saíram do App para `TOM_DA_CENA` (estilo.js), a quarta zona de tabela — o fundo é `fundoDaCena(tomDoGenero(...))`. 74 → 60. (Desceu-a o `oficial` que tirou os literais, porque a catraca tem folga zero.) · 28/09 · V5e: a sombra `rgba(0,0,0,.45)` da seta do fim saiu do App com a própria seta — `SetaDaLeitura` (ui.jsx) a tira de `SETA_DA_LEITURA`, o `onSecond` da casa a 0,45. 75 → 74. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 25/09 · V1b: o brilho `rgba(216,106,91,0.15)` do "Continuar aventura" (o danger de R2) morreu — sai de `alfa(T.rosa, 0.15)`. 76 → 75. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 24/09 · R21: o fundo `rgba(0,0,0,.45)` do `PainelLateral` morreu com a moldura velha — o véu do alforje é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isto. 77 → 76. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero.) · 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R17: `VinhetaDaCena` foi aposentada pela lei do §20 (duas peças para o mesmo facto: ela e a gravura de R13-B), e com ela saíram os dois `rgba(23,19,34,…)` do degradê. 79 → 77. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */
   /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
@@ -309,14 +309,15 @@ const ZONAS_DE_TABELA = [
      ser escrito T (os dezanove apelidos de §3 são `T.x`, e a luz da janela
      é `alfa(T.amberSoft, …)`), senão a tabela vira lavandaria. */
   { arquivo: "src/estilo.js", tabela: "MAPA_VIVO", d5a: "isenta", d5b: "VARRE" },
-  /* 29/10 · T3 — `TOM_DA_CENA` é a quarta tabela de cor: os sete fundos da cena
-     (formas.md § T3 §2), que eram catorze hex soltos no ModalCena do App. São
-     material, não significado (o crepúsculo de um mundo não é um estado do jogo):
-     D5a isenta-a como às irmãs — é onde essas cores têm direito de nascer — e D5b
-     VARRE-a, para que um tom igual a uma cor de T seja escrito T. A porta de
-     contraste dela (ink, amberSoft e danger ≥ 4,5:1 nas duas paradas) mora em
-     teste-genero-no-app.mjs. */
-  { arquivo: "src/estilo.js", tabela: "TOM_DA_CENA", d5a: "isenta", d5b: "VARRE" },
+  /* 29/10 · T3 §4c — a zona `TOM_DA_CENA` SAIU, como a de `LUZ_DA_CENA` em V5a. Ela
+     nasceu em T3 §2 (os catorze hex do fundo do ModalCena, isentos aqui como
+     material); a janela aposentou-se em §5b e a tabela passou a guardar só NOMES
+     de T (a luz do meio de cada mundo, formas.md T3 §4b). Uma tabela de nomes não
+     tem cor para isentar — e a zona continuaria a pedir «pelo menos 10 cores» a
+     uma tabela que já não as tem. Sem a zona, um hex que volte a TOM_DA_CENA
+     conta contra o teto de estilo.js (folga zero) e fica vermelho no dia em que
+     nasce: é a guarda que a lei de §4b («nenhum hex novo») pede. A porta de
+     contraste da luz de cada tom mora em teste-genero-no-app.mjs. */
   /* 25/09 · V5a — a zona `LUZ_DA_CENA` (as quatro luzes de `O rosto da cena`,
      R13) SAIU com a tabela: a gravura deixou a tela e a tabela ficou sem
      leitor. Sem esta linha a zona continuaria a pedir "pelo menos 10 cores"
@@ -532,7 +533,7 @@ const TETO_DE_PILULA_A_MAO = {
    verde por vazio é pior que catraca nenhuma. */
 const ALCANCE_MINIMO = {
   pisoDeArquivosComCor: 15,    /* 17 hoje */
-  pisoDeLiterais: 280,         /* 290 hoje (29/10 · T3: 304 → 290, os catorze hex do ModalCena foram para a zona TOM_DA_CENA — não sumiram, mudaram para onde a cor tem direito de nascer; o piso desce 20 e guarda a mesma coisa, a varredura que não mede vazio) */
+  pisoDeLiterais: 280,         /* 289 hoje (29/10 · T3 §4c: 290 → 289, o véu da janela da cena saiu com ela; o piso fica) · (29/10 · T3: 304 → 290, os catorze hex do ModalCena foram para a zona TOM_DA_CENA — não sumiram, mudaram para onde a cor tem direito de nascer; o piso desce 20 e guarda a mesma coisa, a varredura que não mede vazio) */
   pisoDeClassesDeAnimacao: 10, /* 13 hoje */
   /* PISO, e não igualdade, de propósito: `T` tem de poder ganhar a
      décima quinta cor sem ficar vermelho. O que ele guarda é o REGEX DA

@@ -148,11 +148,17 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      curta do herói, na tira lateral. É retrato novo a entregar a pessoa, e
      por isso a conta sobe de verdade — não é a mudança de arquivo, que
      seria neutra. */
-  t(`a interface entrega a pessoa em ${entes} retratos`, entes === 9);
+  /* T3 §4c (29/10): e SETE. A janela da cena (ModalCena) aposentou-se (formas.md T3 §5b) e
+     levou os seus dois retratos — o do grupo e o do inimigo de pé. Não é retrato que deixou de
+     entregar a pessoa: é uma tela que saiu, e os mesmos rostos continuam no tabuleiro e na tira
+     da batalha, que entregam a pessoa e estão nesta conta. A lei é a mesma. */
+  t(`a interface entrega a pessoa em ${entes} retratos`, entes === 7);
   t("a ficha também", /<Retrato semente=\{sementeDe\(p\)\} ente=\{p\}/.test(semComentarios(CRU("painel-ficha.jsx"))));
   /* E3: pelo mesmo motivo — um dos dois é o da tela da batalha, e ele
      mudou de arquivo, não de comportamento. */
-  t("o inimigo abre carta de inimigo", ((APP + BATALHA).match(/ente=\{e\} inimigo/g) || []).length === 2);
+  /* T3 §4c (29/10): 2 → 1 — o outro era o retrato do inimigo na janela da cena, que se
+     aposentou (T3 §5b); fica o da tela da batalha, onde o inimigo está à vista. */
+  t("o inimigo abre carta de inimigo", ((APP + BATALHA).match(/ente=\{e\} inimigo/g) || []).length === 1);
   /* e o retrato do cabeçalho NÃO: ele já é o botão que abre a ficha, e
      botão dentro de botão passa no teste e falha no dedo */
   /* v9.158: o atalho aponta para a GESTÃO (a ficha é sub-aba dela desde a

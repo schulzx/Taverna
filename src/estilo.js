@@ -963,37 +963,36 @@ export const AMBIENTE = {
   pisos: { prosa: 7, corpoContraMesa: 2.3 },
 };
 
-/* O TOM DA CENA (T3, 29/10) — o fundo do ModalCena, por NOME.
-   Era um objeto de sete gradientes literais no App, chaveado pelo rótulo do
-   gênero, e um mundo novo caía sempre no recuo. Agora o cartão do gênero diz o
-   nome de um tom (cenario.js, ESQUEMA_DO_CENARIO.tons — o vocabulário fechado,
-   que a suíte confere contra as chaves daqui nos dois sentidos) e esta tabela
-   tem a cor. Os nomes são de tom, não de gênero, para outra mesa os reusar sem
-   mentir. Os hex são os de antes, com a mesma caixa: o fundo do mundo padrão
-   sai igual ao byte (formas.md, T3 §2).
+/* O TOM DA CENA (T3, 29/10) — a LUZ do mundo, por NOME (formas.md, T3 §4b).
+   O cartão do gênero diz o nome de um tom (cenario.js, ESQUEMA_DO_CENARIO.tons —
+   o vocabulário fechado, que a suíte confere contra as chaves daqui nos dois
+   sentidos) e esta tabela diz QUE COR DE T é a luz do meio de AMBIENTE nesse
+   mundo. Os nomes são de tom, não de gênero, para outra mesa os reusar sem
+   mentir; as luzes são nomes de T, nunca hex — a luz segue a paleta.
 
-   A PORTA DA TABELA: um tom só entra aqui se ink, amberSoft e danger passarem
-   de 4,5:1 contra as DUAS paradas (WCAG 2.2, 1.4.3, texto pequeno). O pior de
-   hoje é danger sobre o topo de poeira, 5,53:1. A suíte guarda a porta. */
+   PORQUE SAÍRAM OS CATORZE HEX (topo e pé de cada tom): eram o fundo do
+   ModalCena, e a janela aposentou-se (T3 §5b: o tabuleiro já mostra o grupo, a
+   vida e os inimigos, com posição, e ninguém a abria desde 25/07). Sem leitor
+   de tela seriam a cor de uma tela fantasma. Pescam-se do git
+   (6d84aa7:src/estilo.js) se uma tela um dia os quiser.
+
+   A PORTA DA TABELA mora em teste-genero-no-app.mjs, pela conta de
+   teste-v1-folha: com a luz do tom, a prosa no pior ponto da página fica ≥
+   AMBIENTE.pisos.prosa, inkMeio e inkDim ≥ 4,5, o corpo a ΔE ≥
+   AMBIENTE.pisos.corpoContraMesa da mesa — e, sobre T.bg (a criação), o texto
+   solto ≥ 4,5. A tabela inteira dos sete está em formas.md, T3 §4b. */
 export const TOM_DA_CENA = {
-  crepusculo: { topo: "#2A2036", pe: "#1a1420" },
-  aco: { topo: "#16232e", pe: "#0e1620" },
-  magenta: { topo: "#2a1030", pe: "#10121e" },
-  breu: { topo: "#1a1420", pe: "#0a0a10" },
-  poeira: { topo: "#2b2418", pe: "#161208" },
-  cobre: { topo: "#2a2018", pe: "#15100a" },
-  noite: { topo: "#241C33", pe: "#12101a" },
+  crepusculo: { luz: "mundo" },
+  aco: { luz: "mundoSoft" },
+  magenta: { luz: "rosa" },
+  breu: { luz: "lineStrong" },
+  poeira: { luz: "inkMeio" },
+  cobre: { luz: "amber" },
+  noite: { luz: "mundo" },
 };
-/* o ângulo do degradê e o tom do recuo — constantes, não literais na função */
-const ANGULO_DA_CENA = "160deg";
+/* o tom do recuo: sem mundo, sem tom, ou um nome fora da tabela — a noite, cuja
+   luz é a de antes de T3 (o menu, um save sem gênero, a criação antes do clique) */
 const TOM_DE_RECUO = "noite";
-/* o fundo da cena de um tom: sem tom, ou com um nome fora da tabela, é o recuo
-   (noite, o de antes). Pura, e não estoura com nada. Sem espaço depois da
-   vírgula, como era: a string sai igual ao byte. */
-export function fundoDaCena(tom) {
-  const c = (typeof tom === "string" && Object.prototype.hasOwnProperty.call(TOM_DA_CENA, tom) && TOM_DA_CENA[tom]) || TOM_DA_CENA[TOM_DE_RECUO];
-  return "linear-gradient(" + ANGULO_DA_CENA + "," + c.topo + "," + c.pe + ")";
-}
 
 /* O HELPER QUE `MATERIAIS` PROMETIA DESDE D5: uma cor do tema a alfa,
    pronta para um gradiente ou uma sombra. PÚBLICO desde V1b (25/09): o
@@ -1006,11 +1005,25 @@ export const alfa = (cor, a) => {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };
 
-/* A LUZ AMBIENTE MONTADA, para a folha. Mora AQUI e não junto de
+/* A LUZ AMBIENTE DE UM MUNDO (T3 §4b, 29/10): o gradiente de AMBIENTE com a cor
+   da parada do MEIO (a que não é ponta: as pontas são o herói, âmbar, e a mão do
+   jogador, rosa) trocada pela luz do tom. Nenhum alfa nem posição muda — só a
+   cor do meio, que sempre foi «o mundo» e passa a ser ESTE mundo. Pura: tom
+   ausente, fora da tabela ou nome de Object (constructor, toString) é o recuo,
+   e com ele a string sai igual ao byte à de antes. */
+export function luzAmbiente(tom) {
+  const c = (typeof tom === "string" && Object.prototype.hasOwnProperty.call(TOM_DA_CENA, tom) && TOM_DA_CENA[tom]) || TOM_DA_CENA[TOM_DE_RECUO];
+  const paradas = AMBIENTE.paradas.map((p) => (p.em > 0 && p.em < 1 ? { ...p, token: c.luz } : p));
+  return `linear-gradient(${AMBIENTE.direcao}, ${paradas
+    .map((p) => `${alfa(T[p.token], p.alfa)} ${Math.round(p.em * 100)}%`).join(", ")})`;
+}
+
+/* A LUZ AMBIENTE MONTADA, para a folha: a do recuo, que é a de quem não tem
+   mundo (o menu, um save sem gênero). Mora AQUI e não junto de
    `sombra()`/`brilho()` porque lê `AMBIENTE` e `T`, e uma `const` não
-   se lê antes de nascer. */
-const LUZ_AMBIENTE = `linear-gradient(${AMBIENTE.direcao}, ${AMBIENTE.paradas
-  .map((p) => `${alfa(T[p.token], p.alfa)} ${Math.round(p.em * 100)}%`).join(", ")})`;
+   se lê antes de nascer. A página da história e a criação põem por cima, no
+   style, a luz do mundo delas. */
+const LUZ_AMBIENTE = luzAmbiente();
 
 /* A rampa montada, para a folha. Mora AQUI e não junto de `sombra()`
    porque lê `ESBATIMENTO`, e uma `const` não se lê antes de nascer.

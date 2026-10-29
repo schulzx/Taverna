@@ -111,9 +111,10 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      `globo` (T3, 29/10: um mundo, sem dizer qual), que também é um nome deste
      vocabulário — um autor pode escolhê-lo de propósito; o recuo é da tela. */
   glifos: Object.freeze(["castelo", "foguete", "terminal", "olho", "caveira", "bussola", "faiscas", "globo"]),
-  /* o tom da cena (T3, 29/10): o fundo do ModalCena do gênero. Como o glifo, o
-     JSON de um mundo não leva cor — o cartão diz o NOME de um tom deste
-     vocabulário, e a tela (estilo.js, TOM_DA_CENA) tem a cor de cada um. Os nomes
+  /* o tom da cena (T3, 29/10): a luz do mundo do gênero (desde T3 §4b; era o fundo
+     do ModalCena, que se aposentou). Como o glifo, o JSON de um mundo não leva
+     cor — o cartão diz o NOME de um tom deste vocabulário, e a tela (estilo.js,
+     TOM_DA_CENA) diz que cor de T é a luz de cada um. Os nomes
      são de tom, não de gênero, para outra mesa os reusar sem mentir. Fechado: um
      nome fora daqui seria uma cor que nenhuma tela tem. Sem tom, a cena é `noite`. */
   tons: Object.freeze(["crepusculo", "aco", "magenta", "breu", "poeira", "cobre", "noite"]),
@@ -526,7 +527,7 @@ export function cenarioAtivo() { return ativo; }
 /* o tom da cena do gênero (T3, 29/10): o `tom` do cartão da criação cujo `label`
    é o rótulo, ou undefined — o gênero que não é cartão (o save antigo, o Universo
    próprio de texto livre), o cartão sem tom, o rótulo que não veio. Pura, e não
-   estoura com nada: quem escolhe o recuo é a tela (estilo.js, fundoDaCena). */
+   estoura com nada: quem escolhe o recuo é a tela (estilo.js, luzAmbiente). */
 export function tomDoGenero(rotulo, cenario = cenarioAtivo()) {
   const criacao = cenario && cenario.generos && Array.isArray(cenario.generos.criacao) ? cenario.generos.criacao : [];
   const g = typeof rotulo === "string" ? criacao.find((c) => c && c.label === rotulo) : undefined;

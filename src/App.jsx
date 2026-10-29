@@ -73,7 +73,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa, fundoDaCena } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -802,53 +802,11 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
 
 /* ---------------- Modal de nível ---------------- */
 
-function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
-  const aliados = [personagem, ...(personagem.grupo || [])];
-  const inimigos = (combate?.inimigos || []).filter((e) => !e.derrotado);
-  /* T3 (29/10): o fundo sai do tom do cartão do gênero (cenario.js tomDoGenero) e da
-     tabela da tela (estilo.js TOM_DA_CENA); sem tom, ou com um gênero que não é
-     cartão, é a noite de sempre. As duas são puras e não estouram com undefined. */
-  const climaFundo = fundoDaCena(tomDoGenero((mundo || {}).genero));
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.92)", backdropFilter: "blur(4px)" }} onClick={fechar}>
-      <div className="tv-fade w-full max-w-lg rounded-2xl overflow-hidden" style={{ border: `1px solid ${T.amber}` }} onClick={(e) => e.stopPropagation()}>
-        <div className="p-5" style={{ background: climaFundo }}>
-          <div className="tv-mono text-[10px] uppercase tracking-[0.3em] mb-4 text-center" style={{ color: T.amberSoft }}>{nomeCampanha} · cena</div>
-          <div className="flex flex-wrap items-end justify-center gap-3 mb-2">
-            {aliados.map((a, i) => (
-              <div key={i} className="flex flex-col items-center gap-1" style={{ width: 74 }}>
-                <Retrato semente={sementeDe(a)} ente={a} tamanho={i === 0 ? 60 : 50} anel={i === 0 ? T.amber : T.violet} estado={estadoDe(a.vida, a.vidaMax)} />
-                <span className="tv-body text-xs text-center leading-tight truncate w-full" style={{ color: T.ink }}>{a.nome}</span>
-                {i === 0 && <span className="tv-mono text-[8px] uppercase" style={{ color: T.amberSoft }}>você</span>}
-              </div>
-            ))}
-          </div>
-          {inimigos.length > 0 && (
-            <>
-              <div className="flex items-center gap-2 my-3">
-                <div className="h-px flex-1" style={{ background: T.danger, opacity: 0.5 }} />
-                <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.danger }}>⚔ contra</span>
-                <div className="h-px flex-1" style={{ background: T.danger, opacity: 0.5 }} />
-              </div>
-              <div className="flex flex-wrap items-end justify-center gap-3">
-                {inimigos.map((e, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1" style={{ width: 74 }}>
-                    <Retrato semente={sementeDe(e)} ente={e} inimigo tamanho={54} anel={T.danger} estado={estadoDe(e.vida, e.vidaMax, true)} />
-                    <span className="tv-body text-xs text-center leading-tight truncate w-full" style={{ color: T.ink }}>{e.nome}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        <div className="p-4 flex items-center justify-between" style={{ background: T.panel, borderTop: `1px solid ${T.line}` }}>
-          <span className="tv-body text-xs italic" style={{ color: T.inkDim }}>{(mundo || {}).genero}</span>
-          <Botao primario pequeno onClick={fechar}>Fechar</Botao>
-        </div>
-      </div>
-    </div>
-  );
-}
+/* A JANELA DA CENA aposentou-se (T3 §5b, 29/10, por experiência jogada): ela
+   mostrava o grupo, a vida e os inimigos de pé — e o tabuleiro já os
+   mostra, à vista, com posição, distância e iniciativa. Não tinha porta desde
+   72ba827 (25/07). O que ela tinha de único, o tom do mundo, foi para a luz da
+   página (estilo.js, luzAmbiente). Pesca-se de 6d84aa7 se um dia voltar. */
 
 /* MODAL DE NÍVEL (v9.6): deixou de exigir uma decisão apressada. O nível
    entrega PONTOS — de habilidade e de atributo — e o jogador gasta quando
@@ -4039,7 +3997,9 @@ function TelaMundo({ concluir }) {
   const campoLongo = { background: T.panel, border: `1px solid ${T.line}`, color: T.ink };
 
   return (
-    <div className="tv-fade w-full overflow-y-auto tv-scroll">
+    /* T3 §4b: a luz do mundo escolhido, no clique do cartão — quem escolhe Horror vê a
+       sala perder a cor antes de escrever uma linha. Um corte, sem animação. */
+    <div className="tv-fade w-full overflow-y-auto tv-scroll" style={{ backgroundImage: luzAmbiente(genero && genero.tom) }}>
       {/* ---- o cabeçalho ilustrado: a mesma taverna do menu ---- */}
       <div className="relative w-full flex flex-col items-center justify-end px-6 pt-16 pb-10" style={{ borderBottom: `1px solid ${T.line}`, minHeight: 300 }}>
         <img src={heroTaverna} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -5372,6 +5332,11 @@ export default function Taverna() {
   const avisoPodaRef = useRef(false);
   const salvarRef2 = useRef(null);
   const [mundo, setMundo] = useState(null);
+  /* A LUZ DO MUNDO (T3 §4b, 29/10): a cor do meio da luz ambiente da página da
+     história é a do tom do gênero da campanha. Puras as duas (não estouram com
+     null, undefined nem {} — a suíte prova), por isso sem calou; no jogo o
+     gênero não muda, e a conta corre uma vez por mundo. */
+  const luzDoMundo = useMemo(() => luzAmbiente(tomDoGenero((mundo || {}).genero)), [mundo]);
   const [nomeCampanha, setNomeCampanha] = useState("");
   const [personagem, setPersonagem] = useState(null);
   /* ESPELHO DA FICHA (v8.9): montarSystemPrompt roda DENTRO do clique que
@@ -5560,7 +5525,6 @@ export default function Taverna() {
     return () => clearTimeout(id);
   }, [statusSave]);
   const [cronica, setCronica] = useState(null);
-  const [verCena, setVerCena] = useState(false);
   const [longeDoFim, setLongeDoFim] = useState(false);
   const areaRef = useRef(null);
   const [acampado, setAcampado] = useState(false);
@@ -24320,7 +24284,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 do fim se posiciona, e por isso ela fica sempre ACIMA do pé do
                 cartão (a soleira), nunca por cima de uma oferta. */}
             <div className="relative flex-1 min-h-0 flex flex-col">
-            <div ref={areaRef} onScroll={(e) => { aoRolar(e); verSeChegouANova(); }} onWheel={tocouNaRolagem} onTouchMove={tocouNaRolagem} onKeyDown={tocouNaRolagem} onPointerDown={tocouNaRolagem} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 tv-pagina" >
+            <div ref={areaRef} onScroll={(e) => { aoRolar(e); verSeChegouANova(); }} onWheel={tocouNaRolagem} onTouchMove={tocouNaRolagem} onKeyDown={tocouNaRolagem} onPointerDown={tocouNaRolagem} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 tv-pagina" style={{ backgroundImage: luzDoMundo }}>
               {/* A VOZ (R2 → V5) — o `O MESTRE` do topo da página SAIU (o `jogo`,
                   V5 §9): estava lá sempre, `muda` fora da espera, custando ~48 px
                   no topo de toda cena, e durante a espera ficava fora de vista a
@@ -25364,8 +25328,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
       )}
-
-      {verCena && personagem && <ModalCena personagem={personagem} combate={combate} mundo={mundo} nomeCampanha={nomeCampanha} fechar={() => setVerCena(false)} />}
 
       {cronica && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }} onClick={() => cronica !== "gerando" && setCronica(null)}>
