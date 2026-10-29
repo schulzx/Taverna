@@ -455,7 +455,12 @@ sec("5. A TRAVA MORDE SÓ O NECESSÁRIO — envelopes reais do App.jsx");
   const ROLOU = "[COMBATE — RESOLVIDO PELO SISTEMA]";
   const NAO_ROLOU = "[ABERTURA DE CAPÍTULO]";
   t(`o App ainda manda \`${ROLOU}\``, APP.includes(ROLOU));
-  t(`e ainda manda \`${NAO_ROLOU}\``, APP.includes(NAO_ROLOU));
+  /* MOVIDA (28/10, T2-A, a abertura): o texto da abertura do capítulo saiu do
+     App para src/motor/envelopes-do-turno.js. Continua a ser o selo real (não
+     uma cópia): o App manda o envelope do motor, e o envelope do motor abre
+     com este selo. */
+  const { oEnvelopeDaAbertura } = await import("../src/motor/envelopes-do-turno.js");
+  t(`e ainda manda \`${NAO_ROLOU}\``, APP.includes('enviar(oEnvelopeDaAbertura("capitulo"), ') && oEnvelopeDaAbertura("capitulo").startsWith(NAO_ROLOU + " "));
 
   const linhaCombate = APP.slice(APP.indexOf(ROLOU), APP.indexOf(ROLOU) + 240);
   /* MOVIDA (28/10, T1-B fatia 3): DE TEXTO PARA COMPORTAMENTO. O turno que

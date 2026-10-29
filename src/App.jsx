@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -12375,7 +12375,7 @@ export default function Taverna() {
     talvezFecharSessao("capitulo");
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoNovoCapitulo(reg, f.id, { anos, cidade: cidadeAtualRef.current })}`;
     salvar();
-    enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", personagemRef.current, []);
+    enviar(oEnvelopeDaAbertura("capitulo"), personagemRef.current, []);
   };
 
   const iniciar = (pers) => {
@@ -12571,7 +12571,7 @@ export default function Taverna() {
       pushMsgs([{ autor: "sistema", texto: linhaDoNovoCapitulo(historiaRef.current.capitulo, cap.forma) }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoNovoCapitulo(cap.reg, cap.forma, { anos: cap.anos, heroiAnterior: cap.heroiAnterior, cidade: cidadeAtualRef.current })}`;
       salvar();
-      enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", pers, []);
+      enviar(oEnvelopeDaAbertura("capitulo"), pers, []);
       return;
     }
     /* ---------------- A ABERTURA (MM13, 30/09) ----------------
@@ -12640,15 +12640,7 @@ export default function Taverna() {
      campanha inteira: é o turno que decide se o jogador entende onde está. */
   const abrirACampanha = (pers) => {
     const habs = (pers.habilidades || []).map((h) => h.nome).join(", ") || "nenhuma";
-    return `[ABERTURA DA CAMPANHA] Este é o primeiro turno. Narre a abertura em QUATRO partes, nesta ordem e sem títulos — tudo em prosa corrida, na 2ª pessoa: o herói é "você" ("você chegou", nunca "cheguei"):
-
-1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e a LEI dele — a coisa que aqui é verdade e não seria em outro lugar. Concreto: um cheiro, um som, um preço, uma regra que todo mundo obedece sem discutir.
-2) ONDE O HERÓI ESTÁ. A cidade e o ponto exato dentro dela, com o que se vê e se ouve dali. O sistema já decidiu o lugar — use o que está no envelope, não invente outro.
-3) QUEM ELE É AQUI. Não repita a ficha dele: mostre o que o conceito e o passado dele significam NESTE mundo — como as pessoas daqui olham para alguém assim, o que isso lhe abre e o que lhe fecha. E por que ele está neste ponto agora, fazendo o que está fazendo. O jogador precisa terminar a leitura sabendo o que veio fazer aqui.
-4) O PRIMEIRO FIO. Ponha em cena a coisa que o sistema já mandou por envelope de missão e deixe-a puxar: alguém que fala com ele, um sinal, um pedido, um problema que o alcança. Não anuncie que é uma missão, não liste etapas e não peça a resposta dele — só faça o mundo vir até ele, de um jeito em que ficar parado seja a escolha mais difícil.
-
-Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que você faz?".
-(As habilidades iniciais dele já foram concedidas pelo SISTEMA: ${habs} — NÃO envie "adicionar_habilidades".)`;
+    return oEnvelopeDaAbertura("campanha", { habs });
   };
 
   const continuar = (comResumo, { silencioso = false } = {}) => {
@@ -13040,7 +13032,7 @@ Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que voc�
       if (comResumo && !sv.rolagem) {
         enviar(recap && recap.vale
           ? envelopeDaRetomada(recap, volta.quando)
-          : `[RETOMADA] Voltei a "${nomeDaCampanha(sv)}". Reabra a cena onde eu parei em duas ou três frases e devolva a palavra para mim. Não recapitule, não faça o tempo passar e não inicie cena nova.`,
+          : oEnvelopeDaAbertura("retomada", { campanha: nomeDaCampanha(sv) }),
           pers, sv.historico || []);
       }
     } catch (e) {

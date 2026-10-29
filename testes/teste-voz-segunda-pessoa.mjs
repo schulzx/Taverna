@@ -43,6 +43,7 @@ import {
   abrirAbertura, pedidoDaAbertura,
 } from "../src/abertura.js";
 import { SONHOS } from "../src/calendario.js";
+import { oEnvelopeDaAbertura } from "../src/motor/envelopes-do-turno.js";
 import { envelopeSemOportunidade } from "../src/desafios.js";
 import { envelopeDoOraculo } from "../src/oraculo.js";
 import { notaDaChegada } from "../src/geografia.js";
@@ -304,11 +305,15 @@ sec("8. a fiação — App.jsx (a abertura antiga e o sonho)");
      App. Eram os dois sítios do App que davam ao Narrador uma frase-modelo
      na primeira pessoa do herói ("ONDE EU ESTOU", "Esta noite eu sonhei"). */
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  const i = app.indexOf("const abrirACampanha = (pers) => {");
-  const corpo = i >= 0 ? app.slice(i, app.indexOf("\n  };", i)) : "";
+  /* MOVIDA (28/10, T2-A, a abertura): o texto da abertura antiga saiu do App
+     para src/motor/envelopes-do-turno.js. As mesmas quatro provas leem agora
+     o pedido que o motor monta (com a lista das habilidades vazia, como a
+     regex de antes tirava o ${habs}), e o App só lhe passa as habilidades. */
+  const corpo = oEnvelopeDaAbertura("campanha", { habs: "" });
+  t("o App pede a abertura antiga ao motor", app.includes('return oEnvelopeDaAbertura("campanha", { habs });'));
   t("a abertura antiga pede a 2ª pessoa", corpo.includes("na 2ª pessoa: o herói é \"você\""));
   t("a abertura antiga já não diz ONDE EU ESTOU nem QUEM EU SOU", !!corpo && !corpo.includes("ONDE EU ESTOU") && !corpo.includes("QUEM EU SOU"));
-  t("a abertura antiga já não fala do herói por 'me', 'mim', 'comigo', 'minha(s)'", !!corpo && !/(^|[^\p{L}])(me|mim|comigo|minhas?|meu|meus)(?![\p{L}])/u.test(corpo.replace(/\$\{[^}]*\}/g, "")));
+  t("a abertura antiga já não fala do herói por 'me', 'mim', 'comigo', 'minha(s)'", !!corpo && !/(^|[^\p{L}])(me|mim|comigo|minhas?|meu|meus)(?![\p{L}])/u.test(corpo));
   t("as âncoras que teste-sala exige ficam", corpo.includes("1) O MUNDO") && corpo.includes("4) O PRIMEIRO FIO") && corpo.includes("ABERTURA DA CAMPANHA"));
   t("o sonho já não diz 'eu sonhei'", app.includes("[SONHO] O sonho desta noite:") && !app.includes("Esta noite eu sonhei"));
 }

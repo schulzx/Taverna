@@ -15,21 +15,23 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { N_CASOS } from "./combate-casos.mjs";
-import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
+import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorraContornada: "d3d6f60", masmorraAVista: "d3d6f60", masmorraTesouro: "d3d6f60", masmorraSantuario: "d3d6f60", masmorraBusca: "d3d6f60", masmorraFuga: "d3d6f60", correioDecreto: "df6e36b", correioCarta: "df6e36b", correioPeticao: "df6e36b",
-  acampSemDescanso: "640c39f", acampDescansado: "640c39f", fogoSentar: "640c39f", fogoDecisao: "640c39f", fogoFicar: "640c39f", coracaoResposta: "640c39f", coracaoDecisao: "640c39f" };
+  acampSemDescanso: "640c39f", acampDescansado: "640c39f", fogoSentar: "640c39f", fogoDecisao: "640c39f", fogoFicar: "640c39f", coracaoResposta: "640c39f", coracaoDecisao: "640c39f",
+  aberturaCampanha: "548a91a", aberturaCapitulo: "548a91a", aberturaCapituloNovo: "548a91a", aberturaRetomada: "548a91a" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);
 const saida = { antes: ANTES, casos: N_CASOS, blocos: {} };
 for (const bloco of BLOCOS) {
   const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false, so: bloco })[bloco]);
-  saida.blocos[bloco] = casos.map((k) => fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })));
+  /* o hash e o comprimento por caso; o texto inteiro só na amostra (ver fotoGuardada) */
+  saida.blocos[bloco] = casos.map((k, i) => fotoGuardada(fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })), i));
   const erros = saida.blocos[bloco].filter((f) => f.erro).length;
   const faltas = [...new Set(saida.blocos[bloco].flatMap((f) => f.faltas))];
-  const maior = Math.max(...saida.blocos[bloco].map((f) => JSON.stringify(f.texto || "").length));
+  const maior = Math.max(...saida.blocos[bloco].map((f) => f.n));
   console.log(`${bloco} (de ${ANTES[bloco]}): ${N_CASOS} fotos, ${erros} estouram, o maior ${maior} chars, faltas: ${faltas.join(", ") || "nenhuma"}`);
 }
 fs.writeFileSync(path.join(AQUI, "envelopes-dourado.json"), JSON.stringify(saida));

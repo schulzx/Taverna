@@ -97,8 +97,12 @@ t("o estado vem da função", APP.includes("setNomeCampanha(nomeDaCampanha(sv))"
 t("o system prompt da retomada vem da função",
   APP.includes("montarSystemPrompt(nomeDaCampanha(sv),"));
 t("o recap vem da função", APP.includes("nomeCampanha: nomeDaCampanha(sv), desdeODia:"));
+/* MOVIDA (28/10, T2-A, a abertura): o texto da retomada saiu do App para
+   src/motor/envelopes-do-turno.js; a intenção — o nome vem de nomeDaCampanha —
+   lê-se agora no que o App passa ao motor, e o motor põe esse nome no envelope. */
 t("o envelope da retomada vem da função",
-  APP.includes('[RETOMADA] Voltei a "${nomeDaCampanha(sv)}".'));
+  APP.includes('oEnvelopeDaAbertura("retomada", { campanha: nomeDaCampanha(sv) })')
+  && (await import(S + "motor/envelopes-do-turno.js")).oEnvelopeDaAbertura("retomada", { campanha: "A Coroa" }).startsWith('[RETOMADA] Voltei a "A Coroa".'));
 
 sec("o conserto não é silencioso — um conserto mudo é a mesma falha com melhores modos");
 t("o load avisa quando recuperou o nome", APP.includes("salvoSemNome(sv)"));

@@ -22,6 +22,16 @@ import { dataTxt, horaTxt, ehNoite, estacaoDe } from "../calendario.js";
 import { formaDaCidade } from "../geografia.js";
 import { MARCA_DO_RODAPE } from "../prompt.js";
 
+/* A CHAVE É DA TABELA (28/10/2026): toda escolha por chave neste módulo passa
+   por aqui. `tabela[chave]` sozinho lê o protótipo — "constructor" devolvia a
+   função Object, e o texto dela ia ao Narrador. Só conta a chave própria. */
+const daTabela = (tabela, chave) => (Object.hasOwn(tabela, chave) ? tabela[chave] : undefined);
+function aFormaDe(tabela, qual, oQue) {
+  const f = daTabela(tabela, qual);
+  if (typeof f !== "function") throw new Error("envelope " + oQue + " sem forma: " + qual);
+  return f;
+}
+
 /* o texto fixo do rodapé, à letra do App de antes. A marca é a de
    prompt.js: é por ela que o pedido na ordem do cache acha onde o rodapé
    abre (sem ela o corte cai no fallback calado) */
@@ -103,9 +113,7 @@ export const ENVELOPES_DA_MASMORRA = {
     `[MASMORRA — FUGA] Eu ESCOLHI fugir de ${masmorra} antes do fim — abandono conscientemente as salas e tesouros que ainda restavam (o que já conquistei, carrego comigo). Narre a retirada apressada em 2-3 frases e retome a cena do mundo lá fora.`,
 };
 export function oEnvelopeDaMasmorra(qual, dados) {
-  const f = ENVELOPES_DA_MASMORRA[qual];
-  if (!f) throw new Error("envelope da masmorra sem forma: " + qual);
-  return f(dados || {});
+  return aFormaDe(ENVELOPES_DA_MASMORRA, qual, "da masmorra")(dados || {});
 }
 
 /* ============================================================
@@ -124,9 +132,7 @@ export const ENVELOPES_DO_CORREIO = {
     `[CORREIO — PETIÇÃO ${aceite ? "ACEITA" : "RECUSADA"}] ${texto} → EU DECIDI: ${aceite ? "ACEITEI" : "RECUSEI"}.${nota ? ` Consequência (já aplicada pelo sistema): ${nota}.` : ""}${moedas ? ` Moedas: ${moedas > 0 ? "+" : ""}${moedas} (já aplicado).` : ""} Narre a reação de ${de} e as ondas que isso faz no mundo.${SO_ISSO}`,
 };
 export function oEnvelopeDoCorreio(qual, dados) {
-  const f = ENVELOPES_DO_CORREIO[qual];
-  if (!f) throw new Error("envelope do correio sem forma: " + qual);
-  return f(dados || {});
+  return aFormaDe(ENVELOPES_DO_CORREIO, qual, "do correio")(dados || {});
 }
 
 /* ============================================================
@@ -158,14 +164,39 @@ export const ENVELOPES_DO_ACAMPAMENTO = {
   ficarAoFogo: ({ quem }) =>
     "[À FOGUEIRA — FICO MAIS UM POUCO COM " + quem + ", SÓ NÓS DOIS] Os outros já dormem. Narre primeiro esse momento breve, os dois junto às brasas, sem decidir nada por mim; só depois a noite passa.",
   /* a resposta que o jogador deu ao pedido do coração; a que não está na
-     tabela vai sem frase, como no App */
+     tabela vai sem frase, como no App — e a herdada também (no App ia o
+     texto do protótipo: conserto declarado, ver a suíte, secção 8) */
   respostaAoCoracao: ({ nome, resposta }) =>
-    "[RESPOSTA A " + nome + " — DADA POR MIM] " + (RESPOSTA_AO_CORACAO[resposta] ? RESPOSTA_AO_CORACAO[resposta](nome) : "") + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
+    "[RESPOSTA A " + nome + " — DADA POR MIM] " + (daTabela(RESPOSTA_AO_CORACAO, resposta) ? RESPOSTA_AO_CORACAO[resposta](nome) : "") + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
   decisaoDoCoracao: ({ nome, verbo, preco }) =>
     "[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + verbo + " — " + preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.",
 };
 export function oEnvelopeDoAcampamento(qual, dados) {
-  const f = ENVELOPES_DO_ACAMPAMENTO[qual];
-  if (!f) throw new Error("envelope do acampamento sem forma: " + qual);
-  return f(dados || {});
+  return aFormaDe(ENVELOPES_DO_ACAMPAMENTO, qual, "do acampamento")(dados || {});
+}
+
+/* ============================================================
+   5.º GRUPO — A ABERTURA: o primeiro turno da campanha pelo caminho antigo
+   (quando não há pista de abertura; o de hoje é `pedidoDaAbertura`, de
+   abertura.js — longo de propósito e cobrado uma vez só na campanha
+   inteira: é o turno que decide se o jogador entende onde está), a
+   abertura do capítulo novo (o envelope dele já foi na nota, este só manda
+   abrir) e a retomada de um save quando o recap não vale.
+   ============================================================ */
+export const ENVELOPES_DA_ABERTURA = {
+  /* `habs`: as habilidades iniciais, já em texto ("nenhuma" quando não há) */
+  campanha: ({ habs }) => `[ABERTURA DA CAMPANHA] Este é o primeiro turno. Narre a abertura em QUATRO partes, nesta ordem e sem títulos — tudo em prosa corrida, na 2ª pessoa: o herói é "você" ("você chegou", nunca "cheguei"):
+
+1) O MUNDO. Que lugar é este, dito por dentro: o que o move, quem manda, do que se vive, e a LEI dele — a coisa que aqui é verdade e não seria em outro lugar. Concreto: um cheiro, um som, um preço, uma regra que todo mundo obedece sem discutir.
+2) ONDE O HERÓI ESTÁ. A cidade e o ponto exato dentro dela, com o que se vê e se ouve dali. O sistema já decidiu o lugar — use o que está no envelope, não invente outro.
+3) QUEM ELE É AQUI. Não repita a ficha dele: mostre o que o conceito e o passado dele significam NESTE mundo — como as pessoas daqui olham para alguém assim, o que isso lhe abre e o que lhe fecha. E por que ele está neste ponto agora, fazendo o que está fazendo. O jogador precisa terminar a leitura sabendo o que veio fazer aqui.
+4) O PRIMEIRO FIO. Ponha em cena a coisa que o sistema já mandou por envelope de missão e deixe-a puxar: alguém que fala com ele, um sinal, um pedido, um problema que o alcança. Não anuncie que é uma missão, não liste etapas e não peça a resposta dele — só faça o mundo vir até ele, de um jeito em que ficar parado seja a escolha mais difícil.
+
+Termine com a cena aberta e o próximo passo à vista, sem perguntar "o que você faz?".
+(As habilidades iniciais dele já foram concedidas pelo SISTEMA: ${habs} — NÃO envie "adicionar_habilidades".)`,
+  capitulo: () => "[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.",
+  retomada: ({ campanha }) => `[RETOMADA] Voltei a "${campanha}". Reabra a cena onde eu parei em duas ou três frases e devolva a palavra para mim. Não recapitule, não faça o tempo passar e não inicie cena nova.`,
+};
+export function oEnvelopeDaAbertura(qual, dados) {
+  return aFormaDe(ENVELOPES_DA_ABERTURA, qual, "da abertura")(dados || {});
 }

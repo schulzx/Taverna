@@ -218,12 +218,18 @@ sec("7. a costura no App");
 
 sec("8. a abertura da campanha (v9.120)");
 {
-  t("a abertura tem quatro partes", /ABERTURA DA CAMPANHA/.test(APP) && /1\) O MUNDO/.test(APP) && /4\) O PRIMEIRO FIO/.test(APP));
+  /* MOVIDAS (28/10, T2-A, a abertura): o texto da abertura antiga saiu do App
+     para src/motor/envelopes-do-turno.js (oEnvelopeDaAbertura("campanha")). A
+     intenção é a mesma — quatro partes, e o jogador sabe o que veio fazer —, e
+     agora lê-se no pedido que o motor monta, não no texto do App. */
+  const { oEnvelopeDaAbertura } = await import(S + "motor/envelopes-do-turno.js");
+  const PEDIDO = oEnvelopeDaAbertura("campanha", { habs: "nenhuma" });
+  t("a abertura tem quatro partes", /ABERTURA DA CAMPANHA/.test(PEDIDO) && /1\) O MUNDO/.test(PEDIDO) && /4\) O PRIMEIRO FIO/.test(PEDIDO));
   /* v9.346: a voz passou à segunda pessoa (decisão da pessoa, 30/09) — o
      pedido da abertura deixou de falar como o "eu" do herói ("o que vim
      fazer") e passou a "o que veio fazer". A intenção é a mesma: o jogador
      termina a leitura sabendo o que veio fazer. */
-  t("e o jogador termina a leitura sabendo o que veio fazer", /sabendo o que veio fazer aqui/.test(APP));
+  t("e o jogador termina a leitura sabendo o que veio fazer", /sabendo o que veio fazer aqui/.test(PEDIDO));
   /* a peça mecânica, e é ela que muda o turno: sem forçar, o compasso nasce
      em respiro e a PRIMEIRA cena é a única sem intenção nenhuma na mão */
   t("a trama é forçada na abertura", /talvezDarUmaTrama\(\{ forcar: true \}\)/.test(APP));

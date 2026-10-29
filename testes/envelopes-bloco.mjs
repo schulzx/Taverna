@@ -28,6 +28,7 @@ import * as motorEnvelopes from "../src/motor/envelopes-do-turno.js";
 import * as decretos from "../src/decretos.js";
 import { TIPOS_CARTA } from "../src/correio.js";
 import * as subtramas from "../src/subtramas.js";
+import * as arquivo from "../src/arquivo.js";
 
 const NOMES = {
   calendario: ["dataTxt", "horaTxt", "ehNoite", "estacaoDe"],
@@ -37,9 +38,10 @@ const NOMES = {
   chao: ["RAIO_EXAME"],
   decretos: ["tipoDecreto"],
   subtramas: ["fraseDaManha"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento"],
+  arquivo: ["nomeDaCampanha"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura"],
 };
-const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, motorEnvelopes };
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
@@ -68,9 +70,10 @@ const corteDe = (app) => (de, ate) => {
    para chamada: as duas pontas cortam-na até ao fim da linha. `antesDe`
    são as linhas de fora do sítio que o App de antes lia (o SO_ISSO no topo). */
 export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga", "correioDecreto", "correioCarta", "correioPeticao",
-  "acampSemDescanso", "acampDescansado", "fogoSentar", "fogoDecisao", "fogoFicar", "coracaoResposta", "coracaoDecisao"];
+  "acampSemDescanso", "acampDescansado", "fogoSentar", "fogoDecisao", "fogoFicar", "coracaoResposta", "coracaoDecisao",
+  "aberturaCampanha", "aberturaCapitulo", "aberturaCapituloNovo", "aberturaRetomada"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -93,8 +96,14 @@ const ANCORAS = {
   coracaoResposta: { antes: ['      const frase = { aceitou: ', '\n    } catch (e) { calou("responder ao coração"'], hoje: ['      enviar(oEnvelopeDoAcampamento("respostaAoCoracao", ', FIM] },
   coracaoDecisao: { antes: ['      enviar("[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] "', FIM], hoje: ['      enviar(oEnvelopeDoAcampamento("decisaoDoCoracao", ', FIM] },
   correioPeticao: { antes: ["    enviar(`[CORREIO — PETIÇÃO ${aceite", FIM], hoje: ['    enviar(oEnvelopeDoCorreio("peticao", ', FIM] },
+  /* a abertura: a da campanha é a função inteira (o sítio devolve o pedido, não o envia); as duas do
+     capítulo, a linha do enviar; a retomada, a chamada do enviar com o ternário do recap */
+  aberturaCampanha: { antes: ["  const abrirACampanha = (pers) => {", "\n  const continuar = "], hoje: ["  const abrirACampanha = (pers) => {", "\n  const continuar = "] },
+  aberturaCapitulo: { antes: ['enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", personagemRef.current', FIM], hoje: ['enviar(oEnvelopeDaAbertura("capitulo"), personagemRef.current', FIM] },
+  aberturaCapituloNovo: { antes: ['enviar("[ABERTURA DE CAPÍTULO] Abra o capítulo conforme o envelope acima.", pers, []);', FIM], hoje: ['enviar(oEnvelopeDaAbertura("capitulo"), pers, []);', FIM] },
+  aberturaRetomada: { antes: ["        enviar(recap && recap.vale", "\n      }\n    } catch (e) {"], hoje: ["        enviar(recap && recap.vale", "\n      }\n    } catch (e) {"] },
 };
-const DEVOLVE = { rodape: "rodape" };
+const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -213,6 +222,18 @@ export function acampamentoDoCaso(i) {
   };
 }
 
+/* A ABERTURA: o herói sem habilidades, com uma, com várias e sem a lista;
+   o recap que vale e o que não (e nenhum); o save com nome, sem nome e com
+   o nome antigo; o herói do ref e o do capítulo. */
+export function aberturaDoCaso(i) {
+  return {
+    pers: { nome: "Vera do capítulo", habilidades: [[], [{ nome: "Golpe Feroz" }], [{ nome: "Bênção" }, { nome: "Luz" }, { nome: "Escudo da Fé" }], undefined][i % 4] },
+    recap: [null, { vale: true, dias: 3 }, { vale: false }][i % 3],
+    volta: { quando: ["ontem", "há uma semana"][(i >> 1) % 2] },
+    sv: [{ nomeCampanha: "A Coroa de Sal", historico: [{ role: "user", content: "oi" }] }, { personagem: { nome: "Bruna" } }, { nomeCampanha: "  ", historico: null }, { campanha: "O Dragão de Vidro" }, {}][i % 5],
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -227,7 +248,7 @@ const PECAS = [
   "resumoDaqui", "chefesDoFio", "resumoCenaPrompt", "resumoProficienciaPrompt", "resumoPericiasPrompt",
   "resumoHeroismoPrompt", "resumoDescansoPrompt", "resumoRelogiosPrompt", "resumoMagiasPrompt", "resumoSintoniaPrompt",
   "resumoLegadoPrompt", "resumoMissoesPrompt", "resumoGrimorioPrompt", "resumoDadivasPrompt", "resumoTracosPrompt",
-  "resumoInvocacoesPrompt", "envelopeDoQueFicou", "resumoAscensao",
+  "resumoInvocacoesPrompt", "envelopeDoQueFicou", "resumoAscensao", "envelopeDaRetomada",
 ];
 export function dublesDosEnvelopes(k, { novo, bloco }) {
   const log = { chamadas: [], calados: [], faltas: [] };
@@ -281,6 +302,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     if (g === "masmorra") Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
     else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "acampamento") Object.assign(S, acampamentoDoCaso(k.i), { personagem: { nome: "Vera do render" }, fecharANoite: (manha, txt) => { enviados.push([txt, seguro(manha)]); } });
+    else if (g === "abertura") Object.assign(S, aberturaDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };
@@ -318,5 +340,21 @@ export function fotoDoEnvelope(f) {
     texto: f.texto, erro: f.erro, calados: f.log.calados, faltas: [...new Set(f.log.faltas)],
     chamadas: createHash("sha256").update(f.log.chamadas.join("|")).digest("hex").slice(0, 16),
   };
+}
+/* O QUE O DOURADO GUARDA (desde a abertura, 28/10/2026): com 62 sítios de
+   275 casos o texto inteiro levava o arquivo a ~7 MB. A prova é o texto
+   byte a byte, e um hash dele prova o mesmo: o dourado guarda por caso o
+   sha256 (os 32 primeiros hex) e o comprimento do texto — o mesmo
+   comprimento que a régua do teto do prompt mede —, mais o resto da foto
+   (o erro, o que calou, as faltas, as chamadas). O texto inteiro só nos
+   AMOSTRA primeiros casos de cada sítio: é diagnóstico (ver onde diverge),
+   não prova. As duas pontas passam pela mesma `fotoGuardada`, logo a
+   comparação é a mesma que era, e uma mordida muda os mesmos casos. */
+export const AMOSTRA = 3;
+export const tamDoTexto = (texto) => JSON.stringify(texto || "").length;
+export const hashDoTexto = (texto) => createHash("sha256").update(JSON.stringify(texto === undefined ? null : texto)).digest("hex").slice(0, 32);
+export function fotoGuardada(f, i) {
+  const { texto, ...resto } = f;
+  return { h: hashDoTexto(texto), n: tamDoTexto(texto), ...resto, ...(i < AMOSTRA ? { texto } : {}) };
 }
 export const casosDosEnvelopes = (n) => Array.from({ length: n }, (_, i) => casoDosEnvelopes(i));

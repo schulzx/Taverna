@@ -23,8 +23,8 @@
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
-import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento } from "../src/motor/envelopes-do-turno.js";
+import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -37,28 +37,38 @@ const casos = casosDosEnvelopes(N_CASOS);
 const recorte = recorteDosEnvelopes(APP, { novo: true });
 const hoje = Object.fromEntries(BLOCOS.map((b) => [b, blocoComoFuncao(recorte[b])]));
 const fotosDeHoje = (bloco, troca) => casos.map((k) => fotoDoEnvelope(correrOBloco(hoje[bloco], k, { novo: true, troca, bloco })));
-const divergem = (bloco, novas) => novas.filter((f, i) => !igual(f, D.blocos[bloco][i])).length;
+/* o dourado guarda o hash e o comprimento (o texto só na amostra): as fotos de
+   hoje passam pela mesma fotoGuardada antes de comparar */
+const guardadas = (novas) => novas.map((f, i) => fotoGuardada(f, i));
+const divergem = (bloco, novas) => guardadas(novas).filter((f, i) => !igual(f, D.blocos[bloco][i])).length;
+/* as fotos de hoje com o texto inteiro, uma vez por sítio. As secções que contam
+   o que os casos percorrem leem-nas a ELAS (o dourado já não traz o texto): é o
+   mesmo texto, porque a secção 1 prova caso a caso que o hash e o comprimento de
+   hoje são os de antes */
+const HOJE = Object.fromEntries(BLOCOS.map((b) => [b, fotosDeHoje(b)]));
 
 sec("1 · cada grupo, byte a byte contra o App de antes");
 t(`o dourado tem ${N_CASOS} casos em cada grupo, e o commit de antes de cada um`, BLOCOS.every((b) => (D.blocos[b] || []).length === N_CASOS && D.antes[b]));
+t(`o dourado guarda o hash e o comprimento de cada caso, e o texto só nos ${AMOSTRA} primeiros`, BLOCOS.every((b) => D.blocos[b].every((f, i) => /^[0-9a-f]{32}$/.test(f.h) && Number.isInteger(f.n) && ("texto" in f) === (i < AMOSTRA))));
 for (const bloco of BLOCOS) {
   const fotos = D.blocos[bloco];
-  const novas = fotosDeHoje(bloco);
+  const cheias = HOJE[bloco];
+  const novas = guardadas(cheias);
   const batem = novas.filter((f, i) => igual(f, fotos[i])).length;
   const primeira = novas.findIndex((f, i) => !igual(f, fotos[i]));
-  t(`${bloco}: ${batem}/${N_CASOS} iguais ao App de ${D.antes[bloco]}`, batem === N_CASOS, primeira >= 0 ? `o caso ${primeira} diverge: ${JSON.stringify(novas[primeira]).slice(0, 300)} | antes ${JSON.stringify(fotos[primeira]).slice(0, 300)}` : "");
-  t(`${bloco}: determinista`, igual(fotosDeHoje(bloco).slice(0, 60), novas.slice(0, 60)));
+  t(`${bloco}: ${batem}/${N_CASOS} iguais ao App de ${D.antes[bloco]}`, batem === N_CASOS, primeira >= 0 ? `o caso ${primeira} diverge: ${JSON.stringify(cheias[primeira]).slice(0, 300)} | antes ${JSON.stringify(fotos[primeira]).slice(0, 300)}` : "");
+  t(`${bloco}: determinista`, igual(fotosDeHoje(bloco).slice(0, 60), cheias.slice(0, 60)));
   t(`${bloco}: nenhum nome sem dublê, antes ou hoje`, [...fotos, ...novas].every((f) => !f.faltas.length), [...new Set(novas.flatMap((f) => f.faltas))].join(", "));
   t(`${bloco}: nenhum caso estoura`, [...fotos, ...novas].every((f) => !f.erro), (novas.find((f) => f.erro) || {}).erro);
   /* o teto do prompt é sagrado: o maior texto de hoje não passa do de antes */
-  const tam = (f) => JSON.stringify(f.texto || "").length;
+  const tam = (f) => f.n;
   const maior = (xs) => Math.max(...xs.map(tam));
   t(`${bloco}: nenhum char a mais (o maior: ${maior(fotos)} antes, ${maior(novas)} hoje)`, maior(novas) <= maior(fotos) && novas.every((f, i) => tam(f) === tam(fotos[i])));
 }
 
 sec("2 · o rodapé: os casos percorrem o que o texto decide");
 {
-  const R = D.blocos.rodape;
+  const R = HOJE.rodape;
   const conta = (fn) => R.filter(fn).length;
   const noite = conta((f) => f.texto.includes(RODAPE_DO_SISTEMA.noite + ","));
   const desperto = conta((f, i) => casos[i].divindade && casos[i].divindade.despertar);
@@ -113,7 +123,7 @@ sec("4 · a prova morde");
 
 sec("5 · a masmorra: os casos percorrem o que o texto decide, e a prova morde");
 {
-  const M = (b) => D.blocos[b].map((f) => f.texto[0][0]);
+  const M = (b) => HOJE[b].map((f) => f.texto[0][0]);
   const conta = (b, s) => M(b).filter((x) => x.includes(s)).length;
   t(`a busca que achou (${conta("masmorraBusca", "ENCONTREI")}) e a que não (${conta("masmorraBusca", "Nada encontrado")}), com e sem a CD`, conta("masmorraBusca", "ENCONTREI") >= 40 && conta("masmorraBusca", "Nada encontrado") >= 40 && conta("masmorraBusca", " vs ") >= 40 && conta("masmorraBusca", " vs ") < N_CASOS);
   t("a busca fecha com o escopo deste turno", M("masmorraBusca").every((x) => x.endsWith(SO_ISSO)) && SO_ISSO.startsWith(" ESCOPO DESTE TURNO"));
@@ -140,9 +150,9 @@ sec("5 · a masmorra: os casos percorrem o que o texto decide, e a prova morde")
 
 sec("6 · o correio e o domínio: os casos percorrem o que o texto decide, e a prova morde");
 {
-  const M = (b) => D.blocos[b].map((f) => f.texto[0][0]);
+  const M = (b) => HOJE[b].map((f) => f.texto[0][0]);
   const conta = (b, s) => M(b).filter((x) => x.includes(s)).length;
-  const quem = (b) => new Set(D.blocos[b].map((f) => f.texto[0][1])).size;
+  const quem = (b) => new Set(HOJE[b].map((f) => f.texto[0][1])).size;
   t("os três fecham com o escopo deste turno", ["correioDecreto", "correioCarta", "correioPeticao"].every((b) => M(b).every((x) => x.endsWith(SO_ISSO))));
   t(`o decreto de cada tipo, em maiúsculas (${new Set(M("correioDecreto").map((x) => x.split("]")[0])).size} cabeçalhos), e o que não existe cai no de reserva`,
     new Set(M("correioDecreto").map((x) => x.split("]")[0])).size === 5 && conta("correioDecreto", "— CAÇAR UMA CRIATURA]") > conta("correioDecreto", "— ESCOLTAR UMA CARAVANA]"));
@@ -169,9 +179,9 @@ sec("6 · o correio e o domínio: os casos percorrem o que o texto decide, e a p
 
 sec("7 · o acampamento e a fogueira: os casos percorrem o que o texto decide, e a prova morde");
 {
-  const M = (b) => D.blocos[b].map((f) => f.texto[0][0]);
+  const M = (b) => HOJE[b].map((f) => f.texto[0][0]);
   const conta = (b, s) => M(b).filter((x) => x.includes(s)).length;
-  const quem = (b) => new Set(D.blocos[b].map((f) => f.texto[0][1])).size;
+  const quem = (b) => new Set(HOJE[b].map((f) => f.texto[0][1])).size;
   t(`o descanso curto (${conta("acampDescansado", "DESCANSO CURTO]")}) e o longo (${conta("acampDescansado", "DESCANSO LONGO]")}); a frase da manhã à frente (${M("acampDescansado").filter((x) => !x.startsWith("[")).length}) e sem ela`,
     conta("acampDescansado", "DESCANSO CURTO]") >= 100 && conta("acampDescansado", "DESCANSO LONGO]") >= 100 && M("acampDescansado").filter((x) => !x.startsWith("[")).length >= 50 && M("acampDescansado").filter((x) => x.startsWith("[")).length >= 150);
   const cauda = ["[ONDE ACORDO]", "[CLIMA]", "[REINO]", "[GUARDA]", "[SONHO]", "[EVENTOS]"];
@@ -201,6 +211,50 @@ sec("7 · o acampamento e a fogueira: os casos percorrem o que o texto decide, e
     const n = divergem(b, fotosDeHoje(b, troca));
     t(`${nome}: ${n} casos mudam`, n > 0);
   }
+}
+
+sec("9 · a abertura: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const C = HOJE.aberturaCampanha.map((f) => f.texto);
+  const R = HOJE.aberturaRetomada.map((f) => f.texto[0][0]);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  t(`a campanha sem habilidades (${conta(C, "SISTEMA: nenhuma —")}), com uma e com várias (${conta(C, "Bênção, Luz")}), na ordem das quatro partes`,
+    conta(C, "SISTEMA: nenhuma —") >= 100 && conta(C, "SISTEMA: Golpe Feroz —") >= 50 && conta(C, "SISTEMA: Bênção, Luz, Escudo da Fé —") >= 50
+    && C.every((x) => { const p = ["1) O MUNDO", "2) ONDE", "3) QUEM", "4) O PRIMEIRO FIO"].map((s) => x.indexOf(s)); return p.every((n, j) => n >= 0 && (!j || n > p[j - 1])); }));
+  t(`a retomada pelo recap que vale (${R.filter((x) => x.startsWith("<envelopeDaRetomada")).length}) e a do texto fixo, com o nome da campanha`,
+    R.filter((x) => x.startsWith("<envelopeDaRetomada")).length >= 30 && conta(R, "[RETOMADA] Voltei a \"") >= 100 && new Set(R.filter((x) => x.startsWith("[RETOMADA]"))).size >= 3);
+  t("o capítulo: a mesma linha nos dois sítios, para o herói de cada um", HOJE.aberturaCapitulo.every((f) => f.texto[0][0] === oEnvelopeDaAbertura("capitulo")) && HOJE.aberturaCapituloNovo.every((f) => f.texto[0][1] === "Vera do capítulo"));
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_ABERTURA).length === 3 && (() => { try { oEnvelopeDaAbertura("nenhuma", {}); return false; } catch { return true; } })());
+  const E = oEnvelopeDaAbertura;
+  const mordidas = [
+    ["aberturaCampanha", "a campanha sem a lista das habilidades", { oEnvelopeDaAbertura: (q, d) => E(q, { ...d, habs: "nenhuma" }) }],
+    ["aberturaCampanha", "a campanha na 1.ª pessoa", { oEnvelopeDaAbertura: (q, d) => E(q, d).replace("2ª pessoa", "1ª pessoa") }],
+    ["aberturaCapitulo", "o capítulo sem o envelope de cima", { oEnvelopeDaAbertura: (q, d) => E(q, d).replace(" conforme o envelope acima", "") }],
+    ["aberturaCapituloNovo", "o capítulo novo com outro selo", { oEnvelopeDaAbertura: (q, d) => E(q, d).replace("[ABERTURA DE CAPÍTULO]", "[CAPÍTULO]") }],
+    ["aberturaRetomada", "a retomada sem o nome", { oEnvelopeDaAbertura: (q, d) => E(q, { ...d, campanha: "a aventura" }) }],
+    ["aberturaRetomada", "a retomada que deixa o tempo passar", { oEnvelopeDaAbertura: (q, d) => E(q, d).replace(" não faça o tempo passar e", "") }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("8 · a chave da tabela é da tabela, nunca do protótipo");
+{
+  /* o conserto declarado (28/10/2026): a frase da resposta ao coração saía de
+     um objeto literal indexado pela resposta, e uma chave herdada ("constructor",
+     "toString") tirava texto do protótipo — no App de antes ia ao Narrador
+     "function Object() { [native code] }", no motor de 640c39f a ficha de quem
+     pede ("Iris"). Hoje a chave que não é da tabela vai sem frase, como a
+     "outra" que nunca esteve lá. Nos 275 casos nenhuma resposta é herdada, por
+     isso o dourado não se mexe; este é o caso que ele não cobre. */
+  const E = oEnvelopeDoAcampamento;
+  const semFrase = E("respostaAoCoracao", { nome: "Iris", resposta: "outra" });
+  t("a resposta herdada vai sem frase, como a que não está na tabela", ["constructor", "toString", "__proto__", "hasOwnProperty"].every((r) => E("respostaAoCoracao", { nome: "Iris", resposta: r }) === semFrase), E("respostaAoCoracao", { nome: "Iris", resposta: "constructor" }).slice(0, 80));
+  const estoura = (f) => { try { f(); return false; } catch { return true; } };
+  t("a forma herdada não é forma: os envelopes estouram com \"constructor\" e \"toString\"",
+    ["constructor", "toString"].every((q) => estoura(() => oEnvelopeDaMasmorra(q, {})) && estoura(() => oEnvelopeDoCorreio(q, {})) && estoura(() => E(q, {}))));
 }
 
 console.log(`\n${ok} ok, ${mal} falhas`);
