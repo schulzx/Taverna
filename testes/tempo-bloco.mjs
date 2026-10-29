@@ -58,7 +58,11 @@ const corteDe = (app) => (de, ate) => {
 };
 const RELOGIO = ["  const avancarMinutos = (n) => avancarOsMinutos(n).texto;", "  const mostrarRolagensRef = useRef(true);"];
 const PES = ["  const semNome = (s) => ", "  /* Todo lugar a que se pode ir daqui a pé"];
-const PASSO = ["  const moverParaLocal = (alvo) => {", "  const talvezAndarNaCidade = (texto) => {"];
+/* MOVIDA (trilha A, 29/10), E O MOTIVO: a ponta de baixo era `const talvezAndarNaCidade`,
+   o órgão seguinte — que saiu do App com o prelúdio do turno (src/motor/preludio-do-turno.js,
+   provado byte a byte contra o recorte do App em teste-motor-preludio-do-turno.mjs). A ponta
+   passa a ser a secção que vinha depois dele; o recorte é o mesmo, caractere a caractere. */
+const PASSO = ["  const moverParaLocal = (alvo) => {", "\n  /* ---------------- IR PELO MAPA (v9.58) ----------------"];
 export const BLOCOS = ["relogio", "caminhada"];
 const CHAMADAS = {
   relogio: "voltou.r = avancarOsMinutos(caso.n, caso.noTurno ? fichaDoCaso : null);",

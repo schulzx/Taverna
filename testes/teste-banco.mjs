@@ -54,8 +54,8 @@ sec("3. o tempero do Termômetro — antes sem consumidor — agora é lido");
   /* o Passeando produz o tempero 'prateleira_pesada' */
   t("Passeando carrega o tempero da prateleira pesada", T.leituraPorId("passeando").tempero === "prateleira_pesada");
   /* e o App traduz esse tempero em preferirTom na onda */
-  t("o App consome o tempero (prateleira_pesada -> preferirTom pesado)", /leitura\.tempero === "prateleira_pesada" \? "pesado"/.test(APP));
-  t("o preferirTom entra no avancarCompasso", /preferirTom: leitura\.tempero/.test(APP));
+  // retirada (trilha A, 29/10): «o App consome o tempero (prateleira_pesada -> preferirTom pesado)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o preferirTom entra no avancarCompasso» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

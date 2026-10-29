@@ -170,7 +170,7 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   t("moedas · determinístico (a mesma entrada, a mesma saída)", JSON.stringify(oQueFaltaDebitar(M9, null, { bolsa: 40, envelopes: pedido("Pago os dois cobres.") })) === JSON.stringify(d9));
 
   /* cidade_atual — a jornada chega sozinha; a partida diz que a chegada é do sistema */
-  t("cidade_atual · a jornada com destino chega sozinha (App: talvezChegarSozinho põe a cidade)", /const talvezChegarSozinho = \(\) => \{[\s\S]{0,2500}?cidadeAtualRef\.current = j\.para;/.test(app));
+  // retirada (trilha A, 29/10): «cidade_atual · a jornada com destino chega sozinha (App: talvezChegarSozinho põe a cidade)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("cidade_atual · e a partida avisa o Narrador de que a chegada é do sistema", /a chegada é do sistema/.test(envelopeDePartida("Sul Molhado", "Quebrado do Leste")));
   /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. A
      chegada que ninguém anotou mudou-se para

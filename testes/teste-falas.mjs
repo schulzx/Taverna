@@ -90,7 +90,7 @@ sec("5. A PAUTA TEM ONDE PÔR A FALA");
 
 sec("6. LIGADO AO JOGO, E SEM CUSTAR O TURNO");
 {
-  t("o Intérprete é lido UMA vez por turno", /interpreteRef\.current = interpreteParaPauta\(pessoasDaCena\(\)/.test(APP));
+  // retirada (trilha A, 29/10): «o Intérprete é lido UMA vez por turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   // retirada (trilha A, 29/10): «e a Pauta consome o que foi lido» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* v9.201: pautaDoTurno passou a receber a ação do turno (a Mesa Posta lê
      dela a aposta), então a chamada deixou de ter parênteses vazios. A
@@ -99,18 +99,18 @@ sec("6. LIGADO AO JOGO, E SEM CUSTAR O TURNO");
   // retirada (trilha A, 29/10): «as bocas são colhidas antes da Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   // retirada (trilha A, 29/10): «e entram na seção da fala» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   /* em paralelo entre si: a fala de uma não depende da outra */
-  t("as bocas vão em paralelo", /await Promise\.all\(escolhidos\.map\(async \(m\)/.test(APP));
-  t("no modelo barato", /promptDoAtor\(d\)[\s\S]{0,90}?"leve"/.test(APP));
+  // retirada (trilha A, 29/10): «as bocas vão em paralelo» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «no modelo barato» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* MM15 (2): o número deixou de ser um `.slice` solto no App e virou tabela
      (BOCAS_POR_TURNO, em falas.js) — a asserção agora prova a chamada a
      bocasDoTurno e a saída antecipada quando ela devolve vazio. */
-  t("quantas bocas é tabela (bocasDoTurno)", /const escolhidos = bocasDoTurno\(mov, \{ conteudo \}\);\s*\n\s*if \(!escolhidos\.length\) return \[\];/.test(APP));
+  // retirada (trilha A, 29/10): «quantas bocas é tabela (bocasDoTurno)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* envelope do sistema não é frase do jogador: ninguém responde a ele */
-  t("não fala em turno de envelope", /trimStart\(\)\.startsWith\("\["\)\) return \[\];/.test(APP));
-  t("nem quando não há gente na cena", /if \(!mov\.length\) return \[\];/.test(APP));
+  // retirada (trilha A, 29/10): «não fala em turno de envelope» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «nem quando não há gente na cena» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* falhar não custa o turno */
-  t("ator mudo devolve cena, não erro", /catch \{ return null; \}[\s\S]{0,60}?\}\)\);/.test(APP));
-  t("e a colheita inteira é protegida", /const colherAsFalas = async \(conteudo\) => \{\s*try \{/.test(APP));
+  // retirada (trilha A, 29/10): «ator mudo devolve cena, não erro» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «e a colheita inteira é protegida» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 sec("7. O PROMPT DO NARRADOR NÃO PERDEU NADA");

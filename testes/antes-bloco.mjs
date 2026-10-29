@@ -71,6 +71,20 @@ const CHAMADAS = {
      (o pedido do App + o passo do motor) contra o dourado de aac1912. */
   escutaAnda: "    try {\n      const anda = aEscutaAnda({ escuta: escutaRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });\n      escutaRef.current = anda.escuta;\n      if (anda.erro) calou(\"a escuta anda\", anda.erro);\n    } catch (e) { calou(\"a escuta anda\", e); }\n",
   chao: "const c1 = varrerChao(); const c2 = porNoChaoAqui(novosNoChao); voltou.chao = { mesmo: c1 === chaoAntes, c1, c2 };",
+  /* (trilha A, 29/10, o prelúdio no motor) a escuta que LÊ o pedido saiu de
+     `enviar` com o trecho da frase às bocas: é src/motor/preludio-do-turno.js,
+     provada byte a byte contra o recorte do App em teste-motor-preludio-do-turno.mjs
+     (com as mordidas «o compasso que não segura na escuta» e «a forma que não
+     cede ao compasso»). O bloco de hoje leva o mesmo trecho, à letra do App de
+     374ddca, para a escuta continuar inteira aqui contra o dourado de aac1912. */
+  /* (trilha A, 29/10, o prelúdio no motor) o `varrerChao` saiu do App com o
+     prelúdio do turno (era o trecho de `enviar` que o chamava): é
+     src/motor/preludio-do-turno.js, provado byte a byte em
+     teste-motor-preludio-do-turno.mjs. O chão de hoje volta a tê-lo, à letra do
+     App de 374ddca, no sítio onde estava (logo depois da `cenaDoChao`) — o
+     recorte é o de antes, caractere a caractere, e a mordida do chão morde-o. */
+  varrerChao: "  const varrerChao = () => {\n    const c = oChaoDaCena({ chao: chaoRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current }).chao;\n    if (c !== chaoRef.current) { chaoRef.current = c; setChao(c); }\n    return c;\n  };\n",
+  escutaLe: "    /* (T1-A, 8.ª fatia) a escuta lê o pedido e anda no motor\n       (`oPedidoDaEscuta`, `aEscutaAnda`, src/motor/antes-do-mestre.js) */\n    let pedidoEsc = null, fioEsc = [], segurarEsc = false;\n    try {\n      const doPedido = oPedidoDaEscuta({ modo: modoRef.current, abertura: aberturaMundoRef.current, missoes: missoesRef.current, escuta: escutaRef.current }, conteudo);\n      if (doPedido.erro) calou(\"a escuta lê o pedido\", doPedido.erro);\n      pedidoEsc = doPedido.pedido; fioEsc = doPedido.fio; segurarEsc = doPedido.segurar;\n    } catch (e) { calou(\"a escuta lê o pedido\", e); pedidoEsc = null; fioEsc = []; segurarEsc = false; }\n",
 };
 export function recorteDeAntes(app) {
   const corte = corteDe(app);
@@ -81,13 +95,15 @@ export function recorteDeAntes(app) {
     escuta: { orgaos: "", bloco: corte("    let pedidoEsc = null, fioEsc = [], segurarEsc = false;", FIM_DO_PEDIDO) + corte("    try {\n      if (pedidoEsc) escutaRef.current = andarAEscuta(", FIM_DO_PASSO) },
   };
 }
+/* o chão de hoje com o varrer de 374ddca no sítio dele, depois da primeira linha */
+const comOVarrer = (c) => { const k = c.indexOf("\n") + 1; return c.slice(0, k) + CHAMADAS.varrerChao + c.slice(k); };
 export function recorteDeHoje(app) {
   const corte = corteDe(app);
   return {
     mundo: { orgaos: corte(...MUNDO), bloco: CHAMADAS.mundo },
     porta: { orgaos: "", bloco: corte("    /* (T1-A, 8.ª fatia) a pergunta \"o mundo anda neste turno?\"", FIM_DA_PORTA) },
-    chao: { orgaos: corte(...CHAO), bloco: CHAMADAS.chao },
-    escuta: { orgaos: "", bloco: corte("    /* (T1-A, 8.ª fatia) a escuta lê o pedido e anda no motor", FIM_DO_PEDIDO) + CHAMADAS.escutaAnda },
+    chao: { orgaos: comOVarrer(corte(...CHAO)), bloco: CHAMADAS.chao },
+    escuta: { orgaos: "", bloco: CHAMADAS.escutaLe + CHAMADAS.escutaAnda },
   };
 }
 /* um recorte vira uma função () → o que o bloco deixou nas variáveis dele, com os dublês no escopo */

@@ -71,8 +71,8 @@ sec("5. ligado ao jogo");
 {
   t("o App importa a memória do gesto", /from "\.\/gesto\.js"/.test(APP));
   t("há um ref e ele entra no save", /gestosRef/.test(APP) && /gestos: gestosRef\.current/.test(APP));
-  t("na virada, registra quem ficou", /GESTO_DA_POSTURA/.test(APP) && /registrarGesto\(gestosRef\.current/.test(APP));
-  t("na virada, cobra e leva à pauta", /cobrarNaVirada\(gestosRef\.current/.test(APP) && /envelopeDaMemoria\(cob\.pagamentos\)/.test(APP));
+  // retirada (trilha A, 29/10): «na virada, registra quem ficou» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «na virada, cobra e leva à pauta» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o traidor revelado vira delação" (`/gesto: "delatou"/`) está contida na de teste-reviravolta.mjs ("o App põe a delação na conta do alvo": `gesto: "delatou"` e `quem: rev.alvo, gesto: "delatou"`), que é a mesma fiação mais estrita. */
 }
 

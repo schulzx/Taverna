@@ -102,12 +102,12 @@ sec("8. ligada ao jogo (M6)");
   t("a tela da noite convida pelo NOME, nunca pelo marco", /CONVITE_DO_EPISODIO/.test(APP));
   t("iniciarNoite prepara o terreno: sementes do episódio E do pronto", /sementesDoEpisodio\(episodioId/.test(APP) && /dona: "pronto"/.test(APP));
   t("a postura da noite é declarada, não derivada", /posturaDaNoite\(episodioId\)/.test(APP));
-  t("os quatro motores de campanha dormem na noite", (APP.match(/modoRef\.current === "rapida"\) return;/g) || []).length >= 4);
+  // retirada (trilha A, 29/10): «os quatro motores de campanha dormem na noite» — as quatro guardas moravam em `mexerNaReviravolta`, `mexerNoEncalhe`, `mexerNaPostura` e `mexerNoEpisodio` (0 no App hoje): o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* movida na T2-A (o fio da história, 28/10/2026): o texto do marco que empurra saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
-  t("o relógio-contrato vive: cena conta e o marco empurra", /cenaResolvida\(episodioRef\.current\)/.test(APP) && /tetoDoMarco\(/.test(APP) && /oEnvelopeDoFio\("marcoEmpurra"\)/.test(APP));
-  t("o fim fecha em veredito com as contas do Livro", /vereditoDaNoite\(\{/.test(APP) && /fecharNoite\(/.test(APP));
+  // retirada (trilha A, 29/10): «o relógio-contrato vive: cena conta e o marco empurra» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o fim fecha em veredito com as contas do Livro» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("a conversão pula a criação: o herói já existe", /convertidoRef\.current/.test(APP) && /converterParaCampanha\(fichaViva\(\)/.test(APP));
   /* v9.356 (MM17 B): a criação passou a escolher região ou continente
      (mapaDaCriacao) antes da reserva gerarGeografia; o mundo da Noite

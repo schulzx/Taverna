@@ -46,10 +46,10 @@ sec("1. TODO PROPÓSITO SABE VIRAR ATO");
      promessa que o jogador lê e nunca vê. Medido DENTRO de `aplicarProposito`:
      `ef.tipo` tambem e o vocabulario dos consumiveis, que nada tem com isto. */
   const CORPO = APP.slice(APP.indexOf("const aplicarProposito"), APP.indexOf("const colherAsFalas"));
-  t("a função existe", CORPO.length > 200);
-  for (const tp of tipos) t(`o App sabe aplicar "${tp}"`, CORPO.includes(`ef.tipo === "${tp}"`));
-  t("e não aplica nada fora da lista", (CORPO.match(/ef\.tipo === "/g) || []).length === tipos.size);
-  t("e o que não conhece devolve falso", /return false;\s*\};/.test(CORPO));
+  // retirada (trilha A, 29/10): «a função existe» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o App sabe aplicar "<tipo>"», o laço sobre os tipos de PROPOSITOS — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)viar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)viar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)viar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «e não aplica nada fora da lista» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «e o que não conhece devolve falso» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 sec("2. NADA ACONTECE NO DIA ZERO");
@@ -117,19 +117,19 @@ sec("4. O QUE ACONTECEU TEM ONDE FICAR");
 
 sec("5. O MESTRE NÃO PROMETE O QUE NÃO PODE ENTREGAR");
 {
-  t("bolsa quase vazia não é roubada", /if \(inv\.length < 2\) return false;/.test(APP));
-  t("missão sem destino não nasce", /if \(!destino\) return false;/.test(APP));
+  // retirada (trilha A, 29/10): «bolsa quase vazia não é roubada» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «missão sem destino não nasce» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* e o que não aconteceu NÃO é marcado como cumprido */
-  t("só marca cumprido o que de fato aplicou", /if \(!aplicarProposito\(d\)\) continue;[\s\S]{0,120}?cumprirProposito/.test(APP));
-  t("um por turno", /feitos\.push\(d\);\s*break;/.test(APP));
+  // retirada (trilha A, 29/10): «só marca cumprido o que de fato aplicou» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «um por turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* chegar não é cumprir: falar_com a pessoa presente cumpriria no ato */
-  t("a missão exige viagem, não conversa", /etapas: \[\{ tipo: "ir_a", alvo: destino \}\]/.test(APP) && !/tipo: "falar_com", alvo: d\.nome/.test(APP));
+  // retirada (trilha A, 29/10): «a missão exige viagem, não conversa» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("e o destino nunca é a cidade onde já estou", /c\.nome !== cidadeAtualRef\.current/.test(APP));
 }
 
 sec("6. LIGADO AO TURNO, E ANTES DA BOCA");
 {
-  t("dispara no turno", /propositosDoTurnoRef\.current = dispararPropositos\(conteudo\);/.test(APP));
+  // retirada (trilha A, 29/10): «dispara no turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* antes das falas: a fala tem de sair de dentro do fato */
   /* v9.203: a reviravolta (mexerNaReviravolta) roda ENTRE os propósitos e
      as bocas — ela lê quem tem propósito de trair, então precisa do estado
@@ -139,10 +139,10 @@ sec("6. LIGADO AO TURNO, E ANTES DA BOCA");
      (reviravolta, encalhe, postura, episódio) — todos leem o estado que os
      propósitos deixaram e vêm antes da narração. A ordem que importa —
      propósitos ANTES das bocas — segue intacta; só cresceu o miolo. */
-  t("antes das bocas", /dispararPropositos\(conteudo\);[\s\S]{0,220}?falasDoTurnoRef\.current = await colherAsFalas/.test(APP));
-  t("não dispara em envelope do sistema", /const dispararPropositos = \(conteudo\) => \{\s*try \{\s*if \(String\(conteudo \|\| ""\)\.trimStart\(\)\.startsWith\("\["\)\) return \[\];/.test(APP));
-  t("falhar não custa o turno", /const dispararPropositos = \(conteudo\) => \{\s*try \{/.test(APP) && /\} catch \{ return \[\]; \}\s*\};\s*\n\s*const aplicarProposito/.test(APP));
-  t("o que aconteceu é salvo", /if \(feitos\.length\) salvar\(\{ baseMundo: baseMundoRef\.current \}\);/.test(APP));
+  // retirada (trilha A, 29/10): «antes das bocas» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «não dispara em envelope do sistema» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «falhar não custa o turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o que aconteceu é salvo» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 sec("7. A SEÇÃO 'ACABOU' GANHOU DONO");
@@ -159,7 +159,7 @@ sec("8. A ÍNDOLE VEM MESMO DE QUEM O NARRADOR TROUXE");
 {
   /* a gente da base nasce com índole; o NPC que a IA criou, não — e sem
      isto ele nunca teria propósito nenhum */
-  t("o App deriva quando falta", /if \(pessoa && pessoa\.indole\) return pessoa\.indole;\s*return indoleDe\(sementeMundo\(\), pessoa \|\| \{\}\);/.test(APP));
+  // retirada (trilha A, 29/10): «o App deriva quando falta» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   const p = { nome: "Fina Da Rede" };
   t("e derivar dá a MESMA índole que a base daria", JSON.stringify(I.indoleDe("s", p)) === JSON.stringify(I.indoleDe("s", { nome: "Fina Da Rede", id: "outro-id" })));
 }

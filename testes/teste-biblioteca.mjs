@@ -416,7 +416,7 @@ sec("7. A LIGAÇÃO — o mestre consulta nas quatro portas");
   /* MM18 (11/10): a forma também cede à ESCUTA — numa pergunta do jogador,
      no degrau da escuta, nem compasso nem forma nascem (`seguraOMundo`,
      escuta.js). A regra desta linha (a forma cede ao compasso) continua. */
-  t("a cena comum entra no ponto único do turno", /const formaDaCena = doCompasso (\|\| segurarEsc )?\? "" : talvezDarFormaACena\(conteudo\);/.test(app));
+  // retirada (trilha A, 29/10): «a cena comum entra no ponto único do turno» — liam o recorte de `enviar (o prelúdio)`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)/.test(app));
   /* v9.104: a PAUTA entrou na frente da nota, e casar com a lista inteira
      quebra a cada sistema que se muda para dentro dela. O que importa
      afirmar é que a peça continua na nota e que a Pauta vem primeiro. */
@@ -434,13 +434,7 @@ sec("7. A LIGAÇÃO — o mestre consulta nas quatro portas");
   // retirada (trilha A, 29/10): «e vai junto da nota» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "com a Pauta na frente" provava `const nota = [pauta, ...doTurno]` — o mesmo fragmento que teste-mm18-fiacao.mjs §3 exige em ordem ("a pauta vem primeiro, e o que fica depois") e que teste-compasso.mjs guarda ("entra na nota"). Dita três vezes, fica guardada na suíte da ordem. */
   // retirada (trilha A, 29/10): «e o compasso antes da forma» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
-  const g = app.split("const talvezDarFormaACena")[1].split("\n  };")[0];
-  /* duas formas no mesmo turno é o sistema falando por cima de si mesmo */
-  t("não dá forma se já houver uma", /includes\("A FORMA"\)/.test(g));
-  /* dar forma a um envelope de sistema seria moldar a resposta a mim mesmo */
-  t("nem a turno que não é do jogador", /startsWith\("\["\)/.test(g));
-  t("e conta o turno sempre", /contarTurnoDeCena\(estanteRef\.current\)/.test(g));
-  t("também protegida por try", /try \{/.test(g) && /catch \{ return ""; \}/.test(g));
+  // retirada (trilha A, 29/10): «não dá forma se já houver uma», «nem a turno que não é do jogador», «e conta o turno sempre», «também protegida por try» — liam o recorte de `talvezDarFormaACena`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 console.log(`\nbiblioteca v9.86: ${ok} passaram, ${mal} falharam`);

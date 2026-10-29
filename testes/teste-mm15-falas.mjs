@@ -241,10 +241,8 @@ sec("8. a fiação no App.jsx (MM15, 2)");
   const caminho = fileURLToPath(new URL("../src/App.jsx", import.meta.url));
   const APP = fs.readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
 
-  t("o App importa bocasDoTurno e falaDaResposta de falas.js",
-    /import \{[^}]*bocasDoTurno[^}]*falaDaResposta[^}]*\} from "\.\/falas\.js";|import \{[^}]*falaDaResposta[^}]*bocasDoTurno[^}]*\} from "\.\/falas\.js";/.test(APP));
-  t("colherAsFalas lê a resposta pelo leitor próprio da boca",
-    /const fala = falaDaResposta\(bruto\);/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa bocasDoTurno e falaDaResposta de falas.js» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «colherAsFalas lê a resposta pelo leitor próprio da boca» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 
   /* a prova negativa: dentro de colherAsFalas, nenhum extrairJSON(bruto) —
      isolamos o corpo da função pelo mesmo nome que a fecha (enviar, a
@@ -252,7 +250,7 @@ sec("8. a fiação no App.jsx (MM15, 2)");
      resto do arquivo (linhas ~357 e ~364, do Narrador) */
   const ini = APP.indexOf("const colherAsFalas = async (conteudo) => {");
   const fim = APP.indexOf("const enviar = useCallback(async (conteudo, persAtual, histBase) => {", ini);
-  t("colherAsFalas e enviar estão os dois no arquivo, na ordem esperada", ini !== -1 && fim !== -1 && fim > ini);
+  // retirada (trilha A, 29/10): «colherAsFalas e enviar estão os dois no arquivo, na ordem esperada» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   const corpo = APP.slice(ini, fim);
   t("e dentro dela não sobra extrairJSON(bruto) — é o leitor próprio quem lê", !/extrairJSON\(bruto\)/.test(corpo));
 
@@ -269,8 +267,7 @@ sec("8. a fiação no App.jsx (MM15, 2)");
      sendo chamado sempre — comportamento intocado por esta etapa, e já
      coberto pelo §6 de teste-falas.mjs ("o Intérprete é lido UMA vez por
      turno") e pelo ORCAMENTO do §7 acima. */
-  t("colherAsFalas chama chamarModelo só dentro do map de `escolhidos`",
-    /escolhidos\.map\(async \(m\) => \{[\s\S]*?chamarModelo\(/.test(corpo));
+  // retirada (trilha A, 29/10): «colherAsFalas chama chamarModelo só dentro do map de `escolhidos`» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* bocasDoTurno é pura e determinística (sem sorte própria — o §3/§5
      acima já variam a semente do Intérprete, que decide QUEM entra em
      `movimentos`; aqui basta uma cena fixa com os três, porque o número

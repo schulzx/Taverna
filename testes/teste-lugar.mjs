@@ -101,13 +101,7 @@ sec("5. A ONDA CEDE AO VILÃO");
   /* O passo dele e o clímax do compasso podiam cair no mesmo turno, e nada
      os coordenava. É o MESMO defeito que `segurar` já resolvia para
      combate, masmorra e viagem — só que ninguém tinha ligado o vilão. */
-  const g = app.split("const talvezAndarOCompasso")[1].split("\n  };")[0];
-  t("a onda repara no envelope do vilão", /— MOVIMENTO DO SISTEMA\]/.test(g));
-  t("na revelação", /MOMENTO ÚNICO DA CAMPANHA/.test(g));
-  t("e na queda", /\[A QUEDA —/.test(g));
-  /* e ela ESPERA sem perder o turno: a onda é cíclica e pode adiar, o
-     passo do vilão acontece uma vez a cada seis dias de campanha */
-  t("e devolve o turno em vez de perdê-lo", /turnos: Math\.max\(0, \(compassoRef\.current\.turnos \|\| 0\) - 1\)/.test(g));
+  // retirada (trilha A, 29/10): «a onda repara no envelope do vilão», «na revelação», «e na queda», «e devolve o turno em vez de perdê-lo» — liam o recorte de `talvezAndarOCompasso`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 
   /* o comportamento em si, sem o App: `segurar` continua sendo a via */
   let c = garantirCompasso(null);

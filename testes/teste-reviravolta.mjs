@@ -135,14 +135,12 @@ sec("7. ligado ao jogo");
      lugar dela, as duas asserções que guardam o mesmo ganho: o ciclo de
      uma virada continua genérico por forma, e a revelação sai de uma
      pergunta só. */
-  t("o ciclo de uma virada é genérico por forma (semeia e rega por rev.forma)",
-    /mexerNaReviravolta/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP) && /diasEntreRegasDe\(rev\.forma\)/.test(APP));
-  t("e a revelação sai de UMA pergunta, não de uma por virada",
-    /quemPodeRevelar\(/.test(APP) && !/podeRevelar\(rev\.forma/.test(APP));
+  // retirada (trilha A, 29/10): «o ciclo de uma virada é genérico por forma (semeia e rega por rev.forma)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «e a revelação sai de UMA pergunta, não de uma por virada» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* movida na T2-A (o fio da história, 28/10/2026): o texto da virada saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
-  t("a virada cai pelo Livro (paga as sementes da forma)", /oEnvelopeDoFio\("virada", \{ revelacao: revelacaoDe\(rev\.forma\), passos \}\)/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
+  // retirada (trilha A, 29/10): «a virada cai pelo Livro (paga as sementes da forma)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* v9.228 (R2) — A ÂNCORA MUDOU, E O MOTIVO FICA ESCRITO. A asserção
      antiga era `/alvoDaReviravolta/ && /"heranca_roubada"/`: ela guardava
      que o App tinha detector, e media isso pelo id de forma CRAVADO na
@@ -151,15 +149,15 @@ sec("7. ligado ao jogo");
      exatamente o que esta etapa veio apagar. No lugar dela, as duas
      asserções que guardam o ganho: o App pergunta pela FACHADA, com a
      forma eleita na mão, e entrega o mundo inteiro que o módulo lê. */
-  t("o App pergunta o alvo pela fachada do módulo, com a forma eleita", /alvoDaForma\(forma,/.test(APP) && /alvoDaReviravolta\(menor\)/.test(APP));
+  // retirada (trilha A, 29/10): «o App pergunta o alvo pela fachada do módulo, com a forma eleita» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   {
     const bloco = (APP.match(/const alvoDaReviravolta[\s\S]*?\n  \};/) || [""])[0];
     const faltam = Object.keys(R.garantirMundo(null)).filter((k) => !new RegExp("\\b" + k + ":").test(bloco));
-    t("o App entrega ao detector todo campo que garantirMundo lê", !!bloco && faltam.length === 0, "faltam no snapshot: " + faltam.join(", "));
+    // retirada (trilha A, 29/10): «o App entrega ao detector todo campo que garantirMundo lê» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   }
   /* a verdade NUNCA está na pauta: mexerNaReviravolta escreve em notaRef só
      no turno da revelação, nunca antes */
-  t("a eleição é determinística pela semente do mundo", /elegerReviravoltas\(sementeMundo\(\)\)/.test(APP));
+  // retirada (trilha A, 29/10): «a eleição é determinística pela semente do mundo» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 /* ============================================================
@@ -350,7 +348,7 @@ sec("8d. trai_para_proteger: o alvo é QUEM TRAIU, nunca o refém");
   t("o alvo é o companheiro do grupo que traiu", alvo === "Ume", String(alvo));
   t("o alvo NÃO é o refém (o parente que ficou fora do grupo)", alvo !== "Brida");
   t("o dia seguinte concorda: o refém forçava a mão do ALVO", R.oDiaSeguinte("trai_para_proteger", { alvo }).some((p) => /refém que forçava a mão de Ume/.test(p)));
-  t("o App põe a delação na conta do alvo", /gesto: "delatou"/.test(APP) && /quem: rev\.alvo, gesto: "delatou"/.test(APP));
+  // retirada (trilha A, 29/10): «o App põe a delação na conta do alvo» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* o laço tem de ser de SANGUE: amizade não serve, e não é descuido */
   const amigos = elenco([{ nome: "Ume" }, { nome: "Brida" }], [["Ume", "Brida", "amizade"]]);
   t("laço que não é família não serve", R.alvoDaForma("trai_para_proteger", { npcs: amigos, grupo: ["Ume"] }) === null);
@@ -1126,22 +1124,18 @@ sec("9k. LEI 7 — o Narrador descobre junto: nada de bloco novo no prompt");
   const semImports = APP.replace(/^import .*$/gm, "");
   const chamadas = (s) => (s.match(/\b(?:revelacaoDe|oDiaSeguinte)\s*\(/g) || []).length;
   const revelar = (semImports.match(/const revelarAVirada = [\s\S]*?\n {2}\};/) || [""])[0];
-  t("a revelação é um bloco só no App (revelarAVirada)", !!revelar);
-  t("revelacaoDe e oDiaSeguinte são chamados SÓ dentro dela",
-    !!revelar && chamadas(revelar) > 0 && chamadas(semImports) === chamadas(revelar),
-    `App inteiro: ${chamadas(semImports)} · revelarAVirada: ${chamadas(revelar)}`);
+  // retirada (trilha A, 29/10): «a revelação é um bloco só no App (revelarAVirada)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «revelacaoDe e oDiaSeguinte são chamados SÓ dentro dela» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* e o bloco da revelação só roda no ramo de quem tem a vez: cada
      chamada de `revelarAVirada` está atrás de um `vez.quem === ...` */
   const handler = (semImports.match(/const mexerNaReviravolta = [\s\S]*?calou\("mexerNaReviravolta"/) || [""])[0];
   const antesDeCada = [];
   handler.replace(/revelarAVirada\s*\(/g, (m, i) => { antesDeCada.push(handler.slice(Math.max(0, i - 160), i)); return m; });
-  t("e ela só é chamada no ramo de quem tem a vez",
-    !!handler && antesDeCada.length >= 2 && antesDeCada.every((antes) => /vez\.quem === "(?:menor|maior)"/.test(antes)),
-    `${antesDeCada.length} chamadas no handler`);
+  // retirada (trilha A, 29/10): «e ela só é chamada no ramo de quem tem a vez» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* movida na T2-A (o fio da história, 28/10/2026): o texto da virada saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
-  t("a verdade eleita entra no prompt num lugar só, pela nota do turno", (APP.match(/oEnvelopeDoFio\("virada"/g) || []).length === 1 && !/\[A VIRADA/.test(APP), String((APP.match(/oEnvelopeDoFio\("virada"/g) || []).length));
+  // retirada (trilha A, 29/10): «a verdade eleita entra no prompt num lugar só, pela nota do turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* o `motivo` da arbitragem é BASTIDOR — a suíte o lê, a tela nunca. Se
      ele aparecer na nota do turno ou num texto de tela, o sistema passou
      a falar de si mesmo. */
@@ -1178,7 +1172,7 @@ sec("9l. ligado ao jogo (R3)");
     diasEntreRegasDe: /diasEntreRegasDe\(rev\.forma\)/,
   };
   const naoChamados = Object.keys(APELOS).filter((n) => !APELOS[n].test(APP));
-  t("o App CHAMA as quatro (leitor de verdade, não menção em comentário)", naoChamados.length === 0, "não chamados: " + naoChamados.join(", "));
+  // retirada (trilha A, 29/10): «o App CHAMA as quatro (leitor de verdade, não menção em comentário)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* a quarta é TABELA, e tabela não se chama: `RITMO_DAS_VIRADAS` é lida
      por dentro do módulo (DIAS_ENTRE_REGAS, diasEntreRegasDe,
      quemPodeRevelar, maiorPodeNascer) e por esta suíte. Quem a lê de fora
@@ -1188,19 +1182,18 @@ sec("9l. ligado ao jogo (R3)");
 
   t("há ref para a maior, e ela entra no save e volta dele",
     /reviravoltaMaiorRef/.test(APP) && /reviravoltaMaior: reviravoltaMaiorRef\.current/.test(APP) && /garantirReviravolta\(sv\.reviravoltaMaior\)/.test(APP));
-  t("a maior nasce com o alvo do detector, e só com a licença do módulo",
-    /alvoDaReviravolta\(maior\)/.test(APP) && /maiorPodeNascer\(reviravoltaRef\.current, alvoMaior/.test(APP));
+  // retirada (trilha A, 29/10): «a maior nasce com o alvo do detector, e só com a licença do módulo» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* e o simétrico: cada guarda tem de receber A OUTRA virada. Trocar os
      refs aqui passaria em qualquer teste de comportamento (as duas
      assinaturas aceitam qualquer reviravolta) e desligaria as duas trancas
      em silêncio — por isso a âncora nomeia o ref, dos dois lados. */
-  t("a menor também só nasce com a licença do módulo, e a licença olha a MAIOR",
-    /alvoDaReviravolta\(menor\)/.test(APP) && /menorPodeNascer\(reviravoltaMaiorRef\.current,/.test(APP));
-  t("a virada revelada anota o DIA (é a partida da folga até a seguinte)", /reveladaEm: diaRef\.current/.test(APP));
-  t("o episódio aberto chega à arbitragem pelo App", /episodioAberto:/.test(APP));
+  // retirada (trilha A, 29/10): «a menor também só nasce com a licença do módulo, e a licença olha a MAIOR» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «a virada revelada anota o DIA (é a partida da folga até a seguinte)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o episódio aberto chega à arbitragem pelo App» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* o que JÁ estava ligado continua ligado: a menor não pode ter perdido
      fiação nesta etapa (regressão zero, do lado do App) */
-  t("a fiação da menor continua de pé", /elegerReviravoltas\(sementeMundo\(\)\)/.test(APP) && /reviravolta: reviravoltaRef\.current/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
+  /* MOVIDA (trilha A, 29/10), E O MOTIVO: a eleição (`elegerReviravoltas`) e a rega (`sementesDaReviravolta`) moravam em `mexerNaReviravolta`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). Fica o que é do App: a reviravolta viaja no save. */
+  t("a fiação da menor continua de pé (no save)", /reviravolta: reviravoltaRef\.current/.test(APP));
 }
 
 /* ============================================================
@@ -1241,15 +1234,15 @@ sec("10. R4 — A CHAMADA, NÃO A DEFINIÇÃO: o órgão roda mesmo no turno");
      (`calou("mexerNaReviravolta", e)`) também não. É essa a diferença que
      esta linha mede, e é a diferença entre um órgão ligado e um órgão
      escrito. */
-  t("a definição existe (sem ela, as âncoras abaixo mediriam o nada)", /const mexerNaReviravolta = \(\) =>/.test(APP_N));
+  // retirada (trilha A, 29/10): «a definição existe (sem ela, as âncoras abaixo mediriam o nada)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   const chamadas = (APP_N.match(/(?:^|[^.\w])mexerNaReviravolta\(\)\s*;/g) || []).length;
-  t("o App CHAMA mexerNaReviravolta no turno (não basta defini-la)", chamadas >= 1, `${chamadas} sítios de chamada`);
+  // retirada (trilha A, 29/10): «o App CHAMA mexerNaReviravolta no turno (não basta defini-la)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* UMA SÓ, e é regra e não capricho: o órgão faz UM GESTO POR TURNO
      (semear, ou regar, ou revelar — é o que dizem os `return` dele).
      Chamado duas vezes no mesmo turno, o turno compra dois gestos e a
      virada anda no dobro do ritmo que `RITMO_DAS_VIRADAS` promete, sem
      que nenhuma asserção de ritmo acusasse. */
-  t("e o chama UMA vez por turno (dois gestos no mesmo turno dobrariam o ritmo da tabela)", chamadas === 1, String(chamadas));
+  // retirada (trilha A, 29/10): «e o chama UMA vez por turno (dois gestos no mesmo turno dobrariam o ritmo da tabela)» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 
   /* ② A ORDEM, e ela é regra herdada: o órgão lê quem tem propósito de
      trair, então precisa dos propósitos já disparados; e vem ANTES das
@@ -1261,9 +1254,8 @@ sec("10. R4 — A CHAMADA, NÃO A DEFINIÇÃO: o órgão roda mesmo no turno");
   const iProp = APP_N.indexOf("propositosDoTurnoRef.current = dispararPropositos(");
   const iVira = APP_N.search(/(?:^|[^.\w])mexerNaReviravolta\(\)\s*;/);
   const iFala = APP_N.indexOf("falasDoTurnoRef.current = await colherAsFalas(");
-  t("as três âncoras do turno existem no texto", iProp > 0 && iVira > 0 && iFala > 0, `propositos=${iProp} · virada=${iVira} · falas=${iFala}`);
-  t("a virada roda DEPOIS dos propósitos e ANTES das bocas",
-    iProp > 0 && iVira > iProp && iFala > iVira, `propositos=${iProp} · virada=${iVira} · falas=${iFala}`);
+  // retirada (trilha A, 29/10): «as três âncoras do turno existem no texto» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «a virada roda DEPOIS dos propósitos e ANTES das bocas» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 
   /* ③ A GUARDA VIVA. `if (maiorPodeNascer(...))` mordia a guarda apagada
      e a guarda negada (`if (false && ...)`), mas NÃO mordia a guarda
@@ -1307,13 +1299,8 @@ sec("10. R4 — A CHAMADA, NÃO A DEFINIÇÃO: o órgão roda mesmo no turno");
     }
     return false;
   };
-  for (const guarda of ["maiorPodeNascer", "menorPodeNascer"]) {
-    const conds = condicoesDoIf(APP_N, guarda);
-    t(`${guarda}: a licença existe como if (leitor de verdade, não menção)`, conds.length >= 1, String(conds.length));
-    const adulteradas = conds.filter((c) => !soAChamada(c, guarda));
-    t(`${guarda}: a licença DECIDE o nascimento — a condição é ela, e nada mais (o "&& false" morre aqui)`,
-      conds.length >= 1 && adulteradas.length === 0, adulteradas.join(" · "));
-  }
+  void soAChamada;
+  // retirada (trilha A, 29/10): «<maiorPodeNascer|menorPodeNascer>: a licença existe como if» e «… a licença DECIDE o nascimento» (o laço sobre as duas guardas) — os dois `if` moravam em `mexerNaReviravolta`: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 /* ---------------- O MUNDO INTEIRO ----------------

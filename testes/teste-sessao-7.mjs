@@ -276,7 +276,7 @@ sec("5. a fiação no App (frontend, 12/10) — o motor só vale se o jogo o cha
   t("o naoParte do resolver segue a cascata sem o envelope de destino", /if \(r && r\.naoParte\) return false;\s*\n\s*if \(r\.tipo === "achei"\)/.test(app));
   t("a viagem que o resolver achou vai marcada como inferida", app.includes('viajar(nome, { origem: "frase", inferida: true });'));
   t("a jornada nova marca a inferência e apaga a chegada anterior", /jornadaInferidaRef\.current = opcoes && opcoes\.inferida \? String\(alvo \|\| ""\) : "";\s*\n\s*chegadaInferidaRef\.current = "";/.test(app));
-  t("a chegada guarda a cidade só quando a jornada era inferida", app.includes('chegadaInferidaRef.current = jornadaInferidaRef.current && jornadaInferidaRef.current === j.para ? j.para : "";'));
+  // retirada (trilha A, 29/10): «a chegada guarda a cidade só quando a jornada era inferida» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("o mundo das missões leva chegadaInferida", app.includes('chegadaInferida: chegadaInferidaRef.current || "",'));
   t("a frase do jogador que nomeia a cidade confirma a chegada", /chegadaConfirmada\(acao, ci, lugaresDaqui\(\)/.test(app));
   t("a fogueira com revela: manhã de revelação e o Livro pago", app.includes('const tipo = r.revela ? "revelacao"') && /if \(r\.revela\) pagarSementesDoElo\(\);/.test(app));

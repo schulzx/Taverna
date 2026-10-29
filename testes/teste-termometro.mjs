@@ -90,10 +90,10 @@ sec("4. A LEI: lê fatos, e a ORDEM da onda é intocável");
 
 sec("5. ligado ao jogo");
 {
-  t("o App importa o Termômetro", /import \{ lerTermometro, folegoDaLeitura \}/.test(APP));
-  t("há um snapshot montado dos refs", /snapshotDoTermometro/.test(APP));
-  t("o fôlego entra no avancarCompasso", /folego: folegoDaLeitura\(leitura\.leitura\)/.test(APP));
-  t("o snapshot lê o corpo e o relógio", /fracaoPV/.test(APP) && /relogioMaisAlto/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa o Termômetro» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «há um snapshot montado dos refs» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o fôlego entra no avancarCompasso» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «o snapshot lê o corpo e o relógio» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

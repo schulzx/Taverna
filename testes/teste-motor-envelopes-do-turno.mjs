@@ -95,6 +95,12 @@ const NA_PAUTA_DO_MOTOR = ["fioInterludio", "genteCompanheiro"];
    meia-noite») em teste-motor-pedido-do-turno.mjs, 275 casos. O dourado dele
    fica; o lado de HOJE já não tem o que recortar. */
 const NO_PEDIDO_DO_MOTOR = ["rodape"];
+/* (trilha A, 29/10, o prelúdio no motor) SEIS SÍTIOS FORAM COM O PRELÚDIO
+   (viagemEmboscada, fioMarco, fioRumores, fioMundo, fioVirada, caminhoChegada:
+   o porquê e as funções em envelopes-bloco.mjs, SITIOS_DO_PRELUDIO). Ao
+   contrário dos três de cima, o lado de HOJE continua a corrê-los: o sítio
+   vem do texto guardado do App de 374ddca, e as formas das tabelas da viagem,
+   do fio e do caminho seguem cobertas e mordidas aqui. */
 const BLOCOS_DE_HOJE = BLOCOS.filter((b) => !NA_PAUTA_DO_MOTOR.includes(b) && !NO_PEDIDO_DO_MOTOR.includes(b));
 const recorte = Object.assign({}, ...BLOCOS_DE_HOJE.map((b) => recorteDosEnvelopes(APP, { novo: true, so: b })));
 const hoje = Object.fromEntries(BLOCOS_DE_HOJE.map((b) => [b, blocoComoFuncao(recorte[b])]));
@@ -110,6 +116,12 @@ const divergem = (bloco, novas) => guardadas(novas).filter((f, i) => !igual(f, D
 const HOJE = Object.fromEntries(BLOCOS_DE_HOJE.map((b) => [b, fotosDeHoje(b)]));
 
 sec("1 · cada grupo, byte a byte contra o App de antes");
+{
+  const { SITIOS_DO_PRELUDIO } = await import("./envelopes-bloco.mjs");
+  const guardados = Object.keys(SITIOS_DO_PRELUDIO.sitios);
+  const voltaram = guardados.filter((b) => APP.includes(SITIOS_DO_PRELUDIO.sitios[b]));
+  t(`os ${guardados.length} sítios guardados do prelúdio (${SITIOS_DO_PRELUDIO.commit}) já não estão no App${voltaram.length ? " — voltaram: " + voltaram.join(", ") : ""}`, guardados.length === 6 && voltaram.length === 0);
+}
 t(`o dourado tem ${N_CASOS} casos em cada grupo, e o commit de antes de cada um`, BLOCOS.every((b) => (D.blocos[b] || []).length === N_CASOS && D.antes[b]));
 t(`o dourado guarda o hash e o comprimento de cada caso, e o texto só nos ${AMOSTRA} primeiros`, BLOCOS.every((b) => D.blocos[b].every((f, i) => /^[0-9a-f]{32}$/.test(f.h) && Number.isInteger(f.n) && ("texto" in f) === (i < AMOSTRA))));
 t("o dicionário de cada sítio: cada foto distinta uma vez só, todas usadas, e guardar o lido devolve o guardado", BLOCOS.every((b) => { const g = GUARDADO.blocos[b]; const vistos = new Set(g.caso); return new Set(g.fotos.map((f) => JSON.stringify(f))).size === g.fotos.length && vistos.size === g.fotos.length && JSON.stringify(douradoGuardado(D.blocos[b])) === JSON.stringify(g); }));

@@ -34,8 +34,12 @@ const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").
 const pos = (frag) => APP.indexOf(frag);
 const quantas = (frag) => APP.split(frag).length - 1;
 
-/* o corpo de `enviar`, do envio à chamada: a ordem só vale lá dentro */
-const iEnviar = pos("ultimoPedidoRef.current = String(conteudo || \"\").trimStart().startsWith(\"[\")");
+/* o corpo de `enviar`, do envio à chamada: a ordem só vale lá dentro.
+   MOVIDA (trilha A, 29/10), E O MOTIVO: a ponta era `ultimoPedidoRef.current = …`,
+   a primeira linha do prelúdio do turno — que se mudou para
+   src/motor/preludio-do-turno.js (oPreludioDoTurno). A ponta passa a ser a
+   abertura de `enviar`, que continua no App. */
+const iEnviar = pos("const enviar = useCallback(async (conteudo, persAtual, histBase) => {");
 const iChamada = pos("await chamarMestre(systemRef.current, novoHist)");
 const ENVIAR = iEnviar >= 0 && iChamada > iEnviar ? APP.slice(iEnviar, iChamada) : "";
 const ord = (...frags) => {
@@ -54,7 +58,8 @@ sec("1. o App importa a escuta e as duas peças novas do mural");
   /* (trilha A, 29/10) três no App: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js e levou o `escutarOTurno`, o `separarEnvelopes`, o `fechoDoPedido` e o `aEscutaAnda` (a escuta que corta e a que anda são dele) */
   const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta"];
   const im2 = APP.match(/import \{([^}]*)\} from "\.\/motor\/antes-do-mestre\.js";/);
-  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])) && !!im2 && /\boPedidoDaEscuta\b/.test(im2[1]), imp ? "" : "sem import");
+  /* (trilha A, 29/10) e o `oPedidoDaEscuta` já não é do App: quem o chama é o prelúdio do turno (src/motor/preludio-do-turno.js), que o App chama; fica o import do motor, que o App ainda lê */
+  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])) && !!im2, imp ? "" : "sem import");
   const of = APP.match(/import \{([^}]*)\} from "\.\/ofertas\.js";/);
   t("ofertas.js entrega genteDaHistoria e cartazVencido", !!of && /\bgenteDaHistoria\b/.test(of[1]) && /\bcartazVencido\b/.test(of[1]));
 }
@@ -71,10 +76,11 @@ sec("2. o estado: um campo novo do save, ignorado pela versão antiga");
 sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
 {
   t("o corpo de enviar foi achado", ENVIAR.length > 1000);
-  /* (movido, T1-A 8.ª fatia: o pedido lê-se em oPedidoDaEscuta, no motor; a ordem continua a do App) */
-  t("o pedido é lido ANTES de o compasso decidir", ord("const doPedido = oPedidoDaEscuta(", "segurarEsc = doPedido.segurar;", "talvezAndarOCompasso(conteudo, { segurar: segurarEsc })"));
-  t("numa pergunta segura, a forma da cena também não sai", ENVIAR.includes("doCompasso || segurarEsc ? \"\" : talvezDarFormaACena(conteudo)"));
-  t("o compasso aceita o segurar de quem chama, pela porta de sempre", /segurar: segurarExtra \|\| !!combateRef\.current/.test(APP));
+  // retirada (trilha A, 29/10): «o pedido é lido ANTES de o compasso decidir» — o trecho de `enviar` da frase às bocas (a escuta que lê o pedido, o compasso, a forma) mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno); a ordem está provada byte a byte contra o recorte do App em teste-motor-preludio-do-turno.mjs (§3) e mordida lá (§5, «o compasso que não segura na escuta»)
+  // retirada (trilha A, 29/10): «numa pergunta segura, a forma da cena também não sai» — idem, e a mordida é «a forma que não cede ao compasso» (§5)
+  // retirada (trilha A, 29/10): «o compasso aceita o segurar de quem chama, pela porta de sempre» — o `talvezAndarOCompasso` só era chamado por esse trecho e foi com ele para o prelúdio (à letra); o texto do motor não se lê (teste-assercoes-de-texto)
+  /* a ordem que fica no App: o prelúdio (a escuta, o compasso, a forma) entrega ao pedido */
+  t("o prelúdio corre ANTES do pedido, e entrega-lhe a escuta", ord("await oPreludioDoTurno(estadoDoPreludio()", "oPedidoDoTurno(estadoDoPedido(), { frase: conteudo, persAtual, histBase, oficina, doCompasso, formaDaCena, daFrente, daVirada, daTrama, pedidoEsc, fioEsc }"));
   // retirada (trilha A, 29/10): «a nota passa pela escuta, envelope a envelope, com os adiados de antes» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   // retirada (trilha A, 29/10): «a pauta vem primeiro, e o que fica depois» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   // retirada (trilha A, 29/10): «o que espera volta à nota do turno seguinte» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)

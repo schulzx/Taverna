@@ -112,9 +112,9 @@ sec("5. a config e o console de autor");
 
 sec("6. ligado ao jogo — e nunca anunciada");
 {
-  t("o App importa as posturas", /import \{[^}]*derivarPostura[^}]*\} from "\.\/posturas\.js"/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa as posturas» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("há um ref e ele entra no save", /posturaRef/.test(APP) && /postura: posturaRef\.current/.test(APP));
-  t("a postura é derivada por turno", /mexerNaPostura\(\)/.test(APP) && /derivarPostura\(posturaRef\.current/.test(APP));
+  // retirada (trilha A, 29/10): «a postura é derivada por turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("o adversário recebe o viés de moral", /posturaMoral: moralDoInimigo/.test(APP));
   /* G3: o oráculo e o mercado leem a postura pelos ganchos existentes */
   t("o oráculo recebe o viés da postura (por tipo)", /viesDoOraculo\(\(posturaRef\.current \|\| \{\}\)\.postura, tipoDaPergunta/.test(APP));

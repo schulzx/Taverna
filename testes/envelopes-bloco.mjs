@@ -19,6 +19,7 @@
    não é do JavaScript fica em `faltas` (a suíte exige-o vazio), em vez de
    cair calado. */
 import { createHash } from "node:crypto";
+import fs from "node:fs";
 import * as calendario from "../src/calendario.js";
 import * as geografia from "../src/geografia.js";
 import * as semCidade from "../src/masmorra-sem-cidade.js";
@@ -301,6 +302,20 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   corpoRevide: "notaRef.current", corpoFogoAmigo: "notaRef.current", corpoRitual: "notaRef.current", corpoDadiva: "notaRef.current", corpoQuedaSegurada: "notaRef.current", corpoFuria: "notaRef.current", corpoAguentei: "notaRef.current", corpoRaid: "notaRef.current", corpoOportunidade: "notaOp", corpoVitoria: "notaRef.current", corpoFuga: "notaGolpes", corpoQuedaAltura: "o.envelope",
   /* a colheita e a execução devolvem pelo próprio return do sítio; as outras oito, a lista */
   desfechoColheita: "partes", desfechoExecucao: "partes", desfechoGolpe: "partes", desfechoGeminada: "partes", desfechoArea: "partes", desfechoFogoAmigo: "partes", desfechoCondicao: "partes", desfechoDrenou: "partes", desfechoImune: "partes", desfechoErrou: "partes" };
+/* (trilha A, 29/10, o prelúdio no motor) OS SEIS SÍTIOS QUE FORAM COM O
+   PRELÚDIO: o trecho de `enviar` da frase às bocas saiu do App para
+   src/motor/preludio-do-turno.js com as funções que só ele chamava, e nelas
+   moravam a emboscada da volta ao território (viagemEmboscada,
+   `talvezVoltarAoTerritorio`), o marco, os rumores e a virada (fioMarco,
+   fioRumores, `mexerNaNoite`; fioVirada, `revelarAVirada`), o mundo que vai
+   buscar (fioMundo, `mexerNoEncalhe`) e a chegada sozinha (caminhoChegada,
+   `talvezChegarSozinho`). O código deles está provado lá, à letra e byte a byte
+   contra o recorte do App (teste-motor-preludio-do-turno.mjs). Para as formas
+   da tabela continuarem cobertas aqui, o lado de HOJE desses seis corre o
+   sítio guardado — o texto do App de 374ddca, recortado pelas âncoras de hoje
+   em `envelopes-sitios-do-preludio.json` (o texto do motor não se lê:
+   teste-assercoes-de-texto). */
+export const SITIOS_DO_PRELUDIO = JSON.parse(fs.readFileSync(new URL("./envelopes-sitios-do-preludio.json", import.meta.url), "utf8"));
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -308,7 +323,7 @@ export function recorteDosEnvelopes(app, { novo, so } = {}) {
     const A = ANCORAS[b];
     const fora = !novo && A.antesDe ? corte(...A.antesDe) + "\n" : "";
     /* `envolve`: o sítio que é um campo de objeto (nota: `...`,) corre dentro de um objeto, nas duas pontas */
-    const cerne = corte(...(novo ? A.hoje : A.antes));
+    const cerne = novo && Object.hasOwn(SITIOS_DO_PRELUDIO.sitios, b) ? SITIOS_DO_PRELUDIO.sitios[b] : corte(...(novo ? A.hoje : A.antes));
     r[b] = { orgaos: fora + (A.envolve ? A.envolve[0] + "\n" + cerne + "\n" + A.envolve[1] : cerne), devolve: DEVOLVE[b] || "enviados" };
   }
   return r;

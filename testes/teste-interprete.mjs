@@ -177,13 +177,13 @@ sec("8) A LINHA DA PAUTA");
 
 sec("9) LIGADO NO TURNO");
 {
-  ok(/interpreteParaPauta\(pessoasDaCena\(\)/.test(app), "o Intérprete é consultado no ponto único do turno");
+  // retirada (trilha A, 29/10): «o Intérprete é consultado no ponto único do turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   // retirada (trilha A, 29/10): «e escreve na seção A GENTE da Pauta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   ok(/elencoMemRef = useRef\(\{\}\)/.test(app), "a memória por pessoa vive num ref");
   ok(/elencoMem: elencoMemRef\.current/.test(app), "é salva");
   ok(/garantirElenco\(sv\.elencoMem\)/.test(app), "e recarregada");
-  ok(/atoDoTurnoRef\.current = atoDoTexto\(conteudo\)/.test(app), "o ato do herói é lido antes da Pauta — é o que a maioria dos movimentos consulta");
-  ok(/marcarMovimento\(elencoMemRef\.current/.test(app), "e o que cada um fez fica marcado");
+  // retirada (trilha A, 29/10): «o ato do herói é lido antes da Pauta — é o que a maioria dos movimentos consulta» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «e o que cada um fez fica marcado» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\ntudo verde");

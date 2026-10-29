@@ -1,0 +1,12 @@
+{
+ "commit": "374ddca",
+ "porque": "os seis sítios de envelope que saíram do App com o prelúdio do turno (src/motor/preludio-do-turno.js, trilha A, 29/10): o texto do App de 374ddca, recortado pelas âncoras de HOJE de envelopes-bloco.mjs; o lado de hoje de teste-motor-envelopes-do-turno corre-os daqui",
+ "sitios": {
+  "viagemEmboscada": "    return oEnvelopeDaViagem(\"emboscadaDaFuga\", { bando: r.nome, nota: ab.nota });",
+  "fioMarco": "          notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoFio(\"marcoEmpurra\");",
+  "fioRumores": "          if (fora.rumores.length) notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoFio(\"rumoresDaChave\", { rumores: fora.rumores });",
+  "fioMundo": "        notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoFio(\"oMundoVaiBuscar\", { degrau: r.escada.degrau, diz: r.intervencao.diz });",
+  "fioVirada": "    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoFio(\"virada\", { revelacao: revelacaoDe(rev.forma), passos });",
+  "caminhoChegada": "notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCaminho(\"chegada\", { dias, destino: j.para });"
+ }
+}

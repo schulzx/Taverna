@@ -77,14 +77,14 @@ sec("4. o degrau 4 só cobra o que já estava prometido");
 
 sec("5. ligado ao jogo");
 {
-  t("o App importa o Encalhe", /import \{ garantirEscada, subirEscada \}/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa o Encalhe» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("há um ref da escada e ele entra no save", /escadaRef/.test(APP) && /escada: escadaRef\.current/.test(APP));
-  t("o snapshot lê missões abertas e diário parado", /missoesAbertas/.test(APP) && /diasSemDiario/.test(APP));
-  t("a escada sobe no turno", /subirEscada\(escadaRef\.current/.test(APP));
+  // retirada (trilha A, 29/10): «o snapshot lê missões abertas e diário parado» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
+  // retirada (trilha A, 29/10): «a escada sobe no turno» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* movida na T2-A (o fio da história, 28/10/2026): o texto da nota do encalhe saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
-  t("o mundo vai buscar quando sobe um degrau", /oEnvelopeDoFio\("oMundoVaiBuscar", \{ degrau: r\.escada\.degrau, diz: r\.intervencao\.diz \}\)/.test(APP));
+  // retirada (trilha A, 29/10): «o mundo vai buscar quando sobe um degrau» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("resumoDoEncalhe condensa para o autor", E.resumoDoEncalhe({ missoesAbertas: 20, diasSemDiario: 9 }).encalhado === true && E.resumoDoEncalhe({}).encalhado === false);
 }
 

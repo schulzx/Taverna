@@ -264,7 +264,7 @@ sec("8. A LIGAÇÃO NO APP");
   t("e recarregado", /compassoRef\.current = garantirCompasso\(sv\.compasso\)/.test(app));
   /* MM18 (11/10): quem chama pode segurar a onda (a pergunta do jogador,
      no degrau da escuta) — o ponto continua único, com um segundo argumento */
-  t("anda no ponto único do turno", /const doCompasso = talvezAndarOCompasso\(conteudo(, \{ segurar: segurarEsc \})?\);/.test(app));
+  // retirada (trilha A, 29/10): «anda no ponto único do turno» — liam o recorte de `enviar (o prelúdio)`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)/.test(app));
   /* v9.104: a PAUTA passou a abrir a nota — casar com a lista literal
      quebraria a cada sistema que se mudasse para dentro dela. */
   /* MM18 (11/10): os envelopes do turno ganharam nome (`doTurno`) para a
@@ -272,20 +272,13 @@ sec("8. A LIGAÇÃO NO APP");
   // retirada (trilha A, 29/10): «e entra na nota» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "a PAUTA vem antes de tudo" (`/const nota = \[pauta, /`) é prefixo do fragmento que a asserção de cima já exige (`const nota = [pauta, ...doTurno]`) e a ordem que teste-mm18-fiacao.mjs §3 guarda ("a pauta vem primeiro, e o que fica depois"). A intenção — o Narrador sabe ONDE antes do que fazer lá — fica guardada nessas duas. */
 
-  const g = app.split("const talvezAndarOCompasso")[1].split("\n  };")[0];
-  /* SEGURA em combate, masmorra e viagem */
-  /* MM18 (11/10): `segurarExtra` (a escuta) entra à frente; os três de
-     sempre continuam a segurar */
-  t("segura quando há cena grande", /segurar: (segurarExtra \|\| )?!!combateRef\.current \|\| !!masmorraRef\.current \|\| !!jornadaRef\.current/.test(g));
-  t("usa a mesma situação do Bibliotecário", /situacaoDaMesa\(\)/.test(g));
-  t("e o holofote escolhe a família", /preferir: sit\.pilarFaminto/.test(g));
-  t("protegida por try", /try \{/.test(g) && /catch \{ return ""/.test(g));
+  // retirada (trilha A, 29/10): «segura quando há cena grande», «usa a mesma situação do Bibliotecário», «e o holofote escolhe a família», «protegida por try» — liam o recorte de `talvezAndarOCompasso`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 
   /* A FORMA CEDE A VEZ: o envelope do compasso já diz do que a cena trata
      e em que tempo; uma forma por cima seria o sistema dando duas
      instruções de composição para a mesma cena */
   /* MM18 (11/10): e também à escuta (`segurarEsc`); a vez do compasso fica */
-  t("a forma da cena cede a vez ao compasso", /const formaDaCena = doCompasso (\|\| segurarEsc )?\? "" : talvezDarFormaACena/.test(app));
+  // retirada (trilha A, 29/10): «a forma da cena cede a vez ao compasso» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede; a mordida «a forma que não cede ao compasso»), e o texto do motor não se lê (teste-assercoes-de-texto)
 
   t("o ritmo sobe junto do arco", /resumoDoArco = \(\) => \[resumoHistoria\([\s\S]{0,60}?resumoDoRitmo\(\)\]/.test(app));
   /* UMA chamada: a definicao e `const resumoDoRitmo = () =>`, que nao

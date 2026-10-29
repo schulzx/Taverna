@@ -305,8 +305,9 @@ sec("6. a fiação — App.jsx");
     /* movida na fiação da E3 (12/10, v9.424): o import ganhou fichaDoCronista
        no fim; a intenção (os três vêm de npcs.js) é a mesma */
     /nomeComDono, notaDoHomonimo, primeiroNome(, [A-Za-z]+)* \} from "\.\/npcs\.js";/.test(app));
+  /* MOVIDA (trilha A, 29/10), E O MOTIVO: o import levava `paraPauta as interpreteParaPauta` antes, e o Intérprete do turno saiu de `enviar` com o prelúdio (o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)); o `jaMeViuAntes` continua a vir de interprete.js */
   t("e jaMeViuAntes de interprete.js",
-    app.includes('paraPauta as interpreteParaPauta, jaMeViuAntes } from "./interprete.js";'));
+    /import \{[^}]*\bjaMeViuAntes \} from "\.\/interprete\.js";/.test(app));
 
   /* ---- 9a: as três chamadas que levam a masmorra ---- */
   // retirada (trilha A, 29/10): «pautaDoTurno lê o elenco com a masmorra aberta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).

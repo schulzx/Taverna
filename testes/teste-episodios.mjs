@@ -89,8 +89,8 @@ sec("7. ligado ao jogo");
   t("o menu de criação filtra pelas espinhas", /ESTRUTURAS\.filter\(\(e\) => e\.espinha\)/.test(APP));
   t("o App importa o motor de episódios", /from "\.\/episodios\.js"/.test(APP));
   t("há um ref e ele entra no save", /episodioRef/.test(APP) && /episodio: episodioRef\.current/.test(APP));
-  t("abre, semeia e avança no turno", /mexerNoEpisodio\(\)/.test(APP) && /sementesDoEpisodio/.test(APP));
-  t("aninha no ato: fechar registra marco no arco", /registrarMarco\(historiaRef\.current, r\.pesoNoArco/.test(APP));
+  // retirada (trilha A, 29/10): «abre, semeia e avança no turno» — o `mexerNoEpisodio` saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). O `sementesDoEpisodio` que ainda casa no App é o da Noite (iniciarNoite), e é provado em teste-uma-noite
+  // retirada (trilha A, 29/10): «aninha no ato: fechar registra marco no arco» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   // retirada (trilha A, 29/10): «o marco do episódio vai à pauta pelo canal do arco» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }
 

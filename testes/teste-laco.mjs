@@ -200,19 +200,9 @@ sec("6. O CÍRCULO FECHA NO APP");
   t("há um elenco da onda", /const elencoDaOnda = \(\) => \{/.test(app));
   t("com quem está na cena", /aqui: \(el\.aqui \|\| \[\]\)\.map\(\(x\) => x\.nome\)/.test(app));
   t("e os laços por tipo", /for \(const t of TIPOS_DE_LACO\) lacos\[t\.id\] = comLaco/.test(app));
-  t("a onda recebe o elenco", /elenco: elencoDaOnda\(\)/.test(app));
+  // retirada (trilha A, 29/10): «a onda recebe o elenco» — liam o recorte de `talvezAndarOCompasso`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 
-  const g = app.split("const registrarLacoDaOnda")[1].split("\n  };")[0];
-  /* SÓ NO CLÍMAX: nem a semente nem a véspera mexem no registro, porque
-     até o clímax nada aconteceu de fato */
-  t("o registro só acontece no clímax", /r\.movimento\.id !== "climax"/.test(g));
-  t("firma o que o assunto declarou", /if \(a\.firma\) novo = firmarLaco/.test(g));
-  t("reata o que já havia", /else if \(a\.reata\)/.test(g));
-  t("e rompe o que o fim rompe", /else if \(a\.rompe\) novo = romperLaco/.test(g));
-  t("protegido por try", /try \{/.test(g) && /catch \{/.test(g));
-  /* e o registro é do SISTEMA: a IA narra o beijo, o sistema anota que há
-     um amor */
-  t("nada disto passa pela IA", !/resp\.|mudancas/.test(g));
+  // retirada (trilha A, 29/10): «o registro só acontece no clímax», «firma o que o assunto declarou», «reata o que já havia», «e rompe o que o fim rompe», «protegido por try», «nada disto passa pela IA» — liam o recorte de `registrarLacoDaOnda`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 

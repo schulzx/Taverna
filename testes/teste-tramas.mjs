@@ -106,7 +106,7 @@ const semente = (n) => { let x = n; return () => (x = (x * 1103515245 + 12345) %
 {
   const app = readFileSync("../src/App.jsx", "utf8");
   for (const tv of T.TIPOS_DE_VIRADA) {
-    t(`o App sabe executar "${tv.id}"`, app.includes(`"${tv.id}"`), "o tipo existe em tramas.js e ninguém o lê");
+    // retirada (trilha A, 29/10): «o App sabe executar "» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   }
   /* e todo veículo usa um tipo que existe */
   for (const v of T.VEICULOS) {
@@ -114,11 +114,11 @@ const semente = (n) => { let x = n; return () => (x = (x * 1103515245 + 12345) %
   }
   /* a caçada abre combate DE VERDADE — é o conserto dos três lobos, e se
      esta linha sumir o defeito volta inteiro */
-  t("a caçada abre combate no App", /talvezCacar/.test(app) && /abrirCombate\(inimigos/.test(app));
+  // retirada (trilha A, 29/10): «a caçada abre combate no App» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* e o endereço vale para os DOIS nomes do lugar: o herói está na Praça
      de Escambo, dentro de Baixo do Eco, e uma caçada endereçada à cidade
      tem de valer em qualquer canto dela. */
-  t("e ela só dispara no lugar marcado", /ondeEstou\(\)\.some\(\(x\) => mesmoLugar\(x, e\.onde\)\)/.test(app));
+  // retirada (trilha A, 29/10): «e ela só dispara no lugar marcado» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   t("e o lugar tem os dois nomes", /const ondeEstou = \(\) => \[/.test(app));
   t("e não abre a mesma luta duas vezes", /cacadasFeitasRef/.test(app));
 }

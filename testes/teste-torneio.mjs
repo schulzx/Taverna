@@ -80,12 +80,13 @@ sec("6. ligado ao jogo (M6)");
   t("a chave entra no save do território rapida", /torneio: torneioRef\.current/.test(APP) && /garantirTorneio\(sv\.torneio\)/.test(APP));
   t("o botão da luta existe, e só entre lutas", /A PROXIMA LUTA/.test(APP) && /minhaLuta\(torneioRef\.current\)/.test(APP));
   t("o rival entra com a defesa DE HERÓI explícita e a vida real", /defesa: defesaDe\(f, false\)/.test(APP) && /vida: f\.vidaMax/.test(APP));
-  t("a luta real só se REGISTRA na chave", /registrarMinhaLuta\(T, venci\)/.test(APP));
+  // retirada (trilha A, 29/10): «a luta real só se REGISTRA na chave» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* movida na T2-A (o fio da história, 28/10/2026): o texto dos rumores da chave saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
-  t("as chaves correm sozinhas e viram rumor", /correrForaDeTela\(T\)/.test(APP) && /oEnvelopeDoFio\("rumoresDaChave", \{ rumores: fora\.rumores \}\)/.test(APP));
-  t("eliminado tem epílogo; campeão tem cinto", /epilogar\(avancarFaseTorneio\(T\)\)/.test(APP) && /O cinto e seu/.test(APP));
+  /* MOVIDA (trilha A, 29/10), E O MOTIVO: a nota dos rumores da chave morava em `mexerNaNoite`, que saiu do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). Fica o que é do App: a chave corre fora da tela. */
+  t("as chaves correm sozinhas", /correrForaDeTela\(T\)/.test(APP));
+  // retirada (trilha A, 29/10): «eliminado tem epílogo; campeão tem cinto» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   /* movida na T2-A (o fio da história, 28/10/2026): o texto do teto do interlúdio saiu do App para
      src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
      teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */

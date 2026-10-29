@@ -160,7 +160,7 @@ sec("8) LIGADO NO TURNO");
      chamado (não lido como texto), e exige que o App chame aquela forma. */
   // retirada (trilha A, 29/10): «com envelope de canon, para o Narrador não o trazer de volta na cena seguinte» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   ok(/paresEntre\(npcsRef\.current\)/.test(app), "e o atrito entre aliados reusa o `entre` da v9.98 — que finalmente tem quem o use");
-  ok(/O ALIADO/.test(app), "a seção existe na Pauta");
+  // retirada (trilha A, 29/10): «a seção existe na Pauta» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
   ok(/só um/.test(ALIADO_PROMPT) && /a fala é sua/.test(ALIADO_PROMPT), "e o bloco do prompt diz o teto e devolve a fala ao Narrador");
 }
 

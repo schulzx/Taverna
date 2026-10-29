@@ -49,7 +49,8 @@ sec("2. quem abre a luta diz como ela abriu");
     oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, { aplicar: () => {}, abrirCombate: (ins, o) => { abriu.push(o.situacao); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: () => {} });
     t("a emboscada do perigo abre como `emboscada`", abriu.length === 1 && abriu[0] === "emboscada" && /oPerigoDaResposta\(\{[^}]*\}, portasDoFecho\(\)\)/.test(APP) && /sorteDoTurno, abrirCombate, dispararPerigo,/.test(APP));
   }
-  t("a emboscada devida da virada e os dois bandos da fuga também (4 no App, mais a do perigo no motor)", conta('situacao: "emboscada" })') === 4);
+  /* MOVIDA (trilha A, 29/10), E O MOTIVO: a emboscada devida da virada e a da volta ao território (`revelarAVirada`, `talvezVoltarAoTerritorio`) saíram do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). Ficam no App o bando da fuga que volta e a emboscada da viagem. */
+  t("o bando da fuga e a emboscada da viagem também (2 no App; a da virada e a da volta ao território no prelúdio, a do perigo no motor)", conta('situacao: "emboscada" })') === 2);
   t("a sala da masmorra não força nada: a planta decide (`cena` → masmorra)",
     APP.includes("const ab = abrirCombate(inimigos, { pers: personagemRef.current || personagem });"));
 }

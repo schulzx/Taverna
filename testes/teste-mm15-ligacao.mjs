@@ -373,7 +373,10 @@ bloco(() => {
   t("cada ref da lista existe no App", semRef.length === 0, semRef.join(","));
   const quem = [...new Set(G.O_QUE_O_TURNO_ANDA.flatMap((l) => l.quem))];
   /* (trilha A, 29/10) a `pautaDoTurno` está na lista (ela anda refs) e já não mora no App: a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo o corpo dela, que anda os mesmos refs pelo `aplicar` (provado em teste-motor-pauta-do-turno, os refs do fim) */
-  const NO_MOTOR = ["pautaDoTurno"];
+  /* (trilha A, 29/10, o prelúdio no motor) e as doze que o prelúdio do turno levou: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). Andam os mesmos refs pelo `aplicar` da peça. A lista é catraca: a que voltar ao App passa a ser procurada aqui. */
+  const NO_PRELUDIO = ["rodarAFrente", "talvezVirar", "varrerChao", "talvezChegarSozinho", "talvezAndarOCompasso", "talvezDarFormaACena", "dispararPropositos", "mexerNaReviravolta", "mexerNoEncalhe", "mexerNaPostura", "mexerNoEpisodio", "mexerNaNoite"];
+  t("e as que o prelúdio levou já não estão no App", NO_PRELUDIO.every((q) => !new RegExp("const " + q + " = |function " + q + "\\(").test(APP)));
+  const NO_MOTOR = ["pautaDoTurno", ...NO_PRELUDIO];
   const semQuem = quem.filter((q) => !NO_MOTOR.includes(q) && !new RegExp("const " + q + " = |function " + q + "\\(").test(APP));
   t(`e cada uma das ${quem.length} funções que as movem ainda existe`, semQuem.length === 0, semQuem.join(","));
   const sobrevivemFora = G.SOBREVIVEM_AO_DESFEITO.filter((c) => !temNoSave(c));
@@ -411,7 +414,8 @@ bloco(() => {
   t("hoje o relógio anda em `agirInterno` ANTES de o turno partir para o Mestre",
     ag > 0 && minutosAqui > ag && primeiroEnviarDepois > minutosAqui);
   const en = APP.indexOf("const enviar = useCallback(async (conteudo, persAtual, histBase) => {");
-  const anda = APP.indexOf("talvezAndarNaCidade(conteudo);", en);
+  /* MOVIDA (trilha A, 29/10), E O MOTIVO: a âncora era `talvezAndarNaCidade(conteudo);`, que saiu de `enviar` com o prelúdio: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). A caminhada anda dentro da peça (a 4.ª coisa dela); no App, a âncora é a chamada ao prelúdio. */
+  const anda = APP.indexOf("= await oPreludioDoTurno(estadoDoPreludio()", en);
   const chama = APP.indexOf("await chamarMestre(systemRef.current, novoHist)", en);
   t("e dentro de `enviar` a caminhada anda ANTES da chamada ao Mestre", en > 0 && anda > en && chama > anda);
   t("são cinco minutos por turno escrito (a tabela do calendário)", MINUTOS_POR_TURNO === 5);

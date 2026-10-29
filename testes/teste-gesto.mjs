@@ -209,7 +209,7 @@ sec("6. E O APP ENTREGA AS TRÊS MEMÓRIAS NOVAS");
   /* o gesto tem de ser marcado nos DOIS canais, senão a memória fica cega
      em metade dos turnos e o defeito volta pela porta que ninguém olhou */
   t("o gesto é marcado no canal do envelope", /marcarJogada\(estanteRef\.current, j\.id, j\.gesto\)/.test(app));
-  t("e no canal da cena comum", /zerarCadenciaDaCena\(marcarJogada\(estanteRef\.current, j\.id, j\.gesto\)\)/.test(app));
+  // retirada (trilha A, 29/10): «e no canal da cena comum» — o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto)
 }
 
 console.log(`\ngesto v9.87: ${ok} passaram, ${mal} falharam`);
