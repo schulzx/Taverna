@@ -238,6 +238,8 @@ import { oGatilhoDoCronista, oPedidoAoCronista, oAceitoDoCronista } from "./moto
 import { registrarOLugar, dadivasConcedidas, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
+/* a praça que o Juiz julga é a que a pauta mostrou (Fase 4, trilha A, 29/10) */
+import { aPracaDoJuiz } from "./turno-no-servidor.js";
 import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correcao-do-juiz.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
@@ -10542,7 +10544,13 @@ export default function Taverna() {
         fotoDoJuiz = {
           personagem: persAtual || personagemRef.current || personagem, npcs: npcsRef.current, mapa: mapaRef.current, base: baseMundoRef.current,
           cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, oferecidos: nomesOferecidosRef.current, missoes: missoesRef.current,
-          bancas: bancasDaCena(), balcao: (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current) ? balcaoAqui() : [],
+          /* a praça do Juiz é a que a pauta do turno mostrou ao Narrador: o
+             herói, o mercado e os governos do render (o que o enviar vê), a
+             cidade, o dia, o mapa, a lei, a masmorra, a jornada e a postura
+             do instante. Antes lia a banca do último render, e no toque que
+             abre a cidade (o render ainda sem ela) o Juiz não via banca
+             nenhuma. A regra é src/turno-no-servidor.js, a mesma do servidor. */
+          ...aPracaDoJuiz({ mercado, personagem, governos, mundo }, { cidadeAtual: cidadeAtualRef.current, dia: diaRef.current, mapa: mapaRef.current, lei: leiRef.current, masmorra: masmorraRef.current, jornada: jornadaRef.current, postura: posturaRef.current, mercado: mercadoRef.current, personagem: personagemRef.current, mundo: mundoRef.current }),
           narracoes: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre").map((m) => m.texto),
           elenco: nomesDoElenco(), guildas: guildasRef.current, espinha: espinhaRef.current,
           mundo: { semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lexico: (mundoAtual() || {}).lexico },

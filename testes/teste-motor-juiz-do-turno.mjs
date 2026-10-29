@@ -146,5 +146,66 @@ sec("6 · a fiação no App");
   t("a linha vai à consola, ao lado da do custo", /console\.debug\(linhaDoJuiz\(doJuiz\.resumo\)\)/.test(C));
 }
 
+sec("7 · a praça do Juiz no App é a da pauta (Fase 4, trilha A, 29/10)");
+{
+  /* Antes a foto lia `bancasDaCena()` e `balcaoAqui()`, que saem do
+     `mercadoAqui` do ÚLTIMO render: no toque que abre a cidade o render ainda
+     não a tinha, e o Juiz não via banca nenhuma (0 itens na sessão do
+     navegador, contra 29 nos turnos seguintes). Agora a foto usa a mesma
+     regra do servidor, `aPracaDoJuiz` (src/turno-no-servidor.js): o render
+     para o mercado, o herói, os governos e o mundo; os refs do instante para
+     a cidade, o dia, o mapa, a lei, a masmorra, a jornada e a postura. */
+  const { aPracaDoJuiz, oPedidoNoServidor } = await import("../src/turno-no-servidor.js");
+  const { estadoNoTurno } = await import("../src/sessao.js");
+  const { oEstadoDoServidor } = await import("../src/motor/eco-do-turno.js");
+  const semComentarios = (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const C = semComentarios(APP);
+  const iFoto = C.indexOf("fotoDoJuiz = {"), foto = C.slice(iFoto, C.indexOf("};", iFoto));
+  t("a foto do Juiz lê a praça pela aPracaDoJuiz, e não mais pelas bancas do render",
+    /\.\.\.aPracaDoJuiz\(\{ mercado, personagem, governos, mundo \}, \{/.test(foto) && !/bancasDaCena\(\)|balcaoAqui\(\)/.test(foto));
+  const agora = (foto.match(/aPracaDoJuiz\(\{[^}]*\}, \{([^}]*)\}\)/) || [])[1] || "";
+  const pares = agora.split(",").map((x) => x.trim().split(/:\s*/)).filter((p) => p.length === 2);
+  const CAMPO_DO_REF = { cidadeAtual: "cidadeAtualRef", dia: "diaRef", mapa: "mapaRef", lei: "leiRef", masmorra: "masmorraRef", jornada: "jornadaRef", postura: "posturaRef", mercado: "mercadoRef", personagem: "personagemRef", mundo: "mundoRef" };
+  t(`o instante são os dez refs, cada campo pelo seu (${pares.length}/10)`,
+    pares.length === 10 && pares.every(([k, v]) => CAMPO_DO_REF[k] && v === CAMPO_DO_REF[k] + ".current"), agora);
+  t("e a praça entra no App pelo import da regra do servidor", /import \{ aPracaDoJuiz \} from "\.\/turno-no-servidor\.js";/.test(APP));
+
+  /* a sessão do navegador (gravada pelo jogo com a foto de antes): o mercado
+     e o veredito iguais onde o render tinha a banca; o toque de abertura
+     passa a ver a praça */
+  const A = ler("sessao-navegador.json");
+  const FICHA = { atributos: { forca: 2, destreza: 1, constituicao: 2, inteligencia: 0, sabedoria: 1, carisma: 0 }, conceito: "Andarilha sem nome" };
+  const comoOLoadAbre = (e) => { const x = Object.fromEntries(Object.entries(e).filter(([, v]) => v != null)); const p = x.personagem || {}; x.personagem = { ...p, atributos: p.atributos || FICHA.atributos, conceito: p.conceito || FICHA.conceito }; return x; };
+  const can = (x) => JSON.stringify(x);
+  let comBanca = 0, igualMerc = 0, igualVer = 0, abertura = null;
+  for (let i = 0; i < A.turnos.length; i++) {
+    const L = A.turnos[i], ent = L.entrada || {}, g = L.juiz && L.juiz.entrada;
+    if (!g) continue;
+    const frase = ent.frase || (ent.toque && ent.toque.conteudo) || "";
+    const estado = comoOLoadAbre(estadoNoTurno(A, i));
+    const fim = (await oPedidoNoServidor({ estado, frase })).estadoDoFim;
+    const pr = aPracaDoJuiz(oEstadoDoServidor(estado, {}), fim);
+    const merc = entradaDoJuiz({ bancas: pr.bancas, balcao: pr.balcao }, {}).mercado;
+    if (!g.mercado.length) { abertura = { i, g, merc, L }; continue; }
+    comBanca++;
+    if (can(merc) === can(g.mercado)) igualMerc++;
+    const narr = (L.narrador && L.narrador.narrativa) || "";
+    if (can(julgarOTurno(narr, { ...g, mercado: merc }, { turno: i + 1, dia: 1 }).veredito) === can(julgarOTurno(narr, g, { turno: i + 1, dia: 1 }).veredito)) igualVer++;
+  }
+  t(`onde o render tinha a banca, o mercado e o veredito do Juiz são os de antes (${igualMerc}/${comBanca} · ${igualVer}/${comBanca})`, comBanca === 2 && igualMerc === comBanca && igualVer === comBanca);
+  t(`o toque de abertura passa a ver a banca (0 → ${abertura ? abertura.merc.length : "?"} itens)`, !!abertura && abertura.i === 0 && abertura.merc.length === 29);
+  /* a mordida: no toque de abertura, o Narrador cobra o triplo do 1.º item
+     da praça. Sem a praça (a foto de antes), o Juiz não tem com que o
+     comparar e toma o item por gente nova; com ela, acusa com o preço da mesa */
+  if (abertura) {
+    const it = abertura.merc[0];
+    const narr = `Na banca, o mercador ergue ${it.nome}: «São ${it.preco * 3} moedas, nem uma a menos.»`;
+    const v0 = julgarOTurno(narr, abertura.g, { turno: 1, dia: 1 }).veredito;
+    const v1 = julgarOTurno(narr, { ...abertura.g, mercado: abertura.merc }, { turno: 1, dia: 1 }).veredito;
+    const comMesa = (v) => (v.precosInventados || []).filter((p) => p.tabela === it.preco).length;
+    t(`a mordida: o preço triplicado só se mede contra a mesa com a praça (${comMesa(v0)} → ${comMesa(v1)})`, comMesa(v0) === 0 && comMesa(v1) === 1);
+  }
+}
+
 console.log(`\nmotor · juiz do turno: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);
