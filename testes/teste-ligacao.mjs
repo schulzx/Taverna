@@ -247,6 +247,17 @@ sec("1. NENHUM MÓDULO MUDO");
        cada sentada e grava uma linha no fim de cada turno, depois do
        Cronista; onde ela mora (a chave, o teto) diz `sessao-guardada.js`.
        A entrada saiu, e a lista voltou a ficar VAZIA. */
+    /* 29/10 (Fase 4, trilha B · o save aberto como o load): `abrir-o-save.js`
+       nasce no backend — a regra do `continuar` do App para a ficha, o nome
+       da campanha e os oito de NULO_QUE_O_LOAD_REFAZ, tirada do App sem lhe
+       mexer. Espera DOIS credores, os dois da trilha A: o `continuar` do App
+       (a troca está no diário) e a montagem do servidor
+       (turno-no-servidor.js), cuja ligação regrava as sessões de prova de
+       Node — e com elas os casos de que os dourados da pauta, do pedido e do
+       prelúdio são fotos, que são da trilha A regenerar. A ligação inteira
+       está pronta e medida (diário de 29/10). `teste-abrir-o-save.mjs` é o
+       primeiro leitor. A entrada sai quando o App ou o servidor o importar. */
+    "abrir-o-save.js": "29/10/2026 — o continuar do App e a montagem do servidor (trilha A, com os dourados regenerados)",
   };
   const mudos = [];
   for (const f of arqs) {

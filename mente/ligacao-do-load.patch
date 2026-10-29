@@ -1,0 +1,298 @@
+diff --git a/src/turno-no-servidor.js b/src/turno-no-servidor.js
+index eb389aa..13b3b0c 100644
+--- a/src/turno-no-servidor.js
++++ b/src/turno-no-servidor.js
+@@ -88,6 +88,7 @@
+ import { SEMENTE_DA_CASA, comSorte, hashSemente, rng } from "./semente.js";
+ import { pontoDaSorte } from "./motor/sorte-do-turno.js";
+ import { oEstadoDoServidor } from "./motor/eco-do-turno.js";
++import { abrirOSave } from "./abrir-o-save.js";
+ import { oPreludioDoTurno } from "./motor/preludio-do-turno.js";
+ import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } from "./motor/pedido-do-turno.js";
+ import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
+@@ -177,7 +178,11 @@ export async function oPedidoNoServidor(corpo, opcoes) {
+ async function montar(corpo, opcoes) {
+   const { estado, frase, eco, bilhetes } = ehObjeto(corpo) ? corpo : {};
+   const { agora } = ehObjeto(opcoes) ? opcoes : {};
+-  const e0 = oEstadoDoServidor(estado, { eco, bilhetes });
++  /* o save como o load do App o abre (abrir-o-save.js): a ficha migrada, o
++     nome da campanha, o mapa, as guildas, as missões… — fora o que é só da
++     sentada (o teto do sono, a oferta que vai ao mural), porque o servidor
++     abre o save em todo turno e o App só ao carregar */
++  const e0 = oEstadoDoServidor(ehObjeto(estado) ? abrirOSave(estado, { naSentada: false }) : estado, { eco, bilhetes });
+   const casa = aCasaDoTurno(e0);
+   const semente = hashSemente(`${SEMENTE_DA_CASA}|${casa}`);
+   const corrente = rng(semente);
+diff --git a/testes/gravar-sessoes-de-prova.mjs b/testes/gravar-sessoes-de-prova.mjs
+index 4c65e83..65b6546 100644
+--- a/testes/gravar-sessoes-de-prova.mjs
++++ b/testes/gravar-sessoes-de-prova.mjs
+@@ -51,6 +51,9 @@ const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").rep
+ 
+ const { montarEmCena, EM_CENA_NA_PAUTA } = await import("../src/em-cena.js");
+ const { estadoDoSave } = await import("../src/estado.js");
++const { abrirOSave, aSementeDoSave } = await import("../src/abrir-o-save.js");
++const { moldePorId, MOLDE_PADRAO } = await import("../src/moldes.js");
++const { cenarioAtivo } = await import("../src/cenario.js");
+ const { pontoDaSorte } = await import("../src/motor/sorte-do-turno.js");
+ const { abrirASessao, gravarOTurno, correrOTurno, validarASessao } = await import("../src/sessao.js");
+ const { entradaDoJuiz, julgarOTurno } = await import("../src/motor/juiz-do-turno.js");
+@@ -114,11 +117,26 @@ const cidades = [...new Set(R.pautas.map((p) => p.cidade))];
+ const PLANTA = {};
+ for (const p of R.pautas) { const d = lerOnde(p.onde); if (d.lugar && d.cidade && !(PLANTA[d.cidade] || []).some((l) => l.nome === d.lugar)) PLANTA[d.cidade] = [...(PLANTA[d.cidade] || []), { nome: d.lugar, onde: "dentro" }]; }
+ 
++/* O SAVE DE PARTIDA, COMO O LOAD O ABRE (29/10, Fase 4, trilha B). Até aqui
++   o início era o save mínimo, cru: o jogo nunca joga isso — o `continuar`
++   migra a ficha, dá nome à campanha, gera a geografia e as guildas, abre a
++   história, as missões, o reino, os governos, a fé e o relógio do sono — e o
++   servidor passou a abrir cada estado assim (abrir-o-save.js). O arquivo é o
++   dourado do replay e da rota: gravado cru, o servidor e o replay
++   divergiam em todo turno nos dez campos que o load reescreve. */
++const comoOLoadAbre = (sv) => estadoDoSave(abrirOSave(estadoDoSave(sv)));
++/* e o MUNDO da cabeça, o que a fiação do App entrega (sessao.js, «o que a
++   fiação do App tem de entregar»): a semente do save aberto — «A saga de X»,
++   o nome que o jogo deu a estas campanhas sem nome —, o gênero, o molde. Sem
++   ele o replay corria o códex sem mundo, e a gente da base que a narração
++   pôs em cena (o Godfrey de Monte Rasa, na 10.ª) não entrava. */
++const oMundoDe = (E) => ({ semente: aSementeDoSave(E), genero: (E.mundo && E.mundo.genero) || cenarioAtivo().generos.padrao, molde: moldePorId((E.mundo && E.mundo.molde) || MOLDE_PADRAO), lex: (E.mundo && E.mundo.lexico) || null });
++
+ /* o save de partida da 10.ª: o herói e a companheira, a cidade de chegada,
+    o mapa das cidades que a sessão pisou; a ficha SEM as listas da bolsa e
+    das habilidades, de propósito (27/10, T1-B fatia 2: um save mínimo tem de
+    jogar — teste-ficha-incompleta.mjs) */
+-const inicio10 = () => estadoDoSave({
++const inicio10 = () => comoOLoadAbre({
+   personagem: { nome: R.heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, condicoes: [], equipado: {}, grupo: [{ nome: "Saoirse", vida: 10, vidaMax: 10 }] },
+   cidadeAtual: R.pautas[0].cidade, lugar: null, jornada: null,
+   mapa: { cidades: cidades.map((nome) => ({ nome })) },
+@@ -149,7 +167,7 @@ const gravarA10 = () => {
+   let E = inicio10();
+   let antes = null;
+   const regua = [];
+-  let sessao = abrirASessao({ semente: "s10", estado: E, origem: "registo-s10-cena.json (a 10.ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
++  let sessao = abrirASessao({ semente: "s10", estado: E, mundo: oMundoDe(E), origem: "registo-s10-cena.json (a 10.ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
+   for (let i = 0; i < turnos; i++) {
+     const P = R.pautas[i];
+     const resposta = R.respostas[i];
+@@ -182,7 +200,25 @@ const gravarA10 = () => {
+       noMestre = F;
+       return F;
+     };
+-    const r = correrOTurno(E, linha, { semente: "s10", doApp: { antesDoMestre } });
++    const r = correrOTurno(E, linha, { semente: "s10", mundo: sessao.mundo, doApp: { antesDoMestre } });
++    /* O QUE A VIAGEM DO APP MUDOU NO RESTO DO TURNO (29/10): com o mundo na
++       cabeça, o códex revela a gente da base da cidade onde o herói ESTÁ — e
++       quem o pôs lá foi o oráculo (o viajar do App). O turno corre também sem
++       ele, e o que difere vai à mesma declaração: é obra da viagem, não do
++       motor (na 10.ª, a Helga de Nova Profundo e a Saoirse de Nova clara) */
++    const daViagem = app.find((a) => /^(viajar|moverParaLocal)/.test(a.orgao));
++    if (daViagem) {
++      const semOraculo = correrOTurno(E, linha, { semente: "s10", mundo: sessao.mundo });
++      const caminhos = [];
++      for (const k of [...new Set([...Object.keys(r.estado), ...Object.keys(semOraculo.estado)])].sort()) {
++        if (daViagem.campos.includes(k) || J(r.estado[k]) === J(semOraculo.estado[k])) continue;
++        const a = r.estado[k], b = semOraculo.estado[k];
++        if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a)) {
++          for (const c of [...new Set([...Object.keys(a), ...Object.keys(b)])].sort()) if (J(a[c]) !== J(b[c])) caminhos.push(k + "." + c);
++        } else caminhos.push(k);
++      }
++      daViagem.campos = [...daViagem.campos, ...caminhos];
++    }
+     if (r.calou.length) regua.push(`M${i + 1}: ${r.calou.map((c) => c.passo + " estourou: " + c.erro).join(" · ")}`);
+     const Em = noMestre || E;
+     /* a régua do registo: a gente que a pauta nomeia, o estado conhece */
+@@ -213,13 +249,13 @@ const gravarDoCronista = (ses) => {
+   const L = RC.turnos.filter((x) => x.ses === ses);
+   const c0 = [...new Set(L[0].conhecidos)];
+   const heroi = c0[c0.length - 1], companheira = c0[0];
+-  let E = estadoDoSave({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, mapa: { cidades: [] }, npcs: {}, canone: {}, combate: null });
++  let E = comoOLoadAbre({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, mapa: { cidades: [] }, npcs: {}, canone: {}, combate: null });
+   const conhecidos = (e) => new Set([e.personagem.nome, ...(e.personagem.grupo || []).map((g) => g.nome), ...Object.keys(e.npcs || {}), ...Object.keys(e.canone || {})].map(sem));
+   const regua = [];
+   /* OS COMBATENTES SÃO DA LUTA, NÃO DO REGISTO DE GENTE: o registo conhece o
+      Zumbi enquanto a luta dura e esquece-o quando ela acaba */
+   let daLuta = new Set();
+-  let sessao = abrirASessao({ semente: ses, estado: E, origem: "registo-s8-s10-cronista.json (a " + ses.slice(1) + ".ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
++  let sessao = abrirASessao({ semente: ses, estado: E, mundo: oMundoDe(E), origem: "registo-s8-s10-cronista.json (a " + ses.slice(1) + ".ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
+   for (let i = 0; i < L.length - 1; i++) {
+     const a = L[i], b = L[i + 1];
+     const linha = {
+@@ -232,7 +268,7 @@ const gravarDoCronista = (ses) => {
+     const juiz = vereditoDoJuiz(E, a.narrativa, { narracoes: L.slice(0, i).map((x) => x.narrativa), oferecidos: [], frase: a.frase, pauta: "", turno: i + 1 });
+     /* a proposta lê o estado DEPOIS do Mestre e ANTES do Cronista: o turno
+        corre uma vez sem o Cronista para a refazer, e outra com ela */
+-    const meio = correrOTurno(E, { ...linha, cronista: null }, { semente: ses });
++    const meio = correrOTurno(E, { ...linha, cronista: null }, { semente: ses, mundo: sessao.mundo });
+     const ja = conhecidos(meio.estado);
+     const novos = [...new Set(b.conhecidos)].filter((x) => !ja.has(sem(x)));
+     const doCronista = a.util.includes("pessoa") || a.util.includes("canone");
+@@ -241,7 +277,7 @@ const gravarDoCronista = (ses) => {
+       if (a.util.includes("pessoa") && !a.util.includes("canone")) prop.pessoas = novos.map((nome) => ({ nome, genero: "" }));
+       else prop.canone = Object.fromEntries(novos.map((n) => [n, { tipo: "artefato", descricao: "—" }]));
+     }
+-    const r = correrOTurno(E, { ...linha, cronista: { proposta: prop, juizo: null } }, { semente: ses });
++    const r = correrOTurno(E, { ...linha, cronista: { proposta: prop, juizo: null } }, { semente: ses, mundo: sessao.mundo });
+     if (r.calou.length) regua.push(`#${a.k}: ${r.calou.map((c) => c.passo + " estourou: " + c.erro).join(" · ")}`);
+     const rec = oNomeRecusado(meio.estado, r.juizo, r.estado);
+     let Ef = rec.estado;
+diff --git a/testes/teste-sessao.mjs b/testes/teste-sessao.mjs
+index bc5d1c0..d6dcaf6 100644
+--- a/testes/teste-sessao.mjs
++++ b/testes/teste-sessao.mjs
+@@ -237,8 +237,14 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
+      está, na 8.ª e na 9.ª só a gente do registo, e o motor sem defeito. */
+   const raiz = (r) => [...new Set(r.turnos.filter((x) => !x.igual).flatMap((x) => x.divida.flatMap((d) => d.caminhos.map((c) => c.split(/[.[]/)[0]))))].sort();
+   /* MOVIDA (28/10, a peça do Cronista): na 10.ª também a gente — os dois
+-     nomes que o Cronista de então registou e o de hoje recusa (s10#43, #57) */
+-  t("na 10.ª, o que diverge é onde o herói está (a cidade, o sítio, a estrada) e o nome que o Cronista de então registou", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada", "npcs"].includes(c)) && R10.turnos.filter((x) => x.divida.some((d) => d.campo.startsWith("npcs"))).every((x) => x.app.some((a) => /Cronista do jogo de então/.test(a.orgao))), J(raiz(R10)));
++     nomes que o Cronista de então registou e o de hoje recusa (s10#43, #57).
++     MOVIDA (29/10, o save aberto como o load): com o mundo na cabeça o códex
++     revela a gente da base da cidade onde o herói está, e nos dois turnos em
++     que o viajar do App o pôs noutra cidade (s10#23, #57) a gente revelada
++     muda com ela — a linha declara-o na viagem (baseMundo.revelados, e a
++     Saoirse de Nova clara em npcs). A intenção fica: só onde o herói está e
++     o que isso arrasta. */
++  t("na 10.ª, o que diverge é onde o herói está (a cidade, o sítio, a estrada), a gente da base que a cidade revela, e o nome que o Cronista de então registou", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada", "npcs", "baseMundo"].includes(c)) && R10.turnos.filter((x) => x.divida.some((d) => d.campo.startsWith("npcs"))).every((x) => x.app.some((a) => /Cronista do jogo de então/.test(a.orgao))), J(raiz(R10)));
+   t("na 8.ª e na 9.ª, só a gente do registo", J(raiz(R8)) === J(["npcs"]) && J(raiz(R9)) === J(["npcs"]), J([raiz(R8), raiz(R9)]));
+   /* MOVIDA (28/10): o M69 diverge também em «lugar.coord», que a tabela dá
+      a moverParaLocal — o órgão que a linha do M69 já declara */
+diff --git a/testes/teste-turno-no-servidor.mjs b/testes/teste-turno-no-servidor.mjs
+index 0258244..8af386e 100644
+--- a/testes/teste-turno-no-servidor.mjs
++++ b/testes/teste-turno-no-servidor.mjs
+@@ -130,10 +130,18 @@ async function peloCaminhoDoApp({ estado, frase, eco, bilhetes }) {
+   return { pedido: r2.pedido, fim: { ...e0, ...r1.escritas, ...r2.escritas } };
+ }
+ 
+-/* os estados das sessões gravadas, como o load os abre */
++/* os estados das sessões gravadas, como o load os abre. MOVIDA (29/10,
++   trilha B), com o motivo: até aqui «como o load abre» era só tirar os
++   nulos e dar atributos à ficha; o servidor passou a abrir o save pela regra
++   do load (abrir-o-save.js: a ficha migrada, o nome da campanha, o mapa, as
++   guildas, as missões…), e o caminho do App — que É o App depois de um
++   load — abre-o pela mesma peça. Sem isto o App daqui seria um App que
++   nunca carregou um save, e a medida compararia duas aberturas. */
+ const FICHA = { atributos: { forca: 2, destreza: 1, constituicao: 2, inteligencia: 0, sabedoria: 1, carisma: 0 }, conceito: "Andarilha sem nome" };
++const { abrirOSave } = await import("../src/abrir-o-save.js");
++const { pisarNaCidade } = await import("../src/geografia.js");
+ const comoOLoadAbre = (e) => {
+-  const x = Object.fromEntries(Object.entries(e).filter(([, v]) => v != null));
++  const x = Object.fromEntries(Object.entries(abrirOSave(e, { naSentada: false })).filter(([, v]) => v != null));
+   const p = x.personagem || {};
+   x.personagem = { ...p, atributos: p.atributos || FICHA.atributos, conceito: p.conceito || FICHA.conceito };
+   return x;
+@@ -233,11 +241,14 @@ sec("4. O LIXO E OS ESTOUROS");
+   t("eco null passa (é o mesmo que sem eco)", (await rodar({ ...bom, eco: null })).corpo.pedido.hash === sha((await peloCaminhoDoApp({ estado: bom.estado, frase: bom.frase })).pedido));
+   t("eco gordo: 413", (await rodar({ ...bom, eco: { quemE: "x".repeat(200 * 1024) } })).codigo === 413);
+   const { s, A } = SESSOES[0];
+-  const cru = estadoNoTurno(A, 1);
++  /* MOVIDA (29/10): o estado cru (com os nulos) já não estoura — o servidor
++     abre-o como o load —; o que estoura agora é o que estouraria no App: um
++     relato que não é lista */
++  const cru = { ...estadoNoTurno(A, 1), mensagens: { torto: true } };
+   let refEstourou = false;
+   try { await peloCaminhoDoApp({ estado: cru, frase: "Abro a porta." }); } catch { refEstourou = true; }
+   const r = await rodar({ estado: cru, frase: "Abro a porta." });
+-  t(`o estado cru de ${s} (com os nulos) estoura no motor em Node e a rota diz 422`, refEstourou && r.codigo === 422 && r.corpo.motivo === "montagem-estourou");
++  t(`o estado torto de ${s} (o relato fora de lista) estoura no motor em Node e a rota diz 422`, refEstourou && r.codigo === 422 && r.corpo.motivo === "montagem-estourou");
+   t("e o 422 não leva a pilha nem a mensagem do motor", Object.keys(r.corpo).sort().join(",") === "erro,motivo" && !/Cannot|undefined|null/.test(r.corpo.erro));
+   const vazio = await rodar({ estado: {}, frase: "Olho em volta." });
+   t(`o estado vazio não derruba a rota (${vazio.codigo})`, vazio.codigo === 200 || vazio.codigo === 422);
+@@ -266,7 +277,7 @@ sec("6. COM CHAVE — o licenciante");
+   const ref = await peloCaminhoDoApp(casoGordo);
+   t("com chave boa: 200 em ensaio, o mesmo hash", r.codigo === 200 && r.corpo.ensaio === true && r.corpo.pedido.hash === sha(ref.pedido));
+   t("e a conta da licença vem junto", r.corpo.licenca && r.corpo.licenca.licenciante === "casa-de-ensaio" && r.corpo.licenca.usos === 1 && r.corpo.licenca.restam === 4);
+-  const lixo = await rodar({ estado: estadoNoTurno(SESSOES[0].A, 1), frase: "x" }, { headers: { authorization: `Bearer ${e.chave}` }, vars });
++  const lixo = await rodar({ estado: { ...estadoNoTurno(SESSOES[0].A, 1), mensagens: { torto: true } }, frase: "x" }, { headers: { authorization: `Bearer ${e.chave}` }, vars });
+   t("o 422 de um licenciante também leva a conta (o turno contou)", lixo.codigo === 422 && lixo.corpo.licenca && lixo.corpo.licenca.usos === 2);
+ }
+ 
+@@ -355,7 +366,14 @@ const temposDoTurno = [];
+         if (L.juiz && can(sv.juiz) === can(L.juiz.resumo)) navJuiz++;
+         if (d.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k))) navReplay++;
+         const g = difs(naRegua(sv.estadoDoFim), naRegua(estadoNoTurno(A, i + 1)));
+-        if (g.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k) || k === "personagem")) navGravado++;
++        /* MOVIDA (29/10, o save aberto como o load), com o motivo: o servidor
++           abre o save em todo turno, e o load pisa a cidade onde o save parou
++           (v9.54) — o App, na 1.ª sentada de uma campanha nova, ainda não a
++           pisou (só o faz no 1.º load). O mapa do servidor é o do jogo com a
++           cidade atual pisada, e mais nada. */
++        const gs = estadoNoTurno(A, i + 1);
++        const soAPisada = (k) => k === "mapa" && can(sv.estadoDoFim.mapa) === can(pisarNaCidade(gs.mapa, gs.cidadeAtual));
++        if (g.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k) || k === "personagem" || soAPisada(k))) navGravado++;
+       }
+     }
+   }
+@@ -364,7 +382,7 @@ const temposDoTurno = [];
+   t(`e o cânone que a foto do Juiz muda é exceção (${porJuiz} de ${casos})`, porJuiz <= 3);
+   t(`e o Cronista poupado pelo gatilho só muda os campos dele, em ${peloGatilho} dos ${poupados} turnos sem chamada`, peloGatilho <= poupados && poupados > 0);
+   t(`na sessão do jogo, o Juiz do servidor é o gravado (${navJuiz}/${navTurnos})`, navTurnos === 3 && navJuiz === navTurnos);
+-  t(`e o estado do fim é o do replay fora da montagem e do agir (${navReplay}/${navTurnos}), e o do jogo (${navGravado}/${navTurnos}; a ficha leva os atributos que o load lhe põe)`, navReplay === navTurnos && navGravado === navTurnos);
++  t(`e o estado do fim é o do replay fora da montagem e do agir (${navReplay}/${navTurnos}), e o do jogo (${navGravado}/${navTurnos}; a ficha e a cidade pisada são as que o load lhes dá)`, navReplay === navTurnos && navGravado === navTurnos);
+   t(`o eco do turno inteiro, reenviado, dá o pedido do caminho do App (${ecoIgual}/${comEco})`, comEco > 100 && ecoIgual === comEco);
+   t(`e o Juiz deste turno muda o eco (os vetos) em ${ecoMudouPeloJuiz} de ${casos}`, ecoMudouPeloJuiz > 0);
+   t(`a tela tem a forma mínima em todos (${telaBoa}/${casos}): a narração, as linhas, os campos do save, os avulsos`, telaBoa === casos);
+@@ -407,11 +425,19 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
+       eco = Object.keys(sv.eco).length ? sv.eco : null;
+       const g = L.juiz && L.juiz.entrada;
+       if (!g || !sv.entradaDoJuiz) continue;
+-      if (g.mercado.length) { comBanca++; if (can(sv.entradaDoJuiz.mercado) === can(g.mercado)) igual++; }
++      /* MOVIDA (29/10, o save aberto como o load), com o motivo: o herói
++         novo do App não passa por migrarPersonagem até ao 1.º load — na 1.ª
++         sentada não tem suprimentos, e o balcão vende-lhe o Kit de viagem; o
++         servidor abre a ficha como o load, que lhe dá o kit (regras-jogo.js),
++         e o balcão já não o oferece. O mercado é o do App, item a item, menos
++         o que a ficha aberta já tem. */
++      const temKit = !!(((comoOLoadAbre(estadoNoTurno(A, i)).personagem || {}).suprimentos || {}).kit);
++      const doApp = g.mercado.filter((x) => !(temKit && x.id === "kit"));
++      if (g.mercado.length) { comBanca++; if (can(sv.entradaDoJuiz.mercado) === can(doApp)) igual++; }
+       else abertura = `turno ${i}: o App 0, o servidor ${sv.entradaDoJuiz.mercado.length}`;
+     }
+     console.log(`      (sem banca no App: ${abertura || "nenhum"})`);
+-    t(`na sessão do jogo, o mercado do Juiz é o do App onde o App tinha a banca (${igual}/${comBanca}, 29 itens cada)`, comBanca === 2 && igual === comBanca);
++    t(`na sessão do jogo, o mercado do Juiz é o do App onde o App tinha a banca (${igual}/${comBanca}, 29 itens do App, menos o kit que a ficha aberta já tem)`, comBanca === 2 && igual === comBanca);
+   }
+   /* (b) OS 146 TURNOS: a praça do instante e a do render dão o mesmo mercado
+      (a cidade, o dia, o mapa e a lei de antes do turno, como o App os lê no
+@@ -419,8 +445,8 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
+      vende tem lá o MESMO preço — a praça é a que a pauta mostrou ao
+      Narrador. (A pauta põe a preço também a rua — a caneca, o prato quente,
+      de precosDaRua —, que não é banca nem balcão: esses não se cruzam.) */
+-  let comPraca = 0, instanteRender = 0, pautaComPreco = 0, pautaNaPraca = 0, precoAntes = 0, precoDepois = 0, vetoDepois = 0, nomeAntes = 0, nomeDepois = 0, casos = 0;
+-  const foraDaPraca = [];
++  let comPraca = 0, instanteRender = 0, pautaComPreco = 0, pautaNaPraca = 0, precoAntes = 0, precoDepois = 0, vetoDepois = 0, vetoVisto = 0, nomeAntes = 0, nomeDepois = 0, casos = 0;
++  const foraDaPraca = [], vetosNaoVistos = [];
+   for (const { s, A } of SESSOES) {
+     let eco = null;
+     for (let i = 0; i < A.turnos.length; i++) {
+@@ -452,14 +478,28 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
+       const v1 = julgarAProsa(narr, en), v0 = julgarAProsa(narr, { ...en, mercado: [] });
+       precoAntes += v0.precosInventados.length; precoDepois += v1.precosInventados.length;
+       nomeAntes += v0.nomesNovos.length + v0.pessoasNovas.length; nomeDepois += v1.nomesNovos.length + v1.pessoasNovas.length;
+-      vetoDepois += vetosDoVeredito(v1, { turno: 1, cidade: estado.cidadeAtual || "" }).filter((x) => x.especie === "preco-contra-a-mesa").length;
++      const vs = vetosDoVeredito(v1, { turno: 1, cidade: estado.cidadeAtual || "" }).filter((x) => x.especie === "preco-contra-a-mesa");
++      vetoDepois += vs.length;
++      /* o veto contra uma mesa que o Narrador daquele turno VIU (a pauta
++         gravada dava preço À MESMA COISA): é esse que não pode nascer do nada */
++      const viu = new Set(oQueAPautaSabe(String((L.pedido || {}).pauta || "")).mercado.map((x) => sem(x.nome)));
++      vetoVisto += vs.filter((x) => x.toques.some((k) => viu.has(sem(k)))).length;
++      if (vs.length && vetosNaoVistos.length < 4) vetosNaoVistos.push(`${s}#${i}: ${vs.map((x) => x.toques[0]).join(", ")}`);
+     }
+   }
+   console.log(`      (${casos} turnos; praça na cena em ${comPraca}; preços apanhados ${precoAntes} sem a praça → ${precoDepois} com ela; gente e nomes novos ${nomeAntes} → ${nomeDepois}; vetos contra a mesa ${vetoDepois})`);
+   t(`a praça do instante é a do render em todos os turnos gravados (${instanteRender}/${casos})`, casos >= 140 && instanteRender === casos);
+   t(`e há praça em boa parte deles (${comPraca})`, comPraca >= 40);
+   t(`o que a pauta pôs a preço e a praça vende tem o mesmo preço nas duas (${pautaNaPraca}/${pautaComPreco} turnos)${foraDaPraca.length ? " — " + foraDaPraca.join(" · ") : ""}`, pautaComPreco > 0 && pautaNaPraca === pautaComPreco);
+-  t(`com a praça o Juiz não acusa mais preços nas sessões (${precoAntes} → ${precoDepois}) e nenhum veto contra a mesa nasce do nada (${vetoDepois})`, precoDepois <= precoAntes && vetoDepois === 0);
++  /* MOVIDA (29/10, o save aberto como o load), com o motivo: até aqui as
++     cidades das sessões de Node eram só um nome, e uma cidade sem porte não
++     tem banca; abertas como o load as abre, ganham a geografia (o porte, o
++     bioma) e a banca que ela dá — e na 10.ª, em Monte Rasa (gelo), o couro
++     batido a ◉ 15 e as rações a ◉ 8 contra os 20 e 3 que o Narrador disse.
++     Esse Narrador nunca viu a mesa: a pauta gravada da 10.ª é a do registo,
++     sem mercado. A intenção fica, e fica mais exata: nenhum veto contra uma
++     mesa que o Narrador do turno VIU. */
++  t(`com a praça o Juiz não acusa mais preços nas sessões (${precoAntes} → ${precoDepois}), e nenhum veto contra a mesa nasce de uma mesa que o Narrador viu (${vetoVisto} de ${vetoDepois}${vetosNaoVistos.length ? ": " + vetosNaoVistos.join(" · ") : ""})`, precoDepois <= precoAntes && vetoVisto === 0 && vetoDepois <= 2);
+   /* (c) O CASO MONTADO: na Ponte do Martelo (a banca do boticário vende o
+      Elixir de Destreza a ◉ 145), o Narrador diz «Trezentas» num turno que
+      não falou de compra (a pauta não traz a ficha do mercado). Com a praça:
