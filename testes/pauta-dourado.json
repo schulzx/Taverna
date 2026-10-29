@@ -4126,6 +4126,126 @@
    "nPortas": 0,
    "erro": null,
    "faltas": []
+  },
+  {
+   "texto": "59ac29a6e8ac620d",
+   "tam": 1347,
+   "pauta": "f79307e35007ef10",
+   "refs": "5c41c34111fcb265",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "98edec6986e456b1",
+   "tam": 1352,
+   "pauta": "8c0062e948463599",
+   "refs": "80e53acbada3c6fa",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "0a5dcfc3663b34cd",
+   "tam": 1349,
+   "pauta": "8e6375fe02ac0e5f",
+   "refs": "a4e1aa00b86ffe85",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "8785173ae31a4890",
+   "tam": 1360,
+   "pauta": "70b47d26e030d583",
+   "refs": "599e02bf6a4fd5c7",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "28423fce70110b43",
+   "tam": 1366,
+   "pauta": "3fa2c226518ab17a",
+   "refs": "6ebb1b774e92bde8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "45321c16f009fac7",
+   "tam": 1334,
+   "pauta": "3c4dc0729afbef07",
+   "refs": "820b466cf6e5765b",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "d169287974f487c6",
+   "tam": 1377,
+   "pauta": "222744170cc7ea3f",
+   "refs": "c2e54f6cf5ab7fbe",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "af1a1bdda9786cc0",
+   "tam": 1372,
+   "pauta": "e22b89890ff22df6",
+   "refs": "d2c54f093b930b23",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "676b2f98d2f3ec6c",
+   "tam": 1366,
+   "pauta": "9c14f278bcda444c",
+   "refs": "87a012e3459683c8",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "7adadec8e5729d3c",
+   "tam": 1365,
+   "pauta": "28c43f511707c149",
+   "refs": "56f6677e1624909c",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "7dd35388965ba7c4",
+   "tam": 1337,
+   "pauta": "84ad35fb6d6f6f91",
+   "refs": "89307a87258dadd3",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "texto": "cf0854b2ce2e093c",
+   "tam": 1333,
+   "pauta": "49f6c6a94f6e5ed7",
+   "refs": "3c01092218c992b0",
+   "portas": "4f53cda18c2baa0c",
+   "nPortas": 0,
+   "erro": null,
+   "faltas": []
   }
  ]
 }

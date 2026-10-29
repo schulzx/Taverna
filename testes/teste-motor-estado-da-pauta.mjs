@@ -15,7 +15,7 @@
    estado). E cada caso corre também com o render velho (a tela na estrada:
    sem cidade, banca vazia), o do App de antes do conserto: os casos onde a
    praça muda são os que o defeito vendia errado. */
-import { lerODourado, correrAPeca, fotoDaPauta, casosDaPauta, fotoGuardada, mesmaFoto, osModulos, osPadroes, N_CASOS } from "./pauta-bloco.mjs";
+import { lerODourado, correrAPeca, fotoDaPauta, casosDaPauta, fotoGuardada, mesmaFoto, osModulos, osPadroes, N_CASOS, N_DA_PAUTA } from "./pauta-bloco.mjs";
 import { aPautaDoTurno, oEstadoDaPauta, REFS_DA_PAUTA, RENDER_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
 import { textoDaPauta } from "../src/pauta.js";
 
@@ -58,14 +58,18 @@ const agora = CASOS.map((k) => correrAPeca(comoOAppDeAgora, k, D, padroes));
 const antes = CASOS.map((k) => correrAPeca(comoOAppDeAntes, k, D, padroes));
 const batem = agora.filter((r, j) => mesmaFoto(foto(r, CASOS[j]), D.fotos[j])).length;
 const primeira = agora.findIndex((r, j) => !mesmaFoto(foto(r, CASOS[j]), D.fotos[j]));
-t(`${batem}/${N_CASOS} iguais ao dourado, com a banca velha no render (o App de agora)`, batem === N_CASOS, primeira >= 0 ? "o caso " + primeira + " diverge" : "");
+/* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
+   cobertura da pauta (pauta-bloco.mjs, COBERTURA: ENTRETANTO e O QUE VOLTA),
+   depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275
+   fotos antigas ficaram iguais; só entraram casos */
+t(`${batem}/${N_DA_PAUTA} iguais ao dourado, com a banca velha no render (o App de agora)`, batem === N_DA_PAUTA, primeira >= 0 ? "o caso " + primeira + " diverge" : "");
 
 sec("3 · o defeito: com a banca do último render, a praça é a de antes");
 /* o que vai ao Narrador é o texto da pauta (com teto): é ele que se compara */
 const linhas = (r) => (r.p ? textoDaPauta(r.p, { turno: 1 }).split("\n") : []);
 const mudouOObjeto = antes.map((r, j) => (JSON.stringify(r.p) !== JSON.stringify(agora[j].p) ? j : -1)).filter((j) => j >= 0);
 const mudam = mudouOObjeto.filter((j) => linhas(antes[j]).join("\n") !== linhas(agora[j]).join("\n"));
-t(`o render velho muda a pauta em ${mudouOObjeto.length} dos ${N_CASOS} casos, e o texto ao Narrador em ${mudam.length}`, mudam.length > 0 && mudam.length <= mudouOObjeto.length);
+t(`o render velho muda a pauta em ${mudouOObjeto.length} dos ${N_DA_PAUTA} casos, e o texto ao Narrador em ${mudam.length}`, mudam.length > 0 && mudam.length <= mudouOObjeto.length);
 t("e nenhum dos que mudam é igual ao dourado", mudouOObjeto.every((j) => !mesmaFoto(foto(antes[j], CASOS[j]), D.fotos[j])));
 /* a linha da praça (o que se perguntou ao balcão, o preço, a banca que não vende) que só a pauta do instante tem */
 const DA_PRACA = /^PERGUNTOU|banca|balc[aã]o|à venda|◉/;

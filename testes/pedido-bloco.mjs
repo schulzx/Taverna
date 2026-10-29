@@ -27,7 +27,7 @@ import fs from "node:fs";
 import { semearACasa } from "../src/semente.js";
 import { oPedidoDaEscuta } from "../src/motor/antes-do-mestre.js";
 import { ATRIBUTOS } from "../src/constantes.js";
-import { casoDaPauta, N_CASOS, osModulos, sha } from "./pauta-bloco.mjs";
+import { casoDaPauta, N_CASOS, N_DA_PAUTA, osModulos, sha } from "./pauta-bloco.mjs";
 
 export { N_CASOS, sha, osModulos };
 export const AMOSTRA = 3;
@@ -99,7 +99,8 @@ export function casoDoPedido(i) {
   };
   return { ...k, render, entrada };
 }
-export const casosDoPedido = () => Array.from({ length: N_CASOS }, (_, i) => casoDoPedido(i));
+/* os 275 e, no fim, os de cobertura da pauta (29/10): os índices de antes não se movem */
+export const casosDoPedido = () => Array.from({ length: N_DA_PAUTA }, (_, i) => casoDoPedido(i));
 
 /* ---------------- correr um lado ---------------- */
 const fotoDosRefs = (valores) => Object.fromEntries(Object.keys(valores).sort().map((k) => [k, sha(valores[k])]));

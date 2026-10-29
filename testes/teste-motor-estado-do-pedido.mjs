@@ -19,7 +19,8 @@
    banca velha, direto à peça): os que mudam são os que o defeito vendia
    errado. E o que a peça escreve tem ref no App: o aplicar do App só sabe
    escrever o que as duas tabelas nomeiam (o system incluído). */
-import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto, N_CASOS } from "./pedido-bloco.mjs";
+import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto } from "./pedido-bloco.mjs";
+import { N_DA_PAUTA as N_CASOS } from "./pauta-bloco.mjs";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } from "../src/motor/pedido-do-turno.js";
 import { REFS_DA_PAUTA, RENDER_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
 
@@ -61,6 +62,10 @@ sec(`2 · os ${N_CASOS} casos, com o estado montado como o App o monta, contra o
 const agora = await correrOsCasos(D, { lado: "peca", peca: comoOAppDeAgora, casos: CASOS });
 const batem = agora.filter((f, i) => mesmaFoto(fotoGuardada(f, i), D.fotos[i])).length;
 const primeira = agora.findIndex((f, i) => !mesmaFoto(fotoGuardada(f, i), D.fotos[i]));
+/* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
+   cobertura da pauta (pauta-bloco.mjs, COBERTURA: ENTRETANTO e O QUE VOLTA),
+   depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275
+   fotos antigas ficaram iguais; só entraram casos — aqui `N_CASOS` é o número de casos do pedido, os 275 e os de cobertura */
 t(`${batem}/${N_CASOS} iguais ao dourado, com a banca velha no render (o App de agora)`, batem === N_CASOS, primeira >= 0 ? "o caso " + primeira + " diverge" : "");
 const semRef = [...new Set(agora.flatMap((f) => f.aplicados))].filter((c) => !TABELA[c]);
 t("tudo o que a peça escreve tem ref numa das duas tabelas (o aplicar do App não perde nada)", semRef.length === 0, semRef.join());

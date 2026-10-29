@@ -26,6 +26,19 @@
    do save (o eco, os bilhetes, os soltos) varia por índice, sem
    Math.random; a sorte da casa é semeada por caso.
 
+   AS SECÇÕES QUE FALTAVAM (29/10, trilha B). Depois dos 275, os casos de
+   COBERTURA: duas secções da pauta que nenhum dos 275 pisava — ENTRETANTO
+   (`foraDeCena`: o feito do elenco longe dos olhos do herói, de hoje ou de
+   ontem, na cidade da cena) e O QUE VOLTA (`volta`: a promessa plantada
+   que amadureceu e o Livro cobra) —, cada um sobre um dos sintéticos, com
+   o estado que acende a secção. Vêm DEPOIS, e `N_CASOS` continua 275: é
+   sobre ele que o pedido, o prelúdio e as outras provas fazem as contas
+   dos índices (os montados do prelúdio começam ali), e um caso antigo que
+   mudasse de índice mudaria de semente. A terceira, FORMA, não tem caso
+   porque não tem quem a escreva: a forma da cena vai ao Narrador em
+   envelope (`[A FORMA DESTA CENA]`, no pedido), e nenhum sítio da pauta
+   põe nada na secção — a suíte o diz.
+
    E um nome que o recorte leia e nenhum dublê dê não cai em silêncio:
    fica em `faltas`, e a suíte exige-o vazio. */
 import fs from "node:fs";
@@ -174,7 +187,38 @@ function osDeFora(i) {
   };
 }
 
+/* OS CASOS DE COBERTURA: a base (um sintético, com o mundo inteiro), e o
+   que acende a secção. ENTRETANTO lê `elenco.feitos` (elenco.js,
+   foraDeCenaParaPauta: o feito de até FORA_DE_CENA.naPauta.dias atrás, na
+   cidade da cena ou de quem está nela); O QUE VOLTA, `prometido` com a
+   semente madura e o Livro sem cobrar há RITMO_DO_PROMETIDO.intervalo
+   turnos (prometido.js, cobrarNoTurno), fora da luta e com frase do
+   jogador que não pergunta. */
+const FEITOS = ["vendeu o barco no cais e partiu sem dizer para onde", "brigou com a guarda na porta do forte", "pagou a dívida do irmão com prata que ninguém sabe de onde veio"];
+const PROMESSAS = [{ tipo: "frase", texto: "voltarei com a cura para a menina", quem: "Doran o Manco" }, { tipo: "volta", texto: "volto antes da lua cheia com o mapa", quem: "Ilka" }, { tipo: "objeto", texto: "a caixa de cobre que ninguém consegue abrir", quem: "" }];
+/* as bases: sintéticos com cidade (fora da estrada), fora da luta, do lixo e da Noite */
+const BASES_DA_COBERTURA = Array.from({ length: 79 }, (_, n) => 194 + n).filter((i) => i % 9 !== 4 && i % 41 !== 9 && i % 37 !== 11 && i % 5 !== 2).filter((_, n) => n % 4 === 0);
+const COBERTURA = [
+  ...[0, 1, 2, 3, 4, 5].map((j) => ({ base: BASES_DA_COBERTURA[j], o: "entretanto", frase: ["Vou até a taverna.", "Ando pela praça e escuto o que se diz."][j % 2], estado: (k) => {
+    const dia = Number(k.estado.dia) || 5, cidade = k.estado.cidadeAtual || "";
+    return { combate: null, masmorra: null, jornada: null, cidadeAtual: cidade, dia,
+      elenco: { feitos: [{ dia: dia - (j % 2), quem: NOMES[j % NOMES.length], cidade, passo: "fora", o: `${NOMES[j % NOMES.length]} ${FEITOS[j % FEITOS.length]}` }] } };
+  } })),
+  ...[0, 1, 2, 3, 4, 5].map((j) => ({ base: BASES_DA_COBERTURA[6 + j], o: "o que volta", frase: ["Vou até a taverna.", "Sento perto do fogo e peço pão."][j % 2], estado: () => {
+    const plantado = guardarSementes(garantirPrometido(null), [PROMESSAS[j % PROMESSAS.length]]).estado;
+    return { combate: null, modo: "historia", noite: null, prometido: { ...plantado, turno: 6 + j, ultima: 0 } };
+  } })),
+];
+export const N_COBERTURA = COBERTURA.length;
+/* todos os casos da prova da pauta: os 275 e os de cobertura */
+export const N_DA_PAUTA = N_CASOS + N_COBERTURA;
+
 export function casoDaPauta(i) {
+  if (i >= N_CASOS && i < N_DA_PAUTA) {
+    const m = COBERTURA[i - N_CASOS];
+    const k = casoDaPauta(m.base);
+    return { ...k, i, cobertura: m.o, frase: m.frase, estado: copia({ ...k.estado, ...m.estado(k), ultimaAcao: m.frase }) };
+  }
   let estado, frase;
   if (i < N_GRAVADOS) {
     const g = GRAVADOS[i];
@@ -210,7 +254,7 @@ export function casoDaPauta(i) {
   if (i === N_CASOS - 2) return { i, frase: null, estado: {}, render: {} };
   return { i, frase, estado: copia(estado), render: copia(render) };
 }
-export const casosDaPauta = () => Array.from({ length: N_CASOS }, (_, i) => casoDaPauta(i));
+export const casosDaPauta = () => Array.from({ length: N_DA_PAUTA }, (_, i) => casoDaPauta(i));
 
 /* ---------------- correr um lado ---------------- */
 const fotoDosRefs = (valores) => Object.fromEntries(Object.keys(valores).sort().map((k) => [k, sha(valores[k])]));

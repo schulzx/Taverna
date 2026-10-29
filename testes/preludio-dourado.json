@@ -5018,6 +5018,102 @@
    "nPortas": 16,
    "erro": null,
    "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "8621b722bba5e892",
+   "portas": "76684304251677ae",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "081fc3b3c3281483",
+   "refs": "3cdd8e52b57a2aa0",
+   "portas": "3b9b52c5b2182dd8",
+   "nPortas": 6,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "b632b67f4feb62d3",
+   "portas": "e1a65a315f69eab6",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "306aa0c55301d4a8",
+   "refs": "3fd36644843f3626",
+   "portas": "e1681b4b56d00f44",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "46571536611c0875",
+   "portas": "39bb1d83d7de4ab5",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "081fc3b3c3281483",
+   "refs": "4fc5bd115b2cf61a",
+   "portas": "88339560a611293b",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "2b24ba2238ba9a36",
+   "portas": "bbdac2210bb136f2",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "7bef491386de040c",
+   "refs": "9f3ee2f94b53a4ef",
+   "portas": "11ef3d323503916d",
+   "nPortas": 1,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "9f2abf3c4a2da6b8",
+   "portas": "14c5f3de3f998417",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "228dcbe44d94708c",
+   "refs": "bf0871209f6a8853",
+   "portas": "ce06316ba55aa000",
+   "nPortas": 1,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "510a959dc7748000",
+   "portas": "3568faf3973261ef",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "7bef491386de040c",
+   "refs": "f97b012b9c3cd6cb",
+   "portas": "c59656d5df0b95fc",
+   "nPortas": 1,
+   "erro": null,
+   "faltas": []
   }
  ],
  "cadeias": [
@@ -8368,6 +8464,126 @@
    "refs": "dd94fd81841e524a",
    "portas": "c07b478733f093ad",
    "nPortas": 16,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "22f18137f5f9f63d",
+   "tamRede": 63064,
+   "saida": "be7bebfc8d4c6955",
+   "refs": "6cf96f6df39fdeab",
+   "portas": "705f0b0fb94b0a76",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "7a25290c60135eef",
+   "tamRede": 55950,
+   "saida": "870747ba8d939598",
+   "refs": "790f05f36b42c818",
+   "portas": "f83e7ffed8acdf86",
+   "nPortas": 6,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "26f03bb28f78a636",
+   "tamRede": 61153,
+   "saida": "ae6270791a90bce9",
+   "refs": "07e5a09a81babe28",
+   "portas": "997e6191eb313d89",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "cda72d6b71ed1560",
+   "tamRede": 63564,
+   "saida": "d5b23e4b2ab41d28",
+   "refs": "4815ae343a5beab8",
+   "portas": "be2ddcd21898b4c4",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "995bdcc01412fa2c",
+   "tamRede": 61439,
+   "saida": "6d61293c836288d7",
+   "refs": "0654667e40f7a0fa",
+   "portas": "eab34d0e2bec6c17",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "2a511fb61706ef11",
+   "tamRede": 57036,
+   "saida": "5ead046d49696926",
+   "refs": "ea30fdde04ca739b",
+   "portas": "fbfcc3ce97010347",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "14824cf3945dd58c",
+   "tamRede": 62918,
+   "saida": "21b8baa85c89ee44",
+   "refs": "a4bd6a0933b7cef4",
+   "portas": "62a991b039d62dde",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "16a4a15dc235bc81",
+   "tamRede": 57811,
+   "saida": "d33a6e42641e1abd",
+   "refs": "fdc2ace5b6c9945a",
+   "portas": "11ef3d323503916d",
+   "nPortas": 1,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "f207280effff733f",
+   "tamRede": 64348,
+   "saida": "a17a5e83a1f61caa",
+   "refs": "74f3bedae3dc384f",
+   "portas": "efdb5f5cb1d68c8d",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "bf5f83dbe2bce3fd",
+   "tamRede": 56171,
+   "saida": "22dbbe8a00f06f79",
+   "refs": "58698017469d45e2",
+   "portas": "ce06316ba55aa000",
+   "nPortas": 1,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "7ddd18ffbdb5b70b",
+   "tamRede": 61718,
+   "saida": "c14d0cb0d3e89fa2",
+   "refs": "1c634f13e32d3f1d",
+   "portas": "7bfca170c7d71672",
+   "nPortas": 8,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "fad5c16ac1326cad",
+   "tamRede": 58210,
+   "saida": "3f37bee28f38c3c5",
+   "refs": "360b5adc26016122",
+   "portas": "c59656d5df0b95fc",
+   "nPortas": 1,
    "erro": null,
    "faltas": []
   }

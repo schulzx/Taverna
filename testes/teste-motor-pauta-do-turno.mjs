@@ -22,7 +22,7 @@
    sobre o estado congelado e dá o mesmo), o lixo não a derruba, a tabela
    dos refs é a do App, e o teto da pauta não mexeu.
    ============================================================ */
-import { lerODourado, correrOsCasos, casosDaPauta, fotoGuardada, mesmaFoto, osModulos, osPadroes, N_CASOS, N_GRAVADOS } from "./pauta-bloco.mjs";
+import { lerODourado, correrOsCasos, casosDaPauta, fotoGuardada, mesmaFoto, osModulos, osPadroes, N_CASOS, N_GRAVADOS, N_DA_PAUTA, N_COBERTURA } from "./pauta-bloco.mjs";
 import { aPautaDoTurno, REFS_DA_PAUTA, RENDER_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
 import { SECOES, TETO_DA_PAUTA } from "../src/pauta.js";
 import { semearACasa, rng, hashSemente } from "../src/semente.js";
@@ -40,20 +40,24 @@ const PARA_MORDER = CASOS.filter((k) => k.i % 2 === 0 || k.i % 10 === 1 || k.i %
 const diferem = (fotos) => fotos.reduce((a, f, j) => a + (mesmaFoto(fotoGuardada(f, PARA_MORDER[j].i), D.fotos[PARA_MORDER[j].i]) ? 0 : 1), 0);
 
 sec("1. O dourado: o recorte à letra, e o recorte de novo dá as mesmas fotos");
-t(`o dourado é de um commit (${D.commit}) e tem 275 fotos`, /^[0-9a-f]{7,}$/.test(D.commit) && D.fotos.length === N_CASOS && N_CASOS === 275);
+/* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
+   cobertura da pauta (pauta-bloco.mjs, COBERTURA: ENTRETANTO e O QUE VOLTA),
+   depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275
+   fotos antigas ficaram iguais; só entraram casos */
+t(`o dourado é de um commit (${D.commit}) e tem 275 fotos e ${N_COBERTURA} de cobertura`, /^[0-9a-f]{7,}$/.test(D.commit) && D.fotos.length === N_DA_PAUTA && N_CASOS === 275 && N_COBERTURA === 12);
 t(`55 recortes: a pautaDoTurno, 50 funções do componente, os 2 valores do render e os 2 do módulo`, D.recortes.length === 55
   && D.recortes.filter((r) => r.de === "componente").length === 51 && D.recortes.filter((r) => r.de === "render").length === 2 && D.recortes.filter((r) => r.de === "modulo").length === 2);
 t("o pushMsgs NÃO está no recorte (é porta)", !D.recortes.some((r) => r.nome === "pushMsgs"));
 t(`82 refs, ${Object.values(D.refs).filter((r) => r.escreve).length} escritos pela pauta`, Object.keys(D.refs).length === 82);
 t(`os casos: ${N_GRAVADOS} turnos gravados (sessões 8–10) e ${N_CASOS - N_GRAVADOS} só da prova`, N_GRAVADOS === 194);
 const RECORTE = await correrOsCasos(D, { lado: "recorte", casos: CASOS });
-t(`o recorte, corrido de novo com as dependências de hoje, dá as fotos do dourado (${conta(RECORTE)}/275 — se cair, regenere com gerar-pauta-dourado.mjs)`, conta(RECORTE) === N_CASOS);
-t("nenhum nome do recorte ficou sem dublê (faltas vazias nos 275)", RECORTE.every((f) => f.faltas.length === 0));
+t(`o recorte, corrido de novo com as dependências de hoje, dá as fotos do dourado (${conta(RECORTE)}/${N_DA_PAUTA} — se cair, regenere com gerar-pauta-dourado.mjs)`, conta(RECORTE) === N_DA_PAUTA);
+t(`nenhum nome do recorte ficou sem dublê (faltas vazias nos ${N_DA_PAUTA})`, RECORTE.every((f) => f.faltas.length === 0));
 
-sec("2. A peça contra o recorte: 275/275");
+sec(`2. A peça contra o recorte: ${N_DA_PAUTA}/${N_DA_PAUTA}`);
 const PECA = await correrOsCasos(D, { lado: "peca", peca: aPautaDoTurno, casos: CASOS });
-t(`as fotos da peça são as do dourado (${conta(PECA)}/275): o texto, a pauta, os refs do fim, as portas`, conta(PECA) === N_CASOS);
-t("o texto ao Narrador é o mesmo, byte a byte, nos 275", PECA.every((f, i) => f.texto === RECORTE[i].texto));
+t(`as fotos da peça são as do dourado (${conta(PECA)}/${N_DA_PAUTA}): o texto, a pauta, os refs do fim, as portas`, conta(PECA) === N_DA_PAUTA);
+t(`o texto ao Narrador é o mesmo, byte a byte, nos ${N_DA_PAUTA}`, PECA.every((f, i) => f.texto === RECORTE[i].texto));
 t("os refs do fim são os mesmos, campo a campo", PECA.every((f, i) => JSON.stringify(f.refs) === JSON.stringify(RECORTE[i].refs)));
 t("as portas na mesma ordem (calou, setPersonagem, pushMsgs com a foto dos refs)", PECA.every((f, i) => JSON.stringify(f.portas) === JSON.stringify(RECORTE[i].portas)));
 t("os que estouram estouram igual (6, com a mesma mensagem)", PECA.filter((f) => f.erro).length === 6 && PECA.every((f, i) => f.erro === RECORTE[i].erro));
@@ -67,10 +71,18 @@ for (const f of PECA) {
 }
 const vivos = {};
 for (const f of PECA) for (const s of Object.keys(f.pautaObj || {})) vivos[s] = (vivos[s] || 0) + 1;
-const FALTAM = ["forma", "foraDeCena", "volta"];
+/* MOVIDA (29/10, trilha B): ENTRETANTO (foraDeCena) e O QUE VOLTA (volta)
+   ganharam os casos de cobertura (pauta-bloco.mjs, COBERTURA) e saem da
+   lista. FORMA fica, e o motivo antigo («pedem um mundo com mais estrada»)
+   era palpite: nenhum sítio da pauta escreve a secção — a forma da cena vai
+   ao Narrador em envelope ([A FORMA DESTA CENA], no pedido). A asserção de
+   baixo o diz: no dia em que um caso a pisar, ela sai daqui. */
+const FALTAM = ["forma"];
 const POUCOS = SECOES.map((s) => s.id).filter((s) => !FALTAM.includes(s) && !(vivos[s] >= 5));
-t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que pedem um mundo com mais estrada)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
+t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que nenhum sítio da pauta escreve)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
   SECOES.map((s) => `${s.id} ${vivos[s.id] || 0}`).join(" · "));
+t(`ENTRETANTO em ${vivos.foraDeCena || 0} casos e O QUE VOLTA em ${vivos.volta || 0}, todos dos de cobertura; a FORMA em ${vivos.forma || 0}`,
+  vivos.foraDeCena >= 5 && vivos.volta >= 5 && !vivos.forma && PECA.slice(0, N_CASOS).every((f) => !(f.pautaObj || {}).foraDeCena && !(f.pautaObj || {}).volta));
 t(`o pushMsgs (o aliado que vai embora) em ${comPush} casos, a ficha em ${comFicha}, o calou em ${comCalou}`, comPush >= 4 && comFicha >= 4 && comCalou >= 5);
 t("o texto nunca passa do teto da pauta (TETO_DA_PAUTA, que não mexeu: 1400)", TETO_DA_PAUTA === 1400 && D.fotos.every((f) => f.tam <= TETO_DA_PAUTA));
 
@@ -129,8 +141,8 @@ for (const [i, k] of CASOS.entries()) {
   if (JSON.stringify(sem) === antes) intactos++;
   if ((erro === null) === (PECA[i].erro === null) && (!r || JSON.stringify(r.pauta) === JSON.stringify(PECA[i].pautaObj))) iguais++;
 }
-t(`sobre o estado congelado até ao fundo, a peça dá a mesma pauta (${iguais}/275) — nada se escreve por dentro do que entrou`, iguais === N_CASOS);
-t(`e o estado que entrou sai como entrou (${intactos}/275)`, intactos === N_CASOS);
+t(`sobre o estado congelado até ao fundo, a peça dá a mesma pauta (${iguais}/${N_DA_PAUTA}) — nada se escreve por dentro do que entrou`, iguais === N_DA_PAUTA);
+t(`e o estado que entrou sai como entrou (${intactos}/${N_DA_PAUTA})`, intactos === N_DA_PAUTA);
 t("as escritas voltam inteiras, e só nos campos que a tabela diz que a pauta escreve", PECA.every((f) => !f.ret || Object.keys(f.ret.escritas).every((c) => REFS_DA_PAUTA[c] && REFS_DA_PAUTA[c].escreve)));
 t("o que o aplicar recebeu, somado, é o que volta em escritas", PECA.every((f) => !f.ret || JSON.stringify([...new Set(f.aplicados)].sort()) === JSON.stringify(Object.keys(f.ret.escritas).sort())));
 

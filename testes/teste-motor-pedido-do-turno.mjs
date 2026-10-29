@@ -21,6 +21,7 @@
    (a catraca teste-assercoes-de-texto): a peça prova-se jogando.
    ============================================================ */
 import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto, N_CASOS, osModulos, osPadroes } from "./pedido-bloco.mjs";
+import { N_DA_PAUTA } from "./pauta-bloco.mjs";
 import { oPedidoDoTurno, REFS_DO_PEDIDO, RENDER_DO_PEDIDO, ENTRADA_DO_PEDIDO, PEDIDO_AO_NARRADOR } from "../src/motor/pedido-do-turno.js";
 import { rng, hashSemente } from "../src/semente.js";
 
@@ -39,19 +40,23 @@ const diferem = (fotos) => fotos.reduce((a, f, j) => a + (mesmaFoto(fotoGuardada
 
 sec("1. O dourado: o recorte à letra, e o recorte de novo dá as mesmas fotos");
 const R = await correrOsCasos(D, { lado: "recorte" });
-t(`o dourado tem as ${N_CASOS} fotos, de um commit`, D.fotos.length === N_CASOS && /^[0-9a-f]{7,}$/.test(D.commit), D.commit);
-t("o recorte corre de novo e dá as mesmas fotos (o dourado não é de outra árvore)", conta(R) === N_CASOS, `${conta(R)}/${N_CASOS}`);
+/* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
+   cobertura da pauta (pauta-bloco.mjs, COBERTURA: ENTRETANTO e O QUE VOLTA),
+   depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275
+   fotos antigas ficaram iguais; só entraram casos */
+t(`o dourado tem as ${N_DA_PAUTA} fotos, de um commit`, D.fotos.length === N_DA_PAUTA && /^[0-9a-f]{7,}$/.test(D.commit), D.commit);
+t("o recorte corre de novo e dá as mesmas fotos (o dourado não é de outra árvore)", conta(R) === N_DA_PAUTA, `${conta(R)}/${N_DA_PAUTA}`);
 t("o escopo do recorte não achou nome sem dublê (faltas: 0)", R.every((f) => f.faltas.length === 0), R.flatMap((f) => f.faltas).slice(0, 5).join());
 const comRede = R.filter((f) => f.redeInteira);
-t("o pedido chega à rede em quase todos (os que estouram são o lixo e a ficha torta)", comRede.length >= N_CASOS - 16, `${comRede.length}/${N_CASOS}`);
+t("o pedido chega à rede em quase todos (os que estouram são o lixo e a ficha torta)", comRede.length >= N_DA_PAUTA - 16, `${comRede.length}/${N_DA_PAUTA}`);
 t("o pedido que vai à rede é o de chamarMestre: o teto, o formato, a tarefa e o cache são os da tabela",
   comRede.every((f) => f.redeInteira[2] === PEDIDO_AO_NARRADOR.maxTokens && f.redeInteira[3] === PEDIDO_AO_NARRADOR.formato && f.redeInteira[4] === PEDIDO_AO_NARRADOR.tarefa && f.redeInteira[5] === PEDIDO_AO_NARRADOR.comCache));
 t("a frase do jogador vai na última mensagem", comRede.filter((f, j) => { const k = CASOS[R.indexOf(f)]; const m = f.redeInteira[1]; const u = m[m.length - 1]; return !k.entrada.conteudo || (u && u.role === "user" && String(u.content).includes(String(k.entrada.conteudo))); }).length === comRede.length);
 
-sec(`2. A peça contra o recorte: ${N_CASOS}/${N_CASOS}`);
+sec(`2. A peça contra o recorte: ${N_DA_PAUTA}/${N_DA_PAUTA}`);
 const P = await correrOsCasos(D, { lado: "peca", peca: oPedidoDoTurno });
 const iguais = conta(P);
-t(`peça = recorte em ${iguais}/${N_CASOS} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_CASOS);
+t(`peça = recorte em ${iguais}/${N_DA_PAUTA} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_DA_PAUTA);
 t("os que estouram estouram igual (e entregam ao App o que já tinham escrito)", P.every((f, i) => (f.erro === null) === (D.fotos[i].erro === null)));
 {
   const tam = comRede.map((f) => f.tamRede);

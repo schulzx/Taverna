@@ -32,7 +32,7 @@ import fs from "node:fs";
 import { semearACasa } from "../src/semente.js";
 import { abrirRaid } from "../src/raids.js";
 import { casoDoPedido, osPadroes, compilarORecorte as compilarOPedido, lerODourado as lerOPedido } from "./pedido-bloco.mjs";
-import { N_CASOS, osModulos, sha } from "./pauta-bloco.mjs";
+import { N_CASOS, N_COBERTURA, osModulos, sha } from "./pauta-bloco.mjs";
 
 export { N_CASOS, sha, osModulos, osPadroes, lerOPedido };
 export const AMOSTRA = 3;
@@ -116,9 +116,12 @@ const MONTADOS = [
     npcs: { ...(k.estado.npcs || {}), [O_VILAO.nome]: { nome: O_VILAO.nome, status: "morto", papel: "a vilã" } } }) })),
 ];
 export const N_MONTADOS = MONTADOS.length;
-export const N_PRELUDIO = N_CASOS + N_MONTADOS;
+/* os de cobertura da pauta (29/10) vêm por último: depois dos 275 e dos
+   montados, que guardam o índice (e a semente, "preludio|" + i) de antes */
+export const N_PRELUDIO = N_CASOS + N_MONTADOS + N_COBERTURA;
 export function casoDoPreludio(i) {
   if (i < N_CASOS) return casoDoPedido(i);
+  if (i >= N_CASOS + N_MONTADOS) return { ...casoDoPedido(N_CASOS + (i - N_CASOS - N_MONTADOS)), i };
   const m = MONTADOS[i - N_CASOS];
   const k = casoDoPedido(m.base % 194);
   return { ...k, i, montado: m.o, frase: m.frase || k.frase, estado: { ...k.estado, ...m.estado(k) } };
