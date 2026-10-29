@@ -40,11 +40,13 @@
    O 14.º, O DOMÍNIO: o decreto aceito e os três desfechos com que ele volta,
    o imposto, as duas obras, o governador, a revolta, a reivindicação e o
    tratado.
+   O 15.º, O TEMPO E A NOITE: o clima que vira ao passar o tempo e durante a
+   noite, o sonho e o onde acordo.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -593,6 +595,32 @@ sec("18 · o domínio: os casos percorrem o que o texto decide, e a prova morde"
     ["dominioGovernador", "o governador de outra cidade", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, cidade: "Lugar Nenhum" }) }],
     ["dominioReivindicacao", "a reivindicação de um dia a mais", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, dias: d.dias + 1 }) }],
     ["dominioTratado", "o tratado sem o pacto", { oEnvelopeDoDominio: (q, d) => P(q, { ...d, pacto: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("19 · o tempo e a noite: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* as quatro são caudas de outro envelope: o sítio devolve a linha (ou "") */
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const P1 = N("tempoClimaAoPassar"), P2 = N("tempoClimaDaNoite");
+  t("o clima que não virou não ocupa linha (" + P1.filter((x) => x === "").length + "), e o que virou abre com a quebra", [P1, P2].every((P) => P.filter((x) => x === "").length >= 90 && P.filter((x) => x.startsWith("\n[CLIMA] O tempo virou")).length >= 180));
+  t("ao passar o tempo o clima pede a cena; na noite, não", conta(P1, "— as estradas viram lama. Use isso na cena.") >= 90 && P2.every((x) => !x.includes("Use isso na cena")) && conta(P2, "durante a noite: agora está neblina — não se vê a dez passos.") >= 90);
+  const S = N("tempoSonho");
+  t("o sonho sem condição (" + S.filter((x) => !x.includes("(acordei")).length + "), inspirado e perturbado", S.filter((x) => !x.includes("(acordei")).length >= 80 && conta(S, "(acordei INSPIRADO — condição já aplicada pelo sistema)") >= 80 && conta(S, "(acordei PERTURBADO — condição já aplicada pelo sistema)") >= 80 && S.every((x) => x.startsWith("\n[SONHO] O sonho desta noite: \"")));
+  const O = N("tempoOndeAcordo");
+  t("o onde acordo só com a jornada e sem a masmorra que cala (" + O.filter((x) => x).length + ")", O.filter((x) => x === "").length >= 130 && O.filter((x) => x.startsWith("\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (em ")).length >= 100);
+  t("as quatro formas estão na tabela do tempo", Object.keys(ENVELOPES_DO_TEMPO).length === 4 && ["climaAoPassar", "climaDaNoite", "sonho", "ondeAcordo"].every((q) => Object.hasOwn(ENVELOPES_DO_TEMPO, q)));
+  const P = oEnvelopeDoTempo;
+  const mordidas = [
+    ["tempoClimaAoPassar", "o clima de passar o tempo com a cauda da noite", { oEnvelopeDoTempo: (q, d) => P("climaDaNoite", d) }],
+    ["tempoClimaDaNoite", "o clima da noite com a nota no lugar do rótulo", { oEnvelopeDoTempo: (q, d) => P(q, { ...d, rotulo: d.nota }) }],
+    ["tempoSonho", "o sonho que esquece a condição", { oEnvelopeDoTempo: (q, d) => P(q, { ...d, efeito: undefined }) }],
+    ["tempoOndeAcordo", "o onde acordo sem o lugar", { oEnvelopeDoTempo: (q, d) => P(q, { ...d, local: "?" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

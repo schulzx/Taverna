@@ -21,7 +21,7 @@
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDoTempo, blocoComoFuncao, correrOBloco, fotoDoTempo, casosDoTempo, BLOCOS } from "./tempo-bloco.mjs";
-import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, oTempoDoTurno, oPassoDoReplay, minutoAbsoluto, RELOGIO_DO_DIA, TEMPO_DA_CAMINHADA } from "../src/motor/tempo-do-turno.js";
+import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, oTempoDoTurno, oPassoDoReplay, minutoAbsoluto, RELOGIO_DO_DIA, TEMPO_DA_CAMINHADA, ESCALA_DE_PASSAR_O_TEMPO, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "../src/motor/tempo-do-turno.js";
 import { lugarPedido } from "../src/lugar.js";
 import { estadoNoTurno } from "../src/sessao.js";
 
@@ -120,6 +120,30 @@ sec("4 · a sessão que o jogo gravou: o tempo do motor dá o minuto que o App g
     if (E.minuto === depois.minuto && E.dia === depois.dia) batem++; else falhas.push(`turno ${n}: ${E.dia}/${E.minuto} · gravado ${depois.dia}/${depois.minuto}`);
   }
   t(`o minuto e o dia nos ${A.turnos.length} turnos gravados: ${batem}/${A.turnos.length} iguais ao que o App gravou`, batem === A.turnos.length, falhas.join(" | "));
+}
+
+sec("5 · passar o tempo e a noite: a escala e as chances, contra a regra que estava no App");
+{
+  /* A REGRA DE ANTES, à letra (App de 48ce543, passarTempo e o fim do
+     descanso): é o dourado destes números. A escala e as chances são
+     comparadas em toda meia hora de -1 a 48, nas fronteiras de perto
+     (2,999…, 3, 3,0001) e no que não é número. */
+  const antigaEscala = (horas) => horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
+  const antigaChance = (horas) => (horas >= 8 ? 0.65 : 0.35);
+  const H = [];
+  for (let h = -1; h <= 48; h += 0.5) H.push(h);
+  for (const f of [3, 8, 16]) H.push(f - 1e-9, f + 1e-4);
+  H.push(NaN, Infinity, -Infinity, 0, 24, 72);
+  t("a escala de cada hora é a do App de antes (" + H.length + " horas)", H.every((h) => aEscalaDoTempo(h) === antigaEscala(h)), String(H.find((h) => aEscalaDoTempo(h) !== antigaEscala(h))));
+  t("a chance do clima ao passar é a do App de antes", H.every((h) => aChanceDoClimaAoPassar(h) === antigaChance(h)));
+  t("a noite longa: o clima a 0,6 e o sonho a 0,25, como no App de antes", CHANCES_DA_NOITE.clima === 0.6 && CHANCES_DA_NOITE.sonho === 0.25);
+  t("a escala tem quatro degraus, do menor ao sem teto", ESCALA_DE_PASSAR_O_TEMPO.length === 4 && ESCALA_DE_PASSAR_O_TEMPO.map((e) => e.ateHoras).join() === "3,8,16,Infinity" && Object.isFrozen(ESCALA_DE_PASSAR_O_TEMPO));
+  /* a prova morde: um degrau mudado de 8 para 9 h aparece nas horas comparadas */
+  const mordida = (horas) => horas <= 3 ? antigaEscala(1) : horas <= 9 ? antigaEscala(5) : antigaEscala(horas);
+  t("a prova morde: o degrau de 8 h posto em 9 muda " + H.filter((h) => mordida(h) !== aEscalaDoTempo(h)).length + " horas", H.filter((h) => mordida(h) !== aEscalaDoTempo(h)).length > 0);
+  /* o App chama as peças: a escala e as chances já não são literais lá */
+  const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("o App pede a escala, a chance do clima e as da noite ao motor", APP.includes("const escala = aEscalaDoTempo(horas);") && APP.includes("talvezMudarClima(aChanceDoClimaAoPassar(horas))") && APP.includes("talvezMudarClima(CHANCES_DA_NOITE.clima)") && APP.includes("sorteDoTurno(\"sonho\")() < CHANCES_DA_NOITE.sonho"));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

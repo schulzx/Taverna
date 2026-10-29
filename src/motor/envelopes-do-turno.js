@@ -434,3 +434,23 @@ export const ENVELOPES_DO_DOMINIO = {
 export function oEnvelopeDoDominio(qual, dados) {
   return aFormaDe(ENVELOPES_DO_DOMINIO, qual, "do domínio")(dados || {});
 }
+
+/* ============================================================
+   15.º GRUPO — O TEMPO E A NOITE: as linhas que o sistema junta ao envelope
+   de passar o tempo e ao do fim do descanso — o clima que virou (ao passar
+   as horas e durante a noite), o sonho da noite longa (com a condição que
+   deixou, ou nenhuma) e o onde acordo quando a jornada segue. Cada uma abre
+   com a quebra de linha: é cauda de outro envelope, e o App passa-a pronta
+   (`clima` de passarOTempo, a `cauda` de levantarDescansado). As chances de
+   o clima virar e de haver sonho são números: moram em
+   src/motor/tempo-do-turno.js (CHANCE_DO_CLIMA, CHANCES_DA_NOITE).
+   ============================================================ */
+export const ENVELOPES_DO_TEMPO = {
+  climaAoPassar: ({ rotulo, nota }) => `\n[CLIMA] O tempo virou: agora está ${rotulo} — ${nota}. Use isso na cena.`,
+  climaDaNoite: ({ rotulo, nota }) => `\n[CLIMA] O tempo virou durante a noite: agora está ${rotulo} — ${nota}.`,
+  sonho: ({ texto, efeito }) => `\n[SONHO] O sonho desta noite: "${texto}"${efeito ? ` (acordei ${efeito === "inspirado" ? "INSPIRADO" : "PERTURBADO"} — condição já aplicada pelo sistema)` : ""}. Teça o sonho na ficção se quiser — presságio, memória ou puro delírio, você decide o quanto ele significa.`,
+  ondeAcordo: ({ local }) => `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${local}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`,
+};
+export function oEnvelopeDoTempo(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_TEMPO, qual, "do tempo")(dados || {});
+}

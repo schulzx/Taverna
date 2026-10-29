@@ -247,8 +247,8 @@ import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
-import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio } from "./motor/envelopes-do-turno.js";
+import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -16819,15 +16819,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (bloqueado || acampadoRef.current) return;
     if (combateRef.current) { combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0; limparConjuracoesDaLuta(null); }
     setTempoAberto(false);
-    const escala = horas <= 3 ? "algumas horas (mudanças pequenas)" : horas <= 8 ? "boa parte do dia (mudanças perceptíveis)" : horas <= 16 ? "quase um dia inteiro (mudanças significativas)" : "um dia completo (o mundo se move bastante)";
+    const escala = aEscalaDoTempo(horas);
     pushMsgs([{ autor: "sistema", texto: `🕐 Você deixa ${horas}h passarem…` }]);
     /* RELÓGIO: "passar o tempo" agora move as horas de verdade — dias viram
        por aqui também (reino, festivais, sono), não só a ficção. */
     const diasPassados = Math.floor(horas / 24);
     if (diasPassados > 0) coletarRenda(diasPassados);
     const reinoMsg = avancarMinutos(horas * 60);
-    const climaNovo = talvezMudarClima(horas >= 8 ? 0.65 : 0.35);
-    const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou: agora está ${climaNovo.rotulo} — ${climaNovo.nota}. Use isso na cena.` : "";
+    const climaNovo = talvezMudarClima(aChanceDoClimaAoPassar(horas));
+    const climaMsg = climaNovo ? oEnvelopeDoTempo("climaAoPassar", { rotulo: climaNovo.rotulo, nota: climaNovo.nota }) : "";
     /* v9.39: as horas passam ONDE EU ESTOU. Sem esta linha, "reapresente a
        cena atual" virava um convite para o Mestre reabrir a cena que ele tem
        mais à mão — a cidade —, e o jogador que deixou 12h passarem de tocaia
@@ -22662,16 +22662,16 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* SONHOS (v6.7): 25% das noites longas trazem um — presságio, memória ou
        pesadelo. Alguns deixam condição no dia seguinte. O Mestre só tece. */
     let sonhoMsg = "";
-    if (tipo === "longo" && sorteDoTurno("sonho")() < 0.25) {
+    if (tipo === "longo" && sorteDoTurno("sonho")() < CHANCES_DA_NOITE.sonho) {
       const sn = rolarSonho(sorteDoTurno("sonho-qual"));
       if (sn.efeito === "inspirado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Inspirado", tipo: "bom", nota: "acordou com o espírito leve — um bom sonho" }] };
       if (sn.efeito === "perturbado") pers = { ...pers, condicoes: [...(pers.condicoes || []), { nome: "Perturbado", tipo: "ruim", nota: "noite mal dormida, sonhos ruins" }] };
       setPersonagem(pers);
       pushMsgs([{ autor: "sistema", texto: `💭 ${sn.texto}` }]);
-      sonhoMsg = `\n[SONHO] O sonho desta noite: "${sn.texto}"${sn.efeito ? ` (acordei ${sn.efeito === "inspirado" ? "INSPIRADO" : "PERTURBADO"} — condição já aplicada pelo sistema)` : ""}. Teça o sonho na ficção se quiser — presságio, memória ou puro delírio, você decide o quanto ele significa.`;
+      sonhoMsg = oEnvelopeDoTempo("sonho", { texto: sn.texto, efeito: sn.efeito });
     }
-    const climaNovo = tipo === "longo" ? talvezMudarClima(0.6) : null;
-    const climaMsg = climaNovo ? `\n[CLIMA] O tempo virou durante a noite: agora está ${climaNovo.rotulo} — ${climaNovo.nota}.` : "";
+    const climaNovo = tipo === "longo" ? talvezMudarClima(CHANCES_DA_NOITE.clima) : null;
+    const climaMsg = climaNovo ? oEnvelopeDoTempo("climaDaNoite", { rotulo: climaNovo.rotulo, nota: climaNovo.nota }) : "";
     const dur = tipo === "longo" ? "uma noite inteira" : "cerca de uma hora";
     /* v9.469 (a 11.ª sessão): a pauta dizia "PV e PM já foram restaurados"
        pelo nome do descanso, e o herói a 1/12 que já tinha dormido ouvia
@@ -22681,7 +22681,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     /* MM17 C2: quem dorme na masmorra acorda nela, mesmo com a jornada à porta */
     const acordoCala = (() => { try { return calaNaMasmorra("acordo", masmorraRef.current); } catch (e) { calou("acordo na masmorra", e); return false; } })();
     const localMsg = (jornadaRef.current && !acordoCala)
-      ? `\n[ONDE ACORDO] Eu ainda estou EM VIAGEM (${localAtualTxt()}) — acordo no mesmo lugar em que dormi (acampamento na estrada, cabine do navio, etc.). A viagem CONTINUA de onde parou: proibido me colocar em cidade/aposentos; o destino ainda está adiante.`
+      ? oEnvelopeDoTempo("ondeAcordo", { local: localAtualTxt() })
       : "";
     enviar(oEnvelopeDoAcampamento("levantarDescansado", { antes: extra && extra.antes, tipo, dur, recibo: reciboMsg, cauda: [localMsg, climaMsg, reinoMsg, guardaMsg, sonhoMsg, eventosMsg] }), pers);
   };

@@ -43,7 +43,7 @@ import {
   abrirAbertura, pedidoDaAbertura,
 } from "../src/abertura.js";
 import { SONHOS } from "../src/calendario.js";
-import { oEnvelopeDaAbertura } from "../src/motor/envelopes-do-turno.js";
+import { oEnvelopeDaAbertura, oEnvelopeDoTempo } from "../src/motor/envelopes-do-turno.js";
 import { envelopeSemOportunidade } from "../src/desafios.js";
 import { envelopeDoOraculo } from "../src/oraculo.js";
 import { notaDaChegada } from "../src/geografia.js";
@@ -315,7 +315,13 @@ sec("8. a fiação — App.jsx (a abertura antiga e o sonho)");
   t("a abertura antiga já não diz ONDE EU ESTOU nem QUEM EU SOU", !!corpo && !corpo.includes("ONDE EU ESTOU") && !corpo.includes("QUEM EU SOU"));
   t("a abertura antiga já não fala do herói por 'me', 'mim', 'comigo', 'minha(s)'", !!corpo && !/(^|[^\p{L}])(me|mim|comigo|minhas?|meu|meus)(?![\p{L}])/u.test(corpo));
   t("as âncoras que teste-sala exige ficam", corpo.includes("1) O MUNDO") && corpo.includes("4) O PRIMEIRO FIO") && corpo.includes("ABERTURA DA CAMPANHA"));
-  t("o sonho já não diz 'eu sonhei'", app.includes("[SONHO] O sonho desta noite:") && !app.includes("Esta noite eu sonhei"));
+  /* MOVIDA (T2-A, 29/10/2026, o 15.º grupo): o [SONHO] saiu do App para
+     ENVELOPES_DO_TEMPO (src/motor/envelopes-do-turno.js). A intenção é a
+     mesma — o sonho fala do herói sem «eu sonhei» —; a asserção chama a
+     forma do motor (com e sem condição) e exige que o App a chame, e o App
+     segue sem a frase velha. */
+  const sonhos = [undefined, "inspirado", "perturbado"].map((efeito) => oEnvelopeDoTempo("sonho", { texto: "Um corvo fala.", efeito }));
+  t("o sonho já não diz 'eu sonhei'", app.includes("sonhoMsg = oEnvelopeDoTempo(\"sonho\"") && sonhos.every((x) => x.includes("[SONHO] O sonho desta noite:") && !x.includes("eu sonhei")) && !app.includes("Esta noite eu sonhei"));
 }
 
 console.log(`\nvoz-segunda-pessoa: ${ok} passaram, ${mal} falharam`);

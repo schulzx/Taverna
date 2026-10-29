@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -84,9 +84,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "mundoFestival", "mundoRumor", "mundoRumorDeLonge", "mundoReino", "mundoGlobalNovo", "mundoGlobalAvancou", "mundoLocalNovo", "mundoLocalExpirado", "mundoQuest", "mundoDivindade", "mundoEventoDivino",
   "poderInvocacao", "poderSacrificio", "poderMetamagia", "poderEfeito", "poderMilagreComo", "poderMilagre", "poderDespertar", "poderIdentificarNota", "poderIdentificar", "poderLocalizarSem", "poderLocalizarNota", "poderLocalizar", "poderHabilidades", "poderHabilidade", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide",
   "mercadoEquipou", "mercadoConsumivel", "mercadoMapa", "mercadoCompra", "mercadoPechincha", "mercadoVenda",
-  "dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado"];
+  "dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado",
+  "tempoClimaAoPassar", "tempoClimaDaNoite", "tempoSonho", "tempoOndeAcordo"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -210,6 +211,11 @@ const ANCORAS = {
   dominioGovernador: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[GOVERNADOR — JÁ NOMEADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"governador\"", FIM] },
   dominioReivindicacao: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[REIVINDICAÇÃO — JÁ PAGA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"reivindicacao\"", FIM] },
   dominioTratado: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[TRATADO — JÁ FIRMADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoDominio(\"tratado\"", FIM] },
+  /* o tempo e a noite: três linhas de uma linha (o clima ao passar e na noite, o sonho) e o ternário do onde acordo, até ao envio do descanso; o sítio devolve a linha */
+  tempoClimaAoPassar: { antes: ["const climaMsg = climaNovo ? `\\n[CLIMA] O tempo virou: agora", FIM], hoje: ["const climaMsg = climaNovo ? oEnvelopeDoTempo(\"climaAoPassar\"", FIM] },
+  tempoClimaDaNoite: { antes: ["const climaMsg = climaNovo ? `\\n[CLIMA] O tempo virou durante a noite", FIM], hoje: ["const climaMsg = climaNovo ? oEnvelopeDoTempo(\"climaDaNoite\"", FIM] },
+  tempoSonho: { antes: ["sonhoMsg = `\\n[SONHO]", FIM], hoje: ["sonhoMsg = oEnvelopeDoTempo(\"sonho\"", FIM] },
+  tempoOndeAcordo: { antes: ["    const localMsg = (jornadaRef.current && !acordoCala)", "\n    enviar(oEnvelopeDoAcampamento(\"levantarDescansado\""], hoje: ["    const localMsg = (jornadaRef.current && !acordoCala)", "\n    enviar(oEnvelopeDoAcampamento(\"levantarDescansado\""] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -218,7 +224,8 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   mundoFestival: "extras", mundoRumor: "notaRef.current", mundoRumorDeLonge: "notaRef.current", mundoReino: "envelopeEventosReino(evs)", mundoGlobalNovo: "partes", mundoGlobalAvancou: "partes", mundoLocalNovo: "partes", mundoLocalExpirado: "partes", mundoQuest: "partes", mundoDivindade: "partes", mundoEventoDivino: "partes",
   poderInvocacao: "o.nota", poderSacrificio: "o.nota", poderMetamagia: "o.nota", poderEfeito: "o.nota", poderMilagreComo: "notaRef.current", poderMilagre: "enviados", poderDespertar: "enviados", poderIdentificarNota: "notaRef.current", poderIdentificar: "enviados", poderLocalizarSem: "enviados", poderLocalizarNota: "notaRef.current", poderLocalizar: "enviados", poderHabilidades: "enviados", poderHabilidade: "enviados", poderEncerradasAoVencer: "notaRef.current", poderEncerradasNaFuga: "notaRef.current", poderEncerradaNoRevide: "notaRef.current",
   mercadoEquipou: "notaRef.current", mercadoConsumivel: "notaRef.current", mercadoMapa: "notaRef.current", mercadoCompra: "notaRef.current", mercadoPechincha: "notaRef.current", mercadoVenda: "notaRef.current",
-  dominioDecretoAceito: "notaRef.current", dominioDizimado: "notaRef.current", dominioFracasso: "notaRef.current", dominioCumprido: "notaRef.current", dominioObraPronta: "notaRef.current", dominioRevolta: "notaRef.current", dominioImposto: "notaRef.current", dominioObraIniciada: "notaRef.current", dominioGovernador: "notaRef.current", dominioReivindicacao: "notaRef.current", dominioTratado: "notaRef.current" };
+  dominioDecretoAceito: "notaRef.current", dominioDizimado: "notaRef.current", dominioFracasso: "notaRef.current", dominioCumprido: "notaRef.current", dominioObraPronta: "notaRef.current", dominioRevolta: "notaRef.current", dominioImposto: "notaRef.current", dominioObraIniciada: "notaRef.current", dominioGovernador: "notaRef.current", dominioReivindicacao: "notaRef.current", dominioTratado: "notaRef.current",
+  tempoClimaAoPassar: "climaMsg", tempoClimaDaNoite: "climaMsg", tempoSonho: "sonhoMsg", tempoOndeAcordo: "localMsg" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -525,6 +532,18 @@ export function dominioDoCaso(i) {
   };
 }
 
+/* O TEMPO E A NOITE: o clima que não virou e o que virou, de cada rótulo;
+   o sonho sem condição, o que deixa inspirado e o que deixa perturbado; a
+   jornada que segue e nenhuma, e a masmorra que cala o acordo. */
+export function tempoDoCaso(i) {
+  return {
+    sonhoMsg: "",
+    climaNovo: [null, { rotulo: "chuva fina", nota: "as estradas viram lama" }, { rotulo: "neblina", nota: "não se vê a dez passos" }][i % 3],
+    sn: { texto: ["Um corvo fala o teu nome.", "A casa da infância arde."][(i >> 2) % 2], efeito: [undefined, "inspirado", "perturbado"][(i >> 1) % 3] },
+    jornadaRef: { current: (i >> 2) % 2 ? { destino: "Agulha de Sal" } : null }, acordoCala: i % 5 === 3,
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -601,6 +620,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "poderes") Object.assign(S, poderesDoCaso(k.i));
     else if (g === "mercado") Object.assign(S, mercadoDoCaso(k.i));
     else if (g === "dominio") Object.assign(S, dominioDoCaso(k.i));
+    else if (g === "tempo") Object.assign(S, tempoDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

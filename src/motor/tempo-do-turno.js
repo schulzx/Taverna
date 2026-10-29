@@ -180,3 +180,31 @@ export function oPassoDoReplay(estado, alvo) {
   if (!p) return E;
   return andarNoEstado({ ...E, lugar: p.lugar }, p.minutos);
 }
+
+/* PASSAR O TEMPO E A NOITE (T2-A, 29/10/2026 — saiu do App: passarTempo e o
+   fim do descanso). Eram números de regra soltos no App:
+
+   - a ESCALA com que o envelope de passar o tempo diz ao Narrador quanto o
+     mundo muda (até 3 h, até 8 h, até 16 h, mais) — `ateHoras` é inclusivo,
+     como era o `horas <= 3` do App; a última linha não tem teto, e é ela que
+     responde a horas que não são número (o App caía no último ramo);
+   - a CHANCE de o clima virar: ao passar 8 h ou mais, 0,65; menos, 0,35 (o
+     `horas >= 8` do App: NaN cai na curta); na noite do descanso longo, 0,6;
+   - a chance de a noite longa trazer um SONHO, 0,25 (v6.7: um quarto das
+     noites longas).
+
+   O texto das linhas que daqui nascem (o [CLIMA], o [SONHO]) é do motor dos
+   envelopes (ENVELOPES_DO_TEMPO, src/motor/envelopes-do-turno.js). */
+export const ESCALA_DE_PASSAR_O_TEMPO = Object.freeze([
+  Object.freeze({ ateHoras: 3, diz: "algumas horas (mudanças pequenas)" }),
+  Object.freeze({ ateHoras: 8, diz: "boa parte do dia (mudanças perceptíveis)" }),
+  Object.freeze({ ateHoras: 16, diz: "quase um dia inteiro (mudanças significativas)" }),
+  Object.freeze({ ateHoras: Infinity, diz: "um dia completo (o mundo se move bastante)" }),
+]);
+export function aEscalaDoTempo(horas) {
+  const degrau = ESCALA_DE_PASSAR_O_TEMPO.find((e) => horas <= e.ateHoras);
+  return (degrau || ESCALA_DE_PASSAR_O_TEMPO[ESCALA_DE_PASSAR_O_TEMPO.length - 1]).diz;
+}
+export const CHANCE_DO_CLIMA = Object.freeze({ horasDaLonga: 8, aoPassarLongo: 0.65, aoPassarCurto: 0.35, naNoiteLonga: 0.6 });
+export const aChanceDoClimaAoPassar = (horas) => (horas >= CHANCE_DO_CLIMA.horasDaLonga ? CHANCE_DO_CLIMA.aoPassarLongo : CHANCE_DO_CLIMA.aoPassarCurto);
+export const CHANCES_DA_NOITE = Object.freeze({ clima: CHANCE_DO_CLIMA.naNoiteLonga, sonho: 0.25 });
