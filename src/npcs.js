@@ -402,8 +402,66 @@ export function mesmoPapel(a, b) {
   return pa.some((w) => pb.includes(w));
 }
 
+/* O QUE O SISTEMA ESCREVEU NAS NOTAS NÃO SE APAGA (29/10, trilha B)
+
+   As `notas` são o campo livre da ficha, e a mescla substitui-as inteiras:
+   a nota nova do Cronista ou do Narrador é a descrição de agora, e era
+   certo que trocasse a de ontem. Mas há quem escreva nelas sem ser prosa:
+   o boato que se revela (boatos.js#oBoatoDaChegada) deixa a forma na ficha
+   de quem se procurou («visto pelo herói: era verdade», «meia-verdade:
+   …», «partiu de … para …») e a culpa na de quem o contou («mentiu sobre
+   Clarissa: era isca»); a morte que o sistema decide deixa o dia e a causa
+   («Morreu no dia 7 — …», combate-do-turno.js e o prelúdio). Uma nota de
+   oito palavras do Cronista no turno seguinte apagava tudo: o Brom deixava
+   de ter mentido, a Clarissa voltava a poder ser revelada (é a marca que
+   impede a 2.ª revelação, BOATO.marcas), e o morto perdia o dia.
+
+   A régua: a nota nova substitui a prosa, como sempre; as marcas do
+   sistema que a velha tinha juntam-se depois dela, pela mesma junta do
+   boato (`; `), salvo as que a nova já diz. O teto é das marcas, não da
+   nota: as mais recentes primeiro, até `teto.marcas` delas e
+   `teto.letras` letras — a nota nova nunca se corta, e a ficha sem marca
+   sai byte a byte como saía. `marcas` são os começos que o sistema
+   escreve; `corte` parte as notas nos pedaços (a junta do boato, e o
+   «Morreu no dia» que a morte cola com um espaço). As formas do boato
+   moram em boatos.js, e a suíte prova que cada uma bate aqui
+   (teste-o-que-a-mescla-guarda §1), sem import: boatos.js não lê daqui
+   nem daqui se lê boatos.js. */
+export const NOTAS_DO_SISTEMA = Object.freeze({
+  junta: "; ",
+  corte: /;\s*|\s+(?=Morreu no dia \d)/,
+  marcas: Object.freeze([
+    /^visto pelo herói/i,
+    /^meia-verdade\b/i,
+    /^partiu de /i,
+    /^era (verdade|isca|confusão|medo)\b/i,
+    /^(mentiu|enganou-se|repetiu um medo) sobre /i,
+    /^Morreu no dia \d+/,
+  ]),
+  teto: Object.freeze({ marcas: 4, letras: 240 }),
+});
+const ehMarcaDoSistema = (p) => NOTAS_DO_SISTEMA.marcas.some((r) => r.test(p));
+function notasComAsMarcas(velhas, nova) {
+  const n = String(nova).trim();
+  if (typeof velhas !== "string" || !velhas.trim()) return nova;
+  const jaDiz = semAc(n);
+  const marcas = velhas.split(NOTAS_DO_SISTEMA.corte).map((p) => p.trim())
+    .filter((p) => p && ehMarcaDoSistema(p) && !jaDiz.includes(semAc(p)));
+  if (!marcas.length) return nova;
+  /* as mais recentes primeiro (o boato junta no fim), e o teto */
+  const ficam = [];
+  let letras = 0;
+  for (const m of [...new Set(marcas)].reverse()) {
+    if (ficam.length >= NOTAS_DO_SISTEMA.teto.marcas || letras + m.length > NOTAS_DO_SISTEMA.teto.letras) break;
+    ficam.unshift(m); letras += m.length;
+  }
+  return ficam.length ? [n, ...ficam].join(NOTAS_DO_SISTEMA.junta) : nova;
+}
+
 /* Mescla uma atualização numa ficha existente: campos novos sobrescrevem,
    nunca apagam o que já existia (blindagem contra perda de memória).
+   As notas sobrescrevem a prosa, nunca o que o sistema escreveu nelas
+   (NOTAS_DO_SISTEMA, acima).
 
    EXCETO O PAPEL (v9.22). Este campo sobrescrevia como qualquer outro, e foi
    assim que um velho camponês chamado Yorick virou capitão da guarda de uma
@@ -434,7 +492,7 @@ export function mesclarNPC(ficha, dados0 = {}) {
       conflito = { nome: ficha.nome, antes: ficha.papel, agora: String(dados.papel) };
       continue;   // o registro manda: o papel antigo fica
     }
-    out[k] = dados[k];
+    out[k] = k === "notas" ? notasComAsMarcas(ficha && ficha.notas, dados[k]) : dados[k];
   }
   if (dados.relacao) out.relacao = String(dados.relacao).toLowerCase();
   if (dados.ultimaVez) out.ultimaVez = dados.ultimaVez;
