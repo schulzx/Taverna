@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -81,9 +81,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "fichaNivel", "fichaPericias", "fichaAtributo", "fichaHabilidade", "fichaSubclasse", "fichaEspecializacao", "fichaRefazer",
   "fichaCombate", "fichaSucesso", "fichaVolta", "fichaRecrutamento",
   "infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu",
-  "mundoFestival", "mundoRumor", "mundoRumorDeLonge", "mundoReino", "mundoGlobalNovo", "mundoGlobalAvancou", "mundoLocalNovo", "mundoLocalExpirado", "mundoQuest", "mundoDivindade", "mundoEventoDivino"];
+  "mundoFestival", "mundoRumor", "mundoRumorDeLonge", "mundoReino", "mundoGlobalNovo", "mundoGlobalAvancou", "mundoLocalNovo", "mundoLocalExpirado", "mundoQuest", "mundoDivindade", "mundoEventoDivino",
+  "poderInvocacao", "poderSacrificio", "poderMetamagia", "poderEfeito", "poderMilagreComo", "poderMilagre", "poderDespertar", "poderIdentificarNota", "poderIdentificar", "poderLocalizarSem", "poderLocalizarNota", "poderLocalizar", "poderHabilidades", "poderHabilidade", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -168,19 +169,42 @@ const ANCORAS = {
   mundoQuest: { antes: ["        partes.push(`[QUEST GERADA PELO SISTEMA — fase", FIM], hoje: ["        partes.push(oEnvelopeDoMundo(\"questGerada\", ", FIM] },
   mundoDivindade: { antes: ["          partes.push(`[DIVINDADE SE REVELA", FIM], hoje: ["          partes.push(oEnvelopeDoMundo(\"divindadeSeRevela\", ", FIM] },
   mundoEventoDivino: { antes: ["            partes.push(`[EVENTO DIVINO", FIM], hoje: ["            partes.push(oEnvelopeDoMundo(\"eventoDivino\", ", FIM] },
+  /* os poderes: quatro notas de um objeto devolvido (o sítio é a linha dentro de { }, `envolve`),
+     o milagre, o despertar, as magias de função, as habilidades do turno (o enviar inteiro, com o
+     ternário) e as invocações que se desfazem */
+  poderInvocacao: { antes: ["      nota: `[INVOCAÇÃO — POSTA EM CAMPO", FIM], hoje: ["      nota: oEnvelopeDosPoderes(\"invocacaoEmCampo\"", FIM], envolve: ["const o = {","};"] },
+  poderSacrificio: { antes: ["      nota: `[SACRIFÍCIO ARCANO —", FIM], hoje: ["      nota: oEnvelopeDosPoderes(\"sacrificioArcano\"", FIM], envolve: ["const o = {","};"] },
+  poderMetamagia: { antes: ["      nota: `[METAMAGIA ARMADA", FIM], hoje: ["      nota: oEnvelopeDosPoderes(\"metamagiaArmada\"", FIM], envolve: ["const o = {","};"] },
+  poderEfeito: { antes: ["      nota: `[EFEITO APLICADO PELO SISTEMA]", FIM], hoje: ["      nota: oEnvelopeDosPoderes(\"efeitoAplicado\"", FIM], envolve: ["const o = {","};"] },
+  poderMilagreComo: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[COMO O MILAGRE SE MANIFESTA", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"milagreComoSeManifesta\"", FIM] },
+  poderMilagre: { antes: ["    enviar(`[MILAGRE — EFEITO JÁ APLICADO", FIM], hoje: ["    enviar(oEnvelopeDosPoderes(\"milagre\"", FIM] },
+  poderDespertar: { antes: ["    enviar(`[DESPERTAR DIVINO —", FIM], hoje: ["    enviar(oEnvelopeDosPoderes(\"despertarDivino\"", FIM] },
+  poderIdentificarNota: { antes: ["      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[IDENTIFICAR — RESOLVIDO", FIM], hoje: ["      notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"identificarResolvido\"", FIM] },
+  poderIdentificar: { antes: ["      enviar(`[IDENTIFICAR] Usei", FIM], hoje: ["      enviar(oEnvelopeDosPoderes(\"identificar\"", FIM] },
+  poderLocalizarSem: { antes: ["        enviar(`[LOCALIZAR — SEM RESPOSTA]", FIM], hoje: ["        enviar(oEnvelopeDosPoderes(\"localizarSemResposta\"", FIM] },
+  poderLocalizarNota: { antes: ["      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[LOCALIZAR — RESOLVIDO", FIM], hoje: ["      notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"localizarResolvido\"", FIM] },
+  poderLocalizar: { antes: ["      enviar(`[LOCALIZAR] Usei", FIM], hoje: ["      enviar(oEnvelopeDosPoderes(\"localizar\"", FIM] },
+  poderHabilidades: { antes: ["      enviar(desfechos.length\n", "\n      };\n      if (fechouHab)"], hoje: ["      enviar(desfechos.length\n", "\n      };\n      if (fechouHab)"] },
+  poderHabilidade: { antes: ["      enviar(desfechoC\n", "\n      };\n      if (fechouCit)"], hoje: ["      enviar(desfechoC\n", "\n      };\n      if (fechouCit)"] },
+  poderEncerradasAoVencer: { antes: ["\n        notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INVOCAÇÕES ENCERRADAS", FIM], hoje: ["\n        notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"invocacoesEncerradas\"", FIM] },
+  poderEncerradasNaFuga: { antes: ["          notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INVOCAÇÕES ENCERRADAS", FIM], hoje: ["          notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"invocacoesEncerradas\"", FIM] },
+  poderEncerradaNoRevide: { antes: ["          notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INVOCAÇÃO ENCERRADA", FIM], hoje: ["          notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"invocacaoEncerrada\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
   fichaNivel: "notaRef.current", fichaPericias: "notaRef.current", fichaAtributo: "notaRef.current", fichaHabilidade: "notaRef.current", fichaSubclasse: "notaRef.current", fichaEspecializacao: "notaRef.current", fichaRefazer: "notaRef.current", fichaRecrutamento: "notaDoRecrutamento(comp)",
   infoDescarteItem: "notaRef.current", infoDescarteEquip: "notaRef.current", infoEquipou: "notaRef.current", infoForjou: "notaRef.current", infoContrato: "notaRef.current", infoDecreto: "notaRef.current", infoAgoraE: "notaRef.current", infoSaiu: "notaRef.current", infoGuilda: "notaRef.current", infoRecalFicha: "notaRef.current", infoRecalMundo: "notaRef.current", infoTransferiu: "notaRef.current",
-  mundoFestival: "extras", mundoRumor: "notaRef.current", mundoRumorDeLonge: "notaRef.current", mundoReino: "envelopeEventosReino(evs)", mundoGlobalNovo: "partes", mundoGlobalAvancou: "partes", mundoLocalNovo: "partes", mundoLocalExpirado: "partes", mundoQuest: "partes", mundoDivindade: "partes", mundoEventoDivino: "partes" };
+  mundoFestival: "extras", mundoRumor: "notaRef.current", mundoRumorDeLonge: "notaRef.current", mundoReino: "envelopeEventosReino(evs)", mundoGlobalNovo: "partes", mundoGlobalAvancou: "partes", mundoLocalNovo: "partes", mundoLocalExpirado: "partes", mundoQuest: "partes", mundoDivindade: "partes", mundoEventoDivino: "partes",
+  poderInvocacao: "o.nota", poderSacrificio: "o.nota", poderMetamagia: "o.nota", poderEfeito: "o.nota", poderMilagreComo: "notaRef.current", poderMilagre: "enviados", poderDespertar: "enviados", poderIdentificarNota: "notaRef.current", poderIdentificar: "enviados", poderLocalizarSem: "enviados", poderLocalizarNota: "notaRef.current", poderLocalizar: "enviados", poderHabilidades: "enviados", poderHabilidade: "enviados", poderEncerradasAoVencer: "notaRef.current", poderEncerradasNaFuga: "notaRef.current", poderEncerradaNoRevide: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
   for (const b of so ? [so] : BLOCOS) {
     const A = ANCORAS[b];
     const fora = !novo && A.antesDe ? corte(...A.antesDe) + "\n" : "";
-    r[b] = { orgaos: fora + corte(...(novo ? A.hoje : A.antes)), devolve: DEVOLVE[b] || "enviados" };
+    /* `envolve`: o sítio que é um campo de objeto (nota: `...`,) corre dentro de um objeto, nas duas pontas */
+    const cerne = corte(...(novo ? A.hoje : A.antes));
+    r[b] = { orgaos: fora + (A.envolve ? A.envolve[0] + "\n" + cerne + "\n" + A.envolve[1] : cerne), devolve: DEVOLVE[b] || "enviados" };
   }
   return r;
 }
@@ -411,6 +435,35 @@ export function mundoDoCaso(i) {
   };
 }
 
+/* OS PODERES: a nota do turno vazia e já com outra à frente; a invocação de
+   uma criatura e de duas; o efeito em mim e no grupo, com o bônus físico,
+   mágico e nenhum, somado ao golpe e não; o milagre e o despertar de cada
+   grau de fé; o alvo do identificar dito por nome e por item; o localizar
+   dentro e fora do alcance (o alcance dito, zero e pelo raio); as
+   habilidades resolvidas e declaradas, com e sem o que os inimigos fizeram
+   depois e a cauda de tempo; a habilidade com e sem descrição; as
+   invocações que se desfazem, uma e várias. */
+export function poderesDoCaso(i) {
+  const novas = [[{ nome: "Lobo Espectral" }], [{ nome: "Lobo Espectral" }, { nome: "Corvo de Cinza" }]][(i >> 1) % 2];
+  const rv = (j) => ({ texto: ["", " O lobo ataca e erra."][((i >> 1) + j) % 2], pers: { nome: "Vera do turno", mana: (i + j) % 9 } });
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    h: { nome: ["Chamar Lobos", "Escudo da Fé", "Toque Sombrio"][i % 3] }, novas, um: novas.length === 1, molde: { conceito: ["lobos de névoa", "corvos de cinza"][i % 2] },
+    s: { nome: ["Lobo Espectral", "Corvo de Cinza"][i % 2], pm: 2 + (i % 5) },
+    m: { rotulo: ["Magia Ampliada", "Magia Geminada"][i % 2], diz: ["a próxima dobra o alcance", "a próxima atinge dois alvos"][(i >> 1) % 2], nome: ["Identificar", "Agulha do Norte"][i % 2], alcance: [undefined, 5000, 0][i % 3], raio: [3, 8][(i >> 1) % 2] },
+    port: { alvo: ["aliados", "si", undefined][i % 3] }, res: { cond: { nome: ["Abençoado", "Invisível", "Acelerado"][i % 3], efeito: ["+1d4 em ataques", "não pode ser visto", "+1 ação"][(i >> 1) % 3] } },
+    extraEscopo: ["", " (dano físico +2)", " (dano mágico +1d6)"][(i >> 2) % 3], somaNoGolpe: [true, false][(i >> 1) % 2],
+    mil: { nome: ["Chuva de Luz", "O Mar Abre"][i % 2], pf: 3 + (i % 4), desc: ["Cura todos os aliados.", "As águas se separam."][(i >> 1) % 2] }, comoUso: ["ergo a lâmina ao céu", "toco a água com a palma"][i % 2],
+    pers: { nome: "Vera do pers", nivel: 5 + (i % 6) }, divindadeRef: { current: { fieis: 50 + i } }, pan: ["☀ Solenne da Aurora — GD 7 (Deus Menor)", "☀ Solenne; 🌑 Mórdia"][i % 2],
+    alvo: ["Anel da Brasa", { nome: "Lâmina de Osso" }][i % 2], ficha: ["+1 de fogo, raro", "dano 1d8, épico"][(i >> 1) % 2], acao: ["leio as runas", "procuro o Corvo"][i % 2],
+    r: { motivo: ["ninguém com esse nome", "o nome é de ninguém"][i % 2], alvo: ["Corvo", "Porto Sal"][i % 2], direcao: ["norte", "sudoeste"][(i >> 1) % 2], km: 3 + (i % 40) }, dentro: (i >> 2) % 2 === 0,
+    desfechos: [[], ["Lobo — 6 de dano"], ["Lobo — 6 de dano", "Corvo — errou"]][i % 3], listaTxt: ["Golpe Feroz", "Golpe Feroz e Bênção"][i % 2], rvH: rv(0), rvC: rv(1),
+    extraTempo: ["", " [o tempo] passaram 6 segundos."][(i >> 2) % 2],
+    habCitada: { nome: ["Golpe Feroz", "Bênção"][i % 2], descricao: [undefined, "cura 1d8", ""][i % 3] }, custo: (i % 4) * 2, desfechoC: ["", "Lobo — 8 de dano"][(i >> 1) % 2],
+    disp: { sumiram: [["Lobo Espectral"], ["Lobo Espectral", "Corvo de Cinza"]][i % 2] }, exp: { sumiram: [["Corvo de Cinza"], ["Lobo", "Corvo"]][(i >> 1) % 2] },
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -484,6 +537,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "fio") Object.assign(S, fioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "viagem") Object.assign(S, viagemDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "mundo") Object.assign(S, mundoDoCaso(k.i));
+    else if (g === "poderes") Object.assign(S, poderesDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

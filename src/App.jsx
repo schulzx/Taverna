@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -9632,7 +9632,7 @@ export default function Taverna() {
     return {
       pers: p, ok: true,
       linha: `🜁 ${novas.map((n) => `${n.nome} (${n.vida} PV)`).join(", ")} ${um ? "atende" : "atendem"} ao chamado — ${molde.turnos} turnos.`,
-      nota: `[INVOCAÇÃO — POSTA EM CAMPO PELO SISTEMA] "${h.nome}" trouxe ${novas.map((n) => n.nome).join(", ")}: ${molde.conceito}. ${um ? "É uma criatura" : "Elas são criaturas"} de verdade, com PV e lugar no terreno, e o sistema resolve o turno ${um ? "dela" : "delas"}. Narre a chegada e como os inimigos reagem — não decida o que ${um ? "ela faz" : "elas fazem"}, não ${um ? "a" : "as"} fira e não ${um ? "a" : "as"} desfaça: o prazo é do sistema.`,
+      nota: oEnvelopeDosPoderes("invocacaoEmCampo", { habilidade: h.nome, nomes: novas.map((n) => n.nome), conceito: molde.conceito, um }),
     };
   };
 
@@ -9647,7 +9647,7 @@ export default function Taverna() {
     return {
       pers: s.pers, ok: true,
       linha: `🜄 ${s.nome} se desfaz em fumaça — +${s.pm} PM de volta.`,
-      nota: `[SACRIFÍCIO ARCANO — RESOLVIDO PELO SISTEMA] Desfiz ${s.nome} e recuperei ${s.pm} PM. Narre a criatura se desmanchando no gesto de quem a chamou. Os números já foram aplicados.`,
+      nota: oEnvelopeDosPoderes("sacrificioArcano", { nome: s.nome, pm: s.pm }),
     };
   };
 
@@ -9748,7 +9748,7 @@ export default function Taverna() {
     return {
       pers: armarMetamagia(pers, m),
       linha: `✧ Metamagia ${m.rotulo} armada — ${m.diz}.`,
-      nota: `[METAMAGIA ARMADA PELO SISTEMA] Preparei ${m.rotulo}: ${m.diz}. Ela se gasta sozinha na próxima magia que eu lançar — não a aplique você, não escolha por mim qual magia recebe e não a use duas vezes.`,
+      nota: oEnvelopeDosPoderes("metamagiaArmada", { rotulo: m.rotulo, diz: m.diz }),
     };
   };
   const porReescrever = (h, pers) => {
@@ -9837,7 +9837,7 @@ export default function Taverna() {
       pers: p,
       troca,
       texto: `${res.cond.icone} ${h.nome}: ${res.cond.nome}${res.cond.turnos ? ` (${res.cond.turnos}t)` : ""}${port.alvo === "aliados" ? " — em você e no grupo" : ""} · ${res.cond.efeito}${extraEscopo}`,
-      nota: `[EFEITO APLICADO PELO SISTEMA] "${h.nome}" deixou ${port.alvo === "aliados" ? "eu e meu grupo" : "eu"} ${res.cond.nome.toLowerCase()} (${res.cond.efeito})${extraEscopo && somaNoGolpe ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
+      nota: oEnvelopeDosPoderes("efeitoAplicado", { habilidade: h.nome, alvo: port.alvo, condicao: res.cond.nome, efeito: res.cond.efeito, extraEscopo, somaNoGolpe }),
     };
   };
 
@@ -10818,8 +10818,8 @@ export default function Taverna() {
     const recusa = msgs.some((m) => String(m.texto || "").startsWith("⛔"));
     pushMsgs([{ autor: "jogador", texto: `${mil.icone} ${mil.nome} — ${comoUso}` }, ...msgs]);
     if (recusa) return;
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[COMO O MILAGRE SE MANIFESTA — DECISÃO MINHA, NÃO SUA] Eu invoquei "${mil.nome}" ASSIM: ${comoUso}. Essa é a forma do milagre e ela é canônica: use o gesto, o alvo e o veículo que EU descrevi. Não troque por outra imagem, não mude quem foi tocado e não acrescente uma manifestação diferente por cima da minha.`;
-    enviar(`[MILAGRE — EFEITO JÁ APLICADO PELO SISTEMA] Invoco ${mil.nome} (${mil.pf} PF, já cobrados). ${mil.desc} COMO eu o uso: ${comoUso}. Narre essa manifestação exata à altura do meu domínio — visceral, pública, inesquecível — sem recalcular nada e sem inventar um efeito além do que o sistema aplicou.${SO_ISSO}`, personagemRef.current || personagem);
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("milagreComoSeManifesta", { nome: mil.nome, comoUso });
+    enviar(oEnvelopeDosPoderes("milagre", { nome: mil.nome, pf: mil.pf, desc: mil.desc, comoUso }), personagemRef.current || personagem);
   };
 
   /* DESPERTAR (v7.4): ao cruzar o nível NIVEL_DESPERTAR, o céu se abre —
@@ -10845,7 +10845,7 @@ export default function Taverna() {
     }
     pushMsgs([{ autor: "sistema", texto: "🌟 Você despertou — o cosmos passa a te enxergar. (Novo painel: Ascensão)" }]);
     const pan = panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), ${d.temperamento}, culto: ${d.culto}`).join("; ");
-    enviar(`[DESPERTAR DIVINO — MARCO REGISTRADO PELO SISTEMA] Ao alcançar o nível ${pers.nivel}, o nome do herói começou a ser sussurrado em orações: a ASCENSÃO começou. FATOS FIXOS sorteados pelo sistema: o jogador tem ${divindadeRef.current.fieis} fiéis iniciais (gente que já reza baixinho o nome dele) e GD 0→trilha aberta; o PANTEÃO local que ele agora consegue PERCEBER: ${pan}. Narre o despertar como um marco íntimo e arrepiado (um sinal, um olhar que se demora, uma prece espontânea de um estranho) — NÃO um show de poder: ele ainda é mortal (GD 0), mas o caminho dos três estágios (Servo Escolhido → Semideus → Nova Divindade) está aberto. As divindades acima já existiam — só agora ele as sente. Apresente UMA delas de leve neste turno.`, pers);
+    enviar(oEnvelopeDosPoderes("despertarDivino", { nivel: pers.nivel, fieis: divindadeRef.current.fieis, pan }), pers);
     salvar({ personagem: pers });
   };
 
@@ -14534,8 +14534,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const pers = cobrar(p0);
       const ficha = textoDeIdentificacao(alvo);
       pushMsgs([linhaJogador, { autor: "sistema", texto: `${ficha} · −${m.custo} PM` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[IDENTIFICAR — RESOLVIDO PELO SISTEMA] A magia me revelou a ficha exata de "${typeof alvo === "string" ? alvo : alvo.nome}": ${ficha}. Esses números são fato e já estão na minha tela — NÃO os repita como se fossem descoberta sua, não invente poder nenhum além destes. Narre só a cena de leitura: o que a magia mostra, que sensação dá, o que o objeto conta de onde veio.`;
-      enviar(`[IDENTIFICAR] Usei "${m.nome}" sobre ${typeof alvo === "string" ? alvo : alvo.nome}. ${acao}`, pers);
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("identificarResolvido", { alvo: typeof alvo === "string" ? alvo : alvo.nome, ficha });
+      enviar(oEnvelopeDosPoderes("identificar", { magia: m.nome, alvo: typeof alvo === "string" ? alvo : alvo.nome, acao }), pers);
       return true;
     }
 
@@ -14546,15 +14546,15 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       const pers = cobrar(p0);
       if (!r.achou) {
         pushMsgs([linhaJogador, { autor: "sistema", texto: `🧭 ${m.nome}: ${r.motivo} · −${m.custo} PM` }]);
-        enviar(`[LOCALIZAR — SEM RESPOSTA] Usei "${m.nome}" e a agulha não apontou para lugar nenhum: ${r.motivo}. Narre o silêncio da magia em uma frase, sem inventar uma pista de consolação.`, pers);
+        enviar(oEnvelopeDosPoderes("localizarSemResposta", { magia: m.nome, motivo: r.motivo }), pers);
         return true;
       }
       const dentro = r.dentroDoAlcance;
       pushMsgs([linhaJogador, { autor: "sistema", texto: dentro
         ? `🧭 ${r.alvo}: ${r.direcao}, a cerca de ${r.km} km · −${m.custo} PM`
         : `🧭 ${r.alvo} está a ~${r.km} km, muito além do alcance de ${m.nome} · −${m.custo} PM` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[LOCALIZAR — RESOLVIDO PELO SISTEMA] ${dentro ? `A magia apontou: ${r.alvo}, a ${r.direcao}, a cerca de ${r.km} km.` : `${r.alvo} está a ~${r.km} km — ALÉM do alcance da magia, que é de ${m.alcance || m.raio * 1000} m. A agulha girou sem se fixar.`} Não mude a direção nem a distância, e não entregue de graça o que fica fora do alcance.`;
-      enviar(`[LOCALIZAR] Usei "${m.nome}". ${acao}`, pers);
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("localizarResolvido", { dentro, alvo: r.alvo, direcao: r.direcao, km: r.km, alcance: m.alcance || m.raio * 1000 });
+      enviar(oEnvelopeDosPoderes("localizar", { magia: m.nome, acao }), pers);
       return true;
     }
 
@@ -15194,8 +15194,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* K3: idem — o envelope da sequencia de habilidades e continuacao. */
       const depoisDaHab = (rvH) => {
       enviar(desfechos.length
-        ? `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${listaTxt}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}.${rvH.texto} Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
-        : `[HABILIDADES] No MESMO turno uso ${listaTxt} (PM já descontados; tenho ${rvH.pers.mana}). COMO eu as uso: ${acao}.${rvH.texto} Narre a sequência conforme minha intenção. Se ficar incerto sobre o efeito, narre até onde a certeza vai e devolva a vez — você NÃO pede rolagem, e o que faltar o sistema resolve no meu próximo lance. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`, rvH.pers);
+        ? oEnvelopeDosPoderes("habilidadesResolvidas", { lista: listaTxt, desfechos, depois: rvH.texto, acao })
+        : oEnvelopeDosPoderes("habilidadesDeclaradas", { lista: listaTxt, mana: rvH.pers.mana, acao, depois: rvH.texto, extraTempo }), rvH.pers);
       };
       if (fechouHab) depoisDaHab({ pers: fichaViva() || pers, texto: "" });
       else fecharMeuTurno(fichaViva() || pers, depoisDaHab);
@@ -15304,8 +15304,8 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       /* K3: idem — a habilidade citada por texto passa pela mesma porta. */
       const depoisDaCitada = (rvC) => {
       enviar(desfechoC
-        ? `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${habCitada.nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfechoC}.${rvC.texto} Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`
-        : `[HABILIDADE] Uso "${habCitada.nome}" (custo ${custo} PM, já descontado; tenho ${rvC.pers.mana} PM). ${habCitada.descricao || ""} Ação: ${acao}.${rvC.texto} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`, rvC.pers);
+        ? oEnvelopeDosPoderes("habilidadeResolvida", { nome: habCitada.nome, custo, desfecho: desfechoC, depois: rvC.texto, acao })
+        : oEnvelopeDosPoderes("habilidadeDeclarada", { nome: habCitada.nome, custo, mana: rvC.pers.mana, descricao: habCitada.descricao, acao, depois: rvC.texto, extraTempo }), rvC.pers);
       };
       if (fechouCit) depoisDaCitada({ pers: fichaViva() || pers, texto: "" });
       else fecharMeuTurno(fichaViva() || pers, depoisDaCitada);
@@ -15510,7 +15510,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       if (disp.sumiram.length) {
         base0 = disp.pers;
         personagemRef.current = base0;
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`;
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("invocacoesEncerradas", { sumiram: disp.sumiram });
       }
     }
     /* quem FUGIU não tombou: não rende espólio, não conta abate e — o que
@@ -15811,7 +15811,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
         if (disp.sumiram.length) {
           base0 = disp.pers;
           personagemRef.current = base0;
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${disp.sumiram.join(", ")} ${disp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${disp.sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("invocacoesEncerradas", { sumiram: disp.sumiram });
         }
       }
       bumpCont("fugas");
@@ -16575,7 +16575,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           persAtual = exp.pers;
           combateRef.current = { ...combateRef.current, aliados: (combateRef.current.aliados || []).filter((_, i) => !idx.has(i)) };
           pushMsgs(exp.linhas.map((t) => ({ autor: "sistema", texto: t })));
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${exp.sumiram.join(", ")} ${exp.sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo venceu. Narre o desmanche em uma frase e siga — ${exp.sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} no campo, e não ${exp.sumiram.length > 1 ? "voltam" : "volta"}.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDosPoderes("invocacaoEncerrada", { sumiram: exp.sumiram });
         }
       }
       persAtual = mudarFicha(() => persAtual);

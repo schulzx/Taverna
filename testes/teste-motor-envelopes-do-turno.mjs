@@ -31,12 +31,15 @@
    inventário, do grupo e do save. O 11.º, O MUNDO QUE ANDA: o festival, os
    dois boatos, os eventos de reino e o que o descanso longo acorda (o arco
    global e a etapa, o fio local e o que expirou, a quest, a divindade e o
-   evento divino).
+   evento divino). O 12.º, OS PODERES: a invocação, o sacrifício, a metamagia,
+   o efeito aplicado, o milagre e a forma dele, o despertar, as magias de
+   função (identificar, localizar), as habilidades do turno e as invocações
+   que se desfazem.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -469,6 +472,53 @@ sec("15 · o mundo que anda: os casos percorrem o que o texto decide, e a prova 
     ["mundoQuest", "a quest da fase errada", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, fase: "abertura" }) }],
     ["mundoDivindade", "a divindade sem o lugar forte", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, lugar: undefined }) }],
     ["mundoEventoDivino", "o evento divino sem o gancho", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, gancho: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("16 · os poderes: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* as quatro notas de objeto e as do turno devolvem o texto; o milagre, o despertar, as magias e as habilidades, o que se enviou */
+  const N = (b) => HOJE[b].flatMap((f) => (Array.isArray(f.texto) ? f.texto.map((e) => (Array.isArray(e) ? e[0] : e)) : [f.texto]));
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const NOTAS = ["poderMilagreComo", "poderIdentificarNota", "poderLocalizarNota", "poderEncerradasAoVencer", "poderEncerradasNaFuga", "poderEncerradaNoRevide"];
+  t("as notas do turno entram abaixo da que já havia", NOTAS.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
+  const I = N("poderInvocacao");
+  t(`a invocação de uma criatura (${conta(I, "É uma criatura")}) e de duas (${conta(I, "Elas são criaturas")})`, conta(I, "trouxe Lobo Espectral: ") >= 120 && conta(I, "trouxe Lobo Espectral, Corvo de Cinza: ") >= 120 && conta(I, "o turno dela.") >= 120 && conta(I, "não as fira e não as desfaça") >= 120);
+  const E2 = N("poderEfeito");
+  t(`o efeito em mim e no grupo, e o bônus só do que é físico (${conta(E2, "o que é físico")}) ou mágico (${conta(E2, "o que é mágico")})`, conta(E2, "deixou eu e meu grupo ") >= 80 && conta(E2, "deixou eu ") >= 170 && conta(E2, "o que é físico") >= 20 && conta(E2, "o que é mágico") >= 20 && E2.filter((x) => !x.includes("bônus de dano")).length >= 150);
+  const L = N("poderLocalizarNota");
+  t(`o localizar dentro (${conta(L, "A magia apontou: ")}) e fora do alcance, pelo alcance dito e pelo raio`, conta(L, "A magia apontou: ") >= 120 && conta(L, "que é de 5000 m.") >= 30 && conta(L, "que é de 3000 m.") >= 20 && conta(L, "que é de 8000 m.") >= 20);
+  t("o identificar diz o alvo pelo nome e pelo item", conta(N("poderIdentificarNota"), "a ficha exata de \"Lâmina de Osso\"") >= 130 && conta(N("poderIdentificar"), "sobre Anel da Brasa. ") >= 130);
+  const H = N("poderHabilidades"), H1 = N("poderHabilidade");
+  t(`as habilidades resolvidas (${conta(H, "[HABILIDADES — RESOLVIDAS")}) e declaradas (${conta(H, "[HABILIDADES] ")}), com o que veio depois e a cauda de tempo`, conta(H, "[HABILIDADES — RESOLVIDAS PELO SISTEMA]") >= 170 && conta(H, "[HABILIDADES] ") >= 80 && conta(H, " O lobo ataca e erra.") >= 100 && conta(H, "passaram 6 segundos.") >= 30);
+  t(`a habilidade resolvida (${conta(H1, "[HABILIDADE — RESOLVIDA")}) e declarada, com e sem descrição`, conta(H1, "[HABILIDADE — RESOLVIDA PELO SISTEMA]") >= 120 && conta(H1, "[HABILIDADE] ") >= 120 && conta(H1, "PM). cura 1d8 Ação:") >= 20 && conta(H1, "PM).  Ação:") >= 40);
+  t("as invocações que se desfazem, uma e várias", ["poderEncerradasAoVencer", "poderEncerradasNaFuga"].every((b) => conta(N(b), "se desfizeram. Não as mencione") >= 120 && conta(N(b), "se desfez. Não a mencione") >= 120) && conta(N("poderEncerradaNoRevide"), "elas não estão mais no campo, e não voltam.") >= 120);
+  t("as dezoito formas estão na tabela dos poderes", Object.keys(ENVELOPES_DOS_PODERES).length === 18);
+  const P = oEnvelopeDosPoderes;
+  const mordidas = [
+    ["poderInvocacao", "a invocação que conta as criaturas ao contrário", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, um: !d.um }) }],
+    ["poderSacrificio", "o sacrifício que devolve um PM a mais", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, pm: d.pm + 1 }) }],
+    ["poderMetamagia", "a metamagia com o rótulo no lugar do que diz", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, diz: d.rotulo }) }],
+    ["poderEfeito", "o efeito que esquece que o bônus soma no golpe", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, somaNoGolpe: false }) }],
+    ["poderMilagreComo", "a forma do milagre sem o como", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, comoUso: "" }) }],
+    ["poderMilagre", "o milagre sem o escopo do turno", { oEnvelopeDosPoderes: (q, d) => P(q, d).replace(SO_ISSO, "") }],
+    ["poderDespertar", "o despertar com o nível no lugar dos fiéis", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, fieis: d.nivel }) }],
+    ["poderIdentificarNota", "o identificar que não diz o alvo", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, alvo: "?" }) }],
+    ["poderIdentificar", "o identificar sem a frase do jogador", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, acao: "" }) }],
+    ["poderLocalizarSem", "o localizar sem o motivo do silêncio", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, motivo: "" }) }],
+    ["poderLocalizarNota", "o alcance trocado (dentro por fora)", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, dentro: !d.dentro }) }],
+    ["poderLocalizar", "o localizar sem o nome da magia", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, magia: "" }) }],
+    ["poderHabilidades", "as habilidades resolvidas sem o que veio depois", { oEnvelopeDosPoderes: (q, d) => P(q, q === "habilidadesResolvidas" ? { ...d, depois: "" } : d) }],
+    ["poderHabilidades", "as declaradas sem a cauda de tempo", { oEnvelopeDosPoderes: (q, d) => P(q, q === "habilidadesDeclaradas" ? { ...d, extraTempo: "" } : d) }],
+    ["poderHabilidade", "a resolvida que diz o custo errado", { oEnvelopeDosPoderes: (q, d) => P(q, q === "habilidadeResolvida" ? { ...d, custo: d.custo + 1 } : d) }],
+    ["poderHabilidade", "a declarada sem a descrição", { oEnvelopeDosPoderes: (q, d) => P(q, q === "habilidadeDeclarada" ? { ...d, descricao: "" } : d) }],
+    ["poderEncerradasAoVencer", "o fim da luta que só desfaz a primeira", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, sumiram: d.sumiram.slice(0, 1) }) }],
+    ["poderEncerradasNaFuga", "a fuga que só desfaz a primeira", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, sumiram: d.sumiram.slice(0, 1) }) }],
+    ["poderEncerradaNoRevide", "o prazo que só desfaz a primeira", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, sumiram: d.sumiram.slice(0, 1) }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

@@ -30,7 +30,7 @@ import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SELOS_DO_RESOLVIDO, ehTurnoResolvido } from "../src/guardado.js";
-import { ENVELOPES_DA_MASMORRA, ENVELOPES_DA_FICHA } from "../src/motor/envelopes-do-turno.js";
+import { ENVELOPES_DA_MASMORRA, ENVELOPES_DA_FICHA, ENVELOPES_DOS_PODERES } from "../src/motor/envelopes-do-turno.js";
 
 /* mesmo `chdir` de `rodar-tudo.mjs`: os `readFileSync` daqui resolvem
    pelo diretório de trabalho, e este varredor precisa dizer a mesma
@@ -180,15 +180,30 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
      ENVELOPES_DA_FICHA, e o App manda `enviar(oEnvelopeDaFicha("…", …))`. A
      conta do App caiu de 5 para 3 sem que nenhum envelope sumisse; a catraca
      segue-os pelas mesmas três garantias, tabela a tabela (o total segue 9).
-     A amostra da ficha dá a cada forma os nomes que ela lê. */
+     A amostra da ficha dá a cada forma os nomes que ela lê.
+
+     O MILAGRE (T2-A, 28/10/2026, o 12.º grupo). O `[MILAGRE — EFEITO JÁ
+     APLICADO PELO SISTEMA]` saiu do App para ENVELOPES_DOS_PODERES, e o App
+     manda `enviar(oEnvelopeDosPoderes("milagre", …))`: a conta do App cai de
+     3 para 2 e a dos poderes conta 1 (o total segue 9). Da tabela dos poderes
+     conta SÓ o milagre (`so`): é o único que o leitor de literais já contava.
+     As outras formas que anunciam resolvido não iam por `enviar(` com o selo
+     no literal — o sacrifício, o identificar, o localizar e o efeito são
+     notas do turno; as habilidades resolvidas vão por um `enviar(` com um
+     ternário — e nunca entraram na conta; contá-las agora subiria a catraca
+     sem envelope novo nenhum. Os selos de todas estão em `medidos`
+     (src/guardado.js) e teste-guardado prova que casam. */
   const doMotor = [];
   {
     const AMOSTRA_FICHA = { desfecho: "três golpes", resumoInimigos: "", acao: "ataco o lobo", motivo: "pular o muro", dificuldade: 10, via: "fe", voltas: 1, cicatriz: "Mão Fria", descricao: "a mão não aquece", nome: "Iris", nivel: 2, vidaMax: 11, custo: 2, eraNova: false, classeNome: "Mago", classe: "Bardo", atributo: "Força", valor: 1, sub: "Campeão", esp: "Erudito",
       /* as notas [INFO] (o 10.º grupo) */
       quem: "Iris", item: "Lâmina de Osso", raridade: "raro", poder: "", titulo: "Escolta ao Vau", alvo: "Sarna", partes: ["Elfo", "Mago"], profissao: "", guilda: "A Garra", manaMax: 4, prof: 2, dadivas: 0, de: "a mochila", para: "o baú" };
     const AMOSTRA = { pos: "Cripta dos Sussurros · camada 1 · 2/9 salas", nomeArmadilha: "Fosso de Estacas", salva: { passou: false }, alvo: "Iris", sofrido: 3, depois: "", minutos: 10, tempo: "", aviso: "", moedas: 30, item: null, cena: "um nicho de água limpa", masmorra: "Cripta dos Sussurros", total: 12, segredo: null, achou: false, achado: null };
-    const TABELAS = [["ENVELOPES_DA_MASMORRA", ENVELOPES_DA_MASMORRA, "oEnvelopeDaMasmorra", AMOSTRA], ["ENVELOPES_DA_FICHA", ENVELOPES_DA_FICHA, "oEnvelopeDaFicha", AMOSTRA_FICHA]];
-    for (const [tabela, formas, porta, amostra] of TABELAS) for (const [forma, montar] of Object.entries(formas)) {
+    const AMOSTRA_PODERES = { nome: "Chuva de Luz", pf: 3, desc: "Cura todos os aliados.", comoUso: "ergo a lâmina ao céu" };
+    const TABELAS = [["ENVELOPES_DA_MASMORRA", ENVELOPES_DA_MASMORRA, "oEnvelopeDaMasmorra", AMOSTRA], ["ENVELOPES_DA_FICHA", ENVELOPES_DA_FICHA, "oEnvelopeDaFicha", AMOSTRA_FICHA],
+      ["ENVELOPES_DOS_PODERES", ENVELOPES_DOS_PODERES, "oEnvelopeDosPoderes", AMOSTRA_PODERES, ["milagre"]]];
+    for (const [tabela, formas, porta, amostra, so] of TABELAS) for (const [forma, montar] of Object.entries(formas)) {
+      if (so && !so.includes(forma)) continue;
       /* uma forma nova que lê um nome que a amostra não tem estourava o varredor inteiro
          (visto no 10.º grupo): falha com o nome da forma, e as outras seguem medidas */
       let real = "";
@@ -202,16 +217,17 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
           "a catraca conta este envelope como um dos 9 resolvidos. Se o App passou a mandá-lo por outro caminho, o caminho novo tem de entrar na conta — e este elo sai com o motivo escrito");
       }
     }
-    ok(`os envelopes resolvidos das tabelas da masmorra e da ficha (` + doMotor.map((e) => e.linha).join(", ") + `) seguem na conta, montados pela tabela`);
+    ok(`os envelopes resolvidos das tabelas da masmorra, da ficha e dos poderes (` + doMotor.map((e) => e.linha).join(", ") + `) seguem na conta, montados pela tabela`);
   }
   const candidatos = [...doApp, ...daMasmorra, ...doMotor];
 
   /* ---------------- A CATRACA ----------------
      O NÚMERO MEDIDO HOJE: 9 envelopes resolvidos saem por `enviar(` com
-     o selo escrito no literal (3 no App, 1 em `envelopeDaLuta`, de
+     o selo escrito no literal (2 no App, 1 em `envelopeDaLuta`, de
      src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima —, 3 na
      tabela da masmorra do motor — "OS TRÊS QUE MUDARAM DE CASA" — e 2 na da
-     ficha — "OS DOIS DA FICHA") — e o número conta os CANDIDATOS, não os
+     ficha — "OS DOIS DA FICHA" — e 1 na dos poderes — "O MILAGRE") — e o
+     número conta os CANDIDATOS, não os
      aprovados. É de propósito: se ele contasse só quem casa um `padrao`,
      consertar a tabela de selos mexeria na catraca, e uma catraca que se
      move quando se conserta o que ela acusa não acusa nada.

@@ -336,3 +336,40 @@ export const ENVELOPES_DO_MUNDO = {
 export function oEnvelopeDoMundo(qual, dados) {
   return aFormaDe(ENVELOPES_DO_MUNDO, qual, "do mundo")(dados || {});
 }
+
+/* ============================================================
+   12.º GRUPO — OS PODERES: o que o sistema já fez com uma habilidade, uma
+   magia ou um milagre, e o Narrador só põe em cena — a invocação posta em
+   campo, o sacrifício arcano, a metamagia armada, o efeito aplicado, o
+   milagre (a forma que o jogador lhe deu e o efeito já cobrado), o
+   despertar divino, as magias de função (identificar e localizar: a nota
+   com os números e o pedido com a frase do jogador), as habilidades do
+   turno (resolvidas pelo sistema, ou declaradas quando não há rolagem) e as
+   invocações que se desfazem (com o fim da luta e com o prazo).
+   `depois`: o que fecharMeuTurno deixou para o fim do envelope (o texto dos
+   inimigos que agem); `extraTempo`: a cauda de tempo do turno, já pronta.
+   `um`: se a invocação trouxe uma criatura só. `pan`: o panteão já dito.
+   ============================================================ */
+export const ENVELOPES_DOS_PODERES = {
+  invocacaoEmCampo: ({ habilidade, nomes, conceito, um }) => `[INVOCAÇÃO — POSTA EM CAMPO PELO SISTEMA] "${habilidade}" trouxe ${nomes.join(", ")}: ${conceito}. ${um ? "É uma criatura" : "Elas são criaturas"} de verdade, com PV e lugar no terreno, e o sistema resolve o turno ${um ? "dela" : "delas"}. Narre a chegada e como os inimigos reagem — não decida o que ${um ? "ela faz" : "elas fazem"}, não ${um ? "a" : "as"} fira e não ${um ? "a" : "as"} desfaça: o prazo é do sistema.`,
+  sacrificioArcano: ({ nome, pm }) => `[SACRIFÍCIO ARCANO — RESOLVIDO PELO SISTEMA] Desfiz ${nome} e recuperei ${pm} PM. Narre a criatura se desmanchando no gesto de quem a chamou. Os números já foram aplicados.`,
+  metamagiaArmada: ({ rotulo, diz }) => `[METAMAGIA ARMADA PELO SISTEMA] Preparei ${rotulo}: ${diz}. Ela se gasta sozinha na próxima magia que eu lançar — não a aplique você, não escolha por mim qual magia recebe e não a use duas vezes.`,
+  efeitoAplicado: ({ habilidade, alvo, condicao, efeito, extraEscopo, somaNoGolpe }) => `[EFEITO APLICADO PELO SISTEMA] "${habilidade}" deixou ${alvo === "aliados" ? "eu e meu grupo" : "eu"} ${condicao.toLowerCase()} (${efeito})${extraEscopo && somaNoGolpe ? `, e o bônus de dano vale só para o que é ${extraEscopo.includes("físico") ? "físico" : "mágico"}` : ""}. Já está na ficha — narre a manifestação e não envie condição nenhuma por isso.`,
+  milagreComoSeManifesta: ({ nome, comoUso }) => `[COMO O MILAGRE SE MANIFESTA — DECISÃO MINHA, NÃO SUA] Eu invoquei "${nome}" ASSIM: ${comoUso}. Essa é a forma do milagre e ela é canônica: use o gesto, o alvo e o veículo que EU descrevi. Não troque por outra imagem, não mude quem foi tocado e não acrescente uma manifestação diferente por cima da minha.`,
+  milagre: ({ nome, pf, desc, comoUso }) => `[MILAGRE — EFEITO JÁ APLICADO PELO SISTEMA] Invoco ${nome} (${pf} PF, já cobrados). ${desc} COMO eu o uso: ${comoUso}. Narre essa manifestação exata à altura do meu domínio — visceral, pública, inesquecível — sem recalcular nada e sem inventar um efeito além do que o sistema aplicou.${SO_ISSO}`,
+  despertarDivino: ({ nivel, fieis, pan }) => `[DESPERTAR DIVINO — MARCO REGISTRADO PELO SISTEMA] Ao alcançar o nível ${nivel}, o nome do herói começou a ser sussurrado em orações: a ASCENSÃO começou. FATOS FIXOS sorteados pelo sistema: o jogador tem ${fieis} fiéis iniciais (gente que já reza baixinho o nome dele) e GD 0→trilha aberta; o PANTEÃO local que ele agora consegue PERCEBER: ${pan}. Narre o despertar como um marco íntimo e arrepiado (um sinal, um olhar que se demora, uma prece espontânea de um estranho) — NÃO um show de poder: ele ainda é mortal (GD 0), mas o caminho dos três estágios (Servo Escolhido → Semideus → Nova Divindade) está aberto. As divindades acima já existiam — só agora ele as sente. Apresente UMA delas de leve neste turno.`,
+  identificarResolvido: ({ alvo, ficha }) => `[IDENTIFICAR — RESOLVIDO PELO SISTEMA] A magia me revelou a ficha exata de "${alvo}": ${ficha}. Esses números são fato e já estão na minha tela — NÃO os repita como se fossem descoberta sua, não invente poder nenhum além destes. Narre só a cena de leitura: o que a magia mostra, que sensação dá, o que o objeto conta de onde veio.`,
+  identificar: ({ magia, alvo, acao }) => `[IDENTIFICAR] Usei "${magia}" sobre ${alvo}. ${acao}`,
+  localizarSemResposta: ({ magia, motivo }) => `[LOCALIZAR — SEM RESPOSTA] Usei "${magia}" e a agulha não apontou para lugar nenhum: ${motivo}. Narre o silêncio da magia em uma frase, sem inventar uma pista de consolação.`,
+  localizarResolvido: ({ dentro, alvo, direcao, km, alcance }) => `[LOCALIZAR — RESOLVIDO PELO SISTEMA] ${dentro ? `A magia apontou: ${alvo}, a ${direcao}, a cerca de ${km} km.` : `${alvo} está a ~${km} km — ALÉM do alcance da magia, que é de ${alcance} m. A agulha girou sem se fixar.`} Não mude a direção nem a distância, e não entregue de graça o que fica fora do alcance.`,
+  localizar: ({ magia, acao }) => `[LOCALIZAR] Usei "${magia}". ${acao}`,
+  habilidadesResolvidas: ({ lista, desfechos, depois, acao }) => `[HABILIDADES — RESOLVIDAS PELO SISTEMA] No MESMO turno usei ${lista}. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ${desfechos.join(" · ")}.${depois} Narre a sequência inteira como UM só turno meu — não recalcule, não mude quem acertou, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`,
+  habilidadesDeclaradas: ({ lista, mana, acao, depois, extraTempo }) => `[HABILIDADES] No MESMO turno uso ${lista} (PM já descontados; tenho ${mana}). COMO eu as uso: ${acao}.${depois} Narre a sequência conforme minha intenção. Se ficar incerto sobre o efeito, narre até onde a certeza vai e devolva a vez — você NÃO pede rolagem, e o que faltar o sistema resolve no meu próximo lance. LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte.${extraTempo}`,
+  habilidadeResolvida: ({ nome, custo, desfecho, depois, acao }) => `[HABILIDADE — RESOLVIDA PELO SISTEMA] Usei "${nome}" (custo ${custo} PM, já descontado). O SISTEMA já rolou o acerto, calculou e APLICOU o resultado: ${desfecho}.${depois} Sua função é APENAS narrar esse resultado exato — não recalcule, NÃO declare a morte de quem ainda tem PV. Minha intenção: ${acao}`,
+  habilidadeDeclarada: ({ nome, custo, mana, descricao, acao, depois, extraTempo }) => `[HABILIDADE] Uso "${nome}" (custo ${custo} PM, já descontado; tenho ${mana} PM). ${descricao || ""} Ação: ${acao}.${depois} LEMBRETE DE COESÃO: minhas palavras são empolgação, não resultado — só o SISTEMA decide dano e morte; se o inimigo ainda tiver PV, ele segue de pé.${extraTempo}`,
+  invocacoesEncerradas: ({ sumiram }) => `[INVOCAÇÕES ENCERRADAS PELO SISTEMA] Com o fim da luta, ${sumiram.join(", ")} ${sumiram.length > 1 ? "se desfizeram" : "se desfez"}. Não ${sumiram.length > 1 ? "as mencione" : "a mencione"} como se ainda estivesse aqui.`,
+  invocacaoEncerrada: ({ sumiram }) => `[INVOCAÇÃO ENCERRADA PELO SISTEMA] ${sumiram.join(", ")} ${sumiram.length > 1 ? "se desfizeram" : "se desfez"}: o prazo venceu. Narre o desmanche em uma frase e siga — ${sumiram.length > 1 ? "elas não estão mais" : "ela não está mais"} no campo, e não ${sumiram.length > 1 ? "voltam" : "volta"}.`,
+};
+export function oEnvelopeDosPoderes(qual, dados) {
+  return aFormaDe(ENVELOPES_DOS_PODERES, qual, "dos poderes")(dados || {});
+}
