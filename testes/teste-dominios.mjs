@@ -248,7 +248,8 @@ sec("A FELICIDADE DIZ O QUE ELA FAZ (v9.189)");
   t("a fúria tem um limiar com nome", D.FURIA_ABAIXO_DE === 25);
   t("e ele é importado em vez de digitado", /import \{ OBRAS, IMPOSTOS, FURIA_ABAIXO_DE,/.test(APP));
   t("a tela avisa antes de cair", /abaixo de \$\{FURIA_ABAIXO_DE\} a fúria começa a contar/.test(APP));
-  t("e só quando ainda não está em fúria", /fel < FURIA_ABAIXO_DE \+ 15 && !rev \?/.test(APP));
+  /* (movida, trilha A, 29/10) o `rev` que esta âncora lia era a revolta de OUTRO bloco (o do governo, mais abaixo): fora do escopo dele, o painel caía no LimiteErro com a cidade perto da fúria (teste-nome-sem-dono.mjs). A pergunta é a mesma, feita à cidade da linha. */
+  t("e só quando ainda não está em fúria", /fel < FURIA_ABAIXO_DE \+ 15 && !revoltaAgora\(\(governos \|\| \{\}\)\[c\.nome\], dia\) \?/.test(APP));
   /* acima da faixa de perigo a linha não grita */
   t("a linha só fica vermelha perto do buraco", /color: fel < FURIA_ABAIXO_DE \+ 15 \? T\.danger : T\.inkDim/.test(APP));
 }

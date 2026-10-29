@@ -3361,7 +3361,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                                   buraco estava. */}
                               <div className="tv-mono text-[9px] mt-0.5" style={{ color: fel < FURIA_ABAIXO_DE + 15 ? T.danger : T.inkDim }}>
                                 ×{fatorFelicidade(fel).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} na renda
-                                {fel < FURIA_ABAIXO_DE + 15 && !rev ? ` · abaixo de ${FURIA_ABAIXO_DE} a fúria começa a contar` : ""}
+                                {fel < FURIA_ABAIXO_DE + 15 && !revoltaAgora((governos || {})[c.nome], dia) ? ` · abaixo de ${FURIA_ABAIXO_DE} a fúria começa a contar` : ""}
                               </div>
                             </>
                           )}
@@ -10474,7 +10474,7 @@ export default function Taverna() {
         episodioRef.current = r.episodio;
         if (r.fechou) {
           /* aninha no ato: o episodio fechado avanca o arco */
-          try { const rr = registrarMarco(historiaRef.current, r.pesoNoArco || "missao", "episodio: " + episodioRef.current.id); historiaRef.current = rr.historia; setHistoria(historiaRef.current); } catch (e) {}
+          try { const rr = registrarMarco(historiaRef.current, r.pesoNoArco || "missao", "episodio: " + episodioRef.current.id); historiaRef.current = rr.historia; } catch (e) {}
           episodioRef.current = null;
         }
         return;
@@ -11551,7 +11551,7 @@ export default function Taverna() {
        as dívidas. O que muda é o calendário, o arco e quem está do outro
        lado. */
     const h = abrirCapitulo(historiaRef.current, { forma: f.id, dia: diaRef.current, anos });
-    historiaRef.current = h; setHistoria(h);
+    historiaRef.current = h;
     diaRef.current = h.dia; setDia(h.dia);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
     acordouAbsRef.current = (diaRef.current - 1) * 1440 + minutoRef.current;
@@ -16658,7 +16658,6 @@ export default function Taverna() {
           marcarNoArco(feitioDe(m.feitio).peso, m.titulo); /* MM14: gravava {historia, ganhou} no lugar do arco, e cada marco cumprido reiniciava o arco */
           pushMsgs([{ autor: "sistema", texto: `✦ ${linhaDoMarco(m)}` }]);
         }
-        setHistoria(historiaRef.current);
         salvar({ espinha: espinhaRef.current, historia: historiaRef.current });
       }
     }
@@ -20808,7 +20807,7 @@ export default function Taverna() {
        EPÍLOGO — não um resumo, e sem anunciar o próximo vilão. */
     if (capituloFechado(historiaRef.current, true)) {
       const fc = fecharCapitulo(historiaRef.current, { vilao: n, dia: diaRef.current, causa });
-      historiaRef.current = fc.historia; setHistoria(fc.historia);
+      historiaRef.current = fc.historia;
       pushMsgs([{ autor: "sistema", texto: linhaDoCapitulo(fc.registro) }]);
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDoCapitulo(fc.registro)}`;
       /* e a porta aparece — DEPOIS do epílogo, nunca antes: o envelope
@@ -20937,7 +20936,7 @@ export default function Taverna() {
        ANTAGONISTA andou. As duas peças passam a ser uma só. */
     const casou = casarComVilao(historiaRef.current, r.fase.ordem);
     if (casou.virou) {
-      historiaRef.current = casou.historia; setHistoria(casou.historia);
+      historiaRef.current = casou.historia;
       notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeVirada(casou)}`;
     }
   };
