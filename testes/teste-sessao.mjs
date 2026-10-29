@@ -124,8 +124,12 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
      para a asserção não depender da posição.
      MOVIDA A TERCEIRA VEZ (28/10, o tempo do turno no motor, trilha A
      v9.532): entre o mundo e o sítio entrou o tempo da ação — no App, o
-     MINUTOS_POR_TURNO do agirInterno vem antes do enviar. A intenção fica. */
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+     MINUTOS_POR_TURNO do agirInterno vem antes do enviar. A intenção fica.
+     MOVIDA A QUARTA VEZ (29/10, Fase 4, trilha B: o 1.º órgão do depois no
+     servidor): entre a chegada e o Cronista entrou o trabalho daqui — no
+     App, `oferecerTrabalhoDaqui` corre depois do Juiz e do conferente e
+     antes do Cronista. Só corre com `servidor: true` (secção 4c). */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o trabalho daqui", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
   t("e a porta do App diz que é do App, e é a única", /^App /.test(PASSOS_DO_REPLAY.find((p) => p.passo === "o passo antes do Mestre").de) && PASSOS_DO_REPLAY.filter((p) => /^App /.test(p.de)).length === 1);
   t("e o passo do motor antes do Mestre não leva o nome da porta (o `calou` e o oráculo dizem-na por ele)", PASSOS_DO_REPLAY.filter((p) => /antes do Mestre/.test(p.passo)).length === 1);
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);
@@ -278,6 +282,35 @@ sec("4b. UM TURNO, CORRIDO — o passo que o replay e o gravador dividem");
   t("lixo no turno corrido não estoura", !estourou);
   const congela = (x) => { if (x && typeof x === "object") { Object.values(x).forEach(congela); Object.freeze(x); } return x; };
   t("e não mexe no estado nem na linha recebidos (correm congelados)", () => { correrOTurno(congela(copia(antes)), congela(copia(L)), { semente: S10.semente }); return true; });
+}
+
+sec("4c. O MURAL NO REPLAY E NO SERVIDOR — a porta do Cronista e o trabalho daqui (29/10, Fase 4, trilha B)");
+{
+  /* A porta pregarNoMural que o Cronista chama deixou de ser dublê: é a da
+     fábrica dos órgãos do depois (motor/depois-do-turno.js), sobre o estado
+     do replay. Nos 194 turnos das sessões de prova o Cronista nunca a chama
+     (a medida do replay fica 176/194 e 172 — secção 4); aqui, um turno
+     montado em que alguém pede um serviço. */
+  const Em = estadoDoSave({ personagem: { nome: "Íris Vantel", grupo: [], nivel: 2 }, cidadeAtual: "Monte Rasa", mapa: { cidades: [{ nome: "Monte Rasa", populacao: 800 }] }, npcs: {}, canone: {}, dia: 4, abertura: { legado: true }, missoes: [], mural: [] });
+  const narr = "Na praça de Monte Rasa, Varek Duro aproxima-se com o chapéu na mão: — Preciso que alguém leve esta carta ao moinho velho antes do anoitecer. Pago bem, quinze moedas.";
+  const Lm = { n: 1, entrada: { frase: "Ouço o homem." }, sorte: { ponto: "4|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: narr, mudancas: {} },
+    cronista: { proposta: { pessoas: [{ nome: "Varek Duro", papel: "moleiro", genero: "ele" }], missao_oferecida: { titulo: "A carta do moinho", tipo: "favor", dador: "Varek Duro", descricao: "levar a carta ao moinho velho", paga: 15, prazo: 0, etapas: [{ tipo: "ir_a", alvo: "Monte Rasa", quantos: 1 }] } } } };
+  const rr = correrOTurno(Em, Lm, { semente: "teste|mural" });
+  const doVarek = (e) => (e.mural || []).filter((c) => c.dador === "Varek Duro");
+  t("o cartaz do Cronista entra no mural pela porta do motor, com a data do dia (a dublê não pregava)", doVarek(rr.estado).length === 1 && doVarek(rr.estado)[0].titulo === "A carta do moinho" && doVarek(rr.estado)[0].pregadoEm === 4, J(rr.estado.mural));
+  t("e a porta já não aparece como dublê chamada (não há dívida dela)", !rr.portas.some((p) => p.porta === "pregarNoMural") && PORTAS_DO_CRONISTA_NO_REPLAY.pregarNoMural.de === "motor");
+  t("no replay o mundo não oferece (sem o dia do último trabalho, que o save não guarda), e a nota fica de fora", (rr.estado.mural || []).length === 1 && !("nota" in rr.estado) && !("ultimoTrabalhoDia" in rr.estado));
+  const dois = correrOTurno({ ...Em, mural: rr.estado.mural }, Lm, { semente: "teste|mural" });
+  t("o mesmo cartaz duas vezes não prega (a porta única do mural)", doVarek(dois.estado).length === 1);
+  /* no servidor: o mundo oferece ANTES do Cronista (a ordem do App), e o
+     recado dos dois vai à nota */
+  const rs = correrOTurno(Em, Lm, { semente: "teste|mural", servidor: true });
+  const oferecido = (rs.estado.mural || []).find((c) => c.oferecido && c.dador !== "Varek Duro");
+  t("no servidor, o mundo prega o seu trabalho e o Cronista o dele, nessa ordem", !!oferecido && (rs.estado.mural || []).length === 2 && rs.estado.mural[rs.estado.mural.length - 1].dador === "Varek Duro", J((rs.estado.mural || []).map((c) => c.dador)));
+  t("o dia do último trabalho e o aviso que espera a cena ficam no estado (o eco os leva)", rs.estado.ultimoTrabalhoDia === 4 && J(rs.estado.trabalhoPendente) === J([`📋 ${oferecido && oferecido.dador} tem um trabalho no mural.`]));
+  const recados = String(rs.estado.nota || "").split(/\r?\n/).filter((l) => /TRABALHO PREGADO NO MURAL/.test(l));
+  t("e a nota leva os dois recados ao Narrador, o do mundo primeiro", recados.length === 2 && recados[0].includes(oferecido && oferecido.dador) && recados[1].includes("Varek Duro"), J(rs.estado.nota));
+  t("o servidor corre duas vezes igual", J(correrOTurno(Em, Lm, { semente: "teste|mural", servidor: true })) === J(rs));
 }
 
 sec("5. DETERMINISMO — o mesmo arquivo dá o mesmo replay");

@@ -70,6 +70,20 @@
    mudaram (os setters a chamar — o valor está no estadoDoFim) e os
    AVULSOS, o último valor que o turno deu a um estado só de tela (a
    chegada, a fase…), que nenhum campo do save guarda.
+
+   O TRABALHO QUE O MUNDO OFERECE (29/10, trilha B): o 1.º órgão do depois
+   (motor/depois-do-turno.js, a fábrica da trilha A) corre no depois do
+   servidor como um passo do replay («o trabalho daqui», `servidor: true`),
+   na ordem do App: depois do Mestre e da chegada, antes do Cronista — que
+   assim lê o mural já com o papel, e cuja porta `pregarNoMural` é a mesma
+   fábrica. O que ele escreve vai por três canais, um por espécie: o mural
+   no SAVE; o dia do último trabalho e o aviso que espera a cena seguinte
+   no ECO (`ultimoTrabalhoDia`, `trabalhoPendente`: o save não os guarda, e
+   sem o dia o servidor ofereceria em todo turno); o recado ao Narrador na
+   NOTA, um solto — com o que o códex, a chegada, o aplicar e o Cronista
+   deixam ao turno seguinte, que o App junta à nota e o servidor perdia. O
+   aviso sai no turno seguinte, depois da narração da abordagem, nas
+   linhas da tela.
    ============================================================ */
 import { SEMENTE_DA_CASA, comSorte, hashSemente, rng } from "./semente.js";
 import { pontoDaSorte } from "./motor/sorte-do-turno.js";
@@ -376,7 +390,7 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   const m = await montar(corpo, opcoes);
   const resposta = obj(obj(corpo).resposta);
   const L0 = aLinhaDoServidor(m, resposta, null);
-  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar() });
+  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar(), servidor: true });
   const r0 = correrOTurno(m.estadoDoFim, L0.linha, contexto());
   const cr = oCronistaDoServidor(m, resposta, r0.estado);
   let proposta = null, chamado = false;
@@ -391,6 +405,7 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   try { leitura = !cr.pergunta ? null : cr.corre && proposta ? lerALeitura(cr.leitura, cr.narrativa) : pularALeitura(cr.leitura, cr.narrativa); } catch { leitura = null; }
   const L = proposta ? aLinhaDoServidor(m, resposta, proposta) : L0;
   const r = proposta ? correrOTurno(m.estadoDoFim, L.linha, contexto()) : r0;
+  for (const onde of arr(r.calouDoDepois)) if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde);
   /* o eco: o do estado do fim, com os vetos que o Juiz deste turno deixou
      (`andarOsVetos` sobre os da véspera, como o App faz ao julgar) */
   const { eco, soltos } = aRespostaDoServidor({ ...m.estadoDoFim, ...r.estado });

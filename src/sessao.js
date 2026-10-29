@@ -176,7 +176,9 @@ import { estadoDoSave, saveDoEstado, camposDoGrupo } from "./estado.js";
 import { lugarPedido } from "./lugar.js";
 import { oTempoDoTurno, oPassoDoReplay } from "./motor/tempo-do-turno.js";
 import { semearACasa, comSorte } from "./semente.js";
-import { aplicarOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
+import { aplicarOTurno, contextoDoNomeCom, notaComOTurno } from "./motor/aplicar.js";
+import { osOrgaosDoDepois } from "./motor/depois-do-turno.js";
+import { oTrabalhoPendente } from "./motor/entrega-do-turno.js";
 import { aplicarOCodex, aplicarAChegada } from "./motor/fim-do-turno.js";
 import { oAntesDoMestre } from "./motor/antes-do-mestre.js";
 import { julgarOCronista } from "./motor/cronista.js";
@@ -488,7 +490,9 @@ export const PORTAS_DO_CRONISTA_NO_REPLAY = Object.freeze({
   historiaDoMural: { de: "motor", campos: [], porque: "ofertas.js#genteDaHistoria sobre o estado de agora" },
   mundoDaBase: { de: "motor", campos: [], porque: "o mundo gravado, com o mapa e a base do estado de agora (o `mundoDaBase` do App)" },
   nucleoAgora: { de: "dublê", campos: [], porque: "nucleoDaCampanha lê o contexto do elenco e o cache do App: sem núcleo, o favor já pedido pela linha do coração não se apura" },
-  pregarNoMural: { de: "dublê", campos: ["mural"], porque: "pregarNoMural do App (um trabalho por pessoa, o que já está no diário): o dublê não prega" },
+  /* 29/10 (Fase 4, trilha B): deixou de ser dublê — a porta do mural é a da
+     fábrica dos órgãos do depois (trilha A, cc44829), à letra do App */
+  pregarNoMural: { de: "motor", campos: [], porque: "motor/depois-do-turno.js#osOrgaosDoDepois → pregarNoMural, a porta única do mural do App à letra (uma pessoa, um trabalho; o que já está no diário não volta), sobre o estado do replay" },
   marcarNoArco: { de: "dublê", campos: ["historia"], porque: "marcarNoArco do App (arcoComOMarco com o motorDoArco dele): o dublê não marca" },
   ganharFe: { de: "dublê", campos: ["divindade"], porque: "ganharFe do App (os fiéis, a PF, o grau): o dublê não conta" },
   sincronizarNemesis: { de: "dublê", campos: ["nemesis"], porque: "sincronizarNemesis do App (a nêmesis morta no registo): o dublê não encerra" },
@@ -498,7 +502,7 @@ export const PORTAS_DO_CRONISTA_NO_REPLAY = Object.freeze({
 });
 /* o neutro que cada dublê devolve (a porta que «não fez nada» no App) */
 const NEUTRO_DO_DUBLE = Object.freeze({
-  nucleoAgora: () => null, pregarNoMural: () => false, marcarNoArco: () => undefined, ganharFe: () => [],
+  nucleoAgora: () => null, marcarNoArco: () => undefined, ganharFe: () => [],
   sincronizarNemesis: () => undefined, conferirCom: (p) => p, fichaDeCompanheiro: (nome) => ({ nome }), notaDoRecrutamento: () => "",
 });
 /* o efeito da peça → o campo do estado em que ele escreve (e a chave do
@@ -515,6 +519,22 @@ export const EFEITO_DO_CRONISTA_NO_REPLAY = Object.freeze({
   rolagem: { campo: "rolagem", chave: "rolagem" },
 });
 
+/* OS ÓRGÃOS DO DEPOIS SOBRE O ESTADO DO REPLAY (29/10, Fase 4, trilha B):
+   a fábrica da trilha A (motor/depois-do-turno.js) criada com o estado do
+   instante. Sem tela nem disco (nenhum setter, nenhum `salvar`): o que os
+   órgãos escrevem volta pelo `aplicar`, e o `calou` diz onde calou. */
+const osOrgaosNoReplay = (E, aplicar, calou) => osOrgaosDoDepois(E, { aplicar, calou });
+
+/* O que uma peça do fim do turno (o códex, a chegada) deixa à TELA (as
+   linhas, no relato depois das do Mestre, como o `msgs.push` do App) e ao
+   NARRADOR (`paraOCronista`, que o App junta à nota com `notaComOTurno`).
+   A tela o replay não compara; a nota só se escreve no servidor — no
+   replay é bastidor, que o save não guarda. */
+const naTelaENaNota = (E, r, ctx, nota) => {
+  if (nota && nota.tela && arr(r.msgs).length) nota.tela.linhas.push(...arr(r.msgs).map((x) => (typeof x === "string" ? x : String(obj(x).texto || ""))));
+  return ctx.servidor && arr(r.paraOCronista).length ? { ...E, nota: notaComOTurno(E.nota, r.paraOCronista) } : E;
+};
+
 /* o aceito aplicado pela peça do jogo sobre o estado do replay →
    { estado, portas: [{ porta, campos }], calou: [{ onde, erro }] } */
 function oAceitoNoReplay(E0, juizo, proposta, ctx) {
@@ -524,6 +544,11 @@ function oAceitoNoReplay(E0, juizo, proposta, ctx) {
     for (const ef of arr(efeitos)) {
       if (!ehObj(ef)) continue;
       if (ef.tipo === "calou") { calou.push({ onde: String(ef.onde || ""), erro: String((ef.erro && ef.erro.message) || ef.erro || "") }); continue; }
+      /* a nota ao Narrador: no replay é bastidor (o save não a guarda); no
+         servidor é o solto que o pedido do turno seguinte junta — o
+         `notaComOTurno` que o App faz com o efeito (o recado do trabalho
+         que o Cronista pregou, a fé, o homónimo, o teste exigido) */
+      if (ef.tipo === "nota") { if (ctx.servidor) E = { ...E, nota: notaComOTurno(E.nota, arr(ef.linhas)) }; continue; }
       const x = EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo];
       if (x) E = { ...E, [x.campo]: ef[x.chave] };
     }
@@ -539,6 +564,9 @@ function oAceitoNoReplay(E0, juizo, proposta, ctx) {
     contextoDoNome: (n) => contextoDoNomeCom(ctx.doMestre.baseDoNome, n),
     historiaDoMural: () => genteDaHistoria({ abertura: E.abertura, missoes: E.missoes, espinha: E.espinha, grupo: obj(E.personagem).grupo || [] }),
     mundoDaBase: () => (ctx.mundo ? { ...ctx.mundo, mapa: E.mapa, base: E.baseMundo } : null),
+    /* a porta do mural: a fábrica sobre o estado de AGORA (o que o aceito
+       já escreveu), e o que ela escreve (o mural) volta ao estado */
+    pregarNoMural: (cartaz) => osOrgaosNoReplay(E, (x) => { E = { ...E, ...x }; }, (onde, e) => calou.push({ onde: String(onde || ""), erro: String((e && e.message) || e || "") })).pregarNoMural(cartaz),
   };
   const dubles = Object.fromEntries(Object.keys(NEUTRO_DO_DUBLE).map((k) => [k, duble(k)]));
   const fim = oAceitoDoCronista(juizo.aceito, juizo.recusado, proposta, {
@@ -603,26 +631,60 @@ export const PASSOS_DO_REPLAY = Object.freeze([
       /* o que a tela leva deste passo (o servidor devolve-o; o replay não o
          compara): a narração podada e as linhas do sistema no relato */
       if (r && nota) nota.tela = { narrativa: String(obj(r.podado).narrativa || ""), linhas: arr(r.msgs).map((x) => (typeof x === "string" ? x : String(obj(x).texto || ""))) };
-      return r && r.estado ? r.estado : E;
+      let E1 = r && r.estado ? r.estado : E;
+      /* no servidor, o que o aplicar deixa ao Narrador (`paraOCronista`)
+         vai à nota, como o App a escreve (`notaComOTurno`); no replay é
+         bastidor, que o save não guarda */
+      if (ctx.servidor && r && arr(r.paraOCronista).length) E1 = { ...E1, nota: notaComOTurno(E1.nota, r.paraOCronista) };
+      return E1;
     },
   },
   {
     passo: "o códex", de: "motor/fim-do-turno.js#aplicarOCodex (a base do mundo, os nomes à mão)",
-    faz: (E, L, ctx) => {
+    faz: (E, L, ctx, nota) => {
       const oferecidos = arr(obj(L.pedido).nomesAMao);
       /* com o mundo gravado ou sem ele, o códex do App, à letra: sem o mundo
          a metade da base cala e os nomes à mão seguem (o conserto de
          66afe15 — antes, sem mundo, refazia a cidade pela semente vazia, e
          o replay corria aqui uma cópia só dos nomes à mão) */
       const r = aplicarOCodex({ ...E, oferecidos, base: E.baseMundo }, ctx.resposta, { mundo: ctx.mundo });
-      return { ...E, npcs: r.estado.npcs, baseMundo: r.estado.base === undefined ? E.baseMundo : r.estado.base };
+      return naTelaENaNota({ ...E, npcs: r.estado.npcs, baseMundo: r.estado.base === undefined ? E.baseMundo : r.estado.base }, r, ctx, nota);
     },
   },
   {
     passo: "a chegada", de: "motor/fim-do-turno.js#aplicarAChegada (o relógio da travessia é do App)",
-    faz: (E, L, ctx) => {
+    faz: (E, L, ctx, nota) => {
       const r = aplicarAChegada(E, ctx.resposta);
-      return { ...E, cidadeAtual: r.estado.cidadeAtual, lugar: r.estado.lugar, mapa: r.estado.mapa };
+      let E1 = naTelaENaNota({ ...E, cidadeAtual: r.estado.cidadeAtual, lugar: r.estado.lugar, mapa: r.estado.mapa }, r, ctx, nota);
+      /* O TRABALHO QUE ESPERAVA ESTA CENA (v9.37, motor/entrega-do-turno.js):
+         o aviso que o mundo deixou no turno de antes sai DEPOIS da narração
+         da abordagem — no App, o `oTrabalhoPendente` do aplicarResposta,
+         logo depois da chegada e do portão. Viaja no eco; sem ele (o
+         replay, um load), não há aviso. */
+      const doTrabalho = oTrabalhoPendente(E1.trabalhoPendente);
+      if (doTrabalho.msgs.length) {
+        E1 = { ...E1, trabalhoPendente: doTrabalho.pendente };
+        if (nota && nota.tela) nota.tela.linhas.push(...doTrabalho.msgs.map(String));
+      }
+      return E1;
+    },
+  },
+  {
+    /* O TRABALHO QUE O MUNDO OFERECE (29/10, Fase 4, trilha B): o 1.º órgão
+       do depois, a peça da trilha A, na ordem do App — depois do Mestre, da
+       chegada, do Juiz e do conferente das missões, ANTES do Cronista (que
+       lê o mural já com o papel: a mesma pessoa não prega duas vezes).
+       SÓ NO SERVIDOR (`servidor: true`): o órgão guarda o dia do último
+       trabalho num ref que o save não leva (`ultimoTrabalhoDia`). O servidor
+       recebe-o no eco; o replay corre sobre saves, e sem ele ofereceria em
+       todo turno o que o jogo, com o ref vivo, não ofereceu — a régua do
+       replay é o que se jogou. */
+    passo: "o trabalho daqui", de: "motor/depois-do-turno.js#osOrgaosDoDepois → oferecerTrabalhoDaqui (só no servidor: o dia do último trabalho viaja no eco, não no save)",
+    faz: (E, L, ctx, nota) => {
+      if (!ctx.servidor) return E;
+      let E1 = E;
+      osOrgaosNoReplay(E, (x) => { E1 = { ...E1, ...x }; }, (onde) => { (nota.calouDoDepois = nota.calouDoDepois || []).push(String(onde || "")); }).oferecerTrabalhoDaqui();
+      return E1;
     },
   },
   {
@@ -765,7 +827,7 @@ function diferencas(a, b, caminho, out, prof) {
    das sessões de prova usa para escrever a linha: um caminho só).
 
      correrOTurno(antes, linha, { semente, mundo?, narracoes?, doApp?, so?, casa? })
-       → { estado, juizo, juiz, veredito, tela, calou, portas, calouDoCronista, tirados }
+       → { estado, juizo, juiz, veredito, tela, calou, portas, calouDoCronista, calouDoDepois, tirados }
 
    `antes` é o estado do fim do turno anterior (o save v2), `linha` a linha
    do arquivo (o `estado` dela não é lido), `narracoes` as narrações de
@@ -786,7 +848,11 @@ function diferencas(a, b, caminho, out, prof) {
    o correu no prelúdio, ou o cliente no agir), e `casa` é o gerador que o
    turno do servidor já vem usando: em vez de semear a reserva global (que
    num servidor rolaria os dados de outro pedido), os passos correm dentro
-   de `comSorte`. Sem as duas, o replay de sempre. `veredito` é o do Juiz
+   de `comSorte`. Sem as duas, o replay de sempre. `servidor: true` é o
+   estado que traz o eco e os soltos (o que o load zera, o que a tela
+   deixa): com ele corre o trabalho daqui (o dia do último viaja no eco) e
+   o que o fim do turno deixa ao Narrador entra na `nota` (um solto) — no
+   replay, que corre sobre saves, nem um nem outro existe. `veredito` é o do Juiz
    inteiro (a correção do servidor lê-o para os vetos do eco) e `tela` o
    que o passo do Mestre deixa à tela (a narração podada, as linhas). */
 export function correrOTurno(antes, linha, contexto) {
@@ -795,6 +861,7 @@ export function correrOTurno(antes, linha, contexto) {
   const semente = String(c.semente == null ? "" : c.semente), mundo = ehObj(c.mundo) ? c.mundo : null, narracoes = arr(c.narracoes);
   const so = obj(L.sorte), pe = obj(L.pedido), na = obj(L.narrador);
   const soDepois = c.so === "depois";
+  const servidor = c.servidor === true;
   const casa = typeof c.casa === "function" ? c.casa : null;
   if (!casa && typeof so.casa === "string") semearACasa(so.casa);
   const s0 = sorteNoPonto(ehObj(so.contagem) ? so.contagem : CONTAGEM_VAZIA, semente, so.ponto, "salvaguarda");
@@ -804,7 +871,7 @@ export function correrOTurno(antes, linha, contexto) {
   const envelopes = pe.envelopes == null ? "" : pe.envelopes;
   const resposta = { narrativa: String(na.narrativa || ""), mudancas: dado(obj(na.mudancas)) };
   const ctx = {
-    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp),
+    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp), servidor,
     doMestre: { envelopes: Array.isArray(envelopes) ? envelopes.join("\n") : envelopes, pedido: frase, ...(pe.moeda ? { moeda: pe.moeda } : {}), sorte: s0.sorte, sorteDoTurno, mundo: mundo || null, baseDoNome: { heroi: obj(E0.personagem).nome } },
   };
   let E = estadoDoSave(obj(dado(E0)));
@@ -823,7 +890,7 @@ export function correrOTurno(antes, linha, contexto) {
   if (casa) comSorte(casa, correr); else correr();
   if (erroDoJuiz) calou.push({ passo: "o Juiz", erro: String((erroDoJuiz && erroDoJuiz.message) || erroDoJuiz) });
   const juiz = julgado ? dado(julgado.resumo) : null;
-  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), tirados: arr(nota.tirados) };
+  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), calouDoDepois: arr(nota.calouDoDepois), tirados: arr(nota.tirados) };
 }
 
 const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) => !tem(FORA_DA_REGUA, k)));

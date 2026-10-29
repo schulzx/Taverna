@@ -28,7 +28,8 @@
 
    A TABELA `CAMPOS_DO_SERVIDOR` diz, de cada campo, por onde viaja
    (`via`), com que chave (`chave`, a do save para os soltos), de onde vem
-   no jogo (`de`), quem o escreve (`escreve`) e que peça o lê (`le`). O
+   no jogo (`de`), quem o escreve (`escreve`) e que peça o lê (`le`: a
+   pauta, o pedido, o prelúdio, ou `depois` — os órgãos do depois). O
    campo é o das peças (o nome do ref sem `Ref`). As funções só movem
    valores entre as três formas e nunca os validam: quem lê é a peça, com
    as guardas do App.
@@ -54,8 +55,14 @@ export const CAMPOS_DO_SERVIDOR = Object.freeze({
   vetosDoJuiz: C("eco", "vetosDoJuiz", "o que o Juiz vetou na resposta da véspera", "o Juiz, depois da resposta", ["pauta"]),
   derrotadosDaSessao: C("eco", "derrotadosDaSessao", "os mortos desta sessão (até 120)", "o fim da luta", ["pauta", "preludio"]),
   criaturaAVista: C("eco", "criaturaAVista", "a fera vista na estrada", "a estrada (a viagem)", ["pauta"]),
+  /* o trabalho que o mundo oferece (motor/depois-do-turno.js, 29/10): o dia
+     do último (no máximo um por dia — sem ele o servidor ofereceria em todo
+     turno, porque o save não o guarda) e o aviso que espera a cena seguinte
+     (o aplicar do turno seguinte solta-o depois da narração da abordagem) */
+  ultimoTrabalhoDia: C("eco", "ultimoTrabalhoDia", "o dia do último trabalho que o mundo pregou no mural", "oferecerTrabalhoDaqui (o depois do turno)", ["depois"]),
+  trabalhoPendente: C("eco", "trabalhoPendente", "o aviso do trabalho pregado, à espera da narração que o encena", "oferecerTrabalhoDaqui; o aplicar do turno seguinte solta-o", ["depois"]),
   /* ---- os soltos: campo novo no save, `soltos`, na forma de soltosDoTurno() ---- */
-  nota: C("solto", "nota", "o que as ações de tela dizem ao Mestre entre turnos (180 sítios do App)", "a tela; o pedido esvazia-a ao juntá-la", ["pauta", "pedido", "preludio"]),
+  nota: C("solto", "nota", "o que as ações de tela dizem ao Mestre entre turnos (180 sítios do App)", "a tela; o pedido esvazia-a ao juntá-la; o depois do turno (o recado do trabalho, o que o Mestre e o Cronista deixam ao seguinte) enche-a", ["pauta", "pedido", "preludio", "depois"]),
   oficina: C("solto", "oficina", "o trabalho de bancada, forja e desmonte por contar", "a tela; o prelúdio esvazia-a ao virar bilhete", ["preludio"]),
   sinoDoTurno: C("solto", "sino", "o sino do tempo (o que o relógio deu)", "o tempo do turno; a pauta apaga-o", ["pauta"]),
   ultimoPeso: C("solto", "ultimoPeso", "o peso da última cena, e o dia dele", "o fim do turno", ["pauta", "preludio"]),

@@ -26,6 +26,7 @@ import { CAMPOS_DO_SERVIDOR, oEstadoDoServidor, aRespostaDoServidor, oSaveComOsS
 import { REFS_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
 import { REFS_DO_PEDIDO, oPedidoDoTurno } from "../src/motor/pedido-do-turno.js";
 import { REFS_DO_PRELUDIO } from "../src/motor/preludio-do-turno.js";
+import { REFS_DO_DEPOIS } from "../src/motor/depois-do-turno.js";
 import { casoDoPedido } from "./pedido-bloco.mjs";
 import { rng, hashSemente } from "../src/semente.js";
 
@@ -61,7 +62,18 @@ if (process.argv.includes("--gerar")) {
 }
 const ANTIGO = JSON.parse(fs.readFileSync(FIXO, "utf8"));
 
-const PECAS = { pauta: REFS_DA_PAUTA, pedido: REFS_DO_PEDIDO, preludio: REFS_DO_PRELUDIO };
+/* MOVIDA (29/10, Fase 4, trilha B): a quarta peça, os órgãos do depois
+   (motor/depois-do-turno.js), lê e escreve o dia do último trabalho, o
+   aviso que espera a cena e a nota — os dois primeiros viajam no eco desde
+   que o servidor corre o trabalho daqui. A intenção fica: cada campo é
+   lido exatamente pelas peças que a tabela diz, e nenhuma o tem no save.
+   Das três da montagem, exatamente; dos órgãos do depois, que crescem um
+   a um pela trilha A, a tabela diz `depois` em todo campo que eles
+   ESCREVEM (é o que obriga o campo a viajar), e só onde eles o têm — o
+   que um órgão novo só lê chega-lhe pelo estado do servidor, que já o
+   tem (a tabela ganha `depois` nele quando o órgão entrar). */
+const PECAS = { pauta: REFS_DA_PAUTA, pedido: REFS_DO_PEDIDO, preludio: REFS_DO_PRELUDIO, depois: REFS_DO_DEPOIS };
+const DA_MONTAGEM = ["pauta", "pedido", "preludio"];
 const CAMPOS = Object.entries(CAMPOS_DO_SERVIDOR);
 const VIAS = ["eco", "solto", "bilhete"];
 
@@ -69,8 +81,9 @@ sec("1. A tabela é a das peças");
 {
   t(`${CAMPOS.length} campos, cada um numa das três vias, com de onde vem, quem o escreve e quem o lê`, CAMPOS.length >= 15 && CAMPOS.every(([, c]) => VIAS.includes(c.via) && c.chave && c.de && c.escreve && c.le.length > 0));
   for (const via of VIAS) t(`a via ${via} tem campos (${CAMPOS.filter(([, c]) => c.via === via).length})`, CAMPOS.some(([, c]) => c.via === via));
-  const tortos = CAMPOS.filter(([campo, c]) => J([...c.le].sort()) !== J(Object.keys(PECAS).filter((p) => PECAS[p][campo]).sort()));
-  t("cada campo é lido exatamente pelas peças que a tabela diz (os REFS das três)", tortos.length === 0, tortos.map(([c, x]) => `${c}: ${x.le} ≠ ${Object.keys(PECAS).filter((p) => PECAS[p][c])}`).join("; "));
+  const tortos = CAMPOS.filter(([campo, c]) => J(c.le.filter((p) => DA_MONTAGEM.includes(p)).sort()) !== J(DA_MONTAGEM.filter((p) => PECAS[p][campo]).sort())
+    || (c.le.includes("depois") && !REFS_DO_DEPOIS[campo]) || (REFS_DO_DEPOIS[campo] && REFS_DO_DEPOIS[campo].escreve && !c.le.includes("depois")));
+  t("cada campo é lido exatamente pelas peças da montagem que a tabela diz, e o que os órgãos do depois escrevem diz `depois`", tortos.length === 0, tortos.map(([c, x]) => `${c}: ${x.le} ≠ ${Object.keys(PECAS).filter((p) => PECAS[p][c])}`).join("; "));
   const salvos = CAMPOS.filter(([campo]) => Object.values(PECAS).some((R) => R[campo] && R[campo].salvo));
   t("nenhum deles o save de hoje guarda (é por isso que viajam)", salvos.length === 0, salvos.map(([c]) => c).join());
   t("o juizDoTurno não viaja (o turno zera-o antes de o escrever): nenhuma peça o lê", !CAMPOS_DO_SERVIDOR.juizDoTurno && !Object.values(PECAS).some((R) => R.juizDoTurno));

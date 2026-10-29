@@ -523,6 +523,49 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
   }
 }
 
+sec("11. O TRABALHO QUE O MUNDO OFERECE, NO SERVIDOR (o 1.º órgão do depois)");
+{
+  /* motor/depois-do-turno.js (trilha A) corre no depois do servidor como o
+     passo «o trabalho daqui» (sessao.js, `servidor: true`). O caso é o da
+     suíte da peça (`umaCidadeQuePrega`: a cidade, o dia novo, o diário
+     vazio, o herói orientado), sem o dia do último trabalho — o save não o
+     guarda. Nas sessões gravadas o órgão não prega: o dia delas é nulo (os
+     registos não o guardavam), e o «um por dia» fecha-o, como no App. */
+  const { umaCidadeQuePrega } = await import("./depois-bloco.mjs");
+  const { oSaveComOsSoltos } = await import("../src/motor/eco-do-turno.js");
+  const base = umaCidadeQuePrega();
+  delete base.render; delete base.ultimoTrabalhoDia;
+  const narrativa = "A praça segue no seu murmúrio de sempre, e o vento traz o cheiro do pão da manhã. Ninguém olha duas vezes para o forasteiro.";
+  const umTurno = (estado, eco, frase) => oTurnoNoServidor({ estado, frase, ...(eco ? { eco } : {}), resposta: { narrativa, mudancas: {} } }, {});
+  /* o turno seguinte parte do save que este devolveu, com os soltos, como o load o abre */
+  const oSeguinte = (antes, sv) => oSaveComOsSoltos(comoOLoadAbre({ ...antes, ...sv.estadoDoFim }), sv.soltos);
+  const t1 = await umTurno(base, null, "Olho em volta.");
+  const of = (t1.estadoDoFim.mural || []).find((c) => c.oferecido);
+  const aviso = of ? `📋 ${of.dador} tem um trabalho no mural.` : "";
+  const recado = /TRABALHO PREGADO NO MURAL/;
+  t(`o mundo prega um trabalho no mural do save (${of && of.dador}, no dia ${base.dia})`, !!of && t1.estadoDoFim.mural.length === 1 && of.pregadoEm === base.dia);
+  t("o dia do último trabalho e o aviso viajam no eco, e não no save", t1.eco.ultimoTrabalhoDia === base.dia && JSON.stringify(t1.eco.trabalhoPendente) === JSON.stringify([aviso]) && !("ultimoTrabalhoDia" in t1.estadoDoFim) && !("trabalhoPendente" in t1.estadoDoFim));
+  t("o aviso espera a cena: não sai nas linhas deste turno", !t1.tela.linhas.includes(aviso));
+  t("o recado ao Narrador vai na nota (um solto), e não no pedido deste turno", recado.test(String(t1.soltos.nota || "")) && !recado.test(JSON.stringify(t1.pedido)));
+  const e2 = oSeguinte(base, t1);
+  const t2 = await umTurno(e2, t1.eco, "Espero um pouco.");
+  t("DOIS TURNOS SEGUIDOS NO MESMO DIA NÃO OFERECEM DOIS TRABALHOS (com o eco reenviado)", t2.estadoDoFim.mural.length === 1 && t2.eco.ultimoTrabalhoDia === base.dia);
+  t("e o aviso sai no turno seguinte, depois da narração da abordagem, uma vez só", t2.tela.linhas.filter((l) => l === aviso).length === 1 && JSON.stringify(t2.eco.trabalhoPendente) === "[]");
+  const p2 = await oPedidoNoServidor({ estado: e2, frase: "Espero um pouco.", eco: t1.eco });
+  t("o pedido do turno seguinte leva o recado ao Narrador (a nota que o load trouxe nos soltos)", recado.test(JSON.stringify(p2.pedido)));
+  /* o porquê do eco: com o mural vazio no mesmo dia, só o dia do último
+     trabalho segura o órgão — sem ele, o servidor ofereceria em todo turno */
+  const e2v = { ...e2, mural: [] };
+  const comEco = await umTurno(e2v, t1.eco, "Espero."), semEco = await umTurno(e2v, null, "Espero.");
+  t(`e é o eco que o segura: no mesmo dia, sem o mural, com o eco ${comEco.estadoDoFim.mural.length} trabalho, sem ele ${semEco.estadoDoFim.mural.length}`, comEco.estadoDoFim.mural.length === 0 && semEco.estadoDoFim.mural.length === 1);
+  t("o turno com o trabalho corre igual duas vezes, e nada calou", JSON.stringify(await umTurno(base, null, "Olho em volta.")) === JSON.stringify(t1) && !t1.calados.length && !t2.calados.length);
+  /* a rota em ensaio leva o eco novo, e o eco reenviado dá o pedido do caminho do App */
+  const r1 = await rodar({ estado: base, frase: "Olho em volta.", resposta: { narrativa, mudancas: {} } });
+  const r2 = await rodar({ estado: e2, frase: "Espero um pouco.", eco: r1.corpo && r1.corpo.eco });
+  const ref2 = await peloCaminhoDoApp({ estado: e2, frase: "Espero um pouco.", eco: r1.corpo && r1.corpo.eco });
+  t("a rota devolve o eco com o dia do último trabalho, e reenviado dá o pedido do caminho do App", r1.codigo === 200 && r1.corpo.eco.ultimoTrabalhoDia === base.dia && r2.codigo === 200 && r2.corpo.pedido.hash === sha(ref2.pedido));
+}
+
 sec("7. NENHUMA CHAMADA DE REDE, NENHUM NAVEGADOR");
 {
   const fora = chamados.filter((u) => !u.startsWith("https://redis.falso"));
